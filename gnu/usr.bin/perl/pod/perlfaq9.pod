@@ -1,45 +1,71 @@
 =head1 NAME
 
-perlfaq9 - Networking ($Revision: 1.26 $, $Date: 1999/05/23 16:08:30 $)
+perlfaq9 - Networking ($Revision: 1.9 $, $Date: 2002/04/07 18:46:13 $)
 
 =head1 DESCRIPTION
 
 This section deals with questions related to networking, the internet,
 and a few on the web.
 
+=head2 What is the correct form of response from a CGI script?
+
+(Alan Flavell <flavell+www@a5.ph.gla.ac.uk> answers...)
+
+The Common Gateway Interface (CGI) specifies a software interface between 
+a program ("CGI script") and a web server (HTTPD). It is not specific 
+to Perl, and has its own FAQs and tutorials, and usenet group, 
+comp.infosystems.www.authoring.cgi 
+
+The original CGI specification is at: http://hoohoo.ncsa.uiuc.edu/cgi/
+
+Current best-practice RFC draft at: http://CGI-Spec.Golux.Com/
+
+Other relevant documentation listed in: http://www.perl.org/CGI_MetaFAQ.html
+
+These Perl FAQs very selectively cover some CGI issues. However, Perl 
+programmers are strongly advised to use the CGI.pm module, to take care
+of the details for them. 
+
+The similarity between CGI response headers (defined in the CGI
+specification) and HTTP response headers (defined in the HTTP
+specification, RFC2616) is intentional, but can sometimes be confusing.
+
+The CGI specification defines two kinds of script: the "Parsed Header"
+script, and the "Non Parsed Header" (NPH) script. Check your server
+documentation to see what it supports. "Parsed Header" scripts are
+simpler in various respects. The CGI specification allows any of the
+usual newline representations in the CGI response (it's the server's
+job to create an accurate HTTP response based on it). So "\n" written in
+text mode is technically correct, and recommended. NPH scripts are more
+tricky: they must put out a complete and accurate set of HTTP
+transaction response headers; the HTTP specification calls for records
+to be terminated with carriage-return and line-feed, i.e ASCII \015\012
+written in binary mode.
+
+Using CGI.pm gives excellent platform independence, including EBCDIC
+systems. CGI.pm selects an appropriate newline representation
+($CGI::CRLF) and sets binmode as appropriate.
+
 =head2 My CGI script runs from the command line but not the browser.  (500 Server Error)
 
-If you can demonstrate that you've read the following FAQs and that
+Several things could be wrong.  You can go through the "Troubleshooting
+Perl CGI scripts" guide at
+
+	http://www.perl.org/troubleshooting_CGI.html
+
+If, after that, you can demonstrate that you've read the FAQs and that 
 your problem isn't something simple that can be easily answered, you'll
 probably receive a courteous and useful reply to your question if you
 post it on comp.infosystems.www.authoring.cgi (if it's something to do
-with HTTP, HTML, or the CGI protocols).  Questions that appear to be Perl
+with HTTP or the CGI protocols).  Questions that appear to be Perl
 questions but are really CGI ones that are posted to comp.lang.perl.misc
-may not be so well received.
+are not so well received.
 
-The useful FAQs and related documents are:
+The useful FAQs, related documents, and troubleshooting guides are 
+listed in the CGI Meta FAQ:
 
-    CGI FAQ
-        http://www.webthing.com/tutorials/cgifaq.html
+	http://www.perl.org/CGI_MetaFAQ.html
 
-    Web FAQ
-        http://www.boutell.com/faq/
-
-    WWW Security FAQ
-        http://www.w3.org/Security/Faq/
-
-    HTTP Spec
-        http://www.w3.org/pub/WWW/Protocols/HTTP/
-
-    HTML Spec
-        http://www.w3.org/TR/REC-html40/
-        http://www.w3.org/pub/WWW/MarkUp/
-
-    CGI Spec
-        http://www.w3.org/CGI/
-
-    CGI Security FAQ
-        http://www.go2net.com/people/paulp/cgi-security/safe-cgi.txt
 
 =head2 How can I get better error messages from a CGI program?
 
@@ -94,7 +120,7 @@ Here's one "simple-minded" approach, that works for most files:
 
 If you want a more complete solution, see the 3-stage striphtml
 program in
-http://www.perl.com/CPAN/authors/Tom_Christiansen/scripts/striphtml.gz
+http://www.cpan.org/authors/Tom_Christiansen/scripts/striphtml.gz
 .
 
 Here are some tricky cases that you should think about when picking
@@ -122,22 +148,28 @@ on text like this:
 
 =head2 How do I extract URLs?
 
-A quick but imperfect approach is
+You can easily extract all sorts of URLs from HTML with
+C<HTML::SimpleLinkExtor> which handles anchors, images, objects,
+frames, and many other tags that can contain a URL.  If you need 
+anything more complex, you can create your own subclass of 
+C<HTML::LinkExtor> or C<HTML::Parser>.  You might even use 
+C<HTML::SimpleLinkExtor> as an example for something specifically
+suited to your needs.
 
-    #!/usr/bin/perl -n00
-    # qxurl - tchrist@perl.com
-    print "$2\n" while m{
-	< \s*
-	  A \s+ HREF \s* = \s* (["']) (.*?) \1
-	\s* >
-    }gsix;
+Less complete solutions involving regular expressions can save 
+you a lot of processing time if you know that the input is simple.  One
+solution from Tom Christiansen runs 100 times faster than most
+module based approaches but only extracts URLs from anchors where the first
+attribute is HREF and there are no other attributes. 
 
-This version does not adjust relative URLs, understand alternate
-bases, deal with HTML comments, deal with HREF and NAME attributes
-in the same tag, understand extra qualifiers like TARGET, or accept
-URLs themselves as arguments.  It also runs about 100x faster than a
-more "complete" solution using the LWP suite of modules, such as the
-http://www.perl.com/CPAN/authors/Tom_Christiansen/scripts/xurl.gz program.
+        #!/usr/bin/perl -n00
+        # qxurl - tchrist@perl.com
+        print "$2\n" while m{
+            < \s*
+              A \s+ HREF \s* = \s* (["']) (.*?) \1
+            \s* >
+        }gsix;
+
 
 =head2 How do I download a file from the user's machine?  How do I open a file on another machine?
 
@@ -219,7 +251,7 @@ function to handle encoding.
 The best source of detailed information on URI encoding is RFC 2396.
 Basically, the following substitutions do it:
 
-    s/([^\w()'*~!.-])/sprintf '%%%02x', $1/eg;   # encode
+    s/([^\w()'*~!.-])/sprintf '%%%02x', ord $1/eg;   # encode
 
     s/%([A-Fa-f\d]{2})/chr hex $1/eg;            # decode
 
@@ -233,34 +265,36 @@ regexp for breaking any arbitrary URI into components (Appendix B).
 
 =head2 How do I redirect to another page?
 
-According to RFC 2616, "Hypertext Transfer Protocol -- HTTP/1.1", the
-preferred method is to send a C<Location:> header instead of a
-C<Content-Type:> header:
+Specify the complete URL of the destination (even if it is on the same
+server). This is one of the two different kinds of CGI "Location:"
+responses which are defined in the CGI specification for a Parsed Headers
+script. The other kind (an absolute URLpath) is resolved internally to
+the server without any HTTP redirection. The CGI specifications do not
+allow relative URLs in either case.
 
-    Location: http://www.domain.com/newpage
+Use of CGI.pm is strongly recommended.  This example shows redirection
+with a complete URL. This redirection is handled by the web browser.
 
-Note that relative URLs in these headers can cause strange effects
-because of "optimizations" that servers do.
+      use CGI qw/:standard/;
 
-    $url = "http://www.perl.com/CPAN/";
-    print "Location: $url\n\n";
-    exit;
+      my $url = 'http://www.cpan.org/';
+      print redirect($url);
 
-To target a particular frame in a frameset, include the "Window-target:"
-in the header.
 
-    print <<EOF;
-    Location: http://www.domain.com/newpage
-    Window-target: <FrameName>
+This example shows a redirection with an absolute URLpath.  This
+redirection is handled by the local web server.
 
-    EOF
+      my $url = '/CPAN/index.html';
+      print redirect($url);
 
-To be correct to the spec, each of those virtual newlines should
-really be physical C<"\015\012"> sequences by the time your message is
-received by the client browser.  Except for NPH scripts, though, that
-local newline should get translated by your server into standard form,
-so you shouldn't have a problem here, even if you are stuck on MacOS.
-Everybody else probably won't even notice.
+
+But if coded directly, it could be as follows (the final "\n" is 
+shown separately, for clarity), using either a complete URL or
+an absolute URLpath. 
+
+      print "Location: $url\n";   # CGI response header
+      print "\n";                 # end of headers
+
 
 =head2 How do I put a password on my web pages?
 
@@ -271,8 +305,8 @@ server, or perhaps check some of the other FAQs referenced above.
 
 The HTTPD::UserAdmin and HTTPD::GroupAdmin modules provide a
 consistent OO interface to these files, regardless of how they're
-stored.  Databases may be text, dbm, Berkley DB or any database with a
-DBI compatible driver.  HTTPD::UserAdmin supports files used by the
+stored.  Databases may be text, dbm, Berkeley DB or any database with
+a DBI compatible driver.  HTTPD::UserAdmin supports files used by the
 `Basic' and `Digest' authentication schemes.  Here's an example:
 
     use HTTPD::UserAdmin ();
@@ -282,16 +316,9 @@ DBI compatible driver.  HTTPD::UserAdmin supports files used by the
 
 =head2 How do I make sure users can't enter values into a form that cause my CGI script to do bad things?
 
-Read the CGI security FAQ, at
-http://www-genome.wi.mit.edu/WWW/faqs/www-security-faq.html , and the
-Perl/CGI FAQ at
-http://www.perl.com/CPAN/doc/FAQs/cgi/perl-cgi-faq.html .
+See the security references listed in the CGI Meta FAQ
 
-In brief: use tainting (see L<perlsec>), which makes sure that data
-from outside your script (eg, CGI parameters) are never used in
-C<eval> or C<system> calls.  In addition to tainting, never use the
-single-argument form of system() or exec().  Instead, supply the
-command and arguments as a list, which prevents shell globbing.
+	http://www.perl.org/CGI_MetaFAQ.html
 
 =head2 How do I parse a mail header?
 
@@ -355,7 +382,7 @@ mail addresses with a simple regex, such as
 C</^[\w.-]+\@(?:[\w-]+\.)+\w+$/>.  It's a very bad idea.  However,
 this also throws out many valid ones, and says nothing about
 potential deliverability, so it is not suggested.  Instead, see
-http://www.perl.com/CPAN/authors/Tom_Christiansen/scripts/ckaddr.gz,
+http://www.cpan.org/authors/Tom_Christiansen/scripts/ckaddr.gz ,
 which actually checks against the full RFC spec (except for nested
 comments), looks for addresses you may not wish to accept mail to
 (say, Bill Clinton or your postmaster), and then makes sure that the
@@ -471,7 +498,7 @@ Or you might be able use the CPAN module Mail::Mailer:
 The Mail::Internet module uses Net::SMTP which is less Unix-centric than
 Mail::Mailer, but less reliable.  Avoid raw SMTP commands.  There
 are many reasons to use a mail transport agent like sendmail.  These
-include queueing, MX records, and security.
+include queuing, MX records, and security.
 
 =head2 How do I use MIME to make an attachment to a mail message?
 
@@ -585,15 +612,11 @@ an RPC stub generator and includes an RPC::ONC module.
 
 =head1 AUTHOR AND COPYRIGHT
 
-Copyright (c) 1997-1999 Tom Christiansen and Nathan Torkington.
+Copyright (c) 1997-2002 Tom Christiansen and Nathan Torkington.
 All rights reserved.
 
-When included as part of the Standard Version of Perl, or as part of
-its complete documentation whether printed or otherwise, this work
-may be distributed only under the terms of Perl's Artistic License.
-Any distribution of this file or derivatives thereof I<outside>
-of that package require that special arrangements be made with
-copyright holder.
+This documentation is free; you can redistribute it and/or modify it
+under the same terms as Perl itself.
 
 Irrespective of its distribution, all code examples in this file
 are hereby placed into the public domain.  You are permitted and

@@ -7,13 +7,11 @@ archname='m68k-amigaos'
 cc='gcc'
 firstmakefile='GNUmakefile'
 usenm='true'
+d_fork='undef' # available but ENOSYS
 
 usemymalloc='n'
-usevfork='true'
 useperlio='true'
 d_eofnblk='define'
-d_fork='undef'
-d_vfork='define'
 groupstype='int'
 
 # libs
@@ -26,11 +24,12 @@ xlibpth="$libpth"
 # to just these few.  E.g. what about Berkeley DB?
 libswanted='gdbm m dld'
 so=' '
+libs='-lm'
 
 # compiler & linker flags
 # Respect command-line values.
 
-ccflags="$ccflags -DAMIGAOS -mstackextend"
+ccflags="$ccflags -DAMIGAOS"
 case "$optimize" in
 '') optimize='-O2 -fomit-frame-pointer';;
 esac

@@ -5,13 +5,13 @@ require Exporter;
 @ISA = qw(Exporter);
 @EXPORT = qw(&soundex $soundex_nocode);
 
-$VERSION = '1.0';
+$VERSION = '1.01';
 
-# $Id: Soundex.pm,v 1.5 2001/05/24 18:35:39 millert Exp $
+# $Id: Soundex.pm,v 1.6 2002/10/27 22:25:27 millert Exp $
 #
 # Implementation of soundex algorithm as described by Knuth in volume
 # 3 of The Art of Computer Programming, with ideas stolen from Ian
-# Phillips <ian@pipex.net>.
+# Phillipps <ian@pipex.net>.
 #
 # Mike Stok <Mike.Stok@meiko.concord.ma.us>, 2 March 1994.
 #
@@ -25,8 +25,8 @@ $VERSION = '1.0';
 # Lukasiewicz, Lissajous -> L222
 #
 # $Log: Soundex.pm,v $
-# Revision 1.5  2001/05/24 18:35:39  millert
-# merge in perl 5.6.1 with our local changes
+# Revision 1.6  2002/10/27 22:25:27  millert
+# Resolve conflicts, remove old files, merge local changes
 #
 # Revision 1.2  1994/03/24  00:30:27  mike
 # Subtle bug (any excuse :-) spotted by Rich Pinder <rpinder@hsc.usc.edu>
@@ -149,5 +149,5 @@ of C<H416>.
 =head1 AUTHOR
 
 This code was implemented by Mike Stok (C<stok@cybercom.net>) from the 
-description given by Knuth.  Ian Phillips (C<ian@pipex.net>) and Rich Pinder 
+description given by Knuth.  Ian Phillipps (C<ian@pipex.net>) and Rich Pinder 
 (C<rpinder@hsc.usc.edu>) supplied ideas and spotted mistakes.

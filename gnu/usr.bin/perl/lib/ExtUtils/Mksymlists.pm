@@ -1,15 +1,17 @@
 package ExtUtils::Mksymlists;
 
-use 5.005_64;
+use 5.00503;
 use strict qw[ subs refs ];
 # no strict 'vars';  # until filehandles are exempted
 
 use Carp;
 use Exporter;
-our(@ISA, @EXPORT, $VERSION);
+use Config;
+
+use vars qw(@ISA @EXPORT $VERSION);
 @ISA = 'Exporter';
 @EXPORT = '&Mksymlists';
-$VERSION = substr q$Revision: 1.5 $, 10;
+$VERSION = 1.19;
 
 sub Mksymlists {
     my(%spec) = @_;
@@ -81,11 +83,16 @@ sub _write_os2 {
     }
     my $distname = $data->{DISTNAME} || $data->{NAME};
     $distname = "Distribution $distname";
-    my $comment = "Perl (v$Config::Config{version}$threaded) module $data->{NAME}";
+    my $patchlevel = " pl$Config{perl_patchlevel}" || '';
+    my $comment = sprintf "Perl (v%s%s%s) module %s", 
+      $Config::Config{version}, $threaded, $patchlevel, $data->{NAME};
+    chomp $comment;
     if ($data->{INSTALLDIRS} and $data->{INSTALLDIRS} eq 'perl') {
 	$distname = 'perl5-porters@perl.org';
 	$comment = "Core $comment";
     }
+    $comment = "$comment (Perl-config: $Config{config_args})";
+    $comment = substr($comment, 0, 200) . "...)" if length $comment > 203;
     rename "$data->{FILE}.def", "$data->{FILE}_def.old";
 
     open(DEF,">$data->{FILE}.def")
@@ -217,7 +224,7 @@ C<Mksymlists>, which is exported by default from C<ExtUtils::Mksymlists>.
 It takes one argument, a list of key-value pairs, in which the following
 keys are recognized:
 
-=over
+=over 4
 
 =item DLBASE
 

@@ -24,16 +24,22 @@ closedir(OP);
 ## This range will have to adjust as the number of tests expands,
 ## as it's counting the number of .t files in src/t
 ##
-if (@D > 90 && @D < 110) { print "ok 2\n"; } else { print "not ok 2\n"; }
+my ($min, $max) = (115, 135);
+if (@D > $min && @D < $max) { print "ok 2\n"; }
+else {
+    printf "not ok 2 # counting op/*.t, expect $min < %d < $max files\n",
+      scalar @D;
+}
 
 @R = sort @D;
 @G = sort <op/*.t>;
+@G = sort <:op:*.t> if $^O eq 'MacOS';
 if ($G[0] =~ m#.*\](\w+\.t)#i) {
     # grep is to convert filespecs returned from glob under VMS to format
     # identical to that returned by readdir
     @G = grep(s#.*\](\w+\.t).*#op/$1#i,<op/*.t>);
 }
-while (@R && @G && "op/".$R[0] eq $G[0]) {
+while (@R && @G && $G[0] eq ($^O eq 'MacOS' ? ':op:' : 'op/').$R[0]) {
 	shift(@R);
 	shift(@G);
 }

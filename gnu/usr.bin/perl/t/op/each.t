@@ -1,6 +1,12 @@
 #!./perl
 
-print "1..19\n";
+BEGIN {
+    chdir 't' if -d 't';
+    @INC = '../lib';
+    require './test.pl';
+}
+
+plan tests => 39;
 
 $h{'abc'} = 'ABC';
 $h{'def'} = 'DEF';
@@ -36,7 +42,8 @@ $h{'z'} = 'Z';
 @keys = keys %h;
 @values = values %h;
 
-if ($#keys == 29 && $#values == 29) {print "ok 1\n";} else {print "not ok 1\n";}
+ok ($#keys == 29, "keys");
+ok ($#values == 29, "values");
 
 $i = 0;		# stop -w complaints
 
@@ -48,65 +55,58 @@ while (($key,$value) = each(%h)) {
     }
 }
 
-if ($i == 30) {print "ok 2\n";} else {print "not ok 2\n";}
+ok ($i == 30, "each count");
 
 @keys = ('blurfl', keys(%h), 'dyick');
-if ($#keys == 31) {print "ok 3\n";} else {print "not ok 3\n";}
+ok ($#keys == 31, "added a key");
 
 $size = ((split('/',scalar %h))[1]);
 keys %h = $size * 5;
 $newsize = ((split('/',scalar %h))[1]);
-if ($newsize == $size * 8) {print "ok 4\n";} else {print "not ok 4\n";}
+ok ($newsize == $size * 8, "resize");
 keys %h = 1;
 $size = ((split('/',scalar %h))[1]);
-if ($size == $newsize) {print "ok 5\n";} else {print "not ok 5\n";}
+ok ($size == $newsize, "same size");
 %h = (1,1);
 $size = ((split('/',scalar %h))[1]);
-if ($size == $newsize) {print "ok 6\n";} else {print "not ok 6\n";}
+ok ($size == $newsize, "still same size");
 undef %h;
 %h = (1,1);
 $size = ((split('/',scalar %h))[1]);
-if ($size == 8) {print "ok 7\n";} else {print "not ok 7\n";}
+ok ($size == 8, "size 8");
 
 # test scalar each
 %hash = 1..20;
 $total = 0;
 $total += $key while $key = each %hash;
-print "# Scalar each is bad.\nnot " unless $total == 100;
-print "ok 8\n";
+ok ($total == 100, "test scalar each");
 
 for (1..3) { @foo = each %hash }
 keys %hash;
 $total = 0;
 $total += $key while $key = each %hash;
-print "# Scalar keys isn't resetting the iterator.\nnot " if $total != 100;
-print "ok 9\n";
+ok ($total == 100, "test scalar keys resets iterator");
 
 for (1..3) { @foo = each %hash }
 $total = 0;
 $total += $key while $key = each %hash;
-print "# Iterator of each isn't being maintained.\nnot " if $total == 100;
-print "ok 10\n";
+ok ($total != 100, "test iterator of each is being maintained");
 
 for (1..3) { @foo = each %hash }
 values %hash;
 $total = 0;
 $total += $key while $key = each %hash;
-print "# Scalar values isn't resetting the iterator.\nnot " if $total != 100;
-print "ok 11\n";
+ok ($total == 100, "test values keys resets iterator");
 
 $size = (split('/', scalar %hash))[1];
 keys(%hash) = $size / 2;
-print "not " if $size != (split('/', scalar %hash))[1];
-print "ok 12\n";
+ok ($size == (split('/', scalar %hash))[1]);
 keys(%hash) = $size + 100;
-print "not " if $size == (split('/', scalar %hash))[1];
-print "ok 13\n";
+ok ($size != (split('/', scalar %hash))[1]);
 
-print "not " if keys(%hash) != 10;
-print "ok 14\n";
+ok (keys(%hash) == 10, "keys (%hash)");
 
-print keys(hash) != 10 ? "not ok 15\n" : "ok 15\n";
+ok (keys(hash) == 10, "keys (hash)");
 
 $i = 0;
 %h = (a => A, b => B, c=> C, d => D, abc => ABC);
@@ -117,17 +117,73 @@ while (($key, $value) = each(h)) {
 		$i++;
 	}
 }
-if ($i == 5) { print "ok 16\n" } else { print "not ok\n" }
+ok ($i == 5);
 
+@tests = (&next_test, &next_test, &next_test);
 {
     package Obj;
-    sub DESTROY { print "ok 18\n"; }
+    sub DESTROY { print "ok $::tests[1] # DESTROY called\n"; }
     {
 	my $h = { A => bless [], __PACKAGE__ };
         while (my($k,$v) = each %$h) {
-	    print "ok 17\n" if $k eq 'A' and ref($v) eq 'Obj';
+	    print "ok $::tests[0]\n" if $k eq 'A' and ref($v) eq 'Obj';
 	}
     }
-    print "ok 19\n";
+    print "ok $::tests[2]\n";
 }
 
+# Check for Unicode hash keys.
+%u = ("\x{12}", "f", "\x{123}", "fo", "\x{1234}",  "foo");
+$u{"\x{12345}"}  = "bar";
+@u{"\x{10FFFD}"} = "zap";
+
+my %u2;
+foreach (keys %u) {
+    ok (length() == 1, "Check length of " . _qq $_);
+    $u2{$_} = $u{$_};
+}
+ok (eq_hash(\%u, \%u2), "copied unicode hash keys correctly?");
+
+$a = "\xe3\x81\x82"; $A = "\x{3042}";
+%b = ( $a => "non-utf8");
+%u = ( $A => "utf8");
+
+ok (!exists $b{$A}, "utf8 key in bytes hash");
+ok (!exists $u{$a}, "bytes key in utf8 hash");
+print "# $b{$_}\n" for keys %b; # Used to core dump before change #8056.
+pass ("if we got here change 8056 worked");
+print "# $u{$_}\n" for keys %u; # Used to core dump before change #8056.
+pass ("change 8056 is thanks to Inaba Hiroto");
+
+# on EBCDIC chars are mapped differently so pick something that needs encoding
+# there too.
+$d = pack("U*", 0xe3, 0x81, 0xAF);
+{ use bytes; $ol = bytes::length($d) }
+ok ($ol > 3, "check encoding on EBCDIC");
+%u = ($d => "downgrade");
+for (keys %u) {
+    ok (length == 3, "check length"); 
+    is ($_, pack("U*", 0xe3, 0x81, 0xAF), "check value");
+}
+{
+    { use bytes; ok (bytes::length($d) == $ol) }
+}
+
+{
+    my %u;
+    my $u0 = pack("U0U", 0x00FF);
+    my $b0 = "\xC3\xBF";          # 0xCB 0xBF is U+00FF in UTF-8
+    my $u1 = pack("U0U", 0x0100);
+    my $b1 = "\xC4\x80";          # 0xC4 0x80 is U+0100 in UTF-8
+
+    $u{$u0} = 1;
+    $u{$b0} = 2; 
+    $u{$u1} = 3;
+    $u{$b1} = 4;
+
+    is(scalar keys %u, 4, "four different Unicode keys"); 
+    is($u{$u0}, 1, "U+00FF        -> 1");
+    is($u{$b0}, 2, "U+00C3 U+00BF -> 2");
+    is($u{$u1}, 3, "U+0100        -> 3 ");
+    is($u{$b1}, 4, "U+00C4 U+0080 -> 4");
+}

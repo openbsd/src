@@ -1,6 +1,6 @@
 =head1 NAME
 
-perlfaq2 - Obtaining and Learning about Perl ($Revision: 1.32 $, $Date: 1999/10/14 18:46:09 $)
+perlfaq2 - Obtaining and Learning about Perl ($Revision: 1.13 $, $Date: 2002/04/26 16:56:35 $)
 
 =head1 DESCRIPTION
 
@@ -41,7 +41,7 @@ get free compilers for, not for Unix systems.
 Some URLs that might help you are:
 
     http://www.cpan.org/ports/
-    http://language.perl.com/info/software.html
+    http://www.perl.com/pub/language/info/software.html
 
 Someone looking for a Perl for Win16 might look to Laszlo Molnar's djgpp
 port in http://www.cpan.org/ports/#msdos , which comes with clear
@@ -97,7 +97,7 @@ third-party modules and extensions, designed for everything from
 commercial database interfaces to keyboard/screen control to web
 walking and CGI scripts.  The master web site for CPAN is
 http://www.cpan.org/ and there is the CPAN Multiplexer at
-http://www.perl.com/CPAN/CPAN.html which will choose a mirror near you
+http://www.cpan.org/CPAN.html which will choose a mirror near you
 via DNS.  See http://www.perl.com/CPAN (without a slash at the
 end) for how this process works. Also, http://mirror.cpan.org/
 has a nice interface to the http://www.cpan.org/MIRRORED.BY
@@ -129,6 +129,7 @@ miscellaneous modules.
 See http://www.cpan.org/modules/00modlist.long.html or
 http://search.cpan.org/ for a more complete list of modules by category.
 
+CPAN is not affiliated with O'Reilly and Associates.
 
 =head2 Is there an ISO or ANSI certified version of Perl?
 
@@ -182,9 +183,17 @@ following groups:
 
     comp.infosystems.www.authoring.cgi 	Writing CGI scripts for the Web.
 
-There is also Usenet gateway to the mailing list used by the crack
-Perl development team (perl5-porters) at
-news://news.perl.com/perl.porters-gw/ .
+There is also a Usenet gateway to Perl mailing lists sponsored by perl.org at
+nntp://nntp.perl.org , a web interface to the same lists at
+http://nntp.perl.org/group/ and these lists are also available under the
+C<perl.*> hierarchy at http://groups.google.com . Other groups are listed at
+http://lists.perl.org/ ( also known as http://lists.cpan.org/ ).
+
+A nice place to ask questions is the PerlMonks site, http://www.perlmonks.org/
+
+Note that none of the above are supposed to write your code for you:
+asking questions about particular problems or general advice is fine,
+but asking someone to write your code for free is not very cool.
 
 =head2 Where should I post source code?
 
@@ -192,12 +201,12 @@ You should post source code to whichever group is most appropriate, but
 feel free to cross-post to comp.lang.perl.misc.  If you want to cross-post
 to alt.sources, please make sure it follows their posting standards,
 including setting the Followup-To header line to NOT include alt.sources;
-see their FAQ (http://www.faqs.org/faqs/alt-sources-intro/) for details.
+see their FAQ ( http://www.faqs.org/faqs/alt-sources-intro/ ) for details.
 
 If you're just looking for software, first use Google
-(http://www.google.com), Deja (http://www.deja.com), and
-CPAN Search (http://search.cpan.org).  This is faster and more
-productive than just posting a request.
+( http://www.google.com ), Google's usenet search interface
+( http://groups.google.com ),  and CPAN Search ( http://search.cpan.org ).  
+This is faster and more productive than just posting a request.
 
 =head2 Perl Books
 
@@ -224,30 +233,39 @@ of real-world examples, mini-tutorials, and complete programs is:
 	ISBN 1-56592-243-3 [1st Edition August 1998]
 	http://perl.oreilly.com/cookbook/
 
-If you're already a hard-core systems programmer, then the Camel Book
-might suffice for you to learn Perl from.  If you're not, check out
+If you're already a seasoned programmer, then the Camel Book might
+suffice for you to learn Perl from.  If you're not, check out the
+Llama book:
 
-    Learning Perl (the "Llama Book"):
-	by Randal Schwartz and Tom Christiansen
-		    with Foreword by Larry Wall
-	ISBN 1-56592-284-0 [2nd Edition July 1997]
-	http://www.oreilly.com/catalog/lperl2/
+    Learning Perl (the "Llama Book")
+	by Randal L. Schwartz and Tom Phoenix
+	ISBN 0-596-00132-0 [3rd edition July 2001]
+	http://www.oreilly.com/catalog/lperl3/
 
-Despite the picture at the URL above, the second edition of "Llama
-Book" really has a blue cover and was updated for the 5.004 release
-of Perl.  Various foreign language editions are available, including
-I<Learning Perl on Win32 Systems> (the "Gecko Book").
+If you're not an accidental programmer, but a more serious and
+possibly even degreed computer scientist who doesn't need as much
+hand-holding as we try to provide in the Llama, please check out the
+delightful book
 
-If you're not an accidental programmer, but a more serious and possibly
-even degreed computer scientist who doesn't need as much hand-holding as
-we try to provide in the Llama or its defurred cousin the Gecko, please
-check out the delightful book, I<Perl: The Programmer's Companion>,
-written by Nigel Chapman.
+    Perl: The Programmer's Companion
+        by Nigel Chapman
+        ISBN 0-471-97563-X [1997, 3rd printing Spring 1998]
+        http://www.wiley.com/compbooks/catalog/97563-X.htm
+        http://www.wiley.com/compbooks/chapman/perl/perltpc.html (errata etc)
 
-Addison-Wesley (http://www.awlonline.com/) and Manning
-(http://www.manning.com/) are also publishers of some fine Perl books
-such as Object Oriented Programming with Perl by Damian Conway and
-Network Programming with Perl by Lincoln Stein.
+If you are more at home in Windows the following is available
+(though unfortunately rather dated).
+
+    Learning Perl on Win32 Systems (the "Gecko Book")
+	by Randal L. Schwartz, Erik Olson, and Tom Christiansen,
+	    with foreword by Larry Wall
+	ISBN 1-56592-324-3 [1st edition August 1997]
+	http://www.oreilly.com/catalog/lperlwin/
+
+Addison-Wesley ( http://www.awlonline.com/ ) and Manning
+( http://www.manning.com/ ) are also publishers of some fine Perl books
+such as I<Object Oriented Programming with Perl> by Damian Conway and
+I<Network Programming with Perl> by Lincoln Stein.
 
 An excellent technical book discounter is Bookpool at
 http://www.bookpool.com/ where a 30% discount or more is not unusual.
@@ -267,12 +285,12 @@ Recommended books on (or mostly on) Perl follow.
 	http://www.oreilly.com/catalog/pperl3/
 
     Perl 5 Pocket Reference
-        by Johan Vromans
+    by Johan Vromans
 	ISBN 0-596-00032-4 [3rd edition May 2000]
 	http://www.oreilly.com/catalog/perlpr3/
 
     Perl in a Nutshell
-        by Ellen Siever, Stephan Spainhour, and Nathan Patwardhan
+    by Ellen Siever, Stephan Spainhour, and Nathan Patwardhan
 	ISBN 1-56592-286-7 [1st edition December 1998]
 	http://www.oreilly.com/catalog/perlnut/
 
@@ -280,14 +298,13 @@ Recommended books on (or mostly on) Perl follow.
 
     Elements of Programming with Perl
 	by Andrew L. Johnson
-	ISBN 1884777805 [1st edition October 1999]
+	ISBN 1-884777-80-5 [1st edition October 1999]
 	http://www.manning.com/Johnson/
 
     Learning Perl
-	by Randal L. Schwartz and Tom Christiansen
-	    with foreword by Larry Wall
-	ISBN 1-56592-284-0 [2nd edition July 1997]
-	http://www.oreilly.com/catalog/lperl2/
+	by Randal L. Schwartz and Tom Phoenix
+	ISBN 0-596-00132-0 [3rd edition July 2001]
+	http://www.oreilly.com/catalog/lperl3/
 
     Learning Perl on Win32 Systems
 	by Randal L. Schwartz, Erik Olson, and Tom Christiansen,
@@ -297,8 +314,9 @@ Recommended books on (or mostly on) Perl follow.
 
     Perl: The Programmer's Companion
 	by Nigel Chapman
-	ISBN 0-471-97563-X  [1st edition October 1997]
-	http://catalog.wiley.com/title.cgi?isbn=047197563X
+	ISBN 0-471-97563-X [1997, 3rd printing Spring 1998]
+    http://www.wiley.com/compbooks/catalog/97563-X.htm
+    http://www.wiley.com/compbooks/chapman/perl/perltpc.html (errata etc)
 
     Cross-Platform Perl
 	by Eric Foster-Johnson
@@ -340,44 +358,50 @@ Recommended books on (or mostly on) Perl follow.
     Object Oriented Perl
 	Damian Conway
 	    with foreword by Randal L. Schwartz
-	ISBN 1884777791 [1st edition August 1999]
+	ISBN 1-884777-79-1 [1st edition August 1999]
 	http://www.manning.com/Conway/
 
     Data Munging with Perl
-        Dave Cross
-        ISBN 1930110006 [1st edition 2001]
-        http://www.manning.com/cross
+	Dave Cross
+	ISBN 1-930110-00-6 [1st edition 2001]
+	http://www.manning.com/cross
 
-    Learning Perl/Tk
-        by Nancy Walsh
-	ISBN 1-56592-314-6 [1st edition January 1999]
-	http://www.oreilly.com/catalog/lperltk/
+	Mastering Perl/Tk
+	by Steve Lidie and Nancy Walsh
+	ISBN 1-56592-716-8 [1st edition January 2002]
+	http://www.oreilly.com/catalog/mastperltk/
 
 =back
 
 =head2 Perl in Magazines
 
-The first and only periodical devoted to All Things Perl, I<The
-Perl Journal> contained tutorials, demonstrations, case studies,
-announcements, contests, and much more.  I<TPJ> had columns on web
+The first (and for a long time, only) periodical devoted to All Things Perl,
+I<The Perl Journal> contains tutorials, demonstrations, case studies,
+announcements, contests, and much more.  I<TPJ> has columns on web
 development, databases, Win32 Perl, graphical programming, regular
-expressions, and networking, and sponsored the Obfuscated Perl
-Contest. Sadly, this publication is no longer in circulation, but
-should it be resurrected, it will most likely be announced on
-http://use.perl.org/ .
+expressions, and networking, and sponsors the Obfuscated Perl Contest
+and the Perl Poetry Contests.  As of mid-2001, the dead tree version
+of TPJ will be published as a quarterly supplement of SysAdmin
+magazine ( http://www.sysadminmag.com/ ) For more details on TPJ,
+see http://www.tpj.com/
 
-Beyond this, magazines that frequently carry high-quality articles
-on Perl are I<Web Techniques> (see http://www.webtechniques.com/),
-I<Performance Computing> (http://www.performance-computing.com/), and Usenix's
-newsletter/magazine to its members, I<login:>, at http://www.usenix.org/.
-Randal's Web Technique's columns are available on the web at
-http://www.stonehenge.com/merlyn/WebTechniques/ .
+Beyond this, magazines that frequently carry quality articles on
+Perl are I<The Perl Review> ( http://www.theperlreview.com ),
+I<Unix Review> ( http://www.unixreview.com/ ),
+I<Linux Magazine> ( http://www.linuxmagazine.com/ ),
+and Usenix's newsletter/magazine to its members, I<login:>
+( http://www.usenix.org/ )
+
+The Perl columns of Randal L. Schwartz are available on the web at
+http://www.stonehenge.com/merlyn/WebTechniques/ ,
+http://www.stonehenge.com/merlyn/UnixReview/ , and
+http://www.stonehenge.com/merlyn/LinuxMag/ .
 
 =head2 Perl on the Net: FTP and WWW Access
 
 To get the best performance, pick a site from
 the list below and use it to grab the complete list of mirror sites
-which is at /CPAN/MIRRORED.BY or at http://mirror.cpan.org/.
+which is at /CPAN/MIRRORED.BY or at http://mirror.cpan.org/ .
 From there you can find the quickest site for you.  Remember, the
 following list is I<not> the complete list of CPAN mirrors
 (the complete list contains 165 sites as of January 2001):
@@ -390,11 +414,11 @@ following list is I<not> the complete list of CPAN mirrors
   ftp://ftp.uvsq.fr/pub/perl/CPAN/
   ftp://ftp.funet.fi/pub/languages/perl/CPAN/
   ftp://ftp.dti.ad.jp/pub/lang/CPAN/
-  ftp://mirror.aarnet.edu.au/pub/perl/CPAN/
   ftp://cpan.if.usp.br/pub/mirror/CPAN/
 
 One may also use xx.cpan.org where "xx" is the 2-letter country code
 for your domain; e.g. Australia would use au.cpan.org.
+[Note: This only applies to countries that host at least one mirror.]
 
 =head2 What mailing lists are there for Perl?
 
@@ -402,26 +426,23 @@ Most of the major modules (Tk, CGI, libwww-perl) have their own
 mailing lists.  Consult the documentation that came with the module for
 subscription information.
 
-	http://lists.cpan.org/	
+A comprehensive list of Perl related mailing lists can be found at:
+
+	http://lists.cpan.org/
+
+( also visible as http://lists.perl.org/ )
 
 =head2 Archives of comp.lang.perl.misc
 
-Have you tried Deja or AltaVista?  Those are the
-best archives.  Just look up "*perl*" as a newsgroup.
+The Google search engine now carries archived and searchable newsgroup
+content. 
 
-    http://www.deja.com/dnquery.xp?QRY=&DBS=2&ST=PS&defaultOp=AND&LNG=ALL&format=terse&showsort=date&maxhits=25&subjects=&groups=*perl*&authors=&fromdate=&todate=
+http://groups.google.com/groups?group=comp.lang.perl.misc
 
-You might want to trim that down a bit, though.
-
-You'll probably want more a sophisticated query and retrieval mechanism
-than a file listing, preferably one that allows you to retrieve
-articles using a fast-access indices, keyed on at least author, date,
-subject, thread (as in "trn") and probably keywords.  The best
-solution the FAQ authors know of is the MH pick command, but it is
-very slow to select on 18000 articles.
-
-If you have, or know where can be found, the missing sections, please
-let perlfaq-suggestions@perl.com know.
+If you have a question, you can be sure someone has already asked the
+same question at some point on c.l.p.m. It requires some time and patience
+to sift through all the content but often you will find the answer you
+seek.
 
 =head2 Where can I buy a commercial version of Perl?
 
@@ -431,7 +452,7 @@ in releases and comes in well-defined packages. There is a very large
 user community and an extensive literature.  The comp.lang.perl.*
 newsgroups and several of the mailing lists provide free answers to your
 questions in near real-time.  Perl has traditionally been supported by
-Larry, scores of software designers and developers, and myriads of
+Larry, scores of software designers and developers, and myriad
 programmers, all working for free to create a useful thing to make life
 better for everyone.
 
@@ -484,15 +505,10 @@ bugs.
 
 Read the perlbug(1) man page (perl5.004 or later) for more information.
 
-=head2 What is perl.com? Perl Mongers? pm.org? perl.org?
+=head2 What is perl.com? Perl Mongers? pm.org? perl.org? cpan.org?
 
-The Perl Home Page at http://www.perl.com/ is currently hosted on a
-T3 line courtesy of Songline Systems, a software-oriented subsidiary of
-O'Reilly and Associates. Other starting points include
-
-    http://language.perl.com/
-    http://conference.perl.com/
-    http://reference.perl.com/
+The Perl Home Page at http://www.perl.com/ is currently hosted by
+The O'Reilly Network, a subsidiary of O'Reilly and Associates.
 
 Perl Mongers is an advocacy organization for the Perl language which
 maintains the web site http://www.perl.org/ as a general advocacy
@@ -512,18 +528,19 @@ and there are many other sub-domains for special topics, such as
     http://bugs.perl.org/
     http://history.perl.org/
     http://lists.perl.org/
-    http://news.perl.org/
     http://use.perl.org/
+
+http://www.cpan.org/ is the Comprehensive Perl Archive Network,
+a replicated worlwide repository of Perl software, see
+the I<What is CPAN?> question earlier in this document.
 
 =head1 AUTHOR AND COPYRIGHT
 
 Copyright (c) 1997-2001 Tom Christiansen and Nathan Torkington.
 All rights reserved.
 
-When included as an integrated part of the Standard Distribution
-of Perl or of its documentation (printed or otherwise), this works is
-covered under Perl's Artistic License.  For separate distributions of
-all or part of this FAQ outside of that, see L<perlfaq>.
+This documentation is free; you can redistribute it and/or modify it
+under the same terms as Perl itself.
 
 Irrespective of its distribution, all code examples here are in the public
 domain.  You are permitted and encouraged to use this code and any

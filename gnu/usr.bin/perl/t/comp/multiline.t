@@ -1,10 +1,14 @@
 #!./perl
 
-# $RCSfile: multiline.t,v $$Revision: 4.1 $$Date: 92/08/07 18:27:20 $
+BEGIN: {
+    chdir 't';
+    @INC = '../lib';
+    require './test.pl';
+}
 
-print "1..5\n";
+plan(tests => 6);
 
-open(try,'>Comp.try') || (die "Can't open temp file.");
+open(TRY,'>Comp.try') || (die "Can't open temp file.");
 
 $x = 'now is the time
 for all good men
@@ -19,28 +23,31 @@ $y = 'now is the time' . "\n" .
 'for all good men' . "\n" .
 'to come to.' . "\n\n\n!\n\n";
 
-if ($x eq $y) {print "ok 1\n";} else {print "not ok 1\n";}
+is($x, $y,  'test data is sane');
 
-print try $x;
-close try;
+print TRY $x;
+close TRY or die "Could not close: $!";
 
-open(try,'Comp.try') || (die "Can't reopen temp file.");
+open(TRY,'Comp.try') || (die "Can't reopen temp file.");
 $count = 0;
 $z = '';
-while (<try>) {
+while (<TRY>) {
     $z .= $_;
     $count = $count + 1;
 }
 
-if ($z eq $y) {print "ok 2\n";} else {print "not ok 2\n";}
+is($z, $y,  'basic multiline reading');
 
-if ($count == 7) {print "ok 3\n";} else {print "not ok 3\n";}
+is($count, 7,   '    line count');
+is($., 7,       '    $.' );
 
-$_ = ($^O eq 'MSWin32') ? `type Comp.try` : `cat Comp.try`;
+$out = (($^O eq 'MSWin32') || $^O eq 'NetWare' || $^O eq 'VMS') ? `type Comp.try`
+    : ($^O eq 'MacOS') ? `catenate Comp.try`
+    : `cat Comp.try`;
 
-if (/.*\n.*\n.*\n$/) {print "ok 4\n";} else {print "not ok 4\n";}
+like($out, qr/.*\n.*\n.*\n$/);
 
-close(try) || (die "Can't close temp file.");
+close(TRY) || (die "Can't close temp file.");
 unlink 'Comp.try' || `/bin/rm -f Comp.try`;
 
-if ($_ eq $y) {print "ok 5\n";} else {print "not ok 5\n";}
+is($out, $y);

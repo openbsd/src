@@ -44,18 +44,39 @@ directories, or processes, B<with the following exceptions>:
 
 =item *
 
-If you pass a list of arguments to either C<system> or C<exec>,
-the elements of that list are B<not> checked for taintedness.
+If you pass more than one argument to either C<system> or C<exec>,
+the arguments are checked for taintedness B<but> the operation will still
+be attempted, emitting an optional warning.  This will be fatal in a 
+future version of perl so do not rely on it to bypass the tainting 
+mechanism.
 
 =item *
 
 Arguments to C<print> and C<syswrite> are B<not> checked for taintedness.
 
+=item *
+
+Symbolic methods
+
+    $obj->$method(@args);
+
+and symbolic sub references
+
+    &{$foo}(@args);
+    $foo->(@args);
+
+are not checked for taintedness.  This requires extra carefulness
+unless you want external data to affect your control flow.  Unless
+you carefully limit what these symbolic values are, people are able
+to call functions B<outside> your Perl code, such as POSIX::system,
+in which case they are able to run arbitrary external code.
+
 =back
 
-Any variable set to a value
-derived from tainted data will itself be tainted, even if it is
-logically impossible for the tainted data to alter the variable.
+The value of an expression containing tainted data will itself be
+tainted, even if it is logically impossible for the tainted data to
+affect the value.
+
 Because taintedness is associated with each scalar value, some
 elements of an array can be tainted and others not.
 
@@ -71,7 +92,8 @@ For example:
     $data = 'abc';		# Not tainted
 
     system "echo $arg";		# Insecure
-    system "/bin/echo", $arg;	# Secure (doesn't use sh)
+    system "/bin/echo", $arg;	# Allowed but considered insecure
+				# (Perl doesn't know about /bin/echo)
     system "echo $hid";		# Insecure
     system "echo $data";	# Insecure until PATH set
 
@@ -86,9 +108,9 @@ For example:
     open(FOO, "< $arg");	# OK - read-only file
     open(FOO, "> $arg"); 	# Not OK - trying to write
 
-    open(FOO,"echo $arg|");	# Not OK, but...
+    open(FOO,"echo $arg|");	# Not OK
     open(FOO,"-|")
-	or exec 'echo', $arg;	# OK
+	or exec 'echo', $arg;	# Allowed but not really OK
 
     $shout = `echo $arg`;	# Insecure, $shout now tainted
 
@@ -96,29 +118,36 @@ For example:
     umask $arg;			# Insecure
 
     exec "echo $arg";		# Insecure
-    exec "echo", $arg;		# Secure (doesn't use the shell)
+    exec "echo", $arg;		# Allowed but considered insecure
     exec "sh", '-c', $arg;	# Considered secure, alas!
 
     @files = <*.c>;		# insecure (uses readdir() or similar)
     @files = glob('*.c');	# insecure (uses readdir() or similar)
 
+    # In Perl releases older than 5.6.0 the <*.c> and glob('*.c') would
+    # have used an external program to do the filename expansion; but in
+    # either case the result is tainted since the list of filenames comes
+    # from outside of the program.
+
+    $bad = ($arg, 23);		# $bad will be tainted
+    $arg, `true`;		# Insecure (although it isn't really)
+
 If you try to do something insecure, you will get a fatal error saying
 something like "Insecure dependency" or "Insecure $ENV{PATH}".  Note that you
 can still write an insecure B<system> or B<exec>, but only by explicitly
-doing something like the "considered secure" example above.
+doing something like the "considered secure" example above.  This will not
+be possible in a future version of Perl.
 
 =head2 Laundering and Detecting Tainted Data
 
-To test whether a variable contains tainted data, and whose use would thus
-trigger an "Insecure dependency" message, check your nearby CPAN mirror
-for the F<Taint.pm> module, which should become available around November
-1997.  Or you may be able to use the following I<is_tainted()> function.
+To test whether a variable contains tainted data, and whose use would
+thus trigger an "Insecure dependency" message, you can use the
+tainted() function of the Scalar::Util module, available in your
+nearby CPAN mirror, and included in Perl starting from the release 5.8.0.
+Or you may be able to use the following I<is_tainted()> function.
 
     sub is_tainted {
-	return ! eval {
-	    join('',@_), kill 0;
-	    1;
-	};
+        return ! eval { eval("#" . substr(join("", @_), 0, 0)); 1 };
     }
 
 This function makes use of the fact that the presence of tainted data
@@ -230,7 +259,7 @@ not called with a string that the shell could expand.  This is by far the
 best way to call something that might be subjected to shell escapes: just
 never call the shell at all.  
 
-        use English;
+        use English '-no_match_vars';
         die "Can't fork: $!" unless defined($pid = open(KID, "-|"));
         if ($pid) {           # parent
             while (<KID>) {
@@ -343,10 +372,11 @@ determine the insecure things and exploit them without viewing the
 source.  Security through obscurity, the name for hiding your bugs
 instead of fixing them, is little security indeed.
 
-You can try using encryption via source filters (Filter::* from CPAN).
-But crackers might be able to decrypt it.  You can try using the
-byte code compiler and interpreter described below, but crackers might
-be able to de-compile it.  You can try using the native-code compiler
+You can try using encryption via source filters (Filter::* from CPAN,
+or Filter::Util::Call and Filter::Simple since Perl 5.8).
+But crackers might be able to decrypt it.  You can try using the byte
+code compiler and interpreter described below, but crackers might be
+able to de-compile it.  You can try using the native-code compiler
 described below, but crackers might be able to disassemble it.  These
 pose varying degrees of difficulty to people wanting to get at your
 code, but none can definitively conceal it (this is true of every
@@ -359,6 +389,13 @@ statements like "This is unpublished proprietary software of XYZ Corp.
 Your access to it does not give you permission to use it blah blah
 blah."  You should see a lawyer to be sure your licence's wording will
 stand up in court.
+
+=head2 Unicode
+
+Unicode is a new and complex technology and one may easily overlook
+certain security pitfalls.  See L<perluniintro> for an overview and
+L<perlunicode> for details, and L<perlunicode/"Security Implications
+of Unicode"> for security implications in particular.
 
 =head1 SEE ALSO
 

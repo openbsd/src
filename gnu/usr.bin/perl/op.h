@@ -1,6 +1,6 @@
 /*    op.h
  *
- *    Copyright (c) 1991-2001, Larry Wall
+ *    Copyright (c) 1991-2002, Larry Wall
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -23,7 +23,13 @@
  *			which may or may not check number of children).
  */
 
-typedef U32 PADOFFSET;
+#if PTRSIZE == 4
+typedef U32TYPE PADOFFSET;
+#else
+#   if PTRSIZE == 8
+typedef U64TYPE PADOFFSET;
+#   endif
+#endif
 #define NOT_IN_PAD ((PADOFFSET) -1)
 
 #ifdef DEBUGGING_OPS
@@ -53,6 +59,8 @@ typedef U32 PADOFFSET;
 	 dfl)
 
 /*
+=head1 "Gimme" Values
+
 =for apidoc Amn|U32|GIMME_V
 The XSUB-writer's equivalent to Perl's C<wantarray>.  Returns C<G_VOID>,
 C<G_SCALAR> or C<G_ARRAY> for void, scalar or list context,
@@ -96,6 +104,8 @@ Deprecated.  Use C<GIMME_V> instead.
 				/*  On OP_ENTERITER, loop var is per-thread */
 				/*  On pushre, re is /\s+/ imp. by split " " */
 				/*  On regcomp, "use re 'eval'" was in scope */
+				/*  On OP_READLINE, was <$filehandle> */
+				/*  On RV2[SG]V, don't create GV--in defined()*/
 
 /* old names; don't use in new code, but don't break them, either */
 #define OPf_LIST	OPf_WANT_LIST
@@ -147,6 +157,7 @@ Deprecated.  Use C<GIMME_V> instead.
   /* OP_ENTERSUB only */
 #define OPpENTERSUB_DB		16	/* Debug subroutine. */
 #define OPpENTERSUB_HASTARG	32	/* Called from OP tree. */
+#define OPpENTERSUB_NOMOD	64	/* Immune to mod() for :attrlist. */
   /* OP_RV2CV only */
 #define OPpENTERSUB_AMPER	8	/* Used & form to call. */
 #define OPpENTERSUB_NOPAREN	128	/* bare sub call (without parens) */
@@ -184,10 +195,6 @@ Deprecated.  Use C<GIMME_V> instead.
 /* Private for OP_EXISTS */
 #define OPpEXISTS_SUB		64	/* Checking for &sub, not {} or [].  */
 
-/* Private for OP_SORT, OP_PRTF, OP_SPRINTF, OP_FTTEXT, OP_FTBINARY, */
-/*             string comparisons, and case changers. */
-#define OPpLOCALE		64	/* Use locale */
-
 /* Private for OP_SORT */
 #define OPpSORT_NUMERIC		1	/* Optimized away { $a <=> $b } */
 #define OPpSORT_INTEGER		2	/* Ditto while under "use integer" */
@@ -201,7 +208,8 @@ Deprecated.  Use C<GIMME_V> instead.
 #define OPpOPEN_OUT_RAW		64	/* binmode(F,":raw") on output fh */
 #define OPpOPEN_OUT_CRLF	128	/* binmode(F,":crlf") on output fh */
 
-/* Private for OP_EXIT */
+/* Private for OP_EXIT, HUSH also for OP_DIE */
+#define OPpHUSH_VMSISH		64	/* hush DCL exit msg vmsish mode*/
 #define OPpEXIT_VMSISH		128	/* exit(0) vs. exit(1) vmsish mode*/
 
 struct op {
@@ -238,19 +246,43 @@ struct pmop {
     OP *	op_pmreplroot;
     OP *	op_pmreplstart;
     PMOP *	op_pmnext;		/* list of all scanpats */
-    REGEXP *	op_pmregexp;		/* compiled expression */
-    U16		op_pmflags;
-    U16		op_pmpermflags;
+#ifdef USE_ITHREADS
+    IV          op_pmoffset;
+#else
+    REGEXP *    op_pmregexp;            /* compiled expression */
+#endif
+    U32		op_pmflags;
+    U32		op_pmpermflags;
     U8		op_pmdynflags;
+#ifdef USE_ITHREADS
+    char *	op_pmstashpv;
+#else
+    HV *	op_pmstash;
+#endif
 };
+
+#ifdef USE_ITHREADS
+#define PM_GETRE(o)     (INT2PTR(REGEXP*,SvIVX(PL_regex_pad[(o)->op_pmoffset])))
+#define PM_SETRE(o,r)   STMT_START { SV* sv = PL_regex_pad[(o)->op_pmoffset]; sv_setiv(sv, PTR2IV(r)); } STMT_END
+#define PM_GETRE_SAFE(o) (PL_regex_pad ? PM_GETRE(o) : (REGEXP*)0)
+#define PM_SETRE_SAFE(o,r) if (PL_regex_pad) PM_SETRE(o,r)
+#else
+#define PM_GETRE(o)     ((o)->op_pmregexp)
+#define PM_SETRE(o,r)   ((o)->op_pmregexp = (r))
+#define PM_GETRE_SAFE PM_GETRE
+#define PM_SETRE_SAFE PM_SETRE
+#endif
 
 #define PMdf_USED	0x01		/* pm has been used once already */
 #define PMdf_TAINTED	0x02		/* pm compiled from tainted pattern */
 #define PMdf_UTF8	0x04		/* pm compiled from utf8 data */
+#define PMdf_DYN_UTF8	0x08
+
+#define PMdf_CMP_UTF8	(PMdf_UTF8|PMdf_DYN_UTF8)
 
 #define PMf_RETAINT	0x0001		/* taint $1 etc. if target tainted */
 #define PMf_ONCE	0x0002		/* use pattern only once per reset */
-#define PMf_REVERSED	0x0004		/* Should be matched right->left */
+#define PMf_UNUSED	0x0004		/* free for use */
 #define PMf_MAYBE_CONST	0x0008		/* replacement contains variables */
 #define PMf_SKIPWHITE	0x0010		/* skip leading whitespace for split */
 #define PMf_WHITE	0x0020		/* pattern is \s+ */
@@ -267,6 +299,24 @@ struct pmop {
 
 /* mask of bits stored in regexp->reganch */
 #define PMf_COMPILETIME	(PMf_MULTILINE|PMf_SINGLELINE|PMf_LOCALE|PMf_FOLD|PMf_EXTENDED)
+
+#ifdef USE_ITHREADS
+
+#  define PmopSTASHPV(o)	((o)->op_pmstashpv)
+#  define PmopSTASHPV_set(o,pv)	(PmopSTASHPV(o) = savesharedpv(pv))
+#  define PmopSTASH(o)		(PmopSTASHPV(o) \
+				 ? gv_stashpv(PmopSTASHPV(o),GV_ADD) : Nullhv)
+#  define PmopSTASH_set(o,hv)	PmopSTASHPV_set(o, ((hv) ? HvNAME(hv) : Nullch))
+#  define PmopSTASH_free(o)	PerlMemShared_free(PmopSTASHPV(o))
+
+#else
+#  define PmopSTASH(o)		((o)->op_pmstash)
+#  define PmopSTASH_set(o,hv)	((o)->op_pmstash = (hv))
+#  define PmopSTASHPV(o)	(PmopSTASH(o) ? HvNAME(PmopSTASH(o)) : Nullch)
+   /* op_pmstash is not refcounted */
+#  define PmopSTASHPV_set(o,pv)	PmopSTASH_set((o), gv_stashpv(pv,GV_ADD))
+#  define PmopSTASH_free(o)    
+#endif
 
 struct svop {
     BASEOP
@@ -362,7 +412,7 @@ struct loop {
 
 #define Nullop Null(OP*)
 
-/* Lowest byte of PL_opargs */
+/* Lowest byte-and-a-bit of PL_opargs */
 #define OA_MARK 1
 #define OA_FOLDCONST 2
 #define OA_RETSCALAR 4
@@ -425,3 +475,8 @@ struct loop {
 #define PERL_LOADMOD_DENY		0x1
 #define PERL_LOADMOD_NOIMPORT		0x2
 #define PERL_LOADMOD_IMPORT_OPS		0x4
+
+#ifdef USE_REENTRANT_API
+#include "reentr.h"
+#endif
+

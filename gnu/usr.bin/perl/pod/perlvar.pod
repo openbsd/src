@@ -13,14 +13,20 @@ you need only say
 
     use English;
 
-at the top of your program.  This will alias all the short names to the
-long names in the current package.  Some even have medium names,
-generally borrowed from B<awk>.
+at the top of your program. This aliases all the short names to the long
+names in the current package. Some even have medium names, generally
+borrowed from B<awk>. In general, it's best to use the
 
-If you don't mind the performance hit, variables that depend on the
-currently selected filehandle may instead be set by calling an
-appropriate object method on the IO::Handle object.  (Summary lines
-below for this contain the word HANDLE.)  First you must say
+    use English '-no_match_vars';
+
+invocation if you don't need $PREMATCH, $MATCH, or $POSTMATCH, as it avoids
+a certain performance hit with the use of regular expressions. See
+L<English>.
+
+Variables that depend on the currently selected filehandle may be set by
+calling an appropriate object method on the IO::Handle object, although
+this is less efficient than using the regular built-in variables. (Summary
+lines below for this contain the word HANDLE.) First you must say
 
     use IO::Handle;
 
@@ -33,16 +39,82 @@ or more safely,
     HANDLE->method(EXPR)
 
 Each method returns the old value of the IO::Handle attribute.
-The methods each take an optional EXPR, which if supplied specifies the
+The methods each take an optional EXPR, which, if supplied, specifies the
 new value for the IO::Handle attribute in question.  If not supplied,
 most methods do nothing to the current value--except for
 autoflush(), which will assume a 1 for you, just to be different.
+
 Because loading in the IO::Handle class is an expensive operation, you should
 learn how to use the regular built-in variables.
 
 A few of these variables are considered "read-only".  This means that if
 you try to assign to this variable, either directly or indirectly through
 a reference, you'll raise a run-time exception.
+
+You should be very careful when modifying the default values of most
+special variables described in this document. In most cases you want
+to localize these variables before changing them, since if you don't,
+the change may affect other modules which rely on the default values
+of the special variables that you have changed. This is one of the
+correct ways to read the whole file at once:
+
+    open my $fh, "foo" or die $!;
+    local $/; # enable localized slurp mode
+    my $content = <$fh>;
+    close $fh;
+
+But the following code is quite bad:
+
+    open my $fh, "foo" or die $!;
+    undef $/; # enable slurp mode
+    my $content = <$fh>;
+    close $fh;
+
+since some other module, may want to read data from some file in the
+default "line mode", so if the code we have just presented has been
+executed, the global value of C<$/> is now changed for any other code
+running inside the same Perl interpreter.
+
+Usually when a variable is localized you want to make sure that this
+change affects the shortest scope possible. So unless you are already
+inside some short C<{}> block, you should create one yourself. For
+example:
+
+    my $content = '';
+    open my $fh, "foo" or die $!;
+    {
+        local $/;
+        $content = <$fh>;
+    }
+    close $fh;
+
+Here is an example of how your own code can go broken:
+
+    for (1..5){
+        nasty_break();
+        print "$_ ";
+    }
+    sub nasty_break {
+        $_ = 5;
+        # do something with $_
+    }
+
+You probably expect this code to print:
+
+    1 2 3 4 5
+
+but instead you get:
+
+    5 5 5 5 5
+
+Why? Because nasty_break() modifies C<$_> without localizing it
+first. The fix is to add local():
+
+        local $_ = 5;
+
+It's easy to notice the problem in such a short example, but in more
+complicated code you are looking for trouble if you don't localize
+changes to the special variables.
 
 The following list is ordered by scalar variables first, then the
 arrays, then the hashes.
@@ -111,6 +183,21 @@ test.  Outside a C<while> test, this will not happen.
 
 =over 8
 
+=item $a
+
+=item $b
+
+Special package variables when using sort(), see L<perlfunc/sort>.
+Because of this specialness $a and $b don't need to be declared
+(using local(), use vars, or our()) even when using the strict
+vars pragma.  Don't lexicalize them with C<my $a> or C<my $b>
+if you want to be able to use them in the sort() comparison block
+or function.
+
+=back
+
+=over 8
+
 =item $<I<digits>>
 
 Contains the subpattern from the corresponding set of capturing
@@ -129,7 +216,7 @@ BLOCK).  (Mnemonic: like & in some editors.)  This variable is read-only
 and dynamically scoped to the current BLOCK.
 
 The use of this variable anywhere in a program imposes a considerable
-performance penalty on all regular expression matches.  See L<BUGS>.
+performance penalty on all regular expression matches.  See L</BUGS>.
 
 =item $PREMATCH
 
@@ -141,7 +228,7 @@ enclosed by the current BLOCK).  (Mnemonic: C<`> often precedes a quoted
 string.)  This variable is read-only.
 
 The use of this variable anywhere in a program imposes a considerable
-performance penalty on all regular expression matches.  See L<BUGS>.
+performance penalty on all regular expression matches.  See L</BUGS>.
 
 =item $POSTMATCH
 
@@ -152,27 +239,45 @@ pattern match (not counting any matches hidden within a BLOCK or eval()
 enclosed by the current BLOCK).  (Mnemonic: C<'> often follows a quoted
 string.)  Example:
 
-    $_ = 'abcdefghi';
+    local $_ = 'abcdefghi';
     /def/;
     print "$`:$&:$'\n";  	# prints abc:def:ghi
 
 This variable is read-only and dynamically scoped to the current BLOCK.
 
 The use of this variable anywhere in a program imposes a considerable
-performance penalty on all regular expression matches.  See L<BUGS>.
+performance penalty on all regular expression matches.  See L</BUGS>.
 
 =item $LAST_PAREN_MATCH
 
 =item $+
 
-The last bracket matched by the last search pattern.  This is useful if
-you don't know which one of a set of alternative patterns matched.  For
-example:
+The text matched by the last bracket of the last successful search pattern.
+This is useful if you don't know which one of a set of alternative patterns
+matched. For example:
 
     /Version: (.*)|Revision: (.*)/ && ($rev = $+);
 
 (Mnemonic: be positive and forward looking.)
 This variable is read-only and dynamically scoped to the current BLOCK.
+
+=item $^N
+
+The text matched by the used group most-recently closed (i.e. the group
+with the rightmost closing parenthesis) of the last successful search
+pattern.  (Mnemonic: the (possibly) Nested parenthesis that most
+recently closed.)
+
+This is primarily used inside C<(?{...})> blocks for examining text
+recently matched. For example, to effectively capture text to a variable
+(in addition to C<$1>, C<$2>, etc.), replace C<(...)> with
+
+     (?:(...)(?{ $var = $^N }))
+
+By setting and then using C<$var> in this way relieves you from having to
+worry about exactly which numbered set of parentheses they are.
+
+This variable is dynamically scoped to the current BLOCK.
 
 =item @LAST_MATCH_END
 
@@ -209,7 +314,7 @@ Assigning a non-numerical value to C<$*> triggers a warning (and makes
 C<$*> act if C<$* == 0>), while assigning a numerical value to C<$*>
 makes that an implicit C<int> is applied on the value.
 
-=item input_line_number HANDLE EXPR
+=item HANDLE->input_line_number(EXPR)
 
 =item $INPUT_LINE_NUMBER
 
@@ -217,20 +322,33 @@ makes that an implicit C<int> is applied on the value.
 
 =item $.
 
-The current input record number for the last file handle from which
-you just read() (or called a C<seek> or C<tell> on).  The value
-may be different from the actual physical line number in the file,
-depending on what notion of "line" is in effect--see C<$/> on how
-to change that.  An explicit close on a filehandle resets the line
-number.  Because C<< <> >> never does an explicit close, line
-numbers increase across ARGV files (but see examples in L<perlfunc/eof>).
-Consider this variable read-only: setting it does not reposition
-the seek pointer; you'll have to do that on your own.  Localizing C<$.>
-has the effect of also localizing Perl's notion of "the last read
-filehandle".  (Mnemonic: many programs use "." to mean the current line
-number.)
+Current line number for the last filehandle accessed. 
 
-=item input_record_separator HANDLE EXPR
+Each filehandle in Perl counts the number of lines that have been read
+from it.  (Depending on the value of C<$/>, Perl's idea of what
+constitutes a line may not match yours.)  When a line is read from a
+filehandle (via readline() or C<< <> >>), or when tell() or seek() is
+called on it, C<$.> becomes an alias to the line counter for that
+filehandle.
+
+You can adjust the counter by assigning to C<$.>, but this will not
+actually move the seek pointer.  I<Localizing C<$.> will not localize
+the filehandle's line count>.  Instead, it will localize perl's notion
+of which filehandle C<$.> is currently aliased to.
+
+C<$.> is reset when the filehandle is closed, but B<not> when an open
+filehandle is reopened without an intervening close().  For more
+details, see L<perlop/"IE<sol>O Operators">.  Because C<< <> >> never does
+an explicit close, line numbers increase across ARGV files (but see
+examples in L<perlfunc/eof>).
+
+You can also use C<< HANDLE->input_line_number(EXPR) >> to access the
+line counter for a given filehandle without having to worry about
+which handle you last accessed.
+
+(Mnemonic: many programs use "." to mean the current line number.)
+
+=item IO::Handle->input_record_separator(EXPR)
 
 =item $INPUT_RECORD_SEPARATOR
 
@@ -252,8 +370,8 @@ blindly assume that the next input character belongs to the next
 paragraph, even if it's a newline.  (Mnemonic: / delimits
 line boundaries when quoting poetry.)
 
-    undef $/;		# enable "slurp" mode
-    $_ = <FH>;		# whole file now here
+    local $/;           # enable "slurp" mode
+    local $_ = <FH>;    # whole file now here
     s/\n[ \t]+/ /g;
 
 Remember: the value of C<$/> is a string, not a regex.  B<awk> has to be
@@ -264,9 +382,9 @@ scalar that's convertible to an integer will attempt to read records
 instead of lines, with the maximum record size being the referenced
 integer.  So this:
 
-    $/ = \32768; # or \"32768", or \$var_containing_32768
-    open(FILE, $myfile);
-    $_ = <FILE>;
+    local $/ = \32768; # or \"32768", or \$var_containing_32768
+    open my $fh, $myfile or die $!;
+    local $_ = <$fh>;
 
 will read a record of no more than 32768 bytes from FILE.  If you're
 not reading from a record-oriented file (or your OS doesn't have
@@ -283,7 +401,7 @@ non-record reads of a file.
 
 See also L<perlport/"Newlines">.  Also see C<$.>.
 
-=item autoflush HANDLE EXPR
+=item HANDLE->autoflush(EXPR)
 
 =item $OUTPUT_AUTOFLUSH
 
@@ -301,7 +419,7 @@ a Perl program under B<rsh> and want to see the output as it's
 happening.  This has no effect on input buffering.  See L<perlfunc/getc>
 for that.  (Mnemonic: when you want your pipes to be piping hot.)
 
-=item output_field_separator HANDLE EXPR
+=item IO::Handle->output_field_separator EXPR
 
 =item $OUTPUT_FIELD_SEPARATOR
 
@@ -316,7 +434,7 @@ you would set B<awk>'s OFS variable to specify what is printed
 between fields.  (Mnemonic: what is printed when there is a "," in
 your print statement.)
 
-=item output_record_separator HANDLE EXPR
+=item IO::Handle->output_record_separator EXPR
 
 =item $OUTPUT_RECORD_SEPARATOR
 
@@ -387,7 +505,7 @@ explicitly to get B<awk>'s value.  (Mnemonic: # is the number sign.)
 
 Use of C<$#> is deprecated.
 
-=item format_page_number HANDLE EXPR
+=item HANDLE->format_page_number(EXPR)
 
 =item $FORMAT_PAGE_NUMBER
 
@@ -397,7 +515,7 @@ The current page number of the currently selected output channel.
 Used with formats.
 (Mnemonic: % is page number in B<nroff>.)
 
-=item format_lines_per_page HANDLE EXPR
+=item HANDLE->format_lines_per_page(EXPR)
 
 =item $FORMAT_LINES_PER_PAGE
 
@@ -408,7 +526,7 @@ output channel.  Default is 60.
 Used with formats.
 (Mnemonic: = has horizontal lines.)
 
-=item format_lines_left HANDLE EXPR
+=item HANDLE->format_lines_left(EXPR)
 
 =item $FORMAT_LINES_LEFT
 
@@ -439,10 +557,8 @@ This array holds the offsets of the beginnings of the last
 successful submatches in the currently active dynamic scope.
 C<$-[0]> is the offset into the string of the beginning of the
 entire match.  The I<n>th element of this array holds the offset
-of the I<n>th submatch, so C<$+[1]> is the offset where $1
-begins, C<$+[2]> the offset where $2 begins, and so on.
-You can use C<$#-> to determine how many subgroups were in the
-last successful match.  Compare with the C<@+> variable.
+of the I<n>th submatch, so C<$-[1]> is the offset where $1
+begins, C<$-[2]> the offset where $2 begins, and so on.
 
 After a match against some variable $var:
 
@@ -462,7 +578,7 @@ After a match against some variable $var:
 
 =back
 
-=item format_name HANDLE EXPR
+=item HANDLE->format_name(EXPR)
 
 =item $FORMAT_NAME
 
@@ -472,7 +588,7 @@ The name of the current report format for the currently selected output
 channel.  Default is the name of the filehandle.  (Mnemonic: brother to
 C<$^>.)
 
-=item format_top_name HANDLE EXPR
+=item HANDLE->format_top_name(EXPR)
 
 =item $FORMAT_TOP_NAME
 
@@ -482,7 +598,7 @@ The name of the current top-of-page format for the currently selected
 output channel.  Default is the name of the filehandle with _TOP
 appended.  (Mnemonic: points to top of page.)
 
-=item format_line_break_characters HANDLE EXPR
+=item IO::Handle->format_line_break_characters EXPR
 
 =item $FORMAT_LINE_BREAK_CHARACTERS
 
@@ -493,7 +609,7 @@ fill continuation fields (starting with ^) in a format.  Default is
 S<" \n-">, to break on whitespace or hyphens.  (Mnemonic: a "colon" in
 poetry is a part of a line.)
 
-=item format_formfeed HANDLE EXPR
+=item IO::Handle->format_formfeed EXPR
 
 =item $FORMAT_FORMFEED
 
@@ -541,9 +657,17 @@ change the exit status of your program.  For example:
 
 Under VMS, the pragma C<use vmsish 'status'> makes C<$?> reflect the
 actual VMS exit status, instead of the default emulation of POSIX
-status.
+status; see L<perlvms/$?> for details.
 
 Also see L<Error Indicators>.
+
+=item ${^ENCODING}
+
+The I<object reference> to the Encode object that is used to convert
+the source code to Unicode.  Thanks to this variable your perl script
+does not have to be written in UTF-8.  Default is I<undef>.  The direct
+manipulation of this variable is highly discouraged.  See L<encoding>
+for more details.
 
 =item $OS_ERROR
 
@@ -552,9 +676,25 @@ Also see L<Error Indicators>.
 =item $!
 
 If used numerically, yields the current value of the C C<errno>
-variable, with all the usual caveats.  (This means that you shouldn't
-depend on the value of C<$!> to be anything in particular unless
-you've gotten a specific error return indicating a system error.)
+variable, or in other words, if a system or library call fails, it
+sets this variable.  This means that the value of C<$!> is meaningful
+only I<immediately> after a B<failure>:
+
+    if (open(FH, $filename)) {
+	# Here $! is meaningless.
+	...
+    } else {
+	# ONLY here is $! meaningful.
+	...
+	# Already here $! might be meaningless.
+    }
+    # Since here we might have either success or failure,
+    # here $! is meaningless.
+
+In the above I<meaningless> stands for anything: zero, non-zero,
+C<undef>.  A successful system or library call does B<not> set
+the variable to zero.
+
 If used an a string, yields the corresponding system error string.
 You can assign a number to C<$!> to set I<errno> if, for instance,
 you want C<"$!"> to return the string for error I<n>, or you want
@@ -562,6 +702,18 @@ to set the exit value for the die() operator.  (Mnemonic: What just
 went bang?)
 
 Also see L<Error Indicators>.
+
+=item %!
+
+Each element of C<%!> has a true value only if C<$!> is set to that
+value.  For example, C<$!{ENOENT}> is true if and only if the current
+value of C<$!> is C<ENOENT>; that is, if the most recent error was
+"No such file or directory" (or its moral equivalent: not all operating
+systems give that exact error, and certainly not all languages).
+To check if a particular key is meaningful on your system, use
+C<exists $!{the_key}>; for a list of legal keys, use C<keys %!>.
+See L<Errno> for more information, and also see above for the
+validity of C<$!>.
 
 =item $EXTENDED_OS_ERROR
 
@@ -596,10 +748,10 @@ Also see L<Error Indicators>.
 
 =item $@
 
-The Perl syntax error message from the last eval() operator.  If null, the
-last eval() parsed and executed correctly (although the operations you
-invoked may have failed in the normal fashion).  (Mnemonic: Where was
-the syntax error "at"?)
+The Perl syntax error message from the last eval() operator.
+If $@ is the null string, the last eval() parsed and executed
+correctly (although the operations you invoked may have failed in the
+normal fashion).  (Mnemonic: Where was the syntax error "at"?)
 
 Warning messages are not collected in this variable.  You can,
 however, set up a routine to process warnings by setting C<$SIG{__WARN__}>
@@ -624,7 +776,8 @@ across fork() calls.  (Mnemonic: same as shells.)
 =item $<
 
 The real uid of this process.  (Mnemonic: it's the uid you came I<from>,
-if you're running setuid.)
+if you're running setuid.)  You can change both the real uid and
+the effective uid at the same time by using POSIX::setuid().
 
 =item $EFFECTIVE_USER_ID
 
@@ -636,6 +789,9 @@ The effective uid of this process.  Example:
 
     $< = $>;		# set real to effective uid
     ($<,$>) = ($>,$<);	# swap real and effective uid
+
+You can change both the effective uid and the real uid at the same
+time by using POSIX::setuid().
 
 (Mnemonic: it's the uid you went I<to>, if you're running setuid.)
 C<< $< >> and C<< $> >> can be swapped only on machines
@@ -656,6 +812,9 @@ the same as the first number.
 However, a value assigned to C<$(> must be a single number used to
 set the real gid.  So the value given by C<$(> should I<not> be assigned
 back to C<$(> without being forced numeric, such as by adding zero.
+
+You can change both the real gid and the effective gid at the same
+time by using POSIX::setgid().
 
 (Mnemonic: parentheses are used to I<group> things.  The real gid is the
 group you I<left>, if you're running setgid.)
@@ -678,6 +837,9 @@ the rest (if any) are passed to setgroups().  To get the effect of an
 empty list for setgroups(), just repeat the new effective gid; that is,
 to force an effective gid of 5 and an effectively empty setgroups()
 list, say C< $) = "5 5" >.
+
+You can change both the effective gid and the real gid at the same
+time by using POSIX::setgid() (use only a single numeric argument).
 
 (Mnemonic: parentheses are used to I<group> things.  The effective gid
 is the group that's I<right> for you, if you're running setgid.)
@@ -725,10 +887,9 @@ of perl in the right bracket?)  Example:
 See also the documentation of C<use VERSION> and C<require VERSION>
 for a convenient way to fail if the running Perl interpreter is too old.
 
-The use of this variable is deprecated.  The floating point representation
-can sometimes lead to inaccurate numeric comparisons.  See C<$^V> for a
-more modern representation of the Perl version that allows accurate string
-comparisons.
+The floating point representation can sometimes lead to inaccurate
+numeric comparisons.  See C<$^V> for a more modern representation of
+the Perl version that allows accurate string comparisons.
 
 =item $COMPILING
 
@@ -842,6 +1003,18 @@ built, as determined during the configuration process.  The value
 is identical to C<$Config{'osname'}>.  See also L<Config> and the 
 B<-V> command-line switch documented in L<perlrun>.
 
+In Windows platforms, $^O is not very helpful: since it is always
+C<MSWin32>, it doesn't tell the difference between
+95/98/ME/NT/2000/XP/CE/.NET.  Use Win32::GetOSName() or
+Win32::GetOSVersion() (see L<Win32> and L<perlport>) to distinguish
+between the variants.
+
+=item ${^OPEN}
+
+An internal variable used by PerlIO.  A string in two parts, separated
+by a C<\0> byte, the first part describes the input layers, the second
+part describes the output layers.
+
 =item $PERLDB
 
 =item $^P
@@ -920,6 +1093,11 @@ The time at which the program began running, in seconds since the
 epoch (beginning of 1970).  The values returned by the B<-M>, B<-A>,
 and B<-C> filetests are based on this value.
 
+=item ${^TAINT}
+
+Reflects if taint mode is on or off (i.e. if the program was run with
+B<-T> or not).  True for on, false for off.
+
 =item $PERL_VERSION
 
 =item $^V
@@ -935,6 +1113,11 @@ script is in the right range of versions.  (Mnemonic: use ^V for Version
 Control.)  Example:
 
     warn "No \"our\" declarations!\n" if $^V and $^V lt v5.6.0;
+
+To convert C<$^V> into its string representation use sprintf()'s
+C<"%vd"> conversion:
+
+    printf "version is v%vd\n", $^V;  # Perl's version
 
 See the documentation of C<use VERSION> and C<require VERSION>
 for a convenient way to fail if the running Perl interpreter is too old.
@@ -973,8 +1156,63 @@ lexical scope.  See L<bytes>.
 
 =item $^X
 
-The name that the Perl binary itself was executed as, from C's C<argv[0]>.
-This may not be a full pathname, nor even necessarily in your path.
+The name used to execute the current copy of Perl, from C's
+C<argv[0]>.
+
+Depending on the host operating system, the value of $^X may be
+a relative or absolute pathname of the perl program file, or may
+be the string used to invoke perl but not the pathname of the
+perl program file.  Also, most operating systems permit invoking
+programs that are not in the PATH environment variable, so there
+is no guarantee that the value of $^X is in PATH.  For VMS, the
+value may or may not include a version number.
+
+You usually can use the value of $^X to re-invoke an independent
+copy of the same perl that is currently running, e.g.,
+
+  @first_run = `$^X -le "print int rand 100 for 1..100"`;
+
+But recall that not all operating systems support forking or
+capturing of the output of commands, so this complex statement
+may not be portable.
+
+It is not safe to use the value of $^X as a path name of a file,
+as some operating systems that have a mandatory suffix on
+executable files do not require use of the suffix when invoking
+a command.  To convert the value of $^X to a path name, use the
+following statements:
+
+# Build up a set of file names (not command names).
+  use Config;
+  $this_perl = $^X;
+  if ($^O ne 'VMS')
+     {$this_perl .= $Config{_exe}
+          unless $this_perl =~ m/$Config{_exe}$/i;}
+
+Because many operating systems permit anyone with read access to
+the Perl program file to make a copy of it, patch the copy, and
+then execute the copy, the security-conscious Perl programmer
+should take care to invoke the installed copy of perl, not the
+copy referenced by $^X.  The following statements accomplish
+this goal, and produce a pathname that can be invoked as a
+command or referenced as a file.
+
+  use Config;
+  $secure_perl_path = $Config{perlpath};
+  if ($^O ne 'VMS')
+     {$secure_perl_path .= $Config{_exe}
+          unless $secure_perl_path =~ m/$Config{_exe}$/i;}
+
+=item ARGV
+
+The special filehandle that iterates over command-line filenames in
+C<@ARGV>. Usually written as the null filehandle in the angle operator
+C<< <> >>. Note that currently C<ARGV> only has its magical effect
+within the C<< <> >> operator; elsewhere it is just a plain filehandle
+corresponding to the last file opened by C<< <> >>. In particular,
+passing C<\*ARGV> as a parameter to a function that expects a filehandle
+may not cause your function to automatically read the contents of all the
+files in C<@ARGV>.
 
 =item $ARGV
 
@@ -987,6 +1225,20 @@ the script.  C<$#ARGV> is generally the number of arguments minus
 one, because C<$ARGV[0]> is the first argument, I<not> the program's
 command name itself.  See C<$0> for the command name.
 
+=item ARGVOUT
+
+The special filehandle that points to the currently open output file
+when doing edit-in-place processing with B<-i>.  Useful when you have
+to do a lot of inserting and don't want to keep modifying $_.  See
+L<perlrun> for the B<-i> switch.
+
+=item @F
+
+The array @F contains the fields of each line read in when autosplit
+mode is turned on.  See L<perlrun> for the B<-a> switch.  This array
+is package-specific, and must be declared or given a full package name
+if not in package main when running under C<strict 'vars'>.
+
 =item @INC
 
 The array @INC contains the list of places that the C<do EXPR>,
@@ -994,12 +1246,17 @@ C<require>, or C<use> constructs look for their library files.  It
 initially consists of the arguments to any B<-I> command-line
 switches, followed by the default Perl library, probably
 F</usr/local/lib/perl>, followed by ".", to represent the current
-directory.  If you need to modify this at runtime, you should use
+directory.  ("." will not be appended if taint checks are enabled, either by
+C<-T> or by C<-t>.)  If you need to modify this at runtime, you should use
 the C<use lib> pragma to get the machine-dependent library properly
 loaded also:
 
     use lib '/mypath/libdir/';
     use SomeMod;
+
+You can also insert hooks into the file inclusion system by putting Perl
+code directly into @INC.  Those hooks may be subroutine references, array
+references or blessed objects.  See L<perlfunc/require> for details.
 
 =item @_
 
@@ -1014,6 +1271,12 @@ you specified (with module names converted to pathnames), and the
 value is the location of the file found.  The C<require>
 operator uses this hash to determine whether a particular file has
 already been included.
+
+If the file was loaded via a hook (e.g. a subroutine reference, see
+L<perlfunc/require> for a description of these hooks), this hook is
+by default inserted into %INC in place of a filename.  Note, however,
+that the hook may have set the %INC entry by itself to provide some more
+specific info.
 
 =item %ENV
 
@@ -1134,9 +1397,9 @@ To illustrate the differences between these variables, consider the
 following Perl expression, which uses a single-quoted string:
 
     eval q{
-	open PIPE, "/cdrom/install |";
-	@res = <PIPE>;
-	close PIPE or die "bad pipe: $?, $!";
+	open my $pipe, "/cdrom/install |" or die $!;
+	my @res = <$pipe>;
+	close $pipe or die "bad pipe: $?, $!";
     };
 
 After execution of this statement all 4 variables may have been set.  
@@ -1225,7 +1488,7 @@ expression matches in a program, regardless of whether they occur
 in the scope of C<use English>.  For that reason, saying C<use
 English> in libraries is strongly discouraged.  See the
 Devel::SawAmpersand module documentation from CPAN
-(http://www.perl.com/CPAN/modules/by-module/Devel/)
+( http://www.cpan.org/modules/by-module/Devel/ )
 for more information.
 
 Having to even think about the C<$^S> variable in your exception

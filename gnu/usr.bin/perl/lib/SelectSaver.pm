@@ -1,5 +1,7 @@
 package SelectSaver;
 
+our $VERSION = '1.00';
+
 =head1 NAME
 
 SelectSaver - save and restore selected file handle

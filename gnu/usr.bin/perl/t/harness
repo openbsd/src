@@ -5,15 +5,25 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    unshift @INC, '../lib';
+    @INC = '../lib';              # pick up only this build's lib
     $ENV{PERL5LIB} = '../lib';    # so children will see it too
 }
-use lib '../lib';
+
+my $torture; # torture testing?
 
 use Test::Harness;
 
 $Test::Harness::switches = "";    # Too much noise otherwise
 $Test::Harness::verbose = shift if @ARGV && $ARGV[0] eq '-v';
+
+if ($ARGV[0] eq '-torture') {
+    shift;
+    $torture = 1;
+}
+
+# Let tests know they're running in the perl core.  Useful for modules
+# which live dual lives on CPAN.
+$ENV{PERL_CORE} = 1;
 
 #fudge DATA for now.
 %datahandle = qw(
@@ -29,16 +39,53 @@ $Test::Harness::verbose = shift if @ARGV && $ARGV[0] eq '-v';
 		op/runlevel.t		1
 		op/tie.t		1
 		op/lex_assign.t		1
-		pragma/subs.t   	1
 		);
 
 foreach (keys %datahandle) {
      unlink "$_.t";
 }
 
-@tests = @ARGV;
-@tests = <base/*.t comp/*.t cmd/*.t io/*.t op/*.t pragma/*.t lib/*.t> unless @tests;
+my @tests = ();
 
+if (@ARGV) {
+    if ($^O eq 'MSWin32') {
+	@tests = map(glob($_),@ARGV);
+    }
+    else {
+	@tests = @ARGV;
+    }
+} else {
+    unless (@tests) {
+	push @tests, <base/*.t>;
+        push @tests, <comp/*.t>;
+        push @tests, <cmd/*.t>;
+        push @tests, <run/*.t>;
+        push @tests, <io/*.t>;
+        push @tests, <op/*.t>;
+        push @tests, <uni/*.t>;
+        push @tests, <lib/*.t>;
+        push @tests, <japh/*.t> if $torture;
+	push @tests, <win32/*.t> if $^O eq 'MSWin32';
+	use File::Spec;
+	my $updir = File::Spec->updir;
+	my $mani  = File::Spec->catfile(File::Spec->updir, "MANIFEST");
+	if (open(MANI, $mani)) {
+	    while (<MANI>) { # similar code in t/TEST
+	    if (m!^(ext/\S+/?(?:[^/\s]+\.t|test\.pl)|lib/\S+?(?:\.t|test\.pl))\s!) {
+		    push @tests, File::Spec->catfile($updir, $1);
+		}
+	    }
+	    close MANI;
+	} else {
+	    warn "$0: cannot open $mani: $!\n";
+	}
+	push @tests, <pod/*.t>;
+	push @tests, <x2p/*.t>;
+    }
+}
+if ($^O eq 'MSWin32') {
+    s,\\,/,g for @tests;
+}
 Test::Harness::runtests @tests;
 exit(0) unless -e "../testcompile";
 
@@ -46,7 +93,7 @@ exit(0) unless -e "../testcompile";
 #        op/bop.t	1
 #        lib/hostname.t	1
 #	 op/lex_assign.t	1
-#	 lib/ph.t	1  
+#	 lib/ph.t	1
 #        );
 
 my $dhwrapper = <<'EOT';
@@ -72,10 +119,10 @@ EOT
 print "The tests ", join(' ', keys(%infinite)),
     " generate infinite loops! Skipping!\n";
 
-$ENV{'HARNESS_COMPILE_TEST'} = 1; 
+$ENV{'HARNESS_COMPILE_TEST'} = 1;
 $ENV{'PERLCC_TIMEOUT'} = 120 unless $ENV{'PERLCC_TIMEOUT'};
 
-Test::Harness::runtests @tests; 
+Test::Harness::runtests @tests;
 foreach (keys %datahandle) {
      unlink "$_.t";
 }

@@ -1,18 +1,20 @@
 #!./perl
 
-print "1..37\n";
+BEGIN {
+    chdir 't' if -d 't';
+    @INC = '../lib';
+    require './test.pl';
+}
 
-# optimized
+plan tests => 47;
 
 $_ = 'abc';
 $c = do foo();
-if ($c . $_ eq 'cab') {print "ok 1\n";} else {print "not ok 1 $c$_\n";}
-
-# unoptimized
+is ($c . $_, 'cab', 'optimized');
 
 $_ = 'abc';
 $c = chop($_);
-if ($c . $_ eq 'cab') {print "ok 2\n";} else {print "not ok 2\n";}
+is ($c . $_ , 'cab', 'unoptimized');
 
 sub foo {
     chop;
@@ -21,98 +23,152 @@ sub foo {
 @foo = ("hi \n","there\n","!\n");
 @bar = @foo;
 chop(@bar);
-print join('',@bar) eq 'hi there!' ? "ok 3\n" : "not ok 3\n";
+is (join('',@bar), 'hi there!');
 
 $foo = "\n";
 chop($foo,@foo);
-print join('',$foo,@foo) eq 'hi there!' ? "ok 4\n" : "not ok 4\n";
+is (join('',$foo,@foo), 'hi there!');
 
 $_ = "foo\n\n";
-print chomp() == 1 ? "ok 5\n" : "not ok 5\n";
-print $_ eq "foo\n" ? "ok 6\n" : "not ok 6\n";
+$got = chomp();
+ok ($got == 1) or print "# got $got\n";
+is ($_, "foo\n");
 
 $_ = "foo\n";
-print chomp() == 1 ? "ok 7\n" : "not ok 7\n";
-print $_ eq "foo" ? "ok 8\n" : "not ok 8\n";
+$got = chomp();
+ok ($got == 1) or print "# got $got\n";
+is ($_, "foo");
 
 $_ = "foo";
-print chomp() == 0 ? "ok 9\n" : "not ok 9\n";
-print $_ eq "foo" ? "ok 10\n" : "not ok 10\n";
+$got = chomp();
+ok ($got == 0) or print "# got $got\n";
+is ($_, "foo");
 
 $_ = "foo";
 $/ = "oo";
-print chomp() == 2 ? "ok 11\n" : "not ok 11\n";
-print $_ eq "f" ? "ok 12\n" : "not ok 12\n";
+$got = chomp();
+ok ($got == 2) or print "# got $got\n";
+is ($_, "f");
 
 $_ = "bar";
 $/ = "oo";
-print chomp() == 0 ? "ok 13\n" : "not ok 13\n";
-print $_ eq "bar" ? "ok 14\n" : "not ok 14\n";
+$got = chomp();
+ok ($got == 0) or print "# got $got\n";
+is ($_, "bar");
 
 $_ = "f\n\n\n\n\n";
 $/ = "";
-print chomp() == 5 ? "ok 15\n" : "not ok 15\n";
-print $_ eq "f" ? "ok 16\n" : "not ok 16\n";
+$got = chomp();
+ok ($got == 5) or print "# got $got\n";
+is ($_, "f");
 
 $_ = "f\n\n";
 $/ = "";
-print chomp() == 2 ? "ok 17\n" : "not ok 17\n";
-print $_ eq "f" ? "ok 18\n" : "not ok 18\n";
+$got = chomp();
+ok ($got == 2) or print "# got $got\n";
+is ($_, "f");
 
 $_ = "f\n";
 $/ = "";
-print chomp() == 1 ? "ok 19\n" : "not ok 19\n";
-print $_ eq "f" ? "ok 20\n" : "not ok 20\n";
+$got = chomp();
+ok ($got == 1) or print "# got $got\n";
+is ($_, "f");
 
 $_ = "f";
 $/ = "";
-print chomp() == 0 ? "ok 21\n" : "not ok 21\n";
-print $_ eq "f" ? "ok 22\n" : "not ok 22\n";
+$got = chomp();
+ok ($got == 0) or print "# got $got\n";
+is ($_, "f");
 
 $_ = "xx";
 $/ = "xx";
-print chomp() == 2 ? "ok 23\n" : "not ok 23\n";
-print $_ eq "" ? "ok 24\n" : "not ok 24\n";
+$got = chomp();
+ok ($got == 2) or print "# got $got\n";
+is ($_, "");
 
 $_ = "axx";
 $/ = "xx";
-print chomp() == 2 ? "ok 25\n" : "not ok 25\n";
-print $_ eq "a" ? "ok 26\n" : "not ok 26\n";
+$got = chomp();
+ok ($got == 2) or print "# got $got\n";
+is ($_, "a");
 
 $_ = "axx";
 $/ = "yy";
-print chomp() == 0 ? "ok 27\n" : "not ok 27\n";
-print $_ eq "axx" ? "ok 28\n" : "not ok 28\n";
+$got = chomp();
+ok ($got == 0) or print "# got $got\n";
+is ($_, "axx");
 
 # This case once mistakenly behaved like paragraph mode.
 $_ = "ab\n";
 $/ = \3;
-print chomp() == 0 ? "ok 29\n" : "not ok 29\n";
-print $_ eq "ab\n" ? "ok 30\n" : "not ok 30\n";
+$got = chomp();
+ok ($got == 0) or print "# got $got\n";
+is ($_, "ab\n");
 
 # Go Unicode.
 
 $_ = "abc\x{1234}";
 chop;
-print $_ eq "abc" ? "ok 31\n" : "not ok 31\n";
+is ($_, "abc", "Go Unicode");
 
 $_ = "abc\x{1234}d";
 chop;
-print $_ eq "abc\x{1234}" ? "ok 32\n" : "not ok 32\n";
+is ($_, "abc\x{1234}");
 
 $_ = "\x{1234}\x{2345}";
 chop;
-print $_ eq "\x{1234}" ? "ok 33\n" : "not ok 33\n";
+is ($_, "\x{1234}");
 
 my @stuff = qw(this that);
-print chop(@stuff[0,1]) eq 't' ? "ok 34\n" : "not ok 34\n";
+is (chop(@stuff[0,1]), 't');
 
 # bug id 20010305.012
 @stuff = qw(ab cd ef);
-print chop(@stuff = @stuff) eq 'f' ? "ok 35\n" : "not ok 35\n";
+is (chop(@stuff = @stuff), 'f');
 
 @stuff = qw(ab cd ef);
-print chop(@stuff[0, 2]) eq 'f' ? "ok 36\n" : "not ok 36\n";
+is (chop(@stuff[0, 2]), 'f');
 
 my %stuff = (1..4);
-print chop(@stuff{1, 3}) eq '4' ? "ok 37\n" : "not ok 37\n";
+is (chop(@stuff{1, 3}), '4');
+
+# chomp should not stringify references unless it decides to modify them
+$_ = [];
+$/ = "\n";
+$got = chomp();
+ok ($got == 0) or print "# got $got\n";
+is (ref($_), "ARRAY", "chomp ref (modify)");
+
+$/ = ")";  # the last char of something like "ARRAY(0x80ff6e4)"
+$got = chomp();
+ok ($got == 1) or print "# got $got\n";
+ok (!ref($_), "chomp ref (no modify)");
+
+$/ = "\n";
+
+%chomp = ("One" => "One", "Two\n" => "Two", "" => "");
+%chop = ("One" => "On", "Two\n" => "Two", "" => "");
+
+foreach (keys %chomp) {
+  my $key = $_;
+  eval {chomp $_};
+  if ($@) {
+    my $err = $@;
+    $err =~ s/\n$//s;
+    fail ("\$\@ = \"$err\"");
+  } else {
+    is ($_, $chomp{$key}, "chomp hash key");
+  }
+}
+
+foreach (keys %chop) {
+  my $key = $_;
+  eval {chop $_};
+  if ($@) {
+    my $err = $@;
+    $err =~ s/\n$//s;
+    fail ("\$\@ = \"$err\"");
+  } else {
+    is ($_, $chop{$key}, "chop hash key");
+  }
+}

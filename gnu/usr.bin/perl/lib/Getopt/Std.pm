@@ -12,26 +12,30 @@ getopts - Process single-character switches with switch clustering
 
     use Getopt::Std;
 
-    getopt('oDI');    # -o, -D & -I take arg.  Sets opt_* as a side effect.
+    getopt('oDI');    # -o, -D & -I take arg.  Sets $opt_* as a side effect.
     getopt('oDI', \%opts);    # -o, -D & -I take arg.  Values in %opts
     getopts('oif:');  # -o & -i are boolean flags, -f takes an argument
-		      # Sets opt_* as a side effect.
+		      # Sets $opt_* as a side effect.
     getopts('oif:', \%opts);  # options as above. Values in %opts
 
 =head1 DESCRIPTION
 
-The getopt() functions processes single-character switches with switch
+The getopt() function processes single-character switches with switch
 clustering.  Pass one argument which is a string containing all switches
 that take an argument.  For each switch found, sets $opt_x (where x is the
-switch name) to the value of the argument, or 1 if no argument.  Switches
-which take an argument don't care whether there is a space between the
-switch and the argument.
+switch name) to the value of the argument if an argument is expected,
+or 1 otherwise.  Switches which take an argument don't care whether
+there is a space between the switch and the argument.
+
+The getopts() function is similar, but you should pass to it the list of all
+switches to be recognized.  If unspecified switches are found on the
+command-line, the user will be warned that an unknown option was given.
 
 Note that, if your code is running under the recommended C<use strict
 'vars'> pragma, you will need to declare these package variables
 with "our":
 
-    our($opt_foo, $opt_bar);
+    our($opt_x, $opt_y);
 
 For those of you who don't like additional global variables being created, getopt()
 and getopts() will also accept a hash reference as an optional second argument. 
@@ -46,7 +50,7 @@ C<-->.  The C<--> will be removed from @ARGV.
 
 @ISA = qw(Exporter);
 @EXPORT = qw(getopt getopts);
-$VERSION = '1.02';
+$VERSION = '1.03';
 
 # Process single-character switches with switch clustering.  Pass one argument
 # which is a string containing all switches that take an argument.  For each
@@ -57,9 +61,11 @@ $VERSION = '1.02';
 # Usage:
 #	getopt('oDI');  # -o, -D & -I take arg.  Sets opt_* as a side effect.
 
-sub getopt ($;$) {
-    local($argumentative, $hash) = @_;
-    local($_,$first,$rest);
+sub getopt (;$$) {
+    my ($argumentative, $hash) = @_;
+    $argumentative = '' if !defined $argumentative;
+    my ($first,$rest);
+    local $_;
     local @EXPORT;
 
     while (@ARGV && ($_ = $ARGV[0]) =~ /^-(.)(.*)/) {
@@ -111,9 +117,10 @@ sub getopt ($;$) {
 #			#  side effect.
 
 sub getopts ($;$) {
-    local($argumentative, $hash) = @_;
-    local(@args,$_,$first,$rest);
-    local($errs) = 0;
+    my ($argumentative, $hash) = @_;
+    my (@args,$first,$rest);
+    my $errs = 0;
+    local $_;
     local @EXPORT;
 
     @args = split( / */, $argumentative );

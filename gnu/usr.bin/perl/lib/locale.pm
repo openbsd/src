@@ -1,5 +1,7 @@
 package locale;
 
+our $VERSION = '1.00';
+
 =head1 NAME
 
 locale - Perl pragma to use and avoid POSIX locales for built-in operations
@@ -25,7 +27,7 @@ locales.
 
 =cut
 
-$locale::hint_bits = 0x800;
+$locale::hint_bits = 0x4;
 
 sub import {
     $^H |= $locale::hint_bits;

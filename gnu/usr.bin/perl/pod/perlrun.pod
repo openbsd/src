@@ -4,7 +4,7 @@ perlrun - how to execute the Perl interpreter
 
 =head1 SYNOPSIS
 
-B<perl>	S<[ B<-CsTuUWX> ]>
+B<perl>	S<[ B<-CsTtuUWX> ]>
 	S<[ B<-hv> ] [ B<-V>[:I<configvar>] ]>
 	S<[ B<-cw> ] [ B<-d>[:I<debugger>] ] [ B<-D>[I<number/list>] ]>
 	S<[ B<-pna> ] [ B<-F>I<pattern> ] [ B<-l>[I<octal>] ] [ B<-0>[I<octal>] ]>
@@ -81,7 +81,7 @@ if you were so inclined, say
     eval 'exec perl -wS $0 ${1+"$@"}'
         if $running_under_some_shell;
 
-to let Perl see the B<-p> switch.  
+to let Perl see the B<-p> switch.
 
 A similar trick involves the B<env> program, if you have it.
 
@@ -166,7 +166,7 @@ common) and how to protect whitespace and these characters to run
 one-liners (see B<-e> below).
 
 On some systems, you may have to change single-quotes to double ones,
-which you must I<not> do on Unix or Plan9 systems.  You might also
+which you must I<not> do on Unix or Plan 9 systems.  You might also
 have to change a single % to a %%.
 
 For example:
@@ -301,9 +301,11 @@ See L<perldebug>.
 sets debugging flags.  To watch how it executes your program, use
 B<-Dtls>.  (This works only if debugging is compiled into your
 Perl.)  Another nice value is B<-Dx>, which lists your compiled
-syntax tree.  And B<-Dr> displays compiled regular expressions. As an
-alternative, specify a number instead of list of letters (e.g., B<-D14> is
-equivalent to B<-Dtls>):
+syntax tree.  And B<-Dr> displays compiled regular expressions;
+the format of the output is explained in L<perldebguts>.
+
+As an alternative, specify a number instead of list of letters (e.g.,
+B<-D14> is equivalent to B<-Dtls>):
 
         1  p  Tokenizing and parsing
         2  s  Stack snapshots
@@ -311,7 +313,7 @@ equivalent to B<-Dtls>):
         8  t  Trace execution
        16  o  Method and overloading resolution
        32  c  String/numeric conversions
-       64  P  Print preprocessor command for -P, source file input state
+       64  P  Print profiling info, preprocessor command for -P, source file input state
       128  m  Memory allocation
       256  f  Format processing
       512  r  Regular expression parsing and execution
@@ -323,15 +325,21 @@ equivalent to B<-Dtls>):
     32768  D  Cleaning up
     65536  S  Thread synchronization
    131072  T  Tokenising
+   262144  R  Include reference counts of dumped variables (eg when using -Ds)
+   524288  J  Do not s,t,P-debug (Jump over) opcodes within package DB
 
 All these flags require B<-DDEBUGGING> when you compile the Perl
-executable.  See the F<INSTALL> file in the Perl source distribution 
+executable (but see L<Devel::Peek>, L<re> which may change this).
+See the F<INSTALL> file in the Perl source distribution
 for how to do this.  This flag is automatically set if you include B<-g>
 option when C<Configure> asks you about optimizer/debugger flags.
 
 If you're just trying to get a print out of each line of Perl code
 as it executes, the way that C<sh -x> provides for shell scripts,
-you can't use Perl's B<-D> switch.  Instead do this 
+you can't use Perl's B<-D> switch.  Instead do this
+
+  # If you have "env" utility
+  env=PERLDB_OPTS="NonStop=1 AutoTrace=1 frame=2" perl -dS program
 
   # Bourne shell syntax
   $ PERLDB_OPTS="NonStop=1 AutoTrace=1 frame=2" perl -dS program
@@ -539,7 +547,7 @@ Here is an efficient way to delete all files older than a week:
 This is faster than using the B<-exec> switch of B<find> because you don't
 have to start a process on every filename found.  It does suffer from
 the bug of mishandling newlines in pathnames, which you can fix if
-you
+you follow the example under B<-0>.
 
 C<BEGIN> and C<END> blocks may be used to capture control before or after
 the implicit program loop, just as in B<awk>.
@@ -568,12 +576,39 @@ the implicit loop, just as in B<awk>.
 
 =item B<-P>
 
-causes your program to be run through the C preprocessor before
+B<NOTE: Use of -P is strongly discouraged because of its inherent
+problems, including poor portability.>
+
+This option causes your program to be run through the C preprocessor before
 compilation by Perl.  Because both comments and B<cpp> directives begin
 with the # character, you should avoid starting comments with any words
 recognized by the C preprocessor such as C<"if">, C<"else">, or C<"define">.
-Also, in some platforms the C preprocessor knows too much: it knows
-about the C++ -style until-end-of-line comments starting with C<"//">.
+
+If you're considering using C<-P>, you might also want to look at the
+Filter::cpp module from CPAN.
+
+The problems of -P include, but are not limited to:
+
+=over 10
+
+=item *
+
+The C<#!> line is stripped, so any switches there don't apply.
+
+=item *
+
+A C<-P> on a C<#!> line doesn't work.
+
+=item *
+
+B<All> lines that begin with (whitespace and) a C<#> but
+do not look like cpp commands, are stripped, including anything
+inside Perl strings, regular expressions, and here-docs .
+
+=item *
+
+In some platforms the C preprocessor knows too much: it knows about
+the C++ -style until-end-of-line comments starting with C<"//">.
 This will cause problems with common Perl constructs like
 
     s/foo//;
@@ -586,6 +621,23 @@ The workaround is to use some other quoting separator than C<"/">,
 like for example C<"!">:
 
     s!foo!!;
+
+
+
+=item *
+
+It requires not only a working C preprocessor but also a working
+F<sed>.  If not on UNIX, you are probably out of luck on this.
+
+=item *
+
+Script line numbers are not preserved.
+
+=item *
+
+The C<-x> does not work with C<-P>.
+
+=back
 
 =item B<-s>
 
@@ -652,6 +704,17 @@ separators, it will first be searched for in the current directory
 before being searched for on the PATH.  On Unix platforms, the
 program will be searched for strictly on the PATH.
 
+=item B<-t>
+
+Like B<-T>, but taint checks will issue warnings rather than fatal
+errors.  These warnings can be controlled normally with C<no warnings
+qw(taint)>.
+
+B<NOTE: this is not a substitute for -T.> This is meant only to be
+used as a temporary development aid while securing legacy code:
+for real production code and for new secure code written from scratch
+always use the real B<-T>.
+
 =item B<-T>
 
 forces "taint" checks to be turned on so you can test them.  Ordinarily
@@ -701,7 +764,7 @@ values of @INC.
 =item B<-V:>I<name>
 
 Prints to STDOUT the value of the named configuration variable.
-For example, 
+For example,
 
     $ perl -V:man.dir
 
@@ -784,11 +847,147 @@ The program should instead say:
 =item PERL5OPT
 
 Command-line options (switches).  Switches in this variable are taken
-as if they were on every Perl command line.  Only the B<-[DIMUdmw]>
+as if they were on every Perl command line.  Only the B<-[DIMUdmtw]>
 switches are allowed.  When running taint checks (because the program
 was running setuid or setgid, or the B<-T> switch was used), this
 variable is ignored.  If PERL5OPT begins with B<-T>, tainting will be
 enabled, and any subsequent options ignored.
+
+=item PERLIO
+
+A space (or colon) separated list of PerlIO layers. If perl is built
+to use PerlIO system for IO (the default) these layers effect perl's IO.
+
+It is conventional to start layer names with a colon e.g. C<:perlio> to
+emphasise their similarity to variable "attributes". But the code that parses
+layer specification strings (which is also used to decode the PERLIO
+environment variable) treats the colon as a separator.
+
+The list becomes the default for I<all> perl's IO. Consequently only built-in
+layers can appear in this list, as external layers (such as :encoding()) need
+IO in  order to load them!. See L<"open pragma"|open> for how to add external
+encodings as defaults.
+
+The layers that it makes sense to include in the PERLIO environment
+variable are summarised below. For more details see L<PerlIO>.
+
+=over 8
+
+=item :bytes
+
+Turns I<off> the C<:utf8> flag for the layer below.
+Unlikely to be useful in global PERLIO environment variable.
+
+=item :crlf
+
+A layer that implements DOS/Windows like CRLF line endings.
+On read converts pairs of CR,LF to a single "\n" newline character.
+On write converts each "\n" to a CR,LF pair.
+Based on the C<:perlio> layer.
+
+=item :mmap
+
+A layer which implements "reading" of files by using C<mmap()> to
+make (whole) file appear in the process's address space, and then
+using that as PerlIO's "buffer". This I<may> be faster in certain
+circumstances for large files, and may result in less physical memory
+use when multiple processes are reading the same file.
+
+Files which are not C<mmap()>-able revert to behaving like the C<:perlio>
+layer. Writes also behave like C<:perlio> layer as C<mmap()> for write
+needs extra house-keeping (to extend the file) which negates any advantage.
+
+The C<:mmap> layer will not exist if platform does not support C<mmap()>.
+
+=item :perlio
+
+A from scratch implementation of buffering for PerlIO. Provides fast
+access to the buffer for C<sv_gets> which implements perl's readline/E<lt>E<gt>
+and in general attempts to minimize data copying.
+
+C<:perlio> will insert a C<:unix> layer below itself to do low level IO.
+
+=item :raw
+
+Applying the <:raw> layer is equivalent to calling C<binmode($fh)>.
+It makes the stream pass each byte as-is without any translation.
+In particular CRLF translation, and/or :utf8 inuited from locale
+are disabled.
+
+Arranges for all accesses go straight to the lowest buffered layer provided
+by the configration. That is it strips off any layers above that layer.
+
+In Perl 5.6 and some books the C<:raw> layer (previously sometimes also
+referred to as a "discipline") is documented as the inverse of the
+C<:crlf> layer. That is no longer the case - other layers which would
+alter binary nature of the stream are also disabled.  If you want UNIX
+line endings on a platform that normally does CRLF translation, but still
+want UTF-8 or encoding defaults the appropriate thing to do is to add
+C<:perlio> to PERLIO environment variable.
+
+=item :stdio
+
+This layer provides PerlIO interface by wrapping system's ANSI C "stdio"
+library calls. The layer provides both buffering and IO.
+Note that C<:stdio> layer does I<not> do CRLF translation even if that
+is platforms normal behaviour. You will need a C<:crlf> layer above it
+to do that.
+
+=item :unix
+
+Lowest level layer which provides basic PerlIO operations in terms of
+UNIX/POSIX numeric file descriptor calls
+C<open(), read(), write(), lseek(), close()>
+
+=item :utf8
+
+Turns on a flag on the layer below to tell perl that data sent to the
+stream should be converted to perl internal "utf8" form and that data from the
+stream should be considered as so encoded. On ASCII based platforms the
+encoding is UTF-8 and on EBCDIC platforms UTF-EBCDIC.
+May be useful in PERLIO environment variable to make UTF-8 the
+default. (To turn off that behaviour use C<:bytes> layer.)
+
+=item :win32
+
+On Win32 platforms this I<experimental> layer uses native "handle" IO
+rather than unix-like numeric file descriptor layer. Known to be
+buggy in this release.
+
+=back
+
+On all platforms the default set of layers should give acceptable results.
+
+For UNIX platforms that will equivalent of "unix perlio" or "stdio".
+Configure is setup to prefer "stdio" implementation if system's library
+provides for fast access to the buffer, otherwise it uses the "unix perlio"
+implementation.
+
+On Win32 the default in this release is "unix crlf". Win32's "stdio"
+has a number of bugs/mis-features for perl IO which are somewhat
+C compiler vendor/version dependent. Using our own C<crlf> layer as
+the buffer avoids those issues and makes things more uniform.
+The C<crlf> layer provides CRLF to/from "\n" conversion as well as
+buffering.
+
+This release uses C<unix> as the bottom layer on Win32 and so still uses C
+compiler's numeric file descriptor routines. There is an experimental native
+C<win32> layer which is expected to be enhanced and should eventually replace
+the C<unix> layer.
+
+=item PERLIO_DEBUG
+
+If set to the name of a file or device then certain operations of PerlIO
+sub-system will be logged to that file (opened as append). Typical uses
+are UNIX:
+
+   PERLIO_DEBUG=/dev/tty perl script ...
+
+and Win32 approximate equivalent:
+
+   set PERLIO_DEBUG=CON
+   perl script ...
+
 
 =item PERLLIB
 
@@ -829,14 +1028,19 @@ after compilation.
 
 Relevant only if your perl executable was built with B<-DDEBUGGING>,
 this controls the behavior of global destruction of objects and other
-references.
+references.  See L<perlhack/PERL_DESTRUCT_LEVEL> for more information.
+
+=item PERL_ENCODING
+
+If using the C<encoding> pragma without an explicit encoding name, the
+PERL_ENCODING environment variable is consulted for an encoding name.
 
 =item PERL_ROOT (specific to the VMS port)
 
 A translation concealed rooted logical name that contains perl and the
 logical device for the @INC path on VMS only.  Other logical names that
-affect perl on VMS include PERLSHR, PERL_ENV_TABLES, and 
-SYS$TIMEZONE_DIFFERENTIAL but are optional and discussed further in 
+affect perl on VMS include PERLSHR, PERL_ENV_TABLES, and
+SYS$TIMEZONE_DIFFERENTIAL but are optional and discussed further in
 L<perlvms> and in F<README.vms> in the Perl source distribution.
 
 =item SYS$LOGIN (specific to the VMS port)

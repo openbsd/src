@@ -13,7 +13,7 @@ int
 main(int argc, char *argv[])
 {
     int i;
-    int len;
+    size_t len;
     char root[MAX_PATH];
     char *dummy;
     char volname[MAX_PATH];

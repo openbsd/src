@@ -99,12 +99,20 @@ print "ok 35\n" if sprintf("%vd", $a) eq '248.444';
 # UTF8 ~ behaviour
 #
 
+my $Is_EBCDIC = (ord('A') == 193) ? 1 : 0;
+
 my @not36;
 
 for (0x100...0xFFF) {
   $a = ~(chr $_);
-  push @not36, sprintf("%#03X", $_)
-      if $a ne chr(~$_) or length($a) != 1 or ~$a ne chr($_);
+  if ($Is_EBCDIC) {
+      push @not36, sprintf("%#03X", $_)
+          if $a ne chr(~$_) or length($a) != 1;
+  }
+  else {
+      push @not36, sprintf("%#03X", $_)
+          if $a ne chr(~$_) or length($a) != 1 or ~$a ne chr($_);
+  }
 }
 if (@not36) {
     print "# test 36 failed\n";
@@ -117,10 +125,17 @@ my @not37;
 for my $i (0xEEE...0xF00) {
   for my $j (0x0..0x120) {
     $a = ~(chr ($i) . chr $j);
-    push @not37, sprintf("%#03X %#03X", $i, $j)
-	if $a ne chr(~$i).chr(~$j) or
-	   length($a) != 2 or 
-           ~$a ne chr($i).chr($j);
+    if ($Is_EBCDIC) {
+        push @not37, sprintf("%#03X %#03X", $i, $j)
+	    if $a ne chr(~$i).chr(~$j) or
+	       length($a) != 2;
+    }
+    else {
+        push @not37, sprintf("%#03X %#03X", $i, $j)
+	    if $a ne chr(~$i).chr(~$j) or
+	       length($a) != 2 or 
+               ~$a ne chr($i).chr($j);
+    }
   }
 }
 if (@not37) {
@@ -129,7 +144,7 @@ if (@not37) {
 }
 print "ok 37\n";
 
-print "not " unless ~chr(~0) eq "\0";
+print "not " unless ~chr(~0) eq "\0" or $Is_EBCDIC;
 print "ok 38\n";
 
 my @not39;

@@ -161,8 +161,8 @@ you:
 
 If the B<ExtUtils::Embed> module isn't part of your Perl distribution,
 you can retrieve it from
-http://www.perl.com/perl/CPAN/modules/by-module/ExtUtils/.  (If
-this documentation came from your Perl distribution, then you're
+http://www.perl.com/perl/CPAN/modules/by-module/ExtUtils/
+(If this documentation came from your Perl distribution, then you're
 running 5.004 or better and you already have it.)
 
 The B<ExtUtils::Embed> kit on CPAN also contains all source code for
@@ -185,6 +185,7 @@ version of I<miniperlmain.c> containing the essentials of embedding:
     {
         my_perl = perl_alloc();
         perl_construct(my_perl);
+	PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
         perl_parse(my_perl, NULL, argc, argv, (char **)NULL);
         perl_run(my_perl);
         perl_destruct(my_perl);
@@ -238,6 +239,7 @@ That's shown below, in a program I'll call I<showtime.c>.
         perl_construct(my_perl);
 
         perl_parse(my_perl, NULL, argc, argv, NULL);
+	PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
 
         /*** skipping perl_run() ***/
 
@@ -270,10 +272,9 @@ yielding the number of seconds that elapsed between January 1, 1970
 (the beginning of the Unix epoch), and the moment I began writing this
 sentence.
 
-In this particular case we don't have to call I<perl_run>, but in
-general it's considered good practice to ensure proper initialization
-of library code, including execution of all object C<DESTROY> methods
-and package C<END {}> blocks.
+In this particular case we don't have to call I<perl_run>, as we set 
+the PL_exit_flag PERL_EXIT_DESTRUCT_END which executes END blocks in
+perl_destruct.
 
 If you want to pass arguments to the Perl subroutine, you can add
 strings to the C<NULL>-terminated C<args> list passed to
@@ -311,6 +312,7 @@ the first, a C<float> from the second, and a C<char *> from the third.
        perl_construct( my_perl );
 
        perl_parse(my_perl, NULL, 3, embedding, NULL);
+       PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
        perl_run(my_perl);
 
        /** Treat $a as an integer **/
@@ -488,6 +490,7 @@ been wrapped here):
 
      perl_construct(my_perl);
      perl_parse(my_perl, NULL, 3, embedding, NULL);
+     PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
 
      sv_setpv(text, "When he is at a convenience store and the bill comes to some amount like 76 cents, Maynard is aware that there is something he *should* do, something that will enable him to get back a quarter, but he has no idea *what*.  He fumbles through his red squeezey changepurse and gives the boy three extra pennies with his dollar, hoping that he might luck into the correct amount.  The boy gives him back two of his own pennies and then the big shiny quarter that is his prize. -RICHH");
 
@@ -612,6 +615,7 @@ deep breath...
       perl_construct( my_perl );
 
       perl_parse(my_perl, NULL, 2, my_argv, (char **)NULL);
+      PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
       perl_run(my_perl);
 
       PerlPower(3, 4);                      /*** Compute 3 ** 4 ***/
@@ -761,7 +765,7 @@ with L<perlfunc/my> whenever possible.
      perl_construct(perl);
 
      exitstatus = perl_parse(perl, NULL, 2, embedding, NULL);
-
+     PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
      if(!exitstatus) {
         exitstatus = perl_run(perl);
 
@@ -788,7 +792,7 @@ Now compile:
 
  % cc -o persistent persistent.c `perl -MExtUtils::Embed -e ccopts -e ldopts`
 
-Here's a example script file:
+Here's an example script file:
 
  #test.pl
  my $string = "hello";
@@ -807,6 +811,14 @@ Now run:
  already compiled Embed::test_2epl->handler
  foo says: hello
  Enter file name: ^C
+
+=head2 Execution of END blocks
+
+Traditionally END blocks have been executed at the end of the perl_run.
+This causes problems for applications that never call perl_run. Since
+perl 5.7.2 you can specify C<PL_exit_flags |= PERL_EXIT_DESTRUCT_END>
+to get the new behaviour. This also enables the running of END blocks if
+the perl_prase fails and C<perl_destruct> will return the exit value.
 
 =head2 Maintaining multiple interpreter instances
 
@@ -1038,7 +1050,7 @@ Christiansen, Guy Decoux, Hallvard Furuseth, Dov Grobgeld, and Ilya
 Zakharevich.
 
 Doug MacEachern has an article on embedding in Volume 1, Issue 4 of
-The Perl Journal (http://tpj.com).  Doug is also the developer of the
+The Perl Journal ( http://www.tpj.com/ ).  Doug is also the developer of the
 most widely-used Perl embedding: the mod_perl system
 (perl.apache.org), which embeds Perl in the Apache web server.
 Oracle, Binary Evolution, ActiveState, and Ben Sugars's nsapi_perl

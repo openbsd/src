@@ -11,7 +11,7 @@ BEGIN {
 
 use warnings;
 
-print "1..40\n";
+print "1..47\n";
 
 # type coersion on assignment
 $foo = 'foo';
@@ -97,15 +97,28 @@ $x = "ok 17\n";
 %x = ("ok 19" => "\n");
 sub x { "ok 20\n" }
 print ${*x{SCALAR}}, @{*x{ARRAY}}, %{*x{HASH}}, &{*x{CODE}};
+format x =
+ok 21
+.
+print ref *x{FORMAT} eq "FORMAT" ? "ok 21\n" : "not ok 21\n";
 *x = *STDOUT;
-print *{*x{GLOB}} eq "*main::STDOUT" ? "ok 21\n" : "not ok 21\n";
-print {*x{IO}} "ok 22\n";
-print {*x{FILEHANDLE}} "ok 23\n";
+print *{*x{GLOB}} eq "*main::STDOUT" ? "ok 22\n" : "not ok 22\n";
+print {*x{IO}} "ok 23\n";
+
+{
+	my $warn;
+	local $SIG{__WARN__} = sub {
+		$warn .= $_[0];
+	};
+	my $val = *x{FILEHANDLE};
+	print {*x{IO}} ($warn =~ /is deprecated/ ? "ok 24\n" : "not ok 24\n");
+	
+}
 
 # test if defined() doesn't create any new symbols
 
 {
-    my $test = 23;
+    my $test = 24;
 
     my $a = "SYM000";
     print "not " if defined *{$a};
@@ -131,7 +144,7 @@ print {*x{FILEHANDLE}} "ok 23\n";
 # although it *should* if you're talking about magicals
 
 {
-    my $test = 29;
+    my $test = 30;
 
     my $a = "]";
     print "not " unless defined ${$a};
@@ -164,6 +177,14 @@ print {*x{FILEHANDLE}} "ok 23\n";
 }
 
 
+# [ID 20010526.001] localized glob loses value when assigned to
+
+$j=1; %j=(a=>1); @j=(1); local *j=*j; *j = sub{};
+
+print $j    == 1 ? "ok 41\n"  : "not ok 41\n";
+print $j{a} == 1 ? "ok 42\n"  : "not ok 42\n";
+print $j[0] == 1 ? "ok 43\n" : "not ok 43\n";
+
 # does pp_readline() handle glob-ness correctly?
 
 {
@@ -172,5 +193,20 @@ print {*x{FILEHANDLE}} "ok 23\n";
     print $g;
 }
 
+{
+    my $w = '';
+    $SIG{__WARN__} = sub { $w = $_[0] };
+    sub abc1 ();
+    local *abc1 = sub { };
+    print $w eq '' ? "ok 45\n" : "not ok 45\n# $w";
+    sub abc2 ();
+    local *abc2;
+    *abc2 = sub { };
+    print $w eq '' ? "ok 46\n" : "not ok 46\n# $w";
+    sub abc3 ();
+    *abc3 = sub { };
+    print $w =~ /Prototype mismatch/ ? "ok 47\n" : "not ok 47\n# $w";
+}
+
 __END__
-ok 40
+ok 44

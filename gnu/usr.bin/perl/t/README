@@ -1,6 +1,11 @@
-This is the perl test library.  To run all the tests, just type 'TEST'.
+This is the perl test library.  To run the test suite, just type './TEST'
+or 'make test' from the build directory above t/.  See also the section
+"Special Make Test Targets" in pod/perlhack.pod to learn about other
+specific test commands.
 
 To add new tests, just look at the current tests and do likewise.
+The library t/test.pl provides some utility functions that you can use
+in most tests, except in the most basic ones.
 
 If a test fails, run it by itself to see if it prints any informative
 diagnostics.  If not, modify the test to print informative diagnostics.
@@ -10,7 +15,17 @@ ignores lines beginning with '#'.
 
 If you know that Perl is basically working but expect that some tests
 will fail, you may want to use Test::Harness thusly:
+        cd t
 	./perl -I../lib harness
 This method pinpoints failed tests automatically.
 
 If you come up with new tests, please send them to perlbug@perl.org.
+
+Tests in the t/base/ directory ought to be runnable with plain miniperl.
+That is, they should not require Config.pm nor should they require any
+extensions to have been built.  TEST will abort if any tests in the
+t/base/ directory fail.
+
+Tests in the t/comp/, t/cmd/, t/run/, t/io/, and t/op/ directories should
+also be runnable by miniperl and not require Config.pm, but failures
+to comply will not cause TEST to abort like for t/base/.

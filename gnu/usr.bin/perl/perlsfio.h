@@ -1,4 +1,16 @@
+/*    perlsfio.h
+ *
+ *    Copyright (c) 1987-2002, Larry Wall
+ *
+ *    You may distribute under the terms of either the GNU General Public
+ *    License or the Artistic License, as specified in the README file.
+ *
+ */
+
 /* The next #ifdef should be redundant if Configure behaves ... */
+#ifndef FILE
+#define FILE FILE
+#endif
 #ifdef I_SFIO
 #include <sfio.h>
 #endif
@@ -15,6 +27,8 @@ extern int	_stdprintf _ARG_((const char*, ...));
 #define PerlIO_stderr()			sfstderr
 #define PerlIO_stdout()			sfstdout
 #define PerlIO_stdin()			sfstdin
+
+#define PerlIO_isutf8(f)		0
 
 #define PerlIO_printf			sfprintf
 #define PerlIO_stdoutf			_stdprintf
@@ -45,10 +59,12 @@ extern int	_stdprintf _ARG_((const char*, ...));
 #define PerlIO_rewind(f)		(void) sfseek((f),0L,0)
 #define PerlIO_tmpfile()		sftmp(0)
 
-#define PerlIO_importFILE(f,fl)		Perl_croak(aTHX_ "Import from FILE * unimplemeted")
-#define PerlIO_exportFILE(f,fl)		Perl_croak(aTHX_ "Export to FILE * unimplemeted")
+#if 0
+#define PerlIO_importFILE(f,fl)		((void) Perl_croak(aTHX_ "Import from FILE * unimplemented"), NULL)
 #define PerlIO_findFILE(f)		NULL
-#define PerlIO_releaseFILE(p,f)		Perl_croak(aTHX_ "Release of FILE * unimplemeted")
+#endif
+#define PerlIO_exportFILE(f,fl)		Perl_croak(aTHX_ "Export to FILE * unimplemented")
+#define PerlIO_releaseFILE(p,f)		Perl_croak(aTHX_ "Release of FILE * unimplemented")
 
 #define PerlIO_setlinebuf(f)		sfset(f,SF_LINE,1)
 

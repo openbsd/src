@@ -1,49 +1,157 @@
 #!./perl
 
-# Last change: Fri May 28 03:16:57 BST 1999
-
 # This is written in a peculiar style, since we're trying to avoid
 # most of the constructs we'll be testing for.
 
 $| = 1;
 
-if ($#ARGV >= 0 && $ARGV[0] eq '-v') {
-    $verbose = 1;
-    shift;
+# Let tests know they're running in the perl core.  Useful for modules
+# which live dual lives on CPAN.
+$ENV{PERL_CORE} = 1;
+
+# remove empty elements due to insertion of empty symbols via "''p1'" syntax
+@ARGV = grep($_,@ARGV) if $^O eq 'VMS';
+
+# Cheesy version of Getopt::Std.  Maybe we should replace it with that.
+@argv = ();
+if ($#ARGV >= 0) {
+    foreach my $idx (0..$#ARGV) {
+	push( @argv, $ARGV[$idx] ), next unless $ARGV[$idx] =~ /^-(\S+)$/;
+	$core    = 1 if $1 eq 'core';
+	$verbose = 1 if $1 eq 'v';
+	$torture = 1 if $1 eq 'torture';
+	$with_utf= 1 if $1 eq 'utf8';
+        $byte_compile = 1 if $1 eq 'bytecompile';
+        $compile = 1 if $1 eq 'compile';
+	if ($1 =~ /^deparse(,.+)?$/) {
+	    $deparse = 1;
+	    $deparse_opts = $1;
+	}
+    }
 }
+@ARGV = @argv;
 
 chdir 't' if -f 't/TEST';
 
 die "You need to run \"make test\" first to set things up.\n"
-  unless -e 'perl' or -e 'perl.exe';
+  unless -e 'perl' or -e 'perl.exe' or -e 'perl.pm';
+
+if ($ENV{PERL_3LOG}) { # Tru64 third(1) tool, see perlhack
+    unless (-x 'perl.third') {
+	unless (-x '../perl.third') {
+	    die "You need to run \"make perl.third first.\n";
+	}
+	else {
+	    print "Symlinking ../perl.third as perl.third...\n";
+	    die "Failed to symlink: $!\n"
+		unless symlink("../perl.third", "perl.third");
+	    die "Symlinked but no executable perl.third: $!\n"
+		unless -x 'perl.third';
+	}
+    }
+}
 
 # check leakage for embedders
 $ENV{PERL_DESTRUCT_LEVEL} = 2 unless exists $ENV{PERL_DESTRUCT_LEVEL};
 
 $ENV{EMXSHELL} = 'sh';        # For OS/2
 
-if ($#ARGV == -1) {
-    @ARGV = split(/[ \n]/,
-      `echo base/*.t comp/*.t cmd/*.t run/*.t io/*.t; echo op/*.t pragma/*.t lib/*.t`);
+# Roll your own File::Find!
+use TestInit;
+use File::Spec;
+my $curdir = File::Spec->curdir;
+my $updir  = File::Spec->updir;
+
+sub _find_tests {
+    my($dir) = @_;
+    opendir DIR, $dir || die "Trouble opening $dir: $!";
+    foreach my $f (sort { $a cmp $b } readdir DIR) {
+        next if $f eq $curdir or $f eq $updir;
+
+        my $fullpath = File::Spec->catfile($dir, $f);
+
+        _find_tests($fullpath) if -d $fullpath;
+        $fullpath = VMS::Filespec::unixify($fullpath) if $^O eq 'VMS';
+        push @ARGV, $fullpath if $f =~ /\.t$/;
+    }
 }
 
-# %infinite = ( 'comp/require.t', 1, 'op/bop.t', 1, 'lib/hostname.t', 1 ); 
+sub _quote_args {
+    my ($args) = @_;
+    my $argstring = '';
 
-_testprogs('perl', @ARGV);
-_testprogs('compile', @ARGV) if (-e "../testcompile"); 
+    foreach (split(/\s+/,$args)) {
+       # In VMS protect with doublequotes because otherwise
+       # DCL will lowercase -- unless already doublequoted.
+       $_ = q(").$_.q(") if ($^O eq 'VMS') && !/^\"/ && length($_) > 0;
+       $argstring .= ' ' . $_;
+    }
+    return $argstring;
+}
+
+unless (@ARGV) {
+    foreach my $dir (qw(base comp cmd run io op uni)) {
+        _find_tests($dir);
+    }
+    _find_tests("lib") unless $core;
+    my $mani = File::Spec->catfile($updir, "MANIFEST");
+    if (open(MANI, $mani)) {
+        while (<MANI>) { # similar code in t/harness
+	    if (m!^(ext/\S+/?(?:[^/\s]+\.t|test\.pl)|lib/\S+?(?:\.t|test\.pl))\s!) {
+		$t = $1;
+		if (!$core || $t =~ m!^lib/[a-z]!)
+		{
+		    $path = File::Spec->catfile($updir, $t);
+		    push @ARGV, $path;
+		    $name{$path} = $t;
+		}
+	    }
+	}
+	close MANI;
+    } else {
+        warn "$0: cannot open $mani: $!\n";
+    }
+    unless ($core) {
+	_find_tests('pod');  
+	_find_tests('x2p');
+	_find_tests('japh') if $torture;
+    }
+}
+
+# Tests known to cause infinite loops for the perlcc tests.
+# %infinite = ( 'comp/require.t', 1, 'op/bop.t', 1, 'lib/hostname.t', 1 );
+%infinite = ();
+
+if ($deparse) {
+    _testprogs('deparse', '',   @ARGV);
+}
+elsif( $compile || $byte_compile ) { 
+    _testprogs('compile', '',   @ARGV) if $compile;
+    _testprogs('compile', '-B', @ARGV) if $byte_compile;
+}
+else {
+    _testprogs('compile', '',   @ARGV) if -e "../testcompile";
+    _testprogs('perl',    '',   @ARGV);
+}
 
 sub _testprogs {
     $type = shift @_;
+    $args = shift;
     @tests = @_;
 
-
     print <<'EOT' if ($type eq 'compile');
---------------------------------------------------------------------------------
+------------------------------------------------------------------------------
 TESTING COMPILER
---------------------------------------------------------------------------------
+------------------------------------------------------------------------------
 EOT
 
-    $ENV{PERLCC_TIMEOUT} = 120 
+    print <<'EOT' if ($type eq 'deparse');
+------------------------------------------------------------------------------
+TESTING DEPARSER
+------------------------------------------------------------------------------
+EOT
+
+    $ENV{PERLCC_TIMEOUT} = 120
           if ($type eq 'compile' && !$ENV{PERLCC_TIMEOUT});
 
     $bad = 0;
@@ -51,69 +159,155 @@ EOT
     $total = @tests;
     $files  = 0;
     $totmax = 0;
-    $maxlen = 0;
-    foreach (@tests) {
-	$len = length;
+
+    foreach my $t (@tests) {
+      unless (exists $name{$t}) {
+        my $tname = File::Spec->catfile('t',$t);
+        $tname = VMS::Filespec::unixify($tname) if $^O eq 'VMS';
+        $name{$t} = $tname;
+      }
+    }
+    my $maxlen = 0;
+    foreach (@name{@tests}) {
+	s/\.\w+\z/./;
+	my $len = length ;
 	$maxlen = $len if $len > $maxlen;
     }
-    # +3 : we want three dots between the test name and the "ok"
-    # -2 : the .t suffix
-    $dotdotdot = $maxlen + 3 - 2;
+    # + 3 : we want three dots between the test name and the "ok"
+    $dotdotdot = $maxlen + 3 ;
     while ($test = shift @tests) {
 
 	if ( $infinite{$test} && $type eq 'compile' ) {
-	    print STDERR "$test creates infinite loop! Skipping.\n"; 
+	    print STDERR "$test creates infinite loop! Skipping.\n";
             next;
 	}
 	if ($test =~ /^$/) {
 	    next;
 	}
-	$te = $test;
-	chop($te);
-	print "$te" . '.' x ($dotdotdot - length($te));
-
-	open(SCRIPT,"<$test") or die "Can't run $test.\n";
-	$_ = <SCRIPT>;
-	close(SCRIPT);
-	if (/#!.*perl(.*)$/) {
-	    $switch = $1;
-	    if ($^O eq 'VMS') {
-		# Must protect uppercase switches with "" on command line
-		$switch =~ s/-([A-Z]\S*)/"-$1"/g;
+	if ($type eq 'deparse') {
+	    if ($test eq "comp/redef.t") {
+		# Redefinition happens at compile time
+		next;
+	    }
+	    elsif ($test eq "lib/switch.t") {
+		# B::Deparse doesn't support source filtering
+		next;
 	    }
 	}
-	else {
-	    $switch = '';
+	$te = $name{$test} . '.' x ($dotdotdot - length($name{$test}));
+
+	if ($^O ne 'VMS') {  # defer printing on VMS due to piping bug
+	    print $te;
+	    $te = '';
 	}
 
-	if ($type eq 'perl') {
-	    open(RESULTS,"./perl$switch $test |") or print "can't run.\n";
-	}
-	else {
-	    open(RESULTS, "./perl -I../lib ../utils/perlcc -o ./$test.plc ./$test "
-	    		 ." && ./$test.plc |")
-		or print "can't compile.\n";
-        unlink "./$test.plc";
+	$test = $OVER{$test} if exists $OVER{$test};
+
+ 	open(SCRIPT,"<$test") or die "Can't run $test.\n";
+ 	$_ = <SCRIPT>;
+ 	close(SCRIPT) unless ($type eq 'deparse');
+ 	if (/#!.*\bperl.*\s-\w*([tT])/) {
+ 	    $switch = qq{"-$1"};
+ 	}
+ 	else {
+ 	    $switch = '';
+ 	}
+
+        my $test_executable; # for 'compile' tests
+	my $file_opts = "";
+	if ($type eq 'deparse') {
+	    # Look for #line directives which change the filename
+	    while (<SCRIPT>) {
+		$file_opts .= ",-f$3$4"
+			if /^#\s*line\s+(\d+)\s+((\w+)|"([^"]+)")/;
+	    }
+	    close(SCRIPT);
 	}
 
-	$ok = 0;
-	$next = 0;
+	my $utf = $with_utf ? '-I../lib -Mutf8' : '';
+	my $testswitch = '-I. -MTestInit'; # -T will strict . from @INC
+	if ($type eq 'deparse') {
+	    my $deparse =
+		"./perl $testswitch $switch -I../lib -MO=-qq,Deparse,".
+		"-l$deparse_opts$file_opts ".
+		"$test > $test.dp ".
+		"&& ./perl $testswitch $switch -I../lib $test.dp |";
+	    open(RESULTS, $deparse)
+		or print "can't deparse '$deparse': $!.\n";
+	}
+	elsif ($type eq 'perl') {
+	    my $perl = $ENV{PERL} || './perl';
+	    my $redir = ($^O eq 'VMS' ? '2>&1' : '');
+	    my $run = "$perl" . _quote_args("$testswitch $switch $utf") . " $test $redir|";
+	    open(RESULTS,$run) or print "can't run '$run': $!.\n";
+	}
+	else {
+	    my $compile;
+            my $pl2c = "$testswitch -I../lib ../utils/perlcc --testsuite " .
+              # -O9 for good measure, -fcog is broken ATM
+                       "$switch -Wb=-O9,-fno-cog -L .. " .
+                       "-I \".. ../lib/CORE\" $args $utf $test -o ";
+
+            if( $^O eq 'MSWin32' ) {
+                $test_executable = "$test.exe";
+                # hopefully unused name...
+                open HACK, "> xweghyz.pl";
+                print HACK <<EOT;
+#!./perl
+
+open HACK, '.\\perl $pl2c $test_executable |';
+# cl.exe prints the name of the .c file on stdout (\%^\$^#)
+while(<HACK>) {m/^\\w+\\.[cC]\$/ && next;print}
+open HACK, '$test_executable |';
+while(<HACK>) {print}
+EOT
+                close HACK;
+                $compile = 'xweghyz.pl |';
+            }
+            else {
+                $test_executable = "$test.plc";
+                $compile = "./perl $pl2c $test_executable && $test_executable |";
+            }
+            unlink $test_executable if -f $test_executable;
+	    open(RESULTS, $compile)
+		or print "can't compile '$compile': $!.\n";
+	}
+
+        $ok = 0;
+        $next = 0;
 	while (<RESULTS>) {
+	    next if /^\s*$/; # skip blank lines
 	    if ($verbose) {
 		print $_;
 	    }
 	    unless (/^#/) {
-		if (/^1\.\.([0-9]+)/) {
+		if (/^1\.\.([0-9]+)( todo ([\d ]+))?/) {
 		    $max = $1;
+                    %todo = map { $_ => 1 } split / /, $3 if $3;
 		    $totmax += $max;
 		    $files += 1;
 		    $next = 1;
 		    $ok = 1;
 		}
 		else {
-		    $next = $1, $ok = 0, last if /^not ok ([0-9]*)/;
-		    if (/^ok (\d+)(\s*#.*)?$/ && $1 == $next) {
-			$next = $next + 1;
+		    if (/^(not )?ok (\d+)[^#]*(\s*#.*)?/ &&
+			$2 == $next)
+		    {
+			my($not, $num, $extra) = ($1, $2, $3);
+			my($istodo) = $extra =~ /^\s*#\s*TODO/ if $extra;
+                        $istodo = 1 if $todo{$num};
+
+			if( $not && !$istodo ) {
+			    $ok = 0;
+			    $next = $num;
+			    last;
+			}
+			else {
+			    $next = $next + 1;
+			}
+                    }
+                    elsif (/^Bail out!\s*(.*)/i) { # magic words
+                        die "FAILED--Further testing stopped" . ($1 ? ": $1\n" : ".\n");
 		    }
 		    else {
 			$ok = 0;
@@ -122,20 +316,36 @@ EOT
 	    }
 	}
 	close RESULTS;
+	if ($type eq 'deparse') {
+	    unlink "./$test.dp";
+	}
+	if ($ENV{PERL_3LOG}) {
+	    my $tpp = $test;
+	    $tpp =~ s:^\.\./::;
+	    $tpp =~ s:/:_:g;
+	    $tpp =~ s:\.t$:.3log:;
+	    rename("perl.3log", $tpp) ||
+		die "rename: perl3.log to $tpp: $!\n";
+	}
 	$next = $next - 1;
-	if ($ok && $next == $max) {
+        # test if the compiler compiled something
+        if( $type eq 'compile' && !-e "$test_executable" ) {
+            $ok = 0;
+            print "Test did not compile\n";
+        }
+	if ($ok && $next == $max ) {
 	    if ($max) {
-		print "ok\n";
+		print "${te}ok\n";
 		$good = $good + 1;
 	    }
 	    else {
-		print "skipping test on this platform\n";
+		print "${te}skipping test on this platform\n";
 		$files -= 1;
 	    }
 	}
 	else {
 	    $next += 1;
-	    print "FAILED at test $next\n";
+	    print "${te}FAILED at test $next\n";
 	    $bad = $bad + 1;
 	    $_ = $test;
 	    if (/^base/) {
@@ -161,22 +371,41 @@ EOT
 	else {
 	    warn "Failed $bad test scripts out of $files, $pct% okay.\n";
 	}
-	warn <<'SHRDLU';
-   ### Since not all tests were successful, you may want to run some
-   ### of them individually and examine any diagnostic messages they
-   ### produce.  See the INSTALL document's section on "make test".
-   ### If you are testing the compiler, then ignore this message 
-   ### and run 
-   ###      ./perl harness
-   ### in the directory ./t.
-SHRDLU
-	warn <<'SHRDLU' if $good / $total > 0.8;
-   ###
-   ### Since most tests were successful, you have a good chance to
-   ### get information with better granularity by running
-   ###     ./perl harness 
-   ### in directory ./t.
-SHRDLU
+	warn <<'SHRDLU_1';
+### Since not all tests were successful, you may want to run some of
+### them individually and examine any diagnostic messages they produce.
+### See the INSTALL document's section on "make test".
+SHRDLU_1
+	warn <<'SHRDLU_2' if $good / $total > 0.8;
+### You have a good chance to get more information by running
+###   ./perl harness
+### in the 't' directory since most (>=80%) of the tests succeeded.
+SHRDLU_2
+        if (eval {require Config; import Config; 1}) {
+	    if ($Config{usedl} && (my $p = $Config{ldlibpthname})) {
+		warn <<SHRDLU_3;
+### You may have to set your dynamic library search path,
+### $p, to point to the build directory:
+SHRDLU_3
+                if (exists $ENV{$p} && $ENV{$p} ne '') {
+		    warn <<SHRDLU_4a;
+###   setenv $p `pwd`:\$$p; cd t; ./perl harness
+###   $p=`pwd`:\$$p; export $p; cd t; ./perl harness
+###   export $p=`pwd`:\$$p; cd t; ./perl harness
+SHRDLU_4a
+                } else {
+		    warn <<SHRDLU_4b;
+###   setenv $p `pwd`; cd t; ./perl harness
+###   $p=`pwd`; export $p; cd t; ./perl harness
+###   export $p=`pwd`; cd t; ./perl harness
+SHRDLU_4b
+                }    
+		warn <<SHRDLU_5;
+### for csh-style shells, like tcsh; or for traditional/modern
+### Bourne-style shells, like bash, ksh, and zsh, respectively.
+SHRDLU_5
+            }
+	}
     }
     ($user,$sys,$cuser,$csys) = times;
     print sprintf("u=%g  s=%g  cu=%g  cs=%g  scripts=%d  tests=%d\n",

@@ -6,7 +6,7 @@ perllol - Manipulating Arrays of Arrays in Perl
 
 =head2 Declaration and Access of Arrays of Arrays
 
-The simplest thing to build an array of arrays (sometimes imprecisely
+The simplest thing to build is an array of arrays (sometimes imprecisely
 called a list of lists).  It's reasonably easy to understand, and
 almost everything that applies here will also be applicable later
 on with the fancier data structures.

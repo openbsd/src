@@ -22,10 +22,10 @@ interface.
 
 =head1 AVAILABILITY
 
-Gdbm is available from any GNU archive.  The master site is
-C<prep.ai.mit.edu>, but your are strongly urged to use one of the many
-mirrors.   You can obtain a list of mirror sites by issuing the
-command	C<finger fsf@prep.ai.mit.edu>.
+gdbm is available from any GNU archive.  The master site is
+C<ftp.gnu.org>, but you are strongly urged to use one of the many
+mirrors.  You can obtain a list of mirror sites from
+http://www.gnu.org/order/ftp.html.
 
 =head1 BUGS
 
@@ -46,7 +46,6 @@ our($VERSION, @ISA, @EXPORT, $AUTOLOAD);
 require Carp;
 require Tie::Hash;
 require Exporter;
-use AutoLoader;
 use XSLoader ();
 @ISA = qw(Tie::Hash Exporter);
 @EXPORT = qw(
@@ -61,29 +60,18 @@ use XSLoader ();
 	GDBM_WRITER
 );
 
-$VERSION = "1.05";
+$VERSION = "1.06";
 
 sub AUTOLOAD {
     my($constname);
     ($constname = $AUTOLOAD) =~ s/.*:://;
-    my $val = constant($constname, @_ ? $_[0] : 0);
-    if ($! != 0) {
-	if ($! =~ /Invalid/ || $!{EINVAL}) {
-	    $AutoLoader::AUTOLOAD = $AUTOLOAD;
-	    goto &AutoLoader::AUTOLOAD;
-	}
-	else {
-	    Carp::croak("Your vendor has not defined GDBM_File macro $constname, used");
-	}
-    }
-    eval "sub $AUTOLOAD { $val }";
-    goto &$AUTOLOAD;
+    my ($error, $val) = constant($constname);
+    Carp::croak $error if $error;
+    no strict 'refs';
+    *{$AUTOLOAD} = sub { $val };
+    goto &{$AUTOLOAD};
 }
 
 XSLoader::load 'GDBM_File', $VERSION;
 
-# Preloaded methods go here.  Autoload methods go after __END__, and are
-# processed by the autosplit program.
-
 1;
-__END__

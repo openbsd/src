@@ -1,7 +1,8 @@
 package User::grent;
 use strict;
 
-use 5.005_64;
+use 5.006_001;
+our $VERSION = '1.00';
 our(@EXPORT, @EXPORT_OK, %EXPORT_TAGS);
 BEGIN { 
     use Exporter   ();

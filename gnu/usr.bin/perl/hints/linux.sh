@@ -6,11 +6,11 @@
 # Additional info from Nigel Head <nhead@ESOC.bitnet>
 # and Kenneth Albanowski <kjahds@kjahds.com>
 #
-# Consolidated by Andy Dougherty <doughera@lafcol.lafayette.edu>
+# Consolidated by Andy Dougherty <doughera@lafayette.edu>
 #
 # Updated Thu Feb  8 11:56:10 EST 1996
 
-# Updated Thu May 30 10:50:22 EDT 1996 by <doughera@lafcol.lafayette.edu>
+# Updated Thu May 30 10:50:22 EDT 1996 by <doughera@lafayette.edu>
 
 # Updated Fri Jun 21 11:07:54 EDT 1996
 # NDBM support for ELF renabled by <kjahds@kjahds.com>
@@ -39,35 +39,6 @@ d_suidsafe='undef'
 # do the implicit mapping.
 ignore_versioned_solibs='y'
 
-# perl goes into the /usr tree.  See the Filesystem Standard
-# available via anonymous FTP at tsx-11.mit.edu in
-# /pub/linux/docs/linux-standards/fsstnd.
-# Allow a command line override, e.g. Configure -Dprefix=/foo/bar
-#
-#  Addendum for 5.005_57 and beyond:
-#
-# However, most Linux users probably already have a /usr/bin/perl.
-# We can't know whether the current user is intending to *replace*
-# that /usr/bin/perl or whether the user is intending to install
-# a *different* installation.
-#
-# Here is what we used to do:
-# Allow a command line override, e.g. Configure -Dprefix=/foo/bar
-# case "$prefix" in
-# '') prefix='/usr' ;;
-# esac
-#
-# For now, let's assume that most Linux users get their /usr/bin/perl
-# from some packaging system, so that those compiling from source are
-# probably the more experimental folks and hence probably aren't
-# intending to replace /usr/bin/perl (at least just yet).
-# This change makes linux consistent with most other unix platforms
-# in having a default of prefix=/usr/local.
-# These notes can probably safely be removed in 5.005_50 and beyond.
-#
-#	9 April 1999  Andy Dougherty  <doughera@lafayette.edu>
-#
-
 # BSD compatability library no longer needed
 # 'kaffe' has a /usr/lib/libnet.so which is not at all relevent for perl.
 set `echo X "$libswanted "| sed -e 's/ bsd / /' -e 's/ net / /'`
@@ -77,8 +48,6 @@ libswanted="$*"
 # If you have glibc, then report the version for ./myconfig bug reporting.
 # (Configure doesn't need to know the specific version since it just uses
 # gcc to load the library for all tests.)
-# Is this sufficiently robust for libc5 systems as well as
-# glibc-2.1.x systems?
 # We don't use __GLIBC__ and  __GLIBC_MINOR__ because they 
 # are insufficiently precise to distinguish things like
 # libc-2.0.6 and libc-2.0.7.
@@ -91,13 +60,27 @@ fi
 # function in <sys/stat.h>.
 d_lstat=define
 
-# Explanation?
+# The system malloc() is about as fast and as frugal as perl's. 
+# Since the system malloc() has been the default since at least
+# 5.001, we might as well leave it that way.  --AD  10 Jan 2002
 case "$usemymalloc" in
 '') usemymalloc='n' ;;
 esac
 
 case "$optimize" in
-'') optimize='-O2' ;;
+'') # If we have modern enough gcc and well-supported enough CPU,
+    # crank up the optimization level.
+    case "`${cc:-gcc} -v 2>&1`" in
+    *"gcc version 2.95"*|*"gcc version 3."*)
+        case "`arch 2>&1`" in
+        i?86|ppc) optimize='-O3' ;;
+        esac
+        ;;
+    esac
+    case "$optimize" in
+    '') optimize='-O2' ;;
+    esac
+    ;;
 esac
 
 # Are we using ELF?  Thanks to Kenneth Albanowski <kjahds@kjahds.com>
@@ -119,16 +102,12 @@ main() {
 	exit(0); /* succeed (yes, it's ELF) */
 }
 EOM
-if ${cc:-gcc} try.c >/dev/null 2>&1 && ./a.out; then
+if ${cc:-gcc} try.c >/dev/null 2>&1 && $run ./a.out; then
     cat <<'EOM' >&4
 
 You appear to have ELF support.  I'll try to use it for dynamic loading.
 If dynamic loading doesn't work, read hints/linux.sh for further information.
 EOM
-
-#For RedHat Linux 3.0.3, you may need to fetch
-# ftp://ftp.redhat.com/pub/redhat-3.0.3/i386/updates/RPMS/ld.so-1.7.14-3.i386.rpm
-#
 
 else
     cat <<'EOM' >&4
@@ -219,21 +198,22 @@ fi
 # For this reason I suggest using the much bug-fixed tcsh for globbing
 # where available.
 
-if [  ! "`csh -c 'echo $version' 2>/dev/null`"  ] 
-then
-    echo 'Real csh found (might break); looking for tcsh ...'
-    # Use ./UU/loc to find tcsh.  (We no longer run in the hints/ directory)
+# November 2001:  That warning's pretty old now and probably not so
+# relevant, especially since perl now uses File::Glob for globbing.
+# We'll still look for tcsh, but tone down the warnings.
+# Andy Dougherty, Nov. 6, 2001
+if $csh -c 'echo $version' >/dev/null 2>&1; then
+    echo 'Your csh is really tcsh.  Good.'
+else
     if xxx=`./UU/loc tcsh blurfl $pth`; $test -f "$xxx"; then
 	echo "Found tcsh.  I'll use it for globbing."
 	# We can't change Configure's setting of $csh, due to the way
 	# Configure handles $d_portable and commands found in $loclist.
 	# We can set the value for CSH in config.h by setting full_csh.
 	full_csh=$xxx
-    else
-	echo "Couldn't find tcsh.  BEWARE:  GLOBBING MIGHT BE BROKEN."
+    elif [ -f "$csh" ]; then
+	echo "Couldn't find tcsh.  Csh-based globbing might be broken."
     fi
-else
-    echo 'Your csh is really tcsh.  Good.'
 fi
 
 # Shimpei Yamashita <shimpei@socrates.patnet.caltech.edu>
@@ -269,10 +249,23 @@ esac
 cat > UU/usethreads.cbu <<'EOCBU'
 case "$usethreads" in
 $define|true|[yY]*)
-        ccflags="-D_REENTRANT $ccflags"
+        ccflags="-D_REENTRANT -D_GNU_SOURCE $ccflags"
         set `echo X "$libswanted "| sed -e 's/ c / pthread c /'`
         shift
         libswanted="$*"
+
+	# Somehow at least in Debian 2.2 these manage to escape
+	# the #define forest of <features.h> and <time.h> so that
+	# the hasproto macro of Configure doesn't see these protos,
+	# even with the -D_GNU_SOURCE.
+
+	d_asctime_r_proto="$define"
+	d_crypt_r_proto="$define"
+	d_ctime_r_proto="$define"
+	d_gmtime_r_proto="$define"
+	d_localtime_r_proto="$define"
+	d_random_r_proto="$define"
+
 	;;
 esac
 EOCBU

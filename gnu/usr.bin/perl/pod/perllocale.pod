@@ -99,11 +99,11 @@ C<LC_COLLATE>.  sort() is also affected if used without an
 explicit comparison function, because it uses C<cmp> by default.
 
 B<Note:> C<eq> and C<ne> are unaffected by locale: they always
-perform a byte-by-byte comparison of their scalar operands.  What's
+perform a char-by-char comparison of their scalar operands.  What's
 more, if C<cmp> finds that its operands are equal according to the
 collation sequence specified by the current locale, it goes on to
-perform a byte-by-byte comparison, and only returns I<0> (equal) if the
-operands are bit-for-bit identical.  If you really want to know whether
+perform a char-by-char comparison, and only returns I<0> (equal) if the
+operands are char-for-char identical.  If you really want to know whether
 two strings--which C<eq> and C<cmp> may consider different--are equal
 as far as collation in the locale is concerned, see the discussion in
 L<Category LC_COLLATE: Collation>.
@@ -310,6 +310,10 @@ locale "En_US"--and in Cshish shells (B<csh>, B<tcsh>)
 
 	setenv LC_ALL en_US.ISO8859-1
 
+or if you have the "env" application you can do in any shell
+
+	env LC_ALL=en_US.ISO8859-1 perl ...
+
 If you do not know what shell you have, consult your local
 helpdesk or the equivalent.
 
@@ -427,6 +431,31 @@ parameters as integers correctly formatted in the current locale:
         }
         print "\n";
 
+=head2 I18N::Langinfo
+
+Another interface for querying locale-dependent information is the
+I18N::Langinfo::langinfo() function, available at least in UNIX-like
+systems and VMS.
+
+The following example will import the langinfo() function itself and
+three constants to be used as arguments to langinfo(): a constant for
+the abbreviated first day of the week (the numbering starts from
+Sunday = 1) and two more constants for the affirmative and negative
+answers for a yes/no question in the current locale.
+
+    use I18N::Langinfo qw(langinfo ABDAY_1 YESSTR NOSTR);
+
+    my ($abday_1, $yesstr, $nostr) = map { langinfo } qw(ABDAY_1 YESSTR NOSTR);
+
+    print "$abday_1? [$yesstr/$nostr] ";
+
+In other words, in the "C" (or English) locale the above will probably
+print something like:
+
+    Sun? [yes/no] 
+
+See L<I18N::Langinfo> for more information.
+
 =head1 LOCALE CATEGORIES
 
 The following subsections describe basic locale categories.  Beyond these,
@@ -468,7 +497,7 @@ first example is useful for natural text.
 
 As noted in L<USING LOCALES>, C<cmp> compares according to the current
 collation locale when C<use locale> is in effect, but falls back to a
-byte-by-byte comparison for strings that the locale says are equal. You
+char-by-char comparison for strings that the locale says are equal. You
 can use POSIX::strcoll() if you don't want this fall-back:
 
         use POSIX qw(strcoll);
@@ -493,9 +522,9 @@ efficiency by using POSIX::strxfrm() in conjunction with C<eq>:
             if $xfrm_string eq strxfrm("mixed-case string");
 
 strxfrm() takes a string and maps it into a transformed string for use
-in byte-by-byte comparisons against other transformed strings during
+in char-by-char comparisons against other transformed strings during
 collation.  "Under the hood", locale-affected Perl comparison operators
-call strxfrm() for both operands, then do a byte-by-byte
+call strxfrm() for both operands, then do a char-by-char
 comparison of the transformed strings.  By calling strxfrm() explicitly
 and using a non locale-affected comparison, the example attempts to save
 a couple of transformations.  But in fact, it doesn't save anything: Perl
@@ -574,6 +603,8 @@ string formats:
         print "DECIMAL POINT IS COMMA\n"
             if $n == (strtod("2,5"))[0]; # Locale-dependent conversion
 
+See also L<I18N::Langinfo> and C<RADIXCHAR>.
+
 =head2 Category LC_MONETARY: Formatting of monetary amounts
 
 The C standard defines the C<LC_MONETARY> category, but no function
@@ -586,6 +617,8 @@ application's own formatting of currency amounts.  However, you may well
 find that the information, voluminous and complex though it may be, still 
 does not quite meet your requirements: currency formatting is a hard nut 
 to crack.
+
+See also L<I18N::Langinfo> and C<CRNCYSTR>.
 
 =head2 LC_TIME
 
@@ -605,6 +638,9 @@ current locale:
 Note: C<use locale> isn't needed in this example: as a function that
 exists only to generate locale-dependent results, strftime() always
 obeys the current C<LC_TIME> locale.
+
+See also L<I18N::Langinfo> and C<ABDAY_1>..C<ABDAY_7>, C<DAY_1>..C<DAY_7>,
+C<ABMON_1>..C<ABMON_12>, and C<ABMON_1>..C<ABMON_12>.
 
 =head2 Other categories
 
@@ -716,7 +752,7 @@ if modified as a result of a substitution based on a regular
 expression match involving C<\w>, C<\W>, C<\s>, or C<\S>; or of
 case-mapping with C<\l>, C<\L>,C<\u> or C<\U>.
 
-=item  *
+=item *
 
 B<Output formatting functions> (printf() and write()):
 
@@ -724,20 +760,20 @@ Results are never tainted because otherwise even output from print,
 for example C<print(1/7)>, should be tainted if C<use locale> is in
 effect.
 
-=item  *
+=item *
 
 B<Case-mapping functions> (lc(), lcfirst(), uc(), ucfirst()):
 
 Results are tainted if C<use locale> is in effect.
 
-=item  *
+=item *
 
 B<POSIX locale-dependent functions> (localeconv(), strcoll(),
 strftime(), strxfrm()):
 
 Results are never tainted.
 
-=item  *
+=item *
 
 B<POSIX character class tests> (isalnum(), isalpha(), isdigit(),
 isgraph(), islower(), isprint(), ispunct(), isspace(), isupper(),
@@ -925,7 +961,7 @@ structure.
 =head2 Freely available locale definitions
 
 There is a large collection of locale definitions at
-C<ftp://dkuug.dk/i18n/WG15-collection>.  You should be aware that it is
+ftp://dkuug.dk/i18n/WG15-collection .  You should be aware that it is
 unsupported, and is not claimed to be fit for any purpose.  If your
 system allows installation of arbitrary locales, you may find the
 definitions useful as they are, or as a basis for the development of
@@ -949,6 +985,15 @@ nations, when we all know that the world can equally well be divided
 into bankers, bikers, gamers, and so on.  But, for now, it's the only
 standard we've got.  This may be construed as a bug.
 
+=head1 Unicode and UTF-8
+
+The support of Unicode is new starting from Perl version 5.6, and
+more fully implemented in the version 5.8.  See L<perluniintro> and
+L<perlunicode> for more details.
+
+Usually locale settings and Unicode do not affect each other, but
+there are exceptions, see L<perlunicode/Locales> for examples.
+
 =head1 BUGS
 
 =head2 Broken systems
@@ -964,12 +1009,13 @@ operating system upgrade.
 
 =head1 SEE ALSO
 
-L<POSIX/isalnum>, L<POSIX/isalpha>, L<POSIX/isdigit>, 
-L<POSIX/isgraph>, L<POSIX/islower>, L<POSIX/isprint>, 
-L<POSIX/ispunct>, L<POSIX/isspace>, L<POSIX/isupper>, 
-L<POSIX/isxdigit>, L<POSIX/localeconv>, L<POSIX/setlocale>, 
-L<POSIX/strcoll>, L<POSIX/strftime>, L<POSIX/strtod>, 
-L<POSIX/strxfrm>.
+L<I18N::Langinfo>, L<perluniintro>, L<perlunicode>, L<open>,
+L<POSIX/isalnum>, L<POSIX/isalpha>,
+L<POSIX/isdigit>, L<POSIX/isgraph>, L<POSIX/islower>,
+L<POSIX/isprint>, L<POSIX/ispunct>, L<POSIX/isspace>,
+L<POSIX/isupper>, L<POSIX/isxdigit>, L<POSIX/localeconv>,
+L<POSIX/setlocale>, L<POSIX/strcoll>, L<POSIX/strftime>,
+L<POSIX/strtod>, L<POSIX/strxfrm>.
 
 =head1 HISTORY
 

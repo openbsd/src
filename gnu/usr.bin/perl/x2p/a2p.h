@@ -1,6 +1,6 @@
 /* $RCSfile: a2p.h,v $$Revision: 4.1 $$Date: 92/08/07 18:29:09 $
  *
- *    Copyright (c) 1991-2001, Larry Wall
+ *    Copyright (c) 1991-2002, Larry Wall
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -16,6 +16,8 @@
 
 #ifdef VMS
 #  include "config.h"
+#elif defined(NETWARE)
+#  include "../NetWare/config.h"
 #else
 #  include "../config.h"
 #endif
@@ -86,18 +88,10 @@
 #   include <strings.h>
 #endif
 
-#if !defined(HAS_BCOPY) || defined(__cplusplus)
-#   define bcopy(s1,s2,l) memcpy(s2,s1,l)
-#endif
-#if !defined(HAS_BZERO) || defined(__cplusplus)
-#   define bzero(s,l) memset(s,0,l)
-#endif
-
 #if !defined(HAS_STRCHR) && defined(HAS_INDEX) && !defined(strchr)
 #define strchr index
 #define strrchr rindex
 #endif
-
 
 #ifdef I_TIME
 #   include <time.h>
@@ -370,7 +364,7 @@ EXT char *No INIT("");
 
 #define str_true(str) (Str = (str), (Str->str_pok ? True(Str->str_ptr) : (Str->str_nok ? (Str->str_nval != 0.0) : 0 )))
 
-#define str_peek(str) (Str = (str), (Str->str_pok ? Str->str_ptr : (Str->str_nok ? (sprintf(buf,"num(%g)",Str->str_nval),buf) : "" )))
+#define str_peek(str) (Str = (str), (Str->str_pok ? Str->str_ptr : (Str->str_nok ? (sprintf(buf,"num(%"NVgf")",Str->str_nval),buf) : "" )))
 #define str_get(str) (Str = (str), (Str->str_pok ? Str->str_ptr : str_2ptr(Str)))
 #define str_gnum(str) (Str = (str), (Str->str_nok ? Str->str_nval : str_2num(Str)))
 EXT STR *Str;

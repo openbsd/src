@@ -1,8 +1,13 @@
 #
-use Config;
+BEGIN { warn "Running ".__FILE__."\n" };
+BEGIN 
+ {
+  require "../lib/Config.pm";
+  die "../Config.pm:$@" if $@;
+  Config::->import;
+ }
 use File::Compare qw(compare);
 use File::Copy qw(copy);
-my $OBJ   = 1 if $Config{'ccflags'} =~ /PERL_OBJECT/i;
 my $name = $0;
 $name =~ s#^(.*)\.PL$#../$1.SH#;
 my %opt;
@@ -11,6 +16,11 @@ while (@ARGV && $ARGV[0] =~ /^([\w_]+)=(.*)$/)
   $opt{$1}=$2;
   shift(@ARGV);
  }
+
+$opt{CONFIG_H} ||= 'config.h';
+
+warn "Writing $opt{CONFIG_H}\n";
+
 my $patchlevel = $opt{INST_VER};
 $patchlevel =~ s|^[\\/]||;
 $patchlevel =~ s|~VERSION~|$Config{version}|g;
@@ -23,6 +33,8 @@ while (<SH>)
   last if /^sed/;
  }
 ($term,$file,$pat) = /^sed\s+<<(\S+)\s+>(\S+)\s+(.*)$/;
+
+$file =~ s/^\$(\w+)$/$opt{$1}/g;
 
 my $str = "sub munge\n{\n";
 
@@ -40,7 +52,7 @@ eval $str;
 die "$str:$@" if $@;
 
 open(H,">$file.new") || die "Cannot open $file.new:$!";
-binmode H;		# no CRs (which cause a spurious rebuild)
+#binmode H;		# no CRs (which cause a spurious rebuild)
 while (<SH>)
  {
   last if /^$term$/o;
@@ -68,7 +80,7 @@ chmod(0666,"../lib/CORE/config.h");
 copy("$file.new","../lib/CORE/config.h") || die "Cannot copy:$!";
 chmod(0444,"../lib/CORE/config.h");
 
-if (!$OBJ && compare("$file.new",$file))
+if (compare("$file.new",$file))
  {
   warn "$file has changed\n";
   chmod(0666,$file);

@@ -8,7 +8,7 @@ print tmp "tvi920\n";
 print tmp "vt100\n";
 print tmp "Amiga\n";
 print tmp "paper\n";
-close tmp;
+close tmp or die "Could not close: $!";
 
 # test "last" command
 

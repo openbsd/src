@@ -2,6 +2,8 @@ package Text::Abbrev;
 require 5.005;		# Probably works on earlier versions too.
 require Exporter;
 
+our $VERSION = '1.00';
+
 =head1 NAME
 
 abbrev - create an abbreviation table from a list

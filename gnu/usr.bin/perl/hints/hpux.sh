@@ -1,239 +1,287 @@
-#! /bin/sh
+#!/usr/bin/sh
 
-# hints/hpux.sh
-# Perl Configure hints file for Hewlett-Packard's HP-UX 9.x and 10.x
-# (Hopefully, 7.x through 11.x.)
-#
-# This file is based on hints/hpux_9.sh, Perl Configure hints file for
-# Hewlett Packard HP-UX 9.x
-#
-# Use Configure -Dcc=gcc to use gcc.
-#
-# From: Jeff Okamoto <okamoto@corp.hp.com>
-# and
-# hints/hpux_10.sh, Perl Configure hints file for Hewlett Packard HP-UX 10.x
-# From: Giles Lean <giles@nemeton.com.au>
-# and
-# Use #define CPU_* instead of comments for >= 10.x.
-# Support PA1.2 under 10.x.
-# Distinguish between PA2.0, PA2.1, etc.
-# Distinguish between MC68020, MC68030, MC68040
-# Don't assume every OS != 10 is < 10, (e.g., 11).
-# From: Chuck Phillips <cdp@fc.hp.com>
-# HP-UX 10 pthreads hints: Matthew T Harden <mthard@mthard1.monsanto.com>
-# From: Dominic Dunlop <domo@computer.org>
-# Abort and offer advice if bundled (non-ANSI) C compiler selected
-# From: H.Merijn Brand <h.m.brand@hccnet.nl>
-# ccversion detection
-# perl/64/HP-UX wants libdb-3.0 to be shared ELF 64
-# generic pthread support detection for PTH package
-
-
-# This version: March 8, 2000
-# Current maintainer: Jeff Okamoto <okamoto@corp.hp.com>
-
-#--------------------------------------------------------------------
-# Use Configure -Dcc=gcc to use gcc.
-# Use Configure -Dprefix=/usr/local to install in /usr/local.
-#
-# You may have dynamic loading problems if the environment variable
-# LDOPTS='-a archive'.  Under >= 10.x, you can instead LDOPTS='-a
-# archive_shared' to prefer archive libraries without requiring them.
-# Regardless of HPUX release, in the "libs" variable or the ext.libs
-# file, you can always give explicit path names to archive libraries
-# that may not exist on the target machine.  E.g., /usr/lib/libndbm.a
-# instead of -lndbm.  See also note below on ndbm.
-#
-# ALSO, bear in mind that gdbm and Berkely DB contain incompatible
-# replacements for ndbm (and dbm) routines.  If you want concurrent
-# access to ndbm files, you need to make sure libndbm is linked in
-# *before* gdbm and Berkely DB.  Lastly, remember to check the
-# "ext.libs" file which is *probably* messing up the order.  Often,
-# you can replace ext.libs with an empty file to fix the problem.
-#
-# If you get a message about "too much defining", as may happen
-# in HPUX < 10, you might have to append a single entry to your
-# ccflags: '-Wp,-H256000'
-# NOTE: This is a single entry (-W takes the argument 'p,-H256000').
-#--------------------------------------------------------------------
-
-# Turn on the _HPUX_SOURCE flag to get many of the HP add-ons
-# regardless of compiler.  For the HP ANSI C compiler, you may also
-# want to include +e to enable "long long" and "long double".
-#
-# HP compiler flags to include (if at all) *both* as part of ccflags
-# and cc itself so Configure finds (and builds) everything
-# consistently:
-#	-Aa -D_HPUX_SOURCE +e
-#
-# Lastly, you may want to include the "-z" HP linker flag so that
-# reading from a NULL pointer causes a SEGV.
-ccflags="$ccflags -D_HPUX_SOURCE"
-
-# Check if you're using the bundled C compiler.  This compiler doesn't support
-# ANSI C (the -Aa flag) and so is not suitable for perl 5.5 and later.
-case "$cc" in
-'') if cc $ccflags -Aa 2>&1 | $contains 'option' >/dev/null
-    then
-	     cat <<'EOM' >&4
-
-The bundled C compiler is not ANSI-compliant, and so cannot be used to
-build perl.  Please see the file README.hpux for advice on alternative
-compilers.
-
-Cannot continue, aborting.
-EOM
-	exit 1
-    else
-	ccflags="$ccflags -Aa"	# The add-on compiler supports ANSI C
-	# cppstdin and cpprun need the -Aa option if you use the unbundled 
-	# ANSI C compiler (*not* the bundled K&R compiler or gcc)
-	# [XXX this should be set automatically by Configure, but isn't yet.]
-	# [XXX This is reported not to work.  You may have to edit config.sh.
-	#  After running Configure, set cpprun and cppstdin in config.sh,
-	#  run "Configure -S" and then "make".]
-	cpprun="${cc:-cc} -E -Aa"
-	cppstdin="$cpprun"
-	cppminus='-'
-	cpplast='-'
-    fi
-    case "$optimize" in
-	# For HP's ANSI C compiler, up to "+O3" is safe for everything
-	# except shared libraries (PIC code).  Max safe for PIC is "+O2".
-	# Setting both causes innocuous warnings.
-	'')	optimize='-O'
-		#optimize='+O3'
-		#cccdlflags='+z +O2'
-		;;
-    esac
-    cc=cc
-    ;;
-esac
-
-cc=${cc:-cc}
-
-case `$cc -v 2>&1`"" in
-*gcc*) ccisgcc="$define" ;;
-*) ccisgcc=''
-   ccversion=`which cc | xargs what | awk '/Compiler/{print $2}'`
-   ;;
-esac
+### SYSTEM ARCHITECTURE
 
 # Determine the architecture type of this system.
 # Keep leading tab below -- Configure Black Magic -- RAM, 03/02/97
 	xxOsRevMajor=`uname -r | sed -e 's/^[^0-9]*//' | cut -d. -f1`;
-	#xxOsRevMinor=`uname -r | sed -e 's/^[^0-9]*//' | cut -d. -f2`;
-if [ "$xxOsRevMajor" -ge 10 ]
-then
-	# This system is running >= 10.x
+if [ "$xxOsRevMajor" -ge 10 ]; then
+    # This system is running >= 10.x
 
-	# Tested on 10.01 PA1.x and 10.20 PA[12].x.  Idea: Scan
-	# /usr/include/sys/unistd.h for matches with "#define CPU_* `getconf
-	# CPU_VERSION`" to determine CPU type.  Note the part following
-	# "CPU_" is used, *NOT* the comment.
-	#
-	# ASSUMPTIONS: Numbers will continue to be defined in hex -- and in
-	# /usr/include/sys/unistd.h -- and the CPU_* #defines will be kept
-	# up to date with new CPU/OS releases.
-	xxcpu=`getconf CPU_VERSION`; # Get the number.
-	xxcpu=`printf '0x%x' $xxcpu`; # convert to hex
-	archname=`sed -n -e "s/^#[ \t]*define[ \t]*CPU_//p" /usr/include/sys/unistd.h |
-	    sed -n -e "s/[ \t]*$xxcpu[ \t].*//p" |
-	    sed -e s/_RISC/-RISC/ -e s/HP_// -e s/_/./`;
+    # Tested on 10.01 PA1.x and 10.20 PA[12].x.
+    # Idea: Scan /usr/include/sys/unistd.h for matches with
+    # "#define CPU_* `getconf # CPU_VERSION`" to determine CPU type.
+    # Note the text following "CPU_" is used, *NOT* the comment.
+    #
+    # ASSUMPTIONS: Numbers will continue to be defined in hex -- and in
+    # /usr/include/sys/unistd.h -- and the CPU_* #defines will be kept
+    # up to date with new CPU/OS releases.
+    xxcpu=`getconf CPU_VERSION`; # Get the number.
+    xxcpu=`printf '0x%x' $xxcpu`; # convert to hex
+    archname=`sed -n -e "s/^#[[:space:]]*define[[:space:]]*CPU_//p" /usr/include/sys/unistd.h |
+	sed -n -e "s/[[:space:]]*$xxcpu[[:space:]].*//p" |
+	sed -e s/_RISC/-RISC/ -e s/HP_// -e s/_/./ -e "s/[[:space:]]*//g"`;
 else
-	# This system is running <= 9.x
-	# Tested on 9.0[57] PA and [78].0 MC680[23]0.  Idea: After removing
-	# MC6888[12] from context string, use first CPU identifier.
-	#
-	# ASSUMPTION: Only CPU identifiers contain no lowercase letters.
-	archname=`getcontext | tr ' ' '\012' | grep -v '[a-z]' | grep -v MC688 |
-	    sed -e 's/HP-//' -e 1q`;
-	selecttype='int *'
-fi
-
-# Do this right now instead of the delayed callback unit approach.
-case "$use64bitall" in
-$define|true|[yY]*) use64bitint="$define" ;;
-esac
-case "$use64bitint" in
-$define|true|[yY]*)
-    if [ "$xxOsRevMajor" -lt 11 ]; then
-		cat <<EOM >&4
-
-64-bit compilation is not supported on HP-UX $xxOsRevMajor.
-You need at least HP-UX 11.0.
-Cannot continue, aborting.
-EOM
-		exit 1
+    # This system is running <= 9.x
+    # Tested on 9.0[57] PA and [78].0 MC680[23]0.  Idea: After removing
+    # MC6888[12] from context string, use first CPU identifier.
+    #
+    # ASSUMPTION: Only CPU identifiers contain no lowercase letters.
+    archname=`getcontext | tr ' ' '\012' | grep -v '[a-z]' | grep -v MC688 |
+	sed -e 's/HP-//' -e 1q`;
+    selecttype='int *'
     fi
 
-    # Without the 64-bit libc we cannot do much.
-    libc='/lib/pa20_64/libc.sl'
-    if [ ! -f "$libc" ]; then
-		cat <<EOM >&4
-
-*** You do not seem to have the 64-bit libraries in /lib/pa20_64.
-*** Most importantly, I cannot find the $libc.
-*** Cannot continue, aborting.
-EOM
-		exit 1
+# For some strange reason, the u32align test from Configure hangs in
+# HP-UX 10.20 since the December 2001 patches.  So hint it to avoid
+# the test.
+if [ "$xxOsRevMajor" -le 10 ]; then
+    d_u32align=$define
     fi
 
-    ccflags="$ccflags +DD64"
-    ldflags="$ldflags +DD64"
-    test -d /lib/pa20_64 && loclibpth="$loclibpth /lib/pa20_64"
-    libswanted="$libswanted pthread"
-    libscheck='case "`/usr/bin/file $xxx`" in
-*LP64*|*PA-RISC2.0*) ;;
-*) xxx=/no/64-bit$xxx ;;
-esac'
-    if test -n "$ccisgcc" -o -n "$gccversion"; then
-	ld="$cc"
-    else	
-	ld=/usr/bin/ld
-    fi
-    ar=/usr/bin/ar
-    full_ar=$ar
+echo "Archname is $archname"
 
-    if test -z "$ccisgcc" -a -z "$gccversion"; then
-       # The strict ANSI mode (-Aa) doesn't like the LL suffixes.
-       ccflags=`echo " $ccflags "|sed 's@ -Aa @ @g'`
-       case "$ccflags" in
-       *-Ae*) ;;
-       *) ccflags="$ccflags -Ae" ;;
-       esac
-    fi
+# Fix XSlib (CPAN) confusion when re-using a prefix but changing from ILP32
+# to LP64 builds.  They're NOT binary compatible, so quit claiming they are.
+archname64=LP64
 
-    set `echo " $libswanted " | sed -e 's@ dl @ @'`
-    libswanted="$*"
 
-    ;;
-esac
+### HP-UX OS specific behaviour
 
-case "$ccisgcc" in
-# Even if you use gcc, prefer the HP math library over the GNU one.
-"$define") test -d /lib/pa1.1 && ccflags="$ccflags -L/lib/pa1.1" ;;
-esac
-    
-case "$ccisgcc" in
-"$define") ;;
-*)  case "`getconf KERNEL_BITS 2>/dev/null`" in
-    *64*) ldflags="$ldflags -Wl,+vnocompatwarnings" ;;
-    esac
-    ;;
-esac
-
-# Remove bad libraries that will cause problems
-# (This doesn't remove libraries that don't actually exist)
-# -lld is unneeded (and I can't figure out what it's used for anyway)
 # -ldbm is obsolete and should not be used
 # -lBSD contains BSD-style duplicates of SVR4 routines that cause confusion
 # -lPW is obsolete and should not be used
 # The libraries crypt, malloc, ndir, and net are empty.
-# Although -lndbm should be included, it will make perl blow up if you should
-# copy the binary to a system without libndbm.sl.  See ccdlflags below.
-set `echo " $libswanted " | sed -e 's@ ld @ @' -e 's@ dbm @ @' -e 's@ BSD @ @' -e 's@ PW @ @'`
+set `echo "X $libswanted " | sed -e 's/ ld / /' -e 's/ dbm / /' -e 's/ BSD / /' -e 's/ PW / /'`
+shift
 libswanted="$*"
+
+cc=${cc:-cc}
+ar=/usr/bin/ar	# Yes, truly override.  We do not want the GNU ar.
+full_ar=$ar	# I repeat, no GNU ar.  arrr.
+
+set `echo "X $ccflags " | sed -e 's/ -A[ea] / /' -e 's/ -D_HPUX_SOURCE / /'`
+shift
+	cc_cppflags="$* -D_HPUX_SOURCE"
+cppflags="-Aa -D__STDC_EXT__ $cc_cppflags"
+
+case "$prefix" in
+    "") prefix='/opt/perl5' ;;
+    esac
+
+    gnu_as=no
+    gnu_ld=no
+case `$cc -v 2>&1`"" in
+    *gcc*)  ccisgcc="$define"
+	    ccflags="$cc_cppflags"
+	    if [ "X$gccversion" = "X" ]; then
+		# Done too late in Configure if hinted
+		gccversion=`$cc --version | sed 's/.*(GCC) *//'`
+		fi
+	    case "$gccversion" in
+		[012]*) # HP-UX and gcc-2.* break UINT32_MAX :-(
+			ccflags="$ccflags -DUINT32_MAX_BROKEN"
+			;;
+               3*)     # GCC (both 32bit and 64bit) will define __STDC_EXT__
+                       # by default when using GCC 3.0 and newer versions of
+                       # the compiler.
+                       cppflags="$cc_cppflags"
+                       ;;
+		esac
+	    case "`getconf KERNEL_BITS 2>/dev/null`" in
+		*64*)
+		    echo "main(){}">try.c
+		    case "$gccversion" in
+			3*)
+			    case "$archname" in
+                               PA-RISC*)
+                                   case "$ccflags" in
+                                       *-mpa-risc*) ;;
+                                       *) ccflags="$ccflags -mpa-risc-2-0" ;;
+                                       esac
+                                   ;;
+				esac
+			    ;;
+			*)  # gcc with gas will not accept +DA2.0
+			    case "`$cc -c -Wa,+DA2.0 try.c 2>&1`" in
+				*"+DA2.0"*)		# gas
+				    gnu_as=yes
+				    ;;
+				*)			# HPas
+				    ccflags="$ccflags -Wa,+DA2.0"
+				    ;;
+				esac
+			    ;;
+			esac
+		    # gcc with gld will not accept +vnocompatwarnings
+		    case "`$cc -o try -Wl,+vnocompatwarnings try.c 2>&1`" in
+			*"+vnocompat"*)		# gld
+			    gnu_ld=yes
+			    ;;
+			*)			# HPld
+			   case "$gccversion" in
+			       [12]*)
+				   # Why not 3 as well here?
+				   # Since not relevant to IA64, not changed.
+				   ldflags="$ldflags -Wl,+vnocompatwarnings"
+				   ccflags="$ccflags -Wl,+vnocompatwarnings"
+				   ;;
+			       esac
+			    ;;
+			esac
+		    rm -f try.c
+		    ;;
+		esac
+	    ;;
+    *)      ccisgcc=''
+	    ccversion=`which cc | xargs what | awk '/Compiler/{print $2}'`
+	    case "$ccflags" in
+               "-Ae "*) ;;
+               *) ccflags="-Ae $cc_cppflags -Wl,+vnocompatwarnings" ;;
+               esac
+	    # Needed because cpp does only support -Aa (not -Ae)
+	    cpplast='-'
+	    cppminus='-'
+	    cppstdin='cc -E -Aa -D__STDC_EXT__'
+	    cpprun=$cppstdin
+#	    case "$d_casti32" in
+#		"") d_casti32='undef' ;;
+#		esac
+	    ;;
+    esac
+
+# When HP-UX runs a script with "#!", it sets argv[0] to the script name.
+toke_cflags='ccflags="$ccflags -DARG_ZERO_IS_SCRIPT"'
+
+### 64 BITNESS
+
+# Some gcc versions do native 64 bit long (e.g. 2.9-hppa-000310 and gcc-3.0)
+# We have to force 64bitness to go search the right libraries
+    gcc_64native=no
+case "$ccisgcc" in
+    $define|true|[Yy])
+	echo 'int main(){long l;printf("%d\\n",sizeof(l));}'>try.c
+	$cc -o try $ccflags $ldflags try.c
+	if [ "`try`" = "8" ]; then
+	    cat <<EOM >&4
+
+*** This version of gcc uses 64 bit longs. -Duse64bitall is
+*** implicitly set to enable continuation
+EOM
+	    use64bitall=$define
+	    gcc_64native=yes
+	    fi
+	;;
+    esac
+
+case "$use64bitall" in
+    $define|true|[yY]*) use64bitint="$define" ;;
+    esac
+
+case "$usemorebits" in
+    $define|true|[yY]*) use64bitint="$define"; uselongdouble="$define" ;;
+    esac
+
+case "$archname" in
+    IA64*)
+	# While here, override so=sl auto-detection
+	so='so'
+	;;
+    *)
+	case "$uselongdouble" in
+	    *) ;;
+	    $define|true|[yY]*)
+		cat <<EOM >&4
+
+*** long doubles are not (yet) supported on HP-UX (any version)
+*** Until it does, we cannot continue, aborting.
+EOM
+		exit 1 ;;
+	    esac
+	;;
+    esac
+
+case "$use64bitint" in
+    $define|true|[Yy])
+
+	if [ "$xxOsRevMajor" -lt 11 ]; then
+	    cat <<EOM >&4
+
+*** 64-bit compilation is not supported on HP-UX $xxOsRevMajor.
+*** You need at least HP-UX 11.0.
+*** Cannot continue, aborting.
+EOM
+	    exit 1
+	    fi
+
+	# Set libc and the library paths
+	case "$archname" in
+	    PA-RISC*)
+		loclibpth="$loclibpth /lib/pa20_64"
+		libc='/lib/pa20_64/libc.sl' ;;
+	    IA64*) 
+		loclibpth="$loclibpth /usr/lib/hpux64"
+		libc='/usr/lib/hpux64/libc.so' ;;
+	    esac
+	if [ ! -f "$libc" ]; then
+	    cat <<EOM >&4
+
+*** You do not seem to have the 64-bit libc.
+*** I cannot find the file $libc.
+*** Cannot continue, aborting.
+EOM
+	    exit 1
+	    fi
+
+	case "$ccisgcc" in
+	    $define|true|[Yy])
+		# For the moment, don't care that it ain't supported (yet)
+		# by gcc (up to and including 2.95.3), cause it'll crash
+		# anyway. Expect auto-detection of 64-bit enabled gcc on
+		# HP-UX soon, including a user-friendly exit
+		case $gcc_64native in
+		    no) case "$gccversion" in
+			    [123]*) ccflags="$ccflags -mlp64"
+				    case "$archname" in
+					PA-RISC*)
+					    ldflags="$ldflags -Wl,+DD64"
+					    ;;
+					IA64*)
+					    ldflags="$ldflags -mlp64"
+					    ;;
+					esac
+				    ;;
+			    esac
+			;;
+		    esac
+		;;
+	    *)
+		ccflags="$ccflags +DD64"
+		ldflags="$ldflags +DD64"
+		;;
+	    esac
+
+	# Reset the library checker to make sure libraries
+	# are the right type
+	# (NOTE: on IA64, this doesn't work with .a files.)
+	libscheck='case "`/usr/bin/file $xxx`" in
+		       *ELF-64*|*LP64*|*PA-RISC2.0*) ;;
+		       *) xxx=/no/64-bit$xxx ;;
+		       esac'
+
+	;;
+
+    *)	# Not in 64-bit mode
+
+	case "$archname" in
+	    PA-RISC*)
+		libc='/lib/libc.sl' ;;
+	    IA64*) 
+		loclibpth="$loclibpth /usr/lib/hpux32"
+		libc='/usr/lib/hpux32/libc.so' ;;
+	    esac
+	;;
+    esac
 
 # By setting the deferred flag below, this means that if you run perl
 # on a system that does not have the required shared library that you
@@ -246,106 +294,195 @@ libswanted="$*"
 # adding the "nonfatal" option.
 # ccdlflags="-Wl,-E -Wl,-B,immediate $ccdlflags"
 # ccdlflags="-Wl,-E -Wl,-B,immediate,-B,nonfatal $ccdlflags"
-ccdlflags="-Wl,-E -Wl,-B,deferred $ccdlflags"
-
-case "$usemymalloc" in
-'') usemymalloc='y' ;;
-esac
-
-alignbytes=8
-# For native nm, you need "-p" to produce BSD format output.
-nm_opt='-p'
-
-# When HP-UX runs a script with "#!", it sets argv[0] to the script name.
-toke_cflags='ccflags="$ccflags -DARG_ZERO_IS_SCRIPT"'
-
-# If your compile complains about FLT_MIN, uncomment the next line
-# POSIX_cflags='ccflags="$ccflags -DFLT_MIN=1.17549435E-38"'
-
-# Comment this out if you don't want to follow the SVR4 filesystem layout
-# that HP-UX 10.0 uses
-case "$prefix" in
-'') prefix='/opt/perl5' ;;
-esac
-
-# HP-UX can't do setuid emulation offered by Configure
-case "$d_dosuid" in
-'') d_dosuid="$undef" ;;
-esac
-
-# HP-UX 11 groks also LD_LIBRARY_PATH but SHLIB_PATH
-# is recommended for compatibility.
-case "$ldlibpthname" in
-'') ldlibpthname=SHLIB_PATH ;;
-esac
-
-# HP-UX 10.20 and gcc 2.8.1 break UINT32_MAX.
-case "$ccisgcc" in
-"$define") ccflags="$ccflags -DUINT32_MAX_BROKEN" ;;
-esac
-
-cat > UU/cc.cbu <<'EOSH'
-# XXX This script UU/cc.cbu will get 'called-back' by Configure after it
-# XXX has prompted the user for the C compiler to use.
-# Get gcc to share its secrets.
-echo 'main() { return 0; }' > try.c
-	# Indent to avoid propagation to config.sh
-	verbose=`${cc:-cc} -v -o try try.c 2>&1`
-if echo "$verbose" | grep '^Reading specs from' >/dev/null 2>&1; then
-	# Using gcc.
-	: nothing to see here, move on.
+if [ "$gnu_ld" = "yes" ]; then
+    ccdlflags="-Wl,-E $ccdlflags"
 else
-	# Using cc.
-        ar=${ar:-ar}
-	case "`$ar -V 2>&1`" in
-	*GNU*)
-	    if test -x /usr/bin/ar; then
-	    	cat <<END >&2
+    ccdlflags="-Wl,-E -Wl,-B,deferred $ccdlflags"
+    fi
 
-*** You are using HP cc(1) but GNU ar(1).  This might lead into trouble
-*** later on, I'm switching to HP ar to play safe.
 
-END
-		ar=/usr/bin/ar
+### COMPILER SPECIFICS
+
+## Local restrictions (point to README.hpux to lift these)
+
+## Optimization limits
+cat >try.c <<EOF
+#include <sys/resource.h>
+
+int main ()
+{
+    struct rlimit rl;
+    int i = getrlimit (RLIMIT_DATA, &rl);
+    printf ("%d\n", rl.rlim_cur / (1024 * 1024));
+    } /* main */
+EOF
+$cc -o try $ccflags $ldflags try.c
+	maxdsiz=`try`
+rm -f try try.c core
+if [ $maxdsiz -le 64 ]; then
+    # 64 Mb is probably not enough to optimize toke.c
+    # and regexp.c with -O2
+    cat <<EOM >&4
+Your kernel limits the data section of your programs to $maxdsiz Mb,
+which is (sadly) not enough to fully optimize some parts of the
+perl binary. I'll try to use a lower optimization level for
+those parts. If you are a sysadmin, and you *do* want full
+optimization, raise the 'maxdsiz' kernel configuration parameter
+to at least 0x08000000 (128 Mb) and rebuild your kernel.
+EOM
+regexec_cflags=''
+doop_cflags=''
+    fi
+
+case "$ccisgcc" in
+    $define|true|[Yy])
+	
+	case "$optimize" in
+	    "")           optimize="-g -O" ;;
+	    *O[3456789]*) optimize=`echo "$optimize" | sed -e 's/O[3-9]/O2/'` ;;
+	    esac
+	#ld="$cc"
+	ld=/usr/bin/ld
+	cccdlflags='-fPIC'
+	#lddlflags='-shared'
+	lddlflags='-b'
+	case "$optimize" in
+	    *-g*-O*|*-O*-g*)
+		# gcc without gas will not accept -g
+		echo "main(){}">try.c
+		case "`$cc $optimize -c try.c 2>&1`" in
+		    *"-g option disabled"*)
+			set `echo "X $optimize " | sed -e 's/ -g / /'`
+			shift
+			optimize="$*"
+			;;
+		    esac
+		;;
+	    esac
+	if [ $maxdsiz -le 64 ]; then
+	    case "$optimize" in
+		*O2*)	opt=`echo "$optimize" | sed -e 's/O2/O1/'`
+			toke_cflags="$toke_cflags;optimize=\"$opt\""
+			regexec_cflags="optimize=\"$opt\""
+			;;
+		esac
+	    fi
+	;;
+
+    *)	# HP's compiler cannot combine -g and -O
+	case "$optimize" in
+	    "")           optimize="+O2 +Onolimit" ;;
+	    *O[3456789]*) optimize=`echo "$optimize" | sed -e 's/O[3-9]/O2/'` ;;
+	    esac
+	case "$optimize" in
+	    *-O*|\
+	    *O2*)   opt=`echo "$optimize" | sed -e 's/-O/+O2/' -e 's/O2/O1/' -e 's/ *+Onolimit//'`
+		    ;;
+	    *)      opt="$optimize"
+		    ;;
+	    esac
+	if [ $maxdsiz -le 64 ]; then
+	    toke_cflags="$toke_cflags;optimize=\"$opt\""
+	    regexec_cflags="optimize=\"$opt\""
+	    fi
+	case "$archname" in
+	    IA64*)
+		doop_cflags="optimize=\"$opt\""
+		;;
+	    esac
+	ld=/usr/bin/ld
+	cccdlflags='+Z'
+	lddlflags='-b +vnocompatwarnings'
+	;;
+    esac
+
+## LARGEFILES
+
+#case "$uselargefiles-$ccisgcc" in
+#    "$define-$define"|'-define') 
+#	cat <<EOM >&4
+#
+#*** I'm ignoring large files for this build because
+#*** I don't know how to do use large files in HP-UX using gcc.
+#
+#EOM
+#	uselargefiles="$undef"
+#	;;
+#    esac
+
+cat >UU/uselargefiles.cbu <<'EOCBU'
+# This script UU/uselargefiles.cbu will get 'called-back' by Configure 
+# after it has prompted the user for whether to use large files.
+case "$uselargefiles" in
+    ""|$define|true|[yY]*)
+	# there are largefile flags available via getconf(1)
+	# but we cheat for now.  (Keep that in the left margin.)
+ccflags_uselargefiles="-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64"
+
+	case " $ccflags " in
+	*" $ccflags_uselargefiles "*) ;;
+	*) ccflags="$ccflags $ccflags_uselargefiles" ;;
+	esac
+
+	if test -z "$ccisgcc" -a -z "$gccversion"; then
+	    # The strict ANSI mode (-Aa) doesn't like large files.
+	    ccflags=`echo " $ccflags "|sed 's@ -Aa @ @g'`
+	    case "$ccflags" in
+		*-Ae*) ;;
+		*)     ccflags="$ccflags -Ae" ;;
+		esac
 	    fi
 	;;
     esac
-fi
+EOCBU
 
-EOSH
+# THREADING
 
-# Date: Fri, 6 Sep 96 23:15:31 CDT
-# From: "Daniel S. Lewart" <d-lewart@uiuc.edu>
-# I looked through the gcc.info and found this:
-#   * GNU CC compiled code sometimes emits warnings from the HP-UX
-#     assembler of the form:
-#          (warning) Use of GR3 when frame >= 8192 may cause conflict.
-#     These warnings are harmless and can be safely ignored.
-
-cat > UU/usethreads.cbu <<'EOCBU'
 # This script UU/usethreads.cbu will get 'called-back' by Configure 
 # after it has prompted the user for whether to use threads.
+cat >UU/usethreads.cbu <<'EOCBU'
 case "$usethreads" in
-$define|true|[yY]*)
-        if [ "$xxOsRevMajor" -lt 10 ]; then
-            cat <<EOM >&4
+    $define|true|[yY]*)
+	if [ "$xxOsRevMajor" -lt 10 ]; then
+	    cat <<EOM >&4
 
 HP-UX $xxOsRevMajor cannot support POSIX threads.
 Consider upgrading to at least HP-UX 11.
 Cannot continue, aborting.
 EOM
-            exit 1
-        fi
-        case "$xxOsRevMajor" in
-        10)
-            # Under 10.X, a threaded perl can be built
-            if [ -f /usr/include/pthread.h ]; then
+	    exit 1
+	    fi
+
+	if [ "$xxOsRevMajor" -eq 10 ]; then
+	    # Under 10.X, a threaded perl can be built
+	    if [ -f /usr/include/pthread.h ]; then
 		if [ -f /usr/lib/libcma.sl ]; then
 		    # DCE (from Core OS CD) is installed
 
-		    # It needs # libcma and OLD_PTHREADS_API. Also <pthread.h>
-		    # needs to be #included before any other includes
-		    # (in perl.h)
+		   # Check if it is pristine, or patched
+		   cmavsn=`what /usr/lib/libcma.sl 2>&1 | grep 1996`
+		   if [ ! -z "$cmavsn" ]; then
+		       cat <<EOM >&4
+
+***************************************************************************
+
+Perl will support threading through /usr/lib/libcma.sl from
+the HP DCE package, but the version found is too old to be
+reliable.
+
+If you are not depending on this specific version of the library,
+consider to upgrade using patch PHSS_23672 (read README.hpux)
+
+***************************************************************************
+
+(sleeping for 10 seconds...)
+EOM
+		       sleep 10
+		       fi
+
+		    # It needs # libcma and OLD_PTHREADS_API. Also
+		    # <pthread.h> needs to be #included before any
+		    # other includes (in perl.h)
 
 		    # HP-UX 10.X uses the old pthreads API
 		    d_oldpthreads="$define"
@@ -353,11 +490,27 @@ EOM
 		    # include libcma before all the others
 		    libswanted="cma $libswanted"
 
-		    # tell perl.h to include <pthread.h> before other include files
+		    # tell perl.h to include <pthread.h> before other
+		    # include files
 		    ccflags="$ccflags -DPTHREAD_H_FIRST"
+# First column on purpose:
+# this is not a standard Configure variable
+# but we need to get this noticed.
+pthread_h_first="$define"
 
-		    # CMA redefines select to cma_select, and cma_select expects int *
-		    # instead of fd_set * (just like 9.X)
+		    # HP-UX 10.X seems to have no easy
+		    # way of detecting these *time_r protos.
+		    d_gmtime_r_proto='define'
+		    gmtime_r_proto='REENTRANT_PROTO_I_TS'
+		    d_localtime_r_proto='define'
+		    localtime_r_proto='REENTRANT_PROTO_I_TS'
+
+		    # Avoid the poisonous conflicting (and irrelevant)
+		    # prototypes of setkey(). 
+		    i_crypt="$undef"
+
+		    # CMA redefines select to cma_select, and cma_select
+		    # expects int * instead of fd_set * (just like 9.X)
 		    selecttype='int *'
 
 		elif [ -f /usr/lib/libpthread.sl ]; then
@@ -370,8 +523,8 @@ EOM
 		libswanted="no_threads_available"
 		fi
 
-            if [ $libswanted = "no_threads_available" ]; then
-                cat <<EOM >&4
+	    if [ $libswanted = "no_threads_available" ]; then
+		cat <<EOM >&4
 
 In HP-UX 10.X for POSIX threads you need both of the files
 /usr/include/pthread.h and either /usr/lib/libcma.sl or /usr/lib/libpthread.sl.
@@ -381,62 +534,65 @@ Either you must upgrade to HP-UX 11 or install a posix thread library:
 
 or
 
-    PTH package from http://hpux.tn.tudelft.nl/hppd/hpux/alpha.html
+    PTH package from e.g. http://hpux.tn.tudelft.nl/hppd/hpux/alpha.html
 
 Cannot continue, aborting.
 EOM
-     	        exit 1
+		exit 1
 		fi
+	else
+	    # 12 may want upping the _POSIX_C_SOURCE datestamp...
+	    ccflags=" -D_POSIX_C_SOURCE=199506L -D_REENTRANT $ccflags"
+	    set `echo X "$libswanted "| sed -e 's/ c / pthread c /'`
+	    shift
+	    libswanted="$*"
+	    fi
 
-            ;;
-        11 | 12) # 12 may want upping the _POSIX_C_SOURCE datestamp...
-            ccflags=" -D_POSIX_C_SOURCE=199506L $ccflags"
-            set `echo X "$libswanted "| sed -e 's/ c / pthread c /'`
-            shift
-            libswanted="$*"
-	    ;;
-        esac
-	usemymalloc='n'
 	;;
-esac
+    esac
 EOCBU
 
-case "$uselargefiles-$ccisgcc" in
-"$define-$define"|'-define') 
-    cat <<EOM >&4
-
-*** I'm ignoring large files for this build because
-*** I don't know how to do use large files in HP-UX using gcc.
-
-EOM
-    uselargefiles="$undef"
-    ;;
-esac
-
-cat > UU/uselargefiles.cbu <<'EOCBU'
-# This script UU/uselargefiles.cbu will get 'called-back' by Configure 
-# after it has prompted the user for whether to use large files.
-case "$uselargefiles" in
-''|$define|true|[yY]*)
-	# there are largefile flags available via getconf(1)
-	# but we cheat for now.  (Keep that in the left margin.)
-ccflags_uselargefiles="-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64"
-
-	ccflags="$ccflags $ccflags_uselargefiles"
-
-        if test -z "$ccisgcc" -a -z "$gccversion"; then
-           # The strict ANSI mode (-Aa) doesn't like large files.
-           ccflags=`echo " $ccflags "|sed 's@ -Aa @ @g'`
-           case "$ccflags" in
-           *-Ae*) ;;
-           *) ccflags="$ccflags -Ae" ;;
+# The mysterious io_xs memory corruption in 11.00 32bit seems to get
+# fixed by not using Perl's malloc.  Flip side is performance loss.
+# So we want mymalloc for all situations possible
+usemymalloc='y'
+case "$usethreads" in
+    $define|true|[yY]*) usemymalloc='n' ;;
+    *)  case "$ccisgcc" in
+           $undef|false|[nN]*)
+               case "$use64bitint" in
+                   $undef|false|[nN]*)
+                       case "$ccflags" in
+                           *-DDEBUGGING*) ;;
+                           *) usemymalloc='n' ;;
+                           esac
+                       ;;
+                   esac
+               ;;
            esac
-	fi
+       ;;
+    esac
 
+usemymalloc='n'
+case "$useperlio" in
+    $undef|false|[nN]*) usemymalloc='y' ;;
+    esac
+
+# fpclassify() is a macro, the library call is Fpclassify
+# Similarly with the others below.
+d_fpclassify='define'
+d_isnan='define'
+d_isinf='define'
+d_isfinite='define'
+d_unordered='define'
+# Next one(s) need the leading tab.  These are special 'hint' symbols that
+# are not to be propagated to config.sh, all related to pthreads draft 4
+# interfaces.
+case "$d_oldpthreads" in
+    ''|$undef)
+	d_crypt_r_proto='undef'
+	d_getgrent_r_proto='undef'
+	d_getpwent_r_proto='undef'
+	d_strerror_r_proto='undef'
 	;;
-esac
-EOCBU
-
-# keep that leading tab.
-	ccisgcc=''
-
+    esac

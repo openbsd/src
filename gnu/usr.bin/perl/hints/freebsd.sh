@@ -67,7 +67,10 @@ case "$osvers" in
 #
 2.0.5*|2.0-built*|2.1*)
  	usevfork='true'
-	usemymalloc='n'
+	case "$usemymalloc" in
+	    "") usemymalloc='n'
+	        ;;
+	esac
 	d_setregid='define'
 	d_setreuid='define'
 	d_setegid='undef'
@@ -79,7 +82,10 @@ case "$osvers" in
 # don't use -lmalloc (maybe there's an old one from 1.1.5.1 floating around)
 2.2*)
  	usevfork='true'
-	usemymalloc='n'
+	case "$usemymalloc" in
+	    "") usemymalloc='n'
+	        ;;
+	esac
 	libswanted=`echo $libswanted | sed 's/ malloc / /'`
 	d_setregid='define'
 	d_setreuid='define'
@@ -87,7 +93,10 @@ case "$osvers" in
 	d_seteuid='undef'
 	;;
 *)	usevfork='true'
-	usemymalloc='n'
+	case "$usemymalloc" in
+	    "") usemymalloc='n'
+	        ;;
+	esac
 	libswanted=`echo $libswanted | sed 's/ malloc / /'`
 	;;
 esac
@@ -123,6 +132,7 @@ case "$osvers" in
 0*|1*|2*|3*) ;;
 
 *)
+	ccflags="${ccflags} -DHAS_FPSETMASK -DHAS_FLOATINGPOINT_H"
 	if /usr/bin/file -L /usr/lib/libc.so | /usr/bin/grep -vq "not stripped" ; then
 	    usenm=false
 	fi
@@ -172,7 +182,7 @@ esac
 cat > UU/usethreads.cbu <<'EOCBU'
 case "$usethreads" in
 $define|true|[yY]*)
-        lc_r=`/sbin/ldconfig -r|grep ':-lc_r'|awk '{print $NF}'|tail -1`
+        lc_r=`/sbin/ldconfig -r|grep ':-lc_r'|awk '{print $NF}'|sed -n '$p'`
         case "$osvers" in  
 	0*|1*|2.0*|2.1*)   cat <<EOM >&4
 I did not know that FreeBSD $osvers supports POSIX threads.
@@ -209,6 +219,13 @@ EOM
 		 exit 1
 	      fi
 	      ldflags="-pthread $ldflags"
+	      case "$osvers" in
+	      4.*)	# 4.x has gethostbyaddr_r but it is
+			# "Temporary function, not threadsafe"...
+			d_gethostbyaddr_r="undef"
+			d_gethostbyaddr_r_proto="undef"
+			;;
+	      esac
 	      ;;
 
 	esac
@@ -229,5 +246,11 @@ EOM
         esac
 
         unset lc_r
+
+	# Even with the malloc mutexes the Perl malloc does not
+	# seem to be threadsafe in FreeBSD?
+	usemymalloc=n
+
 esac
 EOCBU
+

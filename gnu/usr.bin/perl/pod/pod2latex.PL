@@ -37,11 +37,14 @@ print OUT <<'!NO!SUBS!';
 
 # pod2latex conversion program
 
+use strict;
 use Pod::LaTeX;
 use Pod::Find qw/ pod_find /;
 use Pod::Usage;
 use Getopt::Long;
 use File::Basename;
+
+my $VERSION = "1.00";
 
 # Read command line arguments
 
@@ -53,6 +56,7 @@ my %options = (
 	       "out"    => undef,
 	       "verbose" => 0,
 	       "modify" => 0,
+	       "h1level" => 1,  # section is equivalent to H1
 	      );
 
 GetOptions(\%options, 
@@ -63,6 +67,7 @@ GetOptions(\%options,
 	   "sections=s@",
 	   "out=s",
 	   "modify",
+	   "h1level=i",
 	  ) || pod2usage(2);
 
 pod2usage(1)  if ($options{help});
@@ -126,6 +131,8 @@ if ($multi_documents) {
 				  TableOfContents => $options{'full'},
 				  ReplaceNAMEwithSection => $options{'modify'},
 				  UniqueLabels => $options{'modify'},
+				  Head1Level => $options{'h1level'},
+				  LevelNoNum => $options{'h1level'} + 1,
 				 );
 
       # Select sections if supplied
@@ -173,11 +180,8 @@ if ($multi_documents) {
 
       # if this is the first file to be converted we may want to add
       # a preamble (controlled by command line option)
-      if ($converted == 0 && $options{'full'}) {
-	$preamble = 1;
-      } else {
-	$preamble = 0;
-      }
+      my $preamble = 0;
+      $preamble = 1 if ($converted == 0 && $options{'full'});
 
       # if this is the last file to be converted may want to add
       # a postamble (controlled by command line option)
@@ -196,6 +200,8 @@ if ($multi_documents) {
 				  StartWithNewPage => $options{'full'},
 				  AddPreamble => $preamble,
 				  AddPostamble => $postamble,
+				  Head1Level => $options{'h1level'},
+				  LevelNoNum => $options{'h1level'} + 1,
 				 );
 
       # Store the file name for error messages
@@ -293,6 +299,13 @@ that the description of a module will be in its own section
 which is helpful for including module descriptions in documentation.
 Also forces C<latex> label and index entries to be prefixed by the
 name of the module.
+
+=item B<-h1level>
+
+Specifies the C<latex> section that is equivalent to a C<H1> pod
+directive. This is an integer between 0 and 5 with 0 equivalent to a
+C<latex> chapter, 1 equivalent to a C<latex> section etc. The default
+is 1 (C<H1> equivalent to a latex section).
 
 =item B<-help>
 

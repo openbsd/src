@@ -168,10 +168,10 @@ Tom Christiansen <F<tchrist@mox.perl.com>>, 25 June 1995.
 =cut
 
 use strict;
-use 5.005_64;
+use 5.006;
 use Carp;
 
-our $VERSION = v1.0;
+our $VERSION = 1.1;
 our $DEBUG;
 our $VERBOSE;
 our $PRETTY;
@@ -194,6 +194,12 @@ my @trypod = (
 # handy for development testing of new warnings etc
 unshift @trypod, "./pod/perldiag.pod" if -e "pod/perldiag.pod";
 (my $PODFILE) = ((grep { -e } @trypod), $trypod[$#trypod])[0];
+
+if ($^O eq 'MacOS') {
+    # just updir one from each lib dir, we'll find it ...
+    ($PODFILE) = grep { -e } map { "$_:pod:perldiag.pod" } @INC;
+}
+
 
 $DEBUG ||= 0;
 my $WHOAMI = ref bless [];  # nobody's business, prolly not even mine
@@ -343,9 +349,16 @@ my %msg;
 	    next;
 	}
 
+	if( $for_item ) { $header = $for_item; undef $for_item } 
+	else {
+	    $header = $1;
+	    while( $header =~ /[;,]\z/ ) {
+		<POD_DIAG> =~ /^\s*(.*?)\s*\z/;
+		$header .= ' '.$1;
+	    }
+	}
+
 	# strip formatting directives in =item line
-	$header = $for_item || $1;
-	undef $for_item;	
 	$header =~ s/[A-Z]<(.*?)>/$1/g;
 
 	if ($header =~ /%[csd]/) {
@@ -398,7 +411,7 @@ sub import {
     shift;
     $^W = 1; # yup, clobbered the global variable; 
 	     # tough, if you want diags, you want diags.
-    return if $SIG{__WARN__} eq \&warn_trap;
+    return if defined $SIG{__WARN__} && ($SIG{__WARN__} eq \&warn_trap);
 
     for (@_) {
 
@@ -463,11 +476,18 @@ sub death_trap {
     if (caller eq $WHOAMI) { print STDERR "INTERNAL EXCEPTION: $exception"; } 
     &$olddie if defined $olddie and $olddie and $olddie ne \&death_trap;
 
+    return if $in_eval;
+
     # We don't want to unset these if we're coming from an eval because
-    # then we've turned off diagnostics. (Actually what does this next
-    # line do?  -PSeibel)
-    $SIG{__DIE__} = $SIG{__WARN__} = '' unless $in_eval;
+    # then we've turned off diagnostics.
+
+    # Switch off our die/warn handlers so we don't wind up in our own
+    # traps.
+    $SIG{__DIE__} = $SIG{__WARN__} = '';
+
+    # Have carp skip over death_trap() when showing the stack trace.
     local($Carp::CarpLevel) = 1;
+
     confess "Uncaught exception from user code:\n\t$exception";
 	# up we go; where we stop, nobody knows, but i think we die now
 	# but i'm deeply afraid of the &$olddie guy reraising and us getting

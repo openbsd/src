@@ -1,6 +1,15 @@
-#ifdef WIN32
-#define _POSIX_
-#endif
+#define PERL_EXT_POSIX
+
+#ifdef NETWARE
+	#define _POSIX_
+	/*
+	 * Ideally this should be somewhere down in the includes
+	 * but putting it in other places is giving compiler errors.
+	 * Also here I am unable to check for HAS_UNAME since it wouldn't have
+	 * yet come into the file at this stage - sgp 18th Oct 2000
+	 */
+	#include <sys/utsname.h>
+#endif	/* NETWARE */
 
 #define PERL_NO_GET_CONTEXT
 
@@ -8,7 +17,7 @@
 #define PERLIO_NOT_STDIO 1
 #include "perl.h"
 #include "XSUB.h"
-#if defined(PERL_OBJECT) || defined(PERL_CAPI) || defined(PERL_IMPLICIT_SYS)
+#if defined(PERL_IMPLICIT_SYS)
 #  undef signal
 #  undef open
 #  undef setmode
@@ -38,6 +47,10 @@
 #include <stddef.h>
 #endif
 
+#ifdef I_UNISTD
+#include <unistd.h>
+#endif
+
 /* XXX This comment is just to make I_TERMIO and I_SGTTY visible to 
    metaconfig for future extension writers.  We don't use them in POSIX.
    (This is really sneaky :-)  --AD
@@ -59,6 +72,16 @@
 #undef fdopen
 #endif
 #include <fcntl.h>
+
+#ifdef HAS_TZNAME
+#  if !defined(WIN32) && !defined(__CYGWIN__) && !defined(NETWARE)
+extern char *tzname[];
+#  endif
+#else
+#if !defined(WIN32) || (defined(__MINGW32__) && !defined(tzname))
+char *tzname[] = { "" , "" };
+#endif
+#endif
 
 #if defined(__VMS) && !defined(__POSIX_SOURCE)
 #  include <libdef.h>       /* LIB$_INVARG constant */
@@ -112,7 +135,7 @@
 #if defined (__CYGWIN__)
 #    define tzname _tzname
 #endif
-#if defined (WIN32)
+#if defined (WIN32) || defined (NETWARE)
 #  undef mkfifo
 #  define mkfifo(a,b) not_here("mkfifo")
 #  define ttyname(a) (char*)not_here("ttyname")
@@ -142,8 +165,12 @@
 #  define sigdelset(a,b)	not_here("sigdelset")
 #  define sigfillset(a)		not_here("sigfillset")
 #  define sigismember(a,b)	not_here("sigismember")
+#ifndef NETWARE
+#  undef setuid
+#  undef setgid
 #  define setuid(a)		not_here("setuid")
 #  define setgid(a)		not_here("setgid")
+#endif	/* NETWARE */
 #else
 
 #  ifndef HAS_MKFIFO
@@ -170,7 +197,7 @@
 #  ifdef I_UTIME
 #    include <utime.h>
 #  endif
-#endif /* WIN32 */
+#endif /* WIN32 || NETWARE */
 #endif /* __VMS */
 
 typedef int SysRet;
@@ -199,9 +226,11 @@ typedef struct termios* POSIX__Termios;
 
 /* Possibly needed prototypes */
 char *cuserid (char *);
+#ifndef WIN32
 double strtod (const char *, char **);
 long strtol (const char *, char **, int);
 unsigned long strtoul (const char *, char **, int);
+#endif
 
 #ifndef HAS_CUSERID
 #define cuserid(a) (char *) not_here("cuserid")
@@ -257,7 +286,9 @@ unsigned long strtoul (const char *, char **, int);
 #define tcsetpgrp(a,b) not_here("tcsetpgrp")
 #endif
 #ifndef HAS_TIMES
+#ifndef NETWARE
 #define times(a) not_here("times")
+#endif	/* NETWARE */
 #endif
 #ifndef HAS_UNAME
 #define uname(a) not_here("uname")
@@ -298,246 +329,6 @@ unsigned long strtoul (const char *, char **, int);
 #define localeconv() not_here("localeconv")
 #endif
 
-#ifdef HAS_TZNAME
-#  if !defined(WIN32) && !defined(__CYGWIN__)
-extern char *tzname[];
-#  endif
-#else
-#if !defined(WIN32) || (defined(__MINGW32__) && !defined(tzname))
-char *tzname[] = { "" , "" };
-#endif
-#endif
-
-/* XXX struct tm on some systems (SunOS4/BSD) contains extra (non POSIX)
- * fields for which we don't have Configure support yet:
- *   char *tm_zone;   -- abbreviation of timezone name
- *   long tm_gmtoff;  -- offset from GMT in seconds
- * To workaround core dumps from the uninitialised tm_zone we get the
- * system to give us a reasonable struct to copy.  This fix means that
- * strftime uses the tm_zone and tm_gmtoff values returned by
- * localtime(time()). That should give the desired result most of the
- * time. But probably not always!
- *
- * This is a temporary workaround to be removed once Configure
- * support is added and NETaa14816 is considered in full.
- * It does not address tzname aspects of NETaa14816.
- */
-#ifdef HAS_GNULIBC
-# ifndef STRUCT_TM_HASZONE
-#    define STRUCT_TM_HASZONE
-# endif
-#endif
-
-#ifdef STRUCT_TM_HASZONE
-static void
-init_tm(struct tm *ptm)		/* see mktime, strftime and asctime	*/
-{
-    Time_t now;
-    (void)time(&now);
-    Copy(localtime(&now), ptm, 1, struct tm);
-}
-
-#else
-# define init_tm(ptm)
-#endif
-
-/*
- * mini_mktime - normalise struct tm values without the localtime()
- * semantics (and overhead) of mktime().
- */
-static void
-mini_mktime(struct tm *ptm)
-{
-    int yearday;
-    int secs;
-    int month, mday, year, jday;
-    int odd_cent, odd_year;
-
-#define	DAYS_PER_YEAR	365
-#define	DAYS_PER_QYEAR	(4*DAYS_PER_YEAR+1)
-#define	DAYS_PER_CENT	(25*DAYS_PER_QYEAR-1)
-#define	DAYS_PER_QCENT	(4*DAYS_PER_CENT+1)
-#define	SECS_PER_HOUR	(60*60)
-#define	SECS_PER_DAY	(24*SECS_PER_HOUR)
-/* parentheses deliberately absent on these two, otherwise they don't work */
-#define	MONTH_TO_DAYS	153/5
-#define	DAYS_TO_MONTH	5/153
-/* offset to bias by March (month 4) 1st between month/mday & year finding */
-#define	YEAR_ADJUST	(4*MONTH_TO_DAYS+1)
-/* as used here, the algorithm leaves Sunday as day 1 unless we adjust it */
-#define	WEEKDAY_BIAS	6	/* (1+6)%7 makes Sunday 0 again */
-
-/*
- * Year/day algorithm notes:
- *
- * With a suitable offset for numeric value of the month, one can find
- * an offset into the year by considering months to have 30.6 (153/5) days,
- * using integer arithmetic (i.e., with truncation).  To avoid too much
- * messing about with leap days, we consider January and February to be
- * the 13th and 14th month of the previous year.  After that transformation,
- * we need the month index we use to be high by 1 from 'normal human' usage,
- * so the month index values we use run from 4 through 15.
- *
- * Given that, and the rules for the Gregorian calendar (leap years are those
- * divisible by 4 unless also divisible by 100, when they must be divisible
- * by 400 instead), we can simply calculate the number of days since some
- * arbitrary 'beginning of time' by futzing with the (adjusted) year number,
- * the days we derive from our month index, and adding in the day of the
- * month.  The value used here is not adjusted for the actual origin which
- * it normally would use (1 January A.D. 1), since we're not exposing it.
- * We're only building the value so we can turn around and get the
- * normalised values for the year, month, day-of-month, and day-of-year.
- *
- * For going backward, we need to bias the value we're using so that we find
- * the right year value.  (Basically, we don't want the contribution of
- * March 1st to the number to apply while deriving the year).  Having done
- * that, we 'count up' the contribution to the year number by accounting for
- * full quadracenturies (400-year periods) with their extra leap days, plus
- * the contribution from full centuries (to avoid counting in the lost leap
- * days), plus the contribution from full quad-years (to count in the normal
- * leap days), plus the leftover contribution from any non-leap years.
- * At this point, if we were working with an actual leap day, we'll have 0
- * days left over.  This is also true for March 1st, however.  So, we have
- * to special-case that result, and (earlier) keep track of the 'odd'
- * century and year contributions.  If we got 4 extra centuries in a qcent,
- * or 4 extra years in a qyear, then it's a leap day and we call it 29 Feb.
- * Otherwise, we add back in the earlier bias we removed (the 123 from
- * figuring in March 1st), find the month index (integer division by 30.6),
- * and the remainder is the day-of-month.  We then have to convert back to
- * 'real' months (including fixing January and February from being 14/15 in
- * the previous year to being in the proper year).  After that, to get
- * tm_yday, we work with the normalised year and get a new yearday value for
- * January 1st, which we subtract from the yearday value we had earlier,
- * representing the date we've re-built.  This is done from January 1
- * because tm_yday is 0-origin.
- *
- * Since POSIX time routines are only guaranteed to work for times since the
- * UNIX epoch (00:00:00 1 Jan 1970 UTC), the fact that this algorithm
- * applies Gregorian calendar rules even to dates before the 16th century
- * doesn't bother me.  Besides, you'd need cultural context for a given
- * date to know whether it was Julian or Gregorian calendar, and that's
- * outside the scope for this routine.  Since we convert back based on the
- * same rules we used to build the yearday, you'll only get strange results
- * for input which needed normalising, or for the 'odd' century years which
- * were leap years in the Julian calander but not in the Gregorian one.
- * I can live with that.
- *
- * This algorithm also fails to handle years before A.D. 1 gracefully, but
- * that's still outside the scope for POSIX time manipulation, so I don't
- * care.
- */
-
-    year = 1900 + ptm->tm_year;
-    month = ptm->tm_mon;
-    mday = ptm->tm_mday;
-    /* allow given yday with no month & mday to dominate the result */
-    if (ptm->tm_yday >= 0 && mday <= 0 && month <= 0) {
-	month = 0;
-	mday = 0;
-	jday = 1 + ptm->tm_yday;
-    }
-    else {
-	jday = 0;
-    }
-    if (month >= 2)
-	month+=2;
-    else
-	month+=14, year--;
-    yearday = DAYS_PER_YEAR * year + year/4 - year/100 + year/400;
-    yearday += month*MONTH_TO_DAYS + mday + jday;
-    /*
-     * Note that we don't know when leap-seconds were or will be,
-     * so we have to trust the user if we get something which looks
-     * like a sensible leap-second.  Wild values for seconds will
-     * be rationalised, however.
-     */
-    if ((unsigned) ptm->tm_sec <= 60) {
-	secs = 0;
-    }
-    else {
-	secs = ptm->tm_sec;
-	ptm->tm_sec = 0;
-    }
-    secs += 60 * ptm->tm_min;
-    secs += SECS_PER_HOUR * ptm->tm_hour;
-    if (secs < 0) {
-	if (secs-(secs/SECS_PER_DAY*SECS_PER_DAY) < 0) {
-	    /* got negative remainder, but need positive time */
-	    /* back off an extra day to compensate */
-	    yearday += (secs/SECS_PER_DAY)-1;
-	    secs -= SECS_PER_DAY * (secs/SECS_PER_DAY - 1);
-	}
-	else {
-	    yearday += (secs/SECS_PER_DAY);
-	    secs -= SECS_PER_DAY * (secs/SECS_PER_DAY);
-	}
-    }
-    else if (secs >= SECS_PER_DAY) {
-	yearday += (secs/SECS_PER_DAY);
-	secs %= SECS_PER_DAY;
-    }
-    ptm->tm_hour = secs/SECS_PER_HOUR;
-    secs %= SECS_PER_HOUR;
-    ptm->tm_min = secs/60;
-    secs %= 60;
-    ptm->tm_sec += secs;
-    /* done with time of day effects */
-    /*
-     * The algorithm for yearday has (so far) left it high by 428.
-     * To avoid mistaking a legitimate Feb 29 as Mar 1, we need to
-     * bias it by 123 while trying to figure out what year it
-     * really represents.  Even with this tweak, the reverse
-     * translation fails for years before A.D. 0001.
-     * It would still fail for Feb 29, but we catch that one below.
-     */
-    jday = yearday;	/* save for later fixup vis-a-vis Jan 1 */
-    yearday -= YEAR_ADJUST;
-    year = (yearday / DAYS_PER_QCENT) * 400;
-    yearday %= DAYS_PER_QCENT;
-    odd_cent = yearday / DAYS_PER_CENT;
-    year += odd_cent * 100;
-    yearday %= DAYS_PER_CENT;
-    year += (yearday / DAYS_PER_QYEAR) * 4;
-    yearday %= DAYS_PER_QYEAR;
-    odd_year = yearday / DAYS_PER_YEAR;
-    year += odd_year;
-    yearday %= DAYS_PER_YEAR;
-    if (!yearday && (odd_cent==4 || odd_year==4)) { /* catch Feb 29 */
-	month = 1;
-	yearday = 29;
-    }
-    else {
-	yearday += YEAR_ADJUST;	/* recover March 1st crock */
-	month = yearday*DAYS_TO_MONTH;
-	yearday -= month*MONTH_TO_DAYS;
-	/* recover other leap-year adjustment */
-	if (month > 13) {
-	    month-=14;
-	    year++;
-	}
-	else {
-	    month-=2;
-	}
-    }
-    ptm->tm_year = year - 1900;
-    if (yearday) {
-      ptm->tm_mday = yearday;
-      ptm->tm_mon = month;
-    }
-    else {
-      ptm->tm_mday = 31;
-      ptm->tm_mon = month - 1;
-    }
-    /* re-build yearday based on Jan 1 to get tm_yday */
-    year--;
-    yearday = year*DAYS_PER_YEAR + year/4 - year/100 + year/400;
-    yearday += 14*MONTH_TO_DAYS + 1;
-    ptm->tm_yday = jday - yearday;
-    /* fix tm_wday if not overridden by caller */
-    if ((unsigned)ptm->tm_wday > 6)
-	ptm->tm_wday = (jday + WEEKDAY_BIAS) % 7;
-}
-
 #ifdef HAS_LONG_DOUBLE
 #  if LONG_DOUBLESIZE > NVSIZE
 #    undef HAS_LONG_DOUBLE  /* XXX until we figure out how to use them */
@@ -556,6 +347,20 @@ mini_mktime(struct tm *ptm)
 #endif
 #endif
 
+/* Background: in most systems the low byte of the wait status
+ * is the signal (the lowest 7 bits) and the coredump flag is
+ * the eight bit, and the second lowest byte is the exit status.
+ * BeOS bucks the trend and has the bytes in different order.
+ * See beos/beos.c for how the reality is bent even in BeOS
+ * to follow the traditional.  However, to make the POSIX
+ * wait W*() macros to work in BeOS, we need to unbend the
+ * reality back in place. --jhi */
+#ifdef __BEOS__
+#    define WMUNGE(x) (((x) & 0xFF00) >> 8 | ((x) & 0x00FF) << 8)
+#else
+#    define WMUNGE(x) (x)
+#endif
+
 static int
 not_here(char *s)
 {
@@ -563,2218 +368,191 @@ not_here(char *s)
     return -1;
 }
 
-static
-NV
-constant(char *name, int arg)
-{
-    errno = 0;
-    switch (*name) {
-    case 'A':
-	if (strEQ(name, "ARG_MAX"))
-#ifdef ARG_MAX
-	    return ARG_MAX;
-#else
-	    goto not_there;
-#endif
-	break;
-    case 'B':
-	if (strEQ(name, "BUFSIZ"))
-#ifdef BUFSIZ
-	    return BUFSIZ;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "BRKINT"))
-#ifdef BRKINT
-	    return BRKINT;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "B9600"))
-#ifdef B9600
-	    return B9600;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "B19200"))
-#ifdef B19200
-	    return B19200;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "B38400"))
-#ifdef B38400
-	    return B38400;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "B0"))
-#ifdef B0
-	    return B0;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "B110"))
-#ifdef B110
-	    return B110;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "B1200"))
-#ifdef B1200
-	    return B1200;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "B134"))
-#ifdef B134
-	    return B134;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "B150"))
-#ifdef B150
-	    return B150;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "B1800"))
-#ifdef B1800
-	    return B1800;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "B200"))
-#ifdef B200
-	    return B200;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "B2400"))
-#ifdef B2400
-	    return B2400;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "B300"))
-#ifdef B300
-	    return B300;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "B4800"))
-#ifdef B4800
-	    return B4800;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "B50"))
-#ifdef B50
-	    return B50;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "B600"))
-#ifdef B600
-	    return B600;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "B75"))
-#ifdef B75
-	    return B75;
-#else
-	    goto not_there;
-#endif
-	break;
-    case 'C':
-	if (strEQ(name, "CHAR_BIT"))
-#ifdef CHAR_BIT
-	    return CHAR_BIT;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "CHAR_MAX"))
-#ifdef CHAR_MAX
-	    return CHAR_MAX;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "CHAR_MIN"))
-#ifdef CHAR_MIN
-	    return CHAR_MIN;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "CHILD_MAX"))
-#ifdef CHILD_MAX
-	    return CHILD_MAX;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "CLK_TCK"))
-#ifdef CLK_TCK
-	    return CLK_TCK;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "CLOCAL"))
-#ifdef CLOCAL
-	    return CLOCAL;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "CLOCKS_PER_SEC"))
-#ifdef CLOCKS_PER_SEC
-	    return CLOCKS_PER_SEC;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "CREAD"))
-#ifdef CREAD
-	    return CREAD;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "CS5"))
-#ifdef CS5
-	    return CS5;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "CS6"))
-#ifdef CS6
-	    return CS6;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "CS7"))
-#ifdef CS7
-	    return CS7;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "CS8"))
-#ifdef CS8
-	    return CS8;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "CSIZE"))
-#ifdef CSIZE
-	    return CSIZE;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "CSTOPB"))
-#ifdef CSTOPB
-	    return CSTOPB;
-#else
-	    goto not_there;
-#endif
-	break;
-    case 'D':
-	if (strEQ(name, "DBL_MAX"))
-#ifdef DBL_MAX
-	    return DBL_MAX;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "DBL_MIN"))
-#ifdef DBL_MIN
-	    return DBL_MIN;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "DBL_DIG"))
-#ifdef DBL_DIG
-	    return DBL_DIG;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "DBL_EPSILON"))
-#ifdef DBL_EPSILON
-	    return DBL_EPSILON;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "DBL_MANT_DIG"))
-#ifdef DBL_MANT_DIG
-	    return DBL_MANT_DIG;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "DBL_MAX_10_EXP"))
-#ifdef DBL_MAX_10_EXP
-	    return DBL_MAX_10_EXP;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "DBL_MAX_EXP"))
-#ifdef DBL_MAX_EXP
-	    return DBL_MAX_EXP;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "DBL_MIN_10_EXP"))
-#ifdef DBL_MIN_10_EXP
-	    return DBL_MIN_10_EXP;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "DBL_MIN_EXP"))
-#ifdef DBL_MIN_EXP
-	    return DBL_MIN_EXP;
-#else
-	    goto not_there;
-#endif
-	break;
-    case 'E':
-	switch (name[1]) {
-	case 'A':
-	    if (strEQ(name, "EACCES"))
-#ifdef EACCES
-		return EACCES;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "EADDRINUSE"))
-#ifdef EADDRINUSE
-		return EADDRINUSE;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "EADDRNOTAVAIL"))
-#ifdef EADDRNOTAVAIL
-		return EADDRNOTAVAIL;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "EAFNOSUPPORT"))
-#ifdef EAFNOSUPPORT
-		return EAFNOSUPPORT;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "EAGAIN"))
-#ifdef EAGAIN
-		return EAGAIN;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "EALREADY"))
-#ifdef EALREADY
-		return EALREADY;
-#else
-		goto not_there;
-#endif
-	    break;
-	case 'B':
-	    if (strEQ(name, "EBADF"))
-#ifdef EBADF
-		return EBADF;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "EBUSY"))
-#ifdef EBUSY
-		return EBUSY;
-#else
-		goto not_there;
-#endif
-	    break;
-	case 'C':
-	    if (strEQ(name, "ECHILD"))
-#ifdef ECHILD
-		return ECHILD;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "ECHO"))
-#ifdef ECHO
-		return ECHO;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "ECHOE"))
-#ifdef ECHOE
-		return ECHOE;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "ECHOK"))
-#ifdef ECHOK
-		return ECHOK;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "ECHONL"))
-#ifdef ECHONL
-		return ECHONL;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "ECONNABORTED"))
-#ifdef ECONNABORTED
-		return ECONNABORTED;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "ECONNREFUSED"))
-#ifdef ECONNREFUSED
-		return ECONNREFUSED;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "ECONNRESET"))
-#ifdef ECONNRESET
-		return ECONNRESET;
-#else
-		goto not_there;
-#endif
-	    break;
-	case 'D':
-	    if (strEQ(name, "EDEADLK"))
-#ifdef EDEADLK
-		return EDEADLK;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "EDESTADDRREQ"))
-#ifdef EDESTADDRREQ
-		return EDESTADDRREQ;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "EDOM"))
-#ifdef EDOM
-		return EDOM;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "EDQUOT"))
-#ifdef EDQUOT
-		return EDQUOT;
-#else
-		goto not_there;
-#endif
-	    break;
-	case 'E':
-	    if (strEQ(name, "EEXIST"))
-#ifdef EEXIST
-		return EEXIST;
-#else
-		goto not_there;
-#endif
-	    break;
-	case 'F':
-	    if (strEQ(name, "EFAULT"))
-#ifdef EFAULT
-		return EFAULT;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "EFBIG"))
-#ifdef EFBIG
-		return EFBIG;
-#else
-		goto not_there;
-#endif
-	    break;
-	case 'H':
-	    if (strEQ(name, "EHOSTDOWN"))
-#ifdef EHOSTDOWN
-		return EHOSTDOWN;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "EHOSTUNREACH"))
-#ifdef EHOSTUNREACH
-		return EHOSTUNREACH;
-#else
-		goto not_there;
-#endif
-    	    break;
-	case 'I':
-	    if (strEQ(name, "EINPROGRESS"))
-#ifdef EINPROGRESS
-		return EINPROGRESS;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "EINTR"))
-#ifdef EINTR
-		return EINTR;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "EINVAL"))
-#ifdef EINVAL
-		return EINVAL;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "EIO"))
-#ifdef EIO
-		return EIO;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "EISCONN"))
-#ifdef EISCONN
-		return EISCONN;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "EISDIR"))
-#ifdef EISDIR
-		return EISDIR;
-#else
-		goto not_there;
-#endif
-	    break;
-	case 'L':
-	    if (strEQ(name, "ELOOP"))
-#ifdef ELOOP
-		return ELOOP;
-#else
-		goto not_there;
-#endif
-	    break;
-	case 'M':
-	    if (strEQ(name, "EMFILE"))
-#ifdef EMFILE
-		return EMFILE;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "EMLINK"))
-#ifdef EMLINK
-		return EMLINK;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "EMSGSIZE"))
-#ifdef EMSGSIZE
-		return EMSGSIZE;
-#else
-		goto not_there;
-#endif
-	    break;
-	case 'N':
-	    if (strEQ(name, "ENETDOWN"))
-#ifdef ENETDOWN
-		return ENETDOWN;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "ENETRESET"))
-#ifdef ENETRESET
-		return ENETRESET;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "ENETUNREACH"))
-#ifdef ENETUNREACH
-		return ENETUNREACH;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "ENOBUFS"))
-#ifdef ENOBUFS
-		return ENOBUFS;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "ENOEXEC"))
-#ifdef ENOEXEC
-		return ENOEXEC;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "ENOMEM"))
-#ifdef ENOMEM
-		return ENOMEM;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "ENOPROTOOPT"))
-#ifdef ENOPROTOOPT
-		return ENOPROTOOPT;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "ENOSPC"))
-#ifdef ENOSPC
-		return ENOSPC;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "ENOTBLK"))
-#ifdef ENOTBLK
-		return ENOTBLK;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "ENOTCONN"))
-#ifdef ENOTCONN
-		return ENOTCONN;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "ENOTDIR"))
-#ifdef ENOTDIR
-		return ENOTDIR;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "ENOTEMPTY"))
-#ifdef ENOTEMPTY
-		return ENOTEMPTY;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "ENOTSOCK"))
-#ifdef ENOTSOCK
-		return ENOTSOCK;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "ENOTTY"))
-#ifdef ENOTTY
-		return ENOTTY;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "ENFILE"))
-#ifdef ENFILE
-		return ENFILE;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "ENODEV"))
-#ifdef ENODEV
-		return ENODEV;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "ENOENT"))
-#ifdef ENOENT
-		return ENOENT;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "ENOLCK"))
-#ifdef ENOLCK
-		return ENOLCK;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "ENOSYS"))
-#ifdef ENOSYS
-		return ENOSYS;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "ENXIO"))
-#ifdef ENXIO
-		return ENXIO;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "ENAMETOOLONG"))
-#ifdef ENAMETOOLONG
-		return ENAMETOOLONG;
-#else
-		goto not_there;
-#endif
-	    break;
-	case 'O':
-	    if (strEQ(name, "EOF"))
-#ifdef EOF
-		return EOF;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "EOPNOTSUPP"))
-#ifdef EOPNOTSUPP
-		return EOPNOTSUPP;
-#else
-		goto not_there;
-#endif
-	    break;
-	case 'P':
-	    if (strEQ(name, "EPERM"))
-#ifdef EPERM
-		return EPERM;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "EPFNOSUPPORT"))
-#ifdef EPFNOSUPPORT
-		return EPFNOSUPPORT;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "EPIPE"))
-#ifdef EPIPE
-		return EPIPE;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "EPROCLIM"))
-#ifdef EPROCLIM
-		return EPROCLIM;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "EPROTONOSUPPORT"))
-#ifdef EPROTONOSUPPORT
-		return EPROTONOSUPPORT;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "EPROTOTYPE"))
-#ifdef EPROTOTYPE
-		return EPROTOTYPE;
-#else
-		goto not_there;
-#endif
-	    break;
-	case 'R':
-	    if (strEQ(name, "ERANGE"))
-#ifdef ERANGE
-		return ERANGE;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "EREMOTE"))
-#ifdef EREMOTE
-		return EREMOTE;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "ERESTART"))
-#ifdef ERESTART
-		return ERESTART;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "EROFS"))
-#ifdef EROFS
-		return EROFS;
-#else
-		goto not_there;
-#endif
-	    break;
-	case 'S':
-	    if (strEQ(name, "ESHUTDOWN"))
-#ifdef ESHUTDOWN
-		return ESHUTDOWN;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "ESOCKTNOSUPPORT"))
-#ifdef ESOCKTNOSUPPORT
-		return ESOCKTNOSUPPORT;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "ESPIPE"))
-#ifdef ESPIPE
-		return ESPIPE;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "ESRCH"))
-#ifdef ESRCH
-		return ESRCH;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "ESTALE"))
-#ifdef ESTALE
-		return ESTALE;
-#else
-		goto not_there;
-#endif
-	    break;
-	case 'T':
-	    if (strEQ(name, "ETIMEDOUT"))
-#ifdef ETIMEDOUT
-		return ETIMEDOUT;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "ETOOMANYREFS"))
-#ifdef ETOOMANYREFS
-		return ETOOMANYREFS;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "ETXTBSY"))
-#ifdef ETXTBSY
-		return ETXTBSY;
-#else
-		goto not_there;
-#endif
-    	    break;
-	case 'U':
-	    if (strEQ(name, "EUSERS"))
-#ifdef EUSERS
-		return EUSERS;
-#else
-		goto not_there;
-#endif
-    	    break;
-    	case 'W':
-	    if (strEQ(name, "EWOULDBLOCK"))
-#ifdef EWOULDBLOCK
-		return EWOULDBLOCK;
-#else
-		goto not_there;
-#endif
-    	    break;
-	case 'X':
-	    if (strEQ(name, "EXIT_FAILURE"))
-#ifdef EXIT_FAILURE
-		return EXIT_FAILURE;
-#else
-		return 1;
-#endif
-	    if (strEQ(name, "EXIT_SUCCESS"))
-#ifdef EXIT_SUCCESS
-		return EXIT_SUCCESS;
-#else
-		return 0;
-#endif
-	    if (strEQ(name, "EXDEV"))
-#ifdef EXDEV
-		return EXDEV;
-#else
-		goto not_there;
-#endif
-	    break;
-	}
-	if (strEQ(name, "E2BIG"))
-#ifdef E2BIG
-	    return E2BIG;
-#else
-	    goto not_there;
-#endif
-	break;
-    case 'F':
-	if (strnEQ(name, "FLT_", 4)) {
-	    if (strEQ(name, "FLT_MAX"))
-#ifdef FLT_MAX
-		return FLT_MAX;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "FLT_MIN"))
-#ifdef FLT_MIN
-		return FLT_MIN;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "FLT_ROUNDS"))
-#ifdef FLT_ROUNDS
-		return FLT_ROUNDS;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "FLT_DIG"))
-#ifdef FLT_DIG
-		return FLT_DIG;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "FLT_EPSILON"))
-#ifdef FLT_EPSILON
-		return FLT_EPSILON;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "FLT_MANT_DIG"))
-#ifdef FLT_MANT_DIG
-		return FLT_MANT_DIG;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "FLT_MAX_10_EXP"))
-#ifdef FLT_MAX_10_EXP
-		return FLT_MAX_10_EXP;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "FLT_MAX_EXP"))
-#ifdef FLT_MAX_EXP
-		return FLT_MAX_EXP;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "FLT_MIN_10_EXP"))
-#ifdef FLT_MIN_10_EXP
-		return FLT_MIN_10_EXP;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "FLT_MIN_EXP"))
-#ifdef FLT_MIN_EXP
-		return FLT_MIN_EXP;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "FLT_RADIX"))
-#ifdef FLT_RADIX
-		return FLT_RADIX;
-#else
-		goto not_there;
-#endif
-	    break;
-	}
-	if (strnEQ(name, "F_", 2)) {
-	    if (strEQ(name, "F_DUPFD"))
-#ifdef F_DUPFD
-		return F_DUPFD;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "F_GETFD"))
-#ifdef F_GETFD
-		return F_GETFD;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "F_GETFL"))
-#ifdef F_GETFL
-		return F_GETFL;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "F_GETLK"))
-#ifdef F_GETLK
-		return F_GETLK;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "F_OK"))
-#ifdef F_OK
-		return F_OK;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "F_RDLCK"))
-#ifdef F_RDLCK
-		return F_RDLCK;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "F_SETFD"))
-#ifdef F_SETFD
-		return F_SETFD;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "F_SETFL"))
-#ifdef F_SETFL
-		return F_SETFL;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "F_SETLK"))
-#ifdef F_SETLK
-		return F_SETLK;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "F_SETLKW"))
-#ifdef F_SETLKW
-		return F_SETLKW;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "F_UNLCK"))
-#ifdef F_UNLCK
-		return F_UNLCK;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "F_WRLCK"))
-#ifdef F_WRLCK
-		return F_WRLCK;
-#else
-		goto not_there;
-#endif
-	    break;
-	}
-	if (strEQ(name, "FD_CLOEXEC"))
-#ifdef FD_CLOEXEC
-	    return FD_CLOEXEC;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "FILENAME_MAX"))
-#ifdef FILENAME_MAX
-	    return FILENAME_MAX;
-#else
-	    goto not_there;
-#endif
-	break;
-    case 'H':
-	if (strEQ(name, "HUGE_VAL"))
-#if defined(USE_LONG_DOUBLE) && defined(HUGE_VALL)
-	  /* HUGE_VALL is admittedly non-POSIX but if we are using long doubles
-	   * we might as well use long doubles. --jhi */
-	    return HUGE_VALL;
-#endif
-#ifdef HUGE_VAL
-	    return HUGE_VAL;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "HUPCL"))
-#ifdef HUPCL
-	    return HUPCL;
-#else
-	    goto not_there;
-#endif
-	break;
-    case 'I':
-	if (strEQ(name, "INT_MAX"))
-#ifdef INT_MAX
-	    return INT_MAX;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "INT_MIN"))
-#ifdef INT_MIN
-	    return INT_MIN;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "ICANON"))
-#ifdef ICANON
-	    return ICANON;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "ICRNL"))
-#ifdef ICRNL
-	    return ICRNL;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "IEXTEN"))
-#ifdef IEXTEN
-	    return IEXTEN;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "IGNBRK"))
-#ifdef IGNBRK
-	    return IGNBRK;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "IGNCR"))
-#ifdef IGNCR
-	    return IGNCR;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "IGNPAR"))
-#ifdef IGNPAR
-	    return IGNPAR;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "INLCR"))
-#ifdef INLCR
-	    return INLCR;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "INPCK"))
-#ifdef INPCK
-	    return INPCK;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "ISIG"))
-#ifdef ISIG
-	    return ISIG;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "ISTRIP"))
-#ifdef ISTRIP
-	    return ISTRIP;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "IXOFF"))
-#ifdef IXOFF
-	    return IXOFF;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "IXON"))
-#ifdef IXON
-	    return IXON;
-#else
-	    goto not_there;
-#endif
-	break;
-    case 'L':
-	if (strnEQ(name, "LC_", 3)) {
-	    if (strEQ(name, "LC_ALL"))
-#ifdef LC_ALL
-		return LC_ALL;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "LC_COLLATE"))
-#ifdef LC_COLLATE
-		return LC_COLLATE;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "LC_CTYPE"))
-#ifdef LC_CTYPE
-		return LC_CTYPE;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "LC_MONETARY"))
-#ifdef LC_MONETARY
-		return LC_MONETARY;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "LC_NUMERIC"))
-#ifdef LC_NUMERIC
-		return LC_NUMERIC;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "LC_TIME"))
-#ifdef LC_TIME
-		return LC_TIME;
-#else
-		goto not_there;
-#endif
-	    break;
-	}
-	if (strnEQ(name, "LDBL_", 5)) {
-	    if (strEQ(name, "LDBL_MAX"))
-#ifdef LDBL_MAX
-		return LDBL_MAX;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "LDBL_MIN"))
-#ifdef LDBL_MIN
-		return LDBL_MIN;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "LDBL_DIG"))
-#ifdef LDBL_DIG
-		return LDBL_DIG;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "LDBL_EPSILON"))
-#ifdef LDBL_EPSILON
-		return LDBL_EPSILON;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "LDBL_MANT_DIG"))
-#ifdef LDBL_MANT_DIG
-		return LDBL_MANT_DIG;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "LDBL_MAX_10_EXP"))
-#ifdef LDBL_MAX_10_EXP
-		return LDBL_MAX_10_EXP;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "LDBL_MAX_EXP"))
-#ifdef LDBL_MAX_EXP
-		return LDBL_MAX_EXP;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "LDBL_MIN_10_EXP"))
-#ifdef LDBL_MIN_10_EXP
-		return LDBL_MIN_10_EXP;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "LDBL_MIN_EXP"))
-#ifdef LDBL_MIN_EXP
-		return LDBL_MIN_EXP;
-#else
-		goto not_there;
-#endif
-	    break;
-	}
-	if (strnEQ(name, "L_", 2)) {
-	    if (strEQ(name, "L_ctermid"))
-#ifdef L_ctermid
-		return L_ctermid;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "L_cuserid"))
-#ifdef L_cuserid
-		return L_cuserid;
-#else
-		goto not_there;
-#endif
-	    /* L_tmpnam[e] was a typo--retained for compatibility */
-	    if (strEQ(name, "L_tmpname") || strEQ(name, "L_tmpnam"))
-#ifdef L_tmpnam
-		return L_tmpnam;
-#else
-		goto not_there;
-#endif
-	    break;
-	}
-	if (strEQ(name, "LONG_MAX"))
-#ifdef LONG_MAX
-	    return LONG_MAX;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "LONG_MIN"))
-#ifdef LONG_MIN
-	    return LONG_MIN;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "LINK_MAX"))
-#ifdef LINK_MAX
-	    return LINK_MAX;
-#else
-	    goto not_there;
-#endif
-	break;
-    case 'M':
-	if (strEQ(name, "MAX_CANON"))
-#ifdef MAX_CANON
-	    return MAX_CANON;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "MAX_INPUT"))
-#ifdef MAX_INPUT
-	    return MAX_INPUT;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "MB_CUR_MAX"))
-#ifdef MB_CUR_MAX
-	    return MB_CUR_MAX;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "MB_LEN_MAX"))
-#ifdef MB_LEN_MAX
-	    return MB_LEN_MAX;
-#else
-	    goto not_there;
-#endif
-	break;
-    case 'N':
-	if (strEQ(name, "NULL")) return 0;
-	if (strEQ(name, "NAME_MAX"))
-#ifdef NAME_MAX
-	    return NAME_MAX;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "NCCS"))
-#ifdef NCCS
-	    return NCCS;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "NGROUPS_MAX"))
-#ifdef NGROUPS_MAX
-	    return NGROUPS_MAX;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "NOFLSH"))
-#ifdef NOFLSH
-	    return NOFLSH;
-#else
-	    goto not_there;
-#endif
-	break;
-    case 'O':
-	if (strnEQ(name, "O_", 2)) {
-	    if (strEQ(name, "O_APPEND"))
-#ifdef O_APPEND
-		return O_APPEND;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "O_CREAT"))
-#ifdef O_CREAT
-		return O_CREAT;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "O_TRUNC"))
-#ifdef O_TRUNC
-		return O_TRUNC;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "O_RDONLY"))
-#ifdef O_RDONLY
-		return O_RDONLY;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "O_RDWR"))
-#ifdef O_RDWR
-		return O_RDWR;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "O_WRONLY"))
-#ifdef O_WRONLY
-		return O_WRONLY;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "O_EXCL"))
-#ifdef O_EXCL
-		return O_EXCL;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "O_NOCTTY"))
-#ifdef O_NOCTTY
-		return O_NOCTTY;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "O_NONBLOCK"))
-#ifdef O_NONBLOCK
-		return O_NONBLOCK;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "O_ACCMODE"))
-#ifdef O_ACCMODE
-		return O_ACCMODE;
-#else
-		goto not_there;
-#endif
-	    break;
-	}
-	if (strEQ(name, "OPEN_MAX"))
-#ifdef OPEN_MAX
-	    return OPEN_MAX;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "OPOST"))
-#ifdef OPOST
-	    return OPOST;
-#else
-	    goto not_there;
-#endif
-	break;
-    case 'P':
-	if (strEQ(name, "PATH_MAX"))
-#ifdef PATH_MAX
-	    return PATH_MAX;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "PARENB"))
-#ifdef PARENB
-	    return PARENB;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "PARMRK"))
-#ifdef PARMRK
-	    return PARMRK;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "PARODD"))
-#ifdef PARODD
-	    return PARODD;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "PIPE_BUF"))
-#ifdef PIPE_BUF
-	    return PIPE_BUF;
-#else
-	    goto not_there;
-#endif
-	break;
-    case 'R':
-	if (strEQ(name, "RAND_MAX"))
-#ifdef RAND_MAX
-	    return RAND_MAX;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "R_OK"))
-#ifdef R_OK
-	    return R_OK;
-#else
-	    goto not_there;
-#endif
-	break;
-    case 'S':
-	if (strnEQ(name, "SIG", 3)) {
-	    if (name[3] == '_') {
-		if (strEQ(name, "SIG_BLOCK"))
-#ifdef SIG_BLOCK
-		    return SIG_BLOCK;
-#else
-		    goto not_there;
-#endif
-#ifdef SIG_DFL
-		if (strEQ(name, "SIG_DFL")) return (IV)SIG_DFL;
-#endif
-#ifdef SIG_ERR
-		if (strEQ(name, "SIG_ERR")) return (IV)SIG_ERR;
-#endif
-#ifdef SIG_IGN
-		if (strEQ(name, "SIG_IGN")) return (IV)SIG_IGN;
-#endif
-		if (strEQ(name, "SIG_SETMASK"))
-#ifdef SIG_SETMASK
-		    return SIG_SETMASK;
-#else
-		    goto not_there;
-#endif
-		if (strEQ(name, "SIG_UNBLOCK"))
-#ifdef SIG_UNBLOCK
-		    return SIG_UNBLOCK;
-#else
-		    goto not_there;
-#endif
-		break;
-	    }
-	    if (strEQ(name, "SIGABRT"))
-#ifdef SIGABRT
-		return SIGABRT;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "SIGALRM"))
-#ifdef SIGALRM
-		return SIGALRM;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "SIGCHLD"))
-#ifdef SIGCHLD
-		return SIGCHLD;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "SIGCONT"))
-#ifdef SIGCONT
-		return SIGCONT;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "SIGFPE"))
-#ifdef SIGFPE
-		return SIGFPE;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "SIGHUP"))
-#ifdef SIGHUP
-		return SIGHUP;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "SIGILL"))
-#ifdef SIGILL
-		return SIGILL;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "SIGINT"))
-#ifdef SIGINT
-		return SIGINT;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "SIGKILL"))
-#ifdef SIGKILL
-		return SIGKILL;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "SIGPIPE"))
-#ifdef SIGPIPE
-		return SIGPIPE;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "SIGQUIT"))
-#ifdef SIGQUIT
-		return SIGQUIT;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "SIGSEGV"))
-#ifdef SIGSEGV
-		return SIGSEGV;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "SIGSTOP"))
-#ifdef SIGSTOP
-		return SIGSTOP;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "SIGTERM"))
-#ifdef SIGTERM
-		return SIGTERM;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "SIGTSTP"))
-#ifdef SIGTSTP
-		return SIGTSTP;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "SIGTTIN"))
-#ifdef SIGTTIN
-		return SIGTTIN;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "SIGTTOU"))
-#ifdef SIGTTOU
-		return SIGTTOU;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "SIGUSR1"))
-#ifdef SIGUSR1
-		return SIGUSR1;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "SIGUSR2"))
-#ifdef SIGUSR2
-		return SIGUSR2;
-#else
-		goto not_there;
-#endif
-	    break;
-	}
-	if (name[1] == '_') {
-	    if (strEQ(name, "S_ISGID"))
-#ifdef S_ISGID
-		return S_ISGID;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "S_ISUID"))
-#ifdef S_ISUID
-		return S_ISUID;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "S_IRGRP"))
-#ifdef S_IRGRP
-		return S_IRGRP;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "S_IROTH"))
-#ifdef S_IROTH
-		return S_IROTH;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "S_IRUSR"))
-#ifdef S_IRUSR
-		return S_IRUSR;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "S_IRWXG"))
-#ifdef S_IRWXG
-		return S_IRWXG;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "S_IRWXO"))
-#ifdef S_IRWXO
-		return S_IRWXO;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "S_IRWXU"))
-#ifdef S_IRWXU
-		return S_IRWXU;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "S_IWGRP"))
-#ifdef S_IWGRP
-		return S_IWGRP;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "S_IWOTH"))
-#ifdef S_IWOTH
-		return S_IWOTH;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "S_IWUSR"))
-#ifdef S_IWUSR
-		return S_IWUSR;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "S_IXGRP"))
-#ifdef S_IXGRP
-		return S_IXGRP;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "S_IXOTH"))
-#ifdef S_IXOTH
-		return S_IXOTH;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "S_IXUSR"))
-#ifdef S_IXUSR
-		return S_IXUSR;
-#else
-		goto not_there;
-#endif
-	    errno = EAGAIN;		/* the following aren't constants */
-#ifdef S_ISBLK
-	    if (strEQ(name, "S_ISBLK")) return S_ISBLK(arg);
-#endif
-#ifdef S_ISCHR
-	    if (strEQ(name, "S_ISCHR")) return S_ISCHR(arg);
-#endif
-#ifdef S_ISDIR
-	    if (strEQ(name, "S_ISDIR")) return S_ISDIR(arg);
-#endif
-#ifdef S_ISFIFO
-	    if (strEQ(name, "S_ISFIFO")) return S_ISFIFO(arg);
-#endif
-#ifdef S_ISREG
-	    if (strEQ(name, "S_ISREG")) return S_ISREG(arg);
-#endif
-	    break;
-	}
-	if (strEQ(name, "SEEK_CUR"))
-#ifdef SEEK_CUR
-	    return SEEK_CUR;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "SEEK_END"))
-#ifdef SEEK_END
-	    return SEEK_END;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "SEEK_SET"))
-#ifdef SEEK_SET
-	    return SEEK_SET;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "STREAM_MAX"))
-#ifdef STREAM_MAX
-	    return STREAM_MAX;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "SHRT_MAX"))
-#ifdef SHRT_MAX
-	    return SHRT_MAX;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "SHRT_MIN"))
-#ifdef SHRT_MIN
-	    return SHRT_MIN;
-#else
-	    goto not_there;
-#endif
-	if (strnEQ(name, "SA_", 3)) {
-	    if (strEQ(name, "SA_NOCLDSTOP"))
-#ifdef SA_NOCLDSTOP
-		return SA_NOCLDSTOP;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "SA_NOCLDWAIT"))
-#ifdef SA_NOCLDWAIT
-		return SA_NOCLDWAIT;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "SA_NODEFER"))
-#ifdef SA_NODEFER
-		return SA_NODEFER;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "SA_ONSTACK"))
-#ifdef SA_ONSTACK
-		return SA_ONSTACK;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "SA_RESETHAND"))
-#ifdef SA_RESETHAND
-		return SA_RESETHAND;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "SA_RESTART"))
-#ifdef SA_RESTART
-		return SA_RESTART;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "SA_SIGINFO"))
-#ifdef SA_SIGINFO
-		return SA_SIGINFO;
-#else
-		goto not_there;
-#endif
-	    break;
-	}
-	if (strEQ(name, "SCHAR_MAX"))
-#ifdef SCHAR_MAX
-	    return SCHAR_MAX;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "SCHAR_MIN"))
-#ifdef SCHAR_MIN
-	    return SCHAR_MIN;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "SSIZE_MAX"))
-#ifdef SSIZE_MAX
-	    return SSIZE_MAX;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "STDIN_FILENO"))
-#ifdef STDIN_FILENO
-	    return STDIN_FILENO;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "STDOUT_FILENO"))
-#ifdef STDOUT_FILENO
-	    return STDOUT_FILENO;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "STDERR_FILENO"))
-#ifdef STDERR_FILENO
-	    return STDERR_FILENO;
-#else
-	    goto not_there;
-#endif
-	break;
-    case 'T':
-	if (strEQ(name, "TCIFLUSH"))
-#ifdef TCIFLUSH
-	    return TCIFLUSH;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "TCIOFF"))
-#ifdef TCIOFF
-	    return TCIOFF;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "TCIOFLUSH"))
-#ifdef TCIOFLUSH
-	    return TCIOFLUSH;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "TCION"))
-#ifdef TCION
-	    return TCION;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "TCOFLUSH"))
-#ifdef TCOFLUSH
-	    return TCOFLUSH;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "TCOOFF"))
-#ifdef TCOOFF
-	    return TCOOFF;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "TCOON"))
-#ifdef TCOON
-	    return TCOON;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "TCSADRAIN"))
-#ifdef TCSADRAIN
-	    return TCSADRAIN;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "TCSAFLUSH"))
-#ifdef TCSAFLUSH
-	    return TCSAFLUSH;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "TCSANOW"))
-#ifdef TCSANOW
-	    return TCSANOW;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "TMP_MAX"))
-#ifdef TMP_MAX
-	    return TMP_MAX;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "TOSTOP"))
-#ifdef TOSTOP
-	    return TOSTOP;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "TZNAME_MAX"))
-#ifdef TZNAME_MAX
-	    return TZNAME_MAX;
-#else
-	    goto not_there;
-#endif
-	break;
-    case 'U':
-	if (strEQ(name, "UCHAR_MAX"))
-#ifdef UCHAR_MAX
-	    return UCHAR_MAX;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "UINT_MAX"))
-#ifdef UINT_MAX
-	    return UINT_MAX;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "ULONG_MAX"))
-#ifdef ULONG_MAX
-	    return ULONG_MAX;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "USHRT_MAX"))
-#ifdef USHRT_MAX
-	    return USHRT_MAX;
-#else
-	    goto not_there;
-#endif
-	break;
-    case 'V':
-	if (strEQ(name, "VEOF"))
-#ifdef VEOF
-	    return VEOF;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "VEOL"))
-#ifdef VEOL
-	    return VEOL;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "VERASE"))
-#ifdef VERASE
-	    return VERASE;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "VINTR"))
-#ifdef VINTR
-	    return VINTR;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "VKILL"))
-#ifdef VKILL
-	    return VKILL;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "VMIN"))
-#ifdef VMIN
-	    return VMIN;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "VQUIT"))
-#ifdef VQUIT
-	    return VQUIT;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "VSTART"))
-#ifdef VSTART
-	    return VSTART;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "VSTOP"))
-#ifdef VSTOP
-	    return VSTOP;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "VSUSP"))
-#ifdef VSUSP
-	    return VSUSP;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "VTIME"))
-#ifdef VTIME
-	    return VTIME;
-#else
-	    goto not_there;
-#endif
-	break;
-    case 'W':
-	if (strEQ(name, "W_OK"))
-#ifdef W_OK
-	    return W_OK;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "WNOHANG"))
-#ifdef WNOHANG
-	    return WNOHANG;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "WUNTRACED"))
-#ifdef WUNTRACED
-	    return WUNTRACED;
-#else
-	    goto not_there;
-#endif
-	errno = EAGAIN;		/* the following aren't constants */
-#ifdef WEXITSTATUS
-	if (strEQ(name, "WEXITSTATUS")) return WEXITSTATUS(arg);
-#endif
-#ifdef WIFEXITED
-	if (strEQ(name, "WIFEXITED")) return WIFEXITED(arg);
-#endif
-#ifdef WIFSIGNALED
-	if (strEQ(name, "WIFSIGNALED")) return WIFSIGNALED(arg);
-#endif
-#ifdef WIFSTOPPED
-	if (strEQ(name, "WIFSTOPPED")) return WIFSTOPPED(arg);
-#endif
-#ifdef WSTOPSIG
-	if (strEQ(name, "WSTOPSIG")) return WSTOPSIG(arg);
-#endif
-#ifdef WTERMSIG
-	if (strEQ(name, "WTERMSIG")) return WTERMSIG(arg);
-#endif
-	break;
-    case 'X':
-	if (strEQ(name, "X_OK"))
-#ifdef X_OK
-	    return X_OK;
-#else
-	    goto not_there;
-#endif
-	break;
-    case '_':
-	if (strnEQ(name, "_PC_", 4)) {
-	    if (strEQ(name, "_PC_CHOWN_RESTRICTED"))
-#if defined(_PC_CHOWN_RESTRICTED) || HINT_SC_EXIST
-		return _PC_CHOWN_RESTRICTED;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "_PC_LINK_MAX"))
-#if defined(_PC_LINK_MAX) || HINT_SC_EXIST
-		return _PC_LINK_MAX;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "_PC_MAX_CANON"))
-#if defined(_PC_MAX_CANON) || HINT_SC_EXIST
-		return _PC_MAX_CANON;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "_PC_MAX_INPUT"))
-#if defined(_PC_MAX_INPUT) || HINT_SC_EXIST
-		return _PC_MAX_INPUT;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "_PC_NAME_MAX"))
-#if defined(_PC_NAME_MAX) || HINT_SC_EXIST
-		return _PC_NAME_MAX;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "_PC_NO_TRUNC"))
-#if defined(_PC_NO_TRUNC) || HINT_SC_EXIST
-		return _PC_NO_TRUNC;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "_PC_PATH_MAX"))
-#if defined(_PC_PATH_MAX) || HINT_SC_EXIST
-		return _PC_PATH_MAX;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "_PC_PIPE_BUF"))
-#if defined(_PC_PIPE_BUF) || HINT_SC_EXIST
-		return _PC_PIPE_BUF;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "_PC_VDISABLE"))
-#if defined(_PC_VDISABLE) || HINT_SC_EXIST
-		return _PC_VDISABLE;
-#else
-		goto not_there;
-#endif
-	    break;
-	}
-	if (strnEQ(name, "_POSIX_", 7)) {
-	    if (strEQ(name, "_POSIX_ARG_MAX"))
-#ifdef _POSIX_ARG_MAX
-		return _POSIX_ARG_MAX;
-#else
-		return 0;
-#endif
-	    if (strEQ(name, "_POSIX_CHILD_MAX"))
-#ifdef _POSIX_CHILD_MAX
-		return _POSIX_CHILD_MAX;
-#else
-		return 0;
-#endif
-	    if (strEQ(name, "_POSIX_CHOWN_RESTRICTED"))
-#ifdef _POSIX_CHOWN_RESTRICTED
-		return _POSIX_CHOWN_RESTRICTED;
-#else
-		return 0;
-#endif
-	    if (strEQ(name, "_POSIX_JOB_CONTROL"))
-#ifdef _POSIX_JOB_CONTROL
-		return _POSIX_JOB_CONTROL;
-#else
-		return 0;
-#endif
-	    if (strEQ(name, "_POSIX_LINK_MAX"))
-#ifdef _POSIX_LINK_MAX
-		return _POSIX_LINK_MAX;
-#else
-		return 0;
-#endif
-	    if (strEQ(name, "_POSIX_MAX_CANON"))
-#ifdef _POSIX_MAX_CANON
-		return _POSIX_MAX_CANON;
-#else
-		return 0;
-#endif
-	    if (strEQ(name, "_POSIX_MAX_INPUT"))
-#ifdef _POSIX_MAX_INPUT
-		return _POSIX_MAX_INPUT;
-#else
-		return 0;
-#endif
-	    if (strEQ(name, "_POSIX_NAME_MAX"))
-#ifdef _POSIX_NAME_MAX
-		return _POSIX_NAME_MAX;
-#else
-		return 0;
-#endif
-	    if (strEQ(name, "_POSIX_NGROUPS_MAX"))
-#ifdef _POSIX_NGROUPS_MAX
-		return _POSIX_NGROUPS_MAX;
-#else
-		return 0;
-#endif
-	    if (strEQ(name, "_POSIX_NO_TRUNC"))
-#ifdef _POSIX_NO_TRUNC
-		return _POSIX_NO_TRUNC;
-#else
-		return 0;
-#endif
-	    if (strEQ(name, "_POSIX_OPEN_MAX"))
-#ifdef _POSIX_OPEN_MAX
-		return _POSIX_OPEN_MAX;
-#else
-		return 0;
-#endif
-	    if (strEQ(name, "_POSIX_PATH_MAX"))
-#ifdef _POSIX_PATH_MAX
-		return _POSIX_PATH_MAX;
-#else
-		return 0;
-#endif
-	    if (strEQ(name, "_POSIX_PIPE_BUF"))
-#ifdef _POSIX_PIPE_BUF
-		return _POSIX_PIPE_BUF;
-#else
-		return 0;
-#endif
-	    if (strEQ(name, "_POSIX_SAVED_IDS"))
-#ifdef _POSIX_SAVED_IDS
-		return _POSIX_SAVED_IDS;
-#else
-		return 0;
-#endif
-	    if (strEQ(name, "_POSIX_SSIZE_MAX"))
-#ifdef _POSIX_SSIZE_MAX
-		return _POSIX_SSIZE_MAX;
-#else
-		return 0;
-#endif
-	    if (strEQ(name, "_POSIX_STREAM_MAX"))
-#ifdef _POSIX_STREAM_MAX
-		return _POSIX_STREAM_MAX;
-#else
-		return 0;
-#endif
-	    if (strEQ(name, "_POSIX_TZNAME_MAX"))
-#ifdef _POSIX_TZNAME_MAX
-		return _POSIX_TZNAME_MAX;
-#else
-		return 0;
-#endif
-	    if (strEQ(name, "_POSIX_VDISABLE"))
-#ifdef _POSIX_VDISABLE
-		return _POSIX_VDISABLE;
-#else
-		return 0;
-#endif
-	    if (strEQ(name, "_POSIX_VERSION"))
-#ifdef _POSIX_VERSION
-		return _POSIX_VERSION;
-#else
-		return 0;
-#endif
-	    break;
-	}
-	if (strnEQ(name, "_SC_", 4)) {
-	    if (strEQ(name, "_SC_ARG_MAX"))
-#if defined(_SC_ARG_MAX) || HINT_SC_EXIST
-		return _SC_ARG_MAX;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "_SC_CHILD_MAX"))
-#if defined(_SC_CHILD_MAX) || HINT_SC_EXIST
-		return _SC_CHILD_MAX;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "_SC_CLK_TCK"))
-#if defined(_SC_CLK_TCK) || HINT_SC_EXIST
-		return _SC_CLK_TCK;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "_SC_JOB_CONTROL"))
-#if defined(_SC_JOB_CONTROL) || HINT_SC_EXIST
-		return _SC_JOB_CONTROL;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "_SC_NGROUPS_MAX"))
-#if defined(_SC_NGROUPS_MAX) || HINT_SC_EXIST
-		return _SC_NGROUPS_MAX;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "_SC_OPEN_MAX"))
-#if defined(_SC_OPEN_MAX) || HINT_SC_EXIST
-		return _SC_OPEN_MAX;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "_SC_SAVED_IDS"))
-#if defined(_SC_SAVED_IDS) || HINT_SC_EXIST
-		return _SC_SAVED_IDS;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "_SC_STREAM_MAX"))
-#if defined(_SC_STREAM_MAX) || HINT_SC_EXIST
-		return _SC_STREAM_MAX;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "_SC_TZNAME_MAX"))
-#if defined(_SC_TZNAME_MAX) || HINT_SC_EXIST
-		return _SC_TZNAME_MAX;
-#else
-		goto not_there;
-#endif
-	    if (strEQ(name, "_SC_VERSION"))
-#if defined(_SC_VERSION) || HINT_SC_EXIST
-		return _SC_VERSION;
-#else
-		goto not_there;
-#endif
-	    break;
-	}
-    }
-    errno = EINVAL;
-    return 0;
+#include "const-c.inc"
 
-not_there:
-    errno = ENOENT;
-    return 0;
+/* These were implemented in the old "constant" subroutine. They are actually
+   macros that take an integer argument and return an integer result.  */
+static int
+int_macro_int (const char *name, STRLEN len, IV *arg_result) {
+  /* Initially switch on the length of the name.  */
+  /* This code has been edited from a "constant" function generated by:
+
+use ExtUtils::Constant qw (constant_types C_constant XS_constant);
+
+my $types = {map {($_, 1)} qw(IV)};
+my @names = (qw(S_ISBLK S_ISCHR S_ISDIR S_ISFIFO S_ISREG WEXITSTATUS WIFEXITED
+	       WIFSIGNALED WIFSTOPPED WSTOPSIG WTERMSIG));
+
+print constant_types(); # macro defs
+foreach (C_constant ("POSIX", 'int_macro_int', 'IV', $types, undef, 5, @names) ) {
+    print $_, "\n"; # C constant subs
+}
+print "#### XS Section:\n";
+print XS_constant ("POSIX", $types);
+__END__
+   */
+
+  switch (len) {
+  case 7:
+    /* Names all of length 7.  */
+    /* S_ISBLK S_ISCHR S_ISDIR S_ISREG */
+    /* Offset 5 gives the best switch position.  */
+    switch (name[5]) {
+    case 'E':
+      if (memEQ(name, "S_ISREG", 7)) {
+      /*                    ^       */
+#ifdef S_ISREG
+        *arg_result = S_ISREG(*arg_result);
+        return PERL_constant_ISIV;
+#else
+        return PERL_constant_NOTDEF;
+#endif
+      }
+      break;
+    case 'H':
+      if (memEQ(name, "S_ISCHR", 7)) {
+      /*                    ^       */
+#ifdef S_ISCHR
+        *arg_result = S_ISCHR(*arg_result);
+        return PERL_constant_ISIV;
+#else
+        return PERL_constant_NOTDEF;
+#endif
+      }
+      break;
+    case 'I':
+      if (memEQ(name, "S_ISDIR", 7)) {
+      /*                    ^       */
+#ifdef S_ISDIR
+        *arg_result = S_ISDIR(*arg_result);
+        return PERL_constant_ISIV;
+#else
+        return PERL_constant_NOTDEF;
+#endif
+      }
+      break;
+    case 'L':
+      if (memEQ(name, "S_ISBLK", 7)) {
+      /*                    ^       */
+#ifdef S_ISBLK
+        *arg_result = S_ISBLK(*arg_result);
+        return PERL_constant_ISIV;
+#else
+        return PERL_constant_NOTDEF;
+#endif
+      }
+      break;
+    }
+    break;
+  case 8:
+    /* Names all of length 8.  */
+    /* S_ISFIFO WSTOPSIG WTERMSIG */
+    /* Offset 3 gives the best switch position.  */
+    switch (name[3]) {
+    case 'O':
+      if (memEQ(name, "WSTOPSIG", 8)) {
+      /*                  ^          */
+#ifdef WSTOPSIG
+        int i = *arg_result;
+        *arg_result = WSTOPSIG(WMUNGE(i));
+        return PERL_constant_ISIV;
+#else
+        return PERL_constant_NOTDEF;
+#endif
+      }
+      break;
+    case 'R':
+      if (memEQ(name, "WTERMSIG", 8)) {
+      /*                  ^          */
+#ifdef WTERMSIG
+        int i = *arg_result;
+        *arg_result = WTERMSIG(WMUNGE(i));
+        return PERL_constant_ISIV;
+#else
+        return PERL_constant_NOTDEF;
+#endif
+      }
+      break;
+    case 'S':
+      if (memEQ(name, "S_ISFIFO", 8)) {
+      /*                  ^          */
+#ifdef S_ISFIFO
+        *arg_result = S_ISFIFO(*arg_result);
+        return PERL_constant_ISIV;
+#else
+        return PERL_constant_NOTDEF;
+#endif
+      }
+      break;
+    }
+    break;
+  case 9:
+    if (memEQ(name, "WIFEXITED", 9)) {
+#ifdef WIFEXITED
+      int i = *arg_result;
+      *arg_result = WIFEXITED(WMUNGE(i));
+      return PERL_constant_ISIV;
+#else
+      return PERL_constant_NOTDEF;
+#endif
+    }
+    break;
+  case 10:
+    if (memEQ(name, "WIFSTOPPED", 10)) {
+#ifdef WIFSTOPPED
+      int i = *arg_result;
+      *arg_result = WIFSTOPPED(WMUNGE(i));
+      return PERL_constant_ISIV;
+#else
+      return PERL_constant_NOTDEF;
+#endif
+    }
+    break;
+  case 11:
+    /* Names all of length 11.  */
+    /* WEXITSTATUS WIFSIGNALED */
+    /* Offset 1 gives the best switch position.  */
+    switch (name[1]) {
+    case 'E':
+      if (memEQ(name, "WEXITSTATUS", 11)) {
+      /*                ^                */
+#ifdef WEXITSTATUS
+	int i = *arg_result;
+        *arg_result = WEXITSTATUS(WMUNGE(i));
+        return PERL_constant_ISIV;
+#else
+        return PERL_constant_NOTDEF;
+#endif
+      }
+      break;
+    case 'I':
+      if (memEQ(name, "WIFSIGNALED", 11)) {
+      /*                ^                */
+#ifdef WIFSIGNALED
+	int i = *arg_result;
+        *arg_result = WIFSIGNALED(WMUNGE(i));
+        return PERL_constant_ISIV;
+#else
+        return PERL_constant_NOTDEF;
+#endif
+      }
+      break;
+    }
+    break;
+  }
+  return PERL_constant_NOTFOUND;
+}
+
+static void
+restore_sigmask(pTHX_ SV *osset_sv)
+{
+     /* Fortunately, restoring the signal mask can't fail, because
+      * there's nothing we can do about it if it does -- we're not
+      * supposed to return -1 from sigaction unless the disposition
+      * was unaffected.
+      */
+     sigset_t *ossetp = (sigset_t *) SvPV_nolen( osset_sv );
+     (void)sigprocmask(SIG_SETMASK, ossetp, (sigset_t *)0);
 }
 
 MODULE = SigSet		PACKAGE = POSIX::SigSet		PREFIX = sig
@@ -3016,10 +794,49 @@ setcc(termios_ref, ccix, cc)
 
 MODULE = POSIX		PACKAGE = POSIX
 
-NV
-constant(name,arg)
-	char *		name
-	int		arg
+INCLUDE: const-xs.inc
+
+void
+int_macro_int(sv, iv)
+    PREINIT:
+	dXSTARG;
+	STRLEN		len;
+        int		type;
+    INPUT:
+	SV *		sv;
+        const char *	s = SvPV(sv, len);
+	IV		iv;
+    PPCODE:
+        /* Change this to int_macro_int(s, len, &iv, &nv);
+           if you need to return both NVs and IVs */
+	type = int_macro_int(s, len, &iv);
+      /* Return 1 or 2 items. First is error message, or undef if no error.
+           Second, if present, is found value */
+        switch (type) {
+        case PERL_constant_NOTFOUND:
+          sv = sv_2mortal(newSVpvf("%s is not a valid POSIX macro", s));
+          EXTEND(SP, 1);
+          PUSHs(&PL_sv_undef);
+          PUSHs(sv);
+          break;
+        case PERL_constant_NOTDEF:
+          sv = sv_2mortal(newSVpvf(
+	    "Your vendor has not defined POSIX macro %s, used", s));
+          EXTEND(SP, 1);
+          PUSHs(&PL_sv_undef);
+          PUSHs(sv);
+          break;
+        case PERL_constant_ISIV:
+          PUSHi(iv);
+          break;
+        default:
+          sv = sv_2mortal(newSVpvf(
+	    "Unexpected return type %d while processing POSIX macro %s, used",
+               type, s));
+          EXTEND(SP, 1);
+          PUSHs(&PL_sv_undef);
+          PUSHs(sv);
+        }
 
 int
 isalnum(charstring)
@@ -3374,72 +1191,74 @@ tanh(x)
 	NV		x
 
 SysRet
-sigaction(sig, action, oldaction = 0)
+sigaction(sig, optaction, oldaction = 0)
 	int			sig
-	POSIX::SigAction	action
+	SV *			optaction
 	POSIX::SigAction	oldaction
     CODE:
-#ifdef WIN32
+#if defined(WIN32) || defined(NETWARE)
 	RETVAL = not_here("sigaction");
 #else
 # This code is really grody because we're trying to make the signal
 # interface look beautiful, which is hard.
 
 	{
+	    POSIX__SigAction action;
 	    GV *siggv = gv_fetchpv("SIG", TRUE, SVt_PVHV);
 	    struct sigaction act;
 	    struct sigaction oact;
+	    sigset_t sset;
+	    SV *osset_sv;
+	    sigset_t osset;
 	    POSIX__SigSet sigset;
 	    SV** svp;
 	    SV** sigsvp = hv_fetch(GvHVn(siggv),
 				 PL_sig_name[sig],
 				 strlen(PL_sig_name[sig]),
 				 TRUE);
-	    STRLEN n_a;
 
-	    /* Remember old handler name if desired. */
-	    if (oldaction) {
-		char *hand = SvPVx(*sigsvp, n_a);
-		svp = hv_fetch(oldaction, "HANDLER", 7, TRUE);
-		sv_setpv(*svp, *hand ? hand : "DEFAULT");
-	    }
-
-	    if (action) {
-		/* Vector new handler through %SIG.  (We always use sighandler
-		   for the C signal handler, which reads %SIG to dispatch.) */
-		svp = hv_fetch(action, "HANDLER", 7, FALSE);
-		if (!svp)
-		    croak("Can't supply an action without a HANDLER");
-		sv_setpv(*sigsvp, SvPV(*svp, n_a));
-		mg_set(*sigsvp);	/* handles DEFAULT and IGNORE */
-		act.sa_handler = PL_sighandlerp;
-
-		/* Set up any desired mask. */
-		svp = hv_fetch(action, "MASK", 4, FALSE);
-		if (svp && sv_isa(*svp, "POSIX::SigSet")) {
-		    IV tmp = SvIV((SV*)SvRV(*svp));
-		    sigset =  INT2PTR(sigset_t*, tmp);
-		    act.sa_mask = *sigset;
-		}
+	    /* Check optaction and set action */
+	    if(SvTRUE(optaction)) {
+		if(sv_isa(optaction, "POSIX::SigAction"))
+			action = (HV*)SvRV(optaction);
 		else
-		    sigemptyset(& act.sa_mask);
-
-		/* Set up any desired flags. */
-		svp = hv_fetch(action, "FLAGS", 5, FALSE);
-		act.sa_flags = svp ? SvIV(*svp) : 0;
+			croak("action is not of type POSIX::SigAction");
+	    }
+	    else {
+		action=0;
 	    }
 
-	    /* Now work around sigaction oddities */
-	    if (action && oldaction)
-		RETVAL = sigaction(sig, & act, & oact);
-	    else if (action)
-		RETVAL = sigaction(sig, & act, (struct sigaction *)0);
-	    else if (oldaction)
-		RETVAL = sigaction(sig, (struct sigaction *)0, & oact);
-	    else
-		RETVAL = -1;
+	    /* sigaction() is supposed to look atomic. In particular, any
+	     * signal handler invoked during a sigaction() call should
+	     * see either the old or the new disposition, and not something
+	     * in between. We use sigprocmask() to make it so.
+	     */
+	    sigfillset(&sset);
+	    RETVAL=sigprocmask(SIG_BLOCK, &sset, &osset);
+	    if(RETVAL == -1)
+               XSRETURN_UNDEF;
+	    ENTER;
+	    /* Restore signal mask no matter how we exit this block. */
+	    osset_sv = newSVpv((char *)(&osset), sizeof(sigset_t));
+	    SAVEFREESV( osset_sv );
+	    SAVEDESTRUCTOR_X(restore_sigmask, osset_sv);
 
+	    RETVAL=-1; /* In case both oldaction and action are 0. */
+
+	    /* Remember old disposition if desired. */
 	    if (oldaction) {
+		svp = hv_fetch(oldaction, "HANDLER", 7, TRUE);
+		if(!svp)
+		    croak("Can't supply an oldaction without a HANDLER");
+		if(SvTRUE(*sigsvp)) { /* TBD: what if "0"? */
+			sv_setsv(*svp, *sigsvp);
+		}
+		else {
+			sv_setpv(*svp, "DEFAULT");
+		}
+		RETVAL = sigaction(sig, (struct sigaction *)0, & oact);
+		if(RETVAL == -1)
+                   XSRETURN_UNDEF;
 		/* Get back the mask. */
 		svp = hv_fetch(oldaction, "MASK", 4, TRUE);
 		if (sv_isa(*svp, "POSIX::SigSet")) {
@@ -3456,6 +1275,56 @@ sigaction(sig, action, oldaction = 0)
 		svp = hv_fetch(oldaction, "FLAGS", 5, TRUE);
 		sv_setiv(*svp, oact.sa_flags);
 	    }
+
+	    if (action) {
+		/* Vector new handler through %SIG.  (We always use sighandler
+		   for the C signal handler, which reads %SIG to dispatch.) */
+		svp = hv_fetch(action, "HANDLER", 7, FALSE);
+		if (!svp)
+		    croak("Can't supply an action without a HANDLER");
+		sv_setsv(*sigsvp, *svp);
+		mg_set(*sigsvp);	/* handles DEFAULT and IGNORE */
+		if(SvPOK(*svp)) {
+			char *s=SvPVX(*svp);
+			if(strEQ(s,"IGNORE")) {
+				act.sa_handler = SIG_IGN;
+			}
+			else if(strEQ(s,"DEFAULT")) {
+				act.sa_handler = SIG_DFL;
+			}
+			else {
+				act.sa_handler = PL_sighandlerp;
+			}
+		}
+		else {
+			act.sa_handler = PL_sighandlerp;
+		}
+
+		/* Set up any desired mask. */
+		svp = hv_fetch(action, "MASK", 4, FALSE);
+		if (svp && sv_isa(*svp, "POSIX::SigSet")) {
+		    IV tmp = SvIV((SV*)SvRV(*svp));
+		    sigset = INT2PTR(sigset_t*, tmp);
+		    act.sa_mask = *sigset;
+		}
+		else
+		    sigemptyset(& act.sa_mask);
+
+		/* Set up any desired flags. */
+		svp = hv_fetch(action, "FLAGS", 5, FALSE);
+		act.sa_flags = svp ? SvIV(*svp) : 0;
+
+		/* Don't worry about cleaning up *sigsvp if this fails,
+		 * because that means we tried to disposition a
+		 * nonblockable signal, in which case *sigsvp is
+		 * essentially meaningless anyway.
+		 */
+		RETVAL = sigaction(sig, & act, (struct sigaction *)0);
+               if(RETVAL == -1)
+                   XSRETURN_UNDEF;
+	    }
+
+	    LEAVE;
 	}
 #endif
     OUTPUT:
@@ -3701,7 +1570,7 @@ strxfrm(src)
           STRLEN dstlen;
           char *p = SvPV(src,srclen);
           srclen++;
-          ST(0) = sv_2mortal(NEWSV(800,srclen));
+          ST(0) = sv_2mortal(NEWSV(800,srclen*4+1));
           dstlen = strxfrm(SvPVX(ST(0)), p, (size_t)srclen);
           if (dstlen > srclen) {
               dstlen++;
@@ -3844,64 +1713,10 @@ strftime(fmt, sec, min, hour, mday, mon, year, wday = -1, yday = -1, isdst = -1)
 	int		isdst
     CODE:
 	{
-	    char tmpbuf[128];
-	    struct tm mytm;
-	    int len;
-	    init_tm(&mytm);	/* XXX workaround - see init_tm() above */
-	    mytm.tm_sec = sec;
-	    mytm.tm_min = min;
-	    mytm.tm_hour = hour;
-	    mytm.tm_mday = mday;
-	    mytm.tm_mon = mon;
-	    mytm.tm_year = year;
-	    mytm.tm_wday = wday;
-	    mytm.tm_yday = yday;
-	    mytm.tm_isdst = isdst;
-	    mini_mktime(&mytm);
-	    len = strftime(tmpbuf, sizeof tmpbuf, fmt, &mytm);
-	    /*
-	    ** The following is needed to handle to the situation where 
-	    ** tmpbuf overflows.  Basically we want to allocate a buffer
-	    ** and try repeatedly.  The reason why it is so complicated
-	    ** is that getting a return value of 0 from strftime can indicate
-	    ** one of the following:
-	    ** 1. buffer overflowed,
-	    ** 2. illegal conversion specifier, or
-	    ** 3. the format string specifies nothing to be returned(not
-	    **	  an error).  This could be because format is an empty string
-	    **    or it specifies %p that yields an empty string in some locale.
-	    ** If there is a better way to make it portable, go ahead by
-	    ** all means.
-	    */
-	    if ((len > 0 && len < sizeof(tmpbuf)) || (len == 0 && *fmt == '\0'))
-		ST(0) = sv_2mortal(newSVpv(tmpbuf, len));
-            else {
-		/* Possibly buf overflowed - try again with a bigger buf */
-                int     fmtlen = strlen(fmt);
-		int	bufsize = fmtlen + sizeof(tmpbuf);
-		char* 	buf;
-		int	buflen;
-
-		New(0, buf, bufsize, char);
-		while (buf) {
-		    buflen = strftime(buf, bufsize, fmt, &mytm);
-		    if (buflen > 0 && buflen < bufsize)
-                        break;
-                    /* heuristic to prevent out-of-memory errors */
-                    if (bufsize > 100*fmtlen) {
-                        Safefree(buf);
-                        buf = NULL;
-                        break;
-                    }
-		    bufsize *= 2;
-		    Renew(buf, bufsize, char);
-		}
-		if (buf) {
-		    ST(0) = sv_2mortal(newSVpvn(buf, buflen));
-		    Safefree(buf);
-		}
-                else
-		    ST(0) = sv_2mortal(newSVpvn(tmpbuf, len));
+	    char *buf = my_strftime(fmt, sec, min, hour, mday, mon, year, wday, yday, isdst);
+	    if (buf) {
+		ST(0) = sv_2mortal(newSVpv(buf, 0));
+		Safefree(buf);
 	    }
 	}
 
@@ -3941,6 +1756,14 @@ pathconf(filename, name)
 SysRet
 pause()
 
+SysRet
+setgid(gid)
+	Gid_t		gid
+
+SysRet
+setuid(uid)
+	Uid_t		uid
+
 SysRetLong
 sysconf(name)
 	int		name
@@ -3948,3 +1771,13 @@ sysconf(name)
 char *
 ttyname(fd)
 	int		fd
+
+void
+getcwd()
+    PPCODE:
+      {
+	dXSTARG;
+	getcwd_sv(TARG);
+	XSprePUSH; PUSHTARG;
+      }
+

@@ -5,7 +5,7 @@ BEGIN {
     @INC = '../lib';
 }
 
-print "1..27\n";
+print "1..28\n";
 
 my $i = 1;
 eval "use 5.000";	# implicit semicolon
@@ -82,7 +82,7 @@ if ($@) {
 }
 print "ok ",$i++,"\n";
 
-print "not " unless $INC[0] eq "fred";
+print "not " unless ($INC[0] eq "fred" || ($^O eq 'MacOS' && $INC[0] eq ":fred:"));
 print "ok ",$i++,"\n";
 
 eval "use lib 1.0 qw(joe)";
@@ -92,7 +92,7 @@ if ($@) {
 }
 print "ok ",$i++,"\n";
 
-print "not " unless $INC[0] eq "joe";
+print "not " unless ($INC[0] eq "joe" || ($^O eq 'MacOS' && $INC[0] eq ":joe:"));
 print "ok ",$i++,"\n";
 
 eval "use lib 1.01 qw(freda)";
@@ -101,7 +101,7 @@ unless ($@) {
 }
 print "ok ",$i++,"\n";
 
-print "not " if $INC[0] eq "freda";
+print "not " if ($INC[0] eq "freda" || ($^O eq 'MacOS' && $INC[0] eq ":freda:"));
 print "ok ",$i++,"\n";
 
 {
@@ -167,4 +167,19 @@ print "ok ",$i++,"\n";
 	print "not ";
     }
     print "ok ",$i++,"\n";
+}
+
+
+{
+    # Regression test for patch 14937: 
+    #   Check that a .pm file with no package or VERSION doesn't core.
+    open F, ">xxx.pm" or die "Cannot open xxx.pm: $!\n";
+    print F "1;\n";
+    close F;
+    eval "use lib '.'; use xxx 3;";
+    unless ($@ =~ /^xxx defines neither package nor VERSION--version check failed at/) {
+	print "not ";
+    }
+    print "ok ",$i++,"\n";
+    unlink 'xxx.pm';
 }

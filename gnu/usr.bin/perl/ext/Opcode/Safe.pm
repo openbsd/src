@@ -3,7 +3,7 @@ package Safe;
 use 5.003_11;
 use strict;
 
-our $VERSION = "2.06";
+our $VERSION = "2.07";
 
 use Carp;
 
@@ -47,6 +47,7 @@ sub new {
     # the whole glob *_ rather than $_ and @_ separately, otherwise
     # @_ in non default packages within the compartment don't work.
     $obj->share_from('main', $default_share);
+    Opcode::_safe_pkg_prep($obj->{Root});
     return $obj;
 }
 
@@ -379,7 +380,7 @@ respectfully.
 =item share (NAME, ...)
 
 This shares the variable(s) in the argument list with the compartment.
-This is almost identical to exporting variables using the L<Exporter(3)>
+This is almost identical to exporting variables using the L<Exporter>
 module.
 
 Each NAME must be the B<name> of a variable, typically with the leading

@@ -16,7 +16,7 @@ package CGI::Fast;
 # The most recent version and complete docs are available at:
 #   http://www.genome.wi.mit.edu/ftp/pub/software/WWW/cgi_docs.html
 #   ftp://ftp-genome.wi.mit.edu/pub/software/WWW/
-$CGI::Fast::VERSION='1.02';
+$CGI::Fast::VERSION='1.04';
 
 use CGI;
 use FCGI;
@@ -31,12 +31,31 @@ sub save_request {
     # no-op
 }
 
+# If ENV{FCGI_SOCKET_PATH} is specified, we maintain an FCGI Request handle
+# in this package variable.
+use vars qw($Ext_Request);
+BEGIN {
+   # If ENV{FCGI_SOCKET_PATH} is given, explicitly open the socket,
+   # and keep the request handle around from which to call Accept().
+   if ($ENV{FCGI_SOCKET_PATH}) {
+	my $path    = $ENV{FCGI_SOCKET_PATH};
+	my $backlog = $ENV{FCGI_LISTEN_QUEUE} || 100;
+	my $socket  = FCGI::OpenSocket( $path, $backlog );
+	$Ext_Request = FCGI::Request( \*STDIN, \*STDOUT, \*STDERR, 
+					\%ENV, $socket, 1 );
+   }
+}
+
 # New is slightly different in that it calls FCGI's
 # accept() method.
 sub new {
      my ($self, $initializer, @param) = @_;
      unless (defined $initializer) {
+	if ($Ext_Request) {
+          return undef unless $Ext_Request->Accept() >= 0;
+	} else {
          return undef unless FCGI::accept() >= 0;
+     }
      }
      return $CGI::Q = $self->SUPER::new($initializer, @param);
 }
@@ -139,7 +158,7 @@ the Apache server, the following line must be added to srm.conf:
 FastCGI scripts must end in the extension .fcgi.  For each script you
 install, you must add something like the following to srm.conf:
 
-   AppClass /usr/etc/httpd/fcgi-bin/file_upload.fcgi -processes 2
+    FastCgiServer /usr/etc/httpd/fcgi-bin/file_upload.fcgi -processes 2
 
 This instructs Apache to launch two copies of file_upload.fcgi at 
 startup time.
@@ -149,6 +168,43 @@ startup time.
 Any script that works correctly as a FastCGI script will also work
 correctly when installed as a vanilla CGI script.  However it will
 not see any performance benefit.
+
+=head1 EXTERNAL FASTCGI SERVER INVOCATION
+
+FastCGI supports a TCP/IP transport mechanism which allows FastCGI scripts to run
+external to the webserver, perhaps on a remote machine.  To configure the
+webserver to connect to an external FastCGI server, you would add the following
+to your srm.conf:
+
+    FastCgiExternalServer /usr/etc/httpd/fcgi-bin/file_upload.fcgi -host sputnik:8888
+
+Two environment variables affect how the C<CGI::Fast> object is created,
+allowing C<CGI::Fast> to be used as an external FastCGI server.  (See C<FCGI>
+documentation for C<FCGI::OpenSocket> for more information.)
+
+=over
+
+=item FCGI_SOCKET_PATH
+
+The address (TCP/IP) or path (UNIX Domain) of the socket the external FastCGI
+script to which bind can listen for incoming connections from the web server.
+
+=item FCGI_LISTEN_QUEUE
+
+Maximum length of the queue of pending connections.  
+
+=back
+
+For example:
+
+    #!/usr/local/bin/perl    # must be a FastCGI version of perl!
+    use CGI::Fast;
+    &do_some_initialization();
+    $ENV{FCGI_SOCKET_PATH} = "sputnik:8888";
+    $ENV{FCGI_LISTEN_QUEUE} = 100;
+    while ($q = new CGI::Fast) {
+	&process_request($q);
+    }
 
 =head1 CAVEATS
 

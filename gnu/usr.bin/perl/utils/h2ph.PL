@@ -108,29 +108,14 @@ while (defined (my $file = next_file())) {
     }
 
     print OUT "require '_h2ph_pre.ph';\n\n";
-    while (<IN>) {
-	chop;
-	while (/\\$/) {
-	    chop;
-	    $_ .= <IN>;
-	    chop;
-	}
-	print OUT "# $_\n" if $opt_D;
 
-	if (s:/\*:\200:g) {
-	    s:\*/:\201:g;
-	    s/\200[^\201]*\201//g;	# delete single line comments
-	    if (s/\200.*//) {		# begin multi-line comment?
-		$_ .= '/*';
-		$_ .= <IN>;
-		redo;
-	    }
-	}
+    while (defined (local $_ = next_line($file))) {
 	if (s/^\s*\#\s*//) {
 	    if (s/^define\s+(\w+)//) {
 		$name = $1;
 		$new = '';
 		s/\s+$//;
+		s/\(\w+\s*\(\*\)\s*\(\w*\)\)\s*(-?\d+)/$1/; # (int (*)(foo_t))0
 		if (s/^\(([\w,\s]*)\)//) {
 		    $args = $1;
     	    	    my $proto = '() ';
@@ -255,15 +240,19 @@ while (defined (my $file = next_file())) {
 	    } elsif(/^ident\s+(.*)/) {
 		print OUT $t, "# $1\n";
 	    }
- 	} elsif(/^\s*(typedef\s*)?enum\s*(\s+[a-zA-Z_]\w*\s*)?\{/) {
-	    until(/\}.*?;/) {
-		chomp($next = <IN>);
+	} elsif(/^\s*(typedef\s*)?enum\s*(\s+[a-zA-Z_]\w*\s*)?/) {
+	    until(/\{[^}]*\}.*;/ || /;/) {
+		last unless defined ($next = next_line($file));
+		chomp $next;
+		# drop "#define FOO FOO" in enums
+		$next =~ s/^\s*#\s*define\s+(\w+)\s+\1\s*$//;
 		$_ .= $next;
 		print OUT "# $next\n" if $opt_D;
 	    }
+	    s/#\s*if.*?#\s*endif//g; # drop #ifdefs
 	    s@/\*.*?\*/@@g;
 	    s/\s+/ /g;
-	    /^\s?(typedef\s?)?enum\s?([a-zA-Z_]\w*)?\s?\{(.*)\}\s?([a-zA-Z_]\w*)?\s?;/;
+	    next unless /^\s?(typedef\s?)?enum\s?([a-zA-Z_]\w*)?\s?\{(.*)\}\s?([a-zA-Z_]\w*)?\s?;/;
 	    (my $enum_subs = $3) =~ s/\s//g;
 	    my @enum_subs = split(/,/, $enum_subs);
 	    my $enum_val = -1;
@@ -311,8 +300,21 @@ sub expr {
 	s/^\&\&// && do { $new .= " &&"; next;}; # handle && operator
 	s/^\&([\(a-z\)]+)/$1/i;	# hack for things that take the address of
 	s/^(\s+)//		&& do {$new .= ' '; next;};
-	s/^(0X[0-9A-F]+)[UL]*//i	&& do {$new .= lc($1); next;};
-	s/^(-?\d+\.\d+E[-+]\d+)F?//i	&& do {$new .= $1; next;};
+	s/^0X([0-9A-F]+)[UL]*//i 
+	    && do {my $hex = $1;
+		   $hex =~ s/^0+//;
+		   if (length $hex > 8 && !$Config{use64bitint}) {
+		       # Croak if nv_preserves_uv_bits < 64 ?
+		       $new .=         hex(substr($hex, -8)) +
+			       2**32 * hex(substr($hex,  0, -8));
+		       # The above will produce "errorneus" code
+		       # if the hex constant was e.g. inside UINT64_C
+		       # macro, but then again, h2ph is an approximation.
+		   } else {
+		       $new .= lc("0x$hex");
+		   }
+		   next;};
+	s/^(-?\d+\.\d+E[-+]?\d+)[FL]?//i	&& do {$new .= $1; next;};
 	s/^(\d+)\s*[LU]*//i	&& do {$new .= $1; next;};
 	s/^("(\\"|[^"])*")//	&& do {$new .= $1; next;};
 	s/^'((\\"|[^"])*)'//	&& do {
@@ -387,8 +389,8 @@ sub expr {
 		$new .= '->' if /^[\[\{]/;
 	    } elsif ($id eq 'defined') {
 		$new .= 'defined';
-	    } elsif (/^\(/) {
-		s/^\((\w),/("$1",/ if $id =~ /^_IO[WR]*$/i;	# cheat
+	    } elsif (/^\s*\(/) {
+		s/^\s*\((\w),/("$1",/ if $id =~ /^_IO[WR]*$/i;	# cheat
 		$new .= " &$id";
 	    } elsif ($isatype{$id}) {
 		if ($new =~ /{\s*$/) {
@@ -412,6 +414,85 @@ sub expr {
 	};
 	s/^(.)// && do { if ($1 ne '#') { $new .= $1; } next;};
     }
+}
+
+
+sub next_line
+{
+    my $file = shift;
+    my ($in, $out);
+    my $pre_sub_tri_graphs = 1;
+
+    READ: while (not eof IN) {
+        $in  .= <IN>;
+        chomp $in;
+        next unless length $in;
+
+        while (length $in) {
+            if ($pre_sub_tri_graphs) {
+                # Preprocess all tri-graphs 
+                # including things stuck in quoted string constants.
+                $in =~ s/\?\?=/#/g;                         # | ??=|  #|
+                $in =~ s/\?\?\!/|/g;                        # | ??!|  ||
+                $in =~ s/\?\?'/^/g;                         # | ??'|  ^|
+                $in =~ s/\?\?\(/[/g;                        # | ??(|  [|
+                $in =~ s/\?\?\)/]/g;                        # | ??)|  ]|
+                $in =~ s/\?\?\-/~/g;                        # | ??-|  ~|
+                $in =~ s/\?\?\//\\/g;                       # | ??/|  \|
+                $in =~ s/\?\?</{/g;                         # | ??<|  {|
+                $in =~ s/\?\?>/}/g;                         # | ??>|  }|
+            }
+	    if ($in =~ /^\#ifdef __LANGUAGE_PASCAL__/) {
+                # Tru64 disassembler.h evilness: mixed C and Pascal.
+		while (<IN>) {
+		    last if /^\#endif/; 
+		}
+		next READ;
+	    }
+	    if ($in =~ /^extern inline / && # Inlined assembler.
+		$^O eq 'linux' && $file =~ m!(?:^|/)asm/[^/]+\.h$!) {
+ 		while (<IN>) {
+		    last if /^}/; 
+		}
+		next READ;
+	    }
+            if ($in =~ s/\\$//) {                           # \-newline
+                $out    .= ' ';
+                next READ;
+            } elsif ($in =~ s/^([^"'\\\/]+)//) {            # Passthrough
+                $out    .= $1;
+            } elsif ($in =~ s/^(\\.)//) {                   # \...
+                $out    .= $1;
+            } elsif ($in =~ s/^('(\\.|[^'\\])*')//) {       # '...
+                $out    .= $1;
+            } elsif ($in =~ s/^("(\\.|[^"\\])*")//) {       # "...
+                $out    .= $1;
+            } elsif ($in =~ s/^\/\/.*//) {                  # //...
+                # fall through
+            } elsif ($in =~ m/^\/\*/) {                     # /*...
+                # C comment removal adapted from perlfaq6:
+                if ($in =~ s/^\/\*[^*]*\*+([^\/*][^*]*\*+)*\///) {
+                    $out    .= ' ';
+                } else {                                    # Incomplete /* */
+                    next READ;
+                }
+            } elsif ($in =~ s/^(\/)//) {                    # /...
+                $out    .= $1;
+            } elsif ($in =~ s/^([^\'\"\\\/]+)//) {
+                $out    .= $1;
+            } elsif ($^O eq 'linux' &&
+                     $file =~ m!(?:^|/)linux/byteorder/pdp_endian\.h$! &&
+                     $in   =~ s!\'T KNOW!!) {
+                $out    =~ s!I DON$!I_DO_NOT_KNOW!;
+            } else {
+		die "Cannot parse:\n$in\n";
+            }
+        }
+
+        last READ if $out =~ /\S/;
+    }
+
+    return $out;
 }
 
 
@@ -563,9 +644,9 @@ sub build_preamble_if_necessary
                 print PREAMBLE "# $_=$define{$_}\n";
             }
 
-            if ($define{$_} =~ /^\d+$/) {
+            if ($define{$_} =~ /^(\d+)U?L{0,2}$/i) {
                 print PREAMBLE
-                    "unless (defined &$_) { sub $_() { $define{$_} } }\n\n";
+                    "unless (defined &$_) { sub $_() { $1 } }\n\n";
             } elsif ($define{$_} =~ /^\w+$/) {
                 print PREAMBLE
                     "unless (defined &$_) { sub $_() { &$define{$_} } }\n\n";
@@ -622,6 +703,10 @@ format.
 It is most easily run while in /usr/include:
 
 	cd /usr/include; h2ph * sys/*
+
+or
+
+	cd /usr/include; h2ph * sys/* arpa/* netinet/*
 
 or
 

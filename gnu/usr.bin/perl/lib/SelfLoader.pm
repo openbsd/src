@@ -3,7 +3,7 @@ package SelfLoader;
 require Exporter;
 @ISA = qw(Exporter);
 @EXPORT = qw(AUTOLOAD);
-$VERSION = "1.0902";
+$VERSION = "1.0903";
 sub Version {$VERSION}
 $DEBUG = 0;
 
@@ -47,7 +47,8 @@ AUTOLOAD {
 sub load_stubs { shift->_load_stubs((caller)[0]) }
 
 sub _load_stubs {
-    my($self, $callpack) = @_;
+    # $endlines is used by Devel::SelfStubber to capture lines after __END__
+    my($self, $callpack, $endlines) = @_;
     my $fh = \*{"${callpack}::DATA"};
     my $currpack = $callpack;
     my($line,$name,@lines, @stubs, $protoype);
@@ -94,7 +95,16 @@ sub _load_stubs {
             push(@lines,$line);
         }
     }
-    close($fh) unless defined($line) && $line =~ /^__END__\s*DATA/;     # __END__
+    if (defined($line) && $line =~ /^__END__/) { # __END__
+        unless ($line =~ /^__END__\s*DATA/) {
+            if ($endlines) {
+                # Devel::SelfStubber would like us to capture the lines after
+                # __END__ so it can write out the entire file
+                @$endlines = <$fh>;
+            }
+            close($fh);
+        }
+    }
     push(@stubs, $self->_add_to_cache($name, $currpack, \@lines, $protoype));
     eval join('', @stubs) if @stubs;
 }

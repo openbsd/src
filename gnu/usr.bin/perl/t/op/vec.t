@@ -2,6 +2,8 @@
 
 print "1..30\n";
 
+my $Is_EBCDIC = (ord('A') == 193) ? 1 : 0;
+
 print vec($foo,0,1) == 0 ? "ok 1\n" : "not ok 1\n";
 print length($foo) == 0 ? "ok 2\n" : "not ok 2\n";
 vec($foo,0,1) = 1;
@@ -44,7 +46,7 @@ $x = eval { vec $foo, 0, -13 };
 print "not " if defined $x or $@ !~ /^Illegal number of bits in vec/;
 print "ok 21\n";
 $x = eval { vec($foo, -1, 4) = 2 };
-print "not " if defined $x or $@ !~ /^Assigning to negative offset in vec/;
+print "not " if defined $x or $@ !~ /^Negative offset to vec in lvalue context/;
 print "ok 22\n";
 print "not " if vec('abcd', 7, 8);
 print "ok 23\n";
@@ -62,8 +64,14 @@ print "ok 25\n";
 eval { vec($foo, 1, 8) = 13 };
 print "not " if $@;
 print "ok 26\n";
-print "not " if $foo ne "\xc4\x0d\xc3\xbf\xc3\xbe";
-print "ok 27\n";
+if ($Is_EBCDIC) {
+    print "not " if $foo ne "\x8c\x0d\xff\x8a\x69";
+    print "ok 27\n";
+}
+else {
+    print "not " if $foo ne "\xc4\x0d\xc3\xbf\xc3\xbe";
+    print "ok 27\n";
+}
 $foo = "\x{100}" . "\xff\xfe";
 $x = substr $foo, 1;
 vec($x, 2, 4) = 7;

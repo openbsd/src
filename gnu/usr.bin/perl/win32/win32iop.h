@@ -7,8 +7,8 @@
 #  define END_EXTERN_C }
 #  define EXTERN_C extern "C"
 #else
-#  define START_EXTERN_C 
-#  define END_EXTERN_C 
+#  define START_EXTERN_C
+#  define END_EXTERN_C
 #  define EXTERN_C
 #endif
 #endif
@@ -62,22 +62,23 @@ DllExport  int		win32_getc(FILE *pf);
 DllExport  int		win32_fileno(FILE *pf);
 DllExport  void		win32_clearerr(FILE *pf);
 DllExport  int		win32_fflush(FILE *pf);
-DllExport  long		win32_ftell(FILE *pf);
-DllExport  int		win32_fseek(FILE *pf,long offset,int origin);
+DllExport  Off_t	win32_ftell(FILE *pf);
+DllExport  int		win32_fseek(FILE *pf,Off_t offset,int origin);
 DllExport  int		win32_fgetpos(FILE *pf,fpos_t *p);
 DllExport  int		win32_fsetpos(FILE *pf,const fpos_t *p);
 DllExport  void		win32_rewind(FILE *pf);
 DllExport  FILE*	win32_tmpfile(void);
 DllExport  void		win32_abort(void);
-DllExport  int  	win32_fstat(int fd,struct stat *sbufptr);
-DllExport  int  	win32_stat(const char *name,struct stat *sbufptr);
+DllExport  int  	win32_fstat(int fd,Stat_t *sbufptr);
+DllExport  int  	win32_stat(const char *name,Stat_t *sbufptr);
 DllExport  int		win32_pipe( int *phandles, unsigned int psize, int textmode );
-DllExport  FILE*	win32_popen( const char *command, const char *mode );
-DllExport  int		win32_pclose( FILE *pf);
+DllExport  PerlIO*	win32_popen( const char *command, const char *mode );
+DllExport  PerlIO*	win32_popenlist(const char *mode, IV narg, SV **args);
+DllExport  int		win32_pclose( PerlIO *pf);
 DllExport  int		win32_rename( const char *oname, const char *newname);
 DllExport  int		win32_setmode( int fd, int mode);
-DllExport  long		win32_lseek( int fd, long offset, int origin);
-DllExport  long		win32_tell( int fd);
+DllExport  Off_t	win32_lseek( int fd, Off_t offset, int origin);
+DllExport  Off_t	win32_tell( int fd);
 DllExport  int		win32_dup( int fd);
 DllExport  int		win32_dup2(int h1, int h2);
 DllExport  int		win32_open(const char *path, int oflag,...);
@@ -110,8 +111,9 @@ DllExport  void*	win32_calloc(size_t numitems, size_t size);
 DllExport  void*	win32_realloc(void *block, size_t size);
 DllExport  void		win32_free(void *block);
 
-DllExport  int		win32_open_osfhandle(long handle, int flags);
-DllExport  long		win32_get_osfhandle(int fd);
+DllExport  int		win32_open_osfhandle(intptr_t handle, int flags);
+DllExport  intptr_t	win32_get_osfhandle(int fd);
+DllExport  FILE*	win32_fdupopen(FILE *pf);
 
 DllExport  DIR*		win32_opendir(char *filename);
 DllExport  struct direct*	win32_readdir(DIR *dirp);
@@ -126,12 +128,13 @@ DllExport  int		win32_putenv(const char *name);
 DllExport  unsigned 	win32_sleep(unsigned int);
 DllExport  int		win32_times(struct tms *timebuf);
 DllExport  unsigned 	win32_alarm(unsigned int sec);
-DllExport  int		win32_stat(const char *path, struct stat *buf);
+DllExport  int		win32_stat(const char *path, Stat_t *buf);
 DllExport  char*	win32_longpath(char *path);
 DllExport  int		win32_ioctl(int i, unsigned int u, char *data);
 DllExport  int          win32_link(const char *oldname, const char *newname);
 DllExport  int		win32_unlink(const char *f);
 DllExport  int		win32_utime(const char *f, struct utimbuf *t);
+DllExport  int		win32_gettimeofday(struct timeval *tp, void *not_used);
 DllExport  int		win32_uname(struct utsname *n);
 DllExport  int		win32_wait(int *status);
 DllExport  int		win32_waitpid(int pid, int *status, int flags);
@@ -144,7 +147,18 @@ DllExport  int		win32_getpid(void);
 
 DllExport char *	win32_crypt(const char *txt, const char *salt);
 
+DllExport void *	win32_get_childenv(void);
+DllExport void		win32_free_childenv(void* d);
+DllExport void		win32_clearenv(void);
+DllExport char *	win32_get_childdir(void);
+DllExport void		win32_free_childdir(char* d);
+DllExport Sighandler_t	win32_signal(int sig, Sighandler_t subcode);
+
+
 END_EXTERN_C
+
+#undef alarm
+#define alarm			win32_alarm
 
 /*
  * the following six(6) is #define in stdio.h
@@ -162,10 +176,10 @@ END_EXTERN_C
 #undef pause
 #undef sleep
 #undef times
-#undef alarm
 #undef ioctl
 #undef unlink
 #undef utime
+#undef gettimeofday
 #undef uname
 #undef wait
 
@@ -276,11 +290,11 @@ END_EXTERN_C
 #define pause()			win32_sleep((32767L << 16) + 32767)
 #define sleep			win32_sleep
 #define times			win32_times
-#define alarm			win32_alarm
 #define ioctl			win32_ioctl
 #define link			win32_link
 #define unlink			win32_unlink
 #define utime			win32_utime
+#define gettimeofday		win32_gettimeofday
 #define uname			win32_uname
 #define wait			win32_wait
 #define waitpid			win32_waitpid
@@ -298,6 +312,17 @@ END_EXTERN_C
 #undef crypt
 #define crypt(t,s)		win32_crypt(t,s)
 
+#undef get_childenv
+#undef free_childenv
+#undef clearenv
+#undef get_childdir
+#undef free_childdir
+#define get_childenv()		win32_get_childenv()
+#define free_childenv(d)	win32_free_childenv(d)
+#define clearenv()		win32_clearenv()
+#define get_childdir()		win32_get_childdir()
+#define free_childdir(d)	win32_free_childdir(d)
+
 #undef getenv
 #define getenv win32_getenv
 #undef putenv
@@ -305,4 +330,3 @@ END_EXTERN_C
 
 #endif /* WIN32IO_IS_STDIO */
 #endif /* WIN32IOP_H */
-

@@ -6,6 +6,8 @@ Benchmark - benchmark running times of Perl code
 
 =head1 SYNOPSIS
 
+    use Benchmark qw(:all) ;
+
     timethis ($count, "code");
 
     # Use Perl code in strings...
@@ -196,17 +198,48 @@ Clear all cached times.
 
 =item cmpthese ( COUT, CODEHASHREF, [ STYLE ] )
 
-=item cmpthese ( RESULTSHASHREF )
+=item cmpthese ( RESULTSHASHREF, [ STYLE ] )
 
-Optionally calls timethese(), then outputs comparison chart.  This 
-chart is sorted from slowest to fastest, and shows the percent 
-speed difference between each pair of tests.  Can also be passed 
-the data structure that timethese() returns:
+Optionally calls timethese(), then outputs comparison chart.  This:
 
-    $results = timethese( .... );
+    cmpthese( -1, { a => "++\$i", b => "\$i *= 2" } ) ;
+
+outputs a chart like:
+
+           Rate    b    a
+    b 2831802/s   -- -61%
+    a 7208959/s 155%   --
+
+This chart is sorted from slowest to fastest, and shows the percent speed
+difference between each pair of tests.
+
+c<cmpthese> can also be passed the data structure that timethese() returns:
+
+    $results = timethese( -1, { a => "++\$i", b => "\$i *= 2" } ) ;
     cmpthese( $results );
 
-Returns the data structure returned by timethese() (or passed in).
+in case you want to see both sets of results.
+
+Returns a reference to an ARRAY of rows, each row is an ARRAY of cells from the
+above chart, including labels. This:
+
+    my $rows = cmpthese( -1, { a => '++$i', b => '$i *= 2' }, "none" );
+
+returns a data structure like:
+
+    [
+        [ '',       'Rate',   'b',    'a' ],
+        [ 'b', '2885232/s',  '--', '-59%' ],
+        [ 'a', '7099126/s', '146%',  '--' ],
+    ]
+
+B<NOTE>: This result value differs from previous versions, which returned
+the C<timethese()> result structure.  If you want that, just use the two
+statement C<timethese>...C<cmpthese> idiom shown above.
+
+Incidently, note the variance in the result values between the two examples;
+this is typical of benchmarking.  If this were a real benchmark, you would
+probably want to run a lot more iterations.
 
 =item countit(TIME, CODE)
 
@@ -274,29 +307,39 @@ accuracy and does not usually noticably affect runtimes.
 
 For example,
 
-   use Benchmark;$x=3;cmpthese(-5,{a=>sub{$x*$x},b=>sub{$x**2}})
+    use Benchmark qw( cmpthese ) ;
+    $x = 3;
+    cmpthese( -5, {
+        a => sub{$x*$x},
+        b => sub{$x**2},
+    } );
 
 outputs something like this:
 
    Benchmark: running a, b, each for at least 5 CPU seconds...
-	    a: 10 wallclock secs ( 5.14 usr +  0.13 sys =  5.27 CPU) @ 3835055.60/s (n=20210743)
-	    b:  5 wallclock secs ( 5.41 usr +  0.00 sys =  5.41 CPU) @ 1574944.92/s (n=8520452)
-	  Rate    b    a
-   b 1574945/s   -- -59%
-   a 3835056/s 144%   --
-
-while 
-
-   use Benchmark;
-   $x=3;
-   $r=timethese(-5,{a=>sub{$x*$x},b=>sub{$x**2}},'none');
-   cmpthese($r);
-
-outputs something like this:
-
           Rate    b    a
    b 1559428/s   -- -62%
    a 4152037/s 166%   --
+
+
+while 
+
+    use Benchmark qw( timethese cmpthese ) ;
+    $x = 3;
+    $r = timethese( -5, {
+        a => sub{$x*$x},
+        b => sub{$x**2},
+    } );
+    cmpthese $r;
+
+outputs something like this:
+
+    Benchmark: running a, b, each for at least 5 CPU seconds...
+             a: 10 wallclock secs ( 5.14 usr +  0.13 sys =  5.27 CPU) @ 3835055.60/s (n=20210743)
+             b:  5 wallclock secs ( 5.41 usr +  0.00 sys =  5.41 CPU) @ 1574944.92/s (n=8520452)
+           Rate    b    a
+    b 1574945/s   -- -59%
+    a 3835056/s 144%   --
 
 
 =head1 INHERITANCE
@@ -346,6 +389,12 @@ September, 1999; by Barrie Slaymaker: math fixes and accuracy and
 efficiency tweaks.  Added cmpthese().  A result is now returned from 
 timethese().  Exposed countit() (was runfor()).
 
+December, 2001; by Nicholas Clark: make timestr() recognise the style 'none'
+and return an empty string. If cmpthese is calling timethese, make it pass the
+style in. (so that 'none' will suppress output). Make sub new dump its
+debugging output to STDERR, to be consistent with everything else.
+All bugs found while writing a regression test.
+
 =cut
 
 # evaluate something in a clean lexical environment
@@ -361,8 +410,9 @@ use Exporter;
 @EXPORT=qw(timeit timethis timethese timediff timestr);
 @EXPORT_OK=qw(timesum cmpthese countit
 	      clearcache clearallcache disablecache enablecache);
+%EXPORT_TAGS=( all => [ @EXPORT, @EXPORT_OK ] ) ;
 
-$VERSION = 1.00;
+$VERSION = 1.04;
 
 &init;
 
@@ -391,7 +441,7 @@ sub disablecache  { $cache = 0; }
 # --- Functions to process the 'time' data type
 
 sub new { my @t = (time, times, @_ == 2 ? $_[1] : 0);
-	  print "new=@t\n" if $debug;
+	  print STDERR "new=@t\n" if $debug;
 	  bless \@t; }
 
 sub cpu_p { my($r,$pu,$ps,$cu,$cs) = @{$_[0]}; $pu+$ps         ; }
@@ -427,6 +477,7 @@ sub timestr {
     $f = $defaultfmt unless defined $f;
     # format a time in the required style, other formats may be added here
     $style ||= $defaultstyle;
+    return '' if $style eq 'none';
     $style = ($ct>0) ? 'all' : 'noc' if $style eq 'auto';
     my $s = "@t $style"; # default for unknown style
     $s=sprintf("%2d wallclock secs (%$f usr %$f sys + %$f cusr %$f csys = %$f CPU)",
@@ -498,7 +549,7 @@ sub timeit {
     if ($cache && exists $cache{$cache_key} ) {
 	$wn = $cache{$cache_key};
     } else {
-	$wn = &runloop($n, ref( $code ) ? sub { undef } : '' );
+	$wn = &runloop($n, ref( $code ) ? sub { } : '' );
 	# Can't let our baseline have any iterations, or they get subtracted
 	# out of the result.
 	$wn->[5] = 0;
@@ -646,7 +697,8 @@ sub timethese{
     print " ", join(', ',@names) unless $style eq 'none';
     unless ( $n > 0 ) {
 	my $for = n_to_for( $n );
-	print ", each for at least $for CPU seconds" unless $style eq 'none';
+	print ", each" if $n > 1 && $style ne 'none';
+	print " for at least $for CPU seconds" unless $style eq 'none';
     }
     print "...\n" unless $style eq 'none';
 
@@ -661,10 +713,9 @@ sub timethese{
 }
 
 sub cmpthese{
-    my $results = ref $_[0] ? $_[0] : timethese( @_ );
+    my ($results, $style) = ref $_[0] ? @_ : ( timethese( @_[0,1,2] ), $_[2] ) ;
 
-    return $results
-       if defined $_[2] && $_[2] eq 'none';
+    $style = "" unless defined $style;
 
     # Flatten in to an array of arrays with the name as the first field
     my @vals = map{ [ $_, @{$results->{$_}} ] } keys %$results;
@@ -760,6 +811,8 @@ sub cmpthese{
 	push @rows, \@row;
     }
 
+    return \@rows if $style eq "none";
+
     # Equalize column widths in the chart as much as possible without
     # exceeding 80 characters.  This does not use or affect cols 0 or 1.
     my @sorted_width_refs = 
@@ -791,7 +844,7 @@ sub cmpthese{
 	printf $format, @$_;
     }
 
-    return $results;
+    return \@rows ;
 }
 
 

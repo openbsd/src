@@ -1,4 +1,10 @@
 /*    regexp.h
+ *
+ *    Copyright (c) 1997-2002, Larry Wall
+ *
+ *    You may distribute under the terms of either the GNU General Public
+ *    License or the Artistic License, as specified in the README file.
+ *
  */
 
 /*
@@ -30,12 +36,14 @@ typedef struct regexp {
         struct reg_data *data;	/* Additional data. */
 	char *subbeg;		/* saved or original string 
 				   so \digit works forever. */
+        U32 *offsets;           /* offset annotations 20001228 MJD */
 	I32 sublen;		/* Length of string pointed by subbeg */
 	I32 refcnt;
 	I32 minlen;		/* mininum possible length of $& */
 	I32 prelen;		/* length of precomp */
 	U32 nparens;		/* number of parentheses */
 	U32 lastparen;		/* last paren matched */
+	U32 lastcloseparen;	/* last paren matched */
 	U32 reganch;		/* Internal use only +
 				   Tainted information used by regexec? */
 	regnode program[1];	/* Unwarranted chumminess with compiler. */
@@ -54,6 +62,8 @@ typedef struct regexp {
 #define ROPT_CHECK_ALL		0x00100
 #define ROPT_LOOKBEHIND_SEEN	0x00200
 #define ROPT_EVAL_SEEN		0x00400
+#define ROPT_CANY_SEEN		0x00800
+#define ROPT_SANY_SEEN		ROPT_CANY_SEEN /* src bckwrd cmpt */
 
 /* 0xf800 of reganch is used by PMf_COMPILETIME */
 

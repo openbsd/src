@@ -1,9 +1,8 @@
-#!./perl -w
+#!./perl -Ilib -w
 
 # This file should really be extracted from a .PL file
 
-use lib 'lib';		# use source library if present
-
+use strict;
 use Config;		# for config options in the makefile
 use Getopt::Long;	# for command-line parsing
 use Cwd;
@@ -110,6 +109,8 @@ Chris Hall E<lt>hallc@cs.colorado.eduE<gt>
 
 =cut
 
+my $usage;
+
 $usage =<<END_OF_USAGE;
 Usage: $0 --help --podpath=<name>:...:<name> --podroot=<name>
          --htmldir=<name> --htmlroot=<name> --norecurse --recurse
@@ -142,6 +143,9 @@ Usage: $0 --help --podpath=<name>:...:<name> --podroot=<name>
 
 END_OF_USAGE
 
+my (@libpods, @podpath, $podroot, $htmldir, $htmlroot, $recurse, @splithead,
+    @splititem, $splitpod, $verbose, $pod2html);
+
 @libpods = ();
 @podpath = ( "." );	# colon-separated list of directories containing .pod
 			# and .pm files to be converted.
@@ -163,8 +167,10 @@ usage("") unless @ARGV;
 # See vms/descrip_mms.template -> descrip.mms for invokation.
 if ( $^O eq 'VMS' ) { @ARGV = split(/\s+/,$ARGV[0]); }
 
+use vars qw( %Options );
+
 # parse the command-line
-$result = GetOptions( qw(
+my $result = GetOptions( \%Options, qw(
 	help
 	podpath=s
 	podroot=s
@@ -196,8 +202,8 @@ $splitpod = "$podroot/pod" unless $splitpod;
 # ignored in the conversion process.  these are files that have been
 # process by splititem or splithead and should not be converted as a
 # result.
-@ignore = ();
-
+my @ignore = ();
+my @splitdirs;
 
 # split pods.  its important to do this before convert ANY pods because
 #  it may effect some of the links
@@ -209,25 +215,25 @@ split_on_item($podroot,           \@splitdirs, \@ignore, @splititem);
 # convert the pod pages found in @poddirs
 #warn "converting files\n" if $verbose;
 #warn "\@ignore\t= @ignore\n" if $verbose;
-foreach $dir (@podpath) {
+foreach my $dir (@podpath) {
     installdir($dir, $recurse, $podroot, \@splitdirs, \@ignore);
 }
 
 
 # now go through and create master indices for each pod we split
-foreach $dir (@splititem) {
+foreach my $dir (@splititem) {
     print "creating index $htmldir/$dir.html\n" if $verbose;
     create_index("$htmldir/$dir.html", "$htmldir/$dir");
 }
 
-foreach $dir (@splithead) {
+foreach my $dir (@splithead) {
     $dir .= ".pod" unless $dir =~ /(\.pod|\.pm)$/;
     # let pod2html create the file
     runpod2html($dir, 1);
 
     # now go through and truncate after the index
     $dir =~ /^(.*?)(\.pod|\.pm)?$/sm;
-    $file = "$htmldir/$1";
+    my $file = "$htmldir/$1";
     print "creating index $file.html\n" if $verbose;
 
     # read in everything until what would have been the first =head
@@ -235,13 +241,13 @@ foreach $dir (@splithead) {
     open(H, "<$file.html") ||
 	die "$0: error opening $file.html for input: $!\n";
     $/ = "";
-    @data = ();
+    my @data = ();
     while (<H>) {
 	last if /NAME=/;
 	$_ =~ s{HREF="#(.*)">}{
 	    my $url = "$file/$1.html" ;
             $url = Pod::Html::relativize_url( $url, "$file.html" )
-                if ( ! defined $opt_htmlroot || $opt_htmlroot eq '' ) ;
+                if ( ! defined $Options{htmlroot} || $Options{htmlroot} eq '' );
             "HREF=\"$url\">" ;
         }eg;
 	push @data, $_;
@@ -251,7 +257,7 @@ foreach $dir (@splithead) {
     # now rewrite the file 
     open(H, ">$file.html") ||
 	die "$0: error opening $file.html for output: $!\n";
-    print H "@data\n";
+    print H "@data", "\n";
     close(H);
 }
 
@@ -265,24 +271,24 @@ sub usage {
 
 
 sub parse_command_line {
-    usage() if defined $opt_help;
-    $opt_help = ""; 	    	    # make -w shut up
+    usage() if defined $Options{help};
+    $Options{help} = ""; 	    	    # make -w shut up
 
     # list of directories
-    @podpath   = split(":", $opt_podpath) if defined $opt_podpath;
+    @podpath   = split(":", $Options{podpath}) if defined $Options{podpath};
 
     # lists of files
-    @splithead = split(",", $opt_splithead) if defined $opt_splithead;
-    @splititem = split(",", $opt_splititem) if defined $opt_splititem;
-    @libpods   = split(",", $opt_libpods) if defined $opt_libpods;
+    @splithead = split(",", $Options{splithead}) if defined $Options{splithead};
+    @splititem = split(",", $Options{splititem}) if defined $Options{splititem};
+    @libpods   = split(",", $Options{libpods}) if defined $Options{libpods};
 
-    $htmldir  = $opt_htmldir	    if defined $opt_htmldir;
-    $htmlroot = $opt_htmlroot	    if defined $opt_htmlroot;
-    $podroot  = $opt_podroot	    if defined $opt_podroot;
-    $splitpod = $opt_splitpod	    if defined $opt_splitpod;
+    $htmldir  = $Options{htmldir}	    if defined $Options{htmldir};
+    $htmlroot = $Options{htmlroot}	    if defined $Options{htmlroot};
+    $podroot  = $Options{podroot}	    if defined $Options{podroot};
+    $splitpod = $Options{splitpod}	    if defined $Options{splitpod};
 
-    $recurse  = $opt_recurse	    if defined $opt_recurse;
-    $verbose  = $opt_verbose	    if defined $opt_verbose;
+    $recurse  = $Options{recurse}	    if defined $Options{recurse};
+    $verbose  = $Options{verbose}	    if defined $Options{verbose};
 }
 
 
@@ -322,13 +328,14 @@ sub create_index {
 	close(IN);
 
 	# pull out the NAME section
+  my $name;
 	($name) = grep(/NAME=/, @filedata);
 	($lcp1,$lcp2) = ($name =~ m,/H1>\s(\S+)\s[\s-]*(.*?)\s*$,sm);
 	if (defined $lcp1 and $lcp1 eq '<P>') { # Uninteresting.  Try again.
 	   ($lcp1,$lcp2) = ($name =~ m,/H1>\s<P>\s(\S+)\s[\s-]*(.*?)\s*$,sm);
 	}
 	my $url= "$dir/$file" ;
-	if ( ! defined $opt_htmlroot || $opt_htmlroot eq '' ) {
+	if ( ! defined $Options{htmlroot} || $Options{htmlroot} eq '' ) {
 	    $url = Pod::Html::relativize_url( "$dir/$file", $html ) ;
 	}
 
@@ -383,7 +390,7 @@ sub split_on_item {
     print "splitting files by item.\n" if $verbose && $#splititem >= 0;
     $pwd = getcwd();
 	my $splitter = absolute_path($pwd, "$splitpod/splitpod");
-    foreach $pod (@splititem) {
+    foreach my $pod (@splititem) {
 	# figure out the directory to split into
 	$pod      =~ s,^([^/]*)$,/$1,;
 	$pod      =~ m,(.*?)/(.*?)(\.pod)?$,;
@@ -443,7 +450,7 @@ sub splitpod {
 
     # create list of =head[1-6] sections so that we can rewrite
     #  L<> links as necessary.
-    %heads = ();
+    my %heads = ();
     foreach $i (0..$#poddata) {
 	$heads{htmlize($1)} = 1 if $poddata[$i] =~ /=head[1-6]\s+(.*)/;
     }
@@ -451,7 +458,7 @@ sub splitpod {
     # create a directory of a similar name and store all the
     #  files in there
     $pod =~ s,.*/(.*),$1,;	# get the last part of the name
-    $dir = $pod;
+    my $dir = $pod;
     $dir =~ s/\.pod//g;
     push(@$splitdirs, "$poddir/$dir");
     mkdir("$poddir/$dir", 0755) ||
@@ -538,7 +545,7 @@ sub installdir {
     }
 
     # install all the pods we found
-    foreach $pod (@podlist) {
+    foreach my $pod (@podlist) {
 	# check if we should ignore it.
 	next if grep($_ eq "$podroot/$pod.pod", @$ignore);
 
@@ -552,7 +559,7 @@ sub installdir {
     }
 
     # install all the .pm files we found
-    foreach $pm (@pmlist) {
+    foreach my $pm (@pmlist) {
 	# check if we should ignore it.
 	next if grep($_ eq "$pm.pm", @ignore);
 

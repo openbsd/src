@@ -3,7 +3,7 @@ package Devel::PPPort;
 
 =head1 NAME
 
-Perl/Pollution/Portability
+Devel::PPPort - Perl/Pollution/Portability
 
 =head1 SYNOPSIS
 

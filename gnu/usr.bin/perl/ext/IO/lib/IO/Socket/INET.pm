@@ -15,7 +15,7 @@ use Exporter;
 use Errno;
 
 @ISA = qw(IO::Socket);
-$VERSION = "1.25";
+$VERSION = "1.26";
 
 my $EINVAL = exists(&Errno::EINVAL) ? Errno::EINVAL() : 1;
 
@@ -41,11 +41,8 @@ sub _sock_info {
   $port = $1
 	if(defined $addr && $addr =~ s,:([\w\(\)/]+)$,,);
 
-  if(defined $proto) {
-    if (@proto = ( $proto =~ m,\D,
-		? getprotobyname($proto)
-		: getprotobynumber($proto))
-    ) {
+  if(defined $proto  && $proto =~ /\D/) {
+    if(@proto = getprotobyname($proto)) {
       $proto = $proto[2] || undef;
     }
     else {
@@ -55,15 +52,13 @@ sub _sock_info {
   }
 
   if(defined $port) {
-    $port =~ s,\((\d+)\)$,,;
-
-    my $defport = $1 || undef;
+    my $defport = ($port =~ s,\((\d+)\)$,,) ? $1 : undef;
     my $pnum = ($port =~ m,^(\d+)$,)[0];
 
     @serv = getservbyname($port, $proto[0] || "")
 	if ($port =~ m,\D,);
 
-    $port = $pnum || $serv[2] || $defport || undef;
+    $port = $serv[2] || $defport || $pnum;
     unless (defined $port) {
 	$@ = "Bad service '$origport'";
 	return;
@@ -84,7 +79,8 @@ sub _error {
     my $err = shift;
     {
       local($!);
-      $@ = join("",ref($sock),": ",@_);
+      my $title = ref($sock).": ";
+      $@ = join("", $_[0] =~ /^$title/ ? "" : $title, @_);
       close($sock)
 	if(defined fileno($sock));
     }
@@ -133,6 +129,8 @@ sub configure {
 			or return _error($sock, $!, $@);
     }
 
+    $sock->blocking($arg->{Blocking}) if defined $arg->{Blocking};
+
     $proto ||= (getprotobyname('tcp'))[2];
 
     my $pname = (getprotobynumber($proto))[0];
@@ -158,6 +156,11 @@ sub configure {
 
 	if ($arg->{ReusePort}) {
 	    $sock->sockopt(SO_REUSEPORT,1) or
+		    return _error($sock, $!, "$!");
+	}
+
+	if ($arg->{Broadcast}) {
+		$sock->sockopt(SO_BROADCAST,1) or
 		    return _error($sock, $!, "$!");
 	}
 
@@ -189,12 +192,13 @@ sub configure {
 #        my $timeout = ${*$sock}{'io_socket_timeout'};
 #        my $before = time() if $timeout;
 
+	undef $@;
         if ($sock->connect(pack_sockaddr_in($rport, $raddr))) {
 #            ${*$sock}{'io_socket_timeout'} = $timeout;
             return $sock;
         }
 
-	return _error($sock, $!, "Timeout")
+	return _error($sock, $!, $@ || "Timeout")
 	    unless @raddr;
 
 #	if ($timeout) {
@@ -310,9 +314,10 @@ C<IO::Socket::INET> provides.
     ReuseAddr	Set SO_REUSEADDR before binding
     Reuse	Set SO_REUSEADDR before binding (deprecated, prefer ReuseAddr)
     ReusePort	Set SO_REUSEPORT before binding
+    Broadcast	Set SO_BROADCAST before binding
     Timeout	Timeout	value for various operations
     MultiHomed  Try all adresses for multi-homed hosts
-
+    Blocking    Determine if connection will be blocking mode
 
 If C<Listen> is defined then a listen socket is created, else if the
 socket type, which is derived from the protocol, is SOCK_STREAM then
@@ -320,7 +325,7 @@ connect() is called.
 
 Although it is not illegal, the use of C<MultiHomed> on a socket
 which is in non-blocking mode is of little use. This is because the
-first connect will never fail with a timeout as the connaect call
+first connect will never fail with a timeout as the connect call
 will not block.
 
 The C<PeerAddr> can be a hostname or the IP-address on the
@@ -338,6 +343,9 @@ parameter will be deduced from C<Proto> if not specified.
 If the constructor is only passed a single argument, it is assumed to
 be a C<PeerAddr> specification.
 
+If C<Blocking> is set to 0, the connection will be in nonblocking mode.
+If not specified it defaults to 1 (blocking mode).
+
 Examples:
 
    $sock = IO::Socket::INET->new(PeerAddr => 'www.perl.org',
@@ -353,6 +361,12 @@ Examples:
 
    $sock = IO::Socket::INET->new('127.0.0.1:25');
 
+   $sock = IO::Socket::INET->new(PeerPort  => 9999,
+                                 PeerAddr  => inet_ntoa(INADDR_BROADCAST),
+                                 Proto     => udp,    
+                                 LocalAddr => 'localhost',
+                                 Broadcast => 1 ) 
+                             or die "Can't bind : $@\n";
 
  NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE
 

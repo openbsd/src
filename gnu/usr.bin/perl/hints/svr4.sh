@@ -23,7 +23,7 @@ libswanted=`echo " $libswanted " | sed -e 's/ malloc / /'` # -e 's/ ucb / /'`
 #   it is needed for ODBM_File and NDBM_File extensions.
 
 if [ -r /usr/ucblib/libucb.a ]; then	# If using BSD-compat. library:
-    d_Gconvert='gcvt((x),(n),(b))'	# Try gcvt() before gconvert().
+    gconvert_preference='gcvt sprintf'	# Try gcvt() before gconvert().
     # Use the "native" counterparts, not the BSD emulation stuff:
     d_bcmp='undef' d_bcopy='undef' d_bzero='undef' d_safebcpy='undef'
     d_index='undef' d_killpg='undef' d_getprior='undef' d_setprior='undef'
@@ -138,9 +138,12 @@ esac
 # NCR MP-RAS.  Thanks to Doug Hendricks for this info.
 # The output of uname -a looks like this
 #	foo foo 4.0 3.0 3441 Pentium III(TM)-ISA/PCI
+# Similar errors reported for
+#       foo foo 4.0 3.0 4400 pentium ii(tm)-isapci '
+
 # Configure sets osname=svr4.0, osvers=3.0, archname='3441-svr4.0'
 case "$myuname" in
-*3441*)
+*3441*|*4400*isapci)
     # With the NCR High Performance C Compiler R3.0c, miniperl fails 
     # t/op/regexp.t test 461 unless we compile with optimizie=-g.
     # The whole O/S is being phased out, so more detailed probing

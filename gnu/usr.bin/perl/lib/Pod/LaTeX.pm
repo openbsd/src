@@ -1,8 +1,5 @@
 package Pod::LaTeX;
 
-# Copyright (C) 2000 by Tim Jenness <t.jenness@jach.hawaii.edu>
-# All Rights Reserved.
-
 =head1 NAME
 
 Pod::LaTeX - Convert Pod data to formatted Latex
@@ -36,7 +33,7 @@ use Carp;
 
 use vars qw/ $VERSION %HTML_Escapes @LatexSections /;
 
-$VERSION = '0.53';
+$VERSION = '0.54';
 
 # Definitions of =headN -> latex mapping
 @LatexSections = (qw/
@@ -52,13 +49,17 @@ $VERSION = '0.53';
 # Up to "yuml" these are taken from the original pod2latex
 # command written by Taro Kawagish (kawagish@imslab.co.jp)
 
+
 %HTML_Escapes = (
-    'amp'       =>      '&',      #   ampersand
-    'lt'        =>      '$<$',    #   ' left chevron, less-than
-    'gt'        =>      '$>$',    #   ' right chevron, greater-than
+    # lt, gt and verbar are inserted without math mode
+    # since the $$ will be added during general correction
+    # for those escape characters
+    'amp'       =>      '\&',      #   ampersand
+    'lt'        =>      '<',    #   ' left chevron, less-than
+    'gt'        =>      '>',    #   ' right chevron, greater-than
     'quot'      =>      '"',      #   double quote
     'sol'       =>      '/',
-    'verbar'    =>      '$|$',
+    'verbar'    =>      '|',
 
     "Aacute"    =>      "\\'{A}",       #   capital A, acute accent
     "aacute"    =>      "\\'{a}",       #   small a, acute accent
@@ -254,9 +255,7 @@ sub initialize {
   # Internals
   $self->{_Lists} = [];             # For nested lists
   $self->{_suppress_all_para}  = 0; # For =begin blocks
-  $self->{_suppress_next_para} = 0; # For =for blocks
   $self->{_dont_modify_any_para}=0; # For =begin blocks
-  $self->{_dont_modify_next_para}=0; # For =for blocks
   $self->{_CURRENT_HEAD1}   = '';   # Name of current HEAD1 section
 
   # Options - only initialise if not already set
@@ -337,8 +336,8 @@ of arguments when using the C<new()> constructor.
 =item B<AddPreamble>
 
 Logical to control whether a C<latex> preamble is to be written.
-If true, a valid C<latex> preamble is written before the pod data is written.
-This is similar to:
+If true, a valid C<latex> preamble is written before the pod data
+is written.  This is similar to:
 
   \documentclass{article}
   \begin{document}
@@ -364,13 +363,13 @@ sub AddPreamble {
 
 =item B<AddPostamble>
 
-Logical to control whether a standard C<latex> ending is written to the output
-file after the document has been processed.
-In its simplest form this is simply:
+Logical to control whether a standard C<latex> ending is written to
+the output file after the document has been processed.  In its
+simplest form this is simply:
 
   \end{document}
 
-but can be more complicated if a index is required.
+but can be more complicated if an index is required.
 Can be used to set or retrieve the current value.
 
   $add = $parser->AddPostamble();
@@ -409,10 +408,10 @@ Can be used to set or retrieve the current value:
   $parser->Head1Level(2);
   $sect = $parser->Head1Level;
 
-Setting this number too high can result in sections that may not be reproducible
-in the expected way. For example, setting this to 4 would imply that C<=head3>
-do not have a corresponding C<latex> section (C<=head1> would correspond to
-a C<paragraph>).
+Setting this number too high can result in sections that may not be
+reproducible in the expected way. For example, setting this to 4 would
+imply that C<=head3> do not have a corresponding C<latex> section
+(C<=head1> would correspond to a C<paragraph>).
 
 A check is made to ensure that the supplied value is an integer in the
 range 0 to 5.
@@ -503,8 +502,8 @@ into the preamble and postamble
   $makeindex = $parser->MakeIndex;
   $parser->MakeIndex(0);
 
-Irrelevant if both C<AddPreamble> and C<AddPostamble> are false (or equivalently,
-C<UserPreamble> and C<UserPostamble> are set).
+Irrelevant if both C<AddPreamble> and C<AddPostamble> are false
+(or equivalently, C<UserPreamble> and C<UserPostamble> are set).
 
 Default is for an index to be created.
 
@@ -633,8 +632,8 @@ sub UniqueLabels {
 User supplied C<latex> preamble. Added before the pod translation
 data. 
 
-If set, the contents will be prepended to the output file before the translated 
-data regardless of the value of C<AddPreamble>.
+If set, the contents will be prepended to the output file before
+the translated data regardless of the value of C<AddPreamble>.
 C<MakeIndex> and C<TableOfContents> will also be ignored.
 
 =cut
@@ -652,8 +651,8 @@ sub UserPreamble {
 User supplied C<latex> postamble. Added after the pod translation
 data. 
 
-If set, the contents will be prepended to the output file after the translated 
-data regardless of the value of C<AddPostamble>.
+If set, the contents will be prepended to the output file after
+the translated data regardless of the value of C<AddPostamble>.
 C<MakeIndex> will also be ignored.
 
 =cut
@@ -840,12 +839,20 @@ sub command {
   # return if we dont care
   return if $command eq 'pod';
 
+  # Store a copy of the raw text in case we are in a =for
+  # block and need to preserve the existing latex
+  my $rawpara = $paragraph;
+
+  # Do the latex escapes
   $paragraph = $self->_replace_special_chars($paragraph);
 
   # Interpolate pod sequences in paragraph
   $paragraph = $self->interpolate($paragraph, $line_num);
-
   $paragraph =~ s/\s+$//;
+
+  # Replace characters that can only be done after 
+  # interpolation of interior sequences
+  $paragraph = $self->_replace_special_chars_late($paragraph);
 
   # Now run the command
   if ($command eq 'over') {
@@ -903,14 +910,24 @@ sub command {
 
   } elsif ($command eq 'for') {
 
-    # pass through if latex
-    if ($paragraph =~ /^latex/i) {
-      # Make sure that next paragraph is not modfied before printing
-      $self->{_dont_modify_next_para} = 1;
+    # =for latex
+    #   some latex
 
-    } else {
-      # Suppress the next paragraph unless it is latex
-      $self->{_suppress_next_para} = 1
+    # With =for we will get the text for the full paragraph
+    # as well as the format name.
+    # We do not get an additional paragraph later on. The next
+    # paragraph is not governed by the =for
+
+    # The first line contains the format and the rest is the
+    # raw code.
+    my ($format, $chunk) = split(/\n/, $rawpara, 2);
+
+    # If we have got some latex code print it out immediately
+    # unmodified. Else do nothing.
+    if ($format =~ /^latex/i) {
+      # Make sure that next paragraph is not modfied before printing
+      $self->_output( $chunk );
+
     }
 
   } elsif ($command eq 'end') {
@@ -939,13 +956,10 @@ sub verbatim {
   my $self = shift;
   my ($paragraph, $line_num, $parobj) = @_;
 
-  # Expand paragraph unless in =for or =begin block
-  if ($self->{_dont_modify_any_para} || $self->{_dont_modify_next_para}) {
+  # Expand paragraph unless in =begin block
+  if ($self->{_dont_modify_any_para}) {
     # Just print as is
     $self->_output($paragraph);
-
-    # Reset flag if in =for
-    $self->{_dont_modify_next_para} = 0;
 
   } else {
 
@@ -954,8 +968,21 @@ sub verbatim {
     # Clean trailing space
     $paragraph =~ s/\s+$//;
 
-    # Clean tabs
-    $paragraph =~ s/\t/        /g;
+    # Clean tabs. Routine taken from Tabs.pm
+    # by David Muir Sharnoff muir@idiom.com,
+    # slightly modified by hsmyers@sdragons.com 10/22/01
+    my @l = split("\n",$paragraph);
+    foreach (@l) {
+      1 while s/(^|\n)([^\t\n]*)(\t+)/
+	$1. $2 . (" " x 
+		  (8 * length($3)
+		   - (length($2) % 8)))
+	  /sex;
+    }
+    $paragraph = join("\n",@l);
+    # End of change.
+
+
 
     $self->_output('\begin{verbatim}' . "\n$paragraph\n". '\end{verbatim}'."\n");
   }
@@ -972,19 +999,16 @@ sub textblock {
   my ($paragraph, $line_num, $parobj) = @_;
 
   # print Dumper($self);
-  
-  # Expand paragraph unless in =for or =begin block
-  if ($self->{_dont_modify_any_para} || $self->{_dont_modify_next_para}) {
+
+  # Expand paragraph unless in =begin block
+  if ($self->{_dont_modify_any_para}) {
     # Just print as is
     $self->_output($paragraph);
 
-    # Reset flag if in =for
-    $self->{_dont_modify_next_para} = 0;
-
     return;
-  } 
+  }
 
-  
+
   # Escape latex special characters
   $paragraph = $self->_replace_special_chars($paragraph);
 
@@ -992,6 +1016,8 @@ sub textblock {
   my $expansion = $self->interpolate($paragraph, $line_num);
   $expansion =~ s/\s+$//;
 
+  # Escape special characters that can not be done earlier
+  $expansion = $self->_replace_special_chars_late($expansion);
 
   # If we are replacing 'head1 NAME' with a section
   # we need to look in the paragraph and rewrite things
@@ -1122,7 +1148,8 @@ sub interior_sequence {
 
   } elsif ($seq_command eq 'P') {
     # Special markup for Pod::Hyperlink
-    # Replace :: with /
+    # Replace :: with / - but not sure if I want to do this
+    # any more.
     my $link = $seq_argument;
     $link =~ s/::/\//g;
 
@@ -1131,7 +1158,7 @@ sub interior_sequence {
 
   } elsif ($seq_command eq 'Q') {
     # Special markup for Pod::Hyperlink
-    return "\\textsf{$seq_argument}\n";
+    return "\\textsf{$seq_argument}";
 
   } elsif ($seq_command eq 'X') {
     # Index entries
@@ -1242,7 +1269,7 @@ sub add_item {
 
   # If paragraphs printing is turned off via =begin/=end or whatver
   # simply return immediately
-  return if ($self->{_suppress_all_para} || $self->{_suppress_next_para});
+  return if $self->{_suppress_all_para};
 
   # Check to see whether we are starting a new lists
   if (scalar($self->lists->[-1]->item) == 0) {
@@ -1270,12 +1297,20 @@ sub add_item {
 
   if ($type eq 'description') {
     # Handle long items - long items do not wrap
-    if (length($paragraph) < 40) {
-      # A real description list item
-      $self->_output("\\item[$paragraph] \\mbox{}");
+    # If the string is longer than 40 characters we split
+    # it into a real item header and some bold text.
+    my $maxlen = 40;
+    my ($hunk1, $hunk2) = $self->_split_delimited( $paragraph, $maxlen );
+
+    # Print the first hunk
+    $self->_output("\n\\item[$hunk1] ");
+
+    # and the second hunk if it is defined
+    if ($hunk2) {
+      $self->_output("\\textbf{$hunk2}");
     } else {
-      # The item is now simply bold text
-      $self->_output(qq{\\item \\textbf{$paragraph}});
+      # Not there so make sure we have a new line
+      $self->_output("\\mbox{}");
     }
 
   } else {
@@ -1283,7 +1318,7 @@ sub add_item {
     # out the something
     my $extra_info = $paragraph;
     $extra_info =~ s/^\*\s*//;
-    $self->_output("\\item $extra_info");
+    $self->_output("\n\\item $extra_info");
   }
 
   # Store the item name in the object. Required so that 
@@ -1344,7 +1379,7 @@ sub head {
   my $star = ($level >= $self->LevelNoNum ? '*' : '');
 
   # Section
-  $self->_output("\\" .$LatexSections[$level] .$star ."{$paragraph\\label{".$label ."}\\index{".$index."}}");
+  $self->_output("\\" .$LatexSections[$level] .$star ."{$paragraph\\label{".$label ."}\\index{".$index."}}\n");
 
 }
 
@@ -1369,7 +1404,7 @@ to output parsed text.
 
    $parser->_output($text);
 
-Does not write anything if a =begin or =for is active that should be
+Does not write anything if a =begin is active that should be
 ignored.
 
 =cut
@@ -1378,13 +1413,9 @@ sub _output {
   my $self = shift;
   my $text = shift;
 
-  print { $self->output_handle } $text 
-    unless $self->{_suppress_all_para} ||
-      $self->{_suppress_next_para};
+  print { $self->output_handle } $text
+    unless $self->{_suppress_all_para};
 
-  # Reset pargraph stuff for =for
-  $self->{_suppress_next_para} = 0
-    if $self->{_suppress_next_para};
 }
 
 
@@ -1395,8 +1426,12 @@ with the escaped forms
 
   $escaped = $parser->_replace_special_chars($paragraph);
 
-Need to call this routine before interior_sequences are munged but
-not if verbatim.
+Need to call this routine before interior_sequences are munged but not
+if verbatim. It must be called before interpolation of interior
+sequences so that curly brackets and special latex characters inserted
+during interpolation are not themselves escaped. This means that < and
+> can not be modified here since the text still contains interior
+sequences.
 
 Special characters and the C<latex> equivalents are:
 
@@ -1409,7 +1444,6 @@ Special characters and the C<latex> equivalents are:
   \     $\backslash$
   ^     \^{}
   ~     \~{}
-  |     $|$
 
 =cut
 
@@ -1433,11 +1467,37 @@ sub _replace_special_chars {
   # Replace tilde (~) with \texttt{\~{}}
   $paragraph =~ s/~/\\texttt\{\\~\{\}\}/g;
 
+  # Now add the dollars around each \backslash
+  $paragraph =~ s/(\\backslash)/\$$1\$/g;
+  return $paragraph;
+}
+
+=item B<_replace_special_chars_late>
+
+Replace special characters that can not be replaced before interior
+sequence interpolation. See C<_replace_special_chars> for a routine
+to replace special characters prior to interpolation of interior
+sequences.
+
+Does the following transformation:
+
+  <   $<$
+  >   $>$
+  |   $|$
+
+
+=cut
+
+sub _replace_special_chars_late {
+  my $self = shift;
+  my $paragraph = shift;
+
+  # < and >
+  $paragraph =~ s/(<|>)/\$$1\$/g;
+
   # Replace | with $|$
   $paragraph =~ s'\|'$|$'g;
 
-  # Now add the dollars around each \backslash
-  $paragraph =~ s/(\\backslash)/\$$1\$/g;
 
   return $paragraph;
 }
@@ -1551,6 +1611,66 @@ sub _clean_latex_commands {
   return $paragraph
 }
 
+=item B<_split_delimited>
+
+Split the supplied string into two parts at approximately the
+specified word boundary. Special care is made to make sure that it
+does not split in the middle of some curly brackets.
+
+e.g. "this text is \textbf{very bold}" would not be split into
+"this text is \textbf{very" and " bold".
+
+  ($hunk1, $hunk2) = $self->_split_delimited( $para, $length);
+
+The length indicates the maximum length of hunk1.
+
+=cut
+
+# initially Supplied by hsmyers@sdragons.com
+# 10/25/01, utility to split \hbox
+# busting lines. Reformatted by TimJ to match module style.
+sub _split_delimited {
+  my $self = shift;
+  my $input = shift;
+  my $limit = shift;
+
+  # Return immediately if already small
+  return ($input, '') if length($input) < $limit;
+
+  my @output;
+  my $s = '';
+  my $t = '';
+  my $depth = 0;
+  my $token;
+
+  $input =~ s/\n/ /gm;
+  $input .= ' ';
+  foreach ( split ( //, $input ) ) {
+    $token .= $_;
+    if (/\{/) {
+      $depth++;
+    } elsif ( /}/ ) {
+      $depth--;
+    } elsif ( / / and $depth == 0) {
+      push @output, $token if ( $token and $token ne ' ' );
+      $token = '';
+    }
+  }
+
+  foreach  (@output) {
+    if (length($s) < $limit) {
+      $s .= $_;
+    } else {
+      $t .= $_;
+    }
+  }
+
+  # Tidy up
+  $s =~ s/\s+$//;
+  $t =~ s/\s+$//;
+  return ($s,$t);
+}
+
 =back
 
 =end __PRIVATE__
@@ -1573,18 +1693,24 @@ L<Pod::Parser>, L<Pod::Select>, L<pod2latex>
 
 Tim Jenness E<lt>t.jenness@jach.hawaii.eduE<gt>
 
+Bug fixes have been received from: Simon Cozens
+E<lt>simon@cozens.netE<gt>, Mark A. Hershberger
+E<lt>mah@everybody.orgE<gt>, Marcel Grunauer
+E<lt>marcel@codewerk.comE<gt> and Hugh S Myers
+E<lt>hsmyers@sdragons.comE<gt>.
+
 =head1 COPYRIGHT
 
-Copyright (C) 2000 Tim Jenness. All Rights Reserved.
+Copyright (C) 2000-2001 Tim Jenness. All Rights Reserved.
 
-This program is free software; you can redistribute it and/or modify it
-under the same terms as Perl itself.
+This program is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
 
 =begin __PRIVATE__
 
 =head1 REVISION
 
-$Id: LaTeX.pm,v 1.2 2001/05/24 18:35:35 millert Exp $
+$Id: LaTeX.pm,v 1.3 2002/10/27 22:25:27 millert Exp $
 
 =end __PRIVATE__
 

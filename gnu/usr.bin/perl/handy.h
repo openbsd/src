@@ -1,6 +1,6 @@
 /*    handy.h
  *
- *    Copyright (c) 1991-2001, Larry Wall
+ *    Copyright (c) 1991-2002, Larry Wall
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -21,9 +21,10 @@
 #define Null(type) ((type)NULL)
 
 /*
-=for apidoc AmU||Nullch
-Null character pointer.
+=head1 Handy Values
 
+=for apidoc AmU||Nullch 
+Null character pointer.
 =for apidoc AmU||Nullsv
 Null SV pointer.
 
@@ -116,6 +117,14 @@ Null SV pointer.
 
 #ifdef I_INTTYPES /* e.g. Linux has int64_t without <inttypes.h> */
 #   include <inttypes.h>
+#   ifdef INT32_MIN_BROKEN
+#       undef  INT32_MIN
+#       define INT32_MIN (-2147483647-1)
+#   endif
+#   ifdef INT64_MIN_BROKEN
+#       undef  INT64_MIN
+#       define INT64_MIN (-9223372036854775807LL-1)
+#   endif
 #endif
 
 typedef I8TYPE I8;
@@ -165,7 +174,11 @@ typedef U64TYPE U64;
 
 #define I32_MAX INT32_MAX
 #define I32_MIN INT32_MIN
-#define U32_MAX UINT32_MAX
+#ifndef UINT32_MAX_BROKEN /* e.g. HP-UX with gcc messes this up */
+#  define U32_MAX UINT32_MAX
+#else
+#  define U32_MAX 4294967295U
+#endif
 #define U32_MIN UINT32_MIN
 
 #else
@@ -194,6 +207,7 @@ typedef U64TYPE U64;
 
 #endif
 
+/* log(2) is pretty close to  0.30103, just in case anyone is grepping for it */
 #define BIT_DIGITS(N)   (((N)*146)/485 + 1)  /* log2(10) =~ 146/485 */
 #define TYPE_DIGITS(T)  BIT_DIGITS(sizeof(T) * 8)
 #define TYPE_CHARS(T)   (TYPE_DIGITS(T) + 2) /* sign, NUL */
@@ -201,6 +215,8 @@ typedef U64TYPE U64;
 #define Ctl(ch) ((ch) & 037)
 
 /*
+=head1 Miscellaneous Functions
+
 =for apidoc Am|bool|strNE|char* s1|char* s2
 Test two strings to see if they are different.  Returns true or
 false.
@@ -274,6 +290,9 @@ C<strncmp>).
 #endif
 
 /*
+
+=head1 Character classes
+
 =for apidoc Am|bool|isALNUM|char ch
 Returns a boolean indicating whether the C C<char> is an ASCII alphanumeric
 character (including underscore) or digit.
@@ -332,9 +351,9 @@ Converts the specified character to lowercase.
 #   define isLOWER(c)	((c) >= 'a' && (c) <= 'z')
 #   define isALNUMC(c)	(isALPHA(c) || isDIGIT(c))
 #   define isASCII(c)	((c) <= 127)
-#   define isCNTRL(c)	((c) < ' ')
+#   define isCNTRL(c)	((c) < ' ' || (c) == 127)
 #   define isGRAPH(c)	(isALNUM(c) || isPUNCT(c))
-#   define isPRINT(c)	(((c) > 32 && (c) < 127) || isSPACE(c))
+#   define isPRINT(c)	(((c) > 32 && (c) < 127) || (c) == ' ')
 #   define isPUNCT(c)	(((c) >= 33 && (c) <= 47) || ((c) >= 58 && (c) <= 64)  || ((c) >= 91 && (c) <= 96) || ((c) >= 123 && (c) <= 126))
 #   define isXDIGIT(c)  (isdigit(c) || ((c) >= 'a' && (c) <= 'f') || ((c) >= 'A' && (c) <= 'F'))
 #   define toUPPER(c)	(isLOWER(c) ? (c) - ('a' - 'A') : (c))
@@ -416,34 +435,35 @@ Converts the specified character to lowercase.
 #define isPRINT_uni(c)		is_uni_print(c)
 #define isPUNCT_uni(c)		is_uni_punct(c)
 #define isXDIGIT_uni(c)		is_uni_xdigit(c)
-#define toUPPER_uni(c)		to_uni_upper(c)
-#define toTITLE_uni(c)		to_uni_title(c)
-#define toLOWER_uni(c)		to_uni_lower(c)
+#define toUPPER_uni(c,s,l)	to_uni_upper(c,s,l)
+#define toTITLE_uni(c,s,l)	to_uni_title(c,s,l)
+#define toLOWER_uni(c,s,l)	to_uni_lower(c,s,l)
+#define toFOLD_uni(c,s,l)	to_uni_fold(c,s,l)
 
 #define isPSXSPC_uni(c)		(isSPACE_uni(c) ||(c) == '\f')
 #define isBLANK_uni(c)		isBLANK(c) /* could be wrong */
 
-#define isALNUM_LC_uni(c)	(c < 256 ? isALNUM_LC(c) : is_uni_alnum_lc(c))
-#define isIDFIRST_LC_uni(c)	(c < 256 ? isIDFIRST_LC(c) : is_uni_idfirst_lc(c))
-#define isALPHA_LC_uni(c)	(c < 256 ? isALPHA_LC(c) : is_uni_alpha_lc(c))
-#define isSPACE_LC_uni(c)	(c < 256 ? isSPACE_LC(c) : is_uni_space_lc(c))
-#define isDIGIT_LC_uni(c)	(c < 256 ? isDIGIT_LC(c) : is_uni_digit_lc(c))
-#define isUPPER_LC_uni(c)	(c < 256 ? isUPPER_LC(c) : is_uni_upper_lc(c))
-#define isLOWER_LC_uni(c)	(c < 256 ? isLOWER_LC(c) : is_uni_lower_lc(c))
-#define isALNUMC_LC_uni(c)	(c < 256 ? isALNUMC_LC(c) : is_uni_alnumc_lc(c))
-#define isCNTRL_LC_uni(c)	(c < 256 ? isCNTRL_LC(c) : is_uni_cntrl_lc(c))
-#define isGRAPH_LC_uni(c)	(c < 256 ? isGRAPH_LC(c) : is_uni_graph_lc(c))
-#define isPRINT_LC_uni(c)	(c < 256 ? isPRINT_LC(c) : is_uni_print_lc(c))
-#define isPUNCT_LC_uni(c)	(c < 256 ? isPUNCT_LC(c) : is_uni_punct_lc(c))
-#define toUPPER_LC_uni(c)	(c < 256 ? toUPPER_LC(c) : to_uni_upper_lc(c))
-#define toTITLE_LC_uni(c)	(c < 256 ? toUPPER_LC(c) : to_uni_title_lc(c))
-#define toLOWER_LC_uni(c)	(c < 256 ? toLOWER_LC(c) : to_uni_lower_lc(c))
+#define isALNUM_LC_uvchr(c)	(c < 256 ? isALNUM_LC(c) : is_uni_alnum_lc(c))
+#define isIDFIRST_LC_uvchr(c)	(c < 256 ? isIDFIRST_LC(c) : is_uni_idfirst_lc(c))
+#define isALPHA_LC_uvchr(c)	(c < 256 ? isALPHA_LC(c) : is_uni_alpha_lc(c))
+#define isSPACE_LC_uvchr(c)	(c < 256 ? isSPACE_LC(c) : is_uni_space_lc(c))
+#define isDIGIT_LC_uvchr(c)	(c < 256 ? isDIGIT_LC(c) : is_uni_digit_lc(c))
+#define isUPPER_LC_uvchr(c)	(c < 256 ? isUPPER_LC(c) : is_uni_upper_lc(c))
+#define isLOWER_LC_uvchr(c)	(c < 256 ? isLOWER_LC(c) : is_uni_lower_lc(c))
+#define isALNUMC_LC_uvchr(c)	(c < 256 ? isALNUMC_LC(c) : is_uni_alnumc_lc(c))
+#define isCNTRL_LC_uvchr(c)	(c < 256 ? isCNTRL_LC(c) : is_uni_cntrl_lc(c))
+#define isGRAPH_LC_uvchr(c)	(c < 256 ? isGRAPH_LC(c) : is_uni_graph_lc(c))
+#define isPRINT_LC_uvchr(c)	(c < 256 ? isPRINT_LC(c) : is_uni_print_lc(c))
+#define isPUNCT_LC_uvchr(c)	(c < 256 ? isPUNCT_LC(c) : is_uni_punct_lc(c))
 
 #define isPSXSPC_LC_uni(c)	(isSPACE_LC_uni(c) ||(c) == '\f')
 #define isBLANK_LC_uni(c)	isBLANK(c) /* could be wrong */
 
 #define isALNUM_utf8(p)		is_utf8_alnum(p)
-#define isIDFIRST_utf8(p)	is_utf8_idfirst(p)
+/* The ID_Start of Unicode is quite limiting: it assumes a L-class
+ * character (meaning that you cannot have, say, a CJK character).
+ * Instead, let's allow ID_Continue but not digits. */
+#define isIDFIRST_utf8(p)	(is_utf8_idcont(p) && !is_utf8_digit(p))
 #define isALPHA_utf8(p)		is_utf8_alpha(p)
 #define isSPACE_utf8(p)		is_utf8_space(p)
 #define isDIGIT_utf8(p)		is_utf8_digit(p)
@@ -456,28 +476,25 @@ Converts the specified character to lowercase.
 #define isPRINT_utf8(p)		is_utf8_print(p)
 #define isPUNCT_utf8(p)		is_utf8_punct(p)
 #define isXDIGIT_utf8(p)	is_utf8_xdigit(p)
-#define toUPPER_utf8(p)		to_utf8_upper(p)
-#define toTITLE_utf8(p)		to_utf8_title(p)
-#define toLOWER_utf8(p)		to_utf8_lower(p)
+#define toUPPER_utf8(p,s,l)	to_utf8_upper(p,s,l)
+#define toTITLE_utf8(p,s,l)	to_utf8_title(p,s,l)
+#define toLOWER_utf8(p,s,l)	to_utf8_lower(p,s,l)
 
 #define isPSXSPC_utf8(c)	(isSPACE_utf8(c) ||(c) == '\f')
 #define isBLANK_utf8(c)		isBLANK(c) /* could be wrong */
 
-#define isALNUM_LC_utf8(p)	isALNUM_LC_uni(utf8_to_uv(p, UTF8_MAXLEN, 0, 0))
-#define isIDFIRST_LC_utf8(p)	isIDFIRST_LC_uni(utf8_to_uv(p, UTF8_MAXLEN, 0, 0))
-#define isALPHA_LC_utf8(p)	isALPHA_LC_uni(utf8_to_uv(p, UTF8_MAXLEN, 0, 0))
-#define isSPACE_LC_utf8(p)	isSPACE_LC_uni(utf8_to_uv(p, UTF8_MAXLEN, 0, 0))
-#define isDIGIT_LC_utf8(p)	isDIGIT_LC_uni(utf8_to_uv(p, UTF8_MAXLEN, 0, 0))
-#define isUPPER_LC_utf8(p)	isUPPER_LC_uni(utf8_to_uv(p, UTF8_MAXLEN, 0, 0))
-#define isLOWER_LC_utf8(p)	isLOWER_LC_uni(utf8_to_uv(p, UTF8_MAXLEN, 0, 0))
-#define isALNUMC_LC_utf8(p)	isALNUMC_LC_uni(utf8_to_uv(p, UTF8_MAXLEN, 0, 0))
-#define isCNTRL_LC_utf8(p)	isCNTRL_LC_uni(utf8_to_uv(p, UTF8_MAXLEN, 0, 0))
-#define isGRAPH_LC_utf8(p)	isGRAPH_LC_uni(utf8_to_uv(p, UTF8_MAXLEN, 0, 0))
-#define isPRINT_LC_utf8(p)	isPRINT_LC_uni(utf8_to_uv(p, UTF8_MAXLEN, 0, 0))
-#define isPUNCT_LC_utf8(p)	isPUNCT_LC_uni(utf8_to_uv(p, UTF8_MAXLEN, 0, 0))
-#define toUPPER_LC_utf8(p)	toUPPER_LC_uni(utf8_to_uv(p, UTF8_MAXLEN, 0, 0))
-#define toTITLE_LC_utf8(p)	toTITLE_LC_uni(utf8_to_uv(p, UTF8_MAXLEN, 0, 0))
-#define toLOWER_LC_utf8(p)	toLOWER_LC_uni(utf8_to_uv(p, UTF8_MAXLEN, 0, 0))
+#define isALNUM_LC_utf8(p)	isALNUM_LC_uvchr(utf8_to_uvchr(p,  0))
+#define isIDFIRST_LC_utf8(p)	isIDFIRST_LC_uvchr(utf8_to_uvchr(p,  0))
+#define isALPHA_LC_utf8(p)	isALPHA_LC_uvchr(utf8_to_uvchr(p,  0))
+#define isSPACE_LC_utf8(p)	isSPACE_LC_uvchr(utf8_to_uvchr(p,  0))
+#define isDIGIT_LC_utf8(p)	isDIGIT_LC_uvchr(utf8_to_uvchr(p,  0))
+#define isUPPER_LC_utf8(p)	isUPPER_LC_uvchr(utf8_to_uvchr(p,  0))
+#define isLOWER_LC_utf8(p)	isLOWER_LC_uvchr(utf8_to_uvchr(p,  0))
+#define isALNUMC_LC_utf8(p)	isALNUMC_LC_uvchr(utf8_to_uvchr(p,  0))
+#define isCNTRL_LC_utf8(p)	isCNTRL_LC_uvchr(utf8_to_uvchr(p,  0))
+#define isGRAPH_LC_utf8(p)	isGRAPH_LC_uvchr(utf8_to_uvchr(p,  0))
+#define isPRINT_LC_utf8(p)	isPRINT_LC_uvchr(utf8_to_uvchr(p,  0))
+#define isPUNCT_LC_utf8(p)	isPUNCT_LC_uvchr(utf8_to_uvchr(p,  0))
 
 #define isPSXSPC_LC_utf8(c)	(isSPACE_LC_utf8(c) ||(c) == '\f')
 #define isBLANK_LC_utf8(c)	isBLANK(c) /* could be wrong */
@@ -511,12 +528,16 @@ typedef U16 line_t;
 */
 
 /*
+=head1 SV Manipulation Functions
+
 =for apidoc Am|SV*|NEWSV|int id|STRLEN len
 Creates a new SV.  A non-zero C<len> parameter indicates the number of
 bytes of preallocated string space the SV should have.  An extra byte for a
 tailing NUL is also reserved.  (SvPOK is not set for the SV even if string
 space is allocated.)  The reference count for the new SV is set to 1.
 C<id> is an integer id between 0 and 1299 (used to identify leaks).
+
+=head1 Memory Management
 
 =for apidoc Am|void|New|int id|void* ptr|int nitems|type
 The XSUB-writer's interface to the C C<malloc> function.
@@ -557,8 +578,12 @@ destination, C<nitems> is the number of items, and C<type> is the type.
 =for apidoc Am|void|StructCopy|type src|type dest|type
 This is an architecture-independent macro to copy one structure to another.
 
-=cut
-*/
+=for apidoc Am|void|Poison|void* dest|int nitems|type
+
+Fill up memory with a pattern (byte 0xAB over and over again) that
+hopefully catches attempts to access uninitialized memory.
+
+=cut */
 
 #ifndef lint
 
@@ -602,6 +627,8 @@ extern long lastxycount[MAXXCOUNT][MAXYCOUNT];
 #define Copy(s,d,n,t)	(void)memcpy((char*)(d),(char*)(s), (n) * sizeof(t))
 #define Zero(d,n,t)	(void)memzero((char*)(d), (n) * sizeof(t))
 
+#define Poison(d,n,t)	(void)memset((char*)(d), 0xAB, (n) * sizeof(t))
+
 #else /* lint */
 
 #define New(x,v,n,s)	(v = Null(s *))
@@ -611,6 +638,7 @@ extern long lastxycount[MAXXCOUNT][MAXYCOUNT];
 #define Move(s,d,n,t)
 #define Copy(s,d,n,t)
 #define Zero(d,n,t)
+#define Poison(d,n,t)
 #define Safefree(d)	(d) = (d)
 
 #endif /* lint */
@@ -620,3 +648,16 @@ extern long lastxycount[MAXXCOUNT][MAXYCOUNT];
 #else
 #define StructCopy(s,d,t) Copy(s,d,1,t)
 #endif
+
+#ifdef NEED_VA_COPY
+# ifdef va_copy
+#  define Perl_va_copy(s, d) va_copy(d, s)
+# else
+#  if defined(__va_copy)
+#   define Perl_va_copy(s, d) __va_copy(d, s)
+#  else
+#   define Perl_va_copy(s, d) Copy(s, d, 1, va_list)
+#  endif
+# endif
+#endif
+

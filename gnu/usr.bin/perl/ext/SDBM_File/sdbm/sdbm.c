@@ -36,11 +36,10 @@
 #ifndef sun
 extern int errno;
 #endif
+#endif
 
 extern Malloc_t malloc proto((MEM_SIZE));
 extern Free_t free proto((Malloc_t));
-
-#endif
 
 /*
  * forward

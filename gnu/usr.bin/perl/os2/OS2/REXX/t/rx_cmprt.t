@@ -12,7 +12,7 @@ use OS2::REXX qw(:DEFAULT register);
 
 $| = 1;				# Otherwise data from REXX may come first
 
-print "1..16\n";
+print "1..18\n";
 
 $n = 1;
 sub do_me {
@@ -46,3 +46,9 @@ sub MYFUNC2 {3 * shift}
 REXX_eval_with "call myfunc
 		say 'ok 'myfunc1(1)myfunc2(2)",
   myfunc => sub { register qw(myfunc1 myfunc2) };
+
+REXX_eval_with "say 'ok 'myfunc(10,7)",
+  myfunc => sub { REXX_eval "return $_[0] + $_[1]" };
+
+sub MyFunc3 {print 'ok ', shift() + shift(), "\n"}
+REXX_eval "address perleval\n'MyFunc3(10,8)'";

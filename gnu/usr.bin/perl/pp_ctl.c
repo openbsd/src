@@ -1,6 +1,6 @@
 /*    pp_ctl.c
  *
- *    Copyright (c) 1991-2001, Larry Wall
+ *    Copyright (c) 1991-2002, Larry Wall
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -26,24 +26,7 @@
 
 #define DOCATCH(o) ((CATCH_GET == TRUE) ? docatch(o) : (o))
 
-static I32 sortcv(pTHXo_ SV *a, SV *b);
-static I32 sortcv_stacked(pTHXo_ SV *a, SV *b);
-static I32 sortcv_xsub(pTHXo_ SV *a, SV *b);
-static I32 sv_ncmp(pTHXo_ SV *a, SV *b);
-static I32 sv_i_ncmp(pTHXo_ SV *a, SV *b);
-static I32 amagic_ncmp(pTHXo_ SV *a, SV *b);
-static I32 amagic_i_ncmp(pTHXo_ SV *a, SV *b);
-static I32 amagic_cmp(pTHXo_ SV *a, SV *b);
-static I32 amagic_cmp_locale(pTHXo_ SV *a, SV *b);
-static I32 run_user_filter(pTHXo_ int idx, SV *buf_sv, int maxlen);
-
-#ifdef PERL_OBJECT
-static I32 sv_cmp_static(pTHXo_ SV *a, SV *b);
-static I32 sv_cmp_locale_static(pTHXo_ SV *a, SV *b);
-#else
-#define sv_cmp_static Perl_sv_cmp
-#define sv_cmp_locale_static Perl_sv_cmp_locale
-#endif
+static I32 run_user_filter(pTHX_ int idx, SV *buf_sv, int maxlen);
 
 PP(pp_wantarray)
 {
@@ -86,38 +69,52 @@ PP(pp_regcomp)
     SV *tmpstr;
     STRLEN len;
     MAGIC *mg = Null(MAGIC*);
-
+    
     tmpstr = POPs;
+
+    /* prevent recompiling under /o and ithreads. */
+#if defined(USE_ITHREADS) || defined(USE_5005THREADS)
+    if (pm->op_pmflags & PMf_KEEP && PM_GETRE(pm))
+	 RETURN;
+#endif
+
     if (SvROK(tmpstr)) {
 	SV *sv = SvRV(tmpstr);
 	if(SvMAGICAL(sv))
-	    mg = mg_find(sv, 'r');
+	    mg = mg_find(sv, PERL_MAGIC_qr);
     }
     if (mg) {
 	regexp *re = (regexp *)mg->mg_obj;
-	ReREFCNT_dec(pm->op_pmregexp);
-	pm->op_pmregexp = ReREFCNT_inc(re);
+	ReREFCNT_dec(PM_GETRE(pm));
+	PM_SETRE(pm, ReREFCNT_inc(re));
     }
     else {
 	t = SvPV(tmpstr, len);
 
 	/* Check against the last compiled regexp. */
-	if (!pm->op_pmregexp || !pm->op_pmregexp->precomp ||
-	    pm->op_pmregexp->prelen != len ||
-	    memNE(pm->op_pmregexp->precomp, t, len))
+	if (!PM_GETRE(pm) || !PM_GETRE(pm)->precomp ||
+	    PM_GETRE(pm)->prelen != (I32)len ||
+	    memNE(PM_GETRE(pm)->precomp, t, len))
 	{
-	    if (pm->op_pmregexp) {
-		ReREFCNT_dec(pm->op_pmregexp);
-		pm->op_pmregexp = Null(REGEXP*);	/* crucial if regcomp aborts */
+	    if (PM_GETRE(pm)) {
+		ReREFCNT_dec(PM_GETRE(pm));
+		PM_SETRE(pm, Null(REGEXP*));	/* crucial if regcomp aborts */
 	    }
 	    if (PL_op->op_flags & OPf_SPECIAL)
 		PL_reginterp_cnt = I32_MAX; /* Mark as safe.  */
 
 	    pm->op_pmflags = pm->op_pmpermflags;	/* reset case sensitivity */
 	    if (DO_UTF8(tmpstr))
-		pm->op_pmdynflags |= PMdf_UTF8;
-	    pm->op_pmregexp = CALLREGCOMP(aTHX_ t, t + len, pm);
-	    PL_reginterp_cnt = 0;		/* XXXX Be extra paranoid - needed
+		pm->op_pmdynflags |= PMdf_DYN_UTF8;
+	    else {
+		pm->op_pmdynflags &= ~PMdf_DYN_UTF8;
+		if (pm->op_pmdynflags & PMdf_UTF8)
+		    t = (char*)bytes_to_utf8((U8*)t, &len);
+	    }
+	    PM_SETRE(pm, CALLREGCOMP(aTHX_ t, t + len, pm));
+	    if (!DO_UTF8(tmpstr) && (pm->op_pmdynflags & PMdf_UTF8))
+		Safefree(t);
+	    PL_reginterp_cnt = 0;	/* XXXX Be extra paranoid - needed
 					   inside tie/overload accessors.  */
 	}
     }
@@ -131,15 +128,17 @@ PP(pp_regcomp)
     }
 #endif
 
-    if (!pm->op_pmregexp->prelen && PL_curpm)
+    if (!PM_GETRE(pm)->prelen && PL_curpm)
 	pm = PL_curpm;
-    else if (strEQ("\\s+", pm->op_pmregexp->precomp))
+    else if (strEQ("\\s+", PM_GETRE(pm)->precomp))
 	pm->op_pmflags |= PMf_WHITE;
+    else
+	pm->op_pmflags &= ~PMf_WHITE;
 
     /* XXX runtime compiled output needs to move to the pad */
     if (pm->op_pmflags & PMf_KEEP) {
 	pm->op_private &= ~OPpRUNTIME;	/* no point compiling again */
-#if !defined(USE_ITHREADS) && !defined(USE_THREADS)
+#if !defined(USE_ITHREADS) && !defined(USE_5005THREADS)
 	/* XXX can't change the optree at runtime either */
 	cLOGOP->op_first->op_next = PL_op->op_next;
 #endif
@@ -159,8 +158,10 @@ PP(pp_substcont)
     register REGEXP *rx = cx->sb_rx;
 
     rxres_restore(&cx->sb_rxres, rx);
+    PL_reg_match_utf8 = SvUTF8(cx->sb_targ) ? 1 : 0;
 
     if (cx->sb_iters++) {
+	I32 saviters = cx->sb_iters;
 	if (cx->sb_iters > cx->sb_maxiters)
 	    DIE(aTHX_ "Substitution loop");
 
@@ -176,7 +177,6 @@ PP(pp_substcont)
 				      : (REXEC_COPY_STR|REXEC_IGNOREPOS|REXEC_NOT_FIRST))))
 	{
 	    SV *targ = cx->sb_targ;
-	    bool isutf8;
 
 	    sv_catpvn(dstr, s, cx->sb_strend - s);
 	    cx->sb_rxtainted |= RX_MATCH_TAINTED(rx);
@@ -186,16 +186,15 @@ PP(pp_substcont)
 	    SvPVX(targ) = SvPVX(dstr);
 	    SvCUR_set(targ, SvCUR(dstr));
 	    SvLEN_set(targ, SvLEN(dstr));
-	    isutf8 = DO_UTF8(dstr);
+	    if (DO_UTF8(dstr))
+		SvUTF8_on(targ);
 	    SvPVX(dstr) = 0;
 	    sv_free(dstr);
 
 	    TAINT_IF(cx->sb_rxtainted & 1);
 	    PUSHs(sv_2mortal(newSViv((I32)cx->sb_iters - 1)));
 
-	    (void)SvPOK_only(targ);
-	    if (isutf8)
-		SvUTF8_on(targ);
+	    (void)SvPOK_only_UTF8(targ);
 	    TAINT_IF(cx->sb_rxtainted);
 	    SvSETMAGIC(targ);
 	    SvTAINT(targ);
@@ -204,6 +203,7 @@ PP(pp_substcont)
 	    POPSUBST(cx);
 	    RETURNOP(pm->op_next);
 	}
+	cx->sb_iters = saviters;
     }
     if (RX_MATCH_COPIED(rx) && rx->subbeg != orig) {
 	m = s;
@@ -213,17 +213,18 @@ PP(pp_substcont)
 	cx->sb_strend = s + (cx->sb_strend - m);
     }
     cx->sb_m = m = rx->startp[0] + orig;
-    sv_catpvn(dstr, s, m-s);
+    if (m > s)
+	sv_catpvn(dstr, s, m-s);
     cx->sb_s = rx->endp[0] + orig;
     { /* Update the pos() information. */
 	SV *sv = cx->sb_targ;
 	MAGIC *mg;
 	I32 i;
 	if (SvTYPE(sv) < SVt_PVMG)
-	    SvUPGRADE(sv, SVt_PVMG);
-	if (!(mg = mg_find(sv, 'g'))) {
-	    sv_magic(sv, Nullsv, 'g', Nullch, 0);
-	    mg = mg_find(sv, 'g');
+	    (void)SvUPGRADE(sv, SVt_PVMG);
+	if (!(mg = mg_find(sv, PERL_MAGIC_regex_global))) {
+	    sv_magic(sv, Nullsv, PERL_MAGIC_regex_global, Nullch, 0);
+	    mg = mg_find(sv, PERL_MAGIC_regex_global);
 	}
 	i = m - orig;
 	if (DO_UTF8(sv))
@@ -306,18 +307,18 @@ PP(pp_formline)
     register char *s;
     register char *send;
     register I32 arg;
-    register SV *sv;
-    char *item;
-    I32 itemsize;
-    I32 fieldsize;
+    register SV *sv = Nullsv;
+    char *item = Nullch;
+    I32 itemsize  = 0;
+    I32 fieldsize = 0;
     I32 lines = 0;
     bool chopspace = (strchr(PL_chopset, ' ') != Nullch);
-    char *chophere;
-    char *linemark;
+    char *chophere = Nullch;
+    char *linemark = Nullch;
     NV value;
-    bool gotsome;
+    bool gotsome = FALSE;
     STRLEN len;
-    STRLEN fudge = SvCUR(tmpForm) * (IN_BYTE ? 1 : 3) + 1;
+    STRLEN fudge = SvCUR(tmpForm) * (IN_BYTES ? 1 : 3) + 1;
     bool item_is_utf = FALSE;
 
     if (!SvMAGICAL(tmpForm) || !SvCOMPILED(tmpForm)) {
@@ -361,12 +362,13 @@ PP(pp_formline)
 	    case FF_MORE:	name = "MORE";		break;
 	    case FF_LINEMARK:	name = "LINEMARK";	break;
 	    case FF_END:	name = "END";		break;
+            case FF_0DECIMAL:	name = "0DECIMAL";	break;
 	    }
 	    if (arg >= 0)
 		PerlIO_printf(Perl_debug_log, "%-16s%ld\n", name, (long) arg);
 	    else
 		PerlIO_printf(Perl_debug_log, "%-16s\n", name);
-	} )
+	} );
 	switch (*fpc++) {
 	case FF_LINEMARK:
 	    linemark = t;
@@ -394,7 +396,7 @@ PP(pp_formline)
 	    else {
 		sv = &PL_sv_no;
 		if (ckWARN(WARN_SYNTAX))
-		    Perl_warner(aTHX_ WARN_SYNTAX, "Not enough format arguments");
+		    Perl_warner(aTHX_ packWARN(WARN_SYNTAX), "Not enough format arguments");
 	    }
 	    break;
 
@@ -403,7 +405,7 @@ PP(pp_formline)
 	    itemsize = len;
 	    if (DO_UTF8(sv)) {
 		itemsize = sv_len_utf8(sv);
-		if (itemsize != len) {
+		if (itemsize != (I32)len) {
 		    I32 itembytes;
 		    if (itemsize > fieldsize) {
 			itemsize = fieldsize;
@@ -445,7 +447,7 @@ PP(pp_formline)
 	    itemsize = len;
 	    if (DO_UTF8(sv)) {
 		itemsize = sv_len_utf8(sv);
-		if (itemsize != len) {
+		if (itemsize != (I32)len) {
 		    I32 itembytes;
 		    if (itemsize <= fieldsize) {
 			send = chophere = s + itemsize;
@@ -544,7 +546,13 @@ PP(pp_formline)
 	    if (item_is_utf) {
 		while (arg--) {
 		    if (UTF8_IS_CONTINUED(*s)) {
-			switch (UTF8SKIP(s)) {
+			STRLEN skip = UTF8SKIP(s);
+			switch (skip) {
+			default:
+			    Move(s,t,skip,char);
+			    s += skip;
+			    t += skip;
+			    break;
 			case 7: *t++ = *s++;
 			case 6: *t++ = *s++;
 			case 5: *t++ = *s++;
@@ -639,6 +647,43 @@ PP(pp_formline)
 	    t += fieldsize;
 	    break;
 
+	case FF_0DECIMAL:
+	    /* If the field is marked with ^ and the value is undefined,
+	       blank it out. */
+	    arg = *fpc++;
+	    if ((arg & 512) && !SvOK(sv)) {
+		arg = fieldsize;
+		while (arg--)
+		    *t++ = ' ';
+		break;
+	    }
+	    gotsome = TRUE;
+	    value = SvNV(sv);
+	    /* Formats aren't yet marked for locales, so assume "yes". */
+	    {
+		STORE_NUMERIC_STANDARD_SET_LOCAL();
+#if defined(USE_LONG_DOUBLE)
+		if (arg & 256) {
+		    sprintf(t, "%#0*.*" PERL_PRIfldbl,
+			    (int) fieldsize, (int) arg & 255, value);
+/* is this legal? I don't have long doubles */
+		} else {
+		    sprintf(t, "%0*.0" PERL_PRIfldbl, (int) fieldsize, value);
+		}
+#else
+		if (arg & 256) {
+		    sprintf(t, "%#0*.*f",
+			    (int) fieldsize, (int) arg & 255, value);
+		} else {
+		    sprintf(t, "%0*.0f",
+			    (int) fieldsize, value);
+		}
+#endif
+		RESTORE_NUMERIC_STANDARD();
+	    }
+	    t += fieldsize;
+	    break;
+	
 	case FF_NEWLINE:
 	    f++;
 	    while (t-- > linemark && *t == ' ') ;
@@ -721,7 +766,7 @@ PP(pp_grepstart)
     ENTER;					/* enter outer scope */
 
     SAVETMPS;
-    /* SAVE_DEFSV does *not* suffice here for USE_THREADS */
+    /* SAVE_DEFSV does *not* suffice here for USE_5005THREADS */
     SAVESPTR(DEFSV);
     ENTER;					/* enter inner scope */
     SAVEVPTR(PL_curpm);
@@ -748,7 +793,7 @@ PP(pp_mapwhile)
     I32 count;
     I32 shift;
     SV** src;
-    SV** dst; 
+    SV** dst;
 
     /* first, move source pointer to the next item in the source list */
     ++PL_markstack_ptr[-1];
@@ -780,7 +825,7 @@ PP(pp_mapwhile)
 	     * irrelevant.  --jhi */
             if (shift < count)
                 shift = count; /* Avoid shifting too often --Ben Tilly */
-	    
+	
 	    EXTEND(SP,shift);
 	    src = SP;
 	    dst = (SP += shift);
@@ -790,9 +835,9 @@ PP(pp_mapwhile)
 		*dst-- = *src--;
 	}
 	/* copy the new items down to the destination list */
-	dst = PL_stack_base + (PL_markstack_ptr[-2] += items) - 1; 
+	dst = PL_stack_base + (PL_markstack_ptr[-2] += items) - 1;
 	while (items--)
-	    *dst-- = SvTEMP(TOPs) ? POPs : sv_mortalcopy(POPs); 
+	    *dst-- = SvTEMP(TOPs) ? POPs : sv_mortalcopy(POPs);
     }
     LEAVE;					/* exit inner scope */
 
@@ -829,179 +874,6 @@ PP(pp_mapwhile)
     }
 }
 
-PP(pp_sort)
-{
-    dSP; dMARK; dORIGMARK;
-    register SV **up;
-    SV **myorigmark = ORIGMARK;
-    register I32 max;
-    HV *stash;
-    GV *gv;
-    CV *cv;
-    I32 gimme = GIMME;
-    OP* nextop = PL_op->op_next;
-    I32 overloading = 0;
-    bool hasargs = FALSE;
-    I32 is_xsub = 0;
-
-    if (gimme != G_ARRAY) {
-	SP = MARK;
-	RETPUSHUNDEF;
-    }
-
-    ENTER;
-    SAVEVPTR(PL_sortcop);
-    if (PL_op->op_flags & OPf_STACKED) {
-	if (PL_op->op_flags & OPf_SPECIAL) {
-	    OP *kid = cLISTOP->op_first->op_sibling;	/* pass pushmark */
-	    kid = kUNOP->op_first;			/* pass rv2gv */
-	    kid = kUNOP->op_first;			/* pass leave */
-	    PL_sortcop = kid->op_next;
-	    stash = CopSTASH(PL_curcop);
-	}
-	else {
-	    cv = sv_2cv(*++MARK, &stash, &gv, 0);
-	    if (cv && SvPOK(cv)) {
-		STRLEN n_a;
-		char *proto = SvPV((SV*)cv, n_a);
-		if (proto && strEQ(proto, "$$")) {
-		    hasargs = TRUE;
-		}
-	    }
-	    if (!(cv && CvROOT(cv))) {
-		if (cv && CvXSUB(cv)) {
-		    is_xsub = 1;
-		}
-		else if (gv) {
-		    SV *tmpstr = sv_newmortal();
-		    gv_efullname3(tmpstr, gv, Nullch);
-		    DIE(aTHX_ "Undefined sort subroutine \"%s\" called",
-			SvPVX(tmpstr));
-		}
-		else {
-		    DIE(aTHX_ "Undefined subroutine in sort");
-		}
-	    }
-
-	    if (is_xsub)
-		PL_sortcop = (OP*)cv;
-	    else {
-		PL_sortcop = CvSTART(cv);
-		SAVEVPTR(CvROOT(cv)->op_ppaddr);
-		CvROOT(cv)->op_ppaddr = PL_ppaddr[OP_NULL];
-
-		SAVEVPTR(PL_curpad);
-		PL_curpad = AvARRAY((AV*)AvARRAY(CvPADLIST(cv))[1]);
-            }
-	}
-    }
-    else {
-	PL_sortcop = Nullop;
-	stash = CopSTASH(PL_curcop);
-    }
-
-    up = myorigmark + 1;
-    while (MARK < SP) {	/* This may or may not shift down one here. */
-	/*SUPPRESS 560*/
-	if ((*up = *++MARK)) {			/* Weed out nulls. */
-	    SvTEMP_off(*up);
-	    if (!PL_sortcop && !SvPOK(*up)) {
-		STRLEN n_a;
-	        if (SvAMAGIC(*up))
-	            overloading = 1;
-	        else
-		    (void)sv_2pv(*up, &n_a);
-	    }
-	    up++;
-	}
-    }
-    max = --up - myorigmark;
-    if (PL_sortcop) {
-	if (max > 1) {
-	    PERL_CONTEXT *cx;
-	    SV** newsp;
-	    bool oldcatch = CATCH_GET;
-
-	    SAVETMPS;
-	    SAVEOP();
-
-	    CATCH_SET(TRUE);
-	    PUSHSTACKi(PERLSI_SORT);
-	    if (!hasargs && !is_xsub) {
-		if (PL_sortstash != stash || !PL_firstgv || !PL_secondgv) {
-		    SAVESPTR(PL_firstgv);
-		    SAVESPTR(PL_secondgv);
-		    PL_firstgv = gv_fetchpv("a", TRUE, SVt_PV);
-		    PL_secondgv = gv_fetchpv("b", TRUE, SVt_PV);
-		    PL_sortstash = stash;
-		}
-#ifdef USE_THREADS
-		sv_lock((SV *)PL_firstgv);
-		sv_lock((SV *)PL_secondgv);
-#endif
-		SAVESPTR(GvSV(PL_firstgv));
-		SAVESPTR(GvSV(PL_secondgv));
-	    }
-
-	    PUSHBLOCK(cx, CXt_NULL, PL_stack_base);
-	    if (!(PL_op->op_flags & OPf_SPECIAL)) {
-		cx->cx_type = CXt_SUB;
-		cx->blk_gimme = G_SCALAR;
-		PUSHSUB(cx);
-		if (!CvDEPTH(cv))
-		    (void)SvREFCNT_inc(cv); /* in preparation for POPSUB */
-	    }
-	    PL_sortcxix = cxstack_ix;
-
-	    if (hasargs && !is_xsub) {
-		/* This is mostly copied from pp_entersub */
-		AV *av = (AV*)PL_curpad[0];
-
-#ifndef USE_THREADS
-		cx->blk_sub.savearray = GvAV(PL_defgv);
-		GvAV(PL_defgv) = (AV*)SvREFCNT_inc(av);
-#endif /* USE_THREADS */
-		cx->blk_sub.oldcurpad = PL_curpad;
-		cx->blk_sub.argarray = av;
-	    }
-	    qsortsv((myorigmark+1), max,
-		    is_xsub ? sortcv_xsub : hasargs ? sortcv_stacked : sortcv);
-
-	    POPBLOCK(cx,PL_curpm);
-	    PL_stack_sp = newsp;
-	    POPSTACK;
-	    CATCH_SET(oldcatch);
-	}
-    }
-    else {
-	if (max > 1) {
-	    MEXTEND(SP, 20);	/* Can't afford stack realloc on signal. */
-	    qsortsv(ORIGMARK+1, max,
- 		    (PL_op->op_private & OPpSORT_NUMERIC)
-			? ( (PL_op->op_private & OPpSORT_INTEGER)
-			    ? ( overloading ? amagic_i_ncmp : sv_i_ncmp)
-			    : ( overloading ? amagic_ncmp : sv_ncmp))
-			: ( (PL_op->op_private & OPpLOCALE)
-			    ? ( overloading
-				? amagic_cmp_locale
-				: sv_cmp_locale_static)
-			    : ( overloading ? amagic_cmp : sv_cmp_static)));
-	    if (PL_op->op_private & OPpSORT_REVERSE) {
-		SV **p = ORIGMARK+1;
-		SV **q = ORIGMARK+max;
-		while (p < q) {
-		    SV *tmp = *p;
-		    *p++ = *q;
-		    *q-- = tmp;
-		}
-	    }
-	}
-    }
-    LEAVE;
-    PL_stack_sp = ORIGMARK + max;
-    return nextop;
-}
-
 /* Range stuff. */
 
 PP(pp_range)
@@ -1024,13 +896,16 @@ PP(pp_flip)
     else {
 	dTOPss;
 	SV *targ = PAD_SV(PL_op->op_targ);
- 	int flip;
+ 	int flip = 0;
 
  	if (PL_op->op_private & OPpFLIP_LINENUM) {
- 	    struct io *gp_io;
- 	    flip = PL_last_in_gv
- 		&& (gp_io = GvIOp(PL_last_in_gv))
- 		&& SvIV(sv) == (IV)IoLINES(gp_io);
+	    if (GvIO(PL_last_in_gv)) {
+		flip = SvIV(sv) == (IV)IoLINES(GvIOp(PL_last_in_gv));
+	    }
+	    else {
+		GV *gv = gv_fetchpv(".", TRUE, SVt_PV);
+		if (gv && GvSV(gv)) flip = SvIV(sv) == SvIV(GvSV(gv));
+	    }
  	} else {
  	    flip = SvTRUE(sv);
  	}
@@ -1108,10 +983,23 @@ PP(pp_flop)
     else {
 	dTOPss;
 	SV *targ = PAD_SV(cUNOP->op_first->op_targ);
+	int flop = 0;
 	sv_inc(targ);
-	if ((PL_op->op_private & OPpFLIP_LINENUM)
-	  ? (PL_last_in_gv && SvIV(sv) == (IV)IoLINES(GvIOp(PL_last_in_gv)))
-	  : SvTRUE(sv) ) {
+
+	if (PL_op->op_private & OPpFLIP_LINENUM) {
+	    if (GvIO(PL_last_in_gv)) {
+		flop = SvIV(sv) == (IV)IoLINES(GvIOp(PL_last_in_gv));
+	    }
+	    else {
+		GV *gv = gv_fetchpv(".", TRUE, SVt_PV);
+		if (gv && GvSV(gv)) flop = SvIV(sv) == SvIV(GvSV(gv));
+	    }
+	}
+	else {
+	    flop = SvTRUE(sv);
+	}
+
+	if (flop) {
 	    sv_setiv(PAD_SV(((UNOP*)cUNOP->op_first)->op_first->op_targ), 0);
 	    sv_catpv(targ, "E0");
 	}
@@ -1134,28 +1022,28 @@ S_dopoptolabel(pTHX_ char *label)
 	switch (CxTYPE(cx)) {
 	case CXt_SUBST:
 	    if (ckWARN(WARN_EXITING))
-		Perl_warner(aTHX_ WARN_EXITING, "Exiting substitution via %s", 
-			PL_op_name[PL_op->op_type]);
+		Perl_warner(aTHX_ packWARN(WARN_EXITING), "Exiting substitution via %s",
+			OP_NAME(PL_op));
 	    break;
 	case CXt_SUB:
 	    if (ckWARN(WARN_EXITING))
-		Perl_warner(aTHX_ WARN_EXITING, "Exiting subroutine via %s", 
-			PL_op_name[PL_op->op_type]);
+		Perl_warner(aTHX_ packWARN(WARN_EXITING), "Exiting subroutine via %s",
+			OP_NAME(PL_op));
 	    break;
 	case CXt_FORMAT:
 	    if (ckWARN(WARN_EXITING))
-		Perl_warner(aTHX_ WARN_EXITING, "Exiting format via %s", 
-			PL_op_name[PL_op->op_type]);
+		Perl_warner(aTHX_ packWARN(WARN_EXITING), "Exiting format via %s",
+			OP_NAME(PL_op));
 	    break;
 	case CXt_EVAL:
 	    if (ckWARN(WARN_EXITING))
-		Perl_warner(aTHX_ WARN_EXITING, "Exiting eval via %s", 
-			PL_op_name[PL_op->op_type]);
+		Perl_warner(aTHX_ packWARN(WARN_EXITING), "Exiting eval via %s",
+			OP_NAME(PL_op));
 	    break;
 	case CXt_NULL:
 	    if (ckWARN(WARN_EXITING))
-		Perl_warner(aTHX_ WARN_EXITING, "Exiting pseudo-block via %s", 
-			PL_op_name[PL_op->op_type]);
+		Perl_warner(aTHX_ packWARN(WARN_EXITING), "Exiting pseudo-block via %s",
+			OP_NAME(PL_op));
 	    return -1;
 	case CXt_LOOP:
 	    if (!cx->blk_loop.label ||
@@ -1269,28 +1157,28 @@ S_dopoptoloop(pTHX_ I32 startingblock)
 	switch (CxTYPE(cx)) {
 	case CXt_SUBST:
 	    if (ckWARN(WARN_EXITING))
-		Perl_warner(aTHX_ WARN_EXITING, "Exiting substitution via %s", 
-			PL_op_name[PL_op->op_type]);
+		Perl_warner(aTHX_ packWARN(WARN_EXITING), "Exiting substitution via %s",
+			OP_NAME(PL_op));
 	    break;
 	case CXt_SUB:
 	    if (ckWARN(WARN_EXITING))
-		Perl_warner(aTHX_ WARN_EXITING, "Exiting subroutine via %s", 
-			PL_op_name[PL_op->op_type]);
+		Perl_warner(aTHX_ packWARN(WARN_EXITING), "Exiting subroutine via %s",
+			OP_NAME(PL_op));
 	    break;
 	case CXt_FORMAT:
 	    if (ckWARN(WARN_EXITING))
-		Perl_warner(aTHX_ WARN_EXITING, "Exiting format via %s", 
-			PL_op_name[PL_op->op_type]);
+		Perl_warner(aTHX_ packWARN(WARN_EXITING), "Exiting format via %s",
+			OP_NAME(PL_op));
 	    break;
 	case CXt_EVAL:
 	    if (ckWARN(WARN_EXITING))
-		Perl_warner(aTHX_ WARN_EXITING, "Exiting eval via %s", 
-			PL_op_name[PL_op->op_type]);
+		Perl_warner(aTHX_ packWARN(WARN_EXITING), "Exiting eval via %s",
+			OP_NAME(PL_op));
 	    break;
 	case CXt_NULL:
 	    if (ckWARN(WARN_EXITING))
-		Perl_warner(aTHX_ WARN_EXITING, "Exiting pseudo-block via %s", 
-			PL_op_name[PL_op->op_type]);
+		Perl_warner(aTHX_ packWARN(WARN_EXITING), "Exiting pseudo-block via %s",
+			OP_NAME(PL_op));
 	    return -1;
 	case CXt_LOOP:
 	    DEBUG_l( Perl_deb(aTHX_ "(Found loop #%ld)\n", (long)i));
@@ -1352,6 +1240,9 @@ OP *
 Perl_die_where(pTHX_ char *message, STRLEN msglen)
 {
     STRLEN n_a;
+    IO *io;
+    MAGIC *mg;
+
     if (PL_in_eval) {
 	I32 cxix;
 	register PERL_CONTEXT *cx;
@@ -1377,12 +1268,13 @@ Perl_die_where(pTHX_ char *message, STRLEN msglen)
 		    sv_catpvn(err, message, msglen);
 		    if (ckWARN(WARN_MISC)) {
 			STRLEN start = SvCUR(err)-msglen-sizeof(prefix)+1;
-			Perl_warner(aTHX_ WARN_MISC, SvPVX(err)+start);
+			Perl_warner(aTHX_ packWARN(WARN_MISC), SvPVX(err)+start);
 		    }
 		}
 	    }
-	    else
+	    else {
 		sv_setpvn(ERRSV, message, msglen);
+	    }
 	}
 	else
 	    message = SvPVx(ERRSV, msglen);
@@ -1430,14 +1322,26 @@ Perl_die_where(pTHX_ char *message, STRLEN msglen)
     }
     if (!message)
 	message = SvPVx(ERRSV, msglen);
-    {
+
+    /* if STDERR is tied, print to it instead */
+    if (PL_stderrgv && (io = GvIOp(PL_stderrgv))
+	&& (mg = SvTIED_mg((SV*)io, PERL_MAGIC_tiedscalar))) {
+	dSP; ENTER;
+	PUSHMARK(SP);
+	XPUSHs(SvTIED_obj((SV*)io, mg));
+	XPUSHs(sv_2mortal(newSVpvn(message, msglen)));
+	PUTBACK;
+	call_method("PRINT", G_SCALAR);
+	LEAVE;
+    }
+    else {
 #ifdef USE_SFIO
 	/* SFIO can really mess with your errno */
 	int e = errno;
 #endif
 	PerlIO *serr = Perl_error_log;
 
-	PerlIO_write(serr, message, msglen);
+	PERL_WRITE_MSG_TO_CONSOLE(serr, message, msglen);
 	(void)PerlIO_flush(serr);
 #ifdef USE_SFIO
 	errno = e;
@@ -1490,7 +1394,7 @@ PP(pp_caller)
 
     if (MAXARG)
 	count = POPi;
-    EXTEND(SP, 10);
+
     for (;;) {
 	/* we may be in a higher stacklevel, so dig down deeper */
 	while (cxix < 0 && top_si->si_type != PERLSI_MAIN) {
@@ -1499,8 +1403,10 @@ PP(pp_caller)
 	    cxix = dopoptosub_at(ccstack, top_si->si_cxix);
 	}
 	if (cxix < 0) {
-	    if (GIMME != G_ARRAY)
+	    if (GIMME != G_ARRAY) {
+		EXTEND(SP, 1);
 		RETPUSHUNDEF;
+            }
 	    RETURN;
 	}
 	if (PL_DBsub && cxix >= 0 &&
@@ -1522,6 +1428,7 @@ PP(pp_caller)
 
     stashname = CopSTASHPV(cx->blk_oldcop);
     if (GIMME != G_ARRAY) {
+        EXTEND(SP, 1);
 	if (!stashname)
 	    PUSHs(&PL_sv_undef);
 	else {
@@ -1532,20 +1439,29 @@ PP(pp_caller)
 	RETURN;
     }
 
+    EXTEND(SP, 10);
+
     if (!stashname)
 	PUSHs(&PL_sv_undef);
     else
 	PUSHs(sv_2mortal(newSVpv(stashname, 0)));
-    PUSHs(sv_2mortal(newSVpv(CopFILE(cx->blk_oldcop), 0)));
+    PUSHs(sv_2mortal(newSVpv(OutCopFILE(cx->blk_oldcop), 0)));
     PUSHs(sv_2mortal(newSViv((I32)CopLINE(cx->blk_oldcop))));
     if (!MAXARG)
 	RETURN;
     if (CxTYPE(cx) == CXt_SUB || CxTYPE(cx) == CXt_FORMAT) {
+	GV *cvgv = CvGV(ccstack[cxix].blk_sub.cv);
 	/* So is ccstack[dbcxix]. */
-	sv = NEWSV(49, 0);
-	gv_efullname3(sv, CvGV(ccstack[cxix].blk_sub.cv), Nullch);
-	PUSHs(sv_2mortal(sv));
-	PUSHs(sv_2mortal(newSViv((I32)cx->blk_sub.hasargs)));
+	if (isGV(cvgv)) {
+	    sv = NEWSV(49, 0);
+	    gv_efullname3(sv, cvgv, Nullch);
+	    PUSHs(sv_2mortal(sv));
+	    PUSHs(sv_2mortal(newSViv((I32)cx->blk_sub.hasargs)));
+	}
+	else {
+	    PUSHs(sv_2mortal(newSVpvn("(unknown)",9)));
+	    PUSHs(sv_2mortal(newSViv((I32)cx->blk_sub.hasargs)));
+	}
     }
     else {
 	PUSHs(sv_2mortal(newSVpvn("(eval)",6)));
@@ -1605,10 +1521,10 @@ PP(pp_caller)
 	SV * mask ;
 	SV * old_warnings = cx->blk_oldcop->cop_warnings ;
 
-	if  (old_warnings == pWARN_NONE || 
+	if  (old_warnings == pWARN_NONE ||
 		(old_warnings == pWARN_STD && (PL_dowarn & G_WARN_ON) == 0))
             mask = newSVpvn(WARN_NONEstring, WARNsize) ;
-        else if (old_warnings == pWARN_ALL || 
+        else if (old_warnings == pWARN_ALL ||
 		  (old_warnings == pWARN_STD && PL_dowarn & G_WARN_ON))
             mask = newSVpvn(WARN_ALLstring, WARNsize) ;
         else
@@ -1651,7 +1567,7 @@ PP(pp_dbstate)
 	register CV *cv;
 	register PERL_CONTEXT *cx;
 	I32 gimme = G_ARRAY;
-	I32 hasargs;
+	U8 hasargs;
 	GV *gv;
 
 	gv = PL_DBgv;
@@ -1659,7 +1575,8 @@ PP(pp_dbstate)
 	if (!cv)
 	    DIE(aTHX_ "No DB::DB routine defined");
 
-	if (CvDEPTH(cv) >= 1 && !(PL_debug & (1<<30))) /* don't do recursive DB::DB call */
+	if (CvDEPTH(cv) >= 1 && !(PL_debug & DEBUG_DB_RECURSE_FLAG))
+	    /* don't do recursive DB::DB call */
 	    return NORMAL;
 
 	ENTER;
@@ -1703,21 +1620,21 @@ PP(pp_enteriter)
     ENTER;
     SAVETMPS;
 
-#ifdef USE_THREADS
+#ifdef USE_5005THREADS
     if (PL_op->op_flags & OPf_SPECIAL) {
 	svp = &THREADSV(PL_op->op_targ);	/* per-thread variable */
 	SAVEGENERICSV(*svp);
 	*svp = NEWSV(0,0);
     }
     else
-#endif /* USE_THREADS */
+#endif /* USE_5005THREADS */
     if (PL_op->op_targ) {
 #ifndef USE_ITHREADS
 	svp = &PL_curpad[PL_op->op_targ];		/* "my" variable */
 	SAVESPTR(*svp);
 #else
 	SAVEPADSV(PL_op->op_targ);
-	iterdata = (void*)PL_op->op_targ;
+	iterdata = INT2PTR(void*, PL_op->op_targ);
 	cxtype |= CXp_PADVAR;
 #endif
     }
@@ -2075,7 +1992,7 @@ PP(pp_redo)
 STATIC OP *
 S_dofindlabel(pTHX_ OP *o, char *label, OP **opstack, OP **oplimit)
 {
-    OP *kid;
+    OP *kid = Nullop;
     OP **ops = opstack;
     static char too_deep[] = "Target of goto is too deeply nested";
 
@@ -2173,7 +2090,7 @@ PP(pp_goto)
 	    if (cxix < cxstack_ix)
 		dounwind(cxix);
 	    TOPBLOCK(cx);
-	    if (CxTYPE(cx) == CXt_EVAL && cx->blk_eval.old_op_type == OP_ENTEREVAL) 
+	    if (CxREALEVAL(cx))
 		DIE(aTHX_ "Can't goto subroutine from an eval-string");
 	    mark = PL_stack_sp;
 	    if (CxTYPE(cx) == CXt_SUB && cx->blk_sub.hasargs) {
@@ -2185,10 +2102,10 @@ PP(pp_goto)
 		EXTEND(PL_stack_sp, items); /* @_ could have been extended. */
 		Copy(AvARRAY(av), PL_stack_sp, items, SV*);
 		PL_stack_sp += items;
-#ifndef USE_THREADS
+#ifndef USE_5005THREADS
 		SvREFCNT_dec(GvAV(PL_defgv));
 		GvAV(PL_defgv) = cx->blk_sub.savearray;
-#endif /* USE_THREADS */
+#endif /* USE_5005THREADS */
 		/* abandon @_ if it got reified */
 		if (AvREAL(av)) {
 		    (void)sv_2mortal((SV*)av);	/* delay until return */
@@ -2200,7 +2117,7 @@ PP(pp_goto)
 	    }
 	    else if (CvXSUB(cv)) {	/* put GvAV(defgv) back onto stack */
 		AV* av;
-#ifdef USE_THREADS
+#ifdef USE_5005THREADS
 		av = (AV*)PL_curpad[0];
 #else
 		av = GvAV(PL_defgv);
@@ -2241,8 +2158,8 @@ PP(pp_goto)
 
 		    PL_stack_sp--;		/* There is no cv arg. */
 		    /* Push a mark for the start of arglist */
-		    PUSHMARK(mark); 
-		    (void)(*CvXSUB(cv))(aTHXo_ cv);
+		    PUSHMARK(mark);
+		    (void)(*CvXSUB(cv))(aTHX_ cv);
 		    /* Pop the current context like a decent sub should */
 		    POPBLOCK(cx, PL_curpm);
 		    /* Do _not_ use PUTBACK, keep the XSUB's return stack! */
@@ -2260,7 +2177,7 @@ PP(pp_goto)
 		    cx->blk_sub.hasargs = 0;
 		}
 		cx->blk_sub.cv = cv;
-		cx->blk_sub.olddepth = CvDEPTH(cv);
+		cx->blk_sub.olddepth = (U16)CvDEPTH(cv);
 		CvDEPTH(cv)++;
 		if (CvDEPTH(cv) < 2)
 		    (void)SvREFCNT_inc(cv);
@@ -2312,33 +2229,33 @@ PP(pp_goto)
 			svp = AvARRAY(padlist);
 		    }
 		}
-#ifdef USE_THREADS
+#ifdef USE_5005THREADS
 		if (!cx->blk_sub.hasargs) {
 		    AV* av = (AV*)PL_curpad[0];
-		    
+		
 		    items = AvFILLp(av) + 1;
 		    if (items) {
 			/* Mark is at the end of the stack. */
 			EXTEND(SP, items);
 			Copy(AvARRAY(av), SP + 1, items, SV*);
 			SP += items;
-			PUTBACK ;		    
+			PUTBACK ;		
 		    }
 		}
-#endif /* USE_THREADS */		
+#endif /* USE_5005THREADS */		
 		SAVEVPTR(PL_curpad);
 		PL_curpad = AvARRAY((AV*)svp[CvDEPTH(cv)]);
-#ifndef USE_THREADS
+#ifndef USE_5005THREADS
 		if (cx->blk_sub.hasargs)
-#endif /* USE_THREADS */
+#endif /* USE_5005THREADS */
 		{
 		    AV* av = (AV*)PL_curpad[0];
 		    SV** ary;
 
-#ifndef USE_THREADS
+#ifndef USE_5005THREADS
 		    cx->blk_sub.savearray = GvAV(PL_defgv);
 		    GvAV(PL_defgv) = (AV*)SvREFCNT_inc(av);
-#endif /* USE_THREADS */
+#endif /* USE_5005THREADS */
 		    cx->blk_sub.oldcurpad = PL_curpad;
 		    cx->blk_sub.argarray = av;
 		    ++mark;
@@ -2372,7 +2289,7 @@ PP(pp_goto)
 		     */
 		    SV *sv = GvSV(PL_DBsub);
 		    CV *gotocv;
-		    
+		
 		    if (PERLDB_SUB_NN) {
 			SvIVX(sv) = PTR2IV(cv); /* Already upgraded, saved */
 		    } else {
@@ -2404,6 +2321,8 @@ PP(pp_goto)
 
     if (label && *label) {
 	OP *gotoprobe = 0;
+	bool leaving_eval = FALSE;
+        PERL_CONTEXT *last_eval_cx = 0;
 
 	/* find label */
 
@@ -2413,8 +2332,15 @@ PP(pp_goto)
 	    cx = &cxstack[ix];
 	    switch (CxTYPE(cx)) {
 	    case CXt_EVAL:
-		gotoprobe = PL_eval_root; /* XXX not good for nested eval */
-		break;
+		leaving_eval = TRUE;
+                if (CxREALEVAL(cx)) {
+		    gotoprobe = (last_eval_cx ?
+				last_eval_cx->blk_eval.old_eval_root :
+				PL_eval_root);
+		    last_eval_cx = cx;
+		    break;
+                }
+                /* else fall through */
 	    case CXt_LOOP:
 		gotoprobe = cx->blk_oldcop->op_sibling;
 		break;
@@ -2451,6 +2377,17 @@ PP(pp_goto)
 	}
 	if (!retop)
 	    DIE(aTHX_ "Can't find label %s", label);
+
+	/* if we're leaving an eval, check before we pop any frames
+           that we're not going to punt, otherwise the error
+	   won't be caught */
+
+	if (leaving_eval && *enterops && enterops[1]) {
+	    I32 i;
+            for (i = 1; enterops[i]; i++)
+                if (enterops[i]->op_type == OP_ENTERITER)
+                    DIE(aTHX_ "Can't \"goto\" into the middle of a foreach loop");
+	}
 
 	/* pop unwanted frames */
 
@@ -2509,6 +2446,7 @@ PP(pp_exit)
 #ifdef VMS
         if (anum == 1 && (PL_op->op_private & OPpEXIT_VMSISH))
 	    anum = 0;
+        VMSISH_HUSHED  = VMSISH_HUSHED || (PL_op->op_private & OPpHUSH_VMSISH);
 #endif
     }
     PL_exit_flags |= PERL_EXIT_EXPECTED;
@@ -2604,6 +2542,7 @@ S_docatch(pTHX_ OP *o)
 {
     int ret;
     OP *oldop = PL_op;
+    OP *retop;
     volatile PERL_SI *cursi = PL_curstackinfo;
     dJMPENV;
 
@@ -2611,6 +2550,15 @@ S_docatch(pTHX_ OP *o)
     assert(CATCH_GET == TRUE);
 #endif
     PL_op = o;
+
+    /* Normally, the leavetry at the end of this block of ops will
+     * pop an op off the return stack and continue there. By setting
+     * the op to Nullop, we force an exit from the inner runops()
+     * loop. DAPM.
+     */
+    retop = pop_return();
+    push_return(Nullop);
+
 #ifdef PERL_FLEXIBLE_EXCEPTIONS
  redo_body:
     CALLPROTECT(aTHX_ pcur_env, &ret, MEMBER_TO_FPTR(S_docatch_body));
@@ -2625,11 +2573,15 @@ S_docatch(pTHX_ OP *o)
 #endif
 	break;
     case 3:
+	/* die caught by an inner eval - continue inner loop */
 	if (PL_restartop && cursi == PL_curstackinfo) {
 	    PL_op = PL_restartop;
 	    PL_restartop = 0;
 	    goto redo_body;
 	}
+	/* a die in this eval - continue in outer loop */
+	if (!PL_restartop)
+	    break;
 	/* FALL THROUGH */
     default:
 	JMPENV_POP;
@@ -2639,7 +2591,7 @@ S_docatch(pTHX_ OP *o)
     }
     JMPENV_POP;
     PL_op = oldop;
-    return Nullop;
+    return retop;
 }
 
 OP *
@@ -2694,7 +2646,7 @@ Perl_sv_compile_2op(pTHX_ SV *sv, OP** startop, char *code, AV** avp)
 #else
     SAVEVPTR(PL_op);
 #endif
-    PL_hints = 0;
+    PL_hints &= HINT_UTF8;
 
     PL_op = &dummy;
     PL_op->op_type = OP_ENTEREVAL;
@@ -2711,14 +2663,14 @@ Perl_sv_compile_2op(pTHX_ SV *sv, OP** startop, char *code, AV** avp)
     *avp = (AV*)SvREFCNT_inc(PL_comppad);
     LEAVE;
     if (PL_curcop == &PL_compiling)
-	PL_compiling.op_private = PL_hints;
+	PL_compiling.op_private = (U8)(PL_hints & HINT_PRIVATE_MASK);
 #ifdef OP_IN_REGISTER
     op = PL_opsave;
 #endif
     return rop;
 }
 
-/* With USE_THREADS, eval_owner must be held on entry to doeval */
+/* With USE_5005THREADS, eval_owner must be held on entry to doeval */
 STATIC OP *
 S_doeval(pTHX_ int gimme, OP** startop)
 {
@@ -2759,11 +2711,14 @@ S_doeval(pTHX_ int gimme, OP** startop)
     PL_compcv = (CV*)NEWSV(1104,0);
     sv_upgrade((SV *)PL_compcv, SVt_PVCV);
     CvEVAL_on(PL_compcv);
-#ifdef USE_THREADS
+    assert(CxTYPE(&cxstack[cxstack_ix]) == CXt_EVAL);
+    cxstack[cxstack_ix].blk_eval.cv = PL_compcv;
+
+#ifdef USE_5005THREADS
     CvOWNER(PL_compcv) = 0;
     New(666, CvMUTEXP(PL_compcv), 1, perl_mutex);
     MUTEX_INIT(CvMUTEXP(PL_compcv));
-#endif /* USE_THREADS */
+#endif /* USE_5005THREADS */
 
     PL_comppad = newAV();
     av_push(PL_comppad, Nullsv);
@@ -2772,11 +2727,11 @@ S_doeval(pTHX_ int gimme, OP** startop)
     PL_comppad_name_fill = 0;
     PL_min_intro_pending = 0;
     PL_padix = 0;
-#ifdef USE_THREADS
+#ifdef USE_5005THREADS
     av_store(PL_comppad_name, 0, newSVpvn("@_", 2));
     PL_curpad[0] = (SV*)newAV();
     SvPADMY_on(PL_curpad[0]);	/* XXX Needed? */
-#endif /* USE_THREADS */
+#endif /* USE_5005THREADS */
 
     comppadlist = newAV();
     AvREAL_off(comppadlist);
@@ -2809,8 +2764,6 @@ S_doeval(pTHX_ int gimme, OP** startop)
     PL_error_count = 0;
     PL_curcop = &PL_compiling;
     PL_curcop->cop_arybase = 0;
-    SvREFCNT_dec(PL_rs);
-    PL_rs = newSVpvn("\n", 1);
     if (saveop && saveop->op_flags & OPf_SPECIAL)
 	PL_in_eval |= EVAL_KEEPERR;
     else
@@ -2848,18 +2801,14 @@ S_doeval(pTHX_ int gimme, OP** startop)
 	    Perl_croak(aTHX_ "%sCompilation failed in regexp",
 		       (*msg ? msg : "Unknown error\n"));
 	}
-	SvREFCNT_dec(PL_rs);
-	PL_rs = SvREFCNT_inc(PL_nrs);
-#ifdef USE_THREADS
+#ifdef USE_5005THREADS
 	MUTEX_LOCK(&PL_eval_mutex);
 	PL_eval_owner = 0;
 	COND_SIGNAL(&PL_eval_cond);
 	MUTEX_UNLOCK(&PL_eval_mutex);
-#endif /* USE_THREADS */
+#endif /* USE_5005THREADS */
 	RETPUSHUNDEF;
     }
-    SvREFCNT_dec(PL_rs);
-    PL_rs = SvREFCNT_inc(PL_nrs);
     CopLINE_set(&PL_compiling, 0);
     if (startop) {
 	*startop = PL_eval_root;
@@ -2894,12 +2843,12 @@ S_doeval(pTHX_ int gimme, OP** startop)
     SP = PL_stack_base + POPMARK;		/* pop original mark */
     PL_op = saveop;			/* The caller may need it. */
     PL_lex_state = LEX_NOTPARSING;	/* $^S needs this. */
-#ifdef USE_THREADS
+#ifdef USE_5005THREADS
     MUTEX_LOCK(&PL_eval_mutex);
     PL_eval_owner = 0;
     COND_SIGNAL(&PL_eval_cond);
     MUTEX_UNLOCK(&PL_eval_mutex);
-#endif /* USE_THREADS */
+#endif /* USE_5005THREADS */
 
     RETURNOP(PL_eval_start);
 }
@@ -2943,32 +2892,35 @@ PP(pp_require)
     SV *sv;
     char *name;
     STRLEN len;
-    char *tryname;
+    char *tryname = Nullch;
     SV *namesv = Nullsv;
     SV** svp;
-    I32 gimme = G_SCALAR;
+    I32 gimme = GIMME_V;
     PerlIO *tryrsfp = 0;
     STRLEN n_a;
     int filter_has_file = 0;
     GV *filter_child_proc = 0;
     SV *filter_state = 0;
     SV *filter_sub = 0;
+    SV *hook_sv = 0;
+    SV *encoding;
+    OP *op;
 
     sv = POPs;
-    if (SvNIOKp(sv)) {
-	if (SvPOK(sv) && SvNOK(sv)) {		/* require v5.6.1 */
+    if (SvNIOKp(sv) && PL_op->op_type != OP_DOFILE) {
+	if (SvPOK(sv) && SvNOK(sv) && SvNV(sv)) {		/* require v5.6.1 */
 	    UV rev = 0, ver = 0, sver = 0;
 	    STRLEN len;
 	    U8 *s = (U8*)SvPVX(sv);
 	    U8 *end = (U8*)SvPVX(sv) + SvCUR(sv);
 	    if (s < end) {
-		rev = utf8_to_uv(s, end - s, &len, 0);
+		rev = utf8n_to_uvchr(s, end - s, &len, 0);
 		s += len;
 		if (s < end) {
-		    ver = utf8_to_uv(s, end - s, &len, 0);
+		    ver = utf8n_to_uvchr(s, end - s, &len, 0);
 		    s += len;
 		    if (s < end)
-			sver = utf8_to_uv(s, end - s, &len, 0);
+			sver = utf8n_to_uvchr(s, end - s, &len, 0);
 		}
 	    }
 	    if (PERL_REVISION < rev
@@ -2981,6 +2933,9 @@ PP(pp_require)
 		    "v%d.%d.%d, stopped", rev, ver, sver, PERL_REVISION,
 		    PERL_VERSION, PERL_SUBVERSION);
 	    }
+	    if (ckWARN(WARN_PORTABLE))
+		Perl_warner(aTHX_ packWARN(WARN_PORTABLE),
+                        "v-string in use/require non-portable");
 	    RETPUSHYES;
 	}
 	else if (!SvPOKp(sv)) {			/* require 5.005_03 */
@@ -2997,11 +2952,11 @@ PP(pp_require)
 
 		/* help out with the "use 5.6" confusion */
 		if (sver == 0 && (rev > 5 || (rev == 5 && ver >= 100))) {
-		    DIE(aTHX_ "Perl v%"UVuf".%"UVuf".%"UVuf" required--"
-			"this is only v%d.%d.%d, stopped"
-			" (did you mean v%"UVuf".%"UVuf".0?)",
-			rev, ver, sver, PERL_REVISION, PERL_VERSION,
-			PERL_SUBVERSION, rev, ver/100);
+		    DIE(aTHX_ "Perl v%"UVuf".%"UVuf".%"UVuf" required"
+			" (did you mean v%"UVuf".%03"UVuf"?)--"
+			"this is only v%d.%d.%d, stopped",
+			rev, ver, sver, rev, ver/100,
+			PERL_REVISION, PERL_VERSION, PERL_SUBVERSION);
 		}
 		else {
 		    DIE(aTHX_ "Perl v%"UVuf".%"UVuf".%"UVuf" required--"
@@ -3024,30 +2979,22 @@ PP(pp_require)
 
     /* prepare to compile file */
 
+    if (path_is_absolute(name)) {
+	tryname = name;
+	tryrsfp = doopen_pmc(name,PERL_SCRIPT_MODE);
+    }
 #ifdef MACOS_TRADITIONAL
-    if (PERL_FILE_IS_ABSOLUTE(name)
-	|| (*name == ':' && name[1] != ':' && strchr(name+2, ':')))
-    {
-	tryname = name;
-	tryrsfp = doopen_pmc(name,PERL_SCRIPT_MODE);
-	/* We consider paths of the form :a:b ambiguous and interpret them first
-	   as global then as local
-	*/
-    	if (!tryrsfp && *name == ':' && name[1] != ':' && strchr(name+2, ':'))
-	    goto trylocal;
+    if (!tryrsfp) {
+	char newname[256];
+
+	MacPerl_CanonDir(name, newname, 1);
+	if (path_is_absolute(newname)) {
+	    tryname = newname;
+	    tryrsfp = doopen_pmc(newname,PERL_SCRIPT_MODE);
+	}
     }
-    else 
-trylocal: {
-#else
-    if (PERL_FILE_IS_ABSOLUTE(name)
-	|| (*name == '.' && (name[1] == '/' ||
-			     (name[1] == '.' && name[2] == '/'))))
-    {
-	tryname = name;
-	tryrsfp = doopen_pmc(name,PERL_SCRIPT_MODE);
-    }
-    else {
 #endif
+    if (!tryrsfp) {
 	AV *ar = GvAVn(PL_incgv);
 	I32 i;
 #ifdef VMS
@@ -3063,12 +3010,14 @@ trylocal: {
 		    int count;
 		    SV *loader = dirsv;
 
-		    if (SvTYPE(SvRV(loader)) == SVt_PVAV) {
+		    if (SvTYPE(SvRV(loader)) == SVt_PVAV
+			&& !sv_isobject(loader))
+		    {
 			loader = *av_fetch((AV *)SvRV(loader), 0, TRUE);
 		    }
 
 		    Perl_sv_setpvf(aTHX_ namesv, "/loader/0x%"UVxf"/%s",
-				   PTR2UV(SvANY(loader)), name);
+				   PTR2UV(SvRV(dirsv)), name);
 		    tryname = SvPVX(namesv);
 		    tryrsfp = 0;
 
@@ -3149,6 +3098,7 @@ trylocal: {
 		    LEAVE;
 
 		    if (tryrsfp) {
+			hook_sv = dirsv;
 			break;
 		    }
 
@@ -3167,10 +3117,21 @@ trylocal: {
 		    }
 		}
 		else {
+		  if (!path_is_absolute(name)
+#ifdef MACOS_TRADITIONAL
+			/* We consider paths of the form :a:b ambiguous and interpret them first
+			   as global then as local
+			*/
+			|| (*name == ':' && name[1] != ':' && strchr(name+2, ':'))
+#endif
+		  ) {
 		    char *dir = SvPVx(dirsv, n_a);
 #ifdef MACOS_TRADITIONAL
-		    char buf[256];
-		    Perl_sv_setpvf(aTHX_ namesv, "%s%s", MacPerl_CanonDir(dir, buf), name+(name[0] == ':'));
+		    char buf1[256];
+		    char buf2[256];
+
+		    MacPerl_CanonDir(name, buf2, 1);
+		    Perl_sv_setpvf(aTHX_ namesv, "%s%s", MacPerl_CanonDir(dir, buf1, 0), buf2+(buf2[0] == ':'));
 #else
 #ifdef VMS
 		    char *unixdir;
@@ -3184,20 +3145,13 @@ trylocal: {
 #endif
 		    TAINT_PROPER("require");
 		    tryname = SvPVX(namesv);
-#ifdef MACOS_TRADITIONAL
-		    {
-		    	/* Convert slashes in the name part, but not the directory part, to colons */
-		    	char * colon;
-		    	for (colon = tryname+strlen(dir); colon = strchr(colon, '/'); )
-			    *colon++ = ':';
-		    }
-#endif
 		    tryrsfp = doopen_pmc(tryname, PERL_SCRIPT_MODE);
 		    if (tryrsfp) {
 			if (tryname[0] == '.' && tryname[1] == '/')
 			    tryname += 2;
 			break;
 		    }
+		  }
 		}
 	    }
 	}
@@ -3237,8 +3191,14 @@ trylocal: {
 	SETERRNO(0, SS$_NORMAL);
 
     /* Assume success here to prevent recursive requirement. */
-    (void)hv_store(GvHVn(PL_incgv), name, strlen(name),
-		   newSVpv(CopFILE(&PL_compiling), 0), 0 );
+    len = strlen(name);
+    /* Check whether a hook in @INC has already filled %INC */
+    if (!hook_sv || !(svp = hv_fetch(GvHVn(PL_incgv), name, len, 0))) {
+	(void)hv_store(GvHVn(PL_incgv), name, len,
+		       (hook_sv ? SvREFCNT_inc(hook_sv)
+				: newSVpv(CopFILE(&PL_compiling), 0)),
+		       0 );
+    }
 
     ENTER;
     SAVETMPS;
@@ -3254,8 +3214,12 @@ trylocal: {
         PL_compiling.cop_warnings = pWARN_ALL ;
     else if (PL_dowarn & G_WARN_ALL_OFF)
         PL_compiling.cop_warnings = pWARN_NONE ;
-    else 
+    else if (PL_taint_warn)
+        PL_compiling.cop_warnings = newSVpvn(WARN_TAINTstring, WARNsize);
+    else
         PL_compiling.cop_warnings = pWARN_STD ;
+    SAVESPTR(PL_compiling.cop_io);
+    PL_compiling.cop_io = Nullsv;
 
     if (filter_sub || filter_child_proc) {
 	SV *datasv = filter_add(run_user_filter, Nullsv);
@@ -3274,15 +3238,25 @@ trylocal: {
     CopLINE_set(&PL_compiling, 0);
 
     PUTBACK;
-#ifdef USE_THREADS
+#ifdef USE_5005THREADS
     MUTEX_LOCK(&PL_eval_mutex);
     if (PL_eval_owner && PL_eval_owner != thr)
 	while (PL_eval_owner)
 	    COND_WAIT(&PL_eval_cond, &PL_eval_mutex);
     PL_eval_owner = thr;
     MUTEX_UNLOCK(&PL_eval_mutex);
-#endif /* USE_THREADS */
-    return DOCATCH(doeval(G_SCALAR, NULL));
+#endif /* USE_5005THREADS */
+
+    /* Store and reset encoding. */
+    encoding = PL_encoding;
+    PL_encoding = Nullsv;
+
+    op = DOCATCH(doeval(gimme, NULL));
+    
+    /* Restore encoding. */
+    PL_encoding = encoding;
+
+    return op;
 }
 
 PP(pp_dofile)
@@ -3302,14 +3276,14 @@ PP(pp_entereval)
     STRLEN len;
     OP *ret;
 
-    if (!SvPV(sv,len) || !len)
+    if (!SvPV(sv,len))
 	RETPUSHUNDEF;
     TAINT_PROPER("eval");
 
     ENTER;
     lex_start(sv);
     SAVETMPS;
- 
+
     /* switch to eval mode */
 
     if (PERLDB_NAMEEVAL && CopLINE(PL_curcop)) {
@@ -3341,6 +3315,13 @@ PP(pp_entereval)
         PL_compiling.cop_warnings = newSVsv(PL_curcop->cop_warnings);
         SAVEFREESV(PL_compiling.cop_warnings);
     }
+    SAVESPTR(PL_compiling.cop_io);
+    if (specialCopIO(PL_curcop->cop_io))
+        PL_compiling.cop_io = PL_curcop->cop_io;
+    else {
+        PL_compiling.cop_io = newSVsv(PL_curcop->cop_io);
+        SAVEFREESV(PL_compiling.cop_io);
+    }
 
     push_return(PL_op->op_next);
     PUSHBLOCK(cx, (CXt_EVAL|CXp_REAL), SP);
@@ -3351,16 +3332,16 @@ PP(pp_entereval)
     if (PERLDB_LINE && PL_curstash != PL_debstash)
 	save_lines(CopFILEAV(&PL_compiling), PL_linestr);
     PUTBACK;
-#ifdef USE_THREADS
+#ifdef USE_5005THREADS
     MUTEX_LOCK(&PL_eval_mutex);
     if (PL_eval_owner && PL_eval_owner != thr)
 	while (PL_eval_owner)
 	    COND_WAIT(&PL_eval_cond, &PL_eval_mutex);
     PL_eval_owner = thr;
     MUTEX_UNLOCK(&PL_eval_mutex);
-#endif /* USE_THREADS */
+#endif /* USE_5005THREADS */
     ret = doeval(gimme, NULL);
-    if (PERLDB_INTER && was != PL_sub_generation /* Some subs defined here. */
+    if (PERLDB_INTER && was != (I32)PL_sub_generation /* Some subs defined here. */
 	&& ret != PL_op->op_next) {	/* Successive compilation. */
 	strcpy(safestr, "_<(eval )");	/* Anything fake and short. */
     }
@@ -3447,7 +3428,6 @@ PP(pp_entertry)
     push_return(cLOGOP->op_other->op_next);
     PUSHBLOCK(cx, (CXt_EVAL|CXp_TRYBLOCK), SP);
     PUSHEVAL(cx, 0, 0);
-    PL_eval_root = PL_op;		/* Only needed so that goto works right. */
 
     PL_in_eval = EVAL_INEVAL;
     sv_setpv(ERRSV,"");
@@ -3461,13 +3441,14 @@ PP(pp_leavetry)
     register SV **mark;
     SV **newsp;
     PMOP *newpm;
+    OP* retop;
     I32 gimme;
     register PERL_CONTEXT *cx;
     I32 optype;
 
     POPBLOCK(cx,newpm);
     POPEVAL(cx);
-    pop_return();
+    retop = pop_return();
 
     TAINT_NOT;
     if (gimme == G_VOID)
@@ -3499,7 +3480,7 @@ PP(pp_leavetry)
 
     LEAVE;
     sv_setpv(ERRSV,"");
-    RETURN;
+    RETURNOP(retop);
 }
 
 STATIC void
@@ -3508,20 +3489,20 @@ S_doparseform(pTHX_ SV *sv)
     STRLEN len;
     register char *s = SvPV_force(sv, len);
     register char *send = s + len;
-    register char *base;
+    register char *base = Nullch;
     register I32 skipspaces = 0;
-    bool noblank;
-    bool repeat;
+    bool noblank   = FALSE;
+    bool repeat    = FALSE;
     bool postspace = FALSE;
     U16 *fops;
     register U16 *fpc;
-    U16 *linepc;
+    U16 *linepc = 0;
     register I32 arg;
     bool ischop;
 
     if (len == 0)
 	Perl_croak(aTHX_ "Null picture in formline");
-    
+
     New(804, fops, (send - s)*3+10, U16);    /* Almost certainly too long... */
     fpc = fops;
 
@@ -3549,7 +3530,7 @@ S_doparseform(pTHX_ SV *sv)
 	case ' ': case '\t':
 	    skipspaces++;
 	    continue;
-	    
+	
 	case '\n': case 0:
 	    arg = s - base;
 	    skipspaces++;
@@ -3558,14 +3539,14 @@ S_doparseform(pTHX_ SV *sv)
 		if (postspace)
 		    *fpc++ = FF_SPACE;
 		*fpc++ = FF_LITERAL;
-		*fpc++ = arg;
+		*fpc++ = (U16)arg;
 	    }
 	    postspace = FALSE;
 	    if (s <= send)
 		skipspaces--;
 	    if (skipspaces) {
 		*fpc++ = FF_SKIP;
-		*fpc++ = skipspaces;
+		*fpc++ = (U16)skipspaces;
 	    }
 	    skipspaces = 0;
 	    if (s <= send)
@@ -3576,7 +3557,7 @@ S_doparseform(pTHX_ SV *sv)
 		    arg = fpc - linepc + 1;
 		else
 		    arg = 0;
-		*fpc++ = arg;
+		*fpc++ = (U16)arg;
 	    }
 	    if (s < send) {
 		linepc = fpc;
@@ -3599,7 +3580,7 @@ S_doparseform(pTHX_ SV *sv)
 	    arg = (s - base) - 1;
 	    if (arg) {
 		*fpc++ = FF_LITERAL;
-		*fpc++ = arg;
+		*fpc++ = (U16)arg;
 	    }
 
 	    base = s - 1;
@@ -3624,7 +3605,25 @@ S_doparseform(pTHX_ SV *sv)
 		}
 		*fpc++ = s - base;		/* fieldsize for FETCH */
 		*fpc++ = FF_DECIMAL;
-		*fpc++ = arg;
+                *fpc++ = (U16)arg;
+            }
+            else if (*s == '0' && s[1] == '#') {  /* Zero padded decimals */
+                arg = ischop ? 512 : 0;
+		base = s - 1;
+                s++;                                /* skip the '0' first */
+                while (*s == '#')
+                    s++;
+                if (*s == '.') {
+                    char *f;
+                    s++;
+                    f = s;
+                    while (*s == '#')
+                        s++;
+                    arg |= 256 + (s - f);
+                }
+                *fpc++ = s - base;                /* fieldsize for FETCH */
+                *fpc++ = FF_0DECIMAL;
+		*fpc++ = (U16)arg;
 	    }
 	    else {
 		I32 prespace = 0;
@@ -3653,7 +3652,7 @@ S_doparseform(pTHX_ SV *sv)
 		*fpc++ = ischop ? FF_CHECKCHOP : FF_CHECKNL;
 
 		if (prespace)
-		    *fpc++ = prespace;
+		    *fpc++ = (U16)prespace;
 		*fpc++ = FF_ITEM;
 		if (ismore)
 		    *fpc++ = FF_MORE;
@@ -3676,910 +3675,12 @@ S_doparseform(pTHX_ SV *sv)
     }
     Copy(fops, s, arg, U16);
     Safefree(fops);
-    sv_magic(sv, Nullsv, 'f', Nullch, 0);
+    sv_magic(sv, Nullsv, PERL_MAGIC_fm, Nullch, 0);
     SvCOMPILED_on(sv);
 }
 
-/*
- * The rest of this file was derived from source code contributed
- * by Tom Horsley.
- *
- * NOTE: this code was derived from Tom Horsley's qsort replacement
- * and should not be confused with the original code.
- */
-
-/* Copyright (C) Tom Horsley, 1997. All rights reserved.
-
-   Permission granted to distribute under the same terms as perl which are
-   (briefly):
-
-    This program is free software; you can redistribute it and/or modify
-    it under the terms of either:
-
-	a) the GNU General Public License as published by the Free
-	Software Foundation; either version 1, or (at your option) any
-	later version, or
-
-	b) the "Artistic License" which comes with this Kit.
-
-   Details on the perl license can be found in the perl source code which
-   may be located via the www.perl.com web page.
-
-   This is the most wonderfulest possible qsort I can come up with (and
-   still be mostly portable) My (limited) tests indicate it consistently
-   does about 20% fewer calls to compare than does the qsort in the Visual
-   C++ library, other vendors may vary.
-
-   Some of the ideas in here can be found in "Algorithms" by Sedgewick,
-   others I invented myself (or more likely re-invented since they seemed
-   pretty obvious once I watched the algorithm operate for a while).
-
-   Most of this code was written while watching the Marlins sweep the Giants
-   in the 1997 National League Playoffs - no Braves fans allowed to use this
-   code (just kidding :-).
-
-   I realize that if I wanted to be true to the perl tradition, the only
-   comment in this file would be something like:
-
-   ...they shuffled back towards the rear of the line. 'No, not at the
-   rear!'  the slave-driver shouted. 'Three files up. And stay there...
-
-   However, I really needed to violate that tradition just so I could keep
-   track of what happens myself, not to mention some poor fool trying to
-   understand this years from now :-).
-*/
-
-/* ********************************************************** Configuration */
-
-#ifndef QSORT_ORDER_GUESS
-#define QSORT_ORDER_GUESS 2	/* Select doubling version of the netBSD trick */
-#endif
-
-/* QSORT_MAX_STACK is the largest number of partitions that can be stacked up for
-   future processing - a good max upper bound is log base 2 of memory size
-   (32 on 32 bit machines, 64 on 64 bit machines, etc). In reality can
-   safely be smaller than that since the program is taking up some space and
-   most operating systems only let you grab some subset of contiguous
-   memory (not to mention that you are normally sorting data larger than
-   1 byte element size :-).
-*/
-#ifndef QSORT_MAX_STACK
-#define QSORT_MAX_STACK 32
-#endif
-
-/* QSORT_BREAK_EVEN is the size of the largest partition we should insertion sort.
-   Anything bigger and we use qsort. If you make this too small, the qsort
-   will probably break (or become less efficient), because it doesn't expect
-   the middle element of a partition to be the same as the right or left -
-   you have been warned).
-*/
-#ifndef QSORT_BREAK_EVEN
-#define QSORT_BREAK_EVEN 6
-#endif
-
-/* ************************************************************* Data Types */
-
-/* hold left and right index values of a partition waiting to be sorted (the
-   partition includes both left and right - right is NOT one past the end or
-   anything like that).
-*/
-struct partition_stack_entry {
-   int left;
-   int right;
-#ifdef QSORT_ORDER_GUESS
-   int qsort_break_even;
-#endif
-};
-
-/* ******************************************************* Shorthand Macros */
-
-/* Note that these macros will be used from inside the qsort function where
-   we happen to know that the variable 'elt_size' contains the size of an
-   array element and the variable 'temp' points to enough space to hold a
-   temp element and the variable 'array' points to the array being sorted
-   and 'compare' is the pointer to the compare routine.
-
-   Also note that there are very many highly architecture specific ways
-   these might be sped up, but this is simply the most generally portable
-   code I could think of.
-*/
-
-/* Return < 0 == 0 or > 0 as the value of elt1 is < elt2, == elt2, > elt2
-*/
-#define qsort_cmp(elt1, elt2) \
-   ((*compare)(aTHXo_ array[elt1], array[elt2]))
-
-#ifdef QSORT_ORDER_GUESS
-#define QSORT_NOTICE_SWAP swapped++;
-#else
-#define QSORT_NOTICE_SWAP
-#endif
-
-/* swaps contents of array elements elt1, elt2.
-*/
-#define qsort_swap(elt1, elt2) \
-   STMT_START { \
-      QSORT_NOTICE_SWAP \
-      temp = array[elt1]; \
-      array[elt1] = array[elt2]; \
-      array[elt2] = temp; \
-   } STMT_END
-
-/* rotate contents of elt1, elt2, elt3 such that elt1 gets elt2, elt2 gets
-   elt3 and elt3 gets elt1.
-*/
-#define qsort_rotate(elt1, elt2, elt3) \
-   STMT_START { \
-      QSORT_NOTICE_SWAP \
-      temp = array[elt1]; \
-      array[elt1] = array[elt2]; \
-      array[elt2] = array[elt3]; \
-      array[elt3] = temp; \
-   } STMT_END
-
-/* ************************************************************ Debug stuff */
-
-#ifdef QSORT_DEBUG
-
-static void
-break_here()
-{
-   return; /* good place to set a breakpoint */
-}
-
-#define qsort_assert(t) (void)( (t) || (break_here(), 0) )
-
-static void
-doqsort_all_asserts(
-   void * array,
-   size_t num_elts,
-   size_t elt_size,
-   int (*compare)(const void * elt1, const void * elt2),
-   int pc_left, int pc_right, int u_left, int u_right)
-{
-   int i;
-
-   qsort_assert(pc_left <= pc_right);
-   qsort_assert(u_right < pc_left);
-   qsort_assert(pc_right < u_left);
-   for (i = u_right + 1; i < pc_left; ++i) {
-      qsort_assert(qsort_cmp(i, pc_left) < 0);
-   }
-   for (i = pc_left; i < pc_right; ++i) {
-      qsort_assert(qsort_cmp(i, pc_right) == 0);
-   }
-   for (i = pc_right + 1; i < u_left; ++i) {
-      qsort_assert(qsort_cmp(pc_right, i) < 0);
-   }
-}
-
-#define qsort_all_asserts(PC_LEFT, PC_RIGHT, U_LEFT, U_RIGHT) \
-   doqsort_all_asserts(array, num_elts, elt_size, compare, \
-                 PC_LEFT, PC_RIGHT, U_LEFT, U_RIGHT)
-
-#else
-
-#define qsort_assert(t) ((void)0)
-
-#define qsort_all_asserts(PC_LEFT, PC_RIGHT, U_LEFT, U_RIGHT) ((void)0)
-
-#endif
-
-/* ****************************************************************** qsort */
-
-STATIC void
-S_qsortsv(pTHX_ SV ** array, size_t num_elts, SVCOMPARE_t compare)
-{
-   register SV * temp;
-
-   struct partition_stack_entry partition_stack[QSORT_MAX_STACK];
-   int next_stack_entry = 0;
-
-   int part_left;
-   int part_right;
-#ifdef QSORT_ORDER_GUESS
-   int qsort_break_even;
-   int swapped;
-#endif
-
-   /* Make sure we actually have work to do.
-   */
-   if (num_elts <= 1) {
-      return;
-   }
-
-   /* Setup the initial partition definition and fall into the sorting loop
-   */
-   part_left = 0;
-   part_right = (int)(num_elts - 1);
-#ifdef QSORT_ORDER_GUESS
-   qsort_break_even = QSORT_BREAK_EVEN;
-#else
-#define qsort_break_even QSORT_BREAK_EVEN
-#endif
-   for ( ; ; ) {
-      if ((part_right - part_left) >= qsort_break_even) {
-         /* OK, this is gonna get hairy, so lets try to document all the
-            concepts and abbreviations and variables and what they keep
-            track of:
-
-            pc: pivot chunk - the set of array elements we accumulate in the
-                middle of the partition, all equal in value to the original
-                pivot element selected. The pc is defined by:
-
-                pc_left - the leftmost array index of the pc
-                pc_right - the rightmost array index of the pc
-
-                we start with pc_left == pc_right and only one element
-                in the pivot chunk (but it can grow during the scan).
-
-            u:  uncompared elements - the set of elements in the partition
-                we have not yet compared to the pivot value. There are two
-                uncompared sets during the scan - one to the left of the pc
-                and one to the right.
-
-                u_right - the rightmost index of the left side's uncompared set
-                u_left - the leftmost index of the right side's uncompared set
-
-                The leftmost index of the left sides's uncompared set
-                doesn't need its own variable because it is always defined
-                by the leftmost edge of the whole partition (part_left). The
-                same goes for the rightmost edge of the right partition
-                (part_right).
-
-                We know there are no uncompared elements on the left once we
-                get u_right < part_left and no uncompared elements on the
-                right once u_left > part_right. When both these conditions
-                are met, we have completed the scan of the partition.
-
-                Any elements which are between the pivot chunk and the
-                uncompared elements should be less than the pivot value on
-                the left side and greater than the pivot value on the right
-                side (in fact, the goal of the whole algorithm is to arrange
-                for that to be true and make the groups of less-than and
-                greater-then elements into new partitions to sort again).
-
-            As you marvel at the complexity of the code and wonder why it
-            has to be so confusing. Consider some of the things this level
-            of confusion brings:
-
-            Once I do a compare, I squeeze every ounce of juice out of it. I
-            never do compare calls I don't have to do, and I certainly never
-            do redundant calls.
-
-            I also never swap any elements unless I can prove there is a
-            good reason. Many sort algorithms will swap a known value with
-            an uncompared value just to get things in the right place (or
-            avoid complexity :-), but that uncompared value, once it gets
-            compared, may then have to be swapped again. A lot of the
-            complexity of this code is due to the fact that it never swaps
-            anything except compared values, and it only swaps them when the
-            compare shows they are out of position.
-         */
-         int pc_left, pc_right;
-         int u_right, u_left;
-
-         int s;
-
-         pc_left = ((part_left + part_right) / 2);
-         pc_right = pc_left;
-         u_right = pc_left - 1;
-         u_left = pc_right + 1;
-
-         /* Qsort works best when the pivot value is also the median value
-            in the partition (unfortunately you can't find the median value
-            without first sorting :-), so to give the algorithm a helping
-            hand, we pick 3 elements and sort them and use the median value
-            of that tiny set as the pivot value.
-
-            Some versions of qsort like to use the left middle and right as
-            the 3 elements to sort so they can insure the ends of the
-            partition will contain values which will stop the scan in the
-            compare loop, but when you have to call an arbitrarily complex
-            routine to do a compare, its really better to just keep track of
-            array index values to know when you hit the edge of the
-            partition and avoid the extra compare. An even better reason to
-            avoid using a compare call is the fact that you can drop off the
-            edge of the array if someone foolishly provides you with an
-            unstable compare function that doesn't always provide consistent
-            results.
-
-            So, since it is simpler for us to compare the three adjacent
-            elements in the middle of the partition, those are the ones we
-            pick here (conveniently pointed at by u_right, pc_left, and
-            u_left). The values of the left, center, and right elements
-            are refered to as l c and r in the following comments.
-         */
-
-#ifdef QSORT_ORDER_GUESS
-         swapped = 0;
-#endif
-         s = qsort_cmp(u_right, pc_left);
-         if (s < 0) {
-            /* l < c */
-            s = qsort_cmp(pc_left, u_left);
-            /* if l < c, c < r - already in order - nothing to do */
-            if (s == 0) {
-               /* l < c, c == r - already in order, pc grows */
-               ++pc_right;
-               qsort_all_asserts(pc_left, pc_right, u_left + 1, u_right - 1);
-            } else if (s > 0) {
-               /* l < c, c > r - need to know more */
-               s = qsort_cmp(u_right, u_left);
-               if (s < 0) {
-                  /* l < c, c > r, l < r - swap c & r to get ordered */
-                  qsort_swap(pc_left, u_left);
-                  qsort_all_asserts(pc_left, pc_right, u_left + 1, u_right - 1);
-               } else if (s == 0) {
-                  /* l < c, c > r, l == r - swap c&r, grow pc */
-                  qsort_swap(pc_left, u_left);
-                  --pc_left;
-                  qsort_all_asserts(pc_left, pc_right, u_left + 1, u_right - 1);
-               } else {
-                  /* l < c, c > r, l > r - make lcr into rlc to get ordered */
-                  qsort_rotate(pc_left, u_right, u_left);
-                  qsort_all_asserts(pc_left, pc_right, u_left + 1, u_right - 1);
-               }
-            }
-         } else if (s == 0) {
-            /* l == c */
-            s = qsort_cmp(pc_left, u_left);
-            if (s < 0) {
-               /* l == c, c < r - already in order, grow pc */
-               --pc_left;
-               qsort_all_asserts(pc_left, pc_right, u_left + 1, u_right - 1);
-            } else if (s == 0) {
-               /* l == c, c == r - already in order, grow pc both ways */
-               --pc_left;
-               ++pc_right;
-               qsort_all_asserts(pc_left, pc_right, u_left + 1, u_right - 1);
-            } else {
-               /* l == c, c > r - swap l & r, grow pc */
-               qsort_swap(u_right, u_left);
-               ++pc_right;
-               qsort_all_asserts(pc_left, pc_right, u_left + 1, u_right - 1);
-            }
-         } else {
-            /* l > c */
-            s = qsort_cmp(pc_left, u_left);
-            if (s < 0) {
-               /* l > c, c < r - need to know more */
-               s = qsort_cmp(u_right, u_left);
-               if (s < 0) {
-                  /* l > c, c < r, l < r - swap l & c to get ordered */
-                  qsort_swap(u_right, pc_left);
-                  qsort_all_asserts(pc_left, pc_right, u_left + 1, u_right - 1);
-               } else if (s == 0) {
-                  /* l > c, c < r, l == r - swap l & c, grow pc */
-                  qsort_swap(u_right, pc_left);
-                  ++pc_right;
-                  qsort_all_asserts(pc_left, pc_right, u_left + 1, u_right - 1);
-               } else {
-                  /* l > c, c < r, l > r - rotate lcr into crl to order */
-                  qsort_rotate(u_right, pc_left, u_left);
-                  qsort_all_asserts(pc_left, pc_right, u_left + 1, u_right - 1);
-               }
-            } else if (s == 0) {
-               /* l > c, c == r - swap ends, grow pc */
-               qsort_swap(u_right, u_left);
-               --pc_left;
-               qsort_all_asserts(pc_left, pc_right, u_left + 1, u_right - 1);
-            } else {
-               /* l > c, c > r - swap ends to get in order */
-               qsort_swap(u_right, u_left);
-               qsort_all_asserts(pc_left, pc_right, u_left + 1, u_right - 1);
-            }
-         }
-         /* We now know the 3 middle elements have been compared and
-            arranged in the desired order, so we can shrink the uncompared
-            sets on both sides
-         */
-         --u_right;
-         ++u_left;
-         qsort_all_asserts(pc_left, pc_right, u_left, u_right);
-
-         /* The above massive nested if was the simple part :-). We now have
-            the middle 3 elements ordered and we need to scan through the
-            uncompared sets on either side, swapping elements that are on
-            the wrong side or simply shuffling equal elements around to get
-            all equal elements into the pivot chunk.
-         */
-
-         for ( ; ; ) {
-            int still_work_on_left;
-            int still_work_on_right;
-
-            /* Scan the uncompared values on the left. If I find a value
-               equal to the pivot value, move it over so it is adjacent to
-               the pivot chunk and expand the pivot chunk. If I find a value
-               less than the pivot value, then just leave it - its already
-               on the correct side of the partition. If I find a greater
-               value, then stop the scan.
-            */
-            while ((still_work_on_left = (u_right >= part_left))) {
-               s = qsort_cmp(u_right, pc_left);
-               if (s < 0) {
-                  --u_right;
-               } else if (s == 0) {
-                  --pc_left;
-                  if (pc_left != u_right) {
-                     qsort_swap(u_right, pc_left);
-                  }
-                  --u_right;
-               } else {
-                  break;
-               }
-               qsort_assert(u_right < pc_left);
-               qsort_assert(pc_left <= pc_right);
-               qsort_assert(qsort_cmp(u_right + 1, pc_left) <= 0);
-               qsort_assert(qsort_cmp(pc_left, pc_right) == 0);
-            }
-
-            /* Do a mirror image scan of uncompared values on the right
-            */
-            while ((still_work_on_right = (u_left <= part_right))) {
-               s = qsort_cmp(pc_right, u_left);
-               if (s < 0) {
-                  ++u_left;
-               } else if (s == 0) {
-                  ++pc_right;
-                  if (pc_right != u_left) {
-                     qsort_swap(pc_right, u_left);
-                  }
-                  ++u_left;
-               } else {
-                  break;
-               }
-               qsort_assert(u_left > pc_right);
-               qsort_assert(pc_left <= pc_right);
-               qsort_assert(qsort_cmp(pc_right, u_left - 1) <= 0);
-               qsort_assert(qsort_cmp(pc_left, pc_right) == 0);
-            }
-
-            if (still_work_on_left) {
-               /* I know I have a value on the left side which needs to be
-                  on the right side, but I need to know more to decide
-                  exactly the best thing to do with it.
-               */
-               if (still_work_on_right) {
-                  /* I know I have values on both side which are out of
-                     position. This is a big win because I kill two birds
-                     with one swap (so to speak). I can advance the
-                     uncompared pointers on both sides after swapping both
-                     of them into the right place.
-                  */
-                  qsort_swap(u_right, u_left);
-                  --u_right;
-                  ++u_left;
-                  qsort_all_asserts(pc_left, pc_right, u_left, u_right);
-               } else {
-                  /* I have an out of position value on the left, but the
-                     right is fully scanned, so I "slide" the pivot chunk
-                     and any less-than values left one to make room for the
-                     greater value over on the right. If the out of position
-                     value is immediately adjacent to the pivot chunk (there
-                     are no less-than values), I can do that with a swap,
-                     otherwise, I have to rotate one of the less than values
-                     into the former position of the out of position value
-                     and the right end of the pivot chunk into the left end
-                     (got all that?).
-                  */
-                  --pc_left;
-                  if (pc_left == u_right) {
-                     qsort_swap(u_right, pc_right);
-                     qsort_all_asserts(pc_left, pc_right-1, u_left, u_right-1);
-                  } else {
-                     qsort_rotate(u_right, pc_left, pc_right);
-                     qsort_all_asserts(pc_left, pc_right-1, u_left, u_right-1);
-                  }
-                  --pc_right;
-                  --u_right;
-               }
-            } else if (still_work_on_right) {
-               /* Mirror image of complex case above: I have an out of
-                  position value on the right, but the left is fully
-                  scanned, so I need to shuffle things around to make room
-                  for the right value on the left.
-               */
-               ++pc_right;
-               if (pc_right == u_left) {
-                  qsort_swap(u_left, pc_left);
-                  qsort_all_asserts(pc_left+1, pc_right, u_left+1, u_right);
-               } else {
-                  qsort_rotate(pc_right, pc_left, u_left);
-                  qsort_all_asserts(pc_left+1, pc_right, u_left+1, u_right);
-               }
-               ++pc_left;
-               ++u_left;
-            } else {
-               /* No more scanning required on either side of partition,
-                  break out of loop and figure out next set of partitions
-               */
-               break;
-            }
-         }
-
-         /* The elements in the pivot chunk are now in the right place. They
-            will never move or be compared again. All I have to do is decide
-            what to do with the stuff to the left and right of the pivot
-            chunk.
-
-            Notes on the QSORT_ORDER_GUESS ifdef code:
-
-            1. If I just built these partitions without swapping any (or
-               very many) elements, there is a chance that the elements are
-               already ordered properly (being properly ordered will
-               certainly result in no swapping, but the converse can't be
-               proved :-).
-
-            2. A (properly written) insertion sort will run faster on
-               already ordered data than qsort will.
-
-            3. Perhaps there is some way to make a good guess about
-               switching to an insertion sort earlier than partition size 6
-               (for instance - we could save the partition size on the stack
-               and increase the size each time we find we didn't swap, thus
-               switching to insertion sort earlier for partitions with a
-               history of not swapping).
-
-            4. Naturally, if I just switch right away, it will make
-               artificial benchmarks with pure ascending (or descending)
-               data look really good, but is that a good reason in general?
-               Hard to say...
-         */
-
-#ifdef QSORT_ORDER_GUESS
-         if (swapped < 3) {
-#if QSORT_ORDER_GUESS == 1
-            qsort_break_even = (part_right - part_left) + 1;
-#endif
-#if QSORT_ORDER_GUESS == 2
-            qsort_break_even *= 2;
-#endif
-#if QSORT_ORDER_GUESS == 3
-            int prev_break = qsort_break_even;
-            qsort_break_even *= qsort_break_even;
-            if (qsort_break_even < prev_break) {
-               qsort_break_even = (part_right - part_left) + 1;
-            }
-#endif
-         } else {
-            qsort_break_even = QSORT_BREAK_EVEN;
-         }
-#endif
-
-         if (part_left < pc_left) {
-            /* There are elements on the left which need more processing.
-               Check the right as well before deciding what to do.
-            */
-            if (pc_right < part_right) {
-               /* We have two partitions to be sorted. Stack the biggest one
-                  and process the smallest one on the next iteration. This
-                  minimizes the stack height by insuring that any additional
-                  stack entries must come from the smallest partition which
-                  (because it is smallest) will have the fewest
-                  opportunities to generate additional stack entries.
-               */
-               if ((part_right - pc_right) > (pc_left - part_left)) {
-                  /* stack the right partition, process the left */
-                  partition_stack[next_stack_entry].left = pc_right + 1;
-                  partition_stack[next_stack_entry].right = part_right;
-#ifdef QSORT_ORDER_GUESS
-                  partition_stack[next_stack_entry].qsort_break_even = qsort_break_even;
-#endif
-                  part_right = pc_left - 1;
-               } else {
-                  /* stack the left partition, process the right */
-                  partition_stack[next_stack_entry].left = part_left;
-                  partition_stack[next_stack_entry].right = pc_left - 1;
-#ifdef QSORT_ORDER_GUESS
-                  partition_stack[next_stack_entry].qsort_break_even = qsort_break_even;
-#endif
-                  part_left = pc_right + 1;
-               }
-               qsort_assert(next_stack_entry < QSORT_MAX_STACK);
-               ++next_stack_entry;
-            } else {
-               /* The elements on the left are the only remaining elements
-                  that need sorting, arrange for them to be processed as the
-                  next partition.
-               */
-               part_right = pc_left - 1;
-            }
-         } else if (pc_right < part_right) {
-            /* There is only one chunk on the right to be sorted, make it
-               the new partition and loop back around.
-            */
-            part_left = pc_right + 1;
-         } else {
-            /* This whole partition wound up in the pivot chunk, so
-               we need to get a new partition off the stack.
-            */
-            if (next_stack_entry == 0) {
-               /* the stack is empty - we are done */
-               break;
-            }
-            --next_stack_entry;
-            part_left = partition_stack[next_stack_entry].left;
-            part_right = partition_stack[next_stack_entry].right;
-#ifdef QSORT_ORDER_GUESS
-            qsort_break_even = partition_stack[next_stack_entry].qsort_break_even;
-#endif
-         }
-      } else {
-         /* This partition is too small to fool with qsort complexity, just
-            do an ordinary insertion sort to minimize overhead.
-         */
-         int i;
-         /* Assume 1st element is in right place already, and start checking
-            at 2nd element to see where it should be inserted.
-         */
-         for (i = part_left + 1; i <= part_right; ++i) {
-            int j;
-            /* Scan (backwards - just in case 'i' is already in right place)
-               through the elements already sorted to see if the ith element
-               belongs ahead of one of them.
-            */
-            for (j = i - 1; j >= part_left; --j) {
-               if (qsort_cmp(i, j) >= 0) {
-                  /* i belongs right after j
-                  */
-                  break;
-               }
-            }
-            ++j;
-            if (j != i) {
-               /* Looks like we really need to move some things
-               */
-	       int k;
-	       temp = array[i];
-	       for (k = i - 1; k >= j; --k)
-		  array[k + 1] = array[k];
-               array[j] = temp;
-            }
-         }
-
-         /* That partition is now sorted, grab the next one, or get out
-            of the loop if there aren't any more.
-         */
-
-         if (next_stack_entry == 0) {
-            /* the stack is empty - we are done */
-            break;
-         }
-         --next_stack_entry;
-         part_left = partition_stack[next_stack_entry].left;
-         part_right = partition_stack[next_stack_entry].right;
-#ifdef QSORT_ORDER_GUESS
-         qsort_break_even = partition_stack[next_stack_entry].qsort_break_even;
-#endif
-      }
-   }
-
-   /* Believe it or not, the array is sorted at this point! */
-}
-
-
-#ifdef PERL_OBJECT
-#undef this
-#define this pPerl
-#include "XSUB.h"
-#endif
-
-
 static I32
-sortcv(pTHXo_ SV *a, SV *b)
-{
-    I32 oldsaveix = PL_savestack_ix;
-    I32 oldscopeix = PL_scopestack_ix;
-    I32 result;
-    GvSV(PL_firstgv) = a;
-    GvSV(PL_secondgv) = b;
-    PL_stack_sp = PL_stack_base;
-    PL_op = PL_sortcop;
-    CALLRUNOPS(aTHX);
-    if (PL_stack_sp != PL_stack_base + 1)
-	Perl_croak(aTHX_ "Sort subroutine didn't return single value");
-    if (!SvNIOKp(*PL_stack_sp))
-	Perl_croak(aTHX_ "Sort subroutine didn't return a numeric value");
-    result = SvIV(*PL_stack_sp);
-    while (PL_scopestack_ix > oldscopeix) {
-	LEAVE;
-    }
-    leave_scope(oldsaveix);
-    return result;
-}
-
-static I32
-sortcv_stacked(pTHXo_ SV *a, SV *b)
-{
-    I32 oldsaveix = PL_savestack_ix;
-    I32 oldscopeix = PL_scopestack_ix;
-    I32 result;
-    AV *av;
-
-#ifdef USE_THREADS
-    av = (AV*)PL_curpad[0];
-#else
-    av = GvAV(PL_defgv);
-#endif
-
-    if (AvMAX(av) < 1) {
-	SV** ary = AvALLOC(av);
-	if (AvARRAY(av) != ary) {
-	    AvMAX(av) += AvARRAY(av) - AvALLOC(av);
-	    SvPVX(av) = (char*)ary;
-	}
-	if (AvMAX(av) < 1) {
-	    AvMAX(av) = 1;
-	    Renew(ary,2,SV*);
-	    SvPVX(av) = (char*)ary;
-	}
-    }
-    AvFILLp(av) = 1;
-
-    AvARRAY(av)[0] = a;
-    AvARRAY(av)[1] = b;
-    PL_stack_sp = PL_stack_base;
-    PL_op = PL_sortcop;
-    CALLRUNOPS(aTHX);
-    if (PL_stack_sp != PL_stack_base + 1)
-	Perl_croak(aTHX_ "Sort subroutine didn't return single value");
-    if (!SvNIOKp(*PL_stack_sp))
-	Perl_croak(aTHX_ "Sort subroutine didn't return a numeric value");
-    result = SvIV(*PL_stack_sp);
-    while (PL_scopestack_ix > oldscopeix) {
-	LEAVE;
-    }
-    leave_scope(oldsaveix);
-    return result;
-}
-
-static I32
-sortcv_xsub(pTHXo_ SV *a, SV *b)
-{
-    dSP;
-    I32 oldsaveix = PL_savestack_ix;
-    I32 oldscopeix = PL_scopestack_ix;
-    I32 result;
-    CV *cv=(CV*)PL_sortcop;
-
-    SP = PL_stack_base;
-    PUSHMARK(SP);
-    EXTEND(SP, 2);
-    *++SP = a;
-    *++SP = b;
-    PUTBACK;
-    (void)(*CvXSUB(cv))(aTHXo_ cv);
-    if (PL_stack_sp != PL_stack_base + 1)
-	Perl_croak(aTHX_ "Sort subroutine didn't return single value");
-    if (!SvNIOKp(*PL_stack_sp))
-	Perl_croak(aTHX_ "Sort subroutine didn't return a numeric value");
-    result = SvIV(*PL_stack_sp);
-    while (PL_scopestack_ix > oldscopeix) {
-	LEAVE;
-    }
-    leave_scope(oldsaveix);
-    return result;
-}
-
-
-static I32
-sv_ncmp(pTHXo_ SV *a, SV *b)
-{
-    NV nv1 = SvNV(a);
-    NV nv2 = SvNV(b);
-    return nv1 < nv2 ? -1 : nv1 > nv2 ? 1 : 0;
-}
-
-static I32
-sv_i_ncmp(pTHXo_ SV *a, SV *b)
-{
-    IV iv1 = SvIV(a);
-    IV iv2 = SvIV(b);
-    return iv1 < iv2 ? -1 : iv1 > iv2 ? 1 : 0;
-}
-#define tryCALL_AMAGICbin(left,right,meth,svp) STMT_START { \
-	  *svp = Nullsv;				\
-          if (PL_amagic_generation) { \
-	    if (SvAMAGIC(left)||SvAMAGIC(right))\
-		*svp = amagic_call(left, \
-				   right, \
-				   CAT2(meth,_amg), \
-				   0); \
-	  } \
-	} STMT_END
-
-static I32
-amagic_ncmp(pTHXo_ register SV *a, register SV *b)
-{
-    SV *tmpsv;
-    tryCALL_AMAGICbin(a,b,ncmp,&tmpsv);
-    if (tmpsv) {
-    	NV d;
-    	
-        if (SvIOK(tmpsv)) {
-            I32 i = SvIVX(tmpsv);
-            if (i > 0)
-               return 1;
-            return i? -1 : 0;
-        }
-        d = SvNV(tmpsv);
-        if (d > 0)
-           return 1;
-        return d? -1 : 0;
-     }
-     return sv_ncmp(aTHXo_ a, b);
-}
-
-static I32
-amagic_i_ncmp(pTHXo_ register SV *a, register SV *b)
-{
-    SV *tmpsv;
-    tryCALL_AMAGICbin(a,b,ncmp,&tmpsv);
-    if (tmpsv) {
-    	NV d;
-    	
-        if (SvIOK(tmpsv)) {
-            I32 i = SvIVX(tmpsv);
-            if (i > 0)
-               return 1;
-            return i? -1 : 0;
-        }
-        d = SvNV(tmpsv);
-        if (d > 0)
-           return 1;
-        return d? -1 : 0;
-    }
-    return sv_i_ncmp(aTHXo_ a, b);
-}
-
-static I32
-amagic_cmp(pTHXo_ register SV *str1, register SV *str2)
-{
-    SV *tmpsv;
-    tryCALL_AMAGICbin(str1,str2,scmp,&tmpsv);
-    if (tmpsv) {
-    	NV d;
-    	
-        if (SvIOK(tmpsv)) {
-            I32 i = SvIVX(tmpsv);
-            if (i > 0)
-               return 1;
-            return i? -1 : 0;
-        }
-        d = SvNV(tmpsv);
-        if (d > 0)
-           return 1;
-        return d? -1 : 0;
-    }
-    return sv_cmp(str1, str2);
-}
-
-static I32
-amagic_cmp_locale(pTHXo_ register SV *str1, register SV *str2)
-{
-    SV *tmpsv;
-    tryCALL_AMAGICbin(str1,str2,scmp,&tmpsv);
-    if (tmpsv) {
-    	NV d;
-    	
-        if (SvIOK(tmpsv)) {
-            I32 i = SvIVX(tmpsv);
-            if (i > 0)
-               return 1;
-            return i? -1 : 0;
-        }
-        d = SvNV(tmpsv);
-        if (d > 0)
-           return 1;
-        return d? -1 : 0;
-    }
-    return sv_cmp_locale(str1, str2);
-}
-
-static I32
-run_user_filter(pTHXo_ int idx, SV *buf_sv, int maxlen)
+run_user_filter(pTHX_ int idx, SV *buf_sv, int maxlen)
 {
     SV *datasv = FILTER_DATA(idx);
     int filter_has_file = IoLINES(datasv);
@@ -4648,18 +3749,21 @@ run_user_filter(pTHXo_ int idx, SV *buf_sv, int maxlen)
     return len;
 }
 
-#ifdef PERL_OBJECT
-
-static I32
-sv_cmp_locale_static(pTHXo_ register SV *str1, register SV *str2)
+/* perhaps someone can come up with a better name for
+   this?  it is not really "absolute", per se ... */
+static bool
+S_path_is_absolute(pTHX_ char *name)
 {
-    return sv_cmp_locale(str1, str2);
+    if (PERL_FILE_IS_ABSOLUTE(name)
+#ifdef MACOS_TRADITIONAL
+	|| (*name == ':'))
+#else
+	|| (*name == '.' && (name[1] == '/' ||
+			     (name[1] == '.' && name[2] == '/'))))
+#endif
+    {
+	return TRUE;
+    }
+    else
+    	return FALSE;
 }
-
-static I32
-sv_cmp_static(pTHXo_ register SV *str1, register SV *str2)
-{
-    return sv_cmp(str1, str2);
-}
-
-#endif /* PERL_OBJECT */

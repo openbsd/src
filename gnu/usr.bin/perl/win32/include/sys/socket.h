@@ -1,7 +1,7 @@
-// sys/socket.h
+/* sys/socket.h */
 
-// djl
-// Provide UNIX compatibility
+/* djl */
+/* Provide UNIX compatibility */
 
 #ifndef  _INC_SYS_SOCKET
 #define  _INC_SYS_SOCKET
@@ -109,9 +109,9 @@ void win32_endprotoent(void);
 void win32_endservent(void);
 
 #ifndef WIN32SCK_IS_STDSCK
-//
-// direct to our version
-//
+
+/* direct to our version */
+
 #define htonl		win32_htonl
 #define htons		win32_htons
 #define ntohl		win32_ntohl
@@ -176,4 +176,4 @@ void win32_endservent(void);
 }
 #endif
 
-#endif	// _INC_SYS_SOCKET
+#endif	/* _INC_SYS_SOCKET */

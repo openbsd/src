@@ -28,9 +28,12 @@ while (<C>) {
     $_ = "#   ifndef getenv\n$_#   endif\n";
   }
   elsif ( /getenv\("YYDEBUG"\)/ ) {
+    $_ = "  {\n    register int saved_errno = errno;\n"
+       . "#ifdef VMS\n    register int saved_vaxc_errno = vaxc\$errno;\n"
+       . "#else\n    register int saved_vaxc_errno = 0;\n#endif\n" . $_;
     # Reset the "error" status if an optional lookup fails
     while (not /^\s+\}/) { print COUT; $_ = <C>; }
-    $_ .= "\telse SETERRNO(0,SS\$_NORMAL);\n";
+    $_ .= "    else SETERRNO(saved_errno,saved_vaxc_errno);\n  }\n";
   }
   else {
     # add the dEXT tag to definitions of global vars, so we'll insert

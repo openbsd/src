@@ -34,14 +34,14 @@ Uses the value of a previous getpos call to return to a previously visited
 position. Returns "0 but true" on success, C<undef> on failure.
 
 =back
-  
+
 See L<perlfunc> for complete descriptions of each of the following
 supported C<IO::Seekable> methods, which are just front ends for the
 corresponding built-in functions:
 
 =over 4
 
-=item $io->setpos ( POS, WHENCE )
+=item $io->seek ( POS, WHENCE )
 
 Seek the IO::File to position POS, relative to WHENCE:
 
@@ -55,7 +55,7 @@ POS is absolute position. (Seek relative to the start of the file)
 
 POS is an offset from the current position. (Seek relative to current)
 
-=item WHENCE=1 (SEEK_END)
+=item WHENCE=2 (SEEK_END)
 
 POS is an offset from the end of the file. (Seek relative to end)
 
@@ -80,7 +80,7 @@ of zero is returned as the string C<"0 but true">
 Returns the IO::File's current position, or -1 on error.
 
 =back
-  
+
 =head1 SEE ALSO
 
 L<perlfunc>, 
@@ -94,7 +94,7 @@ Derived from FileHandle.pm by Graham Barr E<lt>gbarr@pobox.comE<gt>
 
 =cut
 
-require 5.005_64;
+use 5.006_001;
 use Carp;
 use strict;
 our($VERSION, @EXPORT, @ISA);
@@ -107,7 +107,8 @@ require Exporter;
 @EXPORT = qw(SEEK_SET SEEK_CUR SEEK_END);
 @ISA = qw(Exporter);
 
-$VERSION = "1.08";
+$VERSION = "1.08_00";
+$VERSION = eval $VERSION;
 
 sub seek {
     @_ == 3 or croak 'usage: $io->seek(POS, WHENCE)';

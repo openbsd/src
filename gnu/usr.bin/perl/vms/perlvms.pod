@@ -17,7 +17,7 @@ subdirectory of the Perl distribution.
 We hope these notes will save you from confusion and lost 
 sleep when writing Perl scripts on VMS.  If you find we've 
 missed something you think should appear here, please don't 
-hesitate to drop a line to vmsperl@newman.upenn.edu.
+hesitate to drop a line to vmsperl@perl.org.
 
 =head1 Installation
 
@@ -194,7 +194,7 @@ so we can try to work around them.
 =head2 Wildcard expansion
 
 File specifications containing wildcards are allowed both on 
-the command line and within Perl globs (e.g. <CE<lt>*.cE<gt>>).  If
+the command line and within Perl globs (e.g. C<E<lt>*.cE<gt>>).  If
 the wildcard filespec uses VMS syntax, the resultant 
 filespecs will follow VMS syntax; if a Unix-style filespec is 
 passed in, Unix-style filespecs will be returned.
@@ -231,6 +231,20 @@ string between the backticks is handled as if it were the
 argument to the C<system> operator (see below).  In this case,
 Perl will wait for the subprocess to complete before continuing. 
 
+The mailbox (MBX) that perl can create to communicate with a pipe
+defaults to a buffer size of 512.  The default buffer size is
+adjustable via the logical name PERL_MBX_SIZE provided that the
+value falls between 128 and the SYSGEN parameter MAXBUF inclusive.
+For example, to double the MBX size from the default within
+a Perl program, use C<$ENV{'PERL_MBX_SIZE'} = 1024;> and then
+open and use pipe constructs.  An alternative would be to issue
+the command:
+
+    $ Define PERL_MBX_SIZE 1024
+
+before running your wide record pipe program.  A larger value may
+improve performance at the expense of the BYTLM UAF quota.
+
 =head1 PERL5LIB and PERLLIB
 
 The PERL5LIB and PERLLIB logical names work as documented in L<perl>,
@@ -244,11 +258,29 @@ directory specifications may use either VMS or Unix syntax.
 Perl for VMS supports redirection of input and output on the 
 command line, using a subset of Bourne shell syntax:
 
-    <F<file> reads stdin from F<file>,
-    >F<file> writes stdout to F<file>,
-    >>F<file> appends stdout to F<file>,
-    2>F<file> writes stderr to F<file>, and
-    2>>F<file> appends stderr to F<file>. 
+=over
+
+=item *
+
+C<E<lt>file> reads stdin from C<file>,
+
+=item *
+
+C<E<gt>file> writes stdout to C<file>,
+
+=item *
+
+C<E<gt>E<gt>file> appends stdout to C<file>,
+
+=item *
+
+C<2E<gt>file> writes stderr to C<file>, and
+
+=item *
+
+C<2E<gt>E<gt>file> appends stderr to C<file>. 
+
+=back
 
 In addition, output may be piped to a subprocess, using the  
 character '|'.  Anything after this character on the command 
@@ -280,10 +312,10 @@ not remain as a previous version under the original filename.)
 
 =item -S
 
-If the C<-S> switch is present I<and> the script name does
-not contain a directory, then Perl translates the logical
-name DCL$PATH as a searchlist, using each translation as
-a directory in which to look for the script.  In addition,
+If the C<"-S"> or C<-"S"> switch is present I<and> the script
+name does not contain a directory, then Perl translates the
+logical name DCL$PATH as a searchlist, using each translation
+as a directory in which to look for the script.  In addition,
 if no file type is specified, Perl looks in each directory
 for a file matching the name specified, with a blank type,
 a type of F<.pl>, and a type of F<.com>, in that order.
@@ -306,7 +338,7 @@ Perl functions were implemented in the VMS port of Perl
     caller, chdir, chmod, chown, chomp, chop, chr,
     close, closedir, cos, crypt*, defined, delete,
     die, do, dump*, each, endpwent, eof, eval, exec*,
-    exists, exit, exp, fileno, fork*, getc, getlogin,
+    exists, exit, exp, fileno, getc, getlogin, getppid,
     getpwent*, getpwnam*, getpwuid*, glob, gmtime*, goto,
     grep, hex, import, index, int, join, keys, kill*,
     last, lc, lcfirst, length, local, localtime, log, m//,
@@ -326,17 +358,22 @@ The following functions were not implemented in the VMS port,
 and calling them produces a fatal error (usually) or 
 undefined behavior (rarely, we hope):
 
-    chroot, dbmclose, dbmopen, fcntl, flock,
-    getpgrp, getppid, getpriority, getgrent, getgrgid,
+    chroot, dbmclose, dbmopen, flock, fork*,
+    getpgrp, getpriority, getgrent, getgrgid,
     getgrnam, setgrent, endgrent, ioctl, link, lstat,
     msgctl, msgget, msgsend, msgrcv, readlink, semctl,
     semget, semop, setpgrp, setpriority, shmctl, shmget,
     shmread, shmwrite, socketpair, symlink, syscall
 
-The following functions are available on Perls compiled with Dec C 5.2 or
-greater and running VMS 7.0 or greater
+The following functions are available on Perls compiled with Dec C
+5.2 or greater and running VMS 7.0 or greater:
 
     truncate
+
+The following functions are available on Perls built on VMS 7.2 or
+greater:
+
+    fcntl (without locking)
 
 The following functions may or may not be implemented, 
 depending on what type of socket support you've built into 
@@ -422,15 +459,15 @@ the UAF was generated using uppercase username and
 password strings; you'll have to upcase the arguments to
 C<crypt> to insure that you'll get the proper value:
 
-  sub validate_passwd {
-    my($user,$passwd) = @_;
-    my($pwdhash);
-    if ( !($pwdhash = (getpwnam($user))[1]) ||
-         $pwdhash ne crypt("\U$passwd","\U$name") ) {
-      intruder_alert($name);
+    sub validate_passwd {
+        my($user,$passwd) = @_;
+        my($pwdhash);
+        if ( !($pwdhash = (getpwnam($user))[1]) ||
+               $pwdhash ne crypt("\U$passwd","\U$name") ) {
+            intruder_alert($name);
+        }
+        return 1;
     }
-    return 1;
-  }
 
 =item dump
 
@@ -445,49 +482,30 @@ affected by calling C<dump>.
 
 =item exec LIST
 
-The C<exec> operator behaves in one of two different ways.  
-If called after a call to C<fork>, it will invoke the CRTL 
-C<execv()> routine, passing its arguments to the subprocess 
-created by C<fork> for execution.  In this case, it is 
-subject to all limitations that affect C<execv()>.  (In 
-particular, this usually means that the command executed in 
-the subprocess must be an image compiled from C source code, 
-and that your options for passing file descriptors and signal 
-handlers to the subprocess are limited.)
-
-If the call to C<exec> does not follow a call to C<fork>, it 
-will cause Perl to exit, and to invoke the command given as 
-an argument to C<exec> via C<lib$do_command>.  If the argument 
-begins with '@' or '$' (other than as part of a filespec), then it 
-is executed as a DCL command.  Otherwise, the first token on 
-the command line is treated as the filespec of an image to 
-run, and an attempt is made to invoke it (using F<.Exe> and 
-the process defaults to expand the filespec) and pass the 
-rest of C<exec>'s argument to it as parameters.  If the token
-has no file type, and matches a file with null type, then an
-attempt is made to determine whether the file is an executable
-image which should be invoked using C<MCR> or a text file which
-should be passed to DCL as a command procedure.
-
-You can use C<exec> in both ways within the same script, as 
-long as you call C<fork> and C<exec> in pairs.  Perl
-keeps track of how many times C<fork> and C<exec> have been
-called, and will call the CRTL C<execv()> routine if there have
-previously been more calls to C<fork> than to C<exec>.
+A call to C<exec> will cause Perl to exit, and to invoke the command
+given as an argument to C<exec> via C<lib$do_command>.  If the
+argument begins with '@' or '$' (other than as part of a filespec),
+then it is executed as a DCL command.  Otherwise, the first token on
+the command line is treated as the filespec of an image to run, and
+an attempt is made to invoke it (using F<.Exe> and the process
+defaults to expand the filespec) and pass the rest of C<exec>'s
+argument to it as parameters.  If the token has no file type, and
+matches a file with null type, then an attempt is made to determine
+whether the file is an executable image which should be invoked
+using C<MCR> or a text file which should be passed to DCL as a
+command procedure.
 
 =item fork
 
-The C<fork> operator works in the same way as the CRTL 
-C<vfork()> routine, which is quite different under VMS than 
-under Unix.  Specifically, while C<fork> returns 0 after it 
-is called and the subprocess PID after C<exec> is called, in 
-both cases the thread of execution is within the parent 
-process, so there is no opportunity to perform operations in 
-the subprocess before calling C<exec>.
-
-In general, the use of C<fork> and C<exec> to create 
-subprocess is not recommended under VMS; wherever possible, 
-use the C<system> operator or piped filehandles instead.
+While in principle the C<fork> operator could be implemented via
+(and with the same rather severe limitations as) the CRTL C<vfork()>
+routine, and while some internal support to do just that is in
+place, the implementation has never been completed, making C<fork>
+currently unavailable.  A true kernel C<fork()> is expected in a
+future version of VMS, and the pseudo-fork based on interpreter
+threads may be available in a future version of Perl on VMS (see
+L<perlfork>).  In the meantime, use C<system>, backticks, or piped
+filehandles to create subprocesses.
 
 =item getpwent
 
@@ -575,10 +593,9 @@ B<SPAWN> at the DCL prompt.
 Perl waits for the subprocess to complete before continuing
 execution in the current process.  As described in L<perlfunc>,
 the return value of C<system> is a fake "status" which follows
-POSIX semantics; see the description of C<$?> in this document
-for more detail.  The actual VMS exit status of the subprocess
-is available in C<$^S> (as long as you haven't used another Perl
-function that resets C<$?> and C<$^S> in the meantime).
+POSIX semantics unless the pragma C<use vmsish 'status'> is in
+effect; see the description of C<$?> in this document for more 
+detail.  
 
 =item time
 
@@ -605,7 +622,7 @@ or backticks.
 C<unlink> will delete the highest version of a file only; in
 order to delete all versions, you need to say
 
-    1 while (unlink LIST);
+    1 while unlink LIST;
 
 You may need to make this change to scripts written for a
 Unix system which expect that after a call to C<unlink>,
@@ -647,15 +664,15 @@ time of the file (VMS revision date).
 =item waitpid PID,FLAGS
 
 If PID is a subprocess started by a piped C<open()> (see L<open>), 
-C<waitpid> will wait for that subprocess, and return its final
-status value.  If PID is a subprocess created in some other way
-(e.g. SPAWNed before Perl was invoked), or is not a subprocess of
-the current process, C<waitpid> will check once per second whether
-the process has completed, and when it has, will return 0.  (If PID
-specifies a process that isn't a subprocess of the current process,
+C<waitpid> will wait for that subprocess, and return its final status
+value in C<$?>.  If PID is a subprocess created in some other way (e.g.
+SPAWNed before Perl was invoked), C<waitpid> will simply check once per
+second whether the process has completed, and return when it has.  (If
+PID specifies a process that isn't a subprocess of the current process,
 and you invoked Perl with the C<-w> switch, a warning will be issued.)
 
-The FLAGS argument is ignored in all cases.
+Returns PID on success, -1 on error.  The FLAGS argument is ignored
+in all cases.
 
 =back
 
@@ -781,8 +798,8 @@ process, which will then be inherited by all subprocesses,
 by saying
 
     foreach my $key (qw[C-local keys you want promoted]) {
-       my $temp = $ENV{$key}; # read from C-local array
-       $ENV{$key} = $temp;    # and define as logical name
+        my $temp = $ENV{$key}; # read from C-local array
+        $ENV{$key} = $temp;    # and define as logical name
     }
 
 (You can't just say C<$ENV{$key} = $ENV{$key}>, since the
@@ -842,18 +859,26 @@ termination status of a process may or may not have been
 generated by an exception.  The next 8 bits are derived from
 the severity portion of the subprocess' exit status: if the
 severity was success or informational, these bits are all 0;
-otherwise, they contain the severity value shifted left one bit.
+if the severity was warning, they contain a value of 1; if the
+severity was error or fatal error, they contain the actual
+severity bits, which turns out to be a value of 2 for error
+and 4 for fatal error.  
+
 As a result, C<$?> will always be zero if the subprocess' exit
 status indicated successful completion, and non-zero if a
-warning or error occurred.  The actual VMS exit status may
-be found in C<$^S> (q.v.).
+warning or error occurred.  Conversely, when setting C<$?> in
+an END block, an attempt is made to convert the POSIX value
+into a native status intelligible to the operating system upon
+exiting Perl.  What this boils down to is that setting C<$?>
+to zero results in the generic success value SS$_NORMAL, and
+setting C<$?> to a non-zero value results in the generic
+failure status SS$_ABORT.  See also L<perlport/exit>.
 
-=item $^S
-
-Under VMS, this is the 32-bit VMS status value returned by the
-last subprocess to complete.  Unlike C<$?>, no manipulation
-is done to make this look like a POSIX wait(5) value, so it
-may be treated as a normal VMS status value.
+The pragma C<use vmsish 'status'> makes C<$?> reflect the actual 
+VMS exit status instead of the default emulation of POSIX status 
+described above.  This pragma also disables the conversion of
+non-zero values to SS$_ABORT when setting C<$?> in an END
+block (but zero will still be converted to SS$_NORMAL).
 
 =item $|
 
@@ -876,10 +901,11 @@ problems.
 
 =head1 Revision date
 
-This document was last updated on 26-Feb-2000, for Perl 5, 
-patchlevel 6.
+This document was last updated on 01-May-2002, for Perl 5,
+patchlevel 8.
 
 =head1 AUTHOR
 
-Charles Bailey  <bailey@cor.newman.upenn.edu>
-Dan Sugalski  <dan@sidhe.org>
+Charles Bailey  bailey@cor.newman.upenn.edu
+Craig Berry  craigberry@mac.com
+Dan Sugalski  dan@sidhe.org

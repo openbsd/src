@@ -1,18 +1,19 @@
 package ExtUtils::Command;
 
-use 5.005_64;
+use 5.00503;
 use strict;
-# use AutoLoader;
 use Carp;
 use File::Copy;
 use File::Compare;
 use File::Basename;
 use File::Path qw(rmtree);
 require Exporter;
-our(@ISA, @EXPORT, $VERSION);
+use vars qw(@ISA @EXPORT $VERSION);
 @ISA     = qw(Exporter);
 @EXPORT  = qw(cp rm_f rm_rf mv cat eqtime mkpath touch test_f);
-$VERSION = '1.01';
+$VERSION = '1.04';
+
+my $Is_VMS = $^O eq 'VMS';
 
 =head1 NAME
 
@@ -33,16 +34,27 @@ ExtUtils::Command - utilities to replace common UNIX commands in Makefiles etc.
 
 =head1 DESCRIPTION
 
-The module is used in the Win32 port to replace common UNIX commands.
-Most commands are wrappers on generic modules File::Path and File::Basename.
+The module is used to replace common UNIX commands.  In all cases the
+functions work from @ARGV rather than taking arguments.  This makes
+them easier to deal with in Makefiles.
+
+  perl -MExtUtils::Command -e some_command some files to work on
+
+I<NOT>
+
+  perl -MExtUtils::Command -e 'some_command qw(some files to work on)'
+
+Filenames with * and ? will be glob expanded.
 
 =over 4
 
 =cut
 
+# VMS uses % instead of ? to mean "one character"
+my $wild_regex = $Is_VMS ? '*%' : '*?';
 sub expand_wildcards
 {
- @ARGV = map(/[\*\?]/ ? glob($_) : $_,@ARGV);
+ @ARGV = map(/[$wild_regex]/o ? glob($_) : $_,@ARGV);
 }
 
 =item cat 
@@ -71,7 +83,7 @@ sub eqtime
  utime((stat($src))[8,9],$dst);
 }
 
-=item rm_f files....
+=item rm_rf files....
 
 Removes directories - recursively (even if readonly)
 
@@ -79,7 +91,8 @@ Removes directories - recursively (even if readonly)
 
 sub rm_rf
 {
- rmtree([grep -e $_,expand_wildcards()],0,0);
+ expand_wildcards();
+ rmtree([grep -e $_,@ARGV],0,0);
 }
 
 =item rm_f files....
@@ -90,11 +103,12 @@ Removes files (even if readonly)
 
 sub rm_f
 {
- foreach (expand_wildcards())
+ expand_wildcards();
+ foreach (@ARGV)
   {
-   next unless -f $_;        
+   next unless -f $_;
    next if unlink($_);
-   chmod(0777,$_);           
+   chmod(0777,$_);
    next if unlink($_);
    carp "Cannot delete $_:$!";
   }
@@ -108,11 +122,11 @@ Makes files exist, with current timestamp
 
 sub touch
 {
- expand_wildcards();
  my $t    = time;
+ expand_wildcards();
  while (@ARGV)
   {
-   my $file = shift(@ARGV);               
+   my $file = shift(@ARGV);
    open(FILE,">>$file") || die "Cannot write $file:$!";
    close(FILE);
    utime($t,$t,$file);
@@ -133,7 +147,7 @@ sub mv
  croak("Too many arguments") if (@ARGV > 1 && ! -d $dst);
  while (@ARGV)
   {
-   my $src = shift(@ARGV);               
+   my $src = shift(@ARGV);
    move($src,$dst);
   }
 }
@@ -143,7 +157,7 @@ sub mv
 Copies source to destination.
 Multiple sources are allowed if destination is an existing directory.
 
-=cut 
+=cut
 
 sub cp
 {
@@ -152,7 +166,7 @@ sub cp
  croak("Too many arguments") if (@ARGV > 1 && ! -d $dst);
  while (@ARGV)
   {
-   my $src = shift(@ARGV);               
+   my $src = shift(@ARGV);
    copy($src,$dst);
   }
 }
@@ -166,7 +180,8 @@ Sets UNIX like permissions 'mode' on all the files.
 sub chmod
 {
  my $mode = shift(@ARGV);
- chmod($mode,expand_wildcards()) || die "Cannot chmod ".join(' ',$mode,@ARGV).":$!";
+ expand_wildcards();
+ chmod($mode,@ARGV) || die "Cannot chmod ".join(' ',$mode,@ARGV).":$!";
 }
 
 =item mkpath directory...
@@ -177,7 +192,8 @@ Creates directory, including any parent directories.
 
 sub mkpath
 {
- File::Path::mkpath([expand_wildcards()],0,0777);
+ expand_wildcards();
+ File::Path::mkpath([@ARGV],0,0777);
 }
 
 =item test_f file

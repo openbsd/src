@@ -1,5 +1,7 @@
 package subs;
 
+our $VERSION = '1.00';
+
 =head1 NAME
 
 subs - Perl pragma to predeclare sub names

@@ -1,5 +1,5 @@
 # hints/solaris_2.sh
-# Last modified: Tue Jan  2 10:16:35 2001
+# Last modified: Mon Jan 29 12:52:28 2001
 # Lupe Christoph <lupe@lupe-christoph.de>
 # Based on version by:
 # Andy Dougherty  <doughera@lafayette.edu>
@@ -26,9 +26,16 @@
 #  these ought to be harmless.  See below for more details.
 
 # See man vfork.
-usevfork=false
+usevfork=${usevfork:-false}
 
-d_suidsafe=define
+# Solaris has secure SUID scripts
+d_suidsafe=${d_suidsafe:-define}
+
+# Several people reported problems with perl's malloc, especially
+# when use64bitall is defined or when using gcc.
+#     http://www.xray.mpe.mpg.de/mailing-lists/perl5-porters/2001-01/msg01318.html
+#     http://www.xray.mpe.mpg.de/mailing-lists/perl5-porters/2001-01/msg00465.html
+usemymalloc=${usemymalloc:-false}
 
 # Avoid all libraries in /usr/ucblib.
 # /lib is just a symlink to /usr/lib
@@ -87,6 +94,21 @@ case "$workshoplibpth_done" in
 esac
 EOCBU
 
+case "$cc" in
+'')	if test -f /opt/SUNWspro/bin/cc; then
+		cc=/opt/SUNWspro/bin/cc
+		cat <<EOF >&4	
+
+You specified no cc but you seem to have the Workshop compiler
+($cc) installed, using that.
+If you want something else, specify that in the command line,
+e.g. Configure -Dcc=gcc
+
+EOF
+	fi
+	;;
+esac
+
 ######################################################
 # General sanity testing.  See below for excerpts from the Solaris FAQ.
 #
@@ -112,7 +134,7 @@ esac
 
 # Check that /dev/fd is mounted.  If it is not mounted, let the
 # user know that suid scripts may not work.
-/usr/bin/df /dev/fd 2>&1 > /dev/null
+df /dev/fd 2>&1 > /dev/null
 case $? in
 0) ;;
 *)
@@ -245,15 +267,21 @@ END
 	    # apparently don't reveal that unless you pass in -V.
 	    # (This may all depend on local configurations too.)
 
+	    # Recompute verbose with -Wl,-v to find GNU ld if present
+	    verbose=`${cc:-cc} -v -Wl,-v -o try try.c 2>&1 | grep ld 2>&1`
+
 	    myld=`echo $verbose| grep ld | awk '/\/ld/ {print $1}'`
 	    # This assumes that gcc's output will not change, and that
 	    # /full/path/to/ld will be the first word of the output.
-	    # Thus myld is something like opt/gnu/sparc-sun-solaris2.5/bin/ld
+	    # Thus myld is something like /opt/gnu/sparc-sun-solaris2.5/bin/ld
 
-	    if $myld -V 2>&1 | grep "ld: Software Generation Utilities" >/dev/null 2>&1; then
+	    # Allow that $myld may be '', due to changes in gcc's output 
+	    if ${myld:-ld} -V 2>&1 |
+		grep "ld: Software Generation Utilities" >/dev/null 2>&1; then
 		# Ok, /usr/ccs/bin/ld eventually does get called.
 		:
 	    else
+		echo "Found GNU ld='$myld'" >&4
 		cat <<END >&2
 
 NOTE: You are using GNU ld(1).  GNU ld(1) might not build Perl.  If you
@@ -265,7 +293,7 @@ doesn't work, you should use -B/usr/ccs/bin/ instead.
 
 END
 		ccdlflags="$ccdlflags -Wl,-E"
-		lddlflags="$lddlflags -W,l-E -G"
+		lddlflags="$lddlflags -Wl,-E -G"
 	    fi
 	fi
 
@@ -378,6 +406,27 @@ for more information.
 
 EOM
         fi
+
+	# These prototypes should be visible since we using
+	# -D_REENTRANT, but that does not seem to work.
+	# It does seem to work for getnetbyaddr_r, weirdly enough,
+	# and other _r functions. (Solaris 8)
+
+	d_ctermid_r_proto="$define"
+	d_gethostbyaddr_r_proto="$define"
+	d_gethostbyname_r_proto="$define"
+	d_getnetbyname_r_proto="$define"
+	d_getprotobyname_r_proto="$define"
+	d_getprotobynumber_r_proto="$define"
+	d_getservbyname_r_proto="$define"
+	d_getservbyport_r_proto="$define"
+
+	# Ditto. (Solaris 7)
+	d_readdir_r_proto="$define"
+	d_readdir64_r_proto="$define"
+	d_tmpnam_r_proto="$define"
+	d_ttyname_r_proto="$define"
+
 	;;
 esac
 EOCBU
@@ -424,6 +473,26 @@ EOM
 		;;
 	    esac
 	    ;;
+esac
+# gcc-2.8.1 on Solaris 8 with -Duse64bitint fails op/pat.t test 822
+# if we compile regexec.c with -O.  Turn off optimization for that one
+# file.  See hints/README.hints , especially 
+# =head2 Propagating variables to config.sh, method 3.
+#  A. Dougherty  May 24, 2002
+case "$use64bitint" in
+"$define")
+    case "${gccversion}-${optimize}" in
+    2.8*-O*)
+	# Honor a command-line override (rather unlikely)
+	case "$regexec_cflags" in
+	'') echo "Disabling optimization on regexec.c for gcc $gccversion" >&4
+	    regexec_cflags='optimize='
+	    echo "regexec_cflags='optimize=\"\"'" >> config.sh 
+	    ;;
+	esac
+	;;
+    esac
+    ;;
 esac
 EOCBU
 
@@ -512,6 +581,9 @@ cat > UU/uselongdouble.cbu <<'EOCBU'
 case "$uselongdouble" in
 "$define"|true|[yY]*)
 	if test -f /opt/SUNWspro/lib/libsunmath.so; then
+		# Unfortunately libpth has already been set and
+		# searched, so we need to add in everything manually.
+		libpth="$libpth /opt/SUNWspro/lib"
 		libs="$libs -lsunmath"
 		ldflags="$ldflags -L/opt/SUNWspro/lib -R/opt/SUNWspro/lib"
 		d_sqrtl=define

@@ -7,7 +7,7 @@
 require Exporter;
 package Math::Trig;
 
-use 5.005_64;
+use 5.006;
 use strict;
 
 use Math::Complex qw(:trig);
@@ -16,7 +16,7 @@ our($VERSION, $PACKAGE, @ISA, @EXPORT, @EXPORT_OK, %EXPORT_TAGS);
 
 @ISA = qw(Exporter);
 
-$VERSION = 1.00;
+$VERSION = 1.01;
 
 my @angcnv = qw(rad2deg rad2grad
 	     deg2rad deg2grad
@@ -32,7 +32,7 @@ my @rdlcnv = qw(cartesian_to_cylindrical
 		spherical_to_cartesian
 		spherical_to_cylindrical);
 
-@EXPORT_OK = (@rdlcnv, 'great_circle_distance');
+@EXPORT_OK = (@rdlcnv, 'great_circle_distance', 'great_circle_direction');
 
 %EXPORT_TAGS = ('radial' => [ @rdlcnv ]);
 
@@ -128,6 +128,20 @@ sub great_circle_distance {
     return $rho *
         acos(cos( $lat0 ) * cos( $lat1 ) * cos( $theta0 - $theta1 ) +
              sin( $lat0 ) * sin( $lat1 ) );
+}
+
+sub great_circle_direction {
+    my ( $theta0, $phi0, $theta1, $phi1 ) = @_;
+
+    my $lat0 = pip2 - $phi0;
+    my $lat1 = pip2 - $phi1;
+
+    my $direction =
+	atan2(sin($theta0 - $theta1) * cos($lat1),
+	      cos($lat0) * sin($lat1) -
+	      sin($lat0) * cos($lat1) * cos($theta0 - $theta1));
+
+    return rad2rad($direction);
 }
 
 =pod
@@ -383,12 +397,12 @@ Notice that when C<$z> is not 0 C<$rho_c> is not equal to C<$rho_s>.
 
 =back
 
-=head1 GREAT CIRCLE DISTANCES
+=head1 GREAT CIRCLE DISTANCES AND DIRECTIONS
 
 You can compute spherical distances, called B<great circle distances>,
-by importing the C<great_circle_distance> function:
+by importing the great_circle_distance() function:
 
-	use Math::Trig 'great_circle_distance'
+  use Math::Trig 'great_circle_distance';
 
   $distance = great_circle_distance($theta0, $phi0, $theta1, $phi1, [, $rho]);
 
@@ -409,10 +423,26 @@ degrees).
   $distance = great_circle_distance($lon0, pi/2 - $lat0,
                                     $lon1, pi/2 - $lat1, $rho);
 
+The direction you must follow the great circle can be computed by the
+great_circle_direction() function:
+
+  use Math::Trig 'great_circle_direction';
+
+  $direction = great_circle_direction($theta0, $phi0, $theta1, $phi1);
+
+The result is in radians, zero indicating straight north, pi or -pi
+straight south, pi/2 straight west, and -pi/2 straight east.
+
+Notice that the resulting directions might be somewhat surprising if
+you are looking at a flat worldmap: in such map projections the great
+circles quite often do not look like the shortest routes-- but for
+example the shortest possible routes from Europe or North America to
+Asia do often cross the polar regions.
+
 =head1 EXAMPLES
 
-To calculate the distance between London (51.3N 0.5W) and Tokyo (35.7N
-139.8E) in kilometers:
+To calculate the distance between London (51.3N 0.5W) and Tokyo
+(35.7N 139.8E) in kilometers:
 
         use Math::Trig qw(great_circle_distance deg2rad);
 
@@ -422,8 +452,17 @@ To calculate the distance between London (51.3N 0.5W) and Tokyo (35.7N
 
         $km = great_circle_distance(@L, @T, 6378);
 
-The answer may be off by few percentages because of the irregular
-(slightly aspherical) form of the Earth.  The used formula
+The direction you would have to go from London to Tokyo
+
+        use Math::Trig qw(great_circle_direction);
+
+        $rad = great_circle_direction(@L, @T);
+
+=head2 CAVEAT FOR GREAT CIRCLE FORMULAS
+
+The answers may be off by few percentages because of the irregular
+(slightly aspherical) form of the Earth.  The formula used for
+grear circle distances
 
 	lat0 = 90 degrees - phi0
 	lat1 = 90 degrees - phi1

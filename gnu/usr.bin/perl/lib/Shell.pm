@@ -1,10 +1,10 @@
 package Shell;
-use 5.005_64;
+use 5.006_001;
 use strict;
 use warnings;
 our($capture_stderr, $VERSION, $AUTOLOAD);
 
-$VERSION = '0.3';
+$VERSION = '0.4';
 
 sub new { bless \$VERSION, shift } # Nothing better to bless
 sub DESTROY { }
@@ -196,6 +196,6 @@ Larry Wall
 
 Changes by Jenda@Krynicky.cz and Dave Cottle <d.cottle@csc.canterbury.ac.nz>
 
-Changes and bug fixes by Casey Tweten <crt@kiski.net>
+Changes and bug fixes by Casey West <casey@geeknest.com>
 
 =cut

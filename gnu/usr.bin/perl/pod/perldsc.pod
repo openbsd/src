@@ -15,7 +15,7 @@ hacked Perl's internal symbol table directly, a strategy that proved hard
 to develop and maintain--to put it mildly.
 
 The 5.0 release of Perl let us have complex data structures.  You
-may now write something like this and all of a sudden, you'd have a array
+may now write something like this and all of a sudden, you'd have an array
 with three dimensions!
 
     for $x (1 .. 10) {
@@ -32,7 +32,7 @@ elaborate construct than meets the eye!
 
 How do you print it out?  Why can't you say just C<print @AoA>?  How do
 you sort it?  How can you pass it to a function or get one of these back
-from a function?  Is is an object?  Can you save it to disk to read
+from a function?  Is it an object?  Can you save it to disk to read
 back later?  How do you access whole rows or columns of that matrix?  Do
 all the values have to be numeric?
 
@@ -76,7 +76,7 @@ one-dimensional.  They can hold only scalar values (meaning a string,
 number, or a reference).  They cannot directly contain other arrays or
 hashes, but instead contain I<references> to other arrays or hashes.
 
-You can't use a reference to a array or hash in quite the same way that you
+You can't use a reference to an array or hash in quite the same way that you
 would a real array or hash.  For C or C++ programmers unused to
 distinguishing between arrays and pointers to the same, this can be
 confusing.  If so, just think of it as the difference between a structure
@@ -332,7 +332,7 @@ types of data structures.
 
 =head1 ARRAYS OF ARRAYS
 
-=head2 Declaration of a ARRAY OF ARRAYS
+=head2 Declaration of an ARRAY OF ARRAYS
 
  @AoA = (
         [ "fred", "barney" ],
@@ -340,7 +340,7 @@ types of data structures.
         [ "homer", "marge", "bart" ],
       );
 
-=head2 Generation of a ARRAY OF ARRAYS
+=head2 Generation of an ARRAY OF ARRAYS
 
  # reading from file
  while ( <> ) {
@@ -361,7 +361,7 @@ types of data structures.
  # add to an existing row
  push @{ $AoA[0] }, "wilma", "betty";
 
-=head2 Access and Printing of a ARRAY OF ARRAYS
+=head2 Access and Printing of an ARRAY OF ARRAYS
 
  # one element
  $AoA[0][0] = "Fred";
@@ -466,7 +466,7 @@ types of data structures.
 
 =head1 ARRAYS OF HASHES
 
-=head2 Declaration of a ARRAY OF HASHES
+=head2 Declaration of an ARRAY OF HASHES
 
  @AoH = (
         {
@@ -485,7 +485,7 @@ types of data structures.
         }
   );
 
-=head2 Generation of a ARRAY OF HASHES
+=head2 Generation of an ARRAY OF HASHES
 
  # reading from file
  # format: LEAD=fred FRIEND=barney
@@ -521,7 +521,7 @@ types of data structures.
  $AoH[0]{pet} = "dino";
  $AoH[2]{pet} = "santa's little helper";
 
-=head2 Access and Printing of a ARRAY OF HASHES
+=head2 Access and Printing of an ARRAY OF HASHES
 
  # one element
  $AoH[0]{lead} = "fred";

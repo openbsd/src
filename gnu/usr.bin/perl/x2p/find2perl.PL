@@ -56,12 +56,17 @@ my $startperl = "#! $perlpath -w";
 #
 # Modified 2000-01-28 to use the 'follow' option of File::Find
 
+sub tab ();
+sub n ($$);
+sub fileglob_to_re ($);
+sub quote ($);
+
 my @roots = ();
 while ($ARGV[0] =~ /^[^-!(]/) {
     push(@roots, shift);
 }
 @roots = (curdir()) unless @roots;
-for (@roots) { $_ = &quote($_) }
+for (@roots) { $_ = quote($_) }
 my $roots = join(', ', @roots);
 
 my $find = "find";
@@ -72,6 +77,7 @@ my $flushall = '';
 my $initfile = '';
 my $initnewer = '';
 my $out = '';
+my $declaresubs = "sub wanted;\n";
 my %init = ();
 my ($follow_in_effect,$Skip_And) = (0,0);
 
@@ -79,26 +85,26 @@ while (@ARGV) {
     $_ = shift;
     s/^-// || /^[()!]/ || die "Unrecognized switch: $_\n";
     if ($_ eq '(') {
-        $out .= &tab . "(\n";
+        $out .= tab . "(\n";
         $indent_depth++;
         next;
     } elsif ($_ eq ')') {
         --$indent_depth;
-        $out .= &tab . ")";
+        $out .= tab . ")";
     } elsif ($_ eq 'follow') {
         $follow_in_effect= 1;
         $stat = 'stat';
         $Skip_And= 1;
     } elsif ($_ eq '!') {
-        $out .= &tab . "!";
+        $out .= tab . "!";
         next;
     } elsif ($_ eq 'name') {
-        $out .= &tab . '/' . &fileglob_to_re(shift) . "/s";
+        $out .= tab . '/' . fileglob_to_re(shift) . "/s";
     } elsif ($_ eq 'perm') {
         my $onum = shift;
         $onum =~ /^-?[0-7]+$/
             || die "Malformed -perm argument: $onum\n";
-        $out .= &tab;
+        $out .= tab;
         if ($onum =~ s/^-//) {
             $onum = sprintf("0%o", oct($onum) & 07777);
             $out .= "((\$mode & $onum) == $onum)";
@@ -108,14 +114,14 @@ while (@ARGV) {
         }
     } elsif ($_ eq 'type') {
         (my $filetest = shift) =~ tr/s/S/;
-        $out .= &tab . "-$filetest _";
+        $out .= tab . "-$filetest _";
     } elsif ($_ eq 'print') {
-        $out .= &tab . 'print("$name\n")';
+        $out .= tab . 'print("$name\n")';
     } elsif ($_ eq 'print0') {
-        $out .= &tab . 'print("$name\0")';
+        $out .= tab . 'print("$name\0")';
     } elsif ($_ eq 'fstype') {
         my $type = shift;
-        $out .= &tab;
+        $out .= tab;
         if ($type eq 'nfs') {
             $out .= '($dev < 0)';
         } else {
@@ -123,22 +129,22 @@ while (@ARGV) {
         }
     } elsif ($_ eq 'user') {
         my $uname = shift;
-        $out .= &tab . "(\$uid == \$uid{'$uname'})";
+        $out .= tab . "(\$uid == \$uid{'$uname'})";
         $init{user} = 1;
     } elsif ($_ eq 'group') {
         my $gname = shift;
-        $out .= &tab . "(\$gid == \$gid{'$gname'})";
+        $out .= tab . "(\$gid == \$gid{'$gname'})";
         $init{group} = 1;
     } elsif ($_ eq 'nouser') {
-        $out .= &tab . '!exists $uid{$uid}';
+        $out .= tab . '!exists $uid{$uid}';
         $init{user} = 1;
     } elsif ($_ eq 'nogroup') {
-        $out .= &tab . '!exists $gid{$gid}';
+        $out .= tab . '!exists $gid{$gid}';
         $init{group} = 1;
     } elsif ($_ eq 'links') {
-        $out .= &tab . &n('$nlink', shift);
+        $out .= tab . n('$nlink', shift);
     } elsif ($_ eq 'inum') {
-        $out .= &tab . &n('$ino', shift);
+        $out .= tab . n('$ino', shift);
     } elsif ($_ eq 'size') {
         $_ = shift;
         my $n = 'int(((-s _) + 511) / 512)';
@@ -147,19 +153,19 @@ while (@ARGV) {
         } elsif (s/k\z//) {
             $n = 'int(((-s _) + 1023) / 1024)';
         }
-        $out .= &tab . &n($n, $_);
+        $out .= tab . n($n, $_);
     } elsif ($_ eq 'atime') {
-        $out .= &tab . &n('int(-A _)', shift);
+        $out .= tab . n('int(-A _)', shift);
     } elsif ($_ eq 'mtime') {
-        $out .= &tab . &n('int(-M _)', shift);
+        $out .= tab . n('int(-M _)', shift);
     } elsif ($_ eq 'ctime') {
-        $out .= &tab . &n('int(-C _)', shift);
+        $out .= tab . n('int(-C _)', shift);
     } elsif ($_ eq 'exec') {
         my @cmd = ();
         while (@ARGV && $ARGV[0] ne ';')
             { push(@cmd, shift) }
         shift;
-        $out .= &tab;
+        $out .= tab;
         if ($cmd[0] =~m#^(?:(?:/usr)?/bin/)?rm$#
                 && $cmd[$#cmd] eq '{}'
                 && (@cmd == 2 || (@cmd == 3 && $cmd[1] eq '-f'))) {
@@ -173,7 +179,8 @@ while (@ARGV) {
         } else {
             for (@cmd)
                 { s/'/\\'/g }
-            { local $" = "','"; $out .= "&doexec(0, '@cmd')"; }
+            { local $" = "','"; $out .= "doexec(0, '@cmd')"; }
+            $declaresubs .= "sub doexec (\$\@);\n";
             $init{doexec} = 1;
         }
     } elsif ($_ eq 'ok') {
@@ -181,41 +188,44 @@ while (@ARGV) {
         while (@ARGV && $ARGV[0] ne ';')
             { push(@cmd, shift) }
         shift;
-        $out .= &tab;
+        $out .= tab;
         for (@cmd)
             { s/'/\\'/g }
-        { local $" = "','"; $out .= "&doexec(0, '@cmd')"; }
+        { local $" = "','"; $out .= "doexec(0, '@cmd')"; }
+        $declaresubs .= "sub doexec (\$\@);\n";
         $init{doexec} = 1;
     } elsif ($_ eq 'prune') {
-        $out .= &tab . '($File::Find::prune = 1)';
+        $out .= tab . '($File::Find::prune = 1)';
     } elsif ($_ eq 'xdev') {
-        $out .= &tab . '!($File::Find::prune |= ($dev != $File::Find::topdev))'
+        $out .= tab . '!($File::Find::prune |= ($dev != $File::Find::topdev))'
 ;
     } elsif ($_ eq 'newer') {
         my $file = shift;
         my $newername = 'AGE_OF' . $file;
         $newername =~ s/\W/_/g;
         $newername = '$' . $newername;
-        $out .= &tab . "(-M _ < $newername)";
-        $initnewer .= "my $newername = -M " . &quote($file) . ";\n";
+        $out .= tab . "(-M _ < $newername)";
+        $initnewer .= "my $newername = -M " . quote($file) . ";\n";
     } elsif ($_ eq 'eval') {
         my $prog = shift;
         $prog =~ s/'/\\'/g;
-        $out .= &tab . "eval {$prog}";
+        $out .= tab . "eval {$prog}";
     } elsif ($_ eq 'depth') {
         $find = 'finddepth';
         next;
     } elsif ($_ eq 'ls') {
-        $out .= &tab . "&ls";
+        $out .= tab . "ls";
+        $declaresubs .= "sub ls ();\n";
         $init{ls} = 1;
     } elsif ($_ eq 'tar') {
         die "-tar must have a filename argument\n" unless @ARGV;
         my $file = shift;
         my $fh = 'FH' . $file;
         $fh =~ s/\W/_/g;
-        $out .= &tab . "&tar(*$fh, \$name)";
-        $flushall .= "&tflushall;\n";
-        $initfile .= "open($fh, " . &quote('> ' . $file) .
+        $out .= tab . "tar(*$fh, \$name)";
+        $flushall .= "tflushall;\n";
+        $declaresubs .= "sub tar;\nsub tflushall ();\n";
+        $initfile .= "open($fh, " . quote('> ' . $file) .
                      qq{) || die "Can't open $fh: \$!\\n";\n};
         $init{tar} = 1;
     } elsif (/^(n?)cpio\z/) {
@@ -223,10 +233,11 @@ while (@ARGV) {
         my $file = shift;
         my $fh = 'FH' . $file;
         $fh =~ s/\W/_/g;
-        $out .= &tab . "&cpio(*$fh, \$name, '$1')";
+        $out .= tab . "cpio(*$fh, \$name, '$1')";
         $find = 'finddepth';
-        $flushall .= "&cflushall;\n";
-        $initfile .= "open($fh, " . &quote('> ' . $file) .
+        $flushall .= "cflushall;\n";
+        $declaresubs .= "sub cpio;\nsub cflushall ();\n";
+        $initfile .= "open($fh, " . quote('> ' . $file) .
                      qq{) || die "Can't open $fh: \$!\\n";\n};
         $init{cpio} = 1;
     } else {
@@ -235,7 +246,7 @@ while (@ARGV) {
 
     if (@ARGV) {
         if ($ARGV[0] eq '-o') {
-            { local($statdone) = 1; $out .= "\n" . &tab . "||\n"; }
+            { local($statdone) = 1; $out .= "\n" . tab . "||\n"; }
             $statdone = 0 if $indent_depth == 1 && exists $init{delayedstat};
             $init{saw_or} = 1;
             shift;
@@ -265,8 +276,9 @@ use vars qw/*name *dir *prune/;
 *dir    = *File::Find::dir;
 *prune  = *File::Find::prune;
 
-END
+$declaresubs
 
+END
 
 if (exists $init{ls}) {
     print <<'END';
@@ -339,19 +351,20 @@ if (exists $init{doexec}) {
 use Cwd ();
 my $cwd = Cwd::cwd();
 
-sub doexec {
+sub doexec ($@) {
     my $ok = shift;
-    for my $word (@_)
+    my @command = @_; # copy so we don't try to s/// aliases to constants
+    for my $word (@command)
         { $word =~ s#{}#$name#g }
     if ($ok) {
         my $old = select(STDOUT);
         $| = 1;
-        print "@_";
+        print "@command";
         select($old);
         return 0 unless <STDIN> =~ /^y/;
     }
     chdir $cwd; #sigh
-    system @_;
+    system @command;
     chdir $File::Find::dir;
     return !$?;
 }
@@ -367,7 +380,7 @@ sub sizemm {
     sprintf("%3d, %3d", ($rdev >> 8) & 0xff, $rdev & 0xff);
 }
 
-sub ls {
+sub ls () {
     my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,
 INTRO
         \$atime,\$mtime,\$ctime,\$blksize,\$blocks) = $stat(_);
@@ -515,9 +528,9 @@ SUB
     }
 }
 
-sub cflushall {
+sub cflushall () {
     for my $fh (keys %cpout) {
-        &cpio($fh, undef, $nc{$fh});
+        cpio($fh, undef, $nc{$fh});
         $cpout{$fh} .= "0" x (5120 - length($cpout{$fh}));
         flush($fh, \$cpout{$fh}, 5120);
         print $blocks{$fh} * 10, " blocks\n";
@@ -619,7 +632,7 @@ SUB
     }
 }
 
-sub tflushall {
+sub tflushall () {
     my $len;
     for my $fh (keys %tarout) {
         $len = 10240 - length($tarout{$fh});
@@ -636,7 +649,7 @@ exit;
 
 ############################################################################
 
-sub tab {
+sub tab () {
     my $tabstring;
 
     $tabstring = "\t" x ($indent_depth/2) . ' ' x ($indent_depth%2 * 4);
@@ -659,21 +672,21 @@ sub tab {
     $tabstring;
 }
 
-sub fileglob_to_re {
+sub fileglob_to_re ($) {
     my $x = shift;
-    $x =~ s#([./^\$()])#\\$1#g;
+    $x =~ s#([./^\$()+])#\\$1#g;
     $x =~ s#([?*])#.$1#g;
     "^$x\\z";
 }
 
-sub n {
+sub n ($$) {
     my ($pre, $n) = @_;
     $n =~ s/^-/< / || $n =~ s/^\+/> / || $n =~ s/^/== /;
     $n =~ s/ 0*(\d)/ $1/;
     "($pre $n)";
 }
 
-sub quote {
+sub quote ($) {
     my $string = shift;
     $string =~ s/\\/\\\\/g;
     $string =~ s/'/\\'/g;
@@ -828,7 +841,7 @@ Like -print, but terminates with \0 instead of \n.
 
 =item C<-exec OPTIONS ;>
 
-exec() the arguments in OPTIONS in a subprocess; any occurence of {} in
+exec() the arguments in OPTIONS in a subprocess; any occurrence of {} in
 OPTIONS will first be substituted with the path of the current
 file.  Note that the command "rm" has been special-cased to use perl's
 unlink() function instead (as an optimization).  The C<;> must be passed as

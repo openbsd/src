@@ -30,31 +30,33 @@ calls.
 #include "perl.h"
 #include "win32.h"
 
-#ifdef PERL_OBJECT
-#define NO_XSLOCKS
-#endif  /* PERL_OBJECT */
-
 #include "XSUB.h"
 
-static SV *error_sv;
+typedef struct {
+    SV *	x_error_sv;
+} my_cxtx_t;		/* this *must* be named my_cxtx_t */
 
-static char *
-OS_Error_String(pTHXo)
-{
- DWORD err = GetLastError();
- STRLEN len;
- if (!error_sv)
-  error_sv = newSVpvn("",0);
- PerlProc_GetOSError(error_sv,err);
- return SvPV(error_sv,len);
-}
-
+#define DL_CXT_EXTRA	/* ask for dl_cxtx to be defined in dlutils.c */
 #include "dlutils.c"	/* SaveError() etc	*/
 
-static void
-dl_private_init(pTHXo)
+#define dl_error_sv	(dl_cxtx.x_error_sv)
+
+static char *
+OS_Error_String(pTHX)
 {
-    (void)dl_generic_private_init(aTHXo);
+    dMY_CXT;
+    DWORD err = GetLastError();
+    STRLEN len;
+    if (!dl_error_sv)
+	dl_error_sv = newSVpvn("",0);
+    PerlProc_GetOSError(dl_error_sv,err);
+    return SvPV(dl_error_sv,len);
+}
+
+static void
+dl_private_init(pTHX)
+{
+    (void)dl_generic_private_init(aTHX);
 }
 
 /* 
@@ -96,7 +98,7 @@ dl_static_linked(char *filename)
 MODULE = DynaLoader	PACKAGE = DynaLoader
 
 BOOT:
-    (void)dl_private_init(aTHXo);
+    (void)dl_private_init(aTHX);
 
 void *
 dl_load_file(filename,flags=0)
@@ -114,8 +116,8 @@ dl_load_file(filename,flags=0)
     DLDEBUG(2,PerlIO_printf(Perl_debug_log," libref=%x\n", RETVAL));
     ST(0) = sv_newmortal() ;
     if (RETVAL == NULL)
-	SaveError(aTHXo_ "load_file:%s",
-		  OS_Error_String(aTHXo)) ;
+	SaveError(aTHX_ "load_file:%s",
+		  OS_Error_String(aTHX)) ;
     else
 	sv_setiv( ST(0), (IV)RETVAL);
   }
@@ -131,8 +133,8 @@ dl_find_symbol(libhandle, symbolname)
     DLDEBUG(2,PerlIO_printf(Perl_debug_log,"  symbolref = %x\n", RETVAL));
     ST(0) = sv_newmortal() ;
     if (RETVAL == NULL)
-	SaveError(aTHXo_ "find_symbol:%s",
-		  OS_Error_String(aTHXo)) ;
+	SaveError(aTHX_ "find_symbol:%s",
+		  OS_Error_String(aTHX)) ;
     else
 	sv_setiv( ST(0), (IV)RETVAL);
 
@@ -154,14 +156,15 @@ dl_install_xsub(perl_name, symref, filename="$Package")
     DLDEBUG(2,PerlIO_printf(Perl_debug_log,"dl_install_xsub(name=%s, symref=%x)\n",
 		      perl_name, symref));
     ST(0) = sv_2mortal(newRV((SV*)newXS(perl_name,
-					(void(*)(pTHXo_ CV *))symref,
+					(void(*)(pTHX_ CV *))symref,
 					filename)));
 
 
 char *
 dl_error()
     CODE:
-    RETVAL = LastError ;
+    dMY_CXT;
+    RETVAL = dl_last_error;
     OUTPUT:
     RETVAL
 

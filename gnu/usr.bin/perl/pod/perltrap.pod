@@ -651,6 +651,16 @@ are to used around the name.
     # perl4 prints: {a}
     # perl5 prints: 2
 
+=item * Parsing
+
+When perl sees C<map {> (or C<grep {>), it has to guess whether the C<{>
+starts a BLOCK or a hash reference. If it guesses wrong, it will report
+a syntax error near the C<}> and the missing (or unexpected) comma.
+
+Use unary C<+> before C<{> on a hash reference, and unary C<+> applied
+to the first thing in a BLOCK (after C<{>), for perl to guess right all
+the time. (See L<perlfunc/map>.)
+
 =back
 
 =head2 Numerical Traps
@@ -662,18 +672,24 @@ operands, or output from same.
 
 =item * Numerical
 
-Formatted output and significant digits
+Formatted output and significant digits.  In general, Perl 5
+tries to be more precise.  For example, on a Solaris Sparc:
 
     print 7.373504 - 0, "\n";
     printf "%20.18f\n", 7.373504 - 0;
 
     # Perl4 prints:
-    7.375039999999996141
-    7.37503999999999614
+    7.3750399999999996141
+    7.375039999999999614
 
     # Perl5 prints:
     7.373504
-    7.37503999999999614
+    7.375039999999999614
+
+Notice how the first result looks better in Perl 5.
+
+Your results may vary, since your floating point formatting routines
+and even floating point format may be slightly different.
 
 =item * Numerical
 
@@ -688,7 +704,7 @@ If in doubt:
 
 Assignment of return values from numeric equality tests
 does not work in perl5 when the test evaluates to false (0).
-Logical tests now return an null, instead of 0
+Logical tests now return a null, instead of 0
 
     $p = ($test == 1);
     print $p,"\n";

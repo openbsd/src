@@ -1,4 +1,10 @@
 /*    regcomp.h
+ *
+ *    Copyright (c) 1997-2002, Larry Wall
+ *
+ *    You may distribute under the terms of either the GNU General Public
+ *    License or the Artistic License, as specified in the README file.
+ *
  */
 
 typedef OP OP_4tree;			/* Will be redefined later. */
@@ -88,21 +94,23 @@ struct regnode_2 {
 };
 
 #define ANYOF_BITMAP_SIZE	32	/* 256 b/(8 b/B) */
-#define ANYOF_CLASSBITMAP_SIZE	 4
+#define ANYOF_CLASSBITMAP_SIZE	 4	/* up to 32 (8*4) named classes */
 
 struct regnode_charclass {
     U8	flags;
     U8  type;
     U16 next_off;
-    char bitmap[ANYOF_BITMAP_SIZE];
+    U32 arg1;
+    char bitmap[ANYOF_BITMAP_SIZE];	/* only compile-time */
 };
 
-struct regnode_charclass_class {
-    U8	flags;
+struct regnode_charclass_class {	/* has [[:blah:]] classes */
+    U8	flags;				/* should have ANYOF_CLASS here */
     U8  type;
     U16 next_off;
-    char bitmap[ANYOF_BITMAP_SIZE];
-    char classflags[ANYOF_CLASSBITMAP_SIZE];
+    U32 arg1;
+    char bitmap[ANYOF_BITMAP_SIZE];		/* both compile-time */
+    char classflags[ANYOF_CLASSBITMAP_SIZE];	/* and run-time */
 };
 
 /* XXX fix this description.
@@ -130,12 +138,19 @@ struct regnode_charclass_class {
 #define ARG_VALUE(arg) (arg)
 #define ARG__SET(arg,val) ((arg) = (val))
 
+#undef ARG
+#undef ARG1
+#undef ARG2
+
 #define ARG(p) ARG_VALUE(ARG_LOC(p))
 #define ARG1(p) ARG_VALUE(ARG1_LOC(p))
 #define ARG2(p) ARG_VALUE(ARG2_LOC(p))
 #define ARG_SET(p, val) ARG__SET(ARG_LOC(p), (val))
 #define ARG1_SET(p, val) ARG__SET(ARG1_LOC(p), (val))
 #define ARG2_SET(p, val) ARG__SET(ARG2_LOC(p), (val))
+
+#undef NEXT_OFF
+#undef NODE_ALIGN
 
 #ifndef lint
 #  define NEXT_OFF(p) ((p)->next_off)
@@ -149,6 +164,11 @@ struct regnode_charclass_class {
 
 #define SIZE_ALIGN NODE_ALIGN
 
+#undef OP
+#undef OPERAND
+#undef MASK
+#undef STRING
+
 #define	OP(p)		((p)->type)
 #define	OPERAND(p)	(((struct regnode_string *)p)->string)
 #define MASK(p)		((char*)OPERAND(p))
@@ -156,6 +176,11 @@ struct regnode_charclass_class {
 #define	STRING(p)	(((struct regnode_string *)p)->string)
 #define STR_SZ(l)	((l + sizeof(regnode) - 1) / sizeof(regnode))
 #define NODE_SZ_STR(p)	(STR_SZ(STR_LEN(p))+1)
+
+#undef NODE_ALIGN
+#undef ARG_LOC
+#undef NEXTOPER
+#undef PREVOPER
 
 #define	NODE_ALIGN(node)
 #define	ARG_LOC(p)	(((struct regnode_1 *)p)->arg1)
@@ -176,17 +201,29 @@ struct regnode_charclass_class {
 
 #define REG_MAGIC 0234
 
-#define SIZE_ONLY (PL_regcode == &PL_regdummy)
+#define SIZE_ONLY (RExC_emit == &PL_regdummy)
 
 /* Flags for node->flags of ANYOF */
 
-#define ANYOF_CLASS	0x08
-#define ANYOF_INVERT	0x04
-#define ANYOF_FOLD	0x02
-#define ANYOF_LOCALE	0x01
+#define ANYOF_CLASS		0x08	/* has [[:blah:]] classes */
+#define ANYOF_INVERT		0x04
+#define ANYOF_FOLD		0x02
+#define ANYOF_LOCALE		0x01
 
 /* Used for regstclass only */
-#define ANYOF_EOS	0x10		/* Can match an empty string too */
+#define ANYOF_EOS		0x10		/* Can match an empty string too */
+
+/* There is a character or a range past 0xff */
+#define ANYOF_UNICODE		0x20
+#define ANYOF_UNICODE_ALL	0x40	/* Can match any char past 0xff */
+
+/* size of node is large (includes class pointer) */
+#define ANYOF_LARGE 		0x80
+
+/* Are there any runtime flags on in this node? */
+#define ANYOF_RUNTIME(s)	(ANYOF_FLAGS(s) & 0x0f)
+
+#define ANYOF_FLAGS_ALL		0xff
 
 /* Character classes for node->classflags of ANYOF */
 /* Should be synchronized with a table in regprop() */
@@ -220,7 +257,7 @@ struct regnode_charclass_class {
 #define ANYOF_NXDIGIT	25
 #define ANYOF_PSXSPC	26	/* POSIX space: \s plus the vertical tab */
 #define ANYOF_NPSXSPC	27
-#define ANYOF_BLANK	28	/* GNU extension: space and tab */
+#define ANYOF_BLANK	28	/* GNU extension: space and tab: non-vertical space */
 #define ANYOF_NBLANK	29
 
 #define ANYOF_MAX	32
@@ -238,7 +275,6 @@ struct regnode_charclass_class {
 #define ANYOF_CLASS_SIZE	(sizeof(struct regnode_charclass_class))
 
 #define ANYOF_FLAGS(p)		((p)->flags)
-#define ANYOF_FLAGS_ALL		0xff
 
 #define ANYOF_BIT(c)		(1 << ((c) & 7))
 
@@ -255,6 +291,14 @@ struct regnode_charclass_class {
 #define ANYOF_BITMAP_SET(p, c)	(ANYOF_BITMAP_BYTE(p, c) |=  ANYOF_BIT(c))
 #define ANYOF_BITMAP_CLEAR(p,c)	(ANYOF_BITMAP_BYTE(p, c) &= ~ANYOF_BIT(c))
 #define ANYOF_BITMAP_TEST(p, c)	(ANYOF_BITMAP_BYTE(p, c) &   ANYOF_BIT(c))
+
+#define ANYOF_BITMAP_SETALL(p)		\
+	memset (ANYOF_BITMAP(p), 255, ANYOF_BITMAP_SIZE)
+#define ANYOF_BITMAP_CLEARALL(p)	\
+	Zero (ANYOF_BITMAP(p), ANYOF_BITMAP_SIZE)
+/* Check that all 256 bits are all set.  Used in S_cl_is_anything()  */
+#define ANYOF_BITMAP_TESTALLSET(p)	\
+	memEQ (ANYOF_BITMAP(p), "\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377", ANYOF_BITMAP_SIZE)
 
 #define ANYOF_SKIP		((ANYOF_SIZE - 1)/sizeof(regnode))
 #define ANYOF_CLASS_SKIP	((ANYOF_CLASS_SIZE - 1)/sizeof(regnode))
@@ -275,10 +319,12 @@ struct regnode_charclass_class {
 
 #define EXTRA_SIZE(guy) ((sizeof(guy)-1)/sizeof(struct regnode))
 
-#define REG_SEEN_ZERO_LEN	1
-#define REG_SEEN_LOOKBEHIND	2
-#define REG_SEEN_GPOS		4
-#define REG_SEEN_EVAL		8
+#define REG_SEEN_ZERO_LEN	 1
+#define REG_SEEN_LOOKBEHIND	 2
+#define REG_SEEN_GPOS		 4
+#define REG_SEEN_EVAL		 8
+#define REG_SEEN_CANY		16
+#define REG_SEEN_SANY		REG_SEEN_CANY /* src bckwrd cmpt */
 
 START_EXTERN_C
 
@@ -300,12 +346,14 @@ EXTCONST U8 PL_varies[] = {
 EXTCONST U8 PL_simple[];
 #else
 EXTCONST U8 PL_simple[] = {
-    REG_ANY, ANYUTF8, SANY, SANYUTF8, ANYOF, ANYOFUTF8,
-    ALNUM, ALNUMUTF8, ALNUML, ALNUMLUTF8,
-    NALNUM, NALNUMUTF8, NALNUML, NALNUMLUTF8,
-    SPACE, SPACEUTF8, SPACEL, SPACELUTF8,
-    NSPACE, NSPACEUTF8, NSPACEL, NSPACELUTF8,
-    DIGIT, DIGITUTF8, NDIGIT, NDIGITUTF8, 0
+    REG_ANY,	SANY,	CANY,
+    ANYOF,
+    ALNUM,	ALNUML,
+    NALNUM,	NALNUML,
+    SPACE,	SPACEL,
+    NSPACE,	NSPACEL,
+    DIGIT,	NDIGIT,
+    0
 };
 #endif
 
@@ -317,6 +365,18 @@ typedef struct re_scream_pos_data_s
     I32 *scream_pos;		/* Internal iterator of scream. */
 } re_scream_pos_data;
 
+/* .what is a character array with one character for each member of .data
+ * The character describes the function of the corresponding .data item:
+ *   f - start-class data for regstclass optimization  
+ *   n - Root of op tree for (?{EVAL}) item
+ *   o - Start op for (?{EVAL}) item
+ *   p - Pad for (?{EVAL} item
+ *   s - swash for unicode-style character class, and the multicharacter
+ *       strings resulting from casefolding the single-character entries
+ *       in the character class
+ * 20010712 mjd@plover.com
+ * (Remember to update re_dup() and pregfree() if you add any items.)
+ */
 struct reg_data {
     U32 count;
     U8 *what;
@@ -326,7 +386,8 @@ struct reg_data {
 struct reg_substr_datum {
     I32 min_offset;
     I32 max_offset;
-    SV *substr;
+    SV *substr;		/* non-utf8 variant */
+    SV *utf8_substr;	/* utf8 variant */
 };
 
 struct reg_substr_data {
@@ -334,10 +395,13 @@ struct reg_substr_data {
 };
 
 #define anchored_substr substrs->data[0].substr
+#define anchored_utf8 substrs->data[0].utf8_substr
 #define anchored_offset substrs->data[0].min_offset
 #define float_substr substrs->data[1].substr
+#define float_utf8 substrs->data[1].utf8_substr
 #define float_min_offset substrs->data[1].min_offset
 #define float_max_offset substrs->data[1].max_offset
 #define check_substr substrs->data[2].substr
+#define check_utf8 substrs->data[2].utf8_substr
 #define check_offset_min substrs->data[2].min_offset
 #define check_offset_max substrs->data[2].max_offset

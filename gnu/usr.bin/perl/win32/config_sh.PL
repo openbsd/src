@@ -1,3 +1,4 @@
+use FindExt;
 # take a semicolon separated path list and turn it into a quoted
 # list of paths that Text::Parsewords will grok
 sub mungepath {
@@ -33,12 +34,31 @@ sub loadopts {
     }
 }
 
+FindExt::scan_ext("../ext");
+
 my %opt;
+
 my $optref = loadopts();
 while (@{$optref} && $optref->[0] =~ /^([\w_]+)=(.*)$/) {
     $opt{$1}=$2;
     shift(@{$optref});
 }
+
+my @dynamic = FindExt::dynamic_extensions();
+my @noxs    = FindExt::noxs_extensions();
+my @known   = sort(@dynamic,split(/\s+/,$opt{'staticext'}),@noxs);
+$opt{'known_extensions'} = join(' ',@known);
+
+if (!$opt{'use5005threads'} || $opt{'use5005threads'} eq 'undef')
+ {
+  @dynamic = grep(!/Thread/,@dynamic);
+  @known   = grep(!/Thread/,@dynamic);
+ }
+
+$opt{'dynamic_ext'} = join(' ',@dynamic);
+$opt{'nonxs_ext'}   = join(' ',@noxs);
+
+$opt{'extensions'} = join(' ',@known);
 
 my $pl_h = '../patchlevel.h';
 
@@ -56,6 +76,8 @@ else {
 }
 $opt{VERSION} = "$opt{PERL_REVISION}.$opt{PERL_VERSION}.$opt{PERL_SUBVERSION}";
 $opt{INST_VER} =~ s|~VERSION~|$opt{VERSION}|g;
+$opt{'version_patchlevel_string'} = "version $opt{PERL_VERSION} subversion $opt{PERL_SUBVERSION}";
+$opt{'version_patchlevel_string'} .= " patchlevel $opt{PERL_PATCHLEVEL}" if exists $opt{PERL_PATCHLEVEL};
 
 $opt{'cf_by'} = $ENV{USERNAME} unless $opt{'cf_by'};
 $opt{'cf_email'} = $opt{'cf_by'} . '@' . (gethostbyname('localhost'))[0]
@@ -64,6 +86,12 @@ $opt{'usemymalloc'} = 'y' if $opt{'d_mymalloc'} eq 'define';
 
 $opt{libpth} = mungepath($opt{libpth}) if exists $opt{libpth};
 $opt{incpath} = mungepath($opt{incpath}) if exists $opt{incpath};
+
+# some functions are not available on Win9x
+if (defined(&Win32::IsWin95) && Win32::IsWin95()) {
+    $opt{d_flock} = 'undef';
+    $opt{d_link} = 'undef';
+}
 
 while (<>) {
     s/~([\w_]+)~/$opt{$1}/g;
@@ -80,4 +108,3 @@ while (<>) {
     }
     print;
 }
-

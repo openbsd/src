@@ -10,15 +10,16 @@ char			T_CHAR
 unsigned char		T_U_CHAR
 char *			T_PV
 unsigned char *		T_PV
+const char *		T_PV
 caddr_t			T_PV
 wchar_t *		T_PV
 wchar_t			T_IV
 bool_t			T_IV
-size_t			T_IV
+size_t			T_UV
 ssize_t			T_IV
 time_t			T_NV
 unsigned long *		T_OPAQUEPTR
-char **			T_PACKED
+char **			T_PACKEDARRAY
 void *			T_PTR
 Time_t *		T_PV
 SV *			T_SV
@@ -29,19 +30,22 @@ CV *			T_CVREF
 
 IV			T_IV
 UV			T_UV
-NV			T_NV
+NV                      T_NV
 I32			T_IV
 I16			T_IV
 I8			T_IV
+STRLEN			T_UV
 U32			T_U_LONG
 U16			T_U_SHORT
 U8			T_UV
 Result			T_U_CHAR
-Boolean			T_IV
+Boolean			T_BOOL
+float                   T_FLOAT
 double			T_DOUBLE
 SysRet			T_SYSRET
 SysRetLong		T_SYSRET
-FILE *			T_IN
+FILE *			T_STDIO
+PerlIO *		T_INOUT
 FileHandle		T_PTROBJ
 InputStream		T_IN
 InOutStream		T_INOUT
@@ -53,25 +57,25 @@ INPUT
 T_SV
 	$var = $arg
 T_SVREF
-	if (sv_isa($arg, \"${ntype}\"))
+	if (SvROK($arg))
 	    $var = (SV*)SvRV($arg);
 	else
-	    croak(\"$var is not of type ${ntype}\")
+	    Perl_croak(aTHX_ \"$var is not a reference\")
 T_AVREF
-	if (sv_isa($arg, \"${ntype}\"))
+	if (SvROK($arg) && SvTYPE(SvRV($arg))==SVt_PVAV)
 	    $var = (AV*)SvRV($arg);
 	else
-	    croak(\"$var is not of type ${ntype}\")
+	    Perl_croak(aTHX_ \"$var is not an array reference\")
 T_HVREF
-	if (sv_isa($arg, \"${ntype}\"))
+	if (SvROK($arg) && SvTYPE(SvRV($arg))==SVt_PVHV)
 	    $var = (HV*)SvRV($arg);
 	else
-	    croak(\"$var is not of type ${ntype}\")
+	    Perl_croak(aTHX_ \"$var is not a hash reference\")
 T_CVREF
-	if (sv_isa($arg, \"${ntype}\"))
+	if (SvROK($arg) && SvTYPE(SvRV($arg))==SVt_PVCV)
 	    $var = (CV*)SvRV($arg);
 	else
-	    croak(\"$var is not of type ${ntype}\")
+	    Perl_croak(aTHX_ \"$var is not a code reference\")
 T_SYSRET
 	$var NOT IMPLEMENTED
 T_UV
@@ -83,7 +87,7 @@ T_INT
 T_ENUM
 	$var = ($type)SvIV($arg)
 T_BOOL
-	$var = (int)SvIV($arg)
+	$var = (bool)SvTRUE($arg)
 T_U_INT
 	$var = (unsigned int)SvUV($arg)
 T_SHORT
@@ -95,7 +99,7 @@ T_LONG
 T_U_LONG
 	$var = (unsigned long)SvUV($arg)
 T_CHAR
-	$var = (char)*SvPV($arg,PL_na)
+	$var = (char)*SvPV_nolen($arg)
 T_U_CHAR
 	$var = (unsigned char)SvUV($arg)
 T_FLOAT
@@ -105,7 +109,7 @@ T_NV
 T_DOUBLE
 	$var = (double)SvNV($arg)
 T_PV
-	$var = ($type)SvPV($arg,PL_na)
+	$var = ($type)SvPV_nolen($arg)
 T_PTR
 	$var = INT2PTR($type,SvIV($arg))
 T_PTRREF
@@ -114,54 +118,54 @@ T_PTRREF
 	    $var = INT2PTR($type,tmp);
 	}
 	else
-	    croak(\"$var is not a reference\")
+	    Perl_croak(aTHX_ \"$var is not a reference\")
 T_REF_IV_REF
-	if (sv_isa($arg, \"${type}\")) {
+	if (sv_isa($arg, \"${ntype}\")) {
 	    IV tmp = SvIV((SV*)SvRV($arg));
-	    $var = *($type *) tmp;
+	    $var = *INT2PTR($type *, tmp);
 	}
 	else
-	    croak(\"$var is not of type ${ntype}\")
+	    Perl_croak(aTHX_ \"$var is not of type ${ntype}\")
 T_REF_IV_PTR
-	if (sv_isa($arg, \"${type}\")) {
+	if (sv_isa($arg, \"${ntype}\")) {
 	    IV tmp = SvIV((SV*)SvRV($arg));
-	    $var = ($type) tmp;
+	    $var = INT2PTR($type, tmp);
 	}
 	else
-	    croak(\"$var is not of type ${ntype}\")
+	    Perl_croak(aTHX_ \"$var is not of type ${ntype}\")
 T_PTROBJ
 	if (sv_derived_from($arg, \"${ntype}\")) {
 	    IV tmp = SvIV((SV*)SvRV($arg));
 	    $var = INT2PTR($type,tmp);
 	}
 	else
-	    croak(\"$var is not of type ${ntype}\")
+	    Perl_croak(aTHX_ \"$var is not of type ${ntype}\")
 T_PTRDESC
 	if (sv_isa($arg, \"${ntype}\")) {
 	    IV tmp = SvIV((SV*)SvRV($arg));
-	    ${type}_desc = (\U${type}_DESC\E*) tmp; 
+	    ${type}_desc = (\U${type}_DESC\E*) tmp;
 	    $var = ${type}_desc->ptr;
 	}
 	else
-	    croak(\"$var is not of type ${ntype}\")
+	    Perl_croak(aTHX_ \"$var is not of type ${ntype}\")
 T_REFREF
 	if (SvROK($arg)) {
 	    IV tmp = SvIV((SV*)SvRV($arg));
 	    $var = *INT2PTR($type,tmp);
 	}
 	else
-	    croak(\"$var is not a reference\")
+	    Perl_croak(aTHX_ \"$var is not a reference\")
 T_REFOBJ
 	if (sv_isa($arg, \"${ntype}\")) {
 	    IV tmp = SvIV((SV*)SvRV($arg));
 	    $var = *INT2PTR($type,tmp);
 	}
 	else
-	    croak(\"$var is not of type ${ntype}\")
+	    Perl_croak(aTHX_ \"$var is not of type ${ntype}\")
 T_OPAQUE
-	$var NOT IMPLEMENTED
+	$var = *($type *)SvPV_nolen($arg)
 T_OPAQUEPTR
-	$var = ($type)SvPV($arg,PL_na)
+	$var = ($type)SvPV_nolen($arg)
 T_PACKED
 	$var = XS_unpack_$ntype($arg)
 T_PACKEDARRAY
@@ -169,11 +173,16 @@ T_PACKEDARRAY
 T_CALLBACK
 	$var = make_perl_cb_$type($arg)
 T_ARRAY
-	$var = $ntype(items -= $argoff);
 	U32 ix_$var = $argoff;
+	$var = $ntype(items -= $argoff);
 	while (items--) {
 	    DO_ARRAY_ELEM;
+	    ix_$var++;
 	}
+        /* this is the number of elements in the array */
+        ix_$var -= $argoff
+T_STDIO
+	$var = PerlIO_findFILE(IoIFP(sv_2io($arg)))
 T_IN
 	$var = IoIFP(sv_2io($arg))
 T_INOUT
@@ -244,8 +253,7 @@ T_PTROBJ
 T_PTRDESC
 	sv_setref_pv($arg, \"${ntype}\", (void*)new\U${type}_DESC\E($var));
 T_REFREF
-	sv_setrefref($arg, \"${ntype}\", XS_service_$ntype,
-		    ($var ? (void*)new $ntype($var) : 0));
+	NOT_IMPLEMENTED
 T_REFOBJ
 	NOT IMPLEMENTED
 T_OPAQUE
@@ -262,12 +270,23 @@ T_CALLBACK
 	sv_setpvn($arg, $var.context.value().chp(),
 		$var.context.value().size());
 T_ARRAY
-	ST_EXTEND($var.size);
-	for (U32 ix_$var = 0; ix_$var < $var.size; ix_$var++) {
+        {
+	    U32 ix_$var;
+	    EXTEND(SP,size_$var);
+	    for (ix_$var = 0; ix_$var < size_$var; ix_$var++) {
 		ST(ix_$var) = sv_newmortal();
 	DO_ARRAY_ELEM
+	    }
+        }
+T_STDIO
+	{
+	    GV *gv = newGVgen("$Package");
+	    PerlIO *fp = PerlIO_importFILE($var,0);
+	    if ( fp && do_open(gv, "+<&", 3, FALSE, 0, 0, fp) )
+		sv_setsv($arg, sv_bless(newRV((SV*)gv), gv_stashpv("$Package",1)));
+	    else
+		$arg = &PL_sv_undef;
 	}
-	SP += $var.size - 1;
 T_IN
 	{
 	    GV *gv = newGVgen("$Package");

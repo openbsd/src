@@ -1,7 +1,34 @@
 package Term::Cap;
-use Carp;
 
-# Last updated: Thu Dec 14 20:02:42 CST 1995 by sanders@bsdi.com
+use Carp;
+use strict;
+
+use vars qw($VERSION $VMS_TERMCAP);
+use vars qw($termpat $state $first $entry);
+
+$VERSION = '1.07';
+
+# Version undef: Thu Dec 14 20:02:42 CST 1995 by sanders@bsdi.com
+# Version 1.00:  Thu Nov 30 23:34:29 EST 2000 by schwern@pobox.com
+#	[PATCH] $VERSION crusade, strict, tests, etc... all over lib/
+# Version 1.01:  Wed May 23 00:00:00 CST 2001 by d-lewart@uiuc.edu
+#	Avoid warnings in Tgetent and Tputs
+# Version 1.02:  Sat Nov 17 13:50:39 GMT 2001 by jns@gellyfish.com
+#       Altered layout of the POD
+#       Added Test::More to PREREQ_PM in Makefile.PL
+#       Fixed no argument Tgetent()
+# Version 1.03:  Wed Nov 28 10:09:38 GMT 2001
+#       VMS Support from Charles Lane <lane@DUPHY4.Physics.Drexel.Edu>
+# Version 1.04:  Thu Nov 29 16:22:03 GMT 2001
+#       Fixed warnings in test
+# Version 1.05:  Mon Dec  3 15:33:49 GMT 2001
+#       Don't try to fall back on infocmp if it's not there. From chromatic.
+# Version 1.06:  Thu Dec  6 18:43:22 GMT 2001
+#       Preload the default VMS termcap from Charles Lane
+#       Don't carp at setting OSPEED unless warnings are on.
+# Version 1.07:  Wed Jan  2 21:35:09 GMT 2002
+#       Sanity check on infocmp output from Norton Allen
+#       Repaired INSTALLDIRS thanks to Michael Schwern
 
 # TODO:
 # support Berkeley DB termcaps
@@ -27,37 +54,12 @@ Term::Cap - Perl termcap interface
 These are low-level functions to extract and use capabilities from
 a terminal capability (termcap) database.
 
-The B<Tgetent> function extracts the entry of the specified terminal
-type I<TERM> (defaults to the environment variable I<TERM>) from the
-database.
+More information on the terminal capabilities will be found in the
+termcap manpage on most Unix-like systems.
 
-It will look in the environment for a I<TERMCAP> variable.  If
-found, and the value does not begin with a slash, and the terminal
-type name is the same as the environment string I<TERM>, the
-I<TERMCAP> string is used instead of reading a termcap file.  If
-it does begin with a slash, the string is used as a path name of
-the termcap file to search.  If I<TERMCAP> does not begin with a
-slash and name is different from I<TERM>, B<Tgetent> searches the
-files F<$HOME/.termcap>, F</etc/termcap>, and F</usr/share/misc/termcap>,
-in that order, unless the environment variable I<TERMPATH> exists,
-in which case it specifies a list of file pathnames (separated by
-spaces or colons) to be searched B<instead>.  Whenever multiple
-files are searched and a tc field occurs in the requested entry,
-the entry it names must be found in the same file or one of the
-succeeding files.  If there is a C<:tc=...:> in the I<TERMCAP>
-environment variable string it will continue the search in the
-files as above.
+=head2 METHODS
 
-I<OSPEED> is the terminal output bit rate (often mistakenly called
-the baud rate).  I<OSPEED> can be specified as either a POSIX
-termios/SYSV termio speeds (where 9600 equals 9600) or an old
-BSD-style speeds (where 13 equals 9600).
-
-B<Tgetent> returns a blessed object reference which the user can
-then use to send the control strings to the terminal using B<Tputs>
-and B<Tgoto>.  It calls C<croak> on failure.
-
-B<Tgoto> decodes a cursor addressing string with the given parameters.
+=over 4
 
 The output strings for B<Tputs> are cached for counts of 1 for performance.
 B<Tgoto> and B<Tpad> do not cache.  C<$self-E<gt>{_xx}> is the raw termcap
@@ -68,39 +70,20 @@ data and C<$self-E<gt>{xx}> is the cached version.
 B<Tgoto>, B<Tputs>, and B<Tpad> return the string and will also
 output the string to $FH if specified.
 
-The extracted termcap entry is available in the object
-as C<$self-E<gt>{TERMCAP}>.
-
-=head1 EXAMPLES
-
-    # Get terminal output speed
-    require POSIX;
-    my $termios = new POSIX::Termios;
-    $termios->getattr;
-    my $ospeed = $termios->getospeed;
-
-    # Old-style ioctl code to get ospeed:
-    #     require 'ioctl.pl';
-    #     ioctl(TTY,$TIOCGETP,$sgtty);
-    #     ($ispeed,$ospeed) = unpack('cc',$sgtty);
-
-    # allocate and initialize a terminal structure
-    $terminal = Tgetent Term::Cap { TERM => undef, OSPEED => $ospeed };
-
-    # require certain capabilities to be available
-    $terminal->Trequire(qw/ce ku kd/);
-
-    # Output Routines, if $FH is undefined these just return the string
-
-    # Tgoto does the % expansion stuff with the given args
-    $terminal->Tgoto('cm', $col, $row, $FH);
-
-    # Tputs doesn't do any % expansion.
-    $terminal->Tputs('dl', $count = 1, $FH);
 
 =cut
 
+# Preload the default VMS termcap.
+# If a different termcap is required then the text of one can be supplied
+# in $Term::Cap::VMS_TERMCAP before Tgetent is called.
+
+if ( $^O eq 'VMS') {
+       chomp (my @entry = <DATA>);
+       $VMS_TERMCAP = join '', @entry;
+}
+
 # Returns a list of termcap files to check.
+
 sub termcap_path { ## private
     my @termcap_path;
     # $TERMCAP, if it's a filespec
@@ -121,20 +104,81 @@ sub termcap_path { ## private
 	    '/usr/share/misc/termcap',
 	);
     }
+
     # return the list of those termcaps that exist
-    grep(-f, @termcap_path);
+    return grep(-f, @termcap_path);
 }
+
+=item B<Tgetent>
+
+Returns a blessed object reference which the user can
+then use to send the control strings to the terminal using B<Tputs>
+and B<Tgoto>.
+
+The function extracts the entry of the specified terminal
+type I<TERM> (defaults to the environment variable I<TERM>) from the
+database.
+
+It will look in the environment for a I<TERMCAP> variable.  If
+found, and the value does not begin with a slash, and the terminal
+type name is the same as the environment string I<TERM>, the
+I<TERMCAP> string is used instead of reading a termcap file.  If
+it does begin with a slash, the string is used as a path name of
+the termcap file to search.  If I<TERMCAP> does not begin with a
+slash and name is different from I<TERM>, B<Tgetent> searches the
+files F<$HOME/.termcap>, F</etc/termcap>, and F</usr/share/misc/termcap>,
+in that order, unless the environment variable I<TERMPATH> exists,
+in which case it specifies a list of file pathnames (separated by
+spaces or colons) to be searched B<instead>.  Whenever multiple
+files are searched and a tc field occurs in the requested entry,
+the entry it names must be found in the same file or one of the
+succeeding files.  If there is a C<:tc=...:> in the I<TERMCAP>
+environment variable string it will continue the search in the
+files as above.
+
+The extracted termcap entry is available in the object
+as C<$self-E<gt>{TERMCAP}>.
+
+It takes a hash reference as an argument with two optional keys:
+
+=over 2
+
+=item OSPEED
+
+The terminal output bit rate (often mistakenly called the baud rate)
+for this terminal - if not set a warning will be generated
+and it will be defaulted to 9600.  I<OSPEED> can be be specified as
+either a POSIX termios/SYSV termio speeds (where 9600 equals 9600) or
+an old DSD-style speed ( where 13 equals 9600).
+
+
+=item TERM
+
+The terminal type whose termcap entry will be used - if not supplied it will
+default to $ENV{TERM}: if that is not set then B<Tgetent> will croak.
+
+=back
+
+It calls C<croak> on failure.
+
+=cut
 
 sub Tgetent { ## public -- static method
     my $class = shift;
-    my $self = bless shift, $class;
+    my ($self) = @_;
+
+    $self = {} unless defined $self;
+    bless $self, $class;
+
     my($term,$cap,$search,$field,$max,$tmp_term,$TERMCAP);
     local($termpat,$state,$first,$entry);	# used inside eval
     local $_;
 
     # Compute PADDING factor from OSPEED (to be used by Tpad)
     if (! $self->{OSPEED}) {
-	carp "OSPEED was not set, defaulting to 9600";
+        if ( $^W ) {
+	   carp "OSPEED was not set, defaulting to 9600";
+        }
 	$self->{OSPEED} = 9600;
     }
     if ($self->{OSPEED} < 16) {
@@ -161,7 +205,30 @@ sub Tgetent { ## public -- static method
 	$entry = $foo;
     }
 
-    my @termcap_path = termcap_path;
+    my @termcap_path = termcap_path();
+
+    unless (@termcap_path || $entry)
+    {
+	# last resort--fake up a termcap from terminfo 
+	local $ENV{TERM} = $term;
+
+        if ( $^O eq 'VMS' ) {
+          $entry = $VMS_TERMCAP;
+        }
+        else {
+           if ( grep { -x "$_/infocmp" } split /:/, $ENV{PATH} ) {
+              eval
+              {
+                my $tmp = `infocmp -C 2>/dev/null`;
+
+                if (( $tmp !~ m%^/%s ) && ( $tmp =~ /(^|\|)${termpat}[:|]/s)) {
+                   $entry = $tmp;
+                }
+              };
+           }
+        }
+    }
+
     croak "Can't find a valid termcap file" unless @termcap_path || $entry;
 
     $state = 1;					# 0 == finished
@@ -202,7 +269,7 @@ sub Tgetent { ## public -- static method
 	    }
 	}
 	defined $entry or $entry = '';
-	$entry .= $_;
+	$entry .= $_ if $_;
     };
 
     while ($state != 0) {
@@ -238,19 +305,19 @@ sub Tgetent { ## public -- static method
     # Precompile $entry into the object
     $entry =~ s/^[^:]*://;
     foreach $field (split(/:[\s:\\]*/,$entry)) {
-	if ($field =~ /^(\w\w)$/) {
+	if (defined $field && $field =~ /^(\w\w)$/) {
 	    $self->{'_' . $field} = 1 unless defined $self->{'_' . $1};
 	    # print STDERR "DEBUG: flag $1\n";
 	}
-	elsif ($field =~ /^(\w\w)\@/) {
+	elsif (defined $field && $field =~ /^(\w\w)\@/) {
 	    $self->{'_' . $1} = "";
 	    # print STDERR "DEBUG: unset $1\n";
 	}
-	elsif ($field =~ /^(\w\w)#(.*)/) {
+	elsif (defined $field && $field =~ /^(\w\w)#(.*)/) {
 	    $self->{'_' . $1} = $2 unless defined $self->{'_' . $1};
 	    # print STDERR "DEBUG: numeric $1 = $2\n";
 	}
-	elsif ($field =~ /^(\w\w)=(.*)/) {
+	elsif (defined $field && $field =~ /^(\w\w)=(.*)/) {
 	    # print STDERR "DEBUG: string $1 = $2\n";
 	    next if defined $self->{'_' . ($cap = $1)};
 	    $_ = $2;
@@ -276,12 +343,42 @@ sub Tgetent { ## public -- static method
 }
 
 # $terminal->Tpad($string, $cnt, $FH);
+
+=item B<Tpad>
+
+Outputs a literal string with appropriate padding for the current terminal.
+
+It takes three arguments:
+
+=over 2
+
+=item B<$string>
+
+The literal string to be output.  If it starts with a number and an optional
+'*' then the padding will be increased by an amount relative to this number,
+if the '*' is present then this amount will me multiplied by $cnt.  This part
+of $string is removed before output/
+
+=item B<$cnt>
+
+Will be used to modify the padding applied to string as described above.
+
+=item B<$FH>
+
+An optional filehandle (or IO::Handle ) that output will be printed to.
+
+=back
+
+The padded $string is returned.
+
+=cut
+
 sub Tpad { ## public
     my $self = shift;
     my($string, $cnt, $FH) = @_;
     my($decr, $ms);
 
-    if ($string =~ /(^[\d.]+)(\*?)(.*)$/) {
+    if (defined $string && $string =~ /(^[\d.]+)(\*?)(.*)$/) {
 	$ms = $1;
 	$ms *= $cnt if $2;
 	$string = $3;
@@ -296,38 +393,109 @@ sub Tpad { ## public
 }
 
 # $terminal->Tputs($cap, $cnt, $FH);
+
+=item B<Tputs>
+
+Output the string for the given capability padded as appropriate without
+any parameter substitution.
+
+It takes three arguments:
+
+=over 2
+
+=item B<$cap>
+
+The capability whose string is to be output.
+
+=item B<$cnt>
+
+A count passed to Tpad to modify the padding applied to the output string.
+If $cnt is zero or one then the resulting string will be cached.
+
+=item B<$FH>
+
+An optional filehandle (or IO::Handle ) that output will be printed to.
+
+=back
+
+The appropriate string for the capability will be returned.
+
+=cut
+
 sub Tputs { ## public
     my $self = shift;
     my($cap, $cnt, $FH) = @_;
     my $string;
 
+    $cnt = 0 unless $cnt;
+
     if ($cnt > 1) {
 	$string = Tpad($self, $self->{'_' . $cap}, $cnt);
     } else {
 	# cache result because Tpad can be slow
-	$string = defined $self->{$cap} ? $self->{$cap} :
-	    ($self->{$cap} = Tpad($self, $self->{'_' . $cap}, 1));
+	unless (exists $self->{$cap}) {
+	    $self->{$cap} = exists $self->{"_$cap"} ?
+		Tpad($self, $self->{"_$cap"}, 1) : undef;
+	}
+	$string = $self->{$cap};
     }
     print $FH $string if $FH;
     $string;
 }
 
-# %%   output `%'
-# %d   output value as in printf %d
-# %2   output value as in printf %2d
-# %3   output value as in printf %3d
-# %.   output value as in printf %c
-# %+x  add x to value, then do %.
-#
-# %>xy if value > x then add y, no output
-# %r   reverse order of two parameters, no output
-# %i   increment by one, no output
-# %B   BCD (16*(value/10)) + (value%10), no output
-#
-# %n   exclusive-or all parameters with 0140 (Datamedia 2500)
-# %D   Reverse coding (value - 2*(value%16)), no output (Delta Data)
-#
 # $terminal->Tgoto($cap, $col, $row, $FH);
+
+=item B<Tgoto>
+
+B<Tgoto> decodes a cursor addressing string with the given parameters.
+
+There are four arguments:
+
+=over 2
+
+=item B<$cap>
+
+The name of the capability to be output.
+
+=item B<$col>
+
+The first value to be substituted in the output string ( usually the column
+in a cursor addressing capability )
+
+=item B<$row>
+
+The second value to be substituted in the output string (usually the row
+in cursor addressing capabilities)
+
+=item B<$FH>
+
+An optional filehandle (or IO::Handle ) to which the output string will be
+printed.
+
+=back
+
+Substitutions are made with $col and $row in the output string with the
+following sprintf() line formats:
+
+ %%   output `%'
+ %d   output value as in printf %d
+ %2   output value as in printf %2d
+ %3   output value as in printf %3d
+ %.   output value as in printf %c
+ %+x  add x to value, then do %.
+
+ %>xy if value > x then add y, no output
+ %r   reverse order of two parameters, no output
+ %i   increment by one, no output
+ %B   BCD (16*(value/10)) + (value%10), no output
+
+ %n   exclusive-or all parameters with 0140 (Datamedia 2500)
+ %D   Reverse coding (value - 2*(value%16)), no output (Delta Data)
+
+The output string will be returned.
+
+=cut
+
 sub Tgoto { ## public
     my $self = shift;
     my($cap, $code, $tmp, $FH) = @_;
@@ -396,6 +564,14 @@ sub Tgoto { ## public
 }
 
 # $terminal->Trequire(qw/ce ku kd/);
+
+=item B<Trequire>
+
+Takes a list of capabilities as an argument and will croak if one is not
+found.
+
+=cut
+
 sub Trequire { ## public
     my $self = shift;
     my($cap,@undefined);
@@ -406,5 +582,70 @@ sub Trequire { ## public
     croak "Terminal does not support: (@undefined)" if @undefined;
 }
 
+=back
+
+=head1 EXAMPLES
+
+    use Term::Cap;
+
+    # Get terminal output speed
+    require POSIX;
+    my $termios = new POSIX::Termios;
+    $termios->getattr;
+    my $ospeed = $termios->getospeed;
+
+    # Old-style ioctl code to get ospeed:
+    #     require 'ioctl.pl';
+    #     ioctl(TTY,$TIOCGETP,$sgtty);
+    #     ($ispeed,$ospeed) = unpack('cc',$sgtty);
+
+    # allocate and initialize a terminal structure
+    $terminal = Tgetent Term::Cap { TERM => undef, OSPEED => $ospeed };
+
+    # require certain capabilities to be available
+    $terminal->Trequire(qw/ce ku kd/);
+
+    # Output Routines, if $FH is undefined these just return the string
+
+    # Tgoto does the % expansion stuff with the given args
+    $terminal->Tgoto('cm', $col, $row, $FH);
+
+    # Tputs doesn't do any % expansion.
+    $terminal->Tputs('dl', $count = 1, $FH);
+
+=head1 COPYRIGHT AND LICENSE
+
+Please see the README file in distribution.
+
+=head1 AUTHOR
+
+This module is part of the core Perl distribution and is also maintained
+for CPAN by Jonathan Stowe <jns@gellyfish.com>.
+
+=head1 SEE ALSO
+
+termcap(5)
+
+=cut
+
+# Below is a default entry for systems where there are terminals but no
+# termcap
 1;
+__DATA__
+vt220|vt200|DEC VT220 in vt100 emulation mode:
+am:mi:xn:xo:
+co#80:li#24:
+RA=\E[?7l:SA=\E[?7h:
+ac=kkllmmjjnnwwqquuttvvxx:ae=\E(B:al=\E[L:as=\E(0:
+bl=^G:cd=\E[J:ce=\E[K:cl=\E[H\E[2J:cm=\E[%i%d;%dH:
+cr=^M:cs=\E[%i%d;%dr:dc=\E[P:dl=\E[M:do=\E[B:
+ei=\E[4l:ho=\E[H:im=\E[4h:
+is=\E[1;24r\E[24;1H:
+nd=\E[C:
+kd=\E[B::kl=\E[D:kr=\E[C:ku=\E[A:le=^H:
+mb=\E[5m:md=\E[1m:me=\E[m:mr=\E[7m:
+kb=\0177:
+r2=\E>\E[24;1H\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h\E=:rc=\E8:
+sc=\E7:se=\E[27m:sf=\ED:so=\E[7m:sr=\EM:ta=^I:
+ue=\E[24m:up=\E[A:us=\E[4m:ve=\E[?25h:vi=\E[?25l:
 

@@ -1,11 +1,16 @@
 package UNIVERSAL;
 
+our $VERSION = '1.00';
+
 # UNIVERSAL should not contain any extra subs/methods beyond those
 # that it exists to define. The use of Exporter below is a historical
-# accident that should be fixed sometime.
+# accident that can't be fixed without breaking code.  Note that we
+# *don't* set @ISA here, don't want all classes/objects inheriting from
+# Exporter.  It's bad enough that all classes have a import() method
+# whenever UNIVERSAL.pm is loaded.
 require Exporter;
 *import = \&Exporter::import;
-@EXPORT_OK = qw(isa can);
+@EXPORT_OK = qw(isa can VERSION);
 
 1;
 __END__
@@ -16,34 +21,79 @@ UNIVERSAL - base class for ALL classes (blessed references)
 
 =head1 SYNOPSIS
 
-    $io = $fd->isa("IO::Handle");
-    $sub = $obj->can('print');
+    $is_io = $fd->isa("IO::Handle");
+    $is_io = Class->isa("IO::Handle");
 
-    $yes = UNIVERSAL::isa($ref, "HASH");
+    $sub = $obj->can("print");
+    $sub = Class->can("print");
+
+    use UNIVERSAL qw( isa can VERSION );
+    $yes = isa $ref, "HASH" ;
+    $sub = can $ref, "fandango" ;
+    $ver = VERSION $obj ;
 
 =head1 DESCRIPTION
 
 C<UNIVERSAL> is the base class which all bless references will inherit from,
-see L<perlobj>
+see L<perlobj>.
 
-C<UNIVERSAL> provides the following methods
+C<UNIVERSAL> provides the following methods and functions:
 
 =over 4
 
-=item isa ( TYPE )
+=item $obj->isa( TYPE ), CLASS->isa( TYPE ), isa( VAL, TYPE )
 
-C<isa> returns I<true> if C<REF> is blessed into package C<TYPE>
-or inherits from package C<TYPE>.
+    C<TYPE> is a package name
+    $obj is a blessed reference or a string containing a package name
+    C<CLASS> is a package name
+    C<VAL> is any of the above or an unblessed reference
 
-C<isa> can be called as either a static or object method call.
+When used as an instance or class method (C<$obj->isa( TYPE )>), C<isa>
+returns I<true> if $obj is blessed into package C<TYPE> or inherits from
+package C<TYPE>.
 
-=item can ( METHOD )
+When used as a class method (C<CLASS->isa( TYPE )>; sometimes referred to as a
+static method), C<isa> returns I<true> if C<CLASS> inherits from (or is itself)
+the name of the package C<TYPE> or inherits from package C<TYPE>.
 
-C<can> checks if the object has a method called C<METHOD>. If it does
-then a reference to the sub is returned. If it does not then I<undef>
-is returned.
+When used as a function, like
 
-C<can> can be called as either a static or object method call.
+   use UNIVERSAL qw( isa ) ;
+   $yes = isa $h, "HASH";
+   $yes = isa "Foo", "Bar";
+
+or
+
+   require UNIVERSAL ;
+   $yes = UNIVERSAL::isa $a, "ARRAY";
+
+, C<isa> returns I<true> in the same cases as above and also if C<VAL> is an
+unblessed reference to a perl variable of type C<TYPE>, such as "HASH",
+"ARRAY", or "Regexp".
+
+=item $obj->can( METHOD ), CLASS->can( METHOD ), can( VAL, METHOD )
+
+C<can> checks if the object or class has a method called C<METHOD>. If it does
+then a reference to the sub is returned. If it does not then I<undef> is
+returned.  This includes methods inherited or imported by C<$obj>, C<CLASS>, or
+C<VAL>.
+
+C<can> cannot know whether an object will be able to provide a method
+through AUTOLOAD, so a return value of I<undef> does not necessarily mean
+the object will not be able to handle the method call. To get around
+this some module authors use a forward declaration (see L<perlsub>)
+for methods they will handle via AUTOLOAD. For such 'dummy' subs, C<can>
+will still return a code reference, which, when called, will fall through
+to the AUTOLOAD. If no suitable AUTOLOAD is provided, calling the coderef
+will cause an error.
+
+C<can> can be called as a class (static) method, an object method, or a
+function.
+
+When used as a function, if C<VAL> is a blessed reference or package name which
+has a method called C<METHOD>, C<can> returns a reference to the subroutine.
+If C<VAL> is not a blessed reference, or if it does not have a method
+C<METHOD>, I<undef> is returned.
 
 =item VERSION ( [ REQUIRE ] )
 
@@ -52,42 +102,9 @@ package the object is blessed into. If C<REQUIRE> is given then
 it will do a comparison and die if the package version is not
 greater than or equal to C<REQUIRE>.
 
-C<VERSION> can be called as either a static or object method call.
+C<VERSION> can be called as either a class (static) method, an object method or
+or a function.
 
-=back
-
-The C<isa> and C<can> methods can also be called as subroutines
-
-=over 4
-
-=item UNIVERSAL::isa ( VAL, TYPE )
-
-C<isa> returns I<true> if one of the following statements is true.
-
-=over 8
-
-=item *
-
-C<VAL> is a reference blessed into either package C<TYPE> or a package
-which inherits from package C<TYPE>.
-
-=item *
-
-C<VAL> is a reference to a C<TYPE> of Perl variable (e.g. 'HASH').
-
-=item *
-
-C<VAL> is the name of a package that inherits from (or is itself)
-package C<TYPE>.
-
-=back
-
-=item UNIVERSAL::can ( VAL, METHOD )
-
-If C<VAL> is a blessed reference which has a method called C<METHOD>,
-C<can> returns a reference to the subroutine.   If C<VAL> is not
-a blessed reference, or if it does not have a method C<METHOD>,
-I<undef> is returned.
 
 =back
 

@@ -11,7 +11,7 @@ use warnings::register;
 use     vars qw($VERSION @ISA);
 require Exporter;
 
-$VERSION = "1.14";
+$VERSION = "1.15";
 
 @ISA = qw(Exporter); # This is only so we can do version checking
 
@@ -131,7 +131,7 @@ sub has_exception
 
 sub has_error
 {
- warnings::warn("Call to depreciated method 'has_error', use 'has_exception'")
+ warnings::warn("Call to deprecated method 'has_error', use 'has_exception'")
 	if warnings::enabled();
  goto &has_exception;
 }
@@ -281,7 +281,7 @@ cache which is indexed by the C<fileno> of the handle, so if more than one
 handle with the same C<fileno> is specified then only the last one is cached.
 
 Each handle can be an C<IO::Handle> object, an integer or an array
-reference where the first element is a C<IO::Handle> or an integer.
+reference where the first element is an C<IO::Handle> or an integer.
 
 =item remove ( HANDLES )
 

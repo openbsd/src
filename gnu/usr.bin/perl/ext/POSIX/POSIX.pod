@@ -191,7 +191,7 @@ to change file and directory owners and groups, see L<perlfunc/chown>.
 
 =item clearerr
 
-Use the method L<IO::Handle::clearerr()> instead, to reset the error
+Use the method C<IO::Handle::clearerr()> instead, to reset the error
 state (if any) and EOF state (if any) of the given stream.
 
 =item clock
@@ -385,7 +385,7 @@ integer value less than or equal to the numerical argument.
 
 This is identical to the C function C<fmod()>.
 
-	$r = modf($x, $y);
+	$r = fmod($x, $y);
 
 It returns the remainder C<$r = $x - $n*$y>, where C<$n = trunc($x/$y)>.
 The C<$r> has the same sign as C<$x> and magnitude (absolute value)
@@ -582,13 +582,13 @@ see L<perlfunc/gmtime>.
 
 This is identical to the C function, except that it can apply to a single
 character or to a whole string.  Consider using regular expressions and the
-C</[[:isalnum:]]/> construct instead, or possibly the C</\w/> construct.
+C</[[:alnum:]]/> construct instead, or possibly the C</\w/> construct.
 
 =item isalpha
 
 This is identical to the C function, except that it can apply to a single
 character or to a whole string.  Consider using regular expressions and the
-C</[[:isalpha:]]/> construct instead.
+C</[[:alpha:]]/> construct instead.
 
 =item isatty
 
@@ -599,55 +599,58 @@ to a tty.  Similar to the C<-t> operator, see L<perlfunc/-X>.
 
 This is identical to the C function, except that it can apply to a single
 character or to a whole string.  Consider using regular expressions and the
-C</[[:iscntrl:]]/> construct instead.
+C</[[:cntrl:]]/> construct instead.
 
 =item isdigit
 
 This is identical to the C function, except that it can apply to a single
 character or to a whole string.  Consider using regular expressions and the
-C</[[:isdigit:]]/> construct instead, or the C</\d/> construct.
+C</[[:digit:]]/> construct instead, or the C</\d/> construct.
 
 =item isgraph
 
 This is identical to the C function, except that it can apply to a single
 character or to a whole string.  Consider using regular expressions and the
-C</[[:isgraph:]]/> construct instead.
+C</[[:graph:]]/> construct instead.
 
 =item islower
 
 This is identical to the C function, except that it can apply to a single
 character or to a whole string.  Consider using regular expressions and the
-C</[[:islower:]]/> construct instead.  Do B<not> use C</a-z/>.
+C</[[:lower:]]/> construct instead.  Do B<not> use C</[a-z]/>.
 
 =item isprint
 
 This is identical to the C function, except that it can apply to a single
 character or to a whole string.  Consider using regular expressions and the
-C</[[:isprint:]]/> construct instead.
+C</[[:print:]]/> construct instead.
 
 =item ispunct
 
 This is identical to the C function, except that it can apply to a single
 character or to a whole string.  Consider using regular expressions and the
-C</[[:ispunct:]]/> construct instead.
+C</[[:punct:]]/> construct instead.
 
 =item isspace
 
 This is identical to the C function, except that it can apply to a single
 character or to a whole string.  Consider using regular expressions and the
-C</[[:isspace:]]/> construct instead, or the C</\s/> construct.
+C</[[:space:]]/> construct instead, or the C</\s/> construct.
+(Note that C</\s/> and C</[[:space:]]/> are slightly different in that
+C</[[:space:]]/> can normally match a vertical tab, while C</\s/> does
+not.)
 
 =item isupper
 
 This is identical to the C function, except that it can apply to a single
 character or to a whole string.  Consider using regular expressions and the
-C</[[:isupper:]]/> construct instead.  Do B<not> use C</A-Z/>.
+C</[[:upper:]]/> construct instead.  Do B<not> use C</[A-Z]/>.
 
 =item isxdigit
 
 This is identical to the C function, except that it can apply to a single
 character or to a whole string.  Consider using regular expressions and the
-C</[[:isxdigit:]]/> construct instead, or simply C</[0-9a-f]/i>.
+C</[[:xdigit:]]/> construct instead, or simply C</[0-9a-f]/i>.
 
 =item kill
 
@@ -1008,9 +1011,12 @@ see L<perlre>.
 
 =item setgid
 
-Sets the real group identifier for this process.
-Identical to assigning a value to the Perl's builtin C<$)> variable,
-see L<perlvar/$UID>.
+Sets the real group identifier and the effective group identifier for
+this process.  Similar to assigning a value to the Perl's builtin
+C<$)> variable, see L<perlvar/$GID>, except that the latter
+will change only the real user identifier, and that the setgid()
+uses only a single numeric argument, as opposed to a space-separated
+list of numbers.
 
 =item setjmp
 
@@ -1037,7 +1043,7 @@ argument means 'query'.)
 
 The following will set the LC_CTYPE behaviour according to the locale
 environment variables (the second argument C<"">).
-Please see your systems L<setlocale(3)> documentation for the locale
+Please see your systems C<setlocale(3)> documentation for the locale
 environment variables' meaning or consult L<perllocale>.
 
 	$loc = setlocale( LC_CTYPE, "" );
@@ -1063,9 +1069,10 @@ setting the session identifier of the current process.
 
 =item setuid
 
-Sets the real user identifier for this process.
-Identical to assigning a value to the Perl's builtin C<$E<lt>> variable,
-see L<perlvar/$UID>.
+Sets the real user identifier and the effective user identifier for
+this process.  Similar to assigning a value to the Perl's builtin
+C<$E<lt>> variable, see L<perlvar/$UID>, except that the latter
+will change only the real user identifier.
 
 =item sigaction
 
@@ -1138,9 +1145,12 @@ See also L<Math::Trig>.
 
 =item sleep
 
-This is identical to Perl's builtin C<sleep()> function
-for suspending the execution of the current for process
-for certain number of seconds, see L<perlfunc/sleep>.
+This is functionally identical to Perl's builtin C<sleep()> function
+for suspending the execution of the current for process for certain
+number of seconds, see L<perlfunc/sleep>.  There is one signifanct 
+difference, however: C<POSIX::sleep()> returns the number of
+B<unslept> seconds, while the C<CORE::sleep()> returns the
+number of slept seconds.
 
 =item sprintf
 
@@ -1529,7 +1539,7 @@ see L<perlfunc/wait>.
 Wait for a child process to change state.  This is identical to Perl's
 builtin C<waitpid()> function, see L<perlfunc/waitpid>.
 
-	$pid = POSIX::waitpid( -1, &POSIX::WNOHANG );
+	$pid = POSIX::waitpid( -1, POSIX::WNOHANG );
 	print "status = ", ($? / 256), "\n";
 
 =item wcstombs
@@ -1827,7 +1837,7 @@ _POSIX_ARG_MAX _POSIX_CHILD_MAX _POSIX_CHOWN_RESTRICTED _POSIX_JOB_CONTROL _POSI
 
 =item Constants
 
-_SC_ARG_MAX _SC_CHILD_MAX _SC_CLK_TCK _SC_JOB_CONTROL _SC_NGROUPS_MAX _SC_OPEN_MAX _SC_SAVED_IDS _SC_STREAM_MAX _SC_TZNAME_MAX _SC_VERSION
+_SC_ARG_MAX _SC_CHILD_MAX _SC_CLK_TCK _SC_JOB_CONTROL _SC_NGROUPS_MAX _SC_OPEN_MAX _SC_PAGESIZE _SC_SAVED_IDS _SC_STREAM_MAX _SC_TZNAME_MAX _SC_VERSION
 
 =back
 
@@ -1976,9 +1986,56 @@ R_OK SEEK_CUR SEEK_END SEEK_SET STDIN_FILENO STDOUT_FILENO STDERR_FILENO W_OK X_
 
 WNOHANG WUNTRACED
 
+=over 16
+
+=item WNOHANG
+
+Do not suspend the calling process until a child process
+changes state but instead return immediately.
+
+=item WUNTRACED
+
+Catch stopped child processes.
+
+=back
+
 =item Macros
 
 WIFEXITED WEXITSTATUS WIFSIGNALED WTERMSIG WIFSTOPPED WSTOPSIG
+
+=over 16
+
+=item WIFEXITED
+
+WIFEXITED($?) returns true if the child process exited normally
+(C<exit()> or by falling off the end of C<main()>)
+
+=item WEXITSTATUS
+
+WEXITSTATUS($?) returns the normal exit status of the child process
+(only meaningful if WIFEXITED($?) is true)
+
+=item WIFSIGNALED
+
+WIFSIGNALED($?) returns true if the child process terminated because
+of a signal
+
+=item WTERMSIG
+
+WTERMSIG($?) returns the signal the child process terminated for
+(only meaningful if WIFSIGNALED($?) is true)
+
+=item WIFSTOPPED
+
+WIFSTOPPED($?) returns true if the child process is currently stopped
+(can happen only if you specified the WUNTRACED flag to waitpid())
+
+=item WSTOPSIG
+
+WSTOPSIG($?) returns the signal the child process was stopped for
+(only meaningful if WIFSTOPPED($?) is true)
+
+=back
 
 =back
 

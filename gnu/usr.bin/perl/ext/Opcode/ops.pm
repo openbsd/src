@@ -1,5 +1,7 @@
 package ops;
 
+our $VERSION = '1.00';
+
 use Opcode qw(opmask_add opset invert_opset);
 
 sub import {

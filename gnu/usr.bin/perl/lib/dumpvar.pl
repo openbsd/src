@@ -30,7 +30,7 @@ sub main::dumpValue {
   local $^W=0;
   (print "undef\n"), return unless defined $_[0];
   (print &stringify($_[0]), "\n"), return unless ref $_[0];
-  dumpvar::unwrap($_[0],0);
+  dumpvar::unwrap($_[0],0, $_[1]);
 }
 
 # This one is good for variable names:
@@ -42,6 +42,12 @@ sub unctrl {
 	return \$_ if ref \$_ eq "GLOB";
 	s/([\001-\037\177])/'^'.pack('c',ord($1)^64)/eg;
 	$_;
+}
+
+sub uniescape {
+    join("",
+	 map { $_ > 255 ? sprintf("\\x{%04X}", $_) : chr($_) }
+	     unpack("U*", $_[0]));
 }
 
 sub stringify {
@@ -67,6 +73,7 @@ sub stringify {
 	} elsif ($unctrl eq 'unctrl') {
 	  s/([\"\\])/\\$1/g ;
 	  s/([\000-\037\177])/'^'.pack('c',ord($1)^64)/eg;
+	  # uniescape?
 	  s/([\200-\377])/'\\0x'.sprintf('%2X',ord($1))/eg 
 	    if $quoteHighBit;
 	} elsif ($unctrl eq 'quote') {
@@ -74,6 +81,7 @@ sub stringify {
 	  s/\033/\\e/g;
 	  s/([\000-\037\177])/'\\c'.chr(ord($1)^64)/eg;
 	}
+	$_ = uniescape($_);
 	s/([\200-\377])/'\\'.sprintf('%3o',ord($1))/eg if $quoteHighBit;
 	($noticks || /^\d+(\.\d*)?\Z/) 
 	  ? $_ 
@@ -107,7 +115,7 @@ sub DumpElem {
 	    join("' '", @{$v}[0..$tArrayDepth]) . "'$shortmore";
   } else {
     print "$short\n";
-    unwrap($_[0],$_[1]);
+    unwrap($_[0],$_[1],$_[2]);
   }
 }
 
@@ -115,6 +123,8 @@ sub unwrap {
     return if $DB::signal;
     local($v) = shift ; 
     local($s) = shift ; # extra no of spaces
+    local($m) = shift ; # maximum recursion depth
+    return if $m == 0;
     local(%v,@v,$sp,$value,$key,@sortKeys,$more,$shortmore,$short) ;
     local($tHashDepth,$tArrayDepth) ;
 
@@ -179,7 +189,7 @@ sub unwrap {
 	    return if $DB::signal;
 	    $value = $ {$v}{$key} ;
 	    print "$sp", &stringify($key), " => ";
-	    DumpElem $value, $s;
+	    DumpElem $value, $s, $m-1;
 	}
 	print "$sp  empty hash\n" unless @sortKeys;
 	print "$sp$more" if defined $more ;
@@ -187,7 +197,7 @@ sub unwrap {
 	$tArrayDepth = $#{$v} ; 
 	undef $more ; 
 	$tArrayDepth = $#{$v} < $arrayDepth-1 ? $#{$v} : $arrayDepth-1 
-	  unless  $arrayDepth eq '' ; 
+	  if defined $arrayDepth && $arrayDepth ne '';
 	$more = "....\n" if $tArrayDepth < $#{$v} ; 
 	$shortmore = "";
 	$shortmore = " ..." if $tArrayDepth < $#{$v} ;
@@ -210,7 +220,7 @@ sub unwrap {
 	    return if $DB::signal;
 	    print "$sp$num  ";
 	    if (exists $v->[$num]) {
-	        DumpElem $v->[$num], $s;
+	        DumpElem $v->[$num], $s, $m-1;
 	    } else {
 	    	print "empty slot\n";
 	    }
@@ -219,7 +229,7 @@ sub unwrap {
 	print "$sp$more" if defined $more ;  
     } elsif (  UNIVERSAL::isa($v, 'SCALAR') or ref $v eq 'REF' ) { 
 	    print "$sp-> ";
-	    DumpElem $$v, $s;
+	    DumpElem $$v, $s, $m-1;
     } elsif ( UNIVERSAL::isa($v, 'CODE') ) { 
 	    print "$sp-> ";
 	    dumpsub (0, $v);
@@ -227,17 +237,24 @@ sub unwrap {
       print "$sp-> ",&stringify($$v,1),"\n";
       if ($globPrint) {
 	$s += 3;
-	dumpglob($s, "{$$v}", $$v, 1);
+       dumpglob($s, "{$$v}", $$v, 1, $m-1);
       } elsif (defined ($fileno = fileno($v))) {
 	print( (' ' x ($s+3)) .  "FileHandle({$$v}) => fileno($fileno)\n" );
       }
     } elsif (ref \$v eq 'GLOB') {
       if ($globPrint) {
-	dumpglob($s, "{$v}", $v, 1) if $globPrint;
+       dumpglob($s, "{$v}", $v, 1, $m-1) if $globPrint;
       } elsif (defined ($fileno = fileno(\$v))) {
 	print( (' ' x $s) .  "FileHandle({$v}) => fileno($fileno)\n" );
       }
     }
+}
+
+sub matchlex {
+  (my $var = $_[0]) =~ s/.//;
+  $var eq $_[1] or 
+    ($_[1] =~ /^([!~])(.)([\x00-\xff]*)/) and 
+      ($1 eq '!') ^ (eval { $var =~ /$2$3/ });
 }
 
 sub matchvar {
@@ -286,16 +303,16 @@ sub quote {
 
 sub dumpglob {
     return if $DB::signal;
-    my ($off,$key, $val, $all) = @_;
+    my ($off,$key, $val, $all, $m) = @_;
     local(*entry) = $val;
     my $fileno;
     if (($key !~ /^_</ or $dumpDBFiles) and defined $entry) {
       print( (' ' x $off) . "\$", &unctrl($key), " = " );
-      DumpElem $entry, 3+$off;
+      DumpElem $entry, 3+$off, $m;
     }
     if (($key !~ /^_</ or $dumpDBFiles) and @entry) {
       print( (' ' x $off) . "\@$key = (\n" );
-      unwrap(\@entry,3+$off) ;
+      unwrap(\@entry,3+$off,$m) ;
       print( (' ' x $off) .  ")\n" );
     }
     if ($key ne "main::" && $key ne "DB::" && %entry
@@ -303,7 +320,7 @@ sub dumpglob {
 	&& ($key !~ /^_</ or $dumpDBFiles)
 	&& !($package eq "dumpvar" and $key eq "stab")) {
       print( (' ' x $off) . "\%$key = (\n" );
-      unwrap(\%entry,3+$off) ;
+      unwrap(\%entry,3+$off,$m) ;
       print( (' ' x $off) .  ")\n" );
     }
     if (defined ($fileno = fileno(*entry))) {
@@ -314,6 +331,36 @@ sub dumpglob {
 	dumpsub($off, $key);
       }
     }
+}
+
+sub dumplex {
+  return if $DB::signal;
+  my ($key, $val, $m, @vars) = @_;
+  return if @vars && !grep( matchlex($key, $_), @vars );
+  local %address;
+  my $off = 0;  # It reads better this way
+  my $fileno;
+  if (UNIVERSAL::isa($val,'ARRAY')) {
+    print( (' ' x $off) . "$key = (\n" );
+    unwrap($val,3+$off,$m) ;
+    print( (' ' x $off) .  ")\n" );
+  }
+  elsif (UNIVERSAL::isa($val,'HASH')) {
+    print( (' ' x $off) . "$key = (\n" );
+    unwrap($val,3+$off,$m) ;
+    print( (' ' x $off) .  ")\n" );
+  }
+  elsif (UNIVERSAL::isa($val,'IO')) {
+    print( (' ' x $off) .  "FileHandle($key) => fileno($fileno)\n" );
+  }
+  #  No lexical subroutines yet...
+  #  elsif (UNIVERSAL::isa($val,'CODE')) {
+  #    dumpsub($off, $$val);
+  #  }
+  else {
+    print( (' ' x $off) . &unctrl($key), " = " );
+    DumpElem $$val, 3+$off, $m;
+  }
 }
 
 sub CvGV_name_or_bust {
@@ -351,7 +398,7 @@ sub findsubs {
 }
 
 sub main::dumpvar {
-    my ($package,@vars) = @_;
+    my ($package,$m,@vars) = @_;
     local(%address,$key,$val,$^W);
     $package .= "::" unless $package =~ /::$/;
     *stab = *{"main::"};
@@ -369,7 +416,7 @@ sub main::dumpvar {
 	  if ($package ne 'dumpvar' or $key ne 'stab')
 	     and ref(\$val) eq 'GLOB';
       } else {
-	dumpglob(0,$key, $val);
+       dumpglob(0,$key, $val, 0, $m);
       }
     }
     if ($usageOnly) {

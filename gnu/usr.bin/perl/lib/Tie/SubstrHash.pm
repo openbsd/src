@@ -1,5 +1,7 @@
 package Tie::SubstrHash;
 
+our $VERSION = '1.00';
+
 =head1 NAME
 
 Tie::SubstrHash - Fixed-table-size, fixed-key-length hashing
@@ -45,7 +47,7 @@ sub TIEHASH {
     my $rlen = 1 + $klen + $vlen;
     $tsize = [$tsize,
 	      findgteprime($tsize * 1.1)]; # Allow 10% empty.
-    $self = bless ["\0", $klen, $vlen, $tsize, $rlen, 0, -1];
+    local $self = bless ["\0", $klen, $vlen, $tsize, $rlen, 0, -1];
     $$self[0] x= $rlen * $tsize->[1];
     $self;
 }

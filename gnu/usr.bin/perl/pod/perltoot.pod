@@ -65,7 +65,7 @@ For example, let's make a simple Person class module.  It gets stored in
 the file Person.pm.  If it were called a Happy::Person class, it would
 be stored in the file Happy/Person.pm, and its package would become
 Happy::Person instead of just Person.  (On a personal computer not
-running Unix or Plan 9, but something like MacOS or VMS, the directory
+running Unix or Plan 9, but something like Mac OS or VMS, the directory
 separator may be different, but the principle is the same.)  Do not assume
 any formal relationship between modules based on their directory names.
 This is merely a grouping convenience, and has no effect on inheritance,
@@ -1757,7 +1757,7 @@ L<overload>.
 L<perlboot> is a kinder, gentler introduction to object-oriented
 programming.
 
-L<perltootc> provides more detail on class data.
+L<perltooc> provides more detail on class data.
 
 Some modules which might prove interesting are Class::Accessor,
 Class::Class, Class::Contract, Class::Data::Inheritable,
@@ -1769,12 +1769,8 @@ Class::MethodMaker and Tie::SecureHash
 Copyright (c) 1997, 1998 Tom Christiansen 
 All rights reserved.
 
-When included as part of the Standard Version of Perl, or as part of
-its complete documentation whether printed or otherwise, this work
-may be distributed only under the terms of Perl's Artistic License.
-Any distribution of this file or derivatives thereof I<outside>
-of that package require that special arrangements be made with
-copyright holder.
+This documentation is free; you can redistribute it and/or modify it
+under the same terms as Perl itself.
 
 Irrespective of its distribution, all code examples in this file
 are hereby placed into the public domain.  You are permitted and

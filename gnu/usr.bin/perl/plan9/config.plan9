@@ -1311,19 +1311,7 @@
  *	If defined, this macro indicates that the C compiler can handle
  *	function prototypes.
  */
-/* _:
- *	This macro is used to declare function parameters for folks who want
- *	to make declarations with prototypes using a different style than
- *	the above macros.  Use double parentheses.  For example:
- *
- *		int main _((int argc, char *argv[]));
- */
 #define	CAN_PROTOTYPE	/**/
-#ifdef CAN_PROTOTYPE
-#define	_(args) args 	/* config-skip */
-#else
-#define	_(args) () 		/* config-skip */	
-#endif
 
 /* RANDBITS:
  *	This symbol contains the number of bits of random number the rand()

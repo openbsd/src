@@ -81,7 +81,7 @@ IV *pval;
 
 
 static SV *
-newFH(FILE *fp, char type) {
+newFH(PerlIO *fp, char type) {
     SV *rv;
     GV **stashp, *gv = (GV *)NEWSV(0,0);
     HV *stash;
@@ -128,16 +128,20 @@ binmode(fh)
 	SV *	fh
 	PROTOTYPE: $
 	CODE:
-	    IO *io = sv_2io(fh);
-	    FILE *fp = io ? IoOFP(io) : NULL;
-	    char iotype = io ? IoTYPE(io) : '\0';
-	    char filespec[NAM$C_MAXRSS], *acmode, *s, *colon, *dirend = Nullch;
-	    int ret = 0, saverrno = errno, savevmserrno = vaxc$errno;
-	    fpos_t pos;
+           SV *name;
+	   IO *io;
+	   char iotype;
+	   char filespec[NAM$C_MAXRSS], *acmode, *s, *colon, *dirend = Nullch;
+	   int ret = 0, saverrno = errno, savevmserrno = vaxc$errno;
+           SV pos;
+           PerlIO *fp;
+	   io = sv_2io(fh);
+           fp = io ? IoOFP(io) : NULL;
+	   iotype = io ? IoTYPE(io) : '\0';
 	    if (fp == NULL || strchr(">was+-|",iotype) == Nullch) {
 	      set_errno(EBADF); set_vaxc_errno(SS$_IVCHAN); XSRETURN_UNDEF;
 	    }
-	    if (!fgetname(fp,filespec)) XSRETURN_UNDEF;
+           if (!PerlIO_getname(fp,filespec)) XSRETURN_UNDEF;
 	    for (s = filespec; *s; s++) {
 	      if (*s == ':') colon = s;
 	      else if (*s == ']' || *s == '>') dirend = s;
@@ -149,7 +153,7 @@ binmode(fh)
 	    /* If we've got a non-file-structured device, clip off the trailing
 	     * junk, and don't lose sleep if we can't get a stream position.  */
 	    if (dirend == Nullch) *(colon+1) = '\0'; 
-	    if (iotype != '-' && (ret = fgetpos(fp, &pos)) == -1 && dirend)
+           if (iotype != '-' && (ret = PerlIO_getpos(fp, &pos)) == -1 && dirend)
 	      XSRETURN_UNDEF;
 	    switch (iotype) {
 	      case '<': case 'r':           acmode = "rb";                      break;
@@ -158,7 +162,7 @@ binmode(fh)
 	           fsetpos below will take care of restoring file position */
 	      case 'a':                     acmode = "ab";                      break;
 	      case '+':  case 's':          acmode = "rb+";                     break;
-	      case '-':                     acmode = fileno(fp) ? "ab" : "rb";  break;
+             case '-':                     acmode = PerlIO_fileno(fp) ? "ab" : "rb";  break;
 	      /* iotype'll be null for the SYS$INPUT:/SYS$OUTPUT:/SYS$ERROR: files */
 	      /* since we didn't really open them and can't really */
 	      /* reopen them */
@@ -168,35 +172,41 @@ binmode(fh)
 	                         iotype, filespec);
 	        acmode = "rb+";
 	    }
-	    if (freopen(filespec,acmode,fp) == NULL) XSRETURN_UNDEF;
-	    if (iotype != '-' && ret != -1 && fsetpos(fp,&pos) == -1) XSRETURN_UNDEF;
+           /* appearances to the contrary, this is an freopen substitute */
+           name = sv_2mortal(newSVpvn(filespec,strlen(filespec)));
+           if (PerlIO_openn(aTHX_ Nullch,acmode,-1,0,0,fp,1,&name) == Nullfp) XSRETURN_UNDEF;
+           if (iotype != '-' && ret != -1 && PerlIO_setpos(fp,&pos) == -1) XSRETURN_UNDEF;
 	    if (ret == -1) { set_errno(saverrno); set_vaxc_errno(savevmserrno); }
 	    XSRETURN_YES;
 
 
 void
 flush(fp)
-	FILE *	fp
+       PerlIO * fp
 	PROTOTYPE: $
 	CODE:
-	    if (fflush(fp)) { ST(0) = &PL_sv_undef; }
-	    else            { clearerr(fp); ST(0) = &PL_sv_yes; }
+           FILE *stdio = PerlIO_exportFILE(fp,0);
+           if (fflush(stdio)) { ST(0) = &PL_sv_undef; }
+           else            { clearerr(stdio); ST(0) = &PL_sv_yes; }
+           PerlIO_releaseFILE(fp,stdio);
 
 char *
 getname(fp)
-	FILE *	fp
+       PerlIO * fp
 	PROTOTYPE: $
 	CODE:
 	    char fname[NAM$C_MAXRSS+1];
 	    ST(0) = sv_newmortal();
-	    if (fgetname(fp,fname) != NULL) sv_setpv(ST(0),fname);
+           if (PerlIO_getname(fp,fname) != NULL) sv_setpv(ST(0),fname);
 
 void
 rewind(fp)
-	FILE *	fp
+       PerlIO * fp
 	PROTOTYPE: $
 	CODE:
-	    ST(0) = rewind(fp) ? &PL_sv_undef : &PL_sv_yes;
+           FILE *stdio = PerlIO_exportFILE(fp,0);
+           ST(0) = rewind(stdio) ? &PL_sv_undef : &PL_sv_yes;
+           PerlIO_releaseFILE(fp,stdio);
 
 void
 remove(name)
@@ -261,11 +271,13 @@ setdef(...)
 
 void
 sync(fp)
-	FILE *	fp
+       PerlIO * fp
 	PROTOTYPE: $
 	CODE:
-	    if (fsync(fileno(fp))) { ST(0) = &PL_sv_undef; }
-	    else                   { clearerr(fp); ST(0) = &PL_sv_yes; }
+           FILE *stdio = PerlIO_exportFILE(fp,0);
+           if (fsync(fileno(stdio))) { ST(0) = &PL_sv_undef; }
+           else                   { clearerr(stdio); ST(0) = &PL_sv_yes; }
+           PerlIO_releaseFILE(fp,stdio);
 
 char *
 tmpnam()
@@ -283,6 +295,8 @@ vmsopen(spec,...)
 	    char *args[8],mode[3] = {'r','\0','\0'}, type = '<';
 	    register int i, myargc;
 	    FILE *fp;
+            SV *fh;
+           PerlIO *pio_fp;
 	    STRLEN n_a;
 	
 	    if (!spec || !*spec) {
@@ -333,9 +347,10 @@ vmsopen(spec,...)
 	        fp = fopen(spec,mode,args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7]);
 	        break;
 	    }
-	    if (fp != Nullfp) {
-	      SV *fh = newFH(fp,(mode[1] ? '+' : (mode[0] == 'r' ? '<' : (mode[0] == 'a' ? 'a' : '>'))));
-	      ST(0) = (fh ? sv_2mortal(fh) : &PL_sv_undef);
+           if (fp != Null(FILE*)) {
+             pio_fp = PerlIO_importFILE(fp,mode);
+             fh = newFH(pio_fp,(mode[1] ? '+' : (mode[0] == 'r' ? '<' : (mode[0] == 'a' ? 'a' : '>'))));
+	     ST(0) = (fh ? sv_2mortal(fh) : &PL_sv_undef);
 	    }
 	    else { ST(0) = &PL_sv_undef; }
 
@@ -349,6 +364,7 @@ vmssysopen(spec,mode,perm,...)
 	    char *args[8];
 	    int i, myargc, fd;
 	    FILE *fp;
+           PerlIO *pio_fp;
 	    SV *fh;
 	    STRLEN n_a;
 	    if (!spec || !*spec) {
@@ -391,18 +407,21 @@ vmssysopen(spec,mode,perm,...)
 	    }
 	    i = mode & 3;
 	    if (fd >= 0 &&
-	       ((fp = fdopen(fd, &("r\000w\000r+"[2*i]))) != Nullfp)) {
-	      SV *fh = newFH(fp,"<>++"[i]);
-	      ST(0) = (fh ? sv_2mortal(fh) : &PL_sv_undef);
+              ((fp = fdopen(fd, &("r\000w\000r+"[2*i]))) != Null(FILE*))) {
+             pio_fp = PerlIO_importFILE(fp,&("r\000w\000r+"[2*i]));
+             fh = newFH(pio_fp,"<>++"[i]);
+	     ST(0) = (fh ? sv_2mortal(fh) : &PL_sv_undef);
 	    }
 	    else { ST(0) = &PL_sv_undef; }
 
 void
 waitfh(fp)
-	FILE *	fp
+       PerlIO * fp
 	PROTOTYPE: $
 	CODE:
-	    ST(0) = fwait(fp) ? &PL_sv_undef : &PL_sv_yes;
+           FILE *stdio = PerlIO_exportFILE(fp,0);
+           ST(0) = fwait(stdio) ? &PL_sv_undef : &PL_sv_yes;
+           PerlIO_releaseFILE(fp,stdio);
 
 void
 writeof(mysv)
@@ -413,11 +432,11 @@ writeof(mysv)
 	    unsigned long int chan, iosb[2], retsts, retsts2;
 	    struct dsc$descriptor devdsc = {0, DSC$K_DTYPE_T, DSC$K_CLASS_S, devnam};
 	    IO *io = sv_2io(mysv);
-	    FILE *fp = io ? IoOFP(io) : NULL;
+           PerlIO *fp = io ? IoOFP(io) : NULL;
 	    if (fp == NULL || strchr(">was+-|",IoTYPE(io)) == Nullch) {
 	      set_errno(EBADF); set_vaxc_errno(SS$_IVCHAN); XSRETURN_UNDEF;
 	    }
-	    if (fgetname(fp,devnam) == Nullch) { ST(0) = &PL_sv_undef; XSRETURN(1); }
+           if (PerlIO_getname(fp,devnam) == Nullch) { ST(0) = &PL_sv_undef; XSRETURN(1); }
 	    if ((cp = strrchr(devnam,':')) != NULL) *(cp+1) = '\0';
 	    devdsc.dsc$w_length = strlen(devnam);
 	    retsts = sys$assign(&devdsc,&chan,0,0);

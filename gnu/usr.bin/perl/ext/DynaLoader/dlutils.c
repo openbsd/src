@@ -8,29 +8,55 @@
  *                      files when the interpreter exits
  */
 
-
-/* pointer to allocated memory for last error message */
-static char *LastError  = (char*)NULL;
-
-/* flag for immediate rather than lazy linking (spots unresolved symbol) */
-static int dl_nonlazy = 0;
-
-#ifdef DL_LOADONCEONLY
-static HV *dl_loaded_files = Nullhv;	/* only needed on a few systems */
+#ifndef XS_VERSION
+#  define XS_VERSION "0"
 #endif
+#define MY_CXT_KEY "DynaLoader::_guts" XS_VERSION
 
+typedef struct {
+    SV*		x_dl_last_error;	/* pointer to allocated memory for
+					   last error message */
+    int		x_dl_nonlazy;		/* flag for immediate rather than lazy
+					   linking (spots unresolved symbol) */
+#ifdef DL_LOADONCEONLY
+    HV *	x_dl_loaded_files;	/* only needed on a few systems */
+#endif
+#ifdef DL_CXT_EXTRA
+    my_cxtx_t	x_dl_cxtx;		/* extra platform-specific data */
+#endif
+#ifdef DEBUGGING
+    int		x_dl_debug;	/* value copied from $DynaLoader::dl_debug */
+#endif
+} my_cxt_t;
+
+START_MY_CXT
+
+#define dl_last_error	(SvPVX(MY_CXT.x_dl_last_error))
+#define dl_nonlazy	(MY_CXT.x_dl_nonlazy)
+#ifdef DL_LOADONCEONLY
+#define dl_loaded_files	(MY_CXT.x_dl_loaded_files)
+#endif
+#ifdef DL_CXT_EXTRA
+#define dl_cxtx		(MY_CXT.x_dl_cxtx)
+#endif
+#ifdef DEBUGGING
+#define dl_debug	(MY_CXT.x_dl_debug)
+#endif
 
 #ifdef DEBUGGING
-static int dl_debug = 0;	/* value copied from $DynaLoader::dl_debug */
-#define DLDEBUG(level,code)	if (dl_debug>=level) { code; }
+#define DLDEBUG(level,code) \
+    STMT_START {					\
+	dMY_CXT;					\
+	if (dl_debug>=level) { code; }			\
+    } STMT_END
 #else
-#define DLDEBUG(level,code)
+#define DLDEBUG(level,code)	NOOP
 #endif
 
-
+#ifdef DL_UNLOAD_ALL_AT_EXIT
 /* Close all dlopen'd files */
 static void
-dl_unload_all_files(pTHXo_ void *unused)
+dl_unload_all_files(pTHX_ void *unused)
 {
     CV *sub;
     AV *dl_librefs;
@@ -51,15 +77,24 @@ dl_unload_all_files(pTHXo_ void *unused)
         }
     }
 }
-
+#endif
 
 static void
-dl_generic_private_init(pTHXo)	/* called by dl_*.xs dl_private_init() */
+dl_generic_private_init(pTHX)	/* called by dl_*.xs dl_private_init() */
 {
     char *perl_dl_nonlazy;
+    MY_CXT_INIT;
+
+    MY_CXT.x_dl_last_error = newSVpvn("", 0);
+    dl_nonlazy = 0;
+#ifdef DL_LOADONCEONLY
+    dl_loaded_files = Nullhv;
+#endif
 #ifdef DEBUGGING
-    SV *sv = get_sv("DynaLoader::dl_debug", 0);
-    dl_debug = sv ? SvIV(sv) : 0;
+    {
+	SV *sv = get_sv("DynaLoader::dl_debug", 0);
+	dl_debug = sv ? SvIV(sv) : 0;
+    }
 #endif
     if ( (perl_dl_nonlazy = getenv("PERL_DL_NONLAZY")) != NULL )
 	dl_nonlazy = atoi(perl_dl_nonlazy);
@@ -75,10 +110,11 @@ dl_generic_private_init(pTHXo)	/* called by dl_*.xs dl_private_init() */
 }
 
 
-/* SaveError() takes printf style args and saves the result in LastError */
+/* SaveError() takes printf style args and saves the result in dl_last_error */
 static void
-SaveError(pTHXo_ char* pat, ...)
+SaveError(pTHX_ char* pat, ...)
 {
+    dMY_CXT;
     va_list args;
     SV *msv;
     char *message;
@@ -93,14 +129,8 @@ SaveError(pTHXo_ char* pat, ...)
     message = SvPV(msv,len);
     len++;		/* include terminating null char */
 
-    /* Allocate some memory for the error message */
-    if (LastError)
-        LastError = (char*)saferealloc(LastError, len) ;
-    else
-        LastError = (char *) safemalloc(len) ;
-
-    /* Copy message into LastError (including terminating null char)	*/
-    strncpy(LastError, message, len) ;
-    DLDEBUG(2,PerlIO_printf(Perl_debug_log, "DynaLoader: stored error msg '%s'\n",LastError));
+    /* Copy message into dl_last_error (including terminating null char) */
+    sv_setpvn(MY_CXT.x_dl_last_error, message, len) ;
+    DLDEBUG(2,PerlIO_printf(Perl_debug_log, "DynaLoader: stored error msg '%s'\n",dl_last_error));
 }
 

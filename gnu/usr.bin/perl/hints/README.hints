@@ -103,6 +103,70 @@ In general, try to avoid hard-wiring something that Configure will
 figure out anyway.  Also try to allow for Configure command-line
 overrides.
 
+=head1 Working around compiler bugs
+
+Occasionally, the root cause of a bug in perl turns out to be due to a bug
+in the compiler.  Often, changing the compilation options (particularly the
+optimization level) can work around the bug.  However, if you try to do
+this on the command line, you will be changing the compilation options for
+every component of perl, which can really hurt perl's performance.
+Instead, consider placing a test case into the hints directory to detect
+whether the compiler bug is present, and add logic to the hints file to
+take a specific and appropriate action
+
+=head2 Test-case conventions
+
+Test cases should be named "tNNN.c", where NNN is the next unused sequence
+number.  The test case must be executable and should display a message
+containing the word "fails" when the compiler bug is present.  It should
+display the word "works" with the compiler bug is not present.  The test
+cases should be liberally commented and may be used by any hints file that
+needs them.  See the first hints file (t001.c) for an example.
+
+=head2 Hint file processing
+
+The hint file must define a call-back unit (see below) that will compile,
+link, and run the test case, and then check for the presence of the string
+"fails" in the output.  If it finds this string, it sets a special variable
+to specify the compilation option(s) for the specific perl source file that
+is affected by the bug.
+
+The special variable is named "XXX_cflags" where "XXX" is the name of
+the source file (without the ".c" suffix).  The value of this variable
+is the string "optimize=YYY", where "YYY" is the compilation option
+necessary to work around the bug.  The default value of this variable
+is "-O" (letter O), which specifies that the C compiler should compile
+the source program at the default optimization level.  If you can
+avoid the compiler bug by disabling optimization, just reset the
+"optimize" variable to the null string.  Sometimes a bug is present at
+a higher optimization level (say, O3) and not present at a lower
+optimization level (say, O1).  In this case, you should specify the
+highest optimization level at which the bug is not present, so that
+you will retain as many of the benefits of code optimization as
+possible.
+
+For example, if the pp_pack.c source file must be compiled at
+optimization level 0 to work around a problem on a particular
+platform, one of the statements
+
+	pp_pack_cflags="optimize=-O0"	or
+	pp_pack_cflags="optimize="
+
+will do the trick, since level 0 is equivalent to no optimization.
+(In case your printer or display device does not distinguish the
+letter O from the digit 0, that is the letter O followed by the digit
+0).  You can specify any compiler option or set of options here, not
+just optimizer options.  These options are appended to the list of all
+other compiler options, so you should be able to override almost any
+compiler option prepared by Configure.  (Obviously this depends on how
+the compiler treats conflicting options, but most seem to go with the
+last value specified on the command line).
+
+You should also allow for the XXX_cflags variable to be overridden on the
+command line.
+
+See the vos.sh hints file for an extended example of these techniques.
+
 =head1 Hint file tricks
 
 =head2 Printing critical messages
@@ -209,16 +273,10 @@ aix 4.1.1.
 
 =over 4
 
-=item Warning
-
-All of the following is experimental and subject to change.  But it
-probably won't change much. :-)
-
 =item Compiler-related flags
 
 The settings of some things, such as optimization flags, may depend on
-the particular compiler used.  For example, for ISC we have the
-following:
+the particular compiler used.  For example, consider the following:
 
     case "$cc" in
     *gcc*)  ccflags="$ccflags -posix"
@@ -256,4 +314,5 @@ say things like "sh Configure -Dcc=gcc -Dusethreads" on the command line.
 
 Have the appropriate amount of fun :-)
 
-    Andy Dougherty		doughera@lafayette.edu
+    Andy Dougherty		doughera@lafayette.edu (author)
+    Paul Green			paul.green@stratus.com (compiler bugs)

@@ -1,9 +1,8 @@
 package ExtUtils::Install;
 
-use 5.005_64;
-our(@ISA, @EXPORT, $VERSION);
-$VERSION = substr q$Revision: 1.5 $, 10;
-# $Date: 2001/05/24 18:35:29 $
+use 5.00503;
+use vars qw(@ISA @EXPORT $VERSION);
+$VERSION = 1.29;
 
 use Exporter;
 use Carp ();
@@ -24,7 +23,7 @@ use File::Spec;
 
 sub install_rooted_file {
     if (defined $INSTALL_ROOT) {
-	MY->catfile($INSTALL_ROOT, $_[0]);
+	File::Spec->catfile($INSTALL_ROOT, $_[0]);
     } else {
 	$_[0];
     }
@@ -32,7 +31,7 @@ sub install_rooted_file {
 
 sub install_rooted_dir {
     if (defined $INSTALL_ROOT) {
-	MY->catdir($INSTALL_ROOT, $_[0]);
+	File::Spec->catdir($INSTALL_ROOT, $_[0]);
     } else {
 	$_[0];
     }
@@ -52,13 +51,13 @@ sub install {
     $nonono  ||= 0;
 
     use Cwd qw(cwd);
-    use ExtUtils::MakeMaker; # to implement a MY class
     use ExtUtils::Packlist;
     use File::Basename qw(dirname);
     use File::Copy qw(copy);
     use File::Find qw(find);
     use File::Path qw(mkpath);
     use File::Compare qw(compare);
+    use File::Spec;
 
     my(%hash) = %$hash;
     my(%pack, $dir, $warn_permissions);
@@ -119,9 +118,8 @@ sub install {
                          $atime,$mtime,$ctime,$blksize,$blocks) = stat;
 	    return unless -f _;
 	    return if $_ eq ".exists";
-	    my $targetdir  = MY->catdir($targetroot, $File::Find::dir);
-	    my $origfile   = $_;
-	    my $targetfile = MY->catfile($targetdir, $_);
+	    my $targetdir  = File::Spec->catdir($targetroot, $File::Find::dir);
+	    my $targetfile = File::Spec->catfile($targetdir, $_);
 
 	    my $diff = 0;
 	    if ( -f $targetfile && -s _ == $size) {
@@ -156,7 +154,8 @@ sub install {
 	    } else {
 		inc_uninstall($_,$File::Find::dir,$verbose,0); # nonono set to 0
 	    }
-	    $packlist->{$origfile}++;
+	    # Record the full pathname.
+	    $packlist->{$targetfile}++;
 
 	}, ".");
 	chdir($cwd) or Carp::croak("Couldn't chdir to $cwd: $!");
@@ -186,12 +185,12 @@ sub install_default {
   @_ < 2 or die "install_default should be called with 0 or 1 argument";
   my $FULLEXT = @_ ? shift : $ARGV[0];
   defined $FULLEXT or die "Do not know to where to write install log";
-  my $INST_LIB = MM->catdir(MM->curdir,"blib","lib");
-  my $INST_ARCHLIB = MM->catdir(MM->curdir,"blib","arch");
-  my $INST_BIN = MM->catdir(MM->curdir,'blib','bin');
-  my $INST_SCRIPT = MM->catdir(MM->curdir,'blib','script');
-  my $INST_MAN1DIR = MM->catdir(MM->curdir,'blib','man1');
-  my $INST_MAN3DIR = MM->catdir(MM->curdir,'blib','man3');
+  my $INST_LIB = File::Spec->catdir(File::Spec->curdir,"blib","lib");
+  my $INST_ARCHLIB = File::Spec->catdir(File::Spec->curdir,"blib","arch");
+  my $INST_BIN = File::Spec->catdir(File::Spec->curdir,'blib','bin');
+  my $INST_SCRIPT = File::Spec->catdir(File::Spec->curdir,'blib','script');
+  my $INST_MAN1DIR = File::Spec->catdir(File::Spec->curdir,'blib','man1');
+  my $INST_MAN3DIR = File::Spec->catdir(File::Spec->curdir,'blib','man3');
   install({
 	   read => "$Config{sitearchexp}/auto/$FULLEXT/.packlist",
 	   write => "$Config{installsitearch}/auto/$FULLEXT/.packlist",
@@ -232,7 +231,7 @@ sub inc_uninstall {
 						  sitelibexp)}) {
 	next if $dir eq ".";
 	next if $seen_dir{$dir}++;
-	my($targetfile) = MY->catfile($dir,$libdir,$file);
+	my($targetfile) = File::Spec->catfile($dir,$libdir,$file);
 	next unless -f $targetfile;
 
 	# The reason why we compare file's contents is, that we cannot
@@ -264,7 +263,6 @@ sub inc_uninstall {
 
 sub run_filter {
     my ($cmd, $src, $dest) = @_;
-    local *SRC, *CMD;
     open(CMD, "|$cmd >$dest") || die "Cannot fork: $!";
     open(SRC, $src)           || die "Cannot open $src: $!";
     my $buf;

@@ -49,12 +49,8 @@
 #include "perl.h"
 #include "XSUB.h"
 
-#include "dlutils.c"    /* dl_debug, LastError; SaveError not used  */
-
-static AV *dl_require_symbols = Nullav;
-
 /* N.B.:
- * dl_debug and LastError are static vars; you'll need to deal
+ * dl_debug and dl_last_error are static vars; you'll need to deal
  * with them appropriately if you need context independence
  */
 
@@ -78,35 +74,50 @@ struct libref {
   struct dsc$descriptor_s defspec;
 };
 
-/* Static data for dl_expand_filespec() - This is static to save
+typedef struct {
+    AV *	x_require_symbols;
+/* "Static" data for dl_expand_filespec() - This is static to save
  * initialization on each call; if you need context-independence,
  * just make these auto variables in dl_expandspec() and dl_load_file()
  */
-static char dlesa[NAM$C_MAXRSS], dlrsa[NAM$C_MAXRSS];
-static struct FAB dlfab;
-static struct NAM dlnam;
+    char	x_esa[NAM$C_MAXRSS];
+    char	x_rsa[NAM$C_MAXRSS];
+    struct FAB	x_fab;
+    struct NAM	x_nam;
+} my_cxtx_t;		/* this *must* be named my_cxtx_t */
 
-/* $PutMsg action routine - records error message in LastError */
+#define DL_CXT_EXTRA	/* ask for dl_cxtx to be defined in dlutils.c */
+#include "dlutils.c"    /* dl_debug, dl_last_error; SaveError not used  */
+
+#define dl_require_symbols	(dl_cxtx.x_require_symbols)
+#define dl_esa			(dl_cxtx.x_esa)
+#define dl_rsa			(dl_cxtx.x_rsa)
+#define dl_fab			(dl_cxtx.x_fab)
+#define dl_nam			(dl_cxtx.x_nam)
+
+/* $PutMsg action routine - records error message in dl_last_error */
 static vmssts
 copy_errmsg(msg,unused)
     struct dsc$descriptor_s *   msg;
     vmssts  unused;
 {
+    dTHX;
+    dMY_CXT;
     if (*(msg->dsc$a_pointer) == '%') { /* first line */
-      if (LastError)
-        strncpy((LastError = saferealloc(LastError,msg->dsc$w_length+1)),
+      if (dl_last_error)
+        strncpy((dl_last_error = saferealloc(dl_last_error,msg->dsc$w_length+1)),
                  msg->dsc$a_pointer, msg->dsc$w_length);
       else
-        strncpy((LastError = safemalloc(msg->dsc$w_length+1)),
+        strncpy((dl_last_error = safemalloc(msg->dsc$w_length+1)),
                  msg->dsc$a_pointer, msg->dsc$w_length);
-      LastError[msg->dsc$w_length] = '\0';
+      dl_last_error[msg->dsc$w_length] = '\0';
     }
     else { /* continuation line */
-      int errlen = strlen(LastError);
-      LastError = saferealloc(LastError, errlen + msg->dsc$w_length + 2);
-      LastError[errlen] = '\n';  LastError[errlen+1] = '\0';
-      strncat(LastError, msg->dsc$a_pointer, msg->dsc$w_length);
-      LastError[errlen+msg->dsc$w_length+1] = '\0';
+      int errlen = strlen(dl_last_error);
+      dl_last_error = saferealloc(dl_last_error, errlen + msg->dsc$w_length + 2);
+      dl_last_error[errlen] = '\n';  dl_last_error[errlen+1] = '\0';
+      strncat(dl_last_error, msg->dsc$a_pointer, msg->dsc$w_length);
+      dl_last_error[errlen+msg->dsc$w_length+1] = '\0';
     }
     return 0;
 }
@@ -134,7 +145,7 @@ findsym_handler(void *sig, void *mech)
     myvec[0] = args = usig[0] > 10 ? 9 : usig[0] - 1;
     while (--args) myvec[args] = usig[args];
     _ckvmssts(sys$putmsg(myvec,copy_errmsg,0,0));
-    DLDEBUG(2,PerlIO_printf(Perl_debug_log, "findsym_handler: received\n\t%s\n",LastError));
+    DLDEBUG(2,PerlIO_printf(Perl_debug_log, "findsym_handler: received\n\t%s\n",dl_last_error));
     return SS$_CONTINUE;
 }
 
@@ -157,15 +168,18 @@ static void
 dl_private_init(pTHX)
 {
     dl_generic_private_init(aTHX);
-    dl_require_symbols = get_av("DynaLoader::dl_require_symbols", 0x4);
-    /* Set up the static control blocks for dl_expand_filespec() */
-    dlfab = cc$rms_fab;
-    dlnam = cc$rms_nam;
-    dlfab.fab$l_nam = &dlnam;
-    dlnam.nam$l_esa = dlesa;
-    dlnam.nam$b_ess = sizeof dlesa;
-    dlnam.nam$l_rsa = dlrsa;
-    dlnam.nam$b_rss = sizeof dlrsa;
+    {
+	dMY_CXT;
+	dl_require_symbols = get_av("DynaLoader::dl_require_symbols", 0x4);
+	/* Set up the static control blocks for dl_expand_filespec() */
+	dl_fab = cc$rms_fab;
+	dl_nam = cc$rms_nam;
+	dl_fab.fab$l_nam = &dl_nam;
+	dl_nam.nam$l_esa = dl_esa;
+	dl_nam.nam$b_ess = sizeof dl_esa;
+	dl_nam.nam$l_rsa = dl_rsa;
+	dl_nam.nam$b_rss = sizeof dl_rsa;
+    }
 }
 MODULE = DynaLoader PACKAGE = DynaLoader
 
@@ -179,54 +193,55 @@ dl_expandspec(filespec)
     char vmsspec[NAM$C_MAXRSS], defspec[NAM$C_MAXRSS];
     size_t deflen;
     vmssts sts;
+    dMY_CXT;
 
     tovmsspec(filespec,vmsspec);
-    dlfab.fab$l_fna = vmsspec;
-    dlfab.fab$b_fns = strlen(vmsspec);
-    dlfab.fab$l_dna = 0;
-    dlfab.fab$b_dns = 0;
+    dl_fab.fab$l_fna = vmsspec;
+    dl_fab.fab$b_fns = strlen(vmsspec);
+    dl_fab.fab$l_dna = 0;
+    dl_fab.fab$b_dns = 0;
     DLDEBUG(1,PerlIO_printf(Perl_debug_log, "dl_expand_filespec(%s):\n",vmsspec));
     /* On the first pass, just parse the specification string */
-    dlnam.nam$b_nop = NAM$M_SYNCHK;
-    sts = sys$parse(&dlfab);
+    dl_nam.nam$b_nop = NAM$M_SYNCHK;
+    sts = sys$parse(&dl_fab);
     DLDEBUG(2,PerlIO_printf(Perl_debug_log, "\tSYNCHK sys$parse = %d\n",sts));
     if (!(sts & 1)) {
-      dl_set_error(dlfab.fab$l_sts,dlfab.fab$l_stv);
+      dl_set_error(dl_fab.fab$l_sts,dl_fab.fab$l_stv);
       ST(0) = &PL_sv_undef;
     }
     else {
       /* Now set up a default spec - everything but the name */
-      deflen = dlnam.nam$l_name - dlesa;
-      memcpy(defspec,dlesa,deflen);
-      memcpy(defspec+deflen,dlnam.nam$l_type,
-             dlnam.nam$b_type + dlnam.nam$b_ver);
-      deflen += dlnam.nam$b_type + dlnam.nam$b_ver;
-      memcpy(vmsspec,dlnam.nam$l_name,dlnam.nam$b_name);
+      deflen = dl_nam.nam$l_name - dl_esa;
+      memcpy(defspec,dl_esa,deflen);
+      memcpy(defspec+deflen,dl_nam.nam$l_type,
+             dl_nam.nam$b_type + dl_nam.nam$b_ver);
+      deflen += dl_nam.nam$b_type + dl_nam.nam$b_ver;
+      memcpy(vmsspec,dl_nam.nam$l_name,dl_nam.nam$b_name);
       DLDEBUG(2,PerlIO_printf(Perl_debug_log, "\tsplit filespec: name = %.*s, default = %.*s\n",
-                        dlnam.nam$b_name,vmsspec,deflen,defspec));
+                        dl_nam.nam$b_name,vmsspec,deflen,defspec));
       /* . . . and go back to expand it */
-      dlnam.nam$b_nop = 0;
-      dlfab.fab$l_dna = defspec;
-      dlfab.fab$b_dns = deflen;
-      dlfab.fab$b_fns = dlnam.nam$b_name;
-      sts = sys$parse(&dlfab);
+      dl_nam.nam$b_nop = 0;
+      dl_fab.fab$l_dna = defspec;
+      dl_fab.fab$b_dns = deflen;
+      dl_fab.fab$b_fns = dl_nam.nam$b_name;
+      sts = sys$parse(&dl_fab);
       DLDEBUG(2,PerlIO_printf(Perl_debug_log, "\tname/default sys$parse = %d\n",sts));
       if (!(sts & 1)) {
-        dl_set_error(dlfab.fab$l_sts,dlfab.fab$l_stv);
+        dl_set_error(dl_fab.fab$l_sts,dl_fab.fab$l_stv);
         ST(0) = &PL_sv_undef;
       }
       else {
         /* Now find the actual file */
-        sts = sys$search(&dlfab);
+        sts = sys$search(&dl_fab);
         DLDEBUG(2,PerlIO_printf(Perl_debug_log, "\tsys$search = %d\n",sts));
         if (!(sts & 1)) {
-          dl_set_error(dlfab.fab$l_sts,dlfab.fab$l_stv);
+          dl_set_error(dl_fab.fab$l_sts,dl_fab.fab$l_stv);
           ST(0) = &PL_sv_undef;
         }
         else {
-          ST(0) = sv_2mortal(newSVpvn(dlnam.nam$l_rsa,dlnam.nam$b_rsl));
+          ST(0) = sv_2mortal(newSVpvn(dl_nam.nam$l_rsa,dl_nam.nam$b_rsl));
           DLDEBUG(1,PerlIO_printf(Perl_debug_log, "\tresult = \\%.*s\\\n",
-                            dlnam.nam$b_rsl,dlnam.nam$l_rsa));
+                            dl_nam.nam$b_rsl,dl_nam.nam$l_rsa));
         }
       }
     }
@@ -237,6 +252,7 @@ dl_load_file(filespec, flags)
     int		flags
     PREINIT:
     dTHX;
+    dMY_CXT;
     char vmsspec[NAM$C_MAXRSS];
     SV *reqSV, **reqSVhndl;
     STRLEN deflen;
@@ -360,7 +376,8 @@ dl_install_xsub(perl_name, symref, filename="$Package")
 char *
 dl_error()
     CODE:
-    RETVAL = LastError ;
+    dMY_CXT;
+    RETVAL = dl_last_error ;
     OUTPUT:
       RETVAL
 

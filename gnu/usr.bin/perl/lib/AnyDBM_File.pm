@@ -1,6 +1,7 @@
 package AnyDBM_File;
 
-use 5.005_64;
+use 5.006_001;
+our $VERSION = '1.00';
 our @ISA = qw(NDBM_File DB_File GDBM_File SDBM_File ODBM_File) unless @ISA;
 
 my $mod;

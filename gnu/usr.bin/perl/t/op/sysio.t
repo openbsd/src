@@ -6,7 +6,11 @@ chdir('op') || chdir('t/op') || die "sysio.t: cannot look for myself: $!";
 
 open(I, 'sysio.t') || die "sysio.t: cannot find myself: $!";
 
-$reopen = ($^O eq 'VMS' || $^O eq 'os2' || $^O eq 'MSWin32' || $^O eq 'dos' ||
+$reopen = ($^O eq 'VMS' ||
+           $^O eq 'os2' ||
+           $^O eq 'MSWin32' ||
+           $^O eq 'NetWare' ||
+           $^O eq 'dos' ||
 	   $^O eq 'mpeix');
 
 $x = 'abc';
@@ -108,8 +112,14 @@ print 'not ' if (-s $outfile);
 print "ok 19\n";
 
 # default offset 0
-print 'not ' unless (syswrite(O, $a, 2) == 2);
-print "ok 20\n";
+if (syswrite(O, $a, 2) == 2){
+  print "ok 20\n";
+} else {
+  print "# $!\nnot ok 20\n";
+  # most other tests make no sense after e.g. "No space left on device"
+  die $!;
+}
+
 
 # $a still intact
 print 'not ' unless ($a eq "#!.\0\0erl");
@@ -203,7 +213,7 @@ close(I);
 
 unlink $outfile;
 
-chdir('..'); 
+chdir('..');
 
 1;
 

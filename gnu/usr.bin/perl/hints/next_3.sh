@@ -2,7 +2,7 @@
 # Andreas Koenig <k@franz.ww.TU-Berlin.DE> and Gerd Knops <gerti@BITart.com>.
 # Comments, questions, and improvements welcome!
 #
-# These hints work for NeXT 3.2 and 3.3.  3.0 has it's own
+# These hints work for NeXT 3.2 and 3.3.  3.0 has its own
 # special hint file.
 #
 

@@ -60,7 +60,7 @@ our($VERSION, @ISA, @EXPORT, @EXPORT_OK, %EXPORT_TAGS, $AUTOLOAD);
 require Exporter;
 use XSLoader ();
 @ISA = qw(Exporter);
-$VERSION = "1.03";
+$VERSION = "1.04";
 # Items to export into callers namespace by default
 # (move infrequently used names to @EXPORT_OK below)
 @EXPORT =
@@ -201,17 +201,11 @@ sub S_ISENFMT  { ( $_[0] & _S_IFMT() ) == S_IFENFMT() }
 
 sub AUTOLOAD {
     (my $constname = $AUTOLOAD) =~ s/.*:://;
-    my $val = constant($constname, 0);
-    if ($! != 0) {
-	if ($! =~ /Invalid/ || $!{EINVAL}) {
-	    $AutoLoader::AUTOLOAD = $AUTOLOAD;
-	    goto &AutoLoader::AUTOLOAD;
-	}
-	else {
-	    my ($pack,$file,$line) = caller;
-	    die "Your vendor has not defined Fcntl macro $constname, used at $file line $line.
-";
-	}
+    die "&Fcntl::constant not defined" if $constname eq 'constant';
+    my ($error, $val) = constant($constname);
+    if ($error) {
+        my (undef,$file,$line) = caller;
+        die "$error at $file line $line.\n";
     }
     *$AUTOLOAD = sub { $val };
     goto &$AUTOLOAD;

@@ -120,7 +120,43 @@ subroutine, assign a reference instead:
 Which makes $richard and $dick the same variable, but leaves
 @richard and @dick as separate arrays.  Tricky, eh?
 
-This mechanism may be used to pass and return cheap references
+There is one subtle difference between the following statements:
+
+    *foo = *bar;
+    *foo = \$bar;
+
+C<*foo = *bar> makes the typeglobs themselves synonymous while
+C<*foo = \$bar> makes the SCALAR portions of two distinct typeglobs
+refer to the same scalar value. This means that the following code:
+
+    $bar = 1;
+    *foo = \$bar;       # Make $foo an alias for $bar
+
+    {
+        local $bar = 2; # Restrict changes to block
+        print $foo;     # Prints '1'!
+    }
+
+Would print '1', because C<$foo> holds a reference to the I<original>
+C<$bar> -- the one that was stuffed away by C<local()> and which will be
+restored when the block ends. Because variables are accessed through the
+typeglob, you can use C<*foo = *bar> to create an alias which can be
+localized. (But be aware that this means you can't have a separate
+C<@foo> and C<@bar>, etc.)
+
+What makes all of this important is that the Exporter module uses glob
+aliasing as the import/export mechanism. Whether or not you can properly
+localize a variable that has been exported from a module depends on how
+it was exported:
+
+    @EXPORT = qw($FOO); # Usual form, can't be localized
+    @EXPORT = qw(*FOO); # Can be localized
+
+You can work around the first case by using the fully qualified name 
+(C<$Package::FOO>) where you need a local value, or by overriding it
+by saying C<*FOO = *Package::FOO> in your script.
+
+The C<*x = \$y> mechanism may be used to pass and return cheap references
 into or from subroutines if you don't want to copy the whole
 thing.  It only works when assigning to dynamic variables, not
 lexicals.
@@ -443,12 +479,31 @@ the module.  It is the responsibility of the F<.pm> file to load
 although the POSIX module happens to do both dynamic loading and
 autoloading, the user can say just C<use POSIX> to get it all.
 
+=head2 Making your module threadsafe
+
+Perl has since 5.6.0 support for a new type of threads called
+interpreter threads. These threads can be used explicitly and implicitly.
+
+Ithreads work by cloning the data tree so that no data is shared
+between different threads. These threads can be used using the threads
+module or by doing fork() on win32 (fake fork() support). When a
+thread is cloned all Perl data is cloned, however non-Perl data cannot
+be cloned automatically.  Perl after 5.7.2 has support for the C<CLONE> 
+special subroutine .  In C<CLONE> you can do whatever you need to do,
+like for example handle the cloning of non-Perl data, if necessary.
+C<CLONE> will be executed once for every package that has it defined
+(or inherits it).  It will be called in the context of the new thread,
+so all modifications are made in the new area.
+
+If you want to CLONE all objects you will need to keep track of them per
+package. This is simply done using a hash and Scalar::Util::weaken().
+
 =head1 SEE ALSO
 
 See L<perlmodlib> for general style issues related to building Perl
 modules and classes, as well as descriptions of the standard library
 and CPAN, L<Exporter> for how Perl's standard import/export mechanism
-works, L<perltoot> and L<perltootc> for an in-depth tutorial on
+works, L<perltoot> and L<perltooc> for an in-depth tutorial on
 creating classes, L<perlobj> for a hard-core reference document on
 objects, L<perlsub> for an explanation of functions and scoping,
 and L<perlxstut> and L<perlguts> for more information on writing

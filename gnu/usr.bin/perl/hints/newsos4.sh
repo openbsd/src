@@ -28,6 +28,6 @@ timetype='long'
 # filemode type is int (not mode_t)
 modetype='int'
 # using sprintf(3) instead of gcvt(3)
-d_Gconvert='sprintf((b),"%.*g",(n),(x))'
+gconvert_preference=sprintf
 # No POSIX.
 useposix='false'

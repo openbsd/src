@@ -64,7 +64,7 @@ print OUT <<'!NO!SUBS!';
 
 $exit = $last_unempty = 0;
 while (<>) {
-    chomp;
+    s/(\012|\015\012|\015)$//;
     if (/^=(\S+)/ && $directive{$1} && $last_unempty) {
 	printf "%s: line %5d, no blank line preceeding directive =%s\n",
 		$ARGV, $., $1;

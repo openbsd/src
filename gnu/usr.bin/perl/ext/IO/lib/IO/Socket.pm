@@ -6,13 +6,13 @@
 
 package IO::Socket;
 
-require 5.005_64;
+require 5.006;
 
 use IO::Handle;
 use Socket 1.3;
 use Carp;
 use strict;
-our(@ISA, $VERSION);
+our(@ISA, $VERSION, @EXPORT_OK);
 use Exporter;
 use Errno;
 
@@ -23,12 +23,18 @@ require IO::Socket::UNIX if ($^O ne 'epoc');
 
 @ISA = qw(IO::Handle);
 
-$VERSION = "1.26";
+$VERSION = "1.27";
+
+@EXPORT_OK = qw(sockatmark);
 
 sub import {
     my $pkg = shift;
-    my $callpkg = caller;
-    Exporter::export 'Socket', $callpkg, @_;
+    if (@_ && $_[0] eq 'sockatmark') { # not very extensible but for now, fast
+	Exporter::export_to_level('IO::Socket', 1, $pkg, 'sockatmark');
+    } else {
+	my $callpkg = caller;
+	Exporter::export 'Socket', $callpkg, @_;
+    }
 }
 
 sub new {
@@ -103,10 +109,10 @@ sub connect {
     my $timeout = ${*$sock}{'io_socket_timeout'};
     my $err;
     my $blocking;
-    $blocking = $sock->blocking(0) if $timeout;
 
+    $blocking = $sock->blocking(0) if $timeout;
     if (!connect($sock, $addr)) {
-	if ($timeout && $!{EINPROGRESS}) {
+	if (defined $timeout && $!{EINPROGRESS}) {
 	    require IO::Select;
 
 	    my $sel = new IO::Select $sock;
@@ -115,14 +121,14 @@ sub connect {
 		$err = $! || (exists &Errno::ETIMEDOUT ? &Errno::ETIMEDOUT : 1);
 		$@ = "connect: timeout";
 	    }
-	    elsif(!connect($sock,$addr) && not $!{EISCONN}) {
+	    elsif (!connect($sock,$addr) && not $!{EISCONN}) {
 		# Some systems refuse to re-connect() to
 		# an already open socket and set errno to EISCONN.
 		$err = $!;
 		$@ = "connect: $!";
 	    }
 	}
-	else {
+        elsif ($blocking || !$!{EINPROGRESS})  {
 	    $err = $!;
 	    $@ = "connect: $!";
 	}
@@ -162,7 +168,7 @@ sub accept {
     my $new = $pkg->new(Timeout => $timeout);
     my $peer = undef;
 
-    if($timeout) {
+    if(defined $timeout) {
 	require IO::Select;
 
 	my $sel = new IO::Select $sock;
@@ -256,6 +262,12 @@ sub sockopt {
     my $sock = shift;
     @_ == 1 ? $sock->getsockopt(SOL_SOCKET,@_)
 	    : $sock->setsockopt(SOL_SOCKET,@_);
+}
+
+sub atmark {
+    @_ == 1 or croak 'usage: $sock->atmark()';
+    my($sock) = @_;
+    sockatmark($sock);
 }
 
 sub timeout {
@@ -357,13 +369,21 @@ in attempt to make the interface more flexible. These are
 
 =item accept([PKG])
 
-perform the system call C<accept> on the socket and return a new object. The
-new object will be created in the same class as the listen socket, unless
-C<PKG> is specified. This object can be used to communicate with the client
-that was trying to connect. In a scalar context the new socket is returned,
-or undef upon failure. In a list context a two-element array is returned
-containing the new socket and the peer address; the list will
-be empty upon failure.
+perform the system call C<accept> on the socket and return a new
+object. The new object will be created in the same class as the listen
+socket, unless C<PKG> is specified. This object can be used to
+communicate with the client that was trying to connect.
+
+In a scalar context the new socket is returned, or undef upon
+failure. In a list context a two-element array is returned containing
+the new socket and the peer address; the list will be empty upon
+failure.
+
+The timeout in the [PKG] can be specified as zero to effect a "poll",
+but you shouldn't do that because a new IO::Select object will be
+created behind the scenes just to do the single poll.  This is
+horrendously inefficient.  Use rather true select() with a zero
+timeout on the handle, or non-blocking IO.
 
 =item socketpair(DOMAIN, TYPE, PROTOCOL)
 
@@ -376,26 +396,33 @@ Additional methods that are provided are:
 
 =over 4
 
-=item timeout([VAL])
+=item atmark
 
-Set or get the timeout value associated with this socket. If called without
-any arguments then the current setting is returned. If called with an argument
-the current setting is changed and the previous value returned.
+True if the socket is currently positioned at the urgent data mark,
+false otherwise.
 
-=item sockopt(OPT [, VAL])
+    use IO::Socket;
 
-Unified method to both set and get options in the SOL_SOCKET level. If called
-with one argument then getsockopt is called, otherwise setsockopt is called.
+    my $sock = IO::Socket::INET->new('some_server');
+    $sock->read(1024,$data) until $sock->atmark;
 
-=item sockdomain
+Note: this is a reasonably new addition to the family of socket
+functions, so all systems may not support this yet.  If it is
+unsupported by the system, an attempt to use this method will
+abort the program.
 
-Returns the numerical number for the socket domain type. For example, for
-a AF_INET socket the value of &AF_INET will be returned.
+The atmark() functionality is also exportable as sockatmark() function:
 
-=item socktype
+	use IO::Socket 'sockatmark';
 
-Returns the numerical number for the socket type. For example, for
-a SOCK_STREAM socket the value of &SOCK_STREAM will be returned.
+This allows for a more traditional use of sockatmark() as a procedural
+socket function.  If your system does not support sockatmark(), the
+C<use> declaration will fail at compile time.
+
+=item connected
+
+If the socket is in a connected state the the peer address is returned.
+If the socket is not in a connected state then undef will be returned.
 
 =item protocol
 
@@ -403,10 +430,26 @@ Returns the numerical number for the protocol being used on the socket, if
 known. If the protocol is unknown, as with an AF_UNIX socket, zero
 is returned.
 
-=item connected
+=item sockdomain
 
-If the socket is in a connected state the the peer address is returned.
-If the socket is not in a connected state then undef will be returned.
+Returns the numerical number for the socket domain type. For example, for
+an AF_INET socket the value of &AF_INET will be returned.
+
+=item sockopt(OPT [, VAL])
+
+Unified method to both set and get options in the SOL_SOCKET level. If called
+with one argument then getsockopt is called, otherwise setsockopt is called.
+
+=item socktype
+
+Returns the numerical number for the socket type. For example, for
+a SOCK_STREAM socket the value of &SOCK_STREAM will be returned.
+
+=item timeout([VAL])
+
+Set or get the timeout value associated with this socket. If called without
+any arguments then the current setting is returned. If called with an argument
+the current setting is changed and the previous value returned.
 
 =back
 
@@ -416,13 +459,18 @@ L<Socket>, L<IO::Handle>, L<IO::Socket::INET>, L<IO::Socket::UNIX>
 
 =head1 AUTHOR
 
-Graham Barr. Currently maintained by the Perl Porters.  Please report all
-bugs to <perl5-porters@perl.org>.
+Graham Barr.  atmark() by Lincoln Stein.  Currently maintained by the
+Perl Porters.  Please report all bugs to <perl5-porters@perl.org>.
 
 =head1 COPYRIGHT
 
 Copyright (c) 1997-8 Graham Barr <gbarr@pobox.com>. All rights reserved.
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
+
+The atmark() implementation: Copyright 2001, Lincoln Stein <lstein@cshl.org>.
+This module is distributed under the same terms as Perl itself.
+Feel free to use, modify and redistribute it as long as you retain
+the correct attribution.
 
 =cut

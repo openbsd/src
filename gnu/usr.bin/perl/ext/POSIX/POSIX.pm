@@ -6,7 +6,7 @@ use AutoLoader;
 
 use XSLoader ();
 
-our $VERSION = "1.03" ;
+our $VERSION = "1.05" ;
 
 # Grandfather old foo_h form to new :foo_h form
 my $loaded;
@@ -20,11 +20,14 @@ sub import {
 }
 
 sub croak { require Carp;  goto &Carp::croak }
+# declare usage to assist AutoLoad
+sub usage;
 
 XSLoader::load 'POSIX', $VERSION;
 
-my $EINVAL = constant("EINVAL", 0);
-my $EAGAIN = constant("EAGAIN", 0);
+my %NON_CONSTS = (map {($_,1)}
+                  qw(S_ISBLK S_ISCHR S_ISDIR S_ISFIFO S_ISREG WEXITSTATUS
+                     WIFEXITED WIFSIGNALED WIFSTOPPED WSTOPSIG WTERMSIG));
 
 sub AUTOLOAD {
     if ($AUTOLOAD =~ /::(_?[a-z])/) {
@@ -35,50 +38,41 @@ sub AUTOLOAD {
     local $! = 0;
     my $constname = $AUTOLOAD;
     $constname =~ s/.*:://;
-    my $val = constant($constname, @_ ? $_[0] : 0);
-    if ($! == 0) {
+    if ($NON_CONSTS{$constname}) {
+        my ($val, $error) = &int_macro_int($constname, $_[0]);
+        croak $error if $error;
+        *$AUTOLOAD = sub { &int_macro_int($constname, $_[0]) };
+    } else {
+        my ($error, $val) = constant($constname);
+        croak $error if $error;
 	*$AUTOLOAD = sub { $val };
-    }
-    elsif ($! == $EAGAIN) {	# Not really a constant, so always call.
-	*$AUTOLOAD = sub { constant($constname, $_[0]) };
-    }
-    elsif ($! == $EINVAL) {
-	croak "$constname is not a valid POSIX macro";
-    }
-    else {
-	croak "Your vendor has not defined POSIX macro $constname, used";
     }
 
     goto &$AUTOLOAD;
 }
 
-sub usage { 
+sub POSIX::SigAction::new {
+    bless {HANDLER => $_[1], MASK => $_[2], FLAGS => $_[3] || 0}, $_[0];
+}
+
+1;
+__END__
+
+sub usage {
     my ($mess) = @_;
     croak "Usage: POSIX::$mess";
 }
 
-sub redef { 
+sub redef {
     my ($mess) = @_;
     croak "Use method $mess instead";
 }
 
-sub unimpl { 
+sub unimpl {
     my ($mess) = @_;
     $mess =~ s/xxx//;
     croak "Unimplemented: POSIX::$mess";
 }
-
-############################
-package POSIX::SigAction;
-
-sub new {
-    bless {HANDLER => $_[1], MASK => $_[2], FLAGS => $_[3] || 0}, $_[0];
-}
-
-############################
-package POSIX; # return to package POSIX so AutoSplit is happy
-1;
-__END__
 
 sub assert {
     usage "assert(expr)" if @_ != 1;
@@ -655,20 +649,6 @@ sub fork {
     CORE::fork;
 }
 
-sub getcwd
-{
-    usage "getcwd()" if @_ != 0;
-    if ($^O eq 'MSWin32') {
-	# this perhaps applies to everyone else also?
-	require Cwd;
-	$cwd = &Cwd::cwd;
-    }
-    else {
-	chop($cwd = `pwd`);
-    }
-    $cwd;
-}
-
 sub getegid {
     usage "getegid()" if @_ != 0;
     $) + 0;
@@ -734,23 +714,13 @@ sub setbuf {
     redef "IO::Handle::setbuf()";
 }
 
-sub setgid {
-    usage "setgid(gid)" if @_ != 1;
-    $( = $_[0];
-}
-
-sub setuid {
-    usage "setuid(uid)" if @_ != 1;
-    $< = $_[0];
-}
-
 sub setvbuf {
     redef "IO::Handle::setvbuf()";
 }
 
 sub sleep {
     usage "sleep(seconds)" if @_ != 1;
-    CORE::sleep($_[0]);
+    $_[0] - CORE::sleep($_[0]);
 }
 
 sub unlink {
@@ -771,7 +741,7 @@ sub load_imports {
     ctype_h =>	[qw(isalnum isalpha iscntrl isdigit isgraph islower
 		isprint ispunct isspace isupper isxdigit tolower toupper)],
 
-    dirent_h =>	[qw()],
+    dirent_h =>	[],
 
     errno_h =>	[qw(E2BIG EACCES EADDRINUSE EADDRNOTAVAIL EAFNOSUPPORT
 		EAGAIN EALREADY EBADF EBUSY ECHILD ECONNABORTED
@@ -808,7 +778,7 @@ sub load_imports {
 		LDBL_MAX LDBL_MAX_10_EXP LDBL_MAX_EXP
 		LDBL_MIN LDBL_MIN_10_EXP LDBL_MIN_EXP)],
 
-    grp_h =>	[qw()],
+    grp_h =>	[],
 
     limits_h =>	[qw( ARG_MAX CHAR_BIT CHAR_MAX CHAR_MIN CHILD_MAX
 		INT_MAX INT_MIN LINK_MAX LONG_MAX LONG_MIN MAX_CANON
@@ -821,13 +791,14 @@ sub load_imports {
 		_POSIX_PATH_MAX _POSIX_PIPE_BUF _POSIX_SSIZE_MAX
 		_POSIX_STREAM_MAX _POSIX_TZNAME_MAX)],
 
-    locale_h =>	[qw(LC_ALL LC_COLLATE LC_CTYPE LC_MONETARY LC_NUMERIC
-		LC_TIME NULL localeconv setlocale)],
+    locale_h =>	[qw(LC_ALL LC_COLLATE LC_CTYPE LC_MESSAGES
+		    LC_MONETARY LC_NUMERIC LC_TIME NULL
+		    localeconv setlocale)],
 
     math_h =>	[qw(HUGE_VAL acos asin atan ceil cosh fabs floor fmod
 		frexp ldexp log10 modf pow sinh tan tanh)],
 
-    pwd_h =>	[qw()],
+    pwd_h =>	[],
 
     setjmp_h =>	[qw(longjmp setjmp siglongjmp sigsetjmp)],
 
@@ -839,7 +810,7 @@ sub load_imports {
 		SIG_IGN SIG_SETMASK SIG_UNBLOCK raise sigaction signal
 		sigpending sigprocmask sigsuspend)],
 
-    stdarg_h =>	[qw()],
+    stdarg_h =>	[],
 
     stddef_h =>	[qw(NULL offsetof)],
 
@@ -868,9 +839,9 @@ sub load_imports {
 		S_ISUID S_IWGRP S_IWOTH S_IWUSR S_IXGRP S_IXOTH S_IXUSR
 		fstat mkfifo)],
 
-    sys_times_h => [qw()],
+    sys_times_h => [],
 
-    sys_types_h => [qw()],
+    sys_types_h => [],
 
     sys_utsname_h => [qw(uname)],
 
@@ -900,7 +871,7 @@ sub load_imports {
 		_POSIX_JOB_CONTROL _POSIX_NO_TRUNC _POSIX_SAVED_IDS
 		_POSIX_VDISABLE _POSIX_VERSION _SC_ARG_MAX
 		_SC_CHILD_MAX _SC_CLK_TCK _SC_JOB_CONTROL
-		_SC_NGROUPS_MAX _SC_OPEN_MAX _SC_SAVED_IDS
+		_SC_NGROUPS_MAX _SC_OPEN_MAX _SC_PAGESIZE _SC_SAVED_IDS
 		_SC_STREAM_MAX _SC_TZNAME_MAX _SC_VERSION
 		_exit access ctermid cuserid
 		dup2 dup execl execle execlp execv execve execvp
@@ -908,7 +879,7 @@ sub load_imports {
 		getpid getuid isatty lseek pathconf pause setgid setpgid
 		setsid setuid sysconf tcgetpgrp tcsetpgrp ttyname)],
 
-    utime_h =>	[qw()],
+    utime_h =>	[],
 
 );
 
@@ -918,22 +889,61 @@ for (values %EXPORT_TAGS) {
 }
 
 @EXPORT_OK = qw(
-    closedir opendir readdir rewinddir
-    fcntl open
-    getgrgid getgrnam
-    atan2 cos exp log sin sqrt
-    getpwnam getpwuid
-    kill
-    fileno getc printf rename sprintf
-    abs exit rand srand system
-    chmod mkdir stat umask
-    times
-    wait waitpid
-    gmtime localtime time 
-    alarm chdir chown close fork getlogin getppid getpgrp link
-	pipe read rmdir sleep unlink write
-    utime
-    nice
+		abs
+		alarm
+		atan2
+		chdir
+		chmod
+		chown
+		close
+		closedir
+		cos
+		exit
+		exp
+		fcntl
+		fileno
+		fork
+		getc
+		getgrgid
+		getgrnam
+		getlogin
+		getpgrp
+		getppid
+		getpwnam
+		getpwuid
+		gmtime
+		isatty
+		kill
+		link
+		localtime
+		log
+		mkdir
+		nice
+		open
+		opendir
+		pipe
+		printf
+		rand
+		read
+		readdir
+		rename
+		rewinddir
+		rmdir
+		sin
+		sleep
+		sprintf
+		sqrt
+		srand
+		stat
+		system
+		time
+		times
+		umask
+		unlink
+		utime
+		wait
+		waitpid
+		write
 );
 
 require Exporter;

@@ -14,6 +14,15 @@ esac
 dll_post="`echo $perl_fullversion | sum | sed -e 's/^0*//' | awk '{print $1}'`"
 dll_post="`printf '%x' $dll_post | tr '[a-z]' '[A-Z]'`"
 
+aout_extra_libs=''
+aout_extra_sep=''
+for xxx in $aout_extra_static_ext; do
+  aout_extra_dir=`echo "$xxx" | sed -e 's/::/\//g'`
+  aout_extra_lib="lib/auto/$aout_extra_dir/"`basename "$aout_extra_dir"`
+  aout_extra_libs="$aout_extra_libs$aout_extra_sep$aout_extra_lib$aout_lib_ext"
+  aout_extra_sep=' '
+done
+
 $spitshell >>Makefile <<!GROK!THIS!
 
 PERL_FULLVERSION = $perl_fullversion
@@ -31,20 +40,27 @@ AOUT_LIBPERL_DLL	= libperl_dll$aout_lib_ext
 AOUT_CCCMD_DLL	= \$(CC) -DDOSISH -DOS2=2 -DEMBED -I. -DPACK_MALLOC -DDEBUGGING_MSTATS -DTWO_POT_OPTIMIZE -DPERL_EMERGENCY_SBRK
 AOUT_CLDFLAGS_DLL	= -Zexe -Zmt -Zcrtdll -Zstack 32000
 
-LD_OPT		= $optimize
+# No -DPERL_CORE
+SO_CCCMD	= \$(CC) $ccflags \$(OPTIMIZE)
+
+LD_OPT		= \$(OPTIMIZE)
+PERL_DLL_LD_OPT = -Zmap -Zlinker /map
 
 PERL_DLL_BASE	= perl$dll_post
 PERL_DLL	= \$(PERL_DLL_BASE)\$(DLSUFFIX)
 TEST_PERL_DLL	= perl_dll_t
 CONFIG_ARGS	= $config_args
+AOUT_EXTRA_LIBS	= $aout_extra_libs
 
 !GROK!THIS!
 
 $spitshell >>Makefile <<'!NO!SUBS!'
+PREPLIBRARY_LIBPERL = $(LIBPERL)
 $(LIBPERL): perl.imp $(PERL_DLL) perl5.def libperl_override.lib
 	emximp -o $(LIBPERL) perl.imp
+	cp $(LIBPERL) perl.lib
 
-libperl_override.imp: os2/os2add.sym
+libperl_override.imp: os2/os2add.sym miniperl
 	./miniperl -wnle 'print "$$_\t$(PERL_DLL_BASE)\t$$_\t?"' os2/os2add.sym > tmp.imp
 	echo	'strdup	$(PERL_DLL_BASE)	Perl_strdup	?' >> tmp.imp
 	echo	'putenv	$(PERL_DLL_BASE)	Perl_putenv	?' >> tmp.imp
@@ -63,6 +79,12 @@ perl.imp: perl5.def
 	echo	'emx_malloc		emxlibcm	402	?' >> $@
 	echo	'emx_realloc		emxlibcm	403	?' >> $@
 
+.PHONY: perl_dll installcmd aout_clean aout_install aout_install.perl \
+	perlrexx test_prep_perl_ test_prep_perl_sys test_prep_perl_stat \
+	test_prep_perl_stat_aout test_prep_various \
+	stat_aout_harness aout_harness stat_harness sys_harness all_harness \
+	stat_aout_test aout_test stat_test sys_test all_test
+
 perl_dll: $(PERL_DLL)
 
 perl_dll_t: t/$(PERL_DLL)
@@ -71,7 +93,7 @@ t/$(PERL_DLL): $(PERL_DLL)
 	$(LNS) $(PERL_DLL) t/$(PERL_DLL)
 
 $(PERL_DLL): $(obj) perl5.def perl$(OBJ_EXT)
-	$(LD) $(LD_OPT) $(LDDLFLAGS) -o $@ perl$(OBJ_EXT) $(obj) $(libs) perl5.def || ( rm $(PERL_DLL) && sh -c false )
+	$(LD) $(LD_OPT) $(LDDLFLAGS) $(PERL_DLL_LD_OPT) -o $@ perl$(OBJ_EXT) $(obj) $(libs) perl5.def || ( rm $(PERL_DLL) && sh -c false )
 
 perl5.olddef: perl.linkexp
 	echo "LIBRARY '$(PERL_DLL_BASE)' INITINSTANCE TERMINSTANCE"	> $@
@@ -105,7 +127,11 @@ perl.linkexp: perl.exports perl.map  os2/os2.sym
 
 # We link miniperl statically, since .DLL depends on $(DYNALOADER) 
 
-miniperl.map miniperl: $(obj) perl$(OBJ_EXT) miniperlmain$(OBJ_EXT) opmini$(OBJ_EXT)
+miniperl.map: miniperl
+
+miniperl.exe: miniperl
+
+miniperl: $(obj) perl$(OBJ_EXT) miniperlmain$(OBJ_EXT) opmini$(OBJ_EXT)
 	$(CC) $(CLDFLAGS) -o miniperl miniperlmain$(OBJ_EXT) perl$(OBJ_EXT) `echo $(obj)|sed -e 's/\bop\./opmini./g'` $(libs) -Zmap -Zlinker /map/PM:VIO
 	@./miniperl -w -Ilib -MExporter -e '<?>' || $(MAKE) minitest
 
@@ -129,29 +155,40 @@ os2thread.h: os2/os2thread.h
 dlfcn.h: os2/dlfcn.h
 	cp -f $< $@
 
-# This one is compiled OMF, so cannot fork():
+# Non-Forking dynamically loaded perl
 
-perl___: $& perlmain$(OBJ_EXT) $(LIBPERL) $(DYNALOADER) $(static_ext) ext.libs
-	$(SHRPENV) $(CC) $(CLDFLAGS) $(CCDLFLAGS) -o perl___ perlmain$(OBJ_EXT) $(DYNALOADER) $(static_ext) $(LIBPERL) `cat ext.libs` $(libs)
+perl___$(EXE_EXT) perl___: $& perlmain$(OBJ_EXT) $(LIBPERL) $(DYNALOADER) $(static_ext) ext.libs
+	$(SHRPENV) $(CC) $(CLDFLAGS) $(CCDLFLAGS) -o perl___ perlmain$(OBJ_EXT) $(DYNALOADER) $(static_ext) $(LIBPERL) `cat ext.libs` $(libs) -Zlinker /map/PM:VIO
 
 # This one is compiled -Zsys, so cannot do many things:
 
+# Remove -Zcrtdll
+STAT_CLDFLAGS = -Zexe -Zomf -Zmt -Zstack 32000
+
+# Non-forking dynamically loaded perl with a wrong CRT library:
+
+perl_stat: $& perlmain$(OBJ_EXT) $(LIBPERL) $(DYNALOADER) $(static_ext) ext.libs
+	$(SHRPENV) $(CC) $(STAT_CLDFLAGS) $(CCDLFLAGS) -o $@ perlmain$(OBJ_EXT) $(DYNALOADER) $(static_ext) $(LIBPERL) `cat ext.libs` $(libs) -Zlinker /map/PM:VIO
+
 # Remove -Zcrtdll, add -Zsys
-SYS_CLDFLAGS = -Zexe -Zomf -Zmt -Zsys -Zstack 32000
+SYS_CLDFLAGS = $(STAT_CLDFLAGS) -Zsys
+
+# Non-Forking dynamically loaded perl without EMX - so with wrong CRT library
 
 perl_sys: $& perlmain$(OBJ_EXT) $(LIBPERL) $(DYNALOADER) $(static_ext) ext.libs
-	$(SHRPENV) $(CC) $(SYS_CLDFLAGS) $(CCDLFLAGS) -o perl_sys perlmain$(OBJ_EXT) $(DYNALOADER) $(static_ext) $(LIBPERL) `cat ext.libs` $(libs)
+	$(SHRPENV) $(CC) $(SYS_CLDFLAGS) $(CCDLFLAGS) -o $@ perlmain$(OBJ_EXT) $(DYNALOADER) $(static_ext) $(LIBPERL) `cat ext.libs` $(libs) -Zlinker /map/PM:VIO
 
 installcmd : 
-	perl -e 'die qq{Give the option INSTALLCMDDIR=... to make!} if $$ARGV[0] eq ""' $(INSTALLCMDDIR)
-	perl os2/perl2cmd.pl $(INSTALLCMDDIR)
+	@perl -e 'die qq{Give the option INSTALLCMDDIR=... to make!} if $$ARGV[0] eq ""' $(INSTALLCMDDIR)
+	./miniperl -Ilib os2/perl2cmd.pl $(INSTALLCMDDIR)
 
 # Aout section:
 
 aout_obj = $(addsuffix $(AOUT_OBJ_EXT),$(basename $(obj)))
 AOUT_DYNALOADER = $(addsuffix $(AOUT_LIB_EXT),$(basename $(DYNALOADER)))
-aout_static_ext = $(addsuffix $(AOUT_LIB_EXT),$(basename $(dynamic_ext)))
-aout_static_lib = $(addsuffix $(LIB_EXT),$(basename $(dynamic_ext)))
+aout_ext = $(dynamic_ext) $(AOUT_EXTRA_LIBS)
+aout_static_ext = $(addsuffix $(AOUT_LIB_EXT),$(basename $(aout_ext)))
+aout_static_lib = $(addsuffix $(LIB_EXT),$(basename $(aout_ext)))
 
 aout_static_ext_dll = $(addsuffix $(AOUT_LIB_EXT),$(basename $(static_ext)))
 DYNALOADER_OBJ = ext/DynaLoader/DynaLoader$(OBJ_EXT)
@@ -167,6 +204,7 @@ $(DYNALOADER_OBJ) : $(DYNALOADER)
 $(AOUT_LIBPERL) : $(aout_obj) perl$(AOUT_OBJ_EXT)
 	rm -f $@
 	$(AOUT_AR) rcu $@ perl$(AOUT_OBJ_EXT) $(aout_obj)
+	cp $@ perl.a
 
 .c$(AOUT_OBJ_EXT):
 	$(AOUT_CCCMD) $(PLDLFLAGS) -c $*.c
@@ -181,20 +219,39 @@ aout_perlmain.c: miniperlmain.c config.sh makefile $(static_ext_autoinit)
 	sh writemain $(DYNALOADER) $(aout_static_lib) > tmp
 	sh mv-if-diff tmp aout_perlmain.c
 
-miniperl_: $& miniperlmain$(AOUT_OBJ_EXT) $(AOUT_LIBPERL) opmini$(AOUT_OBJ_EXT)
+_preplibrary = miniperl lib/Config.pm lib/lib.pm lib/re.pm
+
+miniperl_: $& miniperlmain$(AOUT_OBJ_EXT) $(AOUT_LIBPERL) opmini$(AOUT_OBJ_EXT) $(_preplibrary)
 	$(CC) $(AOUT_CLDFLAGS) $(CCDLFLAGS) -o miniperl_ miniperlmain$(AOUT_OBJ_EXT) opmini$(AOUT_OBJ_EXT) $(AOUT_LIBPERL) $(libs)
 
-perl_: $& aout_perlmain$(AOUT_OBJ_EXT) $(AOUT_LIBPERL) $(AOUT_DYNALOADER) $(aout_static_ext) ext.libs
+# Forking statically loaded perl
+
+# Need a miniperl_ dependency, since $(AOUT_DYNALOADER) is build via implicit
+# rules, thus would not rebuild miniperl_ via an explicit rule
+
+perl_$(EXE_EXT) perl_: $& miniperl_ aout_perlmain$(AOUT_OBJ_EXT) $(AOUT_LIBPERL) $(AOUT_DYNALOADER) $(aout_static_ext) ext.libs
 	$(CC) $(AOUT_CLDFLAGS) $(CCDLFLAGS) -o perl_ aout_perlmain$(AOUT_OBJ_EXT) $(AOUT_DYNALOADER) $(aout_static_ext) $(AOUT_LIBPERL) `cat ext.libs` $(libs)
 
-perl : perl__ perl___
+# Remove -Zcrtdll
+STAT_AOUT_CLDFLAGS = -Zexe -Zmt -Zstack 32000
 
-perl__: $& perlmain$(OBJ_EXT) $(LIBPERL) $(DYNALOADER) $(static_ext) ext.libs
+# Forking dynamically loaded perl with a wrong CRT library:
+
+perl_stat_aout$(EXE_EXT) perl_stat_aout: $& perlmain$(AOUT_OBJ_EXT) $(AOUT_DYNALOADER_OBJ) $(aout_static_ext_dll) $(AOUT_LIBPERL_DLL) ext.libs
+	$(SHRPENV) $(CC) $(STAT_AOUT_CLDFLAGS) $(CCDLFLAGS) -o $@ perlmain$(AOUT_OBJ_EXT) $(AOUT_DYNALOADER_OBJ) $(aout_static_ext_dll) $(AOUT_LIBPERL_DLL) `cat ext.libs` $(libs)
+
+PERLREXX_DLL = perlrexx.dll
+
+perl : perl__ perl___ $(PERLREXX_DLL)
+
+# Dynamically loaded PM-application perl:
+
+perl__$(EXE_EXT) perl__: $& perlmain$(OBJ_EXT) $(LIBPERL) $(DYNALOADER) $(static_ext) ext.libs
 	$(CC) $(CLDFLAGS) $(CCDLFLAGS) -o perl__ perlmain$(OBJ_EXT) $(DYNALOADER) $(static_ext) $(LIBPERL) `cat ext.libs` $(libs) -Zlinker /PM:PM
 
 # Forking dynamically loaded perl:
 
-perl: $& perlmain$(AOUT_OBJ_EXT) $(AOUT_DYNALOADER_OBJ) $(aout_static_ext_dll) $(AOUT_LIBPERL_DLL) ext.libs
+perl$(EXE_EXT) perl: $& perlmain$(AOUT_OBJ_EXT) $(AOUT_DYNALOADER_OBJ) $(aout_static_ext_dll) $(AOUT_LIBPERL_DLL) ext.libs
 	$(CC) $(AOUT_CLDFLAGS_DLL) $(CCDLFLAGS) -o perl perlmain$(AOUT_OBJ_EXT) $(AOUT_DYNALOADER_OBJ) $(aout_static_ext_dll) $(AOUT_LIBPERL_DLL) `cat ext.libs` $(libs)
 
 clean: aout_clean
@@ -207,60 +264,201 @@ aout_install: perl_ aout_install.perl
 aout_install.perl: perl_ installperl
 	./perl_ installperl
 
-aout_test: perl_
-	- cd t && (rm -f perl_$(EXE_EXT); $(LNS) ../perl_$(EXE_EXT) perl$(EXE_EXT)) && ./perl TEST </dev/tty
+perlrexx: $(PERLREXX_DLL)
+	@sh -c true
 
-# To test with harness, set HARNESS_BAD_EXITCODE=2
+perlrexx.c: os2/perlrexx.c
+	@cp -f os2/$@ $@
 
-sys_test: perl_sys
-	- cd t && (rm -f perl_$(EXE_EXT); $(LNS) ../perl_sys$(EXE_EXT) perl$(EXE_EXT)) && ./perl TEST </dev/tty
+# Remove -Zexe, add -Zdll -Zso.  No stack needed
+SO_CLDFLAGS = -Zdll -Zso -Zomf -Zmt -Zsys
 
-sys_harness: perl_sys
-	- cd t && (rm -f perl_$(EXE_EXT); $(LNS) ../perl_sys$(EXE_EXT) perl$(EXE_EXT)) && env HARNESS_BAD_EXITCODE=2 ./perl harness </dev/tty
+# A callable-from-REXX DLL
+
+$(PERLREXX_DLL): perlrexx$(OBJ_EXT) perlrexx.def
+	$(SHRPENV) $(CC) $(SO_CLDFLAGS) $(CCDLFLAGS) -o $@ perlrexx$(OBJ_EXT) $(DYNALOADER) $(static_ext) $(LIBPERL) `cat ext.libs` $(libs) perlrexx.def
+
+perlrexx.def: miniperl $(_preplibrary)
+	echo	"LIBRARY 'perlrexx' INITINSTANCE TERMINSTANCE"	> tmp.def
+	echo	"DESCRIPTION '@#perl5-porters@perl.org:`miniperl -Ilib -MConfig -e 'print \$$]'`#@ REXX to Perl `miniperl -Ilib -MConfig -e 'print \$$Config{version}'` interface'" >> tmp.def
+	echo	"EXPORTS"					>> tmp.def
+	echo	'  "PERL"'					>> tmp.def
+	echo	'  "PERLTERM"'					>> tmp.def
+	echo	'  "PERLINIT"'					>> tmp.def
+	echo	'  "PERLEXIT"'					>> tmp.def
+	echo	'  "PERLEVAL"'					>> tmp.def
+	echo	'  "PERLLASTERROR"'				>> tmp.def
+	echo	'  "PERLEVALSUBCOMMAND"'			>> tmp.def
+	echo	'  "PERLEXPORTALL"'				>> tmp.def
+	echo	'  "PERLDROPALL"'				>> tmp.def
+	echo	'  "PERLDROPALLEXIT"'				>> tmp.def
+	sh mv-if-diff tmp.def $@
+
+
+perlrexx$(OBJ_EXT): perlrexx.c
+	$(SO_CCCMD) $(PLDLFLAGS) -c perlrexx.c
+
+# To test with harness, one needed to HARNESS_IGNORE_EXITCODE=2
+
+# Define to be empty to get a TTY test
+REDIR_TEST = 2>&1 | tee 00_$@
+
+test_prep_perl_: test_prep_pre miniperl_ ./perl_$(EXE_EXT)
+	PERL=./perl_ $(MAKE) _test_prep
+
+test_prep_various: test_prep_pre miniperl $(dynamic_ext) $(TEST_PERL_DLL)
+
+test_prep_perl_sys: test_prep_various ./perl_sys$(EXE_EXT)
+	PERL=./perl_sys $(MAKE) _test_prep
+
+test_prep_perl___: test_prep_various ./perl___$(EXE_EXT)
+	PERL=./perl___ $(MAKE) _test_prep
+
+test_prep_perl_stat: test_prep_various ./perl_stat$(EXE_EXT)
+	PERL=./perl_stat $(MAKE) _test_prep
+
+test_prep_perl_stat_aout: test_prep_various ./perl_stat_aout$(EXE_EXT)
+	PERL=./perl_stat_aout $(MAKE) _test_prep
+
+aout_test: test_prep_perl_
+	PERL=./perl_ $(MAKE) _test
+
+aout_harness: test_prep_perl_
+	-PERL=./perl_ $(MAKE) TESTFILE=harness _test $(REDIR_TEST)
+
+sys_test: test_prep_perl_sys
+	PERL=./perl_sys $(MAKE) _test
+
+sys_harness: test_prep_perl_sys
+	-PERL=./perl_sys $(MAKE) TESTFILE=harness _test $(REDIR_TEST)
+
+stat_test: test_prep_perl_stat
+	PERL=./perl_stat $(MAKE) _test
+
+stat_harness: test_prep_perl_stat
+	-PERL=./perl_stat $(MAKE) TESTFILE=harness _test $(REDIR_TEST)
+
+stat_aout_test: test_prep_perl_stat_aout
+	PERL=./perl_stat_aout $(MAKE) _test
+
+stat_aout_harness: test_prep_perl_stat_aout
+	-PERL=./perl_stat_aout $(MAKE) TESTFILE=harness _test $(REDIR_TEST)
+
+perl___test: test_prep_perl___
+	PERL=./perl___ $(MAKE) _test
+
+perl___harness: test_prep_perl___
+	-PERL=./perl___ $(MAKE) TESTFILE=harness _test $(REDIR_TEST)
+
+all_test: test aout_test perl___test sys_test stat_test stat_aout_test
+
+all_harness: test_harness aout_harness perl___harness sys_harness stat_harness stat_aout_harness
 
 !NO!SUBS!
 
-# Now we need to find directories in ./ext/ which are two level deep
+# Now we need to find directories in ./ext/ which are up to 3 level deep
+# Currently (2001/06) there is no directories 4 levels deep.
+# (Only directories so that there is no Makefile.PL some levels up matter.)
 
 dirs=''
+ddirs=''
 preci='ext/%/Makefile.aout '
 for d in ext/*
 do
-	# echo "Checking '$d'..."
-	f="`echo $d/*/Makefile.PL`"
-	# SDBFile/sdbm, skip kid makefile
-	if test ! -e "$d/Makefile.PL" -a ! "$f" = ""; then
-	    dirs="$dirs $d"
-	    preci="$preci $d/%/Makefile.aout"
+	# echo "...Checking '$d'..."
+	# skip the kid if the parent exists: cmp SDBFile/sdbm, done by MakeMaker
+	if test ! -e "$d/Makefile.PL"; then
+	    # Need to treat subdirectories manually
+	    # echo "...Checking subdirs of '$d'..."
+	    d_treated=''
+	    for dd in $d/*
+	    do
+		if test ! -d $dd; then
+		    continue
+		fi
+		if test -e "$dd/Makefile.PL"; then
+		    if test "X$d_treated" = "X"; then
+			d_treated=1
+			# echo "...Found parentless 2-level deep Makefile.PL's in $d/*/:" $d/*/Makefile.PL
+			dirs="$dirs $d"
+			preci="$preci $d/%/Makefile.aout"
+		    fi
+		else
+		    # Need to treat subsubdirectories manually
+		    dd_treated=''
+		    for ddd in $dd/*
+		    do
+			if test ! -d $ddd; then
+			    continue
+			fi
+			if test -e "$ddd/Makefile.PL"; then
+			    if test "X$dd_treated" = "X"; then
+				dd_treated=1
+				# echo "...Found parentless 3-level deep Makefile.PL's in $dd/*/:" $dd/*/Makefile.PL
+				ddirs="$ddirs $dd"
+				preci="$preci $dd/%/Makefile.aout"
+			    fi
+			fi
+		    done
+		fi
+	   done
 	fi
 done
 
 $spitshell >>Makefile <<!GROK!THIS!
 .PRECIOUS : $preci
 
+# Set this to FORCE to force a rebuilt of aout extensions
+
+AOUT_EXTENSIONS_FORCE = 
+
 !GROK!THIS!
 
-for d in $dirs
+for d in $ddirs
 do
-    p=`basename $d`
+    # Remove the leading component ext/
+    dd=`dirname $d`
+    pp=`basename $dd`
+    p=$pp/`basename $d`
     $spitshell >>Makefile <<!GROK!THIS!
-lib/auto/$p/*/%.a : ext/$p/%/Makefile.aout
-	@cd ext/$p/\$(basename \$(notdir \$@)) ; make -f Makefile.aout config || echo "\$(MAKE) config failed, continuing anyway..."
-	cd ext/$p/\$(basename \$(notdir \$@)) ; make -f Makefile.aout LINKTYPE=static CCCDLFLAGS=
+lib/auto/$p/*/%.a : $d/%/Makefile.aout
+	@cd $d/\$(basename \$(notdir \$@)) ; make -f Makefile.aout config || echo "\$(MAKE) config failed, continuing anyway..."
+	cd $d/\$(basename \$(notdir \$@)) ; make -f Makefile.aout LINKTYPE=static CCCDLFLAGS=
 
-$d/%/Makefile.aout : miniperl_
-	cd \$(dir \$@) ; ../../../miniperl_ -I ../../../lib Makefile.PL MAKEFILE=Makefile.aout INSTALLDIRS=perl 
+$d/%/Makefile.aout : miniperl_ \$(_preplibrary) \$(AOUT_EXTENSIONS_FORCE)
+	cd \$(dir \$@) ; ../../../../miniperl_ -I ../../../../lib Makefile.PL FIRST_MAKEFILE=Makefile.aout INSTALLDIRS=perl PERL_CORE=1
 
 !GROK!THIS!
 
 done
 
+for d in $dirs
+do
+    p=`basename $d`
+    $spitshell >>Makefile <<!GROK!THIS!
+lib/auto/$p/*/%.a : $d/%/Makefile.aout
+	@cd $d/\$(basename \$(notdir \$@)) ; make -f Makefile.aout config || echo "\$(MAKE) config failed, continuing anyway..."
+	cd $d/\$(basename \$(notdir \$@)) ; make -f Makefile.aout LINKTYPE=static CCCDLFLAGS=
+
+$d/%/Makefile.aout : miniperl_ \$(_preplibrary) \$(AOUT_EXTENSIONS_FORCE)
+	cd \$(dir \$@) ; ../../../miniperl_ -I ../../../lib Makefile.PL FIRST_MAKEFILE=Makefile.aout INSTALLDIRS=perl PERL_CORE=1
+
+!GROK!THIS!
+
+done
+
+# We need to special-case OS2/DLL/DLL.a, since the recipe above will
+# try to find it in ext/OS2/DLL
+
 $spitshell >>Makefile <<'!NO!SUBS!'
+lib/auto/OS2/DLL/DLL.a : lib/auto/OS2/REXX/REXX.a
+	@sh -c true
+
 lib/auto/*/%.a : ext/%/Makefile.aout
 	@cd ext/$(basename $(notdir $@)) ; make -f Makefile.aout config || echo "\$(MAKE) config failed, continuing anyway..."
 	cd ext/$(basename $(notdir $@)) ; make -f Makefile.aout LINKTYPE=static CCCDLFLAGS=
 
-ext/%/Makefile.aout : miniperl_
-	cd $(dir $@) ; ../../miniperl_ -I ../../lib Makefile.PL MAKEFILE=Makefile.aout INSTALLDIRS=perl 
+ext/%/Makefile.aout : miniperl_ $(_preplibrary) $(AOUT_EXTENSIONS_FORCE)
+	cd $(dir $@) ; ../../miniperl_ -I ../../lib Makefile.PL FIRST_MAKEFILE=Makefile.aout INSTALLDIRS=perl PERL_CORE=1
 
 !NO!SUBS!

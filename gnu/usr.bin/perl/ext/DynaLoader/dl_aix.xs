@@ -14,6 +14,23 @@
 #define PERLIO_NOT_STDIO 0
 
 /*
+ * On AIX 4.3 and above the emulation layer is not needed any more, and
+ * indeed if perl uses its emulation and perl is linked into apache
+ * which is supposed to use the native dlopen conflicts arise.
+ * Jens-Uwe Mager jum@helios.de
+ */
+#ifdef USE_NATIVE_DLOPEN
+
+#include "EXTERN.h"
+#include "perl.h"
+#include "XSUB.h"
+#include <dlfcn.h>
+
+#include "dlutils.c"	/* SaveError() etc	*/
+
+#else
+
+/*
  * @(#)dlfcn.c	1.5 revision of 93/02/14  20:14:17
  * This is an unpublished work copyright (c) 1992 Helios Software GmbH
  * 3000 Hannover 1, Germany
@@ -94,6 +111,13 @@
 # define FREAD(p,s,n,ldptr)	fread(p,s,n,IOPTR(ldptr))
 #endif
 
+#ifndef RTLD_LAZY
+# define RTLD_LAZY 0
+#endif
+#ifndef RTLD_GLOBAL
+# define RTLD_GLOBAL 0
+#endif
+
 /*
  * We simulate dlopen() et al. through a call to load. Because AIX has
  * no call to find an exported symbol we read the loader section of the
@@ -118,23 +142,35 @@ typedef struct Module {
 	ExportPtr	exports;	/* the array of exports */
 } Module, *ModulePtr;
 
-/*
- * We keep a list of all loaded modules to be able to reference count
- * duplicate dlopen's.
- */
-static ModulePtr modList;		/* XXX threaded */
+typedef struct {
+    /*
+     * We keep a list of all loaded modules to be able to reference count
+     * duplicate dlopen's.
+     */
+    ModulePtr	x_modList;
 
-/*
- * The last error from one of the dl* routines is kept in static
- * variables here. Each error is returned only once to the caller.
- */
-static char errbuf[BUFSIZ];		/* XXX threaded */
-static int errvalid;			/* XXX threaded */
+    /*
+     * The last error from one of the dl* routines is kept in static
+     * variables here. Each error is returned only once to the caller.
+     */
+    char	x_errbuf[BUFSIZ];
+    int		x_errvalid;
+    void *	x_mainModule;
+} my_cxtx_t;		/* this *must* be named my_cxtx_t */
+
+#define DL_CXT_EXTRA	/* ask for dl_cxtx to be defined in dlutils.c */
+#include "dlutils.c"	/* SaveError() etc	*/
+
+#define dl_modList	(dl_cxtx.x_modList)
+#define dl_errbuf	(dl_cxtx.x_errbuf)
+#define dl_errvalid	(dl_cxtx.x_errvalid)
+#define dl_mainModule	(dl_cxtx.x_mainModule)
 
 static void caterr(char *);
 static int readExports(ModulePtr);
 static void *findMain(void);
 
+/* these statics are ok because they're constants */
 static char *strerror_failed   = "(strerror failed)";
 static char *strerror_r_failed = "(strerror_r failed)";
 
@@ -143,7 +179,7 @@ char *strerrorcat(char *str, int err) {
     int msgsiz;
     char *msg;
 
-#ifdef USE_THREADS
+#ifdef USE_5005THREADS
     char *buf = malloc(BUFSIZ);
 
     if (buf == 0)
@@ -157,6 +193,8 @@ char *strerrorcat(char *str, int err) {
       strcat(str, msg);
     free(buf);
 #else
+    dTHX;
+
     if ((msg = strerror(err)) == 0)
       msg = strerror_failed;
     msgsiz = strlen(msg);		/* Note msg = buf and free() above. */
@@ -171,7 +209,7 @@ char *strerrorcpy(char *str, int err) {
     int msgsiz;
     char *msg;
 
-#ifdef USE_THREADS
+#ifdef USE_5005THREADS
     char *buf = malloc(BUFSIZ);
 
     if (buf == 0)
@@ -185,6 +223,8 @@ char *strerrorcpy(char *str, int err) {
       strcpy(str, msg);
     free(buf);
 #else
+    dTHX;
+
     if ((msg = strerror(err)) == 0)
       msg = strerror_failed;
     msgsiz = strlen(msg);	/* Note msg = buf and free() above. */
@@ -199,37 +239,37 @@ char *strerrorcpy(char *str, int err) {
 void *dlopen(char *path, int mode)
 {
 	dTHX;
+	dMY_CXT;
 	register ModulePtr mp;
-	static void *mainModule;		/* XXX threaded */
 
 	/*
 	 * Upon the first call register a terminate handler that will
 	 * close all libraries.
 	 */
-	if (mainModule == NULL) {
-		if ((mainModule = findMain()) == NULL)
+	if (dl_mainModule == NULL) {
+		if ((dl_mainModule = findMain()) == NULL)
 			return NULL;
 	}
 	/*
 	 * Scan the list of modules if have the module already loaded.
 	 */
-	for (mp = modList; mp; mp = mp->next)
+	for (mp = dl_modList; mp; mp = mp->next)
 		if (strcmp(mp->name, path) == 0) {
 			mp->refCnt++;
 			return mp;
 		}
 	Newz(1000,mp,1,Module);
 	if (mp == NULL) {
-		errvalid++;
-		strcpy(errbuf, "Newz: ");
-		strerrorcat(errbuf, errno);
+		dl_errvalid++;
+		strcpy(dl_errbuf, "Newz: ");
+		strerrorcat(dl_errbuf, errno);
 		return NULL;
 	}
 	
 	if ((mp->name = savepv(path)) == NULL) {
-		errvalid++;
-		strcpy(errbuf, "savepv: ");
-		strerrorcat(errbuf, errno);
+		dl_errvalid++;
+		strcpy(dl_errbuf, "savepv: ");
+		strerrorcat(dl_errbuf, errno);
 		safefree(mp);
 		return NULL;
 	}
@@ -248,10 +288,10 @@ void *dlopen(char *path, int mode)
 		
 		safefree(mp->name);
 		safefree(mp);
-		errvalid++;
-		strcpy(errbuf, "dlopen: ");
-		strcat(errbuf, path);
-		strcat(errbuf, ": ");
+		dl_errvalid++;
+		strcpy(dl_errbuf, "dlopen: ");
+		strcat(dl_errbuf, path);
+		strcat(dl_errbuf, ": ");
 		/*
 		 * If AIX says the file is not executable, the error
 		 * can be further described by querying the loader about
@@ -260,19 +300,19 @@ void *dlopen(char *path, int mode)
 		if (saverrno == ENOEXEC) {
 			char *moreinfo[BUFSIZ/sizeof(char *)];
 			if (loadquery(L_GETMESSAGES, moreinfo, sizeof(moreinfo)) == -1)
-				strerrorcpy(errbuf, saverrno);
+				strerrorcpy(dl_errbuf, saverrno);
 			else {
 				char **p;
 				for (p = moreinfo; *p; p++)
 					caterr(*p);
 			}
 		} else
-			strerrorcat(errbuf, saverrno);
+			strerrorcat(dl_errbuf, saverrno);
 		return NULL;
 	}
 	mp->refCnt = 1;
-	mp->next = modList;
-	modList = mp;
+	mp->next = dl_modList;
+	dl_modList = mp;
 	/*
 	 * Assume anonymous exports come from the module this dlopen
 	 * is linked into, that holds true as long as dlopen and all
@@ -282,13 +322,13 @@ void *dlopen(char *path, int mode)
 	 * also reference Apache symbols.
 	 */
 	if (loadbind(0, (void *)dlopen, mp->entry) == -1 ||
-	    loadbind(0, mainModule, mp->entry)) {
+	    loadbind(0, dl_mainModule, mp->entry)) {
 	        int saverrno = errno;
 
 		dlclose(mp);
-		errvalid++;
-		strcpy(errbuf, "loadbind: ");
-		strerrorcat(errbuf, saverrno);
+		dl_errvalid++;
+		strcpy(dl_errbuf, "loadbind: ");
+		strerrorcat(dl_errbuf, saverrno);
 		return NULL;
 	}
 	if (readExports(mp) == -1) {
@@ -304,41 +344,45 @@ void *dlopen(char *path, int mode)
  */
 static void caterr(char *s)
 {
+	dTHX;
+	dMY_CXT;
 	register char *p = s;
 
 	while (*p >= '0' && *p <= '9')
 		p++;
 	switch(atoi(s)) {
 	case L_ERROR_TOOMANY:
-		strcat(errbuf, "too many errors");
+		strcat(dl_errbuf, "too many errors");
 		break;
 	case L_ERROR_NOLIB:
-		strcat(errbuf, "can't load library");
-		strcat(errbuf, p);
+		strcat(dl_errbuf, "can't load library");
+		strcat(dl_errbuf, p);
 		break;
 	case L_ERROR_UNDEF:
-		strcat(errbuf, "can't find symbol");
-		strcat(errbuf, p);
+		strcat(dl_errbuf, "can't find symbol");
+		strcat(dl_errbuf, p);
 		break;
 	case L_ERROR_RLDBAD:
-		strcat(errbuf, "bad RLD");
-		strcat(errbuf, p);
+		strcat(dl_errbuf, "bad RLD");
+		strcat(dl_errbuf, p);
 		break;
 	case L_ERROR_FORMAT:
-		strcat(errbuf, "bad exec format in");
-		strcat(errbuf, p);
+		strcat(dl_errbuf, "bad exec format in");
+		strcat(dl_errbuf, p);
 		break;
 	case L_ERROR_ERRNO:
-		strerrorcat(errbuf, atoi(++p));
+		strerrorcat(dl_errbuf, atoi(++p));
 		break;
 	default:
-		strcat(errbuf, s);
+		strcat(dl_errbuf, s);
 		break;
 	}
 }
 
 void *dlsym(void *handle, const char *symbol)
 {
+	dTHX;
+	dMY_CXT;
 	register ModulePtr mp = (ModulePtr)handle;
 	register ExportPtr ep;
 	register int i;
@@ -350,23 +394,27 @@ void *dlsym(void *handle, const char *symbol)
 	for (ep = mp->exports, i = mp->nExports; i; i--, ep++)
 		if (strcmp(ep->name, symbol) == 0)
 			return ep->addr;
-	errvalid++;
-	strcpy(errbuf, "dlsym: undefined symbol ");
-	strcat(errbuf, symbol);
+	dl_errvalid++;
+	strcpy(dl_errbuf, "dlsym: undefined symbol ");
+	strcat(dl_errbuf, symbol);
 	return NULL;
 }
 
 char *dlerror(void)
 {
-	if (errvalid) {
-		errvalid = 0;
-		return errbuf;
+	dTHX;
+	dMY_CXT;
+	if (dl_errvalid) {
+		dl_errvalid = 0;
+		return dl_errbuf;
 	}
 	return NULL;
 }
 
 int dlclose(void *handle)
 {
+	dTHX;
+	dMY_CXT;
 	register ModulePtr mp = (ModulePtr)handle;
 	int result;
 	register ModulePtr mp1;
@@ -375,8 +423,8 @@ int dlclose(void *handle)
 		return 0;
 	result = UNLOAD(mp->entry);
 	if (result == -1) {
-		errvalid++;
-		strerrorcpy(errbuf, errno);
+		dl_errvalid++;
+		strerrorcpy(dl_errbuf, errno);
 	}
 	if (mp->exports) {
 		register ExportPtr ep;
@@ -386,10 +434,10 @@ int dlclose(void *handle)
 				safefree(ep->name);
 		safefree(mp->exports);
 	}
-	if (mp == modList)
-		modList = mp->next;
+	if (mp == dl_modList)
+		dl_modList = mp->next;
 	else {
-		for (mp1 = modList; mp1; mp1 = mp1->next)
+		for (mp1 = dl_modList; mp1; mp1 = mp1->next)
 			if (mp1->next == mp) {
 				mp1->next = mp->next;
 				break;
@@ -421,6 +469,7 @@ void *calloc(size_t ne, size_t sz)
 static int readExports(ModulePtr mp)
 {
 	dTHX;
+	dMY_CXT;
 	LDFILE *ldp = NULL;
 	AIX_SCNHDR sh;
 	AIX_LDHDR *lhp;
@@ -434,9 +483,9 @@ static int readExports(ModulePtr mp)
 		char *buf;
 		int size = 4*1024;
 		if (errno != ENOENT) {
-			errvalid++;
-			strcpy(errbuf, "readExports: ");
-			strerrorcat(errbuf, errno);
+			dl_errvalid++;
+			strcpy(dl_errbuf, "readExports: ");
+			strerrorcat(dl_errbuf, errno);
 			return -1;
 		}
 		/*
@@ -445,25 +494,25 @@ static int readExports(ModulePtr mp)
 		 * module using L_GETINFO.
 		 */
 		if ((buf = safemalloc(size)) == NULL) {
-			errvalid++;
-			strcpy(errbuf, "readExports: ");
-			strerrorcat(errbuf, errno);
+			dl_errvalid++;
+			strcpy(dl_errbuf, "readExports: ");
+			strerrorcat(dl_errbuf, errno);
 			return -1;
 		}
 		while ((i = loadquery(L_GETINFO, buf, size)) == -1 && errno == ENOMEM) {
 			safefree(buf);
 			size += 4*1024;
 			if ((buf = safemalloc(size)) == NULL) {
-				errvalid++;
-				strcpy(errbuf, "readExports: ");
-				strerrorcat(errbuf, errno);
+				dl_errvalid++;
+				strcpy(dl_errbuf, "readExports: ");
+				strerrorcat(dl_errbuf, errno);
 				return -1;
 			}
 		}
 		if (i == -1) {
-			errvalid++;
-			strcpy(errbuf, "readExports: ");
-			strerrorcat(errbuf, errno);
+			dl_errvalid++;
+			strcpy(dl_errbuf, "readExports: ");
+			strerrorcat(dl_errbuf, errno);
 			safefree(buf);
 			return -1;
 		}
@@ -485,9 +534,9 @@ static int readExports(ModulePtr mp)
 		}
 		safefree(buf);
 		if (!ldp) {
-			errvalid++;
-			strcpy(errbuf, "readExports: ");
-			strerrorcat(errbuf, errno);
+			dl_errvalid++;
+			strcpy(dl_errbuf, "readExports: ");
+			strerrorcat(dl_errbuf, errno);
 			return -1;
 		}
 	}
@@ -496,15 +545,15 @@ static int readExports(ModulePtr mp)
 #else
 	if (TYPE(ldp) != U802TOCMAGIC) {
 #endif
-		errvalid++;
-		strcpy(errbuf, "readExports: bad magic");
+		dl_errvalid++;
+		strcpy(dl_errbuf, "readExports: bad magic");
 		while(ldclose(ldp) == FAILURE)
 			;
 		return -1;
 	}
 	if (ldnshread(ldp, _LOADER, &sh) != SUCCESS) {
-		errvalid++;
-		strcpy(errbuf, "readExports: cannot read loader section header");
+		dl_errvalid++;
+		strcpy(dl_errbuf, "readExports: cannot read loader section header");
 		while(ldclose(ldp) == FAILURE)
 			;
 		return -1;
@@ -514,16 +563,16 @@ static int readExports(ModulePtr mp)
 	 * finding long symbol names residing in the string table easier.
 	 */
 	if ((ldbuf = (char *)safemalloc(sh.s_size)) == NULL) {
-		errvalid++;
-		strcpy(errbuf, "readExports: ");
-		strerrorcat(errbuf, errno);
+		dl_errvalid++;
+		strcpy(dl_errbuf, "readExports: ");
+		strerrorcat(dl_errbuf, errno);
 		while(ldclose(ldp) == FAILURE)
 			;
 		return -1;
 	}
 	if (FSEEK(ldp, sh.s_scnptr, BEGINNING) != OKFSEEK) {
-		errvalid++;
-		strcpy(errbuf, "readExports: cannot seek to loader section");
+		dl_errvalid++;
+		strcpy(dl_errbuf, "readExports: cannot seek to loader section");
 		safefree(ldbuf);
 		while(ldclose(ldp) == FAILURE)
 			;
@@ -532,8 +581,8 @@ static int readExports(ModulePtr mp)
 /* This first case is a hack, since it assumes that the 3rd parameter to
    FREAD is 1. See the redefinition of FREAD above to see how this works. */
 	if (FREAD(ldbuf, sh.s_size, 1, ldp) != 1) {
-		errvalid++;
-		strcpy(errbuf, "readExports: cannot read loader section");
+		dl_errvalid++;
+		strcpy(dl_errbuf, "readExports: cannot read loader section");
 		safefree(ldbuf);
 		while(ldclose(ldp) == FAILURE)
 			;
@@ -551,9 +600,9 @@ static int readExports(ModulePtr mp)
 	}
 	Newz(1001, mp->exports, mp->nExports, Export);
 	if (mp->exports == NULL) {
-		errvalid++;
-		strcpy(errbuf, "readExports: ");
-		strerrorcat(errbuf, errno);
+		dl_errvalid++;
+		strcpy(dl_errbuf, "readExports: ");
+		strerrorcat(dl_errbuf, errno);
 		safefree(ldbuf);
 		while(ldclose(ldp) == FAILURE)
 			;
@@ -593,6 +642,8 @@ static int readExports(ModulePtr mp)
  */
 static void * findMain(void)
 {
+	dTHX;
+	dMY_CXT;
 	struct ld_info *lp;
 	char *buf;
 	int size = 4*1024;
@@ -600,25 +651,25 @@ static void * findMain(void)
 	void *ret;
 
 	if ((buf = safemalloc(size)) == NULL) {
-		errvalid++;
-		strcpy(errbuf, "findMain: ");
-		strerrorcat(errbuf, errno);
+		dl_errvalid++;
+		strcpy(dl_errbuf, "findMain: ");
+		strerrorcat(dl_errbuf, errno);
 		return NULL;
 	}
 	while ((i = loadquery(L_GETINFO, buf, size)) == -1 && errno == ENOMEM) {
 		safefree(buf);
 		size += 4*1024;
 		if ((buf = safemalloc(size)) == NULL) {
-			errvalid++;
-			strcpy(errbuf, "findMain: ");
-			strerrorcat(errbuf, errno);
+			dl_errvalid++;
+			strcpy(dl_errbuf, "findMain: ");
+			strerrorcat(dl_errbuf, errno);
 			return NULL;
 		}
 	}
 	if (i == -1) {
-		errvalid++;
-		strcpy(errbuf, "findMain: ");
-		strerrorcat(errbuf, errno);
+		dl_errvalid++;
+		strcpy(dl_errbuf, "findMain: ");
+		strerrorcat(dl_errbuf, errno);
 		safefree(buf);
 		return NULL;
 	}
@@ -632,6 +683,7 @@ static void * findMain(void)
 	safefree(buf);
 	return ret;
 }
+#endif /* USE_NATIVE_DLOPEN */
 
 /* dl_dlopen.xs
  * 
@@ -654,9 +706,6 @@ static void * findMain(void)
 
 */
 
-#include "dlutils.c"	/* SaveError() etc	*/
-
-
 static void
 dl_private_init(pTHX)
 {
@@ -677,7 +726,7 @@ dl_load_file(filename, flags=0)
 	DLDEBUG(1,PerlIO_printf(Perl_debug_log, "dl_load_file(%s,%x):\n", filename,flags));
 	if (flags & 0x01)
 	    Perl_warn(aTHX_ "Can't make loaded symbols global on this platform while loading %s",filename);
-	RETVAL = dlopen(filename, 1) ;
+	RETVAL = dlopen(filename, RTLD_GLOBAL|RTLD_LAZY) ;
 	DLDEBUG(2,PerlIO_printf(Perl_debug_log, " libref=%x\n", RETVAL));
 	ST(0) = sv_newmortal() ;
 	if (RETVAL == NULL)
@@ -737,7 +786,8 @@ dl_install_xsub(perl_name, symref, filename="$Package")
 char *
 dl_error()
     CODE:
-    RETVAL = LastError ;
+    dMY_CXT;
+    RETVAL = dl_last_error ;
     OUTPUT:
     RETVAL
 

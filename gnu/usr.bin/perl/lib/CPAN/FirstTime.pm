@@ -16,8 +16,9 @@ use ExtUtils::MakeMaker qw(prompt);
 use FileHandle ();
 use File::Basename ();
 use File::Path ();
+use File::Spec;
 use vars qw($VERSION);
-$VERSION = substr q$Revision: 1.4 $, 10;
+$VERSION = substr q$Revision: 1.5 $, 10;
 
 =head1 NAME
 
@@ -97,7 +98,7 @@ This may be a site-wide directory or a personal directory.
 
 };
 
-    my $cpan_home = $CPAN::Config->{cpan_home} || MM->catdir($ENV{HOME}, ".cpan");
+    my $cpan_home = $CPAN::Config->{cpan_home} || File::Spec->catdir($ENV{HOME}, ".cpan");
     if (-d $cpan_home) {
 	print qq{
 
@@ -140,8 +141,8 @@ next question.
 
 };
 
-    $CPAN::Config->{keep_source_where} = MM->catdir($CPAN::Config->{cpan_home},"sources");
-    $CPAN::Config->{build_dir} = MM->catdir($CPAN::Config->{cpan_home},"build");
+    $CPAN::Config->{keep_source_where} = File::Spec->catdir($CPAN::Config->{cpan_home},"sources");
+    $CPAN::Config->{build_dir} = File::Spec->catdir($CPAN::Config->{cpan_home},"build");
 
     #
     # Cache size, Index expire
@@ -268,7 +269,7 @@ by ENTER.
       my $path = $CPAN::Config->{$progname} 
 	  || $Config::Config{$progname}
 	      || "";
-      if (MM->file_name_is_absolute($path)) {
+      if (File::Spec->file_name_is_absolute($path)) {
 	# testing existence is not good enough, some have these exe
 	# extensions
 
@@ -295,7 +296,7 @@ by ENTER.
     $ans = prompt("What is your favorite pager program?",$path);
     $CPAN::Config->{'pager'} = $ans;
     $path = $CPAN::Config->{'shell'};
-    if (MM->file_name_is_absolute($path)) {
+    if (File::Spec->file_name_is_absolute($path)) {
 	warn "Warning: configured $path does not exist\n" unless -e $path;
 	$path = "";
     }
@@ -436,7 +437,7 @@ to actually use it.  But we need to know your favorite WAIT server. If
 you don\'t know a WAIT server near you, just press ENTER.
 
 };
-	$default = "wait://ls6.informatik.uni-dortmund.de:1404";
+	$default = "wait://ls6-www.informatik.uni-dortmund.de:1404";
 	$ans = prompt("Your favorite WAIT server?\n  ",$default);
 	push @{$CPAN::Config->{'wait_list'}}, $ans;
     }
@@ -451,7 +452,7 @@ you don\'t know a WAIT server near you, just press ENTER.
 
 sub conf_sites {
   my $m = 'MIRRORED.BY';
-  my $mby = MM->catfile($CPAN::Config->{keep_source_where},$m);
+  my $mby = File::Spec->catfile($CPAN::Config->{keep_source_where},$m);
   File::Path::mkpath(File::Basename::dirname($mby));
   if (-f $mby && -f $m && -M $m < -M $mby) {
     require File::Copy;
@@ -507,7 +508,7 @@ sub find_exe {
     my($dir);
     #warn "in find_exe exe[$exe] path[@$path]";
     for $dir (@$path) {
-	my $abs = MM->catfile($dir,$exe);
+	my $abs = File::Spec->catfile($dir,$exe);
 	if (($abs = MM->maybe_command($abs))) {
 	    return $abs;
 	}
@@ -518,26 +519,48 @@ sub picklist {
     my($items,$prompt,$default,$require_nonempty,$empty_warning)=@_;
     $default ||= '';
 
-    my ($item, $i);
-    for $item (@$items) {
-	printf "(%d) %s\n", ++$i, $item;
-    }
+	my $pos = 0;
 
     my @nums;
     while (1) {
-	my $num = prompt($prompt,$default);
-	@nums = split (' ', $num);
-	(warn "invalid items entered, try again\n"), next
-	    if grep (/\D/ || $_ < 1 || $_ > $i, @nums);
-	if ($require_nonempty) {
-	    (warn "$empty_warning\n"), next
-		unless @nums;
-	}
-	last;
+
+		# display, at most, 15 items at a time
+		my $limit = $#{ $items } - $pos;
+		$limit = 15 if $limit > 15;
+
+		# show the next $limit items, get the new position
+		$pos = display_some($items, $limit, $pos);
+		$pos = 0 if $pos >= @$items;
+
+		my $num = prompt($prompt,$default);
+		
+		@nums = split (' ', $num);
+		my $i = scalar @$items;
+		(warn "invalid items entered, try again\n"), next
+		    if grep (/\D/ || $_ < 1 || $_ > $i, @nums);
+		if ($require_nonempty) {
+		    (warn "$empty_warning\n");
+		}
+    	print "\n";
+
+		# a blank line continues...
+		next unless @nums;
+		last;
     }
-    print "\n";
     for (@nums) { $_-- }
     @{$items}[@nums];
+}
+
+sub display_some {
+	my ($items, $limit, $pos) = @_;
+	$pos ||= 0;
+
+	my @displayable = @$items[$pos .. ($pos + $limit)];
+    for my $item (@displayable) {
+		printf "(%d) %s\n", ++$pos, $item;
+    }
+	printf "%d more items, hit ENTER\n", (@$items - $pos) if $pos < @$items;
+	return $pos;
 }
 
 sub read_mirrored_by {

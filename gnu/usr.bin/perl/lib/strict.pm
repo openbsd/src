@@ -90,7 +90,7 @@ See L<perlmodlib/Pragmatic Modules>.
 
 =cut
 
-$strict::VERSION = "1.01";
+$strict::VERSION = "1.02";
 
 my %bitmask = (
 refs => 0x00000002,

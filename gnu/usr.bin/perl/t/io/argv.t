@@ -5,123 +5,128 @@ BEGIN {
     @INC = '../lib';
 }
 
-print "1..21\n";
+require "./test.pl";
+
+plan(tests => 22);
 
 use File::Spec;
 
 my $devnull = File::Spec->devnull;
 
-open(try, '>Io_argv1.tmp') || (die "Can't open temp file: $!");
-print try "a line\n";
-close try;
+open(TRY, '>Io_argv1.tmp') || (die "Can't open temp file: $!");
+print TRY "a line\n";
+close TRY or die "Could not close: $!";
 
-if ($^O eq 'MSWin32') {
-  $x = `.\\perl -e "while (<>) {print \$.,\$_;}" Io_argv1.tmp Io_argv1.tmp`;
-}
-else {
-  $x = `./perl -e 'while (<>) {print \$.,\$_;}' Io_argv1.tmp Io_argv1.tmp`;
-}
-if ($x eq "1a line\n2a line\n") {print "ok 1\n";} else {print "not ok 1\n";}
+$x = runperl(
+    prog	=> 'while (<>) { print $., $_; }',
+    args	=> [ 'Io_argv1.tmp', 'Io_argv1.tmp' ],
+);
+is($x, "1a line\n2a line\n", '<> from two files');
 
-if ($^O eq 'MSWin32') {
-  $x = `.\\perl -le "print 'foo'" | .\\perl -e "while (<>) {print \$_;}" Io_argv1.tmp -`;
-}
-else {
-  $x = `echo foo|./perl -e 'while (<>) {print $_;}' Io_argv1.tmp -`;
-}
-if ($x eq "a line\nfoo\n") {print "ok 2\n";} else {print "not ok 2\n";}
+{
+    $x = runperl(
+	prog	=> 'while (<>) { print $_; }',
+	stdin	=> "foo\n",
+	args	=> [ 'Io_argv1.tmp', '-' ],
+    );
+    is($x, "a line\nfoo\n", '   from a file and STDIN');
 
-if ($^O eq 'MSWin32') {
-  $x = `.\\perl -le "print 'foo'" |.\\perl -e "while (<>) {print \$_;}"`;
+    $x = runperl(
+	prog	=> 'while (<>) { print $_; }',
+	stdin	=> "foo\n",
+    );
+    is($x, "foo\n", '   from just STDIN');
 }
-else {
-  $x = `echo foo|./perl -e 'while (<>) {print $_;}'`;
-}
-if ($x eq "foo\n") {print "ok 3\n";} else {print "not ok 3 :$x:\n";}
 
 @ARGV = ('Io_argv1.tmp', 'Io_argv1.tmp', $devnull, 'Io_argv1.tmp');
 while (<>) {
     $y .= $. . $_;
     if (eof()) {
-	if ($. == 3) {print "ok 4\n";} else {print "not ok 4\n";}
+	is($., 3, '$. counts <>');
     }
 }
 
-if ($y eq "1a line\n2a line\n3a line\n")
-    {print "ok 5\n";}
-else
-    {print "not ok 5\n";}
+is($y, "1a line\n2a line\n3a line\n", '<> from @ARGV');
 
-open(try, '>Io_argv1.tmp') or die "Can't open temp file: $!";
-close try;
-open(try, '>Io_argv2.tmp') or die "Can't open temp file: $!";
-close try;
+
+open(TRY, '>Io_argv1.tmp') or die "Can't open temp file: $!";
+close TRY or die "Could not close: $!";
+open(TRY, '>Io_argv2.tmp') or die "Can't open temp file: $!";
+close TRY or die "Could not close: $!";
 @ARGV = ('Io_argv1.tmp', 'Io_argv2.tmp');
-$^I = '.bak';
+$^I = '_bak';   # not .bak which confuses VMS
 $/ = undef;
 my $i = 6;
 while (<>) {
     s/^/ok $i\n/;
     ++$i;
     print;
+    next_test();
 }
-open(try, '<Io_argv1.tmp') or die "Can't open temp file: $!";
-print while <try>;
-open(try, '<Io_argv2.tmp') or die "Can't open temp file: $!";
-print while <try>;
-close try;
+open(TRY, '<Io_argv1.tmp') or die "Can't open temp file: $!";
+print while <TRY>;
+open(TRY, '<Io_argv2.tmp') or die "Can't open temp file: $!";
+print while <TRY>;
+close TRY or die "Could not close: $!";
 undef $^I;
 
-eof try or print 'not ';
-print "ok 8\n";
+ok( eof TRY );
 
-eof NEVEROPENED or print 'not ';
-print "ok 9\n";
+ok( eof NEVEROPENED,    'eof() true on unopened filehandle' );
 
 open STDIN, 'Io_argv1.tmp' or die $!;
 @ARGV = ();
-!eof() or print 'not ';
-print "ok 10\n";
+ok( !eof(),     'STDIN has something' );
 
-<> eq "ok 6\n" or print 'not ';
-print "ok 11\n";
+is( <>, "ok 6\n" );
 
 open STDIN, $devnull or die $!;
 @ARGV = ();
-eof() or print 'not ';
-print "ok 12\n";
+ok( eof(),      'eof() true with empty @ARGV' );
 
 @ARGV = ('Io_argv1.tmp');
-!eof() or print 'not ';
-print "ok 13\n";
+ok( !eof() );
 
 @ARGV = ($devnull, $devnull);
-!eof() or print 'not ';
-print "ok 14\n";
+ok( !eof() );
 
 close ARGV or die $!;
-eof() or print 'not ';
-print "ok 15\n";
+ok( eof(),      'eof() true after closing ARGV' );
 
 {
     local $/;
-    open F, 'Io_argv1.tmp' or die;
+    open F, 'Io_argv1.tmp' or die "Could not open Io_argv1.tmp: $!";
     <F>;	# set $. = 1
-    print "not " if defined(<F>); # should hit eof
-    print "ok 16\n";
+    is( <F>, undef );
+
     open F, $devnull or die;
-    print "not " unless defined(<F>);
-    print "ok 17\n";
-    print "not " if defined(<F>);
-    print "ok 18\n";
-    print "not " if defined(<F>);
-    print "ok 19\n";
+    ok( defined(<F>) );
+
+    is( <F>, undef );
+    is( <F>, undef );
+
     open F, $devnull or die;	# restart cycle again
-    print "not " unless defined(<F>);
-    print "ok 20\n";
-    print "not " if defined(<F>);
-    print "ok 21\n";
-    close F;
+    ok( defined(<F>) );
+    is( <F>, undef );
+    close F or die "Could not close: $!";
 }
 
-END { unlink 'Io_argv1.tmp', 'Io_argv1.tmp.bak', 'Io_argv2.tmp', 'Io_argv2.tmp.bak' }
+# This used to dump core
+fresh_perl_is( <<'**PROG**', "foobar", {}, "ARGV aliasing and eof()" ); 
+open OUT, ">Io_argv3.tmp" or die "Can't open temp file: $!";
+print OUT "foo";
+close OUT;
+open IN, "Io_argv3.tmp" or die "Can't open temp file: $!";
+*ARGV = *IN;
+while (<>) {
+    print;
+    print "bar" if eof();
+}
+close IN;
+unlink "Io_argv3.tmp";
+**PROG**
+
+END {
+    unlink 'Io_argv1.tmp', 'Io_argv1.tmp_bak',
+	'Io_argv2.tmp', 'Io_argv2.tmp_bak', 'Io_argv3.tmp';
+}

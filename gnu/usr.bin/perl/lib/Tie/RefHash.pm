@@ -1,5 +1,7 @@
 package Tie::RefHash;
 
+our $VERSION = 1.30;
+
 =head1 NAME
 
 Tie::RefHash - use references as hash keys
@@ -57,7 +59,7 @@ Gurusamy Sarathy        gsar@activestate.com
 
 =head1 VERSION
 
-Version 1.3    8 Apr 2001
+Version 1.30
 
 =head1 SEE ALSO
 
@@ -65,12 +67,10 @@ perl(1), perlfunc(1), perltie(1)
 
 =cut
 
-use v5.6.0;
 use Tie::Hash;
+use vars '@ISA';
+@ISA = qw(Tie::Hash);
 use strict;
-
-our @ISA = qw(Tie::Hash);
-our $VERSION = '1.3';
 
 sub TIEHASH {
   my $c = shift;
@@ -148,7 +148,8 @@ sub CLEAR {
 }
 
 package Tie::RefHash::Nestable;
-our @ISA = qw(Tie::RefHash);
+use vars '@ISA';
+@ISA = 'Tie::RefHash';
 
 sub STORE {
   my($s, $k, $v) = @_;

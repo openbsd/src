@@ -1,5 +1,7 @@
 package Env;
 
+our $VERSION = '1.00';
+
 =head1 NAME
 
 Env - perl module that imports environment variables as scalars or arrays

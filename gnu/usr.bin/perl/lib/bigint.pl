@@ -20,7 +20,7 @@ package bigint;
 #   '+0'                            canonical zero value
 #   '   -123 123 123'               canonical value '-123123123'
 #   '1 23 456 7890'                 canonical value '+1234567890'
-# Output values always always in canonical form
+# Output values always in canonical form
 #
 # Actual math is done in an internal format consisting of an array
 #   whose first element is the sign (/^[+-]$/) and whose remaining 

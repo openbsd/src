@@ -1,12 +1,11 @@
 =head1 NAME
 
-perlfaq4 - Data Manipulation ($Revision: 1.49 $, $Date: 1999/05/23 20:37:49 $)
+perlfaq4 - Data Manipulation ($Revision: 1.25 $, $Date: 2002/05/30 07:04:25 $)
 
 =head1 DESCRIPTION
 
-The section of the FAQ answers questions related to the manipulation
-of data as numbers, dates, strings, arrays, hashes, and miscellaneous
-data issues.
+This section of the FAQ answers questions related to manipulating
+numbers, dates, strings, arrays, hashes, and miscellaneous data issues.
 
 =head1 Data: Numbers
 
@@ -39,6 +38,11 @@ arbitrary-precision decimal numbers with the Math::BigFloat module
 (part of the standard Perl distribution), but mathematical operations
 are consequently slower.
 
+If precision is important, such as when dealing with money, it's good
+to work with integers and then divide at the last possible moment.
+For example, work in pennies (1995) instead of dollars and cents
+(19.95) and divide by 100 at the end.
+
 To get rid of the superfluous digits, just use a format (eg,
 C<printf("%.2f", 19.95)>) to get the required precision.
 See L<perlop/"Floating-point Arithmetic">.  
@@ -46,18 +50,35 @@ See L<perlop/"Floating-point Arithmetic">.
 =head2 Why isn't my octal data interpreted correctly?
 
 Perl only understands octal and hex numbers as such when they occur
-as literals in your program.  If they are read in from somewhere and
-assigned, no automatic conversion takes place.  You must explicitly
-use oct() or hex() if you want the values converted.  oct() interprets
+as literals in your program.  Octal literals in perl must start with 
+a leading "0" and hexadecimal literals must start with a leading "0x".
+If they are read in from somewhere and assigned, no automatic 
+conversion takes place.  You must explicitly use oct() or hex() if you 
+want the values converted to decimal.  oct() interprets
 both hex ("0x350") numbers and octal ones ("0350" or even without the
 leading "0", like "377"), while hex() only converts hexadecimal ones,
 with or without a leading "0x", like "0x255", "3A", "ff", or "deadbeef".
+The inverse mapping from decimal to octal can be done with either the
+"%o" or "%O" sprintf() formats.  To get from decimal to hex try either 
+the "%x" or the "%X" formats to sprintf().
 
 This problem shows up most often when people try using chmod(), mkdir(),
-umask(), or sysopen(), which all want permissions in octal.
+umask(), or sysopen(), which by widespread tradition typically take 
+permissions in octal.
 
-    chmod(644,  $file);	# WRONG -- perl -w catches this
+    chmod(644,  $file);	# WRONG
     chmod(0644, $file);	# right
+
+Note the mistake in the first line was specifying the decimal literal 
+644, rather than the intended octal literal 0644.  The problem can
+be seen with:
+
+    printf("%#o",644); # prints 01204
+
+Surely you had not intended C<chmod(01204, $file);> - did you?  If you
+want to use numeric literals as arguments to chmod() et al. then please
+try to express them as octal constants, that is with a leading zero and 
+with the following digits restricted to the set 0..7.
 
 =head2 Does Perl have a round() function?  What about ceil() and floor()?  Trig functions?
 
@@ -101,24 +122,138 @@ Perl numbers whose absolute values are integers under 2**31 (on 32 bit
 machines) will work pretty much like mathematical integers.  Other numbers
 are not guaranteed.
 
-=head2 How do I convert bits into ints?
+=head2 How do I convert between numeric representations?
 
-To turn a string of 1s and 0s like C<10110110> into a scalar containing
-its binary value, use the pack() and unpack() functions (documented in
-L<perlfunc/"pack"> and L<perlfunc/"unpack">):
+As always with Perl there is more than one way to do it.  Below
+are a few examples of approaches to making common conversions
+between number representations.  This is intended to be representational
+rather than exhaustive.
 
-    $decimal = unpack('c', pack('B8', '10110110'));
+Some of the examples below use the Bit::Vector module from CPAN.
+The reason you might choose Bit::Vector over the perl built in
+functions is that it works with numbers of ANY size, that it is
+optimized for speed on some operations, and for at least some
+programmers the notation might be familiar.
 
-This packs the string C<10110110> into an eight bit binary structure.
-This is then unpacked as a character, which returns its ordinal value.
+=over 4
 
-This does the same thing:
+=item How do I convert hexadecimal into decimal
+
+Using perl's built in conversion of 0x notation:
+
+    $int = 0xDEADBEEF;
+    $dec = sprintf("%d", $int);
+
+Using the hex function:
+
+    $int = hex("DEADBEEF");
+    $dec = sprintf("%d", $int);
+
+Using pack:
+
+    $int = unpack("N", pack("H8", substr("0" x 8 . "DEADBEEF", -8)));
+    $dec = sprintf("%d", $int);
+
+Using the CPAN module Bit::Vector:
+
+    use Bit::Vector;
+    $vec = Bit::Vector->new_Hex(32, "DEADBEEF");
+    $dec = $vec->to_Dec();
+
+=item How do I convert from decimal to hexadecimal
+
+Using sprint:
+
+    $hex = sprintf("%X", 3735928559);
+
+Using unpack
+
+    $hex = unpack("H*", pack("N", 3735928559));
+
+Using Bit::Vector
+
+    use Bit::Vector;
+    $vec = Bit::Vector->new_Dec(32, -559038737);
+    $hex = $vec->to_Hex();
+
+And Bit::Vector supports odd bit counts:
+
+    use Bit::Vector;
+    $vec = Bit::Vector->new_Dec(33, 3735928559);
+    $vec->Resize(32); # suppress leading 0 if unwanted
+    $hex = $vec->to_Hex();
+
+=item How do I convert from octal to decimal
+
+Using Perl's built in conversion of numbers with leading zeros:
+
+    $int = 033653337357; # note the leading 0!
+    $dec = sprintf("%d", $int);
+
+Using the oct function:
+
+    $int = oct("33653337357");
+    $dec = sprintf("%d", $int);
+
+Using Bit::Vector:
+
+    use Bit::Vector;
+    $vec = Bit::Vector->new(32);
+    $vec->Chunk_List_Store(3, split(//, reverse "33653337357"));
+    $dec = $vec->to_Dec();
+
+=item How do I convert from decimal to octal
+
+Using sprintf:
+
+    $oct = sprintf("%o", 3735928559);
+
+Using Bit::Vector
+
+    use Bit::Vector;
+    $vec = Bit::Vector->new_Dec(32, -559038737);
+    $oct = reverse join('', $vec->Chunk_List_Read(3));
+
+=item How do I convert from binary to decimal
+
+Perl 5.6 lets you write binary numbers directly with
+the 0b notation:
+
+	$number = 0b10110110;
+
+Using pack and ord
 
     $decimal = ord(pack('B8', '10110110'));
 
-Here's an example of going the other way:
+Using pack and unpack for larger strings
 
-    $binary_string = unpack('B*', "\x29");
+    $int = unpack("N", pack("B32",
+	substr("0" x 32 . "11110101011011011111011101111", -32)));
+    $dec = sprintf("%d", $int);
+
+    # substr() is used to left pad a 32 character string with zeros.
+
+Using Bit::Vector:
+
+    $vec = Bit::Vector->new_Bin(32, "11011110101011011011111011101111");
+    $dec = $vec->to_Dec();
+
+=item How do I convert from decimal to binary
+
+Using unpack;
+
+    $bin = unpack("B*", pack("N", 3735928559));
+
+Using Bit::Vector:
+
+    use Bit::Vector;
+    $vec = Bit::Vector->new_Dec(32, -559038737);
+    $bin = $vec->to_Bin();
+
+The remaining transformations (e.g. hex -> oct, bin -> hex, etc.)
+are left as an exercise to the inclined reader.
+
+=back
 
 =head2 Why doesn't & work the way I want it to?
 
@@ -194,7 +329,7 @@ will not create a list of 500,000 integers.
 
 =head2 How can I output Roman numerals?
 
-Get the http://www.perl.com/CPAN/modules/by-module/Roman module.
+Get the http://www.cpan.org/modules/by-module/Roman module.
 
 =head2 Why aren't my random numbers random?
 
@@ -205,10 +340,11 @@ call C<srand> more than once--you make your numbers less random, rather
 than more.
 
 Computers are good at being predictable and bad at being random
-(despite appearances caused by bugs in your programs :-).
-http://www.perl.com/CPAN/doc/FMTEYEWTK/random , courtesy of Tom
-Phoenix, talks more about this.  John von Neumann said, ``Anyone who
-attempts to generate random numbers by deterministic means is, of
+(despite appearances caused by bugs in your programs :-).  see the
+F<random> artitcle in the "Far More Than You Ever Wanted To Know"
+collection in http://www.cpan.org/olddoc/FMTEYEWTK.tgz , courtesy of
+Tom Phoenix, talks more about this.  John von Neumann said, ``Anyone
+who attempts to generate random numbers by deterministic means is, of
 course, living in a state of sin.''
 
 If you want numbers that are more random than C<rand> with C<srand>
@@ -218,6 +354,20 @@ random numbers, but this takes quite a while.  If you want a better
 pseudorandom generator than comes with your operating system, look at
 ``Numerical Recipes in C'' at http://www.nr.com/ .
 
+=head2 How do I get a random number between X and Y?
+
+Use the following simple function.  It selects a random integer between
+(and possibly including!) the two given integers, e.g.,
+C<random_int_in(50,120)>
+
+   sub random_int_in ($$) {
+     my($min, $max) = @_;
+      # Assumes that the two arguments are integers themselves!
+     return $min if $min == $max;
+     ($min, $max) = ($max, $min)  if  $min > $max;
+     return $min + int rand(1 + $max - $min);
+   }
+
 =head1 Data: Dates
 
 =head2 How do I find the week-of-the-year/day-of-the-year?
@@ -226,23 +376,6 @@ The day of the year is in the array returned by localtime() (see
 L<perlfunc/"localtime">):
 
     $day_of_year = (localtime(time()))[7];
-
-or more legibly (in 5.004 or higher):
-
-    use Time::localtime;
-    $day_of_year = localtime(time())->yday;
-
-You can find the week of the year by dividing this by 7:
-
-    $week_of_year = int($day_of_year / 7);
-
-Of course, this believes that weeks start at zero.  The Date::Calc
-module from CPAN has a lot of date calculation functions, including
-day of the year, week of the year, and so on.   Note that not
-all businesses consider ``week 1'' to be the same; for example,
-American businesses often consider the first week with a Monday
-in it to be Work Week #1, despite ISO 8601, which considers
-WW1 to be the first week with a Thursday in it.
 
 =head2 How do I find the current century or millennium?
 
@@ -285,21 +418,23 @@ and Date::Manip modules from CPAN.
 Use the Time::JulianDay module (part of the Time-modules bundle
 available from CPAN.)
 
-Before you immerse yourself too deeply in this, be sure to verify that it
-is the I<Julian> Day you really want.  Are you really just interested in
-a way of getting serial days so that they can do date arithmetic?  If you
+Before you immerse yourself too deeply in this, be sure to verify that
+it is the I<Julian> Day you really want.  Are you interested in a way
+of getting serial days so that you just can tell how many days they
+are apart or so that you can do also other date arithmetic?  If you
 are interested in performing date arithmetic, this can be done using
-either Date::Manip or Date::Calc, without converting to Julian Day first.
+modules Date::Manip or Date::Calc.
 
-There is too much confusion on this issue to cover in this FAQ, but the
-term is applied (correctly) to a calendar now supplanted by the Gregorian
-Calendar, with the Julian Calendar failing to adjust properly for leap
-years on centennial years (among other annoyances).  The term is also used
-(incorrectly) to mean: [1] days in the Gregorian Calendar; and [2] days
-since a particular starting time or `epoch', usually 1970 in the Unix
-world and 1980 in the MS-DOS/Windows world.  If you find that it is not
-the first meaning that you really want, then check out the Date::Manip
-and Date::Calc modules.  (Thanks to David Cassell for most of this text.)
+There is too many details and much confusion on this issue to cover in
+this FAQ, but the term is applied (correctly) to a calendar now
+supplanted by the Gregorian Calendar, with the Julian Calendar failing
+to adjust properly for leap years on centennial years (among other
+annoyances).  The term is also used (incorrectly) to mean: [1] days in
+the Gregorian Calendar; and [2] days since a particular starting time
+or `epoch', usually 1970 in the Unix world and 1980 in the
+MS-DOS/Windows world.  If you find that it is not the first meaning
+that you really want, then check out the Date::Manip and Date::Calc
+modules.  (Thanks to David Cassell for most of this text.)
 
 =head2 How do I find yesterday's date?
 
@@ -446,7 +581,8 @@ parser.
 If you are serious about writing a parser, there are a number of
 modules or oddities that will make your life a lot easier.  There are
 the CPAN modules Parse::RecDescent, Parse::Yapp, and Text::Balanced;
-and the byacc program.
+and the byacc program.   Starting from perl 5.8 the Text::Balanced
+is part of the standard distribution.
 
 One simple destructive, inside-out approach that you might try is to
 pull out the smallest nesting parts one at a time:
@@ -467,7 +603,7 @@ really does work:
     @( = ('(','');
     @) = (')','');
     ($re=$_)=~s/((BEGIN)|(END)|.)/$)[!$3]\Q$1\E$([!$2]/gs;
-    @$ = (eval{/$re/},$@!~/unmatched/);
+    @$ = (eval{/$re/},$@!~/unmatched/i);
     print join("\n",@$[0..$#$]) if( $$[-1] );
 
 =head2 How do I reverse a string?
@@ -498,6 +634,15 @@ Use Text::Wrap (part of the standard Perl distribution):
 
 The paragraphs you give to Text::Wrap should not contain embedded
 newlines.  Text::Wrap doesn't justify the lines (flush-right).
+
+Or use the CPAN module Text::Autoformat.  Formatting files can be easily
+done by making a shell alias, like so:
+
+    alias fmt="perl -i -MText::Autoformat -n0777 \
+        -e 'print autoformat $_, {all=>1}' $*"
+
+See the documentation for Text::Autoformat to appreciate its many
+capabilities.
 
 =head2 How can I access/change the first N letters of a string?
 
@@ -567,6 +712,11 @@ integers:
     while ($string =~ /-\d+/g) { $count++ }
     print "There are $count negative numbers in the string";
 
+Another version uses a global match in list context, then assigns the
+result to a scalar, producing a count of the number of matches.
+
+	$count = () = $string =~ /-\d+/g;
+
 =head2 How do I capitalize all the words on one line?
 
 To make the first letter of each word upper case:
@@ -575,7 +725,7 @@ To make the first letter of each word upper case:
 
 This has the strange effect of turning "C<don't do it>" into "C<Don'T
 Do It>".  Sometimes you might want this.  Other times you might need a
-more thorough solution (Suggested by brian d.  foy):
+more thorough solution (Suggested by brian d foy):
 
     $string =~ s/ (
                  (^\w)    #at the beginning of the line
@@ -852,7 +1002,7 @@ in the indentation.
             would deliver us. You are a liar, Saruman, and a corrupter
             of men's hearts.  --Theoden in /usr/src/perl/taint.c
         FINIS
-    $quote =~ s/\s*--/\n--/;
+    $quote =~ s/\s+--/\n--/;
 
 A nice general-purpose fixer-upper function for indented here documents
 follows.  It expects to be called with a here document as its argument.
@@ -994,7 +1144,7 @@ Like (d), but @in contains only small positive integers:
 
 But perhaps you should have been using a hash all along, eh?
 
-=head2 How can I tell whether a list or array contains a certain element?
+=head2 How can I tell whether a certain element is contained in a list or array?
 
 Hearing the word "in" is an I<in>dication that you probably should have
 used a hash, not a list or array, to store your data.  Hashes are
@@ -1002,11 +1152,11 @@ designed to answer this question quickly and efficiently.  Arrays aren't.
 
 That being said, there are several ways to approach this.  If you
 are going to make this query many times over arbitrary string values,
-the fastest way is probably to invert the original array and keep an
-associative array lying about whose keys are the first array's values.
+the fastest way is probably to invert the original array and maintain a
+hash whose keys are the first array's values.
 
     @blues = qw/azure cerulean teal turquoise lapis-lazuli/;
-    undef %is_blue;
+    %is_blue = ();
     for (@blues) { $is_blue{$_} = 1 }
 
 Now you can check whether $is_blue{$some_color}.  It might have been a
@@ -1016,7 +1166,7 @@ If the values are all small integers, you could use a simple indexed
 array.  This kind of an array will take up less space:
 
     @primes = (2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31);
-    undef @is_tiny_prime;
+    @is_tiny_prime = ();
     for (@primes) { $is_tiny_prime[$_] = 1 }
     # or simply  @istiny_prime[@primes] = (1) x @primes;
 
@@ -1190,20 +1340,33 @@ lists, or you could just do something like this with an array:
 
 =head2 How do I shuffle an array randomly?
 
-Use this:
+If you either have Perl 5.8.0 or later installed, or if you have
+Scalar-List-Utils 1.03 or later installed, you can say:
 
-    # fisher_yates_shuffle( \@array ) : 
-    # generate a random permutation of @array in place
+    use List::Util 'shuffle';
+
+	@shuffled = shuffle(@list);
+
+If not, you can use a Fisher-Yates shuffle.
+
     sub fisher_yates_shuffle {
-        my $array = shift;
-        my $i;
-        for ($i = @$array; --$i; ) {
+        my $deck = shift;  # $deck is a reference to an array
+        my $i = @$deck;
+        while ($i--) {
             my $j = int rand ($i+1);
-            @$array[$i,$j] = @$array[$j,$i];
+            @$deck[$i,$j] = @$deck[$j,$i];
         }
     }
 
-    fisher_yates_shuffle( \@array );    # permutes @array in place
+    # shuffle my mpeg collection
+    #
+    my @mpeg = <audio/*/*.mp3>;
+    fisher_yates_shuffle( \@mpeg );    # randomize @mpeg in place
+    print @mpeg;
+
+Note that the above implementation shuffles an array in place,
+unlike the List::Util::shuffle() which takes a list and returns
+a new shuffled list.
 
 You've probably seen shuffling algorithms that work using splice,
 randomly picking another element to swap the current element with
@@ -1236,12 +1399,19 @@ Here's another; let's compute spherical volumes:
 	$_ *= (4/3) * 3.14159;  # this will be constant folded
     }
 
-If you want to do the same thing to modify the values of the hash,
-you may not use the C<values> function, oddly enough.  You need a slice:
+If you want to do the same thing to modify the values of the
+hash, you can use the C<values> function.  As of Perl 5.6
+the values are not copied, so if you modify $orbit (in this
+case), you modify the value.
 
-    for $orbit ( @orbits{keys %orbits} ) {
+    for $orbit ( values %orbits ) {
 	($orbit **= 3) *= (4/3) * 3.14159; 
     }
+
+Prior to perl 5.6 C<values> returned copies of the values,
+so older perl code often contains constructions such as
+C<@orbits{keys %orbits}> instead of C<values %orbits> where
+the hash is to be modified.
 
 =head2 How do I select a random element from an array?
 
@@ -1282,6 +1452,12 @@ in the permute() function should work on any list:
 	    }
 	}
     }
+
+Unfortunately, this algorithm is very inefficient. The Algorithm::Permute
+module from CPAN runs at least an order of magnitude faster. If you don't
+have a C compiler (or a binary distribution of Algorithm::Permute), then
+you can use List::Permutor which is written in pure Perl, and is still
+several times faster than the algorithm above.
 
 =head2 How do I sort an array by (anything)?
 
@@ -1324,8 +1500,9 @@ If you need to sort on several fields, the following paradigm is useful.
 This can be conveniently combined with precalculation of keys as given
 above.
 
-See http://www.perl.com/CPAN/doc/FMTEYEWTK/sort.html for more about
-this approach.
+See the F<sort> artitcle article in the "Far More Than You Ever Wanted
+To Know" collection in http://www.cpan.org/olddoc/FMTEYEWTK.tgz for
+more about this approach.
 
 See also the question below on sorting hashes.
 
@@ -1338,7 +1515,7 @@ For example, this sets $vec to have bit N set if $ints[N] was set:
     $vec = '';
     foreach(@ints) { vec($vec,$_,1) = 1 }
 
-And here's how, given a vector in $vec, you can
+Here's how, given a vector in $vec, you can
 get those bits into your @ints array:
 
     sub bitvec_to_list {
@@ -1373,7 +1550,23 @@ get those bits into your @ints array:
 This method gets faster the more sparse the bit vector is.
 (Courtesy of Tim Bunce and Winfried Koenig.)
 
-Here's a demo on how to use vec():
+You can make the while loop a lot shorter with this suggestion
+from Benjamin Goldberg:
+
+	while($vec =~ /[^\0]+/g ) {
+	   push @ints, grep vec($vec, $_, 1), $-[0] * 8 .. $+[0] * 8;
+	}
+
+Or use the CPAN module Bit::Vector:
+
+    $vector = Bit::Vector->new($num_of_bits);
+    $vector->Index_List_Store(@ints);
+    @ints = $vector->Index_List_Read();
+
+Bit::Vector provides efficient methods for bit vector, sets of small integers
+and "big int" math. 
+
+Here's a more extensive illustration using vec():
 
     # vec demo
     $vector = "\xff\x0f\xef\xfe";
@@ -1477,13 +1670,13 @@ worry you, you can always reverse the hash into a hash of arrays instead:
 =head2 How can I know how many entries are in a hash?
 
 If you mean how many keys, then all you have to do is
-take the scalar sense of the keys() function:
+use the keys() function in a scalar context:
 
-    $num_keys = scalar keys %hash;
+    $num_keys = keys %hash;
 
-The keys() function also resets the iterator, which in void context is
-faster for tied hashes than would be iterating through the whole 
-hash, one key-value pair at a time.
+The keys() function also resets the iterator, which means that you may 
+see strange results if you use this between uses of other hash operators 
+such as each().
 
 =head2 How do I sort a hash (optionally by value instead of key)?
 
@@ -1517,15 +1710,17 @@ The Tie::IxHash module from CPAN might also be instructive.
 
 =head2 What's the difference between "delete" and "undef" with hashes?
 
-Hashes are pairs of scalars: the first is the key, the second is the
-value.  The key will be coerced to a string, although the value can be
-any kind of scalar: string, number, or reference.  If a key C<$key> is
-present in the array, C<exists($key)> will return true.  The value for
-a given key can be C<undef>, in which case C<$array{$key}> will be
-C<undef> while C<$exists{$key}> will return true.  This corresponds to
-(C<$key>, C<undef>) being in the hash.
+Hashes contain pairs of scalars: the first is the key, the
+second is the value.  The key will be coerced to a string,
+although the value can be any kind of scalar: string,
+number, or reference.  If a key $key is present in
+%hash, C<exists($hash{$key})> will return true.  The value
+for a given key can be C<undef>, in which case
+C<$hash{$key}> will be C<undef> while C<exists $hash{$key}>
+will return true.  This corresponds to (C<$key>, C<undef>)
+being in the hash.
 
-Pictures help...  here's the C<%ary> table:
+Pictures help...  here's the %hash table:
 
 	  keys  values
 	+------+------+
@@ -1537,16 +1732,16 @@ Pictures help...  here's the C<%ary> table:
 
 And these conditions hold
 
-	$ary{'a'}                       is true
-	$ary{'d'}                       is false
-	defined $ary{'d'}               is true
-	defined $ary{'a'}               is true
-	exists $ary{'a'}                is true (Perl5 only)
-	grep ($_ eq 'a', keys %ary)     is true
+	$hash{'a'}                       is true
+	$hash{'d'}                       is false
+	defined $hash{'d'}               is true
+	defined $hash{'a'}               is true
+	exists $hash{'a'}                is true (Perl5 only)
+	grep ($_ eq 'a', keys %hash)     is true
 
 If you now say
 
-	undef $ary{'a'}
+	undef $hash{'a'}
 
 your table now reads:
 
@@ -1561,18 +1756,18 @@ your table now reads:
 
 and these conditions now hold; changes in caps:
 
-	$ary{'a'}                       is FALSE
-	$ary{'d'}                       is false
-	defined $ary{'d'}               is true
-	defined $ary{'a'}               is FALSE
-	exists $ary{'a'}                is true (Perl5 only)
-	grep ($_ eq 'a', keys %ary)     is true
+	$hash{'a'}                       is FALSE
+	$hash{'d'}                       is false
+	defined $hash{'d'}               is true
+	defined $hash{'a'}               is FALSE
+	exists $hash{'a'}                is true (Perl5 only)
+	grep ($_ eq 'a', keys %hash)     is true
 
 Notice the last two: you have an undef value, but a defined key!
 
 Now, consider this:
 
-	delete $ary{'a'}
+	delete $hash{'a'}
 
 your table now reads:
 
@@ -1585,23 +1780,22 @@ your table now reads:
 
 and these conditions now hold; changes in caps:
 
-	$ary{'a'}                       is false
-	$ary{'d'}                       is false
-	defined $ary{'d'}               is true
-	defined $ary{'a'}               is false
-	exists $ary{'a'}                is FALSE (Perl5 only)
-	grep ($_ eq 'a', keys %ary)     is FALSE
+	$hash{'a'}                       is false
+	$hash{'d'}                       is false
+	defined $hash{'d'}               is true
+	defined $hash{'a'}               is false
+	exists $hash{'a'}                is FALSE (Perl5 only)
+	grep ($_ eq 'a', keys %hash)     is FALSE
 
 See, the whole entry is gone!
 
 =head2 Why don't my tied hashes make the defined/exists distinction?
 
-They may or may not implement the EXISTS() and DEFINED() methods
-differently.  For example, there isn't the concept of undef with hashes
-that are tied to DBM* files. This means the true/false tables above
-will give different results when used on such a hash.  It also means
-that exists and defined do the same thing with a DBM* file, and what
-they end up doing is not what they do with ordinary hashes.
+This depends on the tied hash's implementation of EXISTS().
+For example, there isn't the concept of undef with hashes
+that are tied to DBM* files. It also means that exists() and
+defined() do the same thing with a DBM* file, and what they
+end up doing is not what they do with ordinary hashes.
 
 =head2 How do I reset an each() operation part-way through?
 
@@ -1691,7 +1885,7 @@ in L<perltoot>.
 
 =head2 How can I use a reference as a hash key?
 
-You can't do this directly, but you could use the standard Tie::Refhash
+You can't do this directly, but you could use the standard Tie::RefHash
 module distributed with Perl.
 
 =head1 Data: Misc
@@ -1726,9 +1920,13 @@ Assuming that you don't care about IEEE notations like "NaN" or
    if (/^-?\d+$/)       { print "is an integer\n" }
    if (/^[+-]?\d+$/)    { print "is a +/- integer\n" }
    if (/^-?\d+\.?\d*$/) { print "is a real number\n" }
-   if (/^-?(?:\d+(?:\.\d*)?|\.\d+)$/) { print "is a decimal number" }
+   if (/^-?(?:\d+(?:\.\d*)?|\.\d+)$/) { print "is a decimal number\n" }
    if (/^([+-]?)(?=\d|\.\d)\d*(\.\d*)?([Ee]([+-]?\d+))?$/)
-			{ print "a C float" }
+			{ print "a C float\n" }
+
+You can also use the L<Data::Types|Data::Types> module on
+the CPAN, which exports functions that validate data types
+using these and other regular expressions.
 
 If you're on a POSIX system, Perl's supports the C<POSIX::strtod>
 function.  Its semantics are somewhat cumbersome, so here's a C<getnum>
@@ -1753,17 +1951,18 @@ if you just want to say, ``Is this a float?''
 
     sub is_numeric { defined getnum($_[0]) } 
 
-Or you could check out the String::Scanf module on CPAN instead.  The
-POSIX module (part of the standard Perl distribution) provides the
-C<strtod> and C<strtol> for converting strings to double and longs,
+Or you could check out the L<String::Scanf|String::Scanf> module on the CPAN
+instead. The POSIX module (part of the standard Perl distribution) provides
+the C<strtod> and C<strtol> for converting strings to double and longs,
 respectively.
 
 =head2 How do I keep persistent data across program calls?
 
 For some specific applications, you can use one of the DBM modules.
-See L<AnyDBM_File>.  More generically, you should consult the FreezeThaw,
-Storable, or Class::Eroot modules from CPAN.  Here's one example using
-Storable's C<store> and C<retrieve> functions:
+See L<AnyDBM_File>.  More generically, you should consult the FreezeThaw
+or Storable modules from CPAN.  Starting from Perl 5.8 Storable is part
+of the standard distribution.  Here's one example using Storable's C<store>
+and C<retrieve> functions:
 
     use Storable; 
     store(\%hash, "filename");
@@ -1804,15 +2003,11 @@ the PDL module from CPAN instead--it makes number-crunching easy.
 
 =head1 AUTHOR AND COPYRIGHT
 
-Copyright (c) 1997-1999 Tom Christiansen and Nathan Torkington.
+Copyright (c) 1997-2002 Tom Christiansen and Nathan Torkington.
 All rights reserved.
 
-When included as part of the Standard Version of Perl, or as part of
-its complete documentation whether printed or otherwise, this work
-may be distributed only under the terms of Perl's Artistic License.
-Any distribution of this file or derivatives thereof I<outside>
-of that package require that special arrangements be made with
-copyright holder.
+This documentation is free; you can redistribute it and/or modify it
+under the same terms as Perl itself.
 
 Irrespective of its distribution, all code examples in this file
 are hereby placed into the public domain.  You are permitted and

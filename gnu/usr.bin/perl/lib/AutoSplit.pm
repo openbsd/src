@@ -1,17 +1,17 @@
 package AutoSplit;
 
-use 5.005_64;
+use 5.006_001;
 use Exporter ();
 use Config qw(%Config);
 use Carp qw(carp);
 use File::Basename ();
 use File::Path qw(mkpath);
-use File::Spec::Functions qw(curdir catfile);
+use File::Spec::Functions qw(curdir catfile catdir);
 use strict;
 our($VERSION, @ISA, @EXPORT, @EXPORT_OK, $Verbose, $Keep, $Maxlen,
     $CheckForAutoloader, $CheckModTime);
 
-$VERSION = "1.0305";
+$VERSION = "1.0307";
 @ISA = qw(Exporter);
 @EXPORT = qw(&autosplit &autosplit_lib_modules);
 @EXPORT_OK = qw($Verbose $Keep $Maxlen $CheckForAutoloader $CheckModTime);
@@ -54,7 +54,7 @@ $keep defaults to 0.
 
 The
 fourth argument, I<$check>, instructs C<autosplit> to check the module
-currently being split to ensure that it does include a C<use>
+currently being split to ensure that it includes a C<use>
 specification for the AutoLoader module, and skips the module if
 AutoLoader is not detected.
 $check defaults to 1.
@@ -199,6 +199,8 @@ sub autosplit_lib_modules{
 
 # private functions
 
+my $self_mod_time = (stat __FILE__)[9];
+
 sub autosplit_file {
     my($filename, $autodir, $keep, $check_for_autoloader, $check_mod_time)
 	= @_;
@@ -236,6 +238,7 @@ sub autosplit_file {
 	$in_pod = 1 if /^=\w/;
 	$in_pod = 0 if /^=cut/;
 	next if ($in_pod || /^=cut/);
+        next if /^\s*#/;
 
 	# record last package name seen
 	$def_package = $1 if (m/^\s*package\s+([\w:]+)\s*;/);
@@ -253,29 +256,27 @@ sub autosplit_file {
     $def_package or die "Can't find 'package Name;' in $filename\n";
 
     my($modpname) = _modpname($def_package); 
-    if ($Is_VMS) {
-	$modpname = VMS::Filespec::unixify($modpname); # may have dirs
-    }
 
     # this _has_ to match so we have a reasonable timestamp file
     die "Package $def_package ($modpname.pm) does not ".
 	"match filename $filename"
 	    unless ($filename =~ m/\Q$modpname.pm\E$/ or
-		    ($^O eq 'dos') or ($^O eq 'MSWin32') or
+		    ($^O eq 'dos') or ($^O eq 'MSWin32') or ($^O eq 'NetWare') or
 	            $Is_VMS && $filename =~ m/$modpname.pm/i);
 
     my($al_idx_file) = catfile($autodir, $modpname, $IndexFile);
 
     if ($check_mod_time){
 	my($al_ts_time) = (stat("$al_idx_file"))[9] || 1;
-	if ($al_ts_time >= $pm_mod_time){
+	if ($al_ts_time >= $pm_mod_time and
+	    $al_ts_time >= $self_mod_time){
 	    print "AutoSplit skipped ($al_idx_file newer than $filename)\n"
 		if ($Verbose >= 2);
 	    return undef;	# one undef, not a list
 	}
     }
 
-    my($modnamedir) = catfile($autodir, $modpname);
+    my($modnamedir) = catdir($autodir, $modpname);
     print "AutoSplitting $filename ($modnamedir)\n"
 	if $Verbose;
 
@@ -323,7 +324,7 @@ sub autosplit_file {
 	    push(@subnames, $fq_subname);
 	    my($lname, $sname) = ($subname, substr($subname,0,$maxflen-3));
 	    $modpname = _modpname($this_package);
-    	    my($modnamedir) = catfile($autodir, $modpname);
+            my($modnamedir) = catdir($autodir, $modpname);
 	    mkpath($modnamedir,0,0777);
 	    my($lpath) = catfile($modnamedir, "$lname.al");
 	    my($spath) = catfile($modnamedir, "$sname.al");
@@ -338,13 +339,14 @@ sub autosplit_file {
 			if ($Verbose>=1);
 	    }
 	    push(@outfiles, $path);
+	    my $lineno = $fnr - @cache;
 	    print OUT <<EOT;
 # NOTE: Derived from $filename.
-# Changes made here will be lost when autosplit again.
+# Changes made here will be lost when autosplit is run again.
 # See AutoSplit.pm.
 package $this_package;
 
-#line $fnr "$filename (autosplit into $path)"
+#line $lineno "$filename (autosplit into $path)"
 EOT
 	    print OUT @cache;
 	    @cache = ();
@@ -431,9 +433,15 @@ sub _modpname ($) {
     if ($^O eq 'MSWin32') {
 	$modpname =~ s#::#\\#g; 
     } else {
-    	while ($modpname =~ m#(.*?[^:])::([^:].*)#) {
-	    $modpname = catfile($1, $2);
-	}
+	my @modpnames = ();
+	while ($modpname =~ m#(.*?[^:])::([^:].*)#) {
+	       push @modpnames, $1;
+	       $modpname = $2;
+         }
+	$modpname = catfile(@modpnames, $modpname);
+    }
+    if ($Is_VMS) {
+        $modpname = VMS::Filespec::unixify($modpname); # may have dirs
     }
     $modpname;
 }

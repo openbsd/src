@@ -1,6 +1,6 @@
 =head1 NAME
 
-perlfaq - frequently asked questions about Perl ($Date: 1999/05/23 20:38:02 $)
+perlfaq - frequently asked questions about Perl ($Date: 2002/03/11 21:32:23 $)
 
 =head1 DESCRIPTION
 
@@ -13,7 +13,7 @@ This document.
 
 =head2 L<perlfaq1>: General Questions About Perl
 
-Very general, high-level information about Perl.
+Very general, high-level questions about Perl.
 
 =over 4
 
@@ -75,14 +75,14 @@ Where can I get a list of Larry Wall witticisms?
 
 =item *
 
-How can I convince my sysadmin/supervisor/employees to use version 5/5.005/Perl instead of some other language?
+How can I convince my sysadmin/supervisor/employees to use version 5/5.6.1/Perl instead of some other language?
 
 =back
 
 
 =head2 L<perlfaq2>: Obtaining and Learning about Perl
 
-Where to find source and documentation to Perl, support,
+Where to find source and documentation for Perl, support,
 and related matters.
 
 =over 4
@@ -157,7 +157,7 @@ Where do I send bug reports?
 
 =item *
 
-What is perl.com? Perl Mongers? pm.org? perl.org?
+What is perl.com? Perl Mongers? pm.org? perl.org? cpan.org?
 
 =back
 
@@ -226,10 +226,6 @@ How can I generate simple menus without using CGI or Tk?
 
 =item *
 
-What is undump?
-
-=item *
-
 How can I make my Perl program run faster?
 
 =item *
@@ -291,8 +287,7 @@ my C program; what am I doing wrong?
 
 =item *
 
-When I tried to run my script, I got this message. What does it
-mean?
+When I tried to run my script, I got this message. What does it mean?
 
 =item *
 
@@ -322,7 +317,7 @@ Does Perl have a round() function?  What about ceil() and floor()?  Trig functio
 
 =item *
 
-How do I convert bits into ints?
+How do I convert between numeric representations?
 
 =item *
 
@@ -343,6 +338,10 @@ How can I output Roman numerals?
 =item *
 
 Why aren't my random numbers random?
+
+=item *
+
+How do I get a random number between X and Y?
 
 =item *
 
@@ -467,7 +466,7 @@ How can I remove duplicate elements from a list or array?
 
 =item *
 
-How can I tell whether a list or array contains a certain element?
+How can I tell whether a certain element is contained in a list or array?
 
 =item *
 
@@ -610,7 +609,7 @@ How do I pack arrays of doubles or floats for XS code?
 
 =head2 L<perlfaq5>: Files and Formats
 
-I/O and the "f" issues: filehandles, flushing, formats and footers.
+I/O and the "f" issues: filehandles, flushing, formats, and footers.
 
 =over 4
 
@@ -692,6 +691,10 @@ I still don't get locking.  I just want to increment the number in the file.  Ho
 
 =item *
 
+All I want to do is append a small amount of text to the end of a file.  Do I still have to use locking?
+
+=item *
+
 How do I randomly update a binary file?
 
 =item *
@@ -757,7 +760,7 @@ Why do I get weird spaces when I print an array of lines?
 =back
 
 
-=head2 L<perlfaq6>: Regexps
+=head2 L<perlfaq6>: Regular Expressions
 
 Pattern matching and regular expressions.
 
@@ -1188,9 +1191,13 @@ What is socket.ph and where do I get it?
 
 =head2 L<perlfaq9>: Networking
 
-Networking, the Internet, and a few on the web.
+Networking, the internet, and a few on the web.
 
 =over 4
+
+=item *
+
+What is the correct form of response from a CGI script?
 
 =item *
 
@@ -1270,6 +1277,10 @@ How do I send mail?
 
 =item *
 
+How do I use MIME to make an attachment to a mail message?
+
+=item *
+
 How do I read mail?
 
 =item *
@@ -1296,14 +1307,13 @@ How can I do RPC in Perl?
 =head2 Where to get the perlfaq
 
 This document is posted regularly to comp.lang.perl.announce and
-several other related newsgroups.  It is available in a variety of
-formats from CPAN in the /CPAN/doc/FAQs/FAQ/ directory or on the web
-at http://www.perl.com/perl/faq/ .
+several other related newsgroups.  It is available on many
+web sites: http://www.perldoc.com/ and http://perlfaq.cpan.org/ .
 
 =head2 How to contribute to the perlfaq
 
 You may mail corrections, additions, and suggestions to
-perlfaq-suggestions@perl.com .  This alias should not be 
+perlfaq-workers@perl.org .  This alias should not be 
 used to I<ask> FAQs.  It's for fixing the current FAQ.
 Send questions to the comp.lang.perl.misc newsgroup.
 
@@ -1311,7 +1321,7 @@ Send questions to the comp.lang.perl.misc newsgroup.
 
 Your questions will probably go unread, unless they're suggestions of
 new questions to add to the FAQ, in which case they should have gone
-to the perlfaq-suggestions@perl.com instead.
+to the perlfaq-workers@perl.org instead.
 
 You should have read section 2 of this faq.  There you would have
 learned that comp.lang.perl.misc is the appropriate place to go for
@@ -1328,17 +1338,13 @@ Perl Porters.
 
 =head1 Author and Copyright Information
 
-Copyright (c) 1997-1999 Tom Christiansen and Nathan Torkington.
+Copyright (c) 1997-2002 Tom Christiansen and Nathan Torkington.
 All rights reserved.
 
 =head2 Bundled Distributions
 
-When included as part of the Standard Version of Perl or as part of
-its complete documentation whether printed or otherwise, this work
-may be distributed only under the terms of Perl's Artistic License.
-Any distribution of this file or derivatives thereof I<outside>
-of that package requires that special arrangements be made with
-copyright holder.
+This documentation is free; you can redistribute it and/or modify it
+under the same terms as Perl itself.
 
 Irrespective of its distribution, all code examples in these files
 are hereby placed into the public domain.  You are permitted and
@@ -1372,7 +1378,7 @@ of perlfaq7 on variable names within variables.
 
 =item 7/January/99
 
-Small touchups here and there.  Added all questions in this 
+Small touch ups here and there.  Added all questions in this 
 document as a sort of table of contents.
 
 =item 22/June/98

@@ -33,9 +33,19 @@ as C<0>; when used as a string, it is treated the empty string,
 C<"">; and when used as a reference that isn't being assigned
 to, it is treated as an error.  If you enable warnings, you'll
 be notified of an uninitialized value whenever you treat C<undef>
-as a string or a number.  Well, usually.  Boolean ("don't-care")
-contexts and operators such as C<++>, C<-->, C<+=>, C<-=>, and
-C<.=> are always exempt from such warnings.
+as a string or a number.  Well, usually.  Boolean contexts, such as:
+
+    my $a;
+    if ($a) {}
+
+are exempt from warnings (because they care about truth rather than
+definedness).  Operators such as C<++>, C<-->, C<+=>,
+C<-=>, and C<.=>, that operate on undefined left values such as:
+
+    my $a;
+    $a++;
+
+are also always exempt from such warnings.
 
 A declaration can be put anywhere a statement can, but has no effect on
 the execution of the primary sequence of statements--declarations all
@@ -230,9 +240,10 @@ which is Perl short-hand for the more explicitly written version:
 	# now process $line
     }
 
-Note that if there were a C<continue> block on the above code, it would get
-executed even on discarded lines.  This is often used to reset line counters 
-or C<?pat?> one-time matches.
+Note that if there were a C<continue> block on the above code, it would
+get executed only on lines discarded by the regex (since redo skips the
+continue block). A continue block is often used to reset line counters
+or C<?pat?> one-time matches:
 
     # inspired by :1,$g/fred/s//WILMA/
     while (<>) {
@@ -253,10 +264,13 @@ The loop control statements don't work in an C<if> or C<unless>, since
 they aren't loops.  You can double the braces to make them such, though.
 
     if (/pattern/) {{
-	next if /fred/;
-	next if /barney/;
-	# so something here
+	last if /fred/;
+	next if /barney/; # same effect as "last", but doesn't document as well
+	# do something here
     }}
+
+This is caused by the fact that a block by itself acts as a loop that
+executes once, see L<"Basic BLOCKs and Switch Statements">.
 
 The form C<while/if BLOCK BLOCK>, available in Perl 4, is no longer
 available.   Replace any occurrence of C<if BLOCK> by C<if (do BLOCK)>.
@@ -393,8 +407,18 @@ structures.
     }
 
 There is no official C<switch> statement in Perl, because there are
-already several ways to write the equivalent.  In addition to the
-above, you could write
+already several ways to write the equivalent.
+
+However, starting from Perl 5.8 to get switch and case one can use
+the Switch extension and say:
+
+	use Switch;
+
+after which one has switch and case.  It is not as fast as it could be
+because it's not really part of the language (it's done using source
+filters) but it is available, and it's very flexible.
+
+In addition to the above BLOCK construct, you could write
 
     SWITCH: {
 	$abc = 1, last SWITCH  if /^abc/;
@@ -486,7 +510,7 @@ Or
                                   "read-only";
         };
 
-Or if you are certainly that all the C<&&> clauses are true, you can use
+Or if you are certain that all the C<&&> clauses are true, you can use
 something like this, which "switches" on the value of the
 C<HTTP_USER_AGENT> environment variable.
 

@@ -5,7 +5,7 @@
 print "1..4\n";
 
 
-open(FOO,'op/read.t') || open(FOO,'t/op/read.t') || die "Can't open op.read";
+open(FOO,'op/read.t') || open(FOO,'t/op/read.t') || open(FOO,':op:read.t') || die "Can't open op.read";
 seek(FOO,4,0);
 $got = read(FOO,$buf,4);
 

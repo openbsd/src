@@ -2,8 +2,7 @@
 
 # $RCSfile: index.t,v $$Revision: 4.1 $$Date: 92/08/07 18:27:59 $
 
-print "1..20\n";
-
+print "1..24\n";
 
 $foo = 'Now is the time for all good men to come to the aid of their country.';
 
@@ -40,3 +39,11 @@ print rindex("ababa","a",2) == 2 ? "ok 17\n" : "not ok 17\n";
 print rindex("ababa","a",3) == 2 ? "ok 18\n" : "not ok 18\n";
 print rindex("ababa","a",4) == 4 ? "ok 19\n" : "not ok 19\n";
 print rindex("ababa","a",5) == 4 ? "ok 20\n" : "not ok 20\n";
+
+$a = "foo \x{1234}bar";
+
+print index($a, "\x{1234}") == 4 ? "ok 21\n" : "not ok 21\n";
+print index($a, "bar",    ) == 5 ? "ok 22\n" : "not ok 22\n";
+
+print rindex($a, "\x{1234}") == 4 ? "ok 23\n" : "not ok 23\n";
+print rindex($a, "foo",    ) == 0 ? "ok 24\n" : "not ok 24\n";

@@ -13,7 +13,7 @@ Usage:  $0 [-h]
    or:  $0 [-w] [-u] [-n ntargs] [-o otherargs] [-s stripsuffix] [files]
         -n ntargs       arguments to invoke perl with in generated file
                             when run from Windows NT.  Defaults to
-                            '-x -S "%0" %*'.
+                            '-x -S %0 %*'.
         -o otherargs    arguments to invoke perl with in generated file
                             other than when run from Windows NT.  Defaults
                             to '-x -S "%0" %1 %2 %3 %4 %5 %6 %7 %8 %9'.
@@ -33,7 +33,8 @@ EOT
 
 my %OPT = ();
 warn($usage), exit(0) if !getopts('whun:o:a:s:',\%OPT) or $OPT{'h'};
-$OPT{'n'} = '-x -S "%0" %*' unless exists $OPT{'n'};
+# NOTE: %0 is already enclosed in doublequotes by cmd.exe, as appropriate
+$OPT{'n'} = '-x -S %0 %*' unless exists $OPT{'n'};
 $OPT{'o'} = '-x -S "%0" %1 %2 %3 %4 %5 %6 %7 %8 %9' unless exists $OPT{'o'};
 $OPT{'s'} = '/\\.plx?/' unless exists $OPT{'s'};
 $OPT{'s'} = ($OPT{'s'} =~ m#^/([^/]*[^/\$]|)\$?/?$# ? $1 : "\Q$OPT{'s'}\E");
@@ -316,7 +317,7 @@ deprecated C<-a> option.
 =item B<-n> I<ntargs>
 
 Arguments to invoke perl with in generated batch file when run from
-Windows NT (or Windows 98, probably).  Defaults to S<'-x -S "%0" %*'>.
+Windows NT (or Windows 98, probably).  Defaults to S<'-x -S %0 %*'>.
 
 =item B<-o> I<otherargs>
 

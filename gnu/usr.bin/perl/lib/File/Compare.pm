@@ -1,23 +1,19 @@
 package File::Compare;
 
-use 5.005_64;
+use 5.006;
 use strict;
+use warnings;
 our($VERSION, @ISA, @EXPORT, @EXPORT_OK, $Too_Big);
 
 require Exporter;
 use Carp;
 
-$VERSION = '1.1002';
+$VERSION = '1.1003';
 @ISA = qw(Exporter);
 @EXPORT = qw(compare);
 @EXPORT_OK = qw(cmp compare_text);
 
 $Too_Big = 1024 * 1024 * 2;
-
-sub VERSION {
-    # Version of File::Compare
-    return $File::Compare::VERSION;
-}
 
 sub compare {
     croak("Usage: compare( file1, file2 [, buffersize]) ")
@@ -170,8 +166,8 @@ is basically equivalent to
 
 =head1 RETURN
 
-File::Compare::compare return 0 if the files are equal, 1 if the
-files are unequal, or -1 if an error was encountered.
+File::Compare::compare and its sibling functions return 0 if the files
+are equal, 1 if the files are unequal, or -1 if an error was encountered.
 
 =head1 AUTHOR
 

@@ -11,17 +11,13 @@
 #define WIN32IO_IS_STDIO
 #define WIN32SCK_IS_STDSCK
 #define WIN32_LEAN_AND_MEAN
+#define PERLIO_NOT_STDIO 0
 #ifdef __GNUC__
 #define Win32_Winsock
 #endif
 #include <windows.h>
 #include "EXTERN.h"
 #include "perl.h"
-
-#if defined(PERL_OBJECT)
-#define NO_XSLOCKS
-#include "XSUB.h"
-#endif
 
 #include "Win32iop.h"
 #include <sys/socket.h>
@@ -39,7 +35,7 @@
 #	define TO_SOCKET(x)	(x)
 #endif	/* USE_SOCKETS_AS_HANDLES */
 
-#if defined(USE_THREADS) || defined(USE_ITHREADS)
+#if defined(USE_5005THREADS) || defined(USE_ITHREADS)
 #define StartSockets() \
     STMT_START {					\
 	if (!wsock_started)				\
@@ -81,7 +77,7 @@ EndSockets(void)
 void
 start_sockets(void) 
 {
-    dTHXo;
+    dTHX;
     unsigned short version;
     WSADATA retdata;
     int ret;
@@ -104,8 +100,8 @@ void
 set_socktype(void)
 {
 #ifdef USE_SOCKETS_AS_HANDLES
-#if defined(USE_THREADS) || defined(USE_ITHREADS)
-    dTHXo;
+#if defined(USE_5005THREADS) || defined(USE_ITHREADS)
+    dTHX;
     if (!w32_init_socktype) {
 #endif
 	int iSockOpt = SO_SYNCHRONOUS_NONALERT;
@@ -114,7 +110,7 @@ set_socktype(void)
 	 */
 	setsockopt(INVALID_SOCKET, SOL_SOCKET, SO_OPENTYPE,
 		    (char *)&iSockOpt, sizeof(iSockOpt));
-#if defined(USE_THREADS) || defined(USE_ITHREADS)
+#if defined(USE_5005THREADS) || defined(USE_ITHREADS)
 	w32_init_socktype = 1;
     }
 #endif
@@ -295,7 +291,7 @@ win32_select(int nfds, Perl_fd_set* rd, Perl_fd_set* wr, Perl_fd_set* ex, const 
     int r;
 #ifdef USE_SOCKETS_AS_HANDLES
     Perl_fd_set dummy;
-    int i, fd, bit, offset;
+    int i, fd;
     FD_SET nrd, nwr, nex, *prd, *pwr, *pex;
 
     /* winsock seems incapable of dealing with all three null fd_sets,
@@ -418,6 +414,41 @@ win32_socket(int af, int type, int protocol)
     return s;
 }
 
+/*
+ * close RTL fd while respecting sockets
+ * added as temporary measure until PerlIO has real
+ * Win32 native layer
+ *   -- BKS, 11-11-2000
+*/
+
+int my_close(int fd)
+{
+    int osf;
+    if (!wsock_started)		/* No WinSock? */
+	return(close(fd));	/* Then not a socket. */
+    osf = TO_SOCKET(fd);/* Get it now before it's gone! */
+    if (osf != -1) {
+	int err;
+	err = closesocket(osf);
+	if (err == 0) {
+#if defined(USE_FIXED_OSFHANDLE) || defined(PERL_MSVCRT_READFIX)
+            _set_osfhnd(fd, INVALID_HANDLE_VALUE);
+#endif
+	    (void)close(fd);	/* handle already closed, ignore error */
+	    return 0;
+	}
+	else if (err == SOCKET_ERROR) {
+	    err = WSAGetLastError();
+	    if (err != WSAENOTSOCK) {
+		(void)close(fd);
+		errno = err;
+		return EOF;
+	    }
+	}
+    }
+    return close(fd);
+}
+
 #undef fclose
 int
 my_fclose (FILE *pf)
@@ -425,14 +456,14 @@ my_fclose (FILE *pf)
     int osf;
     if (!wsock_started)		/* No WinSock? */
 	return(fclose(pf));	/* Then not a socket. */
-    osf = TO_SOCKET(fileno(pf));/* Get it now before it's gone! */
+    osf = TO_SOCKET(win32_fileno(pf));/* Get it now before it's gone! */
     if (osf != -1) {
 	int err;
 	win32_fflush(pf);
 	err = closesocket(osf);
 	if (err == 0) {
 #if defined(USE_FIXED_OSFHANDLE) || defined(PERL_MSVCRT_READFIX)
-            _set_osfhnd(fileno(pf), INVALID_HANDLE_VALUE);
+            _set_osfhnd(win32_fileno(pf), INVALID_HANDLE_VALUE);
 #endif
 	    (void)fclose(pf);	/* handle already closed, ignore error */
 	    return 0;
@@ -451,7 +482,7 @@ my_fclose (FILE *pf)
 
 #undef fstat
 int
-my_fstat(int fd, struct stat *sbufptr)
+my_fstat(int fd, Stat_t *sbufptr)
 {
     /* This fixes a bug in fstat() on Windows 9x.  fstat() uses the
      * GetFileType() win32 syscall, which will fail on Windows 9x.
@@ -461,8 +492,13 @@ my_fstat(int fd, struct stat *sbufptr)
      * sbufptr->st_mode.
      */
     int osf;
-    if (!wsock_started || IsWinNT())
+    if (!wsock_started || IsWinNT()) {
+#if defined(WIN64) || defined(USE_LARGE_FILES)
+	return _fstati64(fd, sbufptr);
+#else
 	return fstat(fd, sbufptr);
+#endif
+    }
 
     osf = TO_SOCKET(fd);
     if (osf != -1) {
@@ -481,11 +517,15 @@ my_fstat(int fd, struct stat *sbufptr)
 	    sbufptr->st_nlink = 1;
 	    sbufptr->st_uid = sbufptr->st_gid = sbufptr->st_ino = 0;
 	    sbufptr->st_atime = sbufptr->st_mtime = sbufptr->st_ctime = 0;
-	    sbufptr->st_size = (off_t)0;
+	    sbufptr->st_size = (Off_t)0;
 	    return 0;
 	}
     }
+#if defined(WIN64) || defined(USE_LARGE_FILES)
+    return _fstati64(fd, sbufptr);
+#else
     return fstat(fd, sbufptr);
+#endif
 }
 
 struct hostent *
@@ -536,7 +576,7 @@ win32_getprotobynumber(int num)
 struct servent *
 win32_getservbyname(const char *name, const char *proto)
 {
-    dTHXo;    
+    dTHX;    
     struct servent *r;
 
     SOCKET_TEST(r = getservbyname(name, proto), NULL);
@@ -549,7 +589,7 @@ win32_getservbyname(const char *name, const char *proto)
 struct servent *
 win32_getservbyport(int port, const char *proto)
 {
-    dTHXo; 
+    dTHX; 
     struct servent *r;
 
     SOCKET_TEST(r = getservbyport(port, proto), NULL);
@@ -562,7 +602,7 @@ win32_getservbyport(int port, const char *proto)
 int
 win32_ioctl(int i, unsigned int u, char *data)
 {
-    dTHXo;
+    dTHX;
     u_long argp = (u_long)data;
     int retval;
 
@@ -603,28 +643,28 @@ win32_inet_addr(const char FAR *cp)
 void
 win32_endhostent() 
 {
-    dTHXo;
+    dTHX;
     Perl_croak_nocontext("endhostent not implemented!\n");
 }
 
 void
 win32_endnetent()
 {
-    dTHXo;
+    dTHX;
     Perl_croak_nocontext("endnetent not implemented!\n");
 }
 
 void
 win32_endprotoent()
 {
-    dTHXo;
+    dTHX;
     Perl_croak_nocontext("endprotoent not implemented!\n");
 }
 
 void
 win32_endservent()
 {
-    dTHXo;
+    dTHX;
     Perl_croak_nocontext("endservent not implemented!\n");
 }
 
@@ -632,7 +672,7 @@ win32_endservent()
 struct netent *
 win32_getnetent(void) 
 {
-    dTHXo;
+    dTHX;
     Perl_croak_nocontext("getnetent not implemented!\n");
     return (struct netent *) NULL;
 }
@@ -640,7 +680,7 @@ win32_getnetent(void)
 struct netent *
 win32_getnetbyname(char *name) 
 {
-    dTHXo;
+    dTHX;
     Perl_croak_nocontext("getnetbyname not implemented!\n");
     return (struct netent *)NULL;
 }
@@ -648,7 +688,7 @@ win32_getnetbyname(char *name)
 struct netent *
 win32_getnetbyaddr(long net, int type) 
 {
-    dTHXo;
+    dTHX;
     Perl_croak_nocontext("getnetbyaddr not implemented!\n");
     return (struct netent *)NULL;
 }
@@ -656,7 +696,7 @@ win32_getnetbyaddr(long net, int type)
 struct protoent *
 win32_getprotoent(void) 
 {
-    dTHXo;
+    dTHX;
     Perl_croak_nocontext("getprotoent not implemented!\n");
     return (struct protoent *) NULL;
 }
@@ -664,7 +704,7 @@ win32_getprotoent(void)
 struct servent *
 win32_getservent(void) 
 {
-    dTHXo;
+    dTHX;
     Perl_croak_nocontext("getservent not implemented!\n");
     return (struct servent *) NULL;
 }
@@ -672,7 +712,7 @@ win32_getservent(void)
 void
 win32_sethostent(int stayopen)
 {
-    dTHXo;
+    dTHX;
     Perl_croak_nocontext("sethostent not implemented!\n");
 }
 
@@ -680,7 +720,7 @@ win32_sethostent(int stayopen)
 void
 win32_setnetent(int stayopen)
 {
-    dTHXo;
+    dTHX;
     Perl_croak_nocontext("setnetent not implemented!\n");
 }
 
@@ -688,7 +728,7 @@ win32_setnetent(int stayopen)
 void
 win32_setprotoent(int stayopen)
 {
-    dTHXo;
+    dTHX;
     Perl_croak_nocontext("setprotoent not implemented!\n");
 }
 
@@ -696,7 +736,7 @@ win32_setprotoent(int stayopen)
 void
 win32_setservent(int stayopen)
 {
-    dTHXo;
+    dTHX;
     Perl_croak_nocontext("setservent not implemented!\n");
 }
 

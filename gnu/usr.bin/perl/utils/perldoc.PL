@@ -25,6 +25,8 @@ print "Extracting $file (with variable substitutions)\n";
 # In this section, perl variables will be expanded during extraction.
 # You can use $Config{...} to use Configure variables.
 
+my $versiononly = $Config{versiononly} ? $Config{version} : '';
+
 print OUT <<"!GROK!THIS!";
 $Config{startperl}
     eval 'exec $Config{perlpath} -S \$0 \${1+"\$@"}'
@@ -43,7 +45,11 @@ my \@pagers = ();
 push \@pagers, \$pager if -x \$pager;
 
 (my \$bindir = <<'/../') =~ s/\\s*\\z//;
-$Config{scriptdir}
+$Config{scriptdirexp}
+/../
+
+(my \$pod2man = <<'/../') =~ s/\\s*\\z//;
+pod2man$versiononly
 /../
 
 !GROK!THIS!
@@ -117,9 +123,8 @@ Options:
 PageName|ModuleName...
          is the name of a piece of documentation that you want to look at. You
          may either give a descriptive name of the page (as in the case of
-         `perlfunc') the name of a module, either like `Term::Info',
-         `Term/Info', the partial name of a module, like `info', or
-         `makemaker', or the name of a program, like `perldoc'.
+         `perlfunc') the name of a module, either like `Term::Info' or like
+         `Term/Info', or the name of a program, like `perldoc'.
 
 BuiltinFunction
          is the name of a perl function.  Will extract documentation from
@@ -163,9 +168,29 @@ if (!($Is_VMS || $Is_MSWin32 || $Is_Dos || $Is_OS2) && ($> == 0 || $< == 0)
         my $id = eval { getpwnam("nobody") };
            $id = eval { getpwnam("nouser") } unless defined $id;
            $id = -2 unless defined $id;
+	#
+	# According to Stevens' APUE and various
+	# (BSD, Solaris, HP-UX) man pages setting
+	# the real uid first and effective uid second
+	# is the way to go if one wants to drop privileges,
+	# because if one changes into an effective uid of
+	# non-zero, one cannot change the real uid any more.
+	#
+	# Actually, it gets even messier.  There is
+	# a third uid, called the saved uid, and as
+	# long as that is zero, one can get back to
+	# uid of zero.  Setting the real-effective *twice*
+	# helps in *most* systems (FreeBSD and Solaris)
+	# but apparently in HP-UX even this doesn't help:
+	# the saved uid stays zero (apparently the only way
+	# in HP-UX to change saved uid is to call setuid()
+	# when the effective uid is zero).
+	#
         eval {
-            $> = $id;  # must do this one first!
-            $< = $id;
+            $< = $id; # real uid
+            $> = $id; # effective uid
+            $< = $id; # real uid
+            $> = $id; # effective uid
         };
         last if !$@ && $< && $>;
     }
@@ -316,7 +341,7 @@ sub searchfor {
     for ($i=0; $i<@dirs; $i++) {
 	$dir = $dirs[$i];
 	($dir = VMS::Filespec::unixpath($dir)) =~ s!/\z!! if $Is_VMS;
-	if (       ( $ret = check_file $dir,"$s.pod")
+	if (       (! $opt_m && ( $ret = check_file $dir,"$s.pod"))
 		or ( $ret = check_file $dir,"$s.pm")
 		or ( $ret = check_file $dir,$s)
 		or ( $Is_VMS and
@@ -360,50 +385,6 @@ sub filter_nroff {
   join "\n\n", @data;
 }
 
-sub printout {
-    my ($file, $tmp, $filter) = @_;
-    my $err;
-
-    if ($opt_t) {
-	# why was this append?
-	sysopen(OUT, $tmp, O_WRONLY | O_EXCL | O_CREAT, 0600)
-	    or die ("Can't open $tmp: $!");
-	Pod::Text->new()->parse_from_file($file,\*OUT);
-	close OUT   or die "can't close $tmp: $!";
-    }
-    elsif (not $opt_u) {
-	my $cmd = catfile($bindir, 'pod2man') . " --lax $file | $opt_n -man";
-	$cmd .= " | col -x" if $^O =~ /hpux/;
-	my $rslt = `$cmd`;
-	$rslt = filter_nroff($rslt) if $filter;
-	unless (($err = $?)) {
-	    # why was this append?
-	    sysopen(TMP, $tmp, O_WRONLY | O_EXCL | O_CREAT, 0600)
-		or die "Can't open $tmp: $!";
-	    print TMP $rslt
-		or die "Can't print $tmp: $!";
-	    close TMP
-		or die "Can't close $tmp: $!";
-	}
-    }
-    if ($opt_u or $err or -z $tmp) {  # XXX: race with -z
-	# why was this append?
-	sysopen(OUT, $tmp, O_WRONLY | O_EXCL | O_CREAT, 0600)
-	    or die "Can't open $tmp: $!";
-	open(IN,"<", $file)   or die("Can't open $file: $!");
-	my $cut = 1;
-	local $_;
-	while (<IN>) {
-	    $cut = $1 eq 'cut' if /^=(\w+)/;
-	    next if $cut;
-	    print OUT
-		or die "Can't print $tmp: $!";
-	}
-	close IN    or die "Can't close $file: $!";
-	close OUT   or die "Can't close $tmp: $!";
-    }
-}
-
 sub page {
     my ($tmp, $no_tty, @pagers) = @_;
     if ($no_tty) {
@@ -415,24 +396,17 @@ sub page {
 	close TMP		or die "Can't close while $tmp: $!";
     }
     else {
-	foreach my $pager (@pagers) {
+        # On VMS, quoting prevents logical expansion, and temp files with no
+        # extension get the wrong default extension (such as .LIS for TYPE)
+
+        $tmp = VMS::Filespec::rmsexpand($tmp, '.') if ($Is_VMS);
+        foreach my $pager (@pagers) {
           if ($Is_VMS) {
-           last if system("$pager $tmp") == 0; # quoting prevents logical expansion
+            last if system("$pager $tmp") == 0;
           } else {
 	    last if system("$pager \"$tmp\"") == 0;
           }
 	}
-    }
-}
-
-sub cleanup {
-    my @files = @_;
-    for (@files) {
-	if ($Is_VMS) { 
-	    1 while unlink($_);    # XXX: expect failure
-	} else {
-	    unlink($_);		   # or die "Can't unlink $_: $!";
-	} 
     }
 }
 
@@ -450,14 +424,14 @@ foreach (@pages) {
 	next;
     }
     print STDERR "Searching for $_\n" if $opt_v;
-    # We must look both in @INC for library modules and in $bindir
-    # for executables, like h2xs or perldoc itself.
-    my @searchdirs = ($bindir, @INC);
     if ($opt_F) {
 	next unless -r;
 	push @found, $_ if $opt_m or containspod($_);
 	next;
     }
+    # We must look both in @INC for library modules and in $bindir
+    # for executables, like h2xs or perldoc itself.
+    my @searchdirs = ($bindir, @INC);
     unless ($opt_m) {
 	if ($Is_VMS) {
 	    my($i,$trn);
@@ -483,7 +457,8 @@ foreach (@pages) {
 	    print STDERR "Loosely found as @files\n" if $opt_v;
 	}
 	else {
-	    print STDERR "No documentation found for \"$_\".\n";
+	    print STDERR "No " .
+		($opt_m ? "module" : "documentation") . " found for \"$_\".\n";
 	    if (@global_found) {
 		print STDERR "However, try\n";
 		for my $dir (@global_found) {
@@ -516,60 +491,26 @@ my $no_tty;
 if (! -t STDOUT) { $no_tty = 1 }
 END { close(STDOUT) || die "Can't close STDOUT: $!" }
 
-# until here we could simply exit or die
-# now we create temporary files that we have to clean up
-# namely $tmp, $buffer
-# that's because you did it wrong, should be descriptor based --tchrist
-
-my $tmp;
-my $buffer;
 if ($Is_MSWin32) {
-    $tmp = "$ENV{TEMP}\\perldoc1.$$";
-    $buffer = "$ENV{TEMP}\\perldoc1.b$$";
     push @pagers, qw( more< less notepad );
     unshift @pagers, $ENV{PAGER}  if $ENV{PAGER};
     for (@found) { s,/,\\,g }
 }
 elsif ($Is_VMS) {
-    $tmp = 'Sys$Scratch:perldoc.tmp1_'.$$;
-    $buffer = 'Sys$Scratch:perldoc.tmp1_b'.$$;
     push @pagers, qw( most more less type/page );
 }
 elsif ($Is_Dos) {
-    $tmp = "$ENV{TEMP}/perldoc1.$$";
-    $buffer = "$ENV{TEMP}/perldoc1.b$$";
-    $tmp =~ tr!\\/!//!s;
-    $buffer =~ tr!\\/!//!s;
     push @pagers, qw( less.exe more.com< );
     unshift @pagers, $ENV{PAGER}  if $ENV{PAGER};
 }
 else {
     if ($^O eq 'os2') {
-      require POSIX;
-      $tmp = POSIX::tmpnam();
-      $buffer = POSIX::tmpnam();
       unshift @pagers, 'less', 'cmd /c more <';
-    }
-    else {
-      # XXX: this is not secure, because it doesn't open it
-      ($tmp, $buffer) = eval { require POSIX } 
-	    ? (POSIX::tmpnam(),    POSIX::tmpnam()     )
-	    : ("/tmp/perldoc1.$$", "/tmp/perldoc1.b$$" );
     }
     push @pagers, qw( more less pg view cat );
     unshift @pagers, $ENV{PAGER}  if $ENV{PAGER};
 }
 unshift @pagers, $ENV{PERLDOC_PAGER} if $ENV{PERLDOC_PAGER};
-
-# make sure cleanup called
-eval q{
-    sub END { cleanup($tmp, $buffer) } 
-    1;
-} || die;
-
-# exit/die in a windows sighandler is dangerous, so let it do the
-# default thing, which is to exit
-eval q{ use sigtrap qw(die INT TERM HUP QUIT) } unless $^O eq 'MSWin32';
 
 if ($opt_m) {
     foreach my $pager (@pagers) {
@@ -647,7 +588,7 @@ EOD
 	    $found = 1;
 	    push @pod, "=head1 Found in $ARGV\n\n" unless $found_in{$ARGV}++;
 	}
-	elsif (/^=head2/) {
+	elsif (/^=head[12]/) {
 	    $found = 0;
 	}
 	next unless $found;
@@ -658,22 +599,54 @@ EOD
     }
 }
 
+require File::Temp;
+
+my ($tmpfd, $tmp) = File::Temp::tempfile(UNLINK => 1);
+
 my $filter;
 
 if (@pod) {
-    sysopen(TMP, $buffer, O_WRONLY | O_EXCL | O_CREAT)
-	or die("Can't open $buffer: $!");
-    print TMP "=over 8\n\n";
-    print TMP @pod	or die "Can't print $buffer: $!";
-    print TMP "=back\n";
-    close TMP		or die "Can't close $buffer: $!";
+    my ($buffd, $buffer) = File::Temp::tempfile(UNLINK => 1);
+    print $buffd "=over 8\n\n";
+    print $buffd @pod	or die "Can't print $buffer: $!";
+    print $buffd "=back\n";
+    close $buffd	or die "Can't close $buffer: $!";
     @found = $buffer;
     $filter = 1;
 }
 
 foreach (@found) {
-    printout($_, $tmp, $filter);
+    my $file = $_;
+    my $err;
+
+    if ($opt_t) {
+	Pod::Text->new()->parse_from_file($file, $tmpfd);
+    }
+    elsif (not $opt_u) {
+	my $cmd = catfile($bindir, $pod2man) . " --lax $file | $opt_n -man";
+	$cmd .= " | col -x" if $^O =~ /hpux/;
+	my $rslt = `$cmd`;
+	$rslt = filter_nroff($rslt) if $filter;
+	unless (($err = $?)) {
+	    print $tmpfd $rslt
+		or die "Can't print $tmp: $!";
+	}
+    }
+    if ($opt_u or $err) {
+	open(IN,"<", $file)   or die("Can't open $file: $!");
+	my $cut = 1;
+	local $_;
+	while (<IN>) {
+	    $cut = $1 eq 'cut' if /^=(\w+)/;
+	    next if $cut;
+	    print $tmpfd $_
+		or die "Can't print $tmp: $!";
+	}
+	close IN    or die "Can't close $file: $!";
+    }
 }
+close $tmpfd
+    or die "Can't close $tmp: $!";
 page($tmp, $no_tty, @pagers);
 
 exit;
@@ -716,6 +689,9 @@ the perl library modules.
 
 Your system may also have man pages installed for those modules, in
 which case you can probably just use the man(1) command.
+
+If you are looking for a table of contents to the Perl library modules
+documentation, see the L<perltoc> page.
 
 =head1 OPTIONS
 
@@ -766,7 +742,7 @@ the regular expression.
 
 =item B<-X> use an index if present
 
-The B<-X> option looks for a entry whose basename matches the name given on the
+The B<-X> option looks for an entry whose basename matches the name given on the
 command line in the file C<$Config{archlib}/pod.idx>.  The pod.idx file should
 contain fully qualified filenames, one per line.
 
@@ -776,17 +752,14 @@ Because B<perldoc> does not run properly tainted, and is known to
 have security issues, it will not normally execute as the superuser.
 If you use the B<-U> flag, it will do so, but only after setting
 the effective and real IDs to nobody's or nouser's account, or -2
-if unavailable.  If it cannot relinguish its privileges, it will not
+if unavailable.  If it cannot relinquish its privileges, it will not
 run.  
 
 =item B<PageName|ModuleName|ProgramName>
 
 The item you want to look up.  Nested modules (such as C<File::Basename>)
 are specified either as C<File::Basename> or C<File/Basename>.  You may also
-give a descriptive name of a page, such as C<perlfunc>. You may also give a
-partial or wrong-case name, such as "basename" for "File::Basename", but
-this will be slower, if there is more then one page with the same partial
-name, you will only get the first one.
+give a descriptive name of a page, such as C<perlfunc>.
 
 =back
 

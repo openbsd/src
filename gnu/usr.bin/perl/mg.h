@@ -1,6 +1,6 @@
 /*    mg.h
  *
- *    Copyright (c) 1991-2001, Larry Wall
+ *    Copyright (c) 1991-2002, Larry Wall
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -16,6 +16,9 @@ struct mgvtbl {
     U32		(CPERLscope(*svt_len))	(pTHX_ SV *sv, MAGIC* mg);
     int		(CPERLscope(*svt_clear))(pTHX_ SV *sv, MAGIC* mg);
     int		(CPERLscope(*svt_free))	(pTHX_ SV *sv, MAGIC* mg);
+    int		(CPERLscope(*svt_copy))	(pTHX_ SV *sv, MAGIC* mg,
+    					SV *nsv, const char *name, int namlen);
+    int		(CPERLscope(*svt_dup))	(pTHX_ MAGIC *mg, CLONE_PARAMS *param);
 };
 #endif
 
@@ -33,6 +36,8 @@ struct magic {
 #define MGf_TAINTEDDIR 1
 #define MGf_REFCOUNTED 2
 #define MGf_GSKIP      4
+#define MGf_COPY       8
+#define MGf_DUP        16
 
 #define MGf_MINMATCH   1
 

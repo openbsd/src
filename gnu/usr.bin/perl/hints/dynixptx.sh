@@ -44,7 +44,7 @@ esac
 # Jarkko Hietaniemi November 1998
 
 case "$osvers" in
-4.4*) # configure doesn't find sockets, as they're in libsocket, not libc
+4.[45]*) # configure doesn't find sockets, as they're in libsocket, not libc
         d_socket='define'
         d_oldsock='undef'
         d_sockpair='define'

@@ -1,6 +1,6 @@
 /*    cop.h
  *
- *    Copyright (c) 1991-2001, Larry Wall
+ *    Copyright (c) 1991-2002, Larry Wall
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -21,6 +21,7 @@ struct cop {
     I32		cop_arybase;	/* array base this line was compiled with */
     line_t      cop_line;       /* line # of this command */
     SV *	cop_warnings;	/* lexical warnings bitmask */
+    SV *	cop_io;		/* lexical IO defaults */
 };
 
 #define Nullcop Null(COP*)
@@ -29,13 +30,25 @@ struct cop {
 #  define CopFILE(c)		((c)->cop_file)
 #  define CopFILEGV(c)		(CopFILE(c) \
 				 ? gv_fetchfile(CopFILE(c)) : Nullgv)
-#  define CopFILE_set(c,pv)	((c)->cop_file = savepv(pv))
+				 
+ #ifdef NETWARE
+  #define CopFILE_set(c,pv)	((c)->cop_file = savepv(pv))
+ #else
+  #define CopFILE_set(c,pv)	((c)->cop_file = savesharedpv(pv))
+ #endif
+
 #  define CopFILESV(c)		(CopFILE(c) \
 				 ? GvSV(gv_fetchfile(CopFILE(c))) : Nullsv)
 #  define CopFILEAV(c)		(CopFILE(c) \
 				 ? GvAV(gv_fetchfile(CopFILE(c))) : Nullav)
 #  define CopSTASHPV(c)		((c)->cop_stashpv)
-#  define CopSTASHPV_set(c,pv)	((c)->cop_stashpv = ((pv) ? savepv(pv) : Nullch))
+
+  #ifdef NETWARE
+    #define CopSTASHPV_set(c,pv)	((c)->cop_stashpv = ((pv) ? savepv(pv) : Nullch))
+  #else
+    #define CopSTASHPV_set(c,pv)	((c)->cop_stashpv = savesharedpv(pv))
+  #endif
+
 #  define CopSTASH(c)		(CopSTASHPV(c) \
 				 ? gv_stashpv(CopSTASHPV(c),GV_ADD) : Nullhv)
 #  define CopSTASH_set(c,hv)	CopSTASHPV_set(c, (hv) ? HvNAME(hv) : Nullch)
@@ -43,6 +56,17 @@ struct cop {
 				 && (CopSTASHPV(c) == HvNAME(hv)	\
 				     || (CopSTASHPV(c) && HvNAME(hv)	\
 					 && strEQ(CopSTASHPV(c), HvNAME(hv)))))
+  #ifdef NETWARE
+    #define CopSTASH_free(c) SAVECOPSTASH_FREE(c)
+  #else
+    #define CopSTASH_free(c)	PerlMemShared_free(CopSTASHPV(c))      
+  #endif
+
+  #ifdef NETWARE
+    #define CopFILE_free(c) SAVECOPFILE_FREE(c)
+  #else
+    #define CopFILE_free(c)	(PerlMemShared_free(CopFILE(c)),(CopFILE(c) = Nullch))      
+  #endif
 #else
 #  define CopFILEGV(c)		((c)->cop_filegv)
 #  define CopFILEGV_set(c,gv)	((c)->cop_filegv = (GV*)SvREFCNT_inc(gv))
@@ -56,6 +80,9 @@ struct cop {
    /* cop_stash is not refcounted */
 #  define CopSTASHPV_set(c,pv)	CopSTASH_set((c), gv_stashpv(pv,GV_ADD))
 #  define CopSTASH_eq(c,hv)	(CopSTASH(c) == (hv))
+#  define CopSTASH_free(c)	
+#  define CopFILE_free(c)	(SvREFCNT_dec(CopFILEGV(c)),(CopFILEGV(c) = Nullgv))
+
 #endif /* USE_ITHREADS */
 
 #define CopSTASH_ne(c,hv)	(!CopSTASH_eq(c,hv))
@@ -63,6 +90,13 @@ struct cop {
 #define CopLINE_inc(c)		(++CopLINE(c))
 #define CopLINE_dec(c)		(--CopLINE(c))
 #define CopLINE_set(c,l)	(CopLINE(c) = (l))
+
+/* OutCopFILE() is CopFILE for output (caller, die, warn, etc.) */
+#ifdef MACOS_TRADITIONAL
+#  define OutCopFILE(c) MacPerl_MPWFileName(CopFILE(c))
+#else
+#  define OutCopFILE(c) CopFILE(c)
+#endif
 
 /*
  * Here we have some enormously heavy (or at least ponderous) wizardry.
@@ -73,9 +107,9 @@ struct block_sub {
     CV *	cv;
     GV *	gv;
     GV *	dfoutgv;
-#ifndef USE_THREADS
+#ifndef USE_5005THREADS
     AV *	savearray;
-#endif /* USE_THREADS */
+#endif /* USE_5005THREADS */
     AV *	argarray;
     U16		olddepth;
     U8		hasargs;
@@ -85,7 +119,7 @@ struct block_sub {
 
 #define PUSHSUB(cx)							\
 	cx->blk_sub.cv = cv;						\
-	cx->blk_sub.olddepth = CvDEPTH(cv);				\
+	cx->blk_sub.olddepth = (U16)CvDEPTH(cv);			\
 	cx->blk_sub.hasargs = hasargs;					\
 	cx->blk_sub.lval = PL_op->op_private &                          \
 	                      (OPpLVAL_INTRO|OPpENTERSUB_INARGS);
@@ -97,7 +131,7 @@ struct block_sub {
 	cx->blk_sub.dfoutgv = PL_defoutgv;				\
 	(void)SvREFCNT_inc(cx->blk_sub.dfoutgv)
 
-#ifdef USE_THREADS
+#ifdef USE_5005THREADS
 #  define POP_SAVEARRAY() NOOP
 #else
 #  define POP_SAVEARRAY()						\
@@ -105,7 +139,7 @@ struct block_sub {
 	SvREFCNT_dec(GvAV(PL_defgv));					\
 	GvAV(PL_defgv) = cx->blk_sub.savearray;				\
     } STMT_END
-#endif /* USE_THREADS */
+#endif /* USE_5005THREADS */
 
 /* junk in @_ spells trouble when cloning CVs and in pp_caller(), so don't
  * leave any (a fast av_clear(ary), basically) */
@@ -155,6 +189,7 @@ struct block_eval {
     SV *	old_namesv;
     OP *	old_eval_root;
     SV *	cur_text;
+    CV *	cv;
 };
 
 #define PUSHEVAL(cx,n,fgv)						\
@@ -164,6 +199,7 @@ struct block_eval {
 	cx->blk_eval.old_namesv = (n ? newSVpv(n,0) : Nullsv);		\
 	cx->blk_eval.old_eval_root = PL_eval_root;			\
 	cx->blk_eval.cur_text = PL_linestr;				\
+	cx->blk_eval.cv = Nullcv; /* set by doeval(), as applicable */	\
     } STMT_END
 
 #define POPEVAL(cx)							\
@@ -199,18 +235,22 @@ struct block_loop {
 #  define CxITERVAR(c)							\
 	((c)->blk_loop.iterdata						\
 	 ? (CxPADLOOP(cx) 						\
-	    ? &((c)->blk_loop.oldcurpad)[(PADOFFSET)(c)->blk_loop.iterdata]	\
+	    ? &((c)->blk_loop.oldcurpad)[INT2PTR(PADOFFSET, (c)->blk_loop.iterdata)] \
 	    : &GvSV((GV*)(c)->blk_loop.iterdata))			\
 	 : (SV**)NULL)
 #  define CX_ITERDATA_SET(cx,idata)					\
 	cx->blk_loop.oldcurpad = PL_curpad;				\
 	if ((cx->blk_loop.iterdata = (idata)))				\
-	    cx->blk_loop.itersave = SvREFCNT_inc(*CxITERVAR(cx));
+	    cx->blk_loop.itersave = SvREFCNT_inc(*CxITERVAR(cx));	\
+	else								\
+	    cx->blk_loop.itersave = Nullsv;
 #else
 #  define CxITERVAR(c)		((c)->blk_loop.itervar)
 #  define CX_ITERDATA_SET(cx,ivar)					\
 	if ((cx->blk_loop.itervar = (SV**)(ivar)))			\
-	    cx->blk_loop.itersave = SvREFCNT_inc(*CxITERVAR(cx));
+	    cx->blk_loop.itersave = SvREFCNT_inc(*CxITERVAR(cx));	\
+	else								\
+	    cx->blk_loop.itersave = Nullsv;
 #endif
 
 #define PUSHLOOP(cx, dat, s)						\
@@ -270,7 +310,7 @@ struct block {
 	cx->blk_oldscopesp	= PL_scopestack_ix,			\
 	cx->blk_oldretsp	= PL_retstack_ix,			\
 	cx->blk_oldpm		= PL_curpm,				\
-	cx->blk_gimme		= gimme;				\
+	cx->blk_gimme		= (U8)gimme;				\
 	DEBUG_l( PerlIO_printf(Perl_debug_log, "Entering block %ld, type %s\n",	\
 		    (long)cxstack_ix, PL_block_type[CxTYPE(cx)]); )
 
@@ -385,7 +425,9 @@ struct context {
 
 #define CXINC (cxstack_ix < cxstack_max ? ++cxstack_ix : (cxstack_ix = cxinc()))
 
-/* "gimme" values */
+/* 
+=head1 "Gimme" Values
+*/
 
 /*
 =for apidoc AmU||G_SCALAR

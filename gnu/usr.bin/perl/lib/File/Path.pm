@@ -40,6 +40,15 @@ the numeric mode to use when creating the directories
 It returns a list of all directories (including intermediates, determined
 using the Unix '/' separator) created.
 
+If a system error prevents a directory from being created, then the
+C<mkpath> function throws a fatal error with C<Carp::croak>. This error
+can be trapped with an C<eval> block:
+
+  eval { mkpath($dir) };
+  if ($@) {
+    print "Couldn't create $dir: $@";
+  }
+
 Similarly, the C<rmtree> function provides a convenient way to delete a
 subtree from the directory structure, much like the Unix command C<rm -r>.
 C<rmtree> takes three arguments:
@@ -91,13 +100,14 @@ Charles Bailey <F<bailey@newman.upenn.edu>>
 
 =cut
 
-use 5.005_64;
+use 5.006;
 use Carp;
 use File::Basename ();
 use Exporter ();
 use strict;
+use warnings;
 
-our $VERSION = "1.0404";
+our $VERSION = "1.05";
 our @ISA = qw( Exporter );
 our @EXPORT = qw( mkpath rmtree );
 
@@ -179,7 +189,13 @@ sub rmtree {
 		unless $safe;
 
 	    if (opendir my $d, $root) {
-		@files = readdir $d;
+		no strict 'refs';
+		if (!defined ${"\cTAINT"} or ${"\cTAINT"}) {
+		    # Blindly untaint dir names
+		    @files = map { /^(.*)$/s ; $1 } readdir $d;
+		} else {
+		    @files = readdir $d;
+		}
 		closedir $d;
 	    }
 	    else {

@@ -11,6 +11,8 @@
 # Substantially revised for 5.004_01 by Mark Bixby, markb@cccd.edu.
 # Revised again for 5.004_69 by Mark Bixby, markb@cccd.edu.
 # Revised for 5.6.0 by Mark Bixby, mbixby@power.net.
+# Revised for 5.7.3 by Mark Bixby, mark@bixby.org.
+# Revised for 5.8.0 by Mark Bixby, mark@bixby.org.
 #
 osname='mpeix'
 osvers=`uname -r | sed -e 's/.[A-Z]\.\([0-9]\)\([0-9]\)\.[0-9][0-9]/\1.\2/'`
@@ -23,10 +25,14 @@ _nm=$nm
 nm_opt='-configperl'
 usenm='true'
 #
+# Work around the broken inline cat bug that corrupts here docs
+#
+alias -x cat=/bin/cat
+#
 # Various directory locations.
 #
 # Which ones of these does Configure get wrong?
-test -z "$prefix" && prefix='/PERL/PUB'
+test -z "$prefix" && prefix="/$HPACCOUNT/$HPGROUP"
 archname='PA-RISC1.1'
 bin="$prefix"
 installman1dir="$prefix/man/man1"
@@ -43,7 +49,7 @@ startsh='#!/bin/sh'
 test -z "$cc" && cc='gcc'
 cccdlflags='none'
 ccflags="$ccflags -DMPE -D_POSIX_SOURCE -D_SOCKET_SOURCE -D_POSIX_JOB_CONTROL -DIS_SOCKET_CLIB_ITSELF"
-locincpth="$locincpth /usr/local/include /usr/contrib/include /BIND/PUB/include"
+locincpth="$locincpth /usr/local/include /usr/contrib/include /BINDFW/CURRENT/include /SYSLOG/PUB"
 test -z "$optimize" && optimize="-O2"
 ranlib='/bin/true'
 # Special compiling options for certain source files.
@@ -62,7 +68,7 @@ for mpe_remove in bind bsd BSD c curses m socket str svipc syslog; do
   libswanted="$*"
 done
 libswanted="$libswanted bind syslog curses svipc socket str m c"
-loclibpth="$loclibpth /usr/local/lib /usr/contrib/lib /BIND/PUB/lib /SYSLOG/PUB"
+loclibpth="$loclibpth /usr/local/lib /usr/contrib/lib /BINDFW/CURRENT/lib /SYSLOG/PUB"
 #
 # External functions and data items.
 #
@@ -83,15 +89,24 @@ loclibpth="$loclibpth /usr/local/lib /usr/contrib/lib /BIND/PUB/lib /SYSLOG/PUB"
 # Unix named functions that are really vanilla MPE functions that do something
 # completely different than on POSIX or Unix.
 d_crypt='define'
+d_dbmclose='undef'
 d_difftime='define'
 d_dlerror='undef'
 d_dlopen='undef'
 d_Gconvert='gcvt((x),(n),(b))'
+d_getnbyaddr='define'
+d_getnbyname='define'
+d_getpbyname='define'
+d_getpbynumber='define'
+d_getsbyname='define'
+d_getsbyport='define'
+d_gettimeod='undef'
 d_inetaton='undef'
 d_link='undef'
 d_mblen='define'
 d_mbstowcs='define'
 d_mbtowc='define'
+d_memchr='define'
 d_memcmp='define'
 d_memcpy='define'
 d_memmove='define'
@@ -100,6 +115,9 @@ d_pwage='undef'
 d_pwcomment='undef'
 d_pwgecos='undef'
 d_pwpasswd='undef'
+d_setegid='undef'
+d_seteuid='undef'
+d_setitimer='undef'
 d_setpgid='undef'
 d_setsid='undef'
 d_setvbuf='define'
@@ -119,6 +137,7 @@ d_wctomb='define'
 #
 # Include files.
 #
+i_gdbm='undef' # the port is currently incomplete
 i_termios='undef' # we have termios, but not the full set (just tcget/setattr)
 i_time='define'
 i_systime='undef'
@@ -131,5 +150,14 @@ timetype='time_t'
 #
 # Functionality.
 #
-bincompat5005="$undef"
 uselargefiles="$undef"
+#
+# Expected functionality provided in mpeix.c.
+#
+archobjs='mpeix.o'
+
+# Help gmake find mpeix.c
+test -h mpeix.c || ln -s mpeix/mpeix.c mpeix.c
+
+d_gettimeod='define'
+d_truncate='define'

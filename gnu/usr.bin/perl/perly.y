@@ -1,6 +1,6 @@
 /*    perly.y
  *
- *    Copyright (c) 1991-2001, Larry Wall
+ *    Copyright (c) 1991-2002, Larry Wall
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -16,7 +16,9 @@
 #include "EXTERN.h"
 #define PERL_IN_PERLY_C
 #include "perl.h"
-
+#ifdef EBCDIC
+#undef YYDEBUG
+#endif
 #define dep() deprecate("\"do\" to call subroutines")
 
 /* stuff included here to make perly_c.diff apply better */
@@ -39,7 +41,7 @@ struct ysv {
     YYSTYPE oldyylval;
 };
 
-static void yydestruct(pTHXo_ void *ptr);
+static void yydestruct(pTHX_ void *ptr);
 
 %}
 
@@ -81,13 +83,14 @@ static void yydestruct(pTHXo_ void *ptr);
 %token COLONATTR
 
 %type <ival> prog decl format startsub startanonsub startformsub
-%type <ival> remember mremember '&'
+%type <ival> progstart remember mremember '&'
 %type <opval> block mblock lineseq line loop cond else
 %type <opval> expr term subscripted scalar ary hsh arylen star amper sideff
 %type <opval> argexpr nexpr texpr iexpr mexpr mnexpr mtexpr miexpr
 %type <opval> listexpr listexprcom indirob listop method
 %type <opval> formname subname proto subbody cont my_scalar
 %type <opval> subattrlist myattrlist mysubrout myattrterm myterm
+%type <opval> termbinop termunop anonymous termdo
 %type <pval> label
 
 %nonassoc PREC_LOW
@@ -122,20 +125,16 @@ static void yydestruct(pTHXo_ void *ptr);
 
 %% /* RULES */
 
-prog	:	/* NULL */
-		{
-#if defined(YYDEBUG) && defined(DEBUGGING)
-		    yydebug = (PL_debug & 1);
-#endif
-		    PL_expect = XSTATE;
-		}
+/* The whole program */
+prog	:	progstart
 	/*CONTINUED*/	lineseq
-			{ newPROG($2); }
+			{ $$ = $1; newPROG(block_end($1,$2)); }
 	;
 
+/* An ordinary block */
 block	:	'{' remember lineseq '}'
 			{ if (PL_copline > (line_t)$1)
-			      PL_copline = $1;
+			      PL_copline = (line_t)$1;
 			  $$ = block_end($2, $3); }
 	;
 
@@ -143,9 +142,19 @@ remember:	/* NULL */	/* start a full lexical scope */
 			{ $$ = block_start(TRUE); }
 	;
 
+progstart:
+		{
+#if defined(YYDEBUG) && defined(DEBUGGING)
+		    yydebug = (DEBUG_p_TEST);
+#endif
+		    PL_expect = XSTATE; $$ = block_start(TRUE);
+		}
+	;
+
+
 mblock	:	'{' mremember lineseq '}'
 			{ if (PL_copline > (line_t)$1)
-			      PL_copline = $1;
+			      PL_copline = (line_t)$1;
 			  $$ = block_end($2, $3); }
 	;
 
@@ -153,6 +162,7 @@ mremember:	/* NULL */	/* start a partial lexical scope */
 			{ $$ = block_start(FALSE); }
 	;
 
+/* A collection of "lines" in the program */
 lineseq	:	/* NULL */
 			{ $$ = Nullop; }
 	|	lineseq decl
@@ -164,6 +174,7 @@ lineseq	:	/* NULL */
 			    if ($1 && $2) PL_hints |= HINT_BLOCK_SCOPE; }
 	;
 
+/* A "line" in the program */
 line	:	label cond
 			{ $$ = newSTATEOP(0, $1, $2); }
 	|	loop	/* loops add their own labels */
@@ -181,6 +192,7 @@ line	:	label cond
 			  PL_expect = XSTATE; }
 	;
 
+/* An expression which may have a side-effect */
 sideff	:	error
 			{ $$ = Nullop; }
 	|	expr
@@ -194,87 +206,102 @@ sideff	:	error
 	|	expr UNTIL iexpr
 			{ $$ = newLOOPOP(OPf_PARENS, 1, $3, $1);}
 	|	expr FOR expr
-			{ $$ = newFOROP(0, Nullch, $2,
+			{ $$ = newFOROP(0, Nullch, (line_t)$2,
 					Nullop, $3, $1, Nullop); }
 	;
 
+/* else and elsif blocks */
 else	:	/* NULL */
 			{ $$ = Nullop; }
 	|	ELSE mblock
 			{ ($2)->op_flags |= OPf_PARENS; $$ = scope($2); }
 	|	ELSIF '(' mexpr ')' mblock else
-			{ PL_copline = $1;
+			{ PL_copline = (line_t)$1;
 			    $$ = newCONDOP(0, $3, scope($5), $6);
 			    PL_hints |= HINT_BLOCK_SCOPE; }
 	;
 
+/* Real conditional expressions */
 cond	:	IF '(' remember mexpr ')' mblock else
-			{ PL_copline = $1;
+			{ PL_copline = (line_t)$1;
 			    $$ = block_end($3,
 				   newCONDOP(0, $4, scope($6), $7)); }
 	|	UNLESS '(' remember miexpr ')' mblock else
-			{ PL_copline = $1;
+			{ PL_copline = (line_t)$1;
 			    $$ = block_end($3,
 				   newCONDOP(0, $4, scope($6), $7)); }
 	;
 
+/* Continue blocks */
 cont	:	/* NULL */
 			{ $$ = Nullop; }
 	|	CONTINUE block
 			{ $$ = scope($2); }
 	;
 
+/* Loops: while, until, for, and a bare block */
 loop	:	label WHILE '(' remember mtexpr ')' mblock cont
-			{ PL_copline = $2;
+			{ PL_copline = (line_t)$2;
 			    $$ = block_end($4,
 				   newSTATEOP(0, $1,
 				     newWHILEOP(0, 1, (LOOP*)Nullop,
 						$2, $5, $7, $8))); }
 	|	label UNTIL '(' remember miexpr ')' mblock cont
-			{ PL_copline = $2;
+			{ PL_copline = (line_t)$2;
 			    $$ = block_end($4,
 				   newSTATEOP(0, $1,
 				     newWHILEOP(0, 1, (LOOP*)Nullop,
 						$2, $5, $7, $8))); }
 	|	label FOR MY remember my_scalar '(' mexpr ')' mblock cont
 			{ $$ = block_end($4,
-				 newFOROP(0, $1, $2, $5, $7, $9, $10)); }
+				 newFOROP(0, $1, (line_t)$2, $5, $7, $9, $10)); }
 	|	label FOR scalar '(' remember mexpr ')' mblock cont
 			{ $$ = block_end($5,
-				 newFOROP(0, $1, $2, mod($3, OP_ENTERLOOP),
+				 newFOROP(0, $1, (line_t)$2, mod($3, OP_ENTERLOOP),
 					  $6, $8, $9)); }
 	|	label FOR '(' remember mexpr ')' mblock cont
 			{ $$ = block_end($4,
-				 newFOROP(0, $1, $2, Nullop, $5, $7, $8)); }
+				 newFOROP(0, $1, (line_t)$2, Nullop, $5, $7, $8)); }
 	|	label FOR '(' remember mnexpr ';' mtexpr ';' mnexpr ')' mblock
 			/* basically fake up an initialize-while lineseq */
-			{ OP *forop = append_elem(OP_LINESEQ,
-					scalar($5),
-					newWHILEOP(0, 1, (LOOP*)Nullop,
-						   $2, scalar($7),
-						   $11, scalar($9)));
-			  PL_copline = $2;
-			  $$ = block_end($4, newSTATEOP(0, $1, forop)); }
+			{ OP *forop;
+			  PL_copline = (line_t)$2;
+			  forop = newSTATEOP(0, $1,
+					    newWHILEOP(0, 1, (LOOP*)Nullop,
+						$2, scalar($7),
+						$11, $9));
+			  if ($5) {
+				forop = append_elem(OP_LINESEQ,
+                                        newSTATEOP(0, ($1?savepv($1):Nullch),
+						   $5),
+					forop);
+			  }
+
+			  $$ = block_end($4, forop); }
 	|	label block cont  /* a block is a loop that happens once */
 			{ $$ = newSTATEOP(0, $1,
 				 newWHILEOP(0, 1, (LOOP*)Nullop,
 					    NOLINE, Nullop, $2, $3)); }
 	;
 
+/* Normal expression */
 nexpr	:	/* NULL */
 			{ $$ = Nullop; }
 	|	sideff
 	;
 
+/* Boolean expression */
 texpr	:	/* NULL means true */
 			{ (void)scan_num("1", &yylval); $$ = yylval.opval; }
 	|	expr
 	;
 
+/* Inverted boolean expression */
 iexpr	:	expr
 			{ $$ = invert(scalar($1)); }
 	;
 
+/* Expression with its own lexical scope */
 mexpr	:	expr
 			{ $$ = $1; intro_my(); }
 	;
@@ -291,11 +318,13 @@ miexpr	:	iexpr
 			{ $$ = $1; intro_my(); }
 	;
 
+/* Optional "MAIN:"-style loop labels */
 label	:	/* empty */
 			{ $$ = Nullch; }
 	|	LABEL
 	;
 
+/* Some kind of declaration - does not take part in the parse tree */
 decl	:	format
 			{ $$ = 0; }
 	|	subrout
@@ -316,10 +345,12 @@ formname:	WORD		{ $$ = $1; }
 	|	/* NULL */	{ $$ = Nullop; }
 	;
 
+/* Unimplemented "my sub foo { }" */
 mysubrout:	MYSUB startsub subname proto subattrlist subbody
 			{ newMYSUB($2, $3, $4, $5, $6); }
 	;
 
+/* Subroutine definition */
 subrout	:	SUB startsub subname proto subattrlist subbody
 			{ newATTRSUB($2, $3, $4, $5, $6); }
 	;
@@ -336,6 +367,7 @@ startformsub:	/* NULL */	/* start a format subroutine scope */
 			{ $$ = start_subparse(TRUE, 0); }
 	;
 
+/* Name of a subroutine - must be a bareword, could be special */
 subname	:	WORD	{ STRLEN n_a; char *name = SvPV(((SVOP*)$1)->op_sv,n_a);
 			  if (strEQ(name, "BEGIN") || strEQ(name, "END")
 			      || strEQ(name, "INIT") || strEQ(name, "CHECK"))
@@ -343,11 +375,13 @@ subname	:	WORD	{ STRLEN n_a; char *name = SvPV(((SVOP*)$1)->op_sv,n_a);
 			  $$ = $1; }
 	;
 
+/* Subroutine prototype */
 proto	:	/* NULL */
 			{ $$ = Nullop; }
 	|	THING
 	;
 
+/* Optional list of subroutine attributes */
 subattrlist:	/* NULL */
 			{ $$ = Nullop; }
 	|	COLONATTR THING
@@ -356,12 +390,14 @@ subattrlist:	/* NULL */
 			{ $$ = Nullop; }
 	;
 
+/* List of attributes for a "my" variable declaration */
 myattrlist:	COLONATTR THING
 			{ $$ = $2; }
 	|	COLONATTR
 			{ $$ = Nullop; }
 	;
 
+/* Subroutine body - either null or a block */
 subbody	:	block	{ $$ = $1; }
 	|	';'	{ $$ = Nullop; PL_expect = XSTATE; }
 	;
@@ -378,6 +414,7 @@ use	:	USE startsub
 			{ utilize($1, $2, $4, $5, $6); }
 	;
 
+/* Ordinary expressions; logical combinations */
 expr	:	expr ANDOP expr
 			{ $$ = newLOGOP(OP_AND, 0, $1, $3); }
 	|	expr OROP expr
@@ -385,6 +422,7 @@ expr	:	expr ANDOP expr
 	|	argexpr %prec PREC_LOW
 	;
 
+/* Expressions are a list of terms joined by commas */
 argexpr	:	argexpr ','
 			{ $$ = $1; }
 	|	argexpr ',' term
@@ -392,207 +430,169 @@ argexpr	:	argexpr ','
 	|	term %prec PREC_LOW
 	;
 
-listop	:	LSTOP indirob argexpr
+/* List operators */
+listop	:	LSTOP indirob argexpr          /* print $fh @args */
 			{ $$ = convert($1, OPf_STACKED,
 				prepend_elem(OP_LIST, newGVREF($1,$2), $3) ); }
-	|	FUNC '(' indirob expr ')'
+	|	FUNC '(' indirob expr ')'      /* print ($fh @args */
 			{ $$ = convert($1, OPf_STACKED,
 				prepend_elem(OP_LIST, newGVREF($1,$3), $4) ); }
-	|	term ARROW method '(' listexprcom ')'
+	|	term ARROW method '(' listexprcom ')' /* $foo->bar(list) */
 			{ $$ = convert(OP_ENTERSUB, OPf_STACKED,
 				append_elem(OP_LIST,
 				    prepend_elem(OP_LIST, scalar($1), $5),
 				    newUNOP(OP_METHOD, 0, $3))); }
-	|	term ARROW method
+	|	term ARROW method                     /* $foo->bar */
 			{ $$ = convert(OP_ENTERSUB, OPf_STACKED,
 				append_elem(OP_LIST, scalar($1),
 				    newUNOP(OP_METHOD, 0, $3))); }
-	|	METHOD indirob listexpr
+	|	METHOD indirob listexpr              /* new Class @args */
 			{ $$ = convert(OP_ENTERSUB, OPf_STACKED,
 				append_elem(OP_LIST,
 				    prepend_elem(OP_LIST, $2, $3),
 				    newUNOP(OP_METHOD, 0, $1))); }
-	|	FUNCMETH indirob '(' listexprcom ')'
+	|	FUNCMETH indirob '(' listexprcom ')' /* method $object (@args) */
 			{ $$ = convert(OP_ENTERSUB, OPf_STACKED,
 				append_elem(OP_LIST,
 				    prepend_elem(OP_LIST, $2, $4),
 				    newUNOP(OP_METHOD, 0, $1))); }
-	|	LSTOP listexpr
+	|	LSTOP listexpr                       /* print @args */
 			{ $$ = convert($1, 0, $2); }
-	|	FUNC '(' listexprcom ')'
+	|	FUNC '(' listexprcom ')'             /* print (@args) */
 			{ $$ = convert($1, 0, $3); }
-	|	LSTOPSUB startanonsub block
+	|	LSTOPSUB startanonsub block          /* map { foo } ... */
 			{ $3 = newANONATTRSUB($2, 0, Nullop, $3); }
-		    listexpr		%prec LSTOP
+		    listexpr		%prec LSTOP  /* ... @bar */
 			{ $$ = newUNOP(OP_ENTERSUB, OPf_STACKED,
 				 append_elem(OP_LIST,
 				   prepend_elem(OP_LIST, $3, $5), $1)); }
 	;
 
+/* Names of methods. May use $object->$methodname */
 method	:	METHOD
 	|	scalar
 	;
 
-subscripted:    star '{' expr ';' '}'
+/* Some kind of subscripted expression */
+subscripted:    star '{' expr ';' '}'        /* *main::{something} */
+                        /* In this and all the hash accessors, ';' is
+                         * provided by the tokeniser */
 			{ $$ = newBINOP(OP_GELEM, 0, $1, scalar($3)); }
-	|	scalar '[' expr ']'
+	|	scalar '[' expr ']'          /* $array[$element] */
 			{ $$ = newBINOP(OP_AELEM, 0, oopsAV($1), scalar($3)); }
-	|	term ARROW '[' expr ']'
+	|	term ARROW '[' expr ']'      /* somearef->[$element] */
 			{ $$ = newBINOP(OP_AELEM, 0,
 					ref(newAVREF($1),OP_RV2AV),
 					scalar($4));}
-	|	subscripted '[' expr ']'
+	|	subscripted '[' expr ']'    /* $foo->[$bar]->[$baz] */
 			{ $$ = newBINOP(OP_AELEM, 0,
 					ref(newAVREF($1),OP_RV2AV),
 					scalar($3));}
-	|	scalar '{' expr ';' '}'
+	|	scalar '{' expr ';' '}'    /* $foo->{bar();} */
 			{ $$ = newBINOP(OP_HELEM, 0, oopsHV($1), jmaybe($3));
 			    PL_expect = XOPERATOR; }
-	|	term ARROW '{' expr ';' '}'
+	|	term ARROW '{' expr ';' '}' /* somehref->{bar();} */
 			{ $$ = newBINOP(OP_HELEM, 0,
 					ref(newHVREF($1),OP_RV2HV),
 					jmaybe($4));
 			    PL_expect = XOPERATOR; }
-	|	subscripted '{' expr ';' '}'
+	|	subscripted '{' expr ';' '}' /* $foo->[bar]->{baz;} */
 			{ $$ = newBINOP(OP_HELEM, 0,
 					ref(newHVREF($1),OP_RV2HV),
 					jmaybe($3));
 			    PL_expect = XOPERATOR; }
-	|	term ARROW '(' ')'
+	|	term ARROW '(' ')'          /* $subref->() */
 			{ $$ = newUNOP(OP_ENTERSUB, OPf_STACKED,
 				   newCVREF(0, scalar($1))); }
-	|	term ARROW '(' expr ')'
+	|	term ARROW '(' expr ')'     /* $subref->(@args) */
 			{ $$ = newUNOP(OP_ENTERSUB, OPf_STACKED,
 				   append_elem(OP_LIST, $4,
 				       newCVREF(0, scalar($1)))); }
 
-	|	subscripted '(' expr ')'
+	|	subscripted '(' expr ')'   /* $foo->{bar}->(@args) */
 			{ $$ = newUNOP(OP_ENTERSUB, OPf_STACKED,
 				   append_elem(OP_LIST, $3,
 					       newCVREF(0, scalar($1)))); }
-	|	subscripted '(' ')'
+	|	subscripted '(' ')'        /* $foo->{bar}->() */
 			{ $$ = newUNOP(OP_ENTERSUB, OPf_STACKED,
 				   newCVREF(0, scalar($1))); }
+    ;
 
-
-
-term	:	term ASSIGNOP term
+/* Binary operators between terms */
+termbinop	:	term ASSIGNOP term             /* $x = $y */
 			{ $$ = newASSIGNOP(OPf_STACKED, $1, $2, $3); }
-	|	term POWOP term
+	|	term POWOP term                        /* $x ** $y */
 			{ $$ = newBINOP($2, 0, scalar($1), scalar($3)); }
-	|	term MULOP term
+	|	term MULOP term                        /* $x * $y, $x x $y */
 			{   if ($2 != OP_REPEAT)
 				scalar($1);
 			    $$ = newBINOP($2, 0, $1, scalar($3)); }
-	|	term ADDOP term
+	|	term ADDOP term                        /* $x + $y */
 			{ $$ = newBINOP($2, 0, scalar($1), scalar($3)); }
-	|	term SHIFTOP term
+	|	term SHIFTOP term                      /* $x >> $y, $x << $y */
 			{ $$ = newBINOP($2, 0, scalar($1), scalar($3)); }
-	|	term RELOP term
+	|	term RELOP term                        /* $x > $y, etc. */
 			{ $$ = newBINOP($2, 0, scalar($1), scalar($3)); }
-	|	term EQOP term
+	|	term EQOP term                         /* $x == $y, $x eq $y */
 			{ $$ = newBINOP($2, 0, scalar($1), scalar($3)); }
-	|	term BITANDOP term
+	|	term BITANDOP term                     /* $x & $y */
 			{ $$ = newBINOP($2, 0, scalar($1), scalar($3)); }
-	|	term BITOROP term
+	|	term BITOROP term                      /* $x | $y */
 			{ $$ = newBINOP($2, 0, scalar($1), scalar($3)); }
-	|	term DOTDOT term
+	|	term DOTDOT term                       /* $x..$y, $x...$y */
 			{ $$ = newRANGE($2, scalar($1), scalar($3));}
-	|	term ANDAND term
+	|	term ANDAND term                       /* $x && $y */
 			{ $$ = newLOGOP(OP_AND, 0, $1, $3); }
-	|	term OROR term
+	|	term OROR term                         /* $x || $y */
 			{ $$ = newLOGOP(OP_OR, 0, $1, $3); }
-	|	term '?' term ':' term
-			{ $$ = newCONDOP(0, $1, $3, $5); }
-	|	term MATCHOP term
+	|	term MATCHOP term                      /* $x =~ /$y/ */
 			{ $$ = bind_match($2, $1, $3); }
+    ;
 
-	|	'-' term %prec UMINUS
+/* Unary operators and terms */
+termunop : '-' term %prec UMINUS                       /* -$x */
 			{ $$ = newUNOP(OP_NEGATE, 0, scalar($2)); }
-	|	'+' term %prec UMINUS
+	|	'+' term %prec UMINUS                  /* +$x */
 			{ $$ = $2; }
-	|	'!' term
+	|	'!' term                               /* !$x */
 			{ $$ = newUNOP(OP_NOT, 0, scalar($2)); }
-	|	'~' term
+	|	'~' term                               /* ~$x */
 			{ $$ = newUNOP(OP_COMPLEMENT, 0, scalar($2));}
-	|	REFGEN term
-			{ $$ = newUNOP(OP_REFGEN, 0, mod($2,OP_REFGEN)); }
-	|	term POSTINC
+	|	term POSTINC                           /* $x++ */
 			{ $$ = newUNOP(OP_POSTINC, 0,
 					mod(scalar($1), OP_POSTINC)); }
-	|	term POSTDEC
+	|	term POSTDEC                           /* $x-- */
 			{ $$ = newUNOP(OP_POSTDEC, 0,
 					mod(scalar($1), OP_POSTDEC)); }
-	|	PREINC term
+	|	PREINC term                            /* ++$x */
 			{ $$ = newUNOP(OP_PREINC, 0,
 					mod(scalar($2), OP_PREINC)); }
-	|	PREDEC term
+	|	PREDEC term                            /* --$x */
 			{ $$ = newUNOP(OP_PREDEC, 0,
 					mod(scalar($2), OP_PREDEC)); }
-	|	myattrterm	%prec UNIOP
-			{ $$ = $1; }
-	|	LOCAL term	%prec UNIOP
-			{ $$ = localize($2,$1); }
-	|	'(' expr ')'
-			{ $$ = sawparens($2); }
-	|	'(' ')'
-			{ $$ = sawparens(newNULLLIST()); }
-	|	'[' expr ']'
+
+    ;
+
+/* Constructors for anonymous data */
+anonymous:	'[' expr ']'
 			{ $$ = newANONLIST($2); }
 	|	'[' ']'
 			{ $$ = newANONLIST(Nullop); }
-	|	HASHBRACK expr ';' '}'			%prec '('
+	|	HASHBRACK expr ';' '}'	%prec '(' /* { foo => "Bar" } */
 			{ $$ = newANONHASH($2); }
-	|	HASHBRACK ';' '}'				%prec '('
+	|	HASHBRACK ';' '}'	%prec '(' /* { } (';' by tokener) */
 			{ $$ = newANONHASH(Nullop); }
 	|	ANONSUB startanonsub proto subattrlist block	%prec '('
 			{ $$ = newANONATTRSUB($2, $3, $4, $5); }
-	|	scalar	%prec '('
-			{ $$ = $1; }
-	|	star	%prec '('
-			{ $$ = $1; }
-	|	hsh 	%prec '('
-			{ $$ = $1; }
-	|	ary 	%prec '('
-			{ $$ = $1; }
-	|	arylen 	%prec '('
-			{ $$ = newUNOP(OP_AV2ARYLEN, 0, ref($1, OP_AV2ARYLEN));}
-	|       subscripted
-			{ $$ = $1; }
-	|	'(' expr ')' '[' expr ']'
-			{ $$ = newSLICEOP(0, $5, $2); }
-	|	'(' ')' '[' expr ']'
-			{ $$ = newSLICEOP(0, $4, Nullop); }
-	|	ary '[' expr ']'
-			{ $$ = prepend_elem(OP_ASLICE,
-				newOP(OP_PUSHMARK, 0),
-				    newLISTOP(OP_ASLICE, 0,
-					list($3),
-					ref($1, OP_ASLICE))); }
-	|	ary '{' expr ';' '}'
-			{ $$ = prepend_elem(OP_HSLICE,
-				newOP(OP_PUSHMARK, 0),
-				    newLISTOP(OP_HSLICE, 0,
-					list($3),
-					ref(oopsHV($1), OP_HSLICE)));
-			    PL_expect = XOPERATOR; }
-	|	THING	%prec '('
-			{ $$ = $1; }
-	|	amper
-			{ $$ = newUNOP(OP_ENTERSUB, 0, scalar($1)); }
-	|	amper '(' ')'
-			{ $$ = newUNOP(OP_ENTERSUB, OPf_STACKED, scalar($1)); }
-	|	amper '(' expr ')'
-			{ $$ = newUNOP(OP_ENTERSUB, OPf_STACKED,
-			    append_elem(OP_LIST, $3, scalar($1))); }
-	|	NOAMP WORD listexpr
-			{ $$ = newUNOP(OP_ENTERSUB, OPf_STACKED,
-			    append_elem(OP_LIST, $3, scalar($2))); }
-	|	DO term	%prec UNIOP
+
+    ;
+
+/* Things called with "do" */
+termdo	:       DO term	%prec UNIOP                     /* do $filename */
 			{ $$ = dofile($2); }
-	|	DO block	%prec '('
+	|	DO block	%prec '('               /* do { code */
 			{ $$ = newUNOP(OP_NULL, OPf_SPECIAL, scope($2)); }
-	|	DO WORD '(' ')'
+	|	DO WORD '(' ')'                         /* do somesub() */
 			{ $$ = newUNOP(OP_ENTERSUB,
 			    OPf_SPECIAL|OPf_STACKED,
 			    prepend_elem(OP_LIST,
@@ -600,7 +600,7 @@ term	:	term ASSIGNOP term
 				    (OPpENTERSUB_AMPER<<8),
 				    scalar($2)
 				)),Nullop)); dep();}
-	|	DO WORD '(' expr ')'
+	|	DO WORD '(' expr ')'                    /* do somesub(@args) */
 			{ $$ = newUNOP(OP_ENTERSUB,
 			    OPf_SPECIAL|OPf_STACKED,
 			    append_elem(OP_LIST,
@@ -609,56 +609,118 @@ term	:	term ASSIGNOP term
 				    (OPpENTERSUB_AMPER<<8),
 				    scalar($2)
 				)))); dep();}
-	|	DO scalar '(' ')'
+	|	DO scalar '(' ')'                      /* do $subref () */
 			{ $$ = newUNOP(OP_ENTERSUB, OPf_SPECIAL|OPf_STACKED,
 			    prepend_elem(OP_LIST,
 				scalar(newCVREF(0,scalar($2))), Nullop)); dep();}
-	|	DO scalar '(' expr ')'
+	|	DO scalar '(' expr ')'                 /* do $subref (@args) */
 			{ $$ = newUNOP(OP_ENTERSUB, OPf_SPECIAL|OPf_STACKED,
 			    prepend_elem(OP_LIST,
 				$4,
 				scalar(newCVREF(0,scalar($2))))); dep();}
-	|	LOOPEX
+
+        ;
+
+term	:	termbinop
+	|	termunop
+	|	anonymous
+	|	termdo
+	|	term '?' term ':' term
+			{ $$ = newCONDOP(0, $1, $3, $5); }
+	|	REFGEN term                          /* \$x, \@y, \%z */
+			{ $$ = newUNOP(OP_REFGEN, 0, mod($2,OP_REFGEN)); }
+	|	myattrterm	%prec UNIOP
+			{ $$ = $1; }
+	|	LOCAL term	%prec UNIOP
+			{ $$ = localize($2,$1); }
+	|	'(' expr ')'
+			{ $$ = sawparens($2); }
+	|	'(' ')'
+			{ $$ = sawparens(newNULLLIST()); }
+	|	scalar	%prec '('
+			{ $$ = $1; }
+	|	star	%prec '('
+			{ $$ = $1; }
+	|	hsh 	%prec '('
+			{ $$ = $1; }
+	|	ary 	%prec '('
+			{ $$ = $1; }
+	|	arylen 	%prec '('                    /* $#x, $#{ something } */
+			{ $$ = newUNOP(OP_AV2ARYLEN, 0, ref($1, OP_AV2ARYLEN));}
+	|       subscripted
+			{ $$ = $1; }
+	|	'(' expr ')' '[' expr ']'            /* list slice */
+			{ $$ = newSLICEOP(0, $5, $2); }
+	|	'(' ')' '[' expr ']'                 /* empty list slice! */
+			{ $$ = newSLICEOP(0, $4, Nullop); }
+	|	ary '[' expr ']'                     /* array slice */
+			{ $$ = prepend_elem(OP_ASLICE,
+				newOP(OP_PUSHMARK, 0),
+				    newLISTOP(OP_ASLICE, 0,
+					list($3),
+					ref($1, OP_ASLICE))); }
+	|	ary '{' expr ';' '}'                 /* @hash{@keys} */
+			{ $$ = prepend_elem(OP_HSLICE,
+				newOP(OP_PUSHMARK, 0),
+				    newLISTOP(OP_HSLICE, 0,
+					list($3),
+					ref(oopsHV($1), OP_HSLICE)));
+			    PL_expect = XOPERATOR; }
+	|	THING	%prec '('
+			{ $$ = $1; }
+	|	amper                                /* &foo; */
+			{ $$ = newUNOP(OP_ENTERSUB, 0, scalar($1)); }
+	|	amper '(' ')'                        /* &foo() */
+			{ $$ = newUNOP(OP_ENTERSUB, OPf_STACKED, scalar($1)); }
+	|	amper '(' expr ')'                   /* &foo(@args) */
+			{ $$ = newUNOP(OP_ENTERSUB, OPf_STACKED,
+			    append_elem(OP_LIST, $3, scalar($1))); }
+	|	NOAMP WORD listexpr                  /* foo(@args) */
+			{ $$ = newUNOP(OP_ENTERSUB, OPf_STACKED,
+			    append_elem(OP_LIST, $3, scalar($2))); }
+	|	LOOPEX  /* loop exiting command (goto, last, dump, etc) */
 			{ $$ = newOP($1, OPf_SPECIAL);
 			    PL_hints |= HINT_BLOCK_SCOPE; }
 	|	LOOPEX term
 			{ $$ = newLOOPEX($1,$2); }
-	|	NOTOP argexpr
+	|	NOTOP argexpr                        /* not $foo */
 			{ $$ = newUNOP(OP_NOT, 0, scalar($2)); }
-	|	UNIOP
+	|	UNIOP                                /* Unary op, $_ implied */
 			{ $$ = newOP($1, 0); }
-	|	UNIOP block
+	|	UNIOP block                          /* eval { foo }, I *think* */
 			{ $$ = newUNOP($1, 0, $2); }
-	|	UNIOP term
+	|	UNIOP term                           /* Unary op */
 			{ $$ = newUNOP($1, 0, $2); }
-	|	UNIOPSUB term
+	|	UNIOPSUB term                        /* Sub treated as unop */
 			{ $$ = newUNOP(OP_ENTERSUB, OPf_STACKED,
 			    append_elem(OP_LIST, $2, scalar($1))); }
-	|	FUNC0
+	|	FUNC0                                /* Nullary operator */
 			{ $$ = newOP($1, 0); }
 	|	FUNC0 '(' ')'
 			{ $$ = newOP($1, 0); }
-	|	FUNC0SUB
+	|	FUNC0SUB                             /* Sub treated as nullop */
 			{ $$ = newUNOP(OP_ENTERSUB, OPf_STACKED,
 				scalar($1)); }
-	|	FUNC1 '(' ')'
+	|	FUNC1 '(' ')'                        /* not () */
 			{ $$ = newOP($1, OPf_SPECIAL); }
-	|	FUNC1 '(' expr ')'
+	|	FUNC1 '(' expr ')'                   /* not($foo) */
 			{ $$ = newUNOP($1, 0, $3); }
-	|	PMFUNC '(' term ')'
+	|	PMFUNC '(' term ')'                  /* split (/foo/) */
 			{ $$ = pmruntime($1, $3, Nullop); }
-	|	PMFUNC '(' term ',' term ')'
+	|	PMFUNC '(' term ',' term ')'         /* split (/foo/,$bar) */
 			{ $$ = pmruntime($1, $3, $5); }
 	|	WORD
 	|	listop
 	;
 
+/* "my" declarations, with optional attributes */
 myattrterm:	MY myterm myattrlist
 			{ $$ = my_attrs($2,$3); }
 	|	MY myterm
 			{ $$ = localize($2,$1); }
 	;
 
+/* Things that can be "my"'d */
 myterm	:	'(' expr ')'
 			{ $$ = sawparens($2); }
 	|	'(' ')'
@@ -671,6 +733,7 @@ myterm	:	'(' expr ')'
 			{ $$ = $1; }
 	;
 
+/* Basic list expressions */
 listexpr:	/* NULL */ %prec PREC_LOW
 			{ $$ = Nullop; }
 	|	argexpr    %prec PREC_LOW
@@ -685,6 +748,8 @@ listexprcom:	/* NULL */
 			{ $$ = $1; }
 	;
 
+/* A little bit of trickery to make "for my $foo (@bar)" actually be
+   lexical */
 my_scalar:	scalar
 			{ PL_in_my = 0; $$ = my($1); }
 	;
@@ -713,6 +778,7 @@ star	:	'*' indirob
 			{ $$ = newGVREF(0,$2); }
 	;
 
+/* Indirect objects */
 indirob	:	WORD
 			{ $$ = scalar($1); }
 	|	scalar %prec PREC_LOW

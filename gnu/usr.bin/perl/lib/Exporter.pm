@@ -1,88 +1,93 @@
 package Exporter;
 
-require 5.001;
+require 5.006;
 
-$ExportLevel = 0;
-$Verbose ||= 0;
-$VERSION = '5.562';
+# Be lean.
+#use strict;
+#no strict 'refs';
 
-sub export_to_level {
+our $Debug = 0;
+our $ExportLevel = 0;
+our $Verbose ||= 0;
+our $VERSION = '5.566';
+$Carp::Internal{Exporter} = 1;
+
+sub as_heavy {
   require Exporter::Heavy;
-  goto &heavy_export_to_level;
+  # Unfortunately, this does not work if the caller is aliased as *name = \&foo
+  # Thus the need to create a lot of identical subroutines
+  my $c = (caller(1))[3];
+  $c =~ s/.*:://;
+  \&{"Exporter::Heavy::heavy_$c"};
 }
 
 sub export {
-  require Exporter::Heavy;
-  goto &heavy_export;
-}
-
-sub export_tags {
-  require Exporter::Heavy;
-  _push_tags((caller)[0], "EXPORT",    \@_);
-}
-
-sub export_ok_tags {
-  require Exporter::Heavy;
-  _push_tags((caller)[0], "EXPORT_OK", \@_);
+  goto &{as_heavy()};
 }
 
 sub import {
   my $pkg = shift;
   my $callpkg = caller($ExportLevel);
-  *exports = *{"$pkg\::EXPORT"};
+
   # We *need* to treat @{"$pkg\::EXPORT_FAIL"} since Carp uses it :-(
-  *fail = *{"$pkg\::EXPORT_FAIL"};
+  my($exports, $export_cache, $fail)
+    = (\@{"$pkg\::EXPORT"}, \%{"$pkg\::EXPORT"}, \@{"$pkg\::EXPORT_FAIL"});
   return export $pkg, $callpkg, @_
-    if $Verbose or $Debug or @fail > 1;
-  my $args = @_ or @_ = @exports;
-  
-  if ($args and not %exports) {
-    foreach my $sym (@exports, @{"$pkg\::EXPORT_OK"}) {
-      $sym =~ s/^&//;
-      $exports{$sym} = 1;
-    }
+    if $Verbose or $Debug or @$fail > 1;
+  my $args = @_ or @_ = @$exports;
+
+  local $_;
+  if ($args and not %$export_cache) {
+    s/^&//, $export_cache->{$_} = 1
+      foreach (@$exports, @{"$pkg\::EXPORT_OK"});
   }
-  if ($Verbose or $Debug 
-      or grep {/\W/ or $args and not exists $exports{$_}
-	       or @fail and $_ eq $fail[0]
-	       or (@{"$pkg\::EXPORT_OK"} 
-		   and $_ eq ${"$pkg\::EXPORT_OK"}[0])} @_) {
-    return export $pkg, $callpkg, ($args ? @_ : ());
+  my $heavy;
+  # Try very hard not to use {} and hence have to  enter scope on the foreach
+  # We bomb out of the loop with last as soon as heavy is set.
+  if ($args or $fail) {
+    ($heavy = (/\W/ or $args and not exists $export_cache->{$_}
+               or @$fail and $_ eq $fail->[0])) and last
+                 foreach (@_);
+  } else {
+    ($heavy = /\W/) and last
+      foreach (@_);
   }
-  #local $SIG{__WARN__} = sub {require Carp; goto &Carp::carp};
+  return export $pkg, $callpkg, ($args ? @_ : ()) if $heavy;
   local $SIG{__WARN__} = 
-	sub {require Carp; local $Carp::CarpLevel = 1; &Carp::carp};
-  foreach $sym (@_) {
-    # shortcut for the common case of no type character
-    *{"$callpkg\::$sym"} = \&{"$pkg\::$sym"};
-  }
+	sub {require Carp; &Carp::carp};
+  # shortcut for the common case of no type character
+  *{"$callpkg\::$_"} = \&{"$pkg\::$_"} foreach @_;
 }
 
-1;
+# Default methods
 
-# A simple self test harness. Change 'require Carp' to 'use Carp ()' for testing.
-# package main; eval(join('',<DATA>)) or die $@ unless caller;
-__END__
-package Test;
-$INC{'Exporter.pm'} = 1;
-@ISA = qw(Exporter);
-@EXPORT      = qw(A1 A2 A3 A4 A5);
-@EXPORT_OK   = qw(B1 B2 B3 B4 B5);
-%EXPORT_TAGS = (T1=>[qw(A1 A2 B1 B2)], T2=>[qw(A1 A2 B3 B4)], T3=>[qw(X3)]);
-@EXPORT_FAIL = qw(B4);
-Exporter::export_ok_tags('T3', 'unknown_tag');
 sub export_fail {
-    map { "Test::$_" } @_	# edit symbols just as an example
+    my $self = shift;
+    @_;
 }
 
-package main;
-$Exporter::Verbose = 1;
-#import Test;
-#import Test qw(X3);		# export ok via export_ok_tags()
-#import Test qw(:T1 !A2 /5/ !/3/ B5);
-import Test qw(:T2 !B4);
-import Test qw(:T2);		# should fail
+# Unfortunately, caller(1)[3] "does not work" if the caller is aliased as
+# *name = \&foo.  Thus the need to create a lot of identical subroutines
+# Otherwise we could have aliased them to export().
+
+sub export_to_level {
+  goto &{as_heavy()};
+}
+
+sub export_tags {
+  goto &{as_heavy()};
+}
+
+sub export_ok_tags {
+  goto &{as_heavy()};
+}
+
+sub require_version {
+  goto &{as_heavy()};
+}
+
 1;
+__END__
 
 =head1 NAME
 
@@ -90,28 +95,25 @@ Exporter - Implements default import method for modules
 
 =head1 SYNOPSIS
 
-In module ModuleName.pm:
+In module YourModule.pm:
 
-  package ModuleName;
+  package YourModule;
   require Exporter;
   @ISA = qw(Exporter);
+  @EXPORT_OK = qw(munge frobnicate);  # symbols to export on request
 
-  @EXPORT = qw(...);            # symbols to export by default
-  @EXPORT_OK = qw(...);         # symbols to export on request
-  %EXPORT_TAGS = tag => [...];  # define names for sets of symbols
+In other files which wish to use YourModule:
 
-In other files which wish to use ModuleName:
-
-  use ModuleName;               # import default symbols into my package
-
-  use ModuleName qw(...);       # import listed symbols into my package
-
-  use ModuleName ();            # do not import any symbols
+  use ModuleName qw(frobnicate);      # import listed symbols
+  frobnicate ($left, $right)          # calls YourModule::frobnicate
 
 =head1 DESCRIPTION
 
-The Exporter module implements a default C<import> method which
-many modules choose to inherit rather than implement their own.
+The Exporter module implements an C<import> method which allows a module
+to export functions and variables to its users' namespaces. Many modules
+use Exporter rather than implementing their own C<import> method because
+Exporter provides a highly flexible interface, with an implementation optimised
+for the common case.
 
 Perl automatically calls the C<import> method when processing a
 C<use> statement for a module. Modules and C<use> are documented
@@ -131,6 +133,9 @@ ampersand in front of a function is optional, e.g.
     @EXPORT    = qw(afunc $scalar @array);   # afunc is a function
     @EXPORT_OK = qw(&bfunc %hash *typeglob); # explicit prefix on &bfunc
 
+If you are only exporting function names it is recommended to omit the
+ampersand, as the implementation is faster this way.
+
 =head2 Selecting What To Export
 
 Do B<not> export method names!
@@ -149,16 +154,49 @@ informally indicate that they are 'internal' and not for public use.
 (It is actually possible to get private functions by saying:
 
   my $subref = sub { ... };
-  &$subref;
+  $subref->(@args);            # Call it as a function
+  $obj->$subref(@args);        # Use it as a method
 
-But there's no way to call that directly as a method, since a method
-must have a name in the symbol table.)
+However if you use them for methods it is up to you to figure out
+how to make inheritance work.)
 
 As a general rule, if the module is trying to be object oriented
 then export nothing. If it's just a collection of functions then
-@EXPORT_OK anything but use @EXPORT with caution.
+@EXPORT_OK anything but use @EXPORT with caution. For function and
+method names use barewords in preference to names prefixed with
+ampersands for the export lists.
 
 Other module design guidelines can be found in L<perlmod>.
+
+=head2 How to Import
+
+In other files which wish to use your module there are three basic ways for
+them to load your module and import its symbols:
+
+=over 4
+
+=item C<use ModuleName;>
+
+This imports all the symbols from ModuleName's @EXPORT into the namespace
+of the C<use> statement.
+
+=item C<use ModuleName ();>
+
+This causes perl to load your module but does not import any symbols.
+
+=item C<use ModuleName qw(...);>
+
+This imports only the symbols listed by the caller into their namespace.
+All listed symbols must be in your @EXPORT or @EXPORT_OK, else an error
+occurs. The advanced export features of Exporter are accessed like this,
+but with list entries that are syntactically distinct from symbol names.
+
+=back
+
+Unless you want to use its advanced features, this is probably all you
+need to know to use Exporter.
+
+=head1 Advanced features
 
 =head2 Specialised Import Lists
 
@@ -203,13 +241,13 @@ You can say C<BEGIN { $Exporter::Verbose=1 }> to see how the
 specifications are being processed and what is actually being imported
 into modules.
 
-=head2 Exporting without using Export's import method
+=head2 Exporting without using Exporter's import method
 
 Exporter has a special method, 'export_to_level' which is used in situations
-where you can't directly call Export's import method. The export_to_level
+where you can't directly call Exporter's import method. The export_to_level
 method looks like:
 
-MyPackage->export_to_level($where_to_export, $package, @what_to_export);
+    MyPackage->export_to_level($where_to_export, $package, @what_to_export);
 
 where $where_to_export is an integer telling how far up the calling stack
 to export your symbols, and @what_to_export is an array telling what
@@ -219,30 +257,30 @@ currently unused.
 For example, suppose that you have a module, A, which already has an
 import function:
 
-package A;
+    package A;
 
-@ISA = qw(Exporter);
-@EXPORT_OK = qw ($b);
+    @ISA = qw(Exporter);
+    @EXPORT_OK = qw ($b);
 
-sub import
-{
-    $A::b = 1;     # not a very useful import method
-}
+    sub import
+    {
+	$A::b = 1;     # not a very useful import method
+    }
 
 and you want to Export symbol $A::b back to the module that called 
 package A. Since Exporter relies on the import method to work, via 
 inheritance, as it stands Exporter::import() will never get called. 
 Instead, say the following:
 
-package A;
-@ISA = qw(Exporter);
-@EXPORT_OK = qw ($b);
+    package A;
+    @ISA = qw(Exporter);
+    @EXPORT_OK = qw ($b);
 
-sub import
-{
-    $A::b = 1;
-    A->export_to_level(1, @_);
-}
+    sub import
+    {
+	$A::b = 1;
+	A->export_to_level(1, @_);
+    }
 
 This will export the symbols one level 'above' the current package - ie: to 
 the program or module that used package A. 
@@ -309,5 +347,70 @@ Any names which are not tags are added to @EXPORT or @EXPORT_OK
 unchanged but will trigger a warning (with C<-w>) to avoid misspelt tags
 names being silently added to @EXPORT or @EXPORT_OK. Future versions
 may make this a fatal error.
+
+=head2 Generating combined tags
+
+If several symbol categories exist in %EXPORT_TAGS, it's usually
+useful to create the utility ":all" to simplify "use" statements.
+
+The simplest way to do this is:
+
+  %EXPORT_TAGS = (foo => [qw(aa bb cc)], bar => [qw(aa cc dd)]);
+
+  # add all the other ":class" tags to the ":all" class,
+  # deleting duplicates
+  {
+    my %seen;
+
+    push @{$EXPORT_TAGS{all}},
+      grep {!$seen{$_}++} @{$EXPORT_TAGS{$_}} foreach keys %EXPORT_TAGS;
+  }
+
+CGI.pm creates an ":all" tag which contains some (but not really
+all) of its categories.  That could be done with one small
+change:
+
+  # add some of the other ":class" tags to the ":all" class,
+  # deleting duplicates
+  {
+    my %seen;
+
+    push @{$EXPORT_TAGS{all}},
+      grep {!$seen{$_}++} @{$EXPORT_TAGS{$_}}
+        foreach qw/html2 html3 netscape form cgi internal/;
+  }
+
+Note that the tag names in %EXPORT_TAGS don't have the leading ':'.
+
+=head2 C<AUTOLOAD>ed Constants
+
+Many modules make use of C<AUTOLOAD>ing for constant subroutines to
+avoid having to compile and waste memory on rarely used values (see
+L<perlsub> for details on constant subroutines).  Calls to such
+constant subroutines are not optimized away at compile time because
+they can't be checked at compile time for constancy.
+
+Even if a prototype is available at compile time, the body of the
+subroutine is not (it hasn't been C<AUTOLOAD>ed yet). perl needs to
+examine both the C<()> prototype and the body of a subroutine at
+compile time to detect that it can safely replace calls to that
+subroutine with the constant value.
+
+A workaround for this is to call the constants once in a C<BEGIN> block:
+
+   package My ;
+
+   use Socket ;
+
+   foo( SO_LINGER );     ## SO_LINGER NOT optimized away; called at runtime
+   BEGIN { SO_LINGER }
+   foo( SO_LINGER );     ## SO_LINGER optimized away at compile time.
+
+This forces the C<AUTOLOAD> for C<SO_LINGER> to take place before
+SO_LINGER is encountered later in C<My> package.
+
+If you are writing a package that C<AUTOLOAD>s, consider forcing
+an C<AUTOLOAD> for any constants explicitly imported by other packages
+or which are usually used when your package is C<use>d.
 
 =cut

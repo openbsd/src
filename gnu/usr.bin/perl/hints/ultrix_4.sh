@@ -16,7 +16,7 @@ case "$optimize" in
 esac
 
 # Some users have reported Configure runs *much* faster if you 
-# replace all occurences of /bin/sh by /bin/sh5
+# replace all occurrences of /bin/sh by /bin/sh5
 # Something like:
 #   sed 's!/bin/sh!/bin/sh5!g' Configure > Configure.sh5
 # Then run "sh5 Configure.sh5 [your options]"

@@ -2,7 +2,7 @@
 
 # Fix up yacc output to allow dynamic allocation.  Since perly.c
 # is now provided with the perl source, this should not be necessary.
-#  
+#
 # However, if the user wishes to use byacc, or wishes to try another 
 # compiler compiler (e.g. bison or yacc), this script will get run.
 # See makefile run_byacc target for more details.
@@ -14,22 +14,45 @@
 #
 # Additional information to make the BSD section work with SunOS 4.0.2
 #   tdinger@East.Sun.COM (Tom Dinger)	4/15/1991
+#
+# Also edit some practices gcc -Wall finds questionable.
+#  
+
+gnupatch=patch
+. ./config.sh
 
 input=$1
 output=$2
 tmp=/tmp/f$$
 
+inputh=`echo $input|sed 's:\.c$:.h:'`
+if grep '^#ifdef PERL_CORE' $inputh; then
+	: never mind
+else
+	echo "#ifdef PERL_CORE"	> $tmp
+	sed -e 's:^typedef union {:#endif /* PERL_CORE */\
+\
+typedef union {:' $inputh		>> $tmp
+	mv -f $tmp $inputh
+fi
+
 if grep 'yaccpar 1.8 (Berkeley)' $input >/dev/null 2>&1; then
     cp $input $output
     # Don't expect the diff to do everything -- do some by hand
     if test -f perly_c.diff; then
-	patch -F3 $output <perly_c.diff
+	$gnupatch -F3 $output <perly_c.diff
 	sed -e '/^[ 	]*printf("yydebug:/s/printf(/PerlIO_printf(Perl_debug_log, /' \
 	    -e '/^#line /s/"y[.]tab[.]c"/"perly.c"/' \
 	    -e '/\[\] *= *[{]/s/^/static /' \
 	    -e '/^static static/s/^static //' \
 	    -e '/^#define.WORD/,/^#define.ARROW/d' \
 	    -e '/^int.yydebug/,/^#define.yystacksize/d' \
+	    -e 's/^yyerrlab:$//' \
+	    -e 's/^    goto yyerrlab;//' \
+	    -e 's/^yynewerror:$//' \
+	    -e 's/^    goto yynewerror;//' \
+	    -e 's|^static char yysccsid\(.*\)|/* static char yysccsid\1 */|' \
+	    -e 's|deprecate(|deprecate_old(|' \
 	    < $output > $tmp && mv -f $tmp $output || exit 1
 	rm -rf $input
 	echo "If you need to debug perly.c, you need to fix up the #line"
@@ -38,13 +61,19 @@ if grep 'yaccpar 1.8 (Berkeley)' $input >/dev/null 2>&1; then
     exit
 elif grep 'yaccpar	1.9 (Berkeley)' $input >/dev/null 2>&1; then
     if test -f perly.c.dif9; then
-	patch -F3 $output <perly.c.dif9
+	$gnupatch -F3 $output <perly.c.dif9
 	sed -e '/^[ 	]*printf("yydebug:/s/printf(/PerlIO_printf(Perl_debug_log, /' \
 	    -e '/^#line /s/"y[.]tab[.]c"/"perly.c"/' \
 	    -e '/\[\] *= *[{]/s/^/static /' \
 	    -e '/^static static/s/^static //' \
 	    -e '/^#define.WORD/,/^#define.ARROW/d' \
 	    -e '/^int.yydebug/,/^#define.yystacksize/d' \
+	    -e 's/^yyerrlab:$//' \
+	    -e 's/^    goto yyerrlab;//' \
+	    -e 's/^yynewerror:$//' \
+	    -e 's/^    goto yynewerror;//' \
+	    -e 's|^static char yysccsid\(.*\)|/* static char yysccsid\1 */|' \
+	    -e 's|deprecate(|deprecate_old(|' \
 	    < $output > $tmp && mv -f $tmp $output || exit 1
 	rm -rf $input
 	echo "If you need to debug perly.c, you need to fix up the #line"

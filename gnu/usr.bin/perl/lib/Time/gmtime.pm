@@ -1,8 +1,9 @@
 package Time::gmtime;
 use strict;
+use 5.006_001;
+
 use Time::tm;
 
-use 5.005_64;
 our(@ISA, @EXPORT, @EXPORT_OK, %EXPORT_TAGS, $VERSION);
 BEGIN { 
     use Exporter   ();
@@ -14,7 +15,7 @@ BEGIN {
 			$tm_isdst
 		    );
     %EXPORT_TAGS = ( FIELDS => [ @EXPORT_OK, @EXPORT ] );
-    $VERSION     = 1.01;
+    $VERSION     = 1.02;
 }
 use vars      @EXPORT_OK;
 

@@ -31,7 +31,7 @@ have been officially "blessed" into a class package.)
 
 Symbolic references are names of variables or other objects, just as a
 symbolic link in a Unix filesystem contains merely the name of a file.
-The C<*glob> notation is something of a of symbolic reference.  (Symbolic
+The C<*glob> notation is something of a symbolic reference.  (Symbolic
 references are sometimes called "soft references", but please don't call
 them that; references are confusing enough without useless synonyms.)
 
@@ -243,7 +243,9 @@ All of these are self-explanatory except for C<*foo{IO}>.  It returns
 the IO handle, used for file handles (L<perlfunc/open>), sockets
 (L<perlfunc/socket> and L<perlfunc/socketpair>), and directory
 handles (L<perlfunc/opendir>).  For compatibility with previous
-versions of Perl, C<*foo{FILEHANDLE}> is a synonym for C<*foo{IO}>.
+versions of Perl, C<*foo{FILEHANDLE}> is a synonym for C<*foo{IO}>, though it
+is deprecated as of 5.8.0.  If deprecation warnings are in effect, it will warn
+of its use.
 
 C<*foo{THING}> returns undef if that particular THING hasn't been used yet,
 except in the case of scalars.  C<*foo{SCALAR}> returns a reference to an
@@ -537,6 +539,13 @@ string is effectively quoted.
 
 B<WARNING>:  This section describes an experimental feature.  Details may
 change without notice in future versions.
+
+B<NOTE>: The current user-visible implementation of pseudo-hashes
+(the weird use of the first array element) is deprecated starting from
+Perl 5.8.0 and will be removed in Perl 5.10.0, and the feature will be
+implemented differently.  Not only is the current interface rather ugly,
+but the current implementation slows down normal array and hash use quite
+noticeably.  The 'fields' pragma interface will remain available.
 
 Beginning with release 5.005 of Perl, you may use an array reference
 in some contexts that would normally require a hash reference.  This

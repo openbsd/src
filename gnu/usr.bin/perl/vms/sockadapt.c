@@ -34,10 +34,12 @@
 #if ((((__VMS_VER >= 70000000) && (__DECC_VER >= 50200000)) || (__CRTL_VER >= 70000000)) && defined(DECCRTL_SOCKETS))
 #else
 void setnetent(int stayopen) {
-  croak("Function \"setnetent\" not implemented in this version of perl");
+  dTHX;
+  Perl_croak(aTHX_ "Function \"setnetent\" not implemented in this version of perl");
 }
 void endnetent() {
-  croak("Function \"endnetent\" not implemented in this version of perl");
+  dTHX;
+  Perl_croak(aTHX_ "Function \"endnetent\" not implemented in this version of perl");
 }
 #endif
 
@@ -49,29 +51,37 @@ void endnetent() {
 #if ((__VMS_VER >= 70000000) && (__DECC_VER >= 50200000)) || (__CRTL_VER >= 70000000)
 #else
   void sethostent(int stayopen) {
-    croak("Function \"sethostent\" not implemented in this version of perl");
+    dTHX;
+    Perl_croak(aTHX_ "Function \"sethostent\" not implemented in this version of perl");
   }
   void endhostent() {
-    croak("Function \"endhostent\" not implemented in this version of perl");
+    dTHX;
+    Perl_croak(aTHX_ "Function \"endhostent\" not implemented in this version of perl");
   }
   void setprotoent(int stayopen) {
-    croak("Function \"setprotoent\" not implemented in this version of perl");
+    dTHX;
+    Perl_croak(aTHX_ "Function \"setprotoent\" not implemented in this version of perl");
   }
   void endprotoent() {
-    croak("Function \"endprotoent\" not implemented in this version of perl");
+    dTHX;
+    Perl_croak(aTHX_ "Function \"endprotoent\" not implemented in this version of perl");
   }
   void setservent(int stayopen) {
-    croak("Function \"setservent\" not implemented in this version of perl");
+    dTHX;
+    Perl_croak(aTHX_ "Function \"setservent\" not implemented in this version of perl");
   }
   void endservent() {
-    croak("Function \"endservent\" not implemented in this version of perl");
+    dTHX;
+    Perl_croak(aTHX_ "Function \"endservent\" not implemented in this version of perl");
   }
   __sockadapt_my_hostent_t gethostent() {
-    croak("Function \"gethostent\" not implemented in this version of perl");
+    dTHX;
+    Perl_croak(aTHX_ "Function \"gethostent\" not implemented in this version of perl");
     return (__sockadapt_my_hostent_t )NULL; /* Avoid MISSINGRETURN warning, not reached */
   }
   __sockadapt_my_servent_t getservent() {
-    croak("Function \"getservent\" not implemented in this version of perl");
+    dTHX;
+    Perl_croak(aTHX_ "Function \"getservent\" not implemented in this version of perl");
     return (__sockadapt_my_servent_t )NULL; /* Avoid MISSINGRETURN warning, not reached */
   }
 #endif
@@ -80,15 +90,18 @@ void endnetent() {
     /* Work around things missing/broken in SOCKETSHR. */
 
 __sockadapt_my_netent_t getnetbyaddr( __sockadapt_my_addr_t net, int type) {
-  croak("Function \"getnetbyaddr\" not implemented in this version of perl");
+  dTHX;
+  Perl_croak(aTHX_ "Function \"getnetbyaddr\" not implemented in this version of perl");
   return (struct netent *)NULL; /* Avoid MISSINGRETURN warning, not reached */
 }
 __sockadapt_my_netent_t getnetbyname( __sockadapt_my_name_t name) {
-  croak("Function \"getnetbyname\" not implemented in this version of perl");
+  dTHX;
+  Perl_croak(aTHX_ "Function \"getnetbyname\" not implemented in this version of perl");
   return (struct netent *)NULL; /* Avoid MISSINGRETURN warning, not reached */
 }
 __sockadapt_my_netent_t getnetent() {
-  croak("Function \"getnetent\" not implemented in this version of perl");
+  dTHX;
+  Perl_croak(aTHX_ "Function \"getnetent\" not implemented in this version of perl");
   return (__sockadapt_my_netent_t )NULL; /* Avoid MISSINGRETURN warning, not reached */
 }
 

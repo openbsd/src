@@ -2,6 +2,7 @@
 
 use Config;
 use File::Basename qw(&basename &dirname);
+use File::Spec;
 use Cwd;
 
 # List explicitly here the variables you want Configure to
@@ -20,7 +21,7 @@ $file = basename($0, '.PL');
 $file .= '.com' if $^O eq 'VMS';
 
 # Open input file before creating output file.
-$IN = '../lib/diagnostics.pm';
+$IN = File::Spec->catfile(File::Spec->updir, 'lib', 'diagnostics.pm');
 open IN or die "Can't open $IN: $!\n";
 
 # Create output file.

@@ -161,7 +161,7 @@ argument--the new value the user is trying to assign.
 
 This method will be triggered when the C<untie> occurs. This can be useful
 if the class needs to know when no further calls will be made. (Except DESTROY
-of course.) See below for more details.
+of course.) See L<The C<untie> Gotcha> below for more details.
 
 =item DESTROY this
 
@@ -452,7 +452,7 @@ In our example, we'll use a little shortcut if there is a I<LIST>:
 
 =item UNTIE this
 
-Will be called when C<untie> happens. (See below.)
+Will be called when C<untie> happens. (See L<The C<untie> Gotcha> below.)
 
 =item DESTROY this
 
@@ -475,7 +475,7 @@ the keys.  UNTIE is called when C<untie> happens, and DESTROY is called when
 the tied variable is garbage collected.
 
 If this seems like a lot, then feel free to inherit from merely the
-standard Tie::Hash module for most of your methods, redefining only the
+standard Tie::StdHash module for most of your methods, redefining only the
 interesting ones.  See L<Tie::Hash> for details.
 
 Remember that Perl distinguishes between a key not existing in the hash,
@@ -756,7 +756,7 @@ thing, but we'll have to go through the LIST field indirectly.
 
 =item UNTIE this
 
-This is called when C<untie> occurs.
+This is called when C<untie> occurs.  See L<The C<untie> Gotcha> below.
 
 =item DESTROY this
 
@@ -850,7 +850,7 @@ or C<sysread> functions.
 
     sub READ {
 	my $self = shift;
-	my $$bufref = \$_[0];
+	my $bufref = \$_[0];
 	my(undef,$len,$offset) = @_;
 	print "READ called, \$buf=$bufref, \$len=$len, \$offset=$offset";
 	# add to $$bufref, set $len to number of characters read
@@ -880,7 +880,8 @@ function.
 =item UNTIE this
 
 As with the other types of ties, this method will be called when C<untie> happens.
-It may be appropriate to "auto CLOSE" when this occurs.
+It may be appropriate to "auto CLOSE" when this occurs.  See
+L<The C<untie> Gotcha> below.
 
 =item DESTROY this
 
@@ -903,7 +904,7 @@ Here's how to use our little example:
 =head2 UNTIE this
 
 You can define for all tie types an UNTIE method that will be called
-at untie().
+at untie().  See L<The C<untie> Gotcha> below.
 
 =head2 The C<untie> Gotcha
 
@@ -1081,4 +1082,4 @@ TIEHANDLE by Sven Verdoolaege <F<skimo@dns.ufsia.ac.be>> and Doug MacEachern <F<
 
 UNTIE by Nick Ing-Simmons <F<nick@ing-simmons.net>>
 
-Tying Arrays by Casey Tweten <F<crt@kiski.net>>
+Tying Arrays by Casey West <F<casey@geeknest.com>>

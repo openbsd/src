@@ -44,14 +44,19 @@ Anno Siegel
 
 #define DL_LOADONCEONLY
 
+typedef struct {
+    AV *	x_resolve_using;
+} my_cxtx_t;		/* this *must* be named my_cxtx_t */
+
+#define DL_CXT_EXTRA	/* ask for dl_cxtx to be defined in dlutils.c */
 #include "dlutils.c"	/* SaveError() etc	*/
 
-
-static char * dl_last_error = (char *) 0;
-static AV *dl_resolve_using = Nullav;
+#define dl_resolve_using	(dl_cxtx.x_resolve_using)
 
 static char *dlerror()
 {
+    dTHX;
+    dMY_CXT;
     return dl_last_error;
 }
 
@@ -73,13 +78,14 @@ static void TranslateError
     (const char *path, enum dyldErrorSource type, int number)
 {
     dTHX;
+    dMY_CXT;
     char *error;
     unsigned int index;
     static char *OFIErrorStrings[] =
     {
 	"%s(%d): Object Image Load Failure\n",
 	"%s(%d): Object Image Load Success\n",
-	"%s(%d): Not an recognisable object file\n",
+	"%s(%d): Not a recognisable object file\n",
 	"%s(%d): No valid architecture\n",
 	"%s(%d): Object image has an invalid format\n",
 	"%s(%d): Invalid access (permissions?)\n",
@@ -150,6 +156,8 @@ static void TransferError(NXStream *s)
 {
     char *buffer;
     int len, maxlen;
+    dTHX;
+    dMY_CXT;
 
     if ( dl_last_error ) {
         Safefree(dl_last_error);
@@ -174,6 +182,8 @@ static char *dlopen(char *path, int mode /* mode is ignored */)
     char *result;
     char **p;
     STRLEN n_a;
+    dTHX;
+    dMY_CXT;
 	
     /* Do not load what is already loaded into this process */
     if (hv_fetch(dl_loaded_files, path, strlen(path), 0))
@@ -226,7 +236,10 @@ static void
 dl_private_init(pTHX)
 {
     (void)dl_generic_private_init(aTHX);
-    dl_resolve_using = get_av("DynaLoader::dl_resolve_using", GV_ADDMULTI);
+    {
+	dMY_CXT;
+	dl_resolve_using = get_av("DynaLoader::dl_resolve_using", GV_ADDMULTI);
+    }
 }
  
 MODULE = DynaLoader     PACKAGE = DynaLoader
@@ -300,7 +313,8 @@ dl_install_xsub(perl_name, symref, filename="$Package")
 char *
 dl_error()
     CODE:
-    RETVAL = LastError ;
+    dMY_CXT;
+    RETVAL = dl_last_error ;
     OUTPUT:
     RETVAL
 

@@ -233,6 +233,18 @@ Binary ">>" returns the value of its left argument shifted right by
 the number of bits specified by the right argument.  Arguments should
 be integers.  (See also L<Integer Arithmetic>.)
 
+Note that both "<<" and ">>" in Perl are implemented directly using
+"<<" and ">>" in C.  If C<use integer> (see L<Integer Arithmetic>) is
+in force then signed C integers are used, else unsigned C integers are
+used.  Either way, the implementation isn't going to generate results
+larger than the size of the integer type Perl was built with (32 bits
+or 64 bits).
+
+The result of overflowing the range of the integers is undefined
+because it is undefined also in C.  In other words, using 32-bit
+integers, C<< 1 << 32 >> is undefined.  Shifting by a negative number
+of bits is also undefined.
+
 =head2 Named Unary Operators
 
 The various named unary operators are treated as functions with one
@@ -383,10 +395,10 @@ Using "or" for assignment is unlikely to do what you want; see below.
 
 Binary ".." is the range operator, which is really two different
 operators depending on the context.  In list context, it returns an
-array of values counting (up by ones) from the left value to the right
+list of values counting (up by ones) from the left value to the right
 value.  If the left value is greater than the right value then it
 returns the empty array.  The range operator is useful for writing
-C<foreach (1..10)> loops and for doing slice operations on arrays.  In
+C<foreach (1..10)> loops and for doing slice operations on arrays. In
 the current implementation, no temporary array is created when the
 range operator is used as the expression in C<foreach> loops, but older
 versions of Perl might burn a lot of memory when you write something
@@ -395,6 +407,9 @@ like this:
     for (1 .. 1_000_000) {
 	# code
     }
+
+The range operator also works on strings, using the magical auto-increment,
+see below.
 
 In scalar context, ".." returns a boolean value.  The operator is
 bistable, like a flip-flop, and emulates the line-range (comma) operator
@@ -450,7 +465,7 @@ can say
 
     @alphabet = ('A' .. 'Z');
 
-to get all normal letters of the alphabet, or
+to get all normal letters of the English alphabet, or
 
     $hexdigit = (0 .. 9, 'a' .. 'f')[$num & 15];
 
@@ -646,12 +661,15 @@ any pair of delimiters you choose.
     Customary  Generic        Meaning	     Interpolates
 	''	 q{}	      Literal		  no
 	""	qq{}	      Literal		  yes
-	``	qx{}	      Command		  yes (unless '' is delimiter)
+	``	qx{}	      Command		  yes*
 		qw{}	     Word list		  no
-	//	 m{}	   Pattern match	  yes (unless '' is delimiter)
-		qr{}	      Pattern		  yes (unless '' is delimiter)
-		 s{}{}	    Substitution	  yes (unless '' is delimiter)
+	//	 m{}	   Pattern match	  yes*
+		qr{}	      Pattern		  yes*
+		 s{}{}	    Substitution	  yes*
 		tr{}{}	  Transliteration	  no (but see below)
+        <<EOF                 here-doc            yes*
+
+	* unless the delimiter is ''.
 
 Non-bracketing delimiters use the same character fore and aft, but the four
 sorts of brackets (round, angle, square, curly) will all nest, which means
@@ -667,8 +685,9 @@ Note, however, that this does not always work for quoting Perl code:
 
 	$s = q{ if($a eq "}") ... }; # WRONG
 
-is a syntax error. The C<Text::Balanced> module on CPAN is able to do this
-properly.
+is a syntax error. The C<Text::Balanced> module (from CPAN, and
+starting from Perl 5.8 part of the standard distribution) is able
+to do this properly.
 
 There can be whitespace between the operator and the quoting
 characters, except when C<#> is being used as the quoting character.
@@ -679,9 +698,8 @@ from the next line.  This allows you to write:
     s {foo}  # Replace foo
       {bar}  # with bar.
 
-For constructs that do interpolate, variables beginning with "C<$>"
-or "C<@>" are interpolated, as are the following escape sequences.  Within
-a transliteration, the first eleven of these sequences may be used.
+The following escape sequences are available in constructs that interpolate
+and in transliterations.
 
     \t		tab             (HT, TAB)
     \n		newline         (NL)
@@ -694,7 +712,10 @@ a transliteration, the first eleven of these sequences may be used.
     \x1b	hex char	(ESC)
     \x{263a}	wide hex char	(SMILEY)
     \c[		control char    (ESC)
-    \N{name}	named char
+    \N{name}	named Unicode character
+
+The following escape sequences are available in constructs that interpolate
+but not in transliterations.
 
     \l		lowercase next char
     \u		uppercase next char
@@ -703,9 +724,12 @@ a transliteration, the first eleven of these sequences may be used.
     \E		end case modification
     \Q		quote non-word characters till \E
 
-If C<use locale> is in effect, the case map used by C<\l>, C<\L>, C<\u>
-and C<\U> is taken from the current locale.  See L<perllocale>.  For
-documentation of C<\N{name}>, see L<charnames>.
+If C<use locale> is in effect, the case map used by C<\l>, C<\L>,
+C<\u> and C<\U> is taken from the current locale.  See L<perllocale>.
+If Unicode (for example, C<\N{}> or wide hex characters of 0x100 or
+beyond) is being used, the case map used by C<\l>, C<\L>, C<\u> and
+C<\U> is as defined by Unicode.  For documentation of C<\N{name}>,
+see L<charnames>.
 
 All systems use the virtual C<"\n"> to represent a line terminator,
 called a "newline".  There is no such thing as an unvarying, physical
@@ -720,6 +744,16 @@ and prefer a CR+LF (C<"\015\012"> or C<"\cM\cJ">) for line terminators,
 and although they often accept just C<"\012">, they seldom tolerate just
 C<"\015">.  If you get in the habit of using C<"\n"> for networking,
 you may be burned some day.
+
+For constructs that do interpolate, variables beginning with "C<$>"
+or "C<@>" are interpolated.  Subscripted variables such as C<$a[3]> or
+C<$href->{key}[0]> are also interpolated, as are array and hash slices.
+But method calls such as C<$obj->meth> are not.
+
+Interpolating an array or slice interpolates the elements in order,
+separated by the value of C<$">, so is equivalent to interpolating
+C<join $", @array>.    "Punctuation" arrays such as C<@+> are only
+interpolated if the name is enclosed in braces C<@{+}>.
 
 You cannot include a literal C<$> or C<@> within a C<\Q> sequence. 
 An unescaped C<$> or C<@> interpolates the corresponding variable, 
@@ -807,7 +841,11 @@ that you won't change the variables in the pattern.  If you change them,
 Perl won't even notice.  See also L<"qr/STRING/imosx">.
 
 If the PATTERN evaluates to the empty string, the last
-I<successfully> matched regular expression is used instead.
+I<successfully> matched regular expression is used instead. In this
+case, only the C<g> and C<c> flags on the empty pattern is honoured -
+the other flags are taken from the original pattern. If no match has
+previously succeeded, this will (silently) act instead as a genuine
+empty pattern (which will always match).
 
 If the C</g> option is not used, C<m//> in list context returns a
 list consisting of the subexpressions matched by the parentheses in the
@@ -861,7 +899,8 @@ C<m//g>, if any, left off.  Without the C</g> modifier, the C<\G> assertion
 still anchors at pos(), but the match is of course only attempted once.
 Using C<\G> without C</g> on a target string that has not previously had a
 C</g> match applied to it is the same as using the C<\A> assertion to match
-the beginning of the string.
+the beginning of the string.  Note also that, currently, C<\G> is only
+properly supported when anchored at the very beginning of the pattern.
 
 Examples:
 
@@ -1316,6 +1355,98 @@ must use an eval():
 
     eval "tr/$oldlist/$newlist/, 1" or die $@;
 
+=item <<EOF
+
+A line-oriented form of quoting is based on the shell "here-document"
+syntax.  Following a C<< << >> you specify a string to terminate
+the quoted material, and all lines following the current line down to
+the terminating string are the value of the item.  The terminating
+string may be either an identifier (a word), or some quoted text.  If
+quoted, the type of quotes you use determines the treatment of the
+text, just as in regular quoting.  An unquoted identifier works like
+double quotes.  There must be no space between the C<< << >> and
+the identifier, unless the identifier is quoted.  (If you put a space it
+will be treated as a null identifier, which is valid, and matches the first
+empty line.)  The terminating string must appear by itself (unquoted and
+with no surrounding whitespace) on the terminating line.
+
+       print <<EOF;
+    The price is $Price.
+    EOF
+
+       print << "EOF"; # same as above
+    The price is $Price.
+    EOF
+
+       print << `EOC`; # execute commands
+    echo hi there
+    echo lo there
+    EOC
+
+       print <<"foo", <<"bar"; # you can stack them
+    I said foo.
+    foo
+    I said bar.
+    bar
+
+       myfunc(<< "THIS", 23, <<'THAT');
+    Here's a line
+    or two.
+    THIS
+    and here's another.
+    THAT
+
+Just don't forget that you have to put a semicolon on the end
+to finish the statement, as Perl doesn't know you're not going to
+try to do this:
+
+       print <<ABC
+    179231
+    ABC
+       + 20;
+
+If you want your here-docs to be indented with the 
+rest of the code, you'll need to remove leading whitespace
+from each line manually:
+
+    ($quote = <<'FINIS') =~ s/^\s+//gm;
+       The Road goes ever on and on, 
+       down from the door where it began.
+    FINIS
+
+If you use a here-doc within a delimited construct, such as in C<s///eg>,
+the quoted material must come on the lines following the final delimiter.
+So instead of
+
+    s/this/<<E . 'that'
+    the other
+    E
+     . 'more '/eg;
+
+you have to write
+
+    s/this/<<E . 'that' 
+     . 'more '/eg; 
+    the other 
+    E 
+
+If the terminating identifier is on the last line of the program, you
+must be sure there is a newline after it; otherwise, Perl will give the
+warning B<Can't find string terminator "END" anywhere before EOF...>.
+
+Additionally, the quoting rules for the identifier are not related to
+Perl's quoting rules -- C<q()>, C<qq()>, and the like are not supported
+in place of C<''> and C<"">, and the only interpolation is for backslashing
+the quoting character:
+
+    print << "abc\"def";
+    testing...
+    abc"def
+
+Finally, quoted strings cannot span multiple lines.  The general rule is
+that the identifier must be a string literal.  Stick with that, and you
+should be safe.
+
 =back
 
 =head2 Gory details of parsing quoted constructs
@@ -1701,7 +1832,7 @@ The <> symbol will return C<undef> for end-of-file only once.
 If you call it again after this, it will assume you are processing another 
 @ARGV list, and if you haven't set @ARGV, will read input from STDIN.
 
-If angle brackets contain is a simple scalar variable (e.g.,
+If what the angle brackets contain is a simple scalar variable (e.g.,
 <$foo>), then that variable contains the name of the
 filehandle to input from, or its typeglob, or a reference to the
 same.  For example:
@@ -1765,7 +1896,7 @@ than
 because the latter will alternate between returning a filename and
 returning false.
 
-It you're trying to do variable interpolation, it's definitely better
+If you're trying to do variable interpolation, it's definitely better
 to use the glob() function, because the older notation can cause people
 to become confused with the indirect filehandle notation.
 

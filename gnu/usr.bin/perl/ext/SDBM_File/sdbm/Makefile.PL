@@ -1,6 +1,6 @@
 use ExtUtils::MakeMaker;
 
-$define = '-DSDBM -DDUFF';
+my $define = '-DSDBM -DDUFF';
 $define .= ' -DWIN32 -DPERL_STATIC_SYMS' if ($^O eq 'MSWin32');
 
 if ($^O eq 'VMS') {  # Old VAXC compiler can't handle Duff's device

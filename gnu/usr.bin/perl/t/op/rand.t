@@ -17,19 +17,17 @@
 
 BEGIN {
     chdir "t" if -d "t";
-    @INC = '../lib';
+    @INC = qw(. ../lib);
 }
 
 use strict;
 use Config;
 
-print "1..11\n";
+require "test.pl";
+plan(tests => 8);
 
-srand;			# Shouldn't need this with 5.004...
-			# But I'll include it now and test for
-			# whether we needed it later.
 
-my $reps = 1000;	# How many times to try rand each time.
+my $reps = 10000;	# How many times to try rand each time.
 			# May be changed, but should be over 500.
 			# The more the better! (But slower.)
 
@@ -74,8 +72,6 @@ EOM
     }
 
 
-    # Hints for TEST 1
-    #
     # This test checks for one of Perl's most frequent
     # mis-configurations. Your system's documentation
     # for rand(2) should tell you what value you need
@@ -85,13 +81,16 @@ EOM
     # reason that the diagnostic message might get the
     # wrong value is that Config.pm is incorrect.)
     #
-    if ($max <= 0 or $max >= (2 ** $randbits)) {# Just in case...
-	print "# max=[$max] min=[$min]\nnot ok 1\n";
-	print "# This perl was compiled with randbits=$randbits\n";
-	print "# which is _way_ off. Or maybe your system rand is broken,\n";
-	print "# or your C compiler can't multiply, or maybe Martians\n";
-	print "# have taken over your computer. For starters, see about\n";
-	print "# trying a better value for randbits, probably smaller.\n";
+    unless (ok( !$max <= 0 or $max >= (2 ** $randbits))) {# Just in case...
+	print <<DIAG;
+# max=[$max] min=[$min]
+# This perl was compiled with randbits=$randbits
+# which is _way_ off. Or maybe your system rand is broken,
+# or your C compiler can't multiply, or maybe Martians
+# have taken over your computer. For starters, see about
+# trying a better value for randbits, probably smaller.
+DIAG
+
 	# If that isn't the problem, we'll have
 	# to put d_martians into Config.pm 
 	print "# Skipping remaining tests until randbits is fixed.\n";
@@ -100,34 +99,27 @@ EOM
 
     $off = log($max) / log(2);			# log2
     $off = int($off) + ($off > 0);		# Next more positive int
-    if ($off) {
+    unless (is( $off, 0 )) {
 	$shouldbe = $Config{randbits} + $off;
-	print "# max=[$max] min=[$min]\nnot ok 1\n";
+	print "# max=[$max] min=[$min]\n";
 	print "# This perl was compiled with randbits=$randbits on $^O.\n";
 	print "# Consider using randbits=$shouldbe instead.\n";
 	# And skip the remaining tests; they would be pointless now.
 	print "# Skipping remaining tests until randbits is fixed.\n";
 	exit;
-    } else {
-	print "ok 1\n";
     }
 
-    # Hints for TEST 2
-    #
+
     # This should always be true: 0 <= rand(1) < 1
     # If this test is failing, something is seriously wrong,
     # either in perl or your system's rand function.
     #
-    if ($min < 0 or $max >= 1) {	# Slightly redundant...
-	print "not ok 2\n";
+    unless (ok( !($min < 0 or $max >= 1) )) {	# Slightly redundant...
 	print "# min too low\n" if $min < 0;
 	print "# max too high\n" if $max >= 1;
-    } else {
-	print "ok 2\n";
     }
 
-    # Hints for TEST 3
-    #
+
     # This is just a crude test. The average number produced
     # by rand should be about one-half. But once in a while
     # it will be relatively far away. Note: This test will
@@ -135,14 +127,11 @@ EOM
     # See the hints for test 4 to see why.
     #
     $sum /= $reps;
-    if ($sum < 0.4 or $sum > 0.6) {
-	print "not ok 3\n# Average random number is far from 0.5\n";
-    } else {
-	print "ok 3\n";
+    unless (ok( !($sum < 0.4 or $sum > 0.6) )) {
+	print "# Average random number is far from 0.5\n";
     }
 
-    # Hints for TEST 4
-    #
+
     #   NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE
     # This test will fail .1% of the time on a normal system.
     #				also
@@ -189,27 +178,24 @@ EOM
     # (eight bits per rep)
     $dev = abs ($bits - $reps * 4) / sqrt($reps * 2);
 
+    ok( $dev < 3.3 );
+
     if ($dev < 1.96) {
-	print "ok 4\n";		# 95% of the time.
 	print "# Your rand seems fine. If this test failed\n";
 	print "# previously, you may want to run it again.\n";
     } elsif ($dev < 2.575) {
-	print "ok 4\n# In here about 4% of the time. Hmmm...\n";
 	print "# This is ok, but suspicious. But it will happen\n";
 	print "# one time out of 25, more or less.\n";
 	print "# You should run this test again to be sure.\n";
     } elsif ($dev < 3.3) {
-	print "ok 4\n# In this range about 1% of the time.\n";
 	print "# This is very suspicious. It will happen only\n";
 	print "# about one time out of 100, more or less.\n";
 	print "# You should run this test again to be sure.\n";
     } elsif ($dev < 3.9) {
-	print "not ok 4\n# In this range very rarely.\n";
 	print "# This is VERY suspicious. It will happen only\n";
 	print "# about one time out of 1000, more or less.\n";
 	print "# You should run this test again to be sure.\n";
     } else {
-	print "not ok 4\n# Seriously whacked.\n";
 	print "# This is VERY VERY suspicious.\n";
 	print "# Your rand seems to be bogus.\n";
     }
@@ -218,57 +204,6 @@ EOM
     printf "# information on why this might fail. [ %.3f ]\n", $dev;
 }
 
-{
-    srand;		# These three lines are for test 7
-    my $time = time;	# It's just faster to do them here.
-    my $rand = join ", ", rand, rand, rand;
-
-    # Hints for TEST 5
-    # 
-    # This test checks that the argument to srand actually 
-    # sets the seed for generating random numbers. 
-    #
-    srand(3.14159);
-    my $r = rand;
-    srand(3.14159);
-    if (rand != $r) {
-	print "not ok 5\n";
-	print "# srand is not consistent.\n";
-    } else {
-	print "ok 5\n";
-    }
-
-    # Hints for TEST 6
-    # 
-    # This test just checks that the previous one didn't 
-    # give us false confidence!
-    #
-    if (rand == $r) {
-	print "not ok 6\n";
-	print "# rand is now unchanging!\n";
-    } else {
-	print "ok 6\n";
-    }
-
-    # Hints for TEST 7
-    #
-    # This checks that srand without arguments gives
-    # different sequences each time. Note: You shouldn't
-    # be calling srand more than once unless you know
-    # what you're doing! But if this fails on your 
-    # system, run perlbug and let the developers know
-    # what other sources of randomness srand should
-    # tap into.
-    #
-    while ($time == time) { }	# Wait for new second, just in case.
-    srand;
-    if ((join ", ", rand, rand, rand) eq $rand) {
-	print "not ok 7\n";
-	print "# srand without args isn't varying.\n";
-    } else {
-	print "ok 7\n";
-    }
-}
 
 # Now, let's see whether rand accepts its argument
 {
@@ -280,23 +215,17 @@ EOM
 	$min = $n if $n < $min;
     }
 
-    # Hints for TEST 8
-    #
     # This test checks to see that rand(100) really falls 
     # within the range 0 - 100, and that the numbers produced
     # have a reasonably-large range among them.
     #
-    if ($min < 0 or $max >= 100 or ($max - $min) < 65) {
-	print "not ok 8\n";
+    unless ( ok( !($min < 0 or $max >= 100 or ($max - $min) < 65) ) ) {
 	print "# min too low\n" if $min < 0;
 	print "# max too high\n" if $max >= 100;
 	print "# range too narrow\n" if ($max - $min) < 65;
-    } else {
-	print "ok 8\n";
     }
 
-    # Hints for TEST 9
-    #
+
     # This test checks that rand without an argument
     # is equivalent to rand(1).
     #
@@ -304,56 +233,12 @@ EOM
     srand 12345;
     my $r = rand;
     srand 12345;
-    if (rand(1) == $r) {
-	print "ok 9\n";
-    } else {
-	print "not ok 9\n";
-	print "# rand without arguments isn't rand(1)!\n";
-    }
+    is(rand(1),  $r,  'rand() without args is rand(1)');
 
-    # Hints for TEST 10
-    #
+
     # This checks that rand without an argument is not
     # rand($_). (In case somebody got overzealous.)
     # 
-    if ($r >= 1) {
-	print "not ok 10\n";
-	print "# rand without arguments isn't under 1!\n";
-    } else {
-	print "ok 10\n";
-    }
+    ok($r < 1,        'rand() without args is under 1');
 }
 
-# Hints for TEST 11
-#
-# This test checks whether Perl called srand for you. This should
-# be the case in version 5.004 and later. Note: You must still
-# call srand if your code might ever be run on a pre-5.004 system!
-#
-AUTOSRAND:
-{
-    unless ($Config{d_fork}) {
-	# Skip this test. It's not likely to be system-specific, anyway.
-	print "ok 11\n# Skipping this test on this platform.\n";
-	last;
-    }
-
-    my($pid, $first);
-    for (1..5) {
-	my $PERL = (($^O eq 'VMS') ? "MCR $^X"
-		    : ($^O eq 'MSWin32') ? '.\perl'
-		    : './perl');
-	$pid = open PERL, qq[$PERL -e "print rand"|];
-	die "Couldn't pipe from perl: $!" unless defined $pid;
-	if (defined $first) {
-	    if ($first ne <PERL>) {
-		print "ok 11\n";
-		last AUTOSRAND;
-	    }
-	} else {
-	    $first = <PERL>;
-	}
-	close PERL or die "perl returned error code $?";
-    }
-    print "not ok 11\n# srand isn't being autocalled.\n";
-}

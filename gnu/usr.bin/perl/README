@@ -1,7 +1,7 @@
 
-			   Perl Kit, Version 5.0
+			    Perl Kit, Version 5
 
-		       Copyright 1989-2001, Larry Wall
+		       Copyright 1989-2002, Larry Wall
 			    All rights reserved.
 
     This program is free software; you can redistribute it and/or modify
@@ -86,7 +86,7 @@ I've probably changed my copy since the version you have.
 
 The latest versions of perl are always available on the various CPAN
 (Comprehensive Perl Archive Network) sites around the world.
-See <URL:http://www.perl.com/CPAN/src/>.
+See <URL:http://www.cpan.org/src/>.
 
 
 Just a personal note:  I want you to know that I create nice things like this

@@ -2,6 +2,7 @@
 
 use Config;
 use File::Basename qw(&basename &dirname);
+use File::Spec;
 
 # List explicitly here the variables you want Configure to
 # generate.  Metaconfig only looks for shell variables, so you
@@ -17,7 +18,7 @@ chdir(dirname($0));
 $file =~ s/\.pl$// if ($Config{'osname'} eq 'OS2');      # "case-forgiving"
 $file =~ s/\.pl$/.com/ if ($Config{'osname'} eq 'VMS');  # "case-forgiving"
 
-my $dprof_pm = '../ext/Devel/DProf/DProf.pm';
+my $dprof_pm = File::Spec->catfile(File::Spec->updir, 'ext', 'Devel', 'DProf', 'DProf.pm');
 my $VERSION = 0;
 open( PM, "<$dprof_pm" ) || die "Can't open $dprof_pm: $!";
 while(<PM>){
@@ -57,12 +58,14 @@ dprofpp - display perl profile data
 
 =head1 SYNOPSIS
 
-dprofpp [B<-a>|B<-z>|B<-l>|B<-v>|B<-U>] [B<-s>|B<-r>|B<-u>] [B<-q>] [B<-F>] [B<-I|-E>] [B<-O cnt>] [B<-A>] [B<-R>] [B<-S>] [B<-g subroutine>] [profile]
-
+dprofpp [B<-a>|B<-z>|B<-l>|B<-v>|B<-U>] [B<-d>] [B<-s>|B<-r>|B<-u>] [B<-q>] [B<-F>] [B<-I|-E>] [B<-O cnt>] [B<-A>] [B<-R>] [B<-S>] [B<-g subroutine>] [B<-G> <regexp> [B<-P>]] [B<-f> <regexp>] [profile]
+  
 dprofpp B<-T> [B<-F>] [B<-g subroutine>] [profile]
 
 dprofpp B<-t> [B<-F>] [B<-g subroutine>] [profile]
 
+dprofpp B<-G> <regexp> [B<-P>] [profile]
+ 
 dprofpp B<-p script> [B<-Q>] [other opts]
 
 dprofpp B<-V> [profile]
@@ -146,6 +149,10 @@ Average time (in seconds) spent in each call of this routine
 =item B<-a>
 
 Sort alphabetically by subroutine names.
+
+=item B<-d>
+
+Reverse whatever sort is used
 
 =item B<-A>
 
@@ -258,6 +265,25 @@ should show you which subroutines are using the most time.
 
 Ignore subroutines except C<subroutine> and whatever is called from it.
 
+=item B<-G> <regexp>
+
+Aggregate "Group" all calls matching the pattern together.
+For example this can be used to group all calls of a set of packages
+
+  -G "(package1::)|(package2::)|(package3::)"
+
+or to group subroutines by name:
+
+  -G "getNum"
+
+=item B<-P>
+
+Used with -G to aggregate "Pull"  together all calls that did not match -G.
+
+=item B<-f> <regexp>
+
+Filter all calls matching the pattern.
+
 =back
 
 =head1 ENVIRONMENT
@@ -297,7 +323,7 @@ use Getopt::Std 'getopts';
 use Config '%Config';
 
 Setup: {
-	my $options = 'O:g:lzaAvuTtqrRsUFEIp:QVS';
+	my $options = 'O:g:G:Pf:dlzaAvuTtqrRsUFEIp:QVS';
 
 	$Monfile = 'tmon.out';
 	if( exists $ENV{DPROFPP_OPTS} ){
@@ -340,6 +366,11 @@ Setup: {
 # -g subr	count only those who are SUBR or called from SUBR
 # -S		Create statistics for all the depths
 
+# -G		Group all calls matching the pattern together.
+# -P		Used with -G to pull all other calls together.
+# -f		Filter all calls mathcing the pattern.
+# -d		Reverse sort
+
 	if( defined $opt_V ){
 		my $fh = 'main::fh';
 		print "$0 version: $VERSION\n";
@@ -357,6 +388,10 @@ Setup: {
 	$sort = 'by_calls' if defined $opt_l;
 	$sort = 'by_alpha' if defined $opt_a;
 	$sort = 'by_avgcpu' if defined $opt_v;
+	
+	if(defined $opt_d){
+		$sort = "r".$sort;
+	}
 	$incl_excl = 'Exclusive';
 	$incl_excl = 'Inclusive' if defined $opt_I;
 	$whichtime = 'User+System';
@@ -412,6 +447,23 @@ Main: {
 
 	parsestack( $fh, $names, $calls, $times, $ctimes, $idkeys );
 
+	#filter calls
+	if( $opt_f ){
+		for(my $i = 0;$i < @$idkeys - 2;){
+			$key = $$idkeys[$i];
+			if($key =~ /$opt_f/){
+				splice(@$idkeys, $i, 1);
+				$runtime -= $$times{$key};
+				next;
+			}
+			$i++;
+		}
+	}
+
+	if( $opt_G ){
+		group($names, $calls, $times, $ctimes, $idkeys );
+	}
+
 	settime( \$runtime, $hz ) unless $opt_g;
 
 	exit(0) if $opt_T || $opt_t;
@@ -430,6 +482,49 @@ Main: {
 		 $deep_times);
 }
 
+sub group{
+	my ($names, $calls, $times, $ctimes, $idkeys ) = @_;
+		print "Option G Grouping: [$opt_G]\n";
+		# create entries to store grouping
+		$$names{$opt_G} = $opt_G;
+		$$calls{$opt_G} = 0;
+		$$times{$opt_G} = 0;
+		$$ctimes{$opt_G} = 0;
+		$$idkeys[@$idkeys] = $opt_G;
+		# Sum calls for the grouping
+
+		my $other = "other";
+		if($opt_P){
+			$$names{$other} = $other;
+			$$calls{$other} = 0;
+			$$times{$other} = 0;
+			$$ctimes{$other} = 0;
+			$$idkeys[@$idkeys] = $other;
+		}
+
+		for(my $i = 0;$i < @$idkeys - 2;){
+			$key = $$idkeys[$i];
+			if($key =~ /$opt_G/){
+				$$calls{$opt_G} += $$calls{$key};
+				$$times{$opt_G} += $$times{$key};
+				$$ctimes{$opt_G} += $$ctimes{$key};
+				splice(@$idkeys, $i, 1);
+				next;
+			}else{
+				if($opt_P){
+					$$calls{$other} += $$calls{$key};
+					$$times{$other} += $$times{$key};
+					$$ctimes{$other} += $$ctimes{$key};
+					splice(@$idkeys, $i, 1);
+					next;
+				}
+			}
+			$i++;
+		}
+		print "Grouping [$opt_G] Calls: [$$calls{$opt_G}]\n".
+			  "Grouping [$opt_G] Times: [$$times{$opt_G}]\n".
+			  "Grouping [$opt_G] IncTimes: [$$ctimes{$opt_G}]\n";
+}
 
 # Sets $runtime to user, system, real, or user+system time.  The
 # result is given in seconds.
@@ -563,6 +658,7 @@ sub add_to_tree {
   pop @$curdeep_times;
 }
 
+
 sub parsestack {
 	my( $fh, $names, $calls, $times, $ctimes, $idkeys ) = @_;
 	my( $dir, $name );
@@ -598,7 +694,7 @@ sub parsestack {
 		chop;
 		if (/^&/) {
 		  ($dir, $id, $pack, $name) = split;
-		  if ($opt_R and ($name =~ /::(__ANON_|END)$/)) {
+		  if ($opt_R and ($name =~ /(?:::)?(__ANON__|END)$/)) {
 		    $name .= "($id)";
 		  }
 		  $cv_hash{$id} = "$pack\::$name";
@@ -734,8 +830,8 @@ sub exitstamp {
 	if( ! defined $x ){
 		die "Garbled profile, missing an enter time stamp";
 	}
-	if( $x->[0] ne $name ){
-	  if ($x->[0] =~ /::AUTOLOAD$/) {
+	if( $x->[0] ne $name and $opt_G and ($name =~ /$opt_G/)){
+	  if ($x->[0] =~ /(?:::)?AUTOLOAD$/) {
 	    if ($opt_A) {
 	      $name = $x->[0];
 	    }
@@ -801,10 +897,12 @@ sub run_profiler {
 	my $script = shift;
 	my $profiler = shift;
 	my $startperl = shift;
+	my @script_parts = split /\s+/, $script;
 
-	system $startperl, "-d:$profiler", $script;
+	system $startperl, "-d:$profiler", @script_parts;
 	if( $? / 256 > 0 ){
-		die "Failed: $startperl -d:$profiler $script: $!";
+		my $cmd = join ' ', @script_parts;
+		die "Failed: $startperl -d:$profiler $cmd: $!";
 	}
 }
 
@@ -814,6 +912,12 @@ sub by_ctime { $ctimes->{$b} <=> $ctimes->{$a} }
 sub by_calls { $calls->{$b} <=> $calls->{$a} }
 sub by_alpha { $names->{$a} cmp $names->{$b} }
 sub by_avgcpu { $persecs->{$b} <=> $persecs->{$a} }
+# Reversed
+sub rby_time { $times->{$a} <=> $times->{$b} }
+sub rby_ctime { $ctimes->{$a} <=> $ctimes->{$b} }
+sub rby_calls { $calls->{$a} <=> $calls->{$b} }
+sub rby_alpha { $names->{$b} cmp $names->{$a} }
+sub rby_avgcpu { $persecs->{$a} <=> $persecs->{$b} }
 
 
 format CSTAT_top =
@@ -836,3 +940,4 @@ $pcnt, $secs, $csecs, $ncalls, $percall, $cpercall, $name
 close OUT or die "Can't close $file: $!";
 chmod 0755, $file or die "Can't reset permissions for $file: $!\n";
 exec("$Config{'eunicefix'} $file") if $Config{'eunicefix'} ne ':';
+

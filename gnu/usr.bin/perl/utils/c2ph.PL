@@ -3,6 +3,28 @@
 use Config;
 use File::Basename qw(&basename &dirname);
 use Cwd;
+use subs qw(link);
+
+sub link { # This is a cut-down version of installperl:link().
+    my($from,$to) = @_;
+    my($success) = 0;
+
+    eval {
+	CORE::link($from, $to)
+	    ? $success++
+	    : ($from =~ m#^/afs/# || $to =~ m#^/afs/#)
+	      ? die "AFS"  # okay inside eval {}
+	      : die "Couldn't link $from to $to: $!\n";
+    };
+    if ($@) {
+	warn $@;
+	require File::Copy;
+	File::Copy::copy($from, $to)
+	    ? $success++
+	    : warn "Couldn't copy $from to $to: $!\n";
+    }
+    $success;
+}
 
 # List explicitly here the variables you want Configure to
 # generate.  Metaconfig only looks for shell variables, so you

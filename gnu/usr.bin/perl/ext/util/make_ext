@@ -85,16 +85,19 @@ echo "	Making $mname ($target)"
 
 cd ext/$pname
 
-# check link type and do any preliminaries
+# check link type and do any preliminaries.  Valid link types are
+# 'dynamic', 'static', and 'static_pic' (the last one respects
+# CCCDLFLAGS such as -fPIC -- see static_target in the main Makefile.SH)
 case "$target" in
-	    # convert 'static' or 'dynamic' into 'all LINKTYPE=XXX'
-static)     makeargs="LINKTYPE=static CCCDLFLAGS="
-	    target=all
-	    ;;
 dynamic)    makeargs="LINKTYPE=dynamic";
 	    target=all
 	    ;;
-
+static)     makeargs="LINKTYPE=static CCCDLFLAGS="
+	    target=all
+	    ;;
+static_pic) makeargs="LINKTYPE=static"
+	    target=all
+	    ;;
 nonxs)      makeargs="";
 	    target=all
 	    ;;
@@ -116,7 +119,7 @@ nonxs)      makeargs="";
 esac
 
 if test ! -f $makefile ; then
-	test -f Makefile.PL && ../$depth/miniperl -I../$depth/lib Makefile.PL INSTALLDIRS=perl $passthru
+	test -f Makefile.PL && ../$depth/miniperl -I../$depth/lib Makefile.PL INSTALLDIRS=perl PERL_CORE=1 $passthru
 fi
 if test ! -f $makefile ; then
 	if test -f Makefile.SH; then

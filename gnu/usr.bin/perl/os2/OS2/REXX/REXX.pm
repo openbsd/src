@@ -12,7 +12,7 @@ require OS2::DLL;
 # Other items we are prepared to export if requested
 @EXPORT_OK = qw(drop register);
 
-$VERSION = '1.00';
+$VERSION = '1.01';
 
 # We cannot just put OS2::DLL in @ISA, since some scripts would use
 # function interface, not method interface...
@@ -332,6 +332,67 @@ part of the key and it is subject to character set restrictions.
 	OS2::REXX::register("NAME" [, "NAME" [, ...]]);
 
 Since REXX is not case-sensitive, the names should be uppercase.
+
+=head1 Subcommand handlers
+
+By default, the executed REXX code runs without any default subcommand
+handler present.  A subcommand handler named C<PERLEVAL> is defined, but
+not made a default.  Use C<ADDRESS PERLEVAL> REXX command to make it a default
+handler; alternatively, use C<ADDRESS Handler WhatToDo> to direct a command
+to the handler you like.
+
+Experiments show that the handler C<CMD> is also available; probably it is
+provided by the REXX runtime.
+
+=head1 Interfacing from REXX to Perl
+
+This module provides an interface from Perl to REXX, and from REXX-inside-Perl
+back to Perl.  There is an alternative scenario which allows usage of Perl
+from inside REXX.
+
+A DLL F<PerlRexx> provides an API to Perl as REXX functions
+
+  PERL
+  PERLTERM
+  PERLINIT
+  PERLEXIT
+  PERLEVAL
+  PERLLASTERROR
+  PERLEXPORTALL
+  PERLDROPALL
+  PERLDROPALLEXIT
+
+A subcommand handler C<PERLEVALSUBCOMMAND> can also be registered.  Calling
+the function PERLEXPORTALL() exports all these functions, as well as
+exports this subcommand handler under the name C<EVALPERL>.  PERLDROPALL()
+inverts this action (and unloads PERLEXPORTALL() as well).  In particular
+
+  rc = RxFuncAdd("PerlExportAll", 'PerlRexx', "PERLEXPORTALL")
+  rc = PerlExportAll()
+  res = PERLEVAL(perlarg)
+  ADDRESS EVALPERL perlarg1
+  rc = PerlDropAllExit()
+
+loads all the functions above, evals the Perl code in the REXX variable
+C<perlarg>, putting the result into the REXX variable C<res>,
+then evals the Perl code in the REXX variable C<perlarg1>, and, finally,
+drops the loaded functions and the subcommand handler, deinitializes
+the Perl interpreter, and exits the Perl's C runtime library.
+
+PERLEXIT() or PERLDROPALLEXIT() should be called as the last command of
+the REXX program.  (This is considered as a bug.)  Their purpose is to flush
+all the output buffers of the Perl's C runtime library.
+
+C<PERLLASTERROR> gives the reason for the failure of the last PERLEVAL().
+It is useful inside C<signal on syntax> handler.  PERLINIT() and PERLTERM()
+initialize and deinitialize the Perl interpreter.
+
+C<PERLEVAL(string)> initializes the Perl interpreter (if needed), and
+evaluates C<string> as Perl code.  The result is returned to REXX stringified,
+undefined result is considered as failure.
+
+C<PERL(string)> does the same as C<PERLEVAL(string)> wrapped by calls to
+PERLINIT() and PERLEXIT().
 
 =head1 NOTES
 

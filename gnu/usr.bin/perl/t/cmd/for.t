@@ -1,6 +1,6 @@
 #!./perl
 
-print "1..10\n";
+print "1..11\n";
 
 for ($i = 0; $i <= 10; $i++) {
     $x[$i] = $i;
@@ -55,3 +55,14 @@ sub foo {
 print foo(1) == 1 ? "ok" : "not ok", " 8\n";
 print foo(2) == 2 ? "ok" : "not ok", " 9\n";
 print foo(5) == 5 ? "ok" : "not ok", " 10\n";
+
+sub bar {
+    return (1, 2, 4);
+}
+
+$a = 0;
+foreach $b (bar()) {
+    $a += $b;
+}
+print $a == 7 ? "ok" : "not ok", " 11\n";
+

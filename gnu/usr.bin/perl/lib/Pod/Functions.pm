@@ -1,13 +1,79 @@
 package Pod::Functions;
+use strict;
 
-#:vi:set ts=20
+=head1 NAME
+
+Pod::Functions - Group Perl's functions a la perlfunc.pod
+
+=head1 SYNOPSIS
+
+    use Pod:Functions;
+    
+    my @misc_ops = @{ $Kinds{ 'Misc' } };
+    my $misc_dsc = $Type_Description{ 'Misc' };
+
+or
+
+    perl /path/to/lib/Pod/Functions.pm
+
+This will print a grouped list of Perl's functions, like the 
+L<perlfunc/"Perl Functions by Category"> section.
+
+=head1 DESCRIPTION
+
+It exports the following variables:
+
+=over 4
+
+=item %Kinds
+
+This holds a hash-of-lists. Each list contains the functions in the catagory
+the key denotes.
+
+=item %Type
+
+In this hash each key represents a function and the value is the catagory.
+The catagory can be a comma separated list.
+
+=item %Flavor
+
+In this hash each key represents a function and the value is a short 
+description of that function.
+
+=item %Type_Description
+
+In this hash each key represents a catagory of functions and the value is 
+a short description of that catagory.
+
+=item @Type_Order
+
+This list of catagories is used to produce the same order as the
+L<perlfunc/"Perl Functions by Category"> section.
+
+=back
+
+=head1 CHANGES
+
+1.01 20011229 <abe@ztreet.demon.nl>
+    fixed some bugs that slipped in after 5.6.1
+    added the pod
+    finished making it strict safe
+
+1.00 ??
+    first numbered version
+
+=cut
+
+our $VERSION = '1.01';
 
 require Exporter;
 
-@ISA = qw(Exporter);
-@EXPORT = qw(%Kinds %Type %Flavor %Type_Description @Type_Order);
+our @ISA = qw(Exporter);
+our @EXPORT = qw(%Kinds %Type %Flavor %Type_Description @Type_Order);
 
-%Type_Description = (
+our(%Kinds, %Type, %Flavor);
+
+our %Type_Description = (
     'ARRAY'	=> 'Functions for real @ARRAYs',
     'Binary'	=> 'Functions for fixed length data or records',
     'File'	=> 'Functions for filehandles, files, or directories',
@@ -30,7 +96,7 @@ require Exporter;
     'Namespace'	=> 'Keywords altering or affecting scoping of identifiers',
 );
 
-@Type_Order = qw{
+our @Type_Order = qw{
     String
     Regexp
     Math
@@ -57,18 +123,19 @@ while (<DATA>) {
     chomp;
     s/#.*//;
     next unless $_;
-    ($name, $type, $text) = split " ", $_, 3;
+    my($name, $type, $text) = split " ", $_, 3;
     $Type{$name} = $type;
     $Flavor{$name} = $text;
-    for $type ( split /[,\s]+/, $type ) {
-	push @{$Kinds{$type}}, $name;
+    for my $t ( split /[,\s]+/, $type ) {
+        push @{$Kinds{$t}}, $name;
     }
-} 
+}
 
 close DATA;
 
+my( $typedesc, $list );
 unless (caller) { 
-    foreach $type ( @Type_Order ) {
+    foreach my $type ( @Type_Order ) {
 	$list = join(", ", sort @{$Kinds{$type}});
 	$typedesc = $Type_Description{$type} . ":";
 	write;
@@ -85,7 +152,7 @@ format =
 	$list
 .
 
-1
+1;
 
 __DATA__
 -X	File	a file test (-r, -x, etc)
@@ -201,6 +268,7 @@ oct	String,Math	convert a string to an octal number
 open	File	open a file, pipe, or descriptor
 opendir	File	open a directory
 ord	String	find a character's numeric representation
+our	Misc,Namespace	declare and assign a package variable (lexical scoping)
 pack	Binary,String	convert a list into a binary representation
 pipe	Process	open a pair of connected filehandles
 pop	ARRAY	remove the last element from an array and return it

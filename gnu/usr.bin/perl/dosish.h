@@ -1,3 +1,12 @@
+/*    dosish.h
+ *
+ *    Copyright (c) 1997-2002, Larry Wall
+ *
+ *    You may distribute under the terms of either the GNU General Public
+ *    License or the Artistic License, as specified in the README file.
+ *
+ */
+
 #define ABORT() abort();
 
 #ifndef SH_PATH
@@ -13,10 +22,11 @@
 #  define HAS_UTIME
 #  define HAS_KILL
    char *djgpp_pathexp (const char*);
+   void Perl_DJGPP_init (int *argcp,char ***argvp);
 #  if (DJGPP==2 && DJGPP_MINOR < 2)
 #    define NO_LOCALECONV_MON_THOUSANDS_SEP
 #  endif
-#  ifdef USE_THREADS
+#  ifdef USE_5005THREADS
 #    define OLD_PTHREADS_API
 #  endif
 #  define PERL_FS_VER_FMT	"%d_%d_%d"
@@ -25,8 +35,13 @@
 #    define PERL_SYS_INIT(c,v)	Perl_win32_init(c,v)
 #    define BIT_BUCKET "nul"
 #  else
-#    define PERL_SYS_INIT(c,v)
-#    define BIT_BUCKET "\\dev\\nul" /* "wanna be like, umm, Newlined, or somethin?" */
+#	 ifdef NETWARE
+#      define PERL_SYS_INIT(c,v)	Perl_nw5_init(c,v)
+#      define BIT_BUCKET "nwnul"
+#    else
+#      define PERL_SYS_INIT(c,v)
+#      define BIT_BUCKET "\\dev\\nul" /* "wanna be like, umm, Newlined, or somethin?" */
+#    endif /* NETWARE */
 #  endif
 #endif	/* DJGPP */
 
@@ -64,7 +79,11 @@
  *	to include <sys/stat.h> and <sys/types.h> to get any typedef'ed
  *	information.
  */
+#if defined(WIN64) || defined(USE_LARGE_FILES)
+#define Stat_t struct _stati64
+#else
 #define Stat_t struct stat
+#endif
 
 /* USE_STAT_RDEV:
  *	This symbol is defined if this system has a stat structure declaring
@@ -84,7 +103,7 @@
  *	as the first line of a Perl program designed to be executed directly
  *	by name, instead of the standard Unix #!.  If ALTERNATE_SHEBANG
  *	begins with a character other then #, then Perl will only treat
- *	it as a command line if if finds the string "perl" in the first
+ *	it as a command line if it finds the string "perl" in the first
  *	word; otherwise it's treated as the first line of code in the script.
  *	(IOW, Perl won't hand off to another interpreter via an alternate
  *	shebang sequence that might be legal Perl code.)

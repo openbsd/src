@@ -13,7 +13,7 @@ use Carp '&croak';
 use DynaLoader ();
 use Exporter ();
  
-$VERSION = '2.2';
+$VERSION = '2.3';
 @ISA = qw( Exporter DynaLoader IO::File );
 @EXPORT = qw( &O_APPEND &O_CREAT &O_EXCL  &O_NDELAY &O_NOWAIT
               &O_RDONLY &O_RDWR  &O_TRUNC &O_WRONLY );
@@ -146,7 +146,7 @@ VMS::Stdio function.  This compatibility interface will be
 removed in a future release of this extension, so please
 update your code to use the new routines.
 
-=over
+=over 4
 
 =item binmode
 
@@ -240,9 +240,7 @@ as a normal Perl file handle only.  When the scalar containing
 a VMS::Stdio file handle is overwritten, C<undef>d, or goes
 out of scope, the associated file is closed automatically.
 
-=over 4
-
-=head2 File characteristic options
+File characteristic options:
 
 =over 2
 
@@ -605,8 +603,6 @@ I/O timeout value
 
 =back
 
-=back
-
 =item vmssysopen
 
 This function bears the same relationship to the CORE function
@@ -633,6 +629,8 @@ supports this operation.  Its primary use is to send an EOF to a
 subprocess through a pipe opened for writing without closing the
 pipe.  It returns a true value if successful, and C<undef> if
 it encounters an error.
+
+=back
 
 =head1 REVISION
 

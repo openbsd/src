@@ -1,12 +1,12 @@
-# $Id: dgux.sh,v 1.8 1996-11-29 18:16:43-05 roderick Exp $
+# $Id: dgux.sh,v 1.9 2001-05-07 00:06:00-05 Takis Exp $
 
-# This is a hints file for DGUX, which is Data General's Unix.  It was
-# originally developed with version 5.4.3.10 of the OS, and then was
+# This is a hints file for DGUX, which is EMC's Data General's Unix.  It 
+# was originally developed with version 5.4.3.10 of the OS, and then was
 # later updated running under version 4.11.2 (running on m88k hardware).
 # The gross features should work with versions going back to 2.nil but
 # some tweaking will probably be necessary.
 #
-# DGUX is a SVR4 derivative.  It ships with gcc as the standard
+# DGUX is an SVR4 derivative.  It ships with gcc as the standard
 # compiler.  Since version 3.0 it has shipped with Perl 4.036
 # installed in /usr/bin, which is kind of neat.  Be careful when you
 # install that you don't overwrite the system version, though (by
@@ -16,57 +16,76 @@
 #
 # -Roderick Schertler <roderick@argon.org>
 
-# Here are the things from some old DGUX hints files which are different
-# from what's in here now.  I don't know the exact reasons that most of
-# these settings were in the hints files, presumably they can be chalked
-# up to old Configure inadequacies and changes in the OS headers and the
-# like.  These settings might make a good place to start looking if you
-# have problems.
-#
-# This was specified the the 4.036 hints file.  That hints file didn't
-# say what version of the OS it was developed using.
-#
-#     cppstdin='/lib/cpp'
-#
-# The 4.036 and 5.001 hints files both contained these.  The 5.001 hints
-# file said it was developed with version 2.01 of DGUX.
-#
-#     gidtype='gid_t'
-#     groupstype='gid_t'
-#     uidtype='uid_t'
-#     d_index='define'
-#     cc='gcc'
-#
-# These were peculiar to the 5.001 hints file.
-#
-#     ccflags='-D_POSIX_SOURCE -D_DGUX_SOURCE'
-#
-#     # an ugly hack, since the Configure test for "gcc -P -" hangs.
-#     # can't just use 'cppstdin', since our DG has a broken cppstdin :-(
-#     cppstdin=`cd ..; pwd`/cppstdin
-#     cpprun=`cd ..; pwd`/cppstdin
-#
-# One last note:  The 5.001 hints file said "you don't want to use
-# /usr/ucb/cc" in the place at which it set cc to gcc.  That in
-# particular baffles me, as I used to have 2.01 loaded and my memory
-# is telling me that even then /usr/ucb was a symlink to /usr/bin.
-
-
 # The standard system compiler is gcc, but invoking it as cc changes its
 # behavior.  I have to pick one name or the other so I can get the
 # dynamic loading switches right (they vary depending on this).  I'm
 # picking gcc because there's no way to get at the optimization options
 # and so on when you call it cc.
-case $cc in
-    '')
-	cc=gcc
-	case $optimize in
-	    '') optimize=-O2;;
-	esac
-	;;
+
+##########################################
+# Modified by Takis Psarogiannakopoulos
+# Universirty of Cambridge
+# Centre for Mathematical Sciences
+# Department of Pure Mathematics
+# Wilberforce road
+# Cambridge CB3 0WB , UK
+# e-mail <takis@XFree86.Org>
+# Use GCC-2.95.2/3 rev (DG/UX) for threads
+# This compiler supports the -pthread switch
+# to link correctly DG/UX 's -lthread.
+# March 2002
+###########################################
+
+cc=gcc
+ccflags="-DDGUX -D_DGUX_SOURCE"
+# Debug build. If using GNU as,ld use the flag -gstabs+
+# ccflags="-g -mstandard -DDGUX -D_DGUX_SOURCE -DDEBUGGING"
+# Dummy ; always compile with -O2 on GCC 2.95.2/3 rev (DG/UX)
+# even if you debugging the program!
+optimize="-mno-legend -O2"
+
+archname="ix86-dgux"
+libpth="/usr/lib"
+
+#####################################
+# <takis@XFree86.Org>
+# Change this if you want.
+# prefix =/usr/local
+#####################################
+
+prefix=/usr/local
+perlpath="$prefix/bin/perl58"
+startperl="#! $prefix/bin/perl58"
+privlib="$prefix/lib/perl58"
+man1dir="$prefix/man/man1"
+man3dir="$prefix/man/man3"
+
+sitearch="$prefix/lib/perl58/$archname"
+sitelib="$prefix/lib/perl58"
+
+#Do not overwrite by default /usr/bin/perl of DG/UX
+installusrbinperl="$undef"
+
+# Configure may fail to find lstat()
+# function in <sys/stat.h>.
+d_lstat='define'
+
+# Internal (perl) malloc is causing serious problems and
+# test failures in DG/UX. Most notable Embed.t 
+# So for perl-5.7.3 and on do NOT use. 
+# I have no time to investigate more.
+# <takis@XFree86.Org>
+
+case "$usemymalloc" in
+'') usemymalloc='n' ;;
 esac
 
-usevfork=true
+case "$uselongdouble" in
+'') uselongdouble='y' ;;
+esac
+
+#usevfork=true
+usevfork=false
 
 # DG has this thing set up with symlinks which point to different places
 # depending on environment variables (see elink(5)) and the compiler and
@@ -117,20 +136,104 @@ done
 plibpth="$plibpth $sde_path/$sde/usr/lib"
 unset sde_path default_sde sde
 
+#####################################
+# <takis@XFree86.Org>
+#####################################
+
+libperl="libperl58.so"
+
 # Many functions (eg, gethostent(), killpg(), getpriority(), setruid()
 # dbm_*(), and plenty more) are defined in -ldgc.  Usually you don't
 # need to know this (it seems that libdgc.so is searched automatically
 # by ld), but Configure needs to check it otherwise it will report all
 # those functions as missing.
-libswanted="dgc $libswanted"
+
+#####################################
+# <takis@XFree86.Org>
+#####################################
+
+# libswanted="dgc gdbm $libswanted"
+#libswanted="dbm posix $libswanted"
+# Do *NOT* add there the malloc native 
+# DG/UX library!
+libswanted="dbm posix resolv socket nsl dl m"
+
+#####################################
+# <takis@XFree86.Org>
+#####################################
+
+mydomain='.localhost'
+cf_by=`(whoami) 2>/dev/null`
+cf_email="$cf_by@localhost"
 
 # Dynamic loading works using the dlopen() functions.  Note that dlfcn.h
 # used to be broken, it declared _dl*() rather than dl*().  This was the
 # case up to 3.10, it has been fixed in 4.11.  I'm not sure if it was
 # fixed in 4.10.  If you have the older header just ignore the warnings
 # (since pointers and integers have the same format on m88k).
-usedl=true
+
+# usedl=true
+usedl=false
+
 # For cc rather than gcc the flags would be `-K PIC' for compiling and
 # -G for loading.  I haven't tested this.
-cccdlflags=-fpic
-lddlflags=-shared
+
+#####################################
+# <takis@XFree86.Org>
+# Use -fPIC instead -fpic 
+#####################################
+
+cccdlflags=-fPIC
+#We must use gcc
+ld="gcc"
+lddlflags="-shared"
+
+############################################################################
+# DGUX Posix 4A Draft 10 Thread support
+# <takis@XFree86.Org>
+# use Configure -Dusethreads to enable
+############################################################################
+
+cat > UU/usethreads.cbu <<'EOCBU'
+case "$usethreads" in
+$define|true|[yY]*)
+	ccflags="$ccflags"
+	# DG/UX has this for sure! Main Configure fails to
+	# detect it but it is needed!
+	d_pthread_atfork='define'
+	shift
+	# DG/UX's sched_yield is in -lrte
+	# Do *NOT* add there the malloc native 
+	# DG/UX library!
+	libswanted="dbm posix resolv socket nsl dl m rte"
+	archname="ix86-dgux-thread"
+	sitearch="$prefix/lib/perl58/$archname"
+	sitelib="$prefix/lib/perl58"
+  case "$cc" in
+	*gcc*)
+	   #### Use GCC -2.95.2/3 rev (DG/UX) and -pthread
+	   #### Otherwise take out the switch -pthread 
+	   #### And add manually the -D_POSIX4A_DRAFT10_SOURCE flag.
+	   ld="gcc"
+	   ccflags="$ccflags -D_POSIX4A_DRAFT10_SOURCE"
+	   # Debug build : use -DS flag on command line perl
+	   # ccflags="$ccflags -g -mstandard -DDEBUGGING -D_POSIX4A_DRAFT10_SOURCE -pthread"
+	   cccdlflags='-fPIC'
+	   lddlflags="-shared"
+	   #### Use GCC -2.95.2/3 rev (DG/UX) and -pthread
+	   #### Otherwise take out the switch -pthread
+	   #### And add manually the -lthread library.
+	   ldflags="$ldflags -pthread"
+	;;
+
+	*)
+	   echo "Not supported DG/UX cc and threads !"
+	;;
+  esac
+esac
+EOCBU
+
+# "./Configure -d" can't figure this out easily
+d_suidsafe='define'
+
+###################################################

@@ -1,210 +1,353 @@
 #!./perl
 
-# $RCSfile: fs.t,v $$Revision: 4.1 $$Date: 92/08/07 18:27:28 $
-
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
+    require "./test.pl";
 }
 
 use Config;
+use File::Spec::Functions;
 
-$Is_Dosish = ($^O eq 'MSWin32' or $^O eq 'dos' or
-	      $^O eq 'os2' or $^O eq 'mint');
+my $Is_MacOS  = ($^O eq 'MacOS');
+my $Is_VMSish = ($^O eq 'VMS');
+
+if (($^O eq 'MSWin32') || ($^O eq 'NetWare')) {
+    $wd = `cd`;
+} elsif ($^O eq 'VMS') {
+    $wd = `show default`;
+} else {
+    $wd = `pwd`;
+}
+chomp($wd);
+
+my $has_link            = $Config{d_link};
+my $accurate_timestamps =
+    !($^O eq 'MSWin32' || $^O eq 'NetWare' ||
+      $^O eq 'dos'     || $^O eq 'os2'     ||
+      $^O eq 'mint'    || $^O eq 'cygwin'  ||
+      $^O eq 'amigaos' || $wd =~ m#$Config{afsroot}/# ||
+      $Is_MacOS
+     );
 
 if (defined &Win32::IsWinNT && Win32::IsWinNT()) {
-    $Is_Dosish = '' if Win32::FsType() eq 'NTFS';
+    if (Win32::FsType() eq 'NTFS') {
+        $has_link            = 1;
+        $accurate_timestamps = 1;
+    }
 }
 
-print "1..29\n";
+my $needs_fh_reopen =
+    $^O eq 'dos'
+    # Not needed on HPFS, but needed on HPFS386 ?!
+    || $^O eq 'os2';
 
-$wd = (($^O eq 'MSWin32') ? `cd` : `pwd`);
-chop($wd);
+$needs_fh_reopen = 1 if (defined &Win32::IsWin95 && Win32::IsWin95());
 
-if ($^O eq 'MSWin32') { `rmdir /s /q tmp 2>nul`; `mkdir tmp`; }
-else {  `rm -f tmp 2>/dev/null; mkdir tmp 2>/dev/null`; }
-chdir './tmp';
+my $skip_mode_checks =
+    $^O eq 'cygwin' && $ENV{CYGWIN} !~ /ntsec/;
+
+plan tests => 32;
+
+
+if (($^O eq 'MSWin32') || ($^O eq 'NetWare')) {
+    `rmdir /s /q tmp 2>nul`;
+    `mkdir tmp`;
+}
+elsif ($^O eq 'VMS') {
+    `if f\$search("[.tmp]*.*") .nes. "" then delete/nolog/noconfirm [.tmp]*.*.*`;
+    `if f\$search("tmp.dir") .nes. "" then delete/nolog/noconfirm tmp.dir;`;
+    `create/directory [.tmp]`;
+}
+elsif ($Is_MacOS) {
+    rmdir "tmp"; mkdir "tmp";
+}
+else {
+    `rm -f tmp 2>/dev/null; mkdir tmp 2>/dev/null`;
+}
+
+chdir catdir(curdir(), 'tmp');
+
 `/bin/rm -rf a b c x` if -x '/bin/rm';
 
 umask(022);
 
-if ($^O eq 'MSWin32') { print "ok 1 # skipped: bogus umask()\n"; }
-elsif ((umask(0)&0777) == 022) {print "ok 1\n";} else {print "not ok 1\n";}
+SKIP: {
+    skip "bogus umask", 1 if ($^O eq 'MSWin32') || ($^O eq 'NetWare') || ($^O eq 'epoc') || $Is_MacOS;
+
+    is((umask(0)&0777), 022, 'umask'),
+}
+
 open(fh,'>x') || die "Can't create x";
 close(fh);
 open(fh,'>a') || die "Can't create a";
 close(fh);
 
-if ($Is_Dosish) {print "ok 2 # skipped: no link\n";} 
-elsif (eval {link('a','b')}) {print "ok 2\n";} 
-else {print "not ok 2\n";}
+my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,
+    $blksize,$blocks);
 
-if ($Is_Dosish) {print "ok 3 # skipped: no link\n";} 
-elsif (eval {link('b','c')}) {print "ok 3\n";} 
-else {print "not ok 3\n";}
+SKIP: {
+    skip("no link", 4) unless $has_link;
 
-($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,
-    $blksize,$blocks) = stat('c');
+    ok(link('a','b'), "link a b");
+    ok(link('b','c'), "link b c");
 
-if ($Config{dont_use_nlink} || $Is_Dosish)
-    {print "ok 4 # skipped: no link\n";} 
-elsif ($nlink == 3)
-    {print "ok 4\n";} 
-else {print "not ok 4\n";}
+    ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,
+     $blksize,$blocks) = stat('c');
 
-if ($^O eq 'amigaos' || $Is_Dosish)
-    {print "ok 5 # skipped: no link\n";} 
-elsif (($mode & 0777) == 0666)
-    {print "ok 5\n";} 
-else {print "not ok 5\n";}
+    SKIP: {
+        skip "no nlink", 1 if $Config{dont_use_nlink};
 
-$newmode = $^O eq 'MSWin32' ? 0444 : 0777;
-if ((chmod $newmode,'a') == 1) {print "ok 6\n";} else {print "not ok 6\n";}
+        is($nlink, 3, "link count of triply-linked file");
+    }
 
-($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,
-    $blksize,$blocks) = stat('c');
-if ($Is_Dosish) {print "ok 7 # skipped: no link\n";} 
-elsif (($mode & 0777) == $newmode) {print "ok 7\n";} 
-else {print "not ok 7\n";}
+    SKIP: {
+        skip "hard links not that hard in $^O", 1 if $^O eq 'amigaos';
+	skip "no mode checks", 1 if $skip_mode_checks;
 
-$newmode = 0700;
-if ($^O eq 'MSWin32') {
-    chmod 0444, 'x';
-    $newmode = 0666;
+#      if ($^O eq 'cygwin') { # new files on cygwin get rwx instead of rw-
+#          is($mode & 0777, 0777, "mode of triply-linked file");
+#      } else {
+            is($mode & 0777, 0666, "mode of triply-linked file");
+#      }
+    }
 }
 
-if ($Is_Dosish) {print "ok 8 # skipped: no link\n";} 
-elsif ((chmod $newmode,'c','x') == 2) {print "ok 8\n";} 
-else {print "not ok 8\n";}
+$newmode = (($^O eq 'MSWin32') || ($^O eq 'NetWare')) ? 0444 : 0777;
+
+is(chmod($newmode,'a'), 1, "chmod succeeding");
+
+SKIP: {
+    skip("no link", 7) unless $has_link;
+
+    ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,
+     $blksize,$blocks) = stat('c');
+
+    SKIP: {
+	skip "no mode checks", 1 if $skip_mode_checks;
+
+        is($mode & 0777, $newmode, "chmod going through");
+    }
+
+    $newmode = 0700;
+    chmod 0444, 'x';
+    $newmode = 0666;
+
+    is(chmod($newmode,'c','x'), 2, "chmod two files");
+
+    ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,
+     $blksize,$blocks) = stat('c');
+
+    SKIP: {
+	skip "no mode checks", 1 if $skip_mode_checks;
+
+        is($mode & 0777, $newmode, "chmod going through to c");
+    }
+
+    ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,
+     $blksize,$blocks) = stat('x');
+
+    SKIP: {
+	skip "no mode checks", 1 if $skip_mode_checks;
+
+        is($mode & 0777, $newmode, "chmod going through to x");
+    }
+
+    is(unlink('b','x'), 2, "unlink two files");
+
+    ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,
+     $blksize,$blocks) = stat('b');
+
+    is($ino, undef, "ino of removed file b should be undef");
+
+    ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,
+     $blksize,$blocks) = stat('x');
+
+    is($ino, undef, "ino of removed file x should be undef");
+}
+
+is(rename('a','b'), 1, "rename a b");
 
 ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,
-    $blksize,$blocks) = stat('c');
-if ($Is_Dosish) {print "ok 9 # skipped: no link\n";} 
-elsif (($mode & 0777) == $newmode) {print "ok 9\n";} 
-else {print "not ok 9\n";}
+ $blksize,$blocks) = stat('a');
 
-($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,
-    $blksize,$blocks) = stat('x');
-if ($Is_Dosish) {print "ok 10 # skipped: no link\n";} 
-elsif (($mode & 0777) == $newmode) {print "ok 10\n";} 
-else {print "not ok 10\n";}
+is($ino, undef, "ino of renamed file a should be undef");
 
-if ($Is_Dosish) {print "ok 11 # skipped: no link\n"; unlink 'b','x'; } 
-elsif ((unlink 'b','x') == 2) {print "ok 11\n";} 
-else {print "not ok 11\n";}
-($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,
-    $blksize,$blocks) = stat('b');
-if ($ino == 0) {print "ok 12\n";} else {print "not ok 12\n";}
-($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,
-    $blksize,$blocks) = stat('x');
-if ($ino == 0) {print "ok 13\n";} else {print "not ok 13\n";}
-
-if (rename('a','b')) {print "ok 14\n";} else {print "not ok 14\n";}
-($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,
-    $blksize,$blocks) = stat('a');
-if ($ino == 0) {print "ok 15\n";} else {print "not ok 15\n";}
-$delta = $Is_Dosish ? 2 : 1;	# Granularity of time on the filesystem
+$delta = $accurate_timestamps ? 1 : 2;	# Granularity of time on the filesystem
 chmod 0777, 'b';
 $foo = (utime 500000000,500000000 + $delta,'b');
-if ($foo == 1) {print "ok 16\n";} else {print "not ok 16 $foo\n";}
-($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,
-    $blksize,$blocks) = stat('b');
-if ($^O eq 'MSWin32') { print "ok 17 # skipped: bogus (stat)[1]\n"; }
-elsif ($ino) {print "ok 17\n";} else {print "not ok 17\n";}
-if ($wd =~ m#/afs/# || $^O eq 'amigaos' || $^O eq 'dos' || $^O eq 'MSWin32')
-    {print "ok 18 # skipped: granularity of the filetime\n";}
-elsif ($atime == 500000000 && $mtime == 500000000 + $delta)
-    {print "ok 18\n";}
-elsif ($^O =~ /\blinux\b/i) {
-    # Maybe stat() cannot get the correct atime, as happens via NFS on linux?
-    $foo = (utime 400000000,500000000 + 2*$delta,'b');
-    my ($new_atime, $new_mtime) = (stat('b'))[8,9];
-    if ($new_atime == $atime && $new_mtime - $mtime == $delta)
-	{print "ok 18 # accounted for possible NFS/glibc2.2 bug on linux\n";}
-    else
-	{print "not ok 18 $atime/$new_atime $mtime/$new_mtime\n";}
-} else
-    {print "not ok 18 $atime $mtime\n";}
 
-if ((unlink 'b') == 1) {print "ok 19\n";} else {print "not ok 19\n";}
+is($foo, 1, "utime");
+
 ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,
     $blksize,$blocks) = stat('b');
-if ($ino == 0) {print "ok 20\n";} else {print "not ok 20\n";}
+
+SKIP: {
+    skip "bogus inode num", 1 if ($^O eq 'MSWin32') || ($^O eq 'NetWare');
+
+    ok($ino,    'non-zero inode num');
+}
+
+SKIP: {
+    skip "filesystem atime/mtime granularity too low", 2
+      unless $accurate_timestamps;
+
+    print "# atime - $atime  mtime - $mtime  delta - $delta\n";
+    if($atime == 500000000 && $mtime == 500000000 + $delta) {
+        pass('atime');
+        pass('mtime');
+    }
+    else {
+        if ($^O =~ /\blinux\b/i) {
+            print "# Maybe stat() cannot get the correct atime, ".
+                  "as happens via NFS on linux?\n";
+            $foo = (utime 400000000,500000000 + 2*$delta,'b');
+            my ($new_atime, $new_mtime) = (stat('b'))[8,9];
+            print "# newatime - $new_atime  nemtime - $new_mtime\n";
+            if ($new_atime == $atime && $new_mtime - $mtime == $delta) {
+                pass("atime - accounted for possible NFS/glibc2.2 bug on linux");
+                pass("mtime - accounted for possible NFS/glibc2.2 bug on linux");
+            }
+            else {
+                fail("atime - $atime/$new_atime $mtime/$new_mtime");
+                fail("mtime - $atime/$new_atime $mtime/$new_mtime");
+            }
+        }
+        elsif ($^O eq 'VMS') {
+            # why is this 1 second off?
+            is( $atime, 500000001,          'atime' );
+            is( $mtime, 500000000 + $delta, 'mtime' );
+        }
+        elsif ($^O eq 'beos') {
+            SKIP: { skip "atime not updated", 1; }
+            is($mtime, 500000001, 'mtime');
+        }
+        else {
+            fail("atime");
+            fail("mtime");
+        }
+    }
+}
+
+is(unlink('b'), 1, "unlink b");
+
+($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,
+    $blksize,$blocks) = stat('b');
+is($ino, undef, "ino of unlinked file b should be undef");
 unlink 'c';
 
 chdir $wd || die "Can't cd back to $wd";
 
-unlink 'c';
-if ($^O ne 'MSWin32' and `ls -l perl 2>/dev/null` =~ /^l.*->/) {
-    # we have symbolic links
+# Yet another way to look for links (perhaps those that cannot be
+# created by perl?).  Hopefully there is an ls utility in your
+# %PATH%. N.B. that $^O is 'cygwin' on Cygwin.
+
+SKIP: {
+    skip "Win32/Netware specific test", 2
+      unless ($^O eq 'MSWin32') || ($^O eq 'NetWare');
+    skip "No symbolic links found to test with", 2
+      unless  `ls -l perl 2>nul` =~ /^l.*->/;
+
     system("cp TEST TEST$$");
     # we have to copy because e.g. GNU grep gets huffy if we have
     # a symlink forest to another disk (it complains about too many
     # levels of symbolic links, even if we have only two)
-    if (symlink("TEST$$","c")) {print "ok 21\n";} else {print "not ok 21\n";}
+    is(symlink("TEST$$","c"), 1, "symlink");
     $foo = `grep perl c 2>&1`;
-    if ($foo) {print "ok 22\n";} else {print "not ok 22\n";}
+    ok($foo, "found perl in c");
     unlink 'c';
     unlink("TEST$$");
 }
-else {
-    print "ok 21\nok 22\n";
-}
 
-# truncate (may not be implemented everywhere)
 unlink "Iofs.tmp";
-`echo helloworld > Iofs.tmp`;
-eval { truncate "Iofs.tmp", 5; };
-if ($@ =~ /not implemented/) {
-  print "# truncate not implemented -- skipping tests 23 through 26\n";
-  for (23 .. 26) {
-    print "ok $_\n";
-  }
-}
-else {
-  if (-s "Iofs.tmp" == 5) {print "ok 23\n"} else {print "not ok 23\n"}
-  truncate "Iofs.tmp", 0;
-  if (-z "Iofs.tmp") {print "ok 24\n"} else {print "not ok 24\n"}
-  open(FH, ">Iofs.tmp") or die "Can't create Iofs.tmp";
-  binmode FH;
-  { select FH; $| = 1; select STDOUT }
-  {
-    use strict;
+open IOFSCOM, ">Iofs.tmp" or die "Could not write IOfs.tmp: $!";
+print IOFSCOM 'helloworld';
+close(IOFSCOM);
+
+# TODO: pp_truncate needs to be taught about F_CHSIZE and F_FREESP,
+# as per UNIX FAQ.
+
+SKIP: {
+# Check truncating a closed file.
+    eval { truncate "Iofs.tmp", 5; };
+
+    skip("no truncate - $@", 6) if $@;
+
+    is(-s "Iofs.tmp", 5, "truncation to five bytes");
+
+    truncate "Iofs.tmp", 0;
+
+    ok(-z "Iofs.tmp",    "truncation to zero bytes");
+
+#these steps are necessary to check if file is really truncated
+#On Win95, FH is updated, but file properties aren't
+    open(FH, ">Iofs.tmp") or die "Can't create Iofs.tmp";
     print FH "x\n" x 200;
-    truncate(FH, 200) or die "Can't truncate FH: $!";
-  }
-  if ($^O eq 'dos'
-	# Not needed on HPFS, but needed on HPFS386 ?!
-      or $^O eq 'os2')
-  {
-      close (FH); open (FH, ">>Iofs.tmp") or die "Can't reopen Iofs.tmp";
-  }
-  if (-s "Iofs.tmp" == 200) {print "ok 25\n"} else {print "not ok 25\n"}
-  truncate FH, 0;
-  if ($^O eq 'dos'
-	# Not needed on HPFS, but needed on HPFS386 ?!
-      or $^O eq 'os2')
-  {
-      close (FH); open (FH, ">>Iofs.tmp") or die "Can't reopen Iofs.tmp";
-  }
-  if (-z "Iofs.tmp") {print "ok 26\n"} else {print "not ok 26\n"}
-  close FH;
+    close FH;
+
+# Check truncating an open file.
+    open(FH, ">>Iofs.tmp") or die "Can't open Iofs.tmp for appending";
+
+    binmode FH;
+    select FH;
+    $| = 1;
+    select STDOUT;
+
+    {
+	use strict;
+	print FH "x\n" x 200;
+	ok(truncate(FH, 200), "fh resize to 200");
+    }
+
+    if ($needs_fh_reopen) {
+	close (FH); open (FH, ">>Iofs.tmp") or die "Can't reopen Iofs.tmp";
+    }
+
+    if ($^O eq 'vos') {
+        skip ("# TODO - hit VOS bug posix-973 - cannot resize an open file below the current file pos.", 3);
+    }
+
+    is(-s "Iofs.tmp", 200, "fh resize to 200 working (filename check)");
+
+    ok(truncate(FH, 0), "fh resize to zero");
+
+    if ($needs_fh_reopen) {
+	close (FH); open (FH, ">>Iofs.tmp") or die "Can't reopen Iofs.tmp";
+    }
+
+    ok(-z "Iofs.tmp", "fh resize to zero working (filename check)");
+
+    close FH;
 }
 
 # check if rename() can be used to just change case of filename
-chdir './tmp';
-open(fh,'>x') || die "Can't create x";
-close(fh);
-rename('x', 'X');
-print 'not ' unless -e 'X';
-print "ok 27\n";
-unlink 'X';
-chdir $wd || die "Can't cd back to $wd";
+SKIP: {
+    skip "Works in Cygwin only if check_case is set to relaxed", 1
+      if $^O eq 'cygwin';
+
+    chdir './tmp';
+    open(fh,'>x') || die "Can't create x";
+    close(fh);
+    rename('x', 'X');
+
+    # this works on win32 only, because fs isn't casesensitive
+    ok(-e 'X', "rename working");
+
+    1 while unlink 'X';
+    chdir $wd || die "Can't cd back to $wd";
+}
 
 # check if rename() works on directories
-rename 'tmp', 'tmp1' or print "not ";
-print "ok 28\n";
--d 'tmp1' or print "not ";
-print "ok 29\n";
+if ($^O eq 'VMS') {
+    # must have delete access to rename a directory
+    `set file tmp.dir/protection=o:d`;
+    ok(rename('tmp.dir', 'tmp1.dir'), "rename on directories") ||
+      print "# errno: $!\n";
+} else {
+    ok(rename('tmp', 'tmp1'), "rename on directories");
+}
 
-END { rmdir 'tmp1'; unlink "Iofs.tmp"; }
+ok(-d 'tmp1', "rename on directories working");
+
+# need to remove 'tmp' if rename() in test 28 failed!
+END { rmdir 'tmp1'; rmdir 'tmp'; unlink "Iofs.tmp"; }

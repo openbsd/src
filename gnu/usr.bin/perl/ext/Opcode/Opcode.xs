@@ -7,10 +7,21 @@
 #define OP_MASK_BUF_SIZE (MAXO + 100)
 
 /* XXX op_named_bits and opset_all are never freed */
-static HV *op_named_bits;	/* cache shared for whole process	*/
-static SV *opset_all;		/* mask with all bits set		*/
-static IV  opset_len;		/* length of opmasks in bytes		*/
-static int opcode_debug = 0;
+#define MY_CXT_KEY "Opcode::_guts" XS_VERSION
+
+typedef struct {
+    HV *	x_op_named_bits;	/* cache shared for whole process */
+    SV *	x_opset_all;		/* mask with all bits set	*/
+    IV		x_opset_len;		/* length of opmasks in bytes	*/
+    int		x_opcode_debug;
+} my_cxt_t;
+
+START_MY_CXT
+
+#define op_named_bits		(MY_CXT.x_op_named_bits)
+#define opset_all		(MY_CXT.x_opset_all)
+#define opset_len		(MY_CXT.x_opset_len)
+#define opcode_debug		(MY_CXT.x_opcode_debug)
 
 static SV  *new_opset (pTHX_ SV *old_opset);
 static int  verify_opset (pTHX_ SV *opset, int fatal);
@@ -34,6 +45,7 @@ op_names_init(pTHX)
     STRLEN len;
     char **op_names;
     char *bitmap;
+    dMY_CXT;
 
     op_named_bits = newHV();
     op_names = get_op_names();
@@ -50,7 +62,7 @@ op_names_init(pTHX)
     bitmap = SvPV(opset_all, len);
     i = len-1; /* deal with last byte specially, see below */
     while(i-- > 0)
-	bitmap[i] = 0xFF;
+	bitmap[i] = (char)0xFF;
     /* Take care to set the right number of bits in the last byte */
     bitmap[len-1] = (PL_maxo & 0x07) ? ~(0xFF << (PL_maxo & 0x07)) : 0xFF;
     put_op_bitspec(aTHX_ ":all",0, opset_all); /* don't mortalise */
@@ -66,6 +78,8 @@ static void
 put_op_bitspec(pTHX_ char *optag, STRLEN len, SV *mask)
 {
     SV **svp;
+    dMY_CXT;
+
     verify_opset(aTHX_ mask,1);
     if (!len)
 	len = strlen(optag);
@@ -87,6 +101,8 @@ static SV *
 get_op_bitspec(pTHX_ char *opname, STRLEN len, int fatal)
 {
     SV **svp;
+    dMY_CXT;
+
     if (!len)
 	len = strlen(opname);
     svp = hv_fetch(op_named_bits, opname, len, 0);
@@ -110,6 +126,8 @@ static SV *
 new_opset(pTHX_ SV *old_opset)
 {
     SV *opset;
+    dMY_CXT;
+
     if (old_opset) {
 	verify_opset(aTHX_ old_opset,1);
 	opset = newSVsv(old_opset);
@@ -129,9 +147,11 @@ static int
 verify_opset(pTHX_ SV *opset, int fatal)
 {
     char *err = Nullch;
+    dMY_CXT;
+
     if      (!SvOK(opset))              err = "undefined";
     else if (!SvPOK(opset))             err = "wrong type";
-    else if (SvCUR(opset) != opset_len) err = "wrong size";
+    else if (SvCUR(opset) != (STRLEN)opset_len) err = "wrong size";
     if (err && fatal) {
 	croak("Invalid opset: %s", err);
     }
@@ -142,6 +162,8 @@ verify_opset(pTHX_ SV *opset, int fatal)
 static void
 set_opset_bits(pTHX_ char *bitmap, SV *bitspec, int on, char *opname)
 {
+    dMY_CXT;
+
     if (SvIOK(bitspec)) {
 	int myopcode = SvIV(bitspec);
 	int offset = myopcode >> 3;
@@ -156,7 +178,7 @@ set_opset_bits(pTHX_ char *bitmap, SV *bitspec, int on, char *opname)
 	else
 	    bitmap[offset] &= ~(1 << bit);
     }
-    else if (SvPOK(bitspec) && SvCUR(bitspec) == opset_len) {
+    else if (SvPOK(bitspec) && SvCUR(bitspec) == (STRLEN)opset_len) {
 
 	STRLEN len;
 	char *specbits = SvPV(bitspec, len);
@@ -180,6 +202,7 @@ opmask_add(pTHX_ SV *opset)	/* THE ONLY FUNCTION TO EDIT PL_op_mask ITSELF	*/
     char *bitmask;
     STRLEN len;
     int myopcode = 0;
+    dMY_CXT;
 
     verify_opset(aTHX_ opset,1);		/* croaks on bad opset	*/
 
@@ -204,14 +227,14 @@ static void
 opmask_addlocal(pTHX_ SV *opset, char *op_mask_buf) /* Localise PL_op_mask then opmask_add() */
 {
     char *orig_op_mask = PL_op_mask;
+    dMY_CXT;
+
     SAVEVPTR(PL_op_mask);
-#if !defined(PERL_OBJECT)
     /* XXX casting to an ordinary function ptr from a member function ptr
      * is disallowed by Borland
      */
     if (opcode_debug >= 2)
 	SAVEDESTRUCTOR((void(*)(void*))Perl_warn,"PL_op_mask restored");
-#endif
     PL_op_mask = &op_mask_buf[0];
     if (orig_op_mask)
 	Copy(orig_op_mask, PL_op_mask, PL_maxo, char);
@@ -227,11 +250,34 @@ MODULE = Opcode	PACKAGE = Opcode
 PROTOTYPES: ENABLE
 
 BOOT:
+{
+    MY_CXT_INIT;
     assert(PL_maxo < OP_MASK_BUF_SIZE);
     opset_len = (PL_maxo + 7) / 8;
     if (opcode_debug >= 1)
 	warn("opset_len %ld\n", (long)opset_len);
     op_names_init(aTHX);
+}
+
+void
+_safe_pkg_prep(Package)
+    char *	Package
+PPCODE:
+    HV *hv; 
+    ENTER;
+   
+    hv = gv_stashpv(Package, GV_ADDWARN); /* should exist already	*/
+
+    if (strNE(HvNAME(hv),"main")) {
+        Safefree(HvNAME(hv));         
+        HvNAME(hv) = savepv("main"); /* make it think it's in main:: */
+        hv_store(hv,"_",1,(SV *)PL_defgv,0);  /* connect _ to global */
+        SvREFCNT_inc((SV *)PL_defgv);  /* want to keep _ around! */
+    }
+    LEAVE;
+
+
+
 
 
 void
@@ -253,6 +299,7 @@ PPCODE:
     save_hptr(&PL_defstash);		/* save current default stash	*/
     /* the assignment to global defstash changes our sense of 'main'	*/
     PL_defstash = gv_stashpv(Package, GV_ADDWARN); /* should exist already	*/
+
     save_hptr(&PL_curstash);
     PL_curstash = PL_defstash;
 
@@ -289,7 +336,9 @@ invert_opset(opset)
 CODE:
     {
     char *bitmap;
+    dMY_CXT;
     STRLEN len = opset_len;
+
     opset = sv_2mortal(new_opset(aTHX_ opset));	/* verify and clone opset */
     bitmap = SvPVX(opset);
     while(len-- > 0)
@@ -311,6 +360,8 @@ PPCODE:
     int i, j, myopcode;
     char *bitmap = SvPV(opset, len);
     char **names = (desc) ? get_op_descs() : get_op_names();
+    dMY_CXT;
+
     verify_opset(aTHX_ opset,1);
     for (myopcode=0, i=0; i < opset_len; i++) {
 	U16 bits = bitmap[i];
@@ -329,6 +380,7 @@ CODE:
     SV *bitspec, *opset;
     char *bitmap;
     STRLEN len, on;
+
     opset = sv_2mortal(new_opset(aTHX_ Nullsv));
     bitmap = SvPVX(opset);
     for (i = 0; i < items; i++) {
@@ -363,6 +415,7 @@ CODE:
     SV *bitspec, *mask;
     char *bitmap, *opname;
     STRLEN len;
+    dMY_CXT;
 
     if (!SvROK(safe) || !SvOBJECT(SvRV(safe)) || SvTYPE(SvRV(safe))!=SVt_PVHV)
 	croak("Not a Safe object");
@@ -397,6 +450,8 @@ PPCODE:
     STRLEN len;
     SV **args;
     char **op_desc = get_op_descs(); 
+    dMY_CXT;
+
     /* copy args to a scratch area since we may push output values onto	*/
     /* the stack faster than we read values off it if masks are used.	*/
     args = (SV**)SvPVX(sv_2mortal(newSVpvn((char*)&ST(0), items*sizeof(SV*))));
@@ -409,7 +464,7 @@ PPCODE:
 		croak("panic: opcode %d (%s) out of range",myopcode,opname);
 	    XPUSHs(sv_2mortal(newSVpv(op_desc[myopcode], 0)));
 	}
-	else if (SvPOK(bitspec) && SvCUR(bitspec) == opset_len) {
+	else if (SvPOK(bitspec) && SvCUR(bitspec) == (STRLEN)opset_len) {
 	    int b, j;
 	    STRLEN n_a;
 	    char *bitmap = SvPV(bitspec,n_a);
@@ -434,6 +489,7 @@ define_optag(optagsv, mask)
 CODE:
     STRLEN len;
     char *optag = SvPV(optagsv, len);
+
     put_op_bitspec(aTHX_ optag, len, mask); /* croaks */
     ST(0) = &PL_sv_yes;
 
@@ -446,6 +502,7 @@ CODE:
 void
 full_opset()
 CODE:
+    dMY_CXT;
     ST(0) = sv_2mortal(new_opset(aTHX_ opset_all));
 
 void

@@ -23,21 +23,26 @@
 
 #include <CodeFragments.h>
 
-
-#include "dlutils.c"	/* SaveError() etc	*/
-
 typedef CFragConnectionID ConnectionID;
 
-static ConnectionID **	connections;
+typedef struct {
+    ConnectionID **	x_connections;
+} my_cxtx_t;		/* this *must* be named my_cxtx_t */
 
-static void terminate(void)
+#define DL_CXT_EXTRA	/* ask for dl_cxtx to be defined in dlutils.c */
+#include "dlutils.c"	/* SaveError() etc	*/
+
+#define dl_connections	(dl_cxtx.x_connections)
+
+static void terminate(pTHX_ void *ptr)
 {
-    int size = GetHandleSize((Handle) connections) / sizeof(ConnectionID);
-    HLock((Handle) connections);
+    dMY_CXT;
+    int size = GetHandleSize((Handle) dl_connections) / sizeof(ConnectionID);
+    HLock((Handle) dl_connections);
     while (size)
-    	CloseConnection(*connections + --size);
-    DisposeHandle((Handle) connections);
-    connections = nil;
+    	CloseConnection(*dl_connections + --size);
+    DisposeHandle((Handle) dl_connections);
+    dl_connections = nil;
 }
 
 static void
@@ -70,11 +75,12 @@ dl_load_file(filename, flags=0)
 	    GetDiskFragment(
 	    	&spec, 0, 0, spec.name, kLoadCFrag, &connID, &mainAddr, errName);
     if (!err) {
-    	if (!connections) {
-	    connections = (ConnectionID **)NewHandle(0);
-	    atexit(terminate);
+	dMY_CXT;
+    	if (!dl_connections) {
+	    dl_connections = (ConnectionID **)NewHandle(0);
+	    call_atexit(terminate, (void*)0);
     	}
-        PtrAndHand((Ptr) &connID, (Handle) connections, sizeof(ConnectionID));
+        PtrAndHand((Ptr) &connID, (Handle) dl_connections, sizeof(ConnectionID));
     	RETVAL = connID;
     } else
     	RETVAL = (ConnectionID) 0;
@@ -130,7 +136,8 @@ dl_install_xsub(perl_name, symref, filename="$Package")
 char *
 dl_error()
     CODE:
-    RETVAL = LastError ;
+    dMY_CXT;
+    RETVAL = dl_last_error ;
     OUTPUT:
     RETVAL
 

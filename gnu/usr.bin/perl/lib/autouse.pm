@@ -3,7 +3,7 @@ package autouse;
 #use strict;		# debugging only
 use 5.003_90;		# ->can, for my $var
 
-$autouse::VERSION = '1.02';
+$autouse::VERSION = '1.03';
 
 $autouse::DEBUG ||= 0;
 
@@ -39,7 +39,7 @@ sub import {
 
 	my $closure_import_func = $func;	# Full name
 	my $closure_func = $func;		# Name inside package
-	my $index = index($func, '::');
+	my $index = rindex($func, '::');
 	if ($index == -1) {
 	    $closure_import_func = "${callpkg}::$func";
 	} else {
@@ -54,6 +54,7 @@ sub import {
 		die if $@;
 		vet_import $module;
 	    }
+            no warnings 'redefine';
 	    *$closure_import_func = \&{"${module}::$closure_func"};
 	    print "autousing $module; "
 		  ."imported $closure_func as $closure_import_func\n"
@@ -95,28 +96,40 @@ autouse - postpone load of modules until a function is used
 
 If the module C<Module> is already loaded, then the declaration
 
-  use autouse 'Module' => qw(func1 func2($;$) Module::func3);
+  use autouse 'Module' => qw(func1 func2($;$));
 
 is equivalent to
 
   use Module qw(func1 func2);
 
-if C<Module> defines func2() with prototype C<($;$)>, and func1() and
-func3() have no prototypes.  (At least if C<Module> uses C<Exporter>'s
-C<import>, otherwise it is a fatal error.)
+if C<Module> defines func2() with prototype C<($;$)>, and func1() has
+no prototypes.  (At least if C<Module> uses C<Exporter>'s C<import>,
+otherwise it is a fatal error.)
 
 If the module C<Module> is not loaded yet, then the above declaration
-declares functions func1() and func2() in the current package, and
-declares a function Module::func3().  When these functions are called,
-they load the package C<Module> if needed, and substitute themselves
-with the correct definitions.
+declares functions func1() and func2() in the current package.  When
+these functions are called, they load the package C<Module> if needed,
+and substitute themselves with the correct definitions.
+
+=begin _deprecated
+
+   use Module qw(Module::func3);
+
+will work and is the equivalent to:
+
+   use Module qw(func3);
+
+It is not a very useful feature and has been deprecated.
+
+=end _deprecated
+
 
 =head1 WARNING
 
 Using C<autouse> will move important steps of your program's execution
 from compile time to runtime.  This can
 
-=over
+=over 4
 
 =item *
 

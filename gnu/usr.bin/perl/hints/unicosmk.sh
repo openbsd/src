@@ -28,5 +28,19 @@ if test "$d_shm" = ""; then
     *"undef"*) d_shm="$undef" ;;
     esac
 fi
-
-
+# Otherwise the unpack %65c checksums will fail.
+pp_pack_cflags='optimize="-h scalar0 -h vector0"'
+# No shared libraries.
+so='none'
+# Threads call-back unit.
+cat > UU/usethreads.cbu <<'EOCBU'
+# This script UU/usethreads.cbu will get 'called-back' by Configure
+# after it has prompted the user for whether to use threads.
+case "$usethreads" in
+$define|true|[yY]*)
+        set `echo X "$libswanted "| sed -e "s/ c / pthread c /"`
+        shift
+        libswanted="$*"
+	;;
+esac
+EOCBU

@@ -1,3 +1,12 @@
+/*    scope.h
+ *
+ *    Copyright (c) 1997-2002, Larry Wall
+ *
+ *    You may distribute under the terms of either the GNU General Public
+ *    License or the Artistic License, as specified in the README file.
+ *
+ */
+
 #define SAVEt_ITEM		0
 #define SAVEt_SV		1
 #define SAVEt_AV		2
@@ -35,6 +44,11 @@
 #define SAVEt_GENERIC_PVREF	34
 #define SAVEt_PADSV		35
 #define SAVEt_MORTALIZESV	36
+#define SAVEt_SHARED_PVREF	37
+
+#ifndef SCOPE_SAVES_SIGNAL_MASK
+#define SCOPE_SAVES_SIGNAL_MASK 0
+#endif
 
 #define SSCHECK(need) if (PL_savestack_ix + need > PL_savestack_max) savestack_grow()
 #define SSPUSHINT(i) (PL_savestack[PL_savestack_ix++].any_i32 = (I32)(i))
@@ -51,6 +65,8 @@
 #define SSPOPDXPTR (PL_savestack[--PL_savestack_ix].any_dxptr)
 
 /*
+=head1 Callback Functions
+
 =for apidoc Ams||SAVETMPS
 Opening bracket for temporaries on a callback.  See C<FREETMPS> and
 L<perlcall>.
@@ -111,6 +127,7 @@ Closing bracket on a callback.  See C<ENTER> and L<perlcall>.
 #define SAVECLEARSV(sv)	save_clearsv(SOFT_CAST(SV**)&(sv))
 #define SAVEGENERICSV(s)	save_generic_svref((SV**)&(s))
 #define SAVEGENERICPV(s)	save_generic_pvref((char**)&(s))
+#define SAVESHAREDPV(s)		save_shared_pvref((char**)&(s))
 #define SAVEDELETE(h,k,l) \
 	  save_delete(SOFT_CAST(HV*)(h), SOFT_CAST(char*)(k), (I32)(l))
 #define SAVEDESTRUCTOR(f,p) \
@@ -154,9 +171,9 @@ Closing bracket on a callback.  See C<ENTER> and L<perlcall>.
 
 #ifdef USE_ITHREADS
 #  define SAVECOPSTASH(c)	SAVEPPTR(CopSTASHPV(c))
-#  define SAVECOPSTASH_FREE(c)	SAVEGENERICPV(CopSTASHPV(c))
+#  define SAVECOPSTASH_FREE(c)	SAVESHAREDPV(CopSTASHPV(c))
 #  define SAVECOPFILE(c)	SAVEPPTR(CopFILE(c))
-#  define SAVECOPFILE_FREE(c)	SAVEGENERICPV(CopFILE(c))
+#  define SAVECOPFILE_FREE(c)	SAVESHAREDPV(CopFILE(c))
 #else
 #  define SAVECOPSTASH(c)	SAVESPTR(CopSTASH(c))
 #  define SAVECOPSTASH_FREE(c)	SAVECOPSTASH(c)	/* XXX not refcounted */
@@ -309,7 +326,7 @@ typedef void *(CPERLscope(*protect_proc_t)) (pTHX_ volatile JMPENV *pcur_env,
 	    DEBUG_l(Perl_deb(aTHX_ "Setting up jumplevel %p, was %p\n",	\
 			     ce, PL_top_env));			\
 	    JMPENV_PUSH_INIT_ENV(ce,NULL);			\
-	    EXCEPT_SET_ENV(ce,PerlProc_setjmp((ce).je_buf, 1));\
+	    EXCEPT_SET_ENV(ce,PerlProc_setjmp((ce).je_buf, SCOPE_SAVES_SIGNAL_MASK));\
 	    (ce).je_noset = 1;					\
 	}							\
 	else							\
@@ -358,7 +375,7 @@ typedef void *(CPERLscope(*protect_proc_t)) (pTHX_ volatile JMPENV *pcur_env,
 			 &cur_env, PL_top_env));			\
 	cur_env.je_prev = PL_top_env;					\
 	OP_REG_TO_MEM;							\
-	cur_env.je_ret = PerlProc_setjmp(cur_env.je_buf, 1);		\
+	cur_env.je_ret = PerlProc_setjmp(cur_env.je_buf, SCOPE_SAVES_SIGNAL_MASK);		\
 	OP_MEM_TO_REG;							\
 	PL_top_env = &cur_env;						\
 	cur_env.je_mustcatch = FALSE;					\

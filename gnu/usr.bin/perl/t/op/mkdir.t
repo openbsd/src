@@ -20,6 +20,6 @@ print ($! =~ /cannot move|exist|denied/ ? "ok 3\n" : "# $!\nnot ok 3\n");
 print (-d 'blurfl' ? "ok 4\n" : "not ok 4\n");
 print (rmdir('blurfl') ? "ok 5\n" : "not ok 5\n");
 print (rmdir('blurfl') ? "not ok 6\n" : "ok 6\n");
-print ($! =~ /cannot find|such|exist|not found/i ? "ok 7\n" : "# $!\nnot ok 7\n");
+print ($! =~ /cannot find|such|exist|not found|not a directory/i ? "ok 7\n" : "# $!\nnot ok 7\n");
 print (mkdir('blurfl') ? "ok 8\n" : "not ok 8\n");
 print (rmdir('blurfl') ? "ok 9\n" : "not ok 9\n");

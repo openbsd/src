@@ -1,6 +1,6 @@
 =head1 NAME
 
-perlfaq1 - General Questions About Perl ($Revision: 1.23 $, $Date: 1999/05/23 16:08:30 $)
+perlfaq1 - General Questions About Perl ($Revision: 1.8 $, $Date: 2002/04/07 18:46:13 $)
 
 =head1 DESCRIPTION
 
@@ -33,13 +33,17 @@ distribution for more details.  See L<perlhist> (new as of 5.005)
 for Perl's milestone releases.
 
 In particular, the core development team (known as the Perl Porters)
-are a rag-tag band of highly altruistic individuals committed
-to producing better software for free than you could hope to
-purchase for money.  You may snoop on pending developments via
-nntp://news.perl.com/perl.porters-gw/ and the Deja archive at
-http://www.deja.com/ using the perl.porters-gw newsgroup, or you can
-subscribe to the mailing list by sending perl5-porters-request@perl.org
-a subscription request.
+are a rag-tag band of highly altruistic individuals committed to
+producing better software for free than you could hope to purchase for
+money.  You may snoop on pending developments via the archives at
+http://www.xray.mpe.mpg.de/mailing-lists/perl5-porters/
+and http://archive.develooper.com/perl5-porters@perl.org/
+or the news gateway nntp://nntp.perl.org/perl.perl5.porters or
+its web interface at http://nntp.perl.org/group/perl.perl5.porters ,
+or read the faq at http://perlhacker.org/p5p-faq ,
+or you can subscribe to the mailing list by sending
+perl5-porters-request@perl.org a subscription request
+(an empty message with no subject is fine).
 
 While the GNU project includes Perl in its distributions, there's no
 such thing as "GNU Perl".  Perl is not produced nor maintained by the
@@ -92,15 +96,16 @@ See L<perlhist> for a history of Perl revisions.
 At The Second O'Reilly Open Source Software Convention, Larry Wall            
 announced Perl6 development would begin in earnest. Perl6 was an oft
 used term for Chip Salzenberg's project to rewrite Perl in C++ named
-Topaz. However, Topaz should not be confused with the nisus to rewrite
-Perl while keeping the lessons learned from other software, as well as
-Perl5, in mind.
+Topaz. However, Topaz provided valuable insights to the next version
+of Perl and its implementation, but was ultimately abandoned.   
 
-If you have a desire to help in the crusade to make Perl a better place
-then peruse the Perl6 developers page at http://www.perl.org/perl6/ and 
-get involved.
+If you want to learn more about Perl6, or have a desire to help in 
+the crusade to make Perl a better place then peruse the Perl6 developers 
+page at http://dev.perl.org/perl6/ and get involved.
 
-The first alpha release is expected by Summer 2001.
+Perl6 is not scheduled for release yet, and Perl5 will still be supported
+for quite awhile after its release. Do not wait for Perl6 to do whatever
+you need to do.
 
 "We're really serious about reinventing everything that needs reinventing."
 --Larry Wall
@@ -211,7 +216,7 @@ i.e. the current interpreter.  Hence Tom's quip that "Nothing but perl
 can parse Perl."  You may or may not choose to follow this usage.  For
 example, parallelism means "awk and perl" and "Python and Perl" look
 OK, while "awk and Perl" and "Python and perl" do not.  But never
-write "PERL", because perl isn't really an acronym, apocryphal
+write "PERL", because perl is not an acronym, apocryphal
 folklore and post-facto expansions notwithstanding.
 
 =head2 Is it a Perl program or a Perl script?
@@ -252,18 +257,14 @@ programmers prefer to avoid them altogether.
 These are the "just another perl hacker" signatures that some people
 sign their postings with.  Randal Schwartz made these famous.  About
 100 of the earlier ones are available from
-http://www.perl.com/CPAN/misc/japh .
+http://www.cpan.org/misc/japh .
 
 =head2 Where can I get a list of Larry Wall witticisms?
 
 Over a hundred quips by Larry, from postings of his or source code,
-can be found at http://www.perl.com/CPAN/misc/lwall-quotes.txt.gz .
+can be found at http://www.cpan.org/misc/lwall-quotes.txt.gz .
 
-Newer examples can be found by perusing Larry's postings:
-
-    http://x1.dejanews.com/dnquery.xp?QRY=*&DBS=2&ST=PS&defaultOp=AND&LNG=ALL&format=terse&showsort=date&maxhits=100&subjects=&groups=&authors=larry@*wall.org&fromdate=&todate=
-
-=head2 How can I convince my sysadmin/supervisor/employees to use version 5/5.005/Perl instead of some other language?
+=head2 How can I convince my sysadmin/supervisor/employees to use version 5/5.6.1/Perl instead of some other language?
 
 If your manager or employees are wary of unsupported software, or
 software which doesn't officially ship with your operating system, you
@@ -295,7 +296,7 @@ for any given task.  Also mention that the difference between version
 (Well, OK, maybe it's not quite that distinct, but you get the idea.)
 If you want support and a reasonable guarantee that what you're
 developing will continue to work in the future, then you have to run
-the supported version.  As of April 2001 that probably means
+the supported version.  As of January 2002 that probably means
 running either of the releases 5.6.1 (released in April 2001) or
 5.005_03 (released in March 1999), although 5.004_05 isn't that bad
 if you B<absolutely> need such an old version (released in April 1999)
@@ -310,16 +311,18 @@ In August 2000 in all Linux distributions a new security problem was
 found in the optional 'suidperl' (not built or installed by default)
 in all the Perl branches 5.6, 5.005, and 5.004, see
 http://www.cpan.org/src/5.0/sperl-2000-08-05/
+Perl maintenance releases 5.6.1 and 5.8.0 have this security hole closed.
+Most, if not all, Linux distribution have patches for this
+vulnerability available, see http://www.linuxsecurity.com/advisories/ ,
+but the most recommendable way is to upgrade to at least Perl 5.6.1.
 
 =head1 AUTHOR AND COPYRIGHT
 
 Copyright (c) 1997, 1998, 1999, 2000, 2001 Tom Christiansen and Nathan
 Torkington.  All rights reserved.
 
-When included as an integrated part of the Standard Distribution
-of Perl or of its documentation (printed or otherwise), this works is
-covered under Perl's Artistic Licence.  For separate distributions of
-all or part of this FAQ outside of that, see L<perlfaq>.
+This documentation is free; you can redistribute it and/or modify it
+under the same terms as Perl itself.
 
 Irrespective of its distribution, all code examples here are in the public
 domain.  You are permitted and encouraged to use this code and any

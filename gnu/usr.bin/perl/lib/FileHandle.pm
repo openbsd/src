@@ -1,10 +1,10 @@
 package FileHandle;
 
-use 5.005_64;
+use 5.006;
 use strict;
 our($VERSION, @ISA, @EXPORT, @EXPORT_OK);
 
-$VERSION = "2.00";
+$VERSION = "2.01";
 
 require IO::File;
 @ISA = qw(IO::File);
@@ -225,7 +225,7 @@ supported C<FileHandle> methods:
 
 Furthermore, for doing normal I/O you might need these:
 
-=over 
+=over 4
 
 =item $fh->print
 

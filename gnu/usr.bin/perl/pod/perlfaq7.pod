@@ -1,6 +1,6 @@
 =head1 NAME
 
-perlfaq7 - Perl Language Issues ($Revision: 1.28 $, $Date: 1999/05/23 20:36:18 $)
+perlfaq7 - General Perl Language Issues ($Revision: 1.8 $, $Date: 2002/03/26 15:48:32 $)
 
 =head1 DESCRIPTION
 
@@ -167,80 +167,14 @@ details, read L<perlmod>.  You'll also find L<Exporter> helpful.  If
 you're writing a C or mixed-language module with both C and Perl, then
 you should study L<perlxstut>.
 
-Here's a convenient template you might wish you use when starting your
-own module.  Make sure to change the names appropriately.
-
-    package Some::Module;  # assumes Some/Module.pm
-
-    use strict;
-    use warnings;
-
-    BEGIN {
-	use Exporter   ();
-	our ($VERSION, @ISA, @EXPORT, @EXPORT_OK, %EXPORT_TAGS);
-
-	## set the version for version checking; uncomment to use
-	## $VERSION     = 1.00;
-
-	# if using RCS/CVS, this next line may be preferred,
-	# but beware two-digit versions.
-	$VERSION = do{my@r=q$Revision: 1.28 $=~/\d+/g;sprintf '%d.'.'%02d'x$#r,@r};
-
-	@ISA         = qw(Exporter);
-	@EXPORT      = qw(&func1 &func2 &func3);
-	%EXPORT_TAGS = ( );  	# eg: TAG => [ qw!name1 name2! ],
-
-	# your exported package globals go here,
-	# as well as any optionally exported functions
-	@EXPORT_OK   = qw($Var1 %Hashit);
-    }
-    our @EXPORT_OK;
-
-    # exported package globals go here
-    our $Var1;
-    our %Hashit;
-
-    # non-exported package globals go here
-    our @more;
-    our $stuff;
-
-    # initialize package globals, first exported ones
-    $Var1   = '';
-    %Hashit = ();
-
-    # then the others (which are still accessible as $Some::Module::stuff)
-    $stuff  = '';
-    @more   = ();
-
-    # all file-scoped lexicals must be created before
-    # the functions below that use them.
-
-    # file-private lexicals go here
-    my $priv_var    = '';
-    my %secret_hash = ();
-
-    # here's a file-private function as a closure,
-    # callable as &$priv_func;  it cannot be prototyped.
-    my $priv_func = sub {
-        # stuff goes here.
-    };
-
-    # make all your functions, whether exported or not;
-    # remember to put something interesting in the {} stubs
-    sub func1      {}	 # no prototype
-    sub func2()    {}	 # proto'd void
-    sub func3($$)  {}	 # proto'd to 2 scalars
-
-    # this one isn't exported, but could be called!
-    sub func4(\%)  {}    # proto'd to 1 hash ref
-
-    END { }       # module clean-up code here (global destructor)
-
-    1;            # modules must return true
-
-The h2xs program will create stubs for all the important stuff for you:
+The C<h2xs> program will create stubs for all the important stuff for you:
 
   % h2xs -XA -n My::Module
+
+The C<-X> switch tells C<h2xs> that you are not using C<XS> extension
+code.  The C<-A> switch tells C<h2xs> that you are not using the
+AutoLoader, and the C<-n> switch specifies the name of the module.
+See L<h2xs> for more details.
 
 =head2 How do I create a class?
 
@@ -249,17 +183,9 @@ L<perlobj> and L<perlbot>.
 
 =head2 How can I tell if a variable is tainted?
 
-See L<perlsec/"Laundering and Detecting Tainted Data">.  Here's an
-example (which doesn't use any system calls, because the kill()
-is given no processes to signal):
-
-    sub is_tainted {
-	return ! eval { join('',@_), kill 0; 1; };
-    }
-
-This is not C<-w> clean, however.  There is no C<-w> clean way to
-detect taintedness--take this as a hint that you should untaint
-all possibly-tainted data.
+You can use the tainted() function of the Scalar::Util module, available
+from CPAN (or included with Perl since release 5.8.0).
+See also L<perlsec/"Laundering and Detecting Tainted Data">.
 
 =head2 What's a closure?
 
@@ -657,11 +583,21 @@ where they don't belong.
 This is explained in more depth in the L<perlsyn>.  Briefly, there's
 no official case statement, because of the variety of tests possible
 in Perl (numeric comparison, string comparison, glob comparison,
-regex matching, overloaded comparisons, ...).  Larry couldn't decide
-how best to do this, so he left it out, even though it's been on the
-wish list since perl1.
+regex matching, overloaded comparisons, ...).
+Larry couldn't decide how best to do this, so he left it out, even
+though it's been on the wish list since perl1.
 
-The general answer is to write a construct like this:
+Starting from Perl 5.8 to get switch and case one can use the
+Switch extension and say:
+
+	use Switch;
+
+after which one has switch and case.  It is not as fast as it could be
+because it's not really part of the language (it's done using source
+filters) but it is available, and it's very flexible.
+
+But if one wants to use pure Perl, the general answer is to write a
+construct like this:
 
     for ($variable_to_test) {
 	if    (/pat1/)  { }     # do something
@@ -672,7 +608,7 @@ The general answer is to write a construct like this:
 
 Here's a simple example of a switch based on pattern matching, this
 time lined up in a way to make it look more like a switch statement.
-We'll do a multi-way conditional based on the type of reference stored
+We'll do a multiway conditional based on the type of reference stored
 in $whatchamacallit:
 
     SWITCH: for (ref $whatchamacallit) {
@@ -784,7 +720,7 @@ C<< Guru->find("Samy") >>) instead.  Object notation is explained in
 L<perlobj>.
 
 Make sure to read about creating modules in L<perlmod> and
-the perils of indirect objects in L<perlobj/"WARNING">.
+the perils of indirect objects in L<perlobj/"Method Invocation">.
 
 =head2 How can I find out my current package?
 
@@ -805,7 +741,8 @@ not necessarily the same as the one in which you were compiled):
 
 =head2 How can I comment out a large block of perl code?
 
-Use embedded POD to discard it:
+You can use embedded POD to discard it.  The =for directive
+lasts until the next paragraph (two consecutive newlines).
 
     # program is here
 
@@ -813,6 +750,9 @@ Use embedded POD to discard it:
     This paragraph is commented out
 
     # program continues
+
+The =begin and =end directives can contain multiple
+paragraphs.
 
     =begin comment text
 
@@ -823,11 +763,12 @@ Use embedded POD to discard it:
 
     =end comment text
 
-    =cut
+The pod directives cannot go just anywhere.  You must put a
+pod directive where the parser is expecting a new statement,
+not just in the middle of an expression or some other
+arbitrary s grammar production.
 
-This can't go just anywhere.  You have to put a pod directive where
-the parser is expecting a new statement, not just in the middle
-of an expression or some other arbitrary yacc grammar production.
+See L<perlpod> for more details.
 
 =head2 How do I clear a package?
 
@@ -956,15 +897,11 @@ you probably only want to use hard references.
 
 =head1 AUTHOR AND COPYRIGHT
 
-Copyright (c) 1997-1999 Tom Christiansen and Nathan Torkington.
+Copyright (c) 1997-2002 Tom Christiansen and Nathan Torkington.
 All rights reserved.
 
-When included as part of the Standard Version of Perl, or as part of
-its complete documentation whether printed or otherwise, this work
-may be distributed only under the terms of Perl's Artistic License.
-Any distribution of this file or derivatives thereof I<outside>
-of that package require that special arrangements be made with
-copyright holder.
+This documentation is free; you can redistribute it and/or modify it
+under the same terms as Perl itself.
 
 Irrespective of its distribution, all code examples in this file
 are hereby placed into the public domain.  You are permitted and

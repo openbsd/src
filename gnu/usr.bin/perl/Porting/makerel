@@ -78,36 +78,39 @@ print "\n";
 chdir "$relroot/$reldir" or die $!;
 
 print "Setting file permissions...\n";
-system("find . -type f -print     | xargs chmod a-w");
+system("find . -type f -print     | xargs chmod 0444");
 system("find . -type d -print     | xargs chmod 0755");
-
-# the right files should already have the execute bit set
-# in the repository, but this is just insurance
-system("find t -name '*.t' -print | xargs chmod a+x");
+system("find t ext lib -name '*.t'     -print | xargs chmod +x");
+system("find t ext lib -name 'test.pl' -print | xargs chmod +x");
 my @exe = qw(
     Configure
-    configure.gnu
     configpm
-    installperl
-    installhtml
-    installman
+    configure.gnu
     embed.pl
+    installperl
+    installman
     keywords.pl
     opcode.pl
-    warnings.pl
     perly.fixer
     t/TEST
-    t/*/*.t
     *.SH
     vms/ext/Stdio/test.pl
-    vms/ext/*.t
+    vms/ext/filespec.t
     x2p/*.SH
-    Porting/patchls
+    Porting/findrfuncs
+    Porting/genlog
     Porting/makerel
+    Porting/p4genpatch
+    Porting/patchls
+    Porting/*.pl
+    mpeix/nm
+    mpeix/relink
 );
 system("chmod +x @exe");
 
 my @writables = qw(
+    NetWare/config_H.wc
+    NetWare/Makefile
     keywords.h
     opcode.h
     opnames.h
@@ -119,12 +122,14 @@ my @writables = qw(
     global.sym
     pod/perlintern.pod
     pod/perlapi.pod
-    objXSUB.h
     perlapi.h
     perlapi.c
     ext/ByteLoader/byterun.h
     ext/ByteLoader/byterun.c
     ext/B/B/Asmdata.pm
+    ext/Devel/PPPort/PPPort.xs
+    ext/Devel/PPPort/module2.c
+    ext/Devel/PPPort/module3.c
     regnodes.h
     warnings.h
     lib/warnings.pm
@@ -133,21 +138,27 @@ my @writables = qw(
     win32/Makefile
     win32/makefile.mk
     win32/config_H.bc
-    win32/config_H.bc
     win32/config_H.gc
     win32/config_H.vc
+    wince/config_H.ce
+    wince/Makefile.ce
 );
 system("chmod +w @writables");
 
 print "Adding CRs to DOSish files...\n";
 my @crlf = qw(
     djgpp/configure.bat
+    README.ce
     README.dos
     README.win32
     win32/Makefile
     win32/makefile.mk
+    wince/Makefile.ce
+    wince/README.compile
+    wince/README.perlce
+    wince/registry.bat
 );
-system("perl -pi -e 's/\$/\\r/' @crlf");
+system("perl -pi -e 's/\015*\012/\015\012/' @crlf");
 print "\n";
 
 chdir ".." or die $!;

@@ -48,7 +48,7 @@ Creates a new C<IO::Handle> object.
 
 =item new_from_fd ( FD, MODE )
 
-Creates a C<IO::Handle> like C<new> does.
+Creates an C<IO::Handle> like C<new> does.
 It requires two parameters, which are passed to the method C<fdopen>;
 if the fdopen fails, the object is destroyed. Otherwise, it is returned
 to the caller.
@@ -100,12 +100,12 @@ The following methods are not supported on a per-filehandle basis.
 
 Furthermore, for doing normal I/O you might need these:
 
-=over 
+=over 4
 
 =item $io->fdopen ( FD, MODE )
 
 C<fdopen> is like an ordinary C<open> except that its first parameter
-is not a filename but rather a file handle name, a IO::Handle object,
+is not a filename but rather a file handle name, an IO::Handle object,
 or a file descriptor number.
 
 =item $io->opened
@@ -206,7 +206,7 @@ failure.
 Lastly, there is a special method for working under B<-T> and setuid/gid
 scripts:
 
-=over
+=over 4
 
 =item $io->untaint
 
@@ -220,7 +220,7 @@ the taint-clean flag failed. (eg invalid handle)
 
 =head1 NOTE
 
-A C<IO::Handle> object is a reference to a symbol/GLOB reference (see
+An C<IO::Handle> object is a reference to a symbol/GLOB reference (see
 the C<Symbol> package).  Some modules that
 inherit from C<IO::Handle> may want to keep object related variables
 in the hash table part of the GLOB. In an attempt to prevent modules
@@ -247,7 +247,7 @@ Derived from FileHandle.pm by Graham Barr E<lt>F<gbarr@pobox.com>E<gt>
 
 =cut
 
-require 5.005_64;
+use 5.006_001;
 use strict;
 our($VERSION, @EXPORT_OK, @ISA);
 use Carp;
@@ -258,7 +258,8 @@ use IO ();	# Load the XS module
 require Exporter;
 @ISA = qw(Exporter);
 
-$VERSION = "1.21";
+$VERSION = "1.21_00";
+$VERSION = eval $VERSION;
 
 @EXPORT_OK = qw(
     autoflush
@@ -595,7 +596,7 @@ sub constant {
 }
 
 
-# so that flush.pl can be depriciated
+# so that flush.pl can be deprecated
 
 sub printflush {
     my $io = shift;

@@ -4,41 +4,92 @@
 
 sub foo1
 {
-    print $_[0];
+    ok($_[0]);
     'value';
 }
 
 sub foo2
 {
     shift;
-    print $_[0];
+    ok($_[0]);
     $x = 'value';
     $x;
 }
 
-print "1..15\n";
+my $test = 1;
+sub ok {
+    my($ok, $name) = @_;
 
-$_[0] = "not ok 1\n";
-$result = do foo1("ok 1\n");
-print "#2\t:$result: eq :value:\n";
-if ($result EQ 'value') { print "ok 2\n"; } else { print "not ok 2\n"; }
-if ($_[0] EQ "not ok 1\n") { print "ok 3\n"; } else { print "not ok 3\n"; }
+    # You have to do it this way or VMS will get confused.
+    printf "%s %d%s\n", $ok ? "ok" : "not ok", 
+                        $test,
+                        defined $name ? " - $name" : '';
 
-$_[0] = "not ok 4\n";
-$result = do foo2("not ok 4\n","ok 4\n","not ok 4\n");
-print "#5\t:$result: eq :value:\n";
-if ($result EQ 'value') { print "ok 5\n"; } else { print "not ok 5\n"; }
-if ($_[0] EQ "not ok 4\n") { print "ok 6\n"; } else { print "not ok 6\n"; }
+    printf "# Failed test at line %d\n", (caller)[2] unless $ok;
 
-$result = do{print "ok 7\n"; 'value';};
-print "#8\t:$result: eq :value:\n";
-if ($result EQ 'value') { print "ok 8\n"; } else { print "not ok 8\n"; }
-
-sub blather {
-    print @_;
+    $test++;
+    return $ok;
 }
 
-do blather("ok 9\n","ok 10\n");
-@x = ("ok 11\n", "ok 12\n");
-@y = ("ok 14\n", "ok 15\n");
-do blather(@x,"ok 13\n",@y);
+print "1..21\n";
+
+# Test do &sub and proper @_ handling.
+$_[0] = 0;
+$result = do foo1(1);
+
+ok( $result eq 'value',  ":$result: eq :value:" );
+ok( $_[0] == 0 );
+
+$_[0] = 0;
+$result = do foo2(0,1,0);
+ok( $result eq 'value', ":$result: eq :value:" );
+ok( $_[0] == 0 );
+
+$result = do{ ok 1; 'value';};
+ok( $result eq 'value',  ":$result: eq :value:" );
+
+sub blather {
+    ok 1 foreach @_;
+}
+
+do blather("ayep","sho nuff");
+@x = ("jeepers", "okydoke");
+@y = ("uhhuh", "yeppers");
+do blather(@x,"noofie",@y);
+
+unshift @INC, '.';
+
+if (open(DO, ">$$.16")) {
+    print DO "ok(1, 'do in scalar context') if defined wantarray && not wantarray\n";
+    close DO or die "Could not close: $!";
+}
+
+my $a = do "$$.16";
+
+if (open(DO, ">$$.17")) {
+    print DO "ok(1, 'do in list context') if defined wantarray &&     wantarray\n";
+    close DO or die "Could not close: $!";
+}
+
+my @a = do "$$.17";
+
+if (open(DO, ">$$.18")) {
+    print DO "ok(1, 'do in void context') if not defined wantarray\n";
+    close DO or die "Could not close: $!";
+}
+
+do "$$.18";
+
+# bug ID 20010920.007
+eval qq{ do qq(a file that does not exist); };
+ok( !$@, "do on a non-existing file, first try" );
+
+eval qq{ do uc qq(a file that does not exist); };
+ok( !$@, "do on a non-existing file, second try"  );
+
+# 6 must be interpreted as a file name here
+ok( (!defined do 6) && $!, "'do 6' : $!" );
+
+END {
+    1 while unlink("$$.16", "$$.17", "$$.18");
+}

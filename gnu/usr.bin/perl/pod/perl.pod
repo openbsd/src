@@ -12,76 +12,99 @@ B<perl>	S<[ B<-sTuU> ]> S<[ B<-hv> ] [ B<-V>[:I<configvar>] ]>
     S<[ B<-i>[I<extension>] ]> S<[ B<-e> I<'command'> ] 
     [ B<--> ] [ I<programfile> ] [ I<argument> ]...>
 
-For ease of access, the Perl manual has been split up into several sections:
+If you're new to Perl, you should start with L<perlintro>, which is a 
+general intro for beginners and provides some background to help you
+navigate the rest of Perl's extensive documentation.
+
+For ease of access, the Perl manual has been split up into several sections.
+
+=head2 Overview
 
     perl		Perl overview (this section)
-    perlfaq		Perl frequently asked questions
+    perlintro		Perl introduction for beginners
     perltoc		Perl documentation table of contents
-    perlbook		Perl book information
+
+=head2 Tutorials
+
+    perlreftut		Perl references short introduction
+    perldsc		Perl data structures intro
+    perllol		Perl data structures: arrays of arrays
+
+    perlrequick		Perl regular expressions quick start
+    perlretut		Perl regular expressions tutorial
+
+    perlboot		Perl OO tutorial for beginners
+    perltoot		Perl OO tutorial, part 1
+    perltooc		Perl OO tutorial, part 2
+    perlbot		Perl OO tricks and examples
+
+    perlstyle		Perl style guide
+
+    perltrap		Perl traps for the unwary
+    perldebtut		Perl debugging tutorial
+
+    perlfaq		Perl frequently asked questions
+      perlfaq1		General Questions About Perl
+      perlfaq2		Obtaining and Learning about Perl
+      perlfaq3		Programming Tools
+      perlfaq4		Data Manipulation
+      perlfaq5		Files and Formats
+      perlfaq6		Regexes
+      perlfaq7		Perl Language Issues
+      perlfaq8		System Interaction
+      perlfaq9		Networking
+
+=head2 Reference Manual
 
     perlsyn		Perl syntax
     perldata		Perl data structures
     perlop		Perl operators and precedence
     perlsub		Perl subroutines
-    perlfunc		Perl builtin functions
-    perlreftut		Perl references short introduction
-    perldsc		Perl data structures intro
-    perlrequick		Perl regular expressions quick start
+    perlfunc		Perl built-in functions
+      perlopentut	Perl open() tutorial
+      perlpacktut       Perl pack() and unpack() tutorial
     perlpod		Perl plain old documentation
-    perlstyle		Perl style guide
-    perltrap		Perl traps for the unwary
-
+    perlpodspec         Perl plain old documentation format specification
     perlrun		Perl execution and options
     perldiag		Perl diagnostic messages
     perllexwarn		Perl warnings and their control
-    perldebtut		Perl debugging tutorial
     perldebug		Perl debugging
-
     perlvar		Perl predefined variables
-    perllol		Perl data structures: arrays of arrays
-    perlopentut		Perl open() tutorial
-    perlretut		Perl regular expressions tutorial
-
     perlre		Perl regular expressions, the rest of the story
     perlref		Perl references, the rest of the story
-
     perlform		Perl formats
-
-    perlboot		Perl OO tutorial for beginners
-    perltoot		Perl OO tutorial, part 1
-    perltootc		Perl OO tutorial, part 2
     perlobj		Perl objects
-    perlbot		Perl OO tricks and examples
     perltie		Perl objects hidden behind simple variables
+      perldbmfilter	Perl DBM filters
 
     perlipc		Perl interprocess communication
     perlfork		Perl fork() information
     perlnumber		Perl number semantics
+
     perlthrtut		Perl threads tutorial
+      perlothrtut	  Old Perl threads tutorial
 
     perlport		Perl portability guide
     perllocale		Perl locale support
-    perlunicode		Perl unicode support
+    perluniintro	Perl Unicode introduction
+    perlunicode		Perl Unicode support
     perlebcdic		Considerations for running Perl on EBCDIC platforms
 
     perlsec		Perl security
 
     perlmod		Perl modules: how they work
     perlmodlib		Perl modules: how to write and use
+    perlmodstyle	Perl modules: how to write modules with style
     perlmodinstall	Perl modules: how to install from CPAN
     perlnewmod		Perl modules: preparing a new module for distribution
 
-    perlfaq1		General Questions About Perl
-    perlfaq2		Obtaining and Learning about Perl
-    perlfaq3		Programming Tools
-    perlfaq4		Data Manipulation
-    perlfaq5		Files and Formats
-    perlfaq6		Regexes
-    perlfaq7		Perl Language Issues
-    perlfaq8		System Interaction
-    perlfaq9		Networking
+    perlutil		utilities packaged with the Perl distribution
 
     perlcompile		Perl compiler suite intro
+
+    perlfilter		Perl source filters
+
+=head2 Internals and C Language Interface
 
     perlembed		Perl ways to embed perl in your C or C++ application
     perldebguts		Perl debugging guts and tips
@@ -90,40 +113,69 @@ For ease of access, the Perl manual has been split up into several sections:
     perlclib		Internal replacements for standard C library functions
     perlguts		Perl internal functions for those doing extensions
     perlcall		Perl calling conventions from C
-    perlutil		utilities packaged with the Perl distribution
-    perlfilter		Perl source filters
-    perldbmfilter	Perl DBM filters
+
     perlapi		Perl API listing (autogenerated)
     perlintern		Perl internal functions (autogenerated)
+    perliol		C API for Perl's implementation of IO in Layers
     perlapio		Perl internal IO abstraction interface
-    perltodo		Perl things to do
+
     perlhack		Perl hackers guide
+
+=head2 Miscellaneous
+
+    perlbook		Perl book information
+    perltodo		Perl things to do
 
     perlhist		Perl history records
     perldelta		Perl changes since previous version
+    perl572delta	Perl changes in version 5.7.2
+    perl571delta	Perl changes in version 5.7.1
+    perl570delta	Perl changes in version 5.7.0
+    perl561delta	Perl changes in version 5.6.1
+    perl56delta		Perl changes in version 5.6
     perl5005delta	Perl changes in version 5.005
     perl5004delta	Perl changes in version 5.004
 
+=head2 Language-Specific
+
+    perlcn		Perl for Simplified Chinese (in EUC-CN)
+    perljp		Perl for Japanese (in EUC-JP)
+    perlko		Perl for Korean (in EUC-KR)
+    perltw		Perl for Traditional Chinese (in Big5)
+
+=head2 Platform-Specific
+
     perlaix		Perl notes for AIX
-    perlamiga		Perl notes for Amiga
+    perlamiga		Perl notes for AmigaOS
+    perlapollo		Perl notes for Apollo DomainOS
+    perlbeos		Perl notes for BeOS
     perlbs2000		Perl notes for POSIX-BC BS2000
+    perlce		Perl notes for WinCE
     perlcygwin		Perl notes for Cygwin
+    perldgux		Perl notes for DG/UX
     perldos		Perl notes for DOS
     perlepoc		Perl notes for EPOC
+    perlfreebsd		Perl notes for FreeBSD
     perlhpux		Perl notes for HP-UX
+    perlhurd		Perl notes for Hurd
+    perlirix		Perl notes for Irix
     perlmachten		Perl notes for Power MachTen
     perlmacos		Perl notes for Mac OS (Classic)
+    perlmint		Perl notes for MiNT
     perlmpeix		Perl notes for MPE/iX
+    perlnetware		Perl notes for NetWare
     perlos2		Perl notes for OS/2
     perlos390		Perl notes for OS/390
+    perlplan9		Perl notes for Plan 9
+    perlqnx		Perl notes for QNX
     perlsolaris 	Perl notes for Solaris
+    perltru64		Perl notes for Tru64
+    perluts             Perl notes for UTS
     perlvmesa		Perl notes for VM/ESA
     perlvms		Perl notes for VMS
     perlvos		Perl notes for Stratus VOS
     perlwin32		Perl notes for Windows
 
-(If you're intending to read these straight through for the first time,
-the suggested order will tend to reduce the number of forward references.)
 
 By default, the manpages listed above are installed in the 
 F</usr/local/man/> directory.  
@@ -230,7 +282,8 @@ Described in L<perlreftut>, L<perlref>, L<perldsc>, and L<perllol>.
 
 object-oriented programming
 
-Described in L<perlobj>, L<perltoot>, and L<perlbot>.
+Described in L<perlobj>, L<perlboot>, L<perltoot>, L<perltooc>,
+and L<perlbot>.
 
 =item *
 
@@ -267,7 +320,7 @@ Described in L<perlre>, with additional examples in L<perlop>.
 enhanced debugger and interactive Perl environment,
 with integrated editor support
 
-Described in L<perldebug>.
+Described in L<perldebtut>, L<perldebug> and L<perldebguts>.
 
 =item *
 
@@ -307,8 +360,9 @@ Perl developers, please write to perl-thanks@perl.org .
  a2p	awk to perl translator
  s2p	sed to perl translator
 
- http://www.perl.com/	    the Perl Home Page
- http://www.perl.com/CPAN   the Comprehensive Perl Archive
+ http://www.perl.com/       the Perl Home Page
+ http://www.cpan.org/       the Comprehensive Perl Archive
+ http://www.perl.org/       Perl Mongers (Perl user groups)
 
 =head1 DIAGNOSTICS
 

@@ -4,12 +4,12 @@ specially designed to be readable as is.
 
 =head1 NAME
 
-perlwin32 - Perl under Win32
+perlwin32 - Perl under Windows
 
 =head1 SYNOPSIS
 
-These are instructions for building Perl under Windows (9x, NT and
-2000).
+These are instructions for building Perl under Windows 9x/NT/2000/XP
+on the Intel x86 and Itanium architectures.
 
 =head1 DESCRIPTION
 
@@ -35,10 +35,11 @@ you will also need to download and use various other build-time and
 run-time support software described in those files.
 
 This set of instructions is meant to describe a so-called "native"
-port of Perl to Win32 platforms.  The resulting Perl requires no
+port of Perl to Win32 platforms.  This includes both 32-bit and
+64-bit Windows operating systems.  The resulting Perl requires no
 additional software to run (other than what came with your operating
 system).  Currently, this port is capable of using one of the
-following compilers:
+following compilers on the Intel x86 architecture:
 
       Borland C++		version 5.02 or later
       Microsoft Visual C++	version 4.2 or later
@@ -48,20 +49,26 @@ The last of these is a high quality freeware compiler.  Support
 for it is still experimental.  (Older versions of GCC are known
 not to work.)
 
-This port currently supports MakeMaker (the set of modules that
+This port can also be built on the Intel IA64 using:
+
+      Microsoft Platform SDK	Nov 2001 (64-bit compiler and tools)
+
+The MS Platform SDK can be downloaded from http://www.microsoft.com/.
+
+This port fully supports MakeMaker (the set of modules that
 is used to build extensions to perl).  Therefore, you should be
 able to build and install most extensions found in the CPAN sites.
-See L<Usage Hints> below for general hints about this.
+See L<Usage Hints for Perl on Win32> below for general hints about this.
 
-=head2 Setting Up
+=head2 Setting Up Perl on Win32
 
 =over 4
 
 =item Make
 
 You need a "make" program to build the sources.  If you are using
-Visual C++ under Windows NT or 2000, nmake will work.  All other
-builds need dmake.
+Visual C++ or the Platform SDK tools under Windows NT/2000/XP, nmake
+will work.  All other builds need dmake.
 
 dmake is a freely available make that has very nice macro features
 and parallelability.
@@ -71,7 +78,7 @@ A port of dmake for Windows is available from:
     http://www.cpan.org/authors/id/GSAR/dmake-4.1pl1-win32.zip
 
 (This is a fixed version of the original dmake sources obtained from
-http://www.wticorp.com/dmake/.  As of version 4.1PL1, the original
+http://www.wticorp.com/  As of version 4.1PL1, the original
 sources did not build as shipped and had various other problems.
 A patch is included in the above fixed version.)
 
@@ -84,8 +91,8 @@ case letters, they will be compiled into appropriate .obj-files named
 with all lowercase letters, and every time dmake is invoked
 to bring files up to date, it will try to recompile such files again.
 For example, Tk distribution has a lot of such files, resulting in
-needless recompiles everytime dmake is invoked.  To avoid this, you
-may use the script "sncfnmcs.pl" after a successful build.  It is
+needless recompiles every time dmake is invoked.  To avoid this, you
+may use the script "sync_ext.pl" after a successful build.  It is
 available in the win32 subdirectory of the Perl source distribution.
 
 =item Command Shell
@@ -99,7 +106,7 @@ The nmake Makefile also has known incompatibilities with the
 "command.com" shell that comes with Windows 9x.  You will need to
 use dmake and makefile.mk to build under Windows 9x.
 
-The surest way to build it is on Windows NT, using the cmd shell.
+The surest way to build it is on Windows NT/2000/XP, using the cmd shell.
 
 Make sure the path to the build directory does not contain spaces.  The
 build usually works in this circumstance, but some tests will fail.
@@ -124,6 +131,12 @@ under which the Visual C dmake configuration lives) in your environment
 and edit win32/config.vc to change "make=nmake" into "make=dmake".  The
 latter step is only essential if you want to use dmake as your default
 make for building extensions using MakeMaker.
+
+=item Microsoft Platform SDK 64-bit Compiler
+
+The nmake that comes with the Platform SDK will suffice for building
+Perl.  Make sure you are building within one of the "Build Environment"
+shells available after you install the Platform SDK from the Start Menu.
 
 =item Mingw32 with GCC
 
@@ -177,9 +190,10 @@ here:
 
 Make sure you are in the "win32" subdirectory under the perl toplevel.
 This directory contains a "Makefile" that will work with
-versions of nmake that come with Visual C++, and a dmake "makefile.mk"
-that will work for all supported compilers.  The defaults in the dmake
-makefile are setup to build using the GCC compiler.
+versions of nmake that come with Visual C++ or the Platform SDK, and
+a dmake "makefile.mk" that will work for all supported compilers.  The
+defaults in the dmake makefile are setup to build using Microsoft Visual
+C++ 6.0 or newer.
 
 =item *
 
@@ -199,8 +213,8 @@ enable the appropriate option in the makefile.  des_fcrypt() is not
 bundled with the distribution due to US Government restrictions
 on the export of cryptographic software.  Nevertheless, this routine
 is part of the "libdes" library (written by Eric Young) which is widely
-available worldwide, usually along with SSLeay (for example, 
-"ftp://fractal.mta.ca/pub/crypto/SSLeay/DES/").  Set CRYPT_SRC to the
+available worldwide, usually along with SSLeay ( for example, 
+ftp://ftp.funet.fi/pub/crypt/mirrors/dsi/libdes/ ).  Set CRYPT_SRC to the
 name of the file that implements des_fcrypt().  Alternatively, if
 you have built a library that contains des_fcrypt(), you can set
 CRYPT_LIB to point to the library name.  The location above contains
@@ -209,6 +223,12 @@ implementations of des_fcrypt().  Older versions have a single,
 self-contained file (fcrypt.c) that implements crypt(), so they may be
 easier to use.  A patch against the fcrypt.c found in libdes-3.06 is
 in des_fcrypt.patch.
+
+An easier alternative may be to get the pre-patched and ready-to-use
+fcrypt.c that can be found here:
+
+    http://downloads.ActiveState.com/pub/staff/gsar/fcrypt.c
+    ftp://ftp.ActiveState.com/pub/staff/gsar/fcrypt.c
 
 Perl will also build without des_fcrypt(), but the crypt() builtin will
 fail at run time.
@@ -220,20 +240,19 @@ Be sure to read the instructions near the top of the makefiles carefully.
 Type "dmake" (or "nmake" if you are using that make).
 
 This should build everything.  Specifically, it will create perl.exe,
-perl56.dll at the perl toplevel, and various other extension dll's
+perl58.dll at the perl toplevel, and various other extension dll's
 under the lib\auto directory.  If the build fails for any reason, make
 sure you have done the previous steps correctly.
 
 =back
 
-=head2 Testing
+=head2 Testing Perl on Win32
 
 Type "dmake test" (or "nmake test").  This will run most of the tests from
 the testsuite (many tests will be skipped).
 
-There should be no test failures when running under Windows NT 4.0 or
-Windows 2000.  Many tests I<will> fail under Windows 9x due to the inferior
-command shell.
+There should be no test failures when running under Windows NT/2000/XP.
+Many tests I<will> fail under Windows 9x due to the inferior command shell.
 
 Some test failures may occur if you use a command shell other than the
 native "cmd.exe", or if you are building from a path that contains
@@ -256,9 +275,19 @@ contain a header file called "patchlevel.h".  The latest Borland compiler
 option -VI- for backward (bugward) compatibility for using the old Borland
 search algorithm  to locate header files.
 
+If you run the tests on a FAT partition, you may see some failures for
+C<link()> related tests (I<op/write.t>, I<op/stat.t> ...). Testing on
+NTFS avoids these errors.
+
+Furthermore, you should make sure that during C<make test> you do not
+have any GNU tool packages in your path: some toolkits like Unixutils
+include some tools (C<type> for instance) which override the Windows
+ones and makes tests fail. Remove them from your path while testing to
+avoid these errors.
+
 Please report any other failures as described under L<BUGS AND CAVEATS>.
 
-=head2 Installation
+=head2 Installation of Perl on Win32
 
 Type "dmake install" (or "nmake install").  This will put the newly
 built perl and the libraries under whatever C<INST_TOP> points to in the
@@ -277,7 +306,7 @@ sufficient to add a single entry to the path, for instance:
 
     set PATH c:\perl\bin;%PATH%
 
-=head2 Usage Hints
+=head2 Usage Hints for Perl on Win32
 
 =over 4
 
@@ -443,9 +472,9 @@ old version of nmake reportedly available from:
     ftp://ftp.microsoft.com/Softlib/MSLFILES/nmake15.exe
 
 Another option is to use the make written in Perl, available from
-CPAN:
+CPAN.
 
-    http://www.cpan.org/authors/id/NI-S/Make-0.03.tar.gz
+    http://www.cpan.org/modules/by-module/Make/
 
 You may also use dmake.  See L</"Make"> above on how to get it.
 
@@ -540,13 +569,52 @@ all of the ActiveState extensions and most other Win32 extensions from
 CPAN in source form, along with many added bugfixes, and with MakeMaker
 support.  This bundle is available at:
 
-   http://www.cpan.org/authors/id/GSAR/libwin32-0.151.zip
+   http://www.cpan.org/authors/id/GSAR/libwin32-0.18.zip
 
 See the README in that distribution for building and installation
 instructions.  Look for later versions that may be available at the
 same location.
 
-=item Running Perl Scripts
+=item Notes on 64-bit Windows
+
+Windows .NET Server supports the LLP64 data model on the Intel Itanium
+architecture.
+
+The LLP64 data model is different from the LP64 data model that is the
+norm on 64-bit Unix platforms.  In the former, C<int> and C<long> are
+both 32-bit data types, while pointers are 64 bits wide.  In addition,
+there is a separate 64-bit wide integral type, C<__int64>.  In contrast,
+the LP64 data model that is pervasive on Unix platforms provides C<int>
+as the 32-bit type, while both the C<long> type and pointers are of
+64-bit precision.  Note that both models provide for 64-bits of
+addressability.
+
+64-bit Windows running on Itanium is capable of running 32-bit x86
+binaries transparently.  This means that you could use a 32-bit build
+of Perl on a 64-bit system.  Given this, why would one want to build
+a 64-bit build of Perl?  Here are some reasons why you would bother:
+
+=item *
+
+A 64-bit native application will run much more efficiently on
+Itanium hardware.
+
+=item *
+
+There is no 2GB limit on process size.
+
+=item *
+
+Perl automatically provides large file support when built under
+64-bit Windows.
+
+=item *
+
+Embedding Perl inside a 64-bit application.
+
+=back
+
+=head2 Running Perl Scripts
 
 Perl scripts on UNIX use the "#!" (a.k.a "shebang") line to
 indicate to the OS that it should execute the file using perl.
@@ -614,8 +682,6 @@ Here's a diversion:  copy "runperl.bat" to "runperl", and type
 "runperl".  Explain the observed behavior, or lack thereof. :)
 Hint: .gnidnats llits er'uoy fi ,"lrepnur" eteled :tniH
 
-=back
-
 =item Miscellaneous Things
 
 A full set of HTML documentation is installed, so you should be
@@ -636,6 +702,20 @@ find a mailer on your system).
 =back
 
 =head1 BUGS AND CAVEATS
+
+Norton AntiVirus interferes with the build process, particularly if 
+set to "AutoProtect, All Files, when Opened". Unlike large applications 
+the perl build process opens and modifies a lot of files. Having the  
+the AntiVirus scan each and every one slows build the process significantly.
+Worse, with PERLIO=stdio the build process fails with peculiar messages
+as the virus checker interacts badly with miniperl.exe writing configure 
+files (it seems to either catch file part written and treat it as suspicious,
+or virus checker may have it "locked" in a way which inhibits miniperl
+updating it). The build does complete with 
+
+   set PERLIO=perlio
+
+but that may be just luck. Other AntiVirus software may have similar issues.
 
 Some of the built-in functions do not act exactly as documented in
 L<perlfunc>, and a few are not implemented at all.  To avoid
@@ -670,7 +750,7 @@ by C<perl -V>.
 
 =item Gurusamy Sarathy E<lt>gsar@activestate.comE<gt>
 
-=item Nick Ing-Simmons E<lt>nick@ni-s.u-net.comE<gt>
+=item Nick Ing-Simmons E<lt>nick@ing-simmons.netE<gt>
 
 =back
 
@@ -697,6 +777,8 @@ Support for fork() emulation was added in 5.6 (ActiveState Tool Corp).
 
 Win9x support was added in 5.6 (Benjamin Stuhl).
 
-Last updated: 1 April 2001
+Support for 64-bit Windows added in 5.8 (ActiveState Corp).
+
+Last updated: 20 April 2002
 
 =cut

@@ -1,69 +1,121 @@
 #!./perl
 
-# $RCSfile: study.t,v $$Revision: 4.1 $$Date: 92/08/07 18:28:30 $
+BEGIN {
+    chdir 't' if -d 't';
+    @INC = '../lib';
+}
 
-print "1..24\n";
+$Ok_Level = 0;
+my $test = 1;
+sub ok ($;$) {
+    my($ok, $name) = @_;
+
+    local $_;
+
+    # You have to do it this way or VMS will get confused.
+    printf "%s $test%s\n", $ok   ? 'ok' : 'not ok',
+                           $name ? " - $name" : '';
+
+    printf "# Failed test at line %d\n", (caller($Ok_Level))[2] unless $ok;
+
+    $test++;
+    return $ok;
+}
+
+sub nok ($;$) {
+    my($nok, $name) = @_;
+    local $Ok_Level = 1;
+    ok( !$nok, $name );
+}
+
+use Config;
+my $have_alarm = $Config{d_alarm};
+sub alarm_ok (&) {
+    my $test = shift;
+
+    local $SIG{ALRM} = sub { die "timeout\n" };
+    
+    my $match;
+    eval { 
+        alarm(2) if $have_alarm;
+        $match = $test->();
+        alarm(0) if $have_alarm;
+    };
+
+    local $Ok_Level = 1;
+    ok( !$match && !$@, 'testing studys that used to hang' );
+}
+
+
+print "1..26\n";
 
 $x = "abc\ndef\n";
 study($x);
 
-if ($x =~ /^abc/) {print "ok 1\n";} else {print "not ok 1\n";}
-if ($x !~ /^def/) {print "ok 2\n";} else {print "not ok 2\n";}
+ok($x =~ /^abc/);
+ok($x !~ /^def/);
 
 $* = 1;
-if ($x =~ /^def/) {print "ok 3\n";} else {print "not ok 3\n";}
+ok($x =~ /^def/);
 $* = 0;
 
 $_ = '123';
 study;
-if (/^([0-9][0-9]*)/) {print "ok 4\n";} else {print "not ok 4\n";}
+ok(/^([0-9][0-9]*)/);
 
-if ($x =~ /^xxx/) {print "not ok 5\n";} else {print "ok 5\n";}
-if ($x !~ /^abc/) {print "not ok 6\n";} else {print "ok 6\n";}
+nok($x =~ /^xxx/);
+nok($x !~ /^abc/);
 
-if ($x =~ /def/) {print "ok 7\n";} else {print "not ok 7\n";}
-if ($x !~ /def/) {print "not ok 8\n";} else {print "ok 8\n";}
+ok($x =~ /def/);
+nok($x !~ /def/);
 
 study($x);
-if ($x !~ /.def/) {print "ok 9\n";} else {print "not ok 9\n";}
-if ($x =~ /.def/) {print "not ok 10\n";} else {print "ok 10\n";}
+ok($x !~ /.def/);
+nok($x =~ /.def/);
 
-if ($x =~ /\ndef/) {print "ok 11\n";} else {print "not ok 11\n";}
-if ($x !~ /\ndef/) {print "not ok 12\n";} else {print "ok 12\n";}
+ok($x =~ /\ndef/);
+nok($x !~ /\ndef/);
 
 $_ = 'aaabbbccc';
 study;
-if (/(a*b*)(c*)/ && $1 eq 'aaabbb' && $2 eq 'ccc') {
-	print "ok 13\n";
-} else {
-	print "not ok 13\n";
-}
-if (/(a+b+c+)/ && $1 eq 'aaabbbccc') {
-	print "ok 14\n";
-} else {
-	print "not ok 14\n";
-}
+ok(/(a*b*)(c*)/ && $1 eq 'aaabbb' && $2 eq 'ccc');
+ok(/(a+b+c+)/ && $1 eq 'aaabbbccc');
 
-if (/a+b?c+/) {print "not ok 15\n";} else {print "ok 15\n";}
+nok(/a+b?c+/);
 
 $_ = 'aaabccc';
 study;
-if (/a+b?c+/) {print "ok 16\n";} else {print "not ok 16\n";}
-if (/a*b+c*/) {print "ok 17\n";} else {print "not ok 17\n";}
+ok(/a+b?c+/);
+ok(/a*b+c*/);
 
 $_ = 'aaaccc';
 study;
-if (/a*b?c*/) {print "ok 18\n";} else {print "not ok 18\n";}
-if (/a*b+c*/) {print "not ok 19\n";} else {print "ok 19\n";}
+ok(/a*b?c*/);
+nok(/a*b+c*/);
 
 $_ = 'abcdef';
 study;
-if (/bcd|xyz/) {print "ok 20\n";} else {print "not ok 20\n";}
-if (/xyz|bcd/) {print "ok 21\n";} else {print "not ok 21\n";}
+ok(/bcd|xyz/);
+ok(/xyz|bcd/);
 
-if (m|bc/*d|) {print "ok 22\n";} else {print "not ok 22\n";}
+ok(m|bc/*d|);
 
-if (/^$_$/) {print "ok 23\n";} else {print "not ok 23\n";}
+ok(/^$_$/);
 
-$* = 1;		# test 3 only tested the optimized version--this one is for real
-if ("ab\ncd\n" =~ /^cd/) {print "ok 24\n";} else {print "not ok 24\n";}
+$* = 1;	    # test 3 only tested the optimized version--this one is for real
+ok("ab\ncd\n" =~ /^cd/);
+
+if ($^O eq 'os390' or $^O eq 'posix-bc' or $^O eq 'MacOS') {
+    # Even with the alarm() OS/390 and BS2000 can't manage these tests
+    # (Perl just goes into a busy loop, luckily an interruptable one)
+    for (25..26) { print "not ok $_ # TODO compiler bug?\n" }
+    $test += 2;
+} else {
+    # [ID 20010618.006] tests 25..26 may loop
+
+    $_ = 'FGF';
+    study;
+    alarm_ok { /G.F$/ };
+    alarm_ok { /[F]F$/ };
+}
+

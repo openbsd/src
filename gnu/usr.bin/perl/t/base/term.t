@@ -4,24 +4,22 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
 }
-
-use Config;
 
 print "1..7\n";
 
 # check "" interpretation
 
 $x = "\n";
-# 10 is ASCII/Iso Latin, 21 is EBCDIC.
-if ($x eq chr(10) ||
-    ($Config{ebcdic} eq 'define' && $x eq chr(21))) {print "ok 1\n";}
+# 10 is ASCII/Iso Latin, 13 is Mac OS, 21 is EBCDIC.
+if ($x eq chr(10)) { print "ok 1\n";}
+elsif ($x eq chr(13)) { print "ok 1 # Mac OS\n"; }
+elsif ($x eq chr(21)) { print "ok 1 # EBCDIC\n"; }
 else {print "not ok 1\n";}
 
 # check `` processing
 
-$x = `echo hi there`;
+$x = `$^X -le "print 'hi there'"`;
 if ($x eq "hi there\n") {print "ok 2\n";} else {print "not ok 2\n";}
 
 # check $#array
@@ -42,7 +40,12 @@ if (($x | 1) == 101) {print "ok 5\n";} else {print "not ok 5\n";}
 
 # check <> pseudoliteral
 
-open(try, "/dev/null") || open(try,"nla0:") || (die "Can't open /dev/null.");
+if ($^O eq 'MacOS') {
+	open(try,"Dev:Null") || (die "Can't open /dev/null.");
+} else {
+	open(try, "/dev/null") || open(try,"nla0:") || (die "Can't open /dev/null.");
+}
+
 if (<try> eq '') {
     print "ok 6\n";
 }

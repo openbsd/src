@@ -1,6 +1,6 @@
 /*    av.h
  *
- *    Copyright (c) 1991-2001, Larry Wall
+ *    Copyright (c) 1991-2002, Larry Wall
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -16,7 +16,7 @@ struct xpvav {
     MAGIC*	xmg_magic;	/* magic for scalar array */
     HV*		xmg_stash;	/* class package */
 
-    SV**	xav_alloc;	/* pointer to malloced string */
+    SV**	xav_alloc;	/* pointer to beginning of C array of SVs */
     SV*		xav_arylen;
     U8		xav_flags;
 };
@@ -46,8 +46,12 @@ struct xpvav {
 #define AVf_REUSED 4	/* got undeffed--don't turn old memory into SVs now */
 
 /*
+=head1 Handy Values
+
 =for apidoc AmU||Nullav
 Null AV pointer.
+
+=head1 Array Manipulation Functions
 
 =for apidoc Am|int|AvFILL|AV* av
 Same as C<av_len()>.  Deprecated, use C<av_len()> instead.

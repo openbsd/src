@@ -1,6 +1,6 @@
 =head1 NAME
 
-perlfaq8 - System Interaction ($Revision: 1.39 $, $Date: 1999/05/23 18:37:57 $)
+perlfaq8 - System Interaction ($Revision: 1.8 $, $Date: 2002/05/16 12:41:42 $)
 
 =head1 DESCRIPTION
 
@@ -294,7 +294,7 @@ of code just because you're afraid of a little $| variable:
     DEV->autoflush(1);
 
 As mentioned in the previous item, this still doesn't work when using
-socket I/O between Unix and Macintosh.  You'll need to hardcode your
+socket I/O between Unix and Macintosh.  You'll need to hard code your
 line terminators, in that case.
 
 =item non-blocking input
@@ -435,7 +435,7 @@ program.  (There is no way to set the time and date on a per-process
 basis.)  This mechanism will work for Unix, MS-DOS, Windows, and NT;
 the VMS equivalent is C<set time>.
 
-However, if all you want to do is change your timezone, you can
+However, if all you want to do is change your time zone, you can
 probably get away with setting an environment variable:
 
     $ENV{TZ} = "MST7MDT";		   # unixish
@@ -447,12 +447,14 @@ probably get away with setting an environment variable:
 If you want finer granularity than the 1 second that the sleep()
 function provides, the easiest way is to use the select() function as
 documented in L<perlfunc/"select">.  Try the Time::HiRes and
-the BSD::Itimer modules (available from CPAN).
+the BSD::Itimer modules (available from CPAN, and starting from
+Perl 5.8 Time::HiRes is part of the standard distribution).
 
 =head2 How can I measure time under a second?
 
 In general, you may not be able to.  The Time::HiRes module (available
-from CPAN) provides this functionality for some systems.
+from CPAN, and starting from Perl 5.8 part of the standard distribution)
+provides this functionality for some systems.
 
 If your system supports both the syscall() function in Perl as well as
 a system call like gettimeofday(2), then you may be able to do
@@ -632,9 +634,10 @@ STDOUT).
 
 Note that you I<must> use Bourne shell (sh(1)) redirection syntax in
 backticks, not csh(1)!  Details on why Perl's system() and backtick
-and pipe opens all use the Bourne shell are in
-http://www.perl.com/CPAN/doc/FMTEYEWTK/versus/csh.whynot .
-To capture a command's STDERR and STDOUT together:
+and pipe opens all use the Bourne shell are in the
+F<versus/csh.whynot> article in the "Far More Than You Ever Wanted To
+Know" collection in http://www.cpan.org/olddoc/FMTEYEWTK.tgz .  To
+capture a command's STDERR and STDOUT together:
 
     $output = `cmd 2>&1`;                       # either with backticks
     $pid = open(PH, "cmd 2>&1 |");              # or with an open pipe
@@ -677,50 +680,38 @@ there, and the old standard error shows up on the old standard out.
 
 =head2 Why doesn't open() return an error when a pipe open fails?
 
-Because the pipe open takes place in two steps: first Perl calls
-fork() to start a new process, then this new process calls exec() to
-run the program you really wanted to open.  The first step reports
-success or failure to your process, so open() can only tell you
-whether the fork() succeeded or not.
+If the second argument to a piped C<open> contains shell
+metacharacters, perl fork()s, then exec()s a shell to decode the
+metacharacters and eventually run the desired program.  If the program
+couldn't be run, it's the shell that gets the message, not Perl. All
+your Perl program can find out is whether the shell itself could be
+successfully started.  You can still capture the shell's STDERR and
+check it for error messages.  See L<"How can I capture STDERR from an
+external command?"> elsewhere in this document, or use the
+L<IPC::Open3> module.
 
-To find out if the exec() step succeeded, you have to catch SIGCHLD
-and wait() to get the exit status.  You should also catch SIGPIPE if
-you're writing to the child--you may not have found out the exec()
-failed by the time you write.  This is documented in L<perlipc>.
-
-In some cases, even this won't work.  If the second argument to a
-piped open() contains shell metacharacters, perl fork()s, then exec()s
-a shell to decode the metacharacters and eventually run the desired
-program.  Now when you call wait(), you only learn whether or not the
-I<shell> could be successfully started...it's best to avoid shell
-metacharacters.
-
-On systems that follow the spawn() paradigm, open() I<might> do what
-you expect--unless perl uses a shell to start your command. In this
-case the fork()/exec() description still applies.
+If there are no shell metacharacters in the argument of C<open>, Perl
+runs the command directly, without using the shell, and can correctly
+report whether the command started.
 
 =head2 What's wrong with using backticks in a void context?
 
 Strictly speaking, nothing.  Stylistically speaking, it's not a good
-way to write maintainable code because backticks have a (potentially
-humongous) return value, and you're ignoring it.  It's may also not be very
-efficient, because you have to read in all the lines of output, allocate
-memory for them, and then throw it away.  Too often people are lulled
-to writing:
+way to write maintainable code.  Perl has several operators for
+running external commands.  Backticks are one; they collect the output
+from the command for use in your program.  The C<system> function is
+another; it doesn't do this.  
 
-    `cp file file.bak`;
-
-And now they think "Hey, I'll just always use backticks to run programs."
-Bad idea: backticks are for capturing a program's output; the system()
-function is for running programs.
+Writing backticks in your program sends a clear message to the readers
+of your code that you wanted to collect the output of the command.
+Why send a clear message that isn't true?
 
 Consider this line:
 
     `cat /etc/termcap`;
 
-You haven't assigned the output anywhere, so it just wastes memory
-(for a little while).  You forgot to check C<$?> to see whether
-the program even ran correctly, too.  Even if you wrote
+You forgot to check C<$?> to see whether the program even ran
+correctly.  Even if you wrote
 
     print `cat /etc/termcap`;
 
@@ -809,7 +800,7 @@ causes many inefficiencies.
 =head2 Can I use perl to run a telnet or ftp session?
 
 Try the Net::FTP, TCP::Client, and Net::Telnet modules (available from
-CPAN).  http://www.perl.com/CPAN/scripts/netstuff/telnet.emul.shar
+CPAN).  http://www.cpan.org/scripts/netstuff/telnet.emul.shar
 will also help for emulating the telnet protocol, but Net::Telnet is
 quite probably easier to use..
 
@@ -951,9 +942,8 @@ in L<perlfunc/fork>.
 =head2 How do I use an SQL database?
 
 There are a number of excellent interfaces to SQL databases.  See the
-DBD::* modules available from http://www.perl.com/CPAN/modules/DBD .
-A lot of information on this can be found at 
-http://www.symbolstone.org/technology/perl/DBI/
+DBD::* modules available from http://www.cpan.org/modules/DBD .
+A lot of information on this can be found at http://dbi.perl.org/
 
 =head2 How do I make a system() exit on control-C?
 
@@ -978,9 +968,17 @@ sysopen():
 =head2 How do I install a module from CPAN?
 
 The easiest way is to have a module also named CPAN do it for you.
-This module comes with perl version 5.004 and later.  To manually install
-the CPAN module, or any well-behaved CPAN module for that matter, follow
-these steps:
+This module comes with perl version 5.004 and later.  
+
+    $ perl -MCPAN -e shell
+
+    cpan shell -- CPAN exploration and modules installation (v1.59_54)
+    ReadLine support enabled
+
+    cpan> install Some::Module 
+
+To manually install the CPAN module, or any well-behaved CPAN module 
+for that matter, follow these steps:
 
 =over 4
 
@@ -1086,15 +1084,11 @@ but other times it is not.  Modern programs C<use Socket;> instead.
 
 =head1 AUTHOR AND COPYRIGHT
 
-Copyright (c) 1997-1999 Tom Christiansen and Nathan Torkington.
+Copyright (c) 1997-2002 Tom Christiansen and Nathan Torkington.
 All rights reserved.
 
-When included as part of the Standard Version of Perl, or as part of
-its complete documentation whether printed or otherwise, this work
-may be distributed only under the terms of Perl's Artistic License.
-Any distribution of this file or derivatives thereof I<outside>
-of that package require that special arrangements be made with
-copyright holder.
+This documentation is free; you can redistribute it and/or modify it
+under the same terms as Perl itself.
 
 Irrespective of its distribution, all code examples in this file
 are hereby placed into the public domain.  You are permitted and

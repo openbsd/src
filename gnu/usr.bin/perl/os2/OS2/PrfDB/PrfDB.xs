@@ -11,8 +11,30 @@ extern "C" {
 }
 #endif
 
-#define Prf_Open(pszFileName) SaveWinError(PrfOpenProfile(Perl_hab, (pszFileName)))
-#define Prf_Close(hini) (!CheckWinError(PrfCloseProfile(hini)))
+#define Prf_Open(pszFileName) SaveWinError(pPrfOpenProfile(Perl_hab, (pszFileName)))
+#define Prf_Close(hini) (!CheckWinError(pPrfCloseProfile(hini)))
+
+BOOL (*pPrfCloseProfile) (HINI hini);
+HINI (*pPrfOpenProfile) (HAB hab, PCSZ pszFileName);
+BOOL (*pPrfQueryProfile) (HAB hab, PPRFPROFILE pPrfProfile);
+BOOL (*pPrfQueryProfileData) (HINI hini, PCSZ pszApp, PCSZ pszKey, PVOID pBuffer,
+    PULONG pulBufferLength);
+/*
+LONG (*pPrfQueryProfileInt) (HINI hini, PCSZ pszApp, PCSZ pszKey, LONG  sDefault);
+ */
+BOOL (*pPrfQueryProfileSize) (HINI hini, PCSZ pszApp, PCSZ pszKey,
+    PULONG pulReqLen);
+/*
+ULONG (*pPrfQueryProfileString) (HINI hini, PCSZ pszApp, PCSZ pszKey,
+    PCSZ pszDefault, PVOID pBuffer, ULONG ulBufferLength);
+ */
+BOOL (*pPrfReset) (HAB hab, __const__ PRFPROFILE *pPrfProfile);
+BOOL (*pPrfWriteProfileData) (HINI hini, PCSZ pszApp, PCSZ pszKey,
+    CPVOID pData, ULONG ulDataLength);
+/*
+BOOL (*pPrfWriteProfileString) (HINI hini, PCSZ pszApp, PCSZ pszKey,
+    PCSZ pszData);
+ */
 
 SV *
 Prf_Get(pTHX_ HINI hini, PSZ app, PSZ key) {
@@ -20,10 +42,10 @@ Prf_Get(pTHX_ HINI hini, PSZ app, PSZ key) {
     BOOL rc;
     SV *sv;
 
-    if (CheckWinError(PrfQueryProfileSize(hini, app, key, &len))) return &PL_sv_undef;
+    if (CheckWinError(pPrfQueryProfileSize(hini, app, key, &len))) return &PL_sv_undef;
     sv = newSVpv("", 0);
     SvGROW(sv, len + 1);
-    if (CheckWinError(PrfQueryProfileData(hini, app, key, SvPVX(sv), &len))
+    if (CheckWinError(pPrfQueryProfileData(hini, app, key, SvPVX(sv), &len))
 	|| (len == 0 && (app == NULL || key == NULL))) { /* Somewhy needed. */
 	SvREFCNT_dec(sv);
 	return &PL_sv_undef;
@@ -37,12 +59,12 @@ I32
 Prf_GetLength(HINI hini, PSZ app, PSZ key) {
     U32 len;
 
-    if (CheckWinError(PrfQueryProfileSize(hini, app, key, &len))) return -1;
+    if (CheckWinError(pPrfQueryProfileSize(hini, app, key, &len))) return -1;
     return len;
 }
 
 #define Prf_Set(hini, app, key, s, l)			\
-	 (!(CheckWinError(PrfWriteProfileData(hini, app, key, s, l))))
+	 (!(CheckWinError(pPrfWriteProfileData(hini, app, key, s, l))))
 
 #define Prf_System(key)					\
 	( (key) ? ( (key) == 1  ? HINI_USERPROFILE	\
@@ -59,7 +81,7 @@ Prf_Profiles(pTHX)
     char system[257];
     PRFPROFILE info = { 257, user, 257, system};
     
-    if (CheckWinError(PrfQueryProfile(Perl_hab, &info))) return &PL_sv_undef;
+    if (CheckWinError(pPrfQueryProfile(Perl_hab, &info))) return &PL_sv_undef;
     if (info.cchUserName > 257 || info.cchSysName > 257)
 	die("Panic: Profile names too long");
     av_push(av, newSVpv(user, info.cchUserName - 1));
@@ -78,12 +100,12 @@ Prf_SetUser(pTHX_ SV *sv)
     
     if (!SvPOK(sv)) die("User profile name not defined");
     if (SvCUR(sv) > 256) die("User profile name too long");
-    if (CheckWinError(PrfQueryProfile(Perl_hab, &info))) return 0;
+    if (CheckWinError(pPrfQueryProfile(Perl_hab, &info))) return 0;
     if (info.cchSysName > 257)
 	die("Panic: System profile name too long");
     info.cchUserName = SvCUR(sv) + 1;
     info.pszUserName = SvPVX(sv);
-    return !CheckWinError(PrfReset(Perl_hab, &info));
+    return !CheckWinError(pPrfReset(Perl_hab, &info));
 }
 
 MODULE = OS2::PrfDB		PACKAGE = OS2::Prf PREFIX = Prf_
@@ -141,3 +163,11 @@ OUTPUT:
 
 BOOT:
 	Acquire_hab();
+	AssignFuncPByORD(pPrfQueryProfileSize,	ORD_PRF32QUERYPROFILESIZE);
+	AssignFuncPByORD(pPrfOpenProfile,	ORD_PRF32OPENPROFILE);
+	AssignFuncPByORD(pPrfCloseProfile,	ORD_PRF32CLOSEPROFILE);
+	AssignFuncPByORD(pPrfQueryProfile,	ORD_PRF32QUERYPROFILE);
+	AssignFuncPByORD(pPrfReset,		ORD_PRF32RESET);
+	AssignFuncPByORD(pPrfQueryProfileData,	ORD_PRF32QUERYPROFILEDATA);
+	AssignFuncPByORD(pPrfWriteProfileData,	ORD_PRF32WRITEPROFILEDATA);
+

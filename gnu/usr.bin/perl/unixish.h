@@ -1,9 +1,20 @@
+/*    unixish.h
+ *
+ *    Copyright (c) 1997-2002, Larry Wall
+ *
+ *    You may distribute under the terms of either the GNU General Public
+ *    License or the Artistic License, as specified in the README file.
+ *
+ */
+
 /*
  * The following symbols are defined if your operating system supports
  * functions by that name.  All Unixes I know of support them, thus they
  * are not checked by the configuration script, but are directly defined
  * here.
  */
+
+#ifndef PERL_MICRO
 
 /* HAS_IOCTL:
  *	This symbol, if defined, indicates that the ioctl() routine is
@@ -33,6 +44,8 @@
 
 #define HAS_KILL
 #define HAS_WAIT
+
+#endif /* !PERL_MICRO */
   
 /* USEMYBINMODE
  *	This symbol, if defined, indicates that the program should
@@ -82,14 +95,14 @@
  *	as the first line of a Perl program designed to be executed directly
  *	by name, instead of the standard Unix #!.  If ALTERNATE_SHEBANG
  *	begins with a character other then #, then Perl will only treat
- *	it as a command line if if finds the string "perl" in the first
+ *	it as a command line if it finds the string "perl" in the first
  *	word; otherwise it's treated as the first line of code in the script.
  *	(IOW, Perl won't hand off to another interpreter via an alternate
  *	shebang sequence that might be legal Perl code.)
  */
 /* #define ALTERNATE_SHEBANG "#!" / **/
 
-#if !defined(NSIG) || defined(M_UNIX) || defined(M_XENIX) || defined(__NetBSD__)
+#if !defined(NSIG) || defined(M_UNIX) || defined(M_XENIX) || defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
 # include <signal.h>
 #endif
 
@@ -114,20 +127,8 @@
 #define Fflush(fp)         fflush(fp)
 #define Mkdir(path,mode)   mkdir((path),(mode))
 
-/* these should be set in a hint file, not here */
 #ifndef PERL_SYS_INIT
-#if defined(PERL_SCO5) || defined(__FreeBSD__)
-#  ifdef __FreeBSD__
-#    include <floatingpoint.h>
-#  endif
-#  define PERL_SYS_INIT(c,v)	fpsetmask(0); MALLOC_INIT
-#else
-#  ifdef POSIX_BC
-#    define PERL_SYS_INIT(c,v)	sigignore(SIGFPE); MALLOC_INIT
-#  else
-#    define PERL_SYS_INIT(c,v) MALLOC_INIT
-#  endif
-#endif
+#  define PERL_SYS_INIT(c,v) PERL_FPU_INIT MALLOC_INIT
 #endif
 
 #ifndef PERL_SYS_TERM

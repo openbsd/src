@@ -114,14 +114,14 @@ package main;
 $i = 28;
 open(FOO,">Cmd_subval.tmp");
 print FOO "blah blah\n";
-close FOO;
+close FOO or die "Can't close Cmd_subval.tmp: $!";
 
 &file_main(*F);
-close F;
+close F or die "Can't close: $!";
 &info_main;
 
 &file_package(*F);
-close F;
+close F or die "Can't close: $!";
 &info_package;
 
 unlink 'Cmd_subval.tmp';
@@ -129,7 +129,7 @@ unlink 'Cmd_subval.tmp';
 sub file_main {
         local(*F) = @_;
 
-        open(F, 'Cmd_subval.tmp') || die "can't open\n";
+        open(F, 'Cmd_subval.tmp') || die "can't open: $!\n";
 	$i++;
         eof F ? print "not ok $i\n" : print "ok $i\n";
 }
@@ -137,11 +137,11 @@ sub file_main {
 sub info_main {
         local(*F);
 
-        open(F, 'Cmd_subval.tmp') || die "test: can't open\n";
+        open(F, 'Cmd_subval.tmp') || die "test: can't open: $!\n";
 	$i++;
         eof F ? print "not ok $i\n" : print "ok $i\n";
         &iseof(*F);
-	close F;
+	close F or die "Can't close: $!";
 }
 
 sub iseof {
@@ -156,7 +156,7 @@ sub iseof {
  sub main'file_package {
         local(*F) = @_;
 
-        open(F, 'Cmd_subval.tmp') || die "can't open\n";
+        open(F, 'Cmd_subval.tmp') || die "can't open: $!\n";
 	$main'i++;
         eof F ? print "not ok $main'i\n" : print "ok $main'i\n";
  }
@@ -164,7 +164,7 @@ sub iseof {
  sub main'info_package {
         local(*F);
 
-        open(F, 'Cmd_subval.tmp') || die "can't open\n";
+        open(F, 'Cmd_subval.tmp') || die "can't open: $!\n";
 	$main'i++;
         eof F ? print "not ok $main'i\n" : print "ok $main'i\n";
         &iseof(*F);

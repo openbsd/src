@@ -1,5 +1,7 @@
 package Tie::Scalar;
 
+our $VERSION = '1.00';
+
 =head1 NAME
 
 Tie::Scalar, Tie::StdScalar - base class definitions for tied scalars
@@ -45,7 +47,7 @@ For developers wishing to write their own tied-scalar classes, the methods
 are summarized below. The L<perltie> section not only documents these, but
 has sample code as well:
 
-=over
+=over 4
 
 =item TIESCALAR classname, LIST
 
@@ -90,7 +92,7 @@ sub new {
 
 sub TIESCALAR {
     my $pkg = shift;
-    if (defined &{"{$pkg}::new"}) {
+	if ($pkg->can('new') and $pkg ne __PACKAGE__) {
 	warnings::warnif("WARNING: calling ${pkg}->new since ${pkg}->TIESCALAR is missing");
 	$pkg->new(@_);
     }

@@ -1,48 +1,52 @@
 #!./perl
 
-# $RCSfile: repeat.t,v $$Revision: 4.1 $$Date: 92/08/07 18:28:21 $
+BEGIN {
+    chdir 't' if -d 't';
+    @INC = '../lib';
+}
 
-print "1..20\n";
+require './test.pl';
+plan(tests => 25);
 
 # compile time
 
-if ('-' x 5 eq '-----') {print "ok 1\n";} else {print "not ok 1\n";}
-if ('-' x 1 eq '-') {print "ok 2\n";} else {print "not ok 2\n";}
-if ('-' x 0 eq '') {print "ok 3\n";} else {print "not ok 3\n";}
+is('-' x 5, '-----',    'compile time x');
+is('-' x 1, '-',        '  x 1');
+is('-' x 0, '',         '  x 0');
 
-if ('ab' x 3 eq 'ababab') {print "ok 4\n";} else {print "not ok 4\n";}
+is('ab' x 3, 'ababab',  '  more than one char');
 
 # run time
 
 $a = '-';
-if ($a x 5 eq '-----') {print "ok 5\n";} else {print "not ok 5\n";}
-if ($a x 1 eq '-') {print "ok 6\n";} else {print "not ok 6\n";}
-if ($a x 0 eq '') {print "ok 7\n";} else {print "not ok 7\n";}
+is($a x 5, '-----',     'run time x');
+is($a x 1, '-',         '  x 1');
+is($a x 0, '',          '  x 0');
 
 $a = 'ab';
-if ($a x 3 eq 'ababab') {print "ok 8\n";} else {print "not ok 8\n";}
+is($a x 3, 'ababab',    '  more than one char');
 
 $a = 'xyz';
 $a x= 2;
-if ($a eq 'xyzxyz') {print "ok 9\n";} else {print "not ok 9\n";}
+is($a, 'xyzxyz',        'x=2');
 $a x= 1;
-if ($a eq 'xyzxyz') {print "ok 10\n";} else {print "not ok 10\n";}
+is($a, 'xyzxyz',        'x=1');
 $a x= 0;
-if ($a eq '') {print "ok 11\n";} else {print "not ok 11\n";}
+is($a, '',              'x=0');
 
 @x = (1,2,3);
 
-print join('', @x x 4) eq '3333' ? "ok 12\n" : "not ok 12\n";
-print join('', (@x) x 4) eq '123123123123' ? "ok 13\n" : "not ok 13\n";
-print join('', (@x,()) x 4) eq '123123123123' ? "ok 14\n" : "not ok 14\n";
-print join('', (@x,1) x 4) eq '1231123112311231' ? "ok 15\n" : "not ok 15\n";
-print join(':', () x 4) eq '' ? "ok 16\n" : "not ok 16\n";
-print join(':', (9) x 4) eq '9:9:9:9' ? "ok 17\n" : "not ok 17\n";
-print join(':', (9,9) x 4) eq '9:9:9:9:9:9:9:9' ? "ok 18\n" : "not ok 18\n";
-print join('', (split(//,"123")) x 2) eq '123123' ? "ok 19\n" : "not ok 19\n";
+is(join('', @x x 4),        '3333',                 '@x x Y');
+is(join('', (@x) x 4),      '123123123123',         '(@x) x Y');
+is(join('', (@x,()) x 4),   '123123123123',         '(@x,()) x Y');
+is(join('', (@x,1) x 4),    '1231123112311231',     '(@x,1) x Y');
+is(join(':', () x 4),       '',                     '() x Y');
+is(join(':', (9) x 4),      '9:9:9:9',              '(X) x Y');
+is(join(':', (9,9) x 4),    '9:9:9:9:9:9:9:9',      '(X,X) x Y');
+is(join('', (split(//,"123")) x 2), '123123',       'split and x');
 
-#
-# The test #20 is actually testing for Digital C compiler optimizer bug,
+
+# This test is actually testing for Digital C compiler optimizer bug,
 # present in Dec C versions 5.* and 6.0 (used in Digital UNIX and VMS),
 # found in December 1998.  The bug was reported to Digital^WCompaq as
 #     DECC 2745 (21-Dec-1998)
@@ -95,4 +99,37 @@ print join('', (split(//,"123")) x 2) eq '123123' ? "ok 19\n" : "not ok 19\n";
 #
 # jhi@iki.fi
 #
-print "\xdd" x 24 eq "\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd" ? "ok 20\n" : "not ok 20\n";
+is("\xdd" x 24, "\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd", 'Dec C bug');
+
+
+# When we use a list repeat in a scalar context, it behaves like
+# a scalar repeat. Make sure that works properly, and doesn't leave
+# extraneous values on the stack.
+#  -- robin@kitsite.com
+
+my ($x, $y) = scalar ((1,2)x2);
+is($x, "22",    'list repeat in scalar context');
+is($y, undef,   '  no extra values on stack');
+
+# Make sure the stack doesn't get truncated too much - the left
+# operand of the eq binop needs to remain!
+is(77, scalar ((1,7)x2),    'stack truncation');
+
+
+# perlbug 20011113.110 works in 5.6.1, broken in 5.7.2
+{
+    my $x= [("foo") x 2];
+    is( join('', @$x), 'foofoo', 'list repeat in anon array ref broken [ID 20011113.110]' );
+}
+
+# [ID 20010809.028] x operator not copying elements in 'for' list?
+{
+    local $TODO = "x operator not copying elements in 'for' list? [ID 20010809.028]";
+    my $x = 'abcd';
+    my $y = '';
+    for (($x =~ /./g) x 2) {
+	$y .= chop;
+    }
+    is($y, 'abcdabcd');
+}
+

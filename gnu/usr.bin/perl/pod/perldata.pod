@@ -87,10 +87,11 @@ that returns a reference to the appropriate type.  For a description
 of this, see L<perlref>.
 
 Names that start with a digit may contain only more digits.  Names
-that do not start with a letter, underscore, or digit are limited to
-one character, e.g.,  C<$%> or C<$$>.  (Most of these one character names
-have a predefined significance to Perl.  For instance, C<$$> is the
-current process id.)
+that do not start with a letter, underscore, digit or a caret (i.e.
+a control character) are limited to one character, e.g.,  C<$%> or
+C<$$>.  (Most of these one character names have a predefined
+significance to Perl.  For instance, C<$$> is the current process
+id.)
 
 =head2 Context
 
@@ -218,7 +219,7 @@ an array that was previously shortened does not recover values
 that were in those elements.  (It used to do so in Perl 4, but we
 had to break this to make sure destructors were called when expected.)
 
-You can also gain some miniscule measure of efficiency by pre-extending
+You can also gain some minuscule measure of efficiency by pre-extending
 an array that is going to get big.  You can also extend an array
 by assigning to an element that is off the end of the array.  You
 can truncate an array down to nothing by assigning the null list
@@ -271,10 +272,17 @@ integer formats:
     12345
     12345.67
     .23E-10             # a very small number
-    4_294_967_296       # underline for legibility
+    3.14_15_92          # a very important number
+    4_294_967_296       # underscore for legibility
     0xff                # hex
+    0xdead_beef         # more hex   
     0377                # octal
     0b011011            # binary
+
+You are allowed to use underscores (underbars) in numeric literals
+between digits for legibility.  You could, for example, group binary
+digits by threes (as for a Unix-style mode argument such as 0b110_100_100)
+or by fours (to represent nibbles, as in 0b1010_0110) or in other groups.
 
 String literals are usually delimited by either single or double
 quotes.  They work much like quotes in the standard Unix shells:
@@ -326,13 +334,13 @@ anything more complicated in the subscript will be interpreted as
 an expression.
 
 A literal of the form C<v1.20.300.4000> is parsed as a string composed
-of characters with the specified ordinals.  This provides an alternative,
-more readable way to construct strings, rather than use the somewhat less
-readable interpolation form C<"\x{1}\x{14}\x{12c}\x{fa0}">.  This is useful
-for representing Unicode strings, and for comparing version "numbers"
-using the string comparison operators, C<cmp>, C<gt>, C<lt> etc.
-If there are two or more dots in the literal, the leading C<v> may be
-omitted.
+of characters with the specified ordinals.  This form, known as
+v-strings, provides an alternative, more readable way to construct
+strings, rather than use the somewhat less readable interpolation form
+C<"\x{1}\x{14}\x{12c}\x{fa0}">.  This is useful for representing
+Unicode strings, and for comparing version "numbers" using the string
+comparison operators, C<cmp>, C<gt>, C<lt> etc.  If there are two or
+more dots in the literal, the leading C<v> may be omitted.
 
     print v9786;              # prints UTF-8 encoded SMILEY, "\x{263a}"
     print v102.111.111;       # prints "foo"
@@ -341,6 +349,8 @@ omitted.
 Such literals are accepted by both C<require> and C<use> for
 doing a version check.  The C<$^V> special variable also contains the
 running Perl interpreter's version in this form.  See L<perlvar/$^V>.
+Note that using the v-strings for IPv4 addresses is not portable unless
+you also use the inet_aton()/inet_ntoa() routines of the Socket package.
 
 The special literals __FILE__, __LINE__, and __PACKAGE__
 represent the current filename, line number, and package name at that
@@ -405,95 +415,9 @@ and is almost always right.  If it does guess wrong, or if you're just
 plain paranoid, you can force the correct interpretation with curly
 braces as above.
 
-A line-oriented form of quoting is based on the shell "here-document"
-syntax.  Following a C<< << >> you specify a string to terminate
-the quoted material, and all lines following the current line down to
-the terminating string are the value of the item.  The terminating
-string may be either an identifier (a word), or some quoted text.  If
-quoted, the type of quotes you use determines the treatment of the
-text, just as in regular quoting.  An unquoted identifier works like
-double quotes.  There must be no space between the C<< << >> and
-the identifier, unless the identifier is quoted.  (If you put a space it
-will be treated as a null identifier, which is valid, and matches the first
-empty line.)  The terminating string must appear by itself (unquoted and
-with no surrounding whitespace) on the terminating line.
-
-	print <<EOF;
-    The price is $Price.
-    EOF
-
-	print << "EOF";	# same as above
-    The price is $Price.
-    EOF
-
-	print << `EOC`;	# execute commands
-    echo hi there
-    echo lo there
-    EOC
-
-	print <<"foo", <<"bar";	# you can stack them
-    I said foo.
-    foo
-    I said bar.
-    bar
-
-	myfunc(<< "THIS", 23, <<'THAT');
-    Here's a line
-    or two.
-    THIS
-    and here's another.
-    THAT
-
-Just don't forget that you have to put a semicolon on the end
-to finish the statement, as Perl doesn't know you're not going to
-try to do this:
-
-	print <<ABC
-    179231
-    ABC
-	+ 20;
-
-If you want your here-docs to be indented with the 
-rest of the code, you'll need to remove leading whitespace
-from each line manually:
-
-    ($quote = <<'FINIS') =~ s/^\s+//gm;
-	The Road goes ever on and on, 
-	down from the door where it began.
-    FINIS
-
-If you use a here-doc within a delimited construct, such as in C<s///eg>,
-the quoted material must come on the lines following the final delimiter.
-So instead of
-
-    s/this/<<E . 'that'
-    the other
-    E
-     . 'more '/eg;
-
-you have to write
-
-    s/this/<<E . 'that' 
-     . 'more '/eg; 
-    the other 
-    E 
-
-If the terminating identifier is on the last line of the program, you
-must be sure there is a newline after it; otherwise, Perl will give the
-warning B<Can't find string terminator "END" anywhere before EOF...>.
-
-Additionally, the quoting rules for the identifier are not related to
-Perl's quoting rules -- C<q()>, C<qq()>, and the like are not supported
-in place of C<''> and C<"">, and the only interpolation is for backslashing
-the quoting character:
-
-    print << "abc\"def";
-    testing...
-    abc"def
-
-Finally, quoted strings cannot span multiple lines.  The general rule is
-that the identifier must be a string literal.  Stick with that, and you
-should be safe.
+If you're looking for the information on how to use here-documents,
+which used to be here, that's been moved to
+L<perlop/Quote and Quote-like Operators>.
 
 =head2 List value constructors
 
@@ -517,26 +441,26 @@ Note that the value of an actual array in scalar context is the
 length of the array; the following assigns the value 3 to $foo:
 
     @foo = ('cc', '-E', $bar);
-    $foo = @foo;		# $foo gets 3
+    $foo = @foo;                # $foo gets 3
 
 You may have an optional comma before the closing parenthesis of a
 list literal, so that you can say:
 
     @foo = (
-	1,
-	2,
-	3,
+        1,
+        2,
+        3,
     );
 
 To use a here-document to assign an array, one line per element,
 you might use an approach like this:
 
     @sauces = <<End_Lines =~ m/(\S.*\S)/g;
-	normal tomato
-	spicy tomato
-	green chile
-	pesto
-	white wine
+        normal tomato
+        spicy tomato
+        green chile
+        pesto
+        white wine
     End_Lines
 
 LISTs do automatic interpolation of sublists.  That is, when a LIST is
@@ -558,7 +482,7 @@ interpolating an array with no elements is the same as if no
 array had been interpolated at that point.
 
 This interpolation combines with the facts that the opening
-and closing parentheses are optional (except necessary for
+and closing parentheses are optional (except when necessary for
 precedence) and lists may end with an optional comma to mean that
 multiple commas within lists are legal syntax. The list C<1,,3> is a
 concatenation of two lists, C<1,> and C<3>, the first of which ends
@@ -597,14 +521,34 @@ function:
 List assignment in scalar context returns the number of elements
 produced by the expression on the right side of the assignment:
 
-    $x = (($foo,$bar) = (3,2,1));	# set $x to 3, not 2
-    $x = (($foo,$bar) = f());	        # set $x to f()'s return count
+    $x = (($foo,$bar) = (3,2,1));       # set $x to 3, not 2
+    $x = (($foo,$bar) = f());           # set $x to f()'s return count
 
 This is handy when you want to do a list assignment in a Boolean
 context, because most list functions return a null list when finished,
 which when assigned produces a 0, which is interpreted as FALSE.
 
-The final element may be an array or a hash:
+It's also the source of a useful idiom for executing a function or
+performing an operation in list context and then counting the number of
+return values, by assigning to an empty list and then using that
+assignment in scalar context. For example, this code:
+
+    $count = () = $string =~ /\d+/g;
+
+will place into $count the number of digit groups found in $string.
+This happens because the pattern match is in list context (since it
+is being assigned to the empty list), and will therefore return a list
+of all matching parts of the string. The list assignment in scalar
+context will translate that into the number of elements (here, the
+number of times the pattern matched) and assign that to $count. Note
+that simply using
+
+    $count = $string =~ /\d+/g;
+
+would not have worked, since a pattern match in scalar context will
+only return true or false, rather than a count of matches.
+
+The final element of a list assignment may be an array or a hash:
 
     ($a, $b, @rest) = split;
     my($a, $b, %rest) = @_;
@@ -633,23 +577,23 @@ interpreted as a string--if it's a bareword that would be a legal identifier.
 This makes it nice for initializing hashes:
 
     %map = (
-		 red   => 0x00f,
-		 blue  => 0x0f0,
-		 green => 0xf00,
+                 red   => 0x00f,
+                 blue  => 0x0f0,
+                 green => 0xf00,
    );
 
 or for initializing hash references to be used as records:
 
     $rec = {
-		witch => 'Mable the Merciless',
-		cat   => 'Fluffy the Ferocious',
-		date  => '10/31/1776',
+                witch => 'Mable the Merciless',
+                cat   => 'Fluffy the Ferocious',
+                date  => '10/31/1776',
     };
 
 or for using call-by-named-parameter to complicated functions:
 
    $field = $query->radio_group(
-	       name      => 'group_name',
+               name      => 'group_name',
                values    => ['eenie','meenie','minie'],
                default   => 'meenie',
                linebreak => 'true',
@@ -665,34 +609,34 @@ of how to arrange for an output ordering.
 A common way to access an array or a hash is one scalar element at a
 time.  You can also subscript a list to get a single element from it.
 
-    $whoami = $ENV{"USER"};		# one element from the hash
-    $parent = $ISA[0];		        # one element from the array
-    $dir    = (getpwnam("daemon"))[7];	# likewise, but with list
+    $whoami = $ENV{"USER"};             # one element from the hash
+    $parent = $ISA[0];                  # one element from the array
+    $dir    = (getpwnam("daemon"))[7];  # likewise, but with list
 
 A slice accesses several elements of a list, an array, or a hash
 simultaneously using a list of subscripts.  It's more convenient
 than writing out the individual elements as a list of separate
 scalar values.
 
-    ($him, $her)   = @folks[0,-1];		# array slice
-    @them          = @folks[0 .. 3];		# array slice
-    ($who, $home)  = @ENV{"USER", "HOME"};	# hash slice
-    ($uid, $dir)   = (getpwnam("daemon"))[2,7];	# list slice
+    ($him, $her)   = @folks[0,-1];              # array slice
+    @them          = @folks[0 .. 3];            # array slice
+    ($who, $home)  = @ENV{"USER", "HOME"};      # hash slice
+    ($uid, $dir)   = (getpwnam("daemon"))[2,7]; # list slice
 
 Since you can assign to a list of variables, you can also assign to
 an array or hash slice.
 
     @days[3..5]    = qw/Wed Thu Fri/;
     @colors{'red','blue','green'} 
-		   = (0xff0000, 0x0000ff, 0x00ff00);
+                   = (0xff0000, 0x0000ff, 0x00ff00);
     @folks[0, -1]  = @folks[-1, 0];
 
 The previous assignments are exactly equivalent to
 
     ($days[3], $days[4], $days[5]) = qw/Wed Thu Fri/;
     ($colors{'red'}, $colors{'blue'}, $colors{'green'})
-		   = (0xff0000, 0x0000ff, 0x00ff00);
-    ($folks[0], $folks[-1]) = ($folks[0], $folks[-1]);
+                   = (0xff0000, 0x0000ff, 0x00ff00);
+    ($folks[0], $folks[-1]) = ($folks[-1], $folks[0]);
 
 Since changing a slice changes the original array or hash that it's
 slicing, a C<foreach> construct will alter some--or even all--of the
@@ -701,9 +645,9 @@ values of the array or hash.
     foreach (@array[ 4 .. 10 ]) { s/peter/paul/ } 
 
     foreach (@hash{keys %hash}) {
-	s/^\s+//;	    # trim leading whitespace
-	s/\s+$//;	    # trim trailing whitespace
-	s/(\w+)/\u\L$1/g;   # "titlecase" words
+        s/^\s+//;           # trim leading whitespace
+        s/\s+$//;           # trim trailing whitespace
+        s/(\w+)/\u\L$1/g;   # "titlecase" words
     }
 
 A slice of an empty list is still an empty list.  Thus:
@@ -721,7 +665,7 @@ This makes it easy to write loops that terminate when a null list
 is returned:
 
     while ( ($home, $user) = (getpwent)[7,0]) {
-	printf "%-8s %s\n", $user, $home;
+        printf "%-8s %s\n", $user, $home;
     }
 
 As noted earlier in this document, the scalar sense of list assignment
@@ -779,10 +723,10 @@ operator.  These last until their block is exited, but may be passed back.
 For example:
 
     sub newopen {
-	my $path = shift;
-	local  *FH;  # not my!
-	open   (FH, $path) 	    or  return undef;
-	return *FH;
+        my $path = shift;
+        local  *FH;  # not my!
+        open   (FH, $path)          or  return undef;
+        return *FH;
     }
     $fh = newopen('/etc/passwd');
 
@@ -805,15 +749,20 @@ that must be passed around, as in the following example:
 
     sub myopen {
         open my $fh, "@_"
-	     or die "Can't open '@_': $!";
-	return $fh;
+             or die "Can't open '@_': $!";
+        return $fh;
     }
 
     {
         my $f = myopen("</etc/motd");
-	print <$f>;
-	# $f implicitly closed here
+        print <$f>;
+        # $f implicitly closed here
     }
+
+Note that if an initialized scalar variable is used instead the
+result is different: C<my $fh='zzz'; open($fh, ...)> is equivalent
+to C<open( *{'zzz'}, ...)>.
+C<use strict 'refs'> forbids such practice.
 
 Another way to create anonymous filehandles is with the Symbol
 module or with the IO::Handle module and its ilk.  These modules

@@ -1,6 +1,7 @@
 package User::pwent;
 
 use 5.006;
+our $VERSION = '1.00';
 
 use strict;
 use warnings;
@@ -286,7 +287,7 @@ Tom Christiansen
 
 =head1 HISTORY
 
-=over
+=over 4
 
 =item March 18th, 2000
 

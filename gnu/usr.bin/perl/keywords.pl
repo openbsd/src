@@ -4,6 +4,18 @@ unlink "keywords.h";
 open(KW, ">keywords.h") || die "Can't create keywords.h: $!\n";
 select KW;
 
+print <<EOM;
+/*
+ *    keywords.h
+ *
+ *    Copyright (c) 1997-2002, Larry Wall
+ *
+ *    You may distribute under the terms of either the GNU General Public
+ *    License or the Artistic License, as specified in the README file.
+ *
+ */
+EOM
+
 # Read & print data.
 
 $keynum = 0;
@@ -35,13 +47,7 @@ BEGIN
 CORE
 DESTROY
 END
-EQ
-GE
-GT
 INIT
-LE
-LT
-NE
 CHECK
 abs
 accept

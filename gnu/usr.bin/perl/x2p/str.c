@@ -1,6 +1,6 @@
 /* $RCSfile: str.c,v $$Revision: 4.1 $$Date: 92/08/07 18:29:26 $
  *
- *    Copyright (c) 1991-2001, Larry Wall
+ *    Copyright (c) 1991-2002, Larry Wall
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -77,7 +77,7 @@ void
 str_nset(register STR *str, register char *ptr, register int len)
 {
     GROWSTR(&(str->str_ptr), &(str->str_len), len + 1);
-    bcopy(ptr,str->str_ptr,len);
+    memcpy(str->str_ptr,ptr,len);
     str->str_cur = len;
     *(str->str_ptr+str->str_cur) = '\0';
     str->str_nok = 0;		/* invalidate number */
@@ -93,7 +93,7 @@ str_set(register STR *str, register char *ptr)
 	ptr = "";
     len = strlen(ptr);
     GROWSTR(&(str->str_ptr), &(str->str_len), len + 1);
-    bcopy(ptr,str->str_ptr,len+1);
+    memcpy(str->str_ptr,ptr,len+1);
     str->str_cur = len;
     str->str_nok = 0;		/* invalidate number */
     str->str_pok = 1;		/* validate pointer */
@@ -107,7 +107,7 @@ str_chop(register STR *str, register char *ptr)	/* like set but assuming ptr is 
     if (!(str->str_pok))
 	str_2ptr(str);
     str->str_cur -= (ptr - str->str_ptr);
-    bcopy(ptr,str->str_ptr, str->str_cur + 1);
+    memcpy(str->str_ptr, ptr, str->str_cur + 1);
     str->str_nok = 0;		/* invalidate number */
     str->str_pok = 1;		/* validate pointer */
 }
@@ -118,7 +118,7 @@ str_ncat(register STR *str, register char *ptr, register int len)
     if (!(str->str_pok))
 	str_2ptr(str);
     GROWSTR(&(str->str_ptr), &(str->str_len), str->str_cur + len + 1);
-    bcopy(ptr,str->str_ptr+str->str_cur,len);
+    memcpy(str->str_ptr+str->str_cur, ptr, len);
     str->str_cur += len;
     *(str->str_ptr+str->str_cur) = '\0';
     str->str_nok = 0;		/* invalidate number */
@@ -145,7 +145,7 @@ str_cat(register STR *str, register char *ptr)
 	str_2ptr(str);
     len = strlen(ptr);
     GROWSTR(&(str->str_ptr), &(str->str_len), str->str_cur + len + 1);
-    bcopy(ptr,str->str_ptr+str->str_cur,len+1);
+    memcpy(str->str_ptr+str->str_cur, ptr, len+1);
     str->str_cur += len;
     str->str_nok = 0;		/* invalidate number */
     str->str_pok = 1;		/* validate pointer */
@@ -197,7 +197,7 @@ str_new(int len)
     }
     else {
 	str = (STR *) safemalloc(sizeof(STR));
-	bzero((char*)str,sizeof(STR));
+	memset((char*)str,0,sizeof(STR));
     }
     if (len)
 	GROWSTR(&(str->str_ptr), &(str->str_len), len + 1);
@@ -221,7 +221,7 @@ str_replace(register STR *str, register STR *nstr)
     str->str_len = nstr->str_len;
     str->str_cur = nstr->str_cur;
     str->str_pok = nstr->str_pok;
-    if (str->str_nok = nstr->str_nok)
+    if ((str->str_nok = nstr->str_nok))
 	str->str_nval = nstr->str_nval;
     safefree((char*)nstr);
 }
@@ -282,20 +282,21 @@ str_gets(register STR *str, register FILE *fp)
     if (str->str_len <= cnt)		/* make sure we have the room */
 	GROWSTR(&(str->str_ptr), &(str->str_len), cnt+1);
     bp = str->str_ptr;			/* move these two too to registers */
-    ptr = FILE_ptr(fp);
+    ptr = (STDCHAR*)FILE_ptr(fp);
     for (;;) {
 	while (--cnt >= 0) {
-	    if ((*bp++ = *ptr++) == newline)
+	    if ((*bp++ = *ptr++) == newline) {
 		if (bp <= str->str_ptr || bp[-2] != '\\')
 		    goto thats_all_folks;
 		else {
 		    line++;
 		    bp -= 2;
 		}
+	    }
 	}
 	
 	FILE_cnt(fp) = cnt;		/* deregisterize cnt and ptr */
-	FILE_ptr(fp) = ptr;
+	FILE_ptr(fp) = (void*)ptr; /* LHS STDCHAR* cast non-portable */
 	i = getc(fp);		/* get more characters */
 	cnt = FILE_cnt(fp);
 	ptr = FILE_ptr(fp);		/* reregisterize cnt and ptr */
@@ -315,7 +316,7 @@ str_gets(register STR *str, register FILE *fp)
 
 thats_all_folks:
     FILE_cnt(fp) = cnt;			/* put these back or we're in trouble */
-    FILE_ptr(fp) = ptr;
+    FILE_ptr(fp) = (STDCHAR*)ptr;
     *bp = '\0';
     str->str_cur = bp - str->str_ptr;	/* set length */
 
@@ -353,7 +354,7 @@ str_inc(register STR *str)
     }
     for (d = str->str_ptr; *d && *d != '.'; d++) ;
     d--;
-    if (!isdigit(*str->str_ptr) || !isdigit(*d) ) {
+    if (!isDIGIT(*str->str_ptr) || !isDIGIT(*d) ) {
         str_numset(str,atof(str->str_ptr) + 1.0);  /* punt */
 	return;
     }
@@ -389,7 +390,7 @@ str_dec(register STR *str)
     }
     for (d = str->str_ptr; *d && *d != '.'; d++) ;
     d--;
-    if (!isdigit(*str->str_ptr) || !isdigit(*d) || (*d == '0' && d == str->str_ptr)) {
+    if (!isDIGIT(*str->str_ptr) || !isDIGIT(*d) || (*d == '0' && d == str->str_ptr)) {
         str_numset(str,atof(str->str_ptr) - 1.0);  /* punt */
 	return;
     }

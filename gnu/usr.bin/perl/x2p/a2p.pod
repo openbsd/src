@@ -47,12 +47,12 @@ tells a2p to use old awk behavior.  The only current differences are:
 
 =over 5
 
-=item
+=item *
 
 Old awk always has a line loop, even if there are no line
 actions, whereas new awk does not.
 
-=item
+=item *
 
 In old awk, sprintf is extremely greedy about its arguments.
 For example, given the statement
@@ -61,6 +61,8 @@ For example, given the statement
 
 old awk considers I<extra_args> to be arguments to C<sprintf>; new awk
 considers them arguments to C<print>.
+
+=back
 
 =back
 

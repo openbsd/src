@@ -1,6 +1,6 @@
 /*    deb.c
  *
- *    Copyright (c) 1991-2001, Larry Wall
+ *    Copyright (c) 1991-2002, Larry Wall
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -45,9 +45,9 @@ void
 Perl_vdeb(pTHX_ const char *pat, va_list *args)
 {
 #ifdef DEBUGGING
-    char* file = CopFILE(PL_curcop);
+    char* file = OutCopFILE(PL_curcop);
 
-#ifdef USE_THREADS
+#ifdef USE_5005THREADS
     PerlIO_printf(Perl_debug_log, "0x%"UVxf" (%s:%ld)\t",
 		  PTR2UV(thr),
 		  (file ? file : "<free>"),
@@ -55,7 +55,7 @@ Perl_vdeb(pTHX_ const char *pat, va_list *args)
 #else
     PerlIO_printf(Perl_debug_log, "(%s:%ld)\t", (file ? file : "<free>"),
 		  (long)CopLINE(PL_curcop));
-#endif /* USE_THREADS */
+#endif /* USE_5005THREADS */
     (void) PerlIO_vprintf(Perl_debug_log, pat, *args);
 #endif /* DEBUGGING */
 }
@@ -81,10 +81,13 @@ Perl_debstackptrs(pTHX)
 I32
 Perl_debstack(pTHX)
 {
-#ifdef DEBUGGING
+#ifndef SKIP_DEBUGGING
     I32 top = PL_stack_sp - PL_stack_base;
     register I32 i = top - 30;
     I32 *markscan = PL_markstack + PL_curstackinfo->si_markoff;
+
+    if (CopSTASH_eq(PL_curcop, PL_debstash) && !DEBUG_J_TEST_)
+	return 0;
 
     if (i < 0)
 	i = 0;
@@ -93,13 +96,13 @@ Perl_debstack(pTHX)
 	if (*markscan >= i)
 	    break;
 
-#ifdef USE_THREADS
+#ifdef USE_5005THREADS
     PerlIO_printf(Perl_debug_log,
 		  i ? "0x%"UVxf"    =>  ...  " : "0x%lx    =>  ",
 		  PTR2UV(thr));
 #else
     PerlIO_printf(Perl_debug_log, i ? "    =>  ...  " : "    =>  ");
-#endif /* USE_THREADS */
+#endif /* USE_5005THREADS */
     if (PL_stack_base[0] != &PL_sv_undef || PL_stack_sp < PL_stack_base)
 	PerlIO_printf(Perl_debug_log, " [STACK UNDERFLOW!!!]\n");
     do {
@@ -118,6 +121,6 @@ Perl_debstack(pTHX)
     }
     while (1);
     PerlIO_printf(Perl_debug_log, "\n");
-#endif /* DEBUGGING */
+#endif /* SKIP_DEBUGGING */
     return 0;
 }

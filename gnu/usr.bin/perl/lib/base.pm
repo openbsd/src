@@ -44,8 +44,8 @@ L<fields>
 
 package base;
 
-use 5.005_64;
-our $VERSION = "1.01";
+use 5.006_001;
+our $VERSION = "1.03";
 
 sub import {
     my $class = shift;
@@ -54,8 +54,10 @@ sub import {
 
     foreach my $base (@_) {
 	next if $pkg->isa($base);
-	push @{"$pkg\::ISA"}, $base;
-	unless (exists ${"$base\::"}{VERSION}) {
+        my $vglob;
+	if ($vglob = ${"$base\::"}{VERSION} and *$vglob{SCALAR}) {
+          $$vglob = "-1, set by base.pm" unless defined $$vglob;
+        } else {
 	    eval "require $base";
 	    # Only ignore "Can't locate" errors from our eval require.
 	    # Other fatal errors (syntax etc) must be reported.
@@ -66,9 +68,9 @@ sub import {
 			    "\t(Perhaps you need to 'use' the module ",
 			    "which defines that package first.)");
 	    }
-	    ${"$base\::VERSION"} = "-1, set by base.pm"
-		unless exists ${"$base\::"}{VERSION};
+	    ${"$base\::VERSION"} = "-1, set by base.pm" unless defined ${"$base\::VERSION"};
 	}
+	push @{"$pkg\::ISA"}, $base;
 
 	# A simple test like (defined %{"$base\::FIELDS"}) will
 	# sometimes produce typo warnings because it would create

@@ -1,6 +1,6 @@
 #!./perl
 
-print "1..40\n";
+print "1..46\n";
 
 eval 'print "ok 1\n";';
 
@@ -37,7 +37,7 @@ open(try,'>Op.eval');
 print try 'print "ok 10\n"; unlink "Op.eval";',"\n";
 close try;
 
-do 'Op.eval'; print $@;
+do './Op.eval'; print $@;
 
 # Test the singlequoted eval optimizer
 
@@ -99,7 +99,7 @@ do_eval1('print "ok $x\n"');
 $x++;
 do_eval1('eval q[print "ok $x\n"]');
 $x++;
-do_eval1('sub { eval q[print "ok $x\n"] }->()');
+do_eval1('sub { print "# $x\n"; eval q[print "ok $x\n"] }->()');
 $x++;
 
 # calls from within eval'' should clone outer lexicals
@@ -112,7 +112,7 @@ do_eval2('print "ok $x\n"');
 $x++;
 do_eval2('eval q[print "ok $x\n"]');
 $x++;
-do_eval2('sub { eval q[print "ok $x\n"] }->()');
+do_eval2('sub { print "# $x\n"; eval q[print "ok $x\n"] }->()');
 $x++;
 EOT
 
@@ -205,4 +205,39 @@ print $@;
     print "not " if $@;
     print "ok $x\n";
     $x++;
+}
+
+# Check that eval catches bad goto calls
+#   (BUG ID 20010305.003)
+{
+    eval {
+	eval { goto foo; };
+	print ($@ ? "ok 41\n" : "not ok 41\n");
+	last;
+	foreach my $i (1) {
+	    foo: print "not ok 41\n";
+	    print "# jumped into foreach\n";
+	}
+    };
+    print "not ok 41\n" if $@;
+}
+
+# Make sure that "my $$x" is forbidden
+# 20011224 MJD
+{
+  eval q{my $$x};
+  print $@ ? "ok 42\n" : "not ok 42\n";
+  eval q{my @$x};
+  print $@ ? "ok 43\n" : "not ok 43\n";
+  eval q{my %$x};
+  print $@ ? "ok 44\n" : "not ok 44\n";
+  eval q{my $$$x};
+  print $@ ? "ok 45\n" : "not ok 45\n";
+}
+
+# [ID 20020623.002] eval "" doesn't clear $@
+{
+    $@ = 5;
+    eval q{};
+    print length($@) ? "not ok 46\t# \$\@ = '$@'\n" : "ok 46\n";
 }

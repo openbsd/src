@@ -3,7 +3,11 @@ BEGIN {
     @INC = '../lib' if -d 'lib';
     require Config; import Config;
     if (-d 'lib' and $Config{'extensions'} !~ /\bOS2(::|\/)REXX\b/) {
-	print "1..0\n";
+	print "1..0 # skipped: OS2::REXX not built\n";
+	exit 0;
+    }
+    if (defined $ENV{PERL_TEST_NOVREXX}) {
+	print "1..0 # skipped: request via PERL_TEST_NOVREXX\n";
 	exit 0;
     }
 }

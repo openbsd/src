@@ -10,11 +10,10 @@ make your programs easier to read, understand, and maintain.
 
 The most important thing is to run your programs under the B<-w>
 flag at all times.  You may turn it off explicitly for particular
-portions of code via the C<use warnings> pragma or the C<$^W> variable 
-if you must.  You should
-also always run under C<use strict> or know the reason why not.
-The C<use sigtrap> and even C<use diagnostics> pragmas may also prove
-useful.
+portions of code via the C<no warnings> pragma or the C<$^W> variable 
+if you must.  You should also always run under C<use strict> or know the
+reason why not.  The C<use sigtrap> and even C<use diagnostics> pragmas
+may also prove useful.
 
 Regarding aesthetics of code lay out, about the only thing Larry
 cares strongly about is that the closing curly bracket of
@@ -261,10 +260,9 @@ Line up your transliterations when it makes sense:
 Think about reusability.  Why waste brainpower on a one-shot when you
 might want to do something like it again?  Consider generalizing your
 code.  Consider writing a module or object class.  Consider making your
-code run cleanly with C<use strict> and C<use warnings> (or B<-w>) in effect
-Consider giving away
-your code.  Consider changing your whole world view.  Consider... oh,
-never mind.
+code run cleanly with C<use strict> and C<use warnings> (or B<-w>) in
+effect.  Consider giving away your code.  Consider changing your whole
+world view.  Consider... oh, never mind.
 
 =item *
 

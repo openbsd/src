@@ -1,4 +1,5 @@
 use ExtUtils::MakeMaker;
+use Config;
 
 # The existence of the ./sdbm/Makefile.PL file causes MakeMaker
 # to automatically include Makefile code for the targets
@@ -21,18 +22,26 @@ WriteMakefile(
 
 sub MY::postamble {
   if ($^O =~ /MSWin32/ && Win32::IsWin95()) {
-    # XXX: dmake-specific, like rest of Win95 port
-    return
-    '
+	if ($Config{'make'} =~ /dmake/i) {
+	    # dmake-specific
+	    return <<'EOT';
 $(MYEXTLIB): sdbm/Makefile
 @[
 	cd sdbm
 	$(MAKE) all
 	cd ..
 ]
-';
-  }
-  elsif ($^O ne 'VMS') {
+EOT
+	} elsif ($Config{'make'} =~ /nmake/i) {
+	    #
+	    return <<'EOT';
+$(MYEXTLIB): sdbm/Makefile
+	cd sdbm
+	$(MAKE) all
+	cd ..
+EOT
+	} 
+} elsif ($^O ne 'VMS') {
     '
 $(MYEXTLIB): sdbm/Makefile
 	cd sdbm && $(MAKE) all

@@ -1,4 +1,4 @@
-#!./perl
+#!./perl -wT
 
 BEGIN {
     chdir 't' if -d 't';
@@ -6,211 +6,206 @@ BEGIN {
     require Config; import Config;
 }
 
-print "1..84\n";
+require './test.pl';
+plan( tests => 122 );
 
 $x = 'foo';
 $_ = "x";
 s/x/\$x/;
-print "#1\t:$_: eq :\$x:\n";
-if ($_ eq '$x') {print "ok 1\n";} else {print "not ok 1\n";}
+ok( $_ eq '$x', ":$_: eq :\$x:" );
 
 $_ = "x";
 s/x/$x/;
-print "#2\t:$_: eq :foo:\n";
-if ($_ eq 'foo') {print "ok 2\n";} else {print "not ok 2\n";}
+ok( $_ eq 'foo', ":$_: eq :foo:" );
 
 $_ = "x";
 s/x/\$x $x/;
-print "#3\t:$_: eq :\$x foo:\n";
-if ($_ eq '$x foo') {print "ok 3\n";} else {print "not ok 3\n";}
+ok( $_ eq '$x foo', ":$_: eq :\$x foo:" );
 
 $b = 'cd';
 ($a = 'abcdef') =~ s<(b${b}e)>'\n$1';
-print "#4\t:$1: eq :bcde:\n";
-print "#4\t:$a: eq :a\\n\$1f:\n";
-if ($1 eq 'bcde' && $a eq 'a\n$1f') {print "ok 4\n";} else {print "not ok 4\n";}
+ok( $1 eq 'bcde' && $a eq 'a\n$1f', ":$1: eq :bcde: ; :$a: eq :a\\n\$1f:" );
 
 $a = 'abacada';
-if (($a =~ s/a/x/g) == 4 && $a eq 'xbxcxdx')
-    {print "ok 5\n";} else {print "not ok 5\n";}
+ok( ($a =~ s/a/x/g) == 4 && $a eq 'xbxcxdx' );
 
-if (($a =~ s/a/y/g) == 0 && $a eq 'xbxcxdx')
-    {print "ok 6\n";} else {print "not ok 6 $a\n";}
+ok( ($a =~ s/a/y/g) == 0 && $a eq 'xbxcxdx' );
 
-if (($a =~ s/b/y/g) == 1 && $a eq 'xyxcxdx')
-    {print "ok 7\n";} else {print "not ok 7 $a\n";}
+ok( ($a =~ s/b/y/g) == 1 && $a eq 'xyxcxdx' );
 
 $_ = 'ABACADA';
-if (/a/i && s///gi && $_ eq 'BCD') {print "ok 8\n";} else {print "not ok 8 $_\n";}
+ok( /a/i && s///gi && $_ eq 'BCD' );
 
 $_ = '\\' x 4;
-if (length($_) == 4) {print "ok 9\n";} else {print "not ok 9\n";}
-s/\\/\\\\/g;
-if ($_ eq '\\' x 8) {print "ok 10\n";} else {print "not ok 10 $_\n";}
+ok( length($_) == 4 );
+$snum = s/\\/\\\\/g;
+ok( $_ eq '\\' x 8 && $snum == 4 );
 
 $_ = '\/' x 4;
-if (length($_) == 8) {print "ok 11\n";} else {print "not ok 11\n";}
-s/\//\/\//g;
-if ($_ eq '\\//' x 4) {print "ok 12\n";} else {print "not ok 12\n";}
-if (length($_) == 12) {print "ok 13\n";} else {print "not ok 13\n";}
+ok( length($_) == 8 );
+$snum = s/\//\/\//g;
+ok( $_ eq '\\//' x 4 && $snum == 4 );
+ok( length($_) == 12 );
 
 $_ = 'aaaXXXXbbb';
 s/^a//;
-print $_ eq 'aaXXXXbbb' ? "ok 14\n" : "not ok 14\n";
+ok( $_ eq 'aaXXXXbbb' );
 
 $_ = 'aaaXXXXbbb';
 s/a//;
-print $_ eq 'aaXXXXbbb' ? "ok 15\n" : "not ok 15\n";
+ok( $_ eq 'aaXXXXbbb' );
 
 $_ = 'aaaXXXXbbb';
 s/^a/b/;
-print $_ eq 'baaXXXXbbb' ? "ok 16\n" : "not ok 16\n";
+ok( $_ eq 'baaXXXXbbb' );
 
 $_ = 'aaaXXXXbbb';
 s/a/b/;
-print $_ eq 'baaXXXXbbb' ? "ok 17\n" : "not ok 17\n";
+ok( $_ eq 'baaXXXXbbb' );
 
 $_ = 'aaaXXXXbbb';
 s/aa//;
-print $_ eq 'aXXXXbbb' ? "ok 18\n" : "not ok 18\n";
+ok( $_ eq 'aXXXXbbb' );
 
 $_ = 'aaaXXXXbbb';
 s/aa/b/;
-print $_ eq 'baXXXXbbb' ? "ok 19\n" : "not ok 19\n";
+ok( $_ eq 'baXXXXbbb' );
 
 $_ = 'aaaXXXXbbb';
 s/b$//;
-print $_ eq 'aaaXXXXbb' ? "ok 20\n" : "not ok 20\n";
+ok( $_ eq 'aaaXXXXbb' );
 
 $_ = 'aaaXXXXbbb';
 s/b//;
-print $_ eq 'aaaXXXXbb' ? "ok 21\n" : "not ok 21\n";
+ok( $_ eq 'aaaXXXXbb' );
 
 $_ = 'aaaXXXXbbb';
 s/bb//;
-print $_ eq 'aaaXXXXb' ? "ok 22\n" : "not ok 22\n";
+ok( $_ eq 'aaaXXXXb' );
 
 $_ = 'aaaXXXXbbb';
 s/aX/y/;
-print $_ eq 'aayXXXbbb' ? "ok 23\n" : "not ok 23\n";
+ok( $_ eq 'aayXXXbbb' );
 
 $_ = 'aaaXXXXbbb';
 s/Xb/z/;
-print $_ eq 'aaaXXXzbb' ? "ok 24\n" : "not ok 24\n";
+ok( $_ eq 'aaaXXXzbb' );
 
 $_ = 'aaaXXXXbbb';
 s/aaX.*Xbb//;
-print $_ eq 'ab' ? "ok 25\n" : "not ok 25\n";
+ok( $_ eq 'ab' );
 
 $_ = 'aaaXXXXbbb';
 s/bb/x/;
-print $_ eq 'aaaXXXXxb' ? "ok 26\n" : "not ok 26\n";
+ok( $_ eq 'aaaXXXXxb' );
 
 # now for some unoptimized versions of the same.
 
 $_ = 'aaaXXXXbbb';
 $x ne $x || s/^a//;
-print $_ eq 'aaXXXXbbb' ? "ok 27\n" : "not ok 27\n";
+ok( $_ eq 'aaXXXXbbb' );
 
 $_ = 'aaaXXXXbbb';
 $x ne $x || s/a//;
-print $_ eq 'aaXXXXbbb' ? "ok 28\n" : "not ok 28\n";
+ok( $_ eq 'aaXXXXbbb' );
 
 $_ = 'aaaXXXXbbb';
 $x ne $x || s/^a/b/;
-print $_ eq 'baaXXXXbbb' ? "ok 29\n" : "not ok 29\n";
+ok( $_ eq 'baaXXXXbbb' );
 
 $_ = 'aaaXXXXbbb';
 $x ne $x || s/a/b/;
-print $_ eq 'baaXXXXbbb' ? "ok 30\n" : "not ok 30\n";
+ok( $_ eq 'baaXXXXbbb' );
 
 $_ = 'aaaXXXXbbb';
 $x ne $x || s/aa//;
-print $_ eq 'aXXXXbbb' ? "ok 31\n" : "not ok 31\n";
+ok( $_ eq 'aXXXXbbb' );
 
 $_ = 'aaaXXXXbbb';
 $x ne $x || s/aa/b/;
-print $_ eq 'baXXXXbbb' ? "ok 32\n" : "not ok 32\n";
+ok( $_ eq 'baXXXXbbb' );
 
 $_ = 'aaaXXXXbbb';
 $x ne $x || s/b$//;
-print $_ eq 'aaaXXXXbb' ? "ok 33\n" : "not ok 33\n";
+ok( $_ eq 'aaaXXXXbb' );
 
 $_ = 'aaaXXXXbbb';
 $x ne $x || s/b//;
-print $_ eq 'aaaXXXXbb' ? "ok 34\n" : "not ok 34\n";
+ok( $_ eq 'aaaXXXXbb' );
 
 $_ = 'aaaXXXXbbb';
 $x ne $x || s/bb//;
-print $_ eq 'aaaXXXXb' ? "ok 35\n" : "not ok 35\n";
+ok( $_ eq 'aaaXXXXb' );
 
 $_ = 'aaaXXXXbbb';
 $x ne $x || s/aX/y/;
-print $_ eq 'aayXXXbbb' ? "ok 36\n" : "not ok 36\n";
+ok( $_ eq 'aayXXXbbb' );
 
 $_ = 'aaaXXXXbbb';
 $x ne $x || s/Xb/z/;
-print $_ eq 'aaaXXXzbb' ? "ok 37\n" : "not ok 37\n";
+ok( $_ eq 'aaaXXXzbb' );
 
 $_ = 'aaaXXXXbbb';
 $x ne $x || s/aaX.*Xbb//;
-print $_ eq 'ab' ? "ok 38\n" : "not ok 38\n";
+ok( $_ eq 'ab' );
 
 $_ = 'aaaXXXXbbb';
 $x ne $x || s/bb/x/;
-print $_ eq 'aaaXXXXxb' ? "ok 39\n" : "not ok 39\n";
+ok( $_ eq 'aaaXXXXxb' );
 
 $_ = 'abc123xyz';
 s/(\d+)/$1*2/e;              # yields 'abc246xyz'
-print $_ eq 'abc246xyz' ? "ok 40\n" : "not ok 40\n";
+ok( $_ eq 'abc246xyz' );
 s/(\d+)/sprintf("%5d",$1)/e; # yields 'abc  246xyz'
-print $_ eq 'abc  246xyz' ? "ok 41\n" : "not ok 41\n";
+ok( $_ eq 'abc  246xyz' );
 s/(\w)/$1 x 2/eg;            # yields 'aabbcc  224466xxyyzz'
-print $_ eq 'aabbcc  224466xxyyzz' ? "ok 42\n" : "not ok 42\n";
+ok( $_ eq 'aabbcc  224466xxyyzz' );
 
 $_ = "aaaaa";
-print y/a/b/ == 5 ? "ok 43\n" : "not ok 43\n";
-print y/a/b/ == 0 ? "ok 44\n" : "not ok 44\n";
-print y/b// == 5 ? "ok 45\n" : "not ok 45\n";
-print y/b/c/s == 5 ? "ok 46\n" : "not ok 46\n";
-print y/c// == 1 ? "ok 47\n" : "not ok 47\n";
-print y/c//d == 1 ? "ok 48\n" : "not ok 48\n";
-print $_ eq "" ? "ok 49\n" : "not ok 49\n";
+ok( y/a/b/ == 5 );
+ok( y/a/b/ == 0 );
+ok( y/b// == 5 );
+ok( y/b/c/s == 5 );
+ok( y/c// == 1 );
+ok( y/c//d == 1 );
+ok( $_ eq "" );
 
 $_ = "Now is the %#*! time for all good men...";
-print (($x=(y/a-zA-Z //cd)) == 7 ? "ok 50\n" : "not ok 50\n");
-print y/ / /s == 8 ? "ok 51\n" : "not ok 51\n";
+ok( ($x=(y/a-zA-Z //cd)) == 7 );
+ok( y/ / /s == 8 );
 
 $_ = 'abcdefghijklmnopqrstuvwxyz0123456789';
 tr/a-z/A-Z/;
 
-print $_ eq 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789' ? "ok 52\n" : "not ok 52\n";
+ok( $_ eq 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789' );
 
 # same as tr/A-Z/a-z/;
-if ($Config{ebcdic} eq 'define') {	# EBCDIC.
+if (defined $Config{ebcdic} && $Config{ebcdic} eq 'define') {	# EBCDIC.
     no utf8;
     y[\301-\351][\201-\251];
 } else {		# Ye Olde ASCII.  Or something like it.
     y[\101-\132][\141-\172];
 }
 
-print $_ eq 'abcdefghijklmnopqrstuvwxyz0123456789' ? "ok 53\n" : "not ok 53\n";
+ok( $_ eq 'abcdefghijklmnopqrstuvwxyz0123456789' );
 
-if (ord("+") == ord(",") - 1 && ord(",") == ord("-") - 1 &&
-    ord("a") == ord("b") - 1 && ord("b") == ord("c") - 1) {
-  $_ = '+,-';
-  tr/+--/a-c/;
-  print "not " unless $_ eq 'abc';
+SKIP: {
+    skip("not ASCII",1) unless (ord("+") == ord(",") - 1
+			     && ord(",") == ord("-") - 1
+			     && ord("a") == ord("b") - 1
+			     && ord("b") == ord("c") - 1);
+    $_ = '+,-';
+    tr/+--/a-c/;
+    ok( $_ eq 'abc' );
 }
-print "ok 54\n";
 
 $_ = '+,-';
 tr/+\--/a\/c/;
-print $_ eq 'a,/' ? "ok 55\n" : "not ok 55\n";
+ok( $_ eq 'a,/' );
 
 $_ = '+,-';
 tr/-+,/ab\-/;
-print $_ eq 'b-a' ? "ok 56\n" : "not ok 56\n";
+ok( $_ eq 'b-a' );
 
 
 # test recursive substitutions
@@ -233,56 +228,48 @@ sub exp_vars {
     $str;
 }
 
-print exp_vars('$(AAAAA)',0)           eq 'D'
-	? "ok 57\n" : "not ok 57\n";
-print exp_vars('$(E)',0)               eq 'p HHHHH q'
-	? "ok 58\n" : "not ok 58\n";
-print exp_vars('$(DIR)',0)             eq '$(UNDEFINEDNAME)/xxx'
-	? "ok 59\n" : "not ok 59\n";
-print exp_vars('foo $(DIR)/yyy bar',0) eq 'foo $(UNDEFINEDNAME)/xxx/yyy bar'
-	? "ok 60\n" : "not ok 60\n";
-
-# a match nested in the RHS of a substitution:
+ok( exp_vars('$(AAAAA)',0)           eq 'D' );
+ok( exp_vars('$(E)',0)               eq 'p HHHHH q' );
+ok( exp_vars('$(DIR)',0)             eq '$(UNDEFINEDNAME)/xxx' );
+ok( exp_vars('foo $(DIR)/yyy bar',0) eq 'foo $(UNDEFINEDNAME)/xxx/yyy bar' );
 
 $_ = "abcd";
 s/(..)/$x = $1, m#.#/eg;
-print $x eq "cd" ? "ok 61\n" : "not ok 61\n";
+ok( $x eq "cd", 'a match nested in the RHS of a substitution' );
 
 # Subst and lookbehind
 
 $_="ccccc";
-s/(?<!x)c/x/g;
-print $_ eq "xxxxx" ? "ok 62\n" : "not ok 62 # `$_' ne `xxxxx'\n";
+$snum = s/(?<!x)c/x/g;
+ok( $_ eq "xxxxx" && $snum == 5 );
 
 $_="ccccc";
-s/(?<!x)(c)/x/g;
-print $_ eq "xxxxx" ? "ok 63\n" : "not ok 63 # `$_' ne `xxxxx'\n";
+$snum = s/(?<!x)(c)/x/g;
+ok( $_ eq "xxxxx" && $snum == 5 );
 
 $_="foobbarfoobbar";
-s/(?<!r)foobbar/foobar/g;
-print $_ eq "foobarfoobbar" ? "ok 64\n" : "not ok 64 # `$_' ne `foobarfoobbar'\n";
+$snum = s/(?<!r)foobbar/foobar/g;
+ok( $_ eq "foobarfoobbar" && $snum == 1 );
 
 $_="foobbarfoobbar";
-s/(?<!ar)(foobbar)/foobar/g;
-print $_ eq "foobarfoobbar" ? "ok 65\n" : "not ok 65 # `$_' ne `foobarfoobbar'\n";
+$snum = s/(?<!ar)(foobbar)/foobar/g;
+ok( $_ eq "foobarfoobbar" && $snum == 1 );
 
 $_="foobbarfoobbar";
-s/(?<!ar)foobbar/foobar/g;
-print $_ eq "foobarfoobbar" ? "ok 66\n" : "not ok 66 # `$_' ne `foobarfoobbar'\n";
+$snum = s/(?<!ar)foobbar/foobar/g;
+ok( $_ eq "foobarfoobbar" && $snum == 1 );
 
-# check parsing of split subst with comment
 eval 's{foo} # this is a comment, not a delimiter
        {bar};';
-print @? ? "not ok 67\n" : "ok 67\n";
+ok( ! @?, 'parsing of split subst with comment' );
 
-# check if squashing works at the end of string
 $_="baacbaa";
-tr/a/b/s;
-print $_ eq "bbcbb" ? "ok 68\n" : "not ok 68 # `$_' ne `bbcbb'\n";
+$snum = tr/a/b/s;
+ok( $_ eq "bbcbb" && $snum == 4,
+    'check if squashing works at the end of string' );
 
-# XXX TODO: Most tests above don't test return values of the ops. They should.
 $_ = "ab";
-print (s/a/b/ == 1 ? "ok 69\n" : "not ok 69\n");
+ok( s/a/b/ == 1 );
 
 $_ = <<'EOL';
      $url = new URI::URL "http://www/";   die if $url eq "xXx";
@@ -293,6 +280,7 @@ $foo = ' $@%#lowercase $@%# lowercase UPPERCASE$@%#UPPERCASE' .
   ' $@%#lowercase$@%#lowercase$@%# lowercase lowercase $@%#lowercase' .
   ' lowercase $@%#MiXeD$@%# ';
 
+$snum =
 s{  \d+          \b [,.;]? (?{ 'digits' })
    |
     [a-z]+       \b [,.;]? (?{ 'lowercase' })
@@ -309,73 +297,197 @@ s{  \d+          \b [,.;]? (?{ 'digits' })
    |
     [^A-Za-z0-9\s]+          (?{ '$@%#' })
 }{$^R}xg;
-print ($_ eq $foo ? "ok 70\n" : "not ok 70\n#'$_'\n#'$foo'\n");
+ok( $_ eq $foo );
+ok( $snum == 31 );
+
+$_ = 'a' x 6;
+$snum = s/a(?{})//g;
+ok( $_ eq '' && $snum == 6 );
 
 $_ = 'x' x 20; 
-s/(\d*|x)/<$1>/g; 
+$snum = s/(\d*|x)/<$1>/g; 
 $foo = '<>' . ('<x><>' x 20) ;
-print ($_ eq $foo ? "ok 71\n" : "not ok 71\n#'$_'\n#'$foo'\n");
+ok( $_ eq $foo && $snum == 41 );
 
 $t = 'aaaaaaaaa'; 
 
 $_ = $t;
 pos = 6;
-s/\Ga/xx/g;
-print "not " unless $_ eq 'aaaaaaxxxxxx';
-print "ok 72\n";
+$snum = s/\Ga/xx/g;
+ok( $_ eq 'aaaaaaxxxxxx' && $snum == 3 );
 
 $_ = $t;
 pos = 6;
-s/\Ga/x/g;
-print "not " unless $_ eq 'aaaaaaxxx';
-print "ok 73\n";
+$snum = s/\Ga/x/g;
+ok( $_ eq 'aaaaaaxxx' && $snum == 3 );
 
 $_ = $t;
 pos = 6;
 s/\Ga/xx/;
-print "not " unless $_ eq 'aaaaaaxxaa';
-print "ok 74\n";
+ok( $_ eq 'aaaaaaxxaa' );
 
 $_ = $t;
 pos = 6;
 s/\Ga/x/;
-print "not " unless $_ eq 'aaaaaaxaa';
-print "ok 75\n";
+ok( $_ eq 'aaaaaaxaa' );
 
 $_ = $t;
-s/\Ga/xx/g;
-print "not " unless $_ eq 'xxxxxxxxxxxxxxxxxx';
-print "ok 76\n";
+$snum = s/\Ga/xx/g;
+ok( $_ eq 'xxxxxxxxxxxxxxxxxx' && $snum == 9 );
 
 $_ = $t;
-s/\Ga/x/g;
-print "not " unless $_ eq 'xxxxxxxxx';
-print "ok 77\n";
+$snum = s/\Ga/x/g;
+ok( $_ eq 'xxxxxxxxx' && $snum == 9 );
 
 $_ = $t;
 s/\Ga/xx/;
-print "not " unless $_ eq 'xxaaaaaaaa';
-print "ok 78\n";
+ok( $_ eq 'xxaaaaaaaa' );
 
 $_ = $t;
 s/\Ga/x/;
-print "not " unless $_ eq 'xaaaaaaaa';
-print "ok 79\n";
+ok( $_ eq 'xaaaaaaaa' );
 
 $_ = 'aaaa';
-s/\ba/./g;
-print "#'$_'\nnot " unless $_ eq '.aaa';
-print "ok 80\n";
+$snum = s/\ba/./g;
+ok( $_ eq '.aaa' && $snum == 1 );
 
 eval q% s/a/"b"}/e %;
-print ($@ =~ /Bad evalled substitution/ ? "ok 81\n" : "not ok 81\n");
+ok( $@ =~ /Bad evalled substitution/ );
 eval q% ($_ = "x") =~ s/(.)/"$1 "/e %;
-print +($_ eq "x " and !length $@) ? "ok 82\n" : "not ok 82\n# \$_ eq $_, $@\n";
+ok( $_ eq "x " and !length $@ );
 $x = $x = 'interp';
 eval q% ($_ = "x") =~ s/x(($x)*)/"$1"/e %;
-print +($_ eq '' and !length $@) ? "ok 83\n" : "not ok 83\n# \$_ eq $_, $@\n";
+ok( $_ eq '' and !length $@ );
 
 $_ = "C:/";
-s/^([a-z]:)/\u$1/ and print "not ";
-print "ok 84\n";
+ok( !s/^([a-z]:)/\u$1/ );
+
+$_ = "Charles Bronson";
+$snum = s/\B\w//g;
+ok( $_ eq "C B" && $snum == 12 );
+
+{
+    use utf8;
+    my $s = "H\303\266he";
+    my $l = my $r = $s;
+    $l =~ s/[^\w]//g;
+    $r =~ s/[^\w\.]//g;
+    is($l, $r, "use utf8 \\w");
+}
+
+my $pv1 = my $pv2  = "Andreas J. K\303\266nig";
+$pv1 =~ s/A/\x{100}/;
+substr($pv2,0,1) = "\x{100}";
+is($pv1, $pv2);
+
+SKIP: {
+    skip("EBCDIC", 3) if ord("A") == 193; 
+
+    {   
+	# Gregor Chrupala <gregor.chrupala@star-group.net>
+	use utf8;
+	$a = 'Espa&ntilde;a';
+	$a =~ s/&ntilde;/ñ/;
+	like($a, qr/ñ/, "use utf8 RHS");
+    }
+
+    {
+	use utf8;
+	$a = 'España España';
+	$a =~ s/ñ/&ntilde;/;
+	like($a, qr/ñ/, "use utf8 LHS");
+    }
+
+    {
+	use utf8;
+	$a = 'España';
+	$a =~ s/ñ/ñ/;
+	like($a, qr/ñ/, "use utf8 LHS and RHS");
+    }
+}
+
+{
+    # SADAHIRO Tomoyuki <bqw10602@nifty.com>
+
+    $a = "\x{100}\x{101}";
+    $a =~ s/\x{101}/\xFF/;
+    like($a, qr/\xFF/);
+    is(length($a), 2, "SADAHIRO utf8 s///");
+
+    $a = "\x{100}\x{101}";
+    $a =~ s/\x{101}/"\xFF"/e;
+    like($a, qr/\xFF/);
+    is(length($a), 2);
+
+    $a = "\x{100}\x{101}";
+    $a =~ s/\x{101}/\xFF\xFF\xFF/;
+    like($a, qr/\xFF\xFF\xFF/);
+    is(length($a), 4);
+
+    $a = "\x{100}\x{101}";
+    $a =~ s/\x{101}/"\xFF\xFF\xFF"/e;
+    like($a, qr/\xFF\xFF\xFF/);
+    is(length($a), 4);
+
+    $a = "\xFF\x{101}";
+    $a =~ s/\xFF/\x{100}/;
+    like($a, qr/\x{100}/);
+    is(length($a), 2);
+
+    $a = "\xFF\x{101}";
+    $a =~ s/\xFF/"\x{100}"/e;
+    like($a, qr/\x{100}/);
+    is(length($a), 2);
+
+    $a = "\xFF";
+    $a =~ s/\xFF/\x{100}/;
+    like($a, qr/\x{100}/);
+    is(length($a), 1);
+
+    $a = "\xFF";
+    $a =~ s/\xFF/"\x{100}"/e;
+    like($a, qr/\x{100}/);
+    is(length($a), 1);
+}
+
+{
+    # subst with mixed utf8/non-utf8 type
+    my($ua, $ub, $uc, $ud) = ("\x{101}", "\x{102}", "\x{103}", "\x{104}");
+    my($na, $nb) = ("\x{ff}", "\x{fe}");
+    my $a = "$ua--$ub";
+    my $b;
+    ($b = $a) =~ s/--/$na/;
+    is($b, "$ua$na$ub", "s///: replace non-utf8 into utf8");
+    ($b = $a) =~ s/--/--$na--/;
+    is($b, "$ua--$na--$ub", "s///: replace long non-utf8 into utf8");
+    ($b = $a) =~ s/--/$uc/;
+    is($b, "$ua$uc$ub", "s///: replace utf8 into utf8");
+    ($b = $a) =~ s/--/--$uc--/;
+    is($b, "$ua--$uc--$ub", "s///: replace long utf8 into utf8");
+    $a = "$na--$nb";
+    ($b = $a) =~ s/--/$ua/;
+    is($b, "$na$ua$nb", "s///: replace utf8 into non-utf8");
+    ($b = $a) =~ s/--/--$ua--/;
+    is($b, "$na--$ua--$nb", "s///: replace long utf8 into non-utf8");
+
+    # now with utf8 pattern
+    $a = "$ua--$ub";
+    ($b = $a) =~ s/-($ud)?-/$na/;
+    is($b, "$ua$na$ub", "s///: replace non-utf8 into utf8 (utf8 pattern)");
+    ($b = $a) =~ s/-($ud)?-/--$na--/;
+    is($b, "$ua--$na--$ub", "s///: replace long non-utf8 into utf8 (utf8 pattern)");
+    ($b = $a) =~ s/-($ud)?-/$uc/;
+    is($b, "$ua$uc$ub", "s///: replace utf8 into utf8 (utf8 pattern)");
+    ($b = $a) =~ s/-($ud)?-/--$uc--/;
+    is($b, "$ua--$uc--$ub", "s///: replace long utf8 into utf8 (utf8 pattern)");
+    $a = "$na--$nb";
+    ($b = $a) =~ s/-($ud)?-/$ua/;
+    is($b, "$na$ua$nb", "s///: replace utf8 into non-utf8 (utf8 pattern)");
+    ($b = $a) =~ s/-($ud)?-/--$ua--/;
+    is($b, "$na--$ua--$nb", "s///: replace long utf8 into non-utf8 (utf8 pattern)");
+    ($b = $a) =~ s/-($ud)?-/$na/;
+    is($b, "$na$na$nb", "s///: replace non-utf8 into non-utf8 (utf8 pattern)");
+    ($b = $a) =~ s/-($ud)?-/--$na--/;
+    is($b, "$na--$na--$nb", "s///: replace long non-utf8 into non-utf8 (utf8 pattern)");
+}
 

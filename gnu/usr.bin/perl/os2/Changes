@@ -334,3 +334,164 @@ pre 5.6.1:
 	    compartment.  As a result, the return string was not initialized.
 	A complete example of a mini-application added to OS2::REXX.
 	README.os2 updated to reflect the current state of Perl.
+
+pre 5.7.2:
+	aout build: kid bootstrap_* were not associated with XS.
+	bldlevel did not contain enough info.
+	extLibpath* was failing on the call of the second type.
+	Configure defines flushNULL now (EMX -Zomf bug broke autodetection).
+	Configure did not find SIGBREAK.
+	extLibpath supports LIBSTRICT, better error detection.
+	crypt() used if present in -lcrypt or -lufc.
+	dumb getpw*(), getgr*() etc. supported; as in EMX, but if no
+	    $ENV{PW_PASSWD}, the passwd field contains a string which
+	    cannot be returned by crypt() (for security reasons).
+	The unwound recursion in detecting executable by script was
+	    using static buffers.  Thus system('pod2text') would fail if the
+	    current directory contained an empty file named 'perl'.
+	Put ordinals in the base DLL.
+	Enable EXE-compression.
+	    Load time (ms):  Without /e:2: 70.6; With /e:2: 75.3; Lxlite: 62.8
+	    Size drops from 750K to 627K, with lxlite to 515K.
+	    lxlite /c:max gives 488K, but dumps core in t/TEST
+	os2ish.h defines SYSLOG constants ==> Sys::Syslog works.
+	Corrected warnings related to OS/2 code.
+	    At one place = was put instead of ==.
+	Setting $^E should work.
+	Force "SYS0dddd=0xbar: " to error messages and to dlerror().
+	    ($^E == 2 printed SYS0002 itself, but 110 did not.)
+	$OS2::nsyserror=0 switches off forcing SYSdddd on $^E.
+	perl_.exe does not require PM dlls any more (symbols resolved at
+	    runtime on the as needed basis).
+	OS2::Process:
+	    get/set: term size; codepages; screen's cursor; screen's contents
+	    reliable session name setting;
+	    process's parent pid, and the session id;
+	    switching to and enumeration of sessions
+	    window hierarchy inspection
+	    post a message to a window
+	More robust getpriority() on older Warps.
+
+	New C APIs for runtime loading of entry points from DLLs
+	(useful for entry points not present on older versions of
+	OS/2, or with DLLs not present on floppy-boot stripped down
+	setups): CallORD(), DeclFuncByORD(), DeclVoidFuncByORD(),
+	DeclOSFuncByORD(), DeclWinFuncByORD(), AssignFuncPByORD().
+
+pre 5.7.3:
+	Testing with PERL_TEST_NOVREXX=1 in environment makes tests
+	noninteractive (VREXX test requires pressing a button on a dialog).
+
+	New (ugly and voodooish) hack to work around a bug in EMX
+	runtime architecture:
+
+	  EMX.DLL is *not* initialized from its _DLL_InitTerm()
+	  routine, but the initialization is postponed until
+	  immediately before main() is called by the principal
+	  executable (may be the initialization also happens during
+	  InitTerm of -Zso -Zsys DLLs?).  The only reason I can see is
+	  to postpone the initialization until the "layout" structure
+	  is available, so the type of the executable is known.
+	  [Instead, one should have broken the initialization into two
+	  steps, with no-layout-known initialization ASAP, and the
+	  finishing touch done when "layout" is known.]
+
+	  It is due to this hack that -Zsys, -Zso etc. are needed so
+	  often.
+
+	  If during initialization of the Perl runtime environment we
+	  discover that EMX environment is not set up completely, this
+	  can be because of either our DLL being called from an
+	  uncompatible flavor of EMX executable, or from an
+	  unrelated-to-EMX.DLL (e.g., -Zsys or compiled with a
+	  different compiler) executable.  In the first case only the
+	  CRTL is not completely initialized, in the other case
+	  EMX.DLL may be not initialized too.
+
+	  We detect which of these two situations takes place, then
+	  explicitly call the initialization entry points of EMX.DLL
+	  and of CRT.  The large caveat is that the init-entry point
+	  of EMX.DLL also moves the stack pointer (another defect of
+	  EMX architecture, the init() and
+	  set_exception_handlers_on_stack() entry points should have
+	  been separated).  Thus we need some inline-assembler to
+	  compensate for this, and need to remove the installed
+	  exception handler - it is useless anyway, since exception
+	  handlers need to be on the stack.  [This one is on the
+	  stack, but will be overwritten on exit from the function.]
+
+	  We also install an extra hack to run our atexit() handlers
+	  on termination of the process (since the principal
+	  executable does not know about *this* CRTL, we need to do it
+	  ourselves - and longjmp() out of the chain of exception
+	  handlers at a proper moment :-().
+
+	The net result: Perl DLL can be now used with an arbitrary
+	application.  PERLREXX DLL is provided which makes Perl usable
+	from any REXX-enabled application.
+
+	New test targets added to test how well Perl DLL runs with
+	different flavors of executables (see all_harness etc).  To
+	avoid waiting for the user button press, run with env
+	PERL_TEST_NOVREXX=1.
+
+	Another hack: on init of Perl runtime environment, the
+	executable is tested for being an aout EMX executable.  The
+	test is the same done by gdb, so although this test is very
+	voodoo, it should be pretty robust (the beginning of the
+	executable code - at 0x10000 - is tested for a known bit
+	pattern).  The result is used to set $OS2::can_fork, which is
+	eventually used to set $Config::Config{can_fork}.
+
+	REXX::eval_REXX() made reenterable.  ADDRESS PERLEVAL
+	available for the run REXX code.  PERLLASTERROR available.
+
+	A .map file is created for the .dll.  Now easier to debug the
+	failures which do not happen with a debugging executable.
+
+	Duplicate libperl.lib as perl.lib etc. to make Embed happier.
+
+	File::Spec better adjusted to OS/2 (still does not support aa:/dir/).
+
+	New module OS::Process::Const with necessary constants for the
+	Perl calls which mimic OS/2 API calls.
+
+After @14577:
+	$Config{pager} better (but needs work in the binary installer!).
+
+	New API: OS2::DLLname([type], [\&sub])
+
+	New OS2::Process APIs:
+
+		 process_hwnd winTitle_set winTitle swTitle_set bothTitle_set
+                 hWindowPos hWindowPos_set DesktopWindow
+                 ActiveWindow_set
+                 EnableWindow EnableWindowUpdate IsWindowEnabled
+                 IsWindowVisible IsWindowShowing WindowPtr WindowULong
+                 WindowUShort SetWindowBits SetWindowPtr
+                 SetWindowULong
+                 SetWindowUShort MPFROMSHORT MPVOID MPFROMCHAR
+                 MPFROM2SHORT
+                 MPFROMSH2CH MPFROMLONG
+
+	OS::Process::Const symbols exportable from OS::Process too.
+
+	OS::Process: prototypes on subroutines which do not naturally
+	take "vectors" as arguments (not backwards compatible!).
+
+	New C API: SaveCroakWinError(), WinError_2_Perl_rc,
+	DeclWinFuncByORD_CACHE(), DeclWinFuncByORD_CACHE_survive(),
+	DeclWinFuncByORD_CACHE_resetError_survive(),
+	DeclWinFunc_CACHE(), DeclWinFunc_CACHE_resetError(),
+	DeclWinFunc_CACHE_survive(),
+	DeclWinFunc_CACHE_resetError_survive(); many new OS2 entry
+	points conveniently available via wrappers which will do the
+	necessary run-time dynalinking.
+
+After @15047:
+
+	makes PerlIO preserve the binary/text mode of filehandles
+	chosen by CRT library.  (However, TTY handles still are not
+	clean, since switching them to TERMIO mode and back changes
+	the NL translation law at runtime, and PerlIO level does not
+	know this.)

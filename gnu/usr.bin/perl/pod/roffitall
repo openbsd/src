@@ -95,8 +95,8 @@ toroff=`
 	$mandir/perltie.1	\
 	$mandir/perltoc.1	\
 	$mandir/perltodo.1	\
+	$mandir/perltooc.1	\
 	$mandir/perltoot.1	\
-	$mandir/perltootc.1	\
 	$mandir/perltrap.1	\
 	$mandir/perlunicode.1	\
 	$mandir/perlutil.1	\

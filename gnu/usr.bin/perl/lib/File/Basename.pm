@@ -17,9 +17,9 @@ dirname - extract just the directory from a path
     $basename = basename($fullname,@suffixlist);
     $dirname = dirname($fullname);
 
-    ($name,$path,$suffix) = fileparse("lib/File/Basename.pm","\.pm");
+    ($name,$path,$suffix) = fileparse("lib/File/Basename.pm",qr{\.pm});
     fileparse_set_fstype("VMS");
-    $basename = basename("lib/File/Basename.pm",".pm");
+    $basename = basename("lib/File/Basename.pm",qr{\.pm});
     $dirname = dirname("lib/File/Basename.pm");
 
 =head1 DESCRIPTION
@@ -60,7 +60,8 @@ B<path> contains everything up to and including the last directory
 separator in the input file specification.  The remainder of the input
 file specification is then divided into B<name> and B<suffix> based on
 the optional patterns you specify in C<@suffixlist>.  Each element of
-this list is interpreted as a regular expression, and is matched
+this list can be a qr-quoted pattern (or a string which is interpreted
+as a regular expression), and is matched
 against the end of B<name>.  If this succeeds, the matching portion of
 B<name> is removed and prepended to B<suffix>.  By proper use of
 C<@suffixlist>, you can remove file types or versions for examination.
@@ -76,7 +77,7 @@ file as the input file specification.
 Using Unix file syntax:
 
     ($base,$path,$type) = fileparse('/virgil/aeneid/draft.book7',
-				    '\.book\d+');
+				    qr{\.book\d+});
 
 would yield
 
@@ -87,7 +88,7 @@ would yield
 Similarly, using VMS syntax:
 
     ($name,$dir,$type) = fileparse('Doc_Root:[Help]Rhetoric.Rnh',
-				   '\..*');
+				   qr{\..*});
 
 would yield
 
@@ -135,12 +136,13 @@ BEGIN {
 
 
 
-use 5.005_64;
+use 5.006;
+use warnings;
 our(@ISA, @EXPORT, $VERSION, $Fileparse_fstype, $Fileparse_igncase);
 require Exporter;
 @ISA = qw(Exporter);
 @EXPORT = qw(fileparse fileparse_set_fstype basename dirname);
-$VERSION = "2.6";
+$VERSION = "2.71";
 
 
 #   fileparse_set_fstype() - specify OS-based rules used in future
@@ -165,6 +167,10 @@ sub fileparse_set_fstype {
 
 sub fileparse {
   my($fullname,@suffices) = @_;
+  unless (defined $fullname) {
+      require Carp;
+      Carp::croak "fileparse(): need a valid pathname";
+  }
   my($fstype,$igncase) = ($Fileparse_fstype, $Fileparse_igncase);
   my($dirpath,$tail,$suffix,$basename);
   my($taint) = substr($fullname,0,0);  # Is $fullname tainted?
@@ -180,8 +186,14 @@ sub fileparse {
     ($dirpath,$basename) = ($fullname =~ /^((?:.*[:\\\/])?)(.*)/s);
     $dirpath .= '.\\' unless $dirpath =~ /[\\\/]\z/;
   }
+  elsif ($fstype =~ /^os2/i) {
+    ($dirpath,$basename) = ($fullname =~ m#^((?:.*[:\\/])?)(.*)#s);
+    $dirpath = './' unless $dirpath;	# Can't be 0
+    $dirpath .= '/' unless $dirpath =~ m#[\\/]\z#;
+  }
   elsif ($fstype =~ /^MacOS/si) {
     ($dirpath,$basename) = ($fullname =~ /^(.*:)?(.*)/s);
+    $dirpath = ':' unless $dirpath;
   }
   elsif ($fstype =~ /^AmigaOS/i) {
     ($dirpath,$basename) = ($fullname =~ /(.*[:\/])?(.*)/s);
@@ -195,6 +207,7 @@ sub fileparse {
       my $devspec  = $1;
       my $remainder = $3;
       ($dirpath,$basename) = ($remainder =~ m#^(.*/)?(.*)#s);
+      $dirpath ||= '';  # should always be defined
       $dirpath = $devspec.$dirpath;
     }
     $dirpath = './' unless $dirpath;
@@ -212,8 +225,8 @@ sub fileparse {
   }
 
   $tail .= $taint if defined $tail; # avoid warning if $tail == undef
-  wantarray ? ($basename . $taint, $dirpath . $taint, $tail)
-            : $basename . $taint;
+  wantarray ? ($basename .= $taint, $dirpath .= $taint, $tail)
+            : ($basename .= $taint);
 }
 
 
@@ -247,14 +260,7 @@ sub dirname {
 	}
 	$dirname .= ":" unless $dirname =~ /:\z/;
     }
-    elsif ($fstype =~ /MSDOS/i) { 
-        $dirname =~ s/([^:])[\\\/]*\z/$1/;
-        unless( length($basename) ) {
-	    ($basename,$dirname) = fileparse $dirname;
-	    $dirname =~ s/([^:])[\\\/]*\z/$1/;
-	}
-    }
-    elsif ($fstype =~ /MSWin32/i) { 
+    elsif ($fstype =~ /MS(DOS|Win32)|os2/i) { 
         $dirname =~ s/([^:])[\\\/]*\z/$1/;
         unless( length($basename) ) {
 	    ($basename,$dirname) = fileparse $dirname;

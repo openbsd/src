@@ -520,7 +520,7 @@ And finally create a file Makefile.PL that looks like this:
 	WriteMakefile(
 	    NAME   => 'Mytest2::mylib',
 	    SKIP   => [qw(all static static_lib dynamic dynamic_lib)],
-	    clean  => {'FILES' => 'libmylib$(LIBEEXT)'},
+	    clean  => {'FILES' => 'libmylib$(LIB_EXT)'},
 	);
 
 
@@ -798,7 +798,7 @@ passing three pieces of information for each argument listed.  The first
 piece is the order of that argument relative to the others (first, second,
 etc).  The second is the type of argument, and consists of the type
 declaration of the argument (e.g., int, char*, etc).  The third piece is
-the calling convention for the argument in the call to the library function.  
+the calling convention for the argument in the call to the library function.
 
 While Perl passes arguments to functions by reference,
 C passes arguments by value; to implement a C function which modifies data
@@ -915,9 +915,9 @@ way to store and load your extra subroutines.
 
 There is absolutely no excuse for not documenting your extension.
 Documentation belongs in the .pm file.  This file will be fed to pod2man,
-and the embedded documentation will be converted to the man page format,
-then placed in the blib directory.  It will be copied to Perl's man
-page directory when the extension is installed.
+and the embedded documentation will be converted to the manpage format,
+then placed in the blib directory.  It will be copied to Perl's
+manpage directory when the extension is installed.
 
 You may intersperse documentation and Perl code within the .pm file.
 In fact, if you want to use method autoloading, you must do this,
@@ -928,7 +928,7 @@ See L<perlpod> for more information about the pod format.
 =head2 Installing your Extension
 
 Once your extension is complete and passes all its tests, installing it
-is quite simple: you simply run "make install".  You will either need 
+is quite simple: you simply run "make install".  You will either need
 to have write permission into the directories where Perl is installed,
 or ask your system administrator to run the make for you.
 
@@ -1117,7 +1117,7 @@ Mytest.xs:
 	    OUTPUT:
         	RETVAL
 
-And add the following code to test.pl, while incrementing the "1..11" 
+And add the following code to test.pl, while incrementing the "1..11"
 string in the BEGIN block to "1..13":
 
 	$results = Mytest::multi_statfs([ '/', '/blech' ]);
@@ -1186,7 +1186,7 @@ To create a reference, we use the C<newRV> function.  Note that you can
 cast an AV* or an HV* to type SV* in this case (and many others).  This
 allows you to take references to arrays, hashes and scalars with the same
 function.  Conversely, the C<SvRV> function always returns an SV*, which may
-need to be be cast to the appropriate type if it is something other than a
+need to be cast to the appropriate type if it is something other than a
 scalar (check with C<SvTYPE>).
 
 =item *
@@ -1204,9 +1204,107 @@ XPUSH args AND set RETVAL AND assign return value to array
 
 Setting $!
 
-=head2 EXAMPLE 9 (Coming Soon)
+=head2 EXAMPLE 9 Passing open files to XSes
 
-Getting fd's from filehandles
+You would think passing files to an XS is difficult, with all the
+typeglobs and stuff. Well, it isn't.
+
+Suppose that for some strange reason we need a wrapper around the
+standard C library function C<fputs()>. This is all we need:
+
+	#define PERLIO_NOT_STDIO 0
+	#include "EXTERN.h"
+	#include "perl.h"
+	#include "XSUB.h"
+
+	#include <stdio.h>
+
+	int
+	fputs(s, stream)
+		char *          s
+		FILE *	        stream
+
+The real work is done in the standard typemap.
+
+B<But> you loose all the fine stuff done by the perlio layers. This
+calls the stdio function C<fputs()>, which knows nothing about them.
+
+The standard typemap offers three variants of PerlIO *:
+C<InputStream> (T_IN), C<InOutStream> (T_INOUT) and C<OutputStream>
+(T_OUT). A bare C<PerlIO *> is considered a T_INOUT. If it matters
+in your code (see below for why it might) #define or typedef
+one of the specific names and use that as the argument or result
+type in your XS file.
+
+The standard typemap does not contain PerlIO * before perl 5.7,
+but it has the three stream variants. Using a PerlIO * directly
+is not backwards compatible unless you provide your own typemap.
+
+For streams coming I<from> perl the main difference is that
+C<OutputStream> will get the output PerlIO * - which may make
+a difference on a socket. Like in our example...
+
+For streams being handed I<to> perl a new file handle is created
+(i.e. a reference to a new glob) and associated with the PerlIO *
+provided. If the read/write state of the PerlIO * is not correct then you
+may get errors or warnings from when the file handle is used.
+So if you opened the PerlIO * as "w" it should really be an
+C<OutputStream> if open as "r" it should be an C<InputStream>.
+
+Now, suppose you want to use perlio layers in your XS. We'll use the
+perlio C<PerlIO_puts()> function as an example.
+
+In the C part of the XS file (above the first MODULE line) you
+have
+
+	#define OutputStream	PerlIO *
+    or
+	typedef PerlIO *	OutputStream;
+
+
+And this is the XS code:
+
+	int
+	perlioputs(s, stream)
+		char *          s
+		OutputStream	stream
+	CODE:
+		RETVAL = PerlIO_puts(stream, s);
+	OUTPUT:
+		RETVAL
+
+We have to use a C<CODE> section because C<PerlIO_puts()> has the arguments
+reversed compared to C<fputs()>, and we want to keep the arguments the same.
+
+Wanting to explore this thoroughly, we want to use the stdio C<fputs()>
+on a PerlIO *. This means we have to ask the perlio system for a stdio
+C<FILE *>:
+
+	int
+	perliofputs(s, stream)
+		char *          s
+		OutputStream	stream
+	PREINIT:
+		FILE *fp = PerlIO_findFILE(stream);
+	CODE:
+		if (fp != (FILE*) 0) {
+			RETVAL = fputs(s, fp);
+		} else {
+			RETVAL = -1;
+		}
+	OUTPUT:
+		RETVAL
+
+Note: C<PerlIO_findFILE()> will search the layers for a stdio
+layer. If it can't find one, it will call C<PerlIO_exportFILE()> to
+generate a new stdio C<FILE>. Please only call C<PerlIO_exportFILE()> if
+you want a I<new> C<FILE>. It will generate one on each call and push a
+new stdio layer. So don't call it repeatedly on the same
+file. C<PerlIO()>_findFILE will retrieve the stdio layer once it has been
+generated by C<PerlIO_exportFILE()>.
+
+This applies to the perlio system only. For versions before 5.7,
+C<PerlIO_exportFILE()> is equivalent to C<PerlIO_findFILE()>.
 
 =head2 Troubleshooting these Examples
 
@@ -1241,7 +1339,7 @@ to use the following line:
 
 =item *
 
-This document assumes that the executable named "perl" is Perl version 5.  
+This document assumes that the executable named "perl" is Perl version 5.
 Some systems may have installed Perl version 5 as "perl5".
 
 =back
@@ -1258,6 +1356,9 @@ Jeff Okamoto <F<okamoto@corp.hp.com>>
 Reviewed and assisted by Dean Roehrich, Ilya Zakharevich, Andreas Koenig,
 and Tim Bunce.
 
+PerlIO material contributed by Lupe Christoph, with some clarification
+by Nick Ing-Simmons.
+
 =head2 Last Changed
 
-1999/11/30
+2002/05/08

@@ -60,11 +60,13 @@ justification, or centering.  If the variable would exceed the width
 specified, it is truncated.
 
 As an alternate form of right justification, you may also use "#"
-characters (with an optional ".") to specify a numeric field.  This way
-you can line up the decimal points.  If any value supplied for these
-fields contains a newline, only the text up to the newline is printed.
-Finally, the special field "@*" can be used for printing multi-line,
-nontruncated values; it should appear by itself on a line.
+characters (with an optional ".") to specify a numeric field. This way
+you can line up the decimal points. With a "0" (zero) instead of the
+first "#", the formatted number will be padded with leading zeroes if
+necessary. If any value supplied for these fields contains a newline,
+only the text up to the newline is printed. Finally, the special field
+"@*" can be used for printing multi-line, nontruncated values; it
+should appear by itself on a line.
 
 The values are specified on the following line in the same order as
 the picture fields.  The expressions providing the values should be
@@ -187,7 +189,7 @@ stage in the expression to single-step the debugger through):
 
 If you use the English module, you can even read the variable names:
 
-    use English;
+    use English '-no_match_vars';
     $ofh = select(OUTF);
     $FORMAT_NAME     = "My_Other_Format";
     $FORMAT_TOP_NAME = "My_Top_Format";

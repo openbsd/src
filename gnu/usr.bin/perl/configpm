@@ -1,7 +1,36 @@
 #!./miniperl -w
 
-my $config_pm = $ARGV[0] || 'lib/Config.pm';
+# following options are recognized:
+# --no-glossary  - no glossary file inclusion, for compactness
+# --cross=PALTFORM - crosscompiling for PLATFORM
+my %opts = (
+  # %known_opts enumerates allowed opts as well as specifies default and initial values
+  my %known_opts = (
+     'cross' => '',
+     'glossary' => 1,
+  ),
+  # options itself
+  my %specified_opts = (
+    (map {/^--([\-_\w]+)=(.*)$/} @ARGV),                            # --opt=smth
+    (map {/^no-?(.*)$/i?($1=>0):($_=>1)} map {/^--([\-_\w]+)$/} @ARGV),  # --opt --no-opt --noopt
+  ),
+);
+die "option '$_' is not recognized" for grep {!exists $known_opts{$_}} keys %specified_opts;
+@ARGV = grep {!/^--/} @ARGV;
+
+my $config_pm;
 my $glossary = $ARGV[1] || 'Porting/Glossary';
+
+if ($opts{cross}) {
+  # creating cross-platform config file
+  mkdir "xlib";
+  mkdir "xlib/$opts{cross}";
+  $config_pm = $ARGV[0] || "xlib/$opts{cross}/Config.pm";
+}
+else {
+  $config_pm = $ARGV[0] || 'lib/Config.pm';
+}
+
 @ARGV = "./config.sh";
 
 # list names to put first (and hence lookup fastest)
@@ -18,9 +47,7 @@ my $glossary = $ARGV[1] || 'Porting/Glossary';
 # name of lib paths that should be truncated on ':'
 @libpathtrunc = qw(archlib archlibexp privlib privlibexp sitearch sitearchexp
 	sitelib sitelibexp);
-# name of lib paths that should be truncated on ':'
-@libpathtrunc = qw(archlib archlibexp privlib privlibexp sitearch sitearchexp
-	sitelib sitelibexp);
+
 open CONFIG, ">$config_pm" or die "Can't open $config_pm: $!\n";
 $myver = sprintf "v%vd", $^V;
 
@@ -66,7 +93,7 @@ $in_v = 0;
 
 while (<>) {
     next if m:^#!/bin/sh:;
-    # Catch CONFIGDOTSH=true and PERL_VERSION=n line from Configure.
+    # Catch PERL_CONFIG_SH=true and PERL_VERSION=n line from Configure.
     s/^(\w+)=(true|\d+)\s*$/$1='$2'\n/;
     my ($k,$v) = ($1,$2);
     # grandfather PATCHLEVEL and SUBVERSION and CONFIG
@@ -77,7 +104,7 @@ while (<>) {
 	elsif ($k eq 'PERL_SUBVERSION') {
 	    push @v_others, "SUBVERSION='$v'\n";
 	}
-	elsif ($k eq 'CONFIGDOTSH') {
+	elsif ($k eq 'PERL_CONFIG_SH') {
 	    push @v_others, "CONFIG='$v'\n";
 	}
     }
@@ -257,7 +284,7 @@ sub config_sh {
 
 sub config_re {
     my $re = shift;
-    my @matches = ($config_sh =~ /^$re=.*\n/mg);
+    my @matches = grep /^$re=/, split /^/, $config_sh;
     @matches ? (print @matches) : print "$re: not found\n";
 }
 
@@ -282,7 +309,19 @@ if ($OS2::is_aout) {
         $preconfig{$_} = $v eq 'undef' ? undef : $v;
     }
 }
+$preconfig{d_fork} = undef unless $OS2::can_fork; # Some funny cases can't
 sub TIEHASH { bless {%preconfig} }
+ENDOFSET
+  # Extract the name of the DLL from the makefile to avoid duplication
+  my ($f) = grep -r, qw(GNUMakefile Makefile);
+  my $dll;
+  if (open my $fh, '<', $f) {
+    while (<$fh>) {
+      $dll = $1, last if /^PERL_DLL_BASE\s*=\s*(\S*)\s*$/;
+    }
+  }
+  print CONFIG <<ENDOFSET if $dll;
+\$preconfig{dll_name} = '$dll';
 ENDOFSET
 } else {
   print CONFIG <<'ENDOFSET';
@@ -410,29 +449,36 @@ in such cases.
 
 ENDOFTAIL
 
-open(GLOS, "<$glossary") or die "Can't open $glossary: $!";
+if ($opts{glossary}) {
+  open(GLOS, "<$glossary") or die "Can't open $glossary: $!";
+}
 %seen = ();
 $text = 0;
 $/ = '';
 
 sub process {
-  s/\A(\w*)\s+\(([\w.]+)\):\s*\n(\t?)/=item C<$1>\n\nFrom F<$2>:\n\n/m;
-  my $c = substr $1, 0, 1;
-  unless ($seen{$c}++) {
-    print CONFIG <<EOF if $text;
+  if (s/\A(\w*)\s+\(([\w.]+)\):\s*\n(\t?)/=item C<$1>\n\nFrom F<$2>:\n\n/m) {
+    my $c = substr $1, 0, 1;
+    unless ($seen{$c}++) {
+      print CONFIG <<EOF if $text;
 =back
 
 EOF
-    print CONFIG <<EOF;
+      print CONFIG <<EOF;
 =head2 $c
 
-=over
+=over 4
 
 EOF
-    $text = 1;
+     $text = 1;
+    }
+  }
+  elsif (!$text || !/\A\t/) {
+    warn "Expected a Configure variable header",
+      ($text ? " or another paragraph of description" : () );
   }
   s/n't/n\00t/g;		# leave can't, won't etc untouched
-  s/^\t\s+(.*)/\n\t$1\n/gm;	# Indented lines ===> paragraphs
+  s/^\t\s+(.*)/\n$1/gm;		# Indented lines ===> new paragraph
   s/^(?<!\n\n)\t(.*)/$1/gm;	# Not indented lines ===> text
   s{([\'\"])(?=[^\'\"\s]*[./][^\'\"\s]*\1)([^\'\"\s]+)\1}(F<$2>)g; # '.o'
   s{([\'\"])([^\'\"\s]+)\1}(C<$2>)g; # "date" command
@@ -442,8 +488,14 @@ EOF
      (?! e \. g \. )		# Not e.g.
      (?! \. \. \. )		# Not ...
      (?! \d )			# Not 5.004
-     ( [\w./]* [./] [\w./]* )	# Require . or / inside
-     (?<! \. (?= \s ) )		# Do not include trailing dot
+     (?! read/ )		# Not read/write
+     (?! etc\. )		# Not etc.
+     (?! I/O )			# Not I/O
+     (
+	\$ ?			# Allow leading $
+	[\w./]* [./] [\w./]*	# Require . or / inside
+     )
+     (?<! \. (?= [\s)] ) )	# Do not include trailing dot
      (?! [\w/] )		# Include all of it
    }
    (F<$1>)xg;			# /usr/local
@@ -453,10 +505,13 @@ EOF
   s/n[\0]t/n't/g;		# undo can't, won't damage
 }
 
-<GLOS>;				# Skip the preamble
-while (<GLOS>) {
-  process;
-  print CONFIG;
+if ($opts{glossary}) {
+    <GLOS>;				# Skip the "DO NOT EDIT"
+    <GLOS>;				# Skip the preamble
+  while (<GLOS>) {
+    process;
+    print CONFIG;
+  }
 }
 
 print CONFIG <<'ENDOFTAIL';
@@ -476,17 +531,45 @@ ENDOFTAIL
 close(CONFIG);
 close(GLOS);
 
+# Now create Cross.pm if needed
+if ($opts{cross}) {
+  open CROSS, ">lib/Cross.pm" or die "Can not open >lib/Cross.pm: $!";
+  my $cross = <<'EOS';
+# typical invocation:
+#   perl -MCross Makefile.PL
+#   perl -MCross=wince -V:cc
+package Cross;
+
+sub import {
+  my ($package,$platform) = @_;
+  unless (defined $platform) {
+    # if $platform is not specified, then use last one when
+    # 'configpm; was invoked with --cross option
+    $platform = '***replace-marker***';
+  }
+  @INC = map {/\blib\b/?(do{local $_=$_;s/\blib\b/xlib\/$platform/;$_},$_):($_)} @INC;
+  $::Cross::platform = $platform;
+}
+
+1;
+EOS
+  $cross =~ s/\*\*\*replace-marker\*\*\*/$opts{cross}/g;
+  print CROSS $cross;
+  close CROSS;
+}
+
+
 # Now do some simple tests on the Config.pm file we have created
 unshift(@INC,'lib');
 require $config_pm;
 import Config;
 
 die "$0: $config_pm not valid"
-	unless $Config{'CONFIGDOTSH'} eq 'true';
+	unless $Config{'PERL_CONFIG_SH'} eq 'true';
 
 die "$0: error processing $config_pm"
 	if defined($Config{'an impossible name'})
-	or $Config{'CONFIGDOTSH'} ne 'true' # test cache
+	or $Config{'PERL_CONFIG_SH'} ne 'true' # test cache
 	;
 
 die "$0: error processing $config_pm"

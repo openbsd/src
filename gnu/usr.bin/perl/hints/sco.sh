@@ -112,7 +112,7 @@ then
 else
     ###############################################################
     # Need this in release 5 because of changed fpu exeption rules
-    ccflags="$ccflags -D PERL_SCO5"
+    ccflags="$ccflags -D HAS_FPSETMASK"
 
     ###############################################################
     # In Release 5, always compile ELF objects

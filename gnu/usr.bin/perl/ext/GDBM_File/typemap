@@ -3,6 +3,7 @@
 #
 
 datum_key		T_DATUM_K
+datum_key_copy		T_DATUM_K_C
 datum_value		T_DATUM_V
 NDBM_File		T_PTROBJ
 GDBM_File		T_PTROBJ
@@ -17,6 +18,18 @@ T_DATUM_K
 	ckFilter($arg, filter_store_key, \"filter_store_key\");
 	$var.dptr = SvPV($arg, PL_na);
 	$var.dsize = (int)PL_na;
+T_DATUM_K_C
+	{
+	    SV * tmpSV;
+	    if (db->filter_store_key) {
+	        tmpSV = sv_2mortal(newSVsv($arg)); 
+	        ckFilter(tmpSV, filter_store_key, \"filter_store_key\");
+            }
+            else
+                tmpSV = $arg;
+	    $var.dptr = SvPV(tmpSV, PL_na);
+	    $var.dsize = (int)PL_na;
+	}
 T_DATUM_V
         ckFilter($arg, filter_store_value, \"filter_store_value\");
 	if (SvOK($arg)) {

@@ -15,6 +15,16 @@
 #  endif
 #endif
 
+#ifndef HAS_DBMINIT_PROTO
+int	dbminit(char* filename);
+int	dbmclose(void);
+datum	fetch(datum key);
+int	store(datum key, datum dat);
+int	delete(datum key);
+datum	firstkey(void);
+datum	nextkey(datum key);
+#endif
+
 #ifdef DBM_BUG_DUPLICATE_FREE 
 /*
  * DBM on at least Ultrix and HPUX call dbmclose() from dbminit(),
@@ -43,6 +53,7 @@ typedef struct {
 
 typedef ODBM_File_type * ODBM_File ;
 typedef datum datum_key ;
+typedef datum datum_key_copy ;
 typedef datum datum_value ;
 
 #define ckFilter(arg,type,name)					\
@@ -70,13 +81,26 @@ typedef datum datum_value ;
 #define odbm_FIRSTKEY(db)			firstkey()
 #define odbm_NEXTKEY(db,key)			nextkey(key)
 
-static int dbmrefcnt;
+#define MY_CXT_KEY "ODBM_File::_guts" XS_VERSION
+
+typedef struct {
+    int		x_dbmrefcnt;
+} my_cxt_t;
+
+START_MY_CXT
+
+#define dbmrefcnt	(MY_CXT.x_dbmrefcnt)
 
 #ifndef DBM_REPLACE
 #define DBM_REPLACE 0
 #endif
 
 MODULE = ODBM_File	PACKAGE = ODBM_File	PREFIX = odbm_
+
+BOOT:
+{
+    MY_CXT_INIT;
+}
 
 ODBM_File
 odbm_TIEHASH(dbtype, filename, flags, mode)
@@ -88,6 +112,8 @@ odbm_TIEHASH(dbtype, filename, flags, mode)
 	{
 	    char *tmpbuf;
 	    void * dbp ;
+	    dMY_CXT;
+
 	    if (dbmrefcnt++)
 		croak("Old dbm can only open one database");
 	    New(0, tmpbuf, strlen(filename) + 5, char);
@@ -115,6 +141,8 @@ odbm_TIEHASH(dbtype, filename, flags, mode)
 void
 DESTROY(db)
 	ODBM_File	db
+	PREINIT:
+	dMY_CXT;
 	CODE:
 	dbmrefcnt--;
 	dbmclose();
@@ -123,7 +151,7 @@ DESTROY(db)
 datum_value
 odbm_FETCH(db, key)
 	ODBM_File	db
-	datum_key	key
+	datum_key_copy	key
 
 int
 odbm_STORE(db, key, value, flags = DBM_REPLACE)

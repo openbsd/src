@@ -1,4 +1,4 @@
-case $CONFIGDOTSH in
+case $PERL_CONFIG_SH in
 '')
 	if test -f config.sh; then TOP=.;
 	elif test -f ../config.sh; then TOP=..;
@@ -34,7 +34,7 @@ $spitshell >cflags <<!GROK!THIS!
 
 : In the following dollars and backticks do not need the extra backslash.
 $spitshell >>cflags <<'!NO!SUBS!'
-case $CONFIG in
+case $PERL_CONFIG_SH in
 '')
 	if test -f config.sh; then TOP=.;
 	elif test -f ../config.sh; then TOP=..;
@@ -46,6 +46,13 @@ case $CONFIG in
 	fi
 	. $TOP/config.sh
 	;;
+esac
+
+case "X$1" in
+Xoptimize=*|X"optimize=*")
+        eval "$1"
+        shift
+        ;;
 esac
 
 also=': '

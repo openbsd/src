@@ -1,6 +1,6 @@
 /* WIN32.H
  *
- * (c) 1995 Microsoft Corporation. All rights reserved. 
+ * (c) 1995 Microsoft Corporation. All rights reserved.
  * 		Developed by hip communications inc., http://info.hip.com/info/
  *
  *    You may distribute under the terms of either the GNU General Public
@@ -13,9 +13,8 @@
 #  define _WIN32_WINNT 0x0400     /* needed for TryEnterCriticalSection() etc. */
 #endif
 
-#if defined(PERL_OBJECT) || defined(PERL_IMPLICIT_SYS) || defined(PERL_CAPI)
+#if defined(PERL_IMPLICIT_SYS)
 #  define DYNAMIC_ENV_FETCH
-#  define ENV_HV_NAME "___ENV_HV_NAME___"
 #  define HAS_GETENV_LEN
 #  define prime_env_iter()
 #  define WIN32IO_IS_STDIO		/* don't pull in custom stdio layer */
@@ -33,25 +32,27 @@
 #    define __int64 long long
 #  endif
 #  define Win32_Winsock
+#ifdef __cplusplus
+/* Mingw32 gcc -xc++ objects to __attribute((unused)) at least */
+#undef  PERL_UNUSED_DECL
+#define PERL_UNUSED_DECL
+#endif
 #endif
 
-/* Define DllExport akin to perl's EXT, 
+
+/* Define DllExport akin to perl's EXT,
  * If we are in the DLL or mimicing the DLL for Win95 work round
- * then Export the symbol, 
+ * then Export the symbol,
  * otherwise import it.
  */
 
 /* now even GCC supports __declspec() */
 
-#if defined(PERL_OBJECT)
-#define DllExport
-#else
 #if defined(PERLDLL) || defined(WIN95FIX)
 #define DllExport
 /*#define DllExport __declspec(dllexport)*/	/* noises with VC5+sp3 */
-#else 
+#else
 #define DllExport __declspec(dllimport)
-#endif
 #endif
 
 #define  WIN32_LEAN_AND_MEAN
@@ -71,6 +72,7 @@
 #include <stdio.h>
 #include <direct.h>
 #include <stdlib.h>
+#include <stddef.h>
 #include <fcntl.h>
 #ifndef EXT
 #include "EXTERN.h"
@@ -102,8 +104,8 @@ struct utsname {
 #  define END_EXTERN_C }
 #  define EXTERN_C extern "C"
 #else
-#  define START_EXTERN_C 
-#  define END_EXTERN_C 
+#  define START_EXTERN_C
+#  define END_EXTERN_C
 #  define EXTERN_C
 #endif
 #endif
@@ -187,11 +189,6 @@ struct utsname {
 #pragma warn -use	/* "'foo' is declared but never used" */
 #pragma warn -csu	/* "comparing signed and unsigned values" */
 
-/* Borland is picky about a bare member function name used as its ptr */
-#ifdef PERL_OBJECT
-#  define MEMBER_TO_FPTR(name)	&(name)
-#endif
-
 /* Borland C thinks that a pointer to a member variable is 12 bytes in size. */
 #define PERL_MEMBER_PTR_SIZE	12
 
@@ -204,7 +201,7 @@ struct utsname {
 typedef long		uid_t;
 typedef long		gid_t;
 typedef unsigned short	mode_t;
-#pragma  warning(disable: 4018 4035 4101 4102 4244 4245 4761)
+#pragma  warning(disable: 4102)	/* "unreferenced label" */
 
 /* Visual C thinks that a pointer to a member variable is 16 bytes in size. */
 #define PERL_MEMBER_PTR_SIZE	16
@@ -224,10 +221,6 @@ typedef long		gid_t;
 #define fcloseall	_fcloseall
 #define isnan		_isnan	/* ...same libraries as MSVC */
 
-#ifdef PERL_OBJECT
-#  define MEMBER_TO_FPTR(name)	&(name)
-#endif
-
 #ifndef _O_NOINHERIT
 #  define _O_NOINHERIT	0x0080
 #  ifndef _NO_OLDNAMES
@@ -244,45 +237,15 @@ typedef long		gid_t;
 
 /* compatibility stuff for other compilers goes here */
 
+#ifndef _INTPTR_T_DEFINED
+typedef int		intptr_t;
+#  define _INTPTR_T_DEFINED
+#endif
 
-#if !defined(PERL_OBJECT) && defined(PERL_CAPI) && defined(PERL_MEMBER_PTR_SIZE)
-#  define STRUCT_MGVTBL_DEFINITION \
-struct mgvtbl {								\
-    union {								\
-	int	    (CPERLscope(*svt_get))(pTHX_ SV *sv, MAGIC* mg);	\
-	char	    handle_VC_problem1[PERL_MEMBER_PTR_SIZE];		\
-    };									\
-    union {								\
-	int	    (CPERLscope(*svt_set))(pTHX_ SV *sv, MAGIC* mg);	\
-	char	    handle_VC_problem2[PERL_MEMBER_PTR_SIZE];		\
-    };									\
-    union {								\
-	U32	    (CPERLscope(*svt_len))(pTHX_ SV *sv, MAGIC* mg);	\
-	char	    handle_VC_problem3[PERL_MEMBER_PTR_SIZE];		\
-    };									\
-    union {								\
-	int	    (CPERLscope(*svt_clear))(pTHX_ SV *sv, MAGIC* mg);	\
-	char	    handle_VC_problem4[PERL_MEMBER_PTR_SIZE];		\
-    };									\
-    union {								\
-	int	    (CPERLscope(*svt_free))(pTHX_ SV *sv, MAGIC* mg);	\
-	char	    handle_VC_problem5[PERL_MEMBER_PTR_SIZE];		\
-    };									\
-}
-
-#  define BASEOP_DEFINITION \
-    OP*		op_next;						\
-    OP*		op_sibling;						\
-    OP*		(CPERLscope(*op_ppaddr))(pTHX);				\
-    char	handle_VC_problem[PERL_MEMBER_PTR_SIZE-sizeof(OP*)];	\
-    PADOFFSET	op_targ;						\
-    OPCODE	op_type;						\
-    U16		op_seq;							\
-    U8		op_flags;						\
-    U8		op_private;
-
-#endif /* !PERL_OBJECT && PERL_CAPI && PERL_MEMBER_PTR_SIZE */
-
+#ifndef _UINTPTR_T_DEFINED
+typedef unsigned int	uintptr_t;
+#  define _UINTPTR_T_DEFINED
+#endif
 
 START_EXTERN_C
 
@@ -295,9 +258,13 @@ extern  gid_t	getegid(void);
 extern  int	setuid(uid_t uid);
 extern  int	setgid(gid_t gid);
 extern  int	kill(int pid, int sig);
-extern  void	*sbrk(int need);
+#ifndef USE_PERL_SBRK
+extern  void	*sbrk(ptrdiff_t need);
+#  define HAS_SBRK_PROTO
+#endif
 extern	char *	getlogin(void);
 extern	int	chown(const char *p, uid_t o, gid_t g);
+extern  int	mkstemp(const char *path);
 
 #undef	 Stat
 #define  Stat		win32_stat
@@ -323,14 +290,14 @@ typedef struct {
      *	  wShowWindow = SW_HIDE;
      */
     DWORD	dwFlags;
-    DWORD	dwX; 
-    DWORD	dwY; 
-    DWORD	dwXSize; 
-    DWORD	dwYSize; 
-    DWORD	dwXCountChars; 
-    DWORD	dwYCountChars; 
+    DWORD	dwX;
+    DWORD	dwY;
+    DWORD	dwXSize;
+    DWORD	dwYSize;
+    DWORD	dwXCountChars;
+    DWORD	dwYCountChars;
     DWORD	dwFillAttribute;
-    WORD	wShowWindow; 
+    WORD	wShowWindow;
 } child_IO_table;
 
 DllExport void		win32_get_child_IO(child_IO_table* ptr);
@@ -339,10 +306,7 @@ DllExport void		win32_get_child_IO(child_IO_table* ptr);
 extern FILE *		my_fdopen(int, char *);
 #endif
 extern int		my_fclose(FILE *);
-extern int		my_fstat(int fd, struct stat *sbufptr);
-extern int		do_aspawn(void *really, void **mark, void **sp);
-extern int		do_spawn(char *cmd);
-extern int		do_spawn_nowait(char *cmd);
+extern int		my_fstat(int fd, Stat_t *sbufptr);
 extern char *		win32_get_privlib(const char *pl);
 extern char *		win32_get_sitelib(const char *pl);
 extern char *		win32_get_vendorlib(const char *pl);
@@ -382,8 +346,8 @@ typedef  char *		caddr_t;	/* In malloc.c (core address). */
 #  define PERL_SCRIPT_MODE		"rb"
 #endif
 
-/* 
- * Now Win32 specific per-thread data stuff 
+/*
+ * Now Win32 specific per-thread data stuff
  */
 
 struct thread_intern {
@@ -400,13 +364,15 @@ struct thread_intern {
 #    ifdef USE_RTL_THREAD_API
     void *		retv;	/* slot for thread return value */
 #    endif
+    BOOL               Wuse_showwindow;
+    WORD               Wshowwindow;
 };
 
-#ifdef USE_THREADS
+#ifdef USE_5005THREADS
 #  ifndef USE_DECLSPEC_THREAD
 #    define HAVE_THREAD_INTERN
 #  endif /* !USE_DECLSPEC_THREAD */
-#endif /* USE_THREADS */
+#endif /* USE_5005THREADS */
 
 #define HAVE_INTERP_INTERN
 typedef struct {
@@ -414,6 +380,11 @@ typedef struct {
     DWORD	pids[MAXIMUM_WAIT_OBJECTS];
     HANDLE	handles[MAXIMUM_WAIT_OBJECTS];
 } child_tab;
+
+#ifndef Sighandler_t
+typedef Signal_t (*Sighandler_t) (int);
+#define Sighandler_t	Sighandler_t
+#endif
 
 struct interp_intern {
     char *	perlshell_tokens;
@@ -426,11 +397,18 @@ struct interp_intern {
     child_tab *	pseudo_children;
 #endif
     void *	internal_host;
-#ifndef USE_THREADS
+#ifndef USE_5005THREADS
     struct thread_intern	thr_intern;
 #endif
+    UINT	timerid;
+    unsigned 	poll_count;
+    Sighandler_t sigtable[SIG_SIZE];
 };
 
+DllExport int win32_async_check(pTHX);
+
+#define WIN32_POLL_INTERVAL 32768
+#define PERL_ASYNC_CHECK() if (w32_do_async || PL_sig_pending) win32_async_check(aTHX)
 
 #define w32_perlshell_tokens	(PL_sys_intern.perlshell_tokens)
 #define w32_perlshell_vec	(PL_sys_intern.perlshell_vec)
@@ -446,31 +424,39 @@ struct interp_intern {
 #define w32_pseudo_child_pids		(w32_pseudo_children->pids)
 #define w32_pseudo_child_handles	(w32_pseudo_children->handles)
 #define w32_internal_host		(PL_sys_intern.internal_host)
-#ifdef USE_THREADS
+#define w32_timerid			(PL_sys_intern.timerid)
+#define w32_sighandler			(PL_sys_intern.sigtable)
+#define w32_poll_count			(PL_sys_intern.poll_count)
+#define w32_do_async			(w32_poll_count++ > WIN32_POLL_INTERVAL)
+#ifdef USE_5005THREADS
 #  define w32_strerror_buffer	(thr->i.Wstrerror_buffer)
 #  define w32_getlogin_buffer	(thr->i.Wgetlogin_buffer)
 #  define w32_crypt_buffer	(thr->i.Wcrypt_buffer)
 #  define w32_servent		(thr->i.Wservent)
 #  define w32_init_socktype	(thr->i.Winit_socktype)
+#  define w32_use_showwindow	(thr->i.Wuse_showwindow)
+#  define w32_showwindow	(thr->i.Wshowwindow)
 #else
 #  define w32_strerror_buffer	(PL_sys_intern.thr_intern.Wstrerror_buffer)
 #  define w32_getlogin_buffer	(PL_sys_intern.thr_intern.Wgetlogin_buffer)
 #  define w32_crypt_buffer	(PL_sys_intern.thr_intern.Wcrypt_buffer)
 #  define w32_servent		(PL_sys_intern.thr_intern.Wservent)
 #  define w32_init_socktype	(PL_sys_intern.thr_intern.Winit_socktype)
-#endif /* USE_THREADS */
+#  define w32_use_showwindow	(PL_sys_intern.thr_intern.Wuse_showwindow)
+#  define w32_showwindow	(PL_sys_intern.thr_intern.Wshowwindow)
+#endif /* USE_5005THREADS */
 
 /* UNICODE<>ANSI translation helpers */
 /* Use CP_ACP when mode is ANSI */
 /* Use CP_UTF8 when mode is UTF8 */
 
 #define A2WHELPER_LEN(lpa, alen, lpw, nBytes)\
-    (lpw[0] = 0, MultiByteToWideChar((IN_BYTE) ? CP_ACP : CP_UTF8, 0, \
+    (lpw[0] = 0, MultiByteToWideChar((IN_BYTES) ? CP_ACP : CP_UTF8, 0, \
 				    lpa, alen, lpw, (nBytes/sizeof(WCHAR))))
 #define A2WHELPER(lpa, lpw, nBytes)	A2WHELPER_LEN(lpa, -1, lpw, nBytes)
 
 #define W2AHELPER_LEN(lpw, wlen, lpa, nChars)\
-    (lpa[0] = '\0', WideCharToMultiByte((IN_BYTE) ? CP_ACP : CP_UTF8, 0, \
+    (lpa[0] = '\0', WideCharToMultiByte((IN_BYTES) ? CP_ACP : CP_UTF8, 0, \
 				       lpw, wlen, (LPSTR)lpa, nChars,NULL,NULL))
 #define W2AHELPER(lpw, lpa, nChars)	W2AHELPER_LEN(lpw, -1, lpa, nChars)
 
@@ -502,7 +488,7 @@ struct interp_intern {
  * Control structure for lowio file handles
  */
 typedef struct {
-    long osfhnd;    /* underlying OS file HANDLE */
+    intptr_t osfhnd;/* underlying OS file HANDLE */
     char osfile;    /* attributes of file (e.g., open in text mode?) */
     char pipech;    /* one char buffer for handles opened on pipes */
     int lockinitflag;
@@ -536,9 +522,17 @@ EXTERN_C _CRTIMP ioinfo* __pioinfo[];
 #define _pipech(i)  (_pioinfo(i)->pipech)
 
 /* since we are not doing a dup2(), this works fine */
-#define _set_osfhnd(fh, osfh) (void)(_osfhnd(fh) = (long)osfh)
+#define _set_osfhnd(fh, osfh) (void)(_osfhnd(fh) = (intptr_t)osfh)
 #endif
 #endif
+
+/* IO.xs and POSIX.xs define PERLIO_NOT_STDIO to 1 */
+#if defined(PERL_EXT_IO) || defined(PERL_EXT_POSIX)
+#undef  PERLIO_NOT_STDIO
+#endif
+#define PERLIO_NOT_STDIO 0
+
+#include "perlio.h"
 
 /*
  * This provides a layer of functions and macros to ensure extensions will
@@ -547,6 +541,16 @@ EXTERN_C _CRTIMP ioinfo* __pioinfo[];
 #include "win32iop.h"
 
 #define EXEC_ARGV_CAST(x) ((const char *const *) x)
+
+#if !defined(ECONNABORTED) && defined(WSAECONNABORTED)
+#define ECONNABORTED WSAECONNABORTED
+#endif
+#if !defined(EAFNOSUPPORT) && defined(WSAEAFNOSUPPORT)
+#define EAFNOSUPPORT WSAEAFNOSUPPORT
+#endif
+
+DllExport void *win32_signal_context(void);
+#define PERL_GET_SIG_CONTEXT win32_signal_context()
 
 #endif /* _INC_WIN32_PERL5 */
 

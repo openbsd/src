@@ -1,5 +1,6 @@
 package ExtUtils::MM_Win32;
 
+
 =head1 NAME
 
 ExtUtils::MM_Win32 - methods to override UN*X behaviour in ExtUtils::MakeMaker
@@ -14,70 +15,29 @@ See ExtUtils::MM_Unix for a documentation of the methods provided
 there. This package overrides the implementation of these methods, not
 the semantics.
 
-=over
+=over 4
 
 =cut 
 
 use Config;
-#use Cwd;
 use File::Basename;
-require Exporter;
+use File::Spec;
+use ExtUtils::MakeMaker qw( neatvalue );
 
-Exporter::import('ExtUtils::MakeMaker',
-       qw( $Verbose &neatvalue));
+use vars qw(@ISA $VERSION $BORLAND $GCC $DMAKE $NMAKE $PERLMAKE);
+
+require ExtUtils::MM_Any;
+require ExtUtils::MM_Unix;
+@ISA = qw( ExtUtils::MM_Any ExtUtils::MM_Unix );
+$VERSION = '1.05';
 
 $ENV{EMXSHELL} = 'sh'; # to run `commands`
-unshift @MM::ISA, 'ExtUtils::MM_Win32';
 
 $BORLAND = 1 if $Config{'cc'} =~ /^bcc/i;
 $GCC     = 1 if $Config{'cc'} =~ /^gcc/i;
 $DMAKE = 1 if $Config{'make'} =~ /^dmake/i;
 $NMAKE = 1 if $Config{'make'} =~ /^nmake/i;
 $PERLMAKE = 1 if $Config{'make'} =~ /^pmake/i;
-$OBJ   = 1 if $Config{'ccflags'} =~ /PERL_OBJECT/i;
-
-# a few workarounds for command.com (very basic)
-{
-    package ExtUtils::MM_Win95;
-
-    # the $^O test may be overkill, but we want to be sure Win32::IsWin95()
-    # exists before we try it
-
-    unshift @MM::ISA, 'ExtUtils::MM_Win95'
-	if ($^O =~ /Win32/ && Win32::IsWin95());
-
-    sub xs_c {
-	my($self) = shift;
-	return '' unless $self->needs_linking();
-	'
-.xs.c:
-	$(PERL) -I$(PERL_ARCHLIB) -I$(PERL_LIB) $(XSUBPP) \\
-	    $(XSPROTOARG) $(XSUBPPARGS) $*.xs > $*.c
-	'
-    }
-
-    sub xs_cpp {
-	my($self) = shift;
-	return '' unless $self->needs_linking();
-	'
-.xs.cpp:
-	$(PERL) -I$(PERL_ARCHLIB) -I$(PERL_LIB) $(XSUBPP) \\
-	    $(XSPROTOARG) $(XSUBPPARGS) $*.xs > $*.cpp
-	';
-    }
-
-    # many makes are too dumb to use xs_c then c_o
-    sub xs_o {
-	my($self) = shift;
-	return '' unless $self->needs_linking();
-	'
-.xs$(OBJ_EXT):
-	$(PERL) -I$(PERL_ARCHLIB) -I$(PERL_LIB) $(XSUBPP) \\
-	    $(XSPROTOARG) $(XSUBPPARGS) $*.xs > $*.c
-	$(CCCMD) $(CCCDLFLAGS) -I$(PERL_INC) $(DEFINE) $*.c
-	';
-    }
-}	# end of command.com workarounds
 
 sub dlsyms {
     my($self,%attribs) = @_;
@@ -93,9 +53,13 @@ sub dlsyms {
 	push(@m,"
 $self->{BASEEXT}.def: Makefile.PL
 ",
-     q!	$(PERL) "-I$(PERL_ARCHLIB)" "-I$(PERL_LIB)" -MExtUtils::Mksymlists \\
-     -e "Mksymlists('NAME' => '!, $self->{NAME},
-     q!', 'DLBASE' => '!,$self->{DLBASE},
+     q!	$(PERLRUN) -MExtUtils::Mksymlists \\
+     -e "Mksymlists('NAME'=>\"!, $self->{NAME},
+     q!\", 'DLBASE' => '!,$self->{DLBASE},
+     # The above two lines quoted differently to work around
+     # a bug in the 4DOS/4NT command line interpreter.  The visible
+     # result of the bug was files named q('extension_name',) *with the
+     # single quotes and the comma* in the extension build directories.
      q!', 'DL_FUNCS' => !,neatvalue($funcs),
      q!, 'FUNCLIST' => !,neatvalue($funclist),
      q!, 'IMPORTS' => !,neatvalue($imports),
@@ -131,13 +95,11 @@ sub maybe_command {
     return;
 }
 
-sub file_name_is_absolute {
-    my($self,$file) = @_;
-    $file =~ m{^([a-z]:)?[\\/]}i ;
-}
 
 sub find_perl {
     my($self, $ver, $names, $dirs, $trace) = @_;
+    $trace ||= 0;
+
     my($name, $dir);
     if ($trace >= 2){
 	print "Looking for perl $ver by these names:
@@ -150,17 +112,22 @@ in these dirs:
 	next unless defined $dir; # $self->{PERL_SRC} may be undefined
 	foreach $name (@$names){
 	    my ($abs, $val);
-	    if ($self->file_name_is_absolute($name)) { # /foo/bar
+	    if (File::Spec->file_name_is_absolute($name)) {  # /foo/bar
 		$abs = $name;
-	    } elsif ($self->canonpath($name) eq $self->canonpath(basename($name))) { # foo
-		$abs = $self->catfile($dir, $name);
-	    } else { # foo/bar
-		$abs = $self->canonpath($self->catfile($self->curdir, $name));
+	    } elsif (File::Spec->canonpath($name) eq 
+                     File::Spec->canonpath(basename($name))) # foo
+            {
+		$abs = File::Spec->catfile($dir, $name);
+	    } else {                                         # foo/bar
+		$abs = File::Spec->canonpath(
+                           File::Spec->catfile(File::Spec->curdir, $name)
+                       );
 	    }
 	    print "Checking $abs\n" if ($trace >= 2);
 	    next unless $self->maybe_command($abs);
 	    print "Executing $abs\n" if ($trace >= 2);
-	    $val = `$abs -e "require $ver;" 2>&1`;
+            (my($safe_abs) = $abs) =~ s{(\s)}{\\$1}g;
+	    $val = `$safe_abs -e "require $ver;" 2>&1`;
 	    if ($? == 0) {
 	        print "Using PERL=$abs\n" if $trace;
 	        return $abs;
@@ -173,46 +140,26 @@ in these dirs:
     0; # false and not empty
 }
 
-sub catdir {
-    my $self = shift;
-    my @args = @_;
-    for (@args) {
-	# append a slash to each argument unless it has one there
-	$_ .= "\\" if $_ eq '' or substr($_,-1) ne "\\";
-    }
-    my $result = $self->canonpath(join('', @args));
-    $result;
+
+# This code was taken out of MM_Unix to avoid loading File::Glob
+# unless necessary.
+sub find_tests {
+    return join(' ', <t\\*.t>);
 }
 
-=item catfile
-
-Concatenate one or more directory names and a filename to form a
-complete path ending with a filename
-
-=cut
-
-sub catfile {
-    my $self = shift @_;
-    my $file = pop @_;
-    return $file unless @_;
-    my $dir = $self->catdir(@_);
-    $dir =~ s/(\\\.)$//;
-    $dir .= "\\" unless substr($dir,length($dir)-1,1) eq "\\";
-    return $dir.$file;
-}
 
 sub init_others
 {
  my ($self) = @_;
- &ExtUtils::MM_Unix::init_others;
- $self->{'TOUCH'}  = '$(PERL) -I$(PERL_ARCHLIB) -I$(PERL_LIB) -MExtUtils::Command -e touch';
- $self->{'CHMOD'}  = '$(PERL) -I$(PERL_ARCHLIB) -I$(PERL_LIB) -MExtUtils::Command -e chmod'; 
- $self->{'CP'}     = '$(PERL) -I$(PERL_ARCHLIB) -I$(PERL_LIB) -MExtUtils::Command -e cp';
- $self->{'RM_F'}   = '$(PERL) -I$(PERL_ARCHLIB) -I$(PERL_LIB) -MExtUtils::Command -e rm_f';
- $self->{'RM_RF'}  = '$(PERL) -I$(PERL_ARCHLIB) -I$(PERL_LIB) -MExtUtils::Command -e rm_rf';
- $self->{'MV'}     = '$(PERL) -I$(PERL_ARCHLIB) -I$(PERL_LIB) -MExtUtils::Command -e mv';
+ $self->SUPER::init_others;
+ $self->{'TOUCH'}  = '$(PERLRUN) -MExtUtils::Command -e touch';
+ $self->{'CHMOD'}  = '$(PERLRUN) -MExtUtils::Command -e chmod'; 
+ $self->{'CP'}     = '$(PERLRUN) -MExtUtils::Command -e cp';
+ $self->{'RM_F'}   = '$(PERLRUN) -MExtUtils::Command -e rm_f';
+ $self->{'RM_RF'}  = '$(PERLRUN) -MExtUtils::Command -e rm_rf';
+ $self->{'MV'}     = '$(PERLRUN) -MExtUtils::Command -e mv';
  $self->{'NOOP'}   = 'rem';
- $self->{'TEST_F'} = '$(PERL) -I$(PERL_ARCHLIB) -I$(PERL_LIB) -MExtUtils::Command -e test_f';
+ $self->{'TEST_F'} = '$(PERLRUN) -MExtUtils::Command -e test_f';
  $self->{'LD'}     = $Config{'ld'} || 'link';
  $self->{'AR'}     = $Config{'ar'} || 'lib';
  $self->{'LDLOADLIBS'} ||= $Config{'libs'};
@@ -229,7 +176,6 @@ sub init_others
      $self->{'LDDLFLAGS'} .= " $libpath";
  }
  $self->{'DEV_NULL'} = '> NUL';
- # $self->{'NOECHO'} = ''; # till we have it working
 }
 
 
@@ -244,15 +190,21 @@ sub constants {
     my(@m,$tmp);
 
     for $tmp (qw/
-
 	      AR_STATIC_ARGS NAME DISTNAME NAME_SYM VERSION
-	      VERSION_SYM XS_VERSION INST_BIN INST_EXE INST_LIB
-	      INST_ARCHLIB INST_SCRIPT PREFIX  INSTALLDIRS
-	      INSTALLPRIVLIB INSTALLARCHLIB INSTALLSITELIB
-	      INSTALLSITEARCH INSTALLBIN INSTALLSCRIPT PERL_LIB
-	      PERL_ARCHLIB SITELIBEXP SITEARCHEXP LIBPERL_A MYEXTLIB
+	      VERSION_SYM XS_VERSION 
+          INST_BIN INST_LIB INST_ARCHLIB INST_SCRIPT 
+          INSTALLDIRS
+          PREFIX          SITEPREFIX      VENDORPREFIX
+	      INSTALLPRIVLIB  INSTALLSITELIB  INSTALLVENDORLIB
+	      INSTALLARCHLIB  INSTALLSITEARCH INSTALLVENDORARCH
+          INSTALLBIN      INSTALLSITEBIN  INSTALLVENDORBIN  INSTALLSCRIPT 
+          PERL_LIB        PERL_ARCHLIB 
+          SITELIBEXP      SITEARCHEXP 
+          LIBPERL_A MYEXTLIB
 	      FIRST_MAKEFILE MAKE_APERL_FILE PERLMAINCC PERL_SRC
-	      PERL_INC PERL FULLPERL
+	      PERL_INC PERL FULLPERL PERLRUN FULLPERLRUN PERLRUNINST 
+          FULLPERLRUNINST ABSPERL ABSPERLRUN ABSPERLRUNINST
+          FULL_AR PERL_CORE
 
 	      / ) {
 	next unless defined $self->{$tmp};
@@ -267,14 +219,13 @@ XS_DEFINE_VERSION = -D\$(XS_VERSION_MACRO)=\\\"\$(XS_VERSION)\\\"
 };
 
     push @m, qq{
-MAKEMAKER = $INC{'ExtUtils\MakeMaker.pm'}
+MAKEMAKER = $INC{'ExtUtils/MakeMaker.pm'}
 MM_VERSION = $ExtUtils::MakeMaker::VERSION
 };
 
     push @m, q{
 # FULLEXT = Pathname for extension directory (eg Foo/Bar/Oracle).
 # BASEEXT = Basename part of FULLEXT. May be just equal FULLEXT. (eg Oracle)
-# ROOTEXT = Directory part of FULLEXT with leading slash (eg /DBD)  !!! Deprecated from MM 5.32  !!!
 # PARENT_NAME = NAME without BASEEXT and no trailing :: (eg Foo::Bar)
 # DLBASE  = Basename part of dynamic library. May be just equal BASEEXT.
 };
@@ -293,19 +244,15 @@ XS_FILES= ".join(" \\\n\t", sort keys %{$self->{XS}})."
 C_FILES = ".join(" \\\n\t", @{$self->{C}})."
 O_FILES = ".join(" \\\n\t", @{$self->{O_FILES}})."
 H_FILES = ".join(" \\\n\t", @{$self->{H}})."
-HTMLLIBPODS    = ".join(" \\\n\t", sort keys %{$self->{HTMLLIBPODS}})."
-HTMLSCRIPTPODS = ".join(" \\\n\t", sort keys %{$self->{HTMLSCRIPTPODS}})."
 MAN1PODS = ".join(" \\\n\t", sort keys %{$self->{MAN1PODS}})."
 MAN3PODS = ".join(" \\\n\t", sort keys %{$self->{MAN3PODS}})."
 ";
 
     for $tmp (qw/
-	      INST_HTMLPRIVLIBDIR INSTALLHTMLPRIVLIBDIR
-	      INST_HTMLSITELIBDIR INSTALLHTMLSITELIBDIR
-	      INST_HTMLSCRIPTDIR  INSTALLHTMLSCRIPTDIR
-	      INST_HTMLLIBDIR                    HTMLEXT
-	      INST_MAN1DIR        INSTALLMAN1DIR MAN1EXT
-	      INST_MAN3DIR        INSTALLMAN3DIR MAN3EXT
+	      INST_MAN1DIR  MAN1EXT 
+          INSTALLMAN1DIR INSTALLSITEMAN1DIR INSTALLVENDORMAN1DIR
+	      INST_MAN3DIR  MAN3EXT
+          INSTALLMAN3DIR INSTALLSITEMAN3DIR INSTALLVENDORMAN3DIR
 	      /) {
 	next unless defined $self->{$tmp};
 	push @m, "$tmp = $self->{$tmp}\n";
@@ -326,10 +273,10 @@ makemakerdflt: all
 
 .SUFFIXES: .xs .c .C .cpp .cxx .cc \$(OBJ_EXT)
 
-# Nick wanted to get rid of .PRECIOUS. I don't remember why. I seem to recall, that
-# some make implementations will delete the Makefile when we rebuild it. Because
-# we call false(1) when we rebuild it. So make(1) is not completely wrong when it
-# does so. Our milage may vary.
+# Nick wanted to get rid of .PRECIOUS. I don't remember why. I seem to 
+# recall, that some make implementations will delete the Makefile when we 
+# rebuild it. Because we call false(1) when we rebuild it. So make(1) is 
+# not completely wrong when it does so. Our milage may vary.
 # .PRECIOUS: Makefile    # seems to be not necessary anymore
 
 .PHONY: all config static dynamic test linkext manifest
@@ -341,11 +288,11 @@ CONFIGDEP = \$(PERL_ARCHLIB)\\Config.pm \$(PERL_INC)\\config.h
     my @parentdir = split(/::/, $self->{PARENT_NAME});
     push @m, q{
 # Where to put things:
-INST_LIBDIR      = }. $self->catdir('$(INST_LIB)',@parentdir)        .q{
-INST_ARCHLIBDIR  = }. $self->catdir('$(INST_ARCHLIB)',@parentdir)    .q{
+INST_LIBDIR      = }. File::Spec->catdir('$(INST_LIB)',@parentdir)        .q{
+INST_ARCHLIBDIR  = }. File::Spec->catdir('$(INST_ARCHLIB)',@parentdir)    .q{
 
-INST_AUTODIR     = }. $self->catdir('$(INST_LIB)','auto','$(FULLEXT)')       .q{
-INST_ARCHAUTODIR = }. $self->catdir('$(INST_ARCHLIB)','auto','$(FULLEXT)')   .q{
+INST_AUTODIR     = }. File::Spec->catdir('$(INST_LIB)','auto','$(FULLEXT)')       .q{
+INST_ARCHAUTODIR = }. File::Spec->catdir('$(INST_ARCHLIB)','auto','$(FULLEXT)')   .q{
 };
 
     if ($self->has_link_code()) {
@@ -371,12 +318,6 @@ EXPORT_LIST = $tmp
 PERL_ARCHIVE = $tmp
 ";
 
-#    push @m, q{
-#INST_PM = }.join(" \\\n\t", sort values %{$self->{PM}}).q{
-#
-#PM_TO_BLIB = }.join(" \\\n\t", %{$self->{PM}}).q{
-#};
-
     push @m, q{
 TO_INST_PM = }.join(" \\\n\t", sort keys %{$self->{PM}}).q{
 
@@ -386,14 +327,6 @@ PM_TO_BLIB = }.join(" \\\n\t", %{$self->{PM}}).q{
     join('',@m);
 }
 
-
-sub path {
-    my($self) = @_;
-    my $path = $ENV{'PATH'} || $ENV{'Path'} || $ENV{'path'};
-    my @path = split(';',$path);
-    foreach(@path) { $_ = '.' if $_ eq '' }
-    @path;
-}
 
 =item static_lib (o)
 
@@ -413,7 +346,7 @@ sub static_lib {
 $(INST_STATIC): $(OBJECT) $(MYEXTLIB) $(INST_ARCHAUTODIR)\.exists
 	$(RM_RF) $@
 END
-    # If this extension has it's own library (eg SDBM_File)
+    # If this extension has its own library (eg SDBM_File)
     # then copy that to $(INST_STATIC) and add $(OBJECT) into it.
     push(@m, "\t$self->{CP} \$(MYEXTLIB) \$\@\n") if $self->{MYEXTLIB};
 
@@ -454,7 +387,7 @@ BOOTSTRAP = '."$self->{BASEEXT}.bs".'
 # The DynaLoader only reads a non-empty file.
 $(BOOTSTRAP): '."$self->{MAKEFILE} $self->{BOOTDEP}".' $(INST_ARCHAUTODIR)\.exists
 	'.$self->{NOECHO}.'echo "Running Mkbootstrap for $(NAME) ($(BSLOADLIBS))"
-	'.$self->{NOECHO}.'$(PERL) "-I$(PERL_ARCHLIB)" "-I$(PERL_LIB)" \
+	'.$self->{NOECHO}.'$(PERLRUN) \
 		-MExtUtils::Mkbootstrap \
 		-e "Mkbootstrap(\'$(BASEEXT)\',\'$(BSLOADLIBS)\');"
 	'.$self->{NOECHO}.'$(TOUCH) $(BOOTSTRAP)
@@ -530,6 +463,21 @@ $(INST_DYNAMIC): $(OBJECT) $(MYEXTLIB) $(BOOTSTRAP) $(INST_ARCHAUTODIR)\.exists 
     join('',@m);
 }
 
+sub clean
+{
+    my ($self) = shift;
+    my $s = $self->SUPER::clean(@_);
+    my $clean = $GCC ? 'dll.base dll.exp' : '*.pdb';
+    $s .= <<END;
+clean ::
+	-\$(RM_F) $clean
+
+END
+    return $s;
+}
+
+
+
 sub perl_archive
 {
     my ($self) = @_;
@@ -542,25 +490,6 @@ sub export_list
  return "$self->{BASEEXT}.def";
 }
 
-=item canonpath
-
-No physical check on the filesystem, but a logical cleanup of a
-path. On UNIX eliminated successive slashes and successive "/.".
-
-=cut
-
-sub canonpath {
-    my($self,$path) = @_;
-    $path =~ s/^([a-z]:)/\u$1/;
-    $path =~ s|/|\\|g;
-    $path =~ s|(.)\\+|$1\\|g ;                     # xx////xx  -> xx/xx
-    $path =~ s|(\\\.)+\\|\\|g ;                    # xx/././xx -> xx/xx
-    $path =~ s|^(\.\\)+|| unless $path eq ".\\";   # ./xx      -> xx
-    $path =~ s|\\$|| 
-             unless $path =~ m#^([a-z]:)?\\#;      # xx/       -> xx
-    $path .= '.' if $path =~ m#\\$#;
-    $path;
-}
 
 =item perl_script
 
@@ -587,32 +516,20 @@ destination and autosplits them. See L<ExtUtils::Install/DESCRIPTION>
 
 sub pm_to_blib {
     my $self = shift;
-    my($autodir) = $self->catdir('$(INST_LIB)','auto');
+    my($autodir) = File::Spec->catdir('$(INST_LIB)','auto');
     return q{
 pm_to_blib: $(TO_INST_PM)
-	}.$self->{NOECHO}.q{$(PERL) "-I$(INST_ARCHLIB)" "-I$(INST_LIB)" \
-	"-I$(PERL_ARCHLIB)" "-I$(PERL_LIB)" -MExtUtils::Install \
+	}.$self->{NOECHO}.q{$(PERLRUNINST) -MExtUtils::Install \
         -e "pm_to_blib(}.
 	($NMAKE ? 'qw[ <<pmfiles.dat ],'
 	        : $DMAKE ? 'qw[ $(mktmp,pmfiles.dat $(PM_TO_BLIB:s,\\,\\\\,)\n) ],'
 			 : '{ qw[$(PM_TO_BLIB)] },'
 	 ).q{'}.$autodir.q{','$(PM_FILTER)')"
-	}. ($NMAKE ? q{
+}. ($NMAKE ? q{
 $(PM_TO_BLIB)
 <<
-	} : '') . $self->{NOECHO}.q{$(TOUCH) $@
+	} : '') . "\t".$self->{NOECHO}.q{$(TOUCH) $@
 };
-}
-
-=item test_via_harness (o)
-
-Helper method to write the test targets
-
-=cut
-
-sub test_via_harness {
-    my($self, $perl, $tests) = @_;
-    "\t$perl".q! -Mblib -I$(PERL_ARCHLIB) -I$(PERL_LIB) -e "use Test::Harness qw(&runtests $$verbose); $$verbose=$(TEST_VERBOSE); runtests @ARGV;" !."$tests\n";
 }
 
 
@@ -628,7 +545,7 @@ sub tool_autosplit{
     $asl = "\$AutoSplit::Maxlen=$attribs{MAXLEN};" if $attribs{MAXLEN};
     q{
 # Usage: $(AUTOSPLITFILE) FileToSplit AutoDirToSplitInto
-AUTOSPLITFILE = $(PERL) "-I$(PERL_ARCHLIB)" "-I$(PERL_LIB)" -MAutoSplit }.$asl.q{ -e "autosplit($$ARGV[0], $$ARGV[1], 0, 1, 1);"
+AUTOSPLITFILE = $(PERLRUN) -MAutoSplit }.$asl.q{ -e "autosplit($$ARGV[0], $$ARGV[1], 0, 1, 1);"
 };
 }
 
@@ -657,13 +574,13 @@ SHELL = $bin_sh
     push @m, q{
 # The following is a portable way to say mkdir -p
 # To see which directories are created, change the if 0 to if 1
-MKPATH = $(PERL) -I$(PERL_ARCHLIB) -I$(PERL_LIB) -MExtUtils::Command -e mkpath
+MKPATH = $(PERLRUN) -MExtUtils::Command -e mkpath
 
 # This helps us to minimize the effect of the .exists files A yet
 # better solution would be to have a stable file in the perl
 # distribution with a timestamp of zero. But this solution doesn't
 # need any changes to the core distribution and works with older perls
-EQUALIZE_TIMESTAMP = $(PERL) -I$(PERL_ARCHLIB) -I$(PERL_LIB) -MExtUtils::Command -e eqtime
+EQUALIZE_TIMESTAMP = $(PERLRUN) -MExtUtils::Command -e eqtime
 };
 
 
@@ -721,12 +638,9 @@ sub top_targets {
 
     my($self) = shift;
     my(@m);
-    push @m, '
-#all ::	config $(INST_PM) subdirs linkext manifypods
-';
 
     push @m, '
-all :: pure_all htmlifypods manifypods
+all :: pure_all manifypods
 	'.$self->{NOECHO}.'$(NOOP)
 ' 
 	  unless $self->{SKIPHASH}{'all'};
@@ -749,24 +663,6 @@ config :: $(INST_AUTODIR)\.exists
 ';
 
     push @m, $self->dir_target(qw[$(INST_AUTODIR) $(INST_LIBDIR) $(INST_ARCHAUTODIR)]);
-
-    if (%{$self->{HTMLLIBPODS}}) {
-	push @m, qq[
-config :: \$(INST_HTMLLIBDIR)/.exists
-	$self->{NOECHO}\$(NOOP)
-
-];
-	push @m, $self->dir_target(qw[$(INST_HTMLLIBDIR)]);
-    }
-
-    if (%{$self->{HTMLSCRIPTPODS}}) {
-	push @m, qq[
-config :: \$(INST_HTMLSCRIPTDIR)/.exists
-	$self->{NOECHO}\$(NOOP)
-
-];
-	push @m, $self->dir_target(qw[$(INST_HTMLSCRIPTDIR)]);
-    }
 
     if (%{$self->{MAN1PODS}}) {
 	push @m, qq[
@@ -794,67 +690,7 @@ help:
 	perldoc ExtUtils::MakeMaker
 };
 
-    push @m, q{
-Version_check:
-	}.$self->{NOECHO}.q{$(PERL) -I$(PERL_ARCHLIB) -I$(PERL_LIB) \
-		-MExtUtils::MakeMaker=Version_check \
-		-e "Version_check('$(MM_VERSION)')"
-};
-
     join('',@m);
-}
-
-=item htmlifypods (o)
-
-Defines targets and routines to translate the pods into HTML manpages
-and put them into the INST_HTMLLIBDIR and INST_HTMLSCRIPTDIR
-directories.
-
-Same as MM_Unix version (changes command-line quoting).
-
-=cut
-
-sub htmlifypods {
-    my($self, %attribs) = @_;
-    return "\nhtmlifypods : pure_all\n\t$self->{NOECHO}\$(NOOP)\n" unless
-	%{$self->{HTMLLIBPODS}} || %{$self->{HTMLSCRIPTPODS}};
-    my($dist);
-    my($pod2html_exe);
-    if (defined $self->{PERL_SRC}) {
-	$pod2html_exe = $self->catfile($self->{PERL_SRC},'pod','pod2html');
-    } else {
-	$pod2html_exe = $self->catfile($Config{scriptdirexp},'pod2html');
-    }
-    unless ($pod2html_exe = $self->perl_script($pod2html_exe)) {
-	# No pod2html but some HTMLxxxPODS to be installed
-	print <<END;
-
-Warning: I could not locate your pod2html program. Please make sure,
-         your pod2html program is in your PATH before you execute 'make'
-
-END
-        $pod2html_exe = "-S pod2html";
-    }
-    my(@m);
-    push @m,
-qq[POD2HTML_EXE = $pod2html_exe\n],
-qq[POD2HTML = \$(PERL) -we "use File::Basename; use File::Path qw(mkpath); %m=\@ARGV;for (keys %m){" \\\n],
-q[-e "next if -e $$m{$$_} && -M $$m{$$_} < -M $$_ && -M $$m{$$_} < -M '],
- $self->{MAKEFILE}, q[';" \\
--e "print qq(Htmlifying $$m{$$_}\n);" \\
--e "$$dir = dirname($$m{$$_}); mkpath($$dir) unless -d $$dir;" \\
--e "system(qq[$$^X ].q["-I$(PERL_ARCHLIB)" "-I$(PERL_LIB)" $(POD2HTML_EXE) ].qq[$$_>$$m{$$_}])==0 or warn qq(Couldn\\047t install $$m{$$_}\n);" \\
--e "chmod(oct($(PERM_RW))), $$m{$$_} or warn qq(chmod $(PERM_RW) $$m{$$_}: $$!\n);}"
-];
-    push @m, "\nhtmlifypods : pure_all ";
-    push @m, join " \\\n\t", keys %{$self->{HTMLLIBPODS}}, keys %{$self->{HTMLSCRIPTPODS}};
-
-    push(@m,"\n");
-    if (%{$self->{HTMLLIBPODS}} || %{$self->{HTMLSCRIPTPODS}}) {
-	push @m, "\t$self->{NOECHO}\$(POD2HTML) \\\n\t";
-	push @m, join " \\\n\t", %{$self->{HTMLLIBPODS}}, %{$self->{HTMLSCRIPTPODS}};
-    }
-    join('', @m);
 }
 
 =item manifypods (o)
@@ -879,7 +715,7 @@ sub dist_ci {
     my @m;
     push @m, q{
 ci :
-	$(PERL) -I$(PERL_ARCHLIB) -I$(PERL_LIB) -MExtUtils::Manifest=maniread \\
+	$(PERLRUN) -MExtUtils::Manifest=maniread \\
 		-e "@all = keys %{ maniread() };" \\
 		-e "print(\"Executing $(CI) @all\n\"); system(\"$(CI) @all\");" \\
 		-e "print(\"Executing $(RCS_LABEL) ...\n\"); system(\"$(RCS_LABEL) @all\");"
@@ -944,7 +780,6 @@ sub pasthru {
     my($self) = shift;
     return "PASTHRU = " . ($NMAKE ? "-nologo" : "");
 }
-
 
 
 1;
