@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.148 2004/04/25 19:12:57 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.149 2004/04/25 22:31:03 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1532,8 +1532,8 @@ parse_open(struct peer *peer)
 		p += sizeof(op_type);
 		plen -= sizeof(op_type);
 		memcpy(&op_len, p, sizeof(op_len));
-		p += sizeof(op_type);
-		plen -= sizeof(op_type);
+		p += sizeof(op_len);
+		plen -= sizeof(op_len);
 		if (op_len > 0) {
 			if (plen < op_len) {
 				log_peer_warnx(&peer->conf,
