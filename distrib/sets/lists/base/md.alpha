@@ -51,7 +51,7 @@
 ./usr/lib/libpcap.so.1.1
 ./usr/lib/libperl.so.6.1
 ./usr/lib/libreadline.so.0.0
-./usr/lib/libsectok.so.2.0
+./usr/lib/libsectok.so.3.0
 ./usr/lib/libskey.so.2.0
 ./usr/lib/libssl.so.5.0
 ./usr/lib/libstdc++.so.30.0
