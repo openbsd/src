@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.13 1997/10/24 22:15:05 mickey Exp $	*/
+/*	$OpenBSD: bios.c,v 1.14 1997/10/24 23:24:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -117,7 +117,7 @@ biosattach(parent, self, aux)
 	struct bios_softc *sc = (void *) self;
 	struct bios_attach_args *bia = aux;
 #if NAPM > 0 || defined(DEBUG)
-	bios_apminfo_t *apm;
+	bios_apminfo_t *apm = NULL;
 #endif
 	u_int8_t *va = ISA_HOLE_VADDR(0xffff0);
 	char *str;
@@ -135,7 +135,7 @@ biosattach(parent, self, aux)
 	case 0xf8: str = "PS/2 386+";	break;
 	}
 	printf(": %s(%02x) BIOS, date %c%c/%c%c/%c%c\n",
-	       str, va[15], va[5], va[6], va[8], va[9], va[11], va[12]);
+	    str, va[15], va[5], va[6], va[8], va[9], va[11], va[12]);
 
 	printf("%s:", sc->sc_dev.dv_xname);
 
@@ -151,7 +151,9 @@ biosattach(parent, self, aux)
 			break;
 		case BOOTARG_APMINFO:
 			printf(" apminfo");
+#if NAPM > 0 || defined(DEBUG)
 			apm = (bios_apminfo_t *)q->ba_arg;
+#endif
 			break;
 		case BOOTARG_CKSUMLEN:
 			printf(" cksumlen");
@@ -163,13 +165,13 @@ biosattach(parent, self, aux)
 	printf("\n");
 
 #if NAPM > 0
-	{
+	if (apm) {
 		struct bios_attach_args ba;
 #ifdef DEBUG
-	printf("apminfo: %x, code %x/%x[%x], data %x[%x], entry %x\n",
-	       apm->apm_detail, apm->apm_code32_base,
-	       apm->apm_code16_base, apm->apm_code_len,
-	       apm->apm_data_base, apm->apm_data_len, apm->apm_entry);
+		printf("apminfo: %x, code %x/%x[%x], data %x[%x], entry %x\n",
+		    apm->apm_detail, apm->apm_code32_base,
+		    apm->apm_code16_base, apm->apm_code_len,
+		    apm->apm_data_base, apm->apm_data_len, apm->apm_entry);
 #endif
 		ba.bios_dev = "apm";
 		ba.bios_func = 0x15;
@@ -190,7 +192,7 @@ bios_print(aux, pnp)
 
 	if (pnp)
 		printf("%s at %s function 0x%x",
-		       ba->bios_dev, pnp, ba->bios_func);
+		    ba->bios_dev, pnp, ba->bios_func);
 	return (UNCONF);
 }
 
@@ -329,7 +331,7 @@ bios_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		if ((pdi = bios_getdiskinfo(name[1])) == NULL)
 			return ENXIO;
 		return sysctl_rdstruct(oldp, oldlenp, newp,
-					pdi, sizeof(*bios_diskinfo));
+		    pdi, sizeof(*bios_diskinfo));
 	case BIOS_CNVMEM:
 		return sysctl_rdint(oldp, oldlenp, newp, cnvmem);
 	case BIOS_EXTMEM:
