@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$OpenBSD: devlist2h.awk,v 1.2 1999/04/30 07:28:25 fgsch Exp $
+#	$OpenBSD: devlist2h.awk,v 1.3 1999/08/18 22:30:04 d Exp $
 #	$NetBSD: devlist2h.awk,v 1.2 1998/07/22 11:47:13 christos Exp $
 #
 # Copyright (c) 1998, Christos Zoulas
@@ -99,7 +99,7 @@ $1 == "product" {
 	f = 5;
 
 	if ($4 == "{") {
-		products[nproducts, 3] = -1
+		products[nproducts, 3] = "PCMCIA_PRODUCT_INVALID"
 		z = "{ "
 		for (i = 0; i < 4; i++) {
 			if (f <= NF) {
