@@ -1,0 +1,6 @@
+# $OpenBSD: protocols,v 1.1 2001/12/17 00:41:50 krw Exp $
+# Minimal /etc/protocols file for use during installation
+ip	0	IP
+icmp	1	ICMP
+tcp	6	TCP
+udp	17	UDP

@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.25 2001/12/13 01:40:15 krw Exp $
+#	$OpenBSD: list,v 1.26 2001/12/17 00:41:51 krw Exp $
 
 COPY	${OBJDIR}/raminst		raminst
 LINK	raminst				bin/cat
@@ -63,8 +63,10 @@ LINK	usr/mdec/uboot.lif		usr/mdec/hdboot
 LINK	usr/mdec/uboot.lif		usr/mdec/sdboot
 
 # various files that we need in /etc for the install
-COPY	${DESTDIR}/etc/group		etc/group
-COPY	${DESTDIR}/etc/spwd.db		etc/spwd.db
+COPY	${DESTDIR}/etc/group			etc/group
+COPY	${DESTDIR}/etc/spwd.db			etc/spwd.db
+COPY	${CURDIR}/../../miniroot/protocols	etc/protocols
+COPY	${CURDIR}/../../miniroot/services	etc/services
 SPECIAL	sed -e '/^#[ 	].*$/d' < ${DESTDIR}/etc/disktab > etc/disktab
 
 # we strip comments from files since we need the space...

@@ -1,0 +1,10 @@
+# $OpenBSD: services,v 1.1 2001/12/17 00:41:50 krw Exp $
+# Minimal /etc/services file for use during installation
+ftp-data	20/tcp
+ftp		21/tcp
+domain		53/tcp		nameserver
+domain		53/udp		nameserver
+www		80/tcp		http
+shell		514/tcp		cmd
+nfsd		2049/udp	nfs
+nfsd		2049/tcp	nfs

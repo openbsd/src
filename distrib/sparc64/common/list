@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.4 2001/12/13 01:40:15 krw Exp $
+#	$OpenBSD: list,v 1.5 2001/12/17 00:41:51 krw Exp $
 #	$NetBSD: list,v 1.4.4.1 1996/06/20 20:30:26 pk Exp $
 
 SRCDIRS distrib/special
@@ -50,8 +50,10 @@ LINK	instbin			usr/bin/sed
 ARGVLINK ksh		-sh
 
 # various files that we need in /etc for the install
-COPY	${DESTDIR}/etc/group		etc/group
-COPY	${DESTDIR}/etc/spwd.db		etc/spwd.db
+COPY	${DESTDIR}/etc/group			etc/group
+COPY	${DESTDIR}/etc/spwd.db			etc/spwd.db
+COPY	${CURDIR}/../../miniroot/protocols	etc/protocols
+COPY	${CURDIR}/../../miniroot/services	etc/services
 
 # and the installation scripts
 COPY	${CURDIR}/../../miniroot/install.sub		install.sub
