@@ -1,9 +1,10 @@
-/*	$OpenBSD: message.c,v 1.32 2000/08/03 07:23:10 niklas Exp $	*/
-/*	$EOM: message.c,v 1.146 2000/08/02 22:37:43 provos Exp $	*/
+/*	$OpenBSD: message.c,v 1.33 2000/10/07 07:00:20 niklas Exp $	*/
+/*	$EOM: message.c,v 1.155 2000/10/06 23:55:42 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
  * Copyright (c) 1999 Angelos D. Keromytis.  All rights reserved.
+ * Copyright (c) 1999, 2000 Håkan Olsson.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -160,7 +161,7 @@ message_alloc (struct transport *t, u_int8_t *buf, size_t sz)
 }
 
 /*
- * Allocate a message sutiable for a reply to MSG.  Just allocate an empty
+ * Allocate a message suitable for a reply to MSG.  Just allocate an empty
  * ISAKMP header as the first segment.
  */
 struct message *
@@ -170,6 +171,8 @@ message_alloc_reply (struct message *msg)
 
   reply = message_alloc (msg->transport, 0, ISAKMP_HDR_SZ);
   reply->exchange = msg->exchange;
+  if (msg->isakmp_sa)
+    sa_reference (msg->isakmp_sa);
   reply->isakmp_sa = msg->isakmp_sa;
   return reply;
 }
@@ -195,7 +198,7 @@ message_free (struct message *msg)
       free (msg->iov);
     }
   if (msg->retrans)
-      timer_remove_event (msg->retrans);
+    timer_remove_event (msg->retrans);
   for (i = ISAKMP_PAYLOAD_SA; i < ISAKMP_PAYLOAD_RESERVED_MIN; i++)
     for (payload = TAILQ_FIRST (&msg->payload[i]); payload; payload = next)
       {
@@ -209,6 +212,9 @@ message_free (struct message *msg)
   if (msg->flags & MSG_IN_TRANSIT)
     TAILQ_REMOVE (&msg->transport->sendq, msg, link);
   transport_release (msg->transport);
+
+  if (msg->isakmp_sa)
+    sa_release (msg->isakmp_sa);
 
   free (msg);
 }
@@ -252,7 +258,7 @@ message_parse_payloads (struct message *msg, struct payload *p, u_int8_t next,
 
       /* Look at the next payload's type.  */
       next = GET_ISAKMP_GEN_NEXT_PAYLOAD (buf);
-      if (next >= ISAKMP_PAYLOAD_RESERVED_MIN && 
+      if (next >= ISAKMP_PAYLOAD_RESERVED_MIN &&
 	  next <= ISAKMP_PAYLOAD_RESERVED_MAX)
 	{
 	  log_print ("message_parse_payloads: invalid next payload type %d "
@@ -277,9 +283,9 @@ message_parse_payloads (struct message *msg, struct payload *p, u_int8_t next,
       /* Ignore private payloads. */
       if (next >= ISAKMP_PAYLOAD_PRIVATE_MIN)
 	{
-	  log_debug (LOG_MESSAGE, 30, 
-		     "message_parse_payloads: private next payload type %d "
-		     "in payload of type %d ignored", next, payload);
+	  LOG_DBG ((LOG_MESSAGE, 30,
+		    "message_parse_payloads: private next payload type %d "
+		    "in payload of type %d ignored", next, payload));
 	  goto next_payload;
 	}
 
@@ -381,7 +387,7 @@ message_validate_cert_req (struct message *msg, struct payload *p)
       return -1;
     }
 
-  /* 
+  /*
    * Check the certificate types we support and if an acceptable authority
    * is included in the payload check if it can be decoded
    */
@@ -422,6 +428,12 @@ message_validate_delete (struct message *msg, struct payload *p)
 	msg->exchange = exchange_setup_p1 (msg, doi->id);
       else
 	msg->exchange = exchange_setup_p2 (msg, doi->id);
+      if (!msg->exchange)
+	{
+	  log_print ("message_validate_delete: can not create exchange");
+	  message_free (msg);
+	  return -1;
+	}
     }
 
   if (proto != ISAKMP_PROTO_ISAKMP && doi->validate_proto (proto))
@@ -517,6 +529,12 @@ message_validate_notify (struct message *msg, struct payload *p)
 	msg->exchange = exchange_setup_p1 (msg, doi->id);
       else
 	msg->exchange = exchange_setup_p2 (msg, doi->id);
+      if (!msg->exchange)
+	{
+	  log_print ("message_validate_notify: can not create exchange");
+	  message_free (msg);
+	  return -1;
+	}
     }
 
   if (proto != ISAKMP_PROTO_ISAKMP && doi->validate_proto (proto))
@@ -645,7 +663,11 @@ message_validate_sa (struct message *msg, struct payload *p)
     }
 
   if (exchange->phase == 1)
-    msg->isakmp_sa = TAILQ_FIRST (&exchange->sa_list);
+    {
+      msg->isakmp_sa = TAILQ_FIRST (&exchange->sa_list);
+      if (msg->isakmp_sa)
+        sa_reference(msg->isakmp_sa);
+    }
 
   /*
    * Let the DOI validate the situation, at the same time it tells us what
@@ -873,6 +895,8 @@ message_recv (struct message *msg)
   else
     {
       msg->isakmp_sa = sa_lookup_by_header (buf, 0);
+      if (msg->isakmp_sa)
+        sa_reference(msg->isakmp_sa);
 
       /*
        * If we cannot find an ISAKMP SA out of the cookies, this is either
@@ -918,7 +942,7 @@ message_recv (struct message *msg)
 
   if (GET_ISAKMP_HDR_NEXT_PAYLOAD (buf) >= ISAKMP_PAYLOAD_RESERVED_MIN)
     {
-      log_print ("message_recv: invalid payload type %d in ISAKMP header",
+      log_print ("message_recv: invalid payload type %d in ISAKMP header (check  passphrases, if applicable and in Phase 1)",
 		 GET_ISAKMP_HDR_NEXT_PAYLOAD (buf));
       message_drop (msg, ISAKMP_NOTIFY_INVALID_PAYLOAD_TYPE, 0, 1, 1);
       return -1;
@@ -1005,7 +1029,7 @@ message_recv (struct message *msg)
 
   if (flags & ISAKMP_FLAGS_ENC)
     {
-      if (msg->isakmp_sa == NULL) 
+      if (msg->isakmp_sa == NULL)
 	{
 	  LOG_DBG ((LOG_MISC, 10,
 		    "message_recv: no isakmp_sa for encrypted message"));
@@ -1544,13 +1568,13 @@ message_check_duplicate (struct message *msg)
    */
   if (exchange->last_sent)
     {
-      message_free (exchange->last_sent);
       if (exchange->last_sent == exchange->in_transit)
 	{
 	  TAILQ_REMOVE (&exchange->in_transit->transport->sendq,
 			exchange->in_transit, link);
 	  exchange->in_transit = 0;
 	}
+      message_free (exchange->last_sent);
       exchange->last_sent = 0;
     }
 
@@ -1660,7 +1684,7 @@ message_negotiate_sa (struct message *msg,
 	      /* Remove potentially succeeded choices from the SA.  */
 	      while (TAILQ_FIRST (&sa->protos))
 		TAILQ_REMOVE (&sa->protos, TAILQ_FIRST (&sa->protos), link);
-	      
+
 	      /* Skip to the last transform of this protection suite.  */
 	      while ((next_tp = step_transform (tp, &next_propp, &next_sap))
 		     && (GET_ISAKMP_PROP_NO (next_propp->p)
@@ -1680,7 +1704,7 @@ message_negotiate_sa (struct message *msg,
 	{
 	  /*
 	   * Check if the suite we just considered was OK, if so we check
-	   * it against the accepted ones. 
+	   * it against the accepted ones.
 	   */
 	  if (suite_ok_so_far)
 	    {
@@ -1700,7 +1724,7 @@ message_negotiate_sa (struct message *msg,
 		{
 		  /* Backtrack.  */
 		  LOG_DBG ((LOG_MESSAGE, 30,
-			    "message_negotiate_sa: proposal %d failed", 
+			    "message_negotiate_sa: proposal %d failed",
 			    GET_ISAKMP_PROP_NO (propp->p)));
 		  next_tp = saved_tp;
 		  next_propp = saved_propp;
