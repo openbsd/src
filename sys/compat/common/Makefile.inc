@@ -1,21 +1,20 @@
-#	$OpenBSD: Makefile.inc,v 1.5 1996/05/23 08:32:21 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.6 1997/05/30 09:40:57 niklas Exp $
 #	$NetBSD: Makefile.inc,v 1.5 1996/05/20 17:23:59 mrg Exp $
 #
 #	NOTE: $S must correspond to the top of the 'sys' tree
 
-COMPATDIR=	$S/compat/common
-
+PWD!=		pwd
+COMPATDIR!=	cd $S/compat/common; pwd
 COMPATDST?=	lib/compat
-COMPATREL?=	../../
 COMPATLIB=	${COMPATDST}/libcompat.a
 COMPATLIB_PROF=	${COMPATDST}/libcompat_p.a
 
 COMPATMAKE= \
-	cd ${COMPATDST} && ${MAKE} -f ${COMPATREL}${COMPATDIR}/Makefile \
-	    CC="${CC}" CFLAGS="${CFLAGS:S/-I./-I${COMPATREL}./g}" \
-	    LD="${LD}" \
-	    COMPATCPPFLAGS="${CPPFLAGS}" \
-	    COMPATREL="${COMPATREL}" \
+	cd ${COMPATDST} && ${MAKE} -f ${COMPATDIR}/Makefile \
+	    CC="${CC}" CFLAGS="${CFLAGS:S/-I./-I${PWD}\/./g}" \
+	    LD="${LD}" AR="${AR}" RANLIB="${RANLIB}" LORDER="${LORDER}" \
+	    NM="${NM}" \
+	    CPPFLAGS="${CPPFLAGS:S/-I./-I${PWD}\/./g}" \
 	    COMPATDIR="${COMPATDIR}"
 
 ${COMPATLIB}:		.NOTMAIN __always_make_compatlib
