@@ -1,4 +1,4 @@
-/*	$OpenBSD: zutil.h,v 1.14 2003/12/17 04:58:56 millert Exp $	*/
+/*	$OpenBSD: zutil.h,v 1.15 2004/12/03 03:07:09 djm Exp $	*/
 /* zutil.h -- internal interface and configuration of the compression library
  * Copyright (C) 1995-2003 Jean-loup Gailly.
  * For conditions of distribution and use, see copyright notice in zlib.h
@@ -193,9 +193,14 @@ extern const char * const z_errmsg[10]; /* indexed by 2-zlib_error */
 #    define NO_vsnprintf
 #  endif
 #endif
+#ifdef VMS
+#  define NO_vsnprintf
+#endif
 
 #ifdef HAVE_STRERROR
-   extern char *strerror OF((int));
+#  ifndef VMS
+     extern char *strerror OF((int));
+#  endif
 #  define zstrerror(errnum) strerror(errnum)
 #else
 #  define zstrerror(errnum) ""
