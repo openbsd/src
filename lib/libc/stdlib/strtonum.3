@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strtonum.3,v 1.1 2004/05/03 17:09:24 tedu Exp $
+.\"	$OpenBSD: strtonum.3,v 1.2 2004/05/03 17:20:45 tedu Exp $
 .\"
 .Dd April 29, 2004
 .Dt STRTONUM 3
@@ -87,7 +87,7 @@ stores an error string in
 indicating the failure.
 .Sh RETURN VALUES
 The
-.Fn strtol
+.Fn strtonum
 function returns the result of the conversion,
 unless the value would underflow or overflow.
 On error, 0 is returned.
