@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.75 1998/08/06 16:39:09 mickey Exp 
+ *	OpenBSD: pcidevs,v 1.76 1998/08/10 16:46:38 millert Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -975,20 +975,22 @@
 
 /* Silicon Integrated System products */
 #define	PCI_PRODUCT_SIS_86C201	0x0001		/* 86C201 Host-AGP Bridge */
-#define	PCI_PRODUCT_SIS_86C202	0x0002		/* 86C202 */
+#define	PCI_PRODUCT_SIS_86C202	0x0002		/* 86C202 VGA Controller */
 #define	PCI_PRODUCT_SIS_86C205	0x0005		/* 86C205 */
-#define	PCI_PRODUCT_SIS_85C503	0x0008		/* 85C503 */
+#define	PCI_PRODUCT_SIS_85C503	0x0008		/* 85C503 ISA Bridge */
+#define	PCI_PRODUCT_SIS_5595	0x0009		/* 5595 PCI System I/O Chipset */
 #define	PCI_PRODUCT_SIS_85C501	0x0406		/* 85C501 */
 #define	PCI_PRODUCT_SIS_85C496	0x0496		/* 85C496 */
 #define	PCI_PRODUCT_SIS_85C596	0x0496		/* 85C596 */
-#define	PCI_PRODUCT_SIS_85C601	0x0601		/* 85C601 */
+#define	PCI_PRODUCT_SIS_85C601	0x0601		/* 85C601 EIDE Controller */
 #define	PCI_PRODUCT_SIS_5511	0x5511		/* 5511 */
 #define	PCI_PRODUCT_SIS_5512	0x5512		/* 5512 */
-#define	PCI_PRODUCT_SIS_5513	0x5513		/* 5513 */
+#define	PCI_PRODUCT_SIS_5513	0x5513		/* 5513 EIDE Controller */
 #define	PCI_PRODUCT_SIS_5581	0x5581		/* 5581 */
 #define	PCI_PRODUCT_SIS_5582	0x5582		/* 5582 */
 #define	PCI_PRODUCT_SIS_5591	0x5591		/* 5591 Host-PCI Bridge */
 #define	PCI_PRODUCT_SIS_5596	0x5596		/* 5596 */
+#define	PCI_PRODUCT_SIS_5598	0x5598		/* 5598 */
 #define	PCI_PRODUCT_SIS_6204	0x6204		/* 6204 */
 #define	PCI_PRODUCT_SIS_6205	0x6205		/* 6205 */
 

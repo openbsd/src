@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.75 1998/08/06 16:39:09 mickey Exp 
+ *	OpenBSD: pcidevs,v 1.76 1998/08/10 16:46:38 millert Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1794,7 +1794,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_86C202,
 	    0,
 	    "Silicon Integrated System",
-	    "86C202",
+	    "86C202 VGA Controller",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_86C205,
@@ -1806,7 +1806,13 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_85C503,
 	    0,
 	    "Silicon Integrated System",
-	    "85C503",
+	    "85C503 ISA Bridge",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5595,
+	    0,
+	    "Silicon Integrated System",
+	    "5595 PCI System I/O Chipset",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_85C501,
@@ -1830,7 +1836,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_85C601,
 	    0,
 	    "Silicon Integrated System",
-	    "85C601",
+	    "85C601 EIDE Controller",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5511,
@@ -1848,7 +1854,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5513,
 	    0,
 	    "Silicon Integrated System",
-	    "5513",
+	    "5513 EIDE Controller",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5581,
@@ -1873,6 +1879,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Silicon Integrated System",
 	    "5596",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5598,
+	    0,
+	    "Silicon Integrated System",
+	    "5598",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_6204,
