@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.86 2003/08/21 18:56:07 tedu Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.87 2003/08/23 18:12:20 fgsch Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1551,7 +1551,7 @@ sysctl_emul(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 			enabled = (e->e_flags & EMUL_ENABLED);
 			error = sysctl_int(oldp, oldlenp, newp, newlen,
 			    &enabled);
-			e->e_flags |= (enabled & EMUL_ENABLED);
+			e->e_flags = (enabled & EMUL_ENABLED);
 			return (error);
 		}
 	default:
