@@ -1,7 +1,9 @@
-#	$OpenBSD: Makefile,v 1.5 1999/08/15 11:35:57 millert Exp $
+#	$OpenBSD: Makefile,v 1.6 2004/09/18 23:23:50 deraadt Exp $
 
 # Uncomment this to enable tracing in libcurses
 #CURSESTRACE=-DTRACE
+
+NOLINT=
 
 LIB=    curses++
 SRCS=	cursesapp.cc cursesf.cc cursesm.cc cursesmain.cc cursesp.cc \
