@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.45 2000/06/14 19:18:19 provos Exp $
+.\"	$OpenBSD: sysctl.3,v 1.46 2000/06/25 18:58:43 provos Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1075,6 +1075,9 @@ information available for the third level is detailed below.
 Set to 1 to enable swap encryption for all processes.
 A 0 disables swap encryption.
 Pages still on swap receive a grandfather clause.
+When swap encryption is turned on, automatic
+.Xr crash 8
+dumps are disabled.
 .It Dv SWPENC_CREATED
 The number of encryption keys that have been randomly created.  The
 swap partition is divided into sections of normally 512KB. Each section
@@ -1134,7 +1137,7 @@ An attempt to change a value protected by the current kernel security
 level is made.
 .El
 .Sh FILES
-.Bl -tag -width <netinet/icmpXvar.h> -compact
+.Bl -tag -width <uvm/uvmXswapXencrypt.h> -compact
 .It Aq Pa sys/sysctl.h
 definitions for top level identifiers, second level kernel and hardware
 identifiers, and user level identifiers
@@ -1144,6 +1147,8 @@ definitions for second level network identifiers
 definitions for third level profiling identifiers
 .It Aq Pa vm/vm_param.h
 definitions for second level virtual memory identifiers
+.It Aq Pa uvm/uvm_swap_encrypt.h
+definitions for third level virtual memory identifiers
 .It Aq Pa netinet/in.h
 definitions for third level IPv4/v6 identifiers and
 fourth level
