@@ -3,6 +3,7 @@
 .PATH:	${.CURDIR}/../../../usr.sbin/dhcp/dhclient
 .PATH:  ${.CURDIR}/../../../usr.sbin/dhcp/common
 
+COPTS+=-Os
 CPPFLAGS+= -I${.CURDIR}/../../../usr.sbin/dhcp -I${.CURDIR}/../../../usr.sbin/dhcp/includes
 SRCS=	dhclient.c clparse.c \
         raw.c parse.c nit.c icmp.c dispatch.c conflex.c upf.c bpf.c socket.c \
