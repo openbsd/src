@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.108 2004/12/31 15:28:40 pedro Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.109 2005/01/10 11:58:34 pedro Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -661,8 +661,7 @@ vget(vp, flags, p)
 	int flags;
 	struct proc *p;
 {
-	int error;
-	int s;
+	int error, s, onfreelist;
 
 	/*
 	 * If the vnode is in the process of being cleaned out for
@@ -686,8 +685,8 @@ vget(vp, flags, p)
 		return (ENOENT);
  	}
 
-	if (vp->v_usecount == 0 &&
-	    (vp->v_bioflag & VBIOONFREELIST)) {
+	onfreelist = vp->v_bioflag & VBIOONFREELIST;
+	if (vp->v_usecount == 0 && onfreelist) {
 		s = splbio();
 		simple_lock(&vnode_free_list_slock);
 		if (vp->v_holdcnt > 0)
@@ -698,18 +697,21 @@ vget(vp, flags, p)
 		vp->v_bioflag &= ~VBIOONFREELIST;
 		splx(s);
 	}
+
  	vp->v_usecount++;
 	if (flags & LK_TYPE_MASK) {
 		if ((error = vn_lock(vp, flags, p)) != 0) {
 			vp->v_usecount--;
-			if (vp->v_usecount == 0)
+			if (vp->v_usecount == 0 && onfreelist)
 				vputonfreelist(vp);
 
 			simple_unlock(&vp->v_interlock);
 		}
 		return (error);
 	}
+
 	simple_unlock(&vp->v_interlock);
+
 	return (0);
 }
 
