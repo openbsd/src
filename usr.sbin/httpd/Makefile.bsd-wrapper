@@ -1,5 +1,5 @@
 # Build wrapper for Apache 
-# $OpenBSD: Makefile.bsd-wrapper,v 1.4 1999/10/01 21:54:19 beck Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.5 1999/10/01 23:20:25 beck Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -119,13 +119,10 @@ SBINFILES= \
 	src/httpd src/support/ab \
 	src/support/logresolve src/support/rotatelogs src/support/suexec
 
-MAN1SRCS= \
-	src/support/dbmmanage.1 src/support/htdigest.1 src/support/htpasswd.1
 
-MAN8SRCS= \
+MAN+=  src/support/dbmmanage.1 src/support/htdigest.1 src/support/htpasswd.1 \
 	src/support/ab.8 src/support/apachectl.8 src/support/logresolve.8 \
-	src/support/httpd.8 src/support/rotatelogs.8
-
+	httpd.8 src/support/rotatelogs.8
 
 INCFILES= \
 	src/include/alloc.h  \
@@ -559,4 +556,6 @@ distribution:
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
-
+.ifndef NOMAN
+.include <bsd.man.mk>
+.endif
