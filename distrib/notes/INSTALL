@@ -14,7 +14,7 @@ be refined, and now several subsystems and device drivers are shared
 among the different ports.  You can look for this trend to continue.
 
 Security of the system as a whole has been significantly
-improved. Source code for all critical system components has been
+improved.  Source code for all critical system components has been
 checked for remote-access, local-access, denial-of-service, data
 destruction, or information-gathering problems.
 
@@ -24,16 +24,16 @@ compatibility) and several kernel subsystems have been generalized
 to support this more readily.  The binary emulation strategy is 
 aimed at making the emulation as accurate as possible.
 
-Cryptography components are part of OpenBSD. OpenBSD is from Canada,
+Cryptography components are part of OpenBSD.  OpenBSD is from Canada,
 and export of these pieces (such as kerberosIV) to the world is not
-restricted. Note that it can not be re-exported from the US once it
+restricted.  Note that it can not be re-exported from the US once it
 has entered US.  Because of this, take care NOT to get the distrib-
 ution from an FTP server in the US if you are outside of Canada and
 the US.
 
 Many new user programs have been added in OpenBSD 2.1, as well,
 bringing it closer to our goal of supplying a complete UN*X-like
-environment. Tools like perl and ksh are standard, as are numerous
+environment.  Tools like perl and ksh are standard, as are numerous
 other useful tools.
 
 #include "whatis"
@@ -58,8 +58,8 @@ OpenBSD System Requirements and Supported Devices:
 
 #include "hardware"
 
-Getting the OpenBSD System on to Useful Media:
-----------------------------------------------
+Getting the OpenBSD System onto Useful Media:
+---------------------------------------------
 
 #include "xfer"
 
@@ -86,10 +86,11 @@ access to source code so that you can recompile pieces of the system.
 
 A few methods are provided.  If you have an OpenBSD CD, the source code
 is provided.  Otherwise, you can get the pieces over the Internet using
-either ANONCVS or CTM. For more information, see
+ANONCVS, CTM or FTP.  For more information, see
 
 	http://www.openbsd.org/anoncvs.html
 	http://www.openbsd.org/ctm.html
+	http://www.openbsd.org/ftp.html
 
 Using online OpenBSD documentation:
 -----------------------------------
@@ -100,7 +101,7 @@ are denoted by 'name(section)'.  Some examples of this are
 
 	intro(1),
 	man(1),
-	apropros(1),
+	apropos(1),
 	passwd(1), and
 	passwd(5).
 
@@ -138,7 +139,9 @@ Administrivia:
 There are various mailing lists available via the mailing list
 server at <majordomo@OpenBSD.ORG>.  To get help on using the mailing
 list server, send mail to that address with an empty body, and it will
-reply with instructions.
+reply with instructions.  There are also two OpenBSD Usenet newsgroups,
+comp.unix.bsd.openbsd.announce for important announcements and
+comp.unix.bsd.openbsd.misc for general OpenBSD discussion.
 
 To report bugs, use the 'sendbug' command shipped with OpenBSD,
 and fill in as much information about the problem as you can.  Good
