@@ -14,7 +14,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: ac.c,v 1.14 2003/06/11 23:33:24 deraadt Exp $";
+static char rcsid[] = "$Id: ac.c,v 1.15 2003/07/20 19:39:35 mickey Exp $";
 #endif
 
 #include <sys/types.h>
@@ -439,12 +439,15 @@ ac(FILE	*fp)
 	struct utmp_list *lp, *head = NULL;
 	struct utmp usr;
 	struct tm *ltm;
-	time_t secs = 0;
+	time_t secs = 0, prev = 0;
 	int day = -1;
 
 	while (fread((char *)&usr, sizeof(usr), 1, fp) == 1) {
 		if (!FirstTime)
 			FirstTime = usr.ut_time;
+		if (usr.ut_time < prev)
+			continue;	/* broken record */
+		prev = usr.ut_time;
 		if (Flags & AC_D) {
 			ltm = localtime(&usr.ut_time);
 			if (day >= 0 && day != ltm->tm_yday) {
