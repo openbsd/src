@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tar.1,v 1.38 2002/05/25 10:03:33 deraadt Exp $
+.\"	$OpenBSD: tar.1,v 1.39 2002/06/09 05:33:42 todd Exp $
 .\"
 .\" Copyright (c) 1996 SigmaSoft, Th. Lockert
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: tar.1,v 1.38 2002/05/25 10:03:33 deraadt Exp $
+.\"	$OpenBSD: tar.1,v 1.39 2002/06/09 05:33:42 todd Exp $
 .\"
 .Dd February 7, 2001
 .Dt TAR 1
@@ -229,41 +229,41 @@ can be used to select one of the compiled-in backup devices,
 .Sh EXAMPLES
 .Cm $ tar c bonvole sekve
 .Pp
-Creates an archive on the default tape drive, containing the files named 
-.Pa bonvole 
-and 
+Creates an archive on the default tape drive, containing the files named
+.Pa bonvole
+and
 .Pa sekve
 .
 .Pp
 .Cm $ tar zcf foriru.tar.gz bonvole sekve
 .Pp
-Outputs a 
+Outputs a
 .Xr gzip 1
 compressed archive containing the files
-.Pa bonvole 
+.Pa bonvole
 and
 .Pa sekve
-to a file called 
+to a file called
 .Pa foriru.tar.gz
 .Pp
 .Cm $ tar zcvf backup.tar.gz *.c
 .Pp
-Verbosely creates an archive, called 
-.Pa backup.tar.gz 
+Verbosely creates an archive, called
+.Pa backup.tar.gz
 , of all files matching the shell
 .Xr glob 3
 function
-.Pa *.c 
+.Pa *.c
 .Pp
 .Cm $ tar tvzf backup.tar.gz '*.jpeg'
 .Pp
-Verbosely lists, but does not extract, all files ending in 
+Verbosely lists, but does not extract, all files ending in
 .Pa .jpeg
 from an compressed archive named
 .Pa backup.tar.gz .
 Note that the glob pattern has been quoted to avoid expansion by the shell.
 .Pp
-For more detailed examples, see 
+For more detailed examples, see
 .Xr pax 1
 .Pp
 .Sh DIAGNOSTICS
