@@ -982,7 +982,7 @@ suboption(void)
     }  /* end of case TELOPT_TSPEED */
 
     case TELOPT_TTYPE: {		/* Yaaaay! */
-	static char terminalname[41];
+	char *tt;
 
 	if (his_state_is_wont(TELOPT_TTYPE))	/* Ignore if option disabled */
 	    break;
@@ -992,9 +992,9 @@ suboption(void)
 	    return;		/* ??? XXX but, this is the most robust */
 	}
 
-	terminaltype = terminalname;
+	tt = terminaltype;
 
-	while ((terminaltype < (terminalname + sizeof terminalname-1)) &&
+	while ((tt < (terminaltype + sizeof terminaltype-1)) &&
 	       !SB_EOF()) {
 	    int c;
 
@@ -1002,10 +1002,9 @@ suboption(void)
 	    if (isupper(c)) {
 		c = tolower(c);
 	    }
-	    *terminaltype++ = c;    /* accumulate name */
+	    *tt++ = c;    /* accumulate name */
 	}
-	*terminaltype = 0;
-	terminaltype = terminalname;
+	*tt = 0;
 	break;
     }  /* end of case TELOPT_TTYPE */
 

@@ -53,7 +53,7 @@ int	diagnostic;	/* telnet diagnostic capabilities */
 
 slcfun	slctab[NSLC + 1];	/* slc mapping table */
 
-char	*terminaltype;
+char	terminaltype[41];
 
 /*
  * I/O data buffers, pointers, and counters.

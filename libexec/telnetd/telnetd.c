@@ -639,7 +639,7 @@ getterminaltype(char *name, size_t name_sz)
 		     */
 		    _gettermname();
 		    if (strncmp(first, terminaltype, sizeof(first)) != 0)
-			strcpy(terminaltype, first);
+			strlcpy(terminaltype, first, sizeof(terminaltype));
 		    break;
 		}
 	    }
