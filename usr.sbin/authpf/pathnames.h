@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.4 2002/06/07 08:51:44 beck Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.5 2002/10/25 18:35:33 camield Exp $	*/
 
 /*
  * Copyright (C) 2002 Chris Kuethe (ckuethe@ualberta.ca)
@@ -31,7 +31,6 @@
 #define PATH_CONFFILE		"/etc/authpf/authpf.conf"
 #define PATH_ALLOWFILE		"/etc/authpf/authpf.allow"
 #define PATH_PFRULES		"/etc/authpf/authpf.rules"
-#define PATH_NATRULES		"/etc/authpf/authpf.nat"
 #define PATH_PROBLEM		"/etc/authpf/authpf.problem"
 #define PATH_MESSAGE		"/etc/authpf/authpf.message"
 #define PATH_USER_DIR		"/etc/authpf/users"
