@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.62 2002/03/15 21:44:18 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.63 2002/03/19 00:33:18 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -268,6 +268,8 @@ pmap_pte_set(pt_entry_t *pde, vaddr_t va, pt_entry_t pte)
 	    hppa_trunc_page(pte) != (paddr_t)&gateway_page)
 		panic("pmap_pte_set: invalid pte");
 #endif
+	if (!(pte & PTE_PROT(TLB_UNCACHABLE)))
+		Debugger();
 	asm("stwas	%0, 0(%1)"
 	    :: "r" (pte), "r" ((paddr_t)pde + ((va >> 10) & 0xffc)));
 }
@@ -555,7 +557,7 @@ pmap_init()
 	    &pool_allocator_nointr);
 	pool_init(&pmap_pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pmappv",
 	    &pmap_allocator_pv);
-	/* depleet the steal area */
+	/* deplete the steal area */
 	pool_prime(&pmap_pv_pool, (virtual_avail - virtual_steal) / PAGE_SIZE *
 	    pmap_pv_pool.pr_itemsperpage);
 
@@ -578,7 +580,7 @@ pmap_init()
 			panic("pmap_init: cannot allocate pde");
 
 		pmap_pte_set(pde, SYSCALLGATE, (paddr_t)&gateway_page |
-		    PTE_PROT(TLB_GATE_PROT));
+		    PTE_PROT(TLB_UNCACHABLE|TLB_GATE_PROT));
 	}
 }
 
@@ -765,7 +767,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 
 enter:
 	/* preserve old ref & mod */
-	pte = pa | PTE_PROT(pmap_prot(pmap, prot)) |
+	pte = pa | PTE_PROT(TLB_UNCACHABLE|pmap_prot(pmap, prot)) |
 	    (pte & PTE_PROT(TLB_UNCACHABLE|TLB_DIRTY|TLB_REFTRAP));
 	if (wired)
 		pte |= PTE_PROT(TLB_WIRED);
@@ -863,6 +865,8 @@ pmap_write_protect(pmap, sva, eva, prot)
 		}
 		if ((pte = pmap_pte_get(pde, sva))) {
 
+			DPRINTF(PDB_PMAP,
+			    ("pmap_write_protect: pte=0x%x\n", pte));
 			/*
 			 * Determine if mapping is changing.
 			 * If not, nothing to do.
@@ -990,7 +994,8 @@ pmap_changebit(struct vm_page *pg, u_int set, u_int clear)
 			pte &= ~clear;
 			pte |= set;
 
-			pitlb(pve->pv_pmap->pm_space, pve->pv_va);
+			if (pte & PTE_PROT(TLB_EXECUTE))
+				pitlb(pve->pv_pmap->pm_space, pve->pv_va);
 			/* XXX flush only if there was mod ? */
 			fdcache(pve->pv_pmap->pm_space, pve->pv_va, PAGE_SIZE);
 			pdtlb(pve->pv_pmap->pm_space, pve->pv_va);
