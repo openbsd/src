@@ -1,5 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.4 2004/02/22 03:46:16 deraadt Exp $
-# $NetBSD: GENERIC,v 1.27.4.1 2002/08/01 04:18:06 lukem Exp $
+#	$OpenBSD: GENERIC,v 1.5 2004/02/22 18:32:37 deraadt Exp $
 #
 # GENERIC machine description file
 # 
@@ -23,8 +22,8 @@ machine	cats	arm
 
 include "../../../conf/GENERIC"
 
-options	ARM32
-options FOOTBRIDGE_INTR
+options		ARM32
+options		FOOTBRIDGE_INTR
 
 # estimated number of users
 
@@ -47,42 +46,24 @@ options 	CPU_SA110	# Support the SA110 core
 
 #options 	ARMFPE		# ARM Ltd FPE
 
-
-
-
-# Compatibility options
-
 option WSDISPLAY_COMPAT_USL		# VT handling
 option WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 option WSDISPLAY_DEFAULTSCREENS=6	# can get raw scancodes
 option WSDISPLAY_COMPAT_PCVT		# can get raw scancodes
 
-
 config		bsd	swap generic
 
 # The main bus device
-mainbus0 at root
-
-# The boot cpu
-cpu0 at mainbus?
-
-# Core logic
+mainbus0	at root
+cpu0		at mainbus?
 footbridge0	at mainbus?
 
-# footbridge uart
-fcom0	at footbridge?
+fcom0		at footbridge?		# footbridge uart
+#clock*		at footbridge?		# system clock via footbridge
+todclock0	at todservice?		# time-of-day device
 
-# system clock via footbridge
-#clock*	at footbridge?
-
-# time-of-day device via footbridge or RTC
-todclock0	at todservice?
-
-# PCI bus support
-# PCI bus via footbridge
-pci0	at footbridge?			# PCI bus
-
-pci*	at ppb? bus ?
+pci0		at footbridge?		# PCI bus
+pci*		at ppb? bus ?
 
 option          PCIVERBOSE
 option          USBVERBOSE
@@ -322,7 +303,7 @@ ep*	at isa? port ? irq ?
 # The spkr driver provides a simple tone interface to the built in speaker.
 spkr0	at pcppi?			# PC speaker
 
-ds1687rtc0	at isa? port 0x72		# Dallas RTC
+ds1687rtc0 at isa? port 0x72		# Dallas RTC
 
 # ISA Plug-and-Play audio devices
 #ess*	at isapnp?			# ESS Tech ES1887, ES1888, ES888 audio
@@ -345,7 +326,5 @@ midi*	at pcppi?		# MIDI interface to the PC speaker
 #joy0	at isa? port 0x201
 
 # Pseudo-Devices
-
-# mouse & keyboard multiplexor pseudo-devices
-pseudo-device	wsmux		2
+pseudo-device	wsmux		2	# mouse & keyboard multiplexor
 pseudo-device	crypto		1
