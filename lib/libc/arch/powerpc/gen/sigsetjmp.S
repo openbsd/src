@@ -1,3 +1,4 @@
+/*	$OpenBSD: sigsetjmp.S,v 1.2 2002/05/08 20:34:47 drahn Exp $	*/
 /*	$NetBSD$	*/
 
 /*-
