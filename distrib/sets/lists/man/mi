@@ -211,6 +211,7 @@
 ./usr/share/man/cat1/ipf.0
 ./usr/share/man/cat1/ipftest.0
 ./usr/share/man/cat1/ipnat.0
+./usr/share/man/cat1/ipsecadm.0
 ./usr/share/man/cat1/jobs.0
 ./usr/share/man/cat1/join.0
 ./usr/share/man/cat1/jot.0
@@ -356,6 +357,8 @@
 ./usr/share/man/cat1/rmdir.0
 ./usr/share/man/cat1/rs.0
 ./usr/share/man/cat1/rsh.0
+./usr/share/man/cat1/rt.0
+./usr/share/man/cat1/rtdelete.0
 ./usr/share/man/cat1/rup.0
 ./usr/share/man/cat1/ruptime.0
 ./usr/share/man/cat1/rusers.0
@@ -474,6 +477,7 @@
 ./usr/share/man/cat4/ipf.0
 ./usr/share/man/cat4/ipl.0
 ./usr/share/man/cat4/ipnat.0
+./usr/share/man/cat4/ipsec.0
 ./usr/share/man/cat4/iso.0
 ./usr/share/man/cat4/lkm.0
 ./usr/share/man/cat4/lo.0
@@ -618,6 +622,7 @@
 ./usr/share/man/cat8/chown.0
 ./usr/share/man/cat8/chroot.0
 ./usr/share/man/cat8/clri.0
+./usr/share/man/cat8/compat_bsdos.0
 ./usr/share/man/cat8/compat_freebsd.0
 ./usr/share/man/cat8/compat_linux.0
 ./usr/share/man/cat8/compat_sunos.0
@@ -854,5 +859,3 @@
 ./usr/share/man/cat9/splstatclock.0
 ./usr/share/man/cat9/spltty.0
 ./usr/share/man/cat9/splx.0
-./usr/share/man/cat1/ipsecadm.0
-./usr/share/man/cat8/compat_bsdos.0

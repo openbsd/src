@@ -60,6 +60,7 @@
 ./usr/include/dev/audio_if.h
 ./usr/include/dev/audiovar.h
 ./usr/include/dev/ccdvar.h
+./usr/include/dev/clock_subr.h
 ./usr/include/dev/cons.h
 ./usr/include/dev/eisa
 ./usr/include/dev/eisa/eisadevs.h
@@ -143,9 +144,11 @@
 ./usr/include/dev/isa/mcdreg.h
 ./usr/include/dev/isa/opti.h
 ./usr/include/dev/isa/pasreg.h
+./usr/include/dev/isa/pnpdevs.h
 ./usr/include/dev/isa/pssreg.h
 ./usr/include/dev/isa/sbdspvar.h
 ./usr/include/dev/isa/sbreg.h
+./usr/include/dev/isa/sbvar.h
 ./usr/include/dev/isa/wdlink.h
 ./usr/include/dev/isa/wdreg.h
 ./usr/include/dev/isa/wdsreg.h
@@ -159,6 +162,7 @@
 ./usr/include/dev/ofw
 ./usr/include/dev/ofw/openfirm.h
 ./usr/include/dev/pci
+./usr/include/dev/pci/if_devar.h
 ./usr/include/dev/pci/if_fxpreg.h
 ./usr/include/dev/pci/if_fxpvar.h
 ./usr/include/dev/pci/if_levar.h
@@ -729,6 +733,7 @@
 ./usr/include/regex.h
 ./usr/include/regexp.h
 ./usr/include/resolv.h
+./usr/include/rmd160.h
 ./usr/include/rpc/auth.h
 ./usr/include/rpc/auth_unix.h
 ./usr/include/rpc/clnt.h
@@ -923,6 +928,11 @@
 ./usr/include/time.h
 ./usr/include/ttyent.h
 ./usr/include/tzfile.h
+./usr/include/ufs/ext2fs
+./usr/include/ufs/ext2fs/ext2fs.h
+./usr/include/ufs/ext2fs/ext2fs_dinode.h
+./usr/include/ufs/ext2fs/ext2fs_dir.h
+./usr/include/ufs/ext2fs/ext2fs_extern.h
 ./usr/include/ufs/ffs/ffs_extern.h
 ./usr/include/ufs/ffs/fs.h
 ./usr/include/ufs/lfs/lfs.h
@@ -1446,6 +1456,7 @@
 ./usr/share/man/cat3/difftime.0
 ./usr/share/man/cat3/directory.0
 ./usr/share/man/cat3/dirfd.0
+./usr/share/man/cat3/dirname.0
 ./usr/share/man/cat3/div.0
 ./usr/share/man/cat3/dn_comp.0
 ./usr/share/man/cat3/dn_expand.0
@@ -2062,6 +2073,7 @@
 ./usr/share/man/cat3/timezone.0
 ./usr/share/man/cat3/tmpfile.0
 ./usr/share/man/cat3/tmpnam.0
+./usr/share/man/cat3/toascii.0
 ./usr/share/man/cat3/tolower.0
 ./usr/share/man/cat3/toupper.0
 ./usr/share/man/cat3/tputs.0
@@ -2231,12 +2243,3 @@
 ./usr/share/mk/bsd.subdir.mk
 ./usr/share/mk/bsd.sys.mk
 ./var/db/libc.tags
-./usr/include/ufs/ext2fs
-./usr/include/ufs/ext2fs/ext2fs.h
-./usr/include/ufs/ext2fs/ext2fs_dinode.h
-./usr/include/ufs/ext2fs/ext2fs_dir.h
-./usr/include/ufs/ext2fs/ext2fs_extern.h
-./usr/include/dev/pci/if_devar.h
-./usr/include/dev/isa/pnpdevs.h
-./usr/include/dev/isa/sbvar.h
-./usr/include/rmd160.h
