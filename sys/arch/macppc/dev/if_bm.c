@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bm.c,v 1.15 2003/10/16 03:31:25 drahn Exp $	*/
+/*	$OpenBSD: if_bm.c,v 1.16 2003/10/16 03:54:48 deraadt Exp $	*/
 /*	$NetBSD: if_bm.c,v 1.1 1999/01/01 01:27:52 tsubai Exp $	*/
 
 /*-
@@ -299,7 +299,7 @@ bmac_attach(struct device *parent, struct device *self, void *aux)
 
 	ifmedia_init(&mii->mii_media, 0, bmac_mediachange, bmac_mediastatus);
 	mii_attach(&sc->sc_dev, mii, 0xffffffff, MII_PHY_ANY,
-		      MII_OFFSET_ANY, 0);
+	    MII_OFFSET_ANY, 0);
 
 	/* Choose a default media. */
 	if (LIST_FIRST(&mii->mii_phys) == NULL) {

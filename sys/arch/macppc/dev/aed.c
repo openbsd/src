@@ -1,4 +1,4 @@
-/*	$OpenBSD: aed.c,v 1.7 2003/10/16 03:31:25 drahn Exp $	*/
+/*	$OpenBSD: aed.c,v 1.8 2003/10/16 03:54:48 deraadt Exp $	*/
 /*	$NetBSD: aed.c,v 1.5 2000/03/23 06:40:33 thorpej Exp $	*/
 
 /*
@@ -112,11 +112,11 @@ aedattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_rptinterval = 6;
 	sc->sc_repeating = -1;          /* not repeating */
 
-	/* Pull in the options flags. */ 
+	/* Pull in the options flags. */
 	sc->sc_options = (sc->sc_dev.dv_cfdata->cf_flags | aed_options);
 
 	sc->sc_ioproc = NULL;
-	
+
 	sc->sc_buttons = 0;
 
 	sc->sc_open = 0;
@@ -125,7 +125,7 @@ aedattach(struct device *parent, struct device *self, void *aux)
 }
 
 /*
- * Given a keyboard ADB event, record the keycode and call the key 
+ * Given a keyboard ADB event, record the keycode and call the key
  * repeat handler, optionally passing the event through the mouse
  * button emulation handler first.  Pass mouse events directly to
  * the handoff function.
@@ -161,7 +161,7 @@ aed_input(adb_event_t *event)
  * 3rd mouse button events while the 1, 2, and 3 keys will generate
  * the corresponding mouse button event.
  */
-void 
+void
 aed_emulate_mouse(adb_event_t *event)
 {
 	static int emulmodkey_down = 0;
@@ -297,7 +297,7 @@ aed_emulate_mouse(adb_event_t *event)
  * for the repeating key and schedules the next call at sc_rptinterval
  * ticks in the future.
  */
-void 
+void
 aed_kbdrpt(void *kstate)
 {
 	struct aed_softc *aed_sc = (struct aed_softc *)kstate;
@@ -321,7 +321,7 @@ aed_kbdrpt(void *kstate)
  * a new repeating key event if needed, and hands the event off to the
  * appropriate subsystem.
  */
-void 
+void
 aed_dokeyupdown(adb_event_t *event)
 {
 	int     kbd_key;
@@ -359,7 +359,7 @@ aed_handoff(adb_event_t *event)
 /*
  * Place the event in the event queue and wakeup any waiting processes.
  */
-void 
+void
 aed_enqevent(adb_event_t *event)
 {
 	int     s;
@@ -389,7 +389,7 @@ aed_enqevent(adb_event_t *event)
 	splx(s);
 }
 
-int 
+int
 aedopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	int unit;
@@ -416,7 +416,7 @@ aedopen(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 
-int 
+int
 aedclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	int s = spladb();
@@ -429,7 +429,7 @@ aedclose(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 
-int 
+int
 aedread(dev_t dev, struct uio *uio, int flag)
 {
 	int s, error;
@@ -475,7 +475,7 @@ aedread(dev_t dev, struct uio *uio, int flag)
 }
 
 
-int 
+int
 aedwrite(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
@@ -485,7 +485,7 @@ aedwrite(dev, uio, flag)
 }
 
 
-int 
+int
 aedioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	switch (cmd) {

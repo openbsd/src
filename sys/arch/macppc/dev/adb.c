@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb.c,v 1.8 2003/10/16 03:31:25 drahn Exp $	*/
+/*	$OpenBSD: adb.c,v 1.9 2003/10/16 03:54:48 deraadt Exp $	*/
 /*	$NetBSD: adb.c,v 1.6 1999/08/16 06:28:09 tsubai Exp $	*/
 
 /*-
@@ -60,7 +60,7 @@ int	adbprint(void *, const char *);
 /*
  * Global variables.
  */
-int     adb_polling;		/* Are we polling?  (Debugger mode) */
+int	adb_polling;		/* Are we polling?  (Debugger mode) */
 #ifdef ADB_DEBUG
 int	adb_debug;		/* Output debugging messages */
 #endif /* ADB_DEBUG */
@@ -97,7 +97,7 @@ adbmatch(struct device *parent, void *cf, void *aux)
 
 /* HACK ALERT */
 typedef int (clock_read_t)(int *sec, int *min, int *hour, int *day,
-         int *mon, int *yr);
+	    int *mon, int *yr);
 typedef int (time_read_t)(u_long *sec);
 typedef int (time_write_t)(u_long sec);
 extern time_read_t  *time_read;
@@ -153,9 +153,8 @@ adbattach(struct device *parent, struct device *self, void *aux)
 			printf(": via-pmu ");
 			break;
 	}
- 
+
 	printf("%d targets\n", totaladbs);
-	
 
 #if NAED > 0
 	/* ADB event device for compatibility */
@@ -257,7 +256,7 @@ adbprint(void *args, const char *name)
 #endif /* DIAGNOSTIC */
 		}
 	} else		/* a device matched and was configured */
-                printf(" addr %d: ", aa_args->adbaddr);
+		printf(" addr %d: ", aa_args->adbaddr);
 
 	return rv;
 }

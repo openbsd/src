@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.23 2003/10/16 03:31:25 drahn Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.24 2003/10/16 03:54:48 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -94,7 +94,7 @@ void	openpic_do_pending_int(void);
 void	openpic_collect_preconf_intr(void);
 void	ext_intr_openpic(void);
 
-struct cfattach openpic_ca = { 
+struct cfattach openpic_ca = {
 	sizeof(struct openpic_softc),
 	openpic_match,
 	openpic_attach
@@ -151,7 +151,7 @@ openpic_attach(struct device *parent, struct device  *self, void *aux)
 	mac_intr_establish_func  = openpic_intr_establish;
 	mac_intr_disestablish_func  = openpic_intr_disestablish;
 	install_extint(ext_intr_openpic);
-	
+
 #if 1
 	openpic_collect_preconf_intr();
 #endif
@@ -309,13 +309,13 @@ intr_typename(int type)
 {
 
 	switch (type) {
-        case IST_NONE:
+	case IST_NONE:
 		return ("none");
-        case IST_PULSE:
+	case IST_PULSE:
 		return ("pulsed");
-        case IST_EDGE:
+	case IST_EDGE:
 		return ("edge-triggered");
-        case IST_LEVEL:
+	case IST_LEVEL:
 		return ("level-triggered");
 	default:
 		panic("intr_typename: invalid type %d", type);
@@ -587,8 +587,8 @@ openpic_read_irq(int cpu)
 void
 openpic_eoi(int cpu)
 {
-        openpic_write(OPENPIC_EOI(cpu), 0);
-        openpic_read(OPENPIC_EOI(cpu));
+	openpic_write(OPENPIC_EOI(cpu), 0);
+	openpic_read(OPENPIC_EOI(cpu));
 }
 
 void
@@ -612,7 +612,7 @@ ext_intr_openpic()
 		r_imen = 1 << irq;
 
 		if ((pcpl & r_imen) != 0) {
-			ipending |= r_imen;     /* Masked! Mark this as pending */
+			ipending |= r_imen;	/* Masked! Mark this as pending */
 			openpic_disable_irq(realirq);
 			openpic_eoi(0);
 		} else {
@@ -641,50 +641,50 @@ ext_intr_openpic()
 	}
 	ppc_intr_enable(1);
 
-	splx(pcpl);     /* Process pendings. */
+	splx(pcpl);	/* Process pendings. */
 }
 void
 openpic_init()
 {
-        int irq;
-        u_int x;
+	int irq;
+	u_int x;
 
-        /* disable all interrupts */
-        for (irq = 0; irq < 255; irq++)
-                openpic_write(OPENPIC_SRC_VECTOR(irq), OPENPIC_IMASK);
-        openpic_set_priority(0, 15);
+	/* disable all interrupts */
+	for (irq = 0; irq < 255; irq++)
+		openpic_write(OPENPIC_SRC_VECTOR(irq), OPENPIC_IMASK);
+	openpic_set_priority(0, 15);
 
-        /* we don't need 8259 pass through mode */
-        x = openpic_read(OPENPIC_CONFIG);
-        x |= OPENPIC_CONFIG_8259_PASSTHRU_DISABLE;
-        openpic_write(OPENPIC_CONFIG, x);
+	/* we don't need 8259 pass through mode */
+	x = openpic_read(OPENPIC_CONFIG);
+	x |= OPENPIC_CONFIG_8259_PASSTHRU_DISABLE;
+	openpic_write(OPENPIC_CONFIG, x);
 
-        /* send all interrupts to cpu 0 */
-        for (irq = 0; irq < ICU_LEN; irq++)
-                openpic_write(OPENPIC_IDEST(irq), 1 << 0);
-        for (irq = 0; irq < ICU_LEN; irq++) {
-                x = irq;
-                x |= OPENPIC_IMASK;
-                x |= OPENPIC_POLARITY_POSITIVE;
-                x |= OPENPIC_SENSE_LEVEL;
-                x |= 8 << OPENPIC_PRIORITY_SHIFT;
-                openpic_write(OPENPIC_SRC_VECTOR(irq), x);
-        }
+	/* send all interrupts to cpu 0 */
+	for (irq = 0; irq < ICU_LEN; irq++)
+		openpic_write(OPENPIC_IDEST(irq), 1 << 0);
+	for (irq = 0; irq < ICU_LEN; irq++) {
+		x = irq;
+		x |= OPENPIC_IMASK;
+		x |= OPENPIC_POLARITY_POSITIVE;
+		x |= OPENPIC_SENSE_LEVEL;
+		x |= 8 << OPENPIC_PRIORITY_SHIFT;
+		openpic_write(OPENPIC_SRC_VECTOR(irq), x);
+	}
 
-        /* XXX set spurious intr vector */
+	/* XXX set spurious intr vector */
 
-        openpic_set_priority(0, 0);
+	openpic_set_priority(0, 0);
 
-        /* clear all pending interrunts */
-        for (irq = 0; irq < ICU_LEN; irq++) {
-                openpic_read_irq(0);
-                openpic_eoi(0);
-        }
+	/* clear all pending interrunts */
+	for (irq = 0; irq < ICU_LEN; irq++) {
+		openpic_read_irq(0);
+		openpic_eoi(0);
+	}
 
-        for (irq = 0; irq < ICU_LEN; irq++)
-                openpic_disable_irq(irq);
+	for (irq = 0; irq < ICU_LEN; irq++)
+		openpic_disable_irq(irq);
 
-        install_extint(ext_intr_openpic);
+	install_extint(ext_intr_openpic);
 }
 
 /*

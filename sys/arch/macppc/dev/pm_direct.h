@@ -1,4 +1,4 @@
-/*	$OpenBSD: pm_direct.h,v 1.4 2002/06/07 15:49:57 miod Exp $	*/
+/*	$OpenBSD: pm_direct.h,v 1.5 2003/10/16 03:54:48 deraadt Exp $	*/
 /*	$NetBSD: pm_direct.h,v 1.5 1999/07/12 15:54:55 tsubai Exp $	*/
 
 /*
@@ -134,4 +134,4 @@ enum {
 #define PMU_PWR_AC_PRESENT	(1 << 0)
 #define PMU_PWR_BATT_PRESENT	(1 << 2)
 
-#endif 
+#endif

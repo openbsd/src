@@ -1,4 +1,4 @@
-/*	$OpenBSD: macintr.c,v 1.19 2003/10/16 03:31:25 drahn Exp $	*/
+/*	$OpenBSD: macintr.c,v 1.20 2003/10/16 03:54:48 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -97,7 +97,7 @@ void	macintr_attach(struct device *, struct device *, void *);
 void	mac_do_pending_int(void);
 void	mac_ext_intr(void);
 
-struct cfattach macintr_ca = { 
+struct cfattach macintr_ca = {
 	sizeof(struct macintr_softc),
 	macintr_match,
 	macintr_attach

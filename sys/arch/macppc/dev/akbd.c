@@ -1,4 +1,4 @@
-/*	$OpenBSD: akbd.c,v 1.15 2003/10/16 03:31:25 drahn Exp $	*/
+/*	$OpenBSD: akbd.c,v 1.16 2003/10/16 03:54:48 deraadt Exp $	*/
 /*	$NetBSD: akbd.c,v 1.13 2001/01/25 14:08:55 tsubai Exp $	*/
 
 /*
@@ -261,7 +261,7 @@ akbdattach(struct device *parent, struct device *self, void *aux)
  * Handle putting the keyboard data received from the ADB into
  * an ADB event record.
  */
-void 
+void
 kbd_adbcomplete(caddr_t buffer, caddr_t data_area, int adb_command)
 {
 	adb_event_t event;
@@ -299,7 +299,7 @@ kbd_adbcomplete(caddr_t buffer, caddr_t data_area, int adb_command)
 }
 
 /*
- * Given a keyboard ADB event, record the keycodes and call the key 
+ * Given a keyboard ADB event, record the keycodes and call the key
  * repeat handler, optionally passing the event through the mouse
  * button emulation handler first.
  */
@@ -351,11 +351,11 @@ getleds(int addr)
 
 /*
  * Set the keyboard LED's.
- * 
+ *
  * Automatically translates from ioctl/softc format to the
  * actual keyboard register format
  */
-static int 
+static int
 setleds(struct akbd_softc *ksc, u_char leds)
 {
 	int addr;
@@ -388,13 +388,13 @@ setleds(struct akbd_softc *ksc, u_char leds)
 	if ((buffer[2] & 0xf8) != leds)
 		return (EIO);
 	else
-		return (0); 
+		return (0);
 }
 
 /*
  * Toggle all of the LED's on and off, just for show.
  */
-static void 
+static void
 blinkleds(struct akbd_softc *ksc)
 {
 	int addr, i;
@@ -413,7 +413,7 @@ blinkleds(struct akbd_softc *ksc)
 	i = 10;
 	do {
 		(void)setleds(ksc, (u_char)0x00);
-	} while (setleds(ksc, (u_char)0x00) && (i-- > 0)); 
+	} while (setleds(ksc, (u_char)0x00) && (i-- > 0));
 
 	return;
 }
@@ -467,7 +467,7 @@ akbd_rawrepeat(void *v)
 	struct akbd_softc *sc = v;
 	int s;
 
-	s = spltty();   
+	s = spltty();
 	wskbd_rawinput(sc->sc_wskbddev, sc->sc_rep, sc->sc_nrep);
 	splx(s);
 	timeout_add(&sc->sc_rawrepeat_ch, hz * REP_DELAYN / 1000);
@@ -530,7 +530,7 @@ akbd_intr(adb_event_t *event)
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	} else if (sc->sc_rawkbd) {
 		char cbuf[MAXKEYS *2];
-		int c, j, s; 
+		int c, j, s;
 		int npress;
 
 		j = npress = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pm_direct.c,v 1.12 2003/10/16 03:31:25 drahn Exp $	*/
+/*	$OpenBSD: pm_direct.c,v 1.13 2003/10/16 03:54:48 deraadt Exp $	*/
 /*	$NetBSD: pm_direct.c,v 1.9 2000/06/08 22:10:46 tsubai Exp $	*/
 
 /*
@@ -326,9 +326,7 @@ pm_receive_pm2(u_char *data)
 	via_reg_or(VIA1, vACR, 0x1c);
 
 	return rval;
-}	
-
-
+}
 
 /*
  * Send data to PM for the PB Duo series and the PB 5XX series
@@ -346,10 +344,8 @@ pm_send_pm2(data)
 	rval = 0xffffcd36;
 	if (pm_wait_busy((int)ADBDelay*32) != 0) {
 		PM_SET_STATE_ACKON();
-
 		via_reg_or(VIA1, vACR, 0x1c);
-
-		return rval;		
+		return rval;
 	}
 
 	PM_SET_STATE_ACKON();
@@ -376,7 +372,7 @@ pm_pmgrop_pm2(PMData *pmdata)
 	u_char via1_vIER;
 	int rval = 0;
 	int num_pm_data = 0;
-	u_char pm_cmd;	
+	u_char pm_cmd;
 	short pm_num_rx_data;
 	u_char pm_data;
 	u_char *pm_buf;
@@ -408,7 +404,7 @@ pm_pmgrop_pm2(PMData *pmdata)
 			if ((rval = pm_send_pm2((u_char)(num_pm_data & 0xff))) != 0)
 				break;		/* timeout */
 			pmdata->command = 0;
-		}			
+		}
 		/* send PM data */
 		pm_buf = (u_char *)pmdata->s_buf;
 		for (i = 0 ; i < num_pm_data; i++)
@@ -656,9 +652,9 @@ pm_adb_op(u_char *buffer, void *compRout, void *data, int command)
 	pmdata.num_data = 4;
 	pmdata.s_buf = pmdata.data;
 	pmdata.r_buf = pmdata.data;
-	pmdata.data[0] = 0x00;	
+	pmdata.data[0] = 0x00;
 	pmdata.data[1] = 0x86;	/* magic spell for awaking the PM */
-	pmdata.data[2] = 0x00;	
+	pmdata.data[2] = 0x00;
 	pmdata.data[3] = 0x0c;	/* each bit may express the existent ADB device */
 	rval = pmgrop(&pmdata);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: abtn.c,v 1.8 2003/10/16 03:31:25 drahn Exp $	*/
+/*	$OpenBSD: abtn.c,v 1.9 2003/10/16 03:54:48 deraadt Exp $	*/
 /*	$NetBSD: abtn.c,v 1.1 1999/07/12 17:48:26 tsubai Exp $	*/
 
 /*-
@@ -91,7 +91,7 @@ abtn_attach(struct device *parent, struct device *self, void *aux)
 	SetADBInfo(&adbinfo, sc->adbaddr);
 }
 
-void 
+void
 abtn_adbcomplete(caddr_t buffer, caddr_t data, int adb_command)
 {
 	u_int cmd, brightness;
