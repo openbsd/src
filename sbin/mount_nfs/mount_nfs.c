@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_nfs.c,v 1.6 1996/05/28 12:37:57 deraadt Exp $	*/
+/*	$OpenBSD: mount_nfs.c,v 1.7 1996/12/12 10:28:28 deraadt Exp $	*/
 /*	$NetBSD: mount_nfs.c,v 1.12.4.1 1996/05/25 22:48:05 fvdl Exp $	*/
 
 /*
@@ -680,7 +680,7 @@ tryagain:
 								~NFSMNT_NFSV3;
 							goto tryagain;
 						} else {
-							errx(1, "%s",
+							fprintf(stdderr, "%s",
 							    clnt_sperror(clp,
 								"MNT RPC"));
 						}
