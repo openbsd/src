@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.291 2000/07/26 22:29:50 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.293 2000/07/31 19:49:12 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -222,13 +222,13 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_AIRONET, PCI_PRODUCT_AIRONET_PC4500,
 	    0,
 	    "Aironet",
-	    "PC4500 Wireless LAN Adapter",
+	    "PC4500 Wireless",
 	},
 	{
 	    PCI_VENDOR_AIRONET, PCI_PRODUCT_AIRONET_PC4800,
 	    0,
 	    "Aironet",
-	    "PC4800 Wireless LAN Adapter",
+	    "PC4800 Wireless",
 	},
 	{
 	    PCI_VENDOR_ACC, PCI_PRODUCT_ACC_2188,
@@ -966,7 +966,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_AMCIRCUITS, PCI_PRODUCT_AMCIRCUITS_LANAI,
 	    0,
 	    "Applied Micro Circuits",
-	    "Myrinet LANai Interface",
+	    "Myrinet LANai",
 	},
 	{
 	    PCI_VENDOR_ATRONICS, PCI_PRODUCT_ATRONICS_IDE_2015PL,
@@ -4671,6 +4671,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "VT82C586 (Apollo VP) Power Management",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C596,
+	    0,
+	    "VIA",
+	    "VT82C596 Power Management",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_RHINE,
 	    0,
 	    "VIA",
@@ -8028,6 +8034,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_HIFN, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Hi/Fn",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_THREEWARE, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "3ware",
 	    NULL,
 	},
 	{

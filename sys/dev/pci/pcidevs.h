@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.291 2000/07/26 22:29:50 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.293 2000/07/31 19:49:12 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -519,6 +519,7 @@
 #define	PCI_VENDOR_LMC	0x1376		/* LAN Media Corp */
 #define	PCI_VENDOR_NETGEAR	0x1385		/* Netgear */
 #define	PCI_VENDOR_HIFN	0x13a3		/* Hi/Fn */
+#define	PCI_VENDOR_THREEWARE	0x13c1		/* 3ware */
 #define	PCI_VENDOR_SUNDANCE	0x13f0		/* Sundance */
 #define	PCI_VENDOR_CMI	0x13f6		/* C-Media Electronics Inc. */
 #define	PCI_VENDOR_INVERTEX	0x14e1		/* Invertex */
@@ -599,8 +600,8 @@
 #define	PCI_PRODUCT_3DLABS_PERMEDIA2	0x0007		/* GLINT Permedia 2 */
 
 /* Aironet Products */
-#define	PCI_PRODUCT_AIRONET_PC4500	0x4500		/* PC4500 Wireless LAN Adapter */
-#define	PCI_PRODUCT_AIRONET_PC4800	0x4800		/* PC4800 Wireless LAN Adapter */
+#define	PCI_PRODUCT_AIRONET_PC4500	0x4500		/* PC4500 Wireless */
+#define	PCI_PRODUCT_AIRONET_PC4800	0x4800		/* PC4800 Wireless */
 
 /* ACC Products */
 #define	PCI_PRODUCT_ACC_2188	0x0000		/* ACCM 2188 VL-PCI */
@@ -758,7 +759,7 @@
 
 /* Applied Micro Circuts products */
 #define	PCI_PRODUCT_AMCIRCUITS_S5933	0x4750		/* S5933 PCI Matchmaker */
-#define	PCI_PRODUCT_AMCIRCUITS_LANAI	0x8043		/* Myrinet LANai Interface */
+#define	PCI_PRODUCT_AMCIRCUITS_LANAI	0x8043		/* Myrinet LANai */
 
 /* Atronics products */
 #define	PCI_PRODUCT_ATRONICS_IDE_2015PL	0x2015		/* IDE-2015PL */
@@ -1614,6 +1615,7 @@
 #define	PCI_PRODUCT_VIATECH_VT82C1595	0x1595		/* VT82C1595 (Apollo VP2) Host-PCI */
 #define	PCI_PRODUCT_VIATECH_VT83C572	0x3038		/* VT83C572 USB */
 #define	PCI_PRODUCT_VIATECH_VT82C586_PWR	0x3040		/* VT82C586 (Apollo VP) Power Management */
+#define	PCI_PRODUCT_VIATECH_VT82C596	0x3050		/* VT82C596 Power Management */
 #define	PCI_PRODUCT_VIATECH_RHINE	0x3043		/* Rhine/RhineII */
 #define	PCI_PRODUCT_VIATECH_RHINEII_2	0x3065		/* RhineII-2 */
 #define	PCI_PRODUCT_VIATECH_VT82C686A_SMB	0x3057		/* VT82C686A (Apollo 133) SMBus */
