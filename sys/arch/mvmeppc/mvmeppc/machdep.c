@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.38 2004/01/23 10:40:01 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.39 2004/01/24 21:10:33 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -57,6 +57,7 @@
 #include <net/netisr.h>
 
 #include <machine/bat.h>
+#include <machine/bugio.h>
 #include <machine/pmap.h>
 #include <machine/powerpc.h>
 #include <machine/trap.h>
@@ -186,7 +187,6 @@ initppc(startkernel, endkernel, args)
 	extern caddr_t ddblow, ddbsize;
 #endif 
 	extern void consinit(void);
-	extern void callback(void *);
 	extern void *msgbuf_addr;
 	int exc, scratch;
 
@@ -194,6 +194,7 @@ initppc(startkernel, endkernel, args)
 	bzero(proc0.p_addr, sizeof *proc0.p_addr);
 		
 	fw = &ppc1_firmware; /*  Just PPC1-Bug for now... */
+	buginit();
 
 	curpcb = &proc0paddr->u_pcb;
 	
@@ -528,9 +529,7 @@ cpu_startup()
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
 	 */
-#if 1
 	minaddr = vm_map_min(kernel_map);
-#endif
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr, 16 * NCARGS,
 	    VM_MAP_PAGEABLE, FALSE, NULL);
 
