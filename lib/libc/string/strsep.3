@@ -1,4 +1,4 @@
-.\" $OpenBSD: strsep.3,v 1.8 2000/04/21 15:24:20 aaron Exp $
+.\" $OpenBSD: strsep.3,v 1.9 2001/06/14 20:38:38 aaron Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -90,9 +90,12 @@ argument vector:
 .Bd -literal -offset indent
 char **ap, *argv[10], *inputstring;
 
-for (ap = argv; (*ap = strsep(&inputstring, " \et")) != NULL;)
+for (ap = argv; ap < &argv[9] &&
+    (*ap = strsep(&inputstring, " \et")) != NULL;) {
 	if (**ap != '\e0')
-		++ap;
+		ap++;
+}
+*ap = NULL;
 .Ed
 .Sh HISTORY
 The
