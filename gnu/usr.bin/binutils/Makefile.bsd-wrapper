@@ -1,13 +1,13 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.25 1998/07/06 09:04:37 deraadt Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.26 1998/08/07 02:28:12 rahnds Exp $
 
 SUBDIRS=	libiberty opcodes bfd
 MAN=
 
 # gdb not ready yet
-.if (${MACHINE_ARCH} != "powerpc")
-SUBDIRS+=	gdb mmalloc readline 
-MAN+=		gdb/gdb.1 
-.endif
+#.if (${MACHINE_ARCH} != "unknown")
+#SUBDIRS+=	gdb mmalloc readline 
+#MAN+=		gdb/gdb.1 
+#.endif
 
 # some ports use all of binutils, some do not.
 .if (${MACHINE_ARCH} == "alpha") || (${MACHINE_ARCH} == "mips") || \
