@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.222 2003/04/05 21:46:50 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.223 2003/04/19 21:45:16 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -522,7 +522,7 @@ The
 .Ar scheduler
 defines the algorithm used to decide which packets get delayed, dropped, or
 sent out immediately.
-There are two
+There are three
 .Ar schedulers
 currently supported.
 .Bl -tag -width xxxx
@@ -542,6 +542,8 @@ assigned.
 mainly controls the time packets take to get sent out, while
 .Ar bandwidth
 has primarily effects on throughput.
+.It Ar hfsc
+Hierarchical Fair Service Curve.
 .It Ar priq
 Priority Queueing.
 .Ar Queues
@@ -575,7 +577,9 @@ Specifies which queueing scheduler to use.
 Currently supported values
 are
 .Ar cbq
-for Class Based Queueing and
+for Class Based Queueing,
+.Ar hfsc
+for the Hierarchical Fair Service Curve scheduler, and
 .Ar priq
 for Priority Queueing.
 .It Ar bandwidth <bw>
@@ -625,8 +629,8 @@ The name associated with a
 .Ar queue
 must match a queue defined in the
 .Ar altq
-directive (e.g. mail), or, for the
-.Ar cbq
+directive (e.g. mail), or, except for the
+.Ar priq
 .Ar scheduler ,
 in a parent
 .Ar queue
@@ -648,14 +652,18 @@ scheduler does not support bandwidth specification.
 .It Ar priority <level>
 Between queues a priority level can be set.
 For
-.Ar cbq ,
+.Ar cbq
+and
+.Ar hfsc ,
 the range is 0 to 7 and for
 .Ar priq ,
 the range is 0 to 15.
-The default for both is 1.
+The default for all is 1.
 .Ar Priq
 queues with a higher priority are always served first.
 .Ar Cbq
+and
+.Ar Hfsc
 queues with a higher priority are preferred in the case of overload.
 .It Ar qlimit <limit>
 The maximum number of packets held in the queue.
@@ -696,7 +704,9 @@ The queue can borrow bandwidth from the parent.
 .El
 .Pp
 Furthermore, with
-.Ar cbq ,
+.Ar cbq
+and
+.Ar hfsc ,
 child queues can be specified as in an
 .Ar altq
 declaration, thus building a tree of queues using a part of
