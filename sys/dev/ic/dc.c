@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.30 2001/07/02 01:28:20 jason Exp $	*/
+/*	$OpenBSD: dc.c,v 1.31 2001/08/03 23:24:56 chris Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1652,6 +1652,10 @@ void dc_attach(sc)
 	IFQ_SET_MAXLEN(&ifp->if_snd, DC_TX_LIST_CNT - 1);
 	IFQ_SET_READY(&ifp->if_snd);
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+
+#if NVLAN > 0
+	ifp->if_capabilities = IFCAP_VLAN_MTU;
+#endif
 
 	/* Do MII setup. If this is a 21143, check for a PHY on the
 	 * MII bus after applying any necessary fixups to twiddle the
