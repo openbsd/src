@@ -271,12 +271,6 @@ How to set up the kerberos server
 * Add users to the database::   
 * Automate the startup of the servers::  
 
-One-Time Passwords
-
-* What are one time passwords?::  
-* When to use one time passwords?::  
-* Configuring OTPs::            
-
 Resolving frequent problems
 
 * Problems compiling Kerberos::  
@@ -291,7 +285,6 @@ Resolving frequent problems
 @include whatis.texi
 @include install.texi
 @include setup.texi
-@include otp.texi
 @include problems.texi
 @include ack.texi
 @include index.texi
