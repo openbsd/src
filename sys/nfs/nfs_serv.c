@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.6 1996/04/21 22:30:23 deraadt Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.7 1996/11/08 23:20:14 niklas Exp $	*/
 /*	$NetBSD: nfs_serv.c,v 1.25 1996/03/02 15:55:52 jtk Exp $	*/
 
 /*
@@ -2539,8 +2539,8 @@ again:
 	dp = (struct dirent *)cpos;
 	cookiep = cookies;
 
-	while ((dp->d_fileno == 0 || dp->d_type == DT_WHT) &&
-	       cpos < cend && ncookies > 0) {
+	while (cpos < cend && ncookies > 0 &&
+	    (dp->d_fileno == 0 || dp->d_type == DT_WHT)) {
 		cpos += dp->d_reclen;
 		dp = (struct dirent *)cpos;
 		cookiep++;
