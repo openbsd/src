@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.23 1998/10/10 06:48:21 downsj Exp $
+#	$OpenBSD: Makefile,v 1.24 1998/10/10 17:38:18 deraadt Exp $
 #	from: @(#)Makefile	5.1 (Berkeley) 2/12/91
 #	Id: Makefile,v 1.4 1995/12/14 05:41:38 deraadt Exp $
 
@@ -12,7 +12,6 @@ MAN+=	xf86.4
 MLINKS=	mem.4 kmem.4
 MLINKS+= pms.4 psm.4
 MLINKS+= com.4 pccom.4
-MLINKS+= bktr.4 brooktree.4
 MANSUBDIR=/i386
 
 .include <bsd.prog.mk>
