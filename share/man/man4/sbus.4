@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sbus.4,v 1.6 2002/02/19 07:17:51 jason Exp $
+.\"	$OpenBSD: sbus.4,v 1.7 2002/02/20 17:21:44 jason Exp $
 .\"	$NetBSD: sbus.4,v 1.5 2002/01/21 17:54:10 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ includes machine-independent
 .Nm
 drivers, sorted by device type and driver name:
 .Ss Audio interfaces
-.Bl -tag -width 12n -offset ind
+.Bl -tag -width 12n -offset ind -compact
 .It Xr audioamd 4
 .Tn AMD
 7990 codecs
@@ -77,7 +77,7 @@ drivers, sorted by device type and driver name:
 CS4231A codecs
 .El
 .Ss SCSI interfaces
-.Bl -tag -width 12n -offset ind
+.Bl -tag -width 12n -offset ind -compact
 .It Xr esp 4
 NCR53c94 and compatible
 .Tn SCSI
@@ -88,7 +88,7 @@ Qlogic
 interfaces.
 .El
 .Ss Network interfaces
-.Bl -tag -width 12n -offset ind
+.Bl -tag -width 12n -offset ind -compact
 .It Xr le 4
 .Tn Lance
 7990 series
@@ -109,14 +109,14 @@ Quad Ethernet Controller
 board.
 .El
 .Ss Bridges
-.Bl -tag -width 12n -offset ind
+.Bl -tag -width 12n -offset ind -compact
 .It Xr xbox 4
 an
 .Nm sbus
 expansion box.
 .El
 .Ss Graphics devices
-.Bl -tag -width 12n -offset ind
+.Bl -tag -width 12n -offset ind -compact
 .It Xr bwtwo 4
 framebuffer device.
 .It Xr cgthree 4
