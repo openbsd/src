@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.13 2004/07/29 16:46:58 jfb Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.14 2004/07/29 16:52:39 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -277,7 +277,7 @@ struct cvsroot {
 #define CVS_FST_PATCHED   6
 
 
-TAILQ_HEAD(cvs_flist, cvs_files);
+TAILQ_HEAD(cvs_flist, cvs_file);
 
 
 typedef struct cvs_file {
