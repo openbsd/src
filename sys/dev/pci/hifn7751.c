@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.33 2000/04/19 00:10:35 deraadt Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.34 2000/04/23 05:03:40 angelos Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -90,7 +90,7 @@ int	hifn_intr __P((void *));
 u_int	hifn_write_command __P((struct hifn_command *, u_int8_t *));
 u_int32_t hifn_next_signature __P((u_int a, u_int cnt));
 int	hifn_newsession __P((u_int32_t *, struct cryptoini *));
-int	hifn_freesession __P((u_int32_t));
+int	hifn_freesession __P((u_int64_t));
 int	hifn_process __P((struct cryptop *));
 void	hifn_callback __P((struct hifn_softc *, struct hifn_command *, u_int8_t *));
 int	hifn_crypto __P((struct hifn_softc *, hifn_command_t *));
@@ -1084,11 +1084,12 @@ hifn_newsession(sidp, cri)
  * XXX to blow away any keys already stored there.
  */
 int
-hifn_freesession(sid)
-	u_int32_t sid;
+hifn_freesession(tid)
+	u_int64_t tid;
 {
 	struct hifn_softc *sc;
 	int card, session;
+	u_int32_t sid = (tid >> 31) & 0xffffffff;
 
 	card = HIFN_CARD(sid);
 	if (card >= hifn_cd.cd_ndevs || hifn_cd.cd_devs[card] == NULL)
