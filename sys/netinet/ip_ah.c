@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.45 2000/11/17 04:15:42 angelos Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.46 2001/02/20 06:48:06 itojun Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -253,6 +253,17 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 	    /* IPv4 option processing */
 	    for (off = sizeof(struct ip); off < skip;)
 	    {
+		if (ptr[off] == IPOPT_EOL || ptr[off] == IPOPT_NOP ||
+		    off + 1 < skip)
+		    ;
+		else
+		{
+		    DPRINTF(("ah_massage_headers(): illegal IPv4 option length for option %d\n", ptr[off]));
+		    ahstat.ahs_hdrops++;
+		    m_freem(m);
+		    return EINVAL;
+		}
+			   
 		switch (ptr[off])
 		{
 		    case IPOPT_EOL:
@@ -268,10 +279,10 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 		    case 0x86:	/* Commercial security */
 		    case 0x94:	/* Router alert */
 		    case 0x95:	/* RFC1770 */
-			/* Sanity check for zero-length options */
-			if (ptr[off + 1] == 0)
+			/* Sanity check for option length */
+			if (ptr[off + 1] < 2)
 			{
-			    DPRINTF(("ah_massage_headers(): illegal zero-length IPv4 option %d\n", ptr[off]));
+			    DPRINTF(("ah_massage_headers(): illegal IPv4 option length for option %d\n", ptr[off]));
 			    ahstat.ahs_hdrops++;
 			    m_freem(m);
 			    return EINVAL;
@@ -282,6 +293,15 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 
 		    case IPOPT_LSRR:
 		    case IPOPT_SSRR:
+			/* Sanity check for option length */
+			if (ptr[off + 1] < 2)
+			{
+			    DPRINTF(("ah_massage_headers(): illegal IPv4 option length for option %d\n", ptr[off]));
+			    ahstat.ahs_hdrops++;
+			    m_freem(m);
+			    return EINVAL;
+			}
+
 			/*
 			 * On output, if we have either of the source routing
 			 * options, we should swap the destination address of
@@ -296,10 +316,10 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 
 			/* Fall through */
 		    default:
-			/* Sanity check for zero-length options */
-			if (ptr[off + 1] == 0)
+			/* Sanity check for option length */
+			if (ptr[off + 1] < 2)
 			{
-			    DPRINTF(("ah_massage_headers(): illegal zero-length IPv4 option %d\n", ptr[off]));
+			    DPRINTF(("ah_massage_headers(): illegal IPv4 option length for option %d\n", ptr[off]));
 			    ahstat.ahs_hdrops++;
 			    m_freem(m);
 			    return EINVAL;
