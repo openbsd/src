@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.28 2001/06/20 22:25:08 millert Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.29 2001/06/23 22:29:14 millert Exp $	*/
 
 /* OpenBSD S/Key (skeyinit.c)
  *
@@ -188,7 +188,7 @@ main(argc, argv)
 		case 0:
 			/* comment out user if asked to */
 			if (zerokey)
-				exit(skeyzero(&skey, pp->pw_name));
+				exit(skeyzero(&skey));
 
 			(void)printf("[Updating %s with %s]\n", pp->pw_name,
 			    ht ? ht : skey_get_algorithm());
@@ -276,7 +276,7 @@ main(argc, argv)
 
 		/* If new entry is longer than the old, comment out the old. */
 		if (nlen > skey.len) {
-			(void)skeyzero(&skey, pp->pw_name);
+			(void)skeyzero(&skey);
 			/* Re-open keys file and seek to the end */
 			if (skeylookup(&skey, pp->pw_name) == -1)
 				err(1, "cannot reopen database");
