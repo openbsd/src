@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.17 2004/08/02 22:49:49 jfb Exp $	*/
+/*	$OpenBSD: file.c,v 1.18 2004/08/03 04:27:30 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -370,6 +370,7 @@ cvs_file_getdir(CVSFILE *cf, int flags)
 	struct cvs_dir *cdp;
 	struct cvs_flist dirs;
 
+	ndirs = 0;
 	TAILQ_INIT(&dirs);
 	cdp = cf->cf_ddat;
 
