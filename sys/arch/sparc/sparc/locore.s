@@ -2718,6 +2718,7 @@ start_havetype:
 	lduba	[%l3] ASI_CONTROL, %l3
 	cmp	%l3, SUN4_400
 	bne	no_3mmu
+	 nop
 	add	%l0, 2, %l0		! get to proper half-word in RG space
 	add	%l1, 2, %l1
 	lduha	[%l0] ASI_REGMAP, %l4	! regmap[highva] = regmap[lowva];
