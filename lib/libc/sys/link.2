@@ -50,7 +50,7 @@ function call
 atomically creates the specified directory entry (hard link)
 .Fa name2
 with the attributes of the underlying object pointed at by
-.Fa name1
+.Fa name1 .
 If the link is successful: the link count of the underlying object
 is incremented;
 .Fa name1
@@ -98,6 +98,15 @@ characters, or an entire path name exceeded
 characters.
 .It Bq Er ENOENT
 A component of either path prefix does not exist.
+.It Bq Er EOPNOTSUPP
+The file system containing the file named by
+.Fa name1
+does not support links.
+.It Bq Er EMLINK
+The link count of the file named by
+.Fa name1
+would exceed
+.Dv {LINK_MAX}.
 .It Bq Er EACCES
 A component of either path prefix denies search permission.
 .It Bq Er EACCES
@@ -116,7 +125,11 @@ does exist.
 .It Bq Er EPERM
 The file named by
 .Fa name1
-is a directory.
+is a directory and the effective
+user ID is not super-user,
+or the file system containing the file does not permit the use of
+.Fn link
+on a directory.
 .It Bq Er EXDEV
 The link named by
 .Fa name2
