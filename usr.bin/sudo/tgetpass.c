@@ -128,7 +128,7 @@ tgetpass(prompt, timeout, flags)
     }
 
     if (prompt)
-	(void) write(output, prompt, strlen(prompt) + 1);
+	(void) write(output, prompt, strlen(prompt));
 
     /* Turn echo off/on as specified by flags.  */
     (void) term_getattr(input, &oterm);

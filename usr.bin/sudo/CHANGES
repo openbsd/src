@@ -1315,3 +1315,9 @@ Sudo 1.6.3p3 released.
 412) Fixed a case where a string was used after it has been freed.
 
 Sudo 1.6.3p4 released.
+
+413) Fixed listpw and verifypw sudoers options.
+
+414) Do not write NUL when writing passwd prompt; hag@linnaean.org.
+
+Sudo 1.6.3p5 released.
