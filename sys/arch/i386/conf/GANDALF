@@ -1,7 +1,7 @@
 #
 #	GANDALF -- Dual Tyan P5/133 PCI/EISA bus
 #
-#	$OpenBSD: GANDALF,v 1.1 1996/06/02 04:57:26 tholo Exp $
+#	$OpenBSD: GANDALF,v 1.2 1996/06/05 07:13:17 tholo Exp $
 #
 
 machine		i386		# architecture, used by config; REQUIRED
@@ -117,8 +117,7 @@ wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
 wdc1	at isa? port 0x170 irq 15	# ST506, ESDI, and IDE controllers
 wd*	at wdc? drive ?
 
-#ep*	at eisa? slot ?			# 3C5[07]9 ethernet card
-ep0	at isa? port ? irq ?		# 3C5[07]9 ethernet card
+ep*	at eisa? slot ?			# 3C5[07]9 ethernet card
 
 #sb0	at isa? port 0x220 irq 5 drq 1	# SoundBlaster
 spkr0	at pckbd?			# PC speaker
