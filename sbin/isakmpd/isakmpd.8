@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.62 2004/04/15 00:27:40 deraadt Exp $
+.\" $OpenBSD: isakmpd.8,v 1.63 2004/05/13 06:56:34 ho Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -410,6 +410,7 @@ Start the named connection, if stopped or inactive.
 .Pp
 .It Ic "C set [section]:tag=value"
 .It Ic "C set [section]:tag=value force"
+.It Ic "C add [section]:tag=value"
 .It Ic "C rm  [section]:tag"
 .It Ic "C rms [section]"
 Update the running
@@ -422,10 +423,20 @@ will fail if the configuration already contains a section with the named tag;
 use the
 .Sq force
 option to change this behaviour.
+.Sq add
+appends a configuration value to the named configuration list tag.
 .Sq rm
 removes a tag in a section.
 .Sq rms
 removes an entire section.
+.Pp
+NOTE: Sending isakmpd a SIGHUP or an "R" through the FIFO will
+void any updates done to the configuration.
+.Pp
+.It Ic "C get [section]:tag"
+Get the configuration value of the specified section and tag. The
+result is stored in
+.Pa /var/run/isakmpd.result .
 .Pp
 .It Ic "d <cookies> <msgid>"
 Delete the specified SA from the system.
@@ -471,7 +482,7 @@ signal.
 .Pp
 .It Ic "S"
 Report information on all known SAs to the
-.Pa /var/run/isakmpd_sa
+.Pa /var/run/isakmpd.result
 file.
 .Pp
 .It Ic "t <name>"
@@ -519,9 +530,11 @@ The default IKE packet capture file.
 The report file written when
 .Dv SIGUSR1
 is received.
-.It Pa /var/run/isakmpd_sa
+.It Pa /var/run/isakmpd.result
 The report file written when the
 .Sq S
+or
+.Sq "C get"
 command is issued in the command FIFO.
 .It Pa /usr/share/ipsec/isakmpd/
 A directory containing some sample

@@ -1,4 +1,4 @@
-/* $OpenBSD: sa.c,v 1.80 2004/04/15 18:39:26 deraadt Exp $	 */
+/* $OpenBSD: sa.c,v 1.81 2004/05/13 06:56:34 ho Exp $	 */
 /* $EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	 */
 
 /*
@@ -86,16 +86,15 @@ static int      bucket_mask;
 void
 sa_init(void)
 {
-	int             i;
+	int	i;
 
 	bucket_mask = (1 << INITIAL_BUCKET_BITS) - 1;
 	sa_tab = malloc((bucket_mask + 1) * sizeof(struct sa_list));
 	if (!sa_tab)
 		log_fatal("sa_init: malloc (%lu) failed",
 		    (bucket_mask + 1) * (unsigned long) sizeof(struct sa_list));
-	for (i = 0; i <= bucket_mask; i++) {
+	for (i = 0; i <= bucket_mask; i++)
 		LIST_INIT(&sa_tab[i]);
-	}
 }
 
 #if 0
@@ -111,9 +110,8 @@ sa_resize(void)
 	if (!new_tab)
 		return;
 	sa_tab = new_tab;
-	for (i = bucket_mask + 1; i <= new_mask; i++) {
+	for (i = bucket_mask + 1; i <= new_mask; i++)
 		LIST_INIT(&sa_tab[i]);
-	}
 	bucket_mask = new_mask;
 
 	/* XXX Rehash existing entries.  */
@@ -130,7 +128,8 @@ sa_find(int (*check) (struct sa*, void *), void *arg)
 	for (i = 0; i <= bucket_mask; i++)
 		for (sa = LIST_FIRST(&sa_tab[i]); sa; sa = LIST_NEXT(sa, link))
 			if (check(sa, arg)) {
-				LOG_DBG((LOG_SA, 90, "sa_find: return SA %p", sa));
+				LOG_DBG((LOG_SA, 90, "sa_find: return SA %p",
+				    sa));
 				return sa;
 			}
 	LOG_DBG((LOG_SA, 90, "sa_find: no SA matched query"));
@@ -141,8 +140,8 @@ sa_find(int (*check) (struct sa*, void *), void *arg)
 static int
 sa_check_icookie(struct sa *sa, void *icookie)
 {
-	return sa->phase == 1
-	&& memcmp(sa->cookies, icookie, ISAKMP_HDR_ICOOKIE_LEN) == 0;
+	return sa->phase == 1 &&
+	    memcmp(sa->cookies, icookie, ISAKMP_HDR_ICOOKIE_LEN) == 0;
 }
 
 /* Lookup an ISAKMP SA out of just the initiator cookie.  */
@@ -215,10 +214,10 @@ struct dst_isakmpspi_arg {
  * be a finished phaes 1 (ISAKMP) SA.
  */
 static int
-isakmp_sa_check(struct sa * sa, void *v_arg)
+isakmp_sa_check(struct sa *sa, void *v_arg)
 {
 	struct dst_isakmpspi_arg *arg = v_arg;
-	struct sockaddr *dst, *src;
+	struct sockaddr		*dst, *src;
 
 	if (sa->phase != 1 || !(sa->flags & SA_FLAG_READY))
 		return 0;
@@ -241,7 +240,7 @@ isakmp_sa_check(struct sa * sa, void *v_arg)
  * Find an ISAKMP SA with a "name" of DST & SPI.
  */
 struct sa *
-sa_lookup_isakmp_sa(struct sockaddr * dst, u_int8_t * spi)
+sa_lookup_isakmp_sa(struct sockaddr *dst, u_int8_t *spi)
 {
 	struct dst_isakmpspi_arg arg;
 
@@ -253,7 +252,7 @@ sa_lookup_isakmp_sa(struct sockaddr * dst, u_int8_t * spi)
 
 /* Lookup a ready SA by the peer's address.  */
 struct sa *
-sa_lookup_by_peer(struct sockaddr * dst, socklen_t dstlen)
+sa_lookup_by_peer(struct sockaddr *dst, socklen_t dstlen)
 {
 	struct addr_arg arg;
 
@@ -266,7 +265,7 @@ sa_lookup_by_peer(struct sockaddr * dst, socklen_t dstlen)
 
 /* Lookup a ready ISAKMP SA given its peer address.  */
 struct sa *
-sa_isakmp_lookup_by_peer(struct sockaddr * dst, socklen_t dstlen)
+sa_isakmp_lookup_by_peer(struct sockaddr *dst, socklen_t dstlen)
 {
 	struct addr_arg arg;
 
@@ -308,7 +307,7 @@ sa_enter(struct sa *sa)
  * looking for phase 1 SAa and true otherwise.
  */
 struct sa      *
-sa_lookup_by_header(u_int8_t * msg, int phase2)
+sa_lookup_by_header(u_int8_t *msg, int phase2)
 {
 	return sa_lookup(msg + ISAKMP_HDR_COOKIES_OFF,
 	    phase2 ? msg + ISAKMP_HDR_MESSAGE_ID_OFF : 0);
@@ -345,12 +344,13 @@ sa_lookup(u_int8_t *cookies, u_int8_t *message_id)
 			bucket ^= cp[0] | cp[1] << 8;
 		}
 	bucket &= bucket_mask;
-	for (sa = LIST_FIRST(&sa_tab[bucket]);
-	     sa && (memcmp(cookies, sa->cookies, ISAKMP_HDR_COOKIES_LEN) != 0 ||
-	    (message_id && memcmp(message_id, sa->message_id,
-	    ISAKMP_HDR_MESSAGE_ID_LEN) != 0) ||
-	    (!message_id && !zero_test(sa->message_id, ISAKMP_HDR_MESSAGE_ID_LEN)));
-	    sa = LIST_NEXT(sa, link))
+	for (sa = LIST_FIRST(&sa_tab[bucket]); sa &&
+		 (memcmp(cookies, sa->cookies, ISAKMP_HDR_COOKIES_LEN) != 0 ||
+		     (message_id && memcmp(message_id, sa->message_id,
+			 ISAKMP_HDR_MESSAGE_ID_LEN) != 0) ||
+		     (!message_id && !zero_test(sa->message_id,
+			 ISAKMP_HDR_MESSAGE_ID_LEN)));
+	     sa = LIST_NEXT(sa, link))
 		;
 
 	return sa;
@@ -358,7 +358,7 @@ sa_lookup(u_int8_t *cookies, u_int8_t *message_id)
 
 /* Create an SA.  */
 int
-sa_create(struct exchange * exchange, struct transport * t)
+sa_create(struct exchange *exchange, struct transport *t)
 {
 	struct sa      *sa;
 
@@ -377,7 +377,8 @@ sa_create(struct exchange * exchange, struct transport * t)
 		transport_reference(t);
 	sa->phase = exchange->phase;
 	memcpy(sa->cookies, exchange->cookies, ISAKMP_HDR_COOKIES_LEN);
-	memcpy(sa->message_id, exchange->message_id, ISAKMP_HDR_MESSAGE_ID_LEN);
+	memcpy(sa->message_id, exchange->message_id,
+	    ISAKMP_HDR_MESSAGE_ID_LEN);
 	sa->doi = exchange->doi;
 	sa->policy_id = -1;
 
@@ -412,14 +413,14 @@ sa_create(struct exchange * exchange, struct transport * t)
  * prepended to each line.
  */
 void
-sa_dump(int cls, int level, char *header, struct sa * sa)
+sa_dump(int cls, int level, char *header, struct sa *sa)
 {
 	struct proto   *proto;
 	char            spi_header[80];
 	int             i;
 
-	LOG_DBG((cls, level, "%s: %p %s phase %d doi %d flags 0x%x", header, sa,
-	    sa->name ? sa->name : "<unnamed>", sa->phase, sa->doi->id,
+	LOG_DBG((cls, level, "%s: %p %s phase %d doi %d flags 0x%x", header,
+	    sa, sa->name ? sa->name : "<unnamed>", sa->phase, sa->doi->id,
 	    sa->flags));
 	LOG_DBG((cls, level, "%s: icookie %08x%08x rcookie %08x%08x", header,
 	    decode_32(sa->cookies), decode_32(sa->cookies + 4),
@@ -430,11 +431,11 @@ sa_dump(int cls, int level, char *header, struct sa * sa)
 	    sa->kilobytes));
 	for (proto = TAILQ_FIRST(&sa->protos); proto;
 	    proto = TAILQ_NEXT(proto, link)) {
-		LOG_DBG((cls, level, "%s: suite %d proto %d", header, proto->no,
-		    proto->proto));
+		LOG_DBG((cls, level, "%s: suite %d proto %d", header,
+		    proto->no, proto->proto));
 		LOG_DBG((cls, level,
-		    "%s: spi_sz[0] %d spi[0] %p spi_sz[1] %d spi[1] %p", header,
-		    proto->spi_sz[0], proto->spi[0], proto->spi_sz[1],
+		    "%s: spi_sz[0] %d spi[0] %p spi_sz[1] %d spi[1] %p",
+		    header, proto->spi_sz[0], proto->spi[0], proto->spi_sz[1],
 		    proto->spi[1]));
 		LOG_DBG((cls, level, "%s: %s, %s", header,
 		    !sa->doi ? "<nodoi>" :
@@ -447,8 +448,8 @@ sa_dump(int cls, int level, char *header, struct sa * sa)
 			if (proto->spi[i]) {
 				snprintf(spi_header, sizeof spi_header,
 				    "%s: spi[%d]", header, i);
-				LOG_DBG_BUF((cls, level, spi_header, proto->spi[i],
-				    proto->spi_sz[i]));
+				LOG_DBG_BUF((cls, level, spi_header,
+				    proto->spi[i], proto->spi_sz[i]));
 			}
 	}
 }
@@ -460,8 +461,8 @@ static void
 report_spi(FILE *fd, const u_int8_t *buf, size_t sz, int spi)
 {
 #define SBUFSZ (2 * 32 + 9)
-	char            s[SBUFSZ];
-	size_t          i, j;
+	char	s[SBUFSZ];
+	size_t	i, j;
 
 	for (i = j = 0; i < sz;) {
 		snprintf(s + j, sizeof s - j, "%02x", buf[i++]);
@@ -482,17 +483,16 @@ report_spi(FILE *fd, const u_int8_t *buf, size_t sz, int spi)
 	}
 }
 
-
 /*
- * Display the transform names to file SA_FILE.
+ * Display the transform names to file.
  * Structure is taken from pf_key_v2.c, pf_key_v2_set_spi.
  * Transform names are taken from /usr/src/sys/crypto/xform.c.
  */
 static void
-report_proto(FILE * fd, struct proto * proto)
+report_proto(FILE *fd, struct proto *proto)
 {
-	int             keylen, hashlen;
 	struct ipsec_proto *iproto = proto->data;
+	int	keylen, hashlen;
 
 	switch (proto->proto) {
 	case IPSEC_PROTO_IPSEC_ESP:
@@ -617,8 +617,8 @@ report_proto(FILE * fd, struct proto * proto)
 void
 sa_report(void)
 {
-	int             i;
 	struct sa      *sa;
+	int             i;
 
 	for (i = 0; i <= bucket_mask; i++)
 		for (sa = LIST_FIRST(&sa_tab[i]); sa; sa = LIST_NEXT(sa, link))
@@ -630,7 +630,7 @@ sa_report(void)
  * Print an SA's connection details to file SA_FILE.
  */
 static void
-sa_dump_all(FILE * fd, struct sa * sa)
+sa_dump_all(FILE *fd, struct sa *sa)
 {
 	struct proto   *proto;
 	int             i;
@@ -650,7 +650,8 @@ sa_dump_all(FILE * fd, struct sa * sa)
 		/* SPI values. */
 		for (i = 0; i < 2; i++)
 			if (proto->spi[i])
-				report_spi(fd, proto->spi[i], proto->spi_sz[i], i);
+				report_spi(fd, proto->spi[i], proto->spi_sz[i],
+				    i);
 			else
 				fprintf(fd, "SPI %d not defined.", i);
 
@@ -662,36 +663,28 @@ sa_dump_all(FILE * fd, struct sa * sa)
 	}
 }
 
-/* Report info of all SAs to file SA_FILE.  */
+/* Report info of all SAs to file 'fd'.  */
 void
-sa_report_all(void)
+sa_report_all(FILE *fd)
 {
-	int             i;
-	FILE           *fd;
 	struct sa      *sa;
+	int             i;
 
-	/* Open SA_FILE. */
-	fd = monitor_fopen(SA_FILE, "w");
-
-	/* Start sa_config_report. */
 	for (i = 0; i <= bucket_mask; i++)
 		for (sa = LIST_FIRST(&sa_tab[i]); sa; sa = LIST_NEXT(sa, link))
 			if (sa->phase == 1)
 				fprintf(fd, "SA name: none (phase 1)\n\n");
 			else
 				sa_dump_all(fd, sa);
-
-	/* End sa_config_report. */
-	fclose(fd);
 }
 
 /* Free the protocol structure pointed to by PROTO.  */
 void
-proto_free(struct proto * proto)
+proto_free(struct proto *proto)
 {
-	int             i;
-	struct sa      *sa = proto->sa;
 	struct proto_attr *pa;
+	struct sa      *sa = proto->sa;
+	int             i;
 
 	for (i = 0; i < 2; i++)
 		if (proto->spi[i]) {
@@ -745,7 +738,7 @@ sa_remove(struct sa *sa)
 
 /* Raise the reference count of SA.  */
 void
-sa_reference(struct sa * sa)
+sa_reference(struct sa *sa)
 {
 	sa->refcnt++;
 	LOG_DBG((LOG_SA, 80, "sa_reference: SA %p now has %d references",
@@ -754,10 +747,10 @@ sa_reference(struct sa * sa)
 
 /* Release a reference to SA.  */
 void
-sa_release(struct sa * sa)
+sa_release(struct sa *sa)
 {
-	struct proto   *proto;
 	struct cert_handler *handler;
+	struct proto   *proto;
 
 	LOG_DBG((LOG_SA, 80, "sa_release: SA %p had %d references",
 	    sa, sa->refcnt));
@@ -789,7 +782,8 @@ sa_release(struct sa * sa)
 			handler->cert_free(sa->sent_cert);
 	}
 	if (sa->recv_key)
-		key_free(sa->recv_keytype, ISAKMP_KEYTYPE_PUBLIC, sa->recv_key);
+		key_free(sa->recv_keytype, ISAKMP_KEYTYPE_PUBLIC,
+		    sa->recv_key);
 	if (sa->keynote_key)
 		free(sa->keynote_key);	/* This is just a string */
 #if defined (USE_POLICY) || defined (USE_KEYNOTE)
@@ -810,7 +804,7 @@ sa_release(struct sa * sa)
  * filled in.
  */
 void
-sa_isakmp_upgrade(struct message * msg)
+sa_isakmp_upgrade(struct message *msg)
 {
 	struct sa      *sa = TAILQ_FIRST(&msg->exchange->sa_list);
 
@@ -838,20 +832,23 @@ struct attr_validation_state {
 
 /* Validate an attribute. Return 0 on match.  */
 static int
-sa_validate_xf_attrs(u_int16_t type, u_int8_t * value, u_int16_t len,
+sa_validate_xf_attrs(u_int16_t type, u_int8_t *value, u_int16_t len,
     void *arg)
 {
-	struct attr_validation_state *avs = (struct attr_validation_state *) arg;
+	struct attr_validation_state *avs =
+	    (struct attr_validation_state *)arg;
 
 	LOG_DBG((LOG_SA, 95, "sa_validate_xf_attrs: phase %d mode %d type %d "
 	    "len %d", avs->phase, avs->mode, type, len));
 
 	/* Make sure the phase and type are valid.  */
 	if (avs->phase == 1) {
-		if (type < IKE_ATTR_ENCRYPTION_ALGORITHM || type > IKE_ATTR_BLOCK_SIZE)
+		if (type < IKE_ATTR_ENCRYPTION_ALGORITHM ||
+		    type > IKE_ATTR_BLOCK_SIZE)
 			return 1;
 	} else if (avs->phase == 2) {
-		if (type < IPSEC_ATTR_SA_LIFE_TYPE || type > IPSEC_ATTR_ECN_TUNNEL)
+		if (type < IPSEC_ATTR_SA_LIFE_TYPE ||
+		    type > IPSEC_ATTR_ECN_TUNNEL)
 			return 1;
 	} else
 		return 1;
@@ -876,10 +873,10 @@ sa_validate_xf_attrs(u_int16_t type, u_int8_t * value, u_int16_t len,
  * otherwise. Also see note in sa_add_transform() below.
  */
 static int
-sa_validate_proto_xf(struct proto * match, struct payload * xf, int phase)
+sa_validate_proto_xf(struct proto *match, struct payload *xf, int phase)
 {
-	struct proto_attr *pa;
 	struct attr_validation_state *avs;
+	struct proto_attr *pa;
 	int             found = 0;
 	size_t          i;
 	u_int8_t        xf_id;
@@ -946,8 +943,8 @@ sa_validate_proto_xf(struct proto * match, struct payload * xf, int phase)
  * are the initiator.
  */
 int
-sa_add_transform(struct sa * sa, struct payload * xf, int initiator,
-    struct proto ** protop)
+sa_add_transform(struct sa *sa, struct payload *xf, int initiator,
+    struct proto **protop)
 {
 	struct proto   *proto;
 	struct payload *prop = xf->context;
@@ -960,10 +957,11 @@ sa_add_transform(struct sa * sa, struct payload * xf, int initiator,
 			    (unsigned long) sizeof *proto);
 	} else {
 		/*
-		 * RFC 2408, section 4.2 states the responder SHOULD use the proposal
-		 * number from the initiator (i.e us), in it's selected proposal to make
-		 * this lookup easier. Most vendors follow this. One noted exception is
-		 * the CiscoPIX (and perhaps other Cisco products).
+		 * RFC 2408, section 4.2 states the responder SHOULD use the
+		 * proposal number from the initiator (i.e us), in it's
+		 * selected proposal to make this lookup easier. Most vendors
+		 * follow this. One noted exception is the CiscoPIX (and
+		 * perhaps other Cisco products).
 	         *
 		 * We start by matching on the proposal number, as before.
 	         */
@@ -972,13 +970,15 @@ sa_add_transform(struct sa * sa, struct payload * xf, int initiator,
 		    proto = TAILQ_NEXT(proto, link))
 			;
 		/*
-		 * If we did not find a match, search through all proposals and xforms.
+		 * If we did not find a match, search through all proposals
+		 * and xforms.
 	         */
 		if (!proto || sa_validate_proto_xf(proto, xf, sa->phase) != 0)
 			for (proto = TAILQ_FIRST(&sa->protos);
-			    proto && sa_validate_proto_xf(proto, xf, sa->phase) != 0;
-			    proto = TAILQ_NEXT(proto, link))
-				;
+			     proto && sa_validate_proto_xf(proto, xf,
+				 sa->phase) != 0;
+			     proto = TAILQ_NEXT(proto, link))
+			    ;
 	}
 	if (!proto)
 		return -1;
@@ -1000,7 +1000,8 @@ sa_add_transform(struct sa * sa, struct payload * xf, int initiator,
 		proto->spi[0] = malloc(proto->spi_sz[0]);
 		if (!proto->spi[0])
 			goto cleanup;
-		memcpy(proto->spi[0], prop->p + ISAKMP_PROP_SPI_OFF, proto->spi_sz[0]);
+		memcpy(proto->spi[0], prop->p + ISAKMP_PROP_SPI_OFF,
+		    proto->spi_sz[0]);
 	}
 	proto->chosen = xf;
 	proto->sa = sa;
@@ -1032,7 +1033,7 @@ cleanup:
 
 /* Delete an SA.  Tell the peer if NOTIFY is set.  */
 void
-sa_delete(struct sa * sa, int notify)
+sa_delete(struct sa *sa, int notify)
 {
 	/* Don't bother notifying of Phase 1 SA deletes.  */
 	if (sa->phase != 1 && notify)
@@ -1123,7 +1124,8 @@ sa_reinit(void)
 	for (i = 0; i <= bucket_mask; i++)
 		for (sa = LIST_FIRST(&sa_tab[i]); sa; sa = LIST_NEXT(sa, link))
 			if (sa->phase == 2)
-				if (exchange_lookup_by_name(sa->name, sa->phase) == 0) {
+				if (exchange_lookup_by_name(sa->name,
+				    sa->phase) == 0) {
 					timer_remove_event(sa->soft_death);
 					sa_soft_expire(sa);
 				}
@@ -1139,19 +1141,19 @@ sa_flag(char *attr)
 		char           *name;
 		int             flag;
 	} sa_flag_map[] = {
-	    {
-		"active-only", SA_FLAG_ACTIVE_ONLY
-	    },
-
+		{
+			"active-only", SA_FLAG_ACTIVE_ONLY
+		},
+		
 		/*
 		 * Below this point are flags that are internal to the
 		 * implementation.
 		 */
-	    {
-		"__ondemand", SA_FLAG_ONDEMAND
-	    }, {
-		"ikecfg", SA_FLAG_IKECFG
-	    },
+		{
+			"__ondemand", SA_FLAG_ONDEMAND
+		}, {
+			"ikecfg", SA_FLAG_IKECFG
+		},
 	};
 	size_t          i;
 
@@ -1164,7 +1166,7 @@ sa_flag(char *attr)
 
 /* Mark SA as replaced.  */
 void
-sa_mark_replaced(struct sa * sa)
+sa_mark_replaced(struct sa *sa)
 {
 	LOG_DBG((LOG_SA, 60, "sa_mark_replaced: SA %p (%s) marked as replaced",
 	    sa, sa->name ? sa->name : "unnamed"));
@@ -1178,10 +1180,10 @@ sa_mark_replaced(struct sa * sa)
  * stack.
  */
 int
-sa_setup_expirations(struct sa * sa)
+sa_setup_expirations(struct sa *sa)
 {
-	u_int64_t       seconds = sa->seconds;
 	struct timeval  expiration;
+	u_int64_t       seconds = sa->seconds;
 
 	/*
 	 * Set the soft timeout to a random percentage between 85 & 95 of
@@ -1219,8 +1221,8 @@ sa_setup_expirations(struct sa * sa)
 		    "sa_setup_expirations: SA %p hard timeout in %llu seconds",
 		    sa, sa->seconds));
 		expiration.tv_sec += sa->seconds;
-		sa->death = timer_add_event("sa_hard_expire",
-		    sa_hard_expire, sa, &expiration);
+		sa->death = timer_add_event("sa_hard_expire", sa_hard_expire,
+		    sa, &expiration);
 		if (!sa->death) {
 			/* If we don't give up we might start leaking...  */
 			sa_delete(sa, 1);

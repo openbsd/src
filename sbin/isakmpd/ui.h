@@ -1,4 +1,4 @@
-/* $OpenBSD: ui.h,v 1.6 2004/04/15 18:39:26 deraadt Exp $	 */
+/* $OpenBSD: ui.h,v 1.7 2004/05/13 06:56:34 ho Exp $	 */
 /* $EOM: ui.h,v 1.5 1998/12/01 10:20:12 niklas Exp $	 */
 
 /*
@@ -33,6 +33,7 @@
 #define _UI_H_
 
 #define FIFO "/var/run/isakmpd.fifo"
+#define RESULT_FILE "/var/run/isakmpd.result"
 
 extern char    *ui_fifo;
 extern int      ui_socket;

@@ -1,4 +1,4 @@
-/* $OpenBSD: connection.c,v 1.26 2004/04/15 18:39:25 deraadt Exp $	 */
+/* $OpenBSD: connection.c,v 1.27 2004/05/13 06:56:33 ho Exp $	 */
 /* $EOM: connection.c,v 1.28 2000/11/23 12:21:18 niklas Exp $	 */
 
 /*
@@ -263,8 +263,8 @@ connection_setup(char *name)
 
 	/* Check for trials to add duplicate connections.  */
 	if (connection_lookup(name)) {
-		LOG_DBG((LOG_MISC, 10, "connection_setup: cannot add \"%s\" twice",
-		    name));
+		LOG_DBG((LOG_MISC, 10,
+		    "connection_setup: cannot add \"%s\" twice", name));
 		return 0;
 	}
 	conn = calloc(1, sizeof *conn);
@@ -326,7 +326,8 @@ connection_record_passive(char *name)
 	}
 	conn->name = strdup(name);
 	if (!conn->name) {
-		log_error("connection_record_passive: strdup (\"%s\") failed", name);
+		log_error("connection_record_passive: strdup (\"%s\") failed",
+		    name);
 		goto fail;
 	}
 	/* XXX IPsec DOI-specific.  */
@@ -401,7 +402,8 @@ connection_report(void)
 #endif
 
 	gettimeofday(&now, 0);
-	for (conn = TAILQ_FIRST(&connections); conn; conn = TAILQ_NEXT(conn, link))
+	for (conn = TAILQ_FIRST(&connections); conn;
+	     conn = TAILQ_NEXT(conn, link))
 		LOG_DBG((LOG_REPORT, 0,
 		    "connection_report: connection %s next check %ld seconds",
 		    (conn->name ? conn->name : "<unnamed>"),

@@ -1,4 +1,4 @@
-/* $OpenBSD: sa.h,v 1.35 2004/04/15 18:39:26 deraadt Exp $	 */
+/* $OpenBSD: sa.h,v 1.36 2004/05/13 06:56:34 ho Exp $	 */
 /* $EOM: sa.h,v 1.58 2000/10/10 12:39:01 provos Exp $	 */
 
 /*
@@ -225,9 +225,6 @@ struct sa {
 /* This SA flag is a placeholder for a TRANSACTION exchange "SA flag".  */
 #define SA_FLAG_IKECFG		0x40
 
-/* Outfile for detailed SA information. */
-#define SA_FILE "/var/run/isakmpd_sa"
-
 extern void     proto_free(struct proto * proto);
 extern int
 sa_add_transform(struct sa *, struct payload *, int,
@@ -255,6 +252,6 @@ extern void     sa_release(struct sa *);
 extern void     sa_remove(struct sa *);
 extern void     sa_report(void);
 extern void     sa_dump(int, int, char *, struct sa *);
-extern void     sa_report_all(void);
+extern void     sa_report_all(FILE *);
 extern int      sa_setup_expirations(struct sa *);
 #endif				/* _SA_H_ */

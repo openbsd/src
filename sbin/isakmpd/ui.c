@@ -1,4 +1,4 @@
-/* $OpenBSD: ui.c,v 1.38 2004/04/15 18:39:26 deraadt Exp $	 */
+/* $OpenBSD: ui.c,v 1.39 2004/05/13 06:56:34 ho Exp $	 */
 /* $EOM: ui.c,v 1.43 2000/10/05 09:25:12 niklas Exp $	 */
 
 /*
@@ -57,13 +57,16 @@
 #define BUF_SZ 256
 
 /* from isakmpd.c */
-void            daemon_shutdown_now(int);
+void		 daemon_shutdown_now(int);
 
 /* Report all SA configuration information. */
-void            ui_report_sa(char *cmd);
+void		 ui_report_sa(char *);
 
-char           *ui_fifo = FIFO;
-int             ui_socket;
+static FILE	*ui_open_result(void);
+
+char		*ui_fifo = FIFO;
+int		 ui_socket;
+struct event	*ui_cr_event = NULL;
 
 /* Create and open the FIFO used for user control.  */
 void
@@ -88,7 +91,8 @@ ui_init(void)
 #endif
 		if ((st.st_mode & S_IFMT) == S_IFREG) {
 			errno = EEXIST;
-			log_fatal("ui_init: could not create FIFO \"%s\"", ui_fifo);
+			log_fatal("ui_init: could not create FIFO \"%s\"",
+			    ui_fifo);
 		}
 	}
 
@@ -99,8 +103,8 @@ ui_init(void)
 
 	ui_socket = monitor_open(ui_fifo, O_RDWR | O_NONBLOCK, 0);
 	if (ui_socket == -1)
-		log_fatal("ui_init: open (\"%s\", O_RDWR | O_NONBLOCK, 0) failed",
-		    ui_fifo);
+		log_fatal("ui_init: open (\"%s\", O_RDWR | O_NONBLOCK, 0) "
+		    "failed", ui_fifo);
 }
 
 /*
@@ -145,6 +149,37 @@ ui_teardown_all(char *cmd)
 	sa_teardown_all();
 }
 
+static void
+ui_conn_reinit_event(void *v)
+{
+	/*
+	 * This event is required for isakmpd to reinitialize the connection
+	 * and passive-connection lists. Otherwise a change to the
+	 * "[Phase 2]:Connections" tag will not have any effect.
+	 */
+	connection_reinit();
+
+	ui_cr_event = NULL;
+}
+
+static void
+ui_conn_reinit(void)
+{
+	struct timeval tv;
+	
+	if (ui_cr_event)
+		timer_remove_event(ui_cr_event);
+
+	gettimeofday(&tv, 0);
+	tv.tv_sec += 5;
+	
+	ui_cr_event = timer_add_event("ui_conn_reinit", ui_conn_reinit_event,
+	    0, &tv);
+	if (!ui_cr_event)
+		log_print("ui_conn_reinit: timer_add_event() failed. "
+		    "Connections will not be updated.");
+}
+
 /*
  * Call the configuration API.
  * XXX Error handling!  How to do multi-line transactions?  Too short arbitrary
@@ -153,11 +188,27 @@ ui_teardown_all(char *cmd)
 static void
 ui_config(char *cmd)
 {
-	char	subcmd[81], section[81], tag[81], value[81], tmp[81];
-	int	trans = 0, items;
+	char	 subcmd[81], section[81], tag[81], value[81], tmp[81];
+	char	*v, *nv;
+	int	 trans = 0, items, nvlen;
+	FILE	*fd;
 
 	if (sscanf(cmd, "C %80s", subcmd) != 1)
 		goto fail;
+
+	if (strcasecmp(subcmd, "get") == 0) {
+		if (sscanf(cmd, "C %*s [%80[^]]]:%80s", section, tag) != 2)
+			goto fail;
+		v = conf_get_str(section, tag);
+		fd = ui_open_result();
+		if (fd) {
+			if (v)
+				fprintf(fd, "%s\n", v);
+			fclose(fd);
+		}
+		LOG_DBG((LOG_UI, 30, "ui_config: \"%s\"", cmd));
+		return;
+	}
 
 	trans = conf_begin();
 	if (strcasecmp(subcmd, "set") == 0) {
@@ -166,6 +217,39 @@ ui_config(char *cmd)
 		if (!(items == 3 || items == 4))
 			goto fail;
 		conf_set(trans, section, tag, value, items == 4 ? 1 : 0, 0);
+		if (strcasecmp(section, "Phase 2") == 0 &&
+		    (strcasecmp(tag, "Connections") == 0 ||
+			strcasecmp(tag, "Passive-connections") == 0))
+			ui_conn_reinit();
+	} else if (strcasecmp(subcmd, "add") == 0) {
+		items = sscanf(cmd, "C %*s [%80[^]]]:%80[^=]=%80s %80s",
+		    section, tag, value, tmp);
+		if (!(items == 3 || items == 4))
+			goto fail;
+		v = conf_get_str(section, tag);
+		if (!v)
+			conf_set(trans, section, tag, value, 1, 0);
+		else {
+			/* Add the new value to the end of the 'v' list.  */
+			nvlen = strlen(v) + strlen(value) + 2;
+			nv = (char *)malloc(nvlen);
+			if (!nv) {
+				log_error("ui_config: malloc(%d) failed",
+				    nvlen);
+				if (trans)
+					conf_end(trans, 0);
+				return;
+			}
+			snprintf(nv, nvlen,
+			    v[strlen(v) - 1] == ',' ? "%s%s" : "%s,%s", v,
+			    value);
+			conf_set(trans, section, tag, nv, 1, 0);
+			free(nv);
+		}
+		if (strcasecmp(section, "Phase 2") == 0 &&
+		    (strcasecmp(tag, "Connections") == 0 ||
+			strcasecmp(tag, "Passive-connections") == 0))
+			ui_conn_reinit();
 	} else if (strcasecmp(subcmd, "rm") == 0) {
 		if (sscanf(cmd, "C %*s [%80[^]]]:%80s", section, tag) != 2)
 			goto fail;
@@ -302,7 +386,14 @@ void
 ui_report_sa(char *cmd)
 {
 	/* Skip 'cmd' as arg? */
-	sa_report_all();
+
+	FILE *fd = ui_open_result();
+	if (!fd)
+		return;
+	
+	sa_report_all(fd);
+
+	fclose(fd);
 }
 
 /*
@@ -314,7 +405,7 @@ ui_handle_command(char *line)
 {
 	/* Find out what one-letter command was sent.  */
 	switch (line[0]) {
-		case 'c':
+	case 'c':
 		ui_connect(line);
 		break;
 
@@ -361,7 +452,8 @@ ui_handle_command(char *line)
 		break;
 
 	default:
-		log_print("ui_handle_messages: unrecognized command: '%c'", line[0]);
+		log_print("ui_handle_messages: unrecognized command: '%c'",
+		    line[0]);
 	}
 }
 
@@ -431,4 +523,13 @@ ui_handler(void)
 		}
 		p++;
 	}
+}
+
+static FILE *
+ui_open_result(void)
+{
+	FILE *fd = monitor_fopen(RESULT_FILE, "w");
+	if (!fd)
+		log_error("ui_open_result: fopen() failed");
+	return fd;
 }
