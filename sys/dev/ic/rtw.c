@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.10 2005/01/22 10:14:25 jsg Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.11 2005/01/22 11:22:17 jsg Exp $	*/
 /* $NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -145,7 +145,7 @@ void rtw_recv_beacon(struct rtw_softc *, struct mbuf *,
     struct ieee80211_node *, int, int, u_int32_t);
 void rtw_join_bss(struct rtw_softc *, uint8_t *, enum ieee80211_opmode,
     uint16_t);
-void rtw_set_access1(struct rtw_regs *, enum rtw_access, enum rtw_access);
+void rtw_set_access1(struct rtw_regs *, enum rtw_access);
 int rtw_srom_parse(struct rtw_srom *, u_int32_t *, u_int8_t *,
     enum rtw_rfchipid *, u_int32_t *, enum rtw_locale *, const char *);
 int rtw_srom_read(struct rtw_regs *, u_int32_t, struct rtw_srom *,
@@ -354,10 +354,10 @@ rtw_continuous_tx_enable(struct rtw_softc *sc, int enable)
 		tcr |= RTW_TCR_LBK_NORMAL;
 	RTW_WRITE(regs, RTW_TCR, tcr);
 	RTW_SYNC(regs, RTW_TCR, RTW_TCR);
-	rtw_set_access(sc, RTW_ACCESS_ANAPARM);
+	rtw_set_access(regs, RTW_ACCESS_ANAPARM);
 	rtw_txdac_enable(sc, !enable);
-	rtw_set_access(sc, RTW_ACCESS_ANAPARM); /* XXX Voodoo from Linux. */
-	rtw_set_access(sc, RTW_ACCESS_NONE);
+	rtw_set_access(regs, RTW_ACCESS_ANAPARM);/* XXX Voodoo from Linux. */
+	rtw_set_access(regs, RTW_ACCESS_NONE);
 }
 
 #ifdef RTW_DEBUG
@@ -378,18 +378,18 @@ rtw_access_string(enum rtw_access access)
 #endif
 
 void
-rtw_set_access1(struct rtw_regs *regs,
-    enum rtw_access oaccess, enum rtw_access naccess)
+rtw_set_access1(struct rtw_regs *regs, enum rtw_access naccess)
 {
 	KASSERT(naccess >= RTW_ACCESS_NONE && naccess <= RTW_ACCESS_ANAPARM);
-	KASSERT(oaccess >= RTW_ACCESS_NONE && oaccess <= RTW_ACCESS_ANAPARM);
+	KASSERT(regs->r_access >= RTW_ACCESS_NONE &&
+	    regs->r_access <= RTW_ACCESS_ANAPARM);
 
-	if (naccess == oaccess)
+	if (naccess == regs->r_access)
 		return;
 
 	switch (naccess) {
 	case RTW_ACCESS_NONE:
-		switch (oaccess) {
+		switch (regs->r_access) {
 		case RTW_ACCESS_ANAPARM:
 			rtw_anaparm_enable(regs, 0);
 			/*FALLTHROUGH*/
@@ -401,7 +401,7 @@ rtw_set_access1(struct rtw_regs *regs,
 		}
 		break;
 	case RTW_ACCESS_CONFIG:
-		switch (oaccess) {
+		switch (regs->r_access) {
 		case RTW_ACCESS_NONE:
 			rtw_config0123_enable(regs, 1);
 			/*FALLTHROUGH*/
@@ -413,7 +413,7 @@ rtw_set_access1(struct rtw_regs *regs,
 		}
 		break;
 	case RTW_ACCESS_ANAPARM:
-		switch (oaccess) {
+		switch (regs->r_access) {
 		case RTW_ACCESS_NONE:
 			rtw_config0123_enable(regs, 1);
 			/*FALLTHROUGH*/
@@ -428,14 +428,14 @@ rtw_set_access1(struct rtw_regs *regs,
 }
 
 void
-rtw_set_access(struct rtw_softc *sc, enum rtw_access access)
+rtw_set_access(struct rtw_regs *regs, enum rtw_access access)
 {
-	rtw_set_access1(&sc->sc_regs, sc->sc_access, access);
+	rtw_set_access1(regs, access);
 	RTW_DPRINTF(RTW_DEBUG_ACCESS,
-	    ("%s: access %s -> %s\n", sc->sc_dev.dv_xname,
-	    rtw_access_string(sc->sc_access),
+	    ("%s: access %s -> %s\n",__func__, 
+	    rtw_access_string(regs->r_access),
 	    rtw_access_string(access)));
-	sc->sc_access = access;
+	regs->r_access = access;
 }
 
 /*
@@ -2055,11 +2055,11 @@ rtw_pwrstate0(struct rtw_softc *sc, enum rtw_pwrstate power, int before_rf,
 {
 	struct rtw_regs *regs = &sc->sc_regs;
 
-	rtw_set_access(sc, RTW_ACCESS_ANAPARM);
+	rtw_set_access(regs, RTW_ACCESS_ANAPARM);
 
 	(*sc->sc_pwrstate_cb)(regs, power, before_rf, digphy);
 
-	rtw_set_access(sc, RTW_ACCESS_NONE);
+	rtw_set_access(regs, RTW_ACCESS_NONE);
 
 	return;
 }
@@ -2225,7 +2225,7 @@ rtw_set_nettype(struct rtw_softc *sc, enum ieee80211_opmode opmode)
 	uint8_t msr;
 
 	/* I'm guessing that MSR is protected as CONFIG[0123] are. */
-	rtw_set_access(sc, RTW_ACCESS_CONFIG);
+	rtw_set_access(&sc->sc_regs, RTW_ACCESS_CONFIG);
 
 	msr = RTW_READ8(&sc->sc_regs, RTW_MSR) & ~RTW_MSR_NETYPE_MASK;
 
@@ -2247,7 +2247,7 @@ rtw_set_nettype(struct rtw_softc *sc, enum ieee80211_opmode opmode)
 	}
 	RTW_WRITE8(&sc->sc_regs, RTW_MSR, msr);
 
-	rtw_set_access(sc, RTW_ACCESS_NONE);
+	rtw_set_access(&sc->sc_regs, RTW_ACCESS_NONE);
 }
 
 /* XXX is the endianness correct? test. */
@@ -2373,7 +2373,7 @@ rtw_init(struct ifnet *ifp)
 
 	rtw_transmit_config(regs);
 
-	rtw_set_access(sc, RTW_ACCESS_CONFIG);
+	rtw_set_access(regs, RTW_ACCESS_CONFIG);
 
 	RTW_WRITE8(regs, RTW_MSR, 0x0); /* no link */
 	RTW_WBW(regs, RTW_MSR, RTW_BRSR);
@@ -2382,8 +2382,8 @@ rtw_init(struct ifnet *ifp)
 	RTW_WRITE16(regs, RTW_BRSR, RTW_BRSR_MBR8180_2MBPS);
 	RTW_SYNC(regs, RTW_BRSR, RTW_BRSR);
 
-	rtw_set_access(sc, RTW_ACCESS_ANAPARM);
-	rtw_set_access(sc, RTW_ACCESS_NONE);
+	rtw_set_access(regs, RTW_ACCESS_ANAPARM);
+	rtw_set_access(regs, RTW_ACCESS_NONE);
 
 #if 0
 	RTW_WRITE(regs, RTW_FEMR, RTW_FEMR_GWAKE|RTW_FEMR_WKUP|RTW_FEMR_INTR);
@@ -2923,7 +2923,7 @@ rtw_join_bss(struct rtw_softc *sc, uint8_t *bssid, enum ieee80211_opmode opmode,
 
 	RTW_SYNC(regs, RTW_BSSID16, RTW_BSSID32);
 
-	rtw_set_access(sc, RTW_ACCESS_CONFIG);
+	rtw_set_access(regs, RTW_ACCESS_CONFIG);
 
 	intval = MIN(intval0, PRESHIFT(RTW_BCNITV_BCNITV_MASK));
 
@@ -2936,7 +2936,7 @@ rtw_join_bss(struct rtw_softc *sc, uint8_t *bssid, enum ieee80211_opmode opmode,
 
 	rtw_set_nettype(sc, opmode);
 
-	rtw_set_access(sc, RTW_ACCESS_NONE);
+	rtw_set_access(regs, RTW_ACCESS_NONE);
 
 	/* TBD WEP */
 	RTW_WRITE8(regs, RTW_SCR, 0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwvar.h,v 1.4 2005/01/22 10:14:25 jsg Exp $	*/
+/*	$OpenBSD: rtwvar.h,v 1.5 2005/01/22 11:22:18 jsg Exp $	*/
 /* $NetBSD: rtwvar.h,v 1.10 2004/12/26 22:37:57 mycroft Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -108,9 +108,16 @@ enum rtw_rfchipid {
 	/* all PHY flags */
 #define RTW_F_ALLPHY		(RTW_F_DIGPHY|RTW_F_DFLANTB|RTW_F_ANTDIV)
 
+enum rtw_access {
+	RTW_ACCESS_NONE = 0,
+	RTW_ACCESS_CONFIG = 1,
+	RTW_ACCESS_ANAPARM = 2
+};
+
 struct rtw_regs {
 	bus_space_tag_t		r_bt;
 	bus_space_handle_t	r_bh;
+	enum rtw_access		r_access;
 };
 
 #define RTW_SR_GET(sr, ofs) \
@@ -327,10 +334,6 @@ struct rtw_sa2400 {
 
 typedef void (*rtw_pwrstate_t)(struct rtw_regs *, enum rtw_pwrstate, int, int);
 
-enum rtw_access {RTW_ACCESS_NONE = 0,
-		 RTW_ACCESS_CONFIG = 1,
-		 RTW_ACCESS_ANAPARM = 2};
-
 struct rtw_softc {
 	struct device		sc_dev;
 	struct ieee80211com	sc_ic;
@@ -422,7 +425,7 @@ void rtw_txdac_enable(struct rtw_softc *, int);
 void rtw_anaparm_enable(struct rtw_regs *, int);
 void rtw_config0123_enable(struct rtw_regs *, int);
 void rtw_continuous_tx_enable(struct rtw_softc *, int);
-void rtw_set_access(struct rtw_softc *, enum rtw_access);
+void rtw_set_access(struct rtw_regs *, enum rtw_access);
 
 void rtw_attach(struct rtw_softc *);
 int rtw_detach(struct rtw_softc *);
