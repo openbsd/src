@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.15 2000/09/16 13:58:23 itojun Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.16 2000/09/19 03:23:16 angelos Exp $	*/
 /*	$KAME: ip6_output.c,v 1.122 2000/08/19 02:12:02 jinmei Exp $	*/
 
 /*
@@ -165,7 +165,6 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 #ifdef IPSEC
 	union sockaddr_union sdst;
 	u_int32_t sspi;
-	u_int8_t sa_require = 0, sa_have = 0;
 	struct inpcb *inp;
 	struct tdb *tdb;
 	int s;
@@ -223,7 +222,7 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 	        tdb = inp->inp_tdb;
 	} else {
 	        tdb = ipsp_spd_lookup(m, AF_INET6, sizeof(struct ip6_hdr),
-	            &error);
+	            &error, IPSP_DIRECTION_OUT, NULL, NULL);
 	}
 
 	if (tdb == NULL) {
@@ -270,24 +269,9 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 			goto done_spd;
 		}
 
-		/* What are the socket (or default) security requirements ? */
-		if (inp == NULL)
-		        sa_require = get_sa_require(NULL);
-		else
-		        sa_require = inp->inp_secrequire;
+		/* XXX Take into consideration socket requirements ? */
 
-		/*
-		 * Now we check if this tdb has all the transforms which
-		 * are required by the socket or our default policy.
-		 */
-		SPI_CHAIN_ATTRIB(sa_have, tdb_onext, tdb);
-		splx(s);
-		if (sa_require & ~sa_have) {
-			error = EHOSTUNREACH;
-			goto freehdrs;
-		}
-
-#if 1
+#if 1 /* XXX */
 		/* if we have any extension header, we cannot perform IPsec */
 		if (exthdrs.ip6e_hbh || exthdrs.ip6e_dest1 ||
 		    exthdrs.ip6e_rthdr || exthdrs.ip6e_dest2) {
