@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.14 1996/08/13 03:12:41 deraadt Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.15 1996/08/21 09:46:21 deraadt Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -53,6 +53,7 @@
 #include <sys/resourcevar.h>
 #include <sys/signalvar.h>
 #include <sys/systm.h>
+#include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/tty.h>
 #include <sys/conf.h>
@@ -405,6 +406,24 @@ static char *initpaths[] = {
 	NULL,
 };
 
+void
+check_console(p)
+	struct proc *p;
+{
+	struct nameidata nd;
+	int error;
+
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, "/dev/console", p);
+	error = namei(&nd);
+	if (error) {
+		if (error == ENOENT)
+			printf("warning: /dev/console does not exist\n");
+		else
+			printf("warning: /dev/console error %d\n", error);
+	} else
+		vrele(nd.ni_vp);
+}
+
 /*
  * Start the initial user process; try exec'ing each pathname in "initpaths".
  * The program is invoked with one argument containing the boot flags.
@@ -439,6 +458,8 @@ start_init(p)
 	 */
 	cpu_set_init_frame(p, initframep);
 #endif
+
+	check_console(p);
 
 	/*
 	 * Need just enough stack to hold the faked-up "execve()" arguments.
