@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.70 2002/05/31 02:22:21 angelos Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -301,36 +301,35 @@ esp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 		}
 	}
 
-	/* Replay window checking, if appropriate */
+	/* Replay window checking, if appropriate -- no value commitment. */
 	if ((tdb->tdb_wnd > 0) && (!(tdb->tdb_flags & TDBF_NOREPLAY)))
 	{
 		m_copydata(m, skip + sizeof(u_int32_t), sizeof(u_int32_t),
 		    (unsigned char *) &btsx);
 		btsx = ntohl(btsx);
 
-		switch (checkreplaywindow32(btsx, 0, &(tdb->tdb_rpl), tdb->tdb_wnd,
-		    &(tdb->tdb_bitmap)))
+		switch (checkreplaywindow32(btsx, 0, &(tdb->tdb_rpl),
+		    tdb->tdb_wnd, &(tdb->tdb_bitmap), 0))
 		{
 		case 0: /* All's well */
 			break;
 
 		case 1:
+			m_freem(m);
 			DPRINTF(("esp_input(): replay counter wrapped for SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 			espstat.esps_wrap++;
-			m_freem(m);
 			return EACCES;
 
 		case 2:
 		case 3:
 			DPRINTF(("esp_input(): duplicate packet received in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
-			espstat.esps_replay++;
 			m_freem(m);
 			return EACCES;
 
 		default:
+			m_freem(m);
 			DPRINTF(("esp_input(): bogus value from checkreplaywindow32() in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 			espstat.esps_replay++;
-			m_freem(m);
 			return EACCES;
 		}
 	}
@@ -480,6 +479,7 @@ esp_input_cb(void *op)
 	struct cryptop *crp;
 	struct m_tag *mtag;
 	struct tdb *tdb;
+	u_int32_t btsx;
 	int s, err = 0;
 	caddr_t ptr;
 
@@ -561,6 +561,39 @@ esp_input_cb(void *op)
 
 		/* Remove trailing authenticator */
 		m_adj(m, -(esph->authsize));
+	}
+
+	/* Replay window checking, if appropriate */
+	if ((tdb->tdb_wnd > 0) && (!(tdb->tdb_flags & TDBF_NOREPLAY)))
+	{
+		m_copydata(m, skip + sizeof(u_int32_t), sizeof(u_int32_t),
+		    (unsigned char *) &btsx);
+		btsx = ntohl(btsx);
+
+		switch (checkreplaywindow32(btsx, 0, &(tdb->tdb_rpl),
+		    tdb->tdb_wnd, &(tdb->tdb_bitmap), 1))
+		{
+		case 0: /* All's well */
+			break;
+
+		case 1:
+			DPRINTF(("esp_input_cb(): replay counter wrapped for SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+			espstat.esps_wrap++;
+			error = EACCES;
+			goto baddone;
+
+		case 2:
+		case 3:
+			DPRINTF(("esp_input_cb(): duplicate packet received in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+			error = EACCES;
+			goto baddone;
+
+		default:
+			DPRINTF(("esp_input_cb(): bogus value from checkreplaywindow32() in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+			espstat.esps_replay++;
+			error = EACCES;
+			goto baddone;
+		}
 	}
 
 	/* Release the crypto descriptors */
@@ -747,19 +780,6 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 
 	espstat.esps_output++;
 
-	/*
-	 * Check for replay counter wrap-around in automatic (not
-	 * manual) keying.
-	 */
-	if ((!(tdb->tdb_flags & TDBF_NOREPLAY)) &&
-	    (tdb->tdb_rpl == 0) && (tdb->tdb_wnd > 0)) {
-		DPRINTF(("esp_output(): SA %s/%08x should have expired\n",
-		    ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
-		m_freem(m);
-		espstat.esps_wrap++;
-		return EACCES;
-	}
-
 	switch (tdb->tdb_dst.sa.sa_family) {
 #ifdef INET
 	case AF_INET:
@@ -856,7 +876,7 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 		    "SA %s/%08x\n", ipsp_address(tdb->tdb_dst),
 		    ntohl(tdb->tdb_spi)));
 		m_freem(m);
-		espstat.esps_wrap++;
+		espstat.esps_hdrops++;
 		return ENOBUFS;
 	}
 
@@ -1068,9 +1088,18 @@ esp_output_cb(void *op)
  */
 int
 checkreplaywindow32(u_int32_t seq, u_int32_t initial, u_int32_t *lastseq,
-    u_int32_t window, u_int32_t *bitmap)
+    u_int32_t window, u_int32_t *bitmap, int commit)
 {
-	u_int32_t diff;
+	u_int32_t diff, llseq, lbitmap;
+
+	/* Just do the checking, without "committing" any changes. */
+	if (commit == 0) {
+		llseq = *lastseq;
+		lbitmap = *bitmap;
+
+		lastseq = &llseq;
+		bitmap = &lbitmap;
+	}
 
 	seq -= initial;
 

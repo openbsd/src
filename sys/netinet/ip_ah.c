@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.64 2002/05/31 02:22:21 angelos Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -516,7 +516,7 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 		btsx = ntohl(btsx);
 
 		switch (checkreplaywindow32(btsx, 0, &(tdb->tdb_rpl),
-		    tdb->tdb_wnd, &(tdb->tdb_bitmap))) {
+		    tdb->tdb_wnd, &(tdb->tdb_bitmap), 0)) {
 		case 0: /* All's well. */
 			break;
 
@@ -535,7 +535,6 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 			    "SA %s/%08x\n", ipsp_address(tdb->tdb_dst),
 			    ntohl(tdb->tdb_spi)));
 
-			ahstat.ahs_replay++;
 			m_freem(m);
 			return ENOBUFS;
 
@@ -693,6 +692,7 @@ ah_input_cb(void *op)
 	struct cryptop *crp;
 	struct m_tag *mtag;
 	struct tdb *tdb;
+	u_int32_t btsx;
 	u_int8_t prot;
 	caddr_t ptr;
 	int s, err;
@@ -709,8 +709,8 @@ ah_input_cb(void *op)
 	s = spltdb();
 
 	tdb = gettdb(tc->tc_spi, &tc->tc_dst, tc->tc_proto);
-	FREE(tc, M_XDATA);
 	if (tdb == NULL) {
+		FREE(tc, M_XDATA);
 		ahstat.ahs_notdb++;
 		DPRINTF(("ah_input_cb(): TDB is expired while in crypto"));
 		goto baddone;
@@ -725,9 +725,11 @@ ah_input_cb(void *op)
 
 		if (crp->crp_etype == EAGAIN) {
 			splx(s);
+			FREE(tc, M_XDATA);
 			return crypto_dispatch(crp);
 		}
 
+		FREE(tc, M_XDATA);
 		ahstat.ahs_noxform++;
 		DPRINTF(("ah_input_cb(): crypto error %d\n", crp->crp_etype));
 		error = crp->crp_etype;
@@ -739,6 +741,7 @@ ah_input_cb(void *op)
 
 	/* Shouldn't happen... */
 	if (m == NULL) {
+		FREE(tc, M_XDATA);
 		ahstat.ahs_crypto++;
 		DPRINTF(("ah_input_cb(): bogus returned buffer from "
 		    "crypto\n"));
@@ -763,6 +766,8 @@ ah_input_cb(void *op)
 
 		/* Verify authenticator. */
 		if (bcmp(ptr + skip + rplen, calc, ahx->authsize)) {
+			FREE(tc, M_XDATA);
+
 			DPRINTF(("ah_input(): authentication failed for "
 			    "packet in SA %s/%08x\n",
 			    ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
@@ -781,6 +786,48 @@ ah_input_cb(void *op)
 		/* Fix the Next Protocol field. */
 		m_copydata(m, skip, sizeof(u_int8_t), &prot);
 		m_copyback(m, protoff, sizeof(u_int8_t), &prot);
+	}
+
+	FREE(tc, M_XDATA);
+
+	/* Replay window checking, if applicable. */
+	if ((tdb->tdb_wnd > 0) && (!(tdb->tdb_flags & TDBF_NOREPLAY))) {
+		m_copydata(m, skip + offsetof(struct ah, ah_rpl),
+		    sizeof(u_int32_t), (caddr_t) &btsx);
+		btsx = ntohl(btsx);
+
+		switch (checkreplaywindow32(btsx, 0, &(tdb->tdb_rpl),
+		    tdb->tdb_wnd, &(tdb->tdb_bitmap), 1)) {
+		case 0: /* All's well. */
+			break;
+
+		case 1:
+			DPRINTF(("ah_input(): replay counter wrapped for "
+			    "SA %s/%08x\n", ipsp_address(tdb->tdb_dst),
+			    ntohl(tdb->tdb_spi)));
+
+			ahstat.ahs_wrap++;
+			error = ENOBUFS;
+			goto baddone;
+
+		case 2:
+		case 3:
+			DPRINTF(("ah_input_cb(): duplicate packet received in "
+			    "SA %s/%08x\n", ipsp_address(tdb->tdb_dst),
+			    ntohl(tdb->tdb_spi)));
+
+			error = ENOBUFS;
+			goto baddone;
+
+		default:
+			DPRINTF(("ah_input_cb(): bogus value from "
+			    "checkreplaywindow32() in SA %s/%08x\n",
+			    ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+
+			ahstat.ahs_replay++;
+			error = ENOBUFS;
+			goto baddone;
+		}
 	}
 
 	/* Record the beginning of the AH header. */
