@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.87 2003/12/15 07:11:29 mcbride Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.88 2003/12/23 14:52:12 markus Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.87 2003/12/15 07:11:29 mcbride Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.88 2003/12/23 14:52:12 markus Exp $";
 #endif
 #endif /* not lint */
 
@@ -328,7 +328,7 @@ const struct	cmd {
 };
 
 void	adjust_nsellength(void);
-int	getinfo(struct ifreq *);
+int	getinfo(struct ifreq *, int);
 void	getsock(int);
 void	printif(struct ifreq *, int);
 void	printb(char *, unsigned short, char *);
@@ -411,6 +411,7 @@ int
 main(int argc, char *argv[])
 {
 	const struct afswtch *rafp = NULL;
+	int create = 0;
 	int aflag = 0;
 	int ifaliases = 0;
 	int Cflag = 0;
@@ -484,8 +485,8 @@ main(int argc, char *argv[])
 		if (argc == 0)
 			exit(0);
 	}
-
-	if (getinfo(&ifr) < 0)
+	create = (argc > 0) && strcmp(argv[0], "destroy") != 0;
+	if (getinfo(&ifr, create) < 0)
 		exit(1);
 	while (argc > 0) {
 		const struct cmd *p;
@@ -605,15 +606,28 @@ getsock(int naf)
 }
 
 int
-getinfo(struct ifreq *ifr)
+getinfo(struct ifreq *ifr, int create)
 {
 
 	getsock(af);
 	if (s < 0)
 		err(1, "socket");
 	if (ioctl(s, SIOCGIFFLAGS, (caddr_t)ifr) < 0) {
-		warn("SIOCGIFFLAGS");
-		return (-1);
+		int oerrno = errno;
+
+		if (!create) {
+			warn("SIOCGIFFLAGS");
+			return (-1);
+		}
+		if (ioctl(s, SIOCIFCREATE, (caddr_t)ifr) < 0) {
+			errno = oerrno;
+			warn("SIOCGIFFLAGS");
+			return (-1);
+		}
+		if (ioctl(s, SIOCGIFFLAGS, (caddr_t)ifr) < 0) {
+			warn("SIOCGIFFLAGS");
+			return (-1);
+		}
 	}
 	flags = ifr->ifr_flags;
 	if (ioctl(s, SIOCGIFMETRIC, (caddr_t)ifr) < 0) {
@@ -667,7 +681,7 @@ printif(struct ifreq *ifrm, int ifaliases)
 
 		if (ifa->ifa_addr->sa_family == AF_LINK) {
 			namep = ifa->ifa_name;
-			if (getinfo(ifrp) < 0)
+			if (getinfo(ifrp, 0) < 0)
 				continue;
 			status(1, (struct sockaddr_dl *)ifa->ifa_addr);
 			count++;
@@ -749,7 +763,7 @@ printif(struct ifreq *ifrm, int ifaliases)
 		(void) strlcpy(name, ifrp->ifr_name, sizeof(name));
 		if (ifrp->ifr_addr.sa_family == AF_LINK) {
 			ifreq = ifr = *ifrp;
-			if (getinfo(&ifreq) < 0)
+			if (getinfo(&ifreq, 0) < 0)
 				continue;
 			status(1, NULL);
 			count++;
