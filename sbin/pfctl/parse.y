@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.24 2001/08/26 07:58:40 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.25 2001/08/28 09:27:16 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -299,11 +299,17 @@ ipportspec	: ipspec			{ $$.host = $1; $$.port = NULL; }
 
 ipspec		: ANY				{ $$ = NULL; }
 		| '!' host			{ $$ = $2; $$->not = 1; }
-		| host				{ $$ = $1; $$->not = 0; }
+		| host				{ $$ = $1; }
 		| '{' host_list '}'		{ $$ = $2; }
 		;
 
-host_list	: host				{ $$ = $1; }
+host_list	: '!' host			{ $$ = $2; $$->not = 1; } 
+		| host				{ $$ = $1; }
+		| host_list ',' '!' host	{
+			$4->next = $1;
+			$4->not = 1;
+			$$ = $4;
+		}
 		| host_list ',' host		{ $3->next = $1; $$ = $3; }
 
 host		: address			{
