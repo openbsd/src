@@ -1,5 +1,5 @@
-#	$OpenBSD: files.i386,v 1.16 1996/05/04 14:30:35 mickey Exp $
-#	$NetBSD: files.i386,v 1.72 1996/04/09 22:59:03 cgd Exp $
+#	$OpenBSD: files.i386,v 1.17 1996/05/10 12:43:59 deraadt Exp $
+#	$NetBSD: files.i386,v 1.73 1996/05/07 00:58:36 thorpej Exp $
 #
 # new style config file for i386 architecture
 #
@@ -146,14 +146,6 @@ device	ed: ether, ifnet
 attach	ed at isa with ed_isa
 attach	ed at pcmcia with ed_pcmcia
 file	dev/isa/if_ed.c			ed & (ed_isa | ed_pcmcia) needs-flag
-
-# AMD am7990 (Lance) -based boards
-# (BICC Isolan, NE2100, DEPCA)
-# XXX conflicts with other ports; can't be in files.isa
-device	le: ether, ifnet
-attach	le at isa with le_isa: isadma
-attach	le at pci with le_pci
-file	dev/isa/if_le.c			le
 
 # Game adapter (joystick)
 device	joy
