@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.26 1997/03/13 05:30:02 briggs Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.27 1997/04/02 08:01:56 deraadt Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -321,7 +321,7 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_CDROM, T_REMOV,
 	 "MATSHITA", "CD-ROM CR-5XX   ", "1.0b"}, SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,
-	 "MEDIAVIS", "CDR-H93MV       ", "1.31"}, SDEV_NOLUNS},
+	 "MEDIAVIS", "CDR-H93MV       ", "1.3"}, SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,
 	 "NEC     ", "CD-ROM DRIVE:55 ", ""},     SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,
