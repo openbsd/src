@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.8 1999/02/12 04:54:46 kjell Exp $
+.\" $OpenBSD: vpn.8,v 1.9 1999/02/12 21:35:27 kjell Exp $
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -79,7 +79,7 @@ being unguessable, it is very important that the keys be chosen using a
 strong random source. One practical method of generating them
 is by using the 
 .Xr random 4
-device. Eg:
+device. To produce 160 bits of randomness, for example, do a:
 .Bd -literal
    dd if=/dev/urandom bs=1024 count=1 | sha1
 .Ed
@@ -88,11 +88,17 @@ Different cipher types may require different sized keys.
 .Pp
 .Bl -column "Cipher" "Key Length" -compact
 .It Em Cipher	Key Length
-.It Li DES Ta "8 bytes"
-.It Li 3DES Ta "24 bytes"
-.It Li BLF Ta "Variable"
-.It Li CAST Ta "Variable"
+.It Li DES Ta "56 bits"
+.It Li 3DES Ta "168 bits"
+.It Li BLF Ta "Variable (160 bits recommended)"
+.It Li CAST Ta "Variable (160 bits recommended)"
 .El
+.Pp
+Use of DES as an encryption algorithm is not recommended
+(except for backwards compatibility) due to its short key length.
+Note that when using DES (or 3DES), the most significant bit of each
+byte is ignored. This means that 8 bytes are required to form a 56-bit
+DES key, and 24 bytes are required to form a 168 bit 3DES key.
 .Pp
 Initialization vectors (IV) are always 8 byte hexadecimal values.
 .Ss Creating Security Associations
@@ -317,9 +323,10 @@ Firewall configuration file
 .Sh BUGS
 When using 
 .Xr photurisd 8
-in VPN mode, both of your security gateways need to be in the protected
-network; that is, the gateway IP and network mask = network. This means
-that it is only possible to tunnel private networks using manual keying.
+in VPN mode, both of the security gateways IP addresses must fall within
+their protected netranges.
+In situations where the gateway IP is outside the desired netrange, such 
+as with private networks (RFC 1597), manual keying must be used.
 This should be fixed in the next release.
 .Sh SEE ALSO
 .Xr ipf 1 ,
