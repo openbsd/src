@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.9 2004/05/15 13:13:05 otto Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.10 2004/06/09 19:21:55 otto Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -649,10 +649,9 @@ priv_getprotoentry(char *name, size_t name_len, int *num)
 }
 
 /* localtime() replacement: ask parent for localtime and gmtime, cache
- * the localtime for about one hour i.e. until one of the fields other
- * than seconds and minutes change. The check is done using gmtime
- * values since they are the same in parent and child.
- * XXX assumes timezone granularity is 1 hour. */
+ * the localtime for about one minute i.e. until one of the fields other
+ * than seconds changes. The check is done using gmtime
+ * values since they are the same in parent and child. */
 struct	tm *
 priv_localtime(const time_t *t)
 {
@@ -663,12 +662,10 @@ priv_localtime(const time_t *t)
 	if (gt != NULL) {
 		gt = gmtime(t);
 		gt0.tm_sec = gt->tm_sec;
-		gt0.tm_min = gt->tm_min;
 		gt0.tm_zone = gt->tm_zone;
 
 		if (memcmp(gt, &gt0, sizeof(struct tm)) == 0) {
 			lt.tm_sec = gt0.tm_sec;
-			lt.tm_min = gt0.tm_min;
 			return &lt;
 		}
 	}
