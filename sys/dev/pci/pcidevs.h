@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.115 1999/01/16 08:39:06 fgsch Exp 
+ *	OpenBSD: pcidevs,v 1.116 1999/02/03 08:55:34 downsj Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -774,6 +774,10 @@
 
 /* Corollary Products */
 #define	PCI_PRODUCT_COROLLARY_CBUSII_PCIB	0x0014		/* C-Bus II-PCI */
+
+/* Creative Labs */
+#define	PCI_PRODUCT_CREATIVELABS_SBLIVE	0x0002		/* SoundBlaster Live */
+#define	PCI_PRODUCT_CREATIVELABS_DIGIN	0x7002		/* SoundBlaster Digital Input */
 
 /* Cyclades products */
 #define	PCI_PRODUCT_CYCLADES_CYCLOMY_1	0x0100		/* Cyclom-Y below 1M */

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.115 1999/01/16 08:39:06 fgsch Exp 
+ *	OpenBSD: pcidevs,v 1.116 1999/02/03 08:55:34 downsj Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1069,6 +1069,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Corrollary",
 	    "C-Bus II-PCI",
+	},
+	{
+	    PCI_VENDOR_CREATIVELABS, PCI_PRODUCT_CREATIVELABS_SBLIVE,
+	    0,
+	    "Creative Labs",
+	    "SoundBlaster Live",
+	},
+	{
+	    PCI_VENDOR_CREATIVELABS, PCI_PRODUCT_CREATIVELABS_DIGIN,
+	    0,
+	    "Creative Labs",
+	    "SoundBlaster Digital Input",
 	},
 	{
 	    PCI_VENDOR_CYCLADES, PCI_PRODUCT_CYCLADES_CYCLOMY_1,
