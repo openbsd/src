@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftp-proxy.8,v 1.24 2002/10/11 20:32:10 dhartmei Exp $
+.\"	$OpenBSD: ftp-proxy.8,v 1.25 2002/11/27 16:57:39 henning Exp $
 .\"
 .\" Copyright (c) 1996-2001
 .\"	Obtuse Systems Corporation, All rights reserved.
@@ -159,19 +159,21 @@ is run from
 and requires that FTP connections are redirected to it using a
 .Em rdr
 rule.
-A typical way to do this would be to use a rule such as
-.Pp
-rdr on xl0 proto tcp from any to any port 21 -> 127.0.0.1 port 8021 
-.Pp
-in
+A typical way to do this would be to use a
 .Xr pf.conf 5
-(this example assumes xl0 is the interface facing an internal network).
+rule such as
+.Pp
+.Bd -literal
+  int_if = xl0
+  rdr on $int_if proto tcp from any to any port 21 -> 127.0.0.1 port 8021
+.Ed
+.Pp
 .Xr inetd 8
 must then be configured to run
 .Nm ftp-proxy
 on the port from above using
 .Pp
-127.0.0.1:8021 stream tcp nowait root /usr/libexec/ftp-proxy ftp-proxy
+  127.0.0.1:8021 stream tcp nowait root /usr/libexec/ftp-proxy ftp-proxy
 .Pp
 in
 .Xr inetd.conf 5 .
@@ -187,29 +189,32 @@ proxy forwards it to the client.
 The
 .Xr pf.conf 5
 rules need to let pass connections to these proxy ports
-(see options -u, -m and -M above) in on the external interface.
+(see options -u, -m and -M above) out on the external interface.
 The following example allows only ports 49152 to 65535 to pass in
-statefully (assuming xl1 is the external interface):
+statefully:
 .Bd -literal
-block in on xl1 proto tcp all
-pass  in on xl1 proto tcp from any to xl1 port > 49151 keep state
+  block out on $ext_if proto tcp all
+  pass  out on $ext_if proto tcp from $ext_if to any \\
+      port > 49151 keep state
 .Ed
 .Pp
-Alternatively, rules make use of the fact that by default,
+Alternatively, rules can make use of the fact that by default,
 .Nm ftp-proxy
 runs as user "proxy" to allow the backchannel connections, as in the following example:
 .Bd -literal
-block in on xl1 proto tcp all
-pass  in on xl1 proto tcp from any to xl1 user proxy keep state
+  block out on $ext_if proto tcp all
+  pass  out on $ext_if proto tcp from $ext_if to any user proxy keep state
 .Ed
 .Sh SEE ALSO
 .Xr ftp 1 ,
 .Xr pf 4 ,
 .Xr hosts.allow 5 ,
 .Xr hosts.deny 5 ,
+.Xr inetd.conf 5 ,
 .Xr pf.conf 5 ,
+.Xr inetd 8 .
 .Xr pfctl 8 ,
-.Xr syslogd 8
+.Xr syslogd 8 .
 .Sh BUGS
 Extended Passive mode (EPSV) is not supported by the proxy and will
 not work unless the proxy is run in network address translation mode.
