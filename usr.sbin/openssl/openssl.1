@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.32 2004/01/28 19:25:19 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.33 2004/01/28 20:09:23 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -3675,6 +3675,11 @@ This option does not encrypt private keys at all and should only be used
 when absolutely necessary.
 Certain software such as some versions of Java code signing software use
 unencrypted private keys.
+.It Fl noiter
+Use an iteration count of 1.
+See the
+.Sx PKCS12
+section below for a detailed explanation of this option.
 .It Fl nooct
 This option generates RSA private keys in a broken format that some software
 uses.
@@ -3860,20 +3865,19 @@ compatibility, several of the utilities use the old format at present.
 .Fl des | des3
 .Oc
 .Op Fl cacerts
-.Op Fl certpbe
 .Op Fl chain
 .Op Fl clcerts
 .Op Fl descert
 .Op Fl export
 .Op Fl info
 .Op Fl keyex
-.Op Fl keypbe
 .Op Fl keysig
 .Op Fl maciter
 .Op Fl nocerts
 .Op Fl nodes
 .Op Fl noiter
 .Op Fl nokeys
+.Op Fl nomaciter
 .Op Fl nomacver
 .Op Fl noout
 .Op Fl twopass
@@ -3881,14 +3885,15 @@ compatibility, several of the utilities use the old format at present.
 .Op Fl CApath Ar directory
 .Op Fl caname Ar name
 .Op Fl certfile Ar file
+.Op Fl certpbe Ar alg
 .Op Fl engine Ar id
 .Op Fl in Ar file
 .Op Fl inkey Ar file
+.Op Fl keypbe Ar alg
 .Op Fl name Ar name
 .Op Fl out Ar file
 .Op Fl passin Ar arg
 .Op Fl passout Ar arg
-.Op Fl password Ar arg
 .Op Fl rand Ar file ...
 .Ek
 .Pp
@@ -3946,7 +3951,7 @@ The
 .Ar file
 to write certificates and private keys to, standard output by default.
 They are all written in PEM format.
-.It Fl pass Ar arg , Fl passin Ar arg
+.It Fl passin Ar arg
 The PKCS#12 file
 .Pq i.e. input file
 password source.
@@ -3975,7 +3980,7 @@ File of CAs
 .It Fl CApath Ar directory
 Directory of CAs
 .Pq PEM format .
-.It Fl caname Ar friendlyname
+.It Fl caname Ar name
 This specifies the
 .Qq friendly name
 for other certificates.
@@ -3985,6 +3990,14 @@ Netscape ignores friendly names on other certificates,
 whereas MSIE displays them.
 .It Fl certfile Ar file
 A file to read additional certificates from.
+.It Fl certpbe Ar alg , Fl keypbe Ar alg
+These options allow the algorithm used to encrypt the private key and
+certificates to be selected.
+Although any PKCS#5 v1.5 or PKCS#12 algorithms can be selected,
+it is advisable to only use PKCS#12 algorithms.
+See the list in the
+.Sx PKCS12 NOTES
+section for more information.
 .It Fl chain
 If this option is present, then an attempt is made to include the entire
 certificate chain of the user certificate.
@@ -4035,18 +4048,10 @@ Signing only keys can be used for S/MIME signing, authenticode
 and SSL client authentication;
 however, due to a bug only MSIE 5.0 and later support
 the use of signing only keys for SSL client authentication.
-.It Fl keypbe Ar alg , Fl certpbe Ar alg
-These options allow the algorithm used to encrypt the private key and
-certificates to be selected.
-Although any PKCS#5 v1.5 or PKCS#12 algorithms can be selected,
-it is advisable to only use PKCS#12 algorithms.
-See the list in the
-.Sx PKCS12 NOTES
-section for more information.
 .It Fl maciter
 This option is included for compatibility with previous versions; it used
 to be needed to use MAC iterations counts but they are now used by default.
-.It Fl name Ar friendlyname
+.It Fl name Ar name
 This specifies the
 .Qq friendly name
 for the certificate and private key.
@@ -4075,17 +4080,17 @@ This specifies
 .Ar file
 to write the PKCS#12 file to.
 Standard output is used by default.
-.It Fl pass Ar arg , Fl passout Ar arg
-The PKCS#12 file
-.Pq i.e. output file
-password source.
+.It Fl passin Ar arg
+Pass phrase source to decrypt any input private keys with.
 For more information about the format of
 .Ar arg ,
 see the
 .Sx PASS PHRASE ARGUMENTS
 section above.
-.It Fl passin Ar password
-Pass phrase source to decrypt any input private keys with.
+.It Fl passout Ar arg
+The PKCS#12 file
+.Pq i.e. output file
+password source.
 For more information about the format of
 .Ar arg ,
 see the
