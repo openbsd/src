@@ -1,4 +1,4 @@
-/*	$OpenBSD: pr.c,v 1.2 1996/06/26 05:37:54 deraadt Exp $	*/
+/*	$OpenBSD: pr.c,v 1.3 1996/08/10 04:41:00 imp Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
@@ -45,7 +45,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)pr.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$OpenBSD: pr.c,v 1.2 1996/06/26 05:37:54 deraadt Exp $";
+static char *rcsid = "$OpenBSD: pr.c,v 1.3 1996/08/10 04:41:00 imp Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1464,12 +1464,20 @@ prtail(cnt, incomp)
 		/*
 		 * only pad with no headers when incomplete last line
 		 */
-		if (!incomp)
-			return(0);
-		if ((dspace && (putchar('\n') == EOF)) ||
-		    (putchar('\n') == EOF)) {
+		if (incomp &&
+		    ((dspace && (putchar('\n') == EOF)) ||
+		     (putchar('\n') == EOF))) {
 			pfail();
 			return(1);
+		}
+		/*
+		 * but honor the formfeed request
+		 */
+		if (formfeed) {
+			if (putchar('\f') == EOF) {
+				pfail();
+				return(1);
+			}
 		}
 		return(0);
 	}
