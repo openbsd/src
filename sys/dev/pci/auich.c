@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.2 2000/07/18 21:33:11 mickey Exp $	*/
+/*	$OpenBSD: auich.c,v 1.3 2000/08/11 06:17:18 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -12,6 +12,8 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
+ * 3. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -179,7 +181,7 @@ struct ich_softc {
 	struct ac97_codec_if *codec_if;
 	struct ac97_host_if host_if;
 
-	/* dma scatter-gather buffer lists */
+	/* dma scatter-gather buffer lists, aligned to 8 bytes */
 	struct ich_dmalist *dmalist_pcmo, *dmap_pcmo,
 	    dmasto_pcmo[ICH_DMALIST_MAX+1];
 	struct ich_dmalist *dmalist_pcmi, *dmap_pcmi,
@@ -225,13 +227,12 @@ struct cfattach ich_ca = {
 };
 
 static const struct ich_devtype {
-	char	name[MAX_AUDIO_DEV_LEN];
 	int	product;
 	int	options;
 } ich_devices[] = {
-	{ "i82801AA",	PCI_PRODUCT_INTEL_82801AA_ACA, 0 },
-	{ "i82801AB",	PCI_PRODUCT_INTEL_82801AB_ACA, 0 },
-	{ "440MX",	PCI_PRODUCT_INTEL_82440MX_ACA, 0 },
+	{ PCI_PRODUCT_INTEL_82801AA_ACA, 0 },
+	{ PCI_PRODUCT_INTEL_82801AB_ACA, 0 },
+	{ PCI_PRODUCT_INTEL_82440MX_ACA, 0 },
 };
 
 int ich_open __P((void *, int));
@@ -320,7 +321,6 @@ ich_attach(parent, self, aux)
 	bus_size_t mix_size, aud_size;
 	pcireg_t csr;
 	const char *intrstr;
-	int i;
 
 	if (pci_mapreg_map(pa, ICH_NAMBAR, PCI_MAPREG_TYPE_IO, 0,
 			   &sc->iot, &sc->mix_ioh, NULL, &mix_size)) {
@@ -360,11 +360,14 @@ ich_attach(parent, self, aux)
 		return;
 	}
 
+#ifdef notused
 	for (i = sizeof(ich_devices)/sizeof(ich_devices[0]); i--;)
 		if (PCI_PRODUCT(pa->pa_id) == ich_devices[i].product)
 			break;
+#endif
 
-	strcpy(sc->sc_audev.name, ich_devices[i].name);
+	strcpy(sc->sc_audev.name, "ICH0 AC97");
+	sprintf(sc->sc_audev.version, "0x%02x", PCI_REVISION(pa->pa_class));
 	strcpy(sc->sc_audev.config, sc->sc_dev.dv_xname);
 
 	printf(" %s: %s\n", intrstr, sc->sc_audev.name);
@@ -388,9 +391,9 @@ ich_attach(parent, self, aux)
 	sc->host_if.reset = ich_reset_codec;
 
 	if (ac97_attach(&sc->host_if) != 0) {
+		pci_intr_disestablish(pa->pa_pc, sc->sc_ih);
 		bus_space_unmap(sc->iot, sc->aud_ioh, aud_size);
 		bus_space_unmap(sc->iot, sc->mix_ioh, mix_size);
-		pci_intr_disestablish(pa->pa_pc, sc->sc_ih);
 		return;
 	}
 
