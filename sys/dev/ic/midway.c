@@ -1,4 +1,4 @@
-/*	$OpenBSD: midway.c,v 1.21 1997/09/29 17:45:58 chuck Exp $	*/
+/*	$OpenBSD: midway.c,v 1.22 1998/10/20 23:31:06 deraadt Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -1861,7 +1861,14 @@ again:
     goto dequeue_drop;
   }
 
-  if (launch.need > sc->txslot[chan].bfree) {
+  /*
+   * note: note that we cannot totally fill the circular buffer (i.e.
+   * we can't use up all of the remaining sc->txslot[chan].bfree free
+   * bytes) because that would cause the circular buffer read pointer
+   * to become equal to the write pointer, thus signaling 'empty buffer'
+   * to the hardware and stopping the transmitter.
+   */
+  if (launch.need >= sc->txslot[chan].bfree) {
     EN_COUNT(sc->txoutspace);
 #ifdef EN_DEBUG
     printf("%s: tx%d: out of transmit space\n", sc->sc_dev.dv_xname, chan);
