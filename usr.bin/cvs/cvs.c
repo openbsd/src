@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.9 2004/07/30 23:13:24 jfb Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.10 2004/08/06 13:01:09 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -62,6 +62,11 @@ int   cvs_cmdop;
 char *cvs_rootstr;
 char *cvs_rsh = CVS_RSH_DEFAULT;
 char *cvs_editor = CVS_EDITOR_DEFAULT;
+
+
+/* hierarchy of all the files affected by the command */
+CVSFILE *cvs_files;
+
 
 
 /*
