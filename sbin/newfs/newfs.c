@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.20 1999/12/03 19:24:18 art Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.21 2000/03/21 21:58:04 jason Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.8 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: newfs.c,v 1.20 1999/12/03 19:24:18 art Exp $";
+static char rcsid[] = "$OpenBSD: newfs.c,v 1.21 2000/03/21 21:58:04 jason Exp $";
 #endif
 #endif /* not lint */
 
@@ -317,9 +317,9 @@ main(argc, argv)
 				fatal("%s: bad file system size", optarg);
 			break;
 		case 'z':
-				
 			if ((ntracks = atoi(optarg)) <= 0)
 				fatal("%s: bad total tracks", optarg);
+			break;
 		case 't':
 			fstype = optarg;
 			if (strcmp(fstype, "ffs"))
