@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.83 2002/09/05 21:37:18 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.84 2002/09/09 18:32:27 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -2654,7 +2654,6 @@ switch_exited
 	ldw	14*4(t2), r17
 	ldw	15*4(t2), r18
 	stw	t3, TF_R30(t1)
-	fdc	r0(t1)
 	copy	t2, sp
 
 switch_return
