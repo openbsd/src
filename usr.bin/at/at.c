@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.23 2002/05/11 21:37:13 millert Exp $	*/
+/*	$OpenBSD: at.c,v 1.24 2002/05/11 21:56:54 millert Exp $	*/
 /*	$NetBSD: at.c,v 1.4 1995/03/25 18:13:31 glass Exp $	*/
 
 /*
@@ -74,7 +74,7 @@ enum { ATQ, ATRM, AT, BATCH, CAT };	/* what program we want to run */
 
 /* File scope variables */
 #ifndef lint
-static char rcsid[] = "$OpenBSD: at.c,v 1.23 2002/05/11 21:37:13 millert Exp $";
+static char rcsid[] = "$OpenBSD: at.c,v 1.24 2002/05/11 21:56:54 millert Exp $";
 #endif
 
 char *no_export[] =
@@ -572,8 +572,7 @@ main(argc, argv)
 		ATQ, ATRM, AT, BATCH, CAT
 	};				/* what program we want to run */
 	int program = AT;		/* our default program */
-	char *options = "q:f:mvldbVc";	/* default options for at */
-	int disp_version = 0;
+	char *options = "q:f:mvldbc";	/* default options for at */
 	time_t timer;
 
 	RELINQUISH_PRIVS
@@ -589,13 +588,13 @@ main(argc, argv)
 	/* find out what this program is supposed to do */
 	if (strcmp(pgm, "atq") == 0) {
 		program = ATQ;
-		options = "q:vV";
+		options = "q:v";
 	} else if (strcmp(pgm, "atrm") == 0) {
 		program = ATRM;
-		options = "V";
+		options = "";
 	} else if (strcmp(pgm, "batch") == 0) {
 		program = BATCH;
-		options = "f:q:mvV";
+		options = "f:q:mv";
 	}
 
 	/* process whatever options we can process */
@@ -630,7 +629,7 @@ main(argc, argv)
 				usage();
 
 			program = ATRM;
-			options = "V";
+			options = "";
 			break;
 
 		case 'l':
@@ -638,7 +637,7 @@ main(argc, argv)
 				usage();
 
 			program = ATQ;
-			options = "q:vV";
+			options = "q:v";
 			break;
 
 		case 'b':
@@ -646,11 +645,7 @@ main(argc, argv)
 				usage();
 
 			program = BATCH;
-			options = "f:q:mvV";
-			break;
-
-		case 'V':
-			disp_version = 1;
+			options = "f:q:mv";
 			break;
 
 		case 'c':
@@ -663,9 +658,6 @@ main(argc, argv)
 			break;
 		}
 	/* end of options eating */
-
-	if (disp_version)
-		(void)fprintf(stderr, "%s version %.1f\n", namep, AT_VERSION);
 
 	if (!check_permission())
 		errx(EXIT_FAILURE, "You do not have permission to use %s.",

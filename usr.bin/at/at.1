@@ -1,4 +1,4 @@
-.\" $OpenBSD: at.1,v 1.19 2002/05/11 18:41:20 millert Exp $
+.\" $OpenBSD: at.1,v 1.20 2002/05/11 21:56:54 millert Exp $
 .\" $FreeBSD: at.man,v 1.6 1997/02/22 19:54:05 peter Exp $
 .Dd April 12, 1995
 .Dt AT 1
@@ -11,24 +11,19 @@
 .Nd queue, examine or delete jobs for later execution
 .Sh SYNOPSIS
 .Nm at
-.Op Fl V
 .Op Fl q Ar queue
 .Op Fl f Ar file
 .Op Fl mldbv
 .Ar time
 .Nm at
-.Op Fl V
 .Fl c Ar job Op Ar job ...
 .Nm atq
-.Op Fl V
 .Op Fl q Ar queue
 .Op Fl v
 .Nm atrm
-.Op Fl V
 .Ar job
 .Op Ar job ...
 .Nm batch
-.Op Fl V
 .Op Fl q Ar queue
 .Op Fl f Ar file
 .Op Fl mv
@@ -59,8 +54,6 @@ the load average drops below 1.5, or the value specified in the invocation of
 .Pp
 The options are as follows:
 .Bl -tag -width indent
-.It Fl V
-Prints the version number to standard error.
 .It Fl q Ar queue
 Uses the specified queue.
 A queue designation consists of a single letter.
