@@ -1,4 +1,4 @@
-/*	$OpenBSD: audioctl.c,v 1.10 2003/06/21 01:39:07 deraadt Exp $	*/
+/*	$OpenBSD: audioctl.c,v 1.11 2004/07/06 02:46:06 vincent Exp $	*/
 /*	$NetBSD: audioctl.c,v 1.14 1998/04/27 16:55:23 augustss Exp $	*/
 
 /*
@@ -324,7 +324,7 @@ usage(void)
 	fprintf(stderr,
 	    "usage: %s [-f file] [-n] -a\n"
 	    "       %s [-f file] [-n] name [...]\n"
-	    "       %s [-f file] [-n] -w name=value [...]\n", __progname,
+	    "       %s [-f file] [-n] name=value [...]\n", __progname,
 		__progname, __progname);
 
 	exit(1);
@@ -334,8 +334,9 @@ int
 main(int argc, char **argv)
 {
 	int fd, i, ch;
-	int aflag = 0, wflag = 0;
+	int aflag = 0, canwrite, writeinfo = 0;
 	struct stat dstat, ostat;
+	struct field *p;
 	char *file;
 	char *sep = "=";
     
@@ -348,7 +349,7 @@ main(int argc, char **argv)
 			aflag++;
 			break;
 		case 'w':
-			wflag++;
+			/* backward compatibility */
 			break;
 		case 'n':
 			sep = 0;
@@ -356,16 +357,19 @@ main(int argc, char **argv)
 		case 'f':
 			file = optarg;
 			break;
-		case '?':
 		default:
 			usage();
 		}
 	}
 	argc -= optind;
 	argv += optind;
-    
-	if ((fd = open(file, wflag ? O_RDWR : O_RDONLY)) < 0)
-		err(1, "%s", file);
+
+	if ((fd = open(file, O_RDWR)) < 0) {
+		if ((fd = open(file, O_RDONLY)) < 0)
+			err(1, "%s", file);
+		canwrite = 0;
+	} else
+		canwrite = 1;
     
 	/* Check if stdout is the same device as the audio device. */
 	if (fstat(fd, &dstat) < 0)
@@ -378,70 +382,65 @@ main(int argc, char **argv)
 		/* We can't write to stdout so use stderr */
 		out = stderr;
 
-	if (!wflag)
-		getinfo(fd);
+	if (!argc && !aflag)
+		usage();
 
-	if (!argc && aflag && !wflag) {
-		for(i = 0; fields[i].name; i++) {
+	getinfo(fd);
+
+	if (aflag) {
+		for (i = 0; fields[i].name; i++) {
 			if (!(fields[i].flags & ALIAS)) {
 				prfield(&fields[i], sep);
 				fprintf(out, "\n");
 			}
 		}
-	} else if (argc > 0 && !aflag) {
-		struct field *p;
-		if (wflag) {
-			AUDIO_INITINFO(&info);
-			while(argc--) {
-				char *q;
+	} else {
+		while (argc--) {
+			char *q;
 		
-				if ((q = strchr(*argv, '='))) {
-					*q++ = 0;
-					p = findfield(*argv);
-					if (p == 0)
-						warnx("field `%s' does not exist", *argv);
-					else {
-						if (p->flags & READONLY)
-							warnx("`%s' is read only", *argv);
-						else {
-							rdfield(p, q);
-							if (p->valp == &fullduplex)
-								if (ioctl(fd, AUDIO_SETFD, &fullduplex) < 0)
-									err(1, "set failed");
-						}
-					}
-				} else
-					warnx("No `=' in %s", *argv);
-				argv++;
-			}
-			if (ioctl(fd, AUDIO_SETINFO, &info) < 0)
-				err(1, "set failed");
-			if (sep) {
-				getinfo(fd);
-				for(i = 0; fields[i].name; i++) {
-					if (fields[i].flags & SET) {
-						fprintf(out, "%s: -> ", fields[i].name);
-						prfield(&fields[i], 0);
-						fprintf(out, "\n");
-					}
-				}
-			}
-		} else {
-			while(argc--) {
+			if ((q = strchr(*argv, '=')) != NULL) {
+				*q++ = 0;
 				p = findfield(*argv);
-				if (p == 0) {
-					if (strchr(*argv, '='))
-						warnx("field %s does not exist (use -w to set a variable)", *argv);
-					else
-						warnx("field %s does not exist", *argv);
-				} else {
+				if (p == 0)
+					warnx("field `%s' does not exist", *argv);
+				else {
+					if (!canwrite)
+						errx(1, "%s: permission denied",
+						    *argv);
+					if (p->flags & READONLY)
+						warnx("`%s' is read only", *argv);
+					else {
+						rdfield(p, q);
+						if (p->valp == &fullduplex)
+							if (ioctl(fd, AUDIO_SETFD,
+							    &fullduplex) < 0)
+								err(1, "set failed");
+					}
+					writeinfo = 1;
+				}
+			} else {
+				p = findfield(*argv);
+				if (p == 0)
+					warnx("field %s does not exist", *argv);
+				else {
 					prfield(p, sep);
 					fprintf(out, "\n");
 				}
-				argv++;
+			}
+			argv++;
+		}
+		if (writeinfo && ioctl(fd, AUDIO_SETINFO, &info) < 0)
+			err(1, "set failed");
+		if (sep) {
+			getinfo(fd);
+			for (i = 0; fields[i].name; i++) {
+				if (fields[i].flags & SET) {
+					fprintf(out, "%s: -> ", fields[i].name);
+					prfield(&fields[i], 0);
+					fprintf(out, "\n");
+				}
 			}
 		}
-	} else
-		usage();
+	}
 	exit(0);
 }
