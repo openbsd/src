@@ -1,4 +1,4 @@
-/*	$OpenBSD: ess.c,v 1.3 2001/01/29 06:27:59 mickey Exp $	*/
+/*	$OpenBSD: ess.c,v 1.4 2001/07/18 21:37:52 deraadt Exp $	*/
 /*	$NetBSD: ess.c,v 1.44.4.1 1999/06/21 01:18:00 thorpej Exp $	*/
 
 /*
@@ -2422,18 +2422,16 @@ void
 ess_speaker_on(sc)
 	struct ess_softc *sc;
 {
-	/* Disable mute on left- and right-master volume. */
-	ess_clear_mreg_bits(sc, ESS_MREG_VOLUME_LEFT, ESS_VOLUME_MUTE);
-	ess_clear_mreg_bits(sc, ESS_MREG_VOLUME_RIGHT, ESS_VOLUME_MUTE);
+	/* Unmute the DAC. */
+	ess_set_gain(sc, ESS_DAC_PLAY_VOL, 1);
 }
 
 void
 ess_speaker_off(sc)
 	struct ess_softc *sc;
 {
-	/* Enable mute on left- and right-master volume. */
-	ess_set_mreg_bits(sc, ESS_MREG_VOLUME_LEFT, ESS_VOLUME_MUTE);
-	ess_set_mreg_bits(sc, ESS_MREG_VOLUME_RIGHT, ESS_VOLUME_MUTE);
+	/* Mute the DAC. */
+	ess_set_gain(sc, ESS_DAC_PLAY_VOL, 0);
 }
 
 /*
