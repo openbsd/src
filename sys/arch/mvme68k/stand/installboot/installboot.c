@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.8 2003/06/01 17:00:36 deraadt Exp $ */
+/*	$OpenBSD: installboot.c,v 1.9 2003/08/16 17:46:28 deraadt Exp $ */
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -47,7 +47,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <util.h>
-#include <machine/disklabel.h> 	
+#include <machine/disklabel.h>
 
 int	verbose, nowrite, hflag;
 char	*boot, *proto, *dev;
@@ -76,12 +76,11 @@ static void	usage(void);
 int 		main(int, char *[]);
 static void     vid_to_disklabel(char *, char *);
 
-
 static void
-usage()
+usage(void)
 {
 	fprintf(stderr,
-		"usage: installboot [-n] [-v] [-h] <boot> <proto> <device>\n");
+	    "usage: installboot [-n] [-v] [-h] <boot> <proto> <device>\n");
 	exit(1);
 }
 
@@ -90,8 +89,7 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	int	c;
-	int	devfd;
+	int	c, devfd;
 	char	*protostore;
 	long	protosize;
 
@@ -123,17 +121,17 @@ main(argc, argv)
 	dev = argv[optind + 2];
 	strlcpy(cdev, dev, sizeof cdev);
 	cdev[strlen(cdev)-1] = 'c';
-	
+
 	if (verbose) {
 		printf("boot: %s\n", boot);
 		printf("proto: %s\n", proto);
 		printf("device: %s\n", dev);
 		printf("cdevice: %s\n", cdev);
 	}
-	
+
 	/* Insert VID into disklabel */
 	vid_to_disklabel(cdev, proto);
-	
+
 	/* Load proto blocks into core */
 	if ((protostore = loadprotoblocks(proto, &protosize)) == NULL)
 		exit(1);
@@ -253,7 +251,7 @@ loadprotoblocks(fname, size)
 		printf("%s: entry point %#x\n", fname, eh.a_entry);
 		printf("proto bootblock size %ld\n", *size);
 		printf("room for %d filesystem blocks at %#x\n",
-			maxblocknum, nl[X_BLOCK_TABLE].n_value);
+		    maxblocknum, nl[X_BLOCK_TABLE].n_value);
 	}
 
 	close(fd);
@@ -270,12 +268,7 @@ loadprotoblocks(fname, size)
 }
 
 static void
-devread(fd, buf, blk, size, msg)
-	int	fd;
-	void	*buf;
-	daddr_t	blk;
-	size_t	size;
-	char	*msg;
+devread(int fd, void *buf, daddr_t blk, size_t size, char *msg)
 {
 	if (lseek(fd, dbtob(blk), SEEK_SET) != dbtob(blk))
 		err(1, "%s: devread: lseek", msg);
@@ -287,9 +280,7 @@ devread(fd, buf, blk, size, msg)
 static char sblock[SBSIZE];
 
 int
-loadblocknums(boot, devfd)
-char	*boot;
-int	devfd;
+loadblocknums(char *boot, int devfd)
 {
 	int		i, fd;
 	struct	stat	statbuf;
@@ -332,11 +323,11 @@ int	devfd;
 	fs = (struct fs *)sblock;
 
 	/* Sanity-check super-block. */
-	
-   if (fs->fs_magic != FS_MAGIC)
+
+	if (fs->fs_magic != FS_MAGIC)
 		errx(1, "Bad magic number in superblock");
-	
-   if (fs->fs_inopb <= 0)
+
+	if (fs->fs_inopb <= 0)
 		err(1, "Bad inopb=%d in superblock", fs->fs_inopb);
 
 	/* Read inode */
@@ -390,9 +381,7 @@ int	devfd;
 }
 
 static void
-vid_to_disklabel(dkname, bootproto)
-char *dkname;
-char *bootproto;
+vid_to_disklabel(char *dkname, char *bootproto)
 {
 	char *specname;
 	int exe_file, f;
@@ -405,7 +394,7 @@ char *bootproto;
 	pcpul = (struct cpu_disklabel *)malloc(sizeof(struct cpu_disklabel));
 	bzero(pcpul, sizeof(struct cpu_disklabel));
 
-	if (verbose) 
+	if (verbose)
 		printf("modifying vid.\n");
 
 	exe_file = open(bootproto, O_RDONLY, 0444);
@@ -417,9 +406,9 @@ char *bootproto;
 	f = opendev(dkname, O_RDWR, OPENDEV_PART, &specname);
 
 	if (lseek(f, 0, SEEK_SET) < 0 ||
-		    read(f, pcpul, sizeof(struct cpu_disklabel)) 
-			< sizeof(struct cpu_disklabel))
-			    err(4, "%s", specname);
+	    read(f, pcpul, sizeof(struct cpu_disklabel)) <
+	    sizeof(struct cpu_disklabel))
+		err(4, "%s", specname);
 
 
 	pcpul->version = 1;
@@ -462,14 +451,13 @@ char *bootproto;
 	pcpul->cfg_psm = 0x200;
 
 	if (!nowrite) {
-	    if (lseek(f, 0, SEEK_SET) < 0 || 
-		write(f, pcpul, sizeof(struct cpu_disklabel))
-		    < sizeof(struct cpu_disklabel))
+		if (lseek(f, 0, SEEK_SET) < 0 ||
+		    write(f, pcpul, sizeof(struct cpu_disklabel)) <
+		    sizeof(struct cpu_disklabel))
 		    	err(4, "%s", specname);
 	}
 	free(pcpul);
-	
+
 	close(exe_file);
 	close(f);
-
 }
