@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2001/03/25 00:47:25 millert Exp $
+#	$OpenBSD: Makefile,v 1.5 2002/04/19 14:12:03 espie Exp $
 
 LIB=	readline
 SRCS=	readline.c funmap.c keymaps.c vi_mode.c parens.c rltty.c complete.c \
@@ -10,6 +10,8 @@ SUBDIR= doc
 CPPFLAGS+=-DHAVE_CONFIG_H -I${.CURDIR}
 
 includes:
+	${INSTALL} -d -o ${BINOWN} -g ${BINGRP} -m 755 \
+	    ${DESTDIR}/usr/include/readline
 	@cd ${.CURDIR}; for i in $(HDRS); do \
 	    j="cmp -s $$i ${DESTDIR}/usr/include/readline/$$i || \
 		${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 $$i \
