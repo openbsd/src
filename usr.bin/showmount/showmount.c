@@ -1,4 +1,4 @@
-/*	$OpenBSD: showmount.c,v 1.4 1996/06/26 05:39:16 deraadt Exp $	*/
+/*	$OpenBSD: showmount.c,v 1.5 1996/11/03 22:25:58 deraadt Exp $	*/
 /*	$NetBSD: showmount.c,v 1.7 1996/05/01 18:14:10 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)showmount.c	8.3 (Berkeley) 3/29/95";
 #endif
-static char rcsid[] = "$OpenBSD: showmount.c,v 1.4 1996/06/26 05:39:16 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: showmount.c,v 1.5 1996/11/03 22:25:58 deraadt Exp $";
 #endif not lint
 
 #include <sys/types.h>
@@ -65,6 +65,7 @@ static char rcsid[] = "$OpenBSD: showmount.c,v 1.4 1996/06/26 05:39:16 deraadt E
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <vis.h>
 
 /* Constant defs */
 #define	ALL	1
@@ -188,16 +189,21 @@ main(argc, argv)
 		print_dump(mntdump);
 	}
 	if (rpcs & DOEXPORTS) {
+		char	vp[(RPCMNT_PATHLEN+1)*4];
+		char	vn[(RPCMNT_NAMELEN+1)*4];
+
 		printf("Exports list on %s:\n", host);
 		exp = exports;
 		while (exp) {
-			printf("%-35s", exp->ex_dirp);
+			strvis(vp, exp->ex_dirp, VIS_CSTYLE);
+			printf("%-35s", vp);
 			grp = exp->ex_groups;
 			if (grp == NULL) {
 				printf("Everyone\n");
 			} else {
 				while (grp) {
-					printf("%s ", grp->gr_name);
+					strvis(vn, grp->gr_name, VIS_CSTYLE);
+					printf("%s ", vn);
 					grp = grp->gr_next;
 				}
 				printf("\n");
@@ -349,6 +355,8 @@ void
 print_dump(mp)
 	struct mountlist *mp;
 {
+	char	vn[(RPCMNT_NAMELEN+1)*4];
+	char	vp[(RPCMNT_PATHLEN+1)*4];
 
 	if (mp == NULL)
 		return;
@@ -356,13 +364,17 @@ print_dump(mp)
 		print_dump(mp->ml_left);
 	switch (type) {
 	case ALL:
-		printf("%s:%s\n", mp->ml_host, mp->ml_dirp);
+		strvis(vn, mp->ml_host, VIS_CSTYLE);
+		strvis(vp, mp->ml_dirp, VIS_CSTYLE);
+		printf("%s:%s\n", vn, vp);
 		break;
 	case DIRS:
-		printf("%s\n", mp->ml_dirp);
+		strvis(vp, mp->ml_dirp, VIS_CSTYLE);
+		printf("%s\n", vp);
 		break;
 	default:
-		printf("%s\n", mp->ml_host);
+		strvis(vn, mp->ml_host, VIS_CSTYLE);
+		printf("%s\n", vn);
 		break;
 	};
 	if (mp->ml_right)
