@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.81 1998/09/22 09:18:15 fgsch Exp $
+#	$OpenBSD: GENERIC,v 1.82 1998/09/22 18:47:44 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -153,6 +153,7 @@ we0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC 80x3 ethernet series
 we1	at isa? port 0x300 iomem 0xcc000 irq 10	#
 ec0	at isa? port 0x250 iomem 0xd8000 irq 9	# 3C503 ethernet cards
 ne0	at isa? port 0x240 iomem 0xd8000 irq 9	# NE[12]000 ethernet cards
+ne1	at isa? port 0x300 irq 10		# NE[12]000 ethernet cards
 ne*	at isapnp?				# NE[12]000 PnP ethernet cards
 eg0	at isa? port 0x310 irq 5		# 3C505/Etherlink+ ethernet cards
 el0	at isa? port 0x300 irq 9		# 3C501 ethernet cards
