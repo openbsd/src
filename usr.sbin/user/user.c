@@ -1,5 +1,5 @@
-/* $OpenBSD: user.c,v 1.28 2001/12/05 18:20:57 millert Exp $ */
-/* $NetBSD: user.c,v 1.40 2001/08/17 08:29:00 joda Exp $ */
+/* $OpenBSD: user.c,v 1.29 2001/12/05 18:23:55 millert Exp $ */
+/* $NetBSD: user.c,v 1.45 2001/08/17 08:29:00 joda Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -944,7 +944,7 @@ adduser(char *login, user_t *up)
 	    !creategid(login, gid, login)) {
 		(void) close(ptmpfd);
 		(void) pw_abort();
-		err(EXIT_FAILURE, "can't create gid %d for login name %s",
+		errx(EXIT_FAILURE, "can't create gid %d for login name %s",
 		    gid, login);
 	}
 	if (up->u_groupc > 0 && !append_group(login, up->u_groupc, up->u_groupv)) {
@@ -967,10 +967,11 @@ moduser(char *login, char *newlogin, user_t *up)
 	struct group	*grp;
 	struct tm	tm;
 	const char	*homedir;
-	char		newdir[MaxFileNameLen];
 	char		buf[LINE_MAX];
 	size_t		colonc, len, loginc;
+	size_t		cc;
 	FILE		*master;
+	char		newdir[MaxFileNameLen];
 	char		*colon, *line;
 	int		masterfd;
 	int		ptmpfd;
@@ -1113,12 +1114,12 @@ moduser(char *login, char *newlogin, user_t *up)
 					err(EXIT_FAILURE, "can't add `%s'", buf);
 				}
 			}
-		} else if ((colonc = write(ptmpfd, line, len)) != len) {
+		} else if ((cc = write(ptmpfd, line, len)) != len) {
 			(void) close(masterfd);
 			(void) close(ptmpfd);
 			(void) pw_abort();
 			err(EXIT_FAILURE, "short write to /etc/ptmp (%lld not %lld chars)",
-			    (long long)colonc, (long long)len);
+			    (long long)cc, (long long)len);
 		}
 	}
 	if (up != NULL) {
@@ -1546,6 +1547,7 @@ userdel(int argc, char **argv)
 	if (rmhome)
 		(void)removehomedir(pwp->pw_name, pwp->pw_uid, pwp->pw_dir);
 	if (u.u_preserve) {
+		u.u_flags |= F_SHELL;
 		memsave(&u.u_shell, NOLOGIN, strlen(NOLOGIN));
 		(void) strlcpy(password, "*", sizeof(password));
 		memsave(&u.u_password, password, PasswordLength);
@@ -1605,7 +1607,7 @@ groupadd(int argc, char **argv)
 		warnx("warning - invalid group name `%s'", *argv);
 	}
 	if (!creategid(*argv, gid, "")) {
-		err(EXIT_FAILURE, "can't add group: problems with %s file",
+		errx(EXIT_FAILURE, "can't add group: problems with %s file",
 		    _PATH_GROUP);
 	}
 	return EXIT_SUCCESS;
@@ -1711,7 +1713,7 @@ groupmod(int argc, char **argv)
 	if (cc >= sizeof(buf) || cc == -1)
 		err(EXIT_FAILURE, "group `%s' entry too long", grp->gr_name);
 
-	for (cpp = grp->gr_mem ; *cpp; cpp++) {
+	for (cpp = grp->gr_mem ; *cpp ; cpp++) {
 		cc = strlcat(buf, *cpp, sizeof(buf)) + 1;
 		if (cc >= sizeof(buf))
 			err(EXIT_FAILURE, "group `%s' entry too long",
