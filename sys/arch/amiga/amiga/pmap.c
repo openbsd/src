@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.12 1999/01/11 05:11:05 millert Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.13 1999/07/18 16:23:46 deraadt Exp $	*/
 /*	$NetBSD: pmap.c,v 1.39 1997/06/10 18:26:41 veego Exp $	*/
 
 /* 
@@ -277,7 +277,7 @@ void		pmap_enter_ptpage __P((register pmap_t, register vm_offset_t));
 				pa < vm_last_phys)
 #endif
 
-void pmap_activate __P((register pmap_t, struct pcb *));
+void pmap_activate __P((register pmap_t));
 extern vm_offset_t reserve_dumppages __P((vm_offset_t));
 static void amiga_protection_init __P((void));
 void pmap_check_wiring __P((char *, vm_offset_t));
@@ -1925,10 +1925,11 @@ ok:
 }
 
 void
-pmap_activate(pmap, pcbp)
+pmap_activate(pmap)
 	register pmap_t pmap;
-	struct pcb *pcbp;
 {
+	struct pcb *pcbp = &p->p_addr->u_pcb;
+
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_SEGTAB))
 		printf("pmap_activate(%p, %p)\n", pmap, pcbp);

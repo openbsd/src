@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.10 1999/01/11 05:11:20 millert Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.11 1999/07/18 16:23:46 deraadt Exp $	*/
 /*	$NetBSD: pmap.c,v 1.36 1997/06/10 18:52:23 veego Exp $	*/
 
 /* 
@@ -294,8 +294,8 @@ int		protostfree;	/* prototype (default) free ST map */
 struct pv_entry *pmap_alloc_pv __P((void));
 void	pmap_free_pv __P((struct pv_entry *));
 void	pmap_collect_pv __P((void));
-void	pmap_activate __P((pmap_t, struct pcb *));
-void	pmap_deactivate __P((pmap_t, struct pcb *));
+void	pmap_activate __P((pmap_t));
+void	pmap_deactivate __P((pmap_t));
 #ifdef COMPAT_HPUX
 int	pmap_mapmulti __P((pmap_t, vm_offset_t));
 #endif /* COMPAT_HPUX */
@@ -804,10 +804,10 @@ pmap_reference(pmap)
 }
 
 void
-pmap_activate(pmap, pcb)
+pmap_activate(pmap)
 	pmap_t pmap;
-	struct pcb *pcb;
 {
+	struct pcb *pcb = &p->p_addr->u_pcb;
 
 	if (pmap == NULL)
 		return;
@@ -821,9 +821,8 @@ pmap_activate(pmap, pcb)
 }
 
 void
-pmap_deactivate(pmap, pcb)
+pmap_deactivate(pmap)
 	pmap_t pmap;
-	struct pcb *pcb;
 {
 }
 
