@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.113 2003/09/20 13:57:37 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.114 2003/09/28 22:13:45 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -373,10 +373,6 @@ size_memory()
 		if (*look = ~PATTERN, *look != ~PATTERN)
 			break;
 		*look = save;
-	}
-	if ((look > (unsigned int *)0x01FFF000) && (brdtyp == BRD_188)) {
-                /* temp hack to fake 32Meg on MVME188 */
-		look = (unsigned int *)0x01FFF000; 
 	}
 	
 	return (trunc_page((unsigned)look));
@@ -1592,10 +1588,10 @@ unsigned obio_vec[32] = {
 void 
 m188_ext_int(u_int v, struct m88100_saved_state *eframe)
 {
-	register int cpu = cpu_number();
-	register unsigned int cur_mask;
-	register unsigned int level, old_spl;
-	register struct intrhand *intr;
+	int cpu = cpu_number();
+	unsigned int cur_mask;
+	unsigned int level, old_spl;
+	struct intrhand *intr;
 	int ret, intbit;
 	unsigned vec;
 
@@ -1609,7 +1605,7 @@ m188_ext_int(u_int v, struct m88100_saved_state *eframe)
 		 * DUART interrupts.
 		 */
 		flush_pipeline();
-		return;
+		goto out;
 	}
 
 	uvmexp.intrs++;
@@ -1640,13 +1636,23 @@ m188_ext_int(u_int v, struct m88100_saved_state *eframe)
 			for(;;) ;
 		}
 
+#ifdef DEBUG
 		if (level > 7 || (char)level < 0) {
 			panic("int level (%x) is not between 0 and 7", level);
 		}
+#endif
 
 		setipl(level);
 	  
-		enable_interrupt();
+		/*
+		 * Do not enable interrupts yet if we know, from cur_mask,
+		 * that we have not cleared enough conditions yet.
+		 * For now, only the timer interrupt requires its condition
+		 * to be cleared before interrupts are enabled.
+		 */
+		if ((cur_mask & DTI_BIT) == 0) {
+			enable_interrupt();
+		}
 		
 		/* generate IACK and get the vector */
 
@@ -1659,11 +1665,6 @@ m188_ext_int(u_int v, struct m88100_saved_state *eframe)
 		/* find the first bit set in the current mask */
 		intbit = ff1(cur_mask);
 		if (OBIO_INTERRUPT_MASK & (1 << intbit)) {
-			if (guarded_access(ivec[level], 4, (u_char *)&vec) ==
-			    EFAULT) {
-				panic("unable to get vector for this vmebus "
-				    "interrupt (level %x)", level);
-			}
 			vec = obio_vec[intbit];
 			if (vec == 0) {
 				panic("unknown onboard interrupt: mask = 0x%b",
@@ -1683,7 +1684,8 @@ m188_ext_int(u_int v, struct m88100_saved_state *eframe)
 			}
 			vec &= VME_VECTOR_MASK;
 			if (vec & VME_BERR_MASK) {
-				panic("vme vec timeout");
+				printf("vme vec timeout");
+				break;
 			}
 			if (vec == 0) {
 				panic("unknown vme interrupt: mask = 0x%b",
@@ -1693,11 +1695,6 @@ m188_ext_int(u_int v, struct m88100_saved_state *eframe)
 			panic("unknown interrupt: level = %d intbit = 0x%x "
 			    "mask = 0x%b",
 			    level, intbit, 1 << intbit, IST_STRING);
-		}
-		if (vec > 0xFF) {
-			panic("interrupt vector 0x%x greater than 255!"
-			    "level = %d iack = 0x%x", 
-			    vec, level, ivec[level]);
 		}
 
 		if ((intr = intr_handlers[vec]) == NULL) {
@@ -1738,6 +1735,7 @@ m188_ext_int(u_int v, struct m88100_saved_state *eframe)
 	 * returning to assembler
 	 */
 	disable_interrupt();
+out:
 	if (eframe->dmt0 & DMT_VALID)
 		m88100_trap(T_DATAFLT, eframe);
 
@@ -1746,7 +1744,6 @@ m188_ext_int(u_int v, struct m88100_saved_state *eframe)
 	 * was taken.
 	 */
 	setipl(eframe->mask);
-	flush_pipeline();
 }
 
 #endif /* MVME188 */
