@@ -1,4 +1,4 @@
-/*	$OpenBSD: ultrix_misc.c,v 1.8 1996/08/10 12:09:24 deraadt Exp $	*/
+/*	$OpenBSD: ultrix_misc.c,v 1.9 1996/08/25 12:20:02 deraadt Exp $	*/
 /*	$NetBSD: ultrix_misc.c,v 1.23 1996/04/07 17:23:04 jonathan Exp $	*/
 
 /*
@@ -581,4 +581,18 @@ ultrix_sys_sigreturn(p, v, retval)
 	printf("ultrix sigreturn\n");
 #endif
 	return sys_sigreturn(p, (struct sys_sigreturn_args  *)uap, retval);
+}
+
+int
+ultrix_sys_execve(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct ultrix_sys_execve_args *uap = v;
+
+	caddr_t sg = stackgap_init(p->p_emul);
+	ULTRIX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+
+	return (sys_execve(p, (struct sys_execve_args *)&uap, retval));
 }

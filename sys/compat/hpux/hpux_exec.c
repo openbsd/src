@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_exec.c,v 1.3 1996/08/02 20:34:54 niklas Exp $	*/
+/*	$OpenBSD: hpux_exec.c,v 1.4 1996/08/25 12:19:48 deraadt Exp $	*/
 /*	$NetBSD: hpux_exec.c,v 1.3 1996/01/06 12:44:13 thorpej Exp $	*/
 
 /*
@@ -299,4 +299,18 @@ hpux_sys_execv(p, v, retval)
 	SCARG(&ap, envp) = NULL;
 
 	return sys_execve(p, &ap, retval);
+}
+
+int
+hpux_sys_execve(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct hpux_sys_execve_args *uap = v;
+
+	caddr_t sg = stackgap_init(p->p_emul);
+	HPUX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+
+	return (sys_execve(p, (struct sys_execve_args *)&uap, retval));
 }

@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.2 1996/08/02 20:20:30 niklas Exp $
+	$OpenBSD: syscalls.master,v 1.3 1996/08/25 12:19:55 deraadt Exp $
 ;	$NetBSD: syscalls.master,v 1.2 1995/10/07 06:27:28 mycroft Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -104,7 +104,7 @@
 56	NOARGS		{ int sys_revoke(char *path); }
 57	NOARGS		{ int sys_symlink(char *path, char *link); }
 58	NOARGS		{ int sys_readlink(char *path, char *buf, int count); }
-59	NOARGS		{ int sys_execve(char *path, char **argp, \
+59	STD		{ int osf1_sys_execve(char *path, char **argp, \
 			    char **envp); }
 60	NOARGS		{ int sys_umask(int newmask); }
 61	NOARGS		{ int sys_chroot(char *path); }
