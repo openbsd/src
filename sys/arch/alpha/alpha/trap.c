@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.8 1997/02/06 12:13:37 niklas Exp $	*/
+/*	$OpenBSD: trap.c,v 1.9 1997/02/06 12:37:56 niklas Exp $	*/
 /*	$NetBSD: trap.c,v 1.19 1996/11/27 01:28:30 cgd Exp $	*/
 
 /*
@@ -132,13 +132,15 @@ trap(a0, a1, a2, entry, framep)
 {
 	register struct proc *p;
 	register int i;
-	u_int64_t ucode;
+	u_long ucode;
 	u_quad_t sticks;
+	caddr_t va;
 	int user;
 	int typ;
 
 	cnt.v_trap++;
 	p = curproc;
+	va = 0;
 	ucode = 0;
 	user = (framep->tf_regs[FRAME_PS] & ALPHA_PSL_USERMODE) != 0;
 	if (user)  {
@@ -161,7 +163,8 @@ trap(a0, a1, a2, entry, framep)
 			if ((i = unaligned_fixup(a0, a1, a2, p)) == 0)
 				goto out;
 
-			ucode = a0;		/* VA */
+			ucode = VM_PROT_NONE;	/* XXX determine */
+			va = (caddr_t)a0;
 			if (i == SIGBUS)
 				typ = BUS_ADRALN;
 			else
@@ -190,6 +193,7 @@ trap(a0, a1, a2, entry, framep)
 		 */
 		if (user) {
 sigfpe:			i = SIGFPE;
+			va = NULL;		/* XXX determine */
 			ucode = a0;		/* exception summary */
 			typ = FPE_FLTINV;	/* XXX? */
 			break;
@@ -212,13 +216,17 @@ sigfpe:			i = SIGFPE;
 				goto sigfpe;
 		case ALPHA_IF_CODE_BPT:
 		case ALPHA_IF_CODE_BUGCHK:
-			ucode = a0;		/* trap type */
+			/* XXX is a0 trap type or address? */
+			va = (caddr_t)a0;
+			ucode = 0;		/* XXX determine */
 			i = SIGTRAP;
 			typ = TRAP_BRKPT;
 			break;
 
 		case ALPHA_IF_CODE_OPDEC:
-			ucode = a0;		/* trap type */
+			/* XXX is a0 trap type or address? */
+			va = (caddr_t)a0;
+			ucode = 0;		/* XXX determine */
 #ifdef NEW_PMAP
 {
 int instr;
@@ -400,7 +408,8 @@ panic("foo");
 				}
 				goto dopanic;
 			}
-			ucode = a0;
+			va = a0;
+			ucode = ftype;
 			i = SIGSEGV;
 			typ = SEGV_MAPERR;
 			break;
@@ -416,7 +425,7 @@ panic("foo");
 		goto dopanic;
 	}
 
-	trapsignal(p, i, ucode, typ, (union sigval)ucode);
+	trapsignal(p, i, ucode, typ, va);
 out:
 	if (user)
 		userret(p, framep->tf_regs[FRAME_PC], sticks);
