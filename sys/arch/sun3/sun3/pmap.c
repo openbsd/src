@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.7 1997/01/16 04:04:31 kstailey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.8 1997/02/10 12:24:40 downsj Exp $	*/
 /*	$NetBSD: pmap.c,v 1.64 1996/11/20 18:57:35 gwr Exp $	*/
 
 /*-
@@ -3159,7 +3159,7 @@ pmap_copy_page(src, dst)
 	set_pte(tmp_vpages[0], pte);
 	pte = PG_PERM | PA_PGNUM(dst);
 	set_pte(tmp_vpages[1], pte);
-	bcopy((char *) tmp_vpages[0], (char *) tmp_vpages[1], NBPG);
+	copypage((char *) tmp_vpages[0], (char *) tmp_vpages[1]);
 	set_pte(tmp_vpages[0], PG_INVAL);
 	set_pte(tmp_vpages[0], PG_INVAL);
 
@@ -3194,7 +3194,7 @@ pmap_zero_page(pa)
 	/* All mappings to vmp_vpages are non-cached, so no flush. */
 	pte = PG_PERM | PA_PGNUM(pa);
 	set_pte(tmp_vpages[0], pte);
-	bzero((char *) tmp_vpages[0], NBPG);
+	zeropage((char *) tmp_vpages[0]);
 	set_pte(tmp_vpages[0], PG_INVAL);
 
 	tmp_vpages_inuse--;
