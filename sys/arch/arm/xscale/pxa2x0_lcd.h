@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_lcd.h,v 1.5 2005/01/06 16:50:44 miod Exp $ */
+/*	$OpenBSD: pxa2x0_lcd.h,v 1.6 2005/01/06 23:47:20 miod Exp $ */
 /* $NetBSD: pxa2x0_lcd.h,v 1.2 2003/06/17 09:43:14 bsh Exp $ */
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -85,7 +85,7 @@ struct pxa2x0_lcd_softc {
 	int n_screens;
 	LIST_HEAD(, pxa2x0_lcd_screen) screens;
 	struct pxa2x0_lcd_screen *active;
-	struct wsdisplay_emulops emulops;	/* master emulops copy */
+	struct rasops_info	sc_ro;		/* main (console) rasops */
 
 	void *ih;			/* interrupt handler */
 };
@@ -124,8 +124,8 @@ struct lcd_panel_geometry {
 	short end_frame_wait;		/* end of frame wait (EFW) */
 };
 
-void pxa2x0_lcd_geometry(struct pxa2x0_lcd_softc *,
-    const struct lcd_panel_geometry *);
+void	pxa2x0_lcd_geometry(struct pxa2x0_lcd_softc *,
+	    const struct lcd_panel_geometry *);
 struct pxa2x0_lcd_screen *pxa2x0_lcd_new_screen(struct pxa2x0_lcd_softc *, int);
 
 /*
@@ -136,16 +136,18 @@ struct pxa2x0_wsscreen_descr {
 	int depth;			/* bits per pixel */
 };
 
-int pxa2x0_lcd_setup_wsscreen(struct pxa2x0_lcd_softc *,
-    struct pxa2x0_wsscreen_descr *, const struct lcd_panel_geometry *,
-    const char * );
+int	pxa2x0_lcd_setup_console(struct pxa2x0_lcd_softc *,
+	    const struct pxa2x0_wsscreen_descr *);
+int	pxa2x0_lcd_setup_wsscreen(struct pxa2x0_lcd_softc *,
+	    struct pxa2x0_wsscreen_descr *, const struct lcd_panel_geometry *,
+	    const char * );
 
-int pxa2x0_lcd_show_screen(void *, void *, int, void (*)(void *, int, int),
-    void *);
-int pxa2x0_lcd_ioctl(void *, u_long, caddr_t, int, struct proc *);
+int	pxa2x0_lcd_alloc_screen(void *, const struct wsscreen_descr *,
+	    void **, int *, int *, long *);
+void	pxa2x0_lcd_free_screen(void *, void *);
+int	pxa2x0_lcd_ioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t	pxa2x0_lcd_mmap(void *, off_t, int);
-int pxa2x0_lcd_alloc_screen(void *, const struct wsscreen_descr *,
-    void **, int *, int *, long *);
-void pxa2x0_lcd_free_screen(void *, void *);
+int	pxa2x0_lcd_show_screen(void *, void *, int, void (*)(void *, int, int),
+	    void *);
 
 #endif /* _ARM_XSCALE_PXA2X0_LCD_H */

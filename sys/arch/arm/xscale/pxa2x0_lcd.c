@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_lcd.c,v 1.8 2005/01/06 16:50:44 miod Exp $ */
+/*	$OpenBSD: pxa2x0_lcd.c,v 1.9 2005/01/06 23:47:20 miod Exp $ */
 /* $NetBSD: pxa2x0_lcd.c,v 1.8 2003/10/03 07:24:05 bsh Exp $ */
 
 /*
@@ -453,7 +453,7 @@ pxa2x0_lcd_new_screen(struct pxa2x0_lcd_softc *sc,
 
 	LIST_INSERT_HEAD(&(sc->screens), scr, link);
 	sc->n_screens++;
-
+	
 	return scr;
 
  bad:
@@ -480,9 +480,10 @@ pxa2x0_lcd_setup_wsscreen(struct pxa2x0_lcd_softc *sc,
 	int width = geom->panel_width;
 	int height = geom->panel_height;
 	int cookie = -1;
-	struct rasops_info rinfo;
+	struct rasops_info *rinfo;
 
-	memset(&rinfo, 0, sizeof rinfo);
+	rinfo = &sc->sc_ro;
+	memset(rinfo, 0, sizeof(struct rasops_info));
 
 #ifdef notyet
 	if (fontname) {
@@ -498,28 +499,49 @@ pxa2x0_lcd_setup_wsscreen(struct pxa2x0_lcd_softc *sc,
 #endif
 
 	/* let rasops_init calculate # of cols and rows in character */
-	rinfo.ri_flg = 0;
-	rinfo.ri_depth = descr->depth;
-	rinfo.ri_bits = NULL;
-	rinfo.ri_width = width;
-	rinfo.ri_height = height;
-	rinfo.ri_stride = width * rinfo.ri_depth / 8;
-	rinfo.ri_wsfcookie = cookie;
+	rinfo->ri_flg = 0;
+	rinfo->ri_depth = descr->depth;
+	rinfo->ri_bits = NULL;
+	rinfo->ri_width = width;
+	rinfo->ri_height = height;
+	rinfo->ri_stride = width * rinfo->ri_depth / 8;
+	rinfo->ri_wsfcookie = cookie;
 
-	rasops_init(&rinfo, 100, 100);
+	if (descr->depth == 16) {
+		rinfo->ri_rnum = 5;
+		rinfo->ri_rpos = 11;
+		rinfo->ri_gnum = 6;
+		rinfo->ri_gpos = 5;
+		rinfo->ri_bnum = 5;
+		rinfo->ri_bpos = 0;
+	}
 
-	/*
-	 * Since we will use a rasops structure per screen, we need to
-	 * keep a copy of the emulops (which will always be the same)
-	 * in the softc, so as not to require an extra indirection layer.
-	 */
-	sc->emulops = rinfo.ri_ops;
-	descr->c.nrows = rinfo.ri_rows;
-	descr->c.ncols = rinfo.ri_cols;
-	descr->c.capabilities = rinfo.ri_caps;
-	descr->c.textops = &sc->emulops;
+	rasops_init(rinfo, 100, 100);
+
+	descr->c.nrows = rinfo->ri_rows;
+	descr->c.ncols = rinfo->ri_cols;
+	descr->c.capabilities = rinfo->ri_caps;
+	descr->c.textops = &rinfo->ri_ops;
 
 	return cookie;
+}
+
+int
+pxa2x0_lcd_setup_console(struct pxa2x0_lcd_softc *sc,
+    const struct pxa2x0_wsscreen_descr *descr)
+{
+	struct pxa2x0_lcd_screen *scr;
+
+	scr = pxa2x0_lcd_new_screen(sc, descr->depth);
+	if (scr == NULL)
+		return (ENOMEM);
+	
+	sc->sc_ro.ri_hw = (void *)scr;
+	sc->sc_ro.ri_bits = scr->buf_va;
+	bcopy(&sc->sc_ro, &scr->rinfo, sizeof(struct rasops_info));
+
+	pxa2x0_lcd_show_screen(sc, &sc->sc_ro, 0, NULL, NULL);
+	return (0);
 }
 
 int
@@ -555,7 +577,7 @@ pxa2x0_lcd_alloc_screen(void *v, const struct wsscreen_descr *_type,
 	scr = pxa2x0_lcd_new_screen(sc, type->depth);
 	if (scr == NULL)
 		return (ENOMEM);
-	
+
 	/*
 	 * initialize raster operation for this screen.
 	 */
@@ -570,6 +592,15 @@ pxa2x0_lcd_alloc_screen(void *v, const struct wsscreen_descr *_type,
 #ifdef notyet
 	ri->ri_wsfcookie = -1;	/* XXX */
 #endif
+
+	if (type->depth == 16) {
+		ri->ri_rnum = 5;
+		ri->ri_rpos = 11;
+		ri->ri_gnum = 6;
+		ri->ri_gpos = 5;
+		ri->ri_bnum = 5;
+		ri->ri_bpos = 0;
+	}
 
 	rasops_init(ri, type->c.nrows, type->c.ncols);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_lcd.c,v 1.7 2005/01/06 16:50:45 miod Exp $	*/
+/*	$OpenBSD: zaurus_lcd.c,v 1.8 2005/01/06 23:47:22 miod Exp $	*/
 /* $NetBSD: lubbock_lcd.c,v 1.1 2003/08/09 19:38:53 bsh Exp $ */
 
 /*
@@ -157,6 +157,7 @@ lcd_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pxa2x0_lcd_softc *sc = (struct pxa2x0_lcd_softc *)self;
 	struct wsemuldisplaydev_attach_args aa;
+	long defattr;
 
 	pxa2x0_lcd_attach_sub(sc, aux, CURRENT_DISPLAY);
 
@@ -167,12 +168,28 @@ lcd_attach(struct device *parent, struct device *self, void *aux)
 	pxa2x0_lcd_setup_wsscreen(sc, &lcd_bpp4_screen, CURRENT_DISPLAY, NULL);
 #endif
 
-	aa.console = 0;			/* XXX */
+	printf("\n");
+
+	aa.console = 1;		/* XXX allow user configuration? */
+
+	if (aa.console != 0) {
+		if (pxa2x0_lcd_setup_console(sc, &lcd_bpp16_screen) == 0) {
+			/* assumes 16bpp */
+			sc->sc_ro.ri_ops.alloc_attr(&sc->sc_ro, 0, 0, 0,
+			    &defattr);
+
+			wsdisplay_cnattach(&lcd_bpp16_screen.c, &sc->sc_ro,
+			    sc->sc_ro.ri_ccol, sc->sc_ro.ri_crow, defattr);
+		} else {
+			printf("%s: failed to initialize console!\n",
+			    sc->dev.dv_xname);
+			aa.console = 0;	/* better than panicing... */
+		}
+	}
+
 	aa.scrdata = &lcd_screen_list;
 	aa.accessops = &lcd_accessops;
 	aa.accesscookie = sc;
-
-	printf("\n");
 
 	(void)config_found(self, &aa, wsemuldisplaydevprint);
 }
