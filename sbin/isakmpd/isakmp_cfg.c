@@ -1,4 +1,4 @@
-/*	$OpenBSD: isakmp_cfg.c,v 1.1 2001/07/01 20:43:39 niklas Exp $	*/
+/*	$OpenBSD: isakmp_cfg.c,v 1.2 2001/07/04 07:29:10 niklas Exp $	*/
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist.  All rights reserved.
@@ -309,11 +309,9 @@ responder_send_ATTR (struct message *msg)
 	  break;
 
 	case ISAKMP_CFG_ATTR_SUPPORTED_ATTRIBUTES:
-	  /* XXX 2 * 6 more when IPv6 is supported.  */
-	  attr->length = 2 * 9;
+	  attr->length = 2 * 15;
 	  break;
 
-#if 0
 	case ISAKMP_CFG_ATTR_INTERNAL_IP6_ADDRESS:
 	case ISAKMP_CFG_ATTR_INTERNAL_IP6_NETMASK:
 	case ISAKMP_CFG_ATTR_INTERNAL_IP6_DHCP:
@@ -325,7 +323,6 @@ responder_send_ATTR (struct message *msg)
 	case ISAKMP_CFG_ATTR_INTERNAL_IP6_SUBNET:
 	  attr->length = 17;
 	  break;
-#endif
 
 	default:
 	  attr->ignore++;
@@ -428,7 +425,6 @@ responder_send_ATTR (struct message *msg)
 	case ISAKMP_CFG_ATTR_SUPPORTED_ATTRIBUTES:
 	  break;
 
-#if 0
 	case ISAKMP_CFG_ATTR_INTERNAL_IP6_ADDRESS:
 	  break;
 
@@ -446,7 +442,6 @@ responder_send_ATTR (struct message *msg)
 
 	case ISAKMP_CFG_ATTR_INTERNAL_IP6_NBNS:
 	  break;
-#endif
 
 	default:
 	}
