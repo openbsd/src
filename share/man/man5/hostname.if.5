@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hostname.if.5,v 1.38 2004/05/30 21:36:30 jmc Exp $
+.\"	$OpenBSD: hostname.if.5,v 1.39 2004/07/26 08:53:29 jmc Exp $
 .\"	$NetBSD: hosts.5,v 1.4 1994/11/30 19:31:20 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -39,9 +39,9 @@
 .Nd interface-specific configuration files
 .Sh DESCRIPTION
 The
-.Nm hostname.*
+.Nm hostname.*\&
 and
-.Nm bridgename.*
+.Nm bridgename.*\&
 files contain information regarding the configuration of each network interface.
 One file should exist for each interface that is to be configured, such as
 .Pa hostname.fxp0
@@ -51,8 +51,8 @@ However, a configuration file is not needed for lo0.
 Note that multiple entries can be used per configuration file.
 .Pp
 The following three formats are valid for
-.Nm hostname.*
-files.
+.Nm hostname.*\&
+files:
 .Pp
 Regular ipv4 network setup:
 .Bd -ragged -offset indent
@@ -105,7 +105,7 @@ or
 .Dq inet6 .
 .It Va addr
 The optional address that belongs to the interface, such as
-190.191.192.1 or fe80:2::1 .
+190.191.192.1 or fe80:2::1.
 It is also feasible to use a hostname as specified in
 .Pa /etc/hosts .
 It is recommended that an address be used instead of symbolic information,
@@ -167,7 +167,7 @@ A DHCP-configured network interface setup consists of
 .Va options
 .Ed
 .Pp
-For example,
+For example:
 .Bd -literal -offset indent
 dhcp media 100baseTX mediaopt full-duplex
 .Ed
@@ -252,7 +252,7 @@ A bridge interface setup consists of
 \&...
 .Ed
 .Pp
-For example,
+For example:
 .Bd -literal -offset indent
 add fxp0
 add ep1
