@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftp.c,v 1.5 2000/02/01 03:23:42 deraadt Exp $	*/
+/*	$OpenBSD: tftp.c,v 1.6 2000/12/07 18:13:14 deraadt Exp $	*/
 /*	$NetBSD: tftp.c,v 1.5 1995/04/29 05:55:25 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tftp.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: tftp.c,v 1.5 2000/02/01 03:23:42 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tftp.c,v 1.6 2000/12/07 18:13:14 deraadt Exp $";
 #endif /* not lint */
 
 /* Many bug fixes are from Jim Guyton <guyton@rand-unix> */
@@ -438,7 +438,7 @@ printstats(direction, amount)
 	delta = ((tstop.tv_sec*10.)+(tstop.tv_usec/100000)) -
 		((tstart.tv_sec*10.)+(tstart.tv_usec/100000));
 	delta = delta/10.;      /* back to seconds */
-	printf("%s %d bytes in %.1f seconds", direction, amount, delta);
+	printf("%s %lu bytes in %.1f seconds", direction, amount, delta);
 	if (verbose)
 		printf(" [%.0f bits/sec]", (amount*8.)/delta);
 	putchar('\n');

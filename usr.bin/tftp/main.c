@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.4 1997/01/17 07:13:30 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.5 2000/12/07 18:13:14 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.6 1995/05/21 16:54:10 mycroft Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: main.c,v 1.4 1997/01/17 07:13:30 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.5 2000/12/07 18:13:14 deraadt Exp $";
 #endif /* not lint */
 
 /* Many bug fixes are from Jim Guyton <guyton@rand-unix> */
@@ -74,6 +74,7 @@ static char rcsid[] = "$OpenBSD: main.c,v 1.4 1997/01/17 07:13:30 millert Exp $"
 
 #define	TIMEOUT		5		/* secs between rexmt's */
 #define	LBUFLEN		200		/* size of input buffer */
+#define	MAXARGV		20
 
 struct	sockaddr_in peeraddr;
 int	f;
@@ -84,7 +85,7 @@ int	connected;
 char	mode[32];
 char	line[LBUFLEN];
 int	margc;
-char	*margv[20];
+char	*margv[MAXARGV+1];
 char	*prompt = "tftp";
 jmp_buf	toplevel;
 void	intr();
@@ -107,7 +108,7 @@ void	status __P((int, char **));
 static __dead void command __P((void));
 
 static void getusage __P((char *));
-static void makeargv __P((void));
+static int makeargv __P((void));
 static void putusage __P((char *));
 static void settftpmode __P((char *));
 
@@ -201,7 +202,8 @@ setpeer(argc, argv)
 		strcpy(line, "Connect ");
 		printf("(to) ");
 		fgets(&line[strlen(line)], LBUFLEN-strlen(line), stdin);
-		makeargv();
+		if (makeargv())
+			return;
 		argc = margc;
 		argv = margv;
 	}
@@ -329,7 +331,8 @@ put(argc, argv)
 		strcpy(line, "send ");
 		printf("(file) ");
 		fgets(&line[strlen(line)], LBUFLEN-strlen(line), stdin);
-		makeargv();
+		if (makeargv())
+			return;
 		argc = margc;
 		argv = margv;
 	}
@@ -423,7 +426,8 @@ get(argc, argv)
 		strcpy(line, "get ");
 		printf("(files) ");
 		fgets(&line[strlen(line)], LBUFLEN-strlen(line), stdin);
-		makeargv();
+		if (makeargv())
+			return;
 		argc = margc;
 		argv = margv;
 	}
@@ -507,7 +511,8 @@ setrexmt(argc, argv)
 		strcpy(line, "Rexmt-timeout ");
 		printf("(value) ");
 		fgets(&line[strlen(line)], LBUFLEN-strlen(line), stdin);
-		makeargv();
+		if (makeargv())
+			return;
 		argc = margc;
 		argv = margv;
 	}
@@ -535,7 +540,8 @@ settimeout(argc, argv)
 		strcpy(line, "Maximum-timeout ");
 		printf("(value) ");
 		fgets(&line[strlen(line)], LBUFLEN-strlen(line), stdin);
-		makeargv();
+		if (makeargv())
+			return;
 		argc = margc;
 		argv = margv;
 	}
@@ -610,7 +616,8 @@ command()
 		}
 		if ((line[0] == 0) || (line[0] == '\n'))
 			continue;
-		makeargv();
+		if (makeargv())
+			continue;
 		if (margc == 0)
 			continue;
 		c = getcmd(margv[0]);
@@ -658,14 +665,20 @@ getcmd(name)
 /*
  * Slice a string up into argc/argv.
  */
-static void
+static int
 makeargv()
 {
 	register char *cp;
 	register char **argp = margv;
+	int ret = 0;
 
 	margc = 0;
 	for (cp = line; *cp;) {
+		if (margc >= MAXARGV) {
+			printf("too many arguments\n");
+			ret = 1;
+			break;
+		}
 		while (isspace(*cp))
 			cp++;
 		if (*cp == '\0')
@@ -679,6 +692,7 @@ makeargv()
 		*cp++ = '\0';
 	}
 	*argp++ = 0;
+	return (ret);
 }
 
 void
