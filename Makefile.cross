@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.cross,v 1.6 2005/01/28 19:51:47 mickey Exp $
+# $OpenBSD: Makefile.cross,v 1.7 2005/03/12 17:28:08 grange Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-etc-root-var
@@ -287,4 +287,3 @@ cross-cleandir:
 	    BSDSRCDIR=${.CURDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    SKIPDIR="${NO_CROSS}" \
 	    ${MAKE} cleandir)
-
