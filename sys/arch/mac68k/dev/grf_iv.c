@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_iv.c,v 1.11 1997/03/18 05:37:50 briggs Exp $	*/
+/*	$OpenBSD: grf_iv.c,v 1.12 1997/03/18 05:54:01 briggs Exp $	*/
 /*	$NetBSD: grf_iv.c,v 1.17 1997/02/20 00:23:27 scottr Exp $	*/
 
 /*
@@ -155,9 +155,6 @@ grfiv_attach(parent, self, aux)
 			panic("failed to map space for DAFB regs.\n");
 		}
 		/* Show off a bit -- no need to really set these. */
-		mac68k_vidphys = (R4(sc, 0) << 9) | ((R4(sc, 4) & 0xf) << 5);
-		mac68k_vidphys += 0xF9000000;
-		videorowbytes = R4(sc,8) << 2;
 		printf(": DAFB: Monitor sense %x.\n", R4(sc,0x1C)&7);
 		break;
 	default:
