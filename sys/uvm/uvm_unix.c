@@ -83,7 +83,7 @@ sys_obreak(p, v, retval)
 
 	old = (vaddr_t)vm->vm_daddr;
 	new = round_page(SCARG(uap, nsize));
-	if ((rlim_t)(new - old) > p->p_rlimit[RLIMIT_DATA].rlim_cur)
+	if ((new - old) > p->p_rlimit[RLIMIT_DATA].rlim_cur)
 		return(ENOMEM);
 
 	old = round_page(old + ptoa(vm->vm_dsize));
@@ -99,20 +99,23 @@ sys_obreak(p, v, retval)
 		rv = uvm_map(&vm->vm_map, &old, diff, NULL, UVM_UNKNOWN_OFFSET,
 		    UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_COPY,
 		    UVM_ADV_NORMAL, UVM_FLAG_AMAPPAD|UVM_FLAG_FIXED|
-		    UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW)); 
+		    UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW));
+		if (rv == KERN_SUCCESS) {
+			vm->vm_dsize += atop(diff);
+			return (0);
+		}
 	} else {
 		rv = uvm_deallocate(&vm->vm_map, new, -diff);
+		if (rv == KERN_SUCCESS) {
+			vm->vm_dsize -= atop(-diff);
+			return (0);
+		}
 	}
 
-	vm->vm_dsize += atop(diff);
-
-	if (rv != KERN_SUCCESS) {
-		uprintf("sbrk: %s failed, return = %d\n",
-			diff > 0 ? "grow" : "shrink", rv);
-		return(ENOMEM);
-	}
-
-	return (0);
+	uprintf("sbrk: %s %ld failed, return = %d\n",
+		diff > 0 ? "grow" : "shrink",
+		(long)(diff > 0 ? diff : -diff), rv);
+	return(ENOMEM);
 }
 
 /*
