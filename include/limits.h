@@ -39,7 +39,7 @@
 #define	_LIMITS_H_
 
 #if !defined(_ANSI_SOURCE)
-#define	_POSIX_ARG_MAX		262144
+#define	_POSIX_ARG_MAX		4096
 #define	_POSIX_CHILD_MAX	6
 #define	_POSIX_LINK_MAX		8
 #define	_POSIX_MAX_CANON	255
@@ -49,7 +49,7 @@
 #define	_POSIX_OPEN_MAX		16
 #define	_POSIX_PATH_MAX		255
 #define _POSIX_PIPE_BUF		512
-#define _POSIX_SSIZE_MAX	32727
+#define _POSIX_SSIZE_MAX	32767
 #define _POSIX_STREAM_MAX	8
 #define _POSIX_TZNAME_MAX	3
 
