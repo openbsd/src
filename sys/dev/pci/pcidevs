@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.716 2004/02/28 22:33:13 deraadt Exp $
+$OpenBSD: pcidevs,v 1.717 2004/03/03 04:14:59 krw Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1663,7 +1663,14 @@ product SYMBIOS	1510		0x0010	53c1510
 product SYMBIOS	895A		0x0012	53c895A
 product SYMBIOS 1010		0x0020	53c1010-33
 product SYMBIOS 1010_2		0x0021	53c1010-66
+product SYMBIOS 1030		0x0030	53c1030
 product SYMBIOS 875J		0x008f	53c875J
+product SYMBIOS FC909		0x0620	FC909 
+product SYMBIOS FC909A		0x0621	FC909A
+product SYMBIOS FC929		0x0622  FC929
+product SYMBIOS FC929_1		0x0623  FC929
+product SYMBIOS FC919		0x0624  FC919
+product SYMBIOS FC919_1		0x0625  FC919
 product SYMBIOS MEGARAID	0x1960	MegaRAID
 
 /* Packet Engines products */
