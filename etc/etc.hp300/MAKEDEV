@@ -1,15 +1,9 @@
 #!/bin/sh -
 #
-# THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
-# generated from:
+#	$OpenBSD: MAKEDEV,v 1.38 2002/02/09 17:58:16 deraadt Exp $
+#	$NetBSD: MAKEDEV,v 1.12 1995/11/05 23:50:22 thorpej Exp $
 #
-#	OpenBSD: etc.hp300/MAKEDEV.md,v 1.1 2002/02/08 20:26:36 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.23 2002/02/08 20:26:36 todd Exp 
-#	OpenBSD: MAKEDEV.sub,v 1.5 2002/01/23 06:02:19 todd Exp 
-#
-#	$OpenBSD: MAKEDEV,v 1.37 2002/02/09 17:01:40 deraadt Exp $
-#
-# Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
+# Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -17,23 +11,32 @@
 # are met:
 # 1. Redistributions of source code must retain the above copyright
 #    notice, this list of conditions and the following disclaimer.
-# 2. The name of the author may not be used to endorse or promote products
-#    derived from this software without specific prior written permission.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. All advertising materials mentioning features or use of this software
+#    must display the following acknowledgement:
+#	This product includes software developed by the University of
+#	California, Berkeley and its contributors.
+# 4. Neither the name of the University nor the names of its contributors
+#    may be used to endorse or promote products derived from this software
+#    without specific prior written permission.
 #
-# THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
-# INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-# AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
-# THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
-# OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
-# OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
-# ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+#
+#	@(#)MAKEDEV	5.5 (Berkeley) 5/28/91
 #
 # Device "make" file.  Valid arguments:
-#	all	makes all known devices, including local devices.
-#		Tries to make the ``standard'' number of each type.
 #	std	standard devices
 #	local	configuration specific devices
 # Tapes:
@@ -41,43 +44,43 @@
 #	mt*	(Magnetic) 9-track reel tape
 #	st*	Exabyte tape
 # Disks:
-#	ccd*	concatenated disk devices
+#	ccd*	"concatenated" pseudo-disks
 #	hd*	HP300 HP-IB disks
-#	sd*	SCSI disks
+#	sd*	HP300 SCSI disks
 #	vnd*	"file" pseudo-disks
-#	rd*	"ramdisk" pseudo-disks
-# Terminal multiplexers:
+# Terminal multiplexors:
 #	dca*	HP200/300 single port serial interface
 #	dcm*	HP200/300 4 port serial mux interface
 #	apci*	HP400 4 port serial mux interface
 # Pseudo terminals:
-#	tty*	set of 16 slave psuedo terminals
-#	pty*	set of 16 master pseudo terminals
+#	pty*	set of 16 master and slave pseudo terminals
 # Printers:
 #	ppi*	HP-IB plotters
 # Call units:
 # Special purpose devices:
-#	fd	makes fd/* for the fdescfs
+#	fd	file descriptors
 #	grf*	raw interface to HP300 graphics devices
 #	ite*	terminal emulator interface to HP300 graphics devices
 #	hil	HP300 HIL input devices
-#	bpf*	Berkeley Packet Filter
+#	bpf*	packet filter
 #	tun*	network tunnel driver
-#	pf*	Packet Filter
 #	lkm	loadable kernel modules interface
-#	*random	inkernel random data source
+#	*random	inkernel random number generator
 #	xfs*	XFS filesystem devices
-#	altq/	ALTQ control interface
-PATH=/sbin:/usr/sbin:/bin:/usr/bin
-T=$0
+#	altq	ALTQ control interface
+#
 
-# set this to echo for Echo-Only debugging
-[ "$eo" ] || eo=
+PATH=/sbin:/bin/:/usr/bin:/usr/sbin
+umask 77
 
-hex()
+#
+# Utility functions
+#
+
+hex ()
 {
 	case $1 in
-		[0-9]) echo -n $1;;
+		[0-9]) echo -n $1 ;;
 		10) echo -n a;;
 		11) echo -n b;;
 		12) echo -n c;;
@@ -86,121 +89,243 @@ hex()
 		15) echo -n f;;
 	esac
 }
-trunc()
-{
-	# XXX pdksh can't seem to deal with locally scoped variables
-	# in ${foo#$bar} expansions
-	arg1="$1"
-	arg2="$2"
-	case $3 in
-	l)   echo ${arg2#$arg1} ;;
-	r|*) echo ${arg1#$arg2} ;;
-	esac
-}
-unt()
-{
-	# XXX pdksh can't seem to deal with locally scoped variables
-	# in ${foo#$bar} expansions
-	arg="$1"
-	tmp="${arg#[a-zA-Z]*}"
-	tmp="${tmp%*[a-zA-Z]}"
-	while [ "$tmp" != "$arg" ]
-	do
-		arg=$tmp
-		tmp="${arg#[a-zA-Z]*}"
-		tmp="${tmp%*[a-zA-Z]}"
-	done
-	echo $arg
-}
-dodisk()
-{
-	n=$(($((${5}*${7:-16}))+${6})) count=0
-	RMlist="$RMlist $1$2? r$1$2?"
-	[ 0$7 -ne 8 ] && l="i j k l m n o p"
-	for d in a b c d e f g h $l
-	do
-		M $1$2$d	b $3 $(($n+$count)) 640
-		M r$1$2$d	c $4 $(($n+$count)) 640
-		let count=count+1
-	done
-	MKlist="$MKlist;chown root.operator $1$2? r$1$2?"
-}
-dodisk2()
-{
-	n=$(($(($5*${7:-16}))+$6))
-	M $1$2a b $3 $n 640 operator
-	M r$1$2a c $4 $n 640 operator
-	n=$(($n+2))
-	M $1$2c b $3 $n 640 operator
-	M r$1$2c c $4 $n 640 operator
-}
 
-# M name b/c major minor [mode] [group]
-RMlist="rm -f"
-MKlist=":"
-mkl() {
- [ "${mklist[$1]}" ] && {
-  mklist[$1]="${mklist[$1]};mknod -m $1 $2 $3 $4 $5"
- } || {
-  mklist[$1]="mknod -m $1 $2 $3 $4 $5"
-  modes="$modes $1"
- }
-}
-M() {
-	RMlist="$RMlist $1"
-	mkl ${5-666} $1 $2 $3 $4
-	mklist="$mklist $1"
-	G=${6:-wheel}
-	[ "$7" ] && {
-		MKlist="$MKlist;chown $7.$G $1"
-	} || {
-		case $G in
-		wheel)g=0;;kmem)g=2;;operator)g=5;;tty)g=4;;dialer)g=117;;
-		esac
-		[ "${grplist[$g]}" ] && {
-			grplist[$g]="${grplist[$g]} $1"
-		} || {
-			groups="$groups $g"
-			grplist[$g]="chgrp $G $1"
-		}
-	}
-	return 0
-}
-R() {
-[ "$DEBUG" ] && set -x
-for i in "$@"
+#
+# End of utility functions
+#
+
+for i
 do
-U=`unt $i`
-[ "$U" ] || U=0
-
 case $i in
+
+all)
+	sh MAKEDEV std fd ct0 ct1 st0 st1 ccd0 ccd1 ccd2 hd0 hd1 hd2
+	sh MAKEDEV sd0 sd1 sd2 rd0 rd1 pty0 vnd0 vnd1 vnd2 vnd3
+	sh MAKEDEV hil grf0 apci0 ppi0 ite0 dca0 dcm0 dcm1 dcm2 dcm3
+	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
+	sh MAKEDEV pf tun0 tun1 tun2 tun3 lkm random xfs0 altq
+	sh MAKEDEV local
+	;;
+
 raminst)
-	R std ct0 ct1 st0 st1 hd0 hd1 hd2 hd3 hd4
-	R sd0 sd1 sd2 sd3 sd4 rd0 rd1 pty0
-	R hil grf0 apci0 ite0 dca0 dcm0 dcm1
-	R bpf0 bpf1 tun0 tun1 lkm random
+	sh MAKEDEV std fd ct0 ct1 st0 st1 hd0 hd1 hd2 hd3 hd4
+	sh MAKEDEV sd0 sd1 sd2 sd3 sd4 rd0 rd1 pty0
+	sh MAKEDEV hil grf0 apci0 ite0 dca0 dcm0 dcm1
+	sh MAKEDEV bpf0 bpf1 tun0 tun1 lkm random
 	;;
 
 std)
-	M console	c 0 0 600
-	M tty		c 1 0
-	M mem		c 2 0 640 kmem
-	M kmem		c 2 1 640 kmem
-	M null		c 2 2
-	M zero		c 2 12
-	M stdin		c 21 0
-	M stdout	c 21 1
-	M stderr	c 21 2
-	M ksyms		c 36 0 640 kmem
-	M drum		c 3 0 640 kmem
-	M klog		c 6 0 600
+	rm -f console drum kmem mem null zero tty klog stdin stdout stderr ksyms
+	mknod console		c 0 0
+	mknod drum		c 3 0	; chmod 640 drum ; chown root.kmem drum
+	mknod kmem		c 2 1	; chmod 640 kmem ; chown root.kmem kmem
+	mknod mem		c 2 0	; chmod 640 mem ; chown root.kmem mem
+	mknod null		c 2 2	; chmod 666 null
+	mknod zero		c 2 12	; chmod 666 zero
+	mknod tty		c 1 0	; chmod 666 tty
+	mknod klog		c 6 0	; chmod 600 klog
+	mknod stdin		c 21 0	; chmod 666 stdin
+	mknod stdout		c 21 1	; chmod 666 stdout
+	mknod stderr		c 21 2	; chmod 666 stderr
+	mknod ksyms		c 36 0  ; chmod 640 ksyms ; chown root.kmem ksyms
+	;;
+
+fd)
+	rm -f fd/*
+	mkdir fd > /dev/null 2>&1
+	n=0
+	(cd fd && while [ $n -lt 64 ]; do mknod $n c 21 $n; n="$(( $n + 1 ))"; done )
+	chown -R root.wheel fd
+	chmod 555 fd
+	chmod 666 fd/*
+	;;
+
+ct*|mt*|st*)
+	umask 0 ; unit=`expr $i : '..\(.*\)'`
+	case $i in
+	ct*) name=ct; blk=0; chr=7;;
+	mt*) name=mt; blk=1; chr=16;;
+	st*) name=st; blk=6; chr=20;;
+	esac
+	case $unit in
+	0|1|2|3|4|5|6|7)
+		four=`expr $unit + 4` ; eight=`expr $unit + 8`
+		twelve=`expr $unit + 12`; twenty=`expr $unit + 20`
+		#
+		# block devices don't work so don't make them
+		#rm -f ${name}${unit} ${name}${four} ${name}${eight} \
+		#    ${name}${twelve} n${name}${unit} n${name}${eight}
+		#mknod ${name}${unit}	b $blk $unit
+		#mknod ${name}${four}	b $blk $four
+		#mknod ${name}${eight}	b $blk $eight
+		#mknod ${name}${twelve}	b $blk $twelve
+		#mknod n${name}${unit}	b $blk $four ;: sanity w/pdp11 v7
+		#mknod n${name}${eight}	b $blk $twelve ;: ditto
+		#
+		rm -f r${name}${unit} r${name}${four} r${name}${eight} \
+		    r${name}${twelve} nr${name}${unit} nr${name}${eight}
+		mknod r${name}${unit}	c $chr $unit
+		mknod r${name}${four}	c $chr $four
+		mknod r${name}${eight}	c $chr $eight
+		mknod r${name}${twelve}	c $chr $twelve
+		chown root.operator r${name}${unit} r${name}${four} \
+		    r${name}${eight} r${name}${twelve}
+		chmod 660 r${name}${unit} r${name}${four} \
+		    r${name}${eight} r${name}${twelve}
+		ln r${name}${four} nr${name}${unit} ;: sanity w/pdp11 v7
+		ln r${name}${twelve} nr${name}${eight} ;: ditto
+		;;
+	*)
+		echo bad unit for tape in: $1
+		;;
+	esac
+	umask 77
+	;;
+
+bpf*)
+	unit=`expr $i : 'bpf\(.*\)'`
+	rm -f bpf$unit
+	mknod bpf$unit c 22 $unit
+	chmod 600 bpf$unit
+	chown root.wheel bpf$unit
+	;;
+
+pf)
+	rm -f pf
+	mknod pf c 33 0
+	chown root.wheel pf
+	chmod 600 pf
+	;;
+
+tun*)
+	unit=`expr $i : 'tun\(.*\)'`
+	rm -f tun$unit
+	mknod tun$unit c 23 $unit
+	chmod 600 tun$unit
+	chown root.wheel tun$unit
+	;;
+
+rd*)
+	umask 2 ; unit=`expr $i : '.*d\(.*\)'`
+	rm -f rd$unit? rrd$unit?
+	mknod rd${unit}a b 8 `expr $unit '*' 16 + 0`
+	mknod rd${unit}c b 8 `expr $unit '*' 16 + 2`
+	mknod rrd${unit}a c 34 `expr $unit '*' 16 + 0`
+	mknod rrd${unit}c c 34 `expr $unit '*' 16 + 2`
+	chown root.operator rd${unit}[ac] rrd${unit}[ac]
+	chmod 640 rd${unit}[ac] rrd${unit}[ac]
+	umask 77
+	;;
+
+ccd*|hd*|sd*)
+	umask 2 ; unit=`expr $i : '.*d\(.*\)'`
+	case $i in
+	hd*) name=hd; blk=2; chr=9;;
+	sd*) name=sd; blk=4; chr=8;;
+	ccd*) name=ccd; blk=5; chr=17;;
+	esac
+	case $unit in
+	0|1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16|\
+	17|18|19|20|21|22|23|24|25|26|27|28|29|30|31)
+		rm -f $name$unit? r$name$unit?
+		mknod ${name}${unit}a	b $blk `expr $unit '*' 16 + 0`
+		mknod ${name}${unit}b	b $blk `expr $unit '*' 16 + 1`
+		mknod ${name}${unit}c	b $blk `expr $unit '*' 16 + 2`
+		mknod ${name}${unit}d	b $blk `expr $unit '*' 16 + 3`
+		mknod ${name}${unit}e	b $blk `expr $unit '*' 16 + 4`
+		mknod ${name}${unit}f	b $blk `expr $unit '*' 16 + 5`
+		mknod ${name}${unit}g	b $blk `expr $unit '*' 16 + 6`
+		mknod ${name}${unit}h	b $blk `expr $unit '*' 16 + 7`
+		mknod ${name}${unit}i	b $blk `expr $unit '*' 16 + 8`
+		mknod ${name}${unit}j	b $blk `expr $unit '*' 16 + 9`
+		mknod ${name}${unit}k	b $blk `expr $unit '*' 16 + 10`
+		mknod ${name}${unit}l	b $blk `expr $unit '*' 16 + 11`
+		mknod ${name}${unit}m	b $blk `expr $unit '*' 16 + 12`
+		mknod ${name}${unit}n	b $blk `expr $unit '*' 16 + 13`
+		mknod ${name}${unit}o	b $blk `expr $unit '*' 16 + 14`
+		mknod ${name}${unit}p	b $blk `expr $unit '*' 16 + 15`
+		mknod r${name}${unit}a	c $chr `expr $unit '*' 16 + 0`
+		mknod r${name}${unit}b	c $chr `expr $unit '*' 16 + 1`
+		mknod r${name}${unit}c	c $chr `expr $unit '*' 16 + 2`
+		mknod r${name}${unit}d	c $chr `expr $unit '*' 16 + 3`
+		mknod r${name}${unit}e	c $chr `expr $unit '*' 16 + 4`
+		mknod r${name}${unit}f	c $chr `expr $unit '*' 16 + 5`
+		mknod r${name}${unit}g	c $chr `expr $unit '*' 16 + 6`
+		mknod r${name}${unit}h	c $chr `expr $unit '*' 16 + 7`
+		mknod r${name}${unit}i	c $chr `expr $unit '*' 16 + 8`
+		mknod r${name}${unit}j	c $chr `expr $unit '*' 16 + 9`
+		mknod r${name}${unit}k	c $chr `expr $unit '*' 16 + 10`
+		mknod r${name}${unit}l	c $chr `expr $unit '*' 16 + 11`
+		mknod r${name}${unit}m	c $chr `expr $unit '*' 16 + 12`
+		mknod r${name}${unit}n	c $chr `expr $unit '*' 16 + 13`
+		mknod r${name}${unit}o	c $chr `expr $unit '*' 16 + 14`
+		mknod r${name}${unit}p	c $chr `expr $unit '*' 16 + 15`
+		chown root.operator ${name}${unit}[a-p] r${name}${unit}[a-p]
+		chmod 640 ${name}${unit}[a-p] r${name}${unit}[a-p]
+		;;
+	*)
+		echo bad unit for disk in: $i
+		;;
+	esac
+	umask 77
+	;;
+
+vnd*)
+	umask 2 ; unit=`expr $i : 'vnd\(.*\)'`
+	for name in vnd svnd; do
+		blk=6; chr=19;
+		case $name in
+		vnd)	off=0;;
+		svnd)	off=128;;
+		esac
+		rm -f $name$unit? r$name$unit?
+		mknod ${name}${unit}a	b $blk `expr $unit '*' 16 + $off + 0`
+		mknod ${name}${unit}b	b $blk `expr $unit '*' 16 + $off + 1`
+		mknod ${name}${unit}c	b $blk `expr $unit '*' 16 + $off + 2`
+		mknod ${name}${unit}d	b $blk `expr $unit '*' 16 + $off + 3`
+		mknod ${name}${unit}e	b $blk `expr $unit '*' 16 + $off + 4`
+		mknod ${name}${unit}f	b $blk `expr $unit '*' 16 + $off + 5`
+		mknod ${name}${unit}g	b $blk `expr $unit '*' 16 + $off + 6`
+		mknod ${name}${unit}h	b $blk `expr $unit '*' 16 + $off + 7`
+		mknod ${name}${unit}i	b $blk `expr $unit '*' 16 + $off + 8`
+		mknod ${name}${unit}j	b $blk `expr $unit '*' 16 + $off + 9`
+		mknod ${name}${unit}k	b $blk `expr $unit '*' 16 + $off + 10`
+		mknod ${name}${unit}l	b $blk `expr $unit '*' 16 + $off + 11`
+		mknod ${name}${unit}m	b $blk `expr $unit '*' 16 + $off + 12`
+		mknod ${name}${unit}n	b $blk `expr $unit '*' 16 + $off + 13`
+		mknod ${name}${unit}o	b $blk `expr $unit '*' 16 + $off + 14`
+		mknod ${name}${unit}p	b $blk `expr $unit '*' 16 + $off + 15`
+		mknod r${name}${unit}a	c $chr `expr $unit '*' 16 + $off + 0`
+		mknod r${name}${unit}b	c $chr `expr $unit '*' 16 + $off + 1`
+		mknod r${name}${unit}c	c $chr `expr $unit '*' 16 + $off + 2`
+		mknod r${name}${unit}d	c $chr `expr $unit '*' 16 + $off + 3`
+		mknod r${name}${unit}e	c $chr `expr $unit '*' 16 + $off + 4`
+		mknod r${name}${unit}f	c $chr `expr $unit '*' 16 + $off + 5`
+		mknod r${name}${unit}g	c $chr `expr $unit '*' 16 + $off + 6`
+		mknod r${name}${unit}h	c $chr `expr $unit '*' 16 + $off + 7`
+		mknod r${name}${unit}i	c $chr `expr $unit '*' 16 + $off + 8`
+		mknod r${name}${unit}j	c $chr `expr $unit '*' 16 + $off + 9`
+		mknod r${name}${unit}k	c $chr `expr $unit '*' 16 + $off + 10`
+		mknod r${name}${unit}l	c $chr `expr $unit '*' 16 + $off + 11`
+		mknod r${name}${unit}m	c $chr `expr $unit '*' 16 + $off + 12`
+		mknod r${name}${unit}n	c $chr `expr $unit '*' 16 + $off + 13`
+		mknod r${name}${unit}o	c $chr `expr $unit '*' 16 + $off + 14`
+		mknod r${name}${unit}p	c $chr `expr $unit '*' 16 + $off + 15`
+		chown root.operator ${name}${unit}[a-p] r${name}${unit}[a-p]
+		chmod 640 ${name}${unit}[a-p] r${name}${unit}[a-p]
+	done
+	umask 77
 	;;
 
 dca*)
-	case $U in
+	unit=`expr $i : 'dca\(.*\)'`
+	case $unit in
 	0|1|2|3)
-		M tty$U c 12 $U 660 dialer uucp
-		M cua$U c 12 $(($U+128)) 660 dialer uucp
+		rm -f tty${unit} cua${unit}
+		mknod tty${unit} c 12 ${unit}
+		mknod cua${unit} c 12 `expr ${unit} + 128`
+		chown uucp.dialer tty${unit} cua${unit}
+		chmod 660 tty${unit} cua${unit}
 		;;
 	*)
 		echo bad unit for dca in: $i
@@ -209,17 +334,21 @@ dca*)
 	;;
 
 dcm*)
-	case $U in
+	unit=`expr $i : 'dcm\(.*\)'`
+	case $unit in
 	0|1|2|3)
-		u="$(( $U * 4 ))"
+		u="$(( $unit * 4 ))"
 		i=0
 		while [ $i -lt 4 ]
 		do
 			n="$(( $u + $i ))"
 			ext=`hex $n`
 
-			M tty0${ext} c 15 ${n} 660 dialer uucp
-			M cua0${ext} c 15 "$(( $n + 128 ))" 660 dialer uucp
+			rm -f {tty0,cua0}${ext}
+			mknod tty0${ext} c 15 ${n}
+			mknod cua0${ext} c 15 "$(( $n + 128 ))"
+			chown uucp.dialer tty0${ext} cua0${ext}
+			chmod 660 tty0${ext} cua0${ext}
 
 			i="$(( $i + 1 ))"
 		done
@@ -232,11 +361,15 @@ dcm*)
 
 apci*)
 	# There exists only one Frodo ASIC per HP9000/400 SPU.
-	case $U in
+	unit=`expr $i : 'apci\(.*\)'`
+	case $unit in
 	0)
 		for i in 0 1 2 3; do
-			M ttya${i} c 35 ${i} 660 dialer uucp
-			M cuaa${i} c 35 $(($i+128)) 660 dialer uucp
+			rm -f ttya${i} cuaa${i}
+			mknod ttya${i} c 35 ${i}
+			mknod cuaa${i} c 35 `expr ${i} + 128`
+			chown uucp.dialer ttya${i} cuaa${i}
+			chmod 660 ttya${i} cuaa${i}
 		done
 		;;
 	*)
@@ -246,9 +379,11 @@ apci*)
 	;;
 
 ppi*)
-	case $U in
+	unit=`expr $i : 'ppi\(.*\)'`
+	case $unit in
 	0|1|2|3)
-		M ppi$U c MACHINE_ppi_maj $U 600
+		rm -f ppi${unit}
+		mknod ppi${unit} c 11 ${unit}
 		;;
 	*)
 		echo bad unit for ppi in: $i
@@ -257,9 +392,11 @@ ppi*)
 	;;
 
 ite*)
-	case $U in
+	unit=`expr $i : 'ite\(.*\)'`
+	case $unit in
 	0|1|2|3)
-		M ttye$U c 13 $U 600
+		rm -f ttye${unit}
+		mknod ttye${unit} c 13 ${unit}
 		;;
 	*)
 		echo bad unit for ite in: $i
@@ -268,10 +405,12 @@ ite*)
 	;;
 
 grf*)
-	case $U in
+	unit=`expr $i : 'grf\(.*\)'`
+	case $unit in
 	0|1|2|3)
-		M grf$U c 10 $U
-#		echo "grf$U: use MAKEDEV.hpux to make HP-UX names for device"
+		rm -f grf${unit}
+		mknod grf${unit} c 10 ${unit}; chmod 666 grf${unit}
+#		echo "grf${unit}: use MAKEDEV.hpux to make HP-UX names for device"
 		;;
 	*)
 		echo bad unit for grf in: $i
@@ -279,25 +418,24 @@ grf*)
 	esac
 	;;
 
-hil*)
-	for U in 0 1 2 3 4 5 6 7
+hil)
+	for unit in 0 1 2 3 4 5 6 7
 	do
-		M hil$U c 14 $U
+		rm -f hil${unit} locator keyboard
+		mknod hil${unit} c 14 ${unit}
 		if [ -f /usr/sbin/hilinfo ]
 		then
-			case `/usr/sbin/hilinfo -t hil$U` in
+			case `/usr/sbin/hilinfo -t hil${unit}` in
 			mouse)
 				if [ ! -f locator ]
 				then
-					MKlist="$MKlist;ln hil$U locator"
-					RMlist="$RMlist locator"
+					ln hil${unit} locator
 				fi
 				;;
 			keyboard)
 				if [ ! -f keyboard ]
 				then
-					MKlist="$MKlist;ln hil$U keyboard"
-					RMlist="$RMlist keyboard"
+					ln hil${unit} keyboard
 				fi
 				;;
 			*)
@@ -307,172 +445,95 @@ hil*)
 	done
 	if [ ! -f /usr/sbin/hilinfo ]
 	then
-		MKlist="$MKlist;ln hil1 keyboard"
-		MKlist="$MKlist;ln hil3 locator"
-		RMlist="$RMlist keyboard locator"
+		ln hil1 keyboard
+		ln hil3 locator
 	fi
+	chmod 666 hil*
 #	echo "hil: use MAKEDEV.hpux to make HP-UX names for devices"
 	;;
 
-altq)
-	RMlist="mkdir -p altq;$RMlist"
-	for d in altq cbq wfq afm fifoq red rio localq hfsc cdnr blue priq; do
-		M altq/$d c 52 $U 644
-		U=$(($U+1))
-	done
-	;;
-
-xfs*)
-	M xfs$U c 51 $U 600
-	;;
-
-*random)
-	n=0
-	for pre in " " s u p a
-	do
-		M ${pre}random c 32 $n 644
-		n=$(($n+1))
-	done
-	;;
-
 lkm)
-	M lkm c 24 0 640 kmem
-	;;
-
-pf*)
-	M pf c 33 0 600
-	;;
-
-tun*)
-	M tun$U c 23 $U 600
-	;;
-
-bpf*)
-	M bpf$U c 22 $U 600
-	;;
-
-fd)
-	RMlist="mkdir -p fd;$RMlist" n=0
-	while [ $n -lt 64 ];do M fd/$n c 21 $n;n=$(($n+1));done
-	MKlist="$MKlist;chmod 555 fd"
+	rm -f lkm
+	mknod lkm c 24 0
+	chown root.kmem lkm
+	chmod 640 lkm
 	;;
 
 pty*)
-	case $U in
-	0) off=0 name=p;;
-	1) off=16 name=q;;
-	2) off=32 name=r;;
-	3) off=48 name=s;;
-# Note that telnetd, rlogind, and xterm (at least) only look at p-s.
-	4) off=64 name=t;;
-	5) off=80 name=u;;
-	6) off=96 name=v;;
-	7) off=112 name=w;;
-	8) off=128 name=x;;
-	9) off=144 name=y;;
-	10) off=160 name=z;;
-	11) off=176 name=P;;
-	12) off=192 name=Q;;
-	13) off=206 name=R;;
-	14) off=224 name=S;;
-	15) off=240 name=T;;
-	*) echo bad unit for pty in: $i; continue;;
+	class=`expr $i : 'pty\(.*\)'`
+	case $class in
+	0) offset=0 name=p;;
+	1) offset=16 name=q;;
+	2) offset=32 name=r;;
+	3) offset=48 name=s;;
+	4) offset=64 name=t;;
+	5) offset=80 name=u;;
+	6) offset=96 name=v;;
+	7) offset=112 name=w;;
+	8) offset=128 name=x;;
+	9) offset=144 name=y;;
+	10) offset=160 name=z;;
+	11) offset=176 name=P;;
+	12) offset=192 name=Q;;
+	13) offset=208 name=R;;
+	14) offset=224 name=S;;
+	15) offset=240 name=T;;
+	*) echo bad unit for pty in: $i;;
 	esac
-	n=0
-	while [ $n -lt 16 ]
-	do
-		nam=$name$(hex $n)
-		M tty$nam c 4 $(($off+$n))
-		M pty$nam c 5 $(($off+$n))
-		n=$(($n+1))
+	case $class in
+	0|1|2|3|4|5|6|7|8|9|10|11|12|13|14|15)
+		umask 0
+		n=0
+		while [ $n -lt 16 ]
+		do
+			nam=$name`hex $n`
+			rm -f {tty,pty}$nam
+			mknod tty$nam c 4 "$(( $offset + $n ))"
+			mknod pty$nam c 5 "$(( $offset + $n ))"
+			n="$(( $n + 1 ))"
+		done
+		umask 77
+		;;
+	esac
+	;;
+
+random|srandom|urandom|prandom|arandom)
+        rm -f random urandom srandom prandom arandom
+	mknod  random c 32 0
+	mknod srandom c 32 1
+	mknod urandom c 32 2
+	mknod prandom c 32 3
+	mknod arandom c 32 4
+	chown root.wheel random srandom urandom prandom arandom
+	chmod 644 random srandom urandom prandom arandom
+	;;
+
+xfs*)
+	rm -f xfs$unit
+	mknod xfs$unit c 51 $unit 
+	chmod 600 xfs$unit 
+	chown root.wheel xfs$unit
+	;;
+
+altq)
+	mkdir -p altq
+	chmod 755 altq
+	unit=0
+	for dev in altq cbq wfq afm fifoq red rio localq hfsc \
+	    cdnr blue priq; do
+		rm -f altq/$dev
+		mknod altq/$dev c 52 $unit
+		chmod 644 altq/$dev
+		unit=$(($unit + 1))
 	done
 	;;
 
-rd*)
-	dodisk2 rd $U 8 34 $U 0
-	;;
-
-vnd*)
-	dodisk vnd $U 6 19 $U 0
-	dodisk svnd $U 6 19 $U 128
-	;;
-
-ct*|mt*|st*)
-	case $i in
-	ct*) name=ct blk=0 chr=7;;
-	mt*) name=mt blk=1 chr=16;;
-	st*) name=st blk=6 chr=20;;
-	esac
-	case $U in
-	[0-7])
-		four=$(($U+4)) eight=$(($U+8))
-		twelve=$(($U+12)) twenty=$(($U+20))
-		M r$name$U	c $chr $U 660 operator
-		M r$name$four	c $chr $four 660 operator
-		M r$name$eight	c $chr $eight 660 operator
-		M r$name$twelve	c $chr $twelve 660 operator
-		MKlist="$MKlist;ln r$name$four nr$name$U";: sanity w/pdp11 v7
-		MKlist="$MKlist;ln r$name$twelve nr$name$eight";: ditto
-		RMlist="$RMlist nr$name$U nr$name$eight"
-		;;
-	*)
-		echo bad unit for tape in: 
-		;;
-	esac
-	;;
-
 local)
-	test -s $T.local && sh $T.local
+	umask 0
+	test -s MAKEDEV.local && sh MAKEDEV.local
 	;;
-
-all)
-	R local ppi0 xfs0 rndrandom lkm pf altq tun0 tun1 tun2 tun3
-	R bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 rd0 hd0
-	R hd1 hd2 hd3 hd4 ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 std
-	R pty0 pty1 fd sd0 sd1 sd2 sd3 sd4
-	;;
-
-sd*|hd*|ccd*)
-	case $i in
-	sd*) dodisk sd $U 4 8 $U 0;;
-	hd*) dodisk hd $U 2 9 $U 0;;
-	ccd*) dodisk ccd $U 5 17 $U 0;;
-	esac
-	;;
-
 *)
 	echo $i: unknown device
 	;;
 esac
 done
-}
-R "$@"
-if [ "$os" = "SunOS" ]; then
-	eo=transform
-	transform() {
-		case $mode in
-		600) mask=077;;
-		640) mask=027;;
-		660) mask=007;;
-		644) mask=022;;
-		666) mask=0;;
-		440) mask=227;;
-		esac
-		echo `echo "$@"|sed \
-			's/mknod -m \([0-9]*\) /umask '$mask';mknod /;s/-m [0-9]* //g;\
-			 s/operator/5/g;s/root.kmem/root.2/g;s/root\./root:/g'`
-	}
-fi
-list="$RMlist"
-for mode in $modes; do
-	list="$list;${mklist[$mode]}"
-done
-for group in $groups; do
-	list="$list;${grplist[$group]}"
-done
-list="$list;$MKlist"
-if [ "$eo" = "echo" -o "$eo" = "transform" ]; then
-	$eo "$list"
-else
-	echo "$list" | sh
-fi
