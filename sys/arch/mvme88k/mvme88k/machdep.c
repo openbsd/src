@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.151 2004/07/30 20:44:09 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.152 2004/07/30 20:48:40 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -1464,7 +1464,7 @@ intr_establish(int vec, struct intrhand *ihand, const char *name)
 #ifdef DIAGNOSTIC
 			panic("intr_establish: there are other handlers with "
 			    "vec (0x%x) at ipl %x, but you want it at %x",
-			      intr->ih_ipl, vec, ihand->ih_ipl);
+			    vec, intr->ih_ipl, ihand->ih_ipl);
 #endif /* DIAGNOSTIC */
 			return (EINVAL);
 		}
