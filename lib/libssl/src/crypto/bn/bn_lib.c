@@ -702,9 +702,6 @@ int BN_cmp(const BIGNUM *a, const BIGNUM *b)
 		{ gt=1; lt= -1; }
 	else	{ gt= -1; lt=1; }
 
-	bn_fix_top(a);
-	bn_fix_top(b);
-
 	if (a->top > b->top) return(gt);
 	if (a->top < b->top) return(lt);
 	for (i=a->top-1; i>=0; i--)
