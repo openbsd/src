@@ -1,4 +1,4 @@
-/* $OpenBSD: gnum4.c,v 1.14 2001/09/28 00:46:02 espie Exp $ */
+/* $OpenBSD: gnum4.c,v 1.15 2001/10/13 20:18:48 espie Exp $ */
 
 /*
  * Copyright (c) 1999 Marc Espie
@@ -216,7 +216,7 @@ addchars(c, n)
 {
 	if (n == 0)
 		return;
-	if (current + n > bufsize) {
+	while (current + n > bufsize) {
 		if (bufsize == 0)
 			bufsize = 1024;
 		else
