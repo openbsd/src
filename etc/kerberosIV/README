@@ -1,7 +1,9 @@
 #	from @(#)README	8.1 (Berkeley) 6/9/93
-#	$OpenBSD: README,v 1.3 1998/01/03 01:46:07 deraadt Exp $
+#	$OpenBSD: README,v 1.4 1998/01/21 00:29:18 art Exp $
 
 Notes about the contents of the /etc/kerberosIV directory:
+
+(please check /usr/share/info for more information about kerberos)
 
 The file master_key contains a copy of the master key under which the
 entire Kerberos database is encrypted.  Disclosing this key would be bad
@@ -10,8 +12,8 @@ programs need to inspect or modify the kereros database, and so the key
 must be available for them, (or else it would have to be typed in by
 hand):
 		- kerberos (the server itself)
-		- registerd (for new user registration)
 		- kpasswdd (for changing passwords)
+		- kadmind (database administration server)
 
 The srvtab file contains the encryption keys for each service on the local
 host.  Any host offering network services would have a key here, although
@@ -30,9 +32,4 @@ The krb.realms file contains the name of Kerberos servers for
 various (sub)domains.
 
 Kerberos log information it placed in /var/log/kerberos.log
-(see rc.local to change it)
-
-The register_keys directory contains a set of files (all of which begin
-with "."), each of which contains a des key used for registering new users
-with the system.  It is used only by the "registerd" program, and only on
-a Kerberos server host.
+(see /etc/rc to change it)
