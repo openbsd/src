@@ -1,5 +1,5 @@
 '\" t
-.\" $OpenBSD: curses.3tbl,v 1.12 1999/11/28 17:53:40 millert Exp $
+.\" $OpenBSD: curses.3tbl,v 1.13 1999/12/28 15:57:59 millert Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998,1999 Free Software Foundation, Inc.                   *
@@ -29,7 +29,7 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $From: ncurses.3x,v 1.35 1999/10/23 19:50:07 tom Exp $
+.\" $From: ncurses.3x,v 1.39 1999/12/19 01:53:04 tom Exp $
 .TH ncurses 3 ""
 .ds n 5
 .ds d /usr/share/terminfo
@@ -198,6 +198,7 @@ addch/\fBcurs_addch\fR(3)
 addchnstr/\fBcurs_addchstr\fR(3)
 addchstr/\fBcurs_addchstr\fR(3)
 addnstr/\fBcurs_addstr\fR(3)
+assume_default_colors/\fBdft_fgbg\fR(3)*
 attr_get/\fBcurs_attr\fR(3)
 attr_off/\fBcurs_attr\fR(3)
 attr_on/\fBcurs_attr\fR(3)
@@ -223,6 +224,7 @@ color_content/\fBcurs_color\fR(3)
 color_set/\fBcurs_attr\fR(3)
 copywin/\fBcurs_overlay\fR(3)
 curs_set/\fBcurs_kernel\fR(3)
+curses_version/\fBcurs_extend\fR(3)*
 def_prog_mode/\fBcurs_kernel\fR(3)
 def_shell_mode/\fBcurs_kernel\fR(3)
 define_key/\fBdefine_key\fR(3)*
@@ -280,6 +282,7 @@ intrflush/\fBcurs_inopts\fR(3)
 is_linetouched/\fBcurs_touch\fR(3)
 is_wintouched/\fBcurs_touch\fR(3)
 isendwin/\fBcurs_initscr\fR(3)
+keybound/\fBkeybound\fR(3)*
 keyname/\fBcurs_util\fR(3)
 keyok/\fBkeyok\fR(3)*
 keypad/\fBcurs_inopts\fR(3)
@@ -428,6 +431,7 @@ ungetmouse/\fBcurs_mouse\fR(3)*
 untouchwin/\fBcurs_touch\fR(3)
 use_default_colors/\fBdft_fgbg\fR(3)*
 use_env/\fBcurs_util\fR(3)
+use_extended_names/\fBcurs_extend\fR(3)*
 vidattr/\fBterminfo\fR(3)
 vidputs/\fBterminfo\fR(3)
 vline/\fBcurs_border\fR(3)
@@ -475,7 +479,7 @@ winsertln/\fBcurs_deleteln\fR(3)
 winsnstr/\fBcurs_insstr\fR(3)
 winsstr/\fBcurs_insstr\fR(3)
 winstr/\fBcurs_instr\fR(3)
-wmouse_trafo/\fBcurs_mouse\fR(3)
+wmouse_trafo/\fBcurs_mouse\fR(3)*
 wmove/\fBcurs_move\fR(3)
 wnoutrefresh/\fBcurs_refresh\fR(3)
 wprintw/\fBcurs_printw\fR(3)
@@ -544,14 +548,6 @@ For best results, \fBlines\fR and \fBcols\fR should not be specified in
 a terminal description for terminals which are run as emulations.
 
 Use the \fBuse_env\fR function to disable this feature.
-.TP 5
-DISPLAY
-Provides a hint to ncurses that your terminal is an X terminal
-emulator such as \fBxterm\fP.
-If the \fBkmous\fP capability is set to the beginning of the xterm
-mouse response, e.g., "kmous=\\E[M", then ncurses will send the terminal
-xterm's mouse initialization strings and allow appropriate replies.
-See the \fBcurs_mouse\fR(3) manual page for programming information.
 .TP 5
 ESCDELAY
 Specifies the total time, in milliseconds, for which curses will

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.42 1999/11/28 17:53:40 millert Exp $
+#	$OpenBSD: Makefile,v 1.43 1999/12/28 15:57:59 millert Exp $
 
 # Uncomment this to enable tracing in libcurses
 #CURSESTRACE=-DTRACE
@@ -53,14 +53,14 @@ SRCS+=	hardscroll.c hashmap.c lib_mvcur.c lib_tstp.c lib_twait.c \
 CFLAGS+= -I. -I${.CURDIR} ${CURSESTRACE}
 MAN=	curs_addch.3 curs_addchstr.3 curs_addstr.3 curs_attr.3 curs_beep.3 \
 	curs_bkgd.3 curs_border.3 curs_clear.3 curs_color.3 curs_delch.3 \
-	curs_deleteln.3 curs_getch.3 curs_getstr.3 curs_getyx.3 curs_inch.3 \
-	curs_inchstr.3 curs_initscr.3 curs_inopts.3 curs_insch.3 curs_insstr.3 \
-	curs_instr.3 curs_kernel.3 curs_mouse.3 curs_move.3 curs_outopts.3 \
-	curs_overlay.3 curs_pad.3 curs_print.3 curs_printw.3 curs_refresh.3 \
-	curs_scanw.3 curs_scr_dump.3 curs_scroll.3 curs_slk.3 curs_termattrs.3 \
-	curs_touch.3 curs_util.3 curs_window.3 curses.3 define_key.3 \
-	dft_fgbg.3 keybound.3 keyok.3 resizeterm.3 wresize.3 termcap.3 \
-	terminfo.3 terminfo.5 term.5 term.7
+	curs_deleteln.3 curs_extend.3 curs_getch.3 curs_getstr.3 curs_getyx.3 \
+	curs_inch.3 curs_inchstr.3 curs_initscr.3 curs_inopts.3 curs_insch.3 \
+	curs_insstr.3 curs_instr.3 curs_kernel.3 curs_mouse.3 curs_move.3 \
+	curs_outopts.3 curs_overlay.3 curs_pad.3 curs_print.3 curs_printw.3 \
+	curs_refresh.3 curs_scanw.3 curs_scr_dump.3 curs_scroll.3 curs_slk.3 \
+	curs_termattrs.3 curs_touch.3 curs_util.3 curs_window.3 curses.3 \
+	define_key.3 dft_fgbg.3 keybound.3 keyok.3 resizeterm.3 wresize.3 \
+	termcap.3 terminfo.3 terminfo.5 term.5 term.7
 MLINKS+=curses.3 ncurses.3
 MLINKS+=curs_addch.3 addch.3 curs_addch.3 waddch.3 curs_addch.3 mvaddch.3 \
 	curs_addch.3 mvwaddch.3 curs_addch.3 echochar.3 curs_addch.3 \
