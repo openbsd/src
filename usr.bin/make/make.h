@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.6 1995/06/14 15:19:43 christos Exp $	*/
+/*	$NetBSD: make.h,v 1.7 1995/12/16 05:03:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -102,6 +102,7 @@ typedef struct GNode {
     char            *name;     	/* The target's name */
     char    	    *path;     	/* The full pathname of the file */
     int             type;      	/* Its type (see the OP flags, below) */
+    int		    order;	/* Its wait weight */
 
     Boolean         make;      	/* TRUE if this target needs to be remade */
     enum {

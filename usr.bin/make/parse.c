@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.17 1995/11/02 23:55:03 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.18 1995/12/16 05:03:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	5.18 (Berkeley) 2/19/91";
 #else
-static char rcsid[] = "$NetBSD: parse.c,v 1.17 1995/11/02 23:55:03 christos Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.18 1995/12/16 05:03:13 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -168,16 +168,19 @@ typedef enum {
     NotParallel,    /* .NOTPARALELL */
     Null,   	    /* .NULL */
     Order,  	    /* .ORDER */
+    Parallel,	    /* .PARALLEL */
     ExPath,	    /* .PATH */
     Precious,	    /* .PRECIOUS */
     ExShell,	    /* .SHELL */
     Silent,	    /* .SILENT */
     SingleShell,    /* .SINGLESHELL */
     Suffixes,	    /* .SUFFIXES */
+    Wait,	    /* .WAIT */
     Attribute	    /* Generic attribute */
 } ParseSpecial;
 
 static ParseSpecial specType;
+static int waiting;
 
 /*
  * Predecessor node for handling .ORDER. Initialized to NILGNODE when .ORDER
@@ -213,9 +216,11 @@ static struct {
 { ".MFLAGS",	  MFlags,   	0 },
 { ".NOTMAIN",	  Attribute,   	OP_NOTMAIN },
 { ".NOTPARALLEL", NotParallel,	0 },
+{ ".NO_PARALLEL", NotParallel,	0 },
 { ".NULL",  	  Null,	    	0 },
 { ".OPTIONAL",	  Attribute,   	OP_OPTIONAL },
 { ".ORDER", 	  Order,    	0 },
+{ ".PARALLEL",	  Parallel,	0 },
 { ".PATH",	  ExPath,	0 },
 { ".PRECIOUS",	  Precious, 	OP_PRECIOUS },
 { ".RECURSIVE",	  Attribute,	OP_MAKE },
@@ -224,12 +229,14 @@ static struct {
 { ".SINGLESHELL", SingleShell,	0 },
 { ".SUFFIXES",	  Suffixes, 	0 },
 { ".USE",   	  Attribute,   	OP_USE },
+{ ".WAIT",	  Wait, 	0 },
 };
 
 static int ParseFindKeyword __P((char *));
 static int ParseLinkSrc __P((ClientData, ClientData));
 static int ParseDoOp __P((ClientData, ClientData));
-static void ParseDoSrc __P((int, char *));
+static int ParseAddDep __P((ClientData, ClientData));
+static void ParseDoSrc __P((int, char *, Lst));
 static int ParseFindMain __P((ClientData, ClientData));
 static int ParseAddDir __P((ClientData, ClientData));
 static int ParseClearPath __P((ClientData, ClientData));
@@ -441,6 +448,45 @@ ParseDoOp (gnp, opp)
     return (0);
 }
 
+/*- 
+ *---------------------------------------------------------------------
+ * ParseAddDep  --
+ *	Check if the pair of GNodes given needs to be synchronized.
+ *	This has to be when two nodes are on different sides of a
+ *	.WAIT directive.
+ *
+ * Results:
+ *	Returns 1 if the two targets need to be ordered, 0 otherwise.
+ *	If it returns 1, the search can stop
+ *
+ * Side Effects:
+ *	A dependency can be added between the two nodes.
+ *	
+ *---------------------------------------------------------------------
+ */
+int
+ParseAddDep(pp, sp)
+    ClientData pp;
+    ClientData sp;
+{
+    GNode *p = (GNode *) pp;
+    GNode *s = (GNode *) sp;
+
+    if (p->order < s->order) {
+	/*
+	 * XXX: This can cause loops, and loops can cause unmade targets,
+	 * but checking is tedious, and the debugging output can show the
+	 * problem
+	 */
+	(void)Lst_AtEnd(p->successors, (ClientData)s);
+	(void)Lst_AtEnd(s->preds, (ClientData)p);
+	return 0;
+    }
+    else
+	return 1;
+}
+
+
 /*-
  *---------------------------------------------------------------------
  * ParseDoSrc  --
@@ -459,23 +505,31 @@ ParseDoOp (gnp, opp)
  *---------------------------------------------------------------------
  */
 static void
-ParseDoSrc (tOp, src)
+ParseDoSrc (tOp, src, allsrc)
     int		tOp;	/* operator (if any) from special targets */
     char	*src;	/* name of the source to handle */
-{
-    int		op;	/* operator (if any) from special source */
-    GNode	*gn;
+    Lst		allsrc;	/* List of all sources to wait for */
 
-    op = 0;
+{
+    GNode	*gn = NULL;
+
     if (*src == '.' && isupper (src[1])) {
 	int keywd = ParseFindKeyword(src);
 	if (keywd != -1) {
-	    op = parseKeywords[keywd].op;
+	    int op = parseKeywords[keywd].op;
+	    if (op != 0) {
+		Lst_ForEach (targets, ParseDoOp, (ClientData)&op);
+		return;
+	    }
+	    if (parseKeywords[keywd].spec == Wait) {
+		waiting++;
+		return;
+	    }
 	}
     }
-    if (op != 0) {
-	Lst_ForEach (targets, ParseDoOp, (ClientData)&op);
-    } else if (specType == Main) {
+
+    switch (specType) {
+    case Main:
 	/*
 	 * If we have noted the existence of a .MAIN, it means we need
 	 * to add the sources of said target to the list of things
@@ -490,7 +544,9 @@ ParseDoSrc (tOp, src)
 	 * employ that, if desired.
 	 */
 	Var_Append(".TARGETS", src, VAR_GLOBAL);
-    } else if (specType == Order) {
+	return;
+
+    case Order:
 	/*
 	 * Create proper predecessor/successor links between the previous
 	 * source and the current one.
@@ -504,7 +560,9 @@ ParseDoSrc (tOp, src)
 	 * The current source now becomes the predecessor for the next one.
 	 */
 	predecessor = gn;
-    } else {
+	break;
+
+    default:
 	/*
 	 * If the source is not an attribute, we need to find/create
 	 * a node for it. After that we can apply any operator to it
@@ -535,6 +593,13 @@ ParseDoSrc (tOp, src)
 		}
 	    }
 	}
+	break;
+    }
+
+    gn->order = waiting;
+    (void)Lst_AtEnd(allsrc, (ClientData)gn);
+    if (waiting) {
+	Lst_ForEach(allsrc, ParseAddDep, (ClientData)gn);
     }
 }
 
@@ -657,16 +722,20 @@ ParseDoDependency (line)
     Lst    	    paths;   	/* List of search paths to alter when parsing
 				 * a list of .PATH targets */
     int	    	    tOp;    	/* operator from special target */
-    Lst	    	    sources;	/* list of source names after expansion */
+    Lst	    	    sources;	/* list of archive source names after
+				 * expansion */
     Lst 	    curTargs;	/* list of target names to be found and added
 				 * to the targets list */
+    Lst		    curSrcs;	/* list of sources in order */
 
     tOp = 0;
 
     specType = Not;
+    waiting = 0;
     paths = (Lst)NULL;
 
     curTargs = Lst_Init(FALSE);
+    curSrcs = Lst_Init(FALSE);
     
     do {
 	for (cp = line;
@@ -1106,7 +1175,7 @@ ParseDoDependency (line)
 
 		while (!Lst_IsEmpty (sources)) {
 		    gn = (GNode *) Lst_DeQueue (sources);
-		    ParseDoSrc (tOp, gn->name);
+		    ParseDoSrc (tOp, gn->name, curSrcs);
 		}
 		Lst_Destroy (sources, NOFREE);
 		cp = line;
@@ -1116,7 +1185,7 @@ ParseDoDependency (line)
 		    cp += 1;
 		}
 
-		ParseDoSrc (tOp, line);
+		ParseDoSrc (tOp, line, curSrcs);
 	    }
 	    while (*cp && isspace (*cp)) {
 		cp++;
@@ -1135,6 +1204,10 @@ ParseDoDependency (line)
 	Lst_ForEach (targets, ParseFindMain, (ClientData)0);
     }
 
+    /*
+     * Finally, destroy the list of sources
+     */
+    Lst_Destroy(curSrcs, NOFREE);
 }
 
 /*-

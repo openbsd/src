@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.5 1995/06/14 15:20:08 christos Exp $	*/
+/*	$NetBSD: targ.c,v 1.6 1995/12/16 05:03:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)targ.c	5.9 (Berkeley) 3/1/91"; */
-static char *rcsid = "$Id: targ.c,v 1.1.1.1 1995/10/18 08:45:43 deraadt Exp $";
+static char *rcsid = "$Id: targ.c,v 1.2 1995/12/17 13:42:03 deraadt Exp $";
 #endif /* not lint */
 
 /*-
@@ -172,6 +172,7 @@ Targ_NewGN (name)
     gn->make = 	    	FALSE;
     gn->made = 	    	UNMADE;
     gn->childMade = 	FALSE;
+    gn->order =		0;
     gn->mtime = gn->cmtime = 0;
     gn->iParents =  	Lst_Init (FALSE);
     gn->cohorts =   	Lst_Init (FALSE);
