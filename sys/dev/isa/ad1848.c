@@ -1,4 +1,4 @@
-/*	$OpenBSD: ad1848.c,v 1.8 1997/07/10 23:06:31 provos Exp $	*/
+/*	$OpenBSD: ad1848.c,v 1.9 1998/01/18 18:58:36 niklas Exp $	*/
 /*	$NetBSD: ad1848.c,v 1.10 1996/04/29 20:02:32 christos Exp $	*/
 
 /*
@@ -283,7 +283,7 @@ ad1848_forceintr(sc)
      * it is needed (and you pay the latency).  Also, you might
      * never need the buffer anyway.)
      */
-    isa_dmastart(DMAMODE_READ, &dmabuf, 1, sc->sc_drq);
+    isadma_start(&dmabuf, 1, sc->sc_drq, DMAMODE_READ);
 
     ad_write(sc, SP_LOWER_BASE_COUNT, 0);
     ad_write(sc, SP_UPPER_BASE_COUNT, 0);
@@ -1446,7 +1446,7 @@ ad1848_dma_input(addr, p, cc, intr, arg)
     sc->sc_dma_flags = DMAMODE_READ;
     sc->sc_dma_bp = p;
     sc->sc_dma_cnt = cc;
-    isa_dmastart(DMAMODE_READ, p, cc, sc->sc_recdrq);
+    isadma_start(p, cc, sc->sc_recdrq, DMAMODE_READ);
 
     if (sc->precision == 16)
 	cc >>= 1;
@@ -1500,7 +1500,7 @@ ad1848_dma_output(addr, p, cc, intr, arg)
     sc->sc_dma_flags = DMAMODE_WRITE;
     sc->sc_dma_bp = p;
     sc->sc_dma_cnt = cc;
-    isa_dmastart(DMAMODE_WRITE, p, cc, sc->sc_drq);
+    isadma_start(p, cc, sc->sc_drq, DMAMODE_WRITE);
     
     if (sc->precision == 16)
 	cc >>= 1;
@@ -1544,7 +1544,7 @@ ad1848_intr(arg)
 	/* ACK DMA read because it may be in a bounce buffer */
 	/* XXX Do write to mask DMA ? */
 	if (sc->sc_dma_flags & DMAMODE_READ)
-	    isa_dmadone(sc->sc_dma_flags, sc->sc_dma_bp, sc->sc_dma_cnt - 1, sc->sc_recdrq);
+	    isadma_done(sc->sc_recdrq);
 	(*sc->sc_intr)(sc->sc_arg);
 	retval = 1;
     }

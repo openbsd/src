@@ -1,4 +1,4 @@
-/*	$OpenBSD: wt.c,v 1.11 1996/09/01 16:42:24 deraadt Exp $	*/
+/*	$OpenBSD: wt.c,v 1.12 1998/01/18 18:58:40 niklas Exp $	*/
 /*	$NetBSD: wt.c,v 1.33 1996/05/12 23:54:22 mycroft Exp $	*/
 
 /*
@@ -693,10 +693,10 @@ wtintr(arg)
 	    (sc->dmatotal - sc->dmacount) < sc->bsize) {
 		/* If reading short block, copy the internal buffer
 		 * to the user memory. */
-		isa_dmadone(sc->dmaflags, sc->buf, sc->bsize, sc->chan);
+		isadma_done(sc->chan);
 		bcopy(sc->buf, sc->dmavaddr, sc->dmatotal - sc->dmacount);
 	} else
-		isa_dmadone(sc->dmaflags, sc->dmavaddr, sc->bsize, sc->chan);
+		isadma_done(sc->chan);
 
 	/*
 	 * On exception, check for end of file and end of volume.
@@ -882,9 +882,9 @@ wtdma(sc)
 	if ((sc->dmaflags & DMAMODE_READ) &&
 	    (sc->dmatotal - sc->dmacount) < sc->bsize) {
 		/* Reading short block; do it through the internal buffer. */
-		isa_dmastart(sc->dmaflags, sc->buf, sc->bsize, sc->chan);
+		isadma_start(sc->buf, sc->bsize, sc->chan, sc->dmaflags);
 	} else
-		isa_dmastart(sc->dmaflags, sc->dmavaddr, sc->bsize, sc->chan);
+		isadma_start(sc->dmavaddr, sc->bsize, sc->chan, sc->dmaflags);
 }
 
 /* start i/o operation */

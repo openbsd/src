@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbdsp.c,v 1.10 1997/07/10 23:06:38 provos Exp $	*/
+/*	$OpenBSD: sbdsp.c,v 1.11 1998/01/18 18:58:39 niklas Exp $	*/
 /*	$NetBSD: sbdsp.c,v 1.30 1996/10/25 07:25:48 fvdl Exp $	*/
 
 /*
@@ -771,7 +771,7 @@ sbdsp_reset(sc)
 
 	sc->sc_intr = 0;
 	if (sc->sc_dmadir != SB_DMA_NONE) {
-		isa_dmaabort(sc->dmachan);
+		isadma_abort(sc->dmachan);
 		sc->sc_dmadir = SB_DMA_NONE;
 	}
 	sc->sc_last_hs_size = 0;
@@ -1167,7 +1167,7 @@ sbdsp_dma_input(addr, p, cc, intr, arg)
 	sc->dmaaddr = p;
 	sc->dmacnt = ISSB2CLASS(sc) ? (NBPG/cc)*cc : cc;
 	sc->dmachan = sc->sc_precision == 16 ? sc->sc_drq16 : sc->sc_drq8;
-	isa_dmastart(sc->dmaflags, sc->dmaaddr, sc->dmacnt, sc->dmachan);
+	isadma_start(sc->dmaaddr, sc->dmacnt, sc->dmachan, sc->dmaflags);
 	sc->sc_intr = intr;
 	sc->sc_arg = arg;
 
@@ -1285,7 +1285,7 @@ sbdsp_dma_output(addr, p, cc, intr, arg)
 	sc->dmaaddr = p;
 	sc->dmacnt = ISSB2CLASS(sc) ? (NBPG/cc)*cc : cc;
 	sc->dmachan = sc->sc_precision == 16 ? sc->sc_drq16 : sc->sc_drq8;
-	isa_dmastart(sc->dmaflags, sc->dmaaddr, sc->dmacnt, sc->dmachan);
+	isadma_start(sc->dmaaddr, sc->dmacnt, sc->dmachan, sc->dmaflags);
 	sc->sc_intr = intr;
 	sc->sc_arg = arg;
 
@@ -1357,7 +1357,7 @@ sbdsp_intr(arg)
 		if ((x & 3) == 0)
 			return 0;
 	}
-	/* isa_dmafinished() moved to isadma.c */
+	/* isadma_finished() moved to isadma.c */
 	sc->sc_interrupts++;
 	delay(10);
 #if 0
@@ -1372,8 +1372,7 @@ sbdsp_intr(arg)
 		    sc->sc_precision == 16 ? SBP_DSP_IRQACK16 :
 					     SBP_DSP_IRQACK8);
 		if (!ISSB2CLASS(sc))
-			isa_dmadone(sc->dmaflags, sc->dmaaddr, sc->dmacnt,
-			    sc->dmachan);
+			isadma_done(sc->dmachan);
 		(*sc->sc_intr)(sc->sc_arg);
 	} else {
 		return 0;

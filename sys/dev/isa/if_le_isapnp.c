@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_isapnp.c,v 1.4 1997/12/26 23:44:22 deraadt Exp $	*/
+/*	$OpenBSD: if_le_isapnp.c,v 1.5 1998/01/18 18:58:38 niklas Exp $	*/
 /*	$NetBSD: if_le_isa.c,v 1.2 1996/05/12 23:52:56 mycroft Exp $	*/
 
 /*-
@@ -136,7 +136,7 @@ le_isapnp_attach(parent, self, aux)
 
 #if NISADMA > 0
 	if (ia->ia_drq != DRQUNK)
-		isa_dmacascade(ia->ia_drq);
+		isadma_cascade(ia->ia_drq);
 #endif
 
 	lesc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,

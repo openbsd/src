@@ -1,4 +1,4 @@
-/*	$OpenBSD: gus.c,v 1.12 1997/07/10 23:06:34 provos Exp $	*/
+/*	$OpenBSD: gus.c,v 1.13 1998/01/18 18:58:37 niklas Exp $	*/
 /*	$NetBSD: gus.c,v 1.16 1996/05/12 23:52:08 mycroft Exp $	*/
 
 /*-
@@ -217,14 +217,14 @@ struct gus_softc {
 
 	void (*sc_dmaoutintr) __P((void*)); /* DMA completion intr handler */
 	void *sc_outarg;		/* argument for sc_dmaoutintr() */
-	u_char *sc_dmaoutaddr;		/* for isa_dmadone */
+	u_char *sc_dmaoutaddr;		/* for isadma_done */
 	u_long sc_gusaddr;		/* where did we just put it? */
-	int sc_dmaoutcnt;		/* for isa_dmadone */
+	int sc_dmaoutcnt;		/* for isadma_done */
 
 	void (*sc_dmainintr) __P((void*)); /* DMA completion intr handler */
 	void *sc_inarg;			/* argument for sc_dmaoutintr() */
-	u_char *sc_dmainaddr;		/* for isa_dmadone */
-	int sc_dmaincnt;		/* for isa_dmadone */
+	u_char *sc_dmainaddr;		/* for isadma_done */
+	int sc_dmaincnt;		/* for isadma_done */
 
 	struct stereo_dma_intr {
 		void (*intr)__P((void *));
@@ -1366,7 +1366,7 @@ gus_dmaout_timeout(arg)
     outb(sc->sc_iobase+GUS_DATA_HIGH, 0);
 
 #if 0
-    isa_dmaabort(sc->sc_drq);		/* XXX we will dmadone below? */
+    isadma_abort(sc->sc_drq);		/* XXX we will dmadone below? */
 #endif
 
     gus_dmaout_dointr(sc);
@@ -1406,10 +1406,7 @@ gus_dmaout_dointr(sc)
 	register int port = sc->sc_iobase;
 
 	/* sc->sc_dmaoutcnt - 1 because DMA controller counts from zero?. */
-	isa_dmadone(DMAMODE_WRITE,
-		    sc->sc_dmaoutaddr,
-		    sc->sc_dmaoutcnt - 1,
-		    sc->sc_drq);
+	isadma_done(sc->sc_drq);
 	sc->sc_flags &= ~GUS_DMAOUT_ACTIVE;  /* pending DMA is done */
 	DMAPRINTF(("gus_dmaout_dointr %d @ %x\n", sc->sc_dmaoutcnt,
 		   sc->sc_dmaoutaddr));
@@ -1915,7 +1912,7 @@ gusdmaout(sc, flags, gusaddr, buffaddr, length)
 
 	sc->sc_dmaoutaddr = (u_char *) buffaddr;
 	sc->sc_dmaoutcnt = length;
-	isa_dmastart(DMAMODE_WRITE, buffaddr, length, sc->sc_drq);
+	isadma_start(buffaddr, length, sc->sc_drq, DMAMODE_WRITE);
 
 	/*
 	 * Set up DMA address - use the upper 16 bits ONLY
@@ -3225,9 +3222,9 @@ gus_dma_input(addr, buf, size, callback, arg)
 	    dmac |= GUSMASK_SAMPLE_INVBIT;
 	if (sc->sc_channels == 2)
 	    dmac |= GUSMASK_SAMPLE_STEREO;
-	isa_dmastart(DMAMODE_READ, (caddr_t) buf, size, sc->sc_recdrq);
+	isadma_start((caddr_t)buf, size, sc->sc_recdrq, DMAMODE_READ);
 
-	DMAPRINTF(("gus_dma_input isa_dmastarted\n"));
+	DMAPRINTF(("gus_dma_input isadma_started\n"));
 	sc->sc_flags |= GUS_DMAIN_ACTIVE;
 	sc->sc_dmainintr = callback;
 	sc->sc_inarg = arg;
@@ -3252,8 +3249,7 @@ gus_dmain_intr(sc)
 
 	DMAPRINTF(("gus_dmain_intr called\n"));
 	if (sc->sc_dmainintr) {
-	    isa_dmadone(DMAMODE_READ, sc->sc_dmainaddr, sc->sc_dmaincnt - 1,
-			sc->sc_recdrq);
+	    isadma_done(sc->sc_recdrq);
 	    callback = sc->sc_dmainintr;
 	    arg = sc->sc_inarg;
 
@@ -3324,7 +3320,7 @@ gus_halt_out_dma(addr)
 	outb(sc->sc_iobase+GUS_DATA_HIGH, 0);
 
 	untimeout(gus_dmaout_timeout, sc);
-	isa_dmaabort(sc->sc_drq);
+	isadma_abort(sc->sc_drq);
 	sc->sc_flags &= ~(GUS_DMAOUT_ACTIVE|GUS_LOCKED);
 	sc->sc_dmaoutintr = 0;
 	sc->sc_outarg = 0;
@@ -3357,9 +3353,10 @@ gus_halt_in_dma(addr)
 
  	SELECT_GUS_REG(port, GUSREG_SAMPLE_CONTROL);
 	outb(port+GUS_DATA_HIGH,
-	     inb(port+GUS_DATA_HIGH) & ~(GUSMASK_SAMPLE_START|GUSMASK_SAMPLE_IRQ));
+	    inb(port+GUS_DATA_HIGH) &
+	    ~(GUSMASK_SAMPLE_START|GUSMASK_SAMPLE_IRQ));
 
-	isa_dmaabort(sc->sc_recdrq);
+	isadma_abort(sc->sc_recdrq);
 	sc->sc_flags &= ~GUS_DMAIN_ACTIVE;
 	sc->sc_dmainintr = 0;
 	sc->sc_inarg = 0;

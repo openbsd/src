@@ -1,4 +1,4 @@
-/*	$OpenBSD: uha_isa.c,v 1.2 1997/04/13 20:22:42 mickey Exp $	*/
+/*	$OpenBSD: uha_isa.c,v 1.3 1998/01/18 18:58:39 niklas Exp $	*/
 /*	$NetBSD: uha_isa.c,v 1.5 1996/10/21 22:41:21 thorpej Exp $	*/
 
 /*
@@ -132,7 +132,7 @@ uha_isa_attach(parent, self, aux)
 		panic("uha_attach: u14_find failed!");
 
 	if (sc->sc_drq != -1)
-		isa_dmacascade(sc->sc_drq);
+		isadma_cascade(sc->sc_drq);
 
 	sc->sc_ih = isa_intr_establish(ic, sc->sc_irq, IST_EDGE, IPL_BIO,
 	    u14_intr, sc, sc->sc_dev.dv_xname);
