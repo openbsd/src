@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: catopen.c,v 1.8 1996/09/15 09:31:23 tholo Exp $";
+static char rcsid[] = "$OpenBSD: catopen.c,v 1.9 2001/05/11 15:30:14 art Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #define _NLS_PRIVATE
@@ -145,7 +145,7 @@ load_msgcat(path)
 	data = mmap(0, (size_t) st.st_size, PROT_READ, MAP_SHARED, fd, (off_t)0);
 	close (fd);
 
-	if (data == (void *) -1) {
+	if (data == MAP_FAILED) {
 		munmap(data, (size_t) st.st_size);
 		return (nl_catd) -1;
 	}
