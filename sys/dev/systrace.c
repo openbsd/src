@@ -134,6 +134,7 @@ int	systrace_msg_ask(struct fsystrace *, struct str_process *,
 int	systrace_msg_result(struct fsystrace *, struct str_process *,
 	    int, int, size_t, register_t [], register_t []);
 int	systrace_msg_emul(struct fsystrace *, struct str_process *);
+int	systrace_msg_ugid(struct fsystrace *, struct str_process *);
 int	systrace_make_msg(struct str_process *, int);
 
 static struct fileops systracefops = {
@@ -730,6 +731,8 @@ systrace_redirect(int code, struct proc *p, void *v, register_t *retval)
 
 	if (!error) {
 		struct emul *oldemul = p->p_emul;
+		uid_t olduid = p->p_cred->p_ruid;
+		gid_t oldgid = p->p_cred->p_rgid;
 
 		error = (*callp->sy_call)(p, v, retval);
 
@@ -765,6 +768,23 @@ systrace_redirect(int code, struct proc *p, void *v, register_t *retval)
 			systrace_msg_emul(fst, strp);
 		} else
 			systrace_unlock();
+
+		/* Report if effective uid or gid changed */
+		if (olduid != p->p_cred->p_ruid ||
+		    oldgid != p->p_cred->p_rgid) {
+			systrace_lock();
+			if ((strp = p->p_systrace) == NULL) {
+				systrace_unlock();
+				goto nougid;
+			}
+
+			fst = strp->parent;
+			lockmgr(&fst->lock, LK_EXCLUSIVE, NULL, p);
+			systrace_unlock();
+
+			systrace_msg_ugid(fst, strp);
+		nougid:
+		}
 
 		/* Report result from system call */
 		systrace_lock();
@@ -1319,6 +1339,18 @@ systrace_msg_emul(struct fsystrace *fst, struct str_process *strp)
 	memcpy(msg_emul->emul, p->p_emul->e_name, SYSTR_EMULEN);
 
 	return (systrace_make_msg(strp, SYSTR_MSG_EMUL));
+}
+
+int
+systrace_msg_ugid(struct fsystrace *fst, struct str_process *strp)
+{
+	struct str_msg_ugid *msg_ugid = &strp->msg.msg_data.msg_ugid;
+	struct proc *p = strp->proc;
+
+	msg_ugid->uid = p->p_cred->p_ruid;
+	msg_ugid->gid = p->p_cred->p_rgid;
+
+	return (systrace_make_msg(strp, SYSTR_MSG_UGID));
 }
 
 int
