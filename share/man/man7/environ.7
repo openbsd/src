@@ -1,4 +1,4 @@
-.\"	$OpenBSD: environ.7,v 1.7 2000/02/13 13:24:55 aaron Exp $
+.\"	$OpenBSD: environ.7,v 1.8 2000/02/14 15:19:47 aaron Exp $
 .\"	$NetBSD: environ.7,v 1.4 1995/07/03 19:45:07 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -78,10 +78,12 @@ A list of startup commands read by
 and
 .Xr vi 1 .
 .It Ev HOME
-A user's login directory, set by
+The user's login directory, set by
 .Xr login 1
 from the password file
 .Xr passwd 5 .
+.It Ev LOGNAME
+The login name of the user.
 .It Ev PATH
 The sequence of directories, separated by colons, searched by
 .Xr csh 1 ,
@@ -167,8 +169,6 @@ displays the current time in California.
 See
 .Xr tzset 3
 for more information.
-.It Ev LOGNAME
-The login name of the user.
 .It Ev USER
 Deprecated synonym of
 .Ev LOGNAME
@@ -176,7 +176,7 @@ Deprecated synonym of
 .El
 .Pp
 Further names may be placed in the environment by the
-.Xr export
+.Ic export
 command and
 .Ar name Ns No = Ns Ar value
 arguments in
