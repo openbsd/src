@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.6 1997/05/30 17:29:40 grr Exp $
+#	$OpenBSD: list,v 1.7 1997/09/19 06:07:18 deraadt Exp $
 #	$NetBSD: list,v 1.2.4.2 1996/06/26 19:25:00 pk Exp $
 
 # Sparc extra's
@@ -23,9 +23,9 @@ SYMLINK	/tmp	var/tmp
 COPY	${DESTDIR}/dev/MAKEDEV		dev/MAKEDEV
 SPECIAL	cd dev; sh MAKEDEV ramdisk
 
-# we need the contents of /usr/mdec (but not zboot or binstall)
+# we need the contents of /usr/mdec (but not boot or binstall)
 COPYDIR	${DESTDIR}/usr/mdec	usr/mdec
-SPECIAL	rm -f usr/mdec/zboot usr/mdec/binstall
+SPECIAL	rm -f usr/mdec/binstall
 
 # the zoneinfo
 # COPYDIR	${DESTDIR}/usr/share/zoneinfo	usr/share/zoneinfo
