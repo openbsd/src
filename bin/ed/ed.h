@@ -1,4 +1,4 @@
-/*	$OpenBSD: ed.h,v 1.6 2001/01/16 03:04:45 deraadt Exp $	*/
+/*	$OpenBSD: ed.h,v 1.7 2001/07/05 22:30:15 espie Exp $	*/
 /*	$NetBSD: ed.h,v 1.23 1995/03/21 09:04:40 cgd Exp $	*/
 
 /* ed.h: type and constant definitions for the ed editor. */
@@ -247,7 +247,7 @@ int is_legal_filename __P((char *));
 int join_lines __P((long, long));
 int mark_line_node __P((line_t *, int));
 int move_lines __P((long));
-line_t *next_active_node __P(());
+line_t *next_active_node __P((void));
 long next_addr __P((void));
 int open_sbuf __P((void));
 char *parse_char_class __P((char *));
@@ -263,6 +263,7 @@ long read_stream __P((FILE *, long));
 int search_and_replace __P((pattern_t *, int, int));
 int set_active_node __P((line_t *));
 void set_des_key __P((char *));
+void seterrmsg __P((char *));
 void signal_hup __P((int));
 void signal_int __P((int));
 char *strip_escapes __P((char *));
