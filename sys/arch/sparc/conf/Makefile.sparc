@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sparc,v 1.10 1997/06/25 14:47:11 downsj Exp $
+#	$OpenBSD: Makefile.sparc,v 1.11 1997/06/26 02:52:13 downsj Exp $
 # 	$NetBSD: Makefile.sparc,v 1.32.4.1 1996/06/12 20:26:32 pk Exp $
 
 # Makefile for OpenBSD
@@ -41,6 +41,12 @@ CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL
 
 CDIAGFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wno-uninitialized -Wno-format
+
+.if ${IDENT:M-DSUN*} == ${IDENT:M-DSUN4M}
+CMACHFLAGS=	-mv8
+.else
+CMACHFLAGS=
+.endif
 
 CFLAGS=		${DEBUG} -O2 ${CDIAGFLAGS} ${CMACHFLAGS} ${COPTS}
 # add `-mno-fpu' to work around gcc (last noticed in v2.7.2) bug
