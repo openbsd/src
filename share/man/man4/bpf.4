@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bpf.4,v 1.18 2003/07/09 11:45:44 jmc Exp $
+.\"	$OpenBSD: bpf.4,v 1.19 2003/10/22 18:42:40 canacar Exp $
 .\"     $NetBSD: bpf.4,v 1.7 1995/09/27 18:31:50 thorpej Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@ The packet filter appears as a character special device,
 etc.
 After opening the device, the file descriptor must be bound to a specific
 network interface with the
-.Dv BIOSETIF
+.Dv BIOCSETIF
 ioctl.
 A given interface can be shared between multiple listeners, and the filter
 underlying each descriptor will see an identical packet stream.
@@ -90,8 +90,15 @@ macros to extract multi-byte values.
 A packet can be sent out on the network by writing to a
 .Nm
 file descriptor.
+Each descriptor can also have a user-settable filter
+for controlling the writes.
+Only packets matching the filter are sent out of the interface.
 The writes are unbuffered, meaning only one packet can be processed per write.
-Currently, only writes to Ethernets and SLIP links are supported.
+.Pp
+Once a descriptor is configured, further changes to the configuration
+can be prevented using the
+.Dv BIOCLOCK
+ioctl.
 .Ss Ioctls
 The ioctl command codes below are defined in
 .Aq Pa net/bpf.h .
@@ -108,6 +115,8 @@ Additionally,
 and
 .Dv BIOCSETIF
 require
+.Aq Pa sys/socket.h
+and
 .Aq Pa net/if.h .
 .Pp
 The (third) argument to the
@@ -150,6 +159,55 @@ promiscuously are closed.
 Flushes the buffer of incoming packets and resets the statistics that are
 returned by
 .Dv BIOCGSTATS .
+.It Dv BIOCLOCK
+This ioctl is designed to prevent the security issues associated
+with an open
+.Nm
+descriptor in unprivileged programs.
+Even with dropped privileges, an open
+.Nm
+descriptor can be abused by a rogue program to listen on any interface
+on the system, send packets on these interfaces if the descriptor was
+opened read-write and send signals to arbitrary processes using the
+signaling mechanism of
+.Nm bpf .
+By allowing only
+.Dq known safe
+ioctls, the
+.DV BIOCLOCK
+ioctl prevents this abuse.
+The allowable ioctls are
+.Dv BIOCGBLEN ,
+.Dv BIOCFLUSH ,
+.Dv BIOCGDLT ,
+.Dv BIOCGETIF ,
+.Dv BIOCGRTIMEOUT ,
+.Dv BIOCSRTIMEOUT ,
+.Dv BIOCIMMEDIATE ,
+.Dv BIOCGSTATS ,
+.Dv BIOCVERSION ,
+.Dv BIOCGRSIG ,
+.Dv BIOCGHDRCMPLT ,
+.Dv TIOCGPGRP ,
+and
+.Dv FIONREAD .
+Use of any other ioctl is denied with error
+.Er EPERM .
+Once a descriptor is locked, it is not possible to unlock it.
+A process with root privileges is not affected by the lock.
+.Pp
+A privileged program can open a
+.Nm
+device, drop privileges, set the interface, filters and modes on the
+descriptor, and lock it.
+Once the descriptor is locked, the system is safe
+from further abuse through the descriptor.
+Locking a descriptor does not prevent writes.
+If the application does not need to send packets through
+.Nm bpf ,
+it can open the device read-only to prevent writing.
+If sending packets is necessary, a write-filter can be set before locking the
+descriptor to prevent arbitrary packets from being sent out.
 .It Dv BIOCGETIF ( Li "struct ifreq" )
 Returns the name of the hardware interface that the file is listening on.
 The name is returned in the
@@ -229,6 +287,21 @@ are performed.
 See section
 .Sx FILTER MACHINE
 for an explanation of the filter language.
+.It Dv BIOCSETWF ( Li "struct bpf_program" )
+Sets the filter program used by the kernel to filter the packets
+written to the descriptor before the packets are sent out on the
+network.
+See
+.Dv BIOCSETF
+for a description of the filter program.
+This ioctl also acts as
+.Dv BIOCFLUSH .
+.Pp
+Note that the filter operates on the packet data written to the descriptor.
+If the
+.Dq header complete
+flag is not set, the kernel sets the link-layer source address
+of the packet after filtering.
 .It Dv BIOCVERSION ( Li "struct bpf_version" )
 Returns the major and minor version numbers of the filter language currently
 recognized by the kernel.
@@ -756,9 +829,12 @@ pc += (A == X) ? jt : jf
 pc += (A & X) ? jt : jf
 .El
 .It Dv BPF_RET
-The return instructions terminate the filter program and specify the amount
-of packet to accept (i.e., they return the truncation amount).
-A return value of zero indicates that the packet should be ignored.
+The return instructions terminate the filter program and specify the
+amount of packet to accept (i.e., they return the truncation amount)
+or, for the write filter, the maximum acceptable size for the packet
+(i.e., the packet is dropped if it is larger than the returned
+amount).
+A return value of zero indicates that the packet should be ignored/dropped.
 The return value is either a constant
 .Pf ( Dv BPF_K )
 or the accumulator

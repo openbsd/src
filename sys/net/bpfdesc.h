@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpfdesc.h,v 1.10 2003/06/02 23:28:11 millert Exp $	*/
+/*	$OpenBSD: bpfdesc.h,v 1.11 2003/10/22 18:42:40 canacar Exp $	*/
 /*	$NetBSD: bpfdesc.h,v 1.11 1995/09/27 18:30:42 thorpej Exp $	*/
 
 /*
@@ -67,13 +67,15 @@ struct bpf_d {
 	struct bpf_if *	bd_bif;		/* interface descriptor */
 	u_long		bd_rtout;	/* Read timeout in 'ticks' */
 	u_long		bd_rdStart;	/* when the read started */
-	struct bpf_insn *bd_filter; 	/* filter code */
+	struct bpf_insn *bd_rfilter; 	/* read filter code */
+	struct bpf_insn *bd_wfilter; 	/* write filter code */
 	u_long		bd_rcount;	/* number of packets received */
 	u_long		bd_dcount;	/* number of packets dropped */
 
 	u_char		bd_promisc;	/* true if listening promiscuously */
 	u_char		bd_state;	/* idle, waiting, or timed out */
 	u_char		bd_immediate;	/* true to return on packet arrival */
+	u_char		bd_locked;	/* true if descriptor is locked */
 	int		bd_hdrcmplt;	/* false to fill in src lladdr automatically */
 	int		bd_async;	/* non-zero if packet reception should generate signal */
 	int		bd_sig;		/* signal to send upon packet reception */
@@ -97,6 +99,6 @@ struct bpf_if {
 };
 
 #ifdef _KERNEL
-int	 bpf_setf(struct bpf_d *, struct bpf_program *);
+int	 bpf_setf(struct bpf_d *, struct bpf_program *, int);
 #endif /* _KERNEL */
 #endif /* _NET_BPFDESC_H_ */
