@@ -1,30 +1,41 @@
-#	$Id: Makefile.bsd-wrapper,v 1.6 1996/02/05 01:39:13 etheisen Exp $
+#	$Id: Makefile.bsd-wrapper,v 1.7 1996/02/06 06:58:26 etheisen Exp $
 
 MAN=		cccp.1 gcc.1 cp/g++.1
-MLINKS=		gcc.1 cc.1
+MLINKS+=	gcc.1 cc.1
+MLINKS+=	cccp.1 cpp.1
+MLINKS+=	g++.1 c++.1
 GNUCFLAGS=	CFLAGS="${CFLAGS}"
 CLEANFILES=	.gdbinit cp/.gdbinit *.info* bi-parser.c bi-parser.h \
 		c-parse.c c-parse.h cexp.c cp/parse.c cp/parse.h objc-parse.c
 
+#
+# This is ugly, but appears to be the only
+# method to override default include paths
+# without goofing with the source.
+#
+GPLUSPLUS_INCLUDE_DIR=	/usr/include/g++
+GCC_INCLUDE_DIR=	/usr/include
+INCDEF=			T_CPPFLAGS=-DINCLUDE_DEFAULTS=\'{{\"$(GPLUSPLUS_INCLUDE_DIR)\",1,1},{\"$(GCC_INCLUDE_DIR)\",0,0},{0,0,0}}\'
+
 all:	config.status
-	${MAKE} ${GNUCFLAGS} BISON=yacc LDFLAGS=${LDSTATIC}
+	${MAKE} ${GNUCFLAGS} BISON=yacc LDFLAGS=${LDSTATIC} ${INCDEF}
 
 .FORCE:	.IGNORE
 
 config: .FORCE
 	-rm -f config.cache
 	/bin/sh ${.CURDIR}/configure --with-gnu-as --with-gnu-ld \
-		--prefix=/usr --gxx-include=/usr/include/g++
+		--prefix=/usr --gxx-include=${GPLUSPLUS_INCLUDE_DIR}
 
 config.status:
 	/bin/sh ${.CURDIR}/configure --with-gnu-as --with-gnu-ld \
-		--prefix=/usr --gxx-include=/usr/include/g++
+		--prefix=/usr --gxx-include=${GPLUSPLUS_INCLUDE_DIR}
 
 install:	maninstall
 	${MAKE} ${GNUCFLAGS} prefix=${DESTDIR}/usr \
 		infodir=${DESTDIR}/usr/share/info \
 		tooldir=/tmp assertdir=/tmp INSTALL_MAN= NO_TARGET_GCC=true \
-		bindir=${DESTDIR}/usr/bin install
+		bindir=${DESTDIR}/usr/bin ${INCDEF} install
 	ln -f ${DESTDIR}/usr/bin/gcc ${DESTDIR}/usr/bin/cc
 
 clean cleandir:
