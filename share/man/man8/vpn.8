@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.40 2000/07/21 00:20:18 angelos Exp $
+.\" $OpenBSD: vpn.8,v 1.41 2000/09/09 22:19:32 angelos Exp $
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -84,6 +84,14 @@ between (non-routable) private (RFC 1918) networks difficult.
 This does not apply to 
 .Xr isakmpd 8 .
 .Ss Enabling the Appropriate Kernel Operations
+Make sure that the following options and devices are enabled in the kernel:
+.Bd -literal
+option    CRYPTO  # Cryptographic Framework
+option    IPSEC   # IPSEC VPN
+#option   KEY     # KEY implied by IPSEC
+pseudo-device enc 4       # Encapsulation device used by IPSEC
+.Ed
+.Pp
 .Xr ipsec 4
 operations must be first enabled using
 .Xr sysctl 8 .
