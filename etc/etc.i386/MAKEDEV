@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.95 2001/06/04 15:29:00 brad Exp $
+#	$OpenBSD: MAKEDEV,v 1.96 2001/06/04 17:59:48 millert Exp $
 #	$NetBSD: MAKEDEV,v 1.40 1996/03/31 00:50:47 perry Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -230,7 +230,6 @@ std)
 	mknod null		c 2 2	; chmod 666 null
 	mknod xf86		c 2 4   ; chmod 600 xf86 ; chown root xf86
 	mknod zero		c 2 12	; chmod 666 zero
-	mknod io		c 2 14	; chmod 640 io ; chown root.kmem io
 	mknod tty		c 1 0	; chmod 666 tty
 	mknod klog		c 7 0	; chmod 600 klog
 	mknod stdin		c 22 0	; chmod 666 stdin
