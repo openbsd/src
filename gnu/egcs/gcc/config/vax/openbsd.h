@@ -20,8 +20,10 @@ Boston, MA 02111-1307, USA.  */
 
 #include <vax/vax.h>
 #define OBSD_OLD_GAS 
+#define OBSD_NO_DYNAMIC_LIBRARIES
 #include <openbsd.h>
 
+#undef CPP_PREDEFINES
 #define CPP_PREDEFINES "-D__unix__ -D__vax__ -D__OpenBSD__ -Asystem(unix) -Asystem(OpenBSD) -Acpu(vax) -Amachine(vax)"
 
 /* Layout of source language data types. */
