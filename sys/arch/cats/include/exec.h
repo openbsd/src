@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.2 2004/02/01 06:13:17 drahn Exp $	*/
+/*	$OpenBSD: exec.h,v 1.3 2004/12/26 22:33:13 miod Exp $	*/
 /*	$NetBSD: exec.h,v 1.6 1994/10/27 04:16:05 cgd Exp $	*/
 
 /*
@@ -28,8 +28,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _I386_EXEC_H_
-#define _I386_EXEC_H_
+#ifndef _CATS_EXEC_H_
+#define _CATS_EXEC_H_
 
 #define __LDPGSZ	4096
 
@@ -45,4 +45,4 @@
 
 #define _KERN_DO_ELF
 
-#endif  /* _I386_EXEC_H_ */
+#endif  /* _CATS_EXEC_H_ */
