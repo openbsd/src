@@ -1,4 +1,4 @@
-/*	$OpenBSD: wlreg.h,v 1.1 1996/12/24 20:31:25 deraadt Exp $ */
+/*	$OpenBSD: wlreg.h,v 1.2 1997/02/22 12:09:19 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -161,3 +161,67 @@ struct clreg {
 	volatile u_char cl_tdr;				/* 0xf8 */
 	volatile u_char anonD[7];
 };
+
+#define TIR_TEN		0x80		/* irq enable */
+#define TIR_TACT	0x40		/* irq active */
+#define TIR_TEOI	0x20
+#define TIR_TVCT_M	0x0c		/* vector (mask) */
+#define TIR_TCN_M	0x03		/* channel number (mask) */
+
+#define TEOIR_TERMBUF	0x80
+#define TEOIR_EOF	0x40
+#define TEOIR_SETTM2	0x20
+#define TEOIR_SETTM1	0x10
+#define TEOIR_NOTRANSF	0x08
+
+#define REOIR_TERMBUFF	0x80
+#define REOIR_DISCEXC	0x40
+#define REOIR_SETTM2	0x20
+#define REOIR_SETTM1	0x10
+#define REOIR_NOTRANSF	0x08
+#define REOIR_GAP_M	0x07
+
+#define RISRH_BERR	0x80
+#define RISRH_EOF	0x40
+#define RISRH_EOB	0x20
+#define RISRH_BA_BB	0x08
+
+#define RISRL_TIMEOUT	0x80
+#define RISRL_SCDET_M	0x70
+#define RISRL_OE	0x08
+#define RISRL_PE	0x04
+#define RISRL_FE	0x02
+#define RISRL_BREAK	0x01
+
+#define RIR_REN		0x80
+#define RIR_RACT	0x40
+#define RIR_REOI	0x20
+#define RIR_RCVT_M	0x0c
+#define RIR_RCN_M	0x03
+
+#define IER_MDM		0x80
+#define IER_RET		0x20
+#define IER_RXD		0x08
+#define IER_TIMER	0x04
+#define IER_TXMPTY	0x02
+#define IER_TXD		0x01
+
+#define MIR_MER		0x80
+#define MIR_MACT	0x40
+#define MIR_MEO		0x20
+#define MIR_MVCT_M	0x0c
+#define MIR_MCM_M	0x03
+
+#define MISR_DSRCHG	0x80
+#define MISR_CDCHG	0x40
+#define MISR_CTSCHG	0x20
+#define MISR_TIMER2	0x02
+#define MISR_TIMER1	0x01
+
+#define TISR_BERR	0x80
+#define TISR_EOF	0x40
+#define TISR_EOB	0x20
+#define TISR_UE		0x10
+#define TISR_BABB	0x08
+#define TISR_TXEMPTY	0x02
+#define TISR_TXDAT	0x01
