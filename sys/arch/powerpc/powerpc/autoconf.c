@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.11 2001/05/05 22:34:13 art Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.12 2001/06/24 04:49:27 drahn Exp $	*/
 /*
  * Copyright (c) 1996, 1997 Per Fogelstrom
  * Copyright (c) 1995 Theo de Raadt
@@ -41,7 +41,7 @@
  * from: Utah Hdr: autoconf.c 1.31 91/01/21
  *
  *	from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
- *      $Id: autoconf.c,v 1.11 2001/05/05 22:34:13 art Exp $
+ *      $Id: autoconf.c,v 1.12 2001/06/24 04:49:27 drahn Exp $
  */
 
 /*
@@ -72,7 +72,7 @@ struct device * getdevunit __P((char *, int));
 static struct devmap * findtype __P((char **));
 void makebootdev __P((char *cp));
 int getpno __P((char **));
-void diskconf();
+void diskconf(void);
 
 /*
  * The following several variables are related to
