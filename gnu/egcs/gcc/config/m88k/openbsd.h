@@ -25,6 +25,11 @@ Boston, MA 02111-1307, USA.  */
 #include <aoutos.h>
 #include <m88k/m88k.h>
 
+/* <m88k/m88k.h> provided a wrong SET_ASM_OP */
+#undef	SET_ASM_OP
+#define	SET_ASM_OP	"equ"
+
+#define	OBSD_HAS_CORRECT_ASM_OPS
 #define	OBSD_OLD_GAS
 #define	OBSD_NO_DYNAMIC_LIBRARIES
 
