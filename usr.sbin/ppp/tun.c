@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: tun.c,v 1.2 1997/12/21 14:27:18 brian Exp $
+ *	$Id: tun.c,v 1.3 1998/01/11 17:55:21 brian Exp $
  */
 
 #include <sys/param.h>
@@ -32,9 +32,6 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <net/if.h>
-#ifdef __FreeBSD__
-#include <net/if_var.h>
-#endif
 #include <net/if_tun.h>
 
 #include <stdio.h>
