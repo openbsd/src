@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.conf.5,v 1.7 2003/03/11 09:24:58 jmc Exp $
+.\"	$OpenBSD: spamd.conf.5,v 1.8 2003/03/12 04:08:32 david Exp $
 .\"
 .\" Copyright (c) 2003 Jason L. Wright (jason@thought.net)
 .\" Copyright (c) 2003 Bob Beck
@@ -35,7 +35,7 @@
 .Sh NAME
 .Nm spamd.conf
 .Nd configuration file read by
-.Xr spamd-setup 8 
+.Xr spamd-setup 8
 for
 .Xr spamd 8
 .Sh SYNOPSIS
@@ -47,28 +47,28 @@ file is read by
 .Xr spamd-setup 8
 to configure blacklists and whitelists with corresponding
 .Xr pf 4
-table entries for 
+table entries for
 .Xr spamd 8 .
 .Nm
-follows the syntax of configuration databases as documented in 
-.Xr getcap 3 . 
+follows the syntax of configuration databases as documented in
+.Xr getcap 3 .
 Example:
 .Bd -literal -offset indent
 all:\e
 	:spews1:white:myblack:\e
-.Pp
+
 spews1:\e
 	:black\e
 	:msg="SPAM. Your address \&%A is in the spews\e
 	level 1 database\ensee http://www.spews.org/ask.cgi?x=\&%A\en":\e
 	:method=http:\e	
 	:file=www.spews.org/spews_list_level1.txt:
-.Pp
+
 white:\e
 	:white:\e
 	:method=file:\e
 	:file=/var/mail/mywhite.txt:\e
-.Pp
+
 myblack:\e
 	:black:\e
 	:msg=/var/mail/myblackmsg.txt:\e
@@ -104,6 +104,7 @@ the configuration
 all:\e
 	:spews1:white:myblack:white:\e
 .Ed
+.Pp
 would be used instead.
 .Pp
 Blacklists and whitelists are then constructed by name;
@@ -112,10 +113,10 @@ blacklists are identified by the capability
 and whitelists by the capability
 .Ar white .
 .Pp
-The source of the addresses for blacklists and whitelists is 
+The source of the addresses for blacklists and whitelists is
 specified using the
 .Ar method
-and 
+and
 .Ar file
 capability entries.
 .Pp
@@ -134,12 +135,12 @@ and
 .Ar file
 capabilities will make
 .Nm
-retrieve a list of addresses specified in the location in the 
+retrieve a list of addresses specified in the location in the
 .Ar file
 capability for the list.
 The
 .Ar exec
-capability will make 
+capability will make
 .Nm
 spawn the program with arguments indicated in the
 .Ar file
@@ -165,7 +166,8 @@ the following example:
 .Pp
 Each blacklist must include a message, specified in the
 .Ar msg
-capability as a string. If the
+capability as a string.
+If the
 .Ar msg
 string is enclosed in double quotes, the characters in the quoted string
 are escaped as specified in
@@ -177,7 +179,7 @@ Alternatively, if the
 string is not specified in quotes, it is assumed to be a local filename
 from which the message text may be read.
 .Pp
-The message is configured in 
+The message is configured in
 .Xr spamd 8
 to be displayed in the SMTP dialogue to any connections that match
 addresses in the blacklist.
