@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmel.c,v 1.6 2001/11/01 12:13:46 art Exp $ */
+/*	$OpenBSD: vmel.c,v 1.7 2001/11/05 19:45:34 art Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -165,7 +165,7 @@ vmelmmap(dev, off, prot)
 	struct vmelsoftc *sc = (struct vmelsoftc *) vmel_cd.cd_devs[unit];
 	void * pa;
 
-	pa = vmepmap(sc->sc_vme, (void *)off, NBPG, BUS_VMEL);
+	pa = vmepmap(sc->sc_vme, (void *)(int)off, NBPG, BUS_VMEL);
 	printf("vmel %x pa %x\n", off, pa);
 	if (pa == NULL)
 		return (-1);
