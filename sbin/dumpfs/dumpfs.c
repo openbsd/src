@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumpfs.c,v 1.8 1997/11/13 07:38:37 millert Exp $	*/
+/*	$OpenBSD: dumpfs.c,v 1.9 1998/04/25 06:38:07 deraadt Exp $	*/
 /*	$NetBSD: dumpfs.c,v 1.12 1997/04/26 05:41:33 lukem Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.2 (Berkeley) 2/2/94";
 #else
-static char rcsid[] = "$OpenBSD: dumpfs.c,v 1.8 1997/11/13 07:38:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: dumpfs.c,v 1.9 1998/04/25 06:38:07 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -114,15 +114,22 @@ int
 dumpfs(name)
 	char *name;
 {
+	ssize_t n;
 	int fd, c, i, j, k, size;
 
 	if ((fd = open(name, O_RDONLY, 0)) < 0)
 		goto err;
 	if (lseek(fd, (off_t)SBOFF, SEEK_SET) == (off_t)-1)
 		goto err;
-	if (read(fd, &afs, SBSIZE) != SBSIZE)
+	if ((n = read(fd, &afs, SBSIZE)) == -1)
 		goto err;
 
+	if (n != SBSIZE) {
+		warnx("%s: non-existent or truncated superblock, skipped",
+		    name);
+		(void)close(fd);
+ 		return (1);
+	}
  	if (afs.fs_magic != FS_MAGIC) {
 		warnx("%s: superblock has bad magic number, skipping.", name);
 		(void) close(fd);
