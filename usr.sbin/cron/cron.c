@@ -1,4 +1,4 @@
-/*	$OpenBSD: cron.c,v 1.16 2001/10/24 17:28:16 millert Exp $	*/
+/*	$OpenBSD: cron.c,v 1.17 2001/12/11 04:14:00 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$OpenBSD: cron.c,v 1.16 2001/10/24 17:28:16 millert Exp $";
+static char rcsid[] = "$OpenBSD: cron.c,v 1.17 2001/12/11 04:14:00 millert Exp $";
 #endif
 
 #define	MAIN_PROGRAM
@@ -36,6 +36,7 @@ static	void	usage(void),
 		sigchld_handler(int),
 		sighup_handler(int),
 		sigchld_reaper(void),
+		check_sigs(void),
 		parse_args(int c, char *v[]);
 
 static	volatile sig_atomic_t	got_sighup, got_sigchld;
@@ -143,15 +144,7 @@ main(int argc, char *argv[]) {
 		int timeDiff;
 		int wakeupKind;
 
-		if (got_sighup) {
-			got_sighup = 0;
-			log_close();
-		}
-		if (got_sigchld) {
-			got_sigchld = 0;
-			sigchld_reaper();
-		}
-
+		check_sigs();
 		load_database(&database);
 		/* ... wait for the time (in minutes) to change ... */
 		do {
@@ -345,16 +338,27 @@ set_time(int initialize) {
  */
 static void
 cron_sleep(int target) {
-	time_t t;
+	time_t t1, t2;
 	int seconds_to_wait;
 
-	t = time(NULL) + GMToff;
-	seconds_to_wait = (int)(target * SECONDS_PER_MINUTE - t) + 1;
+	t1 = time(NULL) + GMToff;
+	seconds_to_wait = (int)(target * SECONDS_PER_MINUTE - t1) + 1;
 	Debug(DSCH, ("[%ld] Target time=%ld, sec-to-wait=%d\n",
 	    (long)getpid(), (long)target*SECONDS_PER_MINUTE, seconds_to_wait))
 
-	if (seconds_to_wait > 0 && seconds_to_wait < 65)
+	while (seconds_to_wait > 0 && seconds_to_wait < 65) {
 		sleep((unsigned int) seconds_to_wait);
+
+		/*
+		 * Check to see if we were interrupted by a signal.
+		 * If so, service the signal(s) then continue sleeping
+		 * where we left off.
+		 */
+		check_sigs();
+		t2 = time(NULL) + GMToff;
+		seconds_to_wait -= (int)(t2 - t1);
+		t1 = t2;
+	}
 }
 
 static void
@@ -393,6 +397,18 @@ sigchld_reaper() {
 			       (long)getpid(), (long)pid, WEXITSTATUS(waiter)))
 		}
 	} while (pid > 0);
+}
+
+static void
+check_sigs() {
+	if (got_sighup) {
+		got_sighup = 0;
+		log_close();
+	}
+	if (got_sigchld) {
+		got_sigchld = 0;
+		sigchld_reaper();
+	}
 }
 
 static void
