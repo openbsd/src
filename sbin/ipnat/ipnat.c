@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipnat.c,v 1.36 2000/03/13 23:40:19 kjell Exp $	*/
+/*	$OpenBSD: ipnat.c,v 1.37 2000/07/26 20:33:01 mickey Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -122,7 +122,7 @@ int argc;
 char *argv[];
 {
 	char	*file = NULL;
-	int	fd = -1, opts = 0, c;
+	int	fd = -1, opts = 0, c, mode = O_RDWR;
 
 	while ((c = getopt(argc, argv, "CFf:hlnrsv")) != -1)
 		switch (c)
@@ -141,15 +141,18 @@ char *argv[];
 			break;
 		case 'l' :
 			opts |= OPT_LIST;
+			mode = O_RDONLY;
 			break;
 		case 'n' :
 			opts |= OPT_NODO;
+			mode = O_RDONLY;
 			break;
 		case 'r' :
 			opts |= OPT_REM;
 			break;
 		case 's' :
 			opts |= OPT_STAT;
+			mode = O_RDONLY;
 			break;
 		case 'v' :
 			opts |= OPT_VERBOSE;
@@ -158,7 +161,7 @@ char *argv[];
 			usage(argv[0]);
 		}
 
-	if (!(opts & OPT_NODO) && ((fd = open(IPL_NAT, O_RDWR)) == -1) &&
+	if (!(opts & OPT_NODO) && ((fd = open(IPL_NAT, mode)) == -1) &&
 	    ((fd = open(IPL_NAT, O_RDONLY)) == -1)) {
 		(void) fprintf(stderr, "%s: open: %s\n", IPL_NAT,
 			STRERROR(errno));
