@@ -1,3 +1,4 @@
+.\"	$OpenBSD: read_me.nr,v 1.2 2001/01/04 20:43:08 todd Exp $
 .\"	$NetBSD: read_me.nr,v 1.2 1995/04/22 10:59:44 cgd Exp $
 .de @h
 'sp 4
@@ -196,7 +197,7 @@ There are many neat things
 which could go in,
 if there were only enough space.
 However,
-I have specifically not gone to seperated I/D
+I have specificially not gone to separated I/D
 space.
 The main reason is that I would like future versions
 of the game
