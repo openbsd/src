@@ -1,4 +1,4 @@
-#	$OpenBSD: pnpdevs,v 1.20 1998/10/10 09:22:36 deraadt Exp $
+#	$OpenBSD: pnpdevs,v 1.21 1998/10/11 04:24:46 downsj Exp $
 
 #
 # NOTE: All `com' devices also need pccom identifiers.
@@ -359,6 +359,8 @@ com	GWY6290 #Telepath with x2 Technology
 pccom	GWY6290 #Telepath with x2 Technology
 com	GVC0303 #MaxTech 33.6 PnP D/F/V
 pccom	GVC0303 #MaxTech 33.6 PnP D/F/V
+com	GWY0038 #Telepath with v.90
+pccom	GWY0038	#Telepath with v.90
 
 # Ethernet:
 #le	BRI1001	#BOCALANcard COMBO	(PNP8200)
