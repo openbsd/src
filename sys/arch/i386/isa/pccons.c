@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccons.c,v 1.9 1996/04/22 20:12:16 hannken Exp $	*/
+/*	$OpenBSD: pccons.c,v 1.10 1996/04/24 12:40:11 mickey Exp $	*/
 /*	$NetBSD: pccons.c,v 1.96 1996/04/11 22:15:25 cgd Exp $	*/
 
 /*-
@@ -45,6 +45,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/ioctl.h>
 #include <sys/proc.h>
@@ -53,7 +54,6 @@
 #include <sys/tty.h>
 #include <sys/uio.h>
 #include <sys/callout.h>
-#include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
