@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.17 2004/03/17 09:25:10 jmc Exp $
+dnl	$OpenBSD: install,v 1.18 2004/09/20 17:53:28 miod Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
@@ -131,7 +131,7 @@ The list of BUG-supported Ethernet controllers is available with the
 The "NIOT;H" lists only the available controllers in the machine. For
 example, on an MVME187 system with no external network card:
 
-    187-Bug> NIOT;A
+    187-Bug> NIOT;H
     Network Controllers/Nodes Available
     CLUN  DLUN  Name      Address
        0     0  VME187    $FFF46000
@@ -141,7 +141,7 @@ If the BUG does not support the NIOT command (MVME187 BUG prior to version
 
 Before netbooting, enter "NIOT" and fill the parameters. Be sure to provide
 the correct values for Controller LUN and Device LUN (as listed in the
-"NIOT;A" output); also the "Boot File Load Address" and "Boot File
+"NIOT;H" output); also the "Boot File Load Address" and "Boot File
 Execution Address" need to be set to 00AF0000. The "Boot File Name" must
 match the name of the netboot file on the server (copying it as
 "netboot.mvme88k" or "tftpboot.mvme88k" is usually a wise choice). Finally,
