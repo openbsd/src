@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.wgrisc,v 1.1.1.1 1997/02/06 16:02:45 pefo Exp $
+#	$OpenBSD: Makefile.wgrisc,v 1.2 1997/02/23 21:59:25 pefo Exp $
 
 #	@(#)Makefile.wgrisc	8.2 (Berkeley) 2/16/94
 #
@@ -99,7 +99,6 @@ SYSTEM_LD=	-@if [ X${DEBUG} = X-g ]; \
 			${SYSTEM_OBJ} vers.o
 #
 SYSTEM_LD_TAIL=	chmod 755 $@; \
-		elf2ecoff $@ $@.ecoff; \
 		size $@
 
 %LOAD

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.wgrisc,v 1.1.1.1 1997/02/06 16:02:45 pefo Exp $
+#	$OpenBSD: files.wgrisc,v 1.2 1997/02/23 21:59:26 pefo Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
 #
@@ -70,6 +70,11 @@ major	{cd = 3}
 device	asc: scsi
 attach	asc at riscbus
 file	arch/wgrisc/dev/asc.c		asc	needs-count
+
+#	FLASH Memory device driver
+device	flash
+attach	flash at riscbus
+file	arch/wgrisc/dev/flash.c		flash	needs-count
 
 #
 #	ISA
