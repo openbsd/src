@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.8 2003/01/16 04:15:17 art Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.9 2003/05/20 09:51:22 andreas Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.18 1996/05/03 19:42:01 christos Exp $	*/
 
 /* 
@@ -91,11 +91,11 @@ db_find_trace_symbols()
 {
 	db_expr_t	value;
 
-	if (db_value_of_name("_trap", &value))
+	if (db_value_of_name("trap", &value))
 		db_trap_symbol_value = (db_addr_t) value;
-	if (db_value_of_name("_kdintr", &value))
+	if (db_value_of_name("kdintr", &value))
 		db_kdintr_symbol_value = (db_addr_t) value;
-	if (db_value_of_name("_syscall", &value))
+	if (db_value_of_name("syscall", &value))
 		db_syscall_symbol_value = (db_addr_t) value;
 	db_trace_symbols_found = TRUE;
 }
@@ -248,21 +248,18 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 			}
 		}
 		if (INKERNEL((int)frame) && name) {
-			if (!strcmp(name, "_trap")) {
+			if (!strcmp(name, "trap")) {
 				is_trap = TRAP;
-			} else if (!strcmp(name, "_syscall")) {
+			} else if (!strcmp(name, "syscall")) {
 				is_trap = SYSCALL;
-			} else if (name[0] == '_' && name[1] == 'X') {
-				if (!strncmp(name, "_Xintr", 6) ||
-				    !strncmp(name, "_Xresume", 8) ||
-				    !strncmp(name, "_Xstray", 7) ||
-				    !strncmp(name, "_Xhold", 6) ||
-				    !strncmp(name, "_Xrecurse", 9) ||
-				    !strcmp(name, "_Xdoreti") ||
-				    !strncmp(name, "_Xsoft", 6)) {
-					is_trap = INTERRUPT;
-				} else
-					goto normal;
+			} else if (!strncmp(name, "Xintr", 5) ||
+			    !strncmp(name, "Xresume", 7) ||
+			    !strncmp(name, "Xstray", 6) ||
+			    !strncmp(name, "Xhold", 5) ||
+			    !strncmp(name, "Xrecurse", 8) ||
+			    !strcmp(name, "Xdoreti") ||
+			    !strncmp(name, "Xsoft", 5)) {
+				is_trap = INTERRUPT;
 			} else
 				goto normal;
 			narg = 0;
