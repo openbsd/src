@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.9 2002/03/14 01:26:45 millert Exp $	*/
+/*	$OpenBSD: zs.c,v 1.10 2002/09/23 18:43:18 jason Exp $	*/
 /*	$NetBSD: zs.c,v 1.29 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -808,21 +808,22 @@ zs_console_flags(promunit, node, channel)
 	int channel;
 {
 	int cookie, flags = 0;
-	u_int chosen;
+	u_int options;
 	char buf[255];
 
 	/*
 	 * We'll just to the OBP grovelling down here since that's
 	 * the only type of firmware we support.
 	 */
-	chosen = OF_finddevice("/chosen");
+	options = OF_finddevice("/options");
 
 	/* Default to channel 0 if there are no explicit prom args */
 	cookie = 0;
-	if (node == OF_instance_to_package(OF_stdin())) {
-		if (OF_getprop(chosen, "input-device", buf, sizeof(buf)) != -1) {
 
-			if (!strcmp("ttyb", buf))
+	if (node == OF_instance_to_package(OF_stdin())) {
+		if (OF_getprop(options, "input-device",
+		    buf, sizeof(buf)) != -1) {
+			if (strncmp("ttyb", buf, strlen("ttyb")) == 0)
 				cookie = 1;
 		}
 
@@ -831,9 +832,9 @@ zs_console_flags(promunit, node, channel)
 	}
 
 	if (node == OF_instance_to_package(OF_stdout())) { 
-		if (OF_getprop(chosen, "output-device", buf, sizeof(buf)) != -1) {
-
-			if (!strcmp("ttyb", buf))
+		if (OF_getprop(options, "output-device",
+		    buf, sizeof(buf)) != -1) {
+			if (strncmp("ttyb", buf, strlen("ttyb")) == 0)
 				cookie = 1;
 		}
 		
