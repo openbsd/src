@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.9 1995/09/23 17:14:40 thorpej Exp $	*/
+/*	$NetBSD: net.c,v 1.12 1995/12/13 23:38:10 pk Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -105,9 +105,7 @@ sendudp(d, pkt, len)
 	/* Calculate checksum (must save and restore ip header) */
 	tip = *ip;
 	ui = (struct udpiphdr *)ip;
-	ui->ui_next = 0;
-	ui->ui_prev = 0;
-	ui->ui_x1 = 0;
+	bzero(ui->ui_x1, sizeof(ui->ui_x1));
 	ui->ui_len = uh->uh_ulen;
 	uh->uh_sum = in_cksum(ui, len);
 	*ip = tip;
@@ -239,9 +237,7 @@ readudp(d, pkt, len, tleft)
 		/* Check checksum (must save and restore ip header) */
 		tip = *ip;
 		ui = (struct udpiphdr *)ip;
-		ui->ui_next = 0;
-		ui->ui_prev = 0;
-		ui->ui_x1 = 0;
+		bzero(ui->ui_x1, sizeof(ui->ui_x1));
 		ui->ui_len = uh->uh_ulen;
 		if (in_cksum(ui, n) != 0) {
 #ifdef NET_DEBUG
@@ -290,7 +286,8 @@ sendrecv(d, sproc, sbuf, ssize, rproc, rbuf, rsize)
 	register size_t rsize;
 {
 	register ssize_t cc;
-	register time_t t, tmo, tlast, tleft;
+	register time_t t, tmo, tlast;
+	long tleft;
 
 #ifdef NET_DEBUG
 	if (debug)
@@ -302,7 +299,7 @@ sendrecv(d, sproc, sbuf, ssize, rproc, rbuf, rsize)
 	t = getsecs();
 	for (;;) {
 		if (tleft <= 0) {
-			if (tmo == MAXTMO) {
+			if (tmo >= MAXTMO) {
 				errno = ETIMEDOUT;
 				return -1;
 			}
