@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.31 2002/03/14 23:51:47 drahn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.32 2002/03/21 03:02:32 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -251,6 +251,8 @@ where = 3;
 	__asm__ volatile ("mtdbatl 0,%0; mtdbatu 0,%1"
 		      :: "r"(battable[0].batl), "r"(battable[0].batu));
 
+
+
 	/*
 	 * Set up trap vectors
 	 */
@@ -322,6 +324,23 @@ where = 3;
 	 */
 	pmap_bootstrap(startkernel, endkernel);
 
+	/* use BATs to map 1GB memory, no pageable BATs now */
+	if (physmem > btoc(0x10000000)) {
+		__asm__ volatile ("mtdbatl 1,%0; mtdbatu 1,%1"
+			      :: "r"(BATL(0x10000000, BAT_M)),
+			      "r"(BATU(0x10000000)));
+	}
+	if (physmem > btoc(0x20000000)) {
+		__asm__ volatile ("mtdbatl 2,%0; mtdbatu 2,%1"
+			      :: "r"(BATL(0x20000000, BAT_M)),
+			      "r"(BATU(0x20000000)));
+	}
+	if (physmem > btoc(0x30000000)) {
+		__asm__ volatile ("mtdbatl 3,%0; mtdbatu 3,%1"
+			      :: "r"(BATL(0x30000000, BAT_M)),
+			      "r"(BATU(0x30000000)));
+	}
+#if 0
 	/* now that we know physmem size, map physical memory with BATs */
 	if (physmem > btoc(0x10000000)) {
 		battable[0x1].batl = BATL(0x10000000, BAT_M);
@@ -351,6 +370,7 @@ where = 3;
 		battable[0x7].batl = BATL(0x70000000, BAT_M);
 		battable[0x7].batu = BATU(0x70000000);
 	}
+#endif
 
 	/*
 	 * Now enable translation (and machine checks/recoverable interrupts).

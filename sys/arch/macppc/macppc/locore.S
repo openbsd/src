@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.2 2002/03/13 18:27:36 drahn Exp $	*/
+/*	$OpenBSD: locore.S,v 1.3 2002/03/21 03:02:32 drahn Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -440,6 +440,7 @@ _C_LABEL(dsitrap):
 	mfxer	30			/* save XER */
 	mtsprg	2,30			/* in SPRG2 */
 	mfsrr1	31			/* test kernel mode */
+#if 0
 	mtcr	31
 	bc	12,17,1f		/* branch if PSL_PR is set */
 	mfdar	31			/* get fault address */
@@ -466,6 +467,7 @@ _C_LABEL(dsitrap):
 	lmw	28,disisave(0)		/* restore r28-r31 */
 	rfi				/* return to trapped code */
 1:
+#endif
 	mflr	28			/* save LR */
 	bla	s_dsitrap
 _C_LABEL(dsisize) =	.-_C_LABEL(dsitrap)
@@ -481,6 +483,7 @@ _C_LABEL(isitrap):
 	mflr	28			/* save LR */
 	mfcr	29			/* save CR */
 	mfsrr1	31			/* test kernel mode */
+#if 0
 	mtcr	31
 	bc	12,17,1f		/* branch if PSL_PR is set */
 	mfsrr0	31			/* get fault address */
@@ -496,6 +499,7 @@ _C_LABEL(isitrap):
 	lmw	28,disisave(0)		/* restore r28-r31 */
 	rfi				/* return to trapped code */
 1:
+#endif
 	bla	s_isitrap
 _C_LABEL(isisize) =	.-_C_LABEL(isitrap)
 
