@@ -403,7 +403,6 @@ case "${target}" in
     noconfigdirs="$noconfigdirs gdb ld target-newlib target-libgloss"
     ;;
   alpha*-*-openbsd*)
-    noconfigdirs="$noconfigdirs gdb"
     ;;
   alpha*-*-*)
     # newlib is not 64 bit ready
