@@ -5,7 +5,7 @@
  * Created from the file:
  *	OpenBSD: vnode_if.src,v 1.9 1998/12/05 16:54:02 csapuntz Exp 
  * by the script:
- *	OpenBSD: vnode_if.sh,v 1.6 1999/03/03 20:58:27 deraadt Exp 
+ *	OpenBSD: vnode_if.sh,v 1.7 2001/02/26 17:12:27 art Exp 
  */
 
 /*
@@ -138,7 +138,8 @@ int VOP_CREATE(dvp, vpp, cnp, vap)
 	a.a_desc = VDESC(vop_create);
 	a.a_dvp = dvp;
 #ifdef DIAGNOSTIC
-	if ((dvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(dvp)) panic("vop_create: dvp");
+	if ((dvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(dvp))
+		panic("vop_create: dvp");
 #endif
 	a.a_vpp = vpp;
 	a.a_cnp = cnp;
@@ -172,7 +173,8 @@ int VOP_MKNOD(dvp, vpp, cnp, vap)
 	a.a_desc = VDESC(vop_mknod);
 	a.a_dvp = dvp;
 #ifdef DIAGNOSTIC
-	if ((dvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(dvp)) panic("vop_mknod: dvp");
+	if ((dvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(dvp))
+		panic("vop_mknod: dvp");
 #endif
 	a.a_vpp = vpp;
 	a.a_cnp = cnp;
@@ -268,7 +270,8 @@ int VOP_ACCESS(vp, mode, cred, p)
 	a.a_desc = VDESC(vop_access);
 	a.a_vp = vp;
 #ifdef DIAGNOSTIC
-	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp)) panic("vop_access: vp");
+	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))
+		panic("vop_access: vp");
 #endif
 	a.a_mode = mode;
 	a.a_cred = cred;
@@ -333,7 +336,8 @@ int VOP_SETATTR(vp, vap, cred, p)
 	a.a_desc = VDESC(vop_setattr);
 	a.a_vp = vp;
 #ifdef DIAGNOSTIC
-	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp)) panic("vop_setattr: vp");
+	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))
+		panic("vop_setattr: vp");
 #endif
 	a.a_vap = vap;
 	a.a_cred = cred;
@@ -367,7 +371,8 @@ int VOP_READ(vp, uio, ioflag, cred)
 	a.a_desc = VDESC(vop_read);
 	a.a_vp = vp;
 #ifdef DIAGNOSTIC
-	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp)) panic("vop_read: vp");
+	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))
+		panic("vop_read: vp");
 #endif
 	a.a_uio = uio;
 	a.a_ioflag = ioflag;
@@ -401,7 +406,8 @@ int VOP_WRITE(vp, uio, ioflag, cred)
 	a.a_desc = VDESC(vop_write);
 	a.a_vp = vp;
 #ifdef DIAGNOSTIC
-	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp)) panic("vop_write: vp");
+	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))
+		panic("vop_write: vp");
 #endif
 	a.a_uio = uio;
 	a.a_ioflag = ioflag;
@@ -592,7 +598,8 @@ int VOP_FSYNC(vp, cred, waitfor, p)
 	a.a_desc = VDESC(vop_fsync);
 	a.a_vp = vp;
 #ifdef DIAGNOSTIC
-	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp)) panic("vop_fsync: vp");
+	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))
+		panic("vop_fsync: vp");
 #endif
 	a.a_cred = cred;
 	a.a_waitfor = waitfor;
@@ -657,11 +664,13 @@ int VOP_REMOVE(dvp, vp, cnp)
 	a.a_desc = VDESC(vop_remove);
 	a.a_dvp = dvp;
 #ifdef DIAGNOSTIC
-	if ((dvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(dvp)) panic("vop_remove: dvp");
+	if ((dvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(dvp))
+		panic("vop_remove: dvp");
 #endif
 	a.a_vp = vp;
 #ifdef DIAGNOSTIC
-	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp)) panic("vop_remove: vp");
+	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))
+		panic("vop_remove: vp");
 #endif
 	a.a_cnp = cnp;
 	return (VCALL(dvp, VOFFSET(vop_remove), &a));
@@ -693,7 +702,8 @@ int VOP_LINK(dvp, vp, cnp)
 	a.a_desc = VDESC(vop_link);
 	a.a_dvp = dvp;
 #ifdef DIAGNOSTIC
-	if ((dvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(dvp)) panic("vop_link: dvp");
+	if ((dvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(dvp))
+		panic("vop_link: dvp");
 #endif
 	a.a_vp = vp;
 	a.a_cnp = cnp;
@@ -734,7 +744,8 @@ int VOP_RENAME(fdvp, fvp, fcnp, tdvp, tvp, tcnp)
 	a.a_fcnp = fcnp;
 	a.a_tdvp = tdvp;
 #ifdef DIAGNOSTIC
-	if ((tdvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(tdvp)) panic("vop_rename: tdvp");
+	if ((tdvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(tdvp))
+		panic("vop_rename: tdvp");
 #endif
 	a.a_tvp = tvp;
 	a.a_tcnp = tcnp;
@@ -767,7 +778,8 @@ int VOP_MKDIR(dvp, vpp, cnp, vap)
 	a.a_desc = VDESC(vop_mkdir);
 	a.a_dvp = dvp;
 #ifdef DIAGNOSTIC
-	if ((dvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(dvp)) panic("vop_mkdir: dvp");
+	if ((dvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(dvp))
+		panic("vop_mkdir: dvp");
 #endif
 	a.a_vpp = vpp;
 	a.a_cnp = cnp;
@@ -801,11 +813,13 @@ int VOP_RMDIR(dvp, vp, cnp)
 	a.a_desc = VDESC(vop_rmdir);
 	a.a_dvp = dvp;
 #ifdef DIAGNOSTIC
-	if ((dvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(dvp)) panic("vop_rmdir: dvp");
+	if ((dvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(dvp))
+		panic("vop_rmdir: dvp");
 #endif
 	a.a_vp = vp;
 #ifdef DIAGNOSTIC
-	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp)) panic("vop_rmdir: vp");
+	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))
+		panic("vop_rmdir: vp");
 #endif
 	a.a_cnp = cnp;
 	return (VCALL(dvp, VOFFSET(vop_rmdir), &a));
@@ -838,7 +852,8 @@ int VOP_SYMLINK(dvp, vpp, cnp, vap, target)
 	a.a_desc = VDESC(vop_symlink);
 	a.a_dvp = dvp;
 #ifdef DIAGNOSTIC
-	if ((dvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(dvp)) panic("vop_symlink: dvp");
+	if ((dvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(dvp))
+		panic("vop_symlink: dvp");
 #endif
 	a.a_vpp = vpp;
 	a.a_cnp = cnp;
@@ -875,7 +890,8 @@ int VOP_READDIR(vp, uio, cred, eofflag, ncookies, cookies)
 	a.a_desc = VDESC(vop_readdir);
 	a.a_vp = vp;
 #ifdef DIAGNOSTIC
-	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp)) panic("vop_readdir: vp");
+	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))
+		panic("vop_readdir: vp");
 #endif
 	a.a_uio = uio;
 	a.a_cred = cred;
@@ -910,7 +926,8 @@ int VOP_READLINK(vp, uio, cred)
 	a.a_desc = VDESC(vop_readlink);
 	a.a_vp = vp;
 #ifdef DIAGNOSTIC
-	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp)) panic("vop_readlink: vp");
+	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))
+		panic("vop_readlink: vp");
 #endif
 	a.a_uio = uio;
 	a.a_cred = cred;
@@ -968,7 +985,8 @@ int VOP_INACTIVE(vp, p)
 	a.a_desc = VDESC(vop_inactive);
 	a.a_vp = vp;
 #ifdef DIAGNOSTIC
-	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp)) panic("vop_inactive: vp");
+	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))
+		panic("vop_inactive: vp");
 #endif
 	a.a_p = p;
 	return (VCALL(vp, VOFFSET(vop_inactive), &a));
@@ -1086,7 +1104,8 @@ int VOP_BMAP(vp, bn, vpp, bnp, runp)
 	a.a_desc = VDESC(vop_bmap);
 	a.a_vp = vp;
 #ifdef DIAGNOSTIC
-	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp)) panic("vop_bmap: vp");
+	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))
+		panic("vop_bmap: vp");
 #endif
 	a.a_bn = bn;
 	a.a_vpp = vpp;
@@ -1208,7 +1227,8 @@ int VOP_BLKATOFF(vp, offset, res, bpp)
 	a.a_desc = VDESC(vop_blkatoff);
 	a.a_vp = vp;
 #ifdef DIAGNOSTIC
-	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp)) panic("vop_blkatoff: vp");
+	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))
+		panic("vop_blkatoff: vp");
 #endif
 	a.a_offset = offset;
 	a.a_res = res;
@@ -1242,7 +1262,8 @@ int VOP_VALLOC(pvp, mode, cred, vpp)
 	a.a_desc = VDESC(vop_valloc);
 	a.a_pvp = pvp;
 #ifdef DIAGNOSTIC
-	if ((pvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(pvp)) panic("vop_valloc: pvp");
+	if ((pvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(pvp))
+		panic("vop_valloc: pvp");
 #endif
 	a.a_mode = mode;
 	a.a_cred = cred;
@@ -1278,7 +1299,8 @@ int VOP_BALLOC(vp, startoffset, size, cred, flags, bpp)
 	a.a_desc = VDESC(vop_balloc);
 	a.a_vp = vp;
 #ifdef DIAGNOSTIC
-	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp)) panic("vop_balloc: vp");
+	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))
+		panic("vop_balloc: vp");
 #endif
 	a.a_startoffset = startoffset;
 	a.a_size = size;
@@ -1312,7 +1334,8 @@ int VOP_REALLOCBLKS(vp, buflist)
 	a.a_desc = VDESC(vop_reallocblks);
 	a.a_vp = vp;
 #ifdef DIAGNOSTIC
-	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp)) panic("vop_reallocblks: vp");
+	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))
+		panic("vop_reallocblks: vp");
 #endif
 	a.a_buflist = buflist;
 	return (VCALL(vp, VOFFSET(vop_reallocblks), &a));
@@ -1343,7 +1366,8 @@ int VOP_VFREE(pvp, ino, mode)
 	a.a_desc = VDESC(vop_vfree);
 	a.a_pvp = pvp;
 #ifdef DIAGNOSTIC
-	if ((pvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(pvp)) panic("vop_vfree: pvp");
+	if ((pvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(pvp))
+		panic("vop_vfree: pvp");
 #endif
 	a.a_ino = ino;
 	a.a_mode = mode;
@@ -1377,7 +1401,8 @@ int VOP_TRUNCATE(vp, length, flags, cred, p)
 	a.a_desc = VDESC(vop_truncate);
 	a.a_vp = vp;
 #ifdef DIAGNOSTIC
-	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp)) panic("vop_truncate: vp");
+	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))
+		panic("vop_truncate: vp");
 #endif
 	a.a_length = length;
 	a.a_flags = flags;
@@ -1412,7 +1437,8 @@ int VOP_UPDATE(vp, access, modify, waitfor)
 	a.a_desc = VDESC(vop_update);
 	a.a_vp = vp;
 #ifdef DIAGNOSTIC
-	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp)) panic("vop_update: vp");
+	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))
+		panic("vop_update: vp");
 #endif
 	a.a_access = access;
 	a.a_modify = modify;
@@ -1445,7 +1471,8 @@ int VOP_WHITEOUT(dvp, cnp, flags)
 	a.a_desc = VDESC(vop_whiteout);
 	a.a_dvp = dvp;
 #ifdef DIAGNOSTIC
-	if ((dvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(dvp)) panic("vop_whiteout: dvp");
+	if ((dvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(dvp))
+		panic("vop_whiteout: dvp");
 #endif
 	a.a_cnp = cnp;
 	a.a_flags = flags;
