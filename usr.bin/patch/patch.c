@@ -1,4 +1,4 @@
-/*	$OpenBSD: patch.c,v 1.12 1999/08/31 21:29:19 espie Exp $	*/
+/*	$OpenBSD: patch.c,v 1.13 1999/12/04 01:01:06 provos Exp $	*/
 
 /* patch - a program to apply diffs to original files
  *
@@ -12,7 +12,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: patch.c,v 1.12 1999/08/31 21:29:19 espie Exp $";
+static char rcsid[] = "$OpenBSD: patch.c,v 1.13 1999/12/04 01:01:06 provos Exp $";
 #endif /* not lint */
 
 #include "INTERN.h"
@@ -312,7 +312,9 @@ char **argv;
 	if (failed) {
 	    failtotal += failed;
 	    if (!*rejname) {
-		Strcpy(rejname, outname);
+		if (strlcpy(rejname, outname, sizeof(rejname)) >= sizeof(rejname))
+		    fatal2("filename %s is too long\n", outname);
+		    
 #ifndef FLEXFILENAMES
 		{
 		    char *s = strrchr(rejname,'/');
@@ -325,7 +327,8 @@ char **argv;
 			s[13] = '\0';
 		}
 #endif
-		Strcat(rejname, REJEXT);
+		if (strlcat(rejname, REJEXT, sizeof(rejname)) >= sizeof(rejname))
+		    fatal2("filename %s is too long\n", outname);
 	    }
 	    if (skip_rest_of_patch) {
 		say4("%d out of %d hunks ignored--saving rejects to %s\n",
@@ -548,7 +551,8 @@ get_some_switches()
 		strippath = atoi(s);
 		break;
 	    case 'r':
-		Strcpy(rejname, nextarg());
+		if (strlcpy(rejname, nextarg(), sizeof(rejname)) >= sizeof(rejname))
+		    fatal1("argument for -r is too long\n");
 		break;
 	    case 'R':
 		reverse = TRUE;

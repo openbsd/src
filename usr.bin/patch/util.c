@@ -1,7 +1,7 @@
-/*	$OpenBSD: util.c,v 1.6 1999/01/11 00:16:32 marc Exp $	*/
+/*	$OpenBSD: util.c,v 1.7 1999/12/04 01:01:07 provos Exp $	*/
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: util.c,v 1.6 1999/01/11 00:16:32 marc Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.7 1999/12/04 01:01:07 provos Exp $";
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -45,18 +45,21 @@ char *from, *to;
     }
 
     if (origprae) {
-	Strcpy(bakname, origprae);
-	Strcat(bakname, to);
+	if (strlcpy(bakname, origprae, sizeof(bakname)) >= sizeof(bakname) ||
+	    strlcat(bakname, to, sizeof(bakname)) >= sizeof(bakname))
+	    fatal2("filename %s too long for buffer\n", origprae);
     } else {
 #ifndef NODIR
 	char *backupname = find_backup_file_name(to);
 	if (backupname == (char *) 0)
 	    fatal1("out of memory\n");
-	Strcpy(bakname, backupname);
+	if (strlcpy(bakname, backupname, sizeof(bakname)) >= sizeof(bakname))
+	    fatal2("filename %s too long for buffer\n", backupname);
 	free(backupname);
 #else /* NODIR */
-	Strcpy(bakname, to);
-    	Strcat(bakname, simple_backup_suffix);
+	if (strlcpy(bakname, to, sizeof(bakname)) >= sizeof(bakname) ||
+	    strlcat(bakname, simple_backup_suffix, sizeof(bakname)) >= sizeof(bakname))
+	    fatal2("filename %s too long for buffer\n", to);
 #endif /* NODIR */
     }
 
@@ -79,7 +82,7 @@ char *from, *to;
 	    if (*s)
 		*s = toupper(*s);
 	    else
-		Strcpy(simplename, simplename+1);
+		strcpy(simplename, simplename+1);
 	}
 	while (unlink(bakname) >= 0) ;	/* while() is for benefit of Eunice */
 #ifdef DEBUGGING
@@ -358,7 +361,7 @@ bool striplast;
 	if (stat(tmpbuf, &sbuf) && errno == ENOENT) {
 	    while (*s) s++;
 	    *s++ = ' ';
-	    strcpy(s, tmpbuf);
+	    strlcpy(s, tmpbuf, strlen(s) + 1);
 	}
 	*dirv[i] = '/';
     }

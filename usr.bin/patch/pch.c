@@ -1,7 +1,7 @@
-/*	$OpenBSD: pch.c,v 1.9 1998/11/25 00:30:26 espie Exp $	*/
+/*	$OpenBSD: pch.c,v 1.10 1999/12/04 01:01:07 provos Exp $	*/
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: pch.c,v 1.9 1998/11/25 00:30:26 espie Exp $";
+static char rcsid[] = "$OpenBSD: pch.c,v 1.10 1999/12/04 01:01:07 provos Exp $";
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -454,7 +454,7 @@ another_hunk()
 	    p_input_line++;
 	    if (ret == Nullch) {
 		if (p_max - p_end < 4)
-		    Strcpy(buf, "  \n");  /* assume blank lines got chopped */
+		    strcpy(buf, "  \n");  /* assume blank lines got chopped */
 		else {
 		    if (repl_beginning && repl_could_be_missing) {
 			repl_missing = TRUE;
@@ -499,7 +499,7 @@ another_hunk()
 		if (!*s)
 		    malformed ();
 		if (strnEQ(s,"0,0",3))
-		    strcpy(s,s+2);
+		    strcpy(s, s+2);
 		p_first = (LINENUM) atol(s);
 		while (isdigit(*s)) s++;
 		if (*s == ',') {
@@ -807,7 +807,7 @@ another_hunk()
 	    p_input_line++;
 	    if (ret == Nullch) {
 		if (p_max - filldst < 3)
-		    Strcpy(buf, " \n");  /* assume blank lines got chopped */
+		    strcpy(buf, " \n");  /* assume blank lines got chopped */
 		else {
 		    fatal1("unexpected end of file in patch\n");
 		}
@@ -1023,8 +1023,8 @@ FILE *fp;
 	    else
 		indent++;
 	}
-	if (buf != s)
-	    Strcpy(buf, s);
+	if (buf != s && strlcpy(buf, s, sizeof(buf)) >= sizeof(buf))
+	    fatal1("buffer too small in pgets()\n");
     }
     return ret;
 }
