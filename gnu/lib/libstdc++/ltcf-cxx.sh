@@ -419,6 +419,9 @@ case $host_os in
       remove_lgcc=yes
       output_verbose_link_cmds='$CC $ac_cv_prog_cc_pic -shared $CFLAGS -v conftest.$objext 2>&1 | egrep "\-L"'
     fi
+    if [ "$host_cpu" = "hppa" ]; then
+      deplibs_check_method=pass_all;
+    fi
     ;;
   osf3*)
     case $cc_basename in
