@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.9 1997/10/28 05:58:17 millert Exp $
+.\"	$OpenBSD: disklabel.8,v 1.10 1997/10/28 06:01:09 millert Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -265,7 +265,7 @@ Set OpenBSD disk boundaries.  This option tells
 which parts of the disk it is allow to modify.  This option is
 probably only useful ports with fdisk partition tables where the
 ending sector in the MBR is incorrect.  The user may enter '*' at
-the "Size" prompt to indicate the entire size of the disk (minus
+the ``Size'' prompt to indicate the entire size of the disk (minus
 the starting sector).  This is useful for large disks where the
 fdisk partition table is incapable if storing the real size.
 .\" What is this limit?  [somewhere between 8 and 9 gig]
