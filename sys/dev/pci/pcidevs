@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.466 2001/11/21 13:09:50 lebel Exp $
+	$OpenBSD: pcidevs,v 1.467 2001/11/22 02:23:05 naddy Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1580,7 +1580,7 @@ product SYMBIOS 810AP		0x0005	53c810AP
 product SYMBIOS 860		0x0006	53c860
 product SYMBIOS	1510D		0x000a	53c1510D
 product SYMBIOS	896		0x000b	53c896
-product SYMBIOS	895		0x000c	53c89
+product SYMBIOS	895		0x000c	53c895
 product SYMBIOS	885		0x000d	53c885
 product SYMBIOS 875		0x000f	53c875
 product SYMBIOS	1510		0x0010	53c1510
