@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.doc.mk,v 1.7 1997/08/07 08:59:32 niklas Exp $
+#	$OpenBSD: bsd.doc.mk,v 1.8 2001/04/03 23:00:09 espie Exp $
 #	$NetBSD: bsd.doc.mk,v 1.20 1994/07/26 19:42:37 mycroft Exp $
 #	@(#)bsd.doc.mk	8.1 (Berkeley) 8/14/93
 
@@ -46,7 +46,10 @@ install:
 	${INSTALL} ${INSTALL_COPY} -o ${DOCOWN} -g ${DOCGRP} -m ${DOCMODE} \
 	    Makefile ${FILES} ${EXTRA} ${DESTDIR}${DOCDIR}/${DIR}
 
-spell: ${SRCS}
+spell: paper.spell
+
+
+paper.spell: ${SRCS}
 	spell ${SRCS} | sort | comm -23 - spell.ok > paper.spell
 
 .include <bsd.own.mk>

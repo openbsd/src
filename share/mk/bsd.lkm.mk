@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lkm.mk,v 1.15 2000/06/18 23:21:47 assar Exp $
+#	$OpenBSD: bsd.lkm.mk,v 1.16 2001/04/03 23:00:09 espie Exp $
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
@@ -121,3 +121,5 @@ lint: ${LOBJS}
 .include <bsd.dep.mk>
 .include <bsd.subdir.mk>
 .include <bsd.sys.mk>
+
+.PHONY: load unload

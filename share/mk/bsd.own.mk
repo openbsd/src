@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.40 2001/02/17 00:04:55 miod Exp $
+#	$OpenBSD: bsd.own.mk,v 1.41 2001/04/03 23:00:09 espie Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -121,3 +121,8 @@ NOPROFILE=
 NOLINT=
 
 BSD_OWN_MK=Done
+
+.PHONY: spell clean cleandir obj manpages print all \
+	depend beforedepend afterdepend cleandepend \
+	all lint cleanman nlsinstall cleannls includes \
+	beforeinstall realinstall maninstall afterinstall install
