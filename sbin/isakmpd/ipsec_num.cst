@@ -1,4 +1,4 @@
-#	$OpenBSD: ipsec_num.cst,v 1.8 2002/01/27 01:56:31 ho Exp $
+#	$OpenBSD: ipsec_num.cst,v 1.9 2002/06/07 20:50:12 ho Exp $
 #	$EOM: ipsec_num.cst,v 1.5 2000/10/13 17:56:52 angelos Exp $
 
 #
@@ -144,6 +144,9 @@ IKE_AUTH
   RSA_SIG				3
   RSA_ENC				4
   RSA_ENC_REV				5
+  EL_GAMAL_ENC				6
+  EL_GAMAL_ENC_REV			7
+  ECDSA_SIG				8
 .
 
 # IKE group description.
@@ -153,6 +156,14 @@ IKE_GROUP_DESC
   EC2N_155				3
   EC2N_185				4
   MODP_1536				5
+  EC2N_163sect				6
+  EC2N_163K				7
+  EC2N_283sect				8
+  EC2N_283K				9
+  EC2N_409sect				10
+  EC2N_409K				11
+  EC2N_571sect				12
+  EC2N_571K				13
 .
 
 # IKE Group type.
