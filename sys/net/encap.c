@@ -1,4 +1,4 @@
-/*	$OpenBSD: encap.c,v 1.11 1997/07/18 18:09:48 provos Exp $	*/
+/*	$OpenBSD: encap.c,v 1.12 1997/07/21 21:10:37 deraadt Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -107,7 +107,7 @@ encap_init()
     
     for (xsp = xformsw; xsp < xformswNXFORMSW; xsp++)
     {
-	log(LOG_INFO, "encap_init(): attaching <%s>\n", xsp->xf_name);
+	/*log(LOG_INFO, "encap_init(): attaching <%s>\n", xsp->xf_name);*/
 	(*(xsp->xf_attach))();
     }
 }
