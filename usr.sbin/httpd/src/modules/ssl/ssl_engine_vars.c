@@ -79,6 +79,7 @@ static char *ssl_var_lookup_ssl_cert_valid(pool *p, ASN1_UTCTIME *tm);
 static char *ssl_var_lookup_ssl_cert_serial(pool *p, X509 *xs);
 static char *ssl_var_lookup_ssl_cert_chain(pool *p, STACK_OF(X509) *sk, char *var);
 static char *ssl_var_lookup_ssl_cert_PEM(pool *p, X509 *xs);
+static char *ssl_var_lookup_ssl_cert_verify(pool *p, conn_rec *c);
 static char *ssl_var_lookup_ssl_cipher(pool *p, conn_rec *c, char *var);
 static void  ssl_var_lookup_ssl_cipher_bits(char *cipher, int *usekeysize, int *algkeysize);
 static char *ssl_var_lookup_ssl_version(pool *p, char *var);
@@ -303,6 +304,9 @@ static char *ssl_var_lookup_ssl(pool *p, conn_rec *c, char *var)
         sk = SSL_get_peer_cert_chain(ssl);
         result = ssl_var_lookup_ssl_cert_chain(p, sk, var+17);
     }
+    else if (ssl != NULL && strcEQ(var, "CLIENT_VERIFY")) {
+        result = ssl_var_lookup_ssl_cert_verify(p, c);
+    }
     else if (ssl != NULL && strlen(var) > 7 && strcEQn(var, "CLIENT_", 7)) {
         if ((xs = SSL_get_peer_certificate(ssl)) != NULL)
             result = ssl_var_lookup_ssl_cert(p, xs, var+7);
@@ -468,7 +472,7 @@ static char *ssl_var_lookup_ssl_cert_chain(pool *p, STACK_OF(X509) *sk, char *va
 
     if (strspn(var, "0123456789") == strlen(var)) {
         n = atoi(var);
-        if (sk_X509_num(sk) >= n) {
+        if (n < sk_X509_num(sk)) {
             xs = sk_X509_value(sk, n);
             result = ssl_var_lookup_ssl_cert_PEM(p, xs);
         }
@@ -491,6 +495,37 @@ static char *ssl_var_lookup_ssl_cert_PEM(pool *p, X509 *xs)
     n = BIO_read(bio, result, n);
     result[n] = NUL;
     BIO_free(bio);
+    return result;
+}
+
+static char *ssl_var_lookup_ssl_cert_verify(pool *p, conn_rec *c)
+{
+    char *result;
+    long vrc;
+    char *verr;
+    char *vinfo;
+    SSL *ssl;
+    X509 *xs;
+
+    result = NULL;
+    ssl   = ap_ctx_get(c->client->ctx, "ssl");
+    verr  = ap_ctx_get(c->client->ctx, "ssl::verify::error");
+    vinfo = ap_ctx_get(c->client->ctx, "ssl::verify::info");
+    vrc   = SSL_get_verify_result(ssl);
+    xs    = SSL_get_peer_certificate(ssl);
+
+    if (vrc == X509_V_OK && verr == NULL && vinfo == NULL && xs == NULL)
+        /* no client verification done at all */
+        result = "NONE";
+    else if (vrc == X509_V_OK && verr == NULL && vinfo == NULL && xs != NULL)
+        /* client verification done successful */
+        result = "SUCCESS";
+    else if (vrc == X509_V_OK && vinfo != NULL && strEQ(vinfo, "GENEROUS"))
+        /* client verification done in generous way */
+        result = "GENEROUS";
+    else
+        /* client verification failed */
+        result = ap_psprintf(p, "FAILED:%s", verr);
     return result;
 }
 

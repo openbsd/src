@@ -66,6 +66,13 @@
 #ifndef MOD_SSL_H
 #define MOD_SSL_H 1
 
+/* 
+ * Check whether Extended API (EAPI) is enabled
+ */
+#ifndef EAPI
+#error "mod_ssl requires Extended API (EAPI)"
+#endif
+
 /*
  * Power up our brain...
  */
@@ -248,12 +255,27 @@
 #else
 #define SSL_MUTEX_LOCK_MODE (_S_IREAD|_S_IWRITE )
 #endif
-#ifdef USE_SYSVSEM_SERIALIZED_ACCEPT
+#if defined(USE_SYSVSEM_SERIALIZED_ACCEPT) ||\
+    defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) ||\
+    (defined(LINUX) && LINUX >= 2) ||\
+    defined(SOLARIS2)
 #define SSL_CAN_USE_SEM
 #define SSL_HAVE_IPCSEM
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/sem.h>
+/* 
+ * Some platforms have a `union semun' pre-defined but Single Unix
+ * Specification (SUSv2) says in semctl(2): `If required, it is of
+ * type union semun, which the application program must explicitly
+ * declare'. So we define it always ourself to avoid problems (but under
+ * a different name to avoid a namespace clash).
+ */
+union ssl_ipc_semun {
+    long val;
+    struct semid_ds *buf;
+    unsigned short int *array;
+};
 #endif
 #ifdef WIN32
 #define SSL_CAN_USE_SEM
@@ -321,14 +343,10 @@
 #endif /* !SSL_USE_SDBM */
 
 /*
- * Check for OpenSSL version and whether
- * Extended API (EAPI) is enabled
+ * Check for OpenSSL version 
  */
 #if SSL_LIBRARY_VERSION < 0x00903100
 #error "mod_ssl requires OpenSSL 0.9.3 or higher"
-#endif
-#ifndef EAPI
-#error "mod_ssl requires Extended API (EAPI)"
 #endif
 
 /*

@@ -275,14 +275,33 @@ void ssl_mutex_sem_create(server_rec *s, pool *p)
 #ifdef SSL_CAN_USE_SEM
     int semid;
     SSLModConfigRec *mc = myModConfig();
+#ifdef SSL_HAVE_IPCSEM
+    union ssl_ipc_semun semctlarg;
+    struct semid_ds semctlbuf;
+#endif
 
 #ifdef SSL_HAVE_IPCSEM
     semid = semget(IPC_PRIVATE, 1, IPC_CREAT|IPC_EXCL|S_IRUSR|S_IWUSR);
     if (semid == -1 && errno == EEXIST)
-        semid = semget(IPC_PRIVATE, 1, IPC_CREAT|IPC_EXCL|S_IRUSR|S_IWUSR);
+        semid = semget(IPC_PRIVATE, 1, IPC_EXCL|S_IRUSR|S_IWUSR);
     if (semid == -1) {
         ssl_log(s, SSL_LOG_ERROR|SSL_ADD_ERRNO,
                 "Parent process could not create private SSLMutex semaphore");
+        ssl_die();
+    }
+    semctlarg.val = 0;
+    if (semctl(semid, 0, SETVAL, semctlarg) < 0) {
+        ssl_log(s, SSL_LOG_ERROR|SSL_ADD_ERRNO,
+                "Parent process could not initialize SSLMutex semaphore value");
+        ssl_die();
+    }
+    semctlbuf.sem_perm.uid  = ap_user_id;
+    semctlbuf.sem_perm.gid  = ap_group_id;
+    semctlbuf.sem_perm.mode = 0660;
+    semctlarg.buf = &semctlbuf;
+    if (semctl(semid, 0, IPC_SET, semctlarg) < 0) {
+        ssl_log(s, SSL_LOG_ERROR|SSL_ADD_ERRNO,
+                "Parent process could not set permissions for SSLMutex semaphore");
         ssl_die();
     }
 #endif
@@ -333,7 +352,7 @@ BOOL ssl_mutex_sem_acquire(void)
         { 0, 1, SEM_UNDO } /* increment semaphore */
     };
 
-    rc = semop(mc->nMutexSEMID, sb, 2);
+    rc = (semop(mc->nMutexSEMID, sb, 2) == 0);
 #endif
 #ifdef SSL_HAVE_W32SEM
     rc = (ap_acquire_mutex((mutex *)mc->nMutexSEMID) == 0);
@@ -353,7 +372,7 @@ BOOL ssl_mutex_sem_release(void)
         { 0, -1, SEM_UNDO } /* decrements semaphore */
     };
 
-    rc = semop(mc->nMutexSEMID, sb, 1);
+    rc = (semop(mc->nMutexSEMID, sb, 1) == 0);
 #endif
 #ifdef SSL_HAVE_W32SEM
     rc = ap_release_mutex((mutex *)mc->nMutexSEMID);

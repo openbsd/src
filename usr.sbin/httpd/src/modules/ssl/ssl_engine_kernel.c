@@ -209,6 +209,8 @@ void ssl_hook_NewConnection(conn_rec *conn)
      */
     ap_ctx_set(fb->ctx, "ssl::client::dn", NULL);
     ap_ctx_set(fb->ctx, "ssl::verify::error", NULL);
+    ap_ctx_set(fb->ctx, "ssl::verify::info", NULL);
+    SSL_set_verify_result(ssl, X509_V_OK);
 
     /*
      * We have to manage a I/O timeout ourself, because Apache
@@ -343,9 +345,12 @@ void ssl_hook_NewConnection(conn_rec *conn)
         /*
          * Check for failed client authentication
          */
-        if ((cp = (char *)ap_ctx_get(fb->ctx, "ssl::verify::error")) != NULL) {
+        if (   SSL_get_verify_result(ssl) != X509_V_OK
+            || ap_ctx_get(fb->ctx, "ssl::verify::error") != NULL) {
+            cp = (char *)ap_ctx_get(fb->ctx, "ssl::verify::error");
             ssl_log(srvr, SSL_LOG_ERROR|SSL_ADD_SSLERR,
-                    "SSL client authentication failed: %s", cp);
+                    "SSL client authentication failed: %s", 
+                    cp != NULL ? cp : "unknown reason");
             SSL_set_shutdown(ssl, SSL_RECEIVED_SHUTDOWN);
             SSL_smart_shutdown(ssl);
             SSL_free(ssl);
@@ -1155,6 +1160,7 @@ static const char *ssl_hook_Fixup_vars[] = {
     "SSL_CIPHER_EXPORT",
     "SSL_CIPHER_USEKEYSIZE",
     "SSL_CIPHER_ALGKEYSIZE",
+    "SSL_CLIENT_VERIFY",
     "SSL_CLIENT_M_VERSION",
     "SSL_CLIENT_M_SERIAL",
     "SSL_CLIENT_V_START",
@@ -1210,6 +1216,8 @@ int ssl_hook_Fixup(request_rec *r)
     table *e = r->subprocess_env;
     char *var;
     char *val;
+    STACK_OF(X509) *sk;
+    SSL *ssl;
     int i;
 
     /*
@@ -1217,7 +1225,7 @@ int ssl_hook_Fixup(request_rec *r)
      */
     if (!sc->bEnabled)
         return DECLINED;
-    if (ap_ctx_get(r->connection->client->ctx, "ssl") == NULL)
+    if ((ssl = ap_ctx_get(r->connection->client->ctx, "ssl")) == NULL)
         return DECLINED;
 
     /*
@@ -1235,10 +1243,17 @@ int ssl_hook_Fixup(request_rec *r)
      * On-demand bloat up the SSI/CGI environment with certificate data
      */
     if (dc->nOptions & SSL_OPT_EXPORTCERTDATA) {
-        val = ssl_var_lookup(r->pool, r->server, r->connection, r, "SSL_CLIENT_CERT");
-        ap_table_set(e, "SSL_CLIENT_CERT", val);
         val = ssl_var_lookup(r->pool, r->server, r->connection, r, "SSL_SERVER_CERT");
         ap_table_set(e, "SSL_SERVER_CERT", val);
+        val = ssl_var_lookup(r->pool, r->server, r->connection, r, "SSL_CLIENT_CERT");
+        ap_table_set(e, "SSL_CLIENT_CERT", val);
+        sk = SSL_get_peer_cert_chain(ssl);
+        for (i = 0; i < sk_X509_num(sk); i++) {
+            var = ap_psprintf(r->pool, "SSL_CLIENT_CERT_CHAIN_%d", i);
+            val = ssl_var_lookup(r->pool, r->server, r->connection, r, var);
+            if (val != NULL)
+                 ap_table_set(e, var, val);
+        }
     }
 
     /*
@@ -1409,6 +1424,7 @@ int ssl_callback_SSLVerify(int ok, X509_STORE_CTX *ctx)
         ssl_log(s, SSL_LOG_TRACE,
                 "Certificate Verification: Verifiable Issuer is configured as "
                 "optional, therefore we're accepting the certificate");
+        ap_ctx_set(conn->client->ctx, "ssl::verify::info", "GENEROUS");
         ok = TRUE;
     }
 
@@ -1417,7 +1433,8 @@ int ssl_callback_SSLVerify(int ok, X509_STORE_CTX *ctx)
      */
     if (ok) {
         ok = ssl_callback_SSLVerify_CRL(ok, ctx, s);
-        errnum = X509_STORE_CTX_get_error(ctx);
+        if (!ok)
+            errnum = X509_STORE_CTX_get_error(ctx);
     }
 
     /*
@@ -1643,13 +1660,14 @@ int ssl_callback_NewSessionCacheEntry(SSL *ssl, SSL_SESSION *pNew)
      * Set the timeout also for the internal OpenSSL cache, because this way
      * our inter-process cache is consulted only when it's really necessary.
      */
-    t = (SSL_get_time(pNew) + sc->nSessionCacheTimeout);
+    t = sc->nSessionCacheTimeout;
     SSL_set_timeout(pNew, t);
 
     /*
      * Store the SSL_SESSION in the inter-process cache with the
      * same expire time, so it expires automatically there, too.
      */
+    t = (SSL_get_time(pNew) + sc->nSessionCacheTimeout);
     rc = ssl_scache_store(s, pNew, t);
 
     /*

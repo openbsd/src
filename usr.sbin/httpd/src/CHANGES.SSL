@@ -23,6 +23,49 @@
       / __/ |__   _|
   __ |_____(_) |_| ___________________________________________
 
+  Changes with mod_ssl 2.4.4 (27-Sep-1999 to 28-Sep-1999)
+
+   *) Fixed the `union semun' situation for SSLMutex which was broken in 2.4.3
+      because Apache's internal NEED_UNION_SEMUN define is horrible
+      inconsistent (it was defined only for Solaris although it should be for
+      a lot more platforms). The correct solution actually is this: Some
+      platforms have a `union semun' pre-defined but Single Unix Specification
+      (SUSv2) says in semctl(2): `If required, it is of type union semun,
+      which the application program must explicitly declare'. So we have to
+      define it always ourself to avoid problems (but under a different name
+      to avoid a namespace clash, of course).
+
+   *) Fixed `make certificate VIEW=1': nested quotes are
+      disliked by strict(er) Bourne shell flavors.
+
+  Changes with mod_ssl 2.4.3 (06-Sep-1999 to 27-Sep-1999)
+
+   *) Upgraded pkg.contrib/gid-mkcert.sh to use OpenSSL
+      instead of SSLeay+cafix+pkcs12.
+   
+   *) Enabled SSL_USE_SEM (Semaphore based SSLMutex) now explicitly
+      for FreeBSD, NetBSD, OpenBSD, Linux and Solaris.
+
+   *) Fixed ``SSL_CLIENT_CERT_CHAIN<n>'' variable generation under
+      ``SSLOptions +ExportOptions''.
+
+   *) Added new ``SSL_CLIENT_VERIFY'' variable which can be used with
+      SSLRequire to manually check the verify results under ``SSLVerifyClient
+      optional'' in order to redirect to an enrollment page.
+
+   *) Fixed documentation related to SSL_XXX variables.
+
+   *) Fixed timeout handling of internal OpenSSL cache.
+
+   *) Make sure server.key/ca.key files are stored with explicit
+      permissions 600 also in conf/ssl.key/ inside the source tree.
+
+   *) Added hint about "Connection refused" problem to FAQ.
+
+   *) Fixed semaphore based SSLMutex variant: the IPC_CREAT fallback was wrong
+      and the return code semantics were treated incorrectly. Additionally the
+      ownership of the semaphore is now set, too.
+
   Changes with mod_ssl 2.4.2 (30-Aug-1999 to 06-Sep-1999)
    
    *) Added hint about -fPIC vs. -fpic to INSTALL document.
