@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.12 1996/09/30 15:55:13 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.13 1996/09/30 23:53:04 deraadt Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -37,7 +37,7 @@ DT=/etc/disktab				# /etc/disktab
 FSTABDIR=/mnt/etc			# /mnt/etc
 #DONTDOIT=echo
 
-VERSION=1.2
+VERSION=2.0
 FSTAB=${FSTABDIR}/fstab
 
 getresp() {
@@ -49,8 +49,8 @@ getresp() {
 
 echo	"Welcome to the OpenBSD ${VERSION} installation program."
 echo	""
-echo	"This program is designed to help you put OpenBSD on your hard disk,"
-echo	"in a simple and rational way.  You'll be asked several questions,"
+echo	"This program is will put OpenBSD on your hard disk.  It is not"
+echo	"painless, but it could be worse.  You'll be asked several questions,"
 echo	"and it would probably be useful to have your disk's hardware"
 echo	"manual, the installation notes, and a calculator handy."
 echo	""
@@ -71,49 +71,48 @@ echo	""
 echo -n "Proceed with installation? [n] "
 getresp "n"
 case "$resp" in
-	y*|Y*)
-		echo	"Cool!  Let's get to it..."
-		;;
-	*)
-		echo	""
-		echo	"OK, then.  Enter 'halt' at the prompt to halt the"
-		echo	"machine.  Once the machine has halted, remove the"
-		echo	"floppy and press any key to reboot."
-		exit
-		;;
+y*|Y*)
+	echo	"Cool!  Let's get to it..."
+	;;
+*)
+	echo	"OK, then.  Enter 'halt' at the prompt to halt the"
+	echo	"machine.  Once the machine has halted, remove the"
+	echo	"floppy and press any key to reboot."
+	exit
+	;;
 esac
 
 echo	""
 echo	"To do the installation, you'll need to provide some information about"
 echo	"your disk."
-echo	""
+
 echo	"OpenBSD can be installed on ST506, ESDI, IDE, or SCSI disks."
 echo -n	"What kind of disk will you be installing on? [SCSI] "
 getresp "SCSI"
 case "$resp" in
-	esdi|ESDI|st506|ST506)
-		drivetype=wd
-		echo -n "Does it support _automatic_ sector remapping? [y] "
-		getresp "y"
-		case "$resp" in
-			n*|N*)
-				sect_fwd="sf:"
-				;;
-			*)
-				sect_fwd=""
-				;;
-		esac
+esdi|ESDI|st506|ST506)
+	drivetype=wd
+	echo -n "Does it support _automatic_ sector remapping? [y] "
+	getresp "y"
+	case "$resp" in
+	n*|N*)
+		sect_fwd="sf:"
 		;;
-	ide|IDE)
-		drivetype=wd
+	*)
 		sect_fwd=""
-		type=ST506
 		;;
-	scsi|SCSI)
-		drivetype=sd
-		sect_fwd=""
-		type=SCSI
-		;;
+	esac
+;;
+ide|IDE)
+	drivetype=wd
+	sect_fwd=""
+	type=ST506
+	;;
+scsi|SCSI)
+	drivetype=sd
+	sect_fwd=""
+	type=SCSI
+	;;
 esac
 
 # find out what units are possible for that disk, and query the user.
@@ -127,22 +126,18 @@ if [ "X${driveunits}" = "X" ]; then
 fi
 prefdrive=${drivetype}0
 
-echo	""
 echo	"The following ${drivetype}-type disks are supported by this"
 echo	"installation procedure:"
-echo	"	"${driveunits}
+echo	"${driveunits}"
 echo	"Note that they may not exist in _your_ machine; the list of"
 echo	"disks in your machine was printed when the system was booting."
-echo	""
 while [ "X${drivename}" = "X" ]; do
 	echo -n	"Which disk would like to install on? [${prefdrive}] "
 	getresp ${prefdrive}
 	otherdrives=`echo "${driveunits}" | sed -e s,${resp},,`
 	if [ "X${driveunits}" = "X${otherdrives}" ]; then
-		echo	""
 		echo	"\"${resp}\" is an invalid drive name.  Valid choices"
 		echo	"are: "${driveunits}
-		echo	""
 	else
 		drivename=${resp}
 	fi
@@ -150,7 +145,6 @@ done
 
 echo	""
 echo	"Using disk ${drivename}."
-echo	""
 echo -n	"What kind of disk is it? (one word please) [my${drivetype}] "
 getresp "my${drivetype}"
 labelname=$resp
@@ -166,15 +160,14 @@ echo    "again right now if you like."
 echo -n "View the boot messages again? [n] "
 getresp "n"
 case "$resp" in
-	y*|Y*)
-		less /kern/msgbuf
-		;;
-	*)
-		echo	""
-		;;
+y*|Y*)
+	less /kern/msgbuf
+	;;
+*)
+	echo	""
+	;;
 esac
 
-echo	""
 echo	"You will now enter the disk geometry information"
 echo	""
 
@@ -208,31 +201,31 @@ while [ "X${sizemult}" = "X" ]; do
 	echo -n	"What units would you like to use? [cylinders] "
 	getresp cylinders
 	case "$resp" in
-		c*|C*)
-			sizemult=$cylindersize
-			sizeunit="cylinders"
-			;;
-		s*|S*)
-			sizemult=1
-			sizeunit="sectors"
-			;;
-		*)
-			echo	""
-			echo	"Enter cylinders ('c') or sectors ('s')."
-			;;
+	c*|C*)
+		sizemult=$cylindersize
+		sizeunit="cylinders"
+		maxdisk=$cyls_per_disk
+		;;
+	s*|S*)
+		sizemult=1
+		sizeunit="sectors"
+		maxdisk=$disksize;
+		;;
+	*)
+		echo	"Enter cylinders ('c') or sectors ('s')."
+		;;
 	esac
 done
 
 if [ $sizeunit = "sectors" ]; then
-	echo	""
-	echo	"For best disk performance, partitions should begin and end on"
-	echo	"cylinder boundaries.  Wherever possible, pick sizes that are"
-	echo	"multiples of the cylinder size ($cylindersize sectors)."
+	echo "For best disk performance or workable CHS-translating IDE systems,"
+	echo "partitions should begin and end on cylinder boundaries.  Wherever"
+	echo "possible, use multiples of the cylinder size ($cylindersize sectors)."
 fi
 
 echo -n ""
-echo -n "Size of OpenBSD portion of disk (in $sizeunit)? "
-getresp
+echo -n "Size of OpenBSD portion of disk (in $sizeunit) ? [$maxdisk] "
+getresp "$maxdisk"
 partition=$resp
 partition_sects=`expr $resp \* $sizemult`
 part_offset=0
@@ -262,15 +255,15 @@ while [ $root -eq 0 ]; do
 	echo -n "Root partition size (in $sizeunit)? "
 	getresp
 	case $resp in
-		[1-9]*)
-			total=$resp
-			if [ $total -gt $units_left ]; then
-				echo -n	"Root size is greater than remaining "
-				echo	"free space on disk."
-			else
-				root=$resp
-			fi
-			;;
+	[1-9]*)
+		total=$resp
+		if [ $total -gt $units_left ]; then
+			echo -n	"Root size is greater than remaining "
+			echo	"free space on disk."
+		else
+			root=$resp
+		fi
+		;;
 	esac
 done
 root_offset=$part_offset
@@ -284,14 +277,14 @@ while [ $swap -eq 0 ]; do
 	echo -n	"Swap partition size (in $sizeunit)? "
 	getresp
 	case $resp in
-		[1-9]*)
-			if [ $swap -gt $units_left ]; then
-				echo -n	"Swap size is greater than remaining "
-				echo	"free space on disk."
-			else
-				swap=$resp
-			fi
-			;;
+	[1-9]*)
+		if [ $swap -gt $units_left ]; then
+			echo -n	"Swap size is greater than remaining "
+			echo	"free space on disk."
+		else
+			swap=$resp
+		fi
+		;;
 	esac
 done
 swap_offset=`expr $root_offset + $root`
@@ -329,28 +322,27 @@ while [ $part_used -lt $partition ]; do
 		echo	""
 		echo -n	"$units_left $sizeunit remaining in OpenBSD portion of "
 		echo	"the disk"
-		echo -n "Next partition size (in $sizeunit)? "
-		getresp
+		echo -n "Next partition size (in $sizeunit) [$partition] ? "
+		getresp "$partition"
 		case $resp in
-			[1-9]*)
-				total=`expr $part_used + $resp`
-				if [ $total -gt $partition ]; then
-					echo -n	"That would make the parition"
-					echo	"too large to fit!"
-				else
-					part_size=$resp
-					part_used=$total
-					part_name=""
-					while [ "$part_name" = "" ]; do
-						echo -n "Mount point? "
-						getresp
-						part_name=$resp
-					done
-				fi
-				;;
+		[1-9]*)
+			total=`expr $part_used + $resp`
+			if [ $total -gt $partition ]; then
+				echo "That would make the parition too large to fit!"
+			else
+				part_size=$resp
+				part_used=$total
+				part_name=""
+				while [ "$part_name" = "" ]; do
+					echo -n "Mount point? "
+					getresp
+					part_name=$resp
+				done
+			fi
+			;;
 		esac
 	done
-	# XXX we skip partition d to avoid incredible user confusion
+	# XXX we skip partition d to avoid user confusion
 	if [ "$ename" = "" ]; then
 		ename=$part_name
 		offset=`expr $part_offset + $root + $swap`
@@ -449,22 +441,22 @@ answer=""
 while [ "$answer" = "" ]; do
 	getresp
 	case $resp in
-		yes|YES)
-			echo	""
-			echo	"Here we go..."
-			answer=yes
-			;;
-		no|NO)
-			echo	""
-			echo -n	"OK, then.  enter 'halt' to halt the machine.  "
-			echo    "Once the machine has halted,"
-			echo -n	"remove the floppy, and press any key to "
-			echo	"reboot."
-			exit
-			;;
-		*)
-			echo -n "I want a yes or no answer...  well? "
-			;;
+	yes|YES)
+		echo	""
+		echo	"Here we go..."
+		answer=yes
+		;;
+	no|NO)
+		echo	""
+		echo -n	"OK, then.  enter 'halt' to halt the machine.  "
+		echo    "Once the machine has halted,"
+		echo -n	"remove the floppy, and press any key to "
+		echo	"reboot."
+		exit
+		;;
+	*)
+		echo -n "I want a yes or no answer...  well? "
+		;;
 	esac
 done
 
@@ -615,8 +607,6 @@ fi
 sync
 echo	" done."
 
-echo	""
-echo	""
 echo	"OK!  The preliminary work of setting up your disk is now complete."
 echo 	""
 echo	"The remaining tasks are:"
