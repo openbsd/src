@@ -32,6 +32,7 @@ _token:*:64:
 _shadow:*:65:
 crontab:*:66:
 www:*:67:
+_isakmpd:*:68:
 network:*:69:
 named:*:70:
 proxy:*:71:

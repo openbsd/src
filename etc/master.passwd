@@ -16,6 +16,7 @@ _kadmin:*:60:60::0:0:Kerberos Admin Server:/var/empty:/sbin/nologin
 _spamd:*:62:62::0:0:Spam daemon:/var/empty:/sbin/nologin
 uucp:*:66:1::0:0:UNIX-to-UNIX Copy:/var/spool/uucppublic:/usr/libexec/uucp/uucico
 www:*:67:67::0:0:HTTP server:/var/www:/sbin/nologin
+_isakmpd:*:68:68::0:0:isakmpd privsep:/var/empty:/sbin/nologin
 named:*:70:70::0:0:BIND Name Service Daemon:/var/named:/sbin/nologin
 proxy:*:71:71::0:0:Proxy Services:/nonexistent:/sbin/nologin
 nobody:*:32767:32767::0:0:Unprivileged user:/nonexistent:/sbin/nologin
