@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.12 1999/10/29 01:15:15 deraadt Exp $     */
+/*      $OpenBSD: wdc.c,v 1.13 1999/10/29 16:40:22 csapuntz Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -1010,23 +1010,27 @@ wdc_output_bytes(drvp, bytes, buflen)
 {
 	struct channel_softc *chp = drvp->chnl_softc;
 	unsigned int off = 0;
-	unsigned int len = buflen;
+	unsigned int len = buflen, roundlen;	
 
 	if (drvp->drive_flags & DRIVE_CAP32) {
-		bus_space_write_multi_4(chp->data32iot,
+		roundlen = len & ~3;
+
+		bus_space_write_raw_multi_4(chp->data32iot,
 		    chp->data32ioh, wd_data,
 		    (void *)((u_int8_t *)bytes + off), 
-		    len >> 2);
+		    roundlen);
 
-		off += ((len >> 2) << 2);
-		len = len & 0x03;
+		off += roundlen;
+		len -= roundlen;
 	}
 
 	if (len > 0) {
-		bus_space_write_multi_2(chp->cmd_iot,
+		roundlen = (len + 1) & ~0x1;
+
+		bus_space_write_raw_multi_2(chp->cmd_iot,
 		    chp->cmd_ioh, wd_data,
 		    (void *)((u_int8_t *)bytes + off), 
-		    (len + 1) >> 1);
+		    roundlen);
 	}
 
 	return;
@@ -1040,22 +1044,27 @@ wdc_input_bytes(drvp, bytes, buflen)
 {
 	struct channel_softc *chp = drvp->chnl_softc;
 	unsigned int off = 0;
-	unsigned int len = buflen;
+	unsigned int len = buflen, roundlen;
 
 	if (drvp->drive_flags & DRIVE_CAP32) {
-		bus_space_read_multi_4(chp->data32iot,
+		roundlen = len & ~3;
+
+		bus_space_read_raw_multi_4(chp->data32iot,
 		    chp->data32ioh, wd_data,
 		    (void *)((u_int8_t *)bytes + off), 
-		    len >> 2);
-		off += ((len >> 2) << 2);
-		len = len & 0x03;
+		    roundlen);
+
+		off += roundlen;
+		len -= roundlen;
 	}
 
 	if (len > 0) {
-		bus_space_read_multi_2(chp->cmd_iot,
+		roundlen = (len + 1) & ~0x1;
+
+		bus_space_read_raw_multi_2(chp->cmd_iot,
 		    chp->cmd_ioh, wd_data,
 		    (void *)((u_int8_t *)bytes + off), 
-		    (len + 1) >> 1);
+		    roundlen);
 	}
 
 	return;
