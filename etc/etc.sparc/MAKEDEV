@@ -3,11 +3,11 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sparc/MAKEDEV.md,v 1.9 2002/02/17 05:14:30 deraadt Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.36 2002/02/19 21:05:10 todd Exp 
-#	OpenBSD: MAKEDEV.sub,v 1.7 2002/02/16 01:19:52 deraadt Exp 
+#	OpenBSD: etc.sparc/MAKEDEV.md,v 1.8 2002/02/14 13:29:20 todd Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.41 2002/02/25 01:10:26 todd Exp 
+#	OpenBSD: MAKEDEV.sub,v 1.6 2002/02/14 05:50:37 todd Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.90 2002/02/21 18:34:11 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.91 2002/02/25 05:20:37 todd Exp $
 #
 # Copyright (c) 2001,2002 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -359,7 +359,7 @@ cua[a-z])
 	b) n=1 ;;
 	c) n=4 ;;
 	d) n=5 ;;
-	*) echo unknown cua device $i ;;  
+	*) echo unknown cua device $i ;;
 	esac
 	M cua$u c 12 $(($n+128)) 660 dialer uucp
 	;;
@@ -472,8 +472,8 @@ all)
 	R fd1B fd1C fd1D fd1E fd1F fd1G fd1H fd0 fd0B fd0C fd0D fd0E
 	R fd0F fd0G fd0H xfs0 ss0 ss1 ch0 ses0 tcx0 cgfourteen0
 	R cgeight0 cgsix0 cgfour0 cgthree0 cgtwo0 bwtwo0 audio0 uk0
-	R rndrandom lkm cuaa cuab cuac cuad ttya ttyb ttyc ttyd pf
-	R altq xd0 xd1 xd2 xd3 raid0 raid1 raid2 raid3 std st0 st1 fd
+	R random lkm cuaa cuab cuac cuad ttya ttyb ttyc ttyd pf altq
+	R xd0 xd1 xd2 xd3 raid0 raid1 raid2 raid3 std st0 st1 fd
 	;;
 
 xd*|xy*|sd*|raid*|ccd*)
