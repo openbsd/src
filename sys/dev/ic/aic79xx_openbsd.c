@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.c,v 1.4 2004/06/21 18:33:04 krw Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.c,v 1.5 2004/06/22 22:40:35 krw Exp $	*/
 /*
  * Bus independent OpenBSD shim for the aic79xx based Adaptec SCSI controllers
  *
@@ -109,13 +109,13 @@ ahd_attach(struct ahd_softc *ahd)
                 printf("%s: %s\n", ahd->sc_dev.dv_xname, ahd_info);
         }
 
-	ahd->sc_child = config_found((void *)&ahd->sc_dev,
-	    &ahd->sc_channel, scsiprint);
-
 	ahd_intr_enable(ahd, TRUE);
 
 	if (ahd->flags & AHD_RESET_BUS_A)
                 ahd_reset_channel(ahd, 'A', TRUE);
+
+	ahd->sc_child = config_found((void *)&ahd->sc_dev,
+	    &ahd->sc_channel, scsiprint);
 
 	ahd_unlock(ahd, &s);
 
