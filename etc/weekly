@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: weekly,v 1.9 1999/08/04 17:55:16 mickey Exp $
+#	$OpenBSD: weekly,v 1.10 1999/09/19 23:15:28 alex Exp $
 #
 
 PATH=/bin:/sbin:/usr/sbin:/usr/bin:/usr/libexec
@@ -40,3 +40,7 @@ if [ -f /var/db/locate.database ]; then
 else
 	echo "Not rebuilding locate database; no /var/db/locate.database"
 fi
+
+echo ""
+echo "Rebuilding whatis databases:"
+makewhatis
