@@ -1,3 +1,4 @@
+/*	$OpenBSD: nfsm_subs.h,v 1.7 1997/02/24 13:50:04 niklas Exp $	*/
 /*	$NetBSD: nfsm_subs.h,v 1.10 1996/03/20 21:59:56 fvdl Exp $	*/
 
 /*
