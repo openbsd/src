@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.17 2002/02/16 21:27:33 millert Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.18 2002/07/01 21:43:21 jason Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -630,7 +630,7 @@ bridge_cfg(s, brdg, delim)
 	}
 	fd = ifbp.ifbrp_fwddelay;
 
-	if (ioctl(s, SIOCBRDGGFD, (caddr_t)&ifbp)) {
+	if (ioctl(s, SIOCBRDGGMA, (caddr_t)&ifbp)) {
 		warn("%s", brdg);
 		return (EX_IOERR);
 	}
