@@ -33,7 +33,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.5 1997/05/31 08:47:55 tholo Exp $
+.\"	$OpenBSD: malloc.3,v 1.6 1997/05/31 08:55:05 tholo Exp $
 .\"
 .Dd August 27, 1996
 .Dt MALLOC 3
@@ -149,6 +149,10 @@ Currently junk is bytes of 0xd0, this is pronounced ``Duh'' :-)
 .It H
 ``hint'' pass a hint to the kernel about pages we don't use.  If the
 machine is paging a lot this may help a bit.
+
+.It N
+Do not output warning messages when encountering possible corruption
+or bad pointers.
 
 .It R
 ``realloc'' always reallocate when

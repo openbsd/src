@@ -8,7 +8,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: malloc.c,v 1.25 1997/05/31 08:47:56 tholo Exp $";
+static char rcsid[] = "$OpenBSD: malloc.c,v 1.26 1997/05/31 08:55:06 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -219,6 +219,9 @@ static int suicide;
 static int malloc_stats;
 #endif
 
+/* avoid outputting warnings?  */
+static int malloc_silent;
+
 /* always realloc ?  */
 static int malloc_realloc;
 
@@ -361,6 +364,8 @@ wrtwarning(p)
     char *q = " warning: ";
     if (malloc_abort)
 	wrterror(p);
+    else if (malloc_silent)
+	return;
     write(2, __progname, strlen(__progname));
     write(2, malloc_func, strlen(malloc_func));
     write(2, q, strlen(q));
@@ -514,6 +519,8 @@ malloc_init ()
 		case 'R': malloc_realloc = 1; break;
 		case 'j': malloc_junk    = 0; break;
 		case 'J': malloc_junk    = 1; break;
+		case 'n': malloc_silent  = 0; break;
+		case 'N': malloc_silent  = 1; break;
 #ifdef __FreeBSD__
 		case 'u': malloc_utrace  = 0; break;
 		case 'U': malloc_utrace  = 1; break;
