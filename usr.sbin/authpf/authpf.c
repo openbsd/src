@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.68 2003/08/21 19:13:23 frantzen Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.69 2003/09/26 07:24:10 henning Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -582,8 +582,7 @@ change_filter(int add, const char *luser, const char *ipsrc)
 	struct pfioc_rule	 pr[PF_RULESET_MAX];
 	int			 i;
 
-	if (luser == NULL || !luser[0] || strlen(luser) >=
-	    PF_RULESET_NAME_SIZE || ipsrc == NULL || !ipsrc[0]) {
+	if (luser == NULL || !luser[0] || ipsrc == NULL || !ipsrc[0]) {
 		syslog(LOG_ERR, "invalid luser/ipsrc");
 		goto error;
 	}
