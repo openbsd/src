@@ -1,4 +1,4 @@
-/*	$OpenBSD: sun3_startup.c,v 1.17 2001/06/25 00:43:18 mickey Exp $	*/
+/*	$OpenBSD: sun3_startup.c,v 1.18 2001/08/20 19:59:45 miod Exp $	*/
 /*	$NetBSD: sun3_startup.c,v 1.55 1996/11/20 18:57:38 gwr Exp $	*/
 
 /*-
@@ -215,6 +215,7 @@ sun3_mon_reboot(bootstring)
 	sun3_mode_monitor();
 	mon_reboot(bootstring);
 	mon_exit_to_mon();
+	for (;;);	/* appease gcc */
 	/*NOTREACHED*/
 }
 
