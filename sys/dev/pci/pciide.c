@@ -1,4 +1,4 @@
-/*      $OpenBSD: pciide.c,v 1.2 1999/07/19 00:32:44 csapuntz Exp $     */
+/*      $OpenBSD: pciide.c,v 1.3 1999/07/20 07:48:12 fgsch Exp $     */
 /*	$NetBSD: pciide.c,v 1.40 1999/07/12 13:49:38 bouyer Exp $	*/
 
 /*
@@ -343,7 +343,7 @@ const struct pciide_product_desc pciide_cypress_products[] =  {
 };
 
 const struct pciide_product_desc pciide_sis_products[] =  {
-	{ PCI_PRODUCT_SIS_5597_IDE,
+	{ PCI_PRODUCT_SIS_5597,
 	  0,
 	  PCIIDE_NUM_CHANNELS,
 	  "Silicon Integrated System 5597/5598 IDE controller",
