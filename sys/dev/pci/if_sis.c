@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.12 2001/03/14 15:17:31 aaron Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.13 2001/05/10 23:34:01 aaron Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -601,9 +601,7 @@ int sis_probe(parent, match, aux)
 
 	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_SIS_900:
-		return(1);
 	case PCI_PRODUCT_SIS_7016:
-		return(1);
 	case PCI_PRODUCT_NS_DP83815:
 		return(1);
 	}
