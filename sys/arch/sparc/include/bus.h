@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.2 2003/06/23 20:32:23 mickey Exp $	*/
+/*	$OpenBSD: bus.h,v 1.3 2003/06/25 00:02:56 mickey Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  *
@@ -259,36 +259,36 @@ bus_space_write_raw_multi_4(bus_space_tag_t tag, bus_space_handle_t handle,
 }
 
 static void bus_space_set_multi_1(bus_space_tag_t, bus_space_handle_t,
-    bus_addr_t, u_int8_t *, size_t);
+    bus_addr_t, u_int8_t, size_t);
 
 static __inline__ void
 bus_space_set_multi_1(bus_space_tag_t tag, bus_space_handle_t handle,
-    bus_addr_t offset, u_int8_t *dest, size_t count)
+    bus_addr_t offset, u_int8_t dest, size_t count)
 {
 	while ((int)--count >= 0)
-		bus_space_write_1(tag, handle, offset, *dest);
+		bus_space_write_1(tag, handle, offset, dest);
 }
 
 static void bus_space_set_multi_2(bus_space_tag_t, bus_space_handle_t,
-    bus_addr_t, u_int16_t *, size_t);
+    bus_addr_t, u_int16_t, size_t);
 
 static __inline__ void
 bus_space_set_multi_2(bus_space_tag_t tag, bus_space_handle_t handle,
-    bus_addr_t offset, u_int16_t *dest, size_t count)
+    bus_addr_t offset, u_int16_t dest, size_t count)
 {
 	while ((int)--count >= 0)
-		bus_space_write_2(tag, handle, offset, *dest);
+		bus_space_write_2(tag, handle, offset, dest);
 }
 
 static void bus_space_set_multi_4(bus_space_tag_t, bus_space_handle_t,
-    bus_addr_t, u_int32_t *, size_t);
+    bus_addr_t, u_int32_t, size_t);
 
 static __inline__ void
 bus_space_set_multi_4(bus_space_tag_t tag, bus_space_handle_t handle,
-    bus_addr_t offset, u_int32_t *dest, size_t count)
+    bus_addr_t offset, u_int32_t dest, size_t count)
 {
 	while ((int)--count >= 0)
-		bus_space_write_4(tag, handle, offset, *dest);
+		bus_space_write_4(tag, handle, offset, dest);
 }
 
 static void bus_space_write_region_1(bus_space_tag_t, bus_space_handle_t,
@@ -396,38 +396,38 @@ bus_space_read_region_4(bus_space_tag_t tag, bus_space_handle_t handle,
 }
 
 static void bus_space_set_region_1(bus_space_tag_t, bus_space_handle_t,
-    bus_addr_t, u_int8_t *, size_t);
+    bus_addr_t, u_int8_t, size_t);
 
 static __inline__ void
 bus_space_set_region_1(bus_space_tag_t tag, bus_space_handle_t handle,
-    bus_addr_t offset, u_int8_t *dest, size_t count)
+    bus_addr_t offset, u_int8_t dest, size_t count)
 {
 	while ((int)--count >= 0)
-		bus_space_write_1(tag, handle, offset++, *dest);
+		bus_space_write_1(tag, handle, offset++, dest);
 }
 
 static void bus_space_set_region_2(bus_space_tag_t, bus_space_handle_t,
-    bus_addr_t, u_int16_t *, size_t);
+    bus_addr_t, u_int16_t, size_t);
 
 static __inline__ void
 bus_space_set_region_2(bus_space_tag_t tag, bus_space_handle_t handle,
-    bus_addr_t offset, u_int16_t *dest, size_t count)
+    bus_addr_t offset, u_int16_t dest, size_t count)
 {
 	while ((int)--count >= 0) {
-		bus_space_write_2(tag, handle, offset, *dest);
+		bus_space_write_2(tag, handle, offset, dest);
 		offset += 2;
 	}
 }
 
 static void bus_space_set_region_4(bus_space_tag_t, bus_space_handle_t,
-    bus_addr_t, u_int32_t *, size_t);
+    bus_addr_t, u_int32_t, size_t);
 
 static __inline__ void
 bus_space_set_region_4(bus_space_tag_t tag, bus_space_handle_t handle,
-    bus_addr_t offset, u_int32_t *dest, size_t count)
+    bus_addr_t offset, u_int32_t dest, size_t count)
 {
 	while ((int)--count >= 0) {
-		bus_space_write_4(tag, handle, offset, *dest);
+		bus_space_write_4(tag, handle, offset, dest);
 		offset += 4;
 	}
 }
