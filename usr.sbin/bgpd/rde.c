@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.4 2003/12/18 22:22:22 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.5 2003/12/19 01:13:34 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -523,7 +523,7 @@ struct peer_table {
 void
 peer_init(struct bgpd_config *bgpconf, u_long hashsize)
 {
-	struct peer	*p;
+	struct peer	*p, *next;
 	u_long		 hs, i;
 
 	for (hs = 1; hs < hashsize; hs <<= 1) ;
@@ -537,7 +537,8 @@ peer_init(struct bgpd_config *bgpconf, u_long hashsize)
 
 	peertable.peer_hashmask = hs - 1;
 
-	for (p = bgpconf->peers; p != NULL; p = p->next) {
+	for (p = bgpconf->peers; p != NULL; p = next) {
+		next = p->next;
 		p->conf.reconf_action = RECONF_NONE;
 		peer_add(p->conf.id, &p->conf);
 		free(p);
