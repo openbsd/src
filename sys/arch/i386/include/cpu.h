@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.34 1996/05/03 19:22:49 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -153,7 +153,7 @@ void	cpu_reset __P((void));
 /* locore.s */
 struct region_descriptor;
 void	lgdt __P((struct region_descriptor *));
-void	fillw __P((int, caddr_t, size_t));
+void	fillw __P((short, void *, size_t));
 
 struct pcb;
 void	savectx __P((struct pcb *));
