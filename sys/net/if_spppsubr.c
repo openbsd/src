@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.15 2002/09/11 05:38:47 itojun Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.16 2002/09/26 20:43:54 chris Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -9,15 +9,27 @@
  * Heavily revamped to conform to RFC 1661.
  * Copyright (C) 1997, Joerg Wunsch.
  *
- * This software is distributed with NO WARRANTIES, not even the implied
- * warranties for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * 1. Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
  *
- * Authors grant any other persons or organisations permission to use
- * or modify this software as long as this message is kept with the software,
- * all derivative works or modified versions.
+ * THIS SOFTWARE IS PROVIDED BY THE FREEBSD PROJECT ``AS IS'' AND ANY 
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE FREEBSD PROJECT OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE   
+ * POSSIBILITY OF SUCH DAMAGE.
  *
- * Version 2.6, Tue May 12 17:10:39 MSD 1998
- *
+ * From: Version 2.6, Tue May 12 17:10:39 MSD 1998
  */
 
 #include <sys/param.h>

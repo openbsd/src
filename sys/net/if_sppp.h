@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sppp.h,v 1.5 2001/07/09 17:20:05 fgsch Exp $	*/
+/*	$OpenBSD: if_sppp.h,v 1.6 2002/09/26 20:43:54 chris Exp $	*/
 /*	$NetBSD: if_sppp.h,v 1.2.2.1 1999/04/04 06:57:39 explorer Exp $	*/
 
 /*
@@ -10,12 +10,25 @@
  * Heavily revamped to conform to RFC 1661.
  * Copyright (C) 1997, Joerg Wunsch.
  *
- * This software is distributed with NO WARRANTIES, not even the implied
- * warranties for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * 1. Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
  *
- * Authors grant any other persons or organizations permission to use
- * or modify this software as long as this message is kept with the software,
- * all derivative works or modified versions.
+ * THIS SOFTWARE IS PROVIDED BY THE FREEBSD PROJECT ``AS IS'' AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE FREEBSD PROJECT OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  *
  * From: Version 2.0, Fri Oct  6 20:39:21 MSK 1995
  *
