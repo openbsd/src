@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.49 1995/12/27 07:40:08 chopps Exp $
+#	$Id: GENERIC,v 1.3 1996/01/14 12:21:35 niklas Exp $
 
 #
 # GENERIC AMIGA
@@ -219,4 +219,4 @@ pseudo-device	vnd	4
 #pseudo-device	bpfilter	2	# berkeley packet filters
 #pseudo-device	tun 2
 
-config	netbsd swap on generic
+config	bsd swap on generic

@@ -78,7 +78,7 @@ options		GENERIC		# Mini-root boot support
 #
 # Build one kernel that can boot from any disk.
 #
-config		netbsd swap on generic
+config		bsd swap on generic
 
 pseudo-device	view	10	# View (graphics mapping)
 pseudo-device	pty	16	# Pseudo-tty support

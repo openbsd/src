@@ -219,4 +219,4 @@ pseudo-device	bpfilter 12		# berkeley packet filters
 pseudo-device	tun 2
 pseudo-device	vnd	3		# 3 pseudo disks (see vnconfig)
 
-config	netbsd swap on generic
+config	bsd swap on generic
