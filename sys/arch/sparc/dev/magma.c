@@ -1,4 +1,4 @@
-/*	$OpenBSD: magma.c,v 1.8 2001/05/16 12:49:48 ho Exp $	*/
+/*	$OpenBSD: magma.c,v 1.9 2002/01/11 05:17:30 jason Exp $	*/
 /*
  * magma.c
  *
@@ -383,12 +383,21 @@ void *base;
 
 	/* init the cd1400 chips */
 	for( chip = 0 ; chip < card->mb_ncd1400 ; chip++ ) {
-	struct cd1400 *cd = &sc->ms_cd1400[chip];
+		char *str;
+		struct cd1400 *cd = &sc->ms_cd1400[chip];
 
 		cd->cd_reg = base + card->mb_cd1400[chip];
 
-		/* XXX getpropstring(ra->ra_node, "clock") */
-		cd->cd_clock = 25;
+		str = getpropstring(ra->ra_node, "clock");
+		if (strlen(str) == 0)
+			cd->cd_clock = 25;
+		else {
+			char *cp = str;
+
+			cd->cd_clock = 0;
+			while (*cp != '\0')
+				cd->cd_clock = cd->cd_clock * 10 + *cp++ - '0';
+		}
 
 		/* getpropstring(ra->ra_node, "chiprev"); */
 		/* seemingly the Magma drivers just ignore the propstring */
