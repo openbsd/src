@@ -1,4 +1,4 @@
-/*	$OpenBSD: modstat.c,v 1.8 1997/02/06 13:02:43 deraadt Exp $	*/
+/*	$OpenBSD: modstat.c,v 1.9 1997/09/11 11:03:14 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -33,17 +33,18 @@
  *
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <err.h>
-#include <string.h>
-#include <a.out.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/conf.h>
 #include <sys/mount.h>
 #include <sys/lkm.h>
 #include <sys/file.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <err.h>
+#include <string.h>
+#include <a.out.h>
 #include <errno.h>
 #include "pathnames.h"
 
