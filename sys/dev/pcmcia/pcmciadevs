@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.27 1999/11/06 04:08:47 deraadt Exp $
+	$OpenBSD: pcmciadevs,v 1.28 1999/12/22 21:13:34 fgsch Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -66,6 +66,7 @@ vendor IODATA			0x01bf	I-O DATA
 vendor BREEZECOM		0x0a02	BreezeCOM
 vendor LASAT			0x3401	Lasat
 vendor COMPEX			0x8a01	Compex
+vendor DUAL			0x890f	Dual
 vendor CONTEC			0xc001	Contec
 vendor COREGA			0xc00f	Corega K.K.
 vendor ALLIEDTELESIS		0xc00f	Allied Telesis K.K.
@@ -104,6 +105,9 @@ product DAYNA COMMUNICARD_E_2	0x002f Dayna CommuniCard E
 
 /* Digital */
 product DIGITAL MOBILE_MEDIA_CDROM 0x0d00 Digital Mobile Media CD-ROM
+
+/* Dual */
+product DUAL NE2000		0x0100 Dual NE2000
 
 /* Fujitsu */
 product FUJITSU SCSI600		0x0401 Fujitsu 600
