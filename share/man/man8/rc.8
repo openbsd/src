@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rc.8,v 1.10 2000/01/08 01:58:31 hugh Exp $
+.\"	$OpenBSD: rc.8,v 1.11 2000/06/18 17:04:52 aaron Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -78,12 +78,21 @@ runs an
 .Xr fsck 8
 with option
 .Fl p
-to ``preen'' all the disks of minor inconsistencies resulting
+to
+.Dq preen
+all disks of minor inconsistencies resulting
 from the last system shutdown and to check for serious inconsistencies
 caused by hardware or software failure.
 If this auto-check and repair succeeds, then the second part of
 .Nm rc
 is run.
+.Pp
+However, if the file
+.Pa /fastboot
+exists,
+.Xr fsck 8
+will not be invoked during this boot.
+This file is then removed so that it will be run on subsequent boots.
 .Pp
 The second part of
 .Nm rc ,
