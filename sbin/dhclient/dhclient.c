@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.23 2004/03/02 12:56:30 henning Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.24 2004/03/02 13:00:02 henning Exp $	*/
 
 /* DHCP Client. */
 
@@ -163,6 +163,7 @@ routehandler(struct protocol *p)
 	struct rt_msghdr *rtm;
 	struct if_msghdr *ifm;
 	struct ifa_msghdr *ifam;
+	struct if_announcemsghdr *ifan;
 	struct interface_info *ip;
 	ssize_t n;
 
@@ -194,6 +195,12 @@ routehandler(struct protocol *p)
 		if ((ip = isours(ifm->ifm_index)) == NULL)
 			break;
 		if ((rtm->rtm_flags & RTF_UP) == 0)
+			goto die;
+		break;
+	case RTM_IFANNOUNCE:
+		ifan = (struct if_announcemsghdr *)rtm;
+		if (ifan->ifan_what == IFAN_DEPARTURE &&
+		    (ip = isours(ifan->ifan_index)) != NULL)
 			goto die;
 		break;
 	default:
