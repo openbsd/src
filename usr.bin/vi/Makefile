@@ -3,7 +3,7 @@
 SUBDIR= build
 
 .if make(install)
-SUBDIR+=USD.doc/edit USD.doc/exref USD.doc/vi.ref USD.doc/vitut
+SUBDIR+=docs/USD.doc/edit docs/USD.doc/exref docs/USD.doc/vi.ref docs/USD.doc/vitut
 .endif
 
 .include <bsd.subdir.mk>
