@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ae_nubus.c,v 1.12 2004/12/08 06:59:43 miod Exp $	*/
+/*	$OpenBSD: if_ae_nubus.c,v 1.13 2005/03/04 00:38:37 martin Exp $	*/
 /*	$NetBSD: if_ae_nubus.c,v 1.17 1997/05/01 18:17:16 briggs Exp $	*/
 
 /*
@@ -105,6 +105,7 @@ ae_nubus_match(parent, vcf, aux)
 		case AE_VENDOR_FARALLON:
 		case AE_VENDOR_INTERLAN:
 		case AE_VENDOR_KINETICS:
+		case AE_VENDOR_CABLETRON:
 			rv = 1;
 			break;
 		case AE_VENDOR_DAYNA:
@@ -351,8 +352,19 @@ ae_nb_card_vendor(na)
 
 	switch (na->drsw) {
 	case NUBUS_DRSW_APPLE:
+		if (na->drhw == NUBUS_DRHW_ASANTE_LC) {
+			vendor = AE_VENDOR_UNKNOWN;
+			break;
+		}
+		/* FALLTHROUGH */
+	case NUBUS_DRSW_DAYNA2:
 	case NUBUS_DRSW_TECHWORKS:
-		vendor = AE_VENDOR_APPLE;
+	case NUBUS_DRSW_TFLLAN:
+		if (na->drhw == NUBUS_DRHW_CABLETRON) {
+			vendor = AE_VENDOR_CABLETRON;
+		} else {
+			vendor = AE_VENDOR_APPLE;
+		}
 		break;
 	case NUBUS_DRSW_3COM:
 		switch (na->drhw) {
@@ -402,6 +414,7 @@ ae_nb_get_enaddr(na, ep)
 {
 	nubus_dir dir;
 	nubus_dirent dirent;
+	int rv;
 
 	/*
 	 * XXX - note hardwired resource IDs here (0x80); these are
@@ -409,7 +422,18 @@ ae_nb_get_enaddr(na, ep)
 	 * we find out more about Ethernet card resources.
 	 */
 	nubus_get_main_dir(na->fmt, &dir);
-	if (nubus_find_rsrc(na->fmt, &dir, 0x80, &dirent) <= 0)
+	switch (ae_nb_card_vendor(na)) {
+	case AE_VENDOR_APPLE:
+		if (na->drsw == NUBUS_DRSW_TFLLAN) {	/* TFL LAN E410/E420 */
+			rv = nubus_find_rsrc(na->fmt, &dir, 0x80, &dirent);
+			break;
+		}
+		/* FALLTHROUGH */
+	default:
+		rv = nubus_find_rsrc(na->fmt, &dir, 0x80, &dirent);
+		break;
+	}
+	if (rv <= 0)
 		return 1;
 	nubus_get_dir_from_rsrc(na->fmt, &dirent, &dir);
 	if (nubus_find_rsrc(na->fmt, &dir, 0x80, &dirent) <= 0)

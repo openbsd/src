@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aereg.h,v 1.6 2002/06/03 20:01:36 deraadt Exp $	*/
+/*	$OpenBSD: if_aereg.h,v 1.7 2005/03/04 00:38:37 martin Exp $	*/
 /*	$NetBSD: if_aereg.h,v 1.14 1997/02/24 07:34:20 scottr Exp $	*/
 
 /*
@@ -34,6 +34,7 @@ struct ae_ring {
 #define AE_VENDOR_FARALLON	0x04	/* Farallon EtherMac II-TP */
 #define AE_VENDOR_FOCUS		0x05	/* FOCUS Enhancements EtherLAN */
 #define AE_VENDOR_KINETICS	0x06	/* Kinetics EtherPort SE/30 */
+#define AE_VENDOR_CABLETRON	0x07	/* Cabletron Ethernet */
 
 /*
  * Compile-time config flags
