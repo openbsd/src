@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.36 2003/11/06 16:12:07 ho Exp $	*/
+/*	$OpenBSD: log.c,v 1.37 2003/12/14 14:50:23 ho Exp $	*/
 /*	$EOM: log.c,v 1.30 2000/09/29 08:19:23 niklas Exp $	*/
 
 /*
@@ -63,6 +63,7 @@
 #include "isakmp_num.h"
 #include "log.h"
 #include "monitor.h"
+#include "util.h"
 
 static void _log_print (int, int, const char *, va_list, int, int);
 
@@ -469,7 +470,8 @@ log_packet_iov (struct sockaddr *src, struct sockaddr *dst, struct iovec *iov,
   isakmphdr->flags &= ~(ISAKMP_FLAGS_ENC);
 
   /* udp */
-  udp.uh_sport = udp.uh_dport = htons (500);
+  udp.uh_sport = sockaddr_port (src);
+  udp.uh_dport = sockaddr_port (dst);
   datalen += sizeof udp;
   udp.uh_ulen = htons (datalen);
 

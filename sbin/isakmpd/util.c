@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.34 2003/06/03 14:28:16 ho Exp $	*/
+/*	$OpenBSD: util.c,v 1.35 2003/12/14 14:50:23 ho Exp $	*/
 /*	$EOM: util.c,v 1.23 2000/11/23 12:22:08 niklas Exp $	*/
 
 /*
@@ -446,6 +446,22 @@ sockaddr_addrdata (struct sockaddr *sa)
       return (u_int8_t *)&((struct sockaddr_in *)sa)->sin_addr.s_addr;
     default:
       log_print ("sockaddr_addrdata: unsupported protocol family %d",
+		 sa->sa_family);
+      return 0;
+    }
+}
+
+in_port_t
+sockaddr_port (struct sockaddr *sa)
+{
+  switch (sa->sa_family)
+    {
+    case AF_INET6:
+      return ((struct sockaddr_in6 *)sa)->sin6_port;
+    case AF_INET:
+      return ((struct sockaddr_in *)sa)->sin_port;
+    default:
+      log_print ("sockaddr_port: unsupported protocol family %d",
 		 sa->sa_family);
       return 0;
     }
