@@ -111,6 +111,6 @@ sd650|mo650|mo650-ansi|HP6300/650A Magneto-optical with ANSI format drive:\
 # RAM disk
 ram:\
 	:ty=winchester:ns#512:nt#4:nc#1:\
-	:pa#2048:oa#0:ba#4096:fa#512:\
+	:pa#2048:oa#0:ba#4096:fa#512:ta=4.2BSD:ba#4096:fa#512: \
 	:pb#2048:ob#0:bb#4096:fb#512:\
 	:pc#2048:oc#0:bc#4096:fc#512:
