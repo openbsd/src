@@ -1,4 +1,4 @@
-/*	$OpenBSD: fts.c,v 1.22 1999/10/03 19:22:22 millert Exp $	*/
+/*	$OpenBSD: fts.c,v 1.23 1999/10/03 20:39:53 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-static char rcsid[] = "$OpenBSD: fts.c,v 1.22 1999/10/03 19:22:22 millert Exp $";
+static char rcsid[] = "$OpenBSD: fts.c,v 1.23 1999/10/03 20:39:53 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -373,9 +373,16 @@ next:	tmp = p;
 		 * the root of the tree), and load the paths for the next root.
 		 */
 		if (p->fts_level == FTS_ROOTLEVEL) {
-			if (FCHDIR(sp, sp->fts_rfd)) {
-				SET(FTS_STOP);
-				return (NULL);
+			if ((sp->fts_options & FTS_CHDIRROOT)) {
+				if (chdir(p->fts_accpath)) {
+					SET(FTS_STOP);
+					return (NULL);
+				}
+			} else {
+				if (FCHDIR(sp, sp->fts_rfd)) {
+					SET(FTS_STOP);
+					return (NULL);
+				}
 			}
 			fts_load(sp, p);
 			return (sp->fts_cur = p);
@@ -430,9 +437,16 @@ name:		t = sp->fts_path + NAPPEND(p->fts_parent);
 	 * one directory.
 	 */
 	if (p->fts_level == FTS_ROOTLEVEL) {
-		if (FCHDIR(sp, sp->fts_rfd)) {
-			SET(FTS_STOP);
-			return (NULL);
+		if ((sp->fts_options & FTS_CHDIRROOT)) {
+			if (chdir(p->fts_accpath)) {
+				SET(FTS_STOP);
+				return (NULL);
+			}
+		} else {
+			if (FCHDIR(sp, sp->fts_rfd)) {
+				SET(FTS_STOP);
+				return (NULL);
+			}
 		}
 	} else if (p->fts_flags & FTS_SYMFOLLOW) {
 		if (FCHDIR(sp, p->fts_symfd)) {
