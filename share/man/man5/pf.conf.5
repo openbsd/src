@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.6 2001/07/17 22:33:02 provos Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.7 2001/07/20 14:11:05 deraadt Exp $
 .\"
 .\" Copyright (c) 2001, Daniel Hartmeier
 .\" All rights reserved.
@@ -34,7 +34,9 @@
 .Nm pf.conf
 .Nd filter rule configuration file for packet filtering
 .Sh DESCRIPTION
-The packet filter drops, passes and modifies packets according to the
+The
+.Xr pf 4
+packet filter drops, passes and modifies packets according to the
 rules defined in this file.
 For each packet inspected by the filter, the set of rules is evaluated
 from top to bottom, and the last matching rule decides what action is
@@ -71,46 +73,50 @@ icmp-type = "icmp-type" ( icmp-type-name | icmp-type-number )
             [ "code" ( icmp-code-name | icmp-code-number ) ] .
 .Ed
 .Sh FILTER RULES
+Filter rules are typically manipulated using
+.Xr pfctl 8 .
 Filter rules are loaded from a text file into the kernel using
 .Pp
-.Cm pfctl -R file
+.Cm # pfctl -R file
 .Pp
 which replaces the active rule set with the new one.
 The active rule set can be displayed using
 .Pp
-.Cm pfctl -s r
+.Cm # pfctl -s r
 .Pp
 For each packet processed by the packet filter, the filter rules are
 evaluated in sequential order, from first to last.
 Each rule either matches the packet or doesn't.
 The last matching rule decides what action is taken.
 .Pp
-If no rule matches the packet, the default action is pass.
-If you rather want to block everything by default and only pass packets
-that match explicit rules, you can achieve this by adding
+If no rule matches the packet, the default action is
+.Em pass .
+.Pp
+To block everything by default and only pass packets
+that match explicit rules, one uses
 .Bd -literal
-    block in all
-    block out all
+.Cm block in all
+.Cm block out all
 .Ed
 .Pp
-as your first two rules.
+as the first two rules.
 .Sh ACTIONS
 .Bl -tag -width Fl
-.It Li pass
+.It Em pass
 The packet is passed.
-.It Li block
+.It Em block
 The packet is blocked.
 Optionally, the filter can return a TCP RST or ICMP UNREACHABLE packet
 to the sender, where applicable.
-.It Li scrub
+.It Em scrub
 The packet is run through normalization/defragmentation.
 Scrub rules are not considered last matching rules.
 .El
 .Sh LOGGING
 .Bl -tag -width Fl
-.It Li log
+.It Em log
 In addition to the action specified, a log message is generated.
-.It Li log-all
+.It Em log-all
 Used with 
 .Sq keep state
 rules.
@@ -120,8 +126,8 @@ the connection.
 .Pp
 The log messages can be viewed with tcpdump:
 .Bd -literal
-    ifconfig pflog0 up
-    tcpdump -n -i pflog0
+.Cm # ifconfig pflog0 up
+.Cm # tcpdump -n -i pflog0
 .Ed
 .Sh QUICK
 If a packet matches a rule which has the 
@@ -135,9 +141,13 @@ A packet always comes in on or goes out through one interface.
 Most parameters are optional.
 If a parameter is specified, the rule only applies to packets with
 matching attributes.
-.Ss in/out
+.Ss in or out
 The rule applies to incoming or outgoing packets.
-Either in or out must be specified.
+Either
+.Em in
+or
+.Em out
+must be specified.
 To cover both directions, two rules are needed.
 .Ss on <interface>
 The rule applies only to packets coming in on or going out through this
@@ -158,11 +168,11 @@ can be specified using these operators
 >< and <> are binary operators (they take two arguments), and the range
 doesn't include the limits, for instance:
 .Bl -tag -width Fl
-.It Li port 2000 >< 2004
+.It Em port 2000 >< 2004
 means 
 .Sq all ports > 2000 and < 2004 ,
 hence ports 2001, 2002 and 2003.
-.It Li port 2000 <> 2004
+.It Em port 2000 <> 2004
 means 
 .Sq all ports < 2000 or > 2004 ,
 hence ports 1-1999 and 2005-65535.
@@ -182,14 +192,14 @@ The rule only applies to TCP packets that have the flags <a> set
 out of set <b>.
 Flags not specified in <b> are ignored.
 .Bl -tag -width Fl
-.It Li flags S/S
+.It Em flags S/S
 Flag SYN is set.
 The other flags are ignored.
-.It Li flags S/SA
+.It Em flags S/SA
 Of SYN and ACK, exactly SYN is set.
 SYN, SYN+PSH, SYN+RST match, but SYN+ACK, ACK and ACK+RST don't.
 This is more restrictive than the previous example.
-.It Li flags S
+.It Em flags S
 If the second set is not specified, it defaults to FSRPAU.
 Hence, only packets with SYN set and all other flags unset match this 
 rule. This is more restrictive than the previous example.
@@ -197,11 +207,11 @@ rule. This is more restrictive than the previous example.
 .Ss icmp-type <type> code <code>
 The rule only applies to ICMP packets with the specified type and code.
 This parameter is only valid for rules that cover protocol icmp.
-.Sh KEEP STATE
+.Sh STATEFUL INSPECTION
 .Em pf
 is a stateful packet filter, which means it can track the state of
 a connection.
-Instead of passing all traffic to port 25, for instance, you can pass
+Instead of passing all traffic to port 25, for instance, one can pass
 only the initial packet and keep state.
 .Pp
 If a packet matches a pass ... keep-state rule, the filter creates
@@ -223,14 +233,11 @@ a fake source address/port but doesn't know the connection's sequence
 numbers.
 .Pp
 Also, looking up states is usually faster than evaluating rules.
-If you have 50 rules, all of them are evaluated sequentially in O(n).
+If one has 50 rules, all of them are evaluated sequentially in O(n).
 Even with 50'000 states, only 16 comparisons are needed to match a
 state, since states are stored in a binary search tree that allows
 searches in O(log2 n).
 .Pp
-It also makes writing rule sets easier, once you embrace the concept.
-You only filter the initial packets and keep state.
-All other packets are handled by states.
 For instance:
 .Bd -literal
     block out all
@@ -247,12 +254,12 @@ All further packets of these connections are passed if they match a state.
 .Pp
 Specifying flags S/SA restricts state creation to the initial SYN
 packet of the TCP handshake.
-You can also be less restrictive, and allow state creation from
+One can also be less restrictive, and allow state creation from
 intermediate 
 .Pq non-SYN
 packets.
 This will cause pf to synchronize to existing connections, for instance
-if you flush the state table.
+if one flushes the state table.
 .Pp
 For UDP, which is stateless by nature, keep state will create state
 as well.
@@ -260,7 +267,7 @@ UDP packets are matched to states using only host addresses and ports.
 .Pp
 ICMP messages fall in two categories: ICMP error messages, which always
 refer to a TCP or UDP packet, are matched against the refered to connection.
-If you keep state on a TCP connection, and an ICMP source quench message
+If one keeps state on a TCP connection, and an ICMP source quench message
 refering to this TCP connection arrives, it will be matched to the right
 state and get passed.
 .Pp
@@ -304,7 +311,6 @@ Enforces a minium ttl for matching ip packets.
 # and the private network is 10.0.0.0/8, for which i'm doing NAT.
 
 # block and log everything by default
-#
 block             out log on kue0           all
 block             in  log on kue0           all
 block return-rst  out log on kue0 proto tcp all
@@ -315,17 +321,14 @@ block return-icmp in  log on kue0 proto udp all
 # block and log outgoing packets that don't have my address as source,
 # they are either spoofed or something is misconfigured (NAT disabled,
 # for instance), we want to be nice and don't send out garbage.
-#
 block out log quick on kue0 from ! 157.161.48.183 to any
 
 # silently drop broadcasts (cable modem noise)
-#
 block in quick on kue0 from any to 255.255.255.255
 
 # block and log incoming packets from reserved address space and invalid
 # addresses, they are either spoofed or misconfigured, we can't reply to
 # them anyway (hence, no return-rst).
-#
 block in log quick on kue0 from 10.0.0.0/8         to any
 block in log quick on kue0 from 172.16.0.0/12      to any
 block in log quick on kue0 from 192.168.0.0/16     to any
@@ -336,13 +339,10 @@ block in log quick on kue0 from 255.255.255.255/32 to any
 # -----------------------------------------------------------------------
 
 # pass out/in certain ICMP queries and keep state (ping)
-#
 # state matching is done on host addresses and ICMP id (not type/code),
 # so replies (like 0/0 for 8/0) will match queries
-#
 # ICMP error messages (which always refer to a TCP/UDP packet) are
 # handled by the TCP/UDP states
-#
 pass out on kue0 proto icmp all icmp-type 8 code 0 keep state
 pass in  on kue0 proto icmp all icmp-type 8 code 0 keep state
 
@@ -351,11 +351,9 @@ pass in  on kue0 proto icmp all icmp-type 8 code 0 keep state
 # -----------------------------------------------------------------------
 
 # pass out all UDP connections and keep state
-#
 pass out on kue0 proto udp all keep state
 
 # pass in certain UDP connections and keep state (DNS)
-#
 pass in on kue0 proto udp from any to any port = domain keep state
 
 # -----------------------------------------------------------------------
@@ -363,11 +361,9 @@ pass in on kue0 proto udp from any to any port = domain keep state
 # -----------------------------------------------------------------------
 
 # pass out all TCP connections and keep state
-#
 pass out on kue0 proto tcp all keep state
 
 # pass in certain TCP connections and keep state (SSH, SMTP, DNS, IDENT)
-#
 pass in on kue0 proto tcp from any to any port = ssh    keep state
 pass in on kue0 proto tcp from any to any port = smtp   keep state
 pass in on kue0 proto tcp from any to any port = domain keep state
