@@ -2150,12 +2150,13 @@ fixinc.sh: $(FIXINCSRCDIR)/mkfixinc.sh $(FIXINCSRCDIR)/fixincl.c \
 ##	fi
 
 # Build fixed copies of system files.
-stmp-fixinc: fixinc.sh gsyslimits.h
+#stmp-fixinc: fixinc.sh gsyslimits.h
+stmp-fixinc: gsyslimits.h
 	rm -rf include; mkdir include
-	TARGET_MACHINE=$(target); srcdir=`cd $(srcdir); pwd`; \
-	INSTALL_ASSERT_H=$(INSTALL_ASSERT_H); SHELL=$(SHELL) ;\
-	export TARGET_MACHINE srcdir INSTALL_ASSERT_H SHELL ; \
-	$(SHELL) ./fixinc.sh `pwd`/include $(SYSTEM_HEADER_DIR) $(OTHER_FIXINCLUDES_DIRS)
+#	TARGET_MACHINE=$(target); srcdir=`cd $(srcdir); pwd`; \
+#	INSTALL_ASSERT_H=$(INSTALL_ASSERT_H); SHELL=$(SHELL) ;\
+#	export TARGET_MACHINE srcdir INSTALL_ASSERT_H SHELL ; \
+#	$(SHELL) ./fixinc.sh `pwd`/include $(SYSTEM_HEADER_DIR) $(OTHER_FIXINCLUDES_DIRS)
 	rm -f include/syslimits.h
 	if [ -f include/limits.h ]; then \
 	  mv include/limits.h include/syslimits.h; \

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.3 1999/05/28 16:15:12 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.4 1999/05/31 21:30:24 millert Exp $
 
 MAN=		cccp.1 gcc.1 
 MLINKS+=	gcc.1 cc.1
@@ -35,8 +35,6 @@ M_ARCH=		${MACHINE_ARCH}
 GCCARCH=	${M_ARCH}-unknown-openbsd`uname -r`
 
 all:	config.status
-# disable the fixincludes mechanism
-	echo "#!/bin/sh" >${.OBJDIR}/fixinc.sh
 	${MAKE} ${GNUCFLAGS} CC=${CC} LDFLAGS=${LDSTATIC} \
 		build_infodir=. all doc
 
