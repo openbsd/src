@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.34 2004/09/16 20:11:09 deraadt Exp $	*/
+/*	$OpenBSD: misc.c,v 1.35 2005/01/30 20:46:20 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: misc.c,v 1.34 2004/09/16 20:11:09 deraadt Exp $";
+static char const rcsid[] = "$OpenBSD: misc.c,v 1.35 2005/01/30 20:46:20 millert Exp $";
 #endif
 
 /* vix 26jan87 [RCS has the rest of the log]
@@ -734,6 +734,7 @@ open_socket(void)
 		    "can't make socket non-blocking");
 		exit(ERROR_EXIT);
 	}
+	bzero(&s_un, sizeof(s_un));
 	if (snprintf(s_un.sun_path, sizeof s_un.sun_path, "%s/%s",
 	      SPOOL_DIR, CRONSOCK) >= sizeof(s_un.sun_path)) {
 		fprintf(stderr, "%s/%s: path too long\n", SPOOL_DIR, CRONSOCK);
@@ -772,6 +773,7 @@ poke_daemon(const char *spool_dir, unsigned char cookie) {
 
 	(void) utime(spool_dir, NULL);		/* old poke method */
 
+	bzero(&s_un, sizeof(s_un));
 	if (snprintf(s_un.sun_path, sizeof s_un.sun_path, "%s/%s",
 	      SPOOL_DIR, CRONSOCK) >= sizeof(s_un.sun_path)) {
 		fprintf(stderr, "%s: %s/%s: path too long\n",
