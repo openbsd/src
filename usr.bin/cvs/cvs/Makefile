@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.19 2005/03/24 01:03:41 joris Exp $
+#	$OpenBSD: Makefile,v 1.20 2005/03/24 01:21:49 jfb Exp $
 
 .PATH:	${.CURDIR}/..
 
@@ -8,7 +8,7 @@ MAN=	cvs.1 cvsrc.5 cvsintro.7
 SRCS=	cvs.c add.c admin.c annotate.c buf.c checkout.c cmd.c commit.c diff.c \
 	entries.c file.c getlog.c history.c hist.c import.c init.c log.c \
 	logmsg.c proto.c rcs.c rcsnum.c remove.c req.c resp.c root.c \
-	server.c sock.c status.c tag.c update.c util.c version.c
+	server.c sock.c status.c strtab.c tag.c update.c util.c version.c
 
 BINDIR=	/usr/bin
 BINOWN=	root
