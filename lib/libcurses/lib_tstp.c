@@ -117,6 +117,7 @@ static void tstp(int dummy)
 	 * original (pre-curses) modes.
 	 */
 	endwin();
+fflush(stdout);
 
 	/* Unblock SIGTSTP. */
 	(void)sigemptyset(&mask);
