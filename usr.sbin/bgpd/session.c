@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.155 2004/04/27 04:38:12 deraadt Exp $ */
+/*	$OpenBSD: session.c,v 1.156 2004/04/27 17:25:52 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -878,9 +878,8 @@ session_connect(struct peer *peer)
 			bgp_fsm(peer, EVNT_CON_OPENFAIL);
 			return (-1);
 		}
-	}
-
-	bgp_fsm(peer, EVNT_CON_OPEN);
+	} else
+		bgp_fsm(peer, EVNT_CON_OPEN);
 
 	return (0);
 }
