@@ -292,6 +292,8 @@ error(fmt, parg)
 		bell();
 #else
 	c = getchr();
+	if (c == 'q')
+		quit(QUIT_OK);
 	if (c != '\n' && c != '\r' && c != ' ' && c != READ_INTR)
 		ungetcc(c);
 #endif

@@ -1,12 +1,12 @@
 .TH LESS 1
 .SH NAME
-less \- opposite of more
+less, more \- view files on a crt
 .SH SYNOPSIS
-.B "less -?"
+.B "less|more -?"
 .br
-.B "less -V"
+.B "less|more -V"
 .br
-.B "less [-[+]aBcCdeEfgGiImMnNqQrsSuUVwX]"
+.B "less|more [-[+]aBcCdeEfgGiImMnNqQrsSuUVwX]"
 .br
 .B "     [-b \fIbufs\fP] [-h \fIlines\fP] [-j \fIline\fP] [-k \fIkeyfile\fP]"
 .br
@@ -18,7 +18,7 @@ less \- opposite of more
 
 .SH DESCRIPTION
 .I Less
-is a program similar to 
+is a program similar to the traditional
 .I more
 (1), but which allows backward movement
 in the file as well as forward movement.
@@ -35,7 +35,16 @@ There is even limited support for hardcopy terminals.
 (On a hardcopy terminal, lines which should be printed at the top
 of the screen are prefixed with a caret.)
 .PP
-Commands are based on both
+This version of
+.I less
+also acts as 
+.I more
+(1) if it is called as
+.I more.
+In this mode, the differences are in the prompt and that
+.I more
+exits by default when it gets to the end of the file.
+Commands are based on both traditional
 .I more
 and
 .I vi.
@@ -282,6 +291,9 @@ If a number N is specified, the N-th next file is examined.
 Examine the previous file in the command line list.
 If a number N is specified, the N-th previous file is examined.
 .PP
+.IP ":t"
+Go to supplied tag.
+.PP
 .IP ":x"
 Examine the first file in the command line list.
 If a number N is specified, the N-th file in the list is examined.
@@ -377,7 +389,11 @@ Most options may be changed while
 .I less 
 is running, via the "\-" command.
 .PP
-Options are also taken from the environment variable "LESS".
+Options are also taken from the environment variable "LESS" if the
+command is
+.I less
+, or from the environment variable "MORE" if the command is
+.I more.
 For example, 
 to avoid typing "less -options ..." each time 
 .I less 
@@ -439,13 +455,12 @@ full screen repaints are done by scrolling from the bottom of the screen.
 .IP -C
 The -C option is like -c, but the screen is cleared before it is repainted.
 .IP -d
-The -d option suppresses the error message
-normally displayed if the terminal is dumb;
-that is, lacks some important capability,
-such as the ability to clear the screen or scroll backward.
-The -d option does not otherwise change the behavior of
-.I less
-on a dumb terminal).
+The -d option causes the default prompt to include the basic directions
+``[Press space to continue, 'q' to quit.]''.  The -d
+option also causes the message ``[Press 'h' for instructions.]'' to be
+displayed when an invalid command is entered (normally, the bell is
+rung).  This option is useful in environments where users may not be
+experienced with pagers.
 .IP -D\fBx\fP\fIcolor\fP
 [MS-DOS only]
 Sets the color of the text displayed.
@@ -462,7 +477,11 @@ to automatically exit
 the second time it reaches end-of-file.
 By default, the only way to exit 
 .I less
-is via the "q" command.
+is via the "q" command, except in
+.I more
+mode, where
+.I less
+will exit at the end of a file.
 .IP -E
 Causes 
 .I less
@@ -1181,6 +1200,10 @@ Language for determining the character set.
 .IP LESS
 Flags which are passed to 
 .I less
+automatically.
+.IP MORE
+Flags which are passed to
+.I more
 automatically.
 .IP LESSBINFMT
 Format for displaying non-printable, non-control characters.

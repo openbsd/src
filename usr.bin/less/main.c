@@ -42,6 +42,7 @@ public int	any_display = FALSE;
 public int	wscroll;
 public char *	progname;
 public int	quitting;
+public int	more_mode = 0;
 
 extern int	quit_at_eof;
 extern int	cbufs;
@@ -77,6 +78,7 @@ main(argc, argv)
 	char *argv[];
 {
 	IFILE ifile;
+	extern char *__progname;
 
 #ifdef __EMX__
 	_response(&argc, &argv);
@@ -89,12 +91,22 @@ main(argc, argv)
 	 * Process command line arguments and LESS environment arguments.
 	 * Command line arguments override environment arguments.
 	 */
+	if (strcmp(__progname, "more") == 0)
+		more_mode = 1;
+
 	get_term();
 	init_cmds();
 	init_prompt();
 	init_charset();
 	init_option();
-	scan_option(getenv("LESS"));
+
+	if (more_mode) {
+		scan_option("-E");
+		scan_option("-m");
+		scan_option("-G");
+		scan_option(getenv("MORE"));
+	} else
+		scan_option(getenv("LESS"));
 
 #if GNU_OPTIONS
 	/*
@@ -319,7 +331,7 @@ quit(status)
 		save_status = status;
 	quitting = 1;
 	edit((char*)NULL);
-	if (any_display)
+	if (is_tty && any_display)
 		clear_bot();
 	deinit();
 	flush();

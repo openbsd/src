@@ -69,6 +69,9 @@ extern char *editor;
 extern char *editproto;
 #endif
 extern int screen_trashed;	/* The screen has been overwritten */
+extern int be_helpful;
+
+public int helpprompt;
 
 static char ungot[100];
 static char *ungotp = NULL;
@@ -453,14 +456,23 @@ prompt()
 	 * Select the proper prompt and display it.
 	 */
 	clear_bot();
-	p = pr_string();
-	if (p == NULL)
-		putchr(':');
-	else
-	{
+	if (helpprompt) {
 		so_enter();
-		putstr(p);
+		putstr("[Press 'h' for instructions.]");
 		so_exit();
+		helpprompt = 0;
+	} else {
+		p = pr_string();
+		if (p == NULL)
+			putchr(':');
+		else
+		{
+			so_enter();
+			putstr(p);
+			if (be_helpful)
+				putstr(" [Press space to continue, 'q' to quit.]");
+			so_exit();
+		}
 	}
 }
 
@@ -1246,7 +1258,10 @@ commands()
 			break;
 
 		default:
-			bell();
+			if (be_helpful)
+				helpprompt = 1;
+			else
+				bell();
 			break;
 		}
 	}

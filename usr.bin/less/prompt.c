@@ -57,7 +57,7 @@ extern char *editor;
 static char s_proto[] =
   "?n?f%f .?m(file %i of %m) ..?e(END) ?x- Next\\: %x..%t";
 static char m_proto[] =
-  "?n?f%f .?m(file %i of %m) ..?e(END) ?x- Next\\: %x.:?pB%pB\\%:byte %bB?s/%s...%t";
+  "?f%f .?m(file %i of %m) .?e(END) ?x- Next\\: %x.:(?pB%pB\\%:byte %bB?s/%s..).%t";
 static char M_proto[] =
   "?f%f .?n?m(file %i of %m) ..?ltline %lt?L/%L. :byte %bB?s/%s. .?e(END) ?x- Next\\: %x.:?pB%pB\\%..%t";
 static char e_proto[] =
