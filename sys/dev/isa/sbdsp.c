@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbdsp.c,v 1.8 1996/11/02 01:09:37 millert Exp $	*/
+/*	$OpenBSD: sbdsp.c,v 1.9 1997/01/03 00:09:59 kstailey Exp $	*/
 /*	$NetBSD: sbdsp.c,v 1.30 1996/10/25 07:25:48 fvdl Exp $	*/
 
 /*
@@ -1342,12 +1342,7 @@ sbdsp_intr(arg)
 	if (sbdspdebug > 1)
 		Dprintf("sbdsp_intr: intr=0x%x\n", sc->sc_intr);
 #endif
-	if (!isa_dmafinished(sc->sc_drq)) {
-#ifdef AUDIO_DEBUG
-		printf("sbdsp_intr: not finished\n");
-#endif
-		return 0;
-	}
+	/* isa_dmafinished() moved to isadma.c */
 	sc->sc_interrupts++;
 	/* clear interrupt */
 #ifdef notyet
