@@ -1,4 +1,4 @@
-/*      $OpenBSD: pciide.c,v 1.51 2001/04/17 22:43:50 chris Exp $     */
+/*      $OpenBSD: pciide.c,v 1.52 2001/05/22 15:32:38 ho Exp $     */
 /*	$NetBSD: pciide.c,v 1.110 2001/03/20 17:56:46 bouyer Exp $	*/
 
 /*
@@ -568,7 +568,7 @@ pciide_attach(parent, self, aux)
 
 #ifdef WDCDEBUG
        if (wdcdebug_pciide_mask & DEBUG_PROBE)
-               printf("sc_pc %s, sc_tag %s\n", sc->sc_pc, sc->sc_tag);
+               printf(" sc_pc %p, sc_tag %p\n", sc->sc_pc, sc->sc_tag);
 #endif
 
 	sc->sc_pp->chip_map(sc, pa);
@@ -985,8 +985,8 @@ pciide_dma_init(v, channel, drive, databuf, datalen, flags)
 		    htole32(dma_maps->dmamap_xfer->dm_segs[seg].ds_len &
 		    IDEDMA_BYTE_COUNT_MASK);
 		WDCDEBUG_PRINT(("\t seg %d len %d addr 0x%x\n",
-		   seg, le32toh(dma_maps->dma_table[seg].byte_count),
-		   le32toh(dma_maps->dma_table[seg].base_addr)), DEBUG_DMA);
+		   seg, letoh32(dma_maps->dma_table[seg].byte_count),
+		   letoh32(dma_maps->dma_table[seg].base_addr)), DEBUG_DMA);
 
 	}
 	dma_maps->dma_table[dma_maps->dmamap_xfer->dm_nsegs -1].byte_count |=
@@ -3177,7 +3177,7 @@ hpt_setup_channel(chp)
 		pci_conf_write(sc->sc_pc, sc->sc_tag,
 		    HPT_IDETIM(chp->channel, drive), after);
 		WDCDEBUG_PRINT(("%s: bus speed register set to 0x%08x "
-		    "(BIOS 0x%08x)\n", drvp->drv_softc->dv_xname,
+		    "(BIOS 0x%08x)\n", sc->sc_wdcdev.sc_dev.dv_xname,
 		    after, before), DEBUG_PROBE);
 	}
 	if (idedma_ctl != 0) {
