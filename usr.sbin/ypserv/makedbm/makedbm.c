@@ -1,4 +1,4 @@
-/*	$OpenBSD: makedbm.c,v 1.11 1998/07/09 06:33:03 deraadt Exp $ */
+/*	$OpenBSD: makedbm.c,v 1.12 1998/09/17 22:58:38 niklas Exp $ */
 
 /*
  * Copyright (c) 1994-97 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: makedbm.c,v 1.11 1998/07/09 06:33:03 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: makedbm.c,v 1.12 1998/09/17 22:58:38 niklas Exp $";
 #endif
 
 #include <stdio.h>
@@ -340,8 +340,9 @@ main (argc,argv)
 	char	*infile,*outfile;
 	int	usage = 0;
 	int	ch;
-	
+
 	extern int optind;
+	extern char *optarg;
 	
 	yp_input_file = yp_output_file = NULL;
 	yp_master_name = yp_domain_name = NULL;
@@ -367,19 +368,19 @@ main (argc,argv)
 				aflag++;
 				break;
 			case 'i':
-				yp_input_file = argv[optind];
+				yp_input_file = optarg;
 				aflag++;
 				break;
 			case 'o':
-				yp_output_file = argv[optind];
+				yp_output_file = optarg;
 				aflag++;
 				break;
 			case 'm':
-				yp_master_name = argv[optind];
+				yp_master_name = optarg;
 				aflag++;
 				break;
 			case 'd':
-				yp_domain_name = argv[optind];
+				yp_domain_name = optarg;
 				aflag++;
 				break;
 			case 'u':
