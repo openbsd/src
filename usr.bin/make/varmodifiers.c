@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: varmodifiers.c,v 1.11 2003/06/03 02:56:12 millert Exp $	*/
+/*	$OpenBSD: varmodifiers.c,v 1.12 2003/10/07 18:33:08 fgsch Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -1592,7 +1592,7 @@ VarModifiers_Apply(str, name, ctxt, err, freePtr, start, endc, lengthPtr)
 	    if (str != NULL && *freePtr)
 		free(str);
 	    str = var_Error;
-	    freePtr = false;
+	    *freePtr = false;
 	    break;
 	}
 	if (DEBUG(VAR))

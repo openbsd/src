@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: var.c,v 1.57 2003/06/03 02:56:12 millert Exp $	*/
+/*	$OpenBSD: var.c,v 1.58 2003/10/07 18:33:08 fgsch Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -841,7 +841,8 @@ Var_ParseSkip(str, ctxt, result)
     if (*tstr == ':' && endc != '\0')
 	 if (VarModifiers_Apply(NULL, NULL, ctxt, true, NULL, tstr, endc,
 	    &length) == var_Error)
-		*result = false;
+		if (result != NULL)
+		    *result = false;
     return length;
 }
 
