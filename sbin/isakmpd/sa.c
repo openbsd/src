@@ -1,4 +1,4 @@
-/* $OpenBSD: sa.c,v 1.89 2005/02/24 16:16:46 markus Exp $	 */
+/* $OpenBSD: sa.c,v 1.90 2005/02/27 13:12:12 hshoexer Exp $	 */
 /* $EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	 */
 
 /*
@@ -924,7 +924,7 @@ sa_validate_proto_xf(struct proto *match, struct payload *xf, int phase)
 		if (xf_id != GET_ISAKMP_TRANSFORM_ID(pa->attrs))
 			continue;
 
-		memset(avs->checked, 0, sizeof avs->checked);
+		bzero(avs->checked, sizeof avs->checked);
 		if (attribute_map(pa->attrs + ISAKMP_TRANSFORM_SA_ATTRS_OFF,
 		    pa->len - ISAKMP_TRANSFORM_SA_ATTRS_OFF,
 		    sa_validate_xf_attrs, avs) == 0)

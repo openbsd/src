@@ -1,4 +1,4 @@
-/* $OpenBSD: policy.c,v 1.78 2004/08/08 19:11:06 deraadt Exp $	 */
+/* $OpenBSD: policy.c,v 1.79 2005/02/27 13:12:12 hshoexer Exp $	 */
 /* $EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -198,36 +198,36 @@ policy_callback(char *name)
 			free(remote_id);
 			remote_id = 0;
 		}
-		memset(remote_ike_address, 0, sizeof remote_ike_address);
-		memset(local_ike_address, 0, sizeof local_ike_address);
-		memset(ah_life_kbytes, 0, sizeof ah_life_kbytes);
-		memset(ah_life_seconds, 0, sizeof ah_life_seconds);
-		memset(esp_life_kbytes, 0, sizeof esp_life_kbytes);
-		memset(esp_life_seconds, 0, sizeof esp_life_seconds);
-		memset(comp_life_kbytes, 0, sizeof comp_life_kbytes);
-		memset(comp_life_seconds, 0, sizeof comp_life_seconds);
-		memset(ah_key_length, 0, sizeof ah_key_length);
-		memset(ah_key_rounds, 0, sizeof ah_key_rounds);
-		memset(esp_key_length, 0, sizeof esp_key_length);
-		memset(esp_key_rounds, 0, sizeof esp_key_rounds);
-		memset(comp_dict_size, 0, sizeof comp_dict_size);
-		memset(comp_private_alg, 0, sizeof comp_private_alg);
-		memset(remote_filter_addr_upper, 0,
+		bzero(remote_ike_address, sizeof remote_ike_address);
+		bzero(local_ike_address, sizeof local_ike_address);
+		bzero(ah_life_kbytes, sizeof ah_life_kbytes);
+		bzero(ah_life_seconds, sizeof ah_life_seconds);
+		bzero(esp_life_kbytes, sizeof esp_life_kbytes);
+		bzero(esp_life_seconds, sizeof esp_life_seconds);
+		bzero(comp_life_kbytes, sizeof comp_life_kbytes);
+		bzero(comp_life_seconds, sizeof comp_life_seconds);
+		bzero(ah_key_length, sizeof ah_key_length);
+		bzero(ah_key_rounds, sizeof ah_key_rounds);
+		bzero(esp_key_length, sizeof esp_key_length);
+		bzero(esp_key_rounds, sizeof esp_key_rounds);
+		bzero(comp_dict_size, sizeof comp_dict_size);
+		bzero(comp_private_alg, sizeof comp_private_alg);
+		bzero(remote_filter_addr_upper,
 		    sizeof remote_filter_addr_upper);
-		memset(remote_filter_addr_lower, 0,
+		bzero(remote_filter_addr_lower,
 		    sizeof remote_filter_addr_lower);
-		memset(local_filter_addr_upper, 0,
+		bzero(local_filter_addr_upper,
 		    sizeof local_filter_addr_upper);
-		memset(local_filter_addr_lower, 0,
+		bzero(local_filter_addr_lower,
 		    sizeof local_filter_addr_lower);
-		memset(remote_id_addr_upper, 0, sizeof remote_id_addr_upper);
-		memset(remote_id_addr_lower, 0, sizeof remote_id_addr_lower);
-		memset(ah_group_desc, 0, sizeof ah_group_desc);
-		memset(esp_group_desc, 0, sizeof esp_group_desc);
-		memset(remote_id_port, 0, sizeof remote_id_port);
-		memset(remote_filter_port, 0, sizeof remote_filter_port);
-		memset(local_filter_port, 0, sizeof local_filter_port);
-		memset(phase1_group, 0, sizeof phase1_group);
+		bzero(remote_id_addr_upper, sizeof remote_id_addr_upper);
+		bzero(remote_id_addr_lower, sizeof remote_id_addr_lower);
+		bzero(ah_group_desc, sizeof ah_group_desc);
+		bzero(esp_group_desc, sizeof esp_group_desc);
+		bzero(remote_id_port, sizeof remote_id_port);
+		bzero(remote_filter_port, sizeof remote_filter_port);
+		bzero(local_filter_port, sizeof local_filter_port);
+		bzero(phase1_group, sizeof phase1_group);
 
 		dirty = 1;
 		return "";

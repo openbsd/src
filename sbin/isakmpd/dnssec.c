@@ -1,4 +1,4 @@
-/* $OpenBSD: dnssec.c,v 1.20 2004/06/14 09:55:41 ho Exp $	 */
+/* $OpenBSD: dnssec.c,v 1.21 2005/02/27 13:12:12 hshoexer Exp $	 */
 
 /*
  * Copyright (c) 2001 Håkan Olsson.  All rights reserved.
@@ -98,7 +98,7 @@ dns_get_key(int type, struct message *msg, int *keylen)
 
 	id = exchange->initiator ? exchange->id_r : exchange->id_i;
 	id_len = exchange->initiator ? exchange->id_r_len : exchange->id_i_len;
-	memset(name, 0, sizeof name);
+	bzero(name, sizeof name);
 
 	if (!id || id_len == 0) {
 		log_print("dns_get_key: ID is missing");
@@ -187,7 +187,7 @@ dns_get_key(int type, struct message *msg, int *keylen)
 		freerrset(rr);
 		return 0;
 	}
-	memset(&key_rr, 0, sizeof key_rr);
+	bzero(&key_rr, sizeof key_rr);
 
 	/*
 	 * Find a key with the wanted algorithm, if any.

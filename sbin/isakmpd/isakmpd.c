@@ -1,4 +1,4 @@
-/* $OpenBSD: isakmpd.c,v 1.72 2005/02/25 14:21:20 hshoexer Exp $	 */
+/* $OpenBSD: isakmpd.c,v 1.73 2005/02/27 13:12:12 hshoexer Exp $	 */
 /* $EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	 */
 
 /*
@@ -501,7 +501,7 @@ main(int argc, char *argv[])
 			daemon_shutdown();
 
 		/* Setup the descriptors to look for incoming messages at.  */
-		memset(rfds, 0, mask_size);
+		bzero(rfds, mask_size);
 		n = transport_fd_set(rfds);
 		FD_SET(ui_socket, rfds);
 		if (ui_socket + 1 > n)
@@ -518,7 +518,7 @@ main(int argc, char *argv[])
 				n = app_socket + 1;
 		}
 		/* Setup the descriptors that have pending messages to send. */
-		memset(wfds, 0, mask_size);
+		bzero(wfds, mask_size);
 		m = transport_pending_wfd_set(wfds);
 		if (m > n)
 			n = m;

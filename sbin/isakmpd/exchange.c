@@ -1,4 +1,4 @@
-/* $OpenBSD: exchange.c,v 1.106 2005/01/31 10:30:49 hshoexer Exp $	 */
+/* $OpenBSD: exchange.c,v 1.107 2005/02/27 13:12:12 hshoexer Exp $	 */
 /* $EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	 */
 
 /*
@@ -626,8 +626,8 @@ exchange_create(int phase, int initiator, int doi, int type)
 	exchange->phase = phase;
 	exchange->step = 0;
 	exchange->initiator = initiator;
-	memset(exchange->cookies, 0, ISAKMP_HDR_COOKIES_LEN);
-	memset(exchange->message_id, 0, ISAKMP_HDR_MESSAGE_ID_LEN);
+	bzero(exchange->cookies, ISAKMP_HDR_COOKIES_LEN);
+	bzero(exchange->message_id, ISAKMP_HDR_MESSAGE_ID_LEN);
 	exchange->doi = doi_lookup(doi);
 	exchange->type = type;
 	exchange->policy_id = -1;

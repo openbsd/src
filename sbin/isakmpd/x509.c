@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.95 2004/08/10 19:21:01 deraadt Exp $	 */
+/* $OpenBSD: x509.c,v 1.96 2005/02/27 13:12:12 hshoexer Exp $	 */
 /* $EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	 */
 
 /*
@@ -1048,7 +1048,7 @@ x509_certreq_decode(u_int8_t *asn, u_int32_t len)
 		    "CA' info");
 		goto fail;
 	}
-	memset(&naca, 0, sizeof(naca));
+	bzero(&naca, sizeof(naca));
 
 	tmp = asn_decompose("aca.RelativeDistinguishedName."
 	    "AttributeValueAssertion", &aca);

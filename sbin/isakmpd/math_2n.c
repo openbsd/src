@@ -1,4 +1,4 @@
-/* $OpenBSD: math_2n.c,v 1.16 2004/06/14 09:55:41 ho Exp $	 */
+/* $OpenBSD: math_2n.c,v 1.17 2005/02/27 13:12:12 hshoexer Exp $	 */
 /* $EOM: math_2n.c,v 1.15 1999/04/20 09:23:30 niklas Exp $	 */
 
 /*
@@ -135,7 +135,7 @@ b2n_resize(b2n_ptr n, unsigned int chunks)
 	n->dirty = 1;
 
 	if (chunks > old)
-		memset(n->limp + old, 0, size - CHUNK_BYTES * old);
+		bzero(n->limp + old, size - CHUNK_BYTES * old);
 
 	return 0;
 }
@@ -213,7 +213,7 @@ b2n_set_str(b2n_ptr n, char *str)
 	chunks = (CHUNK_BYTES - 1 + len) / CHUNK_BYTES;
 	if (b2n_resize(n, chunks))
 		return -1;
-	memset(n->limp, 0, CHUNK_BYTES * n->chunks);
+	bzero(n->limp, CHUNK_BYTES * n->chunks);
 
 	for (w = 0, i = 0; i < chunks; i++) {
 		tmp = 0;
@@ -426,7 +426,7 @@ b2n_lshift(b2n_ptr d, b2n_ptr n, unsigned int s)
 	memmove(d->limp + maj, n->limp, CHUNK_BYTES * chunks);
 
 	if (maj)
-		memset(d->limp, 0, CHUNK_BYTES * maj);
+		bzero(d->limp, CHUNK_BYTES * maj);
 	if (add)
 		d->limp[d->chunks - 1] = 0;
 
@@ -644,7 +644,7 @@ b2n_div(b2n_ptr q, b2n_ptr r, b2n_ptr n, b2n_ptr m)
 
 	if (b2n_resize(q, (sn - sm + CHUNK_MASK) >> CHUNK_SHIFTS))
 		goto fail;
-	memset(q->limp, 0, CHUNK_BYTES * q->chunks);
+	bzero(q->limp, CHUNK_BYTES * q->chunks);
 
 	if (b2n_lshift(shift, shift, sn - sm))
 		goto fail;

@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.152 2005/02/25 03:02:41 cloder Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.153 2005/02/27 13:12:12 hshoexer Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -648,7 +648,7 @@ pf_key_v2_get_spi(size_t *sz, u_int8_t proto, struct sockaddr *src,
 		goto cleanup;
 
 #ifdef KAME
-	memset(&ssa2, 0, sizeof ssa2);
+	bzero(&ssa2, sizeof ssa2);
 	ssa2.sadb_x_sa2_exttype = SADB_X_EXT_SA2;
 	ssa2.sadb_x_sa2_len = sizeof ssa2 / PF_KEY_V2_CHUNK;
 	ssa2.sadb_x_sa2_mode = 0;
@@ -878,7 +878,7 @@ pf_key_v2_get_kernel_sa(u_int8_t *spi, size_t spi_sz, u_int8_t proto,
 	}
 
 	/* Extract the data.  */
-	memset(&ksa, 0, sizeof ksa);
+	bzero(&ksa, sizeof ksa);
 
 	ext = pf_key_v2_find_ext(ret, SADB_EXT_SA);
 	if (!ext)
@@ -1288,7 +1288,7 @@ pf_key_v2_set_spi(struct sa *sa, struct proto *proto, int incoming,
 		goto cleanup;
 
 #ifdef KAME
-	memset(&ssa2, 0, sizeof ssa2);
+	bzero(&ssa2, sizeof ssa2);
 	ssa2.sadb_x_sa2_exttype = SADB_X_EXT_SA2;
 	ssa2.sadb_x_sa2_len = sizeof ssa2 / PF_KEY_V2_CHUNK;
 #if defined (LINUX_IPSEC)
@@ -1324,7 +1324,7 @@ pf_key_v2_set_spi(struct sa *sa, struct proto *proto, int incoming,
 
 #if defined (USE_NAT_TRAVERSAL) && defined (SADB_X_EXT_UDPENCAP)
 	if (isakmp_sa->flags & SA_FLAG_NAT_T_ENABLE) {
-		memset(&udpencap, 0, sizeof udpencap);
+		bzero(&udpencap, sizeof udpencap);
 		ssa.sadb_sa_flags |= SADB_X_SAFLAGS_UDPENCAP;
 		udpencap.sadb_x_udpencap_exttype = SADB_X_EXT_UDPENCAP;
 		udpencap.sadb_x_udpencap_len =
@@ -2187,7 +2187,7 @@ cleanup:
 	if (!flow)
 		goto cleanup;
 
-	memset(&ssa2, 0, sizeof ssa2);
+	bzero(&ssa2, sizeof ssa2);
 	ssa2.sadb_x_sa2_exttype = SADB_X_EXT_SA2;
 	ssa2.sadb_x_sa2_len = sizeof ssa2 / PF_KEY_V2_CHUNK;
 	ssa2.sadb_x_sa2_mode = 0;
@@ -2841,7 +2841,7 @@ pf_key_v2_delete_spi(struct sa *sa, struct proto *proto, int incoming)
 		goto cleanup;
 
 #ifdef KAME
-	memset(&ssa2, 0, sizeof ssa2);
+	bzero(&ssa2, sizeof ssa2);
 	ssa2.sadb_x_sa2_exttype = SADB_X_EXT_SA2;
 	ssa2.sadb_x_sa2_len = sizeof ssa2 / PF_KEY_V2_CHUNK;
 	ssa2.sadb_x_sa2_mode = 0;
@@ -4296,7 +4296,7 @@ pf_key_v2_group_spis(struct sa *sa, struct proto *proto1,
 	if (pf_key_v2_msg_add(grpspis, (struct sadb_ext *)&sa2, 0) == -1)
 		goto cleanup;
 #else
-	memset(&kamesa2, 0, sizeof kamesa2);
+	bzero(&kamesa2, sizeof kamesa2);
 	kamesa2.sadb_x_sa2_exttype = SADB_X_EXT_SA2;
 	kamesa2.sadb_x_sa2_len = sizeof kamesa2 / PF_KEY_V2_CHUNK;
 	kamesa2.sadb_x_sa2_mode = 0;

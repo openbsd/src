@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtual.c,v 1.10 2004/12/14 10:17:28 mcbride Exp $	*/
+/*	$OpenBSD: virtual.c,v 1.11 2005/02/27 13:12:12 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -310,7 +310,7 @@ virtual_bind_ADDR_ANY(sa_family_t af)
 	struct transport	*t;
 	struct in6_addr		in6addr_any = IN6ADDR_ANY_INIT;
 
-	memset(&dflt_stor, 0, sizeof dflt_stor);
+	bzero(&dflt_stor, sizeof dflt_stor);
 	switch (af) {
 	case AF_INET:
 		d4->sin_family = af;

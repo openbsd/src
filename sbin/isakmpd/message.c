@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.95 2005/02/24 00:30:41 cloder Exp $	 */
+/* $OpenBSD: message.c,v 1.96 2005/02/27 13:12:12 hshoexer Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -2518,7 +2518,7 @@ message_init(void)
 {
 	u_int8_t	i;
 
-	memset(&payload_map, 0, sizeof payload_map);
+	bzero(&payload_map, sizeof payload_map);
 
 	payload_index_max = sizeof payload_revmap / sizeof payload_revmap[0];
 	for (i = 0; i < payload_index_max; i++) {

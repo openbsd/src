@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.33 2004/11/08 12:40:19 hshoexer Exp $	 */
+/* $OpenBSD: monitor.c,v 1.34 2005/02/27 13:12:12 hshoexer Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -97,7 +97,7 @@ monitor_init(int debug)
 	struct passwd  *pw;
 	int             p[2];
 
-	memset(&m_state, 0, sizeof m_state);
+	bzero(&m_state, sizeof m_state);
 
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, p) != 0)
 		log_fatal("monitor_init: socketpair() failed");
@@ -571,7 +571,7 @@ monitor_loop(int debug)
 			}
 		}
 
-		memset(fds, 0, fdsn);
+		bzero(fds, fdsn);
 		FD_SET(m_state.s, fds);
 
 		n = select(maxfd, fds, NULL, NULL, NULL);

@@ -1,4 +1,4 @@
-/* $OpenBSD: log.c,v 1.50 2004/11/08 11:59:37 hshoexer Exp $	 */
+/* $OpenBSD: log.c,v 1.51 2005/02/27 13:12:12 hshoexer Exp $	 */
 /* $EOM: log.c,v 1.30 2000/09/29 08:19:23 niklas Exp $	 */
 
 /*
@@ -322,7 +322,7 @@ log_debug_toggle(void)
 		LOG_DBG((LOG_MISC, 50, "log_debug_toggle: "
 		    "debug levels cleared"));
 		memcpy(&log_level_copy, &log_level, sizeof log_level);
-		memset(&log_level, 0, sizeof log_level);
+		bzero(&log_level, sizeof log_level);
 	} else {
 		memcpy(&log_level, &log_level_copy, sizeof log_level);
 		LOG_DBG((LOG_MISC, 50, "log_debug_toggle: "
@@ -518,8 +518,8 @@ log_packet_iov(struct sockaddr *src, struct sockaddr *dst, struct iovec *iov,
 		off += iov[i].iov_len;
 	}
 
-	memset(&hdr, 0, sizeof hdr);
-	memset(&udp, 0, sizeof udp);
+	bzero(&hdr, sizeof hdr);
+	bzero(&udp, sizeof udp);
 
 	/* isakmp - turn off the encryption bit in the isakmp hdr */
 	isakmphdr = (struct isakmp_hdr *) packet_buf;
@@ -638,7 +638,7 @@ udp_cksum(struct packhdr *hdr, const struct udphdr *u, u_int16_t *d)
 	u_int32_t       sum;
 
 	/* Setup pseudoheader.  */
-	memset(phu.pa, 0, sizeof phu);
+	bzero(phu.pa, sizeof phu);
 	switch (ntohl(hdr->sa_family)) {
 	case AF_INET:
 		ip4 = &hdr->ip.ip4;

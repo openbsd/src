@@ -1,4 +1,4 @@
-/* $OpenBSD: util.c,v 1.49 2004/12/14 10:17:28 mcbride Exp $	 */
+/* $OpenBSD: util.c,v 1.50 2005/02/27 13:12:12 hshoexer Exp $	 */
 /* $EOM: util.c,v 1.23 2000/11/23 12:22:08 niklas Exp $	 */
 
 /*
@@ -261,7 +261,7 @@ text2sockaddr(char *address, char *port, struct sockaddr **sa, sa_family_t af,
 	pid_t pid;
 #endif /* USE_DEFAULT_ROUTE */
 
-	memset(&hints, 0, sizeof hints);
+	bzero(&hints, sizeof hints);
 	if (!allow_name_lookups)
 		hints.ai_flags = AI_NUMERICHOST;
 	hints.ai_family = PF_UNSPEC;
@@ -278,7 +278,7 @@ text2sockaddr(char *address, char *port, struct sockaddr **sa, sa_family_t af,
 		if (!strcmp(address, "default")) {
 			fd = socket(PF_ROUTE, SOCK_RAW, af);
 			
-			memset(buf, 0, sizeof(buf));
+			bzero(buf, sizeof(buf));
 
 			rtm = (struct rt_msghdr *)buf;
 			rtm->rtm_version = RTM_VERSION;
@@ -555,7 +555,7 @@ util_ntoa(char **buf, int af, u_int8_t *addr)
 	struct sockaddr *sfrom = (struct sockaddr *) & from;
 	socklen_t	fromlen = sizeof from;
 
-	memset(&from, 0, fromlen);
+	bzero(&from, fromlen);
 	sfrom->sa_family = af;
 #ifndef USE_OLD_SOCKADDR
 	switch (af) {

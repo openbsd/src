@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor_fdpass.c,v 1.11 2004/10/01 04:08:45 jsg Exp $	*/
+/*	$OpenBSD: monitor_fdpass.c,v 1.12 2005/02/27 13:12:12 hshoexer Exp $	*/
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -44,7 +44,7 @@ mm_send_fd(int socket, int fd)
 	struct iovec    vec;
 	ssize_t         n;
 
-	memset(&msg, 0, sizeof msg);
+	bzero(&msg, sizeof msg);
 	msg.msg_control = (caddr_t) tmp;
 	msg.msg_controllen = CMSG_LEN(sizeof(int));
 	cmsg = CMSG_FIRSTHDR(&msg);
@@ -80,7 +80,7 @@ mm_receive_fd(int socket)
 	ssize_t         n;
 	int             fd;
 
-	memset(&msg, 0, sizeof msg);
+	bzero(&msg, sizeof msg);
 	vec.iov_base = &ch;
 	vec.iov_len = 1;
 	msg.msg_iov = &vec;
