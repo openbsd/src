@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.397 2003/10/31 10:34:47 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.398 2003/11/03 07:50:00 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4539,6 +4539,34 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	}
 
 	/* Copied from ip_output. */
+#ifdef IPSEC
+	/*
+	 * If deferred crypto processing is needed, check that the
+	 * interface supports it.
+	 */
+	if ((mtag = m_tag_find(m0, PACKET_TAG_IPSEC_OUT_CRYPTO_NEEDED, NULL))
+	    != NULL && (ifp->if_capabilities & IFCAP_IPSEC) == 0) {
+		/* Notify IPsec to do its own crypto. */
+		ipsp_skipcrypto_unmark((struct tdb_ident *)(mtag + 1));
+		goto bad;
+	}
+#endif /* IPSEC */
+
+	/* Catch routing changes wrt. hardware checksumming for TCP or UDP. */
+	if (m0->m_pkthdr.csum & M_TCPV4_CSUM_OUT) {
+		if (!(ifp->if_capabilities & IFCAP_CSUM_TCPv4) ||
+		    ifp->if_bridge != NULL) {
+			in_delayed_cksum(m0);
+			m0->m_pkthdr.csum &= ~M_TCPV4_CSUM_OUT; /* Clear */
+		}
+	} else if (m0->m_pkthdr.csum & M_UDPV4_CSUM_OUT) {
+		if (!(ifp->if_capabilities & IFCAP_CSUM_UDPv4) ||
+		    ifp->if_bridge != NULL) {
+			in_delayed_cksum(m0);
+			m0->m_pkthdr.csum &= ~M_UDPV4_CSUM_OUT; /* Clear */
+		}
+	}
+
 	if (ntohs(ip->ip_len) <= ifp->if_mtu) {
 		if ((ifp->if_capabilities & IFCAP_CSUM_IPv4) &&
 		    ifp->if_bridge == NULL) {
