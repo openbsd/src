@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.4 1997/05/14 18:39:08 niklas Exp $
+#	$OpenBSD: Makefile.inc,v 1.5 1997/09/26 02:12:09 millert Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -35,7 +35,8 @@ all: ${CBIN} bootroot
 bootroot: edlabel copy xxboot boot
 	dd if=/dev/zero of=${BOOTSYS} bs=64k count=4
 	vnconfig -v -c ${VND} ${BOOTSYS}
-	newfs -O -m 0 -o space -i 8192 ${VND_RDEV} bootroot
+	disklabel -w ${VND} bootroot
+	newfs -O -m 0 -o space -i 8192 ${VND_RDEV}
 	dd if=xxboot of=${VND_RDEV} count=16
 	mount ${VND_DEV} ${MOUNT_POINT}
 	cp edlabel copy boot ${MOUNT_POINT}
