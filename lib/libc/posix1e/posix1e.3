@@ -1,4 +1,4 @@
-.\"	$OpenBSD: posix1e.3,v 1.5 2002/05/01 08:03:29 mpech Exp $
+.\"	$OpenBSD: posix1e.3,v 1.6 2003/05/07 08:52:43 jmc Exp $
 .\"
 .\" Copyright (c) 2000 Robert N. M. Watson
 .\" All rights reserved.
@@ -52,16 +52,17 @@ support for POSIX.1e interfaces and features is still under
 development at this time.
 .Sh ENVIRONMENT
 POSIX.1e assigns security labels to all objects, extending the security
-functionality described in POSIX.1.  These additional labels provide
-fine-grained discretionary access control, fine-grained capabilities,
+functionality described in POSIX.1.
+These additional labels provide fine-grained discretionary access control,
+fine-grained capabilities,
 and labels necessary for mandatory access control.
 POSIX.2c describes
 a set of userland utilities for manipulating these labels.
 .Sh SEE ALSO
 .Xr extattr 9
 .Sh STANDARDS
-POSIX.1e is described in IEEE POSIX.1e draft 17.  Discussion
-of the draft continues on the cross-platform POSIX.1e implementation
+POSIX.1e is described in IEEE POSIX.1e draft 17.
+Discussion of the draft continues on the cross-platform POSIX.1e implementation
 mailing list.
 To join this list, see the
 .Ox

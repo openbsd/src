@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpc.3,v 1.30 2003/03/17 09:52:21 jmc Exp $
+.\"	$OpenBSD: rpc.3,v 1.31 2003/05/07 08:52:43 jmc Exp $
 .\" 
 .\" Copyright (c) 1998 Theo de Raadt
 .\" All rights reserved.
@@ -301,7 +301,7 @@ is used to encode the procedure's parameters, and
 .Fa outproc
 is used to decode the procedure's results.
 This routine returns zero if it succeeds, or the value of
-.Fa enum clnt_stat"
+.Fa enum clnt_stat
 cast to an integer if it fails.
 The routine
 .Fn clnt_perrno
@@ -479,7 +479,7 @@ to the structure at address
 .Fa errp .
 .Pp
 .Fn clnt_pcreateerror
-print a message to standard error indicating
+prints a message to standard error indicating
 why a client
 .Tn RPC
 handle could not be created.
@@ -529,7 +529,7 @@ takes the same arguments as
 but instead of sending a message to the standard error
 indicating why an
 .Tn RPC
-call failed, return a pointer to a string which contains
+call failed, returns a pointer to a string which contains
 the message.
 Unlike
 .Fn clnt_perror ,
@@ -555,7 +555,7 @@ unlike
 and
 .Fn clnt_spcreaterror ,
 .Fn clnt_sperrno
-returns pointer to static data, but the
+returns a pointer to static data, but the
 result will not get overwritten on each call.
 .Pp
 .Fn clnt_sperror
@@ -757,7 +757,7 @@ See also
 is a user interface to the
 .Xr portmap 8
 service, which establishes a mapping between the triple
-.Fa [ prognum , versnum , protocol]
+.Fa [ prognum , versnum , protocol ]
 and
 .Fa port
 on the machine's
@@ -778,7 +778,7 @@ Automatically done by
 is a user interface to the
 .Xr portmap 8
 service, which destroys all mapping between the triple
-.Fa [ prognum , versnum , *]
+.Fa [ prognum , versnum , * ]
 and
 .Fa ports
 on the machine's
@@ -848,7 +848,8 @@ service side's
 read file descriptor bit mask.
 .Fa __svc_fdsetsize
 is a count of the number of checkable bits in
-.Fa __svc_fdset, and can expand to the full size that
+.Fa __svc_fdset ,
+and can expand to the full size that
 .Xr select 2
 supports, hence exceeding
 .Fa FD_SETSIZE
@@ -880,7 +881,7 @@ Do not pass its address to
 .Xr select 2 !
 Instead, pass the address of a copy.
 .Pp
-As well, note that if the process has descriptor limits
+Additionally, note that if the process has descriptor limits
 which are extended beyond
 .Fa FD_SETSIZE ,
 this variable will only be usable for the first
@@ -993,7 +994,7 @@ service.
 If
 .Fa protocol
 is non-zero, then a mapping of the triple
-.Fa [ prognum , versnum , protocol]
+.Fa [ prognum , versnum , protocol ]
 to
 .Fa xprt\->xp_port
 is established with the local
@@ -1047,7 +1048,7 @@ This routine returns one if it succeeds, zero otherwise.
 removes all mapping of the double
 .Fa [ prognum , versnum ]
 to dispatch routines, and of the triple
-.Fa [ prognum , versnum , *]
+.Fa [ prognum , versnum , * ]
 to port number.
 .Pp
 .Fn svcerr_auth

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: strptime.3,v 1.7 2000/10/18 05:12:12 aaron Exp $
+.\"	$OpenBSD: strptime.3,v 1.8 2003/05/07 08:52:42 jmc Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,8 @@ using the format specified by
 The
 .Fa format
 string consists of zero or more directives.
-A directive is composed of either one or more whitespace as defined by
+A directive is composed of either one or more whitespace characters as
+defined by
 .Fn isspace ,
 an ordinary character (neither `%' nor a whitespace), or a conversion
 specification.
@@ -121,9 +122,12 @@ leading zeros are permitted but not required.
 the minute [0,59];
 leading zeros are permitted but not required.
 .It Cm \&%n
-any whitespace
+any whitespace.
 .It Cm \&%p
-the locale's equivalent of a.m. or p.m..
+the locale's equivalent of
+.Dq AM
+or
+.Dq PM .
 .It Cm \&%r
 the time as %I:%M:%S %p.
 .It Cm \&%R
@@ -132,7 +136,7 @@ the time as %H:%M.
 the seconds [0,61];
 leading zeros are permitted but not required.
 .It Cm \&%t
-any whitespace
+any whitespace.
 .It Cm \&%T
 the time as %H:%M:%S.
 .It Cm \&%U

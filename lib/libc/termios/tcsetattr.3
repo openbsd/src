@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcsetattr.3,v 1.11 2002/03/26 01:36:07 hugh Exp $
+.\"	$OpenBSD: tcsetattr.3,v 1.12 2003/05/07 08:52:43 jmc Exp $
 .\"
 .\" Copyright (c) 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -257,7 +257,7 @@ should be used when changing parameters that affect output.
 .It Dv TCSAFLUSH
 The change occurs after all output written to
 .Fa fd
-has been transmitted to the terminal
+has been transmitted to the terminal.
 Additionally, any input that has been received but not read is discarded.
 .It Dv TCSASOFT
 If this value is
@@ -282,16 +282,16 @@ If zero is specified as the input speed to the function
 .Fn tcsetattr ,
 the input baud rate will be set to the same value as that specified by
 the output baud rate.
-.Pp
+.Sh RETURN VALUES
 If
 .Fn tcsetattr
-is unable able to make any of the requested changes, it returns \-1 and
+is unable to make any of the requested changes, it returns \-1 and
 sets
 .Va errno .
 Otherwise, it makes all of the requested changes it can.
 If the specified input and output baud rates differ and are a combination
 that is not supported, neither baud rate is changed.
-.Pp
+.Sh ERRORS
 Upon successful completion, the functions
 .Fn tcgetattr
 and

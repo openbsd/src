@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ohash_init.3,v 1.5 2002/07/01 07:48:28 espie Exp $
+.\"	$OpenBSD: ohash_init.3,v 1.6 2003/05/07 08:52:43 jmc Exp $
 .\"
 .\" Copyright (c) 1999 Marc Espie.
 .\"
@@ -71,7 +71,7 @@ They provide storage and retrieval of records indexed by keys,
 where a key is a contiguous sequence of bytes at a fixed position in
 each record.
 Keys can either be null-terminated strings or fixed-size memory areas.
-All functions take a pointer to a ohash structure as the
+All functions take a pointer to an ohash structure as the
 .Fa h
 function argument.
 Storage for this structure should be provided by user code.
@@ -166,7 +166,7 @@ if the slot was empty.
 .Fn ohash_first
 and
 .Fn ohash_next
-can be used to access all elements in a ohash table, like this:
+can be used to access all elements in an ohash table, like this:
 .Pp
 .Bd -literal
 	for (n = ohash_first(h, &i); n != NULL; n = ohash_next(h, &i))
@@ -191,7 +191,7 @@ Only
 and
 .Fn ohash_delete
 may call the user-supplied memory functions.
-It is the responsability of the user memory allocation code to verify
+It is the responsibility of the user memory allocation code to verify
 that those calls did not fail.
 .Pp
 If memory allocation fails,
