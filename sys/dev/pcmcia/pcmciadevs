@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.106 2003/10/28 23:44:02 fgsch Exp $
+	$OpenBSD: pcmciadevs,v 1.107 2003/11/17 19:47:43 fgsch Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -411,6 +411,7 @@ product LINKSYS ECARD_2		{ "LINKSYS", "E-CARD", NULL, NULL }
 product COREGA ETHER_PCC_T	{ "corega&spK.K.", "corega&spEther&spPCC-T", NULL, NULL }
 product COREGA ETHER_PCC_TD	{ "corega&spK.K.", "corega&spEther&spPCC-TD", NULL, NULL }
 product COREGA ETHER_II_PCC_T	{ "corega&spK.K.", "corega&spEtherII&spPCC-T", NULL, NULL }
+product COREGA ETHER_II_PCC_TD	{ "corega&spK.K.", "corega&spEtherII&spPCC-TD", NULL, NULL }
 product COREGA FAST_ETHER_PCC_TX	{ "corega&spK.K.", "corega&spFastEther&spPCC-TX", NULL, NULL }
 product COREGA FETHER_PCC_TXD	{ "corega&spK.K.", "corega&spFEther&spPCC-TXD", NULL, NULL }
 product COREGA FETHER_PCC_TXF	{ "corega", "FEther&spPCC-TXF", NULL, NULL }
