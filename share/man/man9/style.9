@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: style.9,v 1.11 2000/12/21 15:41:26 aaron Exp $
+.\"	$OpenBSD: style.9,v 1.12 2001/01/25 18:14:05 aaron Exp $
 .\"
 .Dd August 19, 1999
 .Dt STYLE 9
@@ -183,7 +183,7 @@ enum enumtype { ONE, TWO } et;
 .Ed
 .Pp
 When declaring variables in structures, declare them sorted by use, then
-by size, and then by alphabetical order.
+by size (largest to smallest), then by alphabetical order.
 The first category normally doesn't apply, but there are exceptions.
 Each one gets its own line.
 Put a tab after the first word, i.e., use
@@ -403,8 +403,8 @@ function(a1, a2, fl, a4)
 {
 .Ed
 .Pp
-When declaring variables in functions declare them sorted by size,
-then in alphabetical order; multiple ones per line are okay.
+When declaring variables in functions declare them sorted by size (largest to
+smallest), then in alphabetical order; multiple ones per line are okay.
 Old style function declarations can go on the same line.
 ANSI style function declarations should go in the include file
 .Dq Pa extern.h .
