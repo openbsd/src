@@ -47,7 +47,7 @@
  * ---------------------------------
  * Copyright (c) 1992, 2001 Xerox Corporation.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without modification, 
+ * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
  *
  * Redistributions of source code must retain the above copyright notice,
@@ -58,11 +58,11 @@
  * and/or other materials provided with the distribution.
 
  * Neither name of the Xerox, PARC, nor the names of its contributors may be used
- * to endorse or promote products derived from this software 
- * without specific prior written permission. 
+ * to endorse or promote products derived from this software
+ * without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS ``AS IS'' 
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS ``AS IS''
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
  * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
  * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE XEROX CORPORATION OR CONTRIBUTORS
  * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
@@ -71,12 +71,12 @@
  * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
- * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #ifndef lint
 static char rcsid[] =
-    "@(#) $NetBSD: mrinfo.c,v 1.4 1995/12/10 11:00:51 mycroft Exp $";
+    "@(#) $OpenBSD: mrinfo.c,v 1.15 2003/03/05 21:05:39 deraadt Exp $";
 /*  original rcsid:
     "@(#) Header: mrinfo.c,v 1.6 93/04/08 15:14:16 van Exp (LBL)";
 */
@@ -88,6 +88,7 @@ static char rcsid[] =
 #include "defs.h"
 #include <arpa/inet.h>
 #include <stdarg.h>
+#include <err.h>
 
 #define DEFAULT_TIMEOUT	4	/* How long to wait before retrying requests */
 #define DEFAULT_RETRIES 3	/* How many times to ask each router */
@@ -101,21 +102,15 @@ int	target_level = 0;
 vifi_t  numvifs;		/* to keep loader happy */
 				/* (see COPY_TABLES macro called in kern.c) */
 
-char *			inet_name(u_int32_t addr);
-void			ask(u_int32_t dst);
-void			ask2(u_int32_t dst);
-int			get_number(int *var, int deflt, char ***pargv,
-			    int *pargc);
-u_int32_t		host_addr(char *name);
-void			usage(void);
+char		*inet_name(u_int32_t addr);
+void		ask(u_int32_t dst);
+void		ask2(u_int32_t dst);
+int		get_number(int *var, int deflt, char ***pargv, int *pargc);
+u_int32_t	host_addr(char *name);
+void		usage(void);
 
-/* to shut up -Wstrict-prototypes */
-int			main(int argc, char *argv[]);
-
-
-char   *
-inet_name(addr)
-	u_int32_t  addr;
+char *
+inet_name(u_int32_t addr)
 {
 	struct hostent *e;
 	struct in_addr in;
@@ -172,41 +167,37 @@ log(int severity, int syserr, char *format, ...)
 /*
  * Send a neighbors-list request.
  */
-void 
-ask(dst)
-	u_int32_t  dst;
+void
+ask(u_int32_t dst)
 {
 	send_igmp(our_addr, dst, IGMP_DVMRP, DVMRP_ASK_NEIGHBORS,
-			htonl(MROUTED_LEVEL), 0);
+	    htonl(MROUTED_LEVEL), 0);
 }
 
-void 
-ask2(dst)
-	u_int32_t  dst;
+void
+ask2(u_int32_t dst)
 {
 	send_igmp(our_addr, dst, IGMP_DVMRP, DVMRP_ASK_NEIGHBORS2,
-			htonl(MROUTED_LEVEL), 0);
+	    htonl(MROUTED_LEVEL), 0);
 }
 
 /*
  * Process an incoming neighbor-list message.
  */
-void 
-accept_neighbors(src, dst, p, datalen, level)
-	u_int32_t	src, dst, level;
-	u_char	*p;
-	int     datalen;
+void
+accept_neighbors(u_int32_t src, u_int32_t dst, u_char *p, int datalen,
+    u_int32_t level)
 {
 	u_char *ep = p + datalen;
+
 #define GET_ADDR(a) (a = ((u_int32_t)*p++ << 24), a += ((u_int32_t)*p++ << 16),\
 		     a += ((u_int32_t)*p++ << 8), a += *p++)
 
 	printf("%s (%s):\n", inet_fmt(src, s1), inet_name(src));
 	while (p < ep) {
-		register u_int32_t laddr;
-		register u_char metric;
-		register u_char thresh;
-		register int ncount;
+		u_char metric, thresh;
+		u_int32_t laddr;
+		int ncount;
 
 		GET_ADDR(laddr);
 		laddr = htonl(laddr);
@@ -219,35 +210,35 @@ accept_neighbors(src, dst, p, datalen, level)
 			neighbor = htonl(neighbor);
 			printf("  %s -> ", inet_fmt(laddr, s1));
 			printf("%s (%s) [%d/%d]\n", inet_fmt(neighbor, s1),
-			       inet_name(neighbor), metric, thresh);
+			    inet_name(neighbor), metric, thresh);
 		}
 	}
 }
 
-void 
-accept_neighbors2(src, dst, p, datalen, level)
-	u_int32_t	src, dst, level;
-	u_char	*p;
-	int     datalen;
+void
+accept_neighbors2(u_int32_t src, u_int32_t dst, u_char *p, int datalen,
+    u_int32_t level)
 {
 	u_char *ep = p + datalen;
 	u_int broken_cisco = ((level & 0xffff) == 0x020a); /* 10.2 */
 	/* well, only possibly_broken_cisco, but that's too long to type. */
 
 	printf("%s (%s) [version %d.%d", inet_fmt(src, s1), inet_name(src),
-	       level & 0xff, (level >> 8) & 0xff);
-	if ((level >> 16) & NF_LEAF)   { printf (",leaf"); }
-	if ((level >> 16) & NF_PRUNE)  { printf (",prune"); }
-	if ((level >> 16) & NF_GENID)  { printf (",genid"); }
-	if ((level >> 16) & NF_MTRACE) { printf (",mtrace"); }
+	    level & 0xff, (level >> 8) & 0xff);
+	if ((level >> 16) & NF_LEAF)
+		printf (",leaf");
+	if ((level >> 16) & NF_PRUNE)
+		printf (",prune");
+	if ((level >> 16) & NF_GENID)
+		printf (",genid");
+	if ((level >> 16) & NF_MTRACE)
+		printf (",mtrace");
 	printf ("]:\n");
-	
+
 	while (p < ep) {
-		register u_char metric;
-		register u_char thresh;
-		register u_char flags;
-		register int ncount;
-		register u_int32_t laddr = *(u_int32_t*)p;
+		u_char metric, thresh, flags;
+		u_int32_t laddr = *(u_int32_t*)p;
+		int ncount;
 
 		p += 4;
 		metric = *p++;
@@ -259,11 +250,11 @@ accept_neighbors2(src, dst, p, datalen, level)
 		if (broken_cisco && ncount > 15)	/* dumb Ciscos */
 			ncount = ncount & 0xf;
 		while (--ncount >= 0 && p < ep) {
-			register u_int32_t neighbor = *(u_int32_t*)p;
+			u_int32_t neighbor = *(u_int32_t*)p;
 			p += 4;
 			printf("  %s -> ", inet_fmt(laddr, s1));
 			printf("%s (%s) [%d/%d", inet_fmt(neighbor, s1),
-			       inet_name(neighbor), metric, thresh);
+			    inet_name(neighbor), metric, thresh);
 			if (flags & DVMRP_NF_TUNNEL)
 				printf("/tunnel");
 			if (flags & DVMRP_NF_SRCRT)
@@ -283,13 +274,11 @@ accept_neighbors2(src, dst, p, datalen, level)
 	}
 }
 
-int 
-get_number(var, deflt, pargv, pargc)
-	int    *var, *pargc, deflt;
-	char ***pargv;
+int
+get_number(int *var, int deflt, char ***pargv, int *pargc)
 {
-	if ((*pargv)[0][2] == '\0') {	/* Get the value from the next
-					 * argument */
+	if ((*pargv)[0][2] == '\0') {
+		/* Get the value from the next argument */
 		if (*pargc > 1 && isdigit((*pargv)[1][0])) {
 			(*pargv)++, (*pargc)--;
 			*var = atoi((*pargv)[0]);
@@ -303,9 +292,8 @@ get_number(var, deflt, pargv, pargc)
 		if (isdigit((*pargv)[0][2])) {
 			*var = atoi((*pargv)[0] + 2);
 			return 1;
-		} else {
+		} else
 			return 0;
-		}
 	}
 }
 
@@ -318,17 +306,14 @@ usage()
 }
 
 int
-main(argc, argv)
-	int     argc;
-	char   *argv[];
+main(int argc, char *argv[])
 {
-	int tries;
-	int trynew;
+	int tries, trynew, curaddr, udp;
+	struct hostent *hp, bogus;
+	struct sockaddr_in addr;
+	socklen_t addrlen;
 	struct timeval et;
-	struct hostent *hp;
-	struct hostent bogus;
 	char *host;
-	int curaddr;
 
 	if (geteuid() != 0) {
 		fprintf(stderr, "mrinfo: must be root\n");
@@ -341,7 +326,8 @@ main(argc, argv)
 
 	setlinebuf(stderr);
 
-	argv++, argc--;
+	argv++;
+	argc--;
 	while (argc > 0 && argv[0][0] == '-') {
 		switch (argv[0][1]) {
 		case 'd':
@@ -392,12 +378,9 @@ main(argc, argv)
 
 	/* Check all addresses; mrouters often have unreachable interfaces */
 	for (curaddr = 0; hp->h_addr_list[curaddr] != NULL; curaddr++) {
-	    memcpy(&target_addr, hp->h_addr_list[curaddr], hp->h_length);
-	    {			/* Find a good local address for us. */
-		int     udp;
-		struct sockaddr_in addr;
-		int     addrlen = sizeof(addr);
-
+		memcpy(&target_addr, hp->h_addr_list[curaddr], hp->h_length);
+		/* Find a good local address for us. */
+		addrlen = sizeof(addr);
 		memset(&addr, 0, sizeof addr);
 		addr.sin_family = AF_INET;
 #if (defined(BSD) && (BSD >= 199103))
@@ -406,233 +389,232 @@ main(argc, argv)
 		addr.sin_addr.s_addr = target_addr;
 		addr.sin_port = htons(2000);	/* any port over 1024 will
 						 * do... */
-		if ((udp = socket(AF_INET, SOCK_DGRAM, 0)) < 0
-		|| connect(udp, (struct sockaddr *) & addr, sizeof(addr)) < 0
-		    || getsockname(udp, (struct sockaddr *) & addr, &addrlen) < 0) {
+		if ((udp = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ||
+		    connect(udp, (struct sockaddr *) & addr, sizeof(addr)) < 0 ||
+		    getsockname(udp, (struct sockaddr *) & addr, &addrlen) < 0) {
 			perror("Determining local address");
 			exit(1);
 		}
 		close(udp);
 		our_addr = addr.sin_addr.s_addr;
-	    }
 
-	    tries = 0;
-	    trynew = 1;
-	    /*
-	     * New strategy: send 'ask2' for two timeouts, then fall back
-	     * to 'ask', since it's not very likely that we are going to
-	     * find someone who only responds to 'ask' these days
-	     */
-	    ask2(target_addr);
+		tries = 0;
+		trynew = 1;
+		/*
+		 * New strategy: send 'ask2' for two timeouts, then fall back
+		 * to 'ask', since it's not very likely that we are going to
+		 * find someone who only responds to 'ask' these days
+		 */
+		ask2(target_addr);
 
-	    gettimeofday(&et, 0);
-	    et.tv_sec += timeout;
+		gettimeofday(&et, 0);
+		et.tv_sec += timeout;
 
-	    /* Main receive loop */
-	    for (;;) {
-		fd_set  fds;
-		struct timeval tv, now;
-		int     count, recvlen, dummy = 0;
-		register u_int32_t src, dst, group;
-		struct ip *ip;
-		struct igmp *igmp;
-		int     ipdatalen, iphdrlen, igmpdatalen;
+		/* Main receive loop */
+		for (;;) {
+			int count, recvlen, ipdatalen, iphdrlen, igmpdatalen;
+			u_int32_t src, dst, group;
+			struct timeval tv, now;
+			socklen_t dummy = 0;
+			struct igmp *igmp;
+			struct ip *ip;
+			fd_set  fds;
 
-		FD_ZERO(&fds);
-		if (igmp_socket >= FD_SETSIZE)
-			log(LOG_ERR, 0, "descriptor too big");
-		FD_SET(igmp_socket, &fds);
+			FD_ZERO(&fds);
+			if (igmp_socket >= FD_SETSIZE)
+				log(LOG_ERR, 0, "descriptor too big");
+			FD_SET(igmp_socket, &fds);
 
-		gettimeofday(&now, 0);
-		tv.tv_sec = et.tv_sec - now.tv_sec;
-		tv.tv_usec = et.tv_usec - now.tv_usec;
+			gettimeofday(&now, 0);
+			tv.tv_sec = et.tv_sec - now.tv_sec;
+			tv.tv_usec = et.tv_usec - now.tv_usec;
 
-		if (tv.tv_usec < 0) {
-			tv.tv_usec += 1000000L;
-			--tv.tv_sec;
-		}
-		if (tv.tv_sec < 0)
-			tv.tv_sec = tv.tv_usec = 0;
-
-		count = select(igmp_socket + 1, &fds, 0, 0, &tv);
-
-		if (count < 0) {
-			if (errno != EINTR)
-				perror("select");
-			continue;
-		} else if (count == 0) {
-			log(LOG_DEBUG, 0, "Timed out receiving neighbor lists");
-			if (++tries > retries)
-				break;
-			/* If we've tried ASK_NEIGHBORS2 twice with
-			 * no response, fall back to ASK_NEIGHBORS
-			 */
-			if (tries == 2 && target_level == 0)
-				trynew = 0;
-			if (target_level == 0 && trynew == 0)
-				ask(target_addr);
-			else
-				ask2(target_addr);
-			gettimeofday(&et, 0);
-			et.tv_sec += timeout;
-			continue;
-		}
-		recvlen = recvfrom(igmp_socket, recv_buf, RECV_BUF_SIZE,
-				   0, NULL, &dummy);
-		if (recvlen <= 0) {
-			if (recvlen && errno != EINTR)
-				perror("recvfrom");
-			continue;
-		}
-
-		if (recvlen < sizeof(struct ip)) {
-			log(LOG_WARNING, 0,
-			    "packet too short (%u bytes) for IP header",
-			    recvlen);
-			continue;
-		}
-		ip = (struct ip *) recv_buf;
-		if (ip->ip_p == 0)
-			continue;	/* Request to install cache entry */
-		src = ip->ip_src.s_addr;
-		dst = ip->ip_dst.s_addr;
-		iphdrlen = ip->ip_hl << 2;
-		ipdatalen = ntohs(ip->ip_len);
-		if (iphdrlen + ipdatalen != recvlen) {
-		    log(LOG_WARNING, 0,
-		      "packet shorter (%u bytes) than hdr+data length (%u+%u)",
-		      recvlen, iphdrlen, ipdatalen);
-		    continue;
-		}
-		igmp = (struct igmp *) (recv_buf + iphdrlen);
-		group = igmp->igmp_group.s_addr;
-		igmpdatalen = ipdatalen - IGMP_MINLEN;
-		if (igmpdatalen < 0) {
-		    log(LOG_WARNING, 0,
-			"IP data field too short (%u bytes) for IGMP, from %s",
-			ipdatalen, inet_fmt(src, s1));
-		    continue;
-		}
-		if (igmp->igmp_type != IGMP_DVMRP)
-			continue;
-
-		switch (igmp->igmp_code) {
-		case DVMRP_NEIGHBORS:
-		case DVMRP_NEIGHBORS2:
-			if (src != target_addr) {
-				fprintf(stderr, "mrinfo: got reply from %s",
-					inet_fmt(src, s1));
-				fprintf(stderr, " instead of %s\n",
-					inet_fmt(target_addr, s1));
-				/*continue;*/
+			if (tv.tv_usec < 0) {
+				tv.tv_usec += 1000000L;
+				--tv.tv_sec;
 			}
-			break;
-		default:
-			continue;	/* ignore all other DVMRP messages */
-		}
+			if (tv.tv_sec < 0)
+				tv.tv_sec = tv.tv_usec = 0;
 
-		switch (igmp->igmp_code) {
+			count = select(igmp_socket + 1, &fds, 0, 0, &tv);
 
-		case DVMRP_NEIGHBORS:
-			if (group) {
-				/* knows about DVMRP_NEIGHBORS2 msg */
-				if (target_level == 0) {
-					target_level = ntohl(group);
+			if (count < 0) {
+				if (errno != EINTR)
+					perror("select");
+				continue;
+			} else if (count == 0) {
+				log(LOG_DEBUG, 0,
+				    "Timed out receiving neighbor lists");
+				if (++tries > retries)
+					break;
+				/* If we've tried ASK_NEIGHBORS2 twice with
+				 * no response, fall back to ASK_NEIGHBORS
+				 */
+				if (tries == 2 && target_level == 0)
+					trynew = 0;
+				if (target_level == 0 && trynew == 0)
+					ask(target_addr);
+				else
 					ask2(target_addr);
+				gettimeofday(&et, 0);
+				et.tv_sec += timeout;
+				continue;
+			}
+			recvlen = recvfrom(igmp_socket, recv_buf, RECV_BUF_SIZE,
+			    0, NULL, &dummy);
+			if (recvlen <= 0) {
+				if (recvlen && errno != EINTR)
+					perror("recvfrom");
+				continue;
+			}
+
+			if (recvlen < sizeof(struct ip)) {
+				log(LOG_WARNING, 0,
+				    "packet too short (%u bytes) for IP header",
+				    recvlen);
+				continue;
+			}
+			ip = (struct ip *) recv_buf;
+			if (ip->ip_p == 0)
+				continue;	/* Request to install cache entry */
+			src = ip->ip_src.s_addr;
+			dst = ip->ip_dst.s_addr;
+			iphdrlen = ip->ip_hl << 2;
+			ipdatalen = ntohs(ip->ip_len);
+			if (iphdrlen + ipdatalen != recvlen) {
+				log(LOG_WARNING, 0,
+				    "packet shorter (%u bytes) than "
+				    "hdr+data length (%u+%u)",
+				    recvlen, iphdrlen, ipdatalen);
+				continue;
+			}
+			igmp = (struct igmp *) (recv_buf + iphdrlen);
+			group = igmp->igmp_group.s_addr;
+			igmpdatalen = ipdatalen - IGMP_MINLEN;
+			if (igmpdatalen < 0) {
+				log(LOG_WARNING, 0,
+				    "IP data field too short (%u bytes) "
+				    "for IGMP, from %s",
+				    ipdatalen, inet_fmt(src, s1));
+				continue;
+			}
+			if (igmp->igmp_type != IGMP_DVMRP)
+				continue;
+
+			switch (igmp->igmp_code) {
+			case DVMRP_NEIGHBORS:
+			case DVMRP_NEIGHBORS2:
+				if (src != target_addr) {
+					fprintf(stderr, "mrinfo: got reply from %s",
+					    inet_fmt(src, s1));
+					fprintf(stderr, " instead of %s\n",
+					    inet_fmt(target_addr, s1));
+					/*continue;*/
 				}
-			} else {
-				accept_neighbors(src, dst, (u_char *)(igmp + 1),
-						 igmpdatalen, ntohl(group));
+				break;
+			default:
+				continue;	/* ignore all other DVMRP messages */
+			}
+
+			switch (igmp->igmp_code) {
+			case DVMRP_NEIGHBORS:
+				if (group) {
+					/* knows about DVMRP_NEIGHBORS2 msg */
+					if (target_level == 0) {
+						target_level = ntohl(group);
+						ask2(target_addr);
+					}
+				} else {
+					accept_neighbors(src, dst, (u_char *)(igmp + 1),
+					    igmpdatalen, ntohl(group));
+					exit(0);
+				}
+				break;
+			case DVMRP_NEIGHBORS2:
+				accept_neighbors2(src, dst, (u_char *)(igmp + 1),
+				    igmpdatalen, ntohl(group));
 				exit(0);
 			}
-			break;
-
-		case DVMRP_NEIGHBORS2:
-			accept_neighbors2(src, dst, (u_char *)(igmp + 1),
-					  igmpdatalen, ntohl(group));
-			exit(0);
 		}
-	    }
 	}
 	exit(1);
 }
 
 /* dummies */
-void accept_probe(src, dst, p, datalen, level)
-	u_int32_t src, dst, level;
-	char *p;
-	int datalen;
+void
+accept_probe(u_int32_t src, u_int32_t dst, char *p, int datalen,
+    u_int32_t level)
 {
 }
-void accept_group_report(src, dst, group, r_type)
-	u_int32_t src, dst, group;
-	int r_type;
+
+void
+accept_group_report(u_int32_t src, u_int32_t dst, u_int32_t group, int r_type)
 {
 }
-void accept_neighbor_request2(src, dst)
-	u_int32_t src, dst;
+
+void
+accept_neighbor_request2(u_int32_t src, u_int32_t dst)
 {
 }
-void accept_report(src, dst, p, datalen, level)
-	u_int32_t src, dst, level;
-	char *p;
-	int datalen;
+
+void
+accept_report(u_int32_t src, u_int32_t dst, char *p, int datalen,
+    u_int32_t level)
 {
 }
-void accept_neighbor_request(src, dst)
-	u_int32_t src, dst;
+
+void
+accept_neighbor_request(u_int32_t src, u_int32_t dst)
 {
 }
-void accept_prune(src, dst, p, datalen)
-	u_int32_t src, dst;
-	char *p;
-	int datalen;
+
+void
+accept_prune(u_int32_t src, u_int32_t dst, char *p, int datalen)
 {
 }
-void accept_graft(src, dst, p, datalen)
-	u_int32_t src, dst;
-	char *p;
-	int datalen;
+
+void
+accept_graft(u_int32_t src, u_int32_t dst, char *p, int datalen)
 {
 }
-void accept_g_ack(src, dst, p, datalen)
-	u_int32_t src, dst;
-	char *p;
-	int datalen;
+
+void
+accept_g_ack(u_int32_t src, u_int32_t dst, char *p, int datalen)
 {
 }
-void add_table_entry(origin, mcastgrp)
-	u_int32_t origin, mcastgrp;
+
+void
+add_table_entry(u_int32_t origin, u_int32_t mcastgrp)
 {
 }
-void check_vif_state()
+
+void
+check_vif_state(void)
 {
 }
-void accept_leave_message(src, dst, group)
-	u_int32_t src, dst, group;
+
+void
+accept_leave_message(u_int32_t src, u_int32_t dst, u_int32_t group)
 {
 }
-void accept_mtrace(src, dst, group, data, no, datalen)
-	u_int32_t src, dst, group;
-	char *data;
-	u_int no;
-	int datalen;
+
+void
+accept_mtrace(u_int32_t src, u_int32_t dst, u_int32_t group, char *data,
+    u_int no, int datalen)
 {
 }
-void accept_membership_query(src, dst, group, tmo)
-	u_int32_t src, dst, group;
-	int tmo;
+
+void
+accept_membership_query(u_int32_t src, u_int32_t dst, u_int32_t group, int tmo)
 {
 }
-void accept_info_request(src, dst, p, datalen)
-	u_int32_t src, dst;
-	u_char *p;
-	int datalen;
+
+void
+accept_info_request(u_int32_t src, u_int32_t dst, u_char *p, int datalen)
 {
 }
-void accept_info_reply(src, dst, p, datalen)
-	u_int32_t src, dst;
-	u_char *p;
-	int datalen;
+
+void
+accept_info_reply(u_int32_t src, u_int32_t dst, u_char *p, int datalen)
 {
 }
