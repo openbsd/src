@@ -1,7 +1,7 @@
-#	$OpenBSD: gettytab,v 1.3 1998/06/08 18:03:34 deraadt Exp $
+#	$OpenBSD: gettytab,v 1.4 2000/09/08 02:27:36 pjanzen Exp $
 #
-# Most of the table entries here are just copies of the old getty table,
-# it is by no means certain, or even likely, that any of them are optimal
+# Most of the table entries here are just copies of the old getty table.
+# It is by no means certain, or even likely, that any of them are optimal
 # for any purpose whatever.  Nor is it likely that more than a couple are
 # even correct.
 #
@@ -119,7 +119,7 @@ S|suncons|Sun Console:\
 	:np:sp#9600:
 
 #
-# Wierdo special case for fast crt's with hardcopy devices
+# Weirdo special case for fast crt's with hardcopy devices
 #
 8|T9600|CRT with hardcopy:\
 	:nx=T300:tc=9600-baud:
