@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.c,v 1.18 1996/12/12 07:44:55 deraadt Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.19 1997/01/04 14:05:50 niklas Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.14 1996/05/12 23:06:18 mycroft Exp $	*/
 
 /*-
@@ -340,7 +340,6 @@ isa_attach_hook(parent, self, iba)
 	struct device *parent, *self;
 	struct isabus_attach_args *iba;
 {
-
 	/* Nothing to do. */
 }
 
