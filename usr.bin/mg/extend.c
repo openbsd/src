@@ -1,4 +1,4 @@
-/*	$OpenBSD: extend.c,v 1.6 2001/01/29 01:58:07 niklas Exp $	*/
+/*	$OpenBSD: extend.c,v 1.7 2001/05/23 16:13:59 art Exp $	*/
 
 /*
  *	Extended (M-X) commands, rebinding, and	startup file processing.
@@ -87,7 +87,7 @@ remap(curmap, c, funct, pref_map)
 	KEYMAP *curmap;		/* pointer to the map being changed */
 	int     c;		/* character being changed */
 	PF      funct;		/* function being changed to */
-	KEYMAP *pref_map;	/* if funct==prefix, map to bind to or
+	KEYMAP *pref_map;	/* if funct==NULL, map to bind to or
 				   NULL for new */
 {
 	int		 i, n1, n2, nold;
@@ -96,13 +96,13 @@ remap(curmap, c, funct, pref_map)
 	MAP_ELEMENT	*mep;
 
 	if (ele >= &curmap->map_element[curmap->map_num] || c < ele->k_base) {
-		if (ele > &curmap->map_element[0] && (funct != prefix ||
+		if (ele > &curmap->map_element[0] && (funct != NULL ||
 		    (ele - 1)->k_prefmap == NULL))
 			n1 = c - (ele - 1)->k_num;
 		else
 			n1 = HUGE;
 		if (ele < &curmap->map_element[curmap->map_num] &&
-		    (funct != prefix || ele->k_prefmap == NULL))
+		    (funct != NULL || ele->k_prefmap == NULL))
 			n2 = ele->k_base - c;
 		else
 			n2 = HUGE;
@@ -157,7 +157,7 @@ remap(curmap, c, funct, pref_map)
 			ele->k_prefmap = NULL;
 			curmap->map_num++;
 		}
-		if (funct == prefix) {
+		if (funct == NULL) {
 			if (pref_map != NULL) {
 				ele->k_prefmap = pref_map;
 			} else {
@@ -176,16 +176,16 @@ remap(curmap, c, funct, pref_map)
 		}
 	} else {
 		n1 = c - ele->k_base;
-		if (ele->k_funcp[n1] == funct && (funct != prefix ||
+		if (ele->k_funcp[n1] == funct && (funct != NULL ||
 		    pref_map == NULL || pref_map == ele->k_prefmap))
 			/* no change */
 			return TRUE;
-		if (funct != prefix || ele->k_prefmap == NULL) {
-			if (ele->k_funcp[n1] == prefix)
+		if (funct != NULL || ele->k_prefmap == NULL) {
+			if (ele->k_funcp[n1] == NULL)
 				ele->k_prefmap = (KEYMAP *) NULL;
 			/* easy case */
 			ele->k_funcp[n1] = funct;
-			if (funct == prefix) {
+			if (funct == NULL) {
 				if (pref_map != NULL)
 					ele->k_prefmap = pref_map;
 				else {
@@ -211,7 +211,7 @@ remap(curmap, c, funct, pref_map)
 			 */
 			n2 = 1;
 			for (i = 0; n2 && i < n1; i++)
-				n2 &= ele->k_funcp[i] != prefix;
+				n2 &= ele->k_funcp[i] != NULL;
 			if (curmap->map_num >= curmap->map_max &&
 			    (curmap = realocmap(curmap)) == NULL)
 				return FALSE;
@@ -220,7 +220,7 @@ remap(curmap, c, funct, pref_map)
 				ewprintf("Out of memory");
 				return FALSE;
 			}
-			ele->k_funcp[n1] = prefix;
+			ele->k_funcp[n1] = NULL;
 			for (i = n1 + n2; i <= ele->k_num - ele->k_base; i++)
 				pfp[i - n1 - n2] = ele->k_funcp[i];
 			for (mep = &curmap->map_element[curmap->map_num];
@@ -340,8 +340,8 @@ dobind(curmap, p, unbind)
 	if (inmacro) {
 		for (s = 0; s < maclcur->l_used - 1; s++) {
 			if (doscan(curmap, c = CHARMASK(maclcur->l_text[s]))
-			    != prefix) {
-				if (remap(curmap, c, prefix, (KEYMAP *)NULL)
+			    != NULL) {
+				if (remap(curmap, c, NULL, (KEYMAP *)NULL)
 				    != TRUE)
 					return FALSE;
 			}
@@ -358,7 +358,7 @@ dobind(curmap, p, unbind)
 			ewprintf("%s", prompt);
 			pep[-1] = ' ';
 			pep = keyname(pep, c = getkey(FALSE));
-			if (doscan(curmap, c) != prefix)
+			if (doscan(curmap, c) != NULL)
 				break;
 			*pep++ = '-';
 			*pep = '\0';
@@ -373,7 +373,7 @@ dobind(curmap, p, unbind)
 		if ((s = eread("%s to command: ", prompt, 80, EFFUNC | EFNEW,
 		    prompt)) != TRUE)
 			return s;
-		if (((funct = name_function(prompt)) == prefix) ?
+		if (((funct = name_function(prompt)) == NULL) ?
 		    (pref_map = name_map(prompt)) == NULL : funct == NULL) {
 			ewprintf("[No match]");
 			return FALSE;
@@ -403,14 +403,14 @@ bindkey(mapp, fname, keys, kcount)
 
 	if (fname == NULL)
 		funct = rescan;
-	else if (((funct = name_function(fname)) == prefix) ?
+	else if (((funct = name_function(fname)) == NULL) ?
 	    (pref_map = name_map(fname)) == NULL : funct == NULL) {
 		ewprintf("[No match: %s]", fname);
 		return FALSE;
 	}
 	while (--kcount) {
-		if (doscan(curmap, c = *keys++) != prefix) {
-			if (remap(curmap, c, prefix, (KEYMAP *)NULL) != TRUE)
+		if (doscan(curmap, c = *keys++) != NULL) {
+			if (remap(curmap, c, NULL, (KEYMAP *)NULL) != TRUE)
 				return FALSE;
 		}
 		curmap = ele->k_prefmap;

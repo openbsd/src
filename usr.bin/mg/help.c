@@ -1,4 +1,4 @@
-/*	$OpenBSD: help.c,v 1.4 2001/01/29 01:58:07 niklas Exp $	*/
+/*	$OpenBSD: help.c,v 1.5 2001/05/23 16:14:00 art Exp $	*/
 
 /*
  * Help functions for Mg 2 
@@ -52,7 +52,7 @@ desckey(f, n)
 			pep[-1] = ' ';
 			pep = keyname(pep, key.k_chars[key.k_count++] =
 			    c = getkey(FALSE));
-			if ((funct = doscan(curmap, c)) != prefix)
+			if ((funct = doscan(curmap, c)) != NULL)
 				break;
 			*pep++ = '-';
 			*pep = '\0';
@@ -63,7 +63,7 @@ desckey(f, n)
 		if (ISUPPER(key.k_chars[key.k_count - 1])) {
 			funct = doscan(curmap,
 			    TOLOWER(key.k_chars[key.k_count - 1]));
-			if (funct == prefix) {
+			if (funct == NULL) {
 				*pep++ = '-';
 				*pep = '\0';
 				curmap = ele->k_prefmap;
@@ -78,7 +78,7 @@ nextmode:
 		curmap = curbp->b_modes[m]->p_map;
 		for (i = 0; i < key.k_count; i++) {
 			funct = doscan(curmap, key.k_chars[i]);
-			if (funct != prefix) {
+			if (funct != NULL) {
 				if (i == key.k_count - 1 && funct != rescan)
 					goto found;
 				funct = rescan;
@@ -162,7 +162,7 @@ showall(ind, map)
 		for (i = ele->k_base; i <= last; i++) {
 			functp = ele->k_funcp[i - ele->k_base];
 			if (functp != rescan) {
-				if (functp != prefix)
+				if (functp != NULL)
 					cp2 = function_name(functp);
 				else
 					cp2 = map_name(ele->k_prefmap);
@@ -182,7 +182,7 @@ showall(ind, map)
 	    ele < &map->map_element[map->map_num]; ele++) {
 		if (ele->k_prefmap != NULL) {
 			for (i = ele->k_base;
-			    ele->k_funcp[i - ele->k_base] != prefix; i++) {
+			    ele->k_funcp[i - ele->k_base] != NULL; i++) {
 				if (i >= ele->k_num)
 					/* damaged map */
 					return FALSE;
@@ -275,7 +275,7 @@ findbind(funct, ind, map)
 		last = ele->k_num;
 		for (i = ele->k_base; i <= last; i++) {
 			if (funct == ele->k_funcp[i - ele->k_base]) {
-				if (funct == prefix) {
+				if (funct == NULL) {
 					cp = map_name(ele->k_prefmap);
 					if (!cp ||
 					    strncmp(cp, buf2, strlen(cp)) != 0)
@@ -290,7 +290,7 @@ findbind(funct, ind, map)
 	    ele < &map->map_element[map->map_num]; ele++) {
 		if (ele->k_prefmap != NULL) {
 			for (i = ele->k_base;
-			    ele->k_funcp[i - ele->k_base] != prefix; i++) {
+			    ele->k_funcp[i - ele->k_base] != NULL; i++) {
 				if (i >= ele->k_num)
 					/* damaged */
 					return;

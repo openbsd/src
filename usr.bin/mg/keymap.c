@@ -1,4 +1,4 @@
-/*	$OpenBSD: keymap.c,v 1.5 2001/01/29 01:58:08 niklas Exp $	*/
+/*	$OpenBSD: keymap.c,v 1.6 2001/05/23 16:14:00 art Exp $	*/
 
 /*
  * Keyboard maps.  This is character set dependent.  The terminal specific 
@@ -133,7 +133,7 @@ static PF cX0[] = {
 	onlywind,		/* 1 */
 	splitwind,		/* 2 */
 	rescan,			/* 3 */
-	prefix,			/* 4 */
+	NULL,			/* 4 */
 };
 
 static PF cXeq[] = {
@@ -322,7 +322,7 @@ static PF fund_at[] = {
 	forwchar,		/* ^F */
 	ctrlg,			/* ^G */
 #ifndef NO_HELP
-	prefix,			/* ^H */
+	NULL,			/* ^H */
 #else /* !NO_HELP */
 	rescan,			/* ^H */
 #endif /* !NO_HELP */
@@ -344,13 +344,13 @@ static PF fund_CJ[] = {
 	universal_argument,	/* ^U */
 	forwpage,		/* ^V */
 	killregion,		/* ^W */
-	prefix,			/* ^X */
+	NULL,			/* ^X */
 	yank,			/* ^Y */
 	spawncli,		/* ^Z */
 };
 
 static PF fund_esc[] = {
-	prefix,			/* esc */
+	NULL,			/* esc */
 	rescan,			/* ^\ selfinsert is default on fundamental */
 	rescan,			/* ^] */
 	rescan,			/* ^^ */
@@ -482,7 +482,7 @@ static PF dirednul[] = {
 	forwchar,		/* ^F */
 	ctrlg,			/* ^G */
 #ifndef NO_HELP
-	prefix,			/* ^H */
+	NULL,			/* ^H */
 #endif /* !NO_HELP */
 };
 
@@ -499,12 +499,12 @@ static PF diredcl[] = {
 	universal_argument,	/* ^U */
 	forwpage,		/* ^V */
 	rescan,			/* ^W */
-	prefix,			/* ^X */
+	NULL,			/* ^X */
 };
 
 static PF diredcz[] = {
 	spawncli,		/* ^Z */
-	prefix,			/* esc */
+	NULL,			/* esc */
 	rescan,			/* ^\ */
 	rescan,			/* ^] */
 	rescan,			/* ^^ */
@@ -651,7 +651,7 @@ name_map(name)
 
 /*
  * Warning: functnames MUST be in alphabetical order!  (due to binary search
- * in name_function.)  If the function is prefix, it must be listed with the
+ * in name_function.)  If the function is NULL, it must be listed with the
  * same name in the map_table above.
  */
 FUNCTNAMES functnames[] = {
@@ -671,8 +671,8 @@ FUNCTNAMES functnames[] = {
 #ifdef BSMAP
 	{bsmap, "bsmap-mode"},
 #endif /* BSMAP */
-	{prefix, "c-x 4 prefix"},
-	{prefix, "c-x prefix"},
+	{NULL, "c-x 4 prefix"},
+	{NULL, "c-x prefix"},
 #ifndef NO_MACRO
 	{executemacro, "call-last-kbd-macro"},
 #endif /* !NO_MACRO */
@@ -722,18 +722,18 @@ FUNCTNAMES functnames[] = {
 	{gotoeob, "end-of-buffer"},
 	{gotoeol, "end-of-line"},
 	{enlargewind, "enlarge-window"},
-	{prefix, "esc prefix"},
+	{NULL, "esc prefix"},
 #ifndef NO_STARTUP
 	{evalbuffer, "eval-current-buffer"},
 	{evalexpr, "eval-expression"},
 #endif /* !NO_STARTUP */
 	{swapmark, "exchange-point-and-mark"},
 	{extend, "execute-extended-command"},
-	{prefix, "extra prefix 1"},
-	{prefix, "extra prefix 2"},
-	{prefix, "extra prefix 3"},
-	{prefix, "extra prefix 4"},
-	{prefix, "extra prefix 5"},
+	{NULL, "extra prefix 1"},
+	{NULL, "extra prefix 2"},
+	{NULL, "extra prefix 3"},
+	{NULL, "extra prefix 4"},
+	{NULL, "extra prefix 5"},
 	{fillpara, "fill-paragraph"},
 	{filevisit, "find-file"},
 	{poptofile, "find-file-other-window"},
@@ -744,7 +744,7 @@ FUNCTNAMES functnames[] = {
 	{unbindtokey, "global-unset-key"},
 	{gotoline, "goto-line"},
 #ifndef NO_HELP
-	{prefix, "help"},
+	{NULL, "help"},
 	{help_help, "help-help"},
 #endif /* !NO_HELP */
 	{insert, "insert"},
@@ -1010,7 +1010,7 @@ function_name(fpoint)
 {
 	FUNCTNAMES	*fnp = &functnames[0];
 
-	if (fpoint == prefix)
+	if (fpoint == NULL)
 		/* ambiguous */
 		return (char *)NULL;
 	do {

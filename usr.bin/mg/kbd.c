@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd.c,v 1.5 2001/05/03 20:40:22 art Exp $	*/
+/*	$OpenBSD: kbd.c,v 1.6 2001/05/23 16:14:00 art Exp $	*/
 
 /*
  *	Terminal independent keyboard handling.
@@ -160,7 +160,7 @@ doin()
 	curmap = curbp->b_modes[curbp->b_nmodes]->p_map;
 	key.k_count = 0;
 	while ((funct = doscan(curmap, (key.k_chars[key.k_count++] =
-	    getkey(TRUE)))) == prefix)
+	    getkey(TRUE)))) == NULL)
 		curmap = ele->k_prefmap;
 #ifndef NO_MACRO
 	if (macrodef && macrocount < MAXMACRO)
@@ -185,15 +185,15 @@ rescan(f, n)
 			curmap = curbp->b_modes[mode]->p_map;
 			for (i = 0; i < key.k_count - 1; i++) {
 				if ((fp = doscan(curmap, (key.k_chars[i]))) 
-				    != prefix)
+				    != NULL)
 					break;
 				curmap = ele->k_prefmap;
 			}
-			if (fp == prefix) {
-				if ((fp = doscan(curmap, c)) == prefix)
+			if (fp == NULL) {
+				if ((fp = doscan(curmap, c)) == NULL)
 					while ((fp = doscan(curmap,
 					    key.k_chars[key.k_count++] =
-					    getkey(TRUE))) == prefix)
+					    getkey(TRUE))) == NULL)
 						curmap = ele->k_prefmap;
 				if (fp != rescan) {
 #ifndef NO_MACRO
@@ -210,13 +210,13 @@ rescan(f, n)
 			return ABORT;
 		curmap = curbp->b_modes[mode]->p_map;
 		for (i = 0; i < key.k_count; i++) {
-			if ((fp = doscan(curmap, (key.k_chars[i]))) != prefix)
+			if ((fp = doscan(curmap, (key.k_chars[i]))) != NULL)
 				break;
 			curmap = ele->k_prefmap;
 		}
-		if (fp == prefix) {
+		if (fp == NULL) {
 			while ((fp = doscan(curmap, key.k_chars[i++] = 
-			    getkey(TRUE))) == prefix)
+			    getkey(TRUE))) == NULL)
 				curmap = ele->k_prefmap;
 			key.k_count = i;
 		}
@@ -249,7 +249,7 @@ universal_argument(f, n)
 		if (c >= '0' && c <= '9')
 			return digit_argument(f, nn);
 		curmap = curbp->b_modes[curbp->b_nmodes]->p_map;
-		while ((funct = doscan(curmap, c)) == prefix) {
+		while ((funct = doscan(curmap, c)) == NULL) {
 			curmap = ele->k_prefmap;
 			key.k_chars[key.k_count++] = c = getkey(TRUE);
 		}
@@ -288,7 +288,7 @@ digit_argument(f, n)
 	key.k_chars[0] = c;
 	key.k_count = 1;
 	curmap = curbp->b_modes[curbp->b_nmodes]->p_map;
-	while ((funct = doscan(curmap, c)) == prefix) {
+	while ((funct = doscan(curmap, c)) == NULL) {
 		curmap = ele->k_prefmap;
 		key.k_chars[key.k_count++] = c = getkey(TRUE);
 	}
@@ -328,7 +328,7 @@ negative_argument(f, n)
 	key.k_chars[0] = c;
 	key.k_count = 1;
 	curmap = curbp->b_modes[curbp->b_nmodes]->p_map;
-	while ((funct = doscan(curmap, c)) == prefix) {
+	while ((funct = doscan(curmap, c)) == NULL) {
 		curmap = ele->k_prefmap;
 		key.k_chars[key.k_count++] = c = getkey(TRUE);
 	}
