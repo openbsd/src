@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpleaps.c,v 1.4 2002/08/01 06:26:57 jakob Exp $	*/
+/*	$OpenBSD: ntpleaps.c,v 1.5 2002/08/03 12:20:34 jakob Exp $	*/
 
 /*
  * Copyright (c) 2002 by Thorsten "mirabile" Glaser <x86@ePOST.de>
@@ -21,7 +21,7 @@
 
 /* Leap second support for NTP clients (generic) */
 
-static const char RCSId[] = "$OpenBSD: ntpleaps.c,v 1.4 2002/08/01 06:26:57 jakob Exp $";
+static const char RCSId[] = "$OpenBSD: ntpleaps.c,v 1.5 2002/08/03 12:20:34 jakob Exp $";
 
 
 /*
@@ -154,7 +154,11 @@ ntpleaps_read(void)
 
 	/* Now go parse the tzfile leap second info */
 	for (m1 = 0; m1 < r; m1++) {
-		read(fd, buf, 8);
+		if (read(fd, buf, 8) != 8) {
+			free(l);
+			close(fd);
+			return (-1);
+		}
 		s = SEC_TO_TAI64(read_be_dword(buf));
 		/*
 		 * Assume just _one_ leap second on each entry, and compensate
