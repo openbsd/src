@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: bundle.c,v 1.4 1998/10/29 23:48:19 brian Exp $
+ *	$Id: bundle.c,v 1.5 1998/12/10 18:40:41 brian Exp $
  */
 
 #include <sys/param.h>
@@ -1728,4 +1728,18 @@ bundle_HighestState(struct bundle *bundle)
       result = dl->state;
 
   return result;
+}
+
+int
+bundle_Exception(struct bundle *bundle, int fd)
+{
+  struct datalink *dl;
+
+  for (dl = bundle->links; dl; dl = dl->next)
+    if (dl->physical->fd == fd) {
+      datalink_Down(dl, CLOSE_NORMAL);
+      return 1;
+    }
+
+  return 0;
 }
