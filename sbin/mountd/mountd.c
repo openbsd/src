@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.60 2003/09/26 16:09:27 deraadt Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.61 2003/10/09 20:33:14 millert Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -939,7 +939,7 @@ get_exportlist(void)
 			if (hpe == NULL)
 				out_of_mem();
 			hpe->h_name = strdup("Default");
-			if (hpe->h_name == NULL);
+			if (hpe->h_name == NULL)
 				out_of_mem();
 			hpe->h_addrtype = AF_INET;
 			hpe->h_length = sizeof (u_int32_t);
