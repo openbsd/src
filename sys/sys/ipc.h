@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipc.h,v 1.8 2003/06/02 23:28:21 millert Exp $	*/
+/*	$OpenBSD: ipc.h,v 1.9 2004/07/14 23:45:11 millert Exp $	*/
 /*	$NetBSD: ipc.h,v 1.15 1996/02/09 18:25:12 christos Exp $	*/
 
 /*
@@ -65,6 +65,16 @@ struct oipc_perm {
 	unsigned short	uid;	/* user id */
 	unsigned short	gid;	/* group id */
 	unsigned short	mode;	/* r/w permission */
+	unsigned short	seq;	/* sequence # (to generate unique msg/sem/shm id) */
+	key_t		key;	/* user specified msg/sem/shm key */
+};
+
+struct ipc_perm35 {
+	uid_t		cuid;	/* creator user id */
+	gid_t		cgid;	/* creator group id */
+	uid_t		uid;	/* user id */
+	gid_t		gid;	/* group id */
+	u_int16_t	mode;	/* r/w permission */
 	unsigned short	seq;	/* sequence # (to generate unique msg/sem/shm id) */
 	key_t		key;	/* user specified msg/sem/shm key */
 };

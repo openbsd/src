@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.73 2004/07/14 18:00:48 millert Exp $
+;	$OpenBSD: syscalls.master,v 1.74 2004/07/14 23:45:11 millert Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -497,20 +497,20 @@
 255	STD		{ pid_t sys_getsid(pid_t pid); }
 256	STD		{ int sys_msync(void *addr, size_t len, int flags); }
 #ifdef SYSVSEM
-257	STD		{ int sys___semctl(int semid, int semnum, int cmd, \
-			    union semun *arg); }
+257	COMPAT_35	{ int sys___semctl(int semid, int semnum, int cmd, \
+			    union semun *arg); } semctl35
 #else
 257	UNIMPL
 #endif
 #ifdef SYSVSHM
-258	STD		{ int sys_shmctl(int shmid, int cmd, \
-			    struct shmid_ds *buf); }
+258	COMPAT_35	{ int sys_shmctl(int shmid, int cmd, \
+			    struct shmid_ds35 *buf); } shmctl35
 #else
 258	UNIMPL
 #endif
 #ifdef SYSVMSG
-259	STD		{ int sys_msgctl(int msqid, int cmd, \
-			    struct msqid_ds *buf); }
+259	COMPAT_35	{ int sys_msgctl(int msqid, int cmd, \
+			    struct msqid_ds35 *buf); } msgctl35
 #else
 259	UNIMPL
 #endif
@@ -598,3 +598,21 @@
 293	STD		{ int sys_lstat(const char *path, struct stat *ub); }
 294	STD		{ int sys_fhstat(const fhandle_t *fhp, \
 			    struct stat *sb); }
+#ifdef SYSVSEM
+295	STD		{ int sys___semctl(int semid, int semnum, int cmd, \
+			    union semun *arg); }
+#else
+295	UNIMPL
+#endif
+#ifdef SYSVSHM
+296	STD		{ int sys_shmctl(int shmid, int cmd, \
+			    struct shmid_ds *buf); }
+#else
+296	UNIMPL
+#endif
+#ifdef SYSVMSG
+297	STD		{ int sys_msgctl(int msqid, int cmd, \
+			    struct msqid_ds *buf); }
+#else
+297	UNIMPL
+#endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: shm.h,v 1.17 2004/07/14 23:40:27 millert Exp $	*/
+/*	$OpenBSD: shm.h,v 1.18 2004/07/14 23:45:11 millert Exp $	*/
 /*	$NetBSD: shm.h,v 1.20 1996/04/09 20:55:35 cgd Exp $	*/
 
 /*
@@ -119,6 +119,18 @@ struct oshmid_ds {
 	time_t		shm_dtime;	/* time of last shmdt() */
 	time_t		shm_ctime;	/* time of last change by shmctl() */
 	void		*shm_internal;	/* implementation specific data */
+};
+
+struct shmid_ds35 {
+	struct ipc_perm35 shm_perm;	/* operation permission structure */
+	int		  shm_segsz;	/* size of segment in bytes */
+	pid_t		  shm_lpid;	/* process ID of last shm op */
+	pid_t		  shm_cpid;	/* process ID of creator */
+	shmatt_t	  shm_nattch;	/* number of current attaches */
+	time_t		  shm_atime;	/* time of last shmat() */
+	time_t		  shm_dtime;	/* time of last shmdt() */
+	time_t		  shm_ctime;	/* time of last change by shmctl() */
+	void		  *shm_internal;/* implementation specific data */
 };
 #endif
 
