@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.100 2004/12/01 16:25:20 jmc Exp $
+.\"	$OpenBSD: afterboot.8,v 1.101 2004/12/13 14:00:07 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Marshall M. Midden
 .\" All rights reserved.
@@ -248,9 +248,7 @@ after you flush the routes.
 If you wish to route packets between interfaces, add the directive
 .Pp
 .Dl net.inet.ip.forwarding=1
-.Pp
 or
-.Pp
 .Dl net.inet6.ip6.forwarding=1
 .Pp
 to
@@ -879,6 +877,7 @@ boot time in the kernel image.
 .Xr printcap 5 ,
 .Xr resolv.conf 5 ,
 .Xr ssh_config 5 ,
+.Xr hier 7 ,
 .Xr hostname 7 ,
 .Xr packages 7 ,
 .Xr ports 7 ,

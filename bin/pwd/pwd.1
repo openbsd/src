@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pwd.1,v 1.10 2003/06/02 23:32:09 millert Exp $
+.\"	$OpenBSD: pwd.1,v 1.11 2004/12/13 14:00:07 jmc Exp $
 .\"	$NetBSD: pwd.1,v 1.10 1995/09/07 06:47:30 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -52,6 +52,9 @@ and Korn shell
 .Pq Xr ksh 1
 have their own built-in version of
 .Nm pwd .
+For an explanation of the directory hierarchy,
+see
+.Xr hier 7 .
 .Pp
 The
 .Nm
@@ -61,7 +64,8 @@ utility exits 0 on success or >0 if an error occurred.
 .Xr csh 1 ,
 .Xr ksh 1 ,
 .Xr sh 1 ,
-.Xr getcwd 3
+.Xr getcwd 3 ,
+.Xr hier 7
 .Sh STANDARDS
 The
 .Nm
