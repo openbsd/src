@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_signal.c,v 1.8 1997/09/15 06:04:58 millert Exp $	 */
+/*	$OpenBSD: svr4_signal.c,v 1.9 1998/12/22 07:58:46 deraadt Exp $	 */
 /*	$NetBSD: svr4_signal.c,v 1.24 1996/12/06 03:21:53 christos Exp $	 */
 
 /*
@@ -282,6 +282,9 @@ svr4_sys_sigaction(p, v, retval)
 	caddr_t sg;
 	int error;
 
+	if (SCARG(uap, signum) < 0 || SCARG(uap, signum) >= SVR4_NSIG)
+		return (EINVAL);
+
 	sg = stackgap_init(p->p_emul);
 	nssa = SCARG(uap, nsa);
 	ossa = SCARG(uap, osa);
@@ -384,16 +387,17 @@ svr4_sys_signal(p, v, retval)
 		syscallarg(int) signum;
 		syscallarg(svr4_sig_t) handler;
 	} */ *uap = v;
-	int signum = svr4_to_bsd_sig[SVR4_SIGNO(SCARG(uap, signum))];
-	int error;
+	int signum, error;
 	caddr_t sg = stackgap_init(p->p_emul);
 
-	if (signum <= 0 || signum >= SVR4_NSIG) {
+	signum = SVR4_SIGNO(SCARG(uap, signum));
+	if (signum < 0 || signum >= SVR4_NSIG) {
 		if (SVR4_SIGCALL(SCARG(uap, signum)) == SVR4_SIGNAL_MASK ||
 		    SVR4_SIGCALL(SCARG(uap, signum)) == SVR4_SIGDEFER_MASK)
 			*retval = (int)SVR4_SIG_ERR;
 		return EINVAL;
 	}
+	signum = svr4_to_bsd_sig[signum];
 
 	switch (SVR4_SIGCALL(SCARG(uap, signum))) {
 	case SVR4_SIGDEFER_MASK:
@@ -619,6 +623,8 @@ svr4_sys_kill(p, v, retval)
 	} */ *uap = v;
 	struct sys_kill_args ka;
 
+	if (SCARG(uap, signum) < 0 || SCARG(uap, signum) >= SVR4_NSIG)
+		return (EINVAL);
 	SCARG(&ka, pid) = SCARG(uap, pid);
 	SCARG(&ka, signum) = svr4_to_bsd_sig[SCARG(uap, signum)];
 	return sys_kill(p, &ka, retval);

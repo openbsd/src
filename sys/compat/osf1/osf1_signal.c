@@ -1,4 +1,4 @@
-/*	$OpenBSD: osf1_signal.c,v 1.6 1998/02/17 01:48:07 millert Exp $	*/
+/*	$OpenBSD: osf1_signal.c,v 1.7 1998/12/22 07:58:45 deraadt Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -239,6 +239,9 @@ osf1_sys_sigaction(p, v, retval)
 	caddr_t sg;
 	int error;
 
+	if (SCARG(uap, signum) < 0 || SCARG(uap, signum) >= OSF1_NSIG)
+		return (EINVAL);
+
 	sg = stackgap_init(p->p_emul);
 	nosa = SCARG(uap, nsa);
 	oosa = SCARG(uap, osa);
@@ -339,16 +342,17 @@ osf1_sys_signal(p, v, retval)
 		syscallarg(int) signum;
 		syscallarg(osf1_sig_t) handler;
 	} */ *uap = v;
-	int signum = osf1_to_bsd_sig[OSF1_SIGNO(SCARG(uap, signum))];
-	int error;
+	int signum, error;
 	caddr_t sg = stackgap_init(p->p_emul);
 
-	if (signum <= 0 || signum >= OSF1_NSIG) {
+	int signum = OSF1_SIGNO(SCARG(uap, signum));
+	if (signum < 0 || signum >= OSF1_NSIG) {
 		if (OSF1_SIGCALL(SCARG(uap, signum)) == OSF1_SIGNAL_MASK ||
 		    OSF1_SIGCALL(SCARG(uap, signum)) == OSF1_SIGDEFER_MASK)
 			*retval = (int)OSF1_SIG_ERR;
 		return EINVAL;
 	}
+	int signum = osf1_to_bsd_sig[signum];
 
 	switch (OSF1_SIGCALL(SCARG(uap, signum))) {
 	case OSF1_SIGDEFER_MASK:
@@ -560,6 +564,8 @@ osf1_sys_kill(p, v, retval)
 	} */ *uap = v;
 	struct sys_kill_args ka;
 
+	if (SCARG(uap, signum) < 0 || SCARG(uap, signum) >= OSF1_NSIG)
+		return (EINVAL);
 	SCARG(&ka, pid) = SCARG(uap, pid);
 	SCARG(&ka, signum) = osf1_to_bsd_sig[SCARG(uap, signum)];
 	return sys_kill(p, &ka, retval);

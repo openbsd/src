@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_signal.c,v 1.3 1997/06/02 09:42:12 deraadt Exp $	*/
+/*	$OpenBSD: linux_signal.c,v 1.4 1998/12/22 07:58:45 deraadt Exp $	*/
 /*	$NetBSD: linux_signal.c,v 1.10 1996/04/04 23:51:36 christos Exp $	*/
 
 /*
@@ -247,6 +247,9 @@ linux_sys_sigaction(p, v, retval)
 	caddr_t sg;
 	int error;
 
+	if (SCARG(uap, signum) < 0 || SCARG(uap, signum) >= LINUX_NSIG)
+		return (EINVAL);
+
 	sg = stackgap_init(p->p_emul);
 	nlsa = SCARG(uap, nsa);
 	olsa = SCARG(uap, osa);
@@ -304,6 +307,9 @@ linux_sys_signal(p, v, retval)
 	struct sys_sigaction_args sa_args;
 	struct sigaction *osa, *nsa, tmpsa;
 	int error;
+
+	if (SCARG(uap, sig) < 0 || SCARG(uap, sig) >= LINUX_NSIG)
+		return (EINVAL);
 
 	sg = stackgap_init(p->p_emul);
 	nsa = stackgap_alloc(&sg, sizeof *nsa);
@@ -505,6 +511,8 @@ linux_sys_kill(p, v, retval)
 	struct sys_kill_args ka;
 
 	SCARG(&ka, pid) = SCARG(uap, pid);
+	if (SCARG(uap, signum) < 0 || SCARG(uap, signum) >= LINUX_NSIG)
+		return (EINVAL);
 	SCARG(&ka, signum) = linux_to_bsd_sig[SCARG(uap, signum)];
 	return sys_kill(p, &ka, retval);
 }
