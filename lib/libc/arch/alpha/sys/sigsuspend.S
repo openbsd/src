@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigsuspend.S,v 1.3 1996/11/13 22:05:16 niklas Exp $	*/
+/*	$OpenBSD: sigsuspend.S,v 1.4 1999/01/06 06:10:13 d Exp $	*/
 /*	$NetBSD: sigsuspend.S,v 1.2 1996/10/17 03:08:22 cgd Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
 
 #if defined(SYSLIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: sigsuspend.S,v 1.3 1996/11/13 22:05:16 niklas Exp $"
+	.asciz "$OpenBSD: sigsuspend.S,v 1.4 1999/01/06 06:10:13 d Exp $"
 #endif /* SYSLIBC_SCCS */
 
 LEAF(sigsuspend, 1)
@@ -40,4 +40,4 @@ LEAF(sigsuspend, 1)
 	CALLSYS_ERROR(sigsuspend)
 	mov	zero, v0		/* shouldn't need; just in case... */
 	RET
-END(sigsuspend)
+SYSEND(sigsuspend)

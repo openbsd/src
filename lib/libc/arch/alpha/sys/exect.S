@@ -1,4 +1,4 @@
-/*	$OpenBSD: exect.S,v 1.3 1996/11/13 22:05:11 niklas Exp $	*/
+/*	$OpenBSD: exect.S,v 1.4 1999/01/06 06:10:13 d Exp $	*/
 /*	$NetBSD: exect.S,v 1.2 1996/10/17 03:08:18 cgd Exp $	*/
 
 /*
@@ -32,10 +32,10 @@
 
 #if defined(SYSLIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: exect.S,v 1.3 1996/11/13 22:05:11 niklas Exp $"
+	.asciz "$OpenBSD: exect.S,v 1.4 1999/01/06 06:10:13 d Exp $"
 #endif /* SYSLIBC_SCCS */
 
-LEAF(exect, 3)
+SYSLEAF(exect, 3)
 	CALLSYS_ERROR(execve)
 	RET
-END(exect)
+SYSEND(exect)

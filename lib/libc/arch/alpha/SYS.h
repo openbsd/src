@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.3 1996/11/13 20:46:47 niklas Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.4 1999/01/06 06:10:12 d Exp $	*/
 /*	$NetBSD: SYS.h,v 1.4 1996/10/17 03:03:53 cgd Exp $	*/
 
 /*
@@ -41,29 +41,60 @@ LLABEL(name,0):							\
 	jmp	zero, cerror;					\
 LLABEL(name,1):
 
+#define __LEAF(p,n,e)						\
+	LEAF(___CONCAT(p,n),e)
+#define __END(p,n)						\
+	END(___CONCAT(p,n))
 
-#define	SYSCALL(name)						\
-LEAF(name,0);				/* XXX # of args? */	\
+#define	__SYSCALL(p,name)					\
+__LEAF(p,name,0);			/* XXX # of args? */	\
 	CALLSYS_ERROR(name)
 
-#define	SYSCALL_NOERROR(name)					\
-LEAF(name,0);				/* XXX # of args? */	\
+#define	__SYSCALL_NOERROR(p,name)				\
+__LEAF(p,name,0);			/* XXX # of args? */	\
 	CALLSYS_NOERROR(name)
 
 
-#define RSYSCALL(name)						\
-	SYSCALL(name);						\
+#define __RSYSCALL(p,name)					\
+	__SYSCALL(p,name);						\
 	RET;							\
-END(name)
+__END(p,name)
 
-#define RSYSCALL_NOERROR(name)					\
-	SYSCALL_NOERROR(name);					\
+#define __RSYSCALL_NOERROR(p,name)				\
+	__SYSCALL_NOERROR(p,name);				\
 	RET;							\
-END(name)
+__END(p,name)
 
 
-#define	PSEUDO(label,name)					\
-LEAF(label,0);				/* XXX # of args? */	\
+#define	__PSEUDO(p,label,name)					\
+__LEAF(p,label,0);			/* XXX # of args? */	\
 	CALLSYS_NOERROR(name);					\
 	RET;							\
-END(label);
+__END(p,label);
+
+
+#ifdef _THREAD_SAFE
+/*
+ * For the thread_safe versions, we prepend _thread_sys_ to the function
+ * name so that the 'C' wrapper can go around the real name.
+ */
+# define SYSCALL(x)		__SYSCALL(_thread_sys_,x)
+# define SYSCALL_NOERROR(x)	__SYSCALL_NOERROR(_thread_sys_,x)
+# define RSYSCALL(x)		__RSYSCALL(_thread_sys_,x)
+# define RSYSCALL_NOERROR(x)	__RSYSCALL_NOERROR(_thread_sys_,x)
+# define PSEUDO(x,y)		__PSEUDO(_thread_sys_,x,y)
+# define SYSLEAF(x,e)		__LEAF(_thread_sys_,x,e)
+# define SYSEND(x)		__END(_thread_sys_,x)
+#else _THREAD_SAFE
+/*
+ * The non-threaded library defaults to traditional syscalls where
+ * the function name matches the syscall name.
+ */
+# define SYSCALL(x)		__SYSCALL(,x)
+# define SYSCALL_NOERROR(x)	__SYSCALL_NOERROR(,x)
+# define RSYSCALL(x)		__RSYSCALL(,x)
+# define RSYSCALL_NOERROR(x)	__RSYSCALL_NOERROR(,x)
+# define PSEUDO(x,y)		__PSEUDO(,x,y)
+# define SYSLEAF(x,e)		__LEAF(,x,e)
+# define SYSEND(x)		__END(,x)
+#endif _THREAD_SAFE

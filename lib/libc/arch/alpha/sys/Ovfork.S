@@ -1,4 +1,4 @@
-/*	$OpenBSD: Ovfork.S,v 1.3 1996/11/13 22:05:10 niklas Exp $	*/
+/*	$OpenBSD: Ovfork.S,v 1.4 1999/01/06 06:10:13 d Exp $	*/
 /*	$NetBSD: Ovfork.S,v 1.1 1995/02/10 17:50:29 cgd Exp $	*/
 
 /*
@@ -32,10 +32,10 @@
 
 #if defined(SYSLIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: Ovfork.S,v 1.3 1996/11/13 22:05:10 niklas Exp $"
+	.asciz "$OpenBSD: Ovfork.S,v 1.4 1999/01/06 06:10:13 d Exp $"
 #endif /* SYSLIBC_SCCS */
 
 SYSCALL(vfork)
 	cmovne	a4, zero, v0		/* a4 (rv[1]) != 0, child */
 	RET
-END(vfork)
+SYSEND(vfork)

@@ -34,7 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: SYS.h,v 1.2 1996/08/19 08:17:23 tholo Exp $
+ *	$OpenBSD: SYS.h,v 1.3 1999/01/06 06:12:02 d Exp $
  */
 
 #include <machine/asm.h>
@@ -43,8 +43,10 @@
 
 #ifdef __STDC__
 #define _CAT(x,y) x##y
+#define __ENTRY(p,x) ENTRY(p##x)
 #else
 #define _CAT(x,y) x/**/y
+#define __ENTRY(p,x) ENTRY(p/**/x)
 #endif
 
 /*
@@ -65,23 +67,42 @@
  * Note that it adds a `nop' over what we could do, if we only knew what
  * came at label 1....
  */
-#define	SYSCALL(x) \
-	ENTRY(x); mov _CAT(SYS_,x),%g1; t ST_SYSCALL; bcc 1f; nop; ERROR(); 1:
+#define	__SYSCALL(p,x) \
+	__ENTRY(p,x); mov _CAT(SYS_,x),%g1; t ST_SYSCALL; bcc 1f; nop; ERROR(); 1:
 
 /*
  * RSYSCALL is used when the system call should just return.  Here
  * we use the SYSCALL_G2RFLAG to put the `success' return address in %g2
  * and avoid a branch.
  */
-#define	RSYSCALL(x) \
-	ENTRY(x); mov (_CAT(SYS_,x))|SYSCALL_G2RFLAG,%g1; add %o7,8,%g2; \
+#define	__RSYSCALL(p,x) \
+	__ENTRY(p,x); mov (_CAT(SYS_,x))|SYSCALL_G2RFLAG,%g1; add %o7,8,%g2; \
 	t ST_SYSCALL; ERROR()
 
 /*
  * PSEUDO(x,y) is like RSYSCALL(y) except that the name is x.
  */
-#define	PSEUDO(x,y) \
-	ENTRY(x); mov (_CAT(SYS_,y))|SYSCALL_G2RFLAG,%g1; add %o7,8,%g2; \
+#define	__PSEUDO(p,x,y) \
+	__ENTRY(p,x); mov (_CAT(SYS_,y))|SYSCALL_G2RFLAG,%g1; add %o7,8,%g2; \
 	t ST_SYSCALL; ERROR()
 
+#ifdef _THREAD_SAFE
+/*
+ * For the thread_safe versions, we prepend _thread_sys_ to the function
+ * name so that the 'C' wrapper can go around the real name.
+ */
+# define SYSCALL(x)	__SYSCALL(_thread_sys_,x)
+# define RSYSCALL(x)	__RSYSCALL(_thread_sys_,x)
+# define PSEUDO(x,y)	__PSEUDO(_thread_sys_,x,y)
+# define SYSENTRY(x)	__ENTRY(_thread_sys_,x)
+#else _THREAD_SAFE
+/*
+ * The non-threaded library defaults to traditional syscalls where
+ * the function name matches the syscall name.
+ */
+# define SYSCALL(x)	__SYSCALL(,x)
+# define RSYSCALL(x)	__RSYSCALL(,x)
+# define PSEUDO(x,y)	__PSEUDO(,x,y)
+# define SYSENTRY(x)	__ENTRY(,x)
+#endif _THREAD_SAFE
 	.globl	cerror

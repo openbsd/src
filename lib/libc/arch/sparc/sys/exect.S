@@ -37,12 +37,12 @@
 
 #if defined(SYSLIBC_SCCS) 
 	.text
-	.asciz "$OpenBSD: exect.S,v 1.2 1996/08/19 08:18:04 tholo Exp $"
+	.asciz "$OpenBSD: exect.S,v 1.3 1999/01/06 06:12:03 d Exp $"
 #endif /* SYSLIBC_SCCS */
 
 #include "SYS.h"
 
-ENTRY(exect)
+SYSENTRY(exect)
 	mov	SYS_execve, %g1	/* execve(file, argv, env) */
 	t	ST_SYSCALL
 	ERROR()
