@@ -1,9 +1,10 @@
-/*	$OpenBSD: pwd_mkdb.c,v 1.17 1998/07/14 23:26:33 millert Exp $	*/
+/*	$OpenBSD: pwd_mkdb.c,v 1.18 1998/07/15 00:50:19 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
- * Portions Copyright(C) 1994, Jason Downs.  All rights reserved.
+ * Portions Copyright (c) 1994, Jason Downs.  All rights reserved.
+ * Portions Copyright (c) 1998, Todd C. Miller.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -44,7 +45,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: pwd_mkdb.c,v 1.17 1998/07/14 23:26:33 millert Exp $";
+static char *rcsid = "$OpenBSD: pwd_mkdb.c,v 1.18 1998/07/15 00:50:19 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -81,7 +82,8 @@ HASHINFO openinfo = {
 static enum state { FILE_INSECURE, FILE_SECURE, FILE_ORIG } clean;
 static struct passwd pwd;			/* password structure */
 static char *pname;				/* password file name */
-static char *basedir;
+static char *basedir;				/* dir holding master.passwd */
+static int hasyp;				/* are we running YP? */
 
 void	cleanup __P((void));
 void	error __P((char *));
@@ -89,6 +91,7 @@ void	mv __P((char *, char *));
 int	scan __P((FILE *, struct passwd *, int *));
 void	usage __P((void));
 char	*changedir __P((char *path, char *dir));
+void	db_store __P((FILE *, FILE *, DB *, struct passwd *, int, int));
 
 int
 main(argc, argv)
@@ -96,22 +99,18 @@ main(argc, argv)
 	char *argv[];
 {
 	DB *dp, *edp;
-	DBT data, key;
-	FILE *fp, *oldfp;
+	DBT ypdata, ypkey;
+	FILE *fp, *oldfp = NULL;
 	struct stat st;
 	sigset_t set;
-	int ch, cnt, len, makeold, tfd, flags = 0;
-	char *p, *t;
-	char buf[MAX(MAXPATHLEN, LINE_MAX * 2)], tbuf[1024];
-	int hasyp = 0;
-	int cflag = 0;
-	DBT ypdata, ypkey;
+	int ch, tfd, makeold, flags = 0, checkonly = 0;
+	char buf[MAXPATHLEN];
 
 	makeold = 0;
 	while ((ch = getopt(argc, argv, "cpvd:")) != -1)
 		switch(ch) {
 		case 'c':			/* verify only */
-			cflag = 1;
+			checkonly = 1;
 			break;
 		case 'p':			/* create V7 "file.orig" */
 			makeold = 1;
@@ -154,7 +153,9 @@ main(argc, argv)
 		error(pname);
 
 	/* Check only if password database is valid */
-	if (cflag) {
+	if (checkonly) {
+		u_int cnt;
+
 		for (cnt = 1; scan(fp, &pwd, &flags); ++cnt)
 			;
 		exit(0);
@@ -213,127 +214,16 @@ main(argc, argv)
 	 * pointer record, which if YP is enabled in the C lib, will speed
 	 * things up.
 	 */
-	data.data = (u_char *)buf;
-	key.data = (u_char *)tbuf;
-#define	COMPACT(e)	t = e; while (*p++ = *t++);
 
 	/*
-	 * Write "insecure" (no passwd) info to the .db file.
-	 * We do the loop three times, one per key type, to get good
-	 * locality in the db file.
-	 * 1) Store by name, check for YP, issue warnings and save V7 format.
-	 * 2) Store by uid.
-	 * 3) Store by number (used for iterative lookups).
+	 * Write "insecure" (no passwd) version of the .db file.
+	 * We do this three times, one per key type (for getpw{name,uid,ent}).
+	 * The first time through we also check for YP, issue warnings
+	 * and save the V7 format passwd file if necessary.
 	 */
-	for (cnt = 1; scan(fp, &pwd, &flags); ++cnt) {
-
-		/* look like YP? */
-		if ((pwd.pw_name[0] == '+') || (pwd.pw_name[0] == '-'))
-			hasyp++;
-
-		/* Warn about potentially unsafe uid/gid overrides. */
-		if (pwd.pw_name[0] == '+') {
-			if ((flags & _PASSWORD_NOUID) == 0 && pwd.pw_uid == 0)
-				warnx("line %d: superuser override in YP inclusion", cnt);
-			if ((flags & _PASSWORD_NOGID) == 0 && pwd.pw_gid == 0)
-				warnx("line %d: wheel override in YP inclusion", cnt);
-		}
-
-		/* Create insecure data. */
-		p = buf;
-		COMPACT(pwd.pw_name);
-		COMPACT("*");
-		memmove(p, &pwd.pw_uid, sizeof(uid_t));
-		p += sizeof(uid_t);
-		memmove(p, &pwd.pw_gid, sizeof(gid_t));
-		p += sizeof(gid_t);
-		memmove(p, &pwd.pw_change, sizeof(time_t));
-		p += sizeof(time_t);
-		COMPACT(pwd.pw_class);
-		COMPACT(pwd.pw_gecos);
-		COMPACT(pwd.pw_dir);
-		COMPACT(pwd.pw_shell);
-		memmove(p, &pwd.pw_expire, sizeof(time_t));
-		p += sizeof(time_t);
-		memmove(p, &flags, sizeof(int));
-		p += sizeof(int);
-		data.size = p - buf;
-
-		/* Store insecure by name. */
-		tbuf[0] = _PW_KEYBYNAME;
-		len = strlen(pwd.pw_name);
-		memmove(tbuf + 1, pwd.pw_name, len);
-		key.size = len + 1;
-		if ((dp->put)(dp, &key, &data, R_NOOVERWRITE) == -1)
-			error("put");
-
-		/* Create original format password file entry */
-		if (makeold)
-			if (fprintf(oldfp, "%s:*:%u:%u:%s:%s:%s\n",
-			    pwd.pw_name, pwd.pw_uid, pwd.pw_gid, pwd.pw_gecos,
-			    pwd.pw_dir, pwd.pw_shell) == EOF)
-				error("write old");
-	}
-	rewind(fp);
-	for (cnt = 1; scan(fp, &pwd, &flags); ++cnt) {
-
-		/* Create insecure data. */
-		p = buf;
-		COMPACT(pwd.pw_name);
-		COMPACT("*");
-		memmove(p, &pwd.pw_uid, sizeof(uid_t));
-		p += sizeof(uid_t);
-		memmove(p, &pwd.pw_gid, sizeof(gid_t));
-		p += sizeof(gid_t);
-		memmove(p, &pwd.pw_change, sizeof(time_t));
-		p += sizeof(time_t);
-		COMPACT(pwd.pw_class);
-		COMPACT(pwd.pw_gecos);
-		COMPACT(pwd.pw_dir);
-		COMPACT(pwd.pw_shell);
-		memmove(p, &pwd.pw_expire, sizeof(time_t));
-		p += sizeof(time_t);
-		memmove(p, &flags, sizeof(int));
-		p += sizeof(int);
-		data.size = p - buf;
-
-		/* Store insecure by uid. */
-		tbuf[0] = _PW_KEYBYUID;
-		memmove(tbuf + 1, &pwd.pw_uid, sizeof(pwd.pw_uid));
-		key.size = sizeof(pwd.pw_uid) + 1;
-		if ((dp->put)(dp, &key, &data, R_NOOVERWRITE) == -1)
-			error("put");
-	}
-	rewind(fp);
-	for (cnt = 1; scan(fp, &pwd, &flags); ++cnt) {
-
-		/* Create insecure data. */
-		p = buf;
-		COMPACT(pwd.pw_name);
-		COMPACT("*");
-		memmove(p, &pwd.pw_uid, sizeof(uid_t));
-		p += sizeof(uid_t);
-		memmove(p, &pwd.pw_gid, sizeof(gid_t));
-		p += sizeof(gid_t);
-		memmove(p, &pwd.pw_change, sizeof(time_t));
-		p += sizeof(time_t);
-		COMPACT(pwd.pw_class);
-		COMPACT(pwd.pw_gecos);
-		COMPACT(pwd.pw_dir);
-		COMPACT(pwd.pw_shell);
-		memmove(p, &pwd.pw_expire, sizeof(time_t));
-		p += sizeof(time_t);
-		memmove(p, &flags, sizeof(int));
-		p += sizeof(int);
-		data.size = p - buf;
-
-		/* Store insecure by number. */
-		tbuf[0] = _PW_KEYBYNUM;
-		memmove(tbuf + 1, &cnt, sizeof(cnt));
-		key.size = sizeof(cnt) + 1;
-		if ((dp->put)(dp, &key, &data, R_NOOVERWRITE) == -1)
-			error("put");
-	}
+	db_store(fp, makeold ? oldfp : NULL, dp, &pwd, _PW_KEYBYNAME, 1);
+	db_store(fp, makeold ? oldfp : NULL, dp, &pwd, _PW_KEYBYUID, 1);
+	db_store(fp, makeold ? oldfp : NULL, dp, &pwd, _PW_KEYBYNUM, 1);
 
 	/* Store YP token, if needed. */
 	if (hasyp) {
@@ -365,103 +255,11 @@ main(argc, argv)
 
 	/*
 	 * Write "secure" (including passwd) info to the .db file.
-	 * We do the loop three times, one per key type, to get good
-	 * locality in the db file.
-	 * 1) Store by name.
-	 * 2) Store by uid.
-	 * 3) Store by number (used for iterative lookups).
+	 * We do this three times, one per key type (for getpw{name,uid,ent}).
 	 */
-	rewind(fp);
-	for (cnt = 1; scan(fp, &pwd, &flags); ++cnt) {
-
-		/* Create secure data. */
-		p = buf;
-		COMPACT(pwd.pw_name);
-		COMPACT(pwd.pw_passwd);
-		memmove(p, &pwd.pw_uid, sizeof(uid_t));
-		p += sizeof(int);
-		memmove(p, &pwd.pw_gid, sizeof(gid_t));
-		p += sizeof(int);
-		memmove(p, &pwd.pw_change, sizeof(time_t));
-		p += sizeof(time_t);
-		COMPACT(pwd.pw_class);
-		COMPACT(pwd.pw_gecos);
-		COMPACT(pwd.pw_dir);
-		COMPACT(pwd.pw_shell);
-		memmove(p, &pwd.pw_expire, sizeof(time_t));
-		p += sizeof(time_t);
-		memmove(p, &flags, sizeof(int));
-		p += sizeof(int);
-		data.size = p - buf;
-
-		/* Store secure by name. */
-		tbuf[0] = _PW_KEYBYNAME;
-		len = strlen(pwd.pw_name);
-		memmove(tbuf + 1, pwd.pw_name, len);
-		key.size = len + 1;
-		if ((edp->put)(edp, &key, &data, R_NOOVERWRITE) == -1)
-			error("put");
-	}
-	rewind(fp);
-	for (cnt = 1; scan(fp, &pwd, &flags); ++cnt) {
-
-		/* Create secure data. */
-		p = buf;
-		COMPACT(pwd.pw_name);
-		COMPACT(pwd.pw_passwd);
-		memmove(p, &pwd.pw_uid, sizeof(uid_t));
-		p += sizeof(int);
-		memmove(p, &pwd.pw_gid, sizeof(gid_t));
-		p += sizeof(int);
-		memmove(p, &pwd.pw_change, sizeof(time_t));
-		p += sizeof(time_t);
-		COMPACT(pwd.pw_class);
-		COMPACT(pwd.pw_gecos);
-		COMPACT(pwd.pw_dir);
-		COMPACT(pwd.pw_shell);
-		memmove(p, &pwd.pw_expire, sizeof(time_t));
-		p += sizeof(time_t);
-		memmove(p, &flags, sizeof(int));
-		p += sizeof(int);
-		data.size = p - buf;
-
-		/* Store secure by uid. */
-		tbuf[0] = _PW_KEYBYUID;
-		memmove(tbuf + 1, &pwd.pw_uid, sizeof(pwd.pw_uid));
-		key.size = sizeof(pwd.pw_uid) + 1;
-		if ((edp->put)(edp, &key, &data, R_NOOVERWRITE) == -1)
-			error("put");
-	}
-	rewind(fp);
-	for (cnt = 1; scan(fp, &pwd, &flags); ++cnt) {
-
-		/* Create secure data. */
-		p = buf;
-		COMPACT(pwd.pw_name);
-		COMPACT(pwd.pw_passwd);
-		memmove(p, &pwd.pw_uid, sizeof(uid_t));
-		p += sizeof(int);
-		memmove(p, &pwd.pw_gid, sizeof(gid_t));
-		p += sizeof(int);
-		memmove(p, &pwd.pw_change, sizeof(time_t));
-		p += sizeof(time_t);
-		COMPACT(pwd.pw_class);
-		COMPACT(pwd.pw_gecos);
-		COMPACT(pwd.pw_dir);
-		COMPACT(pwd.pw_shell);
-		memmove(p, &pwd.pw_expire, sizeof(time_t));
-		p += sizeof(time_t);
-		memmove(p, &flags, sizeof(int));
-		p += sizeof(int);
-		data.size = p - buf;
-
-		/* Store secure by number. */
-		tbuf[0] = _PW_KEYBYNUM;
-		memmove(tbuf + 1, &cnt, sizeof(cnt));
-		key.size = sizeof(cnt) + 1;
-		if ((edp->put)(edp, &key, &data, R_NOOVERWRITE) == -1)
-			error("put");
-	}
+	db_store(fp, makeold ? oldfp : NULL, edp, &pwd, _PW_KEYBYNAME, 0);
+	db_store(fp, makeold ? oldfp : NULL, edp, &pwd, _PW_KEYBYUID, 0);
+	db_store(fp, makeold ? oldfp : NULL, edp, &pwd, _PW_KEYBYNUM, 0);
 
 	/* Store YP token, if needed. */
 	if (hasyp) {
@@ -493,6 +291,7 @@ main(argc, argv)
 		(void)snprintf(buf, sizeof(buf), "%s.orig", pname);
 		mv(buf, changedir(_PATH_PASSWD, basedir));
 	}
+
 	/*
 	 * Move the master password LAST -- chpass(1), passwd(1) and vipw(8)
 	 * all use flock(2) on it to block other incarnations of themselves.
@@ -608,4 +407,98 @@ changedir(path, dir)
 		strcat(fixed, p + 1);
 	}
 	return (fixed);
+}
+
+void
+db_store(fp, oldfp, dp, pw, keytype, insecure)
+	FILE *fp;
+	FILE *oldfp;
+	DB *dp;
+	struct passwd *pw;
+	int keytype;
+	int insecure;
+{
+	int flags = 0;
+	u_int cnt;
+	char *p, *t, buf[LINE_MAX * 2], tbuf[1024];
+	DBT data, key;
+	size_t len;
+	static int firsttime = 1;
+
+	rewind(fp);
+	data.data = (u_char *)buf;
+	key.data = (u_char *)tbuf;
+	for (cnt = 1; scan(fp, pw, &flags); ++cnt) {
+
+		if (firsttime) {
+			/* Look like YP? */
+			if ((pw->pw_name[0] == '+') || (pw->pw_name[0] == '-'))
+				hasyp++;
+
+			/* Warn about potentially unsafe uid/gid overrides. */
+			if (pw->pw_name[0] == '+') {
+				if (!(flags & _PASSWORD_NOUID) && !pw->pw_uid)
+					warnx("line %d: superuser override in "
+					    "YP inclusion", cnt);
+				if (!(flags & _PASSWORD_NOGID) && !pw->pw_gid)
+					warnx("line %d: wheel override in "
+					    "YP inclusion", cnt);
+			}
+
+			/* Create V7 format password file entry. */
+			if (oldfp != NULL)
+				if (fprintf(oldfp, "%s:*:%u:%u:%s:%s:%s\n",
+				    pw->pw_name, pw->pw_uid, pw->pw_gid,
+				    pw->pw_gecos, pw->pw_dir, pw->pw_shell)
+				    == EOF)
+					error("write old");
+		}
+
+		/* Create data (a packed struct passwd). */
+#define	COMPACT(e)	t = e; while ((*p++ = *t++));
+		p = buf;
+		COMPACT(pw->pw_name);
+		COMPACT(insecure ? "*" : pw->pw_passwd);
+		memmove(p, &pw->pw_uid, sizeof(uid_t));
+		p += sizeof(uid_t);
+		memmove(p, &pw->pw_gid, sizeof(gid_t));
+		p += sizeof(gid_t);
+		memmove(p, &pw->pw_change, sizeof(time_t));
+		p += sizeof(time_t);
+		COMPACT(pw->pw_class);
+		COMPACT(pw->pw_gecos);
+		COMPACT(pw->pw_dir);
+		COMPACT(pw->pw_shell);
+		memmove(p, &pw->pw_expire, sizeof(time_t));
+		p += sizeof(time_t);
+		memmove(p, &flags, sizeof(int));
+		p += sizeof(int);
+		data.size = p - buf;
+
+		/* Build the key. */
+		switch (keytype) {
+		case _PW_KEYBYNUM:
+			memmove(tbuf + 1, &cnt, sizeof(cnt));
+			key.size = sizeof(cnt) + 1;
+			break;
+
+		case _PW_KEYBYNAME:
+			len = strlen(pw->pw_name);
+			memmove(tbuf + 1, pw->pw_name, len);
+			key.size = len + 1;
+			break;
+
+		case _PW_KEYBYUID:
+			memmove(tbuf + 1, &pw->pw_uid, sizeof(pw->pw_uid));
+			key.size = sizeof(pw->pw_uid) + 1;
+			break;
+		}
+		tbuf[0] = keytype;
+
+		/* Write the record. */
+		if ((dp->put)(dp, &key, &data, R_NOOVERWRITE) == -1)
+			error("put");
+	}
+	if (firsttime)
+		firsttime = 0;
 }
