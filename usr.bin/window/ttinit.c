@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttinit.c,v 1.4 1998/04/26 22:49:07 millert Exp $	*/
+/*	$OpenBSD: ttinit.c,v 1.5 1999/11/14 17:34:24 millert Exp $	*/
 /*	$NetBSD: ttinit.c,v 1.3 1995/09/28 10:34:50 tls Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)ttinit.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: ttinit.c,v 1.4 1998/04/26 22:49:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: ttinit.c,v 1.5 1999/11/14 17:34:24 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -96,6 +96,9 @@ ttinit()
 	 * Use the standard name of the terminal (i.e. the second
 	 * name in termcap).
 	 */
+#ifdef NCURSES_VERSION
+	wwterm = strdup(_nc_first_name(cur_term->type.term_names));
+#else
 	for (p = wwtermcap; *p && *p != '|' && *p != ':'; p++)
 		;
 	if (*p == '|')
@@ -108,6 +111,7 @@ ttinit()
 			*t++ = *p++;
 		*t = 0;
 	}
+#endif
 	for (tp = tt_tab; tp->tt_name != 0; tp++)
 		if (strncmp(tp->tt_name, wwterm, tp->tt_len) == 0)
 			break;

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 1998/07/24 00:11:09 millert Exp $
+#	$OpenBSD: Makefile,v 1.7 1999/11/14 17:34:24 millert Exp $
 
 PROG=	window
 SRCS=	char.c cmd.c cmd1.c cmd2.c cmd3.c cmd4.c cmd5.c cmd6.c cmd7.c \
@@ -15,7 +15,8 @@ SRCS=	char.c cmd.c cmd1.c cmd2.c cmd3.c cmd4.c cmd5.c cmd6.c cmd7.c \
 	wwterminfo.c wwtty.c wwunframe.c wwupdate.c wwwrite.c xx.c xxflush.c \
 	compress.c
 MAN=	window.1
-DPADD=	${LIBCURSES}
-LDADD=	-lcurses
+DPADD=	${LIBOCURSES}
+LDADD=	-locurses
+CFLAGS+=-D_USE_OLD_CURSES_
 
 .include <bsd.prog.mk>
