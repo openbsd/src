@@ -1,16 +1,52 @@
-# $OpenBSD: Makefile,v 1.2 2002/06/11 14:53:16 hin Exp $
+# $OpenBSD: Makefile,v 1.3 2003/08/05 11:11:42 hin Exp $
 
 AFSTOPDIR	= ../..
 .include <../../Makefile.inc>
 
+.PATH:	$(ROKENSRC)
+
 PROG	= fs
 BINDIR	= /usr/sbin
-LDADD	+= ${LIBARLA} ${LIBROKEN} -lkafs -lkrb -lkrb5 -lcrypto -lasn1 -lreadline -ldes -lcurses
-DPADD	+= ${LIBARLA} ${LIBROKEN} ${LIBKAFS}
+LDADD	+= ${LIBARLA} -lkrb5 -lcrypto -lasn1 -lreadline -lcurses
+DPADD	+= ${LIBARLA}
 
 CFLAGS	+= -I${AFSSRC}/appl/lib
 
-SRCS	= fs.c
+SRCS	= fs.c \
+	  fs_arladebug.c \
+	  fs_checkservers.c \
+	  fs_connect.c \
+	  fs_copyacl.c \
+	  fs_diskfree.c \
+	  fs_examine.c \
+	  fs_flush.c \
+	  fs_flushvol.c \
+	  fs_getcache.c \
+	  fs_getcellstat.c \
+	  fs_getfid.c \
+	  fs_getprio.c \
+	  fs_la.c \
+	  fs_listcell.c \
+	  fs_listquota.c \
+	  fs_lsm.c \
+	  fs_mkm.c \
+	  fs_newcell.c \
+	  fs_nnpfsdebug.c \
+	  fs_quota.c \
+	  fs_rmm.c \
+	  fs_setacl.c \
+	  fs_setcache.c \
+	  fs_setcrypt.c \
+	  fs_setquota.c \
+	  fs_statistics.c \
+	  fs_strerror.c \
+	  fs_whereis.c \
+	  fs_whichcell.c \
+	  fs_wscell.c \
+	  estrdup.c \
+	  print_version.c \
+	  getarg.c
+
 .PATH: ${AFSSRC}/appl/fs
 
 SRCS	+= arladebu.c fs_lib.c

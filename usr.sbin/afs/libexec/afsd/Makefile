@@ -1,13 +1,15 @@
-#	$OpenBSD: Makefile,v 1.4 2002/06/11 14:30:32 brad Exp $
+#	$OpenBSD: Makefile,v 1.5 2003/08/05 11:11:42 hin Exp $
 
 AFSTOPDIR=	../..
 .include <../../Makefile.inc>
 
+.PATH:	$(ROKENSRC)
+
 PROG	= afsd
 MAN	= afsd.8 CellServDB.5 ThisCell.5 SuidCells.5 afsd.conf.5 DynRootDB.5
 BINDIR	= /usr/libexec
-LDADD	+= ${LIBARLA} ${LIBROKEN} -lkafs -lkrb -lkrb5 -lasn1 -lcrypto -ldes
-DPADD	+= ${LIBARLA} ${LIBROKEN}
+LDADD	+= ${LIBARLA} -lkrb5 -lasn1 -lcrypto
+DPADD	+= ${LIBARLA}
 
 CFLAGS	+=  -I${AFSSRC}/util -I${AFSSRC}/arlad \
 	   -I${AFSSRC} -I${DESTDIR}/usr/include/kerberosIV
@@ -21,18 +23,23 @@ SRCS	= adir.c \
 	  cmcb.c \
 	  conn.c \
 	  cred.c \
-	  darla.c \
-	  discon_log.c \
+	  d-trans.c \
+	  disco.c \
 	  dynroot.c \
 	  fcache.c \
 	  fprio.c \
 	  inter.c \
 	  kernel.c \
 	  messages.c \
-	  reconnect.c \
+	  nnpfs.c \
+	  poller.c \
+	  state.c \
+	  stats.c \
 	  subr.c \
 	  volcache.c \
-	  xfs.c
+	  estrdup.c \
+	  erealloc.c \
+	  print_version.c
 
 .PATH: ${AFSSRC}/arlad
 
