@@ -16,7 +16,6 @@
 ./usr/include/sparc/bppioctl.h
 ./usr/include/sparc/bsd_openprom.h
 ./usr/include/sparc/cdefs.h
-./usr/include/sparc/cgtworeg.h
 ./usr/include/sparc/conf.h
 ./usr/include/sparc/cpu.h
 ./usr/include/sparc/ctlreg.h
@@ -26,7 +25,6 @@
 ./usr/include/sparc/eeprom.h
 ./usr/include/sparc/endian.h
 ./usr/include/sparc/exec.h
-./usr/include/sparc/fbio.h
 ./usr/include/sparc/fbvar.h
 ./usr/include/sparc/fgaio.h
 ./usr/include/sparc/float.h
@@ -38,8 +36,6 @@
 ./usr/include/sparc/instr.h
 ./usr/include/sparc/internal_types.h
 ./usr/include/sparc/ioctl_fd.h
-./usr/include/sparc/kbd.h
-./usr/include/sparc/kbio.h
 ./usr/include/sparc/kcore.h
 ./usr/include/sparc/limits.h
 ./usr/include/sparc/oldmon.h
@@ -66,7 +62,7 @@
 ./usr/include/sparc/types.h
 ./usr/include/sparc/varargs.h
 ./usr/include/sparc/vmparam.h
-./usr/include/sparc/vuid_event.h
+./usr/include/sparc/z8530var.h
 ./usr/lib/gcc-lib/sparc-unknown-openbsd3.1/2.95.3/SYSCALLS.c.X
 ./usr/lib/gcc-lib/sparc-unknown-openbsd3.1/2.95.3/cc1
 ./usr/lib/gcc-lib/sparc-unknown-openbsd3.1/2.95.3/cc1obj

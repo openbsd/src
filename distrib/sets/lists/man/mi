@@ -1196,6 +1196,7 @@
 ./usr/share/man/cat4/sparc/cgfourteen.0
 ./usr/share/man/cat4/sparc/cgsix.0
 ./usr/share/man/cat4/sparc/cgthree.0
+./usr/share/man/cat4/sparc/cgtwelve.0
 ./usr/share/man/cat4/sparc/cgtwo.0
 ./usr/share/man/cat4/sparc/daadio.0
 ./usr/share/man/cat4/sparc/esp.0
@@ -1208,6 +1209,7 @@
 ./usr/share/man/cat4/sparc/intro.0
 ./usr/share/man/cat4/sparc/kmem.0
 ./usr/share/man/cat4/sparc/le.0
+./usr/share/man/cat4/sparc/lebuffer.0
 ./usr/share/man/cat4/sparc/led.0
 ./usr/share/man/cat4/sparc/magma.0
 ./usr/share/man/cat4/sparc/mem.0
@@ -1225,6 +1227,8 @@
 ./usr/share/man/cat4/sparc/xd.0
 ./usr/share/man/cat4/sparc/xy.0
 ./usr/share/man/cat4/sparc/zs.0
+./usr/share/man/cat4/sparc/zskbd.0
+./usr/share/man/cat4/sparc/zstty.0
 ./usr/share/man/cat4/sparc64
 ./usr/share/man/cat4/sparc64/apio.0
 ./usr/share/man/cat4/sparc64/asio.0
@@ -1233,6 +1237,7 @@
 ./usr/share/man/cat4/sparc64/autoconf.0
 ./usr/share/man/cat4/sparc64/be.0
 ./usr/share/man/cat4/sparc64/beeper.0
+./usr/share/man/cat4/sparc64/bwtwo.0
 ./usr/share/man/cat4/sparc64/cgsix.0
 ./usr/share/man/cat4/sparc64/cgthree.0
 ./usr/share/man/cat4/sparc64/comkbd.0
@@ -1923,6 +1928,8 @@
 ./usr/share/man/cat8/sparc/eeprom.0
 ./usr/share/man/cat8/sparc/installboot.0
 ./usr/share/man/cat8/sparc/kbd.0
+./usr/share/man/cat8/sparc/wsconscfg.0
+./usr/share/man/cat8/sparc/wsconsctl.0
 ./usr/share/man/cat8/sparc64
 ./usr/share/man/cat8/sparc64/MAKEDEV.0
 ./usr/share/man/cat8/sparc64/boot_sparc64.0
@@ -2173,10 +2180,3 @@
 ./usr/share/texinfo
 ./usr/share/texinfo/texinfo.dtd
 ./usr/share/texinfo/texinfo.xsl
-./usr/share/man/cat4/sparc/cgtwelve.0
-./usr/share/man/cat4/sparc/lebuffer.0
-./usr/share/man/cat4/sparc/zskbd.0
-./usr/share/man/cat4/sparc/zstty.0
-./usr/share/man/cat4/sparc64/bwtwo.0
-./usr/share/man/cat8/sparc/wsconscfg.0
-./usr/share/man/cat8/sparc/wsconsctl.0
