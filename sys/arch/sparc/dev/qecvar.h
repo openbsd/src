@@ -1,4 +1,4 @@
-/*	$OpenBSD: qecvar.h,v 1.6 1998/11/02 05:50:59 jason Exp $	*/
+/*	$OpenBSD: qecvar.h,v 1.7 1999/07/05 21:55:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -38,6 +38,7 @@ struct qec_softc {
 	int		sc_nchannels;	/* number of channels on board */
 	int		sc_nrange;	/* number of ranges */
 	struct	rom_range *sc_range;	/* array of ranges */
+	void		*sc_paddr;
 
 	/*
 	 * For use by children:

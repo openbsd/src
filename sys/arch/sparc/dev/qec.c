@@ -1,4 +1,4 @@
-/*	$OpenBSD: qec.c,v 1.10 1998/11/16 06:20:36 jason Exp $	*/
+/*	$OpenBSD: qec.c,v 1.11 1999/07/05 21:55:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -119,6 +119,7 @@ qecattach(parent, self, aux)
 	sc->sc_regs = mapiodev(&ca->ca_ra.ra_reg[0], 0,
 	    sizeof(struct qecregs));
 	sc->sc_bufsiz = ca->ca_ra.ra_reg[1].rr_len;
+	sc->sc_paddr = ca->ca_ra.ra_reg[0].rr_paddr;
 
 	/*
 	 * On qec+qe, the qec has the interrupt priority, but we
@@ -226,10 +227,11 @@ qec_translate(sc, ca)
 	struct qec_softc *sc;
 	struct confargs *ca;
 {
+	static int dev = 0;
 	register int i;
 
 	ca->ca_slot = ca->ca_ra.ra_iospace;
-	ca->ca_offset = (int)ca->ca_ra.ra_paddr;
+	ca->ca_offset = sc->sc_range[dev++].poffset - (long)sc->sc_paddr;
 
 	/* Translate into parent address spaces */
 	for (i = 0; i < ca->ca_ra.ra_nreg; i++) {
