@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_pci.c,v 1.17 2000/04/13 23:51:23 smurph Exp $	*/
+/*	$OpenBSD: ahc_pci.c,v 1.18 2000/05/26 06:49:32 chris Exp $	*/
 /*	$NetBSD: ahc_pci.c,v 1.9 1996/10/21 22:56:24 thorpej Exp $	*/
 
 /*
@@ -161,6 +161,7 @@ void *match, *aux;
 		case PCI_PRODUCT_ADP_AIC7860:
 		case PCI_PRODUCT_ADP_2940AU:
 		case PCI_PRODUCT_ADP_AIC7870:
+		case PCI_PRODUCT_ADP_2930CU:
 		case PCI_PRODUCT_ADP_2940:
 		case PCI_PRODUCT_ADP_3940:
 		case PCI_PRODUCT_ADP_3985:
