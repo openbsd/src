@@ -1,3 +1,4 @@
+/*	$OpenBSD: kern_time.c,v 1.4 1997/02/22 08:28:28 millert Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -32,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)kern_time.c	8.1 (Berkeley) 6/10/93
+ *	@(#)kern_time.c	8.4 (Berkeley) 5/26/95
  */
 
 #include <sys/param.h>
@@ -80,9 +81,8 @@ sys_gettimeofday(p, v, retval)
 
 	if (SCARG(uap, tp)) {
 		microtime(&atv);
-		error = copyout((caddr_t)&atv, (caddr_t)SCARG(uap, tp),
-				sizeof (atv));
-		if (error)
+		if ((error = copyout((caddr_t)&atv, (caddr_t)SCARG(uap, tp),
+		    sizeof (atv))))
 			return (error);
 	}
 	if (SCARG(uap, tzp))
@@ -106,7 +106,7 @@ sys_settimeofday(p, v, retval)
 	struct timezone atz;
 	int error, s;
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = suser(p->p_ucred, &p->p_acflag)))
 		return (error);
 	/* Verify all parameters before changing time. */
 	if (SCARG(uap, tv) && (error = copyin((caddr_t)SCARG(uap, tv),
@@ -116,6 +116,14 @@ sys_settimeofday(p, v, retval)
 	    (caddr_t)&atz, sizeof(atz))))
 		return (error);
 	if (SCARG(uap, tv)) {
+		/*
+		 * If the system is secure, we do not allow the time to be
+		 * set to an earlier value (it may be slowed using adjtime,
+		 * but not set back). This feature prevent interlopers from
+		 * setting arbitrary time stamps on files.
+		 */
+		if (securelevel > 0 && timercmp(&atv, &time, <))
+			return (EPERM);
 		/* WHAT DO WE DO ABOUT PENDING REAL-TIME TIMEOUTS??? */
 		s = splclock();
 		timersub(&atv, &time, &delta);
@@ -153,12 +161,10 @@ sys_adjtime(p, v, retval)
 	register long ndelta, ntickdelta, odelta;
 	int s, error;
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = suser(p->p_ucred, &p->p_acflag)))
 		return (error);
-
-	error = copyin((caddr_t)SCARG(uap, delta), (caddr_t)&atv,
-		       sizeof(struct timeval));
-	if (error)
+	if ((error = copyin((caddr_t)SCARG(uap, delta), (caddr_t)&atv,
+	    sizeof(struct timeval))))
 		return (error);
 
 	/*
@@ -287,10 +293,10 @@ sys_setitimer(p, v, retval)
 		return (EINVAL);
 	s = splclock();
 	if (SCARG(uap, which) == ITIMER_REAL) {
-		untimeout(realitexpire, p);
+		untimeout(realitexpire, (caddr_t)p);
 		if (timerisset(&aitv.it_value)) {
 			timeradd(&aitv.it_value, &time, &aitv.it_value);
-			timeout(realitexpire, p, hzto(&aitv.it_value));
+			timeout(realitexpire, (caddr_t)p, hzto(&aitv.it_value));
 		}
 		p->p_realtimer = aitv;
 	} else
@@ -325,7 +331,7 @@ realitexpire(arg)
 		timeradd(&p->p_realtimer.it_value,
 		    &p->p_realtimer.it_interval, &p->p_realtimer.it_value);
 		if (timercmp(&p->p_realtimer.it_value, &time, >)) {
-			timeout(realitexpire, p,
+			timeout(realitexpire, (caddr_t)p,
 			    hzto(&p->p_realtimer.it_value));
 			splx(s);
 			return;
