@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.19 2001/09/30 21:06:22 jason Exp $
+#	$OpenBSD: GENERIC,v 1.20 2001/10/02 00:28:59 jason Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -39,6 +39,9 @@ auxio*	at ebus?
 beeper*	at ebus?
 
 com*	at ebus?
+
+audioce*	at ebus?
+audio*		at audioce?
 
 zs*	at sbus? slot ? offset ?
 zstty*	at zs? channel ?
@@ -104,3 +107,4 @@ ukphy*	at mii? phy ?				# Unknown PHYs
 
 audiocs*	at sbus? slot ? offset ?
 audio*		at audiocs?
+
