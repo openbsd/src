@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.24 1999/03/03 05:50:19 smurph Exp $
+#	$OpenBSD: bsd.own.mk,v 1.25 1999/06/22 12:54:05 art Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -7,6 +7,9 @@
 .elif exists(/etc/mk.conf)
 .include "/etc/mk.conf"
 .endif
+
+# XXX - This is temporary until everyone uses UVM
+UVM?=		no
 
 # Set `SKEY' to `yes' to build with support for S/key authentication.
 SKEY?=		yes
