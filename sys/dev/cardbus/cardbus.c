@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardbus.c,v 1.12 2004/07/15 17:59:38 brad Exp $ */
+/*	$OpenBSD: cardbus.c,v 1.13 2004/08/02 21:42:58 brad Exp $ */
 /*	$NetBSD: cardbus.c,v 1.24 2000/04/02 19:11:37 mycroft Exp $	*/
 
 /*
@@ -433,14 +433,9 @@ cardbus_attach_card(sc)
       return 0;
     }
   }
-  
-  bhlc = cardbus_conf_read(cc, cf, tag, CARDBUS_BHLC_REG);
-  if (CARDBUS_LATTIMER(bhlc) < 0x10) {
-    bhlc &= ~(CARDBUS_LATTIMER_MASK << CARDBUS_LATTIMER_SHIFT);
-    bhlc |= (0x10 << CARDBUS_LATTIMER_SHIFT);
-    cardbus_conf_write(cc, cf, tag, CARDBUS_BHLC_REG, bhlc);
-  }
 
+  bhlc = cardbus_conf_read(cc, cf, tag, CARDBUS_BHLC_REG);
+  DPRINTF(("%s bhlc 0x%08x -> ", sc->sc_dev.dv_xname, bhlc));
   nfunction = CARDBUS_HDRTYPE_MULTIFN(bhlc) ? 8 : 1;
 
   for(function = 0; function < nfunction; function++) {
@@ -470,7 +465,26 @@ cardbus_attach_card(sc)
     cardbus_conf_write(cc, cf, tag, CARDBUS_BASE4_REG, 0);
     cardbus_conf_write(cc, cf, tag, CARDBUS_BASE5_REG, 0);
     cardbus_conf_write(cc, cf, tag, CARDBUS_ROM_REG, 0);
-    
+ 
+    /* set initial latency and cacheline size */
+    bhlc = cardbus_conf_read(cc, cf, tag, CARDBUS_BHLC_REG);
+    DPRINTF(("%s func%d bhlc 0x%08x -> ", sc->sc_dev.dv_xname,
+	function, bhlc));
+    bhlc &= ~((CARDBUS_LATTIMER_MASK << CARDBUS_LATTIMER_SHIFT) |
+	(CARDBUS_CACHELINE_MASK << CARDBUS_CACHELINE_SHIFT));
+    bhlc |= ((sc->sc_cacheline & CARDBUS_CACHELINE_MASK) << CARDBUS_CACHELINE_SHIFT);
+    bhlc |= ((sc->sc_lattimer & CARDBUS_LATTIMER_MASK) << CARDBUS_LATTIMER_SHIFT);
+
+    cardbus_conf_write(cc, cf, tag, CARDBUS_BHLC_REG, bhlc);
+    bhlc = cardbus_conf_read(cc, cf, tag, CARDBUS_BHLC_REG);
+    DPRINTF(("0x%08x\n", bhlc));
+
+    if (CARDBUS_LATTIMER(bhlc) < 0x10) {
+	bhlc &= ~(CARDBUS_LATTIMER_MASK << CARDBUS_LATTIMER_SHIFT);
+	bhlc |= (0x10 << CARDBUS_LATTIMER_SHIFT);
+	cardbus_conf_write(cc, cf, tag, CARDBUS_BHLC_REG, bhlc);
+    }
+
     /*
      * We need to allocate the ct here, since we might 
      * need it when reading the CIS
@@ -626,7 +640,7 @@ cardbus_detach_card(sc)
 	/* call device detach function */
 
 	if (0 != config_detach(fndev, 0)) {
-	    printf("%s: cannot detaching dev %s, function %d\n",
+	    printf("%s: cannot detach dev %s, function %d\n",
 		   sc->sc_dev.dv_xname, fndev->dv_xname, ct->ct_func);
 	    prev_next = &(ct->ct_next);
 	} else {
