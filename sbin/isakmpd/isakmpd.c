@@ -1,5 +1,5 @@
-/*	$OpenBSD: isakmpd.c,v 1.13 1999/08/05 22:40:57 niklas Exp $	*/
-/*	$EOM: isakmpd.c,v 1.36 1999/08/05 15:01:20 niklas Exp $	*/
+/*	$OpenBSD: isakmpd.c,v 1.14 1999/08/26 22:31:45 niklas Exp $	*/
+/*	$EOM: isakmpd.c,v 1.37 1999/08/26 11:21:49 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -55,7 +55,7 @@
 #include "ui.h"
 #include "util.h"
 
-#ifdef USE_KEYNOTE
+#if defined (USE_KEYNOTE) || defined (HAVE_DLOPEN)
 #include "policy.h"
 #endif
 
@@ -169,7 +169,7 @@ reinit (void)
   /* Reread config file. */
   conf_reinit ();
 
-#ifdef USE_KEYNOTE
+#if defined (USE_KEYNOTE) || defined (HAVE_DLOPEN)
   /* Reread the policies. */
   policy_init ();
 #endif
