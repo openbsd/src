@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.14 2001/06/06 10:59:15 art Exp $ */
+/*	$OpenBSD: loader.c,v 1.15 2001/06/06 12:23:18 art Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -206,8 +206,8 @@ _dl_boot(const char **argv, const char **envp, const long loff,
 	}
 
 	/*
-	 *  Now add the dynamic loader itself last in the object list
-	 *  so we can use the _dl_ code when serving dl.... calls.
+	 * Now add the dynamic loader itself last in the object list
+	 * so we can use the _dl_ code when serving dl.... calls.
 	 */
 
 	dynp = (Elf_Dyn *)((void *)_DYNAMIC);
@@ -232,8 +232,8 @@ _dl_boot(const char **argv, const char **envp, const long loff,
 	}
 
 	/*
-	 * schedule a routine to be run at shutdown, by using atexit.
-	 * cannot call atexit directly from ld.so ??
+	 * Schedule a routine to be run at shutdown, by using atexit.
+	 * cannot call atexit directly from ld.so?
 	 */
 	{
 		const Elf_Sym  *sym;
@@ -249,33 +249,28 @@ _dl_boot(const char **argv, const char **envp, const long loff,
 
 
 	/*
-	 *  Finally make something to help gdb when poking around in the code.
+	 * Finally make something to help gdb when poking around in the code.
 	 */
 #if defined(__powerpc__) || defined(__alpha__)
-	{
-		int done = 0;
-		 
-		debug_map = (struct r_debug *)_dl_malloc(sizeof(*debug_map));
-		debug_map->r_version = 1;
-		debug_map->r_map = (struct link_map *)_dl_objects;
-		debug_map->r_brk = (Elf_Addr)_dl_debug_state;
-		debug_map->r_state = RT_CONSISTENT;
-		debug_map->r_ldbase = loff;
-		_dl_debug_map = debug_map;
+	debug_map = (struct r_debug *)_dl_malloc(sizeof(*debug_map));
+	debug_map->r_version = 1;
+	debug_map->r_map = (struct link_map *)_dl_objects;
+	debug_map->r_brk = (Elf_Addr)_dl_debug_state;
+	debug_map->r_state = RT_CONSISTENT;
+	debug_map->r_ldbase = loff;
+	_dl_debug_map = debug_map;
 
-		/* picks up the first object, the executable itself */
-		dynobj = _dl_objects;
+	/* Picks up the first object, the executable itself */
+	dynobj = _dl_objects;
 
-		for (dynp = dynobj->load_dyn; dynp->d_tag; dynp++) {
-			if (dynp->d_tag == DT_DEBUG) {
-				dynp->d_un.d_ptr = (Elf_Addr) debug_map;
-				done = 1;
-				break;
-			}
+	for (dynp = dynobj->load_dyn; dynp->d_tag; dynp++) {
+		if (dynp->d_tag == DT_DEBUG) {
+			dynp->d_un.d_ptr = (Elf_Addr) debug_map;
+			break;
 		}
-		if (done == 0) {
-			_dl_printf("failed to mark DTDEBUG\n");
-		}
+	}
+	if (dynp->d_tag != DT_DEBUG) {
+		_dl_printf("failed to mark DTDEBUG\n");
 	}
 #endif
 
