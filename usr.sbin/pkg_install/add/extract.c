@@ -1,7 +1,7 @@
-/*	$OpenBSD: extract.c,v 1.10 2000/04/26 15:32:28 espie Exp $	*/
+/*	$OpenBSD: extract.c,v 1.11 2000/07/04 23:22:14 espie Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: extract.c,v 1.10 2000/04/26 15:32:28 espie Exp $";
+static const char *rcsid = "$OpenBSD: extract.c,v 1.11 2000/07/04 23:22:14 espie Exp $";
 #endif
 
 /*
@@ -35,7 +35,7 @@ static const char *rcsid = "$OpenBSD: extract.c,v 1.10 2000/04/26 15:32:28 espie
 
 #define PUSHOUT(todir) /* push out string */				\
         if (where_count > sizeof(STARTSTRING)-1) {			\
-		    strcat(where_args, "|tar xf - -C ");		\
+		    strcat(where_args, "|tar xpf - -C ");		\
 		    strcat(where_args, todir);				\
 		    if (system(where_args)) {				\
 			cleanup(0);					\
