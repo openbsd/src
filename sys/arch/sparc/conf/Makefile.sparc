@@ -34,7 +34,7 @@ SPARC=	../..
 
 INCLUDES=	-I. -I$S/arch -I$S
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL
-GCCWFLAGS=-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes
+GCCWFLAGS=	#-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes
 CFLAGS=		${DEBUG} -O2 ${GCCWFLAGS}
 # add `-mno-fpu' to work around gcc (last noticed in v2.7.2) bug
 CFLAGS+=	-mno-fpu
