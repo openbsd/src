@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: main.c,v 1.57 2002/03/02 00:23:14 espie Exp $ */
+/*	$OpenBSD: main.c,v 1.58 2002/12/30 02:29:24 millert Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -199,11 +199,13 @@ MainParseArgs(argc, argv)
 	int c;
 	int forceJobs = 0;
 
+#define OPTFLAGS "BD:I:PSV:d:ef:ij:km:nqrst"
+#define OPTLETTERS "BPSiknqrst"
+
 	optind = 1;	/* since we're called more than once */
-# define OPTFLAGS "BD:I:PSV:d:ef:ij:km:nqrst"
-# define OPTLETTERS "BPSiknqrst"
-rearg:	while ((c = getopt(argc, argv, OPTFLAGS)) != -1) {
-		switch (c) {
+	optreset = 1;
+	while (optind < argc) {
+		switch (c = getopt(argc, argv, OPTFLAGS)) {
 		case 'D':
 			Var_Set(optarg, "1", VAR_GLOBAL);
 			record_option(c, optarg);
@@ -296,6 +298,16 @@ rearg:	while ((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 			Dir_AddDir(sysIncPath, optarg);
 			record_option(c, optarg);
 			break;
+		case -1:
+			/* Check for variable assignments and targets. */
+			if (!Parse_DoVar(argv[optind], VAR_CMD)) {
+				if (!*argv[optind])
+					Punt("illegal (null) argument.");
+				if (strcmp(argv[optind], "--") != 0)
+					Lst_AtEnd(create, estrdup(argv[optind]));
+			}
+			optind++;	/* skip over non-option */
+			break;
 		default:
 			posixParseOptLetter(c);
 		}
@@ -309,25 +321,6 @@ rearg:	while ((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 		compatMake = true;
 
 	oldVars = true;
-
-	/*
-	 * See if the rest of the arguments are variable assignments and
-	 * perform them if so. Else take them to be targets and stuff them
-	 * on the end of the "create" list.
-	 */
-	for (argv += optind, argc -= optind; *argv; ++argv, --argc)
-		if (!Parse_DoVar(*argv, VAR_CMD)) {
-			if (!**argv)
-				Punt("illegal (null) argument.");
-			if (**argv == '-') {
-				if ((*argv)[1])
-					optind = 0;	/* -flag... */
-				else
-					optind = 1;	/* - */
-				goto rearg;
-			}
-			Lst_AtEnd(create, estrdup(*argv));
-		}
 }
 
 /*-
