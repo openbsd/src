@@ -1,0 +1,28 @@
+# $OpenBSD: genericstable,v 1.1 2004/08/14 17:06:03 millert Exp $
+#
+# sendmail(8) generics table.  Rebuild by running as root:
+#   makemap hash /etc/mail/genericstable < /etc/mail/genericstable
+#
+# This file contains the mapping of local to external addresses.
+# It is often used to map login names to First.Last name style
+# email addresses.
+#
+# Each line denotes a transform of:
+#   local_address	external_address
+#
+# Where local_address is usually unqualified.
+#
+# E.g.
+#   peter		Peter.Parker@bugle.com
+#
+# It is also possible to rewrite non-local address from one or more
+# domains using the GENERICS_DOMAIN or GENERICS_DOMAIN_FILE macros.
+# This is usally used on an outgoing mail hub to rewrite addresses
+# from different subsidiaries or departments to include the parent
+# domain (in addition to the First.Last name mapping).  E.g.
+#
+#   joe@dept.company.com	Joe.Bloggs@company.com
+#
+# See the "genericstable" section of /usr/share/sendmail/README for
+# more information.
+#

@@ -6,7 +6,7 @@ divert(-1)
 # Note that lines beginning with "dnl" below are comments.
 
 divert(0)dnl
-VERSIONID(`@(#)openbsd-proto.mc $Revision: 1.9 $')dnl
+VERSIONID(`@(#)openbsd-proto.mc $Revision: 1.10 $')dnl
 OSTYPE(openbsd)dnl
 dnl
 dnl If you have a non-static IP address you may wish to forward outgoing mail
@@ -58,6 +58,20 @@ dnl Enable support for /etc/mail/virtusertable.
 dnl Used to do N -> N address mapping.
 dnl
 FEATURE(`virtusertable', `hash -o /etc/mail/virtusertable')dnl
+dnl
+dnl Rewrite (unqualified) outgoing email addresses using the
+dnl mapping listed in /etc/mail/genericstable
+dnl
+FEATURE(genericstable, `hash -o /etc/mail/genericstable')dnl
+dnl
+dnl Normally only local addresses are rewritten.  By using
+dnl generics_entire_domain and either GENERICS_DOMAIN
+dnl or GENERICS_DOMAIN_FILE addresses from hosts in the
+dnl specified domain(s) will be rewritten too.
+dnl
+dnl FEATURE(generics_entire_domain)dnl
+dnl GENERICS_DOMAIN(`othercompany.com')dnl
+dnl GENERICS_DOMAIN_FILE(`/etc/mail/generics-domains')dnl
 dnl
 dnl Include the local host domain even on locally delivered mail
 dnl (which would otherwise contain only the username).
