@@ -1,5 +1,5 @@
-/*	$OpenBSD: atwvar.h,v 1.6 2004/07/25 00:16:35 millert Exp $	*/
-/*	$NetBSD: atwvar.h,v 1.12 2004/07/23 05:06:26 dyoung Exp $	*/
+/*	$OpenBSD: atwvar.h,v 1.7 2004/07/25 13:36:08 millert Exp $	*/
+/*	$NetBSD: atwvar.h,v 1.13 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.  All rights reserved.
@@ -177,6 +177,13 @@ struct atw_tx_radiotap_header {
 	u_int16_t				at_chan_flags;
 } __attribute__((__packed__));
 
+enum atw_revision {
+	ATW_REVISION_AB = 0x11,	/* ADM8211A */
+	ATW_REVISION_AF = 0x15,	/* ADM8211A? */
+	ATW_REVISION_BA = 0x20,	/* ADM8211B */
+	ATW_REVISION_CA = 0x30	/* ADM8211C/CR */
+};
+
 struct atw_softc {
 	struct device		sc_dev;
 	struct ieee80211com	sc_ic;
@@ -268,7 +275,11 @@ struct atw_softc {
 
 	/* ADM8211 state variables. */
 	u_int8_t	sc_sram[ATW_SRAM_MAXSIZE];
+	u_int		sc_sramlen;
 	u_int8_t	sc_bssid[IEEE80211_ADDR_LEN];
+	u_int8_t	sc_rev;;
+	u_int8_t	sc_rf3000_options1;
+	u_int8_t	sc_rf3000_options2;
 
 	struct timeval	sc_last_beacon;
 	struct timeout	sc_scan_to;

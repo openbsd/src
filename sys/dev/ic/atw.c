@@ -1,5 +1,5 @@
-/*	$OpenBSD: atw.c,v 1.25 2004/07/25 00:30:48 millert Exp $	*/
-/*	$NetBSD: atw.c,v 1.68 2004/07/23 06:57:50 dyoung Exp $	*/
+/*	$OpenBSD: atw.c,v 1.26 2004/07/25 13:36:08 millert Exp $	*/
+/*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.68 2004/07/23 06:57:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $");
 #endif
 
 #include "bpfilter.h"
@@ -369,22 +369,27 @@ int
 atw_read_srom(struct atw_softc *sc)
 {
 	struct seeprom_descriptor sd;
-	u_int32_t reg;
+	u_int32_t test0, fail_bits;
 
 	(void)memset(&sd, 0, sizeof(sd));
 
-	reg = ATW_READ(sc, ATW_TEST0);
+	test0 = ATW_READ(sc, ATW_TEST0);
 
-	if (reg & ATW_TEST0_EPNE) {
-		printf("%s: SROM not detected\n", sc->sc_dev.dv_xname);
+	switch (sc->sc_rev) {
+	case ATW_REVISION_BA:
+	case ATW_REVISION_CA:
+		fail_bits = ATW_TEST0_EPNE;
+		break;
+	default:
+		fail_bits = ATW_TEST0_EPNE|ATW_TEST0_EPSNM;
+		break;
+	}
+	if ((test0 & fail_bits) != 0) {
+		printf("%s: bad or missing/bad SROM\n", sc->sc_dev.dv_xname);
 		return -1;
 	}
-#ifdef ATW_DEBUG
-	if (reg & ATW_TEST0_EPSNM)
-		printf("%s: bad SROM signature\n", sc->sc_dev.dv_xname);
-#endif
 
-	switch (reg & ATW_TEST0_EPTYP_MASK) {
+	switch (test0 & ATW_TEST0_EPTYP_MASK) {
 	case ATW_TEST0_EPTYP_93c66:
 		ATW_DPRINTF(("%s: 93c66 SROM\n", sc->sc_dev.dv_xname));
 		sc->sc_sromsz = 512;
@@ -397,7 +402,7 @@ atw_read_srom(struct atw_softc *sc)
 		break;
 	default:
 		printf("%s: unknown SROM type %d\n", sc->sc_dev.dv_xname,
-		    MASK_AND_RSHIFT(reg, ATW_TEST0_EPTYP_MASK));
+		    MASK_AND_RSHIFT(test0, ATW_TEST0_EPTYP_MASK));
 		return -1;
 	}
 
@@ -541,7 +546,7 @@ atw_attach(struct atw_softc *sc)
 	};
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
-	int country_code, error, i, nrate;
+	int country_code, error, i, nrate, srom_major;
 	u_int32_t reg;
 	static const char *type_strings[] = {"Intersil (not supported)",
 	    "RFMD", "Marvel (not supported)"};
@@ -620,6 +625,17 @@ atw_attach(struct atw_softc *sc)
 		sc->sc_rxsoft[i].rxs_mbuf = NULL;
 	}
 
+	switch (sc->sc_rev) {
+	case ATW_REVISION_AB:
+	case ATW_REVISION_AF:
+		sc->sc_sramlen = ATW_SRAM_A_SIZE;
+		break;
+	case ATW_REVISION_BA:
+	case ATW_REVISION_CA:
+		sc->sc_sramlen = ATW_SRAM_B_SIZE;
+		break;
+	}
+
 	/* Reset the chip to a known state. */
 	atw_reset(sc);
 
@@ -696,6 +712,21 @@ atw_attach(struct atw_softc *sc)
 	    htole16(sc->sc_srom[ATW_SR_MAC00]),
 	    htole16(sc->sc_srom[ATW_SR_MAC01]),
 	    htole16(sc->sc_srom[ATW_SR_MAC10])));
+
+	srom_major = MASK_AND_RSHIFT(sc->sc_srom[ATW_SR_FORMAT_VERSION],
+	    ATW_SR_MAJOR_MASK);
+
+	if (srom_major < 2)
+		sc->sc_rf3000_options1 = 0;
+	else if (sc->sc_rev == ATW_REVISION_BA) {
+		sc->sc_rf3000_options1 =
+		    MASK_AND_RSHIFT(sc->sc_srom[ATW_SR_CR28_CR03],
+		    ATW_SR_CR28_MASK);
+	} else
+		sc->sc_rf3000_options1 = 0;
+
+	sc->sc_rf3000_options2 = MASK_AND_RSHIFT(sc->sc_srom[ATW_SR_CTRY_CR29],
+	    ATW_SR_CR29_MASK);
 
 	country_code = MASK_AND_RSHIFT(sc->sc_srom[ATW_SR_CTRY_CR29],
 	    ATW_SR_CTRY_MASK);
@@ -884,6 +915,24 @@ atw_node_free(struct ieee80211com *ic, struct ieee80211_node *ni)
 	(*sc->sc_node_free)(ic, ni);
 }
 
+
+static void
+atw_test1_reset(struct atw_softc *sc)
+{
+	switch (sc->sc_rev) {
+	case ATW_REVISION_BA:
+		if (1 /* XXX condition on transceiver type */) {
+			ATW_SET(sc, ATW_TEST1, ATW_TEST1_TESTMODE_MONITOR);
+		}
+		break;
+	case ATW_REVISION_CA:
+		ATW_CLR(sc, ATW_TEST1, ATW_TEST1_TESTMODE_MASK);
+		break;
+	default:
+		break;
+	}
+}
+
 /*
  * atw_reset:
  *
@@ -919,6 +968,7 @@ atw_reset(struct atw_softc *sc)
 	if (ATW_ISSET(sc, ATW_PAR, ATW_PAR_SWR))
 		printf("%s: reset failed to complete\n", sc->sc_dev.dv_xname);
 
+	atw_test1_reset(sc);
 	/*
 	 * Initialize the PCI Access Register.
 	 */
@@ -959,7 +1009,7 @@ atw_clear_sram(struct atw_softc *sc)
 {
 	memset(sc->sc_sram, 0, sizeof(sc->sc_sram));
 	/* XXX not for revision 0x20. */
-	atw_write_sram(sc, 0, sc->sc_sram, sizeof(sc->sc_sram));
+	atw_write_sram(sc, 0, sc->sc_sram, sc->sc_sramlen);
 }
 
 /* TBD atw_init
@@ -1130,11 +1180,28 @@ atw_response_times_init(struct atw_softc *sc)
 void
 atw_bbp_io_init(struct atw_softc *sc)
 {
+	uint32_t mmiraddr2;
+
+	/* XXX The reference driver does this, but is it *really*
+	 * necessary?
+	 */
+	switch (sc->sc_rev) {
+	case ATW_REVISION_AB:
+	case ATW_REVISION_AF:
+		mmiraddr2 = 0x0;
+		break;
+	default:
+		mmiraddr2 = ATW_READ(sc, ATW_MMIRADDR2);
+		mmiraddr2 &=
+		    ~(ATW_MMIRADDR2_PROREXT|ATW_MMIRADDR2_PRORLEN_MASK);
+		break;
+	}
+
 	switch (sc->sc_bbptype) {
 	case ATW_BBPTYPE_INTERSIL:
 		ATW_WRITE(sc, ATW_MMIWADDR, ATW_MMIWADDR_INTERSIL);
 		ATW_WRITE(sc, ATW_MMIRADDR1, ATW_MMIRADDR1_INTERSIL);
-		ATW_WRITE(sc, ATW_MMIRADDR2, ATW_MMIRADDR2_INTERSIL);
+		mmiraddr2 |= ATW_MMIRADDR2_INTERSIL;
 		break;
 	case ATW_BBPTYPE_MARVEL:
 		/* TBD find out the Marvel settings. */
@@ -1143,9 +1210,10 @@ atw_bbp_io_init(struct atw_softc *sc)
 	default:
 		ATW_WRITE(sc, ATW_MMIWADDR, ATW_MMIWADDR_RFMD);
 		ATW_WRITE(sc, ATW_MMIRADDR1, ATW_MMIRADDR1_RFMD);
-		ATW_WRITE(sc, ATW_MMIRADDR2, ATW_MMIRADDR2_RFMD);
+		mmiraddr2 |= ATW_MMIRADDR2_RFMD;
 		break;
 	}
+	ATW_WRITE(sc, ATW_MMIRADDR2, mmiraddr2);
 	ATW_WRITE(sc, ATW_MACTEST, ATW_MACTEST_MMI_USETXCLK);
 }
 
@@ -1626,15 +1694,13 @@ atw_rf3000_init(struct atw_softc *sc)
 	/* XXX Reference driver remarks that Abocom sets this to 50.
 	 * Meaning 0x50, I think....  50 = 0x32, which would set a bit
 	 * in the "reserved" area of register RF3000_OPTIONS1.
-	 *
-	 * EEPROMs for the ADM8211B contain a setting for this register.
 	 */
-	rc = atw_rf3000_write(sc, RF3000_OPTIONS1, 0x0);
+	rc = atw_rf3000_write(sc, RF3000_OPTIONS1, sc->sc_rf3000_options1);
 
 	if (rc != 0)
 		goto out;
 
-	rc = atw_rf3000_write(sc, RF3000_OPTIONS2, RF3000_OPTIONS2_LNAGS_DELAY);
+	rc = atw_rf3000_write(sc, RF3000_OPTIONS2, sc->sc_rf3000_options2);
 
 	if (rc != 0)
 		goto out;
@@ -2028,7 +2094,7 @@ atw_write_sram(struct atw_softc *sc, u_int ofs, u_int8_t *buf, u_int buflen)
 
 	KASSERT(ofs % 2 == 0 && buflen % 2 == 0);
 
-	KASSERT(buflen + ofs <= ATW_SRAM_A_SIZE);
+	KASSERT(buflen + ofs <= sc->sc_sramlen);
 
 	ptr = &sc->sc_sram[ofs];
 
@@ -2096,12 +2162,17 @@ atw_write_wep(struct atw_softc *sc)
 	reg |= LSHIFT(ic->ic_wep_txkey, ATW_MACTEST_KEYID_MASK);
 	ATW_WRITE(sc, ATW_MACTEST, reg);
 
-	/* RX bypass WEP if revision != 0x20. (I assume revision != 0x20
-	 * throughout.)
-	 */
-	sc->sc_wepctl = ATW_WEPCTL_WEPENABLE | ATW_WEPCTL_WEPRXBYP;
-	if (sc->sc_if.if_flags & IFF_LINK2)
-		sc->sc_wepctl &= ~ATW_WEPCTL_WEPRXBYP;
+	sc->sc_wepctl = ATW_WEPCTL_WEPENABLE;
+
+	switch (sc->sc_rev) {
+	case ATW_REVISION_AB:
+	case ATW_REVISION_AF:
+		/* Bypass WEP on Rx. */
+		sc->sc_wepctl |= ATW_WEPCTL_WEPRXBYP;
+		break;
+	default:
+		break;
+	}
 
 	atw_write_sram(sc, ATW_SRAM_ADDR_SHARED_KEY, (u_int8_t*)&buf[0][0],
 	    sizeof(buf));
@@ -3007,6 +3078,16 @@ atw_linkintr(struct atw_softc *sc, u_int32_t linkstatus)
 	}
 }
 
+static __inline int
+atw_hw_decrypted(struct atw_softc *sc, struct ieee80211_frame *wh)
+{
+	if ((sc->sc_ic.ic_flags & IEEE80211_F_WEPON) == 0)
+		return 0;
+	if ((wh->i_fc[1] & IEEE80211_FC1_WEP) == 0)
+		return 0;
+	return (sc->sc_wepctl & ATW_WEPCTL_WEPRXBYP) == 0;
+}
+
 /*
  * atw_rxintr:
  *
@@ -3164,6 +3245,8 @@ atw_rxintr(struct atw_softc *sc)
 
 		wh = mtod(m, struct ieee80211_frame *);
 		ni = ieee80211_find_rxnode(ic, wh);
+		if (atw_hw_decrypted(sc, wh))
+			wh->i_fc[1] &= ~IEEE80211_FC1_WEP;
 		ieee80211_input(ifp, m, ni, (int)rssi, 0);
 		/*
 		 * The frame may have caused the node to be marked for
