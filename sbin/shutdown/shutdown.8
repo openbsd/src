@@ -1,4 +1,4 @@
-.\"	$OpenBSD: shutdown.8,v 1.15 1999/10/07 06:01:59 ericj Exp $
+.\"	$OpenBSD: shutdown.8,v 1.16 2000/01/15 07:00:43 ericj Exp $
 .\"	$NetBSD: shutdown.8,v 1.6 1995/03/18 15:01:07 cgd Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
@@ -158,12 +158,17 @@ tells login not to let anyone log in
 tells
 .Xr rc 8
 not to run fsck when rebooting
+.It Pa /etc/rc.shutdown
+Run by 
+.Xr rc 8
+before the system is shutdown.
 .El
 .Sh SEE ALSO
 .Xr login 1 ,
 .Xr wall 1 ,
 .Xr halt 8 ,
-.Xr reboot 8
+.Xr reboot 8 ,
+.Xr rc.shutdown 8
 .Sh BACKWARD COMPATIBILITY
 The hours and minutes in the second time format may be separated by
 a colon

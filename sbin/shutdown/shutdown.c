@@ -1,4 +1,4 @@
-/*	$OpenBSD: shutdown.c,v 1.17 1999/09/03 18:11:51 deraadt Exp $	*/
+/*	$OpenBSD: shutdown.c,v 1.18 2000/01/15 07:00:43 ericj Exp $	*/
 /*	$NetBSD: shutdown.c,v 1.9 1995/03/18 15:01:09 cgd Exp $	*/
 
 /*
@@ -44,14 +44,15 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: shutdown.c,v 1.17 1999/09/03 18:11:51 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: shutdown.c,v 1.18 2000/01/15 07:00:43 ericj Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
-#include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/syslog.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 #include <ctype.h>
 #include <fcntl.h>
@@ -62,6 +63,7 @@ static char rcsid[] = "$OpenBSD: shutdown.c,v 1.17 1999/09/03 18:11:51 deraadt E
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <tzfile.h>
 #include <unistd.h>
 #include <errno.h>
@@ -120,7 +122,6 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	extern int optind;
 	register char *p, *endp;
 	struct passwd *pw;
 	int arglen, ch, len, readstdin;
@@ -572,6 +573,6 @@ badtime()
 void
 usage()
 {
-	fprintf(stderr, "usage: shutdown [-fhknpr] shutdowntime [ message ]\n");
+	fprintf(stderr, "usage: shutdown [-dfhknpr] shutdowntime [ message ]\n");
 	exit(1);
 }
