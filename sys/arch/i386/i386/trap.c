@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.46 2001/11/28 16:13:28 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.47 2001/12/03 14:29:24 mpech Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -262,7 +262,8 @@ trap(frame)
 		printf("trap type %d code %x eip %x cs %x eflags %x cr2 %x cpl %x\n",
 		    type, frame.tf_err, frame.tf_eip, frame.tf_cs, frame.tf_eflags, rcr2(), cpl);
 
-		panic("trap");
+		panic("trap type %d, code=%x, pc=%x",
+		    type, frame.tf_err, frame.tf_eip);
 		/*NOTREACHED*/
 
 	case T_PROTFLT:
