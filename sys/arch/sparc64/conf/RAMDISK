@@ -1,4 +1,4 @@
-# 	$OpenBSD: RAMDISK,v 1.8 2001/10/10 04:24:12 deraadt Exp $
+# 	$OpenBSD: RAMDISK,v 1.9 2001/10/12 23:09:34 deraadt Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -44,7 +44,7 @@ hme*	at pci? dev ? function ?
 gem*	at pci? dev ? function ?
 
 auxio*	at ebus?
-com*	at ebus?
+#com*	at ebus?
 clock*	at sbus? slot ? offset ?		# Mostek clock 
 clock*	at ebus?
 timer*	at mainbus0				# Timer chip
