@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.cross,v 1.4 2005/01/19 18:31:34 grange Exp $
+# $OpenBSD: Makefile.cross,v 1.5 2005/01/20 21:35:07 grange Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-etc-root-var
@@ -13,9 +13,9 @@ CROSSDIR=	${DESTDIR}/usr/cross/${TARGET}
 CROSSENV=	AR=${CROSSDIR}/usr/bin/ar AS=${CROSSDIR}/usr/bin/as \
 		CC=${CROSSDIR}/usr/bin/cc CPP=${CROSSDIR}/usr/bin/cpp \
 		CXX=${CROSSDIR}/usr/bin/c++ \
-		LD=${CROSSDIR}/usr/bin/ld NM=${CROSSDIR}/usr/bin/nm \
+		LD=${CROSSDIR}/usr/bin/ld \
 		LORDER=/usr/bin/lorder RANLIB=${CROSSDIR}/usr/bin/ranlib \
-		SIZE=${CROSSDIR}/usr/bin/size STRIP=${CROSSDIR}/usr/bin/strip \
+		STRIP=${CROSSDIR}/usr/bin/strip \
 		HOSTCC=\"${CC}\" HOSTCXX=\"${CXX}\" NOMAN= DESTDIR=${CROSSDIR} \
 		HOSTCFLAGS=\"${CFLAGS}\" HOSTCXXFLAGS=\"${CXXFLAGS}\" \
 		HOSTLDFLAGS=\"${LDFLAGS} \" \
