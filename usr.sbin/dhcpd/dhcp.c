@@ -568,7 +568,7 @@ nak_lease(struct packet *packet, struct iaddr *cip)
 		to.sin_port = server_port;
 
 		if (fallback_interface) {
-			result = send_packet(fallback_interface, packet, &raw,
+			result = send_packet(fallback_interface, &raw,
 			    outgoing.packet_length, from, &to, &hto);
 			if (result == -1)
 				warn("send_fallback: %m");
@@ -580,7 +580,7 @@ nak_lease(struct packet *packet, struct iaddr *cip)
 	}
 
 	errno = 0;
-	result = send_packet(packet->interface, packet, &raw,
+	result = send_packet(packet->interface, &raw,
 	    outgoing.packet_length, from, &to, NULL);
 }
 
@@ -1174,7 +1174,7 @@ dhcp_reply(struct lease *lease)
 	for (i = 0; i < 256; i++) {
 		if (state->options[i] &&
 		    state->options[i]->flags & TC_TEMPORARY)
-			free_tree_cache(state->options[i], "dhcp_reply");
+			free_tree_cache(state->options[i]);
 	}
 
 	memcpy(&raw.ciaddr, &state->ciaddr, sizeof raw.ciaddr);
@@ -1233,8 +1233,8 @@ dhcp_reply(struct lease *lease)
 		to.sin_port = server_port;
 
 		if (fallback_interface) {
-			result = send_packet(fallback_interface, NULL,
-			    &raw, packet_length,raw.siaddr, &to, NULL);
+			result = send_packet(fallback_interface, &raw,
+			    packet_length,raw.siaddr, &to, NULL);
 
 			free_lease_state(state, "dhcp_reply fallback 1");
 			lease->state = NULL;
@@ -1262,8 +1262,8 @@ dhcp_reply(struct lease *lease)
 		to.sin_port = client_port;
 
 		if (fallback_interface) {
-			result = send_packet(fallback_interface, NULL,
-			    &raw, packet_length, raw.siaddr, &to, NULL);
+			result = send_packet(fallback_interface, &raw,
+			    packet_length, raw.siaddr, &to, NULL);
 			free_lease_state(state, "dhcp_reply fallback 2");
 			lease->state = NULL;
 			return;
@@ -1285,7 +1285,7 @@ dhcp_reply(struct lease *lease)
 
 	memcpy(&from, state->from.iabuf, sizeof from);
 
-	result = send_packet(state->ip, NULL, &raw, packet_length,
+	result = send_packet(state->ip, &raw, packet_length,
 	    from, &to, &hto);
 
 	free_lease_state(state, "dhcp_reply");

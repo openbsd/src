@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.8 2004/04/14 20:22:27 henning Exp $	*/
+/*	$OpenBSD: options.c,v 1.9 2004/05/04 20:28:40 deraadt Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -102,10 +102,8 @@ void
 parse_option_buffer(struct packet *packet,
     unsigned char *buffer, int length)
 {
-	unsigned char *s, *t;
-	unsigned char *end = buffer + length;
-	int len;
-	int code;
+	unsigned char *s, *t, *end = buffer + length;
+	int len, code;
 
 	for (s = buffer; *s != DHO_END && s < end; ) {
 		code = s[0];
@@ -203,13 +201,9 @@ cons_options(struct packet *inpacket, struct dhcp_packet *outpacket,
     int overload, /* Overload flags that may be set. */
     int terminate, int bootpp, u_int8_t *prl, int prl_len)
 {
-	unsigned char priority_list[300];
-	int priority_len;
-	unsigned char buffer[4096];	/* Really big buffer... */
-	int main_buffer_size;
-	int mainbufix, bufix;
-	int option_size;
-	int length;
+	unsigned char priority_list[300], buffer[4096];
+	int priority_len, main_buffer_size, mainbufix, bufix;
+	int option_size, length;
 
 	/*
 	 * If the client has provided a maximum DHCP message size, use
@@ -350,11 +344,7 @@ store_options(unsigned char *buffer, int buflen, struct tree_cache **options,
     unsigned char *priority_list, int priority_len, int first_cutoff,
     int second_cutoff, int terminate)
 {
-	int bufix = 0;
-	int option_stored[256];
-	int i;
-	int ix;
-	int tto;
+	int bufix = 0, option_stored[256], i, ix, tto;
 
 	/* Zero out the stored-lengths array. */
 	memset(option_stored, 0, sizeof(option_stored));
@@ -463,17 +453,12 @@ pretty_print_option(unsigned int code, unsigned char *data, int len,
     int emit_commas, int emit_quotes)
 {
 	static char optbuf[32768]; /* XXX */
-	int hunksize = 0;
-	int numhunk = -1;
-	int numelem = 0;
-	char fmtbuf[32];
-	int i, j, k;
-	char *op = optbuf;
-	int opleft = sizeof(optbuf);
+	int hunksize = 0, numhunk = -1, numelem = 0;
+	char fmtbuf[32], *op = optbuf;
+	int i, j, k, opleft = sizeof(optbuf);
 	unsigned char *dp = data;
 	struct in_addr foo;
 	char comma;
-
 
 	/* Code should be between 0 and 255. */
 	if (code > 255)

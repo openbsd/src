@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.c,v 1.17 2004/04/21 09:11:58 canacar Exp $ */
+/*	$OpenBSD: dhcpd.c,v 1.18 2004/05/04 20:28:40 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -46,9 +46,6 @@ void usage(void);
 
 time_t cur_time;
 struct group root_group;
-
-struct iaddr server_identifier;
-int server_identifier_matched;
 
 u_int16_t server_port;
 u_int16_t client_port;

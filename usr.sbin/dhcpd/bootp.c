@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootp.c,v 1.7 2004/04/21 09:11:58 canacar Exp $	*/
+/*	$OpenBSD: bootp.c,v 1.8 2004/05/04 20:28:40 deraadt Exp $	*/
 
 /*
  * BOOTP Protocol support.
@@ -333,7 +333,7 @@ lose:
 		to.sin_port = server_port;
 
 		if (fallback_interface) {
-			result = send_packet(fallback_interface, NULL, &raw,
+			result = send_packet(fallback_interface, &raw,
 			    outgoing.packet_length, from, &to, &hto);
 			return;
 		}
@@ -355,6 +355,6 @@ lose:
 	}
 
 	errno = 0;
-	result = send_packet(packet->interface, packet, &raw,
+	result = send_packet(packet->interface, &raw,
 	    outgoing.packet_length, from, &to, &hto);
 }

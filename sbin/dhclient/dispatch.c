@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.24 2004/05/04 18:58:50 deraadt Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.25 2004/05/04 20:28:40 deraadt Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -89,6 +89,7 @@ discover_interfaces(struct interface_info *iface)
 		if (ifa->ifa_addr->sa_family == AF_LINK) {
 			struct sockaddr_dl *foo =
 			    (struct sockaddr_dl *)ifa->ifa_addr;
+
 			iface->index = foo->sdl_index;
 			iface->hw_address.hlen = foo->sdl_alen;
 			iface->hw_address.htype = HTYPE_ETHER; /* XXX */
@@ -122,7 +123,6 @@ discover_interfaces(struct interface_info *iface)
 	if_register_receive(iface);
 	if_register_send(iface);
 	add_protocol(iface->name, iface->rfdesc, got_one, iface);
-
 	freeifaddrs(ifap);
 }
 
@@ -185,9 +185,7 @@ another:
 			to_msec = -1;
 
 		/* Set up the descriptors to be polled. */
-		i = 0;
-
-		for (l = protocols; l; l = l->next) {
+		for (i = 0, l = protocols; l; l = l->next) {
 			struct interface_info *ip = l->local;
 			if (ip && (l->handler != got_one || !ip->dead)) {
 				fds[i].fd = l->fd;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: memory.c,v 1.6 2004/04/20 05:35:33 henning Exp $ */
+/*	$OpenBSD: memory.c,v 1.7 2004/05/04 20:28:40 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 The Internet Software Consortium.
@@ -841,29 +841,4 @@ write_leases(void)
 	}
 	if (!commit_leases())
 		error("Can't commit leases to new database: %m");
-}
-
-void
-dump_subnets(void)
-{
-	struct lease *l;
-	struct shared_network *s;
-	struct subnet *n;
-
-	note("Subnets:");
-	for (n = subnets; n; n = n->next_subnet) {
-		debug("  Subnet %s", piaddr(n->net));
-		debug("     netmask %s", piaddr(n->netmask));
-	}
-	note("Shared networks:");
-	for (s = shared_networks; s; s = s->next) {
-		note("  %s", s->name);
-		for (l = s->leases; l; l = l->next) {
-			print_lease(l);
-		}
-		if (s->last_lease) {
-			debug("    Last Lease:");
-			print_lease(s->last_lease);
-		}
-	}
 }

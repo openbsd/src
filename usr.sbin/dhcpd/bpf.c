@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.3 2004/04/21 09:11:58 canacar Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.4 2004/05/04 20:28:40 deraadt Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -226,9 +226,9 @@ if_register_receive(struct interface_info *info)
 }
 
 ssize_t
-send_packet(struct interface_info *interface, struct packet *packet,
-    struct dhcp_packet *raw, size_t len, struct in_addr from,
-    struct sockaddr_in *to, struct hardware *hto)
+send_packet(struct interface_info *interface, struct dhcp_packet *raw,
+    size_t len, struct in_addr from, struct sockaddr_in *to,
+    struct hardware *hto)
 {
 	unsigned char buf[256];
 	struct iovec iov[2];

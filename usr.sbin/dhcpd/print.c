@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.6 2004/04/20 05:35:33 henning Exp $ */
+/*	$OpenBSD: print.c,v 1.7 2004/05/04 20:28:40 deraadt Exp $ */
 
 /* Turn data structures into printable text. */
 
@@ -73,32 +73,7 @@ bad:
 
 }
 
-void
-print_lease(struct lease *lease)
-{
-	struct tm	*t;
-	char	tbuf[32];
-
-	debug("      Lease %s", piaddr(lease->ip_addr));
-
-	t = gmtime(&lease->starts);
-	strftime(tbuf, sizeof tbuf, "%Y/%m/%d %H:%M:%S", t);
-	debug("        start %s", tbuf);
-
-	t = gmtime(&lease->ends);
-	strftime(tbuf, sizeof tbuf, "%Y/%m/%d %H:%M:%S", t);
-	debug("        end %s", tbuf);
-
-	t = gmtime(&lease->timestamp);
-	strftime(tbuf, sizeof tbuf, "%Y/%m/%d %H:%M:%S", t);
-	debug("        stamp %s", tbuf);
-
-	debug("        hardware addr = %s",
-	    print_hw_addr(lease->hardware_addr.htype,
-	    lease->hardware_addr.hlen, lease->hardware_addr.haddr));
-	debug("        host %s  ", lease->host ? lease->host->name : "<none>");
-}
-
+#ifdef DEBUG_PACKET
 void
 dump_packet(struct packet *tp)
 {
@@ -164,25 +139,4 @@ dump_raw(unsigned char *buf, int len)
 	}
 	note("%s", lbuf);
 }
-
-void
-hash_dump(struct hash_table *table)
-{
-	struct hash_bucket *bp;
-	int	i;
-
-	if (!table)
-		return;
-
-	for (i = 0; i < table->hash_count; i++) {
-		if (!table->buckets[i])
-			continue;
-		note("hash bucket %d:", i);
-		for (bp = table->buckets[i]; bp; bp = bp->next) {
-			if (bp->len)
-				dump_raw(bp->name, bp->len);
-			else
-				note("%s", (char *)bp->name);
-		}
-	}
-}
+#endif /* DEBUG_PACKET */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.10 2004/04/14 20:22:27 henning Exp $	*/
+/*	$OpenBSD: tree.c,v 1.11 2004/05/04 20:28:40 deraadt Exp $	*/
 
 /* Routines for manipulating parse trees... */
 
@@ -60,19 +60,6 @@ cons(caddr_t car, pair cdr)
 	foo->car = car;
 	foo->cdr = cdr;
 	return (foo);
-}
-
-struct dns_host_entry *
-enter_dns_host(char *name)
-{
-	struct dns_host_entry *dh;
-	int len = strlen(name) + 1;
-
-	if (!(dh = calloc(1, sizeof(struct dns_host_entry)))
-	    || !(dh->hostname = calloc(1, len)))
-		error("Can't allocate space for new host.");
-	strlcpy(dh->hostname, name, len);
-	return (dh);
 }
 
 int

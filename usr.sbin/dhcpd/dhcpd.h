@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.11 2004/04/22 15:22:48 henning Exp $ */
+/*	$OpenBSD: dhcpd.h,v 1.12 2004/05/04 20:28:40 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -665,7 +665,6 @@ struct class *add_class(int, char *);
 struct class *find_class(int, unsigned char *, int);
 struct group *clone_group(struct group *, char *);
 void write_leases(void);
-void dump_subnets(void);
 
 /* alloc.c */
 void * dmalloc(int, char *);
@@ -686,7 +685,6 @@ struct protocol *new_protocol(char *);
 struct lease_state *new_lease_state(char *);
 struct domain_search_list *new_domain_search_list(char *);
 struct name_server *new_name_server(char *);
-struct string_list *new_string_list(size_t size, char * name);
 void free_name_server(struct name_server *, char *);
 void free_domain_search_list(struct domain_search_list *, char *);
 void free_lease_state(struct lease_state *, char *);
@@ -697,27 +695,22 @@ void free_class(struct class *, char *);
 void free_subnet(struct subnet *, char *);
 void free_lease(struct lease *, char *);
 void free_hash_bucket(struct hash_bucket *, char *);
-void free_hash_table(struct hash_table *, char *);
-void free_tree_cache(struct tree_cache *, char *);
-void free_packet(struct packet *, char *);
-void free_dhcp_packet(struct dhcp_packet *, char *);
+void free_tree_cache(struct tree_cache *);
 void free_tree(struct tree *, char *);
-void free_string_list(struct string_list *, char *);
 
 /* print.c */
 char *print_hw_addr(int, int, unsigned char *);
-void print_lease(struct lease *);
 void dump_raw(unsigned char *, int);
+#ifdef DEBUG_PACKET
 void dump_packet(struct packet *);
-void hash_dump(struct hash_table *);
+#endif
 
 /* bpf.c */
 int if_register_bpf(struct interface_info *);
 void if_reinitialize_send(struct interface_info *);
 void if_register_send(struct interface_info *);
-ssize_t send_packet(struct interface_info *, struct packet *,
-    struct dhcp_packet *, size_t, struct in_addr, struct sockaddr_in *,
-    struct hardware *);
+ssize_t send_packet(struct interface_info *, struct dhcp_packet *, size_t,
+    struct in_addr, struct sockaddr_in *, struct hardware *);
 void if_reinitialize_receive(struct interface_info *);
 void if_register_receive(struct interface_info *);
 ssize_t receive_packet(struct interface_info *, unsigned char *, size_t,
@@ -735,8 +728,6 @@ extern void (*bootp_packet_handler)(struct interface_info *,
     struct dhcp_packet *, int, unsigned int, struct iaddr, struct hardware *);
 extern struct timeout *timeouts;
 void discover_interfaces(int);
-struct interface_info *setup_fallback(void);
-void reinitialize_interfaces(void);
 void dispatch(void);
 int locate_network(struct packet *);
 void got_one(struct protocol *);
@@ -773,7 +764,6 @@ void putShort(unsigned char *, int);
 /* inet.c */
 struct iaddr subnet_number(struct iaddr, struct iaddr);
 struct iaddr ip_addr(struct iaddr, struct iaddr, u_int32_t);
-struct iaddr broadcast_addr(struct iaddr, struct iaddr);
 u_int32_t host_addr(struct iaddr, struct iaddr);
 int addr_eq(struct iaddr, struct iaddr);
 char *piaddr(struct iaddr);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.39 2004/05/04 18:58:50 deraadt Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.40 2004/05/04 20:28:40 deraadt Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -73,8 +73,6 @@
 
 time_t cur_time;
 time_t default_lease_time = 43200; /* 12 hours... */
-time_t max_lease_time = 86400; /* 24 hours... */
-struct tree_cache *global_options[256];
 
 char *path_dhclient_conf = _PATH_DHCLIENT_CONF;
 char *path_dhclient_db = NULL;
@@ -83,7 +81,6 @@ int log_perror = 1;
 int privfd;
 
 struct iaddr iaddr_broadcast = { 4, { 255, 255, 255, 255 } };
-struct iaddr iaddr_any = { 4, { 0, 0, 0, 0 } };
 struct in_addr inaddr_any;
 struct sockaddr_in sockaddr_broadcast;
 
@@ -1308,20 +1305,6 @@ send_decline(void *ipp)
 }
 
 void
-send_release(void *ipp)
-{
-	struct interface_info *ip = ipp;
-
-	note("DHCPRELEASE on %s to %s port %d", ip->name,
-	    inet_ntoa(sockaddr_broadcast.sin_addr),
-	    ntohs(sockaddr_broadcast.sin_port));
-
-	/* Send out a packet. */
-	(void) send_packet(ip, &ip->client->packet, ip->client->packet_length,
-	    inaddr_any, &sockaddr_broadcast, NULL);
-}
-
-void
 make_discover(struct interface_info *ip, struct client_lease *lease)
 {
 	unsigned char discover = DHCPDISCOVER;
@@ -1595,62 +1578,6 @@ make_decline(struct interface_info *ip, struct client_lease *lease)
 }
 
 void
-make_release(struct interface_info *ip, struct client_lease *lease)
-{
-	unsigned char request = DHCPRELEASE;
-	struct tree_cache *options[256];
-	struct tree_cache message_type_tree;
-	struct tree_cache server_id_tree;
-	int i;
-
-	memset(options, 0, sizeof(options));
-	memset(&ip->client->packet, 0, sizeof(ip->client->packet));
-
-	/* Set DHCP_MESSAGE_TYPE to DHCPRELEASE */
-	i = DHO_DHCP_MESSAGE_TYPE;
-	options[i] = &message_type_tree;
-	options[i]->value = &request;
-	options[i]->len = sizeof(request);
-	options[i]->buf_size = sizeof(request);
-	options[i]->timeout = 0xFFFFFFFF;
-	options[i]->tree = NULL;
-
-	/* Send back the server identifier... */
-	i = DHO_DHCP_SERVER_IDENTIFIER;
-	options[i] = &server_id_tree;
-	options[i]->value = lease->options[i].data;
-	options[i]->len = lease->options[i].len;
-	options[i]->buf_size = lease->options[i].len;
-	options[i]->timeout = 0xFFFFFFFF;
-	options[i]->tree = NULL;
-
-	/* Set up the option buffer... */
-	ip->client->packet_length = cons_options(NULL, &ip->client->packet, 0,
-	    options, 0, 0, 0, NULL, 0);
-	if (ip->client->packet_length < BOOTP_MIN_LEN)
-		ip->client->packet_length = BOOTP_MIN_LEN;
-
-	ip->client->packet.op = BOOTREQUEST;
-	ip->client->packet.htype = ip->hw_address.htype;
-	ip->client->packet.hlen = ip->hw_address.hlen;
-	ip->client->packet.hops = 0;
-	ip->client->packet.xid = arc4random();
-	ip->client->packet.secs = 0;
-	ip->client->packet.flags = 0;
-
-	memset(&ip->client->packet.ciaddr, 0,
-	    sizeof(ip->client->packet.ciaddr));
-	memset(&ip->client->packet.yiaddr, 0,
-	    sizeof(ip->client->packet.yiaddr));
-	memset(&ip->client->packet.siaddr, 0,
-	    sizeof(ip->client->packet.siaddr));
-	memset(&ip->client->packet.giaddr, 0,
-	    sizeof(ip->client->packet.giaddr));
-	memcpy(ip->client->packet.chaddr,
-	    ip->hw_address.haddr, ip->hw_address.hlen);
-}
-
-void
 free_client_lease(struct client_lease *lease)
 {
 	int i;
@@ -1747,9 +1674,6 @@ write_client_lease(struct interface_info *ip, struct client_lease *lease,
 	fprintf(leaseFile, "}\n");
 	fflush(leaseFile);
 }
-
-char scriptName[256];
-FILE *scriptFile;
 
 void
 script_init(char *reason, struct string_list *medium)

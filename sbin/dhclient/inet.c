@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.5 2004/03/02 18:49:21 deraadt Exp $	*/
+/*	$OpenBSD: inet.c,v 1.6 2004/05/04 20:28:40 deraadt Exp $	*/
 
 /*
  * Subroutines to manipulate internet addresses in a safely portable
@@ -66,49 +66,6 @@ subnet_number(struct iaddr addr, struct iaddr mask)
 }
 
 /*
- * Combine a network number and a integer to produce an internet address.
- * This won't work for subnets with more than 32 bits of host address, but
- * maybe this isn't a problem.
- */
-struct iaddr
-ip_addr(struct iaddr subnet, struct iaddr mask, u_int32_t host_address)
-{
-	int i, j, k;
-	u_int32_t swaddr;
-	unsigned char habuf[sizeof(swaddr)];
-	struct iaddr rv;
-
-	swaddr = htonl(host_address);
-	memcpy(habuf, &swaddr, sizeof(swaddr));
-
-	/*
-	 * Combine the subnet address and the host address.   If the
-	 * host address is bigger than can fit in the subnet, return a
-	 * zero-length iaddr structure.
-	 */
-	rv = subnet;
-	j = rv.len - sizeof(habuf);
-	for (i = sizeof(habuf) - 1; i >= 0; i--) {
-		if (mask.iabuf[i + j]) {
-			if (habuf[i] > (mask.iabuf[i + j] ^ 0xFF)) {
-				rv.len = 0;
-				return (rv);
-			}
-			for (k = i - 1; k >= 0; k--)
-				if (habuf[k]) {
-					rv.len = 0;
-					return (rv);
-				}
-			rv.iabuf[i + j] |= habuf[i];
-			break;
-		} else
-			rv.iabuf[i + j] = habuf[i];
-	}
-
-	return (rv);
-}
-
-/*
  * Given a subnet number and netmask, return the address on that subnet
  * for which the host portion of the address is all ones (the standard
  * broadcast address).
@@ -129,27 +86,6 @@ broadcast_addr(struct iaddr subnet, struct iaddr mask)
 	rv.len = subnet.len;
 
 	return (rv);
-}
-
-u_int32_t
-host_addr(struct iaddr addr, struct iaddr mask)
-{
-	int i;
-	u_int32_t swaddr;
-	struct iaddr rv;
-
-	rv.len = 0;
-
-	/* Mask out the network bits... */
-	rv.len = addr.len;
-	for (i = 0; i < rv.len; i++)
-		rv.iabuf[i] = addr.iabuf[i] & ~mask.iabuf[i];
-
-	/* Copy out up to 32 bits... */
-	memcpy(&swaddr, &rv.iabuf[rv.len - sizeof(swaddr)], sizeof(swaddr));
-
-	/* Swap it and return it. */
-	return (ntohl(swaddr));
 }
 
 int

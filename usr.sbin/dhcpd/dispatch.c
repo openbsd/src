@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.8 2004/04/20 05:35:33 henning Exp $ */
+/*	$OpenBSD: dispatch.c,v 1.9 2004/05/04 20:28:40 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -274,32 +274,6 @@ discover_interfaces(int state)
 		add_protocol(tmp->name, tmp->rfdesc, got_one, tmp);
 
 	freeifaddrs(ifap);
-}
-
-struct interface_info *
-setup_fallback(void)
-{
-	fallback_interface = ((struct interface_info *)dmalloc(
-	    sizeof *fallback_interface, "discover_interfaces"));
-
-	if (!fallback_interface)
-		error("Insufficient memory to record fallback interface.");
-	memset(fallback_interface, 0, sizeof *fallback_interface);
-	strlcpy(fallback_interface->name, "fallback", IFNAMSIZ);
-	fallback_interface->shared_network =
-	    new_shared_network("parse_statement");
-	if (!fallback_interface->shared_network)
-		error("No memory for shared subnet");
-	memset(fallback_interface->shared_network, 0,
-	    sizeof(struct shared_network));
-	fallback_interface->shared_network->name = "fallback-net";
-	return fallback_interface;
-}
-
-void
-reinitialize_interfaces(void)
-{
-	interfaces_invalidated = 1;
 }
 
 /*

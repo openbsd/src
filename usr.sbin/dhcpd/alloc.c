@@ -1,4 +1,4 @@
-/*	$OpenBSD: alloc.c,v 1.2 2004/04/14 00:20:25 henning Exp $	*/
+/*	$OpenBSD: alloc.c,v 1.3 2004/05/04 20:28:40 deraadt Exp $	*/
 
 /* Memory allocation... */
 
@@ -42,8 +42,6 @@
 
 #include "dhcpd.h"
 
-struct dhcp_packet *dhcp_free_list;
-struct packet *packet_free_list;
 struct lease_state *free_lease_states;
 
 void *
@@ -71,17 +69,6 @@ new_tree(char *name)
 {
 	struct tree *rval = dmalloc(sizeof(struct tree), name);
 
-	return (rval);
-}
-
-struct string_list *
-new_string_list(size_t size, char * name)
-{
-	struct string_list *rval;
-
-	rval = dmalloc(sizeof(struct string_list) + size, name);
-	if (rval != NULL)
-		rval->string = ((char *)rval) + sizeof(struct string_list);
 	return (rval);
 }
 
@@ -132,38 +119,14 @@ free_hash_bucket(struct hash_bucket *ptr, char *name)
 }
 
 void
-free_hash_table(struct hash_table *ptr, char *name)
-{
-	dfree(ptr, name);
-}
-
-void
-free_tree_cache(struct tree_cache *ptr, char *name)
+free_tree_cache(struct tree_cache *ptr)
 {
 	ptr->value = (unsigned char *)free_tree_caches;
 	free_tree_caches = ptr;
 }
 
 void
-free_packet(struct packet *ptr, char *name)
-{
-	dfree(ptr, name);
-}
-
-void
-free_dhcp_packet(struct dhcp_packet *ptr, char *name)
-{
-	dfree(ptr, name);
-}
-
-void
 free_tree(struct tree *ptr, char *name)
-{
-	dfree(ptr, name);
-}
-
-void
-free_string_list(struct string_list *ptr, char *name)
 {
 	dfree(ptr, name);
 }

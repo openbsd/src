@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.3 2004/04/16 04:30:09 deraadt Exp $	*/
+/*	$OpenBSD: inet.c,v 1.4 2004/05/04 20:28:40 deraadt Exp $	*/
 
 /*
  * Subroutines to manipulate internet addresses in a safely portable
@@ -104,29 +104,6 @@ ip_addr(struct iaddr subnet, struct iaddr mask, u_int32_t host_address)
 		} else
 			rv.iabuf[i + j] = habuf[i];
 	}
-
-	return (rv);
-}
-
-/*
- * Given a subnet number and netmask, return the address on that subnet
- * for which the host portion of the address is all ones (the standard
- * broadcast address).
- */
-struct iaddr
-broadcast_addr(struct iaddr subnet, struct iaddr mask)
-{
-	int i;
-	struct iaddr rv;
-
-	if (subnet.len != mask.len) {
-		rv.len = 0;
-		return (rv);
-	}
-
-	for (i = 0; i < subnet.len; i++)
-		rv.iabuf[i] = subnet.iabuf[i] | (~mask.iabuf[i] & 255);
-	rv.len = subnet.len;
 
 	return (rv);
 }

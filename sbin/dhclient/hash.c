@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash.c,v 1.6 2004/05/04 18:58:50 deraadt Exp $	*/
+/*	$OpenBSD: hash.c,v 1.7 2004/05/04 20:28:40 deraadt Exp $	*/
 
 /* Routines for manipulating hash tables... */
 
@@ -95,38 +95,6 @@ void add_hash(struct hash_table *table, unsigned char *name, int len,
 	bp->next = table->buckets[hashno];
 	bp->len = len;
 	table->buckets[hashno] = bp;
-}
-
-void
-delete_hash_entry(struct hash_table *table, unsigned char *name, int len)
-{
-	int hashno;
-	struct hash_bucket *bp, *pbp = NULL;
-
-	if (!table)
-		return;
-	if (!len)
-		len = strlen((char *)name);
-
-	hashno = do_hash(name, len, table->hash_count);
-
-	/*
-	 * Go through the list looking for an entry that matches; if we
-	 * find it, delete it.
-	 */
-	for (bp = table->buckets[hashno]; bp; bp = bp->next) {
-		if ((!bp->len &&
-		    !strcmp((char *)bp->name, (char *)name)) ||
-		    (bp->len == len && !memcmp(bp->name, name, len))) {
-			if (pbp)
-				pbp->next = bp->next;
-			else
-				table->buckets[hashno] = bp->next;
-			free_hash_bucket(bp);
-			break;
-		}
-		pbp = bp;	/* jwg, 9/6/96 - nice catch! */
-	}
 }
 
 unsigned char *

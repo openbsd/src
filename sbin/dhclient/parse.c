@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.7 2004/02/24 13:08:26 henning Exp $	*/
+/*	$OpenBSD: parse.c,v 1.8 2004/05/04 20:28:40 deraadt Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -130,63 +130,6 @@ parse_string(FILE *cfile)
 
 	if (!parse_semi(cfile))
 		return (NULL);
-	return (s);
-}
-
-/*
- * hostname :== identifier | hostname DOT identifier
- */
-char *
-parse_host_name(FILE *cfile)
-{
-	char *val;
-	int token;
-	int len = 0;
-	char *s;
-	char *t;
-	pair c = NULL;
-
-	/* Read a dotted hostname... */
-	do {
-		/* Read a token, which should be an identifier. */
-		token = next_token(&val, cfile);
-		if (!is_identifier(token) && token != NUMBER) {
-			parse_warn("expecting an identifier in hostname");
-			skip_to_semi(cfile);
-			return (NULL);
-		}
-		/* Store this identifier... */
-		if (!(s = malloc(strlen(val) + 1)))
-			error("can't allocate temp space for hostname.");
-		strlcpy(s, val, strlen(val) + 1);
-		c = cons((caddr_t)s, c);
-		len += strlen(s) + 1;
-		/*
-		 * Look for a dot; if it's there, keep going, otherwise
-		 * we're done.
-		 */
-		token = peek_token(&val, cfile);
-		if (token == DOT)
-			token = next_token(&val, cfile);
-	} while (token == DOT);
-
-	/* Assemble the hostname together into a string. */
-	if (!(s = malloc(len)))
-		error("can't allocate space for hostname.");
-	t = s + len;
-	*--t = '\0';
-	while (c) {
-		pair cdr = c->cdr;
-		int l = strlen((char *)c->car);
-		t -= l;
-		memcpy(t, (char *)c->car, l);
-		/* Free up temp space. */
-		free(c->car);
-		free(c);
-		c = cdr;
-		if (t != s)
-			*--t = '.';
-	}
 	return (s);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.30 2004/05/04 18:58:50 deraadt Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.31 2004/05/04 20:28:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -275,7 +275,6 @@ int peek_token(char **, FILE *);
 void skip_to_semi(FILE *);
 int parse_semi(FILE *);
 char *parse_string(FILE *);
-char *parse_host_name(FILE *);
 int parse_ip_addr(FILE *, struct iaddr *);
 void parse_hardware_param(FILE *, struct hardware *);
 void parse_lease_time(FILE *, time_t *);
@@ -286,14 +285,12 @@ time_t parse_date(FILE *);
 
 /* tree.c */
 int tree_evaluate(struct tree_cache *);
-struct dns_host_entry *enter_dns_host(char *);
 pair cons(caddr_t, pair);
 
 /* alloc.c */
 struct string_list	*new_string_list(size_t size);
 struct hash_table	*new_hash_table(int);
 struct hash_bucket	*new_hash_bucket(void);
-void			 free_hash_bucket(struct hash_bucket *);
 
 /* bpf.c */
 int if_register_bpf(struct interface_info *);
@@ -320,14 +317,12 @@ int interface_link_status(char *);
 /* hash.c */
 struct hash_table *new_hash(void);
 void add_hash(struct hash_table *, unsigned char *, int, unsigned char *);
-void delete_hash_entry(struct hash_table *, unsigned char *, int);
 unsigned char *hash_lookup(struct hash_table *, unsigned char *, int);
 
 /* tables.c */
 extern struct option dhcp_options[256];
 extern unsigned char dhcp_option_default_priority_list[];
 extern int sizeof_dhcp_option_default_priority_list;
-extern char *hardware_types[256];
 extern struct hash_table universe_hash;
 extern struct universe dhcp_universe;
 void initialize_universes(void);
@@ -344,9 +339,7 @@ void putShort(unsigned char *, int);
 
 /* inet.c */
 struct iaddr subnet_number(struct iaddr, struct iaddr);
-struct iaddr ip_addr(struct iaddr, struct iaddr, u_int32_t);
 struct iaddr broadcast_addr(struct iaddr, struct iaddr);
-u_int32_t host_addr(struct iaddr, struct iaddr);
 int addr_eq(struct iaddr, struct iaddr);
 char *piaddr(struct iaddr);
 
@@ -365,7 +358,6 @@ void dhcpnak(struct packet *);
 
 void send_discover(void *);
 void send_request(void *);
-void send_release(void *);
 void send_decline(void *);
 
 void state_reboot(void *);
@@ -380,7 +372,6 @@ void bind_lease(struct interface_info *);
 void make_discover(struct interface_info *, struct client_lease *);
 void make_request(struct interface_info *, struct client_lease *);
 void make_decline(struct interface_info *, struct client_lease *);
-void make_release(struct interface_info *, struct client_lease *);
 
 void free_client_lease(struct client_lease *);
 void rewrite_client_leases(void);
