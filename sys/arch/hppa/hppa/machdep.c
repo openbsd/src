@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.24 2000/03/23 09:59:54 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.25 2000/03/23 20:25:41 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2000 Michael Shalayeff
@@ -142,6 +142,9 @@ u_int	cpu_ticksnum, cpu_ticksdenom, cpu_hzticks;
 	/* exported info */
 char	machine[] = MACHINE_ARCH;
 char	cpu_model[128];
+enum hppa_cpu_type cpu_type;
+int (*cpu_btlb_ins) __P((int i, pa_space_t sp, vaddr_t va, paddr_t pa,
+	    vsize_t sz, u_int prot));
 #ifdef COMPAT_HPUX
 int	cpu_model_hpux;	/* contains HPUX_SYSCONF_CPU* kind of value */
 #endif
@@ -179,6 +182,44 @@ pid_t sigpid = 0;
 #define SDB_FOLLOW	0x01
 #endif
 
+/*
+ * Whatever CPU types we support
+ */
+extern u_int itlb_x[], dtlb_x[], tlbd_x[];
+extern u_int itlb_s[], dtlb_s[], tlbd_s[];
+extern u_int itlb_t[], dtlb_t[], tlbd_t[];
+extern u_int itlb_l[], dtlb_l[], tlbd_l[];
+int btlb_g __P((int i, pa_space_t sp, vaddr_t va, paddr_t pa,
+	    vsize_t sz, u_int prot));
+const struct hppa_cpu_typed {
+	char symid[8];
+	enum hppa_cpu_type type;
+	int  arch;
+	int  features;
+	u_int *itlbh, *dtlbh, *tlbdh;
+	int (*btlbins) __P((int i, pa_space_t sp, vaddr_t va, paddr_t pa,
+	    vsize_t sz, u_int prot));
+} cpu_types[] = {
+	{ "PCX",   hpcx,  0x10, 0,
+				itlb_x, dtlb_x, tlbd_x, btlb_g},
+	{ "PCXS",  hpcxs, 0x11, HPPA_FTRS_BTLBS,
+				itlb_s, dtlb_s, tlbd_s, btlb_g},
+	{ "PCXT",  hpcxt, 0x11, HPPA_FTRS_BTLBU,
+				itlb_t, dtlb_t, tlbd_t, btlb_g},
+	{ "PCXT'", hpcxta,0x11, HPPA_FTRS_BTLBU,
+				itlb_t, dtlb_t, tlbd_t, btlb_g},
+	{ "PCXL",  hpcxl, 0x11, HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
+				itlb_l, dtlb_l, tlbd_l, btlb_g},
+	{ "PCXL2", hpcxl2,0x11, HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
+				itlb_l, dtlb_l, tlbd_l, btlb_g},
+	{ "PCXU",  hpcxu, 0x20, HPPA_FTRS_W32B|HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
+				itlb_l, dtlb_l, tlbd_l, btlb_g},
+	{ "PCXU2", hpcxu2,0x20, HPPA_FTRS_W32B|HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
+				itlb_l, dtlb_l, tlbd_l, btlb_g},
+	{ "PCXW",  hpcxw, 0x20, HPPA_FTRS_W32B|HPPA_FTRS_BTLBU|HPPA_FTRS_HVT,
+				itlb_l, dtlb_l, tlbd_l, btlb_g},
+	{ "", 0 }
+};
 
 void
 hppa_init(start)
@@ -188,6 +229,7 @@ hppa_init(start)
 	vaddr_t v, vstart, vend;
 	register int error;
 	int hptsize;	/* size of HPT table if supported */
+	int cpu_features = 0;
 
 	boothowto |= RB_SINGLE;	/* XXX always go into single-user while debug */
 
@@ -231,12 +273,19 @@ hppa_init(start)
 
 	/* BTLB params */
 	if ((error = pdc_call((iodcio_t)pdc, 0, PDC_BLOCK_TLB,
-	    PDC_BTLB_DEFAULT, &pdc_btlb)) < 0)
-		panic("WARNING: PDC_BTLB error %d", error);
+	    PDC_BTLB_DEFAULT, &pdc_btlb)) < 0) {
+#ifdef DEBUG
+		printf("WARNING: PDC_BTLB error %d", error);
+#endif
+	} else {
+		/* purge TLBs and caches */
+		if (pdc_call((iodcio_t)pdc, 0, PDC_BLOCK_TLB,
+		    PDC_BTLB_PURGE_ALL) < 0)
+			printf("WARNING: BTLB purge failed\n");
 
-	/* purge TLBs and caches */
-	if (pdc_call((iodcio_t)pdc, 0, PDC_BLOCK_TLB, PDC_BTLB_PURGE_ALL) < 0)
-		printf("WARNING: BTLB purge failed\n");
+		cpu_features = pdc_btlb.finfo.num_c?
+		    HPPA_FTRS_BTLBU : HPPA_FTRS_BTLBS;
+	}
 
 	ptlball();
 	fcacheall();
@@ -245,20 +294,62 @@ hppa_init(start)
 	resvmem = ((vaddr_t)&kernel_text) / NBPG;
 
 	/* calculate HPT size */
-	for (hptsize = 1; hptsize < totalphysmem; hptsize *= 2);
-	mtctl(hptsize - 1, CR_HPTMASK);
+	for (hptsize = 256; hptsize < totalphysmem; hptsize *= 2);
+	hptsize *= 16;	/* sizeof(hpt_entry) */
 
 	if (pdc_call((iodcio_t)pdc, 0, PDC_TLB, PDC_TLB_INFO, &pdc_hwtlb) &&
 	    !pdc_hwtlb.min_size && !pdc_hwtlb.max_size) {
 		printf("WARNING: no HPT support, fine!\n");
+		mtctl(hptsize - 1, CR_HPTMASK);
 		hptsize = 0;
 	} else {
+		cpu_features |= HPPA_FTRS_HVT;
+
 		if (hptsize > pdc_hwtlb.max_size)
 			hptsize = pdc_hwtlb.max_size;
 		else if (hptsize < pdc_hwtlb.min_size)
 			hptsize = pdc_hwtlb.min_size;
-		/* have to reload after adjustment */
 		mtctl(hptsize - 1, CR_HPTMASK);
+	}
+
+	/*
+	 * Deal w/ CPU now
+	 */
+	{
+		const struct hppa_cpu_typed *p;
+
+		for (p = cpu_types;
+		     p->arch && p->features != cpu_features; p++);
+
+		if (!p->arch)
+			printf("WARNING: UNKNOWN CPU TYPE; GOOD LUCK (%x)\n",
+			    cpu_features);
+		else {
+		/*
+		 * Ptrs to various tlb handlers, to be filled based on cpu
+		 * features.
+		 * from locore.S
+		 */
+		extern u_int trap_ep_T_TLB_DIRTY[];
+		extern u_int trap_ep_T_ITLBMISS[];
+		extern u_int trap_ep_T_DTLBMISS[];
+		extern u_int trap_ep_T_ITLBMISSNA[];
+		extern u_int trap_ep_T_DTLBMISSNA[];
+#define	LDILDO(t,f) ((t)[0] = (f)[0], (t)[1] = (f)[1])
+
+#ifdef DEBUG
+			printf("cputype: %s\n", p->symid);
+#endif
+			cpu_type = p->type;
+
+			cpu_btlb_ins = p->btlbins;
+			LDILDO(trap_ep_T_TLB_DIRTY , p->tlbdh);
+			LDILDO(trap_ep_T_ITLBMISS  , p->itlbh);
+			LDILDO(trap_ep_T_DTLBMISS  , p->dtlbh);
+			LDILDO(trap_ep_T_ITLBMISSNA, p->itlbh);
+			LDILDO(trap_ep_T_DTLBMISSNA, p->dtlbh);
+#undef LDILDO
+		}
 	}
 
 	/* we hope this won't fail */
@@ -665,6 +756,26 @@ ptlball()
 }
 
 int
+btlb_g(i, sp, va, pa, sz, prot)
+	int i;
+	pa_space_t sp;
+	vaddr_t va;
+	paddr_t pa;
+	vsize_t sz;
+	u_int prot;
+{
+	int error;
+
+	if ((error = pdc_call((iodcio_t)pdc, 0, PDC_BLOCK_TLB, PDC_BTLB_INSERT,
+	    sp, va, pa, sz, prot, i)) < 0) {
+#ifdef BTLBDEBUG
+		printf("WARNING: BTLB insert failed (%d)\n", error);
+#endif
+	}
+	return error;
+}
+
+int
 btlb_insert(space, va, pa, lenp, prot)
 	pa_space_t space;
 	vaddr_t va;
@@ -702,13 +813,8 @@ btlb_insert(space, va, pa, lenp, prot)
 #ifdef BTLBDEBUG
 	printf("btlb_insert(%d): %x:%x=%x[%x,%x]\n", i, space, va, pa, len, prot);
 #endif
-	if ((error = pdc_call((iodcio_t)pdc, 0, PDC_BLOCK_TLB,PDC_BTLB_INSERT,
-	    space, va, pa, len, prot, i)) < 0) {
-#ifdef BTLBDEBUG
-		printf("WARNING: BTLB insert failed (%d)\n", error);
-#endif
+	if ((error = (*cpu_btlb_ins)(i, space, va, pa, len, prot)) < 0)
 		return -(EINVAL);
-	}
 	*lenp = len << PGSHIFT;
 
 	return i;
