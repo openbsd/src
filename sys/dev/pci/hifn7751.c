@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.140 2003/08/01 17:55:54 deraadt Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.141 2003/08/14 15:20:29 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -2202,11 +2202,11 @@ hifn_callback(struct hifn_softc *sc, struct hifn_command *cmd,
 		if (crp->crp_flags & CRYPTO_F_IMBUF)
 			m_copyback((struct mbuf *)crp->crp_buf,
 			    cmd->src_map->dm_mapsize - cmd->sloplen,
-			    cmd->sloplen, (caddr_t)&dma->slop[cmd->slopidx]);
+			    cmd->sloplen, &dma->slop[cmd->slopidx]);
 		else if (crp->crp_flags & CRYPTO_F_IOV)
 			cuio_copyback((struct uio *)crp->crp_buf,
 			    cmd->src_map->dm_mapsize - cmd->sloplen,
-			    cmd->sloplen, (caddr_t)&dma->slop[cmd->slopidx]);
+			    cmd->sloplen, &dma->slop[cmd->slopidx]);
 	}
 
 	i = dma->dstk; u = dma->dstu;

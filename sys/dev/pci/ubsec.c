@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.129 2003/08/08 02:55:17 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.130 2003/08/14 15:20:29 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -848,11 +848,11 @@ ubsec_process(struct cryptop *crp)
 				if (crp->crp_flags & CRYPTO_F_IMBUF)
 					m_copyback(q->q_src_m,
 					    enccrd->crd_inject,
-					    8, (caddr_t)ctx.pc_iv);
+					    8, ctx.pc_iv);
 				else if (crp->crp_flags & CRYPTO_F_IOV)
 					cuio_copyback(q->q_src_io,
 					    enccrd->crd_inject,
-					    8, (caddr_t)ctx.pc_iv);
+					    8, ctx.pc_iv);
 			}
 		} else {
 			ctx.pc_flags |= htole16(UBS_PKTCTX_INBOUND);
@@ -1282,7 +1282,7 @@ ubsec_callback(struct ubsec_softc *sc, struct ubsec_q *q)
 		if (crp->crp_flags & CRYPTO_F_IMBUF)
 			m_copyback((struct mbuf *)crp->crp_buf,
 			    crd->crd_inject, 12,
-			    (caddr_t)dmap->d_dma->d_macbuf);
+			    dmap->d_dma->d_macbuf);
 		else if (crp->crp_flags & CRYPTO_F_IOV && crp->crp_mac)
 			bcopy((caddr_t)dmap->d_dma->d_macbuf,
 			    crp->crp_mac, 12);
