@@ -1,4 +1,4 @@
-/*	$OpenBSD: dp8390.c,v 1.16 2001/07/08 23:38:05 fgsch Exp $	*/
+/*	$OpenBSD: dp8390.c,v 1.17 2001/07/09 17:22:12 fgsch Exp $	*/
 /*	$NetBSD: dp8390.c,v 1.13 1998/07/05 06:49:11 jonathan Exp $	*/
 
 /*
@@ -130,6 +130,7 @@ dp8390_config(sc)
 		ifp->if_watchdog = dp8390_watchdog;
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Print additional info when attached. */
 	printf("%s: address %s\n", sc->sc_dev.dv_xname,
@@ -177,7 +178,6 @@ dp8390_mediastatus(ifp, ifmr)
 		ifmr->ifm_status = 0;
 		return;
 	}
-	IFQ_SET_READY(&ifp->if_snd);
 
 	if (sc->sc_mediastatus)
 		(*sc->sc_mediastatus)(sc, ifmr);
