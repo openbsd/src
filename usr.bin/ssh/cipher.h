@@ -11,13 +11,13 @@ Created: Wed Apr 19 16:50:42 1995 ylo
 
 */
 
-/* RCSID("$Id: cipher.h,v 1.6 1999/09/30 19:22:58 deraadt Exp $"); */
+/* RCSID("$Id: cipher.h,v 1.7 1999/10/02 19:14:54 deraadt Exp $"); */
 
 #ifndef CIPHER_H
 #define CIPHER_H
 
 #include <des.h>
-#include "blowfish.h"
+#include <ssl/blowfish.h>
 
 /* Cipher types.  New types can be added, but old types should not be removed
    for compatibility.  The maximum allowed value is 31. */
