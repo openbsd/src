@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.339 2004/06/13 22:00:50 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.340 2004/06/20 05:13:14 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2004 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1433,6 +1433,8 @@ __EOT
 # user selects from that location. Repeat as many times as the user
 # needs to get all desired sets.
 install_sets() {
+	local _d
+
 	cat << __EOT
 
 You will now specify the location and names of the ${MODE} sets you want to
@@ -1442,12 +1444,14 @@ installation notes for details on the contents of each.
 __EOT
 
 	while : ; do
+		_d=
 		cat << __EOT
 
 Sets can be located on a (m)ounted filesystem; a (c)drom, (d)isk or (t)ape
 device; or a (f)tp, (n)fs or (h)ttp server.
 __EOT
-		ask "Where are the ${MODE} sets? (or 'done')"
+		[[ -z $DEFAULTSETS ]] && _d=done
+		ask "Where are the $MODE sets? (or 'done')" "$_d"
 
 		case $resp in
 		done)	sane_install && return ;;
