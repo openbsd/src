@@ -1,0 +1,124 @@
+.\"     $OpenBSD: tx.4,v 1.1 1998/09/21 17:11:06 jason Exp $
+.\"
+.\" Copyright (c) 1998 Jason L. Wright (jason@thought.net)
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"      This product includes software developed by Jason L. Wright
+.\" 4. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+.\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+.\" DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, 
+.\" INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+.\" (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+.\" SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+.\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+.\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd September 21, 1998
+.Dt TX 4
+.Os OpenBSD
+.Sh NAME
+.Nm tx
+.Nd
+SMC 9432 10/100 Mbps Ethernet device driver
+.Sh SYNOPSIS
+.Cd "tx* at pci? dev ? function ?"
+.Sh DESCRIPTION
+The 
+.Nm
+interface provides access to the 10Mb/s and 100Mb/s Ethernet networks via the
+.Tn SMC
+.Tn EPIC
+chipset.
+This driver provides support for the
+.Tn SMC
+.Tn EtherPower II 10/100
+Ethernet cards.
+.Pp
+Each of the host's network addresses
+is specified at boot time with an
+.Dv SIOCSIFADDR
+.Xr ioctl 2 .
+The
+.Nm
+interface employs the address resolution protocol described in
+.Xr arp 4
+to dynamically map between Internet and Ethernet addresses on the local
+network.
+.Pp
+When a
+.Nm
+interface is brought up, by default, it will attempt to auto-negotiate the
+link speed and duplex.  The speeds, in order of attempt, are:
+100Mb/s Full Duplex, 100Mb/s Half Duplex, 10 Mb/s Full Duplex, and
+10 Mb/s Half Duplex.
+.Pp
+The
+.Nm
+supports several media types, which are selected via the
+.Xr ifconfig 8
+command.
+The supported media types are:
+.Bl -tag -width xxxxxxxxxxxxxx -offset indent
+.It media autoselect
+Attempt to autoselect the media type (default)
+.It media 100baseTX mediaopt full-duplex
+Use 100baseTX, full duplex
+.It media 100baseTX Op mediaopt half-duplex
+Use 100baseTX, half duplex
+.It media 100baseTX mediaopt loopback
+Put the interface into loopback mode
+.It media 10baseT mediaopt full-duplex
+Use 10baseT, full duplex
+.It media 10baseT Op mediaopt half-duplex
+Use 10baseT, half duplex
+.It media 10baseT mediaopt loopback
+Put the interface into loopback mode
+.El
+.Sh DIAGNOSTICS
+.Bl -diag
+.It "tx%d: device timeout %d packets"
+The device stopped responding. Device and driver reset follows this error.
+.It "tx%d: PCI fatal error occured (%s)"
+One of following errors occured: PCI Target Abort, PCI Master Abort, Data
+Parity Error or Address Parity Error. Device and driver reset follows
+this error.
+.It "tx%d: WARNING! no link established"
+No media connected. Displayed at startup only.
+.It "tx%d: cannot allocate mbuf header/cluster"
+Failed to allocate memory for a received packet. Packet was dropped.
+.It "tx%d: can't stop %s DMA"
+While resetting, the driver failed to stop the device correctly. 
+.El
+.Sh SEE ALSO
+.Xr ifconfig 8 ,
+.Xr ifmedia 4 ,
+.Xr intro 4 ,
+.Xr inet 4 ,
+.Xr arp 4
+.Sh BUGS
+.Pp
+The multicast packets filtering is not supported.
+Only one PHY has really been tested,
+.Tn Quality Semiconductor QS6612 .
+.Sh HISTORY
+.Ox
+support for the
+.Nm
+first appeared in
+.Ox 2.4 .
