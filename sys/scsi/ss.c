@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.19 1997/03/09 17:45:01 kstailey Exp $	*/
+/*	$OpenBSD: ss.c,v 1.20 1997/03/10 00:56:59 kstailey Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -534,6 +534,8 @@ ssstart(v)
 	struct ss_softc *ss = v;
 	struct scsi_link *sc_link = ss->sc_link;
 	register struct buf *bp, *dp;
+	struct scsi_r_scanner cmd;
+	int flags;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("ssstart "));
 	/*
@@ -564,7 +566,20 @@ ssstart(v)
 			(ss->special->read)(ss, bp);
 		} else {
 			/* generic scsi2 scanner read */
-			/* XXX add code for SCSI2 scanner read */
+			if (ss->quirkdata->quirks & SS_Q_GET_BUFFER_SIZE) {
+				/* XXX add GET BUFFER SIZE command */
+			}
+			bzero(&cmd, sizeof(cmd));
+			cmd.opcode = READ;
+			_lto3b(bp->b_bcount, cmd.len);
+			flags = SCSI_DATA_IN;
+			/*
+			 * go ask the adapter to do all this for us
+			 */
+			if (scsi_scsi_cmd(sc_link, (struct scsi_generic *) &cmd,
+			    sizeof(cmd), (u_char *) bp->b_data, bp->b_bcount, 0,
+			    100000, bp, flags | SCSI_NOSLEEP))
+				printf("%s: not queued\n", ss->sc_dev.dv_xname);
 		}
 	}
 }
