@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.21 2004/08/06 12:09:25 jfb Exp $	*/
+/*	$OpenBSD: file.c,v 1.22 2004/08/06 14:12:56 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -233,6 +233,7 @@ cvs_file_create(const char *path, u_int type, mode_t mode)
 	if (cfp == NULL)
 		return (NULL);
 	cfp->cf_type = type;
+	cfp->cf_mode = mode;
 
 	if (type == DT_DIR) {
 		if (mkdir(path, mode) == -1) {
@@ -343,6 +344,29 @@ cvs_file_find(CVSFILE *hier, const char *path)
 	} while (sp != NULL);
 
 	return (NULL);
+}
+
+
+/*
+ * cvs_file_attach()
+ *
+ * Attach the file <file> as one of the children of parent <parent>, which
+ * has to be a file of type DT_DIR.
+ * Returns 0 on success, or -1 on failure.
+ */
+
+int
+cvs_file_attach(CVSFILE *parent, CVSFILE *file)
+{
+
+	if (parent->cf_type != DT_DIR)
+		return (-1);
+
+	TAILQ_INSERT_HEAD(&(parent->cf_ddat->cd_files), file, cf_list);
+	parent->cf_ddat->cd_nfiles++;
+	file->cf_parent = parent;
+
+	return (0);
 }
 
 
@@ -648,6 +672,8 @@ cvs_file_alloc(const char *path, u_int type)
  * cvs_file_lget()
  *
  * Get the file and link it with the parent right away.
+ * Returns a pointer to the created file structure on success, or NULL on
+ * failure.
  */
 
 static CVSFILE*
@@ -679,6 +705,8 @@ cvs_file_lget(const char *path, int flags, CVSFILE *parent)
 		return (NULL);
 	}
 	cfp->cf_parent = parent;
+	cfp->cf_mode = st.st_mode & ACCESSPERMS;
+	cfp->cf_mtime = st.st_mtime;
 
 	if ((parent != NULL) && (CVS_DIR_ENTRIES(parent) != NULL)) {
 		ent = cvs_ent_get(CVS_DIR_ENTRIES(parent), cfp->cf_name);
