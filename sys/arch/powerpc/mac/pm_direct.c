@@ -1,4 +1,4 @@
-/*	$OpenBSD: pm_direct.c,v 1.4 2001/07/04 08:38:52 niklas Exp $	*/
+/*	$OpenBSD: pm_direct.c,v 1.5 2001/08/18 21:22:09 drahn Exp $	*/
 /*	$NetBSD: pm_direct.c,v 1.9 2000/06/08 22:10:46 tsubai Exp $	*/
 
 /*
@@ -1044,12 +1044,10 @@ pm_adb_op(buffer, compRout, data, command)
 		return 1;
 	}
 
+	delay(10000);
+
 	adbWaiting = 1;
 	adbWaitingCmd = command;
-
-	{
-		delay (150000);
-	}
 
 	PM_VIA_INTR_ENABLE();
 
