@@ -1,4 +1,4 @@
-/*	$OpenBSD: kauth.c,v 1.2 1998/08/12 23:55:57 art Exp $	*/
+/*	$OpenBSD: kauth.c,v 1.3 1998/08/12 23:58:50 art Exp $	*/
 /*	$KTH: kauth.c,v 1.81 1997/12/09 10:36:33 joda Exp $	*/
 
 /*
@@ -234,7 +234,7 @@ main(int argc, char **argv)
 	errx (1, "Could not get default principal");
   
     /* With root tickets assume remote user is root */
-    if (*remoteuser == '\0') 
+    if (*remoteuser == '\0') {
 	if (strcmp(princ.instance, "root") == 0) {
 	    strncpy(remoteuser, princ.instance, sizeof(remoteuser) - 1);
 	    remoteuser[sizeof(remoteuser) - 1] = '\0';
@@ -243,6 +243,7 @@ main(int argc, char **argv)
 	    strncpy(remoteuser, princ.name, sizeof(remoteuser) - 1);
 	    remoteuser[sizeof(remoteuser) - 1] = '\0';
 	}
+    }
 
     more_args = argc - optind;
   
@@ -303,11 +304,12 @@ main(int argc, char **argv)
     if (k_hasafs()) {
 	if (more_args)
 	    k_setpag();
-	if ((code = krb_afslog(cell, NULL)) != 0 && code != KDC_PR_UNKNOWN)
+	if ((code = krb_afslog(cell, NULL)) != 0 && code != KDC_PR_UNKNOWN) {
 	    if(code > 0)
-	    warnx ("%s", krb_get_err_text(code));
+	        warnx ("%s", krb_get_err_text(code));
 	    else
 		warnx ("failed to store AFS token");
+	}
     }
 
     for(ret = 0; nhost-- > 0; host++)
