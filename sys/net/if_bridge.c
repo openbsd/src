@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.10 1999/06/03 21:52:02 espie Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.11 1999/06/30 00:00:29 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -32,6 +32,8 @@
  */
 
 #include "bridge.h"
+#include "bpfilter.h"
+
 #if NBRIDGE > 0
 
 #include <sys/param.h>
@@ -61,6 +63,10 @@
 #include <netinet/ip_fil_compat.h>
 #include <netinet/ip_fil.h>
 #endif
+#endif
+
+#if NBPFILTER > 0
+#include <net/bpf.h>
 #endif
 
 #include <net/if_bridge.h>
@@ -186,6 +192,10 @@ bridgeattach(unused)
 		ifp->if_snd.ifq_maxlen = ifqmaxlen;
 		ifp->if_hdrlen = sizeof(struct ether_header);
 		if_attach(ifp);
+#if NBPFILTER > 0
+		bpfattach(&bridgectl[i].sc_if.if_bpf, ifp,
+		    DLT_EN10MB, sizeof(struct ether_header));
+#endif
 	}
 }
 
@@ -696,6 +706,11 @@ bridgeintr(void)
 				m_freem(m);
 				continue;
 			}
+
+#if NBPFILTER > 0
+			if (sc->sc_if.if_bpf)
+				bpf_mtap(sc->sc_if.if_bpf, m);
+#endif
 
 			sc->sc_if.if_lastchange = time;
 			sc->sc_if.if_ipackets++;
