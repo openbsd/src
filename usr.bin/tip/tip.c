@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.c,v 1.5 1997/04/20 23:29:33 millert Exp $	*/
+/*	$OpenBSD: tip.c,v 1.6 1997/08/22 22:42:07 millert Exp $	*/
 /*	$NetBSD: tip.c,v 1.13 1997/04/20 00:03:05 mellon Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: tip.c,v 1.5 1997/04/20 23:29:33 millert Exp $";
+static char rcsid[] = "$OpenBSD: tip.c,v 1.6 1997/08/22 22:42:07 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -300,9 +300,10 @@ static	jmp_buf promptbuf;
  *  in from the terminal.  Handles signals & allows use of
  *  normal erase and kill characters.
  */
-prompt(s, p)
+prompt(s, p, sz)
 	char *s;
 	register char *p;
+	size_t sz;
 {
 	register int c;
 	register char *b = p;
@@ -314,7 +315,7 @@ prompt(s, p)
 	unraw();
 	printf("%s", s);
 	if (setjmp(promptbuf) == 0)
-		while ((c = getchar()) != EOF && (*p = c) != '\n')
+		while ((c = getchar()) != EOF && (*p = c) != '\n' && --sz > 0)
 			p++;
 	*p = '\0';
 

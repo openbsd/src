@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.h,v 1.6 1997/04/20 23:29:33 millert Exp $	*/
+/*	$OpenBSD: tip.h,v 1.7 1997/08/22 22:42:08 millert Exp $	*/
 /*	$NetBSD: tip.h,v 1.7 1997/04/20 00:02:46 mellon Exp $	*/
 
 /*
@@ -55,6 +55,7 @@
 #include <setjmp.h>
 #include <unistd.h>
 #include <errno.h>
+#include <limits.h>
 
 /*
  * Remote host attributes
@@ -254,8 +255,8 @@ int	cumode;			/* simulating the "cu" program */
 int	bits8;			/* terminal is is 8-bit mode */
 #define STRIP_PAR	(bits8 ? 0377 : 0177)
 
-char	fname[80];		/* file name buffer for ~< */
-char	copyname[80];		/* file name buffer for ~> */
+char	fname[PATH_MAX];	/* file name buffer for ~< */
+char	copyname[PATH_MAX];	/* file name buffer for ~> */
 char	ccc;			/* synchronization character */
 char	ch;			/* for tipout */
 char	*uucplock;		/* name of lock file for uucp's */

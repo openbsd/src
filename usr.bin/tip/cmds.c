@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.5 1997/04/02 01:47:01 millert Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.6 1997/08/22 22:42:07 millert Exp $	*/
 /*	$NetBSD: cmds.c,v 1.7 1997/02/11 09:24:03 mrg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: cmds.c,v 1.5 1997/04/02 01:47:01 millert Exp $";
+static char rcsid[] = "$OpenBSD: cmds.c,v 1.6 1997/08/22 22:42:07 millert Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -73,7 +73,7 @@ getfl(c)
 	/*
 	 * get the UNIX receiving file's name
 	 */
-	if (prompt("Local file name? ", copyname))
+	if (prompt("Local file name? ", copyname, sizeof(copyname)))
 		return;
 	cp = expand(copyname);
 	if ((sfd = creat(cp, 0666)) < 0) {
@@ -84,7 +84,7 @@ getfl(c)
 	/*
 	 * collect parameters
 	 */
-	if (prompt("List command for remote system? ", buf)) {
+	if (prompt("List command for remote system? ", buf, sizeof(buf))) {
 		unlink(copyname);
 		return;
 	}
@@ -100,7 +100,7 @@ cu_take(cc)
 	int fd, argc;
 	char line[BUFSIZ], *expand(), *cp;
 
-	if (prompt("[take] ", copyname))
+	if (prompt("[take] ", copyname, sizeof(copyname)))
 		return;
 	if ((argc = args(copyname, argv)) < 1 || argc > 2) {
 		printf("usage: <take> from [to]\r\n");
@@ -197,7 +197,7 @@ pipefile()
 	int status, p;
 	extern int errno;
 
-	if (prompt("Local command? ", buf))
+	if (prompt("Local command? ", buf, sizeof(buf)))
 		return;
 
 	if (pipe(pdes)) {
@@ -209,7 +209,7 @@ pipefile()
 		printf("can't fork!\r\n");
 		return;
 	} else if (cpid) {
-		if (prompt("List command for remote system? ", buf)) {
+		if (prompt("List command for remote system? ", buf, sizeof(buf))) {
 			close(pdes[0]), close(pdes[1]);
 			kill (cpid, SIGKILL);
 		} else {
@@ -260,7 +260,7 @@ sendfile(cc)
 	/*
 	 * get file name
 	 */
-	if (prompt("Local file name? ", fname))
+	if (prompt("Local file name? ", fname, sizeof(fname)))
 		return;
 
 	/*
@@ -386,7 +386,7 @@ cu_put(cc)
 	char *expand();
 	char *copynamex;
 
-	if (prompt("[put] ", copyname))
+	if (prompt("[put] ", copyname, sizeof(copyname)))
 		return;
 	if ((argc = args(copyname, argv)) < 1 || argc > 2) {
 		printf("usage: <put> from [to]\r\n");
@@ -462,7 +462,7 @@ pipeout(c)
 	time_t start;
 
 	putchar(c);
-	if (prompt("Local command? ", buf))
+	if (prompt("Local command? ", buf, sizeof(buf)))
 		return;
 	kill(pid, SIGIOT);	/* put TIPOUT into a wait state */
 	signal(SIGINT, SIG_IGN);
@@ -513,7 +513,7 @@ consh(c)
 	time_t start;
 
 	putchar(c);
-	if (prompt("Local command? ", buf))
+	if (prompt("Local command? ", buf, sizeof(buf)))
 		return;
 	kill(pid, SIGIOT);	/* put TIPOUT into a wait state */
 	signal(SIGINT, SIG_IGN);
@@ -614,10 +614,10 @@ setscript()
  */
 chdirectory()
 {
-	char dirname[80];
+	char dirname[PATH_MAX];
 	register char *cp = dirname;
 
-	if (prompt("[cd] ", dirname)) {
+	if (prompt("[cd] ", dirname, sizeof(dirname))) {
 		if (stoprompt)
 			return;
 		cp = value(HOME);
@@ -721,7 +721,7 @@ variable()
 {
 	char	buf[256];
 
-	if (prompt("[set] ", buf))
+	if (prompt("[set] ", buf, sizeof(buf)))
 		return;
 	vlex(buf);
 	if (vtable[BEAUTIFY].v_access&CHANGED) {
