@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systrace.1,v 1.31 2002/12/09 19:43:53 ian Exp $
+.\"	$OpenBSD: systrace.1,v 1.32 2003/03/28 09:56:06 jmc Exp $
 .\"
 .\" Copyright 2002 Niels Provos <provos@citi.umich.edu>
 .\" All rights reserved.
@@ -38,6 +38,7 @@
 .Nd generate and enforce system call policies
 .Sh SYNOPSIS
 .Nm systrace
+.Bk -words
 .Op Fl aAituU
 .Op Fl d Ar policydir
 .Op Fl g Ar gui
@@ -45,6 +46,7 @@
 .Op Fl c Ar uid:gid
 .Op Fl p Ar pid
 .Ar command ...
+.Ek
 .Sh DESCRIPTION
 The
 .Nm
@@ -58,7 +60,7 @@ Alternatively, it might be used to protect the system
 from software bugs (such as buffer overflows) by constraining a
 daemon's access to the system.
 Its privilege elevation feature can be used to obviate the
-need to run large, untrusted programs as root when only one or two 
+need to run large, untrusted programs as root when only one or two
 system calls require root privilege.
 .Pp
 The access policy can be generated interactively or obtained from a
@@ -111,7 +113,7 @@ Specifies the
 and
 .Va gid
 that the monitored application should be executed with,
-which must be specified as nonnegative integers (not as names).
+which must be specified as non-negative integers (not as names).
 This is useful in conjunction with privilege elevation and requires
 root privilege.
 .It Fl f Ar file
@@ -166,7 +168,7 @@ detach
 have special meanings when used with a
 .Va permit
 rule for the
-.Va execve
+.Xr execve 2
 system call.
 When using
 .Do
@@ -181,7 +183,7 @@ detach,
 detaches from a process after successfully
 completing
 the
-.Va execve
+.Xr execve 2
 system call.
 .Pp
 The filter operations have the following meaning:
@@ -213,10 +215,10 @@ the specified regular expression.
 By appending the
 .Va log
 statement to a rule, a matching system call and its arguments
-is logged to
+are logged to
 .Xr syslog 3 .
 This is useful, for example, to log all invocations of the
-.Va execve
+.Xr execve 2
 system call.
 .Pp
 Policy entries may contain an appended predicate.
@@ -228,8 +230,12 @@ Predicates have the following format:
 A rule is added to the configured policy only if its predicate
 evaluates to true.
 .Pp
-The environment variables $HOME, $USER and $CWD are substituted in rules.
-Comments, begun by an unquoted '#' character and 
+The environment variables
+.Ev $HOME , $USER
+and
+.Ev $CWD
+are substituted in rules.
+Comments, begun by an unquoted '#' character and
 continuing to the end of the line, are ignored.
 .Sh PRIVILEGE ELEVATION
 With
@@ -263,9 +269,9 @@ and
 .Va gid
 are elevated only for the duration of the system call, and are restored
 to the old values afterwards (except for the
-.Va seteuid
-or
-.Va setegid
+.Xr seteuid 2
+and
+.Xr setegid 2
 system calls).
 .Sh FILES
 .Bl -tag -width xHOME/xsystrace -compact
