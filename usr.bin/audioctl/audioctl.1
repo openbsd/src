@@ -1,4 +1,4 @@
-.\" $OpenBSD: audioctl.1,v 1.7 1999/06/05 01:21:18 aaron Exp $
+.\" $OpenBSD: audioctl.1,v 1.8 2000/03/04 20:41:44 aaron Exp $
 .\" $NetBSD: audioctl.1,v 1.7 1998/04/27 16:55:23 augustss Exp $
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -62,43 +62,49 @@ command displays or sets various audio system driver variables.
 If a list of variables is present on the command line,
 .Nm
 prints the current value of those variables for the specified device.
-If the
-.Fl a
-flag is specified, all variables for the device are printed.
-If the
-.Fl w
-flag is specified,
+By default,
 .Nm
-attempts to set the specified variables to the given values.
+operates on the
+.Pa /dev/audioctl
+device.
 .Pp
-The
-.Fl f
-flag can be used to give an alternative audio control device. The default is
-.Pa /dev/audioctl .
-.Pp
-The
-.Fl n
-flag suppresses printing of the variable name.
+The options are as follows:
+.Bl -tag -width "-w name=value"
+.It Fl a
+Print all device variables and their current values.
+.It Fl w Ar name=value
+Attempt to set the specified variable
+.Ar name
+to
+.Ar value .
+.It Fl f Ar file
+Specify an alternative audio control device.
+.It Fl n
+Suppress printing of the variable name.
+.El
 .Sh EXAMPLES
 To set the playing sampling rate to 11025 you can enter
+.Pp
 .Dl audioctl -w play.sample_rate=11025
+.Pp
 Note that many of the variables that can be inspected and changed
-with
-.Nm
-are reset when the device is opened.  This can be circumvented
-like this
+are reset when the device is opened.
+This can be circumvented like so:
+.Pp
 .Dl (cat file.au; audioctl -f /dev/stdout -a) > /dev/audio
+.Pp
 or
+.Pp
 .Dl (audioctl -f /dev/stdout -w blocksize=1024; cat file.au) > /dev/audio
-.Sh FILES
-.Bl -tag -width /dev/audioctl
-.It Pa /dev/audioctl
-audio control device
-.El
 .Sh ENVIRONMENT
 .Bl -tag -width AUDIOCTLDEVICE
 .It Ev AUDIOCTLDEVICE
 The audio control device to use.
+.Sh FILES
+.Bl -tag -width /dev/audioctl
+.It Pa /dev/audioctl
+default audio control device
+.El
 .Sh SEE ALSO
 .Xr mixerctl 1 ,
 .Xr audio 4 ,
