@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.24 2003/07/03 08:24:13 markus Exp $
+#	$OpenBSD: Makefile,v 1.25 2003/10/07 01:52:13 dtucker Exp $
 
 REGRESS_TARGETS=	t1 t2 t3 t4 t5 t6 t7
 
@@ -11,6 +11,7 @@ LTESTS= 	connect \
 		proto-mismatch \
 		exit-status \
 		transfer \
+		banner \
 		rekey \
 		stderr-data \
 		stderr-after-eof \
@@ -36,7 +37,7 @@ CLEANFILES+=	authorized_keys_${USER} known_hosts pidfile \
 		ssh_config ssh_proxy sshd_config sshd_proxy \
 		rsa.pub rsa rsa1.pub rsa1 host.rsa host.rsa1 \
 		rsa-agent rsa-agent.pub rsa1-agent rsa1-agent.pub \
-		ls.copy
+		ls.copy banner.in banner.out
 
 #LTESTS+=	ssh-com ssh-com-client ssh-com-keygen ssh-com-sftp
 
