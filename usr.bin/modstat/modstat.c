@@ -1,4 +1,4 @@
-/*	$OpenBSD: modstat.c,v 1.14 2001/08/18 22:06:44 deraadt Exp $	*/
+/*	$OpenBSD: modstat.c,v 1.15 2002/01/08 04:59:24 ericj Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -48,13 +48,7 @@
 #include <errno.h>
 #include "pathnames.h"
 
-void
-usage()
-{
-
-	fprintf(stderr, "usage: modstat [-i moduleid] [-n modulename]\n");
-	exit(1);
-}
+#define POINTERSIZE	((int)(2 * sizeof(void*)))
 
 static char *type_names[] = {
 	"SYSCALL",
@@ -65,11 +59,17 @@ static char *type_names[] = {
 	"MISC"
 };
 
-int
-dostat(devfd, modnum, modname)
-	int devfd;
-	int modnum;
-	char *modname;
+static void
+usage()
+{
+	extern char *__progname;
+
+	(void)fprintf(stderr, "usage: %s [-i id] [-n name]\n", __progname);
+	exit(1);
+}
+
+static int
+dostat(int devfd, int modnum, char *modname)
 {
 	char name[MAXLKMNAME];
 	struct lmc_stat	sbuf;
@@ -98,10 +98,10 @@ dostat(devfd, modnum, modname)
 	}
 
 	/* Decode this stat buffer... */
-	printf("%-7s %3d %3ld %08lx %04lx %8lx %3ld %s\n",
-	    type_names[sbuf.type], sbuf.id, sbuf.offset,
-	    (long)sbuf.area, (long)sbuf.size, (long)sbuf.private,
-	    (long)sbuf.ver, sbuf.name);
+	printf("%-7s %3d %3ld %0*lx %04lx %0*x %3ld %s\n",
+	    type_names[sbuf.type], sbuf.id, sbuf.offset, POINTERSIZE,
+	    (long)sbuf.area, (long)sbuf.size, POINTERSIZE,
+	    (long)sbuf.private, (long)sbuf.ver, sbuf.name);
 
 	return 0;
 }
@@ -145,7 +145,8 @@ main(argc, argv)
 	setegid(getgid());
 	setgid(getgid());
 
-	printf("Type     Id Off Loadaddr Size Info     Rev Module Name\n");
+	printf("Type     Id Off %-*s Size %-*s Rev Module Name\n",
+		POINTERSIZE, "Loadaddr", POINTERSIZE, "Info");
 
 	if (modnum != -1 || modname != NULL) {
 		if (dostat(devfd, modnum, modname))
