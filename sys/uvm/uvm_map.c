@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.16 2001/06/23 19:24:33 smart Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.17 2001/07/11 13:57:54 mts Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.68 1999/08/21 02:19:05 thorpej Exp $	*/
 
 /* 
@@ -1057,6 +1057,10 @@ uvm_unmap_remove(map, start, end, entry_list)
 		 * that we've nuked.  then go do next entry.
 		 */
 		UVMHIST_LOG(maphist, "  removed map entry 0x%x", entry, 0, 0,0);
+
+		/* critical! prevents stale hint */
+		SAVE_HINT(map, entry->prev);
+
 		uvm_map_entry_unlink(map, entry);
 		map->size -= len;
 		entry->next = first_entry;
