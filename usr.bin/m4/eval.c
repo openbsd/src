@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.53 2005/01/21 19:11:02 espie Exp $	*/
+/*	$OpenBSD: eval.c,v 1.54 2005/01/31 16:06:54 robert Exp $	*/
 /*	$NetBSD: eval.c,v 1.7 1996/11/10 21:21:29 pk Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: eval.c,v 1.53 2005/01/21 19:11:02 espie Exp $";
+static char rcsid[] = "$OpenBSD: eval.c,v 1.54 2005/01/31 16:06:54 robert Exp $";
 #endif
 #endif /* not lint */
 
@@ -230,8 +230,10 @@ expand_builtin(const char *argv[], int argc, int td)
 	/*
 	 * dosys - execute system command
 	 */
-		if (argc > 2)
+		if (argc > 2) {
+			fflush(stdout);
 			sysval = system(argv[2]);
+		}
 		break;
 
 	case SYSVTYPE:
