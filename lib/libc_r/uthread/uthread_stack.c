@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_stack.c,v 1.6 2000/02/26 13:34:51 d Exp $	*/
+/*	$OpenBSD: uthread_stack.c,v 1.7 2000/03/22 02:06:05 d Exp $	*/
 /*
  * Copyright 1999, David Leonard. All rights reserved.
  * <insert BSD-style license&disclaimer>
@@ -7,10 +7,10 @@
 /*
  * Thread stack allocation.
  *
- * Stack pointers are assumed to work their way down (backwards) to the
- * beginning of the stack storage. The first page of this storage is 
- * protected using mprotect() so as to generate a SIGSEGV if a thread
- * overflows its stack.
+ * If stack pointers grow down, towards the beginning of stack storage,
+ * the first page of the storage is protected using mprotect() so as
+ * to generate a SIGSEGV if a thread overflows its stack. Similarly,
+ * for stacks that grow up, the last page of the storage is protected.
  */
 
 #include <stddef.h>
@@ -69,18 +69,26 @@ _thread_stack_alloc(base, size)
 	}
 
 	/*
-	 * The red zone is the first physical page of the storage.
-	 * I'm using _BSD_PTRDIFF_T_ to convert the storage base pointer
-	 * into an integer so that I can do page alignment on it.
+	 * Compute the location of the red zone.
+	 * Use _BSD_PTRDIFF_T_ to convert the storage base pointer
+	 * into an integer so that page alignment can be done with
+	 * integer arithmetic.
 	 */
-	stack->redzone = (void*)(((_BSD_PTRDIFF_T_)stack->storage + nbpg - 1) & 
-	    ~(nbpg - 1));
-	if (mprotect(stack->redzone, nbpg, 0) == -1)
-		PANIC("Cannot protect stack red zone");
-
-	/* Find the useful range of the stack. */
+#if defined(MACHINE_STACK_GROWS_UP)
+	/* Red zone is the last page of the storage: */
+	stack->redzone = (void *)(((_BSD_PTRDIFF_T_)stack->storage +
+	    size + nbpg - 1) & ~(nbpg - 1));
+	stack->base = (caddr_t)stack->storage;
+	stack->size = size;
+#else
+	/* Red zone is the first page of the storage: */
+	stack->redzone = (void *)(((_BSD_PTRDIFF_T_)stack->storage + 
+	    nbpg - 1) & ~(nbpg - 1));
 	stack->base = (caddr_t)stack->redzone + nbpg;
 	stack->size = size;
+#endif
+	if (mprotect(stack->redzone, nbpg, 0) == -1)
+		PANIC("Cannot protect stack red zone");
 
 	return stack;
 }
@@ -91,20 +99,20 @@ _thread_stack_free(stack)
 {
 	int nbpg = getpagesize();
 
-	/* Cache allocated stacks of default size. */
+	/* Cache allocated stacks of default size: */
 	if (stack->storage != NULL && stack->size == PTHREAD_STACK_DEFAULT)
 		SLIST_INSERT_HEAD(&_stackq, stack, qe);
 	else {
-		/* Restore storage protection to what malloc expects: */
+		/* Restore storage protection to what malloc gave us: */
 		if (stack->redzone)
 			mprotect(stack->redzone, nbpg,
 			    PROT_READ|PROT_WRITE);
 
-		/* Free storage */
+		/* Free storage: */
 		if (stack->storage)
 			free(stack->storage);
 
-		/* Free stack information storage. */
+		/* Free stack information storage: */
 		free(stack);
 	}
 }
