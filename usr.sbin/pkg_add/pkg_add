@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.140 2004/12/13 21:14:16 espie Exp $
+# $OpenBSD: pkg_add,v 1.141 2004/12/13 21:28:08 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -68,34 +68,40 @@ sub find_conflicts($$)
 	return @bad;
 }
 
-sub can_install($$)
+sub can_install($$$)
 {
-	my ($plist, $state) = @_;
+	my ($plist, $state, $handle) = @_;
 	my $pkgname = $plist->pkgname();
+	my $l = OpenBSD::PkgCfl->make_conflict_list($plist);
+	$handle->{conflicts} = $l;
 
-	my @l = find_conflicts($pkgname, $state);
+	my @conflicts = find_conflicts($pkgname, $state);
+	push(@conflicts, $l->conflicts_with(installed_packages()));
+	return 1 if @conflicts == 0;
 
-	return 1 if @l == 0;
-	if (!$state->{replace} || @l >= 2) {
-		print "Can't install $pkgname because of conflicts (",join(',', @l), ")\n";
+	my %conflicts = map {($_,1)} @conflicts;
+	@conflicts = keys %conflicts;
+
+	if (!$state->{replace} || @conflicts >= 2) {
+		print "Can't install $pkgname because of conflicts (",join(',', @conflicts), ")\n";
 		$errors++;
 		return undef;
 	}
 
 	require OpenBSD::Update;
 
-	my $rplist = OpenBSD::Update::can_do($l[0], $pkgname, $state);
+	my $rplist = OpenBSD::Update::can_do($conflicts[0], $pkgname, $state);
 	if ($rplist) {
 		if (!OpenBSD::Update::is_safe($plist, $state)) {
-			print "Can't safely update $l[0] to $pkgname\n";
+			print "Can't safely update $conflicts[0] to $pkgname\n";
 			$errors++;
 			return undef;
 		}
-		$rplist->{dir} = installed_info($l[0]);
+		$rplist->{dir} = installed_info($conflicts[0]);
 		$plist->{replacing} = $rplist;
 		return 1;
 	} else {
-		print "Can't update $l[0] into $pkgname\n";
+		print "Can't update $conflicts[0] into $pkgname\n";
 		$errors++;
 		return undef;
 	}
@@ -140,20 +146,7 @@ sub pre_add($$)
 		}
 		print "parsing $pkgname\n";
 	}
-	return undef unless can_install($plist, $state);
-	my $avoid = '';
-	if (defined $plist->{replacing}) {
-		$avoid = $plist->{replacing}->pkgname();
-	}
-	# second handling of conflicts
-	my $l = OpenBSD::PkgCfl->make_conflict_list($plist);
-	$handle->{conflicts} = $l;
-	if ($l->conflicts_with(grep {$_ ne $avoid} installed_packages())) {
-		print "package $pkg has conflicts: ", 
-		    join(' ', $l->conflicts_with(installed_packages())), "\n";
-		$errors++;
-		return undef unless $forced{conflicts};
-	}
+	return undef unless can_install($plist, $state, $handle);
 	return $handle;
 }
 
