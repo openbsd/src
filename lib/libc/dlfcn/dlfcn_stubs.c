@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn_stubs.c,v 1.1 2001/11/20 01:09:38 pvalchev Exp $	*/
+/*	$OpenBSD: dlfcn_stubs.c,v 1.2 2001/11/20 01:53:21 pvalchev Exp $	*/
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -40,6 +40,7 @@
  *	without getting any unresolved references.
  */
 
+#ifdef PIC
 void	*dlopen(const char *libname, int how) __attribute__((weak));
 int	 dlclose(void *handle) __attribute__((weak));
 void	*dlsym(void *handle, const char *name) __attribute__((weak));
@@ -82,3 +83,4 @@ dlerror()
 	printf("Wrong dl symbols!\n");
 	return "Wrong dl symbols!\n";
 }
+#endif
