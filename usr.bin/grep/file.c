@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.5 2003/12/29 21:20:55 canacar Exp $	*/
+/*	$OpenBSD: file.c,v 1.6 2005/02/02 06:17:17 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -93,7 +93,7 @@ grep_fdopen(int fd, char *mode)
 {
 	file_t *f;
 
-	if (fd == 0)
+	if (fd == STDIN_FILENO)
 		snprintf(fname, sizeof fname, "(standard input)");
 	else
 		snprintf(fname, sizeof fname, "(fd %d)", fd);
