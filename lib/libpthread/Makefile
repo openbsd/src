@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2000/01/06 22:23:28 d Exp $
+#	$OpenBSD: Makefile,v 1.13 2002/06/17 18:26:55 marc Exp $
 
 #
 # The pthread library is formed from the FreeBSD uthread sources of 
@@ -13,8 +13,7 @@ LIBCSRCDIR=	${.CURDIR}/../libc
 LIB=		pthread
 LINTFLAGS=	-z
 CFLAGS+=	-DPTHREAD_KERNEL -D_POSIX_THREADS -D_THREAD_SAFE 
-CFLAGS+=	-D_PTHREADS_INVARIANTS
-CFLAGS+=	-DNOPOLL -I${LIBC_RSRCDIR}/uthread
+CFLAGS+=	-I${LIBC_RSRCDIR}/uthread
 CFLAGS+=	-I${LIBC_RSRCDIR}/include
 CFLAGS+=	-I${LIBCSRCDIR}/include
 AINC+=		-I${LIBC_RSRCDIR}/uthread
@@ -23,6 +22,9 @@ AINC+=		-I${LIBC_RSRCDIR}/uthread
 # thread locking.
 CFLAGS+=	-D_LOCK_DEBUG
 DEBUG=		-ggdb -Wall
+
+# enable extra internal consistency checks
+CFLAGS+=	-D_PTHREADS_INVARIANTS
 
 .include "${LIBC_RSRCDIR}/include/Makefile.inc"
 .include "${LIBC_RSRCDIR}/sys/Makefile.inc"
