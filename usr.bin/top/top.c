@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.27 2003/07/07 21:36:52 deraadt Exp $	*/
+/*	$OpenBSD: top.c,v 1.28 2003/08/21 08:14:50 deraadt Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -38,6 +38,7 @@ const char      copyright[] = "Copyright (c) 1984 through 1996, William LeFebvre
 #include <ctype.h>
 #include <signal.h>
 #include <string.h>
+#include <poll.h>
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -485,11 +486,10 @@ int
 rundisplay(void)
 {
 	static char tempbuf1[50], tempbuf2[50];
-	struct timeval timeout;
-	fd_set readfds;
 	sigset_t mask;
 	char ch, *iptr;
 	int change, i;
+	struct pollfd pfd[1];
 	uid_t uid;
 	static char command_chars[] = "\f qh?en#sdkriIuSo";
 
@@ -503,10 +503,8 @@ rundisplay(void)
 	 * set up arguments for select with
 	 * timeout
 	 */
-	FD_ZERO(&readfds);
-	FD_SET(STDIN_FILENO, &readfds);
-	timeout.tv_sec = (long) delay;
-	timeout.tv_usec = (long) ((delay - timeout.tv_sec) * 1000000);
+	pfd[0].fd = STDIN_FILENO;
+	pfd[0].events = POLLIN;
 
 	if (leaveflag) {
 		end_screen();
@@ -562,8 +560,7 @@ rundisplay(void)
 	 * wait for either input or the end
 	 * of the delay period
 	 */
-	if (select(STDIN_FILENO + 1, &readfds, (fd_set *) NULL,
-	    (fd_set *) NULL, &timeout) > 0) {
+	if (poll(pfd, 1, delay * 1000) > 0) {
 		char *errmsg;
 		int newval;
 
