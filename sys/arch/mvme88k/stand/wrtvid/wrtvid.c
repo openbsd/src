@@ -5,7 +5,11 @@
 #include <stdio.h>
 #define __DBINTERFACE_PRIVATE
 #include <db.h>
-#include <machine/disklabel.h>
+#include "disklabel.h" 	
+/* disklabel.h is in current dir because of my 
+   cross-compile env.  if <machine/disklabel.h>
+   is newer, copy it here.
+*/
 
 main(argc, argv)
 	int argc;
@@ -23,7 +27,7 @@ main(argc, argv)
 	char fileext[256];
 	char filebase[256];
 
-	if (argc == 0)
+	if (argc == 1)
 		filename = "a.out";
 	else
 		filename = argv[1];
@@ -42,7 +46,7 @@ main(argc, argv)
 	bzero(pcpul, sizeof(struct cpu_disklabel));
 
 	pcpul->version = 1;
-	strcpy(pcpul->vid_id, "NBSD");
+	strcpy(pcpul->vid_id, "M88K");
 
 	fstat(exe_file, &stat);
 	/* size in 256 byte blocks round up after a.out header removed */
@@ -58,6 +62,8 @@ main(argc, argv)
 	read(exe_file, &exe_addr, 4);
 
 	/* check this, it may not work in both endian. */
+	/* No, it doesn't.  Use a big endian machine for now. SPM */
+	
 	{
 		union {
 			struct s {
