@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sort.1,v 1.5 1999/06/05 01:21:40 aaron Exp $
+.\"	$OpenBSD: sort.1,v 1.6 2000/01/05 07:40:43 pjanzen Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -78,7 +78,8 @@ otherwise,
 returns 0.
 .Nm sort
 .Fl c
-produces no output.
+produces no output, except the error messages on
+.Em stderr .
 .It Fl m
 Merge only; the input files are assumed to be pre-sorted.
 .It Fl o Ar output
@@ -181,7 +182,7 @@ has no effect unless key fields are specified.
 is used as the field separator character. The initial
 .Ar char
 is not considered to be part of a field when determining
-key offsets (see below).
+key offsets.
 Each occurrence of
 .Ar char
 is significant (for example,
@@ -189,9 +190,12 @@ is significant (for example,
 delimits an empty field).
 If
 .Fl t
-is not specified,
-blank space characters are used as default field
-separators.
+is not specified, the default field separator is a sequence of
+blank-space characters, and consecutive blank spaces do
+.Em not
+delimit an empty field; further, the initial blank space
+.Em is
+considered part of a field when determining key offsets.
 .It Fl R Ar char
 .Ar char
 is used as the record separator character.
@@ -228,14 +232,18 @@ the standard input is used.
 .El
 .Pp
 A field is
-defined as a minimal sequence of characters followed by a
-field separator or a newline character.
-By default, the first
-blank space of a sequence of blank spaces acts as the field separator.
-All blank spaces in a sequence of blank spaces are considered
-as part of the next field; for example, all blank spaces at
-the beginning of a line are considered to be part of the
-first field.
+defined as a maximal sequence of characters other than the
+field separator and record separator
+.Pq newline by default .
+Initial blank spaces are included in the field unless
+.Fl b
+has been specified;
+the first blank space of a sequence of blank spaces acts as the field
+separator and is included in the field (unless
+.Fl t
+is specified).
+For example, by default all blank spaces at the beginning of a line are
+considered to be part of the first field.
 .Pp
 Fields are specified
 by the
@@ -250,17 +258,20 @@ and
 .Ar field2
 have the form
 .Em m.n
-followed by one or more of the options
-.Fl b , d , f , i ,
-.Fl n , r .
+.Em (m,n > 0)
+and can be followed by one or more of the letters
+.Cm b , d , f , i ,
+.Cm n , 
+and
+.Cm r ,
+which correspond to the options discussed above.
 A
 .Ar field1
 position specified by
 .Em m.n
-.Em (m,n > 0)
 is interpreted as the
 .Em n Ns th
-character in the
+character from the beginning of the
 .Em m Ns th
 field.
 A missing
@@ -285,6 +296,13 @@ refers to the first
 non-blank character in the
 .Em m Ns th
 field.
+.No 1\&. Ns Em n
+refers to the
+.Em n Ns th
+character from the beginning of the line;
+if
+.Em n
+is greater than the length of the line, the field is taken to be empty.
 .Pp
 A
 .Ar field2
