@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.48 2004/07/09 23:52:02 millert Exp $
+	$OpenBSD: syscalls.master,v 1.49 2004/10/27 13:23:38 niklas Exp $
 ;	$NetBSD: syscalls.master,v 1.15 1995/12/18 14:35:10 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -337,8 +337,8 @@
 200	STD		{ gid_t linux_sys_getgid(void); }
 201	NOARGS		{ uid_t sys_geteuid(void); }
 202	NOARGS		{ gid_t sys_getegid(void); }
-203	NOARGS		{ int linux_sys_setreuid(void); }
-204	NOARGS		{ int linux_sys_setregid(void); }
+203	NOARGS		{ int sys_setreuid(int ruid, int euid); }
+204	NOARGS		{ int sys_setregid(int rgid, int egid); }
 205	NOARGS		{ int sys_getgroups(u_int gidsetsize, gid_t *gidset); }
 206	NOARGS		{ int sys_setgroups(u_int gidsetsize, gid_t *gidset); }
 207	NOARGS		{ int linux_sys_fchown(void); }
