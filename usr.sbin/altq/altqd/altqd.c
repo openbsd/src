@@ -1,4 +1,4 @@
-/*	$OpenBSD: altqd.c,v 1.3 2001/08/16 12:59:43 kjc Exp $	*/
+/*	$OpenBSD: altqd.c,v 1.4 2001/08/20 08:36:27 kjc Exp $	*/
 /*	$KAME: altqd.c,v 1.5 2001/08/16 10:39:16 kjc Exp $	*/
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -334,7 +334,7 @@ main(int argc, char **argv)
 			/*
 			 * check input from a client via unix domain socket
 			 */
-			for (i = 0; i <= MAX_CLIENT; i++) {
+			for (i = 0; i < MAX_CLIENT; i++) {
 				int fd;
 
 				if (client[i] == NULL)
