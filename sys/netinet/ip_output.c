@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.58 1999/12/18 19:57:07 angelos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.59 1999/12/21 08:23:06 angelos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -141,7 +141,7 @@ ip_output(m0, va_alist)
 	struct sockaddr_encap *ddst, *gw;
 	u_int8_t sa_require, sa_have = 0;
 	struct tdb *tdb, *t;
-	int s, ip6flag;
+	int s, ip6flag = 0;
 
 #ifdef INET6
 	struct ip6_hdr *ip6;
