@@ -1,5 +1,5 @@
-$OpenBSD: BUGS,v 1.8 1999/04/30 11:48:06 niklas Exp $
-$EOM: BUGS,v 1.29 1999/04/30 11:37:41 niklas Exp $
+$OpenBSD: BUGS,v 1.9 1999/05/01 00:51:30 niklas Exp $
+$EOM: BUGS,v 1.30 1999/04/30 23:58:16 niklas Exp $
 
 Until we have a bug-tracking system setup, we might just add bugs to this
 file:
@@ -74,3 +74,5 @@ file:
 
 * In Linux select(2) of named pipes seems broken as they will return as
   readable even when nothing is there after one read has succeeded.
+
+* I have seen INITIAL-CONTACT sent on the second Main Mode.
