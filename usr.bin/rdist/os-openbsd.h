@@ -33,7 +33,7 @@
  */
 
 /*
- * $OpenBSD: os-openbsd.h,v 1.10 1998/06/26 21:21:16 millert Exp $
+ * $OpenBSD: os-openbsd.h,v 1.11 2002/05/09 19:13:02 millert Exp $
  */
 
 /*
@@ -85,7 +85,9 @@
 /*
  * Select the type of executable file format.
  */
+#ifndef EXE_TYPE
 #define EXE_TYPE	EXE_AOUT
+#endif
 
 /*
  * Select the type of statfs() system call (if any).

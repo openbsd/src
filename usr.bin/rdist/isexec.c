@@ -1,4 +1,4 @@
-/*	$OpenBSD: isexec.c,v 1.4 1998/06/26 21:21:12 millert Exp $	*/
+/*	$OpenBSD: isexec.c,v 1.5 2002/05/09 19:13:02 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -38,7 +38,7 @@ static char RCSid[] =
 "$From: isexec.c,v 6.21 1994/04/01 23:44:10 mcooper Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: isexec.c,v 1.4 1998/06/26 21:21:12 millert Exp $";
+"$OpenBSD: isexec.c,v 1.5 2002/05/09 19:13:02 millert Exp $";
 #endif
 
 static char sccsid[] = "@(#)client.c";
@@ -75,7 +75,7 @@ static int _isexec(fd)
 /*
  * Elf
  */
-#include <elf.h>
+#include <elf_abi.h>
 #define ISELF(h)	(h.e_type == ET_EXEC)
 #endif	/* EXE_ELF_AND_COFF || EXE_ELF */
 
@@ -122,7 +122,6 @@ typedef union {
 /*
  * Elf
  */
-#include <elf.h>
 typedef Elf32_Ehdr 	hdr_t;
 #endif	/* EXE_TYPE == EXE_ELF */
 
