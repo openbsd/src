@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.49 2001/06/24 23:36:08 kjell Exp $
+#	$OpenBSD: MAKEDEV,v 1.50 2001/06/26 07:04:17 drahn Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -180,7 +180,7 @@ ramdisk)
 
 std)
 	rm -f console drum kmem mem reload zero null tty
-	rm -f klog stdin stdout stderr # ksyms
+	rm -f klog stdin stdout stderr ksyms
 	mknod console		c 0 0
 	mknod drum		c 3 0	; chmod 640 drum ; chgrp kmem drum
 	mknod kmem		c 2 1	; chmod 640 kmem ; chgrp kmem kmem
