@@ -22,7 +22,7 @@ options		SWAPPAGER	# paging; REQUIRED
 options		VNODEPAGER	# mmap() of files
 options		DEVPAGER	# mmap() of devices
 
-options		DDB		# in-kernel debugger
+#options	DDB		# in-kernel debugger
 #options	DIAGNOSTIC	# internally consistency checks
 options		KTRACE		# system call tracing, a la ktrace(1)
 
@@ -159,4 +159,4 @@ pseudo-device	tun	2		# network tunneling over tty
 
 pseudo-device	pty	32		# pseudo-terminals
 #pseudo-device	tb	1		# tablet line discipline
-#pseudo-device	vnd	4		# paging to files
+pseudo-device	vnd	4		# paging to files
