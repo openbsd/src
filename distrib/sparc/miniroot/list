@@ -7,23 +7,23 @@ LINK	instbin			sbin/dmesg
 SYMLINK	../../instbin		usr/bin/basename
 SYMLINK ../../instbin		usr/bin/cksum usr/bin/sum
 SYMLINK ../../instbin		usr/bin/cut
-SYMLINK ../../instbin		usr/bin/gawk usr/bin/awk
+SYMLINK ../../instbin		usr/bin/awk
 SYMLINK ../../instbin		usr/bin/getopt
 SYMLINK ../../instbin		usr/bin/grep usr/bin/egrep usr/bin/fgrep
 SYMLINK ../../instbin		usr/bin/netstat
 SYMLINK ../../instbin		usr/bin/rsh
 SYMLINK ../../instbin		usr/bin/strings
 SYMLINK ../../instbin		usr/bin/tset usr/bin/reset
-SYMLINK ../../instbin		usr/bin/vi
+SYMLINK ../../instbin		usr/bin/vim
+SYMLINK usr/bin/vim		usr/bin/vi
 SYMLINK	../../instbin		usr/bin/less usr/bin/more
 SYMLINK	../../instbin		usr/sbin/installboot
 SYMLINK	../../instbin		usr/sbin/sysctl
 
-# crunchgen source directory specials
-CRUNCHSPECIAL	vi srcdir usr.bin/vi/build
-CRUNCHSPECIAL	less srcdir usr.bin/less/less
-CRUNCHSPECIAL	installboot srcdir sys/arch/sparc/stand/installboot
+SRCDIRS	sys/arch/sparc/stand
 
+# crunchgen source directory specials
+#CRUNCHSPECIAL installboot srcdir sys/arch/sparc/stand/installboot
 
 # Minimize use of MFS
 SYMLINK	/tmp	var/tmp
@@ -44,7 +44,7 @@ COPYDIR	${DESTDIR}/usr/share/zoneinfo	usr/share/zoneinfo
 COPY	${CURDIR}/../../share/termcap/termcap.src usr/share/misc/termcap
 
 # copy the kernel
-COPY	${CURDIR}/../../sys/arch/sparc/compile/GENERIC/netbsd	netbsd
+COPY	bsd	bsd
 
 # various files that we need in /etc for the install
 COPY	${DESTDIR}/etc/disktab		etc/disktab.shadow
