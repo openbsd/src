@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_ohci.c,v 1.12 2005/02/19 00:45:14 dlg Exp $ */
+/*	$OpenBSD: pxa2x0_ohci.c,v 1.13 2005/02/23 13:17:29 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -43,7 +43,6 @@ int	pxaohci_detach(struct device *, int);
 struct pxaohci_softc {
 	ohci_softc_t	sc;
 	void		*sc_ih;
-	int		sc_intr;
 };
 
 struct cfattach pxaohci_ca = {
@@ -70,7 +69,6 @@ pxaohci_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc.iot = pxa->pxa_iot;
 	sc->sc.sc_bus.dmatag = pxa->pxa_dmat;
-	sc->sc_intr = PXA2X0_INT_USBH1;
 	sc->sc_ih = NULL;
 	sc->sc.sc_size = 0;
 
@@ -135,8 +133,8 @@ pxaohci_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	sc->sc_ih = pxa2x0_intr_establish(sc->sc_intr, IPL_USB, ohci_intr, sc,
-	    sc->sc.sc_bus.bdev.dv_xname);
+	sc->sc_ih = pxa2x0_intr_establish(PXA2X0_INT_USBH1, IPL_USB,
+	    ohci_intr, sc, sc->sc.sc_bus.bdev.dv_xname);
 
 	sc->sc.sc_child = config_found((void *) sc, &sc->sc.sc_bus,
 	    usbctlprint);
