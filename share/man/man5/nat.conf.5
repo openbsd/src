@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nat.conf.5,v 1.21 2002/01/08 16:28:12 dhartmei Exp $
+.\"	$OpenBSD: nat.conf.5,v 1.22 2002/02/23 01:08:18 dhartmei Exp $
 .\"
 .\" Copyright (c) 2001 Ian Darwin.  All rights reserved.
 .\"
@@ -59,6 +59,25 @@ An
 .Em rdr 
 rule specifies an incoming connection to be redirected
 to another host and optionally a different port.
+.Pp
+Note that all translation rules apply only to packets that pass through
+the specified interface.
+For instance, redirecting port 80 on an external interface to an
+internal web server will only work for connections originating from
+the outside.
+Connections to the address of the external interface from local hosts
+will not be redirected, since such packets do not actually pass through
+the external interface.
+Redirections can't reflect packets back through the interface they
+arrive on, they can only be redirected to hosts connected to different
+interfaces or to the firewall itself.
+.Pp
+Also note that all translations of packets occur before the filter
+rules in
+.Xr pf.conf 5
+are evaluated.
+Hence, 'pass in' rules for redirected packets should specify the
+address/port after translation.
 .Sh GRAMMAR
 Syntax for filter rules in BNF:
 .Bd -literal
