@@ -1,4 +1,4 @@
-/*	$OpenBSD: string.h,v 1.8 2002/10/25 21:55:28 millert Exp $	*/
+/*	$OpenBSD: string.h,v 1.9 2002/11/21 20:42:39 marc Exp $	*/
 /*	$NetBSD: string.h,v 1.6 1994/10/26 00:56:30 cgd Exp $	*/
 
 /*-
@@ -68,6 +68,7 @@ int	 strcoll(const char *, const char *);
 char	*strcpy(char *, const char *);
 size_t	 strcspn(const char *, const char *);
 char	*strerror(int);
+int	 strerror_r(int, char *, size_t);
 size_t	 strlen(const char *);
 char	*strncat(char *, const char *, size_t);
 int	 strncmp(const char *, const char *, size_t);
