@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: keywords.sh,v 1.10 2004/09/22 01:07:10 jaredy Exp $
+# $OpenBSD: keywords.sh,v 1.11 2004/09/24 01:13:04 jaredy Exp $
 # $NetBSD: keywords.sh,v 1.2 1996/11/15 18:57:21 gwr Exp $
 # @(#)keywords	8.2 (Berkeley) 3/19/94
 #
@@ -34,14 +34,12 @@ link
 llinfo
 lock
 lockrest
-mask
 monitor
 mpath
 mtu
 net
 netmask
 nostatic
-osi
 prefixlen
 proto1
 proto2
