@@ -1,4 +1,4 @@
-/*	$OpenBSD: spkr.c,v 1.11 1996/10/18 15:48:10 mickey Exp $ */
+/*	$OpenBSD: spkr.c,v 1.12 1997/10/24 00:00:01 mickey Exp $ */
 /*	$NetBSD: spkr.c,v 1.23.4.1 1996/07/15 22:15:11 fvdl Exp $	*/
 
 /*
@@ -92,9 +92,9 @@ void tone(hz, ticks)
     u_int divisor = TIMER_DIV(hz);
     int sps;
 
-#ifdef DEBUG
+#ifdef SPKR_DEBUG
     printf("tone: hz=%d ticks=%d\n", hz, ticks);
-#endif /* DEBUG */
+#endif /* SPKR_DEBUG */
 
     /* set timer to generate clicks at given frequency in Hertz */
     sps = spltty();
@@ -133,9 +133,9 @@ rest(ticks)
      * This is so other processes can execute while the rest is being
      * waited out.
      */
-#ifdef DEBUG
+#ifdef SPKR_DEBUG
     printf("rest: %d\n", ticks);
-#endif /* DEBUG */
+#endif /* SPKR_DEBUG */
     timeout(endrest, NULL, ticks);
     sleep(endrest, PZERO - 1);
 }
@@ -236,10 +236,10 @@ playtone(pitch, value, sustain)
 		- (whole * (FILLTIME - fill)) / (value * FILLTIME);
 	silence = whole * (FILLTIME-fill) * snum / (FILLTIME * value * sdenom);
 
-#ifdef DEBUG
+#ifdef SPKR_DEBUG
 	printf("playtone: pitch %d for %d ticks, rest for %d ticks\n",
 			pitch, sound, silence);
-#endif /* DEBUG */
+#endif /* SPKR_DEBUG */
 
 	tone(pitchtab[pitch], sound);
 	if (fill != LEGATO)
@@ -262,9 +262,9 @@ playstring(cp, slen)
 	int		sustain, timeval, tempo;
 	register char	c = toupper(*cp);
 
-#ifdef DEBUG
+#ifdef SPKR_DEBUG
 	printf("playstring: %c (%x)\n", c, c);
-#endif /* DEBUG */
+#endif /* SPKR_DEBUG */
 
 	switch (c)
 	{
@@ -489,9 +489,9 @@ spkropen(dev, flags, mode, p)
     int mode;
     struct proc *p;
 {
-#ifdef DEBUG
+#ifdef SPKR_DEBUG
     printf("spkropen: entering with dev = %x\n", dev);
-#endif /* DEBUG */
+#endif /* SPKR_DEBUG */
 
     if (minor(dev) != 0 || !spkr_attached)
 	return(ENXIO);
@@ -515,10 +515,10 @@ spkrwrite(dev, uio, flags)
     register int n;
     char *cp;
     int error;
-#ifdef DEBUG
+#ifdef SPKR_DEBUG
     printf("spkrwrite: entering with dev = %x, count = %d\n",
 		dev, uio->uio_resid);
-#endif /* DEBUG */
+#endif /* SPKR_DEBUG */
 
     if (minor(dev) != 0 || !spkr_attached)
 	return(ENXIO);
@@ -539,9 +539,9 @@ int spkrclose(dev, flags, mode, p)
     int mode;
     struct proc *p;
 {
-#ifdef DEBUG
+#ifdef SPKR_DEBUG
     printf("spkrclose: entering with dev = %x\n", dev);
-#endif /* DEBUG */
+#endif /* SPKR_DEBUG */
 
     if (minor(dev) != 0)
 	return(ENXIO);
@@ -561,9 +561,9 @@ int spkrioctl(dev, cmd, data, flag, p)
     int	flag;
     struct proc *p;
 {
-#ifdef DEBUG
+#ifdef SPKR_DEBUG
     printf("spkrioctl: entering with dev = %x, cmd = %lx\n", dev, cmd);
-#endif /* DEBUG */
+#endif /* SPKR_DEBUG */
 
     if (minor(dev) != 0)
 	return(ENXIO);
