@@ -30,7 +30,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: login.conf.5,v 1.18 2002/06/13 23:22:17 millert Exp $
+.\" $OpenBSD: login.conf.5,v 1.19 2002/07/03 23:28:49 miod Exp $
 .\" BSDI $From: login.conf.5,v 2.20 2000/06/26 14:50:38 prb Exp $
 .\"
 .Dd June 18, 2001
@@ -417,12 +417,6 @@ Authenticate using an ActivCard token.
 See
 .Xr login_activ 8 .
 .\"
-.It Li auth
-Authenticate using the remote authentication protocol.
-Normally linked to another authentication type.
-See
-.Xr login_auth 8 .
-.\"
 .It Li chpass
 Change user's password.
 See
@@ -460,11 +454,6 @@ Normally linked to another authentication type, contact the radius server
 to do authentication.
 See
 .Xr login_radius 8 .
-.\"
-.It Li rchpass
-Change user's rpasswd password.
-See
-.Xr login_rchpass 8 .
 .\"
 .It Li reject
 Request a password and reject any request.
