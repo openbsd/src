@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.103 2000/12/18 16:45:32 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.104 2000/12/24 04:18:05 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -421,7 +421,7 @@ tdb_hashstats(void)
  * Caller is responsible for setting at least spltdb().
  */
 int
-tdb_walk(int (*walker)(struct tdb *, void *), void *arg)
+tdb_walk(int (*walker)(struct tdb *, void *, int), void *arg)
 {
     int i, rval = 0;
     struct tdb *tdbp, *next;
@@ -433,7 +433,10 @@ tdb_walk(int (*walker)(struct tdb *, void *), void *arg)
       for (tdbp = tdbh[i]; rval == 0 && tdbp != NULL; tdbp = next)
       {
 	  next = tdbp->tdb_hnext;
-	  rval = walker(tdbp, (void *)arg);
+	  if (i == tdb_hashmask && next == NULL)
+	    rval = walker(tdbp, (void *)arg, 1);
+	  else
+	    rval = walker(tdbp, (void *)arg, 0);
       }
 
     return rval;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.74 2000/10/14 06:23:52 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.75 2000/12/24 04:18:04 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -480,7 +480,7 @@ extern void tdb_expiration(struct tdb *, int);
 /* Flag values for the last argument of tdb_expiration().  */
 #define TDBEXP_EARLY	1	/* The tdb is likely to end up early.  */
 #define TDBEXP_TIMEOUT	2	/* Maintain expiration timeout.  */
-extern int tdb_walk(int (*)(struct tdb *, void *), void *);
+extern int tdb_walk(int (*)(struct tdb *, void *, int), void *);
 extern void handle_expirations(void *);
 
 /* XF_IP4 */
