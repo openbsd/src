@@ -1,7 +1,7 @@
-/*	$OpenBSD: ises.c,v 1.4 2001/03/28 20:02:59 angelos Exp $	*/
+/*	$OpenBSD: ises.c,v 1.5 2001/06/04 13:07:19 ho Exp $	*/
 
 /*
- * Copyright (c) 2000 Håkan Olsson (ho@crt.se)
+ * Copyright (c) 2000, 2001 Håkan Olsson (ho@crt.se)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,10 +40,6 @@
 #include <sys/kernel.h>
 #include <sys/mbuf.h>
 #include <sys/timeout.h>
-#include <vm/vm.h>
-#include <vm/vm_extern.h>
-#include <vm/pmap.h>
-#include <machine/pmap.h>
 #include <sys/device.h>
 #include <sys/queue.h>
 
@@ -71,7 +67,9 @@ void	ises_initstate __P((void *));
 void	ises_hrng_init __P((struct ises_softc *));
 void	ises_hrng __P((void *));
 void	ises_process_oqueue __P((struct ises_softc *));
-int	ises_queue_cmd __P((struct ises_softc *, u_int32_t, u_int32_t *));
+int	ises_queue_cmd __P((struct ises_softc *, u_int32_t, u_int32_t *, 
+			    u_int32_t (*)(struct ises_softc *, 
+					  struct ises_cmd *)));
 u_int32_t ises_get_fwversion __P((struct ises_softc *));
 int	ises_assert_cmd_mode __P((struct ises_softc *));
 
@@ -81,6 +79,8 @@ int	ises_freesession __P((u_int64_t));
 int	ises_process __P((struct cryptop *));
 void	ises_callback __P((struct ises_q *));
 int	ises_feed __P((struct ises_softc *));
+void	ises_bchu_switch_session __P((struct ises_softc *, 
+				      struct ises_bchu_session *));
 
 /* XXX for now... */
 void	ubsec_mcopy __P((struct mbuf *, struct mbuf *, int, int));
@@ -91,12 +91,25 @@ void	ubsec_mcopy __P((struct mbuf *, struct mbuf *, int, int));
 #define WRITE_REG(sc,reg,val) \
     bus_space_write_4((sc)->sc_memt, (sc)->sc_memh, reg, val)
 
+/* XXX This should probably be (x) = htole32((x)) */
 #define SWAP32(x) ((x) = swap32((x)))
 
 #ifdef ISESDEBUG
 #  define DPRINTF(x) printf x
 #else
 #  define DPRINTF(x)
+#endif
+
+#ifdef ISESDEBUG
+void	ises_debug_init __P((struct ises_softc *));
+void	ises_debug_2 __P((void));
+void	ises_debug_loop __P((void *));
+void	ises_showreg __P((void));
+void	ises_debug_parse_omr __P((struct ises_softc *));
+void	ises_debug_simple_cmd __P((struct ises_softc *, u_int32_t, u_int32_t));
+struct ises_softc *ises_sc;
+struct timeout ises_db_timeout;
+int ises_db;
 #endif
 
 /* For HRNG entropy collection, these values gather 1600 bytes/s */
@@ -112,6 +125,15 @@ struct cfattach ises_ca = {
 struct cfdriver ises_cd = {
 	0, "ises", DV_DULL
 };
+
+struct ises_stats {
+	u_int64_t	ibytes;
+	u_int64_t	obytes;
+	u_int32_t	ipkts;
+	u_int32_t	opkts;
+	u_int32_t	invalid;
+	u_int32_t	nomem;
+} isesstats;
 
 int
 ises_match(struct device *parent, void *match, void *aux)
@@ -142,6 +164,7 @@ ises_attach(struct device *parent, struct device *self, void *aux)
 
 	SIMPLEQ_INIT(&sc->sc_queue);
 	SIMPLEQ_INIT(&sc->sc_qchip);
+	SIMPLEQ_INIT(&sc->sc_cmdq);
 	state = 0;
 
 	/* Verify PCI space */
@@ -216,6 +239,8 @@ ises_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(": %s\n", intrstr);
 
+	memset (&isesstats, 0, sizeof(isesstats));
+
 	sc->sc_cid = crypto_get_driverid();
 
 	if (sc->sc_cid < 0)
@@ -230,7 +255,9 @@ ises_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_initstate = 0;
 	timeout_set(&sc->sc_timeout, ises_initstate, sc);
 	ises_initstate(sc);
-
+#ifdef ISESDEBUG
+	ises_debug_init(sc);
+#endif
 	return;
 
  fail:
@@ -420,7 +447,9 @@ ises_initstate(void *v)
 
 		/* Set the interrupt mask */
 		sc->sc_intrmask = ISES_STAT_BCHU_OAF | ISES_STAT_BCHU_ERR |
-		    ISES_STAT_BCHU_OFHF | ISES_STAT_SW_OQSINC;
+		    ISES_STAT_BCHU_OFHF | ISES_STAT_SW_OQSINC |
+		    ISES_STAT_LNAU_BUSY_1 | ISES_STAT_LNAU_ERR_1 |
+		    ISES_STAT_LNAU_BUSY_2 | ISES_STAT_LNAU_ERR_2;
 #if 0
 		    ISES_STAT_BCHU_ERR | ISES_STAT_BCHU_OAF |
 		    ISES_STAT_BCHU_IFE | ISES_STAT_BCHU_IFHE |
@@ -465,12 +494,15 @@ ises_initstate(void *v)
 
 /* Put a command on the A-interface queue. */
 int
-ises_queue_cmd(struct ises_softc *sc, u_int32_t cmd, u_int32_t *data)
+ises_queue_cmd(struct ises_softc *sc, u_int32_t cmd, u_int32_t *data, 
+	       u_int32_t (*callback)(struct ises_softc *, struct ises_cmd *))
 {
-	int p, len, s;
+	struct ises_cmd *cq;
+	int p, len, s, code;
 
 	len = cmd >> 24;
-
+	code = (cmd >> 16) & 0xFF;
+	
 	s = splimp();
 
 	if (len > READ_REG(sc, ISES_A_IQF)) {
@@ -478,10 +510,28 @@ ises_queue_cmd(struct ises_softc *sc, u_int32_t cmd, u_int32_t *data)
 		return (EAGAIN); /* XXX ENOMEM ? */
 	}
 
+	cq = (struct ises_cmd *) 
+	    malloc(sizeof (struct ises_cmd), M_DEVBUF, M_NOWAIT);
+	if (cq == NULL) {
+		splx(s);
+		isesstats.nomem++;
+		return (ENOMEM);
+	}
+	memset(cq, 0, sizeof (struct ises_cmd));
+	cq->cmd_code = code;
+	cq->cmd_cb = callback;
+	SIMPLEQ_INSERT_TAIL(&sc->sc_cmdq, cq, cmd_next);
+
 	WRITE_REG(sc, ISES_A_IQD, cmd);
 
-	for (p = 0; p < len; p++)
-		WRITE_REG(sc, ISES_A_IQD, *(data + p));
+	/* LNAU register data should be written in reverse order */
+	if ((code >= ISES_CMD_LW_A_1 && code <= ISES_CMD_LW_U_1) || /* LNAU1 */
+	    (code >= ISES_CMD_LW_A_2 && code <= ISES_CMD_LW_U_2))   /* LNAU2 */
+		for (p = len - 1; p >= 0; p--)
+			WRITE_REG(sc, ISES_A_IQD, *(data + p));
+	else
+		for (p = 0; p < len; p++)
+			WRITE_REG(sc, ISES_A_IQD, *(data + p));
 
 	WRITE_REG(sc, ISES_A_IQS, 0);
 
@@ -496,8 +546,13 @@ ises_process_oqueue(struct ises_softc *sc)
 #ifdef ISESDEBUG
 	char *dv = sc->sc_dv.dv_xname;
 #endif
+	struct ises_cmd *cq;
 	u_int32_t oqs, r, d;
-	int cmd, len;
+	int cmd, len, c;
+
+	r = READ_REG(sc, ISES_A_OQS);
+	if (r > 1)
+		DPRINTF(("%s:process_oqueue: OQS=%d\n", dv, r));
 
 	/* OQS gives us the number of responses we have to process. */
 	while ((oqs = READ_REG(sc, ISES_A_OQS)) > 0) {
@@ -507,12 +562,37 @@ ises_process_oqueue(struct ises_softc *sc)
 		cmd = (r >> 16) & 0xff;
 		r   = r & 0xffff;
 
+		if (!SIMPLEQ_EMPTY(&sc->sc_cmdq)) {
+			cq = SIMPLEQ_FIRST(&sc->sc_cmdq);
+			SIMPLEQ_REMOVE_HEAD(&sc->sc_cmdq, cq, cmd_next);
+			cq->cmd_rlen = len;
+		} else {
+			cq = NULL;
+			DPRINTF(("%s:process_oqueue: cmd queue empty!\n", dv));
+		}
+
 		if (r) {
 			/* This command generated an error */
-			DPRINTF(("%s: cmd %d error %d\n", dv, cmd,
+			DPRINTF(("%s:process_oqueue: cmd %d err %d\n", dv, cmd,
 			    (r & ISES_RC_MASK)));
-		} else
+		} else {
+			/* Use specified callback, if any */
+			if (cq && cq->cmd_cb) {
+				if (cmd == cq->cmd_code) {
+					cq->cmd_cb(sc, cq);
+					cmd = ISES_CMD_NONE;
+				} else {
+					DPRINTF(("%s:process_oqueue: expected"
+					    " cmd %d, got %d\n", dv, 
+					    cq->cmd_code, cmd));
+					/* XXX Some error handling here? */
+				}
+			}
+
 			switch (cmd) {
+			case ISES_CMD_NONE:
+				break;
+
 			case ISES_CMD_HBITS:
 				/* XXX How about increasing the pool size? */
 				/* XXX Use add_entropy_words instead? */
@@ -524,22 +604,67 @@ ises_process_oqueue(struct ises_softc *sc)
 				}
 				break;
 
+			case ISES_CMD_LUPLOAD_1:
+				/* Get result of LNAU 1 operation. */
+				DPRINTF(("%s:process_oqueue: LNAU 1 result "
+				     "upload (len=%d)\n", dv, len));
+				sc->sc_lnau1_rlen = len;
+				memset (sc->sc_lnau1_r, 0, 2048 / 8);
+				while (len--) {
+					/* first word is LSW */
+					sc->sc_lnau1_r[len] = 
+					    READ_REG(sc, ISES_A_OQD);
+				}
+				break;
+
+			case ISES_CMD_LUPLOAD_2:
+				/* Get result of LNAU 1 operation. */
+				DPRINTF(("%s:process_oqueue: LNAU 2 result "
+				     "upload (len=%d)\n", dv, len));
+				sc->sc_lnau2_rlen = len;
+				memset (sc->sc_lnau1_r, 0, 2048 / 8);
+				while (len--) {
+					/* first word is LSW */
+					sc->sc_lnau2_r[len] = 
+					    READ_REG(sc, ISES_A_OQD);
+				}
+				break;
+
 			case ISES_CMD_BR_OMR:
-				sc->sc_omr = READ_REG(sc, ISES_A_OQD);
-				DPRINTF(("%s: read sc->sc_omr [%08x]\n", dv,
-				    sc->sc_omr));
+				sc->sc_bsession.omr = READ_REG(sc, ISES_A_OQD);
+				DPRINTF(("%s:process_oqueue: read OMR[%08x]\n",
+				    dv, sc->sc_bsession.omr));
+#ifdef ISESDEBUG
+				ises_debug_parse_omr(sc);
+#endif
+				break;
+
+			case ISES_CMD_BSWITCH:
+				DPRINTF(("%s:process_oqueue: BCHU_SWITCH\n"));
+				/* Put switched BCHU session in sc_bsession. */
+				for(c = 0; len > 0; len--, c++)
+					*((u_int32_t *)&sc->sc_bsession + c) =
+					    READ_REG(sc, ISES_A_OQD);
 				break;
 
 			default:
 				/* All other are ok (no response data) */
+				DPRINTF(("%s:process_oqueue [cmd %d len %d]\n",
+				    dv, cmd, len));
+				if (cq && cq->cmd_cb) 
+					len -= cq->cmd_cb(sc, cq);
 			}
+		}
 
-	/* This will drain any remaining data and ACK this reponse. */
-	while (len-- > 0)
-		d = READ_REG(sc, ISES_A_OQD);
-	WRITE_REG(sc, ISES_A_OQS, 0);
-	if (oqs > 1)
-		DELAY(1); /* Wait for firmware to decrement OQS (8 clocks) */
+		if (cq)
+			free(cq, M_DEVBUF);
+		
+		/* This will drain any remaining data and ACK this reponse. */
+		while (len-- > 0)
+			d = READ_REG(sc, ISES_A_OQD);
+		WRITE_REG(sc, ISES_A_OQS, 0);
+		if (oqs > 1)
+			DELAY(1); /* Wait for fw to decrement OQS (8 clocks) */
 	}
 }
 
@@ -548,6 +673,10 @@ ises_intr(void *arg)
 {
 	struct ises_softc *sc = arg;
 	volatile u_int32_t ints;
+	u_int32_t cmd;
+#ifdef ISESDEBUG
+	char *dv = sc->sc_dv.dv_xname;
+#endif
 
 	ints = READ_REG(sc, ISES_A_INTS);
 	if (!(ints & sc->sc_intrmask))
@@ -566,18 +695,42 @@ ises_intr(void *arg)
 		ises_process_oqueue(sc);
 	}
 
+	if (ints & ISES_STAT_LNAU_BUSY_1) {
+		DPRINTF(("%s:ises_intr: LNAU 1 job complete\n", dv));
+		/* upload LNAU 1 result (into sc->sc_lnau1_r) */
+		cmd = ISES_MKCMD(ISES_CMD_LUPLOAD_1, 0);
+		ises_queue_cmd(sc, cmd, NULL, NULL);
+	}
+
+	if (ints & ISES_STAT_LNAU_BUSY_2) {
+		DPRINTF(("%s:ises_intr: LNAU 2 job complete\n", dv));
+		/* upload LNAU 2 result (into sc->sc_lnau2_r) */
+		cmd = ISES_MKCMD(ISES_CMD_LUPLOAD_2, 0);
+		ises_queue_cmd(sc, cmd, NULL, NULL);
+	}
+
+	if (ints & ISES_STAT_LNAU_ERR_1) {
+		DPRINTF(("%s:ises_intr: LNAU 1 error\n", dv));
+		sc->sc_lnau1_rlen = -1;
+	}
+
+	if (ints & ISES_STAT_LNAU_ERR_2) {
+		DPRINTF(("%s:ises_intr: LNAU 2 error\n", dv));
+		sc->sc_lnau2_rlen = -1;
+	}
+
 	if (ints & ISES_STAT_BCHU_OAF) {	/* output data available */
-		DPRINTF(("ises_intr: BCHU_OAF bit set\n"));
+		DPRINTF(("%s:ises_intr: BCHU_OAF bit set\n", dv));
 		/* ises_process_oqueue(sc); */
 	}
 
 	if (ints & ISES_STAT_BCHU_ERR) {	/* We got a BCHU error */
-		DPRINTF(("ises_intr: BCHU error\n"));
+		DPRINTF(("%s:ises_intr: BCHU error\n", dv));
 		/* XXX Error handling */
 	}
 
 	if (ints & ISES_STAT_BCHU_OFHF) {	/* Output is half full */
-		DPRINTF(("ises_intr: BCHU output FIFO half full\n"));
+		DPRINTF(("%s:ises_intr: BCHU output FIFO half full\n", dv));
 		/* XXX drain data? */
 	}
 
@@ -621,7 +774,7 @@ ises_newsession(u_int32_t *sidp, struct cryptoini *cri)
 {
 	struct cryptoini *c, *mac = NULL, *enc = NULL;
 	struct ises_softc *sc = NULL;
-	struct ises_session *ses = NULL;
+	struct ises_session *ses;
 	MD5_CTX	   md5ctx;
 	SHA1_CTX   sha1ctx;
 	RMD160_CTX rmd160ctx;
@@ -656,27 +809,33 @@ ises_newsession(u_int32_t *sidp, struct cryptoini *cri)
 	if (mac == 0 && enc == 0)
 		return (EINVAL);
 
+	/* Allocate a new session */
 	if (sc->sc_sessions == NULL) {
 		ses = sc->sc_sessions = (struct ises_session *)
 		    malloc(sizeof(struct ises_session), M_DEVBUF, M_NOWAIT);
-		if (ses == NULL)
+		if (ses == NULL) {
+			isesstats.nomem++;
 			return (ENOMEM);
+		}
 		sesn = 0;
 		sc->sc_nsessions = 1;
 	} else {
+		ses = NULL;
 		for (sesn = 0; sesn < sc->sc_nsessions; sesn++)
 			if (sc->sc_sessions[sesn].ses_used == 0) {
 				ses = &sc->sc_sessions[sesn];
 				break;
 			}
 
-		if (ses == NULL)  {
+		if (ses == NULL) {
 			i = sc->sc_nsessions * sizeof(struct ises_session);
 			ses = (struct ises_session *)
 			    malloc(i + sizeof(struct ises_session), M_DEVBUF,
 			    M_NOWAIT);
-			if (ses == NULL)
+			if (ses == NULL) {
+				isesstats.nomem++;
 				return (ENOMEM);
+			}
 
 			memcpy(ses, sc->sc_sessions, i);
 			memset(sc->sc_sessions, 0, i);
@@ -715,21 +874,25 @@ ises_newsession(u_int32_t *sidp, struct cryptoini *cri)
 		for (i = 0; i < mac->cri_klen / 8; i++)
 			mac->cri_key[i] ^= HMAC_IPAD_VAL;
 
-		if (mac->cri_alg == CRYPTO_MD5_HMAC) {
+		switch (mac->cri_alg) {
+		case CRYPTO_MD5_HMAC:
 			MD5Init(&md5ctx);
 			MD5Update(&md5ctx, mac->cri_key, mac->cri_klen / 8);
 			MD5Update(&md5ctx, hmac_ipad_buffer, HMAC_BLOCK_LEN -
 			    (mac->cri_klen / 8));
 			memcpy(ses->ses_hminner, md5ctx.state,
 			    sizeof(md5ctx.state));
-		} else if (mac->cri_alg == CRYPTO_SHA1_HMAC) {
+			break;
+		case CRYPTO_SHA1_HMAC:
 			SHA1Init(&sha1ctx);
 			SHA1Update(&sha1ctx, mac->cri_key, mac->cri_klen / 8);
 			SHA1Update(&sha1ctx, hmac_ipad_buffer, HMAC_BLOCK_LEN -
 			    (mac->cri_klen / 8));
 			memcpy(ses->ses_hminner, sha1ctx.state,
 			    sizeof(sha1ctx.state));
-		} else {
+			break;
+		case CRYPTO_RIPEMD160_HMAC:
+		default:
 			RMD160Init(&rmd160ctx);
 			RMD160Update(&rmd160ctx, mac->cri_key,
 			    mac->cri_klen / 8);
@@ -737,26 +900,31 @@ ises_newsession(u_int32_t *sidp, struct cryptoini *cri)
 			    HMAC_BLOCK_LEN - (mac->cri_klen / 8));
 			memcpy(ses->ses_hminner, rmd160ctx.state,
 			    sizeof(rmd160ctx.state));
+			break;
 		}
 
 		for (i = 0; i < mac->cri_klen / 8; i++)
 			mac->cri_key[i] ^= (HMAC_IPAD_VAL ^ HMAC_OPAD_VAL);
 
-		if (mac->cri_alg == CRYPTO_MD5_HMAC) {
+		switch (mac->cri_alg) {
+		case CRYPTO_MD5_HMAC:
 			MD5Init(&md5ctx);
 			MD5Update(&md5ctx, mac->cri_key, mac->cri_klen / 8);
 			MD5Update(&md5ctx, hmac_ipad_buffer, HMAC_BLOCK_LEN -
 			    (mac->cri_klen / 8));
 			memcpy(ses->ses_hmouter, md5ctx.state,
 			    sizeof(md5ctx.state));
-		} else if (mac->cri_alg == CRYPTO_SHA1_HMAC) {
+			break;
+		case CRYPTO_SHA1_HMAC:
 			SHA1Init(&sha1ctx);
 			SHA1Update(&sha1ctx, mac->cri_key, mac->cri_klen / 8);
 			SHA1Update(&sha1ctx, hmac_ipad_buffer, HMAC_BLOCK_LEN -
 			    (mac->cri_klen / 8));
 			memcpy(ses->ses_hmouter, sha1ctx.state,
 			    sizeof(sha1ctx.state));
-		} else {
+			break;
+		case CRYPTO_RIPEMD160_HMAC:
+		default:
 			RMD160Init(&rmd160ctx);
 			RMD160Update(&rmd160ctx, mac->cri_key,
 			    mac->cri_klen / 8);
@@ -764,6 +932,7 @@ ises_newsession(u_int32_t *sidp, struct cryptoini *cri)
 			    HMAC_BLOCK_LEN - (mac->cri_klen / 8));
 			memcpy(ses->ses_hmouter, rmd160ctx.state,
 			    sizeof(rmd160ctx.state));
+			break;
 		}
 
 		for (i = 0; i < mac->cri_klen / 8; i++)
@@ -892,43 +1061,43 @@ ises_process(struct cryptop *crp)
 		encoffset = enccrd->crd_skip;
 
 		if (enccrd->crd_alg == CRYPTO_3DES_CBC)
-			q->q_ctx.pc_omrflags |= ISES_SOMR_BOMR_3DES;
+			q->q_bsession.omr |= ISES_SOMR_BOMR_3DES;
 		else
-			q->q_ctx.pc_omrflags |= ISES_SOMR_BOMR_DES;
-		q->q_ctx.pc_omrflags |= ISES_SOMR_FMR_CBC;
+			q->q_bsession.omr |= ISES_SOMR_BOMR_DES;
+		q->q_bsession.omr |= ISES_SOMR_FMR_CBC;
 
 		if (enccrd->crd_flags & CRD_F_ENCRYPT) {
-			q->q_ctx.pc_omrflags |= ISES_SOMR_EDR; /* XXX */
+			q->q_bsession.omr |= ISES_SOMR_EDR; /* XXX */
 
 			if (enccrd->crd_flags & CRD_F_IV_EXPLICIT)
-				bcopy(enccrd->crd_iv, q->q_ctx.pc_iv, 8);
+				bcopy(enccrd->crd_iv, q->q_bsession.sccr, 8);
 			else {
-				q->q_ctx.pc_iv[0] = ses->ses_iv[0];
-				q->q_ctx.pc_iv[1] = ses->ses_iv[1];
+				q->q_bsession.sccr[0] = ses->ses_iv[0];
+				q->q_bsession.sccr[1] = ses->ses_iv[1];
 			}
 
 			if ((enccrd->crd_flags & CRD_F_IV_PRESENT) == 0)
 				m_copyback(q->q_src_m, enccrd->crd_inject,
-				    8, (caddr_t)q->q_ctx.pc_iv);
+				    8, (caddr_t)q->q_bsession.sccr);
 		} else {
-			q->q_ctx.pc_omrflags &= ~ISES_SOMR_EDR; /* XXX */
+			q->q_bsession.omr &= ~ISES_SOMR_EDR; /* XXX */
 
 			if (enccrd->crd_flags & CRD_F_IV_EXPLICIT)
-				bcopy(enccrd->crd_iv, q->q_ctx.pc_iv, 8);
+				bcopy(enccrd->crd_iv, q->q_bsession.sccr, 8);
 			else
 				m_copyback(q->q_src_m, enccrd->crd_inject,
-				    8, (caddr_t)q->q_ctx.pc_iv);
+				    8, (caddr_t)q->q_bsession.sccr);
 		}
 
-		q->q_ctx.pc_deskey[0] = ses->ses_deskey[0];
-		q->q_ctx.pc_deskey[1] = ses->ses_deskey[1];
-		q->q_ctx.pc_deskey[2] = ses->ses_deskey[2];
-		q->q_ctx.pc_deskey[3] = ses->ses_deskey[3];
-		q->q_ctx.pc_deskey[4] = ses->ses_deskey[4];
-		q->q_ctx.pc_deskey[5] = ses->ses_deskey[5];
+		q->q_bsession.kr[0] = ses->ses_deskey[0];
+		q->q_bsession.kr[1] = ses->ses_deskey[1];
+		q->q_bsession.kr[2] = ses->ses_deskey[2];
+		q->q_bsession.kr[3] = ses->ses_deskey[3];
+		q->q_bsession.kr[4] = ses->ses_deskey[4];
+		q->q_bsession.kr[5] = ses->ses_deskey[5];
 
-		SWAP32(q->q_ctx.pc_iv[0]);
-		SWAP32(q->q_ctx.pc_iv[1]);
+		SWAP32(q->q_bsession.sccr[0]);
+		SWAP32(q->q_bsession.sccr[1]);
 	}
 
 	if (maccrd) {
@@ -936,30 +1105,30 @@ ises_process(struct cryptop *crp)
 
 		switch (crd->crd_alg) {
 		case CRYPTO_MD5_HMAC:
-			q->q_ctx.pc_omrflags |= ISES_HOMR_HFR_MD5;
+			q->q_bsession.omr |= ISES_HOMR_HFR_MD5;
 			break;
 		case CRYPTO_SHA1_HMAC:
-			q->q_ctx.pc_omrflags |= ISES_HOMR_HFR_SHA1;
+			q->q_bsession.omr |= ISES_HOMR_HFR_SHA1;
 			break;
 		case CRYPTO_RIPEMD160_HMAC:
 		default:
-			q->q_ctx.pc_omrflags |= ISES_HOMR_HFR_RMD160;
+			q->q_bsession.omr |= ISES_HOMR_HFR_RMD160;
 			break;
 		}
 
-		q->q_ctx.pc_hminner[0] = ses->ses_hminner[0];
-		q->q_ctx.pc_hminner[1] = ses->ses_hminner[1];
-		q->q_ctx.pc_hminner[2] = ses->ses_hminner[2];
-		q->q_ctx.pc_hminner[3] = ses->ses_hminner[3];
-		q->q_ctx.pc_hminner[4] = ses->ses_hminner[4];
-		q->q_ctx.pc_hminner[5] = ses->ses_hminner[5];
+		q->q_hminner[0] = ses->ses_hminner[0];
+		q->q_hminner[1] = ses->ses_hminner[1];
+		q->q_hminner[2] = ses->ses_hminner[2];
+		q->q_hminner[3] = ses->ses_hminner[3];
+		q->q_hminner[4] = ses->ses_hminner[4];
+		q->q_hminner[5] = ses->ses_hminner[5];
 
-		q->q_ctx.pc_hmouter[0] = ses->ses_hmouter[0];
-		q->q_ctx.pc_hmouter[1] = ses->ses_hmouter[1];
-		q->q_ctx.pc_hmouter[2] = ses->ses_hmouter[2];
-		q->q_ctx.pc_hmouter[3] = ses->ses_hmouter[3];
-		q->q_ctx.pc_hmouter[4] = ses->ses_hmouter[4];
-		q->q_ctx.pc_hmouter[5] = ses->ses_hmouter[5];
+		q->q_hmouter[0] = ses->ses_hmouter[0];
+		q->q_hmouter[1] = ses->ses_hmouter[1];
+		q->q_hmouter[2] = ses->ses_hmouter[2];
+		q->q_hmouter[3] = ses->ses_hmouter[3];
+		q->q_hmouter[4] = ses->ses_hmouter[4];
+		q->q_hmouter[5] = ses->ses_hmouter[5];
 	}
 
 	if (enccrd && maccrd) {
@@ -986,7 +1155,7 @@ ises_process(struct cryptop *crp)
 		cpoffset = cpskip + dtheend;
 		coffset = 0;
 	}
-	q->q_ctx.pc_offset = coffset >> 2;
+	q->q_offset = coffset >> 2;
 
 	q->q_src_l = mbuf2pages(q->q_src_m, &q->q_src_npa, &q->q_src_packp,
 	    &q->q_src_packl, 1, &nicealign);
@@ -1149,6 +1318,11 @@ ises_process(struct cryptop *crp)
 	return (0);
 
 errout:
+	if (err == ENOMEM)
+		isesstats.nomem++;
+	else if (err == EINVAL)
+		isesstats.invalid++;
+
 	if (q) {
 		if (q->q_src_m != q->q_dst_m)
 			m_freem(q->q_dst_m);
@@ -1198,7 +1372,7 @@ ises_hrng_init(struct ises_softc *sc)
 	cmd = ISES_MKCMD(ISES_CMD_HBITS, 1);
 	r   = 8; /* 8 * 32 = 256 bits */
 
-	if (ises_queue_cmd(sc, cmd, &r))
+	if (ises_queue_cmd(sc, cmd, &r, NULL))
 		return;
 
 	/* Wait until response arrives. */
@@ -1235,7 +1409,7 @@ ises_hrng_init(struct ises_softc *sc)
 	/* Queue 100 cmds; each generate 250 32-bit words of rnd data. */
 	microtime(&tv1);
 	for (i = 0; i < ISES_ROUNDS; i++)
-		ises_queue_cmd(sc, cmd, &r);
+		ises_queue_cmd(sc, cmd, &r, NULL);
 	for (i = 0; i < ISES_ROUNDS; i++) {
 		while (READ_REG(sc, ISES_A_OQS) == 0) ; /* Wait for response */
 
@@ -1253,7 +1427,6 @@ ises_hrng_init(struct ises_softc *sc)
 	    ISES_WPR * ISES_ROUNDS * 32 / 1024 * 1000000 / tv1.tv_usec);
 #endif
 
-	printf("\n");
 	timeout_set(&sc->sc_timeout, ises_hrng, sc);
 	ises_hrng(sc); /* Call first update */
 }
@@ -1278,7 +1451,7 @@ ises_hrng(void *v)
 	cmd = ISES_MKCMD(ISES_CMD_HBITS, 1);
 	n   = (ISESRNGBITS >> 5) & 0xff; /* ask for N 32 bit words */
 
-	ises_queue_cmd(sc, cmd, &n);
+	ises_queue_cmd(sc, cmd, &n, NULL);
 }
 
 u_int32_t
@@ -1351,3 +1524,411 @@ ises_assert_cmd_mode(struct ises_softc *sc)
 		return (-1); /* Unknown mode */
 	}
 }
+
+#ifdef ISESDEBUG
+/*
+ * Development code section below here.
+ */
+
+void
+ises_debug_init (struct ises_softc *sc)
+{
+	ises_sc = sc;
+	ises_db = 0;
+	timeout_set (&ises_db_timeout, ises_debug_loop, sc);
+	timeout_add (&ises_db_timeout, 100);
+	printf ("ises0: ISESDEBUG active (ises_sc = %p)\n", ises_sc);
+}
+
+void
+ises_debug_2 (void)
+{
+	timeout_set (&ises_db_timeout, ises_debug_loop, ises_sc);
+	timeout_add (&ises_db_timeout, 100);
+	printf ("ises0: another debug timeout scheduled!\n");
+}
+
+void
+ises_debug_simple_cmd (struct ises_softc *sc, u_int32_t code, u_int32_t d)
+{
+	u_int32_t cmd, data;
+	
+	cmd = ISES_MKCMD(code, (d ? 1 : 0));
+	data = d;
+	ises_queue_cmd(sc, cmd, &d, NULL);
+}
+
+void
+ises_bchu_switch_session (struct ises_softc *sc, struct ises_bchu_session *ss)
+{
+	/* It appears that the BCHU_SWITCH_SESSION command is broken. */
+	/* We have to work around it. */
+	
+	u_int32_t cmd;
+
+	cmd = ISES_MKCMD(ISES_CMD_BR_KR0, 0); 
+	ises_queue_cmd(sc, cmd, NULL, NULL);
+	cmd = ISES_MKCMD(ISES_CMD_BR_KR1, 0); 
+	ises_queue_cmd(sc, cmd, NULL, NULL);
+	cmd = ISES_MKCMD(ISES_CMD_BR_KR2, 0); 
+	ises_queue_cmd(sc, cmd, NULL, NULL);
+	
+	cmd = ISES_MKCMD(ISES_CMD_BR_OMR, 0); 
+	ises_queue_cmd(sc, cmd, NULL, NULL);
+	cmd = ISES_MKCMD(ISES_CMD_BR_SCCR, 0); 
+	ises_queue_cmd(sc, cmd, NULL, NULL);
+	cmd = ISES_MKCMD(ISES_CMD_BR_DBCR, 0); 
+	ises_queue_cmd(sc, cmd, NULL, NULL);
+	cmd = ISES_MKCMD(ISES_CMD_BR_HMLR, 0); 
+	ises_queue_cmd(sc, cmd, NULL, NULL);
+	cmd = ISES_MKCMD(ISES_CMD_BR_CVR, 0); 
+	ises_queue_cmd(sc, cmd, NULL, NULL);
+}
+
+void
+ises_debug_loop (void *v)
+{
+	struct ises_softc *sc = (struct ises_softc *)v;
+	struct ises_bchu_session bses;
+	u_int32_t cmd, stat;
+	int i;
+
+	if (ises_db)
+		printf ("ises0: ises_db = %d  sc = %p\n", ises_db, sc);
+
+	timeout_add (&ises_db_timeout, 300); /* Every 3 secs */
+
+	stat = READ_REG(sc, ISES_A_OQS);
+	cmd  = READ_REG(sc, ISES_A_IQS);
+	if (stat || cmd)
+		printf ("ises0: IQS=%d OQS=%d / IQF=%d OQF=%d\n",
+		    cmd, stat, READ_REG(sc, ISES_A_IQF),
+		    READ_REG(sc, ISES_A_OQF));
+	
+	switch (ises_db) {
+	default: 
+		/* 0 - do nothing (just loop) */
+		break;
+	case 1:
+		/* Just dump register info */
+		ises_showreg();
+		break;
+	case 2:
+		/* Reset LNAU 1 registers */
+		ises_debug_simple_cmd(sc, ISES_CMD_LRESET_1, 0);
+		
+		/* Compute R = (141 * 5623) % 117 (R should be 51 (0x33)) */
+		ises_debug_simple_cmd(sc, ISES_CMD_LW_A_1, 141);
+		ises_debug_simple_cmd(sc, ISES_CMD_LW_B_1, 5623);
+		ises_debug_simple_cmd(sc, ISES_CMD_LW_N_1, 117);
+		
+		/* Launch LNAU operation. */
+		ises_debug_simple_cmd(sc, ISES_CMD_LMULMOD_1, 0);
+		break;
+	case 3:
+		/* Read result LNAU_1 R register (should not be necessary) */
+		ises_debug_simple_cmd(sc, ISES_CMD_LUPLOAD_1, 0);
+		break;
+	case 4:
+		/* Print result */
+		printf ("LNAU_1 R length = %d\n", sc->sc_lnau1_rlen);
+		for (i = 0; i < sc->sc_lnau1_rlen; i++)
+			printf ("W%02d-[%08x]-(%u)\t%s", i, sc->sc_lnau1_r[i],
+			    sc->sc_lnau1_r[i], (i%4)==3 ? "\n" : "");
+		printf ("%s", (i%4) ? "\n" : "");
+		break;
+	case 5:
+		/* Crypto. */
+
+		/* Load BCHU session data */
+		memset(&bses, 0, sizeof bses);
+		bses.kr[0] = 0xD0;
+		bses.kr[1] = 0xD1;
+		bses.kr[2] = 0xD2;
+		bses.kr[3] = 0xD3;
+		bses.kr[4] = 0xD4;
+		bses.kr[5] = 0xD5;
+
+		/* cipher data out is hash in, SHA1, 3DES, encrypt, ECB */
+		bses.omr = ISES_SELR_BCHU_HISOF | ISES_HOMR_HFR_SHA1 |
+		    ISES_SOMR_BOMR_3DES | ISES_SOMR_EDR | ISES_SOMR_FMR_ECB;
+
+		printf ("Queueing OMR write\n");
+		cmd = ISES_MKCMD(ISES_CMD_BW_OMR, 1);
+		ises_queue_cmd(sc, cmd, &bses.omr, NULL);
+
+		printf ("Queueing KR0, KR1, KR2 writes\n");
+		cmd = ISES_MKCMD(ISES_CMD_BW_KR0, 2);
+		ises_queue_cmd(sc, cmd, &bses.kr[4], NULL);
+		cmd = ISES_MKCMD(ISES_CMD_BW_KR1, 2);
+		ises_queue_cmd(sc, cmd, &bses.kr[2], NULL);
+		cmd = ISES_MKCMD(ISES_CMD_BW_KR2, 2);
+		ises_queue_cmd(sc, cmd, &bses.kr[0], NULL);
+
+#if 0 /* switch session does not appear to work - it never returns */
+		printf ("Queueing BCHU session switch\n");
+		cmd = ISES_MKCMD(ISES_CMD_BSWITCH, sizeof bses / 4);
+		printf ("session is %d 32bit words (== 18 ?), cmd = [%08x]\n", 
+			sizeof bses / 4, cmd);
+		ises_queue_cmd(sc, cmd, (u_int32_t *)&bses, NULL);
+#endif
+		
+		break;
+	case 96:
+		printf ("Stopping HRNG data collection\n");
+		timeout_del(&sc->sc_timeout);
+		break;
+	case 97:
+		printf ("Restarting HRNG data collection\n");
+		if (!timeout_pending(&sc->sc_timeout))
+			timeout_add(&sc->sc_timeout, hz);
+		break;
+	case 98:
+		printf ("Resetting (wait >1s before cont.)\n");
+		stat = ISES_BO_STAT_HWRESET;
+		WRITE_REG(sc, ISES_BO_STAT, stat);
+		stat &= ~ISES_BO_STAT_HWRESET;
+		WRITE_REG(sc, ISES_BO_STAT, stat);
+		break;
+	case 99:
+		printf ("Resetting everything!\n");
+		if (timeout_pending(&sc->sc_timeout))
+			timeout_del(&sc->sc_timeout);
+		timeout_set(&sc->sc_timeout, ises_initstate, sc);
+		sc->sc_initstate = 0;
+		ises_initstate(sc);
+		break;
+	}
+	
+	ises_db = 0; 
+}
+
+void
+ises_showreg (void)
+{
+	struct ises_softc *sc = ises_sc;
+	u_int32_t stat, cmd;
+	
+	/* Board register */
+	
+	printf ("Board register: ");
+	stat = READ_REG(sc, ISES_BO_STAT);
+	
+	if (stat & ISES_BO_STAT_LOOP)
+		printf ("LoopMode ");
+	if (stat & ISES_BO_STAT_TAMPER)
+		printf ("Tamper ");
+	if (stat & ISES_BO_STAT_POWERDOWN)
+		printf ("PowerDown ");
+	if (stat & ISES_BO_STAT_ACONF)
+		printf ("16bitA-IF ");
+	if (stat & ISES_BO_STAT_HWRESET)
+		printf ("HWReset");
+	if (stat & ISES_BO_STAT_AIRQ)
+		printf ("A-IFintr");
+	printf("\n");
+	
+	/* A interface */
+	
+	printf ("A Interface STAT register: \n\tLNAU-[");
+	stat = READ_REG(sc, ISES_A_STAT);
+	if (stat & ISES_STAT_LNAU_MASKED)
+		printf ("masked");
+	else {
+		if (stat & ISES_STAT_LNAU_BUSY_1)
+			printf ("busy1 ");
+		if (stat & ISES_STAT_LNAU_ERR_1)
+			printf ("err1 ");
+		if (stat & ISES_STAT_LNAU_BUSY_2)
+			printf ("busy2 ");
+		if (stat & ISES_STAT_LNAU_ERR_2)
+			printf ("err2 ");
+	}
+	printf ("]\n\tBCHU-[");
+	
+	if (stat & ISES_STAT_BCHU_MASKED)
+		printf ("masked");
+	else {
+		if (stat & ISES_STAT_BCHU_BUSY)
+			printf ("busy ");
+		if (stat & ISES_STAT_BCHU_ERR)
+			printf ("err ");
+		if (stat & ISES_STAT_BCHU_SCIF)
+			printf ("cr-inop ");
+		if (stat & ISES_STAT_BCHU_HIF)
+			printf ("ha-inop ");
+		if (stat & ISES_STAT_BCHU_DDB)
+			printf ("dscd-data ");
+		if (stat & ISES_STAT_BCHU_IRF)
+			printf ("inp-req ");
+		if (stat & ISES_STAT_BCHU_OAF)
+			printf ("out-avail ");
+		if (stat & ISES_STAT_BCHU_DIE)
+			printf ("inp-enabled ");
+		if (stat & ISES_STAT_BCHU_UE)
+			printf ("ififo-empty ");
+		if (stat & ISES_STAT_BCHU_IFE)
+			printf ("ififo-half ");
+		if (stat & ISES_STAT_BCHU_IFHE)
+			printf ("ififo-full ");
+		if (stat & ISES_STAT_BCHU_OFE)
+			printf ("ofifo-empty ");
+		if (stat & ISES_STAT_BCHU_OFHF)
+			printf ("ofifo-half ");
+		if (stat & ISES_STAT_BCHU_OFF)
+			printf ("ofifo-full ");
+	}
+	printf ("] \n\tmisc-[");
+	
+	if (stat & ISES_STAT_HW_DA)
+		printf ("downloaded-appl ");
+	if (stat & ISES_STAT_HW_ACONF)
+		printf ("A-IF-conf ");
+	if (stat & ISES_STAT_SW_WFOQ)
+		printf ("OQ-wait ");
+	if (stat & ISES_STAT_SW_OQSINC)
+		printf ("OQS-increased ");
+	printf ("]\n\t");
+	
+	if (stat & ISES_STAT_HW_DA)
+		printf ("SW-mode is \"%s\"", 
+		    ises_sw_mode[ISES_STAT_SW_MODE(stat)]);
+	else
+		printf ("LDP-state is \"%s\"", 
+		    ises_idp_state[ISES_STAT_IDP_STATE(stat)]);
+	printf ("\n");
+
+	printf ("\tOQS = %d\n\tIQS = %d\n", READ_REG(sc, ISES_A_OQS),
+	    READ_REG(sc, ISES_A_IQS));
+	
+	/* B interface */
+	
+	printf ("B-interface status register contains [%08x]\n", 
+	    READ_REG(sc, ISES_B_STAT));
+	
+	/* DMA */
+	
+	printf ("DMA read starts at 0x%x, length %d bytes\n", 
+	    READ_REG(sc, ISES_DMA_READ_START), 
+	    READ_REG(sc, ISES_DMA_READ_COUNT));
+	
+	printf ("DMA write starts at 0x%x, length %d bytes\n",
+	    READ_REG(sc, ISES_DMA_WRITE_START),
+	    READ_REG(sc, ISES_DMA_WRITE_COUNT));
+
+	printf ("DMA status register contains [%08x]\n", 
+	    READ_REG(sc, ISES_DMA_STATUS));
+
+	/* OMR / HOMR / SOMR */
+	
+	/*
+	 * All these means throwing a cmd on to the A-interface, and then
+	 * reading the result.
+	 *
+	 * Currently, put debug output in process_oqueue...
+	 */
+	
+	printf ("Queueing Operation Method Register (OMR) READ cmd...\n");
+	cmd = ISES_MKCMD(ISES_CMD_BR_OMR, 0);
+	ises_queue_cmd(sc, cmd, NULL, NULL);
+}
+
+void
+ises_debug_parse_omr (struct ises_softc *sc)
+{
+	u_int32_t omr = sc->sc_bsession.omr;
+	
+	printf ("SELR : ");
+	if (omr & ISES_SELR_BCHU_EH)
+		printf ("cont-on-error ");
+	else
+		printf ("stop-on-error ");
+	
+	if (omr & ISES_SELR_BCHU_HISOF)
+		printf ("HU-input-is-SCU-output ");
+	
+	if (omr & ISES_SELR_BCHU_DIS)
+		printf ("data-interface-select ");
+	
+	printf ("\n");
+	
+	printf ("HOMR : ");
+	if (omr & ISES_HOMR_HMTR)
+		printf ("expect-padded-hash-msg ");
+	else
+		printf ("expect-plaintext-hash-msg ");
+	
+	printf ("ER=%d ", (omr & ISES_HOMR_ER) >> 20); /* ick */
+	
+	printf ("HFR=");
+	switch (omr & ISES_HOMR_HFR) {
+	case ISES_HOMR_HFR_NOP:
+		printf ("inactive ");
+		break;
+	case ISES_HOMR_HFR_MD5:
+		printf ("MD5 ");
+		break;
+	case ISES_HOMR_HFR_RMD160:
+		printf ("RMD160 ");
+		break;
+	case ISES_HOMR_HFR_RMD128:
+		printf ("RMD128 ");
+		break;
+	case ISES_HOMR_HFR_SHA1:
+		printf ("SHA-1 ");
+		break;
+	default:
+		printf ("reserved! ");
+		break;
+	}
+	printf ("\nSOMR : ");
+	
+	switch (omr & ISES_SOMR_BOMR) {
+	case ISES_SOMR_BOMR_NOP:
+		printf ("NOP ");
+		break;
+	case ISES_SOMR_BOMR_TRANSPARENT:
+		printf ("transparent ");
+		break;
+	case ISES_SOMR_BOMR_DES:
+		printf ("DES ");
+		break;
+	case ISES_SOMR_BOMR_3DES2:
+		printf ("3DES-2 ");
+		break;
+	case ISES_SOMR_BOMR_3DES:
+		printf ("3DES-3 ");
+		break;
+	default:
+		if (omr & ISES_SOMR_BOMR_SAFER)
+			printf ("SAFER ");
+		else
+			printf ("reserved! ");
+		break;
+	}
+	
+	if (omr & ISES_SOMR_EDR)
+		printf ("mode=encrypt ");
+	else
+		printf ("mode=decrypt ");
+	
+	switch (omr & ISES_SOMR_FMR) {
+	case ISES_SOMR_FMR_ECB:
+		printf ("ECB");
+		break;
+	case ISES_SOMR_FMR_CBC:
+		printf ("CBC");
+		break;
+	case ISES_SOMR_FMR_CFB64:
+		printf ("CFB64");
+		break;
+	case ISES_SOMR_FMR_OFB64:
+		printf ("OFB64");
+		break;
+	default:
+		/* Nada */
+	}
+	printf ("\n");
+}
+
+#endif /* ISESDEBUG */

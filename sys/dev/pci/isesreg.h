@@ -1,4 +1,4 @@
-/*	$OpenBSD: isesreg.h,v 1.1 2001/01/29 08:45:58 ho Exp $ $	*/
+/*	$OpenBSD: isesreg.h,v 1.2 2001/06/04 13:07:19 ho Exp $ $	*/
 
 /*
  * Copyright (c) 2000 Håkan Olsson (ho@crt.se)
@@ -225,6 +225,7 @@ static const char *ises_sw_mode[] =
  * A-interface commands 
  */
 #define ISES_MKCMD(cmd,len)	(cmd | cmd << 16 | len << 8 | len << 24)
+#define ISES_CMD_NONE		-1
 
 /*	Command name		Code	   Len	RLen    Desc                 */
 #define ISES_CMD_CHIP_ID	0x00	/* 0	3	Read chipID */
@@ -328,16 +329,18 @@ static const char *ises_sw_mode[] =
 #define	ISES_CARD(sid)		(((sid) & 0xf0000000) >> 28)
 #define	ISES_SID(crd,ses)	(((crd) << 28) | ((ses) & 0x0fffffff))
 
-struct ises_pktctx {
-	u_int32_t	pc_deskey[6];		/* 3DES key */
-	u_int32_t	pc_hminner[5];		/* hmac inner state */
-	u_int32_t	pc_hmouter[5];		/* hmac outer state */
-	u_int32_t	pc_iv[2];		/* [3]DES iv */
-	u_int32_t	pc_omrflags;		/* OMR flags, as above */
-	u_int32_t	pc_paddr;
-	u_int16_t	pc_offset;		/* crypto offset */
-	u_int8_t	pad[16];
-};
+/* Size and layout of ises_bchu_session is firmware dependent. */
+/* This structure should be usable for the SWITCH_SESSION command. */
+struct ises_bchu_session {
+	u_int32_t	kr[6];		/* Key register KR2,KR1,KR0 */
+	u_int32_t	omr;		/* Operation method register */
+
+	/* The following values (on-chip) are cleared after an OMR write */
+	u_int32_t	sccr[2];	/* Symm. crypto chaining reg. (IV) */
+	u_int32_t	cvr[5];		/* Chaining variables reg. */
+	u_int32_t	dbcr[2];	/* Data block count register */
+	u_int32_t	hmlr[2];	/* Hash message length reg. */
+} __attribute__((packed));
 
 struct ises_pktbuf {
 	volatile u_int32_t	pb_addr;	/* address of buffer start */
