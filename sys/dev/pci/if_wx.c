@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wx.c,v 1.7 2000/12/06 01:02:14 mjacob Exp $	*/
+/*	$OpenBSD: if_wx.c,v 1.8 2000/12/07 02:35:55 mjacob Exp $	*/
 /*
  * Copyright (c) 1999, Traakan Software
  * All rights reserved.
@@ -1154,8 +1154,10 @@ again:
 			sc->tactive = nactv;
 			ifp->if_timer = 10;
 			WRITE_CSR(sc, WXREG_TDT, cidx);
+#if	NBPFILTER > 0
 			if (ifp->if_bpf)
 				bpf_mtap(WX_BPFTAP_ARG(ifp), mb_head);
+#endif
 			continue;
 		}
 
@@ -1492,9 +1494,11 @@ wx_handle_rxint(sc)
 
 	for (idx = 0; idx < npkts; idx++) {
 		mb = pending[idx];
+#if	NBPFILTER > 0
                 if (ifp->if_bpf) {
                         bpf_mtap(WX_BPFTAP_ARG(ifp), mb);
 		}
+#endif
                 ifp->if_ipackets++;
 		if (sc->wx_debug) {
 			printf("%s: RECV packet length %d\n",
