@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.10 1997/07/25 19:13:13 mickey Exp $	*/
+/*	$OpenBSD: tape.c,v 1.11 1997/08/24 08:07:23 downsj Exp $	*/
 /*	$NetBSD: tape.c,v 1.26 1997/04/15 07:12:25 lukem Exp $	*/
 
 /*
@@ -189,7 +189,7 @@ setup()
 	else
 		mt = open(magtape, O_RDONLY, 0);
 	if (mt < 0)
-		err(1, magtape);
+		err(1, "%s", magtape);
 	volno = 1;
 	setdumpnum();
 	FLUSHTAPEBUF();

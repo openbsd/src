@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.4 1997/07/25 19:13:12 mickey Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.5 1997/08/24 08:07:25 downsj Exp $	*/
 /*	$NetBSD: utilities.c,v 1.11 1997/03/19 08:42:56 lukem Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.4 (Berkeley) 10/18/94";
 #else
-static char rcsid[] = "$OpenBSD: utilities.c,v 1.4 1997/07/25 19:13:12 mickey Exp $";
+static char rcsid[] = "$OpenBSD: utilities.c,v 1.5 1997/08/24 08:07:25 downsj Exp $";
 #endif
 #endif /* not lint */
 
@@ -153,7 +153,7 @@ newnode(np)
 	cp = myname(np);
 	if (!Nflag && mkdir(cp, 0777) < 0) {
 		np->e_flags |= EXISTED;
-		warn(cp);
+		warn("%s", cp);
 		return;
 	}
 	Vprintf(stdout, "Make node %s\n", cp);
@@ -176,7 +176,7 @@ removenode(ep)
 	ep->e_flags &= ~TMPNAME;
 	cp = myname(ep);
 	if (!Nflag && rmdir(cp) < 0) {
-		warn(cp);
+		warn("%s", cp);
 		return;
 	}
 	Vprintf(stdout, "Remove node %s\n", cp);
@@ -197,7 +197,7 @@ removeleaf(ep)
 	ep->e_flags &= ~TMPNAME;
 	cp = myname(ep);
 	if (!Nflag && unlink(cp) < 0) {
-		warn(cp);
+		warn("%s", cp);
 		return;
 	}
 	Vprintf(stdout, "Remove leaf %s\n", cp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: modload.c,v 1.13 1997/06/25 18:21:35 kstailey Exp $	*/
+/*	$OpenBSD: modload.c,v 1.14 1997/08/24 08:07:02 downsj Exp $	*/
 /*	$NetBSD: modload.c,v 1.13 1995/05/28 05:21:58 jtc Exp $	*/
 
 /*
@@ -285,7 +285,7 @@ main(argc, argv)
 	 * Pre-open the 0-linked module to get the size information
 	 */
 	if ((modfd = open(out, O_RDONLY, 0)) == -1)
-		err(4, out);
+		err(4, "%s", out);
 	fileopen |= MOD_OPEN;
 
 	/*
@@ -356,7 +356,7 @@ main(argc, argv)
 	 * Open the relinked module to load it...
 	 */
 	if ((modfd = open(out, O_RDONLY, 0)) == -1)
-		err(4, out);
+		err(4, "%s", out);
 	fileopen |= MOD_OPEN;
 
 	/*

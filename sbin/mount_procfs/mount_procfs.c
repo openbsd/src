@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_procfs.c,v 1.5 1997/08/20 05:10:26 millert Exp $	*/
+/*	$OpenBSD: mount_procfs.c,v 1.6 1997/08/24 08:07:17 downsj Exp $	*/
 /*	$NetBSD: mount_procfs.c,v 1.7 1996/04/13 01:31:59 jtc Exp $	*/
 
 /*
@@ -48,7 +48,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_procfs.c	8.3 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$OpenBSD: mount_procfs.c,v 1.5 1997/08/20 05:10:26 millert Exp $";
+static char rcsid[] = "$OpenBSD: mount_procfs.c,v 1.6 1997/08/24 08:07:17 downsj Exp $";
 #endif
 #endif /* not lint */
 
@@ -99,7 +99,7 @@ main(argc, argv)
 			errx(1, "%s: Filesystem not supported by kernel",
 			    argv[1]);
 		else
-			err(1, argv[1]);
+			err(1, "%s", argv[1]);
 	}
 	exit(0);
 }
