@@ -122,8 +122,7 @@ kuserok(kdata, luser)
     if ((pwd = getpwnam(luser)) == NULL) {
 	return(NOTOK);
     }
-    (void) strcpy(pbuf, pwd->pw_dir);
-    (void) strcat(pbuf, "/.klogin");
+    snprintf(pbuf, sizeof pbuf, "%s/.klogin", pwd->pw_dir);
 
     if (access(pbuf, F_OK)) {	 /* not accessible */
 	/*
