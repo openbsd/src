@@ -357,7 +357,11 @@ void process_output(fd_set *writeset)
 		  buffer_len(&stdin_buffer));
       if (len <= 0)
 	{
+#ifdef USE_PIPES
+	  close(fdin); 
+#else
 	  shutdown(fdin, 1); /* We will no longer send. */
+#endif
 	  fdin = -1;
 	}
       else
@@ -477,7 +481,11 @@ void server_loop(int pid, int fdin_arg, int fdout_arg, int fderr_arg)
 	 cause a real eof by closing fdin. */
       if (stdin_eof && fdin != -1 && buffer_len(&stdin_buffer) == 0)
 	{
+#ifdef USE_PIPES
+	  close(fdin);
+#else
 	  shutdown(fdin, 1); /* We will no longer send. */
+#endif
 	  fdin = -1;
 	}
 
@@ -555,15 +563,27 @@ void server_loop(int pid, int fdin_arg, int fdout_arg, int fderr_arg)
 
   /* Close the file descriptors. */
   if (fdout != -1)
+#ifdef USE_PIPES
+    close(fdout);
+#else
     shutdown(fdout, 0);
+#endif
   fdout = -1;
   fdout_eof = 1;
   if (fderr != -1)
+#ifdef USE_PIPES
+    close(fderr);
+#else
     shutdown(fderr, 0);
+#endif
   fderr = -1;
   fderr_eof = 1;
   if (fdin != -1)
+#ifdef USE_PIPES
+    close(fdin);
+#else
     shutdown(fdin, 1);
+#endif
   fdin = -1;
 
   /* Stop listening for channels; this removes unix domain sockets. */
