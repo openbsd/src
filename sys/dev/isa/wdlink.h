@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdlink.h,v 1.4 1996/09/11 07:27:04 downsj Exp $	*/
+/*	$OpenBSD: wdlink.h,v 1.5 1996/11/28 08:23:40 downsj Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -85,7 +85,7 @@ struct wd_link {
 #define GEOMETRY_WAIT	3		/* done uploading geometry */
 #define MULTIMODE	4		/* set multiple mode */
 #define MULTIMODE_WAIT	5		/* done setting multiple mode */
-#define OPEN		6		/* done with open */
+#define READY		6		/* done with open */
 	int sc_mode;			/* transfer mode */
 #define WDM_PIOSINGLE	0		/* single-sector PIO */
 #define WDM_PIOMULTI	1		/* multi-sector PIO */

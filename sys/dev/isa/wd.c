@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.21 1996/11/23 21:46:48 kstailey Exp $	*/
+/*	$OpenBSD: wd.c,v 1.22 1996/11/28 08:23:38 downsj Exp $	*/
 /*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $ */
 
 /*
@@ -790,7 +790,7 @@ wddump(dev, blkno, va, size)
 	part = WDPART(dev);
 
 	/* Make sure it was initialized. */
-	if (d_link->sc_state < OPEN)
+	if (d_link->sc_state < READY)
 		return ENXIO;
 
 	wdc = (void *)wd->sc_dev.dv_parent;

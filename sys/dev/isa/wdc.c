@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.15 1996/11/23 21:46:49 kstailey Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.16 1996/11/28 08:23:39 downsj Exp $	*/
 /*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $ */
 
 /*
@@ -341,21 +341,19 @@ wdc_ata_start(wdc, xfer)
 {
 	bus_chipset_tag_t bc = wdc->sc_bc;
 	bus_io_handle_t ioh = wdc->sc_ioh;
-	struct wd_link *d_link;
+	struct wd_link *d_link = xfer->d_link;
 	struct buf *bp = xfer->c_bp;
 	int nblks;
 
-	d_link=xfer->d_link;
-
 	if (wdc->sc_errors >= WDIORETRIES) {
-		wderror(d_link, bp, "hard error");
+		wderror(d_link, bp, "wdcstart hard error");
 		xfer->c_flags |= C_ERROR;
 		wdc_ata_done(wdc, xfer);
 		return;
 	}
 
 	/* Do control operations specially. */
-	if (d_link->sc_state < OPEN) {
+	if (d_link->sc_state < READY) {
 		/*
 		 * Actually, we want to be careful not to mess with the control
 		 * state if the device is currently busy, but we can assume
@@ -674,11 +672,11 @@ wdcintr(arg)
 	void *arg;
 {
 	struct wdc_softc *wdc = arg;
-	bus_chipset_tag_t bc = wdc->sc_bc;
-	bus_io_handle_t ioh = wdc->sc_ioh;
 	struct wdc_xfer *xfer;
 
 	if ((wdc->sc_flags & WDCF_IRQ_WAIT) == 0) {
+		bus_chipset_tag_t bc = wdc->sc_bc;
+		bus_io_handle_t ioh = wdc->sc_ioh;
 		u_char s;
 #ifdef ATAPI_DEBUG_WDC
 		u_char e, i;
@@ -687,24 +685,26 @@ wdcintr(arg)
 
 		/* Clear the pending interrupt and abort. */
 		s = bus_io_read_1(bc, ioh, wd_status);
+		if (s != (WDCS_DRDY|WDCS_DSC)) {
 #ifdef ATAPI_DEBUG_WDC
-		e = bus_io_read_1(bc, ioh, wd_error);
-		i = bus_io_read_1(bc, ioh, wd_seccnt);
+			e = bus_io_read_1(bc, ioh, wd_error);
+			i = bus_io_read_1(bc, ioh, wd_seccnt);
 
-		printf("wdcintr: inactive controller, "
-		    "punting st=%02x er=%02x irr=%02x\n", s, e, i);
+			printf("wdcintr: inactive controller, "
+			    "punting st=%02x er=%02x irr=%02x\n", s, e, i);
 #else
-		(void)bus_io_read_1(bc, ioh, wd_error);
-		(void)bus_io_read_1(bc, ioh, wd_seccnt);
+			(void)bus_io_read_1(bc, ioh, wd_error);
+			(void)bus_io_read_1(bc, ioh, wd_seccnt);
 #endif
 
-		if (s & WDCS_DRQ) {
-			int len = bus_io_read_1(bc, ioh, wd_cyl_lo) +
-			    256 * bus_io_read_1(bc, ioh, wd_cyl_hi);
+			if (s & WDCS_DRQ) {
+				int len = bus_io_read_1(bc, ioh, wd_cyl_lo) +
+				    256 * bus_io_read_1(bc, ioh, wd_cyl_hi);
 #ifdef ATAPI_DEBUG_WDC
-			printf ("wdcintr: clearing up %d bytes\n", len);
+				printf ("wdcintr: clearing up %d bytes\n", len);
 #endif
-			wdcbit_bucket (wdc, len);
+				wdcbit_bucket (wdc, len);
+			}
 		}
 		return 0;
 	}
@@ -714,10 +714,10 @@ wdcintr(arg)
 	wdc->sc_flags &= ~WDCF_IRQ_WAIT;
 	xfer = wdc->sc_xfer.tqh_first;
 	if (xfer->c_flags & C_ATAPI) {
-		(void) wdc_atapi_intr(wdc,xfer);
+		(void) wdc_atapi_intr(wdc, xfer);
 		return 0;
 	} else {
-		return wdc_ata_intr(wdc,xfer);
+		return wdc_ata_intr(wdc, xfer);
 	}
 }
 
@@ -729,9 +729,7 @@ wdc_ata_intr(wdc,xfer)
 {
 	bus_chipset_tag_t bc = wdc->sc_bc;
 	bus_io_handle_t ioh = wdc->sc_ioh;
-	struct wd_link *d_link;
-
-	d_link = xfer->d_link;
+	struct wd_link *d_link = xfer->d_link;
 
 	if (wait_for_unbusy(wdc) < 0) {
 		wdcerror(wdc, "wdcintr: timeout waiting for unbusy");
@@ -741,7 +739,7 @@ wdc_ata_intr(wdc,xfer)
 	untimeout(wdctimeout, wdc);
 
 	/* Is it not a transfer, but a control operation? */
-	if (d_link->sc_state < OPEN) {
+	if (d_link->sc_state < READY) {
 		if (wdccontrol(d_link) == 0) {
 			/* The drive is busy.  Wait. */
 			return 1;
@@ -776,9 +774,13 @@ wdc_ata_intr(wdc,xfer)
 			goto bad;
 #endif
 
-		wdcunwedge(wdc);
-		if (wdc->sc_errors < WDIORETRIES)
+		if (wdc->sc_errors == (WDIORETRIES + 1) / 2) {
+			wderror(d_link, NULL, "wedgie");
+			wdcunwedge(wdc);
 			return 1;
+		}
+		if (++wdc->sc_errors < WDIORETRIES)
+			goto restart;
 
 		wderror(d_link, xfer->c_bp, "hard error");
 
@@ -1118,7 +1120,7 @@ wdc_exec_xfer(d_link, xfer)
 	struct wd_link *d_link;
 	struct wdc_xfer *xfer;
 {
-	struct wdc_softc *wdc=(struct wdc_softc *)d_link->wdc_softc;
+	struct wdc_softc *wdc = (struct wdc_softc *)d_link->wdc_softc;
 	int s;
 
 	WDDEBUG_PRINT(("wdc_exec_xfer\n"));
@@ -1170,7 +1172,7 @@ wdc_get_xfer(c_link,flags)
 	if ((xfer->c_flags & C_INUSE) != 0)
 		panic("wdc_get_xfer: xfer already in use\n");
 #endif
-	bzero(xfer,sizeof(struct wdc_xfer));
+	bzero(xfer, sizeof(struct wdc_xfer));
 	xfer->c_flags = C_INUSE;
 	xfer->c_link = c_link;
 	return xfer;
@@ -1238,7 +1240,7 @@ wdccontrol(d_link)
 	case MULTIMODE:
 	multimode:
 		if (d_link->sc_mode != WDM_PIOMULTI)
-			goto open;
+			goto ready;
 		bus_io_write_1(bc, ioh, wd_seccnt, d_link->sc_multiple);
 		if (wdccommandshort(wdc, d_link->sc_drive,
 		    WDCC_SETMULTI) != 0) {
@@ -1257,10 +1259,10 @@ wdccontrol(d_link)
 		}
 		/* fall through */
 
-	case OPEN:
-	open:
+	case READY:
+	ready:
 		wdc->sc_errors = 0;
-		d_link->sc_state = OPEN;
+		d_link->sc_state = READY;
 		/*
 		 * The rest of the initialization can be done by normal means.
 		 */
