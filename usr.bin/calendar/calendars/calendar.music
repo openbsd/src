@@ -1,7 +1,7 @@
 /*
  * Music
  *
- * $OpenBSD: calendar.music,v 1.7 2001/11/30 19:37:13 mickey Exp $
+ * $OpenBSD: calendar.music,v 1.8 2001/12/04 07:36:24 mickey Exp $
  */
 
 #ifndef _calendar_music_
@@ -179,7 +179,7 @@
 11/27	Jimi Hendrix (Johnny Allen Hendrix) is born in Seattle, 1942
 11/29	Pau Casals born in Vendrell, 1876
 11/30	George Harrison dies at 13:30 in L.A., 2001
-12/04	Frank Zappa dies in his Laurel Canyon home short before 18:00, 1993
+12/04	Frank Zappa dies in his Laurel Canyon home shortly before 18:00, 1993
 12/05	Mozart dies, 1791
 12/06	First sound recording made by Thomas Edison, 1877
 12/06	The Rolling Stones play Altamont Speedway near San Francisco, 1969
