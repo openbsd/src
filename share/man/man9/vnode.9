@@ -92,11 +92,11 @@ do not surround a stretch of code with a lock, it can and probably
 will eventually be executed simultaneously with other stretches of code
 (including stretches ). Chances are the results will be unexpected and
 disappointing to both the user and you.
- 
-The vnode has a robust set of locks, reference counts, and even a
-version number.
 
-.Ss THE vnode lock
+The vnode actually has three different types of lock: the vnode lock,
+the vnode interlock, and the vnode reclamation lock (VXLOCK).
+
+.Ss The vnode lock
 
 The most general lock is the vnode lock. This lock is acquired by
 calling 
@@ -141,33 +141,19 @@ multi-processor systems for acquiring a quick exclusive lock on the
 contents of the vnode. It MUST NOT be held while sleeping. (What
 fields does it cover? What about splbio/interrupt issues?)
 
+Operations on this lock are a no-op on uniprocessor systems.
+
 .Ss Other Vnode synchronization
 
-The VXLOCK is used to prevent multiple processes from entering the
-vnode reclamation code. It is also used as a flag to indicate
-that reclamation is in progress. The VXWANT flag is set by
-processes 
+The vnode reclamation lock (VXLOCK) is used to prevent multiple
+processes from entering the vnode reclamation code. It is also used as
+a flag to indicate that reclamation is in progress. The VXWANT flag is
+set by processes that wish to woken up when reclamation is finished.
 
 The 
 .Xr vwaitforio 9
-call be called to wait for all outstanding writes associated with a 
-vnode to complete. The
-.Xr vwakeup 9
-call is used at interrupt level to wakeup the waiting processes.
-
-.Ss Reference Counts
-
-The kernel differentiates references to a vnode: references by buffers
-(v_holdcnt) and vnode pool reference count (v_usecount).
-
-The v_holdcnt is maintained transparently as buffers are added and
-removed from vnodes using bgetvp and brelvp.  Code that uses the
-buffer cache for allocating and managing buffers will never see this
-reference count.
-
-The v_usecount alone does not prevent a vnode from being
-reclaimed. However, holding a reference to a vnode guarantees that the
-vnode will not be assigned to a different file.
+call is used for to wait for all outstanding write I/Os associated with a 
+vnode to complete. 
 
 .Ss Version number/capability
 
@@ -210,10 +196,19 @@ The v_data attribute allows a file system to attach piece of file
 system specific memory to the vnode. This contains information about
 the file that is specific to the file system.
 
-.Ss REVIEW
+The v_numoutput attribute indicates the number of pending synchronous
+and asynchronous writes on the vnode. It does not track the number of
+dirty buffers attached to the vnode.  The attribute is used by code
+like fsync to wait for all writes to complete before returning to the
+user. This attribute must be manipulated at splbio().
+
+The v_writecount attribute tracks the number of write calls pending
+on the vnode.
+
+.Ss RULES
 
 The vast majority of vnode functions may not be called from interrupt
-context. The exceptions are bgetvp, brelvp, and vwakeup. The following
+context. The exceptions are bgetvp and brelvp. The following
 fields of the vnode are manipulated at interrupt level: v_numoutput,
 v_holdcnt, v_dirtyblkhd, v_cleanblkhd, v_bioflag, v_freelist, and
 v_synclist. Any accesses to these field should be protected by splbio,
@@ -224,7 +219,10 @@ A vnode will only be reassigned to another file when its reference count
 reaches zero and the vnode lock is freed.
 
 A vnode will not be reclaimed as long as the vnode lock is held.
-
+If the vnode reference count drops to zero while a process is holding
+the vnode lock, the vnode MAY be queued for reclamation. Increasing
+the reference count from 0 to 1 while holding the lock will most likely
+cause intermittent kernel panics.
 
 .Sh SEE ALSO
 
