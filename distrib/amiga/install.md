@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.6 1998/09/11 22:55:45 millert Exp $
+#	$OpenBSD: install.md,v 1.7 1998/10/28 17:53:28 millert Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -143,7 +143,7 @@ md_prep_disklabel()
 }
 
 md_copy_kernel() {
-	# We use a "kernel" set instead
+	check_kernel
 }
 
 md_welcome_banner() {

@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.24 1998/09/24 06:39:49 millert Exp $
+#       $OpenBSD: install.md,v 1.25 1998/10/28 17:53:27 millert Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -50,23 +50,7 @@ md_machine_arch() {
 }
 
 md_copy_kernel() {
-	if [ ! -s /mnt/bsd ]; then
-		echo	""
-		echo	"Warning, no kernel installed!"
-		echo	"You did not unpack a file set containing a kernel."
-		echo	"This is needed to boot.  Please note that the install"
-		echo	"install kernel is not suitable for general use."
-		echo -n	"Escape to shell add /mnt/bsd by hand? [y] "
-		getresp "y"
-		case "$resp" in
-			y*|Y*)
-				echo "Type 'exit' to return to install."
-				sh
-				;;
-			*)
-				;;
-		esac
-	fi
+	check_kernel
 }
 
 md_set_term() {
