@@ -1,5 +1,5 @@
-/*	$OpenBSD: bootp.c,v 1.5 1996/10/16 14:18:35 mickey Exp $	*/
-/*	$NetBSD: bootp.c,v 1.7 1995/09/18 21:19:20 pk Exp $	*/
+/*	$OpenBSD: bootp.c,v 1.6 1996/12/08 15:15:46 niklas Exp $	*/
+/*	$NetBSD: bootp.c,v 1.10 1996/10/13 02:28:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -303,7 +303,7 @@ vend_rfc1048(cp, len)
 	ep = cp + len;
 
 	/* Step over magic cookie */
-	cp += sizeof(long);
+	cp += sizeof(int);
 
 	while (cp < ep) {
 		tag = *cp++;

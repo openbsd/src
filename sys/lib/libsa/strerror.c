@@ -1,5 +1,5 @@
-/*	$OpenBSD: strerror.c,v 1.3 1996/09/23 14:19:05 mickey Exp $	*/
-/*	$NetBSD: strerror.c,v 1.8 1995/09/17 00:49:47 pk Exp $	*/
+/*	$OpenBSD: strerror.c,v 1.4 1996/12/08 15:15:58 niklas Exp $	*/
+/*	$NetBSD: strerror.c,v 1.11 1996/10/13 02:29:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993

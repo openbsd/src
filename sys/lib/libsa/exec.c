@@ -1,5 +1,5 @@
-/*	$OpenBSD: exec.c,v 1.6 1996/10/16 13:01:23 mickey Exp $	*/
-/*	$NetBSD: exec.c,v 1.12.4.1 1996/06/02 12:08:48 ragge Exp $	*/
+/*	$OpenBSD: exec.c,v 1.7 1996/12/08 15:15:49 niklas Exp $	*/
+/*	$NetBSD: exec.c,v 1.15 1996/10/13 02:29:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993

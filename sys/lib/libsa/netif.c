@@ -1,5 +1,5 @@
-/*	$OpenBSD: netif.c,v 1.3 1996/10/29 08:44:09 mickey Exp $	*/
-/*	$NetBSD: netif.c,v 1.5 1995/09/18 21:19:34 pk Exp $	*/
+/*	$OpenBSD: netif.c,v 1.4 1996/12/08 15:15:52 niklas Exp $	*/
+/*	$NetBSD: netif.c,v 1.7 1996/10/13 02:29:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -314,7 +314,7 @@ fnd:
 		panic("netboot: no interfaces left untried");
 	if (netif_probe(nif, machdep_hint)) {
 		printf("netboot: couldn't probe %s%d\n",
-			nif->nif_driver->netif_bname, nif->nif_unit);
+		    nif->nif_driver->netif_bname, nif->nif_unit);
 		errno = EINVAL;
 		return(-1);
 	}

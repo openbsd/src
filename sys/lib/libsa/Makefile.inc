@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile.inc,v 1.3 1996/09/23 14:18:45 mickey Exp $
-#	$NetBSD: Makefile.inc,v 1.4 1995/10/01 06:00:38 phil Exp $
+#	$OpenBSD: Makefile.inc,v 1.4 1996/12/08 15:15:44 niklas Exp $
+#	$NetBSD: Makefile.inc,v 1.5 1996/09/30 16:01:18 ws Exp $
 #
 #	NOTE: $S must correspond to the top of the 'sys' tree
 SADIR=	$S/lib/libsa
@@ -15,7 +15,8 @@ SAMAKE= \
 	  LD='${LD}' \
 	  XCPPFLAGS="${CPPFLAGS}" \
 	  SAREL="${SAREL}" \
-	  SADIR="${SADIR}"
+	  SADIR="${SADIR}" \
+	  EXTRACFLAGS="${EXTRACFLAGS}"
 
 ${SALIB}:		.NOTMAIN __always_make_salib
 	@echo making sure the stand-alone library is up to date...

@@ -1,5 +1,5 @@
-/*	$OpenBSD: ufs.c,v 1.7 1996/10/16 14:02:55 mickey Exp $	*/
-/*	$NetBSD: ufs.c,v 1.14.4.1 1996/06/02 12:08:45 ragge Exp $	*/
+/*	$OpenBSD: ufs.c,v 1.8 1996/12/08 15:15:58 niklas Exp $	*/
+/*	$NetBSD: ufs.c,v 1.16 1996/09/30 16:01:22 ws Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -556,8 +556,10 @@ ufs_open(path, f)
 out:
 	if (buf)
 		free(buf, fs->fs_bsize);
-	if (rc)
+	if (rc) {
+		free(fp->f_fs, SBSIZE);
 		free(fp, sizeof(struct file));
+	}
 	return (rc);
 }
 

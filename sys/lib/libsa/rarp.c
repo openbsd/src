@@ -1,5 +1,5 @@
-/*	$OpenBSD: rarp.c,v 1.4 1996/10/16 14:26:46 mickey Exp $	*/
-/*	$NetBSD: rarp.c,v 1.10 1995/09/23 03:36:10 gwr Exp $	*/
+/*	$OpenBSD: rarp.c,v 1.5 1996/12/08 15:15:55 niklas Exp $	*/
+/*	$NetBSD: rarp.c,v 1.13 1996/10/13 02:29:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.

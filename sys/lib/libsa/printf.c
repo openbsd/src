@@ -1,5 +1,5 @@
-/*	$OpenBSD: printf.c,v 1.5 1996/10/29 07:47:48 mickey Exp $	*/
-/*	$NetBSD: printf.c,v 1.7 1996/02/08 20:19:36 gwr Exp $	*/
+/*	$OpenBSD: printf.c,v 1.6 1996/12/08 15:15:54 niklas Exp $	*/
+/*	$NetBSD: printf.c,v 1.10 1996/11/30 04:19:21 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -70,7 +70,7 @@
 #include "stand.h"
 
 static void kprintn __P((void (*)(int), u_long, int));
-static void kprintf __P((void (*)(int), const char *, va_list));
+static void kdoprnt __P((void (*)(int), const char *, va_list));
 
 #ifndef	STRIPPED
 static void sputchar __P((int));
@@ -99,7 +99,7 @@ sprintf(buf, fmt, va_alist)
 #else
 	va_start(ap);
 #endif
-	kprintf(sputchar, fmt, ap);
+	kdoprnt(sputchar, fmt, ap);
 	va_end(ap);
 	*sbuf = '\0';
 }
@@ -120,18 +120,18 @@ printf(fmt, va_alist)
 #else
 	va_start(ap);
 #endif
-	kprintf(putchar, fmt, ap);
+	kdoprnt(putchar, fmt, ap);
 	va_end(ap);
 }
 
 void
 vprintf(const char *fmt, va_list ap)
 {
-	kprintf(putchar, fmt, ap);
+	kdoprnt(putchar, fmt, ap);
 }
 
 static void
-kprintf(put, fmt, ap)
+kdoprnt(put, fmt, ap)
 	void (*put)__P((int));
 	const char *fmt;
 	va_list ap;

@@ -1,5 +1,5 @@
-/*	$OpenBSD: alloc.c,v 1.2 1996/09/23 14:18:46 mickey Exp $	*/
-/*	$NetBSD: alloc.c,v 1.3 1994/10/26 05:44:34 cgd Exp $	*/
+/*	$OpenBSD: alloc.c,v 1.3 1996/12/08 15:15:45 niklas Exp $	*/
+/*	$NetBSD: alloc.c,v 1.4 1996/09/26 23:15:00 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -90,8 +90,8 @@ alloc(size)
 		f = f->next;
 	}
 	if (f == (struct fl *)0) {
-		f = (struct fl *)top;
-		top += ALIGN(size);
+		f = (struct fl *)ALIGN(top);
+		top = (char *)f + ALIGN(size);
 	} else
 		*prev = f->next;
 	return ((void *)f);

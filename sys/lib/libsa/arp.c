@@ -1,5 +1,5 @@
-/*	$OpenBSD: arp.c,v 1.4 1996/10/16 14:18:34 mickey Exp $	*/
-/*	$NetBSD: arp.c,v 1.13 1995/12/08 04:12:53 gwr Exp $	*/
+/*	$OpenBSD: arp.c,v 1.5 1996/12/08 15:15:45 niklas Exp $	*/
+/*	$NetBSD: arp.c,v 1.15 1996/10/13 02:28:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -135,10 +135,9 @@ arpwhohas(d, addr)
 #ifdef ARP_DEBUG
  	if (debug) {
 		printf("arp: response from %s\n",
-			   ether_sprintf(rbuf.eh.ether_shost));
+		    ether_sprintf(rbuf.eh.ether_shost));
 		printf("arp: cacheing %s --> %s\n",
-			   inet_ntoa(addr),
-			   ether_sprintf(ah->arp_sha));
+		    inet_ntoa(addr), ether_sprintf(ah->arp_sha));
 	}
 #endif
 	MACPY(ah->arp_sha, al->ea);
@@ -289,8 +288,7 @@ arp_reply(d, pkt)
 
 #ifdef ARP_DEBUG
 	if (debug) {
-		printf("arp_reply: to %s\n",
-		       ether_sprintf(arp->arp_sha));
+		printf("arp_reply: to %s\n", ether_sprintf(arp->arp_sha));
 	}
 #endif
 

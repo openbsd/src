@@ -1,5 +1,5 @@
-/*	$OpenBSD: stand.h,v 1.14 1996/11/27 11:59:43 mickey Exp $	*/
-/*	$NetBSD: stand.h,v 1.13 1996/01/13 22:25:42 leo Exp $	*/
+/*	$OpenBSD: stand.h,v 1.15 1996/12/08 15:15:57 niklas Exp $	*/
+/*	$NetBSD: stand.h,v 1.18 1996/11/30 04:35:51 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -114,6 +114,7 @@ struct open_file {
 	void		*f_devdata;	/* device specific data */
 	struct fs_ops	*f_ops;		/* pointer to file system operations */
 	void		*f_fsdata;	/* file system specific data */
+	off_t		f_offset;	/* current file offset (F_RAW) */
 };
 
 #define	SOPEN_MAX	4
@@ -146,7 +147,7 @@ u_int	dkcksum __P((struct disklabel *));
 
 void	printf __P((const char *, ...));
 void	sprintf __P((char *, const char *, ...));
-void	vprintf __P((const char *format, va_list ap));
+void	vprintf __P((const char *, _BSD_VA_LIST_));
 void	twiddle __P((void));
 void	gets __P((char *));
 __dead void	panic __P((const char *, ...)) __attribute__((noreturn));

@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile,v 1.8 1996/10/16 12:46:32 mickey Exp $
-#	$NetBSD: Makefile,v 1.10 1995/10/01 06:00:32 phil Exp $
+#	$OpenBSD: Makefile,v 1.9 1996/12/08 15:15:44 niklas Exp $
+#	$NetBSD: Makefile,v 1.13 1996/10/02 16:19:51 ws Exp $
 
 LIB=	sa
 
@@ -7,10 +7,13 @@ DIR=${SAREL}${SADIR}
 
 .PATH: ${DIR}
 
-#DEBUGFLAGS= -DNETIF_DEBUG -DETHER_DEBUG -DNFS_DEBUG -DRPC_DEBUG -DRARP_DEBUG -DDEBUG -DPARANOID -Wall
+#DEBUGFLAGS= -DBOOTP_DEBUG -DNETIF_DEBUG -DETHER_DEBUG -DNFS_DEBUG -DRPC_DEBUG -DRARP_DEBUG -DDEBUG -DPARANOID -Wall
 #DEBUGFLAGS= -ansi -pedantic -Wall
 AFLAGS+=${XAFLAGS}
 CFLAGS+=${XCFLAGS} -D_STANDALONE -DCOMPAT_UFS $(DEBUGFLAGS) -I${DIR} -I${DIR}/../..
+#
+# Needed for PowerPC
+CFLAGS+=$(EXTRACFLAGS)
 CPPFLAGS+=${XCPPFLAGS}
 
 .if ${MACHINE_ARCH}=="i386"
@@ -35,7 +38,7 @@ SRCS+=	arp.c ether.c in_cksum.c net.c netif.c rpc.c
 SRCS+=	bootp.c rarp.c bootparam.c
 
 # boot filesystems
-SRCS+=	ufs.c nfs.c
+SRCS+=	ufs.c nfs.c cd9660.c
 
 NOPROFILE=
 NOPIC=

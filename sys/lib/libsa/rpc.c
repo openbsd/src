@@ -1,5 +1,5 @@
-/*	$OpenBSD: rpc.c,v 1.6 1996/11/27 19:52:25 niklas Exp $	*/
-/*	$NetBSD: rpc.c,v 1.12 1996/02/26 23:05:26 gwr Exp $	*/
+/*	$OpenBSD: rpc.c,v 1.7 1996/12/08 15:15:56 niklas Exp $	*/
+/*	$NetBSD: rpc.c,v 1.16 1996/10/13 02:29:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -128,7 +128,7 @@ rpc_call(d, prog, vers, proc, sdata, slen, rdata, rlen)
 #ifdef RPC_DEBUG
 	if (debug)
 		printf("rpc_call: prog=0x%x vers=%d proc=%d\n",
-			prog, vers, proc);
+		    prog, vers, proc);
 #endif
 
 	port = rpc_getport(d, prog, vers);
@@ -240,7 +240,7 @@ recvrpc(d, pkt, len, tleft)
 {
 	register struct rpc_reply *reply;
 	ssize_t	n;
-	long	x;
+	int	x;
 
 	errno = 0;
 #ifdef RPC_DEBUG
@@ -319,8 +319,8 @@ rpc_fromaddr(pkt, addr, port)
 int rpc_pmap_num;
 struct pmap_list {
 	struct in_addr	addr;	/* server, net order */
-	u_long	prog;		/* host order */
-	u_long	vers;		/* host order */
+	u_int	prog;		/* host order */
+	u_int	vers;		/* host order */
 	int 	port;		/* host order */
 } rpc_pmap_list[PMAP_NUM];
 
@@ -328,8 +328,8 @@ struct pmap_list {
 int
 rpc_pmap_getcache(addr, prog, vers)
 	struct in_addr	addr;	/* server, net order */
-	u_long		prog;	/* host order */
-	u_long		vers;	/* host order */
+	u_int		prog;	/* host order */
+	u_int		vers;	/* host order */
 {
 	struct pmap_list *pl;
 
@@ -346,8 +346,8 @@ rpc_pmap_getcache(addr, prog, vers)
 void
 rpc_pmap_putcache(addr, prog, vers, port)
 	struct in_addr	addr;	/* server, net order */
-	u_long		prog;	/* host order */
-	u_long		vers;	/* host order */
+	u_int		prog;	/* host order */
+	u_int		vers;	/* host order */
 	int 		port;	/* host order */
 {
 	struct pmap_list *pl;

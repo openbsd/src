@@ -1,5 +1,5 @@
-/*	$OpenBSD: ether.c,v 1.3 1996/10/16 14:18:36 mickey Exp $	*/
-/*	$NetBSD: ether.c,v 1.6 1995/09/14 23:45:25 pk Exp $	*/
+/*	$OpenBSD: ether.c,v 1.4 1996/12/08 15:15:49 niklas Exp $	*/
+/*	$NetBSD: ether.c,v 1.8 1996/10/13 02:29:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -120,7 +120,7 @@ readether(d, pkt, len, tleft, etype)
 #ifdef ETHER_DEBUG
 		if (debug)
 			printf("readether: not ours (ea=%s)\n",
-				ether_sprintf(eh->ether_dhost));
+			    ether_sprintf(eh->ether_dhost));
 #endif
 		return (-1);
 	}

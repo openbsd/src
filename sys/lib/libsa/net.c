@@ -1,5 +1,5 @@
-/*	$OpenBSD: net.c,v 1.6 1996/10/16 14:24:08 mickey Exp $	*/
-/*	$NetBSD: net.c,v 1.12 1995/12/13 23:38:10 pk Exp $	*/
+/*	$OpenBSD: net.c,v 1.7 1996/12/08 15:15:51 niklas Exp $	*/
+/*	$NetBSD: net.c,v 1.14 1996/10/13 02:29:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -76,9 +76,9 @@ sendudp(d, pkt, len)
 		printf("sendudp: d=%x called.\n", (u_int)d);
 		if (d) {
 			printf("saddr: %s:%d",
-				inet_ntoa(d->myip), ntohs(d->myport));
+			    inet_ntoa(d->myip), ntohs(d->myport));
 			printf(" daddr: %s:%d\n",
-				inet_ntoa(d->destip), ntohs(d->destport));
+			    inet_ntoa(d->destip), ntohs(d->destport));
 		}
 	}
 #endif

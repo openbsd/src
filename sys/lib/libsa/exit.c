@@ -1,5 +1,5 @@
-/*	$OpenBSD: exit.c,v 1.2 1996/02/29 13:29:22 niklas Exp $	*/
-/*	$NetBSD: exit.c,v 1.8 1996/02/09 16:10:59 gwr Exp $	*/
+/*	$OpenBSD: exit.c,v 1.3 1996/12/08 15:15:50 niklas Exp $	*/
+/*	$NetBSD: exit.c,v 1.11 1996/12/01 20:22:19 pk Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak

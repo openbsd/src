@@ -1,5 +1,5 @@
-/*	$OpenBSD: nfs.h,v 1.4 1996/11/27 19:52:23 niklas Exp $	*/
-/*	$NetBSD: nfs.h,v 1.4 1995/09/18 21:19:39 pk Exp $	*/
+/*	$OpenBSD: nfs.h,v 1.5 1996/12/08 15:15:53 niklas Exp $	*/
+/*	$NetBSD: nfs.h,v 1.5 1996/07/10 18:32:33 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993

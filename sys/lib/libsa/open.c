@@ -1,5 +1,5 @@
-/*	$OpenBSD: open.c,v 1.4 1996/09/23 14:19:01 mickey Exp $	*/
-/*	$NetBSD: open.c,v 1.10 1996/01/13 22:25:41 leo Exp $	*/
+/*	$OpenBSD: open.c,v 1.5 1996/12/08 15:15:54 niklas Exp $	*/
+/*	$NetBSD: open.c,v 1.12 1996/09/30 16:01:21 ws Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -105,7 +105,7 @@ fnd:
 	/* see if we opened a raw device; otherwise, 'file' is the file name. */
 	if (file == (char *)0 || *file == '\0') {
 		f->f_flags |= F_RAW;
-		return (0);
+		return (fd);
 	}
 
 	/* pass file name to the different filesystem open routines */
@@ -120,6 +120,7 @@ fnd:
 	if (!error)
 		error = ENOENT;
 
+	f->f_dev->dv_close(f);
 err:
 	f->f_flags = 0;
 	errno = error;
