@@ -65,7 +65,7 @@ void error (char * fmt, ...)
   va_end (list);
 
 #ifndef DEBUG
-  syslog (log_priority | LOG_ERR, mbuf);
+  syslog (log_priority | LOG_ERR, "%s", mbuf);
 #endif
 
   /* Also log it to stderr? */
@@ -98,7 +98,7 @@ int warn (char * fmt, ...)
   va_end (list);
 
 #ifndef DEBUG
-  syslog (log_priority | LOG_ERR, mbuf);
+  syslog (log_priority | LOG_ERR, "%s", mbuf);
 #endif
 
   if (log_perror) {
@@ -124,7 +124,7 @@ int note (char * fmt, ...)
   va_end (list);
 
 #ifndef DEBUG
-  syslog (log_priority | LOG_INFO, mbuf);
+  syslog (log_priority | LOG_INFO, "%s", mbuf);
 #endif
 
   if (log_perror) {
@@ -150,7 +150,7 @@ int debug (char * fmt, ...)
   va_end (list);
 
 #ifndef DEBUG
-  syslog (log_priority | LOG_DEBUG, mbuf);
+  syslog (log_priority | LOG_DEBUG, "%s", mbuf);
 #endif
 
   if (log_perror) {
@@ -214,8 +214,8 @@ int parse_warn (char * fmt, ...)
 	va_end (list);
 
 #ifndef DEBUG
-	syslog (log_priority | LOG_ERR, mbuf);
-	syslog (log_priority | LOG_ERR, token_line);
+	syslog (log_priority | LOG_ERR, "%s", mbuf);
+	syslog (log_priority | LOG_ERR, "%s", token_line);
 	if (lexline < 81)
 		syslog (log_priority | LOG_ERR,
 			"%s^", &spaces [sizeof spaces - lexchar]);
