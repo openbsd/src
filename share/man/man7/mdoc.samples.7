@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.samples.7,v 1.12 1999/05/24 12:09:04 aaron Exp $
+.\"	$OpenBSD: mdoc.samples.7,v 1.13 1999/05/24 18:42:25 aaron Exp $
 .\"	$NetBSD: mdoc.samples.7,v 1.5 1996/04/03 20:17:34 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -1130,12 +1130,12 @@ This macro is intended for the
 .Sx SYNOPSIS
 section.
 It may be used
-anywhere else in the man page without problems, but its main purpose
-is to present the function type in kernel normal form for the
+anywhere else in the man page without problems, but in the
 .Sx SYNOPSIS
-of sections two and three
-(it causes a page break allowing the function name to appear
-on the next line).
+section it causes a line break after its use. Its main purpose
+is to present the function type in kernel normal form
+of a section two or three man page by forcing the 
+function name to appear on the next line.
 .Pp
 .Dl Usage: .Ft type ... \*(Pu
 .Bl -tag -width "\&.Ft struct stat" -offset 14n -compact
