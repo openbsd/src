@@ -1,4 +1,4 @@
-#	$OpenBSD: SUN4M,v 1.39 2001/06/27 05:46:28 art Exp $
+#	$OpenBSD: SUN4M,v 1.40 2001/07/21 20:47:55 deraadt Exp $
 # 	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -171,4 +171,3 @@ fd*	at fdc0					# the drive itself
 
 pseudo-device	kbd		# Sun keyboard
 #pseudo-device	strip	1	# radio clock
-pseudo-device	rd 2
