@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.18 2000/02/28 16:34:28 deraadt Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.19 2000/05/01 18:28:58 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.30 1997/03/10 23:55:40 pk Exp $ */
 
 /*
@@ -327,10 +327,19 @@ vmapbuf(bp, sz)
 			panic("vmapbuf: null page frame");
 
 		/*
+		 * Don't enter uncached if cache is mandatory.
+		 *
+		 * XXX - there are probably other cases where we don't need
+		 *       to uncache, but for now we're conservative.
+		 */
+		if (!(cpuinfo.flags & CPUFLG_CACHE_MANDATORY))
+			pa |= PMAP_NC;
+
+		/*
 		 * pmap_enter distributes this mapping to all
 		 * contexts... maybe we should avoid this extra work
 		 */
-		pmap_enter(pmap_kernel(), kva, pa | PMAP_NC,
+		pmap_enter(pmap_kernel(), kva, pa,
 			   VM_PROT_READ | VM_PROT_WRITE, 1, 0);
 
 		uva += PAGE_SIZE;
