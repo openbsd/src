@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.26 2003/01/09 22:27:10 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.27 2003/01/11 07:07:49 jason Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -7748,6 +7748,27 @@ ENTRY(proc_trampoline)
 	CHKPT(%o3,%o4,0x35)
 	ba,a,pt	%icc, return_from_trap
 	 nop
+
+Lfserr:
+	STPTR	%g0, [%o2 + PCB_ONFAULT]! error in r/w, clear pcb_onfault
+	membar	#StoreStore|#StoreLoad
+#ifndef _LP64
+	mov	-1, %o1
+#endif
+	retl				! and return error indicator
+	 mov	-1, %o0
+
+	/*
+	 * This is just like Lfserr, but it's a global label that allows
+	 * mem_access_fault() to check to see that we don't want to try to
+	 * page in the fault.  It's used by fuswintr() etc.
+	 */
+	.globl	_C_LABEL(Lfsbail)
+_C_LABEL(Lfsbail):
+	STPTR	%g0, [%o2 + PCB_ONFAULT]! error in r/w, clear pcb_onfault
+	membar	#StoreStore|#StoreLoad
+	retl				! and return error indicator
+	 mov	-1, %o0
 
 /* probeget and probeset are meant to be used during autoconfiguration */
 /*
