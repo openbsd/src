@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.15 2000/03/02 09:44:28 itojun Exp $	*/
+/*	$OpenBSD: in6.c,v 1.16 2000/03/12 06:16:58 itojun Exp $	*/
 /*	$KAME: in6.c,v 1.55 2000/02/25 00:32:23 itojun Exp $	*/
 
 /*
@@ -311,7 +311,8 @@ in6_control(so, cmd, data, ifp, p)
 #ifdef COMPAT_IN6IFIOCTL
 	struct sockaddr_in6 net;
 #endif
-	int	error = 0, hostIsNew, prefixIsNew;
+	int error = 0, hostIsNew, prefixIsNew;
+	int newifaddr;
 	time_t time_second = (time_t)time.tv_sec;
 	int privileged;
 
@@ -472,7 +473,10 @@ in6_control(so, cmd, data, ifp, p)
 			TAILQ_INSERT_TAIL(&ifp->if_addrlist,
 				(struct ifaddr *)ia, ifa_list);
 			ia->ia_ifa.ifa_refcnt++;
-		}
+
+			newifaddr = 1;
+		} else
+			newifaddr = 0;
 
 		if (cmd == SIOCAIFADDR_IN6) {
 			/* sanity for overflow - beware unsigned */
@@ -623,7 +627,28 @@ in6_control(so, cmd, data, ifp, p)
 		break;
 
 	case SIOCSIFADDR_IN6:
-		return(in6_ifinit(ifp, ia, &ifr->ifr_addr, 1));
+		error = in6_ifinit(ifp, ia, &ifr->ifr_addr, 1);
+  undo:
+		if (error && newifaddr) {
+			TAILQ_REMOVE(&ifp->if_addrlist, &ia->ia_ifa, ifa_list);
+			IFAFREE(&ia->ia_ifa);
+
+			oia = ia;
+			if (oia == (ia = in6_ifaddr))
+				in6_ifaddr = ia->ia_next;
+			else {
+				while (ia->ia_next && (ia->ia_next != oia))
+					ia = ia->ia_next;
+				if (ia->ia_next)
+					ia->ia_next = oia->ia_next;
+				else {
+					printf("Didn't unlink in6_ifaddr "
+					    "from list\n");
+				}
+			}
+			IFAFREE(&ia->ia_ifa);
+		}
+		return error;
 
 #ifdef COMPAT_IN6IFIOCTL		/* XXX should be unused */
 	case SIOCSIFNETMASK_IN6:
@@ -703,8 +728,11 @@ in6_control(so, cmd, data, ifp, p)
 			}
 			prefixIsNew = 1; /* We lie; but effect's the same */
 		}
-		if (hostIsNew || prefixIsNew)
+		if (hostIsNew || prefixIsNew) {
 			error = in6_ifinit(ifp, ia, &ifra->ifra_addr, 0);
+			if (error)
+				goto undo;
+		}
 		if (hostIsNew && (ifp->if_flags & IFF_MULTICAST)) {
 			int error_local = 0;
 
