@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos_misc.c,v 1.21 1999/02/10 00:16:12 niklas Exp $	*/
+/*	$OpenBSD: sunos_misc.c,v 1.22 2000/01/22 23:06:34 millert Exp $	*/
 /*	$NetBSD: sunos_misc.c,v 1.65 1996/04/22 01:44:31 christos Exp $	*/
 
 /*
@@ -382,7 +382,11 @@ sunos_sys_getdents(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct sunos_sys_getdents_args *uap = v;
+	struct sunos_sys_getdents_args /* {
+		syscallarg(int) fd;
+		syscallarg(char *) buf;
+		syscallarg(int) nbytes;
+	} */ *uap = v;
 	struct dirent *bdp;
 	struct vnode *vp;
 	caddr_t inp, buf;	/* BSD-format */
@@ -400,13 +404,14 @@ sunos_sys_getdents(p, v, retval)
 
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
-
 	if ((fp->f_flag & FREAD) == 0)
 		return (EBADF);
-
 	vp = (struct vnode *)fp->f_data;
 
-	if (vp->v_type != VDIR)	/* XXX  vnode readdir op should do this */
+	/* SunOS returns ENOTDIR here, BSD would use EINVAL */
+	if (vp->v_type != VDIR)
+		return (ENOTDIR);
+	if (SCARG(uap, nbytes) < sizeof(struct sunos_dirent))
 		return (EINVAL);
 
 	buflen = min(MAXBSIZE, SCARG(uap, nbytes));
@@ -431,8 +436,7 @@ again:
 	    &ncookies, &cookiebuf);
 	if (error)
 		goto out;
-	
-	if (!error && !cookiebuf) {
+	if (!cookiebuf) {
 		error = EPERM;
 		goto out;
 	}
