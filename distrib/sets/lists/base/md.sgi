@@ -73,7 +73,7 @@
 ./usr/lib/libdes.so.9.0
 ./usr/lib/libedit.so.3.0
 ./usr/lib/libform.so.3.0
-./usr/lib/libg2c.so.8.0
+./usr/lib/libg2c.so.8.1
 ./usr/lib/libgssapi.so.4.0
 ./usr/lib/libiberty.so.8.0
 ./usr/lib/libkafs.so.15.0
