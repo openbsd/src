@@ -1,16 +1,22 @@
-OpenBSD/sparc64 OSREV runs on the following classes of machines:
+OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	- SBUS based workstations:
 		Ultra 1
+		Ultra 2 (should work, but could not be tested)
 	- PCI based workstations:
 		Ultra 5
+		Ultra 10
 	- faithful clones of the above Sun systems.
 
-OpenBSD/sparc64 OSREV does NOT run on these machines (yet):
-	- Sun Blade 100
+OpenBSD/MACHINE OSREV does NOT run on these machines (yet):
+	- Sun Blade 100 (onboard ethernet has issues)
+	- Ultra 30 (onboard scsi has issues)
+	- other, unlisted, UltraSPARC machines.
 
-The minimal configuration requires 32M of RAM and ~120M of disk space.
+The minimal configuration requires 32M of RAM and ~160M of disk space.
 To install the entire system requires much more disk space, and to run
 X or compile the system, more RAM is recommended.
+
+At the moment, the X window system is not available.
 
 Supported devices {:-include-:}:
 	serial ports: 
@@ -27,6 +33,9 @@ Supported devices {:-include-:}:
 		on-board "esp" SCSI controller
 		SBus "esp" SCSI controller (including 3rd party compatibles), 
 
+	framebuffers:
+		on-board framebuffer, as text console only
+
 Hardware the we do NOT currently support, but get many questions about:
 	Multiprocessor machines
 	Audio drivers
@@ -35,4 +44,4 @@ Hardware the we do NOT currently support, but get many questions about:
         SBus GS framebuffer (aka cgtwelve)
         SBus GT framebuffer ("Graphics Tower")
         SBus ZX framebuffer (aka Leo)
-
+	other PCI and SBus cards have not been tested yet.

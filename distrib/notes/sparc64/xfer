@@ -9,171 +9,173 @@ Installation is supported from several media types, including:
 Not all methods are supported on all Sparc Systems and some of them
 work only with the floppy or the miniroot installation.
 
-If you have the OpenBSD CD-ROM distribution (and a CD-ROM drive), you
-may be able boot from it.  Not all sparc systems support booting from
-CD-ROM and the current boot images is only known to work on sun4c and
-some sun4m architecture workstations.  If you can boot from the CD-ROM,
-you are home free and can proceed to the installation steps.  If not,
-you will need to do some setup work to prepare a bootable image, either
-a floppy, hard drive, or compatible net boot server.
-
+dnl XXX uncomment when cd-rom distribution available
+dnl If you have the OpenBSD CD-ROM distribution (and a CD-ROM drive), you
+dnl may be able boot from it. If you can boot from the CD-ROM,
+dnl you are home free and can proceed to the installation steps.  If not,
+dnl you will need to do some setup work to prepare a bootable image, either
+dnl a floppy, hard drive, or compatible net boot server.
+dnl 
 In addition to the bootable image, you also need to consider how to
-access the binary distribution sets to actually install the system.  If
-you have the OpenBSD CD-ROM distribution you can either access the
-CD-ROM directly from the bootable image or remotely mounted on another
-system via NFS.
-
-Although you can access the distribution sets directly from the CD-ROM or
-from one of the FTP mirrors over the internet, you may wish to transfer
-the sets to a local FTP or NFS server, or copy them to a partition on
-the target system's disk or onto a SCSI tape.
+access the binary distribution sets to actually install the system.
+dnl XXX uncomment when cd-rom distribution available
+dnl If you have the OpenBSD CD-ROM distribution you can either access the
+dnl CD-ROM directly from the bootable image or remotely mounted on another
+dnl system via NFS.
+dnl
+dnl Although you can access the distribution sets directly from the CD-ROM or
+dnl from one of the FTP mirrors over the internet, you may wish to transfer
+dnl the sets to a local FTP or NFS server, or copy them to a partition on
+dnl the target system's disk.
 
 The variety of options listed may seem confusing, but situations vary
 widely in terms of what peripherals and what sort of network arrangements
 a user has, the intent is to provide some way that will be practical.
 
+dnl
+dnl XXX no floppy available yet
+dnl Creating a bootable floppy disk using DOS/Windows:
+dnl
+dnl	First you need to get access to the OpenBSD Bootable floppy
+dnl	images.  If you can access the CD-ROM distribution under DOS
+dnl	the bootable disks are in the OSREV/MACHINE directory, otherwise
+dnl	you you will have to download them from one of the OpenBSD
+dnl	ftp or http mirror sites, using ftp or a web-viewer.  In either
+dnl	case, take care to do "binary" transfers, since these are
+dnl	images files and any DOS cr/lf translations or control/z EOF
+dnl	interpretations will result in corrupted transfers.
+dnl	
+dnl	You will also need to go to the "tools" directory and grab a
+dnl	copy of the rawrite.exe utility and its documentation.  This
+dnl	program is needed to correctly copy the bootable filesystem
+dnl	image to the floppy, since it's an image of a unix partition
+dnl	containing a ffs filesystem, not a MSDOS format diskette.
+dnl
+dnl	Once you have installed rawrite.exe, just run it and specify the
+dnl	name of the bootable image, such as "floppy.fs" and the name of
+dnl	the floppy drive, such as "a:".  Be sure to use good quality HD
+dnl	(1.44MB) floppies, formatted on the system you're using.  The
+dnl	image copy and boot process is not especially tolerant of read
+dnl	errors. 
+dnl
+dnl	Note that if you are using NT to write the images to disk, you
+dnl	will need to use ntrw.exe instead.  It is also available in the
+dnl	"tools" directory.  Grab it and run in with the correct 
+dnl	arguments like this "ntrw <image> <drive>:"
+dnl
+dnl	Note that, when installing, the boot floppy can be write-protected
+dnl	(i.e.  read-only).
+dnl
+dnl
+dnl Creating a bootable floppy disk using SunOS or other Un*x-like system:
+dnl
+dnl	First, you will need obtain a local copy of the bootable filesystem
+dnl	image as described above.  If possible use cksum or md5 to verify
+dnl	the checksums of the images vs. the values in the CKSUM or MD5
+dnl	files on the mirror site.
+dnl
+dnl	Next, use the dd(1) utility to copy the file to the floppy drive.
+dnl	Under SunOS, the command would be:
+dnl
+dnl		dd if=floppy{:--:}OSrev.fs of=/dev/rfd0c bs=36b
+dnl
+dnl	If you are using something other than SunOS, you may have to adapt
+dnl	this to conform to local naming conventions for the floppy and
+dnl	options suitable for copying to a "raw" floppy image.  The key
+dnl	issue is that the device name used for the floppy *must* be one
+dnl	that refers to the whole 2880 block image, not a partition or
+dnl	compatibility mode, and the copy command needs to be compatible
+dnl	with the requirement that writes to a raw device must be in
+dnl	multiples of 512-byte blocks.  The variations are endless and
+dnl	beyond the scope of this document.
+dnl
+dnl	If you're doing this on the system you intend to boot the floppy on,
+dnl	copying the floppy back to a file and doing a compare or checksum
+dnl	is a good way to verify that the floppy is readable and free of
+dnl	read/write errors.
+dnl
+dnl
 
-Creating a bootable floppy disk using DOS/Windows:
-
-	First you need to get access to the OpenBSD Bootable floppy
-	images.  If you can access the CD-ROM distribution under DOS
-	the bootable disks are in the OSREV/sparc directory, otherwise
-	you you will have to download them from one of the OpenBSD
-	ftp or http mirror sites, using ftp or a web-viewer.  In either
-	case, take care to do "binary" transfers, since these are
-	images files and any DOS cr/lf translations or control/z EOF
-	interpretations will result in corrupted transfers.
-	
-	You will also need to go to the "tools" directory and grab a
-	copy of the rawrite.exe utility and its documentation.  This
-	program is needed to correctly copy the bootable filesystem
-	image to the floppy, since it's an image of a unix partition
-	containing a ffs filesystem, not a MSDOS format diskette.
-
-	Once you have installed rawrite.exe, just run it and specify the
-	name of the bootable image, such as "floppy.fs" and the name of
-	the floppy drive, such as "a:".  Be sure to use good quality HD
-	(1.44MB) floppies, formatted on the system you're using.  The
-	image copy and boot process is not especially tolerant of read
-	errors. 
-
-	Note that if you are using NT to write the images to disk, you
-	will need to use ntrw.exe instead.  It is also available in the
-	"tools" directory.  Grab it and run in with the correct 
-	arguments like this "ntrw <image> <drive>:"
-
-	Note that, when installing, the boot floppy can be write-protected
-	(i.e.  read-only).
-
-
-Creating a bootable floppy disk using SunOS or other Un*x-like system:
-
-	First, you will need obtain a local copy of the bootable filesystem
-	image as described above.  If possible use cksum or md5 to verify
-	the checksums of the images vs. the values in the CKSUM or MD5
-	files on the mirror site.
-
-	Next, use the dd(1) utility to copy the file to the floppy drive.
-	Under SunOS, the command would be:
-
-		dd if=floppy{:--:}OSrev.fs of=/dev/rfd0c bs=36b
-
-	If you are using something other than SunOS, you may have to adapt
-	this to conform to local naming conventions for the floppy and
-	options suitable for copying to a "raw" floppy image.  The key
-	issue is that the device name used for the floppy *must* be one
-	that refers to the whole 2880 block image, not a partition or
-	compatibility mode, and the copy command needs to be compatible
-	with the requirement that writes to a raw device must be in
-	multiples of 512-byte blocks.  The variations are endless and
-	beyond the scope of this document.
-
-	If you're doing this on the system you intend to boot the floppy on,
-	copying the floppy back to a file and doing a compare or checksum
-	is a good way to verify that the floppy is readable and free of
-	read/write errors.
-
-
-
-Creating a bootable hard disk using SunOS or other Un*x-like system:
-
-	If you don't have a floppy drive you can copy the single floppy
-	installation image "floppy{:--:}OSrev.fs" or the mini-root "miniroot{:--:}OSrev.fs"
-	onto the hard disk you intend to boot on.  Traditionally, the
-	way to do this is to use dd(1) to place the bootable filesystem
-	image in the "swap" partition of the disk (while running in
-	single user mode), and then booting from that partition.
-
-	Using the "b" partition allows you to boot without overwriting
-	any useful parts of the disk, you can also use another partition,
-	but don't used the "a" or "c" partition without understanding
-	the disklabel issues described below under "incompatible systems".
-
-	This requires that you be running SunOS, Solaris, OpenBSD or NetBSD
-	which have a compatible view of SunOS disk labels and partitions.
-
-	Use the dd(1) utility to copy the file to the hard drive.
-	Under SunOS, the command would be:
-
-		dd if=floppy{:--:}OSrev.fs of=/dev/rsd0b bs=36b
-				- or -
-		dd if=miniroot{:--:}OSrev.fs of=/dev/rsd0b bs=36b
-
-	The blocksize is arbitrary as long as it's a multiple of 512-bytes
-	and within the maximum supported by the driver, i.e. bs=126b may
-	not work for all cases.  Again, device/partition names may vary,
-	depending on the OS involved.
-
-	If you are preparing the hard drive on an incompatible system or
-	don't care about the hard disk contents, you can also install the
-	bootable image starting at the beginning of the disk. This lets
-	you prepare a bootable hard-drive even if don't have a working
-	operating system on your Sparc, but it important to understand
-	that the bootable image installed this way includes a "disk label"
-	which can wipe out any pre-existing disklabels or partitioning for
-	the drive.
-
-	The floppy image is used only for booting, and can be placed in
-	a partition that will be overwritten during the install process,
-	since it actually runs off a ram-disk image in the kernel.  In
-	contrast the miniroot is a normal unix root filesystem and you
-	must place in a partition that will not be overwritten until you've
-	completed the installation process.
-
-	To copy the floppy image to the whole disk, overwriting labels:
-
-		dd if=floppy{:--:}OSrev.fs of=/dev/rsdXc bs=36b
-
-	Two notes - X should be replaced by the unit number of the target
-	disk, which is most likely *not* the disk/partition that's your
-	current root partition.  Again names may vary depending on the
-	OS involved.  Second, after doing this, the disklabel will be one
-	that would be appropriate for a floppy, i.e. one partition of 2880
-	block, and you'll probably want to change that later on.
-
-	If you're starting with a virgin disk and trying to do this under
-	SunOS, use format(8) and newfs(8) to set up the partitions and
-	mark the intended partition as an normal partition type.  If you're
-	using OpenBSD, perhaps on another architecture, OpenBSD will
-	create a "fictitious label" that will let you access the whole
-	disk.
-
-	To copy the floppy image to the hard disk, preserving SunOS,
-	Solaris NetBSD or OpenBSD labels:
-
-		dd if=floppy{:--:}OSrev.fs of=/dev/rsdXc bs=1b skip=1 seek=1
-
-	You need to be sure that your version of dd(1) supports the
-	skip and seek operands, otherwise you can try a technique like:
-
-		dd if=/dev/rsdXc of=/tmp/label bs=1b count=1
-		dd if=floppy{:--:}OSrev.fs of=/dev/rsdXc bs=36b
-		dd if=/tmp/label of=/dev/rsdXc bs=1b count=1
-
-	In either case, you've created a situation where the disklabel
-	and the filesystem information don't agree about the partition
-	size and geometry, however the results will be usable.
-
+dnl XXX uncomment when miniroot available
+dnl Creating a bootable hard disk using SunOS or other Un*x-like system:
+dnl 
+dnl 	If you don't have a floppy drive you can copy the single floppy
+dnl 	installation image "floppy{:--:}OSrev.fs" or the mini-root "miniroot{:--:}OSrev.fs"
+dnl 	onto the hard disk you intend to boot on.  Traditionally, the
+dnl 	way to do this is to use dd(1) to place the bootable filesystem
+dnl 	image in the "swap" partition of the disk (while running in
+dnl 	single user mode), and then booting from that partition.
+dnl 
+dnl 	Using the "b" partition allows you to boot without overwriting
+dnl 	any useful parts of the disk, you can also use another partition,
+dnl 	but don't used the "a" or "c" partition without understanding
+dnl 	the disklabel issues described below under "incompatible systems".
+dnl 
+dnl 	This requires that you be running SunOS, Solaris, OpenBSD or NetBSD
+dnl 	which have a compatible view of SunOS disk labels and partitions.
+dnl 
+dnl 	Use the dd(1) utility to copy the file to the hard drive.
+dnl 	Under SunOS, the command would be:
+dnl 
+dnl 		dd if=floppy{:--:}OSrev.fs of=/dev/rsd0b bs=36b
+dnl 				- or -
+dnl 		dd if=miniroot{:--:}OSrev.fs of=/dev/rsd0b bs=36b
+dnl 
+dnl 	The blocksize is arbitrary as long as it's a multiple of 512-bytes
+dnl 	and within the maximum supported by the driver, i.e. bs=126b may
+dnl 	not work for all cases.  Again, device/partition names may vary,
+dnl 	depending on the OS involved.
+dnl 
+dnl 	If you are preparing the hard drive on an incompatible system or
+dnl 	don't care about the hard disk contents, you can also install the
+dnl 	bootable image starting at the beginning of the disk. This lets
+dnl 	you prepare a bootable hard-drive even if don't have a working
+dnl 	operating system on your Sparc, but it important to understand
+dnl 	that the bootable image installed this way includes a "disk label"
+dnl 	which can wipe out any pre-existing disklabels or partitioning for
+dnl 	the drive.
+dnl 
+dnl 	The floppy image is used only for booting, and can be placed in
+dnl 	a partition that will be overwritten during the install process,
+dnl 	since it actually runs off a ram-disk image in the kernel.  In
+dnl 	contrast the miniroot is a normal unix root filesystem and you
+dnl 	must place in a partition that will not be overwritten until you've
+dnl 	completed the installation process.
+dnl 
+dnl 	To copy the floppy image to the whole disk, overwriting labels:
+dnl 
+dnl 		dd if=floppy{:--:}OSrev.fs of=/dev/rsdXc bs=36b
+dnl 
+dnl 	Two notes - X should be replaced by the unit number of the target
+dnl 	disk, which is most likely *not* the disk/partition that's your
+dnl 	current root partition.  Again names may vary depending on the
+dnl 	OS involved.  Second, after doing this, the disklabel will be one
+dnl 	that would be appropriate for a floppy, i.e. one partition of 2880
+dnl 	block, and you'll probably want to change that later on.
+dnl 
+dnl 	If you're starting with a virgin disk and trying to do this under
+dnl 	SunOS, use format(8) and newfs(8) to set up the partitions and
+dnl 	mark the intended partition as an normal partition type.  If you're
+dnl 	using OpenBSD, perhaps on another architecture, OpenBSD will
+dnl 	create a "fictitious label" that will let you access the whole
+dnl 	disk.
+dnl 
+dnl 	To copy the floppy image to the hard disk, preserving SunOS,
+dnl 	Solaris NetBSD or OpenBSD labels:
+dnl 
+dnl 		dd if=floppy{:--:}OSrev.fs of=/dev/rsdXc bs=1b skip=1 seek=1
+dnl 
+dnl 	You need to be sure that your version of dd(1) supports the
+dnl 	skip and seek operands, otherwise you can try a technique like:
+dnl 
+dnl 		dd if=/dev/rsdXc of=/tmp/label bs=1b count=1
+dnl 		dd if=floppy{:--:}OSrev.fs of=/dev/rsdXc bs=36b
+dnl 		dd if=/tmp/label of=/dev/rsdXc bs=1b count=1
+dnl 
+dnl 	In either case, you've created a situation where the disklabel
+dnl 	and the filesystem information don't agree about the partition
+dnl 	size and geometry, however the results will be usable.
+dnl 
 
 Creating a network bootable setup using SunOS or other Un*x-like system:
 
@@ -201,56 +203,6 @@ speed and reliability of your internet connection for this option.  It
 may save much time and frustration to use ftp get/reget to transfer the
 distribution sets to a local server or disk and perform the installation
 from there, rather than directly on the internet.
-
-
-To install or upgrade OpenBSD using a tape, you need to do the following:
-
-	To install OpenBSD from a tape, you need to make a tape that
-	contains the distribution set files, each in "tar" format or
-	in "gzipped tar format".  First you will need to transfer the
-	distribution sets to your local system, using ftp or by mounting
-	the CD-ROM containing the release.  Then you need to make a tape
-	containing the files.
-
-	If you're making the tape on a UN*X-like system, the easiest way
-	to do so is make a shell script along the following lines, call it
-	"/tmp/maketape".
-
-	#! /bin/sh
-	tape=/dev/nrst0
-	mt -f ${tape} rewind
-	if test $# -lt 1
-	then
-		for file in bsd.rd boot
-		do
-			dd if=${file} of=${tape} obs=8k conv=sync
-		done
-	fi
-	for file in base etc comp game man misc xbase xfont xserv xshare
-	do
-		dd if=${file}OSrev.tgz of=${tape} obs=8k conv=sync
-	done
-	tar cf ${tape} bsd
-	mt -f ${tape} offline
-	# end of script
-
-
-	And then:
-
-	cd .../OSREV/sparc
-	sh -x /tmp/maketape
-
-	
-	Note that this script creates a bootable tape. If you only want to
-	fetch the OpenBSD files from tape, but want to boot from another
-	device, you can save time and space creating the tape this way:
-
-	cd .../OSREV/sparc
-	sh -x /tmp/maketape noboot
-
-	
-	If you're using a system other than OpenBSD or SunOS, the tape
-	name and other requirements may change.
 
 
 To install OpenBSD using a remote partition, mounted via

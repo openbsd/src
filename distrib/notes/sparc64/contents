@@ -6,30 +6,28 @@ OpenBSDbsd
 
 OpenBSDrd
 
-		installboot	The OpenBSD/sparc64 boot loader installation
+		installboot	The OpenBSD/MACHINE boot loader installation
 				program
-		bootblk		The OpenBSD/sparc64 boot block
-		ofwboot		The OpenBSD/sparc64 secondary boot loader
-		ofwboot.net	The OpenBSD/sparc64 network boot loader
+		bootblk		The OpenBSD/MACHINE boot block
+		ofwboot		The OpenBSD/MACHINE secondary boot loader
+		ofwboot.net	The OpenBSD/MACHINE network boot loader
 
 
 Please note that there are multiple bootable images and kernels, intended
-to allow installing OpenBSD/sparc64 in a variety of situations without
+to allow installing OpenBSD/MACHINE in a variety of situations without
 requiring a pre-existing working operating system.
 
-The "miniroot{:--:}OSrev.fs" is a small bootable root filesystem that can be used
-for installation or upgrade where there is some means to copy the miniroot
-image into a swap or unused partition on the system, and also for diskless
-or net booting.  This can be convenient if you have a existing installation
-of OpenBSD, NetBSD, or Solaris and wish to test or upgrade the existing
-system to OpenBSD.
+dnl The "miniroot{:--:}OSrev.fs" is a small bootable root filesystem that can be used
+dnl for installation or upgrade where there is some means to copy the miniroot
+dnl image into a swap or unused partition on the system, and also for diskless
+dnl or net booting.  This can be convenient if you have a existing installation
+dnl of OpenBSD, NetBSD, or Solaris and wish to test or upgrade the existing
+dnl system to OpenBSD.
 
 These bootable images are also useful as "failsafe" boots for system
 maintenance and disaster recovery.
 
 The kernel and boot images are provided for net booting installations.
-While the OpenBSD bootblocks will work with the provided miniroot images,
-Sun bootblocks require a separate kernel image and root filesystem.
 
 
 Bootable installation images:
