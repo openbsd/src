@@ -1,4 +1,4 @@
-/*	$OpenBSD: noexec.c,v 1.8 2003/09/25 23:35:06 mickey Exp $	*/
+/*	$OpenBSD: noexec.c,v 1.9 2004/02/23 08:21:53 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002,2003 Michael Shalayeff
@@ -178,6 +178,9 @@ main(int argc, char *argv[])
 
 	if ((page_size = sysconf(_SC_PAGESIZE)) < 0)
 		err(1, "sysconf");
+
+	setvbuf(stdout, NULL, _IONBF, 0);
+	setvbuf(stderr, NULL, _IONBF, 0);
 
 	p = NULL;
 	func = &noexec;
