@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.61 2000/12/03 19:56:20 angelos Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.62 2001/03/03 01:00:19 itojun Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -372,6 +372,16 @@ ipv4_input(struct mbuf *m, ...)
 		}
 		ip = mtod(m, struct ip *);
 	}
+
+	/* 127/8 must not appear on wire - RFC1122 */
+	if ((ntohl(ip->ip_dst.s_addr) >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET ||
+	    (ntohl(ip->ip_src.s_addr) >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET) {
+		if ((m->m_pkthdr.rcvif->if_flags & IFF_LOOPBACK) == 0) {
+			ipstat.ips_badaddr++;
+			goto bad;
+		}
+	}
+
 	if ((ip->ip_sum = in_cksum(m, hlen)) != 0) {
 		ipstat.ips_badsum++;
 		goto bad;
