@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.18 2004/11/14 13:05:02 espie Exp $
+# $OpenBSD: pkg_info,v 1.19 2004/11/15 11:23:10 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -234,7 +234,7 @@ if ($opt_K && !$opt_L) {
 }
 
 if (@ARGV == 0 && !$opt_a && !$opt_A) {
-	Fatal "Missing package name(s)";
+	Fatal "Missing package name(s)" unless $terse && $opt_q;
 }
 
 if (@ARGV > 0 && ($opt_a || $opt_A)) {
