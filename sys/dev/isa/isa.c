@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa.c,v 1.14 1996/08/15 04:46:49 deraadt Exp $	*/
+/*	$OpenBSD: isa.c,v 1.15 1996/08/15 05:26:19 deraadt Exp $	*/
 /*	$NetBSD: isa.c,v 1.85 1996/05/14 00:31:04 thorpej Exp $	*/
 
 /*-
@@ -81,7 +81,7 @@ isaattach(parent, self, aux)
 	struct isa_softc *sc = (struct isa_softc *)self;
 	struct isabus_attach_args *iba = aux;
 #if NISAPNP > 0
-	void postisapnpattach(struct device *, struct device *, void *);
+	void postisapnpattach __P((struct device *, struct device *, void *));
 #endif /* NISAPNP > 0 */
 
 	isa_attach_hook(parent, self, iba);
