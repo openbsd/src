@@ -91,24 +91,13 @@ AC_FUNC_VFORK
 AC_FUNC_CLOSEDIR_VOID
 
 dnl
-dnl Look for shadow password files before we go ahead and set getspnam.
-dnl On some systems (Linux), the C library has getspnam but shadow
-dnl passwords might not be in use.
+dnl Check for shadow password support.
 dnl
-dnl We used to check for the existence of the /etc/security directory
-dnl here, but that's incorrect, since it's possible to have PAM installed
-dnl without using shadow passwords.
-dnl
-AC_MSG_CHECKING([for evidence of shadow passwords])
-if test -f /etc/shadow \
-   || test -f /etc/security/passwd.adjunct ; then
-  found="yes"
-  AC_CHECK_LIB(sec, getspnam)
-  AC_CHECK_FUNCS(getspnam)
-else
-  found="no"
-fi
-AC_MSG_RESULT([$found])
+dnl We used to try to determine whether shadow passwords were actually in
+dnl use or not, but the code has been changed to work right reguardless,
+dnl so we can go back to a simple check.
+AC_CHECK_LIB(sec, getspnam)
+AC_CHECK_FUNCS(getspnam)
 
 dnl We always use CVS's regular expression matcher.
 dnl This is because:

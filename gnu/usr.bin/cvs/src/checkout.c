@@ -242,6 +242,13 @@ checkout (argc, argv)
 	    error (1, 0, "tag `%s' must be a symbolic tag", tag);
     }
 
+#ifdef SERVER_SUPPORT
+    if (server_active && where != NULL)
+    {
+	server_pathname_check (where);
+    }
+#endif
+
     if (!safe_location()) {
         error(1, 0, "Cannot check out files into the repository itself");
     }
@@ -428,11 +435,15 @@ struct dir_to_build
     /* The path to the directory.  */
     char *dirpath;
 
+    /* If set, don't build the directory, just change to it.
+       The caller will also want to set REPOSITORY to NULL.  */
+    int just_chdir;
+
     struct dir_to_build *next;
 };
 
 static int build_dirs_and_chdir PROTO ((struct dir_to_build *list,
-					int sticky, int check_existing_dirs));
+					int sticky));
 
 static void build_one_dir PROTO ((char *, char *, int));
 
@@ -723,6 +734,7 @@ internal error: %s doesn't start with %s in checkout_proc",
 	head->repository = NULL;
 	head->dirpath = xstrdup (where);
 	head->next = NULL;
+	head->just_chdir = 0;
 
 
 	/* Make a copy of the repository name to play with. */
@@ -760,7 +772,26 @@ internal error: %s doesn't start with %s in checkout_proc",
 		assert (strlen (where));
 		strcpy (new->dirpath, "/");
 	    }
-	    
+	    new->next = head;
+	    head = new;
+
+	    /* If where consists of multiple pathname components,
+	       then we want to just cd into it, without creating
+	       directories or modifying CVS directories as we go.
+	       In CVS 1.9 and earlier, the code actually does a
+	       CVS_CHDIR up-front; I'm not going to try to go back
+	       to that exact code but this is somewhat similar
+	       in spirit.  */
+	    if (where_orig != NULL
+		&& cp - where < strlen (where_orig))
+	    {
+		new->repository = NULL;
+		new->just_chdir = 1;
+		continue;
+	    }
+
+	    new->just_chdir = 0;
+
 	    /* Now figure out what repository directory to generate.
                The most complete case would be something like this:
 
@@ -771,12 +802,13 @@ internal error: %s doesn't start with %s in checkout_proc",
 	         cvs co -d what/ever -N foo
 	       
 	       The results in the CVS/Repository files should be:
-	         .     -> .          (this is where we executed the cmd)
-		 what  -> Emptydir   (generated dir -- not in repos)
+	         .     -> (don't touch CVS/Repository)
+			  (I think this case might be buggy currently)
+		 what  -> (don't touch CVS/Repository)
 		 ever  -> .          (same as "cd what/ever; cvs co -N foo")
 		 bar   -> Emptydir   (generated dir -- not in repos)
 		 baz   -> quux       (finally!) */
-	    
+
 	    if (strcmp (reposcopy, CVSroot_directory) == 0)
 	    {
 		/* We can't walk up past CVSROOT.  Instead, the
@@ -835,9 +867,6 @@ internal error: %s doesn't start with %s in checkout_proc",
 		    }
 		}
 	    }
-	    
-	    new->next = head;
-	    head = new;
 	}
 
 	/* clean up */
@@ -852,7 +881,11 @@ internal error: %s doesn't start with %s in checkout_proc",
 	       may not have a thing to do with where the sources are
 	       being checked out.  If it does, build_dirs_and_chdir
 	       will take care of creating adm files here. */
-	       
+	    /* FIXME: checking where_is_absolute is a horrid kludge;
+	       I suspect we probably can just skip the call to
+	       build_one_dir whenever the -d command option was specified
+	       to checkout.  */
+
 	    if (! where_is_absolute)
 	    {
 		/* It may be argued that we shouldn't set any sticky
@@ -866,8 +899,7 @@ internal error: %s doesn't start with %s in checkout_proc",
 	       contain a CVS subdir yet, but all the others contain
 	       CVS and Entries.Static files */
 
-	    if (build_dirs_and_chdir (head, *pargc <= 1,
-				      where_is_absolute) != 0)
+	    if (build_dirs_and_chdir (head, *pargc <= 1) != 0)
 	    {
 		error (0, 0, "ignoring module %s", omodule);
 		err = 1;
@@ -1101,22 +1133,13 @@ emptydir_name ()
     return repository;
 }
 
-
-/* Build all the dirs along the path to DIRS with CVS subdirs with
-   appropriate repositories.  If ->repository is NULL, do not create a
-   CVSADM directory for that subdirectory; just CVS_CHDIR into it.  If
-   check_existing_dirs is nonzero, don't create directories if they
-   already exist, and don't try to write adm files in directories
-   where we don't have write permission.  We use this last option
-   primarily when a user has specified an absolute path for checkout
-   -- we will often not have permission to top-level directories, so
-   we shouldn't complain. */
-
+/* Build all the dirs along the path to DIRS with CVS subdirs with appropriate
+   repositories.  If ->repository is NULL, do not create a CVSADM directory
+   for that subdirectory; just CVS_CHDIR into it.  */
 static int
-build_dirs_and_chdir (dirs, sticky, check_existing_dirs)
+build_dirs_and_chdir (dirs, sticky)
     struct dir_to_build *dirs;
     int sticky;
-    int check_existing_dirs;
 {
     int retval = 0;
     struct dir_to_build *nextdir;
@@ -1124,16 +1147,12 @@ build_dirs_and_chdir (dirs, sticky, check_existing_dirs)
     while (dirs != NULL)
     {
 	char *dir = last_component (dirs->dirpath);
-	int dir_is_writeable;
 
-	if ((! check_existing_dirs) || (! isdir (dir)))
+	if (!dirs->just_chdir)
+	{
 	    mkdir_if_needed (dir);
-
-	Subdir_Register (NULL, NULL, dir);
-
-	/* This is an expensive call -- only make it if necessary. */
-	if (check_existing_dirs)
-	    dir_is_writeable = iswritable (dir);
+	    Subdir_Register (NULL, NULL, dir);
+	}
 
 	if (CVS_CHDIR (dir) < 0)
 	{
@@ -1141,14 +1160,11 @@ build_dirs_and_chdir (dirs, sticky, check_existing_dirs)
 	    retval = 1;
 	    goto out;
 	}
-
-	if ((dirs->repository != NULL)
-	    && ((! check_existing_dirs) || dir_is_writeable))
+	if (dirs->repository != NULL)
 	{
 	    build_one_dir (dirs->repository, dirs->dirpath, sticky);
 	    free (dirs->repository);
 	}
-
 	nextdir = dirs->next;
 	free (dirs->dirpath);
 	free (dirs);

@@ -110,7 +110,7 @@ static const struct cmd
     { "rdiff",    "patch",    "pa",        patch },
     { "release",  "re",       "rel",       release },
     { "remove",   "rm",       "delete",    cvsremove },
-    { "status",   "st",       "stat",      status },
+    { "status",   "st",       "stat",      cvsstatus },
     { "rtag",     "rt",       "rfreeze",   rtag },
     { "tag",      "ta",       "freeze",    cvstag },
     { "unedit",   NULL,	      NULL,	   unedit },
@@ -973,20 +973,37 @@ char *
 Make_Date (rawdate)
     char *rawdate;
 {
-    struct tm *ftm;
     time_t unixtime;
-    char date[MAXDATELEN];
-    char *ret;
 
     unixtime = get_date (rawdate, (struct timeb *) NULL);
     if (unixtime == (time_t) - 1)
 	error (1, 0, "Can't parse date/time: %s", rawdate);
+    return date_from_time_t (unixtime);
+}
+
+/* Convert a time_t to an RCS format date.  This is mainly for the
+   use of "cvs history", because the CVSROOT/history file contains
+   time_t format dates; most parts of CVS will want to avoid using
+   time_t's directly, and instead use RCS_datecmp, Make_Date, &c.
+   Assuming that the time_t is in GMT (as it generally should be),
+   then the result will be in GMT too.
+
+   Returns a newly malloc'd string.  */
+
+char *
+date_from_time_t (unixtime)
+    time_t unixtime;
+{
+    struct tm *ftm;
+    char date[MAXDATELEN];
+    char *ret;
 
     ftm = gmtime (&unixtime);
     if (ftm == NULL)
 	/* This is a system, like VMS, where the system clock is in local
 	   time.  Hopefully using localtime here matches the "zero timezone"
-	   hack I added to get_date.  */
+	   hack I added to get_date (get_date of course being the relevant
+	   issue for Make_Date, and for history.c too I think).  */
 	ftm = localtime (&unixtime);
 
     (void) sprintf (date, DATEFORM,

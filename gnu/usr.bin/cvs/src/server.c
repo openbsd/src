@@ -366,7 +366,8 @@ mkdir_p (dir)
 		int saved_errno = errno;
 
 		if (saved_errno != EEXIST
-		    && (saved_errno != EACCES || !isdir (q)))
+		    && ((saved_errno != EACCES && saved_errno != EROFS)
+			|| !isdir (q)))
 		{
 		    retval = saved_errno;
 		    goto done;
@@ -635,6 +636,18 @@ server_pathname_check (path)
        and is unlikely to do us any good here.  It also is probably capable
        of being a security hole in the anonymous readonly case.  */
     if (isabsolute (path))
+	/* Giving an error is actually kind of a cop-out, in the sense
+	   that it would be nice for "cvs co -d /foo/bar/baz" to work.
+	   A quick fix in the server would be requiring Max-dotdot of
+	   at least one if pathnames are absolute, and then putting
+	   /abs/foo/bar/baz in the temp dir beside the /d/d/d stuff.
+	   A cleaner fix in the server might be to decouple the
+	   pathnames we pass back to the client from pathnames in our
+	   temp directory (this would also probably remove the need
+	   for Max-dotdot).  A fix in the client would have the client
+	   turn it into "cd /foo/bar; cvs co -d baz" (more or less).
+	   This probably has some problems with pathnames which appear
+	   in messages.  */
 	error (1, 0, "absolute pathname `%s' illegal for server", path);
     if (pathname_levels (path) > max_dotdot_limit)
     {
@@ -2256,6 +2269,9 @@ error  \n");
 
     /* We shouldn't have any partial lines from cvs_output and
        cvs_outerr, but we handle them here in case there is a bug.  */
+    /* FIXME: appending a newline, rather than using "MT" as we
+       do in the child process, is probably not really a very good
+       way to "handle" them.  */
     if (! buf_empty_p (saved_output))
     {
 	buf_append_char (saved_output, '\n');
@@ -2325,6 +2341,19 @@ error  \n");
 	}
 
 	exitstatus = (*command) (argument_count, argument_vector);
+
+	/* Output any partial lines.  If the client doesn't support
+	   "MT", we just throw out the partial line, like old versions
+	   of CVS did, since the protocol can't support this.  */
+	if (supported_response ("MT") && ! buf_empty_p (saved_output))
+	{
+	    buf_output0 (protocol, "MT text ");
+	    buf_append_buffer (protocol, saved_output);
+	    buf_output (protocol, "\n", 1);
+	    buf_send_counted (protocol);
+	}
+	/* For now we just discard partial lines on stderr.  I suspect
+	   that CVS can't write such lines unless there is a bug.  */
 
 	/*
 	 * When we exit, that will close the pipes, giving an EOF to
@@ -2840,8 +2869,9 @@ server_register (name, version, timestamp, options, tag, date, conflict)
 	(void) fprintf (stderr,
 			"%c-> server_register(%s, %s, %s, %s, %s, %s, %s)\n",
 			(server_active) ? 'S' : ' ', /* silly */
-			name, version, timestamp, options, tag ? tag : "",
-			date ? date : "", conflict ? conflict : "");
+			name, version, timestamp ? timestamp : "", options,
+			tag ? tag : "", date ? date : "",
+			conflict ? conflict : "");
     }
 
     if (entries_line != NULL)
@@ -3078,7 +3108,7 @@ static void
 serve_status (arg)
     char *arg;
 {
-    do_cvs_command ("status", status);
+    do_cvs_command ("status", cvsstatus);
 }
 
 static void
@@ -3580,7 +3610,7 @@ CVS server internal error: unhandled case in server_updated");
 	if ((updated == SERVER_UPDATED
 	     || updated == SERVER_PATCHED
 	     || updated == SERVER_RCS_DIFF)
-	    && filebuf != NULL
+	    && filebuf == NULL
 	    /* But if we are joining, we'll need the file when we call
 	       join_file.  */
 	    && !joining ())
@@ -4782,25 +4812,23 @@ check_password (username, password, repository)
 	/* No cvs password found, so try /etc/passwd. */
 
 	const char *found_passwd = NULL;
-#ifdef HAVE_GETSPNAM
-	struct spwd *pw;
-
-	pw = getspnam (username);
-	if (pw != NULL)
-	{
-	    found_passwd = pw->sp_pwdp;
-	}
-#else
 	struct passwd *pw;
+#ifdef HAVE_GETSPNAM
+	struct spwd *spw;
 
-	pw = getpwnam (username);
-	if (pw != NULL)
+	spw = getspnam (username);
+	if (spw != NULL)
+	{
+	    found_passwd = spw->sp_pwdp;
+	}
+#endif
+
+	if (found_passwd == NULL && (pw = getpwnam (username)) != NULL)
 	{
 	    found_passwd = pw->pw_passwd;
 	}
-#endif
 	
-	if (pw == NULL)
+	if (found_passwd == NULL)
 	{
 	    printf ("E Fatal error, aborting.\n\
 error 0 %s: no such user\n", username);
@@ -4818,8 +4846,9 @@ error 0 %s: no such user\n", username);
 	    exit (EXIT_FAILURE);
 	}
 	
-	if (found_passwd && *found_passwd)
+	if (*found_passwd)
         {
+	    /* user exists and has a password */
 	    host_user = ((! strcmp (found_passwd,
                                     crypt (password, found_passwd)))
                          ? username : NULL);
@@ -4827,11 +4856,14 @@ error 0 %s: no such user\n", username);
         }
 	else if (password && *password)
         {
+	    /* user exists and has no system password, but we got
+	       one as parameter */
 	    host_user = username;
             goto handle_return;
         }
 	else
         {
+	    /* user exists but has no password at all */
 	    host_user = NULL;
             goto handle_return;
         }
@@ -5590,7 +5622,7 @@ cvs_output_binary (str, len)
 
 	if (error_use_protocol)
 	    buf = buf_to_net;
-	else if (server_active)
+	else
 	    buf = protocol;
 
 	if (!supported_response ("Mbinary"))
