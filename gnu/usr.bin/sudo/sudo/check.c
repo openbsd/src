@@ -1,4 +1,4 @@
-/*	$OpenBSD: check.c,v 1.11 1998/09/17 16:14:18 millert Exp $	*/
+/*	$OpenBSD: check.c,v 1.12 1998/11/13 22:44:33 millert Exp $	*/
 
 /*
  * CU sudo version 1.5.6 (based on Root Group sudo version 1.1)
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$From: check.c,v 1.142 1998/09/17 16:13:05 millert Exp $";
+static char rcsid[] = "$From: check.c,v 1.144 1998/09/18 05:29:26 millert Exp $";
 #endif /* lint */
 
 #include "config.h"
@@ -308,6 +308,7 @@ static int check_timestamp()
 		    timestamp_is_old = 2;	/* bogus time value */
 		    log_error(BAD_STAMPFILE);
 		    inform_user(BAD_STAMPFILE);
+		    remove_timestamp();
 		} else {
 		    timestamp_is_old = 0;	/* time value is reasonable */
 		}
@@ -748,7 +749,7 @@ static void pam_attempt_auth()
     int retval;
     register int counter = TRIES_FOR_PASSWORD;
 
-    /* printf("PAM Authentication\n"); */
+    set_perms(PERM_ROOT, 0);
     retval = pam_start("sudo", user_name, &conv, &pamh);
     if (retval != PAM_SUCCESS) {
         pam_end(pamh, retval);

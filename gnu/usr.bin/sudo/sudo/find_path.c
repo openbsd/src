@@ -1,4 +1,4 @@
-/*	$OpenBSD: find_path.c,v 1.6 1998/09/15 02:42:44 millert Exp $	*/
+/*	$OpenBSD: find_path.c,v 1.7 1998/11/13 22:44:34 millert Exp $	*/
 
 /*
  *  CU sudo version 1.5.6
@@ -116,18 +116,10 @@ char * find_path(file)
     /*
      * If we were given a fully qualified or relative path
      * there is no need to look at PATH.
-     * We really want to fall back if !sudo_goodpath() but then
-     * the error is "not found" -- this way we get the correct error.
      */
     if (strchr(file, '/')) {
 	(void) strcpy(command, file);
-	if (sudo_goodpath(command)) {
-	    return(command);
-	} else {
-	    (void) fprintf(stderr, "%s: %s: ", Argv[0], command);
-	    perror("");
-	    exit(1);
-	}
+	return(sudo_goodpath(command));
     }
 
     /*

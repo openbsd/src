@@ -1,4 +1,4 @@
-/*	$OpenBSD: getspwuid.c,v 1.6 1998/09/15 02:42:44 millert Exp $	*/
+/*	$OpenBSD: getspwuid.c,v 1.7 1998/11/13 22:44:34 millert Exp $	*/
 
 /*
  *  CU sudo version 1.5.6
@@ -184,7 +184,7 @@ static char *sudo_getspwd(pw_ent)
 {
     struct pr_passwd *spw_ent;
 
-    if ((spw_ent = getprpwuid(pw_ent->pw_uid)) && spw_ent->ufld.fd_encrypt) {
+    if ((spw_ent = getprpwnam(pw_ent->pw_name)) && spw_ent->ufld.fd_encrypt) {
 #    ifdef __alpha
 	crypt_type = spw_ent -> ufld.fd_oldcrypt;
 #      ifdef AUTH_CRYPT_C1CRYPT

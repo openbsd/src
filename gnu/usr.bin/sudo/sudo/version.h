@@ -1,4 +1,4 @@
-/*	$OpenBSD: version.h,v 1.6 1998/09/15 02:42:45 millert Exp $	*/
+/*	$OpenBSD: version.h,v 1.7 1998/11/13 22:44:34 millert Exp $	*/
 
 /*
  *  CU sudo version 1.5.6
@@ -25,6 +25,6 @@
 #ifndef _SUDO_VERSION_H
 #define _SUDO_VERSION_H
 
-static char version[] = "1.5.6";
+static char version[] = "1.5.6p6";
 
 #endif /* _SUDO_VERSION_H */
