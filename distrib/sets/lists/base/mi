@@ -2083,6 +2083,7 @@
 ./usr/share/pf/queue3
 ./usr/share/sendmail
 ./usr/share/sendmail/README
+./usr/share/sendmail/TUNING
 ./usr/share/sendmail/cf
 ./usr/share/sendmail/cf/Makefile
 ./usr/share/sendmail/cf/chez.cs.mc
