@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_mutex_lock.3,v 1.6 2002/02/21 20:12:19 fgsch Exp $
+.\" $OpenBSD: pthread_mutex_lock.3,v 1.7 2005/02/09 19:33:24 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Brian Cully <shmit@kublai.com>
 .\" All rights reserved.
@@ -55,6 +55,10 @@ indicate the error.
 .Fn pthread_mutex_lock
 will fail if:
 .Bl -tag -width Er
+.It Bq Er EBUSY
+Currently
+.Fa mutex
+is locked by another thread.
 .It Bq Er EINVAL
 The value specified by
 .Fa mutex
