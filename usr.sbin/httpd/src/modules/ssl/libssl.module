@@ -282,7 +282,7 @@ ConfigStart
     #   determine SSL_BASE
     #
     if [ ".$SSL_BASE" = . ]; then
-        SSL_BASE=`egrep '^SSL_BASE=' $file | tail -1 | awk -F= '{print $2}'`
+        SSL_BASE=`egrep '^SSL_BASE=' $file | sed -n -e '$p' | awk -F= '{print $2}'`
         if [ ".$SSL_BASE" = . ]; then
             if [ -d /usr/local/ssl ]; then
                 SSL_BASE="/usr/local/ssl"

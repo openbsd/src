@@ -443,10 +443,6 @@ static int ssl_io_hook_writev(BUFF *fb, const struct iovec *iov, int iovcnt)
 
 #ifdef WIN32
 
-/* these two functions are exported from buff.c under WIN32 */
-API_EXPORT(int) sendwithtimeout(int sock, const char *buf, int len, int flags);
-API_EXPORT(int) recvwithtimeout(int sock, char *buf, int len, int flags);
-
 /* and the prototypes for our SSL_xxx variants */
 static int SSL_sendwithtimeout(BUFF *fb, const char *buf, int len);
 static int SSL_recvwithtimeout(BUFF *fb, char *buf, int len);
@@ -459,7 +455,7 @@ static int ssl_io_hook_recvwithtimeout(BUFF *fb, char *buf, int len)
     if ((ssl = ap_ctx_get(fb->ctx, "ssl")) != NULL)
         rc = SSL_recvwithtimeout(fb, buf, len);
     else
-        rc = recvwithtimeout(fb->fd, buf, len, 0);
+        rc = ap_recvwithtimeout(fb->fd, buf, len, 0);
     return rc;
 }
 
@@ -471,7 +467,7 @@ static int ssl_io_hook_sendwithtimeout(BUFF *fb, const char *buf, int len)
     if ((ssl = ap_ctx_get(fb->ctx, "ssl")) != NULL)
         rc = SSL_sendwithtimeout(fb, buf, len);
     else
-        rc = sendwithtimeout(fb->fd, buf, len, 0);
+        rc = ap_sendwithtimeout(fb->fd, buf, len, 0);
     return rc;
 }
 

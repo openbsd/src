@@ -239,7 +239,7 @@ static char *ssl_expr_eval_func_file(request_rec *r, char *filename)
         *buf = NUL;
     }
     else {
-        if ((buf = (char *)ap_palloc(r->pool, sizeof(char) * len+1)) == NULL) {
+        if ((buf = (char *)ap_palloc(r->pool, sizeof(char) * (len+1))) == NULL) {
             ssl_expr_error = "Cannot allocate memory";
             ap_pfclose(r->pool, fp);
             return "";

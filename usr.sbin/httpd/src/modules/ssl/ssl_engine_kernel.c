@@ -1835,7 +1835,11 @@ void ssl_callback_DelSessionCacheEntry(
  * SSL handshake and does SSL record layer stuff. We use it to
  * trace OpenSSL's processing in out SSL logfile.
  */
+#if SSL_LIBRARY_VERSION >= 0x00907000
+void ssl_callback_LogTracingState(const SSL *ssl, int where, int rc)
+#else
 void ssl_callback_LogTracingState(SSL *ssl, int where, int rc)
+#endif
 {
     conn_rec *c;
     server_rec *s;
@@ -1845,7 +1849,7 @@ void ssl_callback_LogTracingState(SSL *ssl, int where, int rc)
     /*
      * find corresponding server
      */
-    if ((c = (conn_rec *)SSL_get_app_data(ssl)) == NULL)
+    if ((c = (conn_rec *)SSL_get_app_data((SSL *)ssl)) == NULL)
         return;
     s = c->server;
     if ((sc = mySrvConfig(s)) == NULL)

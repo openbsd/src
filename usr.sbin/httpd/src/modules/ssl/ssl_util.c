@@ -258,7 +258,7 @@ int ssl_util_ppopen_child(void *cmd, child_info *pinfo)
     spawnl(P_NOWAIT, SHELL_PATH, SHELL_PATH, "/c", (char *)cmd, NULL);
 #else
     /* Standard Unix */
-    execl(SHELL_PATH, SHELL_PATH, "-c", (char *)cmd, (char *)NULL);
+    execl(SHELL_PATH, SHELL_PATH, "-c", (char *)cmd, NULL);
 #endif
     return (child_pid);
 }
@@ -431,6 +431,18 @@ void ssl_util_thread_setup(void)
         lock_cs[i] = CreateMutex(NULL, FALSE, NULL);
     CRYPTO_set_locking_callback((void(*)(int, int, const char *, int))
                                 win32_locking_callback);
+#endif /* WIN32 */
+    return;
+}
+
+void ssl_util_thread_cleanup(void)
+{
+#ifdef WIN32
+    int i;
+
+    CRYPTO_set_locking_callback(NULL);
+    for (i = 0; i < CRYPTO_NUM_LOCKS; i++)
+        CloseHandle(lock_cs[i]);
 #endif /* WIN32 */
     return;
 }

@@ -123,7 +123,7 @@ void ssl_init_Module(server_rec *s, pool *p)
     SSLSrvConfigRec *sc;
     server_rec *s2;
     char *cp;
-#ifdef __OpenBSD__    
+#ifdef __OpenBSD__
     int SSLenabled = 0;
 #endif
 
@@ -257,11 +257,11 @@ void ssl_init_Module(server_rec *s, pool *p)
 #ifdef __OpenBSD__
     for (s2 = s; s2 != NULL; s2 = s2->next) {
         sc = mySrvConfig(s2);
-	/* find out if anyone's actually doing ssl */
+       /* find out if anyone's actually doing SSL */
         if (sc->bEnabled)
             SSLenabled = 1;
     }
-    if (SSLenabled) /* skip expensive bits if we're not doing ssl */
+    if (SSLenabled) /* skip expensive bits if we're not doing SSL */
       ssl_init_TmpKeysHandle(SSL_TKP_GEN, s, p);
 #endif
 
@@ -296,15 +296,14 @@ void ssl_init_Module(server_rec *s, pool *p)
     /*
      *  allocate the temporary RSA keys and DH params
      */
-#ifdef __OpenBSD__    
-    if (SSLenabled)  /* skip expensive bits if we're not doing ssl */
+#ifdef __OpenBSD__
+    if (SSLenabled)  /* skip expensive bits if we're not doing SSL */
 #endif
     ssl_init_TmpKeysHandle(SSL_TKP_ALLOC, s, p);
 
     /*
      *  initialize servers
      */
-
     ssl_log(s, SSL_LOG_INFO, "Init: Initializing (virtual) servers for SSL");
     for (s2 = s; s2 != NULL; s2 = s2->next) {
         sc = mySrvConfig(s2);
@@ -406,13 +405,9 @@ void ssl_init_TmpKeysHandle(int action, server_rec *s, pool *p)
         /* generate 512 bit RSA key */
         ssl_log(s, SSL_LOG_INFO, "Init: Generating temporary RSA private keys (512/1024 bits)");
         if ((rsa = RSA_generate_key(512, RSA_F4, NULL, NULL)) == NULL) {
-            ssl_log(s, SSL_LOG_ERROR, "Init: Failed to generate temporary 512 bit RSA private key");
-#if 0
+            ssl_log(s, SSL_LOG_ERROR|SSL_ADD_SSLERR, 
+                    "Init: Failed to generate temporary 512 bit RSA private key");
             ssl_die();
-#else
-	    ssl_log(s, SSL_LOG_ERROR, "Init: You probably have no RSA support in libcrypto. See ssl(8)");
-	    return;
-#endif
         }
         asn1 = (ssl_asn1_t *)ssl_ds_table_push(mc->tTmpKeys, "RSA:512");
         asn1->nData  = i2d_RSAPrivateKey(rsa, NULL);
@@ -422,7 +417,8 @@ void ssl_init_TmpKeysHandle(int action, server_rec *s, pool *p)
 
         /* generate 1024 bit RSA key */
         if ((rsa = RSA_generate_key(1024, RSA_F4, NULL, NULL)) == NULL) {
-            ssl_log(s, SSL_LOG_ERROR, "Init: Failed to generate temporary 1024 bit RSA private key");
+            ssl_log(s, SSL_LOG_ERROR|SSL_ADD_SSLERR, 
+                    "Init: Failed to generate temporary 1024 bit RSA private key");
             ssl_die();
         }
         asn1 = (ssl_asn1_t *)ssl_ds_table_push(mc->tTmpKeys, "RSA:1024");
@@ -786,7 +782,8 @@ void ssl_init_ConfigureServer(server_rec *s, pool *p, SSLSrvConfigRec *sc)
             }
             if (SSL_X509_getCN(p, sc->pPublicCert[i], &cp)) {
                 if (ap_is_fnmatch(cp) &&
-                    !ap_fnmatch(cp, s->server_hostname, FNM_PERIOD|FNM_CASE_BLIND)) {
+                    ap_fnmatch(cp, s->server_hostname, 
+                               FNM_PERIOD|FNM_CASE_BLIND) == FNM_NOMATCH) {
                     ssl_log(s, SSL_LOG_WARN,
                         "Init: (%s) %s server certificate wildcard CommonName (CN) `%s' "
                         "does NOT match server name!?", cpVHostID, 
@@ -1107,6 +1104,8 @@ void ssl_init_ModuleKill(void *data)
     ERR_remove_state(0);
     EVP_cleanup();
 #endif
+
+    ssl_util_thread_cleanup();
 
     return;
 }

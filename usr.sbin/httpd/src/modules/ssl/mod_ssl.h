@@ -720,7 +720,11 @@ int          ssl_callback_SSLVerify_CRL(int, X509_STORE_CTX *, server_rec *);
 int          ssl_callback_NewSessionCacheEntry(SSL *, SSL_SESSION *);
 SSL_SESSION *ssl_callback_GetSessionCacheEntry(SSL *, unsigned char *, int, int *);
 void         ssl_callback_DelSessionCacheEntry(SSL_CTX *, SSL_SESSION *);
+#if SSL_LIBRARY_VERSION >= 0x00907000
+void         ssl_callback_LogTracingState(const SSL *, int, int);
+#else
 void         ssl_callback_LogTracingState(SSL *, int, int);
+#endif
 
 /*  Session Cache Support  */
 void         ssl_scache_init(server_rec *, pool *);
@@ -839,6 +843,7 @@ ssl_algo_t   ssl_util_algotypeof(X509 *, EVP_PKEY *);
 char        *ssl_util_algotypestr(ssl_algo_t);
 char        *ssl_util_ptxtsub(pool *, const char *, const char *, char *);
 void         ssl_util_thread_setup(void);
+void         ssl_util_thread_cleanup(void);
 
 /*  Vendor extension support  */
 #if defined(SSL_VENDOR) && defined(SSL_VENDOR_OBJS)

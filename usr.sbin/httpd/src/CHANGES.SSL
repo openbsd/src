@@ -23,6 +23,18 @@
       / __/ | (_) |
   __ |_____(_)___/ ___________________________________________
               
+  Changes with mod_ssl 2.8.7 (01-Feb-2002 to 23-Feb-2002)
+
+   *) Support for the latest OpenSSL 0.9.7 snapshots.
+
+   *) Fixed potential buffer overflow in DBM and SHMHT session
+      cache if very very large certificate chains are used. 
+
+   *) Compliance with POSIX 1003.1-2001 (SUSv3) by replacing obsolete
+      "head -1" and "tail -1" constructs with sed variants in scripts.
+
+   *) Fixed file descriptor leakage under Win32.
+
   Changes with mod_ssl 2.8.6 (16-Oct-2001 to 01-Feb-2002)
 
    *) Upgraded to Apache 1.3.23

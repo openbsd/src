@@ -86,6 +86,7 @@ int ssl_rand_seed(server_rec *s, pool *p, ssl_rsctx_t nCtx, char *prefix)
     int i, n, l;
     time_t t;
     pid_t pid;
+    int m;
 
     mc = myModConfig();
     nReq  = 0;
@@ -151,12 +152,13 @@ int ssl_rand_seed(server_rec *s, pool *p, ssl_rsctx_t nCtx, char *prefix)
                 nDone += 128;
 
                 /*
-                 * seed in an 1KB extract of the current scoreboard
+                 * seed in extract data from the current scoreboard
                  */
-                if (ap_scoreboard_image != NULL) {
-                    n = ssl_rand_choosenum(0, SCOREBOARD_SIZE-1024-1);
-                    RAND_seed((unsigned char *)ap_scoreboard_image+n, 1024);
-                    nDone += 1024;
+                if (ap_scoreboard_image != NULL && SCOREBOARD_SIZE > 16) {
+                    m = ((SCOREBOARD_SIZE / 2) - 1);
+                    n = ssl_rand_choosenum(0, m);
+                    RAND_seed(((unsigned char *)ap_scoreboard_image)+n, m);
+                    nDone += m;
                 }
             }
         }

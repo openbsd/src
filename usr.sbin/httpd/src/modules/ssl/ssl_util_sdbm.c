@@ -499,14 +499,17 @@ register long dbit;
 {
         register long c;
         register long dirb;
+        int got;
 
         c = dbit / BYTESIZ;
         dirb = c / DBLKSIZ;
 
         if (dirb != db->dirbno) {
                 if (lseek(db->dirf, OFF_DIR(dirb), SEEK_SET) < 0
-                    || read(db->dirf, db->dirbuf, DBLKSIZ) < 0)
+                    || (got = read(db->dirf, db->dirbuf, DBLKSIZ)) < 0)
                         return 0;
+                if (got == 0) 
+                        memset(db->dirbuf, 0, DBLKSIZ);
                 db->dirbno = dirb;
 
                 debug(("dir read: %d\n", dirb));
@@ -522,14 +525,17 @@ register long dbit;
 {
         register long c;
         register long dirb;
+        int got;
 
         c = dbit / BYTESIZ;
         dirb = c / DBLKSIZ;
 
         if (dirb != db->dirbno) {
                 if (lseek(db->dirf, OFF_DIR(dirb), SEEK_SET) < 0
-                    || read(db->dirf, db->dirbuf, DBLKSIZ) < 0)
+                    || (got = read(db->dirf, db->dirbuf, DBLKSIZ)) < 0)
                         return 0;
+                if (got == 0) 
+                        memset(db->dirbuf, 0, DBLKSIZ);
                 db->dirbno = dirb;
 
                 debug(("dir read: %d\n", dirb));
@@ -537,8 +543,13 @@ register long dbit;
 
         db->dirbuf[c % DBLKSIZ] |= (1 << dbit % BYTESIZ);
 
+#if 0
         if (dbit >= db->maxbno)
                 db->maxbno += DBLKSIZ * BYTESIZ;
+#else
+        if (OFF_DIR((dirb+1))*BYTESIZ > db->maxbno) 
+                db->maxbno = OFF_DIR((dirb+1)) * BYTESIZ;
+#endif
 
         if (lseek(db->dirf, OFF_DIR(dirb), SEEK_SET) < 0
             || write(db->dirf, db->dirbuf, DBLKSIZ) < 0)

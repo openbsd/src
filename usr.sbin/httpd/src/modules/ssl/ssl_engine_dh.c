@@ -103,7 +103,7 @@ static unsigned char dh512_g[] =
     0x02,
 };
 
-static DH *get_dh512()
+static DH *get_dh512(void)
 {
     DH *dh;
 
@@ -134,7 +134,7 @@ static unsigned char dh1024_g[] =
     0x02,
 };
 
-static DH *get_dh1024()
+static DH *get_dh1024(void)
 {
     DH *dh;
 
@@ -227,10 +227,10 @@ $dhinfo = "\n\/\*\n$dhinfo\*\/\n\n";
 
 #   generate C source from DH params
 my $dhsource = '';
-open(FP, "openssl dh -noout -C -in dh512.pem | indent | expand -8 |") || die;
+open(FP, "openssl dh -noout -C -in dh512.pem | indent | expand |") || die;
 $dhsource .= $_ while (<FP>);
 close(FP);
-open(FP, "openssl dh -noout -C -in dh1024.pem | indent | expand -8 |") || die;
+open(FP, "openssl dh -noout -C -in dh1024.pem | indent | expand |") || die;
 $dhsource .= $_ while (<FP>);
 close(FP);
 $dhsource =~ s|(DH\s+\*get_dh)|static $1|sg;
