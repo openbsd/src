@@ -1,4 +1,4 @@
-$OpenBSD: eisadevs,v 1.7 1997/07/25 17:40:06 deraadt Exp $
+$OpenBSD: eisadevs,v 1.8 1998/05/16 04:03:16 imp Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -39,6 +39,7 @@ vendor ADP		Adaptec
 vendor AMI		AMI
 vendor BUS		BusLogic
 vendor DEC		Digital Equipment
+vendor DTI		DeskStation Technology, Inc.
 vendor FSI		FORE Systems
 vendor INT		Intel
 vendor ETI		Microdyne
@@ -73,6 +74,9 @@ product DEC 3001	DEFEA FDDI Controller
 product DEC 3002	DEFEA FDDI Controller
 product DEC 3003	DEFEA FDDI Controller
 product DEC 3004	DEFEA FDDI Controller
+
+/* DeskStation Technology, Inc. products */
+product DTI 0000	Evolution RISC PC
 
 /* FORE Systems products */
 product FSI 2001	ESA-200 ATM
