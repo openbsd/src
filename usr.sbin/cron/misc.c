@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.32 2004/07/09 16:22:02 deraadt Exp $	*/
+/*	$OpenBSD: misc.c,v 1.33 2004/07/22 16:36:28 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: misc.c,v 1.32 2004/07/09 16:22:02 deraadt Exp $";
+static char const rcsid[] = "$OpenBSD: misc.c,v 1.33 2004/07/22 16:36:28 millert Exp $";
 #endif
 
 /* vix 26jan87 [RCS has the rest of the log]
@@ -770,27 +770,26 @@ poke_daemon(const char *spool_dir, unsigned char cookie) {
 	int sock = -1;
 	struct sockaddr_un s_un;
 
-	if (utime(spool_dir, NULL) < 0) {
-		fprintf(stderr, "%s: unable to update mtime on %s\n",
-		    ProgramName, spool_dir);
-		return;
-	}
+	(void) utime(spool_dir, NULL);		/* old poke method */
 
 	if (snprintf(s_un.sun_path, sizeof s_un.sun_path, "%s/%s",
-	    SPOOL_DIR, CRONSOCK) >= sizeof(s_un.sun_path)) {
-		s_un.sun_family = AF_UNIX;
-#ifdef SUN_LEN
-		s_un.sun_len = SUN_LEN(&s_un);
-#endif
-		(void) signal(SIGPIPE, SIG_IGN);
-		if ((sock = socket(AF_UNIX, SOCK_STREAM, 0)) >= 0 &&
-		    connect(sock, (struct sockaddr *)&s_un, sizeof(s_un)) == 0)
-			write(sock, &cookie, 1);
-		else
-			fprintf(stderr, "%s: warning, cron does not appear to be "
-			    "running.\n", ProgramName);
-		if (sock >= 0)
-			close(sock);
-		(void) signal(SIGPIPE, SIG_DFL);
+	      SPOOL_DIR, CRONSOCK) >= sizeof(s_un.sun_path)) {
+		fprintf(stderr, "%s: %s/%s: path too long\n",
+		    ProgramName, SPOOL_DIR, CRONSOCK);
+		return;
 	}
+	s_un.sun_family = AF_UNIX;
+#ifdef SUN_LEN
+	s_un.sun_len = SUN_LEN(&s_un);
+#endif
+	(void) signal(SIGPIPE, SIG_IGN);
+	if ((sock = socket(AF_UNIX, SOCK_STREAM, 0)) >= 0 &&
+	    connect(sock, (struct sockaddr *)&s_un, sizeof(s_un)) == 0)
+		write(sock, &cookie, 1);
+	else
+		fprintf(stderr, "%s: warning, cron does not appear to be "
+		    "running.\n", ProgramName);
+	if (sock >= 0)
+		close(sock);
+	(void) signal(SIGPIPE, SIG_DFL);
 }
