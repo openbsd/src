@@ -1,12 +1,12 @@
-/*	$OpenBSD: miidevs.h,v 1.2 1998/09/10 17:25:10 jason Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.3 1998/11/11 03:40:41 jason Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.1 1998/09/10 17:17:33 jason Exp 
+ *	OpenBSD: miidevs,v 1.2 1998/11/11 03:39:41 jason Exp 
  */
-/* $NetBSD: miidevs,v 1.1 1998/08/10 23:55:17 thorpej Exp $ */
+/* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -49,6 +49,7 @@
  * List of known MII OUIs
  */
 
+#define	MII_OUI_AMD	0x00606e	/* Advanced Micro Devices */
 #define	MII_OUI_ICS	0x00057d	/* Integrated Circuit Systems */
 #define	MII_OUI_INTEL	0x00aa00	/* Intel */
 #define	MII_OUI_LEVEL1	0x1e0400	/* Level 1 */
@@ -60,6 +61,10 @@
 /*
  * List of known models.  Grouped by oui.
  */
+
+/* Advanced Micro Devices PHYs */
+#define	MII_MODEL_AMD_79C873	0x0000
+#define	MII_STR_AMD_79C873	"Am79C873 10/100 media interface"
 
 /* Integrated Circuit Systems PHYs */
 #define	MII_MODEL_ICS_1890	0x0002
@@ -86,6 +91,8 @@
 /* Seeq PHYs */
 #define	MII_MODEL_SEEQ_80220	0x0003
 #define	MII_STR_SEEQ_80220	"Seeq 80220 10/100 media interface"
+#define	MII_MODEL_SEEQ_84220	0x0004
+#define	MII_STR_SEEQ_84220	"Seeq 84220 10/100 media interface"
 
 /* Texas Instruments PHYs */
 #define	MII_MODEL_TI_TLAN10T	0x0001
