@@ -1,4 +1,4 @@
-.\"	$OpenBSD: test.1,v 1.7 1998/09/14 22:14:00 aaron Exp $
+.\"	$OpenBSD: test.1,v 1.8 1998/09/19 14:40:26 aaron Exp $
 .\"	$NetBSD: test.1,v 1.6 1995/03/21 07:04:03 cgd Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@
 .Os
 .Sh NAME
 .Nm test
-.Nd Condition evaluation utility.
+.Nd condition evaluation utility
 .Sh SYNOPSIS
 .Nm test
 .Ar expression
@@ -52,10 +52,14 @@
 .Sh DESCRIPTION
 The
 .Nm test
-utility evaluates the expression and, if it evaluates
+utility evaluates the
+.Ar expression
+and, if it evaluates
 to true, returns a zero (true) exit status; otherwise
 it returns 1 (false).
-If there is no expression,
+If no
+.Ar expression
+is given,
 .Nm
 also
 returns 1 (false).
@@ -64,7 +68,8 @@ All operators and flags are separate arguments to the
 .Nm test
 utility.
 .Pp
-The following primaries are used to construct expression:
+The following primaries are used to construct
+.Ar expression :
 .Bl -tag -width Ar
 .It Fl b Ar file
 True if
@@ -281,7 +286,9 @@ or
 .Ar expression2
 are true.
 .It Cm \&( Ns Ar expression Ns Cm \&)
-True if expression is true.
+True if
+.Ar expression
+is true.
 .El
 .Pp
 The
