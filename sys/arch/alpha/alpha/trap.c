@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.7 1997/02/03 13:09:16 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.8 1997/02/06 12:13:37 niklas Exp $	*/
 /*	$NetBSD: trap.c,v 1.19 1996/11/27 01:28:30 cgd Exp $	*/
 
 /*
@@ -135,6 +135,7 @@ trap(a0, a1, a2, entry, framep)
 	u_int64_t ucode;
 	u_quad_t sticks;
 	int user;
+	int typ;
 
 	cnt.v_trap++;
 	p = curproc;
@@ -189,7 +190,7 @@ trap(a0, a1, a2, entry, framep)
 		 */
 		if (user) {
 sigfpe:			i = SIGFPE;
-			vv = ucode = a0;	/* exception summary */
+			ucode = a0;		/* exception summary */
 			typ = FPE_FLTINV;	/* XXX? */
 			break;
 		}
@@ -415,7 +416,7 @@ panic("foo");
 		goto dopanic;
 	}
 
-	trapsignal(p, i, ucode, typ, ucode);
+	trapsignal(p, i, ucode, typ, (union sigval)ucode);
 out:
 	if (user)
 		userret(p, framep->tf_regs[FRAME_PC], sticks);
@@ -880,6 +881,7 @@ unaligned_fixup(va, opcode, reg, p)
 		{ "stl",	4 },	{ "stq",	8 },
 		{ "stl_c",	0 },	{ "stq_c",	0 },	/* can't fix */
 	};
+	int typ;
 
 	/*
 	 * Figure out what actions to take.
