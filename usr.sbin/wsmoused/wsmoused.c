@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmoused.c,v 1.6 2001/11/02 16:19:48 deraadt Exp $ */
+/* $OpenBSD: wsmoused.c,v 1.7 2001/12/09 14:58:27 miod Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -412,7 +412,7 @@ wsmoused(void)
 	res = ioctl(mouse.cfd, WSDISPLAYIO_WSMOUSED, &event);
 	if (res != 0) {
 		/* the display driver has no getchar() method */
-		errx(1, "this display driver has no support for wsmoused\n");
+		logerr(1, "this display driver has no support for wsmoused");
 	}
     
 	bzero(&action, sizeof(action));
@@ -524,6 +524,9 @@ main(int argc, char **argv)
 		/* default is /dev/wsmouse */
 		mouse.portname = WSMOUSE_DEV;
 		
+	if (!nodaemon)
+		openlog(__progname, LOG_PID, LOG_DAEMON);
+
 	for (;;) {
 		signal(SIGINT , terminate);
 		signal(SIGQUIT, terminate);
