@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.66 2004/01/31 21:09:15 henning Exp $ */
+/* $OpenBSD: netcat.c,v 1.67 2004/02/20 10:53:10 jmc Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -63,7 +63,7 @@
 int	iflag;					/* Interval Flag */
 int	kflag;					/* More than one connect */
 int	lflag;					/* Bind to local port */
-int	nflag;					/* Dont do name lookup */
+int	nflag;					/* Don't do name look up */
 char   *pflag;					/* Localport flag */
 int	rflag;					/* Random ports flag */
 char   *sflag;					/* Source Address */
@@ -216,7 +216,7 @@ main(int argc, char *argv[])
 	if (!lflag && kflag)
 		errx(1, "must use -l with -k");
 
-	/* Initialize addrinfo structure */
+	/* Initialize addrinfo structure. */
 	if (family != AF_UNIX) {
 		memset(&hints, 0, sizeof(struct addrinfo));
 		hints.ai_family = family;
@@ -261,7 +261,7 @@ main(int argc, char *argv[])
 		if (family == AF_UNIX)
 			s = unix_listen(host);
 
-		/* Allow only one connection at a time, but stay alive */
+		/* Allow only one connection at a time, but stay alive. */
 		for (;;) {
 			if (family != AF_UNIX)
 				s = local_listen(host, uport, hints);
@@ -315,10 +315,10 @@ main(int argc, char *argv[])
 	} else {
 		int i = 0;
 
-		/* construct the portlist[] array */
+		/* Construct the portlist[] array. */
 		build_ports(uport);
 
-		/* Cycle through portlist, connecting to each port */
+		/* Cycle through portlist, connecting to each port. */
 		for (i = 0; portlist[i] != NULL; i++) {
 			if (s)
 				close(s);
@@ -334,7 +334,7 @@ main(int argc, char *argv[])
 
 			ret = 0;
 			if (vflag || zflag) {
-				/* For UDP, make sure we are connected */
+				/* For UDP, make sure we are connected. */
 				if (uflag) {
 					if (udptest(s) == -1) {
 						ret = 1;
@@ -342,7 +342,7 @@ main(int argc, char *argv[])
 					}
 				}
 
-				/* Don't lookup port if -n */
+				/* Don't look up port if -n. */
 				if (nflag)
 					sv = NULL;
 				else {
@@ -368,7 +368,7 @@ main(int argc, char *argv[])
 
 /*
  * unix_connect()
- * Return's a socket connected to a local unix socket. Return's -1 on failure.
+ * Returns a socket connected to a local unix socket. Returns -1 on failure.
  */
 int
 unix_connect(char *path)
@@ -399,7 +399,7 @@ unix_connect(char *path)
 
 /*
  * unix_listen()
- * create a unix domain socket, and listen on it.
+ * Create a unix domain socket, and listen on it.
  */
 int
 unix_listen(char *path)
@@ -407,7 +407,7 @@ unix_listen(char *path)
 	struct sockaddr_un sun;
 	int s;
 
-	/* create unix domain socket */
+	/* Create unix domain socket. */
 	if ((s = socket(AF_UNIX, SOCK_STREAM, 0)) < 0)
 		return (-1);
 
@@ -435,8 +435,8 @@ unix_listen(char *path)
 
 /*
  * remote_connect()
- * Return's a socket connected to a remote host. Properly bind's to a local
- * port or source address if needed. Return's -1 on failure.
+ * Returns a socket connected to a remote host. Properly binds to a local
+ * port or source address if needed. Returns -1 on failure.
  */
 int
 remote_connect(char *host, char *port, struct addrinfo hints)
@@ -453,7 +453,7 @@ remote_connect(char *host, char *port, struct addrinfo hints)
 		    res0->ai_protocol)) < 0)
 			continue;
 
-		/* Bind to a local port or source address if specified */
+		/* Bind to a local port or source address if specified. */
 		if (sflag || pflag) {
 			struct addrinfo ahints, *ares;
 
@@ -497,8 +497,8 @@ remote_connect(char *host, char *port, struct addrinfo hints)
 
 /*
  * local_listen()
- * Return's a socket listening on a local port, binds to specified source
- * address. Return's -1 on failure.
+ * Returns a socket listening on a local port, binds to specified source
+ * address. Returns -1 on failure.
  */
 int
 local_listen(char *host, char *port, struct addrinfo hints)
@@ -507,7 +507,7 @@ local_listen(char *host, char *port, struct addrinfo hints)
 	int s, ret, x = 1;
 	int error;
 
-	/* Allow nodename to be null */
+	/* Allow nodename to be null. */
 	hints.ai_flags |= AI_PASSIVE;
 
 	/*
@@ -570,7 +570,7 @@ readwrite(int nfd)
 	pfd[0].fd = nfd;
 	pfd[0].events = POLLIN;
 
-	/* Setup STDIN FD */
+	/* Set up STDIN FD. */
 	pfd[1].fd = wfd;
 	pfd[1].events = POLLIN;
 
@@ -620,7 +620,7 @@ readwrite(int nfd)
 	}
 }
 
-/* Deal with RFC854 WILL/WONT DO/DONT negotiation */
+/* Deal with RFC 854 WILL/WONT DO/DONT negotiation. */
 void
 atelnet(int nfd, unsigned char *buf, unsigned int size)
 {
@@ -657,7 +657,7 @@ atelnet(int nfd, unsigned char *buf, unsigned int size)
 /*
  * build_ports()
  * Build an array or ports in portlist[], listing each port
- * that we should try to connect too.
+ * that we should try to connect to.
  */
 void
 build_ports(char *p)
@@ -673,7 +673,7 @@ build_ports(char *p)
 		*n = '\0';
 		n++;
 
-		/* Make sure the ports are in order: lowest->highest */
+		/* Make sure the ports are in order: lowest->highest. */
 		hi = (int)strtoul(n, &endp, 10);
 		if (hi <= 0 || hi > PORT_MAX || *endp != '\0')
 			errx(1, "port range not valid");
@@ -687,7 +687,7 @@ build_ports(char *p)
 			lo = cp;
 		}
 
-		/* Load ports sequentially */
+		/* Load ports sequentially. */
 		for (cp = lo; cp <= hi; cp++) {
 			portlist[x] = calloc(1, PORT_MAX_LEN);
 			if (portlist[x] == NULL)
@@ -696,7 +696,7 @@ build_ports(char *p)
 			x++;
 		}
 
-		/* Randomly swap ports */
+		/* Randomly swap ports. */
 		if (rflag) {
 			int y;
 			char *c;
@@ -722,7 +722,7 @@ build_ports(char *p)
 /*
  * udptest()
  * Do a few writes to see if the UDP port is there.
- * XXX - Better way of doing this? Doesn't work for IPv6
+ * XXX - Better way of doing this? Doesn't work for IPv6.
  * Also fails after around 100 ports checked.
  */
 int
@@ -746,9 +746,6 @@ help(void)
 	fprintf(stderr, "\tCommand Summary:\n\
 	\t-4		Use IPv4\n\
 	\t-6		Use IPv6\n\
-	\t-S		Enable the TCP MD5 signature option\n\
-	\t-U		Use UNIX domain socket\n\
-	\t-X vers\t	SOCKS version (4 or 5)\n\
 	\t-h		This help text\n\
 	\t-i secs\t	Delay interval for lines sent, ports scanned\n\
 	\t-k		Keep inbound sockets open for multiple connects\n\
@@ -756,11 +753,14 @@ help(void)
 	\t-n		Suppress name/port resolutions\n\
 	\t-p port\t	Specify local port for remote connects\n\
 	\t-r		Randomize remote ports\n\
+	\t-S		Enable the TCP MD5 signature option\n\
 	\t-s addr\t	Local source address\n\
 	\t-t		Answer TELNET negotiation\n\
+	\t-U		Use UNIX domain socket\n\
 	\t-u		UDP mode\n\
 	\t-v		Verbose\n\
 	\t-w secs\t	Timeout for connects and final net reads\n\
+	\t-X vers\t	SOCKS version (4 or 5)\n\
 	\t-x addr[:port]\tSpecify socks proxy address and port\n\
 	\t-z		Zero-I/O mode [used for scanning]\n\
 	Port numbers can be individual or ranges: lo-hi [inclusive]\n");
@@ -770,9 +770,9 @@ help(void)
 void
 usage(int ret)
 {
-	fprintf(stderr, "usage: nc [-46SUhklnrtuvz] [-i interval] [-p source port]\n");
-	fprintf(stderr, "\t  [-s ip address] [-w timeout] [-X vers] [-x proxy address [:port]]\n");
-	fprintf(stderr, "\t  [hostname] [port[s...]]\n");
+	fprintf(stderr, "usage: nc [-46hklnrStUuvz] [-i interval] [-p source_port] [-s source_ip_address]\n");
+	fprintf(stderr, "\t  [-w timeout] [-X socks_version] [-x proxy_address[:port]] [hostname]\n");
+	fprintf(stderr, "\t  [port[s]]\n");
 	if (ret)
 		exit(1);
 }

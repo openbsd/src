@@ -1,4 +1,4 @@
-.\"     $OpenBSD: nc.1,v 1.27 2004/01/22 13:28:46 markus Exp $
+.\"     $OpenBSD: nc.1,v 1.28 2004/02/20 10:53:10 jmc Exp $
 .\"
 .\" Copyright (c) 1996 David Sacerdote
 .\" All rights reserved.
@@ -30,18 +30,21 @@
 .Os
 .Sh NAME
 .Nm nc
-.Nd "arbitrary TCP and UDP connections and listens"
+.Nd arbitrary TCP and UDP connections and listens
 .Sh SYNOPSIS
 .Nm nc
-.Op Fl 46hklnrtuvzSU
+.Op Fl 46hklnrStUuvz
 .Op Fl i Ar interval
-.Op Fl p Ar source port
-.Op Fl s Ar source ip address
-.Op Fl x Ar proxy address Op :port
+.Op Fl p Ar source_port
+.Op Fl s Ar source_ip_address
 .Op Fl w Ar timeout
-.Op Fl X Ar socks version
+.Op Fl X Ar socks_version
+.Oo Xo
+.Fl x Ar proxy_address Ns Oo : Ns
+.Ar port Oc Oc
+.Xc
 .Op Ar hostname
-.Op Ar port[s]
+.Op Ar port Ns Bq Ar s
 .Sh DESCRIPTION
 The
 .Nm
@@ -69,7 +72,7 @@ Common uses include:
 .It
 simple TCP proxies
 .It
-shell\-script based HTTP clients and servers
+shell-script based HTTP clients and servers
 .It
 network daemon testing
 .It
@@ -98,24 +101,41 @@ Forces
 .Nm
 to stay listening for another connection after its current connection
 is completed.
+It is an error to use this option without the
+.Fl l
+option.
 .It Fl l
 Used to specify that
 .Nm
 should listen for an incoming connection rather than initiate a
 connection to a remote host.
+It is an error to use this option in conjunction with the
+.Fl p ,
+.Fl s ,
+or
+.Fl z
+options.
 .It Fl n
 Do not do any DNS or service lookups on any specified addresses,
 hostnames or ports.
-.It Fl p Ar port
+.It Fl p Ar source_port
 Specifies the source port
 .Nm
 should use, subject to privilege restrictions and availability.
+It is an error to use this option in conjunction with the
+.Fl l
+option.
 .It Fl r
 Specifies that source and/or destination ports should be chosen randomly
 instead of sequentially within a range or in the order that the system
 assigns them.
-.It Fl s Ar hostname/ip address
+.It Fl S
+Enables the RFC 2385 TCP MD5 signature option.
+.It Fl s Ar source_ip_address
 Specifies the IP of the interface which is used to send the packets.
+It is an error to use this option in conjunction with the
+.Fl l
+option.
 .It Fl t
 Causes
 .Nm
@@ -123,6 +143,8 @@ to send RFC 854 DON'T and WON'T responses to RFC 854 DO and WILL requests.
 This makes it possible to use
 .Nm
 to script telnet sessions.
+.It Fl U
+Specifies to use Unix Domain Sockets.
 .It Fl u
 Use UDP instead of the default option of TCP.
 .It Fl v
@@ -143,72 +165,182 @@ will listen forever for a connection, with or without the
 .Fl w
 flag.
 The default is no timeout.
-.It Fl x Ar proxy address Op :port
-Requests that
-.Nm
-should connect to
-.Ar hostname
-using a SOCKS proxy at address and port.
-If port is not specified, port 1080 is used.
-.It Fl z
-Specifies that
-.Nm
-should just scan for listening daemons, without sending any data to them.
-.It Fl S
-Enables the RFC 2385 TCP MD5 signature option.
-.It Fl U
-Specifies to use Unix Domain Sockets.
-.It Fl X Ar version
+.It Fl X Ar socks_version
 Requests that
 .Nm
 should use the specified version of the SOCKS protocol when talking to
 a SOCKS proxy.
-If version is not specified, SOCKS version 5 is used.
-.El
-.Sh EXAMPLES
-.Bl -tag -width x
-.It Li "$ nc hostname 42"
-Open a TCP connection to port 42 of hostname.
-.It Li "$ nc -p 31337 hostname 42"
-Open a TCP connection to port 42 of hostname, and use port 31337 as
-the source port.
-.It Li "$ nc -w 5 hostname 42"
-Open a TCP connection to port 42 of hostname, and timeout after
-five seconds while attempting to connect.
-.It Li "$ nc -u hostname 53"
-Open a UDP connection to port 53 of hostname.
-.It Li "$ nc -s 10.1.2.3 example.host 42"
-Open a TCP connection to port 42 of example.host using 10.1.2.3 as the
-IP for the local end of the connection.
-.It Li "$ nc -v hostname 42"
-Open a TCP connection to port 42 of hostname, displaying some
-diagnostic messages on stderr.
-.It Li "$ nc -v -z hostname 20-30"
-Attempt to open TCP connections to ports 20 through 30 of
-hostname, and report which ones
+SOCKS versions 4 and 5 are currently supported.
+If the version is not specified, SOCKS version 5 is used.
+.It Xo
+.Fl x Ar proxy_address Ns Oo : Ns
+.Ar port Oc
+.Xc
+Requests that
 .Nm
-was able to connect to.
-.It Li "$ nc -v -u -z -w 3 hostname 20-30"
-Send UDP packets to ports 20-30 of example.host, and report which ones
-did not respond with an ICMP packet after three seconds.
-.It Li "$ nc -l 3000"
-Listen on TCP port 3000, and once there is a connection, send stdin to
-the remote host, and send data from the remote host to stdout.
-.It Li "$ echo foobar | nc hostname 1000"
-Connect to port 1000 of hostname, send the string "foobar"
-followed by a newline, and move data from port 1000 of hostname to
-stdout until hostname closes the connection.
-.It Li "$ nc -U /var/tmp/dsocket"
-Connect to a Unix Domain Socket.
-.It Li "$ nc -lU /var/tmp/dsocket"
-Create and listen on a Unix Domain Socket.
+should connect to
+.Ar hostname
+using a SOCKS proxy at
+.Ar proxy_address
+and
+.Ar port .
+If
+.Ar port
+is not specified, port 1080 is used.
+.It Fl z
+Specifies that
+.Nm
+should just scan for listening daemons, without sending any data to them.
+It is an error to use this option in conjunction with the
+.Fl l
+option.
 .El
+.Sh CLIENT/SERVER MODEL
+It is quite simple to build a very basic client/server model using
+.Nm .
+On one console, start
+.Nm
+listening on a specific port for a connection.
+For example:
+.Pp
+.Dl $ nc -l 1234
+.Pp
+.Nm
+is now listening on port 1234 for a connection.
+On a second console
+.Pq or a second machine ,
+connect to the machine and port being listened on:
+.Pp
+.Dl $ nc 127.0.0.1 1234
+.Pp
+There should now be a connection between the ports.
+Anything typed at the second console will be concatenated to the first,
+and vice-versa.
+After the connection has been set up,
+.Nm
+does not really care which side is being used as a
+.Sq server
+and which side is being used as a
+.Sq client .
+The connection may be terminated using an
+.Dv EOF
+.Pq Sq ^D .
+.Sh DATA TRANSFER
+The example in the previous section can be expanded to build a
+basic data transfer model.
+Any information input into one end of the connection will be output
+to the other end, and input and output can be easily captured in order to
+emulate file transfer.
+.Pp
+Start by using
+.Nm
+to listen on a specific port, with output captured into a file:
+.Pp
+.Dl $ nc -l 1234 \*(Gt filename.out
+.Pp
+Using a second machine, connect to the listening
+.Nm
+process, feeding it the file which is to be transferred:
+.Pp
+.Dl $ nc host.example.com 1234 \*(Lt filename.in
+.Pp
+After the file has been transferred, the connection will close automatically.
+.Sh TALKING TO SERVERS
+It is sometimes useful to talk to servers
+.Dq by hand
+rather than through a user interface.
+It can aid in troubleshooting,
+when it might be necessary to verify what data a server is sending
+in response to commands issued by the client.
+For example, to retrieve the home page of a web site:
+.Pp
+.Dl $ echo \&"GET\&" | nc host.example.com 80
+.Pp
+Note that this also displays the headers sent by the web server.
+They can be filtered, using a tool such as
+.Xr sed 1 ,
+if necessary.
+.Pp
+More complicated examples can be built up when the user knows the format
+of requests required by the server.
+As another example, an email may be submitted to an SMTP server using:
+.Bd -literal -offset indent
+$ nc localhost 25 \*(Lt\*(Lt EOF
+HELO host.example.com
+MAIL FROM: \*(Ltuser@host.example.com\*(Gt
+RCPT TO: \*(Ltuser2@host.example.com\*(Gt
+DATA
+Body of email.
+\&.
+QUIT
+EOF
+.Ed
+.Sh PORT SCANNING
+It may be useful to know which ports are open and running services on
+a target machine.
+The
+.Fl z
+flag can be used to tell
+.Nm
+not to initiate a connection,
+together with the
+.Fl v
+.Pq verbose
+flag,
+to report open ports.
+For example:
+.Bd -literal -offset indent
+$ nc -vz host.example.com 20-30
+Connection to host.example.com 22 port [tcp/ssh] succeeded!
+Connection to host.example.com 25 port [tcp/smtp] succeeded!
+.Ed
+.Pp
+The port range was specified to limit the search to ports 20 \- 30.
+.Pp
+Alternatively, it might be useful to know which server software
+is running, and which versions.
+This information is often contained within the greeting banners.
+In order to retrieve these, it is necessary to first make a connection,
+and then break the connection when the banner has been retrieved.
+This can be accomplished by specifying a small timeout with the
+.Fl w
+flag, or perhaps by issuing a
+.Qq Dv QUIT
+command to the server:
+.Bd -literal -offset indent
+$ echo "QUIT" | nc host.example.com 20-30
+SSH-1.99-OpenSSH_3.6.1p2
+Protocol mismatch.
+220 host.example.com IMS SMTP Receiver Version 0.84 Ready
+.Ed
+.Sh EXAMPLES
+Open a TCP connection to port 42 of hostname, using port 31337 as
+the source port, with a timeout of 5 seconds:
+.Pp
+.Dl $ nc -p 31337 -w 5 hostname 42
+.Pp
+Open a UDP connection to port 53 of hostname:
+.Pp
+.Dl $ nc -u hostname 53
+.Pp
+Open a TCP connection to port 42 of example.host using 10.1.2.3 as the
+IP for the local end of the connection:
+.Pp
+.Dl $ nc -s 10.1.2.3 example.host 42
+.Pp
+Send UDP packets to ports 20-30 of example.host, and report which ones
+responded with an ICMP packet after three seconds:
+.Pp
+.Dl $ nc -uvz -w 3 hostname 20-30
+.Pp
+Create and listen on a Unix Domain Socket:
+.Pp
+.Dl $ nc -lU /var/tmp/dsocket
 .Sh SEE ALSO
-.Xr cat 1 ,
-.Xr telnet 1
+.Xr cat 1
 .Sh AUTHORS
 Original implementation by *Hobbit*
 .Aq hobbit@avian.org .
-.Pp
-Rewritten with IPv6 support by Eric Jackson
-.Aq ericj@monkey.org .
+.br
+Rewritten with IPv6 support by
+.An Eric Jackson Aq ericj@monkey.org .
