@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
  * SUCH DAMAGE.
  *
- * $OpenBSD: pthread.h,v 1.9 1999/11/25 07:01:29 d Exp $
+ * $OpenBSD: pthread.h,v 1.10 2000/01/04 22:34:23 alex Exp $
  *
  * $FreeBSD: pthread.h,v 1.13 1999/07/31 08:36:07 rse Exp $
  */
@@ -269,7 +269,7 @@ int		pthread_rwlockattr_init __P((pthread_rwlockattr_t *));
 int		pthread_rwlockattr_getpshared __P((const pthread_rwlockattr_t *,
 			int *));
 int		pthread_rwlockattr_setpshared __P((pthread_rwlockattr_t *,
-			int *));
+			int));
 int		pthread_rwlockattr_destroy __P((pthread_rwlockattr_t *));
 pthread_t	pthread_self __P((void));
 int		pthread_setspecific __P((pthread_key_t, const void *));

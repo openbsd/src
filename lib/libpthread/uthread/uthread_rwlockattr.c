@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_rwlockattr.c,v 1.3 1999/11/25 07:01:42 d Exp $	*/
+/*	$OpenBSD: uthread_rwlockattr.c,v 1.4 2000/01/04 22:34:24 alex Exp $	*/
 /*-
  * Copyright (c) 1998 Alex Nash
  * All rights reserved.
@@ -83,15 +83,13 @@ pthread_rwlockattr_init (pthread_rwlockattr_t *rwlockattr)
 
 int
 pthread_rwlockattr_setpshared (pthread_rwlockattr_t *rwlockattr,
-	int *pshared)
+	int pshared)
 {
-	int ps = *pshared;
-
 	/* only PTHREAD_PROCESS_PRIVATE is supported */
-	if (ps != PTHREAD_PROCESS_PRIVATE)
+	if (pshared != PTHREAD_PROCESS_PRIVATE)
 		return(EINVAL);
 
-	(*rwlockattr)->pshared = ps;
+	(*rwlockattr)->pshared = pshared;
 
 	return(0);
 }
