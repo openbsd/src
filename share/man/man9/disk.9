@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disk.9,v 1.15 2000/12/22 00:13:34 avsm Exp $
+.\"	$OpenBSD: disk.9,v 1.16 2001/06/27 08:42:59 aaron Exp $
 .\"	$NetBSD: disk.9,v 1.2 1996/04/08 20:41:25 jtc Exp $
 .\"
 .\" Copyright (c) 1995, 1996 Jason R. Thorpe.
@@ -145,8 +145,9 @@ performed by the disk.
 .It Fn disk_resetstat
 Reset the running byte, transfer, and time totals.
 .It Fn disk_find
-Return a pointer to the disk structure corresponding to the name provided,
-or NULL if the disk does not exist.
+Return a pointer to the disk structure corresponding to the name provided, or
+.Dv NULL
+if the disk does not exist.
 .El
 .Pp
 The functions typically called by device drivers are
