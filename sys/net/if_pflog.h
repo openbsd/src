@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pflog.h,v 1.5 2001/06/26 21:03:28 provos Exp $ */
+/* $OpenBSD: if_pflog.h,v 1.6 2001/11/08 22:02:11 mickey Exp $ */
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -28,7 +28,7 @@
 #define _NET_IF_PFLOG_H_
 
 struct pflog_softc {
-	struct ifnet		sc_if;  /* the interface */
+	struct ifnet	sc_if;  /* the interface */
 };
 
 struct pfloghdr {
@@ -43,4 +43,4 @@ struct pfloghdr {
 #define PFLOG_HDRLEN	sizeof(struct pfloghdr)
 
 extern struct pflog_softc pflogif[];
-#endif /* _NET_IF_ENC_H_ */
+#endif /* _NET_IF_PFLOG_H_ */
