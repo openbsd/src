@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.16 2004/04/26 09:35:39 markus Exp $ */
+/*	$OpenBSD: pfkey.c,v 1.17 2004/04/27 04:38:12 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -61,7 +61,7 @@ pfkey_send(int sd, uint8_t satype, uint8_t mtype, uint8_t dir,
 	struct sadb_address	sa_src, sa_dst, sa_peer, sa_smask, sa_dmask;
 	struct sadb_key		sa_akey, sa_ekey;
 	struct sadb_spirange	sa_spirange;
-        struct sadb_protocol	sa_protocol;
+	struct sadb_protocol	sa_protocol;
 	struct iovec		iov[IOV_CNT];
 	ssize_t			n;
 	int			len = 0;

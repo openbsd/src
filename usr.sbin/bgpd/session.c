@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.154 2004/04/27 04:06:58 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.155 2004/04/27 04:38:12 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -455,7 +455,7 @@ bgp_fsm(struct peer *peer, enum session_events event)
 				log_peer_warnx(&peer->conf,
 				    "pfkey setup failed");
 				return;
-			} 
+			}
 
 			if (peer->conf.passive || peer->conf.template) {
 				change_state(peer, STATE_ACTIVE, event);
@@ -826,7 +826,7 @@ session_accept(int listenfd)
 int
 session_connect(struct peer *peer)
 {
-	int			 n, opt = 1;
+	int			 opt = 1;
 	struct sockaddr		*sa;
 
 	/*
@@ -872,15 +872,15 @@ session_connect(struct peer *peer)
 	session_socket_blockmode(peer->sock, BM_NONBLOCK);
 
 	sa = addr2sa(&peer->conf.remote_addr, BGP_PORT);
-	if ((n = connect(peer->sock, sa, sa->sa_len)) == -1)
+	if (connect(peer->sock, sa, sa->sa_len) == -1) {
 		if (errno != EINPROGRESS) {
 			log_peer_warn(&peer->conf, "connect");
 			bgp_fsm(peer, EVNT_CON_OPENFAIL);
 			return (-1);
 		}
+	}
 
-	if (n == 0)
-		bgp_fsm(peer, EVNT_CON_OPEN);
+	bgp_fsm(peer, EVNT_CON_OPEN);
 
 	return (0);
 }
@@ -968,7 +968,7 @@ session_open(struct peer *p)
 	struct buf		*buf;
 	struct mrt_config	*mrt;
 	u_int16_t		 len;
-	int			 errs = 0, n;
+	int			 errs = 0;
 	u_int8_t		 op_type, op_len = 0, optparamlen = 0;
 	u_int8_t		 capa_code, capa_len;
 	struct capa_mp		 capa_mp_v4;
@@ -1045,7 +1045,7 @@ session_open(struct peer *p)
 				    &p->conf, conf);
 		}
 
-		if ((n = buf_close(&p->wbuf, buf)) == -1) {
+		if (buf_close(&p->wbuf, buf) == -1) {
 			log_peer_warn(&p->conf, "session_open buf_close");
 			buf_free(buf);
 			bgp_fsm(p, EVNT_CON_FATAL);
@@ -1067,7 +1067,7 @@ session_keepalive(struct peer *peer)
 	struct buf		*buf;
 	struct mrt_config	*mrt;
 	ssize_t			 len;
-	int			 errs = 0, n;
+	int			 errs = 0;
 
 	len = MSGSIZE_KEEPALIVE;
 
@@ -1098,7 +1098,7 @@ session_keepalive(struct peer *peer)
 			mrt_dump_bgp_msg(mrt, buf->buf, len, &peer->conf, conf);
 	}
 
-	if ((n = buf_close(&peer->wbuf, buf)) == -1) {
+	if (buf_close(&peer->wbuf, buf) == -1) {
 		log_peer_warn(&peer->conf, "session_keepalive buf_close");
 		buf_free(buf);
 		bgp_fsm(peer, EVNT_CON_FATAL);
@@ -1117,7 +1117,7 @@ session_update(u_int32_t peerid, void *data, size_t datalen)
 	struct buf		*buf;
 	struct mrt_config	*mrt;
 	ssize_t			 len;
-	int			 errs = 0, n;
+	int			 errs = 0;
 
 	if ((p = getpeerbyid(peerid)) == NULL) {
 		log_warnx("no such peer: id=%u", peerid);
@@ -1154,7 +1154,7 @@ session_update(u_int32_t peerid, void *data, size_t datalen)
 			mrt_dump_bgp_msg(mrt, buf->buf, len, &p->conf, conf);
 	}
 
-	if ((n = buf_close(&p->wbuf, buf)) == -1) {
+	if (buf_close(&p->wbuf, buf) == -1) {
 		log_peer_warn(&p->conf, "session_update: buf_close");
 		buf_free(buf);
 		bgp_fsm(p, EVNT_CON_FATAL);
@@ -1173,7 +1173,7 @@ session_notification(struct peer *peer, u_int8_t errcode, u_int8_t subcode,
 	struct buf		*buf;
 	struct mrt_config	*mrt;
 	ssize_t			 len;
-	int			 errs = 0, n;
+	int			 errs = 0;
 
 	len = MSGSIZE_NOTIFICATION_MIN + datalen;
 
@@ -1209,7 +1209,7 @@ session_notification(struct peer *peer, u_int8_t errcode, u_int8_t subcode,
 			mrt_dump_bgp_msg(mrt, buf->buf, len, &peer->conf, conf);
 	}
 
-	if ((n = buf_close(&peer->wbuf, buf)) == -1) {
+	if (buf_close(&peer->wbuf, buf) == -1) {
 		log_peer_warn(&peer->conf, "session_notification: buf_close");
 		buf_free(buf);
 		bgp_fsm(peer, EVNT_CON_FATAL);
@@ -1609,7 +1609,7 @@ parse_open(struct peer *peer)
 			peer->IdleHoldTimer = time(NULL);	/* no punish */
 			peer->IdleHoldTime /= 2;
 			return (-1);
-			/* not reached */			
+			/* not reached */
 		}
 	}
 

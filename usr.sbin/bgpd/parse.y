@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.87 2004/04/27 02:35:24 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.88 2004/04/27 04:38:12 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -318,7 +318,7 @@ address		: STRING		{
 
 			if (!host($1, &$$, &len)) {
 				yyerror("could not parse address spec \"%s\"",
-				     $1);
+				    $1);
 				free($1);
 				YYERROR;
 			}
@@ -342,7 +342,7 @@ prefix		: STRING '/' number	{
 
 			if (!host(s, &$$.prefix, &$$.len)) {
 				yyerror("could not parse address \"%s/%u\"",
-				     $1, $3);
+				    $1, $3);
 				free(s);
 				free($1);
 				YYERROR;

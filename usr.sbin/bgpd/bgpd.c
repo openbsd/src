@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.89 2004/04/25 17:34:39 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.90 2004/04/27 04:38:12 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -104,7 +104,7 @@ main(int argc, char *argv[])
 	pid_t			 io_pid = 0, rde_pid = 0, pid;
 	char			*conffile;
 	int			 debug = 0;
-	int			 ch, i, j, n, nfds, timeout;
+	int			 ch, i, j, nfds, timeout;
 	int			 pipe_m2s[2];
 	int			 pipe_m2r[2];
 	int			 pipe_s2r[2];
@@ -247,13 +247,13 @@ main(int argc, char *argv[])
 			}
 
 		if (nfds > 0 && (pfd[PFD_PIPE_SESSION].revents & POLLOUT))
-			if ((n = msgbuf_write(&ibuf_se.w)) < 0) {
+			if (msgbuf_write(&ibuf_se.w) < 0) {
 				log_warn("pipe write error (to SE)");
 				quit = 1;
 			}
 
 		if (nfds > 0 && (pfd[PFD_PIPE_ROUTE].revents & POLLOUT))
-			if ((n = msgbuf_write(&ibuf_rde.w)) < 0) {
+			if (msgbuf_write(&ibuf_rde.w) < 0) {
 				log_warn("pipe write error (to RDE)");
 				quit = 1;
 			}
@@ -280,7 +280,7 @@ main(int argc, char *argv[])
 
 		for (j = PFD_MRT_START; j < i && nfds > 0 ; j++) {
 			if (pfd[j].revents & POLLOUT) {
-				if ((n = mrt_write(mrt[j])) < 0) {
+				if (mrt_write(mrt[j]) < 0) {
 					log_warn("mrt write error");
 				}
 			}

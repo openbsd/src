@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.104 2004/04/25 17:34:39 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.105 2004/04/27 04:38:12 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -102,7 +102,7 @@ rde_main(struct bgpd_config *config, struct network_head *net_l,
 	struct passwd	*pw;
 	struct mrt	*m;
 	struct pollfd	 pfd[2];
-	int		 n, nfds;
+	int		 nfds;
 
 	switch (pid = fork()) {
 	case -1:
@@ -177,7 +177,7 @@ rde_main(struct bgpd_config *config, struct network_head *net_l,
 
 		if (nfds > 0 && (pfd[PFD_PIPE_MAIN].revents & POLLOUT) &&
 		    ibuf_main.w.queued)
-			if ((n = msgbuf_write(&ibuf_main.w)) < 0)
+			if (msgbuf_write(&ibuf_main.w) < 0)
 				fatal("pipe write error");
 
 		if (nfds > 0 && pfd[PFD_PIPE_MAIN].revents & POLLIN) {
@@ -187,7 +187,7 @@ rde_main(struct bgpd_config *config, struct network_head *net_l,
 
 		if (nfds > 0 && (pfd[PFD_PIPE_SESSION].revents & POLLOUT) &&
 		    ibuf_se.w.queued)
-			if ((n = msgbuf_write(&ibuf_se.w)) < 0)
+			if (msgbuf_write(&ibuf_se.w) < 0)
 				fatal("pipe write error");
 
 		if (nfds > 0 && pfd[PFD_PIPE_SESSION].revents & POLLIN) {
