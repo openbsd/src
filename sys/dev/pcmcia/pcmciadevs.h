@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.77 2001/11/06 21:54:14 mickey Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.78 2001/11/20 23:31:55 mickey Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.73 2001/11/06 21:52:26 mickey Exp 
+ *		OpenBSD: pcmciadevs,v 1.74 2001/11/20 23:31:20 mickey Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -84,6 +84,7 @@
 #define	PCMCIA_VENDOR_SAMSUNG	0x0250	/* Samsung */
 #define	PCMCIA_VENDOR_SYMBOL	0x026c	/* Symbol */
 #define	PCMCIA_VENDOR_BUFFALO	0x026f	/* BUFFALO (Melco Corporation) */
+#define	PCMCIA_VENDOR_LINKSYS2	0x0274	/* The Linksys Group */
 #define	PCMCIA_VENDOR_IODATA2	0x028a	/* I-O DATA */
 #define	PCMCIA_VENDOR_BREEZECOM	0x0a02	/* BreezeCOM */
 #define	PCMCIA_VENDOR_NEWMEDIA2	0x10cd	/* NewMedia */
@@ -267,6 +268,8 @@
 #define	PCMCIA_PRODUCT_LINKSYS_ECARD_1	0x0265
 #define	PCMCIA_CIS_LINKSYS_COMBO_ECARD	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_LINKSYS_COMBO_ECARD	0xc1ab
+#define	PCMCIA_CIS_LINKSYS2_IWN	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_LINKSYS2_IWN	0x1612
 
 /* Lucent WaveLAN/IEEE */
 #define	PCMCIA_CIS_LUCENT_WAVELAN_IEEE	{ NULL, NULL, NULL, NULL }
