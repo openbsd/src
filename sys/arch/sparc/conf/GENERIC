@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.66 2003/05/14 01:13:48 miod Exp $
+#	$OpenBSD: GENERIC,v 1.67 2003/05/14 06:39:49 miod Exp $
 # 	$NetBSD: GENERIC,v 1.48 1997/08/23 19:19:01 mjacob Exp $
 
 # Machine architecture; required by config(8)
@@ -288,6 +288,10 @@ wsdisplay* at tvtwo?
 # Fujitsu AG-10e framebuffer.
 agten* at sbus?
 wsdisplay* at agten?
+
+# Southland Media Systems MGX/MGXPlus framebuffer.
+mgx* at sbus?
+wsdisplay* at mgx?
 
 # Microcontroller found on Tadpole
 tctrl0	at obio0
