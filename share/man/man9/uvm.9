@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uvm.9,v 1.6 2001/06/28 22:14:23 millert Exp $
+.\"	$OpenBSD: uvm.9,v 1.7 2001/08/03 15:21:17 mpech Exp $
 .\"	$NetBSD: uvm.9,v 1.14 2000/06/29 06:08:44 mrg Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
@@ -105,7 +105,6 @@ call.
 .Fn uvm_swap_init
 initialises the swap sub-system.
 .Sh VIRTUAL ADDRESS SPACE MANAGEMENT
-.Pp
 .nr nS 1
 .Ft int
 .Fn uvm_map "vm_map_t map" "vaddr_t *startp" "vsize_t size" "struct uvm_object *uobj" "voff_t uoffset" "uvm_flag_t flags"
@@ -340,7 +339,6 @@ has its own, unshared address space, by creating a new one if
 necessary by calling
 .Fn uvmspace_fork .
 .Sh PAGE FAULT HANDLING
-.Pp
 .nr nS 1
 .Ft int
 .Fn uvm_fault "vm_map_t orig_map" "vaddr_t vaddr" "vm_fault_t fault_type" "vm_prot_t access_type"
@@ -359,7 +357,6 @@ describing the type of access requested.
 .Fn uvm_fault
 returns a standard UVM return value.
 .Sh MEMORY MAPPING FILES AND DEVICES
-.Pp
 .nr nS 1
 .Ft struct uvm_object *
 .Fn uvn_attach "void *arg" "vm_prot_t accessprot"
@@ -411,7 +408,6 @@ from persisting when all references are freed.  This function will be
 removed when the file-system and UVM caches are unified.  Returns
 true if there is no active vnode.
 .Sh VIRTUAL MEMORY I/O
-.Pp
 .nr nS 1
 .Ft int
 .Fn uvm_io "vm_map_t map" "struct uio *uio"
@@ -423,7 +419,6 @@ performs the I/O described in
 on the memory described in
 .Fa map .
 .Sh ALLOCATION OF KERNEL MEMORY
-.Pp
 .nr nS 1
 .Ft vaddr_t
 .Fn uvm_km_alloc "vm_map_t map" "vsize_t size"
@@ -501,7 +496,6 @@ return a newly allocated zero-filled address in the kernel map of size
 will also wait for kernel memory to become available, if there is a
 memory shortage.
 .Sh ALLOCATION OF PHYSICAL MEMORY
-.Pp
 .nr nS 1
 .Ft struct vm_page *
 .Fn uvm_pagealloc "struct uvm_object *uobj" "voff_t off" "struct vm_anon *anon"
@@ -618,7 +612,6 @@ calls
 .Fn thread_wakeup
 on the map before unlocking the map.
 .Sh PROCESSES
-.Pp
 .nr nS 1
 .Ft void
 .Fn uvm_pageout

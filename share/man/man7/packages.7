@@ -1,4 +1,4 @@
-.\" $OpenBSD: packages.7,v 1.9 2001/04/30 21:13:36 espie Exp $
+.\" $OpenBSD: packages.7,v 1.10 2001/08/03 15:21:16 mpech Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -209,7 +209,6 @@ Members of the
 project routinely scan built packages for conflicting files.
 Most packages should contain correct annotations, and not allow themselves
 to be installed on top of a conflicting package.
-.Pp
 .Sh PACKAGE DEPENDENCIES
 Each package holds a full list of pre-required packages.
 .Xr pkg_add 1
@@ -252,7 +251,6 @@ For instance, an
 .Nm emacs-no_x11
 package is provided, which does not depend on X11 being installed to be
 functional.
-.Pp
 .Sh SEE ALSO
 .Xr pkg_add 1 ,
 .Xr pkg_info 1 ,

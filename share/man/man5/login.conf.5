@@ -30,7 +30,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: login.conf.5,v 1.11 2001/08/02 22:07:24 hugh Exp $
+.\" $OpenBSD: login.conf.5,v 1.12 2001/08/03 15:21:16 mpech Exp $
 .\" BSDI $From: login.conf.5,v 2.20 2000/06/26 14:50:38 prb Exp $
 .\"
 .Dd June 18, 2001
@@ -404,7 +404,6 @@ For example, to indicate 1 and 1/2 hours, the following string could be used:
 .El
 .\"
 .Sh AUTHENTICATION
-.Pp
 \*(oSuses BSD Authentication, which is made up of a variety of
 authentication styles. The authentication styles currently provided are:
 .Bl -tag -width kerberosxx
@@ -801,7 +800,6 @@ the calling program did first obtain a challenge prior to getting a
 response from the user.
 Not all authentication styles support empty challenges.
 .Sh APPROVAL
-.Pp
 An approval program has the synopsis of:
 .sp
 .ti +.5i
@@ -829,7 +827,6 @@ statement.
 This allows for simple programs which have no information to provide
 other than approval or denial.
 .Sh CLASSIFICATION
-.Pp
 A classify program has the synopsis of:
 .sp
 .ti +.5i

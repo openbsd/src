@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fork1.9,v 1.5 2001/01/14 19:43:25 millert Exp $
+.\"	$OpenBSD: fork1.9,v 1.6 2001/08/03 15:21:17 mpech Exp $
 .\"	$NetBSD: fork1.9,v 1.3 1999/03/16 00:40:47 garbled Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -127,6 +127,7 @@ This will contain the pid of the child process.
 .It Fa retval[1]
 In the parent process, this will contain the value 0.
 In the child process, this will contain 1.
+.El
 .Sh RETURN VALUES
 Upon successful completion of the fork operation,
 .Fn fork1

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: crypto.9,v 1.12 2001/06/27 08:41:35 aaron Exp $
+.\"	$OpenBSD: crypto.9,v 1.13 2001/08/03 15:21:17 mpech Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -357,7 +357,6 @@ callback routine to do the necessary cleanups associated with the
 opaque field in the
 .Fa cryptop
 structure.
-.Pp
 .Sh DRIVER-SIDE API
 The
 .Fn crypto_get_driverid ,
@@ -429,7 +428,6 @@ When the request is completed, or an error is detected, the
 routine should invoked
 .Fn crypto_done .
 Session migration may be performed, as mentioned previously.
-.Pp
 .Sh RETURN VALUES
 .Fn crypto_register ,
 .Fn crypto_unregister ,
