@@ -1,4 +1,4 @@
-.\" $OpenBSD: terminfo.3,v 1.1 1997/11/29 01:17:20 millert Exp $
+.\" $OpenBSD: terminfo.3,v 1.2 1997/11/29 05:09:35 millert Exp $
 .\"
 .\" Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
 .\" All rights reserved.
@@ -61,8 +61,6 @@
 .Fn restartterm "const char *term" "int fildes" "int *errret"
 .Ft char *
 .Fn tparm "const char *str" "..."
-.Ft char *
-.Fn tparam "const char *str" "char *buffer" "int size" "..."
 .Ft int
 .Fn tputs "const char *str" "int affcnt" "int (*putc)(int))"
 .Ft int
@@ -279,13 +277,6 @@ parameters
 A pointer is returned to the result of
 .Dv str
 with the parameters applied.
-.Pp
-The
-.Nm tparam
-routine is included for compatibility with the GNU termcap
-implementation.  It works like
-.Nm tparm
-but you specify a buffer and buffer size to be filled with the expanded string.
 .Pp
 The
 .Nm tputs
