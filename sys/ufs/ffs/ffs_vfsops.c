@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.14 1997/12/09 04:54:42 deraadt Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.15 1998/01/09 20:39:54 csapuntz Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -835,6 +835,8 @@ ffs_vget(mp, ino, vpp)
 
 	ump = VFSTOUFS(mp);
 	dev = ump->um_dev;
+
+retry:
 	if ((*vpp = ufs_ihashget(dev, ino)) != NULL)
 		return (0);
 
@@ -866,8 +868,20 @@ ffs_vget(mp, ino, vpp)
 	 * for old data structures to be purged or for the contents of the
 	 * disk portion of this inode to be read.
 	 */
-	ufs_ihashins(ip);
+	error = ufs_ihashins(ip);
 
+	if (error) {
+		/* VOP_INACTIVE will treat this as a stale file
+		   and recycle it quickly */
+		vrele(vp);
+
+		if (error == EEXIST)
+			goto retry;
+
+		return (error);
+	}
+
+	
 	/* Read in the disk contents for the inode, copy into the inode. */
 	error = bread(ump->um_devvp, fsbtodb(fs, ino_to_fsba(fs, ino)),
 		      (int)fs->fs_bsize, NOCRED, &bp);
