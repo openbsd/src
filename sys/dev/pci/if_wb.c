@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wb.c,v 1.3 1999/09/27 18:17:01 jason Exp $	*/
+/*	$OpenBSD: if_wb.c,v 1.4 1999/11/19 02:29:27 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$FreeBSD: if_wb.c,v 1.13 1999/07/11 00:56:07 wpaul Exp $
+ * $FreeBSD: src/sys/pci/if_wb.c,v 1.26 1999/09/25 17:29:02 wpaul Exp $
  */
 
 /*
@@ -95,6 +95,7 @@
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/device.h>
+#include <sys/queue.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -119,6 +120,8 @@
 #include <vm/vm_kern.h>
 #include <vm/vm_extern.h>
 
+#include <dev/mii/mii.h>
+#include <dev/mii/miivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
@@ -129,25 +132,10 @@
 
 #include <dev/pci/if_wbreg.h>
 
-/*
- * Various supported PHY vendors/types and their names. Note that
- * this driver will work with pretty much any MII-compliant PHY,
- * so failure to positively identify the chip is not a fatal error.
- */
-
-struct wb_type wb_phys[] = {
-	{ TI_PHY_VENDORID, TI_PHY_10BT, "<TI ThunderLAN 10BT (internal)>" },
-	{ TI_PHY_VENDORID, TI_PHY_100VGPMI, "<TI TNETE211 100VG Any-LAN>" },
-	{ NS_PHY_VENDORID, NS_PHY_83840A, "<National Semiconductor DP83840A>"},
-	{ LEVEL1_PHY_VENDORID, LEVEL1_PHY_LXT970, "<Level 1 LXT970>" }, 
-	{ INTEL_PHY_VENDORID, INTEL_PHY_82555, "<Intel 82555>" },
-	{ SEEQ_PHY_VENDORID, SEEQ_PHY_80220, "<SEEQ 80220>" },
-	{ 0, 0, "<MII-compliant physical interface>" }
-};
-
 int wb_probe		__P((struct device *, void *, void *));
 void wb_attach		__P((struct device *, struct device *, void *));
 
+void wb_bfree		__P((struct mbuf *));
 int wb_newbuf		__P((struct wb_softc *, struct wb_chain_onefrag *,
     struct mbuf *));
 int wb_encap		__P((struct wb_softc *, struct wb_chain *,
@@ -158,6 +146,7 @@ void wb_rxeoc		__P((struct wb_softc *));
 void wb_txeof		__P((struct wb_softc *));
 void wb_txeoc		__P((struct wb_softc *));
 int wb_intr		__P((void *));
+void wb_tick		__P((void *));
 void wb_start		__P((struct ifnet *));
 int wb_ioctl		__P((struct ifnet *, u_long, caddr_t));
 void wb_init		__P((void *));
@@ -174,19 +163,18 @@ void wb_mii_sync	__P((struct wb_softc *));
 void wb_mii_send	__P((struct wb_softc *, u_int32_t, int));
 int wb_mii_readreg	__P((struct wb_softc *, struct wb_mii_frame *));
 int wb_mii_writereg	__P((struct wb_softc *, struct wb_mii_frame *));
-void wb_phy_writereg	__P((struct wb_softc *, int, int));
-u_int16_t wb_phy_readreg	__P((struct wb_softc *, int));
 
-void wb_autoneg_xmit	__P((struct wb_softc *));
-void wb_autoneg_mii	__P((struct wb_softc *, int, int));
-void wb_setmode_mii	__P((struct wb_softc *, int));
-void wb_getmode_mii	__P((struct wb_softc *));
-void wb_setcfg		__P((struct wb_softc *, int));
+void wb_setcfg		__P((struct wb_softc *, u_int32_t));
 u_int8_t wb_calchash	__P((caddr_t));
 void wb_setmulti	__P((struct wb_softc *));
 void wb_reset		__P((struct wb_softc *));
+void wb_fixmedia	__P((struct wb_softc *));
 int wb_list_rx_init	__P((struct wb_softc *));
 int wb_list_tx_init	__P((struct wb_softc *));
+
+int wb_miibus_readreg	__P((struct device *, int, int));
+void wb_miibus_writereg	__P((struct device *, int, int, int));
+void wb_miibus_statchg	__P((struct device *));
 
 #define WB_SETBIT(sc, reg, x)				\
 	CSR_WRITE_4(sc, reg,				\
@@ -490,37 +478,49 @@ int wb_mii_writereg(sc, frame)
 	return(0);
 }
 
-u_int16_t wb_phy_readreg(sc, reg)
-	struct wb_softc		*sc;
-	int			reg;
+int
+wb_miibus_readreg(dev, phy, reg)
+	struct device *dev;
+	int phy, reg;
 {
-	struct wb_mii_frame	frame;
+	struct wb_softc *sc = (struct wb_softc *)dev;
+	struct wb_mii_frame frame;
 
 	bzero((char *)&frame, sizeof(frame));
 
-	frame.mii_phyaddr = sc->wb_phy_addr;
+	frame.mii_phyaddr = phy;
 	frame.mii_regaddr = reg;
 	wb_mii_readreg(sc, &frame);
 
 	return(frame.mii_data);
 }
 
-void wb_phy_writereg(sc, reg, data)
-	struct wb_softc		*sc;
-	int			reg;
-	int			data;
+void
+wb_miibus_writereg(dev, phy, reg, data)
+	struct device *dev;
+	int phy, reg, data;
 {
-	struct wb_mii_frame	frame;
+	struct wb_softc *sc = (struct wb_softc *)dev;
+	struct wb_mii_frame frame;
 
 	bzero((char *)&frame, sizeof(frame));
 
-	frame.mii_phyaddr = sc->wb_phy_addr;
+	frame.mii_phyaddr = phy;
 	frame.mii_regaddr = reg;
 	frame.mii_data = data;
 
 	wb_mii_writereg(sc, &frame);
 
 	return;
+}
+
+void
+wb_miibus_statchg(dev)
+	struct device *dev;
+{
+	struct wb_softc *sc = (struct wb_softc *)dev;
+
+	wb_setcfg(sc, sc->sc_mii.mii_media_active);
 }
 
 u_int8_t wb_calchash(addr)
@@ -610,302 +610,14 @@ void wb_setmulti(sc)
 }
 
 /*
- * Initiate an autonegotiation session.
- */
-void wb_autoneg_xmit(sc)
-	struct wb_softc		*sc;
-{
-	u_int16_t		phy_sts;
-
-	wb_phy_writereg(sc, PHY_BMCR, PHY_BMCR_RESET);
-	DELAY(500);
-	while(wb_phy_readreg(sc, PHY_BMCR)
-			& PHY_BMCR_RESET);
-
-	phy_sts = wb_phy_readreg(sc, PHY_BMCR);
-	phy_sts |= PHY_BMCR_AUTONEGENBL|PHY_BMCR_AUTONEGRSTR;
-	wb_phy_writereg(sc, PHY_BMCR, phy_sts);
-
-	return;
-}
-
-/*
- * Invoke autonegotiation on a PHY.
- */
-void wb_autoneg_mii(sc, flag, verbose)
-	struct wb_softc		*sc;
-	int			flag;
-	int			verbose;
-{
-	u_int16_t		phy_sts = 0, media, advert, ability;
-	struct ifnet		*ifp;
-	struct ifmedia		*ifm;
-
-	ifm = &sc->ifmedia;
-	ifp = &sc->arpcom.ac_if;
-
-	ifm->ifm_media = IFM_ETHER | IFM_AUTO;
-
-	/*
-	 * The 100baseT4 PHY on the 3c905-T4 has the 'autoneg supported'
-	 * bit cleared in the status register, but has the 'autoneg enabled'
-	 * bit set in the control register. This is a contradiction, and
-	 * I'm not sure how to handle it. If you want to force an attempt
-	 * to autoneg for 100baseT4 PHYs, #define FORCE_AUTONEG_TFOUR
-	 * and see what happens.
-	 */
-#ifndef FORCE_AUTONEG_TFOUR
-	/*
-	 * First, see if autoneg is supported. If not, there's
-	 * no point in continuing.
-	 */
-	phy_sts = wb_phy_readreg(sc, PHY_BMSR);
-	if (!(phy_sts & PHY_BMSR_CANAUTONEG)) {
-		if (verbose)
-			printf("%s: autonegotiation not supported\n",
-			    sc->sc_dev.dv_xname);
-		ifm->ifm_media = IFM_ETHER|IFM_10_T|IFM_HDX;	
-		return;
-	}
-#endif
-
-	switch (flag) {
-	case WB_FLAG_FORCEDELAY:
-		/*
-	 	 * XXX Never use this option anywhere but in the probe
-	 	 * routine: making the kernel stop dead in its tracks
- 		 * for three whole seconds after we've gone multi-user
-		 * is really bad manners.
-	 	 */
-		wb_autoneg_xmit(sc);
-		DELAY(5000000);
-		break;
-	case WB_FLAG_SCHEDDELAY:
-		/*
-		 * Wait for the transmitter to go idle before starting
-		 * an autoneg session, otherwise wb_start() may clobber
-	 	 * our timeout, and we don't want to allow transmission
-		 * during an autoneg session since that can screw it up.
-	 	 */
-		if (sc->wb_cdata.wb_tx_head != NULL) {
-			sc->wb_want_auto = 1;
-			return;
-		}
-		wb_autoneg_xmit(sc);
-		ifp->if_timer = 5;
-		sc->wb_autoneg = 1;
-		sc->wb_want_auto = 0;
-		return;
-		break;
-	case WB_FLAG_DELAYTIMEO:
-		ifp->if_timer = 0;
-		sc->wb_autoneg = 0;
-		break;
-	default:
-		printf("%s: invalid autoneg flag: %d\n",
-		    sc->sc_dev.dv_xname, flag);
-		return;
-	}
-
-	if (wb_phy_readreg(sc, PHY_BMSR) & PHY_BMSR_AUTONEGCOMP) {
-		if (verbose)
-			printf("%s: autoneg complete, ", sc->sc_dev.dv_xname);
-		phy_sts = wb_phy_readreg(sc, PHY_BMSR);
-	} else {
-		if (verbose)
-			printf("%s: autoneg not complete, ",
-			    sc->sc_dev.dv_xname);
-	}
-
-	media = wb_phy_readreg(sc, PHY_BMCR);
-
-	/* Link is good. Report modes and set duplex mode. */
-	if (wb_phy_readreg(sc, PHY_BMSR) & PHY_BMSR_LINKSTAT) {
-		if (verbose)
-			printf("link status good ");
-		advert = wb_phy_readreg(sc, PHY_ANAR);
-		ability = wb_phy_readreg(sc, PHY_LPAR);
-
-		if (advert & PHY_ANAR_100BT4 && ability & PHY_ANAR_100BT4) {
-			ifm->ifm_media = IFM_ETHER|IFM_100_T4;
-			media |= PHY_BMCR_SPEEDSEL;
-			media &= ~PHY_BMCR_DUPLEX;
-			printf("(100baseT4)\n");
-		} else if (advert & PHY_ANAR_100BTXFULL &&
-			ability & PHY_ANAR_100BTXFULL) {
-			ifm->ifm_media = IFM_ETHER|IFM_100_TX|IFM_FDX;
-			media |= PHY_BMCR_SPEEDSEL;
-			media |= PHY_BMCR_DUPLEX;
-			printf("(full-duplex, 100Mbps)\n");
-		} else if (advert & PHY_ANAR_100BTXHALF &&
-			ability & PHY_ANAR_100BTXHALF) {
-			ifm->ifm_media = IFM_ETHER|IFM_100_TX|IFM_HDX;
-			media |= PHY_BMCR_SPEEDSEL;
-			media &= ~PHY_BMCR_DUPLEX;
-			printf("(half-duplex, 100Mbps)\n");
-		} else if (advert & PHY_ANAR_10BTFULL &&
-			ability & PHY_ANAR_10BTFULL) {
-			ifm->ifm_media = IFM_ETHER|IFM_10_T|IFM_FDX;
-			media &= ~PHY_BMCR_SPEEDSEL;
-			media |= PHY_BMCR_DUPLEX;
-			printf("(full-duplex, 10Mbps)\n");
-		} else /* if (advert & PHY_ANAR_10BTHALF &&
-			ability & PHY_ANAR_10BTHALF) */ {
-			ifm->ifm_media = IFM_ETHER|IFM_10_T|IFM_HDX;
-			media &= ~PHY_BMCR_SPEEDSEL;
-			media &= ~PHY_BMCR_DUPLEX;
-			printf("(half-duplex, 10Mbps)\n");
-		}
-
-		media &= ~PHY_BMCR_AUTONEGENBL;
-
-		/* Set ASIC's duplex mode to match the PHY. */
-		wb_setcfg(sc, media);
-		wb_phy_writereg(sc, PHY_BMCR, media);
-	} else {
-		if (verbose)
-			printf("no carrier\n");
-	}
-
-	if (flag != WB_FLAG_FORCEDELAY)
-		wb_init(sc);
-
-	if (sc->wb_tx_pend) {
-		sc->wb_autoneg = 0;
-		sc->wb_tx_pend = 0;
-		wb_start(ifp);
-	}
-
-	return;
-}
-
-void wb_getmode_mii(sc)
-	struct wb_softc		*sc;
-{
-	u_int16_t		bmsr;
-	struct ifnet		*ifp;
-
-	ifp = &sc->arpcom.ac_if;
-
-	bmsr = wb_phy_readreg(sc, PHY_BMSR);
-
-	/* fallback */
-	sc->ifmedia.ifm_media = IFM_ETHER|IFM_10_T|IFM_HDX;
-
-	if (bmsr & PHY_BMSR_10BTHALF) {
-		ifmedia_add(&sc->ifmedia,
-			IFM_ETHER|IFM_10_T|IFM_HDX, 0, NULL);
-		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_T, 0, NULL);
-	}
-
-	if (bmsr & PHY_BMSR_10BTFULL) {
-		ifmedia_add(&sc->ifmedia,
-			IFM_ETHER|IFM_10_T|IFM_FDX, 0, NULL);
-		sc->ifmedia.ifm_media = IFM_ETHER|IFM_10_T|IFM_FDX;
-	}
-
-	if (bmsr & PHY_BMSR_100BTXHALF) {
-		ifp->if_baudrate = 100000000;
-		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_100_TX, 0, NULL);
-		ifmedia_add(&sc->ifmedia,
-			IFM_ETHER|IFM_100_TX|IFM_HDX, 0, NULL);
-		sc->ifmedia.ifm_media = IFM_ETHER|IFM_100_TX|IFM_HDX;
-	}
-
-	if (bmsr & PHY_BMSR_100BTXFULL) {
-		ifp->if_baudrate = 100000000;
-		ifmedia_add(&sc->ifmedia,
-			IFM_ETHER|IFM_100_TX|IFM_FDX, 0, NULL);
-		sc->ifmedia.ifm_media = IFM_ETHER|IFM_100_TX|IFM_FDX;
-	}
-
-	/* Some also support 100BaseT4. */
-	if (bmsr & PHY_BMSR_100BT4) {
-		ifp->if_baudrate = 100000000;
-		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_100_T4, 0, NULL);
-		sc->ifmedia.ifm_media = IFM_ETHER|IFM_100_T4;
-#ifdef FORCE_AUTONEG_TFOUR
-		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_AUTO, 0 NULL):
-		sc->ifmedia.ifm_media = IFM_ETHER|IFM_AUTO;
-#endif
-	}
-
-	if (bmsr & PHY_BMSR_CANAUTONEG) {
-		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_AUTO, 0, NULL);
-		sc->ifmedia.ifm_media = IFM_ETHER|IFM_AUTO;
-	}
-
-	return;
-}
-
-/*
- * Set speed and duplex mode.
- */
-void wb_setmode_mii(sc, media)
-	struct wb_softc		*sc;
-	int			media;
-{
-	u_int16_t		bmcr;
-	struct ifnet		*ifp;
-
-	ifp = &sc->arpcom.ac_if;
-
-	/*
-	 * If an autoneg session is in progress, stop it.
-	 */
-	if (sc->wb_autoneg) {
-		printf("%s: canceling autoneg session\n", sc->sc_dev.dv_xname);
-		ifp->if_timer = sc->wb_autoneg = sc->wb_want_auto = 0;
-		bmcr = wb_phy_readreg(sc, PHY_BMCR);
-		bmcr &= ~PHY_BMCR_AUTONEGENBL;
-		wb_phy_writereg(sc, PHY_BMCR, bmcr);
-	}
-
-	printf("%s: selecting MII, ", sc->sc_dev.dv_xname);
-
-	bmcr = wb_phy_readreg(sc, PHY_BMCR);
-
-	bmcr &= ~(PHY_BMCR_AUTONEGENBL|PHY_BMCR_SPEEDSEL|
-			PHY_BMCR_DUPLEX|PHY_BMCR_LOOPBK);
-
-	if (IFM_SUBTYPE(media) == IFM_100_T4) {
-		printf("100Mbps/T4, half-duplex\n");
-		bmcr |= PHY_BMCR_SPEEDSEL;
-		bmcr &= ~PHY_BMCR_DUPLEX;
-	}
-
-	if (IFM_SUBTYPE(media) == IFM_100_TX) {
-		printf("100Mbps, ");
-		bmcr |= PHY_BMCR_SPEEDSEL;
-	}
-
-	if (IFM_SUBTYPE(media) == IFM_10_T) {
-		printf("10Mbps, ");
-		bmcr &= ~PHY_BMCR_SPEEDSEL;
-	}
-
-	if ((media & IFM_GMASK) == IFM_FDX) {
-		printf("full duplex\n");
-		bmcr |= PHY_BMCR_DUPLEX;
-	} else {
-		printf("half duplex\n");
-		bmcr &= ~PHY_BMCR_DUPLEX;
-	}
-
-	wb_setcfg(sc, bmcr);
-	wb_phy_writereg(sc, PHY_BMCR, bmcr);
-
-	return;
-}
-
-/*
  * The Winbond manual states that in order to fiddle with the
  * 'full-duplex' and '100Mbps' bits in the netconfig register, we
  * first have to put the transmit and/or receive logic in the idle state.
  */
-void wb_setcfg(sc, bmcr)
-	struct wb_softc		*sc;
-	int			bmcr;
+void
+wb_setcfg(sc, media)
+	struct wb_softc *sc;
+	u_int32_t media;
 {
 	int			i, restart = 0;
 
@@ -925,12 +637,12 @@ void wb_setcfg(sc, bmcr)
 				"rx to idle state\n", sc->sc_dev.dv_xname);
 	}
 
-	if (bmcr & PHY_BMCR_SPEEDSEL)
-		WB_SETBIT(sc, WB_NETCFG, WB_NETCFG_100MBPS);
-	else
+	if (IFM_SUBTYPE(media) == IFM_10_T)
 		WB_CLRBIT(sc, WB_NETCFG, WB_NETCFG_100MBPS);
+	else
+		WB_SETBIT(sc, WB_NETCFG, WB_NETCFG_100MBPS);
 
-	if (bmcr & PHY_BMCR_DUPLEX)
+	if ((media & IFM_GMASK) == IFM_FDX)
 		WB_SETBIT(sc, WB_NETCFG, WB_NETCFG_FULLDUPLEX);
 	else
 		WB_CLRBIT(sc, WB_NETCFG, WB_NETCFG_FULLDUPLEX);
@@ -941,11 +653,19 @@ void wb_setcfg(sc, bmcr)
 	return;
 }
 
-void wb_reset(sc)
-	struct wb_softc		*sc;
+void
+wb_reset(sc)
+	struct wb_softc *sc;
 {
-	register int		i;
+	register int i;
+	struct mii_data *mii = &sc->sc_mii;
 
+	CSR_WRITE_4(sc, WB_NETCFG, 0);
+	CSR_WRITE_4(sc, WB_BUSCTL, 0);
+	CSR_WRITE_4(sc, WB_TXADDR, 0);
+	CSR_WRITE_4(sc, WB_RXADDR, 0);
+
+	WB_SETBIT(sc, WB_BUSCTL, WB_BUSCTL_RESET);
 	WB_SETBIT(sc, WB_BUSCTL, WB_BUSCTL_RESET);
 
 	for (i = 0; i < WB_TIMEOUT; i++) {
@@ -959,11 +679,35 @@ void wb_reset(sc)
 	/* Wait a little while for the chip to get its brains in order. */
 	DELAY(1000);
 
-	/* Reset the damn PHY too. */
-	if (sc->wb_pinfo != NULL)
-		wb_phy_writereg(sc, PHY_BMCR, PHY_BMCR_RESET);
+	if (mii->mii_instance) {
+		struct mii_softc *miisc;
+		for (miisc = LIST_FIRST(&mii->mii_phys); miisc != NULL;
+		    miisc = LIST_NEXT(miisc, mii_list))
+			mii_phy_reset(miisc);
+	}
+}
 
-        return;
+void
+wb_fixmedia(sc)
+	struct wb_softc *sc;
+{
+	struct mii_data *mii = &sc->sc_mii;
+	u_int32_t media;
+
+	if (LIST_FIRST(&mii->mii_phys) == NULL)
+		return;
+
+	mii_pollstat(mii);
+	if (IFM_SUBTYPE(mii->mii_media_active) == IFM_10_T) {
+		media = mii->mii_media_active & ~IFM_10_T;
+		media |= IFM_100_TX;
+	} if (IFM_SUBTYPE(mii->mii_media_active) == IFM_100_TX) {
+		media = mii->mii_media_active & ~IFM_100_TX;
+		media |= IFM_10_T;
+	} else
+		return;
+
+	ifmedia_set(&mii->mii_media, media);
 }
 
 /*
@@ -1011,12 +755,11 @@ wb_attach(parent, self, aux)
 	struct ifnet *ifp = &sc->arpcom.ac_if;
 	bus_addr_t iobase;
 	bus_size_t iosize;
-	int i, media = IFM_ETHER|IFM_100_TX|IFM_FDX, s;
-	u_int round;
-	caddr_t roundptr;
-	u_int16_t phy_vid, phy_did, phy_sts;
-	struct wb_type		*p;
+	int s, rseg;
 	u_int32_t command;
+	bus_dma_segment_t seg;
+	bus_dmamap_t dmamap;
+	caddr_t kva;
 
 	s = splimp();
 
@@ -1108,6 +851,8 @@ wb_attach(parent, self, aux)
 	}
 	printf(": %s", intrstr);
 
+	sc->wb_cachesize = pci_conf_read(pc, pa->pa_tag, WB_PCI_CACHELEN)&0xff;
+
 	/* Reset the adapter. */
 	wb_reset(sc);
 
@@ -1117,29 +862,36 @@ wb_attach(parent, self, aux)
 	wb_read_eeprom(sc, (caddr_t)&sc->arpcom.ac_enaddr, 0, 3, 0);
 	printf(" address %s\n", ether_sprintf(sc->arpcom.ac_enaddr));
 
-	sc->wb_ldata_ptr = malloc(sizeof(struct wb_list_data) + 8,
-				M_DEVBUF, M_NOWAIT);
-	if (sc->wb_ldata_ptr == NULL) {
-		printf("%s: no memory for list buffers!\n",sc->sc_dev.dv_xname);
+	if (bus_dmamem_alloc(pa->pa_dmat, sizeof(struct wb_list_data),
+	    PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
+		printf("%s: can't alloc list data\n", sc->sc_dev.dv_xname);
 		goto fail;
 	}
-
-	sc->wb_ldata = (struct wb_list_data *)sc->wb_ldata_ptr;
-#ifdef __alpha__
-	round = (u_int64_t)sc->wb_ldata_ptr & 0xF;
-#endif
-#ifdef __i386__
-	round = (u_int32_t)sc->wb_ldata_ptr & 0xF;
-#endif
-	roundptr = sc->wb_ldata_ptr;
-	for (i = 0; i < 8; i++) {
-		if (round % 8) {
-			round++;
-			roundptr++;
-		} else
-			break;
+	if (bus_dmamem_map(pa->pa_dmat, &seg, rseg,
+	    sizeof(struct wb_list_data), &kva, BUS_DMA_NOWAIT)) {
+		printf("%s: can't map list data, size %d\n",
+		    sc->sc_dev.dv_xname, sizeof(struct wb_list_data));
+		bus_dmamem_free(pa->pa_dmat, &seg, rseg);
+		goto fail;
 	}
-	sc->wb_ldata = (struct wb_list_data *)roundptr;
+	if (bus_dmamap_create(pa->pa_dmat, sizeof(struct wb_list_data), 1,
+	    sizeof(struct wb_list_data), 0, BUS_DMA_NOWAIT, &dmamap)) {
+		printf("%s: can't create dma map\n", sc->sc_dev.dv_xname);
+		bus_dmamem_unmap(pa->pa_dmat, kva,
+		    sizeof(struct wb_list_data));
+		bus_dmamem_free(pa->pa_dmat, &seg, rseg);
+		goto fail;
+	}
+	if (bus_dmamap_load(pa->pa_dmat, dmamap, kva,
+	    sizeof(struct wb_list_data), NULL, BUS_DMA_NOWAIT)) {
+		printf("%s: can't load dma map\n", sc->sc_dev.dv_xname);
+		bus_dmamap_destroy(pa->pa_dmat, dmamap);
+		bus_dmamem_unmap(pa->pa_dmat, kva,
+		    sizeof(struct wb_list_data));
+		bus_dmamem_free(pa->pa_dmat, &seg, rseg);
+		goto fail;
+	}
+	sc->wb_ldata = (struct wb_list_data *)kva;
 	bzero(sc->wb_ldata, sizeof(struct wb_list_data));
 
 	ifp->if_softc = sc;
@@ -1153,45 +905,22 @@ wb_attach(parent, self, aux)
 	ifp->if_snd.ifq_maxlen = WB_TX_LIST_CNT - 1;
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
-	for (i = WB_PHYADDR_MIN; i < WB_PHYADDR_MAX + 1; i++) {
-		sc->wb_phy_addr = i;
-		wb_phy_writereg(sc, PHY_BMCR, PHY_BMCR_RESET);
-		DELAY(500);
-		while(wb_phy_readreg(sc, PHY_BMCR)
-				& PHY_BMCR_RESET);
-		if ((phy_sts = wb_phy_readreg(sc, PHY_BMSR)))
-			break;
-	}
-	if (phy_sts) {
-		phy_vid = wb_phy_readreg(sc, PHY_VENID);
-		phy_did = wb_phy_readreg(sc, PHY_DEVID);
-		p = wb_phys;
-		while(p->wb_vid) {
-			if (phy_vid == p->wb_vid &&
-				(phy_did | 0x000F) == p->wb_did) {
-				sc->wb_pinfo = p;
-				break;
-			}
-			p++;
-		}
-		if (sc->wb_pinfo == NULL)
-			sc->wb_pinfo = &wb_phys[PHY_UNKNOWN];
-	} else {
-		printf("%s: MII without any phy!\n", sc->sc_dev.dv_xname);
-		goto fail;
-	}
-
 	/*
 	 * Do ifmedia setup.
 	 */
-	ifmedia_init(&sc->ifmedia, 0, wb_ifmedia_upd, wb_ifmedia_sts);
-
-	wb_getmode_mii(sc);
-	wb_autoneg_mii(sc, WB_FLAG_FORCEDELAY, 1);
-	media = sc->ifmedia.ifm_media;
 	wb_stop(sc);
 
-	ifmedia_set(&sc->ifmedia, media);
+	ifmedia_init(&sc->sc_mii.mii_media, 0, wb_ifmedia_upd, wb_ifmedia_sts);
+	sc->sc_mii.mii_ifp = ifp;
+	sc->sc_mii.mii_readreg = wb_miibus_readreg;
+	sc->sc_mii.mii_writereg = wb_miibus_writereg;
+	sc->sc_mii.mii_statchg = wb_miibus_statchg;
+	mii_phy_probe(self, &sc->sc_mii, 0xffffffff);
+	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
+		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE,0,NULL);
+		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
+	} else
+		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
 
 	/*
 	 * Call MI attach routines.
@@ -1259,6 +988,7 @@ int wb_list_rx_init(sc)
 	for (i = 0; i < WB_RX_LIST_CNT; i++) {
 		cd->wb_rx_chain[i].wb_ptr =
 			(struct wb_desc *)&ld->wb_rx_list[i];
+		cd->wb_rx_chain[i].wb_buf = (void *)&ld->wb_rxbufs[i];
 		if (wb_newbuf(sc, &cd->wb_rx_chain[i], NULL) == ENOBUFS)
 			return(ENOBUFS);
 		if (i == (WB_RX_LIST_CNT - 1)) {
@@ -1278,6 +1008,12 @@ int wb_list_rx_init(sc)
 	return(0);
 }
 
+void
+wb_bfree(m)
+	struct mbuf *m;
+{
+}
+
 /*
  * Initialize an RX descriptor and attach an MBUF cluster.
  */
@@ -1293,16 +1029,15 @@ wb_newbuf(sc, c, m)
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 		if (m_new == NULL)
 			return(ENOBUFS);
-
-		MCLGET(m_new, M_DONTWAIT);
-		if (!(m_new->m_flags & M_EXT)) {
-			m_freem(m_new);
-			return(ENOBUFS);
-		}
-		m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
+		m_new->m_data = m_new->m_ext.ext_buf = c->wb_buf;
+		m_new->m_flags |= M_EXT;
+		m_new->m_ext.ext_size = m_new->m_pkthdr.len =
+		    m_new->m_len = WB_BUFBYTES;
+		m_new->m_ext.ext_free = wb_bfree;
+		m_new->m_ext.ext_ref = wb_bfree;
 	} else {
 		m_new = m;
-		m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
+		m_new->m_len = m_new->m_pkthdr.len = WB_BUFBYTES;
 		m_new->m_data = m_new->m_ext.ext_buf;
 	}
 
@@ -1310,7 +1045,7 @@ wb_newbuf(sc, c, m)
 
 	c->wb_mbuf = m_new;
 	c->wb_ptr->wb_data = vtophys(mtod(m_new, caddr_t));
-	c->wb_ptr->wb_ctl = WB_RXCTL_RLINK | (MCLBYTES - 1);
+	c->wb_ptr->wb_ctl = WB_RXCTL_RLINK | 1536;
 	c->wb_ptr->wb_status = WB_RXSTAT;
 
 	return(0);
@@ -1324,7 +1059,7 @@ void wb_rxeof(sc)
 	struct wb_softc		*sc;
 {
         struct ether_header	*eh;
-        struct mbuf		*m;
+        struct mbuf		*m = NULL;
         struct ifnet		*ifp;
 	struct wb_chain_onefrag	*cur_rx;
 	int			total_len = 0;
@@ -1338,23 +1073,28 @@ void wb_rxeof(sc)
 
 		cur_rx = sc->wb_cdata.wb_rx_head;
 		sc->wb_cdata.wb_rx_head = cur_rx->wb_nextdesc;
+
 		m = cur_rx->wb_mbuf;
 
-		if ((rxstat & WB_RXSTAT_MIIERR)
-			 || WB_RXBYTES(cur_rx->wb_ptr->wb_status) == 0) {
+		if ((rxstat & WB_RXSTAT_MIIERR) ||
+		    (WB_RXBYTES(cur_rx->wb_ptr->wb_status) < WB_MIN_FRAMELEN) ||
+		    (WB_RXBYTES(cur_rx->wb_ptr->wb_status) > 1536) ||
+		    !(rxstat & WB_RXSTAT_LASTFRAG) ||
+		    !(rxstat & WB_RXSTAT_RXCMP)) {
 			ifp->if_ierrors++;
-			wb_reset(sc);
+			wb_newbuf(sc, cur_rx, m);
 			printf("%s: receiver babbling: possible chip "
 				"bug, forcing reset\n", sc->sc_dev.dv_xname);
-			ifp->if_flags |= IFF_OACTIVE;
-			ifp->if_timer = 2;
+			wb_fixmedia(sc);
+			wb_reset(sc);
+			wb_init(sc);
 			return;
 		}
 
 		if (rxstat & WB_RXSTAT_RXERR) {
 			ifp->if_ierrors++;
 			wb_newbuf(sc, cur_rx, m);
-			continue;
+			break;
 		}
 
 		/* No errors; receive the packet. */	
@@ -1374,7 +1114,7 @@ void wb_rxeof(sc)
 		wb_newbuf(sc, cur_rx, m);
 		if (m0 == NULL) {
 			ifp->if_ierrors++;
-			continue;
+			break;
 		}
 		m_adj(m0, ETHER_ALIGN);
 		m = m0;
@@ -1483,8 +1223,6 @@ void wb_txeoc(sc)
 	if (sc->wb_cdata.wb_tx_head == NULL) {
 		ifp->if_flags &= ~IFF_OACTIVE;
 		sc->wb_cdata.wb_tx_tail = NULL;
-		if (sc->wb_want_auto)
-			wb_autoneg_mii(sc, WB_FLAG_SCHEDDELAY, 1);
 	} else {
 		if (WB_TXOWN(sc->wb_cdata.wb_tx_head) == WB_UNSENT) {
 			WB_TXOWN(sc->wb_cdata.wb_tx_head) = WB_TXSTAT_OWN;
@@ -1524,20 +1262,20 @@ int wb_intr(arg)
 
 		r = 1;
 
+		if ((status & WB_ISR_RX_NOBUF) || (status & WB_ISR_RX_ERR)) {
+			ifp->if_ierrors++;
+			wb_reset(sc);
+			if (status & WB_ISR_RX_ERR)
+				wb_fixmedia(sc);
+			wb_init(sc);
+			continue;
+		}
+
 		if (status & WB_ISR_RX_OK)
 			wb_rxeof(sc);
 
 		if (status & WB_ISR_RX_IDLE)
 			wb_rxeoc(sc);
-
-		if ((status & WB_ISR_RX_NOBUF) || (status & WB_ISR_RX_ERR)) {
-			ifp->if_ierrors++;
-#ifdef foo
-			wb_stop(sc);
-			wb_reset(sc);
-			wb_init(sc);
-#endif
-		}
 
 		if (status & WB_ISR_TX_OK)
 			wb_txeof(sc);
@@ -1579,6 +1317,19 @@ int wb_intr(arg)
 	}
 
 	return (r);
+}
+
+void
+wb_tick(xsc)
+	void *xsc;
+{
+	struct wb_softc *sc = xsc;
+	int s;
+
+	s = splimp();
+	mii_tick(&sc->sc_mii);
+	timeout(wb_tick, sc, hz);
+	splx(s);
 }
 
 /*
@@ -1688,11 +1439,6 @@ void wb_start(ifp)
 
 	sc = ifp->if_softc;
 
-	if (sc->wb_autoneg) {
-		sc->wb_tx_pend = 1;
-		return;
-	}
-
 	/*
 	 * Check for an available queue slot. If there are none,
 	 * punt.
@@ -1777,18 +1523,11 @@ void wb_start(ifp)
 void wb_init(xsc)
 	void			*xsc;
 {
-	struct wb_softc		*sc = xsc;
-	struct ifnet		*ifp = &sc->arpcom.ac_if;
-	int			s, i;
-	u_int16_t		phy_bmcr = 0;
-
-	if (sc->wb_autoneg)
-		return;
+	struct wb_softc *sc = xsc;
+	struct ifnet *ifp = &sc->arpcom.ac_if;
+	int s, i;
 
 	s = splimp();
-
-	if (sc->wb_pinfo != NULL)
-		phy_bmcr = wb_phy_readreg(sc, PHY_BMCR);
 
 	/*
 	 * Cancel pending I/O and free all RX/TX buffers.
@@ -1801,14 +1540,32 @@ void wb_init(xsc)
 	/*
 	 * Set cache alignment and burst length.
 	 */
+#ifdef foo
 	CSR_WRITE_4(sc, WB_BUSCTL, WB_BUSCTL_CONFIG);
 	WB_CLRBIT(sc, WB_NETCFG, WB_NETCFG_TX_THRESH);
 	WB_SETBIT(sc, WB_NETCFG, WB_TXTHRESH(sc->wb_txthresh));
+#endif
+
+	CSR_WRITE_4(sc, WB_BUSCTL, WB_BUSCTL_MUSTBEONE|WB_BUSCTL_ARBITRATION);
+	WB_SETBIT(sc, WB_BUSCTL, WB_BURSTLEN_16LONG);
+	switch(sc->wb_cachesize) {
+	case 32:
+		WB_SETBIT(sc, WB_BUSCTL, WB_CACHEALIGN_32LONG);
+		break;
+	case 16:
+		WB_SETBIT(sc, WB_BUSCTL, WB_CACHEALIGN_16LONG);
+		break;
+	case 8:
+		WB_SETBIT(sc, WB_BUSCTL, WB_CACHEALIGN_8LONG);
+		break;
+	case 0:
+	default:
+		WB_SETBIT(sc, WB_BUSCTL, WB_CACHEALIGN_NONE);
+		break;
+	}
 
 	/* This doesn't tend to work too well at 100Mbps. */
 	WB_CLRBIT(sc, WB_NETCFG, WB_NETCFG_TX_EARLY_ON);
-
-	wb_setcfg(sc, phy_bmcr);
 
 	/* Init our MAC address */
 	for (i = 0; i < ETHER_ADDR_LEN; i++) {
@@ -1868,14 +1625,12 @@ void wb_init(xsc)
 	CSR_WRITE_4(sc, WB_TXADDR, vtophys(&sc->wb_ldata->wb_tx_list[0]));
 	WB_SETBIT(sc, WB_NETCFG, WB_NETCFG_TX_ON);
 
-	/* Restore state of BMCR */
-	if (sc->wb_pinfo != NULL)
-		wb_phy_writereg(sc, PHY_BMCR, phy_bmcr);
-
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
 	(void)splx(s);
+
+	timeout(wb_tick, sc, hz);
 
 	return;
 }
@@ -1883,22 +1638,14 @@ void wb_init(xsc)
 /*
  * Set media options.
  */
-int wb_ifmedia_upd(ifp)
-	struct ifnet		*ifp;
+int
+wb_ifmedia_upd(ifp)
+	struct ifnet *ifp;
 {
-	struct wb_softc		*sc;
-	struct ifmedia		*ifm;
+	struct wb_softc *sc = ifp->if_softc;
 
-	sc = ifp->if_softc;
-	ifm = &sc->ifmedia;
-
-	if (IFM_TYPE(ifm->ifm_media) != IFM_ETHER)
-		return(EINVAL);
-
-	if (IFM_SUBTYPE(ifm->ifm_media) == IFM_AUTO)
-		wb_autoneg_mii(sc, WB_FLAG_SCHEDDELAY, 1);
-	else
-		wb_setmode_mii(sc, ifm->ifm_media);
+	if (ifp->if_flags & IFF_UP)
+		wb_init(sc);
 
 	return(0);
 }
@@ -1906,49 +1653,17 @@ int wb_ifmedia_upd(ifp)
 /*
  * Report current media status.
  */
-void wb_ifmedia_sts(ifp, ifmr)
+void
+wb_ifmedia_sts(ifp, ifmr)
 	struct ifnet		*ifp;
 	struct ifmediareq	*ifmr;
 {
-	struct wb_softc		*sc;
-	u_int16_t		advert = 0, ability = 0;
+	struct wb_softc *sc = ifp->if_softc;
+	struct mii_data *mii = &sc->sc_mii;
 
-	sc = ifp->if_softc;
-
-	ifmr->ifm_active = IFM_ETHER;
-
-	if (!(wb_phy_readreg(sc, PHY_BMCR) & PHY_BMCR_AUTONEGENBL)) {
-		if (wb_phy_readreg(sc, PHY_BMCR) & PHY_BMCR_SPEEDSEL)
-			ifmr->ifm_active = IFM_ETHER|IFM_100_TX;
-		else
-			ifmr->ifm_active = IFM_ETHER|IFM_10_T;
-		if (wb_phy_readreg(sc, PHY_BMCR) & PHY_BMCR_DUPLEX)
-			ifmr->ifm_active |= IFM_FDX;
-		else
-			ifmr->ifm_active |= IFM_HDX;
-		return;
-	}
-
-	ability = wb_phy_readreg(sc, PHY_LPAR);
-	advert = wb_phy_readreg(sc, PHY_ANAR);
-	if (advert & PHY_ANAR_100BT4 &&
-		ability & PHY_ANAR_100BT4) {
-		ifmr->ifm_active = IFM_ETHER|IFM_100_T4;
-	} else if (advert & PHY_ANAR_100BTXFULL &&
-		ability & PHY_ANAR_100BTXFULL) {
-		ifmr->ifm_active = IFM_ETHER|IFM_100_TX|IFM_FDX;
-	} else if (advert & PHY_ANAR_100BTXHALF &&
-		ability & PHY_ANAR_100BTXHALF) {
-		ifmr->ifm_active = IFM_ETHER|IFM_100_TX|IFM_HDX;
-	} else if (advert & PHY_ANAR_10BTFULL &&
-		ability & PHY_ANAR_10BTFULL) {
-		ifmr->ifm_active = IFM_ETHER|IFM_10_T|IFM_FDX;
-	} else if (advert & PHY_ANAR_10BTHALF &&
-		ability & PHY_ANAR_10BTHALF) {
-		ifmr->ifm_active = IFM_ETHER|IFM_10_T|IFM_HDX;
-	}
-
-	return;
+	mii_pollstat(mii);
+	ifmr->ifm_active = mii->mii_media_active;
+	ifmr->ifm_status = mii->mii_media_status;
 }
 
 int wb_ioctl(ifp, command, data)
@@ -1997,7 +1712,7 @@ int wb_ioctl(ifp, command, data)
 		break;
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->ifmedia, command);
+		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, command);
 		break;
 	default:
 		error = EINVAL;
@@ -2016,18 +1731,14 @@ void wb_watchdog(ifp)
 
 	sc = ifp->if_softc;
 
-	if (sc->wb_autoneg) {
-		wb_autoneg_mii(sc, WB_FLAG_DELAYTIMEO, 1);
-		return;
-	}
-
 	ifp->if_oerrors++;
 	printf("%s: watchdog timeout\n", sc->sc_dev.dv_xname);
 
+#ifdef foo
 	if (!(wb_phy_readreg(sc, PHY_BMSR) & PHY_BMSR_LINKSTAT))
 		printf("%s: no carrier - transceiver cable problem?\n",
 		    sc->sc_dev.dv_xname);
-
+#endif
 	wb_stop(sc);
 	wb_reset(sc);
 	wb_init(sc);
@@ -2050,6 +1761,8 @@ void wb_stop(sc)
 
 	ifp = &sc->arpcom.ac_if;
 	ifp->if_timer = 0;
+
+	untimeout(wb_tick, sc);
 
 	WB_CLRBIT(sc, WB_NETCFG, (WB_NETCFG_RX_ON|WB_NETCFG_TX_ON));
 	CSR_WRITE_4(sc, WB_IMR, 0x00000000);
