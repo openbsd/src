@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.15 1997/04/11 10:01:31 deraadt Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.16 1997/04/14 22:18:57 provos Exp $	*/
 /*	$NetBSD: fdisk.c,v 1.11 1995/10/04 23:11:19 ghudson Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fdisk.c,v 1.15 1997/04/11 10:01:31 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: fdisk.c,v 1.16 1997/04/14 22:18:57 provos Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -322,11 +322,14 @@ leader(lead)
 }
 
 void
-print_partinfo(pp, lead)
+print_partinfo(pp, lead, off)
 	struct dos_partition *pp;
 	int lead;
+	u_int32_t off;
 {
-	leader(lead);
+        static int extcnt;
+	static int extoff;
+
 	printf("sysid %d=0x%02x (%s)\n", pp->dp_typ, pp->dp_typ,
 	    get_type(pp->dp_typ));
 	if (DPCYL(pp->dp_scyl, pp->dp_esect) > 1023) {
@@ -335,7 +338,9 @@ print_partinfo(pp, lead)
 	}
 	leader(lead);
 	printf("    start %d, size %d (%d MB), flag 0x%02x\n",
-	    getlong(&pp->dp_start), getlong(&pp->dp_size),
+	    extoff+getlong(&pp->dp_start) + 
+	    (pp->dp_typ != DOSPTYP_EXTEND ? off : 0), 
+	    getlong(&pp->dp_size),
 	    getlong(&pp->dp_size) * 512 / (1024 * 1024), pp->dp_flag);
 	leader(lead);
 	printf("    beg: cylinder %4d, head %3d, sector %2d\n",
@@ -345,34 +350,47 @@ print_partinfo(pp, lead)
 	printf("    end: cylinder %4d, head %3d, sector %2d\n",
 	    DPCYL(pp->dp_ecyl, pp->dp_esect),
 	    pp->dp_ehd, DPSECT(pp->dp_esect));
+
 	if (pp->dp_typ == DOSPTYP_EXTEND) {
 		struct mboot data;
-		int off;
+		u_int32_t off2;
 		int i;
 
 		/*
 		 * XXX not positive if the extended partition label should
 		 * should be found at the dp_start or at dp_s{cyl,hd,sect}
 		 */
-#if 0
-		off = getlong(&pp->dp_start) - 1;
-#else
-		off = DPCYL(pp->dp_scyl, pp->dp_ssect) * dos_cylindersectors +
-		    pp->dp_shd * dos_sectors +
-		    DPSECT(pp->dp_ssect);
-#endif
-		if (read_disk(off, &data) == -1) {
+
+		off2 = getlong(&pp->dp_start);
+
+		if (read_disk(extoff+off2, 
+			      data.bootinst) == -1) {
 			leader(lead+4);
 			printf("uhm, disk read error...\n");
-		} else {
-			for (i = 0; i < 4; i++) {
-				leader(lead+4);
-				printf("Extended Partition %d: ", i);
-				pp = &data.parts[i];
-				if (!memcmp(pp, &mtpart, sizeof(*pp)))
-					printf("<UNUSED>\n");
-				else
-					print_partinfo(pp, lead+4);
+			return;
+		}
+
+		if (!extoff)
+		  extoff = off2;
+
+		if (getshort(&data.signature) != BOOT_MAGIC) {
+		        fprintf(stderr,
+				"warning: invalid fdisk partition table found!\n");
+			return;
+		}
+
+		/* XXX - I dont quite understand why this needs to be like
+		 * that.
+		 */
+
+		for (i = 0; i < 4; i++) {
+			pp = &data.parts[i];
+			if (memcmp(pp, &mtpart, sizeof(*pp))) {
+			        leader(lead+2);
+				printf("Extended Partition %d: ", extcnt);
+				extcnt++;
+			        print_partinfo(pp, lead+2, off2);
+				extcnt--;
 			}
 		}
 	}
@@ -388,7 +406,7 @@ print_part(part)
 	if (!memcmp(pp, &mtpart, sizeof(*pp)))
 		printf("<UNUSED>\n");
 	else
-		print_partinfo(pp, 0);
+		print_partinfo(pp, 0, 0);
 }
 
 
