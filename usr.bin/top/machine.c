@@ -1,4 +1,4 @@
-/*	$OpenBSD: machine.c,v 1.23 2001/02/22 03:10:24 deraadt Exp $	*/
+/*	$OpenBSD: machine.c,v 1.24 2001/06/03 06:46:47 angelos Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -274,18 +274,20 @@ getprocs(op, arg, cnt)
 	int op, arg;
 	int *cnt;
 {
-	size_t size = 0;
+	size_t size = sizeof(int);
 	int mib[4] = {CTL_KERN, KERN_PROC, op, arg};
-	int st, nprocs;
+	int smib[2] = {CTL_KERN, KERN_NPROCS};
 	static struct kinfo_proc *procbase;
+	int st;
 
-	st = sysctl(mib, 4, NULL, &size, NULL, 0);
+	st = sysctl(smib, 2, cnt, &size, NULL, 0);
 	if (st == -1) {
 		/* _kvm_syserr(kd, kd->program, "kvm_getprocs"); */
 		return (0);
 	}
 	if (procbase)
 		free(procbase);
+	size = (6 * (*cnt) * sizeof(struct kinfo_proc)) / 5;
 	procbase = (struct kinfo_proc *)malloc(size);
 	if (procbase == NULL)
 		return (0);
@@ -300,7 +302,6 @@ getprocs(op, arg, cnt)
 		    size, sizeof(struct kinfo_proc)); */
 		return (0);
 	}
-	*cnt = size / sizeof(struct kinfo_proc);
 	return (procbase);
 }
 
