@@ -79,6 +79,11 @@ You should finish writing to and close the file descriptor returned by
 .Fn pw_lock
 before calling
 .Fn pw_mkdb .
+If
+.Fn pw_mkdb
+fails and you do not wish to retry, you should make sure to call
+.Fn pw_abort
+to clean up the lock file.
 .Pp
 The
 .Fn pw_abort

@@ -1,4 +1,4 @@
-/*	$OpenBSD: passwd.c,v 1.3 1996/06/17 07:46:04 downsj Exp $	*/
+/*	$OpenBSD: passwd.c,v 1.4 1996/06/19 12:36:01 deraadt Exp $	*/
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: passwd.c,v 1.1 1996/05/15 21:42:31 jtc Exp $";
+static char rcsid[] = "$NetBSD: passwd.c,v 1.1.4.1 1996/06/02 19:48:31 ghudson Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -89,10 +89,8 @@ pw_mkdb()
 		exit(1);
 	}
 	pid = waitpid(pid, &pstat, 0);
-	if (pid == -1 || !WIFEXITED(pstat) || WEXITSTATUS(pstat) != 0) {
-		unlink(_PATH_MASTERPASSWD_LOCK);
+	if (pid == -1 || !WIFEXITED(pstat) || WEXITSTATUS(pstat) != 0)
 		return(-1);
-	}
 	return(0);
 }
 
@@ -151,6 +149,7 @@ pw_edit(notsetuid, filename)
 {
 	int pstat;
 	char *p, *editor;
+	char *argp[] = {"sh", "-c", NULL, NULL};
 
 	if (!filename)
 		filename = _PATH_MASTERPASSWD_LOCK;
@@ -161,15 +160,21 @@ pw_edit(notsetuid, filename)
 	if (p == NULL)
 		return;
 	sprintf(p, "%s %s", editor, filename);
+	argp[2] = p;
 
-	if (!(editpid = vfork())) {
+	switch(editpid = vfork()) {
+	case -1:			/* error */
+		free(p);
+		return;
+	case 0:				/* child */
 		if (notsetuid) {
 			setgid(getgid());
 			setuid(getuid());
 		}
-		system(p);
-		_exit(1);
+		execv(_PATH_BSHELL, argp);
+		_exit(127);
 	}
+
 	free(p);
 	for (;;) {
 		editpid = waitpid(editpid, (int *)&pstat, WUNTRACED);
@@ -348,4 +353,3 @@ pw_error(name, err, eval)
 	pw_abort();
 	exit(eval);
 }
-
