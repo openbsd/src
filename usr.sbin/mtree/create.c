@@ -1,5 +1,5 @@
 /*	$NetBSD: create.c,v 1.11 1996/09/05 09:24:19 mycroft Exp $	*/
-/*	$OpenBSD: create.c,v 1.22 2004/07/09 16:22:03 deraadt Exp $	*/
+/*	$OpenBSD: create.c,v 1.23 2004/08/01 18:32:20 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static const char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: create.c,v 1.22 2004/07/09 16:22:03 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: create.c,v 1.23 2004/08/01 18:32:20 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -133,9 +133,7 @@ cwalk(void)
 }
 
 static void
-statf(indent, p)
-	int indent;
-	FTSENT *p;
+statf(int indent, FTSENT *p)
 {
 	struct group *gr;
 	struct passwd *pw;
@@ -263,12 +261,7 @@ statf(indent, p)
 #define	MAXMODE	MBITS + 1
 
 static int
-statd(t, parent, puid, pgid, pmode)
-	FTS *t;
-	FTSENT *parent;
-	uid_t *puid;
-	gid_t *pgid;
-	mode_t *pmode;
+statd(FTS *t, FTSENT *parent, uid_t *puid, gid_t *pgid, mode_t *pmode)
 {
 	FTSENT *p;
 	gid_t sgid;
@@ -359,8 +352,7 @@ statd(t, parent, puid, pgid, pmode)
 }
 
 static int
-dsort(a, b)
-	const FTSENT **a, **b;
+dsort(const FTSENT **a, const FTSENT **b)
 {
 	if (S_ISDIR((*a)->fts_statp->st_mode)) {
 		if (!S_ISDIR((*b)->fts_statp->st_mode))

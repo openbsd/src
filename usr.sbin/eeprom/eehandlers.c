@@ -1,4 +1,4 @@
-/*	$OpenBSD: eehandlers.c,v 1.11 2004/07/09 16:22:02 deraadt Exp $	*/
+/*	$OpenBSD: eehandlers.c,v 1.12 2004/08/01 18:32:17 deraadt Exp $	*/
 /*	$NetBSD: eehandlers.c,v 1.2 1996/02/28 01:13:22 thorpej Exp $	*/
 
 /*-
@@ -657,9 +657,7 @@ ee_verifychecksums(void)
 }
 
 u_char
-ee_checksum(area, len)
-	u_char *area;
-	size_t len;
+ee_checksum(u_char *area, size_t len)
 {
 	u_char sum = 0;
 

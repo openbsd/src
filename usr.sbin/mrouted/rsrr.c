@@ -1,3 +1,4 @@
+/*	$OpenBSD: rsrr.c,v 1.10 2004/08/01 18:32:19 deraadt Exp $	*/
 /*	$NetBSD: rsrr.c,v 1.3 1995/12/10 10:07:14 mycroft Exp $	*/
 
 /*
@@ -83,7 +84,7 @@ static void	rsrr_cache(struct gtable *gt, struct rsrr_rq *route_query);
 
 /* Initialize RSRR socket */
 void
-rsrr_init()
+rsrr_init(void)
 {
     int servlen;
     struct sockaddr_un serv_addr;
@@ -112,9 +113,7 @@ rsrr_init()
 
 /* Read a message from the RSRR socket */
 void
-rsrr_read(f, rfd)
-	int f;
-	fd_set *rfd;
+rsrr_read(int f, fd_set *rfd)
 {
     int rsrr_recvlen;
     sigset_t mask, omask;
@@ -139,8 +138,7 @@ rsrr_read(f, rfd)
  * appropriate action.
  */
 static void
-rsrr_accept(recvlen)
-    int recvlen;
+rsrr_accept(int recvlen)
 {
     struct rsrr_header *rsrr;
     struct rsrr_rq *route_query;
@@ -205,7 +203,7 @@ rsrr_accept(recvlen)
 
 /* Send an Initial Reply to the reservation protocol. */
 static void
-rsrr_accept_iq()
+rsrr_accept_iq(void)
 {
     struct rsrr_header *rsrr;
     struct rsrr_vif *vif_list;
@@ -257,10 +255,7 @@ rsrr_accept_iq()
  * change notification.
  */
 static int
-rsrr_accept_rq(route_query,flags,gt_notify)
-    struct rsrr_rq *route_query;
-    int flags;
-    struct gtable *gt_notify;
+rsrr_accept_rq(struct rsrr_rq *route_query, int flags, struct gtable *gt_notify)
 {
     struct rsrr_header *rsrr;
     struct rsrr_rr *route_reply;
@@ -377,8 +372,7 @@ rsrr_accept_rq(route_query,flags,gt_notify)
 
 /* Send an RSRR message. */
 static int
-rsrr_send(sendlen)
-    int sendlen;
+rsrr_send(int sendlen)
 {
     int error;
 
@@ -400,9 +394,7 @@ rsrr_send(sendlen)
  * caching Route Reply messages for route change notification.
  */
 static void
-rsrr_cache(gt,route_query)
-    struct gtable *gt;
-    struct rsrr_rq *route_query;
+rsrr_cache(struct gtable *gt, struct rsrr_rq *route_query)
 {
     struct rsrr_cache *rc, **rcnp;
     struct rsrr_header *rsrr;
@@ -457,9 +449,7 @@ rsrr_cache(gt,route_query)
  * all the cached Route Reply messages for route change notification.
  */
 void
-rsrr_cache_send(gt,notify)
-    struct gtable *gt;
-    int notify;
+rsrr_cache_send(struct gtable *gt, int notify)
 {
     struct rsrr_cache *rc, **rcnp;
     int flags = 0;
@@ -483,8 +473,7 @@ rsrr_cache_send(gt,notify)
 
 /* Clean the cache by deleting all entries. */
 void
-rsrr_cache_clean(gt)
-    struct gtable *gt;
+rsrr_cache_clean(struct gtable *gt)
 {
     struct rsrr_cache *rc,*rc_next;
 
@@ -499,7 +488,7 @@ rsrr_cache_clean(gt)
 }
 
 void
-rsrr_clean()
+rsrr_clean(void)
 {
     unlink(RSRR_SERV_PATH);
 }

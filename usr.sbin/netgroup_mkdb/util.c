@@ -30,7 +30,7 @@
  */
 
 #ifndef lint
-static char *rcsid = "$Id: util.c,v 1.2 1997/04/15 15:06:13 deraadt Exp $";
+static char *rcsid = "$Id: util.c,v 1.3 2004/08/01 18:32:20 deraadt Exp $";
 #endif
 
 #include <err.h>
@@ -43,8 +43,7 @@ static char *rcsid = "$Id: util.c,v 1.2 1997/04/15 15:06:13 deraadt Exp $";
  *	Error checked malloc
  */
 void *
-emalloc(s)
-    size_t s;
+emalloc(size_t s)
 {
     void *ptr = malloc(s);
     if (ptr == NULL)
@@ -58,9 +57,7 @@ emalloc(s)
  *	Error checked realloc
  */
 void *
-erealloc(p, s)
-    void *p;
-    size_t s;
+erealloc(void *p, size_t s)
 {
     void *ptr = realloc(p, s);
     if (ptr == NULL)
@@ -75,9 +72,7 @@ erealloc(p, s)
  *	and eliminating trailing newlines.
  */
 char *
-getline(fp, size)
-    FILE *fp;
-    size_t *size;
+getline(FILE *fp, size_t *size)
 {
     size_t s, len = 0;
     char *buf = NULL;

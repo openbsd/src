@@ -1,4 +1,4 @@
-/*	$OpenBSD: kgmon.c,v 1.10 2003/06/02 23:36:53 millert Exp $	*/
+/*	$OpenBSD: kgmon.c,v 1.11 2004/08/01 18:32:19 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -37,7 +37,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)kgmon.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: kgmon.c,v 1.10 2003/06/02 23:36:53 millert Exp $";
+static char *rcsid = "$OpenBSD: kgmon.c,v 1.11 2004/08/01 18:32:19 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -163,10 +163,7 @@ main(int argc, char **argv)
  * Check that profiling is enabled and open any ncessary files.
  */
 int
-openfiles(system, kmemf, kvp)
-	char *system;
-	char *kmemf;
-	struct kvmvars *kvp;
+openfiles(char *system, char *kmemf, struct kvmvars *kvp)
 {
 	int mib[3], state, openmode;
 	size_t size;
@@ -212,8 +209,7 @@ openfiles(system, kmemf, kvp)
  * Suppress options that require a writable kernel.
  */
 void
-kern_readonly(mode)
-	int mode;
+kern_readonly(int mode)
 {
 	extern char *__progname;
 
@@ -233,8 +229,7 @@ kern_readonly(mode)
  * Get the state of kernel profiling.
  */
 int
-getprof(kvp)
-	struct kvmvars *kvp;
+getprof(struct kvmvars *kvp)
 {
 	int mib[3];
 	size_t size;
@@ -260,9 +255,7 @@ getprof(kvp)
  * Enable or disable kernel profiling according to the state variable.
  */
 void
-setprof(kvp, state)
-	struct kvmvars *kvp;
-	int state;
+setprof(struct kvmvars *kvp, int state)
 {
 	struct gmonparam *p = (struct gmonparam *)nl[N_GMONPARAM].n_value;
 	int mib[3], oldstate;
@@ -295,8 +288,7 @@ bad:
  * Build the gmon.out file.
  */
 void
-dumpstate(kvp)
-	struct kvmvars *kvp;
+dumpstate(struct kvmvars *kvp)
 {
 	FILE *fp;
 	struct rawarc rawarc;
@@ -410,8 +402,7 @@ dumpstate(kvp)
  * Get the profiling rate.
  */
 int
-getprofhz(kvp)
-	struct kvmvars *kvp;
+getprofhz(struct kvmvars *kvp)
 {
 	int mib[2], profrate;
 	size_t size;
@@ -437,8 +428,7 @@ getprofhz(kvp)
  * Reset the kernel profiling date structures.
  */
 void
-reset(kvp)
-	struct kvmvars *kvp;
+reset(struct kvmvars *kvp)
 {
 	char *zbuf;
 	u_long biggest;

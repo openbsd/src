@@ -30,7 +30,7 @@
  */
 
 #ifndef lint
-static char *rcsid = "$Id: str.c,v 1.1.1.1 1995/10/18 08:47:57 deraadt Exp $";
+static char *rcsid = "$Id: str.c,v 1.2 2004/08/01 18:32:20 deraadt Exp $";
 #endif
 
 /*
@@ -46,8 +46,7 @@ static char *rcsid = "$Id: str.c,v 1.1.1.1 1995/10/18 08:47:57 deraadt Exp $";
  * str_init(): Initialize string
  */
 void
-str_init(s)
-	struct string  *s;
+str_init(struct string *s)
 {
 	s->s_str = NULL;
 	s->s_len = 0;
@@ -58,10 +57,7 @@ str_init(s)
  * str_append(): Append string allocating buffer as necessary
  */
 void
-str_append(buf, str, del)
-	struct string  *buf;
-	const char     *str;
-	int             del;
+str_append(struct string *buf, const char *str, int del)
 {
 	size_t          len = strlen(str) + 1;
 
@@ -82,10 +78,7 @@ str_append(buf, str, del)
  * str_prepend(): Prepend string allocating buffer as necessary
  */
 void
-str_prepend(buf, str, del)
-	struct string  *buf;
-	const char     *str;
-	int             del;
+str_prepend(struct string *buf, const char *str, int del)
 {
 	char           *ptr, *sptr;
 	size_t          len = strlen(str) + 1;
@@ -110,8 +103,7 @@ str_prepend(buf, str, del)
  * str_free(): Free a string
  */
 void
-str_free(s)
-	struct string  *s;
+str_free(struct string *s)
 {
 	free(s->s_str);
 	s->s_str = NULL;

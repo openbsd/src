@@ -1,6 +1,6 @@
 /* $NetBSD: $ */
 /* $FreeBSD: $ */
-/* $OpenBSD: eltsub.c,v 1.4 2003/04/03 18:49:51 deraadt Exp $ */
+/* $OpenBSD: eltsub.c,v 1.5 2004/08/01 18:32:21 deraadt Exp $ */
 /*
  * Copyright (c) 2000 by Matthew Jacob
  * All rights reserved.
@@ -45,8 +45,7 @@ static char *scode2ascii(u_char);
 char *stat2ascii(int, u_char *);
 
 char *
-geteltnm(type)
-	int type;
+geteltnm(int type)
 {
 	static char rbuf[132];
 
@@ -122,8 +121,7 @@ geteltnm(type)
 }
 
 static char *
-scode2ascii(code)
-	u_char code;
+scode2ascii(u_char code)
 {
 	static char rbuf[32];
 	switch (code & 0xf) {
@@ -160,9 +158,7 @@ scode2ascii(code)
 
 
 char *
-stat2ascii(eletype, cstat)
-	int eletype;
-	u_char *cstat;
+stat2ascii(int eletype, u_char *cstat)
 {
 	static char ebuf[256], *scode;
 

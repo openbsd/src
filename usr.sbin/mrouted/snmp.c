@@ -56,8 +56,7 @@ static struct addrCache addrCache[10];
  * Initialize the SNMP part of mrouted
  */
 int /* returns: 0 on success, true on error */
-snmp_init(dest_port)
-    in_port_t dest_port;
+snmp_init(in_port_t dest_port)
 {
    u_long myaddr;
    int ret;
@@ -144,10 +143,7 @@ snmp_init(dest_port)
  * Place an IP address into an OID starting at element n
  */
 void
-put_address(name, addr, n)
-   oid	 *name;
-   u_long addr;
-   int n;
+put_address(oid *name, u_long addr, int n)
 {
    int i;
 
@@ -159,11 +155,7 @@ put_address(name, addr, n)
 
 /* Get an IP address from an OID starting at element n */
 int
-get_address(name, length, addr, n)
-   oid	 *name;
-   int	  length;
-   u_long *addr;
-   int n;
+get_address(oid *name, int length, u_long *addr, int n)
 {
    int i;
    int ok = 1;
@@ -185,15 +177,16 @@ get_address(name, length, addr, n)
 
 /*
  * Implements scalar objects from DVMRP and Multicast MIBs
+ * vp          : IN - pointer to variable entry that points here
+ * name        : IN/OUT - input name requested, output name found
+ * length      : IN/OUT - length of input and output oid's
+ * exact       : IN - TRUE if an exact match was requested.
+ * var_len     : OUT - length of variable or 0 if function returned.
+ * write_method:  OUT - pointer to function to set variable, otherwise 0
  */
 u_char *
-o_scalar(vp, name, length, exact, var_len, write_method)
-    register struct variable *vp;   /* IN - pointer to variable entry that points here */
-    register oid	*name;	    /* IN/OUT - input name requested, output name found */
-    register int	*length;    /* IN/OUT - length of input and output oid's */
-    int			exact;	    /* IN - TRUE if an exact match was requested. */
-    int			*var_len;   /* OUT - length of variable or 0 if function returned. */
-    int			(**write_method)(); /* OUT - pointer to function to set variable, otherwise 0 */
+o_scalar(register struct variable *vp, register oid *name, register int *length,
+    int exact, int *var_len, int (**write_method)() )
 {
     int result;
 
@@ -236,10 +229,7 @@ o_scalar(vp, name, length, exact, var_len, write_method)
  * Find if a specific scoped boundary exists on a Vif
  */
 struct vif_acl *
-find_boundary(vifi, addr, mask)
-   vifi_t vifi;
-   u_long addr;
-   u_long mask;
+find_boundary(vifi_t vifi, u_long addr, u_long mask)
 {
    struct vif_acl *n;
 
@@ -254,10 +244,7 @@ find_boundary(vifi, addr, mask)
  * Find the lowest boundary >= (V,A,M) spec
  */
 struct vif_acl *
-next_boundary(vifi, addr, mask)
-   vifi_t *vifi;
-   u_long  addr;
-   u_long  mask;
+next_boundary(vifi_t *vifi, u_long addr, u_long mask)
 {
    struct vif_acl *bestn, *n;
    int  i;
@@ -281,15 +268,16 @@ next_boundary(vifi, addr, mask)
 
 /*
  * Implements the Boundary Table portion of the DVMRP MIB
+ * vp          : IN - pointer to variable entry that points here
+ * name        : IN/OUT - input name requested, output name found
+ * length      : IN/OUT - length of input and output oid's
+ * exact       : IN - TRUE if an exact match was requested.
+ * var_len     : OUT - length of variable or 0 if function returned.
+ * write_method: OUT - pointer to function to set variable, otherwise 0
  */
 u_char *
-o_dvmrpBoundaryTable(vp, name, length, exact, var_len, write_method)
-    register struct variable *vp;   /* IN - pointer to variable entry that points here */
-    register oid	*name;	    /* IN/OUT - input name requested, output name found */
-    register int	*length;    /* IN/OUT - length of input and output oid's */
-    int			exact;	    /* IN - TRUE if an exact match was requested. */
-    int			*var_len;   /* OUT - length of variable or 0 if function returned. */
-    int			(**write_method)(); /* OUT - pointer to function to set variable, otherwise 0 */
+o_dvmrpBoundaryTable(register struct variable *vp, register oid *name,
+    register int *length, int exact, int *var_len, int (**write_method)())
 {
     vifi_t     vifi;
     u_long	   addr, mask;
@@ -373,9 +361,7 @@ o_dvmrpBoundaryTable(vp, name, length, exact, var_len, write_method)
  * Find the lowest neighbor >= (V,A) spec
  */
 struct listaddr *
-next_neighbor(vifi, addr)
-   vifi_t *vifi;
-   u_long  addr;
+next_neighbor(vifi_t *vifi, u_long addr)
 {
    struct listaddr *bestn, *n;
    int  i;
@@ -399,9 +385,7 @@ next_neighbor(vifi, addr)
  * Find a neighbor, if it exists off a given Vif
  */
 struct listaddr *
-find_neighbor(vifi, addr)
-   vifi_t vifi;
-   u_long addr;
+find_neighbor(vifi_t vifi, u_long addr)
 {
    struct listaddr *n;
 
@@ -412,14 +396,17 @@ find_neighbor(vifi, addr)
    return NULL;
 }
 
+/*
+ * vp          : IN - pointer to variable entry that points here
+ * name        : IN/OUT - input name requested, output name found
+ * length      : IN/OUT - length of input and output oid's
+ * exact       : IN - TRUE if an exact match was requested.
+ * var_len     : OUT - length of variable or 0 if function returned.
+ * write_method: OUT - pointer to function to set variable, otherwise 0
+ */
 u_char *
-o_dvmrpNeighborTable(vp, name, length, exact, var_len, write_method)
-    register struct variable *vp;   /* IN - pointer to variable entry that points here */
-    register oid	*name;	    /* IN/OUT - input name requested, output name found */
-    register int	*length;    /* IN/OUT - length of input and output oid's */
-    int			exact;	    /* IN - TRUE if an exact match was requested. */
-    int			*var_len;   /* OUT - length of variable or 0 if function returned. */
-    int			(**write_method)(); /* OUT - pointer to function to set variable, otherwise 0 */
+o_dvmrpNeighborTable(register struct variable *vp, register oid *name,
+    register int *length, int exact, int *var_len, int (**write_method)())
 {
     vifi_t     vifi;
     u_long     addr, mask;
@@ -516,9 +503,7 @@ o_dvmrpNeighborTable(vp, name, length, exact, var_len, write_method)
 
 /* Look up ifIndex given uvifs[ifnum].uv_lcl_addr */
 struct in_ifaddr *        /* returns: in_ifaddr structure, or null on error */
-ipaddr_to_ifindex(ipaddr, ifIndex)
-   u_long ipaddr;
-   int   *ifIndex;
+ipaddr_to_ifindex(u_long ipaddr, int *ifIndex)
 {
     int interface;
 static struct in_ifaddr in_ifaddr;
@@ -540,9 +525,7 @@ static struct in_ifaddr in_ifaddr;
  * Find if a specific scoped boundary exists on a Vif
  */
 struct listaddr *
-find_cache(grp, vifi)
-   u_long grp;
-   vifi_t vifi;
+find_cache(u_long grp, vifi_t vifi)
 {
    struct listaddr *n;
 
@@ -557,9 +540,7 @@ find_cache(grp, vifi)
  * Find the next group cache entry >= (A,V) spec
  */
 struct listaddr *
-next_cache(addr, vifi)
-   u_long  addr;
-   vifi_t *vifi;
+next_cache(u_long addr, vifi_t *vifi)
 {
    struct listaddr *bestn=NULL, *n;
    int  i, besti;
@@ -585,15 +566,16 @@ next_cache(addr, vifi)
 
 /*
  * Implements the IGMP Cache Table portion of the IGMP MIB
+ * vp          : IN - pointer to variable entry that points here
+ * name        : IN/OUT - input name requested, output name found
+ * length      : IN/OUT - length of input and output oid's
+ * exact       : IN - TRUE if an exact match was requested.
+ * var_len     : OUT - length of variable or 0 if function returned.
+ * write_method: OUT - pointer to function to set variable, otherwise 0
  */
 u_char *
-o_igmpCacheTable(vp, name, length, exact, var_len, write_method)
-    register struct variable *vp;   /* IN - pointer to variable entry that points here */
-    register oid	*name;	    /* IN/OUT - input name requested, output name found */
-    register int	*length;    /* IN/OUT - length of input and output oid's */
-    int			exact;	    /* IN - TRUE if an exact match was requested. */
-    int			*var_len;   /* OUT - length of variable or 0 if function returned. */
-    int			(**write_method)(); /* OUT - pointer to function to set variable, otherwise 0 */
+o_igmpCacheTable(register struct variable *vp, register oid *name,
+    register int *length, int exact, int *var_len, int (**write_method)())
 {
     vifi_t     vifi;
     u_long     grp;
@@ -705,15 +687,16 @@ o_igmpCacheTable(vp, name, length, exact, var_len, write_method)
 
 /*
  * Implements the IGMP Interface Table portion of the IGMP MIB
+ * vp          : IN - pointer to variable entry that points here
+ * name        : IN/OUT - input name requested, output name found
+ * length      : IN/OUT - length of input and output oid's
+ * exact       : IN - TRUE if an exact match was requested.
+ * var_len     : OUT - length of variable or 0 if function returned.
+ * write_method: OUT - pointer to function to set variable, otherwise 0
  */
 u_char *
-o_igmpInterfaceTable(vp, name, length, exact, var_len, write_method)
-    register struct variable *vp;   /* IN - pointer to variable entry that points here */
-    register oid	*name;	    /* IN/OUT - input name requested, output name found */
-    register int	*length;    /* IN/OUT - length of input and output oid's */
-    int			exact;	    /* IN - TRUE if an exact match was requested. */
-    int			*var_len;   /* OUT - length of variable or 0 if function returned. */
-    int			(**write_method)(); /* OUT - pointer to function to set variable, otherwise 0 */
+o_igmpInterfaceTable(register struct variable *vp, register oid	*name,
+    register int *length, int exact, int *var_len, int (**write_method)())
 {
     oid			newname[MAX_NAME_LEN];
     register int	ifnum;
@@ -761,9 +744,7 @@ static struct sioc_vif_req v_req;
  * Given a virtual interface number, make sure we have the current
  * kernel information for that Vif.
  */
-refresh_vif(v_req, ifnum)
-   struct sioc_vif_req *v_req;
-   int ifnum;
+refresh_vif(struct sioc_vif_req *v_req, int ifnum)
 {
    static   int lastq = -1;
 
@@ -777,15 +758,16 @@ refresh_vif(v_req, ifnum)
 
 /*
  * Implements the Multicast Routing Interface Table portion of the Multicast MIB
+ * vp          : IN - pointer to variable entry that points here
+ * name        : IN/OUT - input name requested, output name found
+ * length      : IN/OUT - length of input and output oid's
+ * exact       : IN - TRUE if an exact match was requested.
+ * var_len     : OUT - length of variable or 0 if function returned.
+ * write_method: OUT - pointer to function to set variable, otherwise 0
  */
 u_char *
-o_ipMRouteInterfaceTable(vp, name, length, exact, var_len, write_method)
-    register struct variable *vp;   /* IN - pointer to variable entry that points here */
-    register oid	*name;	    /* IN/OUT - input name requested, output name found */
-    register int	*length;    /* IN/OUT - length of input and output oid's */
-    int			exact;	    /* IN - TRUE if an exact match was requested. */
-    int			*var_len;   /* OUT - length of variable or 0 if function returned. */
-    int			(**write_method)(); /* OUT - pointer to function to set variable, otherwise 0 */
+o_ipMRouteInterfaceTable(register struct variable *vp, register oid *name,
+    register int *length, int exact, int *var_len, int (**write_method)())
 {
     oid			newname[MAX_NAME_LEN];
     register int	ifnum;
@@ -885,15 +867,16 @@ static struct sioc_vif_req v_req;
 
 /*
  * Implements the DVMRP Route Table portion of the DVMRP MIB
+ * vp          : IN - pointer to variable entry that points here
+ * name        : IN/OUT - input name requested, output name found
+ * length      : IN/OUT - length of input and output oid's
+ * exact       : IN - TRUE if an exact match was requested.
+ * var_len     : OUT - length of variable or 0 if function returned.
+ * write_method: OUT - pointer to function to set variable, otherwise 0
  */
 u_char *
-o_dvmrpRouteTable(vp, name, length, exact, var_len, write_method)
-    register struct variable *vp;   /* IN - pointer to variable entry that points here */
-    register oid	*name;	    /* IN/OUT - input name requested, output name found */
-    register int	*length;    /* IN/OUT - length of input and output oid's */
-    int			exact;	    /* IN - TRUE if an exact match was requested. */
-    int			*var_len;   /* OUT - length of variable or 0 if function returned. */
-    int			(**write_method)(); /* OUT - pointer to function to set variable, otherwise 0 */
+o_dvmrpRouteTable(register struct variable *vp, register oid *name,
+    register int *length, int exact, int *var_len, int (**write_method)())
 {
     u_long src, mask;
     oid        newname[MAX_NAME_LEN];
@@ -978,15 +961,16 @@ o_dvmrpRouteTable(vp, name, length, exact, var_len, write_method)
 
 /*
  * Implements the DVMRP Routing Next Hop Table portion of the DVMRP MIB
+ * vp          : IN - pointer to variable entry that points here
+ * name        : IN/OUT - input name requested, output name found
+ * length      : IN/OUT - length of input and output oid's
+ * exact       : IN - TRUE if an exact match was requested.
+ * var_len     : OUT - length of variable or 0 if function returned.
+ * write_method: OUT - pointer to function to set variable, otherwise 0
  */
 u_char *
-o_dvmrpRouteNextHopTable(vp, name, length, exact, var_len, write_method)
-    register struct variable *vp;   /* IN - pointer to variable entry that points here */
-    register oid	*name;	    /* IN/OUT - input name requested, output name found */
-    register int	*length;    /* IN/OUT - length of input and output oid's */
-    int			exact;	    /* IN - TRUE if an exact match was requested. */
-    int			*var_len;   /* OUT - length of variable or 0 if function returned. */
-    int			(**write_method)(); /* OUT - pointer to function to set variable, otherwise 0 */
+o_dvmrpRouteNextHopTable(register struct variable *vp, register oid *name,
+    register int *length, int exact, int *var_len, int (**write_method)())
 {
     u_long     src, mask;
     vifi_t     vifi;
@@ -1062,15 +1046,16 @@ o_dvmrpRouteNextHopTable(vp, name, length, exact, var_len, write_method)
 
 /*
  * Implements the IP Multicast Route Table portion of the Multicast MIB
+ * vp          : IN - pointer to variable entry that points here
+ * name        : IN/OUT - input name requested, output name found
+ * length      : IN/OUT - length of input and output oid's
+ * exact       : IN - TRUE if an exact match was requested.
+ * var_len     : OUT - length of variable or 0 if function returned.
+ * write_method: OUT - pointer to function to set variable, otherwise 0
  */
 u_char *
-o_ipMRouteTable(vp, name, length, exact, var_len, write_method)
-    register struct variable *vp;   /* IN - pointer to variable entry that points here */
-    register oid	*name;	    /* IN/OUT - input name requested, output name found */
-    register int	*length;    /* IN/OUT - length of input and output oid's */
-    int			exact;	    /* IN - TRUE if an exact match was requested. */
-    int			*var_len;   /* OUT - length of variable or 0 if function returned. */
-    int			(**write_method)(); /* OUT - pointer to function to set variable, otherwise 0 */
+o_ipMRouteTable(register struct variable *vp, register oid *name,
+    register int *length, int exact, int *var_len, int (**write_method)())
 {
     u_long src, grp, mask;
     struct gtable *gt = NULL;
@@ -1181,15 +1166,16 @@ static struct sioc_sg_req sg_req;
 /*
  * Implements the IP Multicast Routing Next Hop Table portion of the Multicast
  * MIB
+ * vp          : IN - pointer to variable entry that points here
+ * name	       : IN/OUT - input name requested, output name found
+ * length      : IN/OUT - length of input and output oid's
+ * exact       : IN - TRUE if an exact match was requested.
+ * var_len     : OUT - length of variable or 0 if function returned.
+ * write_method: OUT - pointer to function to set variable, otherwise 0
  */
 u_char *
-o_ipMRouteNextHopTable(vp, name, length, exact, var_len, write_method)
-    register struct variable *vp;   /* IN - pointer to variable entry that points here */
-    register oid	*name;	    /* IN/OUT - input name requested, output name found */
-    register int	*length;    /* IN/OUT - length of input and output oid's */
-    int			exact;	    /* IN - TRUE if an exact match was requested. */
-    int			*var_len;   /* OUT - length of variable or 0 if function returned. */
-    int			(**write_method)(); /* OUT - pointer to function to set variable, otherwise 0 */
+o_ipMRouteNextHopTable(register struct variable *vp, register oid *name,
+    register int *length, int exact, int *var_len, int (**write_method)())
 {
     u_long src, grp, mask, addr;
     vifi_t   vifi;
@@ -1304,13 +1290,13 @@ o_ipMRouteNextHopTable(vp, name, length, exact, var_len, write_method)
 static time_t lasttimer;
 
 void
-sync_timer()
+sync_timer(void)
 {
     time(&lasttimer);
 }
 
 int /* in range [-TIMER_INTERVAL..0] */
-secs_remaining_offset()
+secs_remaining_offset(void)
 {
    time_t tm;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hilinfo.c,v 1.5 2004/07/09 16:22:02 deraadt Exp $	*/
+/*	$OpenBSD: hilinfo.c,v 1.6 2004/08/01 18:32:18 deraadt Exp $	*/
 /* 
  * Copyright (c) 1987-1993, The University of Utah and
  * the Center for Software Science at the University of Utah (CSS).
@@ -52,8 +52,7 @@ struct hil_info {
 };
 
 int
-main(argc, argv)
-	char **argv;
+main(int argc, char *argv[])
 {
 	int aflg, tflg;
 	int c;
@@ -96,8 +95,7 @@ main(argc, argv)
 }
 
 int
-getinfo(dname)
-	char *dname;
+getinfo(char *dname)
 {
 	int f;
 

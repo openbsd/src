@@ -1,5 +1,5 @@
 /*	$NetBSD: spec.c,v 1.6 1995/03/07 21:12:12 cgd Exp $	*/
-/*	$OpenBSD: spec.c,v 1.21 2004/07/09 16:22:03 deraadt Exp $	*/
+/*	$OpenBSD: spec.c,v 1.22 2004/08/01 18:32:20 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static const char sccsid[] = "@(#)spec.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: spec.c,v 1.21 2004/07/09 16:22:03 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: spec.c,v 1.22 2004/08/01 18:32:20 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -168,9 +168,7 @@ noparent:		error("no parent node");
 }
 
 static void
-set(t, ip)
-	char *t;
-	NODE *ip;
+set(char *t, NODE *ip)
 {
 	int type;
 	char *kw, *val = NULL;
@@ -311,9 +309,7 @@ set(t, ip)
 }
 
 static void
-unset(t, ip)
-	char *t;
-	NODE *ip;
+unset(char *t, NODE *ip)
 {
 	char *p;
 

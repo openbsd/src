@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.37 2004/01/25 03:25:49 deraadt Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.38 2004/08/01 18:32:21 deraadt Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -906,9 +906,7 @@ main(int argc, char *argv[])
 }
 
 int
-wait_for_reply(sock, mhdr)
-	int sock;
-	struct msghdr *mhdr;
+wait_for_reply(int sock, struct msghdr *mhdr)
 {
 #ifdef HAVE_POLL
 	struct pollfd pfd[1];

@@ -1,6 +1,6 @@
 /* $NetBSD: $ */ 
 /* $FreeBSD: $ */
-/* $OpenBSD: getobjmap.c,v 1.3 2002/02/16 21:28:09 millert Exp $ */
+/* $OpenBSD: getobjmap.c,v 1.4 2004/08/01 18:32:21 deraadt Exp $ */
 /*
  * Copyright (c) 2000 by Matthew Jacob
  * All rights reserved.
@@ -41,13 +41,10 @@
 #include <sys/ioctl.h>
 #include SESINC
 
-int main(int, char **);
 extern char *geteltnm(int);
 
 int
-main(a, v)
-	int a;
-	char **v;
+main(int a, char *v[])
 {
 	ses_object *objp;
 	int nobj, fd, i;
