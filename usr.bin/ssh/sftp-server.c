@@ -22,7 +22,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-RCSID("$OpenBSD: sftp-server.c,v 1.11 2001/01/15 21:45:29 markus Exp $");
+RCSID("$OpenBSD: sftp-server.c,v 1.12 2001/01/15 21:46:38 markus Exp $");
 
 #include "ssh.h"
 #include "buffer.h"
@@ -720,18 +720,41 @@ process_opendir(void)
 }
 
 /*
- * XXX, draft-ietf-secsh-filexfer-00.txt says: 
- * The recommended format for the longname field is as follows:
- * -rwxr-xr-x   1 mjos     staff      348911 Mar 25 14:29 t-filexfer
- * 1234567890 123 12345678 12345678 12345678 123456789012
+ * drwxr-xr-x    5 markus   markus       1024 Jan 13 18:39 .ssh
  */
 char *
 ls_file(char *name, struct stat *st)
 {
-	char buf[1024];
-	snprintf(buf, sizeof buf, "0%o %d %d %qd %d %s",
-	    st->st_mode, st->st_uid, st->st_gid, (long long)st->st_size,
-	    (int)st->st_mtime, name);
+	int sz = 0;
+	struct passwd *pw;
+	struct group *gr;
+	struct tm *ltime = localtime(&st->st_mtime);
+	char *user, *group;
+	char buf[1024], mode[11+1], tbuf[12+1], ubuf[11+1], gbuf[11+1];
+
+	strmode(st->st_mode, mode);
+	if ((pw = getpwuid(st->st_uid)) != NULL) {
+		user = pw->pw_name;
+	} else {
+		snprintf(ubuf, sizeof ubuf, "%d", st->st_uid);
+		user = ubuf;
+	}
+	if ((gr = getgrgid(st->st_gid)) != NULL) {
+		group = gr->gr_name;
+	} else {
+		snprintf(gbuf, sizeof gbuf, "%d", st->st_gid);
+		group = gbuf;
+	}
+	if (ltime != NULL) {
+		if (time(NULL) - st->st_mtime < (365*24*60*60)/2)
+			sz = strftime(tbuf, sizeof tbuf, "%b %e %H:%M", ltime);
+		else
+			sz = strftime(tbuf, sizeof tbuf, "%b %e  %Y", ltime);
+	}
+	if (sz == 0)
+		tbuf[0] = '\0';
+	snprintf(buf, sizeof buf, "%s %3d %-8.8s %-8.8s %8qd %s %s", mode,
+	    st->st_nlink, user, group, (long long)st->st_size, tbuf, name);
 	return xstrdup(buf);
 }
 
