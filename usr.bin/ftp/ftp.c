@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.31 1998/09/19 20:47:16 millert Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.32 1998/09/19 23:00:50 deraadt Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$OpenBSD: ftp.c,v 1.31 1998/09/19 20:47:16 millert Exp $";
+static char rcsid[] = "$OpenBSD: ftp.c,v 1.32 1998/09/19 23:00:50 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -927,7 +927,18 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 		}
 		errno = d = 0;
 		while ((c = read(fileno(din), buf, bufsize)) > 0) {
-			if ((d = write(fileno(fout), buf, (size_t)c)) != c)
+			size_t	wr;
+			size_t	rd = c;
+
+			d = 0;
+			do {
+				wr = write(fileno(fout), buf + d, rd);
+				if (wr == -1 && errno == EPIPE)
+					break;
+				d += wr;
+				rd -= wr;
+			} while (d < c);
+			if (rd != 0)
 				break;
 			bytes += c;
 			if (hash && (!progress || filesize < 0)) {
