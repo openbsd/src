@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.46 1999/07/26 15:09:00 niklas Exp $	*/
+/*	$OpenBSD: com.c,v 1.47 1999/07/26 15:27:22 niklas Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*-
@@ -96,6 +96,12 @@ struct cfattach com_isa_ca = {
 };
 #endif
 
+#if NCOM_ISAPNP
+struct cfattach com_isapnp_ca = {
+	sizeof(struct com_softc), comprobe, comattach
+};
+#endif
+
 #if NCOM_COMMULTI
 struct cfattach com_commulti_ca = {
 	sizeof(struct com_softc), comprobe, comattach
@@ -140,6 +146,21 @@ extern int kgdb_debug_init;
 #define	SET(t, f)	(t) |= (f)
 #define	CLR(t, f)	(t) &= ~(f)
 #define	ISSET(t, f)	((t) & (f))
+
+/* Macros for determining bus type. */
+#if NCOM_ISA
+#define IS_ISA(parent) \
+    (strcmp((parent)->dv_cfdata->cf_driver->cd_name, "isa") == 0)
+#else
+#define IS_ISA(parent) 0
+#endif
+
+#if NCOM_ISAPNP
+#define IS_ISAPNP(parent) \
+    (strcmp((parent)->dv_cfdata->cf_driver->cd_name, "isapnp") == 0)
+#else
+#define IS_ISAPNP(parent) 0
+#endif
 
 int
 comspeed(speed)
@@ -264,22 +285,22 @@ comprobe(parent, match, aux)
 	int iobase, needioh;
 	int rv = 1;
 
-#if NCOM_ISA
-#define IS_ISA(parent) \
-	!strcmp((parent)->dv_cfdata->cf_driver->cd_name, "isa")
-#endif
 	/*
 	 * XXX should be broken out into functions for isa probe and
 	 * XXX for commulti probe, with a helper function that contains
 	 * XXX most of the interesting stuff.
 	 */
-#if NCOM_ISA
-	if (IS_ISA(parent)) {
+#if NCOM_ISA || NCOM_ISAPNP
+	if (IS_ISA(parent) || IS_ISAPNP(parent)) {
 		struct isa_attach_args *ia = aux;
 
 		iot = ia->ia_iot;
 		iobase = ia->ia_iobase;
-		needioh = 1;
+		if (IS_ISAPNP(parent)) {
+			ioh = ia->ia_ioh;
+			needioh = 0;
+		} else
+			needioh = 1;
 	} else
 #endif
 #if NCOM_COMMULTI
@@ -344,8 +365,8 @@ comattach(parent, self, aux)
 	 */
 	sc->sc_hwflags = 0;
 	sc->sc_swflags = 0;
-#if NCOM_ISA
-	if (IS_ISA(parent)) {
+#if NCOM_ISA || NCOM_ISAPNP
+	if (IS_ISA(parent) || IS_ISAPNP(parent)) {
 		struct isa_attach_args *ia = aux;
 
 		/*
@@ -353,11 +374,17 @@ comattach(parent, self, aux)
 		 */
 		iobase = ia->ia_iobase;
 		iot = ia->ia_iot;
-	        if (iobase != comconsaddr) {
-	                if (bus_space_map(iot, iobase, COM_NPORTS, 0, &ioh))
-				panic("comattach: io mapping failed");
-		} else
-	                ioh = comconsioh;
+		if (IS_ISAPNP(parent)) {
+			/* No console support! */
+			ioh = ia->ia_ioh;
+		} else {
+	       		if (iobase != comconsaddr) {
+				if (bus_space_map(iot, iobase, COM_NPORTS, 0,
+				    &ioh))
+					panic("comattach: io mapping failed");
+			} else
+				ioh = comconsioh;
+		}
 		irq = ia->ia_irq;
 	} else
 #endif
@@ -535,8 +562,8 @@ comattach(parent, self, aux)
 	bus_space_write_1(iot, ioh, com_mcr, 0);
 
 	if (irq != IRQUNK) {
-#if NCOM_ISA
-		if (IS_ISA(parent)) {
+#if NCOM_ISA || NCOM_ISAPNP
+		if (IS_ISA(parent) || IS_ISAPNP(parent)) {
 			struct isa_attach_args *ia = aux;
 
 			sc->sc_ih = isa_intr_establish(ia->ia_ic, irq,
