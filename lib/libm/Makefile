@@ -120,8 +120,8 @@ SRCS=	${COMMON_SRCS}
 # Substitute common sources with any arch specific sources 
 .for i in ${ARCH_SRCS}
     SRCS:=${SRCS:S/${i:S/.S/.c/}/$i/}
+    LSRCS+=${i:S/.S/.c/}
 .endfor
-
 
 MAN+=	acos.3 acosh.3 asin.3 asinh.3 atan.3 atan2.3 atanh.3 ceil.3 \
 	cos.3 cosh.3 erf.3 exp.3 fabs.3 floor.3 fmod.3 hypot.3 ieee.3 \
