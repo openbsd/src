@@ -191,7 +191,7 @@ ALL_CFLAGS = $(INCLUDES) @HDEFINES@ $(CFLAGS)
 .c.o:
 	$(CC) -c $(ALL_CFLAGS) $<
 
-BFDDEP =
+BFDDEP = ../bfd/libbfd.a
 BFDLIB = @BFDLIB@
 LIBIBERTY = ../libiberty/libiberty.a
 
