@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.17 1999/09/10 20:05:50 kstailey Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.18 1999/09/10 20:47:13 kstailey Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -482,13 +482,13 @@ void *elf64_copyargs __P((struct exec_package *, struct ps_strings *,
 int exec_elf64_fixup __P((struct proc *, struct exec_package *));
 char *elf64_check_brand __P((Elf64_Ehdr *));
 #endif
-/* #ifdef _KERN_DO_ELF */
+#ifdef _KERN_DO_ELF
 int exec_elf_makecmds __P((struct proc *, struct exec_package *));
 void *elf_copyargs __P((struct exec_package *, struct ps_strings *,
         void *, void *));
 int exec_elf_fixup __P((struct proc *, struct exec_package *));
 char *elf_check_brand __P((Elf32_Ehdr *));
-/* #endif */
+#endif
 
 #endif /* _KERNEL */
 
