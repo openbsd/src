@@ -38,6 +38,9 @@
  *	@(#)tss.h	5.4 (Berkeley) 1/18/91
  */
 
+#ifndef __I386_TSS_H__
+#define __I386_TSS_H__
+
 /*
  * Intel 386 Context Data Type
  */
@@ -70,3 +73,5 @@ struct i386tss {
 	int	tss_ldt;	/* LDT selector */
 	int	tss_ioopt;	/* options and I/O permission map offset */
 };
+
+#endif /* __I386_TSS_H__ */
