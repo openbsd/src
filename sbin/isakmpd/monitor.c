@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.28 2004/08/08 19:11:06 deraadt Exp $	 */
+/* $OpenBSD: monitor.c,v 1.29 2004/08/12 11:21:07 hshoexer Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -1169,6 +1169,6 @@ m_priv_test_state(int state)
 {
 	if (cur_state != state)
 		log_print("m_priv_test_state: Illegal state: %d != %d",
-		    cur_state, state);
+		    (int)cur_state, state);
 	return;
 }
