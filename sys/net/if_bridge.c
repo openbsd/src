@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.33 2000/06/20 05:50:16 jason Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.34 2000/06/22 19:00:21 art Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -137,6 +137,7 @@ struct bridge_softc {
 	u_int32_t			sc_brtmax;	/* max # addresses */
 	u_int32_t			sc_brtcnt;	/* current # addrs */
 	u_int32_t			sc_brttimeout;	/* timeout ticks */
+	struct timeout			sc_brtimeout;	/* timeout state */
 	LIST_HEAD(, bridge_iflist)	sc_iflist;	/* interface list */
 	LIST_HEAD(bridge_rthead, bridge_rtnode)	*sc_rts;/* hash table */
 };
@@ -203,12 +204,17 @@ bridgeattach(unused)
 	struct ifnet *ifp;
 
 	for (i = 0; i < NBRIDGE; i++) {
-		bridgectl[i].sc_brtmax = BRIDGE_RTABLE_MAX;
-		bridgectl[i].sc_brttimeout = BRIDGE_RTABLE_TIMEOUT;
-		LIST_INIT(&bridgectl[i].sc_iflist);
-		ifp = &bridgectl[i].sc_if;
+		struct bridge_softc *sc;
+
+		sc = &bridgectl[i];
+
+		sc->sc_brtmax = BRIDGE_RTABLE_MAX;
+		sc->sc_brttimeout = BRIDGE_RTABLE_TIMEOUT;
+		timeout_set(&sc->sc_brtimeout, bridge_rtage, sc);
+		LIST_INIT(&sc->sc_iflist);
+		ifp = &sc->sc_if;
 		sprintf(ifp->if_xname, "bridge%d", i);
-		ifp->if_softc = &bridgectl[i];
+		ifp->if_softc = sc;
 		ifp->if_mtu = ETHERMTU;
 		ifp->if_ioctl = bridge_ioctl;
 		ifp->if_output = bridge_output;
@@ -218,7 +224,7 @@ bridgeattach(unused)
 		ifp->if_hdrlen = sizeof(struct ether_header);
 		if_attach(ifp);
 #if NBPFILTER > 0
-		bpfattach(&bridgectl[i].sc_if.if_bpf, ifp,
+		bpfattach(&sc->sc_if.if_bpf, ifp,
 		    DLT_EN10MB, sizeof(struct ether_header));
 #endif
 	}
@@ -449,9 +455,9 @@ bridge_ioctl(ifp, cmd, data)
 		if ((error = suser(prc->p_ucred, &prc->p_acflag)) != 0)
 			break;
 		sc->sc_brttimeout = bcacheto->ifbct_time;
-		untimeout(bridge_rtage, sc);
+		timeout_del(&sc->sc_brtimeout);
 		if (bcacheto->ifbct_time != 0)
-			timeout(bridge_rtage, sc, sc->sc_brttimeout);
+			timeout_add(&sc->sc_brtimeout, sc->sc_brttimeout);
 		break;
 	case SIOCBRDGGTO:
 		bcacheto->ifbct_time = sc->sc_brttimeout;
@@ -713,7 +719,7 @@ bridge_init(sc)
 	splx(s);
 
 	if (sc->sc_brttimeout != 0)
-		timeout(bridge_rtage, sc, sc->sc_brttimeout * hz);
+		timeout_add(&sc->sc_brtimeout, sc->sc_brttimeout * hz);
 }
 
 /*
@@ -731,7 +737,7 @@ bridge_stop(sc)
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
 
-	untimeout(bridge_rtage, sc);
+	timeout_del(&sc->sc_brtimeout);
 
 	bridge_rtflush(sc, IFBF_FLUSHDYN);
 
@@ -1484,7 +1490,7 @@ bridge_rtage(vsc)
 	splx(s);
 
 	if (sc->sc_brttimeout != 0)
-		timeout(bridge_rtage, sc, sc->sc_brttimeout * hz);
+		timeout_add(&sc->sc_brtimeout, sc->sc_brttimeout * hz);
 }
 
 /*
