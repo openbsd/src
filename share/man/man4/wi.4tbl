@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4tbl,v 1.57 2004/10/20 13:19:53 jsg Exp $
+.\"	$OpenBSD: wi.4tbl,v 1.58 2004/10/20 15:36:20 miod Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -359,6 +359,8 @@ command.
 .Xr atw 4 ,
 .Xr ifmedia 4 ,
 .Xr intro 4 ,
+.Xr ipw 4 ,
+.Xr iwi 4 ,
 .Xr macobio 4 ,
 .Xr netintro 4 ,
 .Xr pci 4 ,
