@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.51 2004/03/19 14:04:43 hshoexer Exp $
+#	$OpenBSD: Makefile,v 1.52 2004/04/07 22:43:14 ho Exp $
 #	$EOM: Makefile,v 1.78 2000/10/15 21:33:42 niklas Exp $
 
 #
@@ -72,7 +72,7 @@ CLEANFILES=	exchange_num.c exchange_num.h ipsec_num.c ipsec_num.h \
 		isakmp_fld.c isakmp_fld.h
 MAN=		isakmpd.8 isakmpd.conf.5 isakmpd.policy.5
 CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes \
-		-DNEED_SYSDEP_APP \
+		-Wmissing-declarations -DNEED_SYSDEP_APP \
 		-I${.CURDIR} -I${.CURDIR}/sysdep/${OS} -I.
 #CFLAGS+=	-Wsign-compare -Werror
 
