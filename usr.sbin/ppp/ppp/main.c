@@ -17,12 +17,12 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: main.c,v 1.7 1999/02/02 09:50:14 brian Exp $
+ * $Id: main.c,v 1.8 1999/02/06 03:22:41 brian Exp $
  *
  *	TODO:
  */
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
@@ -64,6 +64,9 @@
 #include "descriptor.h"
 #include "link.h"
 #include "mp.h"
+#ifndef NORADIUS
+#include "radius.h"
+#endif
 #include "bundle.h"
 #include "auth.h"
 #include "systems.h"
@@ -512,6 +515,8 @@ DoLoop(struct bundle *bundle)
       }
       break;
     }
+
+    log_Printf(LogTIMER, "Select returns %d\n", i);
 
     sig_Handle();
 

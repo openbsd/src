@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: prompt.c,v 1.1 1998/08/31 00:22:27 brian Exp $
+ *	$Id: prompt.c,v 1.2 1999/02/06 03:22:43 brian Exp $
  */
 
 #include <sys/param.h>
@@ -63,6 +63,9 @@
 #include "link.h"
 #include "physical.h"
 #include "mp.h"
+#ifndef NORADIUS
+#include "radius.h"
+#endif
 #include "bundle.h"
 #include "chat.h"
 #include "chap.h"

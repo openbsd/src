@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: server.h,v 1.1 1998/08/31 00:22:28 brian Exp $
+ *	$Id: server.h,v 1.2 1999/02/06 03:22:47 brian Exp $
  */
 
 struct bundle;

@@ -17,12 +17,12 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: ccp.c,v 1.1 1998/08/31 00:22:17 brian Exp $
+ * $Id: ccp.c,v 1.2 1999/02/06 03:22:32 brian Exp $
  *
  *	TODO:
  *		o Support other compression protocols
  */
-#include <sys/types.h>
+#include <sys/param.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
@@ -30,7 +30,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <termios.h>
 
 #include "defs.h"
@@ -57,6 +56,9 @@
 #include "mp.h"
 #include "async.h"
 #include "physical.h"
+#ifndef NORADIUS
+#include "radius.h"
+#endif
 #include "bundle.h"
 
 static void CcpSendConfigReq(struct fsm *);

@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: cbcp.h,v 1.1 1998/08/31 00:22:17 brian Exp $
+ *	$Id: cbcp.h,v 1.2 1999/02/06 03:22:32 brian Exp $
  */
 
 struct mbuf;

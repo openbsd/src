@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: modem.c,v 1.2 1999/01/10 02:23:22 brian Exp $
+ * $Id: modem.c,v 1.3 1999/02/06 03:22:42 brian Exp $
  *
  *  TODO:
  */
@@ -69,6 +69,9 @@
 #include "link.h"
 #include "physical.h"
 #include "mp.h"
+#ifndef NORADIUS
+#include "radius.h"
+#endif
 #include "bundle.h"
 #include "prompt.h"
 #include "chat.h"

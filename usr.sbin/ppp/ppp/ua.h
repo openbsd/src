@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: ua.h,v 1.2 1998/09/15 17:21:58 brian Exp $
+ *	$Id: ua.h,v 1.3 1999/02/06 03:22:49 brian Exp $
  */
 
 #ifdef __i386__		/* Do any other archs not care about alignment ? */

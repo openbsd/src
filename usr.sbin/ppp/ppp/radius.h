@@ -1,5 +1,5 @@
-/*-
- * Copyright (c) 1997 Brian Somers <brian@Awfulhak.org>
+/*
+ * Copyright 1999 Internet Business Solutions Ltd., Switzerland
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -23,29 +23,36 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: iplist.h,v 1.2 1999/02/06 03:22:40 brian Exp $
+ *	$Id: radius.h,v 1.1 1999/02/06 03:22:44 brian Exp $
  */
 
-struct iplist_cur {
-  struct in_addr ip;
-  int pos;
-  char *srcptr;
-  u_long srcitem;
-  u_int32_t lstart;
-  u_long nItems;
+struct radius {
+  struct descriptor desc;	/* We're a sort of (selectable) descriptor */
+  struct {
+    int fd;			/* We're selecting on this */
+    struct rad_handle *rad;	/* Using this to talk to our lib */
+    struct pppTimer timer;	/* for this long */
+    struct authinfo *auth;	/* Tell this about success/failure */
+  } cx;
+  unsigned valid : 1;           /* Is this structure valid ? */
+  unsigned vj : 1;              /* FRAMED Compression */
+  struct in_addr ip;            /* FRAMED IP */
+  struct in_addr mask;          /* FRAMED Netmask */
+  unsigned long mtu;            /* FRAMED MTU */
+  struct sticky_route *routes;  /* FRAMED Routes */
+  struct {
+    char file[MAXPATHLEN];	/* Radius config file */
+  } cfg;
 };
 
-struct iplist {
-  struct iplist_cur cur;
-  u_long nItems;
-  char src[LINE_LEN];
-};
+#define descriptor2radius(d) \
+  ((d)->type == RADIUS_DESCRIPTOR ? (struct radius *)(d) : NULL)
 
-extern int iplist_setsrc(struct iplist *, const char *);
-extern void iplist_reset(struct iplist *);
-extern struct in_addr iplist_setcurpos(struct iplist *, long);
-extern struct in_addr iplist_setrandpos(struct iplist *);
-extern int iplist_ip2pos(struct iplist *, struct in_addr);
-extern struct in_addr iplist_next(struct iplist *);
+struct bundle;
 
-#define iplist_isvalid(x) ((x)->src[0] != '\0')
+extern void radius_Init(struct radius *);
+extern void radius_Destroy(struct radius *);
+
+extern void radius_Show(struct radius *, struct prompt *);
+extern void radius_Authenticate(struct radius *, struct authinfo *,
+                                const char *, const char *, const char *);

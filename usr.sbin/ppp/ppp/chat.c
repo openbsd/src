@@ -23,10 +23,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: chat.c,v 1.2 1998/10/29 02:21:44 brian Exp $
+ *	$Id: chat.c,v 1.3 1999/02/06 03:22:33 brian Exp $
  */
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
@@ -66,6 +66,9 @@
 #include "filter.h"
 #include "cbcp.h"
 #include "datalink.h"
+#ifndef NORADIUS
+#include "radius.h"
+#endif
 #include "bundle.h"
 
 #define BUFLEFT(c) (sizeof (c)->buf - ((c)->bufend - (c)->buf))

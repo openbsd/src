@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: bundle.c,v 1.7 1999/02/04 11:54:47 brian Exp $
+ *	$Id: bundle.c,v 1.8 1999/02/06 03:22:31 brian Exp $
  */
 
 #include <sys/param.h>
@@ -32,7 +32,6 @@
 #include <net/if.h>
 #include <arpa/inet.h>
 #include <net/route.h>
-#include <net/if_dl.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <sys/un.h>
@@ -76,6 +75,9 @@
 #include "ccp.h"
 #include "link.h"
 #include "mp.h"
+#ifndef NORADIUS
+#include "radius.h"
+#endif
 #include "bundle.h"
 #include "async.h"
 #include "physical.h"
@@ -134,7 +136,6 @@ bundle_NewPhase(struct bundle *bundle, u_int new)
     break;
 
   case PHASE_NETWORK:
-    ipcp_Setup(&bundle->ncp.ipcp);
     fsm_Up(&bundle->ncp.ipcp.fsm);
     fsm_Open(&bundle->ncp.ipcp.fsm);
     bundle->phase = new;
@@ -556,6 +557,10 @@ bundle_UpdateSet(struct descriptor *d, fd_set *r, fd_set *w, fd_set *e, int *n)
     }
   }
 
+#ifndef NORADIUS
+  result += descriptor_UpdateSet(&bundle->radius.desc, r, w, e, n);
+#endif
+
   /* Which links need a select() ? */
   for (dl = bundle->links; dl; dl = dl->next)
     result += descriptor_UpdateSet(&dl->desc, r, w, e, n);
@@ -580,6 +585,11 @@ bundle_IsSet(struct descriptor *d, const fd_set *fdset)
     if (descriptor_IsSet(&dl->desc, fdset))
       return 1;
 
+#ifndef NORADIUS
+  if (descriptor_IsSet(&bundle->radius.desc, fdset))
+    return 1;
+#endif
+
   if (descriptor_IsSet(&bundle->ncp.mp.server.desc, fdset))
     return 1;
 
@@ -598,6 +608,11 @@ bundle_DescriptorRead(struct descriptor *d, struct bundle *bundle,
   for (dl = bundle->links; dl; dl = dl->next)
     if (descriptor_IsSet(&dl->desc, fdset))
       descriptor_Read(&dl->desc, bundle, fdset);
+
+#ifndef NORADIUS
+  if (descriptor_IsSet(&bundle->radius.desc, fdset))
+    descriptor_Read(&bundle->radius.desc, bundle, fdset);
+#endif
 
   if (FD_ISSET(bundle->dev.fd, fdset)) {
     struct tun_data tun;
@@ -874,6 +889,9 @@ bundle_Create(const char *prefix, int type, const char **argv)
   bundle.autoload.done = 0;
   bundle.autoload.running = 0;
   memset(&bundle.choked.timer, '\0', sizeof bundle.choked.timer);
+#ifndef NORADIUS
+  radius_Init(&bundle.radius);
+#endif
 
   /* Clean out any leftover crud */
   iface_Clear(bundle.iface, IFACE_CLEAR_ALL);
@@ -932,6 +950,11 @@ bundle_Destroy(struct bundle *bundle)
   mp_Down(&bundle->ncp.mp);
   ipcp_CleanInterface(&bundle->ncp.ipcp);
   bundle_DownInterface(bundle);
+
+#ifndef NORADIUS
+  /* Tell the radius server the bad news */
+  radius_Destroy(&bundle->radius);
+#endif
 
   /* Again, these are all DATALINK_CLOSED unless we're abending */
   dl = bundle->links;
@@ -1224,6 +1247,11 @@ bundle_ShowStatus(struct cmdargs const *arg)
 
   prompt_Printf(arg->prompt, " Choked Timer:  %ds\n",
                 arg->bundle->cfg.choked.timeout);
+
+#ifndef NORADIUS
+  radius_Show(&arg->bundle->radius, arg->prompt);
+#endif
+
   prompt_Printf(arg->prompt, " Idle Timer:    ");
   if (arg->bundle->cfg.idle_timeout) {
     prompt_Printf(arg->prompt, "%ds", arg->bundle->cfg.idle_timeout);

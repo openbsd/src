@@ -2,10 +2,10 @@
  * The code in this file was written by Eivind Eklund <perhaps@yes.no>,
  * who places it in the public domain without restriction.
  *
- *	$Id: alias_cmd.c,v 1.2 1998/08/31 08:16:27 brian Exp $
+ *	$Id: alias_cmd.c,v 1.3 1999/02/06 03:22:30 brian Exp $
  */
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
@@ -44,6 +44,9 @@
 #include "link.h"
 #include "mp.h"
 #include "filter.h"
+#ifndef NORADIUS
+#include "radius.h"
+#endif
 #include "bundle.h"
 
 
