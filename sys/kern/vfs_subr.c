@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.100 2004/05/27 20:48:46 tedu Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.101 2004/08/02 03:26:50 pedro Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -663,6 +663,7 @@ vget(vp, flags, p)
 {
 	int error;
 	int s;
+
 	/*
 	 * If the vnode is in the process of being cleaned out for
 	 * another use, we wait for the cleaning to finish and then
@@ -673,12 +674,18 @@ vget(vp, flags, p)
 		simple_lock(&vp->v_interlock);
 		flags |= LK_INTERLOCK;
 	}
+
 	if (vp->v_flag & VXLOCK) {
+		if (flags & LK_NOWAIT) {
+			simple_unlock(&vp->v_interlock);
+			return (EBUSY);
+		}
+
  		vp->v_flag |= VXWANT;
-		simple_unlock(&vp->v_interlock);
-		tsleep(vp, PINOD, "vget", 0);
+		ltsleep(vp, PINOD | PNORELOCK, "vget", 0, &vp->v_interlock);
 		return (ENOENT);
  	}
+
 	if (vp->v_usecount == 0 &&
 	    (vp->v_bioflag & VBIOONFREELIST)) {
 		s = splbio();
@@ -1142,10 +1149,10 @@ vgonel(vp, p)
 	 */
 	if (vp->v_flag & VXLOCK) {
 		vp->v_flag |= VXWANT;
-		simple_unlock(&vp->v_interlock);
-		tsleep(vp, PINOD, "vgone", 0);
+		ltsleep(vp, PINOD | PNORELOCK, "vgone", 0, &vp->v_interlock);
 		return;
 	}
+
 	/*
 	 * Clean out the filesystem specific data.
 	 */
