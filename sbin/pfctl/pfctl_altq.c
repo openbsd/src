@@ -1,4 +1,5 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.17 2002/12/03 10:57:13 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.18 2002/12/06 16:16:15 henning Exp $	*/
+
 /*
  * Copyright (C) 2002
  *	Sony Computer Science Laboratories Inc.  All rights reserved.
@@ -36,11 +37,11 @@
 
 #include <err.h>
 #include <errno.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <math.h>
 
 #include <altq/altq.h>
 #include <altq/altq_cbq.h>
@@ -48,11 +49,11 @@
 #include "pfctl_parser.h"
 #include "pfctl_altq.h"
 
-static int eval_pfqueue_cbq(struct pfctl *pf, struct pf_altq *);
-static int cbq_compute_idletime(struct pfctl *, struct pf_altq *);
-static int check_commit_cbq(int, int, struct pf_altq *);
-static void print_cbq_opts(const struct pf_altq *);
-static char *rate2str(double);
+static	int eval_pfqueue_cbq(struct pfctl *pf, struct pf_altq *);
+static	int cbq_compute_idletime(struct pfctl *, struct pf_altq *);
+static	int check_commit_cbq(int, int, struct pf_altq *);
+static	void print_cbq_opts(const struct pf_altq *);
+static	char *rate2str(double);
 u_int32_t	getifspeed(char *);
 
 TAILQ_HEAD(altqs, pf_altq) altqs = TAILQ_HEAD_INITIALIZER(altqs);
@@ -60,7 +61,7 @@ TAILQ_HEAD(altqs, pf_altq) altqs = TAILQ_HEAD_INITIALIZER(altqs);
 void
 pfaltq_store(struct pf_altq *a)
 {
-	struct pf_altq *altq;
+	struct	pf_altq *altq;
 
 	if ((altq = malloc(sizeof(*altq))) == NULL)
 		err(1, "malloc");
@@ -71,7 +72,7 @@ pfaltq_store(struct pf_altq *a)
 void
 pfaltq_free(struct pf_altq *a)
 {
-	struct pf_altq *altq;
+	struct	pf_altq *altq;
 
 	TAILQ_FOREACH(altq, &altqs, entries) {
 		if (strncmp(a->ifname, altq->ifname, IFNAMSIZ) == 0 &&
@@ -86,7 +87,7 @@ pfaltq_free(struct pf_altq *a)
 struct pf_altq *
 pfaltq_lookup(const char *ifname)
 {
-	struct pf_altq *altq;
+	struct	pf_altq *altq;
 
 	TAILQ_FOREACH(altq, &altqs, entries) {
 		if (strncmp(ifname, altq->ifname, IFNAMSIZ) == 0 &&
@@ -99,7 +100,7 @@ pfaltq_lookup(const char *ifname)
 struct pf_altq *
 qname_to_pfaltq(const char *qname, const char *ifname)
 {
-	struct pf_altq *altq;
+	struct	pf_altq *altq;
 
 	TAILQ_FOREACH(altq, &altqs, entries) {
 		if (strncmp(ifname, altq->ifname, IFNAMSIZ) == 0 &&
@@ -112,7 +113,7 @@ qname_to_pfaltq(const char *qname, const char *ifname)
 u_int32_t
 qname_to_qid(const char *qname, const char *ifname)
 {
-	struct pf_altq *altq;
+	struct	pf_altq *altq;
 
 	TAILQ_FOREACH(altq, &altqs, entries) {
 		if (strncmp(ifname, altq->ifname, IFNAMSIZ) == 0 &&
@@ -125,7 +126,7 @@ qname_to_qid(const char *qname, const char *ifname)
 char *
 qid_to_qname(u_int32_t qid, const char *ifname)
 {
-	struct pf_altq *altq;
+	struct	pf_altq *altq;
 
 	TAILQ_FOREACH(altq, &altqs, entries) {
 		if (strncmp(ifname, altq->ifname, IFNAMSIZ) == 0 &&
@@ -161,7 +162,7 @@ print_altq(const struct pf_altq *a, unsigned level)
 void
 print_queue(const struct pf_altq *a, unsigned level)
 {
-	unsigned i;
+	unsigned	i;
 
 	printf("queue ");
 	for (i = 0; i < level; ++i)
@@ -183,7 +184,7 @@ int
 eval_pfaltq(struct pfctl *pf, struct pf_altq *pa, u_int32_t bw_absolute,
     u_int16_t bw_percent)
 {
-	u_int rate, size, errors = 0;
+	u_int	rate, size, errors = 0;
 
 	if (bw_absolute > 0)
 		pa->ifbandwidth = bw_absolute;
@@ -219,8 +220,8 @@ eval_pfaltq(struct pfctl *pf, struct pf_altq *pa, u_int32_t bw_absolute,
 int
 check_commit_altq(int dev, int opts)
 {
-	struct pf_altq *altq;
-	int error = 0;
+	struct	pf_altq *altq;
+	int	error = 0;
 
 	TAILQ_FOREACH(altq, &altqs, entries) {
 		if (altq->qname[0] == 0) {
@@ -241,8 +242,8 @@ eval_pfqueue(struct pfctl *pf, struct pf_altq *pa, u_int32_t bw_absolute,
     u_int16_t bw_percent)
 {
 	/* should be merged with expand_queue */
-	struct pf_altq *if_pa, *parent;
-	int error = 0;
+	struct	pf_altq *if_pa, *parent;
+	int	error = 0;
 
 	/* find the corresponding interface and copy fields used by queues */
 	if_pa = pfaltq_lookup(pa->ifname);
@@ -270,10 +271,6 @@ eval_pfqueue(struct pfctl *pf, struct pf_altq *pa, u_int32_t bw_absolute,
 		errx(1, "bandwidth for %s invalid (%d / %d)", pa->qname,
 		    bw_absolute, bw_percent);
 
-	/*
-	 * admission control: bandwidth should be smaller than the
-	 * interface bandwidth and the parent bandwidth
-	 */
 	if (pa->bandwidth > pa->ifbandwidth)
 		errx(1, "bandwidth for %s higher than interface", pa->qname);
 	if (parent != NULL && pa->bandwidth > parent->bandwidth)
@@ -298,8 +295,8 @@ eval_pfqueue(struct pfctl *pf, struct pf_altq *pa, u_int32_t bw_absolute,
 static int
 eval_pfqueue_cbq(struct pfctl *pf, struct pf_altq *pa)
 {
-	struct cbq_opts *opts;
-	u_int ifmtu;
+	struct	cbq_opts *opts;
+	u_int	ifmtu;
 
 #if 1
 	ifmtu = 1500;	/* should be obtained from the interface */
@@ -334,11 +331,11 @@ eval_pfqueue_cbq(struct pfctl *pf, struct pf_altq *pa)
 static int
 cbq_compute_idletime(struct pfctl *pf, struct pf_altq *pa)
 {
-	struct cbq_opts *opts;
-	double maxidle_s, maxidle, minidle,
-	    offtime, nsPerByte, ifnsPerByte, ptime, cptime;
-	double z, g, f, gton, gtom, maxrate;
-	u_int minburst, maxburst;
+	struct	cbq_opts *opts;
+	double	maxidle_s, maxidle, minidle;
+	double	offtime, nsPerByte, ifnsPerByte, ptime, cptime;
+	double	z, g, f, gton, gtom, maxrate;
+	u_int	minburst, maxburst;
 
 	opts = &pa->pq_u.cbq_opts;
 	ifnsPerByte = (1.0 / (double)pa->ifbandwidth) * RM_NS_PER_SEC * 8;
@@ -415,9 +412,9 @@ cbq_compute_idletime(struct pfctl *pf, struct pf_altq *pa)
 static int
 check_commit_cbq(int dev, int opts, struct pf_altq *pa)
 {
-	struct pf_altq *altq;
-	int root_class, default_class;
-	int error = 0;
+	struct	pf_altq *altq;
+	int	root_class, default_class;
+	int	error = 0;
 
 	/*
 	 * check if cbq has one root class and one default class
@@ -448,7 +445,7 @@ check_commit_cbq(int dev, int opts, struct pf_altq *pa)
 static void
 print_cbq_opts(const struct pf_altq *a)
 {
-	const struct cbq_opts *opts;
+	const	struct cbq_opts *opts;
 
 	opts = &a->pq_u.cbq_opts;
 
@@ -456,7 +453,6 @@ print_cbq_opts(const struct pf_altq *a)
 	    " pktsize %u maxpktsize %u\n",
 	    opts->minburst, opts->maxburst,
 	    opts->pktsize, opts->maxpktsize);
-
 	printf("        ns_per_byte %u maxidle %u minidle %d offtime %u\n",
 	    opts->ns_per_byte, opts->maxidle, opts->minidle, opts->offtime);
 */
@@ -491,7 +487,7 @@ void
 pfctl_insert_altq_node(struct pf_altq_node **root,
     const struct pf_altq altq)
 {
-	struct pf_altq_node *node;
+	struct	pf_altq_node *node;
 
 	node = calloc(1, sizeof(struct pf_altq_node));
 	if (node == NULL) {
@@ -533,7 +529,7 @@ struct pf_altq_node *
 pfctl_find_altq_node(struct pf_altq_node *root, const char *qname,
     const char *ifname)
 {
-	struct pf_altq_node *node, *child;
+	struct	pf_altq_node *node, *child;
 
 	for (node = root; node != NULL; node = node->next) {
 		if (!strcmp(node->altq.qname, qname)
@@ -597,9 +593,9 @@ pfctl_free_altq_node(struct pf_altq_node *node)
 static char *
 rate2str(double rate)
 {
-	char *buf;
-	static char r2sbuf[R2S_BUFS][RATESTR_MAX];  /* ring bufer */
-	static int idx = 0;
+	char	*buf;
+	static	char r2sbuf[R2S_BUFS][RATESTR_MAX];  /* ring bufer */
+	static	int idx = 0;
 
 	buf = r2sbuf[idx++];
 	if (idx == R2S_BUFS)
