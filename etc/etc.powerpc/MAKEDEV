@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.35 2001/01/30 03:02:21 drahn Exp $
+#	$OpenBSD: MAKEDEV,v 1.36 2001/01/30 08:34:09 deraadt Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -45,7 +45,7 @@
 #	raid*	RAIDframe disk devices
 #
 # Terminal ports:
-#	ttyE*	wscons
+#	ttyC*	wscons
 #	tty*	standard built-in serial ports (2)
 #
 # Pointing devices:
@@ -153,7 +153,7 @@ all)
 	sh $this ccd0 ccd1 ccd2 ccd3
 	sh $this raid0 raid1 raid2 raid3
 	sh $this rd0 ipl
-	sh $this ttyo0 ttyE0 ttyEcfg
+	sh $this ttyo0 ttyC0 ttyCcfg
 	sh $this tty00 tty01 tty02 tty03 pty0 pty1
 	sh $this bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
 	sh $this tun0 tun1 tun2 tun3
@@ -493,17 +493,17 @@ utty*)
 	;;
 
  
-ttyEcfg)
+ttyCcfg)
 	major=67
 	minor=255
-	rm -f ttyEcfg
-	mknod ttyEcfg c $major $minor  
-	chown root.wheel ttyEcfg
+	rm -f ttyCcfg
+	mknod ttyCcfg c $major $minor  
+	chown root.wheel ttyCcfg
         ;;
 
-ttyE*)
-	type=E
-	unit=${i##ttyE}
+ttyC*)
+	type=C
+	unit=${i##ttyC}
 	major=67
 	minor=$unit
         rm -f tty$type$unit
@@ -585,7 +585,7 @@ ss*)
 	;;
 wscons*)
 	unit=${i##*[a-z]}
-	sh $this ttyE${unit} wskbd${unit} wsmouse${unit}
+	sh $this ttyC${unit} wskbd${unit} wsmouse${unit}
 	;;
 wskbd*)
 	unit=${i##*[a-z]}

@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.48 2000/09/13 22:12:39 ericj Exp $
+#	$OpenBSD: MAKEDEV,v 1.49 2001/01/30 08:34:09 deraadt Exp $
 #	$NetBSD: MAKEDEV,v 1.8.4.1 1996/06/18 00:41:56 cgd Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -52,8 +52,8 @@
 #
 # Terminal ports:
 #	ttyB?	DEC 3000 ZS8530 ("scc") serial ports
-#	ttyC?	AlphaStation NS16550 ("com") serial ports
-#	ttyE?	Workstation console ("wscons") tty emulators
+#	tty0?	AlphaStation NS16550 ("com") serial ports
+#	ttyC?	Workstation console ("wscons") tty emulators
 #
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
@@ -149,12 +149,12 @@ all)
 	sh $this ccd0 ccd1 ccd2 ccd3 wd0 wd1 wd2 wd3
 	sh $this bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
 	sh $this tun0 tun1 tun2 tun3
-	sh $this ttyB0 ttyB1 ttyC0 ttyC1 lkm
+	sh $this ttyB0 ttyB1 tty00 tty01 lkm
 	sh $this mmclock lpa0 lpt0 random ipl
 	sh $this uk0 uk1 ss0 ss1
 	sh $this ttyc0 ttyc1 ttyc2 ttyc3 ttyc4 ttyc5 ttyc6 ttyc7
 	sh $this local xfs0
-	sh $this wscons ttyEcfg 
+	sh $this wscons ttyCcfg 
 	;;
 
 raminst)
@@ -162,16 +162,16 @@ raminst)
 	sh $this sd0 sd1 sd2 wd0 st0
 	sh $this cd0
 	sh $this rd0 bpf0
-	sh $this ttyB0 ttyB1 ttyC0 ttyC1 ttyE0 ttyE1 pty0
+	sh $this ttyB0 ttyB1 tty00 tty01 ttyC0 ttyC1 pty0
 	sh $this wsmouse0 wskbd0
-	sh $this ttyEcfg
+	sh $this ttyCcfg
 	;;
 
 wscons)
-	sh $this ttyE0 ttyE1 ttyE2 ttyE3 ttyE4 ttyE5 ttyE6 ttyE7
+	sh $this ttyC0 ttyC1 ttyC2 ttyC3 ttyC4 ttyC5 ttyC6 ttyC7
 	sh $this wsmouse0 wsmouse1 wsmouse2 wsmouse3
 	sh $this wskbd0 wskbd1 wskbd2 wskbd3
-	sh $this ttyEcfg wsmux
+	sh $this ttyCcfg wsmux
 	;;
 
 wsmux|wskbd|wsmouse)
@@ -316,28 +316,28 @@ cd*)
 	umask 77
 	;;
 
-ttyEcfg)
+ttyCcfg)
 	rm -f $i
 	mknod $i c 25 255  
 	chown root:wheel $i 
 	;;
 
-ttyE*)
-		  type=E
-		  unit=${i##ttyE}
+ttyC*)
+	type=C
+	unit=${i##ttyC}
 	case $type in
-	E)	major=25; minor=$unit ;;
+	C)	major=25; minor=$unit ;;
 	esac
         rm -f tty$type$unit
         mknod tty$type$unit c $major $minor
         chown root.wheel tty$type$unit
         ;;
 
-ttyB*|ttyC*|ttyc*)
+ttyB*|tty0*|ttyc*)
 		  unit=${i##tty?}
 	case $i in
 	ttyB*)	type=B; major=15; minor=`mult $unit 2`;;
-	ttyC*)	type=C; major=26; minor=$unit ;;
+	tty0*)	type=0; major=26; minor=$unit ;;
 	ttyc*)	type=c; major=38; minor=$unit ;;
 	esac
         rm -f tty$type$unit cua$type$unit
