@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.46 2002/05/13 17:55:02 drahn Exp $	*/
+/*	$OpenBSD: trap.c,v 1.47 2002/05/15 22:49:16 drahn Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -121,15 +121,9 @@ save_vec(struct proc *p)
 	__asm__ volatile ("mfspr %0, 256" : "=r" (tmp));
 	pcb->pcb_vr->vrsave = tmp;
 
-#ifdef AS_SUPPORTS_ALTIVEC
 #define STR(x) #x
 #define SAVE_VEC_REG(reg, addr)   \
 	__asm__ volatile ("stvxl %0, 0, %1" :: "n"(reg),"r" (addr));
-#else
-#define STR(x) #x
-#define SAVE_VEC_REG(reg, addr)   \
-	__asm__ volatile (".long 0x7c0003ce + (%0 << 21) + (%1 << 11)" :: "n"(reg), "r" (addr))
-#endif
 
 	SAVE_VEC_REG(0,&pcb_vr->vreg[0]);
 	SAVE_VEC_REG(1,&pcb_vr->vreg[1]);
@@ -163,11 +157,7 @@ save_vec(struct proc *p)
 	SAVE_VEC_REG(29,&pcb_vr->vreg[29]);
 	SAVE_VEC_REG(30,&pcb_vr->vreg[30]);
 	SAVE_VEC_REG(31,&pcb_vr->vreg[31]);
-#ifdef AS_SUPPORTS_ALTIVEC
 	__asm__ volatile ("mfvscr 0");
-#else 
-	__asm__ volatile (".long 0x10000604");
-#endif
 	SAVE_VEC_REG(0,&pcb_vr->vscr);
 
 	/* fix kernel msr back */
@@ -201,20 +191,11 @@ enable_vec(struct proc *p)
 	__asm__ volatile ("mtmsr %0" :: "r" (msr));
 	__asm__ volatile ("sync;isync");
 
-#ifdef AS_SUPPORTS_ALTIVEC
 #define LOAD_VEC_REG(reg, addr)   \
 	__asm__ volatile ("lvxl %0, 0, %1" :: "n"(reg), "r" (addr));
-#else
-#define LOAD_VEC_REG(reg, addr)   \
-	__asm__ volatile (".long 0x7c0002ce + (%0 << 21) + (%1 << 11)" :: "n"(reg), "r" (addr));
-#endif
 
 	LOAD_VEC_REG(0, &pcb_vr->vscr);
-#ifdef AS_SUPPORTS_ALTIVEC
 	__asm__ volatile ("mtvscr 0");
-#else
-	__asm__ volatile (".long 0x10000644");
-#endif
 	tmp = pcb_vr->vrsave;
 	__asm__ volatile ("mtspr 256, %0" :: "r" (tmp));
 
