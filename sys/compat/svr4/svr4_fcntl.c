@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_fcntl.c,v 1.13 1997/12/20 16:32:08 deraadt Exp $	 */
+/*	$OpenBSD: svr4_fcntl.c,v 1.14 1999/10/07 16:14:28 brad Exp $	 */
 /*	$NetBSD: svr4_fcntl.c,v 1.14 1995/10/14 20:24:24 christos Exp $	 */
 
 /*
@@ -275,6 +275,15 @@ svr4_sys_open(p, v, retval)
 }
 
 int
+svr4_sys_open64(p, v, retval)
+	register struct proc *p;
+	void *v;  
+	register_t *retval;  
+{
+	return svr4_sys_open(p, v, retval);
+}
+
+int
 svr4_sys_creat(p, v, retval)
 	register struct proc *p;
 	void *v;
@@ -291,6 +300,29 @@ svr4_sys_creat(p, v, retval)
 	SCARG(&cup, flags) = O_WRONLY | O_CREAT | O_TRUNC;
 
 	return sys_open(p, &cup, retval);
+}
+
+int             
+svr4_sys_llseek(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct svr4_sys_llseek_args *uap = v;
+	struct sys_lseek_args ap;
+                
+	SCARG(&ap, fd) = SCARG(uap, fd);
+
+#if BYTE_ORDER == BIG_ENDIAN
+	SCARG(&ap, offset) = (((long long) SCARG(uap, offset1)) << 32) |
+		SCARG(uap, offset2);
+#else   
+	SCARG(&ap, offset) = (((long long) SCARG(uap, offset2)) << 32) |
+		SCARG(uap, offset1);
+#endif  
+	SCARG(&ap, whence) = SCARG(uap, whence);
+   
+	return sys_lseek(p, &ap, retval);
 }
 
 int

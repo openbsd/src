@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_stat.c,v 1.16 1999/07/15 19:26:37 deraadt Exp $	 */
+/*	$OpenBSD: svr4_stat.c,v 1.17 1999/10/07 16:14:28 brad Exp $	 */
 /*	$NetBSD: svr4_stat.c,v 1.21 1996/04/22 01:16:07 christos Exp $	 */
 
 /*
@@ -69,6 +69,7 @@
 #endif
 
 static void bsd_to_svr4_xstat __P((struct stat *, struct svr4_xstat *));
+static void bsd_to_svr4_stat64 __P((struct stat *, struct svr4_stat64 *));
 int svr4_ustat __P((struct proc *, void *, register_t *));
 static int svr4_to_bsd_pathconf __P((int));
 
@@ -88,13 +89,13 @@ bsd_to_svr4_stat(st, st4)
 	struct svr4_stat 	*st4;
 {
 	bzero(st4, sizeof(*st4));
-	st4->st_dev = st->st_dev;
+	st4->st_dev = bsd_to_svr4_odev_t(st->st_dev);
 	st4->st_ino = st->st_ino;
 	st4->st_mode = BSD_TO_SVR4_MODE(st->st_mode);
 	st4->st_nlink = st->st_nlink;
 	st4->st_uid = st->st_uid;
 	st4->st_gid = st->st_gid;
-	st4->st_rdev = st->st_rdev;
+	st4->st_rdev = bsd_to_svr4_odev_t(st->st_rdev);
 	st4->st_size = st->st_size;
 	st4->st_atim = st->st_atimespec.tv_sec;
 	st4->st_mtim = st->st_mtimespec.tv_sec;
@@ -103,20 +104,19 @@ bsd_to_svr4_stat(st, st4)
 #endif
 
 
-
 static void
 bsd_to_svr4_xstat(st, st4)
 	struct stat		*st;
 	struct svr4_xstat	*st4;
 {
 	bzero(st4, sizeof(*st4));
-	st4->st_dev = st->st_dev;
+	st4->st_dev = bsd_to_svr4_dev_t(st->st_dev);
 	st4->st_ino = st->st_ino;
 	st4->st_mode = BSD_TO_SVR4_MODE(st->st_mode);
 	st4->st_nlink = st->st_nlink;
 	st4->st_uid = st->st_uid;
 	st4->st_gid = st->st_gid;
-	st4->st_rdev = st->st_rdev;
+	st4->st_rdev = bsd_to_svr4_dev_t(st->st_rdev);
 	st4->st_size = st->st_size;
 	st4->st_atim = st->st_atimespec;
 	st4->st_mtim = st->st_mtimespec;
@@ -124,6 +124,28 @@ bsd_to_svr4_xstat(st, st4)
 	st4->st_blksize = st->st_blksize;
 	st4->st_blocks = st->st_blocks;
 	strcpy(st4->st_fstype, "unknown");
+}
+
+static void
+bsd_to_svr4_stat64(st, st4)
+	struct stat		*st;
+	struct svr4_stat64	*st4;
+{
+	bzero(st4, sizeof(*st4));
+        st4->st_dev = bsd_to_svr4_dev_t(st->st_dev);
+        st4->st_ino = st->st_ino;
+        st4->st_mode = BSD_TO_SVR4_MODE(st->st_mode); 
+        st4->st_nlink = st->st_nlink;
+        st4->st_uid = st->st_uid;
+        st4->st_gid = st->st_gid;
+        st4->st_rdev = bsd_to_svr4_dev_t(st->st_rdev);
+        st4->st_size = st->st_size;
+        st4->st_atim = st->st_atimespec;
+        st4->st_mtim = st->st_mtimespec;  
+        st4->st_ctim = st->st_ctimespec;
+        st4->st_blksize = st->st_blksize;
+        st4->st_blocks = st->st_blocks;
+        strcpy(st4->st_fstype, "unknown");
 }
 
 
@@ -357,6 +379,39 @@ svr4_sys_fxstat(p, v, retval)
 
 	return 0;
 }
+
+
+int
+svr4_sys_fstat64(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct svr4_sys_fstat64_args *uap = v;
+	struct stat		st;
+	struct svr4_stat64	svr4_st;
+	struct sys_fstat_args	cup;
+	int			error;
+
+	caddr_t sg = stackgap_init(p->p_emul);
+
+	SCARG(&cup, fd) = SCARG(uap, fd);
+	SCARG(&cup, sb) = stackgap_alloc(&sg, sizeof(struct stat));
+
+	if ((error = sys_fstat(p, &cup, retval)) != 0)
+		return error;
+
+	if ((error = copyin(SCARG(&cup, sb), &st, sizeof st)) != 0)
+		return error;   
+
+	bsd_to_svr4_stat64(&st, &svr4_st);
+
+	if ((error = copyout(&svr4_st, SCARG(uap, sb), sizeof svr4_st)) != 0)
+		return error;
+
+	return 0;
+}
+
 
 struct svr4_ustat_args {
 	syscallarg(svr4_dev_t)		dev;

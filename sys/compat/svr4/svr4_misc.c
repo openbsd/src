@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_misc.c,v 1.23 1999/09/11 00:03:16 mickey Exp $	 */
+/*	$OpenBSD: svr4_misc.c,v 1.24 1999/10/07 16:14:28 brad Exp $	 */
 /*	$NetBSD: svr4_misc.c,v 1.42 1996/12/06 03:22:34 christos Exp $	 */
 
 /*
@@ -436,7 +436,8 @@ svr4_sys_mknod(p, v, retval)
 {
 	struct svr4_sys_mknod_args *uap = v;
 	return svr4_mknod(p, retval,
-			  SCARG(uap, path), SCARG(uap, mode), SCARG(uap, dev));
+			  SCARG(uap, path), SCARG(uap, mode),
+			  svr4_to_bsd_odev_t(SCARG(uap, dev)));
 }
 
 
@@ -448,7 +449,8 @@ svr4_sys_xmknod(p, v, retval)
 {
 	struct svr4_sys_xmknod_args *uap = v;
 	return svr4_mknod(p, retval,
-			  SCARG(uap, path), SCARG(uap, mode), SCARG(uap, dev));
+			  SCARG(uap, path), SCARG(uap, mode),
+			  svr4_to_bsd_odev_t(SCARG(uap, dev)));
 }
 
 

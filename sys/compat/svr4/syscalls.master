@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.24 1999/06/07 07:17:48 deraadt Exp $
+	$OpenBSD: syscalls.master,v 1.25 1999/10/07 16:14:28 brad Exp $
 ;	$NetBSD: syscalls.master,v 1.17 1996/02/10 17:12:51 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -276,7 +276,8 @@
 			    size_t nbyte, svr4_off_t off); }
 174	STD		{ ssize_t svr4_sys_pwrite(int fd, const void *buf, \
 			    size_t nbyte, svr4_off_t off); }
-175	UNIMPL		llseek
+175	STD		{ svr4_off64_t svr4_sys_llseek(int fd, \
+			    long offset1, long offset2, int whence); }
 176	UNIMPL		inst_sync
 177	UNIMPL
 178	UNIMPL		kaio
@@ -325,7 +326,8 @@
 214	UNIMPL		mmap64
 215	UNIMPL		stat64
 216	UNIMPL		lstat64
-217	UNIMPL		fstat64
+217	STD		{ int svr4_sys_fstat64(int fd, \
+			    struct svr4_stat64 *sb); }
 218	UNIMPL		statvfs64
 219	UNIMPL		fstatvfs64
 220	UNIMPL		setrlimit64
@@ -333,7 +335,8 @@
 222	UNIMPL		pread64
 223	UNIMPL		pwrite64
 224	UNIMPL		creat64
-225	UNIMPL		open64
+225	STD		{ int svr4_sys_open64(char *path, int flags, \
+			    int mode); }
 226	UNIMPL		rpcsys
 227	UNIMPL
 228	UNIMPL
