@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rln_pcmcia.c,v 1.2 1999/08/08 01:17:23 niklas Exp $	*/
+/*	$OpenBSD: if_rln_pcmcia.c,v 1.3 1999/08/16 16:51:19 deraadt Exp $	*/
 /*
  * David Leonard <d@openbsd.org>, 1999. Public domain.
  *
@@ -61,8 +61,8 @@ struct cfattach rln_pcmcia_ca = {
 #define PCMCIA_CIS_SYMPHONY       { "PROXIM", "LAN PC CARD", "SYMPHONY", NULL }
 
 static struct rln_pcmcia_product {
-	u_int32_t	manufacturer;
-	u_int32_t	product;
+	u_int16_t	manufacturer;
+	u_int16_t	product;
 	const char	*name;
 	u_int8_t	flags;
 } rln_pcmcia_products[] = {

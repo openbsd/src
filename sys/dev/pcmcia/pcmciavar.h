@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmciavar.h,v 1.11 1999/08/08 01:00:15 niklas Exp $	*/
+/*	$OpenBSD: pcmciavar.h,v 1.12 1999/08/16 16:51:20 deraadt Exp $	*/
 /*	$NetBSD: pcmciavar.h,v 1.5 1998/07/19 17:28:17 christos Exp $	*/
 
 /*
@@ -144,15 +144,10 @@ struct pcmcia_card {
 	/* XXX waste of space? */
 	char		cis1_info_buf[256];
 	char		*cis1_info[4];
-	/*
-	 * Use int32_t for manufacturer and product so that they can
-	 * hold the id value found in card CIS and special value that
-	 * indicates no id was found.
-	 */
-	int32_t		manufacturer;
-#define	PCMCIA_VENDOR_INVALID	-1
-	int32_t		product;
-#define	PCMCIA_PRODUCT_INVALID		-1
+	u_int16_t	manufacturer;
+#define	PCMCIA_VENDOR_INVALID	0xffff
+	u_int16_t	product;
+#define	PCMCIA_PRODUCT_INVALID	0xffff
 	u_int16_t	error;
 #define	PCMCIA_CIS_INVALID		{ NULL, NULL, NULL, NULL }
 	SIMPLEQ_HEAD(, pcmcia_function) pf_head;
@@ -181,16 +176,16 @@ struct pcmcia_softc {
 };
 
 struct pcmcia_cis_quirk {
-	int32_t manufacturer;
-	int32_t product;
+	u_int16_t manufacturer;
+	u_int16_t product;
 	char *cis1_info[4];
 	struct pcmcia_function *pf;
 	struct pcmcia_config_entry *cfe;
 };
 
 struct pcmcia_attach_args {
-	int32_t manufacturer;
-	int32_t product;
+	u_int16_t manufacturer;
+	u_int16_t product;
 	struct pcmcia_card *card;
 	struct pcmcia_function *pf;
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic_pcmcia.c,v 1.6 1999/08/16 06:49:29 fgsch Exp $	*/
+/*	$OpenBSD: aic_pcmcia.c,v 1.7 1999/08/16 16:51:19 deraadt Exp $	*/
 /*	$NetBSD: aic_pcmcia.c,v 1.6 1998/07/19 17:28:15 christos Exp $	*/
 
 /*
@@ -68,8 +68,8 @@ struct cfattach aic_pcmcia_ca = {
 };
 
 struct aic_pcmcia_product {
-	u_int32_t	app_vendor;		/* PCMCIA vendor ID */
-	u_int32_t	app_product;		/* PCMCIA product ID */
+	u_int16_t	app_vendor;		/* PCMCIA vendor ID */
+	u_int16_t	app_product;		/* PCMCIA product ID */
 	int		app_expfunc;		/* expected function number */
 } aic_pcmcia_prod[] = {
 	{ PCMCIA_VENDOR_ADAPTEC,	PCMCIA_PRODUCT_ADAPTEC_APA1460_1,

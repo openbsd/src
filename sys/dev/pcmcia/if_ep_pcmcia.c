@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_pcmcia.c,v 1.19 1999/08/16 07:41:29 fgsch Exp $	*/
+/*	$OpenBSD: if_ep_pcmcia.c,v 1.20 1999/08/16 16:51:19 deraadt Exp $	*/
 /*	$NetBSD: if_ep_pcmcia.c,v 1.16 1998/08/17 23:20:40 thorpej Exp $  */
 
 /*-
@@ -141,7 +141,7 @@ struct cfattach ep_pcmcia_ca = {
 };
 
 struct ep_pcmcia_product {
-	u_int32_t	epp_product;	/* PCMCIA product ID */
+	u_int16_t	epp_product;	/* PCMCIA product ID */
 	u_short		epp_chipset;	/* 3Com chipset used */
 	int		epp_flags;	/* initial softc flags */
 	int		epp_expfunc;	/* expected function */

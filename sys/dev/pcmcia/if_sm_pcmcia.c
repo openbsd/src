@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sm_pcmcia.c,v 1.8 1999/08/16 10:25:18 fgsch Exp $	*/
+/*	$OpenBSD: if_sm_pcmcia.c,v 1.9 1999/08/16 16:51:20 deraadt Exp $	*/
 /*	$NetBSD: if_sm_pcmcia.c,v 1.11 1998/08/15 20:47:32 thorpej Exp $  */
 
 /*-
@@ -111,8 +111,8 @@ int	sm_pcmcia_funce_enaddr __P((struct device *, u_int8_t *));
 int	sm_pcmcia_lannid_ciscallback __P((struct pcmcia_tuple *, void *));
 
 struct sm_pcmcia_product {
-	u_int32_t	spp_vendor;	/* vendor ID */
-	u_int32_t	spp_product;	/* product ID */
+	u_int16_t	spp_vendor;	/* vendor ID */
+	u_int16_t	spp_product;	/* product ID */
 	int		spp_expfunc;	/* expected function */
 } sm_pcmcia_prod[] = {
 	{ PCMCIA_VENDOR_MEGAHERTZ2,	PCMCIA_PRODUCT_MEGAHERTZ2_XJACK,

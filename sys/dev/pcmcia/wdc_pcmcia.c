@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc_pcmcia.c,v 1.4 1999/07/26 05:43:16 deraadt Exp $	*/
+/*	$OpenBSD: wdc_pcmcia.c,v 1.5 1999/08/16 16:51:20 deraadt Exp $	*/
 /*	$NetBSD: wdc_pcmcia.c,v 1.19 1999/02/19 21:49:43 abs Exp $ */
 
 /*-
@@ -90,39 +90,36 @@ struct cfattach wdc_pcmcia_ca = {
 };
 
 struct wdc_pcmcia_product {
-	u_int32_t	wpp_vendor;	/* vendor ID */
-	u_int32_t	wpp_product;	/* product ID */
+	u_int16_t	wpp_vendor;	/* vendor ID */
+	u_int16_t	wpp_product;	/* product ID */
 	int		wpp_quirk_flag;	/* Quirk flags */
 #define WDC_PCMCIA_FORCE_16BIT_IO	0x01 /* Don't use PCMCIA_WIDTH_AUTO */
 #define WDC_PCMCIA_NO_EXTRA_RESETS	0x02 /* Only reset ctrl once */
 	const char	*wpp_cis_info[4];	/* XXX necessary? */
-	const char	*wpp_name;	/* product name */
-} wdc_pcmcia_products[] = {
+} wdc_pcmcia_pr[] = {
 
 	{ /* PCMCIA_VENDOR_DIGITAL XXX */ 0x0100,
 	  PCMCIA_PRODUCT_DIGITAL_MOBILE_MEDIA_CDROM,
 	  0, { NULL, "Digital Mobile Media CD-ROM", NULL, NULL },
-	  PCMCIA_STR_DIGITAL_MOBILE_MEDIA_CDROM },
+	  },
 
 	{ PCMCIA_VENDOR_IBM,
 	  PCMCIA_PRODUCT_IBM_PORTABLE_CDROM_DRIVE,
 	  0, { NULL, "Portable CD-ROM Drive", NULL, NULL },
-	  PCMCIA_STR_IBM_PORTABLE_CDROM_DRIVE },
+	  },
 
 	{ PCMCIA_VENDOR_HAGIWARASYSCOM,
 	  -1,			/* XXX */
 	  WDC_PCMCIA_FORCE_16BIT_IO,
 	  { NULL, NULL, NULL, NULL },
-	  "Hagiwara SYS-COM CompactFlash Card" },
+	  },
 
 	/* The TEAC IDE/Card II is used on the Sony Vaio */
 	{ PCMCIA_VENDOR_TEAC,
 	  PCMCIA_PRODUCT_TEAC_IDECARDII,
 	  WDC_PCMCIA_NO_EXTRA_RESETS,
 	  PCMCIA_CIS_TEAC_IDECARDII,
-	  PCMCIA_STR_TEAC_IDECARDII },
-
-	{ 0, 0, 0, { NULL, NULL, NULL, NULL}, NULL }
+	  },
 };
 
 struct wdc_pcmcia_disk_device_interface_args {
@@ -192,10 +189,12 @@ wdc_pcmcia_lookup(pa)
 	struct wdc_pcmcia_product *wpp;
 	int i, cis_match;
 
-	for (wpp = wdc_pcmcia_products; wpp->wpp_name != NULL; wpp++)
-		if ((wpp->wpp_vendor == -1 ||
+	for (wpp = wdc_pcmcia_pr;
+	    wpp < &wdc_pcmcia_pr[sizeof(wdc_pcmcia_pr)/sizeof(wdc_pcmcia_pr[0])];
+	    wpp++)
+		if ((wpp->wpp_vendor == PCMCIA_VENDOR_INVALID ||
 		     pa->manufacturer == wpp->wpp_vendor) &&
-		    (wpp->wpp_product == -1 ||
+		    (wpp->wpp_product == PCMCIA_PRODUCT_INVALID ||
 		     pa->product == wpp->wpp_product)) {
 			cis_match = 1;
 			for (i = 0; i < 4; i++) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.17 1999/08/16 08:58:45 fgsch Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.18 1999/08/16 16:51:19 deraadt Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -83,8 +83,8 @@ struct cfattach ne_pcmcia_ca = {
 };
 
 struct ne2000dev {
-    int32_t manufacturer;
-    int32_t product;
+    u_int16_t manufacturer;
+    u_int16_t product;
     char *cis_info[4];
     int function;
     int enet_maddr;
@@ -347,7 +347,6 @@ ne_pcmcia_attach(parent, self, aux)
 	void (*npp_init_media) __P((struct dp8390_softc *, int **,
 	    int *, int *));
 	int *media, nmedia, defmedia;
-	const char *typestr = "";
 
 	npp_init_media = NULL;
 	media = NULL;
@@ -500,7 +499,6 @@ ne_pcmcia_attach(parent, self, aux)
 		== RTL0_8019ID0 &&
 	    bus_space_read_1(dsc->sc_regt, dsc->sc_regh, NERTL_RTL0_8019ID1)
 		== RTL0_8019ID1) {
-		typestr = " (RTL8019)";
 		npp_init_media = rtl80x9_init_media;
 		dsc->sc_mediachange = rtl80x9_mediachange;
 		dsc->sc_mediastatus = rtl80x9_mediastatus;
@@ -513,7 +511,7 @@ ne_pcmcia_attach(parent, self, aux)
 	if (psc->sc_ih == NULL)
 		printf("no irq");
 
-	printf(": <%s>\n", typestr);
+	printf("\n");
 
 	/* Initialize media, if we have it. */
 	if (npp_init_media != NULL)

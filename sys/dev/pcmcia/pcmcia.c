@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmcia.c,v 1.22 1999/08/16 07:45:22 fgsch Exp $	*/
+/*	$OpenBSD: pcmcia.c,v 1.23 1999/08/16 16:51:20 deraadt Exp $	*/
 /*	$NetBSD: pcmcia.c,v 1.9 1998/08/13 02:10:55 eeh Exp $	*/
 
 /*
@@ -301,16 +301,17 @@ pcmcia_print(arg, pnp)
 			printf("%s%s", i ? ", " : " \"", card->cis1_info[i]);
 		printf("\"");
 
-		if (card->manufacturer != -1 && card->product != -1) {
+		if (card->manufacturer != PCMCIA_VENDOR_INVALID &&
+		    card->product != PCMCIA_PRODUCT_INVALID) {
 			if (i)
 				printf(" ");
 			printf("(");
-			if (card->manufacturer != -1)
-				printf("manufacturer 0x%lx%s",
+			if (card->manufacturer != PCMCIA_VENDOR_INVALID)
+				printf("manufacturer 0x%x%s",
 				    card->manufacturer,
-				    card->product == -1 ? "" : ", ");
-			if (card->product != -1)
-				printf("product 0x%lx",
+				    card->product == PCMCIA_PRODUCT_INVALID ? "" : ", ");
+			if (card->product != PCMCIA_PRODUCT_INVALID)
+				printf("product 0x%x",
 				    card->product);
 			printf(")");
 		}

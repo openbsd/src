@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_pcmcia.c,v 1.20 1999/08/16 07:41:29 fgsch Exp $	*/
+/*	$OpenBSD: com_pcmcia.c,v 1.21 1999/08/16 16:51:19 deraadt Exp $	*/
 /*	$NetBSD: com_pcmcia.c,v 1.15 1998/08/22 17:47:58 msaitoh Exp $	*/
 
 /*-
@@ -117,10 +117,9 @@
 
 /* Devices that we need to match by CIS strings */
 struct com_pcmcia_product {
-	char *name;
 	char *cis1_info[4];
 } com_pcmcia_prod[] = {
-	{ PCMCIA_STR_MEGAHERTZ_XJ2288, PCMCIA_CIS_MEGAHERTZ_XJ2288 },
+	{ PCMCIA_CIS_MEGAHERTZ_XJ2288 },
 };
 
 int com_pcmcia_match __P((struct device *, void *, void *));
