@@ -28,6 +28,10 @@ Report problems and direct all questions to:
 
 /*
  * $Log: rcs.c,v $
+ * Revision 1.2  1996/05/07 12:03:21  mickey
+ * change -L option name to -Z, note that in
+ * co(1) manual, add -Z where were missed.
+ *
  * Revision 1.1.1.1  1995/10/18 08:41:03  deraadt
  * initial import of NetBSD tree
  *
@@ -270,10 +274,10 @@ static struct delrevpair delrev;
 static struct hshentry *cuthead, *cuttail, *delstrt;
 static struct hshentries *gendeltas;
 
-mainProg(rcsId, "rcs", "$Id: rcs.c,v 1.1.1.1 1995/10/18 08:41:03 deraadt Exp $")
+mainProg(rcsId, "rcs", "$Id: rcs.c,v 1.2 1996/05/07 12:03:21 mickey Exp $")
 {
 	static char const cmdusage[] =
-		"\nrcs usage: rcs -{ae}logins -Afile -{blu}[rev] -cstring -{iILqTU} -ksubst -mrev:msg -{nN}name[:[rev]] -orange -sstate[:rev] -t[text] -Vn -xsuff -zzone file ...";
+		"\nrcs usage: rcs -{ae}logins -Afile -{blu}[rev] -cstring -{iILqTU} -ksubst -mrev:msg -{nN}name[:[rev]] -orange -sstate[:rev] -t[text] -Vn -xsuff -zzone -ZlocalId file ...";
 
 	char *a, **newargv, *textfile;
 	char const *branchsym, *commsyml;
@@ -463,6 +467,10 @@ mainProg(rcsId, "rcs", "$Id: rcs.c,v 1.1.1.1 1995/10/18 08:41:03 deraadt Exp $")
 
 		case 'z':
 			zone_set(a);
+			break;
+
+		case 'Z':
+			setRCSlocalId(a);
 			break;
 
 		case 'k':    /*  set keyword expand mode  */

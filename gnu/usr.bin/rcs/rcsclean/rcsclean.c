@@ -37,10 +37,10 @@ static void cleanup P((void));
 static RILE *workptr;
 static int exitstatus;
 
-mainProg(rcscleanId, "rcsclean", "$Id: rcsclean.c,v 1.1.1.1 1995/10/18 08:41:03 deraadt Exp $")
+mainProg(rcscleanId, "rcsclean", "$Id: rcsclean.c,v 1.2 1996/05/07 12:03:28 mickey Exp $")
 {
 	static char const usage[] =
-		"\nrcsclean: usage: rcsclean -ksubst -{nqru}[rev] -T -Vn -xsuff -zzone file ...";
+		"\nrcsclean: usage: rcsclean -ksubst -{nqru}[rev] -T -Vn -xsuff -zzone -ZlocalId file ...";
 
 	static struct buf revision;
 
@@ -120,6 +120,10 @@ mainProg(rcscleanId, "rcsclean", "$Id: rcsclean.c,v 1.1.1.1 1995/10/18 08:41:03 
 
 			case 'z':
 				zone_set(a);
+				break;
+
+			case 'Z':
+				setRCSlocalId(a);
 				break;
 
 			default:
