@@ -1,4 +1,4 @@
-/*	$OpenBSD: iopvar.h,v 1.2 2001/06/26 07:18:36 niklas Exp $	*/
+/*	$OpenBSD: iopvar.h,v 1.3 2001/06/26 07:35:04 mickey Exp $	*/
 /*	$NetBSD: iopvar.h,v 1.5 2001/03/20 13:01:49 ad Exp $	*/
 
 /*-
@@ -180,7 +180,7 @@ int	iop_msg_map(struct iop_softc *, struct iop_msg *, u_int32_t *, void *,
 		    int, int);
 int	iop_msg_map_bio(struct iop_softc *, struct iop_msg *, u_int32_t *,
 			void *, int, int);
-int	iop_msg_post(struct iop_softc *, struct iop_msg *, void *, int);
+int	iop_msg_post(struct iop_softc *, struct iop_msg *, void *, int, int);
 void	iop_msg_unmap(struct iop_softc *, struct iop_msg *);
 
 int	iop_util_abort(struct iop_softc *, struct iop_initiator *, int, int,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: iop.c,v 1.3 2001/06/26 07:18:36 niklas Exp $	*/
+/*	$OpenBSD: iop.c,v 1.4 2001/06/26 07:35:04 mickey Exp $	*/
 /*	$NetBSD: iop.c,v 1.12 2001/03/21 14:27:05 ad Exp $	*/
 
 /*-
@@ -230,7 +230,7 @@ void	iop_msg_poll(struct iop_softc *, struct iop_msg *, int);
 void	iop_msg_wait(struct iop_softc *, struct iop_msg *, int);
 int	iop_ofifo_init(struct iop_softc *);
 int	iop_passthrough(struct iop_softc *, struct ioppt *);
-int	iop_post(struct iop_softc *, u_int32_t *);
+int	iop_post(struct iop_softc *, u_int32_t *, int size);
 void	iop_reconf_thread(void *);
 void	iop_release_mfa(struct iop_softc *, u_int32_t);
 int	iop_reset(struct iop_softc *);
@@ -612,7 +612,7 @@ iop_reconfigure(struct iop_softc *sc, u_int chgind)
 			DPRINTF(("%s: scanning bus %d\n", sc->sc_dv.dv_xname,
 			    tid));
 
-			rv = iop_msg_post(sc, im, &mf, 5*60*1000);
+			rv = iop_msg_post(sc, im, &mf, sizeof(mf), 5*60*1000);
 			iop_msg_free(sc, im);
 #ifdef I2ODEBUG
 			if (rv != 0)
@@ -877,7 +877,7 @@ iop_status_get(struct iop_softc *sc, int nosleep)
 
 	memset(&sc->sc_status, 0, sizeof(sc->sc_status));
 
-	if ((rv = iop_post(sc, (u_int32_t *)&mf)) != 0)
+	if ((rv = iop_post(sc, (u_int32_t *)&mf, sizeof(mf))))
 		return (rv);
 
 	/* XXX */
@@ -930,7 +930,7 @@ iop_ofifo_init(struct iop_softc *sc)
 	 * necessary; this isn't the case (and is in fact a bad thing).
 	 */
 	iop_msg_map(sc, im, mb, (void *)&status, sizeof(status), 0);
-	if ((rv = iop_msg_post(sc, im, mb, 0)) != 0) {
+	if ((rv = iop_msg_post(sc, im, mb, sizeof(*mf), 0)) != 0) {
 		iop_msg_free(sc, im);
 		return (rv);
 	}
@@ -1008,7 +1008,7 @@ iop_hrt_get0(struct iop_softc *sc, struct i2o_hrt *hrt, int size)
 	mf->msgtctx = im->im_tctx;
 
 	iop_msg_map(sc, im, mb, hrt, size, 0);
-	rv = iop_msg_post(sc, im, mb, 30000);
+	rv = iop_msg_post(sc, im, mb, sizeof(*mf), 30000);
 	iop_msg_unmap(sc, im);
 	iop_msg_free(sc, im);
 	return (rv);
@@ -1083,7 +1083,7 @@ iop_lct_get0(struct iop_softc *sc, struct i2o_lct *lct, int size,
 #endif
 
 	iop_msg_map(sc, im, mb, lct, size, 0);
-	rv = iop_msg_post(sc, im, mb, (chgind == 0 ? 120*1000 : 0));
+	rv = iop_msg_post(sc, im, mb, sizeof(*mf), (chgind == 0 ? 120*1000 : 0));
 	iop_msg_unmap(sc, im);
 	iop_msg_free(sc, im);
 	return (rv);
@@ -1188,7 +1188,7 @@ iop_param_op(struct iop_softc *sc, int tid, struct iop_initiator *ii,
 	memset(buf, 0, size);
 	iop_msg_map(sc, im, mb, pgop, sizeof(*pgop), 1);
 	iop_msg_map(sc, im, mb, buf, size, write);
-	rv = iop_msg_post(sc, im, mb, (ii == NULL ? 30000 : 0));
+	rv = iop_msg_post(sc, im, mb, sizeof(*mf), (ii == NULL ? 30000 : 0));
 
 	if (ii == NULL)
 		PRELE(curproc);
@@ -1231,7 +1231,7 @@ iop_simple_cmd(struct iop_softc *sc, int tid, int function, int ictx,
 	mf.msgictx = ictx;
 	mf.msgtctx = im->im_tctx;
 
-	rv = iop_msg_post(sc, im, &mf, timo);
+	rv = iop_msg_post(sc, im, &mf, sizeof(mf), timo);
 	iop_msg_free(sc, im);
 	return (rv);
 }
@@ -1291,7 +1291,7 @@ iop_systab_set(struct iop_softc *sc)
 	iop_msg_map(sc, im, mb, iop_systab, iop_systab_size, 1);
 	iop_msg_map(sc, im, mb, mema, sizeof(mema), 1);
 	iop_msg_map(sc, im, mb, ioa, sizeof(ioa), 1);
-	rv = iop_msg_post(sc, im, mb, 5000);
+	rv = iop_msg_post(sc, im, mb, sizeof(*mf), 5000);
 	iop_msg_unmap(sc, im);
 	iop_msg_free(sc, im);
 	PRELE(curproc);
@@ -1346,16 +1346,16 @@ iop_reset(struct iop_softc *sc)
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_scr_dmamap, BUS_DMASYNC_PREREAD);
 
-	if ((rv = iop_post(sc, (u_int32_t *)&mf)) != 0)
+	if ((rv = iop_post(sc, (u_int32_t *)&mf, sizeof(mf))))
 		goto release;
 
 	/* XXX */
 	POLL(2500,
 	    (bus_dmamap_sync(sc->sc_dmat, sc->sc_scr_dmamap,
 	    BUS_DMASYNC_POSTREAD), *sw != 0));
-	if (*sw != I2O_RESET_IN_PROGRESS) {
+	if (*sw != htole32(I2O_RESET_IN_PROGRESS)) {
 		printf("%s: reset rejected, status 0x%x\n",
-		    sc->sc_dv.dv_xname, *sw);
+		    sc->sc_dv.dv_xname, letoh32(*sw));
 		rv = EIO;
 		goto release;
 	}
@@ -1897,13 +1897,13 @@ iop_msg_unmap(struct iop_softc *sc, struct iop_msg *im)
  * Post a message frame to the IOP's inbound queue.
  */
 int
-iop_post(struct iop_softc *sc, u_int32_t *mb)
+iop_post(struct iop_softc *sc, u_int32_t *mb, int size)
 {
 	u_int32_t mfa;
 	int s;
 
 	/* ZZZ */
-	if (mb[0] >> 16 > IOP_MAX_MSG_SIZE / 4)
+	if (size  > IOP_MAX_MSG_SIZE)
 		panic("iop_post: frame too large");
 
 #ifdef I2ODEBUG
@@ -1911,7 +1911,7 @@ iop_post(struct iop_softc *sc, u_int32_t *mb)
 		int i;
 
 		printf("\niop_post\n");
-		for (i = 0; i < mb[0] >> 16; i++)
+		for (i = 0; i < size / 4; i++)
 			printf("%4d %08x\n", i, mb[i]);
 	}
 #endif
@@ -1937,8 +1937,8 @@ iop_post(struct iop_softc *sc, u_int32_t *mb)
 		    BUS_DMASYNC_PREREAD);
 
 	/* Copy out the message frame. */
-	bus_space_write_region_4(sc->sc_iot, sc->sc_ioh, mfa, mb, mb[0] >> 16);
-	bus_space_barrier(sc->sc_iot, sc->sc_ioh, mfa, mb[0] >> 14 & ~3,
+	bus_space_write_region_4(sc->sc_iot, sc->sc_ioh, mfa, mb, size / 4);
+	bus_space_barrier(sc->sc_iot, sc->sc_ioh, mfa, size & ~3,
 	    BUS_SPACE_BARRIER_WRITE);
 
 	/* Post the MFA back to the IOP. */
@@ -1952,7 +1952,7 @@ iop_post(struct iop_softc *sc, u_int32_t *mb)
  * Post a message to the IOP and deal with completion.
  */
 int
-iop_msg_post(struct iop_softc *sc, struct iop_msg *im, void *xmb, int timo)
+iop_msg_post(struct iop_softc *sc, struct iop_msg *im, void *xmb, int size, int timo)
 {
 	u_int32_t *mb;
 	int rv, s;
@@ -1961,9 +1961,9 @@ iop_msg_post(struct iop_softc *sc, struct iop_msg *im, void *xmb, int timo)
 
 	/* Terminate the scatter/gather list chain. */
 	if ((im->im_flags & IM_SGLOFFADJ) != 0)
-		mb[(mb[0] >> 16) - 2] |= I2O_SGL_END;
+		mb[size - 2] |= I2O_SGL_END;
 
-	if ((rv = iop_post(sc, mb)) != 0)
+	if ((rv = iop_post(sc, mb, size)) != 0)
 		return (rv);
 
 	if ((im->im_flags & IM_DISCARD) != 0)
@@ -2231,7 +2231,7 @@ iop_util_claim(struct iop_softc *sc, struct iop_initiator *ii, int release,
 	mf.msgtctx = im->im_tctx;
 	mf.flags = flags;
 
-	rv = iop_msg_post(sc, im, &mf, 5000);
+	rv = iop_msg_post(sc, im, &mf, sizeof(mf), 5000);
 	iop_msg_free(sc, im);
 	return (rv);
 }	
@@ -2255,7 +2255,7 @@ int iop_util_abort(struct iop_softc *sc, struct iop_initiator *ii, int func,
 	mf.flags = (func << 24) | flags;
 	mf.tctxabort = tctxabort;
 
-	rv = iop_msg_post(sc, im, &mf, 5000);
+	rv = iop_msg_post(sc, im, &mf, sizeof(mf), 5000);
 	iop_msg_free(sc, im);
 	return (rv);
 }
@@ -2277,7 +2277,7 @@ int iop_util_eventreg(struct iop_softc *sc, struct iop_initiator *ii, int mask)
 	mf.eventmask = mask;
 
 	/* This message is replied to only when events are signalled. */
-	return (iop_msg_post(sc, im, &mf, 0));
+	return (iop_msg_post(sc, im, &mf, sizeof(mf), 0));
 }
 
 int
@@ -2447,7 +2447,7 @@ iop_passthrough(struct iop_softc *sc, struct ioppt *pt)
 		mapped = 1;
 	}
 
-	if ((rv = iop_msg_post(sc, im, mf, pt->pt_timo)) != 0)
+	if ((rv = iop_msg_post(sc, im, mf, sizeof(*mf), pt->pt_timo)) != 0)
 		goto bad;
 
 	i = (letoh32(im->im_rb->msgflags) >> 14) & ~3;
