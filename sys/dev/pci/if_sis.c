@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.39 2004/06/06 04:34:33 mcbride Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.40 2004/07/04 22:57:20 deraadt Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -132,6 +132,7 @@ void sis_read_cmos(struct sis_softc *, struct pci_attach_args *, caddr_t, int, i
 #endif
 void sis_read_mac(struct sis_softc *, struct pci_attach_args *);
 void sis_read_eeprom(struct sis_softc *, caddr_t, int, int, int);
+void sis_read96x_mac(struct sis_softc *);
 
 void sis_mii_sync(struct sis_softc *);
 void sis_mii_send(struct sis_softc *, u_int32_t, int);
@@ -359,6 +360,25 @@ void sis_read_mac(sc, pa)
 	enaddr[2] = CSR_READ_4(sc, SIS_RXFILT_DATA) & 0xffff;
 
 	SIS_SETBIT(sc, SIS_RXFILT_CTL, SIS_RXFILTCTL_ENABLE);
+}
+
+void sis_read96x_mac(sc)
+	struct sis_softc *sc;
+{
+	int i;
+
+	SIO_SET(SIS96x_EECTL_REQ);
+
+	for (i = 0; i < 2000; i++) {
+		if ((CSR_READ_4(sc, SIS_EECTL) & SIS96x_EECTL_GNT)) {
+			sis_read_eeprom(sc, (caddr_t)&sc->arpcom.ac_enaddr,
+			    SIS_EE_NODEADDR, 3, 0);
+			break;
+		} else
+			DELAY(1);
+	}
+
+	SIO_SET(SIS96x_EECTL_DONE);
 }
 
 /*
@@ -951,7 +971,7 @@ void sis_attach(parent, self, aux)
 	/* Reset the adapter. */
 	sis_reset(sc);
 
-	printf(": ");
+	printf(":");
 
 	/*
 	 * Get station address from the EEPROM.
@@ -961,13 +981,13 @@ void sis_attach(parent, self, aux)
 		sc->sis_srr = CSR_READ_4(sc, NS_SRR);
 
 		if (sc->sis_srr == NS_SRR_15C)
-			printf("DP83815C,");
+			printf(" DP83815C,");
 		else if (sc->sis_srr == NS_SRR_15D)
-			printf("DP83815D,");
+			printf(" DP83815D,");
 		else if (sc->sis_srr == NS_SRR_16A)
-			printf("DP83816A,");
+			printf(" DP83816A,");
 		else
-			printf("srr %x,", sc->sis_srr);
+			printf(" srr %x,", sc->sis_srr);
 
 		/*
 		 * Reading the MAC address out of the EEPROM on
@@ -1027,7 +1047,9 @@ void sis_attach(parent, self, aux)
 			    0x9, 6);
 		else
 #endif
-		if (sc->sis_rev == SIS_REV_635 ||
+		if (sc->sis_rev == SIS_REV_96x)
+			sis_read96x_mac(sc);
+		else if (sc->sis_rev == SIS_REV_635 ||
 		    sc->sis_rev == SIS_REV_630ET ||
 		    sc->sis_rev == SIS_REV_630EA1)
 			sis_read_mac(sc, pa);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sisreg.h,v 1.17 2004/05/19 11:37:00 brad Exp $ */
+/*	$OpenBSD: if_sisreg.h,v 1.18 2004/07/04 22:57:20 deraadt Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -126,6 +126,10 @@
 #define SIS_EECTL_DOUT		0x00000002
 #define SIS_EECTL_CLK		0x00000004
 #define SIS_EECTL_CSEL		0x00000008
+
+#define SIS96x_EECTL_GNT	0x00000100
+#define SIS96x_EECTL_DONE	0x00000200
+#define SIS96x_EECTL_REQ	0x00000400
 
 #define	SIS_MII_CLK		0x00000040
 #define	SIS_MII_DIR		0x00000020
@@ -385,6 +389,7 @@ struct sis_ring_data {
 #define SIS_REV_630EA1		0x0083
 #define SIS_REV_630ET		0x0084
 #define SIS_REV_635		0x0090
+#define SIS_REV_96x		0x0091
 
 struct sis_type {
 	u_int16_t		sis_vid;
