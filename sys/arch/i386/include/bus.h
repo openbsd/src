@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.13 1998/10/04 22:33:41 niklas Exp $	*/
+/*	$OpenBSD: bus.h,v 1.14 1999/01/31 14:56:01 espie Exp $	*/
 /*	$NetBSD: bus.h,v 1.6 1996/11/10 03:19:25 thorpej Exp $	*/
 
 /*-
@@ -143,45 +143,45 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 #define	bus_space_read_multi_1(t, h, o, a, c) do {			\
 	if ((t) == I386_BUS_SPACE_IO) {					\
 		insb((h) + (o), (a), (c));				\
-	} else {							\
+	} else {void *_addr=(a); int _cnt=(c);				\
 		__asm __volatile("					\
 			cld					;	\
-		1:	movb (%0),%%al				;	\
+		1:	movb (%2),%%al				;	\
 			stosb					;	\
 			loop 1b"				: 	\
-								:	\
-		    "r" ((h) + (o)), "D" ((a)), "c" ((c))	:	\
-		    "%edi", "%ecx", "%eax", "memory");			\
+		    "=D" (_addr), "=c" (_cnt)			:	\
+		    "r" ((h) + (o)), "0" (_addr), "1" (_cnt)	:	\
+		    "%eax", "memory");					\
 	}								\
 } while (0)
 
 #define	bus_space_read_multi_2(t, h, o, a, c) do {			\
 	if ((t) == I386_BUS_SPACE_IO) {					\
 		insw((h) + (o), (a), (c));				\
-	} else {							\
+	} else {void *_addr=(a); int _cnt=(c);				\
 		__asm __volatile("					\
 			cld					;	\
-		1:	movw (%0),%%ax				;	\
+		1:	movw (%2),%%ax				;	\
 			stosw					;	\
 			loop 1b"				:	\
-								:	\
-		    "r" ((h) + (o)), "D" ((a)), "c" ((c))	:	\
-		    "%edi", "%ecx", "%eax", "memory");			\
+		    "=D" (_addr), "=c" (_cnt)			:	\
+		    "r" ((h) + (o)), "0" (_addr), "1" (_cnt)	:	\
+		    "%eax", "memory");					\
 	}								\
 } while (0)
 
 #define	bus_space_read_multi_4(t, h, o, a, c) do {			\
 	if ((t) == I386_BUS_SPACE_IO) {					\
 		insl((h) + (o), (a), (c));				\
-	} else {							\
+	} else {void *_addr=(a); int _cnt=(c);				\
 		__asm __volatile("					\
 			cld					;	\
-		1:	movl (%0),%%eax				;	\
+		1:	movl (%2),%%eax				;	\
 			stosl					;	\
 			loop 1b"				:	\
-								:	\
-		    "r" ((h) + (o)), "D" ((a)), "c" ((c))	:	\
-		    "%edi", "%ecx", "%eax", "memory");			\
+		    "=D" (_addr), "=c" (_cnt)			:	\
+		    "r" ((h) + (o)), "0" (_addr), "1" (_cnt)	:	\
+		    "%eax", "memory");					\
 	}								\
 } while (0)
 
@@ -221,68 +221,71 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
  */
 
 #define	bus_space_read_region_1(t, h, o, a, c) do {			\
+	int _cnt = (c);	void *_addr = (a); int _port = (h)+(o);		\
 	if ((t) == I386_BUS_SPACE_IO) {					\
 		__asm __volatile("					\
 			cld					;	\
-		1:	inb %w0,%%al				;	\
+		1:	inb %w2,%%al				;	\
 			stosb					;	\
-			incl %0					;	\
+			incl %2					;	\
 			loop 1b"				: 	\
-								:	\
-		    "d" ((h) + (o)), "D" ((a)), "c" ((c))	:	\
-		    "%edx", "%edi", "%ecx", "%eax", "memory");		\
+		    "=D" (_addr), "=c" (_cnt), "=d" (_port)	:	\
+		    "0" (_addr), "1" (_cnt), "2" (_port)	:	\
+		    "%eax", "memory", "cc");				\
 	} else {							\
 		__asm __volatile("					\
 			cld					;	\
 			repne					;	\
 			movsb"					:	\
-								:	\
-		    "S" ((h) + (o)), "D" ((a)), "c" ((c))	:	\
-		    "%esi", "%edi", "%ecx", "memory");			\
+		    "=D" (_addr), "=c" (_cnt), "=S" (_port)	:	\
+		    "0" (_addr), "1" (_cnt), "2" (_port)	:	\
+		    "memory", "cc");					\
 	}								\
 } while (0)
 
 #define	bus_space_read_region_2(t, h, o, a, c) do {			\
+	int _cnt = (c);	void *_addr = (a); int _port = (h)+(o);		\
 	if ((t) == I386_BUS_SPACE_IO) {					\
 		__asm __volatile("					\
 			cld					;	\
-		1:	inw %w0,%%ax				;	\
+		1:	inw %w2,%%ax				;	\
 			stosw					;	\
-			addl $2,%0				;	\
+			addl $2,%2				;	\
 			loop 1b"				: 	\
-								:	\
-		    "d" ((h) + (o)), "D" ((a)), "c" ((c))	:	\
-		    "%edx", "%edi", "%ecx", "%eax", "memory");		\
+		    "=D" (_addr), "=c" (_cnt), "=d" (_port)	:	\
+		    "0" (_addr), "1" (_cnt), "2" (_port)	:	\
+		    "%eax", "memory", "cc");				\
 	} else {							\
 		__asm __volatile("					\
 			cld					;	\
 			repne					;	\
 			movsw"					:	\
-								:	\
-		    "S" ((h) + (o)), "D" ((a)), "c" ((c))	:	\
-		    "%esi", "%edi", "%ecx", "memory");			\
+		    "=D" (_addr), "=c" (_cnt), "=S" (_port)	:	\
+		    "0" (_addr), "1" (_cnt), "2" (_port)	:	\
+		    "memory", "cc");					\
 	}								\
 } while (0)
 
 #define	bus_space_read_region_4(t, h, o, a, c) do {			\
+	int _cnt = (c);	void *_addr = (a); int _port = (h)+(o);		\
 	if ((t) == I386_BUS_SPACE_IO) {					\
 		__asm __volatile("					\
 			cld					;	\
-		1:	inl %w0,%%eax				;	\
+		1:	inl %w2,%%eax				;	\
 			stosl					;	\
-			addl $4,%0				;	\
+			addl $4,%2				;	\
 			loop 1b"				: 	\
-								:	\
-		    "d" ((h) + (o)), "D" ((a)), "c" ((c))	:	\
-		    "%edx", "%edi", "%ecx", "%eax", "memory");		\
+		    "=D" (_addr), "=c" (_cnt), "=d" (_port)	:	\
+		    "0" (_addr), "1" (_cnt), "2" (_port)	:	\
+		    "%eax", "memory", "cc");				\
 	} else {							\
 		__asm __volatile("					\
 			cld					;	\
 			repne					;	\
 			movsl"					:	\
-								:	\
-		    "S" ((h) + (o)), "D" ((a)), "c" ((c))	:	\
-		    "%esi", "%edi", "%ecx", "memory");			\
+		    "=D" (_addr), "=c" (_cnt), "=S" (_port)	:	\
+		    "0" (_addr), "1" (_cnt), "2" (_port)	:	\
+		    "memory", "cc");					\
 	}								\
 } while (0)
 
@@ -358,45 +361,45 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 #define	bus_space_write_multi_1(t, h, o, a, c) do {			\
 	if ((t) == I386_BUS_SPACE_IO) {					\
 		outsb((h) + (o), (a), (c));				\
-	} else {							\
+	} else {const void *_addr=(a); int _cnt=(c);			\
 		__asm __volatile("					\
 			cld					;	\
 		1:	lodsb					;	\
-			movb %%al,(%0)				;	\
+			movb %%al,(%2)				;	\
 			loop 1b"				: 	\
-								:	\
-		    "r" ((h) + (o)), "S" ((a)), "c" ((c))	:	\
-		    "%esi", "%ecx", "%eax");				\
+		    "=S" (_addr), "=c" (_cnt)			:	\
+		    "r" ((h) + (o)), "0" (_addr), "1" (_cnt)	:	\
+		    "%eax", "memory", "cc");				\
 	}								\
 } while (0)
 
 #define bus_space_write_multi_2(t, h, o, a, c) do {			\
 	if ((t) == I386_BUS_SPACE_IO) {					\
 		outsw((h) + (o), (a), (c));				\
-	} else {							\
+	} else {const void *_addr=(a); int _cnt=(c);			\
 		__asm __volatile("					\
 			cld					;	\
 		1:	lodsw					;	\
-			movw %%ax,(%0)				;	\
+			movw %%ax,(%2)				;	\
 			loop 1b"				: 	\
-								:	\
-		    "r" ((h) + (o)), "S" ((a)), "c" ((c))	:	\
-		    "%esi", "%ecx", "%eax");				\
+		    "=S" (_addr), "=c" (_cnt)			:	\
+		    "r" ((h) + (o)), "0" (_addr), "1" (_cnt)	:	\
+		    "%eax", "memory", "cc");				\
 	}								\
 } while (0)
 
 #define bus_space_write_multi_4(t, h, o, a, c) do {			\
 	if ((t) == I386_BUS_SPACE_IO) {					\
 		outsl((h) + (o), (a), (c));				\
-	} else {							\
+	} else {const void *_addr=(a); int _cnt=(c);			\
 		__asm __volatile("					\
 			cld					;	\
 		1:	lodsl					;	\
-			movl %%eax,(%0)				;	\
+			movl %%eax,(%2)				;	\
 			loop 1b"				: 	\
-								:	\
-		    "r" ((h) + (o)), "S" ((a)), "c" ((c))	:	\
-		    "%esi", "%ecx", "%eax");				\
+		    "=S" (_addr), "=c" (_cnt)			:	\
+		    "r" ((h) + (o)), "0" (_addr), "1" (_cnt)	:	\
+		    "%eax", "memory", "cc");				\
 	}								\
 } while (0)
 
@@ -436,6 +439,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
  */
 
 #define	bus_space_write_region_1(t, h, o, a, c) do {			\
+	int _port = (h)+(o); void *_addr=(a); int _cnt=(c);		\
 	if ((t) == I386_BUS_SPACE_IO) {					\
 		__asm __volatile("					\
 			cld					;	\
@@ -443,21 +447,22 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 			outb %%al,%w0				;	\
 			incl %0					;	\
 			loop 1b"				: 	\
-								:	\
-		    "d" ((h) + (o)), "S" ((a)), "c" ((c))	:	\
-		    "%edx", "%esi", "%ecx", "%eax", "memory");		\
+		    "=d" (_port), "=S" (_addr), "=c" (_cnt)	:	\
+		    "0" (_port), "1" (_addr), "2" (_cnt)	:	\
+		    "%eax", "memory", "cc");				\
 	} else {							\
 		__asm __volatile("					\
 			cld					;	\
 			repne					;	\
 			movsb"					:	\
-								:	\
-		    "D" ((h) + (o)), "S" ((a)), "c" ((c))	:	\
-		    "%edi", "%esi", "%ecx", "memory");			\
+		    "=D" (_port), "=S" (_addr), "=c" (_cnt)	:	\
+		    "0" (_port), "1" (_addr), "2" (_cnt)	:	\
+		    "memory", "cc");					\
 	}								\
 } while (0)
 
 #define	bus_space_write_region_2(t, h, o, a, c) do {			\
+	int _port = (h)+(o); void *_addr=(a); int _cnt=(c);		\
 	if ((t) == I386_BUS_SPACE_IO) {					\
 		__asm __volatile("					\
 			cld					;	\
@@ -465,21 +470,22 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 			outw %%ax,%w0				;	\
 			addl $2,%0				;	\
 			loop 1b"				: 	\
-								:	\
-		    "d" ((h) + (o)), "S" ((a)), "c" ((c))	:	\
-		    "%edx", "%esi", "%ecx", "%eax", "memory");		\
+		    "=d" (_port), "=S" (_addr), "=c" (_cnt)	:	\
+		    "0" (_port), "1" (_addr), "2" (_cnt)	:	\
+		    "%eax", "memory", "cc");				\
 	} else {							\
 		__asm __volatile("					\
 			cld					;	\
 			repne					;	\
 			movsw"					:	\
-								:	\
-		    "D" ((h) + (o)), "S" ((a)), "c" ((c))	:	\
-		    "%edi", "%esi", "%ecx", "memory");			\
+		    "=D" (_port), "=S" (_addr), "=c" (_cnt)	:	\
+		    "0" (_port), "1" (_addr), "2" (_cnt)	:	\
+		    "memory", "cc");					\
 	}								\
 } while (0)
 
 #define	bus_space_write_region_4(t, h, o, a, c) do {			\
+	int _port = (h)+(o); void *_addr=(a); int _cnt=(c);		\
 	if ((t) == I386_BUS_SPACE_IO) {					\
 		__asm __volatile("					\
 			cld					;	\
@@ -487,17 +493,17 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 			outl %%eax,%w0				;	\
 			addl $4,%0				;	\
 			loop 1b"				: 	\
-								:	\
-		    "d" ((h) + (o)), "S" ((a)), "c" ((c))	:	\
-		    "%edx", "%esi", "%ecx", "%eax", "memory");		\
+		    "=d" (_port), "=S" (_addr), "=c" (_cnt)	:	\
+		    "0" (_port), "1" (_addr), "2" (_cnt)	:	\
+		    "%eax", "memory", "cc");				\
 	} else {							\
 		__asm __volatile("					\
 			cld					;	\
 			repne					;	\
 			movsl"					:	\
-								:	\
-		    "D" ((h) + (o)), "S" ((a)), "c" ((c))	:	\
-		    "%edi", "%esi", "%ecx", "memory");			\
+		    "=D" (_port), "=S" (_addr), "=c" (_cnt)	:	\
+		    "0" (_port), "1" (_addr), "2" (_cnt)	:	\
+		    "memory", "cc");					\
 	}								\
 } while (0)
 
@@ -612,62 +618,62 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
  */
 
 #define	bus_space_set_region_1(t, h, o, v, c) do {			\
+	int _port = (h)+(o); int _cnt = (c);				\
 	if ((t) == I386_BUS_SPACE_IO) {					\
 		__asm __volatile("					\
 		1:	outb %%al,%w0				;	\
 			incl %0					;	\
 			loop 1b"				: 	\
-								:	\
-		    "d" ((h) + (o)), "c" ((c)), "a" ((v))	:	\
-		    "%edx", "%ecx", "%eax");				\
+		    "=d" (_port), "=c" (_cnt)			:	\
+		    "0" (_port), "1" (_cnt), "a" ((v)));		\
 	} else {							\
 		__asm __volatile("					\
 			cld					;	\
 			repne					;	\
 			stosb"					:	\
-								:	\
-		    "D" ((h) + (o)), "c" ((c)), "a" ((v))	:	\
-		    "%edi", "%ecx", "%eax", "memory");			\
+		    "=D" (_port), "=c" (_cnt)			:	\
+		    "0" (_port), "1" (_cnt), "a" ((v))		:	\
+		    "memory");						\
 	}								\
 } while (0)
 
 #define	bus_space_set_region_2(t, h, o, v, c) do {			\
+	int _port = (h)+(o); int _cnt = (c);				\
 	if ((t) == I386_BUS_SPACE_IO) {					\
 		__asm __volatile("					\
 		1:	outw %%ax,%w0				;	\
 			addl $2, %0				;	\
 			loop 1b"				: 	\
-								:	\
-		    "d" ((h) + (o)), "c" ((c)), "a" ((v))	:	\
-		    "%edx", "%ecx", "%eax");				\
+		    "=d" (_port), "=c" (_cnt)			:	\
+		    "0" (_port), "1" (_cnt), "a" ((v)));		\
 	} else {							\
 		__asm __volatile("					\
 			cld					;	\
 			repne					;	\
 			stosw"					:	\
-								:	\
-		    "D" ((h) + (o)), "c" ((c)), "a" ((v))	:	\
-		    "%edi", "%ecx", "%eax", "memory");			\
+		    "=D" (_port), "=c" (_cnt)			:	\
+		    "0" (_port), "1" (_cnt), "a" ((v))		:	\
+		    "memory");						\
 	}								\
 } while (0)
 
 #define	bus_space_set_region_4(t, h, o, v, c) do {			\
+	int _port = (h)+(o); int _cnt = (c);				\
 	if ((t) == I386_BUS_SPACE_IO) {					\
 		__asm __volatile("					\
 		1:	outl %%eax,%w0				;	\
 			addl $4, %0				;	\
 			loop 1b"				: 	\
-								:	\
-		    "d" ((h) + (o)), "c" ((c)), "a" ((v))	:	\
-		    "%edx", "%ecx", "%eax");				\
+		    "=d" (_port), "=c" (_cnt)			:	\
+		    "0" (_port), "1" (_cnt), "a" ((v)));		\
 	} else {							\
 		__asm __volatile("					\
 			cld					;	\
 			repne					;	\
 			stosl"					:	\
-								:	\
-		    "D" ((h) + (o)), "c" ((c)), "a" ((v))	:	\
-		    "%edi", "%ecx", "%eax", "memory");			\
+		    "=D" (_port), "=c" (_cnt)			:	\
+		    "0" (_port), "1" (_cnt), "a" ((v))		:	\
+		    "memory");						\
 	}								\
 } while (0)
 

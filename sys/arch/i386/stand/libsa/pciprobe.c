@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciprobe.c,v 1.1 1998/02/24 22:07:46 weingart Exp $	*/
+/*	$OpenBSD: pciprobe.c,v 1.2 1999/01/31 14:56:01 espie Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -50,8 +50,8 @@ pciprobe()
 	__asm __volatile(DOINT(0x1A) ";shll $8,%2; setc %b2"
 		: "=a" (hw_chars), "=b" (rev), "=c" (rc),
 		  "=d" (sig), "=D" (entry32)
-		: "0" (0xB101), "D" (0x0)
-		: "cc", "eax", "ebx", "ecx", "edx");
+		: "0" (0xB101), "4" (0x0)
+		: "cc");
 
 	if (rc & 0xff00 || hw_chars & 0xff00)
 		return;

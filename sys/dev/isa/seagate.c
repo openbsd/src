@@ -1,4 +1,4 @@
-/*	$OpenBSD: seagate.c,v 1.12 1999/01/07 06:14:49 niklas Exp $	*/
+/*	$OpenBSD: seagate.c,v 1.13 1999/01/31 14:56:01 espie Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -1304,33 +1304,38 @@ sea_information_transfer(sea)
 					if ((tmp & PH_MASK) != phase)
 						break;
 					if (!(phase & STAT_IO)) {
+						int block = BLOCK_SIZE; 
+						void *a = sea->maddr_dr;
 #ifdef SEA_ASSEMBLER
 						asm("shr $2, %%ecx\n\t\
 						    cld\n\t\
 						    rep\n\t\
 						    movsl" :
-						    "=S" (scb->data) :
+						    "=S" (scb->data), 
+							"=c" (block) ,
+						    "=D" (a) :
 						    "0" (scb->data),
-						    "D" (sea->maddr_dr),
-						    "c" (BLOCK_SIZE) :
-						    "%ecx", "%edi");
+						    "2" (a),
+						    "1" (block) );
 #else
 						for (count = 0;
 						    count < BLOCK_SIZE;
 						    count++)
 							DATA = *(scb->data++);
 #endif
-					} else {
+					} else { 
+						int block = BLOCK_SIZE;
+						void *a = sea->maddr_dr;
 #ifdef SEA_ASSEMBLER
 						asm("shr $2, %%ecx\n\t\
 						    cld\n\t\
 						    rep\n\t\
 						    movsl" :
-						    "=D" (scb->data) :
-						    "S" (sea->maddr_dr),
+						    "=D" (scb->data), "=c" (block) ,
+						    "=S" (a) :
 						    "0" (scb->data),
-						    "c" (BLOCK_SIZE) :
-						    "%ecx", "%esi");
+							"2" (a) ,
+						    "1" (block) );
 #else
 					        for (count = 0;
 						    count < BLOCK_SIZE;

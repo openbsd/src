@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.18 1999/01/13 07:26:00 niklas Exp $	*/
+/*	$OpenBSD: clock.c,v 1.19 1999/01/31 14:56:01 espie Exp $	*/
 /*	$NetBSD: clock.c,v 1.39 1996/05/12 23:11:54 mycroft Exp $	*/
 
 /*-
@@ -262,14 +262,10 @@ delay(n)
 	n -= 5;
 	if (n < 0)
 		return;
-	{register int m;
-	__asm __volatile("mul %3"
-			 : "=a" (n), "=d" (m)
-			 : "0" (n), "r" (TIMER_FREQ));
-	__asm __volatile("div %3"
-			 : "=a" (n)
-			 : "0" (n), "d" (m), "r" (1000000)
-			 : "%edx");}
+	__asm __volatile("mul %2\n\tdiv %3"
+			 : "=a" (n) 
+			 : "0" (n), "r" (TIMER_FREQ), "r" (1000000)
+			 : "%edx", "cc");
 #else
 	/*
 	 * Calculate ((n * TIMER_FREQ) / 1e6) without using floating point and
