@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.13 1999/07/02 01:02:53 cmetz Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.14 1999/08/09 21:41:51 deraadt Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -305,13 +305,15 @@ m_copym(m, off0, len, wait)
 	struct mbuf *top;
 	int copyhdr = 0;
 
-	if (off < 0 || len < 0)
-		panic("m_copym");
+	if (off < 0)
+		panic("m_copym: off %d < 0", off);
+	if (len < 0)
+		panic("m_copym: len %d < 0", len);
 	if (off == 0 && m->m_flags & M_PKTHDR)
 		copyhdr = 1;
 	while (off > 0) {
 		if (m == 0)
-			panic("m_copym");
+			panic("m_copym: null mbuf");
 		if (off < m->m_len)
 			break;
 		off -= m->m_len;
@@ -322,7 +324,7 @@ m_copym(m, off0, len, wait)
 	while (len > 0) {
 		if (m == 0) {
 			if (len != M_COPYALL)
-				panic("m_copym");
+				panic("m_copym: %d not M_COPYALL", len);
 			break;
 		}
 		MGET(n, wait, m->m_type);
@@ -376,13 +378,15 @@ m_copym2(m, off0, len, wait)
 	struct mbuf *top;
 	int copyhdr = 0;
 
-	if (off < 0 || len < 0)
-		panic("m_copym");
+	if (len < 0)
+		panic("m_copym2: len %d < 0", len);
+	if (off < 0)
+		panic("m_copym2: off %d < 0", off);
 	if (off == 0 && m->m_flags & M_PKTHDR)
 		copyhdr = 1;
 	while (off > 0) {
 		if (m == 0)
-			panic("m_copym2 (null mbuf)");
+			panic("m_copym2: null mbuf");
 		if (off < m->m_len)
 			break;
 		off -= m->m_len;
@@ -393,7 +397,7 @@ m_copym2(m, off0, len, wait)
 	while (len > 0) {
 		if (m == 0) {
 			if (len != M_COPYALL)
-				panic("m_copym2 (len != M_COPYALL)");
+				panic("m_copym2: %d != M_COPYALL", len);
 			break;
 		}
 		MGET(n, wait, m->m_type);
@@ -448,11 +452,13 @@ m_copydata(m, off, len, cp)
 {
 	register unsigned count;
 
-	if (off < 0 || len < 0)
-		panic("m_copydata");
+	if (off < 0)
+		panic("m_copydata: off %d < 0", off);
+	if (len < 0)
+		panic("m_copydata: len %d < 0", len);
 	while (off > 0) {
 		if (m == 0)
-			panic("m_copydata");
+			panic("m_copydata: null mbuf in skip");
 		if (off < m->m_len)
 			break;
 		off -= m->m_len;
@@ -460,7 +466,7 @@ m_copydata(m, off, len, cp)
 	}
 	while (len > 0) {
 		if (m == 0)
-			panic("m_copydata");
+			panic("m_copydata: null mbuf");
 		count = min(m->m_len - off, len);
 		bcopy(mtod(m, caddr_t) + off, cp, count);
 		len -= count;
@@ -883,11 +889,13 @@ m_apply(m, off, len, f, fstate)
 	int rval;
 	unsigned int count;
 
-	if (off < 0 || len < 0)
-		panic("m_apply");
+	if (len < 0)
+		panic("m_apply: len %d < 0", len);
+	if (off < 0)
+		panic("m_apply: off %d < 0", off);
 	while (off > 0) {
 		if (m == 0)
-			panic("m_apply");
+			panic("m_apply: null mbuf in skip");
 		if (off < m->m_len)
 			break;
 		off -= m->m_len;
@@ -895,7 +903,7 @@ m_apply(m, off, len, f, fstate)
 	}
 	while (len > 0) {
 		if (m == 0)
-			panic("m_apply");
+			panic("m_apply: null mbuf");
 		count = min(m->m_len - off, len);
 
 		rval = f(fstate, mtod(m, caddr_t) + off, count);
