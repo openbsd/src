@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)qsort.c	8.1 (Berkeley) 6/4/93";*/
-static char *rcsid = "$Id: qsort.c,v 1.2 1996/03/25 22:16:40 tholo Exp $";
+static char *rcsid = "$Id: qsort.c,v 1.3 1996/03/25 22:34:43 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -93,13 +93,14 @@ med3(a, b, c, cmp)
 }
 
 void
-qsort(a, n, es, cmp)
-	void *a;
+qsort(aa, n, es, cmp)
+	void *aa;
 	size_t n, es;
 	int (*cmp)();
 {
 	char *pa, *pb, *pc, *pd, *pl, *pm, *pn;
 	int d, r, swaptype, swap_cnt;
+	register char *a = aa;
 
 loop:	SWAPINIT(a, es);
 	swap_cnt = 0;
