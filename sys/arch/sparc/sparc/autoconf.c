@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.62 2005/03/15 18:47:44 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.63 2005/03/21 22:41:30 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -107,7 +107,6 @@ char	*findblkname(int);
 static	struct device *getdisk(char *, int, int, dev_t *);
 static	int mbprint(void *, const char *);
 static	void crazymap(char *, int *);
-int	st_crazymap(int);
 void	swapconf(void);
 void	sync_crash(void);
 int	mainbus_match(struct device *, void *, void *);
@@ -467,7 +466,7 @@ bootpath_build()
 
 /*
  * Fake a ROM generated bootpath.
- * The argument `cp' points to a string such as "xd(0,0,0)netbsd"
+ * The argument `cp' points to a string such as "xd(0,0,0)bsd"
  */
 
 static void
@@ -622,7 +621,7 @@ bootpath_fake(bp, cp)
 		BP_APPEND(bp, "sbus", -1, 0, 0);
 		BP_APPEND(bp, "esp", -1, v0val[0], 0);
 		if (cp[1] == 'r')
-			snprintf(tmpname, sizeof tmpname, "cd"); /* netbsd uses 'cd', not 'sr'*/
+			snprintf(tmpname, sizeof tmpname, "cd"); /* OpenBSD uses 'cd', not 'sr'*/
 		else
 			snprintf(tmpname, sizeof tmpname, "%c%c", cp[0], cp[1]);
 		/* XXX - is TARGET/LUN encoded in v0val[1]? */
@@ -748,20 +747,6 @@ sd_crazymap(n)
 		init = 1;
 	}
 	return prom_sd_crazymap[n];
-}
-
-int
-st_crazymap(n)
-	int	n;
-{
-	static int prom_st_crazymap[8]; /* static: compute only once! */
-	static int init = 0;
-
-	if (init == 0) {
-		crazymap("st-targets", prom_st_crazymap);
-		init = 1;
-	}
-	return prom_st_crazymap[n];
 }
 
 /*
