@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vfsops.c,v 1.6 1997/01/21 21:34:18 rahnds Exp $	*/
+/*	$OpenBSD: cd9660_vfsops.c,v 1.7 1997/05/28 21:30:38 deraadt Exp $	*/
 /*	$NetBSD: cd9660_vfsops.c,v 1.20 1996/02/09 21:32:08 christos Exp $	*/
 
 /*-
@@ -393,6 +393,7 @@ iso_disklabelspoof(dev, strat, lp)
 	int logical_block_size;
 	int error = EINVAL;
 	int iso_blknum;
+	int i;
 
 	bp = geteblk(ISO_DEFAULT_BLOCK_SIZE);
 	bp->b_dev = dev;
@@ -436,6 +437,8 @@ iso_disklabelspoof(dev, strat, lp)
 	 */
 	strncpy(lp->d_typename, pri->volume_id, 16);
 	strncpy(lp->d_packname, pri->volume_id+16, 16);
+	for (i = 0; i < MAXPARTITIONS; i++)
+		lp->d_partitions[i].p_size = 0;
 	lp->d_partitions[0].p_offset = 0;
 	lp->d_partitions[0].p_size = lp->d_secperunit;
 	lp->d_partitions[0].p_fstype = FS_ISO9660;
