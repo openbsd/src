@@ -1,5 +1,5 @@
-/*	$OpenBSD: isavar.h,v 1.9 1996/04/27 18:39:07 niklas Exp $	*/
-/*	$NetBSD: isavar.h,v 1.21 1996/04/11 22:20:50 cgd Exp $	*/
+/*	$OpenBSD: isavar.h,v 1.10 1996/05/10 12:37:45 deraadt Exp $	*/
+/*	$NetBSD: isavar.h,v 1.22 1996/05/05 01:14:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Chris G. Demetriou
@@ -88,6 +88,8 @@ struct isa_attach_args {
 	int	ia_maddr;		/* physical i/o mem addr */
 	u_int	ia_msize;		/* size of i/o memory */
 	void	*ia_aux;		/* driver specific */
+
+	bus_io_handle_t ia_delayioh;	/* i/o handle for `delay port' */
 };
 
 #define	IOBASEUNK	-1		/* i/o address is unknown */
@@ -114,6 +116,14 @@ struct isa_softc {
 
 	bus_chipset_tag_t sc_bc;
 	isa_chipset_tag_t sc_ic;
+
+	/*
+	 * This i/o handle is used to map port 0x84, which is
+	 * read to provide a 2.5us delay.  This i/o handle
+	 * is mapped in isaattach(), and exported to drivers
+	 * via isa_attach_args.
+	 */
+	bus_io_handle_t   sc_delayioh;
 };
 
 #define		cf_iobase		cf_loc[0]
