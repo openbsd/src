@@ -1,4 +1,4 @@
-/*	$OpenBSD: db.c,v 1.8 2004/07/09 16:22:02 deraadt Exp $	*/
+/*	$OpenBSD: db.c,v 1.9 2004/07/29 11:58:41 henning Exp $	*/
 
 /*
  * Persistent database management routines for DHCPD.
@@ -207,7 +207,7 @@ db_startup(void)
 	int db_fd;
 
 	/* open lease file. once we dropped privs it has to stay open */
-	db_fd = open(path_dhcpd_db, O_WRONLY|O_TRUNC|O_CREAT, 0664);
+	db_fd = open(path_dhcpd_db, O_WRONLY|O_CREAT, 0664);
 	if (db_fd == -1)
 		error("Can't create new lease file: %m");
 	if ((db_file = fdopen(db_fd, "w")) == NULL)
