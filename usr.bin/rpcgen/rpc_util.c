@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_util.c,v 1.8 2002/02/16 21:27:51 millert Exp $	*/
+/*	$OpenBSD: rpc_util.c,v 1.9 2002/06/01 01:40:38 deraadt Exp $	*/
 /*	$NetBSD: rpc_util.c,v 1.6 1995/08/29 23:05:57 cgd Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -181,17 +181,17 @@ ptype(prefix, type, follow)
 {
 	if (prefix != NULL) {
 		if (streq(prefix, "enum")) {
-			f_print(fout, "enum ");
+			fprintf(fout, "enum ");
 		} else {
-			f_print(fout, "struct ");
+			fprintf(fout, "struct ");
 		}
 	}
 	if (streq(type, "bool")) {
-		f_print(fout, "bool_t ");
+		fprintf(fout, "bool_t ");
 	} else if (streq(type, "string")) {
-		f_print(fout, "char *");
+		fprintf(fout, "char *");
 	} else {
-		f_print(fout, "%s ", follow ? fixtype(type) : type);
+		fprintf(fout, "%s ", follow ? fixtype(type) : type);
 	}
 }
 
@@ -253,7 +253,7 @@ pvname_svc(pname, vnum)
 	char *pname;
 	char *vnum;
 {
-	f_print(fout, "%s_%s_svc", locase(pname), vnum);
+	fprintf(fout, "%s_%s_svc", locase(pname), vnum);
 }
 
 void
@@ -261,7 +261,7 @@ pvname(pname, vnum)
 	char *pname;
 	char *vnum;
 {
-	f_print(fout, "%s_%s", locase(pname), vnum);
+	fprintf(fout, "%s_%s", locase(pname), vnum);
 }
 
 /*
@@ -272,8 +272,8 @@ error(msg)
 	char *msg;
 {
 	printwhere();
-	f_print(stderr, "%s, line %d: ", infilename, linenum);
-	f_print(stderr, "%s\n", msg);
+	fprintf(stderr, "%s, line %d: ", infilename, linenum);
+	fprintf(stderr, "%s\n", msg);
 	crash();
 }
 
@@ -299,7 +299,7 @@ record_open(file)
 	if (nfiles < NFILES) {
 		outfiles[nfiles++] = file;
 	} else {
-		f_print(stderr, "too many files!\n");
+		fprintf(stderr, "too many files!\n");
 		crash();
 	}
 }
@@ -314,7 +314,7 @@ void
 expected1(exp1)
 	tok_kind exp1;
 {
-	s_print(expectbuf, "expected '%s'",
+	snprintf(expectbuf, sizeof expectbuf, "expected '%s'",
 		toktostr(exp1));
 	error(expectbuf);
 }
@@ -326,7 +326,7 @@ void
 expected2(exp1, exp2)
 	tok_kind exp1, exp2;
 {
-	s_print(expectbuf, "expected '%s' or '%s'",
+	snprintf(expectbuf, sizeof expectbuf, "expected '%s' or '%s'",
 		toktostr(exp1),
 		toktostr(exp2));
 	error(expectbuf);
@@ -339,7 +339,7 @@ void
 expected3(exp1, exp2, exp3)
 	tok_kind exp1, exp2, exp3;
 {
-	s_print(expectbuf, "expected '%s', '%s' or '%s'",
+	snprintf(expectbuf, sizeof expectbuf, "expected '%s', '%s' or '%s'",
 		toktostr(exp1),
 		toktostr(exp2),
 		toktostr(exp3));
@@ -453,13 +453,14 @@ make_argname(pname, vname)
 	char *vname;
 {
 	char *name;
+	int len = strlen(pname) + strlen(vname) + strlen(ARGEXT) + 3;
 
-	name = (char *)malloc(strlen(pname) + strlen(vname) + strlen(ARGEXT) + 3);
+	name = (char *)malloc(len);
 	if (!name) {
 		fprintf(stderr, "failed in malloc");
 		exit(1);
 	}
-	sprintf(name, "%s_%s_%s", locase(pname), vname, ARGEXT);
+	snprintf(name, len, "%s_%s_%s", locase(pname), vname, ARGEXT);
 	return(name);
 }
 

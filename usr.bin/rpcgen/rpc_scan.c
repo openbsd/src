@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_scan.c,v 1.8 2002/02/16 21:27:51 millert Exp $	*/
+/*	$OpenBSD: rpc_scan.c,v 1.9 2002/06/01 01:40:38 deraadt Exp $	*/
 /*	$NetBSD: rpc_scan.c,v 1.4 1995/06/11 21:50:02 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -291,12 +291,12 @@ get_token(tokp)
 			char buf[100];
 			char *p;
 
-			s_print(buf, "illegal character in file: ");
+			snprintf(buf, sizeof buf, "illegal character in file: ");
 			p = buf + strlen(buf);
 			if (isprint(*where)) {
-				s_print(p, "%c", *where);
+				sprintf(p, "%c", *where);
 			} else {
-				s_print(p, "%d", *where);
+				sprintf(p, "%d", *where);
 			}
 			error(buf);
 		}
@@ -460,7 +460,7 @@ static
 printdirective(line)
 	char *line;
 {
-	f_print(fout, "%s", line + 1);
+	fprintf(fout, "%s", line + 1);
 }
 
 static

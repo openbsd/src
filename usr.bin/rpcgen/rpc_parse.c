@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_parse.c,v 1.9 2002/02/16 21:27:51 millert Exp $	*/
+/*	$OpenBSD: rpc_parse.c,v 1.10 2002/06/01 01:40:38 deraadt Exp $	*/
 /*	$NetBSD: rpc_parse.c,v 1.5 1995/08/29 23:05:55 cgd Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -392,7 +392,7 @@ char *name;
 
   for( i = 0; reserved_words[i] != NULL; i++ ) {
     if( strcmp( name, reserved_words[i] ) == 0 ) {
-      sprintf(tmp,
+      snprintf(tmp, sizeof tmp,
 	      "illegal (reserved) name :\'%s\' in type definition", name );
       error(tmp);
     }
@@ -400,7 +400,7 @@ char *name;
   if( new_type ) {
     for( i = 0; reserved_types[i] != NULL; i++ ) {
       if( strcmp( name, reserved_types[i] ) == 0 ) {
-	sprintf(tmp,
+	snprintf(tmp, sizeof tmp,
 		"illegal (reserved) name :\'%s\' in type definition", name );
 	error(tmp);
       }
@@ -499,9 +499,9 @@ get_prog_declaration(dec, dkind, num)
 	get_type(&dec->prefix, &dec->type, dkind);
 	dec->rel = REL_ALIAS;
 	if (peekscan(TOK_IDENT, &tok))  /* optional name of argument */
-		strcpy(name, tok.str);
+		strlcpy(name, tok.str, sizeof name);
 	else
-		sprintf(name, "%s%d", ARGNAME, num); /* default name of argument */
+		snprintf(name, sizeof name, "%s%d", ARGNAME, num); /* default name of argument */
 
 	dec->name = (char *)strdup(name);
 

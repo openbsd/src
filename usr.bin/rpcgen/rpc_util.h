@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_util.h,v 1.9 2002/02/16 21:27:51 millert Exp $	*/
+/*	$OpenBSD: rpc_util.h,v 1.10 2002/06/01 01:40:38 deraadt Exp $	*/
 /*	$NetBSD: rpc_util.h,v 1.3 1995/06/11 21:50:10 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -38,9 +38,6 @@
 
 #define alloc(size)		(void *)malloc((unsigned)(size))
 #define ALLOC(object)   (object *) malloc(sizeof(object))
-
-#define s_print	(void) sprintf
-#define f_print (void) fprintf
 
 struct list {
 	definition *val;

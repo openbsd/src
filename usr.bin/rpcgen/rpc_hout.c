@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_hout.c,v 1.10 2002/02/16 21:27:51 millert Exp $	*/
+/*	$OpenBSD: rpc_hout.c,v 1.11 2002/06/01 01:40:38 deraadt Exp $	*/
 /*	$NetBSD: rpc_hout.c,v 1.4 1995/06/11 21:49:55 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -71,7 +71,7 @@ print_datadef(def)
 	        return;
 
 	if (def->def_kind != DEF_CONST)
-		f_print(fout, "\n");
+		fprintf(fout, "\n");
 	switch (def->def_kind) {
 	case DEF_STRUCT:
 		pstructdef(def);
@@ -106,7 +106,7 @@ print_funcdef(def)
 {
 	switch (def->def_kind) {
 	case DEF_PROGRAM:
-		f_print(fout, "\n");
+		fprintf(fout, "\n");
 		pprogramdef(def);
 		break;
 	}
@@ -118,15 +118,15 @@ pxdrfuncdecl(name, pointerp)
 	int pointerp;
 {
 
-	f_print(fout,"#ifdef __cplusplus\n");
-	f_print(fout, "extern \"C\" bool_t xdr_%s(XDR *, %s%s);\n",
+	fprintf(fout,"#ifdef __cplusplus\n");
+	fprintf(fout, "extern \"C\" bool_t xdr_%s(XDR *, %s%s);\n",
 	    name, name, pointerp ? ("*") : "");
-	f_print(fout,"#elif defined(__STDC__)\n");
-	f_print(fout, "extern  bool_t xdr_%s(XDR *, %s%s);\n",
+	fprintf(fout,"#elif defined(__STDC__)\n");
+	fprintf(fout, "extern  bool_t xdr_%s(XDR *, %s%s);\n",
 	    name, name, pointerp ? ("*") : "");
-	f_print(fout,"#else /* Old Style C */\n");
-	f_print(fout, "bool_t xdr_%s();\n", name);
-	f_print(fout,"#endif /* Old Style C */\n\n");
+	fprintf(fout,"#else /* Old Style C */\n");
+	fprintf(fout, "bool_t xdr_%s();\n", name);
+	fprintf(fout,"#endif /* Old Style C */\n\n");
 }
 
 
@@ -156,15 +156,15 @@ pargdef(def)
 				continue; /* old style or single args */
 			}
 			name = plist->args.argname;
-			f_print(fout, "struct %s {\n", name);
+			fprintf(fout, "struct %s {\n", name);
 			for (l = plist->args.decls;
 			     l != NULL; l = l->next) {
 				pdeclaration(name, &l->decl, 1, ";\n");
 			}
-			f_print(fout, "};\n");
-			f_print(fout, "typedef struct %s %s;\n", name, name);
+			fprintf(fout, "};\n");
+			fprintf(fout, "typedef struct %s %s;\n", name, name);
 			pxdrfuncdecl(name, NULL);
-			f_print(fout, "\n");
+			fprintf(fout, "\n");
 		}
 	}
 }
@@ -176,11 +176,11 @@ pstructdef(def)
 	char *name = def->def_name;
 	decl_list *l;
 
-	f_print(fout, "struct %s {\n", name);
+	fprintf(fout, "struct %s {\n", name);
 	for (l = def->def.st.decls; l != NULL; l = l->next)
 		pdeclaration(name, &l->decl, 1, ";\n");
-	f_print(fout, "};\n");
-	f_print(fout, "typedef struct %s %s;\n", name, name);
+	fprintf(fout, "};\n");
+	fprintf(fout, "typedef struct %s %s;\n", name, name);
 }
 
 static void
@@ -191,14 +191,14 @@ puniondef(def)
 	char *name = def->def_name;
 	declaration *decl;
 
-	f_print(fout, "struct %s {\n", name);
+	fprintf(fout, "struct %s {\n", name);
 	decl = &def->def.un.enum_decl;
 	if (streq(decl->type, "bool")) {
-		f_print(fout, "\tbool_t %s;\n", decl->name);
+		fprintf(fout, "\tbool_t %s;\n", decl->name);
 	} else {
-		f_print(fout, "\t%s %s;\n", decl->type, decl->name);
+		fprintf(fout, "\t%s %s;\n", decl->type, decl->name);
 	}
-	f_print(fout, "\tunion {\n");
+	fprintf(fout, "\tunion {\n");
 	for (l = def->def.un.cases; l != NULL; l = l->next) {
 	  if (l->contflag == 0)
 		pdeclaration(name, &l->case_decl, 2, ";\n");
@@ -207,9 +207,9 @@ puniondef(def)
 	if (decl && !streq(decl->type, "void")) {
 		pdeclaration(name, decl, 2, ";\n");
 	}
-	f_print(fout, "\t} %s_u;\n", name);
-	f_print(fout, "};\n");
-	f_print(fout, "typedef struct %s %s;\n", name, name);
+	fprintf(fout, "\t} %s_u;\n", name);
+	fprintf(fout, "};\n");
+	fprintf(fout, "typedef struct %s %s;\n", name, name);
 }
 
 static void
@@ -217,7 +217,7 @@ pdefine(name, num)
 	char *name;
 	char *num;
 {
-	f_print(fout, "#define %s %s\n", name, num);
+	fprintf(fout, "#define %s %s\n", name, num);
 }
 
 static void
@@ -225,7 +225,7 @@ puldefine(name, num)
 	char *name;
 	char *num;
 {
-	f_print(fout, "#define %s ((u_long)%s)\n", name, num);
+	fprintf(fout, "#define %s ((u_long)%s)\n", name, num);
 }
 
 static int
@@ -263,9 +263,9 @@ pprogramdef(def)
 	puldefine(def->def_name, def->def.pr.prog_num);
 	for (vers = def->def.pr.versions; vers != NULL; vers = vers->next) {
 		if (tblflag) {
-			f_print(fout, "extern struct rpcgen_table %s_%s_table[];\n",
+			fprintf(fout, "extern struct rpcgen_table %s_%s_table[];\n",
 			    locase(def->def_name), vers->vers_num);
-			f_print(fout, "extern %s_%s_nproc;\n",
+			fprintf(fout, "extern %s_%s_nproc;\n",
 			    locase(def->def_name), vers->vers_num);
 		}
 		puldefine(vers->vers_name, vers->vers_num);
@@ -276,26 +276,26 @@ pprogramdef(def)
 		 */
 		for(i=0; i<3; i++) {
 			if (i==0) {
-				f_print(fout,"\n#ifdef __cplusplus\n");
+				fprintf(fout,"\n#ifdef __cplusplus\n");
 				ext = "extern \"C\" ";
 			} else if (i==1) {
-				f_print(fout,"\n#elif defined(__STDC__)\n");
+				fprintf(fout,"\n#elif defined(__STDC__)\n");
 				ext = "extern  ";
 			} else {
-				f_print(fout,"\n#else /* Old Style C */\n");
+				fprintf(fout,"\n#else /* Old Style C */\n");
 				ext = "extern  ";
 			}
 
 			for (proc = vers->procs; proc != NULL; proc = proc->next) {
 				if (!define_printed(proc, def->def.pr.versions))
 					puldefine(proc->proc_name, proc->proc_num);
-				f_print(fout,"%s",ext);
+				fprintf(fout,"%s",ext);
 				pprocdef(proc, vers, "CLIENT *", 0,i);
-				f_print(fout,"%s",ext);
+				fprintf(fout,"%s",ext);
 				pprocdef(proc, vers, "struct svc_req *", 1,i);
 			}
 		}
-		f_print(fout,"#endif /* Old Style C */\n");
+		fprintf(fout,"#endif /* Old Style C */\n");
 	}
 }
 
@@ -309,7 +309,7 @@ pprocdef(proc, vp, addargtype, server_p,mode)
 {
 
 	ptype(proc->res_prefix, proc->res_type, 1);
-	f_print(fout, "* ");
+	fprintf(fout, "* ");
 	if (server_p)
 		pvname_svc(proc->proc_name, vp->vers_num);
 	else
@@ -321,7 +321,7 @@ pprocdef(proc, vp, addargtype, server_p,mode)
 	if (mode == 0 || mode == 1)
 		parglist(proc, addargtype);
 	else
-		f_print(fout, "();\n");
+		fprintf(fout, "();\n");
 }
 
 /* print out argument list of procedure */
@@ -332,7 +332,7 @@ parglist(proc, addargtype)
 {
 	decl_list *dl;
 
-	f_print(fout,"(");
+	fprintf(fout,"(");
 
 	if (proc->arg_num < 2 && newstyle &&
 	   streq(proc->args.decls->decl.type, "void")) {
@@ -341,11 +341,11 @@ parglist(proc, addargtype)
 		for (dl = proc->args.decls; dl != NULL; dl = dl->next) {
 			ptype(dl->decl.prefix, dl->decl.type, 1);
 			if (!newstyle)
-				f_print(fout, "*"); /* old style passes by reference */
-			f_print(fout, ", ");
+				fprintf(fout, "*"); /* old style passes by reference */
+			fprintf(fout, ", ");
 		}
 	}
-	f_print(fout, "%s);\n", addargtype);
+	fprintf(fout, "%s);\n", addargtype);
 }
 
 static void
@@ -357,27 +357,27 @@ penumdef(def)
 	char *last = NULL;
 	int count = 0;
 
-	f_print(fout, "enum %s {\n", name);
+	fprintf(fout, "enum %s {\n", name);
 	for (l = def->def.en.vals; l != NULL; l = l->next) {
-		f_print(fout, "\t%s", l->name);
+		fprintf(fout, "\t%s", l->name);
 		if (l->assignment) {
-			f_print(fout, " = %s", l->assignment);
+			fprintf(fout, " = %s", l->assignment);
 			last = l->assignment;
 			count = 1;
 		} else {
 			if (last == NULL) {
-				f_print(fout, " = %d", count++);
+				fprintf(fout, " = %d", count++);
 			} else {
-				f_print(fout, " = %s + %d", last, count++);
+				fprintf(fout, " = %s + %d", last, count++);
 			}
 		}
 		if (l->next)
-			f_print(fout, ",\n");
+			fprintf(fout, ",\n");
 		else
-			f_print(fout, "\n");
+			fprintf(fout, "\n");
 	}
-	f_print(fout, "};\n");
-	f_print(fout, "typedef enum %s %s;\n", name, name);
+	fprintf(fout, "};\n");
+	fprintf(fout, "typedef enum %s %s;\n", name, name);
 }
 
 static void
@@ -399,30 +399,30 @@ ptypedef(def)
 			old = "bool_t";
 		}
 		if (undefined2(old, name) && def->def.ty.old_prefix) {
-			s_print(prefix, "%s ", def->def.ty.old_prefix);
+			snprintf(prefix, sizeof prefix, "%s ", def->def.ty.old_prefix);
 		} else {
 			prefix[0] = 0;
 		}
-		f_print(fout, "typedef ");
+		fprintf(fout, "typedef ");
 		switch (rel) {
 		case REL_ARRAY:
-			f_print(fout, "struct {\n");
-			f_print(fout, "\tu_int %s_len;\n", name);
-			f_print(fout, "\t%s%s *%s_val;\n", prefix, old, name);
-			f_print(fout, "} %s", name);
+			fprintf(fout, "struct {\n");
+			fprintf(fout, "\tu_int %s_len;\n", name);
+			fprintf(fout, "\t%s%s *%s_val;\n", prefix, old, name);
+			fprintf(fout, "} %s", name);
 			break;
 		case REL_POINTER:
-			f_print(fout, "%s%s *%s", prefix, old, name);
+			fprintf(fout, "%s%s *%s", prefix, old, name);
 			break;
 		case REL_VECTOR:
-			f_print(fout, "%s%s %s[%s]", prefix, old, name,
+			fprintf(fout, "%s%s %s[%s]", prefix, old, name,
 				def->def.ty.array_max);
 			break;
 		case REL_ALIAS:
-			f_print(fout, "%s%s %s", prefix, old, name);
+			fprintf(fout, "%s%s %s", prefix, old, name);
 			break;
 		}
-		f_print(fout, ";\n");
+		fprintf(fout, ";\n");
 	}
 }
 
@@ -441,10 +441,10 @@ pdeclaration(name, dec, tab, separator)
 		return;
 	tabify(fout, tab);
 	if (streq(dec->type, name) && !dec->prefix) {
-		f_print(fout, "struct ");
+		fprintf(fout, "struct ");
 	}
 	if (streq(dec->type, "string")) {
-		f_print(fout, "char *%s", dec->name);
+		fprintf(fout, "char *%s", dec->name);
 	} else {
 		prefix = "";
 		if (streq(dec->type, "bool")) {
@@ -453,34 +453,34 @@ pdeclaration(name, dec, tab, separator)
 			type = "char";
 		} else {
 			if (dec->prefix) {
-				s_print(buf, "%s ", dec->prefix);
+				snprintf(buf, sizeof buf, "%s ", dec->prefix);
 				prefix = buf;
 			}
 			type = dec->type;
 		}
 		switch (dec->rel) {
 		case REL_ALIAS:
-			f_print(fout, "%s%s %s", prefix, type, dec->name);
+			fprintf(fout, "%s%s %s", prefix, type, dec->name);
 			break;
 		case REL_VECTOR:
-			f_print(fout, "%s%s %s[%s]", prefix, type, dec->name,
+			fprintf(fout, "%s%s %s[%s]", prefix, type, dec->name,
 				dec->array_max);
 			break;
 		case REL_POINTER:
-			f_print(fout, "%s%s *%s", prefix, type, dec->name);
+			fprintf(fout, "%s%s *%s", prefix, type, dec->name);
 			break;
 		case REL_ARRAY:
-			f_print(fout, "struct {\n");
+			fprintf(fout, "struct {\n");
 			tabify(fout, tab);
-			f_print(fout, "\tu_int %s_len;\n", dec->name);
+			fprintf(fout, "\tu_int %s_len;\n", dec->name);
 			tabify(fout, tab);
-			f_print(fout, "\t%s%s *%s_val;\n", prefix, type, dec->name);
+			fprintf(fout, "\t%s%s *%s_val;\n", prefix, type, dec->name);
 			tabify(fout, tab);
-			f_print(fout, "} %s", dec->name);
+			fprintf(fout, "} %s", dec->name);
 			break;
 		}
 	}
-	f_print(fout, separator);
+	fprintf(fout, separator);
 }
 
 static int

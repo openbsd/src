@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_tblout.c,v 1.8 2002/02/16 21:27:51 millert Exp $	*/
+/*	$OpenBSD: rpc_tblout.c,v 1.9 2002/06/01 01:40:38 deraadt Exp $	*/
 /*	$NetBSD: rpc_tblout.c,v 1.3 1995/06/24 15:00:15 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -67,7 +67,7 @@ write_tables()
 	definition *def;
 	list *l;
 
-	f_print(fout, "\n");
+	fprintf(fout, "\n");
 	for (l = defined; l != NULL; l = l->next) {
 		def = (definition *) l->val;
 		if (def->def_kind == DEF_PROGRAM)
@@ -88,24 +88,24 @@ write_table(def)
 
 	for (vp = def->def.pr.versions; vp != NULL; vp = vp->next) {
 		warning = 0;
-		s_print(progvers, "%s_%s",
+		snprintf(progvers, sizeof progvers, "%s_%s",
 		    locase(def->def_name), vp->vers_num);
 		/* print the table header */
-		f_print(fout, tbl_hdr, progvers);
+		fprintf(fout, tbl_hdr, progvers);
 
 		if (nullproc(vp->procs)) {
 			expected = 0;
 		} else {
 			expected = 1;
-			f_print(fout, null_entry);
+			fprintf(fout, null_entry);
 		}
 		for (proc = vp->procs; proc != NULL; proc = proc->next) {
 			current = atoi(proc->proc_num);
 			if (current != expected++) {
-				f_print(fout,
+				fprintf(fout,
 				    "\n/*\n * WARNING: table out of order\n */\n");
 				if (warning == 0) {
-					f_print(stderr,
+					fprintf(stderr,
 					    "WARNING %s table is out of order\n",
 					    progvers);
 					warning = 1;
@@ -113,17 +113,17 @@ write_table(def)
 				}
 				expected = current + 1;
 			}
-			f_print(fout, "\n\t(char *(*)())RPCGEN_ACTION(");
+			fprintf(fout, "\n\t(char *(*)())RPCGEN_ACTION(");
 
 			/* routine to invoke */
 			if (!newstyle)
 				pvname_svc(proc->proc_name, vp->vers_num);
 			else {
 				if (newstyle)
-					f_print(fout, "_");   /* calls internal func */
+					fprintf(fout, "_");   /* calls internal func */
 				pvname(proc->proc_name, vp->vers_num);
 			}
-			f_print(fout, "),\n");
+			fprintf(fout, "),\n");
 
 			/* argument info */
 			if (proc->arg_num > 1)
@@ -137,8 +137,8 @@ write_table(def)
 		}
 
 		/* print the table trailer */
-		f_print(fout, tbl_end);
-		f_print(fout, tbl_nproc, progvers, progvers, progvers);
+		fprintf(fout, tbl_end);
+		fprintf(fout, tbl_nproc, progvers, progvers, progvers);
 	}
 }
 
@@ -154,15 +154,15 @@ printit(prefix, type)
 	len += TABSIZE - 1;
 	/* round up to tabs required */
 	tabs = (TABSTOP - len + TABSIZE - 1)/TABSIZE;
-	f_print(fout, "%s", &tabstr[TABCOUNT-tabs]);
+	fprintf(fout, "%s", &tabstr[TABCOUNT-tabs]);
 
 	if (streq(type, "void")) {
-		f_print(fout, "0");
+		fprintf(fout, "0");
 	} else {
-		f_print(fout, "sizeof (");
+		fprintf(fout, "sizeof (");
 		/* XXX: should "follow" be 1 ??? */
 		ptype(prefix, type, 0);
-		f_print(fout, ")");
+		fprintf(fout, ")");
 	}
-	f_print(fout, ",\n");
+	fprintf(fout, ",\n");
 }
