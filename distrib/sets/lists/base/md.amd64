@@ -1344,6 +1344,7 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/errno.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/eti.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/event.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/f2c.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/fcntl.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/float.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/fnmatch.ph
@@ -1478,6 +1479,7 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/g++/x86_64-unknown-openbsd3.5/bits/messages_members.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/g++/x86_64-unknown-openbsd3.5/bits/os_defines.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/g++/x86_64-unknown-openbsd3.5/bits/time_members.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/g2c.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/getopt.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/glob.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/grp.ph

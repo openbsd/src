@@ -1377,6 +1377,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/errno.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/eti.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/event.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/f2c.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/fcntl.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/float.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/fnmatch.ph
@@ -1511,6 +1512,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/g++/ext/stl_hash_fun.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/g++/ext/stl_hashtable.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/g++/ext/stl_rope.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/g2c.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/getopt.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/glob.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/grp.ph

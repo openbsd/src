@@ -765,6 +765,7 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/errno.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/eti.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/event.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/f2c.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/fcntl.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/float.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/fnmatch.ph
@@ -899,6 +900,7 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/g++/sparc64-unknown-openbsd3.5/bits/messages_members.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/g++/sparc64-unknown-openbsd3.5/bits/os_defines.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/g++/sparc64-unknown-openbsd3.5/bits/time_members.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/g2c.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/getopt.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/glob.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/grp.ph
