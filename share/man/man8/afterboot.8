@@ -337,17 +337,7 @@ Check for any local changes needed in the files:
 .Pa /etc/rc.conf , /etc/netstart , /etc/rc.local , rc.securelevel .
 Turning on something like the Network Time Protocol in
 .Pa /etc/rc.securelevel
-requires:
-a) making sure the package is installed,
-b) uncommenting the lines in
-.Pa rc.securelevel ,
-i.e. delete the leading # signs of:
-.Bd -literal -offset indent
-if [ -x /usr/local/sbin/ntpd ]; then
-     /usr/local/sbin/tickadj -Aq
-     echo -n ' ntpd';       /usr/local/sbin/ntpd
-fi
-.Ed
+requires making sure the package is installed.
 .Pp
 If you've installed X, you may want to turn on
 .Xr xdm 1 ,
