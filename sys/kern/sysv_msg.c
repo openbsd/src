@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_msg.c,v 1.2 1996/03/03 17:20:05 niklas Exp $	*/
+/*	$OpenBSD: sysv_msg.c,v 1.3 1998/05/11 06:13:46 deraadt Exp $	*/
 /*	$NetBSD: sysv_msg.c,v 1.19 1996/02/09 19:00:18 christos Exp $	*/
 
 /*
@@ -365,7 +365,7 @@ sys_msgsnd(p, v, retval)
 {
 	register struct sys_msgsnd_args /* {
 		syscallarg(int) msqid;
-		syscallarg(void *) msgp;
+		syscallarg(const void *) msgp;
 		syscallarg(size_t) msgsz;
 		syscallarg(int) msgflg;
 	} */ *uap = v;

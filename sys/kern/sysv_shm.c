@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_shm.c,v 1.6 1997/02/21 08:52:23 deraadt Exp $	*/
+/*	$OpenBSD: sysv_shm.c,v 1.7 1998/05/11 06:13:48 deraadt Exp $	*/
 /*	$NetBSD: sysv_shm.c,v 1.37 1996/03/16 23:17:13 christos Exp $	*/
 
 /*
@@ -172,7 +172,7 @@ sys_shmdt(p, v, retval)
 	register_t *retval;
 {
 	struct sys_shmdt_args /* {
-		syscallarg(void *) shmaddr;
+		syscallarg(const void *) shmaddr;
 	} */ *uap = v;
 	struct shmmap_state *shmmap_s;
 	int i;
@@ -197,7 +197,7 @@ sys_shmat(p, v, retval)
 {
 	struct sys_shmat_args /* {
 		syscallarg(int) shmid;
-		syscallarg(void *) shmaddr;
+		syscallarg(const void *) shmaddr;
 		syscallarg(int) shmflg;
 	} */ *uap = v;
 	int error, i, flags;

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: shmat.2,v 1.4 1997/11/24 02:07:35 deraadt Exp $
+.\"	$OpenBSD: shmat.2,v 1.5 1998/05/11 06:13:50 deraadt Exp $
 .\"	$NetBSD: shmat.2,v 1.2 1997/03/27 08:20:38 mikel Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -42,9 +42,9 @@
 .Fd #include <sys/ipc.h>
 .Fd #include <sys/shm.h>
 .Ft void *
-.Fn shmat "int shmid" "void *shmaddr" "int shmflg"
+.Fn shmat "int shmid" "const void *shmaddr" "int shmflg"
 .Ft int
-.Fn shmdt "void *shmaddr"
+.Fn shmdt "const void *shmaddr"
 .Sh DESCRIPTION
 .Fn shmat
 maps the shared memory segment associated with the shared memory identifier

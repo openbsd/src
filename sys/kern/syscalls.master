@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.24 1998/04/25 07:14:45 deraadt Exp $
+;	$OpenBSD: syscalls.master,v 1.25 1998/05/11 06:13:45 deraadt Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -437,7 +437,7 @@
 224	STD		{ int sys_msgctl(int msqid, int cmd, \
 			    struct msqid_ds *buf); }
 225	STD		{ int sys_msgget(key_t key, int msgflg); }
-226	STD		{ int sys_msgsnd(int msqid, void *msgp, size_t msgsz, \
+226	STD		{ int sys_msgsnd(int msqid, const void *msgp, size_t msgsz, \
 			    int msgflg); }
 227	STD		{ int sys_msgrcv(int msqid, void *msgp, size_t msgsz, \
 			    long msgtyp, int msgflg); }
@@ -448,11 +448,11 @@
 227	UNIMPL		msgrcv
 #endif
 #ifdef SYSVSHM
-228	STD		{ void *sys_shmat(int shmid, void *shmaddr, \
+228	STD		{ void *sys_shmat(int shmid, const void *shmaddr, \
 			    int shmflg); }
 229	STD		{ int sys_shmctl(int shmid, int cmd, \
 			    struct shmid_ds *buf); }
-230	STD		{ int sys_shmdt(void *shmaddr); }
+230	STD		{ int sys_shmdt(const void *shmaddr); }
 231	STD		{ int sys_shmget(key_t key, int size, int shmflg); }
 #else
 228	UNIMPL		shmat

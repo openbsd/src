@@ -1,4 +1,4 @@
-.\"	$OpenBSD: msgsnd.2,v 1.4 1997/11/24 02:07:30 deraadt Exp $
+.\"	$OpenBSD: msgsnd.2,v 1.5 1998/05/11 06:13:49 deraadt Exp $
 .\"	$NetBSD: msgsnd.2,v 1.2 1997/03/27 08:20:36 mikel Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -41,7 +41,7 @@
 .Fd #include <sys/ipc.h>
 .Fd #include <sys/msg.h>
 .Ft int
-.Fn msgsnd "int msqid" "void *msgp" "size_t msgsz" "int msgflg"
+.Fn msgsnd "int msqid" "const void *msgp" "size_t msgsz" "int msgflg"
 .Sh DESCRIPTION
 The 
 .Fn msgsnd
