@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.160 2004/02/10 20:20:01 itojun Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.161 2004/04/28 02:51:58 cedric Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -163,6 +163,10 @@ ip_output(struct mbuf *m0, ...)
 	 * though (e.g., traceroute) have a source address of zeroes.
 	 */
 	if (ip->ip_src.s_addr == INADDR_ANY) {
+		if (flags & IP_ROUTETOETHER) {
+			error = EINVAL;
+			goto bad;
+		}
 		donerouting = 1;
 
 		if (ro == 0) {
@@ -326,7 +330,12 @@ ip_output(struct mbuf *m0, ...)
  done_spd:
 #endif /* IPSEC */
 
-	if (donerouting == 0) {
+	if (flags & IP_ROUTETOETHER) {
+		dst = satosin(&ro->ro_dst);
+		ifp = ro->ro_rt->rt_ifp;
+		mtu = ifp->if_mtu;
+		ro->ro_rt = NULL;
+	} else if (donerouting == 0) {
 		if (ro == 0) {
 			ro = &iproute;
 			bzero((caddr_t)ro, sizeof (*ro));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.191 2004/04/27 18:28:07 frantzen Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.192 2004/04/28 02:51:58 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -846,6 +846,8 @@ struct pf_pdesc {
 	struct pf_rule	*nat_rule;	/* nat/rdr rule applied to packet */
 	struct pf_addr	*src;
 	struct pf_addr	*dst;
+	struct ether_header
+			*eh;
 	u_int16_t	*ip_sum;
 	u_int32_t	 p_len;		/* total length of payload */
 	u_int16_t	 flags;		/* Let SCRUB trigger behavior in
@@ -1341,10 +1343,12 @@ void				 pf_rm_rule(struct pf_rulequeue *,
 
 #ifdef INET
 int	pf_test(int, struct ifnet *, struct mbuf **);
+int	pf_test_eh(int, struct ifnet *, struct mbuf **, struct ether_header *);
 #endif /* INET */
 
 #ifdef INET6
 int	pf_test6(int, struct ifnet *, struct mbuf **);
+int	pf_test6_eh(int, struct ifnet *, struct mbuf **, struct ether_header *);
 void	pf_poolmask(struct pf_addr *, struct pf_addr*,
 	    struct pf_addr *, struct pf_addr *, u_int8_t);
 void	pf_addr_inc(struct pf_addr *, sa_family_t);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_var.h,v 1.29 2003/06/02 23:28:14 millert Exp $	*/
+/*	$OpenBSD: ip_var.h,v 1.30 2004/04/28 02:51:58 cedric Exp $	*/
 /*	$NetBSD: ip_var.h,v 1.16 1996/02/13 23:43:20 christos Exp $	*/
 
 /*
@@ -153,6 +153,7 @@ struct	ipstat {
 #define	IP_ROUTETOIF		SO_DONTROUTE	/* bypass routing tables */
 #define	IP_ALLOWBROADCAST	SO_BROADCAST	/* can send broadcast packets */
 #define	IP_MTUDISC		0x0400		/* pmtu discovery, set DF */
+#define IP_ROUTETOETHER		0x0800		/* ether addresses given */
 
 extern struct ipstat ipstat;
 extern LIST_HEAD(ipqhead, ipq)	ipq;	/* ip reass. queue */

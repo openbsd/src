@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.444 2004/04/28 02:43:08 pb Exp $ */
+/*	$OpenBSD: pf.c,v 1.445 2004/04/28 02:51:58 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -68,6 +68,7 @@
 #include <netinet/tcp_var.h>
 #include <netinet/udp_var.h>
 #include <netinet/icmp_var.h>
+#include <netinet/if_ether.h>
 
 #include <dev/rndvar.h>
 #include <net/pfvar.h>
@@ -129,7 +130,8 @@ void			 pf_change_icmp(struct pf_addr *, u_int16_t *,
 void			 pf_send_tcp(const struct pf_rule *, sa_family_t,
 			    const struct pf_addr *, const struct pf_addr *,
 			    u_int16_t, u_int16_t, u_int32_t, u_int32_t,
-			    u_int8_t, u_int16_t, u_int16_t, u_int8_t, int);
+			    u_int8_t, u_int16_t, u_int16_t, u_int8_t, int,
+			    struct ether_header *, struct ifnet *);
 void			 pf_send_icmp(struct mbuf *, u_int8_t, u_int8_t,
 			    sa_family_t, struct pf_rule *);
 struct pf_rule		*pf_match_translation(struct pf_pdesc *, struct mbuf *,
@@ -790,7 +792,7 @@ pf_purge_expired_state(struct pf_state *cur)
 		    &cur->ext.addr, &cur->lan.addr,
 		    cur->ext.port, cur->lan.port,
 		    cur->src.seqhi, cur->src.seqlo + 1,
-		    TH_RST|TH_ACK, 0, 0, 0, 1);
+		    TH_RST|TH_ACK, 0, 0, 0, 1, NULL, NULL);
 	RB_REMOVE(pf_state_tree_ext_gwy,
 	    &cur->u.s.kif->pfik_ext_gwy, cur);
 	RB_REMOVE(pf_state_tree_lan_ext,
@@ -826,7 +828,6 @@ pf_purge_expired_states(void)
 	for (cur = RB_MIN(pf_state_tree_id, &tree_id);
 	    cur; cur = next) {
 		next = RB_NEXT(pf_state_tree_id, &tree_id, cur);
-
 		if (pf_state_expires(cur) <= time.tv_sec)
 			pf_purge_expired_state(cur);
 	}
@@ -1248,7 +1249,8 @@ void
 pf_send_tcp(const struct pf_rule *r, sa_family_t af,
     const struct pf_addr *saddr, const struct pf_addr *daddr,
     u_int16_t sport, u_int16_t dport, u_int32_t seq, u_int32_t ack,
-    u_int8_t flags, u_int16_t win, u_int16_t mss, u_int8_t ttl, int tag)
+    u_int8_t flags, u_int16_t win, u_int16_t mss, u_int8_t ttl, int tag,
+    struct ether_header *eh, struct ifnet *ifp)
 {
 	struct mbuf	*m;
 	int		 len, tlen;
@@ -1373,8 +1375,28 @@ pf_send_tcp(const struct pf_rule *r, sa_family_t af,
 		h->ip_off = htons(ip_mtudisc ? IP_DF : 0);
 		h->ip_ttl = ttl ? ttl : ip_defttl;
 		h->ip_sum = 0;
-		ip_output(m, (void *)NULL, (void *)NULL, 0, (void *)NULL,
-		    (void *)NULL);
+		if (eh == NULL) {
+			ip_output(m, (void *)NULL, (void *)NULL, 0,
+			    (void *)NULL, (void *)NULL);
+		} else {
+			struct route		 ro;
+			struct rtentry		 rt;
+			struct ether_header	*e = (void *)ro.ro_dst.sa_data;
+
+			if (ifp == NULL) {
+				m_freem(m);
+				return;
+			}
+			rt.rt_ifp = ifp;
+			ro.ro_rt = &rt;
+			ro.ro_dst.sa_len = sizeof(ro.ro_dst);
+			ro.ro_dst.sa_family = pseudo_AF_HDRCMPLT;
+			bcopy(eh->ether_dhost, e->ether_shost, ETHER_ADDR_LEN);
+			bcopy(eh->ether_shost, e->ether_dhost, ETHER_ADDR_LEN);
+			e->ether_type = eh->ether_type;
+			ip_output(m, (void *)NULL, &ro, IP_ROUTETOETHER,
+			    (void *)NULL, (void *)NULL);
+		}
 		break;
 #endif /* INET */
 #ifdef INET6
@@ -2588,7 +2610,7 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 			pf_send_tcp(r, af, pd->dst,
 			    pd->src, th->th_dport, th->th_sport,
 			    ntohl(th->th_ack), ack, TH_RST|TH_ACK, 0, 0,
-			    r->return_ttl, 1);
+			    r->return_ttl, 1, pd->eh, kif->pfik_ifp);
 		} else if ((af == AF_INET) && r->return_icmp)
 			pf_send_icmp(m, r->return_icmp >> 8,
 			    r->return_icmp & 255, af, r);
@@ -2775,7 +2797,7 @@ cleanup:
 			s->src.mss = mss;
 			pf_send_tcp(r, af, daddr, saddr, th->th_dport,
 			    th->th_sport, s->src.seqhi, ntohl(th->th_seq) + 1,
-			    TH_SYN|TH_ACK, 0, s->src.mss, 0, 1);
+			    TH_SYN|TH_ACK, 0, s->src.mss, 0, 1, NULL, NULL);
 			return (PF_SYNPROXY_DROP);
 		}
 	}
@@ -3711,7 +3733,8 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct pfi_kif *kif,
 			pf_send_tcp((*state)->rule.ptr, pd->af, pd->dst,
 			    pd->src, th->th_dport, th->th_sport,
 			    (*state)->src.seqhi, ntohl(th->th_seq) + 1,
-			    TH_SYN|TH_ACK, 0, (*state)->src.mss, 0, 1);
+			    TH_SYN|TH_ACK, 0, (*state)->src.mss, 0, 1,
+			    NULL, NULL);
 			return (PF_SYNPROXY_DROP);
 		} else if (!(th->th_flags & TH_ACK) ||
 		    (ntohl(th->th_ack) != (*state)->src.seqhi + 1) ||
@@ -3741,7 +3764,7 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct pfi_kif *kif,
 			pf_send_tcp((*state)->rule.ptr, pd->af, &src->addr,
 			    &dst->addr, src->port, dst->port,
 			    (*state)->dst.seqhi, 0, TH_SYN, 0,
-			    (*state)->src.mss, 0, 0);
+			    (*state)->src.mss, 0, 0, NULL, NULL);
 			return (PF_SYNPROXY_DROP);
 		} else if (((th->th_flags & (TH_SYN|TH_ACK)) !=
 		    (TH_SYN|TH_ACK)) ||
@@ -3753,11 +3776,13 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct pfi_kif *kif,
 			pf_send_tcp((*state)->rule.ptr, pd->af, pd->dst,
 			    pd->src, th->th_dport, th->th_sport,
 			    ntohl(th->th_ack), ntohl(th->th_seq) + 1,
-			    TH_ACK, (*state)->src.max_win, 0, 0, 1);
+			    TH_ACK, (*state)->src.max_win, 0, 0, 1,
+			    NULL, NULL);
 			pf_send_tcp((*state)->rule.ptr, pd->af, &src->addr,
 			    &dst->addr, src->port, dst->port,
 			    (*state)->src.seqhi + 1, (*state)->src.seqlo + 1,
-			    TH_ACK, (*state)->dst.max_win, 0, 0, 0);
+			    TH_ACK, (*state)->dst.max_win, 0, 0, 0,
+			    NULL, NULL);
 			(*state)->src.seqdiff = (*state)->dst.seqhi -
 			    (*state)->src.seqlo;
 			(*state)->dst.seqdiff = (*state)->src.seqhi -
@@ -4023,7 +4048,8 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct pfi_kif *kif,
 				    pd->dst, pd->src, th->th_dport,
 				    th->th_sport, ntohl(th->th_ack), ack,
 				    TH_RST|TH_ACK, 0, 0,
-				    (*state)->rule.ptr->return_ttl, 1);
+				    (*state)->rule.ptr->return_ttl, 1,
+				    pd->eh, kif->pfik_ifp);
 			}
 			src->seqlo = 0;
 			src->seqhi = 1;
@@ -5276,6 +5302,13 @@ pf_add_mbuf_tag(struct mbuf *m, u_int tag)
 int
 pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 {
+	return pf_test_eh(dir, ifp, m0, NULL);
+}
+
+int
+pf_test_eh(int dir, struct ifnet *ifp, struct mbuf **m0,
+    struct ether_header *eh)
+{
 	struct pfi_kif		*kif;
 	u_short			 action, reason = 0, log = 0;
 	struct mbuf		*m = *m0;
@@ -5331,6 +5364,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 	pd.af = AF_INET;
 	pd.tos = h->ip_tos;
 	pd.tot_len = ntohs(h->ip_len);
+	pd.eh = eh;
 
 	/* handle fragments that didn't get reassembled by normalization */
 	if (h->ip_off & htons(IP_MF | IP_OFFMASK)) {
@@ -5581,6 +5615,13 @@ done:
 int
 pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 {
+	return pf_test6_eh(dir, ifp, m0, NULL);
+}
+
+int
+pf_test6_eh(int dir, struct ifnet *ifp, struct mbuf **m0,
+    struct ether_header *eh)
+{
 	struct pfi_kif		*kif;
 	u_short			 action, reason = 0, log = 0;
 	struct mbuf		*m = *m0;
@@ -5627,6 +5668,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 	pd.af = AF_INET6;
 	pd.tos = 0;
 	pd.tot_len = ntohs(h->ip6_plen) + sizeof(struct ip6_hdr);
+	pd.eh = eh;
 
 	off = ((caddr_t)h - m->m_data) + sizeof(struct ip6_hdr);
 	pd.proto = h->ip6_nxt;
