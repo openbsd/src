@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.96 2005/01/05 10:23:53 hshoexer Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.97 2005/01/05 23:34:37 jmc Exp $
 .\" $EOM: isakmpd.conf.5,v 1.57 2000/12/21 14:43:17 ho Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -652,7 +652,7 @@ family will be used.
 The
 .Em default
 keyword uses the interface associated with the default route.
-In the case of IPv6 link-local addresses will be skipped if 
+In the case of IPv6 link-local addresses will be skipped if
 addresses which are not link-local exist.
 If the address on the interface changes
 .Em isakmpd
@@ -1149,7 +1149,7 @@ LIFE_DURATION=		1000,768:1536
 Using aggressive mode is discouraged due to various design problems.
 If your peer only supports aggressive mode, please consider replacing that
 peer with a sane ISAKMP/IKE implementation.
-For details see 
+For details see
 .Pa http://www.usenix.org/publications/login/1999-12/features/harmful.html .
 .Sh BUGS
 The RFCs do not permit differing DH groups in the same proposal for
