@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.64 2002/03/16 00:56:47 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.65 2002/04/02 16:03:47 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -183,10 +183,20 @@ See
 .Ev PATCH_FILES ,
 .Ev SUPDISTFILES ,
 .Ev REFETCH .
+.It Ar lib-depends-check
+Verify that the
+.Ev LIB_DEPENDS
+hold all shared libraries used for the port.
+See
+.Xr library-specs 7 .
 .It Ar makesum
 Create the ${CHECKSUM_FILE} list of recorded checksums by running the
 cryptographic fingerprints sha1, md5 and rmd160 on ${ALLFILES} minus
 ${IGNOREFILES}.
+.It Ar manpages-check
+Verify that
+.Xr makewhatis 8
+can do a correct job with the port's manpages.
 .It Ar patch
 Apply distribution and
 .Ox
