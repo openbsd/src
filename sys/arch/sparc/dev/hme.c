@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.5 1998/09/01 17:36:59 jason Exp $	*/
+/*	$OpenBSD: hme.c,v 1.6 1998/09/08 04:48:38 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -52,6 +52,7 @@
 #include <net/if_dl.h>
 #include <net/if_types.h>
 #include <net/netisr.h>
+#include <net/if_media.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -105,7 +106,6 @@ static int	hme_mint	__P((struct hme_softc *, u_int32_t));
 static int	hme_eint	__P((struct hme_softc *, u_int32_t));
 
 static void	hme_auto_negotiate __P((struct hme_softc *));
-static void	hme_manual_negotiate __P((struct hme_softc *));
 static void	hme_negotiate_watchdog __P((void *));
 static void	hme_print_link_mode __P((struct hme_softc *));
 static void	hme_set_initial_advertisement	__P((struct hme_softc *));
@@ -117,7 +117,10 @@ static struct mbuf *	hme_get __P((struct hme_softc *, int, int));
 static void		hme_read __P((struct hme_softc *, int, int));
 static int		hme_put __P((struct hme_softc *, int, struct mbuf *));
 
-static void hme_mcreset __P((struct hme_softc *));
+static int	hme_ifmedia_upd __P((struct ifnet *));
+static void	hme_ifmedia_sts __P((struct ifnet *, struct ifmediareq *));
+
+static void	hme_mcreset __P((struct hme_softc *));
 
 struct cfattach hme_ca = {
 	sizeof (struct hme_softc), hmematch, hmeattach
@@ -438,6 +441,10 @@ hmeioctl(ifp, cmd, data)
 			error = 0;
 		}
 		break;
+	case SIOCGIFMEDIA:
+	case SIOCSIFMEDIA:
+		error = ifmedia_ioctl(ifp, ifr, &sc->sc_ifmedia, cmd);
+		break;
 	default:
 		error = EINVAL;
 	}
@@ -596,7 +603,7 @@ hmeinit(sc)
 	cr->tx_cfg |= CR_TXCFG_ENABLE;	/* enable tx */
 	cr->rx_cfg |= CR_RXCFG_ENABLE;	/* enable rx */
 
-	hme_auto_negotiate(sc);
+	hme_ifmedia_upd(&sc->sc_arpcom.ac_if);
 }
 
 static void
@@ -628,26 +635,53 @@ hme_set_initial_advertisement(sc)
 	sc->sc_sw.bmsr = hme_tcvr_read(sc, DP83840_BMSR);
 	sc->sc_sw.anar = hme_tcvr_read(sc, DP83840_ANAR);
 
+	ifmedia_init(&sc->sc_ifmedia, 0, hme_ifmedia_upd, hme_ifmedia_sts);
+
 	/* If 10BaseT Half duplex supported, advertise it, and so on... */
-	if (sc->sc_sw.bmsr & BMSR_10BASET_HALF)
+	if (sc->sc_sw.bmsr & BMSR_10BASET_HALF) {
+		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_10_T, 0, NULL);
+		ifmedia_add(&sc->sc_ifmedia,
+		    IFM_ETHER | IFM_10_T | IFM_HDX, 0, NULL);
+		sc->sc_ifmedia.ifm_media = IFM_ETHER | IFM_10_T | IFM_HDX;
 		sc->sc_sw.anar |= ANAR_10;
+	}
 	else
 		sc->sc_sw.anar &= ~(ANAR_10);
 
-	if (sc->sc_sw.bmsr & BMSR_10BASET_FULL)
+	if (sc->sc_sw.bmsr & BMSR_10BASET_FULL) {
+		ifmedia_add(&sc->sc_ifmedia,
+		    IFM_ETHER | IFM_10_T | IFM_FDX, 0, NULL);
+		sc->sc_ifmedia.ifm_media = IFM_ETHER | IFM_10_T | IFM_FDX;
 		sc->sc_sw.anar |= ANAR_10_FD;
+	}
 	else
 		sc->sc_sw.anar &= ~(ANAR_10_FD);
 
-	if (sc->sc_sw.bmsr & BMSR_100BASETX_HALF)
+	if (sc->sc_sw.bmsr & BMSR_100BASETX_HALF) {
+		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_100_TX, 0, NULL);
+		ifmedia_add(&sc->sc_ifmedia,
+		    IFM_ETHER | IFM_100_TX | IFM_HDX, 0, NULL);
+		sc->sc_ifmedia.ifm_media = IFM_ETHER | IFM_100_TX | IFM_HDX;
 		sc->sc_sw.anar |= ANAR_TX;
+	}
 	else
 		sc->sc_sw.anar &= ~(ANAR_TX);
 
-	if (sc->sc_sw.bmsr & BMSR_100BASETX_FULL)
+	if (sc->sc_sw.bmsr & BMSR_100BASETX_FULL) {
+		ifmedia_add(&sc->sc_ifmedia,
+		    IFM_ETHER | IFM_100_TX | IFM_FDX, 0, NULL);
+		sc->sc_ifmedia.ifm_media = IFM_ETHER | IFM_100_TX | IFM_FDX;
 		sc->sc_sw.anar |= ANAR_TX_FD;
+	}
 	else
 		sc->sc_sw.anar &= ~(ANAR_TX_FD);
+
+	if (sc->sc_sw.bmsr & BMSR_ANC) {
+		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_AUTO, 0, NULL);
+		sc->sc_ifmedia.ifm_media = IFM_ETHER | IFM_AUTO;
+	}
+
+	ifmedia_set(&sc->sc_ifmedia, sc->sc_ifmedia.ifm_media);
 
 	/* Inform card about what it should advertise */
 	hme_tcvr_write(sc, DP83840_ANAR, sc->sc_sw.anar);
@@ -987,9 +1021,9 @@ hme_auto_negotiate(sc)
 	sc->sc_sw.phyidr2 =	hme_tcvr_read(sc, DP83840_PHYIDR2);
 	sc->sc_sw.anar =	hme_tcvr_read(sc, DP83840_ANAR);
 
-	/* can this board autonegotiate? No, do it manually */
+	/* can this board autonegotiate? No, die. */
 	if (! (sc->sc_sw.bmsr & BMSR_ANC))
-		hme_manual_negotiate(sc);
+		return;
 
 	/* advertise -everything- supported */
 	if (sc->sc_sw.bmsr & BMSR_10BASET_HALF)
@@ -1034,20 +1068,11 @@ hme_auto_negotiate(sc)
 	if (!tries) {
 		printf("%s: failed to start auto-negotiation\n",
 			sc->sc_dev.dv_xname);
-		hme_manual_negotiate(sc);
 		return;
 	}
 	sc->sc_an_state = HME_TIMER_AUTONEG;
 	sc->sc_an_ticks = 0;
 	timeout(hme_negotiate_watchdog, sc, (12 * hz)/10);
-}
-
-static void
-hme_manual_negotiate(sc)
-	struct hme_softc *sc;
-{
-	printf("%s: Starting manual negotiation... not yet!\n",
-		sc->sc_dev.dv_xname);
 }
 
 /*
@@ -1529,4 +1554,117 @@ hme_mcreset(sc)
 		cr->htable1 = hash[1];
 		cr->htable0 = hash[0];
 	}
+}
+
+/*
+ * Get current media settings.
+ */
+static void
+hme_ifmedia_sts(ifp, ifmr)
+	struct ifnet *ifp;
+	struct ifmediareq *ifmr;
+{
+	struct hme_softc *sc = ifp->if_softc;
+
+	sc->sc_sw.bmcr = hme_tcvr_read(sc, DP83840_BMCR);
+	sc->sc_sw.bmsr = hme_tcvr_read(sc, DP83840_BMSR);
+
+	switch (sc->sc_sw.bmcr & (BMCR_SPEED | BMCR_DUPLEX)) {
+	case (BMCR_SPEED | BMCR_DUPLEX):
+		ifmr->ifm_active = IFM_ETHER | IFM_100_TX | IFM_FDX;
+		break;
+	case BMCR_SPEED:
+		ifmr->ifm_active = IFM_ETHER | IFM_100_TX | IFM_HDX;
+		break;
+	case BMCR_DUPLEX:
+		ifmr->ifm_active = IFM_ETHER | IFM_10_T | IFM_FDX;
+		break;
+	case 0:
+		ifmr->ifm_active = IFM_ETHER | IFM_10_T | IFM_HDX;
+		break;
+	}
+
+	if (sc->sc_sw.bmsr & BMSR_LINKSTATUS)
+		ifmr->ifm_status |= IFM_AVALID | IFM_ACTIVE;
+	else {
+		ifmr->ifm_status |= IFM_AVALID;
+		ifmr->ifm_status &= ~IFM_ACTIVE;
+	}
+}
+
+static int
+hme_ifmedia_upd(ifp)
+	struct ifnet *ifp;
+{
+	struct hme_softc *sc = ifp->if_softc;
+	struct ifmedia *ifm = &sc->sc_ifmedia;
+	int tries, result;
+
+	if (IFM_TYPE(ifm->ifm_media) != IFM_ETHER)
+		return (EINVAL);
+
+	if (IFM_SUBTYPE(ifm->ifm_media) == IFM_AUTO &&
+	    sc->sc_sw.bmsr & BMSR_ANC) {
+		hme_auto_negotiate(sc);
+		return (0);
+	}
+	if (IFM_SUBTYPE(ifm->ifm_media) == IFM_AUTO)
+		return (EINVAL);
+
+	hme_tcvr_write(sc, DP83840_BMCR,
+	    (BMCR_LOOPBACK | BMCR_PDOWN | BMCR_ISOLATE));
+	if (result == TCVR_FAILURE) {
+		printf("%s: tcvr_reset failed\n", sc->sc_dev.dv_xname);
+		return (EIO);
+	}
+	hme_tcvr_write(sc, DP83840_BMCR, BMCR_RESET);
+
+	tries = 32;
+	while (--tries) {
+		result = hme_tcvr_read(sc, DP83840_BMCR);
+		if (result == TCVR_FAILURE)
+			return (EIO);
+		sc->sc_sw.bmcr = result;
+		if (!(result & BMCR_RESET))
+			break;
+		DELAY(200);
+	}
+	if (!tries) {
+		printf("%s: bmcr reset failed\n", sc->sc_dev.dv_xname);
+		return -1;
+	}
+
+	sc->sc_sw.bmcr = hme_tcvr_read(sc, DP83840_BMCR);
+
+	if (IFM_SUBTYPE(ifm->ifm_media) == IFM_100_T4) {
+		sc->sc_sw.bmcr |= BMCR_SPEED;
+		sc->sc_sw.bmcr &= ~BMCR_DUPLEX;
+	}
+
+	if (IFM_SUBTYPE(ifm->ifm_media) == IFM_100_TX)
+		sc->sc_sw.bmcr |= BMCR_SPEED;
+
+	if (IFM_SUBTYPE(ifm->ifm_media) == IFM_10_T)
+		sc->sc_sw.bmcr &= ~BMCR_SPEED;
+
+	if ((ifm->ifm_media & IFM_GMASK) == IFM_FDX)
+		sc->sc_sw.bmcr |= BMCR_DUPLEX;
+	else
+		sc->sc_sw.bmcr &= ~BMCR_DUPLEX;
+
+	sc->sc_sw.bmcr &= ~(BMCR_ISOLATE);
+	hme_tcvr_write(sc, DP83840_BMCR, sc->sc_sw.bmcr);
+	tries = 32;
+	while (--tries) {
+		sc->sc_sw.bmcr = hme_tcvr_read(sc, DP83840_BMCR);
+		if ((sc->sc_sw.bmcr & BMCR_ISOLATE) == 0)
+			break;
+		DELAY(20);
+	}
+	if (!tries) {
+		printf("%s: bmcr unisolate failed\n", sc->sc_dev.dv_xname);
+		return (EIO);
+	}
+
+	return (0);
 }

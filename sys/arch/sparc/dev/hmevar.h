@@ -1,4 +1,4 @@
-/*	$OpenBSD: hmevar.h,v 1.3 1998/09/01 17:36:59 jason Exp $	*/
+/*	$OpenBSD: hmevar.h,v 1.4 1998/09/08 04:48:38 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -36,7 +36,8 @@ struct hme_softc {
 	struct	sbusdev sc_sd;		/* sbus device */
 	struct	intrhand sc_ih;		/* interrupt vectoring */
 	int	sc_node;		/* which sbus node */
-	struct	arpcom sc_arpcom;
+	struct	ifmedia sc_ifmedia;	/* interface media */
+	struct	arpcom sc_arpcom;	/* ethernet common */
 
 	/*
 	 * Register sets
