@@ -1,4 +1,4 @@
-/* $OpenBSD: zaurus_kbd.c,v 1.12 2005/01/30 21:55:50 drahn Exp $ */
+/* $OpenBSD: zaurus_kbd.c,v 1.13 2005/02/22 18:13:28 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
  *
@@ -450,11 +450,18 @@ zkbd_hinge(void *v)
 	struct zkbd_softc *sc = v;
 	int a = pxa2x0_gpio_get_bit(sc->sc_swa_pin) ? 1 : 0;
 	int b = pxa2x0_gpio_get_bit(sc->sc_swb_pin) ? 2 : 0;
+	extern int lcd_blank(int);
 
 #if 0
 	printf("hinge event A %d B %d\n", a, b);
 #endif
 	sc->sc_hinge = a | b;
+
+	if (sc->sc_hinge == 3)
+		lcd_blank(1);
+	else
+		lcd_blank(0);
+
 	return 1;
 }
 
