@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_fil.c,v 1.11 1997/03/15 17:18:07 kstailey Exp $	*/
+/*	$OpenBSD: ip_fil.c,v 1.12 1997/03/31 15:52:45 kstailey Exp $	*/
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
  *
@@ -102,6 +102,9 @@ struct devsw iplsw = {
 };
 #else /* _BSDI_VERSION >= 199501 */
 
+/* called by main() at boot time */
+void	iplattach __P((int));
+
 # ifdef IPFILTER_LOG
 #  if BSD >= 199306
 int	iplread __P((dev_t, struct uio *, int));
@@ -116,8 +119,8 @@ int	iplopen __P((dev_t, int));
 int	iplclose __P((dev_t, int));
 #endif /* _BSDI_VERSION >= 199501 */
 
-int	iplattach __P((void));
-int	ipldetach __P((void));
+int	ipl_enable __P((void));
+int	ipl_disable __P((void));
 
 #ifdef	IPFILTER_LKM
 int	iplidentify __P((char *));
@@ -136,8 +139,18 @@ void	iplinit __P((void));
 
 void	ipfr_fastroute __P((struct mbuf *, fr_info_t *, frdest_t *));
 
+/*
+ * None of the machinery should be initialized until the caller explicitly
+ * enables the filter with ipf -E.
+ */
+void
+iplattach(dummy)
+int dummy;
+{
+}
+
 int
-iplattach()
+ipl_enable()
 {
 	int s;
 
@@ -159,7 +172,7 @@ iplattach()
 
 
 int
-ipldetach()
+ipl_disable()
 {
 	int s, i = FR_INQUE|FR_OUTQUE;
 
@@ -285,9 +298,9 @@ iplioctl(dev, cmd, data, mode
 		else {
 			IRCOPY(data, (caddr_t)&enable, sizeof(enable));
 			if (enable)
-				error = iplattach();
+				error = ipl_enable();
 			else
-				error = ipldetach();
+				error = ipl_disable();
 		}
 		break;
 	}
@@ -744,9 +757,8 @@ send_reset(ti)
 void
 iplinit()
 {
-	(void) iplattach();
+/*	(void) ipl_enable();  must explicitly enable with ipf -E */
 	ip_init();
-	(void) ipldetach();	/* XXX */
 }
 #endif
 
