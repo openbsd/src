@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: security,v 1.23 1997/10/05 11:49:14 deraadt Exp $
+#	$OpenBSD: security,v 1.24 1997/11/17 08:35:42 deraadt Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -572,7 +572,7 @@ fi
 # file is expected to have two backups, /var/backups/file.{current,backup}.
 # Any changes cause the files to rotate.
 if [ -s /etc/changelist ] ; then
-	for file in `cat /etc/changelist`; do
+	for file in `egrep -v "^#|$MP" /etc/changelist`; do
 		CUR=/var/backups/`basename $file`.current
 		BACK=/var/backups/`basename $file`.backup
 		if [ -s $file ] ; then
