@@ -8,7 +8,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-keyscan.c,v 1.19 2001/03/03 21:19:41 millert Exp $");
+RCSID("$OpenBSD: ssh-keyscan.c,v 1.20 2001/03/05 15:37:27 deraadt Exp $");
 
 #include <sys/queue.h>
 #include <errno.h>
@@ -83,7 +83,7 @@ typedef struct {
 	void (*errfun) (const char *,...);
 } Linebuf;
 
-static __inline__ Linebuf *
+Linebuf *
 Linebuf_alloc(const char *filename, void (*errfun) (const char *,...))
 {
 	Linebuf *lb;
@@ -117,7 +117,7 @@ Linebuf_alloc(const char *filename, void (*errfun) (const char *,...))
 	return (lb);
 }
 
-static __inline__ void
+void
 Linebuf_free(Linebuf * lb)
 {
 	fclose(lb->stream);
@@ -125,7 +125,7 @@ Linebuf_free(Linebuf * lb)
 	xfree(lb);
 }
 
-static __inline__ void
+void
 Linebuf_restart(Linebuf * lb)
 {
 	clearerr(lb->stream);
@@ -133,13 +133,13 @@ Linebuf_restart(Linebuf * lb)
 	lb->lineno = 0;
 }
 
-static __inline__ int
+int
 Linebuf_lineno(Linebuf * lb)
 {
 	return (lb->lineno);
 }
 
-static __inline__ char *
+char *
 Linebuf_getline(Linebuf * lb)
 {
 	int n = 0;
@@ -176,7 +176,7 @@ Linebuf_getline(Linebuf * lb)
 	}
 }
 
-static int
+int
 fdlim_get(int hard)
 {
 	struct rlimit rlfd;
@@ -189,7 +189,7 @@ fdlim_get(int hard)
 		return hard ? rlfd.rlim_max : rlfd.rlim_cur;
 }
 
-static int
+int
 fdlim_set(int lim)
 {
 	struct rlimit rlfd;
@@ -208,7 +208,7 @@ fdlim_set(int lim)
  * separators.  This is the same as the 4.4BSD strsep, but different from the
  * one in the GNU libc.
  */
-static __inline__ char *
+char *
 xstrsep(char **str, const char *delim)
 {
 	char *s, *e;
@@ -554,7 +554,7 @@ nexthost(int argc, char **argv)
 	}
 }
 
-static void
+void
 usage(void)
 {
 	fatal("usage: %s [-t timeout] { [--] host | -f file } ...", __progname);
