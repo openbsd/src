@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.100 2003/02/26 18:57:44 millert Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.101 2003/03/18 23:13:45 mickey Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.98 2003/02/26 18:57:31 millert Exp 
+ *		OpenBSD: pcmciadevs,v 1.99 2003/03/18 23:13:26 mickey Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -634,6 +634,8 @@
 #define	PCMCIA_PRODUCT_NTT_ME_WLAN	PCMCIA_PRODUCT_INVALID
 #define	PCMCIA_CIS_SMC_2632W	{ "SMC", "SMC2632W", "Version 01.02", NULL }
 #define	PCMCIA_PRODUCT_SMC_2632W	PCMCIA_PRODUCT_INVALID
+#define	PCMCIA_CIS_SMC_8041	{ "SMC", "8041TX-10/100-PC-Card-V2", NULL, NULL }
+#define	PCMCIA_PRODUCT_SMC_8041	PCMCIA_PRODUCT_INVALID
 #define	PCMCIA_CIS_NANOSPEED_PRISM2	{ "NANOSPEED", "HFA384x/IEEE", "Version 01.02", NULL }
 #define	PCMCIA_PRODUCT_NANOSPEED_PRISM2	PCMCIA_PRODUCT_INVALID
 #define	PCMCIA_CIS_CABLETRON_ROAMABOUT	{ "Cabletron", "RoamAbout 802.11 DS", "Version 01.01", NULL }
