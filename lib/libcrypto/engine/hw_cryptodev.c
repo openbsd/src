@@ -857,7 +857,6 @@ cryptodev_dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 		goto err;
 	}
 
-	printf("bar\n");
 	memset(&kop, 0, sizeof kop);
 	kop.crk_op = CRK_DSA_SIGN;
 
