@@ -1,4 +1,5 @@
 /*-
+ * Copyright (c) 1996 Theo de Raadt (OpenBSD). All rights reserved.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -39,7 +40,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)portmap.c	5.4 (Berkeley) 4/19/91";*/
-static char rcsid[] = "$Id: portmap.c,v 1.2 1996/05/05 16:15:28 deraadt Exp $";
+static char rcsid[] = "$Id: portmap.c,v 1.3 1996/06/29 19:03:50 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -94,6 +95,7 @@ static char sccsid[] = "@(#)portmap.c 1.32 87/08/06 Copyr 1984 Sun Micro";
 #include <sys/wait.h>
 #include <sys/signal.h>
 #include <sys/resource.h>
+#include <rpcsvc/nfs_prot.h>
 
 void reg_service __P((struct svc_req *, SVCXPRT *));
 void reap	__P(());
@@ -103,13 +105,16 @@ struct pmaplist *pmaplist;
 int debugging = 0;
 extern int errno;
 
+SVCXPRT *ludpxprt, *ltcpxprt;
+
 main(argc, argv)
 	int argc;
 	char **argv;
 {
 	SVCXPRT *xprt;
-	int sock, c;
-	struct sockaddr_in addr;
+	int sock, lsock, c;
+	struct sockaddr_in addr, laddr;
+	int on = 1;
 	int len = sizeof(struct sockaddr_in);
 	register struct pmaplist *pml;
 
@@ -134,15 +139,23 @@ main(argc, argv)
 	openlog("portmap", debugging ? LOG_PID | LOG_PERROR : LOG_PID,
 	    LOG_DAEMON);
 
+	bzero((char *)&addr, sizeof addr);
+	addr.sin_addr.s_addr = 0;
+	addr.sin_family = AF_INET;
+	addr.sin_addr.s_addr = htonl(INADDR_ANY);
+	addr.sin_port = htons(PMAPPORT);
+
+	bzero((char *)&laddr, sizeof laddr);
+	laddr.sin_addr.s_addr = 0;
+	laddr.sin_family = AF_INET;
+	laddr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+	laddr.sin_port = htons(PMAPPORT);
+
 	if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
 		syslog(LOG_ERR, "cannot create udp socket: %m");
 		exit(1);
 	}
-
-	bzero((char *)&addr, sizeof addr);
-	addr.sin_addr.s_addr = 0;
-	addr.sin_family = AF_INET;
-	addr.sin_port = htons(PMAPPORT);
+	setsockopt(lsock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof on);
 	if (bind(sock, (struct sockaddr *)&addr, len) != 0) {
 		syslog(LOG_ERR, "cannot bind udp: %m");
 		exit(1);
@@ -152,6 +165,22 @@ main(argc, argv)
 		syslog(LOG_ERR, "couldn't do udp_create");
 		exit(1);
 	}
+
+	if ((lsock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
+		syslog(LOG_ERR, "cannot create udp socket: %m");
+		exit(1);
+	}
+	setsockopt(lsock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof on);
+	if (bind(lsock, (struct sockaddr *)&laddr, len) != 0) {
+		syslog(LOG_ERR, "cannot bind udp: %m");
+		exit(1);
+	}
+
+	if ((ludpxprt = svcudp_create(lsock)) == (SVCXPRT *)NULL) {
+		syslog(LOG_ERR, "couldn't do udp_create");
+		exit(1);
+	}
+
 	/* make an entry for ourself */
 	pml = (struct pmaplist *)malloc((u_int)sizeof(struct pmaplist));
 	pml->pml_next = 0;
@@ -165,6 +194,7 @@ main(argc, argv)
 		syslog(LOG_ERR, "cannot create tcp socket: %m");
 		exit(1);
 	}
+	setsockopt(lsock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof on);
 	if (bind(sock, (struct sockaddr *)&addr, len) != 0) {
 		syslog(LOG_ERR, "cannot bind udp: %m");
 		exit(1);
@@ -174,6 +204,22 @@ main(argc, argv)
 		syslog(LOG_ERR, "couldn't do tcp_create");
 		exit(1);
 	}
+
+	if ((lsock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
+		syslog(LOG_ERR, "cannot create tcp socket: %m");
+		exit(1);
+	}
+	setsockopt(lsock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof on);
+	if (bind(lsock, (struct sockaddr *)&laddr, len) != 0) {
+		syslog(LOG_ERR, "cannot bind udp: %m");
+		exit(1);
+	}
+	if ((ltcpxprt = svctcp_create(lsock, RPCSMALLMSGSIZE,
+	    RPCSMALLMSGSIZE)) == (SVCXPRT *)NULL) {
+		syslog(LOG_ERR, "couldn't do tcp_create");
+		exit(1);
+	}
+
 	/* make an entry for ourself */
 	pml = (struct pmaplist *)malloc((u_int)sizeof(struct pmaplist));
 	pml->pml_map.pm_prog = PMAPPROG;
@@ -230,9 +276,12 @@ reg_service(rqstp, xprt)
 {
 	struct pmap reg;
 	struct pmaplist *pml, *prevpml, *fnd;
-	long ans, port;
+	struct sockaddr_in *fromsin;
+	long ans = 0, port;
 	caddr_t t;
 	
+	fromsin = svc_getcaller(xprt);
+
 	if (debugging)
 		(void) fprintf(stderr, "server: about to do a switch\n");
 	switch (rqstp->rq_proc) {
@@ -250,6 +299,13 @@ reg_service(rqstp, xprt)
 		/*
 		 * Set a program,version to port mapping
 		 */
+		if (xprt != ltcpxprt && xprt != ludpxprt) {
+			syslog(LOG_WARNING,
+			    "non-local set attempt (might be from %s)",
+			    inet_ntoa(fromsin));
+			svcerr_noproc(xprt);
+			return;
+		}
 		if (!svc_getargs(xprt, xdr_pmap, (caddr_t)&reg))
 			svcerr_decode(xprt);
 		else {
@@ -260,31 +316,35 @@ reg_service(rqstp, xprt)
 			 */
 			fnd = find_service(reg.pm_prog, reg.pm_vers, reg.pm_prot);
 			if (fnd && fnd->pml_map.pm_vers == reg.pm_vers) {
-				if (fnd->pml_map.pm_port == reg.pm_port) {
+				if (fnd->pml_map.pm_port == reg.pm_port)
 					ans = 1;
-					goto done;
-				}
-				else {
-					ans = 0;
-					goto done;
-				}
-			} else {
-				/* 
-				 * add to END of list
-				 */
-				pml = (struct pmaplist *)
-				    malloc((u_int)sizeof(struct pmaplist));
-				pml->pml_map = reg;
-				pml->pml_next = 0;
-				if (pmaplist == 0) {
-					pmaplist = pml;
-				} else {
-					for (fnd= pmaplist; fnd->pml_next != 0;
-					    fnd = fnd->pml_next);
-					fnd->pml_next = pml;
-				}
-				ans = 1;
+				goto done;
 			}
+
+			/* check if secure */
+			if ((pml->pml_map.pm_port < IPPORT_RESERVED ||
+			    pml->pml_map.pm_port == NFS_PORT) &&
+			    htons(fromsin->sin_port) >= IPPORT_RESERVED) {
+				syslog(LOG_WARNING,
+				    "resvport set attempt by non-root");
+				goto done;
+			}
+
+			/* 
+			 * add to END of list
+			 */
+			pml = (struct pmaplist *)
+			    malloc((u_int)sizeof(struct pmaplist));
+			pml->pml_map = reg;
+			pml->pml_next = 0;
+			if (pmaplist == 0) {
+				pmaplist = pml;
+			} else {
+				for (fnd = pmaplist; fnd->pml_next != 0;
+				    fnd = fnd->pml_next);
+				fnd->pml_next = pml;
+			}
+			ans = 1;
 		done:
 			if ((!svc_sendreply(xprt, xdr_long, (caddr_t)&ans)) &&
 			    debugging) {
@@ -298,33 +358,47 @@ reg_service(rqstp, xprt)
 		/*
 		 * Remove a program,version to port mapping.
 		 */
-		if (!svc_getargs(xprt, xdr_pmap, (caddr_t)&reg))
+		if (xprt != ltcpxprt && xprt != ludpxprt) {
+			syslog(LOG_WARNING,
+			    "non-local unset attempt (might be from %s)",
+			    inet_ntoa(fromsin));
+			svcerr_noproc(xprt);
+			return;
+		}
+		if (!svc_getargs(xprt, xdr_pmap, (caddr_t)&reg)) {
 			svcerr_decode(xprt);
-		else {
-			ans = 0;
-			for (prevpml = NULL, pml = pmaplist; pml != NULL; ) {
-				if ((pml->pml_map.pm_prog != reg.pm_prog) ||
-					(pml->pml_map.pm_vers != reg.pm_vers)) {
-					/* both pml & prevpml move forwards */
-					prevpml = pml;
-					pml = pml->pml_next;
-					continue;
-				}
-				/* found it; pml moves forward, prevpml stays */
-				ans = 1;
-				t = (caddr_t)pml;
+			break;
+		}
+		for (prevpml = NULL, pml = pmaplist; pml != NULL; ) {
+			if ((pml->pml_map.pm_prog != reg.pm_prog) ||
+				(pml->pml_map.pm_vers != reg.pm_vers)) {
+				/* both pml & prevpml move forwards */
+				prevpml = pml;
 				pml = pml->pml_next;
-				if (prevpml == NULL)
-					pmaplist = pml;
-				else
-					prevpml->pml_next = pml;
-				free(t);
+				continue;
 			}
-			if ((!svc_sendreply(xprt, xdr_long, (caddr_t)&ans)) &&
-			    debugging) {
-				(void) fprintf(stderr, "svc_sendreply\n");
-				abort();
+			if ((pml->pml_map.pm_port < IPPORT_RESERVED ||
+			    pml->pml_map.pm_port == NFS_PORT) &&
+			    htons(fromsin->sin_port) >= IPPORT_RESERVED) {
+				syslog(LOG_WARNING,
+				    "resvport unset attempt by non-root");
+				break;
 			}
+
+			/* found it; pml moves forward, prevpml stays */
+			ans = 1;
+			t = (caddr_t)pml;
+			pml = pml->pml_next;
+			if (prevpml == NULL)
+				pmaplist = pml;
+			else
+				prevpml->pml_next = pml;
+			free(t);
+		}
+		if ((!svc_sendreply(xprt, xdr_long, (caddr_t)&ans)) &&
+		    debugging) {
+			(void) fprintf(stderr, "svc_sendreply\n");
+			abort();
 		}
 		break;
 
@@ -354,12 +428,10 @@ reg_service(rqstp, xprt)
 		 */
 		if (!svc_getargs(xprt, xdr_void, NULL))
 			svcerr_decode(xprt);
-		else {
-			if ((!svc_sendreply(xprt, xdr_pmaplist,
-			    (caddr_t)&pmaplist)) && debugging) {
-				(void) fprintf(stderr, "svc_sendreply\n");
-				abort();
-			}
+		else if ((!svc_sendreply(xprt, xdr_pmaplist,
+		    (caddr_t)&pmaplist)) && debugging) {
+			(void) fprintf(stderr, "svc_sendreply\n");
+			abort();
 		}
 		break;
 
@@ -506,6 +578,7 @@ callit(rqstp, xprt)
 	if ((pml = find_service(a.rmt_prog, a.rmt_vers,
 	    (u_long)IPPROTO_UDP)) == NULL)
 		return;
+
 	/*
 	 * fork a child to do the work.  Parent immediately returns.
 	 * Child exits upon completion.
@@ -529,15 +602,13 @@ callit(rqstp, xprt)
 
 	client = clntudp_create(&me, a.rmt_prog, a.rmt_vers, timeout, &so);
 	if (client != (CLIENT *)NULL) {
-		if (rqstp->rq_cred.oa_flavor == AUTH_UNIX) {
+		if (rqstp->rq_cred.oa_flavor == AUTH_UNIX)
 			client->cl_auth = authunix_create(au->aup_machname,
 			    au->aup_uid, au->aup_gid, au->aup_len, au->aup_gids);
-		}
 		a.rmt_port = (u_long)port;
 		if (clnt_call(client, a.rmt_proc, xdr_opaque_parms, &a,
-		    xdr_len_opaque_parms, &a, timeout) == RPC_SUCCESS) {
+		    xdr_len_opaque_parms, &a, timeout) == RPC_SUCCESS)
 			svc_sendreply(xprt, xdr_rmtcall_result, (caddr_t)&a);
-		}
 		AUTH_DESTROY(client->cl_auth);
 		clnt_destroy(client);
 	}
