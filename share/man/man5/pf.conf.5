@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.259 2003/06/17 21:48:11 david Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.260 2003/07/04 10:42:52 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -873,7 +873,9 @@ addresses and ports have been translated. Filter rules
 will therefore have to filter based on the translated
 address and port number. In addition, packets that
 match a translation rule are not automatically passed
-through the packet filter; translated packets are
+through the packet filter unless the
+.Ar pass
+modifier is given; translated packets are
 still subject to
 .Ar block
 and
@@ -1976,6 +1978,13 @@ and therefore lacks permission to bind to port 80).
 # map daemon on 8080 to appear to be on 80
 rdr on ne3 proto tcp from any to any port 80 -> 127.0.0.1 port 8080
 .Ed
+If the
+.Ar pass
+modifier is given, packets matching the translation rule are passed without
+inspecting the filter rules:
+.Bd -literal
+rdr pass on ne3 proto tcp from any to any port 80 -> 127.0.0.1 port 8080
+.Ed
 .Pp
 In the example below, vlan12 is configured as 192.168.168.1;
 the machine translates all packets coming from 192.168.168.0/24 to 204.92.77.111
@@ -2186,19 +2195,19 @@ filteropt      = user | group | flags | icmp-type | icmp6-type | tos |
                  "label" string | "tag" string | [ ! ] "tagged" string
                  "queue" "(" string | ( string [ [ "," ] string ] ) ")"
 
-nat-rule       = [ "no" ] "nat" [ "on" ifspec ] [ af ] [ protospec ]
-                 hosts [ "tag" string ]
+nat-rule       = [ "no" ] "nat" [ "pass" ] [ "on" ifspec ] [ af ]
+                 [ protospec ] hosts [ "tag" string ]
                  [ "->" ( redirhost | "{" redirhost-list "}" )
                  [ portspec ] [ pooltype ] [ "static-port" ] ]
 
-binat-rule     = [ "no" ] "binat" [ "on" interface-name ] [ af ]
-                 [ "proto" ( proto-name | proto-number ) ]
+binat-rule     = [ "no" ] "binat" [ "pass" ] [ "on" interface-name ]
+                 [ af ] [ "proto" ( proto-name | proto-number ) ]
                  "from" address [ "/" mask-bits ] "to" ipspec
                  [ "tag" string ]
                  [ "->" address [ "/" mask-bits ] ]
 
-rdr-rule       = [ "no" ] "rdr" [ "on" ifspec ] [ af ] [ protospec ]
-                 hosts [ "tag" string ]
+rdr-rule       = [ "no" ] "rdr" [ "pass" ] [ "on" ifspec ] [ af ]
+                 [ protospec ] hosts [ "tag" string ]
                  [ "->" ( redirhost | "{" redirhost-list "}" )
                  [ portspec ] [ pooltype ] ]
 
