@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_send.c,v 1.4 1997/03/13 19:07:41 downsj Exp $	*/
+/*	$OpenBSD: res_send.c,v 1.5 1997/05/28 21:38:57 deraadt Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989, 1993
@@ -60,7 +60,7 @@
 static char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$From: res_send.c,v 8.12 1996/10/08 04:51:06 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_send.c,v 1.4 1997/03/13 19:07:41 downsj Exp $";
+static char rcsid[] = "$OpenBSD: res_send.c,v 1.5 1997/05/28 21:38:57 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -489,7 +489,7 @@ read_len:
 			 * Use datagrams.
 			 */
 			struct timeval timeout;
-			fd_set dsmask;
+			fd_set *dsmaskp;
 			struct sockaddr_in from;
 			int fromlen;
 
@@ -595,10 +595,17 @@ read_len:
 				timeout.tv_sec = 1;
 			timeout.tv_usec = 0;
     wait:
-			FD_ZERO(&dsmask);
-			FD_SET(s, &dsmask);
-			n = select(s+1, &dsmask, (fd_set *)NULL,
+			dsmaskp = (fd_set *)malloc(howmany(s, NFDBITS) *
+				sizeof(fd_mask));
+			if (dsmaskp == NULL) {
+				res_close();
+				goto next_ns;
+			}
+			FD_ZERO(dsmaskp);
+			FD_SET(s, dsmaskp);
+			n = select(s+1, dsmaskp, (fd_set *)NULL,
 				   (fd_set *)NULL, &timeout);
+			free(dsmaskp);
 			if (n < 0) {
 				if (errno == EINTR)
 					goto wait;

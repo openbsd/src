@@ -34,7 +34,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: rcmd.c,v 1.20 1997/04/05 21:13:15 millert Exp $";
+static char *rcsid = "$OpenBSD: rcmd.c,v 1.21 1997/05/28 21:40:11 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -69,7 +69,7 @@ rcmd(ahost, rport, locuser, remuser, cmd, fd2p)
 {
 	struct hostent *hp;
 	struct sockaddr_in sin, from;
-	fd_set reads;
+	fd_set *readsp = NULL;
 	int oldmask;
 	pid_t pid;
 	int s, lport, timo;
@@ -166,6 +166,10 @@ rcmd(ahost, rport, locuser, remuser, cmd, fd2p)
 
 		if (s2 < 0)
 			goto bad;
+		readsp = (fd_set *)malloc(howmany(MAX(s, s2), NFDBITS) *
+		    sizeof(fd_mask));
+		if (readsp == NULL)
+			goto bad;
 		listen(s2, 1);
 		(void)snprintf(num, sizeof(num), "%d", lport);
 		if (write(s, num, strlen(num)+1) != strlen(num)+1) {
@@ -176,12 +180,12 @@ rcmd(ahost, rport, locuser, remuser, cmd, fd2p)
 			goto bad;
 		}
 again:
-		FD_ZERO(&reads);
-		FD_SET(s, &reads);
-		FD_SET(s2, &reads);
+		FD_ZERO(readsp);
+		FD_SET(s, readsp);
+		FD_SET(s2, readsp);
 		errno = 0;
-		if (select(MAX(s, s2) + 1, &reads, 0, 0, 0) < 1 ||
-		    !FD_ISSET(s2, &reads)) {
+		if (select(MAX(s, s2) + 1, readsp, 0, 0, 0) < 1 ||
+		    !FD_ISSET(s2, readsp)) {
 			if (errno != 0)
 				(void)fprintf(stderr,
 				    "rcmd: select (setting up stderr): %s\n",
@@ -235,11 +239,14 @@ again:
 		goto bad2;
 	}
 	sigsetmask(oldmask);
+	free(readsp);
 	return (s);
 bad2:
 	if (lport)
 		(void)close(*fd2p);
 bad:
+	if (readsp)
+		free(readsp);
 	(void)close(s);
 	sigsetmask(oldmask);
 	return (-1);
