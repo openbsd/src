@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.22 2004/03/25 08:38:52 tom Exp $
+dnl	$OpenBSD: install,v 1.23 2004/05/24 15:47:00 tom Exp $
 OpenBSDInstallShortPrelude
 
 Before you begin, you should decide if OpenBSD is to be installed
@@ -23,7 +23,7 @@ OpenBSDInstallPart2
 	Once the bootloader is installed on the local hard drive, the
 	system can boot from it. OpenBSD may share a drive with Mac OS
 	if the process is followed carefully. Currently it is
-	necessary to use OpenFirmware commands to dual boot between
+	necessary to use Open Firmware commands to dual boot between
 	OS's, or multiple drives may be used with each OS owning drive(s).
 	It is also possible on some newer models to set up the system
 	to auto boot OpenBSD and if Mac OS is desired, choose it using

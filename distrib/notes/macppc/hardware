@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.33 2004/04/19 22:54:07 pvalchev Exp $
+dnl	$OpenBSD: hardware,v 1.34 2004/05/24 15:47:00 tom Exp $
 OpenBSD/MACHINE OSREV runs on iMac, G4 Power Macintosh, and G4 Cube, as well
 as PowerBook and iBook machines.
 
@@ -51,7 +51,7 @@ Supported devices {:-include-:}:
 		    etc) (iop)
 
 	AGP/SVGA/VGA Display Adapters
-		Primary OpenFirmware display only
+		Primary Open Firmware display only
 		The following cards will run an accelerated X server:
 		- ATI Mach64 GP
 		- ATI Mach64 GV
