@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx.c,v 1.6 2000/01/11 19:31:53 fgsch Exp $	*/
+/*	$OpenBSD: ipx.c,v 1.7 2000/01/11 21:10:33 fgsch Exp $	*/
 
 /*-
  *
@@ -41,12 +41,10 @@
  */
 
 #include <sys/param.h>
-#include <sys/queue.h>
 #include <sys/systm.h>
-#include <sys/mbuf.h>
+#include <sys/malloc.h>
 #include <sys/ioctl.h>
 #include <sys/protosw.h>
-#include <sys/errno.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 

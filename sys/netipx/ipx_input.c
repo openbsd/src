@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_input.c,v 1.8 2000/01/11 20:56:15 fgsch Exp $	*/
+/*	$OpenBSD: ipx_input.c,v 1.9 2000/01/11 21:10:34 fgsch Exp $	*/
 
 /*-
  *
@@ -41,24 +41,16 @@
  */
 
 #include <sys/param.h>
-#include <sys/queue.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
+#include <sys/kernel.h>
 #include <sys/mbuf.h>
-#include <sys/domain.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
-#include <sys/errno.h>
-#include <sys/time.h>
-#include <sys/kernel.h>
-#include <sys/proc.h>
-#include <vm/vm.h>
 
 #include <net/if.h>
 #include <net/route.h>
 #include <net/netisr.h>
-#include <net/raw_cb.h>
 
 #include <netipx/ipx.h>
 #include <netipx/spx.h>
