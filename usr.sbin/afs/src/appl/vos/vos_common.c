@@ -262,7 +262,7 @@ get_vlentry (const char *cell, const char *host, const char *volname,
 
     if(host == NULL) {
 	conn_context = malloc(sizeof(struct db_server_context));
-	memset(conn_context, sizeof(struct db_server_context), 0);
+	memset(conn_context, 0, sizeof(struct db_server_context));
 	for (conn = arlalib_first_db(conn_context,
 				     cell, host, afsvldbport, VLDB_SERVICE_ID, 
 				     auth);
