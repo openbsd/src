@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.7 1997/06/15 21:29:22 millert Exp $	*/
+/*	$OpenBSD: job.c,v 1.8 1997/12/16 22:26:21 deraadt Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: job.c,v 1.7 1997/06/15 21:29:22 millert Exp $";
+static char rcsid[] = "$OpenBSD: job.c,v 1.8 1997/12/16 22:26:21 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -229,8 +229,9 @@ STATIC Boolean	jobFull;    	/* Flag to tell when the job table is full. It
 				 * (2) a job can only be run locally, but
 				 * nLocal equals maxLocal */
 #ifndef RMT_WILL_WATCH
-static fd_set  	outputs;    	/* Set of descriptors of pipes connected to
+static fd_set  	*outputsp;    	/* Set of descriptors of pipes connected to
 				 * the output channels of children */
+static int	outputsn;
 #endif
 
 STATIC GNode   	*lastNode;	/* The node for which output was most recently
@@ -700,7 +701,7 @@ JobClose(job)
 #ifdef RMT_WILL_WATCH
 	Rmt_Ignore(job->inPipe);
 #else
-	FD_CLR(job->inPipe, &outputs);
+	FD_CLR(job->inPipe, outputsp);
 #endif
 	if (job->outPipe != job->inPipe) {
 	   (void) close(job->outPipe);
@@ -1278,7 +1279,7 @@ JobExec(job, argv)
 	_exit(1);
     } else {
 #ifdef REMOTE
-	long omask = sigblock(sigmask(SIGCHLD));
+	int omask = sigblock(sigmask(SIGCHLD));
 #endif
 	job->pid = cpid;
 
@@ -1293,7 +1294,19 @@ JobExec(job, argv)
 #ifdef RMT_WILL_WATCH
 	    Rmt_Watch(job->inPipe, JobLocalInput, job);
 #else
-	    FD_SET(job->inPipe, &outputs);
+	    if (outputsp == NULL || job->inPipe > outputsn) {
+		int bytes = howmany(job->inPipe+1, NFDBITS) * sizeof(fd_mask);
+		int obytes = howmany(outputsn+1, NFDBITS) * sizeof(fd_mask);
+
+		if (obytes != bytes) {
+			outputsp = realloc(outputsp, bytes);
+			if (outputsp == NULL)
+				return;
+			memset(outputsp + obytes, 0, bytes - obytes);
+		}
+		outputsn = job->inPipe;
+	    }
+	    FD_SET(job->inPipe, outputsp);
 #endif /* RMT_WILL_WATCH */
 	}
 
@@ -2302,7 +2315,6 @@ Job_CatchOutput()
 {
     int           	  nfds;
     struct timeval	  timeout;
-    fd_set           	  readfds;
     register LstNode	  ln;
     register Job   	  *job;
 #ifdef RMT_WILL_WATCH
@@ -2334,26 +2346,34 @@ Job_CatchOutput()
     }
 #else
     if (usePipes) {
-	readfds = outputs;
+	int count = howmany(outputsn+1, NFDBITS) * sizeof(fd_mask);
+	fd_set *readfdsp = malloc(count);
+	if (readfdsp == NULL)
+	    return;
+
+	memcpy(readfdsp, outputsp, count);
 	timeout.tv_sec = SEL_SEC;
 	timeout.tv_usec = SEL_USEC;
 
-	if ((nfds = select(FD_SETSIZE, &readfds, (fd_set *) 0,
-			   (fd_set *) 0, &timeout)) <= 0)
+	if ((nfds = select(outputsn+1, readfdsp, (fd_set *) 0,
+			   (fd_set *) 0, &timeout)) <= 0) {
+	    free(readfdsp);
 	    return;
-	else {
+	} else {
 	    if (Lst_Open(jobs) == FAILURE) {
+		free(readfdsp);
 		Punt("Cannot open job table");
 	    }
 	    while (nfds && (ln = Lst_Next(jobs)) != NILLNODE) {
 		job = (Job *) Lst_Datum(ln);
-		if (FD_ISSET(job->inPipe, &readfds)) {
+		if (FD_ISSET(job->inPipe, readfdsp)) {
 		    JobDoOutput(job, FALSE);
 		    nfds -= 1;
 		}
 	    }
 	    Lst_Close(jobs);
 	}
+	free(readfdsp);
     }
 #endif /* RMT_WILL_WATCH */
 }
