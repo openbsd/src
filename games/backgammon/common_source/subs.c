@@ -52,15 +52,15 @@ static char	plwhite[] = "Player is white, computer is red.";
 static char	nocomp[] = "(No computer play.)";
 
 char  *descr[] = {
-	"Usage:  backgammon [-] [n r w b pr pw pb t3a]\n",
-	"\t-\tgets this list\n\tn\tdon't ask for rules or instructions",
-	"\tr\tplayer is red (implies n)\n\tw\tplayer is white (implies n)",
-	"\tb\ttwo players, red and white (implies n)",
-	"\tpr\tprint the board before red's turn",
-	"\tpw\tprint the board before white's turn",
-	"\tpb\tprint the board before both player's turn",
-	"\tterm\tterminal is a term",
-	"\tsfile\trecover saved game from file",
+	"Usage:  backgammon [-] [-nrwb] [-pr] [-pw] [-pb] [-t <term>] [-s <file>]\n",
+	"\t-\tgets this list\n\t-n\tdon't ask for rules or instructions",
+	"\t-r\tplayer is red (implies n)\n\t-w\tplayer is white (implies n)",
+	"\t-b\ttwo players, red and white (implies n)",
+	"\t-pr\tprint the board before red's turn",
+	"\t-pw\tprint the board before white's turn",
+	"\t-pb\tprint the board before both player's turn",
+	"\t-t term\tterminal is type term",
+	"\t-s file\trecover previously saved game from file",
 	0
 };
 
@@ -309,81 +309,103 @@ register char	***arg;
 
 {
 	register char	**s;
+	register int	i, j;
 
 	/* process arguments here.  dashes are ignored, nbrw are ignored
-	   if the game is being recovered */
+	 if the game is being recovered */
 
 	s = *arg;
-	while ((s[0] != NULL) && (s[0][0] == '-')) {
-		switch (s[0][1])  {
 
-		/* don't ask if rules or instructions needed */
-		case 'n':
-			if (rflag)
+	/*
+	 * Loop through 1 cmdline arg block.
+	 * Must start with a '-'.
+	 */
+	for (i = 0; (s[0][0] == '-') && (s[0][i] != NULL); i++) {
+		switch (s[0][i]) {
+
+			/* don't ask if rules or instructions needed */
+			case 'n':
+				if (rflag)
+					break;
+				aflag = 0;
+				args[acnt++] = 'n';
 				break;
-			aflag = 0;
-			args[acnt++] = 'n';
-			break;
 
-		/* player is both read and white */
-		case 'b':
-			if (rflag)
+			/* player is both read and white */
+			case 'b':
+				if (rflag)
+					break;
+				pnum = 0;
+				aflag = 0;
+				args[acnt++] = 'b';
 				break;
-			pnum = 0;
-			aflag = 0;
-			args[acnt++] = 'b';
-			break;
 
-		/* player is red */
-		case 'r':
-			if (rflag)
+			/* player is red */
+			case 'r':
+				if (rflag)
+					break;
+				pnum = -1;
+				aflag = 0;
+				args[acnt++] = 'r';
 				break;
-			pnum = -1;
-			aflag = 0;
-			args[acnt++] = 'r';
-			break;
 
-		/* player is white */
-		case 'w':
-			if (rflag)
+			/* player is white */
+			case 'w':
+				if (rflag)
+					break;
+				pnum = 1;
+				aflag = 0;
+				args[acnt++] = 'w';
 				break;
-			pnum = 1;
-			aflag = 0;
-			args[acnt++] = 'w';
-			break;
 
-		/* print board after move according to following character */
-		case 'p':
-			if (s[0][2] != 'r' && s[0][2] != 'w' && s[0][2] != 'b')
+			/* print board after move according to
+			   following character */
+			case 'p':
+				if (s[0][i-1] == '-' && s[0][2] == 'r' &&
+			    	    s[0][2] == 'w' && s[0][2] == 'b') {
+					args[acnt++] = 'p';
+					args[acnt++] = s[0][2];
+					if (s[0][2] == 'r')
+						bflag = 1;
+					if (s[0][2] == 'w')
+						bflag = -1;
+					if (s[0][2] == 'b')
+						bflag = 0;
+				}
+				i++;            /* Blindly skip next char */
 				break;
-			args[acnt++] = 'p';
-			args[acnt++] = s[0][2];
-			if (s[0][2] == 'r')
-				bflag = 1;
-			if (s[0][2] == 'w')
-				bflag = -1;
-			if (s[0][2] == 'b')
-				bflag = 0;
-			break;
 
-		case 't':
-			if (s[0][2] == '\0') {	/* get terminal caps */
+			/* use spec'd term from /etc/termcap */
+			case 't':
+				if (s[0][1-i] != '-')
+					break;
+				if (s[0][2] == '\0') { /* get terminal caps */
+					s++;
+					tflag = getcaps (*s);
+				}
+				else
+					tflag = getcaps (&s[0][2]);
+				break;
+
+			/* restore saved game */
+			case 's':
+				if (s[0][i-1] != '-')
+					break;
 				s++;
-				tflag = getcaps (*s);
-			} else
-				tflag = getcaps (&s[0][2]);
-			break;
+				/* recover file */
+				recover (s[0]);
+				break;
 
-		case 's':
-			s++;
-			/* recover file */
-			recover (s[0]);
-			break;
-		}
-		s++;
-	}
-	if (s[0] != 0)
-		recover(s[0]);
+			/* print cmdline options */
+			case '-':
+				if (strlen(&(s[0][0])) == 1) {
+					for (j = 0; descr[j] != NULL; j++)
+						printf("%s\n", descr[j]);
+					exit(0);
+				}
+				break;
+		} /* end switch */
+	} /* end for */
 }
 
 init ()  {

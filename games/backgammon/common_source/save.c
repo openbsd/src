@@ -52,7 +52,7 @@ static char	exist2[] =
 	"' already exists.\nAre you sure you want to use this file?";
 static char	cantuse[] = "\nCan't use ";
 static char	saved[] = "This game has been saved on the file '";
-static char	type[] = "'.\nType \"backgammon ";
+static char	type[] = "'.\nType \"backgammon -s ";
 static char	rec[] = "\" to recover your game.\n\n";
 static char	cantrec[] = "Can't recover file:  ";
 
