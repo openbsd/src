@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dc.1,v 1.8 2003/10/18 19:47:10 otto Exp $
+.\"	$OpenBSD: dc.1,v 1.9 2003/10/18 21:00:17 jmc Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -291,9 +291,9 @@ is written in an array that is later popped, to reveal the array that
 stored
 .Ql first .
 .It Ic J
-Pop the top value of the stack. The recursion level is popped by that value,
-and following that, the input is skipped until the first occurence of
-the
+Pop the top value of the stack.
+The recursion level is popped by that value and, following that,
+the input is skipped until the first occurrence of the
 .Ic M
 operator.
 .It Ic M
@@ -387,7 +387,7 @@ will terminate because of a too deep recursion level.
 for trying to pop the recursion level more than the current
 recursion level.
 .It mark not found
-for a failed scan for an occurence of the
+for a failed scan for an occurrence of the
 .Ic M
 operator.
 .El
