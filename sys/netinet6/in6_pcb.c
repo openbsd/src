@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.11 2000/04/21 11:42:25 itojun Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.12 2000/04/27 09:23:21 itojun Exp $	*/
 
 /*
 %%% copyright-nrl-95
@@ -567,8 +567,10 @@ in6_pcbnotify(head, dst, fport_arg, la, lport_arg, cmd, notify)
        inp != (struct inpcb *)&head->inpt_queue;)
     {
 #ifdef INET6
-      if (!(inp->inp_flags & INP_IPV6))
+      if (!(inp->inp_flags & INP_IPV6)) {
+	  inp = inp->inp_queue.cqe_next;
 	  continue;
+      }
 #endif
       if (!IN6_ARE_ADDR_EQUAL(&inp->inp_faddr6, faddr) ||
 	  !inp->inp_socket ||
