@@ -1,4 +1,4 @@
-.\"     $OpenBSD: uperf.4,v 1.3 2002/04/04 20:23:13 jason Exp $
+.\"     $OpenBSD: uperf.4,v 1.4 2002/04/04 23:17:56 jason Exp $
 .\"
 .\" Copyright (c) 2002 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -36,13 +36,14 @@
 .Nm uperf
 .Nd performance counters driver
 .Sh SYNOPSIS
-.Cd "uperf* at psycho?"
+.Cd "uperf* at ebus?"
 .Cd "uperf* at sbus? slot ? offset ?"
 .Sh DESCRIPTION
-Some UltraSPARC host bridges provide performance counters.
-On PCI machines, the performance counters are a part of the
-PCI host bridge, and on SBUS machines, the counters are
-a part of the system controller chip (usc or dsc).
+Some UltraSPARC host bridges provide performance counters on their host
+bridges.
+The counters are a part of the system controller chip (usc, dsc, or qsc).
+On PCI machines the system controller shows up a device on the EBUS, but
+on SBUS machines the system controller exists in SBUS space.
 The
 .Nm
 driver provides access to these counters via
