@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo.c,v 1.40 2002/07/24 01:38:34 itojun Exp $	*/
+/*	$OpenBSD: getaddrinfo.c,v 1.41 2002/07/25 21:13:45 deraadt Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.31 2000/08/31 17:36:43 itojun Exp $	*/
 
 /*
@@ -543,11 +543,11 @@ explore_fqdn(pai, hostname, servname, res)
 	}
 
 	if ((_res.options & RES_INIT) == 0 && res_init() == -1)
-		strncpy(lookups, "f", sizeof lookups);
+		strlcpy(lookups, "f", sizeof lookups);
 	else {
 		bcopy(_res.lookups, lookups, sizeof lookups);
 		if (lookups[0] == '\0')
-			strncpy(lookups, "bf", sizeof lookups);
+			strlcpy(lookups, "bf", sizeof lookups);
 	}
 
 	for (i = 0; i < MAXDNSLUS && result == NULL && lookups[i]; i++) {
@@ -818,10 +818,9 @@ get_canonname(pai, ai, str)
 	const char *str;
 {
 	if ((pai->ai_flags & AI_CANONNAME) != 0) {
-		ai->ai_canonname = (char *)malloc(strlen(str) + 1);
+		ai->ai_canonname = strdup(str);
 		if (ai->ai_canonname == NULL)
 			return EAI_MEMORY;
-		strcpy(ai->ai_canonname, str);
 	}
 	return 0;
 }

@@ -52,7 +52,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.48 2002/06/26 06:00:53 itojun Exp $";
+static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.49 2002/07/25 21:13:45 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -614,7 +614,7 @@ gethostbyname2(name, af)
 
 	bcopy(_res.lookups, lookups, sizeof lookups);
 	if (lookups[0] == '\0')
-		strncpy(lookups, "bf", sizeof lookups);
+		strlcpy(lookups, "bf", sizeof lookups);
 
 	hp = (struct hostent *)NULL;
 	for (i = 0; i < MAXDNSLUS && hp == NULL && lookups[i]; i++) {
@@ -719,7 +719,7 @@ gethostbyaddr(addr, len, af)
 
 	bcopy(_res.lookups, lookups, sizeof lookups);
 	if (lookups[0] == '\0')
-		strncpy(lookups, "bf", sizeof lookups);
+		strlcpy(lookups, "bf", sizeof lookups);
 
 	hp = (struct hostent *)NULL;
 	for (i = 0; i < MAXDNSLUS && hp == NULL && lookups[i]; i++) {
