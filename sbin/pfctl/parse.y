@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.481 2005/03/06 19:11:36 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.482 2005/03/07 13:20:03 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2435,7 +2435,7 @@ port		: STRING			{
 				if (atoul($1, &ulval) == 0) {
 					if (ulval > 65535) {
 						free($1);
-						yyerror("illegal port value %d",
+						yyerror("illegal port value %lu",
 						    ulval);
 						YYERROR;
 					}
@@ -2690,7 +2690,7 @@ icmp_item	: icmptype		{
 			if (atoul($3, &ulval) == 0) {
 				if (ulval > 255) {
 					free($3);
-					yyerror("illegal icmp-code %d", ulval);
+					yyerror("illegal icmp-code %lu", ulval);
 					YYERROR;
 				}
 			} else {
@@ -2730,7 +2730,7 @@ icmp6_item	: icmp6type		{
 
 			if (atoul($3, &ulval) == 0) {
 				if (ulval > 255) {
-					yyerror("illegal icmp6-code %ld",
+					yyerror("illegal icmp6-code %lu",
 					    ulval);
 					free($3);
 					YYERROR;
@@ -2762,7 +2762,7 @@ icmptype	: STRING			{
 
 			if (atoul($1, &ulval) == 0) {
 				if (ulval > 255) {
-					yyerror("illegal icmp-type %d", ulval);
+					yyerror("illegal icmp-type %lu", ulval);
 					free($1);
 					YYERROR;
 				}
@@ -2786,7 +2786,7 @@ icmp6type	: STRING			{
 
 			if (atoul($1, &ulval) == 0) {
 				if (ulval > 255) {
-					yyerror("illegal icmp6-type %d", ulval);
+					yyerror("illegal icmp6-type %lu", ulval);
 					free($1);
 					YYERROR;
 				}
@@ -5113,7 +5113,7 @@ getservice(char *n)
 
 	if (atoul(n, &ulval) == 0) {
 		if (ulval > 65535) {
-			yyerror("illegal port value %d", ulval);
+			yyerror("illegal port value %lu", ulval);
 			return (-1);
 		}
 		return (htons(ulval));
@@ -5163,7 +5163,7 @@ parseicmpspec(char *w, sa_family_t af)
 		ulval = p->code;
 	}
 	if (ulval > 255) {
-		yyerror("invalid icmp code %ld", ulval);
+		yyerror("invalid icmp code %lu", ulval);
 		return (0);
 	}
 	return (icmptype << 8 | ulval);
