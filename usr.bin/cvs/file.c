@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.9 2004/07/29 15:41:57 jfb Exp $	*/
+/*	$OpenBSD: file.c,v 1.10 2004/07/29 16:59:39 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -121,7 +121,7 @@ cvs_file_init(void)
 	rcsnum_aton("0", NULL, cvs_addedrev);
 
 	/* standard patterns to ignore */
-	for (i = 0; i < sizeof(cvs_ign_std)/sizeof(char *); i++)
+	for (i = 0; i < (int)(sizeof(cvs_ign_std)/sizeof(char *)); i++)
 		cvs_file_ignore(cvs_ign_std[i]); 
 
 	/* read the cvsignore file in the user's home directory, if any */
@@ -413,7 +413,9 @@ cvs_file_getdir(struct cvs_file *cf, int flags)
 	struct dirent *ent;
 	struct cvs_file *cfp;
 	struct cvs_dir *cdp;
+	struct cvs_flist dirs;
 
+	TAILQ_INIT(&dirs);
 	cdp = cf->cf_ddat;
 
 	if (cvs_readrepo(cf->cf_path, pbuf, sizeof(pbuf)) == 0) {
@@ -457,12 +459,21 @@ cvs_file_getdir(struct cvs_file *cf, int flags)
 		cfp = cvs_file_get(pbuf, flags);
 		if (cfp != NULL) {
 			cfp->cf_parent = cf;
-			LIST_INSERT_HEAD(&(cdp->cd_files), cfp, cf_list);
+
+			if (cfp->cf_type == DT_DIR) 
+				TAILQ_INSERT_HEAD(&dirs, cfp, cf_list);
+			else
+				TAILQ_INSERT_HEAD(&(cdp->cd_files), cfp,
+				    cf_list);
 		}
 	}
 
-	if (flags & CF_SORT)
+	if (flags & CF_SORT) {
 		cvs_file_sort(&(cdp->cd_files));
+		cvs_file_sort(&dirs);
+	}
+	TAILQ_FOREACH(cfp, &dirs, cf_list)
+		TAILQ_INSERT_TAIL(&(cdp->cd_files), cfp, cf_list);
 
 	(void)close(fd);
 	cf->cf_ddat = cdp;
@@ -480,9 +491,6 @@ cvs_file_getdir(struct cvs_file *cf, int flags)
 void
 cvs_file_free(struct cvs_file *cf)
 {
-	struct cvs_file *cfp;
-	struct cvs_dir *cd;
-
 	if (cf->cf_path != NULL)
 		free(cf->cf_path);
 	if (cf->cf_stat != NULL)
@@ -509,7 +517,7 @@ cvs_file_examine(CVSFILE *cf, int (*exam)(CVSFILE *, void *), void *arg)
 
 	if (cf->cf_type == DT_DIR) {
 		ret = (*exam)(cf, arg);
-		LIST_FOREACH(fp, &(cf->cf_ddat->cd_files), cf_list) {
+		TAILQ_FOREACH(fp, &(cf->cf_ddat->cd_files), cf_list) {
 			ret = cvs_file_examine(fp, exam, arg);
 			if (ret == -1)
 				return (-1);
@@ -536,9 +544,9 @@ cvs_file_freedir(struct cvs_dir *cd)
 	if (cd->cd_repo != NULL)
 		free(cd->cd_repo);
 
-	while (!LIST_EMPTY(&(cd->cd_files))) {
-		cfp = LIST_FIRST(&(cd->cd_files));
-		LIST_REMOVE(cfp, cf_list);
+	while (!TAILQ_EMPTY(&(cd->cd_files))) {
+		cfp = TAILQ_FIRST(&(cd->cd_files));
+		TAILQ_REMOVE(&(cd->cd_files), cfp, cf_list);
 		cvs_file_free(cfp);
 	}
 }
@@ -558,7 +566,7 @@ cvs_file_sort(struct cvs_flist *flp)
 	struct cvs_file *cf, *cfvec[256];
 
 	i = 0;
-	LIST_FOREACH(cf, flp, cf_list) {
+	TAILQ_FOREACH(cf, flp, cf_list) {
 		cfvec[i++] = cf;
 		if (i == sizeof(cfvec)/sizeof(struct cvs_file *)) {
 			cvs_log(LP_WARN, "too many files to sort");
@@ -568,18 +576,18 @@ cvs_file_sort(struct cvs_flist *flp)
 		/* now unlink it from the list,
 		 * we'll put it back in order later
 		 */
-		LIST_REMOVE(cf, cf_list);
+		TAILQ_REMOVE(flp, cf, cf_list);
 	}
 
 	/* clear the list just in case */
-	LIST_INIT(flp);
+	TAILQ_INIT(flp);
 	nb = (size_t)i;
 
 	heapsort(cfvec, nb, sizeof(cf), cvs_file_cmp);
 
 	/* rebuild the list from the bottom up */
 	for (i = (int)nb - 1; i >= 0; i--)
-		LIST_INSERT_HEAD(flp, cfvec[i], cf_list);
+		TAILQ_INSERT_HEAD(flp, cfvec[i], cf_list);
 
 	return (0);
 }
@@ -638,7 +646,7 @@ cvs_file_alloc(const char *path, u_int type)
 			return (NULL);
 		}
 		memset(ddat, 0, sizeof(*ddat));
-		LIST_INIT(&(ddat->cd_files));
+		TAILQ_INIT(&(ddat->cd_files));
 		cfp->cf_ddat = ddat;
 	}
 	return (cfp);
