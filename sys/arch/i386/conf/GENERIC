@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.19 1996/06/16 10:33:12 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.20 1996/06/16 11:11:07 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -20,7 +20,6 @@ options		MATH_EMULATE	# floating point emulation
 #options	DUMMY_NOPS	# speed hack; recommended
 options		XSERVER,UCONSOLE
 options		INSECURE	# insecure; allow /dev/mem writing for X
-options		MACHINE_NONCONTIG
 
 maxusers	32		# estimated number of users
 options		TIMEZONE=0	# time zone to adjust RTC time by

@@ -1,4 +1,4 @@
-#	$Id: PCMCIA,v 1.2 1996/06/16 10:33:18 deraadt Exp $
+#	$Id: PCMCIA,v 1.3 1996/06/16 11:11:11 deraadt Exp $
 #	$Source: /home/cvs/src/sys/arch/i386/conf/Attic/PCMCIA,v $
 #
 #	ATHENA-AHA	-- ATHENA kernel for Adaptec & others...
@@ -17,7 +17,6 @@ options		MATH_EMULATE
 
 options		DUMMY_NOPS	# speed hack; recommanded
 options		XSERVER,UCONSOLE
-options		MACHINE_NONCONTIG
 
 maxusers	32		# estimated number of users
 options		TIMEZONE=300	# time zone to adjust RTC time by

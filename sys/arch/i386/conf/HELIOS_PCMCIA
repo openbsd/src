@@ -1,4 +1,4 @@
-#	$OpenBSD: HELIOS_PCMCIA,v 1.6 1996/06/16 10:33:13 deraadt Exp $
+#	$OpenBSD: HELIOS_PCMCIA,v 1.7 1996/06/16 11:11:08 deraadt Exp $
 #
 #	HELIOS_PCMCIA -- Eric Hvozda's notebook
 #
@@ -9,7 +9,6 @@ options		I486_CPU
 
 options		DUMMY_NOPS	# speed hack; recommended
 options		XSERVER,UCONSOLE
-options		MACHINE_NONCONTIG
 
 maxusers	64		# estimated number of users
 options		TIMEZONE=300	# time zone to adjust RTC time by

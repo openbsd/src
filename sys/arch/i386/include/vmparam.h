@@ -139,6 +139,8 @@
 /* APTDPTDI<<PDSHIFT */
 #define VM_MAX_KERNEL_ADDRESS	((vm_offset_t)0xffc00000)
 
+#define	MACHINE_NONCONTIG	/* VM <=> pmap interface modifier */
+
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
 #define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)

@@ -1,4 +1,4 @@
-#	$OpenBSD: TDR,v 1.11 1996/06/16 10:33:19 deraadt Exp $
+#	$OpenBSD: TDR,v 1.12 1996/06/16 11:11:12 deraadt Exp $
 #	$NetBSD: TDR,v 1.64 1996/03/25 05:45:49 perry Exp $
 #
 #	TDR -- Theo Deraadt's 486
@@ -18,7 +18,6 @@ options		MATH_EMULATE	# floating point emulation
 
 options		DUMMY_NOPS	# speed hack; recommended
 options		XSERVER,UCONSOLE
-options		MACHINE_NONCONTIG
 
 maxusers	10		# estimated number of users
 options		TIMEZONE=420	# time zone to adjust RTC time by

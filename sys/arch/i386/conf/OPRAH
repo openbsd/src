@@ -13,7 +13,6 @@ options		MATH_EMULATE	# floating point emulation
 #options	DUMMY_NOPS	# speed hack; recommended
 options		XSERVER,UCONSOLE
 options		INSECURE	# insecure; allow /dev/mem writing for X
-options		MACHINE_NONCONTIG
 
 maxusers	32		# estimated number of users
 options		TIMEZONE=0	# time zone to adjust RTC time by

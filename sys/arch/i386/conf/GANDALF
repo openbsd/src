@@ -1,7 +1,7 @@
 #
 #	GANDALF -- Dual Tyan P5/133 PCI/EISA bus
 #
-#	$OpenBSD: GANDALF,v 1.4 1996/06/16 10:33:11 deraadt Exp $
+#	$OpenBSD: GANDALF,v 1.5 1996/06/16 11:11:07 deraadt Exp $
 #
 
 machine		i386		# architecture, used by config; REQUIRED
@@ -16,7 +16,6 @@ options		PCIVERBOSE	# verbose PCI device information
 options		DUMMY_NOPS	# speed hack; recommanded
 options		XSERVER,UCONSOLE
 #options	INSECURE	# insecure; allow /dev/mem writing for X
-options		MACHINE_NONCONTIG
 
 maxusers	32		# estimated number of users
 options		TIMEZONE=480	# time zone to adjust RTC time by

@@ -1,4 +1,4 @@
-#	$OpenBSD: LAP,v 1.5 1996/06/16 10:33:15 deraadt Exp $
+#	$OpenBSD: LAP,v 1.6 1996/06/16 11:11:09 deraadt Exp $
 #	$NetBSD: TDR,v 1.64 1996/03/25 05:45:49 perry Exp $
 #
 #	TDR -- Theo Deraadt's 486
@@ -18,7 +18,6 @@ options		I586_CPU
 
 options		DUMMY_NOPS	# speed hack; recommended
 options		XSERVER,UCONSOLE
-options		MACHINE_NONCONTIG
 
 maxusers	10		# estimated number of users
 #options	TIMEZONE=0	# time zone to adjust RTC time by
