@@ -301,7 +301,7 @@ distclean-libtool:
 .texinfo.info:
 	restore=: && \
 	backupdir="$(am__leading_dot)am$$$$" && \
-	am__cwd=`pwd` && cd $(srcdir) && \
+	am__cwd=`pwd` && \
 	rm -rf $$backupdir && mkdir $$backupdir && \
 	for f in $@ $@-[0-9] $@-[0-9][0-9] $(@:.info=).i[0-9] $(@:.info=).i[0-9][0-9]; do \
 	  if test -f $$f; then \
@@ -314,10 +314,8 @@ distclean-libtool:
 	 -o $@ $<; \
 	then \
 	  rc=0; \
-	  cd $(srcdir); \
 	else \
 	  rc=$$?; \
-	  cd $(srcdir) && \
 	  $$restore $$backupdir/* `echo "./$@" | sed 's|[^/]*$$||'`; \
 	fi; \
 	rm -rf $$backupdir; \
