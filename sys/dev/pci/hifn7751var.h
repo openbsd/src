@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751var.h,v 1.45 2002/07/23 17:50:33 jason Exp $	*/
+/*	$OpenBSD: hifn7751var.h,v 1.46 2003/01/05 20:07:44 deraadt Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -93,7 +93,7 @@ struct hifn_dma {
 	u_int64_t		test_src, test_dst;
 
 	/*
-	 *  Our current positions for insertion and removal from the desriptor
+	 *  Our current positions for insertion and removal from the descriptor
 	 *  rings. 
 	 */
 	int			cmdi, srci, dsti, resi;
