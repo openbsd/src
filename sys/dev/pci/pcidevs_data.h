@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1 1995/06/18 01:07:06 cgd Exp 
+ *	NetBSD: pcidevs,v 1.3 1995/11/10 19:36:09 christos Exp 
  */
 
 /*
@@ -38,10 +38,28 @@
 
 struct pci_knowndev pci_knowndevs[] = {
 	{
+	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_AIC7850,
+	    PCI_KNOWNDEV_UNSUPP,
+	    "Adaptec",
+	    "AIC-7850",
+	},
+	{
 	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_AIC7870,
 	    PCI_KNOWNDEV_UNSUPP,
 	    "Adaptec",
 	    "AIC-7870",
+	},
+	{
+	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_AIC2940,
+	    PCI_KNOWNDEV_UNSUPP,
+	    "Adaptec",
+	    "AIC-2940",
+	},
+	{
+	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_AIC2940U,
+	    PCI_KNOWNDEV_UNSUPP,
+	    "Adaptec",
+	    "AIC-2940 (\"Ultra\")",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH32,
@@ -192,6 +210,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_KNOWNDEV_UNSUPP,
 	    "S3",
 	    "Vision 864",
+	},
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C590,
+	    0,
+	    "3Com",
+	    "3c590",
 	},
 	{
 	    PCI_VENDOR_OLDNCR, 0,

@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.2 1995/06/20 04:50:43 cgd Exp $
+$NetBSD: pcidevs,v 1.3 1995/11/10 19:36:09 christos Exp $
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -70,7 +70,10 @@ vendor ADP		0x9004		Adaptec
  */
 
 /* Adaptec products */
+product	ADP AIC7850	0x7075	UNSUPP	AIC-7850
 product	ADP AIC7870	0x7078	UNSUPP	AIC-7870
+product	ADP AIC2940	0x7178	UNSUPP	AIC-2940
+product	ADP AIC2940U	0x8178	UNSUPP	AIC-2940 (\"Ultra\")
 
 /* ATI products */
 product ATI MACH32	0x4158	UNSUPP	Mach32
@@ -115,3 +118,6 @@ product QLOGIC ISP1020	0x1020	UNSUPP	ISP1020
 
 /* S3 Products */
 product S3 VISION864	0x88c0	UNSUPP	Vision 864
+
+/* 3COM Products */
+product	3COM 3C590	0x5900		3c590

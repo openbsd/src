@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1 1995/06/18 01:07:06 cgd Exp 
+ *	NetBSD: pcidevs,v 1.3 1995/11/10 19:36:09 christos Exp 
  */
 
 /*
@@ -75,7 +75,10 @@
  */
 
 /* Adaptec products */
+#define	PCI_PRODUCT_ADP_AIC7850	0x7075		/* AIC-7850 */
 #define	PCI_PRODUCT_ADP_AIC7870	0x7078		/* AIC-7870 */
+#define	PCI_PRODUCT_ADP_AIC2940	0x7178		/* AIC-2940 */
+#define	PCI_PRODUCT_ADP_AIC2940U	0x8178		/* AIC-2940 (\"Ultra\") */
 
 /* ATI products */
 #define	PCI_PRODUCT_ATI_MACH32	0x4158		/* Mach32 */
@@ -120,3 +123,6 @@
 
 /* S3 Products */
 #define	PCI_PRODUCT_S3_VISION864	0x88c0		/* Vision 864 */
+
+/* 3COM Products */
+#define	PCI_PRODUCT_3COM_3C590	0x5900		/* 3c590 */
