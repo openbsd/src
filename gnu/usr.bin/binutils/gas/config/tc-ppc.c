@@ -1326,7 +1326,6 @@ ppc_elf_lcomm(xxx)
   *pfrag = 0;
   S_SET_SIZE (symbolP, size);
   S_SET_SEGMENT (symbolP, bss_section);
-  S_CLEAR_EXTERNAL (symbolP);
   subseg_set (old_sec, old_subsec);
   demand_empty_rest_of_line ();
 }
