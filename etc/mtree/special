@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.15 1997/09/29 16:37:20 millert Exp $
+#	$OpenBSD: special,v 1.16 1997/10/21 00:55:08 millert Exp $
 #	$NetBSD: special,v 1.4 1996/05/08 21:30:18 pk Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
@@ -45,7 +45,7 @@ mtree		type=dir mode=0755 uname=root gname=wheel
 special		type=file mode=0600 uname=root gname=wheel
 ..	#mtree
 named.boot	type=file mode=0644 uname=root gname=wheel optional
-netstart	type=file mode=0744 uname=root gname=wheel
+netstart	type=file mode=0644 uname=root gname=wheel
 passwd		type=file mode=0644 uname=root gname=wheel
 printcap	type=file mode=0644 uname=root gname=wheel
 rc		type=file mode=0644 uname=root gname=wheel
