@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.6 1997/08/31 20:42:26 deraadt Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.7 1998/02/14 10:55:09 deraadt Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -173,7 +173,8 @@ sonewconn1(head, connstatus)
 	so->so_proto = head->so_proto;
 	so->so_timeo = head->so_timeo;
 	so->so_pgid = head->so_pgid;
-	so->so_uid = head->so_uid;
+	so->so_euid = head->so_euid;
+	so->so_ruid = head->so_ruid;
 	(void) soreserve(so, head->so_snd.sb_hiwat, head->so_rcv.sb_hiwat);
 	soqinsque(head, so, soqueue);
 	if ((*so->so_proto->pr_usrreq)(so, PRU_ATTACH,

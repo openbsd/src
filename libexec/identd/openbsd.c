@@ -151,6 +151,6 @@ k_getuid(faddr, fport, laddr, lport, uid)
 		return -1;
 	if ((sock.so_state & SS_CONNECTOUT) == 0)
 		return -1;
-	*uid = sock.so_uid;
+	*uid = sock.so_ruid;
 	return (0);
 }
