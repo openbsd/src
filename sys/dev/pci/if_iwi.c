@@ -1,4 +1,4 @@
-/*	$Id: if_iwi.c,v 1.21 2004/12/10 21:25:53 damien Exp $  */
+/*	$Id: if_iwi.c,v 1.22 2004/12/21 17:29:53 damien Exp $  */
 
 /*-
  * Copyright (c) 2004
@@ -94,6 +94,7 @@ static const struct ieee80211_rateset iwi_rateset_11g =
 int iwi_match(struct device *, void *, void *);
 void iwi_attach(struct device *, struct device *, void *);
 int iwi_detach(struct device *, int);
+void iwi_power(int, void *);
 int iwi_dma_alloc(struct iwi_softc *);
 void iwi_release(struct iwi_softc *);
 int iwi_media_change(struct ifnet *);
@@ -176,15 +177,17 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 	int error, i;
 
 	sc->sc_pct = pa->pa_pc;
+	sc->sc_pcitag = pa->pa_tag,
 
-	data = pci_conf_read(sc->sc_pct, pa->pa_tag, 0x40);
+	/* clear device specific PCI configuration register 0x41 */
+	data = pci_conf_read(sc->sc_pct, sc->sc_pcitag, 0x40);
 	data &= ~0x0000ff00;
-	pci_conf_write(sc->sc_pct, pa->pa_tag, 0x40, data);
+	pci_conf_write(sc->sc_pct, sc->sc_pcitag, 0x40, data);
 
 	/* enable bus-mastering */
-	data = pci_conf_read(sc->sc_pct, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	data = pci_conf_read(sc->sc_pct, sc->sc_pcitag, PCI_COMMAND_STATUS_REG);
 	data |= PCI_COMMAND_MASTER_ENABLE;
-	pci_conf_write(sc->sc_pct, pa->pa_tag, PCI_COMMAND_STATUS_REG, data);
+	pci_conf_write(sc->sc_pct, sc->sc_pcitag, PCI_COMMAND_STATUS_REG, data);
 
 	/* map the register window */
 	error = pci_mapreg_map(pa, IWI_PCI_BAR0, PCI_MAPREG_TYPE_MEM |
@@ -301,6 +304,8 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 	ic->ic_newstate = iwi_newstate;
 	ieee80211_media_init(ifp, iwi_media_change, iwi_media_status);
 
+	sc->powerhook = powerhook_establish(iwi_power, sc);
+
 #if NBPFILTER > 0
 	bpfattach(&sc->sc_drvbpf, ifp, DLT_IEEE802_11_RADIO,
 	    sizeof (struct ieee80211_frame) + 64);
@@ -339,6 +344,29 @@ iwi_detach(struct device* self, int flags)
 	bus_space_unmap(sc->sc_st, sc->sc_sh, sc->sc_sz);
 
 	return 0;
+}
+
+void
+iwi_power(int why, void *arg)
+{
+	struct iwi_softc *sc = arg;
+	struct ifnet *ifp;
+	pcireg_t data;
+
+	if (why != PWR_RESUME)
+		return;
+
+	/* clear device specific PCI configuration register 0x41 */
+	data = pci_conf_read(sc->sc_pct, sc->sc_pcitag, 0x40);
+	data &= ~0x0000ff00;
+	pci_conf_write(sc->sc_pct, sc->sc_pcitag, 0x40, data);
+
+	ifp = &sc->sc_ic.ic_if;
+	if (ifp->if_flags & IFF_UP) {
+		ifp->if_init(ifp);
+		if (ifp->if_flags & IFF_RUNNING)
+			ifp->if_start(ifp);
+	}
 }
 
 int
