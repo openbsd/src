@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_syscalls.c,v 1.21 2000/04/12 04:23:05 jasoni Exp $	*/
+/*	$OpenBSD: linux_syscalls.c,v 1.22 2000/06/07 13:37:56 niklas Exp $	*/
 
 /*
  * System call names.
@@ -211,4 +211,5 @@ char *linux_syscallnames[] = {
 	"#188 (unimplemented getpmsg)",		/* 188 = unimplemented getpmsg */
 	"#189 (unimplemented putpmsg)",		/* 189 = unimplemented putpmsg */
 	"vfork",			/* 190 = vfork */
+	"ugetrlimit",			/* 191 = ugetrlimit */
 };

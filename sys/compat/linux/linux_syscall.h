@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_syscall.h,v 1.21 2000/04/12 04:23:05 jasoni Exp $	*/
+/*	$OpenBSD: linux_syscall.h,v 1.22 2000/06/07 13:37:55 niklas Exp $	*/
 
 /*
  * System call numbers.
@@ -198,10 +198,10 @@
 /* syscall: "sethostname" ret: "int" args: "char *" "u_int" */
 #define	LINUX_SYS_sethostname	74
 
-/* syscall: "setrlimit" ret: "int" args: "u_int" "struct ogetrlimit *" */
+/* syscall: "setrlimit" ret: "int" args: "u_int" "struct linux_rlimit *" */
 #define	LINUX_SYS_setrlimit	75
 
-/* syscall: "getrlimit" ret: "int" args: "u_int" "struct ogetrlimit *" */
+/* syscall: "getrlimit" ret: "int" args: "u_int" "struct linux_rlimit *" */
 #define	LINUX_SYS_getrlimit	76
 
 /* syscall: "getrusage" ret: "int" args: "int" "struct rusage *" */
@@ -432,4 +432,7 @@
 /* syscall: "vfork" ret: "int" args: */
 #define	LINUX_SYS_vfork	190
 
-#define	LINUX_SYS_MAXSYSCALL	191
+/* syscall: "ugetrlimit" ret: "int" args: "u_int" "struct linux_rlimit *" */
+#define	LINUX_SYS_ugetrlimit	191
+
+#define	LINUX_SYS_MAXSYSCALL	192

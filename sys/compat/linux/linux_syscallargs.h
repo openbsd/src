@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_syscallargs.h,v 1.22 2000/04/12 04:23:05 jasoni Exp $	*/
+/*	$OpenBSD: linux_syscallargs.h,v 1.23 2000/06/07 13:37:56 niklas Exp $	*/
 
 /*
  * System call argument lists.
@@ -179,6 +179,16 @@ struct linux_sys_sigsuspend_args {
 
 struct linux_sys_sigpending_args {
 	syscallarg(linux_old_sigset_t *) mask;
+};
+
+struct linux_sys_setrlimit_args {
+	syscallarg(u_int) which;
+	syscallarg(struct linux_rlimit *) rlp;
+};
+
+struct linux_sys_getrlimit_args {
+	syscallarg(u_int) which;
+	syscallarg(struct linux_rlimit *) rlp;
 };
 
 struct linux_sys_oldselect_args {
@@ -430,6 +440,11 @@ struct linux_sys_getcwd_args {
 	syscallarg(size_t) length;
 };
 
+struct linux_sys_ugetrlimit_args {
+	syscallarg(u_int) which;
+	syscallarg(struct linux_rlimit *) rlp;
+};
+
 /*
  * System call prototypes.
  */
@@ -497,8 +512,8 @@ int	linux_sys_setregid	__P((struct proc *, void *, register_t *));
 int	linux_sys_sigsuspend	__P((struct proc *, void *, register_t *));
 int	linux_sys_sigpending	__P((struct proc *, void *, register_t *));
 int	compat_43_sys_sethostname	__P((struct proc *, void *, register_t *));
-int	compat_43_sys_setrlimit	__P((struct proc *, void *, register_t *));
-int	compat_43_sys_getrlimit	__P((struct proc *, void *, register_t *));
+int	linux_sys_setrlimit	__P((struct proc *, void *, register_t *));
+int	linux_sys_getrlimit	__P((struct proc *, void *, register_t *));
 int	sys_getrusage	__P((struct proc *, void *, register_t *));
 int	sys_gettimeofday	__P((struct proc *, void *, register_t *));
 int	sys_settimeofday	__P((struct proc *, void *, register_t *));
@@ -584,3 +599,4 @@ int	linux_sys_pwrite	__P((struct proc *, void *, register_t *));
 int	linux_sys_chown	__P((struct proc *, void *, register_t *));
 int	linux_sys_getcwd	__P((struct proc *, void *, register_t *));
 int	sys_vfork	__P((struct proc *, void *, register_t *));
+int	linux_sys_ugetrlimit	__P((struct proc *, void *, register_t *));
