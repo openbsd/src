@@ -1,4 +1,4 @@
-dnl	$OpenBSD: whatis,v 1.1 2004/08/20 17:53:09 pefo Exp $
-OpenBSD/MACHINE OSREV is a new port for the SGI Mips processor computers.
+dnl	$OpenBSD: whatis,v 1.2 2004/09/10 19:11:52 miod Exp $
+OpenBSD/MACHINE OSREV is a new port to the SGI Mips processor computers.
 Currently, in this initial stage the O2 workstation is supported and
 hardware support is being worked on. 

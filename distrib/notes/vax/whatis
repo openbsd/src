@@ -1,5 +1,3 @@
+dnl	$OpenBSD: whatis,v 1.7 2004/09/10 19:11:52 miod Exp $
 OpenBSD/MACHINE OSREV is a port to the VAX series of machines, formerly
 manufactured by Digital Equipment Corporation.
-
-Development is ongoing, and support for a greater variety of hardware
-as well as new features is in the works.

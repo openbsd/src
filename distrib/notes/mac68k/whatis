@@ -1,7 +1,8 @@
+dnl	$OpenBSD: whatis,v 1.16 2004/09/10 19:11:52 miod Exp $
 OpenBSD/MACHINE OSREV is a port to the old Macintosh (680x0-based)
-computers.  As always, there is much to be done on this
-architecture, and help is very much appreciated.  However,
-a wide variety of hardware and software is completely
-functional, making the system an excellent answer to the question
-of a UN*X-like operating system for the Mac 680x0 line of
 computers.
+dnl blatant lies
+dnl A wide variety of hardware and software is completely
+dnl functional, making the system an excellent answer to the question
+dnl of a UN*X-like operating system for the Mac 680x0 line of
+dnl computers.

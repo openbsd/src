@@ -1,5 +1,6 @@
-dnl	$OpenBSD: whatis,v 1.9 2003/09/06 22:22:43 miod Exp $
-For the MACHINE, OpenBSD OSREV brings greater stability and security,
-including a stricter memory permission scheme. As a side effect of the
-full security audit, many userland programs have been significantly
-cleaned up and debugged.
+dnl	$OpenBSD: whatis,v 1.10 2004/09/10 19:11:51 miod Exp $
+dnl Nothing worth saying, so cut the crap.
+dnl For the MACHINE, OpenBSD OSREV brings greater stability and security,
+dnl including a stricter memory permission scheme. As a side effect of the
+dnl full security audit, many userland programs have been significantly
+dnl cleaned up and debugged.

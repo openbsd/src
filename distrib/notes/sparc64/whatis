@@ -1,3 +1,4 @@
-dnl	$OpenBSD: whatis,v 1.8 2003/09/06 22:38:38 miod Exp $
-OpenBSD/MACHINE OSREV is a port to machines based on the UltraSPARC
-processor, such as the workstations manufactured by Sun Microsystems.
+dnl	$OpenBSD: whatis,v 1.9 2004/09/10 19:11:52 miod Exp $
+OpenBSD/MACHINE is a port to machines based on the UltraSPARC (64-bit)
+processor, including most of Sun Microsystems workstations and their
+clones.
