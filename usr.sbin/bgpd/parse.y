@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.113 2004/06/06 17:38:10 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.114 2004/06/08 14:34:48 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -360,15 +360,13 @@ prefix		: STRING '/' number	{
 
 			if (asprintf(&s, "%s/%u", $1, $3) == -1)
 				fatal(NULL);
+			free($1);
 
 			if (!host(s, &$$.prefix, &$$.len)) {
-				yyerror("could not parse address \"%s/%u\"",
-				    $1, $3);
+				yyerror("could not parse address \"%s\"", s);
 				free(s);
-				free($1);
 				YYERROR;
 			}
-			free($1);
 			free(s);
 		}
 		;
@@ -528,6 +526,7 @@ peeropts	: REMOTEAS asnumber	{
 		| TCP MD5SIG PASSWORD string {
 			if (curpeer->conf.auth.method) {
 				yyerror("auth method cannot be redefined");
+				free($4);
 				YYERROR;
 			}
 			if (strlcpy(curpeer->conf.auth.md5key, $4,
@@ -545,6 +544,7 @@ peeropts	: REMOTEAS asnumber	{
 		| TCP MD5SIG KEY string {
 			if (curpeer->conf.auth.method) {
 				yyerror("auth method cannot be redefined");
+				free($4);
 				YYERROR;
 			}
 
@@ -579,6 +579,8 @@ peeropts	: REMOTEAS asnumber	{
 			    ($2 == 0 && curpeer->conf.auth.method !=
 			    AUTH_IPSEC_MANUAL_AH))) {
 				yyerror("auth method cannot be redefined");
+				free($6);
+				free($7);
 				YYERROR;
 			}
 
@@ -590,8 +592,8 @@ peeropts	: REMOTEAS asnumber	{
 				keylen = 16;
 			} else {
 				yyerror("unknown auth algorithm \"%s\"", $6);
-				free($7);
 				free($6);
+				free($7);
 				YYERROR;
 			}
 			free($6);
@@ -935,17 +937,21 @@ filter_set_opt	: LOCALPREF number		{
 			$$.flags = SET_PFTABLE;
 			if (pftable_exists($2) != 0) {
 				yyerror("pftable name does not exist");
+				free($2);
 				YYERROR;
 			}
 			if (strlcpy($$.pftable, $2, sizeof($$.pftable)) >=
 			    sizeof($$.pftable)) {
 				yyerror("pftable name too long");
+				free($2);
 				YYERROR;
 			}
 			if (pftable_add($2) != 0) {
 				yyerror("Couldn't register table");
+				free($2);
 				YYERROR;
 			}
+			free($2);
 		}
 		| COMMUNITY STRING		{
 			$$.flags = SET_COMMUNITY;
