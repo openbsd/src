@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scsi.8,v 1.24 2004/06/26 03:27:36 robert Exp $
+.\"	$OpenBSD: scsi.8,v 1.25 2005/04/01 05:40:22 deraadt Exp $
 .\"	$FreeBSD: scsi.8,v 1.5 1995/05/05 20:41:58 dufault Exp $
 .\"
 .\" Written By Julian ELischer
@@ -191,10 +191,8 @@ The command is sent using the
 ioctl, so the device you are accessing must permit this ioctl.
 See
 .Xr scsi 4
-for full details of which minor devices permit the ioctl, and
-.Xr scsi 3
-for the full details on how to build up the commands and data phases
-using the format arguments.
+for full details of which minor devices permit the
+.Xr ioctl 2 Ns .
 .Pp
 .It Fl v
 Turns on more verbose information.
@@ -205,8 +203,8 @@ Sets the command timeout to
 The default is two seconds.
 .Pp
 .It Fl c Ar cmd_fmt
-Specifies the command as described in
-.Xr scsi 3 .
+Specifies the command as described in the source.
+Sorry.
 The additional arguments provide values for any variables
 specified in the command format.
 .Pp
@@ -215,9 +213,6 @@ Indicates that this is a data out command (i.e., data will be sent from
 the system to the device) with
 .Ar count
 bytes of data.
-The data out is built up using the facilities described in
-.Xr scsi 3
-using the provided arguments to fill in any integer variables.
 .Ar out_fmt
 can be specified as a hyphen
 .Pq Ql -
@@ -230,11 +225,6 @@ Indicates that this is a data in command (i.e., data will be read from
 the device into the system) with
 .Ar count
 bytes of data read in.
-The information is extracted according to
-.Ar in_fmt
-using the facilities described in
-.Xr scsi 3
-and displayed on the standard output.
 .Ar in_fmt
 can be specified as a hyphen
 .Pq Ql -
