@@ -1,5 +1,5 @@
-/*	$OpenBSD: pass3.c,v 1.3 1997/06/14 04:16:56 downsj Exp $	*/
-/*	$NetBSD: pass3.c,v 1.1 1997/06/11 11:21:55 bouyer Exp $	*/
+/*	$OpenBSD: pass3.c,v 1.4 2001/09/18 17:43:15 art Exp $	*/
+/*	$NetBSD: pass3.c,v 1.2 1997/09/14 14:27:28 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -35,18 +35,6 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)pass3.c	8.1 (Berkeley) 6/5/93";
-#else
-#if 0
-static char rcsid[] = "$NetBSD: pass3.c,v 1.1 1997/06/11 11:21:55 bouyer Exp $";
-#else
-static char rcsid[] = "$OpenBSD: pass3.c,v 1.3 1997/06/14 04:16:56 downsj Exp $";
-#endif
-#endif
-#endif /* not lint */
-
 #include <sys/param.h>
 #include <sys/time.h>
 #include <ufs/ext2fs/ext2fs_dinode.h>
@@ -57,7 +45,7 @@ static char rcsid[] = "$OpenBSD: pass3.c,v 1.3 1997/06/14 04:16:56 downsj Exp $"
 void
 pass3()
 {
-	register struct inoinfo **inpp, *inp;
+	struct inoinfo **inpp, *inp;
 	ino_t orphan;
 	int loopcnt;
 

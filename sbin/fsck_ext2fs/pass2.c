@@ -1,5 +1,5 @@
-/*	$OpenBSD: pass2.c,v 1.4 2000/04/26 23:26:06 jasoni Exp $	*/
-/*	$NetBSD: pass2.c,v 1.1 1997/06/11 11:21:53 bouyer Exp $	*/
+/*	$OpenBSD: pass2.c,v 1.5 2001/09/18 17:43:15 art Exp $	*/
+/*	$NetBSD: pass2.c,v 1.6 2000/01/28 16:01:46 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -35,18 +35,6 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)pass2.c	8.6 (Berkeley) 10/27/94";
-#else
-#if 0
-static char rcsid[] = "$NetBSD: pass2.c,v 1.1 1997/06/11 11:21:53 bouyer Exp $";
-#else
-static char rcsid[] = "$OpenBSD: pass2.c,v 1.4 2000/04/26 23:26:06 jasoni Exp $";
-#endif
-#endif
-#endif /* not lint */
-
 #include <sys/param.h>
 #include <sys/time.h>
 #include <ufs/ext2fs/ext2fs_dinode.h>
@@ -71,8 +59,8 @@ static int blksort __P((const void *, const void *));
 void
 pass2()
 {
-	register struct ext2fs_dinode *dp;
-	register struct inoinfo **inpp, *inp;
+	struct ext2fs_dinode *dp;
+	struct inoinfo **inpp, *inp;
 	struct inoinfo **inpend;
 	struct inodesc curino;
 	struct ext2fs_dinode dino;
@@ -206,8 +194,8 @@ static int
 pass2check(idesc)
 	struct inodesc *idesc;
 {
-	register struct ext2fs_direct *dirp = idesc->id_dirp;
-	register struct inoinfo *inp;
+	struct ext2fs_direct *dirp = idesc->id_dirp;
+	struct inoinfo *inp;
 	int n, entrysize, ret = 0;
 	struct ext2fs_dinode *dp;
 	char *errmsg;

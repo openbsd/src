@@ -1,5 +1,5 @@
-/*	$OpenBSD: pass4.c,v 1.3 1997/06/14 04:16:57 downsj Exp $	*/
-/*	$NetBSD: pass4.c,v 1.1 1997/06/11 11:21:56 bouyer Exp $	*/
+/*	$OpenBSD: pass4.c,v 1.4 2001/09/18 17:43:15 art Exp $	*/
+/*	$NetBSD: pass4.c,v 1.2 1997/09/14 14:27:29 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -35,18 +35,6 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)pass4.c	8.1 (Berkeley) 6/5/93";
-#else
-#if 0
-static char rcsid[] = "$NetBSD: pass4.c,v 1.1 1997/06/11 11:21:56 bouyer Exp $";
-#else
-static char rcsid[] = "$OpenBSD: pass4.c,v 1.3 1997/06/14 04:16:57 downsj Exp $";
-#endif
-#endif
-#endif /* not lint */
-
 #include <sys/param.h>
 #include <sys/time.h>
 #include <ufs/ext2fs/ext2fs_dinode.h>
@@ -61,8 +49,8 @@ static char rcsid[] = "$OpenBSD: pass4.c,v 1.3 1997/06/14 04:16:57 downsj Exp $"
 void
 pass4()
 {
-	register ino_t inumber;
-	register struct zlncnt *zlnp;
+	ino_t inumber;
+	struct zlncnt *zlnp;
 	struct ext2fs_dinode *dp;
 	struct inodesc idesc;
 	int n;
@@ -121,9 +109,9 @@ pass4()
 
 int
 pass4check(idesc)
-	register struct inodesc *idesc;
+	struct inodesc *idesc;
 {
-	register struct dups *dlp;
+	struct dups *dlp;
 	int nfrags, res = KEEPON;
 	daddr_t blkno = idesc->id_blkno;
 

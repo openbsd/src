@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.6 2000/04/26 23:26:06 jasoni Exp $	*/
+/*	$OpenBSD: setup.c,v 1.7 2001/09/18 17:43:15 art Exp $	*/
 /*	$NetBSD: setup.c,v 1.1 1997/06/11 11:22:01 bouyer Exp $	*/
 
 /*
@@ -34,18 +34,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
-#else
-#if 0
-static char rcsid[] = "$NetBSD: setup.c,v 1.1 1997/06/11 11:22:01 bouyer Exp $";
-#else
-static char rcsid[] = "$OpenBSD: setup.c,v 1.6 2000/04/26 23:26:06 jasoni Exp $";
-#endif
-#endif
-#endif /* not lint */
 
 #define DKTYPENAMES
 #include <sys/param.h>
@@ -439,11 +427,11 @@ int
 calcsb(dev, devfd, fs)
 	char *dev;
 	int devfd;
-	register struct m_ext2fs *fs;
+	struct m_ext2fs *fs;
 {
-	register struct disklabel *lp;
-	register struct partition *pp;
-	register char *cp;
+	struct disklabel *lp;
+	struct partition *pp;
+	char *cp;
 
 	cp = strchr(dev, '\0') - 1;
 	if ((cp == (char *)-1 || (*cp < 'a' || *cp > 'h')) && !isdigit(*cp)) {

@@ -1,5 +1,5 @@
-/*	$OpenBSD: dir.c,v 1.5 2001/07/07 18:26:11 deraadt Exp $	*/
-/*	$NetBSD: dir.c,v 1.1 1997/06/11 11:21:46 bouyer Exp $	*/
+/*	$OpenBSD: dir.c,v 1.6 2001/09/18 17:43:15 art Exp $	*/
+/*	$NetBSD: dir.c,v 1.5 2000/01/28 16:01:46 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -35,20 +35,9 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)dir.c	8.5 (Berkeley) 12/8/94";
-#else
-#if 0
-static char rcsid[] = "$NetBSD: dir.c,v 1.1 1997/06/11 11:21:46 bouyer Exp $";
-#else
-static char rcsid[] = "$OpenBSD: dir.c,v 1.5 2001/07/07 18:26:11 deraadt Exp $";
-#endif
-#endif
-#endif /* not lint */
-
 #include <sys/param.h>
 #include <sys/time.h>
+#include <ufs/ufs/dir.h>
 #include <ufs/ext2fs/ext2fs_dinode.h>
 #include <ufs/ext2fs/ext2fs_dir.h>
 #include <ufs/ext2fs/ext2fs.h>
@@ -65,8 +54,6 @@ static char rcsid[] = "$OpenBSD: dir.c,v 1.5 2001/07/07 18:26:11 deraadt Exp $";
 
 char	*lfname = "lost+found";
 int	lfmode = 01777;
-/* XXX DIRBLKSIZ id bsize ! */
-#define DIRBLKSIZ 0 /* just for now */
 struct	ext2fs_dirtemplate emptydir = { 0, DIRBLKSIZ }; 
 struct	ext2fs_dirtemplate dirhead = {
 	0, 12, 1, EXT2_FT_DIR, ".",
@@ -88,7 +75,7 @@ static int chgino __P((struct  inodesc *));
 void
 propagate()
 {
-	register struct inoinfo **inpp, *inp, *pinp;
+	struct inoinfo **inpp, *inp, *pinp;
 	struct inoinfo **inpend;
 
 	/*
@@ -123,10 +110,10 @@ propagate()
  */
 int
 dirscan(idesc)
-	register struct inodesc *idesc;
+	struct inodesc *idesc;
 {
-	register struct ext2fs_direct *dp;
-	register struct bufarea *bp;
+	struct ext2fs_direct *dp;
+	struct bufarea *bp;
 	int dsize, n;
 	long blksiz;
 	char *dbuf = NULL;
@@ -172,10 +159,10 @@ dirscan(idesc)
  */
 static struct ext2fs_direct *
 fsck_readdir(idesc)
-	register struct inodesc *idesc;
+	struct inodesc *idesc;
 {
-	register struct ext2fs_direct *dp, *ndp;
-	register struct bufarea *bp;
+	struct ext2fs_direct *dp, *ndp;
+	struct bufarea *bp;
 	long size, blksiz, fix, dploc;
 
 	blksiz = idesc->id_numfrags * sblock.e2fs_bsize;
@@ -279,7 +266,7 @@ fileerror(cwd, ino, errmesg)
 	ino_t cwd, ino;
 	char *errmesg;
 {
-	register struct ext2fs_dinode *dp;
+	struct ext2fs_dinode *dp;
 	char pathbuf[MAXPATHLEN + 1];
 
 	pwarn("%s ", errmesg);
@@ -300,10 +287,10 @@ fileerror(cwd, ino, errmesg)
 
 void
 adjust(idesc, lcnt)
-	register struct inodesc *idesc;
+	struct inodesc *idesc;
 	short lcnt;
 {
-	register struct ext2fs_dinode *dp;
+	struct ext2fs_dinode *dp;
 
 	dp = ginode(idesc->id_number);
 	if (fs2h16(dp->e2di_nlink) == lcnt) {
@@ -333,7 +320,7 @@ static int
 mkentry(idesc)
 	struct inodesc *idesc;
 {
-	register struct ext2fs_direct *dirp = idesc->id_dirp;
+	struct ext2fs_direct *dirp = idesc->id_dirp;
 	struct ext2fs_direct newent;
 	int newlen, oldlen;
 
@@ -363,7 +350,7 @@ static int
 chgino(idesc)
 	struct inodesc *idesc;
 {
-	register struct ext2fs_direct *dirp = idesc->id_dirp;
+	struct ext2fs_direct *dirp = idesc->id_dirp;
 	u_int16_t namlen = dirp->e2d_namlen;
 
 	if (strlen(idesc->id_name) != namlen ||
@@ -383,7 +370,7 @@ linkup(orphan, parentdir)
 	ino_t orphan;
 	ino_t parentdir;
 {
-	register struct ext2fs_dinode *dp;
+	struct ext2fs_dinode *dp;
 	int lostdir;
 	ino_t oldlfdir;
 	struct inodesc idesc;
@@ -546,11 +533,11 @@ makeentry(parent, ino, name)
  */
 static int
 expanddir(dp, name)
-	register struct ext2fs_dinode *dp;
+	struct ext2fs_dinode *dp;
 	char *name;
 {
 	daddr_t lastbn, newblk;
-	register struct bufarea *bp;
+	struct bufarea *bp;
 	char *firstblk;
 
 	if ((firstblk = malloc(sblock.e2fs_bsize)) == NULL) {
@@ -611,7 +598,7 @@ allocdir(parent, request, mode)
 {
 	ino_t ino;
 	struct ext2fs_dinode *dp;
-	register struct bufarea *bp;
+	struct bufarea *bp;
 	struct ext2fs_dirtemplate *dirp;
 
 	ino = allocino(request, IFDIR|mode);
@@ -688,8 +675,8 @@ lftempname(bufp, ino)
 	char *bufp;
 	ino_t ino;
 {
-	register ino_t in;
-	register char *cp;
+	ino_t in;
+	char *cp;
 	int namlen;
 
 	cp = bufp + 2;

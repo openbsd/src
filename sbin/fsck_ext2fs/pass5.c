@@ -1,5 +1,5 @@
-/*	$OpenBSD: pass5.c,v 1.7 2001/09/18 03:24:09 deraadt Exp $	*/
-/*	$NetBSD: pass5.c,v 1.1 1997/06/11 11:21:58 bouyer Exp $	*/
+/*	$OpenBSD: pass5.c,v 1.8 2001/09/18 17:43:15 art Exp $	*/
+/*	$NetBSD: pass5.c,v 1.7 2000/01/28 16:01:46 bouyer Exp $ */
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -35,18 +35,6 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)pass5.c	8.6 (Berkeley) 11/30/94";
-#else
-#if 0
-static char rcsid[] = "$NetBSD: pass5.c,v 1.1 1997/06/11 11:21:58 bouyer Exp $";
-#else
-static char rcsid[] = "$OpenBSD: pass5.c,v 1.7 2001/09/18 03:24:09 deraadt Exp $";
-#endif
-#endif
-#endif /* not lint */
-
 #include <sys/param.h>
 #include <sys/time.h>
 #include <ufs/ufs/dinode.h>
@@ -68,10 +56,10 @@ void
 pass5()
 {
 	int c;
-	register struct m_ext2fs *fs = &sblock;
+	struct m_ext2fs *fs = &sblock;
 	daddr_t dbase, dmax;
-	register daddr_t d;
-	register long i, j;
+	daddr_t d;
+	long i, j;
 	struct inodesc idesc[3];
 	struct bufarea *ino_bitmap = NULL, *blk_bitmap = NULL;
 	char *ibmap, *bbmap;

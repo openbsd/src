@@ -1,5 +1,5 @@
-/*	$OpenBSD: utilities.c,v 1.8 2001/01/31 22:31:51 deraadt Exp $	*/
-/*	$NetBSD: utilities.c,v 1.1 1997/06/11 11:22:02 bouyer Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.9 2001/09/18 17:43:15 art Exp $	*/
+/*	$NetBSD: utilities.c,v 1.6 2001/02/04 21:19:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -35,18 +35,6 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)utilities.c	8.1 (Berkeley) 6/5/93";
-#else
-#if 0
-static char rcsid[] = "$NetBSD: utilities.c,v 1.1 1997/06/11 11:22:02 bouyer Exp $";
-#else
-static char rcsid[] = "$OpenBSD: utilities.c,v 1.8 2001/01/31 22:31:51 deraadt Exp $";
-#endif
-#endif
-#endif /* not lint */
-
 #include <sys/param.h>
 #include <sys/time.h>
 #include <ufs/ext2fs/ext2fs_dinode.h>
@@ -67,6 +55,8 @@ long	diskreads, totalreads;	/* Disk cache statistics */
 
 static void rwerror __P((char *, daddr_t));
 
+extern int returntosingle;
+
 int
 ftypeok(dp)
 	struct ext2fs_dinode *dp;
@@ -84,7 +74,7 @@ ftypeok(dp)
 
 	default:
 		if (debug)
-			printf("bad file type 0%o\n", dp->e2di_mode);
+			printf("bad file type 0%o\n", fs2h16(dp->e2di_mode));
 		return (0);
 	}
 }
@@ -128,7 +118,7 @@ reply(question)
 void
 bufinit()
 {
-	register struct bufarea *bp;
+	struct bufarea *bp;
 	long bufcnt, i;
 	char *bufp;
 
@@ -164,7 +154,7 @@ getdatablk(blkno, size)
 	daddr_t blkno;
 	long size;
 {
-	register struct bufarea *bp;
+	struct bufarea *bp;
 
 	for (bp = bufhead.b_next; bp != &bufhead; bp = bp->b_next)
 		if (bp->b_bno == fsbtodb(&sblock, blkno))
@@ -191,7 +181,7 @@ foundit:
 
 void
 getblk(bp, blk, size)
-	register struct bufarea *bp;
+	struct bufarea *bp;
 	daddr_t blk;
 	long size;
 {
@@ -210,9 +200,9 @@ getblk(bp, blk, size)
 void
 flush(fd, bp)
 	int fd;
-	register struct bufarea *bp;
+	struct bufarea *bp;
 {
-	register int i;
+	int i;
 
 	if (!bp->b_dirty)
 		return;
@@ -250,7 +240,7 @@ void
 ckfini(markclean)
 	int markclean;
 {
-	register struct bufarea *bp, *nbp;
+	struct bufarea *bp, *nbp;
 	int cnt = 0;
 
 	if (fswritefd < 0) {
@@ -377,7 +367,7 @@ bwrite(fd, buf, blk, size)
 int
 allocblk()
 {
-	register int i;
+	int i;
 
 	for (i = 0; i < maxfsblock - 1; i++) {
 		if (testbmap(i))
@@ -412,7 +402,7 @@ getpathname(namebuf, curdir, ino)
 	ino_t curdir, ino;
 {
 	int len;
-	register char *cp;
+	char *cp;
 	struct inodesc idesc;
 	static int busy = 0;
 
@@ -480,7 +470,6 @@ void
 catchquit(n)
 	int n;
 {
-	extern int returntosingle;
 
 	/* XXX signal race */
 	printf("returning to single-user after filesystem check\n");
@@ -508,7 +497,7 @@ voidquit(n)
  */
 int
 dofix(idesc, msg)
-	register struct inodesc *idesc;
+	struct inodesc *idesc;
 	char *msg;
 {
 

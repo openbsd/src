@@ -1,5 +1,5 @@
-/*	$OpenBSD: pass1b.c,v 1.3 1997/06/14 04:16:55 downsj Exp $	*/
-/*	$NetBSD: pass1b.c,v 1.1 1997/06/11 11:21:53 bouyer Exp $	*/
+/*	$OpenBSD: pass1b.c,v 1.4 2001/09/18 17:43:15 art Exp $	*/
+/*	$NetBSD: pass1b.c,v 1.2 1997/09/14 14:27:26 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -35,18 +35,6 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)pass1b.c	8.1 (Berkeley) 6/5/93";
-#else
-#if 0
-static char rcsid[] = "$NetBSD: pass1b.c,v 1.1 1997/06/11 11:21:53 bouyer Exp $";
-#else
-static char rcsid[] = "$OpenBSD: pass1b.c,v 1.3 1997/06/14 04:16:55 downsj Exp $";
-#endif
-#endif
-#endif /* not lint */
-
 #include <sys/param.h>
 #include <sys/time.h>
 #include <ufs/ext2fs/ext2fs_dinode.h>
@@ -62,8 +50,8 @@ static  struct dups *duphead;
 void
 pass1b()
 {
-	register int c, i;
-	register struct ext2fs_dinode *dp;
+	int c, i;
+	struct ext2fs_dinode *dp;
 	struct inodesc idesc;
 	ino_t inumber;
 
@@ -89,9 +77,9 @@ pass1b()
 
 static int
 pass1bcheck(idesc)
-	register struct inodesc *idesc;
+	struct inodesc *idesc;
 {
-	register struct dups *dlp;
+	struct dups *dlp;
 	int nfrags, res = KEEPON;
 	daddr_t blkno = idesc->id_blkno;
 
