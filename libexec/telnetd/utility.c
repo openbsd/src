@@ -1,4 +1,4 @@
-/*	$OpenBSD: utility.c,v 1.9 1998/02/16 04:57:55 jason Exp $	*/
+/*	$OpenBSD: utility.c,v 1.10 1998/03/12 04:53:17 art Exp $	*/
 /*	$NetBSD: utility.c,v 1.9 1996/02/28 20:38:29 thorpej Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 static char sccsid[] = "@(#)utility.c	8.4 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: utility.c,v 1.9 1996/02/28 20:38:29 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: utility.c,v 1.9 1998/02/16 04:57:55 jason Exp $";
+static char rcsid[] = "$OpenBSD: utility.c,v 1.10 1998/03/12 04:53:17 art Exp $";
 #endif
 #endif /* not lint */
 
@@ -202,8 +202,11 @@ netclear()
     char *good;
 #define	wewant(p)	((nfrontp > p) && ((*p&0xff) == IAC) && \
 				((*(p+1)&0xff) != EC) && ((*(p+1)&0xff) != EL))
-
+#ifdef ENCRYPTION
+    thisitem = nclearto > netobuf ? nclearto : netobuf;
+#else
     thisitem = netobuf;
+#endif
 
     while ((next = nextitem(thisitem)) <= nbackp) {
 	thisitem = next;
@@ -211,7 +214,11 @@ netclear()
 
     /* Now, thisitem is first before/at boundary. */
 
+#ifdef ENCRYPTION
+    good = nclearto > netobuf ? nclearto : netobuf;
+#else
     good = netobuf;	/* where the good bytes go */
+#endif
 
     while (nfrontp > thisitem) {
 	if (wewant(thisitem)) {
@@ -252,6 +259,15 @@ netflush()
 	      n += strlen(nfrontp);  /* get count first */
 	      nfrontp += strlen(nfrontp);  /* then move pointer */
 	    });
+#ifdef ENCRYPTION
+	if (encrypt_output) {
+	    char *s = nclearto ? nclearto : nbackp;
+	    if (nfrontp - s > 0) {
+		(*encrypt_output)((unsigned char *)s, nfrontp-s);
+		nclearto = nfrontp;
+	    }
+	}
+#endif
 	/*
 	 * if no urgent data, or if the other side appears to be an
 	 * old 4.2 client (and thus unable to survive TCP urgent data),
@@ -282,11 +298,18 @@ netflush()
 	cleanup(0);
     }
     nbackp += n;
+#ifdef ENCRYPTION
+    if (nbackp > nclearto)
+	nclearto = 0;
+#endif
     if (nbackp >= neturg) {
 	neturg = 0;
     }
     if (nbackp == nfrontp) {
 	nbackp = nfrontp = netobuf;
+#ifdef ENCRYPTION
+	nclearto = 0;
+#endif
     }
     return;
 }  /* end of netflush */
@@ -331,8 +354,19 @@ fatal(f, msg)
 {
 	char buf[BUFSIZ];
 
-	(void) sprintf(buf, "telnetd: %s.\r\n", msg);
-	(void) write(f, buf, (int)strlen(buf));
+	snprintf(buf, sizeof(buf), "telnetd: %s.\r\n", msg);
+#ifdef ENCRYPTION
+	if (encrypt_output) {
+		/*
+		 * Better turn off encryption first....
+		 * Hope it flushes...
+		 */
+		encrypt_send_end();
+		netflush();
+		}
+#endif
+	write(f, buf, (int)strlen(buf));
+
 	sleep(1);	/*XXX*/
 	exit(1);
 }
@@ -1038,6 +1072,83 @@ printsub(direction, pointer, length)
 	    break;
 #endif
 
+#ifdef ENCRYPTION
+	case TELOPT_ENCRYPT:
+	    output_data("ENCRYPT");
+	    if (length < 2) {
+		output_data(" (empty suboption?)");
+		break;
+	    }
+	    switch (pointer[1]) {
+	    case ENCRYPT_START:
+		output_data(" START");
+		break;
+		
+	    case ENCRYPT_END:
+		output_data(" END");
+		break;
+		
+	    case ENCRYPT_REQSTART:
+		output_data(" REQUEST-START");
+		break;
+
+	    case ENCRYPT_REQEND:
+		output_data(" REQUEST-END");
+		break;
+		
+	    case ENCRYPT_IS:
+	    case ENCRYPT_REPLY:
+		output_data(" %s ",
+			    (pointer[1] == ENCRYPT_IS) ?
+			    "IS" : "REPLY");
+		if (length < 3) {
+		    output_data(" (partial suboption?)");
+		    break;
+		}
+		if (ENCTYPE_NAME_OK(pointer[2]))
+		    output_data("%s ",
+				ENCTYPE_NAME(pointer[2]));
+		else
+		    output_data(" %d (unknown)",
+				pointer[2]);
+		
+		encrypt_printsub(&pointer[1], length - 1, buf, sizeof(buf));
+		output_data("%s",
+			    buf);
+		break;
+		
+	    case ENCRYPT_SUPPORT:
+		i = 2;
+		output_data(" SUPPORT ");
+		while (i < length) {
+		    if (ENCTYPE_NAME_OK(pointer[i]))
+			output_data("%s ",
+				    ENCTYPE_NAME(pointer[i]));
+		    else
+			output_data("%d ",
+				    pointer[i]);
+		    i++;
+		}
+		break;
+		
+	    case ENCRYPT_ENC_KEYID:
+		output_data(" ENC_KEYID %d", pointer[1]);
+		goto encommon;
+		
+	    case ENCRYPT_DEC_KEYID:
+		output_data(" DEC_KEYID %d", pointer[1]);
+		goto encommon;
+		
+	    default:
+		output_data(" %d (unknown)", pointer[1]);
+	    encommon:
+		for (i = 2; i < length; i++) {
+               output_data(" %d", pointer[i]);
+		}
+		break;
+	    }
+	    break;
+#endif /* ENCRYPTION */
 
 	default:
 	    if (TELOPT_OK(pointer[0]))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: authenc.c,v 1.2 1996/03/28 23:21:54 niklas Exp $	*/
+/*	$OpenBSD: authenc.c,v 1.3 1998/03/12 04:53:07 art Exp $	*/
 /*	$NetBSD: authenc.c,v 1.3 1996/02/28 20:38:08 thorpej Exp $	*/
 
 /*-
@@ -39,7 +39,7 @@
 static char sccsid[] = "@(#)authenc.c	8.2 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: authenc.c,v 1.3 1996/02/28 20:38:08 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: authenc.c,v 1.2 1996/03/28 23:21:54 niklas Exp $";
+static char rcsid[] = "$OpenBSD: authenc.c,v 1.3 1998/03/12 04:53:07 art Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,6 +63,13 @@ net_write(str, len)
 	void
 net_encrypt()
 {
+#ifdef ENCRYPTION
+	char *s = (nclearto > nbackp) ? nclearto : nbackp;
+	if (s < nfrontp && encrypt_output) {
+		(*encrypt_output)((unsigned char *)s, nfrontp - s);
+	}
+	nclearto = nfrontp;
+#endif
 }
 
 	int
@@ -76,7 +83,7 @@ telnet_spin()
 telnet_getenv(val)
 	char *val;
 {
-	extern char *getenv();
+	extern char *getenv(const char *);
 	return(getenv(val));
 }
 
@@ -87,6 +94,6 @@ telnet_gets(prompt, result, length, echo)
 	int length;
 	int echo;
 {
-	return((char *)0);
+	return NULL;
 }
 #endif	/* defined(AUTHENTICATION) */

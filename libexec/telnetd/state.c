@@ -1,4 +1,4 @@
-/*	$OpenBSD: state.c,v 1.5 1996/08/24 09:03:42 deraadt Exp $	*/
+/*	$OpenBSD: state.c,v 1.6 1998/03/12 04:53:12 art Exp $	*/
 /*	$NetBSD: state.c,v 1.9 1996/02/28 20:38:19 thorpej Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 static char sccsid[] = "@(#)state.c	8.5 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: state.c,v 1.9 1996/02/28 20:38:19 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: state.c,v 1.5 1996/08/24 09:03:42 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: state.c,v 1.6 1998/03/12 04:53:12 art Exp $";
 #endif
 #endif /* not lint */
 
@@ -94,14 +94,15 @@ telrcv()
 {
 	register int c;
 	static int state = TS_DATA;
-#if	defined(CRAY2) && defined(UNICOS5)
-	char *opfrontp = pfrontp;
-#endif
 
 	while (ncc > 0) {
 		if ((&ptyobuf[BUFSIZ] - pfrontp) < 2)
 			break;
 		c = *netip++ & 0377, ncc--;
+#ifdef ENCRYPTION
+       if (decrypt_input)
+           c = (*decrypt_input)(c);
+#endif
 		switch (state) {
 
 		case TS_CR:
@@ -141,7 +142,15 @@ telrcv()
 					c = '\n';
 				} else
 #endif
+#ifdef ENCRYPTION
+				if (decrypt_input)
+					nc = (*decrypt_input)(nc & 0xff);
+#endif
 				{
+#ifdef ENCRYPTION
+				if (decrypt_input)
+					(void)(*decrypt_input)(-1);
+#endif
 					state = TS_CR;
 				}
 			}
@@ -356,21 +365,6 @@ gotiac:			switch (c) {
 			exit(1);
 		}
 	}
-#if	defined(CRAY2) && defined(UNICOS5)
-	if (!linemode) {
-		char	xptyobuf[BUFSIZ+NETSLOP];
-		char	xbuf2[BUFSIZ];
-		register char *cp;
-		int n = pfrontp - opfrontp, oc;
-		memmove(xptyobuf, opfrontp, n);
-		pfrontp = opfrontp;
-		pfrontp += term_input(xptyobuf, pfrontp, n, BUFSIZ+NETSLOP,
-					xbuf2, &oc, BUFSIZ);
-		for (cp = xbuf2; oc > 0; --oc)
-			if ((*nfrontp++ = *cp++) == IAC)
-				*nfrontp++ = IAC;
-	}
-#endif	/* defined(CRAY2) && defined(UNICOS5) */
 }  /* end of telrcv */
 
 /*
@@ -455,11 +449,15 @@ send_do(option, init)
 }
 
 #ifdef	AUTHENTICATION
-extern void auth_request();
+extern void auth_request(void);
 #endif
 #ifdef	LINEMODE
 extern void doclientstat();
 #endif
+#ifdef ENCRYPTION
+extern void encrypt_send_support();
+#endif
+
 
 	void
 willoption(option)
@@ -573,6 +571,12 @@ willoption(option)
 			break;
 #endif
 
+#ifdef ENCRYPTION
+		case TELOPT_ENCRYPT:
+			func = encrypt_send_support;
+			changeok++;
+			break;
+#endif
 
 		default:
 			break;
@@ -629,6 +633,12 @@ willoption(option)
 #ifdef	AUTHENTICATION
 		case TELOPT_AUTHENTICATION:
 			func = auth_request;
+			break;
+#endif
+
+#ifdef ENCRYPTION
+		case TELOPT_ENCRYPT:
+			func = encrypt_send_support;
 			break;
 #endif
 
@@ -920,6 +930,11 @@ dooption(option)
 			cleanup(0);
 			/* NOT REACHED */
 			break;
+#ifdef ENCRYPTION
+		case TELOPT_ENCRYPT:
+			changeok++;
+			break;
+#endif
 
 		case TELOPT_LINEMODE:
 		case TELOPT_TTYPE:
@@ -1481,6 +1496,49 @@ suboption()
 		break;
 	case TELQUAL_NAME:
 		auth_name(subpointer, SB_LEN());
+		break;
+	}
+	break;
+#endif
+#ifdef ENCRYPTION
+	case TELOPT_ENCRYPT:
+		if (SB_EOF())
+		break;
+	switch(SB_GET()) {
+	case ENCRYPT_SUPPORT:
+		encrypt_support(subpointer, SB_LEN());
+		break;
+	case ENCRYPT_IS:
+		encrypt_is(subpointer, SB_LEN());
+		break;
+	case ENCRYPT_REPLY:
+		encrypt_reply(subpointer, SB_LEN());
+		break;
+	case ENCRYPT_START:
+		encrypt_start(subpointer, SB_LEN());
+		break;
+	case ENCRYPT_END:
+		encrypt_end();
+		break;
+	case ENCRYPT_REQSTART:
+		encrypt_request_start(subpointer, SB_LEN());
+		break;
+	case ENCRYPT_REQEND:
+		/*
+		 * We can always send an REQEND so that we cannot
+		 * get stuck encrypting.  We should only get this
+		 * if we have been able to get in the correct mode
+		 * anyhow.
+		 */
+		encrypt_request_end();
+		break;
+	case ENCRYPT_ENC_KEYID:
+		encrypt_enc_keyid(subpointer, SB_LEN());
+		break;
+	case ENCRYPT_DEC_KEYID:
+		encrypt_dec_keyid(subpointer, SB_LEN());
+		break;
+	default:
 		break;
 	}
 	break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext.h,v 1.3 1997/07/14 01:40:38 millert Exp $	*/
+/*	$OpenBSD: ext.h,v 1.4 1998/03/12 04:53:10 art Exp $	*/
 /*	$NetBSD: ext.h,v 1.6 1996/02/28 20:38:13 thorpej Exp $	*/
 
 /*
@@ -123,7 +123,7 @@ extern void
 #ifdef DIAGNOSTICS
 	printoption P((char *, int)),
 	printdata P((char *, char *, int)),
-	printsub P((int, unsigned char *, int)),
+	printsub P((char, unsigned char *, int)),
 #endif
 	ptyflush P((void)),
 	putchr P((int)),
@@ -190,7 +190,11 @@ extern void
 	wontoption P((int)),
 	writenet P((unsigned char *, int));
 
-
+#ifdef ENCRYPTION
+extern void     (*encrypt_output) (unsigned char *, int);
+extern int      (*decrypt_input) (int);
+extern char     *nclearto;
+#endif
 
 /*
  * The following are some clocks used to decide how to interpret

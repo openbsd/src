@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_term.c,v 1.8 1997/07/23 20:36:35 kstailey Exp $	*/
+/*	$OpenBSD: sys_term.c,v 1.9 1998/03/12 04:53:14 art Exp $	*/
 /*	$NetBSD: sys_term.c,v 1.9 1996/03/20 04:25:53 tls Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: sys_term.c,v 1.8 1996/02/28 20:38:21 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: sys_term.c,v 1.8 1997/07/23 20:36:35 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: sys_term.c,v 1.9 1998/03/12 04:53:14 art Exp $";
 #endif
 #endif /* not lint */
 
@@ -1415,6 +1415,16 @@ startslave(host, autologin, autoname)
 #endif
 
 #ifndef	NEWINIT
+	{
+		char *tbuf =
+		"\r\n*** Connection not encrypted! "
+		"Communication may be eavesdropped. ***\r\n";
+#ifdef ENCRYPTION
+		if (encrypt_output == 0 || decrypt_input == 0)
+#endif
+			writenet((unsigned char*)tbuf, strlen(tbuf));
+	}
+
 # ifdef	PARENT_DOES_UTMP
 	utmp_sig_init();
 # endif	/* PARENT_DOES_UTMP */
