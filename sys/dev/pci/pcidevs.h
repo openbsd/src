@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.685 2003/10/28 11:30:07 grange Exp 
+ *		OpenBSD: pcidevs,v 1.686 2003/10/31 03:49:10 drahn Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -127,6 +127,7 @@
 #define	PCI_VENDOR_MITSUBISHIELEC	0x10ba		/* Mitsubishi Electronics */
 #define	PCI_VENDOR_SURECOM	0x10bd		/* Surecom Technology */
 #define	PCI_VENDOR_NEOMAGIC	0x10c8		/* Neomagic */
+#define	PCI_VENDOR_MENTOR	0x10cc		/* Mentor ARC */
 #define	PCI_VENDOR_ADVSYS	0x10cd		/* Advansys */
 #define	PCI_VENDOR_MOLEX	0x10d2		/* Molex */
 #define	PCI_VENDOR_MACRONIX	0x10d9		/* Macronix */
@@ -1472,6 +1473,10 @@
 #define	PCI_PRODUCT_MATROX_MYST_G200_SD	0xff02		/* MGA Mystique G200 SD */
 #define	PCI_PRODUCT_MATROX_MILL_G200_SG	0xff03		/* MGA Millennium G200 SG */
 #define	PCI_PRODUCT_MATROX_MARV_G200_SD	0xff04		/* MGA Marvel G200 SD */
+
+/* Mentor */
+#define	PCI_PRODUCT_MENTOR_PCI0660	0x0660		/* MENTOR Host-PCI */
+#define	PCI_PRODUCT_MENTOR_PCI0661	0x0661		/* MENTOR PCI-PCI */
 
 /* Mitsubishi Electronics */
 #define	PCI_PRODUCT_MITSUBISHIELEC_GUI	0x0304		/* GUI Accel */

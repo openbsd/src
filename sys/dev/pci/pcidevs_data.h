@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.685 2003/10/28 11:30:07 grange Exp 
+ *		OpenBSD: pcidevs,v 1.686 2003/10/31 03:49:10 drahn Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -3955,6 +3955,14 @@ static const struct pci_known_product pci_known_products[] = {
 	    "MGA Marvel G200 SD",
 	},
 	{
+	    PCI_VENDOR_MENTOR, PCI_PRODUCT_MENTOR_PCI0660,
+	    "MENTOR Host-PCI",
+	},
+	{
+	    PCI_VENDOR_MENTOR, PCI_PRODUCT_MENTOR_PCI0661,
+	    "MENTOR PCI-PCI",
+	},
+	{
 	    PCI_VENDOR_MITSUBISHIELEC, PCI_PRODUCT_MITSUBISHIELEC_GUI,
 	    "GUI Accel",
 	},
@@ -7389,6 +7397,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_NEOMAGIC,
 	    "Neomagic",
+	},
+	{
+	    PCI_VENDOR_MENTOR,
+	    "Mentor ARC",
 	},
 	{
 	    PCI_VENDOR_ADVSYS,
