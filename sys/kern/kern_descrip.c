@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.56 2002/03/14 01:27:04 millert Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.57 2002/05/23 14:25:20 art Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -1029,7 +1029,7 @@ fdfree(p)
  * Note: p may be NULL when closing a file
  * that was being passed in a message.
  *
- * The fp must have its usecount bumped and will be FILE_UNUSEd here.
+ * The fp must have its usecount bumped and will be FRELEd here.
  */
 int
 closef(struct file *fp, struct proc *p)
