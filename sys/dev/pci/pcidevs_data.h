@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.831 2005/02/05 01:44:37 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.832 2005/02/07 19:11:54 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -3123,12 +3123,16 @@ static const struct pci_known_product pci_known_products[] = {
 	    "80312 I/O Companion",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7710_PXH_HUB_A,
-	    "PCIE-PCIX Bridge Hub A",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6700PXH_A,
+	    "PCIE-PCIE",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7710_PXH_HUB_B,
-	    "PCIE-PCIX Bridge Hub B",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6700PXH_B,
+	    "PCIE-PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6702PXH,
+	    "PCIE-PCIE",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IOP331_C0,
