@@ -45,7 +45,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: scp.c,v 1.33 2000/07/13 23:19:31 provos Exp $");
+RCSID("$OpenBSD: scp.c,v 1.34 2000/08/19 02:26:08 deraadt Exp $");
 
 #include "ssh.h"
 #include "xmalloc.h"
@@ -103,6 +103,9 @@ char *identity = NULL;
 /* This is the port to use in contacting the remote site (is non-NULL). */
 char *port = NULL;
 
+/* This is the program to execute for the secured connection. ("ssh" or -S) */
+char *ssh_program = SSH_PROGRAM;
+
 /*
  * This function executes the given command as the specified user on the
  * given host.  This returns < 0 if execution fails, and >= 0 otherwise. This
@@ -148,7 +151,7 @@ do_cmd(char *host, char *remuser, char *cmd, int *fdin, int *fdout)
 		close(pout[1]);
 
 		i = 0;
-		args[i++] = SSH_PROGRAM;
+		args[i++] = ssh_program;
 		args[i++] = "-x";
 		args[i++] = "-oFallBackToRsh no";
 		if (IPv4)
@@ -181,8 +184,8 @@ do_cmd(char *host, char *remuser, char *cmd, int *fdin, int *fdout)
 		args[i++] = cmd;
 		args[i++] = NULL;
 
-		execvp(SSH_PROGRAM, args);
-		perror(SSH_PROGRAM);
+		execvp(ssh_program, args);
+		perror(ssh_program);
 		exit(1);
 	}
 	/* Parent.  Close the other side, and return the local side. */
@@ -252,7 +255,7 @@ main(argc, argv)
 	extern int optind;
 
 	fflag = tflag = 0;
-	while ((ch = getopt(argc, argv, "dfprtvBCc:i:P:q46")) != EOF)
+	while ((ch = getopt(argc, argv, "dfprtvBCc:i:P:q46S")) != EOF)
 		switch (ch) {
 		/* User-visible flags. */
 		case '4':
@@ -270,6 +273,10 @@ main(argc, argv)
 		case 'r':
 			iamrecursive = 1;
 			break;
+		case 'S':
+			ssh_program = optarg;
+			break;
+
 		/* Server options. */
 		case 'd':
 			targetshouldbedirectory = 1;
@@ -393,7 +400,7 @@ toremote(targ, argc, argv)
 			if (*src == 0)
 				src = ".";
 			host = strchr(argv[i], '@');
-			len = strlen(SSH_PROGRAM) + strlen(argv[i]) +
+			len = strlen(ssh_program) + strlen(argv[i]) +
 				strlen(src) + (tuser ? strlen(tuser) : 0) +
 				strlen(thost) + strlen(targ) + CMDNEEDS + 32;
 			bp = xmalloc(len);
@@ -406,19 +413,19 @@ toremote(targ, argc, argv)
 				else if (!okname(suser))
 					continue;
 				(void) sprintf(bp,
-					       "%s%s -x -o'FallBackToRsh no' -n -l %s %s %s %s '%s%s%s:%s'",
-					       SSH_PROGRAM, verbose_mode ? " -v" : "",
-					       suser, host, cmd, src,
-					       tuser ? tuser : "", tuser ? "@" : "",
-					       thost, targ);
+				    "%s%s -x -o'FallBackToRsh no' -n -l %s %s %s %s '%s%s%s:%s'",
+				     ssh_program, verbose_mode ? " -v" : "",
+				     suser, host, cmd, src,
+				     tuser ? tuser : "", tuser ? "@" : "",
+				     thost, targ);
 			} else {
 				host = cleanhostname(argv[i]);
 				(void) sprintf(bp,
-					       "exec %s%s -x -o'FallBackToRsh no' -n %s %s %s '%s%s%s:%s'",
-					       SSH_PROGRAM, verbose_mode ? " -v" : "",
-					       host, cmd, src,
-					       tuser ? tuser : "", tuser ? "@" : "",
-					       thost, targ);
+				    "exec %s%s -x -o'FallBackToRsh no' -n %s %s %s '%s%s%s:%s'",
+				     ssh_program, verbose_mode ? " -v" : "",
+				     host, cmd, src,
+				     tuser ? tuser : "", tuser ? "@" : "",
+				     thost, targ);
 			}
 			if (verbose_mode)
 				fprintf(stderr, "Executing: %s\n", bp);
@@ -946,8 +953,9 @@ response()
 void
 usage()
 {
-	(void) fprintf(stderr,
-		       "usage: scp [-pqrvC46] [-P port] [-c cipher] [-i identity] f1 f2; or:\n       scp [options] f1 ... fn directory\n");
+	(void) fprintf(stderr, "usage: scp "
+	    "[-pqrvC46] [-S ssh] [-P port] [-c cipher] [-i identity] f1 f2; or:\n"
+	    "       scp [options] f1 ... fn directory\n");
 	exit(1);
 }
 
@@ -1008,7 +1016,7 @@ run_err(const char *fmt,...)
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: scp.c,v 1.33 2000/07/13 23:19:31 provos Exp $
+ *	$OpenBSD: scp.c,v 1.34 2000/08/19 02:26:08 deraadt Exp $
  */
 
 char *
