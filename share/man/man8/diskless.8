@@ -1,5 +1,5 @@
-.\"	$OpenBSD: diskless.8,v 1.2 1996/03/29 10:17:52 niklas Exp $
-.\"	$NetBSD: diskless.8,v 1.7 1996/02/18 01:10:55 hpeyerl Exp $
+.\"	$OpenBSD: diskless.8,v 1.3 1996/06/10 04:44:27 deraadt Exp $
+.\"	$NetBSD: diskless.8,v 1.7.4.1 1996/05/30 18:58:10 cgd Exp $
 .\"
 .\"
 .\" Copyright (c) 1994 Gordon W. Ross, Theo de Raadt
@@ -71,7 +71,7 @@ address and then use
 to download a boot program from whoever sent the
 .Tn RARP
 reply.  HP 300-series machines use the
-.Tn HP Remote Maintainance Protocol
+.Tn HP Remote Maintenance Protocol
 to download a boot program.
 Typical personal computers may load a
 network boot program either from diskette or
@@ -138,7 +138,7 @@ If the kernel is configured for swap on
 .Tn NFS ,
 it uses the same mechanism as for root, but uses the
 .Tn NFS
-getattr funciton to determine the size of the swap area.
+getattr function to determine the size of the swap area.
 .El
 .Sh CONFIGURATION
 Before a client can boot over the network,
@@ -176,7 +176,7 @@ is configured to run
 in the directory
 .Pa /tftpboot .
 .Pp
-If booting an HP 300-sseries machine, ensure that
+If booting an HP 300-series machine, ensure that
 .Pa /etc/rbootd.conf
 is configured properly to transfer the boot program to the client.
 An entry might look like this:
@@ -196,7 +196,7 @@ from the SunOS media) in the
 .Pa /tftpboot
 directory.
 Make a link such that the boot program is
-accessible by a file name composed of the client's IP adddress
+accessible by a file name composed of the client's IP address
 in HEX, a dot, and the architecture name (all upper case).
 For example:
 .Bd -literal -offset indent -compact
@@ -291,7 +291,7 @@ Note that "le0" above should be replaced with the name of
 the network interface that the client will use for booting.
 .Pp
 .It 10.
-Correct the critical mountpoints in the client's
+Correct the critical mount points in the client's
 .Pa /etc/fstab
 (which will be
 .Pa /export/myclient/root/etc/fstab )
