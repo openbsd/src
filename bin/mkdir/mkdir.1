@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mkdir.1,v 1.9 1999/08/17 14:04:00 aaron Exp $
+.\"	$OpenBSD: mkdir.1,v 1.10 1999/09/23 19:52:48 aaron Exp $
 .\"	$NetBSD: mkdir.1,v 1.9 1995/07/25 19:37:13 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -66,10 +66,10 @@ the specified
 The mode argument can be in any of the formats specified to the
 .Xr chmod 1
 utility.
-If a symbolic mode is specified, the operation characters
-.Dq +
+If a symbolic mode is specified, the operators
+.Ql +
 and
-.Dq -
+.Ql -
 are interpreted relative to an initial mode of
 .Dq a=rwx .
 .It Fl p
@@ -88,6 +88,23 @@ The user must have write permission in the parent directory.
 The
 .Nm
 utility exits 0 on success or >0 if an error occurred.
+.Sh EXAMPLES
+Create a directory named
+.Pa foobar :
+.Pp
+.D1 Ic mkdir foobar
+.Pp
+Create a directory named
+.Pa foobar
+and make it mode 700:
+.Pp
+.D1 Ic mkdir -m 700 myjunk
+.Pp
+Make a directory named
+.Pa cow/horse/monkey ,
+creating any non-existent intermediate directories as necessary:
+.Pp
+.D1 Ic mkdir -p cow/horse/monkey
 .Sh SEE ALSO
 .Xr chmod 1 ,
 .Xr rmdir 1 ,
