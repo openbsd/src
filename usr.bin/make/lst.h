@@ -1,4 +1,4 @@
-/*	$OpenBSD: lst.h,v 1.5 1997/07/25 21:05:34 mickey Exp $	*/
+/*	$OpenBSD: lst.h,v 1.6 1998/12/05 00:06:28 espie Exp $	*/
 /*	$NetBSD: lst.h,v 1.7 1996/11/06 17:59:12 christos Exp $	*/
 
 /*

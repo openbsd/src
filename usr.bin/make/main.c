@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.13 1998/01/28 12:41:50 niklas Exp $	*/
+/*	$OpenBSD: main.c,v 1.14 1998/12/05 00:06:28 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.13 1998/01/28 12:41:50 niklas Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.14 1998/12/05 00:06:28 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -94,6 +94,7 @@ static char rcsid[] = "$OpenBSD: main.c,v 1.13 1998/01/28 12:41:50 niklas Exp $"
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #ifdef __STDC__
 #include <stdarg.h>
 #else
@@ -375,6 +376,9 @@ Main_ParseArgLine(line)
 {
 	char **argv;			/* Manufactured argument vector */
 	int argc;			/* Number of arguments in argv */
+	char *args;			/* Space used by the args */
+	char *buf, *p1;
+	char *argv0 = Var_Value(".MAKE", VAR_GLOBAL, &p1);
 
 	if (line == NULL)
 		return;
@@ -383,8 +387,16 @@ Main_ParseArgLine(line)
 	if (!*line)
 		return;
 
-	argv = brk_string(line, &argc, TRUE);
+	buf = emalloc(strlen(line) + strlen(argv0) + 2);
+	(void)sprintf(buf, "%s %s", argv0, line);
+	efree(p1);
+
+	argv = brk_string(buf, &argc, TRUE, &args);
+	free(buf);
 	MainParseArgs(argc, argv);
+
+	free(args);
+	free(argv);
 }
 
 char *
@@ -592,7 +604,6 @@ main(argc, argv)
 				 * directories */
 	Var_Init();		/* As well as the lists of variables for
 				 * parsing arguments */
-        str_init();
 	if (objdir != curdir)
 		Dir_AddDir(dirSearchPath, curdir);
 	Var_Set(".CURDIR", curdir, VAR_GLOBAL);
@@ -605,6 +616,7 @@ main(argc, argv)
 	 *	MFLAGS also gets initialized empty, for compatibility.
 	 */
 	Var_Set("MAKE", argv[0], VAR_GLOBAL);
+	Var_Set(".MAKE", argv[0], VAR_GLOBAL);
 	Var_Set(MAKEFLAGS, "", VAR_GLOBAL);
 	Var_Set("MFLAGS", "", VAR_GLOBAL);
 	Var_Set("MACHINE", machine, VAR_GLOBAL);
@@ -700,8 +712,7 @@ main(argc, argv)
 	(void)ReadMakefile(".depend", NULL);
 
 	Var_Append("MFLAGS", Var_Value(MAKEFLAGS, VAR_GLOBAL, &p1), VAR_GLOBAL);
-	if (p1)
-	    free(p1);
+	efree(p1);
 
 	/* Install all the flags into the MAKE envariable. */
 	if (((p = Var_Value(MAKEFLAGS, VAR_GLOBAL, &p1)) != NULL) && *p)
@@ -710,8 +721,7 @@ main(argc, argv)
 #else
 		setenv("MAKE", p, 1);
 #endif
-	if (p1)
-	    free(p1);
+	efree(p1);
 
 	/*
 	 * For compatibility, look at the directories in the VPATH variable
@@ -765,8 +775,7 @@ main(argc, argv)
 					  VAR_GLOBAL, &p1);
 
 			printf("%s\n", value ? value : "");
-			if (p1)
-				free(p1);
+			efree(p1);
 		}
 	}
 
@@ -816,10 +825,10 @@ main(argc, argv)
 	Suff_End();
         Targ_End();
 	Arch_End();
-	str_end();
 	Var_End();
 	Parse_End();
 	Dir_End();
+	Job_End();
 
 	if (queryFlag && outOfDate)
 		return(1);

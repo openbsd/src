@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.11 1998/07/13 02:11:37 millert Exp $	*/
+/*	$OpenBSD: job.c,v 1.12 1998/12/05 00:06:27 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: job.c,v 1.11 1998/07/13 02:11:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: job.c,v 1.12 1998/12/05 00:06:27 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -75,6 +75,8 @@ static char rcsid[] = "$OpenBSD: job.c,v 1.11 1998/07/13 02:11:37 millert Exp $"
  *	    	  	    	Hence, the makefile must have been parsed
  *	    	  	    	before this function is called.
  *
+ *	Job_End  	    	Cleanup any memory used.
+ *
  *	Job_Full  	    	Return TRUE if the job table is filled.
  *
  *	Job_Empty 	    	Return TRUE if the job table is completely
@@ -84,7 +86,7 @@ static char rcsid[] = "$OpenBSD: job.c,v 1.11 1998/07/13 02:11:37 millert Exp $"
  *	    	  	    	the line as a shell specification. Returns
  *	    	  	    	FAILURE if the spec was incorrect.
  *
- *	Job_End	  	    	Perform any final processing which needs doing.
+ *	Job_Finish  	    	Perform any final processing which needs doing.
  *	    	  	    	This includes the execution of any commands
  *	    	  	    	which have been/were attached to the .END
  *	    	  	    	target. It should only be called when the
@@ -215,7 +217,8 @@ static Shell 	*commandShell = &shells[DEFSHELL];/* this is the shell to
 						   * Job_ParseShell function */
 static char   	*shellPath = NULL,		  /* full pathname of
 						   * executable image */
-               	*shellName;	      	      	  /* last component of shell */
+               	*shellName = NULL,     	      	  /* last component of shell */
+		*shellArgv = NULL;		  /* Custom shell args */
 
 
 static int  	maxJobs;    	/* The most children we can run at once */
@@ -1111,8 +1114,7 @@ Job_CheckCommands(gn, abortProc)
 	     */
 	    Make_HandleUse(DEFAULT, gn);
 	    Var_Set(IMPSRC, Var_Value(TARGET, gn, &p1), gn);
-	    if (p1)
-		free(p1);
+	    efree(p1);
 	} else if (Dir_MTime(gn) == 0) {
 	    /*
 	     * The node wasn't the target of an operator we have no .DEFAULT
@@ -2681,14 +2683,17 @@ Job_ParseShell(line)
     while (isspace(*line)) {
 	line++;
     }
-    words = brk_string(line, &wordCount, TRUE);
+
+    efree(shellArgv);
+	 	  
+    words = brk_string(line, &wordCount, TRUE, &shellArgv);
 
     memset((Address)&newShell, 0, sizeof(newShell));
 
     /*
      * Parse the specification by keyword
      */
-    for (path = NULL, argc = wordCount - 1, argv = words + 1;
+    for (path = NULL, argc = wordCount - 1, argv = words;
 	 argc != 0;
 	 argc--, argv++) {
 	     if (strncmp(*argv, "path=", 5) == 0) {
@@ -2718,6 +2723,7 @@ Job_ParseShell(line)
 		 } else {
 		     Parse_Error(PARSE_FATAL, "Unknown keyword \"%s\"",
 				  *argv);
+		     free(words);
 		     return(FAILURE);
 		 }
 		 fullSpec = TRUE;
@@ -2937,7 +2943,7 @@ JobInterrupt(runINTERRUPT, signo)
 
 /*
  *-----------------------------------------------------------------------
- * Job_End --
+ * Job_Finish --
  *	Do final processing such as the running of the commands
  *	attached to the .END target.
  *
@@ -2950,7 +2956,7 @@ JobInterrupt(runINTERRUPT, signo)
  *-----------------------------------------------------------------------
  */
 int
-Job_End()
+Job_Finish()
 {
     if (postCommands != NILGNODE && !Lst_IsEmpty(postCommands->commands)) {
 	if (errors) {
@@ -2970,6 +2976,24 @@ Job_End()
     return(errors);
 }
 
+/*-
+ *-----------------------------------------------------------------------
+ * Job_End --
+ *	Cleanup any memory used by the jobs module
+ *
+ * Results:
+ *	None.
+ *
+ * Side Effects:
+ *	Memory is freed
+ *-----------------------------------------------------------------------
+ */
+void
+Job_End()
+{
+    efree(shellArgv);
+}
+ 
 /*-
  *-----------------------------------------------------------------------
  * Job_Wait --

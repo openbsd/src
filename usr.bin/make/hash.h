@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash.h,v 1.3 1996/11/30 21:08:55 millert Exp $	*/
+/*	$OpenBSD: hash.h,v 1.4 1998/12/05 00:06:27 espie Exp $	*/
 /*	$NetBSD: hash.h,v 1.5 1996/11/06 17:59:07 christos Exp $	*/
 
 /*

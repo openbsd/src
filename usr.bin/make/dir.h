@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.h,v 1.3 1996/11/30 21:08:54 millert Exp $	*/
+/*	$OpenBSD: dir.h,v 1.4 1998/12/05 00:06:27 espie Exp $	*/
 /*	$NetBSD: dir.h,v 1.4 1996/11/06 17:59:05 christos Exp $	*/
 
 /*

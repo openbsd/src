@@ -1,4 +1,4 @@
-/*	$OpenBSD: arch.c,v 1.13 1998/07/13 00:41:34 millert Exp $	*/
+/*	$OpenBSD: arch.c,v 1.14 1998/12/05 00:06:26 espie Exp $	*/
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: arch.c,v 1.13 1998/07/13 00:41:34 millert Exp $";
+static char rcsid[] = "$OpenBSD: arch.c,v 1.14 1998/12/05 00:06:26 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -110,6 +110,15 @@ static char rcsid[] = "$OpenBSD: arch.c,v 1.13 1998/07/13 00:41:34 millert Exp $
 #include    "dir.h"
 #include    "config.h"
 
+#ifdef TARGET_MACHINE
+#undef MACHINE
+#define MACHINE TARGET_MACHINE
+#endif
+#ifdef TARGET_MACHINE_ARCH
+#undef MACHINE_ARCH
+#define MACHINE_ARCH TARGET_MACHINE_ARCH
+#endif
+
 static Lst	  archives;   /* Lst of archives we've already examined */
 
 typedef struct Arch {
@@ -159,8 +168,7 @@ ArchFree(ap)
 	free((Address) Hash_GetValue (entry));
 
     free(a->name);
-    if (a->fnametab)
-	free(a->fnametab);
+    efree(a->fnametab);
     Hash_DeleteTable(&a->members);
     free((Address) a);
 }
@@ -650,8 +658,7 @@ ArchStatMember (archive, member, hash)
 badarch:
     fclose (arch);
     Hash_DeleteTable (&ar->members);
-    if (ar->fnametab)
-	free(ar->fnametab);
+    efree(ar->fnametab);
     free ((Address)ar);
     return (NULL);
 }
@@ -727,7 +734,8 @@ ArchSVR4Entry(ar, name, size, arch)
 		break;
 	    }
 	if (DEBUG(ARCH)) {
-	    printf("Found svr4 archive name table with %d entries\n", entry);
+	    printf("Found svr4 archive name table with %lu entries\n", 
+		 	(u_long)entry);
 	}
 	return 0;
     }
@@ -744,8 +752,8 @@ ArchSVR4Entry(ar, name, size, arch)
     }
     if (entry >= ar->fnamesize) {
 	if (DEBUG(ARCH)) {
-	    printf("SVR4 entry offset %s is greater than %d\n",
-		   name, ar->fnamesize);
+	    printf("SVR4 entry offset %s is greater than %lu\n",
+		   name, (u_long)ar->fnamesize);
 	}
 	return 2;
     }
@@ -932,12 +940,10 @@ Arch_Touch (gn)
     char *p1, *p2;
 
     arch = ArchFindMember(Var_Value (ARCHIVE, gn, &p1),
-			  Var_Value (TARGET, gn, &p2),
+			  Var_Value (MEMBER, gn, &p2),
 			  &arh, "r+");
-    if (p1)
-	free(p1);
-    if (p2)
-	free(p2);
+    efree(p1);
+    efree(p2);
     sprintf(arh.ar_date, "%-12ld", (long) now);
 
     if (arch != NULL) {
@@ -997,24 +1003,22 @@ Arch_TouchLib (gn)
  *
  *-----------------------------------------------------------------------
  */
-int
+time_t
 Arch_MTime (gn)
     GNode	  *gn;	      /* Node describing archive member */
 {
     struct ar_hdr *arhPtr;    /* Header of desired member */
-    int		  modTime;    /* Modification time as an integer */
+    time_t	  modTime;    /* Modification time as an integer */
     char *p1, *p2;
 
     arhPtr = ArchStatMember (Var_Value (ARCHIVE, gn, &p1),
-			     Var_Value (TARGET, gn, &p2),
+			     Var_Value (MEMBER, gn, &p2),
 			     TRUE);
-    if (p1)
-	free(p1);
-    if (p2)
-	free(p2);
+    efree(p1);
+    efree(p2);
 
     if (arhPtr != NULL) {
-	modTime = (int) strtol(arhPtr->ar_date, NULL, 10);
+	modTime = (time_t) strtol(arhPtr->ar_date, NULL, 10);
     } else {
 	modTime = 0;
     }
@@ -1037,7 +1041,7 @@ Arch_MTime (gn)
  *
  *-----------------------------------------------------------------------
  */
-int
+time_t
 Arch_MemMTime (gn)
     GNode   	  *gn;
 {
@@ -1061,10 +1065,14 @@ Arch_MemMTime (gn)
 	     * child. We keep searching its parents in case some other
 	     * parent requires this child to exist...
 	     */
-	    nameStart = strchr (pgn->name, '(') + 1;
-	    nameEnd = strchr (nameStart, ')');
+		 /* OpenBSD: less ugly check for nameStart == NULL */
+	    if ((nameStart = strchr (pgn->name, '(') ) != NULL) {
+	    	nameStart++;
+	        nameEnd = strchr (nameStart, ')');
+	    } else
+	    	nameEnd = NULL;
 
-	    if (pgn->make && nameStart != (char *)1 && nameEnd != NULL &&
+	    if (pgn->make && nameEnd != NULL &&
 		strncmp(nameStart, gn->name, nameEnd - nameStart) == 0) {
 				     gn->mtime = Arch_MTime(pgn);
 	    }

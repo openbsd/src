@@ -1,4 +1,4 @@
-/*	$OpenBSD: sprite.h,v 1.4 1998/02/22 19:57:34 mickey Exp $	*/
+/*	$OpenBSD: sprite.h,v 1.5 1998/12/05 00:06:29 espie Exp $	*/
 /*	$NetBSD: sprite.h,v 1.6 1996/11/06 17:59:22 christos Exp $	*/
 
 /*

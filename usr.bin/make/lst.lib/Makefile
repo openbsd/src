@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 1997/03/03 05:21:32 flipk Exp $
+#	$OpenBSD: Makefile,v 1.5 1998/12/05 00:06:31 espie Exp $
 #	$NetBSD: Makefile,v 1.4 1996/11/06 17:59:31 christos Exp $
 
 OBJ=lstAppend.o lstDupl.o lstInit.o lstOpen.o lstAtEnd.o lstEnQueue.o \

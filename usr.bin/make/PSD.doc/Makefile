@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 1996/06/26 05:36:40 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.3 1998/12/05 00:06:30 espie Exp $
 #	$NetBSD: Makefile,v 1.2 1995/06/14 15:20:23 christos Exp $
 
 DIR=	psd/12.make

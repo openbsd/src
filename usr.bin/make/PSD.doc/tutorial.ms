@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tutorial.ms,v 1.3 1996/03/27 19:32:44 niklas Exp $
+.\"	$OpenBSD: tutorial.ms,v 1.4 1998/12/05 00:06:30 espie Exp $
 .\"	$NetBSD: tutorial.ms,v 1.3 1996/03/06 00:15:31 christos Exp $
 .\" Copyright (c) 1988, 1989 by Adam de Boor
 .\" Copyright (c) 1989 by Berkeley Softworks

@@ -1,4 +1,4 @@
-/*	$OpenBSD: suff.c,v 1.10 1998/07/03 18:51:14 millert Exp $	*/
+/*	$OpenBSD: suff.c,v 1.11 1998/12/05 00:06:29 espie Exp $	*/
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-static char rcsid[] = "$OpenBSD: suff.c,v 1.10 1998/07/03 18:51:14 millert Exp $";
+static char rcsid[] = "$OpenBSD: suff.c,v 1.11 1998/12/05 00:06:29 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -1730,8 +1730,7 @@ SuffFindArchiveDeps(gn, slst)
     for (i = (sizeof(copy)/sizeof(copy[0]))-1; i >= 0; i--) {
 	char *p1;
 	Var_Set(copy[i], Var_Value(copy[i], mem, &p1), gn);
-	if (p1)
-	    free(p1);
+	efree(p1);
 
     }
 
@@ -2065,8 +2064,7 @@ sfnd_abort:
 	    gn->suffix = (targ == NULL) ? NULL : targ->suff;
 	    if (gn->suffix)
 		gn->suffix->refCount++;
-	    if (gn->path != NULL)
-		free(gn->path);
+	    efree(gn->path);
 	    gn->path = estrdup(gn->name);
 	}
 
@@ -2166,8 +2164,7 @@ sfnd_abort:
     /*
      * So Dir_MTime doesn't go questing for it...
      */
-    if (gn->path)
-	free(gn->path);
+    efree(gn->path);
     gn->path = estrdup(gn->name);
 
     /*

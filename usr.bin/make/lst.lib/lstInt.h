@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstInt.h,v 1.5 1998/02/22 19:57:36 mickey Exp $	*/
+/*	$OpenBSD: lstInt.h,v 1.6 1998/12/05 00:06:32 espie Exp $	*/
 /*	$NetBSD: lstInt.h,v 1.7 1996/11/06 17:59:44 christos Exp $	*/
 
 /*

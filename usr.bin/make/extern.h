@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.6 1996/11/30 21:09:01 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.7 1998/12/05 00:06:28 espie Exp $	*/
 /*	$NetBSD: nonints.h,v 1.12 1996/11/06 17:59:19 christos Exp $	*/
 
 /*-
@@ -45,8 +45,8 @@
 ReturnStatus Arch_ParseArchive __P((char **, Lst, GNode *));
 void Arch_Touch __P((GNode *));
 void Arch_TouchLib __P((GNode *));
-int Arch_MTime __P((GNode *));
-int Arch_MemMTime __P((GNode *));
+time_t Arch_MTime __P((GNode *));
+time_t Arch_MemMTime __P((GNode *));
 void Arch_FindLib __P((GNode *, Lst));
 Boolean Arch_LibOODate __P((GNode *));
 void Arch_Init __P((void));
@@ -76,6 +76,9 @@ int PrintAddr __P((ClientData, ClientData));
 void Finish __P((int));
 char *estrdup __P((const char *));
 void *emalloc __P((size_t));
+/* efree(x) works when x==NULL. STDC behavior, may need some different
+ * definition for cross-builds on deficient systems */
+#define efree	free
 void *erealloc __P((void *, size_t));
 void enomem __P((void));
 int eunlink __P((const char *));
@@ -96,7 +99,7 @@ Lst Parse_MainName __P((void));
 void str_init __P((void));
 void str_end __P((void));
 char *str_concat __P((char *, char *, int));
-char **brk_string __P((char *, int *, Boolean));
+char **brk_string __P((char *, int *, Boolean, char **));
 char *Str_FindSubstring __P((char *, char *));
 int Str_Match __P((char *, char *));
 char *Str_SYSVMatch __P((char *, char *, int *len));

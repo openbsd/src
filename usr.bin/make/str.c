@@ -1,4 +1,4 @@
-/*	$OpenBSD: str.c,v 1.6 1998/03/07 18:34:50 millert Exp $	*/
+/*	$OpenBSD: str.c,v 1.7 1998/12/05 00:06:29 espie Exp $	*/
 /*	$NetBSD: str.c,v 1.13 1996/11/06 17:59:23 christos Exp $	*/
 
 /*-
@@ -43,45 +43,11 @@
 #if 0
 static char     sccsid[] = "@(#)str.c	5.8 (Berkeley) 6/1/90";
 #else
-static char rcsid[] = "$OpenBSD: str.c,v 1.6 1998/03/07 18:34:50 millert Exp $";
+static char rcsid[] = "$OpenBSD: str.c,v 1.7 1998/12/05 00:06:29 espie Exp $";
 #endif
 #endif				/* not lint */
 
 #include "make.h"
-
-static char **argv, *buffer;
-static int argmax, curlen;
-
-/*
- * str_init --
- *	Initialize the strings package
- *
- */
-void
-str_init()
-{
-    char *p1;
-    argv = (char **)emalloc(((argmax = 50) + 1) * sizeof(char *));
-    argv[0] = Var_Value(".MAKE", VAR_GLOBAL, &p1);
-}
-
-
-/*
- * str_end --
- *	Cleanup the strings package
- *
- */
-void
-str_end()
-{
-    if (argv) {
-	if (argv[0])
-	    free(argv[0]);
-	free((Address) argv);
-    }
-    if (buffer)
-	free(buffer);
-}
 
 /*-
  * str_concat --
@@ -140,33 +106,33 @@ str_concat(s1, s2, flags)
  *	the first word is always the value of the .MAKE variable.
  */
 char **
-brk_string(str, store_argc, expand)
+brk_string(str, store_argc, expand, buffer)
 	register char *str;
 	int *store_argc;
 	Boolean expand;
+	char **buffer;
 {
 	register int argc, ch;
 	register char inquote, *p, *start, *t;
 	int len;
+	int argmax = 50, curlen = 0;
+    	char **argv = (char **)emalloc((argmax + 1) * sizeof(char *));
 
 	/* skip leading space chars. */
 	for (; *str == ' ' || *str == '\t'; ++str)
 		continue;
 
 	/* allocate room for a copy of the string */
-	if ((len = strlen(str) + 1) > curlen) {
-		if (buffer)
-		    free(buffer);
-		buffer = emalloc(curlen = len);
-	}
+	if ((len = strlen(str) + 1) > curlen)
+		*buffer = emalloc(curlen = len);
 
 	/*
 	 * copy the string; at the same time, parse backslashes,
 	 * quotes and build the argument list.
 	 */
-	argc = 1;
+	argc = 0;
 	inquote = '\0';
-	for (p = str, start = t = buffer;; ++p) {
+	for (p = str, start = t = *buffer;; ++p) {
 		switch(ch = *p) {
 		case '"':
 		case '\'':

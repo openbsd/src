@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.boot,v 1.5 1997/09/21 11:49:53 deraadt Exp $
+#	$OpenBSD: Makefile.boot,v 1.6 1998/12/05 00:06:26 espie Exp $
 #
 # a very simple makefile...
 #
@@ -12,7 +12,7 @@
 
 MACHINE=sun
 MACHINE_ARCH=sparc
-CFLAGS= -I. -DMACHINE=\"${MACHINE}\" -DMACHINE_ARCH=\"${MACHINE_ARCH}\" \
+CFLAGS= -I. -DTARGET_MACHINE=\"${MACHINE}\" -DTARGET_MACHINE_ARCH=\"${MACHINE_ARCH}\" \
 	-DMAKE_BOOTSTRAP
 LIBS=
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: make.h,v 1.12 1998/06/29 19:57:10 art Exp $	*/
+/*	$OpenBSD: make.h,v 1.13 1998/12/05 00:06:28 espie Exp $	*/
 /*	$NetBSD: make.h,v 1.15 1997/03/10 21:20:00 christos Exp $	*/
 
 /*
@@ -146,8 +146,8 @@ typedef struct GNode {
 				 * made */
     int             unmade;    	/* The number of unmade children */
 
-    int             mtime;     	/* Its modification time */
-    int        	    cmtime;    	/* The modification time of its youngest
+    time_t          mtime;     	/* Its modification time */
+    time_t     	    cmtime;    	/* The modification time of its youngest
 				 * child */
 
     Lst     	    iParents;  	/* Links to parents for which this is an
@@ -212,6 +212,7 @@ typedef struct GNode {
 #define OP_NOTMAIN	0x00008000  /* The node is exempt from normal 'main
 				     * target' processing in parse.c */
 #define OP_PHONY	0x00010000  /* Not a file target; run always */
+#define OP_NOPATH	0x00020000  /* Don't search for file in the path */
 /* Attributes applied by PMake */
 #define OP_TRANSFORM	0x80000000  /* The node is a transformation rule */
 #define OP_MEMBER 	0x40000000  /* Target is a member of an archive */
@@ -228,6 +229,8 @@ typedef struct GNode {
  * object of a dependency operator
  */
 #define OP_NOP(t)	(((t) & OP_OPMASK) == 0x00000000)
+
+#define OP_NOTARGET (OP_NOTMAIN|OP_USE|OP_EXEC|OP_TRANSFORM)
 
 /*
  * The TARG_ constants are used when calling the Targ_FindNode and

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.14 1998/09/26 19:55:05 aaron Exp $
+.\"	$OpenBSD: make.1,v 1.15 1998/12/05 00:06:28 espie Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -42,7 +42,7 @@
 .Nd maintain program dependencies
 .Sh SYNOPSIS
 .Nm make
-.Op Fl Beiknqrst
+.Op Fl BPSeiknqrst
 .Op Fl D Ar variable
 .Op Fl d Ar flags
 .Op Fl f Ar makefile
@@ -83,6 +83,9 @@ The options are as follows:
 .It Fl B
 Try to be backwards compatible by executing a single shell per command and
 by executing the commands to make the sources of a dependency line in sequence.
+This is turned on by default unless
+.Fl j
+is used.
 .It Fl D Ar variable
 Define
 .Ar variable
@@ -103,6 +106,9 @@ Print debugging information about archive searching and caching.
 Print debugging information about conditional evaluation.
 .It Ar d
 Print debugging information about directory searching and caching.
+.It Ar f
+Print debugging information about the execution of for loops. Currently a
+no-op.
 .It Ar "g1"
 Print the input graph before making anything.
 .It Ar "g2"
@@ -165,11 +171,22 @@ option).
 .It Fl n
 Display the commands that would have been executed, but do not actually
 execute them.
+.It Fl P
+Collate the output of a given job and display it only when the job finishes, 
+instead of mixing the output of parallel jobs together.  
+This option has no effect unless 
+.Fl j
+is used too.
 .It Fl q
 Do not execute any commands, but exit 0 if the specified targets are
 up-to-date and 1, otherwise.
 .It Fl r
 Do not use the built-in rules specified in the system makefile.
+.It Fl S
+Stop processing when an error is encountered.  Default
+behavior. This is needed to negate the
+.Fl k
+option during recursive builds.
 .It Fl s
 Do not echo any commands as they are executed.
 Equivalent to specifying
@@ -240,13 +257,13 @@ The target will not be removed if
 is interrupted.
 .El
 .Pp
-Targets and sources may contain the shell wildcard values
+Targets and sources may contain the shell wildcard expressions
 .Ql ? ,
 .Ql * ,
 .Ql []
 and
 .Ql {} .
-The values
+The expressions
 .Ql ? ,
 .Ql *
 and
@@ -254,7 +271,7 @@ and
 may only be used as part of the final
 component of the target or source, and must be used to describe existing
 files.
-The value
+The expression
 .Ql {}
 need not necessarily be used to describe existing files.
 Expansion is in directory order, not alphabetically as done in the shell.
@@ -347,13 +364,15 @@ The seven local variables are as follows:
 The list of all sources for this target; also known as
 .Ql Va \&> .
 .It Va .ARCHIVE
-The name of the archive file.
+The name of the archive file; also known as
+.Ql Va \&! .
 .It Va .IMPSRC
 The name/path of the source from which the target is to be transformed
 (the ``implied'' source); also known as
 .Ql Va \&< .
 .It Va .MEMBER
-The name of the archive member.
+The name of the archive member; also known as
+.Ql Va \&% .
 .It Va .OODATE
 The list of sources for this target that were deemed out-of-date; also
 known as
@@ -369,6 +388,9 @@ The name of the target; also known as
 .Pp
 The shorter forms
 .Ql Va @ ,
+.Ql Va ! ,
+.Ql Va \&< ,
+.Ql Va \&% ,
 .Ql Va ? ,
 .Ql Va \&> ,
 and
@@ -396,10 +418,12 @@ These variables are
 .Ql Va .ARCHIVE ,
 and
 .Ql Va .MEMBER .
+.El
 .Pp
 In addition,
 .Nm make
-sets or knows about the following variables:
+sets or knows about the following internal variables, or environment 
+variables:
 .Bl -tag -width MAKEFLAGS
 .It Va \&$
 A single dollar sign
@@ -423,8 +447,14 @@ At startup,
 .Nm make
 searches for an alternate directory to place target files -- it
 will attempt to change into this special directory.
-.Nm make
-first tries to change into the directory named by the environment
+.Nm make 
+first tries to change into the prepend the path named by the environment
+variable
+.Ev MAKEOBJDIRPREFIX
+to 
+.Va .CURDIR .
+If that fails, it then
+tries to change into the directory named by the environment
 variable
 .Ev MAKEOBJDIR .
 If that fails, it tries to change into the directory named
@@ -441,21 +471,29 @@ directory, it next tries the directory named
 Finally, if none of the above directories are available
 .Nm make
 will settle for and use the current directory.
-.It Ev MAKEFLAGS
+.It Va .MAKEFLAGS
 The environment variable
 .Ev MAKEFLAGS
 may contain anything that
 may be specified on
 .Nm make Ns 's
-command line.
+command line. Its contents are stored in 
+.Nm make Ns 's
+.Va .MAKEFLAGS 
+variable.
 Anything specified on
 .Nm make Ns 's
 command line is appended to the
-.Ev MAKEFLAGS
+.Va .MAKEFLAGS
 variable which is then
-entered into the environment for all programs which
+entered into the environment as 
+.Ev MAKEFLAGS
+for all programs which
 .Nm make
 executes.
+.It Va MFLAGS
+A shorter synonym for 
+.Va .MAKEFLAGS .
 .It Ev PWD
 Alternate path to the current directory.
 .Nm make
@@ -473,11 +511,21 @@ to the value of
 .Ev PWD
 instead.
 .Ev PWD
-is set to the value of
+is always set to the value of
 .Ql Va .OBJDIR
 for all programs which
 .Nm make
 executes.
+.It Va .TARGETS
+todo
+.It Va .INCLUDES
+todo
+.It Va .LIBS
+todo
+.It Va MACHINE
+todo
+.It Va MACHINE_ARCH
+todo
 .El
 .Pp
 Variable expansion may be modified to select or modify each word of the
@@ -1001,18 +1049,34 @@ command in the file.
 Each source specifies a suffix to
 .Nm make .
 If no sources are specified, any previous specified suffices are deleted.
+.Sh COMPATIBILITY
+Older versions of 
+.Nm make
+used 
+.Ev MAKE
+instead of 
+.Ev MAKEFLAGS .
+This was removed for POSIX compatibility.
+The internal variable 
+.Va MAKE
+is set to the same value as
+.Va .MAKE ,
+support for this may be removed in the future.
 .Sh ENVIRONMENT
 .Nm make
-utilizes the following environment variables, if they exist:
+uses the following environment variables, if they exist:
 .Ev MACHINE ,
-.Ev MAKE ,
+.Ev MACHINE_ARCH ,
 .Ev MAKEFLAGS ,
 .Ev MAKEOBJDIR ,
+.Ev MAKEOBJDIRPREFIX ,
 and
 .Ev PWD .
 .Sh FILES
 .Bl -tag -width /usr/share/mk -compact
 .It Pa .depend
+list of dependencies
+.It Pa BSDmakefile
 list of dependencies
 .It Pa Makefile
 list of dependencies
@@ -1022,6 +1086,9 @@ list of dependencies
 system makefile
 .It Pa /usr/share/mk
 system makefile directory
+.IT Pa /usr/obj
+default 
+.Ev MAKEOBJDIRPREFIX directory.
 .El
 .Sh SEE ALSO
 .Xr mkdep 1

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.16 1998/07/02 20:47:26 millert Exp $	*/
+/*	$OpenBSD: parse.c,v 1.17 1998/12/05 00:06:29 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: parse.c,v 1.16 1998/07/02 20:47:26 millert Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.17 1998/12/05 00:06:29 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -164,6 +164,7 @@ typedef enum {
     Main,	    /* .MAIN and we don't have anything user-specified to
 		     * make */
     NoExport,	    /* .NOEXPORT */
+    NoPath,	    /* .NOPATH */
     Not,	    /* Not special */
     NotParallel,    /* .NOTPARALELL */
     Null,   	    /* .NULL */
@@ -216,6 +217,9 @@ static struct {
 { ".MAKE",  	  Attribute,   	OP_MAKE },
 { ".MAKEFLAGS",	  MFlags,   	0 },
 { ".MFLAGS",	  MFlags,   	0 },
+#if 0	/* basic scaffolding for NOPATH, not working yet */
+{ ".NOPATH",	  NoPath,	OP_NOPATH },
+#endif
 { ".NOTMAIN",	  Attribute,   	OP_NOTMAIN },
 { ".NOTPARALLEL", NotParallel,	0 },
 { ".NO_PARALLEL", NotParallel,	0 },
@@ -235,6 +239,8 @@ static struct {
 { ".WAIT",	  Wait, 	0 },
 };
 
+static void ParseErrorInternal __P((char *, size_t, int, char *, ...));
+static void ParseVErrorInternal __P((char *, size_t, int, char *, va_list));
 static int ParseFindKeyword __P((char *));
 static int ParseLinkSrc __P((ClientData, ClientData));
 static int ParseDoOp __P((ClientData, ClientData));
@@ -297,7 +303,7 @@ ParseFindKeyword (str)
 }
 
 /*-
- * Parse_Error  --
+ * ParseVErrorInternal  --
  *	Error message abort function for parsing. Prints out the context
  *	of the error (line number and file) as well as the message with
  *	two optional arguments.
@@ -307,6 +313,77 @@ ParseFindKeyword (str)
  *
  * Side Effects:
  *	"fatals" is incremented if the level is PARSE_FATAL.
+ */
+/* VARARGS */
+static void
+#ifdef __STDC__
+ParseVErrorInternal(char *cfname, size_t clineno, int type, char *fmt,
+    va_list ap)
+#else
+ParseVErrorInternal(va_alist)
+	va_dcl
+#endif
+{
+	(void)fprintf(stderr, "\"%s\", line %d: ", cfname, (int) clineno);
+	if (type == PARSE_WARNING)
+		(void)fprintf(stderr, "warning: ");
+	(void)vfprintf(stderr, fmt, ap);
+	va_end(ap);
+	(void)fprintf(stderr, "\n");
+	(void)fflush(stderr);
+	if (type == PARSE_FATAL)
+		fatals += 1;
+}
+
+/*-
+ * ParseErrorInternal  --
+ *	Error function
+ *
+ * Results:
+ *	None
+ *
+ * Side Effects:
+ *	None
+ */
+/* VARARGS */
+static void
+#ifdef __STDC__
+ParseErrorInternal(char *cfname, size_t clineno, int type, char *fmt, ...)
+#else
+ParseErrorInternal(va_alist)
+	va_dcl
+#endif
+{
+	va_list ap;
+#ifdef __STDC__
+	va_start(ap, fmt);
+#else
+	int type;		/* Error type (PARSE_WARNING, PARSE_FATAL) */
+	char *fmt;
+	char *cfname;
+	size_t clineno;
+
+	va_start(ap);
+	cfname = va_arg(ap, char *);
+	clineno = va_arg(ap, size_t);
+	type = va_arg(ap, int);
+	fmt = va_arg(ap, char *);
+#endif
+
+	ParseVErrorInternal(cfname, clineno, type, fmt, ap);
+	va_end(ap);
+}
+
+/*-
+ * Parse_Error  --
+ *	External interface to ParseErrorInternal; uses the default filename
+ *	Line number.
+ *
+ * Results:
+ *	None
+ *
+ * Side Effects:
+ *	None
  */
 /* VARARGS */
 void
@@ -329,15 +406,7 @@ Parse_Error(va_alist)
 	fmt = va_arg(ap, char *);
 #endif
 
-	(void)fprintf(stderr, "\"%s\", line %d: ", fname, lineno);
-	if (type == PARSE_WARNING)
-		(void)fprintf(stderr, "warning: ");
-	(void)vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	(void)fprintf(stderr, "\n");
-	(void)fflush(stderr);
-	if (type == PARSE_FATAL)
-		fatals += 1;
+	ParseVErrorInternal(fname, lineno, type, fmt, ap);
 }
 
 /*-
@@ -627,7 +696,7 @@ ParseFindMain(gnp, dummy)
     ClientData    dummy;
 {
     GNode   	  *gn = (GNode *) gnp;
-    if ((gn->type & (OP_NOTMAIN|OP_USE|OP_EXEC|OP_TRANSFORM)) == 0) {
+    if ((gn->type & OP_NOTARGET) == 0) {
 	mainNode = gn;
 	Targ_SetMain(gn);
 	return (dummy ? 1 : 1);
@@ -836,6 +905,7 @@ ParseDoDependency (line)
 		 *	    	    	use Make_HandleUse to actually
 		 *	    	    	apply the .DEFAULT commands.
 		 *	.PHONY		The list of targets
+		 *	.NOPATH		Don't search for file in the path
 		 *	.BEGIN
 		 *	.END
 		 *	.INTERRUPT  	Are not to be considered the

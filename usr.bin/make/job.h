@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.h,v 1.4 1997/06/15 21:29:23 millert Exp $	*/
+/*	$OpenBSD: job.h,v 1.5 1998/12/05 00:06:28 espie Exp $	*/
 /*	$NetBSD: job.h,v 1.5 1996/11/06 17:59:10 christos Exp $	*/
 
 /*
@@ -228,7 +228,8 @@ void Job_Init __P((int, int));
 Boolean Job_Full __P((void));
 Boolean Job_Empty __P((void));
 ReturnStatus Job_ParseShell __P((char *));
-int Job_End __P((void));
+int Job_Finish __P((void));
+void Job_End __P((void));
 void Job_Wait __P((void));
 void Job_AbortAll __P((void));
 void JobFlagForMigration __P((int));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: compat.c,v 1.11 1998/05/13 06:54:58 deraadt Exp $	*/
+/*	$OpenBSD: compat.c,v 1.12 1998/12/05 00:06:27 espie Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: compat.c,v 1.11 1998/05/13 06:54:58 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: compat.c,v 1.12 1998/12/05 00:06:27 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -114,10 +114,9 @@ CompatInterrupt (signo)
 	char 	  *file = Var_Value (TARGET, curTarg, &p1);
 
 	if (!noExecute && eunlink(file) != -1) {
-	    printf ("*** %s removed\n", file);
+	    Error("*** %s removed\n", file);
 	}
-	if (p1)
-	    free(p1);
+	efree(p1);
 
 	/*
 	 * Run .INTERRUPT only if hit with interrupt signal
@@ -138,49 +137,49 @@ CompatInterrupt (signo)
  * shellneed --
  *	
  * Results:
- *	Returns 1 if a specified line must be executed by the shell,
- *	0 if it can be run via execve, and -1 if the command is a no-op.
+ *	Returns 1 if a specified set of arguments 
+ *      must be executed by the shell,
+ *	0 if it can be run via execve, and -1 if the command can be
+ *      handled internally
  *
  * Side Effects:
- *	None.
+ *	May modify the process umask
  *	
  *-----------------------------------------------------------------------
  */
 static int
-shellneed (cmd)
-	char *cmd;
+shellneed (av)
+	char **av;
 {
 	char *runsh[] = { 
 		"alias", "cd", "eval", "exec", "exit", "read", "set", "ulimit",
-		"unalias", "unset", "wait", ":",
+		"unalias", "unset", "wait", 
 		NULL
 	};
 
-	char **av, **p;
-	int ac;
+	char **p;
 
-	av = brk_string(cmd, &ac, TRUE);
-
+	/* FIXME most of these ARE actual no-ops */
 	for (p = runsh; *p; p++)
-		if (strcmp(av[1], *p) == 0)
+		if (strcmp(av[0], *p) == 0)
 			return (1);
 
-	if (strcmp(av[1], "umask") == 0) {
+	if (strcmp(av[0], "umask") == 0) {
 		long umi;
 		char *ep = NULL;
 		mode_t um;
 
-		if (av[2] != NULL) {
-			umi = strtol(av[2], &ep, 8);
+		if (av[1] != NULL) {
+			umi = strtol(av[1], &ep, 8);
 			if (ep == NULL)
 				return (1);
 			um = umi;
-			(void) umask(um);
-			return (-1);
 		}
-		um = umask(0);
+		else {
+			um = umask(0);
+			printf("%o\n", um);
+		}
 		(void) umask(um);
-		printf("%o\n", um);
 		return (-1);
 	}
 
@@ -207,7 +206,7 @@ CompatRunCommand (cmdp, gnp)
     ClientData    gnp;    	/* Node from which the command came */
 {
     char    	  *cmdStart;	/* Start of expanded command */
-    register char *cp;
+    char *cp, *bp = NULL;
     Boolean 	  silent,   	/* Don't print command */
 		  errCheck; 	/* Check errors */
     int 	  reason;   	/* Reason for child's death */
@@ -220,9 +219,9 @@ CompatRunCommand (cmdp, gnp)
 				 * dynamically allocated */
     Boolean 	  local;    	/* TRUE if command should be executed
 				 * locally */
-    int		  internal;	/* Various values.. */
     char	  *cmd = (char *) cmdp;
     GNode	  *gn = (GNode *) gnp;
+    static char	*shargv[4] = { "/bin/sh" };
 
     /*
      * Avoid clobbered variable warnings by forcing the compiler
@@ -239,7 +238,7 @@ CompatRunCommand (cmdp, gnp)
     cmdStart = Var_Subst (NULL, cmd, gn, FALSE);
 
     /*
-     * brk_string will return an argv with a NULL in av[1], thus causing
+     * brk_string will return an argv with a NULL in av[0], thus causing
      * execvp to choke and die horribly. Besides, how can we execute a null
      * command? In any case, we warn the user that the command expanded to
      * nothing (is this the right thing to do?).
@@ -307,24 +306,6 @@ CompatRunCommand (cmdp, gnp)
 	 * -e flag as well as -c if it's supposed to exit when it hits an
 	 * error.
 	 */
-	static char	*shargv[4] = { "/bin/sh" };
-
-	shargv[1] = (errCheck ? "-ec" : "-c");
-	shargv[2] = cmd;
-	shargv[3] = (char *)NULL;
-	av = shargv;
-	argc = 0;
-    } else if ((internal = shellneed(cmd))) {
-	/*
-	 * This command must be passed by the shell for other reasons..
-	 * or.. possibly not at all.
-	 */
-	static char	*shargv[4] = { "/bin/sh" };
-
-	if (internal == -1) {
-		/* Command does not need to be executed */
-		return (0);
-	}
 
 	shargv[1] = (errCheck ? "-ec" : "-c");
 	shargv[2] = cmd;
@@ -333,13 +314,26 @@ CompatRunCommand (cmdp, gnp)
 	argc = 0;
     } else {
 	/*
-	 * No meta-characters, so no need to exec a shell. Break the command
-	 * into words to form an argument vector we can execute.
-	 * brk_string sticks our name in av[0], so we have to
-	 * skip over it...
+	 * No meta-characters, so probably no need to exec a shell. 
+	 * Break the command into words to form an argument vector 
+	 * we can execute.
 	 */
-	av = brk_string(cmd, &argc, TRUE);
-	av += 1;
+	av = brk_string(cmd, &argc, TRUE, &bp);
+	switch(shellneed(av)) {
+	case -1: /* handled internally */
+		free(bp);
+		free(av);
+		return 0;
+	case 1:
+		shargv[1] = (errCheck ? "-ec" : "-c");
+		shargv[2] = cmd;
+		shargv[3] = (char *)NULL;
+		av = shargv;
+		argc = 0;
+		break;
+	default: /* nothing needed */
+		break;
+	}
     }
 
     local = TRUE;
@@ -360,6 +354,10 @@ CompatRunCommand (cmdp, gnp)
 	    (void)execv(av[0], av);
 	}
 	_exit(1);
+    }
+    if (bp) {
+    	free(av);
+	free(bp);
     }
     free(cmdStart);
     Lst_Replace (cmdNode, (ClientData) NULL);
@@ -468,8 +466,7 @@ CompatMake (gnp, pgnp)
 	if (Lst_Member (gn->iParents, pgn) != NILLNODE) {
 	    char *p1;
 	    Var_Set (IMPSRC, Var_Value(TARGET, gn, &p1), pgn);
-	    if (p1)
-		free(p1);
+	    efree(p1);
 	}
 
 	/*
@@ -606,7 +603,10 @@ CompatMake (gnp, pgnp)
 	} else if (keepgoing) {
 	    pgn->make = FALSE;
 	} else {
-	    printf ("\n\nStop.\n");
+	    char *p1;
+
+	    printf ("\n\nStop in %s.\n", Var_Value(".CURDIR", gn, &p1));
+	    efree(p1);
 	    exit (1);
 	}
     } else if (gn->made == ERROR) {
@@ -619,8 +619,7 @@ CompatMake (gnp, pgnp)
 	if (Lst_Member (gn->iParents, pgn) != NILLNODE) {
 	    char *p1;
 	    Var_Set (IMPSRC, Var_Value(TARGET, gn, &p1), pgn);
-	    if (p1)
-		free(p1);
+	    efree(p1);
 	}
 	switch(gn->made) {
 	    case BEINGMADE:

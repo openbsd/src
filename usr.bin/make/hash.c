@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash.c,v 1.3 1996/11/30 21:08:55 millert Exp $	*/
+/*	$OpenBSD: hash.c,v 1.4 1998/12/05 00:06:27 espie Exp $	*/
 /*	$NetBSD: hash.c,v 1.6 1996/11/06 17:59:06 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)hash.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: hash.c,v 1.3 1996/11/30 21:08:55 millert Exp $";
+static char rcsid[] = "$OpenBSD: hash.c,v 1.4 1998/12/05 00:06:27 espie Exp $";
 #endif
 #endif /* not lint */
 

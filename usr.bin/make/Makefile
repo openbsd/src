@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 1998/03/07 18:43:08 millert Exp $
+#	$OpenBSD: Makefile,v 1.8 1998/12/05 00:06:26 espie Exp $
 
 PROG=	make
 CFLAGS+= -I${.CURDIR} -Wall -Wno-char-subscripts -Wno-unused #-Wmissing-prototypes -Wstrict-prototypes

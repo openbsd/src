@@ -1,4 +1,4 @@
-/*	$OpenBSD: targ.c,v 1.8 1998/03/30 06:59:38 deraadt Exp $	*/
+/*	$OpenBSD: targ.c,v 1.9 1998/12/05 00:06:29 espie Exp $	*/
 /*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-static char *rcsid = "$OpenBSD: targ.c,v 1.8 1998/03/30 06:59:38 deraadt Exp $";
+static char *rcsid = "$OpenBSD: targ.c,v 1.9 1998/12/05 00:06:29 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -215,8 +215,7 @@ TargFreeGN (gnp)
 
 
     free(gn->name);
-    if (gn->path)
-	free(gn->path);
+    efree(gn->path);
 
     Lst_Destroy(gn->iParents, NOFREE);
     Lst_Destroy(gn->cohorts, NOFREE);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cond.c,v 1.3 1996/11/30 21:08:52 millert Exp $	*/
+/*	$OpenBSD: cond.c,v 1.4 1998/12/05 00:06:27 espie Exp $	*/
 /*	$NetBSD: cond.c,v 1.7 1996/11/06 17:59:02 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: cond.c,v 1.3 1996/11/30 21:08:52 millert Exp $";
+static char rcsid[] = "$OpenBSD: cond.c,v 1.4 1998/12/05 00:06:27 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -295,8 +295,7 @@ CondDoDefined (argLen, arg)
     } else {
 	result = FALSE;
     }
-    if (p1)
-	free(p1);
+    efree(p1);
     arg[argLen] = savec;
     return (result);
 }
