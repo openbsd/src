@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.6 2002/06/09 03:14:18 todd Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.7 2002/10/15 16:02:10 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -369,6 +369,7 @@ struct rl_softc {
 	struct mii_data		sc_mii;		/* MII information */
 	u_int8_t		rl_type;
 	void			*sc_sdhook;	/* shutdownhook */
+	void			*sc_pwrhook;
 	int			rl_txthresh;
 	struct rl_chain_data	rl_cdata;
 	struct timeout		sc_tick_tmo;
