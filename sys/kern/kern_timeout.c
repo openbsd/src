@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.9 2001/08/23 08:18:57 miod Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.10 2001/08/23 11:20:05 art Exp $	*/
 /*
  * Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -50,7 +50,6 @@
  */
 
 TAILQ_HEAD(,timeout) timeout_todo;	/* Queue of timeouts. */
-TAILQ_HEAD(,timeout) timeout_static;	/* Static pool of timeouts. */
 
 /*
  * All lists are locked with the same lock (which must also block out all
@@ -81,14 +80,9 @@ extern int ticks;		/* XXX - move to sys/X.h */
 void
 timeout_init()
 {
-	int i;
 
 	TAILQ_INIT(&timeout_todo);
-	TAILQ_INIT(&timeout_static);
 	simple_lock_init(&_timeout_lock);
-
-	for (i = 0; i < ntimeout; i++)
-		TAILQ_INSERT_HEAD(&timeout_static, &timeouts[i], to_list);
 }
 
 void
@@ -230,8 +224,6 @@ softclock()
 		fn = to->to_func;
 		arg = to->to_arg;
 
-		if (to->to_flags & TIMEOUT_STATIC)
-			TAILQ_INSERT_HEAD(&timeout_static, to, to_list);
 		timeout_list_unlock(s);
 		fn(arg);
 		timeout_list_lock(&s);
