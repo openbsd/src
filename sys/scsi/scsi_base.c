@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.31 1996/01/12 22:43:29 thorpej Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.33 1996/02/14 21:47:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles Hannum.  All rights reserved.
@@ -42,6 +42,8 @@
 #include <sys/malloc.h>
 #include <sys/errno.h>
 #include <sys/device.h>
+#include <sys/proc.h>
+#include <sys/cpu.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_disk.h>
@@ -50,6 +52,19 @@
 void scsi_error __P((struct scsi_xfer *, int));
 
 LIST_HEAD(xs_free_list, scsi_xfer) xs_free_list;
+
+static __inline struct scsi_xfer *scsi_make_xs __P((struct scsi_link *,
+						    struct scsi_generic *,
+						    int cmdlen,
+						    u_char *data_addr,
+						    int datalen,
+						    int retries,
+						    int timeout,
+						    struct buf *,
+						    int flags));
+
+int sc_err1 __P((struct scsi_xfer *, int));
+int scsi_interpret_sense __P((struct scsi_xfer *));
 
 /*
  * Get a scsi transfer structure for the caller. Charge the structure
@@ -82,7 +97,7 @@ scsi_get_xs(sc_link, flags)
 		(void) tsleep(sc_link, PRIBIO, "getxs", 0);
 	}
 	sc_link->openings--;
-	if (xs = xs_free_list.lh_first) {
+	if ((xs = xs_free_list.lh_first) != NULL) {
 		LIST_REMOVE(xs, free_list);
 		splx(s);
 	} else {
@@ -136,7 +151,7 @@ scsi_free_xs(xs, flags)
  */
 static __inline struct scsi_xfer *
 scsi_make_xs(sc_link, scsi_cmd, cmdlen, data_addr, datalen,
-    retries, timeout, bp, flags)
+	     retries, timeout, bp, flags)
 	struct scsi_link *sc_link;
 	struct scsi_generic *scsi_cmd;
 	int cmdlen;
@@ -439,6 +454,7 @@ retry:
 #ifdef DIAGNOSTIC
 	panic("scsi_execute_xs: impossible");
 #endif
+	return EINVAL;
 }
 
 /*
@@ -667,6 +683,10 @@ scsi_interpret_sense(xs)
 				sc_link->flags &= ~SDEV_MEDIA_LOADED;
 			if ((xs->flags & SCSI_IGNORE_NOT_READY) != 0)
 				return 0;
+			if (xs->retries && !(sc_link->flags & SDEV_REMOVABLE)) {
+				delay(1000000);
+				return ERESTART;
+			}
 			if ((xs->flags & SCSI_SILENT) != 0)
 				return EIO;
 			error = EIO;

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_ioctl.c,v 1.19 1995/09/26 19:26:58 thorpej Exp $	*/
+/*	$NetBSD: scsi_ioctl.c,v 1.20 1996/02/14 21:47:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -59,6 +59,11 @@ struct scsi_ioctl {
 };
 
 LIST_HEAD(, scsi_ioctl) si_head;
+
+struct scsi_ioctl *si_get __P((void));
+void si_free __P((struct scsi_ioctl *));
+struct scsi_ioctl *si_find __P((struct buf *));
+void scsistrategy __P((struct buf *));
 
 struct scsi_ioctl *
 si_get()
