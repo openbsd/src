@@ -72,13 +72,11 @@ struct	in_addr	gwip;
 	else if (arp((char *)&gwip, &eh->ether_dhost) == -1)
 	    {
 		perror("arp");
-		free(buf);
 		return -2;
 	    }
 	eh->ether_type = ETHERTYPE_IP;
 	last_gw.s_addr = gwip.s_addr;
 	err = sendip(nfd, s, sizeof(*eh) + len);
-	free(buf);
 	return err;
 }
 
