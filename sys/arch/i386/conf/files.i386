@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.26 1996/09/12 07:48:44 mickey Exp $
+#	$OpenBSD: files.i386,v 1.27 1996/10/04 02:51:16 deraadt Exp $
 #	$NetBSD: files.i386,v 1.73 1996/05/07 00:58:36 thorpej Exp $
 #
 # new style config file for i386 architecture
@@ -170,6 +170,11 @@ file	dev/isa/if_ed.c			ed & (ed_isa | ed_pcmcia) needs-flag
 device	joy
 attach	joy at isa
 file	arch/i386/isa/joy.c		joy needs-flag
+
+# Adaptec AHA-284x VL SCSI controllers
+# device declaration in sys/conf/files
+attach	ahc at isa with ahc_isa
+file	arch/i386/isa/ahc_isa.c		ahc_isa
 
 # Pentium performance counters
 pseudo-device	pctr

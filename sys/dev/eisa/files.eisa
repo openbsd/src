@@ -1,4 +1,4 @@
-#	$OpenBSD: files.eisa,v 1.6 1996/05/26 00:26:54 deraadt Exp $
+#	$OpenBSD: files.eisa,v 1.7 1996/10/04 02:51:25 deraadt Exp $
 #	$NetBSD: files.eisa,v 1.10 1996/05/20 00:44:11 thorpej Exp $
 #
 # Config.new file and device description for machine-independent EISA code.
@@ -14,7 +14,7 @@ device	ahb: scsi
 attach	ahb at eisa
 file	dev/eisa/aha1742.c		ahb
 
-# Adaptec AHA-27/284X and aic7770 motherboard SCSI controllers
+# Adaptec AHA-274X and aic7770 motherboard SCSI controllers
 # device declaration in sys/conf/files
 attach	ahc at eisa with ahc_eisa
 file	dev/eisa/ahc_eisa.c		ahc_eisa

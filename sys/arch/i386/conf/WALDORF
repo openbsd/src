@@ -115,7 +115,9 @@ aha0	at isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI controllers
 scsibus* at aha?
 #ahb0	at isa? port ? irq ?		# Adaptec 174[024] SCSI controllers
 #scsibus* at ahb?
-#ahc*	at pci? bus ? dev ?		# Adaptec 2940 SCSI controllers
+#ahc0	at isa? port ? irq ?		# Adaptec 284x SCSI controllers
+#ahc*	at eisa? slot ?			# Adaptec 274x, aic7770 SCSI controllers
+#ahc*	at pci? dev ? function ?	# Adaptec 2940 SCSI controllers
 #scsibus* at ahc?
 aic0	at isa? port 0x340 irq 12	# Adaptec 152[02] SCSI controllers
 scsibus* at aic?

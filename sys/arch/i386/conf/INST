@@ -1,4 +1,4 @@
-#	$OpenBSD: INST,v 1.13 1996/10/01 20:25:28 deraadt Exp $
+#	$OpenBSD: INST,v 1.14 1996/10/04 02:51:13 deraadt Exp $
 #	$NetBSD: INSTADP,v 1.17 1996/05/20 03:32:19 thorpej Exp $
 #
 #       Install kernels no longer support X.
@@ -105,8 +105,9 @@ aha1	at isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI controllers
 scsibus* at aha?
 ahb*	at eisa? slot ?			# Adaptec 174[024] SCSI controllers
 scsibus* at ahb?
+ahc0	at isa? port ? irq ?		# Adaptec 284x SCSI controllers
+ahc*	at eisa? slot ?			# Adaptec 274x, aic7770 SCSI controllers
 ahc*	at pci? dev ? function ?	# Adaptec 2940 SCSI controllers
-ahc*	at eisa? slot ?			# Adaptec 284x SCSI controllers
 scsibus* at ahc?
 aic0	at isa? port 0x340 irq 11	# Adaptec 152[02] SCSI controllers
 scsibus* at aic?
