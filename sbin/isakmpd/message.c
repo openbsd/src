@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.73 2004/05/23 18:17:56 hshoexer Exp $	 */
+/* $OpenBSD: message.c,v 1.74 2004/06/09 12:59:36 hshoexer Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -488,6 +488,11 @@ message_validate_cert_req(struct message * msg, struct payload * p)
 /*
  * Validate the delete payload P in message MSG.  As a side-effect, create
  * an exchange if we do not have one already.
+ *
+ * Note:  DELETEs are only accepted as part of an INFORMATIONAL exchange.
+ * exchange_validate() makes sure a HASH payload is present.  Due to the order
+ * of message validation functions in message_validate_payload[] we can be
+ * sure that the HASH payload has been successfully validated at this point.
  */
 static int
 message_validate_delete(struct message *msg, struct payload *p)
@@ -520,6 +525,14 @@ message_validate_delete(struct message *msg, struct payload *p)
 			message_free(msg);
 			return -1;
 		}
+	}
+	/* Only accept DELETE as part of an INFORMATIONAL exchange. */
+	if (msg->exchange->type != ISAKMP_EXCH_INFO) {
+		log_print("message_validate_delete: delete in exchange other "
+		    "than INFO: %s", constant_name(isakmp_exch_cst,
+		    msg->exchange->type));
+		message_free(msg);
+		return -1;
 	}
 	if (proto != ISAKMP_PROTO_ISAKMP && doi->validate_proto(proto)) {
 		log_print("message_validate_delete: protocol not supported");
