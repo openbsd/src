@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.19 1998/08/14 00:55:52 millert Exp $
+#	$OpenBSD: Makefile,v 1.20 1999/01/01 20:33:35 millert Exp $
 #
 #  OpenBSD Makefile
 #
@@ -32,9 +32,9 @@ LDADD=	-lwrap
 
 CFLAGS+=-I${.CURDIR} ${MAPDEF} ${ENVDEF}
 
-SRCS=	alias.c arpadate.c clock.c collect.c conf.c convtime.c daemon.c \
-	deliver.c domain.c envelope.c err.c headers.c macro.c main.c map.c \
-	mci.c mime.c parseaddr.c queue.c readcf.c recipient.c safefile.c \
+SRCS=	alias.c arpadate.c clock.c collect.c conf.c control.c convtime.c \
+	daemon.c deliver.c domain.c envelope.c err.c headers.c macro.c main.c \
+	map.c mci.c mime.c parseaddr.c queue.c readcf.c recipient.c safefile.c \
 	savemail.c snprintf.c srvrsmtp.c stab.c stats.c sysexits.c trace.c \
 	udb.c usersmtp.c util.c version.c
 MAN=	aliases.5 mailq.1 newaliases.1 sendmail.8

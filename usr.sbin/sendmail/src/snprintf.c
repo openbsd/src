@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)snprintf.c	8.11 (Berkeley) 6/4/98";
+static char sccsid[] = "@(#)snprintf.c	8.12 (Berkeley) 10/13/1998";
 #endif /* not lint */
 
 #include "sendmail.h"
@@ -38,7 +38,7 @@ static char sccsid[] = "@(#)snprintf.c	8.11 (Berkeley) 6/4/98";
  * causing nast effects.
  **************************************************************/
 
-/*static char _id[] = "$Id: snprintf.c,v 1.2 1998/07/12 19:45:15 millert Exp $";*/
+/*static char _id[] = "$Id: snprintf.c,v 1.3 1999/01/01 20:34:02 millert Exp $";*/
 void	sm_dopr();
 char	*DoprEnd;
 int	SnprfOverflow;
@@ -367,10 +367,10 @@ quad_to_string(value)
 	static char buf[64];
 
 	/*
-	** Use sprintf() instead of snprintf() since snprintf()
-	** does not support %qu or %llu.  The buffer is large enough
-	** to hold the string so there is no danger of buffer
-	** overflow.
+	**  Use sprintf() instead of snprintf() since snprintf()
+	**  does not support %qu or %llu.  The buffer is large enough
+	**  to hold the string so there is no danger of buffer
+	**  overflow.
 	*/
 
 #if NEED_PERCENTQ
