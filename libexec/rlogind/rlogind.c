@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)rlogind.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: rlogind.c,v 1.5 1996/07/31 09:05:15 deraadt Exp $";
+static char *rcsid = "$Id: rlogind.c,v 1.6 1996/07/31 09:15:53 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -90,9 +90,9 @@ u_char		tick_buf[sizeof(KTEXT_ST)];
 Key_schedule	schedule;
 int		doencrypt, retval, use_kerberos, vacuous;
 
-#define		ARGSTR			"lnkvx"
+#define		ARGSTR			"alnkvx"
 #else
-#define		ARGSTR			"ln"
+#define		ARGSTR			"aln"
 #endif	/* KERBEROS */
 
 char	*env[2];
@@ -101,6 +101,7 @@ char	lusername[NMAX+1], rusername[NMAX+1];
 static	char term[64] = "TERM=";
 #define	ENVSIZE	(sizeof("TERM=")-1)	/* skip null for concatenation */
 int	keepalive = 1;
+int	check_all = 1;
 
 struct	passwd *pwd;
 
@@ -131,6 +132,9 @@ main(argc, argv)
 	opterr = 0;
 	while ((ch = getopt(argc, argv, ARGSTR)) != EOF)
 		switch (ch) {
+		case 'a':
+			/* check_all = 1; */
+			break;
 		case 'l':
 			__check_rhosts_file = 0;
 			break;
@@ -214,6 +218,25 @@ doit(f, fromp)
 		strncpy(hostname, hp->h_name, sizeof hostname);
 	else
 		strncpy(hostname, inet_ntoa(fromp->sin_addr), sizeof hostname);
+
+	if (check_all) {
+		int good = 0;
+
+		hp = gethostbyname(hostname);
+		if (hp) {
+			for (; good == 0 && hp->h_addr_list[0] != NULL;
+			    hp->h_addr_list++)
+				if (!bcmp(hp->h_addr_list[0],
+				    (caddr_t)&fromp->sin_addr,
+				    sizeof(fromp->sin_addr)))
+					good = 1;
+		}
+
+		/* aha, the DNS looks spoofed */
+		if (hp == NULL || good == 0)
+			strncpy(hostname, inet_ntoa(fromp->sin_addr),
+			    sizeof hostname);
+	}
 
 #ifdef	KERBEROS
 	if (use_kerberos) {

@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)rlogind.8	8.1 (Berkeley) 6/4/93
-.\"	$Id: rlogind.8,v 1.2 1996/07/31 09:05:14 deraadt Exp $
+.\"	$Id: rlogind.8,v 1.3 1996/07/31 09:15:52 deraadt Exp $
 .\"
 .Dd June 4, 1993
 .Dt RLOGIND 8
@@ -51,6 +51,9 @@ with authentication based on privileged port numbers from trusted hosts.
 Options supported by
 .Nm rlogind :
 .Bl -tag -width Ds
+.It Fl a
+Ask hostname for verification.  This flag is ignored; this feature is
+always enabled.
 .It Fl l
 Prevent any authentication based on the user's
 .Dq Pa .rhosts
