@@ -33,7 +33,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.81 2001/06/04 23:16:16 markus Exp $");
+RCSID("$OpenBSD: session.c,v 1.82 2001/06/05 16:46:19 markus Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -89,6 +89,7 @@ void	session_set_fds(Session *s, int fdin, int fdout, int fderr);
 void	session_pty_cleanup(Session *s);
 void	session_proctitle(Session *s);
 int	session_setup_x11fwd(Session *s);
+void	session_close(Session *s);
 void	do_exec_pty(Session *s, const char *command);
 void	do_exec_no_pty(Session *s, const char *command);
 void	do_login(Session *s, const char *command);
@@ -370,9 +371,9 @@ do_authenticated1(Authctxt *authctxt)
 				do_exec_pty(s, command);
 			else
 				do_exec_no_pty(s, command);
-
 			if (command != NULL)
 				xfree(command);
+			session_close(s);
 			return;
 
 		default:
@@ -592,7 +593,6 @@ do_exec_pty(Session *s, const char *command)
 	} else {
 		server_loop(pid, ptyfd, fdout, -1);
 		/* server_loop _has_ closed ptyfd and fdout. */
-		session_pty_cleanup(s);
 	}
 }
 
@@ -1665,7 +1665,7 @@ session_setup_x11fwd(Session *s)
 		packet_send_debug("No xauth program; cannot forward with spoofing.");
 		return 0;
 	}
-	if (s->display != NULL) {
+	if (s->display != NULL || xauthfile != NULL) {
 		debug("X11 display already set.");
 		return 0;
 	}
@@ -1697,6 +1697,5 @@ session_setup_x11fwd(Session *s)
 void
 do_authenticated2(Authctxt *authctxt)
 {
-
 	server_loop2();
 }
