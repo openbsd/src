@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcnfsd_misc.c,v 1.7 2003/02/15 12:15:04 deraadt Exp $	*/
+/*	$OpenBSD: pcnfsd_misc.c,v 1.8 2003/02/16 01:53:28 deraadt Exp $	*/
 /*	$NetBSD: pcnfsd_misc.c,v 1.2 1995/07/25 22:20:42 gwr Exp $	*/
 
 /*
@@ -108,28 +108,29 @@ mapfont(f, i, b)
 
 	switch (f) {
 	case 'c':
-		(void)strcpy(fontname, "Courier");
+		(void)strlcpy(fontname, "Courier", sizeof fontname);
 		break;
 	case 'h':
-		(void)strcpy(fontname, "Helvetica");
+		(void)strlcpy(fontname, "Helvetica", sizeof fontname);
 		break;
 	case 't':
-		(void)strcpy(fontname, "Times");
+		(void)strlcpy(fontname, "Times", sizeof fontname);
 		break;
 	default:
-		(void)strcpy(fontname, "Times-Roman");
+		(void)strlcpy(fontname, "Times-Roman", sizeof fontname);
 		goto finis ;
 	}
 	if (i != 'o' && b != 'b') {	/* no bold or oblique */
 		if (f == 't')	/* special case Times */
-			(void)strcat(fontname, "-Roman");
+			(void)strlcat(fontname, "-Roman", sizeof fontname);
 		goto finis;
 	}
-	(void)strcat(fontname, "-");
+	(void)strlcat(fontname, "-", sizeof fontname);
 	if (b == 'b')
-		(void)strcat(fontname, "Bold");
+		(void)strlcat(fontname, "Bold", sizeof fontname);
 	if (i == 'o')		/* o-blique */
-		(void)strcat(fontname, f == 't' ? "Italic" : "Oblique");
+		(void)strlcat(fontname, f == 't' ? "Italic" : "Oblique",
+		    sizeof fontname);
 
 finis:
 	return (&fontname[0]);

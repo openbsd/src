@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcnfsd_print.c,v 1.14 2003/02/15 12:15:04 deraadt Exp $	*/
+/*	$OpenBSD: pcnfsd_print.c,v 1.15 2003/02/16 01:53:28 deraadt Exp $	*/
 /*	$NetBSD: pcnfsd_print.c,v 1.3 1995/08/14 19:45:18 gwr Exp $	*/
 
 /*
@@ -276,7 +276,8 @@ pr_start2(system, pr, user, fname, opts, id)
 				resbuf[i-1] = '\0'; /* trim NL */
 			if (!strncmp(resbuf, "request id is ", 14))
 				/* New - just the first word is needed */
-				strcpy(req_id, strtok(&resbuf[14], delims));
+				strlcpy(req_id, strtok(&resbuf[14], delims),
+				    sizeof req_id);
 			else if (strembedded("disabled", resbuf))
 				failed = 1;
 		}
