@@ -7,7 +7,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-keyscan.c,v 1.27 2001/08/05 23:29:58 markus Exp $");
+RCSID("$OpenBSD: ssh-keyscan.c,v 1.28 2001/08/27 22:02:13 danh Exp $");
 
 #include <sys/queue.h>
 #include <errno.h>
@@ -764,6 +764,8 @@ main(int argc, char **argv)
 
 		for (j = 0; j < fopt_count; j++) {
 			lb = Linebuf_alloc(argv[j], error);
+			if (!lb)
+				continue;
 			while ((line = Linebuf_getline(lb)) != NULL)
 				do_host(line);
 			Linebuf_free(lb);
