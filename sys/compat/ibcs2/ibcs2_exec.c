@@ -1,4 +1,4 @@
-/*	$OpenBSD: ibcs2_exec.c,v 1.6 1997/01/27 22:48:30 deraadt Exp $	*/
+/*	$OpenBSD: ibcs2_exec.c,v 1.7 1997/02/01 21:49:48 deraadt Exp $	*/
 /*	$NetBSD: ibcs2_exec.c,v 1.12 1996/10/12 02:13:52 thorpej Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static int coff_find_section __P((struct proc *, struct vnode *,
 extern int bsd2ibcs_errno[];
 extern struct sysent ibcs2_sysent[];
 extern char *ibcs2_syscallnames[];
-extern void ibcs2_sendsig __P((sig_t, int, int, u_long, caddr_t));
+extern void ibcs2_sendsig __P((sig_t, int, int, u_long, int, union sigval));
 extern char sigcode[], esigcode[];
 
 const char ibcs2_emul_path[] = "/emul/ibcs2";

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.15 1997/01/27 22:48:36 deraadt Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.16 1997/02/01 21:49:41 deraadt Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -519,11 +519,12 @@ pgsignal(pgrp, signum, checkctty)
  * Otherwise, post it normally.
  */
 void
-trapsignal(p, signum, code, addr)
+trapsignal(p, signum, code, type, sigval)
 	struct proc *p;
 	register int signum;
 	u_long code;
-	caddr_t addr;
+	int type;
+	union sigval sigval;
 {
 	register struct sigacts *ps = p->p_sigacts;
 	int mask;
@@ -538,7 +539,7 @@ trapsignal(p, signum, code, addr)
 				p->p_sigmask, code);
 #endif
 		(*p->p_emul->e_sendsig)(ps->ps_sigact[signum], signum,
-		    p->p_sigmask, code, addr);
+		    p->p_sigmask, code, type, sigval);
 		p->p_sigmask |= ps->ps_catchmask[signum];
 		if ((ps->ps_sigreset & mask) != 0) {
 			p->p_sigcatch &= ~mask;
@@ -1003,7 +1004,8 @@ postsig(signum)
 			code = ps->ps_code;
 			ps->ps_code = 0;
 		}
-		(*p->p_emul->e_sendsig)(action, signum, returnmask, code, 0);
+		(*p->p_emul->e_sendsig)(action, signum, returnmask, code,
+		    SI_USER, (union sigval *)0);
 	}
 }
 
@@ -1180,11 +1182,30 @@ sys_nosys(p, v, retval)
 }
 
 void
-initsiginfo(si, sig)
+initsiginfo(si, sig, code, type, val)
 	siginfo_t *si;
 	int sig;
+	u_long code;
+	int type;
+	union sigval val;
 {
 	bzero(si, sizeof *si);
+
 	si->si_signo = sig;
-	si->si_addr = (caddr_t)-1;
+	si->si_code = type;
+	if (type == SI_USER) {
+		si->si_value = val;
+	} else {
+		switch (sig) {
+		case SIGSEGV:
+		case SIGILL:
+		case SIGBUS:
+		case SIGFPE:
+			si->si_addr = val.sival_ptr;
+			si->si_trapno = code;
+			break;
+		case SIGXFSZ:
+			break;
+		}
+	}
 }

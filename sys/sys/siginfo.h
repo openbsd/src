@@ -1,4 +1,4 @@
-/*	$OpenBSD: siginfo.h,v 1.3 1997/01/27 23:21:22 deraadt Exp $	*/
+/*	$OpenBSD: siginfo.h,v 1.4 1997/02/01 21:49:34 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Theo de Raadt
@@ -205,8 +205,7 @@ typedef struct {
 #define si_mstate	_data._prof._mstate
 
 #if defined(_KERNEL)
-void	initsiginfo __P((siginfo_t *, int));
-void	fixsiginfo __P((siginfo_t *, int, u_long, caddr_t));
+void	initsiginfo __P((siginfo_t *, int, u_long, int, union sigval));
 #endif
 
 #endif	/* _SYS_SIGINFO_H */

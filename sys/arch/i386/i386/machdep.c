@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.38 1997/02/01 00:58:25 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.39 1997/02/01 21:53:23 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.202 1996/05/18 15:54:59 christos Exp $	*/
 
 /*-
@@ -570,18 +570,19 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 }
 
 #ifdef COMPAT_IBCS2
-void ibcs2_sendsig __P((sig_t, int, int, u_long, caddr_t));
+void ibcs2_sendsig __P((sig_t, int, int, u_long, int, union sigval));
 
 void
-ibcs2_sendsig(catcher, sig, mask, code, addr)
+ibcs2_sendsig(catcher, sig, mask, code, type, val)
 	sig_t catcher;
 	int sig, mask;
 	u_long code;
-	caddr_t addr;
+	int type;
+	union sigval val;
 {
 	extern int bsd_to_ibcs2_sig[];
 
-	sendsig(catcher, bsd_to_ibcs2_sig[sig], mask, code, addr);
+	sendsig(catcher, bsd_to_ibcs2_sig[sig], mask, code, type, val);
 }
 #endif
 
@@ -596,11 +597,12 @@ ibcs2_sendsig(catcher, sig, mask, code, addr)
  * specified pc, psl.
  */
 void
-sendsig(catcher, sig, mask, code, addr)
+sendsig(catcher, sig, mask, code, type, val)
 	sig_t catcher;
 	int sig, mask;
 	u_long code;
-	caddr_t addr;
+	int type;
+	union sigval val;
 {
 	register struct proc *p = curproc;
 	register struct trapframe *tf;
@@ -671,15 +673,7 @@ sendsig(catcher, sig, mask, code, addr)
 
 	if (psp->ps_siginfo & sigmask(sig)) {
 		frame.sf_sip = &fp->sf_si;
-		initsiginfo(frame.sf_sip, sig);
-		fixsiginfo(frame.sf_sip, sig, code, addr);
-		if (sig == SIGSEGV) {
-			/* try to be more specific about read or write */
-			if (tf->tf_err & PGEX_W)
-				frame.sf_si.si_code = SEGV_ACCERR;
-			else
-				frame.sf_si.si_code = SEGV_MAPERR;
-		}
+		initsiginfo(frame.sf_sip, sig, code, type, val);
 	}
 
 	/* XXX don't copyout siginfo if not needed? */
@@ -786,75 +780,6 @@ sys_sigreturn(p, v, retval)
 	p->p_sigmask = context.sc_mask & ~sigcantmask;
 
 	return (EJUSTRETURN);
-}
-
-void
-fixsiginfo(si, sig, code, addr)
-	siginfo_t *si;
-	int sig;
-	u_long code;
-	caddr_t addr;
-{
-	si->si_addr = addr;
-
-	switch (code) {
-	case T_PRIVINFLT:
-		si->si_code = ILL_PRVOPC;
-		si->si_trapno = T_PRIVINFLT;
-		break;
-	case T_BPTFLT:
-		si->si_code = TRAP_BRKPT;
-		si->si_trapno = T_BPTFLT;
-		break;
-	case T_ARITHTRAP:
-		si->si_code = FPE_INTOVF;
-		si->si_trapno = T_DIVIDE;
-		break;
-	case T_PROTFLT:
-		si->si_code = SEGV_ACCERR;
-		si->si_trapno = T_PROTFLT;
-		break;
-	case T_TRCTRAP:
-		si->si_code = TRAP_TRACE;
-		si->si_trapno = T_TRCTRAP;
-		break;
-	case T_PAGEFLT:
-		si->si_code = SEGV_ACCERR;
-		si->si_trapno = T_PAGEFLT;
-		break;
-	case T_ALIGNFLT:
-		si->si_code = BUS_ADRALN;
-		si->si_trapno = T_ALIGNFLT;
-		break;
-	case T_DIVIDE:
-		si->si_code = FPE_FLTDIV;
-		si->si_trapno = T_DIVIDE;
-		break;
-	case T_OFLOW:
-		si->si_code = FPE_FLTOVF;
-		si->si_trapno = T_DIVIDE;
-		break;
-	case T_BOUND:
-		si->si_code = FPE_FLTSUB;
-		si->si_trapno = T_BOUND;
-		break;
-	case T_DNA:
-		si->si_code = FPE_FLTINV;
-		si->si_trapno = T_DNA;
-		break;
-	case T_FPOPFLT:
-		si->si_code = FPE_FLTINV;
-		si->si_trapno = T_FPOPFLT;
-		break;
-	case T_SEGNPFLT:
-		si->si_code = SEGV_MAPERR;
-		si->si_trapno = T_SEGNPFLT;
-		break;
-	case T_STKFLT:
-		si->si_code = ILL_BADSTK;
-		si->si_trapno = T_STKFLT;
-		break;
-	}
 }
 
 int	waittime = -1;

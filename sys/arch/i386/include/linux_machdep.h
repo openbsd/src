@@ -76,7 +76,7 @@ struct linux_sigframe {
 	sig_t	sf_handler;
 };
 
-void linux_sendsig __P((sig_t, int, int, u_long, caddr_t));
+void linux_sendsig __P((sig_t, int, int, u_long, int, union sigval));
 dev_t linux_fakedev __P((dev_t));
 
 /*

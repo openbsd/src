@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_machdep.c,v 1.9 1997/01/27 22:48:00 deraadt Exp $	*/
+/*	$OpenBSD: svr4_machdep.c,v 1.10 1997/02/01 21:53:26 deraadt Exp $	*/
 /*	$NetBSD: svr4_machdep.c,v 1.24 1996/05/03 19:42:26 christos Exp $	 */
 
 /*
@@ -56,7 +56,7 @@
 #include <machine/vm86.h>
 #include <machine/svr4_machdep.h>
 
-static void svr4_getsiginfo __P((union svr4_siginfo *, int, u_long, caddr_t));
+static void svr4_getsiginfo __P((union svr4_siginfo *, int, u_long, int, caddr_t));
 
 void
 svr4_getcontext(p, uc, mask, oonstack)
@@ -212,10 +212,11 @@ svr4_setcontext(p, uc)
 
 
 static void
-svr4_getsiginfo(si, sig, code, addr)
+svr4_getsiginfo(si, sig, code, type, addr)
 	union svr4_siginfo	*si;
 	int			 sig;
 	u_long			 code;
+	int			 type;
 	caddr_t			 addr;
 {
 	si->svr4_si_signo = bsd_to_svr4_sig[sig];
@@ -315,11 +316,12 @@ svr4_getsiginfo(si, sig, code, addr)
  * will return to the user pc, psl.
  */
 void
-svr4_sendsig(catcher, sig, mask, code, addr)
+svr4_sendsig(catcher, sig, mask, code, type, val)
 	sig_t catcher;
 	int sig, mask;
 	u_long code;
-	caddr_t addr;
+	int type;
+	union sigval val;
 {
 	register struct proc *p = curproc;
 	register struct trapframe *tf;
@@ -354,7 +356,7 @@ svr4_sendsig(catcher, sig, mask, code, addr)
 	 */
 
 	svr4_getcontext(p, &frame.sf_uc, mask, oonstack);
-	svr4_getsiginfo(&frame.sf_si, sig, code, addr);
+	svr4_getsiginfo(&frame.sf_si, sig, code, type, val.sival_ptr);
 
 	frame.sf_signum = frame.sf_si.svr4_si_signo;
 	frame.sf_sip = &fp->sf_si;
