@@ -1,4 +1,4 @@
-.\"     $OpenBSD: fhc.4,v 1.2 2004/09/23 18:28:51 jason Exp $
+.\"     $OpenBSD: clock.4,v 1.1 2004/09/23 18:28:51 jason Exp $
 .\"
 .\" Copyright (c) 2004 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -24,31 +24,36 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 22, 2004
-.Dt FHC 4 sparc64
+.Dd September 23, 2004
+.Dt CLOCK 4 sparc64
 .Os
 .Sh NAME
-.Nm fhc
+.Nm clock
 .Nd SPARC64 FireHose Controller
 .Sh SYNOPSIS
-.Cd "fhc* at central?"
-.Cd "fhc* at mainbus0"
+.Cd "clock* at sbus?"
+.Cd "clock* at ebus?"
+.Cd "clock* at fhc?"
+.Cd "rtc* at ebus?"
 .Sh DESCRIPTION
 The
 .Nm
-device provides support for the
-FireHose Controllers
-found on Sunfire, Starfire, and Wildfire
-UltraSPARC systems.
-These devices are used for board level
-functions on these systems.
+device provides support for the realtime clocks based
+on the following chips:
+.Pp
+.Bl -bullet -offset indent -compact
+.It
+Mostek MK48T02
+.It
+Mostek MK48T08
+.It
+Mostek MK48T18
+.It
+Mostek MK48T59
+.It
+Dallas/Maxim Semiconductor DS1287
 .Sh SEE ALSO
-.Xr central 4 ,
-.Xr clock 4 ,
-.Xr intro 4
-.Sh HISTORY
-.Ox
-support for the
-.Nm
-first appeared in
-.Ox 3.7 .
+.Xr ebus 4 ,
+.Xr fhc 4 ,
+.Xr intro 4 ,
+.Xr sbus 4

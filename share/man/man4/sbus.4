@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sbus.4,v 1.25 2004/03/22 20:31:36 miod Exp $
+.\"	$OpenBSD: sbus.4,v 1.26 2004/09/23 18:28:50 jason Exp $
 .\"	$NetBSD: sbus.4,v 1.5 2002/01/21 17:54:10 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -165,6 +165,8 @@ Sun Serial/Parallel Interface card.
 .Bl -tag -width 13n -offset ind -compact
 .It Xr auxio 4
 Miscellaneous I/O controls.
+.It Xr clock 4
+Realtime clock.
 .It Xr presto 4
 Prestoserve battery-backed memory.
 .It Xr uperf 4
@@ -184,6 +186,7 @@ Performance counters on the host bridge.
 .Xr cgsix 4 ,
 .Xr cgthree 4 ,
 .Xr cgtwelve 4 ,
+.Xr clock 4 ,
 .Xr esp 4 ,
 .Xr hme 4 ,
 .Xr intro 4 ,
