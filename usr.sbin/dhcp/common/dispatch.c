@@ -42,11 +42,14 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dispatch.c,v 1.1 1998/08/18 03:43:25 deraadt Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dispatch.c,v 1.2 2000/02/09 11:55:47 niklas Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
 #include <sys/ioctl.h>
+
+/* Most boxes has less than 16 interfaces, so this might be a good guess.  */
+#define INITIAL_IFREQ_COUNT 16
 
 struct interface_info *interfaces, *dummy_interfaces;
 struct protocol *protocols;
@@ -70,7 +73,8 @@ void discover_interfaces (state)
 {
 	struct interface_info *tmp;
 	struct interface_info *last, *next;
-	char buf [8192];
+	char *buf, *new_buf;
+	int len;
 	struct ifconf ic;
 	struct ifreq ifr;
 	int i;
@@ -92,12 +96,30 @@ void discover_interfaces (state)
 		error ("Can't create addrlist socket");
 
 	/* Get the interface configuration information... */
-	ic.ifc_len = sizeof buf;
-	ic.ifc_ifcu.ifcu_buf = (caddr_t)buf;
-	i = ioctl(sock, SIOCGIFCONF, &ic);
+	len = sizeof (struct ifreq) * INITIAL_IFREQ_COUNT;
+	buf = 0;
+	while (1) {
+		/*
+		 * Allocate a larger buffer each time around the loop and get
+		 * the network interfaces configurations into it.
+		 */
+		ic.ifc_len = len;
+		new_buf = realloc (buf, len);
+		if (!new_buf)
+			error ("realloc: %m");
+		ic.ifc_buf = buf = new_buf;
+		if (ioctl (sock, SIOCGIFCONF, &ic) == -1)
+			error ("ioctl: SIOCGIFCONF: %m");
 
-	if (i < 0)
-		error ("ioctl: SIOCGIFCONF: %m");
+		/*
+		 * If there is place for another ifreq we can be sure that
+		 * the buffer was big enough, otherwise double the size and
+		 * try again.
+		 */
+		if (len - ic.ifc_len >= sizeof (struct ifreq))
+			break;
+		len *= 2;
+	}
 
 	/* If we already have a list of interfaces, and we're running as
 	   a DHCP server, the interfaces were requested. */
@@ -117,7 +139,11 @@ void discover_interfaces (state)
 		struct ifreq *ifp = (struct ifreq *)((caddr_t)ic.ifc_req + i);
 #ifdef HAVE_SA_LEN
 		if (ifp -> ifr_addr.sa_len)
-			i += (sizeof ifp -> ifr_name) + ifp -> ifr_addr.sa_len;
+			i += ((sizeof ifp -> ifr_name) +
+			      (ifp -> ifr_addr.sa_len >
+			       sizeof (struct sockaddr) ?
+			       ifp -> ifr_addr.sa_len :
+			       sizeof (struct sockaddr)));
 		else
 #endif
 			i += sizeof *ifp;
