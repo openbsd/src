@@ -15,3 +15,24 @@ binat on lo0 from 192.168.2.0/28 to any -> 10.0.4.0/28
 binat on lo0 from 192.168.2.0/30 to 192.168.3.1 -> 10.0.3.0/30
 
 binat on lo0 from 192.168.1.8 to ! 172.17.0.0/16 -> 10.0.0.8
+
+binat on lo0 from 1.1.1.1 to no-route -> 2.2.2.2
+binat on lo0 from (lo0) to 1.1.1.1 -> 2.2.2.2
+binat on lo0 from (lo0) to 1.1.1.1 -> (lo1)
+binat on lo0 inet from (lo0) to (lo1) -> (lo1)
+binat on lo0 from 1.1.1.1 to <sometable> -> 2.2.2.2
+binat on lo0 from 1.1.1.1 to !<sometable> -> 2.2.2.2
+binat on lo0 from 1.1.1.1 to (lo1) -> 2.2.2.2
+binat on lo0 from 1.1.1.1 to !(lo1) -> 2.2.2.2
+binat on lo0 from (lo0) to <sometable> -> 2.2.2.2
+
+binat on lo0 from ::1 to no-route -> ::2
+binat on lo0 from (lo0) to ::1 -> ::2
+binat on lo0 from (lo0) to ::1 -> (lo1)
+binat on lo0 inet6 from (lo0) to (lo1) -> (lo1)
+binat on lo0 from ::1 to <sometable> -> ::2
+binat on lo0 from ::1 to !<sometable> -> ::2
+binat on lo0 from ::1 to (lo1) -> ::2
+binat on lo0 from ::1 to !(lo1) -> ::2
+binat on lo0 from (lo0) to <sometable> -> ::2
+
