@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.21 2000/09/14 15:16:40 jakob Exp $
+$OpenBSD: usbdevs,v 1.22 2000/09/17 00:38:31 aaron Exp $
 /* $NetBSD: usbdevs,v 1.88 2000/04/03 12:09:43 augustss Exp $ */
 
 /*
@@ -348,6 +348,7 @@ product CYPRESS FMRADIO		0x1002	FM Radio
 product DLINK DSB650C		0x4000	10Mbps ethernet adapter
 product DLINK DSB650TX		0x4002	10/100 ethernet adapter
 product DLINK DSB650TX_PNA	0x4003	1/10/100 ethernet adapter
+product DLINK DSB650		0xABC1	10/100 ethernet adapter
 
 /* Dallas Semiconductor products */
 product DALLAS J6502		0x4201	J-6502 speakers
