@@ -97,7 +97,7 @@ xfs_realselect(dev_t dev, d_thread_t *p, void *wql)
 
 
 #ifdef HAVE_VOP_POLL
-static int
+int
 xfs_devpoll(dev_t dev, int events, d_thread_t * p)
 {
 #ifdef NNPFS_DEBUG
