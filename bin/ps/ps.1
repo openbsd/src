@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ps.1,v 1.44 2003/10/20 21:16:09 jmc Exp $
+.\"	$OpenBSD: ps.1,v 1.45 2004/02/24 11:53:45 jmc Exp $
 .\"	$NetBSD: ps.1,v 1.16 1996/03/21 01:36:28 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993, 1994
@@ -39,7 +39,7 @@
 .Sh SYNOPSIS
 .Nm ps
 .Sm off
-.Oo \&- Oc Op Cm acCehjklmrSTuvwx
+.Oo \&- Oc Op Cm aCcehjklmrSTuvwx
 .Sm on
 .Op Fl M Ar core
 .Op Fl N Ar system
@@ -74,13 +74,6 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl a
 Display information about other users' processes as well as your own.
-.It Fl c
-Do not display full command with arguments, but only the
-executable name.
-This may be somewhat confusing; for example, all
-.Xr sh 1
-scripts will show as
-.Dq sh .
 .It Fl C
 Change the way the CPU percentage is calculated by using a
 .Dq raw
@@ -88,6 +81,13 @@ CPU calculation that ignores
 .Dq resident
 time (this normally has
 no effect).
+.It Fl c
+Do not display full command with arguments, but only the
+executable name.
+This may be somewhat confusing; for example, all
+.Xr sh 1
+scripts will show as
+.Dq sh .
 .It Fl e
 Display the environment as well.
 .It Fl h
@@ -283,11 +283,11 @@ information:
 .Bl -tag -width indent -compact
 .It +
 The process is in the foreground process group of its control terminal.
-.It <
+.It \*(Lt
 The process has raised
 .Tn CPU
 scheduling priority.
-.It >
+.It \*(Gt
 The process has specified a soft limit on memory requirements and is
 currently exceeding that limit; such a process is (necessarily) not
 swapped.
@@ -353,10 +353,10 @@ as 324000.
 When printing using the command keyword, a process that has exited and
 has a parent that has not yet waited for the process (in other words, a zombie)
 is listed as
-.Dq <defunct> ,
+.Dq Aq defunct ,
 and a process which is blocked while trying
 to exit is listed as
-.Dq <exiting> .
+.Dq Aq exiting .
 .Nm
 makes an educated guess as to the file name and arguments given when the
 process was created by examining memory or the swap area.
