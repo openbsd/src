@@ -4,6 +4,7 @@
 #include "f2c.h"
 #include "fio.h"
 #include <string.h>
+#include <stdio.h>
 #ifndef NON_POSIX_STDIO
 #ifdef MSDOS
 #include "io.h"
