@@ -1,4 +1,5 @@
-/*	$NetBSD: $	*/
+/*	$OpenBSD: unimpl_emul.s,v 1.2 2000/10/24 02:20:21 hugh Exp $	*/
+/*	$NetBSD: unimpl_emul.s,v 1.2 2000/08/14 11:16:52 ragge Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
