@@ -1,9 +1,19 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.1 1998/03/11 20:06:32 maja Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.2 1998/03/14 17:16:06 maja Exp $
 
 MAN=	lynx.1
 CLEANFILES=	lynx.1
-LDFLAGS+=	-s ${LDSTATIC}
-GNUCFLAGS=	CFLAGS="${CFLAGS}" LDFLAGS="${LDFLAGS}"
+GNUCFLAGS=	CFLAGS="${CFLAGS}"
+HTMLDIR=	/usr/share/doc/html
+HELPFILES=	keystrokes/bookmark_help.html keystrokes/cookie_help.html \
+		keystrokes/dired_help.html keystrokes/edit_help.html \
+		keystrokes/follow_help.html keystrokes/gopher_types_help.html \
+		keystrokes/history_help.html keystrokes/keystroke_help.html \
+		keystrokes/movement_help.html keystrokes/option_help.html \
+		keystrokes/other_help.html keystrokes/print_help.html \
+		keystrokes/scrolling_help.html keystrokes/visited_help.html \
+		keystrokes/xterm_help.html Lynx_users_guide.html \
+		about_lynx.html lynx-dev.html lynx_help_main.html \
+		lynx_url_support.html
 
 all:	config.status lynx.cat1
 	${MAKE} ${GNUCFLAGS}
@@ -37,7 +47,15 @@ maninstall:
 	@echo NOMAN is set
 .endif
 
-install: maninstall
+helpinstall:
+	@-for i in ${HELPFILES}; do \
+		j=`dirname $$i`; \
+		echo "Installing ${DESTDIR}${HTMLDIR}/lynx_help/$$i"; \
+		${INSTALL} ${INSTALL_COPY} -g ${BINGRP} -m 444 \
+		${.CURDIR}/lynx_help/$$i ${DESTDIR}${HTMLDIR}/lynx_help/$$j/; \
+	done
+
+install: maninstall helpinstall
 	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
 	    lynx ${DESTDIR}/usr/bin/lynx
 
