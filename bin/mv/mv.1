@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mv.1,v 1.15 2002/02/11 18:43:51 mpech Exp $
+.\"	$OpenBSD: mv.1,v 1.16 2002/02/18 21:01:58 mark Exp $
 .\"	$NetBSD: mv.1,v 1.8 1995/03/21 09:06:51 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -117,7 +117,7 @@ to accomplish the move.
 The effect is equivalent to:
 .Bd -literal -offset indent
 $ rm -f destination_path && \e
-\tcp -pr source_file destination && \e
+\tcp -PRp source_file destination && \e
 \trm -rf source_file
 .Ed
 .Pp
