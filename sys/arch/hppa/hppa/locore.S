@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.18 1999/08/03 15:48:18 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.19 1999/08/14 03:11:31 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -119,8 +119,8 @@ ENTRY($start)
  *	pdc - PDC entry point (not used, HP-UX compatibility)
  *	boothowto - boot flags (see "reboot.h")
  *	bootdev - boot device (index into bdevsw)
- *	bootapiver - /boot API version
  *	esym - end of symbol table (or &end if not present)
+ *	bootapiver - /boot API version
  *	argv - options block passed from /boot
  *	argc - the length of the block
  */
@@ -448,7 +448,7 @@ $syscall
 	stw	r0, FM_PSP(sr1, sp)
 	stw	r0, FM_CRP(sr1, sp)
 
-	addi	pcb_tf+u_pcb, t2, arg0
+	ldo	pcb_tf+u_pcb(t2), arg0
 	copy	r1, arg1
 
 	ldil	L%$global$,dp
@@ -497,11 +497,13 @@ $syscall_return
 	ldw	TF_R17+pcb_tf+u_pcb(t4), r17
 	ldw	TF_R18+pcb_tf+u_pcb(t4), r18
 
-	ldw	TF_CR8+pcb_tf(sr1,t4), t2
+	ldw	TF_CR8+pcb_tf(sr1,t4), t1
+	ldw	TF_CR9+pcb_tf(sr1,t4), t2
+	ldw	TF_CR12+pcb_tf(sr1,t4), t3
+	mtctl	t1, pidr1
+	mtctl	t2, pidr2
+	mtctl	t3, pidr3
 	ldw	pcb_space+u_pcb(t4), t3
-	mtctl	t2, pidr1
-	mtctl	t2, pidr3
-	mtctl	t2, pidr4
 	mtctl	t3, sr0
 	mtctl	t3, sr2
 	mtctl	t3, sr3
@@ -509,9 +511,9 @@ $syscall_return
 	mtctl	t3, sr5
 	mtctl	t3, sr6
 
-	ldw	TF_CR9+pcb_tf(sr1,t4), t4
+	ldw	TF_CR13+pcb_tf(sr1,t4), t4
 	bv	0(rp)
-	mtctl	t4, pidr2
+	mtctl	t4, pidr4
 
 	.exit
 	.procend
@@ -523,85 +525,88 @@ $syscall_end
  * interrupt vector table
  */
 #define	TLABEL(name)	$trap$name
-#define TRAP(reason) \
-	.import TLABEL(all), code	! \
-	mtctl	r1, tr7			! \
-	ldil	L%TLABEL(all), r1	! \
-	.call				! \
-	be	R%TLABEL(all)(sr4, r1)	! \
-	ldi	reason, r1
-
-	/* 8 bytes per entry */
-#define	ATRAP(name, reason) \
-	.export	TLABEL(name), entry	! \
-	.label	TLABEL(name)		! \
-	TRAP(reason)			! \
-	nop ! .word 0, 0, 0
-
-#define	CTRAP(name, reason) \
-	.import	TLABEL(name), code	! \
+#define TRAP(name,num) \
+	.import TLABEL(name), code	! \
 	mtctl	r1, tr7			! \
 	ldil	L%TLABEL(name), r1	! \
 	.call				! \
 	be	R%TLABEL(name)(sr4, r1)	! \
-	ldi	reason, r1		! \
-	nop ! .word 0, 0, 0
+	ldi	num, r1			! \
+	.align	32
+
+#define	ATRAP(name,num) \
+	.export	TLABEL(name)$num, entry	! \
+	.label	TLABEL(name)$num	! \
+	TRAP(all,num)
+
+#define	CTRAP(name,num,pre) \
+	.export	TLABEL(name)$num, entry	! \
+	.label	TLABEL(name)$num	! \
+	pre				! \
+	TRAP(name,num)
+
+#if USECR28
+#define	LDCR28	mfctl	cr28, r24
+#else
+#define	LDCR28	/* nop */
+#endif
+#define	ITLBPRE \
+	mfctl	pcoq,r9		/* Offset */			! \
+	mfctl	pcsq,r8		/* Space  */			! \
+	depi	0,31,12,r9	/* align offset to page */
+#define	DTLBPRE \
+	mfctl	ior, r9		/* Offset */			! \
+	mfctl	isr, r8		/* Space  */			! \
+	depi    0,31,12,r9	/* align offset to page */	! \
+	LDCR28
 
 	.align NBPG
 	.export $ivaaddr, entry
 $ivaaddr
-	ATRAP(nexist,T_NONEXIST)/*  0. invalid interrupt vector */
-	CTRAP(hpmc,T_HPMC)	/*  1. high priority machine check */
-	ATRAP(power,T_POWERFAIL)/*  2. power failure */
-	ATRAP(recnt,T_RECOVERY)	/*  3. recovery counter trap */
-	ATRAP(int,T_INTERRUPT)	/*  4. external interrupt */
-	ATRAP(lpmc,T_LPMC)	/*  5. low-priority machine check */
-	CTRAP(itlb,T_ITLBMISS)	/*  6. instruction TLB miss fault */
-	ATRAP(iprot,T_IPROT)	/*  7. instruction protection trap */
-	ATRAP(illegal,T_ILLEGAL)/*  8. Illegal instruction trap */
-	CTRAP(ibreak,T_IBREAK)	/*  9. break instruction trap */
-	ATRAP(privop,T_PRIV_OP)	/* 10. privileged operation trap */
-	ATRAP(privr,T_PRIV_REG)	/* 11. privileged register trap */
-	ATRAP(ovrfl,T_OVERFLOW)	/* 12. overflow trap */
-	ATRAP(cond,T_CONDITION)	/* 13. conditional trap */
+	ATRAP(null,T_NONEXIST)		/*  0. invalid interrupt vector */
+	CTRAP(hpmc,T_HPMC,)		/*  1. high priority machine check */
+	ATRAP(power,T_POWERFAIL)	/*  2. power failure */
+	ATRAP(recnt,T_RECOVERY)		/*  3. recovery counter trap */
+	ATRAP(intr,T_INTERRUPT)		/*  4. external interrupt */
+	ATRAP(lpmc,T_LPMC)		/*  5. low-priority machine check */
+	CTRAP(itlb,T_ITLBMISS,ITLBPRE)	/*  6. instruction TLB miss fault */
+	ATRAP(iprot,T_IPROT)		/*  7. instruction protection trap */
+	ATRAP(ill,T_ILLEGAL)		/*  8. Illegal instruction trap */
+	CTRAP(ibrk,T_IBREAK,)		/*  9. break instruction trap */
+	ATRAP(privop,T_PRIV_OP)		/* 10. privileged operation trap */
+	ATRAP(privr,T_PRIV_REG)		/* 11. privileged register trap */
+	ATRAP(ovrfl,T_OVERFLOW)		/* 12. overflow trap */
+	ATRAP(cond,T_CONDITION)		/* 13. conditional trap */
 #ifdef FPEMUL_notyet
-	CTRAP(excpt,T_EXCEPTION)/* 14. assist exception trap */
+	CTRAP(excpt,T_EXCEPTION,)	/* 14. assist exception trap */
 #else
-	ATRAP(excpt,T_EXCEPTION)/* 14. assist exception trap */
+	ATRAP(excpt,T_EXCEPTION)
 #endif
-	CTRAP(dtlb,T_DTLBMISS)	/* 15. data TLB miss fault */
-	CTRAP(itlb,T_ITLBMISS)	/* 16. ITLB non-access miss fault */
-	CTRAP(dtlb,T_DTLBMISS)	/* 17. DTLB non-access miss fault */
-	ATRAP(dprot,T_DPROT)	/* 18. data protection trap
-				       unalligned data reference trap */
-	ATRAP(dbreak,T_DBREAK)	/* 19. data break trap */
-	CTRAP(tlbd,T_TLB_DIRTY)	/* 20. TLB dirty bit trap */
-	ATRAP(pageref,T_PAGEREF)/* 21. page reference trap */
-	CTRAP(emu,T_EMULATION)	/* 22. assist emulation trap */
-	ATRAP(hpl,T_HIGHERPL)	/* 23. higher-privelege transfer trap */
-	ATRAP(lpl,T_LOWERPL)	/* 24. lower-privilege transfer trap */
-	ATRAP(tknbr,T_TAKENBR)	/* 25. taken branch trap */
-#ifdef HP7100_CPU
-	ATRAP(datacc,T_DATACC)	/* 26. data access rights trap (T-chip) */
-	ATRAP(datapid,T_DATAPID)/* 27. data protection ID trap (T-chip) */
-#else
-	ATRAP(unk26,26)
-	ATRAP(unk27,27)
-#endif
-	ATRAP(datal,T_DATALIGN)	/* 28. unaligned data ref trap */
+	CTRAP(dtlb,T_DTLBMISS,DTLBPRE)	/* 15. data TLB miss fault */
+	CTRAP(itlb,T_ITLBMISSNA,ITLBPRE)/* 16. ITLB non-access miss fault */
+	CTRAP(dtlb,T_DTLBMISSNA,DTLBPRE)/* 17. DTLB non-access miss fault */
+	ATRAP(dprot,T_DPROT)		/* 18. data protection trap
+					      unalligned data reference trap */
+	ATRAP(dbrk,T_DBREAK)		/* 19. data break trap */
+	CTRAP(tlbd,T_TLB_DIRTY,DTLBPRE)	/* 20. TLB dirty bit trap */
+	ATRAP(pgref,T_PAGEREF)		/* 21. page reference trap */
+	CTRAP(emu,T_EMULATION,)		/* 22. assist emulation trap */
+	ATRAP(hpl,T_HIGHERPL)		/* 23. higher-privelege transfer trap*/
+	ATRAP(lpl,T_LOWERPL)		/* 24. lower-privilege transfer trap */
+	ATRAP(tknbr,T_TAKENBR)		/* 25. taken branch trap */
+	ATRAP(dacc,T_DATACC)		/* 26. data access rights trap */
+	ATRAP(dpid,T_DATAPID)		/* 27. data protection ID trap */
+	ATRAP(dalgn,T_DATALIGN)		/* 28. unaligned data ref trap */
 	ATRAP(unk29,29)
 	ATRAP(unk30,30)
 	ATRAP(unk31,31)
-				/* 32 */
+					/* 32 */
 	.align	32*32
 
 
 	.export	TLABEL(hpmc), entry
 TLABEL(hpmc)
-	copy	%r0, arg0
-	b	boot
-	addi,tr 0,r0,arg0		; Skip first instr at target.
-	break	0,0
+	break	0, 0
 
 	.export TLABEL(emu), entry
 TLABEL(emu)
@@ -621,7 +626,7 @@ TLABEL(emu)
 	 */
 	mtctl	t1, tr2
 	mtctl	t2, tr3
-	mtctl	t3, tr4
+	mtctl	t3, tr5
 
 	ldil	L%fpu_curproc, t1
 	ldw	R%fpu_curproc(t1), t1
@@ -716,7 +721,7 @@ $fpusw_nosave
 	stw	t2, R%fpu_curproc(t1)
 
 $fpusw_done
-	mfctl	tr4, t3
+	mfctl	tr5, t3
 	mfctl	tr3, t2
 	mfctl	tr2, t1
 	rfi
@@ -731,13 +736,12 @@ $fpusw_done
 	 */
 TLABEL(excpt)
 	mtctl	sp, tr3
-	mtctl	r31, tr4
+	mtctl	r31, tr2
 
 	.import	$fpemu_stack
 	ldil	L%$fpemu_stack, r31
 	ldo	R%$fpemu_stack(r31), r31
-	mtctl	sp, tr4
-	ldo	R%TF_SIZE(r31), sp
+	ldo	R%TF_SIZE+FM_SIZE(r31), sp
 
 	stw	r1 , TF_R1 (r31)
 	stw	r2 , TF_R2 (r31)
@@ -775,10 +779,9 @@ TLABEL(excpt)
 
 	ldw	TF_CR11(r31), r1
 	mtsar	r1
-	mfctl	tr4, r31
 	ldw	TF_R29(r31), r29
 	ldw	TF_R28(r31), r27
-	mtctl	r27, tr4
+	mtctl	r27, tr5
 	ldw	TF_R27(r31), r27
 	ldw	TF_R26(r31), r26
 	ldw	TF_R25(r31), r25
@@ -790,9 +793,10 @@ TLABEL(excpt)
 	ldw	TF_R19(r31), r19
 	ldw	TF_R2 (r31), r2
 	mfctl	tr3, sp
+	mfctl	tr2, r31
 
 	comb,<>	r0, ret0, TLABEL(all)
-	mfctl	tr4, ret0
+	mfctl	tr5, ret0
 
 	mfctl	tr7, r1
 	rfi
@@ -805,7 +809,7 @@ $sfu_emu
 	ldo	1(r0), ret0	/* none supported by now */
 
 	/* Compute the hpt entry ptr */
-#define	HPTENT ! \
+#define	HPTENT \
 	extru	r9, 23, 24, r16  	/* r17 = (offset >> 8) */	! \
 	zdep	r8, 26, 16, r24	     	/* r24 = (space << 5) */	! \
 	mfctl	hptmask, r17		/* r17 = sizeof(HPT)-1 */	! \
@@ -825,13 +829,7 @@ $sfu_emu
 	.align	64
 	.export	TLABEL(tlbd), entry
 TLABEL(tlbd)
-	mfctl	ior, r9		/* Offset */
-	mfctl	isr, r8		/* Space  */
-	depi    0, 31, 12, r9	/* Clear the byte offset into the page */
-
-#if USECR28
-	mfctl	cr28, r24
-#else
+#if ! USECR28
 	HPTENT	/* will update cr28 */
 #endif
 	
@@ -860,27 +858,14 @@ $hash_loop_tlbd
 	.align	32
 	.export	TLABEL(itlb), entry
 TLABEL(itlb)
-	mfctl	pcoq,r9		/* Offset */
-	mfctl	pcsq,r8		/* Space  */
-	depi    0,31,12,r9	/* Clear the byte offset into the page */
-
 #if USECR28
 	HPTENT	/* will update cr28 */
 #endif
-	b	$tlbmiss
 	depi	1, 0, 1, r1	/* mark for ITLB insert */
+	/* FALLTHROUGH */
 
-	.align	32
 	.export	TLABEL(dtlb), entry
 TLABEL(dtlb)
-	mfctl	ior, r9		/* Offset */
-	mfctl	isr, r8		/* Space  */
-	depi    0,31,12,r9	/* Clear the byte offset into the page */
-
-#if USECR28
-	mfctl	cr28, r24
-#endif
-	/* FALL THROUGH */
 
 $tlbmiss
 	/* r1 is the trap type
@@ -960,59 +945,57 @@ $tlb_itlb
 $tlb_missend
 
 	.align	32
-	.export	TLABEL(ibreak), entry
-TLABEL(ibreak)
-	mtctl	t1, tr6
-	mtctl	t2, tr5
-	mtctl	t3, tr4
-	mfctl	iir, t1
-	extru	t1, 31, 5, t2
-	comib,<>,n HPPA_BREAK_KERNEL, t2, $ibreak_bad
+	.export	TLABEL(ibrk), entry
+TLABEL(ibrk)
+	mtctl	t1, tr2
+	mtctl	t2, tr3
 
-	/* If this was called by a user process then always pass it to trap() */
-	mfctl	pcoq, t2
-	extru,=	t2, 31, 2, r0
-	b,n	$ibreak_bad
+	/* If called by a user process then always pass it to trap() */
+	mfctl	pcoq, t1
+	extru,=	t1, 31, 2, r0
+	b,n	$ibrk_bad
 
 	/* don't accept breaks from data segments */
 	.import etext
-	ldil	L%etext, t3
-	ldo	R%etext(t3), t3
-	comb,>>=,n t2, t3, $ibreak_bad
+	ldil	L%etext, t2
+	ldo	R%etext(t2), t2
+	comb,>>=,n t1, t2, $ibrk_bad
+
+	mfctl	iir, t1
+	extru	t1, 31, 5, t2
+	comib,<>,n HPPA_BREAK_KERNEL, t2, $ibrk_bad
 
 	/* now process all those `break' calls we make */
 	extru	t1, 18, 13, t2
-	comib,=,n HPPA_BREAK_GET_PSW, t2, $ibreak_getpsw
-	comib,=,n HPPA_BREAK_SET_PSW, t2, $ibreak_setpsw
+	comib,=,n HPPA_BREAK_GET_PSW, t2, $ibrk_getpsw
+	comib,=,n HPPA_BREAK_SET_PSW, t2, $ibrk_setpsw
 
-$ibreak_bad
+$ibrk_bad
 	/* illegal (unimplemented) break entry point */
-	mfctl	tr4, t3
-	mfctl	tr5, t2
+	mfctl	tr3, t2
 	b	TLABEL(all)
-	mfctl	tr6, t1
+	mfctl	tr2, t1
 
-$ibreak_getpsw
-	b	$ibreak_exit
+$ibrk_getpsw
+	b	$ibrk_exit
 	mfctl	ipsw, ret0
 
-$ibreak_setpsw
+$ibrk_setpsw
 	mfctl	ipsw, ret0
-	b	$ibreak_exit
+	b	$ibrk_exit
 	mtctl	arg0, ipsw
 
 	/* insert other fast breaks here */
 
-$ibreak_exit
+$ibrk_exit
 	/* skip the break */
 	mtctl	r0, pcoq
 	mfctl	pcoq, t1
 	mtctl	t1, pcoq
 	ldo	4(t1), t1
 	mtctl	t1, pcoq
-	mfctl	tr4, t3
-	mfctl	tr5, t2
-	mfctl	tr6, t1
+	mfctl	tr3, t2
+	mfctl	tr2, t1
 	mfctl	tr7, r1
 	rfi
 	nop
@@ -1027,51 +1010,42 @@ TLABEL(all)
 	 *	psw copied into ipsw
 	 *	psw = E(default), M(1 if HPMC, else 0)
 	 *	PL = 0
-	 *	r1, r8, r9, r16, r17, r24, r25 shadowed
+	 *	r1, r8, r9, r16, r17, r24, r25 shadowed (maybe)
 	 *	trap number in r1 (old r1 is saved in tr7)
 	 */
 
-	mtctl	sp, tr3	/* do not overwrite cr28 */
-	mtctl	t1, tr5
-	mtctl	t2, tr6
+	mtctl	sp, tr2	/* do not overwrite tr4(cr28) */
+	mtctl	t1, tr3
+	mtctl	t3, tr5
 
 	ldil	L%intr_recurse, t1
-	ldw	R%intr_recurse(t1), t2
-	addi	1, t2, t3
-	comb,<>	r0, t2, $trap_recurse
+	ldw	R%intr_recurse(t1), t3
+	ldo	1(t3), t3
+	comib,<> 1, t3, $trap_recurse
 	stw	t3, R%intr_recurse(t1)
 
 	ldil	L%intr_stack, sp
 	ldo	R%intr_stack(sp), sp
 
-	/* first level recursion always goes into pcb, if any */
-	ldil	L%curproc, t1
-	ldw	R%curproc(t1), t2
-	comb,=	r0, t2, $trap_recurse
-	nop
-
-	ldo	FM_SIZE(sp), sp
-	b	$trap_trap
-	ldo	p_md(t2), t2
-
 $trap_recurse
-	copy	sp, t2
+	copy	sp, t3
 	ldo	FM_SIZE+TF_SIZE(sp), sp
 
-	/* t2 is (struct trapframe *) */
+	/* t3 is (struct trapframe *) */
 $trap_trap
-	stw	arg0,TF_R26(t2)
+	stw	arg0, TF_R26(t3)
 	copy	r1, arg0
 	mfctl	tr7, r1
 
-	mfctl	tr3,t1
-	stw	t1,TF_R30(t2)
+	mfctl	tr2, t1
+	stw	t1, TF_R30(t3)
 
-	mfctl	tr5,t1
-	stw	t1,TF_R22(t2)
+	mfctl	tr5, t1
+	stw	t1, TF_R20(t3) /* t3 */
+	stw	t2, TF_R21(t3)
 
-	mfctl	tr6,t1
-	stw	t1,TF_R21(t2)
+	mfctl	tr3, t1
+	stw	t1, TF_R22(t3)
 
 	/*
 	 * Now, save away other volatile state that prevents us from turning
@@ -1079,36 +1053,30 @@ $trap_trap
 	 * interrupt information.
 	 */
 
-	mfctl	pcoq,t1
-	stw	t1,TF_IIOQH(t2)
+	mfctl	pcoq, t1
+	mtctl	r0, pcoq
+	mfctl	pcoq, t2
+	stw	t1, TF_IIOQH(t3)
+	stw	t2, TF_IIOQT(t3)
 
-	mtctl	r0,pcoq
+	mfctl	pcsq, t1
+	mtctl	r0, pcsq
+	mfctl	pcsq, t2
+	stw	t1, TF_IISQH(t3)
+	stw	t2, TF_IISQT(t3)
 
-	mfctl	pcoq,t1
-	stw	t1,TF_IIOQT(t2)
+	mfctl	ior, t1
+	mfctl	ipsw, t2
+	stw	t1, TF_CR21(t3)
+	stw	t2, TF_CR22(t3)
 
-	mfctl	pcsq,t1
-	stw	t1,TF_IISQH(t2)
+	mfctl	eiem, t1
+	stw	t1, TF_CR15(t3)
 
-	mtctl	r0,pcsq
-
-	mfctl	pcsq,t1
-	stw	t1,TF_IISQT(t2)
-
-	mfctl	ipsw,t1
-	stw	t1,TF_CR22(t2)
-
-	mfctl	eiem,t1
-	stw	t1,TF_CR15(t2)
-
-	mfctl	ior,t1
-	stw	t1,TF_CR21(t2)
-
-	mfctl	isr,t1
-	stw	t1,TF_CR20(t2)
-
-	mfctl	iir,t1
-	stw	t1,TF_CR19(t2)
+	mfctl	iir, t1
+	mfctl	isr, t2
+	stw	t1, TF_CR19(t3)
+	stw	t2, TF_CR20(t3)
 
 	/*
 	 * Now we're about to turn on the PC queue.  We'll also go to virtual
@@ -1116,22 +1084,21 @@ $trap_trap
 	 * point them to the kernel space
 	 */
 
-	mfsp	sr4,t1
-	stw	t1,TF_SR4(t2)
+	mfsp	sr4, t1
+	mfsp	sr5, t2
+	stw	t1, TF_SR4(t3)
+	stw	t2, TF_SR5(t3)
 
-	mfsp	sr5,t1
-	stw	t1,TF_SR5(t2)
+	mfsp	sr6, t1
+	mfsp	sr7, t2
+	stw	t1, TF_SR6(t3)
+	stw	t2, TF_SR7(t3)
 
-	mfsp	sr6,t1
-	stw	t1,TF_SR6(t2)
-
-	mfsp	sr7,t1
-	stw	t1,TF_SR7(t2)
-
-	mtsp	r0,sr4
-	mtsp	r0,sr5
-	mtsp	r0,sr6
-	mtsp	r0,sr7
+	/* XXX HPPA_SID_KERNEL == 0 */
+	mtsp	r0, sr4
+	mtsp	r0, sr5
+	mtsp	r0, sr6
+	mtsp	r0, sr7
 
 	/*
 	 * save the protection ID registers. We will keep the last one
@@ -1139,14 +1106,15 @@ $trap_trap
 	 * ones to be the kernel.
 	 */
 
-	mfctl	pidr1,t1
-	stw	t1,TF_CR8(t2)
+	mfctl	pidr1, t1
+	mfctl	pidr2, t2
+	stw	t1, TF_CR8(t3)
+	stw	t2, TF_CR9(t3)
 
-	mfctl	pidr2,t1
-	stw	t1,TF_CR9(t2)
-
-	mfctl	pidr3,t1
-	stw	t1,TF_CR12(t2)
+	mfctl	pidr3, t1
+	mfctl	pidr4, t2
+	stw	t1, TF_CR12(t3)
+	stw	t2, TF_CR13(t3)
 
 	ldi	HPPA_PID_KERNEL,t1
 	mtctl	t1,pidr1
@@ -1154,33 +1122,33 @@ $trap_trap
 	mtctl	t1,pidr3
 
 	/* load the space queue */
-	mtctl	r0,pcsq
-	mtctl	r0,pcsq
+	mtctl	r0, pcsq
+	mtctl	r0, pcsq
 
 	/*
 	 * set the new psw to be data and code translation, interrupts
 	 * disabled, protection enabled, Q bit on
 	 */
 
-	ldil	L%KERNEL_PSW,t1
-	ldo	R%KERNEL_PSW(t1),t1
-	mtctl	t1,ipsw
+	ldil	L%KERNEL_PSW, t1
+	ldo	R%KERNEL_PSW(t1), t1
+	mtctl	t1, ipsw
 
 	/*
 	 * Load up a real value into eiem to reflect an spl level of splhigh.
 	 * Right now interrupts are still off.
 	 */
-	ldi	INT_NONE,t1
-	mtctl	t1,eiem
+	ldi	INT_NONE, t1
+	mtctl	t1, eiem
 
 	/* load in the address to "return" to with the rfir instruction */
-	ldil	L%$trapnowvirt,t1
-	ldo	R%$trapnowvirt(t1),t1
+	ldil	L%$trapnowvirt, t1
+	ldo	R%$trapnowvirt(t1), t1
 
 	/* load the offset queue */
-	mtctl	t1,pcoq
-	ldo	4(t1),t1
-	mtctl	t1,pcoq
+	mtctl	t1, pcoq
+	ldo	4(t1), t1
+	mtctl	t1, pcoq
 
 	/*
 	 * Must do rfir not rfi since we may be called from tlbmiss routine
@@ -1191,91 +1159,99 @@ $trap_trap
 
 $trapnowvirt
 	/*
-	 * t2 contains the virtual address of the saved status area
+	 * t3 contains the virtual address of the saved status area
 	 * t1 contains the trap flags
 	 * sp contains the virtual address of the stack pointer
 	 */
+#if 0
+	ldil	L%curproc, t1
+	ldw	R%curproc(t1), t3
+	comb,=	r0, t3, $trap_recurse
+	nop
 
-	stw	t1,TF_FLAGS(t2)
+	ldo	FM_SIZE(sp), sp
+	b	$trap_trap
+	ldo	p_md(t3), t3
+#endif
+	stw	t1, TF_FLAGS(t3) /* XXX not really */
 
 	/*
 	 * Save all general registers that we haven't saved already
 	 */
 
-	stw	r1,TF_R1(t2)
-	stw	r2,TF_R2(t2)
+	stw	r1,TF_R1(t3)
+	stw	r2,TF_R2(t3)
 #ifdef DDB
 	stw	rp,FM_CRP(sp)
 	stw	r3,FM_PSP(sp)
 #endif
-	stw	r3,TF_R3(t2)
-	stw	r4,TF_R4(t2)
-	stw	r5,TF_R5(t2)
-	stw	r6,TF_R6(t2)
-	stw	r7,TF_R7(t2)
-	stw	r8,TF_R8(t2)
-	stw	r9,TF_R9(t2)
-	stw	r10,TF_R10(t2)
-	stw	r11,TF_R11(t2)
-	stw	r12,TF_R12(t2)
-	stw	r13,TF_R13(t2)
-	stw	r14,TF_R14(t2)
-	stw	r15,TF_R15(t2)
-	stw	r16,TF_R16(t2)
-	stw	r17,TF_R17(t2)
-	stw	r18,TF_R18(t2)
-	stw	r19,TF_R19(t2)
-	stw	r20,TF_R20(t2)
-	/*	r21 already saved
+	stw	r3,TF_R3(t3)
+	stw	r4,TF_R4(t3)
+	stw	r5,TF_R5(t3)
+	stw	r6,TF_R6(t3)
+	stw	r7,TF_R7(t3)
+	stw	r8,TF_R8(t3)
+	stw	r9,TF_R9(t3)
+	stw	r10,TF_R10(t3)
+	stw	r11,TF_R11(t3)
+	stw	r12,TF_R12(t3)
+	stw	r13,TF_R13(t3)
+	stw	r14,TF_R14(t3)
+	stw	r15,TF_R15(t3)
+	stw	r16,TF_R16(t3)
+	stw	r17,TF_R17(t3)
+	stw	r18,TF_R18(t3)
+	stw	r19,TF_R19(t3)
+	/*	r20 already saved
+	 *	r21 already saved
 	 *	r22 already saved */
-	stw	r23,TF_R23(t2)
-	stw	r24,TF_R24(t2)
-	stw	r25,TF_R25(t2)
+	stw	r23,TF_R23(t3)
+	stw	r24,TF_R24(t3)
+	stw	r25,TF_R25(t3)
 	/*	r26 already saved */
-	stw	r27,TF_R27(t2)
-	stw	r28,TF_R28(t2)
-	stw	r29,TF_R29(t2)
+	stw	r27,TF_R27(t3)
+	stw	r28,TF_R28(t3)
+	stw	r29,TF_R29(t3)
  	/*	r30 already saved */
-	stw	r31,TF_R31(t2)
+	stw	r31,TF_R31(t3)
 
 	/*
 	 * Save the space registers.
 	 */
 
-	mfsp	sr0,t1
-	stw	t1,TF_SR0(t2)
+	mfsp	sr0, t1
+	mfsp	sr1, t2
+	stw	t1, TF_SR0(t3)
+	stw	t2, TF_SR1(t3)
 
-	mfsp	sr1,t1
-	stw	t1,TF_SR1(t2)
-
-	mfsp	sr2,t1
-	stw	t1,TF_SR2(t2)
-
-	mfsp	sr3,t1
-	stw	t1,TF_SR3(t2)
+	mfsp	sr2, t1
+	mfsp	sr3, t2
+	stw	t1, TF_SR2(t3)
+	stw	t2, TF_SR3(t3)
 
 	/*
 	 * Save the necessary control registers that were not already saved.
 	 */
 
-	mfctl	rctr,t1
-	stw	t1,TF_CR0(t2)
+	mfctl	rctr, t1
+	stw	t1, TF_CR0(t3)
 
-	mfctl	sar,t1
-	stw	t1,TF_CR11(t2)
+	mfctl	sar, t1
+	stw	t1, TF_CR11(t3)
 
 #ifdef DDB
 	/*
 	 * Save hpt mask and v2p translation table pointer
 	 */
-	mfctl	hptmask, t1
-	stw	t1, TF_CR24(t2)
+	mfctl	eirr, t1
+	mfctl	hptmask, t2
+	stw	t1, TF_CR23(t3)
+	stw	t2, TF_CR24(t3)
 
 	mfctl	vtop, t1
-	stw	t1, TF_CR25(t2)
-
-	mfctl	cr28, t1
-	stw	t1, TF_CR28(t2)
+	mfctl	cr28, t2
+	stw	t1, TF_CR25(t3)
+	stw	t2, TF_CR28(t3)
 #endif
 
 	/*
@@ -1289,35 +1265,40 @@ $trapnowvirt
 	 * call the C routine trap().
 	 * Trap type (arg0) was setup back in the beginning of the handler
 	 */
-	copy	t2, arg1
+	copy	t3, arg1
 
 #ifdef DDB
-	/* TODO: setup a call frame */
-	copy	r0, r3
+	ldo	-FM_SIZE(sp), r3
 #endif
 	.import	trap, code
 	ldil	L%trap,t1
 	ldo	R%trap(t1),t1
-	copy	t2, r5
+	copy	t3, r5
 	.call
 	blr	r0,rp
 	bv,n	r0(t1)
 	nop
-
+#if 0
 	/* see if context really changed */
 	ldil	L%curproc, t1
 	ldw	R%curproc(t1), t2
+	comb,=	t2, r0, $curproc_zero
 	copy	r5, t3
-	add,<>	t2, r0, t4
-	ldo	p_md(t2), t3	
 
+	ldo	p_md(t2), t3	
+$curproc_zero
+#else
+	copy	r5, t3
+#endif
 	/*
 	 * Restore most of the state, up to the point where we need to turn
 	 * off the PC queue. Going backwards, starting with control regs.
 	 */
 
-	ldw	TF_CR15(t3),t1
-	mtctl	t1,eiem
+	ldw	TF_CR0(t3), t1
+	ldw	TF_CR15(t3), t2
+	mtctl	t1, rctr
+	mtctl	t2, eiem
 
 	ldw	TF_CR11(t3),t1
 	mtctl	t1,sar
@@ -1325,25 +1306,21 @@ $trapnowvirt
 	ldw	TF_CR8(t3),t1
 	mtctl	t1,pidr1
 
-	ldw	TF_CR0(t3),t1
-	mtctl	t1,rctr
 
 	/*
 	 * Restore the lower space registers, we'll restore sr4 - sr7 after
 	 * we have turned off translations
 	 */
 
-	ldw	TF_SR0(t3),t1
-	mtsp	t1,sr0
+	ldw	TF_SR0(t3), t1
+	ldw	TF_SR1(t3), t2
+	mtsp	t1, sr0
+	mtsp	t2, sr1
 
-	ldw	TF_SR1(t3),t1
-	mtsp	t1,sr1
-
-	ldw	TF_SR2(t3),t1
-	mtsp	t1,sr2
-
-	ldw	TF_SR3(t3),t1
-	mtsp	t1,sr3
+	ldw	TF_SR2(t3), t1
+	ldw	TF_SR3(t3), t2
+	mtsp	t1, sr2
+	mtsp	t2, sr3
 
 	/*
 	 * restore most of the general registers
@@ -1381,10 +1358,7 @@ $trapnowvirt
 	/*	r30 (sp) will be restored later */
 	ldw	TF_R31(t3),r31
 
-	ldil	L%intr_recurse, t1
-	ldw	R%intr_recurse(t1), t2
-
-		/*
+	/*
 	 * clear the system mask, this puts us back into physical mode.
 	 *
 	 * N.B: Better not be any code translation traps from this point
@@ -1410,40 +1384,38 @@ $trapnowvirt
 	 */
 
 	ldw	TF_SR4(t3),t1
+	ldw	TF_SR5(t3),t2
 	mtsp	t1,sr4
+	mtsp	t2,sr5
 
-	ldw	TF_SR5(t3),t1
-	mtsp	t1,sr5
-
-	ldw	TF_SR6(t3),t1
-	mtsp	t1,sr6
-
-	ldw	TF_SR7(t3),t1
-	mtsp	t1,sr7
+	ldw	TF_SR6(t3), t1
+	ldw	TF_SR7(t3), t2
+	mtsp	t1, sr6
+	mtsp	t2, sr7
 
 	/*
 	 * finally we can restore the space and offset queues and the ipsw
 	 */
 
-	ldw	TF_IIOQH(t3),t1
-	mtctl	t1,pcoq
+	ldw	TF_IISQH(t3), t1
+	ldw	TF_IISQT(t3), t2
+	mtctl	t1, pcsq
+	mtctl	t2, pcsq
 
-	ldw	TF_IIOQT(t3),t1
-	mtctl	t1,pcoq
+	ldw	TF_IIOQH(t3), t1
+	ldw	TF_IIOQT(t3), t2
+	mtctl	t1, pcoq
+	mtctl	t2, pcoq
 
-	ldw	TF_IISQH(t3),t1
-	mtctl	t1,pcsq
-
-	ldw	TF_IISQT(t3),t1
-	mtctl	t1,pcsq
-
-	ldw	TF_CR22(t3),t1
-	mtctl	t1,ipsw
+	ldw	TF_CR22(t3), t1
+	mtctl	t1, ipsw
 
 	/*
 	 * restore the last registers,r30, r22, and finally r21(t2)
 	 * decrement interrupt recursion level
 	 */
+	ldil	L%intr_recurse, t1
+	ldw	R%intr_recurse(t1), t2
 	addi	-1, t2, t2
 	stw	t2, R%intr_recurse(t1)
 	ldw	TF_R22(t3),t1
@@ -1648,6 +1620,7 @@ EXIT(microtime)
  * setrunqueue(struct proc *p);
  * Insert a process on the appropriate queue.  Should be called at splclock().
  */
+	.align	32
 ENTRY(setrunqueue)
 #ifdef DIAGNOSTIC
 	ldw	p_back(arg0), t1
@@ -1657,53 +1630,73 @@ ENTRY(setrunqueue)
 	ldb	p_stat(arg0), t1
 	comib,=,n SRUN, t1, $setrunqueue_ok
 $setrunqueue_panic
+	copy	arg0, arg1
 	ldil	L%panic, r1
-	ldil	L%$srqpstr, arg0
+	ldil	L%Lsrqpstr, arg0
 	ldo	R%panic(r1), r1
-	ldo	R%$srqpstr(arg0), arg0
+	ldo	R%Lsrqpstr(arg0), arg0
 	.call
 	blr	%r0, rp
 	bv,n	%r0(r1)
-
-$srqpstr
-	.asciz	"setrunqueue"
-	.align	4
+	nop
+Lsrqpstr
+	.asciz	"setrunqueue(%p)"
+	.align	8
 $setrunqueue_ok
 #endif
 
-	ldb	p_priority(arg0), t1
-	shd	r0, t1, 2, t1
-	mtctl	t1, sar
+	ldb	p_priority(arg0), t2
+	ldil	L%qs, t4
+	extru	t2, 29, 5, t1
+	ldo	R%qs(t4), t4
+	sh3add	t1, t4, t4
 	ldil	L%whichqs, t2
 	ldw	R%whichqs(t2), t3
-	ldil	L%qs, t4
+	mtctl	t1, sar
 	vdepi	1, 1, t3
-	ldo	R%qs(t4), t4
 	stw	t3, R%whichqs(t2)
-	sh3add	t1, t4, t1
-	ldw	p_back(t1), t2
-	stw	t1, p_forw(arg0)
-	stw	arg0, p_back(t1)
+
+#if 0
+	/* this actually trashes all the regs we use, be advised ;) */
+	copy	t1, arg1
+	copy	t4, arg2
+	ldil	L%printf, r1
+	ldil	L%Lsrqfmt, arg0
+	ldo	R%printf(r1), r1
+	ldo	R%Lsrqfmt(arg0), arg0
+	.call
+	blr	%r0, rp
+	bv,n	%r0(r1)
+	nop
+#endif
+	ldw	p_back(t4), t2
+	stw	t4, p_forw(arg0)
+	stw	arg0, p_back(t4)
 	stw	arg0, p_forw(t2)
 	bv	0(rp)
 	stw	t2, p_back(arg0)
+Lsrqfmt
+	.asciz	"setrunqueue: bit=%x, qs=%p\n"
 EXIT(setrunqueue)
 
 /*
  * remrunqueue(struct proc *p);
  * Remove a process from its queue.  Should be called at splclock().
  */
+	.align	32
 ENTRY(remrunqueue)
-	ldb	p_priority(arg0), t1
-	shd	r0, t1, 2, t1
+	ldb	p_priority(arg0), t2
+	extru	t2, 29, 5, t1
+	mtsar	t1
+	ldil	L%whichqs, t2
+	ldw	R%whichqs(t2), t3
 
 #ifdef DIAGNOSTIC
-	ldil	L%whichqs, t3
-	ldw	R%whichqs(t3), t3
-	mtctl	t1, sar
 	bvb,<,n	t3, remrunqueue_ok
 
 Lremrunqueue_panic
+	copy	arg0, arg1
+	copy	t1, arg2
 	ldil    L%panic, r1
 	ldil	L%Lrrqpstr, arg0
 	ldo     R%panic(r1), r1
@@ -1713,21 +1706,18 @@ Lremrunqueue_panic
 	bv,n    %r0(r1)
 
 Lrrqpstr
-	.asciz	"remrunqueue"
-	.align	4
+	.asciz	"remrunqueue(%p), bit=%x"
+	.align	8
 remrunqueue_ok
 #endif
-	ldw	p_back(arg0), t2
-	stw	%r0, p_back(arg0)
+	ldw	p_back(arg0), t4
+	stw	r0, p_back(arg0)
 	ldw	p_forw(arg0), arg0
-	stw	arg0, p_forw(t2)
-	stw	t2, p_back(arg0)
-	comb,<>	t2, arg0, Lqnempty
-	ldil	L%whichqs, t2
-#ifndef DIAGNOSTIC
-	ldw	R%whichqs(t2), t3
-	mtctl	t1, sar
-#endif
+	stw	arg0, p_forw(t4)
+	stw	t4, p_back(arg0)
+	comb,<>	t4, arg0, Lqnempty
+	nop
+
 	vdepi	1, 1, t3
 	stw	t3, R%whichqs(t2)
 Lqnempty
@@ -1739,6 +1729,7 @@ EXIT(remrunqueue)
  * cpu_switch()
  * Find the highest priority process and resume it.
  */
+	.align	32
 ENTRY(cpu_switch)
 
 	/*
@@ -1758,58 +1749,62 @@ ENTRY(cpu_switch)
 switch_search
 	/* arg3 = splhigh() */
 	mfctl	eiem, arg3
-idle_loop
-	rsm	PSW_I, r0
-	mtctl	r0, eiem
-
-	/* 1. find new process */
 	ldil	L%whichqs, t1
+	ldi	-1, t2
+idle_loop
+	mtctl	r0, eiem
 	ldw	R%whichqs(t1), t3
 
 	comb,<>	r0, t3, gotprocs
+	nop
 
-	mtctl	arg3, eiem
-	ssm	PSW_I, r0
+	mtctl	t2, eiem
+
 	/* XXX do idle work here */
+	nop ! nop ! nop ! nop ! nop ! nop ! nop ! nop
+
 	b	idle_loop
 	nop
 
 gotprocs
 	ldi	0, t4
 getbit
-	addi	1, t4, t4
-	bb,>=,n	t3,0,getbit
-	shd	t3, t3, 1, t3
+	mtsar	t4
+	bvb,>=,n t3, getbit
+	ldo	1(t4), t4
 
-	addi	-1, t4, t4
-	ldil	L%qs, t3
-	ldo	R%qs(t3), t3
-	sh3add	t4, t3, t3
+	ldil	L%qs, t2
+	ldo	R%qs(t2), t2
+	sh3add	t4, t2, t2
 
-	ldw	p_forw(t3), arg1
+	ldw	p_forw(t2), arg1
 #ifdef DIAGNOSTIC
-	comb,<>,n t3, arg1, link_ok
+	comb,<>	t2, arg1, link_ok
+	nop
 switch_error
-	ldil	L%switch_panic, arg0
-	ldo	R%switch_panic(arg0), arg0
+	copy	t4, arg1
+	copy	t2, arg2
 	ldil    L%panic, r1
+	ldil	L%Lcspstr, arg0
 	ldo     R%panic(r1), r1
+	ldo	R%Lcspstr(arg0), arg0
 	.call
 	blr     %r0, rp
 	bv,n    %r0(r1)
-
-switch_panic	.asciz	"cpu_switch"
-	.align	4
+	nop
+Lcspstr
+	.asciz	"cpu_switch: bit=%x, q/p=%p"
+	.align	8
 link_ok
 #endif
 	ldw	p_forw(arg1), arg0
-	stw	arg0, p_forw(t3)
-	stw	t3, p_back(arg0)
+	stw	arg0, p_forw(t2)
+	stw	t2, p_back(arg0)
 
-	comb,<>,n arg0, t3, sw_qnempty
-	ldw	R%whichqs(t1), t3
-	mtctl	t4, sar
-	vdepi	1, 1, t3
+	comb,<> arg0, t2, sw_qnempty
+	nop
+
+	vdepi	0, 1, t3
 	stw	t3, R%whichqs(t1)
 
 	/* don't need &whichqs (t1) starting here */
@@ -1819,16 +1814,15 @@ sw_qnempty
 
 #ifdef DIAGNOSTIC
 	ldw	p_wchan(arg1), t1
-	comb,=,n r0, t1, switch_error
+	comb,<>,n r0, t1, switch_error
+	copy	arg1, t2
 	ldb	p_stat(arg1), t1
 	comib,<>,n SRUN, t1, switch_error
+	copy	arg1, t2
 #endif
 	ldil	L%curproc, t1
 	stw	r0, p_back(arg1)
 	stw	arg1, R%curproc(t1)
-
-	/* enable interrupts */
-	ssm	PSW_I, r0
 
 	/* Skip context switch if same process. */
 	comb,=,n arg1, t2, switch_return
@@ -1853,7 +1847,6 @@ switch_exited
 	 * arg1: new proc
 	 * arg2: new pcb
 	 */
-	rsm	PSW_I, r0
 
 	ldw	p_addr(arg1), arg2
 	/* only pidr needs restoring, so we can access user space */
@@ -1861,9 +1854,8 @@ switch_exited
 	mtctl	t1, pidr4
 
 switch_return
-	mtctl	arg3, eiem
 	bv	0(rp)
-	ssm	PSW_I, r0
+	mtctl	arg3, eiem
 
 EXIT(cpu_switch)
 
