@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.57 1999/12/10 08:55:23 angelos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.58 1999/12/18 19:57:07 angelos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -1701,7 +1701,7 @@ ip_mloopback(ifp, m, dst)
 	register struct ip *ip;
 	struct mbuf *copym;
 
-	copym = m_copy(m, 0, M_COPYALL);
+	copym = m_copym2(m, 0, M_COPYALL, M_DONTWAIT);
 	if (copym != NULL) {
 		/*
 		 * We don't bother to fragment if the IP length is greater
