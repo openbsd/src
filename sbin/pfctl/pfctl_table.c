@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.23 2003/01/18 15:00:24 cedric Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.24 2003/01/18 22:18:09 cedric Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -642,8 +642,11 @@ xprintf(int opts, char *fmt, ...)
 
 	if (opts & PF_OPT_QUIET)
 		return;
+
 	va_start(args, fmt);
 	vfprintf(stderr, fmt, args);
+	va_end(args);
+
 	if (opts & PF_OPT_DUMMYACTION)
 		fprintf(stderr, " (dummy).\n");
 	else if (opts & PF_OPT_NOACTION)
