@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cdboot.8,v 1.1 2004/08/21 18:53:38 tom Exp $
+.\"	$OpenBSD: cdboot.8,v 1.2 2004/08/24 15:37:59 tom Exp $
 .\" Copyright (c) 2004 Tom Cosgrove
 .\" Copyright (c) 2003 Matthias Drochner
 .\" Copyright (c) 1999 Doug White
@@ -57,9 +57,11 @@ If no commands are given for a short time,
 .Nm
 will then attempt to load an
 .Ox
-kernel
-.Pa /bsd
-from the CD.
+kernel from the CD.
+It first looks for
+.Pa /3.6/amd64/bsd.rd ,
+then for
+.Pa /bsd .
 It may be told to boot an alternative kernel,
 either by commands in the
 .Pa boot.conf
