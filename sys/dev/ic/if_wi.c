@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.70 2002/06/21 06:56:24 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.71 2002/06/21 20:15:37 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.70 2002/06/21 06:56:24 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.71 2002/06/21 20:15:37 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -188,6 +188,7 @@ wi_attach(sc)
 	int			error;
 
 	sc->wi_flags = 0;
+	sc->wi_hostap_info.apflags = 0;
 
 	wi_cor_reset(sc);
 	wi_reset(sc);
