@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.27 1998/06/27 02:31:58 deraadt Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.28 1998/06/27 02:42:41 deraadt Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -70,7 +70,7 @@
 #include <dev/rndvar.h>
 
 #ifdef IPSEC
-extern int     	check_ipsec_policy  __P((struct inpcb *, u_int32_t));
+extern int	check_ipsec_policy __P((struct inpcb *, u_int32_t));
 #endif
 
 /*
@@ -680,7 +680,7 @@ tcp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	case TCPCTL_SENDSPACE:
 		return (sysctl_int(oldp, oldlenp, newp, newlen,&tcp_sendspace));
 	case TCPCTL_IDENT:
-	        return (tcp_ident(oldp, oldlenp, newp, newlen));
+		return (tcp_ident(oldp, oldlenp, newp, newlen));
 	default:
 		return (ENOPROTOOPT);
 	}

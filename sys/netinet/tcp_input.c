@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.18 1998/03/18 02:37:47 angelos Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.19 1998/06/27 02:42:40 deraadt Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -155,7 +155,8 @@ tck_addfriend(struct in_addr f)
 */
 
 static u_int32_t
-tck_makecookie(struct in_addr f)
+tck_makecookie(f)
+	struct in_addr f;
 {
 	static MD5_CTX ctx;
 	u_int8_t buf[16];
@@ -175,13 +176,15 @@ tck_makecookie(struct in_addr f)
 }	
 
 static int
-tck_chkcookie(struct tcpiphdr *ti)
+tck_chkcookie(ti)
+	struct tcpiphdr *ti;
 {
 #ifdef DEBUG_TCPCOOKIE
 	printf("tck_chkcookie: src = 0x%08x, cookie = 0x%08x, seq = 0x%08x, ack = 0x%08x\n", ntohl(ti->ti_src.s_addr), tck_makecookie(ti->ti_src), ti->ti_seq, ti->ti_ack);
 #endif /* DEBUG_TCPCOOKIE */
 
-	if (tck_makecookie(ti->ti_src) == ti->ti_seq) { /* seq in host order */
+	if (tck_makecookie(ti->ti_src) == ti->ti_seq) {
+		/* seq in host order */
 		tck_addfriend(ti->ti_src);
 		return 1;
 	}
@@ -770,15 +773,15 @@ findpcb:
 		 * try to obtain a cookie and drop the frame.
 		 */
 		
-		if (!tck_isafriend(ti->ti_src))
-		{
-			u_long acookie;
+		if (!tck_isafriend(ti->ti_src)) {
+			u_int32_t acookie;
+
 			acookie = tck_makecookie(ti->ti_src);
 			ti->ti_dport = htons(TCK_PORT);
 			tcp_respond(tp, ti, m, acookie, acookie, TH_ACK);
 			/* destroy temporarily created socket */
 			if (dropsocket)
-			  (void) soabort(so);
+				(void) soabort(so);
 			return;
 		}
 #endif /* TCPCOOKIE */
