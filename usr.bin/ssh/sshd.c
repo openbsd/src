@@ -40,7 +40,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.142 2000/12/20 19:37:22 markus Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.143 2000/12/27 12:34:50 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -929,7 +929,7 @@ main(int ac, char **av)
 					/*
 					 * the read end of the pipe is ready
 					 * if the child has closed the pipe
-					 * after successfull authentication
+					 * after successful authentication
 					 * or if the child has died
 					 */
 					close(startup_pipes[i]);
