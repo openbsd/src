@@ -1,4 +1,4 @@
-.\"	$OpenBSD: group.5,v 1.4 1999/07/09 13:35:38 aaron Exp $
+.\"	$OpenBSD: group.5,v 1.5 1999/10/05 20:53:11 aaron Exp $
 .\"	$NetBSD: group.5,v 1.4 1995/07/28 06:41:39 phil Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -107,20 +107,20 @@ If YP is active, the
 .Nm
 file may also contain lines of the format
 .Pp
-.Bl -tag -offset indent -compact
+.Bd -literal -offset indent
 +name:*::
+.Ed
 .Pp
 which causes the specified group to be included from the
 .Pa group.byname
 YP map.
-.Pp
 If no group name is specified, or the
-.Dq +
+.Ql +
 (plus sign) appears alone
 on line, all groups are included from the YP map.
 .Pp
 YP references may appear anywhere in the file, but the single
-.Dq +
+.Ql +
 form should be on the last line, for historical reasons.
 Only the first group with a specific name encountered, whether in the
 .Nm
@@ -148,4 +148,4 @@ A
 file format appeared in
 .At v6 .
 .Pp
-YP file format first appeared in SunOS.
+The YP file format first appeared in SunOS.

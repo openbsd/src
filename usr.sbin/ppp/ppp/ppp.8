@@ -1,4 +1,4 @@
-.\" $Id: ppp.8,v 1.70 1999/09/23 04:12:11 alex Exp $
+.\" $Id: ppp.8,v 1.71 1999/10/05 20:53:10 aaron Exp $
 .Dd 20 September 1995
 .nr XX \w'\fC00'
 .Dt PPP 8
@@ -3433,7 +3433,7 @@ The
 .Ar option Ns No s
 are as follows (in this order of preference):
 .Pp
-.Bl -tag
+.Bl -tag -width Ds
 .It auth
 The callee is expected to decide the callback number based on
 authentication.  If
@@ -3442,7 +3442,7 @@ is the callee, the number should be specified as the fifth field of
 the peers entry in
 .Pa /etc/ppp/ppp.secret .
 .It cbcp
-Microsofts callback control protocol is used.  See
+Microsoft's callback control protocol is used.  See
 .Dq set cbcp
 below.
 .Pp
@@ -3493,7 +3493,7 @@ options) if you wish callback to be optional.
 .Op Ar delay Op Ar retry
 .Oc
 .Xc
-If no arguments are given, CBCP (Microsofts CallBack Control Protocol)
+If no arguments are given, CBCP (Microsoft's CallBack Control Protocol)
 is disabled - ie, configuring CBCP in the
 .Dq set callback
 command will result in

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apm.4,v 1.6 1999/07/21 01:03:07 deraadt Exp $
+.\"	$OpenBSD: apm.4,v 1.7 1999/10/05 20:53:11 aaron Exp $
 .\"
 .\"	Copyright (c) 1998 Marco S. Hyman
 .\"
@@ -31,7 +31,7 @@ Configuration options:
 .Pp
 .Bl -tag -width APM_V10_ONLY -compact -offset indent
 .It Dv APM_V10_ONLY
-Disables support for version 1.1 of the
+Disable support for v1.1 of the
 .Tn APM
 .Tn BIOS
 interface.
@@ -50,18 +50,18 @@ driver implements the following
 calls.  They are defined in
 .Aq Pa machine/apmvar.h .
 .Pp
-.Bl -tag -width APM_IOC_NEXTEVENT
+.Bl -tag -width Ds
 .It Dv APM_IOC_REJECT
 .Em Not implemented . DO NOT USE .
 .It Dv APM_IOC_STANDBY
 .Pq Li "no parameters"
 Request
-.Sq standby
+.Dq standby
 mode.
 .It Dv APM_IOC_SUSPEND
 .Pq Li "no parameters"
 Request
-.Sq suspend
+.Dq suspend
 mode.
 .It Dv APM_IOC_GETPOWER
 .Pq Li "struct apm_power_info"
@@ -76,9 +76,10 @@ struct apm_power_info {
 	u_int spare2[6];
 };
 .Ed
+.Pp
 The following values are defined for
 .Va battery_state :
-.Bl -tag -width APM_BATT_FLAG_NOBATTERY
+.Bl -tag -width Ds
 .It Dv APM_BATT_HIGH
 Battery has a high state of charge.
 .It Dv APM_BATT_LOW
@@ -95,7 +96,7 @@ No battery installed.
 .Pp
 The following values are defined for
 .Va ac_state :
-.Bl -tag -width APM_AC_UNKNOWN
+.Bl -tag -width Ds
 .It Dv APM_AC_OFF
 External power not detected.
 .It Dv APM_AC_ON
@@ -141,7 +142,7 @@ is a sequential count of events that can be used to check if any
 events were lost and
 .Va type
 is one of:
-.Bl -tag -compact -offset indent
+.Bl -tag -width Ds -offset indent -compact
 .It Dv APM_STANDBY_REQ
 .It Dv APM_SUSPEND_REQ
 .It Dv APM_NORMAL_RESUME
@@ -188,7 +189,7 @@ controls message output by the
 .Tn APM
 driver when a power change event is detected.  The integer parameter is one
 of:
-.Bl -tag -width APM_PRINT_OFF
+.Bl -tag -width Ds
 .It Dv APM_PRINT_ON
 All power change events result in a message.  This is the normal
 operating mode for the driver.
@@ -226,7 +227,8 @@ use will fail, returning
 .Sh SEE ALSO
 .Xr apm 8 ,
 .Xr apmd 8
-.Nm http://developer.intel.com/ial/powermgm/apmv12.pdf
+.Pp
+http://developer.intel.com/ial/powermgm/apmv12.pdf
 .Sh HISTORY
 The
 .Nm
