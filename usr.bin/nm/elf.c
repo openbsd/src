@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf.c,v 1.10 2004/10/09 20:26:57 mickey Exp $	*/
+/*	$OpenBSD: elf.c,v 1.11 2004/10/10 16:41:18 mickey Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -88,6 +88,26 @@
 #define	ELF_SDATA	".sdata"
 #define	ELF_SBSS	".sbss"
 #define	ELF_PLT		".plt"
+
+#ifndef	SHN_MIPS_ACOMMON
+#define	SHN_MIPS_ACOMMON	SHN_LOPROC + 0
+#endif
+#ifndef	SHN_MIPS_TEXT
+#define	SHN_MIPS_TEXT		SHN_LOPROC + 1
+#endif
+#ifndef	SHN_MIPS_DATA
+#define	SHN_MIPS_DATA		SHN_LOPROC + 2
+#endif
+#ifndef	SHN_MIPS_SUNDEFINED
+#define	SHN_MIPS_SUNDEFINED	SHN_LOPROC + 4
+#endif
+#ifndef	SHN_MIPS_SCOMMON
+#define	SHN_MIPS_SCOMMON	SHN_LOPROC + 3
+#endif
+
+#ifndef	STT_PARISC_MILLI
+#define	STT_PARISC_MILLI	STT_LOPROC + 0
+#endif
 
 int
 elf_fix_header(Elf_Ehdr *eh)
@@ -205,32 +225,43 @@ elf_fix_sym(Elf_Ehdr *eh, Elf_Sym *sym)
 }
 
 int
-elf_shn2type(u_int shn, const char *sn)
+elf_shn2type(Elf_Ehdr *eh, u_int shn, const char *sn)
 {
 	switch (shn) {
-#ifdef SHN_MIPS_SUNDEFINED
 	case SHN_MIPS_SUNDEFINED:
-#endif
+		if (eh->e_machine == EM_MIPS)
+			return (N_UNDF | N_EXT);
+		break;
+
 	case SHN_UNDEF:
 		return (N_UNDF | N_EXT);
+
 	case SHN_ABS:
 		return (N_ABS);
-#ifdef SHN_MIPS_ACOMMON
+
 	case SHN_MIPS_ACOMMON:
-#endif
-#ifdef SHN_MIPS_SCOMMON
+		if (eh->e_machine == EM_MIPS)
+			return (N_COMM);
+		break;
+
 	case SHN_MIPS_SCOMMON:
-#endif
+		if (eh->e_machine == EM_MIPS)
+			return (N_COMM);
+		break;
+
 	case SHN_COMMON:
 		return (N_COMM);
-#ifdef SHN_MIPS_TEXT
+
 	case SHN_MIPS_TEXT:
-		return (N_TEXT);
-#endif
-#ifdef SHN_MIPS_DATA
+		if (eh->e_machine == EM_MIPS)
+			return (N_TEXT);
+		break;
+
 	case SHN_MIPS_DATA:
-		return (N_DATA);
-#endif
+		if (eh->e_machine == EM_MIPS)
+			return (N_DATA);
+		break;
+
 	default:
 		/* beyond 8 a table-driven binsearch shall be used */
 		if (sn == NULL)
@@ -251,8 +282,9 @@ elf_shn2type(u_int shn, const char *sn)
 			return (N_DATA);
 		else if (!strncmp(sn, ELF_PLT, sizeof(ELF_PLT) - 1))
 			return (N_DATA);
-		return (-1);
 	}
+
+	return (-1);
 }
 
 /*
@@ -281,7 +313,7 @@ elf2nlist(Elf_Sym *sym, Elf_Ehdr *eh, Elf_Shdr *shdr, char *shstr, struct nlist 
 	switch (stt = ELF_ST_TYPE(sym->st_info)) {
 	case STT_NOTYPE:
 	case STT_OBJECT:
-		type = elf_shn2type(sym->st_shndx, sn);
+		type = elf_shn2type(eh, sym->st_shndx, sn);
 		if (type < 0) {
 			if (sn == NULL)
 				np->n_other = '?';
@@ -298,7 +330,7 @@ elf2nlist(Elf_Sym *sym, Elf_Ehdr *eh, Elf_Shdr *shdr, char *shstr, struct nlist 
 		break;
 
 	case STT_FUNC:
-		type = elf_shn2type(sym->st_shndx, NULL);
+		type = elf_shn2type(eh, sym->st_shndx, NULL);
 		np->n_type = type < 0? N_TEXT : type;
 		if (ELF_ST_BIND(sym->st_info) == STB_WEAK) {
 			np->n_type = N_INDR;
@@ -311,7 +343,7 @@ elf2nlist(Elf_Sym *sym, Elf_Ehdr *eh, Elf_Shdr *shdr, char *shstr, struct nlist 
 		break;
 
 	case STT_SECTION:
-		type = elf_shn2type(sym->st_shndx, NULL);
+		type = elf_shn2type(eh, sym->st_shndx, NULL);
 		if (type < 0)
 			np->n_other = '?';
 		else
@@ -322,12 +354,13 @@ elf2nlist(Elf_Sym *sym, Elf_Ehdr *eh, Elf_Shdr *shdr, char *shstr, struct nlist 
 		np->n_type = N_FN | N_EXT;
 		break;
 
-	/* XXX how about cross-nm then ? */
-#ifdef STT_PARISC_MILLI
 	case STT_PARISC_MILLI:
-		np->n_type = N_TEXT;
+		if (eh->e_machine == EM_PARISC)
+			np->n_type = N_TEXT;
+		else
+			np->n_other = '?';
 		break;
-#endif
+
 	default:
 		np->n_other = '?';
 		break;
