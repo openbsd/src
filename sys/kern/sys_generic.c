@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.21 1999/11/29 19:56:59 deraadt Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.22 1999/11/29 22:02:14 deraadt Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -777,10 +777,8 @@ pollscan(p, pl, nfd, retval)
 	 */
 	for (i = 0; i < nfd; i++) {
 		/* Check the file descriptor. */
-		if (pl[i].fd < 0) {
-			pl[i].revents = 0;
+		if (pl[i].fd < 0)
 			continue;
-		}
 		if (pl[i].fd >= fdp->fd_nfiles) {
 			pl[i].revents = POLLNVAL;
 			n++;
