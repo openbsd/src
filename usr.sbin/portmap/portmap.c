@@ -40,7 +40,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)portmap.c	5.4 (Berkeley) 4/19/91";*/
-static char rcsid[] = "$Id: portmap.c,v 1.7 1996/07/25 22:03:05 deraadt Exp $";
+static char rcsid[] = "$Id: portmap.c,v 1.8 1996/07/29 09:29:14 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -196,7 +196,7 @@ main(argc, argv)
 	}
 	setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof on);
 	if (bind(sock, (struct sockaddr *)&addr, len) != 0) {
-		syslog(LOG_ERR, "cannot bind udp: %m");
+		syslog(LOG_ERR, "cannot bind tcp: %m");
 		exit(1);
 	}
 	if ((xprt = svctcp_create(sock, RPCSMALLMSGSIZE, RPCSMALLMSGSIZE))
@@ -211,7 +211,7 @@ main(argc, argv)
 	}
 	setsockopt(lsock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof on);
 	if (bind(lsock, (struct sockaddr *)&laddr, len) != 0) {
-		syslog(LOG_ERR, "cannot bind udp: %m");
+		syslog(LOG_ERR, "cannot bind tcp: %m");
 		exit(1);
 	}
 	if ((ltcpxprt = svctcp_create(lsock, RPCSMALLMSGSIZE,
@@ -233,7 +233,7 @@ main(argc, argv)
 
 	(void)signal(SIGCHLD, reap);
 	svc_run();
-	syslog(LOG_ERR, "run_svc returned unexpectedly");
+	syslog(LOG_ERR, "svc_run returned unexpectedly");
 	abort();
 }
 
