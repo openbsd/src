@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.7 1996/05/23 08:33:15 deraadt Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.8 1996/05/24 22:17:44 dm Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -188,7 +188,7 @@ long hostid;
 #ifdef INSECURE
 int securelevel = -1;
 #else
-int securelevel = 0;
+int securelevel;
 #endif
 
 /*
