@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.15 2004/09/25 09:19:35 otto Exp $ */
+/*	$OpenBSD: file.c,v 1.16 2004/12/04 19:55:12 jaredy Exp $ */
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;
@@ -73,7 +73,7 @@
 #include "patchlevel.h"
 
 #ifndef	lint
-FILE_RCSID("@(#)$Id: file.c,v 1.15 2004/09/25 09:19:35 otto Exp $")
+FILE_RCSID("@(#)$Id: file.c,v 1.16 2004/12/04 19:55:12 jaredy Exp $")
 #endif	/* lint */
 
 
@@ -83,7 +83,8 @@ FILE_RCSID("@(#)$Id: file.c,v 1.15 2004/09/25 09:19:35 otto Exp $")
 #define SYMLINKFLAG ""
 #endif
 
-# define USAGE  "Usage: %s [-bcik" SYMLINKFLAG "nNsvz] [-f namefile] [-F separator] [-m magicfiles] file...\n       %s -C -m magicfiles\n"
+#define USAGE	"Usage: %s [-bck" SYMLINKFLAG "Nnrsvz] [-F separator] [-f namefile] [-m magicfiles] file ...\n" \
+		"       %s [-m magicfiles] -C\n"
 
 #ifndef MAXPATHLEN
 #define	MAXPATHLEN	512

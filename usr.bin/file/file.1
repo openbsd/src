@@ -1,4 +1,4 @@
-.\" $OpenBSD: file.1,v 1.22 2004/10/14 20:56:57 jaredy Exp $
+.\" $OpenBSD: file.1,v 1.23 2004/12/04 19:55:12 jaredy Exp $
 .\" $FreeBSD: src/usr.bin/file/file.1,v 1.16 2000/03/01 12:19:39 sheldonh Exp $
 .\"
 .\" Copyright (c) Ian F. Darwin 1986-1995.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd July 30, 1997
+.Dd December 4, 2004
 .Dt FILE 1
 .Os
 .Sh NAME
@@ -35,10 +35,16 @@
 .Nd determine file type
 .Sh SYNOPSIS
 .Nm file
-.Op Fl vbczL
+.Op Fl bckLNnrsvz
+.Op Fl F Ar separator
 .Op Fl f Ar namefile
 .Op Fl m Ar magicfiles
-.Ar file Op Ar ...
+.Bk -words
+.Ar file ...
+.Ek
+.Nm file
+.Op Fl m Ar magicfiles
+.Fl C
 .Sh DESCRIPTION
 The
 .Nm
@@ -100,7 +106,8 @@ file, whose format is defined in
 .Aq Pa a.out.h
 and possibly
 .Aq Pa exec.h
-in the standard include directory.
+in the standard include directory and is explained in
+.Xr a.out 5 .
 These files have a
 .Dq magic number
 stored in a particular place
@@ -143,22 +150,22 @@ or
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl v
-Print the version of the program and exit.
-.It Fl m Ar list
-Specify an alternate
-.Ar list
-of files containing magic numbers.
-This can be a single file, or a colon-separated list of files.
-.It Fl z
-Try to look inside compressed files.
 .It Fl b
 Do not prepend filenames to output lines (brief mode).
+.It Fl C
+For each magic number file, write a
+.Pa magic.mgc
+output file that contains a preparsed (compiled) version of it.
 .It Fl c
 Cause a checking printout of the parsed form of the magic file.
 This is usually used in conjunction with
 .Fl m
 to debug a new magic file before installing it.
+.It Fl F Ar separator
+Use the specified string as the separator between the filename and
+the file result returned.
+Defaults to
+.Sq \&: .
 .It Fl f Ar namefile
 Read the names of the files to be examined from
 .Ar namefile
@@ -168,17 +175,70 @@ Either
 .Ar namefile
 or at least one filename argument must be present;
 to test the standard input, use
-.Dq -
+.Sq -
 as a filename argument.
+.It Fl k
+Don't stop at the first match, keep going.
 .It Fl L
 Cause symlinks to be followed, as the like-named option in
-.Xr ls 1 .
+.Xr ls 1
 (on systems that support symbolic links).
+.It Fl m Ar magiclist
+Specify an alternate list,
+.Ar magiclist ,
+of files containing magic numbers.
+This can be a single file or a colon-separated list of files.
+If a compiled magic file is found alongside, it will be used instead.
+.It Fl N
+Don't pad filenames so that they align in the output.
+.It Fl n
+Force
+.Em stdout
+to be flushed after checking each file.
+This is only useful if checking a list of files.
+It is intended to be used by programs that want filetype output from a
+pipe.
+.It Fl r
+Don't translate unprintable characters to
+.Sq \e Ns Em ooo .
+Normally
+.Nm
+translates unprintable characters to their octal representation
+(raw mode).
+.It Fl s
+Normally,
+.Nm
+only attempts to read and determine the type of argument files which
+.Xr stat 2
+reports are ordinary files.
+This prevents problems, because reading special files may have peculiar
+consequences.
+Specifying the
+.Fl s
+option causes
+.Nm
+to also read argument files which are block or character special files.
+This is useful for determining the filesystem types of the data in raw
+disk partitions, which are block special files.
+This option also causes
+.Nm
+to disregard the file size as reported by
+.Xr stat 2 ,
+since on some systems it reports a zero size for raw disk partitions.
+.It Fl v
+Print the version of the program and exit.
+.It Fl z
+Try to look inside files that have been run through
+.Xr compress 1 .
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width indent
 .It Ev MAGIC
-Default magic number files.
+Default magic number files, separated by colon characters.
+.Nm
+adds
+.Dq .mgc
+to the value of this variable as appropriate.
 .El
 .Sh FILES
 .Bl -tag -width /etc/magic -compact
@@ -186,9 +246,12 @@ Default magic number files.
 default list of magic numbers
 .El
 .Sh SEE ALSO
+.Xr compress 1 ,
 .Xr hexdump 1 ,
+.Xr ls 1 ,
 .Xr od 1 ,
 .Xr strings 1 ,
+.Xr a.out 5 ,
 .Xr magic 5
 .Sh STANDARDS CONFORMANCE
 This program is believed to exceed the System V Interface Definition
@@ -268,55 +331,36 @@ the first version.
 .An Geoff Collyer
 found several inadequacies
 and provided some magic file entries.
-.Pp
-Altered by
+Contributions to the
+.Ql &
+operator by
 .An Rob McMahon Aq cudcv@warwick.ac.uk ,
-1989, to extend the
-.Ql &
-operator from simple
-.Dq x&y != 0
-to
-.Dq x&y op z .
+1989.
+.Pp
+.An Guy Harris Aq guy@auspex.com
+made many changes from 1993 to the present.
+.Pp
+Primary development and maintenence from 1990 to the present by
+.An Christos Zoulas Aq christos@zoulas.com .
 .Pp
 Altered by
-.An Guy Harris Aq guy@auspex.com ,
-1993, to:
-.Bl -item -offset indent
-.It
-put the
-.Dq old-style
-.Ql &
-operator back the way it was, because
-.Bl -enum -offset indent
-.It
-Rob McMahon's change broke the
-previous style of usage,
-.It
-The SunOS
-.Dq new-style
-.Ql &
-operator, which this version of
-.Nm
-supports, also handles
-.Dq x&y op z ,
-.It
-Rob's change wasn't documented in any case;
-.El
-.It
-put in multiple levels of
-.Ql > ;
-.It
-put in
-.Dq beshort ,
-.Dq leshort ,
-etc. keywords to look at numbers in the
-file in a specific byte order, rather than in the native byte order of
-the process running
-.Nm file .
-.El
+.An Chris Lowth Aq chris@lowth.com ,
+2000: Handle the
+.Fl i
+option to output mime type strings and using an alternative magic file
+and internal logic.
 .Pp
-Currently maintained by
-.An Christos Zoulas Aq christos@zoulas.com .
+Altered by
+.An Eric Fischer Aq enf@pobox.com ,
+July, 2000, to identify character codes and attempt to identify the
+languages of non-ASCII files.
+.Pp
+The list of contributors to the
+.Dq magdir
+directory (source for the
+.Pa /etc/magic
+file) is too long to include here.
+You know who you are; thank you.
 .Sh LEGAL NOTICE
 Copyright (c) Ian F. Darwin, Toronto, Canada, 1986-1999.
 Covered by the standard Berkeley Software Distribution copyright; see the file
@@ -330,7 +374,7 @@ were written by
 .An John Gilmore
 from his public-domain
 .Nm tar
-program.
+program, and are not covered by the above license.
 .Sh BUGS
 There must be a better way to automate the construction of the Magic
 file from all the glop in Magdir.
