@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.6 1996/05/07 10:22:45 niklas Exp $	*/
+/*	$OpenBSD: psl.h,v 1.7 1996/05/31 10:46:29 niklas Exp $	*/
 /*	$NetBSD: psl.h,v 1.8 1996/04/21 21:13:22 veego Exp $	*/
 
 #ifndef _MACHINE_PSL_H_
@@ -7,6 +7,10 @@
 #include <m68k/psl.h>
 
 #if defined(_KERNEL) && !defined(_LOCORE)
+static	__inline int splraise __P((int));
+static	__inline int splexact __P((int));
+static	__inline void splx __P((int));
+static	__inline int spllower __P((int));
 
 static __inline int
 splraise(npsl)
