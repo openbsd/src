@@ -103,7 +103,8 @@ JMP_BUF timebuf;
 
 static int
 get_rfc1413(int sock, const struct sockaddr_in *our_sin,
-	  const struct sockaddr_in *rmt_sin, char user[256], server_rec *srv)
+	  const struct sockaddr_in *rmt_sin, char user[RFC1413_USERLEN+1],
+	  server_rec *srv)
 {
     struct sockaddr_in rmt_query_sin, our_query_sin;
     unsigned int rmt_port, our_port;
@@ -143,28 +144,40 @@ get_rfc1413(int sock, const struct sockaddr_in *our_sin,
 /* send the data */
     ap_snprintf(buffer, sizeof(buffer), "%u,%u\r\n", ntohs(rmt_sin->sin_port),
 	    ntohs(our_sin->sin_port));
-    do i = write(sock, buffer, strlen(buffer));
-    while (i == -1 && errno == EINTR);
-    if (i == -1)
-    {
+
+    /* send query to server. Handle short write. */
+    i = 0;
+    while(i < strlen(buffer)) {
+      int j;
+      j = write(sock, buffer+i, (strlen(buffer+i)));
+      if (j < 0 && errno != EINTR) {
 	log_unixerr("write", NULL, "rfc1413: error sending request", srv);
 	return -1;
+      }
+      else if (j > 0) {
+	i+=j; 
+      }
     }
 
     /*
-     * Read response from server. We assume that all the data
-     * comes in a single packet.
+     * Read response from server. - the response should be newline 
+     * terminated according to rfc - make sure it doesn't stomp it's
+     * way out of the buffer.
      */
-    
-    do i = read(sock, buffer, RFC1413_MAXDATA);
-    while (i == -1 && errno == EINTR);
-    if (i == -1)
-    {
+    i = 0;
+    memset(buffer, 0, sizeof(buffer));
+    while((cp = strchr(buffer, '\n')) == NULL && i < sizeof(buffer) - 1) {
+      int j;
+      j = read(sock, buffer+i, (sizeof(buffer) - 1) - i);
+      if (j < 0 && errno != EINTR) {
 	log_unixerr("read", NULL, "rfc1413: error reading response", srv);
 	return -1;
+      }
+      else if (j > 0) {
+	i+=j; 
+      }
     }
 
-    buffer[i] = '\0';
 /* RFC1413_USERLEN = 512 */
     if (sscanf(buffer, "%u , %u : USERID :%*[^:]:%512s", &rmt_port, &our_port,
 	       user) != 3 || ntohs(rmt_sin->sin_port) != rmt_port
