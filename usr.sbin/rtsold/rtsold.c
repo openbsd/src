@@ -1,5 +1,5 @@
-/*	$OpenBSD: rtsold.c,v 1.21 2002/05/31 21:24:28 itojun Exp $	*/
-/*	$KAME: rtsold.c,v 1.49 2002/05/31 10:19:46 itojun Exp $	*/
+/*	$OpenBSD: rtsold.c,v 1.22 2002/05/31 22:05:16 itojun Exp $	*/
+/*	$KAME: rtsold.c,v 1.51 2002/05/31 22:00:11 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -108,8 +108,9 @@ main(argc, argv)
 	int s, maxfd, ch, once = 0;
 	struct timeval *timeout;
 	char *argv0, *opts;
-	fd_set fdset;
-#if 0
+	fd_set *fdsetp, *selectfdp;
+	int fdmasks;
+#ifdef USE_RTSOCK
 	int rtsock;
 #endif
 
@@ -207,7 +208,7 @@ main(argc, argv)
 		/*NOTREACHED*/
 	}
 	maxfd = s;
-#if 0
+#ifdef USE_RTSOCK
 	if ((rtsock = rtsock_open()) < 0) {
 		warnmsg(LOG_ERR, __FUNCTION__, "failed to open a socket");
 		exit(1);
@@ -216,6 +217,16 @@ main(argc, argv)
 	if (rtsock > maxfd)
 		maxfd = rtsock;
 #endif
+
+	fdmasks = howmany(maxfd + 1, NFDBITS) * sizeof(fd_mask);
+	if ((fdsetp = malloc(fdmasks)) == NULL) {
+		err(1, "malloc");
+		/*NOTREACHED*/
+	}
+	if ((selectfdp = malloc(fdmasks)) == NULL) {
+		err(1, "malloc");
+		/*NOTREACHED*/
+	}
 
 	/* configuration per interface */
 	if (ifinit()) {
@@ -246,21 +257,36 @@ main(argc, argv)
 
 	/* dump the current pid */
 	if (!once) {
+#if (defined(__NetBSD__) && __NetBSD_Version__ >= 106010000) || defined(__OpenBSD__)
 		if (pidfile(NULL) < 0) {
 			warnmsg(LOG_ERR, __FUNCTION__,
 			    "failed to open a pid log file: %s",
 			    strerror(errno));
 		}
+#else
+		pid_t pid = getpid();
+		FILE *fp;
+
+		if ((fp = fopen(pidfilename, "w")) == NULL)
+			warnmsg(LOG_ERR, __FUNCTION__,
+			    "failed to open a pid log file(%s): %s",
+			    pidfilename, strerror(errno));
+		else {
+			fprintf(fp, "%d\n", pid);
+			fclose(fp);
+		}
+#endif
 	}
 
-	FD_ZERO(&fdset);
-	FD_SET(s, &fdset);
-#if 0
-	FD_SET(rtsock, &fdset);
+	memset(fdsetp, 0, fdmasks);
+	FD_SET(s, fdsetp);
+#ifdef USE_RTSOCK
+	FD_SET(rtsock, fdsetp);
 #endif
 	while (1) {		/* main loop */
-		fd_set select_fd = fdset;
 		int e;
+
+		memcpy(selectfdp, fdsetp, fdmasks);
 
 		if (do_dump) {	/* SIGUSR1 */
 			do_dump = 0;
@@ -284,7 +310,7 @@ main(argc, argv)
 			if (ifi == NULL)
 				break;
 		}
-		e = select(maxfd + 1, &select_fd, NULL, NULL, timeout);
+		e = select(maxfd + 1, selectfdp, NULL, NULL, timeout);
 		if (e < 1) {
 			if (e < 0 && errno != EINTR) {
 				warnmsg(LOG_ERR, __FUNCTION__, "select: %s",
@@ -294,11 +320,11 @@ main(argc, argv)
 		}
 
 		/* packet reception */
-#if 0
-		if (FD_ISSET(rtsock, &select_fd))
+#ifdef USE_RTSOCK
+		if (FD_ISSET(rtsock, selectfdp))
 			rtsock_input(rtsock);
 #endif
-		if (FD_ISSET(s, &select_fd))
+		if (FD_ISSET(s, selectfdp))
 			rtsol_input(s);
 	}
 	/* NOTREACHED */
