@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.3 2004/07/14 05:13:06 vincent Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.4 2004/07/14 14:09:17 vincent Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -503,8 +503,8 @@ rcs_patch(const char *data, const char *patch)
  * rcs_getrev()
  *
  * Get the whole contents of revision <rev> from the RCSFILE <rfp>.  The
- * returned buffer is dynamically allocated and should be released using free()
- * once the caller is done using it.
+ * returned buffer is dynamically allocated and should be released using
+ * cvs_buf_free() once the caller is done using it.
  */
 
 BUF*
