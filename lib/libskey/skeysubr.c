@@ -1,17 +1,15 @@
-/* S/KEY v1.1b (skeysubr.c)
+/* OpenBSD S/Key (skeysubr.c)
  *
  * Authors:
  *          Neil M. Haller <nmh@thumper.bellcore.com>
  *          Philip R. Karn <karn@chicago.qualcomm.com>
  *          John S. Walden <jsw@thumper.bellcore.com>
- *
- * Modifications: 
  *          Scott Chasin <chasin@crimelab.com>
  *          Todd C. Miller <Todd.Miller@courtesan.com>
  *
- * S/KEY misc routines.
+ * S/Key misc routines.
  *
- * $OpenBSD: skeysubr.c,v 1.19 2001/01/26 16:06:40 millert Exp $
+ * $OpenBSD: skeysubr.c,v 1.20 2001/06/23 21:03:47 millert Exp $
  */
 
 #include <stdio.h>
@@ -32,17 +30,13 @@
 #define SKEY_HASH_DEFAULT	1
 #endif
 
-static void f_md4 __P((char *x));
-static void f_md5 __P((char *x));
-static void f_sha1 __P((char *x));
-static void f_rmd160 __P((char *x));
-static int keycrunch_md4 __P((char *result, char *seed, char *passwd));
-static int keycrunch_md5 __P((char *result, char *seed, char *passwd));
-static int keycrunch_sha1 __P((char *result, char *seed, char *passwd));
-static int keycrunch_rmd160 __P((char *result, char *seed, char *passwd));
-static void lowcase __P((char *s));
-static void skey_echo __P((int action));
-static void trapped __P((int sig));
+static int keycrunch_md4 __P((char *, char *, char *));
+static int keycrunch_md5 __P((char *, char *, char *));
+static int keycrunch_sha1 __P((char *, char *, char *));
+static int keycrunch_rmd160 __P((char *, char *, char *));
+static void lowcase __P((char *));
+static void skey_echo __P((int));
+static void trapped __P((int));
 
 /* Current hash type (index into skey_hash_types array) */
 static int skey_hash_type = SKEY_HASH_DEFAULT;
@@ -55,19 +49,18 @@ static int skey_hash_type = SKEY_HASH_DEFAULT;
 struct skey_algorithm_table {
 	const char *name;
 	int (*keycrunch) __P((char *, char *, char *));
-	void (*f) __P((char *));
 };
 static struct skey_algorithm_table skey_algorithm_table[] = {
-	{ "md4", keycrunch_md4, f_md4 },
-	{ "md5", keycrunch_md5, f_md5 },
-	{ "sha1", keycrunch_sha1, f_sha1 },
-	{ "rmd160", keycrunch_rmd160, f_rmd160 }
+	{ "md4", keycrunch_md4 },
+	{ "md5", keycrunch_md5 },
+	{ "sha1", keycrunch_sha1 },
+	{ "rmd160", keycrunch_rmd160 }
 };
 
 
 /*
  * Crunch a key:
- * concatenate the seed and the password, run through MD4/5 and
+ * concatenate the seed and the password, run through hash function and
  * collapse to 64 bits. This is defined as the user's starting key.
  */
 int
@@ -85,30 +78,41 @@ keycrunch_md4(result, seed, passwd)
 	char *seed;	/* Seed, any length */
 	char *passwd;	/* Password, any length */
 {
-	char *buf;
+	char *buf = NULL;
 	MD4_CTX md;
 	u_int32_t results[4];
 	unsigned int buflen;
 
-	buflen = strlen(seed) + strlen(passwd);
-	if ((buf = (char *)malloc(buflen+1)) == NULL)
-		return(-1);
-	(void)strcpy(buf, seed);
-	lowcase(buf);
-	(void)strcat(buf, passwd);
+	/*
+	 * If seed and passwd are defined we are in keycrunch() mode,
+	 * else we are in f() mode.
+	 */
+	if (seed && passwd) {
+		buflen = strlen(seed) + strlen(passwd);
+		if ((buf = (char *)malloc(buflen + 1)) == NULL)
+			return(-1);
+		(void)strcpy(buf, seed);
+		lowcase(buf);
+		(void)strcat(buf, passwd);
+		sevenbit(buf);
+	} else {
+		buf = result;
+		buflen = SKEY_BINKEY_SIZE;
+	}
 
 	/* Crunch the key through MD4 */
-	sevenbit(buf);
 	MD4Init(&md);
 	MD4Update(&md, (unsigned char *)buf, buflen);
 	MD4Final((unsigned char *)results, &md);
-	(void)free(buf);
 
 	/* Fold result from 128 to 64 bits */
 	results[0] ^= results[2];
 	results[1] ^= results[3];
 
 	(void)memcpy((void *)result, (void *)results, SKEY_BINKEY_SIZE);
+
+	if (buf != result)
+		(void)free(buf);
 
 	return(0);
 }
@@ -124,25 +128,36 @@ keycrunch_md5(result, seed, passwd)
 	u_int32_t results[4];
 	unsigned int buflen;
 
-	buflen = strlen(seed) + strlen(passwd);
-	if ((buf = (char *)malloc(buflen+1)) == NULL)
-		return(-1);
-	(void)strcpy(buf, seed);
-	lowcase(buf);
-	(void)strcat(buf, passwd);
+	/*
+	 * If seed and passwd are defined we are in keycrunch() mode,
+	 * else we are in f() mode.
+	 */
+	if (seed && passwd) {
+		buflen = strlen(seed) + strlen(passwd);
+		if ((buf = (char *)malloc(buflen + 1)) == NULL)
+			return(-1);
+		(void)strcpy(buf, seed);
+		lowcase(buf);
+		(void)strcat(buf, passwd);
+		sevenbit(buf);
+	} else {
+		buf = result;
+		buflen = SKEY_BINKEY_SIZE;
+	}
 
 	/* Crunch the key through MD5 */
-	sevenbit(buf);
 	MD5Init(&md);
 	MD5Update(&md, (unsigned char *)buf, buflen);
 	MD5Final((unsigned char *)results, &md);
-	(void)free(buf);
 
 	/* Fold result from 128 to 64 bits */
 	results[0] ^= results[2];
 	results[1] ^= results[3];
 
 	(void)memcpy((void *)result, (void *)results, SKEY_BINKEY_SIZE);
+
+	if (buf != result)
+		(void)free(buf);
 
 	return(0);
 }
@@ -158,19 +173,27 @@ keycrunch_sha1(result, seed, passwd)
 	unsigned int buflen;
 	int i, j;
 
-	buflen = strlen(seed) + strlen(passwd);
-	if ((buf = (char *)malloc(buflen+1)) == NULL)
-		return(-1);
-	(void)strcpy(buf, seed);
-	lowcase(buf);
-	(void)strcat(buf, passwd);
+	/*
+	 * If seed and passwd are defined we are in keycrunch() mode,
+	 * else we are in f() mode.
+	 */
+	if (seed && passwd) {
+		buflen = strlen(seed) + strlen(passwd);
+		if ((buf = (char *)malloc(buflen + 1)) == NULL)
+			return(-1);
+		(void)strcpy(buf, seed);
+		lowcase(buf);
+		(void)strcat(buf, passwd);
+		sevenbit(buf);
+	} else {
+		buf = result;
+		buflen = SKEY_BINKEY_SIZE;
+	}
 
 	/* Crunch the key through SHA1 */
-	sevenbit(buf);
 	SHA1Init(&sha);
 	SHA1Update(&sha, (unsigned char *)buf, buflen);
 	SHA1Final(NULL, &sha);
-	(void)free(buf);
 
 	/* Fold 160 to 64 bits */
 	sha.state[0] ^= sha.state[2];
@@ -184,10 +207,13 @@ keycrunch_sha1(result, seed, passwd)
 	 */
 	for (i = 0, j = 0; j < 8; i++, j += 4) {
 		result[j]   = (u_char)(sha.state[i] & 0xff);
-		result[j+1] = (u_char)((sha.state[i] >> 8) & 0xff);
+		result[j+1] = (u_char)((sha.state[i] >> 8)  & 0xff);
 		result[j+2] = (u_char)((sha.state[i] >> 16) & 0xff);
 		result[j+3] = (u_char)((sha.state[i] >> 24) & 0xff);
 	}
+
+	if (buf != result)
+		(void)free(buf);
 
 	return(0);
 }
@@ -203,19 +229,27 @@ keycrunch_rmd160(result, seed, passwd)
 	u_int32_t results[5];
 	unsigned int buflen;
 
-	buflen = strlen(seed) + strlen(passwd);
-	if ((buf = (char *)malloc(buflen+1)) == NULL)
-		return(-1);
-	(void)strcpy(buf, seed);
-	lowcase(buf);
-	(void)strcat(buf, passwd);
+	/*
+	 * If seed and passwd are defined we are in keycrunch() mode,
+	 * else we are in f() mode.
+	 */
+	if (seed && passwd) {
+		buflen = strlen(seed) + strlen(passwd);
+		if ((buf = (char *)malloc(buflen + 1)) == NULL)
+			return(-1);
+		(void)strcpy(buf, seed);
+		lowcase(buf);
+		(void)strcat(buf, passwd);
+		sevenbit(buf);
+	} else {
+		buf = result;
+		buflen = SKEY_BINKEY_SIZE;
+	}
 
 	/* Crunch the key through RMD-160 */
-	sevenbit(buf);
 	RMD160Init(&rmd);
 	RMD160Update(&rmd, (unsigned char *)buf, buflen);
 	RMD160Final((unsigned char *)results, &rmd);
-	(void)free(buf);
 
 	/* Fold 160 to 64 bits */
 	results[0] ^= results[2];
@@ -224,102 +258,21 @@ keycrunch_rmd160(result, seed, passwd)
 
 	(void)memcpy((void *)result, (void *)results, SKEY_BINKEY_SIZE);
 
+	if (buf != result)
+		(void)free(buf);
+
 	return(0);
 }
 
 /*
- * The one-way function f().
+ * The one-way hash function f().
  * Takes SKEY_BINKEY_SIZE bytes and returns SKEY_BINKEY_SIZE bytes in place.
  */
 void
 f(x)
 	char *x;
 {
-	skey_algorithm_table[skey_hash_type].f(x);
-}
-
-static void
-f_md4(x)
-	char *x;
-{
-	MD4_CTX md;
-	u_int32_t results[4];
-
-	MD4Init(&md);
-	MD4Update(&md, (unsigned char *)x, SKEY_BINKEY_SIZE);
-	MD4Final((unsigned char *)results, &md);
-
-	/* Fold 128 to 64 bits */
-	results[0] ^= results[2];
-	results[1] ^= results[3];
-
-	(void)memcpy((void *)x, (void *)results, SKEY_BINKEY_SIZE);
-}
-
-static void
-f_md5(x)
-	char *x;
-{
-	MD5_CTX md;
-	u_int32_t results[4];
-
-	MD5Init(&md);
-	MD5Update(&md, (unsigned char *)x, SKEY_BINKEY_SIZE);
-	MD5Final((unsigned char *)results, &md);
-
-	/* Fold 128 to 64 bits */
-	results[0] ^= results[2];
-	results[1] ^= results[3];
-
-	(void)memcpy((void *)x, (void *)results, SKEY_BINKEY_SIZE);
-}
-
-static void
-f_sha1(x)
-	char *x;
-{
-	SHA1_CTX sha;
-	int i, j;
-
-	SHA1Init(&sha);
-	SHA1Update(&sha, (unsigned char *)x, SKEY_BINKEY_SIZE);
-	SHA1Final(NULL, &sha);
-
-	/* Fold 160 to 64 bits */
-	sha.state[0] ^= sha.state[2];
-	sha.state[1] ^= sha.state[3];
-	sha.state[0] ^= sha.state[4];
-
-	/*
-	 * SHA1 is a big endian algorithm but RFC2289 mandates that
-	 * the result be in little endian form, so we copy to the
-	 * result buffer manually.
-	 */
-	for (i = 0, j = 0; j < 8; i++, j += 4) {
-		x[j]   = (u_char)(sha.state[i] & 0xff);
-		x[j+1] = (u_char)((sha.state[i] >> 8) & 0xff);
-		x[j+2] = (u_char)((sha.state[i] >> 16) & 0xff);
-		x[j+3] = (u_char)((sha.state[i] >> 24) & 0xff);
-	}
-}
-
-static void
-f_rmd160(x)
-	char *x;
-{
-	RMD160_CTX rmd;
-	u_int32_t results[5];
-
-	RMD160Init(&rmd);
-	RMD160Update(&rmd, (unsigned char *)x, SKEY_BINKEY_SIZE);
-	RMD160Final((unsigned char *)results, &rmd);
-
-	/* Fold 160 to 64 bits */
-	results[0] ^= results[2];
-	results[1] ^= results[3];
-	results[0] ^= results[4];
-
-	(void)memcpy((void *)x, (void *)results, SKEY_BINKEY_SIZE);
+	(void)skey_algorithm_table[skey_hash_type].keycrunch(x, NULL, NULL);
 }
 
 /* Strip trailing cr/lf from a line of text */
@@ -397,11 +350,11 @@ trapped(sig)
  */
 int
 atob8(out, in)
-	register char *out;
-	register char *in;
+	char *out;
+	char *in;
 {
-	register int i;
-	register int val;
+	int i;
+	int val;
 
 	if (in == NULL || out == NULL)
 		return(-1);
@@ -425,10 +378,10 @@ atob8(out, in)
 /* Convert 8-byte binary array to hex-ascii string */
 int
 btoa8(out, in)
-	register char *out;
-	register char *in;
+	char *out;
+	char *in;
 {
-	register int i;
+	int i;
 
 	if (in == NULL || out == NULL)
 		return(-1);
@@ -443,7 +396,7 @@ btoa8(out, in)
 /* Convert hex digit to binary integer */
 int
 htoi(c)
-	register int c;
+	int c;
 {
 	if ('0' <= c && c <= '9')
 		return(c - '0');
@@ -457,7 +410,7 @@ htoi(c)
 /* Skip leading spaces from the string */
 char *
 skipspace(cp)
-	register char *cp;
+	char *cp;
 {
 	while (*cp == ' ' || *cp == '\t')
 		cp++;
