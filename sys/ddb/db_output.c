@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_output.c,v 1.10 1997/05/29 03:00:21 mickey Exp $	*/
+/*	$OpenBSD: db_output.c,v 1.11 1997/07/03 21:24:13 niklas Exp $	*/
 /*	$NetBSD: db_output.c,v 1.13 1996/04/01 17:27:14 christos Exp $	*/
 
 /* 
@@ -296,7 +296,7 @@ db_printf_guts(fmt, ap)
 	for (;;) {
 		padc = ' ';
 		width = 0;
-		while ((ch = *(u_char *)fmt++) != '%') {
+		while ((ch = *(const u_char *)fmt++) != '%') {
 			if (ch == '\0')
 				return;
 			db_putchar(ch);
@@ -305,7 +305,7 @@ db_printf_guts(fmt, ap)
 		ladjust = 0;
 		sharpflag = 0;
 		neg = 0;
-reswitch:	switch (ch = *(u_char *)fmt++) {
+reswitch:	switch (ch = *(const u_char *)fmt++) {
 		case '0':
 			padc = '0';
 			goto reswitch;
