@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-#	$OpenBSD: adduser.perl,v 1.3 1997/02/20 01:24:17 downsj Exp $
+#	$OpenBSD: adduser.perl,v 1.4 1997/02/25 00:01:52 downsj Exp $
 #
 # Copyright (c) 1995-1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 # All rights reserved.
@@ -1292,6 +1292,7 @@ sub config_read {
 	    eval $_;
 	    #warn "$_";
 	}
+	next if /^$/;
 	# lines with '^##' are not saved
 	push(@user_variable_list, $_)
 	    if $user_flag && !/^##/ && (s/^[\$\@]// || /^[#\s]/);
@@ -1369,18 +1370,17 @@ shellpref = ($shpref)
 # defaultshell if not empty ("bash")
 defaultshell = "$defaultshell"
 
-# defaultgroup ('USER' for same as username or any other valid group
+# defaultgroup ('USER' for same as username or any other valid group)
 defaultgroup = $defaultgroup
 
-# new users get this uid (1000)
-uid_start = 1000
+# new users get this uid
+uid_start = $uid_start
 
 $do_not_delete
 ## your own variables, see /etc/adduser.message
-$user_var
-
-## end
 EOF
+    print C "$user_var\n" if ($user_var ne '');
+    print C "\n## end\n";
     close C;
 }
 
