@@ -71,13 +71,6 @@ genkey_main (int argn, char *argv[])
 	 * Generate a new key for the user.
 	 */
 	newkey = gentcfskey ();
-	{
-		int i;
-		printf("gentcfskey: key =");
-		for (i = 0; i < KEYSIZE; i++)
-			printf(" %02x", newkey[i]);
-		printf("\n");
-	}
 
 	/*
 	 * Encrypt the generated key with user password
