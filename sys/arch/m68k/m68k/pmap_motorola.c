@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.c,v 1.24 2003/03/01 00:28:48 miod Exp $ */
+/*	$OpenBSD: pmap_motorola.c,v 1.25 2003/03/03 23:23:41 miod Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -2836,7 +2836,7 @@ pmap_map(va, spa, epa, prot)
 	    ("pmap_map(%lx, %lx, %lx, %x)\n", va, spa, epa, prot));
 
 	while (spa < epa) {
-		pmap_enter(pmap_kernel(), va, spa, prot, 0);
+		pmap_kenter_pa(va, spa, prot);
 		va += PAGE_SIZE;
 		spa += PAGE_SIZE;
 	}
