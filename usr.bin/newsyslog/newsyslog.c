@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.32 2000/06/12 17:41:21 millert Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.33 2000/06/14 22:55:19 millert Exp $	*/
 
 /*
  * Copyright (c) 1999 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -88,7 +88,7 @@ provided "as is" without express or implied warranty.
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.32 2000/06/12 17:41:21 millert Exp $";
+static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.33 2000/06/14 22:55:19 millert Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -157,7 +157,7 @@ struct pidinfo {
 int     verbose = 0;            /* Print out what's going on */
 int     needroot = 1;           /* Root privs are necessary */
 int     noaction = 0;           /* Don't do anything, just show it */
-int	monitor = 0;		/* Don't do monitoring by default */
+int	monitormode = 0;	/* Don't do monitoring by default */
 char    *conf = CONF;           /* Configuration file to use */
 time_t  timenow;
 #define MIN_PID		4
@@ -280,9 +280,9 @@ do_entry(ent)
                         printf("size (Kb): %d [%d] ", size, ent->size);
                 if (verbose && (ent->hours > 0))
                         printf(" age (hr): %d [%d] ", modtime, ent->hours);
-		if (monitor && ent->flags & CE_MONITOR)
+		if (monitormode && ent->flags & CE_MONITOR)
 			domonitor(ent->log, ent->whom);
-                if (!monitor && (((ent->size > 0) && (size >= ent->size)) ||
+                if (!monitormode && (((ent->size > 0) && (size >= ent->size)) ||
                     ((ent->hours > 0) && ((modtime >= ent->hours)
                                         || (modtime < 0))))) {
                         if (verbose)
@@ -376,7 +376,7 @@ PRS(argc, argv)
                         conf = optarg;
                         break;
 		case 'm':
-			monitor++;
+			monitormode++;
 			break;
                 default:
                         usage();
