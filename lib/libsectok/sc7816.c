@@ -1,4 +1,4 @@
-/* $Id: sc7816.c,v 1.3 2001/06/08 15:04:04 rees Exp $ */
+/* $Id: sc7816.c,v 1.4 2001/06/12 19:35:25 rees Exp $ */
 
 /*
 copyright 2000
@@ -54,14 +54,16 @@ such damages.
 #include "ifdhandler.h"
 
 #define MAX_READERS 32
+#define N_DEFAULT_READERS 4
 
 #ifdef DL_READERS
 static char defaultConfigFilePath[] = "/etc/reader.conf";
+static char defaultDriverPath[] = "/usr/local/pcsc/lib/libtodos_ag.so";
 
-int DBUpdateReaders(char *readerconf, void (callback) (char *name, unsigned long channelId, char *driverFile));
+int DBUpdateReaders(char *readerconf, int (callback) (int rn, unsigned long channelId, char *driverFile));
 
 /* the callback for DBUpdateReaders */
-void addReader(char *name, unsigned long channelID, char *driverFile);
+int addReader(int rn, unsigned long channelID, char *driverFile);
 void *lookupSym(void *handle, char *name);
 #endif
 
@@ -112,68 +114,66 @@ scopen(int ttyn, int flags, int *ep)
 }
 
 /*
-  NI:
-
   if (config_path != NULL and driver_name != NULL) error;
   if (config_path != NULL) use reader.conf there;
   if (driver_path != NULL) use the specified driver;
   if (config_path == NULL and driver_path == NULL) use /etc/reader.conf;
+
+  Note that the config file is read only once, and drivers are only loaded once,
+  so config_path and driver_path are ignored on subsequent calls.
 */
+
 int
-scxopen(int ttyn, int flags, int *ep,
-	char *config_path, char *driver_path)
+scxopen(int ttyn, int flags, int *ep, char *config_path, char *driver_path)
 {
-    int i, r;
-#ifdef DL_READERS
-    static char todos_driver_path[] = "/usr/local/pcsc/lib/libtodos_ag.so";
-    char *configFilePath = defaultConfigFilePath;
-#endif
+    int i, r = 0;
 
 #ifdef SCPERF
     SetTime ("scopen() start");
 #endif /* SCPERF */
 
+    if (ttyn < 0 || ttyn >= MAX_READERS) {
+	r = SCENOTTY;
+	goto out;
+    }
+
 #ifdef DL_READERS
-    if (config_path != NULL && driver_path != NULL) {
-	/* both config path and driver path are
-	   specified.  thus conflict. */
-	return SCECNFFILES;
-    }
-    else if (config_path != NULL) {
-	/* config file specified */
-	configFilePath = config_path;
-    }
-    else if (driver_path != NULL) {
-	/* driver path is specified */
-	numReaders = 0;
-	
-	addReader(NULL, 0x10000, driver_path);
-	addReader(NULL, 0x10001, driver_path);
-
-	goto open_readers;
-    }
-
-    for (i = 0; i < numReaders; i++) {
-	if (readers[i].driverPath) {
-	    free(readers[i].driverPath);
-	    readers[i].driverPath = NULL;
+    if (driver_path) {
+	/* caller specified a particular driver path to use */
+	if (config_path) {
+	    /* but also specified a config file, which is an error. */
+	    r = SCECNFFILES;
+	    goto out;
+	}
+	if (!readers[ttyn].driverPath) {
+	    /* need a driver */
+	    if (addReader(ttyn, (0x10000 + ttyn), driver_path) < 0) {
+		r = SCEDRVR;
+		goto out;
+	    }
 	}
     }
-    numReaders = 0;
 
-    if (DBUpdateReaders(configFilePath, addReader) < 0) {
-	/* This usually means there is no reader.conf.  Supply a default. */
-	addReader(NULL, 0x10000, todos_driver_path);
-	addReader(NULL, 0x10001, todos_driver_path);
+    if (numReaders == 0) {
+	/* no drivers; read the config file */
+	if (!config_path)
+	    config_path = defaultConfigFilePath;
+	if (DBUpdateReaders(config_path, addReader) < 0) {
+	    if (config_path != defaultConfigFilePath) {
+		/* Something wrong with caller's config file path. */
+		r = SCEDRVR;
+		goto out;
+	    }
+	    /* This usually means there is no reader.conf.  Supply defaults. */
+	    for (i = 0; i < N_DEFAULT_READERS; i++)
+		addReader(i, (0x10000 | i), defaultDriverPath);
+	}
     }
 #else
-    numReaders = 4;
+    numReaders = N_DEFAULT_READERS;
 #endif
 
- open_readers:
     r = openReader(ttyn, flags);
-    if (ep)
-	*ep = r;
 
     if (!r && (flags & SCODSR)) {
 	/* Wait for card present */
@@ -181,10 +181,13 @@ scxopen(int ttyn, int flags, int *ep,
 	    sleep(1);
     }
 
+ out:
 #ifdef SCPERF
     SetTime ("scopen() end");
 #endif /* SCPERF */
 
+    if (ep)
+	*ep = r;
     return r ? -1 : ttyn;
 }
 
@@ -198,7 +201,7 @@ openReader(int readerNum, int flags)
     fprintf(stderr, "openReader %d\n", readerNum);
 #endif
 
-    if (readerNum < 0 || readerNum >= numReaders)
+    if (readerNum < 0 || readerNum >= MAX_READERS)
 	return SCEDRVR;
     reader = &readers[readerNum];
 
@@ -264,11 +267,16 @@ openReader(int readerNum, int flags)
 }
 
 int
-scclose(int readerNum)
+scclose(int ttyn)
 {
-    readerInfo *reader = &readers[readerNum];
+    readerInfo *reader = &readers[ttyn];
 
-    if (reader->driverLoaded == 0)
+    if (ttyn < 0 || ttyn >= MAX_READERS)
+	return -1;
+
+    reader = &readers[ttyn];
+
+    if (!reader->driverLoaded)
 	return -1;
 
     return (reader->close()) ? -1 : 0;
@@ -302,7 +310,7 @@ scxreset(int ttyn, int flags, unsigned char *atr, int *ep)
     SetTime ("scxreset() start");
 #endif /* SCPERF */
 
-    if (reader->driverLoaded == 0) {
+    if (!reader->driverLoaded) {
 	r = SCECLOSED;
 	goto out;
     }
@@ -463,19 +471,24 @@ scread(int ttyn, int cla, int ins, int p1, int p2, int p3, unsigned char *buf, i
 }
 
 #ifdef DL_READERS
-void
-addReader(char *name, unsigned long channelID, char *driverFile)
+int
+addReader(int rn, unsigned long channelID, char *driverFile)
 {
     readerInfo *reader;
 
-    if (numReaders >= MAX_READERS)
-	return;
+    if (rn < 0 || rn >= MAX_READERS)
+	return -1;
 
-    reader = &readers[numReaders++];
+    reader = &readers[rn];
+
+    if (reader->driverPath)
+	return -1;
 
     reader->channelID = channelID;
     reader->driverPath = strdup(driverFile);
     reader->driverLoaded = 0;
+    numReaders++;
+    return 0;
 }
 
 void *

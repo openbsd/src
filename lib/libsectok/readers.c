@@ -1,4 +1,4 @@
-/* $Id: readers.c,v 1.2 2001/06/08 15:04:03 rees Exp $ */
+/* $Id: readers.c,v 1.3 2001/06/12 19:35:25 rees Exp $ */
 
 /*
 copyright 2001
@@ -42,11 +42,12 @@ such damages.
 #include <string.h>
 
 int
-DBUpdateReaders(char *readerconf, void (callback) (char *name, unsigned long channelId, char *driverFile))
+DBUpdateReaders(char *readerconf, int (callback) (int rn, unsigned long channelId, char *driverFile))
 {
 	FILE *f;
 	char buf[512], lv[64], rv[512], libpath[512];
 	long channelno;
+	int nr = 0;
 
 	f = fopen(readerconf, "r");
 	if (!f)
@@ -71,9 +72,9 @@ DBUpdateReaders(char *readerconf, void (callback) (char *name, unsigned long cha
 			channelno = strtol(rv, NULL, 0);
 		if (libpath[0] && channelno != -1) {
 #ifdef DEBUG
-			printf("adding %x %s\n", channelno, libpath);
+			printf("adding rn %d Id 0x%x path %s\n", nr, channelno, libpath);
 #endif
-			(*callback)("", channelno, libpath);
+			(*callback)(nr++, channelno, libpath);
 			libpath[0] = '\0';
 			channelno = -1;
 		}
