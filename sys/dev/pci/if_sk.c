@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.36 2003/12/17 17:26:20 jason Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.37 2003/12/17 17:43:03 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1273,21 +1273,26 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 
-	switch (PCI_PRODUCT(pa->pa_id)) {
-	case PCI_PRODUCT_SCHNEIDERKOCH_GE:
+#define SK_MK_ID(vnd,prd) \
+    (((vnd) << PCI_VENDOR_SHIFT) | ((prd) << PCI_PRODUCT_SHIFT))
+
+	switch (pa->pa_id) {
+	case SK_MK_ID(PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_GE):
 		sc->sk_type = SK_GENESIS;
 		break;
-	case PCI_PRODUCT_SCHNEIDERKOCH_SK9821v2:
-	case PCI_PRODUCT_3COM_3C940:
-	case PCI_PRODUCT_DLINK_DGE530T:
-	case PCI_PRODUCT_LINKSYS_EG1032:
-	case PCI_PRODUCT_LINKSYS_EG1064:
+	case SK_MK_ID(PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C940):
+	case SK_MK_ID(PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE530T):
+	case SK_MK_ID(PCI_VENDOR_LINKSYS, PCI_PRODUCT_LINKSYS_EG1032):
+	case SK_MK_ID(PCI_VENDOR_LINKSYS, PCI_PRODUCT_LINKSYS_EG1064):
+	case SK_MK_ID(PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_SK_V2):
+	case SK_MK_ID(PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_SK9821v2):
 		sc->sk_type = SK_YUKON;
 		break;
 	default:
 		printf(": unknown device!\n");
 		goto fail;
 	}
+#undef SK_MK_ID
 
 #ifdef SK_USEIOSPACE
 	if (!(command & PCI_COMMAND_IO_ENABLE)) {
