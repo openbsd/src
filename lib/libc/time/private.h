@@ -1,4 +1,4 @@
-/*	$OpenBSD: private.h,v 1.8 1998/01/19 00:07:39 millert Exp $	*/
+/*	$OpenBSD: private.h,v 1.9 1998/01/19 00:45:30 millert Exp $	*/
 
 #ifndef PRIVATE_H
 
@@ -13,6 +13,7 @@
 #define TM_GMTOFF		tm_gmtoff
 #define TM_ZONE			tm_zone
 #define PCTS			1
+#define XPG4_1994_04_09		1
 #define STD_INSPIRED		1
 #define HAVE_LONG_DOUBLE	1
 #define HAVE_STRERROR		1
