@@ -1,5 +1,5 @@
-/*	$OpenBSD: ipsec.c,v 1.9 1999/03/31 14:27:37 niklas Exp $	*/
-/*	$EOM: ipsec.c,v 1.86 1999/03/31 14:19:51 niklas Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.10 1999/03/31 20:29:37 niklas Exp $	*/
+/*	$EOM: ipsec.c,v 1.87 1999/03/31 20:22:18 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -361,7 +361,10 @@ ipsec_finalize_exchange (struct message *msg)
 
 	      /* Mark elder SAs with the same flow information as replaced.  */
 	      while ((old_sa = sa_find (ipsec_sa_check_flow, sa)) != 0)
-		sa_mark_replaced (old_sa);
+		{
+		  sa_reference (old_sa);
+		  sa_mark_replaced (old_sa);
+		}
 	    }
 	  exchange->name = 0;
 	  break;
