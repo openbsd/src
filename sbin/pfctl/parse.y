@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.373 2003/05/10 00:45:23 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.374 2003/05/11 01:48:50 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2512,7 +2512,7 @@ natrule		: nataction interface af proto fromto redirpool pooltype
 						    PF_NAT_PROXY_PORT_HIGH;
 					} else if (!r.rpool.proxy_port[1])
 						r.rpool.proxy_port[1] =
-						    ntohs(r.rpool.proxy_port[0]);
+						    r.rpool.proxy_port[0];
 					break;
 				default:
 					break;
