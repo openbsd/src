@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.146 2005/03/16 13:20:43 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.147 2005/03/26 20:04:37 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -1095,7 +1095,7 @@ $fpusw_emu
 	nop
 
 $fpusw_set
-	/* enable coprocessor */
+	/* enable coprocessor XXX */
 	depi	3, 25, 2, r1
 	mtctl	r1, ccr
 
@@ -3105,6 +3105,21 @@ sigcode_call
 ALTENTRY(esigcode)
 EXIT(sigcode)
 
+#ifdef COMPAT_HPUX
+ENTRY(hpux_sigcode,0)
+	bb,>=,n	arg3, 30, hpux_sigcode_call
+	dep	r0, 31, 2, arg3
+	ldw	4(arg3), r19
+	ldw	0(arg3), arg3
+hpux_sigcode_call
+	.call
+	ble	0(sr0, arg3)
+	nop	/* rp has already been set */
+ALTENTRY(hpux_esigcode)
+EXIT(hpux_sigcode)
+#endif /* COMPAT_HPUX */
+
+
 #ifdef COMPAT_LINUX
 ENTRY(linux_sigcode,0)
 
@@ -3112,7 +3127,7 @@ ENTRY(linux_sigcode,0)
 	bv	0(rp)
 	nop
 ALTENTRY(linux_esigcode)
-EXIT(linix_sigcode)
+EXIT(linux_sigcode)
 #endif /* COMPAT_LINUX */
 
 	.end

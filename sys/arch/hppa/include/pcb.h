@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.9 2004/06/08 22:00:25 mickey Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.10 2005/03/26 20:04:37 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 Michael Shalayeff
@@ -34,10 +34,15 @@
 
 struct pcb {
 	u_int64_t pcb_fpregs[HPPA_NFPREGS+1];	/* not in the trapframe */
-	u_int pcb_onfault;		/* SW copy fault handler */
-	pa_space_t pcb_space;		/* copy pmap_space, for asm's sake */
-	vaddr_t pcb_uva;		/* KVA for U-area */
-	u_int pcb_ksp;			/* kernel sp for ctxsw */
+	u_int		pcb_onfault;	/* SW copy fault handler */
+	pa_space_t	pcb_space;	/* copy pmap_space, for asm's sake */
+	vaddr_t		pcb_uva;	/* KVA for U-area */
+	u_int		pcb_ksp;	/* kernel sp for ctxsw */
+
+	/* things used for hpux emulation */
+	void		*pcb_sigreturn;
+	u_int		pcb_srcookie;
+	u_int		pcb_sclen;
 };
 
 struct md_coredump {
