@@ -1,4 +1,4 @@
-.\"     $OpenBSD: nc.1,v 1.33 2004/10/17 03:13:55 djm Exp $
+.\"     $OpenBSD: nc.1,v 1.34 2004/12/31 15:23:31 jmc Exp $
 .\"
 .\" Copyright (c) 1996 David Sacerdote
 .\" All rights reserved.
@@ -353,7 +353,7 @@ Create and listen on a Unix Domain Socket:
 .Pp
 .Dl $ nc -lU /var/tmp/dsocket
 .Pp
-Connect to port 42 of hostname via an HTTP proxy at 10.2.3.4:
+Connect to port 42 of hostname via an HTTP proxy at 10.2.3.4, port 8080:
 .Pp
 .Dl $ nc -x10.2.3.4:8080 -Xconnect hostname 42
 .Sh SEE ALSO
