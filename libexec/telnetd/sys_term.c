@@ -179,7 +179,7 @@ char	wtmpf[]	= "/etc/wtmp";
      int really_stream = 0;
 # endif
 
-     const char *new_login = _PATH_LOGIN;
+     char *new_login = NULL;
 
 /*
  * init_termbuf()
@@ -1273,6 +1273,8 @@ start_login(const char *host, int autologin, char *name)
     struct arg_val argv;
     char *user;
     int save_errno;
+    char *buf;
+    extern char *gettytab[2], *gettyent;
 
 #ifdef HAVE_UTMPX_H
     int pid = getpid();
@@ -1347,6 +1349,13 @@ start_login(const char *host, int autologin, char *name)
 	addarg(&argv, "--");
 	addarg(&argv, strdup(user));
     }
+    if (new_login == NULL && cgetent(&buf, gettytab, gettyent) >= 0) {
+	cgetstr(buf, "lo", &new_login);
+	cgetclose();
+    }
+    if (new_login == NULL)
+	new_login = _PATH_LOGIN;
+
     if (getenv("USER")) {
 	/*
 	 * Assume that login will set the USER variable

@@ -122,6 +122,8 @@ int	lowpty = 0, highpty;	/* low, high pty numbers */
 int debug = 0;
 int keepalive = 1;
 char *progname;
+char *gettyent = "default";
+char *gettytab[2] = { "/etc/gettytab", NULL };
 
 static void usage (void);
 
@@ -130,7 +132,7 @@ static void usage (void);
  * that only the actual options that we support will be
  * passed off to getopt().
  */
-char valid_opts[] = "Bd:hklnS:u:UL:y"
+char valid_opts[] = "Bd:g:hklnS:u:UL:y"
 #ifdef AUTHENTICATION
 		    "a:X:z"
 #endif
@@ -242,6 +244,10 @@ main(int argc, char **argv)
 	    break;
 #endif /* DIAGNOSTICS */
 
+
+	case 'g':
+	    gettyent = optarg;
+	    break;
 
 	case 'h':
 	    hostinfo = 0;
@@ -791,6 +797,7 @@ my_telnet(int f, int p, const char *host, const char *utmp_host,
     int on = 1;
     char *he;
     char *IM;
+    char *buf;
     int nfd;
     int startslave_called = 0;
     time_t timeout;
@@ -943,11 +950,29 @@ my_telnet(int f, int p, const char *host, const char *utmp_host,
     if (getenv("USER"))
 	hostinfo = 0;
 
-    IM = DEFAULT_IM;
-    he = 0;
+    if (cgetent(&buf, gettytab, gettyent) >= 0) {
+	char *HN;
+
+	if (cgetstr(buf, "he", &he) <= 0)
+	    he = NULL;
+	if (cgetstr(buf, "im", &IM) <= 0)
+	    IM = "";
+	if (cgetstr(buf, "hn", &HN) > 0) {
+	    strlcpy(host_name, HN, sizeof host_name);
+	    free(HN);
+	}
+	cgetclose();
+    } else {
+	IM = DEFAULT_IM;
+	he = NULL;
+    }
     edithost(he, host_name);
+    if (he)
+	free(he);
     if (hostinfo && *IM)
 	putf(IM, ptyibuf2);
+    if (*IM)
+	free(IM);
 
     if (pcc)
 	strncat(ptyibuf2, ptyip, pcc+1);
