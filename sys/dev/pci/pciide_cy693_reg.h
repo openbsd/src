@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_cy693_reg.h,v 1.6 2004/09/24 07:38:38 grange Exp $	*/
+/*	$OpenBSD: pciide_cy693_reg.h,v 1.7 2004/10/17 18:16:12 grange Exp $	*/
 /*	$NetBSD: pciide_cy693_reg.h,v 1.4 2000/05/15 08:46:01 bouyer Exp $	*/
 
 /*
@@ -90,5 +90,11 @@ static int8_t cy_dma_rec[] =   {7, 1, 0};
 /* Multiword DMA transfer, for CY_DMA_IDX_PRIMARY or CY_DMA_IDX_SECONDARY */
 #define CY_DMA_DATA_MODE_MASK  0x03
 #define CY_DMA_DATA_SINGLE     0x04
+
+/* Private data */
+struct pciide_cy {
+	const struct cy82c693_handle *cy_handle;
+	int cy_compatchan;
+};
 
 #endif	/* !_DEV_PCI_PCIIDE_CY693_REG_H_ */

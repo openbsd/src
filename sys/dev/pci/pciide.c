@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.173 2004/10/17 18:05:55 grange Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.174 2004/10/17 18:16:12 grange Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -3390,18 +3390,25 @@ cy693_chip_map(sc, pa)
 	struct pciide_channel *cp;
 	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
 	bus_size_t cmdsize, ctlsize;
+	struct pciide_cy *cy;
 
 	if (pciide_chipen(sc, pa) == 0)
 		return;
+
+	/* Allocate memory for private data */
+	sc->sc_cookie = malloc(sizeof(struct pciide_cy), M_DEVBUF, M_NOWAIT);
+	cy = sc->sc_cookie;
+	bzero(cy, sizeof(*cy));
+
 	/*
 	 * this chip has 2 PCI IDE functions, one for primary and one for
 	 * secondary. So we need to call pciide_mapregs_compat() with
 	 * the real channel
 	 */
 	if (pa->pa_function == 1) {
-		sc->sc_cy_compatchan = 0;
+		cy->cy_compatchan = 0;
 	} else if (pa->pa_function == 2) {
-		sc->sc_cy_compatchan = 1;
+		cy->cy_compatchan = 1;
 	} else {
 		printf(": unexpected PCI function %d\n", pa->pa_function);
 		return;
@@ -3415,8 +3422,8 @@ cy693_chip_map(sc, pa)
 		sc->sc_dma_ok = 0;
 	}
 
-	sc->sc_cy_handle = cy82c693_init(pa->pa_iot);
-	if (sc->sc_cy_handle == NULL) {
+	cy->cy_handle = cy82c693_init(pa->pa_iot);
+	if (cy->cy_handle == NULL) {
 		printf(", (unable to map ctl registers)");
 		sc->sc_dma_ok = 0;
 	}
@@ -3455,13 +3462,13 @@ cy693_chip_map(sc, pa)
 		    pciide_pci_intr);
 	} else {
 		printf("compatibility\n");
-		cp->hw_ok = pciide_mapregs_compat(pa, cp, sc->sc_cy_compatchan,
+		cp->hw_ok = pciide_mapregs_compat(pa, cp, cy->cy_compatchan,
 		    &cmdsize, &ctlsize);
 	}
 
 	cp->wdc_channel.data32iot = cp->wdc_channel.cmd_iot;
 	cp->wdc_channel.data32ioh = cp->wdc_channel.cmd_ioh;
-	pciide_map_compat_intr(pa, cp, sc->sc_cy_compatchan, interface);
+	pciide_map_compat_intr(pa, cp, cy->cy_compatchan, interface);
 	if (cp->hw_ok == 0)
 		return;
 	wdcattach(&cp->wdc_channel);
@@ -3470,7 +3477,7 @@ cy693_chip_map(sc, pa)
 		    PCI_COMMAND_STATUS_REG, 0);
 	}
 	if (cp->hw_ok == 0) {
-		pciide_unmap_compat_intr(pa, cp, sc->sc_cy_compatchan,
+		pciide_unmap_compat_intr(pa, cp, cy->cy_compatchan,
 		    interface);
 		return;
 	}
@@ -3493,6 +3500,7 @@ cy693_setup_channel(chp)
 	struct pciide_channel *cp = (struct pciide_channel *)chp;
 	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
 	int dma_mode = -1;
+	struct pciide_cy *cy = sc->sc_cookie;
 
 	cy_cmd_ctrl = idedma_ctl = 0;
 
@@ -3527,10 +3535,10 @@ cy693_setup_channel(chp)
 	if (dma_mode == -1)
 		dma_mode = 0;
 
-	if (sc->sc_cy_handle != NULL) {
+	if (cy->cy_handle != NULL) {
 		/* Note: `multiple' is implied. */
-		cy82c693_write(sc->sc_cy_handle,
-		    (sc->sc_cy_compatchan == 0) ?
+		cy82c693_write(cy->cy_handle,
+		    (cy->cy_compatchan == 0) ?
 		    CY_DMA_IDX_PRIMARY : CY_DMA_IDX_SECONDARY, dma_mode);
 	}
 
@@ -3643,9 +3651,15 @@ sis_chip_map(sc, pa)
 	bus_size_t cmdsize, ctlsize;
 	pcitag_t br_tag;
 	struct pci_attach_args br_pa;
+	struct pciide_sis *sis;
 
 	if (pciide_chipen(sc, pa) == 0)
 		return;
+
+	/* Allocate memory for private data */
+	sc->sc_cookie = malloc(sizeof(struct pciide_sis), M_DEVBUF, M_NOWAIT);
+	sis = sc->sc_cookie;
+	bzero(sis, sizeof(*sis));
 
 	/* Find PCI bridge (dev 0 func 0 on the same bus) */
 	br_tag = pci_make_tag(pa->pa_pc, pa->pa_bus, 0, 0);
@@ -3660,7 +3674,7 @@ sis_chip_map(sc, pa)
 			    pciide_pci_read(sc->sc_pc, sc->sc_tag,
 			    SIS_REG_57) & 0x7f);
 			if (sc->sc_pp->ide_product == SIS_PRODUCT_5518) {
-				sc->sis_type = SIS_TYPE_133NEW;
+				sis->sis_type = SIS_TYPE_133NEW;
 				sc->sc_wdcdev.UDMA_cap =
 				    sis_hostbr_type_match->udma_mode;
 			} else {
@@ -3677,17 +3691,17 @@ sis_chip_map(sc, pa)
 				    DEBUG_PROBE);
 
 				if (sis_south_match(&br_pa)) {
-					sc->sis_type = SIS_TYPE_133OLD;
+					sis->sis_type = SIS_TYPE_133OLD;
 					sc->sc_wdcdev.UDMA_cap =
 					    sis_hostbr_type_match->udma_mode;
 				} else {
-					sc->sis_type = SIS_TYPE_100NEW;
+					sis->sis_type = SIS_TYPE_100NEW;
 					sc->sc_wdcdev.UDMA_cap =
 					    sis_hostbr_type_match->udma_mode;
 				}
 			}
 		} else {
-			sc->sis_type = sis_hostbr_type_match->type;
+			sis->sis_type = sis_hostbr_type_match->type;
 			sc->sc_wdcdev.UDMA_cap =
 			    sis_hostbr_type_match->udma_mode;
 		}
@@ -3696,10 +3710,10 @@ sis_chip_map(sc, pa)
 		printf(": 5597/5598");
 		if (rev >= 0xd0) {
 			sc->sc_wdcdev.UDMA_cap = 2;
-			sc->sis_type = SIS_TYPE_66;
+			sis->sis_type = SIS_TYPE_66;
 		} else {
 			sc->sc_wdcdev.UDMA_cap = 0;
-			sc->sis_type = SIS_TYPE_NOUDMA;
+			sis->sis_type = SIS_TYPE_NOUDMA;
 		}
 	}
 
@@ -3711,7 +3725,7 @@ sis_chip_map(sc, pa)
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_IRQACK;
 		sc->sc_wdcdev.irqack = pciide_irqack;
-		if (sc->sis_type >= SIS_TYPE_66)
+		if (sis->sis_type >= SIS_TYPE_66)
 			sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
 	}
 
@@ -3720,7 +3734,7 @@ sis_chip_map(sc, pa)
 
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
-	switch (sc->sis_type) {
+	switch (sis->sis_type) {
 	case SIS_TYPE_NOUDMA:
 	case SIS_TYPE_66:
 	case SIS_TYPE_100OLD:
@@ -3856,6 +3870,7 @@ sis_setup_channel(chp)
 	u_int32_t idedma_ctl;
 	struct pciide_channel *cp = (struct pciide_channel *)chp;
 	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
+	struct pciide_sis *sis = sc->sc_cookie;
 
 	WDCDEBUG_PRINT(("sis_setup_channel: old timings reg for "
 	    "channel %d 0x%x\n", chp->channel,
@@ -3884,7 +3899,7 @@ sis_setup_channel(chp)
 				if (drvp->UDMA_mode > 2)
 					drvp->UDMA_mode = 2;
 			}
-			switch (sc->sis_type) {
+			switch (sis->sis_type) {
 			case SIS_TYPE_66:
 			case SIS_TYPE_100OLD:
 				sis_tim |= sis_udma66_tim[drvp->UDMA_mode] <<
@@ -3901,7 +3916,7 @@ sis_setup_channel(chp)
 				break;
 			default:
 				printf("unknown SiS IDE type %d\n",
-				    sc->sis_type);
+				    sis->sis_type);
 			}
 		} else {
 			/*
@@ -3918,7 +3933,7 @@ sis_setup_channel(chp)
 				drvp->PIO_mode = 0;
 		}
 		idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
-pio:		switch (sc->sis_type) {
+pio:		switch (sis->sis_type) {
 		case SIS_TYPE_NOUDMA:
 		case SIS_TYPE_66:
 		case SIS_TYPE_100OLD:
@@ -3936,7 +3951,7 @@ pio:		switch (sc->sis_type) {
 			break;
 		default:
 			printf("unknown SiS IDE type %d\n",
-			    sc->sis_type);
+			    sis->sis_type);
 		}
 	}
 	WDCDEBUG_PRINT(("sis_setup_channel: new timings reg for "

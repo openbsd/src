@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciidevar.h,v 1.10 2004/10/17 18:05:55 grange Exp $	*/
+/*	$OpenBSD: pciidevar.h,v 1.11 2004/10/17 18:16:12 grange Exp $	*/
 /*	$NetBSD: pciidevar.h,v 1.6 2001/01/12 16:04:00 bouyer Exp $	*/
 
 /*
@@ -69,13 +69,6 @@ struct pciide_softc {
 	bus_size_t		sc_dma_maxsegsz;
 	bus_size_t		sc_dma_boundary;
 
-	/* For Cypress */
-	const struct cy82c693_handle *sc_cy_handle;
-	int sc_cy_compatchan;
-
-	/* For SiS */
-	u_int8_t sis_type;
-
 	/* Chip description */
 	const struct pciide_product_desc *sc_pp;
 	/* Chip revision */
@@ -99,6 +92,9 @@ struct pciide_softc {
 			int dma_flags;
 		} dma_maps[2];
 	} pciide_channels[PCIIDE_NUM_CHANNELS];
+
+	/* Chip-specific private data */
+	void *sc_cookie;
 };
 
 /*
