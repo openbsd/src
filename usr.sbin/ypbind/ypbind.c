@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.37 1999/02/16 05:54:08 deraadt Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.38 2000/04/11 11:52:55 itojun Exp $ */
 
 /*
  * Copyright (c) 1997,1998 Theo de Raadt <deraadt@OpenBSD.org>
@@ -35,7 +35,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypbind.c,v 1.37 1999/02/16 05:54:08 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypbind.c,v 1.38 2000/04/11 11:52:55 itojun Exp $";
 #endif
 
 #include <sys/param.h>
@@ -67,6 +67,7 @@ static char rcsid[] = "$OpenBSD: ypbind.c,v 1.37 1999/02/16 05:54:08 deraadt Exp
 #include <err.h>
 #include <rpcsvc/yp.h>
 #include <rpcsvc/ypclnt.h>
+#include <ifaddrs.h>
 
 #define SERVERSDIR	"/etc/yp"
 #define BINDINGDIR	"/var/yp/binding"
@@ -749,11 +750,9 @@ broadcast(ypdb, buf, outlen)
 	char *buf;
 	int outlen;
 {
-	char *inbuf = NULL, *ninbuf;
+	struct ifaddrs *ifap, *ifa;
 	int i, sock, len, inlen = 8192;
 	struct sockaddr_in bindsin;
-	struct ifconf ifc;
-	struct ifreq ifreq, *ifr;
 	struct in_addr in;
 
 	memset(&bindsin, 0, sizeof bindsin);
@@ -761,78 +760,37 @@ broadcast(ypdb, buf, outlen)
 	bindsin.sin_len = sizeof(bindsin);
 	bindsin.sin_port = htons(PMAPPORT);
 
-	/* find all networks and send the RPC packet out them all */
-	if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
-		perror("socket");
+	if (getifaddrs(&ifap) != 0) {
+		perror("getifaddrs");
 		return -1;
 	}
-	
-	while (1) {
-		ifc.ifc_len = inlen;
-		ninbuf = realloc(inbuf, inlen);
-		if (ninbuf == NULL) {
-			if (inbuf)
-				free(inbuf);
-			close(sock);
-			return (-1);
-		}
-		ifc.ifc_buf = inbuf = ninbuf;
-		if (ioctl(sock, SIOCGIFCONF, (char *)&ifc) < 0) {
-			(void) close(sock);
-			free(inbuf);
-			perror("ioctl(SIOCGIFCONF)");
-			return (-1);
-		}
-		if (ifc.ifc_len + sizeof(ifreq) < inlen)
+	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+		if (ifa->ifa_addr->sa_family != AF_INET)
+			continue;
+		if ((ifa->ifa_flags & IFF_UP) == 0)
+			continue;
+
+		switch (ifa->ifa_flags & (IFF_LOOPBACK | IFF_BROADCAST)) {
+		case IFF_BROADCAST:
+			if (!ifa->ifa_broadaddr)
+				continue;
+			if (ifa->ifa_broadaddr->sa_family != AF_INET)
+				continue;
+			in = ((struct sockaddr_in *)ifa->ifa_broadaddr)->sin_addr;
 			break;
-		inlen *= 2;
-	}
-
-	ifr = ifc.ifc_req;
-	ifreq.ifr_name[0] = '\0';
-	for (i = 0; i < ifc.ifc_len; i += len,
-	    ifr = (struct ifreq *)((caddr_t)ifr + len)) {
-#if defined(BSD) && BSD >= 199103
-		len = sizeof(ifr->ifr_name) +
-		    (ifr->ifr_addr.sa_len > sizeof(struct sockaddr) ?
-		    ifr->ifr_addr.sa_len : sizeof(struct sockaddr));
-#else
-		len = sizeof ifc.ifc_len / sizeof(struct ifreq);
-#endif
-		ifreq = *ifr;
-		if (ifreq.ifr_addr.sa_family != AF_INET)
-			continue;
-		if (ioctl(sock, SIOCGIFFLAGS, &ifreq) < 0) {
-			perror("ioctl(SIOCGIFFLAGS)");
+		case IFF_LOOPBACK:
+			in = ((struct sockaddr_in *)ifa->ifa_addr)->sin_addr;
+			break;
+		default:
 			continue;
 		}
-		if ((ifreq.ifr_flags & IFF_UP) == 0)
-			continue;
 
-		ifreq.ifr_flags &= (IFF_LOOPBACK | IFF_BROADCAST);
-		if (ifreq.ifr_flags == IFF_BROADCAST) {
-			ifreq.ifr_addr = ifr->ifr_addr;
-			if (ioctl(sock, SIOCGIFBRDADDR, &ifreq) < 0) {
-				perror("ioctl(SIOCGIFBRDADDR)");
-				continue;
-			}
-		} else if (ifreq.ifr_flags == IFF_LOOPBACK) {
-			ifreq.ifr_addr = ifr->ifr_addr;
-			if (ioctl(sock, SIOCGIFADDR, &ifreq) < 0) {
-				perror("ioctl(SIOCGIFADDR)");
-				continue;
-			}
-		} else
-			continue;
-
-		in = ((struct sockaddr_in *)&ifreq.ifr_addr)->sin_addr;
 		bindsin.sin_addr = in;
 		if (sendto(rpcsock, buf, outlen, 0, (struct sockaddr *)&bindsin,
-		    sizeof bindsin) < 0)
+		    bindsin.sin_len) < 0)
 			perror("sendto");
 	}
-	close(sock);
-	free(inbuf);
+	freeifaddrs(ifap);
 	return 0;
 }
 
