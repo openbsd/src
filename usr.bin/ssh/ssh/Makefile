@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.27 2001/01/29 01:58:21 niklas Exp $
+#	$OpenBSD: Makefile,v 1.28 2001/03/03 23:59:37 markus Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -12,7 +12,7 @@ MAN=	ssh.1
 LINKS=	${BINDIR}/ssh ${BINDIR}/slogin
 MLINKS=	ssh.1 slogin.1
 
-SRCS=	ssh.c log-client.c readconf.c clientloop.c \
+SRCS=	ssh.c readconf.c clientloop.c \
 	sshconnect.c sshconnect1.c sshconnect2.c
 
 .include <bsd.own.mk> # for AFS
