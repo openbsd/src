@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.19 2002/05/16 13:01:41 art Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.20 2002/05/16 20:16:15 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2000 Michael Shalayeff
@@ -79,18 +79,18 @@ struct db_variable db_regs[] = {
 	{ "r16",   (long *)&ddb_regs.tf_r16, FCN_NULL },
 	{ "r17",   (long *)&ddb_regs.tf_r17, FCN_NULL },
 	{ "r18",   (long *)&ddb_regs.tf_r18, FCN_NULL },
-	{ "t4",    (long *)&ddb_regs.tf_t4,  FCN_NULL },
-	{ "t3",    (long *)&ddb_regs.tf_t3,  FCN_NULL },
-	{ "t2",    (long *)&ddb_regs.tf_t2,  FCN_NULL },
-	{ "t1",    (long *)&ddb_regs.tf_t1,  FCN_NULL },
-	{ "arg3",  (long *)&ddb_regs.tf_arg3,  FCN_NULL },
-	{ "arg2",  (long *)&ddb_regs.tf_arg2,  FCN_NULL },
-	{ "arg1",  (long *)&ddb_regs.tf_arg1,  FCN_NULL },
-	{ "arg0",  (long *)&ddb_regs.tf_arg0,  FCN_NULL },
-	{ "dp",    (long *)&ddb_regs.tf_dp,    FCN_NULL },
-	{ "ret0",  (long *)&ddb_regs.tf_ret0,  FCN_NULL },
-	{ "ret1",  (long *)&ddb_regs.tf_ret1,  FCN_NULL },
-	{ "sp",    (long *)&ddb_regs.tf_sp,    FCN_NULL },
+	{ "r19",   (long *)&ddb_regs.tf_t4,  FCN_NULL },
+	{ "r20",   (long *)&ddb_regs.tf_t3,  FCN_NULL },
+	{ "r21",   (long *)&ddb_regs.tf_t2,  FCN_NULL },
+	{ "r22",   (long *)&ddb_regs.tf_t1,  FCN_NULL },
+	{ "r23",   (long *)&ddb_regs.tf_arg3,  FCN_NULL },
+	{ "r24",   (long *)&ddb_regs.tf_arg2,  FCN_NULL },
+	{ "r25",   (long *)&ddb_regs.tf_arg1,  FCN_NULL },
+	{ "r26",   (long *)&ddb_regs.tf_arg0,  FCN_NULL },
+	{ "r27",   (long *)&ddb_regs.tf_dp,    FCN_NULL },
+	{ "r28",   (long *)&ddb_regs.tf_ret0,  FCN_NULL },
+	{ "r29",   (long *)&ddb_regs.tf_ret1,  FCN_NULL },
+	{ "r30",   (long *)&ddb_regs.tf_sp,    FCN_NULL },
 	{ "r31",   (long *)&ddb_regs.tf_r31,   FCN_NULL },
 	{ "sar",   (long *)&ddb_regs.tf_sar,   FCN_NULL },
 
