@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ike.c,v 1.12 2002/06/11 18:12:11 ho Exp $	*/
+/*	$OpenBSD: print-ike.c,v 1.13 2002/06/11 18:15:48 ho Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -29,7 +29,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ike.c,v 1.12 2002/06/11 18:12:11 ho Exp $ (XXX)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ike.c,v 1.13 2002/06/11 18:15:48 ho Exp $ (XXX)";
 #endif
 
 #include <sys/param.h>
@@ -343,19 +343,22 @@ ike_pl_transform_print (u_char *buf, int len, u_char doi)
 void
 ike_pl_proposal_print (u_char *buf, int len, u_char doi)
 {
-	u_int8_t i, spisz = buf[2];
+	u_int8_t i, p_id = buf[1], spisz = buf[2];
 
 	printf(" proposal: %d proto: %s spisz: %d xforms: %d",
-	    buf[0], (buf[1] < (sizeof ike / sizeof ike[0]) ? ike[buf[1]] :
+	    buf[0], (p_id < (sizeof ike / sizeof ike[0]) ? ike[p_id] :
 	    "(unknown)"), spisz, buf[3]);
 
 	/* We need to store this for upcoming ike_attribute_print call. */
-	xform_proto = buf[1];
+	xform_proto = p_id;
 
 	if (spisz) {
-		printf(" SPI: 0x");
+		if (p_id == PROTO_IPCOMP)
+			printf(" CPI: 0x");
+		else
+			printf(" SPI: 0x");
 		for (i = 0; i < spisz && (i + 4) < len; i++)
-			printf ("%02x", buf[i + 4]);
+			printf("%02x", buf[i + 4]);
 		doi = IPSEC_DOI;
 	} else
 		doi = ISAKMP_DOI;
