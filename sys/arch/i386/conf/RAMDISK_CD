@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.29 2001/02/13 14:50:33 deraadt Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.30 2001/02/14 06:10:01 fgsch Exp $
 #	from: OpenBSD: INST,v 1.19 1996/11/05 03:49:13 tholo Exp 
 #
 #	Install kernels no longer support X.
@@ -156,6 +156,8 @@ adv*	at pci? dev ? function ?	# AdvanSys 1200A/B and ULTRA SCSI
 scsibus* at adv?
 adw*	at pci? dev ? function ?	# AdvanSys ULTRA WIDE SCSI
 scsibus* at adw?
+pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
+scsibus* at pcscp?
 sea0	at isa? iomem 0xc8000 irq 5	# Seagate ST0[12] SCSI controllers
 scsibus* at sea?
 uha0	at isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI controllers
