@@ -1,4 +1,4 @@
-/*	$OpenBSD: creator.c,v 1.11 2002/06/03 16:32:04 fgsch Exp $	*/
+/*	$OpenBSD: creator.c,v 1.12 2002/06/11 06:53:03 fgsch Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -48,34 +48,7 @@
 #include <dev/wscons/wscons_raster.h>
 #include <dev/rasops/rasops.h>
 
-/* Number of register sets */
-#define	FFB_NREGS		24
-
-/* Register set numbers */
-#define	FFB_REG_PROM		0
-#define	FFB_REG_DAC		1
-#define	FFB_REG_FBC		2
-#define	FFB_REG_DFB8R		3
-#define	FFB_REG_DFB8G		4
-#define	FFB_REG_DFB8B		5
-#define	FFB_REG_DFB8X		6
-#define	FFB_REG_DFB24		7
-#define	FFB_REG_DFB32		8
-#define	FFB_REG_SFB8R		9
-#define	FFB_REG_SFB8G		10
-#define	FFB_REG_SFB8B		11
-#define	FFB_REG_SFB8X		12
-#define	FFB_REG_SFB32		13
-#define	FFB_REG_SFB64		14
-#define	FFB_REG_DFB422A		15
-#define	FFB_REG_DFB422AD	16
-#define	FFB_REG_DFB24B		17
-#define	FFB_REG_DFB422B		18
-#define	FFB_REG_DFB422BD	19
-#define	FFB_REG_SFB8Z		20
-#define	FFB_REG_SFB16Z		21
-#define	FFB_REG_SFB422		22
-#define	FFB_REG_SFB422D		23
+#include <sparc64/dev/creatorvar.h>
 
 struct wsscreen_descr creator_stdscreen = {
 	"std",
@@ -110,70 +83,28 @@ struct wsdisplay_accessops creator_accessops = {
 	creator_alloc_screen,
 	creator_free_screen,
 	creator_show_screen,
-	NULL,	/* load_font */
+	NULL,	/* load font */
 	NULL,	/* scrollback */
 	NULL,	/* getchar */
 	NULL,	/* burner */
-};
-
-struct creator_softc {
-	struct device sc_dv;
-	bus_space_tag_t sc_bt;
-	bus_space_handle_t sc_pixel_h;
-	bus_addr_t sc_addrs[FFB_NREGS];
-	bus_size_t sc_sizes[FFB_NREGS];
-	int sc_height, sc_width, sc_linebytes, sc_depth;
-	int sc_nscreens, sc_nreg;
-	u_int sc_mode;
-	struct rasops_info sc_rasops;
-};
-
-int	creator_match(struct device *, void *, void *);
-void	creator_attach(struct device *, struct device *, void *);
-
-struct cfattach creator_ca = {
-	sizeof(struct creator_softc), creator_match, creator_attach
 };
 
 struct cfdriver creator_cd = {
 	NULL, "creator", DV_DULL
 };
 
-int
-creator_match(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
-{
-	struct mainbus_attach_args *ma = aux;
-
-	if (strcmp(ma->ma_name, "SUNW,ffb") == 0 ||
-	    strcmp(ma->ma_name, "SUNW,afb") == 0)
-		return (1);
-	return (0);
-}
-
 void
-creator_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+creator_attach(struct creator_softc *sc)
 {
-	struct creator_softc *sc = (struct creator_softc *)self;
-	struct mainbus_attach_args *ma = aux;
 	struct wsemuldisplaydev_attach_args waa;
 	long defattr;
-	extern int fbnode;
-	int i, btype, console, nregs;
 	char *model;
-
-	sc->sc_bt = ma->ma_bustag;
-
-	nregs = min(ma->ma_nreg, FFB_NREGS);
+	int btype;
 
 	printf(":");
 
-	if (strcmp(ma->ma_name, "SUNW,afb") != 0) {
-		btype = getpropint(ma->ma_node, "board_type", 0);
-
+	if (sc->sc_type == FFB_CREATOR) {
+		btype = getpropint(sc->sc_node, "board_type", 0);
 		if ((btype & 7) == 3)
 			printf(" Creator3D");
 		else
@@ -181,35 +112,16 @@ creator_attach(parent, self, aux)
 	} else
 		printf(" Elite3D");
 
-	model = getpropstring(ma->ma_node, "model");
+	model = getpropstring(sc->sc_node, "model");
 	if (model == NULL || strlen(model) == 0)
 		model = "unknown";
 
 	printf(", model %s\n", model);
 
-	if (nregs < FFB_REG_DFB24) {
-		printf(": no dfb24 regs found\n");
-		goto fail;
-	}
-
-	if (bus_space_map2(sc->sc_bt, 0, ma->ma_reg[FFB_REG_DFB24].ur_paddr,
-	    ma->ma_reg[FFB_REG_DFB24].ur_len, 0, NULL, &sc->sc_pixel_h)) {
-		printf("%s: failed to map dfb24\n", sc->sc_dv.dv_xname);
-		goto fail;
-	}
-
-	for (i = 0; i < nregs; i++) {
-		sc->sc_addrs[i] = ma->ma_reg[i].ur_paddr;
-		sc->sc_sizes[i] = ma->ma_reg[i].ur_len;
-	}
-	sc->sc_nreg = nregs;
-
-	console = (fbnode == ma->ma_node);
-
 	sc->sc_depth = 24;
 	sc->sc_linebytes = 8192;
-	sc->sc_height = getpropint(ma->ma_node, "height", 0);
-	sc->sc_width = getpropint(ma->ma_node, "width", 0);
+	sc->sc_height = getpropint(sc->sc_node, "height", 0);
+	sc->sc_width = getpropint(sc->sc_node, "width", 0);
 
 	sc->sc_rasops.ri_depth = 32;
 	sc->sc_rasops.ri_stride = sc->sc_linebytes;
@@ -230,7 +142,7 @@ creator_attach(parent, self, aux)
 	creator_stdscreen.textops = &sc->sc_rasops.ri_ops;
 	sc->sc_rasops.ri_ops.alloc_attr(&sc->sc_rasops, 0, 0, 0, &defattr);
 
-	if (console) {
+	if (sc->sc_console) {
 		int *ccolp, *crowp;
 
 		if (romgetcursoraddr(&crowp, &ccolp))
@@ -244,18 +156,11 @@ creator_attach(parent, self, aux)
 		    sc->sc_rasops.ri_ccol, sc->sc_rasops.ri_crow, defattr);
 	}
 
-	waa.console = console;
+	waa.console = sc->sc_console;
 	waa.scrdata = &creator_screenlist;
 	waa.accessops = &creator_accessops;
 	waa.accesscookie = sc;
-	config_found(self, &waa, wsemuldisplaydevprint);
-
-	return;
-
-fail:
-	if (sc->sc_pixel_h != 0)
-		bus_space_unmap(sc->sc_bt, sc->sc_pixel_h,
-		    ma->ma_reg[FFB_REG_DFB24].ur_len);
+	config_found(&sc->sc_dv, &waa, wsemuldisplaydevprint);
 }
 
 int
