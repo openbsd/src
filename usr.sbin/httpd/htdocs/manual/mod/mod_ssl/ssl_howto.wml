@@ -54,33 +54,33 @@ coherences.
 </table>
 
 #   container tag for layouting a question
-<define-container howto>
+<define-tag howto endtag=required>
 <preserve ref>
 <preserve toc>
 <set-var %attributes>
 <p>
-<li><toc_h3 <get-var toc>></toc_h3>
+<li><toc_h3 alt="<get-var toc>"></toc_h3>
     <a name="<get-var ref>"></a>
     <strong id="howto">%body</strong>\
     &nbsp;&nbsp;
-    [<a href="http://www.modssl.org/docs/2.2/ssl_howto.html#<get-var ref>"><b>L</b></a>]
+    [<a href="http://www.modssl.org/docs/2.6/ssl_howto.html#<get-var ref>"><b>L</b></a>]
     <p>
 <restore toc>
 <restore ref>
-</define-container>
+</define-tag>
 
-<define-container config>
+<define-tag config endtag=required>
 <preserve file>
 <set-var %attributes>
 <ifeq "<get-var file>" "" <set-var file="httpd.conf">>
-<box header="<font face=\"Arial,Helvetica\" color=\"#999999\"><get-var file></font>"
+<box header="<font face="Arial,Helvetica" color="#999999"><get-var file></font>"
      bdwidth=1 bdcolor="#cccccc" bgcolor="#ffffff" fgcolor="#000000">
 <pre>
 %body
 </pre>
 </box>\
 <restore file>
-</define-container>
+</define-tag>
 
 <h2>Cipher Suites and Enforced Strong Security</h2>
 
@@ -91,7 +91,7 @@ How can I create a real SSLv2-only server?
 </howto>
 
 The following creates an SSL server which speaks only the SSLv2 protocol and
-it's ciphers.
+its ciphers.
 
 <p>
 <config>

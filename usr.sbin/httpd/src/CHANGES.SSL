@@ -23,6 +23,25 @@
       / __/ | (_) |
   __ |_____(_)___/____________________________________________
 
+  Changes with mod_ssl 2.6.6 (04-Jul-2000 to 12-Aug-2000)
+
+   *) Fixed experimental HTTPS proxy code: A segfault was
+      produced by an incorrect logging command.
+
+   *) Fixed server restarts: Under non-DSO run-time situation, the 
+      OpenSSL library was shutdown (and never re-initialized) and this 
+      way caused segfaults on server restarts. This affected only 
+      installations where mod_ssl+OpenSSL were built as a static module
+      instead of a DSO. This nasty bug was unfortunately introduced in
+      2.6.5 as a side-effect of an (otherwise correct) memory leak bugfix.
+   
+   *) Upgraded both the user manual sources and the website
+      www.modssl.org from WML 1.6 to WML 2.0 format.
+
+   *) Various typo fixes in user manual.
+
+   *) Typo fix in INSTALL document related to RSAref.
+
   Changes with mod_ssl 2.6.5 (01-May-2000 to 04-Jul-2000)
 
    *) Removed more memory leaks by freeing even more stuff

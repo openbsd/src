@@ -70,12 +70,12 @@
       Type:         OPTIONAL (only mandatory for US-citizens)
 
    o  Package:      MM
-      Version:      1.0.x
+      Version:      1.1.x
       Description:  Shared Memory Library
       Reason:       The portable library for shared memory in Apache/EAPI
       Homepage:     http://www.engelschall.com/sw/mm/
       Distribution: http://www.engelschall.com/sw/mm/
-      Tarball:      mm-1.0.x.tar.gz
+      Tarball:      mm-1.1.x.tar.gz
       Location:     Zurich, Switzerland, Europe
       Author(s):    Ralf S. Engelschall <rse@engelschall.com>
       Type:         OPTIONAL
@@ -129,7 +129,7 @@
      $ gzip -d -c apache_1.3.x.tar.gz | tar xvf -                          ALL
      $ gzip -d -c mod_ssl-2.6.x-1.3.x.tar.gz | tar xvf -                   ALL
      $ gzip -d -c openssl-0.9.x.tar.gz | tar xvf -                         ALL
-     $ gzip -d -c mm-1.0.x.tar.gz | tar xvf -                         OPTIONAL
+     $ gzip -d -c mm-1.1.x.tar.gz | tar xvf -                         OPTIONAL
      $ mkdir rsaref-2.0                                                     US
      $ (cd rsaref-2.0; gzip -d -c ../rsaref20.tar.Z | tar xvf -)            US
 
@@ -167,7 +167,7 @@
      $ cd openssl-0.9.x                                                    ALL
      $ sh config \                                                         ALL
             no-idea \                                                       EU
-            -L`pwd`/../rsaref-2.0/local/ rsaref \                           US
+            -L`pwd`/../rsaref-2.0/local/rsaref \                            US
             -fPIC                                                     OPTIONAL
      $ make                                                                ALL
      $ make test                                                      OPTIONAL
@@ -203,18 +203,18 @@
      use a high-performance RAM-based session cache instead of a disk-based
      one.
 
-     $ cd mm-1.0.x                                                    OPTIONAL
+     $ cd mm-1.1.x                                                    OPTIONAL
      $ ./configure --disable-shared                                   OPTIONAL
      $ make                                                           OPTIONAL
      $ cd ..                                                          OPTIONAL
 
      NOTE: When your system already has MM installed in system locations
            you can ignore the steps above and then use `EAPI_MM=SYSTEM'
-           instead of `EAPI_MM=../mm-1.0.x' below.
+           instead of `EAPI_MM=../mm-1.1.x' below.
 
      NOTE: Do not forget the --disable-shared option above. Else you've
            to establish an explicit LD_LIBRARY_PATH which includes the
-           /path/to/mm-1.0.x/.libs/ directory or the compilation of Apache
+           /path/to/mm-1.1.x/.libs/ directory or the compilation of Apache
            will fail because the shared library cannot be found.
 
   5. Now apply the mod_ssl source extension and source patches to the Apache
@@ -236,7 +236,7 @@
               --with-apache=../apache_1.3.x \                              ALL
               --with-ssl=../openssl-0.9.x \                                ALL
               --with-rsa=../rsaref-2.0/local \                              US
-              --with-mm=../mm-1.0.x \                                 OPTIONAL
+              --with-mm=../mm-1.1.x \                                 OPTIONAL
               --with-crt=/path/to/your/server.crt \                   OPTIONAL
               --with-key=/path/to/your/server.key \                   OPTIONAL
               --prefix=/path/to/apache \                                   ALL
@@ -316,7 +316,7 @@
         $ cd apache_1.3.x                                                  ALL
         $ SSL_BASE=../openssl-0.9.x \                                      ALL
           RSA_BASE=../rsaref-2.0/local \                                    US
-          EAPI_MM=../mm-1.0.x \                                       OPTIONAL
+          EAPI_MM=../mm-1.1.x \                                       OPTIONAL
           ./configure \                                                    ALL
               --enable-module=ssl \                                        ALL
               --prefix=/path/to/apache \                                   ALL
@@ -406,21 +406,33 @@
 
   6. Try out Apache without SSL (only HTTP protocol possible):
 
-     $ /path/to/apache/sbin/apachectl start                                ALL
+     $ /path/to/apache/bin/apachectl start                                 ALL
      $ netscape http://<local-host-name>/                                  ALL
-     $ /path/to/apache/sbin/apachectl stop                                 ALL
+     $ /path/to/apache/bin/apachectl stop                                  ALL
 
   7. Try out Apache with SSL (both HTTP and HTTPS protocol possible):
 
-     $ /path/to/apache/sbin/apachectl startssl                             ALL
-     $ netscape http://<local-host-name>/                                  ALL
-     $ netscape https://<local-host-name>/                                 ALL
-     $ /path/to/apache/sbin/apachectl stop                                 ALL
+     $ /path/to/apache/bin/apachectl startssl                              ALL
+     $ netscape http://<local-host-name><http-port>/                       ALL
+     $ netscape https://<local-host-name><https-port>/                     ALL
+     $ /path/to/apache/bin/apachectl stop                                  ALL
 
      NOTE: Replace the `<local-host-name>' with the official name of your
            host. Do not enter `localhost' here, because this name has to match
            the Common Name (CN) of the Subject's Distinguished Name (DN)
            inside your server certificate.
+
+     NOTE: If you have built and installed under root (uid 0), 
+           leave out the the `<http-port>' and `<https-port>' strings above.
+           If you have built and installed under a different user than root,
+           replace `<http-port>' with `:8080' and `<https-port>' with `:8443'
+           above. The reason just is that Apache pre-configures the installed
+           configuration file for direct use (at least as long the APACI
+           option --without-confadjust is not used). For using the official
+           ports (80 for HTTP and 443 for HTTPS) root priviledges are required
+           under run-time, so APACI assumes that it has to use alternate ports
+           (8080 for HTTP and 8443 for HTTPS) if the built and installation is
+           done under non-root users.
 
      NOTE: When the above tests (steps 6 and 7) fail for some reasons
            you are _STRONGLY ADVISED_ to look into the Apache error logfile
@@ -466,7 +478,7 @@
 
     $ cd mod_ssl-2.6.x-1.3.x                                               ALL
     $ ./configure \                                                        ALL
-          --with-apxs[=/path/to/apache/sbin/apxs] \                        ALL
+          --with-apxs[=/path/to/apache/bin/apxs] \                         ALL
           --with-ssl=/path/to/openssl \                                    ALL
           --with-rsa=/path/to/rsaref                                        US
     $ make                                                                 ALL

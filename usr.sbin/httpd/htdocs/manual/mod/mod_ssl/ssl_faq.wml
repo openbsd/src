@@ -60,12 +60,12 @@ author.
 </table>
 
 #   container tag for layouting a question
-<define-container faq>
+<define-tag faq endtag=required>
 <preserve ref>
 <preserve toc>
 <set-var %attributes>
 <p>
-<li><toc_h3 <get-var toc>></toc_h3>
+<li><toc_h3 alt="<get-var toc>"></toc_h3>
     <a name="<get-var ref>"></a>
     <strong id="faq">%body</strong>\
     &nbsp;&nbsp;
@@ -73,7 +73,7 @@ author.
     <p>
 <restore toc>
 <restore ref>
-</define-container>
+</define-tag>
 
 
 <h2>About the module</h2>
@@ -96,7 +96,7 @@ What is the history of mod_ssl?
     1998. As of this writing (August 1999) the current mod_ssl version is 2.4.0.
     <p>
     After one year of very active development with over 1000 working hours and
-    over 40 releases mod_ssl reached it's current state.  The result is an
+    over 40 releases mod_ssl reached its current state.  The result is an
     already very clean source base implementing a very rich functionality.
     The code size increased by a factor of 4 to currently a total of over
     10.000 lines of ANSI C consisting of approx. 70% code and 30% code
@@ -108,24 +108,24 @@ What are the functional differences between mod_ssl and Apache-SSL, from where
 it is originally derived?
 </faq>
 
-    This neither can be answered in short (there were too much code changes)
-    nor can be answered at all by the author (there would be immediately flame
+    This neither can be answered in short (there were too many code changes)
+    nor can be answered at all by the author (there would immediately be flame
     wars with no reasonable results at the end). But as you easily can guess
-    from the 5% of remaining Apache-SSL code, lot's of differences exists,
+    from the 5% of remaining Apache-SSL code, a lot of differences exists,
     although user-visible backward compatibility exists for most things.
     <p>
-    When you really want a detailed comparison you've to read the entries in
-    the large <code>CHANGES</code> file you can find in the mod_ssl
-    distribution. Usually this is too much hard-core. So I recommend you to
+    When you really want a detailed comparison you have to read the entries in
+    the large <code>CHANGES</code> file that is in the mod_ssl
+    distribution. Usually this is much too hard-core. So I recommend you to
     either believe in the opinion and recommendations of other users (the
     simplest approach) or do a comparison yourself (the most reasonable
-    approach). For this grab distributions of mod_ssl (from <a
+    approach). For the latter, grab distributions of mod_ssl (from <a
     href="http://www.modssl.org/">http://www.modssl.org</a>) and Apache-SSL
     (from <a href="http://www.apache-ssl.org/">http://www.apache-ssl.org</a>),
     install both packages, read their documentation and try them out yourself.
     Then choose the one which pleases you most.
     <p>
-    A few final hints to direct your comparison: quality of documentation
+    A few final hints to help direct your comparison: quality of documentation
     ("can you easily find answers and are they sufficient?"), quality of
     source code ("is the source code reviewable so you can make sure there
     aren't any trapdoors or inherent security risks because of bad programming
@@ -155,7 +155,7 @@ the commercial alternatives like Raven or Stronghold?
     (September 20th, 2000) when the RSA patent expires.
         
     <p>
-    Second, there is the point that one has guarrantied support from
+    Second, there is the point that one has guaranteed support from
     the commercial vendors. On the other hand, if you monitored the
     Open Source quality of mod_ssl and the support activities
     found on <a href="mailto:modssl-users@modssl.org">
@@ -166,7 +166,7 @@ the commercial alternatives like Raven or Stronghold?
     <p>
     Third, people often think they would receive perhaps at least a
     better technical SSL solution than mod_ssl from the commercial
-    vendors. But this is not really the truth, because all commercial
+    vendors. But this is not really true, because all commercial
     alternatives (Raven 1.4.x, Stronghold 3.x, RedHat SWS 2.x, etc.)
     <i>are</i> actually based on mod_ssl and OpenSSL. The reason for
     this common misunderstanding is mainly because some vendors make no
@@ -174,9 +174,9 @@ the commercial alternatives like Raven or Stronghold?
     mod_ssl based. So, do not think, just because the commercial
     alternatives are usually more expensive, that you are also receiving
     an alternative <i>technical</i> SSL solution. This is usually not
-    the case. Actually the vendors versions of Apache, mod_ssl and OpenSSL
-    often stay behind the latest free versions and this way still do not
-    include perhaps important bug and security fixes. On the other hand,
+    the case. Actually the vendor versions of Apache, mod_ssl and OpenSSL
+    often stay behind the latest free versions and perhaps this way still do not
+    include important bug and security fixes. On the other hand,
     it sometimes occurs that a vendor version includes useful changes
     which are not available through the official freely available
     packages. But most vendors play fair and contribute back those
@@ -185,7 +185,7 @@ the commercial alternatives like Raven or Stronghold?
     <p>
     So, in short: There are lots of commercial versions of the popular
     Apache+mod_ssl+OpenSSL server combination available. And until the
-    RSA patent expires in the year 2000, US citizens have no chance,
+    RSA patent expires in the year 2000, US citizens have no choice,
     of course. They have to buy one of the commercial versions. Non-US
     citizens are not forced into this situation and should decide
     carefully whether they really need to buy a commercial version or
@@ -213,7 +213,7 @@ Is mod_ssl Year 2000 compliant?
     <p>
     Because first mod_ssl internally never stores years as two digits.
     Instead it always uses the ANSI C &amp; POSIX numerical data type
-    <code>time_t</code> type, which on mostly all Unix platforms at the moment
+    <code>time_t</code> type, which on almost all Unix platforms at the moment
     is a <code>signed long</code> (usually 32-bits) representing seconds since
     epoch of January 1st, 1970, 00:00 UTC. This signed value overflows in
     early January 2038 and not in the year 2000.  Second, date and time
@@ -302,7 +302,7 @@ When I access my website the first time via HTTPS I get a core dump?
     broken vendor DBM libraries. To solve it either build mod_ssl with the
     built-in SDBM library (specify <tt>--enable-rule=SSL_SDBM</tt> at the
     APACI command line) or switch from ``<tt>SSLSessionCache dbm:</tt>'' to the
-    newer ``<tt>SSLSessionCache shm:</tt>'' variant (after you've rebuilt
+    newer ``<tt>SSLSessionCache shm:</tt>'' variant (after you have rebuilt
     Apache with MM, of course).
 
 <faq ref="core-php3" toc="Core dumps for Apache+mod_ssl+PHP3?">
@@ -886,7 +886,7 @@ I try to install a Verisign certificate. Why can't I find neither the
     that file to the <code>SSLCertificateFile</code> directive.
     Remember that you need to give the key file in as well (see
     <code>SSLCertificateKeyFile</code> directive). For a better
-    CA-related overview on SSL certifiate fiddling you can look at <a
+    CA-related overview on SSL certificate fiddling you can look at <a
     href="http://www.thawte.com/certs/server/keygen/mod_ssl.html">
     Thawte's mod_ssl instructions</a>.
 
@@ -1182,7 +1182,7 @@ You have to at least always provide the following information:
 <p>
 <ul>
 <li><em>Apache, mod_ssl and OpenSSL version information</em><br>
-    The mod_ssl version you should really know. It's for instance the version
+    The mod_ssl version you should really know. For instance, it's the version
     number in the distribution tarball.  The Apache version can be determined
     by running ``<code>httpd -v</code>''.  The OpenSSL version can be
     determined by running ``<code>openssl version</code>''.  Alternatively when
@@ -1243,7 +1243,7 @@ Follow the following steps:
     done a <code>setuid()</code> (unless it does an <code>exec()</code>) for
     security reasons (there can be privileged information left over in
     memory).  Additionally you can run ``<code>/path/to/httpd -X</code>''
-    manually to force Apache not not fork.
+    manually to force Apache to not fork.
 <p>
 <li>Analyze the core-dump. For this run ``<code>gdb /path/to/httpd
     /tmp/httpd.core</code>'' or a similar command has to run. In GDB you then

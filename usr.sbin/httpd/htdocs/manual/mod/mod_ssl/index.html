@@ -127,23 +127,49 @@ H4 {
     font-style: normal;
 }
 --></style>
+<script type="text/javascript" language="JavaScript">
+<!-- Hiding the code
+function ro_imgNormal(imgName) {
+    if (document.images) {
+        document[imgName].src = eval(imgName + '_n.src');
+        self.status = '';
+    }
+}
+function ro_imgOver(imgName, descript) {
+    if (document.images) {
+        document[imgName].src = eval(imgName + '_o.src');
+        self.status = descript;
+    }
+}
+// done hiding -->
+</script>
+<script type="text/javascript" language="JavaScript">
+<!-- Hiding the code
+if (document.images) {
+    ro_img_unknown1_n = new Image();
+    ro_img_unknown1_n.src = 'ssl_template.navbut-next-n.gif';
+    ro_img_unknown1_o = new Image();
+    ro_img_unknown1_o.src = 'ssl_template.navbut-next-s.gif';
+}
+// done hiding -->
+</script>
 </head>
 <body bgcolor="#ffffff" text="#000000" link="#333399" alink="#9999ff" vlink="#000066">
 <div align="center">
-<table width="600" cellspacing="0" cellpadding="0" border="0">
+<table width="600" cellspacing="0" cellpadding="0" border="0" summary="">
 <tr>
   <td>
 <br>
-<table cellspacing="0" cellpadding="0" border="0">
+<table cellspacing="0" cellpadding="0" border="0" summary="">
 <tr>
     <td>
-        <table cellspacing="0" cellpadding="0" border="0">
+        <table cellspacing="0" cellpadding="0" border="0" summary="">
         <tr>
         <td>
         <img
            src="ssl_cover_title.jpg"
-           alt="User Manual"
-         width="421" height="73">
+           alt="User Manual" width="421" height="73"
+>
         </td>
         </tr>
         <tr>
@@ -162,8 +188,8 @@ H4 {
 ><img
            src="ssl_cover_logo.jpg"
            alt="mod_ssl - The Apache Interface to OpenSSL"
-           border="0"
-         width="504" height="231"></a>
+           border="0" width="504" height="231"
+></a>
     </td>
 </tr>
 <tr>
@@ -179,42 +205,7 @@ H4 {
                 &nbsp;&nbsp;&nbsp;&nbsp;
             </td>
             <td align="right" valign="bottom">
-<script type="text/javascript" language="JavaScript">
-<!-- Hiding the code
-function ro_imgNormal(imgName) {
-    if (document.images) {
-        document[imgName].src = eval(imgName + "_n.src");
-        self.status = '';
-    }
-}
-function ro_imgOver(imgName, descript) {
-    if (document.images) {
-        document[imgName].src = eval(imgName + "_o.src");
-        self.status = descript;
-    }
-}
-// done hiding -->
-</script>
-<script type="text/javascript" language="JavaScript">
-<!-- Hiding the code
-if (document.images) {
-    ro_img_unknown1_n = new Image();
-    ro_img_unknown1_n.src = "ssl_template.navbut-next-n.gif";
-    ro_img_unknown1_o = new Image();
-    ro_img_unknown1_o.src = "ssl_template.navbut-next-s.gif";
-}
-// done hiding -->
-</script>
-<a href="ssl_overview.html"
-   onMouseOver="ro_imgOver('ro_img_unknown1', 'next page'); return true"
-   onMouseOut="ro_imgNormal('ro_img_unknown1'); return true"
-><img
-   name="ro_img_unknown1"
-   src="ssl_template.navbut-next-n.gif"
-   alt="next page"
-   width="70" height="18"
-   border="0"
-></a><br>Overview
+<a href="ssl_overview.html" onmouseover="ro_imgOver('ro_img_unknown1', 'next page'); return true" onmouseout="ro_imgNormal('ro_img_unknown1'); return true" onfocus="ro_imgOver('ro_img_unknown1', 'next page'); return true" onblur="ro_imgNormal('ro_img_unknown1'); return true"><img name="ro_img_unknown1" src="ssl_template.navbut-next-n.gif" alt="next page" width="70" height="18" border="0"></a><br>Overview
             </td>
             <td>
             <img src="ssl_template.imgdot-1x1-transp.gif" alt="" width="30" height="1" align="bottom" border="0">

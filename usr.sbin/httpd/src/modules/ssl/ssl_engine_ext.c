@@ -600,7 +600,8 @@ static int ssl_ext_mp_clientcert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
     sc         = mySrvConfig(s);
     pcerts     = sc->skProxyClientCerts;
 
-    ssl_log(s, SSL_LOG_DEBUG, "Proxy client certificate callback: (%s) entered");
+    ssl_log(s, SSL_LOG_DEBUG, 
+            "Proxy client certificate callback: (%s) entered", servername);
 
     if ((pcerts == NULL) || (sk_X509_INFO_num(pcerts) <= 0)) {
         ssl_log(s, SSL_LOG_TRACE,

@@ -127,23 +127,79 @@ H4 {
     font-style: normal;
 }
 --></style>
+<script type="text/javascript" language="JavaScript">
+<!-- Hiding the code
+function ro_imgNormal(imgName) {
+    if (document.images) {
+        document[imgName].src = eval(imgName + '_n.src');
+        self.status = '';
+    }
+}
+function ro_imgOver(imgName, descript) {
+    if (document.images) {
+        document[imgName].src = eval(imgName + '_o.src');
+        self.status = descript;
+    }
+}
+// done hiding -->
+</script>
+<script type="text/javascript" language="JavaScript">
+<!-- Hiding the code
+if (document.images) {
+    ro_img_prev_top_n = new Image();
+    ro_img_prev_top_n.src = 'ssl_template.navbut-prev-n.gif';
+    ro_img_prev_top_o = new Image();
+    ro_img_prev_top_o.src = 'ssl_template.navbut-prev-s.gif';
+}
+// done hiding -->
+</script>
+<script type="text/javascript" language="JavaScript">
+<!-- Hiding the code
+if (document.images) {
+    ro_img_prev_bot_n = new Image();
+    ro_img_prev_bot_n.src = 'ssl_template.navbut-prev-n.gif';
+    ro_img_prev_bot_o = new Image();
+    ro_img_prev_bot_o.src = 'ssl_template.navbut-prev-s.gif';
+}
+// done hiding -->
+</script>
+<script type="text/javascript" language="JavaScript">
+<!-- Hiding the code
+if (document.images) {
+    ro_img_next_top_n = new Image();
+    ro_img_next_top_n.src = 'ssl_template.navbut-next-n.gif';
+    ro_img_next_top_o = new Image();
+    ro_img_next_top_o.src = 'ssl_template.navbut-next-s.gif';
+}
+// done hiding -->
+</script>
+<script type="text/javascript" language="JavaScript">
+<!-- Hiding the code
+if (document.images) {
+    ro_img_next_bot_n = new Image();
+    ro_img_next_bot_n.src = 'ssl_template.navbut-next-n.gif';
+    ro_img_next_bot_o = new Image();
+    ro_img_next_bot_o.src = 'ssl_template.navbut-next-s.gif';
+}
+// done hiding -->
+</script>
 </head>
 <body bgcolor="#ffffff" text="#000000" link="#333399" alink="#9999ff" vlink="#000066">
 <div align="center">
-<table width="600" cellspacing="0" cellpadding="0" border="0">
+<table width="600" cellspacing="0" cellpadding="0" border="0" summary="">
 <tr>
   <td>
-          <img src="ssl_template.imgdot-1x1-transp.gif" alt="" width="600" height="1" align="bottom" border="0"><br>
-      <table width="600" cellspacing="0" cellpadding="0">
+      <img src="ssl_template.imgdot-1x1-transp.gif" alt="" width="600" height="1" align="bottom" border="0"><br>
+      <table width="600" cellspacing="0" cellpadding="0" summary="">
       <tr>
         <td>
-        <table width="600">
+        <table width="600" summary="">
         <tr>
             <td align="left" valign="bottom">
             <font face="Arial,Helvetica" size="+2"><b>mod_ssl</b></font>
             </td>
             <td align="right">
-                            <img src="ssl_template.head-chapter.gif" alt="Chapter" width="175" height="94"> <img src="ssl_template.head-num-3.gif" alt="3" width="74" height="89">
+              <img src="ssl_template.head-chapter.gif" alt="Chapter" width="175" height="94"> <img src="ssl_template.head-num-3.gif" alt="3" width="74" height="89">
             </td>
         </tr>
         </table>
@@ -154,67 +210,13 @@ H4 {
       </tr>
       <tr>
         <td>
-           <table width="600" border="0">
+           <table width="600" border="0" summary="">
            <tr>
             <td valign="top" align="left" width="250">
-<script type="text/javascript" language="JavaScript">
-<!-- Hiding the code
-function ro_imgNormal(imgName) {
-    if (document.images) {
-        document[imgName].src = eval(imgName + "_n.src");
-        self.status = '';
-    }
-}
-function ro_imgOver(imgName, descript) {
-    if (document.images) {
-        document[imgName].src = eval(imgName + "_o.src");
-        self.status = descript;
-    }
-}
-// done hiding -->
-</script>
-<script type="text/javascript" language="JavaScript">
-<!-- Hiding the code
-if (document.images) {
-    ro_img_prev_top_n = new Image();
-    ro_img_prev_top_n.src = "ssl_template.navbut-prev-n.gif";
-    ro_img_prev_top_o = new Image();
-    ro_img_prev_top_o.src = "ssl_template.navbut-prev-s.gif";
-}
-// done hiding -->
-</script>
-<a href="ssl_intro.html"
-   onMouseOver="ro_imgOver('ro_img_prev_top', 'previous page'); return true"
-   onMouseOut="ro_imgNormal('ro_img_prev_top'); return true"
-><img
-   name="ro_img_prev_top"
-   src="ssl_template.navbut-prev-n.gif"
-   alt="previous page"
-   width="70" height="18"
-   border="0"
-></a><br><font color="#000000">Introduction</font>
+<a href="ssl_intro.html" onmouseover="ro_imgOver('ro_img_prev_top', 'previous page'); return true" onmouseout="ro_imgNormal('ro_img_prev_top'); return true" onfocus="ro_imgOver('ro_img_prev_top', 'previous page'); return true" onblur="ro_imgNormal('ro_img_prev_top'); return true"><img name="ro_img_prev_top" src="ssl_template.navbut-prev-n.gif" alt="previous page" width="70" height="18" border="0"></a><br><font color="#000000">Introduction</font>
             </td>
             <td valign="top" align="right" width="250">
-<script type="text/javascript" language="JavaScript">
-<!-- Hiding the code
-if (document.images) {
-    ro_img_next_top_n = new Image();
-    ro_img_next_top_n.src = "ssl_template.navbut-next-n.gif";
-    ro_img_next_top_o = new Image();
-    ro_img_next_top_o.src = "ssl_template.navbut-next-s.gif";
-}
-// done hiding -->
-</script>
-<a href="ssl_compat.html"
-   onMouseOver="ro_imgOver('ro_img_next_top', 'next page'); return true"
-   onMouseOut="ro_imgNormal('ro_img_next_top'); return true"
-><img
-   name="ro_img_next_top"
-   src="ssl_template.navbut-next-n.gif"
-   alt="next page"
-   width="70" height="18"
-   border="0"
-></a><br><font color="#000000">Compatibility</font>
+<a href="ssl_compat.html" onmouseover="ro_imgOver('ro_img_next_top', 'next page'); return true" onmouseout="ro_imgNormal('ro_img_next_top'); return true" onfocus="ro_imgOver('ro_img_next_top', 'next page'); return true" onblur="ro_imgNormal('ro_img_next_top'); return true"><img name="ro_img_next_top" src="ssl_template.navbut-next-n.gif" alt="next page" width="70" height="18" border="0"></a><br><font color="#000000">Compatibility</font>
             </td>
            </tr>
            </table>
@@ -222,17 +224,19 @@ if (document.images) {
       </tr>
       <tr>
         <td>
-                    <br>
+          <br>
           <img src="ssl_template.title-ref.gif" alt="Reference" width="456" height="60">
         </td>
       </tr>
       </table>
-<DIV align="right">
-<table cellspacing="0" cellpadding="0" width="150">
+<div align="right">
+<table cellspacing="0" cellpadding="0" width="150" summary="">
 <tr>
 <td>
-<em>``Try to understand everything,
-but believe nothing!''</em>
+<em>
+``Try to understand everything,
+but believe nothing!''
+</em>
 </td>
 </tr>
 <tr>
@@ -245,7 +249,7 @@ Unknown
 </table>
 </div>
 <p>
-<table cellspacing="0" cellpadding="0" border="0">
+<table cellspacing="0" cellpadding="0" border="0" summary="">
 <tr valign="bottom">
 <td>
 <img src="ssl_reference.gfont000.gif" alt="T" width="34" height="34" border="0" align="left">
@@ -269,8 +273,8 @@ virtual host''), which can occur inside the server config files both outside
 &nbsp;&nbsp;
 </td>
 <td>
-<DIV align="right">
-<table cellspacing="0" cellpadding="5" border="0" bgcolor="#ccccff">
+<div align="right">
+<table cellspacing="0" cellpadding="5" border="0" bgcolor="#ccccff" summary="">
 <tr>
 <td bgcolor="#333399">
 <font face="Arial,Helvetica" color="#ccccff">
@@ -327,7 +331,7 @@ can also be used the in the global context.
 Additional directives and environment variables provided by mod_ssl (via
 on-the-fly mapping) for backward compatiblity to other Apache SSL solutions
 are documented in the <a href="ssl_compat.html">Compatibility</a> chapter.
-<H1><a name="ToC1">Configuration Directives</a></H1>
+<h1><a name="ToC1">Configuration Directives</a></h1>
 The most visible and error-prone things of mod_ssl are its configuration
 directives. So we document them in great detail here to assist you in setting
 up the best possible configuration of your SSL-aware webserver.
@@ -335,14 +339,15 @@ up the best possible configuration of your SSL-aware webserver.
 <p>
 <br>
 <a name="SSLPassPhraseDialog"></a>
-<H2><a name="ToC2">SSLPassPhraseDialog</a></H2>
+<h2><a name="ToC2">SSLPassPhraseDialog</a></h2>
 <p>
-<table cellspacing="0" cellpadding="1" bgcolor="#cccccc" border="0">
+<table cellspacing="0" cellpadding="1" bgcolor="#cccccc" border="0" summary="">
 <tr>
 <td>
-<table bgcolor="white" width="600" cellspacing="0" cellpadding="5" border="0">
+<table bgcolor="white" width="600" cellspacing="0" cellpadding="5" border="0" summary="">
 <tr>
-<td><table cellspacing="0" cellpadding="1" border="0">
+<td>
+<table cellspacing="0" cellpadding="1" border="0" summary="">
 <tr><td>
 <font face="Arial,Helvetica"><b>Name:</b></font></a> </td><td> <b>SSLPassPhraseDialog</b></td></tr>
 <tr><td>
@@ -375,7 +380,8 @@ up the best possible configuration of your SSL-aware webserver.
  href="../directive-dict.html#Compatibility"
  rel="Help"
 ><font face="Arial,Helvetica"><b>Compatibility:</b></font></a> </td><td> mod_ssl 2.1 </td></tr>
-</table></td>
+</table>
+</td>
 </tr>
 </table>
 </td>
@@ -442,14 +448,15 @@ SSLPassPhraseDialog exec:/usr/local/apache/sbin/pp-filter
 <p>
 <br>
 <a name="SSLMutex"></a>
-<H2><a name="ToC3">SSLMutex</a></H2>
+<h2><a name="ToC3">SSLMutex</a></h2>
 <p>
-<table cellspacing="0" cellpadding="1" bgcolor="#cccccc" border="0">
+<table cellspacing="0" cellpadding="1" bgcolor="#cccccc" border="0" summary="">
 <tr>
 <td>
-<table bgcolor="white" width="600" cellspacing="0" cellpadding="5" border="0">
+<table bgcolor="white" width="600" cellspacing="0" cellpadding="5" border="0" summary="">
 <tr>
-<td><table cellspacing="0" cellpadding="1" border="0">
+<td>
+<table cellspacing="0" cellpadding="1" border="0" summary="">
 <tr><td>
 <font face="Arial,Helvetica"><b>Name:</b></font></a> </td><td> <b>SSLMutex</b></td></tr>
 <tr><td>
@@ -482,7 +489,8 @@ SSLPassPhraseDialog exec:/usr/local/apache/sbin/pp-filter
  href="../directive-dict.html#Compatibility"
  rel="Help"
 ><font face="Arial,Helvetica"><b>Compatibility:</b></font></a> </td><td> mod_ssl 2.1 </td></tr>
-</table></td>
+</table>
+</td>
 </tr>
 </table>
 </td>
@@ -534,14 +542,15 @@ SSLMutex file:/usr/local/apache/logs/ssl_mutex
 <p>
 <br>
 <a name="SSLRandomSeed"></a>
-<H2><a name="ToC4">SSLRandomSeed</a></H2>
+<h2><a name="ToC4">SSLRandomSeed</a></h2>
 <p>
-<table cellspacing="0" cellpadding="1" bgcolor="#cccccc" border="0">
+<table cellspacing="0" cellpadding="1" bgcolor="#cccccc" border="0" summary="">
 <tr>
 <td>
-<table bgcolor="white" width="600" cellspacing="0" cellpadding="5" border="0">
+<table bgcolor="white" width="600" cellspacing="0" cellpadding="5" border="0" summary="">
 <tr>
-<td><table cellspacing="0" cellpadding="1" border="0">
+<td>
+<table cellspacing="0" cellpadding="1" border="0" summary="">
 <tr><td>
 <font face="Arial,Helvetica"><b>Name:</b></font></a> </td><td> <b>SSLRandomSeed</b></td></tr>
 <tr><td>
@@ -574,7 +583,8 @@ SSLMutex file:/usr/local/apache/logs/ssl_mutex
  href="../directive-dict.html#Compatibility"
  rel="Help"
 ><font face="Arial,Helvetica"><b>Compatibility:</b></font></a> </td><td> mod_ssl 2.2 </td></tr>
-</table></td>
+</table>
+</td>
 </tr>
 </table>
 </td>
@@ -671,13 +681,14 @@ SSLRandomSeed connect file:/dev/urandom 1024
 <p>
 <br>
 <a name="SSLSessionCache"></a>
-<H2><a name="ToC5">SSLSessionCache</a></H2>
-<table cellspacing="0" cellpadding="1" bgcolor="#cccccc" border="0">
+<h2><a name="ToC5">SSLSessionCache</a></h2>
+<table cellspacing="0" cellpadding="1" bgcolor="#cccccc" border="0" summary="">
 <tr>
 <td>
-<table bgcolor="white" width="600" cellspacing="0" cellpadding="5" border="0">
+<table bgcolor="white" width="600" cellspacing="0" cellpadding="5" border="0" summary="">
 <tr>
-<td><table cellspacing="0" cellpadding="1" border="0">
+<td>
+<table cellspacing="0" cellpadding="1" border="0" summary="">
 <tr><td>
 <font face="Arial,Helvetica"><b>Name:</b></font></a> </td><td> <b>SSLSessionCache</b></td></tr>
 <tr><td>
@@ -710,7 +721,8 @@ SSLRandomSeed connect file:/dev/urandom 1024
  href="../directive-dict.html#Compatibility"
  rel="Help"
 ><font face="Arial,Helvetica"><b>Compatibility:</b></font></a> </td><td> mod_ssl 2.1 </td></tr>
-</table></td>
+</table>
+</td>
 </tr>
 </table>
 </td>
@@ -762,13 +774,14 @@ SSLSessionCache shm:/usr/local/apache/logs/ssl_gcache_data(512000)
 <p>
 <br>
 <a name="SSLSessionCacheTimeout"></a>
-<H2><a name="ToC6">SSLSessionCacheTimeout</a></H2>
-<table cellspacing="0" cellpadding="1" bgcolor="#cccccc" border="0">
+<h2><a name="ToC6">SSLSessionCacheTimeout</a></h2>
+<table cellspacing="0" cellpadding="1" bgcolor="#cccccc" border="0" summary="">
 <tr>
 <td>
-<table bgcolor="white" width="600" cellspacing="0" cellpadding="5" border="0">
+<table bgcolor="white" width="600" cellspacing="0" cellpadding="5" border="0" summary="">
 <tr>
-<td><table cellspacing="0" cellpadding="1" border="0">
+<td>
+<table cellspacing="0" cellpadding="1" border="0" summary="">
 <tr><td>
 <font face="Arial,Helvetica"><b>Name:</b></font></a> </td><td> <b>SSLSessionCacheTimeout</b></td></tr>
 <tr><td>
@@ -801,7 +814,8 @@ SSLSessionCache shm:/usr/local/apache/logs/ssl_gcache_data(512000)
  href="../directive-dict.html#Compatibility"
  rel="Help"
 ><font face="Arial,Helvetica"><b>Compatibility:</b></font></a> </td><td> mod_ssl 2.0 </td></tr>
-</table></td>
+</table>
+</td>
 </tr>
 </table>
 </td>
@@ -823,13 +837,14 @@ SSLSessionCacheTimeout 600
 <p>
 <br>
 <a name="SSLEngine"></a>
-<H2><a name="ToC7">SSLEngine</a></H2>
-<table cellspacing="0" cellpadding="1" bgcolor="#cccccc" border="0">
+<h2><a name="ToC7">SSLEngine</a></h2>
+<table cellspacing="0" cellpadding="1" bgcolor="#cccccc" border="0" summary="">
 <tr>
 <td>
-<table bgcolor="white" width="600" cellspacing="0" cellpadding="5" border="0">
+<table bgcolor="white" width="600" cellspacing="0" cellpadding="5" border="0" summary="">
 <tr>
-<td><table cellspacing="0" cellpadding="1" border="0">
+<td>
+<table cellspacing="0" cellpadding="1" border="0" summary="">
 <tr><td>
 <font face="Arial,Helvetica"><b>Name:</b></font></a> </td><td> <b>SSLEngine</b></td></tr>
 <tr><td>
@@ -862,7 +877,8 @@ SSLSessionCacheTimeout 600
  href="../directive-dict.html#Compatibility"
  rel="Help"
 ><font face="Arial,Helvetica"><b>Compatibility:</b></font></a> </td><td> mod_ssl 2.1 </td></tr>
-</table></td>
+</table>
+</td>
 </tr>
 </table>
 </td>
@@ -887,13 +903,14 @@ SSLEngine on
 <p>
 <br>
 <a name="SSLProtocol"></a>
-<H2><a name="ToC8">SSLProtocol</a></H2>
-<table cellspacing="0" cellpadding="1" bgcolor="#cccccc" border="0">
+<h2><a name="ToC8">SSLProtocol</a></h2>
+<table cellspacing="0" cellpadding="1" bgcolor="#cccccc" border="0" summary="">
 <tr>
 <td>
-<table bgcolor="white" width="600" cellspacing="0" cellpadding="5" border="0">
+<table bgcolor="white" width="600" cellspacing="0" cellpadding="5" border="0" summary="">
 <tr>
-<td><table cellspacing="0" cellpadding="1" border="0">
+<td>
+<table cellspacing="0" cellpadding="1" border="0" summary="">
 <tr><td>
 <font face="Arial,Helvetica"><b>Name:</b></font></a> </td><td> <b>SSLProtocol</b></td></tr>
 <tr><td>
@@ -926,7 +943,8 @@ SSLEngine on
  href="../directive-dict.html#Compatibility"
  rel="Help"
 ><font face="Arial,Helvetica"><b>Compatibility:</b></font></a> </td><td> mod_ssl 2.2 </td></tr>
-</table></td>
+</table>
+</td>
 </tr>
 </table>
 </td>
@@ -976,13 +994,14 @@ SSLProtocol all -SSLv2
 <p>
 <br>
 <a name="SSLCipherSuite"></a>
-<H2><a name="ToC9">SSLCipherSuite</a></H2>
-<table cellspacing="0" cellpadding="1" bgcolor="#cccccc" border="0">
+<h2><a name="ToC9">SSLCipherSuite</a></h2>
+<table cellspacing="0" cellpadding="1" bgcolor="#cccccc" border="0" summary="">
 <tr>
 <td>
-<table bgcolor="white" width="600" cellspacing="0" cellpadding="5" border="0">
+<table bgcolor="white" width="600" cellspacing="0" cellpadding="5" border="0" summary="">
 <tr>
-<td><table cellspacing="0" cellpadding="1" border="0">
+<td>
+<table cellspacing="0" cellpadding="1" border="0" summary="">
 <tr><td>
 <font face="Arial,Helvetica"><b>Name:</b></font></a> </td><td> <b>SSLCipherSuite</b></td></tr>
 <tr><td>
@@ -1015,7 +1034,8 @@ SSLProtocol all -SSLv2
  href="../directive-dict.html#Compatibility"
  rel="Help"
 ><font face="Arial,Helvetica"><b>Compatibility:</b></font></a> </td><td> mod_ssl 2.1 </td></tr>
-</table></td>
+</table>
+</td>
 </tr>
 </table>
 </td>
@@ -1054,11 +1074,12 @@ specify the preference and order for the ciphers (see <a href="#table1">Table
 <p>
 <div align="center">
 <a name="table1"></a>
-<table width="600" cellspacing="0" cellpadding="1" border="0">
+<table width="600" cellspacing="0" cellpadding="1" border="0" summary="">
 <caption align="bottom" id="sf">Table 1: OpenSSL Cipher Specification Tags</caption>
 <tr><td bgcolor="#cccccc">
-<table width="598" cellpadding="5" cellspacing="0" border="0">
-<tr><td valign="top" align="center" bgcolor="#ffffff"><table border="0" cellspacing="0" cellpadding="2" width="598">
+<table width="598" cellpadding="5" cellspacing="0" border="0" summary="">
+<tr><td valign="top" align="center" bgcolor="#ffffff">
+<table border="0" cellspacing="0" cellpadding="2" width="598" summary="">
 <tr id="D"><td><b>Tag</b></td> <td><b>Description</b></td>
 <tr id="H"><td colspan="2"><em>Key Exchange Algorithm:</em></td></tr>
 <tr id="D"><td><code>kRSA</code></td>   <td>RSA key exchange</td></tr>
@@ -1097,7 +1118,8 @@ specify the preference and order for the ciphers (see <a href="#table1">Table
 <tr id="D"><td><code>ADH</code></td>    <td>all ciphers using Anonymous Diffie-Hellman key exchange</td> </tr>
 <tr id="H"><td><code>DSS</code></td>    <td>all ciphers using DSS authentication</td> </tr>
 <tr id="D"><td><code>NULL</code></td>   <td>all ciphers using no encryption</td> </tr>
-</table></td>
+</table>
+</td>
 </tr></table>
 </td></tr></table>
 </div>
@@ -1147,11 +1169,12 @@ SSLCipherSuite RSA:!EXP:!NULL:+HIGH:+MEDIUM:-LOW
 <p>
 <div align="center">
 <a name="table2"></a>
-<table width="600" cellspacing="0" cellpadding="1" border="0">
+<table width="600" cellspacing="0" cellpadding="1" border="0" summary="">
 <caption align="bottom" id="sf">Table 2: Particular SSL Ciphers</caption>
 <tr><td bgcolor="#cccccc">
-<table width="598" cellpadding="5" cellspacing="0" border="0">
-<tr><td valign="top" align="center" bgcolor="#ffffff"><table border="0" cellspacing="0" cellpadding="2" width="598">
+<table width="598" cellpadding="5" cellspacing="0" border="0" summary="">
+<tr><td valign="top" align="center" bgcolor="#ffffff">
+<table border="0" cellspacing="0" cellpadding="2" width="598" summary="">
 <tr id="D"><td><b>Cipher-Tag</b></td> <td><b>Protocol</b></td> <td><b>Key Ex.</b></td> <td><b>Auth.</b></td> <td><b>Enc.</b></td> <td><b>MAC</b></td> <td><b>Type</b></td> </tr>
 <tr id="H"><td colspan="7"><em>RSA Ciphers:</em></td></tr>
 <tr id="D"><td><code>DES-CBC3-SHA</code></td> <td>SSLv3</td> <td>RSA</td> <td>RSA</td> <td>3DES(168)</td> <td>SHA1</td> <td>&nbsp;</td> </tr>
@@ -1184,7 +1207,8 @@ SSLCipherSuite RSA:!EXP:!NULL:+HIGH:+MEDIUM:-LOW
 <tr id="H"><td><code>EXP-EDH-DSS-DES-CBC-SHA</code></td> <td>SSLv3</td> <td>DH(512)</td> <td>DSS</td> <td>DES(40)</td> <td>SHA1</td> <td> export</td> </tr>
 <tr id="D"><td><code>EXP-ADH-DES-CBC-SHA</code></td> <td>SSLv3</td> <td>DH(512)</td> <td>None</td> <td>DES(40)</td> <td>SHA1</td> <td> export</td> </tr>
 <tr id="H"><td><code>EXP-ADH-RC4-MD5</code></td> <td>SSLv3</td> <td>DH(512)</td> <td>None</td> <td>RC4(40)</td> <td>MD5</td> <td>  export</td> </tr>
-</table></td>
+</table>
+</td>
 </tr></table>
 </td></tr></table>
 </div>
@@ -1192,13 +1216,14 @@ SSLCipherSuite RSA:!EXP:!NULL:+HIGH:+MEDIUM:-LOW
 <p>
 <br>
 <a name="SSLCertificateFile"></a>
-<H2><a name="ToC10">SSLCertificateFile</a></H2>
-<table cellspacing="0" cellpadding="1" bgcolor="#cccccc" border="0">
+<h2><a name="ToC10">SSLCertificateFile</a></h2>
+<table cellspacing="0" cellpadding="1" bgcolor="#cccccc" border="0" summary="">
 <tr>
 <td>
-<table bgcolor="white" width="600" cellspacing="0" cellpadding="5" border="0">
+<table bgcolor="white" width="600" cellspacing="0" cellpadding="5" border="0" summary="">
 <tr>
-<td><table cellspacing="0" cellpadding="1" border="0">
+<td>
+<table cellspacing="0" cellpadding="1" border="0" summary="">
 <tr><td>
 <font face="Arial,Helvetica"><b>Name:</b></font></a> </td><td> <b>SSLCertificateFile</b></td></tr>
 <tr><td>
@@ -1231,7 +1256,8 @@ SSLCipherSuite RSA:!EXP:!NULL:+HIGH:+MEDIUM:-LOW
  href="../directive-dict.html#Compatibility"
  rel="Help"
 ><font face="Arial,Helvetica"><b>Compatibility:</b></font></a> </td><td> mod_ssl 2.0 </td></tr>
-</table></td>
+</table>
+</td>
 </tr>
 </table>
 </td>
@@ -1255,13 +1281,14 @@ SSLCertificateFile /usr/local/apache/conf/ssl.crt/server.crt
 <p>
 <br>
 <a name="SSLCertificateKeyFile"></a>
-<H2><a name="ToC11">SSLCertificateKeyFile</a></H2>
-<table cellspacing="0" cellpadding="1" bgcolor="#cccccc" border="0">
+<h2><a name="ToC11">SSLCertificateKeyFile</a></h2>
+<table cellspacing="0" cellpadding="1" bgcolor="#cccccc" border="0" summary="">
 <tr>
 <td>
-<table bgcolor="white" width="600" cellspacing="0" cellpadding="5" border="0">
+<table bgcolor="white" width="600" cellspacing="0" cellpadding="5" border="0" summary="">
 <tr>
-<td><table cellspacing="0" cellpadding="1" border="0">
+<td>
+<table cellspacing="0" cellpadding="1" border="0" summary="">
 <tr><td>
 <font face="Arial,Helvetica"><b>Name:</b></font></a> </td><td> <b>SSLCertificateKeyFile</b></td></tr>
 <tr><td>
@@ -1294,7 +1321,8 @@ SSLCertificateFile /usr/local/apache/conf/ssl.crt/server.crt
  href="../directive-dict.html#Compatibility"
  rel="Help"
 ><font face="Arial,Helvetica"><b>Compatibility:</b></font></a> </td><td> mod_ssl 2.0 </td></tr>
-</table></td>
+</table>
+</td>
 </tr>
 </table>
 </td>
@@ -1323,13 +1351,14 @@ SSLCertificateKeyFile /usr/local/apache/conf/ssl.key/server.key
 <p>
 <br>
 <a name="SSLCertificateChainFile"></a>
-<H2><a name="ToC12">SSLCertificateChainFile</a></H2>
-<table cellspacing="0" cellpadding="1" bgcolor="#cccccc" border="0">
+<h2><a name="ToC12">SSLCertificateChainFile</a></h2>
+<table cellspacing="0" cellpadding="1" bgcolor="#cccccc" border="0" summary="">
 <tr>
 <td>
-<table bgcolor="white" width="600" cellspacing="0" cellpadding="5" border="0">
+<table bgcolor="white" width="600" cellspacing="0" cellpadding="5" border="0" summary="">
 <tr>
-<td><table cellspacing="0" cellpadding="1" border="0">
+<td>
+<table cellspacing="0" cellpadding="1" border="0" summary="">
 <tr><td>
 <font face="Arial,Helvetica"><b>Name:</b></font></a> </td><td> <b>SSLCertificateChainFile</b></td></tr>
 <tr><td>
@@ -1362,7 +1391,8 @@ SSLCertificateKeyFile /usr/local/apache/conf/ssl.key/server.key
  href="../directive-dict.html#Compatibility"
  rel="Help"
 ><font face="Arial,Helvetica"><b>Compatibility:</b></font></a> </td><td> mod_ssl 2.3.6 </td></tr>
-</table></td>
+</table>
+</td>
 </tr>
 </table>
 </td>
@@ -1403,13 +1433,14 @@ SSLCertificateChainFile /usr/local/apache/conf/ssl.crt/ca.crt
 <p>
 <br>
 <a name="SSLCACertificatePath"></a>
-<H2><a name="ToC13">SSLCACertificatePath</a></H2>
-<table cellspacing="0" cellpadding="1" bgcolor="#cccccc" border="0">
+<h2><a name="ToC13">SSLCACertificatePath</a></h2>
+<table cellspacing="0" cellpadding="1" bgcolor="#cccccc" border="0" summary="">
 <tr>
 <td>
-<table bgcolor="white" width="600" cellspacing="0" cellpadding="5" border="0">
+<table bgcolor="white" width="600" cellspacing="0" cellpadding="5" border="0" summary="">
 <tr>
-<td><table cellspacing="0" cellpadding="1" border="0">
+<td>
+<table cellspacing="0" cellpadding="1" border="0" summary="">
 <tr><td>
 <font face="Arial,Helvetica"><b>Name:</b></font></a> </td><td> <b>SSLCACertificatePath</b></td></tr>
 <tr><td>
@@ -1442,7 +1473,8 @@ SSLCertificateChainFile /usr/local/apache/conf/ssl.crt/ca.crt
  href="../directive-dict.html#Compatibility"
  rel="Help"
 ><font face="Arial,Helvetica"><b>Compatibility:</b></font></a> </td><td> mod_ssl 2.0 </td></tr>
-</table></td>
+</table>
+</td>
 </tr>
 </table>
 </td>
@@ -1470,13 +1502,14 @@ SSLCACertificatePath /usr/local/apache/conf/ssl.crt/
 <p>
 <br>
 <a name="SSLCACertificateFile"></a>
-<H2><a name="ToC14">SSLCACertificateFile</a></H2>
-<table cellspacing="0" cellpadding="1" bgcolor="#cccccc" border="0">
+<h2><a name="ToC14">SSLCACertificateFile</a></h2>
+<table cellspacing="0" cellpadding="1" bgcolor="#cccccc" border="0" summary="">
 <tr>
 <td>
-<table bgcolor="white" width="600" cellspacing="0" cellpadding="5" border="0">
+<table bgcolor="white" width="600" cellspacing="0" cellpadding="5" border="0" summary="">
 <tr>
-<td><table cellspacing="0" cellpadding="1" border="0">
+<td>
+<table cellspacing="0" cellpadding="1" border="0" summary="">
 <tr><td>
 <font face="Arial,Helvetica"><b>Name:</b></font></a> </td><td> <b>SSLCACertificateFile</b></td></tr>
 <tr><td>
@@ -1509,7 +1542,8 @@ SSLCACertificatePath /usr/local/apache/conf/ssl.crt/
  href="../directive-dict.html#Compatibility"
  rel="Help"
 ><font face="Arial,Helvetica"><b>Compatibility:</b></font></a> </td><td> mod_ssl 2.0 </td></tr>
-</table></td>
+</table>
+</td>
 </tr>
 </table>
 </td>
@@ -1533,13 +1567,14 @@ SSLCACertificateFile /usr/local/apache/conf/ssl.crt/ca-bundle-client.crt
 <p>
 <br>
 <a name="SSLCARevocationPath"></a>
-<H2><a name="ToC15">SSLCARevocationPath</a></H2>
-<table cellspacing="0" cellpadding="1" bgcolor="#cccccc" border="0">
+<h2><a name="ToC15">SSLCARevocationPath</a></h2>
+<table cellspacing="0" cellpadding="1" bgcolor="#cccccc" border="0" summary="">
 <tr>
 <td>
-<table bgcolor="white" width="600" cellspacing="0" cellpadding="5" border="0">
+<table bgcolor="white" width="600" cellspacing="0" cellpadding="5" border="0" summary="">
 <tr>
-<td><table cellspacing="0" cellpadding="1" border="0">
+<td>
+<table cellspacing="0" cellpadding="1" border="0" summary="">
 <tr><td>
 <font face="Arial,Helvetica"><b>Name:</b></font></a> </td><td> <b>SSLCARevocationPath</b></td></tr>
 <tr><td>
@@ -1572,7 +1607,8 @@ SSLCACertificateFile /usr/local/apache/conf/ssl.crt/ca-bundle-client.crt
  href="../directive-dict.html#Compatibility"
  rel="Help"
 ><font face="Arial,Helvetica"><b>Compatibility:</b></font></a> </td><td> mod_ssl 2.3 </td></tr>
-</table></td>
+</table>
+</td>
 </tr>
 </table>
 </td>
@@ -1600,13 +1636,14 @@ SSLCARevocationPath /usr/local/apache/conf/ssl.crl/
 <p>
 <br>
 <a name="SSLCARevocationFile"></a>
-<H2><a name="ToC16">SSLCARevocationFile</a></H2>
-<table cellspacing="0" cellpadding="1" bgcolor="#cccccc" border="0">
+<h2><a name="ToC16">SSLCARevocationFile</a></h2>
+<table cellspacing="0" cellpadding="1" bgcolor="#cccccc" border="0" summary="">
 <tr>
 <td>
-<table bgcolor="white" width="600" cellspacing="0" cellpadding="5" border="0">
+<table bgcolor="white" width="600" cellspacing="0" cellpadding="5" border="0" summary="">
 <tr>
-<td><table cellspacing="0" cellpadding="1" border="0">
+<td>
+<table cellspacing="0" cellpadding="1" border="0" summary="">
 <tr><td>
 <font face="Arial,Helvetica"><b>Name:</b></font></a> </td><td> <b>SSLCARevocationFile</b></td></tr>
 <tr><td>
@@ -1639,7 +1676,8 @@ SSLCARevocationPath /usr/local/apache/conf/ssl.crl/
  href="../directive-dict.html#Compatibility"
  rel="Help"
 ><font face="Arial,Helvetica"><b>Compatibility:</b></font></a> </td><td> mod_ssl 2.3 </td></tr>
-</table></td>
+</table>
+</td>
 </tr>
 </table>
 </td>
@@ -1663,13 +1701,14 @@ SSLCARevocationFile /usr/local/apache/conf/ssl.crl/ca-bundle-client.crl
 <p>
 <br>
 <a name="SSLVerifyClient"></a>
-<H2><a name="ToC17">SSLVerifyClient</a></H2>
-<table cellspacing="0" cellpadding="1" bgcolor="#cccccc" border="0">
+<h2><a name="ToC17">SSLVerifyClient</a></h2>
+<table cellspacing="0" cellpadding="1" bgcolor="#cccccc" border="0" summary="">
 <tr>
 <td>
-<table bgcolor="white" width="600" cellspacing="0" cellpadding="5" border="0">
+<table bgcolor="white" width="600" cellspacing="0" cellpadding="5" border="0" summary="">
 <tr>
-<td><table cellspacing="0" cellpadding="1" border="0">
+<td>
+<table cellspacing="0" cellpadding="1" border="0" summary="">
 <tr><td>
 <font face="Arial,Helvetica"><b>Name:</b></font></a> </td><td> <b>SSLVerifyClient</b></td></tr>
 <tr><td>
@@ -1702,7 +1741,8 @@ SSLCARevocationFile /usr/local/apache/conf/ssl.crl/ca-bundle-client.crl
  href="../directive-dict.html#Compatibility"
  rel="Help"
 ><font face="Arial,Helvetica"><b>Compatibility:</b></font></a> </td><td> mod_ssl 2.0 </td></tr>
-</table></td>
+</table>
+</td>
 </tr>
 </table>
 </td>
@@ -1744,13 +1784,14 @@ SSLVerifyClient require
 <p>
 <br>
 <a name="SSLVerifyDepth"></a>
-<H2><a name="ToC18">SSLVerifyDepth</a></H2>
-<table cellspacing="0" cellpadding="1" bgcolor="#cccccc" border="0">
+<h2><a name="ToC18">SSLVerifyDepth</a></h2>
+<table cellspacing="0" cellpadding="1" bgcolor="#cccccc" border="0" summary="">
 <tr>
 <td>
-<table bgcolor="white" width="600" cellspacing="0" cellpadding="5" border="0">
+<table bgcolor="white" width="600" cellspacing="0" cellpadding="5" border="0" summary="">
 <tr>
-<td><table cellspacing="0" cellpadding="1" border="0">
+<td>
+<table cellspacing="0" cellpadding="1" border="0" summary="">
 <tr><td>
 <font face="Arial,Helvetica"><b>Name:</b></font></a> </td><td> <b>SSLVerifyDepth</b></td></tr>
 <tr><td>
@@ -1783,7 +1824,8 @@ SSLVerifyClient require
  href="../directive-dict.html#Compatibility"
  rel="Help"
 ><font face="Arial,Helvetica"><b>Compatibility:</b></font></a> </td><td> mod_ssl 2.0 </td></tr>
-</table></td>
+</table>
+</td>
 </tr>
 </table>
 </td>
@@ -1816,13 +1858,14 @@ SSLVerifyDepth 10
 <p>
 <br>
 <a name="SSLLog"></a>
-<H2><a name="ToC19">SSLLog</a></H2>
-<table cellspacing="0" cellpadding="1" bgcolor="#cccccc" border="0">
+<h2><a name="ToC19">SSLLog</a></h2>
+<table cellspacing="0" cellpadding="1" bgcolor="#cccccc" border="0" summary="">
 <tr>
 <td>
-<table bgcolor="white" width="600" cellspacing="0" cellpadding="5" border="0">
+<table bgcolor="white" width="600" cellspacing="0" cellpadding="5" border="0" summary="">
 <tr>
-<td><table cellspacing="0" cellpadding="1" border="0">
+<td>
+<table cellspacing="0" cellpadding="1" border="0" summary="">
 <tr><td>
 <font face="Arial,Helvetica"><b>Name:</b></font></a> </td><td> <b>SSLLog</b></td></tr>
 <tr><td>
@@ -1855,7 +1898,8 @@ SSLVerifyDepth 10
  href="../directive-dict.html#Compatibility"
  rel="Help"
 ><font face="Arial,Helvetica"><b>Compatibility:</b></font></a> </td><td> mod_ssl 2.1 </td></tr>
-</table></td>
+</table>
+</td>
 </tr>
 </table>
 </td>
@@ -1883,13 +1927,14 @@ SSLLog /usr/local/apache/logs/ssl_engine_log
 <p>
 <br>
 <a name="SSLLogLevel"></a>
-<H2><a name="ToC20">SSLLogLevel</a></H2>
-<table cellspacing="0" cellpadding="1" bgcolor="#cccccc" border="0">
+<h2><a name="ToC20">SSLLogLevel</a></h2>
+<table cellspacing="0" cellpadding="1" bgcolor="#cccccc" border="0" summary="">
 <tr>
 <td>
-<table bgcolor="white" width="600" cellspacing="0" cellpadding="5" border="0">
+<table bgcolor="white" width="600" cellspacing="0" cellpadding="5" border="0" summary="">
 <tr>
-<td><table cellspacing="0" cellpadding="1" border="0">
+<td>
+<table cellspacing="0" cellpadding="1" border="0" summary="">
 <tr><td>
 <font face="Arial,Helvetica"><b>Name:</b></font></a> </td><td> <b>SSLLogLevel</b></td></tr>
 <tr><td>
@@ -1922,7 +1967,8 @@ SSLLog /usr/local/apache/logs/ssl_engine_log
  href="../directive-dict.html#Compatibility"
  rel="Help"
 ><font face="Arial,Helvetica"><b>Compatibility:</b></font></a> </td><td> mod_ssl 2.1 </td></tr>
-</table></td>
+</table>
+</td>
 </tr>
 </table>
 </td>
@@ -1969,13 +2015,14 @@ SSLLogLevel warn
 <p>
 <br>
 <a name="SSLOptions"></a>
-<H2><a name="ToC21">SSLOptions</a></H2>
-<table cellspacing="0" cellpadding="1" bgcolor="#cccccc" border="0">
+<h2><a name="ToC21">SSLOptions</a></h2>
+<table cellspacing="0" cellpadding="1" bgcolor="#cccccc" border="0" summary="">
 <tr>
 <td>
-<table bgcolor="white" width="600" cellspacing="0" cellpadding="5" border="0">
+<table bgcolor="white" width="600" cellspacing="0" cellpadding="5" border="0" summary="">
 <tr>
-<td><table cellspacing="0" cellpadding="1" border="0">
+<td>
+<table cellspacing="0" cellpadding="1" border="0" summary="">
 <tr><td>
 <font face="Arial,Helvetica"><b>Name:</b></font></a> </td><td> <b>SSLOptions</b></td></tr>
 <tr><td>
@@ -2008,7 +2055,8 @@ SSLLogLevel warn
  href="../directive-dict.html#Compatibility"
  rel="Help"
 ><font face="Arial,Helvetica"><b>Compatibility:</b></font></a> </td><td> mod_ssl 2.1 </td></tr>
-</table></td>
+</table>
+</td>
 </tr>
 </table>
 </td>
@@ -2107,13 +2155,14 @@ SSLOptions +FakeBasicAuth -StrictRequire
 <p>
 <br>
 <a name="SSLRequireSSL"></a>
-<H2><a name="ToC22">SSLRequireSSL</a></H2>
-<table cellspacing="0" cellpadding="1" bgcolor="#cccccc" border="0">
+<h2><a name="ToC22">SSLRequireSSL</a></h2>
+<table cellspacing="0" cellpadding="1" bgcolor="#cccccc" border="0" summary="">
 <tr>
 <td>
-<table bgcolor="white" width="600" cellspacing="0" cellpadding="5" border="0">
+<table bgcolor="white" width="600" cellspacing="0" cellpadding="5" border="0" summary="">
 <tr>
-<td><table cellspacing="0" cellpadding="1" border="0">
+<td>
+<table cellspacing="0" cellpadding="1" border="0" summary="">
 <tr><td>
 <font face="Arial,Helvetica"><b>Name:</b></font></a> </td><td> <b>SSLRequireSSL</b></td></tr>
 <tr><td>
@@ -2146,7 +2195,8 @@ SSLOptions +FakeBasicAuth -StrictRequire
  href="../directive-dict.html#Compatibility"
  rel="Help"
 ><font face="Arial,Helvetica"><b>Compatibility:</b></font></a> </td><td> mod_ssl 2.0 </td></tr>
-</table></td>
+</table>
+</td>
 </tr>
 </table>
 </td>
@@ -2169,13 +2219,14 @@ SSLRequireSSL
 <p>
 <br>
 <a name="SSLRequire"></a>
-<H2><a name="ToC23">SSLRequire</a></H2>
-<table cellspacing="0" cellpadding="1" bgcolor="#cccccc" border="0">
+<h2><a name="ToC23">SSLRequire</a></h2>
+<table cellspacing="0" cellpadding="1" bgcolor="#cccccc" border="0" summary="">
 <tr>
 <td>
-<table bgcolor="white" width="600" cellspacing="0" cellpadding="5" border="0">
+<table bgcolor="white" width="600" cellspacing="0" cellpadding="5" border="0" summary="">
 <tr>
-<td><table cellspacing="0" cellpadding="1" border="0">
+<td>
+<table cellspacing="0" cellpadding="1" border="0" summary="">
 <tr><td>
 <font face="Arial,Helvetica"><b>Name:</b></font></a> </td><td> <b>SSLRequire</b></td></tr>
 <tr><td>
@@ -2208,7 +2259,8 @@ SSLRequireSSL
  href="../directive-dict.html#Compatibility"
  rel="Help"
 ><font face="Arial,Helvetica"><b>Compatibility:</b></font></a> </td><td> mod_ssl 2.1 </td></tr>
-</table></td>
+</table>
+</td>
 </tr>
 </table>
 </td>
@@ -2285,11 +2337,12 @@ SSLRequire (    %{SSL_CIPHER} !~ m/^(EXP|NULL)-/ \
 </blockquote>
 <div align="center">
 <a name="table3"></a>
-<table width="600" cellspacing="0" cellpadding="1" border="0">
+<table width="600" cellspacing="0" cellpadding="1" border="0" summary="">
 <caption align="bottom" id="sf">Table 3: Available Variables for SSLRequire</caption>
 <tr><td bgcolor="#cccccc">
-<table width="598" cellpadding="5" cellspacing="0" border="0">
-<tr><td valign="top" align="center" bgcolor="#ffffff"><table><tr><td>
+<table width="598" cellpadding="5" cellspacing="0" border="0" summary="">
+<tr><td valign="top" align="center" bgcolor="#ffffff">
+<table><tr><td>
 <em>Standard CGI/1.0 and Apache variables:</em>
 <pre>
 HTTP_USER_AGENT        PATH_INFO             AUTH_TYPE
@@ -2346,15 +2399,16 @@ SSL_VERSION_INTERFACE  SSL_CLIENT_S_DN_OU     SSL_SERVER_S_DN_OU
                        SSL_CLIENT_CERT_CHAIN<b>n</b>
                        SSL_CLIENT_VERIFY
 </pre>
-</td></tr></table></td>
+</td></tr></table>
+</td>
 </tr></table>
 </td></tr></table>
 </div>
 <br>
 <br>
 <p>
-<H1><a name="ToC24">Additional Features</a></H1>
-<H2><a name="ToC25">Environment Variables</a></H2>
+<h1><a name="ToC24">Additional Features</a></h1>
+<h2><a name="ToC25">Environment Variables</a></h2>
 This module provides a lot of SSL information as additional environment
 variables to the SSI and CGI namespace. The generated variables are listed in
 <a href="#table4">Table 4</a>. For backward compatibility the information can
@@ -2364,11 +2418,12 @@ compatibility variables.
 <p>
 <div align="center">
 <a name="table4"></a>
-<table width="600" cellspacing="0" cellpadding="1" border="0">
+<table width="600" cellspacing="0" cellpadding="1" border="0" summary="">
 <caption align="bottom" id="sf">Table 4: SSI/CGI Environment Variables</caption>
 <tr><td bgcolor="#cccccc">
-<table width="598" cellpadding="5" cellspacing="0" border="0">
-<tr><td valign="top" align="center" bgcolor="#ffffff"><table border="0" cellspacing="0" cellpadding="2" width="598">
+<table width="598" cellpadding="5" cellspacing="0" border="0" summary="">
+<tr><td valign="top" align="center" bgcolor="#ffffff">
+<table border="0" cellspacing="0" cellpadding="2" width="598" summary="">
 <tr id="H">
  <td><b>Variable Name:</b></td>
  <td><b>Value Type:</b></td>
@@ -2409,13 +2464,14 @@ compatibility variables.
 <tr id="D"><td><code>SSL_SERVER_CERT</code></td>               <td>string</td>    <td>PEM-encoded server certificate</td></tr>
 </table>
 [ where <em>x509</em> is a component of a X.509 DN:
-  <code>C,ST,L,O,OU,CN,T,I,G,S,D,UID,Email</code> ]</td>
+  <code>C,ST,L,O,OU,CN,T,I,G,S,D,UID,Email</code> ]
+</td>
 </tr></table>
 </td></tr></table>
 </div>
 <p>
 <br>
-<H2><a name="ToC26">Custom Log Formats</a></H2>
+<h2><a name="ToC26">Custom Log Formats</a></h2>
 When mod_ssl is built into Apache or at least loaded (under DSO situation)
 additional functions exist for the <a
 href="../mod_log_config.html#formats">Custom Log Format</a> of <a
@@ -2436,56 +2492,18 @@ CustomLog logs/ssl_request_log \
           "%t %h %{SSL_PROTOCOL}x %{SSL_CIPHER}x \"%r\" %b"
 </pre>
 </blockquote>
-          <p>
+      <p>
       <br>
       <table>
       <tr>
         <td>
-           <table width="600" border="0">
+           <table width="600" border="0" summary="">
            <tr>
             <td valign="top" align="left" width="250">
-<script type="text/javascript" language="JavaScript">
-<!-- Hiding the code
-if (document.images) {
-    ro_img_prev_bot_n = new Image();
-    ro_img_prev_bot_n.src = "ssl_template.navbut-prev-n.gif";
-    ro_img_prev_bot_o = new Image();
-    ro_img_prev_bot_o.src = "ssl_template.navbut-prev-s.gif";
-}
-// done hiding -->
-</script>
-<a href="ssl_intro.html"
-   onMouseOver="ro_imgOver('ro_img_prev_bot', 'previous page'); return true"
-   onMouseOut="ro_imgNormal('ro_img_prev_bot'); return true"
-><img
-   name="ro_img_prev_bot"
-   src="ssl_template.navbut-prev-n.gif"
-   alt="previous page"
-   width="70" height="18"
-   border="0"
-></a><br><font color="#000000">Introduction</font>
+<a href="ssl_intro.html" onmouseover="ro_imgOver('ro_img_prev_bot', 'previous page'); return true" onmouseout="ro_imgNormal('ro_img_prev_bot'); return true" onfocus="ro_imgOver('ro_img_prev_bot', 'previous page'); return true" onblur="ro_imgNormal('ro_img_prev_bot'); return true"><img name="ro_img_prev_bot" src="ssl_template.navbut-prev-n.gif" alt="previous page" width="70" height="18" border="0"></a><br><font color="#000000">Introduction</font>
             </td>
             <td valign="top" align="right" width="250">
-<script type="text/javascript" language="JavaScript">
-<!-- Hiding the code
-if (document.images) {
-    ro_img_next_bot_n = new Image();
-    ro_img_next_bot_n.src = "ssl_template.navbut-next-n.gif";
-    ro_img_next_bot_o = new Image();
-    ro_img_next_bot_o.src = "ssl_template.navbut-next-s.gif";
-}
-// done hiding -->
-</script>
-<a href="ssl_compat.html"
-   onMouseOver="ro_imgOver('ro_img_next_bot', 'next page'); return true"
-   onMouseOut="ro_imgNormal('ro_img_next_bot'); return true"
-><img
-   name="ro_img_next_bot"
-   src="ssl_template.navbut-next-n.gif"
-   alt="next page"
-   width="70" height="18"
-   border="0"
-></a><br><font color="#000000">Compatibility</font>
+<a href="ssl_compat.html" onmouseover="ro_imgOver('ro_img_next_bot', 'next page'); return true" onmouseout="ro_imgNormal('ro_img_next_bot'); return true" onfocus="ro_imgOver('ro_img_next_bot', 'next page'); return true" onblur="ro_imgNormal('ro_img_next_bot'); return true"><img name="ro_img_next_bot" src="ssl_template.navbut-next-n.gif" alt="next page" width="70" height="18" border="0"></a><br><font color="#000000">Compatibility</font>
             </td>
            </tr>
            </table>
@@ -2495,7 +2513,7 @@ if (document.images) {
         <td><img src="ssl_template.imgdot-1x1-000000.gif" alt="" width="600" height="2" align="bottom" border="0"></td>
       </tr>
       <tr>
-        <td>        <table width="598">
+        <td><table width="598" summary="">
         <tr>
         <td align="left"><font face="Arial,Helvetica">
         <a href="http://www.modssl.org/">mod_ssl</a> 2.6, User Manual<br>
