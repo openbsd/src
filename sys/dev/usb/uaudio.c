@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.9 2001/05/03 02:20:32 aaron Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.10 2001/09/17 20:30:25 drahn Exp $ */
 /*	$NetBSD: uaudio.c,v 1.41 2001/01/23 14:04:13 augustss Exp $	*/
 
 /*
@@ -409,11 +409,7 @@ USB_ATTACH(uaudio)
 			   USBDEV(sc->sc_dev));
 
 	DPRINTF(("uaudio_attach: doing audio_attach_mi\n"));
-#if defined(__OpenBSD__)
-	audio_attach_mi(&uaudio_hw_if, sc, &sc->sc_dev);
-#else
 	sc->sc_audiodev = audio_attach_mi(&uaudio_hw_if, sc, &sc->sc_dev);
-#endif
 
 	USB_ATTACH_SUCCESS_RETURN;
 }
