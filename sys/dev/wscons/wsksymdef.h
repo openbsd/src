@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsksymdef.h,v 1.4 2000/11/15 19:53:57 aaron Exp $	*/
+/*	$OpenBSD: wsksymdef.h,v 1.5 2001/01/19 18:14:40 deraadt Exp $	*/
 /*	$NetBSD: wsksymdef.h,v 1.34.4.1 2000/07/07 09:49:54 hannken Exp $ */
 
 /*-
@@ -59,7 +59,7 @@
  * Group Ascii (ISO Latin1) character in low byte
  */
 
-#define	KS_BackSpace 		0x08
+#define	KS_BackSpace 		0x7f
 #define	KS_Tab 			0x09
 #define	KS_Linefeed 		0x0a
 #define	KS_Clear 		0x0b
