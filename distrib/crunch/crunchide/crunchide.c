@@ -209,7 +209,7 @@ struct nlist *symbase;
 
 /* is the symbol a global symbol defined in the current file? */
 #define IS_GLOBAL_DEFINED(sp) \
-                  (((sp)->n_type & N_EXT) && ((sp)->n_type & N_TYPE) != N_UNDF)
+		  (((sp)->n_type & N_EXT) && ((sp)->n_type & N_TYPE) != N_UNDF)
 
 #ifdef __sparc
 /* is the relocation entry dependent on a symbol? */
@@ -220,7 +220,7 @@ struct nlist *symbase;
 #else
 /* is the relocation entry dependent on a symbol? */
 #define IS_SYMBOL_RELOC(rp)   \
-                  ((rp)->r_extern||(rp)->r_baserel||(rp)->r_jmptable)
+		  ((rp)->r_extern||(rp)->r_baserel||(rp)->r_jmptable)
 #endif
 
 void check_reloc(char *filename, struct relocation_info *relp);
@@ -256,9 +256,9 @@ void hide_syms(char *filename)
 
     if((buf = mmap(NULL, infstat.st_size, PROT_READ|PROT_WRITE,
 		   MAP_FILE|MAP_SHARED, inf, 0)) == (char *)-1) {
-        fprintf(stderr, "%s: cannot map\n", filename);
-        close(inf);
-        return;
+	fprintf(stderr, "%s: cannot map\n", filename);
+	close(inf);
+	return;
     }
 
 #ifdef _NLIST_DO_ELF
@@ -272,7 +272,7 @@ void hide_syms(char *filename)
 
 #ifdef _NLIST_DO_ECOFF
     if(!ECOFF_BADMAG((struct ecoff_exechdr *)buf)) {
-        printf("processing ecoff file\n");
+	printf("processing ecoff file\n");
 	ecoff_hide(inf, buf);
 	return;
     }

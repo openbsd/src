@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf_hide.c,v 1.4 1997/05/19 09:24:39 pefo Exp $ */
+/*	$OpenBSD: elf_hide.c,v 1.5 1997/07/23 19:31:53 kstailey Exp $ */
 
 /*
  * Copyright (c) 1997 Dale Rahn. All rights reserved.
@@ -187,7 +187,7 @@ load_symtab(Elf32_Ehdr *pehdr, char *pexe)
 {
 	Elf32_Sym *symtab;
 	Elf32_Shdr *symsect;
-	int        symtabsize;
+	int	   symtabsize;
 	Elf32_Shdr *pshdr;
 	Elf32_Shdr *psymshdr;
 	char *shname;
@@ -340,7 +340,7 @@ hide_sym(Elf32_Ehdr *ehdr, Elf32_Shdr *symsect,
 /* XXX Because MIPS needs global symbols to stay global (has to do with GOT) */
 /* XXX we mess around with the symbol names instead. For most uses this      */
 /* XXX will be no problem, symbols are stripped anyway. However, if many     */
-/* XXX one character symbols exist, names may clash.                         */
+/* XXX one character symbols exist, names may clash.			     */
 			{
 				char *p;
 				int n, z;

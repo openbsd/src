@@ -45,7 +45,7 @@ on its own boot floppy).  A more reasonable subset can be made to fit
 easily with a kernel for a decent one-disk fixit filesystem.
 
 The linking together of different programs by hand is an old
-space-saving technique.  Crunch automates the process by building the
+space-saving technique.	 Crunch automates the process by building the
 necessary stub files and makefile for you (via the crunchgen program),
 and by doctoring the symbol tables of the component .o files to allow
 them to link without "symbol multiply defined" conflicts (via the
@@ -76,14 +76,14 @@ Crunch was written for the Maruti Hard Real-Time Operating System
 project at the University of Maryland, to help make for better install
 and recovery procedures for our NetBSD-based development environment. It
 is copyright (c) 1994 by the University of Maryland under a UCB-style
-freely- redistributable notice.  See the file COPYRIGHT for details.
+freely- redistributable notice.	 See the file COPYRIGHT for details.
 
 Please let me know of any problems or of enhancements you make to this
 package.  I'm particularly interested in the details of what you found
-was good to put on your fixit or install disks.  Thanks!
+was good to put on your fixit or install disks.	 Thanks!
 
 Share and Enjoy,
 Jaime
 ............................................................................
-: Stand on my shoulders, : jds@cs.umd.edu  :                  James da Silva
-: not on my toes.        : uunet!mimsy!jds : http://www.cs.umd.edu/users/jds
+: Stand on my shoulders, : jds@cs.umd.edu  :		      James da Silva
+: not on my toes.	 : uunet!mimsy!jds : http://www.cs.umd.edu/users/jds

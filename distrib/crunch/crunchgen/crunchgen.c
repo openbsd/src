@@ -1,4 +1,4 @@
-/*	$OpenBSD: crunchgen.c,v 1.10 1997/04/04 21:52:40 mickey Exp $	*/
+/*	$OpenBSD: crunchgen.c,v 1.11 1997/07/23 19:31:51 kstailey Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -520,21 +520,21 @@ void fillin_program(prog_t *p)
 	    if(is_dir(path))
 		p->objdir = strdup(path);
 	    else
-	        p->objdir = p->srcdir;
-        }
+		p->objdir = p->srcdir;
+	}
     }
 
     /* We have a sourcedir and no explict objs, try */
     /* to find makefile and get objs from it. */
     if (p->srcdir && !p->objs) {
-        for (i = 0; mf_name[i] != NULL; i++) {
-            sprintf(path, "%s/%s", p->srcdir, mf_name[i]);
-            if (is_nonempty_file(path)) {
+	for (i = 0; mf_name[i] != NULL; i++) {
+	    sprintf(path, "%s/%s", p->srcdir, mf_name[i]);
+	    if (is_nonempty_file(path)) {
 		p->mf_name = mf_name[i];
-                fillin_program_objs(p, path);
-                break;
-            }
-        }
+		fillin_program_objs(p, path);
+		break;
+	    }
+	}
     }
 
 
@@ -826,8 +826,8 @@ void prog_makefile_rules(FILE *outmk, prog_t *p)
 
     fprintf(outmk, "%s_stub.c:\n", p->name);
     fprintf(outmk, "\techo \""
-	           "int _crunched_%s_stub(int argc, char **argv, char **envp)"
-	           "{return main(argc,argv,envp);}\" >%s_stub.c\n",
+		   "int _crunched_%s_stub(int argc, char **argv, char **envp)"
+		   "{return main(argc,argv,envp);}\" >%s_stub.c\n",
 	    p->ident, p->name);
     fprintf(outmk, "%s.lo: %s_stub.o $(%s_OBJPATHS)\n",
 	    p->name, p->name, p->ident);
