@@ -1,4 +1,4 @@
-/* $OpenBSD: tsort.c,v 1.8 2001/04/30 21:03:55 espie Exp $ */
+/* $OpenBSD: tsort.c,v 1.9 2001/05/01 20:36:57 espie Exp $ */
 /* ex:ts=8 sw=4: 
  */
 
@@ -579,9 +579,9 @@ split_nodes(hash, heap, remaining)
 
 	struct node *n;
 	unsigned int i;
-	unsigned int total = ohash_entries(hash);
 
 	heap->t = emalloc(sizeof(struct node *) * ohash_entries(hash));
+	remaining->t = emalloc(sizeof(struct node *) * ohash_entries(hash));
 	heap->entries = 0;
 	remaining->entries = 0;
 
@@ -589,9 +589,8 @@ split_nodes(hash, heap, remaining)
 		if (n->refs == 0) 
 			heap->t[heap->entries++] = n;
 		else
-			heap->t[total-1-remaining->entries++] = n;
+			remaining->t[remaining->entries++] = n;
 	}
-	remaining->t = heap->t + heap->entries;
 }
 
 /* Good point to break a cycle: live node with as few refs as possible. */
