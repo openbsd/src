@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.10 1999/06/15 01:18:36 millert Exp $	*/
+/*	$OpenBSD: var.c,v 1.11 2000/11/21 23:12:04 millert Exp $	*/
 
 #include "sh.h"
 #include "ksh_time.h"
@@ -357,7 +357,9 @@ setstr(vq, s, error_ok)
 	const char *s;
 	int error_ok;
 {
-	if (vq->flag & RDONLY) {
+	int no_ro_check = error_ok & 0x4;
+	error_ok &= ~0x4;
+	if ((vq->flag & RDONLY) && !no_ro_check) {
 		warningf(TRUE, "%s: is read only", vq->name);
 		if (!error_ok)
 			errorf(null);
@@ -719,13 +721,13 @@ typeset(var, set, clr, field, base)
 	if (val != NULL) {
 		if (vp->flag&INTEGER) {
 			/* do not zero base before assignment */
-			setstr(vp, val, KSH_UNWIND_ERROR);
+			setstr(vp, val, KSH_UNWIND_ERROR | 0x4);
 			/* Done after assignment to override default */
 			if (base > 0)
 				vp->type = base;
 		} else
 			/* setstr can't fail (readonly check already done) */
-			setstr(vp, val, KSH_RETURN_ERROR);
+			setstr(vp, val, KSH_RETURN_ERROR | 0x4);
 	}
 
 	/* only x[0] is ever exported, so use vpbase */
