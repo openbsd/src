@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vge.c,v 1.3 2004/12/26 05:54:30 pvalchev Exp $	*/
+/*	$OpenBSD: if_vge.c,v 1.4 2004/12/26 05:58:25 pvalchev Exp $	*/
 /*	$FreeBSD: if_vge.c,v 1.3 2004/09/11 22:13:25 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -1445,9 +1445,17 @@ vge_start(struct ifnet *ifp)
 
 	while (sc->vge_ldata.vge_tx_mbuf[idx] == NULL) {
 		IF_DEQUEUE(&ifp->if_snd, m_head);
-
 		if (m_head == NULL)
 			break;
+
+		/*
+		 * If there's a BPF listener, bounce a copy of this frame
+		 * to him.
+		 */
+#if NBPFILTER > 0
+		if (ifp->if_bpf)
+			bpf_mtap(ifp->if_bpf, m_head);
+#endif
 
 		if (vge_encap(sc, m_head, idx)) {
 			IF_PREPEND(&ifp->if_snd, m_head);
@@ -1460,15 +1468,6 @@ vge_start(struct ifnet *ifp)
 
 		pidx = idx;
 		VGE_TX_DESC_INC(idx);
-
-		/*
-		 * If there's a BPF listener, bounce a copy of this frame
-		 * to him.
-		 */
-#if NBPFILTER > 0
-		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m_head);
-#endif
 	}
 
 	if (idx == sc->vge_ldata.vge_tx_prodidx) {
