@@ -1,5 +1,5 @@
-/*	$OpenBSD: psl.h,v 1.4 1996/05/26 18:36:00 briggs Exp $	*/
-/*	$NetBSD: psl.h,v 1.9 1996/05/19 04:30:32 briggs Exp $	*/
+/*	$OpenBSD: psl.h,v 1.5 1996/06/23 16:24:06 briggs Exp $	*/
+/*	$NetBSD: psl.h,v 1.11 1996/06/21 21:51:15 briggs Exp $	*/
 
 #ifndef PSL_C
 #include <m68k/psl.h>
@@ -41,7 +41,7 @@
 #define	spltty()	spl1()	/* disallow tty (softserial & ADB) */
 #define	splbio()	spl2()	/* disallow block I/O */
 #define	splnet()	spl2()	/* disallow network */
-#define	splimp()	spl2()	/* disallow goblins and other nonsense */
+#define	splimp()	spl2()	/* mutual exclusion for memory allocation */
 #define	splclock()	spl2()	/* disallow clock (and other) interrupts */
 #define	splstatclock()	spl2()	/* ditto */
 #define	splzs()		spl4()	/* disallow serial hw interrupts */
