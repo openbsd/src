@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgfourteenreg.h,v 1.3 2002/08/21 20:27:35 miod Exp $	*/
+/*	$OpenBSD: cgfourteenreg.h,v 1.4 2005/03/15 18:50:43 miod Exp $	*/
 /*	$NetBSD: cgfourteenreg.h,v 1.1 1996/09/30 22:41:02 abrown Exp $ */
 
 /*
@@ -51,13 +51,15 @@
 #define CG14_OFFSET_CLUT1	0x4000
 #define CG14_OFFSET_CLUT2	0x5000
 #define CG14_OFFSET_CLUT3	0x6000
-#define CG14_OFFSET_CLUTINCR	0xf000
+#define CG14_OFFSET_AUTOINCR	0xf000
 
 /* Main control register set */
 struct cg14ctl {
 	volatile u_int8_t	ctl_mctl;	/* main control register */
 #define CG14_MCTL_ENABLEINTR	0x80		/* interrupts */
-#define CG14_MCTL_ENABLEVID	0x40		/* enable video */
+#define CG14_MCTL_R0_ENABLEHW	0x40		/* hardware enable */
+#define	CG14_MCTL_R1_ENABLEHW	0x01
+#define	CG14_MCTL_R1_ENABLEVID	0x40		/* display enable */
 #define CG14_MCTL_PIXMODE_MASK	0x30
 #define		CG14_MCTL_PIXMODE_8	0x00	/* data is 16 8-bit pixels */
 #define		CG14_MCTL_PIXMODE_16	0x20	/* data is 8 16-bit pixels */
@@ -65,16 +67,18 @@ struct cg14ctl {
 #define CG14_MCTL_PIXMODE_SHIFT	4
 #define	CG14_MCTL_TMR		0x0c
 #define CG14_MCTL_ENABLETMR	0x02
-#define CG14_MCTL_rev0RESET	0x01
-#define CG14_MCTL_POWERCTL	0x01
-
+#define CG14_MCTL_R0_RESET	0x01
 	volatile u_int8_t	ctl_ppr;	/* packed pixel register */
 	volatile u_int8_t	ctl_tmsr0; 	/* test status reg. 0 */
 	volatile u_int8_t	ctl_tmsr1;	/* test status reg. 1 */
 	volatile u_int8_t	ctl_msr;	/* master status register */
+#define	CG14_MSR_PENDING	0x20		/* interrupt pending */
+#define	CG14_MSR_VRETRACE	0x10		/* vertical retrace interrupt */
+#define	CG14_MSR_FAULT		0x01		/* fault interrupt */
 	volatile u_int8_t	ctl_fsr;	/* fault status register */
 	volatile u_int8_t	ctl_rsr;	/* revision status register */
 #define CG14_RSR_REVMASK	0xf0 		/*  mask to get revision */
+#define CG14_RSR_REVSHIFT	4
 #define CG14_RSR_IMPLMASK	0x0f		/*  mask to get impl. code */
 	volatile u_int8_t	ctl_ccr;	/* clock control register */
 	/* XXX etc. */
@@ -82,6 +86,7 @@ struct cg14ctl {
 
 /* Hardware cursor map */
 #define CG14_CURS_SIZE		32
+#define	CG14_CURS_MASK		0x1f
 struct cg14curs {
 	volatile u_int32_t	curs_plane0[CG14_CURS_SIZE];	/* plane 0 */
 	volatile u_int32_t	curs_plane1[CG14_CURS_SIZE];
@@ -126,33 +131,4 @@ struct cg14clut {
 	volatile u_int32_t	clut_lutd[CG14_CLUT_SIZE];	/* ??? */
 	volatile u_int32_t	clut_lutinc[CG14_CLUT_SIZE];	/* autoincr */
 	volatile u_int32_t	clut_lutincd[CG14_CLUT_SIZE];
-};
-
-/*
- * Layout of cg14 hardware colormap
- */
-union cg14cmap {
-	u_char  	cm_map[256][4];	/* 256 R/G/B/A entries (B is high)*/
-	u_int32_t   	cm_chip[256];	/* the way the chip gets loaded */
-};
-
-/*
- * cg14 hardware cursor colormap
- */
-union cg14cursor_cmap {		/* colormap, like bt_cmap, but tiny */
-	u_char		cm_map[2][4];	/* 2 R/G/B/A entries */
-	u_int32_t	cm_chip[2];	/* 2 chip equivalents */
-};
-
-/*
- * cg14 hardware cursor status
- */
-struct cg14_cursor {		/* cg14 hardware cursor status */
-	short	cc_enable;		/* cursor is enabled */
-	struct	wsdisplay_curpos cc_pos;	/* position */
-	struct	wsdisplay_curpos cc_hot;	/* hot-spot */
-	struct	wsdisplay_curpos cc_size;	/* size of mask & image fields */
-	u_int	cc_eplane[32];		/* enable plane */
-	u_int	cc_cplane[32];		/* color plane */
-	union	cg14cursor_cmap cc_color; /* cursor colormap */
 };
