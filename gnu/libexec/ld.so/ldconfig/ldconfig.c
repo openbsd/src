@@ -383,7 +383,7 @@ int main(int argc, char **argv)
     prog = argv[0];
     opterr = 0;
 
-    while ((c = getopt(argc, argv, "DvnNXlpf:P:")) != EOF)
+    while ((c = getopt(argc, argv, "DvnNXlpf:P:m:")) != EOF)
 	switch (c)
 	{
 	case 'D':
@@ -408,6 +408,8 @@ int main(int argc, char **argv)
 	case 'l':
 	    libmode = 1;	/* library mode */
 	    break;
+	case 'm':		/* Compatibility hack */
+	    break;	
 	case 'p':
 	    printcache = 1;	/* print cache */
 	    break;

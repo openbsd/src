@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldd.c,v 1.1 1996/10/04 21:27:05 pefo Exp $ */
+/*	$OpenBSD: ldd.c,v 1.2 1998/01/28 10:52:45 pefo Exp $ */
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -42,7 +42,7 @@
 #include <sys/mman.h>
 #include <elf_abi.h>
 
-int readsoneeded(FILE *);
+int readsoneeded(FILE *f, int flag);
 
 main(argc, argv)
 	int argc;
@@ -70,22 +70,25 @@ main(argc, argv)
 		fprintf(stderr, "%s: can't find '%s'.\n", argv[0], argv[i]);
 		exit(2);
 	}
-	if(!lflag)
-		readsoneeded(f);
-	fclose(f);
+	if(!lflag) {
+		readsoneeded(f, 0);
+		fclose(f);
+	}
 
-	if(lflag) {
+	else if(lflag && readsoneeded(f, 1)) {
+		fclose(f);
 		setenv("LD_TRACE_LOADED_OBJECTS", "1", 1);
 		execl(argv[i], NULL);
 	}
 	exit(0);
 }
 
-int readsoneeded(FILE *infile)
+int readsoneeded(FILE *infile, int dyncheck)
 {
   Elf32_Ehdr *epnt;
   Elf32_Phdr *ppnt;
   int i;
+  int isdynamic = 0;
   char *header;
   unsigned int dynamic_addr = 0;
   unsigned int dynamic_size = 0;
@@ -148,6 +151,9 @@ int readsoneeded(FILE *infile)
   while(dpnt->d_tag != DT_NULL)
   {
     if (dpnt->d_tag == DT_NEEDED) {
+      isdynamic = 1;
+      if(dyncheck)
+	break;
       soname_val = dpnt->d_un.d_val;
       if (soname_val != 0 && soname_val + strtab_val - loadbase >= 0 &&
         soname_val + strtab_val - loadbase < st.st_size)
@@ -159,6 +165,6 @@ int readsoneeded(FILE *infile)
  skip:
   munmap(header, st.st_size);
 
-  return 0;
+  return isdynamic;
 }
 
