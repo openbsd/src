@@ -1,23 +1,25 @@
-.\"	$OpenBSD: grdc.6,v 1.1 1996/08/21 07:58:08 downsj Exp $
-.TH GRDC 6
-.SH NAME
-grdc \- grand digital clock (curses)
-.SH SYNOPSIS
-.B grdc
-[-s] [
-.I n
-]
-.SH DESCRIPTION
-.I Grdc
+.\"	$OpenBSD: grdc.6,v 1.2 1997/08/04 11:11:39 downsj Exp $
+.Dd August 4, 1997
+.Dt GRDC 6
+.Os OpenBSD
+.Sh NAME
+.Nm grdc
+.Nd grand digital clock (curses)
+.Sh SYNOPSIS
+.Nm
+.Op Fl s
+.Op Ar number
+.Sh DESCRIPTION
+.Nm
 runs a digital clock made of reverse-video blanks on a curses
-compatible VDU screen. With an optional numeric argument
-.I n
+compatible VDU screen.  With an optional numeric argument
+.Ar number
 it stops after
-.I n
-seconds (default never).
+.Ar number
+seconds (defaulting to never).
 The optional
-.B -s
-flag makes digits scroll as they change. In this curses mode implementation,
+.Fl s
+flag makes digits scroll as they change.  In this curses mode implementation,
 the scrolling option has trouble keeping up.
-.SH AUTHOR
+.Sh AUTHOR
 Amos Shapir, modified for curses by John Lupien.
