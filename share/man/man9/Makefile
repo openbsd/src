@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.21 2000/04/27 18:29:26 mickey Exp $
+#	$OpenBSD: Makefile,v 1.22 2000/04/28 05:54:07 angelos Exp $
 #       $NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
-MAN=	audio.9 boot.9 copy.9 ctxsw.9 disk.9 disklabel.9 doshutdownhooks.9 \
-	fetch.9 fork1.9 \
+MAN=	audio.9 boot.9 copy.9 crypto.9 ctxsw.9 disk.9 disklabel.9 \
+	doshutdownhooks.9 fetch.9 fork1.9 \
 	extent.9 hz.9 hzto.9 intro.9 inittodr.9 log.9 kthread.9 \
 	malloc.9 md5.9 microtime.9 panic.9 pfind.9 pool.9 printf.9 \
 	psignal.9 ratecheck.9 resettodr.9 \
