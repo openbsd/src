@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.34 1997/07/25 21:56:22 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.35 1997/08/06 17:35:42 mickey Exp $	*/
 /*	$NetBSD: main.c,v 1.23 1997/07/20 09:45:58 lukem Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.34 1997/07/25 21:56:22 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.35 1997/08/06 17:35:42 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -252,6 +252,7 @@ main(argc, argv)
 					sleep(retry_connect);
 				}
 			} while (!connected);
+			retry_connect = 0; /* connected, stop hiding msgs */
 		}
 	}
 #ifndef SMALL
@@ -665,7 +666,7 @@ void
 usage()
 {
 	(void)fprintf(stderr,
-	    "usage: %s [-adeginprtvV] [host [port]]\n"
+	    "usage: %s [-adeginptvV] [-r <seconds>] [host [port]]\n"
 	    "       %s host:path[/]\n"
 	    "       %s ftp://host[:port]/path[/]\n"
 	    "       %s http://host[:port]/file\n",

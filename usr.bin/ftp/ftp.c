@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.20 1997/07/25 21:56:21 millert Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.21 1997/08/06 17:35:41 mickey Exp $	*/
 /*	$NetBSD: ftp.c,v 1.26 1997/07/20 09:45:53 lukem Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$OpenBSD: ftp.c,v 1.20 1997/07/25 21:56:21 millert Exp $";
+static char rcsid[] = "$OpenBSD: ftp.c,v 1.21 1997/08/06 17:35:41 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -320,8 +320,9 @@ getreply(expecteof)
 				return (4);
 			}
 			if (c != '\r' && (verbose > 0 ||
-			    (verbose > -1 && n == '5' && dig > 4)) &&
-			    (n < '5' || !retry_connect)) {
+			    ((verbose > -1 && n == '5' && dig > 4)) &&
+			    (((!n && c < '5') || (n && n < '5'))
+			     || !retry_connect))) {
 				if (proxflag &&
 				   (dig == 1 || (dig == 5 && verbose == 0)))
 					fprintf(ttyout, "%s:", hostname);
