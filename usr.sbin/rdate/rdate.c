@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdate.c,v 1.5 1996/12/10 15:07:08 deraadt Exp $	*/
+/*	$OpenBSD: rdate.c,v 1.6 1997/01/21 17:44:05 kstailey Exp $	*/
 /*	$NetBSD: rdate.c,v 1.4 1996/03/16 12:37:45 pk Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
 #if 0
 from: static char rcsid[] = "$NetBSD: rdate.c,v 1.3 1996/02/22 06:59:18 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: rdate.c,v 1.5 1996/12/10 15:07:08 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rdate.c,v 1.6 1997/01/21 17:44:05 kstailey Exp $";
 #endif
 #endif				/* lint */
 
@@ -55,6 +55,7 @@ static char rcsid[] = "$OpenBSD: rdate.c,v 1.5 1996/12/10 15:07:08 deraadt Exp $
 #include <sys/socket.h>
 #include <netdb.h>
 #include <netinet/in.h>
+#include <time.h>
 
 /* seconds from midnight Jan 1900 - 1970 */
 #if __STDC__
@@ -167,7 +168,13 @@ main(argc, argv)
 	}
 
 	if (!silent) {
-		(void) fputs(ctime(&tim), stdout);
+		struct tm      *ltm;
+		char		buf[80];
+
+		ltm = localtime(&tim);
+		strftime(buf, 80, "%a %b %d %H:%M:%S %Z %Y\n", ltm);
+		(void) fputs(buf, stdout);
+
 		if (slidetime)
 		    (void) fprintf(stdout, 
 				   "%s: adjust local clock by %d seconds\n",
