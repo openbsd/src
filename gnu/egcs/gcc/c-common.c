@@ -1460,7 +1460,7 @@ new_sentinel_info (argument_num)
   sentinel_info *info;
 
   info = (sentinel_info *)
-	  xmalloc (sizeof (nonnull_info));
+	  xmalloc (sizeof (sentinel_info));
   info->next = NULL;
   info->type = A_SENTINEL;
   info->argument_num = argument_num;
