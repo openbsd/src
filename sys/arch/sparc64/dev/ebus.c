@@ -1,4 +1,4 @@
-/*	$OpenBSD: ebus.c,v 1.5 2001/10/07 15:27:12 jason Exp $	*/
+/*	$OpenBSD: ebus.c,v 1.6 2001/12/14 14:53:48 jason Exp $	*/
 /*	$NetBSD: ebus.c,v 1.24 2001/07/25 03:49:54 eeh Exp $	*/
 
 /*
@@ -496,8 +496,7 @@ _ebus_bus_map(t, btype, offset, size, flags, vaddr, hp)
 		    ("\n_ebus_bus_map: mapping space %x paddr offset %qx pciaddr %qx\n",
 		    ss, (unsigned long long)offset, (unsigned long long)pciaddr));
 		/* pass it onto the psycho */
-		return (bus_space_map2(t, sc->sc_range[i].phys_hi, 
-			pciaddr, size, flags, vaddr, hp));
+		return (bus_space_map2(t, 0, pciaddr, size, flags, vaddr, hp));
 	}
 	DPRINTF(EDB_BUSMAP, (": FAILED\n"));
 	return (EINVAL);
