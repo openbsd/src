@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ref.me,v 1.4 2004/04/01 11:21:15 jmc Exp $
+.\"	$OpenBSD: ref.me,v 1.5 2004/07/29 11:10:38 jmc Exp $
 .\"
 .\" Copyright (c) 1986, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,6 +29,9 @@
 .\"
 .\"	@(#)ref.me	8.1 (Berkeley) 6/8/93
 .\"
+.if n \{\
+.po 5n
+.\}
 .UC 7
 .ll 6.5i
 .lt 6.5i
@@ -117,8 +120,8 @@ For a more casual introduction
 to text processing
 using \*N,
 refer to the document
-.ul
-Writing Papers with \*N using \-me.
+/usr/share/doc/usd/19.memacros:
+.i "Writing Papers with \*N using \-me" .
 .pp
 There are a number of macro parameters
 that may be adjusted.
@@ -389,7 +392,7 @@ of depth
 .i N .
 If
 .i N
-is missing
+is missing,
 the current depth
 (maintained in
 the number register
@@ -457,13 +460,13 @@ If any of
 .i a
 through
 .i f
-are a hyphen
+are a hyphen,
 that number is not reset.
 If
 .i T
 is a single underscore
 (\c
-.q _ )
+.q _ ),
 then the section depth and numbering is reset,
 but the base indent is not reset
 and nothing is printed out.
@@ -873,7 +876,7 @@ a new page is begun,
 that would leave more than
 .NR (bt
 [0]
-white space
+whitespace
 at the bottom of the text.
 If
 .NR (bt
@@ -1367,7 +1370,7 @@ Equivalent to
 .DE
 Leave
 .i N
-contiguous white space,
+contiguous whitespace,
 on the next page if not enough room
 on this page.
 Equivalent to a
@@ -1775,7 +1778,7 @@ If there are any spaces in it,
 the entire header must be quoted.
 If you want the header to have the chapter number
 in it,
-Use the string
+use the string
 .b "\e\e\e\en(ch" .
 For example, to number appendixes
 .b A.1
