@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.158 2002/10/07 12:39:29 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.159 2002/10/07 12:59:55 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -458,8 +458,10 @@ pfrule		: action dir logquick interface route af proto fromto
 			if ($1.b2) {
 				r.rule_flag |= PFRULE_RETURNRST;
 				r.return_ttl = $1.w;
-			} else
+			} else {
+				r.rule_flag |= PFRULE_RETURNICMP;
 				r.return_icmp = $1.w;
+			}
 			r.direction = $2;
 			r.log = $3.log;
 			r.quick = $3.quick;

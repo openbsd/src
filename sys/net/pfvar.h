@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.91 2002/10/07 12:39:29 dhartmei Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.92 2002/10/07 12:59:54 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -282,7 +282,7 @@ struct pf_rule {
 #define	PFRULE_RETURNRST	0x01
 #define	PFRULE_NODF		0x02
 #define	PFRULE_FRAGMENT		0x04
-
+#define	PFRULE_RETURNICMP	0x08
 #define	PFRULE_FRAGCROP		0x10	/* non-buffering frag cache */
 #define	PFRULE_FRAGDROP		0x20	/* drop funny fragments */
 
