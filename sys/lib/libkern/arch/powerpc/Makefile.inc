@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile.inc,v 1.5 1999/11/09 04:18:30 rahnds Exp $
+#	$OpenBSD: Makefile.inc,v 1.6 2000/06/16 19:56:55 millert Exp $
 #	$NetBSD: Makefile.inc,v 1.6 1994/10/26 06:39:03 cgd Exp $
 
 CFLAGS	+= -D_KERNEL
 
 SRCS+=	__main.c __eabi.c \
 	imax.c imin.c lmax.c lmin.c max.c min.c ulmax.c ulmin.c \
-	memset.c memchr.c \
+	memchr.c memcmp.c memset.c \
 	bcmp.c bzero.c ffs.c strcat.c strcmp.c strcpy.c strlen.c strncmp.c \
 	strncpy.c scanc.c skpc.c locc.c htonl.c htons.c ntohl.c ntohs.c \
 	memcpy.c random.c strncasecmp.c
