@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.88 2001/11/13 13:54:25 mpech Exp $
+.\"	$OpenBSD: options.4,v 1.89 2001/11/19 19:11:45 aaron Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -761,7 +761,7 @@ Both communication endpoints need to support
 .Em SACK .
 The fallback behaviour is NewReno fast recovery phase, which allows
 one lost segment to be recovered per round trip time.
-When more then one segment has been dropped per window, the transmission can
+When more than one segment has been dropped per window, the transmission can
 continue without waiting for a retransmission timeout.
 .It Cd option TCP_FACK
 Turns on forward acknowledgements allowing a more precise estimate of
