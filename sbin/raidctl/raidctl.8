@@ -1,4 +1,4 @@
-.\"	$OpenBSD: raidctl.8,v 1.18 2001/12/29 21:54:57 tdeval Exp $
+.\"	$OpenBSD: raidctl.8,v 1.19 2001/12/30 00:31:03 brad Exp $
 .\"     $NetBSD: raidctl.8,v 1.24 2001/07/10 01:30:52 lukem Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1046,9 +1046,12 @@ A typical RAID 1 setup with root on RAID might be as follows:
 .Bl -enum
 .It 
 wd0a - a small partition, which contains a complete, bootable, basic
-NetBSD installation. 
+.Ox
+installation. 
 .It
-wd1a - also contains a complete, bootable, basic NetBSD installation.
+wd1a - also contains a complete, bootable, basic
+.Ox
+installation.
 .It 
 wd0e and wd1e - a RAID 1 set, raid0, used for the root file system.
 .It
