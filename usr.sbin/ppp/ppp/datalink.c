@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: datalink.c,v 1.20 1999/06/10 09:06:27 brian Exp $
+ *	$Id: datalink.c,v 1.21 1999/06/18 13:49:19 brian Exp $
  */
 
 #include <sys/param.h>
@@ -184,6 +184,8 @@ datalink_ChoosePhoneNumber(struct datalink *dl)
     if (dl->phone.next == NULL) {
       strncpy(dl->phone.list, dl->cfg.phone.list, sizeof dl->phone.list - 1);
       dl->phone.list[sizeof dl->phone.list - 1] = '\0';
+      if (*dl->phone.list == '\0')
+        return "";
       dl->phone.next = dl->phone.list;
     }
     dl->phone.alt = strsep(&dl->phone.next, ":");
