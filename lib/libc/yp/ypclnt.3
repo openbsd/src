@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypclnt.3,v 1.9 1999/07/09 13:35:21 aaron Exp $
+.\"	$OpenBSD: ypclnt.3,v 1.10 1999/11/30 00:46:19 deraadt Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -52,6 +52,7 @@
 .Nd Interface to the YP subsystem
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
+.Fd #include <rpc/rpc.h>
 .Fd #include <rpcsvc/ypclnt.h>
 .Fd #include <rpcsvc/yp_prot.h>
 .Ft int
