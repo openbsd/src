@@ -1,5 +1,5 @@
-/*	$OpenBSD: message.c,v 1.20 1999/05/03 22:45:04 niklas Exp $	*/
-/*	$EOM: message.c,v 1.133 1999/05/03 07:58:37 niklas Exp $	*/
+/*	$OpenBSD: message.c,v 1.21 1999/05/14 20:10:11 niklas Exp $	*/
+/*	$EOM: message.c,v 1.134 1999/05/14 20:09:49 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -1519,6 +1519,12 @@ message_check_duplicate (struct message *msg)
   if (exchange->last_sent)
     {
       message_free (exchange->last_sent);
+      if (exchange->last_sent == exchange->in_transit)
+	{
+	  TAILQ_REMOVE (&exchange->in_transit->transport->sendq,
+			exchange->in_transit, link);
+	  exchange->in_transit = 0;
+	}
       exchange->last_sent = 0;
     }
 
