@@ -50,14 +50,18 @@ MANPAGES=$(MAN1) $(MAN5) $(MAN7)
 MANCLEAN=$(MANPAGES)
 fontsubdir=$(fontdir)/dev$(DEV)
 
-all install install_bin install_data TAGS depend distfiles uninstall_sub:
+# Target to use for installing unformatted man-pages.  Some systems may not
+# want them installed.                                   
+INSTALL_MAN=install_man
 
-install: install_bin install_data
+all install install_bin install_data $(INSTALL_MAN) TAGS depend distfiles uninstall_sub:
+
+install: install_bin install_data $(INSTALL_MAN)
 uninstall: uninstall_sub
 pure:
 
 .PHONY: all clean distclean mostlyclean realclean extraclean depend distfiles
-.PHONY: install install_bin install_data
+.PHONY: install install_bin install_data $(INSTALL_MAN)
 .PHONY: uninstall uninstall_sub
 .PHONY: pure
 

@@ -1,11 +1,10 @@
 MAN7=groff_ms.n me.n msafer.n
 
-NORMALFILES=tmac.andoc tmac.pic tmac.ps tmac.psnew tmac.psold tmac.pspic \
+NORMALFILES=$(TMAC_ANDOC) tmac.pic tmac.ps tmac.psnew tmac.psold tmac.pspic \
       tmac.psatk tmac.dvi tmac.tty tmac.tty-char tmac.X tmac.Xps tmac.latin1 \
       tmac.lj4 eqnrc troffrc tmac.safer
-SPECIALFILES=tmac.an tmac.s
+SPECIALFILES=$(TMAC_AN) tmac.s
 STRIPFILES=tmac.e tmac.doc tmac.doc.old
-MDOCFILES=doc-common doc-ditroff doc-nroff doc-syms
 mdocdir=$(tmacdir)/mdoc
 CLEANADD=stamp-strip stamp-wrap tmac.e-s tmac.doc-s tmac.doc.old-s \
  doc-common-s doc-ditroff-s doc-nroff-s doc-syms-s *-wrap
@@ -27,10 +26,14 @@ install_data: $(NORMALFILES) $(SPECIALFILES) stamp-wrap stamp-strip man.local
 	  rm -f $(tmacdir)/$$f; \
 	  $(INSTALL_DATA) $(srcdir)/$$f $(tmacdir)/$$f; \
 	done
-	-rm -f $(tmacdir)/tmac.$(tmac_s_prefix)s
-	$(INSTALL_DATA) $(srcdir)/tmac.s $(tmacdir)/tmac.$(tmac_s_prefix)s
-	-rm -f $(tmacdir)/tmac.$(tmac_an_prefix)an
-	$(INSTALL_DATA) $(srcdir)/tmac.an $(tmacdir)/tmac.$(tmac_an_prefix)an
+	if test -n "$(TMAC_S)"; then \
+		rm -f $(tmacdir)/tmac.$(tmac_s_prefix)s ; \
+		$(INSTALL_DATA) $(srcdir)/tmac.s $(tmacdir)/tmac.$(tmac_s_prefix)s ; \
+	fi
+	if test -n "$(TMAC_AN)"; then \
+		rm -f $(tmacdir)/tmac.$(tmac_an_prefix)an ; \
+		$(INSTALL_DATA) $(srcdir)/tmac.an $(tmacdir)/tmac.$(tmac_an_prefix)an ; \
+	fi
 	for f in $(STRIPFILES); do \
 	  rm -f $(tmacdir)/$$f; \
 	  $(INSTALL_DATA) $$f-s $(tmacdir)/$$f; \

@@ -32,4 +32,4 @@ symbolsl.pfa: symbolsl.ps
 
 $(PSFILES):
 	-rm -f $@
-	sed -f $(srcdir)/psstrip.sed $? >$@
+	sed -f $(srcdir)/psstrip.sed $(srcdir)/$? >$@

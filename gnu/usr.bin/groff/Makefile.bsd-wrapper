@@ -1,0 +1,81 @@
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.1 1996/09/14 20:20:39 etheisen Exp $
+
+#
+# groff config
+#
+PREFIX=		/usr/
+DATASUBDIR=	/usr/share
+FONTDIR=	/usr/share/groff_font
+INDEXDIR=	/usr/share/dict/papers
+COMMON_WORDS=	/usr/share/dict/eign
+
+GNUCFLAGS=	CFLAGS="$(CFLAGS)"
+GNUCXXFLAGS=	CCFLAGS="$(CXXFLAGS)"
+
+CLEANFILES=	config.cache config.log pic/pic.cc eqn/eqn.cc \
+		refer/label.cc $(MAN)
+
+MAN=	addftinfo/addftinfo.1 groff/groff.1 troff/troff.1 tbl/tbl.1 \
+	pic/pic.1 eqn/eqn.1 grops/grops.1 grotty/grotty.1 grodvi/grodvi.1 \
+	tfmtodit/tfmtodit.1 grolj4/grolj4.1 hpftodit/hpftodit.1 \
+	refer/refer.1 lookbib/lookbib.1 indxbib/indxbib.1 lkbib/lkbib.1 \
+	soelim/soelim.1 pfbtops/pfbtops.1 psbb/psbb.1 man/groff_char.7 \
+	man/groff_font.5 man/groff_out.5 tmac/groff_ms.7 tmac/me.7 \
+	tmac/msafer.7 afmtodit/afmtodit.1 grog/grog.1 nroff/nroff.1 \
+	mm/groff_mm.7 mm/groff_mmse.7 
+
+all: config.status gnu_build
+
+.FORCE: .IGNORE
+
+config: .FORCE
+	-rm -f config.cache
+	/bin/sh $(.CURDIR)/configure --prefix=$(PREFIX)
+
+config.status:
+	/bin/sh $(.CURDIR)/configure --prefix=$(PREFIX)
+
+gnu_build:
+	$(MAKE) $(GNUCFLAGS) $(GNUCXXFLAGS) LDFLAGS="-s $(LDSTATIC)" \
+		prefix=$(PREFIX) \
+		datasubdir=$(DATASUBDIR) \
+		fontdir=$(FONTDIR) \
+		indexdir=$(INDEXDIR) \
+		common_words_file=$(COMMON_WORDS)
+
+install: maninstall
+	$(MAKE) $(GNUCFLAGS) $(GNUCXXFLAGS) LDFLAGS=$(LDSTATIC) \
+		prefix=$(DESTDIR)$(PREFIX) \
+		datasubdir=$(DESTDIR)$(DATASUBDIR) \
+		fontdir=$(DESTDIR)$(FONTDIR) \
+		indexdir=$(DESTDIR)$(INDEXDIR) \
+		common_words_file=$(DESTDIR)$(COMMON_WORDS) \
+		INSTALL_MAN= TMAC_AN= TMAC_ANDOC= MDOCFILES= tmac_an= \
+		install
+	install -c -o $(BINOWN) -g $(BINGRP) -m 444 $(.CURDIR)/tmac/tmac.an \
+                $(DESTDIR)$(DATASUBDIR)/tmac/tmac.an.old
+
+clean cleandir:
+	rm -f $(CLEANFILES)
+	-@if [ -e Makefile ]; then $(MAKE) distclean; fi
+
+#
+# Fix gnu manpage suffix 
+#
+.SUFFIXES: .n .1 .2 .3 .4 .5 .6 .7 .8 .9
+
+.n.1 .n.2 .n.3 .n.4 .n.5 .n.6 .n.7 .n.8 .n.9:
+	-@ln -sf $(.OBJDIR)/$(.IMPSRC) $(.TARGET)
+
+depend:
+	# Nothing here so far...
+
+lint:
+	# Nothing here so far...
+
+tags:
+	# Nothing here so far...
+
+.include <bsd.obj.mk>
+.include <bsd.subdir.mk>
+.include <bsd.man.mk>

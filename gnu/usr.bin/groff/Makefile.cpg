@@ -9,7 +9,7 @@ $(PROG): $(OBJS) $(XLIBS)
 
 install_bin: install_prog
 install_prog: $(PROG)
-install_data: install_man
+install_data:
 install_man: $(MANPAGES)
 uninstall_sub: uninstall_prog uninstall_man
 depend: depend_src

@@ -214,6 +214,15 @@ PURIFYCCFLAGS=
 #PURIFYCCFLAGS=-g++=yes \
 #  -collector=`dirname \`$(CCC) -print-libgcc-file-name\``/ld
 
+#
+# XXX - OpenBSD build mods
+#
+INSTALL_MAN=install_man
+TMAC_AN=tmac.an
+TMAC_ANDOC=tmac.andoc
+TMAC_S=tmac.s
+MDOCFILES=doc-common doc-ditroff doc-nroff doc-syms
+
 # Passing down MAKEOVERRIDES prevents $(MAKE) from containing a second
 # copy of $(MDEFINES) when making individual directories; this could
 # cause the argument list to become too long on some systems.
@@ -239,7 +248,9 @@ MDEFINES="MAKEOVERRIDES=$(MAKEOVERRIDES)" \
   "INSTALL_PROGRAM=$(INSTALL_PROGRAM)" "INSTALL_DATA=$(INSTALL_DATA)" \
   "ETAGS=$(ETAGS)" "ETAGSFLAGS=$(ETAGSFLAGS)" "ETAGSCCFLAG=$(ETAGSCCFLAG)" \
   "PERLPATH=$(PERLPATH)" "SH_SCRIPT_SED_CMD=$(SH_SCRIPT_SED_CMD)" \
-  "PURIFY=$(PURIFY)" "PURIFYCCFLAGS=$(PURIFYCCFLAGS)"
+  "PURIFY=$(PURIFY)" "PURIFYCCFLAGS=$(PURIFYCCFLAGS)" \
+  "INSTALL_MAN=$(INSTALL_MAN)" "TMAC_AN=$(TMAC_AN)" "TMAC_ANDOC=$(TMAC_ANDOC)" \
+  "TMAC_S=$(TMAC_S)" "MDOCFILES=$(MDOCFILES)"
 
 SHELL=/bin/sh
 INCDIRS=include
@@ -254,7 +265,7 @@ OTHERDIRS=man tmac afmtodit grog nroff mm
 ALLDIRS=$(INCDIRS) $(LIBDIRS) $(PROGDIRS) $(DEVDIRS) $(OTHERDIRS)
 EXTRADIRS=devps/generate devdvi/generate xditview doc
 DISTDIRS=$(ALLDIRS) $(EXTRADIRS)
-TARGETS=all install install_bin install_data clean distclean mostlyclean \
+TARGETS=all install install_bin install_data $(INSTALL_MAN) clean distclean mostlyclean \
   realclean extraclean distfiles TAGS depend uninstall_sub
 
 do=all
