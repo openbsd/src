@@ -1,4 +1,4 @@
-/*	$OpenBSD: net.c,v 1.4 1997/04/23 19:17:29 millert Exp $	*/
+/*	$OpenBSD: net.c,v 1.5 1997/05/30 23:35:52 kstailey Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)net.c	5.5 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$OpenBSD: net.c,v 1.4 1997/04/23 19:17:29 millert Exp $";
+static char rcsid[] = "$OpenBSD: net.c,v 1.5 1997/05/30 23:35:52 kstailey Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -49,24 +49,26 @@ static char rcsid[] = "$OpenBSD: net.c,v 1.4 1997/04/23 19:17:29 millert Exp $";
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <unistd.h>
+#include "finger.h"
+#include "extern.h"
 
+void
 netfinger(name)
 	char *name;
 {
-	extern int lflag;
-	register FILE *fp;
-	register int c, lastc;
-	struct hostent *hp, def;
+	FILE *fp;
+	int c, lastc;
+	struct hostent *hp;
 	struct servent *sp;
 	struct sockaddr_in sin;
 	int s;
-	char *alist[1], *host;
+	char *host;
 
+	lastc = 0;
 	if (!(host = strrchr(name, '@')))
 		return;
-	*host++ = NULL;
-	if (*host == NULL)
-		host = "localhost";
+	*host++ = '\0';
 	if (inet_aton(host, &sin.sin_addr) == 0) {
 		hp = gethostbyname(host);
 		if (hp == 0) {
@@ -115,8 +117,8 @@ netfinger(name)
 	 * Otherwise, all high bits are stripped; if it isn't printable and
 	 * it isn't a space, we can simply set the 7th bit.  Every ASCII
 	 * character with bit 7 set is printable.
-	 */ 
-	if (fp = fdopen(s, "r"))
+	 */
+	if ((fp = fdopen(s, "r")) != NULL)
 		while ((c = getc(fp)) != EOF) {
 			c &= 0x7f;
 			if (c == '\r') {

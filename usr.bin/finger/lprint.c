@@ -1,4 +1,4 @@
-/*	$OpenBSD: lprint.c,v 1.3 1996/08/27 22:38:23 deraadt Exp $	*/
+/*	$OpenBSD: lprint.c,v 1.4 1997/05/30 23:35:52 kstailey Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)lprint.c	5.13 (Berkeley) 10/31/90";*/
-static char rcsid[] = "$OpenBSD: lprint.c,v 1.3 1996/08/27 22:38:23 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: lprint.c,v 1.4 1997/05/30 23:35:52 kstailey Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -48,20 +48,22 @@ static char rcsid[] = "$OpenBSD: lprint.c,v 1.3 1996/08/27 22:38:23 deraadt Exp 
 #include <tzfile.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 #include <ctype.h>
 #include <paths.h>
 #include <vis.h>
 #include "finger.h"
+#include "extern.h"
 
 #define	LINE_LEN	80
 #define	TAB_LEN		8		/* 8 spaces between tabs */
 #define	_PATH_PLAN	".plan"
 #define	_PATH_PROJECT	".project"
 
+void
 lflag_print()
 {
-	extern int pplan;
-	register PERSON *pn;
+	PERSON *pn;
 
 	for (pn = phead;;) {
 		lprint(pn);
@@ -76,18 +78,18 @@ lflag_print()
 	}
 }
 
+void
 lprint(pn)
-	register PERSON *pn;
+	PERSON *pn;
 {
-	extern time_t now;
-	register struct tm *delta;
-	register WHERE *w;
-	register int cpr, len, maxlen;
+	struct tm *delta;
+	WHERE *w;
+	int cpr, len, maxlen;
 	struct tm *tp;
 	int oddfield;
-	time_t time();
-	char *t, *tzn, *prphone();
+	char *t, *tzn;
 
+	cpr = 0;
 	/*
 	 * long format --
 	 *	login name
@@ -95,6 +97,7 @@ lprint(pn)
 	 *	home directory
 	 *	shell
 	 *	office, office phone, home phone if available
+	 *	mail status
 	 */
 	(void)printf("Login: %-15s\t\t\tName: %s\nDirectory: %-25s",
 	    pn->name, pn->realname, pn->dir);
@@ -110,22 +113,25 @@ lprint(pn)
 	if (pn->office && pn->officephone &&
 	    strlen(pn->office) + strlen(pn->officephone) +
 	    sizeof(OFFICE_TAG) + 2 <= 5 * TAB_LEN) {
-		(void)sprintf(tbuf, "%s: %s, %s", OFFICE_TAG, pn->office,
+		(void)snprintf(tbuf, sizeof(tbuf),
+		    "%s: %s, %s", OFFICE_TAG, pn->office,
 		    prphone(pn->officephone));
 		oddfield = demi_print(tbuf, oddfield);
 	} else {
 		if (pn->office) {
-			(void)sprintf(tbuf, "%s: %s", OFFICE_TAG, pn->office);
+			(void)snprintf(tbuf, sizeof(tbuf),
+			    "%s: %s", OFFICE_TAG, pn->office);
 			oddfield = demi_print(tbuf, oddfield);
 		}
 		if (pn->officephone) {
-			(void)sprintf(tbuf, "%s: %s", OFFICE_PHONE_TAG,
+			(void)snprintf(tbuf, sizeof(tbuf),
+			    "%s: %s", OFFICE_PHONE_TAG,
 			    prphone(pn->officephone));
 			oddfield = demi_print(tbuf, oddfield);
 		}
 	}
 	if (pn->homephone) {
-		(void)sprintf(tbuf, "%s: %s", "Home Phone",
+		(void)snprintf(tbuf, sizeof(tbuf), "%s: %s", "Home Phone",
 		    prphone(pn->homephone));
 		oddfield = demi_print(tbuf, oddfield);
 	}
@@ -133,7 +139,8 @@ lprint(pn)
 		putchar('\n');
 
 	/*
-	 * long format con't: * if logged in
+	 * long format con't:
+	 * if logged in
 	 *	terminal
 	 *	idle time
 	 *	if messages allowed
@@ -221,6 +228,7 @@ lprint(pn)
 	}
 }
 
+int
 demi_print(str, oddfield)
 	char *str;
 	int oddfield;
@@ -260,13 +268,15 @@ demi_print(str, oddfield)
 	return(oddfield);
 }
 
+int
 show_text(directory, file_name, header)
 	char *directory, *file_name, *header;
 {
-	register int ch, lastc;
-	register FILE *fp;
+	int ch, lastc;
+	FILE *fp;
 
-	(void)sprintf(tbuf, "%s/%s", directory, file_name);
+	lastc = 0;
+	(void)snprintf(tbuf, sizeof(tbuf), "%s/%s", directory, file_name);
 	if ((fp = fopen(tbuf, "r")) == NULL)
 		return(0);
 	(void)printf("%s\n", header);
@@ -278,10 +288,11 @@ show_text(directory, file_name, header)
 	return(1);
 }
 
+void
 vputc(ch)
-	register int ch;
+	int ch;
 {
-	char visout[4], *s2;
+	char visout[5], *s2;
 
 	ch = toascii(ch);
 	vis(visout, ch, VIS_SAFE|VIS_NOSLASH, 0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sprint.c,v 1.2 1996/06/26 05:33:18 deraadt Exp $	*/
+/*	$OpenBSD: sprint.c,v 1.3 1997/05/30 23:35:52 kstailey Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -38,27 +38,25 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)sprint.c	5.8 (Berkeley) 12/4/90";*/
-static char rcsid[] = "$OpenBSD: sprint.c,v 1.2 1996/06/26 05:33:18 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: sprint.c,v 1.3 1997/05/30 23:35:52 kstailey Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/time.h>
 #include <tzfile.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "finger.h"
+#include "extern.h"
 
-extern int entries;
-
+void
 sflag_print()
 {
-	extern time_t now;
-	register PERSON *pn;
-	register WHERE *w;
-	register int cnt;
-	register char *p;
-	PERSON **list, **sort();
-	time_t time();
-	char *ctime(), *prphone();
+	PERSON *pn;
+	WHERE *w;
+	int cnt;
+	char *p;
+	PERSON **list;
 
 	list = sort();
 	/*
@@ -69,14 +67,20 @@ sflag_print()
 	 *	if terminal writeable (add an '*' to the terminal name
 	 *		if not)
 	 *	if logged in show idle time and day logged in, else
-	 *		show last login date and time.  If > 6 moths,
-	 *		show year instead of time.
-	 *	office location
-	 *	office phone
+	 *		show last login date and time.  If > 6 months,
+	 *		show year instead of time.  If < 6 days,
+	 *		show day name instead of month & day.
+	 *	if -h given
+	 *		remote host
+	 *	else if -o given (overriding -h) (default)
+	 *		office location
+	 *		office phone
 	 */
 #define	MAXREALNAME	20
-	(void)printf("%-*s %-*s %s\n", UT_NAMESIZE, "Login", MAXREALNAME,
-	    "Name", "Tty  Idle  Login Time   Office     Office Phone");
+#define	MAXHOSTNAME	20
+	(void)printf("%-*s %-*s %s %s\n", UT_NAMESIZE, "Login", MAXREALNAME,
+	    "Name", "Tty  Idle  Login Time  ",
+	    (oflag) ? "Office     Office Phone" : "Where");
 	for (cnt = 0; cnt < entries; ++cnt) {
 		pn = list[cnt];
 		for (w = pn->whead; w != NULL; w = w->next) {
@@ -101,18 +105,26 @@ sflag_print()
 			} else
 				(void)printf("    *  ");
 			p = ctime(&w->loginat);
-			(void)printf("%.6s", p + 4);
+			if (now - w->loginat < SECSPERDAY * (DAYSPERWEEK - 1))
+				(void)printf("   %.3s", p);
+			else
+				(void)printf("%.6s", p + 4);
 			if (now - w->loginat >= SECSPERDAY * DAYSPERNYEAR / 2)
-				(void)printf("  %.4s", p + 20);
+				(void)printf(" %.4s ", p + 20);
 			else
 				(void)printf(" %.5s", p + 11);
-office:			if (pn->office)
-				(void)printf(" %-10.10s", pn->office);
-			else if (pn->officephone)
-				(void)printf(" %-10.10s", " ");
-			if (pn->officephone)
-				(void)printf(" %-.15s",
-				    prphone(pn->officephone));
+office:
+			putchar(' ');
+			if (oflag) {
+				if (pn->office)
+					(void)printf("%-10.10s", pn->office);
+				else if (pn->officephone)
+					(void)printf("%-10.10s", " ");
+				if (pn->officephone)
+					(void)printf(" %-.15s",
+						    prphone(pn->officephone));
+			} else
+				(void)printf("%.*s", MAXHOSTNAME, w->host);
 			putchar('\n');
 		}
 	}
@@ -121,10 +133,8 @@ office:			if (pn->office)
 PERSON **
 sort()
 {
-	register PERSON *pn, **lp;
+	PERSON *pn, **lp;
 	PERSON **list;
-	int psort();
-	char *malloc();
 
 	if (!(list = (PERSON **)malloc((u_int)(entries * sizeof(PERSON *))))) {
 		(void)fprintf(stderr, "finger: out of space.\n");
@@ -136,16 +146,18 @@ sort()
 	return(list);
 }
 
+int
 psort(p, t)
-	PERSON **p, **t;
+	const void *p, *t;
 {
-	return(strcmp((*p)->name, (*t)->name));
+	return(strcmp((*(PERSON **)p)->name, (*(PERSON **)t)->name));
 }
 
+void
 stimeprint(w)
 	WHERE *w;
 {
-	register struct tm *delta;
+	struct tm *delta;
 
 	delta = gmtime(&w->idletime);
 	if (!delta->tm_yday)

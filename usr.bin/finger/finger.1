@@ -1,4 +1,4 @@
-.\"	$OpenBSD: finger.1,v 1.3 1996/12/08 13:29:19 downsj Exp $
+.\"	$OpenBSD: finger.1,v 1.4 1997/05/30 23:35:50 kstailey Exp $
 .\"
 .\" Copyright (c) 1989, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -41,7 +41,7 @@
 .Nd user information lookup program
 .Sh SYNOPSIS
 .Nm finger
-.Op Fl lmMsp
+.Op Fl lmMspho
 .Op Ar user ...
 .Op Ar user@host ...
 .Sh DESCRIPTION
@@ -55,17 +55,37 @@ Options are:
 .Nm Finger
 displays the user's login name, real name, terminal name and write
 status (as a ``*'' before the terminal name if write permission is
-denied), idle time, login time, office location and office phone
-number.
+denied), idle time, login time, and either office location and office
+phone number, or the remote host.
+If
+.Fl h
+is given, the remote is printed.
+If
+.Fl o
+is given, the office location and phone number is printed instead
+(the default).
 .Pp
 Idle time is in minutes if it is a single integer, hours and minutes
 if a ``:'' is present, or days if a ``d'' is present.
-Login time is displayed as month, day, hours and minutes, unless
+Login time is displayed as the dayname if less than six days,
+else month, day, hours and minutes, unless
 more than six months ago, in which case the year is displayed rather
 than the hours and minutes.
 .Pp
 Unknown devices as well as nonexistent idle and login times are
 displayed as single asterisks.
+.Pp
+.It Fl h
+When used in conjunction with the
+.Fl s
+option, the name of the remote host is displayed instead of the office
+location and office phone.
+.Pp
+.It Fl o
+When used in conjunction with the
+.Fl s
+option, the office location and office phone information is displayed
+instead of the name of the remote host.
 .Pp
 .It Fl l
 Produces a multi-line format displaying all of the information
