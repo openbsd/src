@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.86 2001/06/24 23:31:26 mickey Exp $
+#	$OpenBSD: files.i386,v 1.87 2001/06/25 23:06:54 niklas Exp $
 #	$NetBSD: files.i386,v 1.73 1996/05/07 00:58:36 thorpej Exp $
 #
 # new style config file for i386 architecture
@@ -63,7 +63,7 @@ major	{rd = 17}
 #
 # I2O
 #
-#include "dev/i2o/files.i2o"
+include "dev/i2o/files.i2o"
 
 #
 # Machine-independent ATAPI drivers
