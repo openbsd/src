@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.8 2002/06/11 09:36:23 hugh Exp $ */
+/*	$OpenBSD: autoconf.c,v 1.9 2003/08/15 23:16:30 deraadt Exp $ */
 /*	$NetBSD: autoconf.c,v 1.19 2002/06/01 15:33:22 ragge Exp $ */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -62,7 +62,7 @@ long *bootregs;
  */
 
 void
-autoconf()
+autoconf(void)
 {
 	int copyrpb = 1;
 	int fromnet = (bootregs[12] != -1);
@@ -127,7 +127,7 @@ autoconf()
 volatile int tickcnt;
 
 int
-getsecs()
+getsecs(void)
 {
 	return tickcnt/100;
 }
@@ -152,7 +152,7 @@ mcheck(void *arg)
  * to detect unwanted interrupts.
  */
 void
-scbinit()
+scbinit(void)
 {
 	int i;
 
