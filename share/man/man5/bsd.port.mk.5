@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.2 2000/06/10 13:28:10 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.3 2000/06/10 19:23:04 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -89,9 +89,13 @@ without guessing wrong.
 .Bl -tag -width MASTER_SITES
 .It Ev ARCH
 Current machine architecture (read-only).
+.It Ev AUTOCONF
+Location of the autoconf binary if needed. Defaults to autoconf (though maybe
+autoreconf might be more appropriate).
 .It Ev AUTOCONF_DIR
 Where to invoke autoconf if ${CONFIGURE_STYLE} includes autoconf.
 Defaults to ${WRKSRC}.
+.\" AUTOCONF_DIR should probably be a list, and be renamed to AUTOCONF_DIRS ?
 .It BUILD_DEPENDS
 List of other ports the current port needs to build correctly.
 Each item has the form 
@@ -113,6 +117,14 @@ Build dependencies are checked at the beginning of the extract stage.
 Base location where packages suitable for a CDROM (see
 PERMIT_PACKAGE_CDROM) will be placed 
 (default: ${PORTSDIR}/cdrom-packages/${ARCH})
+.It Ev CFLAGS
+Default flags passed to the compiler for building. Many ports ignore it.
+See also 
+.Ev COPTS .
+.It Ev CHECKSUM_FILE
+Location for this port checksums, used at 
+.Ar checksum
+stage. Defaults to ${FILESDIR}/md5.
 .It Ev CLEANDEPENDS
 If set to 
 .Sq Yes
@@ -152,6 +164,10 @@ If
 .Sq simple ,
 there is a configure script, but it does not fit the normal gnu configure
 conventions.
+.It Ev COPTS
+Supplementary options appended to ${CFLAGS} for building. Since most ports
+ignore the COPTS convention, they are actually told to use
+${CFLAGS} ${COPTS} as CFLAGS.
 .It Ev DIST_SUBDIR
 Optionally subdirectory of ${DISTDIR} where the current port's distfiles
 and patchfiles will be located. See target fetch.
@@ -186,6 +202,8 @@ and as a quick validity check.
 Base location where packages suitable for ftp (see
 PERMIT_PACKAGE_FTP) will be placed 
 (default: ${PORTSDIR}/ftp-packages/${ARCH})
+.It Ev GMAKE
+Location of the gnu make binary, if needed. Defaults to gmake.
 .It Ev LIB_DEPENDS
 Libraries this port depends upon. Similar to BUILD_DEPENDS, except that
 .Sq file_to_test
@@ -204,8 +222,18 @@ if port needs human interaction to build. Usually implies NO_PACKAGE as
 well.  Porters should strive to minimize IS_INTERACTIVE ports, by using
 FLAVORS for multiple choice ports, and by postponing human intervention
 to package installation time.
+.It Ev LIBTOOL
+Location of the libtool binary for ports that set
+.Ev USE_LIBTOOL 
+(default: ${LOCALBASE}/bin/libtool).
+.It Ev LIBTOOL_FLAGS
+Arguments to pass to libtool. If USE_LIBTOOL is set, the environment variable
+LIBTOOL is set to ${LIBTOOL} ${LIBTOOL_FLAGS}.
 .It Ev LOCALBASE
 where other ports have already been installed (default: /usr/local)
+.It Ev MAKE_FLAGS
+Flags used for all make invocations, except for the fake stage, which uses
+FAKE_FLAGS.
 .It Ev MAKE_PROGRAM
 The make program that is used for building the port. Set to ${MAKE} or
 ${GMAKE} depending on USE_GMAKE. Read-only.
@@ -247,6 +275,11 @@ Root of the ports tree (default: /usr/ports).
 .It Ev PKGDIR
 Location for packaging information (packing list, port description, port
 short description). Default: pkg.${ARCH} or pkg.
+.It Ev PREFERRED_CIPHERS
+List of cryptographic ciphers to use, in order of preference. Defaults
+is 
+.Sq sha1 rmd160 md5 .
+The first cipher that matches in ${CHECKSUM_FILE} is verified.
 .It Ev PREFIX
 Base directory for the current port installation. Usually ${LOCALBASE},
 though some ports may elect a location under /var, and some multi-packages
@@ -279,7 +312,7 @@ Set to
 if distinct flavors of the port may share a common source tree.
 .It Ev SUBPACKAGE
 Set to the sub package suffix when building a package in a multi-package
-port. Read-only. Used to test for dependencies or adjusting the package
+port. Read-only. Used to test for dependencies or to adjust the package
 name.
 .It Ev SYSCONFDIR
 Location for ports system configuration files. Defaults to /etc, should
@@ -316,16 +349,26 @@ Where X11 has been installed (default: /usr/X11R6).
 .It Ev USE_GMAKE
 Set to
 .Sq Yes
-if gnu make is needed for correct behavior of this port.
+if gnu make (${GMAKE}) is needed for correct behavior of this port.
 .It Ev USE_LIBTOOL
 Set to
 .Sq Yes
 if libtool is required for correct behavior of this port.
+Add correct dependencies, and passes LIBTOOL environment variable to
+scripts invocations.
 .It Ev USE_MOTIF
 Set to
 .Sq Yes
 if lesstif is needed for correct behavior of this port.
+.It Ev XMKMF
+Invocation of xmkmf for CONFIGURE_STYLE=imake port. Defaults to 
+xmkf -a -DPorts.  The -DPorts is specific to
+.Ox
+and is always appended.
 .El
+.\"
+.\"
+.\"
 .Sh OBSOLETE TARGETS
 .Bl -tag -width do-configure
 .It Ar {pre,do}-extract
@@ -345,6 +388,10 @@ instead.
 .It Ev HAS_CONFIGURE
 Use
 .Ev CONFIGURE_STYLE 
+instead.
+.It Ev MD5_FILE
+Use
+.Ev CHECKSUM_FILE
 instead.
 .It Ev NO_CONFIGURE
 If ${FILESDIR}/configure does not exist, no automatic configuration will
@@ -406,6 +453,9 @@ Use
 .Ev CONFIGURE_STYLE
 instead.
 .El
+.\"
+.\"
+.\"
 .Sh FILES
 .Bl -tag -width files/md5
 .It Pa ../Makefile.inc
@@ -540,3 +590,6 @@ over the years.
 .Pp
 When the file grew too large, Marc Espie cleaned it up to restore some of
 its speed and remove a lot of bugs.
+
+.\" Voluntarily undocumented:
+.\" AUTOCONF_ENV: probably not needed anyway, should be internal.
