@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.29 2003/03/30 01:50:21 beck Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.30 2003/04/08 22:09:53 vincent Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -923,8 +923,11 @@ main(int argc, char *argv[])
 		}
 
 		n = select(max+1, fdsr, fdsw, NULL, tvp);
-		if (n == -1 && errno == EINTR)
-			err(1, "select");
+		if (n == -1) {
+			if (errno != EINTR)
+				err(1, "select");
+			continue;
+		}
 		if (n == 0)
 			continue;
 
