@@ -56,6 +56,8 @@ static char rcsid[] = "$NetBSD: log.c,v 1.3 1995/03/21 15:04:21 cgd Exp $";
 #include "include.h"
 #include "pathnames.h"
 
+static FILE *score_fp;
+
 compar(a, b)
 	SCORE	*a, *b;
 {
@@ -94,20 +96,14 @@ timestr(t)
 	return (s);
 }
 
-log_score(list_em)
+open_score_file()
 {
-	register int	i, fd, num_scores = 0, good, changed = 0, found = 0;
-	struct passwd	*pw;
-	FILE		*fp;
-	char		*cp;
-	SCORE		score[100], thisscore;
-#ifdef SYSV
-	struct utsname	name;
-#endif
+	mode_t old_mode;
+	int score_fd;
 
-	umask(0);
-	fd = open(_PATH_SCORE, O_CREAT|O_RDWR, 0644);
-	if (fd < 0) {
+	old_mode = umask(0);
+	score_fd = open(_PATH_SCORE, O_CREAT|O_RDWR, 0664);
+	if (score_fd < 0) {
 		perror(_PATH_SCORE);
 		return (-1);
 	}
@@ -115,23 +111,36 @@ log_score(list_em)
 	 * This is done to take advantage of stdio, while still 
 	 * allowing a O_CREAT during the open(2) of the log file.
 	 */
-	fp = fdopen(fd, "r+");
-	if (fp == NULL) {
+	score_fp = fdopen(score_fd, "r+");
+	if (score_fp == NULL) {
 		perror(_PATH_SCORE);
 		return (-1);
 	}
+	umask(old_mode);
+}
+
+log_score(list_em)
+{
+	int		i, num_scores = 0, good, changed = 0, found = 0;
+	struct passwd	*pw;
+	char		*cp;
+	SCORE		score[100], thisscore;
+#ifdef SYSV
+	struct utsname	name;
+#endif
+
 #ifdef BSD
-	if (flock(fileno(fp), LOCK_EX) < 0)
+	if (flock(fileno(score_fp), LOCK_EX) < 0)
 #endif
 #ifdef SYSV
-	while (lockf(fileno(fp), F_LOCK, 1) < 0)
+	while (lockf(fileno(score_fp), F_LOCK, 1) < 0)
 #endif
 	{
 		perror("flock");
 		return (-1);
 	}
 	for (;;) {
-		good = fscanf(fp, "%s %s %s %d %d %d",
+		good = fscanf(score_fp, "%s %s %s %d %d %d",
 			score[num_scores].name, 
 			score[num_scores].host, 
 			score[num_scores].game,
@@ -215,9 +224,9 @@ log_score(list_em)
 			else
 				puts("You made the top players list!");
 			qsort(score, num_scores, sizeof (*score), compar);
-			rewind(fp);
+			rewind(score_fp);
 			for (i = 0; i < num_scores; i++)
-				fprintf(fp, "%s %s %s %d %d %d\n",
+				fprintf(score_fp, "%s %s %s %d %d %d\n",
 					score[i].name, score[i].host, 
 					score[i].game, score[i].planes,
 					score[i].time, score[i].real_time);
@@ -230,12 +239,18 @@ log_score(list_em)
 		putchar('\n');
 	}
 #ifdef BSD
-	flock(fileno(fp), LOCK_UN);
+	flock(fileno(score_fp), LOCK_UN);
 #endif
 #ifdef SYSV
 	/* lock will evaporate upon close */
 #endif
-	fclose(fp);
+#if 0
+	fclose(score_fp);
+#else
+	fflush(score_fp);
+	fsync(fileno(score_fp));
+	rewind(score_fp);
+#endif
 	printf("%2s:  %-8s  %-8s  %-18s  %4s  %9s  %4s\n", "#", "name", "host", 
 		"game", "time", "real time", "planes safe");
 	puts("-------------------------------------------------------------------------------");

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 1997/06/18 16:43:46 kstailey Exp $
+#	$OpenBSD: Makefile,v 1.6 1997/06/18 18:32:43 kstailey Exp $
 #	$NetBSD: Makefile,v 1.9 1995/03/21 15:03:38 cgd Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
@@ -27,5 +27,11 @@ beforeinstall:
 	(cd ${.CURDIR}/games; ${INSTALL} ${INSTALL_COPY} \
 	    -o ${BINOWN} -g ${BINGRP} \
 	    -m 444 ${GAMES} ${DESTDIR}/usr/share/games/atc)
+	@if [ ! -f ${DESTDIR}/var/games/atc_score ]; then \
+	    ${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 664 \
+		/dev/null ${DESTDIR}/var/games/atc_score ; \
+	else \
+                true ; \
+        fi
 
 .include <bsd.prog.mk>
