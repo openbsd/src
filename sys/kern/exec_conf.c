@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_conf.c,v 1.5 1996/05/22 07:53:46 etheisen Exp $	*/
+/*	$OpenBSD: exec_conf.c,v 1.6 1996/06/07 19:38:58 pefo Exp $	*/
 /*	$NetBSD: exec_conf.c,v 1.16 1995/12/09 05:34:47 cgd Exp $	*/
 
 /*
@@ -31,6 +31,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/param.h>
+#include <sys/exec.h>
+
 #undef EXEC_SCRIPT			/* XXX */
 #define EXEC_SCRIPT			/* XXX */
 #undef EXEC_AOUT			/* XXX */
@@ -41,27 +44,24 @@
 #define EXEC_ECOFF
 #endif
 
-#if defined(COMPAT_SVR4) || defined(COMPAT_LINUX) || defined(pica)
+#if defined(COMPAT_SVR4) || defined(COMPAT_LINUX)
 #undef EXEC_ELF
 #define EXEC_ELF
 #endif
-
-#include <sys/param.h>
-#include <sys/exec.h>
 
 #ifdef EXEC_SCRIPT
 #include <sys/exec_script.h>
 #endif
 
-#ifdef EXEC_AOUT
+#if defined(NATIVE_EXEC_AOUT) || defined(EXEC_AOUT)
 /*#include <sys/exec_aout.h> -- automatically pulled in */
 #endif
 
-#ifdef EXEC_ECOFF
+#if defined(NATIVE_EXEC_ECOFF) || defined(EXEC_ECOFF)
 #include <sys/exec_ecoff.h>
 #endif
 
-#ifdef EXEC_ELF
+#if defined(NATIVE_EXEC_ELF) || defined(EXEC_ELF)
 #include <sys/exec_elf.h>
 #endif
 
@@ -102,7 +102,7 @@ struct execsw execsw[] = {
 #ifdef EXEC_ECOFF
 	{ ECOFF_HDR_SIZE, exec_ecoff_makecmds, },	/* ecoff binaries */
 #endif
-#ifdef EXEC_ELF
+#if defined(NATIVE_EXEC_ELF) || defined(EXEC_ELF)
 	{ sizeof(Elf32_Ehdr), exec_elf_makecmds, },	/* elf binaries */
 #endif
 #ifdef COMPAT_LINUX
