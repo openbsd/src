@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.1.1.1 1996/07/30 20:42:43 pefo Exp $
+#	$OpenBSD: MAKEDEV,v 1.2 1996/08/09 00:25:01 deraadt Exp $
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
 
@@ -20,7 +20,7 @@
 #	ccd*	contatenated disk devices
 #
 # Console ports:
-#	ttyv0	pccons
+#	ttyC0	pccons
 #
 # Pointing devices:
 #	pms*	PS/2 compatible mouse
@@ -53,7 +53,7 @@ case $i in
 
 all)        
         sh MAKEDEV std fd fd0 sd0 sd1 sd2 st0 cd0 tty0 tty1 pty0 pty1
-        sh MAKEDEV ttyv0 lpt0 pms0 rnd local
+        sh MAKEDEV ttyC0 lpt0 pms0 rnd local
         ;;
 
 std)
@@ -70,15 +70,15 @@ std)
 	mknod stderr		c 7 2	; chmod 666 stderr
 	;;
 
-ttyv*)
-	unit=`expr $i : 'ttyv\(.*\)'`
-	rm -f ttyv$unit
-	mknod ttyv$unit c 14 $unit
-	chown root.wheel ttyv$unit
+ttyC*)
+	unit=`expr $i : 'ttyC\(.*\)'`
+	rm -f ttyC$unit
+	mknod ttyC$unit c 14 $unit
+	chown root.wheel ttyC$unit
 	case $unit in
 	0)
 		rm -f pccons
-		ln -s ttyv0 pccons
+		ln -s ttyC0 pccons
 		;;
 	esac
 	;;

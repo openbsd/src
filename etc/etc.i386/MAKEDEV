@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.16 1996/08/08 18:47:15 dm Exp $
+#	$OpenBSD: MAKEDEV,v 1.17 1996/08/09 00:25:03 deraadt Exp $
 #	$NetBSD: MAKEDEV,v 1.40 1996/03/31 00:50:47 perry Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -47,8 +47,8 @@
 #	ccd*	contatenated disk devices
 #
 # Console ports:
-#	ttyv0	pccons or pcvt screen 0
-#	ttyv*	pcvt
+#	ttyC0	pccons or pcvt screen 0
+#	ttyC*	pcvt
 #
 # Pointing devices:
 #	mms*	Microsoft bus mouse
@@ -93,7 +93,7 @@ all)
 	sh MAKEDEV std fd wt0 fd0 fd1 wd0 wd1 wd2 wd3 sd0 sd1 sd2
 	sh MAKEDEV tty0 tty1 tty2 tty3 pty0 pty1 st0 st1 ch0 cd0 cd1
 	sh MAKEDEV mcd0 acd0 vnd0 vnd1 lpa0 lpa1 ccd0 ccd1 ccd2 ccd3
-	sh MAKEDEV lpt0 lpt1 lpt2 ttyv0 bpf0 bpf1 bpf2 bpf3 ipl tun0 tun1 tun2
+	sh MAKEDEV lpt0 lpt1 lpt2 ttyC0 bpf0 bpf1 bpf2 bpf3 ipl tun0 tun1 tun2
 	sh MAKEDEV speaker lkm mms0 lms0 pms0 audio joy0 joy1 apm pcmcia local
 	sh MAKEDEV rnd uk0 uk1 pctr
 # MISSING:
@@ -102,7 +102,7 @@ all)
 
 floppy)
 	sh MAKEDEV std wt0 fd0 fd1 wd0 wd1 sd0 sd1 sd2 tty0 tty1
-	sh MAKEDEV st0 st1 cd0 cd1 mcd0 acd0 ttyv0
+	sh MAKEDEV st0 st1 cd0 cd1 mcd0 acd0 ttyC0
 	;;
 
 std)
@@ -121,15 +121,15 @@ std)
 	mknod stderr		c 22 2	; chmod 666 stderr
 	;;
 
-ttyv*)
-	unit=`expr $i : 'ttyv\(.*\)'`
-	rm -f ttyv$unit
-	mknod ttyv$unit c 12 $unit
-	chown root.wheel ttyv$unit
+ttyC*)
+	unit=`expr $i : 'ttyC\(.*\)'`
+	rm -f ttyC$unit
+	mknod ttyC$unit c 12 $unit
+	chown root.wheel ttyC$unit
 	case $unit in
 	0)
 		rm -f vga
-		ln -s ttyv0 vga
+		ln -s ttyC0 vga
 		;;
 	esac
 	;;
