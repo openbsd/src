@@ -852,6 +852,9 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	  import_identity(newsa, headers[SADB_EXT_IDENTITY_SRC], 0);
 	  import_identity(newsa, headers[SADB_EXT_IDENTITY_DST], 1);
 
+	  headers[SADB_EXT_KEY_AUTH] = NULL;
+	  headers[SADB_EXT_KEY_ENCRYPT] = NULL;
+
 	  rval = tdb_init(newsa, alg, &ii);
 	  if (rval) {
 	    rval = EINVAL;
@@ -860,9 +863,6 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	    goto ret;
 	  }
 	}
-
-	 headers[SADB_EXT_KEY_AUTH] = NULL;
-	 headers[SADB_EXT_KEY_ENCRYPT] = NULL;
 
 	 tdb_delete(sa2, 0);
 	 puttdb((struct tdb *) freeme);
@@ -962,6 +962,9 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	import_identity(newsa, headers[SADB_EXT_IDENTITY_SRC], 0);
 	import_identity(newsa, headers[SADB_EXT_IDENTITY_DST], 1);
 
+	headers[SADB_EXT_KEY_AUTH] = NULL;
+	headers[SADB_EXT_KEY_ENCRYPT] = NULL;
+
 	rval = tdb_init(newsa, alg, &ii);
 	if (rval) {
 	  rval = EINVAL;
@@ -970,9 +973,6 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	  goto ret;
 	}
       }
-
-      headers[SADB_EXT_KEY_AUTH] = NULL;
-      headers[SADB_EXT_KEY_ENCRYPT] = NULL;
 
       puttdb((struct tdb *)freeme);
       freeme = NULL;
