@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.40 2003/12/21 15:12:27 markus Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.41 2004/02/05 04:39:57 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -429,7 +429,6 @@ in6_pcbconnect(inp, nam)
 	struct sockaddr_in6 *sin6 = mtod(nam, struct sockaddr_in6 *);
 	struct ifnet *ifp = NULL;	/* outgoing interface */
 	int error = 0;
-	struct in6_addr mapped;
 	struct sockaddr_in6 tmp;
 
 	(void)&in6a;				/* XXX fool gcc */
@@ -446,15 +445,8 @@ in6_pcbconnect(inp, nam)
 		return EADDRNOTAVAIL;
 
 	/* sanity check for mapped address case */
-	if (IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr)) {
-		if (IN6_IS_ADDR_UNSPECIFIED(&inp->inp_laddr6))
-			inp->inp_laddr6.s6_addr16[5] = htons(0xffff);
-		if (!IN6_IS_ADDR_V4MAPPED(&inp->inp_laddr6))
-			return EINVAL;
-	} else {
-		if (IN6_IS_ADDR_V4MAPPED(&inp->inp_laddr6))
-			return EINVAL;
-	}
+	if (IN6_IS_ADDR_V4MAPPED(&inp->inp_laddr6))
+		return EINVAL;
 
 	/* protect *sin6 from overwrites */
 	tmp = *sin6;
@@ -467,41 +459,20 @@ in6_pcbconnect(inp, nam)
 	sin6->sin6_scope_id = 0;
 
 	/* Source address selection. */
-	if (IN6_IS_ADDR_V4MAPPED(&inp->inp_laddr6) &&
-	    inp->inp_laddr6.s6_addr32[3] == 0) {
-		struct sockaddr_in sin, *sinp;
-
-		bzero(&sin, sizeof(sin));
-		sin.sin_len = sizeof(sin);
-		sin.sin_family = AF_INET;
-		bcopy(&sin6->sin6_addr.s6_addr32[3], &sin.sin_addr,
-		    sizeof(sin.sin_addr));
-		sinp = in_selectsrc(&sin, (struct route *)&inp->inp_route6,
-		    inp->inp_socket->so_options, NULL, &error);
-		if (sinp == 0) {
-			if (error == 0)
-				error = EADDRNOTAVAIL;
-			return (error);
-		}
-		bzero(&mapped, sizeof(mapped));
-		mapped.s6_addr16[5] = htons(0xffff);
-		bcopy(&sinp->sin_addr, &mapped.s6_addr32[3], sizeof(sinp->sin_addr));
-		in6a = &mapped;
-	} else {
-		/*
-		 * XXX: in6_selectsrc might replace the bound local address
-		 * with the address specified by setsockopt(IPV6_PKTINFO).
-		 * Is it the intended behavior?
-		 */
-		in6a = in6_selectsrc(sin6, inp->inp_outputopts6,
-		    inp->inp_moptions6, &inp->inp_route6, &inp->inp_laddr6,
-		    &error);
-		if (in6a == 0) {
-			if (error == 0)
-				error = EADDRNOTAVAIL;
-			return (error);
-		}
+	/*
+	 * XXX: in6_selectsrc might replace the bound local address
+	 * with the address specified by setsockopt(IPV6_PKTINFO).
+	 * Is it the intended behavior?
+	 */
+	in6a = in6_selectsrc(sin6, inp->inp_outputopts6,
+	    inp->inp_moptions6, &inp->inp_route6, &inp->inp_laddr6,
+	    &error);
+	if (in6a == 0) {
+		if (error == 0)
+			error = EADDRNOTAVAIL;
+		return (error);
 	}
+
 	if (inp->inp_route6.ro_rt)
 		ifp = inp->inp_route6.ro_rt->rt_ifp;
 
@@ -512,9 +483,7 @@ in6_pcbconnect(inp, nam)
 	    inp->inp_lport, INPLOOKUP_IPV6)) {
 		return (EADDRINUSE);
 	}
-	if (IN6_IS_ADDR_UNSPECIFIED(&inp->inp_laddr6) ||
-	    (IN6_IS_ADDR_V4MAPPED(&inp->inp_laddr6) &&
-	     inp->inp_laddr6.s6_addr32[3] == 0)) {
+	if (IN6_IS_ADDR_UNSPECIFIED(&inp->inp_laddr6)) {
 		if (inp->inp_lport == 0)
 			(void)in6_pcbbind(inp, (struct mbuf *)0);
 		inp->inp_laddr6 = *in6a;
@@ -565,9 +534,13 @@ in6_pcbnotify(head, dst, fport_arg, src, lport_arg, cmd, cmdarg, notify)
 	sa6_dst = (struct sockaddr_in6 *)dst;
 	if (IN6_IS_ADDR_UNSPECIFIED(&sa6_dst->sin6_addr))
 		return (0);
-	if (IN6_IS_ADDR_V4MAPPED(&sa6_dst->sin6_addr))
+	if (IN6_IS_ADDR_V4MAPPED(&sa6_dst->sin6_addr)) {
+#ifdef DIAGNOSTIC
 		printf("Huh?  Thought in6_pcbnotify() never got "
 		       "called with mapped!\n");
+#endif
+		return (0);
+	}
 
 	/*
 	 * note that src can be NULL when we get notify by local fragmentation.
