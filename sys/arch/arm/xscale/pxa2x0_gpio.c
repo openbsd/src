@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_gpio.c,v 1.15 2005/02/22 23:54:28 drahn Exp $ */
+/*	$OpenBSD: pxa2x0_gpio.c,v 1.16 2005/02/23 00:32:53 drahn Exp $ */
 /*	$NetBSD: pxa2x0_gpio.c,v 1.2 2003/07/15 00:24:55 lukem Exp $	*/
 
 /*
@@ -81,8 +81,8 @@ struct pxagpio_softc {
 	int pxa27x_pins;
 };
 
-static int	pxagpio_match(struct device *, void *, void *);
-static void	pxagpio_attach(struct device *, struct device *, void *);
+int	pxagpio_match(struct device *, void *, void *);
+void	pxagpio_attach(struct device *, struct device *, void *);
 
 #ifdef __NetBSD__
 CFATTACH_DECL(pxagpio, sizeof(struct pxagpio_softc),
@@ -103,14 +103,16 @@ static vaddr_t pxagpio_regs;
 #define GPIO_BOOTSTRAP_REG(reg)	\
 	(*((volatile u_int32_t *)(pxagpio_regs + (reg))))
 
-static int gpio_intr0(void *);
-static int gpio_intr1(void *);
+int pxagpio_intr0(void *);
+int pxagpio_intr1(void *);
 #ifdef PXAGPIO_HAS_GPION_INTRS
-static int gpio_dispatch(struct pxagpio_softc *, int);
-static int gpio_intrN(void *);
+int pxagpio_dispatch(struct pxagpio_softc *, int);
+int pxagpio_intrN(void *);
 #endif
+u_int32_t pxagpio_reg_read(struct pxagpio_softc *sc, int reg);
+void pxagpio_reg_write(struct pxagpio_softc *sc, int reg, u_int32_t val);
 
-static __inline u_int32_t
+u_int32_t
 pxagpio_reg_read(struct pxagpio_softc *sc, int reg)
 {
 	if (__predict_true(sc != NULL))
@@ -121,7 +123,7 @@ pxagpio_reg_read(struct pxagpio_softc *sc, int reg)
 	panic("pxagpio_reg_read: not bootstrapped");
 }
 
-static __inline void
+void
 pxagpio_reg_write(struct pxagpio_softc *sc, int reg, u_int32_t val)
 {
 	if (__predict_true(sc != NULL))
@@ -134,7 +136,7 @@ pxagpio_reg_write(struct pxagpio_softc *sc, int reg, u_int32_t val)
 	return;
 }
 
-static int
+int
 pxagpio_match(struct device *parent, void *cf, void *aux)
 {
 	struct pxaip_attach_args *pxa = aux;
@@ -191,7 +193,7 @@ pxagpio_attach(struct device *parent, struct device *self, void *aux)
 
 #ifdef PXAGPIO_HAS_GPION_INTRS
 	sc->sc_irqcookie[2] = pxa2x0_intr_establish(PXA2X0_INT_GPION, IPL_BIO,
-	    gpio_intrN, sc, NULL);
+	    pxagpio_intrN, sc, NULL);
 	if (sc->sc_irqcookie[2] == NULL) {
 		printf("%s: failed to hook main GPIO interrupt\n",
 		    sc->sc_dev.dv_xname);
@@ -260,13 +262,13 @@ pxa2x0_gpio_intr_establish(u_int gpio, int level, int spl, int (*func)(void *),
 	if (gpio == 0) {
 		KDASSERT(sc->sc_irqcookie[0] == NULL);
 		sc->sc_irqcookie[0] = pxa2x0_intr_establish(PXA2X0_INT_GPIO0,
-		    spl, gpio_intr0, sc, NULL);
+		    spl, pxagpio_intr0, sc, NULL);
 		KDASSERT(sc->sc_irqcookie[0]);
 	} else
 	if (gpio == 1) {
 		KDASSERT(sc->sc_irqcookie[1] == NULL);
 		sc->sc_irqcookie[1] = pxa2x0_intr_establish(PXA2X0_INT_GPIO1,
-		    spl, gpio_intr1, sc, NULL);
+		    spl, pxagpio_intr1, sc, NULL);
 		KDASSERT(sc->sc_irqcookie[1]);
 	}
 
@@ -344,8 +346,8 @@ pxa2x0_gpio_intr_string(void *cookie)
 }
 
 
-static int
-gpio_intr0(void *arg)
+int
+pxagpio_intr0(void *arg)
 {
 	struct pxagpio_softc *sc = arg;
 	int ret;
@@ -367,8 +369,8 @@ gpio_intr0(void *arg)
 	return ret;
 }
 
-static int
-gpio_intr1(void *arg)
+int
+pxagpio_intr1(void *arg)
 {
 	struct pxagpio_softc *sc = arg;
 	int ret;
@@ -391,8 +393,8 @@ gpio_intr1(void *arg)
 }
 
 #ifdef PXAGPIO_HAS_GPION_INTRS
-static int
-gpio_dispatch(struct pxagpio_softc *sc, int gpio_base)
+int
+pxagpio_dispatch(struct pxagpio_softc *sc, int gpio_base)
 {
 	struct gpio_irq_handler **ghp, *gh;
 	int i, s, nhandled, handled, pins;
@@ -460,16 +462,16 @@ gpio_dispatch(struct pxagpio_softc *sc, int gpio_base)
 	return (handled);
 }
 
-static int
-gpio_intrN(void *arg)
+int
+pxagpio_intrN(void *arg)
 {
 	struct pxagpio_softc *sc = arg;
 	int handled;
 
-	handled = gpio_dispatch(sc, 0);
-	handled |= gpio_dispatch(sc, 32);
-	handled |= gpio_dispatch(sc, 64);
-	handled |= gpio_dispatch(sc, 96);
+	handled = pxagpio_dispatch(sc, 0);
+	handled |= pxagpio_dispatch(sc, 32);
+	handled |= pxagpio_dispatch(sc, 64);
+	handled |= pxagpio_dispatch(sc, 96);
 
 	return (handled);
 }
