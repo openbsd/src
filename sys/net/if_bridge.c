@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.84 2002/02/07 23:50:20 jason Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.85 2002/02/14 00:55:49 jason Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -934,7 +934,7 @@ bridge_output(ifp, m, sa, rt)
 
 				if (m1->m_flags & M_PKTHDR) {
 					len = 0;
-					for (mx = m1; mx != NULL; mx = m->m_next)
+					for (mx = m1; mx != NULL; mx = mx->m_next)
 						len += mx->m_len;
 					m1->m_pkthdr.len = len;
 				}
@@ -1509,7 +1509,7 @@ bridge_span(sc, eh, morig)
 
 	if (LIST_EMPTY(&sc->sc_spanlist))
 		return;
-	
+
 	m = m_copym2(morig, 0, M_COPYALL, M_NOWAIT);
 	if (m == NULL)
 		return;
