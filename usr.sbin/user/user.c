@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.3 2000/04/24 22:37:15 jakob Exp $ */
+/* $OpenBSD: user.c,v 1.4 2000/04/24 22:38:31 jakob Exp $ */
 /* $NetBSD: user.c,v 1.17 2000/04/14 06:26:55 simonb Exp $ */
 
 /*
@@ -196,7 +196,6 @@ asystem(char *fmt, ...)
 	return ret;
 }
 
-#ifdef EXTENSIONS
 /* return 1 if all of `s' is numeric */
 static int
 is_number(char *s)
@@ -208,7 +207,6 @@ is_number(char *s)
 	}
 	return 1;
 }
-#endif
 
 /*
  * check that the effective uid is 0 - called from funcs which will
