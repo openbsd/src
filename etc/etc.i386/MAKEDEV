@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.i386/MAKEDEV.md,v 1.24 2004/05/30 08:17:18 grange Exp 
-#	OpenBSD: MAKEDEV.common,v 1.9 2004/05/30 08:17:17 grange Exp 
+#	OpenBSD: etc.i386/MAKEDEV.md,v 1.25 2004/06/03 18:36:59 grange Exp 
+#	OpenBSD: MAKEDEV.common,v 1.10 2004/06/03 18:36:59 grange Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.72 2004/02/16 18:58:53 miod Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.12 2004/02/20 19:13:01 miod Exp 
 #
@@ -78,6 +78,7 @@
 #	bpf*	Berkeley Packet Filter
 #	crypto	Hardware crypto access driver
 #	fd	fd/* nodes for fdescfs
+#	gpio*	General Purpose Input/Output
 #	gpr*	GPR400 smartcard reader
 #	hotplug	devices hot plugging
 #	iop*	I2O controller devices
@@ -348,6 +349,10 @@ gpr*)
 	M gpr$U c 80 $U
 	;;
 
+gpio*)
+	M gpio$U c 83 $U 600
+	;;
+
 fd)
 	RMlist="mkdir -p fd;$RMlist" n=0
 	while [ $n -lt 64 ];do M fd/$n c 22 $n;n=$(($n+1));done
@@ -574,17 +579,17 @@ local)
 	;;
 
 all)
-	R bktr0 ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2
-	R sd3 sd4 cd0 cd1 rd0 tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3
-	R bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 fd1 fd1B fd1C fd1D fd1E
-	R fd1F fd1G fd1H fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H xfs0
-	R ss0 ss1 ch0 ses0 hotplug ptm gpr0 local wscons pci iop0 iop1
-	R uall rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7
-	R tuner0 radio0 music0 speaker audio0 wdt0 wt0 uk0 random joy0
-	R joy1 lpa0 lpa1 lpa2 lpt0 lpt1 lpt2 lkm tty00 tty01 tty02
-	R tty03 ttyc0 ttyc1 ttyc2 ttyc3 ttyc4 ttyc5 ttyc6 ttyc7 apm
-	R crypto pf pctr systrace wd0 wd1 wd2 wd3 raid0 raid1 raid2
-	R raid3 std st0 st1 fd mcd0
+	R gpio0 gpio1 gpio2 bktr0 ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2
+	R vnd3 sd0 sd1 sd2 sd3 sd4 cd0 cd1 rd0 tun0 tun1 tun2 tun3
+	R bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 fd1
+	R fd1B fd1C fd1D fd1E fd1F fd1G fd1H fd0 fd0B fd0C fd0D fd0E
+	R fd0F fd0G fd0H xfs0 ss0 ss1 ch0 ses0 hotplug ptm gpr0 local
+	R wscons pci iop0 iop1 uall rmidi0 rmidi1 rmidi2 rmidi3 rmidi4
+	R rmidi5 rmidi6 rmidi7 tuner0 radio0 music0 speaker audio0
+	R wdt0 wt0 uk0 random joy0 joy1 lpa0 lpa1 lpa2 lpt0 lpt1 lpt2
+	R lkm tty00 tty01 tty02 tty03 ttyc0 ttyc1 ttyc2 ttyc3 ttyc4
+	R ttyc5 ttyc6 ttyc7 apm crypto pf pctr systrace wd0 wd1 wd2
+	R wd3 raid0 raid1 raid2 raid3 std st0 st1 fd mcd0
 	;;
 
 wd*|sd*|raid*|ccd*)
