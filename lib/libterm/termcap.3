@@ -1,4 +1,4 @@
-.\"	$OpenBSD: termcap.3,v 1.4 1997/12/16 04:11:59 millert Exp $
+.\"	$OpenBSD: termcap.3,v 1.5 1998/07/13 03:55:35 millert Exp $
 .\"	$NetBSD: termcap.3,v 1.5 1995/06/05 19:45:48 pk Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -51,8 +51,11 @@
 .Vt char *BC;
 .Vt char *UP;
 .Vt short ospeed;
+.Ft int
 .Fn tgetent "char *bp" "char *name"
+.Ft int
 .Fn tgetnum "char *id"
+.Ft int
 .Fn tgetflag "char *id"
 .Ft char *
 .Fn tgetstr "char *id" "char **area"
