@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.8 2002/05/16 13:01:41 art Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.9 2002/06/10 20:09:24 mdw Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.61 2001/07/31 06:55:47 eeh Exp $ */
 
 /*
@@ -234,6 +234,7 @@ void db_dump_pcb(db_expr_t, int, db_expr_t, char *);
 void db_dump_pv(db_expr_t, int, db_expr_t, char *);
 void db_setpcb(db_expr_t, int, db_expr_t, char *);
 void db_dump_dtlb(db_expr_t, int, db_expr_t, char *);
+void db_dump_itlb(db_expr_t, int, db_expr_t, char *);
 void db_dump_dtsb(db_expr_t, int, db_expr_t, char *);
 void db_pmap_kernel(db_expr_t, int, db_expr_t, char *);
 void db_pload_cmd(db_expr_t, int, db_expr_t, char *);
@@ -427,6 +428,61 @@ db_prom_cmd(addr, have_addr, count, modif)
 	OF_enter();
 }
 
+#define CHEETAHP (((getver()>>32) & 0x1ff) >= 0x14)
+unsigned long db_get_dtlb_data(int entry), db_get_dtlb_tag(int entry),
+db_get_itlb_data(int entry), db_get_itlb_tag(int entry);
+void db_print_itlb_entry(int entry, int i, int endc);
+void db_print_dtlb_entry(int entry, int i, int endc);
+
+extern __inline__ unsigned long db_get_dtlb_data(int entry)
+{
+	unsigned long r;
+	__asm__ __volatile__("ldxa [%1] %2,%0"
+		: "=r" (r)
+		: "r" (entry <<3), "i" (ASI_DMMU_TLB_DATA));
+	return r;
+}
+extern __inline__ unsigned long db_get_dtlb_tag(int entry)
+{
+	unsigned long r;
+	__asm__ __volatile__("ldxa [%1] %2,%0"
+		: "=r" (r)
+		: "r" (entry <<3), "i" (ASI_DMMU_TLB_TAG));
+	return r;
+}
+extern __inline__ unsigned long db_get_itlb_data(int entry)
+{
+	unsigned long r;
+	__asm__ __volatile__("ldxa [%1] %2,%0"
+		: "=r" (r)
+		: "r" (entry <<3), "i" (ASI_IMMU_TLB_DATA));
+	return r;
+}
+extern __inline__ unsigned long db_get_itlb_tag(int entry)
+{
+	unsigned long r;
+	__asm__ __volatile__("ldxa [%1] %2,%0"
+		: "=r" (r)
+		: "r" (entry <<3), "i" (ASI_IMMU_TLB_TAG));
+	return r;
+}
+
+void db_print_dtlb_entry(int entry, int i, int endc)
+{
+	unsigned long tag, data;
+	tag = db_get_dtlb_tag(entry);
+	data = db_get_dtlb_data(entry);
+	db_printf("%2d:%16.16lx %16.16lx%c", i, tag, data, endc);
+}
+
+void db_print_itlb_entry(int entry, int i, int endc)
+{
+	unsigned long tag, data;
+	tag = db_get_itlb_tag(entry);
+	data = db_get_itlb_data(entry);
+	db_printf("%2d:%16.16lx %16.16lx%c", i, tag, data, endc);
+}
+
 void
 db_dump_dtlb(addr, have_addr, count, modif)
 	db_expr_t addr;
@@ -434,14 +490,28 @@ db_dump_dtlb(addr, have_addr, count, modif)
 	db_expr_t count;
 	char *modif;
 {
-	extern void print_dtlb(void);
+	/* extern void print_dtlb(void); -- locore.s; no longer used here */
 
 	if (have_addr) {
 		int i;
 		int64_t* p = (int64_t*)addr;
 		static int64_t buf[128];
 		extern void dump_dtlb(int64_t *);
-		
+	
+	if (CHEETAHP) {
+		db_printf("DTLB %ld\n", addr);
+		switch(addr)
+		{
+		case 0:
+			for (i = 0; i < 16; ++i)
+				db_print_dtlb_entry(i, i, (i&1)?'\n':' ');
+			break;
+		case 2:
+			for (i = 0; i < 512; ++i)
+				db_print_dtlb_entry(i+16384, i, (i&1)?'\n':' ');
+			break;
+		}
+	} else {
 		dump_dtlb(buf);
 		p = buf;
 		for (i=0; i<64;) {
@@ -457,10 +527,40 @@ db_dump_dtlb(addr, have_addr, count, modif)
 			p += 2;
 #endif
 		}
+	}
 	} else {
-#ifdef DEBUG
-		print_dtlb();
-#endif
+printf ("Usage: mach dtlb 0,2\n");
+	}
+}
+
+void
+db_dump_itlb(addr, have_addr, count, modif)
+	db_expr_t addr;
+	int have_addr;
+	db_expr_t count;
+	char *modif;
+{
+	int i;
+	if (!have_addr) {
+		db_printf("Usage: mach itlb 0,1,2\n");
+		return;
+	}
+	if (CHEETAHP) {
+		db_printf("ITLB %ld\n", addr);
+		switch(addr)
+		{
+		case 0:
+			for (i = 0; i < 16; ++i)
+				db_print_itlb_entry(i, i, (i&1)?'\n':' ');
+			break;
+		case 2:
+			for (i = 0; i < 128; ++i)
+				db_print_itlb_entry(i+16384, i, (i&1)?'\n':' ');
+			break;
+		}
+	} else {
+		for (i = 0; i < 63; ++i)
+			db_print_itlb_entry(i, i, (i&1)?'\n':' ');
 	}
 }
 
@@ -983,6 +1083,7 @@ struct db_command db_machine_command_table[] = {
 	{ "esp",	db_esp,		0,	0 },
 #endif
 	{ "fpstate",	db_dump_fpstate,0,	0 },
+	{ "itlb",	db_dump_itlb,	0,	0 },
 	{ "kmap",	db_pmap_kernel,	0,	0 },
 	{ "lock",	db_lock,	0,	0 },
 	{ "pcb",	db_dump_pcb,	0,	0 },
