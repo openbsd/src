@@ -1,4 +1,4 @@
-#	$Id: Makefile.inc,v 1.4 1997/04/23 11:24:43 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.5 1997/05/01 11:30:45 niklas Exp $
 
 REV=	21
 
