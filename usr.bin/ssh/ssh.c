@@ -18,7 +18,7 @@ Modified to work with SSL by Niels Provos <provos@citi.umich.edu> in Canada.
 */
 
 #include "includes.h"
-RCSID("$Id: ssh.c,v 1.14 1999/09/30 04:30:03 deraadt Exp $");
+RCSID("$Id: ssh.c,v 1.15 1999/09/30 05:03:05 deraadt Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -118,9 +118,7 @@ usage()
   fprintf(stderr, "  -R listen-port:host:port   Forward remote port to local address\n");
   fprintf(stderr, "              These cause %s to listen for connections on a port, and\n", av0);
   fprintf(stderr, "              forward them to the other side by connecting to host:port.\n");
-#ifdef WITH_ZLIB
   fprintf(stderr, "  -C          Enable compression.\n");
-#endif /* WITH_ZLIB */
   fprintf(stderr, "  -o 'option' Process the option as if it was read from a configuration file.\n");
   exit(1);
 }
@@ -392,11 +390,9 @@ main(int ac, char **av)
 	  add_local_forward(&options, fwd_port, buf, fwd_host_port);
 	  break;
 
-#ifdef WITH_ZLIB
 	case 'C':
 	  options.compression = 1;
 	  break;
-#endif /* WITH_ZLIB */
 
 	case 'o':
 	  dummy = 1;
@@ -622,7 +618,6 @@ main(int ac, char **av)
       setsid();
     }
 
-#ifdef WITH_ZLIB
   /* Enable compression if requested. */
   if (options.compression)
     {
@@ -644,7 +639,6 @@ main(int ac, char **av)
       else
 	packet_disconnect("Protocol error waiting for compression response.");
     }
-#endif /* WITH_ZLIB */
 
   /* Allocate a pseudo tty if appropriate. */
   if (tty_flag)

@@ -17,7 +17,7 @@ suitable code.
 */
 
 #include "includes.h"
-RCSID("$Id: ttymodes.c,v 1.1 1999/09/26 20:53:38 deraadt Exp $");
+RCSID("$Id: ttymodes.c,v 1.2 1999/09/30 05:03:05 deraadt Exp $");
 
 #include "packet.h"
 #include "ssh.h"
@@ -25,18 +25,6 @@ RCSID("$Id: ttymodes.c,v 1.1 1999/09/26 20:53:38 deraadt Exp $");
 #define TTY_OP_END	0
 #define TTY_OP_ISPEED	192 /* int follows */
 #define TTY_OP_OSPEED	193 /* int follows */
-
-/* Speed extraction & setting macros for sgtty. */
-
-#ifdef USING_SGTTY
-#define cfgetospeed(tio)	((tio)->sg_ospeed)
-#define cfgetispeed(tio)	((tio)->sg_ispeed)
-#define cfsetospeed(tio, spd)	((tio)->sg_ospeed = (spd), 0)
-#define cfsetispeed(tio, spd)	((tio)->sg_ispeed = (spd), 0)
-#ifndef SPEED_T_IN_STDTYPES_H
-typedef char speed_t;
-#endif
-#endif
 
 /* Converts POSIX speed_t to a baud rate.  The values of the constants
    for speed_t are not themselves portable. */
@@ -220,63 +208,16 @@ static speed_t baud_to_speed(int baud)
 
 void tty_make_modes(int fd)
 {
-#ifdef USING_TERMIOS
   struct termios tio;
-#endif
-#ifdef USING_SGTTY
-  struct sgttyb tio;
-  struct tchars tiotc;
-  struct ltchars tioltc;
-  int tiolm;
-#ifdef TIOCGSTAT
-  struct tstatus tiots;
-#endif /* TIOCGSTAT */
-#endif /* USING_SGTTY */
   int baud;
 
   /* Get the modes. */
-#ifdef USING_TERMIOS
   if (tcgetattr(fd, &tio) < 0)
     {
       packet_put_char(TTY_OP_END);
       log("tcgetattr: %.100s", strerror(errno));
       return;
     }
-#endif /* USING_TERMIOS */
-#ifdef USING_SGTTY
-  if (ioctl(fd, TIOCGETP, &tio) < 0)
-    {
-      packet_put_char(TTY_OP_END);
-      log("ioctl(fd, TIOCGETP, ...): %.100s", strerror(errno));
-      return;
-    }
-  if (ioctl(fd, TIOCGETC, &tiotc) < 0)
-    {
-      packet_put_char(TTY_OP_END);
-      log("ioctl(fd, TIOCGETC, ...): %.100s", strerror(errno));
-      return;
-    }
-  if (ioctl(fd, TIOCLGET, &tiolm) < 0)
-    {
-      packet_put_char(TTY_OP_END);
-      log("ioctl(fd, TIOCLGET, ...): %.100s", strerror(errno));
-      return;
-    }
-  if (ioctl(fd, TIOCGLTC, &tioltc) < 0)
-    {
-      packet_put_char(TTY_OP_END);
-      log("ioctl(fd, TIOCGLTC, ...): %.100s", strerror(errno));
-      return;
-    }
-#ifdef TIOCGSTAT
-  if (ioctl(fd, TIOCGSTAT, &tiots) < 0) 
-    {
-      packet_put_char(TTY_OP_END);
-      log("ioctl(fd, TIOCGSTAT, ...): %.100s", strerror(errno));
-      return;
-    }
-#endif /* TIOCGSTAT */
-#endif /* USING_SGTTY */
 
   /* Store input and output baud rates. */
   baud = speed_to_baud(cfgetospeed(&tio));
@@ -287,7 +228,6 @@ void tty_make_modes(int fd)
   packet_put_int(baud);
 
   /* Store values of mode flags. */
-#ifdef USING_TERMIOS
 #define TTYCHAR(NAME, OP) \
   packet_put_char(OP); packet_put_char(tio.c_cc[NAME]);
 #define TTYMODE(NAME, FIELD, OP) \
@@ -295,18 +235,6 @@ void tty_make_modes(int fd)
 #define SGTTYCHAR(NAME, OP)
 #define SGTTYMODE(NAME, FIELD, OP)
 #define SGTTYMODEN(NAME, FIELD, OP)
-#endif /* USING_TERMIOS */
-
-#ifdef USING_SGTTY
-#define TTYCHAR(NAME, OP)
-#define TTYMODE(NAME, FIELD, OP)
-#define SGTTYCHAR(NAME, OP) \
-  packet_put_char(OP); packet_put_char(NAME);
-#define SGTTYMODE(NAME, FIELD, OP) \
-  packet_put_char(OP); packet_put_char((FIELD & NAME) != 0);
-#define SGTTYMODEN(NAME, FIELD, OP) \
-  packet_put_char(OP); packet_put_char((FIELD & NAME) == 0);
-#endif /* USING_SGTTY */
 
 #include "ttymodes.h"
 
@@ -325,18 +253,7 @@ void tty_make_modes(int fd)
 
 void tty_parse_modes(int fd, int *n_bytes_ptr)
 {
-#ifdef USING_TERMIOS
   struct termios tio;
-#endif /* USING_TERMIOS */
-#ifdef USING_SGTTY
-  struct sgttyb tio;
-  struct tchars tiotc;
-  struct ltchars tioltc;
-  int tiolm;
-#ifdef TIOCGSTAT
-  struct tstatus tiots;
-#endif /* TIOCGSTAT */
-#endif
   int opcode, baud;
   int n_bytes = 0;
   int failure = 0;
@@ -344,24 +261,8 @@ void tty_parse_modes(int fd, int *n_bytes_ptr)
   /* Get old attributes for the terminal.  We will modify these flags. 
      I am hoping that if there are any machine-specific modes, they will
      initially have reasonable values. */
-#ifdef USING_TERMIOS
   if (tcgetattr(fd, &tio) < 0)
     failure = -1;
-#endif /* USING_TERMIOS */
-#ifdef USING_SGTTY
-  if (ioctl(fd, TIOCGETP, &tio) < 0)
-    failure = -1;
-  if (ioctl(fd, TIOCGETC, &tiotc) < 0)
-    failure = -1;
-  if (ioctl(fd, TIOCLGET, &tiolm) < 0)
-    failure = -1;
-  if (ioctl(fd, TIOCGLTC, &tioltc) < 0)
-    failure = -1;
-#ifdef TIOCGSTAT
-  if (ioctl(fd, TIOCGSTAT, &tiots) < 0)
-    failure = -1;
-#endif /* TIOCGSTAT */
-#endif /* USING_SGTTY */
 
   for (;;)
     {
@@ -386,7 +287,6 @@ void tty_parse_modes(int fd, int *n_bytes_ptr)
 	    error("cfsetospeed failed for %d", baud);
 	  break;
 
-#ifdef USING_TERMIOS
 #define TTYCHAR(NAME, OP) 				\
 	case OP:					\
 	  n_bytes += 1;					\
@@ -403,33 +303,6 @@ void tty_parse_modes(int fd, int *n_bytes_ptr)
 #define SGTTYCHAR(NAME, OP)
 #define SGTTYMODE(NAME, FIELD, OP)
 #define SGTTYMODEN(NAME, FIELD, OP)
-#endif /* USING_TERMIOS */
-
-#ifdef USING_SGTTY
-#define TTYCHAR(NAME, OP)
-#define TTYMODE(NAME, FIELD, OP)
-#define SGTTYCHAR(NAME, OP) 				\
-	case OP:					\
-	  n_bytes += 1;					\
-	  NAME = packet_get_char();			\
-	  break;
-#define SGTTYMODE(NAME, FIELD, OP)		       	\
-	case OP:					\
-	  n_bytes += 1;					\
-	  if (packet_get_char())			\
-	    FIELD |= NAME;				\
-	  else						\
-	    FIELD &= ~NAME;				\
-	  break;
-#define SGTTYMODEN(NAME, FIELD, OP)		       	\
-	case OP:					\
-	  n_bytes += 1;					\
-	  if (packet_get_char())			\
-	    FIELD &= ~NAME;				\
-	  else						\
-	    FIELD |= NAME;				\
-	  break;
-#endif /* USING_SGTTY */
 
 #include "ttymodes.h"
 
@@ -480,20 +353,7 @@ void tty_parse_modes(int fd, int *n_bytes_ptr)
     return;			/* Packet parsed ok but tty stuff failed */
   
   /* Set the new modes for the terminal. */
-#ifdef USING_TERMIOS
   if (tcsetattr(fd, TCSANOW, &tio) < 0)
     log("Setting tty modes failed: %.100s", strerror(errno));
-#endif /* USING_TERMIOS */
-#ifdef USING_SGTTY
-  if (ioctl(fd, TIOCSETP, &tio) < 0
-      || ioctl(fd, TIOCSETC, &tiotc) < 0
-      || ioctl(fd, TIOCLSET, &tiolm) < 0
-      || ioctl(fd, TIOCSLTC, &tioltc) < 0
-#ifdef TIOCSSTAT
-      || ioctl(fd, TIOCSSTAT, &tiots) < 0
-#endif /* TIOCSSTAT */
-     ) 
-    log("Setting tty modes failed: %.100s", strerror(errno));
-#endif /* USING_SGTTY */
   return;
 }

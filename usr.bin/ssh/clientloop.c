@@ -15,7 +15,7 @@ The main loop for the interactive session (client side).
 */
 
 #include "includes.h"
-RCSID("$Id: clientloop.c,v 1.2 1999/09/28 04:45:36 provos Exp $");
+RCSID("$Id: clientloop.c,v 1.3 1999/09/30 05:03:04 deraadt Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -43,12 +43,7 @@ static volatile int received_window_change_signal = 0;
 #endif /* SIGWINCH */
 
 /* Terminal modes, as saved by enter_raw_mode. */
-#ifdef USING_TERMIOS
 static struct termios saved_tio;
-#endif
-#ifdef USING_SGTTY
-static struct sgttyb saved_tio;
-#endif
 
 /* Flag indicating whether we are in raw mode.  This is used by enter_raw_mode
    and leave_raw_mode. */
@@ -81,14 +76,8 @@ void leave_raw_mode()
   if (!in_raw_mode)
     return;
   in_raw_mode = 0;
-#ifdef USING_TERMIOS
   if (tcsetattr(fileno(stdin), TCSADRAIN, &saved_tio) < 0)
     perror("tcsetattr");
-#endif /* USING_TERMIOS */
-#ifdef USING_SGTTY
-  if (ioctl(fileno(stdin), TIOCSETP, &saved_tio) < 0)
-    perror("ioctl(stdin, TIOCSETP, ...)");
-#endif /* USING_SGTTY */
 
   fatal_remove_cleanup((void (*)(void *))leave_raw_mode, NULL);
 }
@@ -97,7 +86,6 @@ void leave_raw_mode()
 
 void enter_raw_mode()
 {
-#ifdef USING_TERMIOS
   struct termios tio;
 
   if (tcgetattr(fileno(stdin), &tio) < 0)
@@ -115,19 +103,6 @@ void enter_raw_mode()
   if (tcsetattr(fileno(stdin), TCSADRAIN, &tio) < 0)
     perror("tcsetattr");
   in_raw_mode = 1;
-#endif /* USING_TERMIOS */
-#ifdef USING_SGTTY
-  struct sgttyb tio;
-
-  if (ioctl(fileno(stdin), TIOCGETP, &tio) < 0)
-    perror("ioctl(stdin, TIOCGETP, ...)");
-  saved_tio = tio;
-  tio.sg_flags &= ~(CBREAK | ECHO | CRMOD | LCASE | TANDEM);
-  tio.sg_flags |= (RAW | ANYP);
-  if (ioctl(fileno(stdin), TIOCSETP, &tio) < 0)
-    perror("ioctl(stdin, TIOCSETP, ...)");
-  in_raw_mode = 1;
-#endif /* USING_SGTTY */
 
   fatal_add_cleanup((void (*)(void *))leave_raw_mode, NULL);
 }  

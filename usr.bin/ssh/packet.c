@@ -15,7 +15,7 @@ with the other side.  This same code is used both on client and server side.
 */
 
 #include "includes.h"
-RCSID("$Id: packet.c,v 1.3 1999/09/29 18:16:19 dugsong Exp $");
+RCSID("$Id: packet.c,v 1.4 1999/09/30 05:03:04 deraadt Exp $");
 
 #include "xmalloc.h"
 #include "buffer.h"
@@ -26,9 +26,7 @@ RCSID("$Id: packet.c,v 1.3 1999/09/29 18:16:19 dugsong Exp $");
 #include "cipher.h"
 #include "getput.h"
 
-#ifdef WITH_ZLIB
 #include "compress.h"
-#endif /* WITH_ZLIB */
 
 /* This variable contains the file descriptors used for communicating with
    the other side.  connection_in is used for reading; connection_out
@@ -64,10 +62,8 @@ static Buffer incoming_packet;
 /* Scratch buffer for packet compression/decompression. */
 static Buffer compression_buffer;
 
-#ifdef WITH_ZLIB
 /* Flag indicating whether packet compression/decompression is enabled. */
 static int packet_compression = 0;
-#endif /* WITH_ZLIB */
 
 /* Flag indicating whether this module has been initialized. */
 static int initialized = 0;
@@ -163,13 +159,11 @@ packet_close()
   buffer_free(&output);
   buffer_free(&outgoing_packet);
   buffer_free(&incoming_packet);
-#ifdef WITH_ZLIB
   if (packet_compression)
     {
       buffer_free(&compression_buffer);
       buffer_compress_uninit();
     }
-#endif /* WITH_ZLIB */
 }
 
 /* Sets remote side protocol flags. */
@@ -189,7 +183,6 @@ packet_get_protocol_flags()
   return remote_protocol_flags;
 }
 
-#ifdef WITH_ZLIB
 /* Starts packet compression from the next packet on in both directions. 
    Level is compression level 1 (fastest) - 9 (slow, best) as in gzip. */
 
@@ -202,7 +195,6 @@ packet_start_compression(int level)
   buffer_init(&compression_buffer);
   buffer_compress_init(level);
 }
-#endif /* WITH_ZLIB */
 
 /* Encrypts the given number of bytes, copying from src to dest.
    bytes is known to be a multiple of 8. */
@@ -315,7 +307,6 @@ packet_send()
   unsigned long checksum;
   u_int32_t rand = 0;
 
-#ifdef WITH_ZLIB
   /* If using packet compression, compress the payload of the outgoing
      packet. */
   if (packet_compression)
@@ -328,7 +319,6 @@ packet_send()
       buffer_append(&outgoing_packet, buffer_ptr(&compression_buffer),
 		    buffer_len(&compression_buffer));
     }
-#endif /* WITH_ZLIB */
 
   /* Compute packet length without padding (add checksum, remove padding). */
   len = buffer_len(&outgoing_packet) + 4 - 8;
@@ -505,7 +495,6 @@ packet_read_poll(int *payload_len_ptr)
     packet_disconnect("Corrupted check bytes on input.");
   buffer_consume_end(&incoming_packet, 4);
 
-#ifdef WITH_ZLIB
   /* If using packet compression, decompress the packet. */
   if (packet_compression)
     {
@@ -515,7 +504,6 @@ packet_read_poll(int *payload_len_ptr)
       buffer_append(&incoming_packet, buffer_ptr(&compression_buffer),
 		    buffer_len(&compression_buffer));
     }
-#endif /* WITH_ZLIB */
 
   /* Get packet type. */
   buffer_get(&incoming_packet, &buf[0], 1);

@@ -18,7 +18,7 @@ agent connections.
 */
 
 #include "includes.h"
-RCSID("$Id: sshd.c,v 1.10 1999/09/30 04:30:03 deraadt Exp $");
+RCSID("$Id: sshd.c,v 1.11 1999/09/30 05:03:05 deraadt Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -1295,9 +1295,7 @@ do_authentication(char *user, int privileged_port)
 void do_authenticated(struct passwd *pw)
 {
   int type;
-#ifdef WITH_ZLIB
   int compression_level = 0, enable_compression_after_reply = 0;
-#endif /* WITH_ZLIB */
   int have_pty = 0, ptyfd = -1, ttyfd = -1;
   int row, col, xpixel, ypixel, screen;
   char ttyname[64];
@@ -1329,7 +1327,6 @@ void do_authenticated(struct passwd *pw)
       /* Process the packet. */
       switch (type)
 	{
-#ifdef WITH_ZLIB
 	case SSH_CMSG_REQUEST_COMPRESSION:
 	  packet_integrity_check(plen, 4, type);
 	  compression_level = packet_get_int();
@@ -1342,7 +1339,6 @@ void do_authenticated(struct passwd *pw)
 	  /* Enable compression after we have responded with SUCCESS. */
 	  enable_compression_after_reply = 1;
 	  break;
-#endif /* WITH_ZLIB */
 
 	case SSH_CMSG_REQUEST_PTY:
 	  if (no_pty_flag)
@@ -1525,14 +1521,12 @@ void do_authenticated(struct passwd *pw)
       packet_send();
       packet_write_wait();
 
-#ifdef WITH_ZLIB
       /* Enable compression now that we have replied if appropriate. */
       if (enable_compression_after_reply)
 	{
 	  enable_compression_after_reply = 0;
 	  packet_start_compression(compression_level);
 	}
-#endif /* WITH_ZLIB */
 
       continue;
 

@@ -14,7 +14,7 @@ Functions for reading the configuration files.
 */
 
 #include "includes.h"
-RCSID("$Id: readconf.c,v 1.5 1999/09/29 18:16:19 dugsong Exp $");
+RCSID("$Id: readconf.c,v 1.6 1999/09/30 05:03:05 deraadt Exp $");
 
 #include "ssh.h"
 #include "cipher.h"
@@ -323,11 +323,9 @@ void process_config_line(Options *options, const char *host,
 	*intptr = value;
       break;
       
-#ifdef WITH_ZLIB
     case oCompression:
       intptr = &options->compression;
       goto parse_flag;
-#endif /* WITH_ZLIB */
 
     case oKeepAlives:
       intptr = &options->keepalives;
@@ -342,11 +340,9 @@ void process_config_line(Options *options, const char *host,
 		linenum);
       break;
 
-#ifdef WITH_ZLIB
     case oCompressionLevel:
       intptr = &options->compression_level;
       goto parse_int;
-#endif /* WITH_ZLIB */
 
     case oIdentityFile:
       cp = strtok(NULL, WHITESPACE);
@@ -577,13 +573,9 @@ void initialize_options(Options *options)
   options->use_rsh = -1;
   options->batch_mode = -1;
   options->strict_host_key_checking = -1;
-#ifdef WITH_ZLIB
   options->compression = -1;
-#endif /* WITH_ZLIB */
   options->keepalives = -1;
-#ifdef WITH_ZLIB
   options->compression_level = -1;
-#endif /* WITH_ZLIB */
   options->port = -1;
   options->connection_attempts = -1;
   options->cipher = -1;
@@ -635,16 +627,12 @@ void fill_default_options(Options *options)
     options->batch_mode = 0;
   if (options->strict_host_key_checking == -1)
     options->strict_host_key_checking = 2; /* 2 is default */
-#ifdef WITH_ZLIB
   if (options->compression == -1)
     options->compression = 0;
-#endif /* WITH_ZLIB */
   if (options->keepalives == -1)
     options->keepalives = 1;
-#ifdef WITH_ZLIB
   if (options->compression_level == -1)
     options->compression_level = 6;
-#endif /* WITH_ZLIB */
   if (options->port == -1)
     options->port = 0; /* Filled in ssh_connect. */
   if (options->connection_attempts == -1)

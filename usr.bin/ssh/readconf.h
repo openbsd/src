@@ -13,7 +13,7 @@ Functions for reading the configuration file.
 
 */
 
-/* RCSID("$Id: readconf.h,v 1.3 1999/09/29 18:16:20 dugsong Exp $"); */
+/* RCSID("$Id: readconf.h,v 1.4 1999/09/30 05:03:05 deraadt Exp $"); */
 
 #ifndef READCONF_H
 #define READCONF_H
@@ -49,10 +49,8 @@ typedef struct
   int use_rsh;			/* Always use rsh (don\'t try ssh). */
   int batch_mode;		/* Batch mode: do not ask for passwords. */
   int strict_host_key_checking;	/* Strict host key checking. */
-#ifdef WITH_ZLIB
   int compression;		/* Compress packets in both directions. */
   int compression_level;	/* Compression level 1 (fast) to 9 (best). */
-#endif /* WITH_ZLIB */
   int keepalives;		/* Set SO_KEEPALIVE. */
 
   int port;			/* Port to connect. */

@@ -13,7 +13,7 @@ This file includes most of the needed system headers.
 
 */
 
-/* RCSID("$Id: includes.h,v 1.4 1999/09/30 04:30:03 deraadt Exp $"); */
+/* RCSID("$Id: includes.h,v 1.5 1999/09/30 05:03:04 deraadt Exp $"); */
 
 #ifndef INCLUDES_H
 #define INCLUDES_H
@@ -54,7 +54,6 @@ YOU_LOSE
 #include <sys/ioctl.h>
 
 #include <termios.h>
-#define USING_TERMIOS
 
 #include <stdlib.h>
 #include <string.h>

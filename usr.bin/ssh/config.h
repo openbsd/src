@@ -138,10 +138,6 @@ static /**/const char *const rcsid[] = { (char *)rcsid, "\100(#)" msg }
 /* Define this if O_NONBLOCK does not work on your system (e.g., Ultrix). */
 /* #undef O_NONBLOCK_BROKEN */
 
-/* Define this if sys/syslog.h needs to be included in addition to syslog.h.
-   This is the case on some Ultrix versions. */
-/* #undef NEED_SYS_SYSLOG_H */
-
 /* Define this to include libwrap (tcp_wrappers) support. */
 /* #undef LIBWRAP */
 
@@ -203,9 +199,6 @@ static /**/const char *const rcsid[] = { (char *)rcsid, "\100(#)" msg }
 /* Define this if you want to compile in AFS support.
    This can be done at configure time with the --with-afs argument. */
 /* #undef AFS */
-
-/* Define this if you want to add optional compression support. */
-#define WITH_ZLIB 1
 
 /* The number of bytes in a int.  */
 #define SIZEOF_INT 4
@@ -356,9 +349,6 @@ static /**/const char *const rcsid[] = { (char *)rcsid, "\100(#)" msg }
 
 /* Define if you have the <utmpx.h> header file.  */
 /* #undef HAVE_UTMPX_H */
-
-/* Define if you have the <zlib.h> header file.  */
-#define HAVE_ZLIB_H 1
 
 /* Define if you have the crypt library (-lcrypt).  */
 /* #undef HAVE_LIBCRYPT */
