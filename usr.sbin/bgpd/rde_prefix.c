@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_prefix.c,v 1.19 2004/08/05 19:23:10 claudio Exp $ */
+/*	$OpenBSD: rde_prefix.c,v 1.20 2004/08/05 21:28:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -245,7 +245,7 @@ pt_prefix_cmp(const struct pt_entry *a, const struct pt_entry *b)
 	int			 i;
 
 	if (a->af != b->af)
-		fatalx("king bula sez: comapring pears with apples");
+		fatalx("king bula sez: comparing pears with apples");
 
 	switch (a->af) {
 	case AF_INET:
