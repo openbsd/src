@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.3 2004/02/17 15:44:02 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.4 2004/02/18 16:14:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -74,23 +74,21 @@ up_init(struct rde_peer *peer)
 void
 up_down(struct rde_peer *peer)
 {
-	struct update_attr	*ua, *xua;
-	struct update_prefix	*up, *xup;
+	struct update_attr	*ua;
+	struct update_prefix	*up;
 
-	for (ua = TAILQ_FIRST(&peer->updates); ua != TAILQ_END(&peer->updates);
-	    ua = xua) {
-		xua = TAILQ_NEXT(ua, attr_l);
-		for (up = TAILQ_FIRST(&ua->prefix_h);
-		    up != TAILQ_END(&ua->prefix_h); up = xup) {
-			xup = TAILQ_NEXT(up, prefix_l);
+	while ((ua = TAILQ_FIRST(&peer->updates)) != NULL) {
+		TAILQ_REMOVE(&peer->updates, ua, attr_l);
+		while ((up = TAILQ_FIRST(&ua->prefix_h)) != NULL) {
+			TAILQ_REMOVE(&ua->prefix_h, up, prefix_l);
 			free(up);
 		}
+		free(ua->attr);
 		free(ua);
 	}
 
-	for (up = TAILQ_FIRST(&peer->withdraws);
-	    up != TAILQ_END(&peer->withdraws); up = xup) {
-		xup = TAILQ_NEXT(up, prefix_l);
+	while ((up = TAILQ_FIRST(&peer->withdraws)) != NULL) {
+		TAILQ_REMOVE(&peer->withdraws, up, prefix_l);
 		free(up);
 	}
 
@@ -157,6 +155,7 @@ up_add(struct rde_peer *peer, struct update_prefix *p, struct update_attr *a)
 	} else {
 		/* 1.2 if found -> use that, free a */
 		if (a != NULL) {
+			free(a->attr);
 			free(a);
 			a = na;
 			/* move to end of update queue */
@@ -451,12 +450,10 @@ int
 up_dump_prefix(u_char *buf, int len, struct uplist_prefix *prefix_head,
     struct rde_peer *peer)
 {
-	struct update_prefix	*upp, *xupp;
+	struct update_prefix	*upp;
 	int			 r, wpos = 0;
 
-	for (upp = TAILQ_FIRST(prefix_head);
-	    upp != TAILQ_END(prefix_head); upp = xupp) {
-		xupp = TAILQ_NEXT(upp, prefix_l);
+	while ((upp = TAILQ_FIRST(prefix_head)) != NULL) {
 		if ((r = up_set_prefix(buf + wpos, len - wpos,
 		    &upp->prefix, upp->prefixlen)) == -1)
 			break;
@@ -510,6 +507,7 @@ up_dump_attrnlri(u_char *buf, int len, struct rde_peer *peer)
 		if (RB_REMOVE(uptree_attr, &peer->up_attrs, upa) == NULL)
 			log_warnx("dequeuing update failed.");
 		TAILQ_REMOVE(&peer->updates, upa, attr_l);
+		free(upa->attr);
 		free(upa);
 		peer->up_acnt--;
 	}
