@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.35 2004/11/27 14:02:50 espie Exp $
+# $OpenBSD: Update.pm,v 1.36 2004/11/27 16:38:26 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -384,9 +384,9 @@ sub save_old_libraries
 	$old_plist->visit('mark_lib', $libs, $p);
 	$new_plist->visit('unmark_lib', $libs, $p);
 
-	print "Libraries to keep: ", join(",", sort(keys %$libs)), "\n" 
-	    if $state->{beverbose};
 	if (%$libs) {
+		print "Libraries to keep: ", join(",", sort(keys %$libs)), "\n" 
+		    if $state->{beverbose};
 		my $stub_list = split_libs($old_plist, $libs);
 		my $stub_name = $stub_list->pkgname();
 		my $dest = installed_info($stub_name);
@@ -407,6 +407,8 @@ sub save_old_libraries
 		add_installed($stub_name);
 
 		walk_depends_closure($old_plist->pkgname(), $stub_name, $state);
+	} else {
+		print "No libraries to keep\n" if $state->{beverbose};
 	}
 }
 
