@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.38 2005/01/14 20:54:48 jfb Exp $	*/
+/*	$OpenBSD: proto.c,v 1.39 2005/01/14 20:58:43 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -49,12 +49,8 @@
 #include <libgen.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <signal.h>
 #include <string.h>
 #include <sysexits.h>
-#ifdef CVS_ZLIB
-#include <zlib.h>
-#endif
 
 #include "buf.h"
 #include "cvs.h"
@@ -66,14 +62,6 @@
 /* request flags */
 #define CVS_REQF_RESP    0x01
 
-
-extern int   verbosity;
-extern int   cvs_compress;
-extern char *cvs_rsh;
-extern int   cvs_trace;
-extern int   cvs_nolog;
-extern int   cvs_readonly;
-extern int   cvs_cmdop;
 
 static int  cvs_initlog   (void);
 
@@ -509,7 +497,6 @@ cvs_resp_getbyname(const char *rname)
  * Build a space-separated list of all the responses that this protocol
  * implementation supports.
  */
-
 char*
 cvs_resp_getvalid(void)
 {
@@ -605,11 +592,9 @@ cvs_sendfile(struct cvsroot *root, const char *path)
 			(void)close(fd);
 			return (-1);
 		}
-
 	}
 
 	(void)close(fd);
-
 	return (0);
 }
 
