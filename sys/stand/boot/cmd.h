@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.h,v 1.14 2003/08/11 06:23:07 deraadt Exp $	*/
+/*	$OpenBSD: cmd.h,v 1.15 2004/06/24 22:10:18 tom Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -27,6 +27,7 @@
  *
  */
 
+#define CMD_BUFF_SIZE		133
 
 struct cmd_table {
 	char *cmd_name;
@@ -57,3 +58,5 @@ int getcmd(void);
 int read_conf(void);
 int bootparse(int);
 void boot(dev_t);
+
+int docmd(void);		/* No longer static: needed by regress test */

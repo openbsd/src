@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.53 2004/06/24 16:38:59 tom Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.54 2004/06/24 22:10:18 tom Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -24,13 +24,19 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
  */
 
 #include <sys/param.h>
-#include <libsa.h>
 #include <sys/reboot.h>
+
+#ifdef REGRESS
+#include <sys/stat.h>
+#include <errno.h>
+#else
+#include <libsa.h>
 #include <lib/libkern/funcs.h>
+#endif
+
 #include "cmd.h"
 
 #define CTRL(c)	((c)&0x1f)
@@ -72,10 +78,9 @@ static void ls(char *, struct stat *);
 static int readline(char *, size_t, int);
 char *nextword(char *);
 static char *whatcmd(const struct cmd_table **ct, char *);
-static int docmd(void);
 static char *qualify(char *);
 
-char cmd_buf[133];
+char cmd_buf[CMD_BUFF_SIZE];
 
 int
 getcmd(void)
@@ -144,7 +149,7 @@ read_conf(void)
 	return rc;
 }
 
-static int
+int
 docmd(void)
 {
 	char *p = NULL;
@@ -195,7 +200,12 @@ docmd(void)
 	}
 	cmd.argv[cmd.argc] = NULL;
 
+#ifdef REGRESS
+	printf("%s %s\n", cmd.argv[0],
+	    (cmd.argv[1] == NULL) ? "(null)" : cmd.argv[1]);
+#else
 	return (*cmd.cmd->cmd_exec)();
+#endif
 }
 
 static char *
