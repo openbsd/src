@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_port.h,v 1.51 2004/10/05 02:01:18 jsg Exp $ */
+/*	$OpenBSD: usb_port.h,v 1.52 2004/11/08 22:01:02 dlg Exp $ */
 /*	$NetBSD: usb_port.h,v 1.62 2003/02/15 18:33:30 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -175,6 +175,7 @@ void __CONCAT(dname,_attach)(struct device *parent, struct device *self, void *a
 /* Returns from attach */
 #define USB_ATTACH_ERROR_RETURN	return
 #define USB_ATTACH_SUCCESS_RETURN	return
+#define USB_ATTACH_NEED_RESET	return
 
 #define USB_ATTACH_SETUP printf("\n")
 
@@ -371,6 +372,7 @@ __CONCAT(dname,_attach)(parent, self, aux) \
 /* Returns from attach */
 #define USB_ATTACH_ERROR_RETURN	return
 #define USB_ATTACH_SUCCESS_RETURN	return
+#define USB_ATTACH_NEED_RESET	return
 
 #define USB_ATTACH_SETUP printf("\n")
 
@@ -495,6 +497,7 @@ __CONCAT(dname,_attach)(device_t self)
 /* Returns from attach */
 #define USB_ATTACH_ERROR_RETURN	return ENXIO
 #define USB_ATTACH_SUCCESS_RETURN	return 0
+#define USB_ATTACH_NEED_RESET	return EAGAIN
 
 #define USB_ATTACH_SETUP \
 	sc->sc_dev = self; \
