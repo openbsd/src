@@ -1,4 +1,4 @@
-/*	$OpenBSD: bdisp.c,v 1.1.1.1 1996/12/16 06:56:08 downsj Exp $	*/
+/*	$OpenBSD: bdisp.c,v 1.2 1996/12/20 00:22:19 downsj Exp $	*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@ static char sccsid[] = "@(#)bdisp.c	8.2 (Berkeley) 5/3/95";
 
 #include "gomoku.h"
 #include <stdio.h>
-#include <ocurses.h>
+#include <curses.h>
 
 #define	SCRNH		24		/* assume 24 lines for the moment */
 #define	SCRNW		80		/* assume 80 chars for the moment */
