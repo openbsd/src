@@ -9,14 +9,14 @@
 .\"
 .\" Created: Sat Apr 22 21:55:14 1995 ylo
 .\"
-.\" $Id: ssh.1,v 1.19 1999/10/16 20:56:52 markus Exp $
+.\" $Id: ssh.1,v 1.20 1999/10/17 00:26:59 provos Exp $
 .\"
 .Dd September 25, 1999
 .Dt SSH 1
 .Os
 .Sh NAME
 .Nm ssh
-.Nd secure shell client (remote login program)
+.Nd OpenSSH secure shell client (remote login program)
 .Sh SYNOPSIS
 .Nm ssh
 .Op Fl l Ar login_name
@@ -925,14 +925,28 @@ Issues can be found from the SSH WWW home page:
 .Pp
 .Dl http://www.cs.hut.fi/ssh
 .Pp
-This version of
-.Nm
-is a derivative of the original 1.2.12 release, but with bugs removed and
+OpenSSH
+is a derivative of the original ssh 1.2.12 release, but with bugs removed and
 newer features re-added.   Rapidly after the 1.2.12 release, newer versions
-bore successively more restrictive licenses.  In this version, all components
+bore successively more restrictive licenses.  This version of OpenSSH,
+.Bl -bullet
+.It
+all components
 of a restrictive nature (ie. patents) have been directly removed from the
 source code; any licensed or patented components are chosen from external
-libraries.  The libraries described in
+libraries.
+.It
+has been updated to support ssh protocol 1.5
+.It
+contains added support for 
+.Xr kerberos 8
+authentication and ticket passing.
+.It
+support for one-time password authentication with
+.Xr skey 1 .
+.El
+.Pp
+The libraries described in
 .Xr ssl 8
 are required for proper operation.
 .Sh SEE ALSO
