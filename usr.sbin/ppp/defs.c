@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: defs.c,v 1.5 1997/12/27 13:45:18 brian Exp $
+ *	$Id: defs.c,v 1.6 1997/12/30 20:03:16 brian Exp $
  */
 
 #include <sys/param.h>
@@ -89,7 +89,7 @@ GetShortHost()
   char *p;
 
   if (gethostname(VarShortHost, sizeof VarShortHost)) {
-    LogPrintf(LogERROR, "GetShortHost: gethostbyname: %s\n", strerror(errno));
+    LogPrintf(LogERROR, "GetShortHost: gethostname: %s\n", strerror(errno));
     return 0;
   }
 
