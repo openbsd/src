@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.52 2003/12/10 07:22:43 itojun Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.53 2003/12/18 09:23:14 ho Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -601,18 +601,13 @@ in_arpinput(m)
 
 	if (!bcmp((caddr_t)ea->arp_sha, enaddr, sizeof (ea->arp_sha)))
 		goto out;	/* it's from me, ignore it. */
-	if (ETHER_IS_MULTICAST (&ea->arp_sha[0])) {
+	if (ETHER_IS_MULTICAST (&ea->arp_sha[0]))
 		if (!bcmp((caddr_t)ea->arp_sha, (caddr_t)etherbroadcastaddr,
-		    sizeof (ea->arp_sha)))
-		    log(LOG_ERR,
-			"arp: ether address is broadcast for IP address %s!\n",
-			inet_ntoa(isaddr));
-		else
-		    log(LOG_ERR,
-			"arp: ether address is multicast for IP address %s!\n",
-			inet_ntoa(isaddr));
-		goto out;
-	}
+		    sizeof (ea->arp_sha))) {
+			log(LOG_ERR, "arp: ether address is broadcast for "
+			    "IP address %s!\n", inet_ntoa(isaddr));
+			goto out;
+		}
 	if (myaddr.s_addr && isaddr.s_addr == myaddr.s_addr) {
 		log(LOG_ERR,
 		   "duplicate IP address %s sent from ethernet address %s\n",
