@@ -1,4 +1,4 @@
-/*	$OpenBSD: xinstall.c,v 1.14 1997/06/04 05:56:26 millert Exp $	*/
+/*	$OpenBSD: xinstall.c,v 1.15 1997/12/01 21:17:28 chuck Exp $	*/
 /*	$NetBSD: xinstall.c,v 1.9 1995/12/20 10:25:17 jonathan Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #endif
-static char rcsid[] = "$OpenBSD: xinstall.c,v 1.14 1997/06/04 05:56:26 millert Exp $";
+static char rcsid[] = "$OpenBSD: xinstall.c,v 1.15 1997/12/01 21:17:28 chuck Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -419,7 +419,7 @@ copy(from_fd, from_name, to_fd, to_name, size)
 	 */
 	if (size <= 8 * 1048576) {
 		if ((p = mmap(NULL, (size_t)size, PROT_READ,
-		    0, from_fd, (off_t)0)) == (char *)-1) {
+		    MAP_PRIVATE, from_fd, (off_t)0)) == (char *)-1) {
 			serrno = errno;
 			(void)unlink(to_name);
 			errx(EX_OSERR, "%s: %s", from_name, strerror(serrno));
