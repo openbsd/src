@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcmcia.4,v 1.21 2002/06/20 02:47:07 deraadt Exp $
+.\"	$OpenBSD: pcmcia.4,v 1.22 2002/06/20 03:37:54 fgsch Exp $
 .\"	$NetBSD: pcmcia.4,v 1.4 1998/06/07 09:10:30 enami Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -57,6 +57,11 @@ devices.
 .Sh SUPPORTED DEVICES
 The following devices are supported, sorted by function
 and driver name:
+.Ss Miscellaneous
+.Bl -tag -width speaker -offset ind -compact
+.It Xr grp 4
+GemPlus GPR400 smartcard reader.
+.El
 .Ss Serial interfaces and modems
 .Bl -tag -width speaker -offset ind -compact
 .It Xr com 4 , Xr pccom 4
