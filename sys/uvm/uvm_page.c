@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_page.c,v 1.33 2001/11/28 13:47:40 art Exp $	*/
-/*	$NetBSD: uvm_page.c,v 1.51 2001/03/09 01:02:12 chs Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.34 2001/11/28 14:29:13 art Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.52 2001/04/22 17:22:58 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -386,28 +386,12 @@ vaddr_t
 uvm_pageboot_alloc(size)
 	vsize_t size;
 {
-#if defined(PMAP_STEAL_MEMORY)
-	vaddr_t addr;
-
-	/* 
-	 * defer bootstrap allocation to MD code (it may want to allocate 
-	 * from a direct-mapped segment).  pmap_steal_memory should round
-	 * off virtual_space_start/virtual_space_end.
-	 */
-
-	addr = pmap_steal_memory(size, &virtual_space_start,
-	    &virtual_space_end);
-
-	return(addr);
-
-#else /* !PMAP_STEAL_MEMORY */
-
 	static boolean_t initialized = FALSE;
-	vaddr_t addr, vaddr;
+	vaddr_t addr;
+#if !defined(PMAP_STEAL_MEMORY)
+	vaddr_t vaddr;
 	paddr_t paddr;
-
-	/* round to page size */
-	size = round_page(size);
+#endif
 
 	/*
 	 * on first call to this function, initialize ourselves.
@@ -421,6 +405,24 @@ uvm_pageboot_alloc(size)
 
 		initialized = TRUE;
 	}
+
+	/* round to page size */
+	size = round_page(size);
+
+#if defined(PMAP_STEAL_MEMORY)
+
+	/* 
+	 * defer bootstrap allocation to MD code (it may want to allocate 
+	 * from a direct-mapped segment).  pmap_steal_memory should adjust
+	 * virtual_space_start/virtual_space_end if necessary.
+	 */
+
+	addr = pmap_steal_memory(size, &virtual_space_start,
+	    &virtual_space_end);
+
+	return(addr);
+
+#else /* !PMAP_STEAL_MEMORY */
 
 	/*
 	 * allocate virtual memory for this request

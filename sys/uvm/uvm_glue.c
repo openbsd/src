@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_glue.c,v 1.27 2001/11/28 13:47:39 art Exp $	*/
-/*	$NetBSD: uvm_glue.c,v 1.45 2001/03/15 06:10:57 chs Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.28 2001/11/28 14:29:13 art Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.46 2001/04/21 17:38:24 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -556,7 +556,6 @@ uvm_swapout_threads()
 		if (p)
 			uvm_swapout(p);
 	}
-	pmap_update();
 }
 
 /*

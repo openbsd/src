@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_loan.c,v 1.13 2001/11/28 13:47:39 art Exp $	*/
-/*	$NetBSD: uvm_loan.c,v 1.27 2001/04/09 06:21:03 jdolecek Exp $	*/
+/*	$OpenBSD: uvm_loan.c,v 1.14 2001/11/28 14:29:13 art Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.28 2001/04/10 00:53:21 chuck Exp $	*/
 
 /*
  *
@@ -92,7 +92,7 @@
  * use "try" locking.
  *
  * loans are typically broken by the following events:
- *  1. write fault to a loaned page 
+ *  1. user-level xwrite fault to a loaned page 
  *  2. pageout of clean+inactive O->A loaned page
  *  3. owner frees page (e.g. pager flush)
  *
@@ -120,10 +120,13 @@ static int	uvm_loanzero __P((struct uvm_faultinfo *, void ***, int));
  * uvm_loanentry: loan out pages in a map entry (helper fn for uvm_loan())
  *
  * => "ufi" is the result of a successful map lookup (meaning that
- *	the maps are locked by the caller)
- * => we may unlock the maps if needed (for I/O)
+ *	the map is locked by the caller)
+ * => we may unlock and then relock the map if needed (for I/O)
  * => we put our output result in "output"
- * => we return the number of pages we loaned, or -1 if we had an error
+ * => possible return values:
+ *	-1 == error, map is unlocked
+ *	 0 == map relock error (try again!), map is unlocked
+ *	>0 == number of pages we loaned, map remain locked
  */
 
 static __inline int
@@ -140,7 +143,7 @@ uvm_loanentry(ufi, output, flags)
 	int rv, result = 0;
 
 	/*
-	 * lock us the rest of the way down
+	 * lock us the rest of the way down (we unlock before return)
 	 */
 	if (aref->ar_amap)
 		amap_lock(aref->ar_amap);
@@ -162,6 +165,7 @@ uvm_loanentry(ufi, output, flags)
 			anon = NULL;
 		}
 
+		/* locked: map, amap, uobj */
 		if (anon) {
 			rv = uvm_loananon(ufi, output, flags, anon);
 		} else if (uobj) {
@@ -169,8 +173,9 @@ uvm_loanentry(ufi, output, flags)
 		} else if (UVM_ET_ISCOPYONWRITE(ufi->entry)) {
 			rv = uvm_loanzero(ufi, output, flags);
 		} else {
-			rv = -1;		/* null map entry... fail now */
+			rv = -1;	/* null map entry... fail now */
 		}
+		/* locked: if (rv > 0) => map, amap, uobj */
 
 		/* total failure */
 		if (rv < 0)
@@ -189,9 +194,12 @@ uvm_loanentry(ufi, output, flags)
 	}
 
 	/*
-	 * unlock everything and return
+	 * unlock what we locked and return (with map still locked)
 	 */
-	uvmfault_unlockall(ufi, aref->ar_amap, uobj, NULL);
+	if (aref->ar_amap)
+		amap_unlock(aref->ar_amap);
+	if (uobj)
+		simple_unlock(&uobj->vmobjlock);
 	return(result);
 }
 
@@ -200,7 +208,7 @@ uvm_loanentry(ufi, output, flags)
  */
 
 /*
- * uvm_loan: loan pages out to anons or to the kernel
+ * uvm_loan: loan pages in a map out to anons or to the kernel
  * 
  * => map should be unlocked
  * => start and len should be multiples of PAGE_SIZE
@@ -208,6 +216,7 @@ uvm_loanentry(ufi, output, flags)
  * => flag values: UVM_LOAN_TOANON - loan to anons
  *                 UVM_LOAN_TOPAGE - loan to wired kernel page
  *    one and only one of these flags must be set!
+ * => returns 0 (success), or an appropriate error number
  */
 
 int
@@ -262,21 +271,29 @@ uvm_loan(map, start, len, result, flags)
 		}
 
 		/*
-		 * now do the loanout
+		 * map now locked.  now do the loanout...
 		 */
 		rv = uvm_loanentry(&ufi, &output, flags);
 		if (rv < 0) {
+			/* all unlocked due to error */
 			error = EINVAL;
 			goto fail;
 		}
 
 		/*
-		 * done!   advance pointers and unlock.
+		 * done!  the map is locked only if rv > 0.  if that
+		 * is the case, advance and unlock.  
+		 *
+		 * XXXCDC: could avoid the unlock with smarter code
+		 *         (but it only happens on map entry boundaries, 
+		 *          so it isn't that bad).
 		 */
-		rv <<= PAGE_SHIFT;
-		len -= rv;
-		start += rv;
-		uvmfault_unlockmaps(&ufi, FALSE);
+		if (rv) {
+			rv <<= PAGE_SHIFT;
+			len -= rv;
+			start += rv;
+			uvmfault_unlockmaps(&ufi, FALSE);
+		}
 	}
 	
 	/*
@@ -288,6 +305,7 @@ uvm_loan(map, start, len, result, flags)
 fail:
 	/*
 	 * fail: failed to do it.   drop our loans and return failure code.
+	 * map is already unlocked.
 	 */
 	if (output - result) {
 		if (flags & UVM_LOAN_TOANON)
@@ -303,6 +321,7 @@ fail:
 /*
  * uvm_loananon: loan a page from an anon out
  * 
+ * => called with map, amap, uobj locked
  * => return value:
  *	-1 = fatal error, everything is unlocked, abort.
  *	 0 = lookup in ufi went stale, everything unlocked, relookup and
@@ -321,15 +340,16 @@ uvm_loananon(ufi, output, flags, anon)
 	int result;
 
 	/*
-	 * if we are loaning to another anon then it is easy, we just
+	 * if we are loaning to "another" anon then it is easy, we just
 	 * bump the reference count on the current anon and return a
-	 * pointer to it.
+	 * pointer to it (it becomes copy-on-write shared).
 	 */
 	if (flags & UVM_LOAN_TOANON) {
 		simple_lock(&anon->an_lock);
 		pg = anon->u.an_page;
+		/* if (in RAM) and (owned by this anon) and (only 1 ref) */
 		if (pg && (pg->pqflags & PQ_ANON) != 0 && anon->an_ref == 1)
-			/* read protect it */
+			/* write-protect it */
 			pmap_page_protect(pg, VM_PROT_READ);
 		anon->an_ref++;
 		**output = anon;
@@ -351,7 +371,6 @@ uvm_loananon(ufi, output, flags, anon)
 	 * if we were unable to get the anon, then uvmfault_anonget has
 	 * unlocked everything and returned an error code.
 	 */
-
 	if (result != 0) {
 
 		/* need to refault (i.e. refresh our lookup) ? */
@@ -383,7 +402,7 @@ uvm_loananon(ufi, output, flags, anon)
 	*output = (*output) + 1;
 
 	/* unlock anon and return success */
-	if (pg->uobject)
+	if (pg->uobject)	/* XXXCDC: what if this is our uobj? bad */
 		simple_unlock(&pg->uobject->vmobjlock);
 	simple_unlock(&anon->an_lock);
 	return(1);
@@ -392,6 +411,7 @@ uvm_loananon(ufi, output, flags, anon)
 /*
  * uvm_loanuobj: loan a page from a uobj out
  *
+ * => called with map, amap, uobj locked
  * => return value:
  *	-1 = fatal error, everything is unlocked, abort.
  *	 0 = lookup in ufi went stale, everything unlocked, relookup and
@@ -419,13 +439,13 @@ uvm_loanuobj(ufi, output, flags, va)
 	 * XXXCDC: duplicate code with uvm_fault().
 	 */
 
-	if (uobj->pgops->pgo_get) {
+	if (uobj->pgops->pgo_get) {	/* try locked pgo_get */
 		npages = 1;
 		pg = NULL;
 		result = uobj->pgops->pgo_get(uobj, va - ufi->entry->start,
 		    &pg, &npages, 0, VM_PROT_READ, MADV_NORMAL, PGO_LOCKED);
 	} else {
-		result = EIO;
+		result = EIO;		/* must have pgo_get op */
 	}
 
 	/*
@@ -524,7 +544,7 @@ uvm_loanuobj(ufi, output, flags, va)
 	 * not be PG_RELEASED (we caught this above).
 	 */
 
-	if ((flags & UVM_LOAN_TOANON) == 0) {	/* loan to wired-kernel page? */
+	if ((flags & UVM_LOAN_TOANON) == 0) { /* loan to wired-kernel page? */
 		uvm_lock_pageq();
 		if (pg->loan_count == 0)
 			pmap_page_protect(pg, VM_PROT_READ);
@@ -599,6 +619,7 @@ uvm_loanuobj(ufi, output, flags, va)
 /*
  * uvm_loanzero: "loan" a zero-fill page out
  *
+ * => called with map, amap, uobj locked
  * => return value:
  *	-1 = fatal error, everything is unlocked, abort.
  *	 0 = lookup in ufi went stale, everything unlocked, relookup and
