@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.25 2003/06/11 03:49:37 miod Exp $
+#	$OpenBSD: RAMDISK,v 1.26 2003/06/11 20:33:08 drahn Exp $
 #
 # PPC GENERIC config file
 #
@@ -55,7 +55,7 @@ ahc*		at pci? dev ? function ?	# Adaptec 294x, aic78x0 SCSI
 #pcscp*		at pci? dev ? function ?	# AMD Am53c974 PCscsi-PCI SCSI
 pciide*	at pci? dev ? function ?
 kauaiata*	at pci? dev ? function ?	# Apple ATA 100
-wdc*		at kauaiata?  flags 0x1
+wdc*		at kauaiata?
 macobio0	at pci? dev ? function ?
 gem*		at pci? dev ? function ?	# GMAC ethernet
 hme*		at pci? dev ? function ?	# HME ethernet
@@ -114,7 +114,7 @@ scsibus*	at ahc?
 #scsibus*	at mesh?
 #scsibus*	at pcscp?
 
-wdc*		at macobio? flags 0x0
+wdc*		at macobio?
 wd*		at wdc? drive ? flags 0x0000
 wd*		at pciide? channel ? drive ?
 atapiscsi*	at wdc? channel ? flags 0x0000

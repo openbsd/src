@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc_obio.c,v 1.11 2003/06/06 16:36:51 drahn Exp $	*/
+/*	$OpenBSD: wdc_obio.c,v 1.12 2003/06/11 20:33:08 drahn Exp $	*/
 /*	$NetBSD: wdc_obio.c,v 1.15 2001/07/25 20:26:33 bouyer Exp $	*/
 
 /*-
@@ -144,10 +144,8 @@ wdc_obio_attach(parent, self, aux)
 	bus_addr_t cmdbase;
 	bus_size_t cmdsize;
 
-	if (sc->sc_wdcdev.sc_dev.dv_cfdata->cf_flags & WDC_OPTIONS_DMA) {
-		if (ca->ca_nreg >= 16 || ca->ca_nintr == -1)
-			use_dma = 1;	/* XXX Don't work yet. */
-	}
+	if (ca->ca_nreg >= 16 || ca->ca_nintr == -1)
+		use_dma = 1;	/* Enable dma */
 
 	sc->sc_dmat = ca->ca_dmat;
 	if ((error = bus_dmamap_create(sc->sc_dmat,
