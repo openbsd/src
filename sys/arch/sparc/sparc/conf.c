@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.23 1999/07/23 19:11:27 jason Exp $	*/
+/*	$OpenBSD: conf.c,v 1.24 2000/02/21 08:16:36 mjacob Exp $	*/
 /*	$NetBSD: conf.c,v 1.40 1996/04/11 19:20:03 thorpej Exp $ */
 
 /*
@@ -63,6 +63,7 @@
 #include "ccd.h"
 #include "raid.h"
 #include "ch.h"
+#include "ses.h"
 #include "ss.h"
 #include "uk.h"
 #include "sd.h"
@@ -256,6 +257,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ss_init(NSS,ss),           /* 121: SCSI scanner */
 	cdev_ksyms_init(NKSYMS,ksyms),	/* 122: Kernel symbols device */
 	cdev_disk_init(NRAID,raid),     /* 123: RAIDframe disk driver */
+	cdev_ses_init(NSES,ses),	/* 124: SCSI SES or SAF-TE device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
