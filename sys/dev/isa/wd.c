@@ -55,6 +55,7 @@
 #include <machine/pio.h>
 
 #include <dev/isa/isavar.h>
+#include <dev/isa/isadmavar.h>
 #include <dev/isa/wdreg.h>
 
 #define	WAITTIME	(4 * hz)	/* time to wait for a completion */

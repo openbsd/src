@@ -40,6 +40,7 @@
 #include <machine/cpu.h>
 #include <machine/pio.h>
 
+#include <dev/isa/isadmavar.h>
 #include <i386/isa/isa_device.h>	/* XXX BROKEN */
 
 extern int delaycount;  /* from clock setup code */

@@ -66,6 +66,7 @@
 #include <machine/pio.h>
 
 #include <dev/isa/isavar.h>
+#include <dev/isa/isadmavar.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
