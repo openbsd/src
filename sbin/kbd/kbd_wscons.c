@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd_wscons.c,v 1.11 2003/02/16 02:08:02 miod Exp $ */
+/*	$OpenBSD: kbd_wscons.c,v 1.12 2003/03/30 19:10:00 jsyn Exp $ */
 
 /*
  * Copyright (c) 2001 Mats O Jansson.  All rights reserved.
@@ -172,7 +172,7 @@ kbd_list(void)
 			fd = open(device, O_RDONLY);
 		if (fd >= 0) {
 			if (ioctl(fd, WSKBDIO_GTYPE, &kbtype) < 0)
-				err(1, "WDKBDIO_GTYPE");
+				err(1, "WSKBDIO_GTYPE");
 			if ((kbtype == WSKBD_TYPE_PC_XT) ||
 			    (kbtype == WSKBD_TYPE_PC_AT))
 				pc_kbd++;
@@ -228,10 +228,10 @@ kbd_list(void)
 	kvm_close(kd);
 
 	if (rebuild > 0) {
-		printf("Unknown encoding or variant. kbd(1) needs to be rebuild.\n");
+		printf("Unknown encoding or variant. kbd(1) needs to be rebuilt.\n");
 	}
 #else
-	printf("List not available, sorry.\n");
+	printf("List not available; sorry.\n");
 #endif
 }
 
@@ -293,7 +293,7 @@ kbd_set(char *name, int verbose)
 					    "%s: unsupported encoding %s on %s\n",
 					    __progname, name, device);
 				} else {
-					err(1, "WDKBDIO_SETENCODING: %s", device);
+					err(1, "WSKBDIO_SETENCODING: %s", device);
 				}
 				v--;
 			}
