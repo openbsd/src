@@ -1,4 +1,4 @@
-#	$OpenBSD: pnpdevs,v 1.19 1998/10/09 02:37:36 deraadt Exp $
+#	$OpenBSD: pnpdevs,v 1.20 1998/10/10 09:22:36 deraadt Exp $
 
 #
 # NOTE: All `com' devices also need pccom identifiers.
@@ -373,6 +373,7 @@ sb	CTL0041	#SB16 PnP (CT4131)
 sb	CTL0042	#SB AWE64 Value
 sb	CTL0044	#SB AWE64 Gold
 sb	CTL0045	#SB AWE64 Value
+sb	@X@0001	#CMI8330. Audio Adapter
 ym	YMH0021 #
 sb	ESS1868	#
 ed	SMC8416 #SMC EtherEZ
