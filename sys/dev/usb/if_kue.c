@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_kue.c,v 1.16 2002/03/14 03:16:08 millert Exp $ */
-/*	$NetBSD: if_kue.c,v 1.43 2001/10/08 03:37:53 augustss Exp $	*/
+/*	$OpenBSD: if_kue.c,v 1.17 2002/05/06 05:34:39 nate Exp $ */
+/*	$NetBSD: if_kue.c,v 1.47 2002/03/17 18:02:52 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -89,7 +89,6 @@
 #include <sys/device.h>
 #include <sys/proc.h>
 
-#include <sys/device.h>
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
@@ -99,8 +98,6 @@
 #include <net/if_arp.h>
 #endif
 #include <net/if_dl.h>
-
-#define BPF_MTAP(ifp, m) bpf_mtap((ifp)->if_bpf, (m))
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -135,7 +132,12 @@
 #include <dev/usb/usbdevs.h>
 
 #include <dev/usb/if_kuereg.h>
+
+#if defined(__OpenBSD__)
 #include <dev/microcode/kue/kue_fw.h>
+#else
+#include <dev/usb/kue_fw.h>
+#endif
 
 #ifdef KUE_DEBUG
 #define DPRINTF(x)	if (kuedebug) logprintf x
@@ -149,7 +151,7 @@ int	kuedebug = 0;
 /*
  * Various supported device vendors/products.
  */
-Static const struct kue_type kue_devs[] = {
+Static const struct usb_devno kue_devs[] = {
 	{ USB_VENDOR_3COM, USB_PRODUCT_3COM_3C19250 },
 	{ USB_VENDOR_3COM, USB_PRODUCT_3COM_3C460 },
 	{ USB_VENDOR_ABOCOM, USB_PRODUCT_ABOCOM_URE450 },
@@ -181,8 +183,8 @@ Static const struct kue_type kue_devs[] = {
 	{ USB_VENDOR_PORTSMITH, USB_PRODUCT_PORTSMITH_EEA },
 	{ USB_VENDOR_SHARK, USB_PRODUCT_SHARK_PA },
 	{ USB_VENDOR_SMC, USB_PRODUCT_SMC_2102USB },
-	{ 0, 0 }
 };
+#define kue_lookup(v, p) (usb_lookup(kue_devs, v, p))
 
 USB_DECLARE_DRIVER(kue);
 
@@ -248,7 +250,7 @@ kue_ctl(struct kue_softc *sc, int rw, u_int8_t breq, u_int16_t val,
 Static int
 kue_load_fw(struct kue_softc *sc)
 {
-	usb_device_descriptor_t	dd;
+	usb_device_descriptor_t dd;
 	usbd_status		err;
 
 	DPRINTFN(1,("%s: %s: enter\n", USBDEVNAME(sc->kue_dev), __FUNCTION__));
@@ -404,18 +406,14 @@ kue_reset(struct kue_softc *sc)
 USB_MATCH(kue)
 {
 	USB_MATCH_START(kue, uaa);
-	const struct kue_type			*t;
 
 	DPRINTFN(25,("kue_match: enter\n"));
 
 	if (uaa->iface != NULL)
 		return (UMATCH_NONE);
 
-	for (t = kue_devs; t->kue_vid != 0; t++)
-		if (uaa->vendor == t->kue_vid && uaa->product == t->kue_did)
-			return (UMATCH_VENDOR_PRODUCT);
-
-	return (UMATCH_NONE);
+	return (kue_lookup(uaa->vendor, uaa->product) != NULL ?
+		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
 /*
@@ -578,9 +576,6 @@ USB_DETACH(kue)
 #if defined(__NetBSD__)
 #if NRND > 0
 	rnd_detach_source(&sc->rnd_source);
-#endif
-#if NBPFILTER > 0
-	bpfdetach(ifp);
 #endif
 #endif /* __NetBSD__ */
 	ether_ifdetach(ifp);
@@ -799,7 +794,7 @@ kue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	 * address or the interface is in promiscuous mode.
 	 */
 	if (ifp->if_bpf)
-		BPF_MTAP(ifp, m);
+		bpf_mtap(ifp->if_bpf, m);
 #endif
 
 	DPRINTFN(10,("%s: %s: deliver %d\n", USBDEVNAME(sc->kue_dev),
@@ -944,7 +939,7 @@ kue_start(struct ifnet *ifp)
 	 * to him.
 	 */
 	if (ifp->if_bpf)
-		BPF_MTAP(ifp, m_head);
+		bpf_mtap(ifp->if_bpf, m_head);
 #endif
 
 	ifp->if_flags |= IFF_OACTIVE;
