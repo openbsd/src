@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.8 2001/03/10 23:14:32 drahn Exp $ */
+/*	$OpenBSD: cpu.c,v 1.9 2001/03/11 04:48:12 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -172,7 +172,6 @@ cpuattach(parent, dev, aux)
 		hid0 &= ~(HID0_NAP | HID0_SLEEP);
 		hid0 |= HID0_DOZE | HID0_DPM; 
 	}
-	printf("hid0 %x:",hid0);
 	asm ("mtspr %0,1008" : "=r" (hid0));
 
 	/* if processor is G3 or G4, configure l2 cache */ 
