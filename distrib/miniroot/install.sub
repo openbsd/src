@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.60 1998/03/26 03:57:43 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.61 1998/03/26 05:17:48 millert Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -750,6 +750,16 @@ install_url() {
 				stty echo
 				echo ""
 				_ftp_server_password=$resp
+
+				echo -n "Password (again): "
+				stty -echo
+				getresp "${_ftp_server_password}"
+				stty echo
+				echo ""
+				if [ "${_ftp_server_password}" != "${resp}" ]; then
+					echo "Passwords do not match, try again."
+					resp=""
+				fi
 			done
 		else
 			# only used by ftp_list_files()
