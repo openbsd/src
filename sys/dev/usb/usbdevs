@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.103 2004/08/04 01:50:22 dlg Exp $
+$OpenBSD: usbdevs,v 1.104 2004/08/13 22:13:55 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -737,6 +737,7 @@ product FTDI PS2KBDMS		0x8371	PS/2 Keyboard/Mouse
 product FTDI SERIAL_8U100AX	0x8372	Serial converter
 product	FTDI LCD_MX200		0xfa01	Matrix Orbital MX200 Series LCD
 product FTDI LCD_LK202_24	0xfa03	Matrix Orbital LK202-24 LCD
+product FTDI LCD_LK204_24	0xfa04	Matrix Orbital LK204-24 LCD
 product FTDI LCD_CFA_631	0xfc0c  Crystalfontz CFA-631 LCD
 product FTDI LCD_CFA_632	0xfc08  Crystalfontz CFA-632 LCD
 product FTDI LCD_CFA_633	0xfc0b  Crystalfontz CFA-633 LCD
