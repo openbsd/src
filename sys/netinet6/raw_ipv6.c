@@ -42,7 +42,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
  * SUCH DAMAGE.
  *
  *	@(#)raw_ip.c	8.7 (Berkeley) 5/15/95
- *	$Id: raw_ipv6.c,v 1.3 1999/03/09 05:31:55 cmetz Exp $
+ *	$Id: raw_ipv6.c,v 1.4 1999/04/28 09:28:16 art Exp $
  */
 
 #include <sys/param.h>
@@ -155,8 +155,8 @@ ripv6_init()
 	 * to allocate a one entry hash list than it is to check all
 	 * over the place for hashbase == NULL.
 	 */
-	ri6pcbinfo.hashbase = hashinit(1, M_PCB, &ri6pcbinfo.hashmask);
-	ri6pcbinfo.porthashbase = hashinit(1, M_PCB, &ri6pcbinfo.porthashmask);
+	ri6pcbinfo.hashbase = hashinit(1, M_PCB, M_WAITOK, &ri6pcbinfo.hashmask);
+	ri6pcbinfo.porthashbase = hashinit(1, M_PCB, M_WAITOK, &ri6pcbinfo.porthashmask);
 	ri6pcbinfo.ipi_zone = zinit("ri6pcb", sizeof(struct inpcb),
 				   nmbclusters / 4, ZONE_INTERRUPT, 0);
 #else /* __FreeBSD__ */

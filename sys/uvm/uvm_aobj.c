@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.2 1999/02/26 05:32:06 art Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.3 1999/04/28 09:28:18 art Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.15 1998/10/18 23:49:59 chs Exp $	*/
 
 /*
@@ -522,7 +522,7 @@ uao_create(size, flags)
 
 		/* allocate hash table or array depending on object size */
 			if (UAO_USES_SWHASH(aobj)) {
-			aobj->u_swhash = newhashinit(UAO_SWHASH_BUCKETS(aobj),
+			aobj->u_swhash = hashinit(UAO_SWHASH_BUCKETS(aobj),
 			    M_UVMAOBJ, mflags, &aobj->u_swhashmask);
 			if (aobj->u_swhash == NULL)
 				panic("uao_create: hashinit swhash failed");

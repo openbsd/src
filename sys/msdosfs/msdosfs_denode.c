@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_denode.c,v 1.15 1999/02/26 03:28:13 art Exp $	*/
+/*	$OpenBSD: msdosfs_denode.c,v 1.16 1999/04/28 09:28:16 art Exp $	*/
 /*	$NetBSD: msdosfs_denode.c,v 1.23 1997/10/17 11:23:58 ws Exp $	*/
 
 /*-
@@ -81,7 +81,7 @@ int
 msdosfs_init(vfsp)
 	struct vfsconf *vfsp;
 {
-	dehashtbl = hashinit(desiredvnodes/2, M_MSDOSFSMNT, &dehash);
+	dehashtbl = hashinit(desiredvnodes/2, M_MSDOSFSMNT, M_WAITOK, &dehash);
 	return (0);
 }
 

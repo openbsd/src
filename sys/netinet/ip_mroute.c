@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.15 1999/04/20 20:06:12 niklas Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.16 1999/04/28 09:28:16 art Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.27 1996/05/07 02:40:50 thorpej Exp $	*/
 
 /*
@@ -408,7 +408,7 @@ ip_mrouter_init(so, m)
 
 	ip_mrouter = so;
 
-	mfchashtbl = hashinit(MFCTBLSIZ, M_MRTABLE, &mfchash);
+	mfchashtbl = hashinit(MFCTBLSIZ, M_MRTABLE, M_WAITOK, &mfchash);
 	bzero((caddr_t)nexpire, sizeof(nexpire));
 
 	pim_assert = 0;

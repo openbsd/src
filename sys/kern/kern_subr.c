@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_subr.c,v 1.8 1999/02/26 04:56:02 art Exp $	*/
+/*	$OpenBSD: kern_subr.c,v 1.9 1999/04/28 09:28:15 art Exp $	*/
 /*	$NetBSD: kern_subr.c,v 1.15 1996/04/09 17:21:56 ragge Exp $	*/
 
 /*
@@ -161,15 +161,7 @@ again:
  * General routine to allocate a hash table.
  */
 void *
-hashinit(elements, type, hashmask)
-	int elements, type;
-	u_long *hashmask;
-{
-	return newhashinit(elements, type, M_WAITOK, hashmask);
-}
-
-void *
-newhashinit(elements, type, flags, hashmask)
+hashinit(elements, type, flags, hashmask)
 	int elements, type, flags;
 	u_long *hashmask;
 {

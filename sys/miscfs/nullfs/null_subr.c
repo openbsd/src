@@ -1,4 +1,4 @@
-/*	$OpenBSD: null_subr.c,v 1.8 1998/08/06 19:34:41 csapuntz Exp $	*/
+/*	$OpenBSD: null_subr.c,v 1.9 1999/04/28 09:28:15 art Exp $	*/
 /*	$NetBSD: null_subr.c,v 1.6 1996/05/10 22:50:52 jtk Exp $	*/
 
 /*
@@ -84,7 +84,7 @@ nullfs_init(vfsp)
 #ifdef NULLFS_DIAGNOSTIC
 	printf("nullfs_init\n");		/* printed during system boot */
 #endif
-	null_node_hashtbl = hashinit(NNULLNODECACHE, M_CACHE, &null_node_hash);
+	null_node_hashtbl = hashinit(NNULLNODECACHE, M_CACHE, M_WAITOK, &null_node_hash);
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.26 1999/02/26 03:16:25 art Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.27 1999/04/28 09:28:17 art Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -1133,7 +1133,7 @@ nfs_init()
 			+ nqsrv_clockskew + nqsrv_writeslack;
 		NQLOADNOVRAM(nqnfsstarttime);
 		CIRCLEQ_INIT(&nqtimerhead);
-		nqfhhashtbl = hashinit(NQLCHSZ, M_NQLEASE, &nqfhhash);
+		nqfhhashtbl = hashinit(NQLCHSZ, M_NQLEASE, M_WAITOK, &nqfhhash);
 	}
 
 	/*

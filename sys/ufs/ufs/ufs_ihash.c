@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_ihash.c,v 1.6 1998/01/09 20:38:05 csapuntz Exp $	*/
+/*	$OpenBSD: ufs_ihash.c,v 1.7 1999/04/28 09:28:18 art Exp $	*/
 /*	$NetBSD: ufs_ihash.c,v 1.3 1996/02/09 22:36:04 christos Exp $	*/
 
 /*
@@ -61,7 +61,7 @@ void
 ufs_ihashinit()
 {
 
-	ihashtbl = hashinit(desiredvnodes, M_UFSMNT, &ihash);
+	ihashtbl = hashinit(desiredvnodes, M_UFSMNT, M_WAITOK, &ihash);
 	simple_lock_init(&ufs_ihash_slock);
 }
 

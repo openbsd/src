@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.27 1999/02/26 03:19:57 art Exp $	*/
+/*	$OpenBSD: systm.h,v 1.28 1999/04/28 09:28:17 art Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -141,8 +141,7 @@ void vfs_opv_init_default __P((struct vnodeopv_desc *));
 void vfs_op_init __P((void));
 
 int	seltrue __P((dev_t dev, int which, struct proc *));
-void	*hashinit __P((int, int, u_long *));
-void	*newhashinit __P((int, int, int, u_long *));
+void	*hashinit __P((int, int, int, u_long *));
 int	sys_nosys __P((struct proc *, void *, register_t *));
 
 void	panic __P((const char *, ...))

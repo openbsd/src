@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_pcb.c,v 1.2 1996/10/26 09:34:53 mickey Exp $	*/
+/*	$OpenBSD: ipx_pcb.c,v 1.3 1999/04/28 09:28:16 art Exp $	*/
 
 /*-
  *
@@ -68,7 +68,7 @@ ipx_pcbinit(table, hashsize)
 	int	hashsize;
 {
 	CIRCLEQ_INIT(&table->ipxpt_queue);
-	table->ipxpt_hashtbl = hashinit(hashsize, M_PCB, &table->ipxpt_hash);
+	table->ipxpt_hashtbl = hashinit(hashsize, M_PCB, M_WAITOK, &table->ipxpt_hash);
 	table->ipxpt_lport = 0;
 }
 

@@ -890,12 +890,13 @@ softdep_initialize()
 	LIST_INIT(&mkdirlisthd);
 	LIST_INIT(&softdep_workitem_pending);
 	max_softdeps = desiredvnodes * (32 / sizeof(register_t));
-	pagedep_hashtbl = hashinit(desiredvnodes / 5, M_PAGEDEP,
+	pagedep_hashtbl = hashinit(desiredvnodes / 5, M_PAGEDEP, M_WAITOK,
 	    &pagedep_hash);
 	sema_init(&pagedep_in_progress, "pagedep", PRIBIO, 0);
-	inodedep_hashtbl = hashinit(desiredvnodes, M_INODEDEP, &inodedep_hash);
+	inodedep_hashtbl = hashinit(desiredvnodes, M_INODEDEP, M_WAITOK,
+	    &inodedep_hash);
 	sema_init(&inodedep_in_progress, "inodedep", PRIBIO, 0);
-	newblk_hashtbl = hashinit(64, M_NEWBLK, &newblk_hash);
+	newblk_hashtbl = hashinit(64, M_NEWBLK, M_WAITOK, &newblk_hash);
 	sema_init(&newblk_in_progress, "newblk", PRIBIO, 0);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_srvcache.c,v 1.5 1996/04/21 22:30:28 deraadt Exp $	*/
+/*	$OpenBSD: nfs_srvcache.c,v 1.6 1999/04/28 09:28:17 art Exp $	*/
 /*	$NetBSD: nfs_srvcache.c,v 1.12 1996/02/18 11:53:49 fvdl Exp $	*/
 
 /*
@@ -144,7 +144,7 @@ void
 nfsrv_initcache()
 {
 
-	nfsrvhashtbl = hashinit(desirednfsrvcache, M_NFSD, &nfsrvhash);
+	nfsrvhashtbl = hashinit(desirednfsrvcache, M_NFSD, M_WAITOK, &nfsrvhash);
 	TAILQ_INIT(&nfsrvlruhead);
 }
 

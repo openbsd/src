@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdesc_vnops.c,v 1.12 1998/08/06 19:34:32 csapuntz Exp $	*/
+/*	$OpenBSD: fdesc_vnops.c,v 1.13 1999/04/28 09:28:15 art Exp $	*/
 /*	$NetBSD: fdesc_vnops.c,v 1.32 1996/04/11 11:24:29 mrg Exp $	*/
 
 /*
@@ -199,7 +199,7 @@ fdesc_init(vfsp)
 		if (cdevsw[cttymajor].d_open == cttyopen)
 			break;
 	devctty = makedev(cttymajor, 0);
-	fdhashtbl = hashinit(NFDCACHE, M_CACHE, &fdhash);
+	fdhashtbl = hashinit(NFDCACHE, M_CACHE, M_WAITOK, &fdhash);
 	return (0);
 }
 

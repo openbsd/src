@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.21 1998/11/29 01:46:58 art Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.22 1999/04/28 09:28:15 art Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -144,7 +144,7 @@ bufinit()
 
 	for (dp = bufqueues; dp < &bufqueues[BQUEUES]; dp++)
 		TAILQ_INIT(dp);
-	bufhashtbl = hashinit(nbuf, M_CACHE, &bufhash);
+	bufhashtbl = hashinit(nbuf, M_CACHE, M_WAITOK, &bufhash);
 	base = bufpages / nbuf;
 	residual = bufpages % nbuf;
 	for (i = 0; i < nbuf; i++) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_node.c,v 1.9 1998/08/21 23:31:32 csapuntz Exp $	*/
+/*	$OpenBSD: cd9660_node.c,v 1.10 1999/04/28 09:28:14 art Exp $	*/
 /*	$NetBSD: cd9660_node.c,v 1.17 1997/05/05 07:13:57 mycroft Exp $	*/
 
 /*-
@@ -84,10 +84,10 @@ cd9660_init(vfsp)
 	struct vfsconf *vfsp;
 {
 
-	isohashtbl = hashinit(desiredvnodes, M_ISOFSMNT, &isohash);
+	isohashtbl = hashinit(desiredvnodes, M_ISOFSMNT, M_WAITOK, &isohash);
 	simple_lock_init(&cd9660_ihash_slock);
 #ifdef ISODEVMAP
-	idvhashtbl = hashinit(desiredvnodes / 8, M_ISOFSMNT, &idvhash);
+	idvhashtbl = hashinit(desiredvnodes / 8, M_ISOFSMNT, M_WAITOK, &idvhash);
 #endif
 	return (0);
 }
