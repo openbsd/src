@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp.c,v 1.25 2000/03/30 02:49:35 jason Exp $	*/
+/*	$OpenBSD: if_fxp.c,v 1.26 2000/04/18 03:40:55 jason Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -74,20 +74,11 @@
 #include <net/bpfdesc.h>
 #endif
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
-
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/device.h>
 
-#if defined(__NetBSD__)
-#include <net/if_ether.h>
-#include <netinet/if_inarp.h>
-#endif
-
-#if defined(__OpenBSD__)
 #include <netinet/if_ether.h>
-#endif
 
 #include <vm/vm.h>
 
@@ -109,23 +100,6 @@
 #undef vtophys
 #define	vtophys(va)	alpha_XXX_dmamap((vm_offset_t)(va))
 #endif /* __alpha__ */
-
-#else /* __FreeBSD__ */
-
-#include <sys/sockio.h>
-
-#include <netinet/if_ether.h>
-
-#include <vm/vm.h>		/* for vtophys */
-#include <vm/vm_param.h>	/* for vtophys */
-#include <vm/pmap.h>		/* for vtophys */
-#include <machine/clock.h>	/* for DELAY */
-
-#include <pci/pcivar.h>
-#include <pci/if_fxpreg.h>
-#include <pci/if_fxpvar.h>
-
-#endif /* __NetBSD__ || __OpenBSD__ */
 
 #define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
 
@@ -196,27 +170,26 @@ struct fxp_supported_media {
 	const int	fsm_defmedia;	/* default media for this PHY */
 };
 
-static int fxp_mediachange	__P((struct ifnet *));
-static void fxp_mediastatus	__P((struct ifnet *, struct ifmediareq *));
+int fxp_mediachange		__P((struct ifnet *));
+void fxp_mediastatus		__P((struct ifnet *, struct ifmediareq *));
 static inline void fxp_scb_wait	__P((struct fxp_softc *));
-static FXP_INTR_TYPE fxp_intr	__P((void *));
-static void fxp_start		__P((struct ifnet *));
-static int fxp_ioctl		__P((struct ifnet *,
-				    FXP_IOCTLCMD_TYPE, caddr_t));
-static void fxp_init		__P((void *));
-static void fxp_stop		__P((struct fxp_softc *, int));
-static void fxp_watchdog	__P((struct ifnet *));
-static int fxp_add_rfabuf	__P((struct fxp_softc *, struct mbuf *));
-static int fxp_mdi_read		__P((struct device *, int, int));
-static void fxp_mdi_write	__P((struct device *, int, int, int));
-static void fxp_autosize_eeprom	__P((struct fxp_softc *));
-static void fxp_statchg		__P((struct device *));
-static void fxp_read_eeprom	__P((struct fxp_softc *, u_int16_t *,
+int fxp_intr			__P((void *));
+void fxp_start			__P((struct ifnet *));
+int fxp_ioctl			__P((struct ifnet *, u_long, caddr_t));
+void fxp_init			__P((void *));
+void fxp_stop			__P((struct fxp_softc *, int));
+void fxp_watchdog		__P((struct ifnet *));
+int fxp_add_rfabuf		__P((struct fxp_softc *, struct mbuf *));
+int fxp_mdi_read		__P((struct device *, int, int));
+void fxp_mdi_write		__P((struct device *, int, int, int));
+void fxp_autosize_eeprom	__P((struct fxp_softc *));
+void fxp_statchg		__P((struct device *));
+void fxp_read_eeprom		__P((struct fxp_softc *, u_int16_t *,
 				    int, int));
-static int fxp_attach_common	__P((struct fxp_softc *, u_int8_t *));
+int fxp_attach_common	__P((struct fxp_softc *, u_int8_t *));
 
 void fxp_stats_update		__P((void *));
-void fxp_mc_setup	__P((struct fxp_softc *));
+void fxp_mc_setup		__P((struct fxp_softc *));
 
 /*
  * Set initial transmit threshold at 64 (512 bytes). This is
@@ -277,21 +250,14 @@ fxp_scb_wait(sc)
  * Operating system-specific autoconfiguration glue
  *************************************************************/
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
+int fxp_match __P((struct device *, void *, void *));
+void fxp_attach __P((struct device *, struct device *, void *));
 
-#if defined(__BROKEN_INDIRECT_CONFIG) || defined(__OpenBSD__)
-static int fxp_match __P((struct device *, void *, void *));
-#else
-static int fxp_match __P((struct device *, struct cfdata *, void *));
-#endif
-static void fxp_attach __P((struct device *, struct device *, void *));
-
-static void	fxp_shutdown __P((void *));
+void	fxp_shutdown __P((void *));
 void	fxp_power __P((int, void *));
 
 /* Compensate for lack of a generic ether_ioctl() */
-static int	fxp_ether_ioctl __P((struct ifnet *,
-				    FXP_IOCTLCMD_TYPE, caddr_t));
+int	fxp_ether_ioctl __P((struct ifnet *, u_long, caddr_t));
 #define	ether_ioctl	fxp_ether_ioctl
 
 struct cfattach fxp_ca = {
@@ -305,14 +271,10 @@ struct cfdriver fxp_cd = {
 /*
  * Check if a device is an 82557.
  */
-static int
+int
 fxp_match(parent, match, aux)
 	struct device *parent;
-#if defined(__BROKEN_INDIRECT_CONFIG) || defined(__OpenBSD__)
 	void *match;
-#else
-	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct pci_attach_args *pa = aux;
@@ -329,7 +291,7 @@ fxp_match(parent, match, aux)
 	return (0);
 }
 
-static void
+void
 fxp_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
@@ -341,22 +303,10 @@ fxp_attach(parent, self, aux)
 	const char *intrstr = NULL;
 	u_int8_t enaddr[6];
 	struct ifnet *ifp;
-#ifdef __OpenBSD__
 	bus_space_tag_t iot = pa->pa_iot;
 	bus_addr_t iobase;
 	bus_size_t iosize;
-#endif
 
-#ifndef __OpenBSD__
-	/*
-	 * Map control/status registers.
-	 */
-	if (pci_mapreg_map(pa, FXP_PCI_MMBA, PCI_MAPREG_TYPE_MEM, 0,
-	    &sc->sc_st, &sc->sc_sh, NULL, NULL)) {
-		printf(": can't map registers\n");
-		return;
-	}
-#else
 	if (pci_io_find(pc, pa->pa_tag, FXP_PCI_IOBA, &iobase, &iosize)) {
 		printf(": can't find i/o space\n");
 		return;
@@ -367,8 +317,6 @@ fxp_attach(parent, self, aux)
 		return;
 	}
 	sc->sc_st = iot;
-#endif
-
 
 	/*
 	 * Allocate our interrupt.
@@ -380,12 +328,8 @@ fxp_attach(parent, self, aux)
 	}
 
 	intrstr = pci_intr_string(pc, ih);
-#ifdef __OpenBSD__
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, fxp_intr, sc,
 	    self->dv_xname);
-#else
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, fxp_intr, sc);
-#endif
 	if (sc->sc_ih == NULL) {
 		printf(": couldn't establish interrupt");
 		if (intrstr != NULL)
@@ -401,12 +345,8 @@ fxp_attach(parent, self, aux)
 	}
 
 
-#ifdef __OpenBSD__
 	ifp = &sc->arpcom.ac_if;
 	bcopy(enaddr, sc->arpcom.ac_enaddr, sizeof(enaddr));
-#else
-	ifp = &sc->sc_ethercom.ec_if;
-#endif
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
@@ -431,8 +371,8 @@ fxp_attach(parent, self, aux)
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_MANUAL,
 		    0, NULL);
-		printf(FXP_FORMAT ": no phy found, using manual mode\n",
-		    FXP_ARGS(sc));
+		printf("%s: no phy found, using manual mode\n",
+		    sc->sc_dev.dv_xname);
 	}
 
 	if (ifmedia_match(&sc->sc_mii.mii_media, IFM_ETHER|IFM_MANUAL, 0))
@@ -451,19 +391,10 @@ fxp_attach(parent, self, aux)
 	 * TX descriptors.
 	 */
 	ifp->if_snd.ifq_maxlen = FXP_NTXCB - 1;
-#ifdef __NetBSD__
-	ether_ifattach(ifp, enaddr);
-#else
 	ether_ifattach(ifp);
-#endif
 #if NBPFILTER > 0
-#ifdef __OpenBSD__
 	bpfattach(&sc->arpcom.ac_if.if_bpf, ifp, DLT_EN10MB,
 	    sizeof(struct ether_header));
-#else
-	bpfattach(&sc->sc_ethercom.ec_if.if_bpf, ifp, DLT_EN10MB,
-	    sizeof(struct ether_header));
-#endif
 #endif
 
 	/*
@@ -484,7 +415,7 @@ fxp_attach(parent, self, aux)
  * main purpose of this routine is to shut off receiver DMA so that
  * kernel memory doesn't get clobbered during warmboot.
  */
-static void
+void
 fxp_shutdown(sc)
 	void *sc;
 {
@@ -517,10 +448,10 @@ fxp_power(why, arg)
 	splx(s);
 }
 
-static int
+int
 fxp_ether_ioctl(ifp, cmd, data)
 	struct ifnet *ifp;
-	FXP_IOCTLCMD_TYPE cmd;
+	u_long cmd;
 	caddr_t data;
 {
 	struct ifaddr *ifa = (struct ifaddr *) data;
@@ -534,11 +465,7 @@ fxp_ether_ioctl(ifp, cmd, data)
 #ifdef INET
 		case AF_INET:
 			fxp_init(sc);
-#ifdef __OpenBSD__
 			arp_ifinit(&sc->arpcom, ifa);
-#else
-			arp_ifinit(ifp, ifa);
-#endif
 			break;
 #endif
 #ifdef NS
@@ -570,138 +497,6 @@ fxp_ether_ioctl(ifp, cmd, data)
 	return (0);
 }
 
-#else /* __FreeBSD__ */
-
-static u_long fxp_count;
-static char *fxp_probe		__P((pcici_t, pcidi_t));
-static void fxp_attach		__P((pcici_t, int));
-
-static void fxp_shutdown	__P((int, void *));
-
-static struct pci_device fxp_device = {
-	"fxp",
-	fxp_probe,
-	fxp_attach,
-	&fxp_count,
-	NULL
-};
-DATA_SET(pcidevice_set, fxp_device);
-
-/*
- * Return identification string if this is device is ours.
- */
-static char *
-fxp_probe(config_id, device_id)
-	pcici_t config_id;
-	pcidi_t device_id;
-{
-	if (((device_id & 0xffff) == FXP_VENDORID_INTEL) &&
-	    ((device_id >> 16) & 0xffff) == FXP_DEVICEID_i82557)
-		return ("Intel EtherExpress Pro 10/100B Ethernet");
-
-	return NULL;
-}
-
-static void
-fxp_attach(config_id, unit)
-	pcici_t config_id;
-	int unit;
-{
-	struct fxp_softc *sc;
-	vm_offset_t pbase;
-	struct ifnet *ifp;
-	int s;
-
-	sc = malloc(sizeof(struct fxp_softc), M_DEVBUF, M_NOWAIT);
-	if (sc == NULL)
-		return;
-	bzero(sc, sizeof(struct fxp_softc));
-
-	s = splimp();
-
-	/*
-	 * Map control/status registers.
-	 */
-	if (!pci_map_mem(config_id, FXP_PCI_MMBA,
-	    (vm_offset_t *)&sc->csr, &pbase)) {
-		printf("fxp%d: couldn't map memory\n", unit);
-		goto fail;
-	}
-
-	/*
-	 * Allocate our interrupt.
-	 */
-	if (!pci_map_int(config_id, fxp_intr, sc, &net_imask)) {
-		printf("fxp%d: couldn't map interrupt\n", unit);
-		goto fail;
-	}
-
-	/* Do generic parts of attach. */
-	if (fxp_attach_common(sc, sc->arpcom.ac_enaddr)) {
-		/* Failed! */
-		(void) pci_unmap_int(config_id);
-		goto fail;
-	}
-
-	printf("fxp%d: Ethernet address %6D%s\n", unit,
-	    sc->arpcom.ac_enaddr, ":", sc->phy_10Mbps_only ? ", 10Mbps" : "");
-
-	ifp = &sc->arpcom.ac_if;
-	ifp->if_unit = unit;
-	ifp->if_name = "fxp";
-	ifp->if_output = ether_output;
-	ifp->if_baudrate = 100000000;
-	ifp->if_init = fxp_init;
-	ifp->if_softc = sc;
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-	ifp->if_ioctl = fxp_ioctl;
-	ifp->if_start = fxp_start;
-	ifp->if_watchdog = fxp_watchdog;
-
-	/*
-	 * Attach the interface.
-	 */
-	if_attach(ifp);
-	/*
-	 * Let the system queue as many packets as we have available
-	 * TX descriptors.
-	 */
-	ifp->if_snd.ifq_maxlen = FXP_NTXCB - 1;
-	ether_ifattach(ifp);
-#if NBPFILTER > 0
-	bpfattach(ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
-
-	/*
-	 * Add shutdown hook so that DMA is disabled prior to reboot. Not
-	 * doing do could allow DMA to corrupt kernel memory during the
-	 * reboot before the driver initializes.
-	 */
-	at_shutdown(fxp_shutdown, sc, SHUTDOWN_POST_SYNC);
-
-	splx(s);
-	return;
-
- fail:
-	free(sc, M_DEVBUF);
-	splx(s);
-}
-
-/*
- * Device shutdown routine. Called at system shutdown after sync. The
- * main purpose of this routine is to shut off receiver DMA so that
- * kernel memory doesn't get clobbered during warmboot.
- */
-static void
-fxp_shutdown(howto, sc)
-	int howto;
-	void *sc;
-{
-	fxp_stop((struct fxp_softc *) sc, 0);
-}
-
-#endif /* __NetBSD__ || __OpenBSD__ */
-
 /*************************************************************
  * End of operating system-specific autoconfiguration glue
  *************************************************************/
@@ -709,7 +504,7 @@ fxp_shutdown(howto, sc)
 /*
  * Do generic parts of attach.
  */
-static int
+int
 fxp_attach_common(sc, enaddr)
 	struct fxp_softc *sc;
 	u_int8_t *enaddr;
@@ -766,7 +561,7 @@ fxp_attach_common(sc, enaddr)
 	return (0);
 
  fail:
-	printf(FXP_FORMAT ": Failed to malloc memory\n", FXP_ARGS(sc));
+	printf("%s: Failed to malloc memory\n", sc->sc_dev.dv_xname);
 	if (sc->cbl_base)
 		free(sc->cbl_base, M_DEVBUF);
 	if (sc->fxp_stats)
@@ -808,7 +603,7 @@ fxp_attach_common(sc, enaddr)
  * The Linux driver computes a checksum on the EEPROM data, but the
  * value of this checksum is not very well documented.
  */
-static void
+void
 fxp_autosize_eeprom(sc)
 	struct fxp_softc *sc;
 {
@@ -857,7 +652,7 @@ fxp_autosize_eeprom(sc)
  * The word size is 16 bits, so you have to provide the address for
  * every 16 bits of data.
  */
-static void
+void
 fxp_read_eeprom(sc, data, offset, words)
 	struct fxp_softc *sc;
 	u_short *data;
@@ -924,7 +719,7 @@ fxp_read_eeprom(sc, data, offset, words)
 /*
  * Start packet transmission on the interface.
  */
-static void
+void
 fxp_start(ifp)
 	struct ifnet *ifp;
 {
@@ -1043,7 +838,7 @@ tbdinit:
 		 * Pass packet to bpf if there is a listener.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(FXP_BPFTAP_ARG(ifp), mb_head);
+			bpf_mtap(ifp->if_bpf, mb_head);
 #endif
 	}
 
@@ -1060,14 +855,13 @@ tbdinit:
 /*
  * Process interface interrupts.
  */
-static FXP_INTR_TYPE
+int
 fxp_intr(arg)
 	void *arg;
 {
 	struct fxp_softc *sc = arg;
-	struct ifnet *ifp = &sc->sc_if;
+	struct ifnet *ifp = &sc->arpcom.ac_if;
 	u_int8_t statack;
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 	int claimed = 0;
 
 	/*
@@ -1082,12 +876,9 @@ fxp_intr(arg)
 		}
 		return claimed;
 	}
-#endif
 
 	while ((statack = CSR_READ_1(sc, FXP_CSR_SCB_STATACK)) != 0) {
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 		claimed = 1;
-#endif
 		/*
 		 * First ACK all the interrupts in this pass.
 		 */
@@ -1166,7 +957,7 @@ rcvloop:
 					eh = mtod(m, struct ether_header *);
 #if NBPFILTER > 0
 					if (ifp->if_bpf)
-						bpf_tap(FXP_BPFTAP_ARG(ifp),
+						bpf_tap(ifp->if_bpf,
 						    mtod(m, caddr_t),
 						    total_len); 
 #endif /* NBPFILTER > 0 */
@@ -1186,9 +977,7 @@ rcvloop:
 			}
 		}
 	}
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 	return (claimed);
-#endif
 }
 
 /*
@@ -1207,7 +996,7 @@ fxp_stats_update(arg)
 	void *arg;
 {
 	struct fxp_softc *sc = arg;
-	struct ifnet *ifp = &sc->sc_if;
+	struct ifnet *ifp = &sc->arpcom.ac_if;
 	struct fxp_stats *sp = sc->fxp_stats;
 	int s;
 
@@ -1294,7 +1083,7 @@ fxp_stop(sc, drain)
 	struct fxp_softc *sc;
 	int drain;
 {
-	struct ifnet *ifp = &sc->sc_if;
+	struct ifnet *ifp = &sc->arpcom.ac_if;
 	struct fxp_cb_tx *txp;
 	int i;
 
@@ -1360,7 +1149,7 @@ fxp_watchdog(ifp)
 {
 	struct fxp_softc *sc = ifp->if_softc;
 
-	log(LOG_ERR, FXP_FORMAT ": device timeout\n", FXP_ARGS(sc));
+	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 	ifp->if_oerrors++;
 
 	fxp_init(sc);
@@ -1371,7 +1160,7 @@ fxp_init(xsc)
 	void *xsc;
 {
 	struct fxp_softc *sc = xsc;
-	struct ifnet *ifp = &sc->sc_if;
+	struct ifnet *ifp = &sc->arpcom.ac_if;
 	struct fxp_cb_config *cbp;
 	struct fxp_cb_ias *cb_ias;
 	struct fxp_cb_tx *txp;
@@ -1468,12 +1257,8 @@ fxp_init(xsc)
 	cb_ias->cb_status = 0;
 	cb_ias->cb_command = FXP_CB_COMMAND_IAS | FXP_CB_COMMAND_EL;
 	cb_ias->link_addr = -1;
-#if defined(__NetBSD__)
-	bcopy(LLADDR(ifp->if_sadl), (void *)cb_ias->macaddr, 6);
-#else
 	bcopy(sc->arpcom.ac_enaddr, (void *)cb_ias->macaddr,
 	    sizeof(sc->arpcom.ac_enaddr));
-#endif /* __NetBSD__ */
 
 	/*
 	 * Start the IAS (Individual Address Setup) command/DMA.
@@ -1661,13 +1446,12 @@ fxp_mdi_read(self, phy, reg)
 		DELAY(10);
 
 	if (count <= 0)
-		printf(FXP_FORMAT ": fxp_mdi_read: timed out\n",
-		    FXP_ARGS(sc));
+		printf("%s: fxp_mdi_read: timed out\n", sc->sc_dev.dv_xname);
 
 	return (value & 0xffff);
 }
 
-static void
+void
 fxp_statchg(self)
 	struct device *self;
 {
@@ -1694,14 +1478,13 @@ fxp_mdi_write(self, phy, reg, value)
 		DELAY(10);
 
 	if (count <= 0)
-		printf(FXP_FORMAT ": fxp_mdi_write: timed out\n",
-		    FXP_ARGS(sc));
+		printf("%s: fxp_mdi_write: timed out\n", sc->sc_dev.dv_xname);
 }
 
 int
 fxp_ioctl(ifp, command, data)
 	struct ifnet *ifp;
-	FXP_IOCTLCMD_TYPE command;
+	u_long command;
 	caddr_t data;
 {
 	struct fxp_softc *sc = ifp->if_softc;
@@ -1713,10 +1496,8 @@ fxp_ioctl(ifp, command, data)
 	switch (command) {
 
 	case SIOCSIFADDR:
-#if !(defined(__NetBSD__) || defined(__OpenBSD__))
 	case SIOCGIFADDR:
 	case SIOCSIFMTU:
-#endif
 		error = ether_ioctl(ifp, command, data);
 		break;
 
@@ -1740,17 +1521,9 @@ fxp_ioctl(ifp, command, data)
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		sc->all_mcasts = (ifp->if_flags & IFF_ALLMULTI) ? 1 : 0;
-#if defined(__NetBSD__) || defined(__OpenBSD__)
-#if defined(__OpenBSD__)
 		error = (command == SIOCADDMULTI) ?
 		    ether_addmulti(ifr, &sc->arpcom) :
 		    ether_delmulti(ifr, &sc->arpcom);
-#else
-		error = (command == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ethercom) :
-		    ether_delmulti(ifr, &sc->sc_ethercom);
-#endif
-
 		if (error == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware
@@ -1766,14 +1539,6 @@ fxp_ioctl(ifp, command, data)
 				fxp_init(sc);
 			error = 0;
 		}
-#else /* __FreeBSD__ */
-		/*
-		 * Multicast list has changed; set the hardware filter
-		 * accordingly.
-		 */
-		fxp_init(sc);
-		error = 0;
-#endif /* __NetBSD__ || __OpenBSD__ */
 		break;
 
 	case SIOCSIFMEDIA:
@@ -1807,13 +1572,9 @@ fxp_mc_setup(sc)
 	struct fxp_softc *sc;
 {
 	struct fxp_cb_mcs *mcsp = sc->mcsp;
-	struct ifnet *ifp = &sc->sc_if;
-#if defined(__OpenBSD__)
+	struct ifnet *ifp = &sc->arpcom.ac_if;
 	struct ether_multistep step;
 	struct ether_multi *enm;
-#else
-	struct ifmultiaddr *ifma;
-#endif
 	int nmcasts;
 
 	/*
@@ -1874,7 +1635,6 @@ fxp_mc_setup(sc)
 
 	nmcasts = 0;
 	if (!sc->all_mcasts) {
-#if defined(__OpenBSD__)
 		ETHER_FIRST_MULTI(step, &sc->arpcom, enm);
 		while (enm != NULL) {
 			if (nmcasts >= MAXMCADDR) {
@@ -1895,21 +1655,6 @@ fxp_mc_setup(sc)
 			nmcasts++;
 			ETHER_NEXT_MULTI(step, enm);
 		}
-#else
-		for (ifma = ifp->if_multiaddrs.lh_first; ifma != NULL;
-		    ifma = ifma->ifma_link.le_next) {
-			if (ifma->ifma_addr->sa_family != AF_LINK)
-				continue;
-			if (nmcasts >= MAXMCADDR) {
-				sc->all_mcasts = 1;
-				nmcasts = 0;
-				break;
-			}
-			bcopy(LLADDR((struct sockaddr_dl *)ifma->ifma_addr),
-			    (void *) &sc->mcsp->mc_addr[nmcasts][0], 6);
-			nmcasts++;
-		}
-#endif
 	}
 	mcsp->mc_cnt = nmcasts * 6;
 	sc->cbl_first = sc->cbl_last = (struct fxp_cb_tx *) mcsp;

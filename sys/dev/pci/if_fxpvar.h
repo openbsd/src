@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxpvar.h,v 1.7 2000/03/30 02:49:35 jason Exp $	*/
+/*	$OpenBSD: if_fxpvar.h,v 1.8 2000/04/18 03:40:55 jason Exp $	*/
 /*	$NetBSD: if_fxpvar.h,v 1.1 1997/06/05 02:01:58 thorpej Exp $	*/
 
 /*                  
@@ -42,20 +42,11 @@
  *	 for functional grouping.
  */
 struct fxp_softc {
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 	struct device sc_dev;		/* generic device structures */
 	void *sc_ih;			/* interrupt handler cookie */
 	bus_space_tag_t sc_st;		/* bus space tag */
 	bus_space_handle_t sc_sh;	/* bus space handle */
-#else
-	struct caddr_t csr;		/* control/status registers */
-#endif /* __NetBSD__ || __OpenBSD__ */
-#if defined(__OpenBSD__) || defined(__FreeBSD__)
 	struct arpcom arpcom;		/* per-interface network data */
-#endif
-#if defined(__NetBSD__)
-	struct ethercom sc_ethercom;	/* ethernet common part */
-#endif
 	struct mii_data sc_mii;		/* MII media information */
 	struct mbuf *rfa_headm;		/* first mbuf in receive frame area */
 	struct mbuf *rfa_tailm;		/* last mbuf in receive frame area */
@@ -75,7 +66,6 @@ struct fxp_softc {
 };
 
 /* Macros to ease CSR access. */
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 #define	CSR_READ_1(sc, reg)						\
 	bus_space_read_1((sc)->sc_st, (sc)->sc_sh, (reg))
 #define	CSR_READ_2(sc, reg)						\
@@ -88,38 +78,3 @@ struct fxp_softc {
 	bus_space_write_2((sc)->sc_st, (sc)->sc_sh, (reg), (val))
 #define	CSR_WRITE_4(sc, reg, val)					\
 	bus_space_write_4((sc)->sc_st, (sc)->sc_sh, (reg), (val))
-#else
-#define	CSR_READ_1(sc, reg)						\
-	(*((u_int8_t *)((sc)->csr + (reg))))
-#define	CSR_READ_2(sc, reg)						\
-	(*((u_int16_t *)((sc)->csr + (reg))))
-#define	CSR_READ_4(sc, reg)						\
-	(*((u_int32_t *)((sc)->csr + (reg))))
-#define	CSR_WRITE_1(sc, reg, val)					\
-	(*((u_int8_t *)((sc)->csr + (reg)))) = (val)
-#define	CSR_WRITE_2(sc, reg, val)					\
-	(*((u_int16_t *)((sc)->csr + (reg)))) = (val)
-#define	CSR_WRITE_4(sc, reg, val)					\
-	(*((u_int32_t *)((sc)->csr + (reg)))) = (val)
-#endif /* __NetBSD__ || __OpenBSD__ */
-
-/* Deal with slight differences in software interfaces. */
-#if defined(__NetBSD__) || defined(__OpenBSD__)
-#if defined(__OpenBSD__)
-#define	sc_if			arpcom.ac_if
-#else
-#define	sc_if			sc_ethercom.ec_if
-#endif
-#define	FXP_FORMAT		"%s"
-#define	FXP_ARGS(sc)		(sc)->sc_dev.dv_xname
-#define	FXP_INTR_TYPE		int
-#define	FXP_IOCTLCMD_TYPE	u_long
-#define	FXP_BPFTAP_ARG(ifp)	(ifp)->if_bpf
-#else /* __FreeBSD__ */
-#define	sc_if			arpcom.ac_if
-#define	FXP_FORMAT		"fxp%d"
-#define	FXP_ARGS(sc)		(sc)->arpcom.ac_if.if_unit
-#define	FXP_INTR_TYPE		void
-#define	FXP_IOCTLCMD_TYPE	int
-#define	FXP_BPFTAP_ARG(ifp)	ifp
-#endif /* __NetBSD__ || __OpenBSD__ */
