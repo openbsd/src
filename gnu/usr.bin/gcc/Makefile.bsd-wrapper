@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.22 1997/04/07 00:18:17 millert Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.23 1997/04/12 21:54:42 pefo Exp $
 
 MAN=		cccp.1 gcc.1 cp/g++.1 f/g77.1
 MLINKS+=	gcc.1 cc.1
@@ -12,9 +12,9 @@ CLEANFILES=	.gdbinit cp/.gdbinit *.info* bi-parser.c bi-parser.h \
 		objc-parse.c objc-parse.y f/.gdbinit f/*.info*
 
 .if ${MACHINE} == "arc" || ${MACHINE} == "pmax"
-M_ARCH=		mips64el
-.elif ${MACHINE} == "laguna"
-M_ARCH=		mips64
+M_ARCH=		mipsel
+.elif ${MACHINE} == "hkmips" || ${MACHINE} == "sgi"
+M_ARCH=		mips
 .else
 M_ARCH=		${MACHINE_ARCH}
 .endif

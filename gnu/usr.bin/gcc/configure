@@ -1798,7 +1798,7 @@ for machine in $canon_build $canon_host $canon_target; do
 		fixincludes=Makefile.in
 		prefix=$native_prefix
 		;;
-	mips64el-*-openbsd*)  		    # MIPS R4k running OpenBSD
+	mips*el-*-openbsd*)  		    # MIPS running OpenBSD
 		tm_file=mips/openbsd-le.h
 		xm_file=mips/xm-openbsd.h
 		cpu_type=mips
@@ -1807,7 +1807,7 @@ for machine in $canon_build $canon_host $canon_target; do
 		fixincludes=Makefile.in
 		prefix=$native_prefix
 		;;
-	mips64-*-openbsd*)	    # MIPS R4k big-endian running OpenBSD
+	mips*-*-openbsd*)	    # MIPS big-endian running OpenBSD
 		tm_file=mips/openbsd-be.h
 		xm_file=mips/xm-openbsd.h
 		cpu_type=mips
