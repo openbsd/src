@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /*$FreeBSD: if_em.c,v 1.26 2003/06/05 17:51:37 pdeuskar Exp $*/
-/* $OpenBSD: if_em.c,v 1.16 2003/12/09 23:41:35 henning Exp $ */
+/* $OpenBSD: if_em.c,v 1.17 2004/02/12 21:21:06 markus Exp $ */
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -807,6 +807,9 @@ em_init(void *arg)
 #endif /* DEVICE_POLLING */
 		em_enable_intr(sc);
 
+	/* Don't reset the phy next time init gets called */
+	sc->hw.phy_reset_disable = TRUE;
+
 	splx(s);
 	return;
 }
@@ -1009,6 +1012,11 @@ em_media_change(struct ifnet *ifp)
 	default:
 		printf("%s: Unsupported media type\n", sc->sc_dv.dv_xname);
 	}
+
+	/* As the speed/duplex settings my have changed we need to
+	 * reset the PHY.
+	 */
+	sc->hw.phy_reset_disable = FALSE;
 
 	em_init(sc);
 
