@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.153 1999/06/26 14:18:46 ho Exp 
+ *	OpenBSD: pcidevs,v 1.154 1999/06/28 18:30:04 jason Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1135,6 +1135,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Compex",
 	    "RL100-ATX 10/100",
+	},
+	{
+	    PCI_VENDOR_COMPEX, PCI_PRODUCT_COMPEX_98713,
+	    0,
+	    "Compex",
+	    "PMAC 98713",
 	},
 	{
 	    PCI_VENDOR_CONTAQ, PCI_PRODUCT_CONTAQ_82C599,
