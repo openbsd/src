@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.6 2003/12/30 16:29:21 miod Exp $
+dnl	$OpenBSD: hardware,v 1.7 2004/01/05 22:16:46 miod Exp $
 OpenBSD/MACHINE OSREV runs on the systems built around the following
 MVME boards:
 
@@ -26,7 +26,7 @@ Supported HYPERmodules: (for MVME188 systems)
 Supported devices:
 
 MVME187 on-board devices:
-	Cirrus Logic CD2401 serial ports, tty00-tty03 (cl)
+	Cirrus Logic CD2401 serial ports, tty00-tty03/tty07(M8120) (cl)
 	Intel 82596CA Ethernet (ie)
 	NCR53c710 SCSI Controller (ssh)
 	128KB SRAM (/dev/sram0)
