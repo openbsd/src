@@ -47,7 +47,7 @@
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
 @12 block drop in log quick from no-route to any 
-[ Skip steps: sa=end sp=end da=end dp=16 ]
+[ Skip steps: sp=end da=end dp=16 ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
 @13 pass out on tun0 inet proto icmp all icmp-type echoreq code 0 keep state 
