@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.254 2001/04/14 19:30:10 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.255 2001/04/19 04:35:47 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -140,7 +140,7 @@ wskbd*		at pckbd? console ?
 wsmouse*	at pms? mux 0
 wsmouse*	at pmsi? mux 0
 
-pcppi0	at isa?
+pcppi0		at isa?
 sysbeep0	at pcppi?
 
 pccom0	at isa? port 0x3f8 irq 4	# standard PC serial ports
@@ -180,8 +180,8 @@ wsmouse*	at lms? mux 0
 wsmouse*	at mms? mux 0
 
 bt0	at isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI controllers
-bt1	at isa? port 0x334 irq ? drq ?	# BusLogic [57]4X SCSI controllers
-bt2	at isa? port ? irq ?
+bt1	at isa? disable port 0x334 irq ? drq ? # BusLogic [57]4X SCSI controllers
+bt2	at isa? disable port ? irq ?
 scsibus* at bt?
 aha0	at isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI controllers
 aha1	at isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI controllers
@@ -226,13 +226,13 @@ adw*	at pci? dev ? function ?	# AdvanSys ULTRA WIDE SCSI
 scsibus* at adw?
 pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
 scsibus* at pcscp?
-sea0	at isa? iomem 0xc8000 irq 5	# Seagate ST0[12] SCSI controllers
+sea0	at isa? disable iomem 0xc8000 irq 5	# Seagate ST0[12] SCSI controllers
 scsibus* at sea?
 uha0	at isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI controllers
-uha1	at isa? port 0x334 irq ? drq ?	# UltraStor [13]4f SCSI controllers
+uha1	at isa? disable port 0x334 irq ? drq ? # UltraStor [13]4f SCSI controllers
 uha*	at eisa? slot ?			# UltraStor 24f SCSI controllers
 scsibus* at uha?
-wds0	at isa? port 0x350 irq 15 drq 6	# WD7000 and TMC-7000 controllers
+wds0	at isa? disable port 0x350 irq 15 drq 6	# WD7000 and TMC-7000 controllers
 #wds1	at isa? port 0x358 irq 11 drq 5
 scsibus* at wds?
 
@@ -278,8 +278,8 @@ ne0	at isa? port 0x240 irq 9		# NE[12]000 ethernet
 ne1	at isa? port 0x300 irq 10		# NE[12]000 ethernet
 ne2	at isa? port 0x280 irq 9		# NE[12]000 ethernet
 ne*	at isapnp?				# NE[12]000 PnP ethernet
-eg0	at isa? port 0x310 irq 5		# 3C505/Etherlink+ ethernet
-el0	at isa? port 0x300 irq 9		# 3C501 ethernet
+eg0	at isa? disable port 0x310 irq 5	# 3C505/Etherlink+ ethernet
+el0	at isa? disable port 0x300 irq 9 	# 3C501 ethernet
 ep0	at isa? port ? irq ?			# 3C509 ethernet
 ep*	at isapnp?				# 3C509 PnP ethernet
 ep*	at isa? port ? irq ?			# 3C509 ethernet
@@ -375,7 +375,7 @@ ess*	at isapnp?				# ESS Tech ES188[78], ES888
 wss0	at isa? port 0x530 irq 10 drq 0		# Windows Sound System
 wss*	at isapnp?
 pas0	at isa? port 0x220 irq 7 drq 1		# ProAudio Spectrum
-gus0	at isa? port 0x220 irq 7 drq 1 drq2 6	# Gravis UltraSound (drq2 is record drq)
+gus0	at isa? disable port 0x220 irq 7 drq 1 drq2 6 # Gravis (drq2 is record drq)
 ym*	at isapnp?
 mpu*	at isapnp?
 

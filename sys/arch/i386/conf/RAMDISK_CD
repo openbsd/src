@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.41 2001/04/14 19:30:10 deraadt Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.42 2001/04/19 04:35:47 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -152,8 +152,8 @@ pccom*	at isapnp?
 #lpt2	at isa? port 0x3bc
 
 bt0	at isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI controllers
-bt1	at isa? port 0x334 irq ? drq ?	# BusLogic [57]4X SCSI controllers
-#bt2	at isa? port ? irq ?
+bt1	at isa? disable port 0x334 irq ? drq ?	# BusLogic [57]4X SCSI controllers
+#bt2	at isa? disable port ? irq ?
 scsibus* at bt?
 aha0	at isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI controllers
 aha1	at isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI controllers
@@ -196,13 +196,13 @@ adw*	at pci? dev ? function ?	# AdvanSys ULTRA WIDE SCSI
 scsibus* at adw?
 pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
 scsibus* at pcscp?
-sea0	at isa? iomem 0xc8000 irq 5	# Seagate ST0[12] SCSI controllers
+sea0	at isa? disable iomem 0xc8000 irq 5	# Seagate ST0[12] SCSI controllers
 scsibus* at sea?
 uha0	at isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI controllers
-uha1	at isa? port 0x334 irq ? drq ?	# UltraStor [13]4f SCSI controllers
+uha1	at isa? disable port 0x334 irq ? drq ?	# UltraStor [13]4f SCSI controllers
 uha*	at eisa? slot ?			# UltraStor 24f SCSI controllers
 scsibus* at uha?
-wds0	at isa? port 0x350 irq 15 drq 6	# WD7000 and TMC-7000 controllers
+wds0	at isa? disable port 0x350 irq 15 drq 6	# WD7000 and TMC-7000 controllers
 #wds1	at isa? port 0x358 irq 11 drq 5
 scsibus* at wds?
 
@@ -245,8 +245,8 @@ ne0	at isa? port 0x240 irq 9		# NE[12]000 ethernet
 ne1	at isa? port 0x300 irq 10		# NE[12]000 ethernet
 ne2	at isa? port 0x280 irq 9		# NE[12]000 ethernet
 ne*	at isapnp?				# NE[12]000 PnP ethernet
-#eg0	at isa? port 0x310 irq 5		# 3C505/Etherlink+ ethernet
-#el0	at isa? port 0x300 irq 9		# 3C501 ethernet
+eg0	at isa? disable port 0x310 irq 5	# 3C505/Etherlink+ ethernet
+el0	at isa? disable port 0x300 irq 9	# 3C501 ethernet
 ep0	at isa? port ? irq ?			# 3C509 ethernet
 ep*	at isa? port ? irq ?			# 3C509 ethernet
 ef*	at isapnp?				# 3C515 PnP ethernet
