@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scan.l,v 1.3 1996/04/21 23:40:23 deraadt Exp $	*/
+/*	$OpenBSD: scan.l,v 1.4 1996/06/29 17:06:54 deraadt Exp $	*/
 /*	$NetBSD: scan.l,v 1.4 1996/03/17 06:29:35 cgd Exp $	*/
 
 /*
@@ -104,6 +104,7 @@ maxpartitions	{ return MAXPARTITIONS; }
 minor		{ return MINOR; }
 on		{ return ON; }
 options		{ return OPTIONS; }
+option		{ return OPTIONS; }
 "pseudo-device"	{ return PSEUDO_DEVICE; }
 root		{ return ROOT; }
 swap		{ return SWAP; }
