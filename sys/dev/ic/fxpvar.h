@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxpvar.h,v 1.6 2001/08/09 21:12:51 jason Exp $	*/
+/*	$OpenBSD: fxpvar.h,v 1.7 2001/08/10 15:02:05 jason Exp $	*/
 /*	$NetBSD: if_fxpvar.h,v 1.1 1997/06/05 02:01:58 thorpej Exp $	*/
 
 /*                  
@@ -50,6 +50,7 @@
  *	 for functional grouping.
  */
 struct fxp_txsw {
+	struct fxp_txsw *tx_next;
 	struct mbuf *tx_mbuf;
 	bus_dmamap_t tx_map;
 	struct fxp_cb_tx *tx_cb;
@@ -90,7 +91,8 @@ struct fxp_softc {
 	void *sc_sdhook;		/* shutdownhook */
 	void *sc_powerhook;		/* powerhook */
 	struct fxp_txsw txs[FXP_NTXCB];
-	int tx_cons, tx_prod, tx_cnt;
+	struct fxp_txsw *sc_cbt_cons, *sc_cbt_prod, *sc_cbt_prev;
+	int sc_cbt_cnt;
 	bus_dmamap_t tx_cb_map;
 	bus_dma_segment_t sc_cb_seg;
 	int sc_cb_nseg;

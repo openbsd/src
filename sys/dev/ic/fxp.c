@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.23 2001/08/09 21:12:51 jason Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.24 2001/08/10 15:02:05 jason Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -334,6 +334,7 @@ fxp_attach_common(sc, enaddr, intrstr)
 		}
 		sc->txs[i].tx_mbuf = NULL;
 		sc->txs[i].tx_cb = sc->sc_ctrl->tx_cb + i;
+		sc->txs[i].tx_next = &sc->txs[(i + 1) & FXP_TXCB_MASK];
 	}
 	bzero(sc->sc_ctrl, sizeof(struct fxp_ctrl));
 
@@ -631,24 +632,21 @@ fxp_start(ifp)
 	struct ifnet *ifp;
 {
 	struct fxp_softc *sc = ifp->if_softc;
-	struct fxp_txsw *txs;
+	struct fxp_txsw *txs = sc->sc_cbt_prod;
 	struct fxp_cb_tx *txc;
 	struct mbuf *m0, *m = NULL;
-	int prod, oprod, cnt, seg;
+	int cnt = sc->sc_cbt_cnt, seg;
 
 	if ((ifp->if_flags & (IFF_OACTIVE | IFF_RUNNING)) != IFF_RUNNING)
 		return;
-
-	prod = sc->tx_prod;
-	oprod = (prod == 0) ? oprod = FXP_NTXCB - 1 : prod - 1;
-	cnt = sc->tx_cnt;
-	txs = &sc->txs[prod];
 
 	while (1) {
 		if (cnt >= (FXP_NTXCB - 1)) {
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
+
+		txs = txs->tx_next;
 
 		IFQ_POLL(&ifp->if_snd, m0);
 		if (m0 == NULL)
@@ -702,20 +700,17 @@ fxp_start(ifp)
 		}
 
 		++cnt;
-		if (++prod == FXP_NTXCB) {
-			prod = 0;
-			txs = sc->txs;
-		} else
-			txs++;
+		sc->sc_cbt_prod = txs;
 	}
 
-	if (cnt != sc->tx_cnt) {
+	if (cnt != sc->sc_cbt_cnt) {
 		/* We enqueued at least one. */
 		ifp->if_timer = 5;
 
-		txc->cb_command |= FXP_CB_COMMAND_I | FXP_CB_COMMAND_S;
-		sc->txs[oprod].tx_cb->cb_command &=
-		    ~(FXP_CB_COMMAND_S);
+		txs = sc->sc_cbt_prod;
+		txs->tx_cb->cb_command |= FXP_CB_COMMAND_I | FXP_CB_COMMAND_S;
+		sc->sc_cbt_prev->tx_cb->cb_command &= ~FXP_CB_COMMAND_S;
+		sc->sc_cbt_prev = txs;
 
 		bus_dmamap_sync(sc->sc_dmat, sc->tx_cb_map,
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
@@ -723,8 +718,7 @@ fxp_start(ifp)
 		fxp_scb_wait(sc);
 		fxp_scb_cmd(sc, FXP_SCB_COMMAND_CU_RESUME);
 
-		sc->tx_prod = prod;
-		sc->tx_cnt = cnt;
+		sc->sc_cbt_cnt = cnt;
 	}
 }
 
@@ -766,15 +760,14 @@ fxp_intr(arg)
 		 * Free any finished transmit mbuf chains.
 		 */
 		if (statack & (FXP_SCB_STATACK_CXTNO|FXP_SCB_STATACK_CNA)) {
-			int txcnt = sc->tx_cnt, txcons = sc->tx_cons;
-			struct fxp_txsw *txs = &sc->txs[txcons];
-			struct fxp_cb_tx *txc = txs->tx_cb;
+			int txcnt = sc->sc_cbt_cnt;
+			struct fxp_txsw *txs = sc->sc_cbt_cons;
 
 			bus_dmamap_sync(sc->sc_dmat, sc->tx_cb_map,
 			    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 			while ((txcnt > 0) &&
-			    (txc->cb_status & FXP_CB_STATUS_C)) {
+			    (txs->tx_cb->cb_status & FXP_CB_STATUS_C)) {
 				if (txs->tx_mbuf != NULL) {
 					bus_dmamap_sync(sc->sc_dmat,
 					    txs->tx_map, BUS_DMASYNC_POSTREAD);
@@ -784,15 +777,10 @@ fxp_intr(arg)
 					txs->tx_mbuf = NULL;
 				}
 				--txcnt;
-				if (++txcons == FXP_NTXCB) {
-					txs = sc->txs;
-					txcons = 0;
-				} else
-					txs++;
-				txc = txs->tx_cb;
+				txs = txs->tx_next;
 			}
-			sc->tx_cons = txcons;
-			sc->tx_cnt = txcnt;
+			sc->sc_cbt_cons = txs;
+			sc->sc_cbt_cnt = txcnt;
 			ifp->if_timer = 0;
 			ifp->if_flags &= ~IFF_OACTIVE;
 
@@ -997,11 +985,13 @@ fxp_stop(sc, drain)
 	 * Release any xmit buffers.
 	 */
 	for (i = 0; i < FXP_NTXCB; i++) {
-		bus_dmamap_unload(sc->sc_dmat, sc->txs[i].tx_map);
-		m_freem(sc->txs[i].tx_mbuf);
-		sc->txs[i].tx_mbuf = NULL;
+		if (sc->txs[i].tx_mbuf != NULL) {
+			bus_dmamap_unload(sc->sc_dmat, sc->txs[i].tx_map);
+			m_freem(sc->txs[i].tx_mbuf);
+			sc->txs[i].tx_mbuf = NULL;
+		}
 	}
-	sc->tx_prod = sc->tx_cons = sc->tx_cnt = 0;
+	sc->sc_cbt_cnt = 0;
 
 	if (drain) {
 		/*
@@ -1208,9 +1198,8 @@ fxp_init(xsc)
 	 * Set the suspend flag on the first TxCB and start the control
 	 * unit. It will execute the NOP and then suspend.
 	 */
-	sc->tx_cons = 0;
-	sc->tx_prod = 1;
-	sc->tx_cnt = 1;
+	sc->sc_cbt_prev = sc->sc_cbt_prod = sc->sc_cbt_cons = sc->txs;
+	sc->sc_cbt_cnt = 1;
 	sc->sc_ctrl->tx_cb[0].cb_command = FXP_CB_COMMAND_NOP |
 	    FXP_CB_COMMAND_S | FXP_CB_COMMAND_I;
 	bus_dmamap_sync(sc->sc_dmat, sc->tx_cb_map,
