@@ -1,4 +1,4 @@
-/*	$OpenBSD: dnssec.c,v 1.9 2001/08/17 10:35:51 ho Exp $	*/
+/*	$OpenBSD: dnssec.c,v 1.10 2001/08/22 13:30:33 ho Exp $	*/
 
 /*
  * Copyright (c) 2001 Håkan Olsson.  All rights reserved.
@@ -52,6 +52,10 @@
 #include "transport.h"
 #include "util.h"
 
+#ifndef DNS_UFQDN_SEPARATOR
+#define DNS_UFQDN_SEPARATOR "._ipsec."
+#endif
+
 /* adapted from <dns/rdatastruct.h> / RFC 2535  */
 struct dns_rdata_key {
   u_int16_t flags;
@@ -70,7 +74,7 @@ dns_get_key (int type, struct message *msg, int *keylen)
   char name[MAXHOSTNAMELEN];
   in_addr_t ip4;
   u_int8_t algorithm;
-  u_int8_t *id;
+  u_int8_t *id, *umark;
   size_t id_len;
   int ret, i;
 
@@ -107,8 +111,8 @@ dns_get_key (int type, struct message *msg, int *keylen)
     }
 
   /* Exchanges (and SAs) don't carry the ID in ISAKMP form */
-  id -= ISAKMP_ID_TYPE_OFF;
-  id_len += ISAKMP_ID_TYPE_OFF - ISAKMP_ID_DATA_OFF;
+  id -= ISAKMP_GEN_SZ;
+  id_len += ISAKMP_GEN_SZ - ISAKMP_ID_DATA_OFF;
 
   switch (GET_ISAKMP_ID_TYPE (id))
     {
@@ -121,6 +125,11 @@ dns_get_key (int type, struct message *msg, int *keylen)
 	       (ip4 >> 16) & 0xFF, (ip4 >> 8) & 0xFF, ip4 & 0xFF);
       break;
 
+    case IPSEC_ID_IPV6_ADDR:
+      /* XXX Not yet. */
+      return 0;
+      break;
+
     case IPSEC_ID_FQDN:
       if ((id_len + 1) >= MAXHOSTNAMELEN)
 	return 0;
@@ -131,12 +140,30 @@ dns_get_key (int type, struct message *msg, int *keylen)
       break;
 
     case IPSEC_ID_USER_FQDN:
-      /* Some special handling here. */
+      /*
+       * Some special handling here. We want to convert the ID
+       * 'user@host.domain' string into 'user._ipsec.host.domain.'.
+       */
+      if ((id_len + sizeof (DNS_UFQDN_SEPARATOR)) >= MAXHOSTNAMELEN)
+	return 0;
+      /* Look for the '@' separator.  */
+      for (umark = id + ISAKMP_ID_DATA_OFF; (umark - id) < id_len; umark++)
+	if (*umark == '@')
+	  break;
+      if (*umark != '@')
+	{
+	  LOG_DBG((LOG_MISC, 50, "dns_get_key: bad UFQDN ID"));
+	  return 0;
+	}
+      *umark++ = '\0';
+      /* id is now terminated. 'umark', however, is not.  */
+      sprintf (name, "%s%s", id + ISAKMP_ID_DATA_OFF, DNS_UFQDN_SEPARATOR);
+      memcpy (name + strlen (name), umark, id_len - strlen (id) - 1);
+      *(name + id_len + sizeof (DNS_UFQDN_SEPARATOR) - 2) = '.';
+      *(name + id_len + sizeof (DNS_UFQDN_SEPARATOR) - 1) = '\0';
       break;
 
-    case IPSEC_ID_IPV6_ADDR:
     default:
-      /* XXX not yet */
       return 0;
     }
 
