@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.29 2001/07/25 13:25:33 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.30 2001/08/08 01:30:02 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.30 1997/03/10 23:55:40 pk Exp $ */
 
 /*
@@ -204,11 +204,11 @@ dvma_mapin_space(map, va, len, canwait, space)
 		error = extent_alloc_subregion(dvmamap_extent,
 		    DVMA_D24_BASE, DVMA_D24_END, len, dvma_cachealign,
 		    va & (dvma_cachealign - 1), 0,
-		    canwait ? EX_WAITSPACE : EX_WAITOK, &tva);
+		    canwait ? EX_WAITSPACE : EX_NOWAIT, &tva);
 	else
 		error = extent_alloc(dvmamap_extent, len, dvma_cachealign, 
 		    va & (dvma_cachealign - 1), 0,
-		    canwait ? EX_WAITSPACE : EX_WAITOK, &tva);
+		    canwait ? EX_WAITSPACE : EX_NOWAIT, &tva);
 	splx(s);
 	if (error)
 		return NULL;
