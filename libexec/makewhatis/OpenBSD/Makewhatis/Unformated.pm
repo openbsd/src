@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Unformated.pm,v 1.1 2004/08/06 12:05:08 espie Exp $
+# $OpenBSD: Unformated.pm,v 1.2 2004/12/24 00:00:05 espie Exp $
 # Copyright (c) 2000-2004 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -98,12 +98,21 @@ sub handle
     my @lines = ();
     my %toexpand = ();
     my $so_found = 0;
+    my $found_th = 0;
+    my $found_old = 0;
+    my $found_dt = 0;
+    my $found_new = 0;
+    # subject/keep is the only way to deal with Nm/Nd pairs
+    my @subject = ();
+    my @keep = ();
+    my $nd_seen = 0;
     local $_;
 	# retrieve basename of file
     my ($name, $section) = $filename =~ m|(?:.*/)?(.*)\.([\w\d]+)|;
 	# scan until macro
     while (<$f>) {
-	next unless m/^\./;
+	next unless m/^\./ || $found_old || $found_new;
+	next if m/^\.\\\"/;
 	if (m/^\.\s*de/) {
 	    while (<$f>) {
 		last if m/^\.\s*\./;
@@ -120,109 +129,87 @@ sub handle
 		# in pricky mode, we should try to match these
 	    # ($name2, $section2) = m/^\.(?:TH|th)\s+(\S+)\s+(\S+)/;
 	    	# scan until first section
-	    while (<$f>) {
-		if (m/^\.\s*de/) {
-		    while (<$f>) {
-			last if m/^\.\s*\./;
-		    }
-		    next;
-		}
-		if (m/^\.\s*ds\s+(\S+)\s+/) {
-		    chomp($toexpand{$1} = $');
-		    next;
-		}
-		next unless m/^\./;
-		if (m/^\.\s*SH/ || m/^\.\s*sh/) {
-		    my @subject = ();
-		    while (<$f>) {
-			last if m/^\.\s*(?:SH|sh|SS|ss|nf|LI)/;
-			    # several subjects in one manpage
-			if (m/^\.\s*(?:PP|Pp|br|PD|LP|sp)/) {
-			    add_unformated_subject(\@lines, \@subject,
-				$section, $filename, \%toexpand, $picky)
-				    if @subject != 0;
-			    @subject = ();
-			    next;
-			}
-			next if m/^\'/ || m/^\.\s*tr\s+/ || m/^\.\s*\\\"/ ||
-			    m/^\.\s*sv/ || m/^\.\s*Vb\s+/ || m/\.\s*HP\s+/;
-			if (m/^\.\s*de/) {
-			    while (<$f>) {
-				last if m/^\.\s*\./;
-			    }
-			    next;
-			}
-			if (m/^\.\s*ds\s+(\S+)\s+/) {
-			    chomp($toexpand{$1} = $');
-			    next;
-			}
-			# Motif index entries, don't do anything for now.
-			next if m/^\.\s*iX/;
-			# Some other index (cook)
-			next if m/^\.\s*XX/;
-			chomp;
-			s/\.\s*(?:B|I|IR|SM|BR)\s+//;
-			if (m/^\.\s*(\S\S)/) {
-			    print STDERR "$filename: not grokking $_\n" 
-				if $picky;
-			    next;
-			}
-			push(@subject, $_) unless m/^\s*$/;
-		    }
-		    add_unformated_subject(\@lines, \@subject, $section,
-			$filename, \%toexpand, $picky) if @subject != 0;
-		    return \@lines;
-		}
-	    }
-	    print STDERR "Couldn't find subject in old manpage $filename\n";
-	} elsif (m/^\.\s*Dt/) {
+	    $found_th = 1;
+	    next;
+	}
+	if ($found_th && !$found_old && (m/^\.\s*SH/ || m/^\.\s*sh/)) {
+		$found_old = 1;
+		next;
+	}
+	if (m/^\.\s*Dt/) {
 	    $section .= "/$1" if (m/^\.\s*Dt\s+\S+\s+\d\S*\s+(\S+)/);
-	    while (<$f>) {
-		next unless m/^\./;
-		if (m/^\.\s*Sh/) {
-		    # subject/keep is the only way to deal with Nm/Nd pairs
-		    my @subject = ();
-		    my @keep = ();
-		    my $nd_seen = 0;
-		    while (<$f>) {
-		    	next if m/^\.\\\"/;
-			last if m/^\.\s*Sh/;
-			s/\s,/,/g;
-			if (s/^\.\s*(\S\S)\s+//) {
-			    my $macro = $1;
-			    next if $macro eq "\\\"";
-			    s/\"(.*?)\"/$1/g;
-			    s/\\-/-/g;
-			    $macro eq 'Xr' and s/^(\S+)\s+(\d\S*)/$1 ($2)/;
-			    $macro eq 'Ox' and s/^/OpenBSD /;
-			    $macro eq 'Nx' and s/^/NetBSD /;
-			    if ($macro eq 'Nd') {
-				if (@keep != 0) {
-				    add_unformated_subject(\@lines, \@keep, 
-				    	$section, $filename, \%toexpand, $picky);
-				    @keep = ();
-				}
-				push(@subject, "\\-");
-				$nd_seen = 1;
-			    }
-			    if ($nd_seen && $macro eq 'Nm') {
-				@keep = @subject;
-				@subject = ();
-				$nd_seen = 0;
-			    }
-			}
-			push(@subject, $_) unless m/^\s*$/;
-		    }
-		    unshift(@subject, @keep) if @keep != 0;
-		    add_unformated_subject(\@lines, \@subject, $section,
-		    	$filename, \%toexpand, $picky)
+	    $found_dt = 1;
+	    next;
+    	}
+	if ($found_dt && !$found_new && m/^\.\s*Sh/) {
+		$found_new = 1;
+		next;
+	}
+	if ($found_old) {
+		last if m/^\.\s*(?:SH|sh|SS|ss|nf|LI)/;
+		    # several subjects in one manpage
+		if (m/^\.\s*(?:PP|Pp|br|PD|LP|sp)/) {
+		    add_unformated_subject(\@lines, \@subject,
+			$section, $filename, \%toexpand, $picky)
 			    if @subject != 0;
-		    return \@lines;
+		    @subject = ();
+		    next;
 		}
-	    }
+		next if m/^\'/ || m/^\.\s*tr\s+/ || m/^\.\s*\\\"/ ||
+		    m/^\.\s*sv/ || m/^\.\s*Vb\s+/ || m/\.\s*HP\s+/;
+		# Motif index entries, don't do anything for now.
+		next if m/^\.\s*iX/;
+		# Some other index (cook)
+		next if m/^\.\s*XX/;
+		chomp;
+		s/\.\s*(?:B|I|IR|SM|BR)\s+//;
+		if (m/^\.\s*(\S\S)/) {
+		    print STDERR "$filename: not grokking $_\n" 
+			if $picky;
+		    next;
+		}
+		push(@subject, $_) unless m/^\s*$/;
+		next;
+	}
+	if ($found_new) {
+		last if m/^\.\s*Sh/;
+		s/\s,/,/g;
+		if (s/^\.\s*(\S\S)\s+//) {
+		    my $macro = $1;
+		    next if $macro eq "\\\"";
+		    s/\"(.*?)\"/$1/g;
+		    s/\\-/-/g;
+		    $macro eq 'Xr' and s/^(\S+)\s+(\d\S*)/$1 ($2)/;
+		    $macro eq 'Ox' and s/^/OpenBSD /;
+		    $macro eq 'Nx' and s/^/NetBSD /;
+		    if ($macro eq 'Nd') {
+			if (@keep != 0) {
+			    add_unformated_subject(\@lines, \@keep, 
+				$section, $filename, \%toexpand, $picky);
+			    @keep = ();
+			}
+			push(@subject, "\\-");
+			$nd_seen = 1;
+		    }
+		    if ($nd_seen && $macro eq 'Nm') {
+			@keep = @subject;
+			@subject = ();
+			$nd_seen = 0;
+		    }
+		}
+		push(@subject, $_) unless m/^\s*$/;
 	}
     }
-    if ($so_found == 0) {
+    if ($found_th && !$found_old) {
+	    print STDERR "Couldn't find subject in old manpage $filename\n";
+    }
+    if ($found_dt && !$found_new) {
+	    print STDERR "Couldn't find subject in new manpage $filename\n";
+    }
+    unshift(@subject, @keep) if @keep != 0;
+    add_unformated_subject(\@lines, \@subject, $section,
+	$filename, \%toexpand, $picky) if @subject != 0;
+    if (!$so_found && !$found_old && !$found_new) {
 	print STDERR "Unknown manpage type $filename\n";
     }
     return \@lines;
