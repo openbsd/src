@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.13 1998/02/26 10:06:07 peter Exp $	*/
+/*	$OpenBSD: main.c,v 1.14 1998/07/08 22:14:15 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-static char *rcsid = "$OpenBSD: main.c,v 1.13 1998/02/26 10:06:07 peter Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.14 1998/07/08 22:14:15 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -372,6 +372,9 @@ main(argc, argv)
 		fprintf(stderr, "%s: kvm_open: %s\n", __progname, buf);
 		exit(1);
 	}
+	setegid(getgid());
+	setgid(getgid());
+
 	if (kvm_nlist(kvmd, nl) < 0 || nl[0].n_type == 0) {
 		if (nlistf)
 			fprintf(stderr, "%s: %s: no namelist\n", __progname,

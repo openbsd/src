@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.4 1996/07/22 02:01:50 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.5 1998/07/08 22:13:26 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1996/05/16 16:00:55 thorpej Exp $	*/
 
 /*-
@@ -161,8 +161,10 @@ main(argc, argv)
 	argv += optind;
 
 #ifdef __sparc__
-	if (system != NULL)
+	if (system != NULL) {
+		setegid(getgid());
 		setgid(getgid());
+	}
 	if (getcputype() != CPU_SUN4)
 		use_openprom = 1;
 #endif /* __sparc__ */
@@ -222,6 +224,9 @@ getcputype()
 
 	if ((kd = kvm_openfiles(system, NULL, NULL, O_RDONLY, errbuf)) == NULL)
 		errx(1, "can't open kvm: %s", errbuf);
+
+	setegid(getgid());
+	setgid(getgid());
 
 	if (kvm_nlist(kd, nl))
 		KVM_ABORT(kd, "can't read symbol table");

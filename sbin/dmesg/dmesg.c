@@ -1,4 +1,4 @@
-/*	$OpenBSD: dmesg.c,v 1.6 1998/07/05 18:45:17 deraadt Exp $	*/
+/*	$OpenBSD: dmesg.c,v 1.7 1998/07/08 22:14:37 deraadt Exp $	*/
 /*	$NetBSD: dmesg.c,v 1.8 1995/03/18 14:54:49 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)dmesg.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: dmesg.c,v 1.6 1998/07/05 18:45:17 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: dmesg.c,v 1.7 1998/07/08 22:14:37 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -113,6 +113,10 @@ main(argc, argv)
 	/* Read in kernel message buffer, do sanity checks. */
 	if ((kd = kvm_open(nlistf, memf, NULL, O_RDONLY, "dmesg")) == NULL)
 		exit (1);
+
+	setegid(getgid());
+	setgid(getgid());
+
 	if (kvm_nlist(kd, nl) == -1)
 		errx(1, "kvm_nlist: %s", kvm_geterr(kd));
 	if (nl[X_MSGBUF].n_type == 0)

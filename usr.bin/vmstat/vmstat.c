@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.24 1998/05/19 17:38:20 mickey Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.25 1998/07/08 22:14:18 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -185,7 +185,7 @@ main(argc, argv)
 	register int c, todo;
 	u_int interval;
 	int reps;
-        char errbuf[_POSIX2_LINE_MAX];
+	char errbuf[_POSIX2_LINE_MAX];
 
 	memf = nlistf = NULL;
 	interval = reps = todo = 0;
@@ -238,7 +238,7 @@ main(argc, argv)
 		setgid(getgid());
 	}
 
-        kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, errbuf);
+	kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, errbuf);
 	if (kd == 0) {
 		(void)fprintf(stderr,
 		    "vmstat: kvm_openfiles: %s\n", errbuf);
@@ -246,6 +246,10 @@ main(argc, argv)
 	}
 
 	if ((c = kvm_nlist(kd, namelist)) != 0) {
+
+		setegid(getgid());
+		setgid(getgid());
+
 		if (c > 0) {
 			(void)fprintf(stderr,
 			    "vmstat: undefined symbols:");
@@ -272,6 +276,9 @@ main(argc, argv)
 			winlines = winsize.ws_row;
 
 	}
+
+	setegid(getgid());
+	setgid(getgid());
 
 #define	BACKWARD_COMPATIBILITY
 #ifdef	BACKWARD_COMPATIBILITY

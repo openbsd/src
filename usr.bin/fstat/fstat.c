@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.15 1998/07/05 18:42:41 deraadt Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.16 1998/07/08 22:14:12 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fstat.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: fstat.c,v 1.15 1998/07/05 18:42:41 deraadt Exp $";
+static char *rcsid = "$OpenBSD: fstat.c,v 1.16 1998/07/08 22:14:12 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -238,6 +238,10 @@ main(argc, argv)
 		fprintf(stderr, "fstat: %s\n", buf);
 		exit(1);
 	}
+
+	setegid(getgid());
+	setgid(getgid());
+
 	if ((p = kvm_getprocs(kd, what, arg, &cnt)) == NULL) {
 		fprintf(stderr, "fstat: %s\n", kvm_geterr(kd));
 		exit(1);

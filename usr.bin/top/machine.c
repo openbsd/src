@@ -1,4 +1,4 @@
-/*	$OpenBSD: machine.c,v 1.9 1998/06/25 16:54:35 deraadt Exp $	*/
+/*	$OpenBSD: machine.c,v 1.10 1998/07/08 22:14:16 deraadt Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -202,6 +202,9 @@ struct statics *statics;
 	warnx("%s", errbuf);
 	return(-1);
     }
+
+    setegid(getgid());
+    setgid(getgid());
 
     /* get the list of symbols we want to access in the kernel */
     if (kvm_nlist(kd, nlst) <= 0) {

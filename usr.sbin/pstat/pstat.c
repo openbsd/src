@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.17 1998/06/25 17:04:29 deraadt Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.18 1998/07/08 22:13:29 deraadt Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$OpenBSD: pstat.c,v 1.17 1998/06/25 17:04:29 deraadt Exp $";
+static char *rcsid = "$OpenBSD: pstat.c,v 1.18 1998/07/08 22:13:29 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -218,6 +218,10 @@ main(argc, argv)
 
 	if ((kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, buf)) == 0)
 		errx(1, "kvm_openfiles: %s", buf);
+
+	(void)setegid(getgid());
+	(void)setgid(getgid());
+
 	if ((ret = kvm_nlist(kd, nl)) != 0) {
 		if (ret == -1)
 			errx(1, "kvm_nlist: %s", kvm_geterr(kd));

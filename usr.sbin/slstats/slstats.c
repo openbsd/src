@@ -1,4 +1,4 @@
-/*	$OpenBSD: slstats.c,v 1.8 1998/03/19 07:32:08 deraadt Exp $	*/
+/*	$OpenBSD: slstats.c,v 1.9 1998/07/08 22:13:30 deraadt Exp $	*/
 /*	$NetBSD: slstats.c,v 1.6.6.1 1996/06/07 01:42:30 thorpej Exp $	*/
 
 /*
@@ -25,7 +25,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: slstats.c,v 1.8 1998/03/19 07:32:08 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: slstats.c,v 1.9 1998/07/08 22:13:30 deraadt Exp $";
 #endif
 
 #define INET
@@ -142,6 +142,9 @@ main(argc, argv)
 	memset(errbuf, 0, sizeof(errbuf));
 	if ((kd = kvm_openfiles(kernel, kmemf, NULL, O_RDONLY, errbuf)) == NULL)
 		errx(1, "can't open kvm: %s", errbuf);
+
+	setegid(getgid());
+	setgid(getgid());
 
 	if (kvm_nlist(kd, nl) < 0 || nl[0].n_type == 0)
 		errx(1, "%s: SLIP symbols not in namelist",

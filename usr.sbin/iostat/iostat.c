@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.7 1997/01/15 23:44:01 millert Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.8 1998/07/08 22:13:27 deraadt Exp $	*/
 /*	$NetBSD: iostat.c,v 1.10 1996/10/25 18:21:58 scottr Exp $	*/
 
 /*
@@ -182,6 +182,10 @@ main(argc, argv)
 	}
 
 	dkinit(0);
+
+	setegid(getgid());
+	setgid(getgid());
+
 	dkreadstats();
 	selectdrives(argc, argv);
 
