@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsplit.c,v 1.2 1996/06/26 05:33:30 deraadt Exp $	*/
+/*	$OpenBSD: fsplit.c,v 1.3 1998/07/10 21:44:51 mickey Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -44,7 +44,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fsplit.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: fsplit.c,v 1.2 1996/06/26 05:33:30 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: fsplit.c,v 1.3 1998/07/10 21:44:51 mickey Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -52,6 +52,7 @@ static char rcsid[] = "$OpenBSD: fsplit.c,v 1.2 1996/06/26 05:33:30 deraadt Exp 
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <err.h>
 
 /*
  *	usage:		fsplit [-e efile] ... [file]
@@ -97,6 +98,7 @@ struct stat sbuf;
 
 #define trim(p)	while (*p == ' ' || *p == '\t') p++
 
+int
 main(argc, argv)
 char **argv;
 {
@@ -131,10 +133,8 @@ char **argv;
 	if (argc > 2)
 		badparms();
 	else if (argc == 2) {
-		if ((ifp = fopen(argv[1], "r")) == NULL) {
-			fprintf(stderr, "fsplit: cannot open %s\n", argv[1]);
-			exit(1);
-		}
+		if ((ifp = fopen(argv[1], "r")) == NULL)
+			err(1, argv[1]);
 	}
 	else
 		ifp = stdin;
@@ -159,8 +159,7 @@ char **argv;
 		for ( i = 0; i <= extrknt; i++ )
 			if(!extrfnd[i]) {
 				retval = 1;
-				fprintf( stderr, "fsplit: %s not found\n",
-					extrnames[i]);
+				warnx("%s not found", extrnames[i]);
 			}
 		exit( retval );
 	}
@@ -190,8 +189,7 @@ char **argv;
 
 badparms()
 {
-	fprintf(stderr, "fsplit: usage:  fsplit [-e efile] ... [file] \n");
-	exit(1);
+	err(1, "usage:  fsplit [-e efile] ... [file]");
 }
 
 saveit(name)
@@ -226,10 +224,8 @@ int letters;
 				break;
 			*ptr = '0';
 		}
-		if(ptr < name + letters) {
-			fprintf( stderr, "fsplit: ran out of file names\n");
-			exit(1);
-		}
+		if(ptr < name + letters)
+			errx(1, "ran out of file names");
 	}
 }
 
@@ -247,7 +243,7 @@ getline()
 		}
 	}
 	while (getc(ifp) != '\n' && feof(ifp) == 0) ;
-	fprintf(stderr, "line truncated to %d characters\n", BSZ);
+	warnx("line truncated to %d characters", BSZ);
 	return (1);
 }
 
