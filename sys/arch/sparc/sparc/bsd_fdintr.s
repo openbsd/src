@@ -1,3 +1,4 @@
+/*	$OpenBSD: bsd_fdintr.s,v 1.4 1997/08/25 08:38:47 downsj Exp $	*/
 /*	$NetBSD: bsd_fdintr.s,v 1.11 1997/04/07 21:00:36 pk Exp $ */
 
 /*
@@ -36,7 +37,7 @@
 #include <machine/param.h>
 #include <machine/psl.h>
 #include <sparc/sparc/intreg.h>
-#include <sparc/sparc/auxreg.h>
+#include <sparc/sparc/auxioreg.h>
 #include <sparc/sparc/vaddrs.h>
 #include <sparc/dev/fdreg.h>
 #include <sparc/dev/fdvar.h>

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc,v 1.12 1997/08/08 08:24:35 downsj Exp $
+#	$OpenBSD: files.sparc,v 1.13 1997/08/25 08:38:43 downsj Exp $
 #	$NetBSD: files.sparc,v 1.40 1997/07/07 21:53:43 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
@@ -30,7 +30,7 @@ file	arch/sparc/dev/obio.c		obio | vmel | vmes | vme
 
 device auxreg
 attach auxreg at mainbus, obio
-file	arch/sparc/sparc/auxreg.c
+file	arch/sparc/sparc/auxreg.c		auxreg needs-count
 
 device clock
 attach clock at mainbus, obio

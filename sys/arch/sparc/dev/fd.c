@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.20 1997/08/08 08:25:06 downsj Exp $	*/
+/*	$OpenBSD: fd.c,v 1.21 1997/08/25 08:38:44 downsj Exp $	*/
 /*	$NetBSD: fd.c,v 1.51 1997/05/24 20:16:19 pk Exp $	*/
 
 /*-
@@ -73,7 +73,7 @@
 #include <machine/conf.h>
 #include <machine/ioctl_fd.h>
 
-#include <sparc/sparc/auxreg.h>
+#include <sparc/sparc/auxioreg.h>
 #include <sparc/dev/fdreg.h>
 #include <sparc/dev/fdvar.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.27 1997/08/08 08:27:30 downsj Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.28 1997/08/25 08:38:48 downsj Exp $	*/
 /*	$NetBSD: machdep.c,v 1.83 1997/07/29 10:04:44 fair Exp $ */
 
 /*
@@ -96,6 +96,8 @@
 #include "power.h"
 #endif
 
+#include "auxreg.h"
+
 vm_map_t buffer_map;
 extern vm_offset_t avail_end;
 
@@ -119,6 +121,9 @@ int	physmem;
 extern struct msgbuf msgbuf;
 struct	msgbuf *msgbufp = &msgbuf;
 int	msgbufmapped = 0;	/* not mapped until pmap_bootstrap */
+
+/* sysctl settable */
+int	sparc_led_blink = 0;
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
@@ -458,12 +463,32 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	size_t newlen;
 	struct proc *p;
 {
+#if NAUXREG > 0
+	int ret, oldval;
+#endif
 
 	/* all sysctl names are this level are terminal */
 	if (namelen != 1)
 		return (ENOTDIR);	/* overloaded */
 
 	switch (name[0]) {
+	case CPU_LED_BLINK:
+#if NAUXREG > 0
+		oldval = sparc_led_blink;
+		ret = sysctl_int(oldp, oldlenp, newp, newlen,
+		    &sparc_led_blink);
+
+		/*
+		 * If we were false and are now true, call led_blink().
+		 * led_blink() itself will catch the other case.
+		 */
+		if (!oldval && sparc_led_blink > oldval)
+			led_blink((caddr_t *)0);
+
+		return (ret);
+#else
+		return (EOPNOTSUPP);
+#endif
 	default:
 		return (EOPNOTSUPP);
 	}

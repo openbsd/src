@@ -1,3 +1,4 @@
+/*	$OpenBSD: auxreg.c,v 1.7 1997/08/25 08:38:47 downsj Exp $	*/
 /*	$NetBSD: auxreg.c,v 1.21 1997/05/24 20:15:59 pk Exp $ */
 
 /*
@@ -52,7 +53,7 @@
 #include <machine/autoconf.h>
 
 #include <sparc/sparc/vaddrs.h>
-#include <sparc/sparc/auxreg.h>
+#include <sparc/sparc/auxioreg.h>
 
 static int auxregmatch __P((struct device *, void *, void *));
 static void auxregattach __P((struct device *, struct device *, void *));
@@ -65,14 +66,26 @@ struct cfdriver auxreg_cd = {
 	0, "auxreg", DV_DULL
 };
 
-#ifdef BLINK
-static void blink __P((void *zero));
+extern int sparc_led_blink;	/* from machdep */
 
-static void
-blink(zero)
+void
+led_blink(zero)
 	void *zero;
 {
 	register int s;
+
+	/* Don't do anything if there's no auxreg, ok? */
+	if (auxio_reg == 0)
+		return;
+
+	if (!sparc_led_blink) {
+		/* If blink has been disabled, make sure it goes back on... */
+		s = splhigh();
+		LED_ON;
+		splx(s);
+	
+		return;
+	}
 
 	s = splhigh();
 	LED_FLIP;
@@ -85,9 +98,9 @@ blink(zero)
 	 * etc.
 	 */
 	s = (((averunnable.ldavg[0] + FSCALE) * hz) >> (FSHIFT + 1));
-	timeout(blink, (caddr_t)0, s);
+
+	timeout(led_blink, (caddr_t)0, s);
 }
-#endif
 
 /*
  * The OPENPROM calls this "auxiliary-io".
@@ -130,9 +143,10 @@ auxregattach(parent, self, aux)
 	}
 
 	printf("\n");
-#ifdef BLINK
-	blink((caddr_t)0);
-#endif
+
+	/* In case it's initialized to true... */
+	if (sparc_led_blink)
+		led_blink((caddr_t)0);
 }
 
 unsigned int

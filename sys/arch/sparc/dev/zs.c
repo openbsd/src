@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.15 1997/08/08 08:25:43 downsj Exp $	*/
+/*	$OpenBSD: zs.c,v 1.16 1997/08/25 08:38:45 downsj Exp $	*/
 /*	$NetBSD: zs.c,v 1.48 1997/07/29 09:58:18 fair Exp $ */
 
 /*
@@ -75,7 +75,7 @@
 #include <machine/kbd.h>
 
 #include <sparc/sparc/vaddrs.h>
-#include <sparc/sparc/auxreg.h>
+#include <sparc/sparc/auxioreg.h>
 #include <dev/ic/z8530reg.h>
 #include <sparc/dev/zsvar.h>
 

@@ -1,3 +1,4 @@
+/*	$OpenBSD: auxioreg.h,v 1.1 1997/08/25 08:38:46 downsj Exp $	*/
 /*	$NetBSD: auxreg.h,v 1.7 1997/05/17 17:52:52 pk Exp $ */
 
 /*

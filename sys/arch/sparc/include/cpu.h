@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.3 1997/08/08 08:26:11 downsj Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.4 1997/08/25 08:38:45 downsj Exp $	*/
 /*	$NetBSD: cpu.h,v 1.24 1997/03/15 22:25:15 pk Exp $ */
 
 /*
@@ -51,10 +51,12 @@
 /*
  * CTL_MACHDEP definitions.
  */
-#define	CPU_MAXID	1	/* no valid machdep ids */
+#define CPU_LED_BLINK	1	/* int: twiddle the power LED */
+#define	CPU_MAXID	2	/* 1 valid machdep ID */
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
+	{ "led_blink", CTLTYPE_INT }, \
 }
 
 #ifdef _KERNEL
@@ -172,6 +174,8 @@ void	vmeintr_establish __P((int vec, int level, struct intrhand *));
  */
 void	intr_fasttrap __P((int level, void (*vec)(void)));
 
+/* auxreg.c */
+void led_blink __P((void *));
 /* disksubr.c */
 struct dkbad;
 int isbad __P((struct dkbad *bt, int, int, int));
