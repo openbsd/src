@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ip4.c,v 1.24 1999/02/24 23:45:51 angelos Exp $	*/
+/*	$OpenBSD: ip_ip4.c,v 1.25 1999/02/25 19:21:09 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -110,7 +110,6 @@ ip4_input(m, va_alist)
      */
     if (iphlen > sizeof(struct ip))
     {
-	DPRINTF(("ip4_input(): stripping options\n"));
 	ip_stripoptions(m, (struct mbuf *) 0);
 	iphlen = sizeof(struct ip);
     }
@@ -231,11 +230,17 @@ ipe4_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     ipo->ip_hl = 5;
     ipo->ip_tos = ipi->ip_tos;
     ipo->ip_len = htons(ilen + sizeof(struct ip));
-    ipo->ip_id = ip_randomid();
-    HTONS(ipo->ip_id);
-    ipo->ip_off = ipi->ip_off & ~(IP_MF | IP_OFFMASK); /* XXX keep C and DF */
     ipo->ip_ttl = ip_defttl;
     ipo->ip_p = IPPROTO_IPIP;
+    ipo->ip_id = ip_randomid();
+    HTONS(ipo->ip_id);
+
+    /*
+     * XXX We should be keeping tunnel soft-state and send back ICMPs
+     * if needed
+     */
+    ipo->ip_off = ipi->ip_off & ~(IP_DF | IP_MF | IP_OFFMASK);
+
     ipo->ip_sum = 0;
 
     ipo->ip_src = tdb->tdb_src.sin.sin_addr;
