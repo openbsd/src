@@ -1,1 +1,1 @@
-$self->{CCFLAGS} = $Config{ccflags} . ' -O1' ;
+$self->{OPTIMIZE} = '-O1';
