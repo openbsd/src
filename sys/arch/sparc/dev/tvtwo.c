@@ -1,4 +1,4 @@
-/*	$OpenBSD: tvtwo.c,v 1.6 2005/03/07 16:44:50 miod Exp $	*/
+/*	$OpenBSD: tvtwo.c,v 1.7 2005/03/07 21:21:03 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -53,9 +53,7 @@
 #include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
-#include <sys/malloc.h>
 #include <sys/mman.h>
-#include <sys/tty.h>
 #include <sys/conf.h>
 
 #include <uvm/uvm_extern.h>
@@ -67,7 +65,6 @@
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
-#include <dev/wscons/wscons_raster.h>
 #include <dev/rasops/rasops.h>
 #include <machine/fbvar.h>
 
@@ -76,18 +73,26 @@
 /*
  * The memory layout of the board is as follows:
  *
- *	 PROM0		000000 - 00ffff
- *	 overlay plane	010000 - 037fff
- *	 registers	040000 - 0404d0
- *	 CCube		050000 - 05ffff
- *	 8-bit plane	080000 - 17ffff
- *	 24-bit plane	200000 - 6fffff
- *	 PROM1		7f0000 - 7fffff
+ *	PROM0		000000 - 00ffff
+ *	overlay plane	010000 - 037fff
+ *	registers	040000 - 0404d0
+ *	CCube		050000 - 05ffff
+ *	8-bit plane	080000 - 17ffff
+ *	24-bit plane	200000 - 6fffff
+ *	PROM1		7f0000 - 7fffff
  *
- * All of this is mapped using only one register (except for older models
- * which are not currently supported).
- * At PROM initialization, the board will be in 24-bit mode, so no specific
- * initialization is necessary.
+ * Older XVideo provide two sets of SBus registers:
+ *	R0		040000 - 040800
+ *	R1		080000 - 17d200
+ * While the more recent revisions provide only one register:
+ *	R0		000000 - 7fffff
+ *
+ * We currently refuse to attach to the old version because mapping
+ * things requires us to play with the sbus register ranges, and I
+ * don't want to play this game without the hardware at hand -- miod
+ *
+ * At PROM initialization, the board will be in 24-bit mode,
+ * so no specific initialization is necessary.
  */
 
 #define	PX_PROM0_OFFSET		0x000000
@@ -106,7 +111,10 @@
 #define	DISPKLUDGE_DEFAULT	0xc41f
 #define	DISPKLUDGE_BLANK	(1 << 12)
 
-#define	PX_REG_BT463		0x0480
+#define	PX_REG_BT463_RED	0x0480
+#define	PX_REG_BT463_GREEN	0x0490
+#define	PX_REG_BT463_BLUE	0x04a0
+#define	PX_REG_BT463_ALL	0x04b0
 
 #define	PX_REG_SIZE		0x04d0
 
@@ -122,18 +130,18 @@ struct tvtwo_softc {
 	int	sc_nscreens;
 };
 
-int tvtwo_ioctl(void *, u_long, caddr_t, int, struct proc *);
-int tvtwo_alloc_screen(void *, const struct wsscreen_descr *, void **,
-    int *, int *, long *);
-void tvtwo_free_screen(void *, void *);
-int tvtwo_show_screen(void *, void *, int, void (*cb)(void *, int, int),
-    void *);
-paddr_t tvtwo_mmap(void *, off_t, int);
-void tvtwo_burner(void *, u_int, u_int);
+int	tvtwo_ioctl(void *, u_long, caddr_t, int, struct proc *);
+int	tvtwo_alloc_screen(void *, const struct wsscreen_descr *, void **,
+	    int *, int *, long *);
+void	tvtwo_free_screen(void *, void *);
+int	tvtwo_show_screen(void *, void *, int, void (*cb)(void *, int, int),
+	    void *);
+paddr_t	tvtwo_mmap(void *, off_t, int);
+void	tvtwo_burner(void *, u_int, u_int);
 
 static __inline__ void tvtwo_ramdac_wraddr(struct tvtwo_softc *sc,
     u_int32_t addr);
-void tvtwo_initcmap(struct tvtwo_softc *);
+void	tvtwo_initcmap(struct tvtwo_softc *);
 
 struct wsdisplay_accessops tvtwo_accessops = {
 	tvtwo_ioctl,
@@ -147,8 +155,8 @@ struct wsdisplay_accessops tvtwo_accessops = {
 	tvtwo_burner,
 };
 
-int tvtwomatch(struct device *, void *, void *);
-void tvtwoattach(struct device *, struct device *, void *);
+int	tvtwomatch(struct device *, void *, void *);
+void	tvtwoattach(struct device *, struct device *, void *);
 
 struct cfattach tvtwo_ca = {
 	sizeof(struct tvtwo_softc), tvtwomatch, tvtwoattach
@@ -161,8 +169,9 @@ struct cfdriver tvtwo_cd = {
 /*
  * Default frame buffer resolution, depending upon the "freqcode"
  */
-const int defwidth[] = { 1152, 1152, 1152, 1024, 640, 1024 };
-const int defheight[] = { 900, 900, 900, 768, 480, 1024 };
+#define	NFREQCODE	5
+const int defwidth[NFREQCODE] = { 1152, 1152, 1152, 1024, 640 };
+const int defheight[NFREQCODE] = { 900, 900, 900, 768, 480 };
 
 /*
  * Match an XVideo or PowerVideo card.
@@ -173,10 +182,11 @@ tvtwomatch(struct device *parent, void *vcf, void *aux)
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
 
-	if (strcmp(ra->ra_name, "PGI,tvtwo") != 0)
-		return (0);
+	if (strcmp(ra->ra_name, "PGI,tvtwo") == 0 ||
+	    strcmp(ra->ra_name, "PGI,tvthree") == 0)
+		return (1);
 
-	return (1);
+	return (0);
 }
 
 /*
@@ -196,10 +206,12 @@ tvtwoattach(struct device *parent, struct device *self, void *args)
 	printf(": %s", getpropstring(node, "model"));
 	printf(", revision %s\n", getpropstring(node, "revision"));
 
-	/* We do not know how to handle older boards. */
+	/* We do not handle older boards yet. */
 	if (ca->ca_ra.ra_nreg != 1) {
-		printf("%s: old-style boards with %d registers are not supported\n",
-		    self->dv_xname, ca->ca_ra.ra_nreg);
+		printf("%s: old-style boards with %d registers are not supported\n"
+		    "%s: please report this to <sparc@openbsd.org>\n",
+		    self->dv_xname, ca->ca_ra.ra_nreg,
+		    self->dv_xname);
 		return;
 	}
 
@@ -211,17 +223,20 @@ tvtwoattach(struct device *parent, struct device *self, void *args)
 	/* Compute framebuffer size. */
 	freqstring = getpropstring(node, "freqcode");
 	freqcode = (int)*freqstring;
-	if (freqcode == 'g')
-		freqcode = '6';
-	if (freqcode < '1' || freqcode > '6')
-		freqcode = 0;
-	else
-		freqcode -= '1';
+	if (freqcode == 'g') {
+		width = height = 1024;
+	} else {
+		if (freqcode < '1' || freqcode > NFREQCODE + '0')
+			freqcode = 0;
+		else
+			freqcode -= '1';
+		width = defwidth[freqcode];
+		height = defheight[freqcode];
+	}
 
-	width = getpropint(node, "hres", defwidth[freqcode]);
-	height = getpropint(node, "vres", defheight[freqcode]);
-	fb_setsize(&sc->sc_sunfb, 32, width, height,
-	    node, ca->ca_bustype);
+	width = getpropint(node, "hres", width);
+	height = getpropint(node, "vres", height);
+	fb_setsize(&sc->sc_sunfb, 32, width, height, node, ca->ca_bustype);
 
 	/* Map the frame buffer memory area we're interested in. */
 	sc->sc_phys = ca->ca_ra.ra_reg[0];
@@ -348,7 +363,7 @@ tvtwo_show_screen(void *v, void *cookie, int waitok,
 static __inline__ void
 tvtwo_ramdac_wraddr(struct tvtwo_softc *sc, u_int32_t addr)
 {
-	volatile u_int32_t *dac = (u_int32_t *)(sc->sc_regs + PX_REG_BT463);
+	volatile u_int32_t *dac = (u_int32_t *)(sc->sc_regs + PX_REG_BT463_RED);
 
 	dac[0] = (addr & 0xff);		/* lo addr */
 	dac[1] = ((addr >> 8) & 0xff);	/* hi addr */
@@ -357,7 +372,7 @@ tvtwo_ramdac_wraddr(struct tvtwo_softc *sc, u_int32_t addr)
 void
 tvtwo_initcmap(struct tvtwo_softc *sc)
 {
-	volatile u_int32_t *dac = (u_int32_t *)(sc->sc_regs + PX_REG_BT463);
+	volatile u_int32_t *dac = (u_int32_t *)(sc->sc_regs + PX_REG_BT463_RED);
 	u_int32_t c;
 
 	tvtwo_ramdac_wraddr(sc, 0);
