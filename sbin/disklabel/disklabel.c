@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.9 1996/06/12 08:02:44 downsj Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.10 1996/06/17 06:57:06 downsj Exp $	*/
 /*	$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson Exp $	*/
 
 /*
@@ -48,7 +48,7 @@ static char copyright[] =
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 static char sccsid[] = "@(#)disklabel.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson Exp $";
+static char rcsid[] = "$OpenBSD: disklabel.c,v 1.10 1996/06/17 06:57:06 downsj Exp $";
 #endif
 #endif /* not lint */
 
@@ -70,6 +70,7 @@ static char rcsid[] = "$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson E
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <opendev.h>
 #include <unistd.h>
 #include "pathnames.h"
 
@@ -230,24 +231,8 @@ main(argc, argv)
 		usage();
 
 	dkname = argv[0];
-	f = open(dkname, op == READ ? O_RDONLY : O_RDWR);
-	if (f != -1) {
-		specname = dkname;
-		goto ok;
-	}
-	if (dkname[0] != '/') {
-		(void)sprintf(np, "%sr%s%c", _PATH_DEV, dkname, 'a' + RAW_PART);
-		specname = np;
-		np += strlen(specname) + 1;
-	} else
-		specname = dkname;
-	f = open(specname, op == READ ? O_RDONLY : O_RDWR);
-ok:
-	if (f < 0 && errno == ENOENT && dkname[0] != '/') {
-		(void)sprintf(specname, "%sr%s", _PATH_DEV, dkname);
-		np = namebuf + strlen(specname) + 1;
-		f = open(specname, op == READ ? O_RDONLY : O_RDWR);
-	}
+	f = opendev(dkname, (op == READ ? O_RDONLY : O_RDWR), OPENDEV_PART,
+		0600, &specname);
 	if (f < 0)
 		err(4, "%s", specname);
 
