@@ -1,4 +1,4 @@
-/*	$OpenBSD: pio.h,v 1.2 1998/09/15 10:50:12 pefo Exp $	*/
+/*	$OpenBSD: pio.h,v 1.3 1998/10/15 21:30:14 imp Exp $	*/
 
 /*
  * Copyright (c) 1995 Per Fogelstrom.  All rights reserved.
@@ -37,77 +37,15 @@
  */
 
 #define	outb(a,v)	(*(volatile unsigned char*)(a) = (v))
-#define	out8(a,v)	(*(volatile unsigned char*)(a) = (v))
 #define	outw(a,v)	(*(volatile unsigned short*)(a) = (v))
 #define	out16(a,v)	outw(a,v)
 #define	outl(a,v)	(*(volatile unsigned int*)(a) = (v))
 #define	out32(a,v)	outl(a,v)
 #define	inb(a)		(*(volatile unsigned char*)(a))
-#define	in8(a)		(*(volatile unsigned char*)(a))
 #define	inw(a)		(*(volatile unsigned short*)(a))
 #define	in16(a)		inw(a)
 #define	inl(a)		(*(volatile unsigned int*)(a))
 #define	in32(a)		inl(a)
-
-#define	out8rb(a,v)	(*(volatile unsigned char*)(a) = (v))
-#define out16rb(a,v)	(__out16rb((volatile u_int16_t *)(a), v))
-#define out32rb(a,v)	(__out32rb((volatile u_int32_t *)(a), v))
-#define	in8rb(a)	(*(volatile unsigned char*)(a))
-#define in16rb(a)	(__in16rb((volatile u_int16_t *)(a)))
-#define in32rb(a)	(__in32rb((volatile u_int32_t *)(a)))
-
-#define	_swap_(x) \
-	(((x) >> 24) | ((x) << 24) | \
-	(((x) >> 8) & 0xff00) | (((x) & 0xff00) << 8))
-
-static __inline void __out32rb __P((volatile u_int32_t *, u_int32_t));
-static __inline void __out16rb __P((volatile u_int16_t *, u_int16_t));
-static __inline u_int32_t __in32rb __P((volatile u_int32_t *));
-static __inline u_int16_t __in16rb __P((volatile u_int16_t *));
-
-static __inline void
-__out32rb(a,v)
-	volatile u_int32_t *a;
-	u_int32_t v;
-{
-	u_int32_t _v_ = v;
-
-	_v_ = _swap_(_v_);
-	out32(a, _v_);
-}
-
-static __inline void
-__out16rb(a,v)
-        volatile u_int16_t *a;
-        u_int16_t v;
-{
-        u_int16_t _v_;
-
-	_v_ = ((v >> 8) & 0xff) | (v << 8);
-	out16(a, _v_);
-}  
-
-static __inline u_int32_t
-__in32rb(a)
-        volatile u_int32_t *a;
-{
-        u_int32_t _v_;
-
-	_v_ = in32(a);
-	_v_ = _swap_(_v_);
-        return _v_;
-}                      
-
-static __inline u_int16_t
-__in16rb(a)
-        volatile u_int16_t *a;
-{
-        u_int16_t _v_;
-
-	_v_ = in16(a);
-	_v_ = ((_v_ >> 8) & 0xff) | (_v_ << 8);
-        return _v_;
-}
 
 void insb __P((u_int8_t *, u_int8_t *,int));
 void insw __P((u_int16_t *, u_int16_t *,int));

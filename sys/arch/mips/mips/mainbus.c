@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.3 1998/09/15 10:50:13 pefo Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.4 1998/10/15 21:30:15 imp Exp $	*/
 
 /*
  * Copyright (c) 1997 Per Fogelstrom.
@@ -143,22 +143,6 @@ mbattach(parent, self, aux)
 #ifdef sgi
 	if (system_type == SGI_INDY) {
 		nca.ca_name = "indy";
-		nca.ca_slot = 0;
-		nca.ca_offset = 0;
-		nca.ca_bus = &sc->sc_bus;
-		config_found(self, &nca, mbprint);
-	}
-#endif
-
-#ifdef galileo
-	if (system_type == GALILEO_G9) {
-		nca.ca_name = "localbus";
-		nca.ca_slot = 0;
-		nca.ca_offset = 0;
-		nca.ca_bus = &sc->sc_bus;
-		config_found(self, &nca, mbprint);
-
-		nca.ca_name = "galpcibr";
 		nca.ca_slot = 0;
 		nca.ca_offset = 0;
 		nca.ca_bus = &sc->sc_bus;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.4 1998/09/15 10:50:13 pefo Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.5 1998/10/15 21:30:15 imp Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -64,49 +64,70 @@ static int vm_map_findspace_align __P((vm_map_t map, vm_offset_t, vm_size_t,
 int vm_map_find_U __P((vm_map_t, vm_object_t, vm_offset_t, vm_offset_t *,
 			vm_size_t, boolean_t));
 
-extern void child_return __P((struct proc *));
-extern void proc_trampoline __P((void));
 /*
  * Finish a fork operation, with process p2 nearly set up.
+ * Copy and update the kernel stack and pcb, making the child
+ * ready to run, and marking it so that it can return differently
+ * than the parent.  Returns 1 in the child process, 0 in the parent.
+ * We currently double-map the user area so that the stack is at the same
+ * address in each process; in the future we will probably relocate
+ * the frame pointers on the stack after copying.
  */
-void
+int
 cpu_fork(p1, p2)
-	struct proc *p1, *p2;
+	register struct proc *p1, *p2;
 {
+	struct user *up = p2->p_addr;
 	pt_entry_t *pte;
-	struct pcb *pcb;
 	int i;
 	extern struct proc *machFPCurProcPtr;
 
-	p2->p_md.md_regs = &p2->p_addr->u_pcb.pcb_regs;
+	p2->p_md.md_regs = up->u_pcb.pcb_regs;
 	p2->p_md.md_flags = p1->p_md.md_flags & MDP_FPUSED;
 
-	pte = kvtopte(p2->p_addr);
+	/*
+	 * Cache the PTEs for the user area in the machine dependent
+	 * part of the proc struct so cpu_switch() can quickly map in
+	 * the user struct and kernel stack. Note: if the virtual address
+	 * translation changes (e.g. swapout) we have to update this.
+	 */
+	pte = kvtopte(up);
 	for (i = 0; i < UPAGES; i++) {
-		p2->p_md.md_upte[i] = pte->pt_entry & ~(PG_G|PG_RO|PG_WIRED);
+		p2->p_md.md_upte[i] = pte->pt_entry & ~(PG_G | PG_RO | PG_WIRED);
 		pte++;
 	}
 
+	/*
+	 * Copy floating point state from the FP chip if this process
+	 * has state stored there.
+	 */
 	if (p1 == machFPCurProcPtr)
 		MipsSaveCurFPState(p1);
 
-	pcb = &p2->p_addr->u_pcb;
+	/*
+	 * Copy pcb and stack from proc p1 to p2. 
+	 * We do this as cheaply as possible, copying only the active
+	 * part of the stack.  The stack and pcb need to agree;
+	 */
 	p2->p_addr->u_pcb = p1->p_addr->u_pcb;
+	/* cache segtab for ULTBMiss() */
+	p2->p_addr->u_pcb.pcb_segtab = (void *)p2->p_vmspace->vm_pmap.pm_segtab;
 
-	pcb->pcb_segtab = (void *)p2->p_vmspace->vm_pmap.pm_segtab;
-
-	pcb->pcb_context.val[10] = (int)proc_trampoline;
-	pcb->pcb_context.val[8] = (int)(KERNELSTACK - 24);
-	pcb->pcb_context.val[0] = (int)child_return;
-	pcb->pcb_context.val[1] = (int)p2;
-}
-
-void
-cpu_set_kpc(p, pc)
-	struct proc *p;
-	void (*pc) __P((struct proc *));
-{
-	p->p_addr->u_pcb.pcb_context.val[0] = (int)pc;
+	/*
+	 * Arrange for a non-local goto when the new process
+	 * is started, to resume here, returning nonzero from setjmp.
+	 */
+#ifdef DIAGNOSTIC
+	if (p1 != curproc)
+		panic("cpu_fork: curproc");
+#endif
+	if (copykstack(up)) {
+		/*
+		 * Return 1 in child.
+		 */
+		return (1);
+	}
+	return (0);
 }
 
 /*

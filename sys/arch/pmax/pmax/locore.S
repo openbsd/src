@@ -133,22 +133,22 @@
  *	Don't ask why, I don't konw.
  */
 #define	RESTORE_KERN_REGISTERS(offset)			\
-	lw	v1, offset + (V1 * 4)(sp)		; \
-	lw	a0, offset + (A0 * 4)(sp)		; \
-	lw	a1, offset + (A1 * 4)(sp)		; \
-	lw	a2, offset + (A2 * 4)(sp)		; \
-	lw	a3, offset + (A3 * 4)(sp)		; \
-	lw	t0, offset + (T0 * 4)(sp)		; \
-	lw	t1, offset + (T1 * 4)(sp)		; \
-	lw	t2, offset + (T2 * 4)(sp)		; \
-	lw	t3, offset + (T3 * 4)(sp)		; \
-	lw	t4, offset + (T4 * 4)(sp)		; \
-	lw	t5, offset + (T5 * 4)(sp)		; \
-	lw	t6, offset + (T6 * 4)(sp)		; \
-	lw	t7, offset + (T7 * 4)(sp)		; \
-	lw	t8, offset + (T8 * 4)(sp)		; \
-	lw	t9, offset + (T9 * 4)(sp)		; \
-	lw	ra, offset + (RA * 4)(sp)
+	lw	v1, offset + 8(sp)		; \
+	lw	a0, offset + 12(sp)		; \
+	lw	a1, offset + 16(sp)		; \
+	lw	a2, offset + 20(sp)		; \
+	lw	a3, offset + 24(sp)		; \
+	lw	t0, offset + 28(sp)		; \
+	lw	t1, offset + 32(sp)		; \
+	lw	t2, offset + 36(sp)		; \
+	lw	t3, offset + 40(sp)		; \
+	lw	t4, offset + 44(sp)		; \
+	lw	t5, offset + 48(sp)		; \
+	lw	t6, offset + 52(sp)		; \
+	lw	t7, offset + 56(sp)		; \
+	lw	t8, offset + 60(sp)		; \
+	lw	t9, offset + 64(sp)		; \
+	lw	ra, offset + 68(sp)
 
 
 
@@ -213,20 +213,16 @@ start:
 	sw	t1, _C_LABEL(fpu_id)		# save FPU ID register
 	jal	_C_LABEL(main)			# main(regs)
 	move	a0, zero
-	PANIC("Startup failed!")
 /*
- * Setup for and return to user.
+ * proc[1] == /etc/init now running here.
+ * Restore user registers and return.
  */
-LEAF(proc_trampoline)
-	jal	s0
-	move	a0,s1				# set up for return to user.
-
 	.set	noat
-	lw	k0, UADDR+U_PCB_REGS+(SR * 4)
+	li	v0, PSL_USERSET
+	mtc0	v0, MIPS_COP_0_STATUS_REG	# switch to user mode
 	lw	a0, UADDR+U_PCB_REGS+(SR * 4)
 	lw	t0, UADDR+U_PCB_REGS+(MULLO * 4)
 	lw	t1, UADDR+U_PCB_REGS+(MULHI * 4)
-	mtc0	k0, MIPS_COP_0_STATUS_REG	# switch to user mode
 	mtlo	t0
 	mthi	t1
 	lw	k0, UADDR+U_PCB_REGS+(PC * 4)
@@ -262,7 +258,6 @@ LEAF(proc_trampoline)
 	j	k0
 	rfe
 	.set	at
-END(proc_trampoline)
 
 /*
  * This code is copied the user's stack for returning from signal handlers

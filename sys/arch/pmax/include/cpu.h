@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.9 1998/09/15 10:53:54 pefo Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.10 1998/10/15 21:30:16 imp Exp $	*/
 /*	$NetBSD: cpu.h,v 1.15 1996/03/23 20:28:19 jonathan Exp $	*/
 
 /*-
@@ -72,6 +72,7 @@ extern int cpu_arch;
  * referenced in generic code
  */
 #define	cpu_wait(p)			/* nothing */
+#define cpu_set_init_frame(p, fp)	/* nothing */
 #define	cpu_swapout(p)			panic("cpu_swapout: can't get here");
 
 /*

@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.2 1998/09/15 10:58:53 pefo Exp $ */
+#	$OpenBSD: genassym.cf,v 1.3 1998/10/15 21:29:59 imp Exp $ */
 #
 # Copyright (c) 1997 Per Fogelstrom / Opsycon AB
 # 
@@ -38,13 +38,16 @@ include <sys/proc.h>
 include <sys/mbuf.h>
 include <sys/user.h>
 
+include <machine/reg.h>
+
+
 define	P_FORW		offsetof(struct proc, p_forw)
 define	P_BACK		offsetof(struct proc, p_back)
 define	P_PRIORITY	offsetof(struct proc, p_priority)
 define	P_ADDR		offsetof(struct proc, p_addr)
 define	P_UPTE		offsetof(struct proc, p_md.md_upte)
-define	U_PCB_REGS	offsetof(struct user, u_pcb.pcb_regs.zero)
-define	U_PCB_FPREGS	offsetof(struct user, u_pcb.pcb_regs.f0)
+define	U_PCB_REGS	offsetof(struct user, u_pcb.pcb_regs[ZERO])
+define	U_PCB_FPREGS	offsetof(struct user, u_pcb.pcb_regs[F0])
 define	U_PCB_CONTEXT	offsetof(struct user, u_pcb.pcb_context)
 define	U_PCB_ONFAULT	offsetof(struct user, u_pcb.pcb_onfault)
 define	U_PCB_SEGTAB	offsetof(struct user, u_pcb.pcb_segtab)
