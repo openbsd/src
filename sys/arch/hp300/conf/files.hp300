@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hp300,v 1.12 1999/11/08 15:36:08 mickey Exp $
+#	$OpenBSD: files.hp300,v 1.13 2001/05/11 06:41:39 deraadt Exp $
 #	$NetBSD: files.hp300,v 1.28 1997/05/12 08:23:28 thorpej Exp $
 #
 # hp300-specific configuration info
@@ -165,7 +165,7 @@ attach	ppi at hpibbus
 file	arch/hp300/dev/ppi.c		ppi needs-flag
 
 # RAM disk
-file	arch/hp300/dev/rd_root.c	ramdisk_hooks
+file	dev/rd.c			ramdisk_hooks
 major	{rd = 8}
 
 # Old HP SCSI layer

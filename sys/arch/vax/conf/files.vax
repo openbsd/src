@@ -1,4 +1,4 @@
-#	$OpenBSD: files.vax,v 1.21 2001/04/17 15:19:33 hugh Exp $
+#	$OpenBSD: files.vax,v 1.22 2001/05/11 06:41:51 deraadt Exp $
 #       $NetBSD: files.vax,v 1.60 1999/08/27 20:04:32 ragge Exp $
 #
 # new style config file for vax architecture
@@ -127,7 +127,7 @@ attach	ry at hdc
 major	{ry = 24}
 
 # RAM Disk for install floppy
-file arch/vax/vax/rd_root.c		ramdisk_hooks
+file	dev/rd.c			ramdisk_hooks
 major	{rd = 23}
 
 #

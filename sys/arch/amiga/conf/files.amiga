@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amiga,v 1.39 2000/10/12 19:36:52 espie Exp $
+#	$OpenBSD: files.amiga,v 1.40 2001/05/11 06:41:37 deraadt Exp $
 #	$NetBSD: files.amiga,v 1.62 1997/08/27 19:32:47 is Exp $
 
 
@@ -97,7 +97,7 @@ file	arch/amiga/dev/grf_cc.c		grfcc needs-flag
 file	arch/amiga/dev/ite_cc.c		grfcc & ite
 
 # RAM disk
-file	arch/amiga/dev/rd_root.c	ramdisk_hooks
+file	dev/rd.c			ramdisk_hooks
 
 pseudo-device	view
 file	arch/amiga/dev/view.c		view | grfcc needs-count

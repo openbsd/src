@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mac68k,v 1.21 2000/06/12 06:10:47 fgsch Exp $
+#	$OpenBSD: files.mac68k,v 1.22 2001/05/11 06:41:42 deraadt Exp $
 #	$NetBSD: files.mac68k,v 1.61 1997/03/01 20:22:16 scottr Exp $
 
 # mac68k-specific configuration info
@@ -128,7 +128,7 @@ file	dev/cons.c
 file	dev/cninit.c
 
 # RAM Disk for boot tape
-file arch/sun3/dev/rd_root.c		ramdisk_hooks
+file	dev/rd.c				ramdisk_hooks
 
 major	{sd = 4}
 major	{st = 5}

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.28 2001/04/03 06:24:50 mickey Exp $
+#	$OpenBSD: files.hppa,v 1.29 2001/05/11 06:41:41 deraadt Exp $
 #
 # hppa-specific configuration info
 
@@ -111,7 +111,7 @@ major	{ccd = 1}
 major	{vnd = 2}
 
 # RAM disk
-file	arch/hppa/dev/rd_root.c		ramdisk_hooks
+file	dev/rd.c			ramdisk_hooks
 major	{rd = 3}
 
 #

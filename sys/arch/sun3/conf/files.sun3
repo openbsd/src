@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sun3,v 1.15 2000/08/28 21:51:03 miod Exp $
+#	$OpenBSD: files.sun3,v 1.16 2001/05/11 06:41:49 deraadt Exp $
 #	$NetBSD: files.sun3,v 1.26 1996/10/29 19:58:14 gwr Exp $
 
 #
@@ -178,7 +178,7 @@ file arch/sun3/dev/ms.c			ms needs-flag
 
 
 # RAM Disk for boot tape
-file arch/sun3/dev/rd_root.c		ramdisk_hooks
+file dev/rd.c				ramdisk_hooks
 
 # Major numbers for root/swap device configuration
 major	{xy=3}	# Xylogics 450 and 451
