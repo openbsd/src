@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.78 2003/07/30 01:42:47 pvalchev Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.79 2003/09/23 03:04:16 deraadt Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.78 2003/07/30 01:42:47 pvalchev Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.79 2003/09/23 03:04:16 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -599,7 +599,6 @@ printif(struct ifreq *ifrm, int ifaliases)
 		    sizeof(ifrm->ifr_name)))
 			continue;
 		(void) strlcpy(name, ifa->ifa_name, sizeof(name));
-		name[sizeof(name) - 1] = '\0';
 
 #ifdef INET6
 		/* quickhack: sizeof(ifr) < sizeof(ifr6) */
@@ -696,7 +695,7 @@ printif(struct ifreq *ifrm, int ifaliases)
 		if (ifrm && strncmp(ifrm->ifr_name, ifrp->ifr_name,
 		    sizeof(ifrp->ifr_name)))
 			continue;
-		(void) strlcpy(name, ifrp->ifr_name, sizeof(ifrp->ifr_name));
+		(void) strlcpy(name, ifrp->ifr_name, sizeof(name));
 		if (ifrp->ifr_addr.sa_family == AF_LINK) {
 			ifreq = ifr = *ifrp;
 			if (getinfo(&ifreq) < 0)
