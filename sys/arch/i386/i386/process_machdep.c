@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.14 2004/02/01 19:05:23 deraadt Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.15 2004/02/05 01:06:33 deraadt Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.22 1996/05/03 19:42:25 christos Exp $	*/
 
 /*
@@ -222,7 +222,7 @@ process_read_fpregs(p, regs)
 			process_xmm_to_s87(&frame->sv_xmm, &s87);
 			memcpy(regs, &s87, sizeof(*regs));
  		} else
-			bcopy(frame, regs, sizeof(*frame));
+			bcopy(frame, regs, sizeof(*regs));
 	} else
 		bzero(regs, sizeof(*regs));
 
