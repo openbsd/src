@@ -1219,6 +1219,10 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/umass_quirks.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/umass_scsi.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/umassvar.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/umct.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/umidi_quirks.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/umidireg.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/umidivar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/urio.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/usb.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/usb_mem.ph
@@ -1972,6 +1976,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/filedesc.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/filio.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/gmon.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/hash.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/ioccom.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/ioctl.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/ioctl_compat.ph

@@ -142,10 +142,5 @@
 ./usr/libdata/ldscripts/elf_i386.xs
 ./usr/libdata/ldscripts/elf_i386.xu
 ./usr/libdata/ldscripts/elf_i386.xz
-./usr/libdata/perl5/site_perl/i386-openbsd/dev/usb/umct.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/dev/usb/umidi_quirks.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/dev/usb/umidireg.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/dev/usb/umidivar.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/sys/hash.ph
 ./usr/share/man/cat1/gdb.0
 ./usr/share/man/cat1/objdump.0

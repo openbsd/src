@@ -652,6 +652,10 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/umass_quirks.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/umass_scsi.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/umassvar.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/umct.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/umidi_quirks.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/umidireg.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/umidivar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/urio.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/usb.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/usb_mem.ph
@@ -1311,6 +1315,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/filedesc.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/filio.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/gmon.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/sys/hash.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/ioccom.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/ioctl.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/ioctl_compat.ph
