@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_cbq.h,v 1.1 2001/06/27 05:28:34 kjc Exp $	*/
+/*	$OpenBSD: altq_cbq.h,v 1.2 2002/10/10 10:44:02 kjc Exp $	*/
 /*	$KAME: altq_cbq.h,v 1.5 2000/12/02 13:44:40 kjc Exp $	*/
 
 /*
@@ -87,6 +87,7 @@ typedef struct cbq_class_spec {
 #define	CBQCLF_RIO		0x0004  /* use RIO */
 #define	CBQCLF_FLOWVALVE	0x0008	/* use flowvalve (aka penalty-box) */
 #define	CBQCLF_CLEARDSCP	0x0010  /* clear diffserv codepoint */
+#define	CBQCLF_BORROW		0x0020  /* borrow from parent */
 
 /* class flags only for root class */
 #define	CBQCLF_WRR		0x0100	/* weighted-round robin */
