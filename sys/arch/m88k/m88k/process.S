@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.S,v 1.4 2004/07/13 09:45:51 miod Exp $	*/
+/*	$OpenBSD: process.S,v 1.5 2004/08/02 08:34:21 miod Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -249,8 +249,6 @@ ASLOCAL(Ldoneloop)
 	ld	r3, r10, PCB_FCR63
 	fstcr	r2, fcr62
 	fstcr	r3, fcr63
-	ld	r1, r10, PCB_PC
-	ld	r14,r10, PCB_R14
 	ld	r15,r10, PCB_R15
 	ld	r16,r10, PCB_R16
 	ld	r17,r10, PCB_R17
@@ -266,19 +264,15 @@ ASLOCAL(Ldoneloop)
 	ld	r27,r10, PCB_R27
 	ld	r28,r10, PCB_R28
 	ld	r29,r10, PCB_R29
-	ld	r30,r10, PCB_R30	/* restore frame pointer & stack */
-	ld	r31,r10, PCB_SP
-
-/* XXX
- * Should we postpone restoring stack till after ipl is restored?
- * The stack access could fault
- */
-	subu	r31,r31,48
-	st	r1, r31,36		/* save r1 on stack */
+	or	r14,r10, r0		/* preserve curpcb in a register... */
+	subu	r31,r31,32
 	bsr.n	_C_LABEL(setipl)
 	 ld	r2, r10, PCB_IPL	/* restore interrupt mask */
-	ld	r1, r31,36		/* restore r1 from stack */
-	addu	r31,r31,48
+	addu	r31,r31,32
+	ld	r1, r14, PCB_PC
+	ld	r30,r14, PCB_R30	/* restore frame pointer & stack */
+	ld	r31,r14, PCB_SP
+	ld	r14,r14, PCB_R14
 	jmp.n	r1
 	 or	r2, r0, 1		/* return 1 (for alternate returns) */
 
