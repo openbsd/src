@@ -1,4 +1,4 @@
-/*	$OpenBSD: getifaddrs.c,v 1.8 2002/08/09 06:11:53 itojun Exp $	*/
+/*	$OpenBSD: getifaddrs.c,v 1.9 2002/08/09 06:12:25 itojun Exp $	*/
 
 /*
  * Copyright (c) 1995, 1999
@@ -24,10 +24,7 @@
  *
  *	BSDI getifaddrs.c,v 2.12 2000/02/23 14:51:59 dab Exp
  */
-/*
- * NOTE: SIOCGIFCONF case is not LP64 friendly.  it also does not perform
- * try-and-error for region size.
- */
+
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
