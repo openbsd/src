@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: lorder.sh,v 1.11 2001/06/29 01:33:23 pvalchev Exp $
+#	$OpenBSD: lorder.sh,v 1.12 2003/02/08 10:19:30 pvalchev Exp $
 #	$NetBSD: lorder.sh.gnm,v 1.3 1995/12/20 04:45:11 cgd Exp $
 #
 # Copyright (c) 1990, 1993
@@ -48,7 +48,10 @@ esac
 
 # temporary files
 R=`mktemp /tmp/_referenceXXXXXX` || exit 1
-S=`mktemp /tmp/_symbolXXXXXX` || exit 1
+S=`mktemp /tmp/_symbolXXXXXX` || {
+	rm -f ${R}
+	exit 1
+}
 
 # remove temporary files on HUP, INT, QUIT, PIPE, TERM
 trap "rm -f $R $S; exit 0" 0

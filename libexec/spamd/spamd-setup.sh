@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#	$OpenBSD: spamd-setup.sh,v 1.4 2003/01/22 01:38:10 deraadt Exp $
+#	$OpenBSD: spamd-setup.sh,v 1.5 2003/02/08 10:19:30 pvalchev Exp $
 #
 # Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 #
@@ -47,7 +47,10 @@ fetch() {
 }
 
 R=`mktemp /tmp/_spamdXXXXXX` || exit 1
-W=`mktemp /tmp/_spamwXXXXXX` || exit 1
+W=`mktemp /tmp/_spamwXXXXXX` || {
+	rm -f ${R}
+	exit 1
+}
 trap "rm -f $R $W; exit 0" 0
 trap "rm -f $R $W; exit 1" 1 2 3 13 15
 

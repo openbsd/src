@@ -12,7 +12,7 @@
 # The : is required for some old versions of csh.
 # On Ultrix, /bin/sh is too buggy, change the first line to: #!/bin/sh5
 #
-# $OpenBSD: gzexe,v 1.6 2001/09/29 01:13:16 millert Exp $
+# $OpenBSD: gzexe,v 1.7 2003/02/08 10:19:30 pvalchev Exp $
 
 x=`basename "$0"`
 if test $# = 0; then
@@ -84,7 +84,10 @@ for i do
     sed 1q "$0" > $tmp
     sed "s|^if tail|if $tail|" >> $tmp <<'EOF'
 skip=14
-tmpdir=`/usr/bin/mktemp -d /tmp/gzexeXXXXXXXXXX` || exit 1
+tmpdir=`/usr/bin/mktemp -d /tmp/gzexeXXXXXXXXXX` || {
+	rm -f ${tmp}
+	exit 1
+}
 prog="${tmpdir}/`echo \"$0\" | sed 's|^.*/||'`"
 if tail +$skip "$0" | gzip -cd > "$prog"; then
   chmod 700 "$prog"

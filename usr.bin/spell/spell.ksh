@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: spell.ksh,v 1.3 2002/11/27 01:18:34 margarida Exp $
+# $OpenBSD: spell.ksh,v 1.4 2003/02/08 10:19:30 pvalchev Exp $
 #
 # Copyright (c) 2001 Todd C. Miller <Todd.Miller@courtesan.com>
 # All rights reserved.
@@ -72,7 +72,10 @@ while test "${argv[$OPTIND]#+}" = "${argv[$OPTIND]}" && \
 		;;
 	t)	DEROFF="detex"
 		;;
-	v)	VTMP=`mktemp /tmp/spell.XXXXXXXX` || exit 1
+	v)	VTMP=`mktemp /tmp/spell.XXXXXXXX` || {
+			rm -f ${TMP}
+			exit 1
+		}
 		FLAGS[${#FLAGS[@]}]="-v"
 		FLAGS[${#FLAGS[@]}]="-o"
 		FLAGS[${#FLAGS[@]}]="$VTMP"
