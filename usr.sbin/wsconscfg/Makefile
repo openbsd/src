@@ -1,6 +1,7 @@
-#	$OpenBSD: Makefile,v 1.5 2000/09/07 02:12:32 rahnds Exp $
+#	$OpenBSD: Makefile,v 1.6 2001/01/30 00:33:04 aaron Exp $
 
-.if ${MACHINE} == "alpha" || ${MACHINE} == "hppa" || ${MACHINE} == "powerpc"
+.if ${MACHINE} == "i386" || ${MACHINE} == "alpha" || ${MACHINE} == "hppa" || \
+	${MACHINE} == "powerpc"
 
 PROG=	wsconscfg
 SRCS=	wsconscfg.c
