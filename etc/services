@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.23 2000/04/27 15:28:10 millert Exp $
+#	$OpenBSD: services,v 1.24 2000/11/22 15:33:16 jakob Exp $
 #
 # Network services, Internet style
 #
@@ -173,6 +173,8 @@ nfsd		2049/udp	nfs	# NFS server
 nfsd		2049/tcp	nfs	# NFS server
 rfe		5002/tcp		# Radio Free Ethernet
 rfe		5002/udp		# Actually uses UDP only
+sip		5060/tcp		# SIP
+sip		5060/udp		# SIP
 #
 #
 # Kerberos (Project Athena/MIT) services
