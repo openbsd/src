@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdsetroot.c,v 1.2 1997/11/26 02:32:24 deraadt Exp $	*/
+/*	$OpenBSD: rdsetroot.c,v 1.3 1999/02/11 21:18:09 deraadt Exp $	*/
 /*	$NetBSD: rdsetroot.c,v 1.2 1995/10/13 16:38:39 gwr Exp $	*/
 
 /*
@@ -38,6 +38,7 @@
 #include <sys/mman.h>
 
 #include <stdio.h>
+#include <unistd.h>
 #include <a.out.h>
 
 extern off_t lseek();
@@ -62,12 +63,15 @@ int data_len;
 int data_off;
 int data_pgoff;
 
-main(argc,argv)
+void find_rd_root_image(char *);
+
+
+int main(argc,argv)
+	int argc;
 	char **argv;
 {
 	int fd, n;
 	int *ip;
-	char *cp;
 
 	if (argc < 2) {
 		printf("%s: missing file name\n", argv[0]);
@@ -88,7 +92,7 @@ main(argc,argv)
 	}
 
 	if (N_BADMAG(head)) {
-		printf("%s: bad magic number\n");
+		printf("%s: bad magic number\n", file);
 		exit(1);
 	}
 
@@ -109,7 +113,7 @@ main(argc,argv)
 	if (head.a_trsize ||
 		head.a_drsize)
 	{
-		printf("%s: has relocations\n");
+		printf("%s: has relocations\n", file);
 		exit(1);
 	}
 
@@ -181,7 +185,7 @@ struct nlist wantsyms[] = {
 	{ NULL, 0 },
 };
 
-find_rd_root_image(file)
+void find_rd_root_image(file)
 	char *file;
 {
 	int data_va;
