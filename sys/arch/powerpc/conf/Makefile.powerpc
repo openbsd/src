@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.powerpc,v 1.9 2000/10/20 20:54:26 deraadt Exp $
+#	$OpenBSD: Makefile.powerpc,v 1.10 2001/07/10 01:56:50 drahn Exp $
 #
 # Makefile for OpenBSD PowerPC
 #
@@ -32,11 +32,10 @@ STRIP?=	strip
 SIZE?=	size
 
 # source tree is located via $S relative to the compilation directory
-#.ifndef	S
-#S!=	cd ../../../..; pwd
-#.endif
-S=	../../../..
-PPC=	../..
+.ifndef	S
+S!=	cd ../../../..; pwd
+.endif
+PPC=	$S/arch/powerpc
 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc -L${DESTDIR}/usr/include
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL \
