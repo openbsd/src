@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.177 2003/12/15 00:02:04 mcbride Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.178 2003/12/15 07:11:30 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -47,7 +47,7 @@ struct ip;
 #define	PF_TCPS_PROXY_DST	((TCP_NSTATES)+1)
 
 enum	{ PF_INOUT, PF_IN, PF_OUT };
-enum	{ PF_LAN_EXT, PF_EXT_GWY };
+enum	{ PF_LAN_EXT, PF_EXT_GWY, PF_ID };
 enum	{ PF_PASS, PF_DROP, PF_SCRUB, PF_NAT, PF_NONAT,
 	  PF_BINAT, PF_NOBINAT, PF_RDR, PF_NORDR, PF_SYNPROXY_DROP };
 enum	{ PF_RULESET_SCRUB, PF_RULESET_FILTER, PF_RULESET_NAT,
@@ -576,8 +576,10 @@ struct pf_state_peer {
 };
 
 struct pf_state {
+	u_int64_t	 id;
 	RB_ENTRY(pf_state) entry_lan_ext;
 	RB_ENTRY(pf_state) entry_ext_gwy;
+	RB_ENTRY(pf_state) entry_id;
 	struct pf_state_host lan;
 	struct pf_state_host gwy;
 	struct pf_state_host ext;
@@ -594,13 +596,17 @@ struct pf_state {
 	u_int32_t	 expire;
 	u_int32_t	 packets[2];
 	u_int32_t	 bytes[2];
+	u_int32_t        creatorid;
 	sa_family_t	 af;
 	u_int8_t	 proto;
 	u_int8_t	 direction;
 	u_int8_t	 log;
 	u_int8_t	 allow_opts;
 	u_int8_t	 timeout;
-	u_int8_t	 pad[2];
+	u_int8_t	 sync_flags;
+#define	PFSTATE_NOSYNC	 0x01
+#define	PFSTATE_FROMSYNC 0x02
+	u_int8_t	 pad;
 };
 
 TAILQ_HEAD(pf_rulequeue, pf_rule);
@@ -844,11 +850,13 @@ struct pf_status {
 	u_int64_t	scounters[SCNT_MAX];
 	u_int64_t	pcounters[2][2][3];
 	u_int64_t	bcounters[2][2];
+	u_int64_t	stateid;
 	u_int32_t	running;
 	u_int32_t	states;
 	u_int32_t	src_nodes;
 	u_int32_t	since;
 	u_int32_t	debug;
+	u_int32_t	hostid;
 	char		ifname[IFNAMSIZ];
 };
 
@@ -1155,9 +1163,9 @@ struct pfioc_table {
 #define DIOCXBEGIN      _IOWR('D', 81, struct pfioc_trans)
 #define DIOCXCOMMIT     _IOWR('D', 82, struct pfioc_trans)
 #define DIOCXROLLBACK   _IOWR('D', 83, struct pfioc_trans)
-#define DIOCGETSRCNODES		_IOWR('D', 84, struct pfioc_src_nodes)
-#define DIOCCLRSRCNODES		_IO('D', 85)
-
+#define DIOCGETSRCNODES	_IOWR('D', 84, struct pfioc_src_nodes)
+#define DIOCCLRSRCNODES	_IO('D', 85)
+#define DIOCSETHOSTID	_IOWR('D', 86, u_int32_t)
 
 #ifdef _KERNEL
 RB_HEAD(pf_src_tree, pf_src_node);
@@ -1173,6 +1181,11 @@ RB_HEAD(pf_state_tree_ext_gwy, pf_state);
 RB_PROTOTYPE(pf_state_tree_ext_gwy, pf_state,
     entry_ext_gwy, pf_state_compare_ext_gwy);
 extern struct pf_state_tree_ext_gwy tree_ext_gwy;
+
+RB_HEAD(pf_state_tree_id, pf_state);
+RB_PROTOTYPE(pf_state_tree_id, pf_state,
+    entry_id, pf_state_compare_id);
+extern struct pf_state_tree_id tree_id;
 
 extern struct pf_anchorqueue		 pf_anchors;
 extern struct pf_ruleset		 pf_main_ruleset;
@@ -1217,7 +1230,7 @@ extern struct pf_ruleset	*pf_find_or_create_ruleset(char *, char *);
 extern void			 pf_remove_if_empty_ruleset(
 				    struct pf_ruleset *);
 
-extern struct ifnet		*status_ifp;
+extern struct ifnet		*status_ifp, *sync_ifp;
 extern struct pf_rule		 pf_default_rule;
 extern void			 pf_addrcpy(struct pf_addr *, struct pf_addr *,
 				    u_int8_t);

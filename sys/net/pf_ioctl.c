@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.89 2003/12/15 00:02:04 mcbride Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.90 2003/12/15 07:11:30 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -58,7 +58,9 @@
 #include <netinet/ip_var.h>
 #include <netinet/ip_icmp.h>
 
+#include <dev/rndvar.h>
 #include <net/pfvar.h>
+#include <net/if_pfsync.h>
 
 #ifdef INET6
 #include <netinet/ip6.h>
@@ -161,6 +163,10 @@ pfattach(int num)
 	pf_normalize_init();
 	bzero(&pf_status, sizeof(pf_status));
 	pf_status.debug = PF_DEBUG_URGENT;
+
+	/* XXX do our best to avoid a conflict */
+	pf_status.hostid = arc4random();
+	pf_status.stateid = 1; 	/* might want 0 for something special */
 }
 
 int
@@ -782,13 +788,17 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		if (pf_status.running)
 			error = EEXIST;
 		else {
+			u_int64_t stateid = pf_status.stateid;
 			u_int32_t states = pf_status.states;
 			u_int32_t debug = pf_status.debug;
+			u_int32_t hostid = pf_status.hostid;
 			u_int32_t src_nodes = pf_status.src_nodes;
 			bzero(&pf_status, sizeof(struct pf_status));
 			pf_status.running = 1;
 			pf_status.states = states;
 			pf_status.debug = debug;
+			pf_status.stateid = stateid;
+			pf_status.hostid = hostid;
 			pf_status.states = src_nodes;
 			pf_status.since = time.tv_sec;
 			if (status_ifp != NULL)
@@ -1199,6 +1209,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		pf_purge_expired_states();
 		pf_status.states = 0;
 		splx(s);
+		pfsync_clear_states(pf_status.hostid);
 		break;
 	}
 
@@ -2483,6 +2494,17 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		pf_purge_expired_src_nodes();
 		pf_status.src_nodes = 0;
 		splx(s);
+		break;
+	}
+
+	case DIOCSETHOSTID: {
+		u_int32_t	*hostid = (u_int32_t *)addr;
+
+		if (*hostid == 0) {
+			error = EINVAL;
+			goto fail;
+		}
+		pf_status.hostid = *hostid;
 		break;
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.h,v 1.40 2003/08/21 19:14:23 frantzen Exp $	*/
+/*	$OpenBSD: interface.h,v 1.41 2003/12/15 07:11:31 mcbride Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/interface.h,v 1.40 2003/08/21 19:14:23 frantzen Exp $ (LBL)
+ * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/interface.h,v 1.41 2003/12/15 07:11:31 mcbride Exp $ (LBL)
  */
 
 #ifndef tcpdump_interface_h
@@ -200,6 +200,7 @@ extern void pflog_old_if_print(u_char *, const struct pcap_pkthdr *,
         const u_char *);
 extern void pfsync_if_print(u_char *, const struct pcap_pkthdr *,
         const u_char *);
+extern void pfsync_ip_print(const u_char *, u_int, const u_char *);
 extern void ether_if_print(u_char *, const struct pcap_pkthdr *,
 	const u_char *);
 extern void fddi_if_print(u_char *, const struct pcap_pkthdr *, const u_char *);

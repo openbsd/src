@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.86 2003/12/08 09:09:03 markus Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.87 2003/12/15 07:11:29 mcbride Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.86 2003/12/08 09:09:03 markus Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.87 2003/12/15 07:11:29 mcbride Exp $";
 #endif
 #endif /* not lint */
 
@@ -97,6 +97,8 @@ static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.86 2003/12/08 09:09:03 mar
 #include <netinet/if_ether.h>
 #include <net/if_enc.h>
 #include <net/if_ieee80211.h>
+#include <net/pfvar.h>
+#include <net/if_pfsync.h>
 
 #include <netatalk/at.h>
 
@@ -205,6 +207,10 @@ void	setcarp_advbase(const char *,int);
 void	setcarp_advskew(const char *, int);
 void	setcarp_passwd(const char *, int);
 void	setcarp_vhid(const char *, int);
+void	setpfsync_syncif(const char *, int);
+void	setpfsync_maxupd(const char *, int);
+void	unsetpfsync_syncif(const char *, int);
+void	pfsync_status(void);
 void	fixnsel(struct sockaddr_iso *);
 int	main(int, char *[]);
 int	prefix(void *val, int);
@@ -292,6 +298,9 @@ const struct	cmd {
 	{ "advskew",	NEXTARG,	0,		setcarp_advskew },
 	{ "pass",	NEXTARG,	0,		setcarp_passwd },
 	{ "vhid",	NEXTARG,	0,		setcarp_vhid },
+	{ "syncif",	NEXTARG,	0,		setpfsync_syncif },
+	{ "maxupd",	NEXTARG,	0,		setpfsync_maxupd },
+	{ "-syncif",	1,		0,		unsetpfsync_syncif },
 #endif	/* INET_ONLY */
 	/* giftunnel is for backward compat */
 	{ "giftunnel",  NEXTARG2,	0,		NULL, settunnel } ,
@@ -1729,6 +1738,7 @@ status(int link, struct sockaddr_dl *sdl)
 #ifndef	INET_ONLY
 	vlan_status();
 	carp_status();
+	pfsync_status();
 #endif
 	ieee80211_status();
 
@@ -2804,6 +2814,85 @@ setcarp_advbase(const char *val, int d)
 
 	if (ioctl(s, SIOCSVH, (caddr_t)&ifr) == -1)
 		err(1, "SIOCSVH");
+
+	return;
+}
+
+void
+setpfsync_syncif(const char *val, int d)
+{
+	struct pfsyncreq preq;
+
+	bzero((char *)&preq, sizeof(struct pfsyncreq));
+	ifr.ifr_data = (caddr_t)&preq;
+
+	if (ioctl(s, SIOCGETPFSYNC, (caddr_t)&ifr) == -1)
+		err(1, "SIOCGETPFSYNC");
+
+	strlcpy(preq.pfsyncr_syncif, val, sizeof(preq.pfsyncr_syncif));
+
+	if (ioctl(s, SIOCSETPFSYNC, (caddr_t)&ifr) == -1)
+		err(1, "SIOCSETPFSYNC");
+
+	return;
+}
+
+void
+unsetpfsync_syncif(const char *val, int d)
+{
+	struct pfsyncreq preq;
+
+	bzero((char *)&preq, sizeof(struct pfsyncreq));
+	ifr.ifr_data = (caddr_t)&preq;
+
+	if (ioctl(s, SIOCGETPFSYNC, (caddr_t)&ifr) == -1)
+		err(1, "SIOCGETPFSYNC");
+
+	bzero((char *)&preq.pfsyncr_syncif, sizeof(preq.pfsyncr_syncif));
+
+	if (ioctl(s, SIOCSETPFSYNC, (caddr_t)&ifr) == -1)
+		err(1, "SIOCSETPFSYNC");
+
+	return;
+}
+
+void
+setpfsync_maxupd(const char *val, int d)
+{
+	int maxupdates;
+	struct pfsyncreq preq;
+
+	maxupdates = atoi(val);
+
+	memset((char *)&preq, 0, sizeof(struct pfsyncreq));
+	ifr.ifr_data = (caddr_t)&preq;
+
+	if (ioctl(s, SIOCGETPFSYNC, (caddr_t)&ifr) == -1)
+		err(1, "SIOCGETPFSYNC");
+
+	preq.pfsyncr_maxupdates = maxupdates;
+
+	if (ioctl(s, SIOCSETPFSYNC, (caddr_t)&ifr) == -1)
+		err(1, "SIOCSETPFSYNC");
+
+	return;
+}
+
+void
+pfsync_status(void)
+{
+	struct pfsyncreq preq;
+
+	bzero((char *)&preq, sizeof(struct pfsyncreq));
+	ifr.ifr_data = (caddr_t)&preq;
+
+	if (ioctl(s, SIOCGETPFSYNC, (caddr_t)&ifr) == -1)
+		return;
+
+	if (preq.pfsyncr_syncif[0] != '\0') {
+		printf("\tpfsync: syncif: %s maxupd: %d\n",
+		    preq.pfsyncr_syncif, preq.pfsyncr_maxupdates);
+	}
 
 	return;
 }

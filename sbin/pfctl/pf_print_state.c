@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_print_state.c,v 1.34 2003/12/15 00:02:03 mcbride Exp $	*/
+/*	$OpenBSD: pf_print_state.c,v 1.35 2003/12/15 07:11:30 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -140,8 +140,10 @@ print_host(struct pf_state_host *h, sa_family_t af, int opts)
 		aw.v.a.addr = h->addr;
 		if (af == AF_INET)
 			aw.v.a.mask.addr32[0] = 0xffffffff;
-		else
+		else {
 			memset(&aw.v.a.mask, 0xff, sizeof(aw.v.a.mask));
+			af = AF_INET6;
+		}
 		print_addr(&aw, af, opts & PF_OPT_VERBOSE2);
 	}
 
@@ -262,6 +264,10 @@ print_state(struct pf_state *s, int opts)
 			printf(", sticky-address");
 		printf("\n");
 		printf("\n");
+	}
+	if (opts & PF_OPT_VERBOSE2) {
+		printf("   id: %016llx creatorid: %08x\n",
+		    betoh64(s->id), ntohl(s->creatorid));
 	}
 }
 

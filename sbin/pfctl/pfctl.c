@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.193 2003/12/15 00:02:03 mcbride Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.194 2003/12/15 07:11:30 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1208,6 +1208,24 @@ pfctl_set_logif(struct pfctl *pf, char *ifname)
 
 	if (pf->opts & PF_OPT_VERBOSE)
 		printf("set loginterface %s\n", ifname);
+
+	return (0);
+}
+
+int
+pfctl_set_hostid(struct pfctl *pf, u_int32_t hostid)
+{
+	if ((loadopt & PFCTL_FLAG_OPTION) == 0)
+		return (0);
+
+	HTONL(hostid);
+
+	if ((pf->opts & PF_OPT_NOACTION) == 0)
+		if (ioctl(dev, DIOCSETHOSTID, &hostid))
+			err(1, "DIOCSETHOSTID");
+
+	if (pf->opts & PF_OPT_VERBOSE)
+		printf("set hostid %#08x\n", hostid);
 
 	return (0);
 }

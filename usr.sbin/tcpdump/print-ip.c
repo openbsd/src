@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ip.c,v 1.19 2003/02/20 23:39:20 jason Exp $	*/
+/*	$OpenBSD: print-ip.c,v 1.20 2003/12/15 07:11:31 mcbride Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ip.c,v 1.19 2003/02/20 23:39:20 jason Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ip.c,v 1.20 2003/12/15 07:11:31 mcbride Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -555,6 +555,17 @@ ip_print(register const u_char *bp, register u_int length)
 					     ipaddr_string(&ip->ip_src),
 					     ipaddr_string(&ip->ip_dst));
 			vrrp_print(cp, len, ip->ip_ttl);
+			break;
+
+#ifndef IPPROTO_PFSYNC  
+#define IPPROTO_PFSYNC 136
+#endif
+		case IPPROTO_PFSYNC:
+			if (vflag)
+				(void)printf("pfsync %s > %s: ",
+					     ipaddr_string(&ip->ip_src),
+					     ipaddr_string(&ip->ip_dst));
+			pfsync_ip_print(cp, len, (const u_char *)ip);
 			break;
 
 		default:

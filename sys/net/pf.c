@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.408 2003/12/15 00:02:03 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.409 2003/12/15 07:11:30 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -240,16 +240,21 @@ static __inline int pf_state_compare_lan_ext(struct pf_state *,
 	struct pf_state *);
 static __inline int pf_state_compare_ext_gwy(struct pf_state *,
 	struct pf_state *);
+static __inline int pf_state_compare_id(struct pf_state *,
+	struct pf_state *);
 
 struct pf_src_tree tree_src_tracking;
 struct pf_state_tree_lan_ext tree_lan_ext;
 struct pf_state_tree_ext_gwy tree_ext_gwy;
+struct pf_state_tree_id tree_id;
 
 RB_GENERATE(pf_src_tree, pf_src_node, entry, pf_src_compare);
 RB_GENERATE(pf_state_tree_lan_ext, pf_state,
     entry_lan_ext, pf_state_compare_lan_ext);
 RB_GENERATE(pf_state_tree_ext_gwy, pf_state,
     entry_ext_gwy, pf_state_compare_ext_gwy);
+RB_GENERATE(pf_state_tree_id, pf_state,
+    entry_id, pf_state_compare_id);
 
 static __inline int
 pf_src_compare(struct pf_src_node *a, struct pf_src_node *b)
@@ -431,6 +436,21 @@ pf_state_compare_ext_gwy(struct pf_state *a, struct pf_state *b)
 	return (0);
 }
 
+static __inline int
+pf_state_compare_id(struct pf_state *a, struct pf_state *b)
+{
+	if (a->id > b->id)
+		return (1);
+	if (a->id < b->id)
+		return (-1);
+	if (a->creatorid > b->creatorid)
+		return (1);
+	if (a->creatorid < b->creatorid)
+		return (-1);
+
+	return (0);
+}
+
 #ifdef INET6
 void
 pf_addrcpy(struct pf_addr *dst, struct pf_addr *src, sa_family_t af)
@@ -464,6 +484,9 @@ pf_find_state(struct pf_state *key, u_int8_t tree)
 		break;
 	case PF_EXT_GWY:
 		s = RB_FIND(pf_state_tree_ext_gwy, &tree_ext_gwy, key);
+		break;
+	case PF_ID:
+		s = RB_FIND(pf_state_tree_id, &tree_id, key);
 		break;
 	default:
 		/* XXX should we just return NULL? */
@@ -545,6 +568,8 @@ pf_insert_state(struct pf_state *state)
 			printf(" ext: ");
 			pf_print_host(&state->ext.addr, state->ext.port,
 			    state->af);
+			if (state->sync_flags & PFSTATE_FROMSYNC)
+				printf(" (from sync)");
 			printf("\n");
 		}
 		pf_src_tree_remove_state(state);
@@ -563,10 +588,30 @@ pf_insert_state(struct pf_state *state)
 			printf(" ext: ");
 			pf_print_host(&state->ext.addr, state->ext.port,
 			    state->af);
+			if (state->sync_flags & PFSTATE_FROMSYNC)
+				printf(" (from sync)");
 			printf("\n");
 		}
 		RB_REMOVE(pf_state_tree_lan_ext, &tree_lan_ext, state);
 		pf_src_tree_remove_state(state);
+		return (-1);
+	}
+
+	if (state->id == 0 && state->creatorid == 0) {
+		state->id = htobe64(pf_status.stateid++);
+		state->creatorid = pf_status.hostid;
+	}
+	if (RB_INSERT(pf_state_tree_id, &tree_id, state) != NULL) {
+		if (pf_status.debug >= PF_DEBUG_MISC) {
+			printf("pf: state insert failed: "
+			    "id: %016x creatorid: %08x",
+			    betoh64(state->id), ntohl(state->creatorid));
+			if (state->sync_flags & PFSTATE_FROMSYNC)
+				printf(" (from sync)");
+			printf("\n");
+		}
+		RB_REMOVE(pf_state_tree_lan_ext, &tree_lan_ext, state);
+		RB_REMOVE(pf_state_tree_ext_gwy, &tree_ext_gwy, state);
 		return (-1);
 	}
 
@@ -692,6 +737,7 @@ pf_purge_expired_states(void)
 				    TH_RST|TH_ACK, 0, 0);
 			RB_REMOVE(pf_state_tree_ext_gwy, &tree_ext_gwy, cur);
 			RB_REMOVE(pf_state_tree_lan_ext, &tree_lan_ext, cur);
+			RB_REMOVE(pf_state_tree_id, &tree_id, cur);
 
 #if NPFSYNC
 			pfsync_delete_state(cur);
@@ -3869,8 +3915,8 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 	}
 
 	if (dst->scrub || src->scrub) {
-		if (pf_normalize_tcp_stateful(m, off, pd, reason, th, src, dst,
-		    &copyback))
+		if (pf_normalize_tcp_stateful(m, off, pd, reason, th,
+		    src, dst, &copyback))
 			return (PF_DROP);
 	}
 
@@ -5168,6 +5214,9 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 		action = pf_test_state_tcp(&s, dir, ifp, m, off, h, &pd,
 		    &reason);
 		if (action == PF_PASS) {
+#if NPFSYNC
+			pfsync_update_state(s);
+#endif
 			r = s->rule.ptr;
 			a = s->anchor.ptr;
 			log = s->log;
@@ -5193,6 +5242,9 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 		}
 		action = pf_test_state_udp(&s, dir, ifp, m, off, h, &pd);
 		if (action == PF_PASS) {
+#if NPFSYNC
+			pfsync_update_state(s);
+#endif
 			r = s->rule.ptr;
 			a = s->anchor.ptr;
 			log = s->log;
@@ -5218,6 +5270,10 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 		}
 		action = pf_test_state_icmp(&s, dir, ifp, m, off, h, &pd);
 		if (action == PF_PASS) {
+#if NPFSYNC
+			pfsync_update_state(s);
+#endif
+
 			r = s->rule.ptr;
 			a = s->anchor.ptr;
 			log = s->log;
@@ -5230,6 +5286,9 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 	default:
 		action = pf_test_state_other(&s, dir, ifp, &pd);
 		if (action == PF_PASS) {
+#if NPFSYNC
+			pfsync_update_state(s);
+#endif
 			r = s->rule.ptr;
 			a = s->anchor.ptr;
 			log = s->log;
@@ -5474,6 +5533,9 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 		action = pf_test_state_tcp(&s, dir, ifp, m, off, h, &pd,
 		    &reason);
 		if (action == PF_PASS) {
+#if NPFSYNC
+			pfsync_update_state(s);
+#endif
 			r = s->rule.ptr;
 			a = s->anchor.ptr;
 			log = s->log;
@@ -5499,6 +5561,9 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 		}
 		action = pf_test_state_udp(&s, dir, ifp, m, off, h, &pd);
 		if (action == PF_PASS) {
+#if NPFSYNC
+			pfsync_update_state(s);
+#endif
 			r = s->rule.ptr;
 			a = s->anchor.ptr;
 			log = s->log;
@@ -5525,6 +5590,9 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 		action = pf_test_state_icmp(&s, dir, ifp,
 		    m, off, h, &pd);
 		if (action == PF_PASS) {
+#if NPFSYNC
+			pfsync_update_state(s);
+#endif
 			r = s->rule.ptr;
 			a = s->anchor.ptr;
 			log = s->log;

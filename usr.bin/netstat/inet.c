@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.74 2003/12/02 23:16:29 markus Exp $	*/
+/*	$OpenBSD: inet.c,v 1.75 2003/12/15 07:11:31 mcbride Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: inet.c,v 1.74 2003/12/02 23:16:29 markus Exp $";
+static char *rcsid = "$OpenBSD: inet.c,v 1.75 2003/12/15 07:11:31 mcbride Exp $";
 #endif
 #endif /* not lint */
 
@@ -71,6 +71,9 @@ static char *rcsid = "$OpenBSD: inet.c,v 1.74 2003/12/02 23:16:29 markus Exp $";
 #include <netinet/ip_ipcomp.h>
 #include <netinet/ip_ether.h>
 #include <netinet/ip_carp.h>
+#include <net/if.h>
+#include <net/pfvar.h>
+#include <net/if_pfsync.h>
 
 #include <arpa/inet.h>
 #include <limits.h>
@@ -892,6 +895,45 @@ carp_stats(u_long off, char *name)
 #undef p2
 }
 
+/* 
+ * Dump pfsync statistics structure.
+ */
+void
+pfsync_stats(u_long off, char *name)
+{
+	struct pfsyncstats pfsyncstat;
+
+	if (off == 0)
+		return;
+	kread(off, (char *)&pfsyncstat, sizeof(pfsyncstat));
+	printf("%s:\n", name);
+
+#define p(f, m) if (pfsyncstat.f || sflag <= 1) \
+	printf(m, pfsyncstat.f, plural(pfsyncstat.f))
+#define p2(f, m) if (pfsyncstat.f || sflag <= 1) \
+	printf(m, pfsyncstat.f)
+
+	p(pfsyncs_ipackets, "\t%u packet%s received (IPv4)\n");
+	p(pfsyncs_ipackets6, "\t%u packet%s received (IPv6)\n");
+	p(pfsyncs_badif, "\t\t%u packet%s discarded for bad interface\n");
+	p(pfsyncs_badttl, "\t\t%u packet%s discarded for bad interface\n");
+	p(pfsyncs_hdrops, "\t\t%u packet%s shorter than header\n");
+	p(pfsyncs_badver,	"\t\t%u discarded packet%s with a bad version\n");
+	p(pfsyncs_badact,	"\t\t%u discarded packet%s with a bad action\n");
+	p2(pfsyncs_badlen, "\t\t%u discarded because packet too short\n");
+	p2(pfsyncs_badauth, "\t\t%u discarded for bad authentication\n");
+	p(pfsyncs_badstate, "\t%u failed state lookup/insert%s\n");
+	p(pfsyncs_opackets, "\t%u packet%s sent (IPv4)\n");
+	p(pfsyncs_opackets6, "\t%u packet%s sent (IPv6)\n");
+	p2(pfsyncs_onomem, "\t\t%u send failed due to mbuf memory error\n");
+	p2(pfsyncs_oerrors, "\t\t%u send error\n");
+#undef p
+#undef p2
+}
+
+/*
+ * Dump IPCOMP statistics structure.
+ */
 /*
  * Dump IPCOMP statistics structure.
  */

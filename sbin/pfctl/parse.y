@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.425 2003/12/15 00:02:03 mcbride Exp $	*/
+/*	$OpenBSD: parse.y,v 1.426 2003/12/15 07:11:30 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -383,7 +383,7 @@ typedef struct {
 %token	NOROUTE FRAGMENT USER GROUP MAXMSS MAXIMUM TTL TOS DROP TABLE
 %token	REASSEMBLE FRAGDROP FRAGCROP ANCHOR NATANCHOR RDRANCHOR BINATANCHOR
 %token	SET OPTIMIZATION TIMEOUT LIMIT LOGINTERFACE BLOCKPOLICY RANDOMID
-%token	REQUIREORDER SYNPROXY FINGERPRINTS NOSYNC DEBUG
+%token	REQUIREORDER SYNPROXY FINGERPRINTS NOSYNC DEBUG HOSTID
 %token	ANTISPOOF FOR
 %token	BITMASK RANDOM SOURCEHASH ROUNDROBIN STATICPORT
 %token	ALTQ CBQ PRIQ HFSC BANDWIDTH TBRSIZE LINKSHARE REALTIME UPPERLIMIT
@@ -474,6 +474,16 @@ option		: SET OPTIMIZATION STRING		{
 			}
 			if (pfctl_set_logif(pf, $3) != 0) {
 				yyerror("error setting loginterface %s", $3);
+				YYERROR;
+			}
+		}
+		| SET HOSTID number {
+			if ($3 == 0) {
+				yyerror("hostid must be non-zero");
+				YYERROR;
+			}
+			if (pfctl_set_hostid(pf, $3) != 0) {
+				yyerror("error setting loginterface %08x", $3);
 				YYERROR;
 			}
 		}
@@ -4069,6 +4079,7 @@ lookup(char *s)
 		{ "global",		GLOBAL},
 		{ "group",		GROUP},
 		{ "hfsc",		HFSC},
+		{ "hostid",		HOSTID},
 		{ "icmp-type",		ICMPTYPE},
 		{ "icmp6-type",		ICMP6TYPE},
 		{ "in",			IN},

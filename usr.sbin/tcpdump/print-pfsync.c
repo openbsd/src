@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-pfsync.c,v 1.12 2003/11/08 19:51:38 dhartmei Exp $	*/
+/*	$OpenBSD: print-pfsync.c,v 1.13 2003/12/15 07:11:31 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -28,7 +28,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-pfsync.c,v 1.12 2003/11/08 19:51:38 dhartmei Exp $";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-pfsync.c,v 1.13 2003/12/15 07:11:31 mcbride Exp $";
 #endif
 
 #include <sys/param.h>
@@ -64,15 +64,13 @@ struct rtentry;
 
 const char *pfsync_acts[] = { PFSYNC_ACTIONS };
 
+void	pfsync_print(struct pfsync_header *, int);
+
 void
 pfsync_if_print(u_char *user, const struct pcap_pkthdr *h,
      register const u_char *p)
 {
-	/*u_int length = h->len;*/
 	u_int caplen = h->caplen;
-	struct pfsync_header *hdr;
-	struct pf_state *s;
-	int i, flags;
 
 	ts_print(&h->ts);
 
@@ -81,10 +79,36 @@ pfsync_if_print(u_char *user, const struct pcap_pkthdr *h,
 		goto out;
 	}
 
-	packetp = p;
-	snapend = p + caplen;
+	pfsync_print((struct pfsync_header *)p,
+	    caplen - sizeof(struct pfsync_header));
+out:
+	if (xflag) {
+		default_print((const u_char *)h, caplen);
+		putchar('\n');
+	}
+}
 
-	hdr = (struct pfsync_header *)p;
+void
+pfsync_ip_print(const u_char *bp, u_int len, const u_char *bp2)
+{
+	const struct ip *ip = (const struct ip *)bp2;
+	struct pfsync_header *hdr = (struct pfsync_header *)bp;
+	u_int hlen = ip->ip_hl << 2;
+
+	if (len < PFSYNC_HDRLEN)
+		printf("[|pfsync]");
+	else
+		pfsync_print(hdr, (len - sizeof(struct pfsync_header) + hlen));
+}
+
+void
+pfsync_print(struct pfsync_header *hdr, int len)
+{
+	struct pfsync_state *s;
+	struct pfsync_state_upd *u;
+	struct pfsync_state_del *d;
+	int i, flags;
+
 	if (eflag)
 		printf("version %d count %d: ",
 		    hdr->version, hdr->count);
@@ -100,35 +124,56 @@ pfsync_if_print(u_char *user, const struct pcap_pkthdr *h,
 	if (!nflag)
 		flags |= PF_OPT_USEDNS;
 
-	for (i = 1, s = (struct pf_state *)(p + PFSYNC_HDRLEN);
-	    i <= hdr->count && PFSYNC_HDRLEN + i * sizeof(*s) <= caplen;
-	    i++, s++) {
-		struct pf_state st;
+	switch (hdr->action) {
+	case PFSYNC_ACT_INS:
+	case PFSYNC_ACT_UPD:
+	case PFSYNC_ACT_DEL:
+		for (i = 1, s = (void *)((char *)hdr + PFSYNC_HDRLEN);
+		    i <= hdr->count && i * sizeof(*s) <= len; i++, s++) {
+			struct pf_state st;
 
-		bcopy(&s->lan, &st.lan, sizeof(st.lan));
-		bcopy(&s->gwy, &st.gwy, sizeof(st.gwy));
-		bcopy(&s->ext, &st.ext, sizeof(st.ext));
-		pf_state_peer_ntoh(&s->src, &st.src);
-		pf_state_peer_ntoh(&s->dst, &st.dst);
-		st.rule.nr = ntohl(s->rule.nr);
-		st.anchor.nr = ntohl(s->anchor.nr);
-		bcopy(&s->rt_addr, &st.rt_addr, sizeof(st.rt_addr));
-		st.creation = ntohl(s->creation);
-		st.expire = ntohl(s->expire);
-		st.packets[0] = ntohl(s->packets[0]);
-		st.packets[1] = ntohl(s->packets[1]);
-		st.bytes[0] = ntohl(s->bytes[0]);
-		st.bytes[1] = ntohl(s->bytes[1]);
-		st.af = s->af;
-		st.proto = s->proto;
-		st.direction = s->direction;
-		st.log = s->log;
-		st.allow_opts = s->allow_opts;
+			st.id = s->id;
+			pf_state_host_ntoh(&s->lan, &st.lan);
+			pf_state_host_ntoh(&s->gwy, &st.gwy);
+			pf_state_host_ntoh(&s->ext, &st.ext);
+			pf_state_peer_ntoh(&s->src, &st.src);
+			pf_state_peer_ntoh(&s->dst, &st.dst);
+			st.rule.nr = ntohl(s->rule);
+			st.nat_rule.nr = ntohl(s->nat_rule);
+			st.anchor.nr = ntohl(s->anchor);
+			bcopy(&s->rt_addr, &st.rt_addr, sizeof(st.rt_addr));
+			st.creation = ntohl(s->creation);
+			st.expire = ntohl(s->expire);
+			st.packets[0] = ntohl(s->packets[0]);
+			st.packets[1] = ntohl(s->packets[1]);
+			st.bytes[0] = ntohl(s->bytes[0]);
+			st.bytes[1] = ntohl(s->bytes[1]);
+			st.creatorid = s->creatorid;
+			st.af = s->af;
+			st.proto = s->proto;
+			st.direction = s->direction;
+			st.log = s->log;
+			st.allow_opts = s->allow_opts;
+			st.sync_flags = s->sync_flags;
 
-		print_state(&st, flags);
+			print_state(&st, flags);
+		}
+		break;
+	case PFSYNC_ACT_UPD_C:
+		for (i = 1, u = (void *)((char *)hdr + PFSYNC_HDRLEN);
+		    i <= hdr->count && i * sizeof(*u) <= len; i++, d++) {
+			printf("\tid: %016llx creatorid: %08x\n",
+			    betoh64(u->id), htonl(u->creatorid));
+		}
+		break;
+	case PFSYNC_ACT_DEL_C:
+		for (i = 1, d = (void *)((char *)hdr + PFSYNC_HDRLEN);
+		    i <= hdr->count && i * sizeof(*d) <= len; i++, d++) {
+			printf("\tid: %016llx creatorid: %08x\n",
+			    betoh64(d->id), htonl(d->creatorid));
+		}
+		break;
+	default:
+		break;
 	}
-out:
-	if (xflag)
-		default_print((const u_char *)hdr, caplen);
-	putchar('\n');
 }
