@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.70 2002/05/12 00:54:56 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.71 2002/05/18 13:47:57 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -394,7 +394,7 @@ print_port(u_int8_t op, u_int16_t p1, u_int16_t p2, char *proto)
 void
 print_uid(u_int8_t op, uid_t u1, uid_t u2, const char *t)
 {
-	char a1[5], a2[5];
+	char a1[11], a2[11];
 
 	snprintf(a1, sizeof(a1), "%u", u1);
 	snprintf(a2, sizeof(a2), "%u", u2);
@@ -408,7 +408,7 @@ print_uid(u_int8_t op, uid_t u1, uid_t u2, const char *t)
 void
 print_gid(u_int8_t op, gid_t g1, gid_t g2, const char *t)
 {
-	char a1[5], a2[5];
+	char a1[11], a2[11];
 
 	snprintf(a1, sizeof(a1), "%u", g1);
 	snprintf(a2, sizeof(a2), "%u", g2);
