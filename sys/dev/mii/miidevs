@@ -1,5 +1,5 @@
-$OpenBSD: miidevs,v 1.1 1998/09/10 17:17:33 jason Exp $
-/* $NetBSD: miidevs,v 1.1 1998/08/10 23:55:17 thorpej Exp $ */
+$OpenBSD: miidevs,v 1.2 1998/11/11 03:39:41 jason Exp $
+/* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@ $OpenBSD: miidevs,v 1.1 1998/09/10 17:17:33 jason Exp $
  * List of known MII OUIs
  */
 
+oui AMD				0x00606e	Advanced Micro Devices
 oui ICS				0x00057d	Integrated Circuit Systems
 oui INTEL			0x00aa00	Intel
 oui LEVEL1			0x1e0400	Level 1
@@ -53,6 +54,9 @@ oui TI				0x100014	Texas Instruments
 /*
  * List of known models.  Grouped by oui.
  */
+
+/* Advanced Micro Devices PHYs */
+model AMD 79C873		0x0000 Am79C873 10/100 media interface
 
 /* Integrated Circuit Systems PHYs */
 model ICS 1890			0x0002 ICS1890 10/100 media interface
@@ -72,6 +76,7 @@ model QUALSEMI QS6612		0x0000 QS6612 10/100 media interface
 
 /* Seeq PHYs */
 model SEEQ 80220		0x0003 Seeq 80220 10/100 media interface
+model SEEQ 84220		0x0004 Seeq 84220 10/100 media interface
 
 /* Texas Instruments PHYs */
 model TI TLAN10T		0x0001 ThunderLAN 10baseT media interface
