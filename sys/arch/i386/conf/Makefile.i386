@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.i386,v 1.17 1997/02/24 03:27:38 downsj Exp $
+#	$OpenBSD: Makefile.i386,v 1.18 1997/03/29 07:12:04 tholo Exp $
 #	$NetBSD: Makefile.i386,v 1.67 1996/05/11 16:12:11 mycroft Exp $
 
 # Makefile for OpenBSD
@@ -31,10 +31,12 @@ STRIP?=	strip
 TOUCH?=	touch
 
 # source tree is located via $S relative to the compilation directory
-S=	../../../..
-I386=	../..
+.ifndef S
+S!=	cd ../../../..; pwd
+.endif
+I386=	$S/arch/i386
 
-INCLUDES=	-I. -I$S/arch -I$S -nostdinc
+INCLUDES=	-nostdinc -I. -I$S/arch -I$S
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Di386
 
 CDIAGFLAGS=	-Werror -Wall -Wstrict-prototypes -Wno-uninitialized \
@@ -119,14 +121,10 @@ LINKFLAGS+=	-x
 
 %LOAD
 
-assym.h: genassym
-	./genassym >assym.h
-
-genassym: genassym.o
-	${HOSTCC} -o $@ genassym.o
-
-genassym.o: ${I386}/i386/genassym.c
-	${HOSTED_C}
+assym.h: $S/kern/genassym.sh ${I386}/i386/genassym.cf
+	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} \
+	    ${PARAM} < ${I386}/i386/genassym.cf > assym.h.tmp && \
+	    mv -f assym.h.tmp assym.h
 
 param.c: $S/conf/param.c
 	rm -f param.c
@@ -145,7 +143,7 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 
 clean::
 	rm -f eddep *bsd bsd.gdb tags *.[io] [a-z]*.s \
-	    [Ee]rrs linterrs makelinks genassym genassym.o assym.h
+	    [Ee]rrs linterrs makelinks assym.h
 
 lint:
 	@lint -hbxncez -Dvolatile= ${CPPFLAGS} ${PARAM} -UKGDB \
@@ -175,8 +173,6 @@ depend:: .depend
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${I386}/i386/locore.s
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
-	${MKDEP} -a ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} \
-		${I386}/i386/genassym.c
 
 
 # depend on root or device configuration
@@ -190,7 +186,7 @@ ip_input.o ip_output.o in_pcb.o in_proto.o: Makefile
 tcp_subr.o tcp_timer.o tcp_output.o: Makefile
 
 # depend on maxusers
-genassym.o machdep.o: Makefile
+machdep.o: Makefile
 
 # depend on CPU configuration 
 locore.o machdep.o: Makefile
