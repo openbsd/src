@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.36 2003/03/15 00:23:34 miod Exp $
+#	$OpenBSD: list,v 1.37 2003/06/11 03:49:36 miod Exp $
 
 SRCDIRS distrib/special
 SRCDIRS gnu/usr.bin usr.bin bin sbin usr.sbin
@@ -32,7 +32,7 @@ LINK	instbin					sbin/mount
 LINK	instbin					sbin/mount_cd9660
 LINK	instbin					sbin/mount_ffs
 LINK	instbin					sbin/mount_nfs
-LINK	instbin					sbin/newfs sbin/mount_mfs
+LINK	instbin					sbin/newfs
 LINK	instbin					sbin/reboot sbin/halt
 LINK	instbin					sbin/route
 LINK	instbin					sbin/umount
