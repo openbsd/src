@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.78 2003/03/15 23:10:32 avsm Exp $
+.\"	$OpenBSD: afterboot.8,v 1.79 2003/04/13 11:41:10 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Marshall M. Midden
 .\" All rights reserved.
@@ -47,7 +47,7 @@ A basic knowledge of
 .Ux
 is assumed, otherwise type
 .Pp
-.Dl Ic # help
+.Dl # help
 .Pp
 Complete instructions for correcting and fixing items is not provided.
 There are manual pages and other methodologies available for doing that.
@@ -55,7 +55,7 @@ For example, to view the man page for the
 .Xr ls 1
 command, type:
 .Pp
-.Dl Ic man 1 ls
+.Dl # man 1 ls
 .Pp
 Administrators will rapidly become more familiar with
 .Ox
@@ -90,9 +90,9 @@ Instead, administrators are encouraged to add a
 user, add said user to the
 .Dq wheel
 group, then use the
-.Ic su
+.Xr su 1
 and
-.Ic sudo
+.Xr sudo 8
 commands when root privileges are required.
 This process is described in more detail later.
 .Ss Root password
@@ -131,12 +131,35 @@ to the correct time zone in the
 directory.
 .Pp
 Examples:
-.Bl -tag -width date
-.It Cm date 199901271504
-Set the current date to January 27th, 1999 3:04pm.
-.It Cm ln -fs /usr/share/zoneinfo/Canada/Atlantic /etc/localtime
-Set the time zone to Atlantic Standard Time.
-.El
+.Pp
+Set the current date to January 27th, 1999 3:04pm:
+.Dl # date 199901271504
+.Pp
+Set the time zone to Atlantic Standard Time:
+.Dl # ln -fs /usr/share/zoneinfo/Canada/Atlantic /etc/localtime
+.Ss System daemon configuration database
+The file
+.Pa /etc/rc.conf
+is used to configure the system daemons.
+Administrators should make changes to the default settings by creating a
+separate file,
+.Pa /etc/rc.conf.local .
+There are two possible strategies:
+Copy
+.Pa /etc/rc.conf
+to
+.Pa /etc/rc.conf.local
+and directly edit the local file.
+Note: the last thing
+.Pa /etc/rc.conf
+does is source the local file.
+If you copy this file directly you
+.Em must
+remove the final line from
+.Pa /etc/rc.conf.local .
+A second possibility is to start with an empty
+.Pa /etc/rc.conf.local ,
+and add in values as desired.
 .Ss Check hostname
 Use the
 .Ic hostname
@@ -281,10 +304,10 @@ search nts.umn.edu. umn.edu.
 lookup file bind
 .Ed
 .Pp
-If using a caching name server add the line "nameserver 127.0.0.1" first.
+If using a caching name server, add the line "nameserver 127.0.0.1" first.
 To get a local caching name server to run
 you will need to set "named_flags" in
-.Pa /etc/rc.conf
+.Pa /etc/rc.conf.local
 and create the
 .Pa named.boot
 file in the appropriate place for
@@ -302,8 +325,7 @@ being running for proper operation.
 This includes YP and NFS exports, among other services.
 To get the RPC portmapper to start automatically on boot,
 you will need to have this line in
-.Pa /etc/rc.conf
-:
+.Pa /etc/rc.conf.local :
 .Bd -literal -offset indent
 portmap=YES
 .Ed
@@ -351,27 +373,30 @@ and
 commands.
 Example:
 .Bd -literal -offset indent
-.Li # Ic cat /etc/fstab
+# cat /etc/fstab
 /dev/sd0a / ffs rw 1 1
 /dev/sd0b none swap sw 0 0
 /dev/sd0d /usr ffs rw,nodev 1 2
 /dev/sd0e /var ffs rw,nodev,nosuid 1 3
 /dev/sd0g /tmp ffs rw,nodev,nosuid 1 4
 /dev/sd0h /home ffs rw,nodev,nosuid 1 5
-.Li # Ic mount
+
+# mount
 /dev/sd0a on / type ffs (local)
 /dev/sd0d on /usr type ffs (local, nodev)
 /dev/sd0e on /var type ffs (local, nodev, nosuid)
 /dev/sd0g on /tmp type ffs (local, nodev, nosuid)
 /dev/sd0h on /home type ffs (local, nodev, nosuid)
-.Li # Ic df
+
+# df
 Filesystem  1024-blocks     Used    Avail Capacity  Mounted on
 /dev/sd0a         22311    14589     6606    69%    /
 /dev/sd0d        203399   150221    43008    78%    /usr
 /dev/sd0e         10447      682     9242     7%    /var
 /dev/sd0g         18823        2    17879     0%    /tmp
 /dev/sd0h          7519     5255     1888    74%    /home
-.Li # Ic pstat -s
+
+# pstat -s
 Device      512-blocks     Used    Avail Capacity  Priority
 /dev/sd0b       131072    84656    46416    65%    0
 .Ed
@@ -460,11 +485,13 @@ wheel:*:0:root,myself
 .Ed
 .Pp
 Follow instructions for
-.Xr kerberos 1
+.Xr login_krb4 8
+or
+.Xr login_krb5 8
 if using
 Kerberos
 for authentication.
-.Ss rc.conf, rc.local, rc.securelevel, rc.shutdown
+.Ss rc.conf, rc.conf.local, rc.local, rc.securelevel, rc.shutdown
 Check for any local changes needed in the files
 .Pa /etc/rc.conf ,
 .Pa /etc/rc.local ,
@@ -472,14 +499,14 @@ Check for any local changes needed in the files
 and
 .Pa /etc/rc.shutdown .
 Turning on something like the Network Time Protocol in
-.Pa /etc/rc.conf
+.Pa /etc/rc.conf.local
 requires making sure the package is installed.
 .Pp
 If you've installed X, you may want to turn on
 .Xr xdm 1 ,
 the X Display Manager.
 To do this, change the value of xdm_flags in
-.Pa /etc/rc.conf .
+.Pa /etc/rc.conf.local .
 .Ss Printers
 Edit
 .Pa /etc/printcap
@@ -520,7 +547,7 @@ and
 daemons are not enabled in favor of SSH (Secure Shell).
 .Ss Kerberos
 If you are going to use
-.Xr kerberos 1
+.Xr kerberos
 for authentication, and you already have a
 Kerberos
 master, change directory to
@@ -569,7 +596,7 @@ several clients.
 To cause sendmail to accept external network connections, modify the
 .Dq sendmail_flags
 variable in
-.Pa /etc/rc.conf
+.Pa /etc/rc.conf.local
 to use the
 .Pa /etc/mail/sendmail.cf
 file in accordance with the comments therein.
@@ -596,7 +623,7 @@ and
 .Pa /etc/dhcpd.interfaces
 as needed.
 You will have to make sure
-.Pa /etc/rc.conf
+.Pa /etc/rc.conf.local
 has:
 .Bd -literal -offset indent
 dhcpd_flags=-q
@@ -651,7 +678,9 @@ These scripts have been limited so as to keep the system running without
 filling up disk space from normal running processes and database updates.
 (You probably do not need to understand them.)
 .Pp
-The /altroot filesystem can optionally be used to provide a backup of the
+The
+.Pa /altroot
+filesystem can optionally be used to provide a backup of the
 root filesystem on a daily basis.
 To take advantage of this, you must have an entry in
 .Pa /etc/fstab
@@ -766,42 +795,20 @@ In particular, note which devices were not configured.
 This information will prove useful when editing kernel configuration files.
 .Pp
 To compile a kernel inside a writable source tree, do the following:
-.Sm off
 .Bd -literal -offset indent
-.Li #\  Xo
-.Ic cd\ /usr/src/sys/arch/
-.Ar somearch
-.Ic /conf
-.Xc
-.Li #\  Xo
-.Ic vi\ \&
-.Ar SOMEFILE
-.No \ \ \ (to\ make\ any\ changes)
-.Xc
-.Li #\  Xo
-.Ic config\ \&
-.Ar SOMEFILE
-.Xc
-.Li #\  Xo
-.Ic cd\ ../compile/
-.Ar SOMEFILE
-.Xc
-.Li #\  Xo
-.Ic make
-.Xc
+# cd /usr/src/sys/arch/somearch/conf
+# vi SOMEFILE  (to make any changes)
+# config SOMEFILE
+# cd ../compile/SOMEFILE
+# make
 .Ed
-.Sm on
 .Pp
 where
-.Ar somedir
-is a writable directory,
 .Ar somearch
-is the architecture (e.g.
-.Ic i386 ) ,
-and
+is the architecture (e.g. i386), and
 .Ar SOMEFILE
-should be a name indicative of a particular configuration (often
-that of the hostname).
+should be a name indicative of a particular configuration
+(often that of the hostname).
 You can also do a
 .Ic make depend
 so that you will have dependencies there the next time you do a compile.
@@ -832,16 +839,16 @@ configuration changes are required.
 With
 .Xr config 8 ,
 you can change the device configuration in the kernel file directly:
-.Bd -literal
-.Li #\  Ic config Fl e o Ar bsd.new /bsd
+.Bd -literal -offset indent
+# config -e -o bsd.new /bsd
 OpenBSD 2.7-beta (GENERIC.rz0) #0: Mon Oct  4 03:57:22 MEST 1999
     root@winona:/usr/src/sys/arch/pmax/compile/GENERIC.rz0
 Enter 'help' for information
 ukc>
+.Ed
 .Pp
 Additionally, you can permanently save the changes made with UKC during
 boot time in the kernel image.
-.Ed
 .Sh SEE ALSO
 .Xr chgrp 1 ,
 .Xr chmod 1 ,
@@ -850,7 +857,6 @@ boot time in the kernel image.
 .Xr df 1 ,
 .Xr domainname 1 ,
 .Xr hostname 1 ,
-.Xr kerberos 1 ,
 .Xr make 1 ,
 .Xr man 1 ,
 .Xr netstat 1 ,
