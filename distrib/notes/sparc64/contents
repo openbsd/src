@@ -12,20 +12,19 @@ OpenBSDfloppy
 				- Ultra 1/1E
 				- Ultra 2
 
-		floppyB{:--:}OSrev.fs	Another MACHINE boot and installation floppy;
-				see below.
-				This floppy image will boot on PCI-based
-				MACHINE models, such as:
-				- Ultra 5
-				- Ultra 10
-dnl XXX remove the following lines once floppyB is working
-				IMPORTANT! Please note that, as the moment of
-				writing, this floppy image is not working
-				correctly; your mileage may vary.
-				However, it will work correctly when used
-				as a miniroot and booted from the disk's
-				swap area, although the regular miniroot
-				is preferred for this usage.
+dnl		floppyB{:--:}OSrev.fs	Another MACHINE boot and installation floppy;
+dnl				see below.
+dnl				This floppy image will boot on PCI-based
+dnl				MACHINE models, such as:
+dnl				- Ultra 5
+dnl				- Ultra 10
+dnl				IMPORTANT! Please note that, as the moment of
+dnl				writing, this floppy image is not working
+dnl				correctly; your mileage may vary.
+dnl				However, it will work correctly when used
+dnl				as a miniroot and booted from the disk's
+dnl				swap area, although the regular miniroot
+dnl				is preferred for this usage.
 
 OpenBSDdistsets
 
