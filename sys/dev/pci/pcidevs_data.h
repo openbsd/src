@@ -2051,6 +2051,14 @@ static const struct pci_known_product pci_known_products[] = {
 	    "PRO 1000XT",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82544_SC,
+	    "PRO 1000XS",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82544_GC,
+	    "PRO 1000T",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VE_0,
 	    "PRO/100 VE",
 	},
