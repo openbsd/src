@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.h,v 1.10 2001/08/12 12:03:02 heko Exp $ */
+/*	$OpenBSD: trap.h,v 1.11 2001/08/24 22:52:20 miod Exp $ */
 /* 
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
@@ -74,7 +74,6 @@
 
 #ifndef _LOCORE
 void panictrap(int type, struct m88100_saved_state *frame);
-void test_trap2(int num, int m197);
 void test_trap(struct m88100_saved_state *frame);
 void error_fault(struct m88100_saved_state *frame);
 void error_reset(struct m88100_saved_state *frame);
@@ -91,14 +90,14 @@ unsigned ss_next_instr_address(struct proc *p, unsigned pc, unsigned delay_slot)
 int cpu_singlestep(register struct proc *p);
 
 #if defined(MVME187) || defined(MVME188)
-void trap(unsigned type, struct m88100_saved_state *frame);
 void syscall(register_t code, struct m88100_saved_state *tf);
+void trap18x(unsigned type, struct m88100_saved_state *frame);
 #endif /* defined(MVME187) || defined(MVME188) */
-
 #ifdef MVME197
-void trap2(unsigned type, struct m88100_saved_state *frame);
 void m197_syscall(register_t code, struct m88100_saved_state *tf);
+void trap197(unsigned type, struct m88100_saved_state *frame);
 #endif /* MVME197 */
+
 #endif /* _LOCORE */
 
 #endif /* __MACHINE_TRAP_H__ */
