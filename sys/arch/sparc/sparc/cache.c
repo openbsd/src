@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache.c,v 1.4 1997/08/08 08:27:03 downsj Exp $	*/
+/*	$OpenBSD: cache.c,v 1.5 1999/03/03 22:02:21 jason Exp $	*/
 /*	$NetBSD: cache.c,v 1.33 1997/07/29 09:41:56 fair Exp $ */
 
 /*
@@ -739,7 +739,7 @@ viking_pcache_flush_line(va, pa)
 #define cass	4			/* CACHEINFO.dc_associativity */
 
 	if (base == 0)
-		base = (char *)roundup((int)etext, csize);
+		base = (char *)roundup((unsigned int)etext, csize);
 
 	v = base + (((pa & cmask) >> cshift) << cshift);
 	i = 2 * cass - 1;
