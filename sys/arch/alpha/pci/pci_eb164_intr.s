@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_eb164_intr.s,v 1.2 1997/11/10 15:53:13 niklas Exp $	*/
+/*	$OpenBSD: pci_eb164_intr.s,v 1.3 2002/08/15 17:01:38 deraadt Exp $	*/
 /*	$NetBSD: pci_eb164_intr.s,v 1.1 1996/11/25 03:47:07 cgd Exp $	*/
 
 /*
@@ -60,4 +60,4 @@ LEAF(eb164_intr_disable,1)
 	ldiq	a0, 0x35
 	call_pal PAL_cserve
 	RET
-	END(eb164_intr_enable)
+	END(eb164_intr_disable)
