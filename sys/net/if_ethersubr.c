@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.42 2001/02/20 19:39:27 mickey Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.43 2001/03/22 05:26:35 jason Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -615,7 +615,7 @@ decapsulate:
 	etype = ntohs(eh->ether_type);
 
 #if NVLAN > 0
-	if (etype == vlan_proto) {
+	if (etype == ETHERTYPE_8021Q) {
 		if (vlan_input(eh, m) < 0)
 			ifp->if_data.ifi_noproto++;
 		return;

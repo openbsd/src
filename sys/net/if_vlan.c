@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.8 2001/02/20 19:39:48 mickey Exp $ */
+/*	$OpenBSD: if_vlan.c,v 1.9 2001/03/22 05:26:35 jason Exp $ */
 /*
  * Copyright 1998 Massachusetts Institute of Technology
  *
@@ -86,8 +86,6 @@
 #include <net/if_vlan_var.h>
 
 struct	ifaddr	**ifnet_addrs;
-
-u_int	vlan_proto = ETHERTYPE_8021Q;
 
 struct ifvlan ifv_softc[NVLAN];
 
@@ -190,7 +188,7 @@ vlan_start(struct ifnet *ifp)
 	ifp->if_flags |= IFF_OACTIVE;
 	for (;;) {
 		IF_DEQUEUE(&ifp->if_snd, m);
-		if (m == 0)
+		if (m == NULL)
 			break;
 
 		if ((p->if_flags & (IFF_UP|IFF_RUNNING)) !=
@@ -229,9 +227,13 @@ vlan_start(struct ifnet *ifp)
 			m->m_pkthdr.rcvif = ifp;
 			m->m_flags |= M_PROTO1;
 		} else {
+			m->m_flags &= ~M_PROTO1;
 			M_PREPEND(m, EVL_ENCAPLEN, M_DONTWAIT);
 			if (m == NULL) {
-				printf("%s: M_PREPEND failed", ifv->ifv_p->if_xname);
+#ifdef DEBUG
+				printf("%s: M_PREPEND failed\n",
+				    ifv->ifv_p->if_xname);
+#endif
 				ifp->if_ierrors++;
 				continue;
 			}
@@ -239,7 +241,10 @@ vlan_start(struct ifnet *ifp)
 
 			m = m_pullup(m, ETHER_HDR_LEN + EVL_ENCAPLEN);
 			if (m == NULL) {
-				printf("%s: m_pullup failed", ifv->ifv_p->if_xname);
+#ifdef DEBUG
+				printf("%s: m_pullup failed\n",
+				    ifv->ifv_p->if_xname);
+#endif
 				ifp->if_ierrors++;
 				continue;
 			}
@@ -252,7 +257,7 @@ vlan_start(struct ifnet *ifp)
 			      sizeof(struct ether_header));
 			evl = mtod(m, struct ether_vlan_header *);
 			evl->evl_proto = evl->evl_encap_proto;
-			evl->evl_encap_proto = htons(vlan_proto);
+			evl->evl_encap_proto = htons(ETHERTYPE_8021Q);
 			evl->evl_tag = htons(ifv->ifv_tag);
 #ifdef DEBUG
 			printf("vlan_start: %*D\n", sizeof *evl,
@@ -541,7 +546,7 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			break;
 		}
 		pr = ifunit(vlr.vlr_parent);
-		if (pr == 0) {
+		if (pr == NULL) {
 			error = ENOENT;
 			break;
 		}

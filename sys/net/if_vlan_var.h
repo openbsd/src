@@ -64,9 +64,6 @@ struct	ether_vlan_header {
 #define	EVL_PRIOFTAG(tag) (((tag) >> 13) & 7)
 #define	EVL_ENCAPLEN	4	/* length in octets of encapsulation */
 
-/* When these sorts of interfaces get their own identifier... */
-#define	IFT_8021_VLAN	IFT_PROPVIRTUAL
-
 /* sysctl(3) tags, for compatibility purposes */
 #define	VLANCTL_PROTO	1
 #define	VLANCTL_MAX	2
@@ -82,7 +79,6 @@ struct	vlanreq {
 #define	SIOCGETVLAN	SIOCGIFGENERIC
 
 #ifdef _KERNEL
-extern	u_int vlan_proto;
 extern	int vlan_input(register struct ether_header *eh, struct mbuf *m);
 extern	int vlan_input_tag(struct ether_header *eh,
 			struct mbuf *m, u_int16_t t);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_types.h,v 1.6 2000/10/18 19:00:13 jason Exp $	*/
+/*	$OpenBSD: if_types.h,v 1.7 2001/03/22 05:26:35 jason Exp $	*/
 /*	$NetBSD: if_types.h,v 1.7 1995/02/27 09:10:24 glass Exp $	*/
 
 /*
@@ -100,6 +100,7 @@
 
 /* private usage... how should we define these? */
 #define	IFT_BRIDGE	0xe8		/* bridge interfaces */
+#define	IFT_8021_VLAN	0xe9		/* vlan interfaces */
 #define	IFT_GIF		0xf0
 #define	IFT_DUMMY	0xf1
 #define IFT_PVC		0xf2
