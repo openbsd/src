@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.1 2001/06/26 21:57:41 smurph Exp $ */
+/*	$OpenBSD: cpu.c,v 1.2 2001/09/02 19:40:45 miod Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -42,7 +42,7 @@
 #include <machine/autoconf.h>
 
 char cpu_model[80];
-char machine[] = "powerpc";	/* cpu architecture */
+char machine[] = MACHINE;	/* cpu architecture */
 
 /* Definition of the driver for autoconfig. */
 static int	cpumatch(struct device *, void *, void *);

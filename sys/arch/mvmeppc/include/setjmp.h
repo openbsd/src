@@ -1,4 +1,3 @@
-/*	$OpenBSD: setjmp.h,v 1.2 2001/07/04 08:31:32 niklas Exp $	*/
-/*	$NetBSD: setjmp.h,v 1.1 1996/09/30 16:34:34 ws Exp $	*/
+/*	$OpenBSD: setjmp.h,v 1.3 2001/09/02 19:40:24 miod Exp $	*/
 
-#define	_JBLEN	100
+#include <powerpc/setjmp.h>

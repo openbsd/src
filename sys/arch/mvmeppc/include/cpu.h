@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.1 2001/06/26 21:57:44 smurph Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.2 2001/09/02 19:40:24 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
 
 /*
@@ -34,27 +34,7 @@
 #ifndef	_MACHINE_CPU_H_
 #define	_MACHINE_CPU_H_
 
-#include <machine/frame.h>
-
-#include <machine/psl.h>
-
-#define	CLKF_USERMODE(frame)	(((frame)->srr1 & PSL_PR) != 0)
-#define	CLKF_BASEPRI(frame)	((frame)->pri == 0)
-#define	CLKF_PC(frame)		((frame)->srr0)
-#define	CLKF_INTR(frame)	((frame)->depth != 0)
-
-#define	cpu_swapout(p)
-#define cpu_wait(p)
-
-extern void delay __P((unsigned));
-#define	DELAY(n)		delay(n)
-
-extern volatile int want_resched;
-extern volatile int astpending;
-
-#define	need_resched()		(want_resched = 1, astpending = 1)
-#define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, astpending = 1)
-#define	signotify(p)		(astpending = 1)
+#include <powerpc/cpu.h>
 
 #define	CACHELINESIZE	32			/* For now		XXX */
 
@@ -94,7 +74,5 @@ invdcache(from, len)
 	} while ((l -= CACHELINESIZE) > 0);
 	__asm__ __volatile__ ("sync");
 }
-
-extern char *bootpath;
 
 #endif	/* _MACHINE_CPU_H_ */
