@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.43 2002/04/03 21:52:08 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.44 2002/04/04 18:44:35 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.43 2002/04/03 21:52:08 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.44 2002/04/04 18:44:35 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -166,7 +166,7 @@ STATIC int wi_get_pm(struct wi_softc *, struct ieee80211_power *);
 
 int	wi_intr(void *);
 int	wi_attach(struct wi_softc *, int);
-void	wi_init(void *);
+void	wi_init(struct wi_softc *);
 void	wi_stop(struct wi_softc *);
 
 /* Autoconfig definition of driver back-end */
@@ -1316,8 +1316,8 @@ wi_ioctl(ifp, command, data)
 			error = wi_write_record(sc, (struct wi_ltv_gen *)&wreq);
 			if (!error)
 				error = wi_setdef(sc, &wreq);
-			if (!error && ifp->if_flags & IFF_UP)
-				wi_init(ifp);
+			if (!error && (ifp->if_flags & IFF_UP))
+				wi_init(sc);
 		}
 		break;
 	case SIOCG80211NWID:
@@ -1354,7 +1354,7 @@ wi_ioctl(ifp, command, data)
 		WI_SETSTR(WI_RID_DESIRED_SSID, sc->wi_net_name);
 		if (ifp->if_flags & IFF_UP)
 			/* Reinitialize WaveLAN. */
-			wi_init(ifp);
+			wi_init(sc);
 		break;
 	case SIOCS80211NWKEY:
 		error = wi_set_nwkey(sc, (struct ieee80211_nwkey *)data);
@@ -1387,10 +1387,9 @@ wi_ioctl(ifp, command, data)
 }
 
 STATIC void
-wi_init(xsc)
-	void			*xsc;
+wi_init(sc)
+	struct wi_softc		*sc;
 {
-	struct wi_softc		*sc = xsc;
 	struct ifnet		*ifp = &sc->arpcom.ac_if;
 	int			s;
 	struct wi_ltv_macaddr	mac;
@@ -2101,7 +2100,7 @@ wi_media_change(ifp)
 	if (sc->arpcom.ac_if.if_flags & IFF_UP) {
 		if (otype != sc->wi_ptype ||
 		    orate != sc->wi_tx_rate)
-			wi_init(ifp);
+			wi_init(sc);
 	}
 
 	ifp->if_baudrate = ifmedia_baudrate(sc->sc_media.ifm_cur->ifm_media);
@@ -2185,7 +2184,7 @@ wi_set_nwkey(sc, nwkey)
 		return (error);
 
 	if (sc->arpcom.ac_if.if_flags & IFF_UP)
-		wi_init(&sc->arpcom.ac_if);
+		wi_init(sc);
 	return 0;
 }
 
@@ -2230,7 +2229,7 @@ wi_set_pm(struct wi_softc *sc, struct ieee80211_power *power)
 	sc->wi_max_sleep = power->i_maxsleep;
 
 	if (sc->arpcom.ac_if.if_flags & IFF_UP)
-		wi_init(&sc->arpcom.ac_if);
+		wi_init(sc);
 
 	return (0);
 }
