@@ -1,4 +1,4 @@
-/*	$OpenBSD: whois.c,v 1.22 2003/01/07 17:24:08 millert Exp $	*/
+/*	$OpenBSD: whois.c,v 1.23 2003/01/15 23:16:29 millert Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)whois.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: whois.c,v 1.22 2003/01/07 17:24:08 millert Exp $";
+static const char rcsid[] = "$OpenBSD: whois.c,v 1.23 2003/01/15 23:16:29 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -101,7 +101,7 @@ main(int argc, char **argv)
 	country = host = server = NULL;
 	flags = rval = 0;
 	while ((ch = getopt(argc, argv, "aAc:dgh:ilmp:qQrR6")) != -1)
-		switch((char)ch) {
+		switch(ch) {
 		case 'a':
 			host = ANICHOST;
 			break;
@@ -246,6 +246,8 @@ whois(const char *query, const char *server, const char *port, int flags)
 			for (i = 0; ip_whois[i] != NULL; i++) {
 				if (strstr(buf, ip_whois[i]) != NULL) {
 					nhost = strdup(ip_whois[i]);
+					if (nhost == NULL)
+						err(1, "strdup");
 					break;
 				}
 			}
@@ -304,7 +306,7 @@ usage(void)
 	extern char *__progname;
 
 	(void)fprintf(stderr,
-	    "usage: %s [-aAdgilmpQrR6] [-c country-code | -h hostname] "
+	    "usage: %s [-aAdgilmQrR6] [-c country-code | -h hostname] "
 		"[-p port] name ...\n", __progname);
 	exit(1);
 }
