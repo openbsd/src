@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.168 1999/07/27 06:15:03 matthieu Exp 
+ *	OpenBSD: pcidevs,v 1.169 1999/08/05 17:36:52 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -498,7 +498,7 @@
 #define	PCI_VENDOR_LINEARSYS	0x1254		/* Linear Systems */
 #define	PCI_VENDOR_ASIX	0x125b		/* ASIX */
 #define	PCI_VENDOR_AURORA	0x125c		/* Aurora Technologies */
-#define	PCI_VENDOR_ESSTECH	0x125d		/* ESS Technology Inc */
+#define	PCI_VENDOR_ESSTECH	0x125d		/* ESS */
 #define	PCI_VENDOR_ENSONIQ	0x1274		/* Ensoniq */
 #define	PCI_VENDOR_NETAPP	0x1275		/* Network Appliance */
 #define	PCI_VENDOR_ROCKWELL	0x127a		/* Rockwell Semiconductor Systems */

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.168 1999/07/27 06:15:03 matthieu Exp 
+ *	OpenBSD: pcidevs,v 1.169 1999/08/05 17:36:52 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1379,19 +1379,19 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_MAESTROII,
 	    0,
-	    "ESS Technology Inc",
+	    "ESS",
 	    "Maestro II",
 	},
 	{
 	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_SOLO1,
 	    0,
-	    "ESS Technology Inc",
+	    "ESS",
 	    "SOLO-1 AudioDrive",
 	},
 	{
 	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_MAESTRO2E,
 	    0,
-	    "ESS Technology Inc",
+	    "ESS",
 	    "Maestro 2E",
 	},
 	{
@@ -6113,7 +6113,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_ESSTECH, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "ESS Technology Inc",
+	    "ESS",
 	    NULL,
 	},
 	{
