@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.301 2000/08/08 17:01:09 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.302 2000/08/10 16:00:26 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -750,7 +750,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTHETH,
 	    0,
 	    "Apple",
-	    "Uni-North Ethernet",
+	    "Uni-North Eth",
 	},
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTH,

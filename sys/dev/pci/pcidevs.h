@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.301 2000/08/08 17:01:09 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.302 2000/08/10 16:00:26 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -717,7 +717,7 @@
 #define	PCI_PRODUCT_APPLE_OHARE	0x0007		/* OHare */
 #define	PCI_PRODUCT_APPLE_HEATHROW	0x0010		/* Heathrow */
 #define	PCI_PRODUCT_APPLE_PADDINGTON	0x0017		/* Paddington */
-#define	PCI_PRODUCT_APPLE_UNINORTHETH	0x001e		/* Uni-North Ethernet */
+#define	PCI_PRODUCT_APPLE_UNINORTHETH	0x001e		/* Uni-North Eth */
 #define	PCI_PRODUCT_APPLE_UNINORTH	0x001f		/* Uni-North */
 #define	PCI_PRODUCT_APPLE_USB	0x0019		/* USB */
 #define	PCI_PRODUCT_APPLE_UNINORTHAGP	0x0020		/* Uni-North AGP */
