@@ -1,4 +1,4 @@
-/*	$OpenBSD: reverse.c,v 1.9 2001/01/17 00:27:21 pjanzen Exp $	*/
+/*	$OpenBSD: reverse.c,v 1.10 2001/07/17 02:23:58 pvalchev Exp $	*/
 /*	$NetBSD: reverse.c,v 1.6 1994/11/23 07:42:10 jtc Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)reverse.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: reverse.c,v 1.9 2001/01/17 00:27:21 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: reverse.c,v 1.10 2001/07/17 02:23:58 pvalchev Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -227,7 +227,7 @@ r_buf(fp)
 
 	if (enomem) {
 		(void)fprintf(stderr,
-		    "tail: warning: %qd bytes discarded\n", enomem);
+		    "tail: warning: %lld bytes discarded\n", (long long)enomem);
 		rval = 1;
 	}
 

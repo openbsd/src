@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_util.c,v 1.2 1996/06/26 05:38:41 deraadt Exp $	*/
+/*	$OpenBSD: rpc_util.c,v 1.3 2001/07/17 02:23:59 pvalchev Exp $	*/
 /*	$NetBSD: rpc_util.c,v 1.6 1995/08/29 23:05:57 cgd Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -41,6 +41,7 @@ static char sccsid[] = "@(#)rpc_util.c 1.11 89/02/22 (C) 1987 SMI";
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <ctype.h>
 #include "rpc_scan.h"
 #include "rpc_parse.h"
@@ -68,6 +69,7 @@ list *defined;			/* list of defined things */
 /*
  * Reinitialize the world 
  */
+void
 reinitialize()
 {
 	memset(curline, 0, MAXLINESIZE);
@@ -79,6 +81,7 @@ reinitialize()
 /*
  * string equality 
  */
+int
 streq(a, b)
 	char *a;
 	char *b;
@@ -124,7 +127,7 @@ storeval(lstp, val)
 	*l = lst;
 }
 
-static
+static int
 findit(def, type)
 	definition *def;
 	char *type;
@@ -193,7 +196,7 @@ ptype(prefix, type, follow)
 	}
 }
 
-static
+static int
 typedefed(def, type)
 	definition *def;
 	char *type;
@@ -205,6 +208,7 @@ typedefed(def, type)
 	}
 }
 
+int
 isvectordef(type, rel)
 	char *type;
 	relation rel;
@@ -278,6 +282,7 @@ error(msg)
  * Something went wrong, unlink any files that we may have created and then
  * die. 
  */
+void
 crash()
 {
 	int i;
@@ -400,7 +405,7 @@ toktostr(kind)
 	return (sp->str);
 }
 
-static
+static void
 printbuf()
 {
 	char c;
@@ -409,7 +414,7 @@ printbuf()
 
 #	define TABSIZE 4
 
-	for (i = 0; c = curline[i]; i++) {
+	for (i = 0; (c = curline[i]) != '\0'; i++) {
 		if (c == '\t') {
 			cnt = 8 - (i % TABSIZE);
 			c = ' ';

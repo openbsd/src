@@ -1,9 +1,9 @@
-/*	$OpenBSD: rpcinfo.c,v 1.6 2001/07/07 00:31:55 millert Exp $	*/
+/*	$OpenBSD: rpcinfo.c,v 1.7 2001/07/17 02:24:00 pvalchev Exp $	*/
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rpcinfo.c 1.22 87/08/12 SMI";*/
 /*static char sccsid[] = "from: @(#)rpcinfo.c	2.2 88/08/11 4.0 RPCSRC";*/
-static char rcsid[] = "$OpenBSD: rpcinfo.c,v 1.6 2001/07/07 00:31:55 millert Exp $";
+static char rcsid[] = "$OpenBSD: rpcinfo.c,v 1.7 2001/07/17 02:24:00 pvalchev Exp $";
 #endif
 
 /*
@@ -51,6 +51,9 @@ static char rcsid[] = "$OpenBSD: rpcinfo.c,v 1.6 2001/07/07 00:31:55 millert Exp
 #include <rpc/pmap_prot.h>
 #include <rpc/pmap_clnt.h>
 #include <signal.h>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <ctype.h>
 #include <errno.h>
 #include <arpa/inet.h>
@@ -672,7 +675,6 @@ getprognum(arg, ulp)
 	u_long *ulp;
 {
 	register struct rpcent *rpc;
-	register u_long prognum;
 
 	if (isalpha(*arg)) {
 		rpc = getrpcbyname(arg);

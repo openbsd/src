@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_clntout.c,v 1.3 1997/06/11 08:27:27 deraadt Exp $	*/
+/*	$OpenBSD: rpc_clntout.c,v 1.4 2001/07/17 02:23:59 pvalchev Exp $	*/
 /*	$NetBSD: rpc_clntout.c,v 1.4 1995/06/11 21:49:52 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -44,10 +44,8 @@ static char sccsid[] = "@(#)rpc_clntout.c 1.11 89/02/22 (C) 1987 SMI";
 #include "rpc_parse.h"
 #include "rpc_util.h"
 
-static write_program __P((definition *));
+static void write_program __P((definition *));
 static void printbody __P((proc_list *));
-
-extern pdeclaration();
 
 #define DEFAULT_TIMEOUT 25	/* in seconds */
 static char RESULT[] = "clnt_res";
@@ -71,7 +69,7 @@ write_stubs()
 	}
 }
 
-static
+static void
 write_program(def)
 	definition *def;
 {
@@ -165,7 +163,6 @@ printbody(proc)
 {
   decl_list *l;
   bool_t args2 = (proc->arg_num > 1);
-  int i;
 
   /* For new style with multiple arguments, need a structure in which
      to stuff the arguments. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.7 2001/01/18 07:29:28 deraadt Exp $	*/
+/*	$OpenBSD: top.c,v 1.8 2001/07/17 02:23:58 pvalchev Exp $	*/
 
 const char copyright[] = "Copyright (c) 1984 through 1996, William LeFebvre";
 
@@ -917,6 +917,7 @@ restart:
 
     quit(0);
     /*NOTREACHED*/
+    return(0);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_sample.c,v 1.3 1997/11/15 22:10:53 deraadt Exp $	*/
+/*	$OpenBSD: rpc_sample.c,v 1.4 2001/07/17 02:23:59 pvalchev Exp $	*/
 /*	$NetBSD: rpc_sample.c,v 1.2 1995/06/11 21:50:01 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -42,15 +42,16 @@ static char sccsid[] = "@(#)rpc_sample.c  1.1  90/08/30  (C) 1987 SMI";
 #include <sys/cdefs.h>
 #include <stdio.h>
 #include <string.h>
+#include "rpc_scan.h"
 #include "rpc_parse.h"
 #include "rpc_util.h"
 
 static char RQSTP[] = "rqstp";
 
 void printarglist();
-static write_sample_client __P((char *, version_list *));
-static write_sample_server __P((definition *));
-static return_type __P((proc_list *));
+static void write_sample_client __P((char *, version_list *));
+static void write_sample_server __P((definition *));
+static void return_type __P((proc_list *));
 
 void
 write_sample_svc(def)
@@ -81,7 +82,7 @@ write_sample_clnt(def)
 }
 
 
-static
+static void
 write_sample_client(program_name, vp )
      char* program_name;
      version_list *vp;
@@ -164,7 +165,7 @@ write_sample_client(program_name, vp )
   f_print(fout, "}\n");
 }
 
-static
+static void
 write_sample_server(def)
 	definition *def;
 {
@@ -184,11 +185,11 @@ write_sample_server(def)
 
 			f_print(fout, "{\n");
 			f_print(fout, "\n\tstatic ");
-			if( !streq( proc->res_type, "void") )
-			  return_type(proc);
+			if(streq( proc->res_type, "void"))
+			  f_print(fout, "char*");  /* cannot have void type */
 			else
-			  f_print(fout, "char*" );  /* cannot have void type */
-			f_print(fout, " result;\n", proc->res_type);
+			  return_type(proc);
+			f_print(fout, " result;\n");
 			f_print(fout, 
 				"\n\t/*\n\t * insert server code here\n\t */\n\n");
 			if( !streq( proc->res_type, "void") )
@@ -203,13 +204,14 @@ write_sample_server(def)
 	}
 }
 
-static 
+static void
 return_type(plist)
 	proc_list *plist;
 {
 	ptype( plist->res_prefix, plist->res_type, 1 );
 }
 
+void
 add_sample_msg()
 {
 	f_print(fout, "/*\n");

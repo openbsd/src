@@ -1,4 +1,4 @@
-/*	$OpenBSD: talk.c,v 1.4 1998/08/18 04:02:24 millert Exp $	*/
+/*	$OpenBSD: talk.c,v 1.5 2001/07/17 02:23:58 pvalchev Exp $	*/
 /*	$NetBSD: talk.c,v 1.3 1994/12/09 02:14:25 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)talk.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: talk.c,v 1.4 1998/08/18 04:02:24 millert Exp $";
+static char rcsid[] = "$OpenBSD: talk.c,v 1.5 2001/07/17 02:23:58 pvalchev Exp $";
 #endif /* not lint */
 
 #include "talk.h"
@@ -78,4 +78,6 @@ main(argc, argv)
 	end_msgs();
 	set_edit_chars();
 	talk();
+	/* NOTREACHED */
+	return (0);
 }

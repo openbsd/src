@@ -1,4 +1,4 @@
-/*	$OpenBSD: look_up.c,v 1.6 1999/03/03 20:43:30 millert Exp $	*/
+/*	$OpenBSD: look_up.c,v 1.7 2001/07/17 02:23:58 pvalchev Exp $	*/
 /*	$NetBSD: look_up.c,v 1.3 1994/12/09 02:14:21 jtc Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)look_up.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: look_up.c,v 1.6 1999/03/03 20:43:30 millert Exp $";
+static char rcsid[] = "$OpenBSD: look_up.c,v 1.7 2001/07/17 02:23:58 pvalchev Exp $";
 #endif /* not lint */
 
 #include "talk.h"
@@ -92,6 +92,7 @@ check_local()
 	}
 	quit("Unable to connect with initiator", 1);
 	/*NOTREACHED*/
+	return (0);
 }
 
 /*

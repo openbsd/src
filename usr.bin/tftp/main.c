@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.6 2001/03/22 01:34:01 mickey Exp $	*/
+/*	$OpenBSD: main.c,v 1.7 2001/07/17 02:23:59 pvalchev Exp $	*/
 /*	$NetBSD: main.c,v 1.6 1995/05/21 16:54:10 mycroft Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: main.c,v 1.6 2001/03/22 01:34:01 mickey Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.7 2001/07/17 02:23:59 pvalchev Exp $";
 #endif /* not lint */
 
 /* Many bug fixes are from Jim Guyton <guyton@rand-unix> */
@@ -182,6 +182,7 @@ main(argc, argv)
 	if (setjmp(toplevel) != 0)
 		(void)putchar('\n');
 	command();
+	return (0);
 }
 
 char    hostname[MAXHOSTNAMELEN];

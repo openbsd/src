@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_util.h,v 1.3 1997/10/11 21:10:42 deraadt Exp $	*/
+/*	$OpenBSD: rpc_util.h,v 1.4 2001/07/17 02:23:59 pvalchev Exp $	*/
 /*	$NetBSD: rpc_util.h,v 1.3 1995/06/11 21:50:10 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -104,6 +104,7 @@ definition *findval();
 #define FINDVAL(list,item,finder) \
 	findval(list, item, finder)
 
+void reinitialize __P((void));
 char *fixtype __P((char *));
 char *stringfix __P((char *));
 char *locase __P((char *));
@@ -113,20 +114,28 @@ void ptype __P((char *, char *, int));
 int isvectordef __P((char *, relation));
 int streq __P((char *, char *));
 void error __P((char *));
+void crash __P((void));
 void tabify __P((FILE *, int));
 void record_open __P((char *));
 bas_type *find_type __P((char *));
 char *make_argname __P((char *, char *));
+void add_type __P((int, char *));
 /*
  * rpc_cout routines 
  */
 void emit __P((definition *));
+void emit_inline __P((declaration *, int));
+void emit_single_in_line __P((declaration *, int, relation));
+char *upcase __P((char *));
 
 /*
  * rpc_hout routines 
  */
 void print_datadef __P((definition *));
 void print_funcdef __P((definition *));
+void pxdrfuncdecl __P((char *, int));
+void pprocdef __P((proc_list *, version_list *, char *, int, int));
+void pdeclaration __P((char *, declaration *, int, char *));
 
 /*
  * rpc_svcout routines 
@@ -134,7 +143,9 @@ void print_funcdef __P((definition *));
 void write_most __P((char *, int, int));
 void write_rest __P((void));
 void write_programs __P((char *));
+int nullproc __P((proc_list *));
 void write_svc_aux __P((int));
+void write_msg_out __P((void));
 void write_inetd_register __P((char *));
 void write_netid_register __P((char *));
 void write_nettype_register __P((char *));
@@ -155,4 +166,5 @@ void write_tables __P((void));
  */
 void write_sample_svc __P((definition *));
 int write_sample_clnt __P((definition *));
+void add_sample_msg __P((void));
 void write_sample_clnt_main __P((void));
