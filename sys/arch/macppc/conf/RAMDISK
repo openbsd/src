@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.41 2005/03/17 07:57:36 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.42 2005/03/18 03:27:34 brad Exp $
 #
 # PPC GENERIC config file
 #
@@ -66,6 +66,7 @@ vge*		at pci? 	# VIA VT612x
 dc*		at pci?		# DEC Tulip 21143 clones
 xl*		at pci?		# 3C9xx ethernet
 em*		at pci?		# Intel Pro/1000 ethernet
+bge*		at pci?		# Broadcom BCM570x (aka Tigon3)
 ti*		at pci?		# Alteon Tigon 1Gb ethernet
 re*		at pci?		# Realtek 8169/8169S/8110S
 rl*		at pci?		# Realtek 81[23]9 ethernet
