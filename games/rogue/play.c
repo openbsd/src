@@ -1,3 +1,4 @@
+/*	$OpenBSD: play.c,v 1.3 1998/08/22 08:55:39 pjanzen Exp $	*/
 /*	$NetBSD: play.c,v 1.3 1995/04/22 10:28:04 cgd Exp $	*/
 
 /*
@@ -40,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)play.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: play.c,v 1.3 1995/04/22 10:28:04 cgd Exp $";
+static char rcsid[] = "$OpenBSD: play.c,v 1.3 1998/08/22 08:55:39 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,7 +53,7 @@ static char rcsid[] = "$NetBSD: play.c,v 1.3 1995/04/22 10:28:04 cgd Exp $";
  *    1.)  No portion of this notice shall be removed.
  *    2.)  Credit shall not be taken for the creation of this source.
  *    3.)  This code is not to be traded, sold, or used for personal
- *	   gain or profit.
+ *         gain or profit.
  *
  */
 
@@ -61,10 +62,7 @@ static char rcsid[] = "$NetBSD: play.c,v 1.3 1995/04/22 10:28:04 cgd Exp $";
 boolean interrupted = 0;
 char *unknown_command = "unknown command";
 
-extern short party_room, bear_trap;
-extern char hit_message[];
-extern boolean wizard, trap_door;
-
+void
 play_level()
 {
 	short ch;

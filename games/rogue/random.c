@@ -1,3 +1,4 @@
+/*	$OpenBSD: random.c,v 1.3 1998/08/22 08:55:40 pjanzen Exp $	*/
 /*	$NetBSD: random.c,v 1.3 1995/04/22 10:28:06 cgd Exp $	*/
 
 /*
@@ -40,9 +41,11 @@
 #if 0
 static char sccsid[] = "@(#)random.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: random.c,v 1.3 1995/04/22 10:28:06 cgd Exp $";
+static char rcsid[] = "$OpenBSD: random.c,v 1.3 1998/08/22 08:55:40 pjanzen Exp $";
 #endif
 #endif /* not lint */
+
+#include "rogue.h"
 
 /*
  * random.c
@@ -52,12 +55,12 @@ static char rcsid[] = "$NetBSD: random.c,v 1.3 1995/04/22 10:28:06 cgd Exp $";
  *    1.)  No portion of this notice shall be removed.
  *    2.)  Credit shall not be taken for the creation of this source.
  *    3.)  This code is not to be traded, sold, or used for personal
- *	   gain or profit.
+ *         gain or profit.
  *
  */
 
 static long rntb[32] = {
-		 3, 0x9a319039, 0x32d9c024, 0x9b663182, 0x5da1f342, 
+		 3, 0x9a319039, 0x32d9c024, 0x9b663182, 0x5da1f342,
 	0xde3b81e0, 0xdf0a6fb5, 0xf103bc02, 0x48f340fb, 0x7449e56b,
 	0xbeb1dbb0, 0xab5c5918, 0x946554fd, 0x8c2e680f, 0xeb3d799f,
 	0xb11ee0b7, 0x2d436b86, 0xda672e2a, 0x1588ca88, 0xe369735d,
@@ -74,11 +77,11 @@ static int rand_deg = 31;
 static int rand_sep = 3;
 static long *end_ptr = &rntb[32];
 
+void
 srrandom(x)
-int x;
+	int x;
 {
-	register int i;
-	long rrandom();
+	int i;
 
 	state[0] = (long) x;
 	if (rand_type != 0) {
@@ -115,10 +118,11 @@ rrandom()
 	return(i);
 }
 
+int
 get_rand(x, y)
-register int x, y;
+	int x, y;
 {
-	register int r, t;
+	int r, t;
 	long lr;
 
 	if (x > y) {
@@ -133,14 +137,15 @@ register int x, y;
 	return(r);
 }
 
+int
 rand_percent(percentage)
-register int percentage;
+	int percentage;
 {
 	return(get_rand(1, 100) <= percentage);
 }
 
+int
 coin_toss()
 {
-
 	return(((rrandom() & 01) ? 1 : 0));
 }

@@ -1,3 +1,4 @@
+/*	$OpenBSD: hit.c,v 1.3 1998/08/22 08:55:26 pjanzen Exp $	*/
 /*	$NetBSD: hit.c,v 1.3 1995/04/22 10:27:30 cgd Exp $	*/
 
 /*
@@ -40,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)hit.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: hit.c,v 1.3 1995/04/22 10:27:30 cgd Exp $";
+static char rcsid[] = "$OpenBSD: hit.c,v 1.3 1998/08/22 08:55:26 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,7 +53,7 @@ static char rcsid[] = "$NetBSD: hit.c,v 1.3 1995/04/22 10:27:30 cgd Exp $";
  *    1.)  No portion of this notice shall be removed.
  *    2.)  Credit shall not be taken for the creation of this source.
  *    3.)  This code is not to be traded, sold, or used for personal
- *	   gain or profit.
+ *         gain or profit.
  *
  */
 
@@ -61,12 +62,9 @@ static char rcsid[] = "$NetBSD: hit.c,v 1.3 1995/04/22 10:27:30 cgd Exp $";
 object *fight_monster = 0;
 char hit_message[80] = "";
 
-extern short halluc, blind, cur_level;
-extern short add_strength, ring_exp, r_rings;
-extern boolean being_held, interrupted, wizard, con_mon;
-
+void
 mon_hit(monster)
-register object *monster;
+	object *monster;
 {
 	short damage, hit_chance;
 	char *mn;
@@ -92,7 +90,8 @@ register object *monster;
 
 	if (!rand_percent(hit_chance)) {
 		if (!fight_monster) {
-			sprintf(hit_message + strlen(hit_message), "the %s misses", mn);
+			sprintf(hit_message + strlen(hit_message),
+			    "the %s misses", mn);
 			message(hit_message, 1);
 			hit_message[0] = 0;
 		}
@@ -126,9 +125,10 @@ register object *monster;
 	}
 }
 
+void
 rogue_hit(monster, force_hit)
-register object *monster;
-boolean force_hit;
+	object *monster;
+	boolean force_hit;
 {
 	short damage, hit_chance;
 
@@ -164,10 +164,11 @@ RET:	check_gold_seeker(monster);
 	}
 }
 
+void
 rogue_damage(d, monster, other)
-short d;
-object *monster;
-short other;
+	short d;
+	object *monster;
+	short other;
 {
 	if (d >= rogue.hp_current) {
 		rogue.hp_current = 0;
@@ -180,11 +181,12 @@ short other;
 	}
 }
 
+int
 get_damage(ds, r)
-char *ds;
-boolean r;
+	char *ds;
+	boolean r;
 {
-	register i = 0, j, n, d, total = 0;
+	int i = 0, j, n, d, total = 0;
 
 	while (ds[i]) {
 		n = get_number(ds+i);
@@ -206,12 +208,13 @@ boolean r;
 	return(total);
 }
 
+int
 get_w_damage(obj)
-object *obj;
+	object *obj;
 {
 	char new_damage[12];
-	register to_hit, damage;
-	register i = 0;
+	int to_hit, damage;
+	int i = 0;
 
 	if ((!obj) || (obj->what_is != WEAPON)) {
 		return(-1);
@@ -225,11 +228,12 @@ object *obj;
 	return(get_damage(new_damage, 1));
 }
 
+int
 get_number(s)
-register char *s;
+	char *s;
 {
-	register i = 0;
-	register total = 0;
+	int i = 0;
+	int total = 0;
 
 	while ((s[i] >= '0') && (s[i] <= '9')) {
 		total = (10 * total) + (s[i] - '0');
@@ -240,7 +244,7 @@ register char *s;
 
 long
 lget_number(s)
-char *s;
+	char *s;
 {
 	short i = 0;
 	long total = 0;
@@ -252,8 +256,9 @@ char *s;
 	return(total);
 }
 
+int
 to_hit(obj)
-object *obj;
+	object *obj;
 {
 	if (!obj) {
 		return(1);
@@ -261,6 +266,7 @@ object *obj;
 	return(get_number(obj->damage) + obj->hit_enchant);
 }
 
+int
 damage_for_strength()
 {
 	short strength;
@@ -291,9 +297,10 @@ damage_for_strength()
 	return(8);
 }
 
+int
 mon_damage(monster, damage)
-object *monster;
-short damage;
+	object *monster;
+	short damage;
 {
 	char *mn;
 	short row, col;
@@ -324,8 +331,9 @@ short damage;
 	return(1);
 }
 
+void
 fight(to_the_death)
-boolean to_the_death;
+	boolean to_the_death;
 {
 	short ch, c, d;
 	short row, col;
@@ -375,10 +383,11 @@ boolean to_the_death;
 	}
 }
 
+void
 get_dir_rc(dir, row, col, allow_off_screen)
-short dir;
-short *row, *col;
-short allow_off_screen;
+	short dir;
+	short *row, *col;
+	short allow_off_screen;
 {
 	switch(dir) {
 	case LEFT:
@@ -428,8 +437,9 @@ short allow_off_screen;
 	}
 }
 
+int
 get_hit_chance(weapon)
-object *weapon;
+	object *weapon;
 {
 	short hit_chance;
 
@@ -439,8 +449,9 @@ object *weapon;
 	return(hit_chance);
 }
 
+int
 get_weapon_damage(weapon)
-object *weapon;
+	object *weapon;
 {
 	short damage;
 
@@ -450,8 +461,9 @@ object *weapon;
 	return(damage);
 }
 
+void
 s_con_mon(monster)
-object *monster;
+	object *monster;
 {
 	if (con_mon) {
 		monster->m_flags |= CONFUSED;

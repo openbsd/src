@@ -1,3 +1,4 @@
+/*	$OpenBSD: throw.c,v 1.3 1998/08/22 08:55:49 pjanzen Exp $	*/
 /*	$NetBSD: throw.c,v 1.3 1995/04/22 10:28:32 cgd Exp $	*/
 
 /*
@@ -40,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)throw.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: throw.c,v 1.3 1995/04/22 10:28:32 cgd Exp $";
+static char rcsid[] = "$OpenBSD: throw.c,v 1.3 1998/08/22 08:55:49 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,16 +53,13 @@ static char rcsid[] = "$NetBSD: throw.c,v 1.3 1995/04/22 10:28:32 cgd Exp $";
  *    1.)  No portion of this notice shall be removed.
  *    2.)  Credit shall not be taken for the creation of this source.
  *    3.)  This code is not to be traded, sold, or used for personal
- *	   gain or profit.
+ *         gain or profit.
  *
  */
 
 #include "rogue.h"
 
-extern short cur_room;
-extern char *curse_message;
-extern char hit_message[];
-
+void
 throw()
 {
 	short wch, d;
@@ -125,8 +123,9 @@ throw()
 	vanish(weapon, 1, &rogue.pack);
 }
 
+boolean
 throw_at_monster(monster, weapon)
-object *monster, *weapon;
+	object *monster, *weapon;
 {
 	short damage, hit_chance;
 	short t;
@@ -162,9 +161,9 @@ object *monster, *weapon;
 
 object *
 get_thrown_at_monster(obj, dir, row, col)
-object *obj;
-short dir;
-short *row, *col;
+	object *obj;
+	short dir;
+	short *row, *col;
 {
 	short orow, ocol;
 	short i, ch;
@@ -205,9 +204,10 @@ short *row, *col;
 	return(0);
 }
 
+void
 flop_weapon(weapon, row, col)
-object *weapon;
-short row, col;
+	object *weapon;
+	short row, col;
 {
 	object *new_weapon, *monster;
 	short i = 0;
@@ -264,8 +264,9 @@ short row, col;
 	}
 }
 
+void
 rand_around(i, r, c)
-short i, *r, *c;
+	short i, *r, *c;
 {
 	static char* pos = "\010\007\001\003\004\005\002\006\0";
 	static short row, col;

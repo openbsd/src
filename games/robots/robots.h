@@ -1,4 +1,4 @@
-/*	$OpenBSD: robots.h,v 1.2 1998/07/09 04:34:24 pjanzen Exp $	*/
+/*	$OpenBSD: robots.h,v 1.3 1998/08/22 08:56:00 pjanzen Exp $	*/
 /*	$NetBSD: robots.h,v 1.5 1995/04/24 12:24:54 cgd Exp $	*/
 
 /*
@@ -128,7 +128,7 @@ bool	eaten __P((COORD *));
 void	flush_in __P((void));
 void	get_move __P((void));
 void	init_field __P((void));
-bool jumping __P((void));
+bool	jumping __P((void));
 void	make_level __P((void));
 void	move_robots __P((int));
 bool	must_telep __P((void));

@@ -1,3 +1,4 @@
+/*	$OpenBSD: zap.c,v 1.3 1998/08/22 08:55:53 pjanzen Exp $	*/
 /*	$NetBSD: zap.c,v 1.3 1995/04/22 10:28:41 cgd Exp $	*/
 
 /*
@@ -40,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)zap.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: zap.c,v 1.3 1995/04/22 10:28:41 cgd Exp $";
+static char rcsid[] = "$OpenBSD: zap.c,v 1.3 1998/08/22 08:55:53 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,9 +61,7 @@ static char rcsid[] = "$NetBSD: zap.c,v 1.3 1995/04/22 10:28:41 cgd Exp $";
 
 boolean wizard = 0;
 
-extern boolean being_held, score_only, detect_monster;
-extern short cur_room;
-
+void
 zapp()
 {
 	short wch;
@@ -119,8 +118,8 @@ zapp()
 
 object *
 get_zapped_monster(dir, row, col)
-short dir;
-short *row, *col;
+	short dir;
+	short *row, *col;
 {
 	short orow, ocol;
 
@@ -140,9 +139,10 @@ short *row, *col;
 	}
 }
 
+void
 zap_monster(monster, kind)
-object *monster;
-unsigned short kind;
+	object *monster;
+	unsigned short kind;
 {
 	short row, col;
 	object *nm;
@@ -207,8 +207,9 @@ unsigned short kind;
 	}
 }
 
+void
 tele_away(monster)
-object *monster;
+	object *monster;
 {
 	short row, col;
 
@@ -226,6 +227,7 @@ object *monster;
 	}
 }
 
+void
 wizardize()
 {
 	char buf[100];
@@ -248,8 +250,9 @@ wizardize()
 	}
 }
 
+void
 wdrain_life(monster)
-object *monster;
+	object *monster;
 {
 	short hp;
 	object *lmon, *nm;
@@ -277,8 +280,9 @@ object *monster;
 	relight();
 }
 
+void
 bounce(ball, dir, row, col, r)
-short ball, dir, row, col, r;
+	short ball, dir, row, col, r;
 {
 	short orow, ocol;
 	char buf[DCOLS], *s;

@@ -1,3 +1,4 @@
+/*	$OpenBSD: curses.c,v 1.3 1998/08/22 08:55:25 pjanzen Exp $	*/
 /*	$NetBSD: curses.c,v 1.3 1995/04/22 10:27:27 cgd Exp $	*/
 
 /*
@@ -40,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)curses.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: curses.c,v 1.3 1995/04/22 10:27:27 cgd Exp $";
+static char rcsid[] = "$OpenBSD: curses.c,v 1.3 1998/08/22 08:55:25 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,7 +53,7 @@ static char rcsid[] = "$NetBSD: curses.c,v 1.3 1995/04/22 10:27:27 cgd Exp $";
  *    1.)  No portion of this notice shall be removed.
  *    2.)  Credit shall not be taken for the creation of this source.
  *    3.)  This code is not to be traded, sold, or used for personal
- *	   gain or profit.
+ *         gain or profit.
  *
  */
 
@@ -85,8 +86,6 @@ static char rcsid[] = "$NetBSD: curses.c,v 1.3 1995/04/22 10:27:27 cgd Exp $";
 
 #include <stdio.h>
 #include "rogue.h"
-
-boolean tc_tname();
 
 #define BS 010
 #define LF 012
@@ -134,6 +133,7 @@ char *SE = "";
 short cur_row;
 short cur_col;
 
+void
 initscr()
 {
 	clear();
@@ -141,38 +141,43 @@ initscr()
 	printf("%s%s", TI, VS);
 }
 
+void
 endwin()
 {
 	printf("%s%s", TE, VE);
 	md_cbreak_no_echo_nonl(0);
 }
 
+void
 move(row, col)
-short row, col;
+	short row, col;
 {
 	curscr->_cury = row;
 	curscr->_curx = col;
 	screen_dirty = 1;
 }
 
+void
 mvaddstr(row, col, str)
-short row, col;
-char *str;
+	short row, col;
+	char *str;
 {
 	move(row, col);
 	addstr(str);
 }
 
+void
 addstr(str)
-char *str;
+	char *str;
 {
 	while (*str) {
 		addch((int) *str++);
 	}
 }
 
+void
 addch(ch)
-register int ch;
+	int ch;
 {
 	short row, col;
 
@@ -187,17 +192,19 @@ register int ch;
 	screen_dirty = 1;
 }
 
+void
 mvaddch(row, col, ch)
-short row, col;
-int ch;
+	short row, col;
+	int ch;
 {
 	move(row, col);
 	addch(ch);
 }
 
+void
 refresh()
 {
-	register i, j, line;
+	int i, j, line;
 	short old_row, old_col, first_row;
 
 	if (screen_dirty) {
@@ -223,8 +230,9 @@ refresh()
 	}
 }
 
+void
 wrefresh(scr)
-WINDOW *scr;
+	WINDOW *scr;
 {
 	short i, col;
 
@@ -252,13 +260,15 @@ WINDOW *scr;
 	scr = scr;		/* make lint happy */
 }
 
+int
 mvinch(row, col)
-short row, col;
+	short row, col;
 {
 	move(row, col);
 	return((int) buffer[row][col]);
 }
 
+void
 clear()
 {
 	printf("%s", CL);
@@ -268,6 +278,7 @@ clear()
 	clear_buffers();
 }
 
+void
 clrtoeol()
 {
 	short row, col;
@@ -280,34 +291,40 @@ clrtoeol()
 	lines_dirty[row] = 1;
 }
 
+void
 standout()
 {
 	buf_stand_out = 1;
 }
 
+void
 standend()
 {
 	buf_stand_out = 0;
 }
 
+void
 crmode()
 {
 	md_cbreak_no_echo_nonl(1);
 }
 
+void
 noecho()
 {
 	/* crmode() takes care of this */
 }
 
+void
 nonl()
 {
 	/* crmode() takes care of this */
 }
 
+void
 clear_buffers()
 {
-	register i, j;
+	int i, j;
 
 	screen_dirty = 0;
 
@@ -320,8 +337,10 @@ clear_buffers()
 	}
 }
 
+void
 put_char_at(row, col, ch)
-register row, col, ch;
+	short row, col;
+	int ch;
 {
 	put_cursor(row, col);
 	put_st_char(ch);
@@ -329,10 +348,11 @@ register row, col, ch;
 	cur_col++;
 }
 
+void
 put_cursor(row, col)
-register row, col;
+	short row, col;
 {
-	register i, rdif, cdif;
+	int i, rdif, cdif;
 	short ch, t;
 
 	rdif = (row > cur_row) ? row - cur_row : cur_row - row;
@@ -383,8 +403,9 @@ register row, col;
 	}
 }
 
+void
 put_st_char(ch)
-register ch;
+	int ch;
 {
 	if ((ch & ST_MASK) && (!term_stand_out)) {
 		ch &= ~ST_MASK;
@@ -399,13 +420,14 @@ register ch;
 	}
 }
 
+void
 get_term_info()
 {
 	FILE *fp;
 	char *term, *tcf;
 	char buf[BUFLEN];
 
-	if (tcf = md_getenv("TERMCAP")) {
+	if ((tcf = md_getenv("TERMCAP"))) {
 		if (strlen(tcf) > 40) {
 			clean_up("TERMCAP file name too long");
 		}
@@ -435,9 +457,9 @@ get_term_info()
 
 boolean
 tc_tname(fp, term, buf)
-FILE *fp;
-char *term;
-char *buf;
+	FILE *fp;
+	char *term;
+	char *buf;
 {
 	short i, j;
 	boolean found = 0;
@@ -474,9 +496,10 @@ char *buf;
 	return(found);
 }
 
+void
 tc_gtdata(fp, buf)
-FILE *fp;
-char *buf;
+	FILE *fp;
+	char *buf;
 {
 	short i;
 	boolean first = 1;
@@ -534,9 +557,10 @@ char *buf;
 	tc_cmget();
 }
 
+void
 tc_gets(ibuf, tcstr)
-char *ibuf;
-char **tcstr;
+	char *ibuf;
+	char **tcstr;
 {
 	short i, j, k, n;
 	char obuf[BUFLEN];
@@ -610,9 +634,10 @@ char **tcstr;
 	(void) strcpy(*tcstr, obuf);
 }
 
+void
 tc_gnum(ibuf, n)
-char *ibuf;
-int *n;
+	char *ibuf;
+	int *n;
 {
 	short i;
 	int r = 0;
@@ -626,6 +651,7 @@ int *n;
 	*n = r;
 }
 
+void
 tstp()
 {
 	endwin();
@@ -637,6 +663,7 @@ tstp()
 	md_slurp();
 }
 
+void
 tc_cmget()
 {
 	short i = 0, j = 0, rc_spec = 0;

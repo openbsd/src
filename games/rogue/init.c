@@ -1,3 +1,4 @@
+/*	$OpenBSD: init.c,v 1.4 1998/08/22 08:55:27 pjanzen Exp $	*/
 /*	$NetBSD: init.c,v 1.4 1995/04/28 23:49:19 mycroft Exp $	*/
 
 /*
@@ -40,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: init.c,v 1.4 1995/04/28 23:49:19 mycroft Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.4 1998/08/22 08:55:27 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,12 +53,10 @@ static char rcsid[] = "$NetBSD: init.c,v 1.4 1995/04/28 23:49:19 mycroft Exp $";
  *    1.)  No portion of this notice shall be removed.
  *    2.)  Credit shall not be taken for the creation of this source.
  *    3.)  This code is not to be traded, sold, or used for personal
- *	   gain or profit.
+ *         gain or profit.
  *
  */
 
-#include <stdio.h>
-#include <unistd.h>
 #include "rogue.h"
 
 char login_name[MAX_OPT_LEN];
@@ -75,14 +74,10 @@ char *error_file = "rogue.esave";
 char *byebye_string = "Okay, bye bye!";
 gid_t gid, egid;
 
-extern char *fruit;
-extern char *save_file;
-extern short party_room;
-extern boolean jump;
-
+int
 init(argc, argv)
-int argc;
-char *argv[];
+	int argc;
+	char *argv[];
 {
 	char *pn;
 	int seed;
@@ -107,7 +102,7 @@ char *argv[];
 
 	initscr();
 	if ((LINES < DROWS) || (COLS < DCOLS)) {
-		clean_up("must be played on 24 x 80 screen");
+		clean_up("must be played on 24 x 80 screen (or larger)");
 	}
 	start_window();
 	init_curses = 1;
@@ -134,6 +129,7 @@ char *argv[];
 	return(0);
 }
 
+void
 player_init()
 {
 	object *obj;
@@ -182,8 +178,9 @@ player_init()
 	(void) add_to_pack(obj, &rogue.pack, 1);
 }
 
+void
 clean_up(estr)
-char *estr;
+	char *estr;
 {
 	if (save_is_interactive) {
 		if (init_curses) {
@@ -196,6 +193,7 @@ char *estr;
 	md_exit(0);
 }
 
+void
 start_window()
 {
 	crmode();
@@ -205,13 +203,15 @@ start_window()
 #endif
 }
 
+void
 stop_window()
 {
 	endwin();
 }
 
 void
-byebye()
+byebye(dummy)
+	int dummy;
 {
 	md_ignore_signals();
 	if (ask_quit) {
@@ -223,7 +223,8 @@ byebye()
 }
 
 void
-onintr()
+onintr(dummy)
+	int dummy;
 {
 	md_ignore_signals();
 	if (cant_int) {
@@ -236,16 +237,18 @@ onintr()
 }
 
 void
-error_save()
+error_save(dummy)
+	int dummy;
 {
 	save_is_interactive = 0;
 	save_into_file(error_file);
 	clean_up("");
 }
 
+void
 do_args(argc, argv)
-int argc;
-char *argv[];
+	int argc;
+	char *argv[];
 {
 	short i, j;
 
@@ -264,11 +267,12 @@ char *argv[];
 	}
 }
 
+void
 do_opts()
 {
 	char *eptr;
 
-	if (eptr = md_getenv("ROGUEOPTS")) {
+	if ((eptr = md_getenv("ROGUEOPTS"))) {
 		for (;;) {
 			while ((*eptr) == ' ') {
 				eptr++;
@@ -311,9 +315,10 @@ do_opts()
 	init_str(&fruit, "slime-mold");
 }
 
+void
 env_get_value(s, e, add_blank)
-char **s, *e;
-boolean add_blank;
+	char **s, *e;
+	boolean add_blank;
 {
 	short i = 0;
 	char *t;
@@ -337,8 +342,9 @@ boolean add_blank;
 	(*s)[i] = '\0';
 }
 
+void
 init_str(str, dflt)
-char **str, *dflt;
+	char **str, *dflt;
 {
 	if (!(*str)) {
 		*str = md_malloc(MAX_OPT_LEN + 2);

@@ -1,3 +1,4 @@
+/*	$OpenBSD: use.c,v 1.4 1998/08/22 08:55:51 pjanzen Exp $	*/
 /*	$NetBSD: use.c,v 1.3 1995/04/22 10:28:38 cgd Exp $	*/
 
 /*
@@ -40,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)use.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: use.c,v 1.3 1995/04/22 10:28:38 cgd Exp $";
+static char rcsid[] = "$OpenBSD: use.c,v 1.4 1998/08/22 08:55:51 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -69,14 +70,7 @@ boolean detect_monster = 0;
 boolean con_mon = 0;
 char *strange_feeling = "you have a strange feeling for a moment, then it passes";
 
-extern short bear_trap;
-extern char hunger_str[];
-extern short cur_room;
-extern long level_points[];
-extern boolean being_held;
-extern char *fruit, *you_can_move_again;
-extern boolean sustain_strength;
-
+void
 quaff()
 {
 	short ch;
@@ -190,6 +184,7 @@ quaff()
 	vanish(obj, 1, &rogue.pack);
 }
 
+void
 read_scroll()
 {
 	short ch;
@@ -302,10 +297,11 @@ read_scroll()
  *  arrow (or whatever) in the quiver.  It will only decrement the count.
  */
 
+void
 vanish(obj, rm, pack)
-object *obj;
-short rm;
-object *pack;
+	object *obj;
+	short rm;
+	object *pack;
 {
 	if (obj->quantity > 1) {
 		obj->quantity--;
@@ -325,7 +321,9 @@ object *pack;
 	}
 }
 
+void
 potion_heal(extra)
+	int extra;
 {
 	float ratio;
 	short add;
@@ -370,6 +368,7 @@ potion_heal(extra)
 	}
 }
 
+void
 idntfy()
 {
 	short ch;
@@ -397,6 +396,7 @@ AGAIN:
 	message(desc, 0);
 }
 
+void
 eat()
 {
 	short ch;
@@ -438,6 +438,7 @@ eat()
 	vanish(obj, 1, &rogue.pack);
 }
 
+void
 hold_monster()
 {
 	short i, j;
@@ -470,6 +471,7 @@ hold_monster()
 	}
 }
 
+void
 tele()
 {
 	mvaddch(rogue.row, rogue.col, get_dungeon_char(rogue.row, rogue.col));
@@ -482,6 +484,7 @@ tele()
 	bear_trap = 0;
 }
 
+void
 hallucinate()
 {
 	object *obj, *monster;
@@ -511,6 +514,7 @@ hallucinate()
 	}
 }
 
+void
 unhallucinate()
 {
 	halluc = 0;
@@ -518,6 +522,7 @@ unhallucinate()
 	message("everything looks SO boring now", 1);
 }
 
+void
 unblind()
 {
 	blind = 0;
@@ -531,6 +536,7 @@ unblind()
 	}
 }
 
+void
 relight()
 {
 	if (cur_room == PASSAGE) {
@@ -541,6 +547,7 @@ relight()
 	mvaddch(rogue.row, rogue.col, rogue.fchar);
 }
 
+void
 take_a_nap()
 {
 	short i;
@@ -555,6 +562,7 @@ take_a_nap()
 	message(you_can_move_again, 0);
 }
 
+void
 go_blind()
 {
 	short i, j;
@@ -597,11 +605,13 @@ get_ench_color()
 	return("blue ");
 }
 
+void
 cnfs()
 {
 	confused += get_rand(12, 22);
 }
 
+void
 unconfuse()
 {
 	char msg[80];
@@ -611,6 +621,7 @@ unconfuse()
 	message(msg, 1);
 }
 
+void
 uncurse_all()
 {
 	object *obj;

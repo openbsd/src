@@ -1,4 +1,4 @@
-.\"	$NetBSD: random.6,v 1.2 1995/04/22 07:44:04 cgd Exp $
+.\"	$OpenBSD: random.6,v 1.2 1998/08/22 08:55:21 pjanzen Exp $
 .\"
 .\" Copyright (c) 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,7 +40,7 @@
 .Nm random
 .Nd random lines from a file or random numbers
 .Sh SYNOPSIS
-.Nm random
+.Nm
 .Op Fl er
 .Op Ar denominator
 .Sh DESCRIPTION
@@ -57,7 +57,7 @@ The options are as follows:
 If the
 .Fl e
 option is specified,
-.Nm random
+.Nm
 does not read or write anything, and simply exits with a random
 exit value of 0 to
 .Ar denominator

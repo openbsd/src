@@ -1,3 +1,4 @@
+/*	$OpenBSD: main.c,v 1.3 1998/08/22 08:55:32 pjanzen Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/04/22 10:27:41 cgd Exp $	*/
 
 /*
@@ -46,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.3 1995/04/22 10:27:41 cgd Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.3 1998/08/22 08:55:32 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -58,17 +59,16 @@ static char rcsid[] = "$NetBSD: main.c,v 1.3 1995/04/22 10:27:41 cgd Exp $";
  *    1.)  No portion of this notice shall be removed.
  *    2.)  Credit shall not be taken for the creation of this source.
  *    3.)  This code is not to be traded, sold, or used for personal
- *	   gain or profit.
+ *         gain or profit.
  *
  */
 
 #include "rogue.h"
 
-extern short party_room;
-
+int
 main(argc, argv)
-int argc;
-char *argv[];
+	int argc;
+	char *argv[];
 {
 	if (init(argc, argv)) {		/* restored game */
 		goto PL;

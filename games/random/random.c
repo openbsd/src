@@ -1,3 +1,4 @@
+/*	$OpenBSD: random.c,v 1.6 1998/08/22 08:55:22 pjanzen Exp $	*/
 /*	$NetBSD: random.c,v 1.3 1995/04/22 07:44:05 cgd Exp $	*/
 
 /*
@@ -46,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)random.c	8.5 (Berkeley) 4/5/94";
 #else
-static char rcsid[] = "$NetBSD: random.c,v 1.3 1995/04/22 07:44:05 cgd Exp $";
+static char rcsid[] = "$OpenBSD: random.c,v 1.6 1998/08/22 08:55:22 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -69,7 +70,6 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	extern int optind;
 	double denom;
 	int ch, random_exit, selected, unbuffer_output;
 	char *ep;
@@ -79,7 +79,7 @@ main(argc, argv)
 	setgid(getgid());
 
 	random_exit = unbuffer_output = 0;
-	while ((ch = getopt(argc, argv, "er")) != -1)
+	while ((ch = getopt(argc, argv, "erh")) != -1)
 		switch (ch) {
 		case 'e':
 			random_exit = 1;
@@ -88,7 +88,7 @@ main(argc, argv)
 			unbuffer_output = 1;
 			break;
 		default:
-		case '?':
+		case '?': case 'h':
 			usage();
 			/* NOTREACHED */
 		}

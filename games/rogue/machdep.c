@@ -1,3 +1,4 @@
+/*	$OpenBSD: machdep.c,v 1.4 1998/08/22 08:55:31 pjanzen Exp $	*/
 /*	$NetBSD: machdep.c,v 1.5 1995/04/28 23:49:22 mycroft Exp $	*/
 
 /*
@@ -52,7 +53,7 @@ static char rcsid[] = "$NetBSD: machdep.c,v 1.5 1995/04/28 23:49:22 mycroft Exp 
  *    1.)  No portion of this notice shall be removed.
  *    2.)  Credit shall not be taken for the creation of this source.
  *    3.)  This code is not to be traded, sold, or used for personal
- *	   gain or profit.
+ *         gain or profit.
  *
  */
 
@@ -97,8 +98,8 @@ static char rcsid[] = "$NetBSD: machdep.c,v 1.5 1995/04/28 23:49:22 mycroft Exp 
 
 #ifdef UNIX
 
-#include <stdio.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <pwd.h>
@@ -112,7 +113,9 @@ static char rcsid[] = "$NetBSD: machdep.c,v 1.5 1995/04/28 23:49:22 mycroft Exp 
 #endif
 
 #include <signal.h>
+#include <stdlib.h>
 #include <termios.h>
+#include <unistd.h>
 #include "rogue.h"
 #include "pathnames.h"
 
@@ -128,6 +131,7 @@ static char rcsid[] = "$NetBSD: machdep.c,v 1.5 1995/04/28 23:49:22 mycroft Exp 
  * big deal.
  */
 
+void
 md_slurp()
 {
 	(void)fpurge(stdin);
@@ -149,6 +153,7 @@ md_slurp()
  * input, this is not usually critical.
  */
 
+void
 md_heed_signals()
 {
 	signal(SIGINT, onintr);
@@ -168,6 +173,7 @@ md_heed_signals()
  * file, corruption.
  */
 
+void
 md_ignore_signals()
 {
 	signal(SIGQUIT, SIG_IGN);
@@ -186,7 +192,7 @@ md_ignore_signals()
 
 int
 md_get_file_id(fname)
-char *fname;
+	char *fname;
 {
 	struct stat sbuf;
 
@@ -206,7 +212,7 @@ char *fname;
 
 int
 md_link_count(fname)
-char *fname;
+	char *fname;
 {
 	struct stat sbuf;
 
@@ -228,10 +234,11 @@ char *fname;
  * saved-game files and play them.  
  */
 
+void
 md_gct(rt_buf)
-struct rogue_time *rt_buf;
+	struct rogue_time *rt_buf;
 {
-	struct tm *t, *localtime();
+	struct tm *t;
 	time_t seconds;
 
 	time(&seconds);
@@ -261,9 +268,10 @@ struct rogue_time *rt_buf;
  * saved-games that have been modified.
  */
 
+void
 md_gfmt(fname, rt_buf)
-char *fname;
-struct rogue_time *rt_buf;
+	char *fname;
+	struct rogue_time *rt_buf;
 {
 	struct stat sbuf;
 	time_t seconds;
@@ -294,7 +302,7 @@ struct rogue_time *rt_buf;
 
 boolean
 md_df(fname)
-char *fname;
+	char *fname;
 {
 	if (unlink(fname)) {
 		return(0);
@@ -330,8 +338,9 @@ md_gln()
  * delaying execution, which is useful to this program at some times.
  */
 
+void
 md_sleep(nsecs)
-int nsecs;
+	int nsecs;
 {
 	(void) sleep(nsecs);
 }
@@ -375,10 +384,9 @@ int nsecs;
 
 char *
 md_getenv(name)
-char *name;
+	char *name;
 {
 	char *value;
-	char *getenv();
 
 	value = getenv(name);
 
@@ -395,9 +403,8 @@ char *name;
 
 char *
 md_malloc(n)
-int n;
+	int n;
 {
-	char *malloc();
 	char *t;
 
 	t = malloc(n);
@@ -422,6 +429,7 @@ int n;
  * exactly the same way given the same input.
  */
 
+int
 md_gseed()
 {
 	return(getpid());
@@ -434,8 +442,9 @@ md_gseed()
  * hang when it should quit.
  */
 
+void
 md_exit(status)
-int status;
+	int status;
 {
 	exit(status);
 }
@@ -451,8 +460,9 @@ int status;
  * the lock is released.
  */
 
+void
 md_lock(l)
-boolean l;
+	boolean l;
 {
 	extern gid_t gid, egid;
 	static int fd;
@@ -484,19 +494,21 @@ boolean l;
  * The effective user id is restored after the shell completes.
  */
 
+void
 md_shell(shell)
-char *shell;
+	char *shell;
 {
-	long w[2];
+	int w;
 
 	if (!fork()) {
-		int uid;
-
-		uid = getuid();
-		setuid(uid);
+/*		int uid;	*** No longer needed ***
+ *
+ *		uid = getuid();
+ *		setuid(uid);
+ */
 		execl(shell, shell, 0);
 	}
-	wait(w);
+	wait(&w);
 }
 
 /* If you have a viable curses/termlib library, then use it and don't bother
@@ -535,8 +547,9 @@ char *shell;
  *
  */
 
+void
 md_cbreak_no_echo_nonl(on)
-boolean on;
+	boolean on;
 {
 	struct termios tty_buf;
 	static struct termios tty_save;
@@ -583,6 +596,7 @@ md_gdtcf()
  *
  */
 
+void
 md_tstp()
 {
 #ifdef UNIX_BSD4_2

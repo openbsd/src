@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.6 1998/07/09 04:34:16 pjanzen Exp $	*/
+/*	$OpenBSD: main.c,v 1.7 1998/08/22 08:55:54 pjanzen Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1995/04/22 10:08:54 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.6 1998/07/09 04:34:16 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.7 1998/08/22 08:55:54 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,9 +62,8 @@ main(ac, av)
 	int		score_wfd;     /* high score writable file descriptor */
 	int		score_err = 0; /* hold errno from score file open */
 
-	if ((score_wfd = open(Scorefile, O_RDWR)) < 0) {
+	if ((score_wfd = open(Scorefile, O_RDWR)) < 0)
 		score_err = errno;
-	}	
 
 	/* revoke */
 	setegid(getgid());
@@ -76,16 +75,15 @@ main(ac, av)
 		for (++av; ac > 1 && *av[0]; av++, ac--)
 			if (av[0][0] != '-') {
 				Scorefile = av[0];
-				sp = strrchr(Scorefile, '/');
-				if (sp == NULL)
-					sp = Scorefile;
 				if (score_wfd >= 0)
 					close(score_wfd);
-			/* This file is in the current directory  */
-			/* and requires no special privileges: */
+			/* This file requires no special privileges. */
 				if ((score_wfd = open(Scorefile, O_RDWR)) < 0)
 					score_err = errno;
 #ifdef	FANCY
+				sp = strrchr(Scorefile, '/');
+				if (sp == NULL)
+					sp = Scorefile;
 				if (strcmp(sp, "pattern_roll") == 0)
 					Pattern_roll = TRUE;
 				else if (strcmp(sp, "stand_still") == 0)
@@ -112,7 +110,7 @@ main(ac, av)
 						Teleport = TRUE;
 						break;
 					  default:
-						fprintf(stderr, "robots: unknown option: %c\n", *sp);
+						warnx("unknown option: %c", *sp);
 						bad_arg = TRUE;
 						break;
 					}
@@ -127,10 +125,9 @@ main(ac, av)
 		exit(0);
 	}
 
-	if (score_wfd < 0) {
-		fprintf(stderr, "%s: %s\n", Scorefile, strerror(score_err));
-		exit(1);
-	}
+	if (score_wfd < 0)
+		warnx("%s: %s; no scores will be saved", Scorefile,
+			strerror(score_err));
 
 	initscr();
 	signal(SIGINT, quit);
@@ -140,9 +137,7 @@ main(ac, av)
 	if (LINES != Y_SIZE || COLS != X_SIZE) {
 		if (LINES < Y_SIZE || COLS < X_SIZE) {
 			endwin();
-			printf("Need at least a %dx%d screen\n",
-			    Y_SIZE, X_SIZE);
-			exit(1);
+			errx(1, "Need at least a %dx%d screen", Y_SIZE, X_SIZE);
 		}
 		delwin(stdscr);
 		stdscr = newwin(Y_SIZE, X_SIZE, 0, 0);

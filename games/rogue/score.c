@@ -1,3 +1,4 @@
+/*	$OpenBSD: score.c,v 1.4 1998/08/22 08:55:47 pjanzen Exp $	*/
 /*	$NetBSD: score.c,v 1.5 1995/04/22 10:28:26 cgd Exp $	*/
 
 /*
@@ -40,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)score.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: score.c,v 1.5 1995/04/22 10:28:26 cgd Exp $";
+static char rcsid[] = "$OpenBSD: score.c,v 1.4 1998/08/22 08:55:47 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,7 +53,7 @@ static char rcsid[] = "$NetBSD: score.c,v 1.5 1995/04/22 10:28:26 cgd Exp $";
  *    1.)  No portion of this notice shall be removed.
  *    2.)  Credit shall not be taken for the creation of this source.
  *    3.)  This code is not to be traded, sold, or used for personal
- *	   gain or profit.
+ *         gain or profit.
  *
  */
 
@@ -60,15 +61,10 @@ static char rcsid[] = "$NetBSD: score.c,v 1.5 1995/04/22 10:28:26 cgd Exp $";
 #include "rogue.h"
 #include "pathnames.h"
 
-extern char login_name[];
-extern char *m_names[];
-extern short max_level;
-extern boolean score_only, no_skull, msg_cleared;
-extern char *byebye_string, *nick_name;
-
+void
 killed_by(monster, other)
-object *monster;
-short other;
+	object *monster;
+	short other;
 {
 	char buf[128];
 
@@ -134,6 +130,7 @@ short other;
 	put_scores(monster, other);
 }
 
+void
 win()
 {
 	unwield(rogue.weapon);		/* disarm and relax */
@@ -157,8 +154,9 @@ win()
 	put_scores((object *) 0, WIN);
 }
 
+void
 quit(from_intrpt)
-boolean from_intrpt;
+	boolean from_intrpt;
 {
 	char buf[128];
 	short i, orow, ocol;
@@ -198,9 +196,10 @@ boolean from_intrpt;
 	killed_by((object *) 0, QUIT);
 }
 
+void
 put_scores(monster, other)
-object *monster;
-short other;
+	object *monster;
+	short other;
 {
 	short i, n, rank = 10, x, ne = 0, found_player = -1;
 	char scores[10][82];
@@ -278,8 +277,8 @@ short other;
 			rank = ne;
 		}
 		if (rank < 10) {
-			insert_score(scores, n_names, nick_name, rank, ne, monster,
-				other);
+			insert_score(scores, n_names, nick_name, rank, ne,
+			    monster, other);
 			if (ne < 10) {
 				ne++;
 			}
@@ -328,12 +327,13 @@ short other;
 	clean_up("");
 }
 
+void
 insert_score(scores, n_names, n_name, rank, n, monster, other)
-char scores[][82];
-char n_names[][30];
-char *n_name;
-short rank, n;
-object *monster;
+	char scores[][82];
+	char n_names[][30];
+	char *n_name;
+	short rank, n;
+	object *monster;
 {
 	short i;
 	char buf[128];
@@ -346,7 +346,8 @@ object *monster;
 			}
 		}
 	}
-	sprintf(buf, "%2d    %6d   %s: ", rank+1, rogue.gold, login_name);
+	sprintf(buf, "%2d    %6ld   %s: ", rank+1, (long)rogue.gold,
+	    login_name);
 
 	if (other) {
 		switch(other) {
@@ -390,8 +391,9 @@ object *monster;
 	(void) strcpy(n_names[rank], n_name);
 }
 
+boolean
 is_vowel(ch)
-short ch;
+	short ch;
 {
 	return( (ch == 'a') ||
 		(ch == 'e') ||
@@ -400,6 +402,7 @@ short ch;
 		(ch == 'u') );
 }
 
+void
 sell_pack()
 {
 	object *obj;
@@ -432,12 +435,14 @@ sell_pack()
 	message("", 0);
 }
 
+int
 get_value(obj)
-object *obj;
+	object *obj;
 {
 	short wc;
 	int val;
 
+	val = 0;
 	wc = obj->which_kind;
 
 	switch(obj->what_is) {
@@ -479,6 +484,7 @@ object *obj;
 	return(val);
 }
 
+void
 id_all()
 {
 	short i;
@@ -500,8 +506,9 @@ id_all()
 	}
 }
 
+int
 name_cmp(s1, s2)
-char *s1, *s2;
+	char *s1, *s2;
 {
 	short i = 0;
 	int r;
@@ -515,9 +522,10 @@ char *s1, *s2;
 	return(r);
 }
 
+void
 xxxx(buf, n)
-char *buf;
-short n;
+	char *buf;
+	short n;
 {
 	short i;
 	unsigned char c;
@@ -533,7 +541,7 @@ short n;
 
 long
 xxx(st)
-boolean st;
+	boolean st;
 {
 	static long f, s;
 	long r;
@@ -549,8 +557,9 @@ boolean st;
 	return(r);
 }
 
+void
 nickize(buf, score, n_name)
-char *buf, *score, *n_name;
+	char *buf, *score, *n_name;
 {
 	short i = 15, j;
 
@@ -574,9 +583,10 @@ char *buf, *score, *n_name;
 	}
 }
 
+void
 center(row, buf)
-short row;
-char *buf;
+	short row;
+	char *buf;
 {
 	short margin;
 
@@ -584,6 +594,7 @@ char *buf;
 	mvaddstr(row, margin, buf);
 }
 
+void
 sf_error()
 {
 	md_lock(0);

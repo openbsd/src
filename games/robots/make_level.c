@@ -1,4 +1,4 @@
-/*	$OpenBSD: make_level.c,v 1.2 1998/07/09 04:34:17 pjanzen Exp $	*/
+/*	$OpenBSD: make_level.c,v 1.3 1998/08/22 08:55:55 pjanzen Exp $	*/
 /*	$NetBSD: make_level.c,v 1.3 1995/04/22 10:08:56 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)make_level.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: make_level.c,v 1.2 1998/07/09 04:34:17 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: make_level.c,v 1.3 1998/08/22 08:55:55 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -70,7 +70,7 @@ make_level()
 		cp->y = -1;
 	My_pos.y = -1;
 
-	bzero(Field, sizeof Field);
+	memset(Field, 0, sizeof Field);
 	Min.y = Y_FIELDSIZE;
 	Min.x = X_FIELDSIZE;
 	Max.y = 0;
