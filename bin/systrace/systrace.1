@@ -1,0 +1,73 @@
+.\"	$OpenBSD: systrace.1,v 1.1 2002/06/04 19:38:10 provos Exp $
+.\"
+.\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"      This product includes software developed by Niels Provos.
+.\" 4. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\" Manual page, using -mandoc macros
+.\"
+.Dd June 3, 2002
+.Dt SYSTRACE 1
+.Os
+.Sh NAME
+.Nm systrace
+.Nd generates and enforces system call policies
+.Sh SYNOPSIS
+.Nm systrace
+.Op Fl ait
+.Op Fl f Ar file
+.Ar command ...
+.Sh DESCRIPTION
+The
+.Nm
+utility enforces system call policies for applications by
+constraining the application's access to the system.  The policy is
+generated interactively. Operations not covered by the policy raise an
+alarm and allow an user to refine the currently configured policy.
+.Pp
+The options are as follows:
+.Bl -tag -width Dfxfile
+.It Fl a
+Enables automatic enforcement of configured policies.  An operation
+not covered by policy is denied.
+.It Fl t
+Uses text mode to ask for interactive policy generation.
+.It Fl i
+Inherits the policy of the first executed binary to all children.
+.It Fl f Ar file
+The polcifies specified in
+.Ar file
+are added to the policies that
+.Nm
+knows about.
+.El
+.Sh SEE ALSO
+.Xr systrace 4
+.Sh AUTHORS
+The
+.Nm
+utility has been developed by Niels Provos.

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2002/06/04 17:31:04 provos Exp $
+#	$OpenBSD: Makefile,v 1.3 2002/06/04 19:38:10 provos Exp $
 
 PROG=	systrace
 CFLAGS+= -I.
@@ -8,7 +8,6 @@ SRCS=	filter.c intercept-translate.c intercept.c \
 	systrace-translate.c systrace.c \
 	parse.c lex.l
 CLEANFILES+= parse.c parse.h
-NOMAN=
 
 parse.c: parse.y
 	${YACC} -d -o parse.c ${.CURDIR}/parse.y
