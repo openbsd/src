@@ -1,5 +1,5 @@
-.\"	$OpenBSD: faithd.8,v 1.12 2001/02/15 17:51:27 itojun Exp $
-.\"	$KAME: faithd.8,v 1.24 2001/02/15 17:51:46 itojun Exp $
+.\"	$OpenBSD: faithd.8,v 1.13 2001/02/15 17:56:28 itojun Exp $
+.\"	$KAME: faithd.8,v 1.26 2001/02/15 17:55:54 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -299,7 +299,7 @@ to translate rsh/rlogin services.
 However, you should be careful when translating rlogin or rsh
 connections.
 See
-.Sx SECURITY NOTICE
+.Sx SECURITY CONSIDERATIONS
 for more details.
 .Ss Access control samples
 The following illustrates a simple
@@ -336,7 +336,13 @@ on error.
 .%N draft-ietf-ngtrans-tcpudp-relay-01.txt
 .%O work in progress material
 .Re
-.Sh SECURITY NOTICE
+.\"
+.Sh HISTORY
+The
+.Nm
+command first appeared in WIDE Hydrangea IPv6 protocol stack kit.
+.\"
+.Sh SECURITY CONSIDERATIONS
 It is very insecure to use
 .Xr rhosts 5
 and other IP-address based authentication, for connections relayed by
@@ -360,8 +366,3 @@ IPv6 source address needs to be filtered by using packet filters.
 Documents listed in
 .Sx SEE ALSO
 have more discussions on this topic.
-.\"
-.Sh HISTORY
-The
-.Nm
-command first appeared in WIDE Hydrangea IPv6 protocol stack kit.
