@@ -1,22 +1,21 @@
-#	$OpenBSD: bsd.own.mk,v 1.14 1997/02/18 15:52:36 rahnds Exp $
+#	$OpenBSD: bsd.own.mk,v 1.15 1997/04/19 21:26:08 millert Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
+# Host-specific overrides
 .if defined(MAKECONF) && exists(${MAKECONF})
 .include "${MAKECONF}"
 .elif exists(/etc/mk.conf)
 .include "/etc/mk.conf"
 .endif
 
-# Defining `SKEY' causes support for S/key authentication to be compiled in.
-SKEY=		yes
-# Defining `KERBEROS' causes support for Kerberos authentication to be
-# compiled in.
-KERBEROS=	yes
-# Defining 'KERBEROS5' causes support for Kerberos5 authentication to be
-# compiled in.
-#KERBEROS5=	yes
-# Defining 'YP' causes support for NIS/YP to be compiled in
-YP=		yes
+# Set `SKEY' to `yes' to build with support for S/key authentication.
+SKEY?=		yes
+# Set `KERBEROS' to `yes' to build with support for Kerberos authentication.
+KERBEROS?=	yes
+# Set `KERBEROS5' to `yes' to build with support for Kerberos5 authentication.
+KERBEROS5?=	no
+# Set 'YP' to `yes' to build with causes support for NIS/YP.
+YP?=		yes
 
 # where the system object and source trees are kept; can be configurable
 # by the user in case they want them in ~/foosrc and ~/fooobj, for example

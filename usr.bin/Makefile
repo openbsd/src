@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.40 1997/04/08 02:45:10 millert Exp $
+#	$OpenBSD: Makefile,v 1.41 1997/04/19 21:26:24 millert Exp $
 #	$NetBSD: Makefile,v 1.62 1996/03/10 05:45:43 thorpej Exp $
 #	from: @(#)Makefile	5.8.1.1 (Berkeley) 5/8/91
 
@@ -26,7 +26,7 @@ SUBDIR= apply apropos arch asa at aucat awk banner basename bdes biff cal \
 	xargs xinstall xlint xstr yacc yes \
 	gprof
 
-.if defined(YP)
+.if (${YP} == "yes")
 SUBDIR+=ypcat ypmatch ypwhich
 .endif
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 1996/10/03 19:31:25 tholo Exp $
+#	$OpenBSD: Makefile,v 1.6 1997/04/19 21:26:25 millert Exp $
 #	$NetBSD: Makefile,v 1.6 1996/05/15 21:50:39 jtc Exp $
 
 .include <bsd.own.mk>
@@ -10,7 +10,7 @@ BINMODE=4555
 .PATH:	${.CURDIR}/../../lib/libc/gen
 LINKS=	${BINDIR}/chpass ${BINDIR}/chfn ${BINDIR}/chpass ${BINDIR}/chsh
 MLINKS=	chpass.1 chfn.1 chpass.1 chsh.1
-.if defined(YP)
+.if (${YP} == "yes")
 CFLAGS+=-DYP -I${.CURDIR}/../../lib/libc/yp
 .endif
 DPADD+= ${LIBRPCSVC} ${LIBUTIL}

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 1997/04/18 06:47:08 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.17 1997/04/19 21:26:09 millert Exp $
 #	$NetBSD: Makefile,v 1.25 1995/10/09 02:11:28 thorpej Exp $
 
 #
@@ -28,7 +28,7 @@ SUBDIR+= gnu
 
 SUBDIR+= sys lkm
 
-.if defined(KERBEROS)
+.if (${KERBEROS} == "yes")
 SUBDIR+= kerberosIV
 .endif
 
@@ -67,7 +67,7 @@ build:
 .if (${MACHINE_ARCH} == "mips")
 	ldconfig
 .endif
-.if defined(KERBEROS)
+.if (${KERBEROS} == "yes")
 	(cd ${.CURDIR}/kerberosIV && ${MAKE} build)
 .endif
 	${MAKE} depend && ${MAKE} && ${MAKE} install

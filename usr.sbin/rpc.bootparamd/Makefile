@@ -1,8 +1,8 @@
-#	$Id: Makefile,v 1.2 1996/09/04 22:52:09 deraadt Exp $
+#	$Id: Makefile,v 1.3 1997/04/19 21:26:33 millert Exp $
 
 .include <bsd.own.mk>
 
-.if defined(YP)
+.if (${YP} == "yes")
 CFLAGS+=-DYP
 .endif
 

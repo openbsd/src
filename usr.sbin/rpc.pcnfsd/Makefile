@@ -7,7 +7,7 @@ MAN=	pcnfsd.8
 MLINKS= pcnfsd.8 rpc.pcnfsd.8
 CFLAGS += -DUSER_CACHE -DWTMP -I${.OBJDIR}
 
-.if defined(YP)
+.if (${YP} == "yes")
 CFLAGS+=-DUSE_YP
 .endif
 

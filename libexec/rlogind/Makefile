@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
-#	$Id: Makefile,v 1.2 1995/12/16 22:20:19 tholo Exp $
+#	$Id: Makefile,v 1.3 1997/04/19 21:26:20 millert Exp $
 
 PROG=	rlogind
 SRCS=	rlogind.c
@@ -9,7 +9,7 @@ LDADD=	-lutil
 
 .include <bsd.own.mk>	# For KERBEROS
 
-.if defined(KERBEROS)
+.if (${KERBEROS} == "yes")
 SRCS=	rlogind.c des_rw.c
 .PATH:	${.CURDIR}/../../usr.bin/rlogin
 CFLAGS+=-DKERBEROS

@@ -1,4 +1,4 @@
-#       $OpenBSD: Makefile,v 1.3 1997/03/18 20:48:46 maja Exp $
+#       $OpenBSD: Makefile,v 1.4 1997/04/19 21:26:13 millert Exp $
 
 PROG=	sudo
 MAN=	sudo.8 sudoers.5
@@ -11,17 +11,17 @@ DPADD=  ${LIBCOMPAT}
 
 .include <bsd.own.mk>   # For SKEY, KERBEROS and KERBEROS5
 
-.if defined(SKEY)
+.if (${SKEY} == "yes")
 CFLAGS+=-DHAVE_SKEY
 LDADD+= -lskey
 DPADD+= ${LIBSKEY}
 .endif
 
-.if defined(KERBEROS5)
+.if (${KERBEROS5} == "yes")
 CFLAGS+= -DHAVE_KERB5 -I${DESTDIR}/usr/include/kerberosIV
 LDADD+= -lkrb5 -lcrypto
 DPADD+= ${LIBKRB5} ${LIBCRYPTO}
-.elif defined(KERBEROS)
+.elif (${KERBEROS} == "yes")
 CFLAGS+= -DHAVE_KERB4 -I${DESTDIR}/usr/include/kerberosIV
 LDADD+= -lkrb -ldes
 DPADD+= ${LIBKRB} ${LIBDES}

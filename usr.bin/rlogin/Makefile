@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 1996/06/26 05:38:30 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.4 1997/04/19 21:26:28 millert Exp $
 #	$NetBSD: Makefile,v 1.5 1995/03/21 07:58:28 cgd Exp $
 
 PROG=	rlogin
@@ -9,7 +9,7 @@ BINMODE=4555
 
 .include <bsd.own.mk>
 
-.if defined(KERBEROS)
+.if (${KERBEROS} == "yes")
 CFLAGS+=-DKERBEROS
 SRCS+=	krcmd.c kcmd.c des_rw.c
 LDADD+=	-lkrb -ldes
