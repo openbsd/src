@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.65 2004/12/19 16:09:18 deraadt Exp $g
+#	$OpenBSD: GENERIC,v 1.66 2005/01/03 21:42:54 deraadt Exp $g
 #
 # PPC GENERIC config file
 #
@@ -240,7 +240,6 @@ xl*		at cardbus?	# 3C575/3C656 ethernet
 wdc*		at pcmcia?
 
 wsdisplay*	at vgafb?
-wskbd*		at ukbd? mux 1
 
 # MIDI support
 #midi*		at eap?
