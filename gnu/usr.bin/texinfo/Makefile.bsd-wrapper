@@ -1,4 +1,4 @@
-#	$Id: Makefile.bsd-wrapper,v 1.3 1996/01/01 23:51:29 deraadt Exp $
+#	$Id: Makefile.bsd-wrapper,v 1.4 1996/02/02 00:49:14 niklas Exp $
 
 MAN=		info/info.1
 SUBDIRS=	libtxi makeinfo info util
@@ -10,6 +10,7 @@ all:	config.status
 .FORCE:	.IGNORE
 
 config: .FORCE
+	-rm -f config.cache
 	/bin/sh ${.CURDIR}/configure --prefix=/usr
 
 config.status:
