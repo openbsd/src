@@ -504,7 +504,7 @@ badtrap:
 
 	case T_DIV0:
 		ADVANCE;
-		trapsignal(p, SIGFPE, 0, FPE_INTDIV_TRAP, (caddr_t)pc);
+		trapsignal(p, SIGFPE, 0, FPE_INTDIV, (caddr_t)pc);
 		break;
 
 	case T_FLUSHWIN:
