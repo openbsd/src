@@ -26,5 +26,5 @@
 #   StrictHostKeyChecking no
 #   IdentityFile ~/.ssh/identity
 #   Port 22
-#   Cipher idea
+#   Cipher blowfish
 #   EscapeChar ~
