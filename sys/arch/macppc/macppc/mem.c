@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.11 2003/10/15 17:50:16 drahn Exp $	*/
+/*	$OpenBSD: mem.c,v 1.12 2003/10/16 05:03:22 deraadt Exp $	*/
 /*	$NetBSD: mem.c,v 1.1 1996/09/30 16:34:50 ws Exp $ */
 
 /*
@@ -109,7 +109,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 	struct iovec *iov;
 	int error = 0;
 	static caddr_t zeropage;
-	
+
 	while (uio->uio_resid > 0 && error == 0) {
 		iov = uio->uio_iov;
 		if (iov->iov_len == 0) {

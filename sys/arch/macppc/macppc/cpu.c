@@ -1,9 +1,9 @@
-/*	$OpenBSD: cpu.c,v 1.14 2003/10/15 17:50:16 drahn Exp $ */
+/*	$OpenBSD: cpu.c,v 1.15 2003/10/16 05:03:22 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
  * Copyright (c) 1997 RTMX Inc
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -194,13 +194,13 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 	case MPC7410:
 		/* select DOZE mode */
 		hid0 &= ~(HID0_NAP | HID0_SLEEP);
-		hid0 |= HID0_DOZE | HID0_DPM; 
+		hid0 |= HID0_DOZE | HID0_DPM;
 		break;
 	case MPC7450:
 	case MPC7455:
 		/* select NAP mode */
 		hid0 &= ~(HID0_DOZE | HID0_SLEEP);
-		hid0 |= HID0_NAP | HID0_DPM; 
+		hid0 |= HID0_NAP | HID0_DPM;
 		/* try some other flags */
 		hid0 |= HID0_SGE | HID0_BTIC;
 		hid0 |= HID0_LRSTK | HID0_FOLD | HID0_BHT;
@@ -211,7 +211,7 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 	}
 	ppc_mthid0(hid0);
 
-	/* if processor is G3 or G4, configure l2 cache */ 
+	/* if processor is G3 or G4, configure l2 cache */
 	if ( (cpu == MPC750) || (cpu == MPC7400) || (cpu == IBM750FX)
 	    || (cpu == MPC7410) || (cpu == MPC7450) || (cpu == MPC7455)) {
 		config_l2cr(cpu);
@@ -288,7 +288,7 @@ config_l2cr(int cpu)
 		do {
 			x = ppc_mfl2cr();
 		} while (x & L2CR_L2IP);
-				      
+
 		/* Enable L2 cache. */
 		l2cr &= ~L2CR_L2I;
 		l2cr |= L2CR_L2E;
@@ -315,7 +315,7 @@ config_l2cr(int cpu)
 			case L2SIZ_512K:
 				printf(": 512KB");
 				break;
-			case L2SIZ_1M:  
+			case L2SIZ_1M:
 				printf(": 1MB");
 				break;
 			default:
@@ -337,11 +337,10 @@ config_l2cr(int cpu)
 		default:
 			printf(" unknown type");
 		}
-		
+
 		if (l2cr & L2CR_L2PE)
-			printf(" with parity");  
+			printf(" with parity");
 #endif
 	} else
 		printf(": L2 cache not enabled");
-		
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: opendev.c,v 1.6 2003/10/15 17:50:16 drahn Exp $	*/
+/*	$OpenBSD: opendev.c,v 1.7 2003/10/16 05:03:22 deraadt Exp $	*/
 /*	$NetBSD: openfirm.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -80,7 +80,7 @@ OF_package_to_path(int phandle, char *buf, int buflen)
 		3,
 		1,
 	};
-	
+
 	ofw_stack();
 	if (buflen > PAGE_SIZE)
 		return -1;
@@ -112,7 +112,7 @@ OF_call_method(char *method, int ihandle, int nargs, int nreturns, ...)
 		1,
 	};
 	int *ip, n;
-	
+
 	if (nargs > 6)
 		return -1;
 	args.nargs = nargs + 2;
@@ -153,7 +153,7 @@ OF_call_method_1(char *method, int ihandle, int nargs, ...)
 		2,
 	};
 	int *ip, n;
-	
+
 	if (nargs > 6)
 		return -1;
 	args.nargs = nargs + 2;
@@ -186,7 +186,7 @@ OF_open(char *dname)
 		1,
 	};
 	int l;
-	
+
 	ofw_stack();
 	if ((l = strlen(dname)) >= PAGE_SIZE)
 		return -1;
@@ -216,7 +216,7 @@ OF_close(int handle)
 	openfirmware(&args);
 }
 
-/* 
+/*
  * This assumes that character devices don't read in multiples of PAGE_SIZE.
  */
 int
@@ -236,7 +236,7 @@ OF_read(int handle, void *addr, int len)
 		1,
 	};
 	int l, act = 0;
-	
+
 	ofw_stack();
 	args.ihandle = handle;
 	args.addr = OF_buf;
@@ -254,7 +254,6 @@ OF_read(int handle, void *addr, int len)
 				return act;
 			else
 				return args.actual;
-			
 		}
 	}
 	return act;
@@ -277,7 +276,7 @@ OF_write(int handle, void *addr, int len)
 		1,
 	};
 	int l, act = 0;
-	
+
 	ofw_stack();
 	args.ihandle = handle;
 	args.addr = OF_buf;

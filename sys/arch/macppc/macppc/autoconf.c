@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.12 2003/10/15 17:50:16 drahn Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.13 2003/10/16 05:03:22 deraadt Exp $	*/
 /*
  * Copyright (c) 1996, 1997 Per Fogelstrom
  * Copyright (c) 1995 Theo de Raadt
@@ -37,7 +37,7 @@
  * from: Utah Hdr: autoconf.c 1.31 91/01/21
  *
  *	from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
- *      $Id: autoconf.c,v 1.12 2003/10/15 17:50:16 drahn Exp $
+ *      $Id: autoconf.c,v 1.13 2003/10/16 05:03:22 deraadt Exp $
  */
 
 /*
@@ -247,7 +247,7 @@ getdisk(char *str, int len, int defpart, dev_t *devp)
 				printf(" %s[a-p]", dv->dv_xname);
 #ifdef NFSCLIENT
 			if (dv->dv_class == DV_IFNET)
-				printf(" %s", dv->dv_xname); 
+				printf(" %s", dv->dv_xname);
 #endif
 		}
 		printf("\n");
@@ -455,7 +455,7 @@ gotswap:
 		} else {
 			/*
 			 *  Root and Swap are on net.
-			 */	
+			 */
 			nswapdev = dumpdev = NODEV;
 		}
 		swdevt[0].sw_dev = nswapdev;

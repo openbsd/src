@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.57 2003/10/15 17:50:16 drahn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.58 2003/10/16 05:03:22 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -800,11 +800,11 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	switch (name[0]) {
 	case CPU_ALLOWAPERTURE:
 #ifdef APERTURE
-		if (securelevel > 0) 
-			return (sysctl_rdint(oldp, oldlenp, newp, 
+		if (securelevel > 0)
+			return (sysctl_rdint(oldp, oldlenp, newp,
 			    allowaperture));
 		else
-			return (sysctl_int(oldp, oldlenp, newp, newlen, 
+			return (sysctl_int(oldp, oldlenp, newp, newlen,
 			    &allowaperture));
 #else
 		return (sysctl_rdint(oldp, oldlenp, newp, 0));
@@ -823,7 +823,7 @@ dumpsys()
 volatile int cpl, ipending, astpending;
 int imask[7];
 
-/* 
+/*
  * this is a hack interface to allow zs to work better until
  * a true soft interrupt mechanism is created.
  */
@@ -1279,7 +1279,7 @@ bus_space_set_region_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
 {
 	u_int8_t *dst;
 	int i;
-	
+
 	dst = (u_int8_t *) (h+o);
 
 	for (i = 0; i < c; i++)
@@ -1292,7 +1292,7 @@ bus_space_set_region_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
 {
 	u_int16_t *dst;
 	int i;
-	
+
 	dst = (u_int16_t *) (h+o);
 	if (t->bus_reverse)
 		val = swap16(val);
@@ -1306,7 +1306,7 @@ bus_space_set_region_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
 {
 	u_int32_t *dst;
 	int i;
-	
+
 	dst = (u_int32_t *) (h+o);
 	if (t->bus_reverse)
 		val = swap32(val);

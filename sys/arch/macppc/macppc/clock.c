@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.10 2003/07/29 12:13:32 drahn Exp $	*/
+/*	$OpenBSD: clock.c,v 1.11 2003/10/16 05:03:22 deraadt Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 1996/09/30 16:34:40 ws Exp $	*/
 
 /*
@@ -170,14 +170,14 @@ static u_int32_t
 chiptotime(int sec, int min, int hour, int day, int mon, int year)
 {
 	int days, yr;
-		
+
 	sec = FROMBCD(sec);
 	min = FROMBCD(min);
 	hour = FROMBCD(hour);
 	day = FROMBCD(day);
 	mon = FROMBCD(mon);
 	year = FROMBCD(year) + YEAR0;
-		
+
 	/* simple sanity checks */
 	if (year < 1970 || mon < 1 || mon > 12 || day < 1 || day > 31)
 		return (0);
@@ -280,7 +280,7 @@ decr_intr(struct clockframe *frame)
 			 * Reenable interrupts
 			 */
 			ppc_intr_enable(1);
-			
+
 			/*
 			 * Do standard timer interrupt stuff.
 			 * Do softclock stuff only on the last iteration.
@@ -355,7 +355,7 @@ calc_delayconst(void)
 	int qhandle, phandle;
 	char name[32];
 	int s;
-	
+
 	/*
 	 * Get this info during autoconf?				XXX
 	 */
@@ -395,7 +395,7 @@ microtime(struct timeval *tvp)
 	u_int64_t tb;
 	u_int32_t ticks;
 	int s;
-	
+
 	s = ppc_intr_disable();
 	tb = ppc_mftb();
 	ticks = (tb - lasttb) * ns_per_tick;
@@ -417,7 +417,7 @@ delay(unsigned n)
 {
 	u_int64_t tb;
 	u_int32_t tbh, tbl, scratch;
-	
+
 	tb = ppc_mftb();
 	tb += (n * 1000 + ns_per_tick - 1) / ns_per_tick;
 	tbh = tb >> 32;

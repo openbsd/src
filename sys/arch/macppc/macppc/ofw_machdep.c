@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.20 2003/10/15 17:50:16 drahn Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.21 2003/10/16 05:03:22 deraadt Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -91,7 +91,7 @@ void
 ofw_mem_regions(struct mem_region **memp, struct mem_region **availp)
 {
 	int phandle;
-	
+
 	/*
 	 * Get memory.
 	 */
@@ -220,7 +220,7 @@ ofrootfound()
 {
 	int node;
 	struct ofprobe probe;
-		
+
 	if (!(node = OF_peer(0)))
 		panic("No PROM root");
 	probe.phandle = node;
@@ -309,7 +309,7 @@ ofw_do_pending_int()
 static pcitag_t ofw_make_tag( void *cpv, int bus, int dev, int fnc);
 
 /* ARGSUSED */
-static pcitag_t 
+static pcitag_t
 ofw_make_tag(void *cpv, int bus, int dev, int fnc)
 {
         return (bus << 16) | (dev << 11) | (fnc << 8);
@@ -321,7 +321,7 @@ ofw_make_tag(void *cpv, int bus, int dev, int fnc)
 #define       OFW_PCI_PHYS_HI_DEVICESHIFT     11
 #define       OFW_PCI_PHYS_HI_FUNCTIONMASK    0x00000700
 #define       OFW_PCI_PHYS_HI_FUNCTIONSHIFT   8
-   
+
 #define pcibus(x) \
 	(((x) & OFW_PCI_PHYS_HI_BUSMASK) >> OFW_PCI_PHYS_HI_BUSSHIFT)
 #define pcidev(x) \
@@ -383,7 +383,7 @@ ofwconprobe()
 
 	return;
 }
-	
+
 #define DEVTREE_UNKNOWN 0
 #define DEVTREE_USB	1
 #define DEVTREE_ADB	2
@@ -467,7 +467,7 @@ ofw_find_keyboard()
 #if NUKBD > 0
 		printf("USB and ADB found, using USB\n");
 		ukbd_cnattach();
-#else 		
+#else
 		ofw_have_kbd = OFW_HAVE_ADBKBD; /* ??? */
 #endif
 	}
@@ -480,7 +480,7 @@ ofw_find_keyboard()
 #if NAKBD >0
 		printf("ADB found\n");
 		akbd_cnattach();
-#endif 
+#endif
 	}
 }
 
@@ -582,7 +582,7 @@ of_display_console()
 
 		vgafb_pci_console(cons_membus,
 			addr[1].phys_lo, addr[1].size_lo,
-			cons_membus, 
+			cons_membus,
 			cons_addr, addr[0].size_lo,
 			&pa, pcibus(addr[1].phys_hi), pcidev(addr[1].phys_hi),
 			pcifunc(addr[1].phys_hi));
@@ -629,7 +629,7 @@ of_setbrightness(int brightness)
 
 cons_decl(ofw);
 
-/*   
+/*
  * Console support functions
  */
 void
@@ -646,7 +646,7 @@ void
 ofwcnputc(dev_t dev, int c)
 {
 	char ch = c;
- 
+
 	OF_write(OF_stdout, &ch, 1);
 }
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.10 2003/10/15 20:52:44 drahn Exp $	*/
+/*	$OpenBSD: locore.S,v 1.11 2003/10/16 05:03:22 deraadt Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -67,7 +67,7 @@ _C_LABEL(where):	.long	0
  */
 _ENTRY(_C_LABEL(kernel_text))
 _ENTRY(_ASM_LABEL(start))
-/* arguments to start 
+/* arguments to start
  * r1 - stack provided by firmware/bootloader
  * r3 - unused
  * r4 - unused
@@ -82,7 +82,7 @@ start:
 	stw	%r6, fwargsave@l(%r3)
 	stw	%r7, fwargsave@l+4(%r3)
 #ifdef SUPPORT_PPC1BUG
-	mr 	%r0,%r5
+	mr	%r0,%r5
 	cmpwi	0,%r0,0
 	bne	1f
 	/* need additional tests for other systems??? */
@@ -126,7 +126,7 @@ start:
 	mr	%r4,%r1			/* end of mem reserved for kernel */
 	xor	%r0,%r0,%r0
 	stwu	%r0,-16(%r1)		/* end of stack chain */
-	
+
 	li	%r0, 2
 	lis	%r9,_C_LABEL(where)@ha
 	stw	%r0,_C_LABEL(where)@l(%r9)
@@ -153,7 +153,7 @@ _C_LABEL(idle):
 
 	or.	%r9,%r9,%r9
 	bne-	_C_LABEL(sw1)			/* at least one queue non-empty */
-	
+
 	ori	%r3,%r3,PSL_EE		/* reenable ints again */
 	mtmsr	%r3
 	isync
@@ -163,7 +163,7 @@ _C_LABEL(idle):
 	oris	%r3, %r3, PSL_POW@h
 	mtmsr	%r3
 	isync
-	
+
 /* May do some power saving here? */
 
 	b	_C_LABEL(idle)
@@ -188,7 +188,6 @@ _ENTRY(_C_LABEL(switchexit))
 	/* Fall through to cpu_switch to actually select another proc */
 	li      %r3,0                     /* indicate exited process */
 
-	
 /* Fall through to cpu_switch to actually select another proc */
 
 /*
@@ -232,7 +231,7 @@ _C_LABEL(sw1):
 	addi	%r4,%r4,_C_LABEL(qs)@l
 	slwi	%r3,%r10,3
 	add	%r3,%r3,%r4		/* select queue */
-	
+
 	lwz	%r31,P_FORW(%r3)		/* unlink first proc from queue */
 	lwz	%r4,P_FORW(%r31)
 	stw	%r4,P_FORW(%r3)
@@ -728,13 +727,13 @@ _C_LABEL(tlbdsmsize) =	.-_C_LABEL(tlbdsmiss)
  */
 	.local	ddbstk
 	.comm	ddbstk,INTSTK,8	/* ddb stack */
- 
+
 	.globl  _C_LABEL(ddblow),_C_LABEL(ddbsize)
 _C_LABEL(ddblow):
 	mtsprg	1,%r1			/* save SP */
 	stmw	%r28,ddbsave(0)		/* free r28-r31 */
 	mflr	%r28			/* save LR */
-	mfcr	%r29			/* save CR */ 
+	mfcr	%r29			/* save CR */
 	lis	%r1,ddbstk+INTSTK@ha	/* get new SP */
 	addi	%r1,%r1,ddbstk+INTSTK@l
 	bla	ddbtrap
@@ -865,7 +864,7 @@ realtrap:
 	mfsrr1	%r1
 	mtcr	%r1
 	/* restore SP (might have been overwritten) */
-	mfsprg	%r1,1		
+	mfsprg	%r1,1
 	bc	4,17,s_trap		/* branch if PSL_PR is false */
 	lis	%r1,_C_LABEL(curpcb)@ha
 	lwz	%r1,_C_LABEL(curpcb)@l(%r1)
@@ -1143,7 +1142,7 @@ decrintr:
 	.globl	_C_LABEL(ipkdb_trap)
 	.type	_C_LABEL(ipkdb_trap),@function
 _C_LABEL(ipkdb_trap):
-	
+
 	mtsprg	%r2,2
 	mfmsr	%r3
 	mtsrr1	%r3
@@ -1247,10 +1246,10 @@ _C_LABEL(ipkdbsbyte):
 	stw	%r5,0(%r9)		/* restore previous fault handler */
 	dcbst	0,%r9			/* and flush data... */
 	sync
-	icbi	0,%r9			/* and instruction caches */	
+	icbi	0,%r9			/* and instruction caches */
 	blr
 #endif	/* NIPKDB > 0 */
-	
+
 /*
  * int setfault()
  *
@@ -1319,8 +1318,8 @@ _C_LABEL(intrnames):
 	.string "irq52" "irq53" "irq54" "irq55"
 	.string "irq56" "irq57" "irq58" "irq59"
 	.string "irq60" "irq61" "irq62" "irq63"
-	.string "clock" 
-	.string "stat" 
+	.string "clock"
+	.string "stat"
 	.space 512
 _C_LABEL(eintrnames):
 	.align 4
@@ -1349,7 +1348,7 @@ _C_LABEL(intrcnt):
 	.long 0
 _C_LABEL(eintrcnt):
 
-#ifdef DDB   
+#ifdef DDB
 /*
  * Deliberate entry to ddbtrap
  */

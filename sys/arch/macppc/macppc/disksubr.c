@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.8 2003/10/15 17:50:16 drahn Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.9 2003/10/16 05:03:22 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -106,7 +106,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 
 	/* DPME (HFS) disklabel */
 
-	bp->b_blkno = 1; 
+	bp->b_blkno = 1;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
 	bp->b_cylin = 1 / lp->d_secpercyl;
@@ -130,7 +130,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	for (i = 0; i < part_cnt; i++) {
 		struct partition *pp = &lp->d_partitions[8+n];
 
-		bp->b_blkno = 1+i; 
+		bp->b_blkno = 1+i;
 		bp->b_bcount = lp->d_secsize;
 		bp->b_flags = B_BUSY | B_READ;
 		bp->b_cylin = 1+i / lp->d_secpercyl;
@@ -207,7 +207,7 @@ hfs_done:
 			bp->b_flags = B_BUSY | B_READ;
 			bp->b_cylin = part_blkno / lp->d_secpercyl;
 			(*strat)(bp);
-		     
+
 			/* if successful, wander through dos partition table */
 			if (biowait(bp)) {
 				msg = "dos partition I/O error";
@@ -487,7 +487,6 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 
 	/* try DPME partition */
 	if (osdep->macparts[0].pmSig == PART_ENTRY_MAGIC) {
-		
 		/* only write if a valid "OpenBSD" partition type exists */
 		if (osdep->macparts[1].pmSig == PART_ENTRY_MAGIC) {
 			bp->b_blkno = osdep->macparts[1].pmPyPartStart;
@@ -501,7 +500,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 		}
 
 		/* SHOULD FAIL TO WRITE LABEL IF VALID HFS partition exists
-		 * and no OpenBSD partition exists 
+		 * and no OpenBSD partition exists
 		 */
 		error = 1; /* EPERM? */
 		goto done;
