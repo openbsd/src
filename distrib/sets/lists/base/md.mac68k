@@ -1474,6 +1474,10 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/kvm.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/langinfo.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/libgen.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/libmilter
+./usr/libdata/perl5/site_perl/m68k-openbsd/libmilter/mfapi.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/libmilter/mfdef.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/libmilter/milter.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/limits.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/link.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/link_aout.ph

@@ -969,6 +969,10 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/kvm.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/langinfo.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/libgen.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/libmilter
+./usr/libdata/perl5/site_perl/sparc-openbsd/libmilter/mfapi.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/libmilter/mfdef.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/libmilter/milter.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/limits.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/link.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/link_aout.ph

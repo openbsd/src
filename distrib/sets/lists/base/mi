@@ -514,6 +514,8 @@
 ./usr/lib/apache/include/xml
 ./usr/lib/apache/modules
 ./usr/lib/gcc-lib
+./usr/lib/libmilter.a
+./usr/lib/libmilter_p.a
 ./usr/libdata
 ./usr/libdata/cvs
 ./usr/libdata/cvs/contrib
@@ -2198,6 +2200,7 @@
 ./usr/share/pf/spamd
 ./usr/share/sendmail
 ./usr/share/sendmail/README
+./usr/share/sendmail/README.milter
 ./usr/share/sendmail/TUNING
 ./usr/share/sendmail/cf
 ./usr/share/sendmail/cf/Makefile

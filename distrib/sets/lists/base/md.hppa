@@ -1537,6 +1537,10 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/kvm.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/langinfo.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/libgen.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/libmilter
+./usr/libdata/perl5/site_perl/hppa-openbsd/libmilter/mfapi.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/libmilter/mfdef.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/libmilter/milter.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/limits.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/link.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/link_aout.ph

@@ -1552,6 +1552,10 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/kvm.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/langinfo.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/libgen.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/libmilter
+./usr/libdata/perl5/site_perl/i386-openbsd/libmilter/mfapi.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/libmilter/mfdef.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/libmilter/milter.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/limits.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/link.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/link_aout.ph

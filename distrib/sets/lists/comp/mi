@@ -869,6 +869,10 @@
 ./usr/include/kvm.h
 ./usr/include/langinfo.h
 ./usr/include/libgen.h
+./usr/include/libmilter
+./usr/include/libmilter/mfapi.h
+./usr/include/libmilter/mfdef.h
+./usr/include/libmilter/milter.h
 ./usr/include/limits.h
 ./usr/include/link.h
 ./usr/include/link_aout.h

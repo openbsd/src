@@ -1403,6 +1403,10 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/kvm.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/langinfo.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/libgen.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/libmilter
+./usr/libdata/perl5/site_perl/m88k-openbsd/libmilter/mfapi.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/libmilter/mfdef.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/libmilter/milter.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/limits.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/link.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/link_aout.ph

@@ -907,6 +907,10 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/kvm.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/langinfo.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/libgen.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/libmilter
+./usr/libdata/perl5/site_perl/vax-openbsd/libmilter/mfapi.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/libmilter/mfdef.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/libmilter/milter.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/limits.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/link.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/link_aout.ph

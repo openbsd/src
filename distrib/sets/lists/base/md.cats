@@ -1595,6 +1595,10 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/kvm.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/langinfo.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/libgen.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/libmilter
+./usr/libdata/perl5/site_perl/arm-openbsd/libmilter/mfapi.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/libmilter/mfdef.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/libmilter/milter.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/limits.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/link.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/link_aout.ph

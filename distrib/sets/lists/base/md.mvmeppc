@@ -1474,6 +1474,10 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/kvm.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/langinfo.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/libgen.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/libmilter
+./usr/libdata/perl5/site_perl/powerpc-openbsd/libmilter/mfapi.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/libmilter/mfdef.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/libmilter/milter.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/limits.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/link.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/link_aout.ph
