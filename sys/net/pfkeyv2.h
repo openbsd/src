@@ -262,7 +262,7 @@ struct sadb_cred {
 #define SADB_IDENTTYPE_RESERVED   0
 #define SADB_IDENTTYPE_PREFIX     1
 #define SADB_IDENTTYPE_FQDN       2
-#define SADB_IDENTTYPE_MBOX       3
+#define SADB_IDENTTYPE_USERFQDN   3
 #define SADB_IDENTTYPE_CONNECTION 4
 #define SADB_IDENTTYPE_MAX        4
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.61 2001/05/30 11:27:33 angelos Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.62 2001/05/30 16:44:11 angelos Exp $ */
 /*
 %%% copyright-nrl-97
 This software is Copyright 1997-1998 by Randall Atkinson, Ronald Lee,
@@ -591,8 +591,8 @@ import_identity(struct tdb *tdb, struct sadb_ident *sadb_ident, int type)
 	case SADB_IDENTTYPE_FQDN:
 	    (*ipr)->ref_type = IPSP_IDENTITY_FQDN;
 	    break;
-	case SADB_IDENTTYPE_MBOX:
-	    (*ipr)->ref_type = IPSP_IDENTITY_MBOX;
+	case SADB_IDENTTYPE_USERFQDN:
+	    (*ipr)->ref_type = IPSP_IDENTITY_USERFQDN;
 	    break;
 	case SADB_IDENTTYPE_CONNECTION:
 	    (*ipr)->ref_type = IPSP_IDENTITY_CONNECTION;
@@ -685,8 +685,8 @@ export_identity(void **p, struct tdb *tdb, int type)
 	case IPSP_IDENTITY_FQDN:
 	    sadb_ident->sadb_ident_type = SADB_IDENTTYPE_FQDN;
 	    break;
-	case IPSP_IDENTITY_MBOX:
-	    sadb_ident->sadb_ident_type = SADB_IDENTTYPE_MBOX;
+	case IPSP_IDENTITY_USERFQDN:
+	    sadb_ident->sadb_ident_type = SADB_IDENTTYPE_USERFQDN;
 	    break;
 	case IPSP_IDENTITY_CONNECTION:
 	    sadb_ident->sadb_ident_type = SADB_IDENTTYPE_CONNECTION;
