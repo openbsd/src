@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.31 1998/03/06 17:33:32 millert Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.32 1998/04/25 08:27:23 downsj Exp $	*/
 /*	$NetBSD: machdep.c,v 1.94 1997/06/12 15:46:29 mrg Exp $	*/
 
 /*
@@ -42,6 +42,8 @@
  *
  *	@(#)machdep.c	8.10 (Berkeley) 4/20/94
  */
+
+#define HP300_NEWKVM		/* Write generic m68k format kcore dumps. */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,13 +91,12 @@
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/hp300spu.h>
+#ifdef HP300_NEWKVM
+#include <machine/kcore.h>
+#endif	/* HP300_NEWKVM */
 #include <machine/reg.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
-
-#ifdef notyet
-#include <machine/kcore.h>	/* XXX should be pulled in by sys/kcore.h */
-#endif
 
 #include <dev/cons.h>
 
@@ -787,6 +788,9 @@ boot(howto)
 u_long	dumpmag = 0x8fca0101;	/* magic number */
 int	dumpsize = 0;		/* pages */
 long	dumplo = 0;		/* blocks */
+#ifdef HP300_NEWKVM
+cpu_kcore_hdr_t cpu_kcore_hdr;
+#endif	/* HP300_NEWKVM */
 
 /*
  * This is called by configure to set dumplo and dumpsize.
@@ -817,6 +821,15 @@ dumpconf()
 	 */
 	dumpsize = physmem + 1;
 
+#ifdef HP300_NEWKVM
+	/* hp300 only uses a single segment. */
+	cpu_kcore_hdr.ram_segs[0].start = lowram;
+	cpu_kcore_hdr.ram_segs[0].size = ctob(dumpsize);
+	cpu_kcore_hdr.mmutype = mmutype;
+	cpu_kcore_hdr.kernel_pa = lowram;
+	cpu_kcore_hdr.sysseg_pa = 0; /* XXX */
+#endif	/* HP300_NEWKVM */
+
 	/* Always skip the first CLBYTES, in case there is a label there. */
 	if (dumplo < ctod(1))
 		dumplo = ctod(1);
@@ -841,6 +854,11 @@ dumpsys()
 	int pg;			/* page being dumped */
 	vm_offset_t maddr;	/* PA being dumped */
 	int error;		/* error code from (*dump)() */
+#ifdef HP300_NEWKVM
+	kcore_seg_t *kseg_p;
+	cpu_kcore_hdr_t *chdr_p;
+	char    dump_hdr[dbtob(1)];     /* XXX assume hdr fits in 1 block */
+#endif	/* HP300_NEWKVM */
 
 	/* XXX initialized here because of gcc lossage */
 	maddr = lowram;
@@ -864,8 +882,60 @@ dumpsys()
 
 	printf("\ndumping to dev 0x%x, offset %ld\n", dumpdev, dumplo);
 
+#ifdef HP300_NEWKVM
+	kseg_p = (kcore_seg_t *)dump_hdr;
+	chdr_p = (cpu_kcore_hdr_t *)&dump_hdr[ALIGN(sizeof(*kseg_p))];
+	bzero(dump_hdr, sizeof(dump_hdr));
+
+	/*
+	 * Generate a segment header
+	 */
+	CORE_SETMAGIC(*kseg_p, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
+	kseg_p->c_size = dbtob(1) - ALIGN(sizeof(*kseg_p));
+
+	/*
+	 * Add the md header
+	 */
+
+	*chdr_p = cpu_kcore_hdr;
+#endif	/* HP300_NEWKVM */
+
 	printf("dump ");
+#ifdef HP300_NEWKVM
+	maddr = cpu_kcore_hdr.ram_segs[0].start;
+	/* Dump the header. */
+	error = (*dump) (dumpdev, blkno++, (caddr_t)dump_hdr, dbtob(1));
+	switch (error) {
+	case 0:
+		break;
+
+	case ENXIO:
+		printf("device bad\n");
+		return;
+
+	case EFAULT:
+		printf("device not ready\n");
+		return;
+
+	case EINVAL:
+		printf("area improper\n");
+		return;
+
+	case EIO:
+		printf("i/o error\n");
+		return;
+
+	case EINTR:
+		printf("aborted from console\n");
+			return;
+
+		default:
+			printf("error %d\n", error);
+			return;
+	}
+#else
 	maddr = lowram;
+#endif	/* HP300_NEWKVM */
 	for (pg = 0; pg < dumpsize; pg++) {
 #define NPGMB	(1024*1024/NBPG)
 		/* print out how many MBs we have dumped */
