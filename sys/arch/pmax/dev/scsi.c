@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.4 1994/10/26 21:09:18 cgd Exp $	*/
+/*	$NetBSD: scsi.c,v 1.5 1996/04/07 22:53:55 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,6 +43,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 
 #include <pmax/dev/device.h>
 #include <pmax/dev/scsi.h>
@@ -120,6 +121,7 @@ static char **scsiErrors[] = {
 /*
  * Decode the sense data and print a suitable message.
  */
+void
 scsiPrintSense(sp, len)
 	register ScsiClass7Sense *sp;
 	int len;
@@ -201,4 +203,37 @@ scsiGroup1Cmd(cmd, lun, block, count, c)
 	c->highBlockCount = count >> 8;
 	c->lowBlockCount = count;
 	c->control = 0;
+}
+
+/*
+ * Print a SCSI identify  resutl
+ */
+void
+scsiPrintInquiry(inqbuf, i)
+	ScsiInquiryData *inqbuf;
+	int i;
+{
+	if (inqbuf->version > 1 || i < 36)
+		printf(" type 0x%x, qual 0x%x, ver %d",
+			inqbuf->type, inqbuf->qualifier, inqbuf->version);
+	else {
+		char vid[9], pid[17], revl[5];
+
+		bcopy((caddr_t)inqbuf->vendorID, (caddr_t)vid, 8);
+		bcopy((caddr_t)inqbuf->productID, (caddr_t)pid, 16);
+		bcopy((caddr_t)inqbuf->revLevel, (caddr_t)revl, 4);
+		for (i = 8; --i > 0; )
+			if (vid[i] != ' ')
+				break;
+		vid[i+1] = 0;
+		for (i = 16; --i > 0; )
+			if (pid[i] != ' ')
+				break;
+		pid[i+1] = 0;
+		for (i = 4; --i > 0; )
+			if (revl[i] != ' ')
+				break;
+		revl[i+1] = 0;
+		printf(" %s %s rev %s", vid, pid, revl);
+	}
 }

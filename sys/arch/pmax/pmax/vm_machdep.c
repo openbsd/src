@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.7 1995/09/25 20:36:23 jonathan Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.11 1996/05/19 15:55:31 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -58,7 +58,14 @@
 
 #include <machine/pte.h>
 #include <machine/vmparam.h>
+#include <machine/locore.h>
 #include <machine/machConst.h>
+
+#include <machine/locore.h>
+
+extern int  copykstack __P((struct user *up));
+extern void MachSaveCurFPState __P((struct proc *p));
+extern int switch_exit __P((void)); /* XXX never returns? */
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
@@ -69,6 +76,7 @@
  * address in each process; in the future we will probably relocate
  * the frame pointers on the stack after copying.
  */
+int
 cpu_fork(p1, p2)
 	register struct proc *p1, *p2;
 {
@@ -185,7 +193,7 @@ cpu_coredump(p, vp, cred, chdr)
 	struct core *chdr;
 {
 	int error;
-	register struct user *up = p->p_addr;
+	/*register struct user *up = p->p_addr;*/
 	struct coreseg cseg;
 	extern struct proc *machFPCurProcPtr;
 
@@ -229,9 +237,10 @@ cpu_coredump(p, vp, cred, chdr)
  * Both addresses are assumed to reside in the Sysmap,
  * and size must be a multiple of CLSIZE.
  */
+void
 pagemove(from, to, size)
 	register caddr_t from, to;
-	int size;
+	size_t size;
 {
 	register pt_entry_t *fpte, *tpte;
 
@@ -240,8 +249,9 @@ pagemove(from, to, size)
 	fpte = kvtopte(from);
 	tpte = kvtopte(to);
 	while (size > 0) {
-		MachTLBFlushAddr(from);
-		MachTLBUpdate(to, *fpte);
+		MachTLBFlushAddr((vm_offset_t)from);
+		MachTLBUpdate( (u_int)to,
+			       (u_int) (*fpte).pt_entry);    /* XXX casts? */
 		*tpte++ = *fpte;
 		fpte->pt_entry = 0;
 		fpte++;
@@ -270,34 +280,32 @@ extern vm_map_t phys_map;
  *
  * All requests are (re)mapped into kernel VA space via the phys_map
  */
-vmapbuf(bp)
+/*ARGSUSED*/
+void
+vmapbuf(bp, len)
 	register struct buf *bp;
+	vm_size_t len;
 {
-	register caddr_t addr;
-	register vm_size_t sz;
+	register vm_offset_t faddr, taddr, off, pa;
 	struct proc *p;
-	int off;
-	vm_offset_t kva;
-	register vm_offset_t pa;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
-	addr = bp->b_saveaddr = bp->b_un.b_addr;
-	off = (int)addr & PGOFSET;
 	p = bp->b_proc;
-	sz = round_page(bp->b_bcount + off);
-	kva = kmem_alloc_wait(phys_map, sz);
-	bp->b_un.b_addr = (caddr_t) (kva + off);
-	sz = atop(sz);
-	while (sz--) {
-		pa = pmap_extract(vm_map_pmap(&p->p_vmspace->vm_map),
-			(vm_offset_t)addr);
+	faddr = trunc_page(bp->b_saveaddr = bp->b_data);
+	off = (vm_offset_t)bp->b_data - faddr;
+	len = round_page(off + len);
+	taddr = kmem_alloc_wait(phys_map, len);
+	bp->b_data = (caddr_t) (taddr + off);
+	len = atop(len);
+	while (len--) {
+		pa = pmap_extract(vm_map_pmap(&p->p_vmspace->vm_map), faddr);
 		if (pa == 0)
 			panic("vmapbuf: null page frame");
-		pmap_enter(vm_map_pmap(phys_map), kva, trunc_page(pa),
+		pmap_enter(vm_map_pmap(phys_map), taddr, trunc_page(pa),
 			VM_PROT_READ|VM_PROT_WRITE, TRUE);
-		addr += PAGE_SIZE;
-		kva += PAGE_SIZE;
+		faddr += PAGE_SIZE;
+		taddr += PAGE_SIZE;
 	}
 }
 
@@ -305,19 +313,21 @@ vmapbuf(bp)
  * Free the io map PTEs associated with this IO operation.
  * We also invalidate the TLB entries and restore the original b_addr.
  */
-vunmapbuf(bp)
+/*ARGSUSED*/
+void
+vunmapbuf(bp, len)
 	register struct buf *bp;
+	vm_size_t len;
 {
-	register caddr_t addr = bp->b_un.b_addr;
-	register vm_size_t sz;
-	vm_offset_t kva;
+	register vm_offset_t addr, off;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
-	sz = round_page(bp->b_bcount + ((int)addr & PGOFSET));
-	kva = (vm_offset_t)((int)addr & ~PGOFSET);
-	kmem_free_wakeup(phys_map, kva, sz);
-	bp->b_un.b_addr = bp->b_saveaddr;
+	addr = trunc_page(bp->b_data);
+	off = (vm_offset_t)bp->b_data - addr;
+	len = round_page(off + len);
+	kmem_free_wakeup(phys_map, addr, len);
+	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
 }
 
@@ -365,18 +375,17 @@ kvtophys(vm_offset_t kva)
 			printf("oops: Sysmap overrun, max %d index %d\n",
 			       Sysmapsize, pte - Sysmap);
 		}
-kernelmapped:
 		if ((pte->pt_entry & PG_V) == 0) {
-			printf("kvtophys: pte not valid for %x\n", kva);
+			printf("kvtophys: pte not valid for %lx\n", kva);
 		}
 		phys = (pte->pt_entry & PG_FRAME) |
 			(kva & PGOFSET);
 #ifdef DEBUG_VIRTUAL_TO_PHYSICAL
-		printf("kvtophys: kv %x, phys %x", kva, phys);
+		printf("kvtophys: kv %p, phys %x", kva, phys);
 #endif
 	}
 	else {
-		printf("Virtual address %x: cannot map to physical\n",
+		printf("Virtual address %lx: cannot map to physical\n",
 		       kva);
                 phys = 0;
 		/*panic("non-kernel address to kvtophys\n");*/

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.9 1995/04/10 12:45:59 mycroft Exp $	*/
+/*	$NetBSD: pmap.c,v 1.10 1996/05/19 01:58:35 jonathan Exp $	*/
 
 /* 
  * Copyright (c) 1992, 1993
@@ -79,7 +79,8 @@
 #include <vm/vm_page.h>
 #include <vm/vm_pageout.h>
 
-#include <machine/machConst.h>
+#include <mips/cpuregs.h>
+#include <machine/locore.h>
 #include <machine/pte.h>
 
 extern vm_page_t vm_page_alloc1 __P((void));
@@ -198,17 +199,17 @@ pmap_bootstrap(firstaddr)
 	 * phys_start and phys_end but its better to use kseg0 addresses
 	 * rather than kernel virtual addresses mapped through the TLB.
 	 */
-	i = maxmem - pmax_btop(MACH_CACHED_TO_PHYS(firstaddr));
+	i = maxmem - mips_btop(MACH_CACHED_TO_PHYS(firstaddr));
 	valloc(pv_table, struct pv_entry, i);
 
 	/*
 	 * Clear allocated memory.
 	 */
-	firstaddr = pmax_round_page(firstaddr);
+	firstaddr = mips_round_page(firstaddr);
 	bzero((caddr_t)start, firstaddr - start);
 
 	avail_start = MACH_CACHED_TO_PHYS(firstaddr);
-	avail_end = pmax_ptob(maxmem);
+	avail_end = mips_ptob(maxmem);
 	mem_size = avail_end - avail_start;
 
 	virtual_avail = VM_MIN_KERNEL_ADDRESS;
@@ -518,7 +519,7 @@ pmap_remove(pmap, sva, eva)
 		panic("pmap_remove: uva not in range");
 #endif
 	while (sva < eva) {
-		nssva = pmax_trunc_seg(sva) + NBSEG;
+		nssva = mips_trunc_seg(sva) + NBSEG;
 		if (nssva == 0 || nssva > eva)
 			nssva = eva;
 		/*
@@ -686,7 +687,7 @@ pmap_protect(pmap, sva, eva, prot)
 		panic("pmap_protect: uva not in range");
 #endif
 	while (sva < eva) {
-		nssva = pmax_trunc_seg(sva) + NBSEG;
+		nssva = mips_trunc_seg(sva) + NBSEG;
 		if (nssva == 0 || nssva > eva)
 			nssva = eva;
 		/*
@@ -716,6 +717,80 @@ pmap_protect(pmap, sva, eva, prot)
 		}
 	}
 }
+
+#ifdef CPU_R4000
+/*
+ *	Return RO protection of page.
+ */
+int
+pmap_is_page_ro(pmap, va, entry)
+	pmap_t	    pmap;
+	vm_offset_t va;
+	int         entry;
+{
+	return(entry & PG_RO);
+}
+
+/*
+ *	pmap_page_cache:
+ *
+ *	Change all mappings of a page to cached/uncached.
+ */
+void
+pmap_page_cache(pa,mode)
+	vm_offset_t pa;
+{
+	register pv_entry_t pv;
+	register pt_entry_t *pte;
+	register vm_offset_t va;
+	register unsigned entry;
+	register unsigned newmode;
+	int s;
+
+#ifdef DEBUG
+	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
+		printf("pmap_page_uncache(%x)\n", pa);
+#endif
+	if (!IS_VM_PHYSADDR(pa))
+		return;
+
+	newmode = mode & PV_UNCACHED ? PG_UNCACHED : PG_CACHED;
+	pv = pa_to_pvh(pa);
+	s = splimp();
+	while (pv) {
+		pv->pv_flags = (pv->pv_flags & ~PV_UNCACHED) | mode;
+		if (!pv->pv_pmap->pm_segtab) {
+		/*
+		 * Change entries in kernel pmap.
+		 */
+			pte = kvtopte(pv->pv_va);
+			entry = pte->pt_entry;
+			if (entry & PG_V) {
+				entry = (entry & ~PG_CACHEMODE) | newmode;
+				pte->pt_entry = entry;
+				MachTLBUpdate(pv->pv_va, entry);
+			}
+		}
+		else {
+			if (pte = pmap_segmap(pv->pv_pmap, pv->pv_va)) {
+				pte += (pv->pv_va >> PGSHIFT) & (NPTEPG - 1);
+				entry = pte->pt_entry;
+				if (entry & PG_V) {
+					entry = (entry & ~PG_CACHEMODE) | newmode;
+					pte->pt_entry = entry;
+					if (pv->pv_pmap->pm_tlbgen == tlbpid_gen)
+						MachTLBUpdate(pv->pv_va | (pv->pv_pmap->pm_tlbpid <<
+							VMMACH_TLB_PID_SHIFT), entry);
+				}
+			}
+		}
+		pv = pv->pv_next;
+	}
+
+	splx(s);
+}
+#endif	/* CPU_R4000 */
+
 
 /*
  *	Insert the given physical page (p) at
@@ -1288,7 +1363,7 @@ pmap_phys_address(ppn)
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_phys_address(%x)\n", ppn);
 #endif
-	return (pmax_ptob(ppn));
+	return (mips_ptob(ppn));
 }
 
 /*

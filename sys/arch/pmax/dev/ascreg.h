@@ -1,4 +1,4 @@
-/*	$NetBSD: ascreg.h,v 1.5 1994/10/26 21:08:52 cgd Exp $	*/
+/*	$NetBSD: ascreg.h,v 1.6 1996/01/31 23:38:55 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -229,13 +229,13 @@ typedef volatile struct {
 #define ASC_CSR_IO		0x01
 
 #define	ASC_PHASE(csr)		((csr) & 0x7)
-#define ASC_PHASE_DATAO		0x0
-#define ASC_PHASE_DATAI		0x1
-#define ASC_PHASE_COMMAND	0x2
-#define ASC_PHASE_STATUS	0x3
+#define SCSI_PHASE_DATAO	0x0
+#define SCSI_PHASE_DATAI	0x1
+#define SCSI_PHASE_COMMAND	0x2
+#define SCSI_PHASE_STATUS	0x3
 				/* 4..5 ANSI reserved */
-#define ASC_PHASE_MSG_OUT	0x6
-#define ASC_PHASE_MSG_IN	0x7
+#define SCSI_PHASE_MSG_OUT	0x6
+#define SCSI_PHASE_MSG_IN	0x7
 
 /*
  * Destination Bus ID

@@ -1,4 +1,4 @@
-/*	$NetBSD: sfb.c,v 1.4 1995/09/12 07:30:45 jonathan Exp $	*/
+/*	$NetBSD: sfb.c,v 1.11.4.3 1996/09/09 20:47:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,7 +36,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sfb.c	8.1 (Berkeley) 6/10/93
- *      $Id: sfb.c,v 1.1.1.1 1995/10/18 08:51:28 deraadt Exp $
  */
 
 /*
@@ -81,16 +80,19 @@
  * rights to redistribute these changes.
  */
 
-#include <fb.h>
-#include <sfb.h>
+#include "fb.h"
+#include "sfb.h"
 
 #include <sys/param.h>
+#include <sys/systm.h>					/* printf() */
 #include <sys/kernel.h>
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/fcntl.h>
+#include <sys/malloc.h>
 
 #include <machine/autoconf.h>
+#include <dev/tc/tcvar.h>
 #include <machine/fbio.h>
 #include <machine/fbvar.h>
 
@@ -117,16 +119,21 @@ extern int pmax_boardtype;
  * Forward references.
  */
 
-int sfbinit (char *, int, int);
+int sfbinit __P((struct fbinfo *fi, caddr_t sfbaddr, int unit, int silent));
 
 #define CMAP_BITS	(3 * 256)		/* 256 entries, 3 bytes per. */
-static u_char cmap_bits [NSFB * CMAP_BITS];	/* One colormap per sfb... */
+static u_char cmap_bits [CMAP_BITS];		/* colormap for console... */
 
 int sfbmatch __P((struct device *, void *, void *));
 void sfbattach __P((struct device *, struct device *, void *));
+int sfb_intr __P((void *sc));
 
-struct cfdriver sfbcd = {
-	NULL, "sfb", sfbmatch, sfbattach, DV_DULL, sizeof(struct device), 0
+struct cfattach sfb_ca = {
+	sizeof(struct device), sfbmatch, sfbattach
+};
+
+struct cfdriver sfb_cd = {
+	NULL, "sfb", DV_DULL
 };
 
 struct fbdriver sfb_driver = {
@@ -149,28 +156,27 @@ sfbmatch(parent, match, aux)
 	void *match;
 	void *aux;
 {
-	struct cfdata *cf = match;
-	struct confargs *ca = aux;
-	static int nsfbs = 1;
-	caddr_t sfbaddr = BUS_CVTADDR(ca);
+	/*struct cfdata *cf = match;*/
+	struct tc_attach_args *ta = aux;
 
 	/* make sure that we're looking for this type of device. */
-	/*if (!sfbprobe(sfbaddr)) return 0;*/
-	if (!BUS_MATCHNAME(ca, "PMAGB-BA"))
+	if (!TC_BUS_MATCHNAME(ta, "PMAGB-BA"))
 		return (0);
 
-
-#ifdef notyet
-	/* if it can't have the one mentioned, reject it */
-	if (cf->cf_unit >= nsfbs)
+	/*
+	 * if the TC rom ident matches, assume the VRAM is present too.
+	 */
+#if 0
+	if (badaddr( ((caddr_t)ta->ta_addr) + SFB_OFFSET_VRAM, 4))
 		return (0);
 #endif
+
 	return (1);
 }
 
 /*
  * Attach a device.  Hand off all the work to sfbinit(),
- * so console-config cod can attach sfbs early in boot.
+ * so console-config code can attach sfbs early in boot.
  */
 void
 sfbattach(parent, self, aux)
@@ -178,51 +184,70 @@ sfbattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	struct confargs *ca = aux;
-	caddr_t base = 	BUS_CVTADDR(ca);
+	struct tc_attach_args *ta = aux;
+	caddr_t sfbaddr = (caddr_t)ta->ta_addr;
 	int unit = self->dv_unit;
+	struct fbinfo *fi = (struct fbinfo *) self;
 
 #ifdef notyet
 	/* if this is the console, it's already configured. */
-	if (ca->ca_slotpri == cons_slot)
+	if (ta->ta_cookie == cons_slot)
 		return;	/* XXX patch up f softc pointer */
 #endif
 
-	if (!sfbinit(base, unit, 0))
+	if (!sfbinit(fi, sfbaddr, unit, 0))
 		return;
 
 #if 0 /*XXX*/
-	*(base + SFB_INTERRUPT_ENABLE) = 0;
+
+	/*
+	 * Sean Davidson (davidson@sean.zk3.dec.com) reports this
+	 *  isn't sufficient on a 3MIN, Use an interrupt handler instead.
+	 */
+
+	*(sfbaddr + SFB_INTERRUPT_ENABLE) = 0;
+
 #endif
-
+	/*
+	 * By default, the SFB  requests an interrupt during every vertical-retrace period.
+	 * We never enable interrupts from SFB cards, except on the
+	 * 3MIN, where TC options interrupt at spl0 through spl2, and
+	 * disabling of TC option interrupts doesn't work.
+	 */
+	if (pmax_boardtype == DS_3MIN) {
+		tc_intr_establish(parent, (void*)ta->ta_cookie, TC_IPL_NONE,
+				  sfb_intr, fi);
+	}
+	printf("\n");
 }
 
-/*
- * Test to see if device is present.
- * Return true if found and initialized ok.
- */
-/*ARGSUSED*/
-sfbprobe(cp)
-	struct pmax_ctlr *cp;
-{
-}
 
 /*
  * Initialization
  */
 int
-sfbinit(base, unit, silent)
+sfbinit(fi, base, unit, silent)
+	struct fbinfo *fi;
 	char *base;
 	int unit;
 	int silent;
 {
-	struct fbinfo *fi;
-	u_char foo;
 
-	fi = &sfbfi;	/* XXX use softc */
-
-	if (unit > NSFB)
-		return (0);
+	/*
+	 * If this device is being intialized as the console, malloc()
+	 * is not yet up and we must use statically-allocated space.
+	 */
+	if (fi == NULL) {
+		fi = &sfbfi;	/* XXX */
+  		fi->fi_cmap_bits = (caddr_t)cmap_bits;
+	}
+	else {
+    		fi->fi_cmap_bits = malloc(CMAP_BITS, M_DEVBUF, M_NOWAIT);
+		if (fi->fi_cmap_bits == NULL) {
+			printf("sfb%d: no memory for cmap\n", unit);
+			return (0);
+		}
+	}
 
 	/* check for no frame buffer */
 	if (badaddr(base + SFB_OFFSET_VRAM, 4))
@@ -238,7 +263,6 @@ sfbinit(base, unit, silent)
 	fi->fi_linebytes = 1280;
 	fi->fi_driver = &sfb_driver;
 	fi->fi_blanked = 0;
-	fi->fi_cmap_bits = (caddr_t)&cmap_bits [CMAP_BITS * unit];
 
 	/* Fill in Frame Buffer Type struct. */
 	fi->fi_type.fb_boardtype = PMAX_FBTYPE_SFB;
@@ -296,6 +320,32 @@ sfbinit(base, unit, silent)
 
 	fbconnect ("PMAGB-BA", fi, silent);
 	return (1);
+}
+
+
+/*
+ * The  TURBOChannel sfb interrupts by default on every vertical retrace,
+ * and we don't know to disable those interrupt requests.
+ * The 4.4BSD/pamx kernel never enabled delivery of those interrupts from the TC bus,
+ * but there's a kernel design bug on the 3MIN, where disabling
+ * (or enabling) TC option interrupts has no effect; each slot interrupt is
+ * mapped directly to a separate R3000 interrupt  and they always seem to be taken.
+ *
+ * This function simply dismisses SFB interrupts, or the interrupt
+ * request from the card will still be active.
+ */
+int
+sfb_intr(sc)
+	void *sc;
+{
+	struct fbinfo *fi = /* XXX (struct fbinfo *)sc */ &sfbfi;
+	
+	char *slot_addr = (((char *)fi->fi_base) - SFB_ASIC_OFFSET);
+	
+	/* reset vertical-retrace interrupt by writing a dont-care */
+	*(int*) (slot_addr + SFB_CLEAR) = 0;
+
+	return (0);
 }
 
 /* old bt459 code used to be here */

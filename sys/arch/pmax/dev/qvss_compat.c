@@ -1,4 +1,4 @@
-/*	$NetBSD: qvss_compat.c,v 1.2 1995/09/18 03:01:24 jonathan Exp $	*/
+/*	$NetBSD: qvss_compat.c,v 1.4 1996/05/19 01:16:18 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -81,7 +81,7 @@
 
 #include <machine/fbio.h>
 #include <machine/fbvar.h>
-#include <pmax/dev/fbreg.h>
+#include <pmax/dev/fbreg.h>		/* XXX should be renamed fbvar.h */
 #include <pmax/dev/lk201.h>
 
 /*#include <pmax/stand/dec_prom.h>*/
@@ -89,18 +89,26 @@
 #include <pmax/pmax/cons.h>
 #include <pmax/pmax/pmaxtype.h>
 
-#include <dc.h>
-#include <scc.h>
-#include <dtop.h>
+#include "dc.h"
+#include "scc.h"
+#include "dtop.h"
 
 
 /*
  * Forward / extern references.
  */
 
-extern void pmEventQueueInit __P((pmEventQueue *qe));
-void fbKbdEvent(), fbMouseEvent(), fbMouseButtons(), fbScroll();
+#include <pmax/dev/qvssvar.h>			/* our own externs */
 extern int pmax_boardtype;
+
+extern void pmEventQueueInit __P((pmEventQueue *qe));
+void	genKbdEvent __P((int ch));
+void	genMouseEvent __P((MouseReport *newRepPtr));
+void	genMouseButtons __P((MouseReport *newRepPtr));
+void	genConfigMouse __P((void));
+void	genDeconfigMouse __P((void));
+void	mouseInput __P((int cc));
+
 
 
 #if NDC > 0
@@ -146,6 +154,7 @@ extern struct fbinfo *firstfi;
  * are gone. Note that the QVSS/pm mapped event buffer includes the
  * fbu field initialized below.
  */
+void
 init_pmaxfbu(fi)
 	struct fbinfo *fi;
 {
@@ -188,8 +197,7 @@ init_pmaxfbu(fi)
 
 	if (tty_rows != fbu->scrInfo.max_row ||
 	    tty_cols != fbu->scrInfo.max_col)
-		printf("framebuffer init: size mismatch",
-		       "given %dx%d, compute %dx%x\n",
+		printf("framebuffer init: size mismatch: given %dx%d, compute %dx%d\n",
 		       fbu->scrInfo.max_row, fbu->scrInfo.max_col,
 		       tty_rows, tty_cols);
 
@@ -471,6 +479,7 @@ fbMouseButtons(newRepPtr, fi)
  * address space.
  * Return errno if there was an error.
  */
+int
 fbmmap_fb(fi, dev, data, p)
 	struct fbinfo *fi;
 	dev_t dev;
@@ -485,9 +494,9 @@ fbmmap_fb(fi, dev, data, p)
 	struct fbuaccess *fbp;
 	register struct fbuaccess *fbu = fi->fi_fbu;
 
-	len = pmax_round_page(((vm_offset_t)fbu & PGOFSET) +
+	len = mips_round_page(((vm_offset_t)fbu & PGOFSET) +
 			      sizeof(struct fbuaccess)) +
-		pmax_round_page(fi->fi_type.fb_size);
+		mips_round_page(fi->fi_type.fb_size);
 	addr = (vm_offset_t)0x20000000;		/* XXX */
 	vn.v_type = VCHR;			/* XXX */
 	vn.v_specinfo = &si;			/* XXX */
@@ -509,7 +518,7 @@ fbmmap_fb(fi, dev, data, p)
 	/*
 	 * Map the frame buffer into the user's address space.
 	 */
-	fbu->scrInfo.bitmap = (char *)pmax_round_page(fbp + 1);
+	fbu->scrInfo.bitmap = (char *)mips_round_page(fbp + 1);
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.25 1996/01/03 20:33:25 jonathan Exp $
+#	$NetBSD: files.pmax,v 1.31.4.1 1996/05/30 03:54:56 mhitch Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -9,29 +9,47 @@ maxusers 2 8 64
 #
 # Bus-independent devices
 #
-device mainbus at root { }		# no locators
+device mainbus { }			# no locators
+attach mainbus at root
 
-device cpu at mainbus			# not optional
+device cpu				# not optional
+attach cpu at mainbus
 file arch/pmax/pmax/cpu.c		cpu
 
-
+#
+# CPU-dependent files
+#
+#file	arch/pmax/pmax/kn01.c			kn01	# DS3100, pmax
+#file	arch/pmax/pmax/kn02.c			kn02	# DS5000/200, 3max
+#file	arch/pmax/pmax/kn03.c			kn03	# DS5000/240, 3maxplus
+#file	arch/pmax/pmax/kn02ba.c			kn02ba	# DS5000/1xx, 3min(kmin)
+#file	arch/pmax/pmax/kn02ca.c			kn02ca	# DS5000/1xx, maxine
+#file	arch/pmax/pmax/kn210.c				# DS5400, mipsfair
+#file	arch/pmax/pmax/kn220.c				# DS5500, mipsfair2
+file	arch/pmax/pmax/kn230.c			kn230	# DS5100, mipsmate
 #
 # Auto-configuration driver for the turbochannel bus itself.
 #
-device tc at mainbus  { } #{ slot = -1, offset = -1 }
-file	arch/pmax/tc/tc.c		tc		needs-flag
+#define	tcbus { }
+
+device tc {[slot = -1], [offset = -1]} ##{ } 
+attach tc at mainbus
+file	arch/pmax/tc/tc_subr.c		tc		needs-flag
+file	dev/tc/tc.c			tc		needs-flag
 
 
 #
 # The TurboChannel IOCTL ASIC. Present on IOASIC machines,
 # which is all turbochannel machines ever built except the 3MAX (5000/200).
 #
-device ioasic at tc { } 	#{ }	# not really optional
+device ioasic { } 		#{ }	# not really optional
+attach ioasic at tc
 file	arch/pmax/tc/asic.c		ioasic
 
 
 # Real-time clock (not optional)
-device	clock at ioasic,tc,mainbus 
+device	clock
+attach	clock at ioasic, tc, mainbus
 file	arch/pmax/pmax/clock.c		clock
 
 
@@ -50,21 +68,26 @@ major { rz = 21 }
 # Old 4.4bsd pmax-specific scsi driver (deprecated).
 #
 define	oldscsi {}
-device oldscsibus at oldscsi	{target = -1, drive = -1}
+device oldscsibus	{target = -1, drive = -1}
+attach oldscsibus at oldscsi
 
 # asc:  system-slot or turbochannel-option SCSI interface
-device asc at ioasic,tc: oldscsi,scsi
+device asc: oldscsi,scsi
+attach asc at ioasic, tc
 file	dev/tc/asc.c			asc needs-flag
 
 # sii:  kn01 SCSI interface 
-device sii at mainbus: oldscsi,scsi
+device sii: oldscsi,scsi
+attach sii at mainbus
 file	arch/pmax/dev/sii.c		sii needs-flag
 
 
-device	tz at oldscsibus: tape
+device	tz: tape
+attach	tz at oldscsibus
 file	arch/pmax/dev/tz.c		tz needs-count
 
-device	rz at oldscsibus: disk
+device	rz: disk
+attach	rz at oldscsibus
 file	arch/pmax/dev/rz.c		rz needs-count
 
 #
@@ -73,47 +96,65 @@ file	arch/pmax/dev/rz.c		rz needs-count
 
 # DC7085 (DZ-like four-port serial device) on mainbus on non-IOASIC machines.
 # For the 3MAX (aka kn02 aka 5k/200) pretend that it's on an  ASIC.
-device dc at mainbus,ioasic
-file	arch/pmax/dev/dc.c			dc needs-count
+device dc
+attach dc at mainbus, ioasic
+file	arch/pmax/dev/dc.c		dc needs-count
 
 # The "desktop bus" on the MAXINE (5k/25). What is it, anyway? ADB?
-device dtop at ioasic
-file	arch/pmax/dev/dtop.c			dtop needs-count
+device dtop
+attach dtop at ioasic
+file	arch/pmax/dev/dtop.c		dtop needs-flag
 
 # LANCE ethernet driver.
 #  XXX Should use new machine-independent one instead.
-device le at ioasic,tc,mainbus: ifnet, ether
-file	arch/pmax/tc/if_le.c		le needs-flag
+# device defined in sys/conf/files
+attach le at ioasic with le_ioasic
+attach le at tc with le_tc
+attach le at mainbus with le_pmax
+#file	arch/pmax/tc/if_le.c		(le_pmax|le_tc|le_ioasic) needs-flag
+
+
+file	dev/tc/if_le_dec.c		(le_ioasic | le_tc | le_pmax)
+file	dev/tc/if_le_ioasic.c		le_ioasic	needs-flag #for le_iomem
+file	dev/tc/if_le_tc.c		le_tc
+file	dev/tc/if_le_ibus.c		le_pmax		needs-flag #for kn01_intr
 
 # 3100 (pmax) onboard framebuffer
-device pm at mainbus
-file	arch/pmax/dev/pm.c		pm needs-count
-file	arch/pmax/dev/bt478.c			pm
+device pm
+attach pm at mainbus
+file	arch/pmax/dev/pm.c		pm needs-flag
+file	arch/pmax/dev/bt478.c		pm
 
 ########################################################################
 # Turbochannel options.
 ########################################################################
 
-device cfb at tc
-file	arch/pmax/dev/cfb.c		cfb needs-count
+device cfb
+attach cfb at tc
+file	arch/pmax/dev/cfb.c		cfb needs-flag
 
-device sfb at tc
-file	arch/pmax/dev/sfb.c		sfb needs-count
+device sfb
+attach sfb at tc
+file	arch/pmax/dev/sfb.c		sfb needs-flag
 
-device mfb at tc
-file	arch/pmax/dev/mfb.c		mfb needs-count
+device mfb
+attach mfb at tc
+file	arch/pmax/dev/mfb.c		mfb needs-flag
 
 #  Zilog 8350/Intel 82350(?) SCC UART.
-device scc at ioasic
-file	arch/pmax/tc/scc.c		scc	needs-count
+device scc
+attach scc at ioasic
+file	arch/pmax/tc/scc.c		scc needs-count
 
 # MAXINE onboard framebuffer
-device	xcfb at tc
-file	arch/pmax/dev/xcfb.c 		xcfb needs-count
+device	xcfb
+attach	xcfb at tc
+file	arch/pmax/dev/xcfb.c 		xcfb needs-flag
 file	arch/pmax/dev/ims332.c		xcfb
 
 # DECWRL 45Mbit T3 interface
-device	tt at tc
+device	tt
+attach	tt at tc
 file	arch/pmax/dev/if_tt.c		tt needs-count
 
 ## bogus pmax-specific SCSI code. Leave in until new-style config done.
@@ -124,16 +165,13 @@ file	arch/pmax/pmax/conf.c
 #file	arch/pmax/pmax/kadb.c			optional kadb
 #file	arch/pmax/pmax/machdep.c		standard config-dependent
 file	arch/pmax/pmax/machdep.c
-file	arch/pmax/pmax/cpu_exec.c
-file	arch/pmax/pmax/mem.c
 file	arch/pmax/pmax/pmap.c
-file	arch/pmax/pmax/process_machdep.c
 file	arch/pmax/pmax/sys_machdep.c
 file	arch/pmax/pmax/trap.c
+file	arch/pmax/pmax/pmax_trap.c
 file	arch/pmax/pmax/vm_machdep.c
 file	arch/pmax/pmax/disksubr.c
 file	arch/pmax/stand/libsa/callvec.c
-file	arch/pmax/pmax/elf.c
 file	arch/pmax/pmax/mainbus.c
 
 # Console autoconfiguration code: selects between a framebuffers
@@ -152,13 +190,13 @@ file	netinet/in_cksum.c
 file	netns/ns_cksum.c			ns
 
 ## Support code for LK-201 keyboards, mice, and qvss ring buffers
-file	arch/pmax/dev/lk201.c		pm or cfb or sfb or mfb or xcfb
+file	arch/pmax/dev/lk201.c		pm | cfb | sfb | mfb | xcfb
 file	arch/pmax/dev/qvss_compat.c	fb
 
 
 # VDAC/RAMDAC support for framebuffers. Other  devices supported by
 # NetBSD  may use the same chips, too.
-file	arch/pmax/dev/bt459.c			cfb or sfb
+file	arch/pmax/dev/bt459.c			cfb | sfb
 
 #
 # Pseudo-device driver for framebuffers.  All user-level requests,

@@ -1,4 +1,4 @@
-/*	$NetBSD: tz.c,v 1.8 1995/09/18 03:04:55 jonathan Exp $	*/
+/*	$NetBSD: tz.c,v 1.10 1996/04/10 16:33:44 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,17 +54,26 @@
 #include <sys/file.h>
 #include <sys/ioctl.h>
 #include <sys/mtio.h>
+#include <sys/proc.h>
 #include <sys/syslog.h>
 #include <sys/tprintf.h>
+
+#include <sys/conf.h>
+#include <machine/conf.h>
 
 #include <pmax/dev/device.h>
 #include <pmax/dev/scsi.h>
 
-int	tzprobe();
-void	tzstart(), tzdone();
+int	tzprobe __P(( void *sd /*struct pmax_scsi_device *sd*/));
+int	tzcommand __P((dev_t dev, int command, int code,
+		       int count, caddr_t data));
+void	tzstart __P((int unit));
+void	tzdone __P((int unit, int error, int resid, int status));
 
 struct	pmax_driver tzdriver = {
-	"tz", tzprobe, tzstart, tzdone,
+	"tz", tzprobe,
+	(void	(*) __P((struct ScsiCmd *cmd))) tzstart,
+	tzdone,
 };
 
 struct	tz_softc {
@@ -105,19 +114,21 @@ struct	tz_softc {
 int	tzdebug = 0;
 #endif
 
-void tzstrategy __P((register struct buf *bp));
 
 /*
  * Test to see if device is present.
  * Return true if found and initialized ok.
  */
-tzprobe(sd)
-	struct pmax_scsi_device *sd;
+int
+tzprobe(xxxsd)
+	void *xxxsd;
 {
+
+	register struct pmax_scsi_device *sd = xxxsd;
+
 	register struct tz_softc *sc = &tz_softc[sd->sd_unit];
 	register int i;
 	ScsiInquiryData inqbuf;
-	ScsiClass7Sense *sp;
 
 	/* init some parameters that don't change */
 	sc->sc_sd = sd;
@@ -214,8 +225,7 @@ tzprobe(sd)
 			sc->sc_tapeid = MT_ISMFOUR;
 		} else {
 			printf("tz%d: assuming GENERIC SCSI tape device\n",
-				sd->sd_unit,
-				inqbuf.type, inqbuf.qualifier, inqbuf.version);
+				sd->sd_unit);
 			sc->sc_tapeid = 0;
 		}
 	}
@@ -231,6 +241,7 @@ bad:
 /*
  * Perform a special tape command on a SCSI Tape drive.
  */
+int
 tzcommand(dev, command, code, count, data)
 	dev_t dev;
 	int command;
@@ -280,7 +291,7 @@ tzcommand(dev, command, code, count, data)
 	sc->sc_buf.b_flags = 0;
 	sc->sc_cmd.flags = 0;
 	if (sc->sc_buf.b_resid)
-		printf("tzcommand: resid %d\n", sc->sc_buf.b_resid); /* XXX */
+		printf("tzcommand: resid %ld\n", sc->sc_buf.b_resid); /* XXX */
 	if (error == 0)
 		switch (command) {
 		case SCSI_SPACE:
@@ -386,7 +397,7 @@ tzdone(unit, error, resid, status)
 			sc->sc_sense.sense[2] = SCSI_CLASS7_NO_SENSE;
 		} else if (!cold) {
 			ScsiClass7Sense *sp;
-			long resid;
+			long resid = 0;
 
 			sp = (ScsiClass7Sense *)sc->sc_sense.sense;
 			if (sp->error7 != 0x70)
@@ -412,7 +423,7 @@ tzdone(unit, error, resid, status)
 				}
 				if (sc->sc_blklen && sp->badBlockLen) {
 					tprintf(sc->sc_ctty,
-						"tz%d: Incorrect Block Length, expected %d got %d\n",
+						"tz%d: Incorrect Block Length, expected %d got %ld\n",
 						unit, sc->sc_blklen, resid);
 					break;
 				}
@@ -423,7 +434,7 @@ tzdone(unit, error, resid, status)
 					 * full record.
 					 */
 					tprintf(sc->sc_ctty,
-						"tz%d: Partial Read of Variable Length Tape Block, expected %d read %d\n",
+						"tz%d: Partial Read of Variable Length Tape Block, expected %ld read %ld\n",
 						unit, bp->b_bcount - resid,
 						bp->b_bcount);
 					bp->b_resid = 0;
@@ -491,7 +502,7 @@ tzdone(unit, error, resid, status)
 		bp->b_resid = resid;
 	}
 
-	if (dp = bp->b_actf)
+	if ((dp = bp->b_actf) != 0)
 		dp->b_actb = bp->b_actb;
 	else
 		sc->sc_tab.b_actb = bp->b_actb;
@@ -509,6 +520,7 @@ tzdone(unit, error, resid, status)
 }
 
 /* ARGSUSED */
+int
 tzopen(dev, flags, type, p)
 	dev_t dev;
 	int flags, type;
@@ -663,9 +675,12 @@ tzopen(dev, flags, type, p)
 	return (0);
 }
 
-tzclose(dev, flag)
+int
+tzclose(dev, flag, mode, p)
 	dev_t dev;
-	int flag;
+	int flag, mode;
+	struct proc *p;
+	
 {
 	register struct tz_softc *sc = &tz_softc[tzunit(dev)];
 	int error = 0;
@@ -699,14 +714,15 @@ tzclose(dev, flag)
 }
 
 int
-tzread(dev, uio)
+tzread(dev, uio, iomode)
 	dev_t dev;
 	struct uio *uio;
+	int iomode;
 {
+#if 0
+	/*XXX*/ /* check for hardware write-protect? */
 	register struct tz_softc *sc = &tz_softc[tzunit(dev)];
 
-	/*XXX*/ /* check for hardware write-protect? */
-#if 0
 	if (sc->sc_type == SCSI_ROM_TYPE)
 		return (EROFS);
 
@@ -719,13 +735,14 @@ tzread(dev, uio)
 }
 
 int
-tzwrite(dev, uio)
+tzwrite(dev, uio, iomode)
 	dev_t dev;
 	struct uio *uio;
+	int iomode;
 {
+#if 0
 	register struct tz_softc *sc = &tz_softc[tzunit(dev)];
 
-#if 0
 	if (sc->sc_format_pid && sc->sc_format_pid != curproc->p_pid)
 		return (EPERM);
 #endif
@@ -735,14 +752,14 @@ tzwrite(dev, uio)
 }
 
 int
-tzioctl(dev, cmd, data, flag)
+tzioctl(dev, cmd, data, flag, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	int flag;
+	struct proc *p;
 {
 	register struct tz_softc *sc = &tz_softc[tzunit(dev)];
-	register struct buf *bp = &sc->sc_buf;
 	struct mtop *mtop;
 	struct mtget *mtget;
 	int code, count;
@@ -841,8 +858,11 @@ tzstrategy(bp)
  * Non-interrupt driven, non-dma dump routine.
  */
 int
-tzdump(dev)
+tzdump(dev, blkno, va, size)
 	dev_t dev;
+	daddr_t blkno;
+	caddr_t va;
+	size_t size;
 {
 	/* Not implemented. */
 	return (ENXIO);

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.h,v 1.5 1995/03/28 18:19:00 jtc Exp $	*/
+/*	$NetBSD: scsi.h,v 1.7 1996/04/07 22:53:54 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -380,6 +380,7 @@ typedef struct ScsiInquiryData {
 	u_char	revLevel[4];	/* Revision level (ASCII) */
 	u_char	revData[8];	/* Revision data (ASCII) */
 #endif
+	u_char	pading[1024];	/* newer SCSI II drives give additional data */
 } ScsiInquiryData;
 
 /*
@@ -551,8 +552,20 @@ struct scsi_fmt_sense {
 /*
  * Routines.
  */
-extern void scsiGroup0Cmd();
-extern void scsiGroup1Cmd();
+extern void scsiGroup0Cmd __P((unsigned cmd,	/* group0 SCSI command */
+			       unsigned lun,	/* Logical Unit Number */
+			       register unsigned block,
+			       unsigned count,
+			       register ScsiGroup0Cmd *c));
+
+extern void scsiGroup1Cmd __P((unsigned cmd,	/* group0 SCSI command */
+			       unsigned lun,	/* Logical Unit Number */
+			       register unsigned block,
+			       unsigned count,
+			       register ScsiGroup1Cmd *c));
+
+extern void scsiPrintSense __P((register ScsiClass7Sense *sp, int len));
+extern void scsiPrintInquiry __P((ScsiInquiryData *inqbuf, int len));
 #endif /* _KERNEL */
 
 #endif /* _SCSI_H */

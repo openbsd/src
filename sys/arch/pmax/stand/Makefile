@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 1996/01/15 01:44:52 thorpej Exp $
+#	$NetBSD: Makefile,v 1.7 1996/02/01 22:32:19 mycroft Exp $
 #	@(#)Makefile	8.3 (Berkeley) 2/16/94
 
 DESTDIR=
@@ -12,7 +12,7 @@ S=      ${.CURDIR}/../../..
 
 DEFS= -DSTANDALONE -DSMALL
 CFLAGS=	-O2 ${INCPATH} ${DEFS}
-AFLAGS=	-O2 ${INCPATH} ${DEFS} -DLOCORE
+AFLAGS=	-O2 ${INCPATH} ${DEFS} -D_LOCORE
 
 .PATH: ${S}/arch/${MACHINE_ARCH}/${MACHINE_ARCH}
 .PATH: ${S}/stand ${S}/lib/libsa
@@ -72,7 +72,7 @@ boot:	start.o boot.o bootconf.o filesystem.o ${LIBS}
 
 start.o: ${.CURDIR}/start.S
 
-#	${CPP} -E ${CFLAGS:M-[ID]*} -DLOCORE ${AINC} ${.IMPSRC} | \
+#	${CPP} -E ${CFLAGS:M-[ID]*} -D_LOCORE ${AINC} ${.IMPSRC} | \
 #	    ${AS} -o ${.TARGET}
 
 mkboot: ${.CURDIR}/mkboot.c

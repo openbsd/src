@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.5 1996/08/29 09:26:25 deraadt Exp $	*/
+/*	$NetBSD: conf.c,v 1.21.4.1 1996/08/13 07:58:43 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,6 +46,12 @@
 #include <sys/conf.h>
 #include <sys/vnode.h>
 
+#ifndef LKM
+#define	lkmenodev	enodev
+#else
+int	lkmenodev __P((void));
+#endif
+
 int	ttselect	__P((dev_t, int, struct proc *));
 
 #include "vnd.h"
@@ -89,6 +95,14 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NRZ,rz),		/* 22: ?? old SCSI disk */ /*XXX*/
 	bdev_notdef(),			/* 23: mscp */
 	bdev_disk_init(NCCD,ccd),	/* 24: concatenated disk driver */
+
+	bdev_lkm_dummy(),		/* 25 */
+	bdev_lkm_dummy(),		/* 26 */
+	bdev_lkm_dummy(),		/* 27 */
+	bdev_lkm_dummy(),		/* 28 */
+	bdev_lkm_dummy(),		/* 29 */
+	bdev_lkm_dummy(),		/* 30 */
+
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
@@ -145,8 +159,14 @@ cdev_decl(cfb);
 cdev_decl(xcfb);
 #include "mfb.h"
 cdev_decl(mfb);
-#include "random.h"
-cdev_decl(random);
+dev_decl(filedesc,open);
+
+#ifdef LKM
+#define	NLKM	1
+#else
+#define	NLKM	0
+#endif
+cdev_decl(lkm);
 
 
 /* a framebuffer with an attached mouse: */
@@ -159,24 +179,16 @@ cdev_decl(random);
 	dev_init(c,n,mmap) }
 
 
-/* open, close, read, ioctl */
-cdev_decl(ipl);
-#ifdef IPFILTER
-#define NIPF 1
-#else
-#define NIPF 0
-#endif
-
 struct cdevsw	cdevsw[] =
 {
-	cdev_cn_init(1,cn),		/* 0: virtual console */
+	cdev_cn_init(1,cn),		/* 0: virtual console */  /* (dz?) */
 	cdev_swap_init(1,sw),		/* 1: /dev/drum (swap pseudo-device) */
 	cdev_ctty_init(1,ctty),		/* 2: controlling terminal */
 	cdev_mm_init(1,mm),		/* 3: /dev/{null,mem,kmem,...} */
         cdev_tty_init(NPTY,pts),        /* 4: pseudo-tty slave */
         cdev_ptc_init(NPTY,ptc),        /* 5: pseudo-tty master */
 	cdev_log_init(1,log),		/* 6: /dev/klog */
-	cdev_fd_init(1,fd),		/* 7: file descriptor pseudo-dev */
+	cdev_fd_init(1,filedesc),	/* 7: file descriptor pseudo-dev */
 	cdev_notdef(),			/* 8: old 2100/3100 frame buffer */
 	cdev_notdef(),			/* 9: old slot for SCSI disk */
 	cdev_tape_init(NTZ,tz),		/* 10: SCSI tape */
@@ -259,8 +271,17 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NRASTERCONSOLE,rcons), /* 85: rcons pseudo-dev */
 	cdev_fbm_init(NFB,fb),	/* 86: frame buffer pseudo-device */
 	cdev_disk_init(NCCD,ccd),	/* 87: concatenated disk driver */
-	cdev_gen_ipf(NIPF,ipl),	/* 88: IP filter log */
-	cdev_random_init(NRANDOM,random);	/* 89: random data source */
+
+	cdev_lkm_dummy(),		/* 88 */
+	cdev_lkm_dummy(),		/* 89 */
+	cdev_lkm_init(NLKM,lkm),	/* 90: loadable module driver */
+	cdev_lkm_dummy(),		/* 91 */
+	cdev_lkm_dummy(),		/* 92 */
+	cdev_lkm_dummy(),		/* 93 */
+	cdev_lkm_dummy(),		/* 94 */
+	cdev_lkm_dummy(),		/* 95 */
+	cdev_lkm_dummy(),		/* 96 */
+	
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

@@ -2,7 +2,7 @@
 # DECstation (3100 or 5000/xxx)
 #
 #	Generic config.new configuration for NetBSD/pmax
-# 	$NetBSD: NEWCONF,v 1.6 1995/12/28 16:08:20 jonathan Exp $
+# 	$NetBSD: NEWCONF,v 1.6.4.2 1996/06/17 05:14:26 jonathan Exp $
 #
 include		"std.pmax"
 
@@ -14,9 +14,9 @@ maxusers	8
 #  what the root device is.)
 #options		GENERIC
 
+options		CPU_R3000		# R2000/R3000 support
 
 # replaces "cpu ds5k/240"
-options		DS5000			# generic TC support and 3MAX support
 options		DS5000_240		# 3MAXPLUS (kn03) support
 options		DS5000_100		# 3MIN (kn02ba/kmin) support
 options		DS5000_25		# MAXINE (kn02ca/xine) support
@@ -60,7 +60,7 @@ options		NULLFS		# null layer filesystem
 
 # Networking options
 options		INET		# Internet protocols
-#options		"TCP_COMPAT_42"	# compatibility with 4.2BSD TCP/IP
+options		"TCP_COMPAT_42"	# compatibility with 4.2BSD TCP/IP
 options		GATEWAY		# IP packet forwarding
 #options	MULTICAST	# Multicast support
 #options	MROUTING	# Multicast routing support
@@ -70,6 +70,7 @@ options		GATEWAY		# IP packet forwarding
 
 # pmax specific
 options		COMPAT_ULTRIX	# ultrix compatibility
+options		"HZ=256"	# RTC rate required
 
 # Note that this configuration is unlikely to work, yet...
 config		netbsd root on rz0a swap on rz0b and rz1b dumps on rz0b

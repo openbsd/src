@@ -1,4 +1,9 @@
-/*	$NetBSD: locore.S,v 1.17 1995/12/20 02:00:32 jonathan Exp $	*/
+/*	$NetBSD: locore.S,v 1.21 1996/05/19 00:25:14 jonathan Exp $	*/
+
+/*
+ * locore file for either "new" merged MIPS-I/MIPS-II kernels or
+ * old-style pmax kernels
+ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,6 +100,9 @@ start:
 	bne	t1, t3, 1b			# NB: always executes next
 	tlbwi					# Write the TLB entry.
 
+/*
+ * Initialize stack and call machine startup.
+ */
 	la	sp, start - START_FRAME
 #ifdef __GP_SUPPORT__
 	la	gp, _C_LABEL(_gp)
@@ -104,12 +112,17 @@ start:
 	sw	zero, START_FRAME - 8(sp)	# Zero out old fp for debugger
 
 	li	t0, MACH_SR_COP_1_BIT		# Disable interrupts and
-	mtc0	t0, MACH_COP_0_STATUS_REG	#   enable the coprocessor
+	mtc0	t0, MACH_COP_0_STATUS_REG	#   enable the fp coprocessor
 	li	sp, KERNELSTACK - START_FRAME	# switch to standard stack
 	mfc0	t0, MACH_COP_0_PRID		# read processor ID register
+
+	nop					# XXX r4000 pipeline:
+	nop					# wait for new status to
+	nop					# to be effective
+	nop
 	cfc1	t1, MACH_FPC_ID			# read FPU ID register
-	sw	t0, _C_LABEL(cpu)		# save PRID register
-	sw	t1, _C_LABEL(fpu)		# save FPU ID register
+	sw	t0, _C_LABEL(cpu_id)		# save PRID register
+	sw	t1, _C_LABEL(fpu_id)		# save FPU ID register
 	jal	_C_LABEL(main)			# main(regs)
 	move	a0, zero
 /*
@@ -517,6 +530,20 @@ smallcpy:
 END(memcpy)
 
 /*
+ * fillw(pat, addr, count)
+ */
+LEAF(fillw)
+1:
+	addiu	a2, a2, -1
+	sh	a0, 0(a1)
+	bne	a2,zero, 1b
+	addiu	a1, a1, 2
+
+	jr	ra
+	nop
+END(fillw)
+
+/*
  * Copy a null terminated string within the kernel address space.
  * Maxlength may be null if count not wanted.
  *	copystr(fromaddr, toaddr, maxlength, &lencopied)
@@ -877,7 +904,7 @@ END(switch_exit)
  * profiling.
  */
 LEAF(idle)
-	li	t0, (MACH_INT_MASK | MACH_SR_INT_ENA_CUR)
+	li	t0, (MACH_INT_MASK | MIPS_SR_INT_IE)
 	mtc0	t0, MACH_COP_0_STATUS_REG	# enable all interrupts
 	sw	zero, _C_LABEL(curproc)		# set curproc NULL for stats
 1:
@@ -1145,10 +1172,28 @@ LEAF(_remque)
 END(_remque)
 
 /*
+ * GCC2 seems to want to call __main in main() for some reason.
+ */
+LEAF(__main)
+	j	ra
+	nop
+END(__main)
+
+/*
+ *----------------------------------------------------------------------------
+ *
+ * mips_r2000_UTLBmiss --
+ * MachUTLBmiss --
+ *
+ *	Vector code for a MIPS-I user-space TLB miss from user-space.
+ *
+ *
  * This code is copied to the UTLB exception vector address to
  * handle user level TLB translation misses.
  * NOTE: This code must be relocatable!!!
  */
+	.globl	_C_LABEL(mips_R2000_UTLBMiss)
+_C_LABEL(mips_R2000_UTLBMiss):
 	.globl	_C_LABEL(MachUTLBMiss)
 _C_LABEL(MachUTLBMiss):
 	.set	noat
@@ -1184,30 +1229,35 @@ _C_LABEL(MachUTLBMiss):
 	.globl	_C_LABEL(MachUTLBMissEnd)
 _C_LABEL(MachUTLBMissEnd):
 
-/*
- * GCC2 seems to want to call __main in main() for some reason.
- */
-LEAF(__main)
-	j	ra
-	nop
-END(__main)
+	.globl	_C_LABEL(mips_R2000_UTLBMissEnd)
+_C_LABEL(mips_R2000_UTLBMissEnd):
 
-	/*
+
+/*
+ *----------------------------------------------------------------------------
+ *
+ * mips_R2000_execption --
+ *
+ *	Vector code for the general exception vector 0x80000080
+ *	on an r2000 or r3000.
+ *
  * This code is copied to the general exception vector address to
  * handle all execptions except RESET and UTLBMiss.
  * NOTE: This code must be relocatable!!!
+ *
+ *----------------------------------------------------------------------------
  */
-	.globl	_C_LABEL(MachException)
-_C_LABEL(MachException):
+	.globl	_C_LABEL(mips_R2000_exception)
+_C_LABEL(mips_R2000_exception):
 /*
  * Find out what mode we came from and jump to the proper handler.
  */
 	.set	noat
 	mfc0	k0, MACH_COP_0_STATUS_REG	# Get the status register
 	mfc0	k1, MACH_COP_0_CAUSE_REG	# Get the cause register value.
-	and	k0, k0, MACH_SR_KU_PREV		# test for user mode
-	sll	k0, k0, 3			# shift user bit for cause index
-	and	k1, k1, MACH_CR_EXC_CODE	# Mask out the cause bits.
+	and	k0, k0, MIPS_3K_SR_KU_PREV	# test for user mode
+	sll	k0, k0, 4			# shift user bit for cause index
+	and	k1, k1, MIPS_3K_CR_EXC_CODE	# Mask out the cause bits.
 	or	k1, k1, k0			# change index to user table
 1:
 	la	k0, _C_LABEL(machExceptionTable) # get base of the jump table
@@ -1221,8 +1271,119 @@ _C_LABEL(MachException):
 	j	k0				# Jump to the function.
 	nop
 	.set	at
-	.globl	_C_LABEL(MachExceptionEnd)
-_C_LABEL(MachExceptionEnd):
+	.globl	_C_LABEL(mips_R2000_exceptionEnd)
+_C_LABEL(mips_R2000_exceptionEnd):
+
+
+
+#ifdef R4000	/* XXX doesn't assemble in default pmax kernel */
+
+/*
+ *----------------------------------------------------------------------------
+ *
+ * mips_R4000_TLBMiss --
+ * MachTLBMiss --
+ *
+ *	Vector code for the TLB-miss exception vector 0x80000180
+ *	on an r4000.
+ *
+ * This code is copied to the TLB exception vector address to
+ * handle TLB translation misses.
+ * NOTE: This code must be relocatable and max 32 instructions!!!
+ * Don't check for invalid pte's here. We load them as well and
+ * let the processor trap to load the correct value after service.
+ *
+ *----------------------------------------------------------------------------
+ */
+	.globl	_C_LABEL(mips_R4000_TLBMiss)
+_C_LABEL(mips_R4000_TLBMiss):
+	.globl	_C_LABEL(MachTLBMiss)
+_C_LABEL(MachTLBMiss):
+	.set	noat
+	dmfc0	k0, MACH_COP_0_BAD_VADDR	# get the virtual address
+	lw	k1, UADDR+U_PCB_SEGTAB		# get the current segment table
+	bltz	k0, 1f				# kernel address space ->
+	srl	k0, k0, SEGSHIFT - 2		# compute segment table index
+	andi	k0, k0, 0x7fc			# PMAP_SEGTABSIZ-1
+	addu	k1, k1, k0
+	dmfc0	k0, MACH_COP_0_BAD_VADDR	# get the virtual address
+	lw	k1, 0(k1)			# get pointer to segment map
+	srl	k0, k0, PGSHIFT - 2		# compute segment map index
+	andi	k0, k0, ((NPTEPG/2) - 1) << 3
+	beq	k1, zero, 2f			# invalid segment map
+	addu	k1, k1, k0			# index into segment map
+	lw	k0, 0(k1)			# get page PTE
+	lw	k1, 4(k1)
+	dsll	k0, k0, 34
+	dsrl	k0, k0, 34
+	dmtc0	k0, MACH_COP_0_TLB_LO0
+	dsll	k1, k1, 34
+	dsrl	k1, k1, 34
+	dmtc0	k1, MACH_COP_0_TLB_LO1
+	nop
+	tlbwr					# update TLB
+	nop
+	nop
+	nop
+	nop
+	nop
+	eret
+1:
+	j	MachTLBMissException
+	nop
+2:
+	j	SlowFault
+	nop
+
+	.globl	_C_LABEL(MachTLBMissEnd)
+C_LABEL(MachTLBMissEnd):
+	.globl	_C_LABEL(mips_R4000_TLBMissEnd)
+_C_LABEL(mips_R4000_TLBMissEnd):
+	.set	at
+#endif	/* XXX doesn't assemble in default pmax kernel *//*
+
+
+ *----------------------------------------------------------------------------
+ *
+ * Mips_R4000_execption --
+ *
+ *	Vector code for the general exception vector 0x80000080
+ *	on an r4000 or r4400.
+ *
+ * This code is copied to the general exception vector address to
+ * handle all execptions except RESET and TLBMiss.
+ * NOTE: This code must be relocatable!!!
+ *----------------------------------------------------------------------------
+ */
+	.globl	mips_r4000_exception
+_C_LABEL(mips_R4000_exception):
+/*
+ * Find out what mode we came from and jump to the proper handler.
+ */
+	.set	noat
+	mfc0	k0, MACH_COP_0_STATUS_REG	# Get the status register
+	mfc0	k1, MACH_COP_0_CAUSE_REG	# Get the cause register value.
+	and	k0, k0, MIPS_4K_SR_KSU_USER	# test for user mode
+						# sneaky but the bits are
+						# with us........
+	sll	k0, k0, 3			# shift user bit for cause index
+	and	k1, k1, MIPS_4K_CR_EXC_CODE	# Mask out the cause bits.
+	or	k1, k1, k0			# change index to user table
+1:
+	la	k0, machExceptionTable		# get base of the jump table
+	addu	k0, k0, k1			# Get the address of the
+						#  function entry.  Note that
+						#  the cause is already
+						#  shifted left by 2 bits so
+						#  we dont have to shift.
+	lw	k0, 0(k0)			# Get the function address
+	nop
+	j	k0				# Jump to the function.
+	nop
+	.set	at
+	.globl	mips_R4000_exceptionEnd
+_C_LABEL(mips_R4000_exceptionEnd):
+
 
 /*
  * We couldn't find a TLB entry.
@@ -1268,6 +1429,7 @@ SlowFault:
 #define	KERN_EXC_FRAME_SIZE	(STAND_FRAME_SIZE + KERN_REG_SIZE + 12)
 
 NNON_LEAF(MachKernGenException, KERN_EXC_FRAME_SIZE, ra)
+ALEAF(mips_r2000_KernGenException)
 	.set	noat
 #ifdef KADB
 	la	k0, kdbpcb			# save registers for kadb
@@ -1372,6 +1534,7 @@ END(MachKernGenException)
  *----------------------------------------------------------------------------
  */
 NNON_LEAF(MachUserGenException, STAND_FRAME_SIZE, ra)
+ALEAF(mips_r2000_UserGenException)
 	.set	noat
 	.mask	0x80000000, (STAND_RA_OFFSET - STAND_FRAME_SIZE)
 /*
@@ -1497,6 +1660,7 @@ END(MachUserGenException)
 #define	KINTR_FRAME_SIZE	(STAND_FRAME_SIZE + KERN_REG_SIZE + 16)
 
 NNON_LEAF(MachKernIntr, KINTR_FRAME_SIZE, ra)
+ALEAF(mips_r2000_KernIntr)
 	.set	noat
 	subu	sp, sp, KINTR_FRAME_SIZE	# allocate stack frame
 	.mask	0x80000000, (STAND_RA_OFFSET - KINTR_FRAME_SIZE)
@@ -1594,6 +1758,7 @@ END(MachKernIntr)
  *----------------------------------------------------------------------------
  */
 NNON_LEAF(MachUserIntr, STAND_FRAME_SIZE, ra)
+ALEAF(mips_r2000_UserIntr)
 	.set	noat
 	.mask	0x80000000, (STAND_RA_OFFSET - STAND_FRAME_SIZE)
 /*
@@ -1691,7 +1856,7 @@ NNON_LEAF(MachUserIntr, STAND_FRAME_SIZE, ra)
 	sw	s6, UADDR+U_PCB_REGS+(S6 * 4)
 	sw	s7, UADDR+U_PCB_REGS+(S7 * 4)
 	sw	s8, UADDR+U_PCB_REGS+(S8 * 4)
-	li	t0, MACH_HARD_INT_MASK | MACH_SR_INT_ENA_CUR
+	li	t0, MACH_HARD_INT_MASK | MIPS_SR_INT_IE
 /*
  * Call the software interrupt handler.
  */
@@ -1741,121 +1906,12 @@ NNON_LEAF(MachUserIntr, STAND_FRAME_SIZE, ra)
 	.set	at
 END(MachUserIntr)
 
-#if 0
-/*----------------------------------------------------------------------------
- *
- * MachTLBModException --
- *
- *	Handle a TLB modified exception.
- *	The BaddVAddr, Context, and EntryHi registers contain the failed
- *	virtual address.
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	None.
- *
- *----------------------------------------------------------------------------
- */
-NLEAF(MachTLBModException)
-	.set	noat
-	tlbp					# find the TLB entry
-	mfc0	k0, MACH_COP_0_TLB_LOW		# get the physical address
-	mfc0	k1, MACH_COP_0_TLB_INDEX	# check to be sure its valid
-	or	k0, k0, VMMACH_TLB_MOD_BIT	# update TLB
-	blt	k1, zero, 4f			# not found!!!
-	mtc0	k0, MACH_COP_0_TLB_LOW
-	li	k1, MACH_CACHED_MEMORY_ADDR
-	subu	k0, k0, k1
-	srl	k0, k0, VMMACH_TLB_PHYS_PAGE_SHIFT
-	la	k1, pmap_attributes
-	addu	k0, k0, k1
-	lbu	k1, 0(k0)			# fetch old value
-	nop
-	or	k1, k1, 1			# set modified bit
-	sb	k1, 0(k0)			# save new value
-	mfc0	k0, MACH_COP_0_EXC_PC		# get return address
-	nop
-	j	k0
-	rfe
-4:
-	break	0				# panic
-	.set	at
-END(MachTLBModException)
-#endif
 
-/*----------------------------------------------------------------------------
- *
- * MachTLBMissException --
- *
- *	Handle a TLB miss exception from kernel mode.
- *	The BaddVAddr, Context, and EntryHi registers contain the failed
- *	virtual address.
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	None.
- *
- *----------------------------------------------------------------------------
- */
-NLEAF(MachTLBMissException)
-	.set	noat
-	mfc0	k0, MACH_COP_0_BAD_VADDR	# get the fault address
-	li	k1, VM_MIN_KERNEL_ADDRESS	# compute index
-	subu	k0, k0, k1
-	lw	k1, _C_LABEL(Sysmapsize)	# index within range?
-	srl	k0, k0, PGSHIFT
-	sltu	k1, k0, k1
-	beq	k1, zero, 1f			# No. check for valid stack
-	nop
-	lw	k1, _C_LABEL(Sysmap)
-	sll	k0, k0, 2			# compute offset from index
-	addu	k1, k1, k0
-	lw	k0, 0(k1)			# get PTE entry
-	mfc0	k1, MACH_COP_0_EXC_PC		# get return address
-	mtc0	k0, MACH_COP_0_TLB_LOW		# save PTE entry
-	and	k0, k0, PG_V			# check for valid entry
-	beq	k0, zero, _C_LABEL(MachKernGenException) # PTE invalid
-	nop
-	tlbwr					# update TLB
-	j	k1
-	rfe
-
-1:
-	subu	k0, sp, UADDR + 0x200		# check to see if we have a
-	sltiu	k0, UPAGES*NBPG - 0x200		#  valid kernel stack
-	bne	k0, zero, _C_LABEL(MachKernGenException) # Go panic
-	nop
-
-	la	a0, start - START_FRAME - 8	# set sp to a valid place
-	sw	sp, 24(a0)
-	move	sp, a0
-	la	a0, 1f
-	mfc0	a2, MACH_COP_0_STATUS_REG
-	mfc0	a3, MACH_COP_0_CAUSE_REG
-	mfc0	a1, MACH_COP_0_EXC_PC
-	sw	a2, 16(sp)
-	sw	a3, 20(sp)
-	sw	sp, 24(sp)
-	move	a2, ra
-	jal	_C_LABEL(printf)
-	mfc0	a3, MACH_COP_0_BAD_VADDR
-	.data
-1:
-	.asciiz	"ktlbmiss: PC %x RA %x ADR %x\nSR %x CR %x SP %x\n"
-	.text
-
-	la	sp, start - START_FRAME		# set sp to a valid place
-	PANIC("kernel stack overflow")
-	.set	at
-END(MachTLBMissException)
 
 /*
  * Set/clear software interrupt routines.
  */
+
 LEAF(setsoftclock)
 	mfc0	v1, MACH_COP_0_STATUS_REG	# save status register
 	mtc0	zero, MACH_COP_0_STATUS_REG	# disable interrupts (2 cycles)
@@ -1918,7 +1974,7 @@ END(clearsoftnet)
 LEAF(MachEnableIntr)
 	mfc0	v0, MACH_COP_0_STATUS_REG	# read status register
 	nop
-	or	v0, v0, MACH_SR_INT_ENA_CUR
+	or	v0, v0, MIPS_SR_INT_IE
 	mtc0	v0, MACH_COP_0_STATUS_REG	# enable all interrupts
 	j	ra
 	nop
@@ -1927,10 +1983,10 @@ END(MachEnableIntr)
 LEAF(spl0)
 	mfc0	v0, MACH_COP_0_STATUS_REG	# read status register
 	nop
-	or	t0, v0, (MACH_INT_MASK | MACH_SR_INT_ENA_CUR)
+	or	t0, v0, (MACH_INT_MASK | MIPS_SR_INT_IE)
 	mtc0	t0, MACH_COP_0_STATUS_REG	# enable all interrupts
 	j	ra
-	and	v0, v0, (MACH_INT_MASK | MACH_SR_INT_ENA_CUR)
+	and	v0, v0, (MACH_INT_MASK | MIPS_SR_INT_IE)
 END(spl0)
 
 LEAF(splsoftclock)
@@ -1938,8 +1994,9 @@ LEAF(splsoftclock)
 	li	t0, ~MACH_SOFT_INT_MASK_0	# disable soft clock
 	and	t0, t0, v0
 	mtc0	t0, MACH_COP_0_STATUS_REG	# save it
+	nop					# 3 ins to disable on r4x00
 	j	ra
-	and	v0, v0, (MACH_INT_MASK | MACH_SR_INT_ENA_CUR)
+	and	v0, v0, (MACH_INT_MASK | MIPS_SR_INT_IE)
 END(splsoftclock)
 
 LEAF(splsoftnet)
@@ -1948,7 +2005,7 @@ LEAF(splsoftnet)
 	and	t0, t0, v0
 	mtc0	t0, MACH_COP_0_STATUS_REG	# save it
 	j	ra
-	and	v0, v0, (MACH_INT_MASK | MACH_SR_INT_ENA_CUR)
+	and	v0, v0, (MACH_INT_MASK | MIPS_SR_INT_IE)
 END(splsoftnet)
 
 LEAF(Mach_spl0)
@@ -1956,8 +2013,9 @@ LEAF(Mach_spl0)
 	li	t0, ~(MACH_INT_MASK_0|MACH_SOFT_INT_MASK_1|MACH_SOFT_INT_MASK_0)
 	and	t0, t0, v0
 	mtc0	t0, MACH_COP_0_STATUS_REG	# save it
+	nop					# 3 ins to disable on r4x00
 	j	ra
-	and	v0, v0, (MACH_INT_MASK | MACH_SR_INT_ENA_CUR)
+	and	v0, v0, (MACH_INT_MASK | MIPS_SR_INT_IE)
 END(Mach_spl0)
 
 LEAF(Mach_spl1)
@@ -1965,8 +2023,9 @@ LEAF(Mach_spl1)
 	li	t0, ~(MACH_INT_MASK_1|MACH_SOFT_INT_MASK_1|MACH_SOFT_INT_MASK_0)
 	and	t0, t0, v0
 	mtc0	t0, MACH_COP_0_STATUS_REG	# save it
+	nop					# 3 ins to disable on r4x00
 	j	ra
-	and	v0, v0, (MACH_INT_MASK | MACH_SR_INT_ENA_CUR)
+	and	v0, v0, (MACH_INT_MASK | MIPS_SR_INT_IE)
 END(Mach_spl1)
 
 LEAF(Mach_spl2)
@@ -1974,8 +2033,9 @@ LEAF(Mach_spl2)
 	li	t0, ~(MACH_INT_MASK_2|MACH_SOFT_INT_MASK_1|MACH_SOFT_INT_MASK_0)
 	and	t0, t0, v0
 	mtc0	t0, MACH_COP_0_STATUS_REG	# save it
+	nop					# 3 ins to disable on r4x00
 	j	ra
-	and	v0, v0, (MACH_INT_MASK | MACH_SR_INT_ENA_CUR)
+	and	v0, v0, (MACH_INT_MASK | MIPS_SR_INT_IE)
 END(Mach_spl2)
 
 LEAF(Mach_spl3)
@@ -1983,9 +2043,31 @@ LEAF(Mach_spl3)
 	li	t0, ~(MACH_INT_MASK_3|MACH_SOFT_INT_MASK_1|MACH_SOFT_INT_MASK_0)
 	and	t0, t0, v0
 	mtc0	t0, MACH_COP_0_STATUS_REG	# save it
+	nop					# 3 ins to disable on r4x00
 	j	ra
-	and	v0, v0, (MACH_INT_MASK | MACH_SR_INT_ENA_CUR)
+	and	v0, v0, (MACH_INT_MASK | MIPS_SR_INT_IE)
 END(Mach_spl3)
+
+LEAF(Mach_spl4)
+	mfc0	v0, MACH_COP_0_STATUS_REG	# read status register
+	li	t0, ~(MACH_INT_MASK_4|MACH_SOFT_INT_MASK_1|MACH_SOFT_INT_MASK_0)
+	and	t0, t0, v0
+	mtc0	t0, MACH_COP_0_STATUS_REG	# save it
+	nop					# 3 ins to disable
+	j	ra
+	and	v0, v0, (MACH_INT_MASK | MIPS_SR_INT_IE)
+END(Mach_spl4)
+
+LEAF(Mach_spl5)
+	mfc0	v0, MACH_COP_0_STATUS_REG	# read status register
+	li	t0, ~(MACH_INT_MASK_5|MACH_SOFT_INT_MASK_1|MACH_SOFT_INT_MASK_0)
+	and	t0, t0, v0
+	mtc0	t0, MACH_COP_0_STATUS_REG	# save it
+	nop					# 3 ins to disable
+	j	ra
+	and	v0, v0, (MACH_INT_MASK | MIPS_SR_INT_IE)
+END(Mach_spl5)
+
 
 /*
  * We define an alternate entry point after mcount is called so it
@@ -1994,11 +2076,12 @@ END(Mach_spl3)
 LEAF(splhigh)
 ALEAF(_splhigh)
 	mfc0	v0, MACH_COP_0_STATUS_REG	# read status register
-	li	t0, ~MACH_SR_INT_ENA_CUR	# disable all interrupts
+	li	t0, ~MIPS_SR_INT_IE	# disable all interrupts
 	and	t0, t0, v0
 	mtc0	t0, MACH_COP_0_STATUS_REG	# save it
+	nop					# 3 ins to disable on r4000
 	j	ra
-	and	v0, v0, (MACH_INT_MASK | MACH_SR_INT_ENA_CUR)
+	and	v0, v0, (MACH_INT_MASK | MIPS_SR_INT_IE)
 END(splhigh)
 
 /*
@@ -2007,10 +2090,11 @@ END(splhigh)
 LEAF(splx)
 ALEAF(_splx)
 	mfc0	v0, MACH_COP_0_STATUS_REG
-	li	t0, ~(MACH_INT_MASK | MACH_SR_INT_ENA_CUR)
+	li	t0, ~(MACH_INT_MASK | MIPS_SR_INT_IE)
 	and	t0, t0, v0
 	or	t0, t0, a0
 	mtc0	t0, MACH_COP_0_STATUS_REG
+	nop					# 3 ins to disable
 	j	ra
 	nop
 END(splx)
@@ -2044,6 +2128,131 @@ ALEAF(MachEmptyWriteBuffer)
 	nop
 END(MachEmptyWriteBuffer)
 
+
+/*----------------------------------------------------------------------------
+ *
+ *		XXX  START of r3000-specific code  XXX 
+ *
+ *----------------------------------------------------------------------------
+ */
+
+
+
+#if 0
+/*----------------------------------------------------------------------------
+ *
+ * MachTLBModException --
+ *
+ *	Handle a TLB modified exception.
+ *	The BaddVAddr, Context, and EntryHi registers contain the failed
+ *	virtual address.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------------
+ */
+NLEAF(MachTLBModException)
+ALEAF(mips_r2000_TLBModException)
+	.set	noat
+	tlbp					# find the TLB entry
+	mfc0	k0, MACH_COP_0_TLB_LOW		# get the physical address
+	mfc0	k1, MACH_COP_0_TLB_INDEX	# check to be sure its valid
+	or	k0, k0, VMMACH_TLB_MOD_BIT	# update TLB
+	blt	k1, zero, 4f			# not found!!!
+	mtc0	k0, MACH_COP_0_TLB_LOW
+	li	k1, MACH_CACHED_MEMORY_ADDR
+	subu	k0, k0, k1
+	srl	k0, k0, VMMACH_TLB_PHYS_PAGE_SHIFT
+	la	k1, pmap_attributes
+	addu	k0, k0, k1
+	lbu	k1, 0(k0)			# fetch old value
+	nop
+	or	k1, k1, 1			# set modified bit
+	sb	k1, 0(k0)			# save new value
+	mfc0	k0, MACH_COP_0_EXC_PC		# get return address
+	nop
+	j	k0
+	rfe
+4:
+	break	0				# panic
+	.set	at
+END(MachTLBModException)
+#endif
+
+/*----------------------------------------------------------------------------
+ *
+ * MachTLBMissException --
+ *
+ *	Handle a TLB miss exception from kernel mode.
+ *	The BaddVAddr, Context, and EntryHi registers contain the failed
+ *	virtual address.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------------
+ */
+NLEAF(MachTLBMissException)
+ALEAF(mips_r2000_TLBMissException)
+	.set	noat
+	mfc0	k0, MACH_COP_0_BAD_VADDR	# get the fault address
+	li	k1, VM_MIN_KERNEL_ADDRESS	# compute index
+	subu	k0, k0, k1
+	lw	k1, _C_LABEL(Sysmapsize)	# index within range?
+	srl	k0, k0, PGSHIFT
+	sltu	k1, k0, k1
+	beq	k1, zero, 1f			# No. check for valid stack
+	nop
+	lw	k1, _C_LABEL(Sysmap)
+	sll	k0, k0, 2			# compute offset from index
+	addu	k1, k1, k0
+	lw	k0, 0(k1)			# get PTE entry
+	mfc0	k1, MACH_COP_0_EXC_PC		# get return address
+	mtc0	k0, MACH_COP_0_TLB_LOW		# save PTE entry
+	and	k0, k0, PG_V			# check for valid entry
+	beq	k0, zero, _C_LABEL(MachKernGenException) # PTE invalid
+	nop
+	tlbwr					# update TLB
+	j	k1
+	rfe
+
+1:
+	subu	k0, sp, UADDR + 0x200		# check to see if we have a
+	sltiu	k0, UPAGES*NBPG - 0x200		#  valid kernel stack
+	bne	k0, zero, _C_LABEL(MachKernGenException) # Go panic
+	nop
+
+	la	a0, start - START_FRAME - 8	# set sp to a valid place
+	sw	sp, 24(a0)
+	move	sp, a0
+	la	a0, 1f
+	mfc0	a2, MACH_COP_0_STATUS_REG
+	mfc0	a3, MACH_COP_0_CAUSE_REG
+	mfc0	a1, MACH_COP_0_EXC_PC
+	sw	a2, 16(sp)
+	sw	a3, 20(sp)
+	sw	sp, 24(sp)
+	move	a2, ra
+	jal	_C_LABEL(printf)
+	mfc0	a3, MACH_COP_0_BAD_VADDR
+	.data
+1:
+	.asciiz	"ktlbmiss: PC %x RA %x ADR %x\nSR %x CR %x SP %x\n"
+	.text
+
+	la	sp, start - START_FRAME		# set sp to a valid place
+	PANIC("kernel stack overflow")
+	.set	at
+END(MachTLBMissException)
+
+
 /*--------------------------------------------------------------------------
  *
  * MachTLBWriteIndexed --
@@ -2064,6 +2273,7 @@ END(MachEmptyWriteBuffer)
  *--------------------------------------------------------------------------
  */
 LEAF(MachTLBWriteIndexed)
+ALEAF(mips_r2000_TLBWriteIndexed)
 	mfc0	v1, MACH_COP_0_STATUS_REG	# Save the status register.
 	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts
 	mfc0	t0, MACH_COP_0_TLB_HI		# Save the current PID.
@@ -2134,6 +2344,7 @@ END(MachTLBWriteRandom)
  *--------------------------------------------------------------------------
  */
 LEAF(MachSetPID)
+ALEAF(mips_r2000_SetPID)
 	sll	a0, a0, VMMACH_TLB_PID_SHIFT	# put PID in right spot
 	mtc0	a0, MACH_COP_0_TLB_HI		# Write the hi reg value
 	j	ra
@@ -2157,6 +2368,7 @@ END(MachSetPID)
  *--------------------------------------------------------------------------
  */
 LEAF(MachTLBFlush)
+ALEAF(mips_r2000_TLBFlush)
 	mfc0	v1, MACH_COP_0_STATUS_REG	# Save the status register.
 	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts
 	mfc0	t0, MACH_COP_0_TLB_HI		# Save the PID
@@ -2248,6 +2460,7 @@ END(MachTLBFlushPID)
  *--------------------------------------------------------------------------
  */
 LEAF(MachTLBFlushAddr)
+ALEAF(mips_r2000_TLBFlushAddr)
 	mfc0	v1, MACH_COP_0_STATUS_REG	# Save the status register.
 	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts
 	mfc0	t0, MACH_COP_0_TLB_HI		# Get current PID
@@ -2287,6 +2500,7 @@ END(MachTLBFlushAddr)
  *--------------------------------------------------------------------------
  */
 LEAF(MachTLBUpdate)
+ALEAF(mips_r2000_TLBUpdate)
 	mfc0	v1, MACH_COP_0_STATUS_REG	# Save the status register.
 	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts
 	mfc0	t0, MACH_COP_0_TLB_HI		# Save current PID
@@ -2412,8 +2626,1172 @@ LEAF(MachTLBGetPID)
 	srl	v0, v0, VMMACH_TLB_PID_SHIFT	# put PID in right spot
 END(MachTLBGetPID)
 
+
+/*----------------------------------------------------------------------------
+ *
+ *	R3000 cache sizing and flushing code.
+ *
+ *----------------------------------------------------------------------------
+ */
+
+
+/*----------------------------------------------------------------------------
+ *
+ * MachConfigCache --
+ *
+ *	Size the caches.
+ *	NOTE: should only be called from mach_init().
+ *
+ * Results:
+ *     	None.
+ *
+ * Side effects:
+ *	The size of the data cache is stored into machDataCacheSize and the
+ *	size of instruction cache is stored into machInstCacheSize.
+ *
+ *----------------------------------------------------------------------------
+ */
+NON_LEAF(MachConfigCache, STAND_FRAME_SIZE, ra)
+ALEAF(mips_r2000_ConfigCache)
+	subu	sp, sp, STAND_FRAME_SIZE
+	sw	ra, STAND_RA_OFFSET(sp)		# Save return address.
+	.mask	0x80000000, (STAND_RA_OFFSET - STAND_FRAME_SIZE)
+	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts.
+	la	v0, 1f
+	or	v0, MACH_UNCACHED_MEMORY_ADDR	# Run uncached.
+	j	v0
+	nop
+1:
 /*
- * Return the current value of the cause register.
+ * This works because jal doesn't change pc[31..28] and the
+ * linker still thinks SizeCache is in the cached region so it computes
+ * the correct address without complaining.
+ */
+	jal	_C_LABEL(SizeCache)		# Get the size of the d-cache.
+	nop
+	sw	v0, _C_LABEL(machDataCacheSize)
+	nop					# Make sure sw out of pipe
+	nop
+	nop
+	nop
+	li	v0, MACH_SR_SWAP_CACHES		# Swap caches
+	mtc0	v0, MACH_COP_0_STATUS_REG
+	nop					# Insure caches stable
+	nop
+	nop
+	nop
+	jal	_C_LABEL(SizeCache)		# Get the size of the i-cache.
+	nop
+	mtc0	zero, MACH_COP_0_STATUS_REG	# Swap back caches and enable.
+	nop
+	nop
+	nop
+	nop
+	sw	v0, _C_LABEL(machInstCacheSize)
+	la	t0, 1f
+	j	t0				# Back to cached mode
+	nop
+1:
+	lw	ra, STAND_RA_OFFSET(sp)		# Restore return addr
+	addu	sp, sp, STAND_FRAME_SIZE	# Restore sp.
+	j	ra
+	nop
+END(MachConfigCache)
+
+/*----------------------------------------------------------------------------
+ *
+ * SizeCache --
+ *
+ *	Get the size of the cache.
+ *
+ * Results:
+ *	The size of the cache.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------------
+ */
+LEAF(SizeCache)
+ALEAF(mips_r2000_SizeCache)
+	mfc0	t0, MACH_COP_0_STATUS_REG	# Save the current status reg.
+	nop
+	or	v0, t0, MACH_SR_ISOL_CACHES	# Isolate the caches.
+	nop					# Make sure no stores in pipe
+	mtc0	v0, MACH_COP_0_STATUS_REG
+	nop					# Make sure isolated
+	nop
+	nop
+/*
+ * Clear cache size boundaries.
+ */
+	li	v0, MACH_MIN_CACHE_SIZE
+	li	v1, MACH_CACHED_MEMORY_ADDR
+	li	t2, MACH_MAX_CACHE_SIZE
+1:
+	addu	t1, v0, v1			# Compute address to clear
+	sw	zero, 0(t1)			# Clear cache memory
+	bne	v0, t2, 1b
+	sll	v0, v0, 1
+
+	li	v0, -1
+	sw	v0, 0(v1)			# Store marker in cache
+	li	v0, MACH_MIN_CACHE_SIZE
+2:
+	addu	t1, v0, v1			# Compute address
+	lw	t3, 0(t1)			# Look for marker
+	nop
+	bne	t3, zero, 3f			# Found marker.
+	nop
+	bne	v0, t2, 2b			# keep looking
+	sll	v0, v0, 1			# cache size * 2
+
+	move	v0, zero			# must be no cache
+3:
+	mtc0	t0, MACH_COP_0_STATUS_REG
+	nop					# Make sure unisolated
+	nop
+	nop
+	nop
+	j	ra
+	nop
+END(SizeCache)
+
+/*----------------------------------------------------------------------------
+ *
+ * MachFlushCache --
+ *
+ *	Flush the caches.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	The contents of the caches is flushed.
+ *
+ *----------------------------------------------------------------------------
+ */
+LEAF(MachFlushCache)
+ALEAF(mips_r2000_FlushCache)
+	lw	t1, _C_LABEL(machInstCacheSize)	# Must load before isolating
+	lw	t2, _C_LABEL(machDataCacheSize)	# Must load before isolating
+	mfc0	t3, MACH_COP_0_STATUS_REG 	# Save the status register.
+	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts.
+	la	v0, 1f
+	or	v0, MACH_UNCACHED_MEMORY_ADDR	# Run uncached.
+	j	v0
+	nop
+/*
+ * Flush the instruction cache.
+ */
+1:
+	li	v0, MACH_SR_ISOL_CACHES | MACH_SR_SWAP_CACHES
+	mtc0	v0, MACH_COP_0_STATUS_REG	# Isolate and swap caches.
+	li	t0, MACH_UNCACHED_MEMORY_ADDR
+	subu	t0, t0, t1
+	li	t1, MACH_UNCACHED_MEMORY_ADDR
+	la	v0, 1f				# Run cached
+	j	v0
+	nop
+1:
+	addu	t0, t0, 4
+	bne	t0, t1, 1b
+	sb	zero, -4(t0)
+
+	la	v0, 1f
+	or	v0, MACH_UNCACHED_MEMORY_ADDR
+	j	v0				# Run uncached
+	nop
+/*
+ * Flush the data cache.
+ */
+1:
+	li	v0, MACH_SR_ISOL_CACHES
+	mtc0	v0, MACH_COP_0_STATUS_REG	# Isolate and swap back caches
+	li	t0, MACH_UNCACHED_MEMORY_ADDR
+	subu	t0, t0, t2
+	la	v0, 1f
+	j	v0				# Back to cached mode
+	nop
+1:
+	addu	t0, t0, 4
+	bne	t0, t1, 1b
+	sb	zero, -4(t0)
+
+	nop					# Insure isolated stores
+	nop					#   out of pipe.
+	nop
+	nop
+	mtc0	t3, MACH_COP_0_STATUS_REG	# Restore status reg.
+	nop					# Insure cache unisolated.
+	nop
+	nop
+	nop
+	j	ra
+	nop
+END(MachFlushCache)
+
+/*----------------------------------------------------------------------------
+ *
+ * MachFlushICache --
+ *
+ *	void MachFlushICache(addr, len)
+ *		vm_offset_t addr, len;
+ *
+ *	Flush instruction cache for range of addr to addr + len - 1.
+ *	The address can be any valid address so long as no TLB misses occur.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	The contents of the cache is flushed.
+ *
+ *----------------------------------------------------------------------------
+ */
+LEAF(MachFlushICache)
+ALEAF(mips_r2000_FlushICache)
+	mfc0	t0, MACH_COP_0_STATUS_REG	# Save SR
+	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts.
+
+	la	v1, 1f
+	or	v1, MACH_UNCACHED_MEMORY_ADDR	# Run uncached.
+	j	v1
+	nop
+1:
+	bc0f	1b				# make sure stores are complete
+	li	v1, MACH_SR_ISOL_CACHES | MACH_SR_SWAP_CACHES
+	mtc0	v1, MACH_COP_0_STATUS_REG
+	nop
+	addu	a1, a1, a0			# compute ending address
+1:
+	addu	a0, a0, 4
+	bne	a0, a1, 1b
+	sb	zero, -4(a0)
+
+	mtc0	t0, MACH_COP_0_STATUS_REG	# enable interrupts
+	j	ra				# return and run cached
+	nop
+END(MachFlushICache)
+
+/*----------------------------------------------------------------------------
+ *
+ * MachFlushDCache --
+ *
+ *	void MachFlushDCache(addr, len)
+ *		vm_offset_t addr, len;
+ *
+ *	Flush data cache for range of addr to addr + len - 1.
+ *	The address can be any valid address so long as no TLB misses occur.
+ *	(Be sure to use cached K0SEG kernel addresses)
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	The contents of the cache is flushed.
+ *
+ *----------------------------------------------------------------------------
+ */
+LEAF(MachFlushDCache)
+ALEAF(mips_r2000_FlushDCache)
+	mfc0	t0, MACH_COP_0_STATUS_REG	# Save SR
+	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts.
+	nop
+1:
+	bc0f	1b				# make sure stores are complete
+# BUG: should drain write buffer.
+# The insn above does not work on some all DEC machines, or all variants
+# of the mips architecture.
+	li	v1, MACH_SR_ISOL_CACHES
+	mtc0	v1, MACH_COP_0_STATUS_REG
+	nop
+	addu	t1, a1, a0			# compute ending address
+1:
+	sb	zero, 0(a0)
+	sb	zero, 4(a0)
+	sb	zero, 8(a0)
+	sb	zero, 12(a0)
+	sb	zero, 16(a0)
+	sb	zero, 20(a0)
+	sb	zero, 24(a0)
+	addu	a0, 32
+	bltu	a0, t1, 1b
+	sb	zero, -4(a0)
+
+	nop					# drain pipeline
+	nop
+	mtc0	t0, MACH_COP_0_STATUS_REG	# enable interrupts
+	nop
+	j	ra				# return and run cached
+	nop
+END(MachFlushDCache)
+
+/*----------------------------------------------------------------------------
+ *
+ *		XXX  END of r3000-specific code  XXX 
+ *
+ *----------------------------------------------------------------------------
+ */
+
+
+
+#ifdef notyet	/* XXX -- r4000 support, not yet */
+
+
+/*----------------------------------------------------------------------------
+ *
+ *		XXX  START of r4000-specific code  XXX 
+ *
+ *----------------------------------------------------------------------------
+ */
+
+
+/*----------------------------------------------------------------------------
+ *
+ *	R4000 TLB exception handlers
+ *
+ *----------------------------------------------------------------------------
+ */
+
+
+/*----------------------------------------------------------------------------
+ *
+ * MachTLBMInvalidException --
+ *
+ *	Handle a TLB invalid exception from kernel mode in kernel space.
+ *	The BaddVAddr, Context, and EntryHi registers contain the failed
+ *	virtual address.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------------
+ */
+NLEAF(MachTLBInvalidException)
+	.set	noat
+	dmfc0	k0, MACH_COP_0_BAD_VADDR	# get the fault address
+	li	k1, VM_MIN_KERNEL_ADDRESS	# compute index
+	subu	k0, k0, k1
+	lw	k1, Sysmapsize			# index within range?
+	srl	k0, k0, PGSHIFT
+	sltu	k1, k0, k1
+	beq	k1, zero, sys_stk_chk		# No. check for valid stack
+	lw	k1, Sysmap
+
+	sll	k0, k0, 2			# compute offset from index
+	tlbp					# Probe the invalid entry
+	addu	k1, k1, k0
+	and	k0, k0, 4			# check even/odd page
+	bne	k0, zero, KernTLBIOdd
+	nop
+
+	mfc0	k0, MACH_COP_0_TLB_INDEX
+	nop
+	bltz	k0, sys_stk_chk
+	sltiu	k0, k0, 8
+
+	bne	k0, zero, sys_stk_chk
+	lw	k0, 0(k1)			# get PTE entry
+
+	dsll	k0, k0, 34			# get rid of "wired" bit
+	dsrl	k0, k0, 34
+	dmtc0	k0, MACH_COP_0_TLB_LO0		# load PTE entry
+	and	k0, k0, PG_V			# check for valid entry
+	beq	k0, zero, MachKernGenException	# PTE invalid
+	lw	k0, 4(k1)			# get odd PTE entry
+	dsll	k0, k0, 34
+	dsrl	k0, k0, 34
+	dmtc0	k0, MACH_COP_0_TLB_LO1		# load PTE entry
+	nop
+	tlbwi					# write TLB
+	nop
+	nop
+	nop
+	nop
+	nop
+	eret
+
+KernTLBIOdd:
+	mfc0	k0, MACH_COP_0_TLB_INDEX
+	nop
+	bltz	k0, sys_stk_chk
+	sltiu	k0, k0, 8
+
+	bne	k0, zero, sys_stk_chk
+	lw	k0, 0(k1)			# get PTE entry
+
+	dsll	k0, k0, 34			# get rid of wired bit
+	dsrl	k0, k0, 34
+	dmtc0	k0, MACH_COP_0_TLB_LO1		# save PTE entry
+	and	k0, k0, PG_V			# check for valid entry
+	beq	k0, zero, MachKernGenException	# PTE invalid
+	lw	k0, -4(k1)			# get even PTE entry
+	dsll	k0, k0, 34
+	dsrl	k0, k0, 34
+	dmtc0	k0, MACH_COP_0_TLB_LO0		# save PTE entry
+	nop
+	tlbwi					# update TLB
+	nop
+	nop
+	nop
+	nop
+	nop
+	eret
+END(MachTLBInvalidException)
+
+/*----------------------------------------------------------------------------
+ *
+ * MachTLBMissException --
+ *
+ *	Handle a TLB miss exception from kernel mode in kernel space.
+ *	The BaddVAddr, Context, and EntryHi registers contain the failed
+ *	virtual address.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------------
+ */
+NLEAF(MachTLBMissException)
+	.set	noat
+	dmfc0	k0, MACH_COP_0_BAD_VADDR	# get the fault address
+	li	k1, VM_MIN_KERNEL_ADDRESS	# compute index
+	subu	k0, k0, k1
+	lw	k1, Sysmapsize			# index within range?
+	srl	k0, k0, PGSHIFT
+	sltu	k1, k0, k1
+	beq	k1, zero, sys_stk_chk		# No. check for valid stack
+	lw	k1, Sysmap
+	srl	k0, k0, 1
+	sll	k0, k0, 3			# compute offset from index
+	addu	k1, k1, k0
+	lw	k0, 0(k1)			# get PTE entry
+	lw	k1, 4(k1)			# get odd PTE entry
+	dsll	k0, k0, 34			# get rid of "wired" bit
+	dsrl	k0, k0, 34
+	dmtc0	k0, MACH_COP_0_TLB_LO0		# load PTE entry
+	dsll	k1, k1, 34
+	dsrl	k1, k1, 34
+	dmtc0	k1, MACH_COP_0_TLB_LO1		# load PTE entry
+	nop
+	tlbwr					# write TLB
+	nop
+	nop
+	nop
+	nop
+	nop
+	eret
+
+sys_stk_chk:
+	subu	k0, sp, UADDR + 0x200		# check to see if we have a
+	sltiu	k0, UPAGES*NBPG - 0x200		#  valid kernel stack
+	bne	k0, zero, MachKernGenException	# Go panic
+	nop
+
+	la	a0, start - START_FRAME - 8	# set sp to a valid place
+	sw	sp, 24(a0)
+	move	sp, a0
+	la	a0, 1f
+	mfc0	a2, MACH_COP_0_STATUS_REG
+	mfc0	a3, MACH_COP_0_CAUSE_REG
+	dmfc0	a1, MACH_COP_0_EXC_PC
+	sw	a2, 16(sp)
+	sw	a3, 20(sp)
+	move	a2, ra
+	jal	printf
+	dmfc0	a3, MACH_COP_0_BAD_VADDR
+	.data
+1:
+	.asciiz	"ktlbmiss: PC %x RA %x ADR %x\nSR %x CR %x SP %x\n"
+	.text
+
+	la	sp, start - START_FRAME		# set sp to a valid place
+	PANIC("kernel stack overflow")
+	.set	at
+END(MachTLBMissException)
+
+
+/*--------------------------------------------------------------------------
+ *
+ * MachTLBWriteIndexed --
+ *
+ *	Write the given entry into the TLB at the given index.
+ *
+ *	MachTLBWriteIndexed(index, tlb)
+ *		unsigned index;
+ *		tlb *tlb;
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	TLB entry set.
+ *
+ *--------------------------------------------------------------------------
+ */
+LEAF(MachTLBWriteIndexed)
+ALEAF(mips_r2000_TLBWriteIndexed)
+	mfc0	v1, MACH_COP_0_STATUS_REG	# Save the status register.
+	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts
+	nop
+	lw	a2, 8(a1)
+	lw	a3, 12(a1)
+	dmfc0	t0, MACH_COP_0_TLB_HI		# Save the current PID.
+
+	dmtc0	a2, MACH_COP_0_TLB_LO0		# Set up entry low0.
+	dmtc0	a3, MACH_COP_0_TLB_LO1		# Set up entry low1.
+	lw	a2, 0(a1)
+	lw	a3, 4(a1)
+	mtc0	a0, MACH_COP_0_TLB_INDEX	# Set the index.
+	dmtc0	a2, MACH_COP_0_TLB_PG_MASK	# Set up entry mask.
+	dmtc0	a3, MACH_COP_0_TLB_HI		# Set up entry high.
+	nop
+	tlbwi					# Write the TLB
+	nop
+	nop
+	nop					# Delay for effect
+	nop
+
+	dmtc0	t0, MACH_COP_0_TLB_HI		# Restore the PID.
+	nop
+	dmtc0	zero, MACH_COP_0_TLB_PG_MASK	# Default mask value.
+	j	ra
+	mtc0	v1, MACH_COP_0_STATUS_REG	# Restore the status register
+END(MachTLBWriteIndexed)
+
+/*--------------------------------------------------------------------------
+ *
+ * MachSetPID --
+ *
+ *	Write the given pid into the TLB pid reg.
+ *
+ *	MachSetPID(pid)
+ *		int pid;
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	PID set in the entry hi register.
+ *
+ *--------------------------------------------------------------------------
+ */
+LEAF(MachSetPID)
+	dmtc0	a0, MACH_COP_0_TLB_HI		# Write the hi reg value
+	j	ra
+	nop
+END(MachSetPID)
+
+/*--------------------------------------------------------------------------
+ *
+ * MachSetWIRED --
+ *
+ *	Write the given value into the TLB wired reg.
+ *
+ *	MachSetPID(wired)
+ *		int wired;
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	WIRED set in the wired register.
+ *
+ *--------------------------------------------------------------------------
+ */
+LEAF(MachSetWIRED)
+	mtc0	a0, MACH_COP_0_TLB_WIRED
+	j	ra
+	nop
+END(MachSetWIRED)
+
+/*--------------------------------------------------------------------------
+ *
+ * MachGetWIRED --
+ *
+ *	Get the value from the TLB wired reg.
+ *
+ *	MachGetWIRED(void)
+ *
+ * Results:
+ *	Value of wired reg.
+ *
+ * Side effects:
+ *	None.
+ *
+ *--------------------------------------------------------------------------
+ */
+LEAF(MachGetWIRED)
+	mfc0	v0, MACH_COP_0_TLB_WIRED
+	j	ra
+	nop
+END(MachGetWIRED)
+
+/*--------------------------------------------------------------------------
+ *
+ * MachTLBFlush --
+ *
+ *	Flush the "random" entries from the TLB.
+ *	Uses "wired" register to determine what register to start with.
+ *
+ *	MachTLBFlush()
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	The TLB is flushed.
+ *
+ *--------------------------------------------------------------------------
+ */
+LEAF(MachTLBFlush)
+	mfc0	v1, MACH_COP_0_STATUS_REG	# Save the status register.
+	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts
+	mfc0	t1, MACH_COP_0_TLB_WIRED
+	li	t2, VMMACH_NUM_TLB_ENTRIES
+	li	v0, MACH_CACHED_MEMORY_ADDR	# invalid address
+	dmfc0	t0, MACH_COP_0_TLB_HI		# Save the PID
+
+	dmtc0	v0, MACH_COP_0_TLB_HI		# Mark entry high as invalid
+	dmtc0	zero, MACH_COP_0_TLB_LO0	# Zero out low entry0.
+	dmtc0	zero, MACH_COP_0_TLB_LO1	# Zero out low entry1.
+	mtc0	zero, MACH_COP_0_TLB_PG_MASK	# Zero out mask entry.
+/*
+ * Align the starting value (t1) and the upper bound (t2).
+ */
+1:
+	mtc0	t1, MACH_COP_0_TLB_INDEX	# Set the index register.
+	addu	t1, t1, 1			# Increment index.
+	tlbwi					# Write the TLB entry.
+	nop
+	nop
+	bne	t1, t2, 1b
+	nop
+
+	dmtc0	t0, MACH_COP_0_TLB_HI		# Restore the PID
+	j	ra
+	mtc0	v1, MACH_COP_0_STATUS_REG	# Restore the status register
+END(MachTLBFlush)
+
+
+/*--------------------------------------------------------------------------
+ *
+ * MachTLBFlushAddr --
+ *
+ *	Flush any TLB entries for the given address and TLB PID.
+ *
+ *	MachTLBFlushAddr(TLBhi)
+ *		unsigned TLBhi;
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	The process's page is flushed from the TLB.
+ *
+ *--------------------------------------------------------------------------
+ */
+LEAF(MachTLBFlushAddr)
+	mfc0	v1, MACH_COP_0_STATUS_REG	# Save the status register.
+	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts
+	nop
+	li	v0, (PG_HVPN | PG_ASID)
+	and	a0, a0, v0			# Make shure valid hi value.
+	dmfc0	t0, MACH_COP_0_TLB_HI		# Get current PID
+	dmtc0	a0, MACH_COP_0_TLB_HI		# look for addr & PID
+	nop
+	nop
+	nop
+	tlbp					# Probe for the entry.
+	nop
+	nop					# Delay for effect
+	nop
+	mfc0	v0, MACH_COP_0_TLB_INDEX	# See what we got
+	li	t1, MACH_CACHED_MEMORY_ADDR	# Load invalid entry.
+	bltz	v0, 1f				# index < 0 => !found
+	nop
+	dmtc0	t1, MACH_COP_0_TLB_HI		# Mark entry high as invalid
+
+	dmtc0	zero, MACH_COP_0_TLB_LO0	# Zero out low entry.
+	dmtc0	zero, MACH_COP_0_TLB_LO1	# Zero out low entry.
+	nop
+	tlbwi
+	nop
+	nop
+	nop
+	nop
+1:
+	dmtc0	t0, MACH_COP_0_TLB_HI		# restore PID
+	j	ra
+	mtc0	v1, MACH_COP_0_STATUS_REG	# Restore the status register
+END(MachTLBFlushAddr)
+
+/*--------------------------------------------------------------------------
+ *
+ * MachTLBUpdate --
+ *
+ *	Update the TLB if highreg is found; otherwise, enter the data.
+ *
+ *	MachTLBUpdate(virpageadr, lowregx)
+ *		unsigned virpageadr, lowregx;
+ *
+ * Results:
+ *	< 0 if loaded >= 0 if updated.
+ *
+ * Side effects:
+ *	None.
+ *
+ *--------------------------------------------------------------------------
+ */
+LEAF(MachTLBUpdate)
+	mfc0	v1, MACH_COP_0_STATUS_REG	# Save the status register.
+	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts
+	and	t1, a0, 0x1000			# t1 = Even/Odd flag
+	li	v0, (PG_HVPN | PG_ASID)
+	and	a0, a0, v0
+	dmfc0	t0, MACH_COP_0_TLB_HI		# Save current PID
+	dmtc0	a0, MACH_COP_0_TLB_HI		# Init high reg
+	and	a2, a1, PG_G			# Copy global bit
+	nop
+	nop
+	tlbp					# Probe for the entry.
+	dsll	a1, a1, 34
+	dsrl	a1, a1, 34
+	bne	t1, zero, 2f			# Decide even odd
+	mfc0	v0, MACH_COP_0_TLB_INDEX	# See what we got
+# EVEN
+	nop
+	bltz	v0, 1f				# index < 0 => !found
+	nop
+
+	tlbr					# update, read entry first
+	nop
+	nop
+	nop
+	dmtc0	a1, MACH_COP_0_TLB_LO0		# init low reg0.
+	nop
+	tlbwi					# update slot found
+	b	4f
+	nop
+1:
+	mtc0	zero, MACH_COP_0_TLB_PG_MASK	# init mask.
+	dmtc0	a0, MACH_COP_0_TLB_HI		# init high reg.
+	dmtc0	a1, MACH_COP_0_TLB_LO0		# init low reg0.
+	dmtc0	a2, MACH_COP_0_TLB_LO1		# init low reg1.
+	nop
+	tlbwr					# enter into a random slot
+	b	4f
+	nop
+# ODD
+2:
+	nop
+	bltz	v0, 3f				# index < 0 => !found
+	nop
+
+	tlbr					# read the entry first
+	nop
+	nop
+	nop
+	dmtc0	a1, MACH_COP_0_TLB_LO1		# init low reg1.
+	nop
+	tlbwi					# update slot found
+	b	4f
+	nop
+3:
+	mtc0	zero, MACH_COP_0_TLB_PG_MASK	# init mask.
+	dmtc0	a0, MACH_COP_0_TLB_HI		# init high reg.
+	dmtc0	a2, MACH_COP_0_TLB_LO0		# init low reg0.
+	dmtc0	a1, MACH_COP_0_TLB_LO1		# init low reg1.
+	nop
+	tlbwr					# enter into a random slot
+
+4:						# Make shure pipeline
+	nop					# advances before we
+	nop					# uses the tlb.
+	nop
+	nop
+	dmtc0	t0, MACH_COP_0_TLB_HI		# restore PID
+	j	ra
+	mtc0	v1, MACH_COP_0_STATUS_REG	# Restore the status register
+END(MachTLBUpdate)
+
+/*--------------------------------------------------------------------------
+ *
+ * MachTLBRead --
+ *
+ *	Read the TLB entry.
+ *
+ *	MachTLBRead(entry, tlb)
+ *		unsigned entry;
+ *		struct tlb *tlb;
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	tlb will contain the TLB entry found.
+ *
+ *--------------------------------------------------------------------------
+ */
+LEAF(MachTLBRead)
+	mfc0	v1, MACH_COP_0_STATUS_REG	# Save the status register.
+	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts
+	nop
+	nop
+	nop
+	dmfc0	t0, MACH_COP_0_TLB_HI		# Get current PID
+
+	mtc0	a0, MACH_COP_0_TLB_INDEX	# Set the index register
+	nop
+	tlbr					# Read from the TLB
+	nop
+	nop
+	nop
+	mfc0	t2, MACH_COP_0_TLB_PG_MASK	# fetch the hi entry
+	dmfc0	t3, MACH_COP_0_TLB_HI		# fetch the hi entry
+	dmfc0	t4, MACH_COP_0_TLB_LO0		# See what we got
+	dmfc0	t5, MACH_COP_0_TLB_LO1		# See what we got
+	dmtc0	t0, MACH_COP_0_TLB_HI		# restore PID
+	nop
+	nop
+	nop					# wait for PID active
+	mtc0	v1, MACH_COP_0_STATUS_REG	# Restore the status register
+	sw	t2, 0(a1)
+	sw	t3, 4(a1)
+	sw	t4, 8(a1)
+	j	ra
+	sw	t5, 12(a1)
+END(MachTLBRead)
+
+/*--------------------------------------------------------------------------
+ *
+ * MachTLBGetPID --
+ *
+ *	MachTLBGetPID()
+ *
+ * Results:
+ *	Returns the current TLB pid reg.
+ *
+ * Side effects:
+ *	None.
+ *
+ *--------------------------------------------------------------------------
+ */
+LEAF(MachTLBGetPID)
+	dmfc0	v0, MACH_COP_0_TLB_HI		# get PID
+	j	ra
+	and	v0, v0, VMMACH_TLB_PID		# mask off PID
+END(MachTLBGetPID)
+
+
+
+/*----------------------------------------------------------------------------
+ *
+ *	R4000 cache sizing and flushing code.
+ *
+ *----------------------------------------------------------------------------
+ */
+
+
+/*----------------------------------------------------------------------------
+ *
+ * MachConfigCache --
+ *
+ *	Size the caches.
+ *	NOTE: should only be called from mach_init().
+ *
+ * Results:
+ *     	None.
+ *
+ * Side effects:
+ *	The size of the data cache is stored into machPrimaryDataCacheSize.
+ *	The size of instruction cache is stored into machPrimaryInstCacheSize.
+ *	Alignment mask for cache aliasing test is stored in machCacheAliasMask.
+ *
+ *----------------------------------------------------------------------------
+ */
+LEAF(MachConfigCache)
+	mfc0	v0, MACH_COP_0_CONFIG		# Get configuration register
+	nop
+	srl	t1, v0, 9			# Get I cache size.
+	and	t1, 3
+	li	t2, 4096
+	sllv	t2, t2, t1
+	sw	t2, machPrimaryDataCacheSize
+	addiu	t2, -1
+	and	t2, ~(NBPG - 1)
+	sw	t2, machCacheAliasMask
+
+	and	t2, v0, 0x20
+	srl	t2, t2, 1
+	addu	t2, t2, 16
+	sw	t2, machPrimaryDataCacheLSize
+
+	srl	t1, v0, 6			# Get I cache size.
+	and	t1, 3
+	li	t2, 4096
+	sllv	t2, t2, t1
+	sw	t2, machPrimaryInstCacheSize
+
+	and	t2, v0, 0x10
+	addu	t2, t2, 16
+	sw	t2, machPrimaryInstCacheLSize
+	j	ra
+	nop
+END(MachConfigCache)
+
+/*----------------------------------------------------------------------------
+ *
+ * MachFlushCache --
+ *
+ *	Flush the caches. Assumes a line size of 16 bytes for speed.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	The contents of the caches is flushed.
+ *
+ *----------------------------------------------------------------------------
+ */
+LEAF(MachFlushCache)
+	lw	t1, machPrimaryInstCacheSize
+	lw	t2, machPrimaryDataCacheSize
+ #	lw	t3, machPrimaryInstCacheLSize
+ #	lw	t4, machPrimaryDataCacheLSize
+/*
+ * Flush the instruction cache.
+ */
+	li	t0, MACH_CACHED_MEMORY_ADDR
+	addu	t1, t0, t1		# End address
+	subu	t1, t1, 128
+1:
+	cache	0, 0(t0)
+	cache	0, 16(t0)
+	cache	0, 32(t0)
+	cache	0, 48(t0)
+	cache	0, 64(t0)
+	cache	0, 80(t0)
+	cache	0, 96(t0)
+	cache	0, 112(t0)
+	bne	t0, t1, 1b
+	addu	t0, t0, 128
+
+/*
+ * Flush the data cache.
+ */
+	li	t0, MACH_CACHED_MEMORY_ADDR
+	addu	t1, t0, t2		# End address
+	subu	t1, t1, 128
+1:
+	cache	1, 0(t0)
+	cache	1, 16(t0)
+	cache	1, 32(t0)
+	cache	1, 48(t0)
+	cache	1, 64(t0)
+	cache	1, 80(t0)
+	cache	1, 96(t0)
+	cache	1, 112(t0)
+	bne	t0, t1, 1b
+	addu	t0, t0, 128
+
+	j	ra
+	nop
+END(MachFlushCache)
+
+/*----------------------------------------------------------------------------
+ *
+ * MachFlushICache --
+ *
+ *	void MachFlushICache(addr, len)
+ *		vm_offset_t addr, len;
+ *
+ *	Flush instruction cache for range of addr to addr + len - 1.
+ *	The address can be any valid address so long as no TLB misses occur.
+ *	Assumes a cache line size of 16 bytes for speed.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	The contents of the cache is flushed.
+ *	Must not touch v0.
+ *
+ *----------------------------------------------------------------------------
+ */
+LEAF(MachFlushICache)
+	addu	a1, 127		# Align
+	srl	a1, a1, 7	# Number of unrolled loops
+1:
+	cache	0, 0(a0)
+	cache	0, 16(a0)
+	cache	0, 32(a0)
+	cache	0, 48(a0)
+	cache	0, 64(a0)
+	cache	0, 80(a0)
+	cache	0, 96(a0)
+	cache	0, 112(a0)
+	addu	a1, -1
+	bne	a1, zero, 1b
+	addu	a0, 128
+
+	j	ra
+	nop
+END(MachFlushICache)
+
+/*----------------------------------------------------------------------------
+ *
+ * MachFlushDCache --
+ *
+ *	void MachFlushDCache(addr, len)
+ *		vm_offset_t addr, len;
+ *
+ *	Flush data cache for index range of addr to addr + len - 1.
+ *	The address is reduced to a kseg0 index.
+ *	
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	The contents of the cache is written back to primary memory.
+ *	The cache line is invalidated.
+ *
+ *----------------------------------------------------------------------------
+ */
+LEAF(MachFlushDCache)
+ALEAF(mips_r2000_FlushDCache)
+	lw	a2, machPrimaryDataCacheSize
+	addiu	a2, -1
+	and	a0, a0, a2
+	addu	a1, 127		# Align
+	li	a2, 0x80000000
+	addu	a0, a0, a2
+	addu	a1, a1, a0
+	and	a0, a0, -128
+	subu	a1, a1, a0
+	srl	a1, a1, 7	# Compute number of cache lines
+1:
+	cache	1, 0(a0)
+	cache	1, 16(a0)
+	cache	1, 32(a0)
+	cache	1, 48(a0)
+	cache	1, 64(a0)
+	cache	1, 80(a0)
+	cache	1, 96(a0)
+	cache	1, 112(a0)
+	addu	a1, -1
+	bne	a1, zero, 1b
+	addu	a0, 128
+
+	j	ra
+	nop
+END(MachFlushDCache)
+
+/*----------------------------------------------------------------------------
+ *
+ * MachHitFlushDCache --
+ *
+ *	void MachHitFlushDCache(addr, len)
+ *		vm_offset_t addr, len;
+ *
+ *	Flush data cache for range of addr to addr + len - 1.
+ *	The address can be any valid viritual address as long
+ *	as no TLB invalid traps occur. Only lines with matching
+ *	addr is flushed.
+ *	
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	The contents of the cache is written back to primary memory.
+ *	The cache line is invalidated.
+ *
+ *----------------------------------------------------------------------------
+ */
+LEAF(MachHitFlushDCache)
+	beq	a1, zero, 2f
+	addu	a1, 127		# Align
+	addu	a1, a1, a0
+	and	a0, a0, -128
+	subu	a1, a1, a0
+	srl	a1, a1, 7	# Compute number of cache lines
+1:
+	cache	0x15, 0(a0)
+	cache	0x15, 16(a0)
+	cache	0x15, 32(a0)
+	cache	0x15, 48(a0)
+	cache	0x15, 64(a0)
+	cache	0x15, 80(a0)
+	cache	0x15, 96(a0)
+	cache	0x15, 112(a0)
+	addu	a1, -1
+	bne	a1, zero, 1b
+	addu	a0, 128
+
+2:
+	j	ra
+	nop
+END(MachHitFlushDCache)
+/*----------------------------------------------------------------------------
+ *
+ * MachInvalidateDCache --
+ *
+ *	void MachFlushDCache(addr, len)
+ *		vm_offset_t addr, len;
+ *
+ *	Flush data cache for range of addr to addr + len - 1.
+ *	The address can be any valid address as long as no TLB misses occur.
+ *	(Be sure to use cached K0SEG kernel addresses or mapped addresses)
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	The cache line is invalidated.
+ *
+ *----------------------------------------------------------------------------
+ */
+LEAF(MachInvalidateDCache)
+	addu	a1, a1, a0			# compute ending address
+1:
+	addu	a0, a0, 4
+	bne	a0, a1, 1b
+	cache	0x11,-4(a0)
+
+	j	ra
+	nop
+END(MachInvalidateDCache)
+
+/*----------------------------------------------------------------------------
+ *
+ *			XXX  END of r4000-specific code  XXX 
+ *
+ *----------------------------------------------------------------------------
+ */
+
+#endif 	/* XXX -- r4000 support, not yet */
+
+
+/*----------------------------------------------------------------------------
+ *
+ * MachSwitchFPState --
+ *
+ *	Return the current value of the cause register.
+ *
+ *	MachGetCauseReg(void)
+ *
+ * Results:
+ *	current value of Cause register.None.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------------
  */
 LEAF(MachGetCauseReg)
 	mfc0	v0, MACH_COP_0_CAUSE_REG
@@ -2619,10 +3997,17 @@ END(MachSaveCurFPState)
 /*----------------------------------------------------------------------------
  *
  * MachFPInterrupt --
+ * MachFPTrap --
  *
- *	Handle a floating point interrupt.
+ *	Handle a floating point interrupt (r3k) or trap (r4k).
+ *	the handlers  are indentical, only the reporting mechanisms differ.
  *
  *	MachFPInterrupt(statusReg, causeReg, pc)
+ *		unsigned statusReg;
+ *		unsigned causeReg;
+ *		unsigned pc;
+ *
+ *	MachFPTrap(statusReg, causeReg, pc)
  *		unsigned statusReg;
  *		unsigned causeReg;
  *		unsigned pc;
@@ -2636,6 +4021,9 @@ END(MachSaveCurFPState)
  *----------------------------------------------------------------------------
  */
 NON_LEAF(MachFPInterrupt, STAND_FRAME_SIZE, ra)
+	# XXX should use ANONLEAF (or ANESTED) instead of ALEAF.
+ALEAF(MachFPTrap)
+
 	subu	sp, sp, STAND_FRAME_SIZE
 	mfc0	t0, MACH_COP_0_STATUS_REG
 	sw	ra, STAND_RA_OFFSET(sp)
@@ -2645,6 +4033,9 @@ NON_LEAF(MachFPInterrupt, STAND_FRAME_SIZE, ra)
 	mtc0	t1, MACH_COP_0_STATUS_REG
 	nop
 	nop
+	nop				# 1st extra nop for r4k
+	nop				# 2nd extra nop for r4k
+
 	cfc1	t1, MACH_FPC_CSR	# stall til FP done
 	cfc1	t1, MACH_FPC_CSR	# now get status
 	nop
@@ -2721,291 +4112,6 @@ FPReturn:
 	addu	sp, sp, STAND_FRAME_SIZE
 END(MachFPInterrupt)
 
-/*----------------------------------------------------------------------------
- *
- * MachConfigCache --
- *
- *	Size the caches.
- *	NOTE: should only be called from mach_init().
- *
- * Results:
- *     	None.
- *
- * Side effects:
- *	The size of the data cache is stored into machDataCacheSize and the
- *	size of instruction cache is stored into machInstCacheSize.
- *
- *----------------------------------------------------------------------------
- */
-NON_LEAF(MachConfigCache, STAND_FRAME_SIZE, ra)
-	subu	sp, sp, STAND_FRAME_SIZE
-	sw	ra, STAND_RA_OFFSET(sp)		# Save return address.
-	.mask	0x80000000, (STAND_RA_OFFSET - STAND_FRAME_SIZE)
-	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts.
-	la	v0, 1f
-	or	v0, MACH_UNCACHED_MEMORY_ADDR	# Run uncached.
-	j	v0
-	nop
-1:
-/*
- * This works because jal doesn't change pc[31..28] and the
- * linker still thinks SizeCache is in the cached region so it computes
- * the correct address without complaining.
- */
-	jal	_C_LABEL(SizeCache)		# Get the size of the d-cache.
-	nop
-	sw	v0, _C_LABEL(machDataCacheSize)
-	nop					# Make sure sw out of pipe
-	nop
-	nop
-	nop
-	li	v0, MACH_SR_SWAP_CACHES		# Swap caches
-	mtc0	v0, MACH_COP_0_STATUS_REG
-	nop					# Insure caches stable
-	nop
-	nop
-	nop
-	jal	_C_LABEL(SizeCache)		# Get the size of the i-cache.
-	nop
-	mtc0	zero, MACH_COP_0_STATUS_REG	# Swap back caches and enable.
-	nop
-	nop
-	nop
-	nop
-	sw	v0, _C_LABEL(machInstCacheSize)
-	la	t0, 1f
-	j	t0				# Back to cached mode
-	nop
-1:
-	lw	ra, STAND_RA_OFFSET(sp)		# Restore return addr
-	addu	sp, sp, STAND_FRAME_SIZE	# Restore sp.
-	j	ra
-	nop
-END(MachConfigCache)
-
-/*----------------------------------------------------------------------------
- *
- * SizeCache --
- *
- *	Get the size of the cache.
- *
- * Results:
- *	The size of the cache.
- *
- * Side effects:
- *	None.
- *
- *----------------------------------------------------------------------------
- */
-LEAF(SizeCache)
-	mfc0	t0, MACH_COP_0_STATUS_REG	# Save the current status reg.
-	nop
-	or	v0, t0, MACH_SR_ISOL_CACHES	# Isolate the caches.
-	nop					# Make sure no stores in pipe
-	mtc0	v0, MACH_COP_0_STATUS_REG
-	nop					# Make sure isolated
-	nop
-	nop
-/*
- * Clear cache size boundaries.
- */
-	li	v0, MACH_MIN_CACHE_SIZE
-	li	v1, MACH_CACHED_MEMORY_ADDR
-	li	t2, MACH_MAX_CACHE_SIZE
-1:
-	addu	t1, v0, v1			# Compute address to clear
-	sw	zero, 0(t1)			# Clear cache memory
-	bne	v0, t2, 1b
-	sll	v0, v0, 1
-
-	li	v0, -1
-	sw	v0, 0(v1)			# Store marker in cache
-	li	v0, MACH_MIN_CACHE_SIZE
-2:
-	addu	t1, v0, v1			# Compute address
-	lw	t3, 0(t1)			# Look for marker
-	nop
-	bne	t3, zero, 3f			# Found marker.
-	nop
-	bne	v0, t2, 2b			# keep looking
-	sll	v0, v0, 1			# cache size * 2
-
-	move	v0, zero			# must be no cache
-3:
-	mtc0	t0, MACH_COP_0_STATUS_REG
-	nop					# Make sure unisolated
-	nop
-	nop
-	nop
-	j	ra
-	nop
-END(SizeCache)
-
-/*----------------------------------------------------------------------------
- *
- * MachFlushCache --
- *
- *	Flush the caches.
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	The contents of the caches is flushed.
- *
- *----------------------------------------------------------------------------
- */
-LEAF(MachFlushCache)
-	lw	t1, _C_LABEL(machInstCacheSize)	# Must load before isolating
-	lw	t2, _C_LABEL(machDataCacheSize)	# Must load before isolating
-	mfc0	t3, MACH_COP_0_STATUS_REG 	# Save the status register.
-	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts.
-	la	v0, 1f
-	or	v0, MACH_UNCACHED_MEMORY_ADDR	# Run uncached.
-	j	v0
-	nop
-/*
- * Flush the instruction cache.
- */
-1:
-	li	v0, MACH_SR_ISOL_CACHES | MACH_SR_SWAP_CACHES
-	mtc0	v0, MACH_COP_0_STATUS_REG	# Isolate and swap caches.
-	li	t0, MACH_UNCACHED_MEMORY_ADDR
-	subu	t0, t0, t1
-	li	t1, MACH_UNCACHED_MEMORY_ADDR
-	la	v0, 1f				# Run cached
-	j	v0
-	nop
-1:
-	addu	t0, t0, 4
-	bne	t0, t1, 1b
-	sb	zero, -4(t0)
-
-	la	v0, 1f
-	or	v0, MACH_UNCACHED_MEMORY_ADDR
-	j	v0				# Run uncached
-	nop
-/*
- * Flush the data cache.
- */
-1:
-	li	v0, MACH_SR_ISOL_CACHES
-	mtc0	v0, MACH_COP_0_STATUS_REG	# Isolate and swap back caches
-	li	t0, MACH_UNCACHED_MEMORY_ADDR
-	subu	t0, t0, t2
-	la	v0, 1f
-	j	v0				# Back to cached mode
-	nop
-1:
-	addu	t0, t0, 4
-	bne	t0, t1, 1b
-	sb	zero, -4(t0)
-
-	nop					# Insure isolated stores
-	nop					#   out of pipe.
-	nop
-	nop
-	mtc0	t3, MACH_COP_0_STATUS_REG	# Restore status reg.
-	nop					# Insure cache unisolated.
-	nop
-	nop
-	nop
-	j	ra
-	nop
-END(MachFlushCache)
-
-/*----------------------------------------------------------------------------
- *
- * MachFlushICache --
- *
- *	void MachFlushICache(addr, len)
- *		vm_offset_t addr, len;
- *
- *	Flush instruction cache for range of addr to addr + len - 1.
- *	The address can be any valid address so long as no TLB misses occur.
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	The contents of the cache is flushed.
- *
- *----------------------------------------------------------------------------
- */
-LEAF(MachFlushICache)
-	mfc0	t0, MACH_COP_0_STATUS_REG	# Save SR
-	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts.
-
-	la	v1, 1f
-	or	v1, MACH_UNCACHED_MEMORY_ADDR	# Run uncached.
-	j	v1
-	nop
-1:
-	bc0f	1b				# make sure stores are complete
-	li	v1, MACH_SR_ISOL_CACHES | MACH_SR_SWAP_CACHES
-	mtc0	v1, MACH_COP_0_STATUS_REG
-	nop
-	addu	a1, a1, a0			# compute ending address
-1:
-	addu	a0, a0, 4
-	bne	a0, a1, 1b
-	sb	zero, -4(a0)
-
-	mtc0	t0, MACH_COP_0_STATUS_REG	# enable interrupts
-	j	ra				# return and run cached
-	nop
-END(MachFlushICache)
-
-/*----------------------------------------------------------------------------
- *
- * MachFlushDCache --
- *
- *	void MachFlushDCache(addr, len)
- *		vm_offset_t addr, len;
- *
- *	Flush data cache for range of addr to addr + len - 1.
- *	The address can be any valid address so long as no TLB misses occur.
- *	(Be sure to use cached K0SEG kernel addresses)
- * Results:
- *	None.
- *
- * Side effects:
- *	The contents of the cache is flushed.
- *
- *----------------------------------------------------------------------------
- */
-LEAF(MachFlushDCache)
-	mfc0	t0, MACH_COP_0_STATUS_REG	# Save SR
-	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts.
-	nop
-1:
-	bc0f	1b				# make sure stores are complete
-# BUG: should drain write buffer.
-# The insn above does not work on some all DEC machines, or all variants
-# of the mips architecture.
-	li	v1, MACH_SR_ISOL_CACHES
-	mtc0	v1, MACH_COP_0_STATUS_REG
-	nop
-	addu	t1, a1, a0			# compute ending address
-1:
-	sb	zero, 0(a0)
-	sb	zero, 4(a0)
-	sb	zero, 8(a0)
-	sb	zero, 12(a0)
-	sb	zero, 16(a0)
-	sb	zero, 20(a0)
-	sb	zero, 24(a0)
-	addu	a0, 32
-	bltu	a0, t1, 1b
-	sb	zero, -4(a0)
-
-	nop					# drain pipeline
-	nop
-	mtc0	t0, MACH_COP_0_STATUS_REG	# enable interrupts
-	nop
-	j	ra				# return and run cached
-	nop
-END(MachFlushDCache)
 
 #ifdef KADB
 /*
@@ -3161,22 +4267,27 @@ END(cpu_getregs)
 _C_LABEL(intrnames):
 	.asciiz	"softclock"
 	.asciiz	"softnet"
-	.asciiz	"dc"
+	.asciiz	"serial0"
+	.asciiz	"serial1"
+	.asciiz	"serial2"
 	.asciiz	"ether"
-	.asciiz	"disk"
+	.asciiz	"scsi"
 	.asciiz	"memory"
 	.asciiz	"clock"
-	.asciiz	"fp"
-	.asciiz	"tcslot0"		# Intrs 0 through 4 folded in here for now
+	.asciiz	"fpu"
+	.asciiz	"tcslot0"
 	.asciiz	"tcslot1"
 	.asciiz	"tcslot2"
-	.asciiz	"tcslot3"
-	.asciiz	"tcslot4"
+	.asciiz "dtop"
+	.asciiz "isdn"
+	.asciiz	"floppy"
+	.asciiz	"stray"
 	.asciiz	"nmi"
+	.asciiz	"lostclock"
 _C_LABEL(eintrnames):
 	.align	2
 _C_LABEL(intrcnt):
-	.word	0,0,0,0,0,0,0,0,0,0,0,0,0,0
+	.word	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0
 _C_LABEL(eintrcnt):
 	.word	0	# This shouldn't be needed but with 4.4bsd's as, the eintrcnt
 			#  label ends end up in a different section otherwise.

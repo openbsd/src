@@ -1,4 +1,4 @@
-/*	$NetBSD: xcfb.c,v 1.9 1995/10/09 01:45:26 jonathan Exp $	*/
+/*	$NetBSD: xcfb.c,v 1.14.4.1 1996/05/30 04:04:01 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -80,16 +80,17 @@
  *	v 9.2 90/02/13 22:16:24 shirriff Exp  SPRITE (DECWRL)";
  */
 
-#include <fb.h>
+#include "fb.h"
 
-#include <xcfb.h>
-#include <dtop.h>
+#include "xcfb.h"
+#include "dtop.h"
 #if NXCFB > 0
 #if NDTOP == 0
 xcfb needs dtop device
 #else
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/ioctl.h>
@@ -97,10 +98,12 @@ xcfb needs dtop device
 #include <sys/errno.h>
 #include <sys/proc.h>
 #include <sys/mman.h>
+#include <sys/malloc.h>
 
 #include <vm/vm.h>
 
 #include <sys/device.h>
+#include <dev/tc/tcvar.h>
 #include <machine/autoconf.h>
 #include <machine/machConst.h>
 #include <machine/pmioctl.h>
@@ -111,9 +114,9 @@ xcfb needs dtop device
 #include <pmax/pmax/cons.h>
 
 #include <pmax/dev/xcfbreg.h>
+#include <pmax/dev/xcfbvar.h>
 #include <pmax/dev/ims332.h>
 #include <pmax/pmax/maxine.h>
-#include <pmax/pmax/pmaxtype.h>
 
 #include <pmax/dev/dtopreg.h>
 
@@ -131,10 +134,10 @@ struct fbuaccess xcfbu;
 struct pmax_fbtty xcfbfb;
 
 struct fbinfo	xcfbfi;	/*XXX*/
-extern struct cfdriver cfb;
+extern struct cfdriver cfb_cd;
 
 #define CMAP_BITS	(3 * 256)		/* 256 entries, 3 bytes per. */
-static u_char cmap_bits [NXCFB * CMAP_BITS];	/* One colormap per cfb... */
+static u_char cmap_bits [CMAP_BITS];		/* colormap for console... */
 
 #define XCFB_FB_SIZE 0x100000	/* size of raster (mapped into userspace) */
 
@@ -176,8 +179,12 @@ extern u_short defCursor[32];
 int xcfbmatch __P((struct device *, void *, void *));
 void xcfbattach __P((struct device *, struct device *, void *));
 
-struct cfdriver xcfbcd = {
-	NULL, "xcfb", xcfbmatch, xcfbattach, DV_DULL, sizeof(struct device), 0
+struct cfattach xcfb_ca = {
+	sizeof(struct device), xcfbmatch, xcfbattach
+};
+
+struct cfdriver xcfb_cd = {
+	NULL, "xcfb", DV_DULL
 };
 
 int
@@ -186,19 +193,14 @@ xcfbmatch(parent, match, aux)
 	void *match;
 	void *aux;
 {
-	struct cfdata *cf = match;
-	struct confargs *ca = aux;
-	static int nxcfbs = 1;
+	/*struct cfdata *cf = match;*/
+	struct tc_attach_args *ta = aux;
 
-	/* make sure that we're looking for this type of device. */
-	if (!BUS_MATCHNAME(ca, "PMAG-DV ") && !BUS_MATCHNAME(ca, "xcfb"))
+	/* Make sure that it's an xcfb. */
+	if (!TC_BUS_MATCHNAME(ta, "PMAG-DV ")  &&
+	    strcmp(ta->ta_modname, "xcfb") != 0)
 		return (0);
 
-#ifdef notyet
-	/* if it can't have the one mentioned, reject it */
-	if (cf->cf_unit >= nxcfbs)
-		return (0);
-#endif
 	return (1);
 }
 
@@ -208,9 +210,9 @@ xcfbattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	struct confargs *ca = aux;
+	struct tc_attach_args *ta = aux;
 
-	if (!xcfbinit(NULL, BUS_CVTADDR(ca), self->dv_unit, 0));
+	if (!xcfbinit(NULL, (caddr_t)ta->ta_addr, self->dv_unit, 0));
 		return;
 
 	/* no interrupts for XCFB */
@@ -229,10 +231,21 @@ xcfbinit(fi, base, unit, silent)
 	int unit;
 	int silent;
 {
-	register u_int *reset = (u_int *)IMS332_RESET_ADDRESS;
-
-	if (fi == 0) fi = &xcfbfi;
-	unit = 0;	/*XXX*/ /* FIXME */
+	/*XXX*/
+	/*
+	 * If this device is being intialized as the console, malloc()
+	 * is not yet up and we must use statically-allocated space.
+	 */
+	if (fi == NULL) {
+		fi = &xcfbfi;	/* XXX */
+  		fi->fi_cmap_bits = (caddr_t)cmap_bits;
+	} else {
+    		fi->fi_cmap_bits = malloc(CMAP_BITS, M_DEVBUF, M_NOWAIT);
+		if (fi->fi_cmap_bits == NULL) {
+			printf("cfb%d: no memory for cmap\n", unit);
+			return (0);
+		}
+	}
 
 	/*XXX*/
 	/*
@@ -252,7 +265,6 @@ xcfbinit(fi, base, unit, silent)
 	fi->fi_linebytes = 1024;
 	fi->fi_driver = &xcfb_driver;
 	fi->fi_blanked = 0;
-	fi->fi_cmap_bits = (caddr_t)&cmap_bits [CMAP_BITS * unit];
 
 	/* Fill in Frame Buffer Type struct. */
 	fi->fi_type.fb_boardtype = PMAX_FBTYPE_XCFB;

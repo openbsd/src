@@ -1,4 +1,4 @@
-/*	$NetBSD: font.c,v 1.7 1995/10/05 01:52:44 jonathan Exp $ */
+/*	$NetBSD: font.c,v 1.8 1996/04/07 19:53:36 jonathan Exp $ */
 
 /*
  * Copyright (c) 1991, 1993, 1995
@@ -59,6 +59,8 @@
 #include <dev/rcons/raster.h>
 
 #include <pmax/dev/qvss.h>	/* Little-endian font for rcons */
+
+void rcons_font __P((struct rconsole *rc));
 
 void
 rcons_font(rc)

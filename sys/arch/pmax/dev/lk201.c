@@ -5,6 +5,7 @@
 
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/syslog.h>
 #include <sys/select.h>
 #include <dev/cons.h>
@@ -12,6 +13,7 @@
 #include <machine/pmioctl.h>
 
 #include <pmax/dev/lk201.h>
+#include <pmax/dev/lk201var.h>
 
 
 /* Exported functions */

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.9 1996/01/07 15:38:44 jonathan Exp $	*/
+/*	$NetBSD: clock.c,v 1.12.4.1 1996/05/30 04:10:34 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,6 +51,14 @@
 #include <machine/machConst.h>
 #include <pmax/pmax/clockreg.h>
 
+#include "tc.h"			/* Is a Turbochannel configured? */
+
+#if NTC>0
+#include <dev/tc/tcvar.h>
+#include <dev/tc/ioasicvar.h>
+#endif
+
+
 /*
  * Machine-dependent clock routines.
  *
@@ -77,6 +85,32 @@ volatile struct chiptime *Mach_clock_addr;
 #define RATE_2048_HZ	0x5	/* 488.281 usecs/interrupt */
 
 #undef SELECTED_RATE
+#if (HZ == 64)
+# define SELECTED_RATE RATE_64_HZ	/* 4.4bsd default on pmax */
+# define SHIFT_HZ 6
+# else	/* !64 Hz */
+#if (HZ == 128)
+# define SELECTED_RATE RATE_128_HZ
+# define SHIFT_HZ 7
+#else	/* !128 Hz */
+#if (HZ == 256)
+# define SELECTED_RATE RATE_256_HZ
+# define SHIFT_HZ 8
+#else /*!256Hz*/
+#if (HZ == 512)
+# define SELECTED_RATE RATE_512_HZ
+# define SHIFT_HZ 9
+#else /*!512hz*/
+#if (HZ == 1024)
+# define SELECTED_RATE RATE_1024_HZ
+# define SHIFT_HZ 10
+#else /* !1024hz*/
+# error RTC interrupt rate HZ not recognised; must be a power of 2
+#endif /*!64Hz*/
+#endif /*!1024Hz*/
+#endif /*!512 Hz*/
+#endif /*!256 Hz*/
+#endif /*!128Hz*/
 
 /*
  * RTC interrupt rate: pick one of 64, 128, 256, 512, 1024, 2048.
@@ -93,48 +127,43 @@ volatile struct chiptime *Mach_clock_addr;
  * give resolution in ns or tens of ns.
  */
 
-#ifndef RTC_HZ
+#ifndef HZ
 #ifdef __mips__
-#define RTC_HZ 64
+/*#define HZ 64*/	/* conveniently divides 1 sec */
+#define HZ 256	/* default on Ultrix */
 #else
-# error Kernel config parameter RTC_HZ not defined
+# error Kernel config parameter HZ not defined
 #endif
 #endif
 
 /* Compute value to program clock with, given config parameter RTC_HZ */
 
-#if (RTC_HZ == 128)
-# define SELECTED_RATE RATE_128_HZ
-#else	/* !128 Hz */
-#if (RTC_HZ == 256)
-# define SELECTED_RATE RATE_256_HZ
-#else /*!256Hz*/
-#if (RTC_HZ == 512)
-# define SELECTED_RATE RATE_512_HZ
-#else /*!512hz*/
-#if (RTC_HZ == 1024)
-# define SELECTED_RATE RATE_1024_HZ
-#else /* !1024hz*/
-# if (RTC_HZ == 64)
-# define SELECTED_RATE RATE_64_HZ	/* 4.4bsd default on pmax */
-# else
-# error RTC interrupt rate RTC_HZ not recognised; must be a power of 2
-#endif /*!64Hz*/
-#endif /*!1024Hz*/
-#endif /*!512 Hz*/
-#endif /*!256 Hz*/
-#endif /*!128Hz*/
 
 
+/* global autoconfiguration variables -- bus type*/
+extern struct cfdriver mainbus_cd;
+#if NTC>0
+extern struct cfdriver ioasic_cd;
+extern struct cfdriver tc_cd;
+#endif
+
+
 /* Definition of the driver for autoconfig. */
 static int	clockmatch __P((struct device *, void *, void *));
 static void	clockattach __P((struct device *, struct device *, void *));
-struct cfdriver clockcd = {
-	NULL, "clock", clockmatch, clockattach, DV_DULL, sizeof(struct device),
+
+struct cfattach clock_ca = {
+	sizeof(struct device), clockmatch, clockattach
 };
 
+struct cfdriver clock_cd = {
+	NULL, "clock", DV_DULL
+};
+
+#ifdef notyet
 static void	clock_startintr __P((void *));
 static void	clock_stopintr __P((void *));
+#endif
 
 volatile struct chiptime *Mach_clock_addr;
 
@@ -146,31 +175,35 @@ clockmatch(parent, cfdata, aux)
 {
 	struct cfdata *cf = cfdata;
 	struct confargs *ca = aux;
+#if NTC>0
+	struct ioasicdev_attach_args *d = aux;
+#endif
 #ifdef notdef /* XXX */
 	struct tc_cfloc *asic_locp = (struct asic_cfloc *)cf->cf_loc;
 #endif
-	register volatile struct chiptime *c;
-	int vec, ipl;
 	int nclocks;
 
+#if NTC>0
+	if (parent->dv_cfdata->cf_driver != &ioasic_cd &&
+	    parent->dv_cfdata->cf_driver != &tc_cd &&
+	    parent->dv_cfdata->cf_driver != &mainbus_cd)
+#else
+	if (parent->dv_cfdata->cf_driver != &mainbus_cd)
+#endif
+		return(0);
+
 	/* make sure that we're looking for this type of device. */
-	if (!BUS_MATCHNAME(ca, "dallas_rtc"))
+#if NTC>0
+	if (parent->dv_cfdata->cf_driver != &mainbus_cd) {
+		if (strcmp(d->iada_modname, "mc146818") != 0)
+			return (0);
+	} else
+#endif
+	if (strcmp(ca->ca_name, "mc146818") != 0)
 		return (0);
 
 	/* All known decstations have a Dallas RTC */
-#ifdef pmax
 	nclocks = 1;
-#else      
-	/*See how many clocks this system has */	
-	switch (hwrpb->rpb_type) {
-	case ST_DEC_3000_500:
-	case ST_DEC_3000_300:
-		nclocks = 1;
-		break;
-	default:
-		nclocks = 0;
-	}
-#endif
 
 	/* if it can't have the one mentioned, reject it */
 	if (cf->cf_unit >= nclocks)
@@ -185,11 +218,22 @@ clockattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	register volatile struct chiptime *c;
 	struct confargs *ca = aux;
+#if NTC>0
+	struct ioasicdev_attach_args *d = aux;
+#endif
+#ifndef pmax
+	register volatile struct chiptime *c;
+#endif
 
-	Mach_clock_addr = (struct chiptime *)
-		MACH_PHYS_TO_UNCACHED(BUS_CVTADDR(ca));
+#if NTC>0
+	if (parent->dv_cfdata->cf_driver != &mainbus_cd)
+		Mach_clock_addr = (struct chiptime *)
+			MACH_PHYS_TO_UNCACHED(d->iada_addr);
+	else
+#endif
+		Mach_clock_addr = (struct chiptime *)
+			MACH_PHYS_TO_UNCACHED(ca->ca_addr);
 
 #ifdef pmax
 	printf("\n");
@@ -200,7 +244,7 @@ clockattach(parent, self, aux)
 	
 	c = Mach_clock_addr;
 	c->regb = REGB_DATA_MODE | REGB_HOURS_FORMAT;
-	MachEmptyWriteBuffer();
+	wbflush();
 #endif
 
 #ifdef notyet /*XXX*/ /*FIXME*/
@@ -217,12 +261,19 @@ cpu_initclocks()
 {
 	register volatile struct chiptime *c;
 	extern int tickadj;
+#ifdef NTP
+	extern int fixtick;
+#endif
+	register long tmp;
 
 	if (Mach_clock_addr == NULL)
 		panic("cpu_initclocks: no clock to initialize");
 
-	hz = RTC_HZ;		/* Clock Hz is a configuration parameter */
+	hz = HZ;		/* Clock Hz is a configuration parameter */
 	tick = 1000000 / hz;	/* number of microseconds between interrupts */
+#ifdef NTP
+	fixtick =
+#endif
 	tickfix = 1000000 - (hz * tick);
 	if (tickfix) {
 		int ftp;
@@ -235,7 +286,16 @@ cpu_initclocks()
 	c = Mach_clock_addr;
 	c->rega = REGA_TIME_BASE | SELECTED_RATE;
 	c->regb = REGB_PER_INT_ENA | REGB_DATA_MODE | REGB_HOURS_FORMAT;
-	MachEmptyWriteBuffer();		/* Alpha needs this */
+	wbflush();		/* Alpha needs this */
+
+	/*
+	 * Reset tickadj to ntp's idea of what it should be
+	 * XXX this should be in conf/param.c
+	 */
+	tmp = (long) tick * 500L;
+	tickadj = (int)(tmp / 1000000L);
+	if (tmp % 1000000L > 0)
+		tickadj++;
 }
 
 /*
@@ -312,7 +372,7 @@ inittodr(base)
 	while ((c->rega & REGA_UIP) == 1) {
 		splx(s);
 		DELAY(10);
-		s = splx();
+		s = splclock();
 	}
 
 	sec = c->sec;
@@ -364,7 +424,7 @@ inittodr(base)
 			deltat = -deltat;
 		if (deltat < 2 * SECDAY)
 			return;
-		printf("WARNING: clock %s %d days",
+		printf("WARNING: clock %s %ld days",
 		    time.tv_sec < base ? "lost" : "gained", deltat / SECDAY);
 	}
 bad:
@@ -391,6 +451,7 @@ resettodr()
 	dow = (t2 + 4) % 7;	/* 1/1/1970 was thursday */
 
 	/* compute the year */
+	t = t2;
 	year = 69;
 	while (t2 >= 0) {	/* whittle off years */
 		t = t2;
@@ -424,9 +485,9 @@ resettodr()
 	s = splclock();
 	t = c->regd;				/* reset VRT */
 	c->regb = REGB_SET_TIME | REGB_DATA_MODE | REGB_HOURS_FORMAT;
-	MachEmptyWriteBuffer();
+	wbflush();
 	c->rega = 0x70;				/* reset time base */
-	MachEmptyWriteBuffer();
+	wbflush();
 
 	c->sec = sec;
 	c->min = min;
@@ -435,18 +496,18 @@ resettodr()
 	c->day = day;
 	c->mon = mon;
 	c->year = year;
-	MachEmptyWriteBuffer();
+	wbflush();
 
 	c->rega = REGA_TIME_BASE | SELECTED_RATE;
 	c->regb = REGB_PER_INT_ENA | REGB_DATA_MODE | REGB_HOURS_FORMAT;
-	MachEmptyWriteBuffer();
+	wbflush();
 	splx(s);
 #ifdef	DEBUG_CLOCK
 	printf("resettodr(): todr hw yy/mm/dd= %d/%d/%d\n", year, mon, day);
 #endif
 
 	c->nvram[48*4] |= 1;		/* Set PROM time-valid bit */
-	MachEmptyWriteBuffer();
+	wbflush();
 }
 
 /*XXX*/

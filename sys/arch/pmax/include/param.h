@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.12 1995/07/23 20:11:55 jonathan Exp $	*/
+/*	$NetBSD: param.h,v 1.17 1996/05/20 10:50:52 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,28 +43,20 @@
  */
 
 /*
- * Machine dependent constants for DEC Station 3100.
+ * Machine-dependent constants (VM, etc) common across MIPS cpus
  */
-#define	MACHINE	     "pmax"
-#define MACHINE_ARCH "mips"
-#define MID_MACHINE  MID_PMAX
+
+#include <mips/mips_param.h>
 
 /*
- * Round p (pointer or byte index) up to a correctly-aligned value for all
- * data types (int, long, ...).   The result is u_int and must be cast to
- * any desired pointer type.
+ * Machine dependent constants for DEC Station 3100.
  */
-#define	ALIGNBYTES	7
-#define	ALIGN(p)	(((u_int)(p) + ALIGNBYTES) &~ ALIGNBYTES)
 
-#define	NBPG		4096		/* bytes/page */
-#define	PGOFSET		(NBPG-1)	/* byte offset into page */
-#define	PGSHIFT		12		/* LOG2(NBPG) */
-#define	NPTEPG		(NBPG/4)
-
-#define NBSEG		0x400000	/* bytes/segment */
-#define	SEGOFSET	(NBSEG-1)	/* byte offset into segment */
-#define	SEGSHIFT	22		/* LOG2(NBSEG) */
+#define	_MACHINE	pmax
+#define	MACHINE		"pmax"
+#define	_MACHINE_ARCH	mips
+#define	MACHINE_ARCH	"mips"
+#define	MID_MACHINE	MID_PMAX
 
 #define	KERNBASE	0x80000000	/* start of kernel virtual */
 #define KERNTEXTOFF	0x80030000	/* start of kernel text for kvm_mkdb */
@@ -101,59 +93,15 @@
 #define	MCLOFSET	(MCLBYTES - 1)
 #ifndef NMBCLUSTERS
 #ifdef GATEWAY
-#define	NMBCLUSTERS	512		/* map size, max cluster allocation */
+#define	NMBCLUSTERS	2048		/* map size, max cluster allocation */
 #else
-#define	NMBCLUSTERS	256		/* map size, max cluster allocation */
+#define	NMBCLUSTERS	1024		/* map size, max cluster allocation */
 #endif
 #endif
-
-/*
- * Size of kernel malloc arena in CLBYTES-sized logical pages
- */ 
-#ifndef NKMEMCLUSTERS
-#define	NKMEMCLUSTERS	(512*1024/CLBYTES)
-#endif
-
-/* pages ("clicks") (4096 bytes) to disk blocks */
-#define	ctod(x)		((x) << (PGSHIFT - DEV_BSHIFT))
-#define	dtoc(x)		((x) >> (PGSHIFT - DEV_BSHIFT))
-
-/* pages to bytes */
-#define	ctob(x)		((x) << PGSHIFT)
-#define	btoc(x)		(((x) + PGOFSET) >> PGSHIFT)
-
-/* bytes to disk blocks */
-#define	btodb(x)	((x) >> DEV_BSHIFT)
-#define	dbtob(x)	((x) << DEV_BSHIFT)
-
-/*
- * Map a ``block device block'' to a file system block.
- * This should be device dependent, and should use the bsize
- * field from the disk label.
- * For now though just use DEV_BSIZE.
- */
-#define	bdbtofsb(bn)	((bn) / (BLKDEV_IOSIZE/DEV_BSIZE))
-
-/*
- * Mach derived conversion macros
- */
-#define pmax_round_page(x)	((((unsigned)(x)) + NBPG - 1) & ~(NBPG-1))
-#define pmax_trunc_page(x)	((unsigned)(x) & ~(NBPG-1))
-#define pmax_btop(x)		((unsigned)(x) >> PGSHIFT)
-#define pmax_ptob(x)		((unsigned)(x) << PGSHIFT)
 
 #ifdef _KERNEL
-#ifndef LOCORE
-extern int (*Mach_splnet) __P((void)), (*Mach_splbio) __P((void)),
-	   (*Mach_splimp) __P((void)), (*Mach_spltty) __P((void)),
-	   (*Mach_splclock) __P((void)), (*Mach_splstatclock) __P((void));
-#define	splnet()	((*Mach_splnet)())
-#define	splbio()	((*Mach_splbio)())
-#define	splimp()	((*Mach_splimp)())
-#define	spltty()	((*Mach_spltty)())
-#define	splclock()	((*Mach_splclock)())
-#define	splstatclock()	((*Mach_splstatclock)())
-extern	int cpuspeed;
+#ifndef _LOCORE
+extern int cpuspeed;
 #define	DELAY(n)	{ register int N = cpuspeed * (n); while (--N > 0); }
 #endif
 #endif /* !_KERNEL */

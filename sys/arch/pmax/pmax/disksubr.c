@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.7 1996/01/07 22:02:55 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.10 1996/05/19 18:49:33 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -35,11 +35,13 @@
  *	@(#)ufs_disksubr.c	7.16 (Berkeley) 5/4/91
  */
 
-#include "param.h"
-#include "systm.h"
-#include "buf.h"
-#include "disklabel.h"
-#include "syslog.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/buf.h>
+#include <sys/device.h>
+#include <sys/disk.h>
+#include <sys/disklabel.h>
+#include <sys/syslog.h>
 
 #define	b_cylin	b_resid
 
@@ -47,11 +49,14 @@
 #include "../../stand/dec_boot.h"
 
 extern char *
-compat_label __P((dev_t dev, void (*strat)(),
+compat_label __P((dev_t dev, void (*strat) __P((struct buf *bp)),
 		  struct disklabel *lp, struct cpu_disklabel *osdep));
 
 #endif
 
+char*	readdisklabel __P((dev_t dev, void (*strat) __P((struct buf *bp)),
+		       register struct disklabel *lp,
+		       struct cpu_disklabel *osdep));
 
 /*
  * Attempt to read a disk label from a device
@@ -188,6 +193,7 @@ done:
  * Check new disk label for sensibility
  * before setting it.
  */
+int
 setdisklabel(olp, nlp, openmask, osdep)
 	register struct disklabel *olp, *nlp;
 	u_long openmask;
@@ -233,6 +239,7 @@ setdisklabel(olp, nlp, openmask, osdep)
 /*
  * Write disk label back to device after modification.
  */
+int
 writedisklabel(dev, strat, lp, osdep)
 	dev_t dev;
 	void (*strat)();
@@ -256,7 +263,7 @@ writedisklabel(dev, strat, lp, osdep)
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_READ;
 	(*strat)(bp);
-	if (error = biowait(bp))
+	if ((error = biowait(bp)) != 0)
 		goto done;
 	for (dlp = (struct disklabel *)bp->b_un.b_addr;
 	    dlp <= (struct disklabel *)
@@ -281,14 +288,14 @@ done:
 /*
  * was this the boot device ?
  */
-int
+void
 dk_establish(dk, dev)
 	struct disk *dk;
 	struct device *dev;
 {
 	/* see also arch/alpha/alpha/disksubr.c */
 	printf("Warning: boot path unknown\n");
-	return 1;
+	return;
 }
 
 /* 

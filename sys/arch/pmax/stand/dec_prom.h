@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_prom.h,v 1.6 1995/03/28 18:19:41 jtc Exp $	*/
+/*	$NetBSD: dec_prom.h,v 1.8 1996/04/08 00:52:10 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -62,7 +62,7 @@
  * by Digital Equipment Corporation.
  */
 
-#ifndef LOCORE
+#ifndef _LOCORE
 #include <sys/types.h>
 #include <sys/cdefs.h>
 
@@ -85,7 +85,7 @@ typedef struct {
 	int	revision;	/* hardware revision level */
 	int	clk_period;	/* clock period in nano seconds */
 	int	slot_size;	/* slot size in magabytes */
-	int	io_timeout;	/* I/O timeout in cycles
+	int	io_timeout;	/* I/O timeout in cycles */
 	int	dma_range;	/* DMA address range in megabytes */
 	int	max_dma_burst;	/* maximum DMA burst length */
 	int	parity;		/* true if system module supports T.C. parity */
@@ -200,7 +200,7 @@ typedef struct {
 	int 	num;		/* Number of strings used. */
 } MachStringTable;
 
-#endif /* LOCORE */
+#endif /* _LOCORE */
 
 /*
  * The prom has a jump table at the beginning of it to get to its

@@ -1,4 +1,4 @@
-/*	$NetBSD: pdma.h,v 1.4 1994/10/26 21:09:11 cgd Exp $	*/
+/*	$NetBSD: pdma.h,v 1.5 1996/04/10 17:38:04 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -43,5 +43,5 @@ struct pdma {
 	char	*p_mem;
 	char	*p_end;
 	int	p_arg;
-	void	(*p_fcn)();
+	void	(*p_fcn) __P((struct tty *tp));
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: bt478.c,v 1.2 1995/11/25 10:38:42 mellon Exp $	*/
+/*	$NetBSD: bt478.c,v 1.4 1996/04/08 00:57:43 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -57,6 +57,7 @@
 
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/select.h>
@@ -73,12 +74,22 @@
 /*
  * Forward references.
  */
-void bt478RestoreCursorColor();
-void bt478CursorColor();	/* qvss ioctl interface uses this */
-/*static*/ void bt478InitColorMap();
-int bt478GetColorMap();
-static void bt478VDACInit();
-int bt478LoadColorMap();
+
+
+int bt478init __P((struct fbinfo *fi));
+
+void bt478RestoreCursorColor __P((struct fbinfo *fi));
+/* qvss ioctl interface uses this */
+void bt478CursorColor __P((struct fbinfo *fi, unsigned int color[]));
+
+void bt478BlankCursor __P((struct fbinfo *fi));
+/*static*/ void bt478InitColorMap __P((struct fbinfo *fi));
+int bt478GetColorMap __P((struct fbinfo *fi, caddr_t bits,
+				   int index, int count));
+int bt478LoadColorMap __P((struct fbinfo *fi, caddr_t bits,
+				   int index, int count));
+
+
 
 extern int pmax_boardtype;
 extern u_short defCursor[32];
@@ -98,18 +109,18 @@ bt478init(fi)
 	 *
 	 * Initialize the VDAC
 	 */
-	vdac->overWA = 0x04; MachEmptyWriteBuffer();
-	vdac->over = 0x00; MachEmptyWriteBuffer();
-	vdac->over = 0x00; MachEmptyWriteBuffer();
-	vdac->over = 0x00; MachEmptyWriteBuffer();
-	vdac->overWA = 0x08; MachEmptyWriteBuffer();
-	vdac->over = 0x00; MachEmptyWriteBuffer();
-	vdac->over = 0x00; MachEmptyWriteBuffer();
-	vdac->over = 0x7f; MachEmptyWriteBuffer();
-	vdac->overWA = 0x0c; MachEmptyWriteBuffer();
-	vdac->over = 0xff; MachEmptyWriteBuffer();
-	vdac->over = 0xff; MachEmptyWriteBuffer();
-	vdac->over = 0xff; MachEmptyWriteBuffer();
+	vdac->overWA = 0x04; wbflush();
+	vdac->over = 0x00; wbflush();
+	vdac->over = 0x00; wbflush();
+	vdac->over = 0x00; wbflush();
+	vdac->overWA = 0x08; wbflush();
+	vdac->over = 0x00; wbflush();
+	vdac->over = 0x00; wbflush();
+	vdac->over = 0x7f; wbflush();
+	vdac->overWA = 0x0c; wbflush();
+	vdac->over = 0xff; wbflush();
+	vdac->over = 0xff; wbflush();
+	vdac->over = 0xff; wbflush();
 
 	/* Initialize the cursor position... */
 	fi -> fi_cursor.width = 16;
@@ -134,26 +145,26 @@ bt478RestoreCursorColor(fi)
 	register int i;
 
 	vdac->overWA = 0x04;
-	MachEmptyWriteBuffer();
+	wbflush();
 	for (i = 0; i < 3; i++) {  
 		vdac->over = bg_RGB[i];
-		MachEmptyWriteBuffer();
+		wbflush();
 	}
 
 	vdac->overWA = 0x08;
-	MachEmptyWriteBuffer();
+	wbflush();
 	vdac->over = 0x00;
-	MachEmptyWriteBuffer();
+	wbflush();
 	vdac->over = 0x00;
-	MachEmptyWriteBuffer();
+	wbflush();
 	vdac->over = 0x7f;
-	MachEmptyWriteBuffer();
+	wbflush();
 
 	vdac->overWA = 0x0c;
-	MachEmptyWriteBuffer();
+	wbflush();
 	for (i = 0; i < 3; i++) {
 		vdac->over = fg_RGB[i];
-		MachEmptyWriteBuffer();
+		wbflush();
 	}
 }
 
@@ -186,10 +197,10 @@ bt478BlankCursor(fi)
 	register int i;
 
 	vdac->overWA = 0x0c;
-	MachEmptyWriteBuffer();
+	wbflush();
 	for (i = 0; i < 3; i++) {
 		vdac->over = 0;
-		MachEmptyWriteBuffer();
+		wbflush();
 	}
 }
 
@@ -205,44 +216,44 @@ bt478InitColorMap (fi)
 
 	*(volatile char *)MACH_PHYS_TO_UNCACHED
 		(KN01_PHYS_COLMASK_START) = 0xff;	/* XXX */
-	MachEmptyWriteBuffer();
+	wbflush();
 
 	if (fi -> fi_type.fb_depth == 1) {
-		vdac->mapWA = 0; MachEmptyWriteBuffer();
+		vdac->mapWA = 0; wbflush();
 		for (i = 0; i < 256; i++) {
 			((u_char *)(fi -> fi_cmap_bits)) [i * 3] = 0;
 			((u_char *)(fi -> fi_cmap_bits)) [i * 3 + 1]
 				= (i < 128) ? 0x00 : 0xff;
 			((u_char *)(fi -> fi_cmap_bits)) [i * 3 + 2] = 0;
 			vdac->map = 0;
-			MachEmptyWriteBuffer();
+			wbflush();
 			vdac->map = (i < 128) ? 0x00 : 0xff;
-			MachEmptyWriteBuffer();
+			wbflush();
 			vdac->map = 0;
-			MachEmptyWriteBuffer();
+			wbflush();
 		}
 	} else {
-		vdac->mapWA = 0; MachEmptyWriteBuffer();
+		vdac->mapWA = 0; wbflush();
 		((u_char *)(fi -> fi_cmap_bits)) [0] = 0;
 		((u_char *)(fi -> fi_cmap_bits)) [1] = 0;
 		((u_char *)(fi -> fi_cmap_bits)) [2] = 0;
 		vdac->map = 0;
-		MachEmptyWriteBuffer();
+		wbflush();
 		vdac->map = 0;
-		MachEmptyWriteBuffer();
+		wbflush();
 		vdac->map = 0;
-		MachEmptyWriteBuffer();
+		wbflush();
 
 		for (i = 1; i < 256; i++) {
 			((u_char *)(fi -> fi_cmap_bits)) [i * 3] = 0xff;
 			((u_char *)(fi -> fi_cmap_bits)) [i * 3 + 1] = 0xff;
 			((u_char *)(fi -> fi_cmap_bits)) [i * 3 + 2] = 0xff;
 			vdac->map = 0xff;
-			MachEmptyWriteBuffer();
+			wbflush();
 			vdac->map = 0xff;
-			MachEmptyWriteBuffer();
+			wbflush();
 			vdac->map = 0xff;
-			MachEmptyWriteBuffer();
+			wbflush();
 		}
 	}
 
@@ -250,7 +261,7 @@ bt478InitColorMap (fi)
 		bg_RGB[i] = 0x00;
 		fg_RGB[i] = 0xff;
 	}
-	bt478RestoreCursorColor();
+	bt478RestoreCursorColor(fi);
 }
 
 /* Load the color map. */
@@ -266,23 +277,26 @@ bt478LoadColorMap(fi, bits, index, count)
 	u_char *cmap;
 	int i;
 
-	if (index > 256 || index < 0 || index + count > 256)
+	if (index < 0 || count < 1 || index + count > 256)
 		return EINVAL;
 
 	cmap_bits = (u_char *)bits;
 	cmap = (u_char *)(fi -> fi_cmap_bits) + index * 3;
 
-	vdac->mapWA = index; MachEmptyWriteBuffer();
 	for (i = 0; i < count; i++) {
-		cmap [(i + index) * 3]
-			= vdac->map = cmap_bits [i * 3];
-		MachEmptyWriteBuffer();
-		cmap [(i + index) * 3 + 1]
-			= vdac->map = cmap_bits [i * 3 + 1];
-		MachEmptyWriteBuffer();
-		cmap [(i + index) * 3 + 2]
-			= vdac -> map = cmap_bits [i * 3 + 2];
-		MachEmptyWriteBuffer();
+		vdac->mapWA = i + index; wbflush();
+
+		cmap [i * 3] = cmap_bits [i * 3];
+		vdac->map = cmap_bits [i * 3];
+		wbflush();
+
+		cmap [i * 3 + 1] = cmap_bits [i * 3 + 1];
+		vdac->map = cmap_bits [i * 3 + 1];
+		wbflush();
+
+		cmap [i * 3 + 2] = cmap_bits [i * 3 + 2];
+		vdac -> map = cmap_bits [i * 3 + 2];
+		wbflush();
 	}
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.41 1996/01/04 22:22:40 jtc Exp $	*/
+/*	$NetBSD: machdep.c,v 1.51.2.4 1996/06/25 21:52:17 jtc Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -80,10 +80,11 @@
 
 #include <pmax/stand/dec_prom.h>
 
-#include <pmax/dev/sccreg.h>
 #include <pmax/dev/ascreg.h>
 
 #include <machine/autoconf.h>
+#include <machine/locore.h>
+
 #include <pmax/pmax/clockreg.h>
 #include <pmax/pmax/kn01.h>
 #include <pmax/pmax/kn02.h>
@@ -95,28 +96,27 @@
 #include <pmax/pmax/pmaxtype.h>
 #include <pmax/pmax/cons.h>
 
-#include <pm.h>
-#include <cfb.h>
-#include <mfb.h>
-#include <xcfb.h>
-#include <sfb.h>
-#include <dc.h>
-#include <dtop.h>
-#include <scc.h>
-#include <le.h>
-#include <asc.h>
 
-#include <pmax/dev/sccvar.h>
-#include <pmax/dev/dcvar.h>
+#include <mips/mips/mips_machdep.c>	/* XXX */
+
+
+#include "pm.h"
+#include "cfb.h"
+#include "mfb.h"
+#include "xcfb.h"
+#include "sfb.h"
+#include "dc.h"
+#include "dtop.h"
+#include "scc.h"
+#include "le_ioasic.h"
+#include "asc.h"
 
 #if NDTOP > 0
-extern int dtopKBDGetc();
+#include <pmax/dev/dtopvar.h>
 #endif
 
 
-extern int KBDGetc();
 extern void fbPutc();
-/*extern struct consdev cn_tab;*/
 
 /* Will scan from max to min, inclusive */
 static int tc_max_slot = KN02_TC_MAX;
@@ -152,10 +152,11 @@ int	bufpages = 0;
 int	msgbufmapped = 0;	/* set when safe to use msgbuf */
 int	maxmem;			/* max memory per process */
 int	physmem;		/* max supported memory, changes to actual */
+int	physmem_boardmax;	/* {model,simm}-specific bound on physmem */
 int	pmax_boardtype;		/* Mother board type */
 u_long	le_iomem;		/* 128K for lance chip via. ASIC */
 u_long	asc_iomem;		/* and 7 * 8K buffers for the scsi */
-u_long	asic_base;		/* Base address of I/O asic */
+u_long	ioasic_base;		/* Base address of I/O asic */
 const	struct callback *callv;	/* pointer to PROM entry points */
 
 extern void	(*tc_enable_interrupt)  __P ((u_int slotno,
@@ -164,7 +165,7 @@ extern void	(*tc_enable_interrupt)  __P ((u_int slotno,
 void	(*tc_enable_interrupt) __P ((u_int slotno,
 				     int (*handler) __P ((void *sc)),
 				     void *sc, int onoff));
-extern	int (*pmax_hardware_intr)();
+extern	int (*mips_hardware_intr)();
 
 int	kn02_intr(), kmin_intr(), xine_intr();
 
@@ -175,9 +176,14 @@ void	kn01_enable_intr  __P ((u_int slotno,
 				intr_arg_t sc, int onoff));
 #endif /* DS3100 */
 
+#ifdef DS5100 /* mipsmate */
+# include <pmax/pmax/kn230var.h>   /* kn230_establish_intr(), kn230_intr() */
+#endif
+
 #ifdef DS5000_240
 int	kn03_intr();
 #endif
+
 extern	int Mach_spl0(), Mach_spl1(), Mach_spl2(), Mach_spl3(), splhigh();
 int	(*Mach_splbio)() = splhigh;
 int	(*Mach_splnet)() = splhigh;
@@ -187,21 +193,21 @@ int	(*Mach_splclock)() = splhigh;
 int	(*Mach_splstatclock)() = splhigh;
 extern	volatile struct chiptime *Mach_clock_addr;
 u_long	kmin_tc3_imask, xine_tc3_imask;
+
 #ifdef DS5000_240
 u_long	kn03_tc3_imask;
 extern u_long latched_cycle_cnt;
 #endif
+
 tc_option_t tc_slot_info[TC_MAX_LOGICAL_SLOTS];
 static	void asic_init();
 extern	void RemconsInit();
 
-#ifdef DS5000
-
-#if 1 /*def DS5000_200*/
+#ifdef DS5000_200
 void	kn02_enable_intr __P ((u_int slotno,
 			       int (*handler) __P((intr_arg_t sc)),
 			       intr_arg_t sc, int onoff));
-#endif /*def DS5000_200*/
+#endif /*DS5000_200*/
 
 #ifdef DS5000_100
 void	kmin_enable_intr __P ((u_int slotno, int (*handler) (intr_arg_t sc),
@@ -218,8 +224,10 @@ void	kn03_enable_intr __P ((u_int slotno, int (*handler) (intr_arg_t sc),
 			       intr_arg_t sc, int onoff));
 #endif /*DS5000_240*/
 
+#if defined(DS5000_200) || defined(DS5000_25) || defined(DS5000_100) || \
+    defined(DS5000_240)
 volatile u_int *Mach_reset_addr;
-#endif /* DS5000 */
+#endif /* DS5000_200 || DS5000_25 || DS5000_100 || DS5000_240 */
 
 
 /*
@@ -236,6 +244,7 @@ struct	proc nullproc;		/* for use by swtch_exit() */
  * Process arguments passed to us by the prom monitor.
  * Return the first page address following the system.
  */
+void
 mach_init(argc, argv, code, cv)
 	int argc;
 	char *argv[];
@@ -249,10 +258,10 @@ mach_init(argc, argv, code, cv)
 	caddr_t start;
 	extern char edata[], end[];
 	extern char MachUTLBMiss[], MachUTLBMissEnd[];
-	extern char MachException[], MachExceptionEnd[];
+	extern char mips_R2000_exception[], mips_R2000_exceptionEnd[];
 
 	/* clear the BSS segment */
-	v = (caddr_t)pmax_round_page(end);
+	v = (caddr_t)mips_round_page(end);
 	bzero(edata, v - edata);
 
 	/* Initialize callv so we can do PROM output... */
@@ -267,6 +276,33 @@ mach_init(argc, argv, code, cv)
 		argc--;
 		argv++;
 	}
+
+#if 0
+	/*
+	 * Copy down exception vector code.
+	 */
+	if (MachUTLBMissEnd - MachUTLBMiss > 0x80)
+		panic("startup: UTLB code too large");
+	bcopy(MachUTLBMiss, (char *)MACH_UTLB_MISS_EXC_VEC,
+		MachUTLBMissEnd - MachUTLBMiss);
+	bcopy(mips_R2000_exception, (char *)MACH_GEN_EXC_VEC,
+		mips_R2000_exceptionEnd - mips_R2000_exception);
+
+	/*
+	 * Copy locore-function vector.
+	 */
+	bcopy(&R2000_locore_vec, &mips_locore_jumpvec,
+	      sizeof(mips_locore_jumpvec_t));
+
+	/*
+	 * Clear out the I and D caches.
+	 */
+	mips_r2000_ConfigCache();
+	mips_r2000_FlushCache();
+#else
+	/*XXX*/
+	r2000_vector_init();
+#endif
 
 	/* look at argv[0] and compute bootdev */
 	makebootdev(argv[0]);
@@ -354,22 +390,6 @@ mach_init(argc, argv, code, cv)
 	bzero(start, v - start);
 
 	/*
-	 * Copy down exception vector code.
-	 */
-	if (MachUTLBMissEnd - MachUTLBMiss > 0x80)
-		panic("startup: UTLB code too large");
-	bcopy(MachUTLBMiss, (char *)MACH_UTLB_MISS_EXC_VEC,
-		MachUTLBMissEnd - MachUTLBMiss);
-	bcopy(MachException, (char *)MACH_GEN_EXC_VEC,
-		MachExceptionEnd - MachException);
-
-	/*
-	 * Clear out the I and D caches.
-	 */
-	MachConfigCache();
-	MachFlushCache();
-
-	/*
 	 * Determine what model of computer we are running on.
 	 */
 	if (code == DEC_PROM_MAGIC) {
@@ -389,33 +409,44 @@ mach_init(argc, argv, code, cv)
 		boot(RB_HALT | RB_NOSYNC);
 	}
 
+	/*
+	 * Initialize physmem_boardmax; assume no SIMM-bank limits.
+	 * Adjst later in model-specific code if necessary.
+	 */
+	physmem_boardmax = MACH_MAX_MEM_ADDR;
+
 	/* check what model platform we are running on */
 	pmax_boardtype = ((i >> 16) & 0xff);
 
 	switch (pmax_boardtype) {
+
+#ifdef DS3100
 	case DS_PMAX:	/* DS3100 Pmax */
 		/*
 		 * Set up interrupt handling and I/O addresses.
 		 */
-		pmax_hardware_intr = kn01_intr;
+		mips_hardware_intr = kn01_intr;
 		tc_enable_interrupt = kn01_enable_intr; /*XXX*/
 		Mach_splbio = Mach_spl0;
 		Mach_splnet = Mach_spl1;
 		Mach_spltty = Mach_spl2;
-		Mach_splimp = Mach_spl2;
+		Mach_splimp = splhigh; /*XXX Mach_spl1(), if not for malloc()*/
 		Mach_splclock = Mach_spl3;
 		Mach_splstatclock = Mach_spl3;
 		Mach_clock_addr = (volatile struct chiptime *)
 			MACH_PHYS_TO_UNCACHED(KN01_SYS_CLOCK);
 		strcpy(cpu_model, "3100");
 		break;
+#endif /* DS3100 */
 
-	case DS_MIPSFAIR:	/* DS5100 mipsfair */
+
+#ifdef DS5100
+	case DS_MIPSMATE:	/* DS5100 aka mipsmate aka kn230 */
 		/* XXX just a guess */
 		/*
 		 * Set up interrupt handling and I/O addresses.
 		 */
-		pmax_hardware_intr = kn01_intr;
+		mips_hardware_intr = kn230_intr;
 		tc_enable_interrupt = kn01_enable_intr; /*XXX*/
 		Mach_splbio = Mach_spl0;
 		Mach_splnet = Mach_spl1;
@@ -427,8 +458,9 @@ mach_init(argc, argv, code, cv)
 			MACH_PHYS_TO_UNCACHED(KN01_SYS_CLOCK);
 		strcpy(cpu_model, "5100");
 		break;
+#endif /* DS5100 */
 
-#ifdef DS5000
+#ifdef DS5000_200
 	case DS_3MAX:	/* DS5000/200 3max */
 		{
 		volatile int *csr_addr =
@@ -446,7 +478,7 @@ mach_init(argc, argv, code, cv)
 		i = *csr_addr;
 		*csr_addr = (i & ~(KN02_CSR_WRESERVED | KN02_CSR_IOINTEN)) |
 			KN02_CSR_CORRECT | 0xff;
-		pmax_hardware_intr = kn02_intr;
+		mips_hardware_intr = kn02_intr;
 		tc_enable_interrupt = kn02_enable_intr;
 		Mach_splbio = Mach_spl0;
 		Mach_splnet = Mach_spl0;
@@ -460,6 +492,7 @@ mach_init(argc, argv, code, cv)
 		}
 		strcpy(cpu_model, "5000/200");
 		break;
+#endif /* DS5000_200 */
 
 #ifdef DS5000_100
 	case DS_3MIN:	/* DS5000/1xx 3min */
@@ -468,8 +501,8 @@ mach_init(argc, argv, code, cv)
 		tc_slot_phys_base[0] = KMIN_PHYS_TC_0_START;
 		tc_slot_phys_base[1] = KMIN_PHYS_TC_1_START;
 		tc_slot_phys_base[2] = KMIN_PHYS_TC_2_START;
-		asic_base = MACH_PHYS_TO_UNCACHED(KMIN_SYS_ASIC);
-		pmax_hardware_intr = kmin_intr;
+		ioasic_base = MACH_PHYS_TO_UNCACHED(KMIN_SYS_ASIC);
+		mips_hardware_intr = kmin_intr;
 		tc_enable_interrupt = kmin_enable_intr;
 		kmin_tc3_imask = (KMIN_INTR_CLOCK | KMIN_INTR_PSWARN |
 			KMIN_INTR_TIMEOUT);
@@ -493,8 +526,8 @@ mach_init(argc, argv, code, cv)
 		/*
 		 * Initialize interrupts.
 		 */
-		*(u_int *)ASIC_REG_IMSK(asic_base) = KMIN_IM0;
-		*(u_int *)ASIC_REG_INTR(asic_base) = 0;
+		*(u_int *)IOASIC_REG_IMSK(ioasic_base) = KMIN_IM0;
+		*(u_int *)IOASIC_REG_INTR(ioasic_base) = 0;
 
 		/* clear any memory errors from probes */
 		Mach_reset_addr =
@@ -502,8 +535,21 @@ mach_init(argc, argv, code, cv)
 		(*Mach_reset_addr) = 0;
 
 		strcpy(cpu_model, "5000/1xx");
-		break;
 
+		/*
+		 * The kmin memory hardware seems to wrap  memory addresses
+		 * with 4Mbyte SIMMs, which causes the physmem computation
+		 * to lose.  Find out how big the SIMMS are and set
+		 * max_	physmem accordingly.
+		 * XXX Do MAXINEs lose the same way?
+		 */
+		physmem_boardmax = KMIN_PHYS_MEMORY_END + 1;
+		if ((*(int*)(MACH_PHYS_TO_UNCACHED(KMIN_REG_MSR)) &
+		     KMIN_MSR_SIZE_16Mb) == 0)
+			physmem_boardmax = physmem_boardmax >> 2;
+		physmem_boardmax = MACH_PHYS_TO_UNCACHED(physmem_boardmax);
+
+		break;
 #endif /* ds5000_100 */
 
 #ifdef DS5000_25
@@ -512,8 +558,8 @@ mach_init(argc, argv, code, cv)
 		tc_min_slot = XINE_TC_MIN;
 		tc_slot_phys_base[0] = XINE_PHYS_TC_0_START;
 		tc_slot_phys_base[1] = XINE_PHYS_TC_1_START;
-		asic_base = MACH_PHYS_TO_UNCACHED(XINE_SYS_ASIC);
-		pmax_hardware_intr = xine_intr;
+		ioasic_base = MACH_PHYS_TO_UNCACHED(XINE_SYS_ASIC);
+		mips_hardware_intr = xine_intr;
 		tc_enable_interrupt = xine_enable_intr;
 		Mach_splbio = Mach_spl3;
 		Mach_splnet = Mach_spl3;
@@ -527,8 +573,8 @@ mach_init(argc, argv, code, cv)
 		/*
 		 * Initialize interrupts.
 		 */
-		*(u_int *)ASIC_REG_IMSK(asic_base) = XINE_IM0;
-		*(u_int *)ASIC_REG_INTR(asic_base) = 0;
+		*(u_int *)IOASIC_REG_IMSK(ioasic_base) = XINE_IM0;
+		*(u_int *)IOASIC_REG_INTR(ioasic_base) = 0;
 		/* clear any memory errors from probes */
 		Mach_reset_addr =
 		    (u_int*)MACH_PHYS_TO_UNCACHED(XINE_REG_TIMEOUT);
@@ -544,8 +590,8 @@ mach_init(argc, argv, code, cv)
 		tc_slot_phys_base[0] = KN03_PHYS_TC_0_START;
 		tc_slot_phys_base[1] = KN03_PHYS_TC_1_START;
 		tc_slot_phys_base[2] = KN03_PHYS_TC_2_START;
-		asic_base = MACH_PHYS_TO_UNCACHED(KN03_SYS_ASIC);
-		pmax_hardware_intr = kn03_intr;
+		ioasic_base = MACH_PHYS_TO_UNCACHED(KN03_SYS_ASIC);
+		mips_hardware_intr = kn03_intr;
 		tc_enable_interrupt = kn03_enable_intr;
 		Mach_reset_addr =
 		    (u_int *)MACH_PHYS_TO_UNCACHED(KN03_SYS_ERRADR);
@@ -570,18 +616,17 @@ mach_init(argc, argv, code, cv)
 		 */
 		kn03_tc3_imask = KN03_IM0 &
 			~(KN03_INTR_TC_0|KN03_INTR_TC_1|KN03_INTR_TC_2);
-		*(u_int *)ASIC_REG_IMSK(asic_base) = kn03_tc3_imask;
-		*(u_int *)ASIC_REG_INTR(asic_base) = 0;
+		*(u_int *)IOASIC_REG_IMSK(ioasic_base) = kn03_tc3_imask;
+		*(u_int *)IOASIC_REG_INTR(ioasic_base) = 0;
 		wbflush();
 		/* XXX hard-reset LANCE */
-		 *(u_int *)ASIC_REG_CSR(asic_base) |= 0x100;
+		 *(u_int *)IOASIC_REG_CSR(ioasic_base) |= 0x100;
 
 		/* clear any memory errors from probes */
 		*Mach_reset_addr = 0;
 		strcpy(cpu_model, "5000/240");
 		break;
 #endif /* DS5000_240 */
-#endif /* DS5000 */
 
 	default:
 		printf("kernel not configured for systype 0x%x\n", i);
@@ -593,28 +638,31 @@ mach_init(argc, argv, code, cv)
 	 * Be careful to save and restore the original contents for msgbuf.
 	 */
 	physmem = btoc((vm_offset_t)v - KERNBASE);
-	cp = (char *)MACH_PHYS_TO_UNCACHED(physmem << PGSHIFT);
-	while (cp < (char *)MACH_MAX_MEM_ADDR) {
+	cp = (char *)MACH_PHYS_TO_UNCACHED(physmem << PGSHIFT);	
+	while (cp < (char *)physmem_boardmax) {
+	  	int j;
 		if (badaddr(cp, 4))
 			break;
 		i = *(int *)cp;
+		j = ((int *)cp)[4];
 		*(int *)cp = 0xa5a5a5a5;
 		/*
 		 * Data will persist on the bus if we read it right away.
 		 * Have to be tricky here.
 		 */
 		((int *)cp)[4] = 0x5a5a5a5a;
-		MachEmptyWriteBuffer();
+		wbflush();
 		if (*(int *)cp != 0xa5a5a5a5)
 			break;
 		*(int *)cp = i;
+		((int *)cp)[4] = j;
 		cp += NBPG;
 		physmem++;
 	}
 
 	maxmem = physmem;
 
-#if NLE > 0
+#if NLE_IOASIC > 0
 	/*
 	 * Grab 128K at the top of physical memory for the lance chip
 	 * on machines where it does dma through the I/O ASIC.
@@ -625,7 +673,7 @@ mach_init(argc, argv, code, cv)
 		maxmem -= btoc(128 * 1024);
 		le_iomem = (maxmem << PGSHIFT);
 	}
-#endif /* NLE */
+#endif /* NLE_IOASIC */
 #if NASC > 0
 	/*
 	 * Ditto for the scsi chip. There is probably a way to make asc.c
@@ -712,6 +760,7 @@ mach_init(argc, argv, code, cv)
  * cpu_startup: allocate memory for variable-sized tables,
  * initialize cpu, and do autoconfiguration.
  */
+void
 cpu_startup()
 {
 	register unsigned i;
@@ -811,13 +860,6 @@ cpu_startup()
 	/*
 	 * Configure the system.
 	 */
-	if (boothowto & RB_CONFIG) {
-#ifdef BOOT_CONFIG
-		user_config();
-#else
-		printf("kernel does not support -c; continuing..\n");
-#endif
-	}
 	configure();
 }
 
@@ -850,7 +892,10 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 
 /*
  * Set registers on exec.
- * Clear all registers except sp, pc.
+ * Clear all registers except sp, pc, and t9.
+ * $sp is set to the stack pointer passed in.  $pc is set to the entry
+ * point given by the exec_package passed in, as is $t9 (used for PIC
+ * code by the MIPS elf abi).
  */
 void
 setregs(p, pack, stack, retval)
@@ -864,6 +909,7 @@ setregs(p, pack, stack, retval)
 	bzero((caddr_t)p->p_md.md_regs, (FSR + 1) * sizeof(int));
 	p->p_md.md_regs[SP] = stack;
 	p->p_md.md_regs[PC] = pack->ep_entry & ~3;
+        p->p_md.md_regs[T9] = pack->ep_entry & ~3; /* abicall requirement */
 	p->p_md.md_regs[PS] = PSL_USERSET;
 	p->p_md.md_flags & ~MDP_FPUSED;
 	if (machFPCurProcPtr == p)
@@ -976,6 +1022,7 @@ sendsig(catcher, sig, mask, code)
 	regs[A3] = (int)catcher;
 
 	regs[PC] = (int)catcher;
+	regs[T9] = (int)catcher;
 	regs[SP] = (int)fp;
 	/*
 	 * Signal trampoline code is at base of user stack.
@@ -1059,6 +1106,89 @@ sys_sigreturn(p, v, retval)
 
 int	waittime = -1;
 
+
+int	dumpmag = (int)0x8fca0101;	/* magic number for savecore */
+int	dumpsize = 0;		/* also for savecore */
+long	dumplo = 0;
+
+void
+dumpconf()
+{
+	int nblks;
+
+	dumpsize = physmem;
+	if (dumpdev != NODEV && bdevsw[major(dumpdev)].d_psize) {
+		nblks = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
+		if (dumpsize > btoc(dbtob(nblks - dumplo)))
+			dumpsize = btoc(dbtob(nblks - dumplo));
+		else if (dumplo == 0)
+			dumplo = nblks - btodb(ctob(physmem));
+	}
+	/*
+	 * Don't dump on the first CLBYTES (why CLBYTES?)
+	 * in case the dump device includes a disk label.
+	 */
+	if (dumplo < btodb(CLBYTES))
+		dumplo = btodb(CLBYTES);
+}
+
+/*
+ * Doadump comes here after turning off memory management and
+ * getting on the dump stack, either when called above, or by
+ * the auto-restart code.
+ */
+void
+dumpsys()
+{
+	int error;
+
+	msgbufmapped = 0;
+	if (dumpdev == NODEV)
+		return;
+	/*
+	 * For dumps during autoconfiguration,
+	 * if dump device has already configured...
+	 */
+	if (dumpsize == 0)
+		dumpconf();
+	if (dumplo < 0)
+		return;
+	printf("\ndumping to dev %x, offset %d\n", dumpdev, dumplo);
+	printf("dump ");
+	/*
+	 * XXX
+	 * All but first arguments to  dump() bogus.
+	 * What should blkno, va, size be?
+	 */
+	error = (*bdevsw[major(dumpdev)].d_dump)(dumpdev, 0, 0, 0);
+	switch (error) {
+
+	case ENXIO:
+		printf("device bad\n");
+		break;
+
+	case EFAULT:
+		printf("device not ready\n");
+		break;
+
+	case EINVAL:
+		printf("area improper\n");
+		break;
+
+	case EIO:
+		printf("i/o error\n");
+		break;
+
+	default:
+		printf("error %d\n", error);
+		break;
+
+	case 0:
+		printf("succeeded\n");
+	}
+}
+
+void
 boot(howto)
 	register int howto;
 {
@@ -1074,10 +1204,6 @@ boot(howto)
 
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
-		extern struct proc proc0;
-		/* avoid panic at boot XXX */
-		if (curproc == NULL)
-			curproc = &proc0;
 		/*
 		 * Synchronize the disks....
 		 */
@@ -1110,81 +1236,86 @@ boot(howto)
 			dumpsys();
 		(*f)();	/* jump back to prom monitor and do 'auto' cmd */
 	}
+	while(1) ;	/* fool gcc */
 	/*NOTREACHED*/
 }
 
-int	dumpmag = (int)0x8fca0101;	/* magic number for savecore */
-int	dumpsize = 0;		/* also for savecore */
-long	dumplo = 0;
 
-dumpconf()
-{
-	int nblks;
-
-	dumpsize = physmem;
-	if (dumpdev != NODEV && bdevsw[major(dumpdev)].d_psize) {
-		nblks = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
-		if (dumpsize > btoc(dbtob(nblks - dumplo)))
-			dumpsize = btoc(dbtob(nblks - dumplo));
-		else if (dumplo == 0)
-			dumplo = nblks - btodb(ctob(physmem));
-	}
-	/*
-	 * Don't dump on the first CLBYTES (why CLBYTES?)
-	 * in case the dump device includes a disk label.
-	 */
-	if (dumplo < btodb(CLBYTES))
-		dumplo = btodb(CLBYTES);
-}
 
 /*
- * Doadump comes here after turning off memory management and
- * getting on the dump stack, either when called above, or by
- * the auto-restart code.
+ * Read a high-resolution clock, if one is available, and return
+ * the current microsecond offset from time-of-day.
  */
-dumpsys()
+
+#ifndef DS5000_240
+# define clkread() (0)
+#else
+
+/*
+ * IOASIC TC cycle counter, latched on every interrupt from RTC chip.
+ */
+u_long latched_cycle_cnt;
+
+/*
+ * On a Decstation 5000/240,  use the turbochannel bus-cycle counter
+ * to interpolate micro-seconds since the  last RTC clock tick.
+ * The interpolation base is the copy of the bus cycle-counter taken
+ * by the RTC interrupt handler.
+ * XXX on XINE, use the microsecond free-running counter.
+ *
+ */
+static inline u_long
+clkread()
 {
-	int error;
 
-	msgbufmapped = 0;
-	if (dumpdev == NODEV)
-		return;
-	/*
-	 * For dumps during autoconfiguration,
-	 * if dump device has already configured...
-	 */
-	if (dumpsize == 0)
-		dumpconf();
-	if (dumplo < 0)
-		return;
-	printf("\ndumping to dev %x, offset %d\n", dumpdev, dumplo);
-	printf("dump ");
-	switch (error = (*bdevsw[major(dumpdev)].d_dump)(dumpdev)) {
+	register u_long usec, cycles;	/* really 32 bits? */
 
-	case ENXIO:
-		printf("device bad\n");
-		break;
-
-	case EFAULT:
-		printf("device not ready\n");
-		break;
-
-	case EINVAL:
-		printf("area improper\n");
-		break;
-
-	case EIO:
-		printf("i/o error\n");
-		break;
-
-	default:
-		printf("error %d\n", error);
-		break;
-
-	case 0:
-		printf("succeeded\n");
+	/* only support 5k/240 TC bus counter */
+	if (pmax_boardtype != DS_3MAXPLUS) {
+		return (0);
 	}
+
+	cycles = *(u_long*)IOASIC_REG_CTR(ioasic_base);
+
+	/* Compute difference in cycle count from last hardclock() to now */
+#if 1
+	/* my code, using u_ints */
+	cycles = cycles - latched_cycle_cnt;
+#else
+	/* Mills code, using (signed) ints */
+	if (cycles >= latched_cycle_cnt)
+		cycles = cycles - latched_cycle_cnt;
+	else
+		cycles = latched_cycle_cnt - cycles;
+#endif
+
+	/*
+	 * Scale from 40ns to microseconds.
+	 * Avoid a kernel FP divide (by 25) using the approximation 
+	 * 1/25 = 40/1000 =~ 41/ 1024, which is good to 0.0975 %
+	 */
+	usec = cycles + (cycles << 3) + (cycles << 5);
+	usec = usec >> 10;
+
+#ifdef CLOCK_DEBUG
+	if (usec > 3906 +4) {
+		 addlog("clkread: usec %d, counter=%lx\n",
+			 usec, latched_cycle_cnt);
+		stacktrace();
+	}
+#endif /*CLOCK_DEBUG*/
+	return usec;
 }
+
+#if 0
+void
+microset()
+{
+		latched_cycle_cnt = *(u_long*)(IOASIC_REG_CTR(ioasic_base));
+}
+#endif
+#endif /*DS5000_240*/
+
 
 /*
  * Return the best possible estimate of the time in the timeval
@@ -1202,42 +1333,11 @@ microtime(tvp)
 
 
 	*tvp = time;
-#ifdef notdef
 	tvp->tv_usec += clkread();
-	while (tvp->tv_usec > 1000000) {
-		tvp->tv_sec++;
+	if (tvp->tv_usec >= 1000000) {
 		tvp->tv_usec -= 1000000;
+		tvp->tv_sec++;
 	}
-#endif
-	/*
-	 * if there's a turbochannel cycle counter, use that to
-	 * interpolate micro-seconds since the  last RTC clock tick,
-	 * using the software copy of the bus cycle-counter taken by
-	 * the RTC interrupt handler.
-	 */
-#ifdef DS5000_240
-	if (pmax_boardtype == DS_3MAXPLUS) {
-		usec = *(u_int*)ASIC_REG_CTR(asic_base);
-		/* subtract cycle count a last  tick */
-		if (usec >= latched_cycle_cnt)
-			usec = usec - latched_cycle_cnt;
-		else
-			usec = latched_cycle_cnt - usec;
-
-		/*
-		 * scale from 40ns to microseconds.
-		 * avoid a kernel FP divide (by 25) using
-		 * an approximation 1/25 = 40/1000 =~ 41/ 1024.
-		 */
-		usec = usec + (usec << 3) + (usec << 5);
-		usec = usec >> 10;
-		tvp-> tv_usec += usec;
-		if (tvp->tv_usec >= 1000000) {
-			tvp->tv_usec -= 1000000;
-			tvp->tv_sec++;
-		}
-	}
-#endif
 
 	if (tvp->tv_sec == lasttime.tv_sec &&
 	    tvp->tv_usec <= lasttime.tv_usec &&
@@ -1249,16 +1349,20 @@ microtime(tvp)
 	splx(s);
 }
 
+int
 initcpu()
 {
 	register volatile struct chiptime *c;
 	int i;
 
+#if defined(DS5000_200) || defined(DS5000_25) || defined(DS5000_100) || \
+    defined(DS5000_240)
 	/* Reset after bus errors during probe */
 	if (Mach_reset_addr) {
 		*Mach_reset_addr = 0;
-		MachEmptyWriteBuffer();
+		wbflush();
 	}
+#endif
 
 	/* clear any pending interrupts */
 	switch (pmax_boardtype) {
@@ -1267,14 +1371,14 @@ initcpu()
 	case DS_3MAXPLUS:
 	case DS_3MIN:
 	case DS_MAXINE:
-		*(u_int *)ASIC_REG_INTR(asic_base) = 0;
+		*(u_int *)IOASIC_REG_INTR(ioasic_base) = 0;
 		break;
 	case DS_3MAX:
 		*(u_int *)MACH_PHYS_TO_UNCACHED(KN02_SYS_CHKSYN) = 0;
-		MachEmptyWriteBuffer();
+		wbflush();
 		break;
 	default:
-		printf("Unknown system type in initcpu()\n");
+		printf("initcpu(): unknown system type 0x%x\n", pmax_boardtype);
 		break;
 	}
 
@@ -1355,7 +1459,7 @@ out:
 }
 
 
-#ifdef DS5000
+#ifdef DS3100
 
 /*
  * Enable an interrupt from a slot on the KN01 internal bus.
@@ -1381,7 +1485,10 @@ kn01_enable_intr(slotno, handler, sc, on)
 		tc_slot_info[slotno].sc = 0;
 	}
 }
+#endif /* DS3100 */
 
+
+#ifdef DS5000_200
 
 /*
  * Enable/Disable interrupts for a TURBOchannel slot on the 3MAX.
@@ -1399,8 +1506,8 @@ kn02_enable_intr(slotno, handler, sc, on)
 	int s;
 
 #if 0
-	printf("3MAX enable_intr: imask %x, %sabling slot %d, unit %d\n",
-	       kn03_tc3_imask, (on? "en" : "dis"), slotno, unit);
+	printf("3MAX enable_intr: imask %x, %sabling slot %d, sc %p\n",
+	       kn03_tc3_imask, (on? "en" : "dis"), slotno, sc);
 #endif
 
 	if (slotno > TC_MAX_LOGICAL_SLOTS)
@@ -1424,7 +1531,9 @@ kn02_enable_intr(slotno, handler, sc, on)
 		*p_csr = csr & ~slotno;
 	splx(s);
 }
+#endif /*DS5000_200*/
 
+#ifdef DS5000_100
 /*
  *	Object:
  *		kmin_enable_intr		EXPORTED function
@@ -1463,6 +1572,7 @@ kmin_enable_intr(slotno, handler, sc, on)
 		mask = (KMIN_INTR_SCSI | KMIN_INTR_SCSI_PTR_LOAD |
 			KMIN_INTR_SCSI_OVRUN | KMIN_INTR_SCSI_READ_E);
 		break;
+
 	case KMIN_LANCE_SLOT:
 		mask = KMIN_INTR_LANCE;
 		break;
@@ -1527,7 +1637,10 @@ kmin_enable_intr(slotno, handler, sc, on)
 		tc_slot_info[slotno].sc = 0;
 	}
 }
+#endif /*DS5000_100*/
 
+
+#ifdef DS5000_25
 /*
  *	Object:
  *		xine_enable_intr		EXPORTED function
@@ -1591,8 +1704,9 @@ xine_enable_intr(slotno, handler, sc, on)
 		tc_slot_info[slotno].intr = 0;
 		tc_slot_info[slotno].sc = 0;
 	}
-	*(u_int *)ASIC_REG_IMSK(asic_base) = xine_tc3_imask;
+	*(u_int *)IOASIC_REG_IMSK(ioasic_base) = xine_tc3_imask;
 }
+#endif /*DS5000_25*/
 
 #ifdef DS5000_240
 void
@@ -1601,7 +1715,7 @@ kn03_tc_reset()
 /*
 	 * Reset interrupts, clear any errors from newconf probes
 	 */
-	*(u_int *)ASIC_REG_INTR(asic_base) = 0;
+	*(u_int *)IOASIC_REG_INTR(ioasic_base) = 0;
 	*(unsigned *)MACH_PHYS_TO_UNCACHED(KN03_SYS_ERRADR) = 0;
 }
 
@@ -1646,7 +1760,7 @@ kn03_enable_intr(slotno, handler, sc, on)
 		break;
 	case KN03_LANCE_SLOT:
 		mask = KN03_INTR_LANCE;
-		mask |= ASIC_INTR_LANCE_READ_E;
+		mask |= IOASIC_INTR_LANCE_READ_E;
 		break;
 	case KN03_SCC0_SLOT:
 		mask = KN03_INTR_SCC_0;
@@ -1674,7 +1788,7 @@ kn03_enable_intr(slotno, handler, sc, on)
 		tc_slot_info[slotno].sc = 0;
 	}
 done:
-	*(u_int *)ASIC_REG_IMSK(asic_base) = kn03_tc3_imask;
+	*(u_int *)IOASIC_REG_IMSK(ioasic_base) = kn03_tc3_imask;
 	wbflush();
 }
 #endif /* DS5000_240 */
@@ -1690,11 +1804,10 @@ asic_init(isa_maxine)
 	volatile u_int *decoder;
 
 	/* These are common between 3min and maxine */
-	decoder = (volatile u_int *)ASIC_REG_LANCE_DECODE(asic_base);
+	decoder = (volatile u_int *)IOASIC_REG_LANCE_DECODE(ioasic_base);
 	*decoder = KMIN_LANCE_CONFIG;
 
 	/* set the SCSI DMA configuration map */
-	decoder = (volatile u_int *) ASIC_REG_SCSI_DECODE(asic_base);
+	decoder = (volatile u_int *) IOASIC_REG_SCSI_DECODE(ioasic_base);
 	(*decoder) = 0x00000000e;
 }
-#endif /* DS5000 */

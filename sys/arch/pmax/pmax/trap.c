@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.24 1995/12/28 16:22:41 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.37.2.2 1996/09/09 20:39:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,6 +42,10 @@
  *	@(#)trap.c	8.5 (Berkeley) 1/11/94
  */
 
+#if #defined(CPU_R4000) && !defined(CPU_R3000)
+#error Must define at least one of CPU_R3000 or CPU_R4000.
+#endif
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -60,6 +64,7 @@
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/cpu.h>
+#include <machine/locore.h>
 #include <machine/pte.h>
 #include <machine/mips_opcode.h>
 
@@ -67,78 +72,194 @@
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
 
-#include <pmax/pmax/clockreg.h>
-#include <pmax/pmax/kn01.h>
-#include <pmax/pmax/kn02.h>
-#include <pmax/pmax/kmin.h>
-#include <pmax/pmax/maxine.h>
-#include <pmax/pmax/kn03.h>
-#include <pmax/pmax/asic.h>
-#include <pmax/pmax/turbochannel.h>
-
-#include <pmax/stand/dec_prom.h>
-
-#include <asc.h>
-#include <sii.h>
-#include <le.h>
-#include <dc.h>
-
 #include <sys/cdefs.h>
 #include <sys/syslog.h>
+#include <miscfs/procfs/procfs.h>
 
-#include <pmax/pmax/trap.h>
+/* all this to get prototypes for ipintr() and arpintr() */
+#include <sys/socket.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/if_ether.h>
+#include <netinet/ip_var.h>
+
+#include "ppp.h"
 
 struct	proc *machFPCurProcPtr;		/* pointer to last proc to use FP */
 
 /*
+ * Port-specific hardware interrupt handler
+ */
+
+int (*mips_hardware_intr) __P((u_int mask, u_int pc, u_int status,
+			       u_int cause)) =
+	( int (*) __P((u_int, u_int, u_int, u_int)) ) 0;
+
+/*
  * Exception-handling functions, called via machExceptionTable from locore
  */
-extern void MachKernGenException __P((void));
-extern void MachUserGenException __P((void));
-extern void MachKernIntr __P((void));
-extern void MachUserIntr __P((void));
 extern void MachTLBModException  __P((void));
 extern void MachTLBMissException __P((void));
+
+extern void mips_r2000_KernGenException __P((void));
+extern void mips_r2000_UserGenException __P((void));
+extern void mips_r2000_KernIntr __P((void));
+extern void mips_r2000_UserIntr __P((void));
+extern void mips_r2000_TLBModException  __P((void));
+extern void mips_r2000_TLBMissException __P((void));
+
+
+extern void mips_r4000_KernGenException __P((void));
+extern void mips_r4000_UserGenException __P((void));
+extern void mips_r4000_KernIntr __P((void));
+extern void mips_r4000_UserIntr __P((void));
+extern void mips_r4000_TLBModException  __P((void));
+extern void mips_r4000_TLBMissException __P((void));
+
+void (*mips_r2000_ExceptionTable[]) __P((void)) = {
+/*
+ * The kernel exception handlers.
+ */
+    mips_r2000_KernIntr,			/* 0 external interrupt */
+    mips_r2000_KernGenException,		/* 1 TLB modification */
+    mips_r2000_TLBMissException,		/* 2 TLB miss (load or instr. fetch) */
+    mips_r2000_TLBMissException,		/* 3 TLB miss (store) */
+    mips_r2000_KernGenException,		/* 4 address error (load or I-fetch) */
+    mips_r2000_KernGenException,		/* 5 address error (store) */
+    mips_r2000_KernGenException,		/* 6 bus error (I-fetch) */
+    mips_r2000_KernGenException,		/* 7 bus error (load or store) */
+    mips_r2000_KernGenException,		/* 8 system call */
+    mips_r2000_KernGenException,		/* 9 breakpoint */
+    mips_r2000_KernGenException,		/* 10 reserved instruction */
+    mips_r2000_KernGenException,		/* 11 coprocessor unusable */
+    mips_r2000_KernGenException,		/* 12 arithmetic overflow */
+    mips_r2000_KernGenException,		/* 13 r4k trap excpt, r3k reserved */
+    mips_r2000_KernGenException,		/* 14 r4k virt coherence, r3k reserved */
+    mips_r2000_KernGenException,		/* 15 r4k FP exception, r3k reserved */
+    mips_r2000_KernGenException,		/* 16 reserved */
+    mips_r2000_KernGenException,		/* 17 reserved */
+    mips_r2000_KernGenException,		/* 18 reserved */
+    mips_r2000_KernGenException,		/* 19 reserved */
+    mips_r2000_KernGenException,		/* 20 reserved */
+    mips_r2000_KernGenException,		/* 21 reserved */
+    mips_r2000_KernGenException,		/* 22 reserved */
+    mips_r2000_KernGenException,		/* 23 watch exception */
+    mips_r2000_KernGenException,		/* 24 reserved */
+    mips_r2000_KernGenException,		/* 25 reserved */
+    mips_r2000_KernGenException,		/* 26 reserved */
+    mips_r2000_KernGenException,		/* 27 reserved */
+    mips_r2000_KernGenException,		/* 28 reserved */
+    mips_r2000_KernGenException,		/* 29 reserved */
+    mips_r2000_KernGenException,		/* 30 reserved */
+    mips_r2000_KernGenException,		/* 31 virt. coherence exception data */
+/*
+ * The user exception handlers.
+ */
+    mips_r2000_UserIntr,		        /*  0 */
+    mips_r2000_UserGenException,	        /*  1 */
+    mips_r2000_UserGenException,	        /*  2 */
+    mips_r2000_UserGenException,	        /*  3 */
+    mips_r2000_UserGenException,	        /*  4 */
+    mips_r2000_UserGenException,	        /*  5 */
+    mips_r2000_UserGenException,	        /*  6 */
+    mips_r2000_UserGenException,	        /*  7 */
+    mips_r2000_UserGenException,	        /*  8 */
+    mips_r2000_UserGenException,	        /*  9 */
+    mips_r2000_UserGenException,	        /* 10 */
+    mips_r2000_UserGenException,	        /* 11 */
+    mips_r2000_UserGenException,	        /* 12 */
+    mips_r2000_UserGenException,	        /* 13 */
+    mips_r2000_UserGenException,	        /* 14 */
+    mips_r2000_UserGenException,	        /* 15 */
+    mips_r2000_UserGenException,		/* 16 */
+    mips_r2000_UserGenException,		/* 17 */
+    mips_r2000_UserGenException,		/* 18 */
+    mips_r2000_UserGenException,		/* 19 */
+    mips_r2000_UserGenException,		/* 20 */
+    mips_r2000_UserGenException,		/* 21 */
+    mips_r2000_UserGenException,		/* 22 */
+    mips_r2000_UserGenException,		/* 23 */
+    mips_r2000_UserGenException,		/* 24 */
+    mips_r2000_UserGenException,		/* 25 */
+    mips_r2000_UserGenException,		/* 26 */
+    mips_r2000_UserGenException,		/* 27 */
+    mips_r2000_UserGenException,		/* 28 */
+    mips_r2000_UserGenException,		/* 29 */
+    mips_r2000_UserGenException,		/* 20 */
+    mips_r2000_UserGenException,		/* 31 */
+};
 
 void (*machExceptionTable[]) __P((void)) = {
 /*
  * The kernel exception handlers.
  */
-	MachKernIntr,			/* external interrupt */
-	MachKernGenException,		/* TLB modification */
-	MachTLBMissException,		/* TLB miss (load or instr. fetch) */
-	MachTLBMissException,		/* TLB miss (store) */
-	MachKernGenException,		/* address error (load or I-fetch) */
-	MachKernGenException,		/* address error (store) */
-	MachKernGenException,		/* bus error (I-fetch) */
-	MachKernGenException,		/* bus error (load or store) */
-	MachKernGenException,		/* system call */
-	MachKernGenException,		/* breakpoint */
-	MachKernGenException,		/* reserved instruction */
-	MachKernGenException,		/* coprocessor unusable */
-	MachKernGenException,		/* arithmetic overflow */
-	MachKernGenException,		/* reserved */
-	MachKernGenException,		/* reserved */
-	MachKernGenException,		/* reserved */
+    mips_r2000_KernIntr,			/* 0 external interrupt */
+    mips_r2000_KernGenException,		/* 1 TLB modification */
+    mips_r2000_TLBMissException,		/* 2 TLB miss (load or instr. fetch) */
+    mips_r2000_TLBMissException,		/* 3 TLB miss (store) */
+    mips_r2000_KernGenException,		/* 4 address error (load or I-fetch) */
+    mips_r2000_KernGenException,		/* 5 address error (store) */
+    mips_r2000_KernGenException,		/* 6 bus error (I-fetch) */
+    mips_r2000_KernGenException,		/* 7 bus error (load or store) */
+    mips_r2000_KernGenException,		/* 8 system call */
+    mips_r2000_KernGenException,		/* 9 breakpoint */
+    mips_r2000_KernGenException,		/* 10 reserved instruction */
+    mips_r2000_KernGenException,		/* 11 coprocessor unusable */
+    mips_r2000_KernGenException,		/* 12 arithmetic overflow */
+    mips_r2000_KernGenException,		/* 13 r4k trap excpt, r3k reserved */
+    mips_r2000_KernGenException,		/* 14 r4k virt coherence, r3k reserved */
+    mips_r2000_KernGenException,		/* 15 r4k FP exception, r3k reserved */
+    mips_r2000_KernGenException,		/* 16 reserved */
+    mips_r2000_KernGenException,		/* 17 reserved */
+    mips_r2000_KernGenException,		/* 18 reserved */
+    mips_r2000_KernGenException,		/* 19 reserved */
+    mips_r2000_KernGenException,		/* 20 reserved */
+    mips_r2000_KernGenException,		/* 21 reserved */
+    mips_r2000_KernGenException,		/* 22 reserved */
+    mips_r2000_KernGenException,		/* 23 watch exception */
+    mips_r2000_KernGenException,		/* 24 reserved */
+    mips_r2000_KernGenException,		/* 25 reserved */
+    mips_r2000_KernGenException,		/* 26 reserved */
+    mips_r2000_KernGenException,		/* 27 reserved */
+    mips_r2000_KernGenException,		/* 28 reserved */
+    mips_r2000_KernGenException,		/* 29 reserved */
+    mips_r2000_KernGenException,		/* 30 reserved */
+    mips_r2000_KernGenException,		/* 31 virt. coherence exception data */
 /*
  * The user exception handlers.
  */
-	MachUserIntr,
-	MachUserGenException,
-	MachUserGenException,
-	MachUserGenException,
-	MachUserGenException,
-	MachUserGenException,
-	MachUserGenException,
-	MachUserGenException,
-	MachUserGenException,
-	MachUserGenException,
-	MachUserGenException,
-	MachUserGenException,
-	MachUserGenException,
-	MachUserGenException,
-	MachUserGenException,
-	MachUserGenException,
+    mips_r2000_UserIntr,		        /*  0 */
+    mips_r2000_UserGenException,	        /*  1 */
+    mips_r2000_UserGenException,	        /*  2 */
+    mips_r2000_UserGenException,	        /*  3 */
+    mips_r2000_UserGenException,	        /*  4 */
+    mips_r2000_UserGenException,	        /*  5 */
+    mips_r2000_UserGenException,	        /*  6 */
+    mips_r2000_UserGenException,	        /*  7 */
+    mips_r2000_UserGenException,	        /*  8 */
+    mips_r2000_UserGenException,	        /*  9 */
+    mips_r2000_UserGenException,	        /* 10 */
+    mips_r2000_UserGenException,	        /* 11 */
+    mips_r2000_UserGenException,	        /* 12 */
+    mips_r2000_UserGenException,	        /* 13 */
+    mips_r2000_UserGenException,	        /* 14 */
+    mips_r2000_UserGenException,	        /* 15 */
+    mips_r2000_UserGenException,		/* 16 */
+    mips_r2000_UserGenException,		/* 17 */
+    mips_r2000_UserGenException,		/* 18 */
+    mips_r2000_UserGenException,		/* 19 */
+    mips_r2000_UserGenException,		/* 20 */
+    mips_r2000_UserGenException,		/* 21 */
+    mips_r2000_UserGenException,		/* 22 */
+    mips_r2000_UserGenException,		/* 23 */
+    mips_r2000_UserGenException,		/* 24 */
+    mips_r2000_UserGenException,		/* 25 */
+    mips_r2000_UserGenException,		/* 26 */
+    mips_r2000_UserGenException,		/* 27 */
+    mips_r2000_UserGenException,		/* 28 */
+    mips_r2000_UserGenException,		/* 29 */
+    mips_r2000_UserGenException,		/* 20 */
+    mips_r2000_UserGenException,		/* 31 */
 };
 
 char	*trap_type[] = {
@@ -155,9 +276,25 @@ char	*trap_type[] = {
 	"reserved instruction",
 	"coprocessor unusable",
 	"arithmetic overflow",
-	"reserved 13",
-	"reserved 14",
-	"reserved 15",
+	"r4k trap/r3k reserved 13",
+	"r4k virtual coherency instruction/r3k reserved 14",
+	"r4k floating point/ r3k reserved 15",
+	"reserved 16",
+	"reserved 17",
+	"reserved 18",
+	"reserved 19",
+	"reserved 20",
+	"reserved 21",
+	"reserved 22",
+	"r4k watch",
+	"reserved 24",
+	"reserved 25",
+	"reserved 26",
+	"reserved 27",
+	"reserved 28",
+	"reserved 29",
+	"reserved 30",
+	"r4k virtual coherency data",
 };
 
 #ifdef DEBUG
@@ -168,6 +305,7 @@ struct trapdebug {		/* trap history buffer for debugging */
 	u_int	vadr;
 	u_int	pc;
 	u_int	ra;
+	u_int	sp;
 	u_int	code;
 } trapdebug[TRAPSIZE], *trp = trapdebug;
 
@@ -175,14 +313,20 @@ void trapDump __P((char * msg));
 void cpu_getregs __P((int *regs));
 #endif	/* DEBUG */
 
+/*
+ * Other forward declarations.
+ */
+u_int MachEmulateBranch __P((unsigned *regsPtr,
+			     unsigned instPC,
+			     unsigned fpcCSR,
+			     int allowNonBranch));
 
 /* extern functions used but not declared elsewhere */
 extern void MachFPInterrupt __P((u_int status, u_int cause, u_int pc));
 extern void clearsoftclock __P((void));
 extern void clearsoftnet __P((void));
-extern void splx __P((int));
+extern int splx __P((int));
 extern int splhigh __P((void));
-extern void MachTLBUpdate __P((u_int, u_int));
 extern void MachSwitchFPState __P((struct proc *from, struct user *to));
 
 /* only called by locore */
@@ -200,41 +344,38 @@ extern void MachEmptyWriteBuffer __P((void));
 extern void MachUTLBMiss __P((void));
 extern void setsoftclock __P((void));
 extern int main __P((void*));
+extern void am7990_meminit __P((void*)); /* XXX */
 #endif	/* DEBUG */
 
 
-
-static void pmax_errintr __P((void));
-static void kn02_errintr __P((void)), kn02ba_errintr __P((void));
-
-#ifdef DS5000_240
-static void kn03_errintr __P ((void));
-extern u_long kn03_tc3_imask;
-
-/*
- * IOASIC 40ns bus-cycle counter, used as hi-resolution clock:
- * may also be present on (some) XINE, 3min hardware, but not tested there.
- */
-extern u_long asic_base;	/* Base address of I/O asic */
-u_long latched_cycle_cnt;	/*
-				 * IOASIC cycle counter, latched on every
-				 * interrupt from RTC chip (64Hz).
-				 */
-#endif /*DS5000_240*/
-
-static unsigned kn02ba_recover_erradr __P((u_int phys, u_int mer));
-extern tc_option_t tc_slot_info[TC_MAX_LOGICAL_SLOTS];
-extern u_long kmin_tc3_imask, xine_tc3_imask;
-extern const struct callback *callv;
-
-int (*pmax_hardware_intr) __P((u_int mask, u_int pc, u_int status,
-			       u_int cause)) =
-	( int (*) __P((u_int, u_int, u_int, u_int)) ) 0;
-
 extern volatile struct chiptime *Mach_clock_addr;
-extern u_long intrcnt[];
 extern u_long kernelfaults;
 u_long kernelfaults = 0;
+extern u_long intrcnt[];
+
+/*
+ * Index into intrcnt[], which is defined in locore
+ */
+typedef enum {
+	SOFTCLOCK_INTR =0,
+	SOFTNET_INTR	=1,
+	SERIAL0_INTR=2,
+	SERIAL1_INTR = 3,
+	SERIAL2_INTR = 4,
+	LANCE_INTR =5,
+	SCSI_INTR = 6,
+	ERROR_INTR=7,
+	HARDCLOCK = 8,
+  	FPU_INTR   =9,
+	SLOT0_INTR =10,
+	SLOT1_INTR =11,
+	SLOT2_INTR =12,
+	DTOP_INTR = 13, /* XXX */
+	ISDN_INTR = 14, /* XXX */
+	FLOPPY_INTR = 15,
+	STRAY_INTR = 16
+} decstation_intr_t;
+
 
 /*
  * Handle an exception.
@@ -264,13 +405,14 @@ trap(statusReg, causeReg, vadr, pc, args)
 	trp->pc = pc;
 	trp->ra = !USERMODE(statusReg) ? ((int *)&args)[19] :
 		p->p_md.md_regs[RA];
+	trp->sp = (int)&args;
 	trp->code = 0;
 	if (++trp == &trapdebug[TRAPSIZE])
 		trp = trapdebug;
 #endif
 
 	cnt.v_trap++;
-	type = (causeReg & MACH_CR_EXC_CODE) >> MACH_CR_EXC_CODE_SHIFT;
+	type = (causeReg & MIPS_3K_CR_EXC_CODE) >> MACH_CR_EXC_CODE_SHIFT;
 	if (USERMODE(statusReg)) {
 		type |= T_USER;
 		sticks = p->p_sticks;
@@ -280,8 +422,8 @@ trap(statusReg, causeReg, vadr, pc, args)
 	 * Enable hardware interrupts if they were on before.
 	 * We only respond to software interrupts when returning to user mode.
 	 */
-	if (statusReg & MACH_SR_INT_ENA_PREV)
-		splx((statusReg & MACH_HARD_INT_MASK) | MACH_SR_INT_ENA_CUR);
+	if (statusReg & MIPS_3K_SR_INT_ENA_PREV)
+		splx((statusReg & MACH_HARD_INT_MASK) | MIPS_SR_INT_IE);
 
 	switch (type) {
 	case T_TLB_MOD:
@@ -330,8 +472,9 @@ trap(statusReg, causeReg, vadr, pc, args)
 		pte += (vadr >> PGSHIFT) & (NPTEPG - 1);
 		entry = pte->pt_entry;
 #ifdef DIAGNOSTIC
-		if (!(entry & PG_V) || (entry & PG_M))
+		if (!(entry & PG_V) || (entry & PG_M)) {
 			panic("trap: utlbmod: invalid pte");
+		}
 #endif
 		if (entry & PG_RO) {
 			/* write to read only page */
@@ -347,8 +490,9 @@ trap(statusReg, causeReg, vadr, pc, args)
 #ifdef ATTR
 		pmap_attributes[atop(pa)] |= PMAP_ATTR_MOD;
 #else
-		if (!IS_VM_PHYSADDR(pa))
+		if (!IS_VM_PHYSADDR(pa)) {
 			panic("trap: utlbmod: unmanaged page");
+		}
 		PHYS_TO_VM_PAGE(pa)->flags &= ~PG_CLEAN;
 #endif
 		if (!USERMODE(statusReg))
@@ -370,7 +514,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 			rv = vm_fault(kernel_map, va, ftype, FALSE);
 			if (rv == KERN_SUCCESS)
 				return (pc);
-			if (i = ((struct pcb *)UADDR)->pcb_onfault) {
+			if ((i = ((struct pcb *)UADDR)->pcb_onfault) != 0) {
 				((struct pcb *)UADDR)->pcb_onfault = 0;
 				return (onfault_table[i]);
 			}
@@ -431,14 +575,14 @@ trap(statusReg, causeReg, vadr, pc, args)
 			goto out;
 		}
 		if (!USERMODE(statusReg)) {
-			if (i = ((struct pcb *)UADDR)->pcb_onfault) {
+			if ((i = ((struct pcb *)UADDR)->pcb_onfault) != 0) {
 				((struct pcb *)UADDR)->pcb_onfault = 0;
 				return (onfault_table[i]);
 			}
 			goto err;
 		}
 		ucode = vadr;
-		i = SIGSEGV;
+		i = (rv == KERN_PROTECTION_FAILURE) ? SIGBUS : SIGSEGV;
 		break;
 	    }
 
@@ -446,7 +590,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 	case T_ADDR_ERR_ST+T_USER:	/* misaligned or kseg access */
 	case T_BUS_ERR_IFETCH+T_USER:	/* BERR asserted to cpu */
 	case T_BUS_ERR_LD_ST+T_USER:	/* BERR asserted to cpu */
-		i = SIGBUS;
+		i = SIGSEGV;
 		break;
 
 	case T_SYSCALL+T_USER:
@@ -601,6 +745,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 		trp->vadr = locr0[SP];
 		trp->pc = locr0[PC];
 		trp->ra = locr0[RA];
+		/*trp->sp = (int)&args;*/
 		trp->code = -code;
 		if (++trp == &trapdebug[TRAPSIZE])
 			trp = trapdebug;
@@ -631,7 +776,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 #endif
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_SYSRET))
-			ktrsysret(p->p_tracep, code, i, rval);
+			ktrsysret(p->p_tracep, code, i, rval[0]); /*XXX*/
 #endif
 		goto out;
 	    }
@@ -702,6 +847,19 @@ trap(statusReg, causeReg, vadr, pc, args)
 		p->p_md.md_flags |= MDP_FPUSED;
 		goto out;
 
+	case T_FPE:
+#ifdef DEBUG
+		trapDump("fpintr");
+#else
+		printf("FPU Trap: PC %x CR %x SR %x\n",
+			pc, causeReg, statusReg);
+		goto err;
+#endif
+
+	case T_FPE+T_USER:
+		MachFPTrap(statusReg, causeReg, pc);
+		goto out;
+
 	case T_OVFLOW+T_USER:
 		i = SIGFPE;
 		break;
@@ -709,7 +867,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 	case T_ADDR_ERR_LD:	/* misaligned access */
 	case T_ADDR_ERR_ST:	/* misaligned access */
 	case T_BUS_ERR_LD_ST:	/* BERR asserted to cpu */
-		if (i = ((struct pcb *)UADDR)->pcb_onfault) {
+		if ((i = ((struct pcb *)UADDR)->pcb_onfault) != 0) {
 			((struct pcb *)UADDR)->pcb_onfault = 0;
 			return (onfault_table[i]);
 		}
@@ -812,13 +970,13 @@ out:
  * Note: curproc might be NULL.
  */
 void
-interrupt(statusReg, causeReg, pc)
+interrupt(statusReg, causeReg, pc /* XXX what, args */ )
 	unsigned statusReg;	/* status register at time of the exception */
 	unsigned causeReg;	/* cause register at time of exception */
 	unsigned pc;		/* program counter where to continue */
 {
 	register unsigned mask;
-	struct clockframe cf;
+	/*struct clockframe cf;*/
 
 #ifdef DEBUG
 	trp->status = statusReg;
@@ -826,6 +984,7 @@ interrupt(statusReg, causeReg, pc)
 	trp->vadr = 0;
 	trp->pc = pc;
 	trp->ra = 0;
+	trp->sp = /* (int)&args */ 0;	/* XXX pass args in */
 	trp->code = 0;
 	if (++trp == &trapdebug[TRAPSIZE])
 		trp = trapdebug;
@@ -833,10 +992,10 @@ interrupt(statusReg, causeReg, pc)
 
 	cnt.v_intr++;
 	mask = causeReg & statusReg;	/* pending interrupts & enable mask */
-	if (pmax_hardware_intr)
-		splx((*pmax_hardware_intr)(mask, pc, statusReg, causeReg));
+	if (mips_hardware_intr)
+		splx((*mips_hardware_intr)(mask, pc, statusReg, causeReg));
 	if (mask & MACH_INT_MASK_5) {
-		intrcnt[7]++;
+		intrcnt[FPU_INTR]++;
 		if (!USERMODE(statusReg)) {
 #ifdef DEBUG
 			trapDump("fpintr");
@@ -849,11 +1008,12 @@ interrupt(statusReg, causeReg, pc)
 	}
 
 	/* process network interrupt if we trapped or will very soon */
+	/* XXX fixme: operator precedence botch? */
 	if ((mask & MACH_SOFT_INT_MASK_1) ||
 	    netisr && (statusReg & MACH_SOFT_INT_MASK_1)) {
 		clearsoftnet();
 		cnt.v_soft++;
-		intrcnt[1]++;
+		intrcnt[SOFTNET_INTR]++;
 #ifdef INET
 		if (netisr & (1 << NETISR_ARP)) {
 			netisr &= ~(1 << NETISR_ARP);
@@ -876,7 +1036,6 @@ interrupt(statusReg, causeReg, pc)
 			clnlintr();
 		}
 #endif
-#include "ppp.h"
 #if NPPP > 0
 		if (netisr & (1 << NETISR_PPP)) {
 			netisr &= ~(1 << NETISR_PPP);
@@ -887,503 +1046,12 @@ interrupt(statusReg, causeReg, pc)
 
 	if (mask & MACH_SOFT_INT_MASK_0) {
 		clearsoftclock();
-		intrcnt[0]++;
+		intrcnt[SOFTCLOCK_INTR]++;
 		cnt.v_soft++;
 		softclock();
-  	}
+ 	}
 }
 
-/*
- * Handle pmax (DECstation 2100/3100) interrupts.
- */
-int
-kn01_intr(mask, pc, statusReg, causeReg)
-	unsigned mask;
-	unsigned pc;
-	unsigned statusReg;
-	unsigned causeReg;
-{
-	register volatile struct chiptime *c = Mach_clock_addr;
-	struct clockframe cf;
-	int temp;
-	extern struct cfdriver siicd;
-	extern struct cfdriver lecd;
-
-	/* handle clock interrupts ASAP */
-	if (mask & MACH_INT_MASK_3) {
-		intrcnt[6]++;
-		temp = c->regc;	/* XXX clear interrupt bits */
-		cf.pc = pc;
-		cf.sr = statusReg;
-		hardclock(&cf);
-
-		/* keep clock interrupts enabled */
-		causeReg &= ~MACH_INT_MASK_3;
-	}
-	/* Re-enable clock interrupts */
-	splx(MACH_INT_MASK_3 | MACH_SR_INT_ENA_CUR);
-#if NSII > 0
-	if (mask & MACH_INT_MASK_0) {
-		intrcnt[2]++;
-		siiintr(siicd.cd_devs[0]);
-	}
-#endif
-#if NLE > 0
-	if (mask & MACH_INT_MASK_1) {
-		intrcnt[3]++;
-		leintr(lecd.cd_devs[0]);
-	}
-#endif
-#if NDC > 0
-	if (mask & MACH_INT_MASK_2) {
-		intrcnt[4]++;
-		dcintr(0);
-	}
-#endif
-	if (mask & MACH_INT_MASK_4) {
-		intrcnt[5]++;
-		pmax_errintr();
-	}
-	return ((statusReg & ~causeReg & MACH_HARD_INT_MASK) |
-		MACH_SR_INT_ENA_CUR);
-}
-
-/*
- * Handle hardware interrupts for the KN02. (DECstation 5000/200)
- * Returns spl value.
- */
-int
-kn02_intr(mask, pc, statusReg, causeReg)
-	unsigned mask;
-	unsigned pc;
-	unsigned statusReg;
-	unsigned causeReg;
-{
-	register unsigned i, m;
-	register volatile struct chiptime *c = Mach_clock_addr;
-	register unsigned csr;
-	int temp;
-	struct clockframe cf;
-	static int warned = 0;
-
-	/* handle clock interrupts ASAP */
-	if (mask & MACH_INT_MASK_1) {
-		csr = *(unsigned *)MACH_PHYS_TO_UNCACHED(KN02_SYS_CSR);
-		if ((csr & KN02_CSR_PSWARN) && !warned) {
-			warned = 1;
-			printf("WARNING: power supply is overheating!\n");
-		} else if (warned && !(csr & KN02_CSR_PSWARN)) {
-			warned = 0;
-			printf("WARNING: power supply is OK again\n");
-		}
-		intrcnt[6]++;
-
-		temp = c->regc;	/* XXX clear interrupt bits */
-		cf.pc = pc;
-		cf.sr = statusReg;
-		hardclock(&cf);
-
-		/* keep clock interrupts enabled */
-		causeReg &= ~MACH_INT_MASK_1;
-	}
-	/* Re-enable clock interrupts */
-	splx(MACH_INT_MASK_1 | MACH_SR_INT_ENA_CUR);
-	if (mask & MACH_INT_MASK_0) {
-		static int intr_map[8] = { 8, 9, 10, 11, 12, 4, 3, 2 };
-
-		csr = *(unsigned *)MACH_PHYS_TO_UNCACHED(KN02_SYS_CSR);
-		m = csr & (csr >> KN02_CSR_IOINTEN_SHIFT) & KN02_CSR_IOINT;
-#if 0
-		*(unsigned *)MACH_PHYS_TO_UNCACHED(KN02_SYS_CSR) =
-			(csr & ~(KN02_CSR_WRESERVED | 0xFF)) |
-			(m << KN02_CSR_IOINTEN_SHIFT);
-#endif
-		for (i = 0; m; i++, m >>= 1) {
-			if (!(m & 1))
-				continue;
-			intrcnt[intr_map[i]]++;
-			if (tc_slot_info[i].intr)
-				(*tc_slot_info[i].intr)(tc_slot_info[i].sc);
-			else
-				printf("spurious interrupt %d\n", i);
-		}
-#if 0
-		*(unsigned *)MACH_PHYS_TO_UNCACHED(KN02_SYS_CSR) =
-			csr & ~(KN02_CSR_WRESERVED | 0xFF);
-#endif
-	}
-	if (mask & MACH_INT_MASK_3) {
-		intrcnt[5]++;
-		kn02_errintr();
-	}
-
-	return ((statusReg & ~causeReg & MACH_HARD_INT_MASK) |
-		MACH_SR_INT_ENA_CUR);
-}
-
-/*
- * 3min hardware interrupts. (DECstation 5000/1xx)
- */
-int
-kmin_intr(mask, pc, statusReg, causeReg)
-	unsigned mask;
-	unsigned pc;
-	unsigned statusReg;
-	unsigned causeReg;
-{
-	register u_int intr;
-	register volatile struct chiptime *c = Mach_clock_addr;
-	volatile u_int *imaskp =
-		(volatile u_int *)MACH_PHYS_TO_UNCACHED(KMIN_REG_IMSK);
-	volatile u_int *intrp =
-		(volatile u_int *)MACH_PHYS_TO_UNCACHED(KMIN_REG_INTR);
-	unsigned int old_mask;
-	struct clockframe cf;
-	int temp;
-	static int user_warned = 0;
-
-	old_mask = *imaskp & kmin_tc3_imask;
-	*imaskp = kmin_tc3_imask |
-		 (KMIN_IM0 & ~(KN03_INTR_TC_0|KN03_INTR_TC_1|KN03_INTR_TC_2));
-
-	if (mask & MACH_INT_MASK_4)
-		(*callv->_halt)((int *)0, 0);
-	if (mask & MACH_INT_MASK_3) {
-		intr = *intrp;
-
-		/* masked interrupts are still observable */
-		intr &= old_mask;
-	
-		if (intr & KMIN_INTR_SCSI_PTR_LOAD) {
-			*intrp &= ~KMIN_INTR_SCSI_PTR_LOAD;
-#ifdef notdef
-			asc_dma_intr();
-#endif
-		}
-	
-		if (intr & (KMIN_INTR_SCSI_OVRUN | KMIN_INTR_SCSI_READ_E))
-			*intrp &= ~(KMIN_INTR_SCSI_OVRUN | KMIN_INTR_SCSI_READ_E);
-
-		if (intr & KMIN_INTR_LANCE_READ_E)
-			*intrp &= ~KMIN_INTR_LANCE_READ_E;
-
-		if (intr & KMIN_INTR_TIMEOUT)
-			kn02ba_errintr();
-	
-		if (intr & KMIN_INTR_CLOCK) {
-			temp = c->regc;	/* XXX clear interrupt bits */
-			cf.pc = pc;
-			cf.sr = statusReg;
-			hardclock(&cf);
-		}
-	
-		if ((intr & KMIN_INTR_SCC_0) &&
-			tc_slot_info[KMIN_SCC0_SLOT].intr)
-			(*(tc_slot_info[KMIN_SCC0_SLOT].intr))
-			(tc_slot_info[KMIN_SCC0_SLOT].sc);
-	
-		if ((intr & KMIN_INTR_SCC_1) &&
-			tc_slot_info[KMIN_SCC1_SLOT].intr)
-			(*(tc_slot_info[KMIN_SCC1_SLOT].intr))
-			(tc_slot_info[KMIN_SCC1_SLOT].sc);
-	
-		if ((intr & KMIN_INTR_SCSI) &&
-			tc_slot_info[KMIN_SCSI_SLOT].intr)
-			(*(tc_slot_info[KMIN_SCSI_SLOT].intr))
-			(tc_slot_info[KMIN_SCSI_SLOT].sc);
-	
-		if ((intr & KMIN_INTR_LANCE) &&
-			tc_slot_info[KMIN_LANCE_SLOT].intr)
-			(*(tc_slot_info[KMIN_LANCE_SLOT].intr))
-			(tc_slot_info[KMIN_LANCE_SLOT].sc);
-	
-		if (user_warned && ((intr & KMIN_INTR_PSWARN) == 0)) {
-			printf("%s\n", "Power supply ok now.");
-			user_warned = 0;
-		}
-		if ((intr & KMIN_INTR_PSWARN) && (user_warned < 3)) {
-			user_warned++;
-			printf("%s\n", "Power supply overheating");
-		}
-	}
-	if ((mask & MACH_INT_MASK_0) && tc_slot_info[0].intr)
-		(*tc_slot_info[0].intr)(tc_slot_info[0].sc);
-	if ((mask & MACH_INT_MASK_1) && tc_slot_info[1].intr)
-		(*tc_slot_info[1].intr)(tc_slot_info[1].sc);
-	if ((mask & MACH_INT_MASK_2) && tc_slot_info[2].intr)
-		(*tc_slot_info[2].intr)(tc_slot_info[2].sc);
-
-#if 0 /*XXX*/
-	if (mask & (MACH_INT_MASK_2|MACH_INT_MASK_1|MACH_INT_MASK_0))
-		printf("kmin: slot intr, mask 0x%x\n",
-			mask &
-			(MACH_INT_MASK_2|MACH_INT_MASK_1|MACH_INT_MASK_0));
-#endif
-	
-	return ((statusReg & ~causeReg & MACH_HARD_INT_MASK) |
-		MACH_SR_INT_ENA_CUR);
-}
-
-/*
- * Maxine hardware interrupts. (Personal DECstation 5000/xx)
- */
-int
-xine_intr(mask, pc, statusReg, causeReg)
-	unsigned mask;
-	unsigned pc;
-	unsigned statusReg;
-	unsigned causeReg;
-{
-	register u_int intr;
-	register volatile struct chiptime *c = Mach_clock_addr;
-	volatile u_int *imaskp = (volatile u_int *)
-		MACH_PHYS_TO_UNCACHED(XINE_REG_IMSK);
-	volatile u_int *intrp = (volatile u_int *)
-		MACH_PHYS_TO_UNCACHED(XINE_REG_INTR);
-	u_int old_mask;
-	struct clockframe cf;
-	int temp;
-
-	old_mask = *imaskp & xine_tc3_imask;
-	*imaskp = xine_tc3_imask;
-
-	if (mask & MACH_INT_MASK_4)
-		(*callv->_halt)((int *)0, 0);
-
-	/* handle clock interrupts ASAP */
-	if (mask & MACH_INT_MASK_1) {
-		temp = c->regc;	/* XXX clear interrupt bits */
-		cf.pc = pc;
-		cf.sr = statusReg;
-		hardclock(&cf);
-		causeReg &= ~MACH_INT_MASK_1;
-		/* reenable clock interrupts */
-		splx(MACH_INT_MASK_1 | MACH_SR_INT_ENA_CUR);
-	}
-	if (mask & MACH_INT_MASK_3) {
-		intr = *intrp;
-		/* masked interrupts are still observable */
-		intr &= old_mask;
-
-		if ((intr & XINE_INTR_SCC_0)) {
-			if (tc_slot_info[XINE_SCC0_SLOT].intr)
-				(*(tc_slot_info[XINE_SCC0_SLOT].intr))
-				(tc_slot_info[XINE_SCC0_SLOT].sc);
-			else
-				printf ("can't handle scc interrupt\n");
-		}
-	
-		if (intr & XINE_INTR_SCSI_PTR_LOAD) {
-			*intrp &= ~XINE_INTR_SCSI_PTR_LOAD;
-#ifdef notdef
-			asc_dma_intr();
-#endif
-		}
-	
-		if (intr & (XINE_INTR_SCSI_OVRUN | XINE_INTR_SCSI_READ_E))
-			*intrp &= ~(XINE_INTR_SCSI_OVRUN | XINE_INTR_SCSI_READ_E);
-
-		if (intr & XINE_INTR_LANCE_READ_E)
-			*intrp &= ~XINE_INTR_LANCE_READ_E;
-
-		if (intr & XINE_INTR_DTOP_RX) {
-			if (tc_slot_info[XINE_DTOP_SLOT].intr)
-				(*(tc_slot_info[XINE_DTOP_SLOT].intr))
-				(tc_slot_info[XINE_DTOP_SLOT].sc);
-			else
-				printf ("can't handle dtop interrupt\n");
-		}
-	
-		if (intr & XINE_INTR_FLOPPY) {
-			if (tc_slot_info[XINE_FLOPPY_SLOT].intr)
-				(*(tc_slot_info[XINE_FLOPPY_SLOT].intr))
-				(tc_slot_info[XINE_FLOPPY_SLOT].sc);
-		else
-			printf ("can't handle floppy interrupt\n");
-		}
-	
-		if (intr & XINE_INTR_TC_0) {
-			if (tc_slot_info[0].intr)
-				(*(tc_slot_info[0].intr))
-				(tc_slot_info[0].sc);
-			else
-				printf ("can't handle tc0 interrupt\n");
-		}
-	
-		if (intr & XINE_INTR_TC_1) {
-			if (tc_slot_info[1].intr)
-				(*(tc_slot_info[1].intr))
-				(tc_slot_info[1].sc);
-			else
-				printf ("can't handle tc1 interrupt\n");
-		}
-	
-		if (intr & XINE_INTR_ISDN) {
-			if (tc_slot_info[XINE_ISDN_SLOT].intr)
-				(*(tc_slot_info[XINE_ISDN_SLOT].intr))
-				(tc_slot_info[XINE_ISDN_SLOT].sc);
-			else
-				printf ("can't handle isdn interrupt\n");
-		}
-	
-		if (intr & XINE_INTR_SCSI) {
-			if (tc_slot_info[XINE_SCSI_SLOT].intr)
-				(*(tc_slot_info[XINE_SCSI_SLOT].intr))
-				(tc_slot_info[XINE_SCSI_SLOT].sc);
-			else
-				printf ("can't handle scsi interrupt\n");
-		}
-	
-		if (intr & XINE_INTR_LANCE) {
-			if (tc_slot_info[XINE_LANCE_SLOT].intr)
-				(*(tc_slot_info[XINE_LANCE_SLOT].intr))
-				(tc_slot_info[XINE_LANCE_SLOT].sc);
-			else
-				printf ("can't handle lance interrupt\n");
-	
-		}
-	}
-	if (mask & MACH_INT_MASK_2)
-		kn02ba_errintr();
-	return ((statusReg & ~causeReg & MACH_HARD_INT_MASK) |
-		MACH_SR_INT_ENA_CUR);
-}
-
-#ifdef DS5000_240
-/*
- * 3Max+ hardware interrupts. (DECstation 5000/240) UNTESTED!!
- */
-int
-kn03_intr(mask, pc, statusReg, causeReg)
-	unsigned mask;
-	unsigned pc;
-	unsigned statusReg;
-	unsigned causeReg;
-{
-	register u_int intr;
-	register volatile struct chiptime *c = Mach_clock_addr;
-	volatile u_int *imaskp = (volatile u_int *)
-		MACH_PHYS_TO_UNCACHED(KN03_REG_IMSK);
-	volatile u_int *intrp = (volatile u_int *)
-		MACH_PHYS_TO_UNCACHED(KN03_REG_INTR);
-	u_int old_mask;
-	struct clockframe cf;
-	int temp;
-	static int user_warned = 0;
-
-	old_mask = *imaskp & kn03_tc3_imask;
-	*imaskp = kn03_tc3_imask;
-
-	if (mask & MACH_INT_MASK_4)
-		(*callv->_halt)((int *)0, 0);
-
-	/* handle clock interrupts ASAP */
-	if (mask & MACH_INT_MASK_1) {
-		temp = c->regc;	/* XXX clear interrupt bits */
-		cf.pc = pc;
-		cf.sr = statusReg;
-		intrcnt[6]++;
-		hardclock(&cf);
-		latched_cycle_cnt = *(u_long*)(ASIC_REG_CTR(asic_base));
-		causeReg &= ~MACH_INT_MASK_1;
-		/* reenable clock interrupts */
-		splx(MACH_INT_MASK_1 | MACH_SR_INT_ENA_CUR);
-	}
-
-	if (mask & MACH_INT_MASK_0) {
-		intr = *intrp;
-		/* masked interrupts are still observable */
-		intr &= old_mask;
-
-		if (intr & KN03_INTR_SCSI_PTR_LOAD) {
-			*intrp &= ~KN03_INTR_SCSI_PTR_LOAD;
-#ifdef notdef
-			asc_dma_intr();
-#endif
-		}
-	
-		if (intr & (KN03_INTR_SCSI_OVRUN | KN03_INTR_SCSI_READ_E))
-			*intrp &= ~(KN03_INTR_SCSI_OVRUN | KN03_INTR_SCSI_READ_E);
-
-		if (intr & KN03_INTR_LANCE_READ_E)
-			*intrp &= ~KN03_INTR_LANCE_READ_E;
-
-		if ((intr & KN03_INTR_SCC_0) &&
-			tc_slot_info[KN03_SCC0_SLOT].intr) {
-			(*(tc_slot_info[KN03_SCC0_SLOT].intr))
-			(tc_slot_info[KN03_SCC0_SLOT].sc);
-			intrcnt[2]++;
-		}
-	
-		if ((intr & KN03_INTR_SCC_1) &&
-			tc_slot_info[KN03_SCC1_SLOT].intr) {
-			(*(tc_slot_info[KN03_SCC1_SLOT].intr))
-			(tc_slot_info[KN03_SCC1_SLOT].sc);
-			intrcnt[2]++;
-		}
-	
-		if ((intr & KN03_INTR_TC_0) &&
-			tc_slot_info[0].intr) {
-			(*(tc_slot_info[0].intr))
-			(tc_slot_info[0].sc);
-			intrcnt[8]++;
-		}
-#ifdef DIAGNOSTIC
-		else if (intr & KN03_INTR_TC_0)
-			printf ("can't handle tc0 interrupt\n");
-#endif /*DIAGNOSTIC*/
-
-		if ((intr & KN03_INTR_TC_1) &&
-			tc_slot_info[1].intr) {
-			(*(tc_slot_info[1].intr))
-			(tc_slot_info[1].sc);
-			intrcnt[9]++;
-		}
-#ifdef DIAGNOSTIC
-		else if (intr & KN03_INTR_TC_1)
-			printf ("can't handle tc1 interrupt\n");
-#endif /*DIAGNOSTIC*/
-
-		if ((intr & KN03_INTR_TC_2) &&
-			tc_slot_info[2].intr) {
-			(*(tc_slot_info[2].intr))
-			(tc_slot_info[2].sc);
-			intrcnt[10]++;
-		}
-#ifdef DIAGNOSTIC
-		else if (intr & KN03_INTR_TC_2)
-			printf ("can't handle tc2 interrupt\n");
-#endif /*DIAGNOSTIC*/
-	
-		if ((intr & KN03_INTR_SCSI) &&
-			tc_slot_info[KN03_SCSI_SLOT].intr) {
-			(*(tc_slot_info[KN03_SCSI_SLOT].intr))
-			(tc_slot_info[KN03_SCSI_SLOT].sc);
-			intrcnt[4]++;
-		}
-	
-		if ((intr & KN03_INTR_LANCE) &&
-			tc_slot_info[KN03_LANCE_SLOT].intr) {
-			(*(tc_slot_info[KN03_LANCE_SLOT].intr))
-			(tc_slot_info[KN03_LANCE_SLOT].sc);
-			intrcnt[3]++;
-		}
-	
-		if (user_warned && ((intr & KN03_INTR_PSWARN) == 0)) {
-			printf("%s\n", "Power supply ok now.");
-			user_warned = 0;
-		}
-		if ((intr & KN03_INTR_PSWARN) && (user_warned < 3)) {
-			user_warned++;
-			printf("%s\n", "Power supply overheating");
-		}
-	}
-	if (mask & MACH_INT_MASK_3)
-		kn03_errintr();
-	return ((statusReg & ~causeReg & MACH_HARD_INT_MASK) |
-		MACH_SR_INT_ENA_CUR);
-}
-#endif /* DS5000_240 */
 
 /*
  * This is called from MachUserIntr() if astpending is set.
@@ -1447,145 +1115,16 @@ trapDump(msg)
 		if (trp->cause == 0)
 			break;
 		printf("%s: ADR %x PC %x CR %x SR %x\n",
-			trap_type[(trp->cause & MACH_CR_EXC_CODE) >>
+			trap_type[(trp->cause & MIPS_3K_CR_EXC_CODE) >>
 				MACH_CR_EXC_CODE_SHIFT],
 			trp->vadr, trp->pc, trp->cause, trp->status);
-		printf("   RA %x code %d\n", trp-> ra, trp->code);
+		printf("   RA %x SP %x code %d\n", trp->ra, trp->sp, trp->code);
 	}
 	bzero(trapdebug, sizeof(trapdebug));
 	trp = trapdebug;
 	splx(s);
 }
 #endif
-
-/*
- *----------------------------------------------------------------------
- *
- * MemErrorInterrupts --
- *   pmax_errintr - for the DS2100/DS3100
- *   kn02_errintr - for the DS5000/200
- *   kn02ba_errintr - for the DS5000/1xx and DS5000/xx
- *
- *	Handler an interrupt for the control register.
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	None.
- *
- *----------------------------------------------------------------------
- */
-static void
-pmax_errintr()
-{
-	volatile u_short *sysCSRPtr =
-		(u_short *)MACH_PHYS_TO_UNCACHED(KN01_SYS_CSR);
-	u_short csr;
-
-	csr = *sysCSRPtr;
-
-	if (csr & KN01_CSR_MERR) {
-		printf("Memory error at 0x%x\n",
-			*(unsigned *)MACH_PHYS_TO_UNCACHED(KN01_SYS_ERRADR));
-		panic("Mem error interrupt");
-	}
-	*sysCSRPtr = (csr & ~KN01_CSR_MBZ) | 0xff;
-}
-
-static void
-kn02_errintr()
-{
-	u_int erradr, chksyn, physadr;
-	int i;
-
-	erradr = *(u_int *)MACH_PHYS_TO_UNCACHED(KN02_SYS_ERRADR);
-	chksyn = *(u_int *)MACH_PHYS_TO_UNCACHED(KN02_SYS_CHKSYN);
-	*(u_int *)MACH_PHYS_TO_UNCACHED(KN02_SYS_ERRADR) = 0;
-	MachEmptyWriteBuffer();
-
-	if (!(erradr & KN02_ERR_VALID))
-		return;
-	/* extract the physical word address and compensate for pipelining */
-	physadr = erradr & KN02_ERR_ADDRESS;
-	if (!(erradr & KN02_ERR_WRITE))
-		physadr = (physadr & ~0xfff) | ((physadr & 0xfff) - 5);
-	physadr <<= 2;
-	printf("%s memory %s %s error at 0x%x\n",
-		(erradr & KN02_ERR_CPU) ? "CPU" : "DMA",
-		(erradr & KN02_ERR_WRITE) ? "write" : "read",
-		(erradr & KN02_ERR_ECCERR) ? "ECC" : "timeout",
-		physadr);
-	if (erradr & KN02_ERR_ECCERR) {
-		*(u_int *)MACH_PHYS_TO_UNCACHED(KN02_SYS_CHKSYN) = 0;
-		MachEmptyWriteBuffer();
-		printf("ECC 0x%x\n", chksyn);
-
-		/* check for a corrected, single bit, read error */
-		if (!(erradr & KN02_ERR_WRITE)) {
-			if (physadr & 0x4) {
-				/* check high word */
-				if (chksyn & KN02_ECC_SNGHI)
-					return;
-			} else {
-				/* check low word */
-				if (chksyn & KN02_ECC_SNGLO)
-					return;
-			}
-		}
-	}
-	panic("Mem error interrupt");
-}
-
-#ifdef DS5000_240
-static void
-kn03_errintr()
-{
-
-	printf("erradr %x\n", *(unsigned *)MACH_PHYS_TO_UNCACHED(KN03_SYS_ERRADR));
-	*(unsigned *)MACH_PHYS_TO_UNCACHED(KN03_SYS_ERRADR) = 0;
-	MachEmptyWriteBuffer();
-}
-#endif /* DS5000_240 */
-
-static void
-kn02ba_errintr()
-{
-	register int mer, adr, siz;
-	static int errintr_cnt = 0;
-
-	siz = *(volatile int *)MACH_PHYS_TO_UNCACHED(KMIN_REG_MSR);
-	mer = *(volatile int *)MACH_PHYS_TO_UNCACHED(KMIN_REG_MER);
-	adr = *(volatile int *)MACH_PHYS_TO_UNCACHED(KMIN_REG_AER);
-
-	/* clear interrupt bit */
-	*(unsigned int *)MACH_PHYS_TO_UNCACHED(KMIN_REG_TIMEOUT) = 0;
-
-	errintr_cnt++;
-	printf("(%d)%s%x [%x %x %x]\n", errintr_cnt,
-	       "Bad memory chip at phys ",
-	       kn02ba_recover_erradr(adr, mer),
-	       mer, siz, adr);
-}
-
-static unsigned
-kn02ba_recover_erradr(phys, mer)
-	register unsigned phys, mer;
-{
-	/* phys holds bits 28:2, mer knows which byte */
-	switch (mer & KMIN_MER_LASTBYTE) {
-	case KMIN_LASTB31:
-		mer = 3; break;
-	case KMIN_LASTB23:
-		mer = 2; break;
-	case KMIN_LASTB15:
-		mer = 1; break;
-	case KMIN_LASTB07:
-		mer = 0; break;
-	}
-	return ((phys & KMIN_AER_ADDR_MASK) | mer);
-}
-
 
 /*
  * forward declaration
@@ -1595,7 +1134,7 @@ static unsigned GetBranchDest __P((InstFmt *InstPtr));
 /*
  * Return the resulting PC as if the branch was executed.
  */
-u_int
+unsigned
 MachEmulateBranch(regsPtr, instPC, fpcCSR, allowNonBranch)
 	unsigned *regsPtr;
 	unsigned instPC;
@@ -1606,9 +1145,13 @@ MachEmulateBranch(regsPtr, instPC, fpcCSR, allowNonBranch)
 	unsigned retAddr;
 	int condition;
 
+#ifdef notyet	/*  Compute desination of r4000 squashed branches */
+#define GetBranchDest(InstPtr, inst) \
+	((unsigned)InstPtr + 4 + ((short)inst.IType.imm << 2))
+
 	inst.word = (instPC < MACH_CACHED_MEMORY_ADDR) ?
 		fuiword((caddr_t)instPC) : *(unsigned*)instPC;
-		
+#endif
 #if 0
 	printf("regsPtr=%x PC=%x Inst=%x fpcCsr=%x\n", regsPtr, instPC,
 		inst.word, fpcCSR); /* XXX */
@@ -1633,14 +1176,20 @@ MachEmulateBranch(regsPtr, instPC, fpcCSR, allowNonBranch)
 		switch ((int)inst.IType.rt) {
 		case OP_BLTZ:
 		case OP_BLTZAL:
+		case OP_BLTZL:		/* squashed */
+		case OP_BLTZALL:	/* squashed */
+
 			if ((int)(regsPtr[inst.RType.rs]) < 0)
 				retAddr = GetBranchDest((InstFmt *)instPC);
 			else
 				retAddr = instPC + 8;
 			break;
 
-		case OP_BGEZAL:
 		case OP_BGEZ:
+		case OP_BGEZAL:
+		case OP_BGEZL:		/* squashed */
+		case OP_BGEZALL:	/* squashed */
+
 			if ((int)(regsPtr[inst.RType.rs]) >= 0)
 				retAddr = GetBranchDest((InstFmt *)instPC);
 			else
@@ -1659,6 +1208,8 @@ MachEmulateBranch(regsPtr, instPC, fpcCSR, allowNonBranch)
 		break;
 
 	case OP_BEQ:
+	case OP_BEQL:			/* squashed */
+
 		if (regsPtr[inst.RType.rs] == regsPtr[inst.RType.rt])
 			retAddr = GetBranchDest((InstFmt *)instPC);
 		else
@@ -1666,6 +1217,8 @@ MachEmulateBranch(regsPtr, instPC, fpcCSR, allowNonBranch)
 		break;
 
 	case OP_BNE:
+	case OP_BNEL:			/* squashed */
+
 		if (regsPtr[inst.RType.rs] != regsPtr[inst.RType.rt])
 			retAddr = GetBranchDest((InstFmt *)instPC);
 		else
@@ -1673,6 +1226,8 @@ MachEmulateBranch(regsPtr, instPC, fpcCSR, allowNonBranch)
 		break;
 
 	case OP_BLEZ:
+	case OP_BLEZL:				/* squashed */
+
 		if ((int)(regsPtr[inst.RType.rs]) <= 0)
 			retAddr = GetBranchDest((InstFmt *)instPC);
 		else
@@ -1680,6 +1235,8 @@ MachEmulateBranch(regsPtr, instPC, fpcCSR, allowNonBranch)
 		break;
 
 	case OP_BGTZ:
+	case OP_BGTZL:				/* squashed */
+
 		if ((int)(regsPtr[inst.RType.rs]) > 0)
 			retAddr = GetBranchDest((InstFmt *)instPC);
 		else
@@ -1725,8 +1282,6 @@ GetBranchDest(InstPtr)
 	return ((unsigned)InstPtr + 4 + ((short)InstPtr->IType.imm << 2));
 }
 
-#ifdef DEBUG
-
 /*
  * This routine is called by procxmt() to single step one instruction.
  * We do this by storing a break instruction after the current instruction,
@@ -1740,6 +1295,7 @@ cpu_singlestep(p)
 	register int *locr0 = p->p_md.md_regs;
 	int i;
 
+#if notanymore
 	/* compute next address after current location */
 	va = MachEmulateBranch(locr0, locr0[PC], locr0[FSR], 1);
 	if (p->p_md.md_ss_addr || p->p_md.md_ss_addr == va ||
@@ -1765,6 +1321,69 @@ cpu_singlestep(p)
 				sa, ea, VM_PROT_READ|VM_PROT_EXECUTE, FALSE);
 		}
 	}
+#endif
+	int bpinstr = MACH_BREAK_SSTEP;
+	int curinstr;
+	struct uio uio;
+	struct iovec iov;
+
+	/*
+	 * Fetch what's at the current location.
+	 */
+	iov.iov_base = (caddr_t)&curinstr;
+	iov.iov_len = sizeof(int); 
+	uio.uio_iov = &iov;
+	uio.uio_iovcnt = 1; 
+	uio.uio_offset = (off_t)locr0[PC];
+	uio.uio_resid = sizeof(int);
+	uio.uio_segflg = UIO_SYSSPACE;
+	uio.uio_rw = UIO_READ;
+	uio.uio_procp = curproc;
+	procfs_domem(curproc, p, NULL, &uio);
+
+	/* compute next address after current location */
+	if(curinstr != 0) {
+		va = MachEmulateBranch(locr0, locr0[PC], locr0[FSR], curinstr);
+	}
+	else {
+		va = locr0[PC] + 4;
+	}
+	if (p->p_md.md_ss_addr) {
+		printf("SS %s (%d): breakpoint already set at %x (va %x)\n",
+			p->p_comm, p->p_pid, p->p_md.md_ss_addr, va); /* XXX */
+		return (EFAULT);
+	}
+	p->p_md.md_ss_addr = va;
+
+	/*
+	 * Fetch what's at the current location.
+	 */
+	iov.iov_base = (caddr_t)&p->p_md.md_ss_instr;
+	iov.iov_len = sizeof(int); 
+	uio.uio_iov = &iov;
+	uio.uio_iovcnt = 1; 
+	uio.uio_offset = (off_t)va;
+	uio.uio_resid = sizeof(int);
+	uio.uio_segflg = UIO_SYSSPACE;
+	uio.uio_rw = UIO_READ;
+	uio.uio_procp = curproc;
+	procfs_domem(curproc, p, NULL, &uio);
+
+	/*
+	 * Store breakpoint instruction at the "next" location now.
+	 */
+	iov.iov_base = (caddr_t)&bpinstr;
+	iov.iov_len = sizeof(int); 
+	uio.uio_iov = &iov;
+	uio.uio_iovcnt = 1; 
+	uio.uio_offset = (off_t)va;
+	uio.uio_resid = sizeof(int);
+	uio.uio_segflg = UIO_SYSSPACE;
+	uio.uio_rw = UIO_WRITE;
+	uio.uio_procp = curproc;
+	i = procfs_domem(curproc, p, NULL, &uio);
+	MachFlushCache(); /* XXX memory barrier followed by flush icache? */
+
 	if (i < 0)
 		return (EFAULT);
 #if 0
@@ -1775,6 +1394,7 @@ cpu_singlestep(p)
 	return (0);
 }
 
+#ifdef DEBUG
 int
 kdbpeek(addr)
 {
@@ -1853,11 +1473,21 @@ specialframe:
 		goto done;
 	}
 
+/*
+ * check for PC between two entry points
+ */
+# define Between(x, y, z) \
+		( ((x) <= (y)) && ((y) < (z)) )
+# define pcBetween(a,b) \
+		Between((unsigned)a, pc, (unsigned)b)
+
+
 	/* Backtraces should contine through interrupts from kernel mode */
-	if (pc >= (unsigned)MachKernIntr && pc < (unsigned)MachUserIntr) {
+#ifdef CPU_R3000
+	if (pcBetween(mips_r2000_KernIntr, mips_r2000_UserIntr)) {
 		/* NOTE: the offsets depend on the code in locore.s */
-		(*printfn)("MachKernIntr+%x: (%x, %x ,%x) -------\n",
-		       pc-(unsigned)MachKernIntr, a0, a1, a2);
+		(*printfn)("r3000 KernIntr+%x: (%x, %x ,%x) -------\n",
+		       pc-(unsigned)mips_r2000_KernIntr, a0, a1, a2);
 		a0 = kdbpeek(sp + 36);
 		a1 = kdbpeek(sp + 40);
 		a2 = kdbpeek(sp + 44);
@@ -1868,26 +1498,63 @@ specialframe:
 		sp = sp + 108;
 		goto specialframe;
 	}
+#endif	/* CPU_R3000 */
+
+#ifdef CPU_R4000
+	if (pcBetween(mips_r4000_KernIntr, mips_r4000_UserIntr) {
+		/* NOTE: the offsets depend on the code in locore.s */
+		(*printfn)("R4000 KernIntr+%x: (%x, %x ,%x) -------\n",
+		       pc-(unsigned)mips_r4000_KernIntr, a0, a1, a2);
+		a0 = kdbpeek(sp + 36);
+		a1 = kdbpeek(sp + 40);
+		a2 = kdbpeek(sp + 44);
+		a3 = kdbpeek(sp + 48);
+
+		pc = kdbpeek(sp + 20);	/* exc_pc - pc at time of exception */
+		ra = kdbpeek(sp + 92);	/* ra at time of exception */
+		sp = sp + 108;
+		goto specialframe;
+	}
+#endif	/* cpu_r4000 */
 
 
-# define Between(x, y, z) \
-		( ((x) <= (y)) && ((y) < (z)) )
-# define pcBetween(a,b) \
-		Between((unsigned)a, pc, (unsigned)b)
 
 	/*
 	 * Check for current PC in  exception handler code that don't
 	 * have a preceding "j ra" at the tail of the preceding function. 
 	 * Depends on relative ordering of functions in locore.
 	 */
-	if (pcBetween(MachKernGenException, MachUserGenException))
-		subr = (unsigned) MachKernGenException;
-	else if (pcBetween(MachUserGenException,MachKernIntr))
-		subr = (unsigned) MachUserGenException;
-	else if (pcBetween(MachKernIntr, MachUserIntr))
-		subr = (unsigned) MachKernIntr;
-	else if (pcBetween(MachUserIntr, MachTLBMissException))
-		subr = (unsigned) MachUserIntr;
+
+	/* XXX fixup tests after cutting and pasting in locore.S */
+	/* R4000  exception handlers */
+
+	if (pcBetween(mips_r2000_KernGenException, mips_r2000_UserGenException))
+		subr = (unsigned) mips_r2000_KernGenException;
+	else if (pcBetween(mips_r2000_UserGenException,mips_r2000_KernIntr))
+		subr = (unsigned) mips_r2000_UserGenException;
+	else if (pcBetween(mips_r2000_KernIntr, mips_r2000_UserIntr))
+		subr = (unsigned) mips_r2000_KernIntr;
+	else if (pcBetween(mips_r2000_UserIntr, mips_r2000_TLBMissException))
+		subr = (unsigned) mips_r2000_UserIntr;
+
+	else if (pcBetween(mips_r2000_UserIntr, mips_r2000_TLBMissException))
+		subr = (unsigned) mips_r2000_UserIntr;
+
+	/* R4000  exception handlers */
+#ifdef CPU_R4000
+	else if (pcBetween(mips_r4000_KernGenException, mips_r4000_UserGenException))
+		subr = (unsigned) mips_r4000_KernGenException;
+	else if (pcBetween(mips_r4000_UserGenException,mips_r4000_KernIntr))
+		subr = (unsigned) mips_r4000_UserGenException;
+	else if (pcBetween(mips_r4000_KernIntr, mips_r4000_UserIntr))
+		subr = (unsigned) mips_r4000_KernIntr;
+
+
+	else if (pcBetween(mips_r4000_UserIntr, mips_r4000_TLBMissException))
+		subr = (unsigned) mips_r4000_UserIntr;
+#endif /* CPU_R4000 */
+
+
 	else if (pcBetween(splx, MachEmptyWriteBuffer))
 		subr = (unsigned) splx;
 	else if (pcBetween(cpu_switch, fuword))
@@ -1904,7 +1571,12 @@ specialframe:
 
 	/* check for bad PC */
 	if (pc & 3 || pc < 0x80000000 || pc >= (unsigned)edata) {
-		(*printfn)("PC 0x%x: not in kernel\n", pc);
+		(*printfn)("PC 0x%x: not in kernel space\n", pc);
+		ra = 0;
+		goto done;
+	}
+	if (!pcBetween(start, (unsigned) edata)) {
+		(*printfn)("PC 0x%x: not in kernel text\n", pc);
 		ra = 0;
 		goto done;
 	}
@@ -1928,7 +1600,9 @@ specialframe:
 	 * Jump here for locore entry pointsn for which the preceding
 	 * function doesn't end in "j ra"
 	 */
+#if 0
 stackscan:
+#endif
 	/* scan forwards to find stack size and any saved registers */
 	stksize = 0;
 	more = 3;
@@ -2054,10 +1728,23 @@ static struct { void *addr; char *name;} names[] = {
 	Name(main),
 	Name(interrupt),
 	Name(trap),
-	Name(MachKernGenException),
-	Name(MachUserGenException),
-	Name(MachKernIntr),
-	Name(MachUserIntr),
+#ifdef pmax
+	Name(am7990_meminit),
+#endif
+#ifdef CPU_R3000
+	Name(mips_r2000_KernGenException),
+	Name(mips_r2000_UserGenException),
+	Name(mips_r2000_KernIntr),
+	Name(mips_r2000_UserIntr),
+#endif	/* CPU_R3000 */
+
+#ifdef CPU_R4000
+	Name(mips_r4000_KernGenException),
+	Name(mips_r4000_UserGenException),
+	Name(mips_r4000_KernIntr),
+	Name(mips_r4000_UserIntr),
+#endif	/* CPU_R4000 */
+
 	Name(splx),
 	Name(idle),
 	Name(cpu_switch),

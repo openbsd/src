@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.1 1995/08/10 05:17:11 jonathan Exp $	*/
+/*	$NetBSD: cpu.c,v 1.5.4.1 1996/06/16 17:28:21 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -29,32 +29,39 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/systm.h>
 
+#include <machine/cpu.h>
 #include <machine/autoconf.h>
-/*#include <machine/rpb.h>*/
 
 /* Definition of the driver for autoconfig. */
 static int	cpumatch(struct device *, void *, void *);
 static void	cpuattach(struct device *, struct device *, void *);
-struct cfdriver cpucd =
-    { NULL, "cpu", cpumatch, cpuattach, DV_DULL, sizeof (struct device) };
 
-static int	cpuprint __P((void *, char *pnp));
+struct cfattach cpu_ca = {
+	sizeof (struct device), cpumatch, cpuattach
+};
 
-extern void cpu_configure __P((void));
+struct cfdriver cpu_cd = {
+	NULL, "cpu", DV_DULL
+};
+
+extern void cpu_identify __P((void));
+
+
 static int
 cpumatch(parent, cfdata, aux)
 	struct device *parent;
 	void *cfdata;
 	void *aux;
 {
-	struct cfdata *cf = cfdata;
 	struct confargs *ca = aux;
 
-	/* make sure that we're looking for a CPU. */
-	if (strcmp(ca->ca_name, cpucd.cd_name) != 0)
-		return (0);
 
+	/* make sure that we're looking for a CPU. */
+	if (strcmp(ca->ca_name, cpu_cd.cd_name) != 0) {
+		return (0);
+	}
 	return (1);
 }
 
@@ -65,32 +72,14 @@ cpuattach(parent, dev, aux)
 	void *aux;
 {
 
-	/* Identify cpu. */
+	printf(": ");
 
-	cpu_configure();
-	printf("\n");
-
-	/* Work out what kind of FPU is present. */
-
-#if 0
-	if (major == PCS_PROC_LCA4) {
-		struct confargs nca;
-
-		/*
-		 * If the processor is an KN01, it's got no bus,
-		 * but a fixed set of onboard devices.
-		 * Attach it here. (!!!)
-		 */
-		nca.ca_name = "kn01";
-		nca.ca_slot = 0;
-		nca.ca_offset = 0;
-		nca.ca_bus = NULL;
-		if (!config_found(dev, &nca, cpuprint))
-			panic("cpuattach: couldn't attach LCA bus interface");
-	}
-#endif
+	cpu_identify();
 }
 
+
+
+#if 0
 static int
 cpuprint(aux, pnp)
 	void *aux;
@@ -98,7 +87,12 @@ cpuprint(aux, pnp)
 {
 	register struct confargs *ca = aux;
 
+/*XXX*/ printf("debug: cpuprint\n");
+
+#if 0
 	if (pnp)
 		printf("%s at %s", ca->ca_name, pnp);
+#endif
 	return (UNCONF);
 }
+#endif

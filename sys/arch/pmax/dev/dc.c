@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.12 1995/09/11 21:29:23 jonathan Exp $	*/
+/*	$NetBSD: dc.c,v 1.16.4.5 1996/06/16 17:15:51 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -56,7 +56,7 @@
  *	v 1.4 89/08/29 11:55:30 nelson Exp  SPRITE (DECWRL)";
  */
 
-#include <dc.h>
+#include "dc.h"
 #if NDC > 0
 /*
  * DC7085 (DZ-11 look alike) Driver
@@ -74,9 +74,12 @@
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 
+#include <machine/conf.h>
 #include <sys/device.h>
 #include <machine/autoconf.h>
 #include <machine/machConst.h>
+#include <dev/tc/tcvar.h>
+#include <dev/tc/ioasicvar.h>
 
 #include <machine/dc7085cons.h>
 #include <machine/pmioctl.h>
@@ -88,14 +91,23 @@
 #include <pmax/dev/lk201.h>
 
 #include "dcvar.h"
+#include "tc.h"
+
+#include <pmax/dev/lk201var.h>		/* XXX KbdReset band friends */
 
 extern int pmax_boardtype;
+extern struct cfdriver mainbus_cd;
+
+struct dc_softc {
+	struct device sc_dv;
+	struct pdma dc_pdma[4];
+};
 
 /*
- * Autoconfiguration data for config.new.
+ * Autoconfiguration data for config.
+ * 
  * Use the statically-allocated softc until old autoconfig code and
  * config.old are completely gone.
- * 
  */
 int	dcmatch  __P((struct device * parent, void *cfdata, void *aux));
 void	dcattach __P((struct device *parent, struct device *self, void *aux));
@@ -103,9 +115,14 @@ void	dcattach __P((struct device *parent, struct device *self, void *aux));
 int	dc_doprobe __P((void *addr, int unit, int flags, int pri));
 int	dcintr __P((void * xxxunit));
 
-extern struct cfdriver dccd;
-struct  cfdriver dccd = {
-	NULL, "dc", dcmatch, dcattach, DV_DULL, sizeof(struct device), 0
+extern struct cfdriver dc_cd;
+
+struct cfattach dc_ca = {
+	sizeof(struct dc_softc), dcmatch, dcattach
+};
+
+struct  cfdriver dc_cd = {
+	NULL, "dc", DV_TTY
 };
 
 
@@ -146,21 +163,21 @@ int	dc_timer;		/* true if timer started */
 struct	pdma dcpdma[NDCLINE];
 
 struct speedtab dcspeedtab[] = {
-	0,	0,
-	50,	LPR_B50,
-	75,	LPR_B75,
-	110,	LPR_B110,
-	134,	LPR_B134,
-	150,	LPR_B150,
-	300,	LPR_B300,
-	600,	LPR_B600,
-	1200,	LPR_B1200,
-	1800,	LPR_B1800,
-	2400,	LPR_B2400,
-	4800,	LPR_B4800,
-	9600,	LPR_B9600,
-	19200,	LPR_B19200,
-	-1,	-1
+	{ 0,	0,	},
+	{ 50,	LPR_B50    },
+	{ 75,	LPR_B75    },
+	{ 110,	LPR_B110   },
+	{ 134,	LPR_B134   },
+	{ 150,	LPR_B150   },
+	{ 300,	LPR_B300   },
+	{ 600,	LPR_B600   },
+	{ 1200,	LPR_B1200  },
+	{ 1800,	LPR_B1800  },
+	{ 2400,	LPR_B2400  },
+	{ 4800,	LPR_B4800  },
+	{ 9600,	LPR_B9600  },
+	{ 19200,LPR_B19200 },
+	{ -1,	-1 }
 };
 
 #ifndef	PORTSELECTOR
@@ -172,6 +189,15 @@ struct speedtab dcspeedtab[] = {
 #endif
 
 /*
+ * Forward declarations
+ */
+struct tty *dctty __P((dev_t  dev));
+void dcrint __P((int));
+int dcmctl __P((dev_t dev, int bits, int how));
+
+
+
+/*
  * Match driver based on name
  */
 int
@@ -180,12 +206,29 @@ dcmatch(parent, match, aux)
 	void *match;
 	void *aux;
 {
-	struct cfdata *cf = match;
 	struct confargs *ca = aux;
+#if NTC>0
+	struct ioasicdev_attach_args *d = aux;
+#endif
 
 	static int nunits = 0;
 
-	if (!BUS_MATCHNAME(ca, "dc"))
+#if NTC > 0
+	if (parent->dv_cfdata->cf_driver == &ioasic_cd) {
+		if (strcmp(d->iada_modname, "dc") != 0 &&
+		    strcmp(d->iada_modname, "dc7085") != 0)
+			return (0);
+	}
+	else
+#endif /* NTC */
+
+	if (parent->dv_cfdata->cf_driver == &mainbus_cd) {
+		if (strcmp(ca->ca_name, "dc") != 0 &&
+		    strcmp(ca->ca_name, "mdc") != 0 &&
+		    strcmp(ca->ca_name, "dc7085") != 0)
+			return (0);
+	}
+	else
 		return (0);
 
 	/*
@@ -207,13 +250,33 @@ dcattach(parent, self, aux)
 	void *aux;
 {
 	register struct confargs *ca = aux;
+#if NTC > 0
+	struct ioasicdev_attach_args *d = aux;
+#endif /* NTC */
+	caddr_t dcaddr;
 
-	(void) dc_doprobe((void*)MACH_PHYS_TO_UNCACHED(BUS_CVTADDR(ca)),
-			  self->dv_unit, self->dv_cfdata->cf_flags,
-			  ca->ca_slot);
 
-	/* tie pseudo-slot to device */
-	BUS_INTR_ESTABLISH(ca, dcintr, (void *)self->dv_unit);
+#if NTC > 0
+	if (parent->dv_cfdata->cf_driver == &ioasic_cd) {
+		dcaddr = (caddr_t)d->iada_addr;
+		(void) dc_doprobe((void*)MACH_PHYS_TO_UNCACHED(dcaddr),
+				  self->dv_unit, self->dv_cfdata->cf_flags,
+				  (int)d->iada_cookie);
+		/* tie pseudo-slot to device */
+		ioasic_intr_establish(parent, d->iada_cookie, TC_IPL_TTY,
+		    dcintr, self);
+	}
+	else
+#endif /* NTC */
+	if (parent->dv_cfdata->cf_driver == &mainbus_cd) {
+		dcaddr = (caddr_t)ca->ca_addr;
+		(void) dc_doprobe((void*)MACH_PHYS_TO_UNCACHED(dcaddr),
+				  self->dv_unit, self->dv_cfdata->cf_flags,
+				  ca->ca_slot);
+
+		/* tie pseudo-slot to device */
+		BUS_INTR_ESTABLISH(ca, dcintr, self);
+	}
 	printf("\n");
 }
 
@@ -222,6 +285,8 @@ dcattach(parent, self, aux)
  * XXX used for ugly special-cased console input that should be redone
  * more cleanly.
  */
+static inline int raster_console __P((void));
+
 static inline int
 raster_console()
 {
@@ -230,6 +295,11 @@ raster_console()
 }
 
 
+/*
+ * DC7085 (dz-11) probe routine from old-style config.
+ * This is only here out of intertia.
+ */
+int
 dc_doprobe(addr, unit, flags, priority)
 	void *addr;
 	int unit, flags, priority;
@@ -256,7 +326,7 @@ dc_doprobe(addr, unit, flags, priority)
 	/* reset chip */
 	dcaddr = (dcregs *)addr;
 	dcaddr->dc_csr = CSR_CLR;
-	MachEmptyWriteBuffer();
+	wbflush();
 	while (dcaddr->dc_csr & CSR_CLR)
 		;
 	dcaddr->dc_csr = CSR_MSE | CSR_TIE | CSR_RIE;
@@ -266,6 +336,8 @@ dc_doprobe(addr, unit, flags, priority)
 	for (cntr = 0; cntr < 4; cntr++) {
 		pdp->p_addr = (void *)dcaddr;
 		tp = dc_tty[unit * 4 + cntr] = ttymalloc();
+		if (cntr != DCKBD_PORT && cntr != DCMOUSE_PORT)
+			tty_attach(tp);
 		pdp->p_arg = (int) tp;
 		pdp->p_fcn = dcxint;
 		pdp++;
@@ -286,10 +358,10 @@ dc_doprobe(addr, unit, flags, priority)
 			s = spltty();
 			dcaddr->dc_lpr = LPR_RXENAB | LPR_8_BIT_CHAR |
 				LPR_B4800 | DCKBD_PORT;
-			MachEmptyWriteBuffer();
+			wbflush();
 			dcaddr->dc_lpr = LPR_RXENAB | LPR_B4800 | LPR_OPAR |
 				LPR_PARENB | LPR_8_BIT_CHAR | DCMOUSE_PORT;
-			MachEmptyWriteBuffer();
+			wbflush();
 			DELAY(1000);
 			KBDReset(makedev(DCDEV, DCKBD_PORT), dcPutc);
 			MouseInit(makedev(DCDEV, DCMOUSE_PORT), dcPutc, dcGetc);
@@ -298,7 +370,7 @@ dc_doprobe(addr, unit, flags, priority)
 			s = spltty();
 			dcaddr->dc_lpr = LPR_RXENAB | LPR_8_BIT_CHAR |
 				LPR_B9600 | minor(cn_tab->cn_dev);
-			MachEmptyWriteBuffer();
+			wbflush();
 			DELAY(1000);
 			/*cn_tab.cn_disabled = 0;*/ /* FIXME */
 			splx(s);
@@ -308,6 +380,7 @@ dc_doprobe(addr, unit, flags, priority)
 	return (1);
 }
 
+int
 dcopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
@@ -321,8 +394,10 @@ dcopen(dev, flag, mode, p)
 	if (unit >= dc_cnt || dcpdma[unit].p_addr == (void *)0)
 		return (ENXIO);
 	tp = dc_tty[unit];
-	if (tp == NULL)
+	if (tp == NULL) {
 		tp = dc_tty[unit] = ttymalloc();
+		tty_attach(tp);
+	}
 	tp->t_oproc = dcstart;
 	tp->t_param = dcparam;
 	tp->t_dev = dev;
@@ -351,8 +426,8 @@ dcopen(dev, flag, mode, p)
 	while (!(flag & O_NONBLOCK) && !(tp->t_cflag & CLOCAL) &&
 	       !(tp->t_state & TS_CARR_ON)) {
 		tp->t_state |= TS_WOPEN;
-		if (error = ttysleep(tp, (caddr_t)&tp->t_rawq, TTIPRI | PCATCH,
-		    ttopen, 0))
+		if ((error = ttysleep(tp, (caddr_t)&tp->t_rawq,
+				      TTIPRI | PCATCH, ttopen, 0)) != 0)
 			break;
 	}
 	splx(s);
@@ -362,6 +437,7 @@ dcopen(dev, flag, mode, p)
 }
 
 /*ARGSUSED*/
+int
 dcclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
@@ -384,6 +460,7 @@ dcclose(dev, flag, mode, p)
 	return (ttyclose(tp));
 }
 
+int
 dcread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
@@ -394,6 +471,7 @@ dcread(dev, uio, flag)
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
 }
 
+int
 dcwrite(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
@@ -413,9 +491,10 @@ dctty(dev)
 }
 
 /*ARGSUSED*/
+int
 dcioctl(dev, cmd, data, flag, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
@@ -475,6 +554,7 @@ dcioctl(dev, cmd, data, flag, p)
 	return (0);
 }
 
+int
 dcparam(tp, t)
 	register struct tty *tp;
 	register struct termios *t;
@@ -504,18 +584,18 @@ dcparam(tp, t)
 		if (unit == DCKBD_PORT) {
 			dcaddr->dc_lpr = LPR_RXENAB | LPR_8_BIT_CHAR |
 				LPR_B4800 | DCKBD_PORT;
-			MachEmptyWriteBuffer();
+			wbflush();
 			return (0);
 		} else if (unit == DCMOUSE_PORT) {
 			dcaddr->dc_lpr = LPR_RXENAB | LPR_B4800 | LPR_OPAR |
 				LPR_PARENB | LPR_8_BIT_CHAR | DCMOUSE_PORT;
-			MachEmptyWriteBuffer();
+			wbflush();
 			return (0);
 		}
 	} else if (tp->t_dev == cn_tab->cn_dev) {
 		dcaddr->dc_lpr = LPR_RXENAB | LPR_8_BIT_CHAR |
 			LPR_B9600 | unit;
-		MachEmptyWriteBuffer();
+		wbflush();
 		return (0);
 	}
 	if (ospeed == 0) {
@@ -534,7 +614,7 @@ dcparam(tp, t)
 	if (cflag & CSTOPB)
 		lpr |= LPR_2_STOP;
 	dcaddr->dc_lpr = lpr;
-	MachEmptyWriteBuffer();
+	wbflush();
 	DELAY(10);
 	return (0);
 }
@@ -546,9 +626,11 @@ int
 dcintr(xxxunit)
 	void *xxxunit;
 {
-	register int unit = (int)xxxunit;
+	register struct dc_softc *sc = xxxunit;
 	register dcregs *dcaddr;
 	register unsigned csr;
+
+	register int unit = sc->sc_dv.dv_unit;
 
 	unit <<= 2;
 	dcaddr = (dcregs *)dcpdma[unit].p_addr;
@@ -562,6 +644,7 @@ dcintr(xxxunit)
 	return 0;
 }
 
+void
 dcrint(unit)
 	register int unit;
 {
@@ -629,7 +712,7 @@ dcxint(tp)
 	if (dp->p_mem < dp->p_end) {
 		dcaddr = (dcregs *)dp->p_addr;
 		dcaddr->dc_tdr = dc_brk[unit >> 2] | *dp->p_mem++; 
-		MachEmptyWriteBuffer();
+		wbflush();
 		DELAY(10);
 		return;
 	}
@@ -647,7 +730,7 @@ dcxint(tp)
 	if (tp->t_outq.c_cc == 0 || !(tp->t_state & TS_BUSY)) {
 		dcaddr = (dcregs *)dp->p_addr;
 		dcaddr->dc_tcr &= ~(1 << (unit & 03));
-		MachEmptyWriteBuffer();
+		wbflush();
 		DELAY(10);
 	}
 }
@@ -702,7 +785,7 @@ dcstart(tp)
 	dp->p_end = dp->p_mem = tp->t_outq.c_cf;
 	dp->p_end += cc;
 	dcaddr->dc_tcr |= 1 << (minor(tp->t_dev) & 03);
-	MachEmptyWriteBuffer();
+	wbflush();
 out:
 	splx(s);
 }
@@ -711,6 +794,7 @@ out:
  * Stop output on a line.
  */
 /*ARGSUSED*/
+int
 dcstop(tp, flag)
 	register struct tty *tp;
 {
@@ -725,8 +809,11 @@ dcstop(tp, flag)
 			tp->t_state |= TS_FLUSH;
 	}
 	splx(s);
+
+	return (0);
 }
 
+int
 dcmctl(dev, bits, how)
 	dev_t dev;
 	int bits, how;
@@ -899,7 +986,7 @@ dcPutc(dev, c)
 	dcaddr = (dcregs *)dcpdma[minor(dev)].p_addr;
 	tcr = dcaddr->dc_tcr;
 	dcaddr->dc_tcr = tcr | (1 << minor(dev));
-	MachEmptyWriteBuffer();
+	wbflush();
 	DELAY(10);
 	while (1) {
 		/*
@@ -919,7 +1006,7 @@ dcPutc(dev, c)
 		if (line != minor(dev)) {
 			tcr |= 1 << line;
 			dcaddr->dc_tcr &= ~(1 << line);
-			MachEmptyWriteBuffer();
+			wbflush();
 			DELAY(10);
 			continue;
 		}
@@ -927,7 +1014,7 @@ dcPutc(dev, c)
 		 * Start sending the character.
 		 */
 		dcaddr->dc_tdr = dc_brk[0] | (c & 0xff);
-		MachEmptyWriteBuffer();
+		wbflush();
 		DELAY(10);
 		/*
 		 * Wait for character to be sent.
@@ -945,12 +1032,12 @@ dcPutc(dev, c)
 			if (line != minor(dev)) {
 				tcr |= 1 << line;
 				dcaddr->dc_tcr &= ~(1 << line);
-				MachEmptyWriteBuffer();
+				wbflush();
 				DELAY(10);
 				continue;
 			}
 			dcaddr->dc_tcr &= ~(1 << minor(dev));
-			MachEmptyWriteBuffer();
+			wbflush();
 			DELAY(10);
 			break;
 		}
@@ -961,7 +1048,7 @@ dcPutc(dev, c)
 	 */
 	if (tcr & 0xF) {
 		dcaddr->dc_tcr = tcr;
-		MachEmptyWriteBuffer();
+		wbflush();
 		DELAY(10);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.8 1995/09/25 21:10:03 jonathan Exp $	*/
+/*	$NetBSD: device.h,v 1.9 1996/04/10 16:27:38 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -125,4 +125,13 @@ typedef struct ScsiCmd {
 #ifdef _KERNEL
 extern struct pmax_ctlr pmax_cinit[];
 extern struct pmax_scsi_device scsi_dinit[];
-#endif
+
+/*
+ * Old-style pmax driver glue:
+ * Callbacks to add known a controller, and to configure all slaves on
+ * all  known controllers.
+ */
+void pmax_add_scsi __P((struct pmax_driver *dp, int unit));
+void configure_scsi __P((void));
+
+#endif	/* _KERNEL */

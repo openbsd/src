@@ -1,4 +1,4 @@
-/*	$NetBSD: mfbreg.h,v 1.4 1994/10/26 21:09:11 cgd Exp $	*/
+/*	$NetBSD: mfbreg.h,v 1.4.6.1 1996/08/13 08:03:52 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -87,7 +87,7 @@ typedef struct {
 /* when using autoincrement */
 #define	BT431_WRITE_REG_AUTOI(regs, val) { \
 		(regs)->addr_reg = SET_VALUE(val); \
-		MachEmptyWriteBuffer(); \
+		wbflush(); \
 	}
 
 #define	BT431_READ_REG_AUTOI(regs) \
@@ -95,7 +95,7 @@ typedef struct {
 
 #define	BT431_WRITE_CMAP_AUTOI(regs, val) { \
 		(regs)->addr_cmap = (val); \
-		MachEmptyWriteBuffer(); \
+		wbflush(); \
 	}
 
 #define	BT431_READ_CMAP_AUTOI(regs) \
@@ -118,7 +118,7 @@ typedef struct {
  */
 #define BT455_SELECT_ENTRY(regs, regno) { \
 		(regs)->addr_cmap = (regno)&0x0f; \
-		MachEmptyWriteBuffer(); \
+		wbflush(); \
 	}
 
 /*

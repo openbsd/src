@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.14 1995/12/28 19:16:58 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.16 1996/04/10 17:38:18 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -58,11 +58,32 @@
 #include <sys/conf.h>
 #include <sys/dmap.h>
 #include <sys/reboot.h>
+#include <sys/device.h>
 
 #include <machine/cpu.h>
 #include <pmax/dev/device.h>
 #include <pmax/pmax/pmaxtype.h>
 #include <pmax/pmax/turbochannel.h>
+
+void setroot __P((void));
+void swapconf __P((void));
+void dumpconf __P((void)); 	/* XXX */
+
+void xconsinit __P((void));	/* XXX console-init continuation */
+
+#if 0
+/*
+ * XXX system-dependent, should call through a pointer.
+ * (spl0 should _NOT_ enable TC interrupts on a 3MIN.)
+ *
+ */
+int spl0 __P((void));
+#endif
+
+void	configure __P((void));
+void	makebootdev __P((char *cp));
+
+
 
 /*
  * The following several variables are related to
@@ -79,70 +100,7 @@ extern int cputype;	/* glue for new-style config */
 int cputype;
 
 extern int initcpu __P((void));		/*XXX*/
-void cpu_configure __P((void));
 void configure_scsi __P((void));
-
-/*
- * Print cpu type. (This should be moved into cpu.c)
- */
-
-void
-cpu_configure()
-{
-	/*
-	 * for some reason the Pmax has an R2000 cpu with an implementation
-	 * level of 2 and DEC's R3000s are level 2 as well?
-	 */
-	if (pmax_boardtype == DS_PMAX) {
-		cpu.cpu.cp_imp = MIPS_R2000;
-		fpu.cpu.cp_imp = MIPS_R2010;
-	}
-
-	switch (cpu.cpu.cp_imp) {
-	case MIPS_R2000:
-		printf("cpu0 (MIPS R2000 revision %d.%d)\n",
-			cpu.cpu.cp_majrev, cpu.cpu.cp_minrev);
-		break;
-
-	case MIPS_R3000:
-		printf("cpu0 (MIPS R3000 revision %d.%d)\n",
-			cpu.cpu.cp_majrev, cpu.cpu.cp_minrev);
-		break;
-
-	case MIPS_R4000:
-		printf("cpu0 (MIPS R4000 revision %d.%d)\n",
-			cpu.cpu.cp_majrev, cpu.cpu.cp_minrev);
-		break;
-
-	default:
-		printf("cpu0 (implementation %d revision %d.%d)\n",
-			cpu.cpu.cp_imp, cpu.cpu.cp_majrev, cpu.cpu.cp_minrev);
-	}
-	switch (fpu.cpu.cp_imp) {
-	case MIPS_R2010:
-		printf("fpu0 (MIPS R2010 revision %d.%d)\n",
-			fpu.cpu.cp_majrev, fpu.cpu.cp_minrev);
-		break;
-
-	case MIPS_R3010:
-		printf("fpu0 (MIPS R3010 revision %d.%d)\n",
-			fpu.cpu.cp_majrev, fpu.cpu.cp_minrev);
-		break;
-
-	case MIPS_R4010:
-		printf("fpu0 (MIPS R4010 revision %d.%d)\n",
-			fpu.cpu.cp_majrev, fpu.cpu.cp_minrev);
-		break;
-
-	default:
-		printf("fpu0 (implementation %d revision %d.%d)\n",
-			fpu.cpu.cp_imp, fpu.cpu.cp_majrev, fpu.cpu.cp_minrev);
-	}
-	printf("data cache size %dK inst cache size %dK\n",
-		machDataCacheSize >> 10, machInstCacheSize >> 10);
-
-}
-
 
 /*
  * Determine mass storage and memory configuration for a machine.
@@ -154,7 +112,6 @@ cpu_configure()
 void
 configure()
 {
-	register struct pmax_ctlr *cp;
 	int s;
 
 	/*
@@ -171,7 +128,7 @@ configure()
 	 * Kick off autoconfiguration
 	 */
 	s = splhigh();
-	if (config_rootfound("mainbus", "mainbus") == 0)
+	if (config_rootfound("mainbus", "mainbus") == NULL)
 	    panic("no mainbus found");
 
 #if 0
@@ -221,6 +178,7 @@ configure()
 /*
  * Configure swap space and related parameters.
  */
+void
 swapconf()
 {
 	register struct swdevt *swp;
@@ -246,30 +204,30 @@ swapconf()
 u_long	bootdev = 0;		/* should be dev_t, but not until 32 bits */
 
 static	char devname[][2] = {
-	  0, 0,		/*  0 = 4.4bsd rz */
-	  0, 0,		/*  1 = vax ht */
-	  0, 0,		/*  2 = ?? */
-	'r','k',	/*  3 = rk */
-	  0, 0,		/*  4 = sw */
-	't','m',	/*  5 = tm */
-	't','s',	/*  6 = ts */
-	'm','t',	/*  7 = mt */
-	'r','t',	/*  8 = rt*/
-	 0,  0,		/*  9 = ?? */
-	'u','t',	/* 10 = ut */
-	'i','d',	/* 11 = 11/725 idc */
-	'r','x',	/* 12 = rx */
-	'u','u',	/* 13 = uu */
-	'r','l',	/* 14 = rl */
-	't','u',	/* 15 = tmscp */
-	'c','s',	/* 16 = cs */
-	'm','d',	/* 17 = md */
-	's','t',	/* 18 = st */
-	's','d',	/* 19 = sd */
-	't','z',	/* 20 = tz */
-	'r','z',	/* 21 = rz */
-	 0,  0,		/* 22 = ?? */
-	'r','a',	/* 23 = ra */
+	{  0,  0  },	/*  0 = 4.4bsd rz */
+	{  0,  0  },	/*  1 = vax ht */
+	{  0,  0  },	/*  2 = ?? */
+	{ 'r','k' },	/*  3 = rk */
+	{  0,  0  },	/*  4 = sw */
+	{ 't','m' },	/*  5 = tm */
+	{ 't','s' },	/*  6 = ts */
+	{ 'm','t' },	/*  7 = mt */
+	{ 'r','t' },	/*  8 = rt*/
+	{  0,  0  },	/*  9 = ?? */
+	{ 'u','t' },	/* 10 = ut */
+	{ 'i','d' },	/* 11 = 11/725 idc */
+	{ 'r','x' },	/* 12 = rx */
+	{ 'u','u' },	/* 13 = uu */
+	{ 'r','l' },	/* 14 = rl */
+	{ 't','u' },	/* 15 = tmscp */
+	{ 'c','s' },	/* 16 = cs */
+	{ 'm','d' },	/* 17 = md */
+	{ 's','t' },	/* 18 = st */
+	{ 's','d' },	/* 19 = sd */
+	{ 't','z' },	/* 20 = tz */
+	{ 'r','z' },	/* 21 = rz */
+	{  0,  0  },	/* 22 = ?? */
+	{ 'r','a' },	/* 23 = ra */
 };
 
 #define	PARTITIONMASK	0x7
@@ -280,12 +238,17 @@ static	char devname[][2] = {
  * If we can do so, and not instructed not to do so,
  * change rootdev to correspond to the load device.
  */
+void
 setroot()
 {
 	int  majdev, mindev, unit, part, controller;
-	dev_t temp, orootdev;
+	dev_t  orootdev;
 	struct swdevt *swp;
 	register struct pmax_scsi_device *dp;
+
+#ifdef DOSWAP
+	dev_t temp;
+#endif
 
 	if (boothowto & RB_DFLTROOT ||
 	    (bootdev & B_MAGICMASK) != B_DEVMAGIC)
@@ -327,6 +290,7 @@ setroot()
 
 #ifdef DOSWAP
 	mindev &= ~PARTITIONMASK;
+	temp = 0;
 	for (swp = swdevt; swp->sw_dev != NODEV; swp++) {
 		if (majdev == major(swp->sw_dev) &&
 		    mindev == (minor(swp->sw_dev) & ~PARTITIONMASK)) {

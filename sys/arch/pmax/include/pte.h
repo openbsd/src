@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.5 1995/03/28 18:19:26 jtc Exp $	*/
+/*	$NetBSD: pte.h,v 1.6 1996/02/01 22:32:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,7 +46,7 @@
  * R2000 hardware page table entry
  */
 
-#ifndef LOCORE
+#ifndef _LOCORE
 struct pte {
 #if BYTE_ORDER == BIG_ENDIAN
 unsigned int	pg_pfnum:20,		/* HW: core page frame number or 0 */
@@ -76,7 +76,7 @@ typedef union pt_entry {
 	unsigned int	pt_entry;	/* for copying, etc. */
 	struct pte	pt_pte;		/* for getting to bits by name */
 } pt_entry_t;	/* Mach page table entry */
-#endif /* LOCORE */
+#endif /* _LOCORE */
 
 #define	PT_ENTRY_NULL	((pt_entry_t *) 0)
 
@@ -93,7 +93,7 @@ typedef union pt_entry {
 #define PG_SHIFT	12
 #define	PG_PFNUM(x)	(((x) & PG_FRAME) >> PG_SHIFT)
 
-#if defined(_KERNEL) && !defined(LOCORE)
+#if defined(_KERNEL) && !defined(_LOCORE)
 /*
  * Kernel virtual address to page table entry and visa versa.
  */

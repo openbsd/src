@@ -1,4 +1,4 @@
-/*	$NetBSD: ims332.h,v 1.1 1995/09/11 08:11:25 jonathan Exp $	*/
+/*	$NetBSD: ims332.h,v 1.2 1996/04/08 00:57:38 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -168,8 +168,6 @@
 #define	IMS332_BOOT_xxx			0xffff80	/* reserved, mbz */
 
 int ims332init (struct fbinfo *);
-static u_int ims332_read_register (struct fbinfo *, int);
-static void ims332_write_register (struct fbinfo *, int, unsigned int);
 void ims332InitColorMap (struct fbinfo *);
 int ims332LoadColorMap (struct fbinfo *, caddr_t, int, int);
 int ims332GetColorMap (struct fbinfo *, caddr_t, int, int);

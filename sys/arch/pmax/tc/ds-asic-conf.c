@@ -1,4 +1,4 @@
-/*	$NetBSD: ds-asic-conf.c,v 1.4 1996/01/03 20:39:14 jonathan Exp $	*/
+/*	$NetBSD: ds-asic-conf.c,v 1.5.4.1 1996/05/30 04:13:22 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1995 Jonathan Stone
@@ -20,20 +20,20 @@ struct asic_slot {
 
 struct asic_slot kn03_asic_slots[] =
 {
-		/* name        slot  offset intpri  */
-	{ { "lance",	  0, (u_int) (3 * 0x40000), KN03_LANCE_SLOT, },
+	/*   name        slot  offset 		   addr intpri  */
+	{ { "lance",	  0, (u_int) (3 * 0x40000), 0,KN03_LANCE_SLOT },
 	    KN03_INTR_LANCE, asic_intrnull, (void*) KN03_LANCE_SLOT, },
 
-	{ { "scc",	  1, (u_int) (4 * 0x40000), KN03_SCC0_SLOT, },
+	{ { "scc",	  1, (u_int) (4 * 0x40000), 0, KN03_SCC0_SLOT },
 	    KN03_INTR_SCC_0, asic_intrnull, (void *)KN03_SCC0_SLOT, },
 
-	{ { "scc",	  2, (u_int) (6 * 0x40000), KN03_SCC1_SLOT, },
+	{ { "scc",	  2, (u_int) (6 * 0x40000), 0, KN03_SCC1_SLOT },
 	    KN03_INTR_SCC_1, asic_intrnull, (void *)KN03_SCC1_SLOT, },
 
-	{ { "dallas_rtc", 3, (u_int) (8* 0x40000),  0 /*XXX*/, },
+	{ { "mc146818", 3, (u_int) (8* 0x40000),  0 /*XXX*/, 0 /*XXX*/},
 	    0,               asic_intrnull, (void *)(long) 16 /*XXX*/, },
 
-	{ { "asc",	  4, (u_int) (12* 0x40000), KN03_SCSI_SLOT, },
+	{ { "asc",	  4, (u_int) (12* 0x40000), 0, KN03_SCSI_SLOT, },
 	    0,               asic_intrnull, (void *)KN03_SCSI_SLOT, },
 
 	{ { NULL, 0, 0, 0 }, 0, NULL, NULL }
@@ -42,28 +42,28 @@ struct asic_slot kn03_asic_slots[] =
 
 struct asic_slot xine_asic_slots[] =
 {
-	{ { "lance",	   0, (u_int) (3 * 0x40000), KN03_LANCE_SLOT, },
-	    KN03_INTR_LANCE, asic_intrnull, (void*) KN03_LANCE_SLOT, },
+	{ { "lance",	   0, (u_int) (3 * 0x40000), 0, XINE_LANCE_SLOT },
+	    XINE_INTR_LANCE, asic_intrnull, (void*) XINE_LANCE_SLOT, },
 
-	{ { "scc",	   1, (u_int) (4 * 0x40000),  KN03_SCC0_SLOT, },
-	    KN03_INTR_SCC_0, asic_intrnull, (void *)KN03_SCC0_SLOT, },
+	{ { "scc",	   1, (u_int) (4 * 0x40000),  0, XINE_SCC0_SLOT },
+	    XINE_INTR_SCC_0, asic_intrnull, (void *) XINE_SCC0_SLOT, },
 
-	{ { "dallas_rtc",  2, 0, (u_int) (8* 0x40000), },
+	{ { "mc146818",    2, (u_int) (8* 0x40000), 0, 0},
 	    0, asic_intrnull, (void *)(long) 16 /*XXX*/, },
 
-	{ { "isdn",	   3, (u_int) (9 * 0x40000), XINE_ISDN_SLOT, },
+	{ { "isdn",	   3, (u_int) (9 * 0x40000), 0, XINE_ISDN_SLOT },
 	    0,		      asic_intrnull, (void *)(long) XINE_ISDN_SLOT, },
 
-	{ { "dtop",	   4, (u_int) (10* 0x40000), XINE_DTOP_SLOT, },
+	{ { "dtop",	   4, (u_int) (10* 0x40000), 0, XINE_DTOP_SLOT },
 	    0,		      asic_intrnull, (void *)(long) XINE_DTOP_SLOT, },
 
-	{ { "fdc",	   5, (u_int) (11* 0x40000), XINE_FLOPPY_SLOT, },
+	{ { "fdc",	   5, (u_int) (11* 0x40000), 0, XINE_FLOPPY_SLOT },
 	    0,		     asic_intrnull, (void *) (long)XINE_FLOPPY_SLOT, },
 
-	{ { "asc",	   6, (u_int) (12* 0x40000), XINE_SCSI_SLOT, },
+	{ { "asc",	   6, (u_int) (12* 0x40000), 0, XINE_SCSI_SLOT },
 	    0 /*XINE_INTR_SCSI*/, asic_intrnull, (void*)XINE_SCSI_SLOT, },
 #if 0
-	{ { "frc",	   3, (u_int) (15* 0x40000), XINE_SLOT_FRC, },
+	{ { "frc",	   3, (u_int) (15* 0x40000), 0, XINE_SLOT_FRC },
 	    0,		      asic_intrnull, (void *)(long) XINE_SLOT_FRC, },
 #endif
 	{ { NULL, 0, 0, }, 0, NULL, NULL }
@@ -80,10 +80,11 @@ struct asic_slot xine_asic_slots[] =
  */
 
 struct asic_slot kn02_asic_slots[] = {
-	{ { "dc",	   0,  (u_int) (4 * 0x80000), 7 },
+	/*   name        slot  offset 		   addr intpri  */
+	{ { "dc",	   0,  (u_int) (4 * 0x80000), 0, 7 },
 	    KN03_INTR_SCC_0, asic_intrnull, (void *) 7, },
 	
-	{ { "dallas_rtc",  0, (u_int) (5 * 0x80000), 0, },
+	{ { "mc146818",  0, (u_int) (5 * 0x80000), 0, 0 },
 	    0, 		    asic_intrnull, (void *) 16 /*XXX*/, },
 
 	{ { NULL, 0, 0 },  0, NULL, NULL }

@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.9 1995/10/05 01:52:57 jonathan Exp $	*/
+/*	$NetBSD: fb.c,v 1.10.4.1 1996/08/13 08:32:18 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -80,24 +80,28 @@
 #include <miscfs/specfs/specdev.h>
 
 #include <machine/autoconf.h>
+#include <sys/conf.h>
+#include <machine/conf.h>
+
 #include <machine/machConst.h>
 #include <machine/pmioctl.h>
 
 #include <machine/fbio.h>
 #include <machine/fbvar.h>
 #include <pmax/dev/fbreg.h>
-/*#include <pmax/dev/lk201.h>*/
+#include <pmax/dev/qvssvar.h>
+
 
 #include <pmax/stand/dec_prom.h>
 
 #include <pmax/pmax/cons.h>
 #include <pmax/pmax/pmaxtype.h>
 
-#include <rasterconsole.h>
+#include "rasterconsole.h"
 
-#include <dc.h>
-#include <scc.h>
-#include <dtop.h>
+#include "dc.h"
+#include "scc.h"
+#include "dtop.h"
 
 /*
  * This framebuffer driver is a generic driver for all supported
@@ -121,26 +125,26 @@ extern void fbScreenInit __P (( struct fbinfo *fi));
 
 #if NDC > 0
 #include <machine/dc7085cons.h>
-extern int dcGetc(), dcparam();
-extern void dcPutc();
+#include <pmax/dev/dcvar.h>
 #endif
+
 #if NDTOP > 0
-#include <pmax/dev/dtopreg.h>
-extern void dtopKBDPutc();
+#include <pmax/dev/dtopvar.h>
 #endif
+
 #if NSCC > 0
-#include <pmax/dev/sccreg.h>
-extern int sccGetc(), sccparam();
-extern void sccPutc();
+#include <pmax/tc/sccvar.h>
 #endif
-
-/* LK-201 and successor keycode mapping */
-extern int kbdMapChar __P((int keycode));
-extern void KBDReset __P(( dev_t dev, void (*putc) (dev_t, int) ));
-
 
 /*
- * The blessed framebuffer; the fb that gets
+ * LK-201 and successor keycode mapping 
+*/
+#include <pmax/dev/lk201var.h>
+
+extern void rcons_connect __P((struct fbinfo *info));	/* XXX */
+
+/*
+ * The "blessed" framebuffer; the fb that gets
  * the qvss-style ring buffer of mouse/kbd events, and is used
  * for glass-tty fb console output.
  */
@@ -163,7 +167,7 @@ u_short defCursor[32] = {
  */
 
 #include <sys/device.h>
-#include <fb.h>
+#include "fb.h"
 
 
 static struct {
@@ -171,11 +175,18 @@ static struct {
 	int cd_ndevs;
 } fbcd =   { {NULL}, 0} ;
 
+void fbattach __P((int n));
 
+
+
+/*
+ * attach routine: required for pseudo-device
+ */
 void
 fbattach(n)
 	int n;
 {
+	/* allocate space  for n framebuffers... */
 }
 
 /*
@@ -193,15 +204,17 @@ fbconnect (name, info, silent)
 	static int first = 1;
 
 #ifndef FBDRIVER_DOES_ATTACH
-	/* See if we've already configured this frame buffer; if not,
-	   find a slot for it. */
+	/*
+	 * See if we've already configured this frame buffer;
+	 * if not, find an "fb" pseudo-device entry for it.
+	 */
 	for (fbix = 0; fbix < fbcd.cd_ndevs; fbix++)
 		if ((fbcd.cd_devs [fbix]->fi_type.fb_boardtype
 		     == info -> fi_type.fb_boardtype)
 		    && fbcd.cd_devs [fbix]->fi_unit == info -> fi_unit)
 			goto got_it;
 			
-	if (fbcd.cd_ndevs == NFB) {
+	if (fbcd.cd_ndevs >= NFB) {
 		printf ("fb: more frame buffers probed than configured!\n");
 		return;
 	}
@@ -210,7 +223,9 @@ fbconnect (name, info, silent)
 	fbcd.cd_devs [fbix] = info;
 #endif /* FBDRIVER_DOES_ATTACH */
 
-	/* If this is the first frame buffer we've seen, pass it to rcons. */
+	/*
+	 * If this is the first frame buffer we've seen, pass it to rcons.
+	 */
 	if (first) {
 		extern dev_t cn_in_dev;	/* XXX rcons hackery */
 
@@ -219,12 +234,7 @@ fbconnect (name, info, silent)
 #if NRASTERCONSOLE > 0
 		/*XXX*/ cn_in_dev = cn_tab->cn_dev; /*XXX*/ /* FIXME */
 		rcons_connect (info);
-#else /*  no raster console */
-		printf("\n"); /* XXX flush out any prom output */
-		fbScreenInit(firstfi);
-		fbScroll(firstfi);
-		cn_tab->cn_putc = fbPutc;
-#endif  /*  no raster console */
+#endif  /* NRASTERCONSOLE */
 		first = 0;
 	}
 
@@ -240,11 +250,8 @@ got_it:
 	return;
 }
 
-#if 0
-#include "new_fb.c"	/* new framebufer driver with no X support yet */
-#else
+
 #include "fb_usrreq.c"	/* old pm-compatblie driver that supports X11R5 */
-#endif
 
 
 /*
@@ -264,41 +271,44 @@ tb_kbdmouseconfig(fi)
 	}
 
 	switch (pmax_boardtype) {
+
 #if NDC > 0
 	case DS_PMAX:
 	case DS_3MAX:
 		fi->fi_glasstty->KBDPutc = dcPutc;
 		fi->fi_glasstty->kbddev = makedev(DCDEV, DCKBD_PORT);
 		break;
-#endif
+#endif	/* NDC */
+
 #if NSCC > 0
 	case DS_3MIN:
 	case DS_3MAXPLUS:
 		fi->fi_glasstty->KBDPutc = sccPutc;
 		fi->fi_glasstty->kbddev = makedev(SCCDEV, SCCKBD_PORT);
 		break;
-#endif
+#endif /* NSCC */
+
 #if NDTOP > 0
 	case DS_MAXINE:
 		fi->fi_glasstty->KBDPutc = dtopKBDPutc;
 		fi->fi_glasstty->kbddev = makedev(DTOPDEV, DTOPKBD_PORT);
 		break;
-#endif
+#endif	/* NDTOP */
+
 	default:
 		printf("Can't configure keyboard/mouse\n");
 		return (1);
 	};
+
 	return (0);
 }
 
+/*
+ * pre-rcons glass-tty emulator (stub)
+ */
 void
 fbScreenInit(fi)
 	struct fbinfo *fi;
 {
 	/* how to do this on rcons ? */
 }
-
-#if 0
-/* Use 4.4bsd/pmax frambeuffer glass-tty for console output */
-#include "fb-tty.c"
-#endif

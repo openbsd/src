@@ -1,4 +1,4 @@
-/*	$NetBSD: turbochannel.h,v 1.7 1995/09/12 07:32:31 jonathan Exp $	*/
+/*	$NetBSD: turbochannel.h,v 1.8 1996/05/19 01:44:45 jonathan Exp $	*/
 
 
 /*-
@@ -108,9 +108,10 @@ typedef struct {
 	tc_padded_char_t	slot_size;	/* legal: 1-128, unit: 4Mb */
 	unsigned char		test_data[TC_ROM_TEST_DATA_SIZE];
 						/* must always contain:
-						/* x55 x00 xaa xff
-						/* (each byte is repeated
-						/*  rom_stride times) */
+						 * x55 x00 xaa xff
+						 * (each byte is repeated
+						 *  rom_stride times)
+						 */
 	tc_padded_char_t	firmware_rev[TC_ROM_LLEN];
 	tc_padded_char_t	vendor_name[TC_ROM_LLEN];
 	tc_padded_char_t	module_name[TC_ROM_LLEN];

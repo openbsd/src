@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.6 1995/10/05 01:52:51 jonathan Exp $	*/
+/*	$NetBSD: rcons.c,v 1.9 1996/05/19 01:06:14 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -37,7 +37,7 @@
  *
  */
 
-#include <rasterconsole.h>
+#include "rasterconsole.h"
 #if NRASTERCONSOLE > 0
 
 #include <sys/param.h>
@@ -49,9 +49,11 @@
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/conf.h>
+#include <machine/conf.h>
 #include <sys/vnode.h>
 
 #include <pmax/stand/dec_prom.h>
+
 
 #include <pmax/dev/sccreg.h>
 #include <pmax/pmax/kn01.h>
@@ -67,6 +69,7 @@
 #include <sys/device.h>
 #include <machine/fbio.h>
 #include <dev/rcons/rcons.h>
+#include <dev/rcons/rcons_subr.h>
 #include <dev/rcons/raster.h>
 #include <machine/fbvar.h>
 
@@ -91,10 +94,19 @@ dev_t	cn_in_dev = NODEV;	/* console input device. */
 
 char rcons_maxcols [20];
 
-void rcons_vputc __P ((dev_t dev, int c));
+void	rcons_connect __P((struct fbinfo *info));
+void	rasterconsoleattach __P((int n));
+void	rcons_vputc __P ((dev_t dev, int c));
 
-extern int (*v_putc) /*__P((dev_t dev, int c))*/ ();
+
+void	rconsreset __P((struct tty *tp, int rw));
+void	rconsstrategy __P((struct buf *bp));
+void	rcons_input __P((dev_t dev, int ic));
+
+void rconsstart		__P((struct tty *));
+
 void nobell __P ((int));
+
 
 /*
  * rcons_connect is called by fbconnect when the first frame buffer is
@@ -107,7 +119,6 @@ rcons_connect (info)
 	static struct rconsole rc;
 	static int row, col;
 
-	void * tem;
 	/* If we're running a serial console, don't set up a raster console
 	   even if there's a device that can support it. */
 	if (cn_tab -> cn_pri == CN_REMOTE)
@@ -153,7 +164,6 @@ rcons_connect (info)
 	row = (rc.rc_height / HW_FONT_HEIGHT) - 1;
 	col = 0;
 
-	tem = v_putc;	/* rcons putchar signature doesn't match dev/cons */
 	rcons_init (&rc);
 
 
@@ -177,8 +187,6 @@ rcons_vputc(dev, c)
 	dev_t dev;
 	int c;
 {
-	int s;
-
 	/*
 	 * Call the pointer-to-function that rcons_init tried to give us,
 	 * discarding the dev_t argument.
@@ -192,12 +200,18 @@ rcons_vputc(dev, c)
  * device, and isn't on a sparc; this is a useful point to set up
  * the vnode, clean up pmax console initialization, and set
  * the initial tty size.
+ */
 /* ARGSUSED */
+void
 rasterconsoleattach (n)
 	int n;
 {
 	register struct tty *tp = &rcons_tty [0];
+
+#ifdef notyet
 	int status;
+#endif
+
 
 	/* Set up the tty queues now... */
 	clalloc(&tp->t_rawq, 1024, 1);
@@ -229,13 +243,14 @@ rasterconsoleattach (n)
 }
 
 /* ARGSUSED */
+int
 rconsopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
 	struct proc *p;
 {
 	register struct tty *tp = &rcons_tty [0];
- 	static int firstopen = 1;
+ 	/*static int firstopen = 1;*/
 	int status;
 
 	if ((tp->t_state & TS_ISOPEN) == 0) {
@@ -258,13 +273,13 @@ rconsopen(dev, flag, mode, p)
 }
 
 /* ARGSUSED */
+int
 rconsclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
 	struct proc *p;
 {
 	register struct tty *tp = &rcons_tty [0];
-	struct vnode *vp;
 
 	(*linesw[tp->t_line].l_close)(tp, flag);
 	ttyclose(tp);
@@ -273,6 +288,7 @@ rconsclose(dev, flag, mode, p)
 }
 
 /* ARGSUSED */
+int
 rconsread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
@@ -284,6 +300,7 @@ rconsread(dev, uio, flag)
 }
 
 /* ARGSUSED */
+int
 rconswrite(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
@@ -303,6 +320,7 @@ rconstty(dev)
         return (tp);
 }
 
+int
 rconsioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	u_long cmd;
@@ -322,13 +340,16 @@ rconsioctl(dev, cmd, data, flag, p)
 }
 
 /* ARGSUSED */
+int
 rconsstop (tp, rw)
 	struct tty *tp;
 	int rw;
 {
+	return (0);
 }
 
 /*ARGSUSED*/
+void
 rconsreset (tp, rw)
 	struct tty *tp;
 	int rw;
@@ -336,6 +357,7 @@ rconsreset (tp, rw)
 }
 
 /*ARGSUSED*/
+int
 rconsselect(dev, which, p)
 	dev_t dev;
 	int which;
@@ -345,11 +367,16 @@ rconsselect(dev, which, p)
 }
 
 /*ARGSUSED*/
-rconsmmap ()
+int
+rconsmmap (dev, off, prot)
+	dev_t dev;
+	 int off;
+	 int prot;
 {
 	return 0;
 }
 
+void
 rconsstrategy(bp)
 	struct buf *bp;
 {
@@ -358,6 +385,7 @@ rconsstrategy(bp)
 /* Called by real input device when there is input for rcons.   Passes
    input through line discpline interrupt routine... */
 
+void
 rcons_input (dev, ic)
 	dev_t dev;
 	int ic;

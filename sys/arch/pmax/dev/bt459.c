@@ -1,3 +1,5 @@
+/*	$NetBSD: bt459.c,v 1.4 1996/04/08 00:57:41 jonathan Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,7 +36,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sfb.c	8.1 (Berkeley) 6/10/93
- *      $Id: bt459.c,v 1.1.1.1 1995/10/18 08:51:25 deraadt Exp $
  */
 
 /*
@@ -52,7 +53,6 @@
  *
  * from: Header: /sprite/src/kernel/dev/ds3100.md/RCS/devGraphics.c,
  *	v 9.2 90/02/13 22:16:24 shirriff Exp  SPRITE (DECWRL)";
- * $Id: bt459.c,v 1.1.1.1 1995/10/18 08:51:25 deraadt Exp $
  */
 /*
  * Mach Operating System
@@ -81,6 +81,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/select.h>
@@ -291,12 +292,12 @@ bt459RestoreCursorColor(fi)
 	bt459_select_reg(regs, BT459_REG_CCOLOR_1);
 	for (i = 0; i < 3; i++) {
 		regs->addr_reg = cursor_RGB[i];
-		MachEmptyWriteBuffer();
+		wbflush();
 	}
 	bt459_select_reg(regs, BT459_REG_CCOLOR_3);
 	for (i = 3; i < 6; i++) {
 		regs->addr_reg = cursor_RGB[i];
-		MachEmptyWriteBuffer();
+		wbflush();
 	}
 }
 
@@ -307,7 +308,7 @@ bt459CursorColor(fi, color)
 	unsigned int color[];
 	struct fbinfo *fi;
 {
-	register int i, j;
+	register int i;
 
 	for (i = 0; i < 6; i++)
 		cursor_RGB[i] = (u_char)(color[i] >> 8);
@@ -350,23 +351,23 @@ bt459PosCursor(fi, x, y)
 	fbu->scrInfo.cursor.x = x;		/* keep track of real cursor */
 	fbu->scrInfo.cursor.y = y;		/* position, indep. of mouse */
 
-#ifdef MELLON	/* perhaps this is right for sfb ? */
-	x += 369;	/* is this correct for rcons on an sfb?? */
-#else
-	x += 219;	/* this is right for old pmax fb drivers on a cfb */
-#endif
+	/* XXX is this a linear function of x-dimension screen size? */
+	if (fi->fi_type.fb_boardtype == PMAX_FBTYPE_SFB)
+		x += 369;	/* is this correct for rcons on an sfb?? */
+	else
+		x += 219;	/* correct for a cfb */
 	y += 34;
 
 	
 	bt459_select_reg(regs, BT459_REG_CXLO);
 	regs->addr_reg = x;
-	MachEmptyWriteBuffer();
+	wbflush();
 	regs->addr_reg = x >> 8;
-	MachEmptyWriteBuffer();
+	wbflush();
 	regs->addr_reg = y;
-	MachEmptyWriteBuffer();
+	wbflush();
 	regs->addr_reg = y >> 8;
-	MachEmptyWriteBuffer();
+	wbflush();
 }
 
 /* Initialize the colormap to the default state, which is that entry
@@ -382,22 +383,22 @@ bt459InitColorMap(fi)
 
 	bt459_select_reg(regs, 0);
 	((u_char *)(fi -> fi_cmap_bits)) [0] = regs->addr_cmap = 0;
-	MachEmptyWriteBuffer();
+	wbflush();
 	((u_char *)(fi -> fi_cmap_bits)) [1] = regs->addr_cmap = 0;
-	MachEmptyWriteBuffer();
+	wbflush();
 	((u_char *)(fi -> fi_cmap_bits)) [2] = regs->addr_cmap = 0;
-	MachEmptyWriteBuffer();
+	wbflush();
 
 	for (i = 0; i < 256; i++) {
 		((u_char *)(fi -> fi_cmap_bits)) [i * 3]
 			= regs->addr_cmap = 0xff;
-		MachEmptyWriteBuffer();
+		wbflush();
 		((u_char *)(fi -> fi_cmap_bits)) [i * 3 + 1]
 			= regs->addr_cmap = 0xff;
-		MachEmptyWriteBuffer();
+		wbflush();
 		((u_char *)(fi -> fi_cmap_bits)) [i * 3 + 2]
 			= regs -> addr_cmap = 0xff;
-		MachEmptyWriteBuffer();
+		wbflush();
 	}
 
 	for (i = 0; i < 3; i++) {
@@ -484,11 +485,11 @@ bt459_video_on(fi)
 	/* restore old color map entry zero */
 	bt459_select_reg(regs, 0);
 	regs->addr_cmap = cmap_bits [0];
-	MachEmptyWriteBuffer();
+	wbflush();
 	regs->addr_cmap = cmap_bits [0];
-	MachEmptyWriteBuffer();
+	wbflush();
 	regs->addr_cmap = cmap_bits [0];
-	MachEmptyWriteBuffer();
+	wbflush();
 
 	/* enable normal display */
 	bt459_write_reg(regs, BT459_REG_PRM, 0xff);
@@ -513,11 +514,11 @@ bt459_video_off(fi)
 	/* set color map entry zero to zero */
 	bt459_select_reg(regs, 0);
 	regs->addr_cmap = 0;
-	MachEmptyWriteBuffer();
+	wbflush();
 	regs->addr_cmap = 0;
-	MachEmptyWriteBuffer();
+	wbflush();
 	regs->addr_cmap = 0;
-	MachEmptyWriteBuffer();
+	wbflush();
 
 	/* disable display */
 	bt459_write_reg(regs, BT459_REG_PRM, 0);
@@ -536,7 +537,7 @@ bt459_select_reg(regs, regno)
 {
 	regs->addr_lo = regno;
 	regs->addr_hi = regno >> 8;
-	MachEmptyWriteBuffer();
+	wbflush();
 }
 
 static void
@@ -545,9 +546,9 @@ bt459_write_reg(regs, regno, val)
 {
 	regs->addr_lo = regno;
 	regs->addr_hi = regno >> 8;
-	MachEmptyWriteBuffer();
+	wbflush();
 	regs->addr_reg = val;
-	MachEmptyWriteBuffer();
+	wbflush();
 }
 
 static u_char
@@ -556,7 +557,7 @@ bt459_read_reg(regs, regno)
 {
 	regs->addr_lo = regno;
 	regs->addr_hi = regno >> 8;
-	MachEmptyWriteBuffer();
+	wbflush();
 	return (regs->addr_reg);
 }
 

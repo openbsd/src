@@ -30,7 +30,7 @@
  *
  *	filesystem.c
  *
- *	$Id: filesystem.c,v 1.1 1995/12/14 05:26:27 deraadt Exp $
+ *	$Id: filesystem.c,v 1.2 1996/09/15 21:13:22 deraadt Exp $
  */
 
 #include <stand.h>

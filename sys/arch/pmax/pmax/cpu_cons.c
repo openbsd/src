@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_cons.c,v 1.6 1996/01/03 20:39:19 jonathan Exp $	*/
+/*	$NetBSD: cpu_cons.c,v 1.10.4.1 1996/05/30 04:10:36 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -55,11 +55,9 @@
 
 #include <pmax/stand/dec_prom.h>
 
-#include <pmax/dev/sccreg.h>
 #include <pmax/pmax/kn01.h>
 #include <pmax/pmax/kn02.h>
 #include <pmax/pmax/kmin.h>
-#include <pmax/pmax/maxine.h>
 #include <pmax/pmax/kn03.h>
 #include <pmax/pmax/asic.h>
 #include <pmax/pmax/turbochannel.h>
@@ -74,38 +72,48 @@
 #include <pmax/dev/fbreg.h>
 
 #include <machine/autoconf.h>
-#include <pmax/dev/lk201.h>
+#include <pmax/dev/lk201var.h>
 #include <dev/tc/tcvar.h>
 
-#include <pm.h>
-#include <cfb.h>
-#include <mfb.h>
-#include <xcfb.h>
-#include <sfb.h>
-#include <dc.h>
-#include <dtop.h>
-#include <scc.h>
-#include <le.h>
-#include <asc.h>
+#include "pm.h"
+#include "cfb.h"
+#include "mfb.h"
+#include "xcfb.h"
+#include "sfb.h"
+#include "dc.h"
+#include "dtop.h"
+#include "scc.h"
+#include "asc.h"
+#include "tc.h"
 
 #if NDC > 0
 #include <machine/dc7085cons.h>
-extern int dcGetc(), dcparam();
-extern void dcPutc();
+#include <pmax/dev/dcvar.h>
 #endif
+
 #if NDTOP > 0
-extern int dtopKBDGetc();
+#include <pmax/dev/dtopvar.h>
 #endif
+
 #if NSCC > 0
-extern int sccGetc(), sccparam();
-extern void sccPutc();
+#include <pmax/tc/sccvar.h>
 #endif
+
+#if NPM > 0
+#include <pmax/dev/pmvar.h>
+#endif
+
+#if NXCFB > 0
+#include <pmax/dev/xcfbvar.h>
+#endif
+
+
 static int romgetc __P ((dev_t));
 static void romputc __P ((dev_t, int));
 static void rompollc __P((dev_t, int));
 
 
-int	pmax_boardtype;		/* Mother board type */
+extern int	pmax_boardtype;		/* Mother board type */
 
 /*
  * Major device numbers for possible console devices. XXX
@@ -133,14 +141,14 @@ struct consdev cd = {
 	CN_DEAD,
 };
 
-/* should be locals of consinit, but that's split in two til
- * new-style config of decstations is finished
+/*
+ * Should be locals of consinit, but that's split in two until
+ * new-style config is finished
  */
 
 /*
  * Forward declarations
  */
-
 
 void consinit __P((void));
 void xconsinit __P((void));
@@ -278,6 +286,7 @@ consinit()
 	    /*
 	     * Check for a suitable turbochannel frame buffer.
 	     */
+#if NTC>0
 	    if (tc_findconsole(crt)) {
 			cd.cn_pri = CN_NORMAL;
 #ifdef RCONS_HACK
@@ -287,6 +296,7 @@ consinit()
 			cd.cn_putc = rcons_vputc;	/*XXX*/
 			return;
 	    } else
+#endif
 		printf("No crt console device in slot %d\n", crt);
 	}
 
@@ -370,7 +380,8 @@ xconsinit()
 /*
  * Get character from ROM console.
  */
-static int romgetc(dev)
+static int
+romgetc(dev)
 	dev_t dev;
 {
 	int s = splhigh ();
@@ -383,7 +394,8 @@ static int romgetc(dev)
 /*
  * Print a character on ROM console.
  */
-static void romputc (dev, c)
+static void
+romputc (dev, c)
 	dev_t dev;
 	register int c;
 {
@@ -393,13 +405,19 @@ static void romputc (dev, c)
 	splx(s);
 }
 
-static void rompollc (dev, c)
+static void
+rompollc (dev, c)
 	dev_t dev;
 	register int c;
 {
 	return;
 }
 
+
+#ifdef notanymore
+/*
+ * select() on a possibly-redirected console.
+ */
 
 extern struct	tty *constty;		/* virtual console output device */
 extern struct	consdev *cn_tab;	/* physical console device info */
@@ -430,3 +448,4 @@ pmax_cnselect(dev, rw, p)
 #endif
 	return (ttselect(cn_tab->cn_dev, rw, p));
 }
+#endif /* notanymore */

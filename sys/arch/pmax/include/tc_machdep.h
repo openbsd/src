@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_machdep.h,v 1.1 1995/12/28 08:42:17 jonathan Exp $	*/
+/*	$NetBSD: tc_machdep.h,v 1.3.4.1 1996/05/30 04:07:39 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -60,6 +60,8 @@
 #ifndef __MACHINE_TC_MACHDEP_H__
 #define __MACHINE_TC_MACHDEP_H__
 
+#include <mips/cpuregs.h>		/* defines MACH_PHYS_TO_UNCACHED */
+
 typedef int32_t		tc_addr_t;
 typedef int32_t		tc_offset_t;
 
@@ -74,11 +76,36 @@ typedef int32_t		tc_offset_t;
 #define	tc_badaddr(tcaddr)						\
     badaddr((void *)(tcaddr), sizeof (u_int32_t))
 
-
-#define	TC_DENSE_TO_SPARSE(addr)					\
-    (addr)
+#define	TC_DENSE_TO_SPARSE(addr)  (addr)
 		
-#define	TC_PHYS_TO_UNCACHED(addr)					\
-    (addr)
+#define	TC_PHYS_TO_UNCACHED(addr) MACH_PHYS_TO_UNCACHED(addr)
+
+
+/*
+ * Use the following macros to compare device names on a pmax, as
+ * the autoconfig structs are in a state of flux.
+ */
+struct confargs;
+
+#define TC_BUS_MATCHNAME(ta, name) \
+     (strncmp( (ta)->ta_modname, (name), TC_ROM_LLEN+1) == 0)
+
+/*
+ * Port-specific declarations:
+ * Declarations "private" sys/dev/tc/tc.c MI functions used to search
+ * for potential TC-option console devices (framebuffers),
+ */
+int tc_checkslot __P((tc_addr_t slotbase, char *namep));
+
+/*
+ * And declarations for the MD function used to search for and configure
+ * a TC framebuffer  as system console, and to configure the TC bus
+ * (the last is a hack).
+ */
+
+extern int tc_findconsole __P((int preferred_slot));
+extern void config_tcbus __P((struct device *parent, int cputype,
+			      int printfn __P((void*, char*)) ));
+
 
 #endif /* __MACHINE_TC_MACHDEP_H__*/

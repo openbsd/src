@@ -22,11 +22,11 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/types.h>
 #include <sys/device.h>
 #include <sys/buf.h>
 #include <sys/dkstat.h>
-
 
 #include <machine/autoconf.h>
 #include <pmax/dev/device.h>
@@ -68,6 +68,8 @@ extern struct pmax_driver tzdriver;
 
 struct pmax_scsi_device scsi_dinit[] = {
 /*driver,	cdriver,	unit,	ctlr,	drive,	slave,	dk,	flags*/
+
+#if NSII > 0
 { &rzdriver,	&siidriver,	0,	0,	0,	0,	1,	0x0 },
 { &rzdriver,	&siidriver,	1,	0,	1,	0,	1,	0x0 },
 { &rzdriver,	&siidriver,	2,	0,	2,	0,	1,	0x0 },
@@ -75,6 +77,9 @@ struct pmax_scsi_device scsi_dinit[] = {
 { &rzdriver,	&siidriver,	4,	0,	4,	0,	1,	0x0 },
 { &tzdriver,	&siidriver,	0,	0,	5,	0,	0,	0x0 },
 { &tzdriver,	&siidriver,	1,	0,	6,	0,	0,	0x0 },
+#endif /* NSII */
+
+#if NASC > 0
 { &rzdriver,	&ascdriver,	0,	0,	0,	0,	1,	0x0 },
 { &rzdriver,	&ascdriver,	1,	0,	1,	0,	1,	0x0 },
 { &rzdriver,	&ascdriver,	2,	0,	2,	0,	1,	0x0 },
@@ -82,7 +87,9 @@ struct pmax_scsi_device scsi_dinit[] = {
 { &rzdriver,	&ascdriver,	4,	0,	4,	0,	1,	0x0 },
 { &tzdriver,	&ascdriver,	0,	0,	5,	0,	0,	0x0 },
 { &tzdriver,	&ascdriver,	1,	0,	6,	0,	0,	0x0 },
-0
+#endif /* NASC */
+
+ { 0 }
 };
 
 
@@ -92,10 +99,14 @@ void	noattach __P((struct device *parent, struct device *self, void *aux));
 
 /* placeholder definitions for new-style scsi bus/disk/tape drivers */
 
-struct cfdriver oldscsibuscd = {NULL, "", nomatch, noattach, DV_DULL, 0, 0};
+struct cfattach oldscsibus_ca = { 0, nomatch, noattach };
+struct cfdriver oldscsibus_cd = {NULL, "", DV_DULL };
 
-struct cfdriver rzcd	= {NULL, "rz", nomatch, noattach, DV_DULL, 0, 0};
-struct cfdriver tzcd	= {NULL, "tz", nomatch, noattach, DV_DULL, 0, 0};
+struct cfattach rz_ca = { 0, nomatch, noattach };
+struct cfdriver rz_cd	= { NULL, "rz", DV_DULL };
+
+struct cfattach tz_ca = { 0, nomatch, noattach };
+struct cfdriver tz_cd	= { NULL, "tz", DV_DULL} ;
 
 
 #define MAX_SCSI 4
@@ -145,10 +156,10 @@ configure_scsi()
 	register struct pmax_driver *drp;
 
 	/* probe and initialize SCSI buses */
-	for (cp = &pmax_scsi_table[0]; drp = cp->pmax_driver; cp++) {
+	for (cp = &pmax_scsi_table[0]; (drp = cp->pmax_driver) != NULL; cp++) {
 
 		/* probe and initialize devices connected to controller */
-		for (dp = scsi_dinit; drp = dp->sd_driver; dp++) {
+		for (dp = scsi_dinit; (drp = dp->sd_driver) != NULL; dp++) {
 			/* might want to get fancier later */
 			if (dp->sd_cdriver != cp->pmax_driver ||
 			    dp->sd_ctlr != cp->pmax_unit)
@@ -175,9 +186,10 @@ nomatch(parent, cfdata, aux)
 	void *cfdata;
 	void *aux;
 {
+#if /*def DEBUG*/ 0
 	struct cfdata *cf = cfdata;
 	struct confargs *ca = aux;
-#if /*def DEBUG*/ 0
+
 	printf("nomatch  %s: %s: %s offset 0x%lx not yet done: %x\n",
 	        parent->dv_cfdata->cf_driver->cd_name,
 	       parent->dv_xname,
@@ -204,7 +216,7 @@ noattach(parent, self, aux)
 	       ca->ca_name, self->dv_unit,
 	       parent->dv_xname);
 #else
-	panic("Can't do ew-attach of old device %s\n",
+	panic("Can't do new-config attach of old device %s\n",
 	      ca->ca_name, self->dv_unit);
 #endif
 	return;
