@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.15 1997/12/22 10:13:50 deraadt Exp $ */
+/*	$OpenBSD: unistd.h,v 1.16 1997/12/27 12:03:44 tholo Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -177,7 +177,7 @@ int	 truncate __P((const char *, off_t));
 int	 ttyslot __P((void));
 u_int	 ualarm __P((u_int, u_int));
 int	 undelete __P((const char *));
-void	 usleep __P((u_int));
+int	 usleep __P((useconds_t));
 void	*valloc __P((size_t));			/* obsoleted by malloc() */
 pid_t	 vfork __P((void));
 int	 issetugid __P((void));
