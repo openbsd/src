@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.5 2004/02/07 11:35:59 henning Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.6 2004/02/07 11:40:17 henning Exp $	*/
 
 /* Network input dispatcher... */
 
@@ -233,8 +233,8 @@ discover_interfaces(int state)
 		next = tmp->next;
 		if ((tmp->flags & INTERFACE_AUTOMATIC) &&
 		    state == DISCOVER_REQUESTED)
-			tmp->flags &= ~(INTERFACE_AUTOMATIC |
-					  INTERFACE_REQUESTED);
+			tmp->flags &=
+			    ~(INTERFACE_AUTOMATIC | INTERFACE_REQUESTED);
 		if (!tmp->ifp || !(tmp->flags & INTERFACE_REQUESTED)) {
 			if ((tmp->flags & INTERFACE_REQUESTED) != ir)
 				error("%s: not found", tmp->name);
@@ -416,7 +416,7 @@ another:
 
 		i = 0;
 		for (l = protocols; l; l = l->next) {
-		        struct interface_info *ip;
+			struct interface_info *ip;
 			ip = l->local;
 			if ((fds[i].revents & POLLIN)) {
 				fds[i].revents = 0;
@@ -510,7 +510,7 @@ interface_status(struct interface_info *ifinfo)
 	if (ioctl(ifsock, SIOCGIFMEDIA, (caddr_t)&ifmr) < 0) {
 		if (errno != EINVAL) {
 			syslog(LOG_DEBUG, "ioctl(SIOCGIFMEDIA) on %s: %m",
-			       ifname);
+			    ifname);
 			ifinfo->noifmedia = 1;
 			goto active;
 		}
@@ -522,7 +522,7 @@ interface_status(struct interface_info *ifinfo)
 		goto active;
 	}
 	if (ifmr.ifm_status & IFM_AVALID) {
-		switch(ifmr.ifm_active & IFM_NMASK) {
+		switch (ifmr.ifm_active & IFM_NMASK) {
 		case IFM_ETHER:
 			if (ifmr.ifm_status & IFM_ACTIVE)
 				goto active;
