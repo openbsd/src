@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: pap.c,v 1.19 2002/05/16 14:27:21 brian Exp $
+ * $OpenBSD: pap.c,v 1.20 2002/06/17 01:14:08 brian Exp $
  */
 
 #include <sys/param.h>
@@ -266,7 +266,7 @@ pap_Input(struct bundle *bundle, struct link *l, struct mbuf *bp)
 #ifndef NORADIUS
       if (*bundle->radius.cfg.file) {
         if (!radius_Authenticate(&bundle->radius, authp, authp->in.name,
-                                 key, strlen(key), NULL, 0, NULL, 0))
+                                 key, strlen(key), NULL, 0))
           pap_Failure(authp);
       } else
 #endif

@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: radius.h,v 1.10 2002/06/15 08:02:01 brian Exp $
+ *	$OpenBSD: radius.h,v 1.11 2002/06/17 01:14:08 brian Exp $
  */
 
 #define	MPPE_POLICY_ALLOWED	1
@@ -85,7 +85,7 @@ extern void radius_Destroy(struct radius *);
 extern void radius_Show(struct radius *, struct prompt *);
 extern int radius_Authenticate(struct radius *, struct authinfo *,
                                const char *, const char *, int,
-                               const char *, int, const char *, int);
+                               const char *, int);
 extern void radius_Account(struct radius *, struct radacct *,
                            struct datalink *, int, struct in_addr *,
                            struct in_addr *, struct pppThroughput *);

@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: chap.h,v 1.12 2002/03/31 02:38:49 brian Exp $
+ * $OpenBSD: chap.h,v 1.13 2002/06/17 01:14:08 brian Exp $
  */
 
 struct mbuf;
@@ -62,6 +62,13 @@ struct chap {
   ((d)->type == CHAP_DESCRIPTOR ? (struct chap *)(d) : NULL)
 #define auth2chap(a) \
   ((struct chap *)((char *)a - (int)&((struct chap *)0)->auth))
+
+struct MSCHAPv2_resp {		/* rfc2759 */
+  char PeerChallenge[16];
+  char Reserved[8];
+  char NTResponse[24];
+  char Flags;
+};
 
 extern void chap_Init(struct chap *, struct physical *);
 extern void chap_ReInit(struct chap *);
