@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcs.c,v 1.8 2004/07/20 08:46:23 art Exp $	*/
+/*	$OpenBSD: arcs.c,v 1.9 2004/07/23 23:15:18 marc Exp $	*/
 /*	$NetBSD: arcs.c,v 1.6 1995/04/19 07:15:52 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)arcs.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: arcs.c,v 1.8 2004/07/20 08:46:23 art Exp $";
+static char rcsid[] = "$OpenBSD: arcs.c,v 1.9 2004/07/23 23:15:18 marc Exp $";
 #endif
 #endif /* not lint */
 
@@ -745,8 +745,8 @@ compresslist()
 	    (*arcpp) -> arc_cyclecnt--;
 	cyclecnt--;
 	*prev = clp -> next;
-	clp = clp -> next;
 	free( clp );
+	clp = *prev;
     }
 }
 
