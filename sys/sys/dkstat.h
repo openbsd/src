@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkstat.h,v 1.4 1997/11/23 03:19:20 mickey Exp $	*/
+/*	$OpenBSD: dkstat.h,v 1.5 2001/05/14 07:12:23 angelos Exp $	*/
 /*	$NetBSD: dkstat.h,v 1.8 1995/12/28 19:16:31 thorpej Exp $	*/
 
 /*-
@@ -52,8 +52,5 @@
 #ifdef _KERNEL
 long cp_time[CPUSTATES];
 
-long tk_cancc;
-long tk_nin;
-long tk_nout;
-long tk_rawcc;
+int64_t tk_cancc, tk_nin, tk_nout, tk_rawcc;
 #endif
