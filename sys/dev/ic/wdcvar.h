@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdcvar.h,v 1.34 2004/09/24 07:05:44 grange Exp $     */
+/*      $OpenBSD: wdcvar.h,v 1.35 2004/10/17 08:42:41 grange Exp $     */
 /*	$NetBSD: wdcvar.h,v 1.17 1999/04/11 20:50:29 bouyer Exp $	*/
 
 /*-
@@ -113,6 +113,9 @@ enum wdc_regs {
 	wdr_altsts = _WDC_RDONLY | _WDC_AUX,
 	wdr_ctlr = _WDC_WRONLY | _WDC_AUX
 };
+
+#define WDC_NREG	8 /* number of command registers */
+#define WDC_NSHADOWREG	2 /* number of command "shadow" registers */
 
 struct channel_softc_vtbl {
 	u_int8_t (*read_reg)(struct channel_softc *, enum wdc_regs reg);
