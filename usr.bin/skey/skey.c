@@ -1,4 +1,4 @@
-/* * $OpenBSD: skey.c,v 1.6 1996/10/14 20:45:23 millert Exp $*/
+/* * $OpenBSD: skey.c,v 1.7 1996/10/30 01:09:23 millert Exp $*/
 /*
  * S/KEY v1.1b (skey.c)
  *
@@ -74,6 +74,9 @@ main(argc, argv)
 		}
 		i++;
 	}
+
+	if (argc > i + 2)
+		usage(argv[0]);
 
 	/* Could be in the form <number>/<seed> */
 	if (argc <= i + 1) {
