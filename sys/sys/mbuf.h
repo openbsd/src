@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.46 2001/06/25 04:01:28 angelos Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.47 2001/06/25 05:40:20 angelos Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -594,7 +594,7 @@ struct m_tag *m_tag_next __P((struct mbuf *, struct m_tag *));
 #define PACKET_TAG_BRIDGE			7  /* Bridge processing done */
 #define PACKET_TAG_GIF				8  /* GIF processing done */
 #define PACKET_TAG_GRE				9  /* GRE processing done */
-#define	PACKET_TAG_PACKET_CHECKSUM		10 /* NIC checksumming done */
+#define	PACKET_TAG_IN_PACKET_CHECKSUM		10 /* NIC checksumming done */
 
 #ifdef MBTYPES
 int mbtypes[] = {				/* XXX */
