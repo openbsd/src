@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.16 2003/06/02 20:06:17 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.17 2004/03/11 08:39:48 otto Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -35,7 +35,7 @@ char copyright[] =
 #if !defined(lint)
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.16 2003/06/02 20:06:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.17 2004/03/11 08:39:48 otto Exp $";
 #endif
 
 #include "defs.h"
@@ -182,7 +182,7 @@ main(int argc,
 				break;
 			}
 			bzero(&parm, sizeof(parm));
-			parm.parm_addr_h = ntohl(p_addr);
+			parm.parm_addr_h = p_addr;
 			parm.parm_mask = p_mask;
 			parm.parm_d_metric = n;
 			p = check_parms(&parm);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parms.c,v 1.10 2003/06/02 20:06:17 millert Exp $	*/
+/*	$OpenBSD: parms.c,v 1.11 2004/03/11 08:39:48 otto Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -139,8 +139,6 @@ gwkludge(void)
 	int metric, n;
 	u_int state;
 	char *type;
-	struct parm *parmp;
-
 
 	fp = fopen(_PATH_GATEWAYS, "r");
 	if (fp == 0)
@@ -202,6 +200,7 @@ gwkludge(void)
 				       " entry \"%s\"", dname, lptr);
 				continue;
 			}
+			HTONL(dst);	/* make network # into IP address */
 		} else {
 			msglog("bad \"%s\" in "_PATH_GATEWAYS
 			       " entry \"%s\"", lptr);
@@ -270,15 +269,6 @@ gwkludge(void)
 		if ((state & (IS_NO_RIP | IS_NO_RDISC))
 		    == (IS_NO_RIP|IS_NO_RDISC))
 			state |= IS_PASSIVE;
-
-		parmp = (struct parm*)malloc(sizeof(*parmp));
-		bzero(parmp, sizeof(*parmp));
-		parmp->parm_next = parms;
-		parms = parmp;
-		parmp->parm_addr_h = ntohl(dst);
-		parmp->parm_mask = -1;
-		parmp->parm_d_metric = 0;
-		parmp->parm_int_state = state;
 
 		/* See if this new interface duplicates an existing
 		 * interface.
@@ -367,6 +357,7 @@ parse_parms(char *line)
 			free(intnetp);
 			return line;
 		}
+		HTONL(intnetp->intnet_addr);
 		intnetp->intnet_next = intnets;
 		intnets = intnetp;
 		return 0;
@@ -544,13 +535,13 @@ check_parms(struct parm *new)
  */
 int					/* 0=bad */
 getnet(char *name,
-       naddr *addrp,			/* host byte order */
-       naddr *maskp)
+       naddr *addrp,			/* network in host byte order */
+       naddr *maskp)			/* masks are always in host order */
 {
 	int i;
 	struct netent *np;
-	naddr mask;
-	struct in_addr in;
+	naddr mask;			/* in host byte order */
+	struct in_addr in;		/* a network and so host byte order */
 	char hname[MAXHOSTNAMELEN+1];
 	char *mname, *p;
 
@@ -571,7 +562,7 @@ getnet(char *name,
 	if (np != 0) {
 		in.s_addr = (naddr)np->n_net;
 	} else if (inet_aton(name, &in) == 1) {
-		HTONL(in.s_addr);
+		NTOHL(in.s_addr);
 	} else {
 		return 0;
 	}
@@ -580,8 +571,8 @@ getnet(char *name,
 		/* we cannot use the interfaces here because we have not
 		 * looked at them yet.
 		 */
-		mask = std_mask(in.s_addr);
-		if ((~mask & ntohl(in.s_addr)) != 0)
+		mask = std_mask(htonl(in.s_addr));
+		if ((~mask & in.s_addr) != 0)
 			mask = HOST_MASK;
 	} else {
 		mask = (naddr)strtoul(mname, &p, 0);
@@ -591,7 +582,7 @@ getnet(char *name,
 	}
 	if (mask != 0 && in.s_addr == RIP_DEFAULT)
 		return 0;
-	if ((~mask & ntohl(in.s_addr)) != 0)
+	if ((~mask & in.s_addr) != 0)
 		return 0;
 
 	*addrp = in.s_addr;
