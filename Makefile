@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.45 1999/01/24 16:08:37 art Exp $
+#	$OpenBSD: Makefile,v 1.46 1999/01/24 16:40:42 niklas Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -302,6 +302,7 @@ cross-gcc:
 	chmod ${BINMODE} ${CROSSDIR}/usr/bin/cpp
 	chown ${BINOWN}.${BINGRP} ${CROSSDIR}/usr/bin/cpp
 
+# XXX MAKEOBJDIR maybe should be obj.${TARGET} here, revisit later
 cross-lib:
 	-mkdir -p ${CROSSDIR}/usr/obj
 	-mkdir -p ${CROSSDIR}/usr/lib
@@ -315,14 +316,31 @@ cross-lib:
 	    for lib in csu libc; do \
 		(cd $$lib; \
 		    ${CROSSENV} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+		    ${MAKE} NOMAN= depend; \
+		    ${CROSSENV} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 		    ${MAKE} NOMAN=; \
 		    ${CROSSENV} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 		    DESTDIR=${CROSSDIR} ${MAKE} NOMAN= install); \
 	    done; \
+	    ${CROSSENV} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+	    ${MAKE} NOMAN= depend; \
 	    ${CROSSENV} MAKEOBJDIR=obj.${MACHINE}.${TARGET} ${MAKE} NOMAN=; \
 	    ${CROSSENV} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    DESTDIR=${CROSSDIR} SKIPDIR=libocurses/PSD.doc \
 	    ${MAKE} NOMAN= install)
+	(cd kerberosIV; \
+	    BSDOBJDIR=${CROSSDIR}/usr/obj \
+	    BSDSRCDIR=${.CURDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+	    ${MAKE} obj; \
+	    for lib in acl krb kadm kafs kdb; do \
+		(cd $$lib; \
+		    ${CROSSENV} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+		    ${MAKE} NOMAN= depend; \
+		    ${CROSSENV} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+		    ${MAKE} NOMAN=; \
+		    DESTDIR=${CROSSDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+		    ${MAKE} NOMAN= install); \
+	    done)
 	ln -sf ${CROSSDIR}/usr/lib \
 	    ${CROSSDIR}/usr/`cat ${CROSSDIR}/TARGET_CANON`/lib
 
