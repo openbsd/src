@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.106 2004/04/28 02:57:27 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.107 2004/04/28 03:34:38 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1056,14 +1056,18 @@ peer_down(u_int32_t id)
 void
 peer_dump(u_int32_t id, u_int16_t afi, u_int8_t safi)
 {
-	if (afi == AFI_ALL | afi == AFI_IPv4)
+	if (afi == AFI_ALL || afi == AFI_IPv4)
 		if (safi == SAFI_ALL || safi == SAFI_UNICAST ||
 		    safi == SAFI_BOTH) {
+#if 0
 			pt_dump(up_dump_upcall, peer);
+#endif
 			return;
 		}
 
+#if 0
 	log_peer_warnx(&peer->conf, "unsupported AFI, SAFI combination");
+#endif
 }
 
 /*
