@@ -1,4 +1,4 @@
-/*	$OpenBSD: fwscsi.c,v 1.7 2002/12/17 10:54:52 tdeval Exp $	*/
+/*	$OpenBSD: fwscsi.c,v 1.8 2002/12/30 11:42:41 tdeval Exp $	*/
 
 /*
  * Copyright (c) 2002 Thierry Deval.  All rights reserved.
@@ -994,8 +994,13 @@ fwscsi_minphys(struct buf *buf)
 {
 	DPRINTF(("%s: cpl = %d(%08x)\n", __func__, cpl, cpl));
 
+#if 0	/* XXX - Only small transfers, until we implement data pages. */
 	if (buf->b_bcount > SBP2_MAX_TRANS)
 		buf->b_bcount = SBP2_MAX_TRANS;
+#else
+	if (buf->b_bcount > 0x8000)
+		buf->b_bcount = 0x8000;
+#endif
 
 	minphys(buf);
 }
