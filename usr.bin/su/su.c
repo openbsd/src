@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.39 2001/06/25 16:18:38 millert Exp $	*/
+/*	$OpenBSD: su.c,v 1.40 2001/06/25 21:29:31 hin Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)su.c	5.26 (Berkeley) 7/6/91";*/
-static char rcsid[] = "$OpenBSD: su.c,v 1.39 2001/06/25 16:18:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: su.c,v 1.40 2001/06/25 21:29:31 hin Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -143,6 +143,10 @@ main(argc, argv)
 	/* get current login name and shell */
 	ruid = getuid();
 	username = getlogin();
+
+	if(username != NULL)
+		auth_setoption(as, "invokinguser", username);
+
 	if (username == NULL || (pwd = getpwnam(username)) == NULL ||
 	    pwd->pw_uid != ruid)
 		pwd = getpwuid(ruid);
@@ -187,14 +191,7 @@ main(argc, argv)
 		if ((pwd->pw_uid || !style || strcmp(style, LOGIN_DEFSTYLE)) &&
 		    (style = login_getstyle(lc, style, "auth-su")) == NULL)
 			auth_errx(as, 1, "invalid authentication type");
-		if (pwd->pw_uid || strcmp(user, "root") != 0)
-			fullname = user;
-		else {
-			if ((fullname =
-			    malloc(strlen(username) + 6)) == NULL)
-				auth_err(as, 1, NULL);
-			(void)sprintf(fullname, "%s.root", username);
-		}
+		fullname = user;
 		/*
 		 * Let the authentication program know whether they are
 		 * in group wheel or not (if trying to become super user)
