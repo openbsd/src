@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.174 2001/06/22 14:46:42 deraadt Exp $
+#	$OpenBSD: rc,v 1.175 2001/06/27 03:34:08 hin Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -513,19 +513,34 @@ if [ -f /sbin/kbd -a -f /etc/kbdtype ]; then
 	kbd `cat /etc/kbdtype`
 fi
 
-# Kerberos runs ONLY on the Kerberos servers
-# Kadmin runs only on the main server
-if [ X${kerberos_server} = X"YES" ]; then
-	echo 'kerberos server'
+# KerberosIV runs ONLY on the KDC servers
+# Kadmin runs only on the master server
+if [ X${krb4_master_kdc} = X"YES" ]; then
+	echo 'KerberosIV KDC'
 	/usr/libexec/kerberos >> /var/log/kerberos.log &
 	/usr/libexec/kadmind -n >> /var/log/kadmind.log &
 fi
 
 # Kpropd runs only on Kerberos slave servers
-if [ X${kerberos_slave} = X"YES" ]; then
+if [ X${krb4_slave_kdc} = X"YES" ]; then
 	echo 'kerberos slave server'
 	/usr/libexec/kerberos -s >> /var/log/kerberos.log &
 	/usr/libexec/kpropd -i &
+fi
+
+# KerberosV master KDC
+if [ X${krb5_master_kdc} = X"YES" ]; then
+	echo 'KerberosV master KDC'
+	/usr/libexec/kdc &
+	/usr/libexec/kadmind &
+	/usr/libexec/kpasswdd &
+fi
+
+# KerberosV slave KDC
+if [ X${krb5_slave_kdc} = X"YES" ]; then
+	echo 'KerberosV slave KDC'
+	/usr/libexec/kdc &
+	# Remember to enable hpropd in inetd.conf
 fi
 
 [ -f /etc/rc.local ] && . /etc/rc.local
