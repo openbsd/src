@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.14 2000/05/05 00:26:28 deraadt Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.15 2000/06/13 00:38:46 deraadt Exp $	*/
 /*	$NetBSD: pchb.c,v 1.6 1997/06/06 23:29:16 thorpej Exp $	*/
 
 /*
@@ -173,7 +173,6 @@ pchbattach(parent, self, aux)
 		 * This host bridge has a second PCI bus.
 		 * Configure it.
 		 */
-		printf("\n");
 		neednl = 0;
 		pba.pba_busname = "pci";
 		pba.pba_iot = pa->pa_iot;
@@ -181,6 +180,7 @@ pchbattach(parent, self, aux)
 		pba.pba_dmat = pa->pa_dmat;
 		pba.pba_bus = bdnum;
 		pba.pba_pc = pa->pa_pc;
+		printf("\n");
 		config_found(self, &pba, pchb_print);
 		break;
 	case PCI_VENDOR_INTEL:
@@ -225,6 +225,7 @@ pchbattach(parent, self, aux)
 				pba.pba_dmat = pa->pa_dmat;
 				pba.pba_bus = pbnum;
 				pba.pba_pc = pa->pa_pc;
+				printf("\n");
 				config_found(self, &pba, pchb_print);
 				break;
 			}
@@ -260,6 +261,7 @@ pchbattach(parent, self, aux)
 				pba.pba_dmat = pa->pa_dmat;
 				pba.pba_bus = pbnum;
 				pba.pba_pc = pa->pa_pc;
+				printf("\n");
 				config_found(self, &pba, pchb_print);
 			}
 			break;
