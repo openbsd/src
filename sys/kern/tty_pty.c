@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.19 2004/02/10 21:06:50 millert Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.20 2004/02/23 21:17:54 beck Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -1005,7 +1005,8 @@ static __inline int
 pty_isfree_locked(int minor)
 {
 	struct pt_softc *pt = pt_softc[minor];
-	return (pt->pt_tty == NULL || pt->pt_tty->t_oproc == NULL);
+	return (pt == NULL || pt->pt_tty == NULL ||
+	    pt->pt_tty->t_oproc == NULL);
 }
 
 static int
