@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.40 2005/03/15 18:40:15 miod Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.41 2005/03/15 20:19:24 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -144,10 +144,10 @@ vgafbattach(parent, self, aux)
 	sc->sc_node = PCITAG_NODE(pa->pa_tag);
 	sc->sc_pcitag = pa->pa_tag;
 
+	printf("\n");
+
 	if (vgafb_mapregs(sc, pa))
 		return;
-
-	printf("\n");
 
 	sc->sc_console = vgafb_is_console(sc->sc_node);
 
@@ -410,23 +410,30 @@ vgafb_mapregs(sc, pa)
 	bus_size_t bs;
 	int hasio = 0, hasmem = 0, hasmmio = 0; 
 	u_int32_t i, cf;
+	int rv;
 
 	for (i = PCI_MAPREG_START; i < PCI_MAPREG_END; i += 4) {
 		cf = pci_conf_read(pa->pa_pc, pa->pa_tag, i);
 		if (PCI_MAPREG_TYPE(cf) == PCI_MAPREG_TYPE_IO) {
 			if (hasio)
 				continue;
-			if (pci_io_find(pa->pa_pc, pa->pa_tag, i,
-			    &sc->sc_io_addr, &sc->sc_io_size)) {
-				printf(": failed to find io at 0x%x\n", i);
+			rv = pci_io_find(pa->pa_pc, pa->pa_tag, i,
+			    &sc->sc_io_addr, &sc->sc_io_size);
+			if (rv != 0) {
+				if (rv != ENOENT)
+					printf("%s: failed to find io at 0x%x\n",
+					    sc->sc_sunfb.sf_dev.dv_xname, i);
 				continue;
 			}
 			hasio = 1;
 		} else {
 			/* Memory mapping... frame memory or mmio? */
-			if (pci_mem_find(pa->pa_pc, pa->pa_tag, i,
-			    &ba, &bs, NULL)) {
-				printf(": failed to find mem at 0x%x\n", i);
+			rv = pci_mem_find(pa->pa_pc, pa->pa_tag, i,
+			    &ba, &bs, NULL);
+			if (rv != 0) {
+				if (rv != ENOENT)
+					printf("%s: failed to find mem at 0x%x\n",
+					    sc->sc_sunfb.sf_dev.dv_xname, i);
 				continue;
 			}
 
@@ -441,7 +448,8 @@ vgafb_mapregs(sc, pa)
 					continue;
 				if (bus_space_map(pa->pa_memt, ba, bs,
 				    0, &sc->sc_mem_h)) {
-					printf(": can't map mem space\n");
+					printf("%s: can't map mem space\n",
+					    sc->sc_sunfb.sf_dev.dv_xname);
 					continue;
 				}
 				sc->sc_mem_addr = ba;
@@ -452,7 +460,8 @@ vgafb_mapregs(sc, pa)
 	}
 
 	if (hasmmio == 0 || hasmem == 0 || hasio == 0) {
-		printf(": failed to find all ports\n");
+		printf("%s: failed to find all ports\n",
+		    sc->sc_sunfb.sf_dev.dv_xname);
 		goto fail;
 	}
 
