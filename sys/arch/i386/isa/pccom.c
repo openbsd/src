@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccom.c,v 1.39 2001/07/23 14:28:46 jason Exp $	*/
+/*	$OpenBSD: pccom.c,v 1.40 2001/08/08 19:07:17 mickey Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -118,7 +118,6 @@ void pccom_xr16850_fifo_init __P((bus_space_tag_t, bus_space_handle_t));
 int	comprobe __P((struct device *, void *, void *));
 void	comattach __P((struct device *, struct device *, void *));
 void	compwroff __P((struct com_softc *));
-void	com_raisedtr __P((void *));
 
 #if NPCCOM_ISA
 struct cfattach pccom_isa_ca = {
