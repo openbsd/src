@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.237 2002/12/06 00:47:31 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.238 2002/12/06 12:36:02 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1172,11 +1172,10 @@ host_list	: xhost				{ $$ = $1; }
 		;
 
 xhost		: '!' host			{
-			if ($2->next != NULL) {
-				yyerror("negated address list");
-				YYERROR;
-			} else
-				$2->not = 1;
+			struct node_host *n;
+
+			for (n = $2; n != NULL; n = n->next)
+				n->not = 1;
 			$$ = $2;
 		}
 		| host				{ $$ = $1; }
