@@ -1,4 +1,4 @@
-.\"	$OpenBSD: remote.5,v 1.8 2000/10/26 00:37:05 aaron Exp $
+.\"	$OpenBSD: remote.5,v 1.9 2001/04/12 22:36:51 millert Exp $
 .\"	$NetBSD: remote.5,v 1.4 1997/04/20 00:05:27 mellon Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -104,6 +104,15 @@ A boolean capability is specified by simply listing the capability.
 .It Sy \&at
 (str)
 Auto call unit type.
+.It Sy \&be
+(bool)
+Initialize the
+.Xr tip
+variable
+.Dq beautify
+to
+.Sy on ,
+so that non-printable characters will be discarded when scripting.
 .It Sy \&br
 (num)
 The baud rate used in establishing
@@ -123,8 +132,10 @@ Default is the same as the
 field.
 .It Sy \&dc
 (bool)
-This host is directly connected, and tip should not expect carrier detect
-to be high, nor should it exit if carrier detect drops.
+This host is directly connected, and
+.Xr tip
+should not expect carrier detect to be high, nor should it exit if
+carrier detect drops.
 .It Sy \&di
 (str)
 Disconnect message sent to the host when a disconnect is requested by the user.
@@ -139,6 +150,18 @@ If this file refers to a terminal line,
 .Xr tip 1
 attempts to perform an exclusive open on the device to insure only
 one user at a time has access to the port.
+.It Sy \&ec
+(bool)
+Initialize the
+.Xr tip
+variable
+.Dq echocheck
+to
+.Sy on ,
+so that
+.Xr tip
+will synchronize with the remote host during file
+transfer by waiting for the last character transmitted to echo.
 .It Sy \&el
 (str)
 Characters marking an end-of-line.
@@ -150,6 +173,30 @@ escapes are only recognized by
 after one of the characters in
 .Sy el ,
 or after a carriage-return.
+.It Sy \&es
+(str)
+The escape character for
+.Xr tip .
+The default is
+.Dq ~ .
+.It Sy \&et
+(num)
+Number of seconds to wait for an echo response when
+.Dq echocheck
+mode is on.
+The default value is 10 seconds.
+.It Sy \&ex
+(str)
+Set of non-printable characters not to be discarded when scripting
+with beautification turned on.
+The default value is
+.Dq \et\en\eb\ef .
+.It Sy \&fo
+(str)
+Character used to force literal data transmission.
+The default value is
+.Sq \e020
+(^P).
 .It Sy \&fs
 (str)
 Frame size for transfers.
@@ -163,6 +210,34 @@ The host uses half-duplex communication, local echo should be performed.
 Input end-of-file marks.
 The default is
 .Dv NULL .
+.It Sy \&nb
+(bool)
+Initialize the
+.Xr tip
+variable
+.Dq beautify
+to
+.Sy off ,
+so that non-printable characters will not be discarded when scripting.
+.It Sy \&nt
+(bool)
+Initialize the
+.Xr tip
+variable
+.Dq tandem
+to
+.Sy off ,
+so that XON/XOFF flow control will not be used to throttle data
+from the remote host.
+.It Sy \&nv
+(bool)
+Initialize the
+.Xr tip
+variable
+.Dq verbose
+to
+.Sy off ,
+so that verbose mode will be turned off.
 .It Sy \&oe
 (str)
 Output end-of-file string.
@@ -183,7 +258,7 @@ This may be one of
 or
 .Dq one
 (always set bit 8 to 1).
-The default is even parity.
+The default is no parity.
 .It Sy \&pn
 (str)
 Telephone number(s) for this host.
@@ -195,10 +270,82 @@ searches the file
 .Pa /etc/phones
 file for a list of telephone numbers (see
 .Xr phones 5 ) .
+.It Sy \&pr
+(str)
+Character that indicates end-of-line on the remote host.
+The default value is
+.Sq \en .
+.It Sy \&ra
+(bool)
+Initialize the
+.Xr tip
+variable
+.Dq raise
+to
+.Sy on ,
+so that lowercase letters are mapped to uppercase before sending
+them to the remote host.
+.It Sy \&rc
+(str)
+Character that toggles case-mapping mode.
+The default value is
+.Sq \e001
+(^A).
+.It Sy \&re
+(str)
+The file in which to record session scripts.
+The default value is
+.Pa tip.record .
+.It Sy \&rw
+(str)
+Initialize the
+.Xr tip
+variable
+.Dq rawftp
+to
+.Sy on ,
+so that all characters will be sent as is during file transfers.
+.It Sy \&sc
+(bool)
+Initialize the
+.Xr tip
+variable
+.Dq script
+to
+.Sy on ,
+so that everything transmitted by the remote host will be recorded.
+.It Sy \&ta
+(bool)
+Initialize the
+.Xr tip
+variable
+.Dq tandem
+to
+.Sy on ,
+so that XON/XOFF flow control will be used to throttle data
+from the remote host.
+.It Sy \&tb
+(bool)
+Initialize the 
+.Xr tip 
+variable 
+.Dq tabexpand
+to
+.Sy on ,
+so that each tab will be expanded to 8 spaces during file transfers.
 .It Sy \&tc
 (str)
 Indicates that the list of capabilities is continued in the named description.
 This is used primarily to share common capability information.
+.It Sy \&vb
+(bool)
+Initialize the
+.Xr tip
+variable
+.Dq verbose
+to
+.Sy on ,
+so that verbose mode will be turned on.
 .El
 .Pp
 Here is a short example showing the use of the capability continuation
