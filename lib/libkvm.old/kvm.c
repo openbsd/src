@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.5 1998/06/29 22:27:46 angelos Exp $	*/
+/*	$OpenBSD: kvm.c,v 1.6 1998/06/29 22:38:18 angelos Exp $	*/
 
 /*	$NetBSD: kvm.c,v 1.2 1996/05/13 02:30:22 thorpej Exp $	*/
 
@@ -496,7 +496,7 @@ kvm_read(kd, kva, buf, len)
 		
 			cc = _kvm_kvatop(kd, kva, &pa);
 			if (cc == 0)
-				return (0);
+				return (-1);
 			if (cc > len)
 				cc = len;
 			errno = 0;
