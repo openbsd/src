@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.19 2002/06/28 16:50:38 art Exp $ */
+/* $OpenBSD: cpu.h,v 1.20 2002/08/24 17:21:45 matthieu Exp $ */
 /* $NetBSD: cpu.h,v 1.45 2000/08/21 02:03:12 thorpej Exp $ */
 
 /*-
@@ -331,7 +331,9 @@ do {									\
 #define	CPU_BOOTED_KERNEL	6	/* string: booted kernel name */
 #define	CPU_FP_SYNC_COMPLETE	7	/* int: always fixup sync fp traps */
 #define CPU_CHIPSET		8	/* chipset information */
-#define	CPU_MAXID		9	/* 7 valid machdep IDs */
+#define CPU_ALLOWAPERTURE         9
+
+#define	CPU_MAXID		10	/* valid machdep IDs */
 
 #define CPU_CHIPSET_MEM		1	/* PCI memory address */
 #define CPU_CHIPSET_BWX		2	/* PCI supports BWX */
@@ -351,6 +353,7 @@ do {									\
 	{ "booted_kernel", CTLTYPE_STRING }, \
 	{ "fp_sync_complete", CTLTYPE_INT }, \
 	{ "chipset", CTLTYPE_NODE }, \
+	{ "allowaperture", CTLTYPE_INT }, \
 }
 
 #define CTL_CHIPSET_NAMES { \

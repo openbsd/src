@@ -1,4 +1,4 @@
-/* $OpenBSD: mem.c,v 1.16 2001/11/06 19:53:13 miod Exp $ */
+/* $OpenBSD: mem.c,v 1.17 2002/08/24 17:21:45 matthieu Exp $ */
 /* $NetBSD: mem.c,v 1.26 2000/03/29 03:48:20 simonb Exp $ */
 
 /*
@@ -64,6 +64,13 @@ cdev_decl(mm);
 
 caddr_t zeropage;
 
+/* open counter for aperture */
+#ifdef APERTURE
+static int ap_open_count = 0;
+static pid_t ap_open_pid = -1;
+extern int allowaperture;
+#endif
+
 /*ARGSUSED*/
 int
 mmopen(dev, flag, mode, p)
@@ -73,13 +80,26 @@ mmopen(dev, flag, mode, p)
 {
 
 	switch (minor(dev)) {
-		case 0:
-		case 1:
-		case 2:
-		case 12:
-			return (0);
-		default:
-			return (ENXIO);
+	case 0:
+	case 1:
+	case 2:
+		return (0);
+#ifdef APERTURE
+	case 4:
+	        if (suser(p->p_ucred, &p->p_acflag) != 0 || !allowaperture)
+			return (EPERM);
+
+		/* authorize only one simultaneous open() from the same pid */
+		if (ap_open_count > 0 && p->p_pid != ap_open_pid)
+			return(EPERM);
+		ap_open_count++;
+		ap_open_pid = p->p_pid;
+		return (0);
+#endif
+	case 12:
+		return (0);
+	default:
+		return (ENXIO);
 	}
 }
 
@@ -91,6 +111,12 @@ mmclose(dev, flag, mode, p)
 	struct proc *p;
 {
 
+#ifdef APERTURE
+	if (minor(dev) == 4) {
+		ap_open_count--;
+		ap_open_pid = -1;
+	}
+#endif
 	return (0);
 }
 
@@ -197,6 +223,8 @@ mmmmap(dev, off, prot)
 	off_t off;
 	int prot;
 {
+	switch (minor(dev)) {
+	case 0:
 	/*
 	 * /dev/mem is the only one that makes sense through this
 	 * interface.  For /dev/kmem any physaddr we return here
@@ -205,15 +233,29 @@ mmmmap(dev, off, prot)
 	 * and /dev/zero is a hack that is handled via the default
 	 * pager in mmap().
 	 */
-	if (minor(dev) != 0)
-		return (-1);
 
 	/*
 	 * Allow access only in RAM.
 	 */
-	if ((prot & alpha_pa_access(atop(off))) != prot)
-		return (-1);
-	return (alpha_btop(off));
+		if ((prot & alpha_pa_access(atop(off))) != prot)
+			return (-1);
+		return (alpha_btop(off));
+		
+#ifdef APERTURE
+	case 4:
+		/* minor device 4 is aperture driver */
+		switch (allowaperture) {
+		case 1:
+			if ((prot & alpha_pa_access(atop(off))) != prot)
+				return (-1);
+			return alpha_btop(off);
+		default:
+			return -1;
+		}
+#endif
+	default:
+		return -1;
+	}
 }
 
 int

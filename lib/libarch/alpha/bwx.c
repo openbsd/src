@@ -1,4 +1,4 @@
-/* $OpenBSD: bwx.c,v 1.2 2002/07/13 20:00:47 deraadt Exp $ */
+/* $OpenBSD: bwx.c,v 1.3 2002/08/24 17:21:44 matthieu Exp $ */
 /*-
  * Copyright (c) 1998 Doug Rabson
  * All rights reserved.
@@ -41,15 +41,41 @@
 
 #include "io.h"
 
+#define PATH_APERTURE "/dev/xf86"
+
 #define mb()	__asm__ __volatile__("mb"  : : : "memory")
 #define wmb()	__asm__ __volatile__("wmb" : : : "memory")
 
-static int		mem_fd;		/* file descriptor to /dev/mem */
-static void	       *bwx_int1_ports;	/* mapped int1 io ports */
-static void	       *bwx_int2_ports;	/* mapped int2 io ports */
-static void	       *bwx_int4_ports;	/* mapped int4 io ports */
+static int		mem_fd = -1;	/* file descriptor to /dev/mem */
+static void	       *bwx_int1_ports = MAP_FAILED; /* mapped int1 io ports */
+static void	       *bwx_int2_ports = MAP_FAILED; /* mapped int2 io ports */
+static void	       *bwx_int4_ports = MAP_FAILED; /* mapped int4 io ports */
 static u_int64_t	bwx_io_base;	/* physical address of ports */
 static u_int64_t	bwx_mem_base;	/* physical address of bwx mem */
+
+static void
+bwx_open_mem(void)
+{
+
+	if (mem_fd != -1) 
+		return;
+	mem_fd = open(_PATH_MEM, O_RDWR);
+	if (mem_fd < 0) 
+		mem_fd = open(PATH_APERTURE, O_RDWR);
+	if (mem_fd < 0)
+		err(1, "Failed to open both %s and %s", _PATH_MEM, 
+		    PATH_APERTURE);
+}
+
+static void 
+bwx_close_mem(void)
+{
+
+	if (mem_fd != -1) {
+		close(mem_fd);
+		mem_fd = -1;
+	}
+}
 
 static void
 bwx_init(void)
@@ -57,10 +83,6 @@ bwx_init(void)
 	size_t len = sizeof(u_int64_t);
 	int error;
 	int mib[3];
-	
-	mem_fd = open(_PATH_MEM, O_RDWR);
-	if (mem_fd < 0)
-		err(1, _PATH_MEM);
 	
 	mib[0] = CTL_MACHDEP;
 	mib[1] = CPU_CHIPSET;
@@ -77,12 +99,16 @@ bwx_ioperm(u_int32_t from, u_int32_t num, int on)
 {
 	u_int32_t start, end;
 
-	if (!bwx_int1_ports)
+	if (bwx_int1_ports == MAP_FAILED)
 		bwx_init();
 
 	if (!on)
 		return -1;		/* XXX can't unmap yet */
+
+	if (bwx_int1_ports != MAP_FAILED)
+		return 0;
 	
+	bwx_open_mem();
 	start = trunc_page(from);
 	end = round_page(from + num);
 	if ((bwx_int1_ports = mmap(0, end-start, PROT_READ|PROT_WRITE,
@@ -97,6 +123,7 @@ bwx_ioperm(u_int32_t from, u_int32_t num, int on)
 	    MAP_SHARED, mem_fd, bwx_io_base + BWX_EV56_INT4 + start)) ==
 	    MAP_FAILED) 
 		err(1, "mmap int4");
+	bwx_close_mem();
 	return 0;
 }
 
@@ -157,28 +184,33 @@ bwx_map_memory(u_int32_t address, u_int32_t size)
 	struct bwx_mem_handle *h;
 
 	h = malloc(sizeof(struct bwx_mem_handle));
-	if (!h) return 0;
+	if (h == NULL) return NULL;
+	bwx_open_mem();
 	h->virt1 = mmap(0, size << 5, PROT_READ|PROT_WRITE, MAP_SHARED,
 	    mem_fd, bwx_mem_base + BWX_EV56_INT1 + address);
-	if ((long) h->virt1 == -1) {
+	if (h->virt1 == MAP_FAILED) {
+		bwx_close_mem();
 		free(h);
-		return 0;
+		return NULL;
 	}
 	h->virt2 = mmap(0, size << 5, PROT_READ|PROT_WRITE, MAP_SHARED,
 	    mem_fd, bwx_mem_base + BWX_EV56_INT2 + address);
-	if ((long) h->virt2 == -1) {
+	if (h->virt2 == MAP_FAILED) {
 		munmap(h->virt1, size);
+		bwx_close_mem();
 		free(h);
-		return 0;
+		return NULL;
 	}
 	h->virt4 = mmap(0, size << 5, PROT_READ|PROT_WRITE, MAP_SHARED,
 	    mem_fd, bwx_mem_base + BWX_EV56_INT4 + address);
-	if ((long) h->virt4 == -1) {
+	if (h->virt4 == MAP_FAILED) {
 		munmap(h->virt1, size);
 		munmap(h->virt2, size);
+		bwx_close_mem();
 		free(h);
-		return 0;
+		return NULL;
 	}
+	bwx_close_mem();
 	return h;
 }
 

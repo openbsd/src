@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.114 2002/07/04 20:05:27 miod Exp $
+#	$OpenBSD: GENERIC,v 1.115 2002/08/24 17:21:45 matthieu Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 
 machine	alpha
@@ -38,6 +38,7 @@ option		USBVERBOSE
 # Wscons options
 option		WSDISPLAY_COMPAT_RAWKBD # can get raw scancodes
 
+option		APERTURE		# in-kernel aperture driver for XFree86
 option		USER_PCICONF		# user-space PCI configuration
 
 config		bsd	swap generic

@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.76 2002/07/21 01:09:19 art Exp $ */
+/* $OpenBSD: machdep.c,v 1.77 2002/08/24 17:21:44 matthieu Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -160,6 +160,14 @@ int	bufcachepercent = BUFCACHEPERCENT;
 
 struct vm_map *exec_map = NULL;
 struct vm_map *phys_map = NULL;
+
+#ifdef APERTURE
+#ifdef INSECURE
+int allowaperture = 1;
+#else
+int allowaperture = 0;
+#endif
+#endif
 
 int	maxmem;			/* max memory per process */
 
@@ -1785,7 +1793,17 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		    &alpha_fp_sync_complete));
 #endif
-
+	case CPU_ALLOWAPERTURE:
+#ifdef APERTURE
+		if (securelevel > 0)
+                        return (sysctl_rdint(oldp, oldlenp, newp,
+				 allowaperture));
+                else
+                        return (sysctl_int(oldp, oldlenp, newp, newlen,
+                            &allowaperture));
+#else
+		return (sysctl_rdint(oldp, oldlenp, newp, 0));
+#endif
 	default:
 		return (EOPNOTSUPP);
 	}

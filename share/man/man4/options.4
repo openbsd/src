@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.106 2002/07/12 21:44:48 mickey Exp $
+.\"	$OpenBSD: options.4,v 1.107 2002/08/24 17:21:44 matthieu Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -544,9 +544,16 @@ Makes the boot process more verbose for PCMCIA peripherals.
 .It Cd option MACOBIOVERBOSE
 Makes the boot process more verbose for Mac OBIO peripherals.
 .It Cd option APERTURE
-Provide in-kernel support for VGA framebuffer mapping by user-processes
-(such as an X windows server).
-This option is supported in the i386 architecture.
+Provide in-kernel support for controlling VGA framebuffer mapping 
+and PCI configuration registers by user-processes
+(such as an X Window System server).
+This option is supported on the 
+.Va alpha Ns ,
+.Va i386 Ns ,
+.Va macppc 
+and
+.Va sparc64 
+architectures.
 .It Cd option LKM
 Enables support for loadable kernel modules.
 See
