@@ -1,4 +1,4 @@
-/* $OpenBSD: keynote.y,v 1.11 2001/09/03 20:14:51 deraadt Exp $ */
+/* $OpenBSD: keynote.y,v 1.12 2002/05/27 06:29:14 deraadt Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -495,7 +495,7 @@ stringexp: str EQ str {
 	 | str REGEXP str 
             {
 	      regmatch_t pmatch[32];
-	      char grp[4], *gr;
+	      char grp[10], *gr;
 	      regex_t preg;
 	      int i;
 
@@ -532,7 +532,8 @@ stringexp: str EQ str {
 #if !defined(HAVE_SNPRINTF)
 			  sprintf(grp, "%lu", (unsigned long)preg.re_nsub);
 #else /* !HAVE_SNPRINTF */
-			  snprintf(grp, 3, "%lu", (unsigned long)preg.re_nsub);
+			  snprintf(grp, sizeof grp, "%lu",
+			        (unsigned long)preg.re_nsub);
 #endif /* !HAVE_SNPRINTF */	
 			  if (keynote_env_add("_0", grp, &keynote_temp_list,
 					      1, 0) != RESULT_TRUE)
@@ -560,7 +561,7 @@ stringexp: str EQ str {
 #if !defined(HAVE_SNPRINTF)
 			      sprintf(grp, "_%d", i);
 #else /* !HAVE_SNPRINTF */
-			      snprintf(grp, 3, "_%d", i);
+			      snprintf(grp, sizeof grp, "_%d", i);
 #endif /* !HAVE_SNPRINTF */
 			      if (keynote_env_add(grp, gr, &keynote_temp_list,
 						  1, 0) == -1)
@@ -585,8 +586,8 @@ str: str DOTT str    {  if (keynote_exceptionflag || keynote_donteval)
 			  $$ = (char *) NULL;
 			else
 			{
-			    $$ = calloc(strlen($1) + strlen($3) + 1,
-					sizeof(char));
+			    int len = strlen($1) + strlen($3) + 1;
+			    $$ = calloc(len, sizeof(char));
 			    keynote_lex_remove($1);
 			    keynote_lex_remove($3);
 			    if ($$ == (char *) NULL)
@@ -597,8 +598,7 @@ str: str DOTT str    {  if (keynote_exceptionflag || keynote_donteval)
 				return -1;
 			    }
  
-			    strcpy($$, $1);
-			    strcpy($$ + strlen($1), $3);
+			    snprintf($$, len, "%s%s", $1, $3);
 			    free($1);
 			    free($3);
 			    if (keynote_lex_add($$, LEXTYPE_CHAR) == -1)

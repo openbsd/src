@@ -1,5 +1,5 @@
 %{
-/* $OpenBSD: keynote.l,v 1.13 2001/09/03 20:14:51 deraadt Exp $ */
+/* $OpenBSD: keynote.l,v 1.14 2002/05/27 06:29:14 deraadt Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -125,6 +125,7 @@ comment		"#"[^\n]*
 <LOCALINIT>"="	                return EQQ;
 <KEYPREDICATE>"," 		return COMMA;
 <ACTIONSTRING,KEYPREDICATE,SIGNERINIT,LOCALINIT>{variable} {
+					int len;
                                         if (keynote_exceptionflag ||
 					    keynote_donteval)
 					{
@@ -132,15 +133,14 @@ comment		"#"[^\n]*
 					    return VARIABLE;
 					}
 
-					knlval.string = calloc(strlen(kntext)
-							       + 1,
-							       sizeof(char));
+					len = strlen(kntext) + 1;
+					knlval.string = calloc(len, sizeof(char));
                                         if (knlval.string == (char *) NULL)
 					{
 					    keynote_errno = ERROR_MEMORY;
 					    return -1;
 					}
-		  	          	strcpy(knlval.string, kntext);
+		  	          	strlcpy(knlval.string, kntext, len);
 					if (keynote_lex_add(knlval.string,
 							    LEXTYPE_CHAR) ==
 					    -1)
@@ -155,6 +155,8 @@ comment		"#"[^\n]*
 				return FLOAT;
 			      }
 <KEYNOTEVERSION>{number}      {
+				int len;
+
                                 if (keynote_exceptionflag ||
 				    keynote_donteval)
 				{
@@ -162,14 +164,14 @@ comment		"#"[^\n]*
 				    return STRING;
 				}
 
-				knlval.string = calloc(strlen(kntext) + 1,
-						       sizeof(char));
+				len = strlen(kntext) + 1;
+				knlval.string = calloc(len, sizeof(char));
                                 if (knlval.string == (char *) NULL)
 				{
 				    keynote_errno = ERROR_MEMORY;
 				    return -1;
 				}
-		  	        strcpy(knlval.string, kntext);
+		  	        strlcpy(knlval.string, kntext, len);
 				if (keynote_lex_add(knlval.string,
 						    LEXTYPE_CHAR) == -1)
 				  return -1;

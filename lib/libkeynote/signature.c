@@ -1,4 +1,4 @@
-/* $OpenBSD: signature.c,v 1.11 2001/09/03 20:14:51 deraadt Exp $ */
+/* $OpenBSD: signature.c,v 1.12 2002/05/27 06:29:14 deraadt Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -929,6 +929,7 @@ keynote_sign_assertion(struct assertion *as, char *sigalg, void *key,
     SHA_CTX shscontext;
     MD5_CTX md5context;
 #endif /* CRYPTO */
+    int len;
 
     if ((as->as_signature_string_s == (char *) NULL) ||
 	(as->as_startofsignature == (char *) NULL) ||
@@ -1137,8 +1138,8 @@ keynote_sign_assertion(struct assertion *as, char *sigalg, void *key,
     }
 
     /* Replace as->as_signature */
-    as->as_signature = (char *) calloc(strlen(sigalg) +
-				       strlen(finalbuf) + 1, sizeof(char));
+    len = strlen(sigalg) + strlen(finalbuf) + 1;
+    as->as_signature = (char *) calloc(len, sizeof(char));
     if (as->as_signature == (char *) NULL)
     {
 	free(finalbuf);
@@ -1147,7 +1148,7 @@ keynote_sign_assertion(struct assertion *as, char *sigalg, void *key,
     }
 
     /* Concatenate algorithm name and signature value */
-    sprintf(as->as_signature, "%s%s", sigalg, finalbuf);
+    snprintf(as->as_signature, len, "%s%s", sigalg, finalbuf);
     free(finalbuf);
     finalbuf = as->as_signature;
 

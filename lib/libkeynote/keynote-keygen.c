@@ -1,4 +1,4 @@
-/* $OpenBSD: keynote-keygen.c,v 1.17 2001/09/13 17:55:10 angelos Exp $ */
+/* $OpenBSD: keynote-keygen.c,v 1.18 2002/05/27 06:29:14 deraadt Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -124,16 +124,18 @@ keynote_keygen(int argc, char *argv[])
     /* Fix algorithm name */
     if (argv[1][strlen(argv[1]) - 1] != ':')
     {
+	int len = strlen(argv[1]) + 2;
+
         fprintf(stderr, "Algorithm name [%s] should be terminated with a "
 		"colon, fixing.\n", argv[1]);
-	algname = (char *) calloc(strlen(argv[1]) + 2, sizeof(char));
+	algname = (char *) calloc(len, sizeof(char));
 	if (algname == (char *) NULL)
 	{
 	    perror("calloc()");
 	    exit(1);
 	}
 
-	strcpy(algname, argv[1]);
+	strlcpy(algname, argv[1], len);
 	algname[strlen(algname)] = ':';
     }
     else
@@ -252,14 +254,14 @@ keynote_keygen(int argc, char *argv[])
 	    }
 	}
 
-	privalgname = (char *) calloc(strlen(KEYNOTE_PRIVATE_KEY_PREFIX) +
-				      strlen(foo) + 1, sizeof(char));
+	len = strlen(KEYNOTE_PRIVATE_KEY_PREFIX) + strlen(foo) + 1;
+	privalgname = (char *) calloc(len, sizeof(char));
 	if (privalgname == (char *) NULL)
 	{
 	    perror("calloc()");
 	    exit(1);
 	}
-	sprintf(privalgname, "%s%s", KEYNOTE_PRIVATE_KEY_PREFIX, algname);
+	snprintf(privalgname, len, "%s%s", KEYNOTE_PRIVATE_KEY_PREFIX, algname);
 	print_key(fp, privalgname, foo, begin, prlen);
 	free(privalgname);
 	free(foo);
@@ -337,14 +339,14 @@ keynote_keygen(int argc, char *argv[])
 	    }
 	}
 
-	privalgname = (char *) calloc(strlen(KEYNOTE_PRIVATE_KEY_PREFIX) +
-				      strlen(foo) + 1, sizeof(char));
+	len = strlen(KEYNOTE_PRIVATE_KEY_PREFIX) + strlen(foo) + 1;
+	privalgname = (char *) calloc(len, sizeof(char));
 	if (privalgname == (char *) NULL)
 	{
 	    perror("calloc()");
 	    exit(1);
 	}
-	sprintf(privalgname, "%s%s", KEYNOTE_PRIVATE_KEY_PREFIX, algname);
+	snprintf(privalgname, len, "%s%s", KEYNOTE_PRIVATE_KEY_PREFIX, algname);
 	print_key(fp, privalgname, foo, begin, prlen);
 	free(privalgname);
 	free(foo);

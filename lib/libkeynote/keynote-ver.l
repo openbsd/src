@@ -1,5 +1,5 @@
 %{
-/* $OpenBSD: keynote-ver.l,v 1.11 2001/09/03 20:14:51 deraadt Exp $ */
+/* $OpenBSD: keynote-ver.l,v 1.12 2002/05/27 06:29:14 deraadt Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -64,14 +64,15 @@ comment         "#"[^\n]*
 				BEGIN(SECONDPART);
 			        return EQ;
 			      }
-<FIRSTPART>{vstring}          { kvlval.s.string = calloc(strlen(kvtext) + 1,
-							 sizeof(char));
+<FIRSTPART>{vstring}          {
+				int len = strlen(kvtext) + 1;
+				kvlval.s.string = calloc(len, sizeof(char));
                                 if (kvlval.s.string == (char *) NULL)
 				{
 				    keynote_errno = ERROR_MEMORY;
 				    return -1;
 				}
-				strcpy(kvlval.s.string, kvtext);
+				strlcpy(kvlval.s.string, kvtext, len);
 				BEGIN(MIDDLEPART);
                                 return VSTRING;
                               }
