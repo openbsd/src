@@ -22,7 +22,7 @@
 # PROF is set to -pg if profiling.
 
 CC?=	cc
-LD=	/usr/local/bin/ld
+LD=	ld
 MKDEP?=	mkdep
 STRIP?=	strip
 
@@ -83,8 +83,16 @@ SYSTEM_OBJ=	locore.o fp.o locore_machdep.o \
 		param.o ioconf.o ${OBJS} ${LIBKERN} ${LIBCOMPAT}
 SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	@rm -f $@
-SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o ; \
-		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} vers.o
+#SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o ; \
+#		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} vers.o
+SYSTEM_LD=	-@if [ X${DEBUG} = X-g ]; \
+		then strip=-X; \
+		else strip=-x; \
+		fi; \
+		echo ${LD} $$strip -o $@ -e start -T ../../conf/ld.script \
+			'$${SYSTEM_OBJ}' vers.o; \
+		${LD} $$strip -o $@ -e start -T ../../conf/ld.script \
+			${SYSTEM_OBJ} vers.o
 SYSTEM_LD_TAIL=	@size $@; chmod 755 $@
 
 DEBUG?=
