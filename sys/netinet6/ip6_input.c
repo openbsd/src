@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.51 2003/06/02 23:28:15 millert Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.52 2003/06/30 08:04:22 itojun Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -197,6 +197,8 @@ ip6_input(m)
 	u_int32_t rtalert = ~0;
 	int nxt, ours = 0;
 	struct ifnet *deliverifp = NULL;
+	struct in6_addr odst;
+	int srcrt;
 
 	/*
 	 * mbuf statistics by kazu
@@ -245,12 +247,14 @@ ip6_input(m)
         /*
          * Packet filter
          */
+	odst = ip6->ip6_dst;
 	if (pf_test6(PF_IN, m->m_pkthdr.rcvif, &m) != PF_PASS)
 		goto bad;
 	if (m == NULL)
 		return;
 
 	ip6 = mtod(m, struct ip6_hdr *);
+	srcrt = !IN6_ARE_ADDR_EQUAL(&odst, &ip6->ip6_dst);
 #endif
 
 	ip6stat.ip6s_nxthist[ip6->ip6_nxt]++;
@@ -600,7 +604,7 @@ ip6_input(m)
 			return;
 		}
 	} else if (!ours) {
-		ip6_forward(m, 0);
+		ip6_forward(m, srcrt);
 		return;
 	}	
 
