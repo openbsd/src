@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.h,v 1.1 1997/01/20 19:39:56 millert Exp $	*/
+/*	$OpenBSD: sort.h,v 1.2 1997/06/24 02:37:17 dgregor Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -47,6 +47,7 @@
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define NBINS 256
 #define MAXMERGE 16
