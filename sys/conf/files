@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.195 2001/04/09 07:14:17 tholo Exp $
+#	$OpenBSD: files,v 1.196 2001/04/10 22:52:00 aaron Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -177,6 +177,10 @@ file	dev/ic/xl.c		xl
 # Intel EtherExpress PRO 10/100B
 device	fxp: ether, ifnet, ifmedia, mii
 file	dev/ic/fxp.c		fxp
+
+# RealTek 8129/8139
+device	rl: ether, ifnet, ifmedia, mii
+file	dev/ic/rtl81x9.c	rl
 
 # Clones of Digital 2104x
 device	dc: ether, ifnet, ifmedia, mii
