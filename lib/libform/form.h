@@ -1,3 +1,5 @@
+/*	$OpenBSD: form.h,v 1.3 1997/12/03 05:39:59 millert Exp $	*/
+
 /*-----------------------------------------------------------------------------+
 |           The ncurses form library is  Copyright (C) 1995-1997               |
 |             by Juergen Pfeifer <Juergen.Pfeifer@T-Online.de>                 |
@@ -73,7 +75,7 @@ typedef struct fieldnode {
   struct typenode *	type;	  /* field type		        */
   void *		arg;	  /* argument for type	        */
   char *		buf;	  /* field buffers	        */
-  const void *		usrptr;	  /* user pointer		*/
+  void *		usrptr;	  /* user pointer		*/
 } FIELD;
 
 	/**************
@@ -120,7 +122,7 @@ typedef struct formnode {
   FIELD **		field;	  /* field [maxfield]	        */
   FIELD *		current;  /* current field	        */
   _PAGE *		page;	  /* page [maxpage]	        */
-  const void *		usrptr;	  /* user pointer		*/
+  void *		usrptr;	  /* user pointer		*/
 
   void                  (*forminit)(struct formnode *);
   void                  (*formterm)(struct formnode *);
@@ -296,7 +298,7 @@ extern int      free_field(FIELD *),
                 field_pad(const FIELD *),
                 set_field_buffer(FIELD *,int,const char *),
                 set_field_status(FIELD *,bool),
-                set_field_userptr(FIELD *,const void *),
+                set_field_userptr(FIELD *, void *),
                 set_field_opts(FIELD *,Field_Options),
                 field_opts_on(FIELD *,Field_Options),
                 field_opts_off(FIELD *,Field_Options);
@@ -309,8 +311,7 @@ extern bool     new_page(const FIELD *),
 
 extern void     *field_arg(const FIELD *);
 
-extern const void                
-                *field_userptr(const FIELD *);
+extern void     *field_userptr(const FIELD *);
 
 extern FIELDTYPE
                 *field_type(const FIELD *);
@@ -355,7 +356,7 @@ extern int      free_form(FORM *),
                 unpost_form(FORM *),
                 pos_form_cursor(FORM *),
                 form_driver(FORM *,int),
-                set_form_userptr(FORM *,const void *),
+                set_form_userptr(FORM *,void *),
                 set_form_opts(FORM *,Form_Options),
                 form_opts_on(FORM *,Form_Options),
                 form_opts_off(FORM *,Form_Options),
@@ -364,8 +365,7 @@ extern int      free_form(FORM *),
 extern const char
                 *form_request_name(int);
 
-extern const void
-                *form_userptr(const FORM *);
+extern void     *form_userptr(const FORM *);
 
 extern Form_Options
                 form_opts(const FORM *);

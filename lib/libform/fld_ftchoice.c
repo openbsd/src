@@ -1,4 +1,4 @@
-/*	$OpenBSD: fld_type.c,v 1.3 1997/12/03 05:39:58 millert Exp $	*/
+/*	$OpenBSD: fld_ftchoice.c,v 1.1 1997/12/03 05:39:53 millert Exp $	*/
 
 /*-----------------------------------------------------------------------------+
 |           The ncurses form library is  Copyright (C) 1995-1997               |
@@ -24,61 +24,31 @@
 
 #include "form.priv.h"
 
-MODULE_ID("Id: fld_type.c,v 1.6 1997/10/21 13:24:19 juergen Exp $")
+MODULE_ID("Id: fld_ftchoice.c,v 1.1 1997/10/21 13:24:19 juergen Exp $")
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform  
-|   Function      :  int set_field_type(FIELD *field, FIELDTYPE *type,...)
-|   
-|   Description   :  Associate the specified fieldtype with the field.
-|                    Certain field types take additional arguments. Look
-|                    at the spec of the field types !
+|   Function      :  int set_fieldtype_choice(
+|                          FIELDTYPE *typ,
+|                          bool (* const next_choice)(FIELD *,const void *),
+|                          bool (* const prev_choice)(FIELD *,const void *))
+|
+|   Description   :  Define implementation of enumeration requests.
 |
 |   Return Values :  E_OK           - success
-|                    E_SYSTEM_ERROR - system error
+|                    E_BAD_ARGUMENT - invalid arguments
 +--------------------------------------------------------------------------*/
-int set_field_type(FIELD *field,FIELDTYPE *type, ...)
+int set_fieldtype_choice(FIELDTYPE * typ,
+			 bool (* const next_choice) (FIELD *,const void *),
+			 bool (* const prev_choice) (FIELD *,const void *))
 {
-  va_list ap;
-  int res = E_SYSTEM_ERROR;
-  int err = 0;
+  if ( !typ || !next_choice || !prev_choice ) 
+    RETURN(E_BAD_ARGUMENT);
 
-  va_start(ap,type);
-
-  Normalize_Field(field);
-  _nc_Free_Type(field);
-
-  field->type = type;
-  field->arg  = (void *)_nc_Make_Argument(field->type,&ap,&err);
-
-  if (err)
-    {
-      _nc_Free_Argument(field->type,(TypeArgument *)(field->arg));
-      field->type = (FIELDTYPE *)0;
-      field->arg  = (void *)0;
-    }
-  else
-    {
-      res = E_OK;
-      if (field->type) 
-	field->type->ref++;
-    }
-
-  va_end(ap);
-  RETURN(res);
+  typ->status |= _HAS_CHOICE;
+  typ->next = next_choice;
+  typ->prev = prev_choice;
+  RETURN(E_OK);
 }
 
-/*---------------------------------------------------------------------------
-|   Facility      :  libnform  
-|   Function      :  FIELDTYPE *field_type(const FIELD *field)
-|   
-|   Description   :  Retrieve the associated fieldtype for this field.
-|
-|   Return Values :  Pointer to fieldtype of NULL if none is defined.
-+--------------------------------------------------------------------------*/
-FIELDTYPE *field_type(const FIELD * field)
-{
-  return Normalize_Field(field)->type;
-}
-
-/* fld_type.c ends here */
+/* fld_ftchoice.c ends here */

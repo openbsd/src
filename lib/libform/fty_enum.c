@@ -1,3 +1,5 @@
+/*	$OpenBSD: fty_enum.c,v 1.3 1997/12/03 05:40:17 millert Exp $	*/
+
 
 /*
  * THIS CODE IS SPECIFICALLY EXEMPTED FROM THE NCURSES PACKAGE COPYRIGHT.
@@ -13,7 +15,7 @@
 
 #include "form.priv.h"
 
-MODULE_ID("Id: fty_enum.c,v 1.5 1997/02/15 17:33:59 tom Exp $")
+MODULE_ID("Id: fty_enum.c,v 1.8 1997/10/18 19:33:20 tom Exp $")
 
 typedef struct {
   char **kwds;
@@ -63,15 +65,15 @@ static void *Make_Enum_Type(va_list * ap)
 static void *Copy_Enum_Type(const void * argp)
 {
   const enumARG *ap = (const enumARG *)argp;
-  enumARG *new = (enumARG *)0;
+  enumARG *result = (enumARG *)0;
 
   if (argp)
     {
-      new = (enumARG *)malloc(sizeof(enumARG));
-      if (new)
-	*new = *ap;
+      result = (enumARG *)malloc(sizeof(enumARG));
+      if (result)
+	*result = *ap;
     }
-  return (void *)new;
+  return (void *)result;
 }
 
 /*---------------------------------------------------------------------------
@@ -127,9 +129,8 @@ static int Compare(const unsigned char *s, const unsigned char *buf,
 	} 
       else 
 	{
-	  while(toupper(*s)==toupper(*buf))
+	  while(toupper(*s++)==toupper(*buf))
 	    {
-	      s++;
 	      if (*buf++=='\0') return EXACT;
 	    }
 	}
@@ -170,7 +171,7 @@ static bool Check_Enum_Field(FIELD * field, const void  * argp)
     {
       if ((res=Compare((unsigned char *)s,bp,ccase))!=NOMATCH)
 	{
-	  t=s;
+	  p=t=s; /* t is at least a partial match */
 	  if ((unique && res!=EXACT)) 
 	    {
 	      while( (p = *kwds++) )
@@ -181,16 +182,19 @@ static bool Check_Enum_Field(FIELD * field, const void  * argp)
 			{
 			  t = p;
 			  break;
-			}	
-		      t = (char *)0;
+			}
+		      else
+			t = (char *)0;
 		    }
 		}
-	    }
+	    }	  
 	  if (t)
 	    {
 	      set_field_buffer(field,0,t);
 	      return TRUE;
 	    }
+	  if (!p)
+	    break;
 	}
     }
   return FALSE;

@@ -1,3 +1,5 @@
+/*	$OpenBSD: frm_win.c,v 1.3 1997/12/03 05:40:16 millert Exp $	*/
+
 /*-----------------------------------------------------------------------------+
 |           The ncurses form library is  Copyright (C) 1995-1997               |
 |             by Juergen Pfeifer <Juergen.Pfeifer@T-Online.de>                 |
@@ -22,7 +24,7 @@
 
 #include "form.priv.h"
 
-MODULE_ID("Id: frm_win.c,v 1.4 1997/05/01 16:47:54 juergen Exp $")
+MODULE_ID("Id: frm_win.c,v 1.5 1997/10/21 13:24:19 juergen Exp $")
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform  
@@ -56,36 +58,5 @@ WINDOW *form_win(const FORM * form)
   return (f->win ? f->win : stdscr);
 }
 
-/*---------------------------------------------------------------------------
-|   Facility      :  libnform  
-|   Function      :  int set_form_sub(FORM *form, WINDOW *win)
-|   
-|   Description   :  Set the subwindow of the form to win. 
-|
-|   Return Values :  E_OK       - success
-|                    E_POSTED   - form is posted
-+--------------------------------------------------------------------------*/
-int set_form_sub(FORM * form, WINDOW * win)
-{
-  if (form && (form->status & _POSTED))	
-    RETURN(E_POSTED);
-
-  Normalize_Form( form )->sub = win;
-  RETURN(E_OK);
-}	
-
-/*---------------------------------------------------------------------------
-|   Facility      :  libnform  
-|   Function      :  WINDOW *form_sub(const FORM *)
-|   
-|   Description   :  Retrieve the window of the form.
-|
-|   Return Values :  The pointer to the Subwindow.
-+--------------------------------------------------------------------------*/
-WINDOW *form_sub(const FORM * form)
-{
-  const FORM* f = Normalize_Form( form );
-  return Get_Form_Window(f);
-}
-
 /* frm_win.c ends here */
+

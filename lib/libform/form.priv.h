@@ -1,3 +1,5 @@
+/*	$OpenBSD: form.priv.h,v 1.3 1997/12/03 05:39:59 millert Exp $	*/
+
 /*-----------------------------------------------------------------------------+
 |           The ncurses form library is  Copyright (C) 1995-1997               |
 |             by Juergen Pfeifer <Juergen.Pfeifer@T-Online.de>                 |
@@ -40,6 +42,10 @@
 #define _HAS_CHOICE      (0x04) /* Type has choice methods                */
 #define _RESIDENT        (0x08) /* Type is builtin                        */
 
+/* This are the field options required to be a selectable field in field
+   navigation requests */
+#define O_SELECTABLE (O_ACTIVE | O_VISIBLE)
+
 /* If form is NULL replace form argument by default-form */
 #define Normalize_Form(form)  ((form)=(form)?(form):_nc_Default_Form)
 
@@ -61,6 +67,9 @@
 #define Single_Line_Field(field) \
    (((field)->rows + (field)->nrow) == 1)
 
+/* Logic to determine whether or not a field is selectable */
+#define Field_Is_Selectable(f)     (((f)->opts & O_SELECTABLE)==O_SELECTABLE)
+#define Field_Is_Not_Selectable(f) (((f)->opts & O_SELECTABLE)!=O_SELECTABLE)
 
 typedef struct typearg {
   struct typearg *left;
@@ -92,3 +101,20 @@ typedef struct typearg {
 
 #define C_BLANK ' '
 #define is_blank(c) ((c)==C_BLANK)
+
+extern const FIELDTYPE* _nc_Default_FieldType;
+
+extern TypeArgument* _nc_Make_Argument(const FIELDTYPE*,va_list*,int*);
+extern TypeArgument *_nc_Copy_Argument(const FIELDTYPE*,const TypeArgument*, int*);
+extern void _nc_Free_Argument(const FIELDTYPE*,TypeArgument*);
+extern bool _nc_Copy_Type(FIELD*, FIELD const *);
+extern void _nc_Free_Type(FIELD *);
+
+extern int _nc_Synchronize_Attributes(FIELD*);
+extern int _nc_Synchronize_Options(FIELD*,Field_Options);
+extern int _nc_Set_Form_Page(FORM*,int,FIELD*);
+extern int _nc_Refresh_Current_Field(FORM*);
+extern FIELD* _nc_First_Active_Field(FORM*);
+extern bool _nc_Internal_Validation(FORM*);
+extern int _nc_Set_Current_Field(FORM*,FIELD*);
+extern int _nc_Position_Form_Cursor(FORM*);

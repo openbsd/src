@@ -1,4 +1,4 @@
-/*	$OpenBSD: fld_type.c,v 1.3 1997/12/03 05:39:58 millert Exp $	*/
+/*	$OpenBSD: fld_pad.c,v 1.1 1997/12/03 05:39:56 millert Exp $	*/
 
 /*-----------------------------------------------------------------------------+
 |           The ncurses form library is  Copyright (C) 1995-1997               |
@@ -21,64 +21,50 @@
 | NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH    |
 | THE USE OR PERFORMANCE OF THIS SOFTWARE.                                     |
 +-----------------------------------------------------------------------------*/
-
 #include "form.priv.h"
 
-MODULE_ID("Id: fld_type.c,v 1.6 1997/10/21 13:24:19 juergen Exp $")
+MODULE_ID("Id: fld_pad.c,v 1.1 1997/10/21 13:24:19 juergen Exp $")
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform  
-|   Function      :  int set_field_type(FIELD *field, FIELDTYPE *type,...)
+|   Function      :  int set_field_pad(FIELD *field, int ch)
 |   
-|   Description   :  Associate the specified fieldtype with the field.
-|                    Certain field types take additional arguments. Look
-|                    at the spec of the field types !
+|   Description   :  Set the pad character used to fill the field. This must
+|                    be a printable character.
 |
 |   Return Values :  E_OK           - success
+|                    E_BAD_ARGUMENT - invalid field pointer or pad character
 |                    E_SYSTEM_ERROR - system error
 +--------------------------------------------------------------------------*/
-int set_field_type(FIELD *field,FIELDTYPE *type, ...)
+int set_field_pad(FIELD  * field, int ch)
 {
-  va_list ap;
-  int res = E_SYSTEM_ERROR;
-  int err = 0;
+  int res = E_BAD_ARGUMENT;
 
-  va_start(ap,type);
-
-  Normalize_Field(field);
-  _nc_Free_Type(field);
-
-  field->type = type;
-  field->arg  = (void *)_nc_Make_Argument(field->type,&ap,&err);
-
-  if (err)
+  Normalize_Field( field );
+  if (isprint((unsigned char)ch))
     {
-      _nc_Free_Argument(field->type,(TypeArgument *)(field->arg));
-      field->type = (FIELDTYPE *)0;
-      field->arg  = (void *)0;
+      if (field->pad != ch)
+	{
+	  field->pad = ch;
+	  res = _nc_Synchronize_Attributes( field );
+	}
+      else
+	res = E_OK;
     }
-  else
-    {
-      res = E_OK;
-      if (field->type) 
-	field->type->ref++;
-    }
-
-  va_end(ap);
   RETURN(res);
 }
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform  
-|   Function      :  FIELDTYPE *field_type(const FIELD *field)
+|   Function      :  int field_pad(const FIELD *field)
 |   
-|   Description   :  Retrieve the associated fieldtype for this field.
+|   Description   :  Retrieve the fields pad character.
 |
-|   Return Values :  Pointer to fieldtype of NULL if none is defined.
+|   Return Values :  The pad character.
 +--------------------------------------------------------------------------*/
-FIELDTYPE *field_type(const FIELD * field)
+int field_pad(const FIELD * field)
 {
-  return Normalize_Field(field)->type;
+  return Normalize_Field( field )->pad;
 }
 
-/* fld_type.c ends here */
+/* fld_pad.c ends here */

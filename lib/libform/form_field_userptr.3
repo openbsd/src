@@ -1,3 +1,4 @@
+.\" $OpenBSD: form_field_userptr.3,v 1.3 1997/12/03 05:40:05 millert Exp $
 '\" t
 .TH form_field_userptr 3X ""
 .SH NAME
@@ -5,9 +6,9 @@
 .SH SYNOPSIS
 \fB#include <form.h>\fR
 .br
-int set_field_userptr(FIELD *field, const void*userptr);
+int set_field_userptr(FIELD *field, void*userptr);
 .br
-const void *field_userptr(const FIELD *field);
+void *field_userptr(const FIELD *field);
 .br
 .SH DESCRIPTION
 Every form field has a field that can be used to hold application-specific data

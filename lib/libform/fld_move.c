@@ -1,4 +1,4 @@
-/*	$OpenBSD: fld_type.c,v 1.3 1997/12/03 05:39:58 millert Exp $	*/
+/*	$OpenBSD: fld_move.c,v 1.1 1997/12/03 05:39:55 millert Exp $	*/
 
 /*-----------------------------------------------------------------------------+
 |           The ncurses form library is  Copyright (C) 1995-1997               |
@@ -24,61 +24,31 @@
 
 #include "form.priv.h"
 
-MODULE_ID("Id: fld_type.c,v 1.6 1997/10/21 13:24:19 juergen Exp $")
+MODULE_ID("Id: fld_move.c,v 1.1 1997/10/21 13:24:19 juergen Exp $")
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform  
-|   Function      :  int set_field_type(FIELD *field, FIELDTYPE *type,...)
+|   Function      :  int move_field(FIELD *field,int frow, int fcol)
 |   
-|   Description   :  Associate the specified fieldtype with the field.
-|                    Certain field types take additional arguments. Look
-|                    at the spec of the field types !
+|   Description   :  Moves the disconnected field to the new location in
+|                    the forms subwindow.
 |
-|   Return Values :  E_OK           - success
-|                    E_SYSTEM_ERROR - system error
+|   Return Values :  E_OK            - success
+|                    E_BAD_ARGUMENT  - invalid argument passed
+|                    E_CONNECTED     - field is connected
 +--------------------------------------------------------------------------*/
-int set_field_type(FIELD *field,FIELDTYPE *type, ...)
+int move_field(FIELD *field, int frow, int fcol)
 {
-  va_list ap;
-  int res = E_SYSTEM_ERROR;
-  int err = 0;
+  if ( !field || (frow<0) || (fcol<0) ) 
+    RETURN(E_BAD_ARGUMENT);
 
-  va_start(ap,type);
+  if (field->form) 
+    RETURN(E_CONNECTED);
 
-  Normalize_Field(field);
-  _nc_Free_Type(field);
-
-  field->type = type;
-  field->arg  = (void *)_nc_Make_Argument(field->type,&ap,&err);
-
-  if (err)
-    {
-      _nc_Free_Argument(field->type,(TypeArgument *)(field->arg));
-      field->type = (FIELDTYPE *)0;
-      field->arg  = (void *)0;
-    }
-  else
-    {
-      res = E_OK;
-      if (field->type) 
-	field->type->ref++;
-    }
-
-  va_end(ap);
-  RETURN(res);
+  field->frow = frow;
+  field->fcol = fcol;
+  RETURN(E_OK);
 }
 
-/*---------------------------------------------------------------------------
-|   Facility      :  libnform  
-|   Function      :  FIELDTYPE *field_type(const FIELD *field)
-|   
-|   Description   :  Retrieve the associated fieldtype for this field.
-|
-|   Return Values :  Pointer to fieldtype of NULL if none is defined.
-+--------------------------------------------------------------------------*/
-FIELDTYPE *field_type(const FIELD * field)
-{
-  return Normalize_Field(field)->type;
-}
+/* fld_move.c ends here */
 
-/* fld_type.c ends here */

@@ -1,3 +1,5 @@
+/*	$OpenBSD: fty_regex.c,v 1.3 1997/12/03 05:40:19 millert Exp $	*/
+
 
 /*
  * THIS CODE IS SPECIFICALLY EXEMPTED FROM THE NCURSES PACKAGE COPYRIGHT.
@@ -13,9 +15,9 @@
 
 #include "form.priv.h"
 
-MODULE_ID("Id: fty_regex.c,v 1.9 1997/05/01 16:03:17 tom Exp $")
+MODULE_ID("Id: fty_regex.c,v 1.11 1997/10/18 19:32:35 tom Exp $")
 
-#if HAVE_REGEX_H	/* We prefer POSIX regex */
+#if HAVE_REGEX_H_FUNCS	/* We prefer POSIX regex */
 #include <regex.h>
 
 typedef struct
@@ -24,7 +26,7 @@ typedef struct
   unsigned long *refCount;
 } RegExp_Arg;
 
-#elif HAVE_REGEXP_H | HAVE_REGEXPR_H
+#elif HAVE_REGEXP_H_FUNCS | HAVE_REGEXPR_H_FUNCS
 #undef RETURN
 static int reg_errno;
 
@@ -47,7 +49,7 @@ static char *RegEx_Error(int code)
 #define RETURN(c)	return(c)
 #define ERROR(c)	return RegEx_Error(c)
 
-#if HAVE_REGEXP_H
+#if HAVE_REGEXP_H_FUNCS
 #include <regexp.h>
 #else
 #include <regexpr.h>
@@ -75,7 +77,7 @@ typedef struct
 +--------------------------------------------------------------------------*/
 static void *Make_RegularExpression_Type(va_list * ap)
 {
-#if HAVE_REGEX_H
+#if HAVE_REGEX_H_FUNCS
   char *rx = va_arg(*ap,char *);
   RegExp_Arg *preg;
 
@@ -98,7 +100,7 @@ static void *Make_RegularExpression_Type(va_list * ap)
 	}
     }
   return((void *)preg);
-#elif HAVE_REGEXP_H | HAVE_REGEXPR_H
+#elif HAVE_REGEXP_H_FUNCS | HAVE_REGEXPR_H_FUNCS
   char *rx = va_arg(*ap,char *);
   RegExp_Arg *pArg;
 
@@ -115,7 +117,7 @@ static void *Make_RegularExpression_Type(va_list * ap)
 	char *buf = (char *)malloc(blen);
 	if (buf)
 	  {
-#if HAVE_REGEXP_H
+#if HAVE_REGEXP_H_FUNCS
 	    char *last_pos = compile (rx, buf, &buf[blen], '\0');
 #else
 	    char *last_pos = compile (rx, buf, &buf[blen], '\0');
@@ -162,16 +164,16 @@ static void *Make_RegularExpression_Type(va_list * ap)
 +--------------------------------------------------------------------------*/
 static void *Copy_RegularExpression_Type(const void * argp)
 {
-#if (HAVE_REGEX_H | HAVE_REGEXP_H | HAVE_REGEXPR_H)
+#if (HAVE_REGEX_H_FUNCS | HAVE_REGEXP_H_FUNCS | HAVE_REGEXPR_H_FUNCS)
   const RegExp_Arg *ap = (const RegExp_Arg *)argp;
-  const RegExp_Arg *new = (const RegExp_Arg *)0; 
+  const RegExp_Arg *result = (const RegExp_Arg *)0; 
   
   if (ap)
     {
       *(ap->refCount) += 1;
-      new = ap;
+      result = ap;
     }
-  return (void *)new;
+  return (void *)result;
 #else
   return 0;
 #endif
@@ -187,19 +189,19 @@ static void *Copy_RegularExpression_Type(const void * argp)
 +--------------------------------------------------------------------------*/
 static void Free_RegularExpression_Type(void * argp)
 {
-#if HAVE_REGEX_H | HAVE_REGEXP_H | HAVE_REGEXPR_H
+#if HAVE_REGEX_H_FUNCS | HAVE_REGEXP_H_FUNCS | HAVE_REGEXPR_H_FUNCS
   RegExp_Arg *ap = (RegExp_Arg *)argp;
   if (ap)
     {
       if (--(*(ap->refCount)) == 0)
 	{
-#if HAVE_REGEX_H
+#if HAVE_REGEX_H_FUNCS
 	  if (ap->pRegExp)
 	    {
 	      free(ap->refCount);
 	      regfree(ap->pRegExp);
 	    }
-#elif HAVE_REGEXP_H | HAVE_REGEXPR_H
+#elif HAVE_REGEXP_H_FUNCS | HAVE_REGEXPR_H_FUNCS
 	  if (ap->compiled_expression)
 	    {
 	      free(ap->refCount);
@@ -226,11 +228,11 @@ static void Free_RegularExpression_Type(void * argp)
 static bool Check_RegularExpression_Field(FIELD * field, const void  * argp)
 {
   bool match = FALSE;
-#if HAVE_REGEX_H
+#if HAVE_REGEX_H_FUNCS
   const RegExp_Arg *ap = (const RegExp_Arg*)argp;
   if (ap && ap->pRegExp)
     match = (regexec(ap->pRegExp,field_buffer(field,0),0,NULL,0) ? FALSE:TRUE);
-#elif HAVE_REGEXP_H | HAVE_REGEXPR_H
+#elif HAVE_REGEXP_H_FUNCS | HAVE_REGEXPR_H_FUNCS
   RegExp_Arg *ap = (RegExp_Arg *)argp;
   if (ap && ap->compiled_expression)
     match = (step(field_buffer(field,0),ap->compiled_expression) ? TRUE:FALSE);

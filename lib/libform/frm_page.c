@@ -1,4 +1,4 @@
-/*	$OpenBSD: fld_type.c,v 1.3 1997/12/03 05:39:58 millert Exp $	*/
+/*	$OpenBSD: frm_page.c,v 1.1 1997/12/03 05:40:14 millert Exp $	*/
 
 /*-----------------------------------------------------------------------------+
 |           The ncurses form library is  Copyright (C) 1995-1997               |
@@ -24,61 +24,69 @@
 
 #include "form.priv.h"
 
-MODULE_ID("Id: fld_type.c,v 1.6 1997/10/21 13:24:19 juergen Exp $")
+MODULE_ID("Id: frm_page.c,v 1.2 1997/10/26 11:21:04 juergen Exp $")
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform  
-|   Function      :  int set_field_type(FIELD *field, FIELDTYPE *type,...)
+|   Function      :  int set_form_page(FORM * form,int  page)
 |   
-|   Description   :  Associate the specified fieldtype with the field.
-|                    Certain field types take additional arguments. Look
-|                    at the spec of the field types !
+|   Description   :  Set the page number of the form.
 |
-|   Return Values :  E_OK           - success
-|                    E_SYSTEM_ERROR - system error
+|   Return Values :  E_OK              - success
+|                    E_BAD_ARGUMENT    - invalid form pointer or page number
+|                    E_BAD_STATE       - called from a hook routine
+|                    E_INVALID_FIELD   - current field can't be left
+|                    E_SYSTEM_ERROR    - system error
 +--------------------------------------------------------------------------*/
-int set_field_type(FIELD *field,FIELDTYPE *type, ...)
+int set_form_page(FORM * form, int page)
 {
-  va_list ap;
-  int res = E_SYSTEM_ERROR;
-  int err = 0;
+  int err = E_OK;
 
-  va_start(ap,type);
+  if ( !form || (page<0) || (page>=form->maxpage) )
+    RETURN(E_BAD_ARGUMENT);
 
-  Normalize_Field(field);
-  _nc_Free_Type(field);
-
-  field->type = type;
-  field->arg  = (void *)_nc_Make_Argument(field->type,&ap,&err);
-
-  if (err)
+  if (!(form->status & _POSTED))
     {
-      _nc_Free_Argument(field->type,(TypeArgument *)(field->arg));
-      field->type = (FIELDTYPE *)0;
-      field->arg  = (void *)0;
-    }
+      form->curpage = page;
+      form->current = _nc_First_Active_Field(form);
+  }
   else
     {
-      res = E_OK;
-      if (field->type) 
-	field->type->ref++;
+      if (form->status & _IN_DRIVER) 
+	err = E_BAD_STATE;
+      else
+	{
+	  if (form->curpage != page)
+	    {
+	      if (!_nc_Internal_Validation(form)) 
+		err = E_INVALID_FIELD;
+	      else
+		{
+		  Call_Hook(form,fieldterm);
+		  Call_Hook(form,formterm);
+		  err = _nc_Set_Form_Page(form,page,(FIELD *)0);
+		  Call_Hook(form,forminit);
+		  Call_Hook(form,fieldinit);
+		  _nc_Refresh_Current_Field(form);
+		}
+	    }
+	}
     }
-
-  va_end(ap);
-  RETURN(res);
+  RETURN(err);
 }
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform  
-|   Function      :  FIELDTYPE *field_type(const FIELD *field)
+|   Function      :  int form_page(const FORM * form)
 |   
-|   Description   :  Retrieve the associated fieldtype for this field.
+|   Description   :  Return the current page of the form.
 |
-|   Return Values :  Pointer to fieldtype of NULL if none is defined.
+|   Return Values :  >= 0  : current page number
+|                    -1    : invalid form pointer
 +--------------------------------------------------------------------------*/
-FIELDTYPE *field_type(const FIELD * field)
+int form_page(const FORM * form)
 {
-  return Normalize_Field(field)->type;
+  return Normalize_Form(form)->curpage;
 }
 
-/* fld_type.c ends here */
+/* frm_page.c ends here */

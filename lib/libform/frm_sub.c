@@ -1,4 +1,4 @@
-/*	$OpenBSD: fld_type.c,v 1.3 1997/12/03 05:39:58 millert Exp $	*/
+/*	$OpenBSD: frm_sub.c,v 1.1 1997/12/03 05:40:15 millert Exp $	*/
 
 /*-----------------------------------------------------------------------------+
 |           The ncurses form library is  Copyright (C) 1995-1997               |
@@ -24,61 +24,38 @@
 
 #include "form.priv.h"
 
-MODULE_ID("Id: fld_type.c,v 1.6 1997/10/21 13:24:19 juergen Exp $")
+MODULE_ID("Id: frm_sub.c,v 1.1 1997/10/21 13:24:19 juergen Exp $")
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform  
-|   Function      :  int set_field_type(FIELD *field, FIELDTYPE *type,...)
+|   Function      :  int set_form_sub(FORM *form, WINDOW *win)
 |   
-|   Description   :  Associate the specified fieldtype with the field.
-|                    Certain field types take additional arguments. Look
-|                    at the spec of the field types !
+|   Description   :  Set the subwindow of the form to win. 
 |
-|   Return Values :  E_OK           - success
-|                    E_SYSTEM_ERROR - system error
+|   Return Values :  E_OK       - success
+|                    E_POSTED   - form is posted
 +--------------------------------------------------------------------------*/
-int set_field_type(FIELD *field,FIELDTYPE *type, ...)
+int set_form_sub(FORM * form, WINDOW * win)
 {
-  va_list ap;
-  int res = E_SYSTEM_ERROR;
-  int err = 0;
+  if (form && (form->status & _POSTED))	
+    RETURN(E_POSTED);
 
-  va_start(ap,type);
-
-  Normalize_Field(field);
-  _nc_Free_Type(field);
-
-  field->type = type;
-  field->arg  = (void *)_nc_Make_Argument(field->type,&ap,&err);
-
-  if (err)
-    {
-      _nc_Free_Argument(field->type,(TypeArgument *)(field->arg));
-      field->type = (FIELDTYPE *)0;
-      field->arg  = (void *)0;
-    }
-  else
-    {
-      res = E_OK;
-      if (field->type) 
-	field->type->ref++;
-    }
-
-  va_end(ap);
-  RETURN(res);
-}
+  Normalize_Form( form )->sub = win;
+  RETURN(E_OK);
+}	
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform  
-|   Function      :  FIELDTYPE *field_type(const FIELD *field)
+|   Function      :  WINDOW *form_sub(const FORM *)
 |   
-|   Description   :  Retrieve the associated fieldtype for this field.
+|   Description   :  Retrieve the window of the form.
 |
-|   Return Values :  Pointer to fieldtype of NULL if none is defined.
+|   Return Values :  The pointer to the Subwindow.
 +--------------------------------------------------------------------------*/
-FIELDTYPE *field_type(const FIELD * field)
+WINDOW *form_sub(const FORM * form)
 {
-  return Normalize_Field(field)->type;
+  const FORM* f = Normalize_Form( form );
+  return Get_Form_Window(f);
 }
 
-/* fld_type.c ends here */
+/* frm_sub.c ends here */

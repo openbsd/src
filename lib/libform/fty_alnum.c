@@ -1,3 +1,5 @@
+/*	$OpenBSD: fty_alnum.c,v 1.3 1997/12/03 05:40:17 millert Exp $	*/
+
 
 /*
  * THIS CODE IS SPECIFICALLY EXEMPTED FROM THE NCURSES PACKAGE COPYRIGHT.
@@ -13,7 +15,7 @@
 
 #include "form.priv.h"
 
-MODULE_ID("Id: fty_alnum.c,v 1.6 1997/02/15 17:31:21 tom Exp $")
+MODULE_ID("Id: fty_alnum.c,v 1.7 1997/10/18 19:33:55 tom Exp $")
 
 typedef struct {
   int width;
@@ -48,12 +50,12 @@ static void *Make_AlphaNumeric_Type(va_list * ap)
 static void *Copy_AlphaNumeric_Type(const void *argp)
 {
   const alnumARG *ap = (const alnumARG *)argp;
-  alnumARG *new = (alnumARG *)malloc(sizeof(alnumARG));
+  alnumARG *result = (alnumARG *)malloc(sizeof(alnumARG));
 
-  if (new)
-    *new = *ap;
+  if (result)
+    *result = *ap;
 
-  return ((void *)new);
+  return ((void *)result);
 }
 
 /*---------------------------------------------------------------------------

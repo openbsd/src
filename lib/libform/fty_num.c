@@ -1,3 +1,5 @@
+/*	$OpenBSD: fty_num.c,v 1.3 1997/12/03 05:40:19 millert Exp $	*/
+
 
 /*
  * THIS CODE IS SPECIFICALLY EXEMPTED FROM THE NCURSES PACKAGE COPYRIGHT.
@@ -13,7 +15,7 @@
 
 #include "form.priv.h"
 
-MODULE_ID("Id: fty_num.c,v 1.9 1997/04/19 17:26:38 juergen Exp $")
+MODULE_ID("Id: fty_num.c,v 1.11 1997/10/18 19:32:58 tom Exp $")
 
 #if HAVE_LOCALE_H
 #include <locale.h>
@@ -63,15 +65,15 @@ static void *Make_Numeric_Type(va_list * ap)
 static void *Copy_Numeric_Type(const void * argp)
 {
   const numericARG *ap = (const numericARG *)argp;
-  numericARG *new = (numericARG *)0;
+  numericARG *result = (numericARG *)0;
 
   if (argp)
     {
-      new = (numericARG *)malloc(sizeof(numericARG));
-      if (new)
-	*new  = *ap;
+      result = (numericARG *)malloc(sizeof(numericARG));
+      if (result)
+	*result  = *ap;
     }
-  return (void *)new;
+  return (void *)result;
 }
 
 /*---------------------------------------------------------------------------
@@ -169,7 +171,7 @@ static bool Check_Numeric_Character(int c, const void * argp)
 	  c == '+'    || 
 	  c == '-'    || 
 	  c == (
-#ifdef HAVE_LOCALE_H
+#if HAVE_LOCALE_H
 		(L && L->decimal_point) ? *(L->decimal_point) :
 #endif
 		'.')

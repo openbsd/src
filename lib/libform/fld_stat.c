@@ -1,3 +1,5 @@
+/*	$OpenBSD: fld_stat.c,v 1.3 1997/12/03 05:39:57 millert Exp $	*/
+
 /*-----------------------------------------------------------------------------+
 |           The ncurses form library is  Copyright (C) 1995-1997               |
 |             by Juergen Pfeifer <Juergen.Pfeifer@T-Online.de>                 |

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fld_type.c,v 1.3 1997/12/03 05:39:58 millert Exp $	*/
+/*	$OpenBSD: fld_ftlink.c,v 1.1 1997/12/03 05:39:53 millert Exp $	*/
 
 /*-----------------------------------------------------------------------------+
 |           The ncurses form library is  Copyright (C) 1995-1997               |
@@ -24,61 +24,52 @@
 
 #include "form.priv.h"
 
-MODULE_ID("Id: fld_type.c,v 1.6 1997/10/21 13:24:19 juergen Exp $")
+MODULE_ID("Id: fld_ftlink.c,v 1.1 1997/10/21 13:24:19 juergen Exp $")
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform  
-|   Function      :  int set_field_type(FIELD *field, FIELDTYPE *type,...)
+|   Function      :  FIELDTYPE *link_fieldtype(
+|                                FIELDTYPE *type1,
+|                                FIELDTYPE *type2)
 |   
-|   Description   :  Associate the specified fieldtype with the field.
-|                    Certain field types take additional arguments. Look
-|                    at the spec of the field types !
+|   Description   :  Create a new fieldtype built from the two given types.
+|                    They are connected by an logical 'OR'.
+|                    If an error occurs, errno is set to                    
+|                       E_BAD_ARGUMENT  - invalid arguments
+|                       E_SYSTEM_ERROR  - system error (no memory)
 |
-|   Return Values :  E_OK           - success
-|                    E_SYSTEM_ERROR - system error
+|   Return Values :  Fieldtype pointer or NULL if error occured.
 +--------------------------------------------------------------------------*/
-int set_field_type(FIELD *field,FIELDTYPE *type, ...)
+FIELDTYPE *link_fieldtype(FIELDTYPE * type1, FIELDTYPE * type2)
 {
-  va_list ap;
-  int res = E_SYSTEM_ERROR;
-  int err = 0;
+  FIELDTYPE *nftyp = (FIELDTYPE *)0;
 
-  va_start(ap,type);
-
-  Normalize_Field(field);
-  _nc_Free_Type(field);
-
-  field->type = type;
-  field->arg  = (void *)_nc_Make_Argument(field->type,&ap,&err);
-
-  if (err)
+  if ( type1 && type2 )
     {
-      _nc_Free_Argument(field->type,(TypeArgument *)(field->arg));
-      field->type = (FIELDTYPE *)0;
-      field->arg  = (void *)0;
+      nftyp = (FIELDTYPE *)malloc(sizeof(FIELDTYPE));
+      if (nftyp)
+	{
+	  *nftyp = *_nc_Default_FieldType;
+	  nftyp->status |= _LINKED_TYPE;
+	  if ((type1->status & _HAS_ARGS) || (type2->status & _HAS_ARGS) )
+	    nftyp->status |= _HAS_ARGS;
+	  if ((type1->status & _HAS_CHOICE) || (type2->status & _HAS_CHOICE) )
+	    nftyp->status |= _HAS_CHOICE;
+	  nftyp->left  = type1;
+	  nftyp->right = type2; 
+	  type1->ref++;
+	  type2->ref++;
+	}
+      else
+	{
+	  SET_ERROR( E_SYSTEM_ERROR );
+	}
     }
   else
     {
-      res = E_OK;
-      if (field->type) 
-	field->type->ref++;
+      SET_ERROR( E_BAD_ARGUMENT );
     }
-
-  va_end(ap);
-  RETURN(res);
+  return nftyp;
 }
 
-/*---------------------------------------------------------------------------
-|   Facility      :  libnform  
-|   Function      :  FIELDTYPE *field_type(const FIELD *field)
-|   
-|   Description   :  Retrieve the associated fieldtype for this field.
-|
-|   Return Values :  Pointer to fieldtype of NULL if none is defined.
-+--------------------------------------------------------------------------*/
-FIELDTYPE *field_type(const FIELD * field)
-{
-  return Normalize_Field(field)->type;
-}
-
-/* fld_type.c ends here */
+/* fld_ftlink.c ends here */

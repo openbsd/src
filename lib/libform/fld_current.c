@@ -1,4 +1,4 @@
-/*	$OpenBSD: frm_opts.c,v 1.3 1997/12/03 05:40:13 millert Exp $	*/
+/*	$OpenBSD: fld_current.c,v 1.1 1997/12/03 05:39:51 millert Exp $	*/
 
 /*-----------------------------------------------------------------------------+
 |           The ncurses form library is  Copyright (C) 1995-1997               |
@@ -21,85 +21,96 @@
 | NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH    |
 | THE USE OR PERFORMANCE OF THIS SOFTWARE.                                     |
 +-----------------------------------------------------------------------------*/
-
 #include "form.priv.h"
 
-MODULE_ID("Id: frm_opts.c,v 1.3 1997/05/01 16:47:54 juergen Exp $")
+MODULE_ID("Id: fld_current.c,v 1.1 1997/10/21 13:24:19 juergen Exp $")
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform  
-|   Function      :  int set_form_opts(FORM *form, Form_Options opts)
+|   Function      :  int set_current_field(FORM  * form,FIELD * field)
 |   
-|   Description   :  Turns on the named options and turns off all the
-|                    remaining options for that form.
+|   Description   :  Set the current field of the form to the specified one.
 |
 |   Return Values :  E_OK              - success
-|                    E_BAD_ARGUMENT    - invalid options
+|                    E_BAD_ARGUMENT    - invalid form or field pointer
+|                    E_REQUEST_DENIED  - field not selectable
+|                    E_BAD_STATE       - called from a hook routine
+|                    E_INVALID_FIELD   - current field can't be left
+|                    E_SYSTEM_ERROR    - system error
 +--------------------------------------------------------------------------*/
-int set_form_opts(FORM * form, Form_Options  opts)
+int set_current_field(FORM  * form, FIELD * field)
 {
-  if (opts & ~ALL_FORM_OPTS)
+  int err = E_OK;
+
+  if ( !form || !field )
     RETURN(E_BAD_ARGUMENT);
+
+  if ( (form != field->form) || Field_Is_Not_Selectable(field) )
+    RETURN(E_REQUEST_DENIED);
+
+  if (!(form->status & _POSTED))
+    {
+      form->current = field;
+      form->curpage = field->page;
+  }
   else
     {
-      Normalize_Form( form )->opts = opts;
-      RETURN(E_OK);
+      if (form->status & _IN_DRIVER) 
+	err = E_BAD_STATE;
+      else
+	{
+	  if (form->current != field)
+	    {
+	      if (!_nc_Internal_Validation(form)) 
+	       err = E_INVALID_FIELD;
+	      else
+		{
+		  Call_Hook(form,fieldterm);
+		  if (field->page != form->curpage)
+		    {
+		      Call_Hook(form,formterm);
+		      err = _nc_Set_Form_Page(form,field->page,field);
+		      Call_Hook(form,forminit);
+		    } 
+		  else 
+		    {
+		      err = _nc_Set_Current_Field(form,field);
+		    }
+		  Call_Hook(form,fieldinit);
+		  _nc_Refresh_Current_Field(form);
+		}
+	    }
+	}
     }
+  RETURN(err);
 }
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform  
-|   Function      :  Form_Options form_opts(const FORM *)
+|   Function      :  FIELD *current_field(const FORM * form)
 |   
-|   Description   :  Retrieves the current form options.
+|   Description   :  Return the current field.
 |
-|   Return Values :  The option flags.
+|   Return Values :  Pointer to the current field.
 +--------------------------------------------------------------------------*/
-Form_Options form_opts(const FORM * form)
+FIELD *current_field(const FORM * form)
 {
-  return (Normalize_Form(form)->opts & ALL_FORM_OPTS);
+  return Normalize_Form(form)->current;
 }
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform  
-|   Function      :  int form_opts_on(FORM *form, Form_Options opts)
+|   Function      :  int field_index(const FIELD * field)
 |   
-|   Description   :  Turns on the named options; no other options are 
-|                    changed.
+|   Description   :  Return the index of the field in the field-array of
+|                    the form.
 |
-|   Return Values :  E_OK            - success 
-|                    E_BAD_ARGUMENT  - invalid options
+|   Return Values :  >= 0   : field index
+|                    -1     : fieldpointer invalid or field not connected
 +--------------------------------------------------------------------------*/
-int form_opts_on(FORM * form, Form_Options opts)
+int field_index(const FIELD * field)
 {
-  if (opts & ~ALL_FORM_OPTS)
-    RETURN(E_BAD_ARGUMENT);
-  else
-    {
-      Normalize_Form( form )->opts |= opts;	
-      RETURN(E_OK);
-    }
+  return ( (field && field->form) ? field->index : -1 );
 }
 
-/*---------------------------------------------------------------------------
-|   Facility      :  libnform  
-|   Function      :  int form_opts_off(FORM *form, Form_Options opts)
-|   
-|   Description   :  Turns off the named options; no other options are 
-|                    changed.
-|
-|   Return Values :  E_OK            - success 
-|                    E_BAD_ARGUMENT  - invalid options
-+--------------------------------------------------------------------------*/
-int form_opts_off(FORM * form, Form_Options opts)
-{
-  if (opts & ~ALL_FORM_OPTS)
-    RETURN(E_BAD_ARGUMENT);
-  else
-    {
-      Normalize_Form(form)->opts &= ~opts;
-      RETURN(E_OK);
-    }
-}
-
-/* frm_opts.c ends here */
+/* fld_current.c ends here */

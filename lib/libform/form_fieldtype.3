@@ -1,3 +1,4 @@
+.\" $OpenBSD: form_fieldtype.3,v 1.3 1997/12/03 05:40:06 millert Exp $
 '\" t
 .TH form_field 3X ""
 .SH NAME
@@ -22,9 +23,9 @@ int set_fieldtype_choice(
     bool (* const next_choice)(FIELD *, const void *),
     bool (* const prev_choice)(FIELD *, const void *));
 .br
-FIELDTYPE *link_fieldtype(FIELDTYPE *type1, 
+FIELDTYPE *link_fieldtype(FIELDTYPE *type1,
                           FIELDTYPE *type2);
-.br 
+.br
 .SH DESCRIPTION
 The function \fBnew_fieldtype\fR creates a new field type usable for data
 validation.  You supply it with \fIfield_check\fR, a predicate to check the
@@ -40,13 +41,16 @@ the character to be checked and a pointer to an argument-block structure.
 The function \fBfree_fieldtype\fR frees the space allocated for a given
 validation type.
 
-The function \fBset_fieldtype\fR associates three storage-management functions 
+The function \fBset_fieldtype\fR associates three storage-management functions
 with a field type.  The \fImak_arg\fR function is automatically applied to the
 list of arguments you give \fBset_field_type\fR when attaching validation
-to a field; its job is to bundle these into an allocated argument-block 
+to a field; its job is to bundle these into an allocated argument-block
 object which can later be passed to validation predicated.  The other two
 hook arguments should copy and free argument-block structures.  They will
-be used by the forms-driver code.
+be used by the forms-driver code. You must supply the \fImak_arg\fR function,
+the other two are optional, you may supply NULL for them. In this case it
+is assumed, that \fImak_arg\fR doesn't allocate memory but simply loads the
+argument into a single scalar value.
 
 The form driver requests \fBREQ_NEXT_CHOICE\fR and \fBREQ_PREV_CHOICE\fR assume
 that the possible values of a field form an ordered set, and provide the forms

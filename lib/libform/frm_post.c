@@ -1,4 +1,4 @@
-/*	$OpenBSD: fld_type.c,v 1.3 1997/12/03 05:39:58 millert Exp $	*/
+/*	$OpenBSD: frm_post.c,v 1.1 1997/12/03 05:40:14 millert Exp $	*/
 
 /*-----------------------------------------------------------------------------+
 |           The ncurses form library is  Copyright (C) 1995-1997               |
@@ -21,64 +21,89 @@
 | NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH    |
 | THE USE OR PERFORMANCE OF THIS SOFTWARE.                                     |
 +-----------------------------------------------------------------------------*/
-
 #include "form.priv.h"
 
-MODULE_ID("Id: fld_type.c,v 1.6 1997/10/21 13:24:19 juergen Exp $")
+MODULE_ID("Id: frm_post.c,v 1.1 1997/10/21 13:24:19 juergen Exp $")
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform  
-|   Function      :  int set_field_type(FIELD *field, FIELDTYPE *type,...)
+|   Function      :  int post_form(FORM * form)
 |   
-|   Description   :  Associate the specified fieldtype with the field.
-|                    Certain field types take additional arguments. Look
-|                    at the spec of the field types !
+|   Description   :  Writes the form into its associated subwindow.
 |
-|   Return Values :  E_OK           - success
-|                    E_SYSTEM_ERROR - system error
+|   Return Values :  E_OK              - success
+|                    E_BAD_ARGUMENT    - invalid form pointer
+|                    E_POSTED          - form already posted
+|                    E_NOT_CONNECTED   - no fields connected to form
+|                    E_NO_ROOM         - form doesn't fit into subwindow
+|                    E_SYSTEM_ERROR    - system error
 +--------------------------------------------------------------------------*/
-int set_field_type(FIELD *field,FIELDTYPE *type, ...)
+int post_form(FORM * form)
 {
-  va_list ap;
-  int res = E_SYSTEM_ERROR;
-  int err = 0;
+  WINDOW *formwin;
+  int err;
+  int page;
 
-  va_start(ap,type);
+  if (!form)
+    RETURN(E_BAD_ARGUMENT);
 
-  Normalize_Field(field);
-  _nc_Free_Type(field);
+  if (form->status & _POSTED)   
+    RETURN(E_POSTED);
 
-  field->type = type;
-  field->arg  = (void *)_nc_Make_Argument(field->type,&ap,&err);
+  if (!(form->field))
+    RETURN(E_NOT_CONNECTED);
+  
+  formwin = Get_Form_Window(form);
+  if ((form->cols > getmaxx(formwin)) || (form->rows > getmaxy(formwin))) 
+    RETURN(E_NO_ROOM);
 
-  if (err)
-    {
-      _nc_Free_Argument(field->type,(TypeArgument *)(field->arg));
-      field->type = (FIELDTYPE *)0;
-      field->arg  = (void *)0;
-    }
-  else
-    {
-      res = E_OK;
-      if (field->type) 
-	field->type->ref++;
-    }
+  /* reset form->curpage to an invald value. This forces Set_Form_Page
+     to do the page initialization which is required by post_form.
+  */
+  page = form->curpage;
+  form->curpage = -1;
+  if ((err = _nc_Set_Form_Page(form,page,form->current))!=E_OK)
+    RETURN(err);
 
-  va_end(ap);
-  RETURN(res);
+  form->status |= _POSTED;
+
+  Call_Hook(form,forminit);
+  Call_Hook(form,fieldinit);
+
+  _nc_Refresh_Current_Field(form);
+  RETURN(E_OK);
 }
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform  
-|   Function      :  FIELDTYPE *field_type(const FIELD *field)
+|   Function      :  int unpost_form(FORM * form)
 |   
-|   Description   :  Retrieve the associated fieldtype for this field.
+|   Description   :  Erase form from its associated subwindow.
 |
-|   Return Values :  Pointer to fieldtype of NULL if none is defined.
+|   Return Values :  E_OK            - success
+|                    E_BAD_ARGUMENT  - invalid form pointer
+|                    E_NOT_POSTED    - form isn't posted
+|                    E_BAD_STATE     - called from a hook routine
 +--------------------------------------------------------------------------*/
-FIELDTYPE *field_type(const FIELD * field)
+int unpost_form(FORM * form)
 {
-  return Normalize_Field(field)->type;
+  if (!form)
+    RETURN(E_BAD_ARGUMENT);
+
+  if (!(form->status & _POSTED)) 
+    RETURN(E_NOT_POSTED);
+
+  if (form->status & _IN_DRIVER) 
+    RETURN(E_BAD_STATE);
+
+  Call_Hook(form,fieldterm);
+  Call_Hook(form,formterm);
+
+  werase(Get_Form_Window(form));
+  delwin(form->w);
+  form->w = (WINDOW *)0;
+  form->status &= ~_POSTED;
+  RETURN(E_OK);
 }
 
-/* fld_type.c ends here */
+/* frm_post.c ends here */

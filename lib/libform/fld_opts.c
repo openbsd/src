@@ -1,4 +1,4 @@
-/*	$OpenBSD: frm_opts.c,v 1.3 1997/12/03 05:40:13 millert Exp $	*/
+/*	$OpenBSD: fld_opts.c,v 1.1 1997/12/03 05:39:56 millert Exp $	*/
 
 /*-----------------------------------------------------------------------------+
 |           The ncurses form library is  Copyright (C) 1995-1997               |
@@ -21,85 +21,93 @@
 | NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH    |
 | THE USE OR PERFORMANCE OF THIS SOFTWARE.                                     |
 +-----------------------------------------------------------------------------*/
-
 #include "form.priv.h"
 
-MODULE_ID("Id: frm_opts.c,v 1.3 1997/05/01 16:47:54 juergen Exp $")
+MODULE_ID("Id: fld_opts.c,v 1.1 1997/10/21 13:24:19 juergen Exp $")
+
+/*----------------------------------------------------------------------------
+  Field-Options manipulation routines
+  --------------------------------------------------------------------------*/
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform  
-|   Function      :  int set_form_opts(FORM *form, Form_Options opts)
+|   Function      :  int set_field_opts(FIELD *field, Field_Options opts)
 |   
-|   Description   :  Turns on the named options and turns off all the
-|                    remaining options for that form.
+|   Description   :  Turns on the named options for this field and turns
+|                    off all the remaining options.
 |
-|   Return Values :  E_OK              - success
-|                    E_BAD_ARGUMENT    - invalid options
-+--------------------------------------------------------------------------*/
-int set_form_opts(FORM * form, Form_Options  opts)
-{
-  if (opts & ~ALL_FORM_OPTS)
-    RETURN(E_BAD_ARGUMENT);
-  else
-    {
-      Normalize_Form( form )->opts = opts;
-      RETURN(E_OK);
-    }
-}
-
-/*---------------------------------------------------------------------------
-|   Facility      :  libnform  
-|   Function      :  Form_Options form_opts(const FORM *)
-|   
-|   Description   :  Retrieves the current form options.
-|
-|   Return Values :  The option flags.
-+--------------------------------------------------------------------------*/
-Form_Options form_opts(const FORM * form)
-{
-  return (Normalize_Form(form)->opts & ALL_FORM_OPTS);
-}
-
-/*---------------------------------------------------------------------------
-|   Facility      :  libnform  
-|   Function      :  int form_opts_on(FORM *form, Form_Options opts)
-|   
-|   Description   :  Turns on the named options; no other options are 
-|                    changed.
-|
-|   Return Values :  E_OK            - success 
+|   Return Values :  E_OK            - success
+|                    E_CURRENT       - the field is the current field
 |                    E_BAD_ARGUMENT  - invalid options
+|                    E_SYSTEM_ERROR  - system error
 +--------------------------------------------------------------------------*/
-int form_opts_on(FORM * form, Form_Options opts)
+int set_field_opts(FIELD * field, Field_Options opts)
 {
-  if (opts & ~ALL_FORM_OPTS)
-    RETURN(E_BAD_ARGUMENT);
-  else
-    {
-      Normalize_Form( form )->opts |= opts;	
-      RETURN(E_OK);
-    }
+  int res = E_BAD_ARGUMENT;
+  if (!(opts & ~ALL_FIELD_OPTS))
+    res = _nc_Synchronize_Options( Normalize_Field(field), opts );
+  RETURN(res);
 }
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform  
-|   Function      :  int form_opts_off(FORM *form, Form_Options opts)
+|   Function      :  Field_Options field_opts(const FIELD *field)
 |   
-|   Description   :  Turns off the named options; no other options are 
-|                    changed.
+|   Description   :  Retrieve the fields options.
 |
-|   Return Values :  E_OK            - success 
-|                    E_BAD_ARGUMENT  - invalid options
+|   Return Values :  The options.
 +--------------------------------------------------------------------------*/
-int form_opts_off(FORM * form, Form_Options opts)
+Field_Options field_opts(const FIELD * field)
 {
-  if (opts & ~ALL_FORM_OPTS)
-    RETURN(E_BAD_ARGUMENT);
-  else
-    {
-      Normalize_Form(form)->opts &= ~opts;
-      RETURN(E_OK);
-    }
+  return ALL_FIELD_OPTS & Normalize_Field( field )->opts;
 }
 
-/* frm_opts.c ends here */
+/*---------------------------------------------------------------------------
+|   Facility      :  libnform  
+|   Function      :  int field_opts_on(FIELD *field, Field_Options opts)
+|   
+|   Description   :  Turns on the named options for this field and all the 
+|                    remaining options are unchanged.
+|
+|   Return Values :  E_OK            - success
+|                    E_CURRENT       - the field is the current field
+|                    E_BAD_ARGUMENT  - invalid options
+|                    E_SYSTEM_ERROR  - system error
++--------------------------------------------------------------------------*/
+int field_opts_on(FIELD * field, Field_Options opts)
+{
+  int res = E_BAD_ARGUMENT;
+
+  if (!(opts & ~ALL_FIELD_OPTS))
+    {
+      Normalize_Field( field );
+      res = _nc_Synchronize_Options( field, field->opts | opts );
+    }
+  RETURN(res);
+}
+
+/*---------------------------------------------------------------------------
+|   Facility      :  libnform  
+|   Function      :  int field_opts_off(FIELD *field, Field_Options opts)
+|   
+|   Description   :  Turns off the named options for this field and all the 
+|                    remaining options are unchanged.
+|
+|   Return Values :  E_OK            - success
+|                    E_CURRENT       - the field is the current field
+|                    E_BAD_ARGUMENT  - invalid options
+|                    E_SYSTEM_ERROR  - system error
++--------------------------------------------------------------------------*/
+int field_opts_off(FIELD  * field, Field_Options opts)
+{
+  int res = E_BAD_ARGUMENT;
+
+  if (!(opts & ~ALL_FIELD_OPTS))
+    {
+      Normalize_Field( field );
+      res = _nc_Synchronize_Options( field, field->opts & ~opts );
+    }
+  RETURN(res);
+}	
+
+/* fld_opts.c ends here */

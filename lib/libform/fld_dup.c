@@ -1,4 +1,4 @@
-/*	$OpenBSD: fld_type.c,v 1.3 1997/12/03 05:39:58 millert Exp $	*/
+/*	$OpenBSD: fld_dup.c,v 1.1 1997/12/03 05:39:52 millert Exp $	*/
 
 /*-----------------------------------------------------------------------------+
 |           The ncurses form library is  Copyright (C) 1995-1997               |
@@ -24,61 +24,66 @@
 
 #include "form.priv.h"
 
-MODULE_ID("Id: fld_type.c,v 1.6 1997/10/21 13:24:19 juergen Exp $")
+MODULE_ID("Id: fld_dup.c,v 1.1 1997/10/21 13:24:19 juergen Exp $")
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform  
-|   Function      :  int set_field_type(FIELD *field, FIELDTYPE *type,...)
+|   Function      :  FIELD *dup_field(FIELD *field, int frow, int fcol)
 |   
-|   Description   :  Associate the specified fieldtype with the field.
-|                    Certain field types take additional arguments. Look
-|                    at the spec of the field types !
-|
-|   Return Values :  E_OK           - success
+|   Description   :  Duplicates the field at the specified position. All
+|                    field attributes and the buffers are copied.
+|                    If an error occurs, errno is set to
+|                    
+|                    E_BAD_ARGUMENT - invalid argument
 |                    E_SYSTEM_ERROR - system error
-+--------------------------------------------------------------------------*/
-int set_field_type(FIELD *field,FIELDTYPE *type, ...)
-{
-  va_list ap;
-  int res = E_SYSTEM_ERROR;
-  int err = 0;
-
-  va_start(ap,type);
-
-  Normalize_Field(field);
-  _nc_Free_Type(field);
-
-  field->type = type;
-  field->arg  = (void *)_nc_Make_Argument(field->type,&ap,&err);
-
-  if (err)
-    {
-      _nc_Free_Argument(field->type,(TypeArgument *)(field->arg));
-      field->type = (FIELDTYPE *)0;
-      field->arg  = (void *)0;
-    }
-  else
-    {
-      res = E_OK;
-      if (field->type) 
-	field->type->ref++;
-    }
-
-  va_end(ap);
-  RETURN(res);
-}
-
-/*---------------------------------------------------------------------------
-|   Facility      :  libnform  
-|   Function      :  FIELDTYPE *field_type(const FIELD *field)
-|   
-|   Description   :  Retrieve the associated fieldtype for this field.
 |
-|   Return Values :  Pointer to fieldtype of NULL if none is defined.
+|   Return Values :  Pointer to the new field or NULL if failure
 +--------------------------------------------------------------------------*/
-FIELDTYPE *field_type(const FIELD * field)
+FIELD *dup_field(FIELD * field, int frow, int fcol)
 {
-  return Normalize_Field(field)->type;
+  FIELD *New_Field = (FIELD *)0;
+  int err = E_BAD_ARGUMENT;
+
+  if (field && (frow>=0) && (fcol>=0) && 
+      ((err=E_SYSTEM_ERROR) != 0) && /* trick : this resets the default error */
+      (New_Field=(FIELD *)malloc(sizeof(FIELD))) )
+    {
+      *New_Field         = *_nc_Default_Field;
+      New_Field->frow    = frow;
+      New_Field->fcol    = fcol;
+      New_Field->link    = New_Field;
+      New_Field->rows    = field->rows;
+      New_Field->cols    = field->cols;
+      New_Field->nrow    = field->nrow;
+      New_Field->drows   = field->drows;
+      New_Field->dcols   = field->dcols;
+      New_Field->maxgrow = field->maxgrow;
+      New_Field->nbuf    = field->nbuf;
+      New_Field->just    = field->just;
+      New_Field->fore    = field->fore;
+      New_Field->back    = field->back;
+      New_Field->pad     = field->pad;
+      New_Field->opts    = field->opts;
+      New_Field->usrptr  = field->usrptr;
+
+      if (_nc_Copy_Type(New_Field,field))
+	{
+	  size_t len;
+
+	  len = Total_Buffer_Size(New_Field);
+	  if ( (New_Field->buf=(char *)malloc(len)) )
+	    {
+	      memcpy(New_Field->buf,field->buf,len);
+	      return New_Field;
+	    }
+	}
+    }
+
+  if (New_Field) 
+    free_field(New_Field);
+
+  SET_ERROR(err);
+  return (FIELD *)0;
 }
 
-/* fld_type.c ends here */
+/* fld_dup.c ends here */

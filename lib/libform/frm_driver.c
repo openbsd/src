@@ -1,3 +1,5 @@
+/*	$OpenBSD: frm_driver.c,v 1.4 1997/12/03 05:40:12 millert Exp $	*/
+
 /*-----------------------------------------------------------------------------+
 |           The ncurses form library is  Copyright (C) 1995-1997               |
 |             by Juergen Pfeifer <Juergen.Pfeifer@T-Online.de>                 |
@@ -19,6 +21,9 @@
 | NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH    |
 | THE USE OR PERFORMANCE OF THIS SOFTWARE.                                     |
 +-----------------------------------------------------------------------------*/
+#include "form.priv.h"
+
+MODULE_ID("Id: frm_driver.c,v 1.28 1997/10/21 13:24:19 juergen Exp $")
 
 /*----------------------------------------------------------------------------
   This is the core module of the form library. It contains the majority
@@ -63,10 +68,6 @@
   routines I omit them mostly.
   --------------------------------------------------------------------------*/
 
-#include "form.priv.h"
-
-MODULE_ID("Id: frm_driver.c,v 1.20 1997/05/01 16:47:54 juergen Exp $")
-
 /*
 Some options that may effect compatibility in behavior to SVr4 forms,
 but they are here to allow a more intuitive and user friendly behaviour of
@@ -85,6 +86,8 @@ Perhaps at some time we will make this configurable at runtime.
 #define FRIENDLY_PREV_NEXT_WORD (1)
 /* Fix the wrong behaviour for forms with all fields inactive */
 #define FIX_FORM_INACTIVE_BUG (1)
+/* Allow dynamic field growth also when navigating past the end */
+#define GROW_IF_NAVIGATE (1)
 
 /*----------------------------------------------------------------------------
   Forward references to some internally used static functions
@@ -180,13 +183,6 @@ static int FE_Delete_Previous(FORM *);
 #define First_Position_In_Current_Field(form) \
   (((form)->currow==0) && ((form)->curcol==0))
 
-/* This are the field options required to be a selectable field in field
-   navigation requests */
-#define O_SELECTABLE (O_ACTIVE | O_VISIBLE)
-
-/* Logic to determine whether or not a field is selectable */
-#define Field_Is_Selectable(f)     (((f)->opts & O_SELECTABLE)==O_SELECTABLE)
-#define Field_Is_Not_Selectable(f) (((f)->opts & O_SELECTABLE)!=O_SELECTABLE)
 
 #define Minimum(a,b) (((a)<=(b)) ? (a) : (b))
 #define Maximum(a,b) (((a)>=(b)) ? (a) : (b))
@@ -545,9 +541,9 @@ static bool Field_Grown(FIELD * field, int amount)
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform  
-|   Function      :  static int Position_Form_Cursor(FORM * form)
+|   Function      :  int _nc_Position_Form_Cursor(FORM * form)
 |   
-|   Description   :  Position the currsor in the window for the current
+|   Description   :  Position the cursor in the window for the current
 |                    field to be in sync. with the currow and curcol 
 |                    values.
 |
@@ -556,7 +552,8 @@ static bool Field_Grown(FIELD * field, int amount)
 |                    E_SYSTEM_ERROR    - form has no current field or
 |                                        field-window
 +--------------------------------------------------------------------------*/
-static int Position_Form_Cursor(FORM * form)
+int
+_nc_Position_Form_Cursor(FORM * form)
 {
   FIELD  *field;
   WINDOW *formwin;
@@ -587,7 +584,7 @@ static int Position_Form_Cursor(FORM * form)
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform  
-|   Function      :  static int Refresh_Current_Field(FORM * form)
+|   Function      :  int _nc_Refresh_Current_Field(FORM * form)
 |   
 |   Description   :  Propagate the changes in the fields window to the
 |                    window of the form.
@@ -596,7 +593,8 @@ static int Position_Form_Cursor(FORM * form)
 |                    E_BAD_ARGUMENT    - invalid form pointer
 |                    E_SYSTEM_ERROR    - general error
 +--------------------------------------------------------------------------*/
-static int Refresh_Current_Field(FORM * form)
+int
+_nc_Refresh_Current_Field(FORM * form)
 {
   WINDOW *formwin;
   FIELD  *field;
@@ -703,7 +701,7 @@ static int Refresh_Current_Field(FORM * form)
 	}
     }
   untouchwin(form->w);
-  return Position_Form_Cursor(form);
+  return _nc_Position_Form_Cursor(form);
 }
 	
 /*---------------------------------------------------------------------------
@@ -805,7 +803,7 @@ static bool Check_Char(FIELDTYPE * typ, int ch, TypeArgument *argp)
 	    return typ->ccheck(ch,(void *)argp);
 	}
     }
-  return isprint((unsigned char)ch);
+  return (isprint((unsigned char)ch) ? TRUE : FALSE);
 }
 
 /*---------------------------------------------------------------------------
@@ -892,7 +890,7 @@ static int Synchronize_Field(FIELD * field)
 	    Buffer_To_Window( field, form->w );
 	  
 	  field->status |= _NEWTOP;
-	  res = Refresh_Current_Field( form );
+	  res = _nc_Refresh_Current_Field( form );
 	}
       else
 	res = Display_Field( field );
@@ -938,7 +936,7 @@ static int Synchronize_Linked_Fields(FIELD * field)
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform  
-|   Function      :  static int Synchronize_Attributes(FIELD * field)
+|   Function      :  int _nc_Synchronize_Attributes(FIELD * field)
 |   
 |   Description   :  If a fields visual attributes have changed, this
 |                    routine is called to propagate those changes to the
@@ -948,7 +946,7 @@ static int Synchronize_Linked_Fields(FIELD * field)
 |                    E_BAD_ARGUMENT   - invalid field pointer
 |                    E_SYSTEM_ERROR   - some severe basic error
 +--------------------------------------------------------------------------*/
-static int Synchronize_Attributes(FIELD * field)
+int _nc_Synchronize_Attributes(FIELD * field)
 {
   FORM *form;
   int res = E_OK;
@@ -982,7 +980,7 @@ static int Synchronize_Attributes(FIELD * field)
 	      wsyncup(formwin);
 	      Buffer_To_Window(field,form->w);
 	      field->status |= _NEWTOP; /* fake refresh to paint all */
-	      Refresh_Current_Field(form);
+	      _nc_Refresh_Current_Field(form);
 	    }
 	}
       else 
@@ -995,8 +993,8 @@ static int Synchronize_Attributes(FIELD * field)
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform  
-|   Function      :  static int Synchronize_Options(FIELD * field,
-|                                                   Field_Options newopts)
+|   Function      :  int _nc_Synchronize_Options(FIELD * field,
+|                                                Field_Options newopts)
 |   
 |   Description   :  If a fields options have changed, this routine is
 |                    called to propagate these changes to the screen and
@@ -1006,7 +1004,8 @@ static int Synchronize_Attributes(FIELD * field)
 |                    E_BAD_ARGUMENT      - invalid field pointer 
 |                    E_SYSTEM_ERROR      - some severe basic error
 +--------------------------------------------------------------------------*/
-static int Synchronize_Options(FIELD *field, Field_Options newopts)
+int
+_nc_Synchronize_Options(FIELD *field, Field_Options newopts)
 {
   Field_Options oldopts;
   Field_Options changed_opts;
@@ -1036,9 +1035,9 @@ static int Synchronize_Options(FIELD *field, Field_Options newopts)
 	      if (changed_opts & O_VISIBLE)
 		{
 		  if (newopts & O_VISIBLE)
-		    res = Erase_Field(field);
-		  else
 		    res = Display_Field(field);
+		  else
+		    res = Erase_Field(field);
 		}
 	      else
 		{
@@ -1094,9 +1093,8 @@ static int Synchronize_Options(FIELD *field, Field_Options newopts)
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform  
-|   Function      :  static int Set_Current_Field(
-|                                                 FORM  * form,
-|                                                 FIELD * newfield)
+|   Function      :  int _nc_Set_Current_Field(FORM  * form,
+|                                              FIELD * newfield)
 |   
 |   Description   :  Make the newfield the new current field.
 |
@@ -1104,7 +1102,8 @@ static int Synchronize_Options(FIELD *field, Field_Options newopts)
 |                    E_BAD_ARGUMENT      - invalid form or field pointer 
 |                    E_SYSTEM_ERROR      - some severe basic error
 +--------------------------------------------------------------------------*/
-static int Set_Current_Field(FORM  *form, FIELD *newfield)
+int
+_nc_Set_Current_Field(FORM  *form, FIELD *newfield)
 {
   FIELD  *field;
   WINDOW *new_window;
@@ -1127,7 +1126,7 @@ static int Set_Current_Field(FORM  *form, FIELD *newfield)
 	  (field->opts & O_VISIBLE) &&
 	  (field->form->curpage == field->page))
 	{
-	  Refresh_Current_Field(form);
+	  _nc_Refresh_Current_Field(form);
 	  if (field->opts & O_PUBLIC)
 	    {
 	      if (field->drows > field->rows)
@@ -1198,7 +1197,7 @@ static int Set_Current_Field(FORM  *form, FIELD *newfield)
 |   Function      :  static int IFN_Next_Character(FORM * form)
 |   
 |   Description   :  Move to the next character in the field. In a multiline
-|                    field this wraps and the end of the line.
+|                    field this wraps at the end of the line.
 |
 |   Return Values :  E_OK                - success
 |                    E_REQUEST_DENIED    - at the rightmost position
@@ -1211,7 +1210,17 @@ static int IFN_Next_Character(FORM * form)
     {
       if ((++(form->currow))==field->drows)
 	{
+#if GROW_IF_NAVIGATE
+	  if (!Single_Line_Field(field) && Field_Grown(field,1)) {
+	    form->curcol = 0;
+	    return(E_OK);
+	  }
+#endif
 	  form->currow--;
+#if GROW_IF_NAVIGATE
+	  if (Single_Line_Field(field) && Field_Grown(field,1))
+	    return(E_OK);
+#endif
 	  form->curcol--;
 	  return(E_REQUEST_DENIED);
 	}
@@ -1261,6 +1270,10 @@ static int IFN_Next_Line(FORM * form)
 
   if ((++(form->currow))==field->drows)
     {
+#if GROW_IF_NAVIGATE
+      if (!Single_Line_Field(field) && Field_Grown(field,1))
+	return(E_OK);
+#endif
       form->currow--;
       return(E_REQUEST_DENIED);
     }
@@ -1500,6 +1513,11 @@ static int IFN_Right_Character(FORM * form)
 {
   if ( (++(form->curcol)) == form->current->dcols )
     {
+#if GROW_IF_NAVIGATE
+      FIELD *field = form->current;
+      if (Single_Line_Field(field) && Field_Grown(field,1))
+	return(E_OK);
+#endif
       --(form->curcol);
       return(E_REQUEST_DENIED);
     }
@@ -1542,6 +1560,10 @@ static int IFN_Down_Character(FORM * form)
 
   if ( (++(form->currow)) == field->drows )
     {
+#if GROW_IF_NAVIGATE
+      if (!Single_Line_Field(field) && Field_Grown(field,1))
+	return(E_OK);
+#endif
       --(form->currow);
       return(E_REQUEST_DENIED);
     }
@@ -2025,7 +2047,7 @@ static int Wrapping_Not_Necessary_Or_Wrapping_Ok(FORM * form)
 
   if ( (field->opts & O_WRAP)                     &&  /* wrapping wanted     */
       (!Single_Line_Field(field))                 &&  /* must be multi-line  */
-      (There_Is_No_Room_For_A_Char_In_Line(form)) &&  /* line id full        */
+      (There_Is_No_Room_For_A_Char_In_Line(form)) &&  /* line is full        */
       (!Last_Row || Growable(field))               )  /* there are more lines*/
     {
       char *bp;
@@ -2060,6 +2082,8 @@ static int Wrapping_Not_Necessary_Or_Wrapping_Ok(FORM * form)
 	      return E_OK;
 	    }
 	}
+      else
+	return E_OK;
       if (result!=E_OK)
 	{
 	  wmove(form->w,form->currow,form->curcol);
@@ -2644,14 +2668,15 @@ static bool Check_Field(FIELDTYPE *typ, FIELD *field, TypeArgument *argp)
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform  
-|   Function      :  static bool Internal_Validation(FORM * form )
+|   Function      :  bool _nc_Internal_Validation(FORM * form )
 |   
 |   Description   :  Validate the current field of the form.  
 |
 |   Return Values :  TRUE  - field is valid
 |                    FALSE - field is invalid
 +--------------------------------------------------------------------------*/
-static bool Internal_Validation(FORM *form)
+bool
+_nc_Internal_Validation(FORM *form)
 {
   FIELD *field;
 
@@ -2688,7 +2713,7 @@ static bool Internal_Validation(FORM *form)
 +--------------------------------------------------------------------------*/
 static int FV_Validation(FORM * form)
 {
-  if (Internal_Validation(form))
+  if (_nc_Internal_Validation(form))
     return E_OK;
   else
     return E_INVALID_FIELD;
@@ -2731,7 +2756,7 @@ INLINE static FIELD *Next_Field_On_Page(FIELD * field)
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform  
-|   Function      :  static FIELD * First_Active_Field(FORM * form)
+|   Function      :  FIELD* _nc_First_Active_Field(FORM * form)
 |   
 |   Description   :  Get the first active field on the current page,
 |                    if there are such. If there are none, get the first
@@ -2740,7 +2765,8 @@ INLINE static FIELD *Next_Field_On_Page(FIELD * field)
 |
 |   Return Values :  Pointer to calculated field.
 +--------------------------------------------------------------------------*/
-static FIELD * First_Active_Field(FORM * form)
+FIELD*
+_nc_First_Active_Field(FORM * form)
 {
   FIELD **last_on_page = &form->field[form->page[form->curpage].pmax];
   FIELD *proposed = Next_Field_On_Page(*last_on_page);
@@ -3019,7 +3045,7 @@ static int Inter_Field_Navigation(int (* const fct) (FORM *),FORM *form)
 {
   int res;
 
-  if (!Internal_Validation(form)) 
+  if (!_nc_Internal_Validation(form)) 
     res = E_INVALID_FIELD;
   else
     {
@@ -3041,8 +3067,8 @@ static int Inter_Field_Navigation(int (* const fct) (FORM *),FORM *form)
 +--------------------------------------------------------------------------*/
 static int FN_Next_Field(FORM * form)
 {
-  return Set_Current_Field(form,
-			   Next_Field_On_Page(form->current));
+  return _nc_Set_Current_Field(form,
+			       Next_Field_On_Page(form->current));
 }
 
 /*---------------------------------------------------------------------------
@@ -3057,8 +3083,8 @@ static int FN_Next_Field(FORM * form)
 +--------------------------------------------------------------------------*/
 static int FN_Previous_Field(FORM * form)
 {
-  return Set_Current_Field(form,
-			   Previous_Field_On_Page(form->current));
+  return _nc_Set_Current_Field(form,
+			       Previous_Field_On_Page(form->current));
 }
 
 /*---------------------------------------------------------------------------
@@ -3072,9 +3098,8 @@ static int FN_Previous_Field(FORM * form)
 +--------------------------------------------------------------------------*/
 static int FN_First_Field(FORM * form)
 {
-  return 
-    Set_Current_Field(form,
-       Next_Field_On_Page(form->field[form->page[form->curpage].pmax]));
+  return _nc_Set_Current_Field(form,
+      Next_Field_On_Page(form->field[form->page[form->curpage].pmax]));
 }
 
 /*---------------------------------------------------------------------------
@@ -3089,7 +3114,7 @@ static int FN_First_Field(FORM * form)
 static int FN_Last_Field(FORM * form)
 {
   return 
-    Set_Current_Field(form,
+    _nc_Set_Current_Field(form,
        Previous_Field_On_Page(form->field[form->page[form->curpage].pmin]));
 }
 
@@ -3105,8 +3130,8 @@ static int FN_Last_Field(FORM * form)
 +--------------------------------------------------------------------------*/
 static int FN_Sorted_Next_Field(FORM * form)
 {
-  return Set_Current_Field(form,
-			   Sorted_Next_Field(form->current));
+  return _nc_Set_Current_Field(form,
+			       Sorted_Next_Field(form->current));
 }
 
 /*---------------------------------------------------------------------------
@@ -3121,8 +3146,8 @@ static int FN_Sorted_Next_Field(FORM * form)
 +--------------------------------------------------------------------------*/
 static int FN_Sorted_Previous_Field(FORM * form)
 {
-  return Set_Current_Field(form,
-			   Sorted_Previous_Field(form->current));
+  return _nc_Set_Current_Field(form,
+			       Sorted_Previous_Field(form->current));
 }
 
 /*---------------------------------------------------------------------------
@@ -3137,8 +3162,8 @@ static int FN_Sorted_Previous_Field(FORM * form)
 +--------------------------------------------------------------------------*/
 static int FN_Sorted_First_Field(FORM * form)
 {
-  return Set_Current_Field(form,
-	    Sorted_Next_Field(form->field[form->page[form->curpage].smax]));
+  return _nc_Set_Current_Field(form,
+	      Sorted_Next_Field(form->field[form->page[form->curpage].smax]));
 }
 
 /*---------------------------------------------------------------------------
@@ -3153,7 +3178,7 @@ static int FN_Sorted_First_Field(FORM * form)
 +--------------------------------------------------------------------------*/
 static int FN_Sorted_Last_Field(FORM * form)
 {
-  return Set_Current_Field(form,
+  return _nc_Set_Current_Field(form,
 	   Sorted_Previous_Field(form->field[form->page[form->curpage].smin]));
 }
 
@@ -3169,8 +3194,8 @@ static int FN_Sorted_Last_Field(FORM * form)
 +--------------------------------------------------------------------------*/
 static int FN_Left_Field(FORM * form)
 {
-  return Set_Current_Field(form,
-			   Left_Neighbour_Field(form->current));
+  return _nc_Set_Current_Field(form,
+			       Left_Neighbour_Field(form->current));
 }
 
 /*---------------------------------------------------------------------------
@@ -3185,8 +3210,8 @@ static int FN_Left_Field(FORM * form)
 +--------------------------------------------------------------------------*/
 static int FN_Right_Field(FORM * form)
 {
-  return Set_Current_Field(form,
-			   Right_Neighbour_Field(form->current));
+  return _nc_Set_Current_Field(form,
+			       Right_Neighbour_Field(form->current));
 }
 
 /*---------------------------------------------------------------------------
@@ -3203,8 +3228,8 @@ static int FN_Right_Field(FORM * form)
 +--------------------------------------------------------------------------*/
 static int FN_Up_Field(FORM * form)
 {
-  return Set_Current_Field(form,
-			   Upper_Neighbour_Field(form->current));
+  return _nc_Set_Current_Field(form,
+			       Upper_Neighbour_Field(form->current));
 }
 
 /*---------------------------------------------------------------------------
@@ -3221,8 +3246,8 @@ static int FN_Up_Field(FORM * form)
 +--------------------------------------------------------------------------*/
 static int FN_Down_Field(FORM * form)
 {
-  return Set_Current_Field(form,
-			   Down_Neighbour_Field(form->current));
+  return _nc_Set_Current_Field(form,
+			       Down_Neighbour_Field(form->current));
 }
 /*----------------------------------------------------------------------------
   END of Field Navigation routines 
@@ -3234,9 +3259,9 @@ static int FN_Down_Field(FORM * form)
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform  
-|   Function      :  static int Set_Form_Page(FORM * form,
-|                                             int page,
-|                                             FIELD * field)
+|   Function      :  int _nc_Set_Form_Page(FORM * form,
+|                                          int page,
+|                                          FIELD * field)
 |   
 |   Description   :  Make the given page nr. the current page and make
 |                    the given field the current field on the page. If
@@ -3247,7 +3272,8 @@ static int FN_Down_Field(FORM * form)
 |   Return Values :  E_OK                - success
 |                    != E_OK             - error from subordinate call
 +--------------------------------------------------------------------------*/
-static int Set_Form_Page(FORM * form, int page, FIELD * field)
+int
+_nc_Set_Form_Page(FORM * form, int page, FIELD * field)
 {
   int res = E_OK;
 
@@ -3267,7 +3293,7 @@ static int Set_Form_Page(FORM * form, int page, FIELD * field)
 	} while(field_on_page != last_field);
 
       if (field)
-	res = Set_Current_Field(form,field);
+	res = _nc_Set_Current_Field(form,field);
       else
 	/* N.B.: we don't encapsulate this by Inter_Field_Navigation(),
 	   because this is already executed in a page navigation
@@ -3332,7 +3358,7 @@ static int Page_Navigation(int (* const fct) (FORM *), FORM * form)
 {
   int res;
 
-  if (!Internal_Validation(form)) 
+  if (!_nc_Internal_Validation(form)) 
     res = E_INVALID_FIELD;
   else
     {
@@ -3356,7 +3382,7 @@ static int Page_Navigation(int (* const fct) (FORM *), FORM * form)
 +--------------------------------------------------------------------------*/
 static int PN_Next_Page(FORM * form)
 { 
-  return Set_Form_Page(form,Next_Page_Number(form),(FIELD *)0);
+  return _nc_Set_Form_Page(form,Next_Page_Number(form),(FIELD *)0);
 }
 
 /*---------------------------------------------------------------------------
@@ -3370,7 +3396,7 @@ static int PN_Next_Page(FORM * form)
 +--------------------------------------------------------------------------*/
 static int PN_Previous_Page(FORM * form)
 {
-  return Set_Form_Page(form,Previous_Page_Number(form),(FIELD *)0);
+  return _nc_Set_Form_Page(form,Previous_Page_Number(form),(FIELD *)0);
 }
 
 /*---------------------------------------------------------------------------
@@ -3384,7 +3410,7 @@ static int PN_Previous_Page(FORM * form)
 +--------------------------------------------------------------------------*/
 static int PN_First_Page(FORM * form)
 {
-  return Set_Form_Page(form,0,(FIELD *)0);
+  return _nc_Set_Form_Page(form,0,(FIELD *)0);
 }
 
 /*---------------------------------------------------------------------------
@@ -3398,7 +3424,7 @@ static int PN_First_Page(FORM * form)
 +--------------------------------------------------------------------------*/
 static int PN_Last_Page(FORM * form)
 {
-  return Set_Form_Page(form,form->maxpage-1,(FIELD *)0);
+  return _nc_Set_Form_Page(form,form->maxpage-1,(FIELD *)0);
 }
 /*----------------------------------------------------------------------------
   END of Field Navigation routines 
@@ -3423,7 +3449,6 @@ static int Data_Entry(FORM * form, int c)
 {
   FIELD  *field = form->current;
   int result = E_REQUEST_DENIED;
-  bool End_Of_Field;
 
   if ( (field->opts & O_EDIT) 
 #if FIX_FORM_INACTIVE_BUG
@@ -3457,9 +3482,9 @@ static int Data_Entry(FORM * form, int c)
 
       if ((result=Wrapping_Not_Necessary_Or_Wrapping_Ok(form))==E_OK)
 	{
+	  bool End_Of_Field= (((field->drows-1)==form->currow) &&
+			      ((field->dcols-1)==form->curcol));
 	  form->status |= _WINDOW_MODIFIED;
-	  End_Of_Field= (((field->drows-1)==form->currow) &&
-			 ((field->dcols-1)==form->curcol));
 	  if (End_Of_Field && !Growable(field) && (field->opts & O_AUTOSKIP))
 	    result = Inter_Field_Navigation(FN_Next_Field,form);
 	  else
@@ -3616,7 +3641,7 @@ int form_driver(FORM * form, int  c)
   
   if (c==FIRST_ACTIVE_MAGIC)
     {
-      form->current = First_Active_Field(form);
+      form->current = _nc_First_Active_Field(form);
       return E_OK;
     }
   
@@ -3650,10 +3675,10 @@ int form_driver(FORM * form, int  c)
 	  NULL,                    /* Field Validation is generic         */
 	  NULL                     /* Choice Request is generic           */
 	};
-      int nMethods = (sizeof(Generic_Methods)/sizeof(Generic_Methods[0]));
-      int method   = ((BI->keycode & ID_Mask) >> ID_Shft) & 0xffff;
+      size_t nMethods = (sizeof(Generic_Methods)/sizeof(Generic_Methods[0]));
+      size_t method   = ((BI->keycode & ID_Mask) >> ID_Shft) & 0xffff;
       
-      if ( (method < 0) || (method >= nMethods) || !(BI->cmd) )
+      if ( (method >= nMethods) || !(BI->cmd) )
 	res = E_SYSTEM_ERROR;
       else
 	{
@@ -3672,274 +3697,15 @@ int form_driver(FORM * form, int  c)
 		     (TypeArgument *)(form->current->arg)))
 	res = Data_Entry(form,c);
     }
-  Refresh_Current_Field(form);
+  _nc_Refresh_Current_Field(form);
   RETURN(res);
-}
-
-/*---------------------------------------------------------------------------
-|   Facility      :  libnform  
-|   Function      :  int post_form(FORM * form)
-|   
-|   Description   :  Writes the form into its associated subwindow.
-|
-|   Return Values :  E_OK              - success
-|                    E_BAD_ARGUMENT    - invalid form pointer
-|                    E_POSTED          - form already posted
-|                    E_NOT_CONNECTED   - no fields connected to form
-|                    E_NO_ROOM         - form doesn't fit into subwindow
-|                    E_SYSTEM_ERROR    - system error
-+--------------------------------------------------------------------------*/
-int post_form(FORM * form)
-{
-  WINDOW *formwin;
-  int err;
-  int page;
-
-  if (!form)
-    RETURN(E_BAD_ARGUMENT);
-
-  if (form->status & _POSTED)   
-    RETURN(E_POSTED);
-
-  if (!(form->field))
-    RETURN(E_NOT_CONNECTED);
-  
-  formwin = Get_Form_Window(form);
-  if ((form->cols > getmaxx(formwin)) || (form->rows > getmaxy(formwin))) 
-    RETURN(E_NO_ROOM);
-
-  /* reset form->curpage to an invald value. This forces Set_Form_Page
-     to do the page initialization which is required by post_form.
-  */
-  page = form->curpage;
-  form->curpage = -1;
-  if ((err = Set_Form_Page(form,page,form->current))!=E_OK)
-    RETURN(err);
-
-  form->status |= _POSTED;
-
-  Call_Hook(form,forminit);
-  Call_Hook(form,fieldinit);
-
-  Refresh_Current_Field(form);
-  RETURN(E_OK);
-}
-
-/*---------------------------------------------------------------------------
-|   Facility      :  libnform  
-|   Function      :  int unpost_form(FORM * form)
-|   
-|   Description   :  Erase form from its associated subwindow.
-|
-|   Return Values :  E_OK            - success
-|                    E_BAD_ARGUMENT  - invalid form pointer
-|                    E_NOT_POSTED    - form isn't posted
-|                    E_BAD_STATE     - called from a hook routine
-+--------------------------------------------------------------------------*/
-int unpost_form(FORM * form)
-{
-  if (!form)
-    RETURN(E_BAD_ARGUMENT);
-
-  if (!(form->status & _POSTED)) 
-    RETURN(E_NOT_POSTED);
-
-  if (form->status & _IN_DRIVER) 
-    RETURN(E_BAD_STATE);
-
-  Call_Hook(form,fieldterm);
-  Call_Hook(form,formterm);
-
-  werase(Get_Form_Window(form));
-  delwin(form->w);
-  form->w = (WINDOW *)0;
-  form->status &= ~_POSTED;
-  RETURN(E_OK);
-}
-
-/*---------------------------------------------------------------------------
-|   Facility      :  libnform  
-|   Function      :  int pos_form_cursor(FORM * form)
-|   
-|   Description   :  Moves the form window cursor to the location required
-|                    by the form driver to resume form processing. This may
-|                    be needed after the application calls a curses library
-|                    I/O routine that modifies the cursor position.
-|
-|   Return Values :  E_OK                      - Success
-|                    E_SYSTEM_ERROR            - System error.
-|                    E_BAD_ARGUMENT            - Invalid form pointer
-|                    E_NOT_POSTED              - Form is not posted
-+--------------------------------------------------------------------------*/
-int pos_form_cursor(FORM * form)
-{
-  int res;
-
-  if (!form)
-   res = E_BAD_ARGUMENT;
-  else
-    {
-      if (!(form->status & _POSTED))
-        res = E_NOT_POSTED;
-      else
-	res = Position_Form_Cursor(form);
-    }
-  RETURN(res);
-}
-
-/*---------------------------------------------------------------------------
-|   Facility      :  libnform  
-|   Function      :  int set_current_field(FORM  * form,FIELD * field)
-|   
-|   Description   :  Set the current field of the form to the specified one.
-|
-|   Return Values :  E_OK              - success
-|                    E_BAD_ARGUMENT    - invalid form or field pointer
-|                    E_REQUEST_DENIED  - field not selectable
-|                    E_BAD_STATE       - called from a hook routine
-|                    E_INVALID_FIELD   - current field can't be left
-|                    E_SYSTEM_ERROR    - system error
-+--------------------------------------------------------------------------*/
-int set_current_field(FORM  * form, FIELD * field)
-{
-  int err = E_OK;
-
-  if ( !form || !field )
-    RETURN(E_BAD_ARGUMENT);
-
-  if ( (form != field->form) || Field_Is_Not_Selectable(field) )
-    RETURN(E_REQUEST_DENIED);
-
-  if (!(form->status & _POSTED))
-    {
-      form->current = field;
-      form->curpage = field->page;
-  }
-  else
-    {
-      if (form->status & _IN_DRIVER) 
-	err = E_BAD_STATE;
-      else
-	{
-	  if (form->current != field)
-	    {
-	      if (!Internal_Validation(form)) 
-	       err = E_INVALID_FIELD;
-	      else
-		{
-		  Call_Hook(form,fieldterm);
-		  if (field->page != form->curpage)
-		    {
-		      Call_Hook(form,formterm);
-		      err = Set_Form_Page(form,field->page,field);
-		      Call_Hook(form,forminit);
-		    } 
-		  else 
-		    {
-		      err = Set_Current_Field(form,field);
-		    }
-		  Call_Hook(form,fieldinit);
-		  Refresh_Current_Field(form);
-		}
-	    }
-	}
-    }
-  RETURN(err);
-}
-
-/*---------------------------------------------------------------------------
-|   Facility      :  libnform  
-|   Function      :  FIELD *current_field(const FORM * form)
-|   
-|   Description   :  Return the current field.
-|
-|   Return Values :  Pointer to the current field.
-+--------------------------------------------------------------------------*/
-FIELD *current_field(const FORM * form)
-{
-  return Normalize_Form(form)->current;
-}
-
-/*---------------------------------------------------------------------------
-|   Facility      :  libnform  
-|   Function      :  int field_index(const FIELD * field)
-|   
-|   Description   :  Return the index of the field in the field-array of
-|                    the form.
-|
-|   Return Values :  >= 0   : field index
-|                    -1     : fieldpointer invalid or field not connected
-+--------------------------------------------------------------------------*/
-int field_index(const FIELD * field)
-{
-  return ( (field && field->form) ? field->index : -1 );
-}
-
-/*---------------------------------------------------------------------------
-|   Facility      :  libnform  
-|   Function      :  int set_form_page(FORM * form,int  page)
-|   
-|   Description   :  Set the page number of the form.
-|
-|   Return Values :  E_OK              - success
-|                    E_BAD_ARGUMENT    - invalid form pointer or page number
-|                    E_BAD_STATE       - called from a hook routine
-|                    E_INVALID_FIELD   - current field can't be left
-|                    E_SYSTEM_ERROR    - system error
-+--------------------------------------------------------------------------*/
-int set_form_page(FORM * form, int page)
-{
-  int err = E_OK;
-
-  if ( !form || (page<0) || (page>=form->maxpage) )
-    RETURN(E_BAD_ARGUMENT);
-
-  if (!(form->status & _POSTED))
-    {
-      form->curpage = page;
-      form->current = First_Active_Field(form);
-  }
-  else
-    {
-      if (form->status & _IN_DRIVER) 
-	err = E_BAD_STATE;
-      else
-	{
-	  if (form->curpage != page)
-	    {
-	      if (!Internal_Validation(form)) 
-		err = E_INVALID_FIELD;
-	      else
-		{
-		  Call_Hook(form,fieldterm);
-		  Call_Hook(form,formterm);
-		  err = Set_Form_Page(form,page,(FIELD *)0);
-		  Call_Hook(form,forminit);
-		  Call_Hook(form,fieldinit);
-		  Refresh_Current_Field(form);
-		}
-	    }
-	}
-    }
-  RETURN(err);
-}
-
-/*---------------------------------------------------------------------------
-|   Facility      :  libnform  
-|   Function      :  int form_page(const FORM * form)
-|   
-|   Description   :  Return the current page of the form.
-|
-|   Return Values :  >= 0  : current page number
-|                    -1    : invalid form pointer
-+--------------------------------------------------------------------------*/
-int form_page(const FORM * form)
-{
-  return Normalize_Form(form)->curpage;
 }
 
 /*----------------------------------------------------------------------------
-  Field-Buffer manipulation routines
+  Field-Buffer manipulation routines.
+  The effects of setting a buffer is tightly coupled to the core of the form
+  driver logic. This is especially true in the case of growable fields.
+  So I don't separate this into an own module. 
   --------------------------------------------------------------------------*/
 
 /*---------------------------------------------------------------------------
@@ -4016,14 +3782,19 @@ int set_field_buffer(FIELD * field, int buffer, const char * value)
   for(s=(char *)value; *s && (s < (value+len)); s++)
     p[s-value] = *s;
   if (s < (value+len))
-    p[s-value] = *s++; 
+    {
+      p[s-value] = *s++;
+      s = p + (s-value);
+    }
   else 
     s=(char *)0;
 #endif
 
   if (s) 
     { /* this means, value was null terminated and not greater than the
-	 buffer. We have to pad with blanks */
+	 buffer. We have to pad with blanks. Please note that due to memccpy
+	 logic s points after the terminating null. */
+      s--; /* now we point to the terminator. */
       assert(len >= (unsigned int)(s-p));
       if (len > (unsigned int)(s-p))
 	memset(s,C_BLANK,len-(unsigned int)(s-p));
@@ -4056,252 +3827,6 @@ char *field_buffer(const FIELD * field, int  buffer)
     return Address_Of_Nth_Buffer(field,buffer);
   else
     return (char *)0;
-}
-
-/*----------------------------------------------------------------------------
-  Field-Options manipulation routines
-  --------------------------------------------------------------------------*/
-
-/*---------------------------------------------------------------------------
-|   Facility      :  libnform  
-|   Function      :  int set_field_opts(FIELD *field, Field_Options opts)
-|   
-|   Description   :  Turns on the named options for this field and turns
-|                    off all the remaining options.
-|
-|   Return Values :  E_OK            - success
-|                    E_CURRENT       - the field is the current field
-|                    E_BAD_ARGUMENT  - invalid options
-|                    E_SYSTEM_ERROR  - system error
-+--------------------------------------------------------------------------*/
-int set_field_opts(FIELD * field, Field_Options opts)
-{
-  int res = E_BAD_ARGUMENT;
-  if (!(opts & ~ALL_FIELD_OPTS))
-    res = Synchronize_Options( Normalize_Field(field), opts );
-  RETURN(res);
-}
-
-/*---------------------------------------------------------------------------
-|   Facility      :  libnform  
-|   Function      :  Field_Options field_opts(const FIELD *field)
-|   
-|   Description   :  Retrieve the fields options.
-|
-|   Return Values :  The options.
-+--------------------------------------------------------------------------*/
-Field_Options field_opts(const FIELD * field)
-{
-  return ALL_FIELD_OPTS & Normalize_Field( field )->opts;
-}
-
-/*---------------------------------------------------------------------------
-|   Facility      :  libnform  
-|   Function      :  int field_opts_on(FIELD *field, Field_Options opts)
-|   
-|   Description   :  Turns on the named options for this field and all the 
-|                    remaining options are unchanged.
-|
-|   Return Values :  E_OK            - success
-|                    E_CURRENT       - the field is the current field
-|                    E_BAD_ARGUMENT  - invalid options
-|                    E_SYSTEM_ERROR  - system error
-+--------------------------------------------------------------------------*/
-int field_opts_on(FIELD * field, Field_Options opts)
-{
-  int res = E_BAD_ARGUMENT;
-
-  if (!(opts & ~ALL_FIELD_OPTS))
-    {
-      Normalize_Field( field );
-      res = Synchronize_Options( field, field->opts | opts );
-    }
-  RETURN(res);
-}
-
-/*---------------------------------------------------------------------------
-|   Facility      :  libnform  
-|   Function      :  int field_opts_off(FIELD *field, Field_Options opts)
-|   
-|   Description   :  Turns off the named options for this field and all the 
-|                    remaining options are unchanged.
-|
-|   Return Values :  E_OK            - success
-|                    E_CURRENT       - the field is the current field
-|                    E_BAD_ARGUMENT  - invalid options
-|                    E_SYSTEM_ERROR  - system error
-+--------------------------------------------------------------------------*/
-int field_opts_off(FIELD  * field, Field_Options opts)
-{
-  int res = E_BAD_ARGUMENT;
-
-  if (!(opts & ~ALL_FIELD_OPTS))
-    {
-      Normalize_Field( field );
-      res = Synchronize_Options( field, field->opts & ~opts );
-    }
-  RETURN(res);
-}	
-
-/*----------------------------------------------------------------------------
-  Field-Attribute manipulation routines
-  --------------------------------------------------------------------------*/
-/* "Template" macro to generate a function to set a fields attribute */
-#define GEN_FIELD_ATTR_SET_FCT( name ) \
-int set_field_ ## name (FIELD * field, chtype attr)\
-{\
-   int res = E_BAD_ARGUMENT;\
-   if ( attr==A_NORMAL || ((attr & A_ATTRIBUTES)==attr) )\
-     {\
-       Normalize_Field( field );\
-       if ((field -> name) != attr)\
-         {\
-           field -> name = attr;\
-           res = Synchronize_Attributes( field );\
-         }\
-       else\
-	 res = E_OK;\
-     }\
-   RETURN(res);\
-}
-
-/* "Template" macro to generate a function to get a fields attribute */
-#define GEN_FIELD_ATTR_GET_FCT( name ) \
-chtype field_ ## name (const FIELD * field)\
-{\
-   return ( A_ATTRIBUTES & (Normalize_Field( field ) -> name) );\
-}
-
-/*---------------------------------------------------------------------------
-|   Facility      :  libnform  
-|   Function      :  int set_field_fore(FIELD *field, chtype attr)
-|   
-|   Description   :  Sets the foreground of the field used to display the
-|                    field contents.
-|
-|   Return Values :  E_OK             - success
-|                    E_BAD_ARGUMENT   - invalid attributes
-|                    E_SYSTEM_ERROR   - system error
-+--------------------------------------------------------------------------*/
-GEN_FIELD_ATTR_SET_FCT( fore )
-
-/*---------------------------------------------------------------------------
-|   Facility      :  libnform  
-|   Function      :  chtype field_fore(const FIELD *)
-|   
-|   Description   :  Retrieve fields foreground attribute
-|
-|   Return Values :  The foreground attribute
-+--------------------------------------------------------------------------*/
-GEN_FIELD_ATTR_GET_FCT( fore )
-
-/*---------------------------------------------------------------------------
-|   Facility      :  libnform  
-|   Function      :  int set_field_back(FIELD *field, chtype attr)
-|   
-|   Description   :  Sets the background of the field used to display the
-|                    fields extend.
-|
-|   Return Values :  E_OK             - success
-|                    E_BAD_ARGUMENT   - invalid attributes
-|                    E_SYSTEM_ERROR   - system error
-+--------------------------------------------------------------------------*/
-GEN_FIELD_ATTR_SET_FCT( back )
-
-/*---------------------------------------------------------------------------
-|   Facility      :  libnform
-|   Function      :  chtype field_back(const 
-|   
-|   Description   :  Retrieve fields background attribute
-|
-|   Return Values :  The background attribute
-+--------------------------------------------------------------------------*/
-GEN_FIELD_ATTR_GET_FCT( back )
-
-/*---------------------------------------------------------------------------
-|   Facility      :  libnform  
-|   Function      :  int set_field_pad(FIELD *field, int ch)
-|   
-|   Description   :  Set the pad character used to fill the field. This must
-|                    be a printable character.
-|
-|   Return Values :  E_OK           - success
-|                    E_BAD_ARGUMENT - invalid field pointer or pad character
-|                    E_SYSTEM_ERROR - system error
-+--------------------------------------------------------------------------*/
-int set_field_pad(FIELD  * field, int ch)
-{
-  int res = E_BAD_ARGUMENT;
-
-  Normalize_Field( field );
-  if (isprint((unsigned char)ch))
-    {
-      if (field->pad != ch)
-	{
-	  field->pad = ch;
-	  res = Synchronize_Attributes( field );
-	}
-      else
-	res = E_OK;
-    }
-  RETURN(res);
-}
-
-/*---------------------------------------------------------------------------
-|   Facility      :  libnform  
-|   Function      :  int field_pad(const FIELD *field)
-|   
-|   Description   :  Retrieve the fields pad character.
-|
-|   Return Values :  The pad character.
-+--------------------------------------------------------------------------*/
-int field_pad(const FIELD * field)
-{
-  return Normalize_Field( field )->pad;
-}
-
-/*---------------------------------------------------------------------------
-|   Facility      :  libnform  
-|   Function      :  int set_field_just(FIELD *field, int just)
-|   
-|   Description   :  Set the fields type of justification.
-|
-|   Return Values :  E_OK            - success
-|                    E_BAD_ARGUMENT  - one of the arguments was incorrect
-|                    E_SYSTEM_ERROR  - system error
-+--------------------------------------------------------------------------*/
-int set_field_just(FIELD * field, int just)
-{
-  int res = E_BAD_ARGUMENT;
-
-  if ((just==NO_JUSTIFICATION)  ||
-      (just==JUSTIFY_LEFT)	||
-      (just==JUSTIFY_CENTER)	||
-      (just==JUSTIFY_RIGHT)	)
-    {
-      Normalize_Field( field );
-      if (field->just != just)
-	{
-	  field->just = just;
-	  res = Synchronize_Attributes( field );
-	}
-      else
-	res = E_OK;
-    }
-  RETURN(res);
-}
-
-/*---------------------------------------------------------------------------
-|   Facility      :  libnform  
-|   Function      :  int field_just( const FIELD *field )
-|   
-|   Description   :  Retrieve the fields type of justification
-|
-|   Return Values :  The justification type.
-+--------------------------------------------------------------------------*/
-int field_just(const FIELD * field)
-{
-  return Normalize_Field( field )->just;
 }
 
 /* frm_driver.c ends here */

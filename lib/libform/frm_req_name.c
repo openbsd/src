@@ -1,3 +1,5 @@
+/*	$OpenBSD: frm_req_name.c,v 1.2 1997/12/03 05:40:14 millert Exp $	*/
+
 /*-----------------------------------------------------------------------------+
 |           The ncurses form library is  Copyright (C) 1995-1997               |
 |             by Juergen Pfeifer <Juergen.Pfeifer@T-Online.de>                 |
@@ -27,7 +29,7 @@
 
 #include "form.priv.h"
 
-MODULE_ID("$Id: frm_req_name.c,v 1.1 1997/11/26 04:01:19 millert Exp $")
+MODULE_ID("Id: frm_req_name.c,v 1.4 1997/05/01 16:47:54 juergen Exp $")
 
 static const char *request_names[ MAX_FORM_COMMAND - MIN_FORM_COMMAND + 1 ] = {
   "NEXT_PAGE"	 ,

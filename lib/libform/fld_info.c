@@ -1,4 +1,4 @@
-/*	$OpenBSD: fld_type.c,v 1.3 1997/12/03 05:39:58 millert Exp $	*/
+/*	$OpenBSD: fld_info.c,v 1.1 1997/12/03 05:39:53 millert Exp $	*/
 
 /*-----------------------------------------------------------------------------+
 |           The ncurses form library is  Copyright (C) 1995-1997               |
@@ -24,61 +24,60 @@
 
 #include "form.priv.h"
 
-MODULE_ID("Id: fld_type.c,v 1.6 1997/10/21 13:24:19 juergen Exp $")
+MODULE_ID("Id: fld_info.c,v 1.1 1997/10/21 13:24:19 juergen Exp $")
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform  
-|   Function      :  int set_field_type(FIELD *field, FIELDTYPE *type,...)
+|   Function      :  int field_info(const FIELD *field,
+|                                   int *rows, int *cols,
+|                                   int *frow, int *fcol,
+|                                   int *nrow, int *nbuf)
 |   
-|   Description   :  Associate the specified fieldtype with the field.
-|                    Certain field types take additional arguments. Look
-|                    at the spec of the field types !
+|   Description   :  Retrieve infos about the fields creation parameters.
 |
 |   Return Values :  E_OK           - success
-|                    E_SYSTEM_ERROR - system error
+|                    E_BAD_ARGUMENT - invalid field pointer
 +--------------------------------------------------------------------------*/
-int set_field_type(FIELD *field,FIELDTYPE *type, ...)
+int field_info(const FIELD *field,
+	       int *rows, int *cols, 
+	       int *frow, int *fcol, 
+	       int *nrow, int *nbuf)
 {
-  va_list ap;
-  int res = E_SYSTEM_ERROR;
-  int err = 0;
+  if (!field) 
+    RETURN(E_BAD_ARGUMENT);
 
-  va_start(ap,type);
-
-  Normalize_Field(field);
-  _nc_Free_Type(field);
-
-  field->type = type;
-  field->arg  = (void *)_nc_Make_Argument(field->type,&ap,&err);
-
-  if (err)
-    {
-      _nc_Free_Argument(field->type,(TypeArgument *)(field->arg));
-      field->type = (FIELDTYPE *)0;
-      field->arg  = (void *)0;
-    }
-  else
-    {
-      res = E_OK;
-      if (field->type) 
-	field->type->ref++;
-    }
-
-  va_end(ap);
-  RETURN(res);
+  if (rows) *rows = field->rows;
+  if (cols) *cols = field->cols;
+  if (frow) *frow = field->frow;
+  if (fcol) *fcol = field->fcol;
+  if (nrow) *nrow = field->nrow;
+  if (nbuf) *nbuf = field->nbuf;
+  RETURN(E_OK);
 }
-
+	
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform  
-|   Function      :  FIELDTYPE *field_type(const FIELD *field)
+|   Function      :  int dynamic_field_info(const FIELD *field,
+|                                           int *drows, int *dcols,
+|                                           int *maxgrow)
 |   
-|   Description   :  Retrieve the associated fieldtype for this field.
+|   Description   :  Retrieve informations about a dynamic fields current
+|                    dynamic parameters.
 |
-|   Return Values :  Pointer to fieldtype of NULL if none is defined.
+|   Return Values :  E_OK           - success
+|                    E_BAD_ARGUMENT - invalid argument
 +--------------------------------------------------------------------------*/
-FIELDTYPE *field_type(const FIELD * field)
+int dynamic_field_info(const FIELD *field,
+		       int *drows, int *dcols, int *maxgrow)
 {
-  return Normalize_Field(field)->type;
+  if (!field)
+    RETURN(E_BAD_ARGUMENT);
+
+  if (drows)   *drows   = field->drows;
+  if (dcols)   *dcols   = field->dcols;
+  if (maxgrow) *maxgrow = field->maxgrow;
+
+  RETURN(E_OK);
 }
 
-/* fld_type.c ends here */
+/* fld_info.c ends here */

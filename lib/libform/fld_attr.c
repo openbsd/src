@@ -1,4 +1,4 @@
-/*	$OpenBSD: frm_opts.c,v 1.3 1997/12/03 05:40:13 millert Exp $	*/
+/*	$OpenBSD: fld_attr.c,v 1.1 1997/12/03 05:39:51 millert Exp $	*/
 
 /*-----------------------------------------------------------------------------+
 |           The ncurses form library is  Copyright (C) 1995-1997               |
@@ -21,85 +21,83 @@
 | NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH    |
 | THE USE OR PERFORMANCE OF THIS SOFTWARE.                                     |
 +-----------------------------------------------------------------------------*/
-
 #include "form.priv.h"
 
-MODULE_ID("Id: frm_opts.c,v 1.3 1997/05/01 16:47:54 juergen Exp $")
+MODULE_ID("Id: fld_attr.c,v 1.1 1997/10/21 13:24:19 juergen Exp $")
 
-/*---------------------------------------------------------------------------
-|   Facility      :  libnform  
-|   Function      :  int set_form_opts(FORM *form, Form_Options opts)
-|   
-|   Description   :  Turns on the named options and turns off all the
-|                    remaining options for that form.
-|
-|   Return Values :  E_OK              - success
-|                    E_BAD_ARGUMENT    - invalid options
-+--------------------------------------------------------------------------*/
-int set_form_opts(FORM * form, Form_Options  opts)
-{
-  if (opts & ~ALL_FORM_OPTS)
-    RETURN(E_BAD_ARGUMENT);
-  else
-    {
-      Normalize_Form( form )->opts = opts;
-      RETURN(E_OK);
-    }
+/*----------------------------------------------------------------------------
+  Field-Attribute manipulation routines
+  --------------------------------------------------------------------------*/
+/* "Template" macro to generate a function to set a fields attribute */
+#define GEN_FIELD_ATTR_SET_FCT( name ) \
+int set_field_ ## name (FIELD * field, chtype attr)\
+{\
+   int res = E_BAD_ARGUMENT;\
+   if ( attr==A_NORMAL || ((attr & A_ATTRIBUTES)==attr) )\
+     {\
+       Normalize_Field( field );\
+       if ((field -> name) != attr)\
+         {\
+           field -> name = attr;\
+           res = _nc_Synchronize_Attributes( field );\
+         }\
+       else\
+	 res = E_OK;\
+     }\
+   RETURN(res);\
+}
+
+/* "Template" macro to generate a function to get a fields attribute */
+#define GEN_FIELD_ATTR_GET_FCT( name ) \
+chtype field_ ## name (const FIELD * field)\
+{\
+   return ( A_ATTRIBUTES & (Normalize_Field( field ) -> name) );\
 }
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform  
-|   Function      :  Form_Options form_opts(const FORM *)
+|   Function      :  int set_field_fore(FIELD *field, chtype attr)
 |   
-|   Description   :  Retrieves the current form options.
+|   Description   :  Sets the foreground of the field used to display the
+|                    field contents.
 |
-|   Return Values :  The option flags.
+|   Return Values :  E_OK             - success
+|                    E_BAD_ARGUMENT   - invalid attributes
+|                    E_SYSTEM_ERROR   - system error
 +--------------------------------------------------------------------------*/
-Form_Options form_opts(const FORM * form)
-{
-  return (Normalize_Form(form)->opts & ALL_FORM_OPTS);
-}
+GEN_FIELD_ATTR_SET_FCT( fore )
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform  
-|   Function      :  int form_opts_on(FORM *form, Form_Options opts)
+|   Function      :  chtype field_fore(const FIELD *)
 |   
-|   Description   :  Turns on the named options; no other options are 
-|                    changed.
+|   Description   :  Retrieve fields foreground attribute
 |
-|   Return Values :  E_OK            - success 
-|                    E_BAD_ARGUMENT  - invalid options
+|   Return Values :  The foreground attribute
 +--------------------------------------------------------------------------*/
-int form_opts_on(FORM * form, Form_Options opts)
-{
-  if (opts & ~ALL_FORM_OPTS)
-    RETURN(E_BAD_ARGUMENT);
-  else
-    {
-      Normalize_Form( form )->opts |= opts;	
-      RETURN(E_OK);
-    }
-}
+GEN_FIELD_ATTR_GET_FCT( fore )
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform  
-|   Function      :  int form_opts_off(FORM *form, Form_Options opts)
+|   Function      :  int set_field_back(FIELD *field, chtype attr)
 |   
-|   Description   :  Turns off the named options; no other options are 
-|                    changed.
+|   Description   :  Sets the background of the field used to display the
+|                    fields extend.
 |
-|   Return Values :  E_OK            - success 
-|                    E_BAD_ARGUMENT  - invalid options
+|   Return Values :  E_OK             - success
+|                    E_BAD_ARGUMENT   - invalid attributes
+|                    E_SYSTEM_ERROR   - system error
 +--------------------------------------------------------------------------*/
-int form_opts_off(FORM * form, Form_Options opts)
-{
-  if (opts & ~ALL_FORM_OPTS)
-    RETURN(E_BAD_ARGUMENT);
-  else
-    {
-      Normalize_Form(form)->opts &= ~opts;
-      RETURN(E_OK);
-    }
-}
+GEN_FIELD_ATTR_SET_FCT( back )
 
-/* frm_opts.c ends here */
+/*---------------------------------------------------------------------------
+|   Facility      :  libnform
+|   Function      :  chtype field_back(const 
+|   
+|   Description   :  Retrieve fields background attribute
+|
+|   Return Values :  The background attribute
++--------------------------------------------------------------------------*/
+GEN_FIELD_ATTR_GET_FCT( back )
+
+/* fld_attr.c ends here */

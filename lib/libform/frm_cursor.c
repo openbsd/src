@@ -1,4 +1,4 @@
-/*	$OpenBSD: fld_type.c,v 1.3 1997/12/03 05:39:58 millert Exp $	*/
+/*	$OpenBSD: frm_cursor.c,v 1.1 1997/12/03 05:40:10 millert Exp $	*/
 
 /*-----------------------------------------------------------------------------+
 |           The ncurses form library is  Copyright (C) 1995-1997               |
@@ -21,64 +21,38 @@
 | NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH    |
 | THE USE OR PERFORMANCE OF THIS SOFTWARE.                                     |
 +-----------------------------------------------------------------------------*/
-
 #include "form.priv.h"
 
-MODULE_ID("Id: fld_type.c,v 1.6 1997/10/21 13:24:19 juergen Exp $")
+MODULE_ID("Id: frm_cursor.c,v 1.1 1997/10/21 13:24:19 juergen Exp $")
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform  
-|   Function      :  int set_field_type(FIELD *field, FIELDTYPE *type,...)
+|   Function      :  int pos_form_cursor(FORM * form)
 |   
-|   Description   :  Associate the specified fieldtype with the field.
-|                    Certain field types take additional arguments. Look
-|                    at the spec of the field types !
+|   Description   :  Moves the form window cursor to the location required
+|                    by the form driver to resume form processing. This may
+|                    be needed after the application calls a curses library
+|                    I/O routine that modifies the cursor position.
 |
-|   Return Values :  E_OK           - success
-|                    E_SYSTEM_ERROR - system error
+|   Return Values :  E_OK                      - Success
+|                    E_SYSTEM_ERROR            - System error.
+|                    E_BAD_ARGUMENT            - Invalid form pointer
+|                    E_NOT_POSTED              - Form is not posted
 +--------------------------------------------------------------------------*/
-int set_field_type(FIELD *field,FIELDTYPE *type, ...)
+int pos_form_cursor(FORM * form)
 {
-  va_list ap;
-  int res = E_SYSTEM_ERROR;
-  int err = 0;
+  int res;
 
-  va_start(ap,type);
-
-  Normalize_Field(field);
-  _nc_Free_Type(field);
-
-  field->type = type;
-  field->arg  = (void *)_nc_Make_Argument(field->type,&ap,&err);
-
-  if (err)
-    {
-      _nc_Free_Argument(field->type,(TypeArgument *)(field->arg));
-      field->type = (FIELDTYPE *)0;
-      field->arg  = (void *)0;
-    }
+  if (!form)
+   res = E_BAD_ARGUMENT;
   else
     {
-      res = E_OK;
-      if (field->type) 
-	field->type->ref++;
+      if (!(form->status & _POSTED))
+        res = E_NOT_POSTED;
+      else
+	res = _nc_Position_Form_Cursor(form);
     }
-
-  va_end(ap);
   RETURN(res);
 }
 
-/*---------------------------------------------------------------------------
-|   Facility      :  libnform  
-|   Function      :  FIELDTYPE *field_type(const FIELD *field)
-|   
-|   Description   :  Retrieve the associated fieldtype for this field.
-|
-|   Return Values :  Pointer to fieldtype of NULL if none is defined.
-+--------------------------------------------------------------------------*/
-FIELDTYPE *field_type(const FIELD * field)
-{
-  return Normalize_Field(field)->type;
-}
-
-/* fld_type.c ends here */
+/* frm_cursor.c ends here */

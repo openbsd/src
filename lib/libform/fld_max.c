@@ -1,4 +1,4 @@
-/*	$OpenBSD: fld_type.c,v 1.3 1997/12/03 05:39:58 millert Exp $	*/
+/*	$OpenBSD: fld_max.c,v 1.1 1997/12/03 05:39:55 millert Exp $	*/
 
 /*-----------------------------------------------------------------------------+
 |           The ncurses form library is  Copyright (C) 1995-1997               |
@@ -24,61 +24,43 @@
 
 #include "form.priv.h"
 
-MODULE_ID("Id: fld_type.c,v 1.6 1997/10/21 13:24:19 juergen Exp $")
+MODULE_ID("Id: fld_max.c,v 1.1 1997/10/21 13:24:19 juergen Exp $")
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform  
-|   Function      :  int set_field_type(FIELD *field, FIELDTYPE *type,...)
+|   Function      :  int set_max_field(FIELD *field, int maxgrow)
 |   
-|   Description   :  Associate the specified fieldtype with the field.
-|                    Certain field types take additional arguments. Look
-|                    at the spec of the field types !
+|   Description   :  Set the maximum growth for a dynamic field. If maxgrow=0
+|                    the field may grow to any possible size.
 |
 |   Return Values :  E_OK           - success
-|                    E_SYSTEM_ERROR - system error
+|                    E_BAD_ARGUMENT - invalid argument
 +--------------------------------------------------------------------------*/
-int set_field_type(FIELD *field,FIELDTYPE *type, ...)
+int set_max_field(FIELD *field, int maxgrow)
 {
-  va_list ap;
-  int res = E_SYSTEM_ERROR;
-  int err = 0;
-
-  va_start(ap,type);
-
-  Normalize_Field(field);
-  _nc_Free_Type(field);
-
-  field->type = type;
-  field->arg  = (void *)_nc_Make_Argument(field->type,&ap,&err);
-
-  if (err)
-    {
-      _nc_Free_Argument(field->type,(TypeArgument *)(field->arg));
-      field->type = (FIELDTYPE *)0;
-      field->arg  = (void *)0;
-    }
+  if (!field || (maxgrow<0))
+    RETURN(E_BAD_ARGUMENT);
   else
     {
-      res = E_OK;
-      if (field->type) 
-	field->type->ref++;
+      bool single_line_field = Single_Line_Field(field);
+
+      if (maxgrow>0)
+	{
+	  if (( single_line_field && (maxgrow < field->dcols)) ||
+	      (!single_line_field && (maxgrow < field->drows)))
+	    RETURN(E_BAD_ARGUMENT);
+	}
+      field->maxgrow = maxgrow;
+      field->status &= ~_MAY_GROW;
+      if (!(field->opts & O_STATIC))
+	{
+	  if ((maxgrow==0) ||
+	      ( single_line_field && (field->dcols < maxgrow)) ||
+	      (!single_line_field && (field->drows < maxgrow)))
+	    field->status |= _MAY_GROW;
+	}
     }
-
-  va_end(ap);
-  RETURN(res);
+  RETURN(E_OK);
 }
-
-/*---------------------------------------------------------------------------
-|   Facility      :  libnform  
-|   Function      :  FIELDTYPE *field_type(const FIELD *field)
-|   
-|   Description   :  Retrieve the associated fieldtype for this field.
-|
-|   Return Values :  Pointer to fieldtype of NULL if none is defined.
-+--------------------------------------------------------------------------*/
-FIELDTYPE *field_type(const FIELD * field)
-{
-  return Normalize_Field(field)->type;
-}
-
-/* fld_type.c ends here */
+		  
+/* fld_max.c ends here */

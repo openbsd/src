@@ -1,3 +1,5 @@
+/*	$OpenBSD: frm_def.c,v 1.3 1997/12/03 05:40:11 millert Exp $	*/
+
 /*-----------------------------------------------------------------------------+
 |           The ncurses form library is  Copyright (C) 1995-1997               |
 |             by Juergen Pfeifer <Juergen.Pfeifer@T-Online.de>                 |
@@ -22,7 +24,7 @@
 
 #include "form.priv.h"
 
-MODULE_ID("Id: frm_def.c,v 1.4 1997/05/01 16:47:54 juergen Exp $")
+MODULE_ID("Id: frm_def.c,v 1.6 1997/10/21 13:24:19 juergen Exp $")
 
 /* this can't be readonly */
 static FORM default_form = {
@@ -109,23 +111,24 @@ static FIELD *Insert_Field_By_Position(FIELD *newfield, FIELD *head)
 +--------------------------------------------------------------------------*/
 static void Disconnect_Fields( FORM * form )
 {
-  FIELD **fields;
-  
-  assert(form && form->field);
-
-  for(fields=form->field;*fields;fields++)
+  if (form->field)
     {
-      if (form == (*fields)->form) 
-	(*fields)->form = (FORM *)0;
-    }
-  
-  form->rows = form->cols = 0;
-  form->maxfield = form->maxpage = -1;
-  form->field = (FIELD **)0;
-  if (form->page) 
-    free(form->page);
-  form->page = (_PAGE *)0;
-}	
+      FIELD **fields;
+
+      for(fields=form->field;*fields;fields++)
+	{
+	  if (form == (*fields)->form) 
+	    (*fields)->form = (FORM *)0;
+	}
+      
+      form->rows = form->cols = 0;
+      form->maxfield = form->maxpage = -1;
+      form->field = (FIELD **)0;
+      if (form->page) 
+	free(form->page);
+      form->page = (_PAGE *)0;
+    }	
+}
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform  
@@ -360,32 +363,6 @@ FIELD **form_fields(const FORM * form)
 int field_count(const FORM * form)
 {
   return (Normalize_Form( form )->maxfield);
-}
-
-/*---------------------------------------------------------------------------
-|   Facility      :  libnform  
-|   Function      :  int scale_form( const FORM *form, int *rows, int *cols )
-|   
-|   Description   :  Retrieve size of form
-|
-|   Return Values :  E_OK              - no error
-|                    E_BAD_ARGUMENT    - invalid form pointer
-|                    E_NOT_CONNECTED   - no fields connected to form
-+--------------------------------------------------------------------------*/
-int scale_form(const FORM * form, int * rows, int * cols)
-{
-  if ( !form )
-    RETURN(E_BAD_ARGUMENT);
-
-  if ( !(form->field) )
-    RETURN(E_NOT_CONNECTED);
-  
-  if (rows) 
-    *rows = form->rows;
-  if (cols) 
-    *cols = form->cols;
-  
-  RETURN(E_OK);
 }
 
 /* frm_def.c ends here */

@@ -1,3 +1,5 @@
+/*	$OpenBSD: fty_alpha.c,v 1.3 1997/12/03 05:40:17 millert Exp $	*/
+
 
 /*
  * THIS CODE IS SPECIFICALLY EXEMPTED FROM THE NCURSES PACKAGE COPYRIGHT.
@@ -13,7 +15,7 @@
 
 #include "form.priv.h"
 
-MODULE_ID("Id: fty_alpha.c,v 1.6 1997/02/15 17:31:08 tom Exp $")
+MODULE_ID("Id: fty_alpha.c,v 1.7 1997/10/18 19:33:38 tom Exp $")
 
 typedef struct {
   int width;
@@ -48,13 +50,13 @@ static void *Make_Alpha_Type(va_list * ap)
 static void *Copy_Alpha_Type(const void * argp)
 {
   const alphaARG *ap = (const alphaARG *)argp;
-  alphaARG *new = (alphaARG *)malloc(sizeof(alphaARG));
+  alphaARG *result = (alphaARG *)malloc(sizeof(alphaARG));
   
-  if (new)
+  if (result)
     {
-      *new = *ap;
+      *result = *ap;
     }
-  return ((void *)new);
+  return ((void *)result);
 }
 
 /*---------------------------------------------------------------------------

@@ -1,3 +1,5 @@
+/*	$OpenBSD: fty_int.c,v 1.3 1997/12/03 05:40:18 millert Exp $	*/
+
 
 /*
  * THIS CODE IS SPECIFICALLY EXEMPTED FROM THE NCURSES PACKAGE COPYRIGHT.
@@ -13,7 +15,7 @@
 
 #include "form.priv.h"
 
-MODULE_ID("Id: fty_int.c,v 1.7 1997/04/19 15:22:40 juergen Exp $")
+MODULE_ID("Id: fty_int.c,v 1.8 1997/10/18 19:32:50 tom Exp $")
 
 typedef struct {
   int precision;
@@ -53,15 +55,15 @@ static void *Make_Integer_Type(va_list * ap)
 static void *Copy_Integer_Type(const void * argp)
 {
   const integerARG *ap = (const integerARG *)argp;
-  integerARG *new = (integerARG *)0;
+  integerARG *result = (integerARG *)0;
 
   if (argp)
     {
-      new = (integerARG *)malloc(sizeof(integerARG));
-      if (new)
-	*new = *ap;
+      result = (integerARG *)malloc(sizeof(integerARG));
+      if (result)
+	*result = *ap;
     }
-  return (void *)new;
+  return (void *)result;
 }
 
 /*---------------------------------------------------------------------------
