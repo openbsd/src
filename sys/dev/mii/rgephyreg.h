@@ -1,4 +1,4 @@
-/*	$OpenBSD: rgephyreg.h,v 1.1 2004/06/05 05:49:29 pvalchev Exp $	*/
+/*	$OpenBSD: rgephyreg.h,v 1.2 2004/10/28 23:37:11 pvalchev Exp $	*/
 /*
  * Copyright (c) 2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -30,7 +30,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD$
+ * $FreeBSD: rgephyreg.h,v 1.1 2003/09/11 03:53:46 wpaul Exp $
  */
 
 #ifndef _DEV_MII_RGEPHYREG_H_

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rgephy.c,v 1.4 2004/09/27 18:25:48 brad Exp $	*/
+/*	$OpenBSD: rgephy.c,v 1.5 2004/10/28 23:37:11 pvalchev Exp $	*/
 /*
  * Copyright (c) 2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -29,6 +29,8 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * $FreeBSD: rgephy.c,v 1.5 2004/05/30 17:57:40 phk Exp $
  */
 
 /*
