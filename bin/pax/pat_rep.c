@@ -1,4 +1,4 @@
-/*	$OpenBSD: pat_rep.c,v 1.22 2002/10/16 19:20:02 millert Exp $	*/
+/*	$OpenBSD: pat_rep.c,v 1.23 2002/11/29 20:15:43 deraadt Exp $	*/
 /*	$NetBSD: pat_rep.c,v 1.4 1995/03/21 09:07:33 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static const char sccsid[] = "@(#)pat_rep.c	8.2 (Berkeley) 4/18/94";
 #else
-static const char rcsid[] = "$OpenBSD: pat_rep.c,v 1.22 2002/10/16 19:20:02 millert Exp $";
+static const char rcsid[] = "$OpenBSD: pat_rep.c,v 1.23 2002/11/29 20:15:43 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -400,7 +400,7 @@ pat_sel(ARCHD *arcn)
 		/*
 		 * should never happen....
 		 */
-		paxwarn(1, "Pattern list inconsistant");
+		paxwarn(1, "Pattern list inconsistent");
 		return(-1);
 	}
 	*ppt = pt->fow;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: indent.c,v 1.12 2002/03/16 00:18:19 vincent Exp $	*/
+/*	$OpenBSD: indent.c,v 1.13 2002/11/29 20:15:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -47,7 +47,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";*/
-static char rcsid[] = "$OpenBSD: indent.c,v 1.12 2002/03/16 00:18:19 vincent Exp $";
+static char rcsid[] = "$OpenBSD: indent.c,v 1.13 2002/11/29 20:15:43 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1112,7 +1112,7 @@ check_type:
 		     */
 		    if (match_state[ifdef_level].tos >= 0
 			  && bcmp(&ps, &match_state[ifdef_level], sizeof ps))
-			diag(0, "Syntactically inconsistant #ifdef alternatives.");
+			diag(0, "Syntactically inconsistent #ifdef alternatives.");
 #endif
 		}
 		if (blanklines_around_conditional_compilation) {

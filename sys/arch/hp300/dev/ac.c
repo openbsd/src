@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac.c,v 1.10 2002/05/30 11:03:52 art Exp $	*/
+/*	$OpenBSD: ac.c,v 1.11 2002/11/29 20:15:43 deraadt Exp $	*/
 /*	$NetBSD: ac.c,v 1.9 1997/04/02 22:37:21 scottr Exp $	*/
 
 /*
@@ -506,7 +506,7 @@ acconvert(sbuf, dbuf, ne)
 		}
 #ifdef DEBUG
 		if (ne < 0 || bcount < 0)
-			panic("acconvert: inconsistant");
+			panic("acconvert: inconsistent");
 #endif
 	}
 }
