@@ -1,4 +1,4 @@
-/* $OpenBSD: spc.c,v 1.6 2004/08/25 20:57:38 miod Exp $ */
+/* $OpenBSD: spc.c,v 1.7 2004/08/25 21:00:37 miod Exp $ */
 /* $NetBSD: spc.c,v 1.2 2003/11/17 14:37:59 tsutsui Exp $ */
 
 /*
@@ -84,6 +84,9 @@ struct cfdriver spc_cd = {
 	NULL, "spc", DV_DULL
 };
 
+/* cf_flags */
+#define	SPC_NODMA	0x01
+
 int
 spc_dio_match(struct device *parent, void *vcf, void *aux)
 {
@@ -140,8 +143,10 @@ spc_dio_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_initiator = id;
 
-	sc->sc_dma_start = spc_dio_dmastart;
-	sc->sc_dma_done  = spc_dio_dmadone;
+	if ((sc->sc_dev.dv_cfdata->cf_flags & SPC_NODMA) == 0) {
+		sc->sc_dma_start = spc_dio_dmastart;
+		sc->sc_dma_done  = spc_dio_dmadone;
+	}
 	sc->sc_reset = spc_dio_reset;
 
 	dsc->sc_dq.dq_softc = dsc;

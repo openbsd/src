@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.31 2004/08/03 21:46:54 miod Exp $
+#	$OpenBSD: GENERIC,v 1.32 2004/08/25 21:00:37 miod Exp $
 #	$NetBSD: GENERIC,v 1.23 1997/01/31 06:12:57 thorpej Exp $
 #
 # Generic kernel - one size fits all.
@@ -110,7 +110,7 @@ ct*		at hpibbus? slave ? punit ?	# HP-IB cartridge tapes
 mt*		at hpibbus? slave ? punit ?	# HP-IB 9-track tape
 ppi0		at hpibbus0 slave 5 punit 0	# HP-IB plotter
 
-spc*		at dio? scode ?		# SCSI controller
+spc*		at dio? scode ? flags 0x00	# SCSI controller
 scsibus*	at spc?
 
 sd*		at scsibus? target ? lun ?	# SCSI disks
