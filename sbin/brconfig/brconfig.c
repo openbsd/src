@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.25 2003/06/02 18:44:35 jason Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.26 2003/06/25 09:44:55 henning Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1155,6 +1155,8 @@ bridge_showrule(struct ifbrlreq *r, char *delim)
 		printf(" src %s", ether_ntoa(&r->ifbr_src));
 	if (r->ifbr_flags & BRL_FLAG_DSTVALID)
 		printf(" dst %s", ether_ntoa(&r->ifbr_dst));
+	if (r->ifbr_tagname[0])
+		printf(" tag %s", r->ifbr_tagname);
 
 	printf("\n");
 }
@@ -1177,6 +1179,7 @@ bridge_rule(int s, char *brdg, int targc, char **targv, int ln)
 		fprintf(stderr, "invalid rule\n");
 		return (EX_USAGE);
 	}
+	rule.ifbr_tagname[0] = 0;
 	rule.ifbr_flags = 0;
 	rule.ifbr_action = 0;
 	strlcpy(rule.ifbr_name, brdg, sizeof(rule.ifbr_name));
@@ -1223,6 +1226,21 @@ bridge_rule(int s, char *brdg, int targc, char **targv, int ln)
 				goto bad_rule;
 			rule.ifbr_flags |= BRL_FLAG_SRCVALID;
 			dea = &rule.ifbr_src;
+		} else if (strcmp(argv[0], "tag") == 0) {
+			if (argc < 2) {
+				fprintf(stderr, "missing tag name\n");
+				goto bad_rule;
+			}
+			if (rule.ifbr_tagname[0]) {
+				fprintf(stderr, "tag already defined\n");
+				goto bad_rule;
+			}
+			if (strlcpy(rule.ifbr_tagname, argv[1],
+			    PF_TAG_NAME_SIZE) > PF_TAG_NAME_SIZE) {
+				fprintf(stderr, "tag name too long\n");
+				goto bad_rule;
+			}
+			dea = NULL;
 		} else
 			goto bad_rule;
 
@@ -1230,12 +1248,14 @@ bridge_rule(int s, char *brdg, int targc, char **targv, int ln)
 
 		if (argc == 0)
 			goto bad_rule;
-		ea = ether_aton(argv[0]);
-		if (ea == NULL) {
-			warnx("Invalid address: %s", argv[0]);
-			return (EX_USAGE);
+		if (dea != NULL) {
+			ea = ether_aton(argv[0]);
+			if (ea == NULL) {
+				warnx("Invalid address: %s", argv[0]);
+				return (EX_USAGE);
+			}
+			bcopy(ea, dea, sizeof(*dea));
 		}
-		bcopy(ea, dea, sizeof(*dea));
 		argc--; argv++;
 	}
 
