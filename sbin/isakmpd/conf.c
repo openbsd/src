@@ -1,5 +1,5 @@
-/*	$OpenBSD: conf.c,v 1.6 1999/02/26 03:34:26 niklas Exp $	*/
-/*	$EOM: conf.c,v 1.14 1999/02/25 11:38:47 niklas Exp $	*/
+/*	$OpenBSD: conf.c,v 1.7 1999/03/02 15:35:12 niklas Exp $	*/
+/*	$EOM: conf.c,v 1.15 1999/03/02 15:33:33 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -35,7 +35,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/queue.h>
 #include <sys/stat.h>

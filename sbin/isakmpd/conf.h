@@ -1,5 +1,5 @@
-/*	$OpenBSD: conf.h,v 1.5 1999/02/26 03:34:55 niklas Exp $	*/
-/*	$EOM: conf.h,v 1.6 1999/02/25 11:09:32 niklas Exp $	*/
+/*	$OpenBSD: conf.h,v 1.6 1999/03/02 15:35:12 niklas Exp $	*/
+/*	$EOM: conf.h,v 1.7 1999/03/02 15:33:19 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -37,6 +37,7 @@
 #ifndef _CONF_H_
 #define _CONF_H_
 
+#include <sys/types.h>
 #include <sys/queue.h>
 #include <stdio.h>
 
