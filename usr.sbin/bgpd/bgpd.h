@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.24 2003/12/25 14:28:49 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.25 2003/12/25 17:07:24 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #ifndef __BGPD_H__
-#define __BGPD_H__
+#define	__BGPD_H__
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -28,19 +28,20 @@
 
 #define	BGP_VERSION			4
 #define	BGP_PORT			179
-#define CONFFILE			"/etc/bgpd.conf"
+#define	CONFFILE			"/etc/bgpd.conf"
 #define	BGPD_USER			"_bgpd"
-#define PEER_DESCR_LEN			32
+#define	PEER_DESCR_LEN			32
 
 #define	MAX_PKTSIZE			4096
 #define	MIN_HOLDTIME			3
 #define	READ_BUF_SIZE			65535
+#define	RT_BUF_SIZE			16384
 
-#define BGPD_OPT_VERBOSE		0x0001
-#define BGPD_OPT_VERBOSE2		0x0002
-#define BGPD_OPT_NOACTION		0x0004
+#define	BGPD_OPT_VERBOSE		0x0001
+#define	BGPD_OPT_VERBOSE2		0x0002
+#define	BGPD_OPT_NOACTION		0x0004
 
-#define BGPD_FLAG_NO_FIB_UPDATE		0x0001
+#define	BGPD_FLAG_NO_FIB_UPDATE		0x0001
 
 enum {
 	PROC_MAIN,
@@ -143,7 +144,7 @@ struct peer {
 	struct peer		*next;
 };
 
-#define MRT_FILE_LEN	512
+#define	MRT_FILE_LEN	512
 enum mrtdump_type {
 	MRT_NONE,
 	MRT_TABLE_DUMP
@@ -181,7 +182,7 @@ struct mrtdump_config {
 /* ipc messages */
 
 #define	IMSG_HEADER_SIZE	sizeof(struct imsg_hdr)
-#define MAX_IMSGSIZE		8192
+#define	MAX_IMSGSIZE		8192
 
 struct imsg_readbuf {
 	u_char			 buf[MAX_IMSGSIZE];
@@ -301,5 +302,6 @@ int	kroute_init(void);
 int	kroute_change(int, struct kroute *);
 int	kroute_delete(int, struct kroute *);
 void	kroute_shutdown(int);
+void	kroute_dispatch_msg(int);
 
 #endif /* __BGPD_H__ */

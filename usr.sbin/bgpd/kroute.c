@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.18 2003/12/25 16:21:50 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.19 2003/12/25 17:07:24 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -52,6 +52,7 @@ RB_PROTOTYPE(kroute_tree, kroute_node, entry, kroute_compare);
 RB_GENERATE(kroute_tree, kroute_node, entry, kroute_compare);
 
 u_int32_t		rtseq = 1;
+pid_t			pid;
 
 #define	F_BGPD_INSERTED		0x0001
 #define F_KERNEL		0x0002
@@ -67,6 +68,8 @@ kroute_init(void)
 	/* not intrested in my own messages */
 	if (setsockopt(s, SOL_SOCKET, SO_USELOOPBACK, &opt, sizeof(opt)) == -1)
 		fatal("route setsockopt", errno);
+
+	pid = getpid();
 
 	RB_INIT(&krt);
 
@@ -175,11 +178,8 @@ kroute_delete(int fd, struct kroute *kroute)
 	s.r.prefix = kroute->prefix;
 	s.r.prefixlen = kroute->prefixlen;
 
-	if ((kr = RB_FIND(kroute_tree, &krt, &s)) == NULL) {
-		/* at the moment this is totally valid... */
-		log_kroute(LOG_CRIT, "kroute_delete: no match for", kroute);
+	if ((kr = RB_FIND(kroute_tree, &krt, &s)) == NULL)
 		return (0);
-	}
 
 	if (!(kr->flags & F_BGPD_INSERTED))
 		return (0);
@@ -322,4 +322,95 @@ kroute_fetchtable(void)
 	}
 	free(buf);
 	return (0);
+}
+
+void
+kroute_dispatch_msg(int fd)
+{
+	char			 buf[RT_BUF_SIZE];
+	ssize_t			 n;
+	char			*next, *lim;
+	struct rt_msghdr	*rtm;
+	struct sockaddr		*sa, *rti_info[RTAX_MAX];
+	struct sockaddr_in	*sa_in;
+	struct kroute_node	*kr, s;
+	in_addr_t		 nexthop;
+
+	if ((n = read(fd, &buf, sizeof(buf))) == -1)
+		fatal("read error on routing socket", errno);
+	if (n == 0)
+		fatal("routing socket closed", 0);
+
+	lim = buf + n;
+	for (next = buf; next < lim; next += rtm->rtm_msglen) {
+		rtm = (struct rt_msghdr *)next;
+		sa = (struct sockaddr *)(rtm + 1);
+		get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
+
+		if ((sa_in = (struct sockaddr_in *)rti_info[RTAX_DST]) == NULL)
+			continue;
+
+		if (rtm->rtm_flags & RTF_LLINFO)	/* arp cache */
+			continue;
+
+		if (rtm->rtm_pid == pid)		/* cause by us */
+			continue;
+
+		if (rtm->rtm_errno)			/* failed attempts... */
+			continue;
+
+		s.r.prefix = sa_in->sin_addr.s_addr;
+		if ((sa_in = (struct sockaddr_in *)rti_info[RTAX_NETMASK]) !=
+		    NULL) {
+			s.r.prefixlen =
+			    mask2prefixlen(sa_in->sin_addr.s_addr);
+		} else if (rtm->rtm_flags & RTF_HOST)
+			s.r.prefixlen = 32;
+		else
+			s.r.prefixlen = prefixlen_classful(s.r.prefix);
+
+		if ((sa_in = (struct sockaddr_in *)rti_info[RTAX_GATEWAY]) !=
+		    NULL)
+			nexthop = sa_in->sin_addr.s_addr;
+		else
+			nexthop = 0;
+
+		switch (rtm->rtm_type) {
+		case RTM_ADD:
+		case RTM_CHANGE:
+			if (nexthop == 0)
+				fatal("nexthop is 0 in kroute_dispatch!", 0);
+
+			if ((kr = RB_FIND(kroute_tree, &krt, &s)) != NULL) {
+				if (kr->flags & F_KERNEL)
+					kr->r.nexthop = nexthop;
+			} else {
+				if ((kr = calloc(1,
+				   sizeof(struct kroute_node))) == NULL)
+					fatal(NULL, errno);
+				kr->r.prefix = s.r.prefix;
+				kr->r.prefixlen = s.r.prefixlen;
+				kr->r.nexthop = nexthop;
+				kr->flags = F_KERNEL;
+
+				if (RB_INSERT(kroute_tree, &krt, kr) != NULL) {
+					logit(LOG_CRIT, "RB_INSERT failed!");
+					continue;
+				}
+			}
+			break;
+		case RTM_DELETE:
+			if ((kr = RB_FIND(kroute_tree, &krt, &s)) == NULL)
+				continue;
+			if (!(kr->flags & F_KERNEL))
+				continue;
+			RB_REMOVE(kroute_tree, &krt, kr);
+			free(kr);
+			break;
+		default:
+			/* ingnore for now */
+			break;
+		}
+
+	}
 }

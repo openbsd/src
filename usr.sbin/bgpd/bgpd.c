@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.28 2003/12/25 02:24:26 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.29 2003/12/25 17:07:24 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -82,7 +82,8 @@ usage(void)
 #define POLL_MAX		8
 #define PFD_PIPE_SESSION	0
 #define PFD_PIPE_ROUTE		1
-#define PFD_MRT_START		2
+#define PFD_SOCK_ROUTE		2
+#define PFD_MRT_START		3
 
 int
 main(int argc, char *argv[])
@@ -203,6 +204,8 @@ main(int argc, char *argv[])
 		pfd[PFD_PIPE_ROUTE].events = POLLIN;
 		if (ibuf_rde.w.queued)
 			pfd[PFD_PIPE_ROUTE].events |= POLLOUT;
+		pfd[PFD_SOCK_ROUTE].fd = rfd;
+		pfd[PFD_SOCK_ROUTE].events = POLLIN;
 		i = PFD_MRT_START;
 		LIST_FOREACH(mconf, &mrtconf, list)
 			if (mconf->msgbuf.queued > 0) {
@@ -211,7 +214,7 @@ main(int argc, char *argv[])
 				mrt[i++] = mconf;
 			}
 
-		if ((nfds = poll(pfd, 2, INFTIM)) == -1)
+		if ((nfds = poll(pfd, i, INFTIM)) == -1)
 			if (errno != EINTR)
 				fatal("poll error", errno);
 
@@ -231,6 +234,11 @@ main(int argc, char *argv[])
 		if (nfds > 0 && pfd[PFD_PIPE_ROUTE].revents & POLLIN) {
 			nfds--;
 			dispatch_imsg(&ibuf_rde, PFD_PIPE_ROUTE, &mrtconf);
+		}
+
+		if (nfds > 0 && pfd[PFD_SOCK_ROUTE].revents & POLLIN) {
+			nfds--;
+			kroute_dispatch_msg(rfd);
 		}
 
 		for (j = PFD_MRT_START; j < i && nfds > 0 ; j++) {
