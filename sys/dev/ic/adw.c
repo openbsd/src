@@ -1,4 +1,4 @@
-/*	$OpenBSD: adw.c,v 1.24 2001/11/06 19:53:18 miod Exp $ */
+/*	$OpenBSD: adw.c,v 1.25 2001/11/11 21:59:19 krw Exp $ */
 /* $NetBSD: adw.c,v 1.23 2000/05/27 18:24:50 dante Exp $	 */
 
 /*
@@ -1233,32 +1233,32 @@ NO_ERROR:
 		switch (scsiq->host_status) {
 		case QHSTA_NO_ERROR:
 			switch (scsiq->scsi_status) {
-			case SCSI_STATUS_CONDITION_MET:
-			case SCSI_STATUS_INTERMID:
-			case SCSI_STATUS_INTERMID_COND_MET:
+			case SCSI_COND_MET:
+			case SCSI_INTERM:
+			case SCSI_INTERM_COND_MET:
 				/*
 				 * These non-zero status values are 
 				 * not really error conditions.
 				 *
 				 * XXX - would it be too paranoid to 
-				 *       add SCSI_STATUS_GOOD here in
+				 *       add SCSI_OK here in
 				 *       case the docs are wrong re
 				 *       QD_NO_ERROR?
 				 */
 				goto NO_ERROR;
 
-			case SCSI_STATUS_CHECK_CONDITION:
-			case SCSI_STATUS_CMD_TERMINATED:
-			case SCSI_STATUS_ACA_ACTIVE:
+			case SCSI_CHECK:
+			case SCSI_TERMINATED:
+			case SCSI_ACA_ACTIVE:
 				s1 = &ccb->scsi_sense;
 				s2 = &xs->sense;
 				*s2 = *s1;
 				xs->error = XS_SENSE;
 				break;
 
-			case SCSI_STATUS_TARGET_BUSY:
-			case SCSI_STATUS_QUEUE_FULL:
-			case SCSI_STATUS_RSERV_CONFLICT:
+			case SCSI_BUSY:
+			case SCSI_QUEUE_FULL:
+			case SCSI_RESV_CONFLICT:
 				sc->sc_freeze_dev[scsiq->target_id] = 1;
 				xs->error = XS_BUSY;
 				break;

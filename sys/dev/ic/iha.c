@@ -1,4 +1,4 @@
-/*	$OpenBSD: iha.c,v 1.11 2001/11/05 17:25:58 art Exp $ */
+/*	$OpenBSD: iha.c,v 1.12 2001/11/11 21:59:19 krw Exp $ */
 /*
  * Initio INI-9xxxU/UW SCSI Device Driver
  *
@@ -864,7 +864,7 @@ iha_scsi_label:
 		while ((pScb = iha_pop_done_scb(sc)) != NULL) {
 
 			switch (pScb->SCB_TaStat) {
-			case SCSI_CMD_TERMINATED:
+			case SCSI_TERMINATED:
 			case SCSI_ACA_ACTIVE:
 			case SCSI_CHECK:
 				pScb->SCB_Tcs->TCS_Flags &= 
@@ -2417,20 +2417,20 @@ iha_done_scb(sc, pScb)
 		case HOST_OK:
 			switch (pScb->SCB_TaStat) {
 			case SCSI_OK:
-			case SCSI_CONDITION_MET:
+			case SCSI_COND_MET:
 			case SCSI_INTERM:
 			case SCSI_INTERM_COND_MET:
 				xs->resid = pScb->SCB_BufLen;
 				xs->error = XS_NOERROR;
 				break;
 
-			case SCSI_RSERV_CONFLICT:
+			case SCSI_RESV_CONFLICT:
 			case SCSI_BUSY:
 			case SCSI_QUEUE_FULL:
 				xs->error = XS_BUSY;
 				break;
 
-			case SCSI_CMD_TERMINATED:
+			case SCSI_TERMINATED:
 			case SCSI_ACA_ACTIVE:
 			case SCSI_CHECK:
 				s1 = &pScb->SCB_ScsiSenseData;

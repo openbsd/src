@@ -1,4 +1,4 @@
-/*	$OpenBSD: adwlib.h,v 1.8 2001/04/06 04:42:06 csapuntz Exp $ */
+/*	$OpenBSD: adwlib.h,v 1.9 2001/11/11 21:59:19 krw Exp $ */
 /*      $NetBSD: adwlib.h,v 1.14 2000/07/03 18:14:18 dante Exp $        */
 
 /*
@@ -872,21 +872,6 @@ typedef struct adw_scsi_req_q {
 #define QHSTA_M_INVALID_DEVICE      0x45 /* Bad target ID */
 #define QHSTA_M_FROZEN_TIDQ         0x46 /* TID Queue frozen. */
 #define QHSTA_M_SGBACKUP_ERROR      0x47 /* Scatter-Gather backup error */
-
-/*
- * ADW_SCSI_REQ_Q 'scsi_status' return values.
- */
-#define SCSI_STATUS_GOOD		0x00
-#define SCSI_STATUS_CHECK_CONDITION	0x02
-#define SCSI_STATUS_CONDITION_MET	0x04
-#define SCSI_STATUS_TARGET_BUSY		0x08
-#define SCSI_STATUS_INTERMID		0x10
-#define SCSI_STATUS_INTERMID_COND_MET	0x14
-#define SCSI_STATUS_RSERV_CONFLICT	0x18
-#define SCSI_STATUS_CMD_TERMINATED	0x22
-#define SCSI_STATUS_QUEUE_FULL		0x28
-#define SCSI_STATUS_ACA_ACTIVE		0x30
-
 
 /*
  * Microcode idle loop commands

@@ -1,4 +1,4 @@
-/*	$OpenBSD: iha.h,v 1.8 2001/11/05 17:25:58 art Exp $ */
+/*	$OpenBSD: iha.h,v 1.9 2001/11/11 21:59:19 krw Exp $ */
 /*
  * Initio INI-9xxxU/UW SCSI Device Driver
  *
@@ -47,12 +47,6 @@
 #define IHA_MAX_TARGETS		16
 #define IHA_MAX_SCB		32
 #define IHA_MAX_EXTENDED_MSG	 4 /* SDTR(3) and WDTR(4) only */
-
-#define SCSI_CONDITION_MET    0x04 /* SCSI Status codes not defined */
-#define SCSI_INTERM_COND_MET  0x14 /*     in scsi_all.h             */
-#define SCSI_RSERV_CONFLICT   0x18
-#define SCSI_CMD_TERMINATED   0x22
-#define SCSI_ACA_ACTIVE	      0x30
 
 /*
  *   Scatter-Gather Element Structure
