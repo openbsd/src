@@ -1,4 +1,4 @@
-/*	$OpenBSD: nubus.c,v 1.9 1997/03/12 13:15:58 briggs Exp $	*/
+/*	$OpenBSD: nubus.c,v 1.10 1997/04/08 04:14:46 briggs Exp $	*/
 /*	$NetBSD: nubus.c,v 1.32 1997/02/28 07:54:02 scottr Exp $	*/
 
 /*
@@ -108,6 +108,7 @@ nubus_attach(parent, self, aux)
 	nubus_dir dir;
 	nubus_dirent dirent;
 	nubus_type slottype;
+	u_long entry;
 	int i, rsrcid;
 
   	printf("\n");
@@ -116,13 +117,54 @@ nubus_attach(parent, self, aux)
 		if (probe_slot(i, &fmtblock) <= 0)
 			continue;
 
-		if ((rsrcid = nubus_video_resource(i)) == (-1))
-			rsrcid = 0x80;
+		rsrcid = 0x80;
 
 		nubus_get_main_dir(&fmtblock, &dir);
 
-		if (nubus_find_rsrc(&fmtblock, &dir, rsrcid, &dirent) <= 0)
-			continue;
+		/*
+		 * Get the resource for the first function on the card.
+		 * This is assumed to be at resource ID 0x80.  If we can
+		 * not find this entry (as we can not on some video cards),
+		 * check to see if we can get a different ID from the list
+		 * of video resources given to us by the booter.  If that
+		 * doesn't work either, take the first resource following
+		 * the board resource.
+		 */
+		if (nubus_find_rsrc(&fmtblock, &dir, rsrcid, &dirent) <= 0) {
+			if ((rsrcid = nubus_video_resource(i)) == -1) {
+				/*
+				 * Since nubus_find_rsrc failed, the directory
+				 * is back at its base.
+				 */
+				entry = dir.curr_ent;
+
+				/*
+				 * All nubus cards should have a board
+				 * resource, but be sure that's what it
+				 * is before we skip it.
+				 */
+				rsrcid = GetByte(&fmtblock, entry);
+				if (rsrcid == 0x1)
+					entry =
+					    IncPtr(&fmtblock, dir.curr_ent, 4);
+
+				rsrcid = GetByte(&fmtblock, entry);
+#ifdef DEBUG
+				if (nubus_debug & NDB_FOLLOW)
+					printf("\tUsing rsrc 0x%x.\n", rsrcid);
+#endif
+				if (rsrcid == 0xff)
+					continue;	/* end of chain */
+			}
+			/*
+			 * Try to find the resource passed by the booter
+			 * or the one we just tracked down.
+			 */
+			if (nubus_find_rsrc(&fmtblock, &dir,
+					    rsrcid, &dirent) <= 0) {
+				continue;
+			}
+		}
 
 		nubus_get_dir_from_rsrc(&fmtblock, &dirent, &dir);
 
@@ -133,6 +175,35 @@ nubus_attach(parent, self, aux)
 		if (nubus_get_ind_data(&fmtblock, &dirent,
 		    (caddr_t) &slottype, sizeof(nubus_type)) <= 0)
 			continue;
+
+		/*
+		 * If this is a display card, try to pull out the correct
+		 * display mode as passed by the booter.
+		 */
+		if (slottype.category == NUBUS_CATEGORY_DISPLAY) {
+			int	r;
+
+			if ((r = nubus_video_resource(i)) != -1) {
+
+				nubus_get_main_dir(&fmtblock, &dir);
+
+				if (nubus_find_rsrc(&fmtblock, &dir,
+						    r, &dirent) <= 0)
+					continue;
+
+				nubus_get_dir_from_rsrc(&fmtblock,
+							&dirent, &dir);
+
+				if (nubus_find_rsrc(&fmtblock, &dir,
+						NUBUS_RSRC_TYPE, &dirent) <= 0)
+					continue;
+
+				if (nubus_get_ind_data(&fmtblock, &dirent,
+						(caddr_t) &slottype,
+						sizeof(nubus_type)) <= 0)
+					continue;
+			}
+		}
 
 		na_args.slot = i;
 		na_args.rsrcid = rsrcid;

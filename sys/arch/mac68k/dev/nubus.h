@@ -1,4 +1,4 @@
-/*	$OpenBSD: nubus.h,v 1.9 1997/04/01 13:52:34 briggs Exp $	*/
+/*	$OpenBSD: nubus.h,v 1.10 1997/04/08 04:14:47 briggs Exp $	*/
 /*	$NetBSD: nubus.h,v 1.17 1997/02/24 06:20:07 scottr Exp $	*/
 
 /*
@@ -72,8 +72,9 @@
 #define   NUBUS_DRSW_FOCUS	0x011A
 #define    NUBUS_DRHW_INTERLAN	0x0100
 #define    NUBUS_DRHW_KINETICS	0x0106
-#define    NUBUS_DRHW_SONIC	0x0110
 #define    NUBUS_DRHW_CABLETRON	0x0109
+#define    NUBUS_DRHW_SONIC	0x0110
+#define    NUBUS_DRHW_APPLE_SN	0x0119
 
 #define NUBUS_CATEGORY_COMMUNICATIONS	0x0006
 #define  NUBUS_TYPE_RS232	0x0002
