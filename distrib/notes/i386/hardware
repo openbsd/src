@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.109 2003/03/15 23:06:44 grange Exp $
+dnl	$OpenBSD: hardware,v 1.110 2003/03/18 23:55:21 mickey Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PC's and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -568,18 +568,52 @@ Supported hardware {:-include-:}:
 		    Intel i8255x-based, including:
 			Intel PRO/100 CardBus II
 		    NE2000-based, including:
-			Accton EN2216
+			Accton EN2212, EN2216
+			Allied Telesis LA-PCM
 			AmbiCom AMB8002T
-			D-Link DE-650, DE-660
+			Arowana FE
+			Belkin F5D5020
+			Billionton Systems LNT-10TN
+			CNet NE2000
+			Compex Linkport ENET-B
+			Corega PCC-T, PCC-TD, EtherII PCC-T,
+			Corega FastEther PCC-T, FastEther PCC-TX
+			Corega FastEther PCC-TXD, FastEther PCC-TXF
+			D-Link DE-650, DE-660, DE-660+, DFE-670TXD
+			Dayna CommuniCard E
+			Digital DEPCM-XX
+			Dual NE2000
+			Edimax NE2000
 			Genius ME 3000II SE
+			Grey Cell GCS2000 Gold II
+			GVC NIC-2000p, NP0335
 			Hawking PN650TX
+			I-O DATA PCLA, PCLA/TE
 			IC-Card
 			Kingston KNE-PC2
-			Linksys PCMPC100, EC2T Combo
+			Linksys PCMPC100, EC2T Combo, EthernetCard
+			Linksys Combo EthernetCard, Trust Combo EthernetCard
+			Linksys Etherfast 10/100
+			MACNICA ME1 for JEIDA
+			Melco LPC3-TX
+			National Semiconductor InfoMover
 			NDC Instant-Link
-			Netgear FA410TX
+			Netgear FA410TX, FA410TXC, FA411
 			Network Everywhere NP10T
 			New Media LiveWire 10/100
+			Planet SmartCom 2000
+			Planex FNW-3600-T, FNW-3700-T
+			Premax PE-200
+			RPTI EP-400, EP-401
+			Seiko Epson EN10B
+			SMC EZCard, 8041
+			Socket Communications LP-CF, LP-E
+			SVEC PN650TX, ComboCard, LANCard
+			Synergy S21810
+			Tamarack NE2000
+			Telecom Device TCD-HPC100
+			Wisecom T210CT, iPort
+			Xircom CFE-10
 		    RealTek 81[23]9-based, including:
 			Accton MPX5030 CardBus
 			Corega FEther CB-TXD 10/100 Ethernet
