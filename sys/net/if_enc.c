@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_enc.c,v 1.9 1998/06/28 18:49:40 deraadt Exp $	*/
+/*	$OpenBSD: if_enc.c,v 1.10 1999/05/16 21:35:54 niklas Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -92,7 +92,7 @@ encattach(int nenc)
 	sprintf(enc_softc.if_xname, "enc0");
 	enc_softc.if_list.tqe_next = NULL;
 	enc_softc.if_mtu = ENCMTU;
-	enc_softc.if_flags = IFF_LOOPBACK;
+	enc_softc.if_flags = 0;
 	enc_softc.if_type = IFT_ENC;
 	enc_softc.if_ioctl = encioctl;
 	enc_softc.if_output = encoutput;
