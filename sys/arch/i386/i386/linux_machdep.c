@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_machdep.c,v 1.14 2000/03/28 06:35:57 jasoni Exp $	*/
+/*	$OpenBSD: linux_machdep.c,v 1.15 2001/04/07 21:31:24 tholo Exp $	*/
 /*	$NetBSD: linux_machdep.c,v 1.29 1996/05/03 19:42:11 christos Exp $	*/
 
 /*
@@ -72,8 +72,13 @@
 /*
  * To see whether pcvt is configured (for virtual console ioctl calls).
  */
+#include "wsdisplay.h"
 #include "vt.h"
-#if NVT > 0
+#if NWSDISPLAY > 0 && defined(WSDISPLAY_COMPAT_USL)
+#include <sys/ioctl.h>
+#include <dev/wscons/wsconsio.h>
+#include <dev/wscons/wsdisplay_usl_io.h>
+#elif NVT > 0
 #include <arch/i386/isa/pcvt/pcvt_ioctl.h>
 #endif
 
@@ -445,7 +450,7 @@ linux_machdepioctl(p, v, retval)
 	} */ *uap = v;
 	struct sys_ioctl_args bia;
 	u_long com;
-#if NVT > 0
+#if (NWSDISPLAY > 0 && defined(WSDISPLAY_COMPAT_USL)) || NVT > 0
 	int error;
 	struct vt_mode lvt;
 	caddr_t bvtp, sg;
@@ -456,7 +461,7 @@ linux_machdepioctl(p, v, retval)
 	com = SCARG(uap, com);
 
 	switch (com) {
-#if NVT > 0
+#if (NWSDISPLAY > 0 && defined(WSDISPLAY_COMPAT_USL)) || NVT > 0
 	case LINUX_KDGKBMODE:
 		com = KDGKBMODE;
 		break;
@@ -465,11 +470,22 @@ linux_machdepioctl(p, v, retval)
 		if ((unsigned)SCARG(uap, data) == LINUX_K_MEDIUMRAW)
 			SCARG(&bia, data) = (caddr_t)K_RAW;
 		break;
+	case LINUX_KIOCSOUND:
+		SCARG(&bia, data) =
+			(caddr_t)(((unsigned long)SCARG(&bia, data)) & 0xffff);
+		/* fall through */
 	case LINUX_KDMKTONE:
 		com = KDMKTONE;
 		break;
 	case LINUX_KDSETMODE:
 		com = KDSETMODE;
+		break;
+	case LINUX_KDGETMODE:
+#if NWSDISPLAY > 0 && defined(WSDISPLAY_COMPAT_USL)
+		com = WSDISPLAYIO_GMODE;
+#else
+		com = KDGETMODE;
+#endif
 		break;
 	case LINUX_KDENABIO:
 		com = KDENABIO;
@@ -512,6 +528,9 @@ linux_machdepioctl(p, v, retval)
 			return error;
 		SCARG(&bia, data) = bvtp;
 		break;
+	case LINUX_VT_DISALLOCATE:
+		/* XXX should use WSDISPLAYIO_DELSCREEN */
+		return 0;
 	case LINUX_VT_RELDISP:
 		com = VT_RELDISP;
 		break;
@@ -521,6 +540,12 @@ linux_machdepioctl(p, v, retval)
 	case LINUX_VT_WAITACTIVE:
 		com = VT_WAITACTIVE;
 		break;
+	case LINUX_VT_GETSTATE:
+		com = VT_GETSTATE;
+		break;
+	case LINUX_KDGKBTYPE:
+		/* This is what Linux does */
+		return (subyte(SCARG(uap, data), KB_101));
 #endif
 	default:
 		printf("linux_machdepioctl: invalid ioctl %08lx\n", com);
