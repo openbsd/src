@@ -1,4 +1,4 @@
-/*	$OpenBSD: more.c,v 1.11 2003/05/28 19:11:34 mickey Exp $	*/
+/*	$OpenBSD: more.c,v 1.12 2003/05/28 19:25:18 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1980 The Regents of the University of California.
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)more.c	5.28 (Berkeley) 3/1/93";
 #else
-static const char rcsid[] = "$OpenBSD: more.c,v 1.11 2003/05/28 19:11:34 mickey Exp $";
+static const char rcsid[] = "$OpenBSD: more.c,v 1.12 2003/05/28 19:25:18 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -150,7 +150,7 @@ int		ulglitch;	/* terminal has underline mode glitch */
 int		pstate = 0;	/* current UL state */
 
 struct {
-    long chrctr, line;
+	long chrctr, line;
 } context, screen_start;
 
 extern char	PC;		/* pad character (termcap) */
@@ -581,11 +581,14 @@ screen(FILE *f, int num_lines)
 void
 onquit(int dummy)
 {
+	int save_errno = errno;
+
 	signal(SIGQUIT, SIG_IGN);
 	if (!inwait) {
 		putchar('\n');
 		if (!startup) {
 			signal(SIGQUIT, onquit);
+			errno = save_errno;
 			siglongjmp(restore, 1);
 		} else
 			Pause++;
@@ -595,6 +598,7 @@ onquit(int dummy)
 		notell = 0;
 	}
 	signal(SIGQUIT, onquit);
+	errno = save_errno;
 }
 
 /*
@@ -603,6 +607,7 @@ onquit(int dummy)
 void
 chgwinsz(int dummy)
 {
+	int save_errno = errno;
 	struct winsize win;
 
 	(void)signal(SIGWINCH, SIG_IGN);
@@ -618,6 +623,7 @@ chgwinsz(int dummy)
 			Mcol = win.ws_col;
 	}
 	(void)signal(SIGWINCH, chgwinsz);
+	errno = save_errno;
 }
 
 /*
@@ -751,7 +757,7 @@ getline(FILE *f, int *length)
 							break;
 					}
 					if (column >= promptlen)
-					     promptlen = 0;
+						promptlen = 0;
 				}
 			} else
 				column = 1 + (column | 7);
@@ -1542,11 +1548,11 @@ readch(void)
 	/* We know stderr is hooked up to /dev/tty so this is safe. */
 	if (read(STDERR_FILENO, &ch, 1) <= 0) {
 		if (errno != EINTR)
-                        end_it(0);
-                else
-                        ch = otty.c_cc[VKILL];
+			end_it(0);
+		else
+			ch = otty.c_cc[VKILL];
 	}
-        return (ch);
+	return (ch);
 }
 
 static char BS = '\b';
@@ -1766,30 +1772,32 @@ rdline(FILE *f)
 void
 onsusp(int dummy)
 {
-    sigset_t mask, omask;
+	int save_errno = errno;
+	sigset_t mask, omask;
 
-    /* ignore SIGTTOU so we don't get stopped if csh grabs the tty */
-    signal(SIGTTOU, SIG_IGN);
-    reset_tty();
-    fflush(stdout);
-    signal(SIGTTOU, SIG_DFL);
-    /* Send the TSTP signal to suspend our process group */
-    signal(SIGTSTP, SIG_DFL);
+	/* ignore SIGTTOU so we don't get stopped if csh grabs the tty */
+	signal(SIGTTOU, SIG_IGN);
+	reset_tty();
+	fflush(stdout);
+	signal(SIGTTOU, SIG_DFL);
+	/* Send the TSTP signal to suspend our process group */
+	signal(SIGTSTP, SIG_DFL);
 
-    /* unblock SIGTSTP or we won't be able to suspend ourself */
-    sigemptyset(&mask);
-    sigaddset(&mask, SIGTSTP);
-    sigprocmask(SIG_UNBLOCK, &mask, &omask);
+	/* unblock SIGTSTP or we won't be able to suspend ourself */
+	sigemptyset(&mask);
+	sigaddset(&mask, SIGTSTP);
+	sigprocmask(SIG_UNBLOCK, &mask, &omask);
 
-    kill(0, SIGTSTP);
-    /* Pause for station break */
+	kill(0, SIGTSTP);
+	/* Pause for station break */
 
-    /* We're back */
-    sigprocmask(SIG_SETMASK, &omask, NULL);
-    signal(SIGTSTP, onsusp);
-    set_tty();
-    if (inwait)
-	    siglongjmp(restore, 1);
+	/* We're back */
+	sigprocmask(SIG_SETMASK, &omask, NULL);
+	signal(SIGTSTP, onsusp);
+	set_tty();
+	errno = save_errno;
+	if (inwait)
+		siglongjmp(restore, 1);
 }
 
 __dead void
