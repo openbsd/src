@@ -1,4 +1,4 @@
-/*	$OpenBSD: afssys.c,v 1.9 1999/03/04 21:56:35 art Exp $	*/
+/*	$OpenBSD: afssys.c,v 1.10 1999/03/19 10:43:33 art Exp $	*/
 /*	$KTH: afssys.c,v 1.57 1998/05/09 17:19:03 joda Exp $	*/
 
 /*
@@ -89,5 +89,11 @@ k_hasafs(void)
 
     bzero(&parms, sizeof(struct ViceIoctl));
 
-    return !k_pioctl(NULL, VIOCSETTOK, &parms, 0);
+    k_pioctl(NULL, VIOCSETTOK, &parms, 0);
+
+    /*
+     * An ENOSYS means failure. Anything else is success (including EINVAL).
+     */
+
+    return errno != ENOSYS;
 }
