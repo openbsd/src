@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.49 2002/04/07 23:23:49 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.50 2002/04/08 18:31:27 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.49 2002/04/07 23:23:49 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.50 2002/04/08 18:31:27 mickey Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -436,15 +436,16 @@ wi_rxeof(sc)
 	eh = mtod(m, struct ether_header *);
 	m->m_pkthdr.rcvif = ifp;
 
-	if (rx_frame.wi_status == WI_STAT_MGMT &&  
+	if (rx_frame.wi_status == htole16(WI_STAT_MGMT) &&  
 	    sc->wi_ptype == WI_PORTTYPE_AP) {
 
-		if ((WI_802_11_OFFSET_RAW + rx_frame.wi_dat_len + 2) >
-		    MCLBYTES) {
+		u_int16_t rxlen = letoh16(rx_frame.wi_dat_len);
+
+		if ((WI_802_11_OFFSET_RAW + rxlen + 2) > MCLBYTES) {
 			printf("%s: oversized mgmt packet received in "
 			    "hostap mode (wi_dat_len=%d, wi_status=0x%x)\n",
 			    sc->sc_dev.dv_xname,
-			    rx_frame.wi_dat_len, rx_frame.wi_status);
+			    rxlen, letoh16(rx_frame.wi_status));
 			m_freem(m);
 			ifp->if_ierrors++;  
 			return;
@@ -453,8 +454,7 @@ wi_rxeof(sc)
 		/* Put the whole header in there. */
 		bcopy(&rx_frame, mtod(m, void *), sizeof(struct wi_frame));
 		if (wi_read_data(sc, id, WI_802_11_OFFSET_RAW,
-		    mtod(m, caddr_t) + WI_802_11_OFFSET_RAW,
-		    rx_frame.wi_dat_len + 2)) {
+		    mtod(m, caddr_t) + WI_802_11_OFFSET_RAW, rxlen + 2)) {
 			m_freem(m);
 			if (sc->arpcom.ac_if.if_flags & IFF_DEBUG)
 				printf("wihap: failed to copy header\n");
@@ -462,8 +462,7 @@ wi_rxeof(sc)
 			return;
 		}
 
-		m->m_pkthdr.len = m->m_len =
-		    WI_802_11_OFFSET_RAW + rx_frame.wi_dat_len;
+		m->m_pkthdr.len = m->m_len = WI_802_11_OFFSET_RAW + rxlen;
 
 		/* XXX: consider giving packet to bhp? */
 
@@ -1775,7 +1774,7 @@ nextpkt:
 		bcopy((char *)&eh->ether_shost,
 		    (char *)&tx_frame.wi_src_addr, ETHER_ADDR_LEN);
 
-		tx_frame.wi_dat_len = htole16(m0->m_pkthdr.len - WI_SNAPHDR_LEN);
+		tx_frame.wi_dat_len = m0->m_pkthdr.len - WI_SNAPHDR_LEN;
 		tx_frame.wi_dat[0] = htons(WI_SNAP_WORD0);
 		tx_frame.wi_dat[1] = htons(WI_SNAP_WORD1);
 		tx_frame.wi_len = htons(m0->m_pkthdr.len - WI_SNAPHDR_LEN);
@@ -1796,6 +1795,7 @@ nextpkt:
 			tx_frame.wi_dat_len += IEEE80211_WEP_IVLEN +
 			    IEEE80211_WEP_KIDLEN + IEEE80211_WEP_CRCLEN;
 
+			tx_frame.wi_dat_len = htole16(tx_frame.wi_dat_len);
 			wi_write_data(sc, id, 0, (caddr_t)&tx_frame,
 			    sizeof(struct wi_frame));
 			wi_write_data(sc, id, WI_802_11_OFFSET_RAW,
@@ -1807,6 +1807,7 @@ nextpkt:
 			    m0->m_pkthdr.len - sizeof(struct ether_header),
 			    (caddr_t)&sc->wi_txbuf);
 
+			tx_frame.wi_dat_len = htole16(tx_frame.wi_dat_len);
 			wi_write_data(sc, id, 0, (caddr_t)&tx_frame,
 			    sizeof(struct wi_frame));
 			wi_write_data(sc, id, WI_802_11_OFFSET,
@@ -1885,6 +1886,7 @@ wi_mgmt_xmit(sc, data, len)
 	tx_frame.wi_dat_len = len - sizeof(struct wi_80211_hdr);
 	tx_frame.wi_len = htole16(tx_frame.wi_dat_len);
 
+	tx_frame.wi_dat_len = htole16(tx_frame.wi_dat_len);
 	wi_write_data(sc, id, 0, (caddr_t)&tx_frame, sizeof(struct wi_frame));
 	wi_write_data(sc, id, WI_802_11_OFFSET_RAW, dptr,
 	    (len - sizeof(struct wi_80211_hdr)) + 2);
@@ -2008,7 +2010,7 @@ wi_get_id(sc)
 			sc->sc_firmware_type = WI_INTERSIL;
 			break;
 		default:
-			if (letoh16(ver.wi_ver[0]) & 0x8000) {
+			if (ver.wi_ver[0] & htole16(0x8000)) {
 				p = "Unknown PRISM2 chip";
 				sc->sc_firmware_type = WI_INTERSIL;
 			} else {

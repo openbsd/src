@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_hostap.c,v 1.9 2002/04/07 23:23:49 millert Exp $	*/
+/*	$OpenBSD: if_wi_hostap.c,v 1.10 2002/04/08 18:31:27 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002
@@ -626,7 +626,8 @@ wihap_assoc_req(struct wi_softc *sc, struct wi_frame *rxfrm,
 	    rates, sizeof(rates)))<0)
 		return;
 
-	if ((rxfrm->wi_frame_ctl & WI_FCTL_STYPE) == WI_STYPE_MGMT_REASREQ) {
+	if ((rxfrm->wi_frame_ctl & htole16(WI_FCTL_STYPE)) ==
+	    htole16(WI_STYPE_MGMT_REASREQ)) {
 		/* Reassociation Request-- * Current AP.  (Ignore?) */
 		if (len < 6)
 			return;
@@ -702,7 +703,7 @@ fail:
 	/* Send response. */
 	resp_hdr = (struct wi_80211_hdr *) sc->wi_txbuf;
 	bzero(resp_hdr, sizeof(struct wi_80211_hdr));
-	resp_hdr->frame_ctl = WI_FTYPE_MGMT | WI_STYPE_MGMT_ASRESP;
+	resp_hdr->frame_ctl = htole16(WI_FTYPE_MGMT | WI_STYPE_MGMT_ASRESP);
 	pkt = sc->wi_txbuf + sizeof(struct wi_80211_hdr);
 
 	bcopy(rxfrm->wi_addr2, resp_hdr->addr1, ETHER_ADDR_LEN);
@@ -712,10 +713,10 @@ fail:
 	put_hword(&pkt, capinfo);
 	put_hword(&pkt, status);
 	put_hword(&pkt, asid);
-	rates_len=put_rates(&pkt, sc->wi_supprates);
+	rates_len = put_rates(&pkt, sc->wi_supprates);
 
 	wi_mgmt_xmit(sc, sc->wi_txbuf,
-	    8 + rates_len+sizeof(struct wi_80211_hdr));
+	    8 + rates_len + sizeof(struct wi_80211_hdr));
 }
 
 /* wihap_deauth_req()
@@ -790,9 +791,10 @@ wihap_disassoc_req(struct wi_softc *sc, struct wi_frame *rxfrm,
 static __inline void
 wihap_debug_frame_type(struct wi_frame *rxfrm)
 {
-	printf("wihap_mgmt_input: len=%d ", rxfrm->wi_dat_len);
+	printf("wihap_mgmt_input: len=%d ", letoh16(rxfrm->wi_dat_len));
 
-	if ((letoh16(rxfrm->wi_frame_ctl) & WI_FCTL_FTYPE) == WI_FTYPE_MGMT) {
+	if ((rxfrm->wi_frame_ctl & htole16(WI_FCTL_FTYPE)) ==
+	    htole16(WI_FTYPE_MGMT)) {
 
 		printf("MGMT: ");
 
@@ -861,7 +863,8 @@ wihap_mgmt_input(struct wi_softc *sc, struct wi_frame *rxfrm, struct mbuf *m)
 	pkt = mtod(m, caddr_t) + WI_802_11_OFFSET_RAW;
 	len = m->m_len - WI_802_11_OFFSET_RAW;
 
-	if ((rxfrm->wi_frame_ctl & WI_FCTL_FTYPE) == WI_FTYPE_MGMT) {
+	if ((rxfrm->wi_frame_ctl & htole16(WI_FCTL_FTYPE)) ==
+	    htole16(WI_FTYPE_MGMT)) {
 
 		/* any of the following will mess w/ the station list */
 		s = splsoftclock();
@@ -970,7 +973,7 @@ wihap_data_input(struct wi_softc *sc, struct wi_frame *rxfrm, struct mbuf *m)
 	int			mcast, s;
 
 	/* TODS flag must be set. */
-	if (!(letoh16(rxfrm->wi_frame_ctl) & WI_FCTL_TODS)) {
+	if (!(rxfrm->wi_frame_ctl & htole16(WI_FCTL_TODS))) {
 		if (ifp->if_flags & IFF_DEBUG)
 			printf("wihap_data_input: no TODS src=%s\n",
 			    ether_sprintf(rxfrm->wi_addr2));
@@ -1003,7 +1006,7 @@ wihap_data_input(struct wi_softc *sc, struct wi_frame *rxfrm, struct mbuf *m)
 	}
 
 	timeout_add(&sta->tmo, hz * whi->inactivity_time);
-	sta->sig_info = rxfrm->wi_q_info;
+	sta->sig_info = letoh16(rxfrm->wi_q_info);
 
 	splx(s);
 
