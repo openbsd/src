@@ -1,10 +1,10 @@
-/*	$OpenBSD: exchange.c,v 1.65 2002/06/01 07:44:21 deraadt Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.66 2002/06/07 19:53:19 ho Exp $	*/
 /*	$EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.  All rights reserved.
  * Copyright (c) 1999, 2001 Angelos D. Keromytis.  All rights reserved.
- * Copyright (c) 1999, 2000 Håkan Olsson.  All rights reserved.
+ * Copyright (c) 1999, 2000, 2002 Håkan Olsson.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -715,6 +715,21 @@ exchange_add_finalization (struct exchange *exchange,
   exchange->finalize_arg = node;
 }
 
+static void
+exchange_establish_transaction (struct exchange *exchange, void *arg, int fail)
+{
+  /* Establish a TRANSACTION exchange.  */
+  struct exchange_finalization_node *node
+    = (struct exchange_finalization_node *)arg;
+  struct sa *isakmp_sa = sa_lookup_by_name ((char *)node->second_arg, 1);
+
+  if (isakmp_sa && !fail)
+    exchange_establish_p2 (isakmp_sa, ISAKMP_EXCH_TRANSACTION, 0, 0,
+			   node->first, node->first_arg);
+
+  free (node);
+}
+
 /* Establish a phase 1 exchange.  */
 void
 exchange_establish_p1 (struct transport *t, u_int8_t type, u_int32_t doi,
@@ -724,6 +739,8 @@ exchange_establish_p1 (struct transport *t, u_int8_t type, u_int32_t doi,
 {
   struct exchange *exchange;
   struct message *msg;
+  struct conf_list *flags;
+  struct conf_list_node *flag;
   char *tag = 0;
   char *str;
 
@@ -805,8 +822,39 @@ exchange_establish_p1 (struct transport *t, u_int8_t type, u_int32_t doi,
   if (!exchange->policy && name)
     exchange->policy = conf_get_str ("Phase 1", "Default");
 
-  exchange->finalize = finalize;
-  exchange->finalize_arg = arg;
+  if (name)
+    {
+      flags = conf_get_list (name, "Flags");
+      if (flags)
+	{
+	  for (flag = TAILQ_FIRST (&flags->fields); flag;
+	       flag = TAILQ_NEXT (flag, link))
+	    if (strcasecmp (flag->field, "ikecfg") == 0)
+	      {
+		struct exchange_finalization_node *node;
+
+		node = calloc (1, (unsigned long)sizeof *node);
+		if (!node)
+		  {
+		    log_print ("exchange_establish_p1: calloc (1, %lu) failed",
+			       (unsigned long)sizeof (*node));
+		    exchange_free (exchange);
+		    return;
+		  }
+
+		/* Insert this finalization inbetween the original.  */
+		node->first = finalize;
+		node->first_arg = arg;
+		node->second_arg = name;
+		exchange_add_finalization (exchange,
+					   exchange_establish_transaction,
+					   node);
+		finalize = 0;
+	      }
+	  conf_free_list (flags);
+	}
+    }
+  exchange_add_finalization (exchange, finalize, arg);
   cookie_gen (t, exchange, exchange->cookies, ISAKMP_HDR_ICOOKIE_LEN);
   exchange_enter (exchange);
 #ifdef USE_DEBUG
@@ -816,8 +864,9 @@ exchange_establish_p1 (struct transport *t, u_int8_t type, u_int32_t doi,
   msg = message_alloc (t, 0, ISAKMP_HDR_SZ);
   msg->exchange = exchange;
 
-  /* Do not create SA for an information exchange.  */
-  if (exchange->type != ISAKMP_EXCH_INFO)
+  /* Do not create SA for an information or transaction exchange.  */
+  if (exchange->type != ISAKMP_EXCH_INFO
+      && exchange->type != ISAKMP_EXCH_TRANSACTION)
     {
       /*
        * Don't install a transport into this SA as it will be an INADDR_ANY
@@ -1393,8 +1442,6 @@ exchange_finalize (struct message *msg)
       exchange->keynote_key = 0;
       msg->isakmp_sa->policy_id = exchange->policy_id;
       exchange->policy_id = -1;
-      msg->isakmp_sa->id_i_len = exchange->id_i_len;
-      msg->isakmp_sa->id_r_len = exchange->id_r_len;
       msg->isakmp_sa->initiator = exchange->initiator;
 
       if (exchange->recv_certtype && exchange->recv_cert)
@@ -1426,11 +1473,6 @@ exchange_finalize (struct message *msg)
 							       ->transport)));
     }
 
-  exchange->doi->finalize_exchange (msg);
-  if (exchange->finalize)
-    exchange->finalize (exchange, exchange->finalize_arg, 0);
-  exchange->finalize = 0;
-
   /* Copy the ID from phase 1 to exchange or phase 2 SA.  */
   if (msg->isakmp_sa)
     {
@@ -1449,6 +1491,11 @@ exchange_finalize (struct message *msg)
 			  msg->isakmp_sa->id_r, msg->isakmp_sa->id_r_len);
 	}
     }
+
+  exchange->doi->finalize_exchange (msg);
+  if (exchange->finalize)
+    exchange->finalize (exchange, exchange->finalize_arg, 0);
+  exchange->finalize = 0;
 
   /*
    * There is no reason to keep the SAs connected to us anymore, in fact
