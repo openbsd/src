@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc,v 1.56 2003/06/18 17:40:31 miod Exp $
+#	$OpenBSD: files.sparc,v 1.57 2003/06/23 09:30:36 miod Exp $
 #	$NetBSD: files.sparc,v 1.44 1997/08/31 21:29:16 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
@@ -373,3 +373,16 @@ file	arch/sparc/dev/tctrl.c		tctrl needs-flag
 device	presto: disk
 attach	presto at sbus
 file	arch/sparc/dev/presto.c		presto needs-flag
+
+# PCMCIA devices
+
+device	tslot: pcmciabus
+attach	tslot at sbus
+file	arch/sparc/dev/ts102.c		tslot
+
+device	stp: pcmciabus
+attach	stp at sbus with stp_sbus
+file	dev/sbus/stp4020.c		stp
+file	arch/sparc/dev/stp_sbus.c	stp_sbus
+
+include	"dev/pcmcia/files.pcmcia"
