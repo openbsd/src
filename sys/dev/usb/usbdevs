@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.109 2004/10/04 13:00:27 deraadt Exp $
+$OpenBSD: usbdevs,v 1.110 2004/10/04 21:53:12 dlg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -542,6 +542,7 @@ product BELKIN F5U109		0x0109	F5U109 Serial
 product BELKIN F5U409		0x0409	F5U409 Serial
 product BELKIN SCSI		0x0115	SCSI
 product BELKIN USB2LAN		0x0121	USB to LAN Converter
+product BELKIN F5U237		0x0237	F5U237 USB 2.0 7-Port Hub
 product BELKIN F5U120		0x1203	F5U120-PC Hub
 
 /* Billionton products */
