@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.103 2004/01/02 23:25:18 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.104 2004/01/04 22:51:55 miod Exp $	*/
 /*
  * Copyright (c) 2001, 2002, 2003 Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -1017,7 +1017,8 @@ pmap_bootstrap(vaddr_t load_start, paddr_t *phys_start, paddr_t *phys_end,
 	for (i = 0; i < MAX_CPUS; i++)
 		if (cpu_sets[i]) {
 			/* Invalidate entire kernel TLB. */
-			cmmu_flush_tlb(i, 1, 0, -1);
+			cmmu_flush_tlb(i, TRUE, VM_MIN_KERNEL_ADDRESS,
+			    VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS);
 			/* still physical */
 			/*
 			 * Set valid bit to DT_INVALID so that the very first
@@ -2326,8 +2327,8 @@ pmap_collect(pmap_t pmap)
  *	apr template into UAPR (user area pointer register) in the
  *	CMMUs connected to the specified CPU.
  *
- *	If kernel_pmap is specified, only flushes the TLBs mapping kernel
- *	virtual space, in the CMMUs connected to the specified CPU.
+ *	Then, it flushes the TLBs mapping user virtual space, in the CMMUs
+ *	connected to the specified CPU.
  */
 void
 pmap_activate(struct proc *p)
@@ -2362,7 +2363,6 @@ pmap_activate(struct proc *p)
 			*(register_t *)&batc_entry[n] = pmap->pm_ibatc[n].bits;
 #else
 		cmmu_set_uapr(pmap->pm_apr);
-		cmmu_flush_tlb(cpu, FALSE, 0, -1);
 #endif	/* PMAP_USE_BATC */
 
 		/*
@@ -2371,6 +2371,12 @@ pmap_activate(struct proc *p)
 		SETBIT_CPUSET(cpu, &(pmap->pm_cpus));
 		simple_unlock(&pmap->pm_lock);
 	}
+#ifdef	PMAP_USE_BATC
+	else
+#endif
+
+	cmmu_flush_tlb(cpu, FALSE, VM_MIN_ADDRESS,
+	    VM_MAX_ADDRESS - VM_MIN_ADDRESS);
 }
 
 /*
