@@ -52,7 +52,8 @@ plus_constant_wide (x, c)
   register rtx tem;
   int all_constant = 0;
 
-  if (c == 0)
+  if (c == 0
+      && !(flag_propolice_protection && x == virtual_stack_vars_rtx))
     return x;
 
  restart:
@@ -149,7 +150,8 @@ plus_constant_wide (x, c)
       break;
     }
 
-  if (c != 0)
+  if (c != 0
+      || (flag_propolice_protection && x == virtual_stack_vars_rtx))
     x = gen_rtx_PLUS (mode, x, GEN_INT (c));
 
   if (GET_CODE (x) == SYMBOL_REF || GET_CODE (x) == LABEL_REF)
