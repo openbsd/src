@@ -1,4 +1,4 @@
-.\"	$OpenBSD: calendar.1,v 1.5 1998/09/23 04:32:36 aaron Exp $
+.\"	$OpenBSD: calendar.1,v 1.6 1998/11/03 03:42:05 millert Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"     The Regents of the University of California.  All rights reserved.
@@ -213,3 +213,17 @@ command appeared in
 .Sh BUGS
 .Nm calendar
 doesn't handle Jewish holidays or moon phases.
+.br
+When used with the
+.Fl A
+and
+.Fl B
+flags,
+.Nm calendar
+will only print the first instance of periodic events.  When using the
+.Fl A
+and   
+.Fl B
+flags to cross a year boundary,
+.Nm calendar
+will use calculate the date of easter in the current year, not the next year.
