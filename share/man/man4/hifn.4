@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hifn.4,v 1.4 2000/04/05 12:37:33 jason Exp $
+.\"	$OpenBSD: hifn.4,v 1.5 2000/04/14 06:00:20 deraadt Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt
 .\" All rights reserved.
@@ -58,6 +58,11 @@ all vendors just use the obvious ID which is 13 bytes of 0.
 .Sh SEE ALSO
 .Xr crypt 3 ,
 .Xr ipsec 4
+.Sh CAVEATS
+The Hi/fn 9751 shares the same PCI id.  This chip is basically a 7751, but
+with the cryptographic functions missing.  Instead, the 9751 is only capable
+of doing compression.  Since we do not currently attempt to use either of
+these chips to do any compression, the 9751-based cards are not useful.
 .Sh HISTORY
 The
 .Nm
