@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_aue.c,v 1.21 2002/06/26 11:29:55 espie Exp $ */
-/*	$NetBSD: if_aue.c,v 1.75 2002/03/18 14:01:05 christos Exp $	*/
+/*	$OpenBSD: if_aue.c,v 1.22 2002/07/04 05:51:13 nate Exp $ */
+/*	$NetBSD: if_aue.c,v 1.76 2002/06/25 01:07:38 nathanw Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -169,6 +169,7 @@ struct aue_type {
 };
 
 Static const struct aue_type aue_devs[] = {
+ {{ USB_VENDOR_3COM,		USB_PRODUCT_3COM_3C460B},	  PII },
  {{ USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_XX1},	  PNA|PII },
  {{ USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_XX2},	  PII },
  {{ USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_UFE1000},	  LSYS },
