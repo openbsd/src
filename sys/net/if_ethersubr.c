@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.50 2001/06/23 22:52:51 fgsch Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.51 2001/06/24 22:34:04 fgsch Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -622,7 +622,7 @@ ether_input(ifp, eh, m)
 		m_freem(m);
 		return;
 	}
-	if (eh->ether_dhost[0] & 1) {
+	if (ETHER_IS_MULTICAST(eh->ether_dhost)) {
 		if ((ifp->if_flags & IFF_SIMPLEX) == 0) {
 			struct ifaddr *ifa;
 			struct sockaddr_dl *sdl = NULL;
