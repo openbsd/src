@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_extent.c,v 1.23 2002/06/28 20:45:44 jason Exp $	*/
+/*	$OpenBSD: subr_extent.c,v 1.24 2002/12/08 04:22:33 art Exp $	*/
 /*	$NetBSD: subr_extent.c,v 1.7 1996/11/21 18:46:34 cgd Exp $	*/
 
 /*-
@@ -88,20 +88,27 @@ static	void extent_register(struct extent *);
  * Should work, no?
  */
 static LIST_HEAD(listhead, extent) ext_list;
-static struct listhead *ext_listp;
 
 static void
-extent_register(ex)
-	struct extent *ex;
+extent_register(struct extent *ex)
 {
-	/* Is this redundant? */
-	if (ext_listp == NULL){
+	struct extent *ep;
+	static int initialized;
+
+	if (!initialized){
 		LIST_INIT(&ext_list);
-		ext_listp = &ext_list;
+		initialized = 1;
 	}
 
+#ifdef DIAGNOSTIC
+	LIST_FOREACH(ep, &ext_list, ex_link) {
+		if (ep == ex)
+			panic("extent_register: already registered");
+	}
+#endif
+
 	/* Insert into list */
-	LIST_INSERT_HEAD(ext_listp, ex, ex_link);
+	LIST_INSERT_HEAD(&ext_list, ex, ex_link);
 }
 
 struct pool ex_region_pl;
@@ -131,7 +138,7 @@ extent_find(name)
 {
 	struct extent *ep;
 
-	for(ep = ext_listp->lh_first; ep != NULL; ep = ep->ex_link.le_next){
+	LIST_FOREACH(ep, &ext_list, ex_link) {
 		if (!strcmp(ep->ex_name, name))
 			return(ep);
 	}
@@ -149,7 +156,7 @@ extent_print_all(void)
 {
 	struct extent *ep;
 
-	for(ep = ext_listp->lh_first; ep != NULL; ep = ep->ex_link.le_next){
+	LIST_FOREACH(ep, &ext_list, ex_link) {
 		extent_print(ep);
 	}
 }
