@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptosoft.c,v 1.33 2002/04/03 23:22:36 fgsch Exp $	*/
+/*	$OpenBSD: cryptosoft.c,v 1.34 2002/04/22 23:10:09 deraadt Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -12,7 +12,7 @@
  * Permission to use, copy, and modify this software with or without fee
  * is hereby granted, provided that this entire notice is included in
  * all source code copies of any software which is or includes a copy or
- * modification of this software. 
+ * modification of this software.
  *
  * THIS SOFTWARE IS BEING PROVIDED "AS IS", WITHOUT ANY EXPRESS OR
  * IMPLIED WARRANTY. IN PARTICULAR, NONE OF THE AUTHORS MAKES ANY
@@ -39,13 +39,13 @@
 #include <crypto/xform.h>
 
 u_int8_t hmac_ipad_buffer[64] = {
-	0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 
-	0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 
-	0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 
-	0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 
-	0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 
-	0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 
-	0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 
+	0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
+	0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
+	0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
+	0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
+	0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
+	0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
+	0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
 	0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36
 };
 
@@ -174,7 +174,7 @@ swcr_encdec(struct cryptodesc *crd, struct swcr_data *sw, caddr_t buf,
 					bcopy(blk, iv, blks);
 					ivp = iv;
 				} else {	/* decrypt */
-					/*	
+					/*
 					 * Keep encrypted block for XOR'ing
 					 * with next block
 					 */
@@ -297,7 +297,7 @@ swcr_encdec(struct cryptodesc *crd, struct swcr_data *sw, caddr_t buf,
 					bcopy(blk, iv, blks);
 					ivp = iv;
 				} else {	/* decrypt */
-					/*	
+					/*
 					 * Keep encrypted block for XOR'ing
 					 * with next block
 					 */
@@ -320,7 +320,7 @@ swcr_encdec(struct cryptodesc *crd, struct swcr_data *sw, caddr_t buf,
 
 				/* Copy back decrypted block */
 				cuio_copyback(uio, k, blks, blk);
-			       
+
 				count += blks;
 
 				/* Advance pointer */
@@ -449,7 +449,7 @@ swcr_authcompute(struct cryptop *crp, struct cryptodesc *crd,
 		COPYBACK(outtype, buf, crd->crd_inject, axf->authsize, aalg);
 	else
 		bcopy(aalg, crp->crp_mac, axf->authsize);
-	
+
 	return 0;
 }
 
@@ -464,29 +464,29 @@ swcr_compdec(struct cryptodesc *crd, struct swcr_data *sw,
 	struct comp_algo *cxf;
 	int adj;
 	u_int32_t result;
-   
+
 	cxf = sw->sw_cxf;
 
 	/* We must handle the whole buffer of data in one time
 	 * then if there is not all the data in the mbuf, we must
 	 * copy in a buffer.
 	 */
-       
+
 	MALLOC(data, u_int8_t *, crd->crd_len, M_CRYPTO_DATA,  M_NOWAIT);
 	if (data == NULL)
 		return (EINVAL);
 	COPYDATA(outtype, buf, crd->crd_skip, crd->crd_len, data);
-	
+
 	if (crd->crd_flags & CRD_F_COMP)
 		result = cxf->compress(data, crd->crd_len, &out);
 	else
 		result = cxf->decompress(data, crd->crd_len, &out);
-    
+
 	FREE(data, M_CRYPTO_DATA);
 	if (result == 0)
 		return EINVAL;
 
-	/* Copy back the (de)compressed data. m_copyback is 
+	/* Copy back the (de)compressed data. m_copyback is
 	 * extending the mbuf as necessary.
 	 */
 	sw->sw_size = result;
@@ -498,7 +498,7 @@ swcr_compdec(struct cryptodesc *crd, struct swcr_data *sw,
 			return 0;
 		}
 	}
-	
+
 	COPYBACK(outtype, buf, crd->crd_skip, result, out);
 	if (result < crd->crd_len) {
 		adj = result - crd->crd_len;
@@ -617,7 +617,7 @@ swcr_newsession(u_int32_t *sid, struct cryptoini *cri)
 			    cri->cri_klen / 8);
 			(*swd)->sw_exf = txf;
 			break;
-	
+
 		case CRYPTO_MD5_HMAC:
 			axf = &auth_hash_hmac_md5_96;
 			goto authcommon;
@@ -633,41 +633,41 @@ swcr_newsession(u_int32_t *sid, struct cryptoini *cri)
 				swcr_freesession(i);
 				return ENOBUFS;
 			}
-	
+
 			(*swd)->sw_octx = malloc(axf->ctxsize, M_CRYPTO_DATA,
 			    M_NOWAIT);
 			if ((*swd)->sw_octx == NULL) {
 				swcr_freesession(i);
 				return ENOBUFS;
 			}
-	
+
 			for (k = 0; k < cri->cri_klen / 8; k++)
 				cri->cri_key[k] ^= HMAC_IPAD_VAL;
-	
+
 			axf->Init((*swd)->sw_ictx);
 			axf->Update((*swd)->sw_ictx, cri->cri_key,
 			    cri->cri_klen / 8);
 			axf->Update((*swd)->sw_ictx, hmac_ipad_buffer,
 			    HMAC_BLOCK_LEN - (cri->cri_klen / 8));
-	
+
 			for (k = 0; k < cri->cri_klen / 8; k++)
 				cri->cri_key[k] ^= (HMAC_IPAD_VAL ^ HMAC_OPAD_VAL);
-	
+
 			axf->Init((*swd)->sw_octx);
 			axf->Update((*swd)->sw_octx, cri->cri_key,
 			    cri->cri_klen / 8);
 			axf->Update((*swd)->sw_octx, hmac_opad_buffer,
 			    HMAC_BLOCK_LEN - (cri->cri_klen / 8));
-	
+
 			for (k = 0; k < cri->cri_klen / 8; k++)
 				cri->cri_key[k] ^= HMAC_OPAD_VAL;
 			(*swd)->sw_axf = axf;
 			break;
-	
+
 		case CRYPTO_MD5_KPDK:
 			axf = &auth_hash_key_md5;
 			goto auth2common;
-	
+
 		case CRYPTO_SHA1_KPDK:
 			axf = &auth_hash_key_sha1;
 		auth2common:
@@ -677,7 +677,7 @@ swcr_newsession(u_int32_t *sid, struct cryptoini *cri)
 				swcr_freesession(i);
 				return ENOBUFS;
 			}
-	
+
 			/* Store the key so we can "append" it to the payload */
 			(*swd)->sw_octx = malloc(cri->cri_klen / 8, M_CRYPTO_DATA,
 			    M_NOWAIT);
@@ -685,7 +685,7 @@ swcr_newsession(u_int32_t *sid, struct cryptoini *cri)
 				swcr_freesession(i);
 				return ENOBUFS;
 			}
-	
+
 			(*swd)->sw_klen = cri->cri_klen / 8;
 			bcopy(cri->cri_key, (*swd)->sw_octx, cri->cri_klen / 8);
 			axf->Init((*swd)->sw_ictx);
@@ -698,7 +698,7 @@ swcr_newsession(u_int32_t *sid, struct cryptoini *cri)
 		case CRYPTO_MD5:
 			axf = &auth_hash_md5;
 			goto auth3common;
-	
+
 		case CRYPTO_SHA1:
 			axf = &auth_hash_sha1;
 		auth3common:
@@ -708,7 +708,7 @@ swcr_newsession(u_int32_t *sid, struct cryptoini *cri)
 				swcr_freesession(i);
 				return ENOBUFS;
 			}
-	
+
 			axf->Init((*swd)->sw_ictx);
 			(*swd)->sw_axf = axf;
 			break;
@@ -721,7 +721,7 @@ swcr_newsession(u_int32_t *sid, struct cryptoini *cri)
 			swcr_freesession(i);
 			return EINVAL;
 		}
-	
+
 		(*swd)->sw_alg = cri->cri_alg;
 		cri = cri->cri_next;
 		swd = &((*swd)->sw_next);
@@ -890,7 +890,7 @@ swcr_process(struct cryptop *crp)
 			break;
 
 		case CRYPTO_DEFLATE_COMP:
-			if ((crp->crp_etype = swcr_compdec(crd, sw, 
+			if ((crp->crp_etype = swcr_compdec(crd, sw,
 			    crp->crp_buf, type)) != 0)
 				goto done;
 			else
