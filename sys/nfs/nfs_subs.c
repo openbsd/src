@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.12 1996/09/25 11:57:25 niklas Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.13 1996/10/15 11:34:15 deraadt Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -1117,9 +1117,10 @@ nfs_init()
 #ifdef NFSSERVER
 	nfsrv_init(0);			/* Init server data structures */
 	nfsrv_initcache();		/* Init the server request cache */
+#endif /* NFSSERVER */
 
 	/*
-	 * Initialize the nqnfs server stuff.
+	 * Initialize the nqnfs client/server stuff.
 	 */
 	if (nqnfsstarttime == 0) {
 		nqnfsstarttime = boottime.tv_sec + nqsrv_maxlease
@@ -1128,7 +1129,6 @@ nfs_init()
 		CIRCLEQ_INIT(&nqtimerhead);
 		nqfhhashtbl = hashinit(NQLCHSZ, M_NQLEASE, &nqfhhash);
 	}
-#endif /* NFSSERVER */
 
 	/*
 	 * Initialize reply list and start timer
