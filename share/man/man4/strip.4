@@ -1,4 +1,4 @@
-.\"	$OpenBSD: strip.4,v 1.17 2003/07/09 13:26:20 jmc Exp $
+.\"	$OpenBSD: strip.4,v 1.18 2004/03/21 19:47:59 miod Exp $
 .\"
 .\" Copyright 1996 The Board of Trustees of The Leland Stanford
 .\" Junior University. All Rights Reserved.
@@ -17,17 +17,9 @@
 .Os
 .Sh NAME
 .Nm strip
-.\" Why doesn't this work right? mdoc(7) nor mdoc.samples(7) lists
-.\" .Nd, except for a passing reference in the latter.
 .Nd packet-mode network device driver for the Metricom Ricochet radio
 .Sh SYNOPSIS
-.\" want to write
-.\" .Sy pseudo-device
-.\" .Nm tun
-.\" .Op Ar count
-.\" so that .Nm is just "tun", but if we do that we get a line break
-.\" after "pseudo-device", ick.
-.Nm pseudo-device strip
+.Cd "pseudo-device strip" Op Ar count
 .Op Ar count
 .Sh DESCRIPTION
 Configures
