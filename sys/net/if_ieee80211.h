@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_ieee80211.h,v 1.3 2001/06/09 06:16:38 angelos Exp $	*/
-/*	$NetBSD: if_ieee80211.h,v 1.4 2000/07/05 02:35:53 onoe Exp $	*/
+/*	$OpenBSD: if_ieee80211.h,v 1.4 2001/06/11 16:04:58 mickey Exp $	*/
+/*	$NetBSD: if_ieee80211.h,v 1.6 2000/12/12 04:03:38 thorpej Exp $	*/
 
 
 #ifndef _NET_IF_IEEE80211_H_
@@ -16,6 +16,17 @@ struct ieee80211_frame {
 	u_int8_t	i_addr3[ETHER_ADDR_LEN];
 	u_int8_t	i_seq[2];
 	/* possibly followed by addr4[ETHER_ADDR_LEN]; */
+	/* see below */
+};
+
+struct ieee80211_frame_addr4 {
+	u_int8_t	i_fc[2];
+	u_int8_t	i_dur[2];
+	u_int8_t	i_addr1[ETHER_ADDR_LEN];
+	u_int8_t	i_addr2[ETHER_ADDR_LEN];
+	u_int8_t	i_addr3[ETHER_ADDR_LEN];
+	u_int8_t	i_seq[2];
+	u_int8_t	i_addr4[ETHER_ADDR_LEN];
 };
 
 #define	IEEE80211_FC0_VERSION_MASK		0x03
@@ -133,5 +144,14 @@ struct ieee80211_nwkey {
 };
 #define	SIOCS80211NWKEY		 _IOW('i', 232, struct ieee80211_nwkey)
 #define	SIOCG80211NWKEY		_IOWR('i', 233, struct ieee80211_nwkey)
+
+/* power management parameters */
+struct ieee80211_power {
+	char		i_name[IFNAMSIZ];	/* if_name, e.g. "wi0" */
+	int		i_enabled;		/* 1 == on, 0 == off */
+	int		i_maxsleep;		/* max sleep in ms */
+};
+#define	SIOCS80211POWER		 _IOW('i', 234, struct ieee80211_power)
+#define	SIOCG80211POWER		_IOWR('i', 235, struct ieee80211_power)
 
 #endif /* _NET_IF_IEEE80211_H_ */
