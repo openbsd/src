@@ -1,5 +1,5 @@
 /*	$NetBSD: compare.c,v 1.11 1996/09/05 09:56:48 mycroft Exp $	*/
-/*	$OpenBSD: compare.c,v 1.15 2002/03/14 16:44:25 mpech Exp $	*/
+/*	$OpenBSD: compare.c,v 1.16 2002/09/23 04:10:14 millert Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)compare.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: compare.c,v 1.15 2002/03/14 16:44:25 mpech Exp $";
+static const char rcsid[] = "$OpenBSD: compare.c,v 1.16 2002/09/23 04:10:14 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -185,6 +185,7 @@ typeerr:		LABEL;
 			(void)printf(")\n");
 		tab = "\t";
 	skip:
+		;
 	}
 	if (s->flags & F_NLINK && s->type != F_DIR &&
 	    s->st_nlink != p->fts_statp->st_nlink) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ike.c,v 1.14 2002/07/11 16:14:52 stevesk Exp $	*/
+/*	$OpenBSD: print-ike.c,v 1.15 2002/09/23 04:10:14 millert Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -29,7 +29,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ike.c,v 1.14 2002/07/11 16:14:52 stevesk Exp $ (XXX)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ike.c,v 1.15 2002/09/23 04:10:14 millert Exp $ (XXX)";
 #endif
 
 #include <sys/param.h>
@@ -687,6 +687,7 @@ ike_pl_print (u_char type, u_char *buf, u_char doi)
 		break;
 
 	default:
+		break;
 	}
 	ike_tab_level--;
 

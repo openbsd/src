@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: fgen.l,v 1.5 2002/07/12 00:26:24 deraadt Exp $	*/
+/*	$OpenBSD: fgen.l,v 1.6 2002/09/23 04:10:14 millert Exp $	*/
 /*	$NetBSD: fgen.l,v 1.12 2001/06/13 10:46:05 wiz Exp $	*/
 /* FLEX input for FORTH input file scanner */
 /*  
@@ -1955,6 +1955,7 @@ tokenize(input)
 			}
 			break;
 		default:
+			break;
 		}
 	}
 	return;
