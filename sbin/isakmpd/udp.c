@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp.c,v 1.32 2001/06/29 19:41:43 ho Exp $	*/
+/*	$OpenBSD: udp.c,v 1.33 2001/06/29 20:22:58 niklas Exp $	*/
 /*	$EOM: udp.c,v 1.57 2001/01/26 10:09:57 niklas Exp $	*/
 
 /*
@@ -111,7 +111,7 @@ static LIST_HEAD (udp_listen_list, udp_transport) udp_listen_list;
 
 char *udp_default_port = 0;
 char *udp_bind_port = 0;
-static struct transport *default_transport;
+static struct transport *default_transport, *default_transport6;
 
 /* Find an UDP transport listening on ADDR:PORT.  */
 static struct udp_transport *
@@ -431,7 +431,8 @@ udp_create (char *name)
     addr_str = conf_get_str ("General", "Listen-on");
   if (!addr_str)
     {
-      if (!default_transport)
+      if ((dst->sa_family == AF_INET && !default_transport) ||
+	  (dst->sa_family == AF_INET6 && !default_transport6))
 	{
 	  log_print ("udp_create: no default transport");
 	  rv = 0;
@@ -439,7 +440,10 @@ udp_create (char *name)
 	}
       else
 	{
-	  rv = udp_clone ((struct udp_transport *)default_transport, dst);
+	  /* XXX Ugly!  */
+	  rv = udp_clone ((struct udp_transport *)(dst->sa_family == AF_INET
+						   ? default_transport
+						   : default_transport6), dst);
 	  goto ret;
 	}
     }
@@ -532,9 +536,21 @@ udp_init ()
 
   default_transport = udp_bind ((struct sockaddr *)&dflt_stor);
   if (!default_transport)
-    log_error ("udp_init: could not allocate default ISAKMP UDP port");
+    log_error ("udp_init: could not allocate default IPv4 ISAKMP UDP port");
   else if (conf_get_str ("General", "Listen-on"))
     default_transport->flags &= ~TRANSPORT_LISTEN;
+
+  memset (&dflt_stor, 0, sizeof dflt_stor);
+  dflt->sin_family = AF_INET6;
+  ((struct sockaddr_in6 *)dflt)->sin6_len = sizeof (struct sockaddr_in6);
+  ((struct sockaddr_in6 *)dflt)->sin6_port = 
+    htons ((in_port_t)strtol (port, NULL, 10));
+
+  default_transport6 = udp_bind ((struct sockaddr *)&dflt_stor);
+  if (!default_transport6)
+    log_error ("udp_init: could not allocate default IPv6 ISAKMP UDP port");
+  else if (conf_get_str ("General", "Listen-on"))
+    default_transport6->flags &= ~TRANSPORT_LISTEN;
 
   transport_method_add (&udp_transport_vtbl);
 }
