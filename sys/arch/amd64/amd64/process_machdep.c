@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.1 2004/01/28 01:39:39 mickey Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.2 2004/01/29 12:43:35 mickey Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.1 2003/04/26 18:39:31 fvdl Exp $	*/
 
 /*-
@@ -102,7 +102,30 @@ process_read_regs(struct proc *p, struct reg *regs)
 {
 	struct trapframe *tf = process_frame(p);
 
-	memcpy(regs, tf, sizeof (*regs));
+        regs->r_rdi = tf->tf_rdi;
+        regs->r_rsi = tf->tf_rsi;
+        regs->r_rdx = tf->tf_rdx;
+        regs->r_rcx = tf->tf_rcx;
+        regs->r_r8  = tf->tf_r8;
+        regs->r_r9  = tf->tf_r9;
+        regs->r_r10 = tf->tf_r10;
+        regs->r_r11 = tf->tf_r11;
+        regs->r_r12 = tf->tf_r12;
+        regs->r_r13 = tf->tf_r13;
+        regs->r_r14 = tf->tf_r14;
+        regs->r_r15 = tf->tf_r15;
+        regs->r_rbp = tf->tf_rbp;
+        regs->r_rbx = tf->tf_rbx;
+        regs->r_rax = tf->tf_rax;
+        regs->r_rsp = tf->tf_rsp;
+        regs->r_rip = tf->tf_rip;
+        regs->r_rflags = tf->tf_rflags;
+        regs->r_cs  = tf->tf_cs;
+        regs->r_ss  = tf->tf_ss;
+        regs->r_ds  = tf->tf_ds;
+        regs->r_es  = tf->tf_es;
+        regs->r_fs  = tf->tf_fs;
+        regs->r_gs  = tf->tf_gs;
 
 	return (0);
 }
@@ -135,19 +158,41 @@ process_read_fpregs(struct proc *p, struct fpreg *regs)
 }
 
 int
-process_write_regs(struct proc *p, struct reg *regp)
+process_write_regs(struct proc *p, struct reg *regs)
 {
 	struct trapframe *tf = process_frame(p);
-	long *regs = regp->regs;
 
 	/*
 	 * Check for security violations.
 	 */
-	if (((regs[_REG_RFL] ^ tf->tf_rflags) & PSL_USERSTATIC) != 0 ||
-	    !USERMODE(regs[_REG_CS], regs[_REG_RFL]))
+	if (((regs->r_rflags ^ tf->tf_rflags) & PSL_USERSTATIC) != 0 ||
+	    !USERMODE(regs->r_cs, regs->r_rflags))
 		return (EINVAL);
 
-	memcpy(tf, regs, sizeof (*tf));
+        tf->tf_rdi = regs->r_rdi;
+        tf->tf_rsi = regs->r_rsi;
+        tf->tf_rdx = regs->r_rdx;
+        tf->tf_rcx = regs->r_rcx;
+        tf->tf_r8  = regs->r_r8;
+        tf->tf_r9  = regs->r_r9;
+        tf->tf_r10 = regs->r_r10;
+        tf->tf_r11 = regs->r_r11;
+        tf->tf_r12 = regs->r_r12;
+        tf->tf_r13 = regs->r_r13;
+        tf->tf_r14 = regs->r_r14;
+        tf->tf_r15 = regs->r_r15;
+        tf->tf_rbp = regs->r_rbp;
+        tf->tf_rbx = regs->r_rbx;
+        tf->tf_rax = regs->r_rax;
+        tf->tf_rsp = regs->r_rsp;
+        tf->tf_rip = regs->r_rip;
+        tf->tf_rflags = regs->r_rflags;
+        tf->tf_cs  = regs->r_cs;
+        tf->tf_ss  = regs->r_ss;
+        tf->tf_ds  = regs->r_ds;
+        tf->tf_es  = regs->r_es;
+        tf->tf_fs  = regs->r_fs;
+        tf->tf_gs  = regs->r_gs;
 
 	return (0);
 }

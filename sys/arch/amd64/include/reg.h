@@ -1,4 +1,4 @@
-/*	$OpenBSD: reg.h,v 1.1 2004/01/28 01:39:39 mickey Exp $	*/
+/*	$OpenBSD: reg.h,v 1.2 2004/01/29 12:43:35 mickey Exp $	*/
 /*	$NetBSD: reg.h,v 1.1 2003/04/26 18:39:47 fvdl Exp $	*/
 
 /*-
@@ -53,27 +53,30 @@
 
 /* When referenced during a trap/exception, registers are at these offsets */
 
-#define tR15	0
-#define tR14	1
-#define tR13	2
-#define tR12	3
-#define tR11	4
-#define tR10	5
-#define tR9	6
-#define tR8	7
-#define	tRDI	8
-#define	tRSI	9
-#define	tRBP	10
-#define	tRBX	11
-#define	tRDX	12
-#define	tRCX	13
+#define tRDI	0
+#define tRSI	1
+#define tRDX	2
+#define tRCX	3
+#define tR8	4
+#define tR9	5
+#define tR10	6
+#define tR11	7
+#define	tR12	8
+#define	tR13	9
+#define	tR14	10
+#define	tR15	11
+#define	tRBP	12
+#define	tRBX	13
 #define	tRAX	14
-
-#define	tRIP	17
+#define	tRSP	15
+#define	tRIP	16
+#define	tRFLAGS	17
 #define	tCS	18
-#define	tRFLAGS	19
-#define	tRSP	20
-#define	tSS	21
+#define	tSS	19
+#define	tDS	20
+#define	tES	21
+#define	tFS	22
+#define	tGS	23
 
 /*
  * Registers accessible to ptrace(2) syscall for debugger use.
@@ -81,7 +84,30 @@
  * remain synced (XXX should use common structure).
  */
 struct reg {
-	long	regs[_NGREG];
+	int64_t	r_rdi;
+	int64_t	r_rsi;
+	int64_t	r_rdx;
+	int64_t	r_rcx;
+	int64_t r_r8;
+	int64_t r_r9;
+	int64_t r_r10;
+	int64_t r_r11;
+	int64_t r_r12;
+	int64_t r_r13;
+	int64_t r_r14;
+	int64_t r_r15;
+	int64_t	r_rbp;
+	int64_t	r_rbx;
+	int64_t	r_rax;
+	int64_t	r_rsp;
+	int64_t	r_rip;
+	int64_t	r_rflags;
+	int64_t	r_cs;
+	int64_t	r_ss;
+	int64_t	r_ds;
+	int64_t	r_es;
+	int64_t	r_fs;
+	int64_t	r_gs;
 };
 
 struct fpreg {
