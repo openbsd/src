@@ -1690,3 +1690,12 @@
 ./usr/share/man/cat1/ssh.0
 ./usr/share/man/cat8/sshd.0
 ./usr/share/man/cat4/sk.0
+./usr/share/man/cat1/dbmmanage.0
+./usr/share/man/cat1/htdigest.0
+./usr/share/man/cat1/htpasswd.0
+./usr/share/man/cat8/ab.0
+./usr/share/man/cat8/apachectl.0
+./usr/share/man/cat8/apxs.0
+./usr/share/man/cat8/logresolve.0
+./usr/share/man/cat8/rotatelogs.0
+./usr/share/man/cat8/suexec.0
