@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.141 2004/04/24 19:51:49 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.142 2004/05/06 18:32:08 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -370,22 +370,48 @@ getcpuspeed()
 		c = (unsigned char)brdid.speed[i];
 		if (c == ' ')
 			c = '0';
-		else if (c > '9' || c < '0')
-			goto fail;
+		else if (c > '9' || c < '0') {
+			speed = 0;
+			break;
+		}
 		speed = speed * 10 + (c - '0');
 	}
 	speed = speed / 100;
-	return (speed);
 
-fail:
+	switch (brdtyp) {
+#ifdef MVME187
+	case BRD_187:
+	case BRD_8120:
+		if (speed == 25 || speed == 33)
+			return speed;
+		speed = 25;
+		break;
+#endif
+#ifdef MVME188
+	case BRD_188:
+		if (speed == 20 || speed == 25)
+			return speed;
+		speed = 25;
+		break;
+#endif
+#ifdef MVME197
+	case BRD_197:
+		if (speed == 40 || speed == 50)
+			return speed;
+		speed = 50;
+		break;
+#endif
+	}
+
 	/*
-	 * If we end up here, the board information block is
-	 * damaged and we can't trust it.
-	 * Suppose we are running at 25MHz and hope for the best.
+	 * If we end up here, the board information block is damaged and
+	 * we can't trust it.
+	 * Suppose we are running at the most common speed for our board,
+	 * and hope for the best (this really only affects osiop).
 	 */
 	printf("WARNING: Board Configuration Data invalid, "
 	    "replace NVRAM and restore values\n");
-	return (25);
+	return speed;
 }
 
 void
