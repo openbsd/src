@@ -1,4 +1,4 @@
-/*	$OpenBSD: termcap.h,v 1.5 2000/07/10 03:06:11 millert Exp $	*/
+/*	$OpenBSD: termcap.h,v 1.6 2000/10/08 22:46:56 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -33,7 +33,7 @@
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
  ****************************************************************************/
 
-/* $From: termcap.h.in,v 1.10 1999/01/09 22:38:04 Uchiyama.Yasushi Exp $ */
+/* $From: termcap.h.in,v 1.12 2000/10/08 01:06:37 tom Exp $ */
 
 #ifndef _NCU_TERMCAP_H
 #define _NCU_TERMCAP_H	1
@@ -47,7 +47,6 @@ extern "C"
 #endif /* __cplusplus */
 
 #include <sys/types.h>
-#include <termios.h> 
 
 #undef  NCURSES_CONST 
 #define NCURSES_CONST  
@@ -55,7 +54,7 @@ extern "C"
 extern char PC;
 extern char *UP;
 extern char *BC;
-extern speed_t ospeed; 
+extern short ospeed; 
 
 #if !defined(_NCU_TERM_H)
 extern char *tgetstr(NCURSES_CONST char *, char **);

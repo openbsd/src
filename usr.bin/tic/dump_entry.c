@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump_entry.c,v 1.15 2000/06/19 03:53:58 millert Exp $	*/
+/*	$OpenBSD: dump_entry.c,v 1.16 2000/10/08 22:47:10 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998-2000 Free Software Foundation, Inc.                   *
@@ -40,7 +40,7 @@
 #include <termsort.c>		/* this C file is generated */
 #include <parametrized.h>	/* so is this */
 
-MODULE_ID("$From: dump_entry.c,v 1.53 2000/04/15 21:23:30 tom Exp $")
+MODULE_ID("$From: dump_entry.c,v 1.54 2000/10/01 01:34:06 tom Exp $")
 
 #define INDENT			8
 #define DISCARD(string) string = ABSENT_STRING
@@ -643,8 +643,9 @@ fmt_entry(TERMTYPE * tterm,
 		sprintf(buffer, "%s@", name);
 		WRAP_CONCAT;
 	    } else if (outform == F_TERMCAP || outform == F_TCONVERR) {
+		int params = (i < (int) SIZEOF(parametrized)) ? parametrized[i] : 0;
 		char *srccap = _nc_tic_expand(tterm->Strings[i], TRUE, numbers);
-		char *cv = _nc_infotocap(name, srccap, parametrized[i]);
+		char *cv = _nc_infotocap(name, srccap, params);
 
 		if (cv == 0) {
 		    if (outform == F_TCONVERR) {

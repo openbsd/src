@@ -1,5 +1,5 @@
 '\" t
-.\" $OpenBSD: captoinfo.1tbl,v 1.6 2000/07/24 04:06:12 millert Exp $
+.\" $OpenBSD: captoinfo.1tbl,v 1.7 2000/10/08 22:47:09 millert Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
@@ -29,7 +29,7 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $From: captoinfo.1m,v 1.15 2000/07/15 23:04:27 china Exp $
+.\" $From: From: captoinfo.1m,v 1.16 2000/08/13 01:56:49 tom Exp $
 .TH captoinfo 1 ""
 .ds n 5
 .ds d /usr/share/terminfo

@@ -1,4 +1,4 @@
-.\" $OpenBSD: tic.1,v 1.11 2000/07/24 04:06:12 millert Exp $
+.\" $OpenBSD: tic.1,v 1.12 2000/10/08 22:47:10 millert Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -28,7 +28,7 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $From: tic.1m,v 1.27 2000/07/15 23:04:27 china Exp $
+.\" $From: tic.1m,v 1.29 2000/08/19 18:51:05 tom Exp $
 .TH tic 1 ""
 .ds n 5
 .ds d /usr/share/terminfo
@@ -43,6 +43,7 @@ I\
 N\
 R\
 T\
+V\
 a\
 c\
 f\
@@ -148,6 +149,9 @@ are "SVr1", "Ultrix", "HP", "BSD" and "AIX"; see \fBterminfo\fR(\*n) for details
 eliminates size-restrictions on the generated text.
 This is mainly useful for testing and analysis, since the compiled
 descriptions are limited (e.g., 1023 for termcap, 4096 for terminfo).
+.TP
+\fB-V\fR
+reports the version of ncurses which was used in this program, and exits.
 .TP
 \fB-r\fR
 Force entry resolution (so there are no remaining tc capabilities) even
@@ -269,6 +273,7 @@ The
 \fB-N\fR,
 \fB-R\fR,
 \fB-T\fR,
+\fB-V\fR,
 \fB-a\fR,
 \fB-e\fR,
 \fB-f\fR,

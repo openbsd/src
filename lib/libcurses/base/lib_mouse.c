@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_mouse.c,v 1.10 2000/07/10 03:06:14 millert Exp $	*/
+/*	$OpenBSD: lib_mouse.c,v 1.11 2000/10/08 22:46:59 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -86,7 +86,7 @@
 #endif
 #endif
 
-MODULE_ID("$From: lib_mouse.c,v 1.52 2000/06/29 23:02:26 tom Exp $")
+MODULE_ID("$From: lib_mouse.c,v 1.54 2000/10/03 08:26:34 tom Exp $")
 
 #define MY_TRACE TRACE_ICALLS|TRACE_IEVENT
 
@@ -156,7 +156,7 @@ write_event(int down, int button, int x, int y)
     char buf[6];
     unsigned long ignore;
 
-    strcpy(buf, key_mouse);
+    strncpy(buf, key_mouse, 3);	/* should be "\033[M" */
     buf[3] = ' ' + (button - 1) + (down ? 0 : 0x40);
     buf[4] = ' ' + x - LEFT_COL + 1;
     buf[5] = ' ' + y - TOP_ROW + 1;
@@ -516,7 +516,7 @@ mouse_activate(bool on)
 
 	switch (mousetype) {
 	case M_XTERM:
-#ifdef NCURSES_EXT_FUNCS
+#if NCURSES_EXT_FUNCS
 	    keyok(KEY_MOUSE, on);
 #endif
 	    TPUTS_TRACE("xterm mouse initialization");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_tputs.c,v 1.7 2000/07/24 04:06:10 millert Exp $	*/
+/*	$OpenBSD: lib_tputs.c,v 1.8 2000/10/08 22:47:02 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -47,10 +47,10 @@
 #include <termcap.h>		/* ospeed */
 #include <tic.h>
 
-MODULE_ID("$From: lib_tputs.c,v 1.48 2000/07/22 22:33:23 Bruno.Haible Exp $")
+MODULE_ID("$From: lib_tputs.c,v 1.51 2000/10/08 00:22:24 tom Exp $")
 
 char PC = 0;			/* used by termcap library */
-speed_t ospeed = 0;		/* used by termcap library */
+short ospeed = 0;		/* used by termcap library */
 
 int _nc_nulls_sent = 0;		/* used by 'tack' program */
 
@@ -104,7 +104,7 @@ _nc_outch(int ch)
     return OK;
 }
 
-#ifdef USE_WIDEC_SUPPORT
+#if USE_WIDEC_SUPPORT
 /*
  * Reference: The Unicode Standard 2.0
  *
@@ -143,20 +143,26 @@ _nc_utf8_outch(int ch)
     case 6:
 	*--ptr = (ch | otherMark) & byteMask;
 	ch >>= 6;
+	/* FALLTHRU */
     case 5:
 	*--ptr = (ch | otherMark) & byteMask;
 	ch >>= 6;
+	/* FALLTHRU */
     case 4:
 	*--ptr = (ch | otherMark) & byteMask;
 	ch >>= 6;
+	/* FALLTHRU */
     case 3:
 	*--ptr = (ch | otherMark) & byteMask;
 	ch >>= 6;
+	/* FALLTHRU */
     case 2:
 	*--ptr = (ch | otherMark) & byteMask;
 	ch >>= 6;
+	/* FALLTHRU */
     case 1:
 	*--ptr = (ch | firstMark[count]);
+	break;
     }
     while (count--)
 	_nc_outch(*ptr++);
@@ -176,7 +182,7 @@ tputs(const char *string, int affcnt, int (*outc) (int))
     bool always_delay;
     bool normal_delay;
     int number;
-#ifdef BSD_TPUTS
+#if BSD_TPUTS
     int trailpad;
 #endif /* BSD_TPUTS */
 
@@ -190,7 +196,7 @@ tputs(const char *string, int affcnt, int (*outc) (int))
 	    (void) sprintf(addrbuf, "%p", outc);
 	if (_nc_tputs_trace) {
 	    _tracef("tputs(%s = %s, %d, %s) called", _nc_tputs_trace,
-		_nc_visbuf(string), affcnt, addrbuf);
+		    _nc_visbuf(string), affcnt, addrbuf);
 	} else {
 	    _tracef("tputs(%s, %d, %s) called", _nc_visbuf(string), affcnt, addrbuf);
 	}
@@ -209,13 +215,13 @@ tputs(const char *string, int affcnt, int (*outc) (int))
 	normal_delay =
 	    !xon_xoff
 	    && padding_baud_rate
-#ifdef NCURSES_NO_PADDING
+#if NCURSES_NO_PADDING
 	    && (SP == 0 || !(SP->_no_padding))
 #endif
 	    && (_nc_baudrate(ospeed) >= padding_baud_rate);
     }
 
-#ifdef BSD_TPUTS
+#if BSD_TPUTS
     /*
      * This ugly kluge deals with the fact that some ancient BSD programs
      * (like nethack) actually do the likes of tputs("50") to get delays.
@@ -306,7 +312,7 @@ tputs(const char *string, int affcnt, int (*outc) (int))
 	string++;
     }
 
-#ifdef BSD_TPUTS
+#if BSD_TPUTS
     /*
      * Emit any BSD-style prefix padding that we've accumulated now.
      */

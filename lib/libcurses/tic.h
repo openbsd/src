@@ -1,4 +1,4 @@
-/*	$OpenBSD: tic.h,v 1.9 2000/03/26 16:45:03 millert Exp $	*/
+/*	$OpenBSD: tic.h,v 1.10 2000/10/08 22:46:56 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998-2000 Free Software Foundation, Inc.                   *
@@ -34,9 +34,9 @@
  ****************************************************************************/
 
 /*
+ * $From: tic.h,v 1.35 2000/09/09 19:47:16 tom Exp $
  *	tic.h - Global variables and structures for the terminfo
  *			compiler.
- *
  */
 
 #ifndef __TIC_H
@@ -238,6 +238,9 @@ extern const struct name_table_entry	* const *_nc_get_hash_table(bool);
 #ifndef TERMINFO
 #define TERMINFO "/usr/share/terminfo"
 #endif
+
+/* access.c */
+extern char *_nc_basename(char *);
 
 /* comp_hash.c: name lookup */
 struct name_table_entry	const *_nc_find_entry(const char *,

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.46 2000/07/24 04:06:09 millert Exp $
+#	$OpenBSD: Makefile,v 1.47 2000/10/08 22:46:54 millert Exp $
 
 # Uncomment this to enable tracing in libcurses
 #CURSESTRACE=-DTRACE
@@ -40,10 +40,10 @@ SRCS+=	access.c add_tries.c alloc_entry.c alloc_ttype.c captoinfo.c \
 	doalloc.c free_ttype.c getenv_num.c home_terminfo.c init_keytry.c \
 	lib_acs.c lib_baudrate.c lib_cur_term.c lib_data.c lib_has_cap.c \
 	lib_kernel.c lib_longname.c lib_napms.c lib_options.c lib_print.c \
-	lib_raw.c lib_setup.c lib_termcap.c lib_termname.c lib_ti.c \
-	lib_tparm.c lib_tputs.c lib_ttyflags.c name_match.c \
+	lib_raw.c lib_setup.c lib_termcap.c lib_termname.c lib_tgoto.c \
+	lib_ti.c lib_tparm.c lib_tputs.c lib_ttyflags.c name_match.c \
 	parse_entry.c read_bsd_terminfo.c read_entry.c read_termcap.c \
-	setbuf.c write_entry.c
+	setbuf.c strings.c write_entry.c
 # trace
 SRCS+=	lib_trace.c lib_traceatr.c lib_tracebits.c lib_tracechr.c \
 	lib_tracedmp.c lib_tracemse.c trace_buf.c trace_tries.c trace_xnames.c

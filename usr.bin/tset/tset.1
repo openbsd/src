@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tset.1,v 1.8 2000/03/15 11:56:14 aaron Exp $
+.\"	$OpenBSD: tset.1,v 1.9 2000/10/08 22:47:11 millert Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@
 .Nd terminal initialization
 .Sh SYNOPSIS
 .Nm tset
-.Op Fl IQqrSs
+.Op Fl IQqrSsV
 .Op Fl
 .Op Fl e Ar ch
 .Op Fl i Ar ch
@@ -50,7 +50,7 @@
 .Op Ar terminal
 .br
 .Nm reset
-.Op Fl IQqrSs
+.Op Fl IQqrSsV
 .Op Fl
 .Op Fl e Ar ch
 .Op Fl i Ar ch
@@ -153,6 +153,8 @@ and
 .Ev TERMCAP
 to the standard output.
 See the section below on setting the environment for details.
+.It Fl V
+Report the version of ncurses which was used in this program, and exit.
 .El
 .Pp
 The arguments for the

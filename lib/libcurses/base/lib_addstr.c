@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_addstr.c,v 1.2 2000/06/19 03:53:38 millert Exp $	*/
+/*	$OpenBSD: lib_addstr.c,v 1.3 2000/10/08 22:46:58 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -42,7 +42,7 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: lib_addstr.c,v 1.17 2000/04/29 21:15:55 tom Exp $")
+MODULE_ID("$From: lib_addstr.c,v 1.18 2000/07/29 16:42:41 tom Exp $")
 
 int
 waddnstr(WINDOW *win, const char *const astr, int n)
@@ -53,7 +53,7 @@ waddnstr(WINDOW *win, const char *const astr, int n)
     T((T_CALLED("waddnstr(%p,%s,%d)"), win, _nc_visbuf(astr), n));
 
     if (win && (str != 0)) {
-	T(("... current %s", _traceattr(win->_attrs)));
+	TR(TRACE_VIRTPUT | TRACE_ATTRS, ("... current %s", _traceattr(win->_attrs)));
 	TR(TRACE_VIRTPUT, ("str is not null"));
 	code = OK;
 	if (n < 0)

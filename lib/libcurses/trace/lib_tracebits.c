@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_tracebits.c,v 1.6 2000/07/24 04:06:11 millert Exp $	*/
+/*	$OpenBSD: lib_tracebits.c,v 1.7 2000/10/08 22:47:04 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -36,9 +36,9 @@
 #include <curses.priv.h>
 #include <term.h>		/* cur_term */
 
-MODULE_ID("$From: lib_tracebits.c,v 1.6 2000/07/23 00:22:32 tom Exp $")
+MODULE_ID("$From: lib_tracebits.c,v 1.7 2000/09/02 18:08:37 tom Exp $")
 
-#if defined(SVR4_TERMIO) && !defined(_POSIX_SOURCE)
+#if SVR4_TERMIO && !defined(_POSIX_SOURCE)
 #define _POSIX_SOURCE
 #endif
 

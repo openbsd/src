@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_newterm.c,v 1.10 2000/07/24 04:06:10 millert Exp $	*/
+/*	$OpenBSD: lib_newterm.c,v 1.11 2000/10/08 22:46:59 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -42,14 +42,14 @@
 
 #include <curses.priv.h>
 
-#if defined(SVR4_TERMIO) && !defined(_POSIX_SOURCE)
+#if SVR4_TERMIO && !defined(_POSIX_SOURCE)
 #define _POSIX_SOURCE
 #endif
 
 #include <term.h>		/* clear_screen, cup & friends, cur_term */
 #include <tic.h>
 
-MODULE_ID("$From: lib_newterm.c,v 1.47 2000/07/22 22:33:34 Bruno.Haible Exp $")
+MODULE_ID("$From: lib_newterm.c,v 1.48 2000/09/02 18:11:42 tom Exp $")
 
 #ifndef ONLCR			/* Allows compilation under the QNX 4.2 OS */
 #define ONLCR 0
@@ -193,7 +193,7 @@ newterm(NCURSES_CONST char *name, FILE * ofp, FILE * ifp)
     SP->_use_rmso = SGR0_TEST(exit_standout_mode);
     SP->_use_rmul = SGR0_TEST(exit_underline_mode);
 
-#ifdef USE_WIDEC_SUPPORT
+#if USE_WIDEC_SUPPORT
     /*
      * XFree86 xterm can be configured to support UTF-8 based on environment
      * variable settings.

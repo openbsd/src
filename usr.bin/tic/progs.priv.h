@@ -1,4 +1,4 @@
-/*	$OpenBSD: progs.priv.h,v 1.6 2000/06/19 03:53:59 millert Exp $	*/
+/*	$OpenBSD: progs.priv.h,v 1.7 2000/10/08 22:47:10 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998-2000 Free Software Foundation, Inc.                   *
@@ -32,7 +32,7 @@
  *  Author: Thomas E. Dickey <dickey@clark.net> 1997,1998                   *
  ****************************************************************************/
 /*
- * $From: progs.priv.h,v 1.22 2000/04/08 23:47:39 tom Exp $
+ * $From: progs.priv.h,v 1.24 2000/10/01 01:33:34 tom Exp $
  *
  *	progs.priv.h
  *
@@ -41,7 +41,7 @@
 
 #include <ncurses_cfg.h>
 
-#ifdef USE_RCS_IDS
+#if USE_RCS_IDS
 #define MODULE_ID(id) static const char Ident[] = id;
 #else
 #define MODULE_ID(id) /*nothing*/
@@ -164,7 +164,7 @@ extern int optind;
 /* We use isascii only to guard against use of 7-bit ctype tables in the
  * isprint test in infocmp.
  */
-#ifndef HAVE_ISASCII
+#if !HAVE_ISASCII
 # undef isascii
 # if ('z'-'a' == 25) && ('z' < 127) && ('Z'-'A' == 25) && ('Z' < 127) && ('9' < 127)
 #  define isascii(c) (((c) & 0xff) <= 127)
@@ -172,3 +172,5 @@ extern int optind;
 #  define isascii(c) 1	/* not really ascii anyway */
 # endif
 #endif
+
+#define SIZEOF(v) (sizeof(v)/sizeof(v[0]))

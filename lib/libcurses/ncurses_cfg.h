@@ -1,5 +1,3 @@
-/*	$OpenBSD: ncurses_cfg.h,v 1.19 2000/06/19 03:53:36 millert Exp $	*/
-
 /* include/ncurses_cfg.h.  Generated automatically by configure.  */
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -33,13 +31,17 @@
  *  Author: Thomas E. Dickey <dickey@clark.net> 1997                        *
  ****************************************************************************/
 /*
- * $From: ncurses_cfg.hin,v 1.2 1998/02/11 12:13:46 tom Exp $
+ * $From: ncurses_cfg.hin,v 1.3 2000/09/02 17:13:32 tom Exp $
  *
  * This is a template-file used to generate the "ncurses_cfg.h" file.
  *
- * Rather than list every definition, the configuration script substitutes
- * the definitions that it finds using 'sed'.  You need a patch (971222)
- * to autoconf 2.12 to do this.
+ * Rather than list every definition, the configuration script substitutes the
+ * definitions that it finds using 'sed'.  You need a patch (original date
+ * 971222) to autoconf 2.12 or 2.13 to do this.
+ *
+ * See:
+ *	http://dickey.his.com/autoconf/
+ *	ftp://dickey.his.com/autoconf/
  */
 #ifndef NC_CONFIG_H
 #define NC_CONFIG_H
@@ -55,15 +57,19 @@
 #define GCC_UNUSED __attribute__((unused))
 #define HAVE_BIG_CORE 1
 #define HAVE_BSD_CGETENT 1
+#define HAVE_CURSES_VERSION 1
 #define HAVE_DIRENT_H 1
 #define HAVE_ERRNO 1
 #define HAVE_FCNTL_H 1
 #define HAVE_FORM_H 1
 #define HAVE_GETCWD 1
+#define HAVE_GETEGID 1
+#define HAVE_GETEUID 1
 #define HAVE_GETTIMEOFDAY 1
 #define HAVE_GETTTYNAM 1
 #define HAVE_HAS_KEY 1
 #define HAVE_ISASCII 1
+#define HAVE_ISSETUGID 1
 /* #define HAVE_LIBFORM 1 */
 /* #define HAVE_LIBMENU 1 */
 /* #define HAVE_LIBPANEL 1 */
@@ -112,19 +118,23 @@
 #define HAVE_VSSCANF 1
 #define HAVE_WORKING_POLL 1
 #define HAVE_WRESIZE 1
+#define MIXEDCASE_FILENAMES 1
 #define NCURSES_EXT_FUNCS 1
 #define NCURSES_NO_PADDING 1
 #define NDEBUG 1
-/* #define PURE_TERMINFO 1 */
 #define RETSIGTYPE void
 #define STDC_HEADERS 1
-#define SYSTEM_NAME "openbsd2.7"
+#define SYSTEM_NAME "openbsd2.8"
+#define TERMINFO "/usr/share/terminfo"
 #define TERMINFO_DIRS "/usr/share/terminfo"
 #define TYPEOF_CHTYPE long
+#define USE_ASSUMED_COLOR 1
 #define USE_DATABASE 1
 #define USE_GETCAP 1
 #define USE_HASHMAP 1
 /* #define USE_SIGWINCH 1 */
+
+#include <ncurses_def.h>
 
 	/* The C compiler may not treat these properly but C++ has to */
 #ifdef __cplusplus

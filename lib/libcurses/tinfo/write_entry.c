@@ -1,4 +1,4 @@
-/*	$OpenBSD: write_entry.c,v 1.8 2000/03/13 23:53:40 millert Exp $	*/
+/*	$OpenBSD: write_entry.c,v 1.9 2000/10/08 22:47:03 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -54,7 +54,7 @@
 #define TRACE_OUT(p)		/*nothing */
 #endif
 
-MODULE_ID("$From: write_entry.c,v 1.52 2000/03/11 12:23:42 tom Exp $")
+MODULE_ID("$From: write_entry.c,v 1.53 2000/10/04 02:32:14 tom Exp $")
 
 static int total_written;
 
@@ -118,10 +118,12 @@ _nc_set_writedir(char *dir)
     const char *destination;
     char actual[PATH_MAX];
 
+    if (dir == 0
+     && use_terminfo_vars())
+	dir = getenv("TERMINFO");
+
     if (dir != 0)
 	(void) _nc_tic_dir(dir);
-    else if (getenv("TERMINFO") != NULL)
-	(void) _nc_tic_dir(getenv("TERMINFO"));
 
     destination = _nc_tic_dir(0);
     if (make_directory(destination) < 0) {

@@ -1,7 +1,7 @@
-/*	$OpenBSD: home_terminfo.c,v 1.4 2000/10/02 17:33:47 millert Exp $	*/
+/*	$OpenBSD: home_terminfo.c,v 1.5 2000/10/08 22:47:01 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -29,7 +29,7 @@
  ****************************************************************************/
 
 /****************************************************************************
- *  Author: Thomas E. Dickey <dickey@clark.net> 1998                        *
+ *  Author: Thomas E. Dickey <dickey@clark.net> 1998,2000                   *
  ****************************************************************************/
 
 /*
@@ -39,7 +39,7 @@
 #include <curses.priv.h>
 #include <tic.h>
 
-MODULE_ID("$From: home_terminfo.c,v 1.2 1999/02/27 19:58:46 tom Exp $")
+MODULE_ID("$From: home_terminfo.c,v 1.3 2000/10/04 02:31:53 tom Exp $");
 
 #define my_length (strlen(home) + sizeof(PRIVATE_INFO))
 
@@ -48,17 +48,20 @@ MODULE_ID("$From: home_terminfo.c,v 1.2 1999/02/27 19:58:46 tom Exp $")
 char *
 _nc_home_terminfo(void)
 {
-	char *home;
-	static char *temp = 0;
+    char *home;
+    static char *temp = 0;
 
-	if (temp == 0 && !issetugid()) {
-		if ((home = getenv("HOME")) != 0 && *home != '\0'
-		 && my_length <= PATH_MAX) {
-			temp = typeMalloc(char, my_length);
-			if (temp == 0)
-				_nc_err_abort("Out of memory");
-			(void) sprintf(temp, PRIVATE_INFO, home);
-		}
+    if (use_terminfo_vars()) {
+	if (temp == 0) {
+	    if ((home = getenv("HOME")) != 0
+		&& my_length <= PATH_MAX) {
+		temp = typeMalloc(char, my_length);
+		if (temp == 0)
+		    _nc_err_abort("Out of memory");
+		(void) sprintf(temp, PRIVATE_INFO, home);
+	    }
 	}
 	return temp;
+    }
+    return 0;
 }

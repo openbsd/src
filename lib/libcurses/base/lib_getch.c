@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_getch.c,v 1.6 2000/07/10 03:06:13 millert Exp $	*/
+/*	$OpenBSD: lib_getch.c,v 1.7 2000/10/08 22:46:58 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -42,7 +42,7 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: lib_getch.c,v 1.48 2000/07/08 11:21:51 tom Exp $")
+MODULE_ID("$From: lib_getch.c,v 1.49 2000/07/29 15:45:24 tom Exp $")
 
 #include <fifo_defs.h>
 
@@ -91,7 +91,7 @@ static inline int
 fifo_peek(void)
 {
     int ch = SP->_fifo[peek];
-    T(("peeking at %d", peek));
+    TR(TRACE_IEVENT, ("peeking at %d", peek));
 
     p_inc();
     return ch;
@@ -102,7 +102,7 @@ fifo_pull(void)
 {
     int ch;
     ch = SP->_fifo[head];
-    T(("pulling %d from %d", ch, head));
+    TR(TRACE_IEVENT, ("pulling %d from %d", ch, head));
 
     if (peek == head) {
 	h_inc();
@@ -164,17 +164,17 @@ fifo_push(void)
 #endif
 
     if ((n == -1) || (n == 0)) {
-	T(("read(%d,&ch,1)=%d, errno=%d", SP->_ifd, n, errno));
+	TR(TRACE_IEVENT, ("read(%d,&ch,1)=%d, errno=%d", SP->_ifd, n, errno));
 	ch = ERR;
     }
-    T(("read %d characters", n));
+    TR(TRACE_IEVENT, ("read %d characters", n));
 
     SP->_fifo[tail] = ch;
     SP->_fifohold = 0;
     if (head == -1)
 	head = peek = tail;
     t_inc();
-    T(("pushed %#x at %d", ch, tail));
+    TR(TRACE_IEVENT, ("pushed %#x at %d", ch, tail));
 #ifdef TRACE
     if (_nc_tracing & TRACE_IEVENT)
 	_nc_fifo_dump();
@@ -225,7 +225,7 @@ wgetch(WINDOW *win)
     if (head == -1 && !SP->_raw && !SP->_cbreak) {
 	char buf[MAXCOLUMNS], *sp;
 
-	T(("filling queue in cooked mode"));
+	TR(TRACE_IEVENT, ("filling queue in cooked mode"));
 
 	wgetnstr(win, buf, MAXCOLUMNS);
 
@@ -243,13 +243,13 @@ wgetch(WINDOW *win)
     if (!win->_notimeout && (win->_delay >= 0 || SP->_cbreak > 1)) {
 	int delay;
 
-	T(("timed delay in wgetch()"));
+	TR(TRACE_IEVENT, ("timed delay in wgetch()"));
 	if (SP->_cbreak > 1)
 	    delay = (SP->_cbreak - 1) * 100;
 	else
 	    delay = win->_delay;
 
-	T(("delay is %d milliseconds", delay));
+	TR(TRACE_IEVENT, ("delay is %d milliseconds", delay));
 
 	if (head == -1)		/* fifo is empty */
 	    if (!_nc_timed_wait(3, delay, (int *) 0))

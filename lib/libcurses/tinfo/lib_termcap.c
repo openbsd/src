@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_termcap.c,v 1.6 2000/03/10 01:35:04 millert Exp $	*/
+/*	$OpenBSD: lib_termcap.c,v 1.7 2000/10/08 22:47:02 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -41,7 +41,7 @@
 #define __INTERNAL_CAPS_VISIBLE
 #include <term_entry.h>
 
-MODULE_ID("$From: lib_termcap.c,v 1.36 2000/02/13 01:01:26 tom Exp $")
+MODULE_ID("$From: lib_termcap.c,v 1.37 2000/09/16 20:30:16 tom Exp $")
 
 /*
    some of the code in here was contributed by:
@@ -191,20 +191,4 @@ tgetstr(NCURSES_CONST char *id, char **area)
 	}
     }
     returnPtr(NULL);
-}
-
-/*
- *	char *
- *	tgoto(string, x, y)
- *
- *	Retained solely for upward compatibility.  Note the intentional
- *	reversing of the last two arguments.
- *
- */
-
-char *
-tgoto(const char *string, int x, int y)
-{
-    T((T_CALLED("tgoto(%s,%d,%d)"), string, x, y));
-    returnPtr(tparm((NCURSES_CONST char *) string, y, x));
 }

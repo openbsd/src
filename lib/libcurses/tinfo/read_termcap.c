@@ -1,5 +1,3 @@
-/*	$OpenBSD: read_termcap.c,v 1.11 2000/10/02 22:31:10 millert Exp $	 */
-
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
  *                                                                          *
@@ -57,9 +55,9 @@
 #include <tic.h>
 #include <term_entry.h>
 
-MODULE_ID("$From: read_termcap.c,v 1.47 2000/04/15 16:53:19 Todd.C.Miller Exp $")
+MODULE_ID("$From: read_termcap.c,v 1.49 2000/10/05 00:37:19 tom Exp $")
 
-#ifndef PURE_TERMINFO
+#if !PURE_TERMINFO
 
 #ifdef __EMX__
 #define is_pathname(s) ((((s) != 0) && ((s)[0] == '/')) \
@@ -779,12 +777,13 @@ _nc_tgetent(char *bp, char **sourcename, int *lineno, const char *name)
     char *pathvec[PVECSIZ];	/* to point to names in pathbuf */
     char **pvec;		/* holds usable tail of path vector */
     char *termpath;
+    string_desc desc;
 
     fname = pathvec;
     pvec = pathvec;
     tbuf = bp;
     p = pathbuf;
-    cp = issetugid() ? NULL : getenv("TERMCAP");
+    cp = use_terminfo_vars() ? getenv("TERMCAP") : NULL;
 
     /*
      * TERMCAP can have one of two things in it.  It can be the name of a file
@@ -795,25 +794,28 @@ _nc_tgetent(char *bp, char **sourcename, int *lineno, const char *name)
      * instead.  The path is found in the TERMPATH variable, or becomes
      * "$HOME/.termcap /etc/termcap" if no TERMPATH exists.
      */
-#define	MY_PATH_DEF	"/etc/termcap /usr/share/misc/termcap"
-    if (issetugid())
-	strlcpy(pathbuf, MY_PATH_DEF, PBUFSIZ);
-    else {
-	if (!is_pathname(cp)) {	/* no TERMCAP or it holds an entry */
-	    if ((termpath = getenv("TERMPATH")) != 0) {
-		strlcpy(pathbuf, termpath, PBUFSIZ);
-	    } else {
-		if ((home = getenv("HOME")) != 0 && *home != '\0' &&
-		    strlen(home) < PBUFSIZ) {	/* setup path */
-		    p += strlen(home);	/* path, looking in */
-		    strcpy(pathbuf, home);	/* $HOME first */
-		    *p++ = '/';
-		}			/* if no $HOME look in cwd */
-		strlcpy(p, ".termcap " MY_PATH_DEF,
-		    (size_t) (PBUFSIZ - (p - pathbuf)));
+    _nc_str_init(&desc, pathbuf, sizeof(pathbuf));
+    if (cp == NULL) {
+	_nc_safe_strcpy(&desc, "/usr/share/misc/termcap /etc/termcap");
+    } else if (!is_pathname(cp)) {	/* TERMCAP holds an entry */
+	if ((termpath = getenv("TERMPATH")) != 0) {
+	    _nc_safe_strcat(&desc, termpath);
+	} else {
+	    char temp[PBUFSIZ];
+	    size_t len;
+	    temp[0] = 0;
+	    if ((home = getenv("HOME")) != 0 && *home != '\0'
+	     && strchr(home, ' ') == 0) { /* setup path */
+		len = snprintf(temp, sizeof(temp), "%s/.termcap", home);
+		if (len < sizeof(temp)) {
+		    _nc_safe_strcat(&desc, temp);
+		}
 	    }
-	} else			/* user-defined name in TERMCAP */
-	    strlcpy(pathbuf, cp, PBUFSIZ);	/* still can be tokenized */
+	    _nc_safe_strcat(&desc, " /usr/share/misc/termcap");
+	    _nc_safe_strcat(&desc, " /etc/termcap");
+	}
+    } else {			/* user-defined name in TERMCAP */
+	_nc_safe_strcat(&desc, cp);	/* still can be tokenized */
     }
 
     *fname++ = pathbuf;		/* tokenize path into vector of names */
@@ -927,7 +929,7 @@ _nc_read_termcap_entry(const char *const tn, TERMTYPE * const tp)
     static char *source;
     static int lineno;
 
-    if (!issetugid() && (p = getenv("TERMCAP")) != 0
+    if (use_terminfo_vars() && (p = getenv("TERMCAP")) != 0
 	&& !is_pathname(p) && _nc_name_match(p, tn, "|:")) {
 	/* TERMCAP holds a termcap entry */
 	strlcpy(tc, p, sizeof(tc));
@@ -976,7 +978,7 @@ _nc_read_termcap_entry(const char *const tn, TERMTYPE * const tp)
     char pathbuf[PATH_MAX];
 
     termpaths[filecount] = 0;
-    if (!issetugid() && (tc = getenv("TERMCAP"))) {
+    if (use_terminfo_vars() && (tc = getenv("TERMCAP")) != 0) {
 	if (is_pathname(tc)) {	/* interpret as a filename */
 	    ADD_TC(tc, 0);
 	} else if (_nc_name_match(tc, tn, "|:")) {	/* treat as a capability file */
@@ -1009,7 +1011,7 @@ _nc_read_termcap_entry(const char *const tn, TERMTYPE * const tp)
 
 #define PRIVATE_CAP "%s/.termcap"
 
-	if (!issetugid() && (h = getenv("HOME")) != NULL && *home != '\0'
+	if (use_terminfo_vars() && (h = getenv("HOME")) != NULL && *h != '\0'
 	    && (strlen(h) + sizeof(PRIVATE_CAP)) < PATH_MAX) {
 	    /* user's .termcap, if any, should override it */
 	    (void) strcpy(envhome, h);

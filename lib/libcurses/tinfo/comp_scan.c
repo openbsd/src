@@ -50,7 +50,7 @@
 #include <term_entry.h>
 #include <tic.h>
 
-MODULE_ID("$From: comp_scan.c,v 1.45 2000/07/08 00:43:55 tom Exp $")
+MODULE_ID("$From: comp_scan.c,v 1.47 2000/09/24 01:15:17 tom Exp $")
 
 /*
  * Maximum length of string capability we'll accept before raising an error.
@@ -80,8 +80,8 @@ static char separator;		/* capability separator */
 static int pushtype;		/* type of pushback token */
 static char pushname[MAX_NAME_SIZE + 1];
 
-#ifdef NCURSES_EXT_FUNCS
-bool _nc_disable_period = FALSE; /* used by tic -a option */
+#if NCURSES_EXT_FUNCS
+bool _nc_disable_period = FALSE;	/* used by tic -a option */
 #endif
 
 static int last_char(void);
@@ -153,7 +153,7 @@ _nc_get_token(void)
 
 	_nc_set_type(pushname);
 	DEBUG(3, ("pushed-back token: `%s', class %d",
-		_nc_curr_token.tk_name, pushtype));
+		  _nc_curr_token.tk_name, pushtype));
 
 	pushtype = NO_PUSHBACK;
 	pushname[0] = '\0';
@@ -180,10 +180,10 @@ _nc_get_token(void)
 	    ch = next_char();
 
 	if (ch == '.'
-#ifdef NCURSES_EXT_FUNCS
-	 && !_nc_disable_period
+#if NCURSES_EXT_FUNCS
+	    && !_nc_disable_period
 #endif
-	) {
+	    ) {
 	    dot_flag = TRUE;
 	    DEBUG(8, ("dot-flag set"));
 
@@ -198,12 +198,12 @@ _nc_get_token(void)
 
 	/* have to make some punctuation chars legal for terminfo */
 	if (!isalnum(ch)
-#ifdef NCURSES_EXT_FUNCS
-	 && !(ch == '.' && _nc_disable_period)
+#if NCURSES_EXT_FUNCS
+	    && !(ch == '.' && _nc_disable_period)
 #endif
-	 && !strchr(terminfo_punct, (char) ch)) {
+	    && !strchr(terminfo_punct, (char) ch)) {
 	    _nc_warning("Illegal character (expected alphanumeric or %s) - %s",
-		terminfo_punct, unctrl(ch));
+			terminfo_punct, unctrl(ch));
 	    _nc_panic_mode(separator);
 	    goto start_token;
 	}
@@ -338,7 +338,7 @@ _nc_get_token(void)
 	    case '@':
 		if ((ch = next_char()) != separator)
 		    _nc_warning("Missing separator after `%s', have %s",
-			buffer, unctrl(ch));
+				buffer, unctrl(ch));
 		_nc_curr_token.tk_name = buffer;
 		type = CANCEL;
 		break;
@@ -391,30 +391,30 @@ _nc_get_token(void)
 	switch (type) {
 	case BOOLEAN:
 	    _tracef("Token: Boolean; name='%s'",
-		_nc_curr_token.tk_name);
+		    _nc_curr_token.tk_name);
 	    break;
 
 	case NUMBER:
 	    _tracef("Token: Number;  name='%s', value=%d",
-		_nc_curr_token.tk_name,
-		_nc_curr_token.tk_valnumber);
+		    _nc_curr_token.tk_name,
+		    _nc_curr_token.tk_valnumber);
 	    break;
 
 	case STRING:
 	    _tracef("Token: String;  name='%s', value=%s",
-		_nc_curr_token.tk_name,
-		_nc_visbuf(_nc_curr_token.tk_valstring));
+		    _nc_curr_token.tk_name,
+		    _nc_visbuf(_nc_curr_token.tk_valstring));
 	    break;
 
 	case CANCEL:
 	    _tracef("Token: Cancel; name='%s'",
-		_nc_curr_token.tk_name);
+		    _nc_curr_token.tk_name);
 	    break;
 
 	case NAMES:
 
 	    _tracef("Token: Names; value='%s'",
-		_nc_curr_token.tk_name);
+		    _nc_curr_token.tk_name);
 	    break;
 
 	case EOF:
@@ -571,7 +571,7 @@ _nc_trans_string(char *ptr, char *last)
 
 		default:
 		    _nc_warning("Illegal character %s in \\ sequence",
-			unctrl(ch));
+				unctrl(ch));
 		    *(ptr++) = (char) ch;
 		}		/* endswitch (ch) */
 	    }			/* endelse (ch < '0' ||  ch > '7') */
@@ -621,7 +621,7 @@ _nc_push_token(int tokclass)
     _nc_get_type(pushname);
 
     DEBUG(3, ("pushing token: `%s', class %d",
-	    _nc_curr_token.tk_name, pushtype));
+	      _nc_curr_token.tk_name, pushtype));
 }
 
 /*
@@ -736,7 +736,7 @@ next_char(void)
 	} while
 	    (bufstart != NULL && line[0] == '#');
 
-	if (bufstart == NULL)
+	if (bufstart == NULL || *bufstart == 0)
 	    return (EOF);
 
 	while (iswhite(*bufptr))
@@ -749,10 +749,19 @@ next_char(void)
 	if ((len = strlen(bufptr)) > 1) {
 	    if (bufptr[len - 1] == '\n'
 		&& bufptr[len - 2] == '\r') {
-		bufptr[len - 2] = '\n';
-		bufptr[len - 1] = '\0';
+		len--;
+		bufptr[len - 1] = '\n';
+		bufptr[len] = '\0';
 	    }
 	}
+
+	/*
+	 * If we don't have a trailing newline, it's because the line is simply
+	 * too long.  Give up.  (FIXME:  We could instead reallocate the line
+	 * buffer and allow arbitrary-length lines).
+	 */
+	if (len == 0 || (bufptr[len - 1] != '\n'))
+	    return (EOF);
     }
 
     first_column = (bufptr == bufstart);
@@ -782,7 +791,7 @@ end_of_stream(void)
 /* are we at end of input? */
 {
     return ((yyin ? feof(yyin) : (bufptr && *bufptr == '\0'))
-	? TRUE : FALSE);
+	    ? TRUE : FALSE);
 }
 
 /* comp_scan.c ends here */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: comp_parse.c,v 1.7 2000/06/19 03:53:48 millert Exp $	*/
+/*	$OpenBSD: comp_parse.c,v 1.8 2000/10/08 22:47:00 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -54,7 +54,7 @@
 #include <tic.h>
 #include <term_entry.h>
 
-MODULE_ID("$From: comp_parse.c,v 1.40 2000/04/15 16:57:08 tom Exp $")
+MODULE_ID("$From: comp_parse.c,v 1.41 2000/10/03 09:53:49 tom Exp $")
 
 static void sanity_check(TERMTYPE *);
 void (*_nc_check_termtype) (TERMTYPE *) = sanity_check;
@@ -124,29 +124,30 @@ _nc_free_entries(ENTRY * headp)
     }
 }
 
+static char *
+force_bar(char *dst, char *src, size_t siz)
+{
+    if (strchr(src, '|') == 0) {
+	size_t len;
+
+	len = strlcpy(dst, src, siz);
+	if (len >= siz - 2)
+	    len = siz - 2;;
+	(void) strcpy(dst + len, "|");
+	src = dst;
+    }
+    return src;
+}
+
 bool
 _nc_entry_match(char *n1, char *n2)
 /* do any of the aliases in a pair of terminal names match? */
 {
     char *pstart, *qstart, *pend, *qend;
-    char nc1[MAX_NAME_SIZE + 1], nc2[MAX_NAME_SIZE + 1];
-    size_t n;
+    char nc1[MAX_NAME_SIZE + 2], nc2[MAX_NAME_SIZE + 2];
 
-    if (strchr(n1, '|') == NULL) {
-	if ((n = strlcpy(nc1, n1, sizeof(nc1))) > sizeof(nc1) - 2)
-	    n = sizeof(nc1) - 2;
-	nc1[n++] = '|';
-	nc1[n] = '\0';
-	n1 = nc1;
-    }
-
-    if (strchr(n2, '|') == NULL) {
-	if ((n = strlcpy(nc2, n2, sizeof(nc2))) > sizeof(nc2) - 2)
-	    n = sizeof(nc2) - 2;
-	nc2[n++] = '|';
-	nc2[n] = '\0';
-	n2 = nc2;
-    }
+    n1 = force_bar(nc1, n1, sizeof(nc1));
+    n2 = force_bar(nc2, n2, sizeof(nc2));
 
     for (pstart = n1; (pend = strchr(pstart, '|')); pstart = pend + 1)
 	for (qstart = n2; (qend = strchr(qstart, '|')); qstart = qend + 1)

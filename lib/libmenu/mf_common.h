@@ -1,7 +1,7 @@
-/*	$OpenBSD: mf_common.h,v 1.5 1999/05/17 03:04:26 millert Exp $	*/
+/*	$OpenBSD: mf_common.h,v 1.6 2000/10/08 22:47:07 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -58,7 +58,7 @@ extern int errno;
 
 #include <nc_alloc.h>
 
-#ifdef USE_RCS_IDS
+#if USE_RCS_IDS
 #define MODULE_ID(id) static const char Ident[] = id;
 #else
 #define MODULE_ID(id) /*nothing*/
