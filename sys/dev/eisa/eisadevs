@@ -1,4 +1,4 @@
-$OpenBSD: eisadevs,v 1.19 2004/03/31 20:06:53 mickey Exp $
+$OpenBSD: eisadevs,v 1.20 2004/05/05 05:33:56 mickey Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -129,8 +129,8 @@ product ACE 6010	Disk Controller
 product ACE 7010	Multi-Function Board
 
 /* Acer products */
-product ACR 1201	1200 486/25 EISA System Board
-product ACR 1211	AcerFrame 3000SP33 486/33 EISA System Board
+product ACR 1201	1200 486/25 System Board
+product ACR 1211	AcerFrame 3000SP33 486/33 System Board
 product ACR 1341	M1 486SX/20 CPU Board
 product ACR 1351	M1 486SX/20 CPU Board
 product ACR 1361	M1 487/20 CPU Board
@@ -143,7 +143,7 @@ product ACR 15A1	M1 486/33 CPU Board
 product ACR 15B1	M1 486/33 CPU Board
 product ACR 1701	AcerFrame 1000
 product ACR 1711	AcerFrame 1000 486/33 SYSTEM-2
-product ACR 1801	P43WE EISA System Board
+product ACR 1801	P43WE System Board
 product ACR 3211	AcerFrame 3000MP 486 SYSTEM-1
 product ACR 3221	AcerFrame 486 Series SYSTEM-2
 product ACR 3231	AcerFrame 486 Series SYSTEM-3
@@ -168,17 +168,17 @@ product ADP 7771	AHA-274x SCSI
 product ADP 7756	AHA-284x SCSI (BIOS enabled)
 product ADP 7757	AHA-284x SCSI (BIOS disabled)
 
-product AEI 0401	486EI EISA System Board
+product AEI 0401	486EI System Board
 
-product AEO 0301	486EO EISA System Board
+product AEO 0301	486EO System Board
 
 product AIM 0002	AUVA OPTi/EISA 32-Bit 486 All-in-One System Board
 
-product AIR 0101	AIR486SE/25/33 EISA Baby AT-foot print motherboard
+product AIR 0101	AIR486SE/25/33 Baby AT-foot print motherboard
 product AIR 0103	AIR486SE/25/33/50
 product AIR 0201	AIR486LE/25/33/50
-product AIR 0301	AIR 486EO EISA System Board
-product AIR 0401	486EI EISA System Board
+product AIR 0301	AIR 486EO System Board
+product AIR 0401	486EI System Board
 product AIR 0501	AIR 586EP PCI/EISA System Board
 product AIR 0601	AIR 54CEP PCI/EISA System Board
 product AIR 0701	AIR 54CDP PCI/EISA System Board
@@ -187,18 +187,18 @@ product AIR 0901	AIR 54TDP PCI/EISA Dual-Processors System Board
 product AIR 1001	AIR P6NDP PCI/EISA Dual-Pentium Processor System Board
 product AIR 2001	AIR SCSI-2E
 product AIR 2101	AIR SCSI-2V
-product AIR 3001	ENET-2E EISA BUS MASTER ETHERNET
+product AIR 3001	ENET-2E BUS MASTER ETHERNET
 product AIR 3101	ENET-2V LOCAL BUS MASTER ETHERNET
 
 product ALR 0001	Power/Business VEISA System Board
 product ALR 0041	PowerPro System Board
 product ALR 0181	PowerPro System Board
 product ALR 0241	Evolution V Pentium Tower System Board
-product ALR 0341	EISA PCI base System Board
+product ALR 0341	EISA/PCI base System Board
 product ALR 3000	80486 Processor Module
 product ALR 3010	Pentium Processor Board
 product ALR 3023	ALR 16-bit VGA without Parallel port
-product ALR 8580	Advanced Disk Array Caching EISA Controller
+product ALR 8580	Advanced Disk Array Caching Controller
 product ALR A0C1	System Board
 product ALR A301	Revolution Q-SMP System Board
 product ALR A311	Revolution Q-2SMP System Board
@@ -208,31 +208,31 @@ product ALR B0B0	Secondary System Processor Board - 80486DX2/66
 /* AMI products */
 product AMI 15C1	SCSI Host Adapter
 product AMI 15D1	SCSI Host Adapter - Rev 2
-product AMI 15E1	Single Ended EISA SCSI
-product AMI 16B1	ENTERPRISE EISA system board
-product AMI 2509	ENTERPRISE EISA system board
-product AMI 25B1	ENTERPRISE EISA system board
-product AMI 28A1	EZ-FLEX EISA System Board
+product AMI 15E1	Single Ended SCSI
+product AMI 16B1	ENTERPRISE System Board
+product AMI 2509	ENTERPRISE System Board
+product AMI 25B1	ENTERPRISE System Board
+product AMI 28A1	EZ-FLEX System Board
 product AMI 44C1	SCSI Host Adapter - Series 44
-product AMI 44D2	Fast Single Ended EISA SCSI
+product AMI 44D2	Fast Single Ended SCSI
 product AMI 4801	Series 48 SCSI
-product AMI 68B1	Enterprise III 486 EISA System Board
+product AMI 68B1	Enterprise III 486 System Board
 
-product APS 0101	EISA PIP INTERFACE
-product APS 0102	EISA PIP INTERFACE
-product APS 0103	EISA PIP INTERFACE
+product APS 0101	PIP INTERFACE
+product APS 0102	PIP INTERFACE
+product APS 0103	PIP INTERFACE
 
 product ARC 0010	Alta EtherTPI/Combo
 product ARC 0020	Alta TokenCombo-16 S/U
 
-product ASU 0100	EISA-SC100 SCSI Cache Host Adapter (CFG file V2.0)
-product ASU 0500	EISA-L500 Ethernet
-product ASU 4001	EISA-486C Main Board
-product ASU 4101	EISA-486E Main Board
-product ASU 4201	EISA-486A Main Board
-product ASU 4301	EISA-486SI Main Board
-product ASU 4501	Mini EISA-486H Main Board
-product ASU 4701	Mini EISA-486AS Main Board
+product ASU 0100	SC100 SCSI Cache Host Adapter (CFG file V2.0)
+product ASU 0500	L500 Ethernet
+product ASU 4001	486C Main Board
+product ASU 4101	486E Main Board
+product ASU 4201	486A Main Board
+product ASU 4301	486SI Main Board
+product ASU 4501	Mini 486H Main Board
+product ASU 4701	Mini 486AS Main Board
 product ASU 4901	VL/EISA-486SV1 Main Board
 product ASU 5101	PCI/E-P5MP4 or PCI/E-P54NP4 Main Board V2.3
 product ASU 5201	P/E-P55T2P4D  Main Board (CFG File V1.2)
@@ -240,8 +240,8 @@ product ASU 5201	P/E-P55T2P4D  Main Board (CFG File V1.2)
 /* ATI products */
 product ATI 1500	AT-1500 Ethernet
 product ATI 1700	AT-1700 Ethernet
-product ATI 4400	mach32 EISA Graphics
-product ATI 4402	mach32 EISA Graphics
+product ATI 4400	mach32 Graphics
+product ATI 4402	mach32 Graphics
 product ATI 4410	mach32 Graphics
 product ATI 4420	mach32 Graphics
 product ATI 4430	mach32 VLB Graphics
@@ -266,16 +266,16 @@ product BUS 6301	Bt763E 82596-based Ethernet
 
 /* Cache Computers products */
 product CCI 0000	Memory Refresh Controller
-product CCI 1001	486/25  EISA System Board
-product CCI 2001	486/33  EISA System Board
-product CCI 3001	Modular EISA System Board
-product CCI 3009	Modular EISA System Board
+product CCI 1001	486/25  System Board
+product CCI 2001	486/33  System Board
+product CCI 3001	Modular System Board
+product CCI 3009	Modular System Board
 product CCI 4000	486/33 CPU Board
 product CCI 4001	486/33 CPU Board
 product CCI 5001	486/50 CPU Board
 product CCI 6001	LAN Adapter
-product CCI 7001	EISA System Board
-product CCI 8001	EISA System Board
+product CCI 7001	System Board
+product CCI 8001	System Board
 
 /* Chase products */
 product CHA A041	AT4 Intelligent Serial Controller
@@ -540,11 +540,11 @@ product DTI 2000	ESP2000A/ESP2000 System Processor Board
 product DTI 2002	ESP2002 Integrated System Processor
 
 /* DTK products */
-product DTK 0001	PLM-3300I 80486 EISA Board
+product DTK 0001	PLM-3300I 80486 Board
 product DTK 0003	PLM-3331P EISACACHE486 33/25/50 MHZ
 
-product ECS 0580	DI-580A EISA SCSI
-product ECS 0590	DI-590 EISA SCSI
+product ECS 0580	DI-580A SCSI
+product ECS 0590	DI-590 SCSI
 
 /* ELSA products */
 product ELS 8041	WINNER 1000 Enhanced VGA
@@ -554,11 +554,11 @@ product ETI 1001	NE3300 Ethernet Rev. C & D
 
 product EVX 0002	PN-3000 System Board
 
-product FCT 0001	EISA SYSTEM BOARD
-product FCT 0002	386 EISA SYSTEM BOARD
-product FCT 0003	486 EISA SYSTEM BOARD
+product FCT 0001	SYSTEM BOARD
+product FCT 0002	386 SYSTEM BOARD
+product FCT 0003	486 SYSTEM BOARD
 
-product FIC 0000	LEO 486VE EISA Main Board
+product FIC 0000	LEO 486VE Main Board
 
 product FIX 1516	15-16MB Memory Hole Patch - Netserver LF/LC 5/66
 
@@ -571,7 +571,7 @@ product FSI 2003	ESA-200E ATM
 product GDT 2001	GDT2000/GDT2020 Fast-SCSI Cache Controller - Rev. 1.0
 product GDT 3001	GDT3000/GDT3020 Dual Channel SCSI Controller - Rev. 1.0
 product GDT 3002	GDT30x0A Cache Controller
-product GDT 3003	GDT3000B/GDT3010A EISA SCSI Cache Controller - Rev. 1.0
+product GDT 3003	GDT3000B/GDT3010A SCSI Cache Controller - Rev. 1.0
 
 product GIT 0000	G486PEL EISA & LOCAL Bus Mother Board.
 product GIT 0001	G486HVL EISA & VESA LOCAL Bus Mother Board.
@@ -605,26 +605,26 @@ product HWP 1810	ThinLAN Interface Board (27210B)
 product HWP 1811	ThinLAN PC Adapter Card (27250A)
 product HWP 1820	EtherTwist Adapter Card/8 (27245-60002)
 product HWP 1832	EtherTwist PC LAN Adapter/16 TP Plus (27247B)
-product HWP 1840	EtherTwist EISA LAN Adapter/32
+product HWP 1840	EtherTwist LAN Adapter/32
 product HWP 1850	LAN AdapterCard -- 25567A
 product HWP 1870	PSI
 product HWP 18A0	EtherTwist PC LAN Adapter/16 TL Plus (27252A)
 product HWP 18C0	EtherTwist PC LAN Adapter NC/16 TP (J2405A)
-product HWP 18E0	100Mbps EISA ATM Card
-product HWP 1940	10/100VG Selectable EISA LAN Adapter (J2577A)
+product HWP 18E0	100Mbps ATM Card
+product HWP 1940	10/100VG Selectable LAN Adapter (J2577A)
 product HWP 1980	ATM Adapter -- J2802A
 product HWP 1990	100VG AnyLAN adapter card
 product HWP 19A0	Low-cost PSI
 product HWP 1C00	Serial/Parallel Interface Board (24540B)
 product HWP 2002	ScanJet II Interface (C1752A)
-product HWP 2051	EISA Test Adapter Card
+product HWP 2051	Test Adapter Card
 product HWP 2080	ScanJet II Interface (C2502A)
-product HWP C000	Series 700 EISA System Board
-product HWP C010	Series 700 EISA System Board
-product HWP C051	Series 700 EISA System Board
-product HWP C091	EISA System Board
-product HWP C0D1	EISA System Board
-product HWP C0E1	EISA System Board
+product HWP C000	Series 700 System Board
+product HWP C010	Series 700 System Board
+product HWP C051	Series 700 System Board
+product HWP C091	System Board
+product HWP C0D1	System Board
+product HWP C0E1	System Board
 
 /* IBM products */
 product IBM 0001	Auto 16/4 Token Ring
@@ -642,7 +642,7 @@ product IIN 0B01	Intel TokenExpress(tm) ISA/8
 product IKN 1110	hardcopy boards: 10092, 10097, or 10111
 
 /* Integrated Micro Solution Inc. products */
-product IMS 1001	486 EISA System Board
+product IMS 1001	486 System Board
 
 product ING 2040	HCL-Hewlett Packard Limited PANTHER System Board
 
@@ -656,7 +656,7 @@ product INT 0000	Mercury/Neptune PCI-EISA Main Board
 product INT 0081	HP Limited PANTHER System Board
 product INT 0701	TokenExpress(tm) ISA 16/4
 product INT 0703	TokenExpress(tm) ISA/16s
-product INT 0902	TokenExpress(tm) EISA 16/4
+product INT 0902	TokenExpress(tm) 16/4
 product INT 0B01	TokenExpress(tm) ISA/8
 product INT 1000	EtherExpress 16 Family Ethernet
 product INT 1010	EtherExpress 32 Flash Ethernet
@@ -687,14 +687,14 @@ product ITC 0001	EISA-486C Main Board
 product ITK 0011	ixEins Basic S0/Up0 ISDN Version 1.1
 product ITK 0012	ixEins Basic S0/Up0 ISDN Version 1.2
 
-product KCI 3201	ET32EM EISA 32-bit BUS-MASTER Ethernet
-product KCI 3202	ET-32EM 32-bit EISA Bus Master Ethernet
+product KCI 3201	ET32EM 32-bit BUS-MASTER Ethernet
+product KCI 3202	ET-32EM 32-bit Bus Master Ethernet
 
 /* LeafNET products */
 product LEF 8000	Ethernet
 
 /* Madge products */
-product MDG 0002	Smart 16/4 EISA Ringnode
+product MDG 0002	Smart 16/4 Ringnode
 product MDG 0010	Smart 16/4 AT Ringnode
 product MDG 0020	Smart 16/4 ISA Client Ringnode
 product MDG 2000	Blue+ 16/4 ISA Token Ring
@@ -708,10 +708,10 @@ product MCY 2501	NE2500/NE5500 Series Ethernet
 product MET 1104	UGA 1104 Graphics
 product MET 1128	UGA 1124/1128 Graphics
 
-product MIC 0001	EISA 486 66/50/33/25 System Board
+product MIC 0001	486 66/50/33/25 System Board
 product MIC 0004	486 PCI-EISA System Board
 product MIC 0005	M5PE EISA-PCI Pentium System Board
-product MIC 0021	NET3200 EISA Ethernet LAN Adapter
+product MIC 0021	NET3200 Ethernet LAN Adapter
 product MIC 0054	M54Pe Dual Pentium PCI-EISA System Board
 product MIC 3001	EISA3 System Board
 product MIC 5402	M54E2 Dual Pentium PCI-EISA System Board
@@ -723,27 +723,27 @@ MINIADP	Adaptec 32-bit SCSI Host Adapter (with floppy)
 product MIR 0928	miroCRYSTAL / miroMAGIC / miroRAINBOW (14-Sep-93)
 
 /* Mylex Products */
-product MLX 0010	LNE390A EISA 32-bit Ethernet
-product MLX 0011	LNE390B EISA 32-bit Ethernet
-product MLX 0020	DCE376 EISA 32-Bit SCSI
-product MLX 0021	DCE376 EISA 32-Bit SCSI
-product MLX 0022	DCE376 EISA 32-Bit SCSI
+product MLX 0010	LNE390A 32-bit Ethernet
+product MLX 0011	LNE390B 32-bit Ethernet
+product MLX 0020	DCE376 32-Bit SCSI
+product MLX 0021	DCE376 32-Bit SCSI
+product MLX 0022	DCE376 32-Bit SCSI
 product MLX 0030	LNI390A ISA 16-Bit Ethernet
-product MLX 0040	GXE020B or GXE020C EISA 32-Bit Graphics
-product MLX 0050	GLE(911) EISA Graphics
-product MLX 0070	DAC960 EISA Disk Array
-product MLX 0071	DAC960 EISA Disk Array (3-channel)
-product MLX 0072	DAC960 EISA Disk Array (3-channel)
-product MLX 0073	DAC960 EISA Disk Array (2-channel)
-product MLX 0074	DAC960 EISA Disk Array (1-channel)
-product MLX 0075	DAC960-A EISA Disk Array (3-channel)
-product MLX 0076	DAC960-A EISA Disk Array (2-channel)
-product MLX 0077	DAC960-A EISA Disk Array (1-channel)
-product MLX 0101	LME596 EISA 32-bit 4 Channel Ethernet
-product MLX FD01	MDE486 EISA 32-Bit 486 System Board
-product MLX FE01	MBE486 EISA 32-Bit 486 System Board
-product MLX FF01	MAE486 EISA 32-Bit 486 System Board
-product MLX FF02	MDE486 or MNE486 EISA 32-Bit 486 System Board
+product MLX 0040	GXE020B/C 32-Bit Graphics
+product MLX 0050	GLE(911) Graphics
+product MLX 0070	DAC960 Disk Array
+product MLX 0071	DAC960 Disk Array (3-channel)
+product MLX 0072	DAC960 Disk Array (3-channel)
+product MLX 0073	DAC960 Disk Array (2-channel)
+product MLX 0074	DAC960 Disk Array (1-channel)
+product MLX 0075	DAC960-A Disk Array (3-channel)
+product MLX 0076	DAC960-A Disk Array (2-channel)
+product MLX 0077	DAC960-A Disk Array (1-channel)
+product MLX 0101	LME596 32-bit 4 Channel Ethernet
+product MLX FD01	MDE486 32-Bit 486 System Board
+product MLX FE01	MBE486 32-Bit 486 System Board
+product MLX FF01	MAE486 32-Bit 486 System Board
+product MLX FF02	MDE486/MNE486 32-Bit 486 System Board
 
 /* Matrox products */
 product MTX 2040	IM-1280/EISA
@@ -797,20 +797,20 @@ product NVL 1501	NE2000PLUS Ethernet
 product OLC 0701	ISA 16/4 Token-Ring
 product OLC 0702	OC-3117, ISA 16/4 Token-Ring
 product OLC 0801	OC-3118 ISA 16/4 Token-Ring
-product OLC 0901	EISA 16/4 Token-Ring
-product OLC 0902	EISA 16/4 Token-Ring
+product OLC 0901	16/4 Token-Ring
+product OLC 0902	16/4 Token-Ring
 product OLC 0B01	PCA 16/4 Token-Ring
-product OLC 1201	32 Bit EISA 16/4 Token-Ring
+product OLC 1201	32 Bit 16/4 Token-Ring
 
 /* OPTi products */
-product OPT 0000	HUNTER EISA 32-Bit 486 System Board
-product OPT 0200	LOW_COST EISA 32-Bit 486 System Board
+product OPT 0000	HUNTER 32-Bit 486 System Board
+product OPT 0200	LOW_COST 32-Bit 486 System Board
 
 product OTI 0011	Pro II/EISA
 
-product PCI 0080	486WB 8 SLOT EISA SYSTEM BOARD
-product PCI 0120	486WB 12 SLOT EISA SYSTEM BOARD
-product PCI 2080	486WB 8 SLOT EISA SYSTEM BOARD
+product PCI 0080	486WB 8 SLOT SYSTEM BOARD
+product PCI 0120	486WB 12 SLOT SYSTEM BOARD
+product PCI 2080	486WB 8 SLOT SYSTEM BOARD
 
 product PHI 8041	Standard VGA controller
 
@@ -896,7 +896,7 @@ product TCO 010C	TC6045 ARC-Card/AT
 product TCO 030D	TC6042 ARC-Card/CE
 product TCO 040B	TC6142 ARC-Card/CE
 product TCO 050D	TC4035 TOKEN RING Adapter/AT (Rev D)
-product TCO 3147	TC3047 System (TCNS) EISA Adapter
+product TCO 3147	TC3047 System (TCNS) Adapter
 product TCO 345A	TC3045 Network System (TCNS) AT Adapter
 product TCO 345B	TC3045 Network System (TCNS) AT Adapter
 
@@ -907,11 +907,11 @@ product TEC 8002	QT HOST ADAPTER
 product TEC 8003	QT PC36 TAPE CONTROLLER
 
 product TRM 0001	EISA-486C SYSTEM BOARD
-product TRM 0320	DC-320 EISA SCSI Host Adapter
-product TRM 0620	DC-620 EISA IDE Cache Controller
-product TRM 0820	DC-820 EISA SCSI Cache Host Adapter
-product TRM 320E	DC-320E EISA SCSI Host Adapter
-product TRM 820B	DC-820B EISA SCSI Cache Host Adapter
+product TRM 0320	DC-320 SCSI Host Adapter
+product TRM 0620	DC-620 IDE Cache Controller
+product TRM 0820	DC-820 SCSI Cache Host Adapter
+product TRM 320E	DC-320E SCSI Host Adapter
+product TRM 820B	DC-820B SCSI Cache Host Adapter
 
 /* Truevision products  */
 product TRU 0210	Image Capture Board
@@ -919,7 +919,7 @@ product TRU 0520	ATVista (R) VideoGraphics
 product TRU 1100	DVR
 
 /* Texas Instruments products  */
-product TXN 0011	TACT84500 MODULAR EISA SYSTEM BOARD
+product TXN 0011	TACT84500 MODULAR SYSTEM BOARD
 
 /* Tyan products */
 product TYN 0000	486 PRO-EISA Board
