@@ -1,8 +1,5 @@
-/* dhcrelay.c
-
-   DHCP/BOOTP Relay Agent. */
-
 /*
+ * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
  * Copyright (c) 1997, 1998, 1999 The Internet Software Consortium.
  * All rights reserved.
  *
@@ -64,9 +61,8 @@ struct server_list {
 	struct sockaddr_in to;
 } *servers;
 
-int main (argc, argv)
-	int argc;
-	char **argv;
+int
+main(int argc, char *argv[])
 {
 	int			 ch, quiet = 0, no_daemon = 0;
 	extern char		*__progname;
@@ -126,7 +122,7 @@ int main (argc, argv)
 		if (iap) {
 			if ((sp = calloc(1, sizeof *sp)) == NULL)
 				error("calloc");
-			sp -> next = servers;
+			sp->next = servers;
 			servers = sp;
 			memcpy (&sp->to.sin_addr, iap, sizeof *iap);
 		}
@@ -142,25 +138,24 @@ int main (argc, argv)
 
 	/* Default to the DHCP/BOOTP port. */
 	if (!local_port) {
-		ent = getservbyname ("dhcps", "udp");
+		ent = getservbyname("dhcps", "udp");
 		if (!ent)
-			local_port = htons (67);
+			local_port = htons(67);
 		else
-			local_port = ent -> s_port;
-		endservent ();
+			local_port = ent->s_port;
+		endservent();
 	}
-	remote_port = htons (ntohs (local_port) + 1);
+	remote_port = htons(ntohs(local_port) + 1);
 
 	/* We need at least one server. */
-	if (!sp) {
+	if (!sp)
 		usage();
-	}
 
 	/* Set up the server sockaddrs. */
-	for (sp = servers; sp; sp = sp -> next) {
-		sp -> to.sin_port = local_port;
-		sp -> to.sin_family = AF_INET;
-		sp -> to.sin_len = sizeof sp -> to;
+	for (sp = servers; sp; sp = sp->next) {
+		sp->to.sin_port = local_port;
+		sp->to.sin_family = AF_INET;
+		sp->to.sin_len = sizeof sp->to;
 	}
 
 	/* Get the current time... */
@@ -177,102 +172,96 @@ int main (argc, argv)
 		daemon(0, 0);
 
 	/* Start dispatching packets and timeouts... */
-	dispatch ();
+	dispatch();
+	/* not reached */
 
-	/*NOTREACHED*/
-	return 0;
+	exit (0);
 }
 
-void relay (ip, packet, length, from_port, from, hfrom)
-	struct interface_info *ip;
-	struct dhcp_packet *packet;
-	int length;
-	unsigned int from_port;
-	struct iaddr from;
-	struct hardware *hfrom;
+void
+relay(struct interface_info *ip, struct dhcp_packet *packet, int length,
+    unsigned int from_port, struct iaddr from, struct hardware *hfrom)
 {
-	struct server_list *sp;
-	struct sockaddr_in to;
-	struct interface_info *out;
-	struct hardware hto;
+	struct server_list	*sp;
+	struct sockaddr_in	 to;
+	struct interface_info	*out;
+	struct hardware		 hto;
 
-	if (packet -> hlen > sizeof packet -> chaddr) {
-		note ("Discarding packet with invalid hlen.");
+	if (packet->hlen > sizeof packet->chaddr) {
+		note("Discarding packet with invalid hlen.");
 		return;
 	}
 
 	/* If it's a bootreply, forward it to the client. */
-	if (packet -> op == BOOTREPLY) {
-		memset(&to, 0, sizeof(to));
-		if (!(packet -> flags & htons (BOOTP_BROADCAST))) {
-			to.sin_addr = packet -> yiaddr;
+	if (packet->op == BOOTREPLY) {
+		bzero(&to, sizeof(to));
+		if (!(packet->flags & htons(BOOTP_BROADCAST))) {
+			to.sin_addr = packet->yiaddr;
 			to.sin_port = remote_port;
 		} else {
-			to.sin_addr.s_addr = htonl (INADDR_BROADCAST);
+			to.sin_addr.s_addr = htonl(INADDR_BROADCAST);
 			to.sin_port = remote_port;
 		}
 		to.sin_family = AF_INET;
 		to.sin_len = sizeof to;
 
 		/* Set up the hardware destination address. */
-		hto.hlen = packet -> hlen;
+		hto.hlen = packet->hlen;
 		if (hto.hlen > sizeof hto.haddr)
 			hto.hlen = sizeof hto.haddr;
-		memcpy (hto.haddr, packet -> chaddr, hto.hlen);
-		hto.htype = packet -> htype;
+		memcpy(hto.haddr, packet->chaddr, hto.hlen);
+		hto.htype = packet->htype;
 
+/* XXX broken */
 		/* Find the interface that corresponds to the giaddr
 		   in the packet. */
-		for (out = interfaces; out; out = out -> next) {
-			if (!memcmp (&out -> primary_address,
-				     &packet -> giaddr,
-				     sizeof packet -> giaddr))
+		for (out = interfaces; out; out = out->next) {
+			if (!memcmp (&out->primary_address,
+				     &packet->giaddr,
+				     sizeof packet->giaddr))
 				break;
 		}
 		if (!out) {
 			warn ("packet to bogus giaddr %s.",
-			      inet_ntoa (packet -> giaddr));
+			      inet_ntoa (packet->giaddr));
 			return;
 		}
 
 		if (send_packet (out,
 				  (struct packet *)0,
-				  packet, length, out -> primary_address,
+				  packet, length, out->primary_address,
 				  &to, &hto) != -1)
 			debug ("forwarded BOOTREPLY for %s to %s",
-			       print_hw_addr (packet -> htype, packet -> hlen,
-					      packet -> chaddr),
-			       inet_ntoa (to.sin_addr));
-
+			    print_hw_addr(packet->htype, packet->hlen,
+			    packet->chaddr), inet_ntoa (to.sin_addr));
+/* XXX */
 		return;
 	}
 
 	/* If giaddr is set on a BOOTREQUEST, ignore it - it's already
 	   been gatewayed. */
-	if (packet -> giaddr.s_addr) {
-		note ("ignoring BOOTREQUEST with giaddr of %s\n",
-		      inet_ntoa (packet -> giaddr));
+	if (packet->giaddr.s_addr) {
+		note("ignoring BOOTREQUEST with giaddr of %s\n",
+		    inet_ntoa(packet->giaddr));
 		return;
 	}
 
 	/* Set the giaddr so the server can figure out what net it's
 	   from and so that we can later forward the response to the
 	   correct net. */
-	packet -> giaddr = ip -> primary_address;
+	packet->giaddr = ip->primary_address;
 
 	/* Otherwise, it's a BOOTREQUEST, so forward it to all the
 	   servers. */
-	for (sp = servers; sp; sp = sp -> next) {
-		if (send_packet (interfaces,
-				  (struct packet *)0,
-				  packet, length, ip -> primary_address,
-				  &sp -> to, (struct hardware *)0) != -1) {
-			debug ("forwarded BOOTREQUEST for %s to %s",
-			       print_hw_addr (packet -> htype, packet -> hlen,
-					      packet -> chaddr),
-			       inet_ntoa (sp -> to.sin_addr));
+	for (sp = servers; sp; sp = sp->next) {
+		if (send_packet(interfaces, NULL, packet, length,
+		    ip->primary_address, &sp->to, NULL) != -1) {
+			debug("forwarded BOOTREQUEST for %s to %s",
+			    print_hw_addr(packet->htype, packet->hlen,
+			    packet->chaddr), inet_ntoa(sp->to.sin_addr));
 		}
 	}
+
 }
 
 void
@@ -285,59 +274,32 @@ usage(void)
 	exit (1);
 }
 
-void cleanup ()
+char *
+print_hw_addr(int htype, int hlen, unsigned char *data)
 {
-}
+	static char	 habuf[49];
+	char		*s;
+	int		 i;
 
-int write_lease (lease)
-	struct lease *lease;
-{
-	return 1;
-}
-
-int commit_leases ()
-{
-	return 1;
-}
-
-void bootp (packet)
-	struct packet *packet;
-{
-}
-
-void dhcp (packet)
-	struct packet *packet;
-{
-}
-
-char *print_hw_addr (htype, hlen, data)
-	int htype;
-	int hlen;
-	unsigned char *data;
-{
-	static char habuf [49];
-	char *s;
-	int i;
-
-	if (htype == 0 || hlen == 0) {
+	if (htype == 0 || hlen == 0)
 		goto bad;
-	} else {
-		int slen = sizeof(habuf);
+	else {
+		int	slen = sizeof(habuf);
 		s = habuf;
 		for (i = 0; i < hlen; i++) {
-			int j;
-			j = snprintf (s, slen, "%02x", data [i]);
+			int	j;
+			j = snprintf(s, slen, "%02x", data[i]);
 			if (j <= 0)
 				goto bad;
 
 			s += strlen (s);
 			slen -= (strlen(s) + 1);
-			*s++ = ':';
+ 			*s++ = ':';
 		}
 		*--s = 0;
 	}
 	return habuf;
- bad:
+bad:
 	strlcpy (habuf, "<null>", sizeof habuf);
 	return habuf;
 
