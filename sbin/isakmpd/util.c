@@ -1,5 +1,5 @@
-/*	$OpenBSD: util.c,v 1.9 2000/10/16 23:27:03 niklas Exp $	*/
-/*	$EOM: util.c,v 1.19 2000/10/14 23:40:08 angelos Exp $	*/
+/*	$OpenBSD: util.c,v 1.10 2000/10/27 19:22:36 niklas Exp $	*/
+/*	$Id: util.c,v 1.10 2000/10/27 19:22:36 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -226,9 +226,9 @@ check_file_secrecy (char *name, off_t *file_size)
 {
   struct stat st;
   
-  if (lstat (name, &st) == -1)
+  if (stat (name, &st) == -1)
     {
-      log_error ("check_file_secrecy: lstat (\"%s\") failed", name);
+      log_error ("check_file_secrecy: stat (\"%s\") failed", name);
       return -1;
     }
   if (st.st_uid != geteuid () && st.st_uid != getuid ())

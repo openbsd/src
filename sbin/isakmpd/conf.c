@@ -1,5 +1,5 @@
-/*	$OpenBSD: conf.c,v 1.23 2000/10/26 22:28:16 niklas Exp $	*/
-/*	$EOM: conf.c,v 1.45 2000/10/24 13:29:15 niklas Exp $	*/
+/*	$OpenBSD: conf.c,v 1.24 2000/10/27 19:22:36 niklas Exp $	*/
+/*	$EOM: conf.c,v 1.46 2000/10/26 16:17:19 ho Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -510,7 +510,7 @@ conf_reinit (void)
   char *new_conf_addr = 0;
   struct stat sb;
 
-  if ((lstat (conf_path, &sb) == 0) || (errno != ENOENT))
+  if ((stat (conf_path, &sb) == 0) || (errno != ENOENT))
     {
       if (check_file_secrecy (conf_path, &sz))
 	return;
