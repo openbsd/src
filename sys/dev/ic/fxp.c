@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.36 2002/05/13 14:19:53 art Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.37 2002/05/13 15:36:22 art Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -779,6 +779,8 @@ fxp_intr(arg)
 				}
 				--txcnt;
 				txs = txs->tx_next;
+				FXP_TXCB_SYNC(sc, txs,
+				    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 			}
 			sc->sc_cbt_cons = txs;
 			sc->sc_cbt_cnt = txcnt;
