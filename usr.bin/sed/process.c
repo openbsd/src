@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.7 2002/02/16 21:27:52 millert Exp $	*/
+/*	$OpenBSD: process.c,v 1.8 2002/04/15 21:47:45 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -39,7 +39,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)process.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$OpenBSD: process.c,v 1.7 2002/02/16 21:27:52 millert Exp $";
+static char *rcsid = "$OpenBSD: process.c,v 1.8 2002/04/15 21:47:45 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -134,7 +134,8 @@ redirect:
 			case 'D':
 				if (pd)
 					goto new;
-				if ((p = memchr(ps, '\n', psl - 1)) == NULL) {
+				if (psl == 0 ||
+				    (p = memchr(ps, '\n', psl - 1)) == NULL) {
 					pd = 1;
 					goto new;
 				} else {
@@ -186,7 +187,8 @@ redirect:
 			case 'P':
 				if (pd)
 					break;
-				if ((p = memchr(ps, '\n', psl - 1)) != NULL) {
+				if (psl != 0 &&
+				    (p = memchr(ps, '\n', psl - 1)) != NULL) {
 					oldpsl = psl;
 					psl = (p + 1) - ps;
 				}
@@ -239,7 +241,7 @@ redirect:
 				HS = tspace;
 				break;
 			case 'y':
-				if (pd)
+				if (pd || psl == 0)
 					break;
 				for (p = ps, len = psl; --len; ++p)
 					*p = cp->u.y[(unsigned char)*p];
