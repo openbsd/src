@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.4 2003/08/01 14:04:35 avsm Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.5 2003/08/15 23:13:06 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -402,7 +402,7 @@ priv_open_log(const char *log)
 	int cmd, fd;
 
 	if (priv_fd < 0)
-		errx(1, "%s: called from privileged child\n", __func__);
+		errx(1, "%s: called from privileged child", __func__);
 
 	if (strlcpy(path, log, sizeof path) >= sizeof(path))
 		return -1;

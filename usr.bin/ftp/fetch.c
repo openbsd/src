@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.46 2003/04/05 17:19:47 deraadt Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.47 2003/08/15 23:13:06 deraadt Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fetch.c,v 1.46 2003/04/05 17:19:47 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: fetch.c,v 1.47 2003/08/15 23:13:06 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -233,7 +233,7 @@ url_get(origline, proxyenv, outfile)
 		progressmeter(-1);
 
 		if ((buf = malloc(4096)) == NULL)
-			errx(1, "Can't allocate memory for transfer buffer\n");
+			errx(1, "Can't allocate memory for transfer buffer");
 
 		/* Finally, suck down the file. */
 		i = 0;
@@ -497,7 +497,7 @@ again:
 
 	/* Finally, suck down the file. */
 	if ((buf = malloc(4096)) == NULL)
-		errx(1, "Can't allocate memory for transfer buffer\n");
+		errx(1, "Can't allocate memory for transfer buffer");
 	i = 0;
 	while ((len = fread(buf, sizeof(char), 4096, fin)) > 0) {
 		bytes += len;

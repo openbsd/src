@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc_errno.c,v 1.2 2003/07/31 21:48:03 deraadt Exp $	*/
+/*	$OpenBSD: malloc_errno.c,v 1.3 2003/08/15 23:13:07 deraadt Exp $	*/
 /*
  * Public domain.  2003, Otto Moerbeek
  */
@@ -16,11 +16,11 @@ testerrno(size_t sz)
 	p = malloc(sz);
 
 	if (p == NULL && errno != ENOMEM)
-		errx(1, "fail: %lx %p %d\n", (unsigned long)sz, p, errno);
+		errx(1, "fail: %lx %p %d", (unsigned long)sz, p, errno);
 
 	/* if alloc succeeded, test if errno did not change */
 	if (p != NULL && errno != -1) 
-		errx(1, "fail: %lx %p %d\n", (unsigned long)sz, p, errno);
+		errx(1, "fail: %lx %p %d", (unsigned long)sz, p, errno);
 
 	free(p);
 }
