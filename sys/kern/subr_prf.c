@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.15 1996/12/06 08:08:17 niklas Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.16 1997/10/01 02:22:59 angelos Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.25 1996/04/22 01:38:46 christos Exp $	*/
 
 /*-
@@ -352,6 +352,9 @@ printf(fmt, va_alist)
 	return (0);
 }
 
+#define FLAG_LONG 	0x1
+#define FLAG_QUAD	0x2
+
 /*
  * Scaled down version of printf(3).
  *
@@ -397,7 +400,7 @@ kprintf(fmt, flags, tp, ap)
 {
 	register char *p, *q;
 	register int ch, n;
-	u_long ul;
+	u_int64_t ul;
 	int base, lflag, tmp, width;
 	char padc;
 
@@ -430,7 +433,10 @@ reswitch:	switch (ch = *(const u_char *)fmt++) {
 			}
 			goto reswitch;
 		case 'l':
-			lflag = 1;
+			lflag |= FLAG_LONG;
+			goto reswitch;
+		case 'q':
+			lflag |= FLAG_QUAD;
 			goto reswitch;
 		case 'b':
 			ul = va_arg(ap, int);
@@ -468,19 +474,31 @@ reswitch:	switch (ch = *(const u_char *)fmt++) {
 				putchar(ch, flags, tp);
 			break;
 		case 'd':
-			ul = lflag ? va_arg(ap, long) : va_arg(ap, int);
-			if ((long)ul < 0) {
+			if (lflag & FLAG_QUAD)
+			  ul = va_arg(ap, int64_t);
+			else
+			  ul = lflag & FLAG_LONG ? 
+			       va_arg(ap, long) : va_arg(ap, int);
+			if ((int64_t)ul < 0) {
 				putchar('-', flags, tp);
-				ul = -(long)ul;
+				ul = -(int64_t)ul;
 			}
 			base = 10;
 			goto number;
 		case 'o':
-			ul = lflag ? va_arg(ap, u_long) : va_arg(ap, u_int);
+			if (lflag & FLAG_QUAD)
+			  ul = va_arg(ap, u_int64_t);
+			else
+			  ul = lflag & FLAG_LONG ?
+			       va_arg(ap, u_long) : va_arg(ap, u_int);
 			base = 8;
 			goto number;
 		case 'u':
-			ul = lflag ? va_arg(ap, u_long) : va_arg(ap, u_int);
+			if (lflag & FLAG_QUAD)
+			  ul = va_arg(ap, u_int64_t);
+			else
+			  ul = lflag & FLAG_LONG ?
+			       va_arg(ap, u_long) : va_arg(ap, u_int);
 			base = 10;
 			goto number;
 		case 'p':
@@ -490,7 +508,11 @@ reswitch:	switch (ch = *(const u_char *)fmt++) {
 			base = 16;
 			goto number;
 		case 'x':
-			ul = lflag ? va_arg(ap, u_long) : va_arg(ap, u_int);
+			if (lflag & FLAG_QUAD)
+			  ul = va_arg(ap, u_int64_t);
+			else
+			  ul = lflag & FLAG_LONG ?
+			       va_arg(ap, u_long) : va_arg(ap, u_int);
 			base = 16;
 number:			p = ksprintn(ul, base, &tmp);
 			if (width && (width -= tmp) > 0)
@@ -501,7 +523,9 @@ number:			p = ksprintn(ul, base, &tmp);
 			break;
 		default:
 			putchar('%', flags, tp);
-			if (lflag)
+			if (lflag & FLAG_QUAD)
+				putchar('q', flags, tp);
+			if (lflag & FLAG_LONG)
 				putchar('l', flags, tp);
 			/* FALLTHROUGH */
 		case '%':
@@ -563,7 +587,7 @@ vsprintf(buf, cfmt, ap)
 	register const char *fmt = cfmt;
 	register char *p, *bp;
 	register int ch, base;
-	u_long ul;
+	u_int64_t ul;
 	int lflag, tmp, width;
 	char padc;
 
@@ -594,8 +618,11 @@ reswitch:	switch (ch = *(const u_char *)fmt++) {
 					break;
 			}
 			goto reswitch;
+		case 'q':
+			lflag |= FLAG_QUAD;
+			goto reswitch;
 		case 'l':
-			lflag = 1;
+			lflag |= FLAG_LONG;
 			goto reswitch;
 		/* case 'b': ... break; XXX */
 		case 'c':
@@ -609,21 +636,33 @@ reswitch:	switch (ch = *(const u_char *)fmt++) {
 			--bp;
 			break;
 		case 'd':
-			ul = lflag ? va_arg(ap, long) : va_arg(ap, int);
-			if ((long)ul < 0) {
+			if (lflag & FLAG_QUAD)
+			  ul = va_arg(ap, int64_t);
+			else
+			  ul = lflag & FLAG_LONG ?
+			       va_arg(ap, long) : va_arg(ap, int);
+			if ((int64_t)ul < 0) {
 				*bp++ = '-';
-				ul = -(long)ul;
+				ul = -(int64_t)ul;
 			}
 			base = 10;
 			goto number;
 			break;
 		case 'o':
-			ul = lflag ? va_arg(ap, u_long) : va_arg(ap, u_int);
+			if (lflag & FLAG_QUAD)
+			  ul = va_arg(ap, u_int64_t);
+			else
+			  ul = lflag & FLAG_LONG ?
+			       va_arg(ap, u_long) : va_arg(ap, u_int);
 			base = 8;
 			goto number;
 			break;
 		case 'u':
-			ul = lflag ? va_arg(ap, u_long) : va_arg(ap, u_int);
+			if (lflag & FLAG_QUAD)
+			  ul = va_arg(ap, u_int64_t);
+			else
+			  ul = lflag & FLAG_LONG ?
+			       va_arg(ap, u_long) : va_arg(ap, u_int);
 			base = 10;
 			goto number;
 			break;
@@ -634,7 +673,11 @@ reswitch:	switch (ch = *(const u_char *)fmt++) {
 			base = 16;
 			goto number;
 		case 'x':
-			ul = lflag ? va_arg(ap, u_long) : va_arg(ap, u_int);
+			if (lflag & FLAG_QUAD)
+			  ul = va_arg(ap, u_int64_t);
+			else
+			  ul = lflag & FLAG_LONG ?
+			       va_arg(ap, u_long) : va_arg(ap, u_int);
 			base = 16;
 number:			p = ksprintn(ul, base, &tmp);
 			if (width && (width -= tmp) > 0)
@@ -645,7 +688,9 @@ number:			p = ksprintn(ul, base, &tmp);
 			break;
 		default:
 			*bp++ = '%';
-			if (lflag)
+			if (lflag & FLAG_QUAD)
+				*bp++ = 'q';
+			if (lflag & FLAG_LONG)
 				*bp++ = 'l';
 			/* FALLTHROUGH */
 		case '%':
