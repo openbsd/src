@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.22 2003/12/25 23:21:36 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.23 2003/12/26 00:12:23 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -42,7 +42,7 @@ struct kroute_node {
 
 struct knexthop_node {
 	RB_ENTRY(knexthop_node)	 entry;
-	struct kroute_nexthop	 nh;
+	in_addr_t		 nexthop;
 	struct kroute_node	*kroute;
 };
 
@@ -89,6 +89,7 @@ kroute_init(void)
 	pid = getpid();
 
 	RB_INIT(&krt);
+	RB_INIT(&knt);
 	kroute_fetchtable();
 
 	return (s);
@@ -466,11 +467,11 @@ kroute_remove(struct kroute_node *kr)
 				 * that this nexthop is now invalid
 				 */
 				bzero(&nh, sizeof(nh));
-				kroute_validate_nexthop(s->nh.nexthop, &nh);
-				if (nh.valid == 0) {
-					/* no alternate route */
-					/* imsg_ invalid blah blah */
-				}
+				kroute_validate_nexthop(s->nexthop, &nh);
+#if 0
+				if (nh.valid == 0)	/* no alternate route */
+					send_nexthop_update(&nh);
+#endif
 			}
 
 	free(kr);
@@ -501,7 +502,7 @@ kroute_nexthop_check(in_addr_t key)
 	struct kroute_nexthop	 nh;
 	struct knexthop_node	*h, s;
 
-	s.nh.nexthop = key;
+	s.nexthop = key;
 
 	bzero(&nh, sizeof(nh));
 	nh.nexthop = key;
@@ -514,8 +515,9 @@ kroute_nexthop_check(in_addr_t key)
 		}
 	} else
 		kroute_validate_nexthop(key, &nh);
-
-	/* imsg_compose via bgpd.c blah blah blah */
+#if 0
+	send_nexthop_update(&nh);
+#endif
 }
 
 void
@@ -527,7 +529,7 @@ kroute_validate_nexthop(in_addr_t key, struct kroute_nexthop *nh)
 	if ((h = calloc(1, sizeof(struct knexthop_node))) == NULL)
 		fatal(NULL, errno);
 
-	nh->nexthop = key;
+	h->nexthop = nh->nexthop = key;
 
 	if ((kr = kroute_match(key)) != NULL)
 		if (kr->flags & F_KERNEL) {	/* must be non-bgp! */
@@ -540,13 +542,11 @@ kroute_validate_nexthop(in_addr_t key, struct kroute_nexthop *nh)
 
 	if (RB_INSERT(knexthop_tree, &knt, h) != NULL)
 		fatal("RB_INSERT(knexthop_tree, &knt, h) failed!", 0);
-
-	/* imsg_compose via bgpd.c bla bla bla */
 }
 
 int
 knexthop_compare(struct knexthop_node *a, struct knexthop_node *b)
 {
-	return (b->nh.nexthop - a->nh.nexthop);
+	return (b->nexthop - a->nexthop);
 }
 
