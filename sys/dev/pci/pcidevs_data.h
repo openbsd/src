@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.625 2003/05/17 21:36:24 jason Exp 
+ *		OpenBSD: pcidevs,v 1.626 2003/05/17 21:50:24 jason Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -847,8 +847,32 @@ static const struct pci_known_product pci_known_products[] = {
 	    "768 USB",
 	},
 	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_8151_SC,
+	    "8151 Sys Control",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_8151_AGP,
+	    "8151 AGP",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_8111_PPB,
+	    "8111 PCI-PCI",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_8111_USB,
+	    "8111 USB",
+	},
+	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_8111_IDE,
 	    "8111 IDE",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_8111_SMB,
+	    "8111 SMBus",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_8111_ACPI,
+	    "8111 ACPI",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_8111_ACA,
