@@ -1,4 +1,4 @@
-/*	$OpenBSD: externs.h,v 1.9 2002/03/22 13:49:28 hin Exp $	*/
+/*	$OpenBSD: externs.h,v 1.10 2002/03/25 10:52:32 hin Exp $	*/
 /* $KTH: externs.h,v 1.16 1997/11/29 02:28:35 joda Exp $ */
 
 /*
@@ -88,7 +88,7 @@ extern int
     termdata,		/* Print out terminal data flow */
     debug;		/* Debug level */
 
-extern sig_atomic_t intr_happened, intr_waiting;	/* for interrupt handling */
+extern volatile sig_atomic_t intr_happened, intr_waiting;	/* for interrupt handling */
 
 extern cc_t escape;	/* Escape to command mode */
 extern cc_t rlogin;	/* Rlogin mode escape character */

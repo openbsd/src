@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_bsd.c,v 1.11 2002/03/22 13:49:28 hin Exp $	*/
+/*	$OpenBSD: sys_bsd.c,v 1.12 2002/03/25 10:52:32 hin Exp $	*/
 /*	$NetBSD: sys_bsd.c,v 1.11 1996/02/28 21:04:10 thorpej Exp $	*/
 
 /*
@@ -844,8 +844,8 @@ deadpeer(sig)
 	longjmp(peerdied, -1);
 }
 
-sig_atomic_t intr_happened = 0;
-sig_atomic_t intr_waiting = 0;
+volatile sig_atomic_t intr_happened = 0;
+volatile sig_atomic_t intr_waiting = 0;
 
     /* ARGSUSED */
     void
