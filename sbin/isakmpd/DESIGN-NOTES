@@ -1,5 +1,5 @@
-$OpenBSD: DESIGN-NOTES,v 1.5 1998/12/21 01:02:22 niklas Exp $
-$EOM: DESIGN-NOTES,v 1.37 1998/12/20 11:54:04 niklas Exp $
+$OpenBSD: DESIGN-NOTES,v 1.6 1999/02/26 03:29:40 niklas Exp $
+$EOM: DESIGN-NOTES,v 1.38 1999/02/25 11:21:54 niklas Exp $
 
 General coding conventions
 --------------------------
@@ -17,7 +17,8 @@ Multiple inclusion protection like this:
 Start all files with RCS ID tags.
 
 GCC -Wall clean, ANSI prototypes.  System dependent facilities should be
-named sysdep_* and be placed in sysdep.c.  Primary target systems are OpenBSD
+named sysdep_* and be placed in sysdep.c.  Every C file should include
+sysdep.h as the first isakmpd include file.  Primary target systems are OpenBSD
 and Linux, but porting to Microsoft Windows variants should not be made
 overly difficult.
 
