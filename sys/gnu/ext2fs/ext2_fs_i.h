@@ -1,4 +1,4 @@
-/*	$OpenBSD	*/
+/*	$OpenBSD: ext2_fs_i.h,v 1.2 1997/04/25 17:09:44 kstailey Exp $	*/
 
 /*
  *  added for EXT2FS support in Lites 1.1
