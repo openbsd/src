@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.3 1996/03/19 21:10:48 mickey Exp $	*/
+/*	$OpenBSD: proc.h,v 1.4 1996/03/24 17:40:44 tholo Exp $	*/
 /*	$NetBSD: proc.h,v 1.42 1996/02/09 18:25:23 christos Exp $	*/
 
 /*-
@@ -305,12 +305,6 @@ struct	prochd {
 	struct	proc *ph_link;		/* Linked list of running processes. */
 	struct	proc *ph_rlink;
 } qs[NQS];
-
-#define	current_thread()	(curproc->p_thread)
-void	assert_wait __P((event_t, boolean_t));
-void	thread_block __P((void));
-void	thread_sleep __P((event_t, struct slock *, boolean_t));
-void	thread_wakeup __P((event_t));
 
 struct proc *pfind __P((pid_t));	/* Find process by id. */
 struct pgrp *pgfind __P((pid_t));	/* Find process group by id. */
