@@ -75,6 +75,7 @@ case "$openbsd_distribution" in
 	libpth='/usr/lib'
 	locincpth=''
 	loclibpth=''
+	ccflags='-DAPPLLIB_EXP="/usr/local/libdata/perl5"'
 	;;
 esac
 

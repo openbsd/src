@@ -8,8 +8,8 @@ use strict;
 use vars qw($VERSION $Is_Mac $Is_OS2 $Is_VMS $Is_Win32 $Is_Dos $Is_PERL_OBJECT
 	    $Verbose %pm %static $Xsubpp_Version);
 
-$VERSION = substr q$Revision: 1.5 $, 10;
-# $Id: MM_Unix.pm,v 1.5 1999/05/09 02:16:41 millert Exp $
+$VERSION = substr q$Revision: 1.6 $, 10;
+# $Id: MM_Unix.pm,v 1.6 1999/05/09 16:34:10 millert Exp $
 
 Exporter::import('ExtUtils::MakeMaker',
 	qw( $Verbose &neatvalue));
@@ -126,7 +126,6 @@ sub catfile {
     return $self->canonpath($file) unless @_;
     my $dir = $self->catdir(@_);
     for ($dir) {
-	$_ =~ s/:.*$//;
 	$_ .= "/" unless substr($_,length($_)-1,1) eq "/";
     }
     return $self->canonpath($dir.$file);
@@ -1604,12 +1603,7 @@ from the perl source tree.
 	# we should also consider $ENV{PERL5LIB} here
 	$self->{PERL_LIB}     ||= $Config::Config{privlibexp};
 	$self->{PERL_ARCHLIB} ||= $Config::Config{archlibexp};
-	foreach (split(':', $self->{PERL_ARCHLIB})) {
-	    last if (-d ($self->{PERL_INC} = $self->catdir($_, "CORE")));
-	}
-	# use the primary path compenents of privlibexp and archlibexp
-	$self->{PERL_LIB} =~ s/:.*//;
-	$self->{PERL_ARCHLIB} =~ s/:.*//;
+	$self->{PERL_INC}     = $self->catdir("$self->{PERL_ARCHLIB}","CORE"); # wild guess for now
 	my $perl_h;
 	unless (-f ($perl_h = $self->catfile($self->{PERL_INC},"perl.h"))){
 	    die qq{
