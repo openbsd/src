@@ -54,7 +54,7 @@ static u_int32_t cksum;
 static des_cblock big_cksum[2];
 static struct timeval msg_time;
 static u_char msg_time_5ms;
-static long msg_time_sec;
+static int32_t msg_time_sec;
 
 /*
  * krb_mk_safe() constructs an AUTH_MSG_SAFE message.  It takes some
@@ -111,7 +111,7 @@ krb_mk_safe(in, out, length, key, sender, receiver)
     if (gettimeofday(&msg_time,(struct timezone *)0)) {
         return  -1;
     }
-    msg_time_sec = (long) msg_time.tv_sec;
+    msg_time_sec = (int32_t) msg_time.tv_sec;
     msg_time_5ms = msg_time.tv_usec/5000; /* 5ms quanta */
 
     p = out;
@@ -172,6 +172,6 @@ krb_mk_safe(in, out, length, key, sender, receiver)
     bcopy((char *)big_cksum,(char *)p,sizeof(big_cksum));
     p += sizeof(big_cksum);
 
-    return ((long)(p - out));	/* resulting size */
+    return ((int32_t)(p - out));	/* resulting size */
 
 }

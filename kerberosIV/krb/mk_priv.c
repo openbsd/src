@@ -53,7 +53,7 @@ or implied warranty.
 static u_int32_t c_length;
 static struct timeval msg_time;
 static u_char msg_time_5ms;
-static long msg_time_sec;
+static int32_t msg_time_sec;
 
 /*
  * krb_mk_priv() constructs an AUTH_MSG_PRIVATE message.  It takes
@@ -121,7 +121,7 @@ krb_mk_priv(in, out, length, schedule, key, sender, receiver)
     if (gettimeofday(&msg_time,(struct timezone *)0)) {
         return -1;
     }
-    msg_time_sec = (long) msg_time.tv_sec;
+    msg_time_sec = (int32_t) msg_time.tv_sec;
     msg_time_5ms = msg_time.tv_usec/5000; /* 5ms quanta */
 
     p = out;
