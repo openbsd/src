@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.20 2001/04/15 22:47:38 jason Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.21 2001/04/30 04:52:20 jason Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -1547,26 +1547,33 @@ txp_set_filter(sc)
 	struct arpcom *ac = &sc->sc_arpcom;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	u_int32_t crc, carry, hashbit, hash[2];
-	u_int16_t filter = 0;
+	u_int16_t filter;
 	u_int8_t octet;
 	int i, j, mcnt = 0;
 	struct ether_multi *enm;
 	struct ether_multistep step;
 
-again:
-	if (ifp->if_flags & IFF_PROMISC)
+	if (ifp->if_flags & IFF_PROMISC) {
 		filter = TXP_RXFILT_PROMISC;
-	else if (ifp->if_flags & IFF_ALLMULTI)
-		filter = TXP_RXFILT_DIRECT | TXP_RXFILT_ALLMULTI |
-		    TXP_RXFILT_BROADCAST;
+		goto setit;
+	}
+
+again:
+	filter = TXP_RXFILT_DIRECT;
+
+	if (ifp->if_flags & IFF_BROADCAST)
+		filter |= TXP_RXFILT_BROADCAST;
+
+	if (ifp->if_flags & IFF_ALLMULTI)
+		filter |= TXP_RXFILT_ALLMULTI;
 	else {
-		filter = TXP_RXFILT_DIRECT | TXP_RXFILT_BROADCAST;
 		hash[0] = hash[1] = 0;
 
 		ETHER_FIRST_MULTI(step, ac, enm);
 		while (enm != NULL) {
 			if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
 				/*
+				 * We must listen to a range of multicast
 				 * addresses.  For now, just accept all
 				 * multicasts, rather than trying to set only
 				 * those filter bits needed to match the range.
@@ -1606,6 +1613,7 @@ again:
 		}
 	}
 
+setit:
 	txp_command(sc, TXP_CMD_RX_FILTER_WRITE, filter, 0, 0,
 	    NULL, NULL, NULL, 1);
 }
