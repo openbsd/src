@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.5 2002/11/19 17:37:39 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.6 2002/11/19 17:41:19 henning Exp $	*/
 /*
  * Copyright (C) 2002
  *	Sony Computer Science Laboratories Inc.  All rights reserved.
@@ -137,15 +137,11 @@ qid_to_qname(u_int32_t qid, const char *ifname)
 void
 print_altq(const struct pf_altq *a, unsigned level)
 {
-	unsigned i;
-
 	if (a->qname[0] != NULL) {
 		print_queue(a, level);
 		return;
 	}
 
-	for (i = 0; i < level; ++i)
-		printf("  ");
 	printf("altq on %s scheduler %u bandwidth %s tbrsize %u",
 	    a->ifname, a->scheduler, rate2str((double)a->ifbandwidth),
 	    a->tbrsize);
