@@ -79,3 +79,7 @@
 ./usr/lib/libtermlib_pic.a
 ./usr/lib/libz_pic.a
 ./usr/lib/libkdb_pic.a
+./usr/share/man/cat1/gdb.0
+./usr/share/man/cat1/gprof.0
+./usr/bin/gdb
+./usr/bin/gprof

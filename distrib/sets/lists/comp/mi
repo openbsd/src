@@ -11,9 +11,7 @@
 ./usr/bin/g++
 ./usr/bin/g77
 ./usr/bin/gcc
-./usr/bin/gdb
 ./usr/bin/genclass
-./usr/bin/gprof
 ./usr/bin/ld
 ./usr/bin/lex
 ./usr/bin/lint
@@ -1016,7 +1014,6 @@
 ./usr/share/lkm/vfs/README
 ./usr/share/lkm/vfs/module/Makefile
 ./usr/share/lkm/vfs/module/kernfsmod.c
-./usr/share/man/cat1/ar.0
 ./usr/share/man/cat1/as.0
 ./usr/share/man/cat1/asa.0
 ./usr/share/man/cat1/c++.0
@@ -1026,13 +1023,12 @@
 ./usr/share/man/cat1/fpr.0
 ./usr/share/man/cat1/g++.0
 ./usr/share/man/cat1/gcc.0
-./usr/share/man/cat1/gdb.0
-./usr/share/man/cat1/gprof.0
 ./usr/share/man/cat1/ld.0
 ./usr/share/man/cat1/lex.0
 ./usr/share/man/cat1/lint.0
 ./usr/share/man/cat1/lorder.0
 ./usr/share/man/cat1/mkstr.0
+./usr/share/man/cat1/ar.0
 ./usr/share/man/cat1/ranlib.0
 ./usr/share/man/cat1/rpcgen.0
 ./usr/share/man/cat1/strip.0
