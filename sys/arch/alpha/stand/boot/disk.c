@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.9 2001/01/25 03:50:46 todd Exp $	*/
+/*	$OpenBSD: disk.c,v 1.10 2001/09/16 01:34:32 art Exp $	*/
 /*	$NetBSD: disk.c,v 1.6 1997/04/06 08:40:33 cgd Exp $	*/
 
 /*
@@ -143,14 +143,15 @@ diskopen(f, ctlr, unit, part)
 	if (i || cnt != DEV_BSIZE) {
 		printf("disk%d: error reading disk label\n", unit);
 		goto bad;
-	} else if (lp->d_magic != DISKMAGIC) {
+	} else if (((struct disklabel *)(buf + LABELOFFSET))->d_magic !=
+		    DISKMAGIC) {
 		/* No label at all.  Fake all partitions as whole disk. */
 		for (i = 0; i < MAXPARTITIONS; i++) {
 			lp->d_partitions[part].p_offset = 0;
 			lp->d_partitions[part].p_size = 0x7fffffff;
 		}
 	} else {
-		msg = getdisklabel(buf, lp);
+		msg = getdisklabel(buf + LABELOFFSET, lp);
 		if (msg) {
 			printf("disk%d: %s\n", unit, msg);
 			goto bad;
