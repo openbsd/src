@@ -1,4 +1,4 @@
-/*	$OpenBSD: execute.c,v 1.6 2002/07/28 08:44:14 pjanzen Exp $	*/
+/*	$OpenBSD: execute.c,v 1.7 2003/04/06 18:50:37 deraadt Exp $	*/
 /*	$NetBSD: execute.c,v 1.3 1995/03/23 08:34:38 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)execute.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: execute.c,v 1.6 2002/07/28 08:44:14 pjanzen Exp $";
+static const char rcsid[] = "$OpenBSD: execute.c,v 1.7 2003/04/06 18:50:37 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -255,7 +255,7 @@ save()
 	}
 	fclose(outf);
 
-	strcpy(buf, ctime(&t));
+	strlcpy(buf, ctime(&t), sizeof buf);
 	for (sp = buf; *sp != '\n'; sp++)
 		continue;
 	*sp = '\0';
@@ -443,7 +443,7 @@ badness:
 		return(FALSE);
 	}
 
-	strcpy(buf, ctime(&sbuf.st_mtime));
+	strlcpy(buf, ctime(&sbuf.st_mtime), sizeof buf);
 	for (sp = buf; *sp != '\n'; sp++)
 		continue;
 	*sp = '\0';

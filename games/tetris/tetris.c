@@ -1,4 +1,4 @@
-/*	$OpenBSD: tetris.c,v 1.15 2002/12/06 21:48:51 millert Exp $	*/
+/*	$OpenBSD: tetris.c,v 1.16 2003/04/06 18:50:38 deraadt Exp $	*/
 /*	$NetBSD: tetris.c,v 1.2 1995/04/22 07:42:47 cgd Exp $	*/
 
 /*-
@@ -210,7 +210,7 @@ main(argc, argv)
 		}
 	}
 
-	sprintf(key_msg,
+	snprintf(key_msg, sizeof key_msg,
 "%s - left   %s - rotate   %s - right   %s - drop   %s - pause   %s - quit",
 		key_write[0], key_write[1], key_write[2], key_write[3],
 		key_write[4], key_write[5]);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.2 1999/01/18 06:20:53 pjanzen Exp $	*/
+/*	$OpenBSD: misc.c,v 1.3 2003/04/06 18:50:38 deraadt Exp $	*/
 /*	$NetBSD: misc.c,v 1.3 1995/04/22 10:37:03 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: misc.c,v 1.2 1999/01/18 06:20:53 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.3 2003/04/06 18:50:38 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -235,7 +235,8 @@ logger(s)
 		    / scene[lp->l_gamenum].ship[lp->l_shipnum].specs->pts) {
 			(void) fwrite((char *)log,
 				sizeof (struct logs), lp - log, fp);
-			(void) strcpy(log[NLOG-1].l_name, s->file->captain);
+			(void) strlcpy(log[NLOG-1].l_name, s->file->captain,
+			    sizeof log[NLOG-1].l_name);
 			log[NLOG-1].l_uid = getuid();
 			log[NLOG-1].l_shipnum = s->file->index;
 			log[NLOG-1].l_gamenum = game;

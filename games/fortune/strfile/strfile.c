@@ -1,4 +1,4 @@
-/*	$OpenBSD: strfile.c,v 1.11 2002/12/06 21:48:51 millert Exp $	*/
+/*	$OpenBSD: strfile.c,v 1.12 2003/04/06 18:50:37 deraadt Exp $	*/
 /*	$NetBSD: strfile.c,v 1.4 1995/04/24 12:23:09 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)strfile.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: strfile.c,v 1.11 2002/12/06 21:48:51 millert Exp $";
+static char rcsid[] = "$OpenBSD: strfile.c,v 1.12 2003/04/06 18:50:37 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -301,7 +301,7 @@ getargs(argc, argv)
 	if (*argv) {
 		Infile = *argv;
 		if (*++argv)
-			(void) strcpy(Outfile, *argv);
+			(void) strlcpy(Outfile, *argv, sizeof Outfile);
 	}
 	if (!Infile) {
 		puts("No input file name");

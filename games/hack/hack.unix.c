@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.unix.c,v 1.10 2003/03/16 21:22:36 camield Exp $	*/
+/*	$OpenBSD: hack.unix.c,v 1.11 2003/04/06 18:50:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,7 +62,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.unix.c,v 1.10 2003/03/16 21:22:36 camield Exp $";
+static char rcsid[] = "$OpenBSD: hack.unix.c,v 1.11 2003/04/06 18:50:37 deraadt Exp $";
 #endif /* not lint */
 
 /* This file collects some Unix dependencies; hack.pager.c contains some more */
@@ -178,7 +178,7 @@ char filename[MAXPATHLEN+1];
 		if ((np = strchr(path, ':')) == NULL)
 			np = path + strlen(path);	/* point to end str */
 		if (np - path <= 1)			/* %% */
-			(void) strcpy(filename, name);
+			(void) strlcpy(filename, name, sizeof filename);
 		else {
 			(void) strncpy(filename, path, np - path);
 			filename[np - path] = '/';

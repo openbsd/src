@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.invent.c,v 1.6 2003/03/16 21:22:35 camield Exp $	*/
+/*	$OpenBSD: hack.invent.c,v 1.7 2003/04/06 18:50:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,7 +62,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.invent.c,v 1.6 2003/03/16 21:22:35 camield Exp $";
+static char rcsid[] = "$OpenBSD: hack.invent.c,v 1.7 2003/04/06 18:50:37 deraadt Exp $";
 #endif /* not lint */
 
 #include	"hack.h"
@@ -398,7 +398,7 @@ register char *let,*word;
 	}
 	bp[foo] = 0;
 	if(foo == 0 && bp > buf && bp[-1] == ' ') *--bp = 0;
-	(void) strcpy(lets, bp);	/* necessary since we destroy buf */
+	(void) strlcpy(lets, bp, sizeof lets);	/* necessary since we destroy buf */
 	if(foo > 5) {			/* compactify string */
 		foo = foo2 = 1;
 		ilet2 = bp[0];
@@ -649,7 +649,7 @@ register char let;
 {
 	static char li[BUFSZ];
 
-	(void) sprintf(li, "%c - %s.",
+	(void) snprintf(li, sizeof li, "%c - %s.",
 		flags.invlet_constant ? obj->invlet : let,
 		doname(obj));
 	return(li);
@@ -804,7 +804,7 @@ dolook() {
     if(gold) {
 	char gbuf[30];
 
-	(void) sprintf(gbuf, "%ld gold piece%s",
+	(void) snprintf(gbuf, sizeof gbuf, "%ld gold piece%s",
 		gold->amount, plur(gold->amount));
 	if(!ct++)
 	    pline("You %s here %s.", verb, gbuf);

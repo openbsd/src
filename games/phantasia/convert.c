@@ -1,4 +1,4 @@
-/*	$OpenBSD: convert.c,v 1.4 2002/12/06 21:48:51 millert Exp $	*/
+/*	$OpenBSD: convert.c,v 1.5 2003/04/06 18:50:38 deraadt Exp $	*/
 /*	$NetBSD: convert.c,v 1.2 1995/03/24 03:58:34 cgd Exp $	*/
 
 /*
@@ -166,9 +166,12 @@ FILE	*oldcharac, *newcharac;		/* to open old and new files */
 	Newplayer.p_virgin = Oldplayer.o_virgin;
 	Newplayer.p_blindness = Oldplayer.o_blindness;
 
-	strcpy(Newplayer.p_name, Oldplayer.o_name);
-	strcpy(Newplayer.p_password, Oldplayer.o_password);
-	strcpy(Newplayer.p_login, Oldplayer.o_login);
+	strlcpy(Newplayer.p_name, Oldplayer.o_name,
+		sizeof Newplayer.p_name);
+	strlcpy(Newplayer.p_password, Oldplayer.o_password,
+		sizeof Newplayer.p_password);
+	strlcpy(Newplayer.p_login, Oldplayer.o_login,
+		sizeof Newplayer.p_login);
 
 	/* write new structure */
 	fwrite((char *) &Newplayer, sizeof(Newplayer), 1, newcharac);

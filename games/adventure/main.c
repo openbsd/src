@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.12 2002/05/31 03:39:55 pjanzen Exp $	*/
+/*	$OpenBSD: main.c,v 1.13 2003/04/06 18:50:33 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1996/05/21 21:53:09 mrg Exp $	*/
 
 /*-
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/2/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.12 2002/05/31 03:39:55 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.13 2003/04/06 18:50:33 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -172,7 +172,8 @@ l2600:		checkhints();		/* to 2600-2602		*/
 		getin(&wd1, &wd2);
 		if (delhit) {		/* user typed a DEL	*/
 			delhit = 0;	/* reset counter	*/
-			copystr("quit", wd1);	/* pretend he's quitting */
+			/* pretend he's quitting */
+			strcpy(wd1, "quit");
 			*wd2 = 0;
 		}
 l2608:		if ((foobar = -foobar) > 0)
@@ -244,7 +245,7 @@ l19999:		k = 43;
 		    || (!weq(wd2, "plant") && !weq(wd2, "door")))
 			goto l2610;
 		if (at(vocab(wd2, 1, 0)))
-			copystr("pour", wd2);
+			strcpy(wd2, "pour");
 
 l2610:		if (weq(wd1, "west"))
 			if (++iwest == 10)
@@ -279,7 +280,7 @@ l8:
 		default: bug(110);
 		}
 
-l2800:		copystr(wd2, wd1);
+l2800:		strcpy(wd1, wd2);
 		*wd2 = 0;
 		goto l2610;
 

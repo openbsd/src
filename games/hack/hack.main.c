@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.main.c,v 1.9 2003/03/16 21:22:35 camield Exp $	*/
+/*	$OpenBSD: hack.main.c,v 1.10 2003/04/06 18:50:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,7 +62,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.main.c,v 1.9 2003/03/16 21:22:35 camield Exp $";
+static char rcsid[] = "$OpenBSD: hack.main.c,v 1.10 2003/04/06 18:50:37 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -259,7 +259,7 @@ char *argv[];
 	getmailstatus();
 #endif
 #ifdef WIZARD
-	if(wizard) (void) strcpy(plname, "wizard"); else
+	if(wizard) (void) strlcpy(plname, "wizard", sizeof plname); else
 #endif
 	if(!*plname || !strncmp(plname, "player", 4)
 		    || !strncmp(plname, "games", 4))
@@ -308,7 +308,7 @@ char *argv[];
 	}
 #endif
 	setftty();
-	(void) sprintf(SAVEF, "save/%u%s", getuid(), plname);
+	(void) snprintf(SAVEF, sizeof SAVEF, "save/%u%s", getuid(), plname);
 	regularize(SAVEF+5);		/* avoid . or / in name */
 	if((fd = open(SAVEF, O_RDONLY)) >= 0 &&
 	   (uptodate(fd) || unlink(SAVEF) == 666)) {

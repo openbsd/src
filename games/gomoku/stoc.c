@@ -1,4 +1,4 @@
-/*	$OpenBSD: stoc.c,v 1.4 2002/05/31 04:21:30 pjanzen Exp $	*/
+/*	$OpenBSD: stoc.c,v 1.5 2003/04/06 18:50:37 deraadt Exp $	*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)stoc.c	8.1 (Berkeley) 7/24/94";
 #else
-static char rcsid[] = "$OpenBSD: stoc.c,v 1.4 2002/05/31 04:21:30 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: stoc.c,v 1.5 2003/04/06 18:50:37 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -73,7 +73,7 @@ stoc(s)
 	for (i = 0; mv[i].m_code >= 0; i++)
 		if (s == mv[i].m_code)
 			return(mv[i].m_text);
-	sprintf(buf, "%c%d", letters[s % BSZ1], s / BSZ1);
+	snprintf(buf, sizeof buf, "%c%d", letters[s % BSZ1], s / BSZ1);
 	return(buf);
 }
 

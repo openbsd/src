@@ -1,4 +1,4 @@
-/*	$OpenBSD: input.c,v 1.7 2002/02/16 21:27:08 millert Exp $	*/
+/*	$OpenBSD: input.c,v 1.8 2003/04/06 18:50:36 deraadt Exp $	*/
 /*	$NetBSD: input.c,v 1.4 1995/04/27 21:22:24 mycroft Exp $	*/
 
 /*-
@@ -50,7 +50,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: input.c,v 1.7 2002/02/16 21:27:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: input.c,v 1.8 2003/04/06 18:50:36 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -185,7 +185,7 @@ pop()
 
 	ioclrtoeol(T_POS);
 
-	strcpy(T_STR, "");
+	strlcpy(T_STR, "", sizeof T_STR);
 	T_RULE = -1;
 	T_CH = -1;
 	return (0);
@@ -201,7 +201,7 @@ rezero()
 	T_RULE = -1;
 	T_CH = -1;
 	T_POS = 0;
-	strcpy(T_STR, "");
+	strlcpy(T_STR, "", sizeof T_STR);
 }
 
 void
@@ -210,7 +210,7 @@ push(ruleno, ch)
 {
 	int	newstate, newpos;
 
-	(void)sprintf(T_STR, st[T_STATE].rule[ruleno].str, tval);
+	(void)snprintf(T_STR, sizeof T_STR, st[T_STATE].rule[ruleno].str, tval);
 	T_RULE = ruleno;
 	T_CH = ch;
 	newstate = st[T_STATE].rule[ruleno].to_state;
@@ -224,7 +224,7 @@ push(ruleno, ch)
 	T_STATE = newstate;
 	T_POS = newpos;
 	T_RULE = -1;
-	strcpy(T_STR, "");
+	strlcpy(T_STR, "", sizeof T_STR);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mille.h,v 1.7 2002/02/17 19:42:20 millert Exp $	*/
+/*	$OpenBSD: mille.h,v 1.8 2003/04/06 18:50:37 deraadt Exp $	*/
 /*	$NetBSD: mille.h,v 1.5 1995/03/24 05:01:51 cgd Exp $	*/
 
 /*
@@ -208,7 +208,7 @@ typedef struct {
 
 extern bool	Debug, Finished, Next, On_exit, Order, Saved;
 
-extern char	Initstr[], *C_fmt;
+extern char	Initstr[100], *C_fmt;
 extern const char	*const *C_name, *Fromfile;
 
 extern int	Card_no, End, Handstart, Movetype, Numgos,

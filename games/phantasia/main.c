@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.11 2002/12/06 21:48:51 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.12 2003/04/06 18:50:38 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/04/24 12:24:37 cgd Exp $	*/
 
 /*
@@ -793,7 +793,8 @@ titlelist()
 		    Other.p_status != S_NOTUSED)
 			/* found the king */
 		{
-			sprintf(Databuf, "The present ruler is %s  Level:%.0f",
+			snprintf(Databuf, sizeof Databuf,
+			    "The present ruler is %s  Level:%.0f",
 			    Other.p_name, Other.p_level);
 			mvaddstr(4, 40 - strlen(Databuf) / 2, Databuf);
 			kingfound = TRUE;
@@ -808,7 +809,9 @@ titlelist()
 		if (Other.p_specialtype == SC_VALAR && Other.p_status != S_NOTUSED)
 			/* found the valar */
 		{
-			sprintf(Databuf, "The Valar is %s   Login:  %s", Other.p_name, Other.p_login);
+			snprintf(Databuf, sizeof Databuf,
+			    "The Valar is %s   Login:  %s", Other.p_name,
+			    Other.p_login);
 			mvaddstr(6, 40 - strlen(Databuf) / 2, Databuf);
 			break;
 		}
@@ -824,7 +827,8 @@ titlelist()
 				councilfound = TRUE;
 			}
 			/* This assumes a finite (<=5) number of C.O.W.: */
-			sprintf(Databuf, "%s   Login:  %s", Other.p_name, Other.p_login);
+			snprintf(Databuf, sizeof Databuf,
+			    "%s   Login:  %s", Other.p_name, Other.p_login);
 			mvaddstr(Lines++, 40 - strlen(Databuf) / 2, Databuf);
 		}
 	/* search for the two highest players */
@@ -841,8 +845,8 @@ titlelist()
 			hiexp = Other.p_experience;
 			nxtlvl = hilvl;
 			hilvl = Other.p_level;
-			strcpy(nxtname, hiname);
-			strcpy(hiname, Other.p_name);
+			strlcpy(nxtname, hiname, sizeof nxtname);
+			strlcpy(hiname, Other.p_name, sizeof hiname);
 		} else
 			if (Other.p_experience > nxtexp
 			    && Other.p_specialtype <= SC_KING
@@ -851,10 +855,11 @@ titlelist()
 			{
 				nxtexp = Other.p_experience;
 				nxtlvl = Other.p_level;
-				strcpy(nxtname, Other.p_name);
+				strlcpy(nxtname, Other.p_name, sizeof nxtname);
 			}
 	mvaddstr(15, 28, "Highest characters are:");
-	sprintf(Databuf, "%s  Level:%.0f   and   %s  Level:%.0f",
+	snprintf(Databuf, sizeof Databuf,
+	    "%s  Level:%.0f   and   %s  Level:%.0f",
 	    hiname, hilvl, nxtname, nxtlvl);
 	mvaddstr(17, 40 - strlen(Databuf) / 2, Databuf);
 

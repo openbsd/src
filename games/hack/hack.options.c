@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.options.c,v 1.5 2003/03/16 21:22:36 camield Exp $	*/
+/*	$OpenBSD: hack.options.c,v 1.6 2003/04/06 18:50:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,7 +62,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.options.c,v 1.5 2003/03/16 21:22:36 camield Exp $";
+static char rcsid[] = "$OpenBSD: hack.options.c,v 1.6 2003/04/06 18:50:37 deraadt Exp $";
 #endif /* not lint */
 
 #include "config.h"
@@ -243,19 +243,20 @@ doset()
 	pline("What options do you want to set? ");
 	getlin(buf);
 	if(!buf[0] || buf[0] == '\033') {
-	    (void) strcpy(buf,"HACKOPTIONS=");
-	    (void) strcat(buf, flags.female ? "female," : "male,");
-	    if(flags.standout) (void) strcat(buf,"standout,");
-	    if(flags.nonull) (void) strcat(buf,"nonull,");
-	    if(flags.nonews) (void) strcat(buf,"nonews,");
-	    if(flags.time) (void) strcat(buf,"time,");
-	    if(flags.notombstone) (void) strcat(buf,"notombstone,");
+	    (void) strlcpy(buf,"HACKOPTIONS=", sizeof buf);
+	    (void) strlcat(buf, flags.female ? "female," : "male,", sizeof buf);
+	    if(flags.standout) (void) strlcat(buf,"standout,", sizeof buf);
+	    if(flags.nonull) (void) strlcat(buf,"nonull,", sizeof buf);
+	    if(flags.nonews) (void) strlcat(buf,"nonews,", sizeof buf);
+	    if(flags.time) (void) strlcat(buf,"time,", sizeof buf);
+	    if(flags.notombstone) (void) strlcat(buf,"notombstone,", sizeof buf);
 	    if(flags.no_rest_on_space)
-		(void) strcat(buf,"!rest_on_space,");
+		(void) strlcat(buf,"!rest_on_space,", sizeof buf);
 	    if(flags.end_top != 5 || flags.end_around != 4 || flags.end_own){
-		(void) sprintf(eos(buf), "endgame: %u topscores/%u around me",
+		(void) snprintf(eos(buf), buf + sizeof buf - eos(buf),
+			"endgame: %u topscores/%u around me",
 			flags.end_top, flags.end_around);
-		if(flags.end_own) (void) strcat(buf, "/own scores");
+		if(flags.end_own) (void) strlcat(buf, "/own scores", sizeof buf);
 	    } else {
 		register char *eop = eos(buf);
 		if(*--eop == ',') *eop = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.do_name.c,v 1.5 2003/03/16 21:22:35 camield Exp $	*/
+/*	$OpenBSD: hack.do_name.c,v 1.6 2003/04/06 18:50:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,7 +62,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.do_name.c,v 1.5 2003/03/16 21:22:35 camield Exp $";
+static char rcsid[] = "$OpenBSD: hack.do_name.c,v 1.6 2003/04/06 18:50:37 deraadt Exp $";
 #endif /* not lint */
 
 #include "hack.h"
@@ -253,7 +253,7 @@ xmonnam(mtmp, vb) register struct monst *mtmp; int vb; {
 static char buf[BUFSZ];		/* %% */
 extern char *shkname();
 	if(mtmp->mnamelth && !vb) {
-		(void) strcpy(buf, NAME(mtmp));
+		(void) strlcpy(buf, NAME(mtmp), sizeof buf);
 		return(buf);
 	}
 	switch(mtmp->data->mlet) {
@@ -264,23 +264,23 @@ extern char *shkname();
 		    if(!rn2(2)) (void)
 		      strcpy((char *) mtmp->mextra, !rn2(5) ? plname : gn);
 		  }
-		  (void) sprintf(buf, "%s's ghost", gn);
+		  (void) snprintf(buf, sizeof buf, "%s's ghost", gn);
 		}
 		break;
 	case '@':
 		if(mtmp->isshk) {
-			(void) strcpy(buf, shkname(mtmp));
+			(void) strlcpy(buf, shkname(mtmp), sizeof buf);
 			break;
 		}
 		/* fall into next case */
 	default:
-		(void) sprintf(buf, "the %s%s",
+		(void) snprintf(buf, sizeof buf, "the %s%s",
 			mtmp->minvis ? "invisible " : "",
 			mtmp->data->mname);
 	}
 	if(vb && mtmp->mnamelth) {
-		(void) strcat(buf, " called ");
-		(void) strcat(buf, NAME(mtmp));
+		(void) strlcat(buf, " called ", sizeof buf);
+		(void) strlcat(buf, NAME(mtmp), sizeof buf);
 	}
 	return(buf);
 }
@@ -311,7 +311,7 @@ register char *adj;
 	static char buf[BUFSZ];		/* %% */
 
 	if(!strncmp(bp, "the ", 4)) bp += 4;
-	(void) sprintf(buf, "the %s %s", adj, bp);
+	(void) snprintf(buf, sizeof buf, "the %s %s", adj, bp);
 	return(buf);
 }
 

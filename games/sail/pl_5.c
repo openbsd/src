@@ -1,4 +1,4 @@
-/*	$OpenBSD: pl_5.c,v 1.2 1999/01/18 06:20:53 pjanzen Exp $	*/
+/*	$OpenBSD: pl_5.c,v 1.3 2003/04/06 18:50:38 deraadt Exp $	*/
 /*	$NetBSD: pl_5.c,v 1.4 1995/04/24 12:25:21 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_5.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: pl_5.c,v 1.2 1999/01/18 06:20:53 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: pl_5.c,v 1.3 2003/04/06 18:50:38 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -65,7 +65,8 @@ acceptmove()
 
 	ta = maxturns(ms, &af);
 	ma = maxmove(ms, mf->dir, 0);
-	(void) sprintf(prompt, "move (%d,%c%d): ", ma, af ? '\'' : ' ', ta);
+	(void) snprintf(prompt, sizeof prompt,
+		"move (%d,%c%d): ", ma, af ? '\'' : ' ', ta);
 	sgetstr(prompt, buf, sizeof buf);
 	dir = mf->dir;
 	vma = ma;
@@ -140,9 +141,9 @@ acceptmove()
 		}
 	}
 	if (*buf)
-		(void) strcpy(movebuf, buf);
+		(void) strlcpy(movebuf, buf, sizeof movebuf);
 	else
-		(void) strcpy(movebuf, "d");
+		(void) strlcpy(movebuf, "d", sizeof movebuf);
 	Writestr(W_MOVE, ms, movebuf);
 	Msg("Helm: %s.", movebuf);
 }

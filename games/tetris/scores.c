@@ -1,4 +1,4 @@
-/*	$OpenBSD: scores.c,v 1.7 2002/05/31 04:21:30 pjanzen Exp $	*/
+/*	$OpenBSD: scores.c,v 1.8 2003/04/06 18:50:38 deraadt Exp $	*/
 /*	$NetBSD: scores.c,v 1.2 1995/04/22 07:42:38 cgd Exp $	*/
 
 /*-
@@ -193,7 +193,7 @@ savescore(level)
 		break;
 	}
 	if (i >= nscores) {
-		strcpy(sp->hs_name, me);
+		strlcpy(sp->hs_name, me, sizeof sp->hs_name);
 		sp->hs_level = level;
 		sp->hs_score = score;
 		sp->hs_time = now;

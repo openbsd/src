@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.5 2003/03/11 04:47:39 david Exp $	*/
+/*	$OpenBSD: update.c,v 1.6 2003/04/06 18:50:36 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -49,7 +49,7 @@
 #if 0
 static char sccsid[] = "@(#)update.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: update.c,v 1.5 2003/03/11 04:47:39 david Exp $";
+static char rcsid[] = "$OpenBSD: update.c,v 1.6 2003/04/06 18:50:36 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -204,8 +204,9 @@ update(dummy)
 			if (too_close(p1, p2, 1)) {
 				static char	buf[80];
 
-				(void)sprintf(buf, "collided with plane '%c'.",
-					name(p2));
+				(void)snprintf(buf, sizeof buf,
+				    "collided with plane '%c'.",
+				    name(p2));
 				loser(p1, buf);
 			}
 	/*
@@ -229,21 +230,25 @@ command(pp)
 
 	buf[0] = '\0';
 	bp = buf;
-	(void)sprintf(bp, "%c%d%c%c%d: ", name(pp), pp->altitude, 
+	(void)snprintf(bp, buf + sizeof buf - bp,
+		"%c%d%c%c%d: ", name(pp), pp->altitude, 
 		(pp->fuel < LOWFUEL) ? '*' : ' ',
 		(pp->dest_type == T_AIRPORT) ? 'A' : 'E', pp->dest_no);
 
 	comm_start = bp = strchr(buf, '\0');
 	if (pp->altitude == 0)
-		(void)sprintf(bp, "Holding @ A%d", pp->orig_no);
+		(void)snprintf(bp, buf + sizeof buf - bp,
+			"Holding @ A%d", pp->orig_no);
 	else if (pp->new_dir >= MAXDIR || pp->new_dir < 0)
 		strcpy(bp, "Circle");
 	else if (pp->new_dir != pp->dir)
-		(void)sprintf(bp, "%d", dir_deg(pp->new_dir));
+		(void)snprintf(bp, buf + sizeof buf - bp,
+			"%d", dir_deg(pp->new_dir));
 
 	bp = strchr(buf, '\0');
 	if (pp->delayd)
-		(void)sprintf(bp, " @ B%d", pp->delayd_no);
+		(void)snprintf(bp, buf + sizeof buf - bp,
+			" @ B%d", pp->delayd_no);
 
 	bp = strchr(buf, '\0');
 	if (*comm_start == '\0' && 

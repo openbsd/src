@@ -1,4 +1,4 @@
-/*	$OpenBSD: shield.c,v 1.4 2002/05/31 04:21:30 pjanzen Exp $	*/
+/*	$OpenBSD: shield.c,v 1.5 2003/04/06 18:50:38 deraadt Exp $	*/
 /*	$NetBSD: shield.c,v 1.4 1995/04/24 12:26:09 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)shield.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: shield.c,v 1.4 2002/05/31 04:21:30 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: shield.c,v 1.5 2003/04/06 18:50:38 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -125,9 +125,11 @@ shield(f)
 	else
 	{
 		if (*stat)
-			(void)sprintf(s, "%s %s up.  Do you want %s down", device, dev2, dev3);
+			(void)snprintf(s, sizeof s,
+			    "%s %s up.  Do you want %s down", device, dev2, dev3);
 		else
-			(void)sprintf(s, "%s %s down.  Do you want %s up", device, dev2, dev3);
+			(void)snprintf(s, sizeof s,
+			    "%s %s down.  Do you want %s up", device, dev2, dev3);
 		if (!getynpar(s))
 			return;
 		i = !*stat;

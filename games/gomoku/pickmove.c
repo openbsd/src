@@ -1,4 +1,4 @@
-/*	$OpenBSD: pickmove.c,v 1.7 2002/05/31 04:21:30 pjanzen Exp $	*/
+/*	$OpenBSD: pickmove.c,v 1.8 2003/04/06 18:50:37 deraadt Exp $	*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)pickmove.c	8.2 (Berkeley) 5/3/95";
 #else
-static char rcsid[] = "$OpenBSD: pickmove.c,v 1.7 2002/05/31 04:21:30 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: pickmove.c,v 1.8 2003/04/06 18:50:37 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -102,7 +102,8 @@ pickmove(us)
 			continue;
 		if (debug && (sp->s_combo[BLACK].c.a == 1 ||
 		    sp->s_combo[WHITE].c.a == 1)) {
-			sprintf(fmtbuf, "- %s %x/%d %d %x/%d %d %d", stoc(sp - board),
+			snprintf(fmtbuf, sizeof fmtbuf,
+				"- %s %x/%d %d %x/%d %d %d", stoc(sp - board),
 				sp->s_combo[BLACK].s, sp->s_level[BLACK],
 				sp->s_nforce[BLACK],
 				sp->s_combo[WHITE].s, sp->s_level[WHITE],
@@ -119,14 +120,16 @@ pickmove(us)
 	}
 
 	if (debug) {
-		sprintf(fmtbuf, "B %s %x/%d %d %x/%d %d %d",
+		snprintf(fmtbuf, sizeof fmtbuf,
+			"B %s %x/%d %d %x/%d %d %d",
 			stoc(sp1 - board),
 			sp1->s_combo[BLACK].s, sp1->s_level[BLACK],
 			sp1->s_nforce[BLACK],
 			sp1->s_combo[WHITE].s, sp1->s_level[WHITE],
 			sp1->s_nforce[WHITE], sp1->s_wval);
 		dlog(fmtbuf);
-		sprintf(fmtbuf, "W %s %x/%d %d %x/%d %d %d",
+		snprintf(fmtbuf, sizeof fmtbuf,
+			"W %s %x/%d %d %x/%d %d %d",
 			stoc(sp2 - board),
 			sp2->s_combo[WHITE].s, sp2->s_level[WHITE],
 			sp2->s_nforce[WHITE],
@@ -335,7 +338,8 @@ scanframes(color)
 	d = 2;
 	while (d <= ((unsigned)(movenum + 1) >> 1) && combolen > n) {
 		if (debug) {
-			sprintf(fmtbuf, "%cL%d %d %d %d", "BW"[color],
+			snprintf(fmtbuf, sizeof fmtbuf,
+				"%cL%d %d %d %d", "BW"[color],
 				d, combolen - n, combocnt, elistcnt);
 			dlog(fmtbuf);
 			refresh();
@@ -394,13 +398,15 @@ scanframes(color)
 
 #ifdef DEBUG
 	if (combocnt) {
-		sprintf(fmtbuf, "scanframes: %c combocnt %d", "BW"[color],
+		snprintf(fmtbuf, sizeof fmtbuf,
+			"scanframes: %c combocnt %d", "BW"[color],
 			combocnt);
 		dlog(fmtbuf);
 		whatsup(0);
 	}
 	if (elistcnt) {
-		sprintf(fmtbuf, "scanframes: %c elistcnt %d", "BW"[color],
+		snprintf(fmtbuf, sizeof fmtbuf,
+			"scanframes: %c elistcnt %d", "BW"[color],
 			elistcnt);
 		dlog(fmtbuf);
 		whatsup(0);
@@ -510,13 +516,14 @@ makecombo2(ocbp, osp, off, s)
 		combocnt++;
 
 		if (c == 1 && debug > 1) {
-		    sprintf(fmtbuf, "%c c %d %d m %x %x o %d %d",
+		    snprintf(fmtbuf, sizeof fmtbuf,
+			"%c c %d %d m %x %x o %d %d",
 			"bw"[curcolor],
 			ncbp->c_framecnt[0], ncbp->c_framecnt[1],
 			ncbp->c_emask[0], ncbp->c_emask[1],
 			ncbp->c_voff[0], ncbp->c_voff[1]);
 		    dlog(fmtbuf);
-		    printcombo(ncbp, fmtbuf);
+		    printcombo(ncbp, fmtbuf, sizeof fmtbuf);
 		    dlog(fmtbuf);
 		}
 		if (c > 1) {
@@ -680,7 +687,8 @@ makecombo(ocbp, osp, off, s)
 		sp = &board[vertices[0].o_intersect];
 #ifdef DEBUG
 		if (sp->s_occ != EMPTY) {
-		    sprintf(fmtbuf, "loop: %c %s", "BW"[curcolor],
+		    snprintf(fmtbuf, sizeof fmtbuf,
+			"loop: %c %s", "BW"[curcolor],
 			stoc(sp - board));
 		    dlog(fmtbuf);
 		    whatsup(0);
@@ -762,13 +770,14 @@ makecombo(ocbp, osp, off, s)
 	    }
 
 	    if (c == 1 && debug > 1) {
-		sprintf(fmtbuf, "%c v%d i%d d%d c %d %d m %x %x o %d %d",
+		snprintf(fmtbuf, sizeof fmtbuf,
+		    "%c v%d i%d d%d c %d %d m %x %x o %d %d",
 		    "bw"[curcolor], verts, ncbp->c_frameindex, ncbp->c_dir,
 		    ncbp->c_framecnt[0], ncbp->c_framecnt[1],
 		    ncbp->c_emask[0], ncbp->c_emask[1],
 		    ncbp->c_voff[0], ncbp->c_voff[1]);
 		dlog(fmtbuf);
-		printcombo(ncbp, fmtbuf);
+		printcombo(ncbp, fmtbuf, sizeof fmtbuf);
 		dlog(fmtbuf);
 	    }
 	    if (c > 1) {
@@ -809,8 +818,8 @@ makeempty(ocbp)
 	int nframes;
 
 	if (debug > 2) {
-		sprintf(fmtbuf, "E%c ", "bw"[curcolor]);
-		printcombo(ocbp, fmtbuf + 3);
+		snprintf(fmtbuf, sizeof fmtbuf, "E%c ", "bw"[curcolor]);
+		printcombo(ocbp, fmtbuf + 3, sizeof fmtbuf - 3);
 		dlog(fmtbuf);
 	}
 
@@ -932,7 +941,8 @@ makeempty(ocbp)
 			}
 			nep->e_fval.s = ep->e_fval.s;
 			if (debug > 2) {
-				sprintf(fmtbuf, "e %s o%d i%d c%d m%x %x",
+				snprintf(fmtbuf, sizeof fmtbuf,
+					"e %s o%d i%d c%d m%x %x",
 					stoc(sp - board),
 					nep->e_off,
 					nep->e_frameindex,
@@ -1228,12 +1238,14 @@ sortcombo(scbpp, cbpp, fcbp)
 	if (debug > 3) {
 		char *str;
 
-		sprintf(fmtbuf, "sortc: %s%c l%d", stoc(fcbp->c_vertex),
+		snprintf(fmtbuf, sizeof fmtbuf,
+			"sortc: %s%c l%d", stoc(fcbp->c_vertex),
 			pdir[fcbp->c_dir], curlevel);
 		dlog(fmtbuf);
 		str = fmtbuf;
 		for (cpp = cbpp; cpp < cbpp + curlevel; cpp++) {
-			sprintf(str, " %s%c", stoc((*cpp)->c_vertex),
+			snprintf(str, fmtbuf + sizeof fmtbut - str,
+				" %s%c", stoc((*cpp)->c_vertex),
 				pdir[(*cpp)->c_dir]);
 			str += strlen(str);
 		}
@@ -1287,21 +1299,23 @@ inserted:
 		if (debug > 3) {
 			char *str;
 
-			sprintf(fmtbuf, "sort1: n%d", n);
+			snprintf(fmtbuf, sizeof fmtbuf, "sort1: n%d", n);
 			dlog(fmtbuf);
 			str = fmtbuf;
 			for (cpp = scbpp; cpp < scbpp + n; cpp++) {
-				sprintf(str, " %s%c", stoc((*cpp)->c_vertex),
+				snprintf(str, fmtbuf + sizeof fmtbuf - str,
+					" %s%c", stoc((*cpp)->c_vertex),
 					pdir[(*cpp)->c_dir]);
 				str += strlen(str);
 			}
 			dlog(fmtbuf);
-			printcombo(cbp, fmtbuf);
+			printcombo(cbp, fmtbuf, sizeof fmtbuf);
 			dlog(fmtbuf);
 			str = fmtbuf;
 			cbpp--;
 			for (cpp = cbpp; cpp < cbpp + n; cpp++) {
-				sprintf(str, " %s%c", stoc((*cpp)->c_vertex),
+				snprintf(str, fmtbuf + sizeof fmtbuf - str,
+					" %s%c", stoc((*cpp)->c_vertex),
 					pdir[(*cpp)->c_dir]);
 				str += strlen(str);
 			}
@@ -1329,20 +1343,24 @@ inserted:
  * Print the combo into string 'str'.
  */
 void
-printcombo(cbp, str)
+printcombo(cbp, str, strl)
 	struct combostr *cbp;
 	char *str;
+	size_t strl;
 {
+	char *basestr = str;
 	struct combostr *tcbp;
 
-	sprintf(str, "%x/%d", cbp->c_combo.s, cbp->c_nframes);
+	snprintf(str, strl, "%x/%d", cbp->c_combo.s, cbp->c_nframes);
 	str += strlen(str);
 	for (; (tcbp = cbp->c_link[1]) != NULL; cbp = cbp->c_link[0]) {
-		sprintf(str, " %s%c%x", stoc(tcbp->c_vertex), pdir[tcbp->c_dir],
+		snprintf(str, basestr + strl - str,
+			" %s%c%x", stoc(tcbp->c_vertex), pdir[tcbp->c_dir],
 			cbp->c_flg);
 		str += strlen(str);
 	}
-	sprintf(str, " %s%c", stoc(cbp->c_vertex), pdir[cbp->c_dir]);
+	snprintf(str, basestr + strl - str,
+		" %s%c", stoc(cbp->c_vertex), pdir[cbp->c_dir]);
 }
 
 #ifdef DEBUG

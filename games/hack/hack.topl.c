@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.topl.c,v 1.5 2003/03/16 21:22:36 camield Exp $	*/
+/*	$OpenBSD: hack.topl.c,v 1.6 2003/04/06 18:50:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,7 +62,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.topl.c,v 1.5 2003/03/16 21:22:36 camield Exp $";
+static char rcsid[] = "$OpenBSD: hack.topl.c,v 1.6 2003/04/06 18:50:37 deraadt Exp $";
 #endif /* not lint */
 
 #include "hack.h"
@@ -85,7 +85,7 @@ doredotopl(){
 	if(!last_redone_topl)
 		last_redone_topl = old_toplines;
 	if(last_redone_topl){
-		(void) strcpy(toplines, last_redone_topl->topl_text);
+		(void) strlcpy(toplines, last_redone_topl->topl_text, sizeof toplines);
 	}
 	redotoplin();
 	return(0);
@@ -188,8 +188,8 @@ register char *line,*arg1,*arg2,*arg3,*arg4,*arg5,*arg6;
 	register int n,n0;
 
 	if(!line || !*line) return;
-	if(!strchr(line, '%')) (void) strcpy(pbuf,line); else
-	(void) sprintf(pbuf,line,arg1,arg2,arg3,arg4,arg5,arg6);
+	if(!strchr(line, '%')) (void) strlcpy(pbuf,line,sizeof pbuf); else
+	(void) snprintf(pbuf,sizeof pbuf,line,arg1,arg2,arg3,arg4,arg5,arg6);
 	if(flags.toplin == 1 && !strcmp(pbuf, toplines)) return;
 	nscr();		/* %% */
 
@@ -199,8 +199,8 @@ register char *line,*arg1,*arg2,*arg3,*arg4,*arg5,*arg6;
 	if(flags.toplin == 1 && tly == 1 &&
 	    n0 + strlen(toplines) + 3 < CO-8 &&  /* leave room for --More-- */
 	    strncmp(bp, "You ", 4)) {
-		(void) strcat(toplines, "  ");
-		(void) strcat(toplines, bp);
+		(void) strlcat(toplines, "  ", sizeof toplines);
+		(void) strlcat(toplines, bp, sizeof toplines);
 		tlx += 2;
 		addtopl(bp);
 		return;

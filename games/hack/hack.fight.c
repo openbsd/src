@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.fight.c,v 1.5 2003/03/16 21:22:35 camield Exp $	*/
+/*	$OpenBSD: hack.fight.c,v 1.6 2003/04/06 18:50:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,7 +62,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.fight.c,v 1.5 2003/03/16 21:22:35 camield Exp $";
+static char rcsid[] = "$OpenBSD: hack.fight.c,v 1.6 2003/04/06 18:50:37 deraadt Exp $";
 #endif /* not lint */
 
 #include	"hack.h"
@@ -93,7 +93,7 @@ boolean vis;
 		char buf[BUFSZ];
 		if(mdef->mimic) seemimic(mdef);
 		if(magr->mimic) seemimic(magr);
-		(void) sprintf(buf,"%s %s", Monnam(magr),
+		(void) snprintf(buf,sizeof buf,"%s %s", Monnam(magr),
 			hit ? "hits" : "misses");
 		pline("%s %s.", buf, monnam(mdef));
 	} else {

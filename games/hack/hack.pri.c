@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.pri.c,v 1.5 2003/03/16 21:22:36 camield Exp $	*/
+/*	$OpenBSD: hack.pri.c,v 1.6 2003/04/06 18:50:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,7 +62,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.pri.c,v 1.5 2003/03/16 21:22:36 camield Exp $";
+static char rcsid[] = "$OpenBSD: hack.pri.c,v 1.6 2003/04/06 18:50:37 deraadt Exp $";
 #endif /* not lint */
 
 #include "hack.h"
@@ -661,17 +661,17 @@ extern char *eos();
 	if(flags.botlx) *ob = 0;
 	flags.botl = flags.botlx = 0;
 #ifdef GOLD_ON_BOTL
-	(void) sprintf(newbot,
+	(void) snprintf(newbot, sizeof newbot,
 		"Level %-2d  Gold %-5lu  Hp %3d(%d)  Ac %-2d  Str ",
 		dlevel, u.ugold, u.uhp, u.uhpmax, u.uac);
 #else
-	(void) sprintf(newbot,
+	(void) snprintf(newbot, sizeof newbot,
 		"Level %-2d   Hp %3d(%d)   Ac %-2d   Str ",
 		dlevel,  u.uhp, u.uhpmax, u.uac);
 #endif /* GOLD_ON_BOTL */
 	if(u.ustr>18) {
 	    if(u.ustr>117)
-		(void) strcat(newbot,"18/**");
+		(void) strlcat(newbot,"18/**",sizeof newbot);
 	    else
 		(void) sprintf(eos(newbot), "18/%02d",u.ustr-18);
 	} else
@@ -681,7 +681,7 @@ extern char *eos();
 #else
 	(void) sprintf(eos(newbot), "   Exp %2u  ", u.ulevel);
 #endif /* EXP_ON_BOTL */
-	(void) strcat(newbot, hu_stat[u.uhs]);
+	(void) strlcat(newbot, hu_stat[u.uhs], sizeof newbot);
 	if(flags.time)
 	    (void) sprintf(eos(newbot), "  %ld", moves);
 	if(strlen(newbot) >= COLNO) {
@@ -701,7 +701,7 @@ extern char *eos();
 		if(*ob) ob++;
 		if(*nb) nb++;
 	}
-	(void) strcpy(oldbot, newbot);
+	(void) strlcpy(oldbot, newbot, sizeof oldbot);
 }
 
 #ifdef WAN_PROBING

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.6 2002/02/17 19:42:21 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.7 2003/04/06 18:50:38 deraadt Exp $	*/
 /*	$NetBSD: extern.h,v 1.8 1998/09/13 15:27:30 hubertf Exp $ */
 
 /*
@@ -321,10 +321,10 @@ void thinkofgrapples(void);
 void checkup(void);
 void prizecheck(void);
 int str_end(const char *);
-void closeon(struct ship *, struct ship *, char[], int, int, int);
-int score(char[], struct ship *, struct ship *, int);
+void closeon(struct ship *, struct ship *, char[], size_t, int, int, int);
+int score(char[], size_t, struct ship *, struct ship *, int);
 void move_ship(const char *, struct ship *, unsigned char *, short *, short *, char *);
-void try(char[], char [], int, int, int, int, int, struct ship *,
+void try(char[], size_t, char [], size_t, int, int, int, int, int, struct ship *,
     struct ship *, int *, int);
 void rmend(char *);
 

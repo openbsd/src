@@ -1,4 +1,4 @@
-/*	$OpenBSD: pack.c,v 1.7 2002/07/18 07:13:57 pjanzen Exp $	*/
+/*	$OpenBSD: pack.c,v 1.8 2003/04/06 18:50:38 deraadt Exp $	*/
 /*	$NetBSD: pack.c,v 1.3 1995/04/22 10:27:54 cgd Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)pack.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: pack.c,v 1.7 2002/07/18 07:13:57 pjanzen Exp $";
+static const char rcsid[] = "$OpenBSD: pack.c,v 1.8 2003/04/06 18:50:38 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -365,7 +365,7 @@ wear()
 		return;
 	}
 	obj->identified = 1;
-	(void) strcpy(desc, "wearing ");
+	(void) strlcpy(desc, "wearing ", sizeof desc);
 	get_desc(obj, desc, sizeof(desc));
 	messagef(0, "wearing %s", desc);
 	do_wear(obj);

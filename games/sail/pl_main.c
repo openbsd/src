@@ -1,4 +1,4 @@
-/*	$OpenBSD: pl_main.c,v 1.7 2001/02/17 20:15:00 pjanzen Exp $	*/
+/*	$OpenBSD: pl_main.c,v 1.8 2003/04/06 18:50:38 deraadt Exp $	*/
 /*	$NetBSD: pl_main.c,v 1.5 1995/04/24 12:25:25 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_main.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: pl_main.c,v 1.7 2001/02/17 20:15:00 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: pl_main.c,v 1.8 2003/04/06 18:50:38 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -203,7 +203,7 @@ reprint:
 		(void) fflush(stdout);
 		(void) fgets(captain, sizeof captain, stdin);
 		if (!*captain || *captain == '\n')
-			(void) strcpy(captain, "no name");
+			(void) strlcpy(captain, "no name", sizeof captain);
 		else if (captain[strlen(captain) - 1] == '\n')
 		    captain[strlen(captain) - 1] = '\0';
 	}

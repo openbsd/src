@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.4 2002/02/16 21:27:08 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.5 2003/04/06 18:50:33 deraadt Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1997/10/11 01:55:27 lukem Exp $	*/
 
 /*
@@ -121,7 +121,6 @@ int vocab(const char *, int, int);
 void prht(void);
 
 /* These three used to be functions in vocab.c */
-#define copystr(src, dest)	strcpy((dest), (src))
 #define weq(str1, str2)		(!strncmp((str1), (str2), 5))
 #define length(str)			(strlen((str)) + 1)
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sync.c,v 1.3 2002/02/19 19:39:36 millert Exp $	*/
+/*	$OpenBSD: sync.c,v 1.4 2003/04/06 18:50:38 deraadt Exp $	*/
 /*	$NetBSD: sync.c,v 1.9 1998/08/30 09:19:40 veego Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)sync.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: sync.c,v 1.3 2002/02/19 19:39:36 millert Exp $";
+static char rcsid[] = "$OpenBSD: sync.c,v 1.4 2003/04/06 18:50:38 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -104,7 +104,7 @@ makesignal(struct ship *from, const char *fmt, struct ship *ship, ...)
 
 	va_start(ap, ship);
 	fmtship(format, sizeof(format), fmt, ship);
-	(void) vsprintf(message, format, ap);
+	(void) vsnprintf(message, sizeof message, format, ap);
 	va_end(ap);
 	Writestr(W_SIGNAL, from, message);
 }
@@ -116,7 +116,7 @@ makemsg(struct ship *from, const char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
-	(void) vsprintf(message, fmt, ap);
+	(void) vsnprintf(message, sizeof message, fmt, ap);
 	va_end(ap);
 	Writestr(W_SIGNAL, from, message);
 }
@@ -129,7 +129,7 @@ sync_exists(game)
 	struct stat s;
 	time_t t;
 
-	(void) sprintf(buf, SF, game);
+	(void) snprintf(buf, sizeof buf, SF, game);
 	(void) time(&t);
 	setegid(egid);
 	if (stat(buf, &s) < 0) {
@@ -138,7 +138,7 @@ sync_exists(game)
 	}
 	if (s.st_mtime < t - 60*60*2) {		/* 2 hours */
 		(void) unlink(buf);
-		(void) sprintf(buf, LF, game);
+		(void) snprintf(buf, sizeof buf, LF, game);
 		(void) unlink(buf);
 		setegid(gid);
 		return 0;
@@ -154,8 +154,8 @@ sync_open()
 
 	if (sync_fp != NULL)
 		(void) fclose(sync_fp);
-	(void) sprintf(sync_lock, LF, game);
-	(void) sprintf(sync_file, SF, game);
+	(void) snprintf(sync_lock, sizeof sync_lock, LF, game);
+	(void) snprintf(sync_file, sizeof sync_file, SF, game);
 	setegid(egid);
 	if (stat(sync_file, &tmp) < 0) {
 		mode_t omask = umask(002);
@@ -189,8 +189,9 @@ Write(type, ship, a, b, c, d)
 	struct ship *ship;
 	long a, b, c, d;
 {
-	(void) sprintf(sync_bp, "%d %d 0 %ld %ld %ld %ld\n",
-		       type, ship->file->index, a, b, c, d);
+	(void) snprintf(sync_bp, sync_buf + sizeof sync_buf - sync_bp,
+		"%d %d 0 %ld %ld %ld %ld\n",
+	       type, ship->file->index, a, b, c, d);
 	while (*sync_bp++)
 		;
 	sync_bp--;
@@ -205,8 +206,9 @@ Writestr(type, ship, a)
 	struct ship *ship;
 	const char *a;
 {
-	(void) sprintf(sync_bp, "%d %d 1 %s\n",
-		       type, ship->file->index, a);
+	(void) snprintf(sync_bp, sync_buf + sizeof sync_buf - sync_bp,
+		"%d %d 1 %s\n",
+		type, ship->file->index, a);
 	while (*sync_bp++)
 		;
 	sync_bp--;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: phantglobs.h,v 1.4 2002/02/16 21:27:11 millert Exp $	*/
+/*	$OpenBSD: phantglobs.h,v 1.5 2003/04/06 18:50:38 deraadt Exp $	*/
 /*	$NetBSD: phantglobs.h,v 1.3 1995/04/24 12:24:39 cgd Exp $	*/
 
 /*
@@ -52,7 +52,7 @@ extern	FILE	*Monstfp;	/* pointer to open monster file */
 extern	FILE	*Messagefp;	/* pointer to open message file */
 extern	FILE	*Energyvoidfp;	/* pointer to open energy void file */
 
-extern	char	Databuf[];	/* a place to read data into */
+extern	char	Databuf[SZ_DATABUF];	/* a place to read data into */
 
 /* some canned strings for messages */
 extern	char	Illcmd[];

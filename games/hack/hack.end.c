@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.end.c,v 1.5 2003/03/16 21:22:35 camield Exp $	*/
+/*	$OpenBSD: hack.end.c,v 1.6 2003/04/06 18:50:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,13 +62,12 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.end.c,v 1.5 2003/03/16 21:22:35 camield Exp $";
+static char rcsid[] = "$OpenBSD: hack.end.c,v 1.6 2003/04/06 18:50:37 deraadt Exp $";
 #endif /* not lint */
 
 #include "hack.h"
 #include <stdio.h>
 #include <signal.h>
-#define	Sprintf	(void) sprintf
 extern char plname[], pl_character[];
 extern char *itoa(), *ordin(), *eos();
 
@@ -111,14 +110,14 @@ done_in_by(mtmp) register struct monst *mtmp; {
 static char buf[BUFSZ];
 	pline("You die ...");
 	if(mtmp->data->mlet == ' '){
-		Sprintf(buf, "the ghost of %s", (char *) mtmp->mextra);
+		snprintf(buf, sizeof buf, "the ghost of %s", (char *) mtmp->mextra);
 		killer = buf;
 	} else if(mtmp->mnamelth) {
-		Sprintf(buf, "%s called %s",
+		snprintf(buf, sizeof buf, "%s called %s",
 			mtmp->data->mname, NAME(mtmp));
 		killer = buf;
 	} else if(mtmp->minvis) {
-		Sprintf(buf, "invisible %s", mtmp->data->mname);
+		snprintf(buf, sizeof buf, "invisible %s", mtmp->data->mname);
 		killer = buf;
 	} else killer = mtmp->data->mname;
 	done("died");
@@ -451,53 +450,53 @@ outentry(rank,t1,so) register struct toptenentry *t1; {
 boolean quit = FALSE, killed = FALSE, starv = FALSE;
 char linebuf[BUFSZ];
 	linebuf[0] = 0;
-	if(rank) Sprintf(eos(linebuf), "%3d", rank);
-		else Sprintf(eos(linebuf), "   ");
-	Sprintf(eos(linebuf), " %6ld %8s", t1->points, t1->name);
-	if(t1->plchar == 'X') Sprintf(eos(linebuf), " ");
-	else Sprintf(eos(linebuf), "-%c ", t1->plchar);
+	if(rank) sprintf(eos(linebuf), "%3d", rank);
+		else sprintf(eos(linebuf), "   ");
+	sprintf(eos(linebuf), " %6ld %8s", t1->points, t1->name);
+	if(t1->plchar == 'X') sprintf(eos(linebuf), " ");
+	else sprintf(eos(linebuf), "-%c ", t1->plchar);
 	if(!strncmp("escaped", t1->death, 7)) {
 	  if(!strcmp(" (with amulet)", t1->death+7))
-	    Sprintf(eos(linebuf), "escaped the dungeon with amulet");
+	    sprintf(eos(linebuf), "escaped the dungeon with amulet");
 	  else
-	    Sprintf(eos(linebuf), "escaped the dungeon [max level %d]",
+	    sprintf(eos(linebuf), "escaped the dungeon [max level %d]",
 	      t1->maxlvl);
 	} else {
 	  if(!strncmp(t1->death,"quit",4)) {
 	    quit = TRUE;
 	    if(t1->maxhp < 3*t1->hp && t1->maxlvl < 4)
-	  	Sprintf(eos(linebuf), "cravenly gave up");
+	  	sprintf(eos(linebuf), "cravenly gave up");
 	    else
-		Sprintf(eos(linebuf), "quit");
+		sprintf(eos(linebuf), "quit");
 	  }
 	  else if(!strcmp(t1->death,"choked"))
-	    Sprintf(eos(linebuf), "choked on %s food",
+	    sprintf(eos(linebuf), "choked on %s food",
 		(t1->sex == 'F') ? "her" : "his");
 	  else if(!strncmp(t1->death,"starv",5))
-	    Sprintf(eos(linebuf), "starved to death"), starv = TRUE;
-	  else Sprintf(eos(linebuf), "was killed"), killed = TRUE;
-	  Sprintf(eos(linebuf), " on%s level %d",
+	    sprintf(eos(linebuf), "starved to death"), starv = TRUE;
+	  else sprintf(eos(linebuf), "was killed"), killed = TRUE;
+	  sprintf(eos(linebuf), " on%s level %d",
 	    (killed || starv) ? "" : " dungeon", t1->level);
 	  if(t1->maxlvl != t1->level)
-	    Sprintf(eos(linebuf), " [max %d]", t1->maxlvl);
-	  if(quit && t1->death[4]) Sprintf(eos(linebuf), t1->death + 4);
+	    sprintf(eos(linebuf), " [max %d]", t1->maxlvl);
+	  if(quit && t1->death[4]) sprintf(eos(linebuf), t1->death + 4);
 	}
-	if(killed) Sprintf(eos(linebuf), " by %s%s",
+	if(killed) sprintf(eos(linebuf), " by %s%s",
 	  (!strncmp(t1->death, "trick", 5) || !strncmp(t1->death, "the ", 4))
 		? "" :
 	  strchr(vowels,*t1->death) ? "an " : "a ",
 	  t1->death);
-	Sprintf(eos(linebuf), ".");
+	sprintf(eos(linebuf), ".");
 	if(t1->maxhp) {
 	  register char *bp = eos(linebuf);
 	  char hpbuf[10];
 	  int hppos;
-	  Sprintf(hpbuf, (t1->hp > 0) ? itoa(t1->hp) : "-");
+	  snprintf(hpbuf, sizeof hpbuf, (t1->hp > 0) ? itoa(t1->hp) : "-");
 	  hppos = COLNO - 7 - strlen(hpbuf);
 	  if(bp <= linebuf + hppos) {
 	    while(bp < linebuf + hppos) *bp++ = ' ';
 	    (void) strcpy(bp, hpbuf);
-	    Sprintf(eos(bp), " [%d]", t1->maxhp);
+	    sprintf(eos(bp), " [%d]", t1->maxhp);
 	  }
 	}
 	if(so == 0) puts(linebuf);
@@ -517,7 +516,7 @@ char linebuf[BUFSZ];
 char *
 itoa(a) int a; {
 static char buf[12];
-	Sprintf(buf,"%d",a);
+	snprintf(buf,sizeof buf,"%d",a);
 	return(buf);
 }
 

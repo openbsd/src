@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.objnam.c,v 1.5 2003/03/16 21:22:36 camield Exp $	*/
+/*	$OpenBSD: hack.objnam.c,v 1.6 2003/04/06 18:50:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,13 +62,10 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.objnam.c,v 1.5 2003/03/16 21:22:36 camield Exp $";
+static char rcsid[] = "$OpenBSD: hack.objnam.c,v 1.6 2003/04/06 18:50:37 deraadt Exp $";
 #endif /* not lint */
 
 #include	"hack.h"
-#define Sprintf (void) sprintf
-#define Strcat  (void) strcat
-#define	Strcpy	(void) strcpy
 #define	PREFIX	15
 extern char *eos();
 extern int bases[];
@@ -88,7 +85,7 @@ register int i = strlen(pref);
 char *
 sitoa(a) int a; {
 static char buf[13];
-	Sprintf(buf, (a < 0) ? "%d" : "+%d", a);
+	snprintf(buf, sizeof buf, (a < 0) ? "%d" : "+%d", a);
 	return(buf);
 }
 
@@ -104,42 +101,42 @@ register char *un = ocl->oc_uname;
 register int nn = ocl->oc_name_known;
 	switch(ocl->oc_olet) {
 	case POTION_SYM:
-		Strcpy(buf, "potion");
+		strlcpy(buf, "potion", sizeof buf);
 		break;
 	case SCROLL_SYM:
-		Strcpy(buf, "scroll");
+		strlcpy(buf, "scroll", sizeof buf);
 		break;
 	case WAND_SYM:
-		Strcpy(buf, "wand");
+		strlcpy(buf, "wand", sizeof buf);
 		break;
 	case RING_SYM:
-		Strcpy(buf, "ring");
+		strlcpy(buf, "ring", sizeof buf);
 		break;
 	default:
 		if(nn) {
-			Strcpy(buf, an);
+			strlcpy(buf, an, sizeof buf);
 			if(otyp >= TURQUOISE && otyp <= JADE)
-				Strcat(buf, " stone");
+				strlcat(buf, " stone", sizeof buf);
 			if(un)
-				Sprintf(eos(buf), " called %s", un);
+				sprintf(eos(buf), " called %s", un);
 			if(dn)
-				Sprintf(eos(buf), " (%s)", dn);
+				sprintf(eos(buf), " (%s)", dn);
 		} else {
-			Strcpy(buf, dn ? dn : an);
+			strlcpy(buf, dn ? dn : an, sizeof buf);
 			if(ocl->oc_olet == GEM_SYM)
-				Strcat(buf, " gem");
+				strlcat(buf, " gem", sizeof buf);
 			if(un)
-				Sprintf(eos(buf), " called %s", un);
+				sprintf(eos(buf), " called %s", un);
 		}
 		return(buf);
 	}
 	/* here for ring/scroll/potion/wand */
 	if(nn)
-		Sprintf(eos(buf), " of %s", an);
+		sprintf(eos(buf), " of %s", an);
 	if(un)
-		Sprintf(eos(buf), " called %s", un);
+		sprintf(eos(buf), " called %s", un);
 	if(dn)
-		Sprintf(eos(buf), " (%s)", dn);
+		sprintf(eos(buf), " (%s)", dn);
 	return(buf);
 }
 
@@ -157,21 +154,21 @@ register int pl = (obj->quan != 1);
 	if(!obj->dknown && !Blind) obj->dknown = 1; /* %% doesn't belong here */
 	switch(obj->olet) {
 	case AMULET_SYM:
-		Strcpy(buf, (obj->spe < 0 && obj->known)
+		strcpy(buf, (obj->spe < 0 && obj->known)
 			? "cheap plastic imitation of the " : "");
-		Strcat(buf,"Amulet of Yendor");
+		strcat(buf,"Amulet of Yendor");
 		break;
 	case TOOL_SYM:
 		if(!nn) {
-			Strcpy(buf, dn);
+			strcpy(buf, dn);
 			break;
 		}
-		Strcpy(buf,an);
+		strcpy(buf,an);
 		break;
 	case FOOD_SYM:
 		if(obj->otyp == DEAD_HOMUNCULUS && pl) {
 			pl = 0;
-			Strcpy(buf, "dead homunculi");
+			strcpy(buf, "dead homunculi");
 			break;
 		}
 		/* fungis ? */
@@ -179,97 +176,97 @@ register int pl = (obj->quan != 1);
 	case WEAPON_SYM:
 		if(obj->otyp == WORM_TOOTH && pl) {
 			pl = 0;
-			Strcpy(buf, "worm teeth");
+			strcpy(buf, "worm teeth");
 			break;
 		}
 		if(obj->otyp == CRYSKNIFE && pl) {
 			pl = 0;
-			Strcpy(buf, "crysknives");
+			strcpy(buf, "crysknives");
 			break;
 		}
 		/* fall into next case */
 	case ARMOR_SYM:
 	case CHAIN_SYM:
 	case ROCK_SYM:
-		Strcpy(buf,an);
+		strcpy(buf,an);
 		break;
 	case BALL_SYM:
-		Sprintf(buf, "%sheavy iron ball",
+		sprintf(buf, "%sheavy iron ball",
 		  (obj->owt > objects[obj->otyp].oc_weight) ? "very " : "");
 		break;
 	case POTION_SYM:
 		if(nn || un || !obj->dknown) {
-			Strcpy(buf, "potion");
+			strcpy(buf, "potion");
 			if(pl) {
 				pl = 0;
-				Strcat(buf, "s");
+				strcat(buf, "s");
 			}
 			if(!obj->dknown) break;
 			if(un) {
-				Strcat(buf, " called ");
-				Strcat(buf, un);
+				strcat(buf, " called ");
+				strcat(buf, un);
 			} else {
-				Strcat(buf, " of ");
-				Strcat(buf, an);
+				strcat(buf, " of ");
+				strcat(buf, an);
 			}
 		} else {
-			Strcpy(buf, dn);
-			Strcat(buf, " potion");
+			strcpy(buf, dn);
+			strcat(buf, " potion");
 		}
 		break;
 	case SCROLL_SYM:
-		Strcpy(buf, "scroll");
+		strcpy(buf, "scroll");
 		if(pl) {
 			pl = 0;
-			Strcat(buf, "s");
+			strcat(buf, "s");
 		}
 		if(!obj->dknown) break;
 		if(nn) {
-			Strcat(buf, " of ");
-			Strcat(buf, an);
+			strcat(buf, " of ");
+			strcat(buf, an);
 		} else if(un) {
-			Strcat(buf, " called ");
-			Strcat(buf, un);
+			strcat(buf, " called ");
+			strcat(buf, un);
 		} else {
-			Strcat(buf, " labeled ");
-			Strcat(buf, dn);
+			strcat(buf, " labeled ");
+			strcat(buf, dn);
 		}
 		break;
 	case WAND_SYM:
 		if(!obj->dknown)
-			Sprintf(buf, "wand");
+			sprintf(buf, "wand");
 		else if(nn)
-			Sprintf(buf, "wand of %s", an);
+			sprintf(buf, "wand of %s", an);
 		else if(un)
-			Sprintf(buf, "wand called %s", un);
+			sprintf(buf, "wand called %s", un);
 		else
-			Sprintf(buf, "%s wand", dn);
+			sprintf(buf, "%s wand", dn);
 		break;
 	case RING_SYM:
 		if(!obj->dknown)
-			Sprintf(buf, "ring");
+			sprintf(buf, "ring");
 		else if(nn)
-			Sprintf(buf, "ring of %s", an);
+			sprintf(buf, "ring of %s", an);
 		else if(un)
-			Sprintf(buf, "ring called %s", un);
+			sprintf(buf, "ring called %s", un);
 		else
-			Sprintf(buf, "%s ring", dn);
+			sprintf(buf, "%s ring", dn);
 		break;
 	case GEM_SYM:
 		if(!obj->dknown) {
-			Strcpy(buf, "gem");
+			strcpy(buf, "gem");
 			break;
 		}
 		if(!nn) {
-			Sprintf(buf, "%s gem", dn);
+			sprintf(buf, "%s gem", dn);
 			break;
 		}
-		Strcpy(buf, an);
+		strcpy(buf, an);
 		if(obj->otyp >= TURQUOISE && obj->otyp <= JADE)
-			Strcat(buf, " stone");
+			strcat(buf, " stone");
 		break;
 	default:
-		Sprintf(buf,"glorkum %c (0%o) %u %d",
+		sprintf(buf,"glorkum %c (0%o) %u %d",
 			obj->olet,obj->olet,obj->otyp,obj->spe);
 	}
 	if(pl) {
@@ -289,16 +286,16 @@ register int pl = (obj->quan != 1);
 		p = eos(buf)-1;
 		if(*p == 's' || *p == 'z' || *p == 'x' ||
 		    (*p == 'h' && p[-1] == 's'))
-			Strcat(buf, "es");	/* boxes */
+			strcat(buf, "es");	/* boxes */
 		else if(*p == 'y' && !strchr(vowels, p[-1]))
-			Strcpy(p, "ies");	/* rubies, zruties */
+			strcpy(p, "ies");	/* rubies, zruties */
 		else
-			Strcat(buf, "s");
+			strcat(buf, "s");
 	}
 nopl:
 	if(obj->onamelth) {
-		Strcat(buf, " named ");
-		Strcat(buf, ONAME(obj));
+		strcat(buf, " named ");
+		strcat(buf, ONAME(obj));
 	}
 	return(buf);
 }
@@ -310,43 +307,43 @@ register struct obj *obj;
 char prefix[PREFIX];
 register char *bp = xname(obj);
 	if(obj->quan != 1)
-		Sprintf(prefix, "%u ", obj->quan);
+		snprintf(prefix, sizeof prefix, "%u ", obj->quan);
 	else
-		Strcpy(prefix, "a ");
+		strlcpy(prefix, "a ", sizeof prefix);
 	switch(obj->olet) {
 	case AMULET_SYM:
 		if(strncmp(bp, "cheap ", 6))
-			Strcpy(prefix, "the ");
+			strlcpy(prefix, "the ", sizeof prefix);
 		break;
 	case ARMOR_SYM:
 		if(obj->owornmask & W_ARMOR)
-			Strcat(bp, " (being worn)");
+			strcat(bp, " (being worn)");
 		/* fall into next case */
 	case WEAPON_SYM:
 		if(obj->known) {
-			Strcat(prefix, sitoa(obj->spe));
-			Strcat(prefix, " ");
+			strlcat(prefix, sitoa(obj->spe), sizeof prefix);
+			strlcat(prefix, " ", sizeof prefix);
 		}
 		break;
 	case WAND_SYM:
 		if(obj->known)
-			Sprintf(eos(bp), " (%d)", obj->spe);
+			sprintf(eos(bp), " (%d)", obj->spe);
 		break;
 	case RING_SYM:
-		if(obj->owornmask & W_RINGR) Strcat(bp, " (on right hand)");
-		if(obj->owornmask & W_RINGL) Strcat(bp, " (on left hand)");
+		if(obj->owornmask & W_RINGR) strcat(bp, " (on right hand)");
+		if(obj->owornmask & W_RINGL) strcat(bp, " (on left hand)");
 		if(obj->known && (objects[obj->otyp].bits & SPEC)) {
-			Strcat(prefix, sitoa(obj->spe));
-			Strcat(prefix, " ");
+			strlcat(prefix, sitoa(obj->spe), sizeof prefix);
+			strlcat(prefix, " ", sizeof prefix);
 		}
 		break;
 	}
 	if(obj->owornmask & W_WEP)
-		Strcat(bp, " (weapon in hand)");
+		strcat(bp, " (weapon in hand)");
 	if(obj->unpaid)
-		Strcat(bp, " (unpaid)");
+		strcat(bp, " (unpaid)");
 	if(!strcmp(prefix, "a ") && strchr(vowels, *bp))
-		Strcpy(prefix, "an ");
+		strlcpy(prefix, "an ", sizeof prefix);
 	bp = strprepend(bp, prefix);
 	return(bp);
 }
@@ -356,9 +353,9 @@ setan(str,buf)
 register char *str,*buf;
 {
 	if(strchr(vowels,*str))
-		Sprintf(buf, "an %s", str);
+		sprintf(buf, "an %s", str);
 	else
-		Sprintf(buf, "a %s", str);
+		sprintf(buf, "a %s", str);
 }
 
 char *
@@ -366,20 +363,20 @@ aobjnam(otmp,verb) register struct obj *otmp; register char *verb; {
 register char *bp = xname(otmp);
 char prefix[PREFIX];
 	if(otmp->quan != 1) {
-		Sprintf(prefix, "%u ", otmp->quan);
+		snprintf(prefix, sizeof prefix, "%u ", otmp->quan);
 		bp = strprepend(bp, prefix);
 	}
 
 	if(verb) {
 		/* verb is given in plural (i.e., without trailing s) */
-		Strcat(bp, " ");
+		strcat(bp, " ");
 		if(otmp->quan != 1)
-			Strcat(bp, verb);
+			strcat(bp, verb);
 		else if(!strcmp(verb, "are"))
-			Strcat(bp, "is");
+			strcat(bp, "is");
 		else {
-			Strcat(bp, verb);
-			Strcat(bp, "s");
+			strcat(bp, verb);
+			strcat(bp, "s");
 		}
 	}
 	return(bp);
@@ -482,13 +479,13 @@ char *un, *dn, *an;
 				if(p[-3] == 'i') {
 					if(!strcmp(p-7, "cookies"))
 						goto mins;
-					Strcpy(p-3, "y");
+					strcpy(p-3, "y");
 					goto sing;
 				}
 
 				/* note: cloves / knives from clove / knife */
 				if(!strcmp(p-6, "knives")) {
-					Strcpy(p-3, "fe");
+					strcpy(p-3, "fe");
 					goto sing;
 				}
 
@@ -502,11 +499,11 @@ char *un, *dn, *an;
 			p[-1] = 0;
 		} else {
 			if(!strcmp(p-9, "homunculi")) {
-				Strcpy(p-1, "us"); /* !! makes string longer */
+				strcpy(p-1, "us"); /* !! makes string longer */
 				goto sing;
 			}
 			if(!strcmp(p-5, "teeth")) {
-				Strcpy(p-5, "tooth");
+				strcpy(p-5, "tooth");
 				goto sing;
 			}
 			/* here we cannot find the plural suffix */

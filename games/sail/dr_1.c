@@ -1,4 +1,4 @@
-/*	$OpenBSD: dr_1.c,v 1.2 1999/01/18 06:20:51 pjanzen Exp $	*/
+/*	$OpenBSD: dr_1.c,v 1.3 2003/04/06 18:50:38 deraadt Exp $	*/
 /*	$NetBSD: dr_1.c,v 1.4 1995/04/24 12:25:10 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_1.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: dr_1.c,v 1.2 1999/01/18 06:20:51 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: dr_1.c,v 1.3 2003/04/06 18:50:38 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -190,7 +190,8 @@ fightitout(from, to, key)
 		subtract(from, totalfrom, crewfrom, fromcap, pcfrom);
 		subtract(to, totalto, crewto, tocap, pcto);
 		makemsg(from, "boarders from %s repelled", to->shipname);
-		(void) sprintf(message, "killed in melee: %d.  %s: %d",
+		(void) snprintf(message, sizeof message,
+			"killed in melee: %d.  %s: %d",
 			totalto, from->shipname, totalfrom);
 		Writestr(W_SIGNAL, to, message);
 		if (key)
@@ -222,10 +223,12 @@ fightitout(from, to, key)
 				subtract(to, mento, crewto, tocap, pcto);
 				subtract(from, - mento, crewfrom, to, 0);
 			}
-			(void) sprintf(message, "captured by the %s!",
+			(void) snprintf(message, sizeof message,
+				"captured by the %s!",
 				to->shipname);
 			Writestr(W_SIGNAL, from, message);
-			(void) sprintf(message, "killed in melee: %d.  %s: %d",
+			(void) snprintf(message, sizeof message,
+				"killed in melee: %d.  %s: %d",
 				totalto, from->shipname, totalfrom);
 			Writestr(W_SIGNAL, to, message);
 			mento = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dr_3.c,v 1.2 1999/01/18 06:20:52 pjanzen Exp $	*/
+/*	$OpenBSD: dr_3.c,v 1.3 2003/04/06 18:50:38 deraadt Exp $	*/
 /*	$NetBSD: dr_3.c,v 1.3 1995/04/22 10:36:49 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_3.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: dr_3.c,v 1.2 1999/01/18 06:20:52 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: dr_3.c,v 1.3 2003/04/06 18:50:38 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -73,6 +73,7 @@ moveall()		/* move all comp ships */
 				*sp->file->movebuf = '\0';
 			else
 				closeon(sp, closest, sp->file->movebuf,
+					sizeof sp->file->movebuf,
 					ta, ma, af);
 		} else
 			*sp->file->movebuf = '\0';
@@ -86,10 +87,12 @@ moveall()		/* move all comp ships */
 	n = 0;
 	foreachship(sp) {
 		if (snagged(sp))
-			(void) strcpy(sp->file->movebuf, "d");
+			(void) strlcpy(sp->file->movebuf, "d",
+			    sizeof sp->file->movebuf);
 		else
 			if (*sp->file->movebuf != 'd')
-				(void) strcat(sp->file->movebuf, "d");
+				(void) strlcat(sp->file->movebuf, "d",
+					sizeof sp->file->movebuf);
 		row[n] = sp->file->row;
 		col[n] = sp->file->col;
 		dir[n] = sp->file->dir;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: banner.c,v 1.8 2002/05/31 03:40:00 pjanzen Exp $	*/
+/*	$OpenBSD: banner.c,v 1.9 2003/04/06 18:50:36 deraadt Exp $	*/
 /*	$NetBSD: banner.c,v 1.4 1995/04/22 11:55:15 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)banner.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: banner.c,v 1.8 2002/05/31 03:40:00 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: banner.c,v 1.9 2003/04/06 18:50:36 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -1065,10 +1065,10 @@ main(argc, argv)
 
 	/* Have now read in the data. Next get the message to be printed. */
 	if (*argv) {
-		strcpy(message, *argv);
+		strlcpy(message, *argv, sizeof message);
 		while (*++argv) {
-			strcat(message, " ");
-			strcat(message, *argv);
+			strlcat(message, " ", sizeof message);
+			strlcat(message, *argv, sizeof message);
 		}
 		nchars = strlen(message);
 	} else {

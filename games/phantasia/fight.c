@@ -1,4 +1,4 @@
-/*	$OpenBSD: fight.c,v 1.7 2002/01/16 01:28:54 millert Exp $	*/
+/*	$OpenBSD: fight.c,v 1.8 2003/04/06 18:50:38 deraadt Exp $	*/
 /*	$NetBSD: fight.c,v 1.2 1995/03/24 03:58:39 cgd Exp $	*/
 
 /*
@@ -1058,7 +1058,8 @@ callmonster(which)
 		} else
 			/* make Modnar into Morgoth */
 		{
-			strcpy(Curmonster.m_name, "Morgoth");
+			strlcpy(Curmonster.m_name, "Morgoth",
+			    sizeof Curmonster.m_name);
 			Curmonster.m_strength = drandom() * (Player.p_maxenergy + Player.p_shield) / 1.4
 			    + drandom() * (Player.p_maxenergy + Player.p_shield) / 1.5;
 			Curmonster.m_brains = Player.p_brains;
@@ -1077,7 +1078,8 @@ callmonster(which)
 			which = (int) ROLL(0.0, 100.0);
 			fseek(Monstfp, (long) which * (long) SZ_MONSTERSTRUCT, SEEK_SET);
 			fread(&Othermonster, SZ_MONSTERSTRUCT, 1, Monstfp);
-			strcpy(Curmonster.m_name, Othermonster.m_name);
+			strlcpy(Curmonster.m_name, Othermonster.m_name,
+			    sizeof Curmonster.m_name);
 		}
 	truncstring(Curmonster.m_name);
 

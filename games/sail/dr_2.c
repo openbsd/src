@@ -1,4 +1,4 @@
-/*	$OpenBSD: dr_2.c,v 1.2 1999/01/18 06:20:52 pjanzen Exp $	*/
+/*	$OpenBSD: dr_2.c,v 1.3 2003/04/06 18:50:38 deraadt Exp $	*/
 /*	$NetBSD: dr_2.c,v 1.4 1995/04/24 12:25:12 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_2.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: dr_2.c,v 1.2 1999/01/18 06:20:52 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: dr_2.c,v 1.3 2003/04/06 18:50:38 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -139,9 +139,10 @@ str_end(str)
 }
 
 void
-closeon(from, to, command, ta, ma, af)
+closeon(from, to, command, commandl, ta, ma, af)
 	struct ship *from, *to;
 	char command[];
+	size_t commandl;
 	int ma, ta, af;
 {
 	int high;
@@ -149,14 +150,16 @@ closeon(from, to, command, ta, ma, af)
 
 	temp[0] = command[0] = '\0';
 	high = -30000;
-	try(command, temp, ma, ta, af, ma, from->file->dir, from, to, &high, 0);
+	try(command, commandl, temp, sizeof temp, ma, ta, af, ma, from->file->dir,
+	    from, to, &high, 0);
 }
 
 const int dtab[] = {0,1,1,2,3,4,4,5};	/* diagonal distances in x==y */
 
 int
-score(movement, ship, to, onlytemp)
+score(movement, movementl, ship, to, onlytemp)
 	char movement[];
+	size_t movementl;
 	struct ship *ship, *to;
 	char onlytemp;
 {
@@ -171,7 +174,7 @@ score(movement, ship, to, onlytemp)
 	drift = fp->drift;
 	move_ship(movement, ship, &fp->dir, &fp->row, &fp->col, &drift);
 	if (!*movement)
-		(void) strcpy(movement, "d");
+		(void) strlcpy(movement, "d", movementl);
 
 	ran = range(ship, to);
 	total = -50 * ran;
@@ -234,10 +237,14 @@ move_ship(p, ship, dir, row, col, drift)
 }
 
 void
-try(command, temp, ma, ta, af, vma, dir, f, t, high, rakeme)
+try(command, commandl, temp, templ, ma, ta, af, vma, dir, f, t, high, rakeme)
+	char command[];
+	size_t commandl;
+	char temp[];
+	size_t templ;
+	int ma, ta, af, vma, dir;
 	struct ship *f, *t;
-	int ma, ta, af, vma, dir, *high, rakeme;
-	char command[], temp[];
+	int *high, rakeme;
 {
 	int new, n;
 	char st[4];
@@ -245,35 +252,35 @@ try(command, temp, ma, ta, af, vma, dir, f, t, high, rakeme)
 
 	if ((n = str_end(temp)) < '1' || n > '9')
 		for (n = 1; vma - n >= 0; n++) {
-			(void) sprintf(st, "%d", n);
-			(void) strcat(temp, st);
-			new = score(temp, f, t, rakeme);
+			(void) snprintf(st, sizeof st, "%d", n);
+			(void) strlcat(temp, st, templ);
+			new = score(temp, templ, f, t, rakeme);
 			if (new > *high && (!rakeme || rakeyou)) {
 				*high = new;
-				(void) strcpy(command, temp);
+				(void) strlcpy(command, temp, commandl);
 			}
-			try(command, temp, ma-n, ta, af, vma-n,
+			try(command, commandl, temp, templ, ma-n, ta, af, vma-n,
 				dir, f, t, high, rakeme);
 			rmend(temp);
 		}
 	if ((ma > 0 && ta > 0 && (n = str_end(temp)) != 'l' && n != 'r') || !strlen(temp)) {
-		(void) strcat(temp, "r");
-		new = score(temp, f, t, rakeme);
+		(void) strlcat(temp, "r", templ);
+		new = score(temp, templ, f, t, rakeme);
 		if (new > *high && (!rakeme || (gunsbear(f, t) && !gunsbear(t, f)))) {
 			*high = new;
-			(void) strcpy(command, temp);
+			(void) strlcpy(command, temp, commandl);
 		}
-		try(command, temp, ma-1, ta-1, af, min(ma-1, maxmove(f, (dir == 8 ? 1 : dir+1), 0)), (dir == 8 ? 1 : dir+1),f,t,high,rakeme);
+		try(command, commandl, temp, templ, ma-1, ta-1, af, min(ma-1, maxmove(f, (dir == 8 ? 1 : dir+1), 0)), (dir == 8 ? 1 : dir+1),f,t,high,rakeme);
 		rmend(temp);
 	}
 	if ((ma > 0 && ta > 0 && (n = str_end(temp)) != 'l' && n != 'r') || !strlen(temp)){
-		(void) strcat(temp, "l");
-		new = score(temp, f, t, rakeme);
+		(void) strlcat(temp, "l", templ);
+		new = score(temp, templ, f, t, rakeme);
 		if (new > *high && (!rakeme || (gunsbear(f, t) && !gunsbear(t, f)))){
 			*high = new;
-			(void) strcpy(command, temp);
+			(void) strlcpy(command, temp, commandl);
 		}
-		try(command, temp, ma-1, ta-1, af, (min(ma-1,maxmove(f, (dir-1 ? dir-1 : 8), 0))), (dir-1 ? dir -1 : 8), f, t, high, rakeme);
+		try(command, commandl, temp, templ, ma-1, ta-1, af, (min(ma-1,maxmove(f, (dir-1 ? dir-1 : 8), 0))), (dir-1 ? dir -1 : 8), f, t, high, rakeme);
 		rmend(temp);
 	}
 }

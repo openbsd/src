@@ -1,4 +1,4 @@
-/*	$OpenBSD: score.c,v 1.4 2001/08/10 23:50:22 pjanzen Exp $	*/
+/*	$OpenBSD: score.c,v 1.5 2003/04/06 18:50:36 deraadt Exp $	*/
 /*	$NetBSD: score.c,v 1.3 1995/03/21 15:08:57 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)score.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: score.c,v 1.4 2001/08/10 23:50:22 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: score.c,v 1.5 2003/04/06 18:50:36 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -132,49 +132,51 @@ scorehand(hand, starter, n, crb, do_explain)
 			if (hand[i].suit == starter.suit) {
 				score++;
 				if (do_explain)
-					strcat(expl, "His Nobs");
+					strlcat(expl, "His Nobs", sizeof expl);
 			}
 		h[i] = hand[i];
 	}
 
 	if (flag && n >= CINHAND) {
 		if (do_explain && expl[0] != '\0')
-			strcat(expl, ", ");
+			strlcat(expl, ", ", sizeof expl);
 		if (starter.suit == k) {
 			score += 5;
 			if (do_explain)
-				strcat(expl, "Five-flush");
+				strlcat(expl, "Five-flush", sizeof expl);
 		} else
 			if (!crb) {
 				score += 4;
 				if (do_explain && expl[0] != '\0')
-					strcat(expl, ", Four-flush");
+					strlcat(expl, ", Four-flush", sizeof expl);
 				else
-					strcpy(expl, "Four-flush");
+					strlcpy(expl, "Four-flush", sizeof expl);
 			}
 	}
 	if (do_explain && expl[0] != '\0')
-		strcat(expl, ", ");
+		strlcat(expl, ", ", sizeof expl);
 	h[n] = starter;
 	sorthand(h, n + 1);	/* sort by rank */
 	i = 2 * fifteens(h, n + 1);
 	score += i;
 	if (do_explain) {
 		if (i > 0) {
-			(void) sprintf(buf, "%d points in fifteens", i);
-			strcat(expl, buf);
+			(void) snprintf(buf, sizeof buf,
+			    "%d points in fifteens", i);
+			strlcat(expl, buf, sizeof expl);
 		} else
-			strcat(expl, "No fifteens");
+			strlcat(expl, "No fifteens", sizeof expl);
 	}
 	i = pairuns(h, n + 1);
 	score += i;
 	if (do_explain) {
 		if (i > 0) {
-			(void) sprintf(buf, ", %d points in pairs, %d in runs",
+			(void) snprintf(buf, sizeof buf,
+			    ", %d points in pairs, %d in runs",
 			    pairpoints, runpoints);
-			strcat(expl, buf);
+			strlcat(expl, buf, sizeof expl);
 		} else
-			strcat(expl, ", No pairs/runs");
+			strlcat(expl, ", No pairs/runs", sizeof expl);
 	}
 	return (score);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.13 2002/12/06 21:48:51 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.14 2003/04/06 18:50:37 deraadt Exp $	*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -45,7 +45,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.13 2002/12/06 21:48:51 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.14 2003/04/06 18:50:37 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -193,7 +193,7 @@ again:
 		else if (strcmp(buf, "white") == 0)
 			color = WHITE;
 		else {
-			sprintf(fmtbuf,
+			snprintf(fmtbuf, sizeof fmtbuf,
 			    "Huh?  Expected `black' or `white', got `%s'\n",
 			    buf);
 			panic(fmtbuf);
@@ -299,7 +299,8 @@ again:
 			break;
 		}
 		if (interactive) {
-			sprintf(fmtbuf, fmt[color], movenum, stoc(curmove));
+			snprintf(fmtbuf, sizeof fmtbuf,
+				fmt[color], movenum, stoc(curmove));
 			log(fmtbuf);
 		}
 		if ((i = makemove(color, curmove)) != MOVEOK)
@@ -397,7 +398,8 @@ top:
 		quit(0);
 	case 'd':		/* set debug level */
 		debug = fmtbuf[1] - '0';
-		sprintf(fmtbuf, "Debug set to %d", debug);
+		snprintf(fmtbuf, sizeof fmtbuf,
+			"Debug set to %d", debug);
 		dlog(fmtbuf);
 		sleep(1);
 	case 'c':
@@ -411,7 +413,8 @@ top:
 		goto top;
 	case 's':		/* suggest a move */
 		i = fmtbuf[1] == 'b' ? BLACK : WHITE;
-		sprintf(fmtbuf, "suggest %c %s", i == BLACK ? 'B' : 'W',
+		snprintf(fmtbuf, sizeof fmtbuf,
+			"suggest %c %s", i == BLACK ? 'B' : 'W',
 			stoc(pickmove(i)));
 		dlog(fmtbuf);
 		goto top;
@@ -466,17 +469,20 @@ top:
 		goto top;
 	case 'p':
 		sp = &board[i = ctos(fmtbuf + 1)];
-		sprintf(fmtbuf, "V %s %x/%d %d %x/%d %d %d %x", stoc(i),
+		snprintf(fmtbuf, sizeof fmtbuf,
+			"V %s %x/%d %d %x/%d %d %d %x", stoc(i),
 			sp->s_combo[BLACK].s, sp->s_level[BLACK],
 			sp->s_nforce[BLACK],
 			sp->s_combo[WHITE].s, sp->s_level[WHITE],
 			sp->s_nforce[WHITE], sp->s_wval, sp->s_flg);
 		dlog(fmtbuf);
-		sprintf(fmtbuf, "FB %s %x %x %x %x", stoc(i),
+		snprintf(fmtbuf, sizeof fmtbuf,
+			"FB %s %x %x %x %x", stoc(i),
 			sp->s_fval[BLACK][0].s, sp->s_fval[BLACK][1].s,
 			sp->s_fval[BLACK][2].s, sp->s_fval[BLACK][3].s);
 		dlog(fmtbuf);
-		sprintf(fmtbuf, "FW %s %x %x %x %x", stoc(i),
+		snprintf(fmtbuf, sizeof fmtbuf,
+			"FW %s %x %x %x %x", stoc(i),
 			sp->s_fval[WHITE][0].s, sp->s_fval[WHITE][1].s,
 			sp->s_fval[WHITE][2].s, sp->s_fval[WHITE][3].s);
 		dlog(fmtbuf);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr.c,v 1.4 1998/09/02 06:36:07 pjanzen Exp $	*/
+/*	$OpenBSD: subr.c,v 1.5 2003/04/06 18:50:33 deraadt Exp $	*/
 /*	$NetBSD: subr.c,v 1.2 1995/03/21 12:05:11 cgd Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)subr.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: subr.c,v 1.4 1998/09/02 06:36:07 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: subr.c,v 1.5 2003/04/06 18:50:33 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -556,7 +556,7 @@ trsay()				/* 9030			*/
 	int i;
 
 	if (*wd2 != 0)
-		copystr(wd2, wd1);
+		strcpy(wd1, wd2);
 	i = vocab(wd1, -1, 0);
 	if (i == 62 || i == 65 || i == 71 || i == 2025) {
 		*wd2 = 0;

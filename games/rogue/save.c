@@ -1,4 +1,4 @@
-/*	$OpenBSD: save.c,v 1.7 2002/07/26 19:56:07 pjanzen Exp $	*/
+/*	$OpenBSD: save.c,v 1.8 2003/04/06 18:50:38 deraadt Exp $	*/
 /*	$NetBSD: save.c,v 1.3 1995/04/22 10:28:21 cgd Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)save.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: save.c,v 1.7 2002/07/26 19:56:07 pjanzen Exp $";
+static const char rcsid[] = "$OpenBSD: save.c,v 1.8 2003/04/06 18:50:38 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -107,8 +107,10 @@ save_into_file(sfile)
 	if (sfile[0] == '~') {
 		if ((hptr = md_getenv("HOME"))) {
 			if (strlen(hptr) + strlen(sfile+1) < sizeof(name_buffer)) {
-				(void) strcpy(name_buffer, hptr);
-				(void) strcat(name_buffer, sfile+1);
+				(void) strlcpy(name_buffer, hptr,
+					sizeof name_buffer);
+				(void) strlcat(name_buffer, sfile+1,
+					sizeof name_buffer);
 				sfile = name_buffer;
 			} else {
 				messagef(0, "homedir is too long");

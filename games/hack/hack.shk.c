@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.shk.c,v 1.7 2003/03/16 21:22:36 camield Exp $	*/
+/*	$OpenBSD: hack.shk.c,v 1.8 2003/04/06 18:50:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,7 +62,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.shk.c,v 1.7 2003/03/16 21:22:36 camield Exp $";
+static char rcsid[] = "$OpenBSD: hack.shk.c,v 1.8 2003/04/06 18:50:37 deraadt Exp $";
 #endif /* not lint */
 
 #include "hack.h"
@@ -736,17 +736,18 @@ int mode;		/* 0: deliver count 1: paged */
 		thisused = bp->price * uquan;
 		totused += thisused;
 		obj->quan = uquan;		/* cheat doname */
-		(void) sprintf(buf, "x -  %s", doname(obj));
+		(void) snprintf(buf, sizeof buf, "x -  %s", doname(obj));
 		obj->quan = oquan;		/* restore value */
 		for(cnt = 0; buf[cnt]; cnt++);
 		while(cnt < 50)
 			buf[cnt++] = ' ';
-		(void) sprintf(&buf[cnt], " %5ld zorkmids", thisused);
+		(void) snprintf(&buf[cnt], sizeof buf - cnt,
+		    " %5ld zorkmids", thisused);
 		if(page_line(buf))
 			goto quit;
 	    }
 	}
-	(void) sprintf(buf, "Total:%50ld zorkmids", totused);
+	(void) snprintf(buf, sizeof buf, "Total:%50ld zorkmids", totused);
 	if(page_line("") || page_line(buf))
 		goto quit;
 	set_pager(1);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.rip.c,v 1.4 2003/03/16 21:22:36 camield Exp $	*/
+/*	$OpenBSD: hack.rip.c,v 1.5 2003/04/06 18:50:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,7 +62,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.rip.c,v 1.4 2003/03/16 21:22:36 camield Exp $";
+static char rcsid[] = "$OpenBSD: hack.rip.c,v 1.5 2003/04/06 18:50:37 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -90,17 +90,17 @@ outrip(){
 	cls();
 	curs(1, 8);
 	puts(riptop);
-	(void) strcpy(buf, plname);
+	(void) strlcpy(buf, plname, sizeof buf);
 	buf[16] = 0;
 	center(6, buf);
-	(void) sprintf(buf, "%ld AU", u.ugold);
+	(void) snprintf(buf, sizeof buf, "%ld AU", u.ugold);
 	center(7, buf);
-	(void) sprintf(buf, "killed by%s",
+	(void) snprintf(buf, sizeof buf, "killed by%s",
 		!strncmp(killer, "the ", 4) ? "" :
 		!strcmp(killer, "starvation") ? "" :
 		strchr(vowels, *killer) ? " an" : " a");
 	center(8, buf);
-	(void) strcpy(buf, killer);
+	(void) strlcpy(buf, killer, sizeof buf);
  	{
 		register int i1;
 		if((i1 = strlen(buf)) > 16) {
@@ -115,7 +115,7 @@ outrip(){
 		center(9, buf);
 		center(10, buf+i1);
 	}
-	(void) sprintf(buf, "%4d", getyear());
+	(void) snprintf(buf, sizeof buf, "%4d", getyear());
 	center(11, buf);
 	puts(ripbot);
 	getret();

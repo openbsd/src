@@ -1,4 +1,4 @@
-/*	$OpenBSD: fortune.c,v 1.15 2002/05/31 20:40:11 pjanzen Exp $	*/
+/*	$OpenBSD: fortune.c,v 1.16 2003/04/06 18:50:37 deraadt Exp $	*/
 /*	$NetBSD: fortune.c,v 1.8 1995/03/23 08:28:40 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)fortune.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: fortune.c,v 1.15 2002/05/31 20:40:11 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: fortune.c,v 1.16 2003/04/06 18:50:37 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -466,10 +466,12 @@ add_file(percent, file, dir, head, tail, parent)
 	if (dir == NULL) {
 		path = file;
 		was_malloc = FALSE;
-	}
-	else {
-		path = do_malloc((unsigned int) (strlen(dir) + strlen(file) + 2));
-		(void) strcat(strcat(strcpy(path, dir), "/"), file);
+	} else {
+		size_t len;
+
+		len = (unsigned int) (strlen(dir) + strlen(file) + 2);
+		path = do_malloc(len);
+		snprintf(path, len, "%s/%s", dir, file);
 		was_malloc = TRUE;
 	}
 	if ((isdir = is_dir(path)) && parent != NULL) {

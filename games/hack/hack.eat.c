@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.eat.c,v 1.5 2003/03/16 21:22:35 camield Exp $	*/
+/*	$OpenBSD: hack.eat.c,v 1.6 2003/04/06 18:50:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,7 +62,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.eat.c,v 1.5 2003/03/16 21:22:35 camield Exp $";
+static char rcsid[] = "$OpenBSD: hack.eat.c,v 1.6 2003/04/06 18:50:37 deraadt Exp $";
 #endif /* not lint */
 
 #include	"hack.h"
@@ -314,7 +314,8 @@ gotit:
 eatx:
 	if(multi<0 && !nomovemsg){
 		static char msgbuf[BUFSZ];
-		(void) sprintf(msgbuf, "You finished eating the %s.",
+		(void) snprintf(msgbuf, sizeof msgbuf,
+				"You finished eating the %s.",
 				ftmp->oc_name);
 		nomovemsg = msgbuf;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: getpar.c,v 1.9 2002/05/31 04:21:30 pjanzen Exp $	*/
+/*	$OpenBSD: getpar.c,v 1.10 2003/04/06 18:50:38 deraadt Exp $	*/
 /*	$NetBSD: getpar.c,v 1.4 1995/04/24 12:25:57 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getpar.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: getpar.c,v 1.9 2002/05/31 04:21:30 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: getpar.c,v 1.10 2003/04/06 18:50:38 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -157,8 +157,8 @@ getcodpar(s, tab)
 			c = 4;
 			for (r = tab; r->abrev; r++)
 			{
-				strcpy(input, r->abrev);
-				strcat(input, r->full);
+				strlcpy(input, r->abrev, sizeof input);
+				strlcat(input, r->full, sizeof input);
 				printf("%14.14s", input);
 				if (--c > 0)
 					continue;
@@ -215,7 +215,7 @@ getstrpar(s, r, l, t)
 
 	if (t == 0)
 		t = " \t\n;";
-	(void)sprintf(format, "%%%d[^%s]", l, t);
+	(void)snprintf(format, sizeof format, "%%%d[^%s]", l, t);
 	while (1)
 	{
 		if ((f = testnl()) && s)

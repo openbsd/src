@@ -1,4 +1,4 @@
-/*	$OpenBSD: wizard.c,v 1.9 2002/02/18 06:38:43 deraadt Exp $	*/
+/*	$OpenBSD: wizard.c,v 1.10 2003/04/06 18:50:33 deraadt Exp $	*/
 /*	$NetBSD: wizard.c,v 1.3 1995/04/24 12:21:41 cgd Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)wizard.c	8.1 (Berkeley) 6/2/93";
 #else
-static char rcsid[] = "$OpenBSD: wizard.c,v 1.9 2002/02/18 06:38:43 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: wizard.c,v 1.10 2003/04/06 18:50:33 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -81,7 +81,7 @@ char    magic[6];
 void
 poof()
 {
-	strcpy(magic, DECR(d,w,a,r,f));
+	strlcpy(magic, DECR(d,w,a,r,f), sizeof magic);
 	latncy = 45;
 }
 
