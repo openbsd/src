@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.14 2002/05/09 21:53:17 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.15 2002/05/09 22:14:16 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$OpenBSD: misc.c,v 1.14 2002/05/09 21:53:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.15 2002/05/09 22:14:16 millert Exp $";
 #endif
 
 /* vix 26jan87 [RCS has the rest of the log]
@@ -472,40 +472,43 @@ int
 allowed(username)
 	char *username;
 {
-	static int	init = FALSE;
-	static FILE	*allow, *deny;
-	static int	allow_error, deny_error;
+	FILE	*allow = NULL;
+	FILE	*deny = NULL;
+	int	isallowed;
 
-	if (!init) {
-		init = TRUE;
 #if defined(ALLOW_FILE) && defined(DENY_FILE)
-		allow = fopen(ALLOW_FILE, "r");
-		allow_error = !allow && errno != ENOENT;
-		deny = fopen(DENY_FILE, "r");
-		deny_error = !deny && errno != ENOENT;
-		Debug(DMISC, ("allow/deny enabled, %d/%d\n", !!allow, !!deny))
-#else
-		allow = NULL;
-		allow_error = 0;
-		deny = NULL;
-		deny_error = 0;
-#endif
-	}
+	isallowed = FALSE;
+	allow = fopen(ALLOW_FILE, "r");
+	if (allow == NULL && errno != ENOENT)
+		goto out;
+	deny = fopen(DENY_FILE, "r");
+	if (deny == NULL && errno != ENOENT)
+		goto out;
+	Debug(DMISC, ("allow/deny enabled, %d/%d\n", !!allow, !!deny))
 
-	if (allow_error)
-		return (FALSE);
-	if (allow)
-		return (in_file(username, allow, FALSE));
-	if (deny_error)
-		return (FALSE);
-	if (deny)
-		return (!in_file(username, deny, TRUE));
+	if (allow) {
+		isallowed = in_file(username, allow, FALSE);
+		goto out;
+	}
+	if (deny) {
+		isallowed = !in_file(username, deny, TRUE);
+		goto out;
+	}
+#endif
 
 #if defined(ALLOW_ONLY_ROOT)
-	return (strcmp(username, ROOT_USER) == 0);
+	isallowed = strcmp(username, ROOT_USER) == 0;
 #else
-	return (TRUE);
+	isallowed = TRUE;
 #endif
+
+out:
+	if (allow)
+		fclose(allow);
+	if (deny)
+		fclose(deny);
+
+	return (isallowed);
 }
 
 
