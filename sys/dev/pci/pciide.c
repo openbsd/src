@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.140 2003/09/29 13:39:16 grange Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.141 2003/10/09 18:57:00 grange Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -220,6 +220,7 @@ void amd756_chip_map(struct pciide_softc*, struct pci_attach_args*);
 void amd756_setup_channel(struct channel_softc*);
 
 void apollo_chip_map(struct pciide_softc*, struct pci_attach_args*);
+void apollo_sata_chip_map(struct pciide_softc*, struct pci_attach_args*);
 void apollo_setup_channel(struct channel_softc*);
 
 void cmd_chip_map(struct pciide_softc*, struct pci_attach_args*);
@@ -457,6 +458,10 @@ const struct pciide_product_desc pciide_via_products[] =  {
 	{ PCI_PRODUCT_VIATECH_VT82C571, /* VIA VT82C571 IDE */
 	  0,
 	  apollo_chip_map
+	},
+	{ PCI_PRODUCT_VIATECH_VT8237_SATA, /* VIA VT8237 SATA */
+	  IDE_PCI_CLASS_OVERRIDE,
+	  apollo_sata_chip_map
 	}
 };
 
@@ -2461,6 +2466,10 @@ apollo_chip_map(sc, pa)
 		printf(": ATA133");
 		sc->sc_wdcdev.UDMA_cap = 6;
 		break;
+	case PCI_PRODUCT_VIATECH_VT8237_SATA:
+		printf(": ATA133");
+		sc->sc_wdcdev.UDMA_cap = 6;
+		break;
 	default:
 		printf(": DMA");
 		sc->sc_wdcdev.UDMA_cap = 0;
@@ -2528,6 +2537,52 @@ next:
 	WDCDEBUG_PRINT(("apollo_chip_map: APO_DATATIM=0x%x, APO_UDMA=0x%x\n",
 	    pci_conf_read(sc->sc_pc, sc->sc_tag, APO_DATATIM),
 	    pci_conf_read(sc->sc_pc, sc->sc_tag, APO_UDMA)), DEBUG_PROBE);
+}
+
+void
+apollo_sata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
+{
+	struct pciide_channel *cp;
+	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
+	int channel;
+	bus_size_t cmdsize, ctlsize;
+
+	if (pciide_chipen(sc, pa) == 0)
+		return;
+
+	if (interface == 0) {
+		WDCDEBUG_PRINT(("apollo_sata_chip_map interface == 0\n"),
+		    DEBUG_PROBE);
+		interface = PCIIDE_INTERFACE_BUS_MASTER_DMA |
+		    PCIIDE_INTERFACE_PCI(0) | PCIIDE_INTERFACE_PCI(1);
+	}
+
+	printf(": DMA");
+	pciide_mapreg_dma(sc, pa);
+	printf("\n");
+
+	if (sc->sc_dma_ok) {
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA |
+		    WDC_CAPABILITY_DMA | WDC_CAPABILITY_IRQACK;
+		sc->sc_wdcdev.irqack = pciide_irqack;
+	}
+	sc->sc_wdcdev.PIO_cap = 4;
+	sc->sc_wdcdev.DMA_cap = 2;
+	sc->sc_wdcdev.UDMA_cap = 6;
+
+	sc->sc_wdcdev.channels = sc->wdc_chanarray;
+	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
+	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
+	    WDC_CAPABILITY_MODE;
+	sc->sc_wdcdev.set_modes = sata_setup_channel;
+
+	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
+		cp = &sc->pciide_channels[channel];
+		if (pciide_chansetup(sc, channel, interface) == 0)
+			continue;
+		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
+		     pciide_pci_intr);
+	}
 }
 
 void
