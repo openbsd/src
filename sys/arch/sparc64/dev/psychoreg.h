@@ -1,4 +1,4 @@
-/*	$OpenBSD: psychoreg.h,v 1.9 2002/03/04 02:32:51 jason Exp $	*/
+/*	$OpenBSD: psychoreg.h,v 1.10 2003/03/27 16:27:27 jason Exp $	*/
 /*	$NetBSD: psychoreg.h,v 1.6.4.2 2001/09/13 01:14:40 thorpej Exp $ */
 
 /*
@@ -205,7 +205,7 @@ struct psychoreg {
 
 	u_int64_t	pad16[48];
 
-	u_int64_t	pci_int_diag;		/* SBUS int state diag reg */		/* 1fe.0000.a800 */
+	u_int64_t	pci_int_diag;		/* PCI int state diag reg */		/* 1fe.0000.a800 */
 	u_int64_t	obio_int_diag;		/* OBIO and misc int state diag reg */	/* 1fe.0000.a808 */
 
 	u_int64_t	pad17[254];
