@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ping.8,v 1.6 1996/07/23 10:36:40 deraadt Exp $
+.\"	$OpenBSD: ping.8,v 1.7 1998/03/31 23:04:09 deraadt Exp $
 .\"	$NetBSD: ping.8,v 1.10 1995/12/31 04:55:35 ghudson Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -144,7 +144,9 @@ option in the
 packet and displays
 the route buffer on returned packets.
 Note that the IP header is only large enough for nine such routes.
-Many hosts ignore or discard this option.
+If more routes come back than should, such as due to an illegal spoofed
+packet, ping will print the route list and then truncate it at the correct
+spot.  Many hosts ignore or discard this option.
 .It Fl r
 Bypass the normal routing tables and send directly to a host on an attached
 network.
