@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: alias_db.c,v 1.18 2001/06/07 09:32:55 brian Exp $
+ * $OpenBSD: alias_db.c,v 1.19 2001/08/21 04:09:15 brian Exp $
  */
 
 /*
@@ -47,9 +47,6 @@
     there is an incomplete connection, in which case the link
     can be deleted after a certain amount of time.
 
-
-    This software is placed into the public domain with no restrictions
-    on its distribution.
 
     Initial version: August, 1996  (cjm)
 

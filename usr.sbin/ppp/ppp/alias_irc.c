@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: alias_irc.c,v 1.6 2001/08/18 22:15:28 brian Exp $
+ * $OpenBSD: alias_irc.c,v 1.7 2001/08/21 04:09:15 brian Exp $
  */
 
 /* Alias_irc.c intercepts packages contain IRC CTCP commands, and
@@ -37,9 +37,6 @@
 	 The interception is likely to change the length of the packet.
 	 The handling of this is copied more-or-less verbatim from
 	 ftp_alias.c
-
-    This software is placed into the public domain with no restrictions
-    on its distribution.
 
 	 Initial version: Eivind Eklund <perhaps@yes.no> (ee) 97-01-29
 

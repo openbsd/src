@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: alias_ftp.c,v 1.10 2001/06/27 16:15:13 brian Exp $
+ * $OpenBSD: alias_ftp.c,v 1.11 2001/08/21 04:09:15 brian Exp $
  */
 
 /*
@@ -43,9 +43,6 @@
     changes of sequence and acknowledgment numbers, since the client
     machine is totally unaware of the modification to the TCP stream.
 
-
-    This software is placed into the public domain with no restrictions
-    on its distribution.
 
     References: RFC 959, RFC 2428.
 

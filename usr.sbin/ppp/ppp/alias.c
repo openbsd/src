@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: alias.c,v 1.14 2001/06/07 09:32:55 brian Exp $
+ * $OpenBSD: alias.c,v 1.15 2001/08/21 04:09:15 brian Exp $
  */
 
 /*
@@ -44,9 +44,6 @@
     special code for modifying the ftp PORT command used to establish
     data connections, while alias_irc.c does the same for IRC
     DCC. Alias_util.c contains a few utility routines.
-
-    This software is placed into the public domain with no restrictions
-    on its distribution.
 
     Version 1.0 August, 1996  (cjm)
 
