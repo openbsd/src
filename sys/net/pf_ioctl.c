@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.87 2003/11/02 01:33:56 mcbride Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.88 2003/12/12 20:05:45 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -390,7 +390,7 @@ pf_empty_pool(struct pf_palist *poola)
 	struct pf_pooladdr	*empty_pool_pa;
 
 	while ((empty_pool_pa = TAILQ_FIRST(poola)) != NULL) {
-		pf_dynaddr_remove(&empty_pool_pa->addr);
+		pfi_dynaddr_remove(&empty_pool_pa->addr);
 		pf_tbladdr_remove(&empty_pool_pa->addr);
 		TAILQ_REMOVE(poola, empty_pool_pa, entries);
 		pool_put(&pf_pooladdr_pl, empty_pool_pa);
@@ -418,8 +418,8 @@ pf_rm_rule(struct pf_rulequeue *rulequeue, struct pf_rule *rule)
 		return;
 	pf_tag_unref(rule->tag);
 	pf_tag_unref(rule->match_tag);
-	pf_dynaddr_remove(&rule->src.addr);
-	pf_dynaddr_remove(&rule->dst.addr);
+	pfi_dynaddr_remove(&rule->src.addr);
+	pfi_dynaddr_remove(&rule->dst.addr);
 	if (rulequeue == NULL) {
 		pf_tbladdr_remove(&rule->src.addr);
 		pf_tbladdr_remove(&rule->dst.addr);
@@ -886,9 +886,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				error = EBUSY;
 		if (rule->rt && !rule->direction)
 			error = EINVAL;
-		if (pf_dynaddr_setup(&rule->src.addr, rule->af))
+		if (pfi_dynaddr_setup(&rule->src.addr, rule->af))
 			error = EINVAL;
-		if (pf_dynaddr_setup(&rule->dst.addr, rule->af))
+		if (pfi_dynaddr_setup(&rule->dst.addr, rule->af))
 			error = EINVAL;
 		if (pf_tbladdr_setup(ruleset, &rule->src.addr))
 			error = EINVAL;
@@ -982,8 +982,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 		bcopy(rule, &pr->rule, sizeof(struct pf_rule));
-		pf_dynaddr_copyout(&pr->rule.src.addr);
-		pf_dynaddr_copyout(&pr->rule.dst.addr);
+		pfi_dynaddr_copyout(&pr->rule.src.addr);
+		pfi_dynaddr_copyout(&pr->rule.dst.addr);
 		pf_tbladdr_copyout(&pr->rule.src.addr);
 		pf_tbladdr_copyout(&pr->rule.dst.addr);
 		for (i = 0; i < PF_SKIP_COUNT; ++i)
@@ -1098,9 +1098,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 			if (newrule->rt && !newrule->direction)
 				error = EINVAL;
-			if (pf_dynaddr_setup(&newrule->src.addr, newrule->af))
+			if (pfi_dynaddr_setup(&newrule->src.addr, newrule->af))
 				error = EINVAL;
-			if (pf_dynaddr_setup(&newrule->dst.addr, newrule->af))
+			if (pfi_dynaddr_setup(&newrule->dst.addr, newrule->af))
 				error = EINVAL;
 			if (pf_tbladdr_setup(ruleset, &newrule->src.addr))
 				error = EINVAL;
@@ -1752,8 +1752,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				break;
 			}
 		}
-		if (pf_dynaddr_setup(&pa->addr, pp->af)) {
-			pf_dynaddr_remove(&pa->addr);
+		if (pfi_dynaddr_setup(&pa->addr, pp->af)) {
+			pfi_dynaddr_remove(&pa->addr);
 			pool_put(&pf_pooladdr_pl, pa);
 			error = EINVAL;
 			break;
@@ -1803,7 +1803,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 		bcopy(pa, &pp->addr, sizeof(struct pf_pooladdr));
-		pf_dynaddr_copyout(&pp->addr.addr);
+		pfi_dynaddr_copyout(&pp->addr.addr);
 		pf_tbladdr_copyout(&pp->addr.addr);
 		splx(s);
 		break;
@@ -1867,9 +1867,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				}
 			} else
 				newpa->ifp = NULL;
-			if (pf_dynaddr_setup(&newpa->addr, pca->af) ||
+			if (pfi_dynaddr_setup(&newpa->addr, pca->af) ||
 			    pf_tbladdr_setup(ruleset, &newpa->addr)) {
-				pf_dynaddr_remove(&newpa->addr);
+				pfi_dynaddr_remove(&newpa->addr);
 				pool_put(&pf_pooladdr_pl, newpa);
 				error = EINVAL;
 				break;
@@ -1899,7 +1899,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		if (pca->action == PF_CHANGE_REMOVE) {
 			TAILQ_REMOVE(&pool->list, oldpa, entries);
-			pf_dynaddr_remove(&oldpa->addr);
+			pfi_dynaddr_remove(&oldpa->addr);
 			pf_tbladdr_remove(&oldpa->addr);
 			pool_put(&pf_pooladdr_pl, oldpa);
 		} else {

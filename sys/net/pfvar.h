@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.175 2003/12/11 13:13:27 cedric Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.176 2003/12/12 20:05:45 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1150,10 +1150,6 @@ extern int			 pf_tbladdr_setup(struct pf_ruleset *,
 				    struct pf_addr_wrap *);
 extern void			 pf_tbladdr_remove(struct pf_addr_wrap *);
 extern void			 pf_tbladdr_copyout(struct pf_addr_wrap *);
-extern int			 pf_dynaddr_setup(struct pf_addr_wrap *,
-				    sa_family_t);
-extern void			 pf_dynaddr_copyout(struct pf_addr_wrap *);
-extern void			 pf_dynaddr_remove(struct pf_addr_wrap *);
 extern void			 pf_calc_skip_steps(struct pf_rulequeue *);
 extern void			 pf_rule_set_qid(struct pf_rulequeue *);
 extern u_int32_t		 pf_qname_to_qid(char *);
@@ -1250,6 +1246,10 @@ int	pfr_ina_rollback(struct pfr_table *, u_int32_t, int *, int);
 int	pfr_ina_commit(struct pfr_table *, u_int32_t, int *, int *, int);
 int	pfr_ina_define(struct pfr_table *, struct pfr_addr *, int, int *,
 	    int *, u_int32_t, int);
+
+int	pfi_dynaddr_setup(struct pf_addr_wrap *, sa_family_t);
+void	pfi_dynaddr_copyout(struct pf_addr_wrap *);
+void	pfi_dynaddr_remove(struct pf_addr_wrap *);
 
 u_int16_t	pf_tagname2tag(char *);
 void		pf_tag2tagname(u_int16_t, char *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.406 2003/12/11 13:13:27 cedric Exp $ */
+/*	$OpenBSD: pf.c,v 1.407 2003/12/12 20:05:45 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -110,7 +110,6 @@ struct timeout		 pf_expire_to;			/* expire timeout */
 struct pool		 pf_rule_pl, pf_addr_pl;
 struct pool		 pf_state_pl, pf_altq_pl, pf_pooladdr_pl;
 
-void			 pf_dynaddr_update(void *);
 void			 pf_print_host(struct pf_addr *, u_int16_t, u_int8_t);
 void			 pf_print_state(struct pf_state *);
 void			 pf_print_flags(u_int8_t);
@@ -593,101 +592,6 @@ pf_tbladdr_copyout(struct pf_addr_wrap *aw)
 	aw->p.tbl = NULL;
 	aw->p.tblcnt = (kt->pfrkt_flags & PFR_TFLAG_ACTIVE) ?
 		kt->pfrkt_cnt : -1;
-}
-
-int
-pf_dynaddr_setup(struct pf_addr_wrap *aw, sa_family_t af)
-{
-	if (aw->type != PF_ADDR_DYNIFTL)
-		return (0);
-	aw->p.dyn = pool_get(&pf_addr_pl, PR_NOWAIT);
-	if (aw->p.dyn == NULL)
-		return (1);
-	bcopy(aw->v.ifname, aw->p.dyn->ifname, sizeof(aw->p.dyn->ifname));
-	aw->p.dyn->ifp = ifunit(aw->p.dyn->ifname);
-	if (aw->p.dyn->ifp == NULL) {
-		pool_put(&pf_addr_pl, aw->p.dyn);
-		aw->p.dyn = NULL;
-		return (1);
-	}
-	aw->p.dyn->addr = &aw->v.a.addr;
-	aw->p.dyn->af = af;
-	aw->p.dyn->undefined = 1;
-	aw->p.dyn->hook_cookie = hook_establish(
-	    aw->p.dyn->ifp->if_addrhooks, 1,
-	    pf_dynaddr_update, aw->p.dyn);
-	if (aw->p.dyn->hook_cookie == NULL) {
-		pool_put(&pf_addr_pl, aw->p.dyn);
-		aw->p.dyn = NULL;
-		return (1);
-	}
-	pf_dynaddr_update(aw->p.dyn);
-	return (0);
-}
-
-void
-pf_dynaddr_update(void *p)
-{
-	struct pf_addr_dyn	*ad = (struct pf_addr_dyn *)p;
-	struct ifaddr		*ia;
-	int			 s, changed = 0;
-
-	if (ad == NULL || ad->ifp == NULL)
-		panic("pf_dynaddr_update");
-	s = splsoftnet();
-	TAILQ_FOREACH(ia, &ad->ifp->if_addrlist, ifa_list)
-		if (ia->ifa_addr != NULL &&
-		    ia->ifa_addr->sa_family == ad->af) {
-			if (ad->af == AF_INET) {
-				struct in_addr *a, *b;
-
-				a = &ad->addr->v4;
-				b = &((struct sockaddr_in *)ia->ifa_addr)
-				    ->sin_addr;
-				if (ad->undefined ||
-				    memcmp(a, b, sizeof(*a))) {
-					bcopy(b, a, sizeof(*a));
-					changed = 1;
-				}
-			} else if (ad->af == AF_INET6) {
-				struct in6_addr *a, *b;
-
-				a = &ad->addr->v6;
-				b = &((struct sockaddr_in6 *)ia->ifa_addr)
-				    ->sin6_addr;
-				if (ad->undefined ||
-				    memcmp(a, b, sizeof(*a))) {
-					bcopy(b, a, sizeof(*a));
-					changed = 1;
-				}
-			}
-			if (changed)
-				ad->undefined = 0;
-			break;
-		}
-	if (ia == NULL)
-		ad->undefined = 1;
-	splx(s);
-}
-
-void
-pf_dynaddr_remove(struct pf_addr_wrap *aw)
-{
-	if (aw->type != PF_ADDR_DYNIFTL || aw->p.dyn == NULL)
-		return;
-	hook_disestablish(aw->p.dyn->ifp->if_addrhooks,
-	    aw->p.dyn->hook_cookie);
-	pool_put(&pf_addr_pl, aw->p.dyn);
-	aw->p.dyn = NULL;
-}
-
-void
-pf_dynaddr_copyout(struct pf_addr_wrap *aw)
-{
-	if (aw->type != PF_ADDR_DYNIFTL || aw->p.dyn == NULL)
-		return;
-	bcopy(aw->p.dyn->ifname, aw->v.ifname, sizeof(aw->v.ifname));
-	aw->p.dyn = (struct pf_addr_dyn *)1;
 }
 
 void
