@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.60 2002/06/12 04:07:17 art Exp $
+#	$OpenBSD: bsd.own.mk,v 1.61 2002/08/03 08:10:42 pvalchev Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -29,7 +29,7 @@ AFS?=		yes
 .endif
 # Set `DEBUGLIBS' to `yes' to build libraries with debugging symbols
 DEBUGLIBS?=	no
-# Set toolchain for libdl and other "differences"
+# Set toolchain to be able to know differences.
 .if (${MACHINE_ARCH} == "alpha" || ${MACHINE_ARCH} == "powerpc" || \
      ${MACHINE_ARCH} == "hppa" || ${MACHINE_ARCH} == "sparc64")
 ELF_TOOLCHAIN?=	yes
