@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.11 1998/10/18 20:02:31 millert Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.12 1999/03/04 04:37:33 niklas Exp $
 
 #
 # groff config
@@ -33,8 +33,12 @@ MAN_BUILD1=	${MAN_SRC1:S/.n$/.cat1/g}
 MAN_BUILD5=	${MAN_SRC5:S/.n$/.cat5/g}
 MAN_BUILD7=	${MAN_SRC7:S/.n$/.cat7/g}
 
-# Only use for cleaning!
+# Used for cleaning, which is why it is independent of NOMAN
 MANALL=		${MAN_BUILD1} ${MAN_BUILD5} ${MAN_BUILD7}
+.ifndef NOMAN
+MAN_BUILD=	${MANALL}
+.endif
+
 
 MLINKS=	groff_ms.7 ms.7 groff_mm.7 mm.7
 
@@ -44,7 +48,7 @@ MLINKS=	groff_ms.7 ms.7 groff_mm.7 mm.7
 	@echo "${NROFF} -mandoc ${.IMPSRC} > ${.TARGET}"
 	@${NROFF} -mandoc ${.IMPSRC} > ${.TARGET} || (rm -f ${.TARGET}; false)
 
-all: config.status gnu_build
+all: config.status gnu_build ${MAN_BUILD}
 
 .FORCE: .IGNORE
 
@@ -79,8 +83,7 @@ gnu_build:
 		indexdir=${INDEXDIR} \
 		common_words_file=${COMMON_WORDS}
 
-.if !defined(NOMAN)
-install: ${MAN_BUILD1} ${MAN_BUILD5} ${MAN_BUILD7} maninstall
+install: maninstall
 	${MAKE} ${GNUCFLAGS} ${GNUCXXFLAGS} LDFLAGS=${LDSTATIC} \
 		prefix=${DESTDIR}${PREFIX} \
 		datasubdir=${DESTDIR}${DATASUBDIR} \
@@ -91,19 +94,6 @@ install: ${MAN_BUILD1} ${MAN_BUILD5} ${MAN_BUILD7} maninstall
 		install
 	install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${.CURDIR}/tmac/tmac.an \
                 ${DESTDIR}${DATASUBDIR}/tmac/tmac.an.old
-.else
-install:
-	${MAKE} ${GNUCFLAGS} ${GNUCXXFLAGS} LDFLAGS=${LDSTATIC} \
-		prefix=${DESTDIR}${PREFIX} \
-		datasubdir=${DESTDIR}${DATASUBDIR} \
-		fontdir=${DESTDIR}${FONTDIR} \
-		indexdir=${DESTDIR}${INDEXDIR} \
-		common_words_file=${DESTDIR}${COMMON_WORDS} \
-		INSTALL_MAN= TMAC_AN= TMAC_ANDOC= MDOCFILES= tmac_an= \
-		install
-	install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${.CURDIR}/tmac/tmac.an \
-                ${DESTDIR}${DATASUBDIR}/tmac/tmac.an.old
-.endif
 
 clean cleandir:
 	rm -f ${CLEANFILES}
