@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.18 2004/09/18 20:01:38 henning Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.19 2004/09/18 20:27:57 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -313,6 +313,10 @@ ntpd_settime(double d)
 	struct timeval	tv, curtime;
 	char		buf[80];
 	time_t		tval;
+
+	/* if the offset is small, don't call settimeofday */
+	if (d < SETTIME_MIN_OFFSET && d > -SETTIME_MIN_OFFSET)
+		return;
 
 	d_to_tv(d, &tv);
 	if (gettimeofday(&curtime, NULL) == -1)
