@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_reg.h,v 1.1 2001/03/28 03:27:10 fgsch Exp $	*/
+/*	$OpenBSD: bktr_reg.h,v 1.2 2001/03/28 06:15:36 fgsch Exp $	*/
 /*
  * $FreeBSD: src/sys/dev/bktr/bktr_reg.h,v 1.42 2000/10/31 13:09:56 roger Exp $
  *
@@ -554,7 +554,7 @@ struct bktr_softc {
 
 
     /* The following definitions are for the contiguous memory */
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__OpenBSD__)
     vaddr_t bigbuf;          /* buffer that holds the captured image */
     vaddr_t vbidata;         /* RISC program puts VBI data from the current frame here */
     vaddr_t vbibuffer;       /* Circular buffer holding VBI data for the user */
