@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: svc_tcp.c,v 1.8 1997/02/07 06:27:19 deraadt Exp $";
+static char *rcsid = "$OpenBSD: svc_tcp.c,v 1.9 1997/02/13 22:21:11 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -52,6 +52,7 @@ static char *rcsid = "$OpenBSD: svc_tcp.c,v 1.8 1997/02/07 06:27:19 deraadt Exp 
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
+#include <netinet/ip_var.h>
 
 /*
  * Ops vector for TCP/IP based rpc service handle
@@ -248,20 +249,21 @@ rendezvous_request(xprt)
 
 #ifdef IP_OPTIONS
 	{
-		u_char optbuf[BUFSIZ/3];
-		int optsize = sizeof(optbuf), i;
+		struct ipoption opts;
+		int optsize = sizeof(opts), i;
 
-		if (!getsockopt(sock, IPPROTO_IP, IP_OPTIONS, (char *)optbuf,
+		if (!getsockopt(sock, IPPROTO_IP, IP_OPTIONS, (char *)&opts,
 		    &optsize) && optsize != 0) {
 			for (i = 0; i < optsize; ) {
-				u_char c = optbuf[i];
+				u_char c = (u_char)opts.ipopt_list[i];
 				if (c == IPOPT_LSRR || c == IPOPT_SSRR) {
 					close(sock);
 					goto again;
 				}
 				if (c == IPOPT_EOL)
 					break;
-				i += (c == IPOPT_NOP) ? 1 : optbuf[i+1];
+				i += (c == IPOPT_NOP) ? 1 :
+				    (u_char)opts.ipopt_list[i+1];
 			}
 		}
 	}

@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)rlogind.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: rlogind.c,v 1.16 1997/02/05 21:09:30 deraadt Exp $";
+static char *rcsid = "$Id: rlogind.c,v 1.17 1997/02/13 22:21:10 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -62,6 +62,7 @@ static char *rcsid = "$Id: rlogind.c,v 1.16 1997/02/05 21:09:30 deraadt Exp $";
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
+#include <netinet/ip_var.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 
@@ -258,23 +259,24 @@ doit(f, fromp)
 		}
 #ifdef IP_OPTIONS
 		{
-		u_char optbuf[BUFSIZ/3];
-		int optsize = sizeof(optbuf), ipproto, i;
+		struct ipoption opts;
+		int optsize = sizeof(opts), ipproto, i;
 		struct protoent *ip;
 
 		if ((ip = getprotobyname("ip")) != NULL)
 			ipproto = ip->p_proto;
 		else
 			ipproto = IPPROTO_IP;
-		if (getsockopt(0, ipproto, IP_OPTIONS, (char *)optbuf,
+		if (getsockopt(0, ipproto, IP_OPTIONS, (char *)&opts,
 		    &optsize) == 0 && optsize != 0) {
 			for (i = 0; i < optsize; ) {
-				u_char c = optbuf[i];
+				u_char c = (u_char)opts.ipopt_list[i];
 				if (c == IPOPT_LSRR || c == IPOPT_SSRR)
 					exit(1);
 				if (c == IPOPT_EOL)
 					break;
-				i += (c == IPOPT_NOP) ? 1 : optbuf[i+1];
+				i += (c == IPOPT_NOP) ? 1 :
+				    (u_char)opts.ipopt_list[i+1];
 			}
 		}
 		}
