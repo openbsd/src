@@ -1,4 +1,4 @@
-.\"	$OpenBSD: awk.1,v 1.19 2003/12/19 09:27:36 jmc Exp $
+.\"	$OpenBSD: awk.1,v 1.20 2003/12/19 12:48:02 jmc Exp $
 .\" EX/EE is a Bd
 .\"
 .\" Copyright (C) Lucent Technologies 1997
@@ -67,7 +67,7 @@ is treated as an assignment, not a filename,
 and is executed at the time it would have been opened if it were a filename.
 .Pp
 The options are as follows:
-.Bl -tag -width Ds
+.Bl -tag -width "-safe "
 .It Fl d Ns Op Ar n
 Debug mode.
 Set debug level to
@@ -257,11 +257,16 @@ stands for
 .Ar $0 .
 String constants are quoted
 .Li \&"" ,
-with the usual C escapes recognized within.
+with the usual C escapes recognized within
+(see
+.Xr printf 1
+for a complete list of these).
 Expressions take on string or numeric values as appropriate,
 and are built using the operators
 .Ic + \- * / % ^
-(exponentiation), and concatenation (indicated by whitespace).
+.Pq exponentiation ,
+and concatenation
+.Pq indicated by whitespace .
 The operators
 .Ic \&! ++ \-\- += \-= *= /= %= ^=
 .Ic > >= < <= == != ?:
@@ -368,7 +373,7 @@ do not combine with other patterns.
 .Pp
 Variable names with special meanings:
 .Pp
-.Bl -tag -width "FILENAME" -compact
+.Bl -tag -width "FILENAME " -compact
 .It Va ARGC
 Argument count, assignable.
 .It Va ARGV
@@ -715,6 +720,7 @@ Print an error message to standard error:
 .Sh SEE ALSO
 .Xr egrep 1 ,
 .Xr lex 1 ,
+.Xr printf 1 ,
 .Xr sed 1 ,
 .Xr printf 3
 .Rs
