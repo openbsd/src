@@ -29,8 +29,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: uthread_spinlock.c,v 1.2 1998/11/09 03:13:21 d Exp $
- * $OpenBSD: uthread_spinlock.c,v 1.2 1998/11/09 03:13:21 d Exp $
+ * $FreeBSD: uthread_spinlock.c,v 1.4 1998/06/09 23:13:10 jb Exp $
+ * $OpenBSD: uthread_spinlock.c,v 1.3 1998/12/23 22:49:47 d Exp $
  *
  */
 

@@ -29,8 +29,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: uthread_fd.c,v 1.2 1998/11/09 03:13:19 d Exp $
- * $OpenBSD: uthread_fd.c,v 1.2 1998/11/09 03:13:19 d Exp $
+ * $FreeBSD: uthread_fd.c,v 1.9 1998/09/13 15:33:42 dt Exp $
+ * $OpenBSD: uthread_fd.c,v 1.3 1998/12/23 22:49:46 d Exp $
  *
  */
 #include <errno.h>

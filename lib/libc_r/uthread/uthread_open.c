@@ -29,8 +29,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: uthread_open.c,v 1.1 1998/08/27 09:01:15 d Exp $
- * $OpenBSD: uthread_open.c,v 1.1 1998/08/27 09:01:15 d Exp $
+ * $FreeBSD: uthread_open.c,v 1.4 1998/04/29 09:59:07 jb Exp $
+ * $OpenBSD: uthread_open.c,v 1.2 1998/12/23 22:49:46 d Exp $
  *
  */
 #include <stdarg.h>

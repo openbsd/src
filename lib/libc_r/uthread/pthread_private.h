@@ -31,6 +31,8 @@
  *
  * Private thread definitions for the uthread kernel.
  *
+ * $OpenBSD: pthread_private.h,v 1.6 1998/12/23 22:49:46 d Exp $
+ *
  */
 
 #ifndef _PTHREAD_PRIVATE_H

@@ -29,8 +29,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: uthread_writev.c,v 1.1 1998/08/27 09:01:30 d Exp $
- * $OpenBSD: uthread_writev.c,v 1.1 1998/08/27 09:01:30 d Exp $
+ * $FreeBSD: uthread_writev.c,v 1.10 1998/06/14 09:36:14 jb Exp $
+ * $OpenBSD: uthread_writev.c,v 1.2 1998/12/23 22:49:47 d Exp $
  *
  */
 #include <sys/types.h>
