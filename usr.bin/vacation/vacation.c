@@ -1,4 +1,4 @@
-/*	$OpenBSD: vacation.c,v 1.15 2001/11/19 19:02:17 mpech Exp $	*/
+/*	$OpenBSD: vacation.c,v 1.16 2002/02/07 07:17:38 mpech Exp $	*/
 /*	$NetBSD: vacation.c,v 1.7 1995/04/29 05:58:27 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vacation.c	8.2 (Berkeley) 1/26/94";
 #endif
-static char rcsid[] = "$OpenBSD: vacation.c,v 1.15 2001/11/19 19:02:17 mpech Exp $";
+static char rcsid[] = "$OpenBSD: vacation.c,v 1.16 2002/02/07 07:17:38 mpech Exp $";
 #endif /* not lint */
 
 /*
@@ -218,8 +218,9 @@ readheaders()
 	while (fgets(buf, sizeof(buf), stdin) && *buf != '\n')
 		switch(*buf) {
 		case 'F':		/* "From " */
+		case 'f':
 			cont = 0;
-			if (!strncmp(buf, "From ", 5)) {
+			if (!strncasecmp(buf, "From ", 5)) {
 				for (p = buf + 5; *p && *p != ' '; ++p)
 					;
 				*p = '\0';
@@ -231,6 +232,7 @@ readheaders()
 			}
 			break;
 		case 'R':		/* "Return-Path:" */
+		case 'r':
 			cont = 0;
 			if (strncasecmp(buf, "Return-Path:",
 					sizeof("Return-Path:")-1) ||
@@ -249,6 +251,7 @@ readheaders()
 				exit(0);
 			break;
 		case 'P':		/* "Precedence:" */
+		case 'p':
 			cont = 0;
 			if (strncasecmp(buf, "Precedence", 10) ||
 			    (buf[10] != ':' && buf[10] != ' ' &&
@@ -265,6 +268,7 @@ readheaders()
 				exit(0);
 			break;
 		case 'S':		/* Subject: */
+		case 's':
 			cont = 0;
 			if (strncasecmp(buf, "Subject:",
 					sizeof("Subject:")-1) ||
@@ -281,12 +285,14 @@ readheaders()
 				*p = '\0';
 			break;
 		case 'C':		/* "Cc:" */
-			if (strncmp(buf, "Cc:", 3))
+		case 'c':
+			if (strncasecmp(buf, "Cc:", 3))
 				break;
 			cont = 1;
 			goto findme;
 		case 'T':		/* "To:" */
-			if (strncmp(buf, "To:", 3))
+		case 't':
+			if (strncasecmp(buf, "To:", 3))
 				break;
 			cont = 1;
 			goto findme;
