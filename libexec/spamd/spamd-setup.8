@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd-setup.8,v 1.2 2003/02/14 05:51:57 jason Exp $
+.\"	$OpenBSD: spamd-setup.8,v 1.3 2003/02/19 19:18:54 jason Exp $
 .\"
 .\" Copyright (c) 2003 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -29,13 +29,14 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd Febuary 14, 2003
-.Dt spamd-setup 1
+.Dt spamd-setup 8
 .Os
 .Sh NAME
 .Nm spamd-setup
 .Nd parse and load file of spammer addresses
 .Sh SYNOPSIS
 .Nm spamd-setup
+.Op Fl s
 .Op Fl 1
 .Op Fl 2
 .Op Fl f Ar file
@@ -55,10 +56,13 @@ redirection rule can be used to selectively send spammers
 .Xr spamd 8 .
 Sources and actions are as follows:
 .Bl -tag -width XXXXXXXXXX
-.It Fl 1
+.It Fl s
 The SPEWS level 1 database is fetched via
 .Xr ftp 1
 and used in the black-list.
+.It Fl 1
+Synonym for
+.Fl s .
 .It Fl 2
 The SPEWS level 2 database is fetched via
 .Xr ftp 1
