@@ -8,7 +8,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: malloc.c,v 1.59 2003/08/04 16:51:49 jfb Exp $";
+static char rcsid[] = "$OpenBSD: malloc.c,v 1.60 2003/09/27 21:09:15 tedu Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -149,7 +149,7 @@ static int fdzero;
 #define	MMAP_FD	fdzero
 #define INIT_MMAP() \
 	{ if ((fdzero=open("/dev/zero", O_RDWR, 0000)) == -1) \
-	    wrterror("open of /dev/zero"); }
+	    wrterror("open of /dev/zero.\n"); }
 #else
 #define MMAP_FD (-1)
 #define INIT_MMAP()
@@ -381,7 +381,7 @@ map_pages(size_t pages)
     pages <<= malloc_pageshift;
     if (pages > SIZE_T_MAX - (size_t)result) {
 #ifdef MALLOC_EXTRA_SANITY
-	wrtwarning("(ES): overflow in map_pages fails\n");
+	wrtwarning("(ES): overflow in map_pages fails.\n");
 #endif /* MALLOC_EXTRA_SANITY */
 	errno = ENOMEM;
 	return (NULL);
@@ -390,7 +390,7 @@ map_pages(size_t pages)
 
     if (brk(tail) == (char *)-1) {
 #ifdef MALLOC_EXTRA_SANITY
-	wrtwarning("(ES): map_pages fails\n");
+	wrtwarning("(ES): map_pages fails.\n");
 #endif /* MALLOC_EXTRA_SANITY */
 	return (NULL);
     }
@@ -521,7 +521,7 @@ malloc_init(void)
 		default:
 		    j = malloc_abort;
 		    malloc_abort = 0;
-		    wrtwarning("unknown char in MALLOC_OPTIONS\n");
+		    wrtwarning("unknown char in MALLOC_OPTIONS.\n");
 		    malloc_abort = j;
 		    break;
 	    }
@@ -594,19 +594,19 @@ malloc_pages(size_t size)
 
 #ifdef MALLOC_EXTRA_SANITY
 	if (pf->size & malloc_pagemask)
-	    wrterror("(ES): junk length entry on free_list\n");
+	    wrterror("(ES): junk length entry on free_list.\n");
 	if (!pf->size)
-	    wrterror("(ES): zero length entry on free_list\n");
+	    wrterror("(ES): zero length entry on free_list.\n");
 	if (pf->page == pf->end)
-	    wrterror("(ES): zero entry on free_list\n");
+	    wrterror("(ES): zero entry on free_list.\n");
 	if (pf->page > pf->end)
-	    wrterror("(ES): sick entry on free_list\n");
+	    wrterror("(ES): sick entry on free_list.\n");
 	if ((void*)pf->page >= (void*)sbrk(0))
-	    wrterror("(ES): entry on free_list past brk\n");
+	    wrterror("(ES): entry on free_list past brk.\n");
 	if (page_dir[ptr2index(pf->page)] != MALLOC_FREE)
-	    wrterror("(ES): non-free first page on free-list\n");
+	    wrterror("(ES): non-free first page on free-list.\n");
 	if (page_dir[ptr2index(pf->end)-1] != MALLOC_FREE)
-	    wrterror("(ES): non-free last page on free-list\n");
+	    wrterror("(ES): non-free last page on free-list.\n");
 #endif /* MALLOC_EXTRA_SANITY */
 
 	if (pf->size < size)
@@ -629,7 +629,7 @@ malloc_pages(size_t size)
 
 #ifdef MALLOC_EXTRA_SANITY
     if (p != NULL && page_dir[ptr2index(p)] != MALLOC_FREE)
-	wrterror("(ES): allocated non-free page on free-list\n");
+	wrterror("(ES): allocated non-free page on free-list.\n");
 #endif /* MALLOC_EXTRA_SANITY */
 
     size >>= malloc_pageshift;
@@ -1140,7 +1140,7 @@ free_bytes(void *ptr, int index, struct pginfo *info)
 	mp = &((*mp)->next);
 #ifdef MALLOC_EXTRA_SANITY
 	if (!*mp)
-		wrterror("(ES): Not on queue\n");
+		wrterror("(ES): Not on queue.\n");
 #endif /* MALLOC_EXTRA_SANITY */
     }
     *mp = info->next;
@@ -1209,7 +1209,7 @@ static int malloc_active;
 void *
 malloc(size_t size)
 {
-    register void *r;
+    void *r;
 
     malloc_func = " in malloc():";
     _MALLOC_LOCK();
@@ -1249,7 +1249,7 @@ free(void *ptr)
 void *
 realloc(void *ptr, size_t size)
 {
-    register void *r;
+    void *r;
 
     malloc_func = " in realloc():";
     _MALLOC_LOCK();
