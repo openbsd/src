@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-#	$OpenBSD: adduser.perl,v 1.35 2002/02/18 21:40:08 ericj Exp $
+#	$OpenBSD: adduser.perl,v 1.36 2002/02/23 18:54:55 espie Exp $
 #
 # Copyright (c) 1995-1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 # All rights reserved.
@@ -89,7 +89,7 @@ sub variables {
     $group = "/etc/group";
     $pwd_mkdb = "pwd_mkdb -p";	# program for building passwd database
     $encryptionmethod = "blowfish";
-    $rcsid = '$OpenBSD: adduser.perl,v 1.35 2002/02/18 21:40:08 ericj Exp $';
+    $rcsid = '$OpenBSD: adduser.perl,v 1.36 2002/02/23 18:54:55 espie Exp $';
 
     # List of directories where shells located
     @path = ('/bin', '/usr/bin', '/usr/local/bin');
@@ -446,7 +446,7 @@ sub add_group {
     local($gid, $name) = @_;
 
     return 0 if
-	$groupmembers{$gid} =~ /^(.+,)?$name(,.+)?$/;
+	$groupmembers{$gid} =~ /^(.*,)?$name(,.*)?$/;
 
     $groupmembers_bak{$gid} = $groupmembers{$gid};
     $groupmembers{$gid} .= "," if $groupmembers{$gid};
