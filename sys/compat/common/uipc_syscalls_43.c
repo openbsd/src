@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls_43.c,v 1.5 1998/08/05 16:38:31 millert Exp $	*/
+/*	$OpenBSD: uipc_syscalls_43.c,v 1.6 1998/12/20 23:51:31 millert Exp $	*/
 /*	$NetBSD: uipc_syscalls_43.c,v 1.5 1996/03/14 19:31:50 christos Exp $	*/
 
 /*
@@ -219,7 +219,7 @@ compat_43_sys_recvmsg(p, v, retval)
 	    sizeof (struct omsghdr));
 	if (error)
 		return (error);
-	if (msg.msg_iovlen <= 0 || msg.msg_iovlen > UIO_MAXIOV)
+	if (msg.msg_iovlen <= 0 || msg.msg_iovlen > IOV_MAX)
 		return (EMSGSIZE);
 	if (msg.msg_iovlen > UIO_SMALLIOV)
 		MALLOC(iov, struct iovec *,
@@ -291,7 +291,7 @@ compat_43_sys_sendmsg(p, v, retval)
 	    sizeof (struct omsghdr));
 	if (error)
 		return (error);
-	if (msg.msg_iovlen <= 0 || msg.msg_iovlen > UIO_MAXIOV)
+	if (msg.msg_iovlen <= 0 || msg.msg_iovlen > IOV_MAX)
 		return (EMSGSIZE);
 	if (msg.msg_iovlen > UIO_SMALLIOV)
 		MALLOC(iov, struct iovec *,
