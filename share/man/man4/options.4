@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.66 2001/05/30 01:11:22 millert Exp $
+.\"	$OpenBSD: options.4,v 1.67 2001/05/30 02:14:03 deraadt Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -782,19 +782,6 @@ Internet backbone routers to provide per-packet authentication for the TCP
 packets used to communicate BGP routing information.
 You will also need a
 routing daemon that supports this option in order to actually use it.
-.It Cd option IPFILTER
-This option enables the IP filtering on the packet level using
-Darren Reed's ip-filter package.
-.It Cd option IPFILTER_LOG
-This option, in conjunction with
-.Cm option IPFILTER ,
-enables logging of IP packets using ip-filter.
-.It Cd option IPFILTER_DEFAULT_BLOCK
-This option sets the default policy of ip-filter to block packets that
-exit the rule-set unmatched.
-Otherwise they are silently passed. See
-.Xr ipf 8
-for details.
 .It Cd option PPP_FILTER
 This option turns on
 .Xr pcap 3

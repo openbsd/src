@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.27 2001/04/01 20:14:40 hugh Exp $
+#	$OpenBSD: MAKEDEV,v 1.28 2001/05/30 02:11:27 deraadt Exp $
 #	$NetBSD: MAKEDEV,v 1.30 2000/01/21 12:28:29 tsutsui Exp $
 #
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
@@ -92,7 +92,7 @@ ramdisk)
 std)
 	rm -f console drum floppy crl csa1 csa2 tu0 tu1 g0 g1 g2 g3
 	rm -f kUmem kmem mem null zero tty klog ttyg[0-3]
-	rm -f stdin stdout stderr ksyms ipl ipnat ipstate ipauth
+	rm -f stdin stdout stderr ksyms
 	mknod console		c 0 0
 	mknod ttyg0		c 25 0
 	mknod ttyg1		c 25 1
@@ -115,11 +115,7 @@ std)
 	mknod stdin		c 53 0	; chmod 666 stdin
 	mknod stdout		c 53 1	; chmod 666 stdout
 	mknod stderr		c 53 2	; chmod 666 stderr
-	mknod ipl		c 42 0	; chmod 600 ipl
 	mknod ksyms		c 50 0	; chmod 640 ksyms ; chown root.kmem ksyms
-	mknod ipnat		c 42 1	; chmod 600 ipnat
-	mknod ipstate		c 42 2	; chmod 600 ipstate
-	mknod ipauth		c 42 3	; chmod 600 ipauth
 	;;
 
 fd)

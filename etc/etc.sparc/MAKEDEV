@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.65 2001/05/14 07:51:41 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.66 2001/05/30 02:11:25 deraadt Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -86,7 +86,6 @@
 #	spif*	spif card (makes 8 tty and 1 bpp)
 #	bpp*	bpp
 #	xfs*	XFS filesystem devices
-#	ipl	IP filter log
 
 PATH=/sbin:/bin:/usr/bin:/usr/sbin
 this=$0
@@ -206,7 +205,6 @@ all)
 	sh $this ccd0 ccd1 ccd2 ccd3
 	sh $this raid0 raid1 raid2 raid3
 	sh $this bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
-	sh $this ipl
 	sh $this bwtwo0 cgtwo0 cgthree0 cgfour0 cgsix0
 	sh $this cgeight0 cgfourteen0 tcx0
 	sh $this lkm random local
@@ -335,15 +333,6 @@ bpf*)
 	mknod bpf$unit c 105 $unit
 	chmod 600 bpf$unit
 	chown root.wheel bpf$unit
-	;;
-
-ipl)
-	rm -f ipl ipnat ipstate ipauth
-	mknod ipl c 59 0
-	mknod ipnat c 59 1
-	mknod ipstate c 59 2
-	mknod ipauth c 59 3
-	chown root.wheel ipl ipnat ipstate ipauth
 	;;
 
 tun*)

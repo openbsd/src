@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.72 2001/05/27 00:39:26 angelos Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.73 2001/05/30 02:12:31 deraadt Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -148,10 +148,6 @@ u_char	ip_protox[IPPROTO_MAX];
 int	ipqmaxlen = IFQ_MAXLEN;
 struct	in_ifaddrhead in_ifaddr;
 struct	ifqueue ipintrq;
-#if defined(IPFILTER) || defined(IPFILTER_LKM)
-int	(*fr_checkp) __P((struct ip *, int, struct ifnet *, int,
-			  struct mbuf **));
-#endif
 
 int	ipq_locked;
 static __inline int ipq_lock_try __P((void));
@@ -376,23 +372,6 @@ ipv4_input(m)
 		} else
 			m_adj(m, ip->ip_len - m->m_pkthdr.len);
 	}
-
-#if defined(IPFILTER) || defined(IPFILTER_LKM)
-	 /*
-	 * Check if we want to allow this packet to be processed.
-	 * Consider it to be bad if not.
-	 */
-	{
-		struct mbuf *m0 = m;
-		if (fr_checkp && (*fr_checkp)(ip, hlen, m->m_pkthdr.rcvif, 0, &m0)) {
-			return;
-		}
-		if (m0 == 0) {  /* in case of 'fastroute' */
-			return;
-		}
-		ip = mtod(m = m0, struct ip *);
-	}
-#endif
 
 	/*
 	 * Process options and, if not destined for us,

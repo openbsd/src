@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC.rz0,v 1.9 2001/05/17 00:57:58 pvalchev Exp $
+#	$OpenBSD: GENERIC.rz0,v 1.10 2001/05/30 02:12:21 deraadt Exp $
 #
 # GENERIC kernel for the distribition simpleroot with root + swap hardcoded
 # to rz0 - required for use with zip drives for instance
@@ -68,8 +68,7 @@ option		KERNFS			# kernel data-structure filesystem
 #option		ISO			# osi networking
 #option		TPIP
 #option		EON
-option		IPFILTER		# IP packet filter for security
-option		IPFILTER_LOG		# use /dev/ipl to log IPF
+
 # compat stuff
 #option		COMPAT_ULTRIX		# ultrix compatibility
 

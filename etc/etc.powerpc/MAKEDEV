@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.43 2001/04/10 03:03:52 brad Exp $
+#	$OpenBSD: MAKEDEV,v 1.44 2001/05/30 02:11:24 deraadt Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -153,7 +153,7 @@ all)
 	sh $this vnd0 vnd1 vnd2 vnd3
 	sh $this ccd0 ccd1 ccd2 ccd3
 	sh $this raid0 raid1 raid2 raid3
-	sh $this rd0 ipl
+	sh $this rd0
 	sh $this ttyC0 ttyCcfg
 	sh $this tty00 tty01 tty02 tty03 pty0 pty1
 	sh $this bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
@@ -523,15 +523,6 @@ bpf*)
 	rm -f bpf${unit}
 	mknod bpf${unit} c 22 ${unit}
 	chown root.wheel bpf${unit}
-	;;
-
-ipl)
-	rm -f ipl ipnat ipstate ipauth
-	mknod ipl c 39 0
-	mknod ipnat c 39 1
-	mknod ipstate c 39 2
-	mknod ipauth c 39 3
-	chown root.wheel ipl ipnat ipstate ipauth
 	;;
 
 tun*)

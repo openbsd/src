@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.55 2001/05/11 04:56:15 jason Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.56 2001/05/30 02:12:24 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -141,7 +141,7 @@ u_int8_t bridge_filterrule __P((struct brl_head *, struct ether_header *));
 	 (a)->ether_addr_octet[2] == 0x5e)
 
 
-#if defined(INET) && (defined(IPFILTER) || defined(IPFILTER_LKM))
+#if defined(INET) && defined(IPFILTER)
 /*
  * Filter hooks
  */
@@ -1002,7 +1002,7 @@ bridgeintr_frame(sc, m)
 		return;
 	}
 
-#if defined(INET) && (defined(IPFILTER) || defined(IPFILTER_LKM))
+#if defined(INET) && defined(IPFILTER)
 	m = bridge_filter(sc, src_if, &eh, m);
 	if (m == NULL)
 		return;
@@ -1847,7 +1847,7 @@ bridge_flushrule(bif)
 	return (0);
 }
 
-#if defined(INET) && (defined(IPFILTER) || defined(IPFILTER_LKM))
+#if defined(INET) && defined(IPFILTER)
 
 /*
  * Filter IP packets by peeking into the ethernet frame.  This violates

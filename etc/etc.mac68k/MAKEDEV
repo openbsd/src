@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.31 2000/03/22 07:34:29 niklas Exp $
+#	$OpenBSD: MAKEDEV,v 1.32 2001/05/30 02:11:19 deraadt Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -139,7 +139,6 @@ all)
 	sh $this adb asc0 grf0 grf1 grf2 grf3 ttye0
 	sh $this tty00 tty01 pty0
 	sh $this bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
-	sh $this ipl
 	sh $this tun0 tun1 tun2 tun3
 	sh $this lkm
 	sh $this random
@@ -420,15 +419,6 @@ bpf*)
 	rm -f bpf${unit}
 	mknod bpf${unit} c 22 ${unit}
 	chown root.wheel bpf${unit}
-	;;
-
-ipl)
-	rm -f ipl ipnat ipstate ipauth
-	mknod ipl c 35 0
-	mknod ipnat c 35 1
-	mknod ipstate c 35 2
-	mknod ipauth c 35 3
-	chown root.wheel ipl ipnat ipstate ipauth
 	;;
 
 tun*)

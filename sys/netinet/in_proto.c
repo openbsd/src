@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.26 2001/05/25 22:08:23 itojun Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.27 2001/05/30 02:12:27 deraadt Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -142,11 +142,6 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #ifdef MROUTING
 #include <netinet/ip_mroute.h>
 #endif /* MROUTING */
-
-#ifdef IPFILTER
-void	iplinit __P((void));
-#define ip_init	iplinit
-#endif
 
 #ifdef INET6
 #include <netinet6/ip6_var.h>

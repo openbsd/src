@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.10 2001/03/12 23:23:50 miod Exp $
+#	$OpenBSD: MAKEDEV,v 1.11 2001/05/30 02:11:21 deraadt Exp $
 #	$NetBSD: MAKEDEV,v 1.5 1997/01/01 23:46:23 pk Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@ all)
 	sh $this tty00 tty01 tty02 tty03
 	sh $this ttyw0
 	sh $this sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9
-	sh $this vnd0 vnd1 pty0 cd0 ipl
+	sh $this vnd0 vnd1 pty0 cd0
 	sh $this bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
 	#sh $this ccd0 ccd1 ccd2 ccd3
 	sh $this tun0 tun1 lkm local
@@ -338,15 +338,6 @@ lkm)
 	mknod lkm c 24 0
 	chown root.kmem lkm
 	chmod 640 lkm
-	;;
-
-ipl)
-	rm -f ipl ipnat ipstate ipauth
-	mknod ipl c 39 0
-	mknod ipnat c 39 1
-	mknod ipstate c 39 2
-	mknod ipauth c 39 3
-	chown root.wheel ipl ipnat ipstate ipauth
 	;;
 
 local)

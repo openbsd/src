@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.21 2001/05/17 00:57:57 pvalchev Exp $
+#	$OpenBSD: GENERIC,v 1.22 2001/05/30 02:12:21 deraadt Exp $
 #
 # GENERIC kernel for the distribition simpleroot
 #
@@ -69,8 +69,6 @@ option		KERNFS			# kernel data-structure filesystem
 #option		ISO			# osi networking
 #option		TPIP
 #option		EON
-option		IPFILTER		# IP packet filter for security
-option		IPFILTER_LOG		# use /dev/ipl to log IPF
 # compat stuff
 #option		COMPAT_ULTRIX		# ultrix compatibility
 

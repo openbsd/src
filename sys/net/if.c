@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.43 2001/02/20 13:50:53 itojun Exp $	*/
+/*	$OpenBSD: if.c,v 1.44 2001/05/30 02:12:24 deraadt Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -101,12 +101,6 @@
 #endif
 #include <netinet6/in6_ifattach.h>
 #include <netinet6/in6_var.h>
-#endif
-
-#ifdef IPFILTER
-#include <netinet/ip_fil_compat.h>
-#include <netinet/ip_fil.h>
-#include <netinet/ip_nat.h>
 #endif
 
 #if NBPFILTER > 0
@@ -380,11 +374,6 @@ if_detach(ifp)
 
 	/* Remove the interface from the list of all interfaces.  */
 	TAILQ_REMOVE(&ifnet, ifp, if_list);
-
-#ifdef IPFILTER
-	/* XXX More ipf & ipnat cleanup needed.  */
-	nat_clearlist();
-#endif
 
 	/* Deallocate private resources.  */
 	for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa;

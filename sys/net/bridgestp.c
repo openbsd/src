@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgestp.c,v 1.5 2001/03/22 03:48:29 jason Exp $	*/
+/*	$OpenBSD: bridgestp.c,v 1.6 2001/05/30 02:12:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -63,11 +63,6 @@
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
-
-#ifdef IPFILTER
-#include <netinet/ip_fil_compat.h>
-#include <netinet/ip_fil.h>
-#endif
 #endif
 
 #if NBPFILTER > 0

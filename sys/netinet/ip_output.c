@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.97 2001/05/29 01:09:14 angelos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.98 2001/05/30 02:12:34 deraadt Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -90,9 +90,6 @@ extern int ipsec_esp_network_default_level;
 static struct mbuf *ip_insertoptions __P((struct mbuf *, struct mbuf *, int *));
 static void ip_mloopback
 	__P((struct ifnet *, struct mbuf *, struct sockaddr_in *));
-#if defined(IPFILTER) || defined(IPFILTER_LKM)
-int (*fr_checkp) __P((struct ip *, int, struct ifnet *, int, struct mbuf **));
-#endif
 
 /*
  * IP output.  The packet in mbuf chain m contains a skeletal IP
@@ -558,29 +555,6 @@ sendit:
 	if (sproto != 0) {
 	        s = splnet();
 
-#if defined(IPFILTER) || defined(IPFILTER_LKM)
-		if (fr_checkp) {
-			/*
-			 * Ok, it's time for a simple round-trip to the IPF/NAT
-			 * code with the enc0 interface.
-			 */
-			struct mbuf *m0 = m;
-			void *ifp = (void *)&encif[0].sc_if;
-			if ((*fr_checkp)(ip, hlen, ifp, 1, &m0)) {
-				error = EHOSTUNREACH;
-				splx(s);
-				goto done;
-			}
-			if (m0 == 0) { /* in case of 'fastroute' */
-				error = 0;
-				splx(s);
-				goto done;
-			}
-			ip = mtod(m = m0, struct ip *);
-			hlen = ip->ip_hl << 2;
-  	        }
-#endif /* IPFILTER */
-		
 		tdb = gettdb(sspi, &sdst, sproto);
 		if (tdb == NULL) {
 			error = EHOSTUNREACH;
@@ -624,23 +598,6 @@ sendit:
 	}
 #endif /* IPSEC */
 
-#if defined(IPFILTER) || defined(IPFILTER_LKM)
-	/*
-	 * looks like most checking has been done now...do a filter check
-	 */
-	{
-		struct mbuf *m0 = m;
-		if (fr_checkp && (*fr_checkp)(ip, hlen, ifp, 1, &m0)) {
-			error = EHOSTUNREACH;
-			goto done;
-		}
-		if (m0 == 0) { /* in case of 'fastroute' */
-			error = 0;
-			goto done;
-		}
-		ip = mtod(m = m0, struct ip *);
-	}
-#endif
 	/*
 	 * If small enough for interface, can just send directly.
 	 */

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.121 2001/05/14 14:39:39 hin Exp $
+#	$OpenBSD: Makefile,v 1.122 2001/05/30 02:11:04 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -15,8 +15,8 @@ BINGRP= wheel
 BIN1=	bootptab changelist ccd.conf csh.cshrc csh.login csh.logout \
 	daily dhcpd.conf dhcpd.interfaces dm.conf exports ftpusers \
 	ftpchroot gettytab group hosts hosts.lpd inetd.conf \
-	ipf.rules ksh.kshrc locate.rc man.conf monthly motd mrouted.conf \
-	myname ipnat.rules netstart networks newsyslog.conf passwd.conf \
+	ksh.kshrc locate.rc man.conf monthly motd mrouted.conf \
+	myname netstart networks newsyslog.conf passwd.conf \
 	phones printcap protocols rbootd.conf rc rc.conf rc.local \
 	rc.securelevel rc.shutdown remote rpc security services \
 	shells syslog.conf weekly etc.${MACHINE}/disktab dhclient.conf \
@@ -187,8 +187,6 @@ distribution-etc-root-var: distrib-dirs
 		${DESTDIR}/var/log/daemon
 	${INSTALL} -c -o ${BINOWN} -g wheel -m 640 /dev/null \
 		${DESTDIR}/var/log/ftpd
-	${INSTALL} -c -o ${BINOWN} -g wheel -m 640 /dev/null \
-		${DESTDIR}/var/log/ipflog
 	${INSTALL} -c -o ${BINOWN} -g wheel -m 644 /dev/null \
 		${DESTDIR}/var/log/lastlog
 	${INSTALL} -c -o ${BINOWN} -g wheel -m 640 /dev/null \

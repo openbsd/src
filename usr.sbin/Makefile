@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.77 2001/05/29 21:41:23 millert Exp $
+#	$OpenBSD: Makefile,v 1.78 2001/05/30 02:11:04 deraadt Exp $
 
 # not yet done: catman
 
@@ -6,8 +6,8 @@
 
 SUBDIR=	ac accton adduser amd arp bootpd bootpgw bootpef bootptest \
 	chroot config cron dev_mkdb dhcp \
-	edquota gspa httpd inetd iostat ipfs \
-	ipftest ipmon ipsend kgmon kvm_mkdb lpr \
+	edquota gspa httpd inetd iostat \
+	kgmon kvm_mkdb lpr \
 	mailwrapper map-mbone mrinfo mopd mrouted mtrace mtree named \
 	netgroup_mkdb openssl pkg pkg_install portmap ppp pppd pppoe pstat \
 	pwd_mkdb quot quotaon rarpd rbootd rdconfig rdate repquota rmt \

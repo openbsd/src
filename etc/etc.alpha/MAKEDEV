@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.51 2001/05/14 07:56:36 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.52 2001/05/30 02:11:11 deraadt Exp $
 #	$NetBSD: MAKEDEV,v 1.8.4.1 1996/06/18 00:41:56 cgd Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -82,7 +82,6 @@
 #	*random	inkernal random data source
 #	uk*	SCSI Unknown device
 #	ss*	SCSI scanners
-#	ipl	IP filter log
 
 PATH=/sbin:/bin:/usr/bin:/usr/sbin
 this=$0
@@ -159,7 +158,7 @@ all)
 	sh $this bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
 	sh $this tun0 tun1 tun2 tun3
 	sh $this ttyB0 ttyB1 tty00 tty01 lkm
-	sh $this mmclock lpa0 lpt0 random ipl
+	sh $this mmclock lpa0 lpt0 random
 	sh $this uk0 uk1 ss0 ss1
 	sh $this ttyc0 ttyc1 ttyc2 ttyc3 ttyc4 ttyc5 ttyc6 ttyc7
 	sh $this local xfs0
@@ -536,15 +535,6 @@ random|srandom|urandom|prandom|arandom)
 	mknod arandom c 34 4
 	chown root.wheel random srandom urandom prandom arandom
 	chmod 644 random srandom urandom prandom arandom
-	;;
-
-ipl)
-	rm -f ipl ipnat ipstate ipauth
-	mknod ipl c 35 0
-	mknod ipnat c 35 1
-	mknod ipstate c 35 2
-	mknod ipauth c 35 3
-	chown root.wheel ipl ipnat ipstate ipauth
 	;;
 
 uk*)

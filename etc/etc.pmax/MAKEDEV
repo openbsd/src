@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.35 2000/09/13 21:09:51 maja Exp $
+#	$OpenBSD: MAKEDEV,v 1.36 2001/05/30 02:11:23 deraadt Exp $
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
 
@@ -117,7 +117,7 @@ all)
 #	sh $this lkm local
 	sh $this xfs0
 	sh $this fb0 fb1 fb2
-	sh $this random ipl
+	sh $this random
        ;;
 
 raminst)
@@ -178,15 +178,6 @@ bpf*)
 	mknod bpf$unit c 12 $unit
 	chmod 600 bpf$unit
 	chown root.wheel bpf$unit
-	;;
-
-ipl)
-	rm -f ipl ipnat ipstate ipauth
-	mknod ipl c 91 0
-	mknod ipnat c 91 1
-	mknod ipstate c 91 2
-	mknod ipauth c 91 3
-	chown root.wheel ipl ipnat ipstate ipauth
 	;;
 
 #tun*)

@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.93 2001/05/14 07:42:18 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.94 2001/05/30 02:11:17 deraadt Exp $
 #	$NetBSD: MAKEDEV,v 1.40 1996/03/31 00:50:47 perry Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -189,7 +189,7 @@ all)
 	sh $this ttyC0 ttyC1 ttyC2 ttyC3 ttyC4 ttyC5 ttyC6 ttyC7 ttyC8 ttyC9
 	sh $this ttyCa ttyCb
 	sh $this wscons
-	sh $this ipl tun0 tun1 tun2
+	sh $this tun0 tun1 tun2
 	sh $this bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
 	sh $this speaker lkm audio0 joy0 joy1 apm local
 	sh $this random ses0 uk0 uk1 ss0 ss1 pctr bktr0 tuner0 wdt0
@@ -560,15 +560,6 @@ bpf*|tun[0-9]*)
 	rm -f $name$unit
 	mknod $name$unit c $chr $unit
 	chown root.wheel $name$unit
-	;;
-
-ipl)
-	rm -f ipl ipnat ipstate ipauth
-	mknod ipl c 44 0
-	mknod ipnat c 44 1
-	mknod ipstate c 44 2
-	mknod ipauth c 44 3
-	chown root.wheel ipl ipnat ipstate ipauth
 	;;
 
 speaker)					# (XXX - installed)

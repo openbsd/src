@@ -1,6 +1,0 @@
-# $OpenBSD: ipnat.rules,v 1.2 1999/05/08 16:33:10 jason Exp $
-#
-# See /usr/share/ipf/nat.1 for examples.
-# edit the ipnat= line in /etc/rc.conf to enable Network Address Translation
-
-#map ppp0 10.0.0.0/8 -> ppp0/32 portmap tcp/udp 10000:20000

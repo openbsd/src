@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.170 2001/05/15 21:28:43 deraadt Exp $
+#	$OpenBSD: rc,v 1.171 2001/05/30 02:11:09 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -182,10 +182,6 @@ if [ "X${named_flags}" != X"NO" ]; then
 		named_flags="-t ${named_chroot} ${named_flags}"
 	fi
 	echo 'starting named';		named $named_flags
-fi
-
-if [ X"${ipfilter}" = X"YES" -a X"${ipmon_flags}" != X"NO" ]; then
-	echo 'starting ipmon';		ipmon ${ipmon_flags}
 fi
 
 # $photurisd_flags is imported from /etc/rc.conf;
