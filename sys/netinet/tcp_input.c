@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.109 2002/03/15 18:19:52 millert Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.110 2002/03/19 14:58:54 itojun Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -1080,21 +1080,19 @@ findpcb:
 
 		/*
 		 * RFC1122 4.2.3.10, p. 104: discard bcast/mcast SYN
-		 * in_broadcast() should never return true on a received
-		 * packet with M_BCAST not set.
 		 */
 		if (m->m_flags & (M_BCAST|M_MCAST))
 			goto drop;
 		switch (af) {
 #ifdef INET6
 		case AF_INET6:
-			/* XXX What about IPv6 Anycasting ?? :-(  rja */
 			if (IN6_IS_ADDR_MULTICAST(&ipv6->ip6_dst))
 				goto drop;
 			break;
 #endif /* INET6 */
 		case AF_INET:
-			if (IN_MULTICAST(ip->ip_dst.s_addr))
+			if (IN_MULTICAST(ip->ip_dst.s_addr) ||
+			    in_broadcast(ip->ip_dst, m->m_pkthdr.rcvif))
 				goto drop;
 			break;
 		}
@@ -2139,7 +2137,8 @@ dropwithreset:
 		break;
 #endif /* INET6 */
 	case AF_INET:
-		if (IN_MULTICAST(ip->ip_dst.s_addr))
+		if (IN_MULTICAST(ip->ip_dst.s_addr) ||
+		    in_broadcast(ip->ip_dst, m->m_pkthdr.rcvif))
 			goto drop;
 	}
 	if (tiflags & TH_ACK) {
