@@ -39,6 +39,11 @@ Thailand:
 ftp://ftp.ruibon.ac.th/pup/OpenBSD ==
 	ftp://ftp.th.openbsd.org/pub/OpenBSD
 
+Korea:
+
+ftp://sunsite.kren.ne.kr/pup/OpenBSD ==
+	ftp://ftp.kr.openbsd.org/pub/OpenBSD
+
 United Kingdom:
 
 ftp://ftp.demon.co.uk/pub/OpenBSD
