@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.57 2004/05/06 14:29:12 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.58 2004/05/20 12:17:04 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -267,7 +267,9 @@ show_summary_msg(struct imsg *imsg)
 			    p->conf.remote_masklen) == -1)
 				err(1, NULL);
 		} else
-			s = strdup(log_addr(&p->conf.remote_addr));
+			if ((s = strdup(log_addr(&p->conf.remote_addr))) ==
+			    NULL)
+				err(1, NULL);
 
 		printf("%-20s %5u %10llu %10llu %5u %-8s %s\n",
 		    s, p->conf.remote_as,
