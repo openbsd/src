@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.h,v 1.4 2004/02/07 13:59:45 henning Exp $	*/
+/*	$OpenBSD: dhcp.h,v 1.5 2004/05/04 15:49:49 deraadt Exp $	*/
 
 /* Protocol structures... */
 
@@ -52,7 +52,7 @@
 #define DHCP_OPTION_LEN		(DHCP_MTU_MAX - DHCP_FIXED_LEN)
 
 #define BOOTP_MIN_LEN		300
-#define DHCP_MIN_LEN            548
+#define DHCP_MIN_LEN		548
 
 struct dhcp_packet {
 	u_int8_t  op;		/* Message opcode/type */
@@ -82,8 +82,8 @@ struct dhcp_packet {
 #define BOOTP_BROADCAST 32768L
 
 /* Possible values for hardware type (htype) field... */
-#define HTYPE_ETHER	1               /* Ethernet 10Mbps              */
-#define HTYPE_IEEE802	6               /* IEEE 802.2 Token Ring...	*/
+#define HTYPE_ETHER	1		/* Ethernet			*/
+#define HTYPE_IEEE802	6		/* IEEE 802.2 Token Ring...	*/
 #define HTYPE_FDDI	8		/* FDDI...			*/
 
 /* Magic cookie validating dhcp options field (and bootp vendor
