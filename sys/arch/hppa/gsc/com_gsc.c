@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_gsc.c,v 1.9 2002/01/25 21:46:40 mickey Exp $	*/
+/*	$OpenBSD: com_gsc.c,v 1.10 2002/02/03 01:47:54 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -85,8 +85,8 @@ com_gsc_attach(parent, self, aux)
 	sc->sc_iot = ga->ga_iot;
 	if (sc->sc_iobase == CONADDR)
 		sc->sc_ioh = comconsioh;
-	else if (bus_space_map(sc->sc_iot, ga->ga_hpa + IOMOD_DEVOFFSET,
-	    COM_NPORTS, 0, &sc->sc_ioh)) {
+	else if (bus_space_map(sc->sc_iot, sc->sc_iobase, COM_NPORTS,
+	    0, &sc->sc_ioh)) {
 		printf(": cannot map io space\n");
 		return;
 	}
