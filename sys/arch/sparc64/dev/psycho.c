@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.23 2002/10/12 01:09:43 krw Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.24 2002/12/02 17:08:51 jason Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -987,18 +987,24 @@ psycho_intr_establish(t, ihandle, level, flags, handler, arg)
 
 		/* Hunt thru obio first */
 		for (intrmapptr = &sc->sc_regs->scsi_int_map,
-			 intrclrptr = &sc->sc_regs->scsi_clr_int;
-		     intrmapptr <= &sc->sc_regs->ffb1_int_map;
-		     intrmapptr++, intrclrptr++) {
+		    intrclrptr = &sc->sc_regs->scsi_clr_int;
+		    intrmapptr < &sc->sc_regs->ffb0_int_map;
+		    intrmapptr++, intrclrptr++) {
 			if (INTINO(*intrmapptr) == ino)
 				goto found;
 		}
 
 		/* Now do PCI interrupts */
 		for (intrmapptr = &sc->sc_regs->pcia_slot0_int,
-			 intrclrptr = &sc->sc_regs->pcia0_clr_int[0];
-		     intrmapptr <= &sc->sc_regs->pcib_slot3_int;
-		     intrmapptr++, intrclrptr += 4) {
+		    intrclrptr = &sc->sc_regs->pcia0_clr_int[0];
+		    intrmapptr <= &sc->sc_regs->pcib_slot3_int;
+		    intrmapptr++, intrclrptr += 4) {
+			/* Skip PCI-A Slot 2 and PCI-A Slot 3 on psycho's */
+			if (sc->sc_mode == PSYCHO_MODE_PSYCHO &&
+			    (intrmapptr == &sc->sc_regs->pcia_slot2_int ||
+			     intrmapptr == &sc->sc_regs->pcia_slot3_int))
+				continue;
+
 			if (((*intrmapptr ^ vec) & 0x3c) == 0) {
 				intrclrptr += vec & 0x3;
 				goto found;
