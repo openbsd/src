@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sun3,v 1.26 2001/07/15 13:10:50 assar Exp $
+#	$OpenBSD: Makefile.sun3,v 1.27 2001/08/30 22:10:18 miod Exp $
 #	$NetBSD: Makefile.sun3,v 1.51 1996/09/09 21:07:08 mycroft Exp $
 
 # Makefile for OpenBSD
@@ -34,6 +34,7 @@ STRIP?=	strip
 S!=	cd ../../../..; pwd
 .endif
 SUN3=	$S/arch/sun3
+M68K=	$S/arch/m68k
 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dmc68020 -Dsun3
@@ -104,10 +105,12 @@ LINKFLAGS+=	-S
 
 %LOAD
 
-assym.h: $S/kern/genassym.sh ${SUN3}/sun3/genassym.cf
-	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} \
-	    ${PARAM} < ${SUN3}/sun3/genassym.cf > assym.h.tmp && \
-	    mv -f assym.h.tmp assym.h
+assym.h: $S/kern/genassym.sh \
+	 ${M68K}/m68k/genassym.cf ${SUN3}/sun3/genassym.cf
+	cat ${M68K}/m68k/genassym.cf ${SUN3}/sun3/genassym.cf | \
+	    sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
+	    > assym.h.tmp && \
+	mv -f assym.h.tmp assym.h
 
 param.c: $S/conf/param.c
 	rm -f param.c

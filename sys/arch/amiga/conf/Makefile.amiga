@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amiga,v 1.26 2001/07/15 13:10:47 assar Exp $
+#	$OpenBSD: Makefile.amiga,v 1.27 2001/08/30 22:10:14 miod Exp $
 #	$NetBSD: Makefile.amiga,v 1.60 1997/07/23 10:19:42 is Exp $
 
 # Makefile for OpenBSD
@@ -35,6 +35,7 @@ TOUCH?=	touch -f -c
 S!=	cd ../../../..; pwd
 .endif
 AMIGA=	$S/arch/amiga
+M68K=	$S/arch/m68k
 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dmc68020 -Damiga
@@ -75,10 +76,10 @@ LIBCOMPAT=	${COMPATLIB_PROF}
 .endif
 
 ### for the Motorola 68040 Floating Point Software Product
-.include "$S/arch/m68k/fpsp/Makefile.inc"
+.include "${M68K}/fpsp/Makefile.inc"
 
 ### for the Motorola 68060 Software Support Package
-.include "$S/arch/m68k/060sp/Makefile.inc"
+.include "${M68K}/060sp/Makefile.inc"
 
 # compile rules: rules are named ${TYPE}_${SUFFIX} where TYPE is NORMAL or
 # HOSTED}, and SUFFIX is the file suffix, capitalized (e.g. C for a .c file).
@@ -124,9 +125,11 @@ LINKFLAGS+=	-S
 
 %LOAD
 
-assym.h: ${AMIGA}/amiga/genassym.cf $S/kern/genassym.sh
-	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
-	    < ${AMIGA}/amiga/genassym.cf > assym.h.tmp && \
+assym.h: $S/kern/genassym.sh \
+	 ${M68K}/m68k/genassym.cf ${AMIGA}/amiga/genassym.cf
+	cat ${M68K}/m68k/genassym.cf ${AMIGA}/amiga/genassym.cf | \
+	    sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
+	    > assym.h.tmp && \
 	mv -f assym.h.tmp assym.h
 
 param.c: $S/conf/param.c

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.mvme68k,v 1.11 2001/07/15 13:10:49 assar Exp $
+#	$OpenBSD: Makefile.mvme68k,v 1.12 2001/08/30 22:10:18 miod Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -29,8 +29,11 @@ STRIP?=	strip
 COPTS?=	-O2
 
 # source tree is located via $S relative to the compilation directory
-S=	../../../..
-MVME68K=../..
+.ifndef S
+S!=	cd ../../../..; pwd
+.endif
+MVME68K=$S/arch/mvme68k
+M68K=	$S/arch/m68k
 
 INCLUDES=	 -I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dmvme68k
@@ -69,10 +72,10 @@ LIBCOMPAT=	${COMPATLIB_PROF}
 .endif
 
 ### for the Motorola 68040 Floating Point Software Product
-.include "$S/arch/m68k/fpsp/Makefile.inc"
+.include "${M68K}/fpsp/Makefile.inc"
 
 ### for the Motorola 68060 Support Package
-.include "$S/arch/m68k/060sp/Makefile.inc"
+.include "${M68K}/060sp/Makefile.inc"
 
 # compile rules: rules are named ${TYPE}_${SUFFIX} where TYPE is NORMAL or
 # HOSTED}, and SUFFIX is the file suffix, capitalized (e.g. C for a .c file).
@@ -113,10 +116,12 @@ LINKFLAGS+=	-S
 
 %LOAD
 
-assym.h: $S/kern/genassym.sh ${MVME68K}/mvme68k/genassym.cf
-	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} \
-	    ${PARAM} < ${MVME68K}/mvme68k/genassym.cf > assym.h.tmp && \
-	    mv -f assym.h.tmp assym.h
+assym.h: $S/kern/genassym.sh \
+	 ${M68K}/m68k/genassym.cf ${MVME68K}/mvme68k/genassym.cf
+	cat ${M68K}/m68k/genassym.cf ${MVME68K}/mvme68k/genassym.cf | \
+	    sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
+	    > assym.h.tmp && \
+	mv -f assym.h.tmp assym.h
 
 param.c: $S/conf/param.c
 	rm -f param.c
