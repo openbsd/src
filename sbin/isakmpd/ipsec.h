@@ -1,5 +1,5 @@
-/*	$OpenBSD: ipsec.h,v 1.13 2000/02/01 02:46:18 niklas Exp $	*/
-/*	$EOM: ipsec.h,v 1.40 2000/01/31 22:33:46 niklas Exp $	*/
+/*	$OpenBSD: ipsec.h,v 1.14 2000/08/03 07:24:48 niklas Exp $	*/
+/*	$EOM: ipsec.h,v 1.41 2000/07/01 23:30:41 provos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -149,5 +149,9 @@ extern int ipsec_is_attribute_incompatible (u_int16_t, u_int8_t *, u_int16_t,
 extern int ipsec_keymat_length (struct proto *);
 extern int ipsec_save_g_x (struct message *);
 extern struct sa *ipsec_sa_lookup (in_addr_t, u_int32_t, u_int8_t);
+
+extern char *ipsec_decode_ids(char *, u_int8_t *, size_t, u_int8_t *, size_t,
+			      int);
+extern int ipsec_clone_id(u_int8_t **, size_t *, u_int8_t *, size_t);
 
 #endif /* _IPSEC_H_ */
