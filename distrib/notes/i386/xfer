@@ -1,132 +1,27 @@
 Installation is supported from several media types, including:
 
-	DOS partitions
+	CD-ROM
 	FFS partitions
+	DOS (FAT) partitions
 	EXT2 partitions
 	Tape
+dnl	Remote NFS partition
 	FTP
 	HTTP
 
 If you can't (or don't want to) boot off the CD-ROM, you'll need to have
 a floppy disk (1.44MB required).
 
-The floppy installation allows installing OpenBSD directly from FTP
-mirror sites over the internet, however you must consider the speed and
-reliability of your internet connection for this option.  It may save
-much time and frustration to use ftp get/reget to transfer the
-distribution sets to a local server or disk and perform the installation
-from there, rather than directly from the internet.
+OpenBSDXferFloppyFromDOS
+
+OpenBSDXferFloppyFromUNIX
 
 
-Creating a bootable floppy disk using DOS/Windows:
-
-	First you need to get access to the OpenBSD bootable floppy
-	images. If you can access the distribution from the CD-ROM under 
-	DOS, you will find the bootable disks in the OSREV/MACHINE 
-	directory. Otherwise, you will have to download them from one of 
-	the OpenBSD ftp or http mirror sites, using an ftp client or a web 
-	browser. In either case, take care to do "binary" transfers, since 
-	these are images files and any DOS cr/lf translations or control/z 
-	EOF interpretations will result in corrupted transfers.
-	
-	You will also need to go to the "tools" directory and grab a
-	copy of the rawrite.exe utility and its documentation.  This
-	program is needed to correctly copy the bootable filesystem
-	image to the floppy, since it's an image of a unix partition
-	containing a ffs filesystem, not a MSDOS format diskette.
-
-	Once you have installed rawrite.exe, just run it and specify the
-	name of the bootable image, such as "floppy{:--:}OSrev.fs" and the name of
-	the floppy drive, such as "a:".  Be sure to use good quality HD
-	(1.44MB) floppies, formatted on the system you're using.  The
-	image copy and boot process is not especially tolerant of read
-	errors. 
-
-	Note that if you are using NT to write the images to disk, you
-	will need to use ntrw.exe instead.  It is also available in the
-	"tools" directory.  Grab it and run in with the correct 
-	arguments like this "ntrw <image> <drive>:"
-
-	Note that, when installing, the boot floppy can be write-protected
-	(i.e.  read-only).
+OpenBSDXferShortPrelude
 
 
-Creating a bootable floppy disk using SunOS or other Un*x-like system:
+OpenBSDXferBareTape(xbase xfont xlink xserv xshare)
 
-	First, you will need obtain a local copy of the bootable filesystem
-	image as described above.  If possible use the cksum(1) or md5(1) 
-	commands to verify the checksums of the images vs. the values in 
-	the CKSUM or MD5 files on the mirror site.
-
-	Next, use the dd(1) utility to copy the file to the floppy drive.
-	Under SunOS, the command would be:
-
-		dd if=floppy{:--:}OSrev.fs of=/dev/rfd0c bs=36b
-
-	If you are using something other than SunOS, you may have to adapt
-	this to conform to local naming conventions for the floppy and
-	options suitable for copying to a "raw" floppy image.  The key
-	issue is that the device name used for the floppy *must* be one
-	that refers to the correct block device, not a partition or
-	compatibility mode, and the copy command needs to be compatible
-	with the requirement that writes to a raw device must be in
-	multiples of 512-byte blocks.  The variations are endless and
-	beyond the scope of this document.
-
-	If you're doing this on the system you intend to boot the floppy on,
-	copying the floppy back to a file and doing a compare or checksum
-	is a good way to verify that the floppy is readable and free of
-	read/write errors.
-
-
-Creating an installation tape:
-
-	While you won't be able to boot OpenBSD from a tape, you can use
-	one to provide the installation sets.  To do so, you need to make
-	a tape that contains the distribution set files, each in "tar"
-	format or in "gzipped tar format".  First you will need to
-	transfer the distribution sets to your local system, using ftp or
-	by mounting the CD-ROM containing the release.  Then you need to
-	make a tape containing the files.
-
-	If you're making the tape on a UN*X-like system, the easiest way
-	to do so is make a shell script along the following lines, call it
-	"/tmp/maketape".
-
-	#! /bin/sh
-	tape=/dev/nrst0
-	mt -f ${tape} rewind
-	for file in base etc comp game man misc xbase xfont xlink xserv xshare
-	do
-		dd if=${file}OSrev.tgz of=${tape} obs=8k conv=sync
-	done
-	tar cf ${tape} bsd
-	mt -f ${tape} offline
-	# end of script
-
-
-	And then:
-
-	cd .../OSREV/MACHINE
-	sh -x /tmp/maketape
-
-	
-	If you're using a system other than OpenBSD or SunOS, the tape
-	name and other requirements may change.
-
-
-If you are upgrading OpenBSD, you also have the option of installing
-OpenBSD by putting the new distribution sets somewhere in your existing
-file system, and using them from there.  To do that, you must do the
-following:
-
-	Place the distribution sets you wish to upgrade somewhere in
-	your current file system tree.  At a bare minimum, you must
-	upgrade the "base" binary distribution, and so must put the
-	"base{:--:}OSrev" set somewhere in your file system.  If you wish,
-	you can do the other sets, as well, but you should NOT upgrade
-	the "etc" distribution; the "etc" distribution contains system
-	configuration files that you should review and update by hand.
-
-	Once you have done this, you can proceed to the next step in
-	the upgrade process, actually upgrading your system.
+dnl OpenBSDXferNFS
+dnl
+OpenBSDXferFFS

@@ -2,71 +2,22 @@ Installation is supported from several media types, including:
 
 	CDROM
 	FFS partitions
-	HFS partitions (bootloader only, in conjuction with FTP/HTTP/tape)
+	HFS partitions (bootloader only, in conjuction with another media)
 	Tape
+	Remote NFS partition
 	FTP
 	HTTP
 
+OpenBSDXferShortPrelude
+
 Unless the machine already has openbsd installed on it, and
-the bootloader can be loaded from local disk the bootloader will
-need to be loaded from the network (netboot) but from there
-the system can be installed from any of the above.
+the bootloader can be loaded from local disk, the bootloader will
+need to be loaded from the network (netboot), but from then
+the system can be installed from any of the above sources.
 
-While an installation floppy is included in the snapshot it is unlikely
-that it will be very useful due to lack of floppy drive on the imac
-and the reported inability to boot from USB floppies on the supported
-version of the hardware.
 
-Obviously, the steps necessary to prepare the distribution sets for
-installation or upgrade depend on which installation medium you
-choose.  The steps for the various media types are outlined below.
+OpenBSDXferBareTape(xbase xfont xserv xshare)
 
-To install or upgrade OpenBSD using a tape, you need to do the
-following:
+OpenBSDXferNFS
 
-	To install OpenBSD from a tape, you need to make a tape that
-	contains the distribution set files, in "tar" format.  If
-	you're making the tape on a UN*X-like system, the easiest way
-	to do so is probably something like:
-
-		tar cf <tape_device> <dist_directories>
-
-	where "<tape_device>" is the name of the tape device that
-	describes the tape drive you're using (possibly /dev/rst0, or
-	something similar, but it will vary from system to system.
-	(If you can't figure it out, ask your system administrator.)
-	In the above example, "<dist_directories>" are the
-	distribution sets' directories, for the distribution sets you
-	wish to place on the tape.  For instance, to put the "base{:--:}OSrev"
-	and "etc{:--:}OSrev" distributions on tape (in order to do the absolute
-	minimum installation to a new disk), you would do the
-	following:
-
-		cd .../OSREV		# the top of the tree
-		cd MACHINE/
-		tar cf <tape_device> base{:--:}OSrev etc{:--:}OSrev
-
-	(Note that you still need to fill in "<tape_device>" in the
-	example.)
-
-	Once you have the files on the tape, you can proceed to the
-	next step in the installation or upgrade process.  If you're
-	installing OpenBSD from scratch, go to the section on preparing
-	your hard disk, below.  If you're upgrading an existing
-	installation, go directly to the section on upgrading.
-
-If you are upgrading OpenBSD, you also have the option of installing
-OpenBSD by putting the new distribution sets somewhere in your existing
-file system, and using them from there.  To do that, you must do the
-following:
-
-	Place the distribution sets you wish to upgrade somewhere in
-	your current file system tree.  At a bare minimum, you must
-	upgrade the "base" binary distribution, and so must put the
-	"base{:--:}OSrev" set somewhere in your file system.  If you wish,
-	you can do the other sets, as well, but you should NOT upgrade
-	the "etc" distribution; the "etc" distribution contains system
-	configuration files that you should review and update by hand.
-
-	Once you have done this, you can proceed to the next step in
-	the upgrade process, actually upgrading your system.
+OpenBSDXferFFS

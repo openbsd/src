@@ -1,9 +1,9 @@
 Installation is supported from several media types, including:
 
+	CD-ROM
 	FFS partitions
 	Tape
 	Remote NFS partition
-	CD-ROM
 	FTP
 	HTTP
 
@@ -26,74 +26,11 @@ dnl from one of the FTP mirrors over the internet, you may wish to transfer
 dnl the sets to a local FTP or NFS server, or copy them to a partition on
 dnl the target system's disk.
 
-The variety of options listed may seem confusing, but situations vary
-widely in terms of what peripherals and what sort of network arrangements
-a user has, the intent is to provide some way that will be practical.
-
-dnl
 dnl XXX uncomment when floppy available
-dnl Creating a bootable floppy disk using DOS/Windows:
+dnl OpenBSDXferFloppyFromDOS
 dnl
-dnl	First you need to get access to the OpenBSD bootable floppy
-dnl	images. If you can access the distribution from the CD-ROM under 
-dnl	DOS, you will find the bootable disks in the OSREV/MACHINE 
-dnl	directory. Otherwise, you will have to download them from one of 
-dnl	the OpenBSD ftp or http mirror sites, using an ftp client or a web 
-dnl	browser. In either case, take care to do "binary" transfers, since 
-dnl	these are images files and any DOS cr/lf translations or control/z 
-dnl	EOF interpretations will result in corrupted transfers.
-dnl	
-dnl	You will also need to go to the "tools" directory and grab a
-dnl	copy of the rawrite.exe utility and its documentation.  This
-dnl	program is needed to correctly copy the bootable filesystem
-dnl	image to the floppy, since it's an image of a unix partition
-dnl	containing a ffs filesystem, not a MSDOS format diskette.
+dnl OpenBSDXferFloppyFromUnix
 dnl
-dnl	Once you have installed rawrite.exe, just run it and specify the
-dnl	name of the bootable image, such as "floppy.fs" and the name of
-dnl	the floppy drive, such as "a:".  Be sure to use good quality HD
-dnl	(1.44MB) floppies, formatted on the system you're using.  The
-dnl	image copy and boot process is not especially tolerant of read
-dnl	errors. 
-dnl
-dnl	Note that if you are using NT to write the images to disk, you
-dnl	will need to use ntrw.exe instead.  It is also available in the
-dnl	"tools" directory.  Grab it and run in with the correct 
-dnl	arguments like this "ntrw <image> <drive>:"
-dnl
-dnl	Note that, when installing, the boot floppy can be write-protected
-dnl	(i.e.  read-only).
-dnl
-dnl
-dnl Creating a bootable floppy disk using SunOS or other Un*x-like system:
-dnl
-dnl	First, you will need obtain a local copy of the bootable filesystem
-dnl	image as described above.  If possible use the cksum(1) or md5(1) 
-dnl	commands to verify the checksums of the images vs. the values in 
-dnl	the CKSUM or MD5 files on the mirror site.
-dnl
-dnl	Next, use the dd(1) utility to copy the file to the floppy drive.
-dnl	Under SunOS, the command would be:
-dnl
-dnl		dd if=floppy{:--:}OSrev.fs of=/dev/rfd0c bs=36b
-dnl
-dnl	If you are using something other than SunOS, you may have to adapt
-dnl	this to conform to local naming conventions for the floppy and
-dnl	options suitable for copying to a "raw" floppy image.  The key
-dnl	issue is that the device name used for the floppy *must* be one
-dnl	that refers to the correct block device, not a partition or
-dnl	compatibility mode, and the copy command needs to be compatible
-dnl	with the requirement that writes to a raw device must be in
-dnl	multiples of 512-byte blocks.  The variations are endless and
-dnl	beyond the scope of this document.
-dnl
-dnl	If you're doing this on the system you intend to boot the floppy on,
-dnl	copying the floppy back to a file and doing a compare or checksum
-dnl	is a good way to verify that the floppy is readable and free of
-dnl	read/write errors.
-dnl
-dnl
-
 dnl XXX uncomment when floppy or miniroot available
 dnl XXX make sure to adapt text, especially examples, if only floppy
 dnl XXX or miniroot is available, but not both.
@@ -176,7 +113,6 @@ dnl 	In either case, you've created a situation where the disklabel
 dnl 	and the filesystem information don't agree about the partition
 dnl 	size and geometry, however the results will be usable.
 dnl 
-
 Creating a network bootable setup using SunOS or other Un*x-like system:
 
 	The details of setting up a network bootable environment vary
@@ -192,10 +128,7 @@ Creating a network bootable setup using SunOS or other Un*x-like system:
 	by the netboot setup.
 
 
-
-The steps necessary to prepare the distribution sets for installation
-depend on which method of installation you choose.  Some methods
-require a bit of setup first that is explained below.
+OpenBSDXferPrelude
 
 dnl XXX uncomment when floppy available
 dnl The floppy installation allows installing OpenBSD directly from FTP
@@ -206,84 +139,8 @@ dnl distribution sets to a local server or disk and perform the installation
 dnl from there, rather than directly from the internet.
 dnl 
 
-To install or upgrade OpenBSD using a tape, you need to do the following:
+OpenBSDXferBareTape
 
-	To install OpenBSD from a tape, you need to make a tape that
-	contains the distribution set files, each in "tar" format or
-	in "gzipped tar format".  First you will need to transfer the
-	distribution sets to your local system, using ftp or by mounting
-	the CD-ROM containing the release.  Then you need to make a tape
-	containing the files.
+OpenBSDXferNFS
 
-	If you're making the tape on a UN*X-like system, the easiest way
-	to do so is make a shell script along the following lines, call it
-	"/tmp/maketape".
-
-	#! /bin/sh
-	tape=/dev/nrst0
-	mt -f ${tape} rewind
-	for file in base etc comp game man misc
-	do
-		dd if=${file}OSrev.tgz of=${tape} obs=8k conv=sync
-	done
-	tar cf ${tape} bsd
-	mt -f ${tape} offline
-	# end of script
-
-
-	And then:
-
-	cd .../OSREV/sparc
-	sh -x /tmp/maketape
-
-	
-	If you're using a system other than OpenBSD or SunOS, the tape
-	name and other requirements may change.
-
-
-To install OpenBSD using a remote partition, mounted via
-NFS, you must do the following:
-
-	NOTE:	This method of installation is recommended only for
-		those already familiar with using BSD network
-		configuration and management commands.  If you aren't,
-		this documentation should help, but is not intended to
-		be all-encompassing.
-
-	Place the OpenBSD distribution sets you wish to install into a
-	directory on an NFS server, and make that directory mountable
-	by the machine on which you are installing or upgrading OpenBSD.
-	This will probably require modifying the /etc/exports file
-	of the NFS server and resetting its mount daemon (mountd).
-	(Both of these actions will probably require superuser
-	privileges on the server.)
-
-	You need to know the numeric IP address of the NFS server,
-	and, if the server is not on a network directly connected to
-	the machine on which you're installing or upgrading OpenBSD,
-	you need to know the numeric IP address of the router closest
-	to the OpenBSD machine.  Finally, you need to know the numeric
-	IP address of the OpenBSD machine itself.
-
-	Once the NFS server is set up properly and you have the
-	information mentioned above, you can proceed to the next step
-	in the installation or upgrade process.  If you're installing
-	OpenBSD from scratch, go to the section on preparing your hard
-	disk, below.  If you're upgrading an existing installation, go
-	directly to the section on upgrading.
-
-If you are upgrading OpenBSD, you also have the option of installing
-OpenBSD by putting the new distribution sets somewhere in your existing
-file system, and using them from there.  To do that, you must do the
-following:
-
-	Place the distribution sets you wish to upgrade somewhere in
-	your current file system tree.  At a bare minimum, you must
-	upgrade the "base" binary distribution, and so must put the
-	"base{:--:}OSrev" set somewhere in your file system.  If you wish,
-	you can do the other sets, as well, but you should NOT upgrade
-	the "etc" distribution; the "etc" distribution contains system
-	configuration files that you should review and update by hand.
-
-	Once you have done this, you can proceed to the next step in
-	the upgrade process, actually upgrading your system.
+OpenBSDXferFFS
