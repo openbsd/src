@@ -79,18 +79,26 @@ man page for possible options and their meanings.
 .Bl -tag -width copyright -compact
 .It Pa boottime
 the time at which the system was last booted (decimal ASCII).
+.It Pa byteorder
+the _BYTE_ORDER for this kernel.
 .It Pa copyright
 kernel copyright message.
 .It Pa hostname
 the hostname, with a trailing newline.
 The hostname can be changed by writing to this file.
 A trailing newline will be stripped from the hostname being written.
+.It Pa domainname
+the domainname, with a trailing newline, behaves like a hostname.
 .It Pa hz
 the frequency of the system clock (decimal ASCII).
 .It Pa loadavg
 the 1, 5 and 15 minute load average in kernel fixed-point format.
 The final integer is the fix-point scaling factor.
 All numbers are in decimal ASCII.
+.It Pa machine
+the architecture this kernel compiled for.
+.It Pa model
+the model of the processor this machine running on.
 .It Pa msgbuf
 the kernel message buffer, also read by
 .Xr syslogd 8 ,
@@ -98,8 +106,18 @@ through the
 .Pa log
 device, and by
 .Xr dmesg 8 .
+.It Pa ncpu
+the number of CPUs in this machine.
+.It Pa ostype
+the OS type for this kernel ("OpenBSD").
+.It Pa osrelease
+the release number of the OS.
+.It Pa osrev
+the revision number of the OS (BSD from <sys/param.h>).
 .It Pa pagesize
 the machine pagesize (decimal ASCII).
+.It Pa posix
+the _POSIX_VERSION for this kernel.
 .It Pa physmem
 the number of pages of physical memory in the machine (decimal ASCII).
 .\" .It Pa root
@@ -118,6 +136,8 @@ the raw root device.
 .It Pa time
 the second and microsecond value of the system clock.
 Both numbers are in decimal ASCII.
+.It Pa usermem
+the number of pages of physical memory available for user processes.
 .It Pa version
 the kernel version string.
 The head line for
