@@ -1,4 +1,4 @@
-/*	$OpenBSD: hotplugd.c,v 1.1 2004/05/30 08:28:28 grange Exp $	*/
+/*	$OpenBSD: hotplugd.c,v 1.2 2004/05/30 16:29:41 grange Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -127,6 +127,7 @@ exec_script(const char *file, int class, char *name)
 {
 	char strclass[8];
 	pid_t pid;
+	int status;
 
 	snprintf(strclass, sizeof(strclass), "%d", class);
 
@@ -144,6 +145,19 @@ exec_script(const char *file, int class, char *name)
 		syslog(LOG_ERR, "execl: %m");
 		_exit(1);
 		/* NOTREACHED */
+	} else {
+		/* parent process */
+		if (waitpid(pid, &status, 0) == -1) {
+			syslog(LOG_ERR, "waitpid: %m");
+			return;
+		}
+		if (WIFEXITED(status)) {
+			if (WEXITSTATUS(status) != 0)
+				syslog(LOG_NOTICE, "%s: exit status %d", file,
+				    WEXITSTATUS(status));
+		} else {
+			syslog(LOG_NOTICE, "%s: terminated abnormally", file);
+		}
 	}
 }
 
