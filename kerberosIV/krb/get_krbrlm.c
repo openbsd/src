@@ -1,4 +1,4 @@
-/*	$OpenBSD: get_krbrlm.c,v 1.9 1997/12/09 07:57:17 art Exp $	*/
+/*	$OpenBSD: get_krbrlm.c,v 1.10 1997/12/09 09:07:07 art Exp $	*/
 /* $KTH: get_krbrlm.c,v 1.16 1997/05/02 01:26:22 assar Exp $ */
 
 /* 
@@ -73,7 +73,7 @@ krb_get_lrealm(char *r, int n)
     return(KFAILURE);		/* Temporary restriction */
 
   /* First try user specified file */
-  if (dir != 0 && getuid() != geteuid()) {
+  if (dir != 0 && !issetugid()) {
     char fname[MAXPATHLEN];
     if(k_concat(fname, sizeof(fname), dir, "/krb.conf", NULL) == 0)
 	if (krb_get_lrealm_f(r, n, fname) == KSUCCESS)

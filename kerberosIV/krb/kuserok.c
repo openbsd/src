@@ -1,4 +1,4 @@
-/*	$OpenBSD: kuserok.c,v 1.4 1997/12/09 07:57:26 art Exp $	*/
+/*	$OpenBSD: kuserok.c,v 1.5 1997/12/09 09:07:08 art Exp $	*/
 /* $KTH: kuserok.c,v 1.21 1997/04/01 08:18:35 joda Exp $ */
 
 /*
@@ -107,7 +107,7 @@ krb_kuserok(char *name, char *instance, char *realm, char *luser)
 	return OK;
     strncpy(file, pwd->pw_dir, MAXPATHLEN);
     file[MAXPATHLEN-1] = '\0';
-    strncat(file, "/.klogin", MAXPATHLEN);
+    strncat(file, "/.klogin", MAXPATHLEN - strlen(file));
     file[MAXPATHLEN-1] = '\0';
     
     f = fopen(file, "r");

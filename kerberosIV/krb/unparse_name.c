@@ -1,4 +1,4 @@
-/*	$OpenBSD: unparse_name.c,v 1.2 1997/12/09 07:57:41 art Exp $	*/
+/*	$OpenBSD: unparse_name.c,v 1.3 1997/12/09 09:07:09 art Exp $	*/
 /* $KTH: unparse_name.c,v 1.7 1997/04/01 08:18:46 joda Exp $ */
 
 /*
@@ -60,12 +60,12 @@ krb_unparse_name_r(krb_principal *pr, char *fullname)
 {
     quote_string("'@\\", pr->name, fullname);
     if(pr->instance[0]){
-	strncat(fullname, ".", MAXPATHLEN);
+	strncat(fullname, ".", MAXPATHLEN - strlen(fullname));
 	fullname[MAXPATHLEN-1] = '\0';
 	quote_string("@\\", pr->instance, fullname + strlen(fullname));
     }
     if(pr->realm[0]){
-	strncat(fullname, "@", MAXPATHLEN);
+	strncat(fullname, "@", MAXPATHLEN - strlen(fullname));
 	fullname[MAXPATHLEN-1] = '\0';
 	quote_string("\\", pr->realm, fullname + strlen(fullname));
     }
