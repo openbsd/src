@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.18 1997/04/08 13:55:57 briggs Exp $ */
+/*	$OpenBSD: trap.c,v 1.19 1998/04/03 03:47:42 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -235,10 +235,12 @@ again:
 				    p->p_pid, p->p_comm, fp->f_pc, faultaddr);
 #endif
 		} else if (sig = writeback(fp, fromtrap)) {
+			register union sigval sv;
+
 			beenhere = 1;
 			oticks = p->p_sticks;
-			trapsignal(p, sig, VM_PROT_WRITE, SEGV_MAPERR,
-			    (caddr_t)faultaddr);
+			sv.sival_int = faultaddr;
+			trapsignal(p, sig, VM_PROT_WRITE, SEGV_MAPERR, sv);
 			goto again;
 		}
 	}
@@ -270,6 +272,7 @@ trap(type, code, v, frame)
 #ifdef COMPAT_SUNOS
 	extern struct emul emul_sunos;
 #endif
+	register union sigval sv;
 
 	cnt.v_trap++;
 	p = curproc;
@@ -644,7 +647,8 @@ copyfault:
 		break;
 	    }
 	}
-	trapsignal(p, i, ucode, typ, (caddr_t)v);
+	sv.sival_int = v;
+	trapsignal(p, i, ucode, typ, sv);
 	if ((type & T_USER) == 0)
 		return;
 out:
