@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-tcp.c,v 1.15 2001/06/25 19:56:11 itojun Exp $	*/
+/*	$OpenBSD: print-tcp.c,v 1.16 2001/12/23 01:05:15 stevesk Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-tcp.c,v 1.15 2001/06/25 19:56:11 itojun Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-tcp.c,v 1.16 2001/12/23 01:05:15 stevesk Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -52,6 +52,10 @@ static const char rcsid[] =
 #include "extract.h"
 
 #include "nfs.h"
+
+static void print_tcp_rst_data(register const u_char *sp, u_int length);
+
+#define MAX_RST_DATA_LEN	30
 
 /* Compatibility */
 #ifndef TCPOPT_WSCALE
@@ -562,12 +566,17 @@ tcp_print(register const u_char *bp, register u_int length,
 	 * Decode payload if necessary.
 	*/
 	bp += (tp->th_off * 4);
-	if (sport == BGP_PORT || dport == BGP_PORT)
-		bgp_print(bp, length);
+	if (flags & TH_RST) {
+		if (vflag)
+			print_tcp_rst_data(bp, length);
+	} else {
+		if (sport == BGP_PORT || dport == BGP_PORT)
+			bgp_print(bp, length);
 #if 0
-	else if (sport == NETBIOS_SSN_PORT || dport == NETBIOS_SSN_PORT)
-		nbt_tcp_print(bp, length);
+		else if (sport == NETBIOS_SSN_PORT || dport == NETBIOS_SSN_PORT)
+			nbt_tcp_print(bp, length);
 #endif
+	}
 	return;
 bad:
 	fputs("[bad opt]", stdout);
@@ -580,3 +589,39 @@ trunc:
 		putchar('>');
 }
 
+
+/*
+ * RFC1122 says the following on data in RST segments:
+ *
+ *         4.2.2.12  RST Segment: RFC-793 Section 3.4
+ *
+ *            A TCP SHOULD allow a received RST segment to include data.
+ *
+ *            DISCUSSION
+ *                 It has been suggested that a RST segment could contain
+ *                 ASCII text that encoded and explained the cause of the
+ *                 RST.  No standard has yet been established for such
+ *                 data.
+ *
+ */
+
+static void
+print_tcp_rst_data(register const u_char *sp, u_int length)
+{
+	int c;
+
+	if (TTEST2(*sp, length))
+		printf(" [RST");
+	else
+		printf(" [!RST");
+	if (length > MAX_RST_DATA_LEN) {
+		length = MAX_RST_DATA_LEN;	/* can use -X for longer */
+		putchar('+');			/* indicate we truncate */
+	}
+	putchar(' ');
+	while (length-- && sp <= snapend) {
+		c = *sp++;
+		safeputchar(c);
+	}
+	putchar(']');
+}
