@@ -1,27 +1,25 @@
-/*	$Id: acl_files.c,v 1.3 1996/09/15 23:17:59 millert Exp $	*/
+/* $KTH: acl_files.c,v 1.10 1997/05/02 14:28:56 assar Exp $ */
 
-/*-
- * Copyright (C) 1989 by the Massachusetts Institute of Technology
- *
- * Export of this software from the United States of America is assumed
- * to require a specific license from the United States Government.
- * It is the responsibility of any person or organization contemplating
- * export to obtain such a license before exporting.
- *
- * WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
- * distribute this software and its documentation for any purpose and
- * without fee is hereby granted, provided that the above copyright
- * notice appear in all copies and that both that copyright notice and
- * this permission notice appear in supporting documentation, and that
- * the name of M.I.T. not be used in advertising or publicity pertaining
- * to distribution of the software without specific, written prior
- * permission.  M.I.T. makes no representations about the suitability of
- * this software for any purpose.  It is provided "as is" without express
- * or implied warranty.
- *
- */
+/* 
+  Copyright (C) 1989 by the Massachusetts Institute of Technology
 
-#include <kerberosIV/site.h>
+   Export of this software from the United States of America is assumed
+   to require a specific license from the United States Government.
+   It is the responsibility of any person or organization contemplating
+   export to obtain such a license before exporting.
+
+WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
+distribute this software and its documentation for any purpose and
+without fee is hereby granted, provided that the above copyright
+notice appear in all copies and that both that copyright notice and
+this permission notice appear in supporting documentation, and that
+the name of M.I.T. not be used in advertising or publicity pertaining
+to distribution of the software without specific, written prior
+permission.  M.I.T. makes no representations about the suitability of
+this software for any purpose.  It is provided "as is" without express
+or implied warranty.
+
+  */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -56,9 +54,6 @@
 				/* Each acl costs 1 open file descriptor */
 #define ACL_LEN 16		/* Twice a reasonable acl length */
 
-#define MAX(a,b) (((a)>(b))?(a):(b))
-#define MIN(a,b) (((a)<(b))?(a):(b))
-
 #define COR(a,b) ((a!=NULL)?(a):(b))
 
 /* Canonicalize a principal name */
@@ -66,10 +61,8 @@
 /* If realm is missing, it becomes the local realm */
 /* Canonicalized form is put in canon, which must be big enough to hold
    MAX_PRINCIPAL_SIZE characters */
-int
-acl_canonicalize_principal(principal, canon)
-	char *principal;
-	char *canon;
+void
+acl_canonicalize_principal(char *principal, char *canon)
 {
     char *dot, *atsign, *end;
     int len;
@@ -84,7 +77,7 @@ acl_canonicalize_principal(principal, canon)
 	    /* Copy into canon */
 	    strncpy(canon, principal, MAX_PRINCIPAL_SIZE);
 	    canon[MAX_PRINCIPAL_SIZE-1] = '\0';
-	    return(0);
+	    return;
 	} else {
 	    /* Nope, it's part of the realm */
 	    dot = NULL;
@@ -95,7 +88,7 @@ acl_canonicalize_principal(principal, canon)
     end = principal + strlen(principal);
 
     /* Get the principal name */
-    len = MIN(ANAME_SZ, COR(dot, COR(atsign, end)) - principal);
+    len = min(ANAME_SZ, COR(dot, COR(atsign, end)) - principal);
     strncpy(canon, principal, len);
     canon += len;
 
@@ -105,7 +98,7 @@ acl_canonicalize_principal(principal, canon)
     /* Get the instance, if it exists */
     if(dot != NULL) {
 	++dot;
-	len = MIN(INST_SZ, COR(atsign, end) - dot);
+	len = min(INST_SZ, COR(atsign, end) - dot);
 	strncpy(canon, dot, len);
 	canon += len;
     }
@@ -117,23 +110,21 @@ acl_canonicalize_principal(principal, canon)
     /* Otherwise, default to local realm */
     if(atsign != NULL) {
 	++atsign;
-	len = MIN(REALM_SZ, end - atsign);
+	len = min(REALM_SZ, end - atsign);
 	strncpy(canon, atsign, len);
 	canon += len;
 	*canon++ = '\0';
     } else if(krb_get_lrealm(canon, 1) != KSUCCESS) {
-	return(-1);
+	strcpy(canon, KRB_REALM);
     }
-    return(0);
 }
 	    
 /* Get a lock to modify acl_file */
 /* Return new FILE pointer */
 /* or NULL if file cannot be modified */
 /* REQUIRES WRITE PERMISSION TO CONTAINING DIRECTORY */
-static FILE *
-acl_lock_file(acl_file)
-	char *acl_file;
+static
+FILE *acl_lock_file(char *acl_file)
 {
     struct stat s;
     char new[LINESIZE];
@@ -179,9 +170,7 @@ acl_lock_file(acl_file)
 /* Returns 0 if successful, < 0 otherwise */
 /* Closes f */
 static int
-acl_abort(acl_file, f)
-	char *acl_file;
-	FILE *f;
+acl_abort(char *acl_file, FILE *f)
 {
     char new[LINESIZE];
     int ret;
@@ -206,9 +195,7 @@ acl_abort(acl_file, f)
 /* Returns < 0 if some other error occurs */
 /* Closes f */
 static int
-acl_commit(acl_file, f)
-	char *acl_file;
-	FILE *f;
+acl_commit(char *acl_file, FILE *f)
 {
     char new[LINESIZE];
     int ret;
@@ -232,9 +219,7 @@ acl_commit(acl_file, f)
 /* Erases it if it does */
 /* Returns return value of acl_commit */
 int
-acl_initialize(acl_file, perm)
-	char *acl_file;
-	int perm;
+acl_initialize(char *acl_file, int perm)
 {
     FILE *new;
     int fd;
@@ -256,10 +241,9 @@ acl_initialize(acl_file, perm)
 /* Eliminate all whitespace character in buf */
 /* Modifies its argument */
 static void
-nuke_whitespace(buf)
-	char *buf;
+ nuke_whitespace(char *buf)
 {
-    register char *pin, *pout;
+    char *pin, *pout;
 
     for(pin = pout = buf; *pin != '\0'; pin++)
 	if(!isspace(*pin)) *pout++ = *pin;
@@ -276,8 +260,7 @@ struct hashtbl {
 
 /* Make an empty hash table of size s */
 static struct hashtbl *
-make_hash(size)
-	int size;
+make_hash(int size)
 {
     struct hashtbl *h;
 
@@ -291,8 +274,7 @@ make_hash(size)
 
 /* Destroy a hash table */
 static void
-destroy_hash(h)
-	struct hashtbl *h;
+destroy_hash(struct hashtbl *h)
 {
     int i;
 
@@ -305,10 +287,9 @@ destroy_hash(h)
 
 /* Compute hash value for a string */
 static unsigned int
-hashval(s)
-	register char *s;
+hashval(char *s)
 {
-    register unsigned hv;
+    unsigned hv;
 
     for(hv = 0; *s != '\0'; s++) {
 	hv ^= ((hv << 3) ^ *s);
@@ -318,9 +299,7 @@ hashval(s)
 
 /* Add an element to a hash table */
 static void
-add_hash(h, el)
-	struct hashtbl *h;
-	char *el;
+add_hash(struct hashtbl *h, char *el)
 {
     unsigned hv;
     char *s;
@@ -344,17 +323,14 @@ add_hash(h, el)
 
     hv = hashval(el) % h->size;
     while(h->tbl[hv] != NULL && strcmp(h->tbl[hv], el)) hv = (hv+1) % h->size;
-    s = malloc(strlen(el)+1);
-    strcpy(s, el);
+    s = strdup(el);
     h->tbl[hv] = s;
     h->entries++;
 }
 
 /* Returns nonzero if el is in h */
 static int
-check_hash(h, el)
-	struct hashtbl *h;
-	char *el;
+check_hash(struct hashtbl *h, char *el)
 {
     unsigned hv;
 
@@ -382,8 +358,7 @@ static int acl_cache_next = 0;
 /* Returns index into acl_cache otherwise */
 /* Note that if acl is already loaded, this is just a lookup */
 static int
-acl_load(name)
-	char *name;
+acl_load(char *name)
 {
     int i;
     FILE *f;
@@ -439,8 +414,7 @@ acl_load(name)
 	   acl_cache[i].acl = make_hash(ACL_LEN);
 	   while(fgets(buf, sizeof(buf), f) != NULL) {
 	       nuke_whitespace(buf);
-	       if (acl_canonicalize_principal(buf, canon) < 0)
-		   return(-1);
+	       acl_canonicalize_principal(buf, canon);
 	       add_hash(acl_cache[i].acl, canon);
 	   }
 	   fclose(f);
@@ -452,9 +426,7 @@ acl_load(name)
 /* Returns nonzero if it can be determined that acl contains principal */
 /* Principal is not canonicalized, and no wildcarding is done */
 int
-acl_exact_match(acl, principal)
-	char *acl;
-	char *principal;
+acl_exact_match(char *acl, char *principal)
 {
     int idx;
 
@@ -466,16 +438,13 @@ acl_exact_match(acl, principal)
 /* Recognizes wildcards in acl of the form
    name.*@realm, *.*@realm, and *.*@* */
 int
-acl_check(acl, principal)
-	char *acl;
-	char *principal;
+acl_check(char *acl, char *principal)
 {
     char buf[MAX_PRINCIPAL_SIZE];
     char canon[MAX_PRINCIPAL_SIZE];
     char *realm;
 
-    if (acl_canonicalize_principal(principal, canon) < 0)
-	return(0);
+    acl_canonicalize_principal(principal, canon);
 
     /* Is it there? */
     if(acl_exact_match(acl, canon)) return(1);
@@ -496,17 +465,14 @@ acl_check(acl, principal)
 /* Adds principal to acl */
 /* Wildcards are interpreted literally */
 int
-acl_add(acl, principal)
-	char *acl;
-	char *principal;
+acl_add(char *acl, char *principal)
 {
     int idx;
     int i;
     FILE *new;
     char canon[MAX_PRINCIPAL_SIZE];
 
-    if (acl_canonicalize_principal(principal, canon) < 0)
-	return(-1);
+    acl_canonicalize_principal(principal, canon);
 
     if((new = acl_lock_file(acl)) == NULL) return(-1);
     if((acl_exact_match(acl, canon))
@@ -517,7 +483,7 @@ acl_add(acl, principal)
     /* It isn't there yet, copy the file and put it in */
     for(i = 0; i < acl_cache[idx].acl->size; i++) {
 	if(acl_cache[idx].acl->tbl[i] != NULL) {
-	    if(fputs(acl_cache[idx].acl->tbl[i], new) == 0
+	    if(fputs(acl_cache[idx].acl->tbl[i], new) == EOF
 	       || putc('\n', new) != '\n') {
 		   acl_abort(acl, new);
 		   return(-1);
@@ -532,17 +498,14 @@ acl_add(acl, principal)
 /* Removes principal from acl */
 /* Wildcards are interpreted literally */
 int
-acl_delete(acl, principal)
-	char *acl;
-	char *principal;
+acl_delete(char *acl, char *principal)
 {
     int idx;
     int i;
     FILE *new;
     char canon[MAX_PRINCIPAL_SIZE];
 
-    if (acl_canonicalize_principal(principal, canon) < 0)
-	return(-1);
+    acl_canonicalize_principal(principal, canon);
 
     if((new = acl_lock_file(acl)) == NULL) return(-1);
     if((!acl_exact_match(acl, canon))
