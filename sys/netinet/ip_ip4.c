@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ip4.c,v 1.19 1998/06/10 23:57:12 provos Exp $	*/
+/*	$OpenBSD: ip_ip4.c,v 1.20 1998/07/29 22:18:49 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -141,7 +141,6 @@ ip4_input(m, va_alist)
     }
 
     ipi = (struct ip *) ((caddr_t) ipo + iphlen);
-
     ip4stat.ip4s_ibytes += ntohs(ipi->ip_len);
 
     /*
@@ -166,7 +165,6 @@ ip4_input(m, va_alist)
     m->m_len -= iphlen;
     m->m_pkthdr.len -= iphlen;
     m->m_data += iphlen;
-	
     m->m_flags |= M_TUNNEL;
 
     /*
@@ -196,7 +194,6 @@ ip4_input(m, va_alist)
     IF_ENQUEUE(ifq, m);
     schednetisr(NETISR_IP);
     splx(s);
-	
     return;
 }
 
@@ -243,7 +240,7 @@ ipe4_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     ipo->ip_sum = 0;
     ipo->ip_src = tdb->tdb_osrc;
     ipo->ip_dst = tdb->tdb_odst;
-	
+
 /* 
  *  printf("ip4_output: [%x->%x](l=%d, p=%d)", 
  *  	   ntohl(ipi->ip_src.s_addr), ntohl(ipi->ip_dst.s_addr),

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.9 1998/07/03 07:05:08 deraadt Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.10 1998/07/29 22:18:50 angelos Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.27 1996/05/07 02:40:50 thorpej Exp $	*/
 
 /*
@@ -1480,6 +1480,13 @@ ipip_input(m, va_alist)
 		return;
 	}
 
+#ifdef IPSEC
+	if (!have_encap_tunnel) {
+		rip_input(m);
+		return;
+	}
+#endif
+
 	if (ip->ip_src.s_addr != last_encap_src) {
 		register struct vif *vife;
 	
@@ -1510,8 +1517,17 @@ acceptedhere:
 	m->m_len -= hlen;
 	m->m_pkthdr.len -= hlen;
 #ifdef IPSEC
-	if (isencaped == 0)
-		m->m_pkthdr.rcvif = vifp->v_ifp;
+	if (isencaped == 0) {
+	        if (vifp)
+		        m->m_pkthdr.rcvif = vifp->v_ifp;
+		else {
+		        ++mrtstat.mrts_bad_tunnel;
+			m_freem(m);
+			return;		
+		}
+	}
+	else
+	        m->m_flags |= M_TUNNEL;
 #else
 	m->m_pkthdr.rcvif = vifp->v_ifp;
 #endif

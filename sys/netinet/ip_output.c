@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.33 1998/07/29 21:13:07 angelos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.34 1998/07/29 22:18:48 angelos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -469,6 +469,16 @@ expbail:
 				}
 			}
 
+			if (tdb->tdb_xform->xf_type == XF_IP4) {
+				/*
+				 * Fix checksum if IP-IP; AH and ESP fix the
+				 * IP header checksum in their 
+				 * output routines.
+				 */
+			        ip = mtod(m, struct ip *);
+				ip->ip_sum = in_cksum(m, hlen);
+			}
+
 			error = (*(tdb->tdb_xform->xf_output))(m, gw,
 			    tdb, &mp);
 			if (mp == NULL)
@@ -477,8 +487,15 @@ expbail:
 				RTFREE(re->re_rt);
 				return error;
 			}
-			tdb = tdb->tdb_onext;
+
 			m = mp;
+			if (tdb->tdb_xform->xf_type == XF_IP4) {
+			        /* If IP-IP, calculate outter header cksum */
+			        ip = mtod(m, struct ip *);
+				ip->ip_sum = in_cksum(m, ip->ip_hl << 2);
+			}
+
+			tdb = tdb->tdb_onext;
 		}
 
 		/*
