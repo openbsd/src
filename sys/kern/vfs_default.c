@@ -1,4 +1,4 @@
-/*       $OpenBSD: vfs_default.c,v 1.1 1998/01/10 23:44:29 csapuntz Exp $  */
+/*       $OpenBSD: vfs_default.c,v 1.2 1998/01/11 02:10:44 csapuntz Exp $  */
 
 
 /*
@@ -50,6 +50,8 @@
 
 #include <miscfs/specfs/specdev.h>
 
+
+extern struct simplelock spechash_slock;
 
 /*
  * Eliminate all activity associated with  the requested vnode

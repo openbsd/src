@@ -1,4 +1,4 @@
-/*       $OpenBSD: vfs_sync.c,v 1.1 1998/01/10 23:44:29 csapuntz Exp $  */
+/*       $OpenBSD: vfs_sync.c,v 1.2 1998/01/11 02:10:45 csapuntz Exp $  */
 
 
 /*
@@ -67,6 +67,8 @@ static int syncer_delayno = 0;
 static long syncer_mask;
 LIST_HEAD(synclist, vnode);
 static struct synclist *syncer_workitem_pending;
+
+extern struct simplelock mountlist_slock;
 
 /*
  * The workitem queue.
