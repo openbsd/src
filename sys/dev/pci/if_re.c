@@ -1,4 +1,5 @@
-/*	$OpenBSD: if_re.c,v 1.13 2004/11/14 01:14:07 pvalchev Exp $	*/
+/*	$OpenBSD: if_re.c,v 1.14 2004/12/11 06:27:49 pvalchev Exp $	*/
+/*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -29,8 +30,6 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
- *
- * $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $
  */
 
 /*
@@ -322,14 +321,14 @@ re_gmii_readreg(struct device *self, int phy, int reg)
 	u_int32_t		rval;
 	int			i;
 
-	if (phy != 7) // XXX 1 ??
-		return(0);
+	if (phy != 7)
+		return (0);
 
 	/* Let the rgephy driver read the GMEDIASTAT register */
 
 	if (reg == RL_GMEDIASTAT) {
 		rval = CSR_READ_1(sc, RL_GMEDIASTAT);
-		return(rval);
+		return (rval);
 	}
 
 	CSR_WRITE_4(sc, RL_PHYAR, reg << 16);
@@ -392,7 +391,7 @@ re_miibus_readreg(struct device *dev, int phy, int reg)
 	/* Pretend the internal PHY is only at address 0 */
 	if (phy) {
 		splx(s);
-		return(0);
+		return (0);
 	}
 	switch(reg) {
 	case MII_BMCR:
@@ -413,7 +412,7 @@ re_miibus_readreg(struct device *dev, int phy, int reg)
 	case MII_PHYIDR1:
 	case MII_PHYIDR2:
 		splx(s);
-		return(0);
+		return (0);
 	/*
 	 * Allow the rlphy driver to read the media status
 	 * register. If we have a link partner which does not
@@ -423,15 +422,15 @@ re_miibus_readreg(struct device *dev, int phy, int reg)
 	case RL_MEDIASTAT:
 		rval = CSR_READ_1(sc, RL_MEDIASTAT);
 		splx(s);
-		return(rval);
+		return (rval);
 	default:
 		printf("%s: bad phy register\n", sc->sc_dev.dv_xname);
 		splx(s);
-		return(0);
+		return (0);
 	}
 	rval = CSR_READ_2(sc, re8139_reg);
 	splx(s);
-	return(rval);
+	return (rval);
 }
 
 void
@@ -487,7 +486,6 @@ re_miibus_writereg(struct device *dev, int phy, int reg, int data)
 void
 re_miibus_statchg(struct device *dev)
 {
-	return;
 }
 
 /*
@@ -611,7 +609,7 @@ re_diag(sc)
 
 	MGETHDR(m0, M_DONTWAIT, MT_DATA);
 	if (m0 == NULL)
-		return(ENOBUFS);
+		return (ENOBUFS);
 
 	/*
 	 * Initialize the NIC in test mode. This sets the chip up
@@ -783,7 +781,7 @@ re_allocmem(struct rl_softc *sc)
 		if (error) {
 			printf("%s: can't create DMA map for TX\n",
 			    sc->sc_dev.dv_xname);
-			return(ENOMEM);
+			return (ENOMEM);
 		}
 	}
 
@@ -815,11 +813,11 @@ re_allocmem(struct rl_softc *sc)
 		if (error) {
 			printf("%s: can't create DMA map for RX\n",
 			    sc->sc_dev.dv_xname);
-			return(ENOMEM);
+			return (ENOMEM);
 		}
 	}
 
-	return(0);
+	return (0);
 }
 
 /*
@@ -1060,13 +1058,13 @@ re_newbuf(sc, idx, m)
 	if (m == NULL) {
 		MGETHDR(n, M_DONTWAIT, MT_DATA);
 		if (n == NULL)
-			return(ENOBUFS);
+			return (ENOBUFS);
 		m = n;
 
 		MCLGET(m, M_DONTWAIT);
 		if (! (m->m_flags & M_EXT)) {
 			m_freem(m);
-			return(ENOBUFS);
+			return (ENOBUFS);
 		}
 	} else
 		m->m_data = m->m_ext.ext_buf;
@@ -1108,11 +1106,11 @@ re_newbuf(sc, idx, m)
             sc->rl_ldata.rl_rx_dmamap[idx]->dm_mapsize,
 	    BUS_DMASYNC_PREREAD);
 
-	return 0;
+	return (0);
 out:
 	if (n != NULL)
 		m_freem(n);
-	return ENOMEM;
+	return (ENOMEM);
 }
 
 int
@@ -1130,7 +1128,7 @@ re_tx_list_init(sc)
 	sc->rl_ldata.rl_tx_considx = 0;
 	sc->rl_ldata.rl_tx_free = RL_TX_DESC_CNT;
 
-	return(0);
+	return (0);
 }
 
 int
@@ -1145,7 +1143,7 @@ re_rx_list_init(sc)
 
 	for (i = 0; i < RL_RX_DESC_CNT; i++) {
 		if (re_newbuf(sc, i, NULL) == ENOBUFS)
-			return(ENOBUFS);
+			return (ENOBUFS);
 	}
 
 	/* Flush the RX descriptors */
@@ -1158,7 +1156,7 @@ re_rx_list_init(sc)
 	sc->rl_ldata.rl_rx_prodidx = 0;
 	sc->rl_head = sc->rl_tail = NULL;
 
-	return(0);
+	return (0);
 }
 
 /*
@@ -1494,7 +1492,7 @@ re_intr(arg)
 	ifp = &sc->sc_arpcom.ac_if;
 
 	if (!(ifp->if_flags & IFF_UP))
-		return 0;
+		return (0);
 
 #ifdef DEVICE_POLLING
 	if  (ifp->if_flags & IFF_POLLING)
@@ -1521,10 +1519,8 @@ re_intr(arg)
 		if ((status & RL_INTRS_CPLUS) == 0)
 			break;
 
-		if (status & RL_ISR_RX_OK)
-			re_rxeof(sc);
-
-		if (status & RL_ISR_RX_ERR)
+		if ((status & RL_ISR_RX_OK) ||
+		    (status & RL_ISR_RX_ERR))
 			re_rxeof(sc);
 
 		if ((status & RL_ISR_TIMEOUT_EXPIRED) ||
@@ -1550,7 +1546,7 @@ re_intr(arg)
 done:
 #endif
 
-	return claimed;
+	return (claimed);
 }
 
 int
@@ -1568,7 +1564,7 @@ re_encap(sc, m_head, idx)
 	u_int32_t		cmdstat, rl_flags;
 
 	if (sc->rl_ldata.rl_tx_free <= 4)
-		return(EFBIG);
+		return (EFBIG);
 
 	/*
 	 * Set up checksum offload. Note: checksum offload bits must
@@ -1595,11 +1591,11 @@ re_encap(sc, m_head, idx)
 	if (error) {
 		printf("%s: can't map mbuf (error %d)\n",
 		    sc->sc_dev.dv_xname, error);
-		return ENOBUFS;
+		return (ENOBUFS);
 	}
 
 	if (map->dm_nsegs > sc->rl_ldata.rl_tx_free - 4)
-		return ENOBUFS;
+		return (ENOBUFS);
 	/*
 	 * Map the segment array into descriptors. Note that we set the
 	 * start-of-frame and end-of-frame markers for either TX or RX, but
@@ -1616,7 +1612,7 @@ re_encap(sc, m_head, idx)
 	while (1) {
 		d = &sc->rl_ldata.rl_tx_list[curidx];
 		if (letoh32(d->rl_cmdstat) & RL_RDESC_STAT_OWN)
-			return ENOBUFS;
+			return (ENOBUFS);
 
 		cmdstat = map->dm_segs[i].ds_len;
 		d->rl_bufaddr_lo =
@@ -1674,7 +1670,7 @@ re_encap(sc, m_head, idx)
 	RL_DESC_INC(curidx);
 	*idx = curidx;
 
-	return 0;
+	return (0);
 }
 
 /*
@@ -1755,7 +1751,7 @@ re_init(struct ifnet *ifp)
 	u_int32_t		reg;
 	int s;
 
-	s = splimp(); /* XXX NOT NEEDED MAYBE, from rl(4) */
+	s = splimp();
 
 	/*
 	 * Cancel pending I/O and free all RX/TX buffers.
@@ -1823,24 +1819,20 @@ re_init(struct ifnet *ifp)
 	rxcfg |= RL_RXCFG_RX_INDIV;
 
 	/* If we want promiscuous mode, set the allframes bit. */
-	if (ifp->if_flags & IFF_PROMISC) {
+	if (ifp->if_flags & IFF_PROMISC)
 		rxcfg |= RL_RXCFG_RX_ALLPHYS;
-		CSR_WRITE_4(sc, RL_RXCFG, rxcfg);
-	} else {
+	else
 		rxcfg &= ~RL_RXCFG_RX_ALLPHYS;
-		CSR_WRITE_4(sc, RL_RXCFG, rxcfg);
-	}
+	CSR_WRITE_4(sc, RL_RXCFG, rxcfg);
 
 	/*
 	 * Set capture broadcast bit to capture broadcast frames.
 	 */
-	if (ifp->if_flags & IFF_BROADCAST) {
+	if (ifp->if_flags & IFF_BROADCAST)
 		rxcfg |= RL_RXCFG_RX_BROAD;
-		CSR_WRITE_4(sc, RL_RXCFG, rxcfg);
-	} else {
+	else
 		rxcfg &= ~RL_RXCFG_RX_BROAD;
-		CSR_WRITE_4(sc, RL_RXCFG, rxcfg);
-	}
+	CSR_WRITE_4(sc, RL_RXCFG, rxcfg);
 
 	/*
 	 * Program the multicast filter, if necessary.
@@ -1906,7 +1898,7 @@ re_init(struct ifnet *ifp)
 		CSR_WRITE_2(sc, RL_MAXRXPKTLEN, 16383);
 
 	if (sc->rl_testmode)
-		return 0;
+		return (0);
 
 	mii_mediachg(&sc->sc_mii);
 
@@ -1919,7 +1911,7 @@ re_init(struct ifnet *ifp)
 
 	timeout_add(&sc->timer_handle, hz);
 
-	return 0;
+	return (0);
 }
 
 /*
@@ -2026,7 +2018,7 @@ re_ioctl(ifp, command, data)
 
 	splx(s);
 
-	return(error);
+	return (error);
 }
 
 void
