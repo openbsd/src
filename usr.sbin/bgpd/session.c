@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.211 2004/12/23 17:24:03 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.212 2004/12/23 17:34:04 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2392,13 +2392,23 @@ getpeerbyaddr(struct bgpd_addr *addr)
 struct peer *
 getpeerbydesc(const char *descr)
 {
-	struct peer *p;
+	struct peer	*p, *res = NULL;
+	int		 match = 0;
 
-	for (p = peers; p != NULL && strcmp(p->conf.descr, descr);
-	    p = p->next)
-		;	/* nothing */
+	for (p = peers; p != NULL; p = p->next)
+		if (!strcmp(p->conf.descr, descr)) {
+			res = p;
+			match++;
+		}
 
-	return (p);
+	if (match > 1)
+		log_info("neighbor description \"%s\" not unique, request "
+		    "aborted", descr);
+
+	if (match == 1)
+		return (res);
+	else
+		return (NULL);
 }
 
 struct peer *
