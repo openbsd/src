@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.4 1996/03/29 13:42:59 mickey Exp $
+#	$OpenBSD: Makefile,v 1.5 1996/04/17 21:40:12 mickey Exp $
 #       $NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
 MAN=	boot.9 copy.9 disk.9 doshutdownhooks.9 fetch.9 intro.9 inittodr.9 \
-	resettodr.9 rnd.9 shutdownhook_establish.9 store.9 time.9 \
+	md5.9 resettodr.9 rnd.9 shutdownhook_establish.9 store.9 time.9 \
 	vm_allocate.9 vm_map_copy.9 vm_deallocate.9 vm_map_inherit.9 \
 	vm_map_protect.9
 
@@ -17,6 +17,7 @@ MLINKS+=disk.9 disk_init.9 disk.9 disk_attach.9 disk.9 disk_detatch.9 \
 	disk.9 disk_resetstat.9
 MLINKS+=fetch.9 fubyte.9 fetch.9 fuibyte.9 fetch.9 fusword.9 \
 	fetch.9 fuswintr.9 fetch.9 fuword.9 fetch.9 fuiword.9
+MLINKS+=md5.9 MD5Init.9 md5.9 MD5Transform.9
 MLINKS+=store.9 subyte.9 store.9 suibyte.9 store.9 susword.9 \
 	store.9 suswintr.9 store.9 suword.9 store.9 suiword.9
 MLINKS+=vm_map_copy.9 vm_copy.9
