@@ -571,7 +571,11 @@ hardclock(frame)
 			break;
 		}
 	}
+#ifdef CPU_CLOCKUPDATE
+	CPU_CLOCKUPDATE(&time, &newtime);
+#else
 	time = newtime;
+#endif
 
 	/*
 	 * Process callouts at a very low cpu priority, so we don't keep the
