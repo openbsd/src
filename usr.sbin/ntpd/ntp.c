@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.41 2004/11/10 11:47:28 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.42 2004/11/12 17:24:52 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -27,6 +27,7 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "ntpd.h"
