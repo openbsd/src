@@ -1,4 +1,4 @@
-.\"	$OpenBSD: doc-syms,v 1.46 2003/06/02 23:30:16 millert Exp $
+.\"	$OpenBSD: doc-syms,v 1.47 2003/07/16 07:43:28 jmc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -342,11 +342,11 @@
 .	ds aa \&\f\\n(cF\s\\n(cZ
 .	nr aP \\n(aP+1
 .       if "\\*(A\\n(aP"-p1003.1-88" \{\
-.		ds b1 \&\\*(tNIEEE Std\\*(aa1003.1-1988\\*(sV
+.		ds b1 \&\\*(tNIEEE Std \\*(aa1003.1-1988\\*(sV
 .		as b1 (``\\*(tN\\*(Px\\*(aa'')
 .	\}
 .       if "\\*(A\\n(aP"-p1003.1-90" \{\
-.		ds b1 \&\\*(tNIEEE Std\\*(aa1003.1-1990\\*(sV
+.		ds b1 \&\\*(tNIEEE Std \\*(aa1003.1-1990\\*(sV
 .		as b1 (``\\*(tN\\*(Px\\*(aa'')
 .       \}
 .       if "\\*(A\\n(aP"-p1003.1-01" \{\
@@ -354,19 +354,19 @@
 .		as b1 (``\\*(tN\\*(Px\\*(aa'')
 .       \}
 .       if "\\*(A\\n(aP"-p1003.1" \{\
-.		ds b1 \&\\*(tNIEEE Std\\*(aa1003.1\\*(sV
+.		ds b1 \&\\*(tNIEEE Std \\*(aa1003.1\\*(sV
 .		as b1 (``\\*(tN\\*(Px\\*(aa'')
 .       \}
 .       if "\\*(A\\n(aP"-p1003.1b" \{\
-.		ds b1 \&\\*(tNIEEE Std\\*(aa1003.1b\\*(sV
+.		ds b1 \&\\*(tNIEEE Std \\*(aa1003.1b\\*(sV
 .		as b1 (``\\*(tN\\*(Px\\*(aa'')
 .       \}
 .       if "\\*(A\\n(aP"-p1003.1b-93" \{\
-.		ds b1 \&\\*(tNIEEE Std\\*(aa1003.1b-1993\\*(sV
+.		ds b1 \&\\*(tNIEEE Std \\*(aa1003.1b-1993\\*(sV
 .		as b1 (``\\*(tN\\*(Px\\*(aa'')
 .       \}
 .	if "\\*(A\\n(aP"-p1003.1c-95" \{\
-.		ds b1 \&\\*(tNIEEE Std\\*(aa1003.1c-1995\\*(sV
+.		ds b1 \&\\*(tNIEEE Std \\*(aa1003.1c-1995\\*(sV
 .		as b1 (``\\*(tN\\*(Px\\*(aa'')
 .	\}
 .	if "\\*(A\\n(aP"-p1003.1-96" \{\
@@ -374,19 +374,19 @@
 .		as b1 (``\\*(tN\\*(Px\\*(aa'')
 .	\}
 .       if "\\*(A\\n(aP"-p1003.2-92" \{\
-.		ds b1 \&\\*(tNIEEE Std\\*(aa1003.2-1992\\*(sV
+.		ds b1 \&\\*(tNIEEE Std \\*(aa1003.2-1992\\*(sV
 .		as b1 (``\\*(tN\\*(Px.2\\*(aa'')
 .       \}
 .       if "\\*(A\\n(aP"-p1003.2" \{\
-.		ds b1 \&\\*(tNIEEE Std\\*(aa1003.2\\*(sV
+.		ds b1 \&\\*(tNIEEE Std \\*(aa1003.2\\*(sV
 .		as b1 (``\\*(tN\\*(Px.2\\*(aa'')
 .       \}
 .       if "\\*(A\\n(aP"-p1387.2-95" \{\
-.		ds b1 \&\\*(tNIEEE Std\\*(aa1387.2-1995\\*(sV
+.		ds b1 \&\\*(tNIEEE Std \\*(aa1387.2-1995\\*(sV
 .		as b1 (``\\*(tN\\*(Px.7.2\\*(aa'')
 .       \}
 .       if "\\*(A\\n(aP"-p1387.2" \{\
-.		ds b1 \&\\*(tNIEEE Std\\*(aa1387.2\\*(sV
+.		ds b1 \&\\*(tNIEEE Std \\*(aa1387.2\\*(sV
 .		as b1 (``\\*(tN\\*(Px.7.2\\*(aa'')
 .       \}
 .       if "\\*(A\\n(aP"-ansiC" \{\
@@ -402,7 +402,7 @@
 .		as b1 (``\\*(tNANSI C99\\*(aa'')
 .       \}
 .       if "\\*(A\\n(aP"-ieee754" \{\
-.		ds b1 \&\\*(tNIEEE Std\\*(aa754-1985
+.		ds b1 \&\\*(tNIEEE Std \\*(aa754-1985
 .       \}
 .       if "\\*(A\\n(aP"-iso8802-3" \{\
 .		ds b1 \&\\*(tNISO \\*(aa8802-3: 1989\\*(sV
