@@ -1,4 +1,4 @@
-.\"	$OpenBSD: random.9,v 1.5 1999/05/23 14:11:40 aaron Exp $
+.\"	$OpenBSD: random.9,v 1.6 1999/12/15 16:13:20 ericj Exp $
 .\"
 .\" Copyright (c) 1996	Michael Shalayeff
 .\" All rights reserved.
@@ -36,17 +36,18 @@
 .Nd device kernel interface
 .Sh SYNOPSIS
 .Fd #include <dev/rndvar.h>
-.Va void add_mouse_randomness(u_int32_t);
-.br
-.Va void add_tty_randomness(int);
-.br
-.Va void add_net_randomness(int isr);
-.br
-.Va void add_blkdev_randomness(u_int32_t);
-.br
-.Va void get_random_bytes(void *buf, size_t nbytes);
-.br
-.Va u_int32_t arc4random(void);
+.Ft void 
+.Fn add_mouse_randomness "u_int32_t"
+.Ft void
+.Fn add_tty_randomness "int"
+.Ft void 
+.Fn add_net_randomness "int isr"
+.Ft void 
+.Fn add_blkdev_randomness "u_int32_t"
+.Ft void
+.Fn get_random_bytes "void *buf" "size_t nbytes"
+.Ft u_int32_t 
+.Fn arc4random "void"
 .br
 .Sh DESCRIPTION
 add_{mouse,tty,net,blkdev}_randomness routines used to supply data
