@@ -1,4 +1,4 @@
-/*	$OpenBSD: inttypes.h,v 1.2 1998/06/21 22:13:35 millert Exp $	*/
+/*	$OpenBSD: inttypes.h,v 1.3 1999/01/07 23:39:03 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -32,16 +32,6 @@
 
 /* Machine type dependent parameters. */
 #include <machine/types.h>
-
-/*
- * Fixed-size integer types as specified in XPG4.2.
- * int8_t, int16_t, int32_t, int64_t are defined in <machine/types.h>
- */
-
-typedef u_int8_t		uint8_t;
-typedef u_int16_t		uint16_t;
-typedef u_int32_t		uint32_t;
-typedef u_int64_t		uint64_t;
 
 /* XXX - these really belong in <machine/types.h> (maybe create u_register_t) */
 typedef long			intptr_t;

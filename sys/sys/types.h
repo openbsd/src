@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.13 1999/01/07 05:35:22 deraadt Exp $	*/
+/*	$OpenBSD: types.h,v 1.14 1999/01/07 23:38:59 millert Exp $	*/
 /*	$NetBSD: types.h,v 1.29 1996/11/15 22:48:25 jtc Exp $	*/
 
 /*-
@@ -65,11 +65,6 @@ typedef unsigned long	ulong;		/* Sys V compatibility */
 typedef	u_int64_t	u_quad_t;	/* quads */
 typedef	int64_t		quad_t;
 typedef	quad_t *	qaddr_t;
-
-typedef u_int8_t       uint8_t;
-typedef u_int16_t      uint16_t;
-typedef u_int32_t      uint32_t;
-typedef u_int64_t      uint64_t;
 
 typedef	char *		caddr_t;	/* core address */
 typedef	int32_t		daddr_t;	/* disk address */
