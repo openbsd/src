@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.18 2002/06/15 00:38:37 art Exp $	*/
+/*	$OpenBSD: locore.s,v 1.19 2002/07/20 20:19:10 art Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -64,7 +64,6 @@
 #undef	FLTRACE			/* Keep history of all page faults */
 #undef	TRAPSTATS		/* Count traps */
 #undef	TRAPS_USE_IG		/* Use Interrupt Globals for all traps */
-#define	HWREF			/* Track ref/mod bits in trap handlers */
 #undef	PMAP_FPSTATE		/* Allow nesting of VIS pmap copy/zero */
 #define	NEW_FPSTATE
 #define	PMAP_PHYS_PAGE		/* Use phys ASIs for pmap copy/zero */
@@ -896,11 +895,7 @@ ufast_DMMU_protection:			! 06c = fast data access MMU protection
 	inc	%g2
 	stw	%g2, [%g1+%lo(_C_LABEL(udprot))]
 #endif
-#ifdef HWREF
 	ba,a,pt	%xcc, dmmu_write_fault
-#else
-	ba,a,pt	%xcc, winfault
-#endif
 	nop
 	TA32
 	UTRAP(0x070)			! Implementation dependent traps
@@ -1136,11 +1131,7 @@ kfast_DMMU_protection:			! 06c = fast data access MMU protection
 	inc	%g2
 	stw	%g2, [%g1+%lo(_C_LABEL(kdprot))]
 #endif
-#ifdef HWREF
 	ba,a,pt	%xcc, dmmu_write_fault
-#else
-	ba,a,pt	%xcc, winfault
-#endif
 	nop
 	TA32
 	UTRAP(0x070)			! Implementation dependent traps

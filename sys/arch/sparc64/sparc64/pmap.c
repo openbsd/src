@@ -1,7 +1,6 @@
-/*	$OpenBSD: pmap.c,v 1.13 2002/06/11 11:16:46 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.14 2002/07/20 20:19:11 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
-#define	HWREF
 /*
  * 
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -1988,7 +1987,8 @@ pmap_kenter_pa(va, pa, prot)
 				 (VM_PROT_WRITE & prot),
 				 1, 0, 1, 0);
 	/* We don't track modification here. */
-	if (VM_PROT_WRITE & prot) tte.data |= TLB_REAL_W|TLB_W; /* HWREF -- XXXX */
+	if (VM_PROT_WRITE & prot)
+		tte.data |= TLB_REAL_W|TLB_W;
 	tte.data |= TLB_TSB_LOCK;	/* wired */
 	ASSERT((tte.data & TLB_NFO) == 0);
 	pg = NULL;
@@ -2235,21 +2235,10 @@ pmap_enter(pm, va, pa, prot, flags)
 	tte.data = TSB_DATA(0, size, pa, pm == pmap_kernel(),
 		(flags & VM_PROT_WRITE), (!(pa & PMAP_NC)), 
 		aliased, 1, (pa & PMAP_LITTLE));
-#ifdef HWREF
-	if (prot & VM_PROT_WRITE) tte.data |= TLB_REAL_W;
-#else
-	/* If it needs ref accounting do nothing. */
-	if (!(flags&VM_PROT_READ)) {
-		simple_unlock(&pm->pm_lock);
-		splx(s);
-		if (wired) {
-			printf("pmap_enter: wired but not readable\n");
-			Debugger();
-		}
-		return 0;
-	}
-#endif
-	if (wired) tte.data |= TLB_TSB_LOCK;
+	if (prot & VM_PROT_WRITE)
+		tte.data |= TLB_REAL_W;
+	if (wired)
+		tte.data |= TLB_TSB_LOCK;
 	ASSERT((tte.data & TLB_NFO) == 0);
 	pg = NULL;
 #ifdef NOTDEF_DEBUG
@@ -2867,11 +2856,7 @@ pmap_clear_modify(pg)
 			/* Need to both clear the modify and write bits */
 			if (data & (TLB_MODIFY))
 				changed |= 1;
-#ifdef HWREF
 			data &= ~(TLB_MODIFY|TLB_W);
-#else
-			data &= ~(TLB_MODIFY|TLB_W|TLB_REAL_W);
-#endif
 			ASSERT((data & TLB_NFO) == 0);
 			if (pseg_set(pv->pv_pmap, pv->pv_va&PV_VAMASK, data, 0)) {
 				printf("pmap_clear_modify: gotten pseg empty!\n");
@@ -2954,15 +2939,9 @@ pmap_clear_reference(pg)
 				printf("clearing ref pm:%p va:%p ctx:%lx data:%x:%x\n", pv->pv_pmap,
 				       (void *)(u_long)pv->pv_va, (u_long)pv->pv_pmap->pm_ctx, (int)(data>>32), (int)data);
 #endif
-#ifdef HWREF
 			if (data & TLB_ACCESS)
 				changed |= 1;
 			data &= ~TLB_ACCESS;
-#else
-			if (data < 0)
-				changed |= 1;
-			data = 0;
-#endif
 			ASSERT((data & TLB_NFO) == 0);
 			if (pseg_set(pv->pv_pmap, pv->pv_va, data, 0)) {
 				printf("pmap_clear_reference: gotten pseg empty!\n");
@@ -3020,7 +2999,6 @@ pmap_is_modified(pg)
 	s = splvm();
 	pv = pa_to_pvh(pa);
 	if (pv->pv_va&PV_MOD) i = 1;
-#ifdef HWREF
 #ifdef DEBUG	
 	if (pv->pv_next && !pv->pv_pmap) {
 		printf("pmap_is_modified: npv but no pmap for pv %p\n", pv);
@@ -3041,7 +3019,6 @@ pmap_is_modified(pg)
 	if (i) pv->pv_va |= PV_MOD;
 #ifdef DEBUG
 	if (i) pv->pv_va |= PV_WE;
-#endif
 #endif
 	splx(s);
 
@@ -3067,7 +3044,6 @@ pmap_is_referenced(pg)
 	s = splvm();
 	pv = pa_to_pvh(pa);
 	if (pv->pv_va&PV_REF) i = 1;
-#ifdef HWREF 
 #ifdef DEBUG	
 	if (pv->pv_next && !pv->pv_pmap) {
 		printf("pmap_is_referenced: npv but no pmap for pv %p\n", pv);
@@ -3086,7 +3062,6 @@ pmap_is_referenced(pg)
 		}
 	/* Save ref info */
 	if (i) pv->pv_va |= PV_REF;
-#endif
 	splx(s);
 
 #ifdef DEBUG
