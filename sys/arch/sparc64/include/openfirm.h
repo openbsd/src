@@ -1,4 +1,4 @@
-/*	$OpenBSD: openfirm.h,v 1.4 2002/06/15 17:23:31 art Exp $	*/
+/*	$OpenBSD: openfirm.h,v 1.5 2004/08/08 21:04:44 miod Exp $	*/
 /*	$NetBSD: openfirm.h,v 1.8 2001/07/20 00:07:14 eeh Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ int OF_getproplen (int handle, char *prop);
 int OF_stdin (void);
 int OF_stdout (void);
 void OF_set_symbol_lookup (void (*s2v)(void *), void (*v2s)(void *));
-void OF_poweroff (void) __attribute__((__noreturn__));
+void OF_poweroff (void);
 void OF_sym2val (void *);
 void OF_val2sym (void *);
 int OF_milliseconds (void);
