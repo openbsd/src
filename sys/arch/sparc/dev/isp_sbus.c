@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_sbus.c,v 1.5 1999/03/17 05:20:24 mjacob Exp $	*/
+/*	$OpenBSD: isp_sbus.c,v 1.6 1999/03/17 21:50:12 deraadt Exp $	*/
 /* release_03_16_99A */
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
@@ -144,6 +144,8 @@ isp_sbus_attach(parent, self, aux)
 		printf(": expected 1 interrupt, got %d\n", ca->ca_ra.ra_nintr);
 		return;
 	}
+
+	printf("\n");
 
 	sbc->sbus_pri = ca->ca_ra.ra_intr[0].int_pri;
 	sbc->sbus_mdvec = mdvec;
