@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.156 2002/12/23 13:05:20 mcbride Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.157 2002/12/23 15:18:51 mcbride Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1353,7 +1353,7 @@ incoming connections to port 25.
 .Pp
 Then
 .Bd -literal
-    # echo "block in quick from 1.2.3.4 to any" \ \\
+    # echo "block in quick from 1.2.3.4 to any" | \\
 	pfctl -a spews:manual -f -
 .Ed
 .Pp
