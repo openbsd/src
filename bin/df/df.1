@@ -1,4 +1,4 @@
-.\"	$OpenBSD: df.1,v 1.33 2004/01/05 20:36:19 jmc Exp $
+.\"	$OpenBSD: df.1,v 1.34 2004/11/17 23:51:01 millert Exp $
 .\"	$NetBSD: df.1,v 1.12 1995/12/05 02:42:45 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -129,6 +129,17 @@ Output, in a strict format suitable for portable scripts, disk space
 statistics for the
 .Pa /usr
 file system using kilobyte block sizes.
+.Sh DIAGNOSTICS
+The
+.Nm
+utility exits with one of the following values:
+.Pp
+.Bl -tag -width flag
+.It Li 0
+Successful completion.
+.It Li \*(Gt0
+An error occurred.
+.El
 .Sh SEE ALSO
 .Xr quota 1 ,
 .Xr fstatfs 2 ,
