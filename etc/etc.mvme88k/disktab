@@ -1,4 +1,4 @@
-#	$OpenBSD: disktab,v 1.3 2002/06/09 06:15:14 todd Exp $
+#	$OpenBSD: disktab,v 1.4 2003/03/01 00:46:23 miod Exp $
 
 # Disk geometry and partition layout tables.
 # Key:
@@ -20,11 +20,11 @@
 #	il	sector interleave (n:1), 1 default
 #	bs	boot block size, default BBSIZE
 #	sb	superblock size, default SBSIZE
-#	o[a-h]	partition offsets in sectors
-#	p[a-h]	partition sizes in sectors
-#	b[a-h]	partition block sizes in bytes
-#	f[a-h]	partition fragment sizes in bytes
-#	t[a-h]	partition types (filesystem, swap, etc)
+#	o[a-p]	partition offsets in sectors
+#	p[a-p]	partition sizes in sectors
+#	b[a-p]	partition block sizes in bytes
+#	f[a-p]	partition fragment sizes in bytes
+#	t[a-p]	partition types (filesystem, swap, etc)
 #
 # All partition sizes reserve space for bad sector tables.
 # (5 cylinders needed for maintenance + replacement sectors)

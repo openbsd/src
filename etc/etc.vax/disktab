@@ -1,4 +1,4 @@
-#	$OpenBSD: disktab,v 1.8 2002/08/03 16:37:10 hugh Exp $
+#	$OpenBSD: disktab,v 1.9 2003/03/01 00:46:24 miod Exp $
 #	$NetBSD: disktab,v 1.2 1996/03/05 12:01:53 ragge Exp $
 #
 #	@(#)disktab	8.1 (Berkeley) 6/9/93
@@ -23,11 +23,11 @@
 #	il	sector interleave (n:1), 1 default
 #	bs	boot block size, default BBSIZE
 #	sb	superblock size, default SBSIZE
-#	o[a-h]	partition offsets in sectors
-#	p[a-h]	partition sizes in sectors
-#	b[a-h]	partition block sizes in bytes
-#	f[a-h]	partition fragment sizes in bytes
-#	t[a-h]	partition types (filesystem, swap, etc)
+#	o[a-p]	partition offsets in sectors
+#	p[a-p]	partition sizes in sectors
+#	b[a-p]	partition block sizes in bytes
+#	f[a-p]	partition fragment sizes in bytes
+#	t[a-p]	partition types (filesystem, swap, etc)
 #	b[0-1]	primary and secondary bootstraps, optional
 #
 # WARNING:
@@ -506,7 +506,7 @@ miniroot|fake-type used when installation:\
 
 rdroot:\
 	:ty=ramdisk:se#512:nt#2:rm#300:ns#8:nc#192:\
-	:pa#3072:oa#0:ta=4.2BSD:ba#3072:fa#1024: \
+	:pa#3072:oa#0:ta=4.2BSD:ba#4096:fa#1024:\
 	:pc#3072:oc#0:
 
 floppy|floppy3|3in|3.5in High Density Floppy:\

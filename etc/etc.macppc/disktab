@@ -1,4 +1,4 @@
-# $OpenBSD: disktab,v 1.2 2002/06/09 06:15:14 todd Exp $
+# $OpenBSD: disktab,v 1.3 2003/03/01 00:46:23 miod Exp $
 #
 #	@(#)disktab	5.5 (Berkeley) 2/27/91
 #
@@ -12,9 +12,9 @@
 #	se	sector size, 512 default
 #	sf	supports bad144-style bad sector forwarding
 #	so	partition offsets in sectors
-#	p[a-h]	partition sizes in sectors
-#	b[a-h]	partition block sizes in bytes
-#	f[a-h]	partition fragment sizes in bytes
+#	p[a-p]	partition sizes in sectors
+#	b[a-p]	partition block sizes in bytes
+#	f[a-p]	partition fragment sizes in bytes
 #
 
 
