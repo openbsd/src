@@ -1,4 +1,5 @@
-/*	$NetBSD: lfs_debug.c,v 1.2 1994/06/29 06:46:54 cgd Exp $	*/
+/*	$OpenBSD: lfs_debug.c,v 1.2 1996/02/27 07:13:23 niklas Exp $	*/
+/*	$NetBSD: lfs_debug.c,v 1.3 1996/02/12 22:08:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,6 +38,7 @@
 
 #ifdef DEBUG
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
@@ -119,7 +121,7 @@ lfs_dump_dinode(dip)
 {
 	int i;
 
-	(void)printf("%s%u\t%s%d\t%s%u\t%s%u\t%s%lu\n",
+	(void)printf("%s%u\t%s%d\t%s%u\t%s%u\t%s%qu\n",
 		"mode  ", dip->di_mode,
 		"nlink ", dip->di_nlink,
 		"uid   ", dip->di_uid,

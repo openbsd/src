@@ -1,4 +1,5 @@
-/*	$NetBSD: lfs_subr.c,v 1.2 1994/06/29 06:47:00 cgd Exp $	*/
+/*	$OpenBSD: lfs_subr.c,v 1.2 1996/02/27 07:13:27 niklas Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.3 1996/02/09 22:28:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -36,6 +37,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/buf.h>
@@ -54,14 +56,15 @@
  * remaining space in the directory.
  */
 int
-lfs_blkatoff(ap)
+lfs_blkatoff(v)
+	void *v;
+{
 	struct vop_blkatoff_args /* {
 		struct vnode *a_vp;
 		off_t a_offset;
 		char **a_res;
 		struct buf **a_bpp;
-	} */ *ap;
-{
+	} */ *ap = v;
 	register struct lfs *fs;
 	struct inode *ip;
 	struct buf *bp;
@@ -74,7 +77,7 @@ lfs_blkatoff(ap)
 	bsize = blksize(fs);
 
 	*ap->a_bpp = NULL;
-	if (error = bread(ap->a_vp, lbn, bsize, NOCRED, &bp)) {
+	if ((error = bread(ap->a_vp, lbn, bsize, NOCRED, &bp)) != 0) {
 		brelse(bp);
 		return (error);
 	}

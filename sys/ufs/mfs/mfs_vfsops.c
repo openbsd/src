@@ -1,4 +1,5 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.9 1995/09/01 19:39:18 mycroft Exp $	*/
+/*	$OpenBSD: mfs_vfsops.c,v 1.2 1996/02/27 07:15:47 niklas Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.10 1996/02/09 22:31:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -62,7 +63,7 @@ u_long	mfs_rootsize;	/* size of mini-root in bytes */
 
 static	int mfs_minor;	/* used for building internal dev_t */
 
-extern int (**mfs_vnodeop_p)();
+extern int (**mfs_vnodeop_p) __P((void *));
 
 /*
  * mfs vfs operations.
@@ -89,6 +90,7 @@ struct vfsops mfs_vfsops = {
  */
 #define ROOTNAME	"mfs_root"
 
+int
 mfs_mountroot()
 {
 	extern struct vnode *rootvp;
@@ -119,12 +121,12 @@ mfs_mountroot()
 	mfsp->mfs_vnode = rootvp;
 	mfsp->mfs_pid = p->p_pid;
 	mfsp->mfs_buflist = (struct buf *)0;
-	if (error = ffs_mountfs(rootvp, mp, p)) {
+	if ((error = ffs_mountfs(rootvp, mp, p)) != 0) {
 		free(mp, M_MOUNT);
 		free(mfsp, M_MFSNODE);
 		return (error);
 	}
-	if (error = vfs_lock(mp)) {
+	if ((error = vfs_lock(mp)) != 0) {
 		(void)ffs_unmount(mp, 0, p);
 		free(mp, M_MOUNT);
 		free(mfsp, M_MFSNODE);
@@ -150,11 +152,12 @@ mfs_mountroot()
  * This is called early in boot to set the base address and size
  * of the mini-root.
  */
+int
 mfs_initminiroot(base)
 	caddr_t base;
 {
 	struct fs *fs = (struct fs *)(base + SBOFF);
-	extern int (*mountroot)();
+	extern int (*mountroot) __P((void));
 
 	/* check for valid super block */
 	if (fs->fs_magic != FS_MAGIC || fs->fs_bsize > MAXBSIZE ||
@@ -189,7 +192,8 @@ mfs_mount(mp, path, data, ndp, p)
 	size_t size;
 	int flags, error;
 
-	if (error = copyin(data, (caddr_t)&args, sizeof (struct mfs_args)))
+	error = copyin(data, (caddr_t)&args, sizeof (struct mfs_args));
+	if (error)
 		return (error);
 
 	/*
@@ -231,7 +235,7 @@ mfs_mount(mp, path, data, ndp, p)
 	mfsp->mfs_vnode = devvp;
 	mfsp->mfs_pid = p->p_pid;
 	mfsp->mfs_buflist = (struct buf *)0;
-	if (error = ffs_mountfs(devvp, mp, p)) {
+	if ((error = ffs_mountfs(devvp, mp, p)) != 0) {
 		mfsp->mfs_buflist = (struct buf *)-1;
 		vrele(devvp);
 		return (error);
@@ -273,10 +277,10 @@ mfs_start(mp, flags, p)
 	base = mfsp->mfs_baseoff;
 	while (mfsp->mfs_buflist != (struct buf *)-1) {
 #define	DOIO() \
-		while (bp = mfsp->mfs_buflist) {	\
-			mfsp->mfs_buflist = bp->b_actf;	\
-			mfs_doio(bp, base);		\
-			wakeup((caddr_t)bp);		\
+		while ((bp = mfsp->mfs_buflist) != NULL) {	\
+			mfsp->mfs_buflist = bp->b_actf;		\
+			mfs_doio(bp, base);			\
+			wakeup((caddr_t)bp);			\
 		}
 		DOIO();
 		/*
@@ -285,7 +289,7 @@ mfs_start(mp, flags, p)
 		 * otherwise we will loop here, as tsleep will always return
 		 * EINTR/ERESTART.
 		 */
-		if (error = tsleep((caddr_t)vp, mfs_pri, "mfsidl", 0)) {
+		if ((error = tsleep((caddr_t)vp, mfs_pri, "mfsidl", 0)) != 0) {
 			DOIO();
 			if (dounmount(mp, 0, p) != 0)
 				CLRSIG(p, CURSIG(p));
@@ -297,6 +301,7 @@ mfs_start(mp, flags, p)
 /*
  * Get file system statistics.
  */
+int
 mfs_statfs(mp, sbp, p)
 	struct mount *mp;
 	struct statfs *sbp;

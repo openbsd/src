@@ -1,4 +1,5 @@
-/*	$NetBSD: lfs_balloc.c,v 1.2 1994/06/29 06:46:49 cgd Exp $	*/
+/*	$OpenBSD: lfs_balloc.c,v 1.2 1996/02/27 07:13:20 niklas Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.3 1996/02/09 22:28:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -35,6 +36,7 @@
  *	@(#)lfs_balloc.c	8.1 (Berkeley) 6/11/93
  */
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
@@ -47,6 +49,7 @@
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>
+#include <ufs/ufs/ufs_extern.h>
 
 #include <ufs/lfs/lfs.h>
 #include <ufs/lfs/lfs_extern.h>
@@ -79,7 +82,8 @@ lfs_balloc(vp, iosize, lbn, bpp)
 	 */
 
 	*bpp = NULL;
-	if (error = ufs_bmaparray(vp, lbn, &daddr, &indirs[0], &num, NULL ))
+	error = ufs_bmaparray(vp, lbn, &daddr, &indirs[0], &num, NULL);
+	if (error)
 		return (error);
 
 	*bpp = bp = getblk(vp, lbn, fs->lfs_bsize, 0, 0);

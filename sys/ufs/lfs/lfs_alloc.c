@@ -1,4 +1,5 @@
-/*	$NetBSD: lfs_alloc.c,v 1.2 1994/06/29 06:46:47 cgd Exp $	*/
+/*	$OpenBSD: lfs_alloc.c,v 1.2 1996/02/27 07:13:20 niklas Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.3 1996/02/09 22:28:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -36,6 +37,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/buf.h>
 #include <sys/vnode.h>
@@ -48,6 +50,7 @@
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>
+#include <ufs/ufs/ufs_extern.h>
 
 #include <ufs/lfs/lfs.h>
 #include <ufs/lfs/lfs_extern.h>
@@ -57,14 +60,15 @@ extern u_long nextgennumber;
 /* Allocate a new inode. */
 /* ARGSUSED */
 int
-lfs_valloc(ap)
+lfs_valloc(v)
+	void *v;
+{
 	struct vop_valloc_args /* {
 		struct vnode *a_pvp;
 		int a_mode;
 		struct ucred *a_cred;
 		struct vnode **a_vpp;
-	} */ *ap;
-{
+	} */ *ap = v;
 	struct lfs *fs;
 	struct buf *bp;
 	struct ifile *ifp;
@@ -113,12 +117,12 @@ lfs_valloc(ap)
 		}
 		ifp--;
 		ifp->if_nextfree = LFS_UNUSED_INUM;
-		if (error = VOP_BWRITE(bp))
+		if ((error = VOP_BWRITE(bp)) != 0)
 			return (error);
 	}
 
 	/* Create a vnode to associate with the inode. */
-	if (error = lfs_vcreate(ap->a_pvp->v_mount, new_ino, &vp))
+	if ((error = lfs_vcreate(ap->a_pvp->v_mount, new_ino, &vp)) != 0)
 		return (error);
 
 
@@ -135,7 +139,8 @@ lfs_valloc(ap)
 	/* Insert into the inode hash table. */
 	ufs_ihashins(ip);
 
-	if (error = ufs_vinit(vp->v_mount, lfs_specop_p, LFS_FIFOOPS, &vp)) {
+	error = ufs_vinit(vp->v_mount, lfs_specop_p, LFS_FIFOOPS, &vp);
+	if (error) {
 		vput(vp);
 		*ap->a_vpp = NULL;
 		return (error);
@@ -158,13 +163,13 @@ lfs_vcreate(mp, ino, vpp)
 	ino_t ino;
 	struct vnode **vpp;
 {
-	extern int (**lfs_vnodeop_p)();
+	extern int (**lfs_vnodeop_p) __P((void *));
 	struct inode *ip;
 	struct ufsmount *ump;
 	int error, i;
 
 	/* Create the vnode. */
-	if (error = getnewvnode(VT_LFS, mp, lfs_vnodeop_p, vpp)) {
+	if ((error = getnewvnode(VT_LFS, mp, lfs_vnodeop_p, vpp)) != 0) {
 		*vpp = NULL;
 		return (error);
 	}
@@ -199,13 +204,14 @@ ip->i_din.di_spare[1] = 0xdeadbeef;
 /* Free an inode. */
 /* ARGUSED */
 int
-lfs_vfree(ap)
+lfs_vfree(v)
+	void *v;
+{
 	struct vop_vfree_args /* {
 		struct vnode *a_pvp;
 		ino_t a_ino;
 		int a_mode;
-	} */ *ap;
-{
+	} */ *ap = v;
 	SEGUSE *sup;
 	struct buf *bp;
 	struct ifile *ifp;

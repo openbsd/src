@@ -1,4 +1,5 @@
-/*	$NetBSD: lfs_bio.c,v 1.4 1995/06/18 14:48:33 cgd Exp $	*/
+/*	$OpenBSD: lfs_bio.c,v 1.2 1996/02/27 07:13:21 niklas Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.5 1996/02/09 22:28:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -36,6 +37,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/vnode.h>
@@ -46,6 +48,7 @@
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>
+#include <ufs/ufs/ufs_extern.h>
 
 #include <ufs/lfs/lfs.h>
 #include <ufs/lfs/lfs_extern.h>
@@ -70,11 +73,12 @@ int	lfs_writing;			/* Set if already kicked off a writer
 #define LFS_BUFWAIT	2
 
 int
-lfs_bwrite(ap)
+lfs_bwrite(v)
+	void *v;
+{
 	struct vop_bwrite_args /* {
 		struct buf *a_bp;
-	} */ *ap;
-{
+	} */ *ap = v;
 	register struct buf *bp = ap->a_bp;
 	struct lfs *fs;
 	struct inode *ip;
@@ -100,8 +104,9 @@ lfs_bwrite(ap)
 		    bp->b_lblkno > 0) {
 			/* Out of space, need cleaner to run */
 			wakeup(&lfs_allclean_wakeup);
-			if (error = tsleep(&fs->lfs_avail, PCATCH | PUSER,
-			    "cleaner", NULL)) {
+			error = tsleep(&fs->lfs_avail, PCATCH | PUSER,
+				       "cleaner", NULL);
+			if (error) {
 				brelse(bp);
 				return (error);
 			}
@@ -168,7 +173,6 @@ lfs_check(vp, blkno)
 	struct vnode *vp;
 	daddr_t blkno;
 {
-	extern int lfs_allclean_wakeup;
 	int error;
 
 	error = 0;

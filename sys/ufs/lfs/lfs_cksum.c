@@ -1,4 +1,5 @@
-/*	$NetBSD: lfs_cksum.c,v 1.4 1994/12/14 13:03:46 mycroft Exp $	*/
+/*	$OpenBSD: lfs_cksum.c,v 1.2 1996/02/27 07:13:22 niklas Exp $	*/
+/*	$NetBSD: lfs_cksum.c,v 1.6 1996/02/16 02:22:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,6 +37,9 @@
  */
 
 #include <sys/types.h>
+#ifdef _KERNEL
+#include <ufs/lfs/lfs_extern.h>
+#endif
 
 /*
  * Simple, general purpose, fast checksum.  Data must be short-aligned.

@@ -1,4 +1,5 @@
-/*	$NetBSD: lfs_segment.c,v 1.3 1994/08/21 03:15:32 cgd Exp $	*/
+/*	$OpenBSD: lfs_segment.c,v 1.2 1996/02/27 07:13:26 niklas Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.4 1996/02/09 22:28:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -232,8 +233,9 @@ lfs_segwrite(mp, flags)
 		if (clean <= 2) {
 			printf ("segs clean: %d\n", clean);
 			wakeup(&lfs_allclean_wakeup);
-			if (error = tsleep(&fs->lfs_avail, PRIBIO + 1,
-			    "lfs writer", 0))
+			error = tsleep(&fs->lfs_avail, PRIBIO + 1,
+				       "lfs writer", 0);
+			if (error)
 				return (error);
 		}
 	} while (clean <= 2 );
@@ -579,7 +581,8 @@ lfs_updatemeta(sp)
 		(*sp->start_bpp)->b_blkno = off = fs->lfs_offset;
 		fs->lfs_offset += db_per_fsb;
 
-		if (error = ufs_bmaparray(vp, lbn, &daddr, a, &num, NULL))
+		error = ufs_bmaparray(vp, lbn, &daddr, a, &num, NULL);
+		if (error)
 			panic("lfs_updatemeta: ufs_bmaparray %d", error);
 		ip = VTOI(vp);
 		switch (num) {
@@ -755,7 +758,7 @@ lfs_writeseg(fs, sp)
 	size_t size;
 	u_long *datap, *dp;
 	int ch_per_blk, do_again, i, nblocks, num, s;
-	int (*strategy)__P((struct vop_strategy_args *));
+	int (*strategy)__P((void *));
 	struct vop_strategy_args vop_strategy_a;
 	u_short ninos;
 	char *p;
@@ -773,7 +776,7 @@ lfs_writeseg(fs, sp)
 	/* Update the segment usage information. */
 	LFS_SEGENTRY(sup, fs, sp->seg_number, bp);
 	ninos = (ssp->ss_ninos + INOPB(fs) - 1) / INOPB(fs);
-	sup->su_nbytes += nblocks - 1 - ninos << fs->lfs_bshift;
+	sup->su_nbytes += (nblocks - 1 - ninos) << fs->lfs_bshift;
 	sup->su_nbytes += ssp->ss_ninos * sizeof(struct dinode);
 	sup->su_nbytes += LFS_SUMMARY_SIZE;
 	sup->su_lastmod = time.tv_sec;
@@ -917,7 +920,7 @@ lfs_writesuper(fs)
 {
 	struct buf *bp;
 	dev_t i_dev;
-	int (*strategy) __P((struct vop_strategy_args *));
+	int (*strategy) __P((void *));
 	int s;
 	struct vop_strategy_args vop_strategy_a;
 
@@ -1069,7 +1072,7 @@ lfs_shellsort(bp_array, lb_array, nmemb)
 	struct buf *bp_temp;
 	u_long lb_temp;
 
-	for (incrp = __rsshell_increments; incr = *incrp++;)
+	for (incrp = __rsshell_increments; (incr = *incrp++) != 0;)
 		for (t1 = incr; t1 < nmemb; ++t1)
 			for (t2 = t1 - incr; t2 >= 0;)
 				if (lb_array[t2] > lb_array[t2 + incr]) {
@@ -1087,6 +1090,7 @@ lfs_shellsort(bp_array, lb_array, nmemb)
 /*
  * Check VXLOCK.  Return 1 if the vnode is locked.  Otherwise, vget it.
  */
+int
 lfs_vref(vp)
 	register struct vnode *vp;
 {

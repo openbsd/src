@@ -1,4 +1,5 @@
-/*	$NetBSD: mfs_extern.h,v 1.3 1994/12/14 13:03:51 mycroft Exp $	*/
+/*	$OpenBSD: mfs_extern.h,v 1.2 1996/02/27 07:15:46 niklas Exp $	*/
+/*	$NetBSD: mfs_extern.h,v 1.4 1996/02/09 22:31:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -44,19 +45,26 @@ struct ucred;
 struct vnode;
 
 __BEGIN_DECLS
-int	mfs_badop __P((void));
-int	mfs_bmap __P((struct vop_bmap_args *));
-int	mfs_close __P((struct vop_close_args *));
-void	mfs_doio __P((struct buf *bp, caddr_t base));
-int	mfs_inactive __P((struct vop_inactive_args *)); /* XXX */
-int	mfs_reclaim __P((struct vop_reclaim_args *));
-int	mfs_init __P((void));
-int	mfs_ioctl __P((struct vop_ioctl_args *));
-int	mfs_mount __P((struct mount *mp,
-	    char *path, caddr_t data, struct nameidata *ndp, struct proc *p));
-int	mfs_open __P((struct vop_open_args *));
-int	mfs_print __P((struct vop_print_args *)); /* XXX */
-int	mfs_start __P((struct mount *mp, int flags, struct proc *p));
-int	mfs_statfs __P((struct mount *mp, struct statfs *sbp, struct proc *p));
-int	mfs_strategy __P((struct vop_strategy_args *)); /* XXX */
+/* mfs_vfsops.c */
+int	mfs_mountroot	__P((void));
+int	mfs_initminiroot	__P((caddr_t));
+int	mfs_mount	__P((struct mount *, char *, caddr_t,
+			     struct nameidata *, struct proc *));
+int	mfs_start	__P((struct mount *, int, struct proc *));
+int	mfs_statfs	__P((struct mount *, struct statfs *, struct proc *));
+
+void	mfs_init	__P((void));
+
+/* mfs_vnops.c */
+int	mfs_open	__P((void *));
+int	mfs_ioctl	__P((void *));
+int	mfs_strategy	__P((void *));
+void	mfs_doio	__P((struct buf *, caddr_t));
+int	mfs_bmap	__P((void *));
+int	mfs_close	__P((void *));
+int	mfs_inactive	__P((void *));
+int	mfs_reclaim	__P((void *));
+int	mfs_print	__P((void *));
+int	mfs_badop	__P((void *));
+
 __END_DECLS

@@ -1,4 +1,5 @@
-/*	$NetBSD: lfs_inode.c,v 1.3 1995/06/15 23:22:44 cgd Exp $	*/
+/*	$OpenBSD: lfs_inode.c,v 1.2 1996/02/27 07:13:25 niklas Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.4 1996/02/09 22:28:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -55,10 +56,10 @@
 #include <ufs/lfs/lfs.h>
 #include <ufs/lfs/lfs_extern.h>
 
-int
+void
 lfs_init()
 {
-	return (ufs_init());
+	ufs_init();
 }
 
 /* Search a block for a specific dinode. */
@@ -80,14 +81,15 @@ lfs_ifind(fs, ino, dip)
 }
 
 int
-lfs_update(ap)
+lfs_update(v)
+	void *v;
+{
 	struct vop_update_args /* {
 		struct vnode *a_vp;
 		struct timeval *a_access;
 		struct timeval *a_modify;
 		int a_waitfor;
-	} */ *ap;
-{
+	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip;
 
@@ -144,15 +146,16 @@ lfs_update(ap)
  */
 /* ARGSUSED */
 int
-lfs_truncate(ap)
+lfs_truncate(v)
+	void *v;
+{
 	struct vop_truncate_args /* {
 		struct vnode *a_vp;
 		off_t a_length;
 		int a_flags;
 		struct ucred *a_cred;
 		struct proc *a_p;
-	} */ *ap;
-{
+	} */ *ap = v;
 	register struct indir *inp;
 	register int i;
 	register daddr_t *daddrp;
@@ -211,17 +214,17 @@ lfs_truncate(ap)
 	else {
 		lbn = lblkno(fs, length);
 #ifdef QUOTA
-		if (e1 = getinoquota(ip))
+		if ((e1 = getinoquota(ip)) != 0)
 			return (e1);
 #endif	
-		if (e1 = bread(vp, lbn, fs->lfs_bsize, NOCRED, &bp))
+		if ((e1 = bread(vp, lbn, fs->lfs_bsize, NOCRED, &bp)) != 0)
 			return (e1);
 		ip->i_size = length;
 		size = blksize(fs);
 		(void)vnode_pager_uncache(vp);
 		bzero((char *)bp->b_data + offset, (u_int)(size - offset));
 		allocbuf(bp, size);
-		if (e1 = VOP_BWRITE(bp))
+		if ((e1 = VOP_BWRITE(bp)) != 0)
 			return (e1);
 	}
 	/*
@@ -276,7 +279,7 @@ lfs_truncate(ap)
 					bzero((daddr_t *)bp->b_data +
 					    inp->in_off, fs->lfs_bsize - 
 					    inp->in_off * sizeof(daddr_t));
-					if (e1 = VOP_BWRITE(bp)) 
+					if ((e1 = VOP_BWRITE(bp)) != 0)
 						return (e1);
 				}
 			}
