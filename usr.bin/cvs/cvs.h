@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.25 2004/08/06 20:08:49 jfb Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.26 2004/08/13 02:16:29 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -178,6 +178,7 @@ struct cvs_ent {
 	char    *ce_name;
 	RCSNUM  *ce_rev;
 	char    *ce_timestamp;
+	time_t   ce_mtime;
 	char    *ce_opts;
 	char    *ce_tag;
 	TAILQ_ENTRY(cvs_ent) ce_list;
@@ -278,9 +279,10 @@ int              cvs_hist_append  (CVSHIST *, struct cvs_hent *);
 
 /* from util.c */
 int    cvs_readrepo   (const char *, char *, size_t);
-int    cvs_splitpath  (const char *, char *, size_t, char **);
+time_t cvs_datesec    (const char *);
 int    cvs_modetostr  (mode_t, char *, size_t);
 int    cvs_strtomode  (const char *, mode_t *);
+int    cvs_splitpath  (const char *, char *, size_t, char **);
 int    cvs_mkadmin    (struct cvs_file *, mode_t);
 int    cvs_cksum      (const char *, char *, size_t);
 int    cvs_exec       (int, char **, int []);

@@ -1,16 +1,16 @@
-/*	$OpenBSD: util.c,v 1.8 2004/08/12 18:34:37 jfb Exp $	*/
+/*	$OpenBSD: util.c,v 1.9 2004/08/13 02:16:29 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
- * All rights reserved. 
+ * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without 
- * modification, are permitted provided that the following conditions 
- * are met: 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
  *
- * 1. Redistributions of source code must retain the above copyright 
- *    notice, this list of conditions and the following disclaimer. 
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
  * 2. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission. 
+ *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
  * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
@@ -21,7 +21,7 @@
  * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+ * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/types.h>
@@ -38,6 +38,11 @@
 #include "cvs.h"
 #include "log.h"
 #include "file.h"
+
+static const char *cvs_months[] = {
+	"Jan", "Feb", "Mar", "Apr", "May", "Jun",
+	"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+};
 
 
 /* letter -> mode type map */
@@ -112,6 +117,69 @@ cvs_readrepo(const char *dir, char *dst, size_t len)
 
 	(void)fclose(fp);
 	return (0);
+}
+
+
+/*
+ * cvs_datesec()
+ *
+ * Take a ctime(3)-style date string and transform it into the number of
+ * seconds since the Epoch.
+ */
+
+time_t
+cvs_datesec(const char *date)
+{
+	int i;
+	long off;
+	char sign, mon[8], gmt[8], hr[4], min[4], *ep;
+	struct tm cvs_tm;
+
+	memset(&cvs_tm, 0, sizeof(cvs_tm));
+	sscanf(date, "%d %3s %d %2d:%2d:%2d %5s", &cvs_tm.tm_mday, mon,
+	    &cvs_tm.tm_year, &cvs_tm.tm_hour, &cvs_tm.tm_min,
+	    &cvs_tm.tm_sec, gmt);
+	cvs_tm.tm_year -= 1900;
+	cvs_tm.tm_isdst = -1;
+
+	if (*gmt == '-') {
+		sscanf(gmt, "%c%2s%2s", &sign, hr, min);
+		cvs_tm.tm_gmtoff = strtol(hr, &ep, 10);
+		if ((cvs_tm.tm_gmtoff == LONG_MIN) ||
+		    (cvs_tm.tm_gmtoff == LONG_MAX) ||
+		    (*ep != '\0')) {
+			cvs_log(LP_ERR,
+			    "parse error in GMT hours specification `%s'", hr);
+			cvs_tm.tm_gmtoff = 0;
+		}
+		else {
+			/* get seconds */
+			cvs_tm.tm_gmtoff *= 3600;
+
+			/* add the minutes */
+			off = strtol(min, &ep, 10);
+			if ((cvs_tm.tm_gmtoff == LONG_MIN) ||
+			    (cvs_tm.tm_gmtoff == LONG_MAX) ||
+			    (*ep != '\0')) {
+				cvs_log(LP_ERR,
+				    "parse error in GMT minutes "
+				    "specification `%s'", min);
+			}
+			else
+				cvs_tm.tm_gmtoff += off * 60;
+		}
+	}
+	if (sign == '-')
+		cvs_tm.tm_gmtoff = -cvs_tm.tm_gmtoff;
+
+	for (i = 0; i < (int)(sizeof(cvs_months)/sizeof(cvs_months[0])); i++) {
+		if (strcmp(cvs_months[i], mon) == 0) {
+			cvs_tm.tm_mon = i;
+			break;
+		}
+	}
+
+	return mktime(&cvs_tm);
 }
 
 
@@ -199,19 +267,19 @@ cvs_modetostr(mode_t mode, char *buf, size_t len)
 
 	if (um) {
 		snprintf(tmp, sizeof(tmp), "u=%s", cvs_modestr[um]);
-		l = strlcat(buf, tmp, len); 
+		l = strlcat(buf, tmp, len);
 	}
 	if (gm) {
 		if (um)
 			strlcat(buf, ",", len);
 		snprintf(tmp, sizeof(tmp), "g=%s", cvs_modestr[gm]);
-		strlcat(buf, tmp, len); 
+		strlcat(buf, tmp, len);
 	}
 	if (om) {
 		if (um || gm)
 			strlcat(buf, ",", len);
 		snprintf(tmp, sizeof(tmp), "o=%s", cvs_modestr[gm]);
-		strlcat(buf, tmp, len); 
+		strlcat(buf, tmp, len);
 	}
 
 	return (0);
@@ -317,7 +385,7 @@ cvs_getargv(const char *line, char **argv, int argvlen)
 				else if (*lp == '\\')
 					lp++;
 
-				qbuf[i++] = *lp++; 
+				qbuf[i++] = *lp++;
 				if (i == sizeof(qbuf)) {
 					err++;
 					break;
