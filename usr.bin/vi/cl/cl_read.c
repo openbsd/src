@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_read.c,v 1.11 2002/02/17 19:42:33 millert Exp $	*/
+/*	$OpenBSD: cl_read.c,v 1.12 2003/09/02 22:44:06 dhartmei Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -146,13 +146,23 @@ cl_read(sp, flags, bp, blen, nrp, tp)
 	CL_PRIVATE *clp;
 	GS *gp;
 	SCR *tsp;
-	fd_set rdfd;
+	fd_set *rdfd;
 	input_t rval;
 	int maxfd, nr, term_reset;
 
 	gp = sp->gp;
 	clp = CLP(sp);
 	term_reset = 0;
+
+	/* Allocate space for rdfd. */
+	maxfd = STDIN_FILENO;
+	for (tsp = gp->dq.cqh_first;
+	    tsp != (void *)&gp->dq; tsp = tsp->q.cqe_next)
+		if (F_ISSET(sp, SC_SCRIPT) && sp->script->sh_master > maxfd)
+			maxfd = sp->script->sh_master;
+	rdfd = (fd_set *)malloc(howmany(maxfd + 1, NFDBITS) * sizeof(fd_mask));
+	if (rdfd == NULL)
+		goto err;
 
 	/*
 	 * 1: A read from a file or a pipe.  In this case, the reads
@@ -163,11 +173,13 @@ cl_read(sp, flags, bp, blen, nrp, tp)
 	if (!F_ISSET(clp, CL_STDIN_TTY)) {
 		switch (nr = read(STDIN_FILENO, bp, blen)) {
 		case 0:
+			free(rdfd);
 			return (INP_EOF);
 		case -1:
 			goto err;
 		default:
 			*nrp = nr;
+			free(rdfd);
 			return (INP_OK);
 		}
 		/* NOTREACHED */
@@ -177,14 +189,16 @@ cl_read(sp, flags, bp, blen, nrp, tp)
 	 * 2: A read with an associated timeout, e.g., trying to complete
 	 *    a map sequence.  If input exists, we fall into #3.
 	 */
-	FD_ZERO(&rdfd);
-	poll.tv_sec = 0;
-	poll.tv_usec = 0;
 	if (tp != NULL) {
-		FD_SET(STDIN_FILENO, &rdfd);
+		memset(rdfd, 0, howmany(STDIN_FILENO + 1, NFDBITS)
+		    * sizeof(fd_mask));
+		poll.tv_sec = 0;
+		poll.tv_usec = 0;
+		FD_SET(STDIN_FILENO, rdfd);
 		switch (select(STDIN_FILENO + 1,
-		    &rdfd, NULL, NULL, tp == NULL ? &poll : tp)) {
+		    rdfd, NULL, NULL, tp == NULL ? &poll : tp)) {
 		case 0:
+			free(rdfd);
 			return (INP_TIMEOUT);
 		case -1:
 			goto err;
@@ -224,17 +238,13 @@ cl_read(sp, flags, bp, blen, nrp, tp)
 	 * the only way to keep from locking out scripting windows.
 	 */
 	if (F_ISSET(gp, G_SCRWIN)) {
-loop:		FD_ZERO(&rdfd);
-		FD_SET(STDIN_FILENO, &rdfd);
-		maxfd = STDIN_FILENO;
+loop:		memset(rdfd, 0, howmany(maxfd + 1, NFDBITS) * sizeof(fd_mask));
+		FD_SET(STDIN_FILENO, rdfd);
 		for (tsp = gp->dq.cqh_first;
 		    tsp != (void *)&gp->dq; tsp = tsp->q.cqe_next)
-			if (F_ISSET(sp, SC_SCRIPT)) {
-				FD_SET(sp->script->sh_master, &rdfd);
-				if (sp->script->sh_master > maxfd)
-					maxfd = sp->script->sh_master;
-			}
-		switch (select(maxfd + 1, &rdfd, NULL, NULL, NULL)) {
+			if (F_ISSET(sp, SC_SCRIPT))
+				FD_SET(sp->script->sh_master, rdfd);
+		switch (select(maxfd + 1, rdfd, NULL, NULL, NULL)) {
 		case 0:
 			abort();
 		case -1:
@@ -242,9 +252,11 @@ loop:		FD_ZERO(&rdfd);
 		default:
 			break;
 		}
-		if (!FD_ISSET(STDIN_FILENO, &rdfd)) {
-			if (sscr_input(sp))
+		if (!FD_ISSET(STDIN_FILENO, rdfd)) {
+			if (sscr_input(sp)) {
+				free(rdfd);
 				return (INP_ERR);
+			}
 			goto loop;
 		}
 	}
@@ -303,6 +315,7 @@ err:		if (errno == EINTR)
 	/* Restore the terminal state if it was modified. */
 	if (term_reset)
 		(void)tcsetattr(STDIN_FILENO, TCSASOFT | TCSADRAIN, &term1);
+	free(rdfd);
 	return (rval);
 }
 

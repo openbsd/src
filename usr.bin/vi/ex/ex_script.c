@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_script.c,v 1.10 2003/04/17 02:22:56 itojun Exp $	*/
+/*	$OpenBSD: ex_script.c,v 1.11 2003/09/02 22:44:06 dhartmei Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -37,6 +37,7 @@ static const char sccsid[] = "@(#)ex_script.c	10.30 (Berkeley) 9/24/96";
 #include <stdio.h>		/* XXX: OSF/1 bug: include before <grp.h> */
 #include <grp.h>
 #include <limits.h>
+#include <poll.h>
 #include <stdlib.h>
 #include <string.h>
 #include <termios.h>
@@ -211,32 +212,29 @@ static int
 sscr_getprompt(sp)
 	SCR *sp;
 {
-	struct timeval tv;
 	CHAR_T *endp, *p, *t, buf[1024];
 	SCRIPT *sc;
-	fd_set fdset;
+	struct pollfd pfd[1];
 	recno_t lline;
 	size_t llen, len;
 	u_int value;
 	int nr;
 
-	FD_ZERO(&fdset);
 	endp = buf;
 	len = sizeof(buf);
 
 	/* Wait up to a second for characters to read. */
-	tv.tv_sec = 5;
-	tv.tv_usec = 0;
 	sc = sp->script;
-	FD_SET(sc->sh_master, &fdset);
-	switch (select(sc->sh_master + 1, &fdset, NULL, NULL, &tv)) {
+	pfd[0].fd = sc->sh_master;
+	pfd[0].events = POLLIN;
+	switch (poll(pfd, 1, 5 * 1000)) {
 	case -1:		/* Error or interrupt. */
-		msgq(sp, M_SYSERR, "select");
+		msgq(sp, M_SYSERR, "poll");
 		goto prompterr;
 	case  0:		/* Timeout */
 		msgq(sp, M_ERR, "Error: timed out");
 		goto prompterr;
-	case  1:		/* Characters to read. */
+	default:		/* Characters to read. */
 		break;
 	}
 
@@ -272,15 +270,13 @@ more:	len = sizeof(buf) - (endp - buf);
 		goto more;
 
 	/* Wait up 1/10 of a second to make sure that we got it all. */
-	tv.tv_sec = 0;
-	tv.tv_usec = 100000;
-	switch (select(sc->sh_master + 1, &fdset, NULL, NULL, &tv)) {
+	switch (poll(pfd, 1, 100)) {
 	case -1:		/* Error or interrupt. */
-		msgq(sp, M_SYSERR, "select");
+		msgq(sp, M_SYSERR, "poll");
 		goto prompterr;
 	case  0:		/* Timeout */
 		break;
-	case  1:		/* Characters to read. */
+	default:		/* Characters to read. */
 		goto more;
 	}
 
@@ -381,31 +377,40 @@ sscr_input(sp)
 	SCR *sp;
 {
 	GS *gp;
-	struct timeval poll;
-	fd_set rdfd;
-	int maxfd;
+	struct timeval tv;
+	fd_set *rdfd;
+	int maxfd, nfd;
 
 	gp = sp->gp;
 
-loop:	maxfd = 0;
-	FD_ZERO(&rdfd);
-	poll.tv_sec = 0;
-	poll.tv_usec = 0;
+	/* Allocate space for rdfd. */
+	maxfd = STDIN_FILENO;
+	for (sp = gp->dq.cqh_first; sp != (void *)&gp->dq; sp = sp->q.cqe_next)
+		if (F_ISSET(sp, SC_SCRIPT) && sp->script->sh_master > maxfd)
+			maxfd = sp->script->sh_master;
+	rdfd = (fd_set *)malloc(howmany(maxfd + 1, NFDBITS) * sizeof(fd_mask));
+	if (rdfd == NULL) {
+		msgq(sp, M_SYSERR, "malloc");
+		return (1);
+	}
+
+loop:	memset(rdfd, 0, howmany(maxfd + 1, NFDBITS) * sizeof(fd_mask));
+	tv.tv_sec = 0;
+	tv.tv_usec = 0;
 
 	/* Set up the input mask. */
 	for (sp = gp->dq.cqh_first; sp != (void *)&gp->dq; sp = sp->q.cqe_next)
-		if (F_ISSET(sp, SC_SCRIPT)) {
-			FD_SET(sp->script->sh_master, &rdfd);
-			if (sp->script->sh_master > maxfd)
-				maxfd = sp->script->sh_master;
-		}
+		if (F_ISSET(sp, SC_SCRIPT))
+			FD_SET(sp->script->sh_master, rdfd);
 
 	/* Check for input. */
-	switch (select(maxfd + 1, &rdfd, NULL, NULL, &poll)) {
+	switch (select(maxfd + 1, rdfd, NULL, NULL, &tv)) {
 	case -1:
 		msgq(sp, M_SYSERR, "select");
+		free(rdfd);
 		return (1);
 	case 0:
+		free(rdfd);
 		return (0);
 	default:
 		break;
@@ -414,8 +419,10 @@ loop:	maxfd = 0;
 	/* Read the input. */
 	for (sp = gp->dq.cqh_first; sp != (void *)&gp->dq; sp = sp->q.cqe_next)
 		if (F_ISSET(sp, SC_SCRIPT) &&
-		    FD_ISSET(sp->script->sh_master, &rdfd) && sscr_insert(sp))
+		    FD_ISSET(sp->script->sh_master, rdfd) && sscr_insert(sp)) {
+			free(rdfd);
 			return (1);
+		}
 	goto loop;
 }
 
@@ -430,7 +437,7 @@ sscr_insert(sp)
 	struct timeval tv;
 	CHAR_T *endp, *p, *t;
 	SCRIPT *sc;
-	fd_set rdfd;
+	struct pollfd pfd[1];
 	recno_t lno;
 	size_t blen, len, tlen;
 	u_int value;
@@ -481,12 +488,9 @@ more:	switch (nr = read(sc->sh_master, endp, MINREAD)) {
 		 * confused the shell, or whatever.
 		 */
 		if (!sscr_matchprompt(sp, t, len, &tlen) || tlen != 0) {
-			tv.tv_sec = 0;
-			tv.tv_usec = 100000;
-			FD_ZERO(&rdfd);
-			FD_SET(sc->sh_master, &rdfd);
-			if (select(sc->sh_master + 1,
-			    &rdfd, NULL, NULL, &tv) == 1) {
+			pfd[0].fd = sc->sh_master;
+			pfd[0].events = POLLIN;
+			if (poll(pfd, 1, 100) > 0) {
 				memmove(bp, t, len);
 				endp = bp + len;
 				goto more;
