@@ -83,7 +83,9 @@ sigexit(int signo)
 void
 usage(void)
 {
-    fprintf(stderr,"usage: %s [-d] [-t timo] [-s] [-a] [-f devfile] [-S sockfile]\n", __progname);
+    fprintf(stderr,
+	    "usage: %s [-dsaqepm] [-t timo] [-a] [-f devfile] [-S sockfile]\n",
+	    __progname);
     exit(1);
 }
 
@@ -121,7 +123,7 @@ power_status(int fd, int force, struct apm_power_info *pinfo)
 		       "estimated battery life %d%% (%d minutes)",
 		       battstate(bstate.battery_state),
 		       ac_state(bstate.ac_state), bstate.battery_life,
-		       bstate.minutes_left / 60 );
+		       bstate.minutes_left );
 	    else
 		syslog(LOG_NOTICE,
 		       "battery status: %s. external power status: %s. "
@@ -424,7 +426,7 @@ main(int argc, char *argv[])
 		    resumes++;
 		    break;
 		case APM_POWER_CHANGE:
-		    power_status(ctl_fd, 1, 0);
+		    power_status(ctl_fd, 0, 0);
 		    break;
 		default:
 		    break;
