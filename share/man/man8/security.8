@@ -1,4 +1,4 @@
-.\" $OpenBSD: security.8,v 1.9 2004/10/04 20:55:29 jmc Exp $
+.\" $OpenBSD: security.8,v 1.10 2005/01/06 00:00:38 jmc Exp $
 .\"
 .\" David Leonard, 2001. Public Domain.
 .\"
@@ -74,11 +74,25 @@ Check disk ownership and permissions.
 Check for changes in the device file list.
 .It
 Check for permission changes in special files and system binaries listed in
-.Pa /etc/mtree/special
-and
-.Pa "/etc/mtree/*.secure" .
+.Pa /etc/mtree/special .
+.Nm
+also provides hooks for administrators to create their own lists.
+These lists should be kept in
+.Pa /etc/mtree/
+and filenames must have the suffix
+.Dq .secure .
+The following example shows how to create such a list,
+to protect the home directory of user
+.Dq bob :
+.Bd -literal -offset 4n
+# mtree -cx -p /home/bob -K md5digest,type \*(Gt/etc/mtree/bob.secure
+# chown root:wheel /etc/mtree/bob.secure
+# chmod 600 /etc/mtree/bob.secure
+.Ed
+.Pp
 .Sy Note:
-This is not complete protection against Trojan horsed binaries, as
+These checks do not provide complete protection against
+Trojan horsed binaries, as
 the miscreant can modify the tree specification to match the replaced binary.
 For details on really protecting yourself against modified binaries, see
 .Xr mtree 8 .

@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: security,v 1.68 2004/08/25 19:59:29 millert Exp $
+#	$OpenBSD: security,v 1.69 2005/01/06 00:00:38 jmc Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -602,9 +602,9 @@ fi
 #
 # Create the mtree tree specifications using:
 #
-#	mtree -cx -pDIR -kcksum,gid,mode,nlink,size,link,time,uid > DIR.secure
-#	chown root:wheel DIR.secure
-#	chmod 600 DIR.secure
+#	mtree -cx -p DIR -K md5digest,type >/etc/mtree/DIR.secure
+#	chown root:wheel /etc/mtree/DIR.secure
+#	chmod 600 /etc/mtree/DIR.secure
 #
 # Note, this is not complete protection against Trojan horsed binaries, as
 # the hacker can modify the tree specification to match the replaced binary.
