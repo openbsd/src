@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftree.c,v 1.22 2003/06/02 23:32:08 millert Exp $	*/
+/*	$OpenBSD: ftree.c,v 1.23 2003/06/13 17:51:14 millert Exp $	*/
 /*	$NetBSD: ftree.c,v 1.4 1995/03/21 09:07:21 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)ftree.c	8.2 (Berkeley) 4/18/94";
 #else
-static const char rcsid[] = "$OpenBSD: ftree.c,v 1.22 2003/06/02 23:32:08 millert Exp $";
+static const char rcsid[] = "$OpenBSD: ftree.c,v 1.23 2003/06/13 17:51:14 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -80,6 +80,7 @@ static FTSENT *ftent = NULL;		/* current file tree entry */
 static int ftree_skip;			/* when set skip to next file arg */
 
 static int ftree_arg(void);
+static char *getpathname(char *, int);
 
 /*
  * ftree_start()
@@ -259,7 +260,6 @@ ftree_chk(void)
 static int
 ftree_arg(void)
 {
-	char *pt;
 
 	/*
 	 * close off the current file tree
@@ -279,10 +279,8 @@ ftree_arg(void)
 			 * the user didn't supply any args, get the file trees
 			 * to process from stdin;
 			 */
-			if (fgets(farray[0], PAXPATHLEN+1, stdin) == NULL)
+			if (getpathname(farray[0], PAXPATHLEN+1) == NULL)
 				return(-1);
-			if ((pt = strchr(farray[0], '\n')) != NULL)
-				*pt = '\0';
 		} else {
 			/*
 			 * the user supplied the file args as arguments to pax
@@ -498,4 +496,52 @@ next_file(ARCHD *arcn)
 	arcn->nlen = strlcpy(arcn->name, ftent->fts_path, sizeof(arcn->name));
 	arcn->org_name = ftent->fts_path;
 	return(0);
+}
+
+/*
+ * getpathname()
+ *	Reads a pathname from stdin, handling NUL- or newline-termination.
+ * Return:
+ *	NULL at end of file, otherwise the NUL-terminated buffer.
+ */
+
+static char *
+getpathname(char *buf, int buflen)
+{
+	char *bp, *ep;
+	int ch, term;
+
+	if (zeroflag) {
+		/*
+		 * Read a NUL-terminated pathname, being especially
+		 * paranoid about proper termination and pathname length.
+		 */
+		for (bp = buf, ep = buf + buflen; bp < ep; bp++) {
+			if ((ch = getchar()) == EOF) {
+				if (bp != buf)
+					paxwarn(1, "Ignoring unterminated "
+					    "pathname at EOF");
+				return(NULL);
+			}
+			if ((*bp = ch) == '\0')
+				return(buf);
+		}
+		/* Too long - skip this path */
+		*--bp = '\0';
+		term = '\0';
+	} else {
+		if (fgets(buf, buflen, stdin) == NULL)
+			return(NULL);
+		if ((bp = strchr(buf, '\n')) != NULL || feof(stdin)) {
+			if (bp != NULL)
+				*bp = '\0';
+			return(buf);
+		}
+		/* Too long - skip this path */
+		term = '\n';
+	}
+	while ((ch = getchar()) != term && ch != EOF)
+		;
+	paxwarn(1, "Ignoring too-long pathname: %s", buf);
+	return(NULL);
 }

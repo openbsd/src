@@ -1,4 +1,4 @@
-/*	$OpenBSD: gen_subs.c,v 1.16 2003/06/02 23:32:08 millert Exp $	*/
+/*	$OpenBSD: gen_subs.c,v 1.17 2003/06/13 17:51:14 millert Exp $	*/
 /*	$NetBSD: gen_subs.c,v 1.5 1995/03/21 09:07:26 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)gen_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: gen_subs.c,v 1.16 2003/06/02 23:32:08 millert Exp $";
+static const char rcsid[] = "$OpenBSD: gen_subs.c,v 1.17 2003/06/13 17:51:14 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -82,13 +82,19 @@ ls_list(ARCHD *arcn, time_t now, FILE *fp)
 	char f_mode[MODELEN];
 	char f_date[DATELEN];
 	const char *timefrmt;
+	int term;
+
+	term = zeroflag ? '\0' : '\n';	/* path termination character */
 
 	/*
 	 * if not verbose, just print the file name
 	 */
 	if (!vflag) {
-		safe_print(arcn->name, fp);
-		(void)putc('\n', fp);
+		if (zeroflag)
+			(void)fputs(arcn->name, fp);
+		else
+			safe_print(arcn->name, fp);
+		(void)putc(term, fp);
 		(void)fflush(fp);
 		return;
 	}
@@ -151,7 +157,7 @@ ls_list(ARCHD *arcn, time_t now, FILE *fp)
 		fputs(" => ", fp);
 		safe_print(arcn->ln_name, fp);
 	}
-	(void)putc('\n', fp);
+	(void)putc(term, fp);
 	(void)fflush(fp);
 	return;
 }

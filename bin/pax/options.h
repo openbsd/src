@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.h,v 1.3 2003/06/02 23:32:08 millert Exp $	*/
+/*	$OpenBSD: options.h,v 1.4 2003/06/13 17:51:14 millert Exp $	*/
 /*	$NetBSD: options.h,v 1.3 1995/03/21 09:07:32 cgd Exp $	*/
 
 /*-
@@ -84,12 +84,13 @@
 #define	CXF	0x08000000
 #define	CYF	0x10000000	/* nonstandard extension */
 #define	CZF	0x20000000	/* nonstandard extension */
+#define	C0F	0x40000000	/* nonstandard extension */
 
 /*
  * ascii string indexed by bit position above (alter the above and you must
  * alter this string) used to tell the user what flags caused us to complain
  */
-#define FLGCH	"abcdfiklnoprstuvwxBDEGHLPTUXYZ"
+#define FLGCH	"abcdfiklnoprstuvwxBDEGHLPTUXYZ0"
 
 /*
  * legal pax operation bit patterns

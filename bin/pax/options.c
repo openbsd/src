@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.57 2003/06/02 23:32:08 millert Exp $	*/
+/*	$OpenBSD: options.c,v 1.58 2003/06/13 17:51:14 millert Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-static const char rcsid[] = "$OpenBSD: options.c,v 1.57 2003/06/02 23:32:08 millert Exp $";
+static const char rcsid[] = "$OpenBSD: options.c,v 1.58 2003/06/13 17:51:14 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -194,7 +194,7 @@ pax_options(int argc, char **argv)
 	/*
 	 * process option flags
 	 */
-	while ((c=getopt(argc,argv,"ab:cdf:iklno:p:rs:tuvwx:zB:DE:G:HLPT:U:XYZ"))
+	while ((c=getopt(argc,argv,"ab:cdf:iklno:p:rs:tuvwx:zB:DE:G:HLPT:U:XYZ0"))
 	    != -1) {
 		switch (c) {
 		case 'a':
@@ -504,6 +504,14 @@ pax_options(int argc, char **argv)
 			 */
 			Zflag = 1;
 			flg |= CZF;
+			break;
+		case '0':
+			/*
+			 * Use \0 as pathname terminator.
+			 * (For use with the -print0 option of find(1).)
+			 */
+			zeroflag = 1;
+			flg |= C0F;
 			break;
 		default:
 			pax_usage();
