@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.10 2001/06/23 19:44:38 deraadt Exp $
+#	$OpenBSD: install.md,v 1.11 2002/02/14 03:34:14 deraadt Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -128,7 +128,7 @@ md_welcome_banner() {
 {
 	if [ "$MODE" = "install" ]; then
 		echo ""
-		echo "Welcome to the OpenBSD/amiga ${VERSION} installation program."
+		echo "Welcome to the OpenBSD/amiga ${VERSION_MAJOR}.${VERSION_MINOR} installation program."
 		cat << \__welcome_banner_1
 
 This program is designed to help you put OpenBSD on your disk in a simple and
@@ -137,7 +137,7 @@ __welcome_banner_1
 
 	else
 		echo ""
-		echo "Welcome to the OpenBSD/amiga ${VERSION} upgrade program."
+		echo "Welcome to the OpenBSD/amiga ${VERSION_MAJOR}.${VERSION_MINOR} upgrade program."
 		cat << \__welcome_banner_2
 
 This program is designed to help you upgrade your OpenBSD system in a

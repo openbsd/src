@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.7 2001/06/23 19:44:49 deraadt Exp $
+#       $OpenBSD: install.md,v 1.8 2002/02/14 03:34:15 deraadt Exp $
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
@@ -171,7 +171,7 @@ __md_prep_disklabel_1
 md_welcome_banner() {
 	if [ "$MODE" = "install" ]; then
 		echo ""
-		echo "Welcome to the OpenBSD/mvme88k ${VERSION} installation program."
+		echo "Welcome to the OpenBSD/mvme88k ${VERSION_MAJOR}.${VERSION_MINOR} installation program."
 		cat << \__welcome_banner_1
 
 This program is designed to help you put OpenBSD on your disk,
@@ -182,7 +182,7 @@ __welcome_banner_1
 
 	else
 		echo ""
-		echo "Welcome to the OpenBSD/mvme88k ${VERSION} upgrade program."
+		echo "Welcome to the OpenBSD/mvme88k ${VERSION_MAJOR}.${VERSION_MINOR} upgrade program."
 		cat << \__welcome_banner_2
 
 This program is designed to help you upgrade your OpenBSD system in a
