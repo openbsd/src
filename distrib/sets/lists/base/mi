@@ -32,8 +32,10 @@
 ./bin/rksh
 ./bin/rm
 ./bin/rmail
+./bin/rmd160
 ./bin/rmdir
 ./bin/sh
+./bin/sha1
 ./bin/sleep
 ./bin/stty
 ./bin/sync
@@ -106,6 +108,7 @@
 ./sbin/nfsd
 ./sbin/nfsiod
 ./sbin/nologin
+./sbin/photurisd
 ./sbin/ping
 ./sbin/quotacheck
 ./sbin/rdump
@@ -121,6 +124,7 @@
 ./sbin/scsi
 ./sbin/shutdown
 ./sbin/slattach
+./sbin/startkey
 ./sbin/swapon
 ./sbin/ttyflags
 ./sbin/tunefs
@@ -211,6 +215,7 @@
 ./usr/bin/gzip
 ./usr/bin/head
 ./usr/bin/hexdump
+./usr/bin/hoststat
 ./usr/bin/id
 ./usr/bin/ident
 ./usr/bin/indent
@@ -276,6 +281,7 @@
 ./usr/bin/olf2elf
 ./usr/bin/otp-md4
 ./usr/bin/otp-md5
+./usr/bin/otp-rmd160
 ./usr/bin/otp-sha1
 ./usr/bin/page
 ./usr/bin/pagesize
@@ -291,6 +297,7 @@
 ./usr/bin/printf
 ./usr/bin/protoize
 ./usr/bin/pstruct
+./usr/bin/purgestat
 ./usr/bin/quota
 ./usr/bin/rcs
 ./usr/bin/rcs2log
@@ -347,6 +354,7 @@
 ./usr/bin/time
 ./usr/bin/tip
 ./usr/bin/tn3270
+./usr/bin/top
 ./usr/bin/touch
 ./usr/bin/tput
 ./usr/bin/tr
@@ -657,6 +665,7 @@
 ./usr/libexec/uucp/uuconv
 ./usr/libexec/uucp/uuxqt
 ./usr/libexec/uucpd
+./usr/libexec/vi.recover
 ./usr/lkm
 ./usr/lkm/ipl.o
 ./usr/local
@@ -743,6 +752,7 @@
 ./usr/sbin/makemap
 ./usr/sbin/map-mbone
 ./usr/sbin/mk-amd-map
+./usr/sbin/mkalias
 ./usr/sbin/mknetid
 ./usr/sbin/mopa.out
 ./usr/sbin/mopchk
@@ -854,12 +864,6 @@
 ./usr/share/calendar/ru_SU.KOI8-R/calendar.msk
 ./usr/share/calendar/ru_SU.KOI8-R/calendar.orthodox
 ./usr/share/calendar/ru_SU.KOI8-R/calendar.pagan
-./usr/share/locale/de
-./usr/share/locale/de/LC_MESSAGES
-./usr/share/locale/de/LC_MESSAGES/texinfo.mo
-./usr/share/locale/fr
-./usr/share/locale/fr/LC_MESSAGES
-./usr/share/locale/fr/LC_MESSAGES/texinfo.mo
 ./usr/share/dict
 ./usr/share/dict/papers
 ./usr/share/dict/special
@@ -986,6 +990,12 @@
 ./usr/share/lkm/vfs
 ./usr/share/lkm/vfs/module
 ./usr/share/locale
+./usr/share/locale/de
+./usr/share/locale/de/LC_MESSAGES
+./usr/share/locale/de/LC_MESSAGES/texinfo.mo
+./usr/share/locale/fr
+./usr/share/locale/fr/LC_MESSAGES
+./usr/share/locale/fr/LC_MESSAGES/texinfo.mo
 ./usr/share/man
 ./usr/share/man/COPYRIGHT
 ./usr/share/man/cat1
@@ -1720,19 +1730,10 @@
 ./var/spool/uucp
 ./var/spool/uucppublic
 ./var/tmp
+./var/tmp/vi.recover
 ./var/yp
 ./var/yp/Makefile.main
 ./var/yp/Makefile.main.dist
 ./var/yp/Makefile.yp
 ./var/yp/Makefile.yp.dist
 ./var/yp/README
-./bin/rmd160
-./bin/sha1
-./usr/bin/otp-rmd160
-./sbin/photurisd
-./sbin/startkey
-./usr/sbin/mkalias
-./usr/libexec/vi.recover
-./var/tmp/vi.recover
-./usr/bin/hoststat
-./usr/bin/purgestat

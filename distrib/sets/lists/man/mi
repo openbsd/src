@@ -15,10 +15,6 @@
 ./usr/share/info/cvs.info-6
 ./usr/share/info/cvs.info-7
 ./usr/share/info/cvs.info-8
-./usr/share/info/gmp.info
-./usr/share/info/gmp.info-1
-./usr/share/info/gmp.info-2
-./usr/share/info/gmp.info-3
 ./usr/share/info/cvsclient.info
 ./usr/share/info/dir
 ./usr/share/info/g77.info
@@ -58,6 +54,10 @@
 ./usr/share/info/gcc.info-7
 ./usr/share/info/gcc.info-8
 ./usr/share/info/gcc.info-9
+./usr/share/info/gmp.info
+./usr/share/info/gmp.info-1
+./usr/share/info/gmp.info-2
+./usr/share/info/gmp.info-3
 ./usr/share/info/gperf.info
 ./usr/share/info/gzip.info
 ./usr/share/info/info-stnd.info
@@ -183,6 +183,7 @@
 ./usr/share/man/cat1/fstat.0
 ./usr/share/man/cat1/ftp.0
 ./usr/share/man/cat1/g77.0
+./usr/share/man/cat1/gencat.0
 ./usr/share/man/cat1/getconf.0
 ./usr/share/man/cat1/getopt.0
 ./usr/share/man/cat1/gperf.0
@@ -278,6 +279,7 @@
 ./usr/share/man/cat1/olf2elf.0
 ./usr/share/man/cat1/otp-md4.0
 ./usr/share/man/cat1/otp-md5.0
+./usr/share/man/cat1/otp-rmd160.0
 ./usr/share/man/cat1/otp-sha1.0
 ./usr/share/man/cat1/page.0
 ./usr/share/man/cat1/pagesize.0
@@ -317,6 +319,7 @@
 ./usr/share/man/cat1/perlvar.0
 ./usr/share/man/cat1/perlxs.0
 ./usr/share/man/cat1/perlxstut.0
+./usr/share/man/cat1/photurisd.0
 ./usr/share/man/cat1/pkg_add.0
 ./usr/share/man/cat1/pkg_create.0
 ./usr/share/man/cat1/pkg_delete.0
@@ -339,6 +342,7 @@
 ./usr/share/man/cat1/rcsmerge.0
 ./usr/share/man/cat1/rdist.0
 ./usr/share/man/cat1/rdistd.0
+./usr/share/man/cat1/readlink.0
 ./usr/share/man/cat1/register.0
 ./usr/share/man/cat1/rehash.0
 ./usr/share/man/cat1/repeat.0
@@ -348,6 +352,7 @@
 ./usr/share/man/cat1/rlog.0
 ./usr/share/man/cat1/rlogin.0
 ./usr/share/man/cat1/rm.0
+./usr/share/man/cat1/rmd160.0
 ./usr/share/man/cat1/rmdir.0
 ./usr/share/man/cat1/rs.0
 ./usr/share/man/cat1/rsh.0
@@ -362,6 +367,7 @@
 ./usr/share/man/cat1/sed.0
 ./usr/share/man/cat1/sendbug.0
 ./usr/share/man/cat1/sh.0
+./usr/share/man/cat1/sha1.0
 ./usr/share/man/cat1/shar.0
 ./usr/share/man/cat1/size.0
 ./usr/share/man/cat1/skey.0
@@ -372,6 +378,7 @@
 ./usr/share/man/cat1/sort.0
 ./usr/share/man/cat1/source.0
 ./usr/share/man/cat1/split.0
+./usr/share/man/cat1/startkey.0
 ./usr/share/man/cat1/stop.0
 ./usr/share/man/cat1/strings.0
 ./usr/share/man/cat1/stty.0
@@ -391,6 +398,7 @@
 ./usr/share/man/cat1/time.0
 ./usr/share/man/cat1/tip.0
 ./usr/share/man/cat1/tn3270.0
+./usr/share/man/cat1/top.0
 ./usr/share/man/cat1/touch.0
 ./usr/share/man/cat1/tput.0
 ./usr/share/man/cat1/tr.0
@@ -442,11 +450,13 @@
 ./usr/share/man/cat1/znew.0
 ./usr/share/man/cat4/acd.0
 ./usr/share/man/cat4/ahc.0
+./usr/share/man/cat4/arandom.0
 ./usr/share/man/cat4/arp.0
 ./usr/share/man/cat4/audio.0
 ./usr/share/man/cat4/bpf.0
 ./usr/share/man/cat4/ccd.0
 ./usr/share/man/cat4/cd.0
+./usr/share/man/cat4/ch.0
 ./usr/share/man/cat4/clnp.0
 ./usr/share/man/cat4/cltp.0
 ./usr/share/man/cat4/cua.0
@@ -455,6 +465,7 @@
 ./usr/share/man/cat4/esis.0
 ./usr/share/man/cat4/fd.0
 ./usr/share/man/cat4/fpa.0
+./usr/share/man/cat4/i386/pccom.0
 ./usr/share/man/cat4/icmp.0
 ./usr/share/man/cat4/idp.0
 ./usr/share/man/cat4/imp.0
@@ -466,6 +477,11 @@
 ./usr/share/man/cat4/iso.0
 ./usr/share/man/cat4/lkm.0
 ./usr/share/man/cat4/lo.0
+./usr/share/man/cat4/mac68k/ae.0
+./usr/share/man/cat4/mac68k/intro.0
+./usr/share/man/cat4/mac68k/kmem.0
+./usr/share/man/cat4/mac68k/mem.0
+./usr/share/man/cat4/mac68k/sn.0
 ./usr/share/man/cat4/ncr.0
 ./usr/share/man/cat4/netintro.0
 ./usr/share/man/cat4/networking.0
@@ -606,6 +622,7 @@
 ./usr/share/man/cat8/compat_linux.0
 ./usr/share/man/cat8/compat_sunos.0
 ./usr/share/man/cat8/compat_svr4.0
+./usr/share/man/cat8/compat_ultrix.0
 ./usr/share/man/cat8/comsat.0
 ./usr/share/man/cat8/cron.0
 ./usr/share/man/cat8/cvsbug.0
@@ -622,6 +639,7 @@
 ./usr/share/man/cat8/fasthalt.0
 ./usr/share/man/cat8/fingerd.0
 ./usr/share/man/cat8/fsck.0
+./usr/share/man/cat8/fsck_ext2fs.0
 ./usr/share/man/cat8/fsck_ffs.0
 ./usr/share/man/cat8/fsck_msdos.0
 ./usr/share/man/cat8/fsdb.0
@@ -647,6 +665,8 @@
 ./usr/share/man/cat8/kdb_util.0
 ./usr/share/man/cat8/kerberos.0
 ./usr/share/man/cat8/kpasswdd.0
+./usr/share/man/cat8/kprop.0
+./usr/share/man/cat8/kpropd.0
 ./usr/share/man/cat8/ksrvutil.0
 ./usr/share/man/cat8/kstash.0
 ./usr/share/man/cat8/kvm_mkdb.0
@@ -662,6 +682,7 @@
 ./usr/share/man/cat8/map-mbone.0
 ./usr/share/man/cat8/mfs.0
 ./usr/share/man/cat8/mk-amd-map.0
+./usr/share/man/cat8/mkalias.0
 ./usr/share/man/cat8/mknetid.0
 ./usr/share/man/cat8/mknod.0
 ./usr/share/man/cat8/modload.0
@@ -756,6 +777,7 @@
 ./usr/share/man/cat8/rwalld.0
 ./usr/share/man/cat8/rwhod.0
 ./usr/share/man/cat8/sa.0
+./usr/share/man/cat8/safe_finger.0
 ./usr/share/man/cat8/savecore.0
 ./usr/share/man/cat8/scsi.0
 ./usr/share/man/cat8/sendmail.0
@@ -818,6 +840,7 @@
 ./usr/share/man/cat8/ypxfr_2perday.0
 ./usr/share/man/cat8/zdump.0
 ./usr/share/man/cat8/zic.0
+./usr/share/man/cat9/panic.0
 ./usr/share/man/cat9/spl.0
 ./usr/share/man/cat9/spl0.0
 ./usr/share/man/cat9/splbio.0
@@ -833,37 +856,3 @@
 ./usr/share/man/cat9/splstatclock.0
 ./usr/share/man/cat9/spltty.0
 ./usr/share/man/cat9/splx.0
-./usr/share/man/cat9/panic.0
-./usr/share/man/cat8/compat_ultrix.0
-./usr/share/man/cat4/mac68k/ae.0
-./usr/share/man/cat4/mac68k/intro.0
-./usr/share/man/cat4/mac68k/kmem.0
-./usr/share/man/cat4/mac68k/mem.0
-./usr/share/man/cat4/mac68k/sn.0
-./usr/share/man/cat4/ch.0
-./usr/share/man/cat4/arandom.0
-./usr/share/man/cat3/pw_setdir.0
-./usr/share/man/cat4/i386/pccom.0
-./usr/share/man/cat1/gencat.0
-./usr/share/man/cat3/pw_file.0
-./usr/share/man/cat2/getpgid.0
-./usr/share/man/cat8/kprop.0
-./usr/share/man/cat8/kpropd.0
-./usr/share/man/cat8/safe_finger.0
-./usr/share/man/cat1/otp-rmd160.0
-./usr/share/man/cat1/rmd160.0
-./usr/share/man/cat1/sha1.0
-./usr/share/man/cat3/SHA1Final.0
-./usr/share/man/cat3/SHA1Init.0
-./usr/share/man/cat3/SHA1Transform.0
-./usr/share/man/cat3/SHA1Update.0
-./usr/share/man/cat3/sha1.0
-./usr/share/man/cat3/rmd160.0
-./usr/share/man/cat3/localeconv.0
-./usr/share/man/cat3/setlocale.0
-./usr/share/man/cat8/mkalias.0
-./usr/share/man/cat1/photurisd.0
-./usr/share/man/cat1/startkey.0
-./usr/share/man/cat3/inet_ntop.0
-./usr/share/man/cat3/inet_pton.0
-./usr/share/man/cat8/fsck_ext2fs.0

@@ -14,7 +14,7 @@
 ./usr/lib/gcc-lib/i386-unknown-openbsd2.1/2.7.2.1/include
 ./usr/lib/gcc-lib/i386-unknown-openbsd2.1/2.7.2.1/include/objc
 ./usr/lib/libacl.so.4.0
-./usr/lib/libc.so.17.0
+./usr/lib/libc.so.17.1
 ./usr/lib/libcurses.so.3.1
 ./usr/lib/libdes.so.6.0
 ./usr/lib/libedit.so.0.0
@@ -543,6 +543,8 @@
 ./usr/lib/perl5/i386-openbsd/5.003/sys/un.ph
 ./usr/lib/perl5/i386-openbsd/5.003/sys/unistd.ph
 ./usr/lib/perl5/i386-openbsd/5.003/sys/unpcb.ph
+./usr/lib/perl5/i386-openbsd/5.003/inttypes.ph
+./usr/lib/perl5/i386-openbsd/5.003/libgen.ph
 ./usr/lib/perl5/i386-openbsd/5.003/sys/user.ph
 ./usr/lib/perl5/i386-openbsd/5.003/sys/utsname.ph
 ./usr/lib/perl5/i386-openbsd/5.003/sys/vadvise.ph
