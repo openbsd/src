@@ -39,7 +39,6 @@
 ./usr/include/dev/audiovar.h
 ./usr/include/dev/ccdvar.h
 ./usr/include/dev/cons.h
-./usr/include/dev/ramdisk.h
 ./usr/include/dev/eisa
 ./usr/include/dev/eisa/eisareg.h
 ./usr/include/dev/eisa/eisavar.h
@@ -103,10 +102,16 @@
 ./usr/include/dev/pci/pcidevs_data.h
 ./usr/include/dev/pci/pcireg.h
 ./usr/include/dev/pci/pcivar.h
+./usr/include/dev/ramdisk.h
 ./usr/include/dev/rcons
 ./usr/include/dev/rcons/raster.h
 ./usr/include/dev/rcons/rcons.h
 ./usr/include/dev/rcons/rcons_subr.h
+./usr/include/dev/tc
+./usr/include/dev/tc/if_levar.h
+./usr/include/dev/tc/ioasicvar.h
+./usr/include/dev/tc/tcreg.h
+./usr/include/dev/tc/tcvar.h
 ./usr/include/dev/vndioctl.h
 ./usr/include/dirent.h
 ./usr/include/disktab.h
@@ -638,6 +643,7 @@
 ./usr/lib/libl_p.a
 ./usr/lib/libm.a
 ./usr/lib/libm_p.a
+./usr/lib/libobjc.a
 ./usr/lib/libpcap.a
 ./usr/lib/libpcap_p.a
 ./usr/lib/libresolv.a
@@ -691,6 +697,7 @@
 ./usr/share/man/cat1/asa.0
 ./usr/share/man/cat1/c++.0
 ./usr/share/man/cat1/cc.0
+./usr/share/man/cat1/cccp.0
 ./usr/share/man/cat1/flex.0
 ./usr/share/man/cat1/fpr.0
 ./usr/share/man/cat1/g++.0
@@ -774,6 +781,10 @@
 ./usr/share/man/cat2/mmap.0
 ./usr/share/man/cat2/mount.0
 ./usr/share/man/cat2/mprotect.0
+./usr/share/man/cat2/msgctl.0
+./usr/share/man/cat2/msgget.0
+./usr/share/man/cat2/msgrcv.0
+./usr/share/man/cat2/msgsnd.0
 ./usr/share/man/cat2/msync.0
 ./usr/share/man/cat2/munlock.0
 ./usr/share/man/cat2/munmap.0
@@ -797,6 +808,9 @@
 ./usr/share/man/cat2/sbrk.0
 ./usr/share/man/cat2/seek.0
 ./usr/share/man/cat2/select.0
+./usr/share/man/cat2/semctl.0
+./usr/share/man/cat2/semget.0
+./usr/share/man/cat2/semop.0
 ./usr/share/man/cat2/send.0
 ./usr/share/man/cat2/sendmsg.0
 ./usr/share/man/cat2/sendto.0
@@ -814,6 +828,9 @@
 ./usr/share/man/cat2/setsockopt.0
 ./usr/share/man/cat2/settimeofday.0
 ./usr/share/man/cat2/setuid.0
+./usr/share/man/cat2/shmat.0
+./usr/share/man/cat2/shmctl.0
+./usr/share/man/cat2/shmget.0
 ./usr/share/man/cat2/shutdown.0
 ./usr/share/man/cat2/sigaction.0
 ./usr/share/man/cat2/sigaltstack.0
@@ -1539,4 +1556,5 @@
 ./usr/share/mk/bsd.own.mk
 ./usr/share/mk/bsd.prog.mk
 ./usr/share/mk/bsd.subdir.mk
+./usr/share/mk/bsd.sys.mk
 ./var/db/libc.tags

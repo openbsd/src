@@ -54,6 +54,7 @@
 ./usr/share/man/cat4/i386/eg.0
 ./usr/share/man/cat4/i386/el.0
 ./usr/share/man/cat4/i386/ep.0
+./usr/share/man/cat4/i386/gus.0
 ./usr/share/man/cat4/i386/ie.0
 ./usr/share/man/cat4/i386/intro.0
 ./usr/share/man/cat4/i386/kmem.0
@@ -66,11 +67,14 @@
 ./usr/share/man/cat4/i386/ncr.0
 ./usr/share/man/cat4/i386/npx.0
 ./usr/share/man/cat4/i386/pms.0
+./usr/share/man/cat4/i386/pss.0
 ./usr/share/man/cat4/i386/rtfps.0
+./usr/share/man/cat4/i386/sb.0
 ./usr/share/man/cat4/i386/sea.0
 ./usr/share/man/cat4/i386/speaker.0
 ./usr/share/man/cat4/i386/uha.0
 ./usr/share/man/cat4/i386/wd.0
+./usr/share/man/cat4/i386/wss.0
 ./usr/share/man/cat4/i386/wt.0
 ./usr/share/man/cat4/pc532/lpt.0
 ./usr/share/man/cat4/pc532/plip.0
