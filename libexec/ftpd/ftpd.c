@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.71 2000/04/29 14:02:59 deraadt Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.72 2000/06/12 12:02:55 itojun Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -2150,7 +2150,7 @@ pasv_error:
 void
 long_passive(char *cmd, int pf)
 {
-	int len;
+	int len, on;
 	register u_char *p, *a;
 
 	if (!logged_in) {
@@ -2202,6 +2202,27 @@ long_passive(char *cmd, int pf)
 		perror_reply(425, "Can't open passive connection");
 		return;
 	}
+
+	switch (ctrl_addr.su_family) {
+	case AF_INET:
+#ifdef IP_PORTRANGE
+		on = high_data_ports ? IP_PORTRANGE_HIGH : IP_PORTRANGE_DEFAULT;
+		if (setsockopt(pdata, IPPROTO_IP, IP_PORTRANGE,
+		    (char *)&on, sizeof(on)) < 0)
+			goto pasv_error;
+#endif
+		break;
+	case AF_INET6:
+#ifdef IPV6_PORTRANGE
+		on = high_data_ports ? IPV6_PORTRANGE_HIGH
+				     : IPV6_PORTRANGE_DEFAULT;
+		if (setsockopt(pdata, IPPROTO_IPV6, IPV6_PORTRANGE,
+		    (char *)&on, sizeof(on)) < 0)
+			goto pasv_error;
+#endif
+		break;
+	}
+
 	pasv_addr = ctrl_addr;
 	pasv_addr.su_port = 0;
 	(void) seteuid((uid_t) 0);
