@@ -1,4 +1,4 @@
-/*	$OpenBSD: frame.h,v 1.8 1999/08/14 03:34:07 mickey Exp $	*/
+/*	$OpenBSD: frame.h,v 1.9 1999/09/11 23:49:37 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -21,13 +21,14 @@
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * IN NO EVENT SHALL THE AUTHOR OR HIS RELATIVES BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF MIND, USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 
@@ -41,28 +42,25 @@
  */
 #define	HPPA_FRAME_NARGS	(12)
 #define	HPPA_FRAME_MAXARGS	(HPPA_FRAME_NARGS * 4)
-#define	HPPA_FRAME_ARGSOFF	(18 * sizeof(register_t))
-
-#ifndef _LOCORE
-	/* size of frame is 32*sizeof(register_t) */
-struct hppa_frame {
-	register_t f_rp;
-	register_t f_r3 , f_r4 , f_r5 , f_r6 , f_r7 , f_r8 , f_r9 , f_r10,
-		   f_r11, f_r12, f_r13, f_r14, f_r15, f_r16, f_r17, f_r18;
-	register_t f_args[HPPA_FRAME_NARGS];
-	register_t f_sp;
-	register_t f_pad[2];
-	/* locals goes here */
-};
-#endif /* _LOCORE */
+#define	HPPA_FRAME_ARG(n)	(-(32 + 4*(n)))
+#define	HPPA_FRAME_CARG(n,sp)	((register_t *)((sp) + HPPA_FRAME_ARG(n)))
+#define	HPPA_FRAME_SIZE		(48)
+#define	HPPA_FRAME_PSP		(-4)
+#define	HPPA_FRAME_EP		(-8)
+#define	HPPA_FRAME_CLUP		(-12)
+#define	HPPA_FRAME_SL		(-16)
+#define	HPPA_FRAME_CRP		(-20)
+#define	HPPA_FRAME_ERP		(-24)
+#define	HPPA_FRAME_ESR4		(-28)
+#define	HPPA_FRAME_EDP		(-32)
 
 /*
  * Macros to decode processor status word.
  */
-#define HPPA_PC_PRIV_MASK    3
-#define HPPA_PC_PRIV_KERN    0
-#define HPPA_PC_PRIV_USER    3
-#define USERMODE(pc)    ((((register_t)pc) & HPPA_PC_PRIV_MASK) != HPPA_PC_PRIV_KERN)
+#define	HPPA_PC_PRIV_MASK    3
+#define	HPPA_PC_PRIV_KERN    0
+#define	HPPA_PC_PRIV_USER    3
+#define	USERMODE(pc)    ((((register_t)pc) & HPPA_PC_PRIV_MASK) != HPPA_PC_PRIV_KERN)
 #define	KERNMODE(pc)	(((register_t)pc) & ~HPPA_PC_PRIV_MASK)
 
 #ifndef _LOCORE
@@ -127,8 +125,9 @@ struct trapframe {
 	u_int	tf_hptm;	/* cr24 - DDB */
 	u_int	tf_vtop;	/* cr25 - DDB */
 	u_int	tf_cr28;	/*      - DDB */
+	u_int	tf_cr30;	/* KSP */
 
-	u_int	tf_pad[4];	/* pad to 256 bytes */
+	u_int	tf_pad[3];	/* pad to 256 bytes */
 };
 #endif /* !_LOCORE */
 
