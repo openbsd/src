@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.8 1997/01/25 23:26:42 tholo Exp $	*/
+/*	$OpenBSD: route.c,v 1.9 1997/06/18 01:52:27 angelos Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: route.c,v 1.8 1997/01/25 23:26:42 tholo Exp $";
+static char *rcsid = "$OpenBSD: route.c,v 1.9 1997/06/18 01:52:27 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -66,6 +66,12 @@ static char *rcsid = "$OpenBSD: route.c,v 1.8 1997/01/25 23:26:42 tholo Exp $";
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#ifndef INET
+#define INET
+#endif
+
+#include <net/encap.h>
 #include "netstat.h"
 
 #define kget(p, d) (kread((u_long)(p), (char *)&(d), sizeof (d)))
@@ -114,6 +120,7 @@ static void np_rtentry __P((struct rt_msghdr *));
 static void p_sockaddr __P((struct sockaddr *, int, int));
 static void p_flags __P((int, char *));
 static void p_rtentry __P((struct rtentry *));
+static void encap_print __P((struct rtentry *));
 
 /*
  * Print routing tables.
@@ -148,7 +155,10 @@ routepr(rtree)
 			} else if (af == AF_UNSPEC || af == i) {
 				pr_family(i);
 				do_rtent = 1;
-				pr_rthdr();
+				if (i != AF_ENCAP)
+				  pr_rthdr();
+				else
+				  pr_encaphdr();
 				p_tree(head.rnh_treetop);
 			}
 		}
@@ -180,6 +190,9 @@ pr_family(af)
 	case AF_CCITT:
 		afname = "X.25";
 		break;
+	case AF_ENCAP:
+	        afname = "Encap";
+		break;
 	default:
 		afname = NULL;
 		break;
@@ -207,6 +220,20 @@ pr_rthdr()
 		WID_DST, WID_DST, "Destination",
 		WID_GW, WID_GW, "Gateway",
 		"Flags", "Refs", "Use", "Mtu", "Interface");
+}
+
+/*
+ * Print header for AF_ENCAP entries.
+ */
+void
+pr_encaphdr()
+{
+    if (Aflag)
+            printf("%-8s ", "Address");
+    printf("%-15s %-15s %-5s %-15s %-15s %-5s %-5s %-15s %-15s %-8s %-9s %s\n",
+	   "Source address", "Source mask", "Port", "Dest. address", 
+	   "Dest. mask", "Port", "Proto", "Tunnel entry", "Tunnel exit",
+	   "SPI", "Interface", "Use");
 }
 
 static struct sockaddr *
@@ -347,9 +374,9 @@ np_rtentry(rtm)
 	if (rtm->rtm_addrs == RTA_DST)
 		p_sockaddr(sa, 0, 36);
 	else {
-		p_sockaddr(sa, rtm->rtm_flags, 16);
+	        p_sockaddr(sa, rtm->rtm_flags, 16);
 		if (sa->sa_len == 0)
-			sa->sa_len = sizeof(long);
+		      sa->sa_len = sizeof(long);
 		sa = (struct sockaddr *)(sa->sa_len + (char *)sa);
 		p_sockaddr(sa, 0, 18);
 	}
@@ -384,7 +411,7 @@ p_sockaddr(sa, flags, width)
 	case AF_IPX:
 		cp = ipx_print(sa);
 		break;
-
+		
 	case AF_LINK:
 	    {
 		register struct sockaddr_dl *sdl = (struct sockaddr_dl *)sa;
@@ -464,8 +491,17 @@ p_rtentry(rt)
 	register struct rtentry *rt;
 {
 	static struct ifnet ifnet, *lastif;
-
-	p_sockaddr(kgetsa(rt_key(rt)), rt->rt_flags, WID_DST);
+	struct sockaddr *sa;
+	
+	sa = kgetsa(rt_key(rt));
+	
+	if (sa->sa_family == AF_ENCAP)
+	{
+	    encap_print(rt);
+	    return;
+	}
+	
+	p_sockaddr(sa, rt->rt_flags, WID_DST);
 	p_sockaddr(kgetsa(rt->rt_gateway), RTF_HOST, WID_GW);
 	p_flags(rt->rt_flags, "%-6.6s ");
 	printf("%6d %8d ", rt->rt_refcnt, rt->rt_use);
@@ -744,6 +780,26 @@ ipx_phost(sa)
 	p = ipx_print((struct sockaddr *)&work);
 	if (strncmp("0H.", p, 3) == 0) p += 3;
 	return(p);
+}
+
+static void
+encap_print(rt)
+	register struct rtentry *rt;
+{
+        struct sockaddr_encap sen1, sen2, sen3;
+
+	bcopy(kgetsa(rt_key(rt)), &sen1, sizeof(sen1));
+	bcopy(kgetsa(rt_mask(rt)), &sen2, sizeof(sen2));
+	bcopy(kgetsa(rt->rt_gateway), &sen3, sizeof(sen3));
+
+	printf("%-15s ", inet_ntoa(sen1.sen_ip_src));
+	printf("%-15s %-5u ", inet_ntoa(sen2.sen_ip_src), sen1.sen_sport);
+	printf("%-15s ", inet_ntoa(sen1.sen_ip_dst));
+	printf("%-15s %-5u %-5u ", inet_ntoa(sen2.sen_ip_dst),
+	       sen1.sen_dport, sen1.sen_proto);
+	printf("%-15s ", inet_ntoa(sen3.sen_ipsp_src));
+	printf("%-15s %08x enc%-6u %-u\n", inet_ntoa(sen3.sen_ipsp_dst),
+	       ntohl(sen3.sen_ipsp_spi), sen3.sen_ipsp_ifn, rt->rt_use);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.9 1997/02/22 04:35:24 angelos Exp $	*/
+/*	$OpenBSD: main.c,v 1.10 1997/06/18 01:52:27 angelos Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-static char *rcsid = "$OpenBSD: main.c,v 1.9 1997/02/22 04:35:24 angelos Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.10 1997/06/18 01:52:27 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -262,6 +262,8 @@ main(argc, argv)
 				af = AF_NS;
 			else if (strcmp(optarg, "iso") == 0)
 				af = AF_ISO;
+			else if (strcmp(optarg, "encap") == 0)
+				af = AF_ENCAP;
 			else {
 				(void)fprintf(stderr,
 				    "%s: %s: unknown address family\n",
