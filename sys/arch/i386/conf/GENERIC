@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.76 1998/09/02 03:05:10 jason Exp $
+#	$OpenBSD: GENERIC,v 1.77 1998/09/10 21:21:38 jason Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -177,6 +177,12 @@ ed*	at pcmcia? port 0x300 size 0x20 irq 10 slot ? # PCMCIA based ed cards
 ep*	at pcmcia? port 0x300 size 0x10 irq 10 slot ? # PCMCIA based ep cards
 fpa*	at pci? dev ? function ?		# DEC DEFPA FDDI cards
 xl*	at pci? dev ? function ?		# 3c900/3c905 Ethernet
+
+# Media Independent Interface (mii) drivers
+#exphy*	at mii? phy ?				# 3Com internal PHYs
+#inphy*	at mii? phy ?				# Intel 82555 PHYs
+#nsphy*	at mii? phy ?				# NS and compatible PHYs
+#qsphy*	at mii? phy ?				# Quality Semi QS6612 PHYs
 
 pss0	at isa? port 0x220 irq 7 drq 6  # Personal Sound System
 sp0	at pss0 port 0x530 irq 10 drq 0	# 	sound port driver
