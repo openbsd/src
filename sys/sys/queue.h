@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.h,v 1.15 2000/04/15 00:20:13 deraadt Exp $	*/
+/*	$OpenBSD: queue.h,v 1.16 2000/09/07 19:47:59 art Exp $	*/
 /*	$NetBSD: queue.h,v 1.11 1996/05/16 05:17:14 mycroft Exp $	*/
 
 /*
@@ -308,10 +308,10 @@ struct {								\
 	    (var) != TAILQ_END(head);					\
 	    (var) = TAILQ_NEXT(var, field))
 
-#define TAILQ_FOREACH_REVERSE(var, head, field)				\
-	for((var) = TAILQ_LAST(head);					\
+#define TAILQ_FOREACH_REVERSE(var, head, field, headname)		\
+	for((var) = TAILQ_LAST(head, headname);				\
 	    (var) != TAILQ_END(head);					\
-	    (var) = TAILQ_PREV(var, field))
+	    (var) = TAILQ_PREV(var, headname, field))
 
 /*
  * Tail queue functions.
