@@ -1,4 +1,4 @@
-/*	$OpenBSD: union_subr.c,v 1.14 2003/06/02 23:28:11 millert Exp $ */
+/*	$OpenBSD: union_subr.c,v 1.15 2004/04/25 19:00:29 tedu Exp $ */
 /*	$NetBSD: union_subr.c,v 1.41 2001/11/10 13:33:45 lukem Exp $	*/
 
 /*
@@ -806,10 +806,11 @@ union_relookup(um, dvp, vpp, cnp, cn, path, pathlen)
 	cn->cn_nameiop = CREATE;
 	cn->cn_flags = (LOCKPARENT|HASBUF|SAVENAME|SAVESTART|ISLASTCN);
 	cn->cn_proc = cnp->cn_proc;
-	if (um->um_op == UNMNT_ABOVE)
-		cn->cn_cred = cnp->cn_cred;
+	if (um->um_op == UNMNT_BELOW && cnp->cn_nameiop == LOOKUP)
+		cn->cn_cred = um->um_cred;	/* XXX */
 	else
-		cn->cn_cred = um->um_cred;
+		cn->cn_cred = cnp->cn_cred;
+
 	cn->cn_nameptr = cn->cn_pnbuf;
 	cn->cn_hash = cnp->cn_hash;
 	cn->cn_consume = cnp->cn_consume;
