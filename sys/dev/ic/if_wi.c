@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.68 2002/06/21 06:46:26 fgsch Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.69 2002/06/21 06:50:37 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.68 2002/06/21 06:46:26 fgsch Exp $";
+	"$OpenBSD: if_wi.c,v 1.69 2002/06/21 06:50:37 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -187,7 +187,7 @@ wi_attach(sc)
 	struct ifnet		*ifp;
 	int			error;
 
-	sc->wi_flags = WI_FLAGS_ATTACHED;
+	sc->wi_flags = 0;
 
 	wi_cor_reset(sc);
 	wi_reset(sc);
@@ -382,6 +382,8 @@ wi_attach(sc)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 	printf("\n");
+
+	sc->wi_flags |= WI_FLAGS_ATTACHED;
 
 #if NBPFILTER > 0
 	BPFATTACH(&sc->sc_arpcom.ac_if.if_bpf, ifp, DLT_EN10MB,
