@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.55 2002/04/08 09:12:36 deraadt Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.56 2002/06/05 06:33:30 jsyn Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -399,7 +399,9 @@ using the specified
 .Ar key .
 The
 .Ar key
-can either be a string, a series of hexadecimal digits, or a set of keys
+can either be a string, a series of hexadecimal digits (preceded by
+.So 0x Sc Ns ),
+or a set of keys
 of the form
 .Ar n:k1,k2,k3,k4 ,
 where 
