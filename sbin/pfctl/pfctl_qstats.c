@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_qstats.c,v 1.5 2003/01/10 07:59:18 henning Exp $ */
+/*	$OpenBSD: pfctl_qstats.c,v 1.6 2003/01/10 08:00:23 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer
@@ -272,12 +272,8 @@ print_priqstats(struct priq_classstats qstats)
 	    "dropped pkts: %6llu bytes: %6llu ]\n",
 	    qstats.xmitcnt.packets, qstats.xmitcnt.bytes,
 	    qstats.dropcnt.packets, qstats.dropcnt.bytes);
-
-/* strange results. disable for now */
-#if 0
 	printf("[ qlength: %3d/%3d ]\n",
 	    qstats.qlength, qstats.qlimit);
-#endif
 }
 
 
