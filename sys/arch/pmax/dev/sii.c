@@ -1058,7 +1058,7 @@ again:
 			 * Note that the SII DMA address is not incremented
 			 * as DMA proceeds.
 			 */
-			if (state->dmaCurPhase > 0) {
+			if (state->dmaCurPhase >= 0) {
 				/* save dma registers */
 				state->dmaPrevPhase = state->dmaCurPhase;
 				state->dmaCurPhase = -1;
