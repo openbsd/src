@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.2 2001/09/04 22:25:02 deraadt Exp $
+#	$OpenBSD: install.md,v 1.3 2001/10/08 17:40:40 drahn Exp $
 #
 #
 # Copyright rc) 1996 The NetBSD Foundation, Inc.
@@ -378,7 +378,7 @@ md_welcome_banner() {
 {
 	if [ "$MODE" = install ]; then
 		cat << __EOT
-Welcome to the OpenBSD/powerpc ${VERSION_MAJOR}.${VERSION_MINOR} installation program.
+Welcome to the OpenBSD/macppc ${VERSION_MAJOR}.${VERSION_MINOR} installation program.
 
 This program is designed to help you put OpenBSD on your disk in a simple and
 rational way.
@@ -386,7 +386,7 @@ __EOT
 
 	else
 		cat << __EOT
-Welcome to the OpenBSD/powerpc ${VERSION_MAJOR}.${VERSION_MINOR} upgrade program.
+Welcome to the OpenBSD/macppc ${VERSION_MAJOR}.${VERSION_MINOR} upgrade program.
 
 This program is designed to help you upgrade your OpenBSD system in a simple
 and rational way.  As a reminder, installing the 'etc' binary set is NOT
