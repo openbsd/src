@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpc.3,v 1.16 1999/05/20 15:22:52 aaron Exp $
+.\"	$OpenBSD: rpc.3,v 1.17 1999/05/24 12:15:33 aaron Exp $
 .\" Mostly converted to mandoc by Theo de Raadt, Tue Feb 24 04:04:46 MST 1998
 .\"
 .Dd February 16, 1988
@@ -227,8 +227,8 @@ The routine
 .Fn clnt_perrno
 is handy for translating failure statuses into messages.
 .Pp
-Warning: calling remote procedures with this routine
-uses
+.Sy Warning:
+calling remote procedures with this routine uses
 .Tn UDP/IP
 as a transport; see
 .Fn clntudp_create
@@ -264,8 +264,9 @@ returns zero,
 .Fn clnt_broadcast
 waits for more replies; otherwise it returns with appropriate
 status.
-.IP
-Warning: broadcast sockets are limited in size to the
+.Pp
+.Sy Warning:
+broadcast sockets are limited in size to the
 maximum transfer unit of the data link. For Ethernet,
 this value is 1500 bytes.
 .Pp
@@ -316,8 +317,9 @@ currently supported values for this field are \(lqudp\(rq
 and \(lqtcp\(rq.
 Default timeouts are set, but can be modified using
 .Fn clnt_control .
-.IP
-Warning: Using
+.Pp
+.Sy Warning:
+Using
 .Tn UDP
 has its shortcomings.  Since
 .Tn UDP-based
@@ -345,7 +347,8 @@ and their argument types and what they do are:
 .Tn CLGET_TIMEOUT	struct timeval	get total timeout
 .Ed
 .Pp
-Note: if you set the timeout using
+.Sy Note:
+if you set the timeout using
 .Fn clnt_control ,
 the timeout parameter passed to
 .Fn clnt_call
@@ -432,8 +435,9 @@ is like
 .Fn clnt_pcreateerror ,
 except that it returns a string
 instead of printing to the standard error.
-.IP
-Bugs: returns pointer to static data that is overwritten
+.Pp
+.Sy Bugs:
+returns pointer to static data that is overwritten
 on each call.
 .Pp
 .Fn clnt_sperrno
@@ -447,8 +451,8 @@ the message.  Unlike
 .Fn clnt_perror ,
 it does not append a
 .Tn NEWLINE
-to the end of the message. 
-.IP
+to the end of the message.
+.Pp
 .Fn clnt_sperrno
 is used instead of
 .Fn clnt_perrno
@@ -460,7 +464,9 @@ does not want the message to be output with
 or if a message format different than that supported by
 .Fn clnt_perrno
 is to be used.
-Note: unlike
+.Pp
+.Sy Note:
+unlike
 .Fn clnt_sperror
 and
 .Fn clnt_spcreaterror ,
@@ -474,8 +480,9 @@ is like
 except that (like
 .Fn clnt_sperrno )
 it returns a string instead of printing to standard error.
-.IP
-Bugs: returns pointer to static data that is overwritten
+.Pp
+.Sy Bugs:
+returns pointer to static data that is overwritten
 on each call.
 .Pp
 .Fn clntraw_create
@@ -569,8 +576,9 @@ time until a response is received or until the call times
 out.
 The total time for the call to time out is specified by
 .Fn clnt_call .
-.IP
-This allows the user to specify the maximun packet size for sending and receiving 
+.Pp
+This allows the user to specify the maximun packet size for sending
+and receiving
 .Tn UDP-based
 .Tn RPC
 messages.
@@ -581,7 +589,7 @@ stuffs the machine's
 address into
 .Fa *addr ,
 without consulting the library routines that deal with
-.BR /etc/hosts .
+.Pa /etc/hosts .
 The port number is always set to
 .Fa htons(PMAPPORT) .
 Returns zero on success, non-zero on failure.
@@ -617,7 +625,7 @@ The value of
 is most likely
 .B
 .Tn IPPROTO_UDP
-or 
+or
 .Fa IPPROTO_TCP .
 A return value of zero means that the mapping does not exist
 or that
@@ -671,7 +679,7 @@ service. The value of
 is most likely
 .B
 .Tn IPPROTO_UDP
-or 
+or
 .Fa IPPROTO_TCP .
 This routine returns one if it succeeds, zero otherwise.
 Automatically done by
@@ -710,8 +718,9 @@ is used to decode the parameters while
 is used to encode the results.
 This routine returns zero if the registration succeeded, \-1
 otherwise.
-.IP
-Warning: remote procedures registered in this form
+.Pp
+.Sy Warning:
+remote procedures registered in this form
 are accessed using the
 .Tn UDP/IP
 transport; see
@@ -778,7 +787,7 @@ to svc_getreqset() or any creation routines.
 Do not pass its address to
 .Xr select 2 !
 Instead, pass the address of a copy.
-.br
+.Pp
 As well, note that if the process has descriptor limits
 which are extended beyond
 .Fa FD_SETSIZE ,
@@ -877,7 +886,7 @@ service (generally
 is zero,
 .B
 .Tn IPPROTO_UDP
-or 
+or
 .B
 .Tn IPPROTO_TCP
 ).
@@ -1042,8 +1051,8 @@ is the transport's port number.
 This routine returns
 .Tn NULL
 if it fails.
-.IP
-This allows the user to specify the maximun packet size for sending and 
+.Pp
+This allows the user to specify the maximun packet size for sending and
 receiving
 .Tn UDP-based
 .Tn RPC messages.
@@ -1151,26 +1160,21 @@ This routine modifies the global variable
 Service implementors usually do not need this routine.
 .Sh SEE ALSO
 .\"Xr rpc_secure 3 ,
-.Xr getrpcent 3 ,
-.Xr getrpcport 3 ,
-.Xr portmap 8 ,
-.Xr rpc 5 ,
-.Xr rpcauth 3 ,
 .Xr rpcgen 1 ,
 .Xr select 2 ,
-.Xr xdr 3 .
-.br
+.Xr getrpcent 3 ,
+.Xr getrpcport 3 ,
+.Xr rpcauth 3 ,
+.Xr rpc 5 ,
+.Xr portmap 8 ,
+.Xr xdr 3
+.Pp
 The following manuals:
-.RS
-.ft I
-Remote Procedure Calls: Protocol Specification
-.br
-Remote Procedure Call Programming Guide
-.br
-rpcgen Programming Guide
-.br
-.ft R
-.RE
-.Fa "RPC: Remote Procedure Call Protocol Specification" ,
-.Tn RFC1050, Sun Microsystems, Inc.,
-.Tn USC-ISI.
+.Re
+.%T "Remote Procedure Calls: Protocol Specification;"
+.%T "Remote Procedure Call Programming Guide;"
+.%T "rpcgen Programming Guide;"
+.%T "RPC: Remote Procedure Call Protocol Specification;"
+.%T "RFC1050"
+.%A "Sun Microsystems, Inc., USC-ISI."
+.Re
