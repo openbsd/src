@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcibiosvar.h,v 1.7 2001/05/12 19:12:44 mickey Exp $	*/
+/*	$OpenBSD: pcibiosvar.h,v 1.8 2001/10/25 19:03:49 mickey Exp $	*/
 /*	$NetBSD: pcibios.h,v 1.2 2000/04/28 17:15:16 uch Exp $	*/
 
 /*
@@ -169,3 +169,6 @@ int	sis85c503_init __P((pci_chipset_tag_t, bus_space_tag_t, pcitag_t,
 	    pciintr_icu_tag_t *, pciintr_icu_handle_t *));
 int	amd756_init __P((pci_chipset_tag_t, bus_space_tag_t, pcitag_t,
 	    pciintr_icu_tag_t *, pciintr_icu_handle_t *));
+int	ali1543_init __P((pci_chipset_tag_t, bus_space_tag_t, pcitag_t,
+	    pciintr_icu_tag_t *, pciintr_icu_handle_t *));
+

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.92 2001/08/25 10:13:29 art Exp $
+#	$OpenBSD: files.i386,v 1.93 2001/10/25 19:03:49 mickey Exp $
 #	$NetBSD: files.i386,v 1.73 1996/05/07 00:58:36 thorpej Exp $
 #
 # new style config file for i386 architecture
@@ -254,6 +254,7 @@ file	arch/i386/pci/piix.c		pcibios
 file	arch/i386/pci/sis85c503.c	pcibios
 file	arch/i386/pci/via82c586.c	pcibios
 file	arch/i386/pci/amd756.c		pcibios
+file	arch/i386/pci/ali1543.c		pcibios
 
 #
 # CARDBUS
