@@ -1,9 +1,8 @@
-/*	$OpenBSD: wl.c,v 1.9 2002/04/27 23:21:05 miod Exp $ */
+/*	$OpenBSD: wl.c,v 1.10 2003/06/02 05:09:14 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
  *
- *   
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:

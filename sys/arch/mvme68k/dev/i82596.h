@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82596.h,v 1.1 1999/09/27 02:49:00 smurph Exp $ */
+/*	$OpenBSD: i82596.h,v 1.2 2003/06/02 05:09:14 deraadt Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -18,9 +18,6 @@
  *    must display the following acknowledgement:
  *	This product includes software developed by the University of
  *	Vermont and State Agricultural College and Garrett A. Wollman.
- *    and
- *      This product includes software developed under OpenBSD by
- *	Theo de Raadt for Willowglen Singapore.
  * 4. Neither the name of the University nor the name of the author
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
