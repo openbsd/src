@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sched.c	8.1 (Berkeley) 6/6/93
- *	$Id: sched.c,v 1.5 2002/05/26 02:49:50 deraadt Exp $
+ *	$Id: sched.c,v 1.6 2002/05/26 10:37:58 deraadt Exp $
  */
 
 /*
@@ -215,11 +215,11 @@ int sig;
 		pjob *p, *p2;
 
 		if (WIFSIGNALED(w))
-			plog(XLOG_ERROR, "Process %d exited with signal %ld",
+			plog(XLOG_ERROR, "Process %ld exited with signal %ld",
 				(long)pid, w.w_termsig);
 #ifdef DEBUG
 		else
-			dlog("Process %d exited with status %ld",
+			dlog("Process %ld exited with status %ld",
 				(long)pid, w.w_retcode);
 #endif /* DEBUG */
 
