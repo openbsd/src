@@ -1,4 +1,4 @@
-/*	$OpenBSD: zbsdmod.c,v 1.5 2005/01/24 22:20:33 uwe Exp $	*/
+/*	$OpenBSD: zbsdmod.c,v 1.6 2005/03/29 19:44:12 uwe Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -21,7 +21,7 @@
 #include "compat_linux.h"
 
 #define BOOTARGS_BUFSIZ	256
-#define BOOTARGS_MAJIC	0x4f425344
+#define BOOTARGS_MAGIC	0x4f425344
 
 #define ZBOOTDEV_MAJOR	99
 #define ZBOOTDEV_MODE	0222
@@ -65,8 +65,8 @@ static	int i;
 static	vaddr_t minv;
 static	int *addr;
 
-/* The maximum size of a kernel image is restricted to 8MB. */
-static	int bsdimage[2097152];	/* XXX use kmalloc() */
+/* The maximum size of a kernel image is restricted to 5MB. */
+static	int bsdimage[1310720];	/* XXX use kmalloc() */
 static	char bootargs[BOOTARGS_BUFSIZ];
 
 /*
@@ -219,7 +219,7 @@ zbsdmod_close(struct inode *ino, struct file *f)
 			    position);
 
 			if (position < BOOTARGS_BUFSIZ) {
-				*(int *)bootargs = BOOTARGS_MAJIC;
+				*(int *)bootargs = BOOTARGS_MAGIC;
 				bootargs[position + sizeof(int)] = '\0';
 				memcpy(bootargs + sizeof(int), bsdimage,
 				    position);
