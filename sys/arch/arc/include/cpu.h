@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.3 1996/08/26 11:12:02 pefo Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.4 1996/09/14 15:58:25 pefo Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -297,6 +297,7 @@
 struct clockframe {
 	int	pc;	/* program counter at time of interrupt */
 	int	sr;	/* status register at time of interrupt */
+	int	cr;	/* cause register at time of interrupt */
 };
 
 #define	CLKF_USERMODE(framep)	((framep)->sr & SR_KSU_USER)

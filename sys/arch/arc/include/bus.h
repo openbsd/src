@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.3 1996/07/30 20:24:24 pefo Exp $	*/
+/*	$OpenBSD: bus.h,v 1.4 1996/09/14 15:58:25 pefo Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -101,7 +101,7 @@ struct arc_isa_busmap {
 #endif
 
 #define bus_mem_map(t, addr, size, cacheable, mhp)			\
-    (*mhp = (t == NULL ? port : port + (ulong)(t->isa_mem_base)), 0)
+    (*mhp = (bus_mem_handle_t)(t == NULL ? addr : addr + (ulong)(t->isa_mem_base)), 0)
 #define bus_mem_unmap(t, ioh, size)
 
 #define	bus_mem_read_1(t, h, o)		(*(volatile u_int8_t *)((h) + (o)))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccons.c,v 1.6 1996/09/05 08:04:16 pefo Exp $	*/
+/*	$OpenBSD: pccons.c,v 1.7 1996/09/14 15:58:22 pefo Exp $	*/
 /*	$NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp $	*/
 
 /*-
@@ -76,6 +76,7 @@
 #include <arc/dti/desktech.h>
 
 #include <dev/isa/isavar.h>
+#include <arc/isa/isa_machdep.h>
 #include <machine/kbdreg.h>
 
 extern int cputype;
@@ -147,13 +148,17 @@ int pcprobe __P((struct device *, void *, void *));
 void pcattach __P((struct device *, struct device *, void *));
 int pcintr __P((void *));
 
-struct cfattach pc_ca = {
-	 sizeof(struct pc_softc), pcprobe, pcattach
-};
 struct cfdriver pc_cd = {
 	NULL, "pc", DV_TTY, NULL, 0
 };
 
+struct cfattach pc_pica_ca = {
+	 sizeof(struct pc_softc), pcprobe, pcattach
+};
+
+struct cfattach pc_isa_ca = {
+	 sizeof(struct pc_softc), pcprobe, pcattach
+};
 int pmsprobe __P((struct device *, void *, void *));
 void pmsattach __P((struct device *, struct device *, void *));
 int pmsintr __P((void *));
@@ -167,16 +172,15 @@ struct cfdriver pms_cd = {
 
 #define	PMSUNIT(dev)	(minor(dev))
 
-#define	COL		80
-#define	ROW		25
 #define	CHR		2
 
 static unsigned int addr_6845;
-static unsigned int mono_base;
-static unsigned int mono_buf;
-static unsigned int cga_base;
-static unsigned int cga_buf;
-static unsigned int kbd_base;
+static unsigned int mono_base = 0x3b4;
+static unsigned int mono_buf = 0xb0000;
+static unsigned int cga_base = 0x3d4;
+static unsigned int cga_buf = 0xb8000;
+static unsigned int kbd_cmdp = 0x64;
+static unsigned int kbd_datap = 0x60;
 
 char *sget __P((void));
 void sput __P((u_char *, int));
@@ -196,7 +200,7 @@ kbd_wait_output()
 	u_int i;
 
 	for (i = 100000; i; i--)
-		if ((inb(kbd_base + KBSTATP) & KBS_IBF) == 0) {
+		if ((inb(kbd_cmdp) & KBS_IBF) == 0) {
 			KBD_DELAY;
 			return 1;
 		}
@@ -209,7 +213,7 @@ kbd_wait_input()
 	u_int i;
 
 	for (i = 100000; i; i--)
-		if ((inb(kbd_base + KBSTATP) & KBS_DIB) != 0) {
+		if ((inb(kbd_cmdp) & KBS_DIB) != 0) {
 			KBD_DELAY;
 			return 1;
 		}
@@ -221,12 +225,12 @@ kbd_flush_input()
 {
 	u_char c;
 
-	while (c = inb(kbd_base + KBSTATP) & 0x03)
+	while (c = inb(kbd_cmdp) & 0x03)
 		if ((c & KBS_DIB) == KBS_DIB) {
 			/* XXX - delay is needed to prevent some keyboards from
 			   wedging when the system boots */
 			delay(6);
-			(void) inb(kbd_base + KBDATAP);
+			(void) inb(kbd_datap);
 		}
 }
 
@@ -241,10 +245,10 @@ kbc_get8042cmd()
 
 	if (!kbd_wait_output())
 		return -1;
-	outb(kbd_base + KBCMDP, K_RDCMDBYTE);
+	outb(kbd_cmdp, K_RDCMDBYTE);
 	if (!kbd_wait_input())
 		return -1;
-	return inb(kbd_base + KBDATAP);
+	return inb(kbd_datap);
 }
 #endif
 
@@ -258,10 +262,10 @@ kbc_put8042cmd(val)
 
 	if (!kbd_wait_output())
 		return 0;
-	outb(kbd_base + KBCMDP, K_LDCMDBYTE);
+	outb(kbd_cmdp, K_LDCMDBYTE);
 	if (!kbd_wait_output())
 		return 0;
-	outb(kbd_base + KBOUTP, val);
+	outb(kbd_datap, val);
 	return 1;
 }
 
@@ -279,7 +283,7 @@ kbd_cmd(val, polling)
 	if(!polling) {
 		i = spltty();
 		if(kb_oq_get == kb_oq_put) {
-			outb(kbd_base + KBOUTP, val);
+			outb(kbd_datap, val);
 		}
 		kb_oq[kb_oq_put] = val;
 		kb_oq_put = (kb_oq_put + 1) & 7;
@@ -289,13 +293,13 @@ kbd_cmd(val, polling)
 	else do {
 		if (!kbd_wait_output())
 			return 0;
-		outb(kbd_base + KBOUTP, val);
+		outb(kbd_datap, val);
 		for (i = 100000; i; i--) {
-			if (inb(kbd_base + KBSTATP) & KBS_DIB) {
+			if (inb(kbd_cmdp) & KBS_DIB) {
 				register u_char c;
 
 				KBD_DELAY;
-				c = inb(kbd_base + KBDATAP);
+				c = inb(kbd_datap);
 				if (c == KBR_ACK || c == KBR_ECHO) {
 					return 1;
 				}
@@ -416,8 +420,10 @@ pcprobe(parent, cfdata, aux)
 	u_int i;
 
 	/* Make shure we're looking for this type of device */
-	if(!BUS_MATCHNAME(ca, "pc"))
-		return(0);
+	if(!strcmp((parent)->dv_cfdata->cf_driver->cd_name, "pica")) {
+		if(!BUS_MATCHNAME(ca, "pc"))
+			return(0);
+	}
 
 	/* Enable interrupts and keyboard, etc. */
 	if (!kbc_put8042cmd(CMDBYTE)) {
@@ -434,11 +440,11 @@ pcprobe(parent, cfdata, aux)
 		goto lose;
 	}
 	for (i = 600000; i; i--)
-		if ((inb(kbd_base + KBSTATP) & KBS_DIB) != 0) {
+		if ((inb(kbd_cmdp) & KBS_DIB) != 0) {
 			KBD_DELAY;
 			break;
 		}
-	if (i == 0 || inb(kbd_base + KBDATAP) != KBR_RSTDONE) {
+	if (i == 0 || inb(kbd_datap) != KBR_RSTDONE) {
 		printf("pcprobe: reset error %d\n", 2);
 		goto lose;
 	}
@@ -497,12 +503,21 @@ pcattach(parent, self, aux)
 	void *aux;
 {
 	struct confargs *ca = aux;
+	struct isa_attach_args *ia = aux;
 	struct pc_softc *sc = (void *)self;
 
 	printf(": %s\n", vs.color ? "color" : "mono");
 	do_async_update(1);
 
-	BUS_INTR_ESTABLISH(ca, pcintr, (void *)(long)sc);
+	switch(cputype) {
+	case ACER_PICA_61:
+		BUS_INTR_ESTABLISH(ca, pcintr, (void *)(long)sc);
+		break;
+	case DESKSTATION_TYNE:
+		isa_intr_establish(ia->ia_ic, ia->ia_irq, 1,
+			2, pcintr, sc, sc->sc_dev.dv_xname);	/*XXX ick */
+		break;
+	}
 }
 
 int
@@ -612,7 +627,7 @@ pcintr(arg)
 	register struct tty *tp = sc->sc_tty;
 	u_char *cp;
 
-	if ((inb(kbd_base + KBSTATP) & KBS_DIB) == 0)
+	if ((inb(kbd_cmdp) & KBS_DIB) == 0)
 		return 0;
 	if (polling)
 		return 1;
@@ -624,7 +639,7 @@ pcintr(arg)
 			do
 				(*linesw[tp->t_line].l_rint)(*cp++, tp);
 			while (*cp);
-	} while (inb(kbd_base + KBSTATP) & KBS_DIB);
+	} while (inb(kbd_cmdp) & KBS_DIB);
 	return 1;
 }
 
@@ -788,21 +803,24 @@ pccninit(cp)
 	switch(cputype) {
 
 	case ACER_PICA_61:
-		mono_base = PICA_MONO_BASE;
-		mono_buf = PICA_MONO_BUF;
-		cga_base = PICA_CGA_BASE;
-		cga_buf = PICA_CGA_BUF;
-		kbd_base = PICA_SYS_KBD;
+		mono_base += PICA_V_LOCAL_VIDEO_CTRL;
+		mono_buf += PICA_V_LOCAL_VIDEO;
+		cga_base += PICA_V_LOCAL_VIDEO_CTRL;
+		cga_buf += PICA_V_LOCAL_VIDEO;
+		kbd_cmdp = PICA_SYS_KBD + 0x61;
+		kbd_datap = PICA_SYS_KBD + 0x60;
 		break;
 
 	case DESKSTATION_TYNE:
-		mono_base = PICA_MONO_BASE;
-		mono_buf = PICA_MONO_BUF;
-		cga_base = PICA_CGA_BASE;
-		cga_buf = PICA_CGA_BUF;
-		kbd_base = PICA_SYS_KBD;
+		mono_base += TYNE_V_ISA_IO;
+		mono_buf += TYNE_V_ISA_MEM;
+		cga_base += TYNE_V_ISA_IO;
+		cga_buf += TYNE_V_ISA_MEM;
+		kbd_cmdp = TYNE_V_ISA_IO + 0x64;
+		kbd_datap = TYNE_V_ISA_IO + 0x60;
 		outb(TYNE_V_ISA_IO + 0x3ce, 6);		/* Correct video mode */
-		outb(TYNE_V_ISA_IO + 0x3cf, 0xe);
+		outb(TYNE_V_ISA_IO + 0x3cf, inb(TYNE_V_ISA_IO + 0x3cf) | 0xc);
+		kbc_put8042cmd(CMDBYTE);		/* Want XT codes.. */
 		break;
 	}
 }
@@ -834,7 +852,7 @@ pccngetc(dev)
 
 	do {
 		/* wait for byte */
-		while ((inb(kbd_base + KBSTATP) & KBS_DIB) == 0);
+		while ((inb(kbd_cmdp) & KBS_DIB) == 0);
 		/* see if it's worthwhile */
 		cp = sget();
 	} while (!cp);
@@ -937,15 +955,15 @@ sput(cp, n)
 		return;
 
 	if (crtat == 0) {
-		u_short volatile *cp;
+		volatile u_short *cp;
 		u_short was;
 		unsigned cursorat;
 
-		cp = (u_short *)cga_buf;
+		cp = (volatile u_short *)cga_buf;
 		was = *cp;
-		*cp = (u_short) 0xA55A;
+		*cp = (volatile u_short) 0xA55A;
 		if (*cp != 0xA55A) {
-			cp = (u_short *)mono_buf;
+			cp = (volatile u_short *)mono_buf;
 			addr_6845 = mono_base;
 			vs.color = 0;
 		} else {
@@ -954,25 +972,21 @@ sput(cp, n)
 			vs.color = 1;
 		}
 
-		/* Extract cursor location */
-		outb(addr_6845, 14);
-		cursorat = inb(addr_6845+1) << 8;
-		outb(addr_6845, 15);
-		cursorat |= inb(addr_6845+1);
-
 #ifdef FAT_CURSOR
 		cursor_shape = 0x0012;
 #else
 		get_cursor_shape();
 #endif
 
-		Crtat = (u_short *)cp;
-		crtat = (u_short *)(cp + cursorat);
-
-		vs.ncol = COL;
-		vs.nrow = ROW;
-		vs.nchr = COL * ROW;
+		bios_display_info(&vs.col, &vs.row, &vs.ncol, &vs.nrow);
+		vs.nchr = vs.ncol * vs.nrow;
+		vs.col--;
+		vs.row--;
+		cursorat = vs.ncol * vs.row + vs.col;
 		vs.at = FG_LIGHTGREY | BG_BLACK;
+
+		Crtat = (u_short *)cp;
+		crtat = Crtat + cursorat;
 
 		if (vs.color == 0)
 			vs.so_at = FG_BLACK | BG_LIGHTGREY;
@@ -1002,8 +1016,8 @@ sput(cp, n)
 			vs.col += inccol;
 		}
 		maybe_scroll:
-			if (vs.col >= COL) {
-				vs.col -= COL;
+			if (vs.col >= vs.ncol) {
+				vs.col -= vs.ncol;
 				scroll = 1;
 			}
 			break;
@@ -1013,7 +1027,7 @@ sput(cp, n)
 				break;
 			--crtat;
 			if (--vs.col < 0)
-				vs.col += COL;	/* non-destructive backspace */
+				vs.col += vs.ncol;	/* non-destructive backspace */
 			break;
 
 		case '\r':
@@ -1506,17 +1520,17 @@ sget()
 
 top:
 	KBD_DELAY;
-	dt = inb(kbd_base + KBDATAP);
+	dt = inb(kbd_datap);
 
 	switch (dt) {
 	case KBR_ACK: case KBR_ECHO:
 		kb_oq_get = (kb_oq_get + 1) & 7;
 		if(kb_oq_get != kb_oq_put) {
-			outb(kbd_base + KBOUTP, kb_oq[kb_oq_get]);
+			outb(kbd_datap, kb_oq[kb_oq_get]);
 		}
 		goto loop;
 	case KBR_RESEND:
-		outb(kbd_base + KBOUTP, kb_oq[kb_oq_get]);
+		outb(kbd_datap, kb_oq[kb_oq_get]);
 		goto loop;
 	}
 
@@ -1719,7 +1733,7 @@ printf("keycode %d\n",dt);
 
 	extended = 0;
 loop:
-	if ((inb(kbd_base + KBSTATP) & KBS_DIB) == 0)
+	if ((inb(kbd_cmdp) & KBS_DIB) == 0)
 		return 0;
 	goto top;
 }
@@ -1765,7 +1779,6 @@ pc_xmode_off()
 #endif
 	async_update();
 }
-/*	$NetBSD: pms.c,v 1.21 1995/04/18 02:25:18 mycroft Exp $	*/
 
 #include <machine/mouse.h>
 
@@ -1802,9 +1815,9 @@ pms_dev_cmd(value)
 	u_char value;
 {
 	kbd_flush_input();
-	outb(kbd_base + KBCMDP, 0xd4);
+	outb(kbd_cmdp, 0xd4);
 	kbd_flush_input();
-	outb(kbd_base + KBDATAP, value);
+	outb(kbd_datap, value);
 }
 
 static inline void
@@ -1812,7 +1825,7 @@ pms_aux_cmd(value)
 	u_char value;
 {
 	kbd_flush_input();
-	outb(kbd_base + KBCMDP, value);
+	outb(kbd_cmdp, value);
 }
 
 static inline void
@@ -1820,9 +1833,9 @@ pms_pit_cmd(value)
 	u_char value;
 {
 	kbd_flush_input();
-	outb(kbd_base + KBCMDP, 0x60);
+	outb(kbd_cmdp, 0x60);
 	kbd_flush_input();
-	outb(kbd_base + KBDATAP, value);
+	outb(kbd_datap, value);
 }
 
 int
@@ -1840,7 +1853,7 @@ pmsprobe(parent, probe, aux)
 	pms_dev_cmd(KBC_RESET);
 	pms_aux_cmd(PMS_MAGIC_1);
 	delay(10000);
-	x = inb(kbd_base + KBDATAP);
+	x = inb(kbd_datap);
 	pms_pit_cmd(PMS_INT_DISABLE);
 	if (x & 0x04)
 		return 0;
@@ -2048,20 +2061,20 @@ pmsintr(arg)
 	switch (state) {
 
 	case 0:
-		buttons = inb(kbd_base + KBDATAP);
+		buttons = inb(kbd_datap);
 		if ((buttons & 0xc0) == 0)
 			++state;
 		break;
 
 	case 1:
-		dx = inb(kbd_base + KBDATAP);
+		dx = inb(kbd_datap);
 		/* Bounding at -127 avoids a bug in XFree86. */
 		dx = (dx == -128) ? -127 : dx;
 		++state;
 		break;
 
 	case 2:
-		dy = inb(kbd_base + KBDATAP);
+		dy = inb(kbd_datap);
 		dy = (dy == -128) ? -127 : dy;
 		state = 0;
 
@@ -2122,4 +2135,5 @@ pmsselect(dev, rw, p)
 	splx(s);
 
 	return ret;
+
 }

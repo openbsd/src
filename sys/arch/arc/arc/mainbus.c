@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.1.1.1 1996/06/24 09:07:21 pefo Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.2 1996/09/14 15:58:17 pefo Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.3 1995/06/28 02:45:10 cgd Exp $	*/
 
 /*
@@ -116,7 +116,8 @@ mbattach(parent, self, aux)
 		nca.ca_bus = &sc->sc_bus;
 		config_found(self, &nca, mbprint);
 	}
-	if (cputype == ACER_PICA_61) {
+	if (cputype == ACER_PICA_61 ||
+	    cputype == DESKSTATION_TYNE) {
 		/* we have an ISA bus! */
 		nca.ca_name = "isabr";
 		nca.ca_slot = 0;

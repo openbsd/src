@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpr.c,v 1.1 1996/06/24 20:10:34 pefo Exp $ */
+/*	$OpenBSD: lpr.c,v 1.2 1996/09/14 15:58:21 pefo Exp $ */
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -118,7 +118,7 @@ int lprintr __P((void *));
 #if NLPR_ISA
 int lpr_isa_probe __P((struct device *, void *, void *));
 void lpr_isa_attach __P((struct device *, struct device *, void *));
-struct cfattach lpr_ca = {
+struct cfattach lpr_isa_ca = {
 	sizeof(struct lpr_softc), lpr_isa_probe, lpr_isa_attach
 };
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.11 1996/09/06 04:57:52 imp Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.12 1996/09/14 15:58:16 pefo Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	8.3 (Berkeley) 1/12/94
- *      $Id: machdep.c,v 1.11 1996/09/06 04:57:52 imp Exp $
+ *      $Id: machdep.c,v 1.12 1996/09/14 15:58:16 pefo Exp $
  */
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
@@ -123,10 +123,7 @@ int	bufpages = BUFPAGES;
 int	bufpages = 0;
 #endif
 int	msgbufmapped = 0;	/* set when safe to use msgbuf */
-int	maxmem;			/* max memory per process */
 int	physmem;		/* max supported memory, changes to actual */
-int	memcfg;			/* memory config register */
-int	brdcfg;			/* motherboard config register */
 int	cpucfg;			/* Value of processor config register */
 int	cputype;		/* Mother board type */
 int	ncpu = 1;		/* At least one cpu in the system */
@@ -174,7 +171,7 @@ mips_init(argc, argv, code)
 	register char *cp;
 	register int i;
 	register unsigned firstaddr;
-	register caddr_t v;
+	register caddr_t sysend;
 	caddr_t start;
 	struct tlb tlb;
 	extern char edata[], end[];
@@ -182,11 +179,11 @@ mips_init(argc, argv, code)
 	extern char MachException[], MachExceptionEnd[];
 
 	/* clear the BSS segment in OpenBSD code */
-	v = (caddr_t)mips_round_page(end);
-	bzero(edata, v - edata);
+	sysend = (caddr_t)mips_round_page(end);
+	bzero(edata, sysend - edata);
 
-    /* Initialize the CPU type */
-    bios_ident();
+	/* Initialize the CPU type */
+	bios_ident();
 
 	/*
 	 * Get config register now as mapped from BIOS since we are
@@ -198,13 +195,9 @@ mips_init(argc, argv, code)
 	case ACER_PICA_61:	/* ALI PICA 61 and MAGNUM is almost the */
 	case MAGNUM:		/* Same kind of hardware. NEC goes here too */
 		if(cputype == MAGNUM) {
-			/* XXX this is likely broken */
-			memcfg = in32(R4030_SYS_CONFIG);
 			strcpy(cpu_model, "MIPS Magnum");
 		}
 		else {
-			memcfg = in32(PICA_MEMORY_SIZE_REG);
-			brdcfg = in32(PICA_CONFIG_REG);
 			strcpy(cpu_model, "Acer Pica-61");
 		}
 		isa_io_base = PICA_V_ISA_IO;
@@ -220,57 +213,22 @@ mips_init(argc, argv, code)
 		Mach_spltty = Mach_spl2;
 		Mach_splstatclock = Mach_spl3;
 #endif
-
-		/*
-		 * Size is determined from the memory config register.
-		 *  d0-d2 = bank 0 size (sim id)
-		 *  d3-d5 = bank 1 size
-		 *  d6 = bus width. (doubels memory size)
-		 */
-		if((memcfg & 7) <= 5)
-			physmem = 2097152 << (memcfg & 7);
-		if(((memcfg >> 3) & 7) <= 5)
-			physmem += 2097152 << ((memcfg >> 3) & 7);
-
-		if((memcfg & 0x40) == 0)
-			physmem += physmem;	/* 128 bit config */
-
-		mem_layout[0].mem_start = 0x00100000;
-		mem_layout[0].mem_size = physmem - mem_layout[0].mem_start;
-		mem_layout[1].mem_start = 0x00020000;
-		mem_layout[1].mem_size =  0x00100000 - mem_layout[1].mem_start;
-		mem_layout[2].mem_start = 0x0;
 		break;
 
 	case DESKSTATION_RPC44:
 		strcpy(cpu_model, "Deskstation rPC44");
-
-		/*XXX Need to find out how to size mem */
-		physmem = 1024 * 1024 * 32;
-		mem_layout[0].mem_start = 0x00100000;
-		mem_layout[0].mem_size = physmem - mem_layout[0].mem_start;
-		mem_layout[1].mem_start = 0x00008000;
-		mem_layout[1].mem_size = 0x000a0000 - mem_layout[1].mem_start;
-		mem_layout[2].mem_start = 0x0;
+		isa_io_base = TYNE_V_ISA_IO;		/*XXX*/
+		isa_mem_base = TYNE_V_ISA_MEM;		/*XXX*/
 		break;
 
 	case DESKSTATION_TYNE:
 		strcpy(cpu_model, "Deskstation Tyne");
 		isa_io_base = TYNE_V_ISA_IO;
 		isa_mem_base = TYNE_V_ISA_MEM;
-
-		/*XXX Need to find out how to size mem */
-		physmem = 1024 * 1024 * 16;
-		mem_layout[0].mem_start = 0x00100000;
-		mem_layout[0].mem_size = physmem - mem_layout[0].mem_start;
-		mem_layout[1].mem_start = 0x00020000;
-		mem_layout[1].mem_size =  0x00100000 - mem_layout[1].mem_start;
-		mem_layout[2].mem_start = 0x0;
 		break;
 
 	default:
-/*XXX printf doesn't work here .... use bios?? */
-		printf("kernel not configured for systype 0x%x\n", i);
+		bios_putstring("kernel not configured for this system\n");
 		boot(RB_HALT | RB_NOSYNC);
 	}
 	physmem = btoc(physmem);
@@ -324,7 +282,7 @@ mips_init(argc, argv, code)
 	 */
 	if (boothowto & RB_MINIROOT) {
 		boothowto |= RB_DFLTROOT;
-		v += mfs_initminiroot(v);
+		sysend += mfs_initminiroot(sysend);
 	}
 #endif
 
@@ -350,11 +308,11 @@ mips_init(argc, argv, code)
 	/*
 	 * Init mapping for u page(s) for proc[0], pm_tlbpid 1.
 	 */
-	v = (caddr_t)((int)v+3 & -4);
-	start = v;
-	curproc->p_addr = proc0paddr = (struct user *)v;
+	sysend = (caddr_t)((int)sysend + 3 & -4);
+	start = sysend;
+	curproc->p_addr = proc0paddr = (struct user *)sysend;
 	curproc->p_md.md_regs = proc0paddr->u_pcb.pcb_regs;
-	firstaddr = CACHED_TO_PHYS(v);
+	firstaddr = CACHED_TO_PHYS(sysend);
 	for (i = 0; i < UPAGES; i+=2) {
 		tlb.tlb_mask = PG_SIZE_4K;
 		tlb.tlb_hi = vad_to_vpn((UADDR + (i << PGSHIFT))) | 1;
@@ -365,8 +323,8 @@ mips_init(argc, argv, code)
 		R4K_TLBWriteIndexed(i,&tlb);
 		firstaddr += NBPG * 2;
 	}
-	v += UPAGES * NBPG;
-	v = (caddr_t)((int)v+3 & -4);
+	sysend += UPAGES * NBPG;
+	sysend = (caddr_t)((int)sysend+3 & -4);
 	R4K_SetPID(1);
 
 	/*
@@ -374,19 +332,19 @@ mips_init(argc, argv, code)
 	 * init mapping for u page(s), pm_tlbpid 0
 	 * This could be used for an idle process.
 	 */
-	nullproc.p_addr = (struct user *)v;
+	nullproc.p_addr = (struct user *)sysend;
 	nullproc.p_md.md_regs = nullproc.p_addr->u_pcb.pcb_regs;
 	bcopy("nullproc", nullproc.p_comm, sizeof("nullproc"));
-	firstaddr = CACHED_TO_PHYS(v);
+	firstaddr = CACHED_TO_PHYS(sysend);
 	for (i = 0; i < UPAGES; i+=2) {
 		nullproc.p_md.md_upte[i] = vad_to_pfn(firstaddr) | PG_V | PG_M | PG_CACHED;
 		nullproc.p_md.md_upte[i+1] = vad_to_pfn(firstaddr + NBPG) | PG_V | PG_M | PG_CACHED;
 		firstaddr += NBPG * 2;
 	}
-	v += UPAGES * NBPG;
+	sysend += UPAGES * NBPG;
 
 	/* clear pages for u areas */
-	bzero(start, v - start);
+	bzero(start, sysend - start);
 
 	/*
 	 * Copy down exception vector code.
@@ -405,33 +363,28 @@ mips_init(argc, argv, code)
 	R4K_FlushCache();
 
 	/*
-	 * Find out how much memory is available.
+	 * Initialize error message buffer.
 	 */
-	/* Already know from above!!! */
-	maxmem = physmem;
-
-	/*
-	 * Initialize error message buffer (at end of core).
-	 */
-	maxmem -= btoc(sizeof (struct msgbuf));
-	msgbufp = (struct msgbuf *)(PHYS_TO_CACHED(maxmem << PGSHIFT));
+	msgbufp = (struct msgbuf *)(sysend);
+	sysend = (caddr_t)(sysend + (sizeof(struct msgbuf)));
 	msgbufmapped = 1;
 
 	/*
 	 * Allocate space for system data structures.
-	 * The first available kernel virtual address is in "v".
-	 * As pages of kernel virtual memory are allocated, "v" is incremented.
+	 * The first available kernel virtual address is in "sysend".
+	 * As pages of kernel virtual memory are allocated, "sysend"
+	 * is incremented.
 	 *
 	 * These data structures are allocated here instead of cpu_startup()
 	 * because physical memory is directly addressable. We don't have
 	 * to map these into virtual address space.
 	 */
-	start = v;
+	start = sysend;
 
 #define	valloc(name, type, num) \
-	    (name) = (type *)v; v = (caddr_t)((name)+(num))
+	    (name) = (type *)sysend; sysend = (caddr_t)((name)+(num))
 #define	valloclim(name, type, num, lim) \
-	    (name) = (type *)v; v = (caddr_t)((lim) = ((name)+(num)))
+	    (name) = (type *)sysend; sysend = (caddr_t)((lim) = ((name)+(num)))
 #ifdef REAL_CLISTS
 	valloc(cfree, struct cblock, nclist);
 #endif
@@ -478,12 +431,12 @@ mips_init(argc, argv, code)
 	/*
 	 * Clear allocated memory.
 	 */
-	bzero(start, v - start);
+	bzero(start, sysend - start);
 
 	/*
 	 * Initialize the virtual memory system.
 	 */
-	pmap_bootstrap((vm_offset_t)v);
+	pmap_bootstrap((vm_offset_t)sysend);
 }
 
 void
@@ -527,7 +480,7 @@ tlb_init_tyne()
 {
 	struct tlb tlb;
 
-	tlb.tlb_mask = PG_SIZE_64K;
+	tlb.tlb_mask = PG_SIZE_256K;
 	tlb.tlb_hi = vad_to_vpn(TYNE_V_BOUNCE);
 	tlb.tlb_lo0 = vad_to_pfn64(TYNE_P_BOUNCE) | PG_IOPAGE;
 	tlb.tlb_lo1 = PG_G;
@@ -544,6 +497,13 @@ tlb_init_tyne()
 	tlb.tlb_lo0 = vad_to_pfn64(TYNE_P_ISA_MEM) | PG_IOPAGE;
 	tlb.tlb_lo1 = PG_G;
 	R4K_TLBWriteIndexed(3, &tlb);
+
+	tlb.tlb_mask = PG_SIZE_4K;
+	tlb.tlb_hi = vad_to_vpn(0xe3000000);
+	tlb.tlb_lo0 = 0x03ffc000 | PG_IOPAGE;
+	tlb.tlb_lo1 = PG_G;
+	R4K_TLBWriteIndexed(4, &tlb);
+
 }
 
 /*
@@ -560,6 +520,7 @@ consinit()
 		return;
 	initted = 1;
 	cninit();
+mdbpanic();
 }
 
 /*
@@ -1073,13 +1034,16 @@ microtime(tvp)
 initcpu()
 {
 
-	/*
-	 * Disable all interrupts. New masks will be set up
-	 * during system configuration
-	 */
-	out16(PICA_SYS_LB_IE,0x000);
-	out32(R4030_SYS_EXT_IMASK, 0x00);
-
+	switch(cputype) {
+	case ACER_PICA_61:
+		/*
+		 * Disable all interrupts. New masks will be set up
+		 * during system configuration
+		 */
+		out16(PICA_SYS_LB_IE,0x000);
+		out32(R4030_SYS_EXT_IMASK, 0x00);
+		break;
+	}
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ace.c,v 1.5 1996/09/02 09:01:49 deraadt Exp $	*/
+/*	$OpenBSD: ace.c,v 1.6 1996/09/14 15:58:21 pefo Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*-
@@ -57,6 +57,7 @@
 #include <sys/types.h>
 #include <sys/device.h>
 
+#include <arc/arc/arctype.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
 
@@ -1677,9 +1678,15 @@ acecnprobe(cp)
 	struct consdev *cp;
 {
 	/* XXX NEEDS TO BE FIXED XXX */
+	extern int cputype;
 	bus_chipset_tag_t bc = 0;
 	bus_io_handle_t ioh;
 	int found;
+
+	cp->cn_pri = CN_DEAD;
+
+	if(cputype != ACER_PICA_61)
+		return;
 
 	if (bus_io_map(bc, CONADDR, COM_NPORTS, &ioh)) {
 		cp->cn_pri = CN_DEAD;
@@ -1688,7 +1695,6 @@ acecnprobe(cp)
 	ioh = CONADDR;
 	found = comprobe1(bc, ioh, CONADDR);
 	if (!found) {
-		cp->cn_pri = CN_DEAD;
 		return;
 	}
 

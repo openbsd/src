@@ -1,4 +1,4 @@
-/*	$OpenBSD: picabus.c,v 1.3 1996/07/30 20:24:32 pefo Exp $	*/
+/*	$OpenBSD: picabus.c,v 1.4 1996/09/14 15:58:29 pefo Exp $	*/
 /*	$NetBSD: tc.c,v 1.2 1995/03/08 00:39:05 cgd Exp $	*/
 
 /*
@@ -61,8 +61,8 @@ void	pica_intr_establish __P((struct confargs *, int (*)(void *), void *));
 void	pica_intr_disestablish __P((struct confargs *));
 caddr_t	pica_cvtaddr __P((struct confargs *));
 int	pica_matchname __P((struct confargs *, char *));
-int	pica_iointr __P((void *));
-int	pica_clkintr __P((unsigned, unsigned, unsigned, unsigned));
+int	pica_iointr __P((unsigned int, struct clockframe *));
+int	pica_clkintr __P((unsigned int, struct clockframe *));
 
 extern int cputype;
 
@@ -286,8 +286,9 @@ pica_intrnull(val)
  *   Handle pica i/o interrupt.
  */
 int
-pica_iointr(val)
-	void *val;
+pica_iointr(mask, cf)
+	unsigned mask;
+	struct clockframe *cf;
 {
 	int vector;
 
@@ -301,19 +302,14 @@ pica_iointr(val)
  * Handle pica interval clock interrupt.
  */
 int
-pica_clkintr(mask, pc, statusReg, causeReg)
+pica_clkintr(mask, cf)
 	unsigned mask;
-	unsigned pc;
-	unsigned statusReg;
-	unsigned causeReg;
+	struct clockframe *cf;
 {
-	struct clockframe cf;
 	int temp;
 
 	temp = inw(R4030_SYS_IT_STAT);
-	cf.pc = pc;
-	cf.sr = statusReg;
-	hardclock(&cf);
+	hardclock(cf);
 
 	/* Re-enable clock interrupts */
 	splx(INT_MASK_4 | SR_INT_ENAB);

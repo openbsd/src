@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.h,v 1.1 1996/09/06 04:57:51 imp Exp $	*/
+/*	$OpenBSD: arcbios.h,v 1.2 1996/09/14 15:58:12 pefo Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  *
@@ -137,9 +137,37 @@ typedef enum arc_status
 	arc_EROFS,			/* Read-only file system     */
 } arc_status_t;
 
-typedef caddr_t arc_mem_t; /* XXX */
+typedef enum {
+	ExeceptionBlock,
+	SystemParameterBlock,
+	FreeMemory,
+	BadMemory,
+	LoadedProgram,
+	FirmwareTemporary,
+	FirmwarePermanent,
+	FreeContigous
+} MEMORYTYPE;
+
+typedef struct arc_mem {
+	MEMORYTYPE	Type;		/* Memory chunk type */
+	u_int32_t	BasePage;	/* Page no, first page */
+	u_int32_t	PageCount;	/* Number of pages */
+} arc_mem_t;
+
 typedef caddr_t arc_time_t; /* XXX */
-typedef caddr_t arc_dsp_stat_t; /* XXX */
+
+typedef struct arc_dsp_stat {
+	u_int16_t	CursorXPosition;
+	u_int16_t	CursorYPosition;
+	u_int16_t	CursorMaxXPosition;
+	u_int16_t	CursorMaxYPosition;
+	u_char		ForegroundColor;
+	u_char		BackgroundColor;
+	u_char		HighIntensity;
+	u_char		Underscored;
+	u_char		ReverseVideo;
+} arc_dsp_stat_t;
+
 typedef caddr_t arc_dirent_t; /* XXX */
 typedef u_int32_t arc_open_mode_t; /* XXX */
 typedef u_int32_t arc_seek_mode_t; /* XXX */

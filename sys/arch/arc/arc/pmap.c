@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.3 1996/08/26 11:11:56 pefo Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.4 1996/09/14 15:58:17 pefo Exp $	*/
 /* 
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.c	8.4 (Berkeley) 1/26/94
- *      $Id: pmap.c,v 1.3 1996/08/26 11:11:56 pefo Exp $
+ *      $Id: pmap.c,v 1.4 1996/09/14 15:58:17 pefo Exp $
  */
 
 /*
@@ -166,6 +166,8 @@ struct {
 #define PDB_WIRING	0x4000
 #define PDB_PVDUMP	0x8000
 
+extern int _ftext[];
+extern int _end[];
 int pmapdebug = 0x0;
 
 #endif /* DEBUG */
@@ -194,10 +196,13 @@ void
 pmap_bootstrap(firstaddr)
 	vm_offset_t firstaddr;
 {
-	register int i, n;
+	register int i, n, nextpage;
 	register pt_entry_t *spte;
+	struct physseg *pseg;
 	vm_offset_t start = firstaddr;
-	extern int maxmem, physmem;
+	extern int physmem;
+
+/*XXX*/	char pbuf[100];
 
 #define	valloc(name, type, num) \
 	    (name) = (type *)firstaddr; firstaddr = (vm_offset_t)((name)+(num))
@@ -224,13 +229,13 @@ pmap_bootstrap(firstaddr)
 	 * phys_start and phys_end but its better to use kseg0 addresses
 	 * rather than kernel virtual addresses mapped through the TLB.
 	 */
-	i = maxmem - mips_btop(CACHED_TO_PHYS(firstaddr));
 #ifdef MACHINE_NONCONTIG
-	for( n = 1; n < MAXMEMSEGS; n++) {
-		if(mem_layout[n].mem_start == 0)
-			break;
+	i = 0;
+	for( n = 0; n < MAXMEMSEGS; n++) {
 		i += mips_btop(mem_layout[n].mem_size);
 	}
+#else
+	i = physmem - mips_btop(CACHED_TO_PHYS(firstaddr));
 #endif /*MACHINE_NONCONTIG*/
 	valloc(pv_table, struct pv_entry, i);
 
@@ -241,27 +246,47 @@ pmap_bootstrap(firstaddr)
 	bzero((caddr_t)start, firstaddr - start);
 
 	avail_start = CACHED_TO_PHYS(firstaddr);
-	avail_end = mips_ptob(maxmem);
+	avail_end = mips_ptob(physmem);
 
 #ifdef MACHINE_NONCONTIG
-	avail_next = avail_start;
-	avail_remaining = mips_btop(avail_end - avail_start);
-	physsegs[0].start = avail_start;
-	physsegs[0].end = avail_end;
-	physsegs[0].first_page = 0;
+	avail_remaining = 0;
+	nextpage = 0;
 
 	/*
-	 * Now reclaim the "lost" memory areas. Skip the first one
-         * as that is the segment where the os was loaded.
+	 * Now set up memory areas. Be careful to remove areas used
+         * for the OS and for exception vector stuff.
          */
-	for( i = 1; i < MAXMEMSEGS; i++) {
-		if((physsegs[i].start = mem_layout[i].mem_start) == 0)
-			break;
-		physsegs[i].end = physsegs[i].start + mem_layout[i].mem_size;
-		physsegs[i].first_page = physsegs[i-1].first_page +
-		    (physsegs[i-1].end - physsegs[i-1].start) / NBPG;
-		avail_remaining += (physsegs[i].end - physsegs[i].start) / NBPG;
+	pseg = &physsegs[0];
+
+	for( i = 0; i < MAXMEMSEGS; i++) {
+		/* Adjust for the kernel exeption vectors and sys data area */
+		if(mem_layout[i].mem_start < 0x8000) { 
+			if((mem_layout[i].mem_start + mem_layout[i].mem_size) < 0x8000)
+				continue;	/* To small skip it */
+			mem_layout[i].mem_size -= 0x8000 - mem_layout[i].mem_start;
+			mem_layout[i].mem_start = 0x8000;  /* Adjust to be above vec's */
+		}
+		/* Adjust for the kernel expansion area (bufs etc) */
+		if((mem_layout[i].mem_start + mem_layout[i].mem_size > CACHED_TO_PHYS(_ftext)) && 
+		   (mem_layout[i].mem_start < CACHED_TO_PHYS(avail_start))) { 
+			mem_layout[i].mem_size -= CACHED_TO_PHYS(avail_start) - mem_layout[i].mem_start;
+			mem_layout[i].mem_start = CACHED_TO_PHYS(avail_start);
+		}
+
+		if(mem_layout[i].mem_size == 0)
+			continue;
+
+		pseg->start = mem_layout[i].mem_start;
+		pseg->end = pseg->start + mem_layout[i].mem_size;
+		pseg->first_page = nextpage;
+		nextpage += (pseg->end - pseg->start) / NBPG;
+		avail_remaining += (pseg->end - pseg->start) / NBPG;
+/*XXX*/	sprintf(pbuf,"segment = %d start 0x%x end 0x%x avail %d page %d\n", i, pseg->start, pseg->end, avail_remaining, nextpage); bios_putstring(pbuf);
+		pseg++;
 	}
+
+	avail_next = physsegs[0].start;
+
 #endif /* MACHINE_NONCONTIG */
 
 	virtual_avail = VM_MIN_KERNEL_ADDRESS;
@@ -326,7 +351,7 @@ pmap_init(phys_start, phys_end)
 {
 
 #ifdef DEBUG
-	if (pmapdebug & (PDB_FOLLOW|PDB_INIT))
+	if (1 || pmapdebug & (PDB_FOLLOW|PDB_INIT))
 #ifdef MACHINE_NONCONTIG
 		printf("pmap_init(%lx, %lx)\n", avail_start, avail_end);
 #else

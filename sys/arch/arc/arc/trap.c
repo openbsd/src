@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.5 1996/09/02 11:33:24 pefo Exp $	*/
+/*	$OpenBSD: trap.c,v 1.6 1996/09/14 15:58:18 pefo Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  * from: Utah Hdr: trap.c 1.32 91/04/06
  *
  *	from: @(#)trap.c	8.5 (Berkeley) 1/11/94
- *      $Id: trap.c,v 1.5 1996/09/02 11:33:24 pefo Exp $
+ *      $Id: trap.c,v 1.6 1996/09/14 15:58:18 pefo Exp $
  */
 
 #include <sys/param.h>
@@ -335,8 +335,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 		}
 		entry |= PG_M;
 		pte->pt_entry = entry;
-		vadr = (vadr & ~PGOFSET) |
-			(pmap->pm_tlbpid << VMTLB_PID_SHIFT);
+		vadr = (vadr & ~PGOFSET) | (pmap->pm_tlbpid << VMTLB_PID_SHIFT);
 		R4K_TLBUpdate(vadr, entry);
 		pa = pfn_to_vad(entry);
 #ifdef ATTR
@@ -840,6 +839,9 @@ interrupt(statusReg, causeReg, pc, what, args)
 
 	cnt.v_intr++;
 	mask = causeReg & statusReg;	/* pending interrupts & enable mask */
+	cf.pc = pc;
+	cf.sr = statusReg;
+	cf.cr = causeReg;
 
 	/*
 	 *  Check off all enabled interrupts. Called interrupt routine
@@ -847,7 +849,7 @@ interrupt(statusReg, causeReg, pc, what, args)
 	 */
 	for(i = 0; i < 5; i++) {
 		if(cpu_int_tab[i].int_mask & mask) {
-			causeReg &= (*cpu_int_tab[i].int_hand)(mask, pc, statusReg, causeReg);
+			causeReg &= (*cpu_int_tab[i].int_hand)(mask, &cf);
 		}
 	}
 	/*

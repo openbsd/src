@@ -1,4 +1,4 @@
-/*	$OpenBSD: isabus.c,v 1.2 1996/07/30 20:24:30 pefo Exp $	*/
+/*	$OpenBSD: isabus.c,v 1.3 1996/09/14 15:58:27 pefo Exp $	*/
 /*	$NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp $	*/
 
 /*-
@@ -108,19 +108,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <arc/isa/spkrreg.h>
 #include <arc/isa/isa_machdep.h>
 
-extern int isa_io_base;		/* Base address for ISA I/O space	*/
-extern int isa_mem_base;	/* Base address for ISA MEM space	*/
-
 static int beeping;
-
-/*
- *	I/O macros to access isa bus ports/memory.
- *	At the first glance theese macros may seem inefficient.
- *      However, the cpu executes an instruction every 7.5ns
- *	so the bus is much slower so it doesn't matter, really.
- */
-#define	isa_outb(x,y)	outb(isa_io_base + (x), y)
-#define	isa_inb(x)	inb(isa_io_base + (x))
 
 #define	IRQ_SLAVE	2
 #define ICU_LEN		16
@@ -147,7 +135,7 @@ struct cfdriver isabr_cd = {
 void	*isabr_intr_establish __P((isa_chipset_tag_t, int, int, int,
 			int (*)(void *), void *, char *));
 void	isabr_intr_disestablish __P((isa_chipset_tag_t, void*));
-int	isabr_iointr __P((void *));
+int	isabr_iointr __P((unsigned int, struct clockframe *));
 void	isabr_initicu();
 
 extern int cputype;
@@ -188,6 +176,9 @@ isabrattach(parent, self, aux)
 	case ACER_PICA_61:
 		set_intr(INT_MASK_2, isabr_iointr, 3);
 		break;
+	case DESKSTATION_TYNE:
+		set_intr(INT_MASK_2, isabr_iointr, 2);
+		break;
 	default:
 		panic("isabrattach: unkown cputype!");
 	}
@@ -216,7 +207,7 @@ isabrprint(aux, pnp)
 
         if (pnp)
                 printf("%s at %s", ca->ca_name, pnp);
-        printf(" I/O base 0x%lx Mem base 0x%lx", isa_io_base, isa_mem_base);
+        printf(" isa_io_base 0x%lx isa_mem_base 0x%lx", isa_io_base, isa_mem_base);
         return (UNCONF);
 }
 
@@ -231,7 +222,7 @@ int	imen;
 int	intrtype[ICU_LEN], intrmask[ICU_LEN], intrlevel[ICU_LEN];
 struct intrhand *intrhand[ICU_LEN];
 
-int fakeintr(void *arg) {return 0;}
+int fakeintr(void *a) {return 0;}
 
 /*
  * Recalculate the interrupt masks from scratch.
@@ -383,17 +374,35 @@ isabr_intr_disestablish(ic, arg)
 }
 
 /*
- *	Process an interrupt from the ISA bus ACER PICA style.
+ *	Process an interrupt from the ISA bus.
  */
 int
-isabr_iointr(ca)
-	void *ca; /* XXX */
+isabr_iointr(mask, cf)
+        unsigned mask;
+        struct clockframe *cf;
 {
 	struct intrhand *ih;
 	int isa_vector;
 	int o_imen;
+	char vector;
 
-	isa_vector = in32(R4030_SYS_ISA_VECTOR) & (ICU_LEN - 1);
+	switch(cputype) {
+	case ACER_PICA_61:
+		isa_vector = in32(R4030_SYS_ISA_VECTOR) & (ICU_LEN - 1);
+		break;
+	case DESKSTATION_TYNE:
+		isa_outb(IO_ICU1, 0x0f);	/* Poll */
+		vector = isa_inb(IO_ICU1);
+		if(vector > 0 || (isa_vector = vector & 7) == 2) { 
+			isa_outb(IO_ICU2, 0x0f);
+			vector = isa_inb(IO_ICU2);
+			if(vector > 0) {
+				printf("isa: spurious interrupt.\n");
+				return(~0);
+			}
+			isa_vector = (vector & 7) | 8;
+		}
+	}
 
 	o_imen = imen;
 	imen |= 1 << (isa_vector & (ICU_LEN - 1));
@@ -409,6 +418,10 @@ isabr_iointr(ca)
 		isa_outb(IO_ICU1, 0x60 + isa_vector);
 	}
 	ih = intrhand[isa_vector];
+	if(isa_vector == 0) {	/* Clock */	/*XXX*/
+		(*ih->ih_fun)(cf);
+		ih = ih->ih_next;
+	}
 	while(ih) {
 		(*ih->ih_fun)(ih->ih_arg);
 		ih = ih->ih_next;
@@ -426,7 +439,7 @@ isabr_iointr(ca)
 /* 
  * Initialize the Interrupt controller logic.
  */
-void                  
+void
 isabr_initicu()
 {  
 

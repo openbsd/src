@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock_mc.c,v 1.2 1996/07/30 20:24:13 pefo Exp $	*/
+/*	$OpenBSD: clock_mc.c,v 1.3 1996/09/14 15:58:13 pefo Exp $	*/
 /*	$NetBSD: clock_mc.c,v 1.2 1995/06/28 04:30:30 cgd Exp $	*/
 
 /*
@@ -51,17 +51,23 @@
 #include <machine/autoconf.h>
 #include <machine/pio.h>
 
+#include <dev/isa/isareg.h>
+#include <dev/isa/isavar.h>
+#include <dev/ic/mc146818reg.h>
+
 #include <arc/arc/clockvar.h>
 #include <arc/arc/arctype.h>
 #include <arc/pica/pica.h>
-#include <dev/ic/mc146818reg.h>
+#include <arc/isa/isa_machdep.h>
+#include <arc/isa/timerreg.h>
 
 extern u_int	cputype;
 extern int	cpu_int_mask;
 
 void		mcclock_attach __P((struct device *parent,
 		    struct device *self, void *aux));
-static void	mcclock_init __P((struct clock_softc *csc));
+static void	mcclock_init_pica __P((struct clock_softc *csc));
+static void	mcclock_init_tyne __P((struct clock_softc *csc));
 static void	mcclock_get __P((struct clock_softc *csc, time_t base,
 		    struct tod_time *ct));
 static void	mcclock_set __P((struct clock_softc *csc,
@@ -79,12 +85,17 @@ struct mcclockdata {
 #define	mc146818_read(sc, reg)						\
 	    (*((struct mcclockdata *)sc->sc_data)->mc_read)(sc, reg)
 
-#if defined(ACER_PICA_61)
-static void	mc_write_arc __P((struct clock_softc *csc, u_int reg,
+/* Acer pica clock read code */
+static void	mc_write_pica __P((struct clock_softc *csc, u_int reg,
 		    u_int datum));
-static u_int	mc_read_arc __P((struct clock_softc *csc, u_int reg));
-static struct mcclockdata mcclockdata_arc = { mc_write_arc, mc_read_arc };
-#endif
+static u_int	mc_read_pica __P((struct clock_softc *csc, u_int reg));
+static struct mcclockdata mcclockdata_pica = { mc_write_pica, mc_read_pica };
+
+/* Deskstation clock read code */
+static void	mc_write_tyne __P((struct clock_softc *csc, u_int reg,
+		    u_int datum));
+static u_int	mc_read_tyne __P((struct clock_softc *csc, u_int reg));
+static struct mcclockdata mcclockdata_tyne = { mc_write_tyne, mc_read_tyne };
 
 void
 mcclock_attach(parent, self, aux)
@@ -99,7 +110,6 @@ mcclock_attach(parent, self, aux)
 
 	printf(": mc146818 or compatible");
 
-	csc->sc_init = mcclock_init;
 	csc->sc_get = mcclock_get;
 	csc->sc_set = mcclock_set;
 
@@ -110,8 +120,14 @@ mcclock_attach(parent, self, aux)
 		 * XXX should really allocate a new one and copy, or
 		 * something.  unlikely we'll have more than one...
 		 */
-		csc->sc_data = &mcclockdata_arc;
-		mcclockdata_arc.mc_addr = BUS_CVTADDR(ca);
+		csc->sc_init = mcclock_init_pica;
+		csc->sc_data = &mcclockdata_pica;
+		mcclockdata_tyne.mc_addr = BUS_CVTADDR(ca);
+		break;
+
+	case DESKSTATION_TYNE:
+		csc->sc_init = mcclock_init_tyne;
+		csc->sc_data = &mcclockdata_tyne;
 		break;
 
 	default:
@@ -124,13 +140,22 @@ mcclock_attach(parent, self, aux)
 }
 
 static void
-mcclock_init(csc)
+mcclock_init_pica(csc)
 	struct clock_softc *csc;
 {
 /* XXX Does not really belong here but for the moment we don't care */
 	out32(R4030_SYS_IT_VALUE, 9); /* 10ms - 1 */
 	/* Enable periodic clock interrupt */
 	out32(R4030_SYS_EXT_IMASK, cpu_int_mask);
+}
+
+static void
+mcclock_init_tyne(csc)
+	struct clock_softc *csc;
+{
+	isa_outb(TIMER_MODE, TIMER_SEL0 | TIMER_16BIT | TIMER_RATEGEN);
+	isa_outb(TIMER_CNTR0, TIMER_DIV(hz) % 256);
+	isa_outb(TIMER_CNTR0, TIMER_DIV(hz) / 256);
 }
 
 /*
@@ -171,7 +196,6 @@ mcclock_set(csc, ct)
 
 	s = splclock();
 	MC146818_GETTOD(csc, &regs);
-	splx(s);
 
 	regs[MC_SEC] = ct->sec;
 	regs[MC_MIN] = ct->min;
@@ -181,16 +205,12 @@ mcclock_set(csc, ct)
 	regs[MC_MONTH] = ct->mon;
 	regs[MC_YEAR] = ct->year;
 
-	s = splclock();
 	MC146818_PUTTOD(csc, &regs);
 	splx(s);
 }
 
-
-#if defined(ACER_PICA_61)
-
 static void
-mc_write_arc(csc, reg, datum)
+mc_write_pica(csc, reg, datum)
 	struct clock_softc *csc;
 	u_int reg, datum;
 {
@@ -202,7 +222,7 @@ mc_write_arc(csc, reg, datum)
 }
 
 static u_int
-mc_read_arc(csc, reg)
+mc_read_pica(csc, reg)
 	struct clock_softc *csc;
 	u_int reg;
 {
@@ -213,4 +233,24 @@ mc_read_arc(csc, reg)
 	i = inb(PICA_SYS_CLOCK);
 	return(i);
 }
-#endif /*ACER_PICA_61*/
+
+static void
+mc_write_tyne(csc, reg, datum)
+	struct clock_softc *csc;
+	u_int reg, datum;
+{
+	isa_outb(IO_RTC, reg);
+	isa_outb(IO_RTC+1, datum);
+}
+
+static u_int
+mc_read_tyne(csc, reg)
+	struct clock_softc *csc;
+	u_int reg;
+{
+	int i;
+
+	isa_outb(IO_RTC, reg);
+	i = isa_inb(IO_RTC+1);
+	return(i);
+}

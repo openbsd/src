@@ -1,8 +1,8 @@
-#	$OpenBSD: files.arc,v 1.3 1996/09/06 04:57:50 imp Exp $
+#	$OpenBSD: files.arc,v 1.4 1996/09/14 15:58:20 pefo Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
 #
-maxpartitions 8
+maxpartitions 16
 
 maxusers 2 8 64
 
@@ -53,12 +53,6 @@ device	pica {}
 attach	pica at mainbus			# { slot = -1, offset = -1 }
 file	arch/arc/pica/picabus.c		pica
 
-#	Real time clock, must have one..
-device	clock
-attach	clock at pica
-file	arch/arc/arc/clock.c		clock
-file	arch/arc/arc/clock_mc.c		clock
-
 #	Ethernet chip
 device	sn
 attach	sn at pica: ifnet, ether
@@ -73,13 +67,6 @@ major	{cd = 3}
 device	asc: scsi
 attach	asc at pica
 file	arch/arc/dev/asc.c		asc	needs-count
-
-#	Console driver on PC-style graphics
-device	pc: tty
-attach	pc at pica
-device	pms: tty
-attach	pms at pica
-file	arch/arc/dev/pccons.c		pc	needs-count
 
 #	Floppy disk controller
 device	fdc {drive = -1}
@@ -106,6 +93,21 @@ define  pci {}				# XXX dummy decl...
 
 include	"../../../dev/isa/files.isa"
 
+#	Real time clock, must have one..
+device	clock
+attach	clock at pica with clock_pica
+attach	clock at isa with clock_isa
+file	arch/arc/arc/clock.c	clock & (clock_isa | clock_pica) needs-flag
+file	arch/arc/arc/clock_mc.c	clock & (clock_isa | clock_pica) needs-flag
+
+#	Console driver on PC-style graphics
+device	pc: tty
+attach	pc at pica with pc_pica
+attach	pc at isa with pc_isa
+device	pms: tty
+attach	pms at pica
+file	arch/arc/dev/pccons.c		pc & (pc_pica | pc_isa)	needs-flag
+
 #	Serial driver for both ISA and LOCAL bus.
 device  ace: tty
 attach  ace at isa with ace_isa
@@ -118,6 +120,19 @@ device  lpr
 attach  lpr at isa with lpr_isa
 attach	lpr at pica with lpr_pica
 file	arch/arc/dev/lpr.c		lpr & (lpr_isa | lpr_pica) needs-flag
+
+# BusLogic BT-445C VLB SCSI Controller. Special on local bus.
+device  btl: scsi
+attach  btl at isa
+file    arch/arc/isa/btl.c                    btl needs-count
+
+# National Semiconductor DS8390/WD83C690-based boards
+# (WD/SMC 80x3 family, SMC Ultra [8216], 3Com 3C503, NE[12]000, and clones)
+# XXX conflicts with other ports; can't be in files.isa
+device  ed: ether, ifnet
+attach  ed at isa with ed_isa
+attach  ed at pcmcia with ed_pcmcia
+file    dev/isa/if_ed.c                 ed & (ed_isa | ed_pcmcia) needs-flag
 
 #
 

@@ -1,32 +1,35 @@
-/*	$OpenBSD: desktechbus.c,v 1.1 1996/09/05 08:01:16 pefo Exp $	*/
-/*	$NetBSD: tc.c,v 1.2 1995/03/08 00:39:05 cgd Exp $	*/
+/*	$OpenBSD: desktechbus.c,v 1.2 1996/09/14 15:58:24 pefo Exp $ */
 
 /*
- * Copyright (c) 1994, 1995 Carnegie-Mellon University.
- * All rights reserved.
- *
- * Author: Chris G. Demetriou
- * Author: Per Fogelstrom. (Mips R4x00)
+ * Copyright (c) 1996 Per Fogelstrom
  * 
- * Permission to use, copy, modify and distribute this software and
- * its documentation is hereby granted, provided that both the copyright
- * notice and this permission notice appear in all copies of the
- * software, derivative works or modified versions, and any portions
- * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
- * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
- * Carnegie Mellon requests users of this software to return to
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed under OpenBSD by
+ *	Per Fogelstrom.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
  *
- *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
- *  School of Computer Science
- *  Carnegie Mellon University
- *  Pittsburgh PA 15213-3890
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+ * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  *
- * any improvements or extensions that they make and grant Carnegie the
- * rights to redistribute these changes.
  */
 
 #include <sys/param.h>
@@ -36,107 +39,107 @@
 #include <machine/pio.h>
 #include <machine/autoconf.h>
 
-#include <arc/pica/pica.h>
 #include <arc/arc/arctype.h>
+#include <arc/dti/desktech.h>
 
-struct pica_softc {
+struct dti_softc {
 	struct	device sc_dv;
 	struct	abus sc_bus;
-	struct	pica_dev *sc_devs;
+	struct	dti_dev *sc_devs;
 };
 
 /* Definition of the driver for autoconfig. */
-int	picamatch(struct device *, void *, void *);
-void	picaattach(struct device *, struct device *, void *);
-int	picaprint(void *, char *);
+int	dtimatch(struct device *, void *, void *);
+void	dtiattach(struct device *, struct device *, void *);
+int	dtiprint(void *, char *);
 
-struct cfattach pica_ca = {
-	sizeof(struct pica_softc), picamatch, picaattach
+struct cfattach dti_ca = {
+	sizeof(struct dti_softc), dtimatch, dtiattach
 };
-struct cfdriver pica_cd = {
-	NULL, "pica", DV_DULL, NULL, 0
+struct cfdriver dti_cd = {
+	NULL, "dti", DV_DULL, NULL, 0
 };
 
-void	pica_intr_establish __P((struct confargs *, int (*)(void *), void *));
-void	pica_intr_disestablish __P((struct confargs *));
-caddr_t	pica_cvtaddr __P((struct confargs *));
-int	pica_matchname __P((struct confargs *, char *));
-int	pica_iointr __P((void *));
-int	pica_clkintr __P((unsigned, unsigned, unsigned, unsigned));
+void	dti_intr_establish __P((struct confargs *, int (*)(void *), void *));
+void	dti_intr_disestablish __P((struct confargs *));
+caddr_t	dti_cvtaddr __P((struct confargs *));
+int	dti_matchname __P((struct confargs *, char *));
+int	dti_iointr __P((void *));
+int	dti_clkintr __P((unsigned, unsigned, unsigned, unsigned));
 
 extern int cputype;
 
 /*
  *  Interrupt dispatch table.
  */
-struct pica_int_desc int_table[] = {
-	{0, pica_intrnull, (void *)NULL, 0 },  /*  0 */
-	{0, pica_intrnull, (void *)NULL, 0 },  /*  1 */
-	{0, pica_intrnull, (void *)NULL, 0 },  /*  2 */
-	{0, pica_intrnull, (void *)NULL, 0 },  /*  3 */
-	{0, pica_intrnull, (void *)NULL, 0 },  /*  4 */
-	{0, pica_intrnull, (void *)NULL, 0 },  /*  5 */
-	{0, pica_intrnull, (void *)NULL, 0 },  /*  6 */
-	{0, pica_intrnull, (void *)NULL, 0 },  /*  7 */
-	{0, pica_intrnull, (void *)NULL, 0 },  /*  8 */
-	{0, pica_intrnull, (void *)NULL, 0 },  /*  9 */
-	{0, pica_intrnull, (void *)NULL, 0 },  /* 10 */
-	{0, pica_intrnull, (void *)NULL, 0 },  /* 11 */
-	{0, pica_intrnull, (void *)NULL, 0 },  /* 12 */
-	{0, pica_intrnull, (void *)NULL, 0 },  /* 13 */
-	{0, pica_intrnull, (void *)NULL, 0 },  /* 14 */
-	{0, pica_intrnull, (void *)NULL, 0 },  /* 15 */
+struct dti_int_desc int_table[] = {
+	{0, dti_intrnull, (void *)NULL, 0 },  /*  0 */
+	{0, dti_intrnull, (void *)NULL, 0 },  /*  1 */
+	{0, dti_intrnull, (void *)NULL, 0 },  /*  2 */
+	{0, dti_intrnull, (void *)NULL, 0 },  /*  3 */
+	{0, dti_intrnull, (void *)NULL, 0 },  /*  4 */
+	{0, dti_intrnull, (void *)NULL, 0 },  /*  5 */
+	{0, dti_intrnull, (void *)NULL, 0 },  /*  6 */
+	{0, dti_intrnull, (void *)NULL, 0 },  /*  7 */
+	{0, dti_intrnull, (void *)NULL, 0 },  /*  8 */
+	{0, dti_intrnull, (void *)NULL, 0 },  /*  9 */
+	{0, dti_intrnull, (void *)NULL, 0 },  /* 10 */
+	{0, dti_intrnull, (void *)NULL, 0 },  /* 11 */
+	{0, dti_intrnull, (void *)NULL, 0 },  /* 12 */
+	{0, dti_intrnull, (void *)NULL, 0 },  /* 13 */
+	{0, dti_intrnull, (void *)NULL, 0 },  /* 14 */
+	{0, dti_intrnull, (void *)NULL, 0 },  /* 15 */
 };
 
-struct pica_dev {
+struct dti_dev {
 	struct confargs	ps_ca;
 	u_int		ps_mask;
 	intr_handler_t	ps_handler;
 	void 		*ps_base;
 };
 #ifdef ACER_PICA_61
-struct pica_dev acer_pica_61_cpu[] = {
+struct dti_dev acer_dti_61_cpu[] = {
 	{{ "dallas_rtc",0, 0, },
-	   0,			 pica_intrnull, (void *)PICA_SYS_CLOCK, },
+	   0,			 dti_intrnull, (void *)PICA_SYS_CLOCK, },
 	{{ "lpr",	1, 0, },
-	   PICA_SYS_LB_IE_PAR1,	 pica_intrnull, (void *)PICA_SYS_PAR1, },
+	   PICA_SYS_LB_IE_PAR1,	 dti_intrnull, (void *)PICA_SYS_PAR1, },
 	{{ "fdc",	2, 0, },
-	   PICA_SYS_LB_IE_FLOPPY,pica_intrnull, (void *)PICA_SYS_FLOPPY, },
+	   PICA_SYS_LB_IE_FLOPPY,dti_intrnull, (void *)PICA_SYS_FLOPPY, },
 	{{ NULL,	3, NULL, },
-	   0, pica_intrnull, (void *)NULL, },
+	   0, dti_intrnull, (void *)NULL, },
 	{{ NULL,	4, NULL, },
-	   0, pica_intrnull, (void *)NULL, },
+	   0, dti_intrnull, (void *)NULL, },
 	{{ "sonic",	5, 0, },
-	   PICA_SYS_LB_IE_SONIC, pica_intrnull, (void *)PICA_SYS_SONIC, },
+	   PICA_SYS_LB_IE_SONIC, dti_intrnull, (void *)PICA_SYS_SONIC, },
 	{{ "asc",	6, 0, },
-	   PICA_SYS_LB_IE_SCSI,  pica_intrnull, (void *)PICA_SYS_SCSI, },
+	   PICA_SYS_LB_IE_SCSI,  dti_intrnull, (void *)PICA_SYS_SCSI, },
 	{{ "pc",	7, 0, },
-	   PICA_SYS_LB_IE_KBD,	 pica_intrnull, (void *)PICA_SYS_KBD, },
+	   PICA_SYS_LB_IE_KBD,	 dti_intrnull, (void *)PICA_SYS_KBD, },
 	{{ "pms",	8, NULL, },
-	   PICA_SYS_LB_IE_MOUSE, pica_intrnull, (void *)PICA_SYS_KBD, },
+	   PICA_SYS_LB_IE_MOUSE, dti_intrnull, (void *)PICA_SYS_KBD, },
 	{{ "com",	9, 0, },
-	   PICA_SYS_LB_IE_COM1,	 pica_intrnull, (void *)PICA_SYS_COM1, },
+	   PICA_SYS_LB_IE_COM1,	 dti_intrnull, (void *)PICA_SYS_COM1, },
 	{{ "com",      10, 0, },
-	   PICA_SYS_LB_IE_COM2,	 pica_intrnull, (void *)PICA_SYS_COM2, },
+	   PICA_SYS_LB_IE_COM2,	 dti_intrnull, (void *)PICA_SYS_COM2, },
 	{{ NULL,       -1, NULL, },
 	   0, NULL, (void *)NULL, },
 };
 #endif
 
-struct pica_dev *pica_cpu_devs[] = {
+struct dti_dev *dti_cpu_devs[] = {
         NULL,                   /* Unused */
 #ifdef ACER_PICA_61
-        acer_pica_61_cpu,       /* Acer PICA */
+        acer_dti_61_cpu,       /* Acer PICA */
 #else
 	NULL,
 #endif
 };
-int npica_cpu_devs = sizeof pica_cpu_devs / sizeof pica_cpu_devs[0];
+int ndti_cpu_devs = sizeof dti_cpu_devs / sizeof dti_cpu_devs[0];
 
 int local_int_mask = 0;	/* Local interrupt enable mask */
 
 int
-picamatch(parent, cfdata, aux)
+dtimatch(parent, cfdata, aux)
 	struct device *parent;
 	void *cfdata;
 	void *aux;
@@ -145,44 +148,44 @@ picamatch(parent, cfdata, aux)
 	struct confargs *ca = aux;
 
         /* Make sure that we're looking for a PICA. */
-        if (strcmp(ca->ca_name, pica_cd.cd_name) != 0)
+        if (strcmp(ca->ca_name, dti_cd.cd_name) != 0)
                 return (0);
 
         /* Make sure that unit exists. */
 	if (cf->cf_unit != 0 ||
-	    cputype > npica_cpu_devs || pica_cpu_devs[cputype] == NULL)
+	    cputype > ndti_cpu_devs || dti_cpu_devs[cputype] == NULL)
 		return (0);
 
 	return (1);
 }
 
 void
-picaattach(parent, self, aux)
+dtiattach(parent, self, aux)
 	struct device *parent;
 	struct device *self;
 	void *aux;
 {
-	struct pica_softc *sc = (struct pica_softc *)self;
+	struct dti_softc *sc = (struct dti_softc *)self;
 	struct confargs *nca;
 	int i;
 
 	printf("\n");
 
 	/* keep our CPU device description handy */
-	sc->sc_devs = pica_cpu_devs[cputype];
+	sc->sc_devs = dti_cpu_devs[cputype];
 
 	/* set up interrupt handlers */
-	set_intr(INT_MASK_1, pica_iointr, 2);
+	set_intr(INT_MASK_1, dti_iointr, 2);
 
 	sc->sc_bus.ab_dv = (struct device *)sc;
 	sc->sc_bus.ab_type = BUS_PICA;
-	sc->sc_bus.ab_intr_establish = pica_intr_establish;
-	sc->sc_bus.ab_intr_disestablish = pica_intr_disestablish;
-	sc->sc_bus.ab_cvtaddr = pica_cvtaddr;
-	sc->sc_bus.ab_matchname = pica_matchname;
+	sc->sc_bus.ab_intr_establish = dti_intr_establish;
+	sc->sc_bus.ab_intr_disestablish = dti_intr_disestablish;
+	sc->sc_bus.ab_cvtaddr = dti_cvtaddr;
+	sc->sc_bus.ab_matchname = dti_matchname;
 
 	/* Initialize PICA Dma */
-	picaDmaInit();
+	dtiDmaInit();
 
 	/* Try to configure each PICA attached device */
 	for (i = 0; sc->sc_devs[i].ps_ca.ca_slot >= 0; i++) {
@@ -194,12 +197,12 @@ picaattach(parent, self, aux)
 		nca->ca_bus = &sc->sc_bus;
 
 		/* Tell the autoconfig machinery we've found the hardware. */
-		config_found(self, nca, picaprint);
+		config_found(self, nca, dtiprint);
 	}
 }
 
 int
-picaprint(aux, pnp)
+dtiprint(aux, pnp)
 	void *aux;
 	char *pnp;
 {
@@ -212,32 +215,32 @@ picaprint(aux, pnp)
 }
 
 caddr_t
-pica_cvtaddr(ca)
+dti_cvtaddr(ca)
 	struct confargs *ca;
 {
-	struct pica_softc *sc = pica_cd.cd_devs[0];
+	struct dti_softc *sc = dti_cd.cd_devs[0];
 
 	return(sc->sc_devs[ca->ca_slot].ps_base + ca->ca_offset);
 
 }
 
 void
-pica_intr_establish(ca, handler, val)
+dti_intr_establish(ca, handler, val)
 	struct confargs *ca;
 	intr_handler_t handler;
 	void *val;
 {
-	struct pica_softc *sc = pica_cd.cd_devs[0];
+	struct dti_softc *sc = dti_cd.cd_devs[0];
 
 	int slot;
 
 	slot = ca->ca_slot;
 	if(slot == 0) {		/* Slot 0 is special, clock */
-		set_intr(INT_MASK_4, pica_clkintr, 1);
+		set_intr(INT_MASK_4, dti_clkintr, 1);
 	}
 
 	if(int_table[slot].int_mask != 0) {
-		panic("pica intr already set");
+		panic("dti intr already set");
 	}
 	else {
 		int_table[slot].int_mask = sc->sc_devs[slot].ps_mask;;
@@ -249,10 +252,10 @@ pica_intr_establish(ca, handler, val)
 }
 
 void
-pica_intr_disestablish(ca)
+dti_intr_disestablish(ca)
 	struct confargs *ca;
 {
-	struct pica_softc *sc = pica_cd.cd_devs[0];
+	struct dti_softc *sc = dti_cd.cd_devs[0];
 
 	int slot;
 
@@ -262,13 +265,13 @@ pica_intr_disestablish(ca)
 	else {
 		local_int_mask &= ~int_table[slot].int_mask;
 		int_table[slot].int_mask = 0;
-		int_table[slot].int_hand = pica_intrnull;
+		int_table[slot].int_hand = dti_intrnull;
 		int_table[slot].param = (void *)NULL;
 	}
 }
 
 int
-pica_matchname(ca, name)
+dti_matchname(ca, name)
 	struct confargs *ca;
 	char *name;
 {
@@ -276,17 +279,17 @@ pica_matchname(ca, name)
 }
 
 int
-pica_intrnull(val)
+dti_intrnull(val)
 	void *val;
 {
 	panic("uncaught PICA intr for slot %d\n", val);
 }
 
 /*
- *   Handle pica i/o interrupt.
+ *   Handle dti i/o interrupt.
  */
 int
-pica_iointr(val)
+dti_iointr(val)
 	void *val;
 {
 	int vector;
@@ -298,10 +301,10 @@ pica_iointr(val)
 }
 
 /*
- * Handle pica interval clock interrupt.
+ * Handle dti interval clock interrupt.
  */
 int
-pica_clkintr(mask, pc, statusReg, causeReg)
+dti_clkintr(mask, pc, statusReg, causeReg)
 	unsigned mask;
 	unsigned pc;
 	unsigned statusReg;

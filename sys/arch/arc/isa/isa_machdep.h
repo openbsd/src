@@ -1,4 +1,4 @@
-/*      $OpenBSD: isa_machdep.h,v 1.1.1.1 1996/06/24 09:07:18 pefo Exp $  */
+/*      $OpenBSD: isa_machdep.h,v 1.2 1996/09/14 15:58:26 pefo Exp $  */
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -33,6 +33,18 @@
 #define _ISA_MACHDEP_H_
 
 typedef struct arc_isa_bus *isa_chipset_tag_t;
+
+/*
+ *      I/O macros to access isa bus ports/memory.
+ *      At the first glance theese macros may seem inefficient.
+ *      However, the cpu executes an instruction every 7.5ns
+ *      so the bus is much slower so it doesn't matter, really.
+ */
+#define isa_outb(x,y)   outb(isa_io_base + (x), y)
+#define isa_inb(x)      inb(isa_io_base + (x))
+ 
+extern int isa_io_base;		/* Base address for ISA I/O space       */ 
+extern int isa_mem_base;	/* Base address for ISA MEM space       */
 
 struct arc_isa_bus {
         void    *ic_data;

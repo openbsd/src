@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.3 1996/08/26 11:11:53 pefo Exp $	*/
+/*	$OpenBSD: locore.S,v 1.4 1996/09/14 15:58:15 pefo Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -50,7 +50,7 @@
  *	v 1.1 89/07/10 14:27:41 nelson Exp  SPRITE (DECWRL)
  *
  *	from: @(#)locore.s	8.5 (Berkeley) 1/4/94
- *	$Id: locore.S,v 1.3 1996/08/26 11:11:53 pefo Exp $
+ *	$Id: locore.S,v 1.4 1996/09/14 15:58:15 pefo Exp $
  */
 
 /*
@@ -265,6 +265,95 @@ LEAF(fillw)
 	jr	ra
 	nop
 END(fillw)
+
+/*
+ *	Block I/O routines mainly used by I/O drivers.
+ *
+ *	Args as:	a0 = port
+ *			a1 = memory address
+ *			a2 = count
+ */
+LEAF(insb)
+	beq	a2, zero, 2f
+	addu	a2, a1
+1:
+	lbu	v0, 0(a0)
+	addiu	a1, 1
+	bne	a1, a2, 1b
+	sb	v0, -1(a1)
+2:
+	jr	ra
+	nop
+END(insb)
+
+LEAF(insw)
+	beq	a2, zero, 2f
+	addu	a2, a2
+	addu	a2, a1
+1:
+	lhu	v0, 0(a0)
+	addiu	a1, 2
+	bne	a1, a2, 1b
+	sh	v0, -2(a1)
+2:
+	jr	ra
+	nop
+END(insw)
+
+LEAF(insl)
+	beq	a2, zero, 2f
+	sll	a2, 2
+	addu	a2, a1
+1:
+	lw	v0, 0(a0)
+	addiu	a1, 4
+	bne	a1, a2, 1b
+	sw	v0, -4(a1)
+2:
+	jr	ra
+	nop
+END(insl)
+
+LEAF(outsb)
+	beq	a2, zero, 2f
+	addu	a2, a1
+1:
+	lbu	v0, 0(a1)
+	addiu	a1, 1
+	bne	a1, a2, 1b
+	sb	v0, 0(a0)
+2:
+	jr	ra
+	nop
+END(outsb)
+
+LEAF(outsw)
+	beq	a2, zero, 2f
+	addu	a2, a2
+	addu	a2, a1
+1:
+	lhu	v0, 0(a1)
+	addiu	a1, 2
+	bne	a1, a2, 1b
+	sh	v0, 0(a0)
+2:
+	jr	ra
+	nop
+END(outsw)
+
+LEAF(outsl)
+	beq	a2, zero, 2f
+	sll	a2, 2
+	addu	a2, a1
+1:
+	lw	v0, 0(a1)
+	addiu	a1, 4
+	bne	a1, a2, 1b
+	sw	v0, 0(a0)
+2:
+	jr	ra
+	nop
+END(outsl)
 
 /*
  * Copy a null terminated string from the user address space into
@@ -2489,7 +2578,7 @@ LEAF(R4K_ConfigCache)
 	addu	t2, t2, 16
 	sw	t2, CpuPrimaryInstCacheLSize
 	and	v1, 0xff00
-	li	t1, (MIPS_R4600 << 4)
+	li	t1, (MIPS_R4600 << 8)
 	li	t2, 1
 	bnel	v1, t1, 1f
 	li	t2, 0
@@ -2527,14 +2616,25 @@ LEAF(R4K_FlushCache)
 	addu	t1, t0, t1		# End address
 	subu	t1, t1, 128
 1:
+	bne	v0, zero, 2f
 	cache	0, 0(t0)
+
 	cache	0, 16(t0)
-	cache	0, 32(t0)
 	cache	0, 48(t0)
-	cache	0, 64(t0)
 	cache	0, 80(t0)
-	cache	0, 96(t0)
+	b	3f
 	cache	0, 112(t0)
+
+2:
+	cache	0, 8192+0(t0)
+	cache	0, 8192+32(t0)
+	cache	0, 8192+64(t0)
+	cache	0, 8192+96(t0)
+
+3:
+	cache	0, 32(t0)
+	cache	0, 64(t0)
+	cache	0, 96(t0)
 	bne	t0, t1, 1b
 	addu	t0, t0, 128
 
@@ -2545,14 +2645,25 @@ LEAF(R4K_FlushCache)
 	addu	t1, t0, t2		# End address
 	subu	t1, t1, 128
 1:
+	bne	v0, zero, 2f
 	cache	1, 0(t0)
+
 	cache	1, 16(t0)
-	cache	1, 32(t0)
 	cache	1, 48(t0)
-	cache	1, 64(t0)
 	cache	1, 80(t0)
-	cache	1, 96(t0)
+	b	3f
 	cache	1, 112(t0)
+
+2:
+	cache	1, 8192+0(t0)
+	cache	1, 8192+32(t0)
+	cache	1, 8192+64(t0)
+	cache	1, 8192+96(t0)
+
+3:
+	cache	1, 32(t0)
+	cache	1, 64(t0)
+	cache	1, 96(t0)
 	bne	t0, t1, 1b
 	addu	t0, t0, 128
 
@@ -2581,18 +2692,30 @@ END(R4K_FlushCache)
  *----------------------------------------------------------------------------
  */
 LEAF(R4K_FlushICache)
+	lw	v0, CpuTwoWayCache
 	addu	a1, 127		# Align
 	srl	a1, a1, 7	# Number of unrolled loops
 1:
-	cache	0, 0(a0)
-	cache	0, 16(a0)
-	cache	0, 32(a0)
-	cache	0, 48(a0)
-	cache	0, 64(a0)
-	cache	0, 80(a0)
-	cache	0, 96(a0)
-	cache	0, 112(a0)
+	bne	v0, zero, 2f
 	addu	a1, -1
+
+	cache	0, 16(a0)
+	cache	0, 48(a0)
+	cache	0, 80(a0)
+	b	3f
+	cache	0, 112(a0)
+
+2:
+	cache	0, 8192+0(a0)
+	cache	0, 8192+32(a0)
+	cache	0, 8192+64(a0)
+	cache	0, 8192+96(a0)
+
+3:
+	cache	0, 0(a0)
+	cache	0, 32(a0)
+	cache	0, 64(a0)
+	cache	0, 96(a0)
 	bne	a1, zero, 1b
 	addu	a0, 128
 
@@ -2620,6 +2743,7 @@ END(R4K_FlushICache)
  *----------------------------------------------------------------------------
  */
 LEAF(R4K_FlushDCache)
+	lw	v0, CpuTwoWayCache
 	lw	a2, CpuPrimaryDataCacheSize
 	addiu	a2, -1
 	and	a0, a0, a2
@@ -2631,15 +2755,26 @@ LEAF(R4K_FlushDCache)
 	subu	a1, a1, a0
 	srl	a1, a1, 7	# Compute number of cache lines
 1:
-	cache	1, 0(a0)
-	cache	1, 16(a0)
-	cache	1, 32(a0)
-	cache	1, 48(a0)
-	cache	1, 64(a0)
-	cache	1, 80(a0)
-	cache	1, 96(a0)
-	cache	1, 112(a0)
+	bne	v0, zero, 2f
 	addu	a1, -1
+
+	cache	1, 16(a0)
+	cache	1, 48(a0)
+	cache	1, 80(a0)
+	b	3f
+	cache	1, 112(a0)
+
+2:
+	cache	1, 8192+0(a0)
+	cache	1, 8192+32(a0)
+	cache	1, 8192+64(a0)
+	cache	1, 8192+96(a0)
+
+3:
+	cache	1, 0(a0)
+	cache	1, 32(a0)
+	cache	1, 64(a0)
+	cache	1, 96(a0)
 	bne	a1, zero, 1b
 	addu	a0, 128
 
@@ -2669,26 +2804,31 @@ END(R4K_FlushDCache)
  *----------------------------------------------------------------------------
  */
 LEAF(R4K_HitFlushDCache)
-	beq	a1, zero, 2f
+	lw	v0, CpuTwoWayCache
+	beq	a1, zero, 3f
 	addu	a1, 127		# Align
 	addu	a1, a1, a0
 	and	a0, a0, -128
 	subu	a1, a1, a0
 	srl	a1, a1, 7	# Compute number of cache lines
 1:
-	cache	0x15, 0(a0)
-	cache	0x15, 16(a0)
-	cache	0x15, 32(a0)
-	cache	0x15, 48(a0)
-	cache	0x15, 64(a0)
-	cache	0x15, 80(a0)
-	cache	0x15, 96(a0)
-	cache	0x15, 112(a0)
+	bne	v0, zero, 2f
 	addu	a1, -1
+
+	cache	0x15, 16(a0)
+	cache	0x15, 48(a0)
+	cache	0x15, 80(a0)
+	cache	0x15, 112(a0)
+
+2:
+	cache	0x15, 0(a0)
+	cache	0x15, 32(a0)
+	cache	0x15, 64(a0)
+	cache	0x15, 96(a0)
 	bne	a1, zero, 1b
 	addu	a0, 128
 
-2:
+3:
 	j	ra
 	nop
 END(R4K_HitFlushDCache)
@@ -2713,6 +2853,7 @@ END(R4K_HitFlushDCache)
 LEAF(R4K_InvalidateDCache)
 	addu	a1, a1, a0			# compute ending address
 1:
+	cache	0x11,8194(a0)
 	addu	a0, a0, 4
 	bne	a0, a1, 1b
 	cache	0x11,-4(a0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: desktech.h,v 1.1 1996/09/05 08:01:15 pefo Exp $ */
+/*	$OpenBSD: desktech.h,v 1.2 1996/09/14 15:58:23 pefo Exp $ */
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -53,25 +53,16 @@
  * I/O map
  */
 
-#define	TYNE_P_BOUNCE		(0x0900000000LL)	/* Dma bounce buffer */
-#define	TYNE_V_BOUNCE		0xe0000000
-#define	TYNE_S_BOUNCE		0x00010000
-
-#define	TYNE_P_ISA_IO		(0x0100800000LL)	/* ISA I/O control */
-#define	TYNE_V_ISA_IO		0xe2000000
-#define	TYNE_S_ISA_IO		0x01000000
+#define	TYNE_P_ISA_IO		(0x0900000000LL)	/* ISA I/O Control */
+#define	TYNE_V_ISA_IO		0xe0000000
+#define	TYNE_S_ISA_IO		0x00010000
 
 #define	TYNE_P_ISA_MEM		(0x0100000000LL)	/* ISA Memory control */
-#define	TYNE_V_ISA_MEM		0xe3000000
+#define	TYNE_V_ISA_MEM		0xe1000000
 #define	TYNE_S_ISA_MEM		0x01000000
 
-/*
- *  Addresses used by various display drivers.
- */
-#define TYNE_MONO_BASE	(TYNE_V_ISA_IO + 0x3B4)
-#define TYNE_MONO_BUF	(TYNE_V_ISA_MEM + 0xB0000)
-#define TYNE_CGA_BASE	(TYNE_V_ISA_IO + 0x3D4)
-#define TYNE_CGA_BUF	(TYNE_V_ISA_MEM + 0xB8000)
-#define	TYNE_SYS_KBD	(TYNE_V_ISA_IO)
+#define	TYNE_P_BOUNCE		(0x0100800000LL)	/* Dma bounce buffer */
+#define	TYNE_V_BOUNCE		0xe2000000
+#define	TYNE_S_BOUNCE		0x00020000
 
 #endif	/* _DESKTECH_H_ */
