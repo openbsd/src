@@ -30,7 +30,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: yp_maplist.c,v 1.4 1996/08/19 08:35:10 tholo Exp $";
+static char *rcsid = "$OpenBSD: yp_maplist.c,v 1.5 1996/12/03 08:20:04 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -57,7 +57,7 @@ yp_maplist(indomain, outmaplist)
 	struct dom_binding *ysd;
 	struct ypresp_maplist ypml;
 	struct timeval  tv;
-	int             r;
+	int tries = 0, r;
 
 again:
 	if (_yp_dobind(indomain, &ysd) != 0)
@@ -71,7 +71,8 @@ again:
 	r = clnt_call(ysd->dom_client, YPPROC_MAPLIST,
 	    xdr_domainname, &indomain, xdr_ypresp_maplist, &ypml, tv);
 	if (r != RPC_SUCCESS) {
-		clnt_perror(ysd->dom_client, "yp_maplist: clnt_call");
+		if (tries++)
+			clnt_perror(ysd->dom_client, "yp_maplist: clnt_call");
 		ysd->dom_vers = -1;
 		goto again;
 	}

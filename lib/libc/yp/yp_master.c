@@ -30,7 +30,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: yp_master.c,v 1.4 1996/08/19 08:35:10 tholo Exp $";
+static char *rcsid = "$OpenBSD: yp_master.c,v 1.5 1996/12/03 08:20:05 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -59,7 +59,7 @@ yp_master(indomain, inmap, outname)
 	struct ypresp_master yprm;
 	struct ypreq_nokey yprnk;
 	struct timeval  tv;
-	int             r;
+	int tries = 0, r;
 
 	if (indomain == NULL || *indomain == '\0' ||
 	    strlen(indomain) > YPMAXDOMAIN || inmap == NULL ||
@@ -81,7 +81,8 @@ again:
 	r = clnt_call(ysd->dom_client, YPPROC_MASTER,
 	    xdr_ypreq_nokey, &yprnk, xdr_ypresp_master, &yprm, tv);
 	if (r != RPC_SUCCESS) {
-		clnt_perror(ysd->dom_client, "yp_master: clnt_call");
+		if (tries++)
+			clnt_perror(ysd->dom_client, "yp_master: clnt_call");
 		ysd->dom_vers = -1;
 		goto again;
 	}
