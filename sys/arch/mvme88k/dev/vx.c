@@ -1,4 +1,4 @@
-/*	$OpenBSD: vx.c,v 1.11 2001/08/31 08:18:24 miod Exp $ */
+/*	$OpenBSD: vx.c,v 1.12 2001/10/28 00:57:38 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr. 
  * All rights reserved.
@@ -47,12 +47,12 @@
 
 #include <dev/cons.h>
 
+#include <mvme88k/dev/vme.h>
 #include <mvme88k/dev/vxreg.h>
 
 #include "pcctwo.h"
 #if NPCCTWO > 0
 #include <mvme88k/dev/pcctworeg.h>
-#include <mvme88k/dev/vme.h>
 #endif
 
 #ifdef	DDB

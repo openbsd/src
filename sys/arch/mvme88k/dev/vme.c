@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.13 2001/09/11 20:05:24 miod Exp $ */
+/*	$OpenBSD: vme.c,v 1.14 2001/10/28 00:57:38 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -294,7 +294,6 @@ vmeattach(parent, self, args)
 {
 	struct vmesoftc *sc = (struct vmesoftc *)self;
 	struct confargs *ca = args;
-	struct vme2reg *vme2;
 
 	/* XXX any initialization to do? */
 
@@ -306,6 +305,7 @@ vmeattach(parent, self, args)
 	case BUS_PCCTWO:
 	{
 		int scon;
+		struct vme2reg *vme2;
 
 		vme2 = (struct vme2reg *)sc->sc_vaddr;
 		/* Sanity check that the Bug is set up right */
