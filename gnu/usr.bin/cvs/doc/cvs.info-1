@@ -1,0 +1,1369 @@
+This is Info file cvs.info, produced by Makeinfo-1.55 from the input
+file ./cvs.texinfo.
+
+   Copyright (C) 1992, 1993 Signum Support AB Copyright (C) 1993, 1994
+Free Software Foundation, Inc.
+
+   Permission is granted to make and distribute verbatim copies of this
+manual provided the copyright notice and this permission notice are
+preserved on all copies.
+
+   Permission is granted to copy and distribute modified versions of
+this manual under the conditions for verbatim copying, provided also
+that the section entitled "GNU General Public License" is included
+exactly as in the original, and provided that the entire resulting
+derived work is distributed under the terms of a permission notice
+identical to this one.
+
+   Permission is granted to copy and distribute translations of this
+manual into another language, under the above conditions for modified
+versions, except that the section entitled "GNU General Public License"
+and this permission notice may be included in translations approved by
+the Free Software Foundation instead of in the original English.
+
+
+File: cvs.info,  Node: Top,  Next: Preface,  Prev: (DIR),  Up: (DIR)
+
+
+
+   This info manual describes CVS and is updated to release 1.4 or
+something similar.
+
+* Menu:
+
+* Preface::                     About this manual
+* What is CVS?::                What is CVS?
+* Basic concepts::              Basic concepts of revision management
+* A sample session::            A tour of basic CVS usage
+* Repository::                  Where all your sources are stored
+* Starting a new project::      Starting a project with CVS
+* Multiple developers::         How CVS helps a group of developers
+* Branches::                    Parallel development explained
+* Merging::                     How to move changes between branches
+* Recursive behavior::          CVS descends directories
+* Adding files::                Adding files to a module
+* Removing files::              Removing files from a module
+* Tracking sources::            Tracking third-party sources
+* Moving files::                Moving and renaming files
+* Moving directories::          Moving and renaming directories
+* Keyword substitution::        CVS can include the revision inside the file
+* Revision management::         Policy questions for revision management
+* Invoking CVS::                Reference manual for CVS commands
+* Administrative files::        Reference manual for the Administrative files
+* Environment variables::       All environment variables which affect CVS
+* Troubleshooting::             Some tips when nothing works
+* Copying::                     GNU GENERAL PUBLIC LICENSE
+* Index::                       Index
+
+
+File: cvs.info,  Node: Preface,  Next: What is CVS?,  Prev: Top,  Up: Top
+
+About this manual
+*****************
+
+   Up to this point, one of the weakest parts of CVS has been the
+documentation.  CVS is a complex program.  Previous versions of the
+manual were written in the manual page format, which is not really well
+suited for such a complex program.
+
+   When writing this manual, I had several goals in mind:
+
+   * No knowledge of RCS should be necessary.
+
+   * No previous knowledge of revision control software should be
+     necessary.  All terms, such as "revision numbers", "revision
+     trees" and "merging" are explained as they are introduced.
+
+   * The manual should concentrate on the things CVS users want to do,
+     instead of what the CVS commands can do.  The first part of this
+     manual leads you through things you might want to do while doing
+     development, and introduces the relevant CVS commands as they are
+     needed.
+
+   * Information should be easy to find.  In the reference manual in
+     the appendices almost all information about every CVS command is
+     gathered together.  There is also an extensive index, and a lot of
+     cross references.
+
+   This manual was contributed by Signum Support AB in Sweden.  Signum
+is yet another in the growing list of companies that support free
+software.  You are free to copy both this manual and the CVS program.
+*Note Copying::, for the details.  Signum Support offers support
+contracts and binary distribution for many programs, such as CVS, GNU
+Emacs, the GNU C compiler and others.  You can also buy hardcopies of
+this manual from us.  Write to us for more information.
+
+     Signum Support AB
+     Box 2044
+     S-580 02  Linkoping
+     Sweden
+     
+     Email: info@signum.se
+     Phone: +46 (0)13 - 21 46 00
+     Fax:   +46 (0)13 - 21 47 00
+
+* Menu:
+
+* Checklist::
+* Credits::
+* BUGS::
+
+
+File: cvs.info,  Node: Checklist,  Next: Credits,  Up: Preface
+
+Checklist for the impatient reader
+==================================
+
+   CVS is a complex system.  You will need to read the manual to be
+able to use all of its capabilities.  There are dangers that can easily
+be avoided if you know about them, and this manual tries to warn you
+about them.  This checklist is intended to help you avoid the dangers
+without reading the entire manual.  If you intend to read the entire
+manual you can skip this table.
+
+Binary files
+     CVS can handle binary files, but you must have RCS release 5.5 or
+     later and a release of GNU diff that supports the `-a' flag
+     (release 1.15 and later are OK).  You must also configure both RCS
+     and CVS to handle binary files when you install them.
+
+     Keword substitution can be a source of trouble with binary files.
+     *Note Keyword substitution::, for solutions.
+
+The `admin' command
+     Uncareful use of the `admin' command can cause CVS to cease
+     working.  *Note admin::, before trying to use it.
+
+
+File: cvs.info,  Node: Credits,  Next: BUGS,  Prev: Checklist,  Up: Preface
+
+Credits
+=======
+
+   Roland Pesch, Cygnus Support <pesch@cygnus.com> wrote the manual
+pages which were distributed with CVS 1.3.  Appendix A and B contain
+much text that was extracted from them.  He also read an early draft of
+this manual and contributed many ideas and corrections.
+
+   The mailing-list `info-cvs' is sometimes informative. I have
+included information from postings made by the following persons: David
+G. Grubbs <dgg@think.com>.
+
+   Some text has been extracted from the man pages for RCS.
+
+   The CVS FAQ (*note What is CVS?::.) by David G. Grubbs has been used
+as a check-list to make sure that this manual is as complete as
+possible.  (This manual does however not include all of the material in
+the FAQ).  The FAQ contains a lot of useful information.
+
+   In addition, the following persons have helped by telling me about
+mistakes I've made: Roxanne Brunskill <rbrunski@datap.ca>, Kathy Dyer
+<dyer@phoenix.ocf.llnl.gov>, Karl Pingle <pingle@acuson.com>, Thomas A
+Peterson <tap@src.honeywell.com>, Inge Wallin <ingwa@signum.se>, Dirk
+Koschuetzki <koschuet@fmi.uni-passau.de> and Michael Brown
+<brown@wi.extrel.com>.
+
+
+File: cvs.info,  Node: BUGS,  Prev: Credits,  Up: Preface
+
+BUGS
+====
+
+   This manual is still very new.  Here is a list of known deficiencies
+in it:
+
+   * In the examples, the output from CVS is sometimes displayed,
+     sometimes not.
+
+   * The input that you are supposed to type in the examples should
+     have a different font than the output from the computer.
+
+   * This manual should be clearer about what file permissions you
+     should set up in the repository, and about setuid/setgid.
+
+   * Some of the chapters are not yet complete.  They are noted by
+     comments in the `cvs.texinfo' file.
+
+   * This list is not complete.  If you notice any error, omission, or
+     something that is unclear, please send mail to ceder@signum.se.
+
+   I hope that you will find this manual useful, despite the
+above-mentioned shortcomings.
+
+
+                                                Linkoping, October 1993
+                                                         Per Cederqvist
+
+
+File: cvs.info,  Node: What is CVS?,  Next: Basic concepts,  Prev: Preface,  Up: Top
+
+What is CVS?
+************
+
+   CVS is a version control system.  Using it, you can record the
+history of your source files.
+
+   For example, bugs sometimes creep in when software is modified, and
+you might not detect the bug until a long time after you make the
+modification.  With CVS, you can easily retrieve old versions to see
+exactly which change caused the bug.  This can sometimes be a big help.
+
+   You could of course save every version of every file you have ever
+created.  This would however waste an enormous amount of disk space.
+cVS stores all the versions of a file in a single file in a clever way
+that only stores the differences between versions.
+
+   CVS also helps you if you are part of a group of people working on
+the same project.  It is all too easy to overwrite each others' changes
+unless you are extremely careful.  Some editors, like GNU Emacs, try to
+make sure that the same file is never modified by two people at the
+same time.  Unfortunately, if someone is using another editor, that
+safeguard will not work.  CVS solves this problem by insulating the
+different developers from each other.  Every developer works in his own
+directory, and CVS merges the work when each developer is done.
+
+   CVS started out as a bunch of shell scripts written by Dick Grune,
+posted to `comp.sources.unix' in the volume 6 release of December,
+1986.  While no actual code from these shell scripts is present in the
+current version of CVS much of the CVS conflict resolution algorithms
+come from them.
+
+   In April, 1989, Brian Berliner designed and coded CVS.  Jeff Polk
+later helped Brian with the design of the CVS module and vendor branch
+support.
+
+   You can get CVS via anonymous ftp from a number of sites, for
+instance prep.ai.mit.edu in `pub/gnu'.
+
+   There is a mailing list for CVS where bug reports can be sent,
+questions can be asked, an FAQ is posted, and discussion about future
+enhancements to CVS take place.  To submit a message to the list, write
+to <info-cvs@prep.ai.mit.edu>.  To subscribe or unsubscribe, write to
+<info-cvs-request@prep.ai.mit.edu>. Please be specific about your email
+address.
+
+   Work is in progress on creating a newsgroup for CVS-related topics.
+It will appear somewhere under the `gnu.' hierarchy.  Gateways to and
+from the mailing list will be set up.
+
+   The FTP site think.com has some CVS material in the `/pub/cvs'
+subdirectory.  Currently (late summer 1993) it contains an excellent
+FAQ (Frequently Asked Questions, with answers), and an improved (but
+unofficial) version of CVS.
+
+CVS is not...
+=============
+
+   CVS can do a lot of things for you, but it does not try to be
+everything for everyone.
+
+CVS is not a build system.
+     Though the structure of your repository and modules file interact
+     with your build system (e.g. `Makefile's), they are essentially
+     independent.
+
+     CVS does not dictate how you build anything.  It merely stores
+     files for retrieval in a tree structure you devise.
+
+     CVS does not dictate how to use disk space in the checked out
+     working directories.  If you write your `Makefile's or scripts in
+     every directory so they have to know the relative positions of
+     everything else, you wind up requiring the entire repository to be
+     checked out.  That's simply bad planning.
+
+     If you modularize your work, and construct a build system that
+     will share files (via links, mounts, `VPATH' in `Makefile's,
+     etc.), you can arrange your disk usage however you like.
+
+     But you have to remember that *any* such system is a lot of work
+     to construct and maintain.  CVS does not address the issues
+     involved.  You must use your brain and a collection of other tools
+     to provide a build scheme to match your plans.
+
+     Of course, you should place the tools created to support such a
+     build system (scripts, `Makefile's, etc) under CVS.
+
+CVS is not a substitute for management.
+     Your managers and project leaders are expected to talk to you
+     frequently enough to make certain you are aware of schedules,
+     merge points, branch names and release dates.  If they don't, CVS
+     can't help.
+
+     CVS is an instrument for making sources dance to your tune.  But
+     you are the piper and the composer.  No instrument plays itself or
+     writes its own music.
+
+CVS is not a substitute for developer communication.
+     When faced with conflicts within a single file, most developers
+     manage to resolve them without too much effort.  But a more
+     general definition of "conflict" includes problems too difficult
+     to solve without communication between developers.
+
+     CVS cannot determine when simultaneous changes within a single
+     file, or across a whole collection of files, will logically
+     conflict with one another.  Its concept of a "conflict" is purely
+     textual, arising when two changes to the same base file are near
+     enough to spook the merge (i.e. `diff3') command.
+
+     CVS does not claim to help at all in figuring out non-textual or
+     distributed conflicts in program logic.
+
+     For example: Say you change the arguments to function `X' defined
+     in file `A'.  At the same time, someone edits file `B', adding new
+     calls to function `X' using the old arguments.  You are outside
+     the realm of CVS's competence.
+
+     Acquire the habit of reading specs and talking to your peers.
+
+CVS is not a configuration management system.
+     CVS is a source control system.  The phrase "configuration
+     management" is a marketing term, not an industry-recognized set of
+     functions.
+
+     A true "configuration management system" would contain elements of
+     the following:
+
+        * Source control.
+
+        * Dependency tracking.
+
+        * Build systems (i.e. What to build and how to find things
+          during a build.  What is shared?  What is local?)
+
+        * Bug tracking.
+
+        * Automated Testing procedures.
+
+        * Release Engineering documentation and procedures.
+
+        * Tape Construction.
+
+        * Customer Installation.
+
+        * A way for users to run different versions of the same
+          software on the same host at the same time.
+
+     CVS provides only the first.
+
+   This section is taken from release 2.3 of the CVS FAQ.
+
+
+File: cvs.info,  Node: Basic concepts,  Next: A sample session,  Prev: What is CVS?,  Up: Top
+
+Basic concepts
+**************
+
+   CVS stores all files in a centralized "repository": a directory
+(such as `/usr/local/cvsroot' or `user@remotehost:/usr/local/cvsroot')
+which is populated with a hierarchy of files and directories.  (*note
+Remote repositories::. for information about keeping the repository on
+a remote machine.)
+
+   Normally, you never access any of the files in the repository
+directly.  Instead, you use CVS commands to get your own copy of the
+files, and then work on that copy.  When you've finished a set of
+changes, you check (or "commit") them back into the repository.
+
+   The files in the repository are organized in "modules".  Each module
+is made up of one or more files, and can include files from several
+directories.  A typical usage is to define one module per project.
+
+* Menu:
+
+* Revision numbers::            The meaning of a revision number
+* Versions revisions releases::  Terminology used in this manual
+
+
+File: cvs.info,  Node: Revision numbers,  Next: Versions revisions releases,  Up: Basic concepts
+
+Revision numbers
+================
+
+   Each version of a file has a unique "revision number".  Revision
+numbers look like `1.1', `1.2', `1.3.2.2' or even `1.3.2.2.4.5'.  A
+revision number always has an even number of period-separated decimal
+integers.  By default revision 1.1 is the first revision of a file.
+Each successive revision is given a new number by increasing the
+rightmost number by one.  The following figure displays a few
+revisions, with newer revisions to the right.
+
+            +-----+    +-----+    +-----+    +-----+    +-----+
+            ! 1.1 !----! 1.2 !----! 1.3 !----! 1.4 !----! 1.5 !
+            +-----+    +-----+    +-----+    +-----+    +-----+
+
+   CVS is not limited to linear development.  The "revision tree" can
+be split into "branches", where each branch is a self-maintained line of
+development.  Changes made on one branch can easily be moved back to
+the main trunk.
+
+   Each branch has a "branch number", consisting of an odd number of
+period-separated decimal integers.  The branch number is created by
+appending an integer to the revision number where the corresponding
+branch forked off.  Having branch numbers allows more than one branch
+to be forked off from a certain revision.
+
+   All revisions on a branch have revision numbers formed by appending
+an ordinal number to the branch number.  The following figure
+illustrates branching with an example.
+
+                                                          +-------------+
+                               Branch 1.2.2.3.2 ->        ! 1.2.2.3.2.1 !
+                                                        / +-------------+
+                                                       /
+                                                      /
+                      +---------+    +---------+    +---------+    +---------+
+     Branch 1.2.2 -> _! 1.2.2.1 !----! 1.2.2.2 !----! 1.2.2.3 !----! 1.2.2.4 !
+                    / +---------+    +---------+    +---------+    +---------+
+                   /
+                  /
+     +-----+    +-----+    +-----+    +-----+    +-----+
+     ! 1.1 !----! 1.2 !----! 1.3 !----! 1.4 !----! 1.5 !      <- The main trunk
+     +-----+    +-----+    +-----+    +-----+    +-----+
+                     !
+                     !
+                     !   +---------+    +---------+    +---------+
+     Branch 1.2.4 -> +---! 1.2.4.1 !----! 1.2.4.2 !----! 1.2.4.3 !
+                         +---------+    +---------+    +---------+
+
+   The exact details of how the branch number is constructed is not
+something you normally need to be concerned about, but here is how it
+works: When CVS creates a branch number it picks the first unused even
+integer, starting with 2.  So when you want to create a branch from
+revision 6.4 it will be numbered 6.4.2.  All branch numbers ending in a
+zero (such as 6.4.0) are used internally by CVS (*note Magic branch
+numbers::.).  The branch 1.1.1 has a special meaning.  *Note Tracking
+sources::.
+
+
+File: cvs.info,  Node: Versions revisions releases,  Prev: Revision numbers,  Up: Basic concepts
+
+Versions, revisions and releases
+================================
+
+   A file can have several versions, as described above.  Likewise, a
+software product can have several versions.  A software product is
+often given a version number such as `4.1.1'.
+
+   Versions in the first sense are called "revisions" in this document,
+and versions in the second sense are called "releases".  To avoid
+confusion, the word "version" is almost never used in this document.
+
+
+File: cvs.info,  Node: A sample session,  Next: Repository,  Prev: Basic concepts,  Up: Top
+
+A sample session
+****************
+
+   This section describes a typical work-session using CVS.  It assumes
+that a repository is set up (*note Repository::.).
+
+   Suppose you are working on a simple compiler.  The source consists
+of a handful of C files and a `Makefile'.  The compiler is called `tc'
+(Trivial Compiler), and the repository is set up so that there is a
+module called `tc'.
+
+* Menu:
+
+* Getting the source::          Creating a workspace
+* Committing your changes::     Making your work available to others
+* Cleaning up::                 Cleaning up
+* Viewing differences::         Viewing differences
+
+
+File: cvs.info,  Node: Getting the source,  Next: Committing your changes,  Up: A sample session
+
+Getting the source
+==================
+
+   The first thing you must do is to get your own working copy of the
+source for `tc'.  For this, you use the `checkout' command:
+
+     $ cvs checkout tc
+
+This will create a new directory called `tc' and populate it with the
+source files.
+
+     $ cd tc
+     $ ls tc
+     CVS         Makefile    backend.c   driver.c    frontend.c  parser.c
+
+   The `CVS' directory is used internally by CVS.  Normally, you should
+not modify or remove any of the files in it.
+
+   You start your favorite editor, hack away at `backend.c', and a
+couple of hours later you have added an optimization pass to the
+compiler.  A note to RCS and SCCS users: There is no need to lock the
+files that you want to edit.  *Note Multiple developers:: for an
+explanation.
+
+
+File: cvs.info,  Node: Committing your changes,  Next: Cleaning up,  Prev: Getting the source,  Up: A sample session
+
+Committing your changes
+=======================
+
+   When you have checked that the compiler is still compilable you
+decide to make a new version of `backend.c'.
+
+     $ cvs commit backend.c
+
+CVS starts an editor, to allow you to enter a log message.  You type in
+"Added an optimization pass.", save the temporary file, and exit the
+editor.
+
+   The environment variable `$CVSEDITOR' determines which editor is
+started.  If `$CVSEDITOR' is not set, then if the environment variable
+`$EDITOR' is set, it will be used. If both `$CVSEDITOR' and `$EDITOR'
+are not set then the editor defaults to `vi'.  If you want to avoid the
+overhead of starting an editor you can specify the log message on the
+command line using the `-m' flag instead, like this:
+
+     $ cvs commit -m "Added an optimization pass" backend.c
+
+
+File: cvs.info,  Node: Cleaning up,  Next: Viewing differences,  Prev: Committing your changes,  Up: A sample session
+
+Cleaning up
+===========
+
+   Before you turn to other tasks you decide to remove your working
+copy of tc.  One acceptable way to do that is of course
+
+     $ cd ..
+     $ rm -r tc
+
+but a better way is to use the `release' command (*note release::.):
+
+     $ cd ..
+     $ cvs release -d tc
+     M driver.c
+     ? tc
+     You have [1] altered files in this repository.
+     Are you sure you want to release (and delete) module `tc': n
+     ** `release' aborted by user choice.
+
+   The `release' command checks that all your modifications have been
+committed.  If history logging is enabled it also makes a note in the
+history file.  *Note history file::.
+
+   When you use the `-d' flag with `release', it also removes your
+working copy.
+
+   In the example above, the `release' command wrote a couple of lines
+of output.  `? tc' means that the file `tc' is unknown to CVS.  That is
+nothing to worry about: `tc' is the executable compiler, and it should
+not be stored in the repository.  *Note cvsignore::, for information
+about how to make that warning go away.  *Note release output::, for a
+complete explanation of all possible output from `release'.
+
+   `M driver.c' is more serious.  It means that the file `driver.c' has
+been modified since it was checked out.
+
+   The `release' command always finishes by telling you how many
+modified files you have in your working copy of the sources, and then
+asks you for confirmation before deleting any files or making any note
+in the history file.
+
+   You decide to play it safe and answer `n RET' when `release' asks
+for confirmation.
+
+
+File: cvs.info,  Node: Viewing differences,  Prev: Cleaning up,  Up: A sample session
+
+Viewing differences
+===================
+
+   You do not remember modifying `driver.c', so you want to see what
+has happened to that file.
+
+     $ cd tc
+     $ cvs diff driver.c
+
+   This command runs `diff' to compare the version of `driver.c' that
+you checked out with your working copy.  When you see the output you
+remember that you added a command line option that enabled the
+optimization pass.  You check it in, and release the module.
+
+     $ cvs commit -m "Added an optimization pass" driver.c
+     Checking in driver.c;
+     /usr/local/cvsroot/tc/driver.c,v  <--  driver.c
+     new revision: 1.2; previous revision: 1.1
+     done
+     $ cd ..
+     $ cvs release -d tc
+     ? tc
+     You have [0] altered files in this repository.
+     Are you sure you want to release (and delete) module `tc': y
+
+
+File: cvs.info,  Node: Repository,  Next: Starting a new project,  Prev: A sample session,  Up: Top
+
+The Repository
+**************
+
+   Figure 3 below shows a typical setup of a repository.  Only
+directories are shown below.
+
+     /usr
+      |
+      +--local
+      |   |
+      |   +--cvsroot
+      |   |    |
+      |   |    +--CVSROOT
+               |      (administrative files)
+               |
+               +--gnu
+               |   |
+               |   +--diff
+               |   |   (source code to GNU diff)
+               |   |
+               |   +--rcs
+               |   |   (source code to RCS)
+               |   |
+               |   +--cvs
+               |       (source code to CVS)
+               |
+               +--yoyodyne
+                   |
+                   +--tc
+                   |    |
+                   |    +--man
+                   |    |
+                   |    +--testing
+                   |
+                   +--(other Yoyodyne software)
+
+   There are a couple of different ways to tell CVS where to find the
+repository.  You can name the repository on the command line
+explicitly, with the `-d' (for "directory") option:
+
+     cvs -d /usr/local/cvsroot checkout yoyodyne/tc
+
+   Or you can set the `$CVSROOT' environment variable to an absolute
+path to the root of the repository, `/usr/local/cvsroot' in this
+example.  To set `$CVSROOT', all `csh' and `tcsh' users should have
+this line in their `.cshrc' or `.tcshrc' files:
+
+     setenv CVSROOT /usr/local/cvsroot
+
+`sh' and `bash' users should instead have these lines in their
+`.profile' or `.bashrc':
+
+     CVSROOT=/usr/local/cvsroot
+     export CVSROOT
+
+   A repository specified with `-d' will override the `$CVSROOT'
+environment variable.  Once you've checked a working copy out from the
+repository, it will remember where its repository is (the information
+is recorded in the `CVS/Root' file in the working copy).
+
+   The `-d' option and the `CVS/Root' file both override the `$CVSROOT'
+environment variable; however, CVS will complain if the `-d' argument
+and the `CVS/Root' file disagree.
+
+   There is nothing magical about the name `/usr/local/cvsroot'.  You
+can choose to place the repository anywhere you like.  *Note Remote
+repositories:: to learn how the repository can be on a different
+machine than your working copy of the sources.
+
+   The repository is split in two parts.  `$CVSROOT/CVSROOT' contains
+administrative files for CVS.  The other directories contain the actual
+user-defined modules.
+
+* Menu:
+
+* User modules::                The structure of the repository
+* Intro administrative files::  Defining modules
+* Multiple repositories::       Multiple repositories
+* Creating a repository::       Creating a repository
+* Remote repositories::         Accessing repositories on remote machines
+
+
+File: cvs.info,  Node: User modules,  Next: Intro administrative files,  Up: Repository
+
+User modules
+============
+
+       `$CVSROOT'
+         |
+         +--yoyodyne
+         |   |
+         |   +--tc
+         |   |   |
+                 +--Makefile,v
+                 +--backend.c,v
+                 +--driver.c,v
+                 +--frontend.c,v
+                 +--parser.c,v
+                 +--man
+                 |    |
+                 |    +--tc.1,v
+                 |
+                 +--testing
+                      |
+                      +--testpgm.t,v
+                      +--test2.t,v
+
+   The figure above shows the contents of the `tc' module inside the
+repository.  As you can see all file names end in `,v'.  The files are
+"history files".  They contain, among other things, enough information
+to recreate any revision of the file, a log of all commit messages and
+the user-name of the person who committed the revision.  CVS uses the
+facilities of RCS, a simpler version control system, to maintain these
+files.  For a full description of the file format, see the `man' page
+`rcsfile(5)'.
+
+* Menu:
+
+* File permissions::            File permissions
+
+
+File: cvs.info,  Node: File permissions,  Up: User modules
+
+File permissions
+----------------
+
+   All `,v' files are created read-only, and you should not change the
+permission of those files.  The directories inside the repository
+should be writable by the persons that have permission to modify the
+files in each directory.  This normally means that you must create a
+UNIX group (see group(5)) consisting of the persons that are to edit
+the files in a project, and set up the repository so that it is that
+group that owns the directory.
+
+   This means that you can only control access to files on a
+per-directory basis.
+
+   CVS tries to set up reasonable file permissions for new directories
+that are added inside the tree, but you must fix the permissions
+manually when a new directory should have different permissions than its
+parent directory.
+
+   Since CVS was not written to be run setuid, it is unsafe to try to
+run it setuid.  You cannot use the setuid features of RCS together with
+CVS.
+
+
+File: cvs.info,  Node: Intro administrative files,  Next: Multiple repositories,  Prev: User modules,  Up: Repository
+
+The administrative files
+========================
+
+   The directory `$CVSROOT/CVSROOT' contains some "administrative
+files".  *Note Administrative files::, for a complete description.  You
+can use CVS without any of these files, but some commands work better
+when at least the `modules' file is properly set up.
+
+   The most important of these files is the `modules' file.  It defines
+all modules in the repository.  This is a sample `modules' file.
+
+     CVSROOT         -i mkmodules CVSROOT
+     modules         -i mkmodules CVSROOT modules
+     cvs             gnu/cvs
+     rcs             gnu/rcs
+     diff            gnu/diff
+     tc              yoyodyne/tc
+
+   The `modules' file is line oriented.  In its simplest form each line
+contains the name of the module, whitespace, and the directory where
+the module resides.  The directory is a path relative to `$CVSROOT'.
+The last for lines in the example above are examples of such lines.
+
+   Each module definition can contain options.  The `-i mkmodules' is
+an example of an option.  It arranges for CVS to run the `mkmodules'
+program whenever any file in the module CVSROOT is committed.  That
+program is responsible for checking out read-only copies from the RCS
+"history files" of all the administrative files.  These read-only
+copies are used internally by CVS.  You should never edit them directly.
+
+   The line that defines the module called `modules' uses features that
+are not explained here.  *Note modules::, for a full explanation of all
+the available features.
+
+Editing administrative files
+----------------------------
+
+   You edit the administrative files in the same way that you would edit
+any other module.  Use `cvs checkout CVSROOT' to get a working copy,
+edit it, and commit your changes in the normal way.
+
+   It is possible to commit an erroneous administrative file.  You can
+often fix the error and check in a new revision, but sometimes a
+particularly bad error in the administrative file makes it impossible
+to commit new revisions.
+
+
+File: cvs.info,  Node: Multiple repositories,  Next: Creating a repository,  Prev: Intro administrative files,  Up: Repository
+
+Multiple repositories
+=====================
+
+   In some situations it is a good idea to have more than one
+repository, for instance if you have two development groups that work
+on separate projects without sharing any code.  All you have to do to
+have several repositories is to set `$CVSROOT' to the repository you
+want to use at the moment.
+
+   There are disadvantages to having more than one repository.  In CVS
+1.3 you *must* make sure that `$CVSROOT' always points to the correct
+repository.  If the same filename is used in two repositories, and you
+mix up the setting of `$CVSROOT', you might lose data.  CVS 1.4 solves
+this problem by saving the repository information in the local `CVS'
+administration files.  If you try to use the wrong repository, CVS will
+warn you of the attempt and then exit.
+
+   Notwithstanding, it can be confusing to have two or more
+repositories.
+
+   All examples in this manual assume that you have a single repository.
+
+
+File: cvs.info,  Node: Creating a repository,  Next: Remote repositories,  Prev: Multiple repositories,  Up: Repository
+
+Creating a repository
+=====================
+
+   See the instructions in the `INSTALL' file in the CVS distribution.
+
+
+File: cvs.info,  Node: Remote repositories,  Prev: Creating a repository,  Up: Repository
+
+Remote repositories
+===================
+
+   The repository and your working copy of the sources can be on
+different machines.  To access a remote repository, use the following
+format for its name:
+
+             user@hostname:/path/to/repository
+
+   (The `user@' can be omitted if it's the same on both the local and
+remote hosts.)
+
+   CVS uses the `rsh' protocol to perform these operations, so the
+remote user host needs to have a `.rhosts' file which grants access to
+the local user.
+
+   For example, suppose you are the user `mozart' on the local machine
+`anklet.grunge.com'.  You want to access the module `foo' in the
+repository `/usr/local/sources/', on machine `chainsaw.brickyard.com'.
+
+   If your username is also `bach' on `chainsaw.brickyard.com', then
+you need only type
+
+     cvs -d bach@chainsaw.brickyard.com:/user/local/sources checkout foo
+
+   Remember, for this to work, `bach''s `.rhosts' file must contain the
+line:
+
+     anklet.grunge.com  mozart
+
+   Once the working copy is checked out, it is not necessary to specify
+the repository explicitly for every subsequent operation -- the working
+copy records it in the `CVS/Root' file.
+
+
+File: cvs.info,  Node: Starting a new project,  Next: Multiple developers,  Prev: Repository,  Up: Top
+
+Starting a project with CVS
+***************************
+
+   Since CVS 1.x is bad at renaming files and moving them between
+directories, the first thing you do when you start a new project should
+be to think through your file organization.  It is not impossible--just
+awkward--to rename or move files in CVS 1.x.  *Note Moving files::.
+
+   What to do next depends on the situation at hand.
+
+* Menu:
+
+* Setting up the files::        Getting the files into the repository
+* Defining the module::         How to make a module of the files
+
+
+File: cvs.info,  Node: Setting up the files,  Next: Defining the module,  Up: Starting a new project
+
+Setting up the files
+====================
+
+   The first step is to create the files inside the repository.  This
+can be done in a couple of different ways.
+
+* Menu:
+
+* From files::                  This method is useful with old projects
+                                where files already exists.
+
+* From scratch::                Creating a module from scratch.
+
+
+File: cvs.info,  Node: From files,  Next: From scratch,  Up: Setting up the files
+
+Creating a module from a number of files
+----------------------------------------
+
+   When you begin using CVS, you will probably already have several
+projects that can be put under CVS control.  In these cases the easiest
+way is to use the `import' command.  An example is probably the easiest
+way to explain how to use it.  If the files you want to install in CVS
+reside in `DIR', and you want them to appear in the repository as
+`$CVSROOT/yoyodyne/DIR', you can do this:
+
+     $ cd DIR
+     $ cvs import -m "Imported sources" yoyodyne/DIR yoyo start
+
+   Unless you supply a log message with the `-m' flag, CVS starts an
+editor and prompts for a message.  The string `yoyo' is a "vendor tag",
+and `start' is a "release tag".  They may fill no purpose in this
+context, but since CVS requires them they must be present.  *Note
+Tracking sources::, for more information about them.
+
+   You can now verify that it worked, and remove your original source
+directory.
+
+     $ cd ..
+     $ mv DIR DIR.orig
+     $ cvs checkout yoyodyne/DIR       # Explanation below
+     $ ls -R yoyodyne
+     $ rm -r DIR.orig
+
+Erasing the original sources is a good idea, to make sure that you do
+not accidentally edit them in DIR, bypassing CVS.  Of course, it would
+be wise to make sure that you have a backup of the sources before you
+remove them.
+
+   The `checkout' command can either take a module name as argument (as
+it has done in all previous examples) or a path name relative to
+`$CVSROOT', as it did in the example above.
+
+   It is a good idea to check that the permissions CVS sets on the
+directories inside `$CVSROOT' are reasonable, and that they belong to
+the proper groups.  *Note File permissions::.
+
+
+File: cvs.info,  Node: From scratch,  Prev: From files,  Up: Setting up the files
+
+Creating a module from scratch
+------------------------------
+
+   For a new project, the easiest thing to do is probably to create an
+empty directory structure, like this:
+
+     $ mkdir tc
+     $ mkdir tc/man
+     $ mkdir tc/testing
+
+   After that, you use the `import' command to create the corresponding
+(empty) directory structure inside the repository:
+
+     $ cd tc
+     $ cvs import -m "Created directory structure" yoyodyne/DIR yoyo start
+
+   Then, use `add' to add files (and new directories) as they appear.
+
+   Check that the permissions CVS sets on the directories inside
+`$CVSROOT' are reasonable.
+
+
+File: cvs.info,  Node: Defining the module,  Prev: Setting up the files,  Up: Starting a new project
+
+Defining the module
+===================
+
+   The next step is to define the module in the `modules' file.  Some
+CVS commands work without this step, but others (most notably
+`release') require that all modules are properly defined in the
+`modules' file.
+
+   In simple cases these steps are sufficient to define a module.
+
+  1. Get a working copy of the modules file.
+
+          $ cvs checkout modules
+          $ cd modules
+
+  2. Edit the file and insert a line that defines the module.  *Note
+     Intro administrative files::, for an introduction.  *Note
+     modules::, for a full description of the modules file.  You can
+     use the following line to define the module `tc':
+
+          tc   yoyodyne/tc
+
+  3. Commit your changes to the modules file.
+
+          $ cvs commit -m "Added the tc module." modules
+
+  4. Release the modules module.
+
+          $ cd ..
+          $ cvs release -d modules
+
+
+File: cvs.info,  Node: Multiple developers,  Next: Branches,  Prev: Starting a new project,  Up: Top
+
+Multiple developers
+*******************
+
+   When more than one person works on a software project things often
+get complicated.  Often, two people try to edit the same file
+simultaneously.  Some other version control systems (including RCS and
+SCCS) try to solve that particular problem by introducing "file
+locking", so that only one person can edit each file at a time.
+Unfortunately, file locking can be very counter-productive.  If two
+persons want to edit different parts of a file, there may be no reason
+to prevent either of them from doing so.
+
+   CVS does not use file locking.  Instead, it allows many people to
+edit their own "working copy" of a file simultaneously.  The first
+person that commits his changes has no automatic way of knowing that
+another has started to edit it.  Others will get an error message when
+they try to commit the file.  They must then use CVS commands to bring
+their working copy up to date with the repository revision.  This
+process is almost automatic, and explained in this chapter.
+
+   There are many ways to organize a team of developers.  CVS does not
+try to enforce a certain organization.  It is a tool that can be used
+in several ways.  It is often useful to inform the group of commits you
+have done.  CVS has several ways of automating that process.  *Note
+Informing others::.  *Note Revision management::, for more tips on how
+to use CVS.
+
+* Menu:
+
+* File status::                 A file can be in several states
+* Updating a file::             Bringing a file up-to-date
+* Conflicts example::           An informative example
+* Informing others::            To cooperate you must inform
+
+
+File: cvs.info,  Node: File status,  Next: Updating a file,  Up: Multiple developers
+
+File status
+===========
+
+   After you have checked out a file out from CVS, it is in one of
+these four states:
+
+Up-to-date
+     The file is identical with the latest revision in the repository.
+
+Locally modified
+     You have edited the file, and not yet committed your changes.
+
+Needing update
+     Someone else has committed a newer revision to the repository.
+
+Needing merge
+     Someone else have committed a newer revision to the repository,
+     and you have also made modifications to the file.
+
+   You can use the `status' command to find out the status of a given
+file.  *Note status::.
+
+
+File: cvs.info,  Node: Updating a file,  Next: Conflicts example,  Prev: File status,  Up: Multiple developers
+
+Bringing a file up to date
+==========================
+
+   When you want to update or merge a file, use the `update' command.
+For files that are not up to date this is roughly equivalent to a
+`checkout' command: the newest revision of the file is extracted from
+the repository and put in your working copy of the module.
+
+   Your modifications to a file are never lost when you use `update'.
+If no newer revision exists, running `update' has no effect.  If you
+have edited the file, and a newer revision is available, CVS will merge
+all changes into your working copy.
+
+   For instance, imagine that you checked out revision 1.4 and started
+editing it.  In the meantime someone else committed revision 1.5, and
+shortly after that revision 1.6.  If you run `update' on the file now,
+CVS will incorporate all changes between revision 1.4 and 1.6 into your
+file.
+
+   If any of the changes between 1.4 and 1.6 were made too close to any
+of the changes you have made, an "overlap" occurs.  In such cases a
+warning is printed, and the resulting file includes both versions of
+the lines that overlap, delimited by special markers.  *Note update::,
+for a complete description of the `update' command.
+
+
+File: cvs.info,  Node: Conflicts example,  Next: Informing others,  Prev: Updating a file,  Up: Multiple developers
+
+Conflicts example
+=================
+
+   Suppose revision 1.4 of `driver.c' contains this:
+
+     #include <stdio.h>
+     
+     void main()
+     {
+         parse();
+         if (nerr == 0)
+             gencode();
+         else
+             fprintf(stderr, "No code generated.\n");
+         exit(nerr == 0 ? 0 : 1);
+     }
+
+Revision 1.6 of `driver.c' contains this:
+
+     #include <stdio.h>
+     
+     int main(int argc,
+              char **argv)
+     {
+         parse();
+         if (argc != 1)
+         {
+             fprintf(stderr, "tc: No args expected.\n");
+             exit(1);
+         }
+         if (nerr == 0)
+             gencode();
+         else
+             fprintf(stderr, "No code generated.\n");
+         exit(!!nerr);
+     }
+
+Your working copy of `driver.c', based on revision 1.4, contains this
+before you run `cvs update':
+
+     #include <stdlib.h>
+     #include <stdio.h>
+     
+     void main()
+     {
+         init_scanner();
+         parse();
+         if (nerr == 0)
+             gencode();
+         else
+             fprintf(stderr, "No code generated.\n");
+         exit(nerr == 0 ? EXIT_SUCCESS : EXIT_FAILURE);
+     }
+
+You run `cvs update':
+
+     $ cvs update driver.c
+     RCS file: /usr/local/cvsroot/yoyodyne/tc/driver.c,v
+     retrieving revision 1.4
+     retrieving revision 1.6
+     Merging differences between 1.4 and 1.6 into driver.c
+     rcsmerge warning: overlaps during merge
+     cvs update: conflicts found in driver.c
+     C driver.c
+
+CVS tells you that there were some conflicts.  Your original working
+file is saved unmodified in `.#driver.c.1.4'.  The new version of
+`driver.c' contains this:
+
+     #include <stdlib.h>
+     #include <stdio.h>
+     
+     int main(int argc,
+              char **argv)
+     {
+         init_scanner();
+         parse();
+         if (argc != 1)
+         {
+             fprintf(stderr, "tc: No args expected.\n");
+             exit(1);
+         }
+         if (nerr == 0)
+             gencode();
+         else
+             fprintf(stderr, "No code generated.\n");
+     <<<<<<< driver.c
+         exit(nerr == 0 ? EXIT_SUCCESS : EXIT_FAILURE);
+     =======
+         exit(!!nerr);
+     >>>>>>> 1.6
+     }
+
+Note how all non-overlapping modifications are incorporated in your
+working copy, and that the overlapping section is clearly marked with
+`<<<<<<<', `=======' and `>>>>>>>'.
+
+   You resolve the conflict by editing the file, removing the markers
+and the erroneous line.  Suppose you end up with this file:
+     #include <stdlib.h>
+     #include <stdio.h>
+     
+     int main(int argc,
+              char **argv)
+     {
+         init_scanner();
+         parse();
+         if (argc != 1)
+         {
+             fprintf(stderr, "tc: No args expected.\n");
+             exit(1);
+         }
+         if (nerr == 0)
+             gencode();
+         else
+             fprintf(stderr, "No code generated.\n");
+         exit(nerr == 0 ? EXIT_SUCCESS : EXIT_FAILURE);
+     }
+
+You can now go ahead and commit this as revision 1.7.
+
+     $ cvs commit -m "Initialize scanner. Use symbolic exit values." driver.c
+     Checking in driver.c;
+     /usr/local/cvsroot/yoyodyne/tc/driver.c,v  <--  driver.c
+     new revision: 1.7; previous revision: 1.6
+     done
+
+   If you use release 1.04 or later of pcl-cvs (a GNU Emacs front-end
+for CVS) you can use an Emacs package called emerge to help you resolve
+conflicts.  See the documentation for pcl-cvs.
+
+
+File: cvs.info,  Node: Informing others,  Prev: Conflicts example,  Up: Multiple developers
+
+Informing others about commits
+==============================
+
+   It is often useful to inform others when you commit a new revision
+of a file.  The `-i' option of the `modules' file, or the `loginfo'
+file, can be used to automate this process.  *Note modules::.  *Note
+loginfo::.  You can use these features of CVS to, for instance,
+instruct CVS to mail a message to all developers, or post a message to
+a local newsgroup.
+
+
+File: cvs.info,  Node: Branches,  Next: Merging,  Prev: Multiple developers,  Up: Top
+
+Branches
+********
+
+   So far, all revisions shown in this manual have been on the "main
+trunk" of the revision tree, i.e., all revision numbers have been of
+the form X.Y.  One useful feature, especially when maintaining several
+releases of a software product at once, is the ability to make branches
+on the revision tree.  "Tags", symbolic names for revisions, will also
+be introduced in this chapter.
+
+* Menu:
+
+* Tags::                        Tags-Symbolic revisions
+* Branches motivation::         What branches are good for
+* Creating a branch::           Creating a branch
+* Sticky tags::                 Sticky tags
+
+
+File: cvs.info,  Node: Tags,  Next: Branches motivation,  Up: Branches
+
+Tags-Symbolic revisions
+=======================
+
+   The revision numbers live a life of their own.  They need not have
+anything at all to do with the release numbers of your software
+product.  Depending on how you use CVS the revision numbers might
+change several times between two releases.  As an example, some of the
+source files that make up RCS 5.6 have the following revision numbers:
+
+     ci.c            5.21
+     co.c            5.9
+     ident.c         5.3
+     rcs.c           5.12
+     rcsbase.h       5.11
+     rcsdiff.c       5.10
+     rcsedit.c       5.11
+     rcsfcmp.c       5.9
+     rcsgen.c        5.10
+     rcslex.c        5.11
+     rcsmap.c        5.2
+     rcsutil.c       5.10
+
+   You can use the `tag' command to give a symbolic name to a certain
+revision of a file.  You can use the `-v' flag to the `status' command
+to see all tags that a file has, and which revision numbers they
+represent.  (The output of `status' unfortunately uses the word
+"version" instead of "revision".)
+
+   The following example shows how you can add a tag to a file.  The
+commands must be issued inside your working copy of the module.  That
+is, you should issue the command in the directory where `backend.c'
+resides.
+
+     $ cvs tag release-0-4 backend.c
+     T backend.c
+     $ cvs status -v backend.c
+     ===================================================================
+     File: backend.c         Status: Up-to-date
+     
+         Version:            1.4     Tue Dec  1 14:39:01 1992
+         RCS Version:        1.4     /usr/local/cvsroot/yoyodyne/tc/backend.c,v
+         Sticky Tag:         (none)
+         Sticky Date:        (none)
+         Sticky Options:     (none)
+     
+         Existing Tags:
+             release-0-4                     (revision: 1.4)
+
+   There is seldom reason to tag a file in isolation.  A more common
+use is to tag all the files that constitute a module with the same tag
+at strategic points in the development life-cycle, such as when a
+release is made.
+
+     $ cvs tag release-1-0 .
+     cvs tag: Tagging .
+     T Makefile
+     T backend.c
+     T driver.c
+     T frontend.c
+     T parser.c
+
+   (When you give CVS a directory as argument, it generally applies the
+operation to all the files in that directory, and (recursively), to any
+subdirectories that it may contain.  *Note Recursive behavior::.)
+
+   The `checkout' command has a flag, `-r', that lets you check out a
+certain revision of a module.  This flag makes it easy to retrieve the
+sources that make up release 1.0 of the module `tc' at any time in the
+future:
+
+     $ cvs checkout -r release-1-0 tc
+
+This is useful, for instance, if someone claims that there is a bug in
+that release, but you cannot find the bug in the current working copy.
+
+   You can also check out a module as it was at any given date.  *Note
+checkout options::.
+
+   When you tag more than one file with the same tag you can think
+about the tag as "a curve drawn through a matrix of filename vs.
+revision number."  Say we have 5 files with the following revisions:
+
+             file1   file2   file3   file4   file5
+     
+             1.1     1.1     1.1     1.1  /--1.1*      <-*-  TAG
+             1.2*-   1.2     1.2    -1.2*-
+             1.3  \- 1.3*-   1.3   / 1.3
+             1.4          \  1.4  /  1.4
+                           \-1.5*-   1.5
+                             1.6
+
+   At some time in the past, the `*' versions were tagged.  You can
+think of the tag as a handle attached to the curve drawn through the
+tagged revisions.  When you pull on the handle, you get all the tagged
+revisions.  Another way to look at it is that you "sight" through a set
+of revisions that is "flat" along the tagged revisions, like this:
+
+             file1   file2   file3   file4   file5
+     
+                             1.1
+                             1.2
+                     1.1     1.3                       _
+             1.1     1.2     1.4     1.1              /
+             1.2*----1.3*----1.5*----1.2*----1.1     (--- <--- Look here
+             1.3             1.6     1.3              \_
+             1.4                     1.4
+                                     1.5
+

@@ -1,0 +1,583 @@
+Tue Oct  3 09:32:19 1995  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* NEWS: Remove item about -f global option; it is old news already
+	mentioned elsewhere in the file.
+
+Mon Oct  2 18:12:15 1995  Jim Blandy  <jimb@totoro.cyclic.com>
+
+	* FAQ: Updated for CVS 1.5.  And now 1.6 is almost out.  The FAQ
+        always lags the package, sigh...
+
+Mon Oct  2 18:10:35 1995  Larry Jones  <larry.jones@sdrc.com>
+
+	* configure, config.h.in: Rebuilt using autoconf and autoheader.
+
+	* configure.in: check for <sys/bsdtypes.h>; used by src/server.c.
+	(ISC keeps all the stuff that BSD has in <sys/types.h> here, so
+	we need it for the FD_SET stuff for select().)
+	Moved check for gethostname() after check for connect() since if
+	connect() is not found, we may add librariesd and gethostname()
+	may well be in one of those libraries. 
+	If connect() isn't found, look in -linet (ISC) in addition to
+	-lsocket and -lnsl.  Also, ignore the cache since we need to
+	update LIBS reguardless of whether it was found before or not and
+	the answer may well be different afterwards. 
+	Define CLIENT_SUPPORT and SERVER_SUPPORT only if connect() is
+	found.
+
+	* INSTALL: update info for ISC 4.0.1; renumber footnotes.
+
+Mon Oct  2 17:01:07 1995  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* INSTALL: Indicate CVS version tested with Solaris 2.4.
+
+Mon Oct  2 10:42:37 1995  Karl Fogel  <kfogel@totoro.cyclic.com>
+
+        * (configure): Re-ran autoconf.
+
+Mon Oct  2 10:33:58 1995  Michael Finken  <finken@conware.de>
+
+        * configure.in: AC_REPLACE `strstr'.
+
+Sun Oct  1 23:22:28 1995  Bryan O'Sullivan  <bos@serpentine.com>
+
+	* (INSTALL): noted that CVS works fine on Solaris 2.4 with both
+	  gcc and SPARCworks cc.
+
+Sun Oct  1 18:48:19 1995  Karl Fogel  <kfogel@totoro.cyclic.com>
+
+        * (configure): re-ran autoconf following Peter Wemm's change
+        below.
+
+Sun Oct  1 22:24:56 1995  Peter Wemm  <peter@haywire.dialix.com>
+
+	* configure.in: more extensive searching for -lsocket and -lnsl
+	as done in Taylor-UUCP 1.06
+
+Sun Oct  1 15:32:01 1995  Karl Fogel  <kfogel@totoro.cyclic.com>
+
+        * (configure): re-ran autoconf.
+
+Sun Oct  1 11:35:17 1995  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* TODO: Remove item about setting comment leader automatically;
+	RCS 5.7 does this.
+
+Wed Sep 27 15:34:04 1995  Peter Wemm  <peter@haywire.dialix.com>
+
+	* configure.in: correct detection of GNU diff's -a option for
+	src/options.h
+	* configure: regenerate with autoconf
+
+Fri Sep 22 14:29:31 1995  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* TODO: Remove item about reindenting on the way in and out.
+	wrappers provide this functionality.
+
+Wed Sep 20 14:27:28 1995  Jim Blandy  <jimb@totoro.cyclic.com>
+
+        * configure.in: #define the symbols DIFF and GREP to be the paths
+	to the DIFF and GREP programs; their values will be edited into
+	src/options.h (and config.h, coincidentally).
+	* acconfig.h (DIFF, GREP): Add these.
+	* configure, config.h.in: Rebuilt using autoconf and autoheader.
+
+Sun Sep 10 21:38:05 1995  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* TODO: CVS can already undo a change, suggest documenting how.
+	Expand slightly on mode stuff.
+	Remove item about not letting people check out into repository (it
+	is done).
+	Redo item about expanding env vars in *info to reflect current
+	thinking.
+	Remove item about making it hard to accidentally move tags; it is
+	done.
+	Add client/server note to suggestion regarding interactive merging.
+
+Fri Sep  1 12:07:02 1995  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* BUGS: Remove items about refetching unpatchable files and options.h.
+
+Fri Sep  1 09:20:09 1995  Jim Blandy  <jimb@totoro.cyclic.com>
+
+	* Makefile.in (DISTFILES): Remove cvsnt.vcp; it's been deleted.
+
+Thu Aug 31 13:47:35 1995  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* Makefile.in (stamp-h): Rebuild config.status before trying to
+	use it to build config.h.
+
+	* Makefile.in: Change "cd foo; make" to "cd foo && make";
+	otherwise we get into an infinite loop if an objdir doesn't exist.
+
+Thu Aug 31 11:07:06 1995  Jim Blandy  <jimb@totoro.cyclic.com>
+
+	* configure.in: Arrange not to touch options.h if we haven't
+	modified it.  AC_CONFIG_HEADER checks if the file is unmodified,
+	whereas AC_OUTPUT doesn't, and they're otherwise identical, so...
+	(AC_CONFIG_HEADER): ... mention src/options.h here...
+	(AC_OUTPUT): ... not here.
+	Copy src/options.h to src/options.h-SAVED, don't move it.
+	Otherwise, configure will create it again every time.
+	Remove the code to compare the new src/options.h with
+	src/options.h-SAVED and move it back if it's unchanged; autoconf
+	writes that for us now.
+
+Wed Aug 30 18:45:28 1995  Jim Blandy  <jimb@totoro.cyclic.com>
+
+        * .cvsignore: Ignore WinDebug and WinRel directories, used by
+	Microsoft Visual C++ to store object files and executables.
+
+	* acconfig.h (CVS_SUPPORT, CLIENT_SUPPORT, SERVER_SUPPORT): New
+	symbols, which autoheader will use to build config.h.in from
+	configure.in.
+	* configure.in (SERVER_SUPPORT, CLIENT_SUPPORT): Remove spaces
+	between AC_DEFINEs and opening parens of argument lists.  Oops.
+	* configure: Rebuild using autoconf.
+	* config.h.in: Rebuild using autoheader.
+
+	* Makefile.in (SUBDIRS): Uncomment windows-NT.
+
+	* INSTALL: Added Windows NT to list of supported platforms.
+	Added Windows NT installation instructions.
+
+Tue Aug 29 16:08:01 1995  Jim Blandy  <jimb@totoro.cyclic.com>
+
+	* cvsnt.mak: Completed Windows NT port.
+
+	* configure.in (SERVER_SUPPORT, CLIENT_SUPPORT): Arrange for these
+	to get #defined.  In the config.h file for the Windows NT port, we
+	only #define CLIENT_SUPPORT.
+	* config.h.in (SERVER_SUPPORT, CLIENT_SUPPORT): Add #undefs for
+        these.
+
+	* configure.in (AC_OUTPUT): Build the Makefile for the windows-NT
+	subdirectory too.
+
+	* cvsnt.vcp: Removed.  This doesn't store any information needed
+	to compile CVS; it seems to be mostly programmer preference stuff.
+	There's no need to distribute it.
+
+	* INSTALL: Added info about Harris Nighthawk from Steve Allen ---
+	thanks!
+
+Mon Aug 21 16:08:37 1995  Jim Blandy  <jimb@totoro.cyclic.com>
+
+        Bring the saga to a close:
+	* configure.in: Use AC_PROG_MAKE_SET here, to decide whether we
+	need to set the MAKE variable in Makefile.
+	* Makefile.in: Use @SET_MAKE@ here, to set MAKE when appropriate.
+
+Mon Aug 21 15:26:29 1995  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* Makefile.in: Add comment regarding AC_SET_MAKE.
+
+Sat Aug 19 21:57:51 1995  Jim Blandy  <jimb@totoro.cyclic.com>
+
+	* configure.in: Define CVS_SUPPORT, to tell certain library
+	functions that they're part of CVS.
+	* config.h.in: Add #undef for CVS_SUPPORT, for configure to chew
+	on.
+
+Fri Aug 18 22:35:34 1995  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* Makefile.in: Don't set MAKE; apparently all makes set it and GNU
+	make, at least, will set it to what make was invoked as (perhaps gmake
+	or some such), not just "make" (which might not support VPATH, for
+	example).
+
+Sun Aug 13 23:35:47 1995  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* INSTALL: Convert Data General entry to same format as other entries.
+
+Sun Aug 13 13:11:36 1995  Jim Blandy  <jimb@totoro.cyclic.com>
+
+	* cvs-format.el: Add note about set-c-style.
+
+Thu Aug  3 16:13:29 1995  Jim Blandy  <jimb@totoro.cyclic.com>
+
+	* INSTALL: Fixed mail address for updates.
+
+        * INSTALL: Noted that 1.5 runs on SunOS 4.1.1 -- 4.1.3.
+
+Sun Jul 30 20:12:26 1995  James Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvsinit.sh: Unify code for modules and loginfo with code for
+	other files which have checked-out and ,v files in CVSROOT.
+	Don't add "#" to start of lines in rcstemplate.
+
+Sat Jul 29 16:48:05 1995  James Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvsinit.sh: If arguments are given, give version number and
+	usage message.  Make printed messages much more concise.
+
+	* cvsinit.sh: Rename log.pl to log.  Don't install log twice.
+
+	* Makefile.in (install-local), contrib/Makefile.in (install):
+	Remove "reminder" to run cvsinit; running cvsinit is not required.
+
+Fri Jul 28 16:46:10 1995  James Kingdon  <kingdon@harvey.cyclic.com>
+
+	* Makefile.in (SUBDIRS): Comment out windows-NT.
+
+Fri Jul 28 02:27:54 1995  Jim Blandy  <jimb@totoro.cyclic.com>
+
+	* Makefile.in (DISTFILES): Add cvsnt.mak and cvsnt.vcp.
+	(SUBDIRS): Add windows-NT.
+
+	* config.h.in: Regenerated from configure.in by autoheader.
+
+Wed Jul 19 18:00:00 1995  Jim Blandy  <jimb@cyclic.com>
+
+	* configure.in (AC_CHECK_HEADERS): Check for <io.h> and <direct.h>.
+
+Tue Jul 18 21:18:00 1995  Jim Blandy  <jimb@cyclic.com>
+
+	* configure.in (AC_CHECK_HEADERS): Check for sys/param.h; Windows NT
+	doesn't have it.
+
+	* configure.in (AC_CHECK_HEADERS): Check for sys/time.h.  If you're
+	using AC_HEADER_TIME, it's best to check for this too.
+	
+	* cvsnt.mak: New file --- makefile equivalent for Microsoft Visual C++.
+	Choose this as your project when working with CVS under MSVC++.
+	* cvsnt.vcp: New file --- configuration info for Microsoft Visual C++.
+	* windows-NT: New subdirectory, containing files to be used to
+	build under Microsoft Windows NT.
+
+Wed Jul 12 23:26:24 1995  James Kingdon	 <kingdon@harvey.cyclic.com>
+
+	* Makefile.in: Remove duplicate install-info rule.
+
+Wed Jul 12 16:00:27 1995 Karl Fogel <kfogel@floss.cyclic.com>
+
+	* Makefile.in (install-local): added rule for install-info, made
+	`install' depend on it.
+
+	* README: correct mailing list addresses.
+	* INSTALL: same.
+
+Wed Jul 12 09:15:02 1995  Jim Meyering	(meyering@comco.com)
+
+	* configure.in (gdiff_path): Remove gdiff from the list of programs.
+	SGI's Irix includes a program named gdiff that is an X-based GUI to
+	diff.
+
+	* configure.in: Add check for working fnmatch functions so that
+	systems providing it don't incur the space overhead of linking
+	with the version in lib.  Cross compiling builds always use the
+	version in lib.
+
+Tue Jul 11 15:47:20 1995  Greg A. Woods	 <woods@most.weird.com>
+
+	* configure.in: add some FIXME comments
+	- add a hack to restore src/options.h if AC_OUTPUT() didn't modify
+	it. Note that this does *not* work for config.status, thus one
+	FIXME comment.
+	- add test for #! (to warn about possible failure of perl scripts
+	- add test for diff and grep paths (for src/options.h.in)
+	- fix up handling of src/options.h.in
+	- add checks for PERL_PATH and CSH_PATH (from previous local changes)
+
+Tue Jul 11 14:31:18 1995  Michael Shields  <shields@tembel.org>
+
+	* Makefile.in (LDFLAGS): Pick up from configure.
+
+Sun Jul	 9 19:03:00 1995  Greg A. Woods	 <woods@most.weird.com>
+
+	* configure: re-ran autoconf-2.4
+
+	* cvsinit.sh: make use of xVERSIONx from the Makefile
+	- get rid of stuff duplicated in examples/* and use that instead
+
+	* Makefile.in: $(VERSION) for cvsinit.sh wasn't set, so get it
+	from src/version.c instead.
+
+	* cvsinit.sh: install two more example CVSROOT control/config
+	files: rcstemplate checkoutlist
+	- install useful scripts from $CVSLIB/contrib too...
+	(from previous local changes)
+
+	* Makefile.in: add another reminder to run 'cvsinit' to update
+	repository(ies) (from previous local changes)
+	
+Thu Jul	 6 17:53:55 1995  Paul Eggert  <eggert@twinsun.com>
+
+	* Makefile.in (mostlyclean-local): Remove $(PROGS).
+
+Sat Jul	 1 13:11:41 1995  James Kingdon	 <kingdon@harvey.cyclic.com>
+
+	* Version 1.5.1.
+
+Thu Jun 29 01:02:09 1995  James Kingdon	 <kingdon@harvey.cyclic.com>
+
+	* configure.in, configure: cross_compiling gets set to "no", not
+	empty--change test accordingly.
+
+	* Version 1.4.93.
+
+Wed Jun 28 22:33:54 1995  James Kingdon	 <kingdon@harvey.cyclic.com>
+
+	* lib/Makefile.in, man/Makefile.in, doc/Makefile.in: Comment out
+	rules for configure and config.status, just like in Makefile.in or
+	src/Makefile.in.
+
+Tue Jun 27 19:53:05 1995  James Kingdon	 <kingdon@harvey.cyclic.com>
+
+	* configure.in (AC_REPLACE_FUNCS), configure: Remove fnmatch.
+	* lib/Makefile.in (OBJECTS): Add fnmatch.
+	Avoids buggy Solaris 2.4 libc fnmatch.
+
+	* FAQ: Updated with new version from ftp.odi.com.
+
+Mon Jun 26 15:17:46 1995  James Kingdon	 <kingdon@harvey.cyclic.com>
+
+	* Version 1.4.92.
+
+Thu Jun 22 12:45:24 1995  James Kingdon	 <kingdon@harvey.cyclic.com>
+
+	* Version 1.4.91.
+
+Wed Jun 21 16:33:04 1995  James Kingdon	 <kingdon@harvey.cyclic.com>
+
+	* PROJECTS: New file.
+	* Makefile.in (DISTFILES): Add it.
+
+Wed Jun 21 16:12:14 1995  James Kingdon	 <kingdon@harvey.cyclic.com>
+
+	* Makefile.in (FLAGS_TO_PASS): Don't pass INSTALL to sub-makes.
+	The reason for passing it is gone now that we are using autoconf
+	2.x which will set INSTALL in the sub-makefiles correctly.
+
+Tue Jun 20 18:14:54 1995  James Kingdon	 <kingdon@harvey.cyclic.com>
+
+	* configure.in, configure: Make sure src directory exists before
+	trying to copy options.h to it.
+
+Mon Jun 19 13:47:20 1995  Jim Blandy  <jimb@totoro.cyclic.com>
+
+	* Makefile.in: Add a "remotecheck" target here, for consistency;
+	people shouldn't have to switch to src before running the tests.
+
+Mon Jun 19 10:08:03 1995  Jim Kingdon  (kingdon@lioth.cygnus.com)
+
+	* INSTALL: Update list of machines tested.  Remove note about
+	systems missing opendir--this is an autoconf issue, not something
+	installers should have to worry about.	Refer to NEWS instead of
+	ChangeLog.  No longer "strongly recommend" putting diff -a in
+	options.h.
+
+Fri Jun 16 22:30:03 1995  Jim Kingdon  (kingdon@cyclic.com)
+
+	* Version 1.4.90.
+
+	* configure, configure.in (AC_OUTPUT): Add config/pcl-cvs/Makefile.
+
+	* Makefile.in (dist): Rename dist from ccvs-<version> to cvs-<version>.
+
+	* Makefile.in (dist, dist-dir), src/Makefile.in, doc/Makefile.in,
+	examples/Makefile.in, contrib/Makefile.in,
+	contrib/pcl-cvs/Makefile, man/Makefile.in, lib/Makefile.in
+	(dist-dir): Use srcdir where appropriate.
+
+Thu Jun 15 14:33:37 1995  Jim Kingdon  (kingdon@cyclic.com)
+
+	* CYCLIC-CVS-FAQ: Removed.
+	* Rename ChangeLog.fsf to NEWS.	 Add information about changes
+	since 1.4A2.
+	* Makefile.in (DISTFILES): Adjust accordingly.
+	* README: Revise to reflect current status of releases.
+
+Thu Jun 15 12:22:42 1995  Jim Kingdon  (kingdon@cyclic.com)
+
+	* TODO: Remove various items already fixed.  Revise others.
+
+Thu Jun 15 12:24:45 1995  J.T. Conklin	<jtc@rtl.cygnus.com>
+
+	* configure.in: Use AC_C_INLINE to handle inline.
+	Reorganized to put compiler and OS checks first so that any
+	special defines they might provide are used in subsequent tests.
+
+	* configure, config.h.in: regenerated with autoconf and
+	autoheader version 2.3.
+
+Thu Jun	 8 16:33:51 1995  Jim Kingdon  (kingdon@lioth.cygnus.com)
+
+	* INSTALL (Installation): Disrecommend RCS 5.6.[5-7].
+
+Tue May 30 00:07:15 1995  Jim Meyering	(meyering@comco.com)
+
+	* Makefile.in (distclean-local): Don't delete config.status here.
+	(distclean): Delete config.status here instead, but only after
+	recursive make invocations.  Otherwise, the new dependencies
+	in */Makefile.in on ../config.status led to failure in each sub-make
+	because there is no rule there to make ../config.status.
+	Reported by Jeff Johnson <jbj@brewster.jbj.org>.
+	(realclean): Likewise.
+
+Mon May 29 22:24:28 1995  J.T. Conklin	<jtc@rtl.cygnus.com>
+
+	* configure.in: Use AC_HEADER_DIRENT instead of AC_DIR_HEADER.
+	Use AC_HEADER_STAT to determine if S_FOO() macros work.	 
+	Use AC_HEADER_TIME to determine if both <sys/time.h> and <time.h> 
+	can be included as recommend by autoconf manual.
+	Remove AC_STRUCT_TM test, as above test is better.
+
+	* configure, config.h.in: regenerated with autoconf and
+	autoheader version 2.3.
+
+Fri Apr 28 14:36:49 1995  Ken Raeburn  (raeburn@kr-pc.cygnus.com)
+
+	* Makefile.in: Set "all" as default target instead of ".PHONY".
+	Some versions of make will otherwise try building all of the phony
+	targets, in order.
+
+Mon May	 1 14:02:42 1995  Jim Blandy  <jimb@totoro.bio.indiana.edu>
+
+	* configure.in: Set up src/options.h for the user.  Its defaults are
+	usually right.
+	* README, INSTALL: Adjust installation instructions appropriately.
+
+Fri Apr 28 22:31:26 1995  Jim Blandy  <jimb@totoro.bio.indiana.edu>
+
+	* Makefile.in (DISTFILES): Brought up-to-date.
+	(dist): Rewritten to use dist-dir targets, passing DISTDIR variable.
+	(GZIP, GZIP_EXT): New variables.
+	(dist-dir): New target.
+
+	We don't want to include a file the user has to edit in the
+	distribution.
+	* src/options.h: No longer distributed.
+	* src/options.h.in: Distribute this instead.
+	* INSTALL, README: Installation instructions updated.
+
+Sat Apr	 8 19:02:21 1995  Roland McGrath  <roland@baalperazim.frob.com>
+
+	* configure.in: Check for fchdir.  
+	(connect check): Use AC_CHECK_LIB instead of (obsolete)
+	AC_HAVE_LIBRARY.
+
+Sat Apr	 8 14:52:46 1995  Jim Blandy  <jimb@totoro.bio.indiana.edu>
+
+	* Makefile.in (CFLAGS): Let configure set the default for CFLAGS.
+	Under GCC, we want -g -O.
+
+Wed Feb	 8 06:49:49 1995  Roland McGrath  <roland@churchy.gnu.ai.mit.edu>
+
+	* Makefile.in (stamp-h): Pass CONFIG_FILES=$@ to config.status so
+	the target is created.
+	* configure.in: Applied `autoupdate' from Autoconf 2.1 to
+	modernize macro usage.
+	(AC_RSH): Call removed.	 It was obsolete and not doing anything useful.
+	(AC_OUTPUT): Write stamp-h as the Makefile rules expect we will.
+	(AC_TYPE_PID_T): Add this check.
+
+Tue Nov	 8 06:26:54 1994  Jim Kingdon  (kingdon@lioth.cygnus.com)
+
+	* Add stamp-h.in.  Remove it from .cvsignore.
+
+Fri Oct 28 11:50:51 1994  Jim Kingdon  (kingdon@lioth.cygnus.com)
+
+	* Makefile.in: Comment out autoconf and autoheader rules.
+
+Tue Oct 25 17:44:13 1994  Ken Raeburn  <raeburn@cujo.cygnus.com>
+
+	* Makefile.in (all, install, uninstall): Fail if make in
+	subdirectory fails.
+
+Tue Oct 18 13:26:15 1994  Jim Kingdon  (kingdon@lioth.cygnus.com)
+
+	* Makefile.in (FLAGS_TO_PASS): Pass INSTALL*.  Add comment about
+	why we need to.
+
+Tue Sep 27 08:27:06 1994  Jim Kingdon  (kingdon@lioth.cygnus.com)
+
+	* Makefile.in (SUBDIRS): Reinstate "contrib".
+	* configure.in (AC_OUTPUT): Add contrib/Makefile.
+	* configure: Regenerated.
+
+Tue Sep 27 01:03:59 1994  John Gilmore	(gnu@cygnus.com)
+
+	* Makefile.in (SUBDIRS):  Comment out "contrib".  Since we don't
+	bother to configure it, we shouldn't make it either.
+
+Wed Aug 10 14:52:57 1994  Ken Raeburn  (raeburn@cujo.cygnus.com)
+
+	* Makefile.in (FLAGS_TO_PASS): Don't include LIBS or CFLAGS twice.
+
+	* configure.in: Include waitpid and memmove in AC_REPLACE_FUNCS
+	list.  Don't check for memmove separately.
+	* configure: Regenerated.
+	* config.h.in: Regenerated for Mark's change.
+
+Wed Aug 10 14:32:24 1994  Mark Eichin  (eichin@cygnus.com)
+
+	* configure.in (KRB4): recognize --with-krb4=path. Also test for
+	krb_get_err_text so src/main.c and src/client.c can deal
+	appropriately.
+
+Tue Aug	 9 15:49:07 1994  Ken Raeburn  (raeburn@cujo.cygnus.com)
+
+	* configure.in: Check sizes of `long' and `int', needed for md5
+	code.
+	* acconfig.h: New file.	 Mention HAVE_KERBEROS, to keep autoheader
+	happy.
+	* configure, config.h.in: Regenerated.
+
+Tue Jul 19 11:23:21 1994  Ian Lance Taylor  (ian@sanguine.cygnus.com)
+
+	* configure.in: Check not only that krb.h exists, but that it will
+	actually compile correctly.
+	* configure: Regenerated.
+
+Mon Jul 11 07:04:36 1994  Jim Kingdon  (kingdon@lioth.cygnus.com)
+
+	* configure.in: Add comment re autoheader.
+
+Tue Jun 28 22:09:23 1994  Ian Lance Taylor  (ian@tweedledumb.cygnus.com)
+
+	* configure.in: Only look for -lsocket and -lnsl if we don't
+	already have connect.
+	* configure: Regenerated.
+
+Mon Jun 27 17:21:48 1994  Ian Lance Taylor  (ian@sanguine.cygnus.com)
+
+	* configure.in: Correct "krb_libdir" to "${krb_libdir}".
+	* configure: Regenerated.
+
+Fri Jun	 3 10:15:24 1994  Ian Lance Taylor  (ian@tweedledumb.cygnus.com)
+
+	* configure.in: Check for -lsocket and -lnsl.
+	* configure: Regenerated.
+
+Fri May 27 18:12:43 1994  Ian Lance Taylor  (ian@tweedledumb.cygnus.com)
+
+	* configure.in: Add valloc to AC_REPLACE_FUNCS.	 Add getpagesize
+	to AC_HAVE_FUNCS.  Check for krb.h and -lkrb.  If not found, look
+	in /usr/kerberos if native.  If found somewhere, define
+	HAVE_KERBEROS and also look for -ldes.	Substitute includeopt.
+	* configure: Regenerated.
+
+Fri Mar 11 13:11:51 1994  Ian Lance Taylor  (ian@tweedledumb.cygnus.com)
+
+	* configure.in: Check for <sys/select.h>; used by src/server.c.
+	* configure: Regenerated.
+
+Sun Jan	 9 12:04:15 1994  Ken Raeburn  (raeburn@kr-pc.cygnus.com)
+
+	* configure.in: Check for timezone function, for NetBSD support.
+	* configure: Regenerated.
+
+Wed Dec 15 18:05:21 1993  david d `zoo' zuhn  (zoo@andros.cygnus.com)
+
+	* Makefile.in: add MAKEINFO to MDEFINES, pass down MDEFINES on all
+	  recursive make invocations that require it; define
+	  INSTALL_PROGRAM and use it; reorganize MDEFINES; set infodir and
+	  add to MDEFINES; use YACC instead of BISON
+
+
+Mon Dec	 6 17:02:18 1993  K. Richard Pixley  (rich@sendai.cygnus.com)
+
+	* src/diff.c (diff_fileproc): add support for "cvs diff -N" which
+	  allows for adding or removing files via patches.
+

@@ -1,0 +1,39 @@
+Thu Sep 7  19:18:00 1995  Jim Blandy  <jimb@cyclic.com>
+
+	* config.h (CVS_SUPPORT): #define this.
+
+	* ndir.c (opendir): Make the directory name argument a const
+	char *, instead of just a char *.
+	* ndir.h (opendir): Extern declaration changed to match.
+
+Thu Aug 31 12:00:08 1995  Jim Blandy  <jimb@totoro.cyclic.com>
+
+	* Makefile.in (HEADERS, SOURCES): New variables.
+	(DISTFILES): Refer to them, and include README, Makefile.in, and
+	.cvsignore.
+
+	* filesubr.c (unlink_file_dir, deep_remove_dir): New functions,
+	originally added to src/filesubr.c and then adapted here for
+	Windows NT.
+
+Wed Aug 30 15:39:57 1995  Jim Blandy  <jimb@totoro.cyclic.com>
+
+        * Windows NT port merged.
+	* README, config.h, filesubr.c, mkdir.c, ndir.c, ndir.h,
+	options.h, pwd.c, pwd.h, rcmd.c, rcmd.h, run.c, startserver.c,
+	strippath.c, stripslash.c, waitpid.c, win32.c: Changed or added.
+
+Thu Aug 10 13:30:00 1995  Jim Blandy <jimb@cyclic.com>
+
+	* filesubr.c, mkdir.c, pwd.c, run.c, win32.c: New source files.
+	* pwd.h: New header file.
+
+Wed Jul 19 18:00:00 1995  Jim Blandy <jimb@cyclic.com>
+
+	* alloca.h: New file.
+
+	* config.h (HAVE_IO_H): Define this.
+
+Tue Jul 18 21:18:00 1995  Jim Blandy <jimb@cyclic.com>
+
+	* config.h, options.h, pwd.h: New files.

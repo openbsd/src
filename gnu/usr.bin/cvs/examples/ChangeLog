@@ -1,0 +1,40 @@
+Mon Jul 24 17:08:25 1995  Vince DeMarco  <vdemarco@bou.shl.com>
+
+	* Updated comb program to work when the user runs update/commit
+	etc from the top directory of a source tree.
+
+Fri Jul 21 10:35:10 1995  Vince DeMarco <vdemarco@bou.shl.com>
+
+	* Makefile.in (DISTFILES, EXAMPLE_FILES): Add cvswrappers uncom comb.
+	* cvswrappers uncom comb: New files.
+
+Sun Jul  9 21:21:35 1995  Karl Fogel  <kfogel@floss.cyclic.com>
+
+        Greg Woods' change:
+        
+        * checkoutlist, rcstemplate: new files.
+
+Sun Jul  9 19:03:00 1995  Greg A. Woods  <woods@most.weird.com>
+        
+	* modules: fix this up so cvsinit can use it for new
+        repositories
+
+	* loginfo: fix comments to note current perl requirement
+        for log and log_accum
+
+	* Makefile.in: add new template example files
+	(from previous local changes)
+
+	* rcsinfo, loginfo, commitinfo: corrections to comments
+        - corrections to sample control lines (from previous local changes)
+        
+Sat May 27 08:46:00 1995  Jim Meyering  (meyering@comco.com)
+
+	* Makefile.in (Makefile): Regenerate only Makefile in current
+	directory when Makefile.in is out of date.  Depend on ../config.status.
+
+Fri Apr 28 22:48:03 1995  Jim Blandy  <jimb@totoro.bio.indiana.edu>
+
+	* Makefile.in (DISTFILES): Updated.
+	(dist-dir): Renamed from dist, changed to work with DISTDIR value
+	passed from parent.

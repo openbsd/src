@@ -1,0 +1,48 @@
+#### Under Windows NT and Microsoft Visual C++, we use cvsnt.mak, not
+#### this makefile.  However, we need this file in order for 'make
+#### dist' to work properly on Unix machines.
+
+HEADERS = \
+  alloca.h \
+  config.h \
+  ndir.h \
+  options.h \
+  pwd.h \
+  rcmd.h
+SOURCES = \
+  filesubr.c \
+  mkdir.c \
+  ndir.c \
+  pwd.c \
+  rcmd.c \
+  run.c \
+  startserver.c \
+  strippath.c \
+  stripslash.c \
+  waitpid.c \
+  win32.c
+DISTFILES = ${HEADERS} ${SOURCES} \
+  README ChangeLog Makefile.in .cvsignore
+
+all:
+
+.PHONY: all install uninstall
+all install uninstall:
+
+.PHONY: tags TAGS
+tags TAGS:
+
+.PHONY: ls
+ls:
+	@echo ${DISTFILES}
+
+.PHONY: clean distclean realclean mostlyclean
+clean distclean realclean mostlyclean:
+
+.PHONY: lint
+lint:
+
+.PHONY: dist-dir
+dist-dir:
+	mkdir ${DISTDIR}
+	ln ${DISTFILES} ${DISTDIR}
