@@ -1260,7 +1260,7 @@ vt220|vt200|DEC VT220 in vt100 emulation mode:\
 	:is=\E[1;24r\E[24;1H:k1=\EOP:k2=\EOQ:k3=\EOR:k4=\EOS:\
 	:k5=\E[17~:k6=\E[18~:k7=\E[19~:k8=\E[20~:k9=\E[21~:\
 	:k;=\E[29~:kD=\E[3~:kI=\E[2~:kN=\E[6~:kP=\E[5~:kb=^H:\
-	:kd=\E[B:kh=\E[1~:kl=\E[D:kr=\E[C:ku=\E[A:le=^H:mb=\E[5m:\
+	:kd=\EOB:kh=\E[1~:kl=\EOD:kr=\EOC:ku=\EOA:le=^H:mb=\E[5m:\
 	:md=\E[1m:me=\E[m:mr=\E[7m:nd=\E[C:nl=^J:\
 	:r2=\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h:rc=\E8:\
 	:rf=/usr/share/tabset/vt100:\
