@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.6 2004/03/10 01:23:25 deraadt Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.7 2004/03/12 01:36:58 deraadt Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -206,8 +206,8 @@ fxp*	at pci? dev ? function ?		# EtherExpress 10/100B ethernet
 #tx*	at pci? dev ? function ?		# SMC 83C170 EPIC ethernet
 #tl*	at pci? dev ? function ?		# Compaq Thunderlan ethernet
 #vr*	at pci? dev ? function ?		# VIA Rhine ethernet
-#dc*	at pci? dev ? function ?		# 21143, "tulip" clone ethernet
-#sis*	at pci? dev ? function ?		# SiS 900/7016 ethernet
+dc*	at pci? dev ? function ?		# 21143, "tulip" clone ethernet
+sis*	at pci? dev ? function ?		# SiS 900/7016 ethernet
 #wb*	at pci? dev ? function ?		# Winbond W89C840F ethernet
 #ti*	at pci? dev ? function ?		# Alteon Tigon 1Gb ethernet
 skc*	at pci? dev ? function ?		# SysKonnect GEnesis 984x
