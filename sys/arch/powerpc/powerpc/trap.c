@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.40 2001/11/28 16:13:29 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.41 2001/11/29 04:47:41 drahn Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -335,7 +335,7 @@ printf("dsi on addr %x iar %x lr %x\n", frame->dar, frame->srr0,frame->lr);
 			
 			ftype = VM_PROT_READ | VM_PROT_EXECUTE;
 			if (uvm_fault(&p->p_vmspace->vm_map,
-				     trunc_page(frame->srr0), 0, ftype)) {
+				     trunc_page(frame->srr0), 0, ftype) == 0) {
 				break;
 			}
 		}
