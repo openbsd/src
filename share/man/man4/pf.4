@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.4 2001/07/01 22:07:35 angelos Exp $
+.\"	$OpenBSD: pf.4,v 1.5 2001/09/05 12:34:44 dhartmei Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -47,6 +47,184 @@ utility, or through an ioctl interface.
 .Bl -tag -width /dev/pf -compact
 .It Pa /dev/pf
 packet filtering device.
+.El
+.Sh IOCTL INTERFACE
+pf supports to following
+.Xr ioctl 2
+commands:
+.Bl -tag -width xxxxxx
+.It Dv DIOCSTART
+Starts the packet filter.
+.It Dv DIOCSTOP
+Stops the packet filter.
+.It Dv DIOCBEGINRULES  Fa "u_int32_t"
+Clears the inactive filter rule set, returns ticket for subsequent
+DIOCADDRULE and DIOCCOMMITRULES calls.
+.It Dv DIOCADDRULE     Fa "struct pfioc_rule"
+.Bd -literal
+struct pfioc_rule {
+	u_int32_t	 ticket;
+	u_int32_t	 nr;
+	struct pf_rule	 rule;
+};
+.Ed
+.Pp
+Adds filter
+.Va rule
+at the end of the inactive filter rule set.
+Requires
+.Va ticket
+obtained through preceding DIOCBEGINRULES call.
+.Va nr
+is ignored.
+.It Dv DIOCCOMMITRULES Fa "u_int32_t"
+Switch inactive to active filter rule set. Requires
+.Va ticket
+.
+.It Dv DIOCGETRULES    Fa "struct pfioc_rule"
+Returns
+.Va ticket
+for subsequent DIOCGETRULE calls and
+.Va nr
+of rules in the active filter rule set.
+.It Dv DIOCGETRULE     Fa "struct pfioc_rule"
+Returns filter
+.Va rule
+number
+.Va nr
+using
+.Va ticket
+obtained through a preceding DIOCGETRULES call.
+.It Dv DIOCBEGINNATS   Fa "u_int32_t"
+.It Dv DIOCADDNAT      Fa "struct pfioc_nat"
+.Bd -literal
+struct pfioc_nat {
+	u_int32_t	 ticket;
+	u_int32_t	 nr;
+	struct pf_nat	 nat;
+};
+.Ed
+.It Dv DIOCCOMMITNATS  Fa "u_int32_t"
+.It Dv DIOCGETNATS     Fa "struct pfioc_nat"
+.It Dv DIOCGETNAT      Fa "struct pfioc_nat"
+.It Dv DIOCBEGINRDRS   Fa "u_int32_t"
+.It Dv DIOCADDRDR      Fa "struct pfioc_rdr"
+.Bd -literal
+struct pfioc_rdr {
+	u_int32_t	 ticket;
+	u_int32_t	 nr;
+	struct pf_rdr	 rdr;
+};
+.Ed
+.It Dv DIOCCOMMITRDRS  Fa "u_int32_t"
+.It Dv DIOCGETRDRS     Fa "struct pfioc_rdr"
+.It Dv DIOCGETRDR      Fa "struct pfioc_rdr"
+.It Dv DIOCCLRSTATES
+Clears the state table.
+.It Dv DIOCGETSTATE    Fa "struct pfioc_state"
+.Bd -literal
+struct pfioc_state {
+	u_int32_t	 nr;
+	struct pf_state	 state;
+};
+.Ed
+.Pp
+Extracts the entry with the specified number from the state table.
+.It Dv DIOCSETSTATUSIF Fa "struct pfioc_if"
+.Bd -literal
+struct pfioc_if {
+	char		 ifname[IFNAMSIZ];
+};
+.Ed
+.Pp
+Specifies the interface for which statistics are accumulated.
+.It Dv DIOCGETSTATUS   Fa "struct pf_status"
+.Bd -literal
+struct pf_status {
+	u_int64_t	 counters[PFRES_MAX];
+	u_int64_t	 fcounters[FCNT_MAX];
+	u_int64_t	 pcounters[2][3];
+	u_int64_t	 bcounters[2];
+	u_int32_t	 running;
+	u_int32_t	 states;
+	u_int32_t	 since;
+	u_int32_t	 debug;
+};
+.Ed
+.Pp
+Gets the internal packet filter statistics.
+.It Dv DIOCCLRSTATUS
+.It Dv DIOCNATLOOK     Fa "struct pfioc_natlook"
+Looks up a state table entry by source and destination addresses and ports.
+.Bd -literal
+struct pfioc_natlook {
+	u_int32_t	 saddr;
+	u_int32_t	 daddr;
+	u_int32_t	 rsaddr;
+	u_int32_t	 rdaddr;
+	u_int16_t	 sport;
+	u_int16_t	 dport;
+	u_int16_t	 rsport;
+	u_int16_t	 rdport;
+	u_int8_t	 proto;
+	u_int8_t	 direction;
+};
+.Ed
+.It Dv DIOCSETDEBUG    Fa "u_int32_t"
+.Bd -literal
+enum	{ PF_DEBUG_NONE=0, PF_DEBUG_URGENT=1, PF_DEBUG_MISC=2 };
+.Ed
+Sets the debug level.
+.It Dv DIOCGETSTATES   Fa "struct pfioc_states"
+.Bd -literal
+struct pfioc_states {
+	int	ps_len;
+        union {
+		caddr_t psu_buf;
+		struct pf_state *psu_states;
+	} ps_u;
+#define ps_buf		ps_u.psu_buf
+#define ps_states	ps_u.psu_states
+};
+.Ed
+.It Dv DIOCCHANGERULE  Fa "struct pfioc_changerule"
+Adds or removes a filter rule in the active filter rule set.
+.Bd -literal
+struct pfioc_changerule {
+	u_int32_t	 action;
+	struct pf_rule	 oldrule;
+	struct pf_rule	 newrule;
+};
+enum	{ PF_CHANGE_ADD_HEAD=1, PF_CHANGE_ADD_TAIL=2,
+	  PF_CHANGE_ADD_BEFORE=3, PF_CHANGE_ADD_AFTER=4,
+	  PF_CHANGE_REMOVE=5 };
+.Ed
+.It Dv DIOCCHANGENAT   Fa "struct pfioc_changenat"
+Adds or removes a nat rule in the active nat rule set.
+.Bd -literal
+struct pfioc_changenat {
+	u_int32_t	 action;
+	struct pf_nat	 oldnat;
+	struct pf_nat	 newnat;
+};
+.Ed
+.It Dv DIOCCHANGERDR   Fa "struct pfioc_changerdr"
+Adds or removes a rdr rule in the active rdr rule set.
+.Bd -literal
+struct pfioc_changerdr {
+	u_int32_t	 action;
+	struct pf_rdr	 oldrdr;
+	struct pf_rdr	 newrdr;
+};
+.Ed
+.It Dv DIOCSETTIMEOUT  Fa "struct pfioc_tm"
+.Bd -literal
+struct pfioc_tm {
+	int		 timeout;
+	int		 seconds;
+};
+.Ed
+.It Dv DIOCGETTIMEOUT  Fa "struct pfioc_tm"
 .El
 .Sh SEE ALSO
 .Xr bridge 4 ,
