@@ -1,15 +1,12 @@
-#	$OpenBSD: Makefile,v 1.1 2005/03/18 20:26:12 uwe Exp $
+#	$OpenBSD: Makefile,v 1.2 2005/03/18 20:28:38 deraadt Exp $
 
 TOP=    ${.CURDIR}/..
-IPK=	openbsd37_arm.ipk
+IPK=	openbsd${OSrev}_arm.ipk
 
 all: ${IPK}
 
 ${IPK}:
-	-rm -rf ${.OBJDIR}/data
-
 	install -o ${BINOWN} -g ${BINGRP} -m 755 -d ${.OBJDIR}/data/hdd2/OpenBSD
-#	install -o ${BINOWN} -g ${BINGRP} -m 755 -d ${.OBJDIR}/data/hdd2
 	install -o ${BINOWN} -g ${BINGRP} -m 755 -d \
 	    ${.OBJDIR}/data/opt/QtPalmtop/apps/Applications
 	install -o ${BINOWN} -g ${BINGRP} -m 755 -d ${.OBJDIR}/data/opt/QtPalmtop/bin
@@ -50,7 +47,8 @@ install:
 	cp ${IPK} ${DESTDIR}/snapshot
 
 clean cleandir:
-	rm -rf data control ${IPK} debian-binary control.tar.gz data.tar.gz
+	rm -rf data control ${IPK} debian-binary control.tar.gz data.tar.gz \
+	    bootbsd.png
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>
