@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.102 2002/05/16 16:34:13 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.103 2002/06/17 08:05:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -2034,25 +2034,21 @@ ubsec_kprocess_rsapriv(sc, krp)
 		padlen = 1024;
 	else {
 		err = E2BIG;
-		printf("bad pad.\n");
 		goto errout;
 	}
 
 	if (ubsec_ksigbits(&krp->krp_param[UBS_RSAPRIV_PAR_DP]) > padlen) {
 		err = E2BIG;
-		printf("bad p\n");
 		goto errout;
 	}
 
 	if (ubsec_ksigbits(&krp->krp_param[UBS_RSAPRIV_PAR_DQ]) > padlen) {
 		err = E2BIG;
-		printf("bad q\n");
 		goto errout;
 	}
 
 	if (ubsec_ksigbits(&krp->krp_param[UBS_RSAPRIV_PAR_PINV]) > padlen) {
 		err = E2BIG;
-		printf("bad pinv\n");
 		goto errout;
 	}
 
@@ -2108,7 +2104,6 @@ ubsec_kprocess_rsapriv(sc, krp)
 	/* Copy in input message (aligned buffer/length). */
 	if (ubsec_ksigbits(&krp->krp_param[UBS_RSAPRIV_PAR_MSGIN]) > msglen) {
 		/* Is this likely? */
-		printf("msginbuf...\n");
 		err = E2BIG;
 		goto errout;
 	}
@@ -2123,7 +2118,6 @@ ubsec_kprocess_rsapriv(sc, krp)
 
 	/* Prepare space for output message (aligned buffer/length). */
 	if (ubsec_ksigbits(&krp->krp_param[UBS_RSAPRIV_PAR_MSGOUT]) < msglen) {
-		printf("msgoutbuf\n");
 		/* Is this likely? */
 		err = E2BIG;
 		goto errout;
