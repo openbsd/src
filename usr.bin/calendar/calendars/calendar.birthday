@@ -1,7 +1,7 @@
 /*
  * Birthday
  *
- * $OpenBSD: calendar.birthday,v 1.10 1998/11/03 20:11:03 pjanzen Exp $
+ * $OpenBSD: calendar.birthday,v 1.11 2001/10/26 20:55:05 mickey Exp $
  */
 
 #ifndef _calendar_birthday_
@@ -30,8 +30,9 @@
 01/21	Thomas Jonathan "Stonewall" Jackson born in Clarksburg, VA, 1824
 01/21	Ethan Allen born, 1738
 01/22	Sir Francis Bacon born, 1561
-01/23	Ernst Abbe born, 1840, formulated diffraction theory
 01/23	Joseph Hewes born, 1730
+01/23	Ernst Abbe born, 1840, formulated diffraction theory
+01/23	Sergei M. Eisenstein born in Riga, Latvia, 1898
 01/23	Samuel Barber died, 1981
 01/24	John Belushi is born in Chicago, 1949
 01/25	Robert Burns born, 1759
@@ -49,8 +50,9 @@
 02/09	George Hartmann born, 1489, designed astrolabes, timepieces, etc.
 02/10	Charles Lamb born, 1775
 02/10	William Allen White born, 1868
-02/11	Thomas Edison born, 1847
 02/11	William Henry Fox Talbot born, 1800, photographic pioneer
+02/11	Thomas Edison born, 1847
+02/11	Sergei M. Eisenstein died in Moscow, Russia, 1988
 02/12	Abraham Lincoln born, 1809
 02/12	Charles Darwin born in Shrewsbury, England, 1809
 02/15	Galileo Galilei born in Pisa, Italy, 1564
