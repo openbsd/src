@@ -1,6 +1,4 @@
-/* confpars.c
-
-   Parser for dhcpd config file... */
+/*	$OpenBSD: confpars.c,v 1.7 2004/04/20 05:35:33 henning Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 The Internet Software Consortium.

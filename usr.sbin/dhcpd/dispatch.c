@@ -1,6 +1,4 @@
-/* dispatch.c
-
-   Network input dispatcher... */
+/*	$OpenBSD: dispatch.c,v 1.8 2004/04/20 05:35:33 henning Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999

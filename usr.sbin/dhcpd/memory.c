@@ -1,3 +1,5 @@
+/*	$OpenBSD: memory.c,v 1.6 2004/04/20 05:35:33 henning Exp $ */
+
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 The Internet Software Consortium.
  * All rights reserved.

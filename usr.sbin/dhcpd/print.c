@@ -1,4 +1,4 @@
-/*	$Id: print.c,v 1.5 2004/04/18 00:43:27 deraadt Exp $	 */
+/*	$OpenBSD: print.c,v 1.6 2004/04/20 05:35:33 henning Exp $ */
 
 /* Turn data structures into printable text. */
 

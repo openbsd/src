@@ -1,8 +1,4 @@
-/*
- * icmp.c
- *
- * ICMP Protocol engine - for sending out pings and receiving responses.
- */
+/*	$OpenBSD */
 
 /*
  * Copyright (c) 1997, 1998 The Internet Software Consortium.
