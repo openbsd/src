@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.59 2004/08/24 02:57:33 tedu Exp $	*/
+/*	$OpenBSD: in6.c,v 1.60 2004/10/07 12:08:25 henning Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -777,6 +777,7 @@ in6_control(so, cmd, data, ifp, p)
 		return ((*ifp->if_ioctl)(ifp, cmd, data));
 	}
 
+	dohooks(ifp->if_addrhooks, 0);
 	return (0);
 }
 
