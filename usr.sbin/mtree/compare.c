@@ -1,5 +1,5 @@
 /*	$NetBSD: compare.c,v 1.11 1996/09/05 09:56:48 mycroft Exp $	*/
-/*	$OpenBSD: compare.c,v 1.19 2004/08/01 18:32:20 deraadt Exp $	*/
+/*	$OpenBSD: compare.c,v 1.20 2004/11/21 19:36:04 otto Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static const char sccsid[] = "@(#)compare.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: compare.c,v 1.19 2004/08/01 18:32:20 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: compare.c,v 1.20 2004/11/21 19:36:04 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -264,7 +264,7 @@ typeerr:		LABEL;
 		}
 	}
 	if (s->flags & F_RMD160) {
-		char *new_digest, buf[41];
+		char *new_digest, buf[RMD160_DIGEST_STRING_LENGTH];
 
 		new_digest = RMD160File(p->fts_accpath, buf);
 		if (!new_digest) {
@@ -280,7 +280,7 @@ typeerr:		LABEL;
 		}
 	}
 	if (s->flags & F_SHA1) {
-		char *new_digest, buf[41];
+		char *new_digest, buf[SHA1_DIGEST_STRING_LENGTH];
 
 		new_digest = SHA1File(p->fts_accpath, buf);
 		if (!new_digest) {

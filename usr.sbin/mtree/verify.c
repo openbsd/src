@@ -1,4 +1,4 @@
-/*	$OpenBSD: verify.c,v 1.15 2004/08/01 18:32:20 deraadt Exp $	*/
+/*	$OpenBSD: verify.c,v 1.16 2004/11/21 19:36:04 otto Exp $	*/
 /*	$NetBSD: verify.c,v 1.10 1995/03/07 21:26:28 cgd Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static const char sccsid[] = "@(#)verify.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: verify.c,v 1.15 2004/08/01 18:32:20 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: verify.c,v 1.16 2004/11/21 19:36:04 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -82,7 +82,7 @@ vwalk(void)
 
 	argv[0] = ".";
 	argv[1] = NULL;
-	if ((t = fts_open(argv, ftsoptions, NULL)) == NULL)
+	if ((t = fts_open(argv, ftsoptions, dsort)) == NULL)
 		error("fts_open: %s", strerror(errno));
 	level = root;
 	specdepth = rval = 0;

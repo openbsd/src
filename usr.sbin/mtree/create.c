@@ -1,5 +1,5 @@
 /*	$NetBSD: create.c,v 1.11 1996/09/05 09:24:19 mycroft Exp $	*/
-/*	$OpenBSD: create.c,v 1.23 2004/08/01 18:32:20 deraadt Exp $	*/
+/*	$OpenBSD: create.c,v 1.24 2004/11/21 19:36:04 otto Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static const char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: create.c,v 1.23 2004/08/01 18:32:20 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: create.c,v 1.24 2004/11/21 19:36:04 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -70,7 +70,6 @@ static gid_t gid;
 static uid_t uid;
 static mode_t mode;
 
-static int	dsort(const FTSENT **, const FTSENT **);
 static void	output(int, int *, const char *, ...);
 static int	statd(FTS *, FTSENT *, uid_t *, gid_t *, mode_t *);
 static void	statf(int, FTSENT *);
@@ -213,7 +212,7 @@ statf(int indent, FTSENT *p)
 			output(indent, &offset, "md5digest=%s", md5digest);
 	}
 	if (keys & F_RMD160 && S_ISREG(p->fts_statp->st_mode)) {
-		char *rmd160digest, buf[41];
+		char *rmd160digest, buf[RMD160_DIGEST_STRING_LENGTH];
 
 		rmd160digest = RMD160File(p->fts_accpath,buf);
 		if (!rmd160digest)
@@ -222,7 +221,7 @@ statf(int indent, FTSENT *p)
 			output(indent, &offset, "rmd160digest=%s", rmd160digest);
 	}
 	if (keys & F_SHA1 && S_ISREG(p->fts_statp->st_mode)) {
-		char *sha1digest, buf[41];
+		char *sha1digest, buf[SHA1_DIGEST_STRING_LENGTH];
 
 		sha1digest = SHA1File(p->fts_accpath,buf);
 		if (!sha1digest)
@@ -351,7 +350,7 @@ statd(FTS *t, FTSENT *parent, uid_t *puid, gid_t *pgid, mode_t *pmode)
 	return (0);
 }
 
-static int
+int
 dsort(const FTSENT **a, const FTSENT **b)
 {
 	if (S_ISDIR((*a)->fts_statp->st_mode)) {

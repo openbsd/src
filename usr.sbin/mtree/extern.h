@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.6 2004/05/02 17:55:53 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.7 2004/11/21 19:36:04 otto Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1995/03/07 21:12:07 cgd Exp $	*/
 
 /*-
@@ -36,6 +36,7 @@ struct _node;
 struct _ftsent;
 
 int		 compare(char *, struct _node *, struct _ftsent *);
+int		 dsort(const struct _ftsent **, const struct _ftsent **);
 int		 crc(int, u_int32_t *, u_int32_t *);
 void		 cwalk(void);
 void		 error(const char *, ...);
