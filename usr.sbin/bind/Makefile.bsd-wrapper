@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.5 2003/02/04 19:59:56 deraadt Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.6 2003/02/10 21:26:18 deraadt Exp $
 
 .include <bsd.own.mk>
 
-.if ${MACHINE_ARCH:Msparc64}
+.if ${MACHINE_ARCH} == "sparc64" || ${MACHINE_ARCH} == "sparc"
 CFLAGS+=	-fno-stack-protector
 .endif
 
