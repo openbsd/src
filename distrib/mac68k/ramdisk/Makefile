@@ -1,63 +1,59 @@
-#	$OpenBSD: Makefile,v 1.1 1999/06/13 10:33:31 downsj Exp $
-#	$NetBSD: Makefile,v 1.1 1995/07/18 04:13:06 briggs Exp $
+#	$OpenBSD: Makefile,v 1.2 2002/04/24 22:33:41 miod Exp $
 
 TOP=		${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
-IMAGE=		ramdisk-${REV}.fs
-CRUNCHCONF?=    ${.CURDIR}/${CBIN}.conf
-BASE=		ramdisk
+BSD_RD=		bsd.rd
+BSDSBC_RD=	bsdsbc.rd
+IMAGE=		mr.fs
+CBIN?=		instbin
+LISTS=		${.CURDIR}/list
+UTILS?=		${.CURDIR}/../../miniroot
 
 MOUNT_POINT=	/mnt
+MTREE=		${.CURDIR}/mtree.conf
 
 VND?=		svnd0
 VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
 VND_CRDEV=	/dev/r${VND}c
 PID!=		echo $$$$
-REALIMAGE!=	echo /var/tmp/image.${PID}
 
-GZIP?=		gzip
-GZIPFLAGS?=	-9f
+DISKTYPE=	rdroot
+NBLKS=		2880
+NEWFSARGS= -t ffs -m 0 -o space -u 32 -c 16 -b 4096
 
-all: ${CBIN} ${IMAGE} bsd.rd
-	@echo "all done"
+all:	${BSD_RD} ${BSDSBC_RD}
 
-install: bsd.rd
-	cp bsd.rd ${DESTDIR}/snapshot/bsd.rd
-	cp bsdsbc.rd ${DESTDIR}/snapshot/bsdsbc.rd
+${BSD_RD}: ${CBIN} ${IMAGE} bsd rdsetroot
+	cp bsd ${BSD_RD}
+	${.OBJDIR}/rdsetroot ${BSD_RD} < ${IMAGE}
 
-.include "Makefile.inc"
+${BSDSBC_RD}: ${CBIN} ${IMAGE} bsdsbc rdsetroot
+	cp bsdsbc ${BSDSBC_RD}
+	${.OBJDIR}/rdsetroot ${BSDSBC_RD} < ${IMAGE}
 
-DISKTYPE=       rdroot
-NBLKS=          4096
-NEWFSARGS= -m 0 -o space -c 16 -i 3072
-
-bsd.rd: ${IMAGE} bsd rdsetroot
-	${.OBJDIR}/rdsetroot bsd < ${IMAGE}
-	${GZIP} -c ${GZIPFLAGS} bsd > bsd.rd
+${IMAGE}: rd_setup do_files rd_teardown
 
 bsd:
+.ifndef(NOBUILD)
 	cd ${.CURDIR}/../../../sys/arch/mac68k/conf && config RAMDISK
 	cd ${.CURDIR}/../../../sys/arch/mac68k/compile/RAMDISK && \
 	    make clean && make depend && make
+.endif
 	cp ${.CURDIR}/../../../sys/arch/mac68k/compile/RAMDISK/bsd bsd
 
-bsdsbc.rd: ${IMAGE} bsdsbc rdsetroot
-	${.OBJDIR}/rdsetroot bsdsbc < ${IMAGE}
-	${GZIP} -c ${GZIPFLAGS} bsdsbc > bsdsbc.rd
-
 bsdsbc:
+.ifndef(NOBUILD)
 	cd ${.CURDIR}/../../../sys/arch/mac68k/conf && config RAMDISKSBC
 	cd ${.CURDIR}/../../../sys/arch/mac68k/compile/RAMDISKSBC && \
 	    make clean && make depend && make
+.endif
 	cp ${.CURDIR}/../../../sys/arch/mac68k/compile/RAMDISKSBC/bsd bsdsbc
 
-${IMAGE}: ${CBIN} rd_setup do_files rd_teardown
-
-rd_setup: ${CBIN}
-	dd if=/dev/zero of=${REALIMAGE} bs=512 count=${NBLKS}
-	vnconfig -v -c ${VND} ${REALIMAGE}
+rd_setup:
+	dd if=/dev/zero of=${IMAGE} bs=512 count=${NBLKS}
+	vnconfig -v -c ${VND} ${IMAGE}
 	disklabel -w ${VND} ${DISKTYPE}
 	newfs ${NEWFSARGS} ${VND_RDEV}
 	fsck ${VND_RDEV}
@@ -67,15 +63,38 @@ rd_teardown:
 	@df -i ${MOUNT_POINT}
 	-umount ${MOUNT_POINT}
 	-vnconfig -u ${VND}
-	cp ${REALIMAGE} ${IMAGE}
-	rm ${REALIMAGE}
 
 rdsetroot:	${TOP}/../common/rdsetroot.c
-	${HOSTCC} -DDEBUG -o rdsetroot ${TOP}/../common/rdsetroot.c
+	${HOSTCC} -DBROKEN_NMAGIC -DDEBUG -o rdsetroot ${TOP}/../common/rdsetroot.c
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
 	-vnconfig -u ${VND}
-	-/bin/rm -f ${IMAGE}
 
 .PRECIOUS:	${IMAGE}
+
+install:
+	cp ${BSD_RD} ${DESTDIR}/snapshot/${BSD_RD}
+	cp ${BSDSBC_RD} ${DESTDIR}/snapshot/${BSDSBC_RD}
+
+${CBIN}.conf: ${LISTS}
+	awk -f ${UTILS}/makeconf.awk CBIN=${CBIN} ${LISTS} > ${CBIN}.conf
+
+${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CBIN}.conf
+	crunchgen -D ${.CURDIR}/../../.. -L ${DESTDIR}/usr/lib ${CBIN}.conf
+
+${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
+	make -f ${CBIN}.mk all
+
+do_files:
+	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
+	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
+	    REV=${REV} TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTS}
+
+clean cleandir:
+	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.conf ${CBIN}.mk ${CBIN}.cache \
+	*.o *.lo *.c bsd bsdmix bsdofw ${BSD_RD} ${BSDSBC_RD} \
+	rdsetroot
+
+.include <bsd.obj.mk>
+.include <bsd.subdir.mk>

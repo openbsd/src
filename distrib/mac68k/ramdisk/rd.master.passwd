@@ -1,5 +1,0 @@
-root::0:0::0:0::/:/bin/sh
-daemon:*:1:31::0:0::/:/bin/sh
-operator:*:2:20::0:0::/:/bin/sh
-bin:*:3:7::0:0::/:/sbin/sh
-uucp:*:66:1::0:0::/:/bin/sh

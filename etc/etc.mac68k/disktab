@@ -1,4 +1,4 @@
-#	$OpenBSD: disktab,v 1.3 1999/06/13 05:20:11 downsj Exp $
+#	$OpenBSD: disktab,v 1.4 2002/04/24 22:33:41 miod Exp $
 #	$NetBSD: disktab,v 1.3 1995/09/30 21:57:48 thorpej Exp $
 #
 #	@(#)disktab	5.5 (Berkeley) 2/27/91
@@ -25,6 +25,6 @@
 # with the same geometry.
 
 rdroot|ramdiskroot|RAM-disk root FS image:\
-	:ty=simulated:se#512:nc#16:nt#2:ns#128:\
-	:ta=4.2BSD:oa#0:pa#4096:fa#512:ba#4096\
-	:ob#0:pb#0:oc#0:pc#4096:
+	:ty=simulated:se#512:nc#45:nt#2:ns#32:\
+	:ta=4.2BSD:oa#0:pa#2880:fa#512:ba#2880\
+	:ob#0:pb#0:oc#0:pc#2880:
