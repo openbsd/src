@@ -1,3 +1,4 @@
+/*	$OpenBSD: ospf.h,v 1.2 1996/03/04 15:59:13 mickey Exp $	*/
 /*	$NetBSD: ospf.h,v 1.2 1995/03/06 19:10:57 mycroft Exp $	*/
 
 /*

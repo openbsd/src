@@ -1,3 +1,4 @@
+/*	$OpenBSD: print-ppp.c,v 1.2 1996/03/04 15:59:34 mickey Exp $	*/
 /*	$NetBSD: print-ppp.c,v 1.3 1995/03/06 19:11:27 mycroft Exp $	*/
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: print-tcp.c,v 1.2 1996/03/04 15:59:39 mickey Exp $	*/
 /*	$NetBSD: print-tcp.c,v 1.5 1995/03/06 19:11:33 mycroft Exp $	*/
 
 /*
@@ -92,7 +93,7 @@ tcp_print(register const u_char *bp, register int length,
 	register u_char flags;
 	register int hlen;
 	u_short sport, dport, win, urp;
-	tcp_seq seq, ack;
+	u_int32 seq, ack;
 
 	tp = (struct tcphdr *)bp;
 	ip = (struct ip *)bp2;
@@ -180,7 +181,7 @@ tcp_print(register const u_char *bp, register int length,
 	hlen = tp->th_off * 4;
 	length -= hlen;
 	if (length > 0 || flags & (TH_SYN | TH_FIN | TH_RST))
-		(void)printf(" %lu:%lu(%d)", seq, seq + length, length);
+		(void)printf(" %u:%u(%d)", seq, seq + length, length);
 	if (flags & TH_ACK)
 		(void)printf(" ack %u", ack);
 

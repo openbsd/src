@@ -1,4 +1,5 @@
-/*	$NetBSD: print-ip.c,v 1.4 1995/04/24 13:27:43 cgd Exp $	*/
+/*	$OpenBSD: print-ip.c,v 1.2 1996/03/04 15:59:26 mickey Exp $	*/
+/*	$NetBSD: print-ip.c,v 1.4 1995/04/24 13:27:43 cgd Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
@@ -21,9 +22,33 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+/*
+ * Copyright (c) 1995 Sun Microsystems, Inc.
+ * All rights reserved.
+ * 
+ * Permission is hereby granted, without written agreement and without
+ * license or royalty fees, to use, copy, modify, and distribute this
+ * software and its documentation for any purpose, provided that the
+ * above copyright notice and the following two paragraphs appear in
+ * all copies of this software.
+
+ * IN NO EVENT SHALL SUN MICROSYSTEMS, INC. BE LIABLE TO ANY PARTY FOR
+ * DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES
+ * ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF
+ * SUN MICROSYSTEMS, INC. HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH
+ * DAMAGE.
+
+ * SUN MICROSYSTEMS, INC. SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+ * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
+ * THE SOFTWARE PROVIDED HEREUNDER IS ON AN "AS IS" BASIS, AND SUN
+ * MICROSYSTEMS, INC. HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT,
+ * UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+*/
+
 #ifndef lint
 static char rcsid[] =
-    "@(#) Header: print-ip.c,v 1.38 94/06/14 20:17:40 leres Exp (LBL)";
+    "@(#) Header: print-ip.c,v 1.38 94/06/14 20:17:40 leres Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -304,6 +329,31 @@ ip_print(register const u_char *bp, register int length)
 				printf(" (encap)");
 				return;
 			}
+			break;
+#ifndef IPPROTO_SKIP_OLD
+#define IPPROTO_SKIP_OLD 79
+#endif
+		case IPPROTO_SKIP_OLD:
+			skip_print_old(cp, len, (const u_char *) ip);
+			break;
+#ifndef IPPROTO_ESP
+#define IPPROTO_ESP 50
+#endif
+		case IPPROTO_ESP:
+			esp_print(cp, len, (const u_char *) ip);
+			break;
+#ifndef IPPROTO_AH
+#define IPPROTO_AH 51
+#endif
+		case IPPROTO_AH:
+			ah_print(cp, len, (const u_char *) ip);
+			break;
+
+#ifndef IPPROTO_SKIP
+#define IPPROTO_SKIP 57
+#endif
+		case IPPROTO_SKIP:
+			skip_print(cp, len, (const u_char *) ip);
 			break;
 		default:
 			(void)printf("%s > %s:", ipaddr_string(&ip->ip_src),

@@ -1,3 +1,4 @@
+/*	$OpenBSD: print-rip.c,v 1.2 1996/03/04 15:59:35 mickey Exp $	*/
 /*	$NetBSD: print-rip.c,v 1.4 1995/06/20 23:38:49 christos Exp $	*/
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: print-fddi.c,v 1.2 1996/03/04 15:59:24 mickey Exp $	*/
 /*	$NetBSD: print-fddi.c,v 1.2 1995/03/06 19:11:12 mycroft Exp $	*/
 
 /*

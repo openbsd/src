@@ -1,3 +1,4 @@
+#	$OpenBSD: Makefile,v 1.2 1996/03/04 15:58:53 mickey Exp $
 #	$NetBSD: Makefile,v 1.6 1995/03/07 23:18:39 mycroft Exp $
 #
 #  Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
@@ -19,7 +20,7 @@
 #  WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 #  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
-# @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/Makefile,v 1.1.1.1 1995/10/18 08:48:23 deraadt Exp $ (LBL)
+# @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/Makefile,v 1.2 1996/03/04 15:58:53 mickey Exp $ (LBL)
 
 PROG=	tcpdump
 MAN=	tcpdump.8
@@ -35,7 +36,7 @@ SRCS=	tcpdump.c addrtoname.c \
 	print-icmp.c print-sl.c print-ppp.c print-rip.c \
 	print-snmp.c print-ntp.c print-null.c print-egp.c print-ospf.c \
 	print-fddi.c print-llc.c print-sunrpc.c \
-	print-wb.c print-decnet.c print-isoclns.c print-ipx.c \
+	print-wb.c print-decnet.c print-isoclns.c print-ipx.c print-skip.c \
 	util.c bpf_dump.c parsenfsfh.c version.c
 
 AWKS =	atime.awk packetdat.awk send-ack.awk stime.awk

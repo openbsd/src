@@ -1,3 +1,4 @@
+/*	$OpenBSD: print-udp.c,v 1.2 1996/03/04 15:59:41 mickey Exp $	*/
 /*	$NetBSD: print-udp.c,v 1.3 1995/03/06 19:11:36 mycroft Exp $	*/
 
 /*

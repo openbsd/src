@@ -1,3 +1,4 @@
+#	$OpenBSD: packetdat.awk,v 1.2 1996/03/04 15:59:15 mickey Exp $
 #	$NetBSD: packetdat.awk,v 1.2 1995/03/06 19:10:59 mycroft Exp $
 
 BEGIN	{

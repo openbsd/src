@@ -1,3 +1,4 @@
+/*	$OpenBSD: print-sl.c,v 1.2 1996/03/04 15:59:36 mickey Exp $	*/
 /*	$NetBSD: print-sl.c,v 1.5 1995/03/06 19:11:29 mycroft Exp $	*/
 
 /*
@@ -129,9 +130,11 @@ sliplink_print(register const u_char *p, register const struct ip *ip,
 
 	case TYPE_UNCOMPRESSED_TCP:
 		/*
-		 * The connection id is stode in the IP protcol field.
+		 * The connection id is stored in the IP protcol field.
+		 * Get it from the link layer since sl_uncompress_tcp()
+		 * has restored the IP header copy to IPPROTO_TCP.
 		 */
-		lastconn = ip->ip_p;
+		lastconn = ((struct ip *)&p[SLX_CHDR])->ip_p;
 		hlen = ip->ip_hl;
 		hlen += ((struct tcphdr *)&((int *)ip)[hlen])->th_off;
 		lastlen[dir][lastconn] = length - (hlen << 2);

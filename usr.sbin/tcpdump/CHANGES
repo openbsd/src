@@ -1,5 +1,31 @@
+$OpenBSD: CHANGES,v 1.2 1996/03/04 15:58:52 mickey Exp $
 $NetBSD: CHANGES,v 1.2 1995/03/06 19:09:42 mycroft Exp $
-@(#) Header: CHANGES,v 1.6 94/06/20 19:34:38 leres Exp (LBL)
+@(#) Header: CHANGES,v 1.6+ 94/06/20 19:34:38 leres Exp $ (LBL)
+
+v3.0.2 Thu Apr 20 21:28:16 PDT 1995
+
+- Change configuration to not use gcc v2 flags with gcc v1.
+
+- Redo gmt2local() so that it works under BSDI (which seems to return
+  an empty timezone struct from gettimeofday()). Based on report from
+  Terry Kennedy (terry@spcvxa.spc.edu).
+
+- Change configure to recognize IP[0-9]* as "mips" SGI hardware. Based
+  on report from Mark Andrews (mandrews@alias.com).
+
+- Don't pass cc flags to gcc. Resulted from a bug report from Rainer
+  Orth (ro@techfak.uni-bielefeld.de).
+
+- Fixed printout of connection id for uncompressed tcp slip packets.
+  Resulted from a bug report from Richard Stevens (rstevens@noao.edu).
+
+- Hack around deficiency in Ultrix's make.
+
+- Add ETHERTYPE_TRAIL define which is missing from irix5.
+
+v3.0.1 Wed Aug 31 22:42:26 PDT 1994
+
+- Fix problems with gcc2 vs. malloc() and read() prototypes under SunOS 4.
 
 v3.0 Mon Jun 20 19:23:27 PDT 1994
 

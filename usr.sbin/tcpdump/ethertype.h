@@ -1,3 +1,4 @@
+/*	$OpenBSD: ethertype.h,v 1.2 1996/03/04 15:59:01 mickey Exp $	*/
 /*	$NetBSD: ethertype.h,v 1.2 1995/03/06 19:10:06 mycroft Exp $	*/
 
 /*

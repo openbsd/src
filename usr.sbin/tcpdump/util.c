@@ -1,3 +1,4 @@
+/*	$OpenBSD: util.c,v 1.2 1996/03/04 15:59:47 mickey Exp $	*/
 /*	$NetBSD: util.c,v 1.3 1995/03/06 19:11:53 mycroft Exp $	*/
 
 /*
@@ -319,16 +320,22 @@ read_infile(char *fname)
 int
 gmt2local()
 {
-#ifndef SOLARIS
-	struct timeval now;
+#ifndef SVR4
+	struct timeval tv;
 	struct timezone tz;
-	long t;
+	register struct tm *tm;
+	register int t;
 
-	if (gettimeofday(&now, &tz) < 0)
+	if (gettimeofday(&tv, &tz) < 0)
 		error("gettimeofday");
+	tm = localtime((time_t *)&tv.tv_sec);
+#ifndef SUNOS3
+	t = tm->tm_gmtoff;
+#else
 	t = tz.tz_minuteswest * -60;
-	if (localtime((time_t *)&now.tv_sec)->tm_isdst)
-		t += 3600;
+	if (tm->tm_isdst)
+		t += 60 * 60;
+#endif
 	return (t);
 #else
 	tzset();

@@ -1,3 +1,4 @@
+/*	$OpenBSD: print-snmp.c,v 1.2 1996/03/04 15:59:37 mickey Exp $	*/
 /*	$NetBSD: print-snmp.c,v 1.3 1995/03/06 19:11:30 mycroft Exp $	*/
 
 /*

@@ -1,3 +1,4 @@
+#	$OpenBSD: atime.awk,v 1.2 1996/03/04 15:58:58 mickey Exp $
 #	$NetBSD: atime.awk,v 1.2 1995/03/06 19:09:52 mycroft Exp $
 
 $6 ~ /^ack/ && $5 !~ /[SFR]/ 	{

@@ -1,3 +1,4 @@
+/*	$OpenBSD: print-domain.c,v 1.2 1996/03/04 15:59:21 mickey Exp $	*/
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.

@@ -1,3 +1,4 @@
+/*	$OpenBSD: interface.h,v 1.2 1996/03/04 15:59:04 mickey Exp $	*/
 /*	$NetBSD: interface.h,v 1.2 1995/03/06 19:10:18 mycroft Exp $	*/
 
 /*
@@ -134,6 +135,11 @@ extern void snmp_print(const u_char *, int);
 extern void sunrpcrequest_print(const u_char *, int, const u_char *);
 extern void tftp_print(const u_char *, int);
 extern void wb_print(const void *, int);
+
+extern void skip_print(const u_char *, int, const u_char *);
+extern void skip_print_old(const u_char *, int, const u_char *);
+extern void ah_print(const u_char *, int, const u_char *);
+extern void esp_print(const u_char *, int, const u_char *);
 
 #define min(a,b) ((a)>(b)?(b):(a))
 #define max(a,b) ((b)>(a)?(b):(a))

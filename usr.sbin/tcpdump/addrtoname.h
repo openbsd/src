@@ -1,3 +1,4 @@
+/*	$OpenBSD: addrtoname.h,v 1.2 1996/03/04 15:58:56 mickey Exp $	*/
 /*	$NetBSD: addrtoname.h,v 1.2 1995/03/06 19:09:50 mycroft Exp $	*/
 
 /*

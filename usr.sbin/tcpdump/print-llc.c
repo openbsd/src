@@ -1,3 +1,4 @@
+/*	$OpenBSD: print-llc.c,v 1.2 1996/03/04 15:59:29 mickey Exp $	*/
 /*	$NetBSD: print-llc.c,v 1.2 1995/03/06 19:11:19 mycroft Exp $	*/
 
 /*

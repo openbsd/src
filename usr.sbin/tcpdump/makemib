@@ -1,5 +1,6 @@
 #!/bin/sh
 #
+#	$OpenBSD: makemib,v 1.2 1996/03/04 15:59:07 mickey Exp $
 #	$NetBSD: makemib,v 1.2 1995/03/06 19:10:22 mycroft Exp $
 #
 # Copyright (c) 1990, by John Robert LoVerso.
