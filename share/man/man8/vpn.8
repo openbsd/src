@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.37 2000/05/02 22:01:36 ho Exp $
+.\" $OpenBSD: vpn.8,v 1.38 2000/05/02 22:33:26 ho Exp $
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -120,7 +120,12 @@ being unguessable, it is very important that the keys be chosen using a
 strong random source. One practical method of generating them
 is by using the
 .Xr random 4
-device. To produce 160 bits (20 bytes) of randomness, for example, do a:
+device. To produce 160 bits (20 bytes) of randomness, for example, do:
+.Bd -literal
+   openssl rand 20 | hexdump -e '20/1 "%02x"'
+.Ed
+.Pp
+or:
 .Bd -literal
    openssl rand 20 | perl -pe 's/./unpack("H2",$&)/ges'
 .Ed
@@ -306,9 +311,9 @@ The 3DES encryption key needs 192 bits (3x64), or 24 bytes.
 The SHA-1 authentication key for needs 160 bits, or 20 bytes.
 .Pp
 .Bd -literal
-# openssl rand 24 | perl -pe 's/./unpack("H2",$&)/ges' > enc_key
+# openssl rand 24 | hexdump -e '24/1 "%02x"' > enc_key
 
-# openssl rand 20 | perl -pe 's/./unpack("H2",$&)/ges' > auth_key
+# openssl rand 20 | hexdump -e '20/1 "%02x"' > auth_key
 .Ed
 .Pp
 .It
@@ -435,12 +440,15 @@ for machine A:
 .Bd -literal
 
 # Incoming phase 1 negotiations are multiplexed on the source IP
-# address.
+# address. Phase 1 is used to setup a protected channel just 
+# between the two gateway machines. This channel is then used for
+# the phase 2 negotiation traffic (i.e encrypted & authenticated).
 
 [Phase 1]
 193.168.2.1=		peer-machineB
 
-# In 'Phase 2' we define the VPN connections we want to use.
+# 'Phase 2' defines which connections the daemon should establish.
+# These connections contain the actual "IPsec VPN" information.
 
 [Phase 2]
 Connections=		VPN-A-B
@@ -495,12 +503,15 @@ for machine B:
 .Bd -literal
 
 # Incoming phase 1 negotiations are multiplexed on the source IP
-# address.
+# address. Phase 1 is used to setup a protected channel just 
+# between the two gateway machines. This channel is then used for
+# the phase 2 negotiation traffic (i.e encrypted & authenticated).
 
 [Phase 1]
 193.168.1.254=		peer-machineA
 
-# In 'Phase 2' we define the VPN connections we want to use.
+# 'Phase 2' defines which connections the daemon should establish.
+# These connections contain the actual "IPsec VPN" information.
 
 [Phase 2]
 Connections=		VPN-B-A
