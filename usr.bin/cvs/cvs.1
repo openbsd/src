@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.46 2005/02/09 16:34:56 xsa Exp $
+.\"	$OpenBSD: cvs.1,v 1.47 2005/02/09 16:36:55 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2004, 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -134,7 +134,7 @@ The date and hour (UTC) the revision was checked in.
 Standard header containing the full pathname of the RCS
 file, the revision number, the date (UTC), the author and the state.
 .It \&$Id\&$
-The same content as $Header: /home/cvs/src/usr.bin/cvs/cvs.1,v 1.46 2005/02/09 16:34:56 xsa Exp $ but without the path
+The same content as \&$Header\&$ but without the path
 of the RCS file.
 .It \&$Log\&$
 The log message supplied during commit, preceded by a header
@@ -194,7 +194,8 @@ Useful with the
 command to avoid displaying the differences between keyword substitutions.
 .It Fl k Ar kv
 The default behaviour.
-Keywords are normally substituted i.e. \&$Revision\&$ becomes $Revision: 1.46 $.
+Keywords are normally substituted i.e. \&$Revision\&$ becomes
+\&$Revision: 1.47 $.
 .It Fl k Ar kvl
 Like
 .Fl k Ar kv ,
@@ -211,7 +212,7 @@ command to guarantee that files that already contain external keywords
 do not get modified.
 .It Fl k Ar v
 Substitue the value of keywords instead of keywords themselves
-e.g. instead of \&$Revision\&$, only insert 1.1 and not $Revision: 1.46 $.
+e.g. instead of \&$Revision\&$, only insert 1.1 and not \&$Revision: 1.47 $.
 This option must be used with care, as it can only be used once.
 It is often used with the
 .Ic export
