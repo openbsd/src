@@ -1,4 +1,8 @@
-#	$OpenBSD: pnpdevs,v 1.2 1997/11/07 08:07:07 niklas Exp $
+#	$OpenBSD: pnpdevs,v 1.3 1997/12/21 14:36:44 downsj Exp $
+
+#
+# NOTE: All `com' devices also need pccom identifiers.
+#
 
 #--Interrupt Controllers--
 #	PNP0000	#AT Interrupt Controller
@@ -50,8 +54,10 @@
 #	PNP0401	#ECP printer port
 
 #--Serial Devices--
-#	PNP0500	#Standard PC COM port
-#	PNP0501	#16550A-compatible COM port
+com	PNP0500	#Standard PC COM port
+pccom	PNP0500	#Standard PC COM port
+com	PNP0501	#16550A-compatible COM port
+pccom	PNP0501	#16550A-compatible COM port
 #	PNP0510	#Generic IRDA-compatible device
 
 #--Disk Controllers--
@@ -336,5 +342,13 @@ le	WUMbeef
 #	PNPB02F	#Joystick/Game port
 
 #***** Modems - PNPCxxx-Dxxx****************************
-#	PNPC000	#Compaq 14400 Modem (TBD)
-#	PNPC001	#Compaq 2400/9600 Modem (TBD)
+com	PNPC000	#Compaq 14400 Modem (TBD)
+pccom	PNPC000	#Compaq 14400 Modem (TBD)
+com	PNPC001	#Compaq 2400/9600 Modem (TBD)
+pccom	PNPC001	#Compaq 2400/9600 Modem (TBD)
+
+# Everything else.
+com	MOT1170	#Motorola Bitsurfer ISDN TA
+pccom	MOT1170	#Motorola Bitsurfer ISDN TA
+com	NECE761	#33.6Modem
+pccom	NECE761	#33.6Modem
