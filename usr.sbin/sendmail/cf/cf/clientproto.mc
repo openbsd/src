@@ -48,7 +48,6 @@ divert(-1)
 #  Other than these, it should never contain any other lines.
 #
 
-include(`../m4/cf.m4')
 VERSIONID(`@(#)clientproto.mc	8.6 (Berkeley) 8/16/95')
 
 OSTYPE(unknown)
