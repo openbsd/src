@@ -362,7 +362,10 @@ void process_output(fd_set *writeset)
 #ifdef USE_PIPES
 	  close(fdin); 
 #else
-	  shutdown(fdin, SHUT_WR); /* We will no longer send. */
+          if (fdout == -1)
+            close(fdin);
+	  else
+	    shutdown(fdin, SHUT_WR); /* We will no longer send. */
 #endif
 	  fdin = -1;
 	}
@@ -486,7 +489,10 @@ void server_loop(int pid, int fdin_arg, int fdout_arg, int fderr_arg)
 #ifdef USE_PIPES
 	  close(fdin);
 #else
-	  shutdown(fdin, SHUT_WR); /* We will no longer send. */
+          if (fdout == -1)
+            close(fdin);
+	  else
+	    shutdown(fdin, SHUT_WR); /* We will no longer send. */
 #endif
 	  fdin = -1;
 	}
@@ -565,27 +571,15 @@ void server_loop(int pid, int fdin_arg, int fdout_arg, int fderr_arg)
 
   /* Close the file descriptors. */
   if (fdout != -1)
-#ifdef USE_PIPES
     close(fdout);
-#else
-    shutdown(fdout, SHUT_RD);
-#endif
   fdout = -1;
   fdout_eof = 1;
   if (fderr != -1)
-#ifdef USE_PIPES
     close(fderr);
-#else
-    shutdown(fderr, SHUT_RD);
-#endif
   fderr = -1;
   fderr_eof = 1;
   if (fdin != -1)
-#ifdef USE_PIPES
     close(fdin);
-#else
-    shutdown(fdin, SHUT_WR);
-#endif
   fdin = -1;
 
   /* Stop listening for channels; this removes unix domain sockets. */
