@@ -223,7 +223,7 @@ tgetline(fd, buf, bufsiz, timeout)
 	free(readfds);
     } else {
 	/* Keep reading until out of space, EOF, error, or newline */
-	while (--left && (n = read(fd, &c, 1)) == 1 && (c != '\n' || c != '\r'))
+	while (--left && (n = read(fd, &c, 1)) == 1 && c != '\n' && c != '\r')
 	    *cp++ = c;
     }
     *cp = '\0';

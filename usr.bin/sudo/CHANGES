@@ -1249,3 +1249,6 @@ Sudo 1.6.2 released.
      by 'secure-path'.  Patch from jmknoble@pobox.com.
 
 394) Pam now works on HP-UX 11.0, thanks to Jeff A. Earickson.
+
+395) Fixed a bug that caused an infinite loop when the password
+     timeout was disabled.
