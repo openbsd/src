@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.9 1998/04/25 20:31:35 mickey Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.10 1999/02/26 10:26:58 art Exp $	*/
 /*	$NetBSD: pmap.h,v 1.23 1996/05/03 19:26:30 christos Exp $	*/
 
 /* 
@@ -199,7 +199,8 @@ pmap_phys_address(int ppn)
 	return i386_ptob(ppn);
 }
 
-void pmap_activate __P((pmap_t, struct pcb *));
+void pmap_activate __P((struct proc *));
+void pmap_deactivate __P((struct proc *));
 vm_offset_t pmap_map __P((vm_offset_t, vm_offset_t, vm_offset_t, int));
 
 #endif	/* _KERNEL */
