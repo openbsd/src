@@ -1,4 +1,4 @@
-.\"	$OpenBSD: isapnp.4,v 1.6 1999/07/06 19:27:45 deraadt Exp $
+.\"	$OpenBSD: isapnp.4,v 1.7 1999/07/07 13:43:47 aaron Exp $
 .\"	$NetBSD: isapnp.4,v 1.8 1998/06/07 09:08:46 enami Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
@@ -41,7 +41,7 @@
 An
 .Nm
 bus can be configured for each supported ISA bus.
-.Sh INTRODUCTION
+.Sh DESCRIPTION
 .Ox
 provides machine-independent bus support and drivers for ISA
 Plug-and-Play (isapnp) autoconfiguration of PnP-compatible
@@ -69,16 +69,16 @@ modems (i386 only).
 .Ss Network interfaces
 .Bl -tag -width speaker -offset indent -compact
 .It ep
-3com 3c509B Etherlink-III Ethernet interface.
+3Com 3c509B Etherlink-III Ethernet interface.
 .It le
-Ethernet driver for Lance based ethernet interface.
+Ethernet driver for Lance based Ethernet interfaces.
 .It ne
-NE2000-compatible ethernet interfaces.
+NE2000-compatible Ethernet interfaces.
 .El
 .Ss Sound cards
 .Bl -tag -width speaker -offset indent -compact
 .It sb
-Soundblaster series sound cards (SB16 PnP through AWE64).
+SoundBlaster series sound cards (SB16 PnP through AWE64).
 .It gus
 Gravis Ultrasound PnP sound cards.
 .It ym
@@ -91,32 +91,31 @@ Windows Sound System cards.
 .It joy
 Joystick driver.
 .El
-.Sh PROBLEMS
+.Sh CAVEATS
 From time to time an
-.Em isapnp
+.Nm
 device will be found which the kernel does not recognize.
 The kernel matches
-.Em isapnp
+.Nm
 devices to device drivers based on identifiers which each device
 provides.  For example, this device:
 .Pp
 joy0 at isapnp0 <Creative SB16 PnP, CTL7001, PNPB02F, Game> port 0x200/8
 .Pp
 This joystick calls itself by the two names
-.Em CTL7001
+.Dq CTL7001
 and
-.Em PNPB02F .
-.Em PNPB02F
-is a standard name, but
-.Em CTL7001
+.Dq PNPB02F .
+The latter is a standard name, but
+.Dq CTL7001
 is a vendor-specific name.  Some devices unfortunately advertise only
-using  vendor-specific names, for instance:
+using vendor-specific names, for instance:
 .Pp
 isapnp0: <PnP Sound Chip, @P@1001, , > port 0x200/8 not configured
 .Pp
 Testing will show that this device is actually a joystick.  To resolve
 the issue, the actual name
-.Em @P@1001
+.Dq @P@1001
 has to be entered into the database found in
 .Pa /sys/dev/isa/pnpdevs
 and a new kernel must be built.
@@ -125,17 +124,17 @@ Then the device will probe like this:
 joy0 at isapnp0 <PnP Sound Chip, @P@1001, , > port 0x200/8
 .Pp
 .Sh SEE ALSO
-.Xr aic 4 ,
 .Xr aha 4 ,
+.Xr aic 4 ,
 .Xr ep 4 ,
 .Xr intro 4 ,
+.Xr joy 4 ,
 .Xr le 4 ,
 .Xr ne 4 ,
 .Xr pccom 4 ,
 .Xr sb 4 ,
-.Xr ym 4 ,
 .Xr wss 4 ,
-.Xr joy 4
+.Xr ym 4
 .Sh HISTORY
 The
 .Nm
