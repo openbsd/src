@@ -1,4 +1,4 @@
-/*	$OpenBSD: lowparse.c,v 1.2 2000/06/23 16:40:50 espie Exp $ */
+/*	$OpenBSD: lowparse.c,v 1.3 2000/07/17 23:54:26 espie Exp $ */
 
 /* low-level parsing functions. */
 
@@ -539,7 +539,7 @@ test_char:
 		} while (line && Cond_Eval(line) != COND_PARSE);
 		if (line == NULL)
 		    break;
-		/*FALLTHRU*/
+		/* FALLTHROUGH */
 	    case COND_PARSE:
 		free(line);
 		line = ParseReadLine();

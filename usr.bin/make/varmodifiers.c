@@ -1,4 +1,4 @@
-/*	$OpenBSD: varmodifiers.c,v 1.2 2000/07/17 23:26:51 espie Exp $	*/
+/*	$OpenBSD: varmodifiers.c,v 1.3 2000/07/17 23:54:26 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -1072,7 +1072,7 @@ VarModifiers_Apply(str, ctxt, err, freePtr, start, endc, lengthPtr)
 		    termc = *cp;
 		    break;
 		}
-		/*FALLTHRU*/
+		/* FALLTHROUGH */
 	    case 'T':
 		if (tstr[1] == endc || tstr[1] == ':') {
 		    newStr = VarModify(str, VarTail, NULL);
@@ -1080,7 +1080,7 @@ VarModifiers_Apply(str, ctxt, err, freePtr, start, endc, lengthPtr)
 		    termc = *cp;
 		    break;
 		}
-		/*FALLTHRU*/
+		/* FALLTHROUGH */
 	    case 'H':
 		if (tstr[1] == endc || tstr[1] == ':') {
 		    newStr = VarModify(str, VarHead, NULL);
@@ -1088,7 +1088,7 @@ VarModifiers_Apply(str, ctxt, err, freePtr, start, endc, lengthPtr)
 		    termc = *cp;
 		    break;
 		}
-		/*FALLTHRU*/
+		/* FALLTHROUGH */
 	    case 'E':
 		if (tstr[1] == endc || tstr[1] == ':') {
 		    newStr = VarModify(str, VarSuffix, NULL);
@@ -1096,7 +1096,7 @@ VarModifiers_Apply(str, ctxt, err, freePtr, start, endc, lengthPtr)
 		    termc = *cp;
 		    break;
 		}
-		/*FALLTHRU*/
+		/* FALLTHROUGH */
 	    case 'R':
 		if (tstr[1] == endc || tstr[1] == ':') {
 		    newStr = VarModify(str, VarRoot, NULL);
@@ -1104,7 +1104,7 @@ VarModifiers_Apply(str, ctxt, err, freePtr, start, endc, lengthPtr)
 		    termc = *cp;
 		    break;
 		}
-		/*FALLTHRU*/
+		/* FALLTHROUGH */
 	    case 'U':
 		if (tstr[1] == endc || tstr[1] == ':') {
 		    newStr = VarModify(str, VarUppercase, NULL);
@@ -1112,7 +1112,7 @@ VarModifiers_Apply(str, ctxt, err, freePtr, start, endc, lengthPtr)
 		    termc = *cp;
 		    break;
 		}
-		/*FALLTHRU*/
+		/* FALLTHROUGH */
 	    case 'L':
 		if (tstr[1] == endc || tstr[1] == ':') {
 		    newStr = VarModify(str, VarLowercase, NULL);
@@ -1120,7 +1120,7 @@ VarModifiers_Apply(str, ctxt, err, freePtr, start, endc, lengthPtr)
 		    termc = *cp;
 		    break;
 		}
-		/*FALLTHRU*/
+		/* FALLTHROUGH */
 #ifdef SUNSHCMD
 	    case 's':
 		if (tstr[1] == 'h' && (tstr[2] == endc || tstr[2] == ':')) {
@@ -1132,7 +1132,7 @@ VarModifiers_Apply(str, ctxt, err, freePtr, start, endc, lengthPtr)
 		    termc = *cp;
 		    break;
 		}
-		/*FALLTHRU*/
+		/* FALLTHROUGH */
 #endif
 	    default:
 	    {

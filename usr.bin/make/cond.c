@@ -1,4 +1,4 @@
-/*	$OpenBSD: cond.c,v 1.19 2000/06/23 16:21:43 espie Exp $	*/
+/*	$OpenBSD: cond.c,v 1.20 2000/07/17 23:54:26 espie Exp $	*/
 /*	$NetBSD: cond.c,v 1.7 1996/11/06 17:59:02 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: cond.c,v 1.19 2000/06/23 16:21:43 espie Exp $";
+static char rcsid[] = "$OpenBSD: cond.c,v 1.20 2000/07/17 23:54:26 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -1183,13 +1183,13 @@ Cond_Eval (line)
 		    break;
 		}
 		goto err;
-		/*FALLTHRU*/
+		/* FALLTHROUGH */
 	    case False:
 		if (CondToken(TRUE) == EndOfFile) {
 		    value = FALSE;
 		    break;
 		}
-		/*FALLTHRU*/
+		/* FALLTHROUGH */
 	    case Err:
 	    err:
 		Parse_Error (level, "Malformed conditional (%s)",
