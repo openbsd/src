@@ -1,4 +1,5 @@
 #!/usr/bin/perl
+#	$OpenBSD: genc.pl,v 1.3 2003/07/13 06:39:44 jason Exp $
 #
 # Copyright (c) 2003 Jason L. Wright (jason@thought.net)
 # All rights reserved.
