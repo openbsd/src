@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.9 1996/08/27 11:46:20 deraadt Exp $
+#	$OpenBSD: netstart,v 1.10 1996/09/04 10:25:55 deraadt Exp $
 
 # set these to "NO" to turn them off.  otherwise, they're used as flags
 routed_flags=-q
@@ -20,6 +20,9 @@ gated=NO
 kerberos_server=NO
 amd=NO
 ipfilter=NO
+portmap=YES			# almost always needed
+inetd=YES			# almost always needed
+lpd=NO				# printing daemons
 
 # miscellaneous other flags
 # only used if the appropriate server is marked YES above
