@@ -1,4 +1,4 @@
-/*	$OpenBSD: recvjob.c,v 1.9 1997/07/17 06:52:19 millert Exp $	*/
+/*	$OpenBSD: recvjob.c,v 1.10 1997/07/20 19:04:18 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)recvjob.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: recvjob.c,v 1.9 1997/07/17 06:52:19 millert Exp $";
+static char rcsid[] = "$OpenBSD: recvjob.c,v 1.10 1997/07/20 19:04:18 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -183,6 +183,9 @@ readjob()
 			strncpy(tfname, cp, sizeof tfname-1);
 			tfname[sizeof tfname-1] = '\0';
 			tfname[0] = 't';
+			if (strchr(tfname, '/'))
+				frecverr("readjob: %s: illegal path name",
+				    tfname);
 			if (!chksize(size)) {
 				(void) write(1, "\2", 1);
 				continue;
