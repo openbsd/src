@@ -1,4 +1,4 @@
-/*	$OpenBSD: isakmpd.c,v 1.59 2004/03/31 10:47:16 ho Exp $	*/
+/*	$OpenBSD: isakmpd.c,v 1.60 2004/04/08 10:05:54 hshoexer Exp $	*/
 /*	$EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	*/
 
 /*
@@ -39,6 +39,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 #include <fcntl.h>
 
@@ -396,6 +397,9 @@ main (int argc, char *argv[])
   if (!debug)
     if (daemon (0, 0))
       log_fatal ("main: daemon (0, 0) failed");
+
+  /* Set timezone before priv'separation */
+  tzset();
 
 #if defined (USE_PRIVSEP)
   if (monitor_init ())

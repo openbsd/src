@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.27 2004/02/25 16:01:28 hshoexer Exp $	*/
+/*	$OpenBSD: init.c,v 1.28 2004/04/08 10:05:54 hshoexer Exp $	*/
 /*	$EOM: init.c,v 1.25 2000/03/30 14:27:24 ho Exp $	*/
 
 /*
@@ -69,8 +69,6 @@ init (void)
   isakmp_doi_init ();
   libcrypto_init ();
 
-  tzset ();
-
   timer_init ();
 
   /* The following group are depending on timer_init having run.  */
@@ -117,9 +115,6 @@ reinit (void)
   conf_reinit ();
 
   log_reinit ();
-
-  /* Set timezone */
-  tzset ();
 
 #ifdef USE_POLICY
   /* Reread the policies.  */
