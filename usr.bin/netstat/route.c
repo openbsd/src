@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.11 1997/06/24 03:53:01 millert Exp $	*/
+/*	$OpenBSD: route.c,v 1.12 1997/06/29 08:45:23 provos Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: route.c,v 1.11 1997/06/24 03:53:01 millert Exp $";
+static char *rcsid = "$OpenBSD: route.c,v 1.12 1997/06/29 08:45:23 provos Exp $";
 #endif
 #endif /* not lint */
 
@@ -230,10 +230,10 @@ pr_encaphdr()
 {
 	if (Aflag)
 		printf("%-8s ", "Address");
-	printf("%-15s %-15s %-5s %-15s %-15s %-5s %-5s %-15s %-15s %-8s %-9s %s\n",
+	printf("%-15s %-15s %-5s %-15s %-15s %-5s %-5s %-15s %-8s %s\n",
 	    "Source address", "Source mask", "Port", "Dest. address", 
-	    "Dest. mask", "Port", "Proto", "Tunnel entry", "Tunnel exit",
-	    "SPI", "Interface", "Use");
+	    "Dest. mask", "Port", "Proto", "Tunnel exit",
+	    "SPI", "Use");
 }
 
 static struct sockaddr *
@@ -801,9 +801,8 @@ encap_print(rt)
 	printf("%-15s ", inet_ntoa(sen1.sen_ip_dst));
 	printf("%-15s %-5u %-5u ", inet_ntoa(sen2.sen_ip_dst),
 	    sen1.sen_dport, sen1.sen_proto);
-	printf("%-15s ", inet_ntoa(sen3.sen_ipsp_src));
-	printf("%-15s %08x enc%-6u %-u\n", inet_ntoa(sen3.sen_ipsp_dst),
-	    ntohl(sen3.sen_ipsp_spi), sen3.sen_ipsp_ifn, rt->rt_use);
+	printf("%-15s %08x %-u\n", inet_ntoa(sen3.sen_ipsp_dst),
+	    ntohl(sen3.sen_ipsp_spi), rt->rt_use);
 }
 
 void
