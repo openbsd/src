@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.324 2000/09/22 18:03:52 aaron Exp 
+ *		OpenBSD: pcidevs,v 1.326 2000/09/28 18:37:35 aaron Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1405,6 +1405,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Cirrus Logic",
 	    "CS4280 CrystalClear Audio",
+	},
+	{
+	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CS4281,
+	    0,
+	    "Cirrus Logic",
+	    "CS4281 CrystalClear Audio",
 	},
 	{
 	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_640,
