@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.10 1998/09/10 06:44:41 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.11 1999/09/26 14:04:58 espie Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.10 1998/09/10 06:44:41 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.11 1999/09/26 14:04:58 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -331,7 +331,7 @@ compress(in, out, method, bits)
 	register int ifd;
 	int ofd;
 	register void *cookie;
-	register size_t nr;
+	register ssize_t nr;
 	u_char buf[Z_BUFSIZE];
 	int error;
 
@@ -354,7 +354,7 @@ compress(in, out, method, bits)
 	if ((ifd = open(in, O_RDONLY)) >= 0 &&
 	    (cookie = (*method->open)(ofd, "w", bits)) != NULL) {
 
-		while ((nr = read(ifd, buf, sizeof(buf))) > 0)
+		while ((nr = read(ifd, buf, sizeof(buf))) != -1 && nr != 0)
 			if ((method->write)(cookie, buf, nr) != nr) {
 				if (verbose >= 0)
 					warn("%s", out);
@@ -363,7 +363,7 @@ compress(in, out, method, bits)
 			}
 	}
 
-	if (ifd < 0 || close(ifd) || nr < 0) {
+	if (ifd < 0 || close(ifd) || nr == -1) {
 		if (!error && verbose >= 0)
 			warn("%s", in);
 		error++;
@@ -408,7 +408,7 @@ decompress(in, out, method, bits)
 	int ifd;
 	register int ofd;
 	register void *cookie;
-	register size_t nr;
+	register ssize_t nr;
 	u_char buf[Z_BUFSIZE];
 	int error;
 
@@ -438,7 +438,7 @@ decompress(in, out, method, bits)
 	if ((ofd = open(out, O_WRONLY|O_CREAT, S_IWUSR)) >= 0 &&
 	    (cookie = (*method->open)(ifd, "r", bits)) != NULL) {
 
-		while ((nr = (method->read)(cookie, buf, sizeof(buf))) > 0)
+		while ((nr = (method->read)(cookie, buf, sizeof(buf))) != -1 && nr != 0)
 			if (write(ofd, buf, nr) != nr) {
 				if (verbose >= 0)
 					warn("%s", out);
@@ -453,7 +453,7 @@ decompress(in, out, method, bits)
 		error++;
 	}
 
-	if (cookie == NULL || (method->close)(cookie) || nr < 0) {
+	if (cookie == NULL || (method->close)(cookie) || nr == -1) {
 		if (!error && verbose >= 0)
 			warn("%s", in);
 		error++;
