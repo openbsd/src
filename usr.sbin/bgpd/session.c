@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.38 2003/12/24 23:14:23 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.39 2003/12/24 23:48:05 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -100,7 +100,7 @@ setup_listener(void)
 {
 	int			 fd, opt;
 
-	if ((fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
+	if ((fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1)
 		return (fd);
 
 	opt = 1;
@@ -144,14 +144,14 @@ session_main(struct bgpd_config *config, int pipe_m2s[2], int pipe_s2r[2])
 	if ((pw = getpwnam(BGPD_USER)) == NULL)
 		fatal(NULL, errno);
 
-	if (chroot(pw->pw_dir) < 0)
+	if (chroot(pw->pw_dir) == -1)
 		fatal("chroot failed", errno);
 	chdir("/");
 
 	setproctitle("session engine");
 	bgpd_process = PROC_SE;
 
-	if ((sock = setup_listener()) < 0)
+	if ((sock = setup_listener()) == -1)
 		fatal("listener setup failed", 0);
 
 	if (setgroups(1, &pw->pw_gid) ||
@@ -666,7 +666,7 @@ session_connect(struct peer *peer)
 	if (peer->sock != -1)	/* what do we do here? */
 		return (-1);
 
-	if ((peer->sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
+	if ((peer->sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1) {
 		log_err(peer, "session_connect socket");
 		bgp_fsm(peer, EVNT_CON_OPENFAIL);
 		return (-1);
@@ -689,7 +689,7 @@ session_connect(struct peer *peer)
 	}
 
 	if ((n = connect(peer->sock, (struct sockaddr *)&peer->conf.remote_addr,
-	    sizeof(peer->conf.remote_addr))) < 0)
+	    sizeof(peer->conf.remote_addr))) == -1)
 		if (errno != EINPROGRESS) {
 			log_err(peer, "connect");
 			bgp_fsm(peer, EVNT_CON_OPENFAIL);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.4 2003/12/24 13:49:21 henning Exp $ */
+/*	$OpenBSD: config.c,v 1.5 2003/12/24 23:48:06 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -103,7 +103,7 @@ get_bgpid(void)
 
 	localnet = inet_addr("127.0.0.0");
 
-	if (getifaddrs(&ifap) < 0)
+	if (getifaddrs(&ifap) == -1)
 		fatal("getifaddrs", errno);
 
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {

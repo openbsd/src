@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.27 2003/12/24 20:09:57 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.28 2003/12/24 23:48:06 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -91,7 +91,7 @@ rde_main(struct bgpd_config *config, int pipe_m2r[2], int pipe_s2r[2])
 	if ((pw = getpwnam(BGPD_USER)) == NULL)
 		fatal("getpwnam", errno);
 
-	if (chroot(pw->pw_dir) < 0)
+	if (chroot(pw->pw_dir) == -1)
 		fatal("chroot failed", errno);
 	chdir("/");
 
