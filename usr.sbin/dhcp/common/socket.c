@@ -50,7 +50,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: socket.c,v 1.1 1998/08/18 03:43:27 deraadt Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: socket.c,v 1.2 2000/12/30 17:54:07 angelos Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -126,6 +126,11 @@ int if_register_socket (info)
 	if (setsockopt (sock, SOL_SOCKET, SO_REUSEADDR,
 			(char *)&flag, sizeof flag) < 0)
 		error ("Can't set SO_REUSEADDR option on dhcp socket: %m");
+
+	flag = 1;
+	if (setsockopt (sock, SOL_SOCKET, SO_REUSEPORT,
+			(char *)&flag, sizeof flag) < 0)
+	        error ("Can't set SO_REUSEPORT option on dhcp socket: %m");
 
 	/* Set the BROADCAST option so that we can broadcast DHCP responses. */
 	if (setsockopt (sock, SOL_SOCKET, SO_BROADCAST,
