@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpcmd.y,v 1.38 2002/02/16 21:27:29 millert Exp $	*/
+/*	$OpenBSD: ftpcmd.y,v 1.39 2002/02/19 17:58:24 mpech Exp $	*/
 /*	$NetBSD: ftpcmd.y,v 1.7 1996/04/08 19:03:11 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-static char rcsid[] = "$OpenBSD: ftpcmd.y,v 1.38 2002/02/16 21:27:29 millert Exp $";
+static char rcsid[] = "$OpenBSD: ftpcmd.y,v 1.39 2002/02/19 17:58:24 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -1406,10 +1406,11 @@ void
 upper(s)
 	char *s;
 {
-	while (*s != '\0') {
-		if (islower(*s))
-			*s = toupper(*s);
-		s++;
+	char *p;
+
+	for (p = s; *p; p++) {
+		if (islower(*p))
+			*p = toupper(*p);
 	}
 }
 
