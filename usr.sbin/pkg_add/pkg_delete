@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.40 2004/08/10 12:05:52 espie Exp $
+# $OpenBSD: pkg_delete,v 1.41 2004/08/11 09:28:26 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -573,6 +573,7 @@ if ($opt_B eq '') {
     $state->{destdirname} = '${PKG_DESTDIR}';
 }
 
+eval {
 # and finally, handle the removal
 { do {
 	$removed = 0;
@@ -597,7 +598,9 @@ if ($opt_B eq '') {
 	# we're not actually doing anything, so we can't expect this loop 
 	# to ever finish
 	last if $opt_n;
-} while ($removed); }
+} while ($removed); } };
+
+my $dielater = $@;
 
 ensure_ldconfig($opt_v) unless $opt_n;
 # delayed directory removal
@@ -607,4 +610,7 @@ OpenBSD::PackingElement::Fontdir::finish_fontdirs();
 my $logname = OpenBSD::Logger::logname();
 if (defined $logname) {
 	print "Problems logged as $logname\n";
+}
+if ($dielater) {
+	die $@;
 }
