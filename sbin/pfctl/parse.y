@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.427 2003/12/15 07:30:17 mcbride Exp $	*/
+/*	$OpenBSD: parse.y,v 1.428 2003/12/15 09:12:55 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -120,9 +120,9 @@ struct node_state_opt {
 	int			 type;
 	union {
 		u_int32_t	 max_states;
- 		u_int32_t	 max_src_states;
- 		u_int32_t	 max_src_nodes;
- 		u_int8_t	 src_track;
+		u_int32_t	 max_src_states;
+		u_int32_t	 max_src_nodes;
+		u_int8_t	 src_track;
 		struct {
 			int		number;
 			u_int32_t	seconds;
@@ -2612,14 +2612,14 @@ redir_host_list	: host				{ $$ = $1; }
 		;
 
 redirpool	: /* empty */			{ $$ = NULL; }
-		| ARROW redirspec 		{
+		| ARROW redirspec		{
 			$$ = calloc(1, sizeof(struct redirection));
 			if ($$ == NULL)
 				err(1, "redirection: calloc");
 			$$->host = $2;
 			$$->rport.a = $$->rport.b = $$->rport.t = 0;
 		}
-		| ARROW redirspec PORT rport 	{
+		| ARROW redirspec PORT rport	{
 			$$ = calloc(1, sizeof(struct redirection));
 			if ($$ == NULL)
 				err(1, "redirection: calloc");
