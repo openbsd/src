@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.13 1997/08/13 04:35:42 mickey Exp $	*/
+/*	$OpenBSD: boot.c,v 1.14 1997/08/21 22:04:31 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -45,7 +45,6 @@ const char *const kernels[] = {
 };
 
 extern	const char version[];
-int	boothowto;
 u_int	cnvmem, extmem;
 struct cmd_state cmd;
 
@@ -58,16 +57,17 @@ boot(bootdev)
 
 	machdep();
 
+	devboot(bootdev, cmd.bootdev);
 	strncpy(cmd.image, bootfile, sizeof(cmd.image));
+	cmd.boothowto = 0;
 	cmd.conf = "/etc/boot.conf";
 	cmd.cwd[0] = '/'; cmd.cwd[1] = '\0';
 	cmd.addr = (void *)0x100000;
 	cmd.timeout = 5;
-	devboot(bootdev, cmd.bootdev);
 
 	f = read_conf();
 
-	printf(">> OpenBSD BOOT: %u/%u k [%s]\n", cnvmem, extmem, version);
+	printf(">> OpenBSD BOOT %s\n", version);
 
 	while (1) {
 		if (f <= 0) /* no boot.conf, or no boot cmd in there */
@@ -77,7 +77,7 @@ boot(bootdev)
 		f = 0;
 
 		printf("booting %s: ", cmd.path);
-		exec(cmd.path, cmd.addr, boothowto);
+		exec(cmd.path, cmd.addr, cmd.boothowto);
 
 		if (kernels[++i] == NULL)
 			bootfile = kernels[i=0];

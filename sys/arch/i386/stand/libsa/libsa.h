@@ -1,4 +1,4 @@
-/*	$OpenBSD: libsa.h,v 1.13 1997/08/13 03:35:08 mickey Exp $	*/
+/*	$OpenBSD: libsa.h,v 1.14 1997/08/21 22:04:33 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -42,7 +42,6 @@ void machdep __P((void));
 int kentry __P((u_int, u_int));
 void time_print __P((void));
 
-extern int	boothowto;
 		/* XXX filled in assumption that last file opened is kernel */
 extern int	bootdev, bootdev_geometry;
 extern u_int	cnvmem, extmem;

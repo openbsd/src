@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.25 1997/08/21 21:40:24 mickey Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.26 1997/08/21 22:04:32 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -490,17 +490,17 @@ static int
 Xhowto()
 {
 	if (cmd.argc < 2) {
-		if (boothowto) {
+		if (cmd.boothowto) {
 			putchar('-');
-			if (boothowto & RB_ASKNAME)
+			if (cmd.boothowto & RB_ASKNAME)
 				putchar('a');
-			if (boothowto & RB_HALT)
+			if (cmd.boothowto & RB_HALT)
 				putchar('b');
-			if (boothowto & RB_CONFIG)
+			if (cmd.boothowto & RB_CONFIG)
 				putchar('c');
-			if (boothowto & RB_SINGLE)
+			if (cmd.boothowto & RB_SINGLE)
 				putchar('s');
-			if (boothowto & RB_KDB)
+			if (cmd.boothowto & RB_KDB)
 				putchar('d');
 		}
 	} else
@@ -554,7 +554,7 @@ bootparse(i)
 	int i;
 {
 	register char *cp;
-	int howto = boothowto;
+	int howto = cmd.boothowto;
 
 	for (; i < cmd.argc; i++) {
 		cp = cmd.argv[i];
@@ -586,7 +586,7 @@ bootparse(i)
 			return 1;
 		}
 	}
-	boothowto = howto;
+	cmd.boothowto = howto;
 	return 0;
 }
 
