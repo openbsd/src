@@ -1,8 +1,8 @@
-#	$Id: Makefile,v 1.1.1.1 1995/10/18 08:37:34 deraadt Exp $
+#	$Id: Makefile,v 1.2 1996/09/21 07:03:13 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
-IMAGE=		inst-${REV}.fs
+IMAGE=		inst${REV}.fs
 
 .include "${TOP}/inst-common/Makefile.inc"
