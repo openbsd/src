@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.h,v 1.4 2001/06/13 13:43:35 angelos Exp $	*/
+/*	$OpenBSD: xform.h,v 1.5 2001/06/16 22:17:50 deraadt Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -29,35 +29,33 @@
 #include <crypto/rmd160.h>
 
 /* Declarations */
-struct auth_hash
-{
-    int type;
-    char *name;
-    u_int16_t keysize;
-    u_int16_t hashsize; 
-    u_int16_t authsize;
-    u_int16_t ctxsize;
-    void (*Init) (void *);
-    int  (*Update) (void *, u_int8_t *, u_int16_t);
-    void (*Final) (u_int8_t *, void *);
+struct auth_hash {
+	int type;
+	char *name;
+	u_int16_t keysize;
+	u_int16_t hashsize; 
+	u_int16_t authsize;
+	u_int16_t ctxsize;
+	void (*Init) (void *);
+	int  (*Update) (void *, u_int8_t *, u_int16_t);
+	void (*Final) (u_int8_t *, void *);
 };
 
-struct enc_xform
-{
-    int type;
-    char *name;
-    u_int16_t blocksize;
-    u_int16_t minkey, maxkey;
-    void (*encrypt) (caddr_t, u_int8_t *);
-    void (*decrypt) (caddr_t, u_int8_t *);
-    void (*setkey) (u_int8_t **, u_int8_t *, int len);
-    void (*zerokey) (u_int8_t **);
+struct enc_xform {
+	int type;
+	char *name;
+	u_int16_t blocksize;
+	u_int16_t minkey, maxkey;
+	void (*encrypt) (caddr_t, u_int8_t *);
+	void (*decrypt) (caddr_t, u_int8_t *);
+	void (*setkey) (u_int8_t **, u_int8_t *, int len);
+	void (*zerokey) (u_int8_t **);
 };
 
 union authctx {
-    MD5_CTX md5ctx;
-    SHA1_CTX sha1ctx;
-    RMD160_CTX rmd160ctx;
+	MD5_CTX md5ctx;
+	SHA1_CTX sha1ctx;
+	RMD160_CTX rmd160ctx;
 };
 
 extern struct enc_xform enc_xform_des;
@@ -72,4 +70,5 @@ extern struct auth_hash auth_hash_key_sha1;
 extern struct auth_hash auth_hash_hmac_md5_96;
 extern struct auth_hash auth_hash_hmac_sha1_96;
 extern struct auth_hash auth_hash_hmac_ripemd_160_96;
+
 #endif /* _CRYPTO_XFORM_H_ */
