@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.54 2002/02/03 01:58:13 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.55 2002/02/04 18:13:05 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -204,7 +204,7 @@ TAILQ_HEAD(, pv_page) pv_page_freelist;
 u_int pv_nfree;
 
 #ifdef PMAPDEBUG
-void pmap_hptdump __P((void));
+void pmap_hptdump __P((int sp));
 #endif
 
 u_int	kern_prot[8], user_prot[8];
@@ -1538,27 +1538,35 @@ pmap_kremove(va, size)
  * prints whole va->pa (aka HPT or HVT)
  */
 void
-pmap_hptdump()
+pmap_hptdump(sp)
+	int sp;
 {
 	register struct hpt_entry *hpt, *ehpt;
 	register struct pv_entry *pv;
+	register int hpthf;
 
 	mfctl(CR_HPTMASK, ehpt);
 	mfctl(CR_VTOP, hpt);
 	ehpt = (struct hpt_entry *)((int)hpt + (int)ehpt + 1);
 	db_printf("HPT dump %p-%p:\n", hpt, ehpt);
-	for (; hpt < ehpt; hpt++)
-		if (hpt->hpt_valid || hpt->hpt_entry) {
-			db_printf("hpt@%p: %x{%sv=%x:%x},%b,%x\n",
-			    hpt, *(int *)hpt, (hpt->hpt_valid?"ok,":""),
-			    hpt->hpt_space, hpt->hpt_vpn << 9,
-			    hpt->hpt_tlbprot, TLB_BITS,
-			    tlbptob(hpt->hpt_tlbpage));
-			for (pv = hpt->hpt_entry; pv; pv = pv->pv_hash)
+	for (hpthf = 0; hpt < ehpt; hpt++, hpthf = 0)
+		for (pv = hpt->hpt_entry; pv; pv = pv->pv_hash)
+			if (sp < 0 || sp == pv->pv_space) {
+				if (!hpthf) {
+					db_printf(
+					    "hpt@%p: %x{%sv=%x:%x},%b,%x\n",
+					    hpt, *(u_int *)hpt,
+					    (hpt->hpt_valid?"ok,":""),
+					    hpt->hpt_space, hpt->hpt_vpn << 9,
+					    hpt->hpt_tlbprot, TLB_BITS,
+					    tlbptob(hpt->hpt_tlbpage));
+
+					hpthf++;
+				}
 				db_printf("    pv={%p,%x:%x,%b,%x}->%p\n",
 				    pv->pv_pmap, pv->pv_space, pv->pv_va,
 				    pv->pv_tlbprot, TLB_BITS,
 				    tlbptob(pv->pv_tlbpage), pv->pv_hash);
-		}
+			}
 }
 #endif
