@@ -1,7 +1,7 @@
 #ifndef FOR_H
 #define FOR_H
 /*	$OpenPackages$ */
-/* $OpenBSD: for.h,v 1.1 2001/05/23 12:34:43 espie Exp $ */
+/* $OpenBSD: for.h,v 1.2 2002/06/13 23:26:39 espie Exp $ */
 /*
  * Copyright (c) 2001 Marc Espie.
  *
@@ -38,9 +38,9 @@ typedef struct For_ For;
 /* handle = For_Eval(line);
  *	Evaluate for loop in line, and returns an opaque handle.
  *	Loop lines are parsed as
- *	for <variable1> ... in <values>
- *	assuming the dot has been parsed by previous modules. 
- *	Returns NULL if this is not a for loop after all.  */
+ *	 <variable1> ... in <values>
+ *	assuming .for has been parsed by previous modules. 
+ *	Returns NULL if this does not parse as a for loop after all.  */
 extern For *For_Eval(const char *);
 
 /* finished = For_Accumulate(handle, line);
