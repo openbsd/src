@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_m68k.c,v 1.7 2001/05/19 05:03:59 millert Exp $ */
+/*	$OpenBSD: kvm_m68k.c,v 1.8 2001/06/21 19:30:47 miod Exp $ */
 /*	$NetBSD: kvm_m68k.c,v 1.9 1996/05/07 06:09:11 leo Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_m68k.c,v 1.7 2001/05/19 05:03:59 millert Exp $";
+static char *rcsid = "$OpenBSD: kvm_m68k.c,v 1.8 2001/06/21 19:30:47 miod Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -72,6 +72,7 @@ static char *rcsid = "$OpenBSD: kvm_m68k.c,v 1.7 2001/05/19 05:03:59 millert Exp
 
 #include "kvm_private.h"
 
+#include <machine/cpu.h>
 #include <machine/pte.h>
 #include <machine/kcore.h>
 
@@ -124,7 +125,7 @@ _kvm_vatop(kd, sta, va, pa)
 		*pa = va + cpu_kh->kernel_pa;
 		return (NBPG - offset);
 	}
-	if (cpu_kh->mmutype == -2) {
+	if (cpu_kh->mmutype == MMU_68040 || cpu_kh->mmutype == MMU_68060) {
 		st_entry_t *sta2;
 
 		addr = (u_long)&sta[va >> SG4_SHIFT1];
