@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.12 2005/03/26 08:09:54 tedu Exp $	*/
+/*	$OpenBSD: log.c,v 1.13 2005/03/28 22:46:09 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -41,7 +41,7 @@ extern char *__progname;
 
 
 #ifdef unused
-static char *cvs_log_levels[] = {
+static char *cvs_log_levels[LP_MAX + 1] = {
 	"debug",
 	"info",
 	"notice",
@@ -50,10 +50,11 @@ static char *cvs_log_levels[] = {
 	"alert",
 	"error",
 	"abort",
+	"trace",
 };
 #endif
 
-static int cvs_slpriomap[] = {
+static int cvs_slpriomap[LP_MAX + 1] = {
 	LOG_DEBUG,
 	LOG_INFO,
 	LOG_NOTICE,
@@ -62,6 +63,7 @@ static int cvs_slpriomap[] = {
 	LOG_ALERT,
 	LOG_ERR,
 	LOG_ERR,
+	LOG_DEBUG,
 };
 
 static u_int cvs_log_dest = LD_STD;
@@ -204,7 +206,7 @@ cvs_vlog(u_int level, const char *fmt, va_list vap)
 	char prefix[64], buf[1024], ebuf[32];
 	FILE *out;
 
-	if (level >= LP_MAX)
+	if (level > LP_MAX)
 		return (-1);
 
 	/* apply any filters */
