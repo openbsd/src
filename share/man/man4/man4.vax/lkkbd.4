@@ -1,4 +1,4 @@
-.\"     $OpenBSD: lkkbd.4,v 1.1 2003/03/06 22:21:41 jason Exp $
+.\"     $OpenBSD: lkkbd.4,v 1.2 2003/03/06 22:23:02 jason Exp $
 .\"
 .\" Copyright (c) 2003 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -43,8 +43,11 @@ The
 .Nm
 driver provides support for DEC LK200 and LK400 keyboards hooked up to
 .Xr dz 4
-serial controllers.
+serial controllers within the
+.Xr wscons 4
+framework.
 .Sh SEE ALSO
 .Xr dz 4 ,
 .Xr intro 4 ,
+.Xr wscons 4 ,
 .Xr wskbd 4
