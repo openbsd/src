@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.10 1997/02/21 09:06:18 niklas Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.11 1997/02/23 02:33:05 niklas Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.27 1996/10/13 03:06:34 christos Exp $	*/
 
 /*
@@ -193,6 +193,10 @@ readdisklabel(dev, strat, lp, clp)
 			goto done;
 		}
 		msg = "no rdb nor BSD disklabel found";
+#if defined(CD9660)
+		if (iso_disklabelspoof(dev, strat, lp) == 0)
+			msg = NULL;
+#endif
 		goto done;
 	} else if (msg) {
 		/*
