@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftree.c,v 1.14 2001/05/16 03:04:56 mickey Exp $	*/
+/*	$OpenBSD: ftree.c,v 1.15 2001/05/19 15:31:20 millert Exp $	*/
 /*	$NetBSD: ftree.c,v 1.4 1995/03/21 09:07:21 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ftree.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: ftree.c,v 1.14 2001/05/16 03:04:56 mickey Exp $";
+static char rcsid[] = "$OpenBSD: ftree.c,v 1.15 2001/05/19 15:31:20 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -484,7 +484,7 @@ next_file(arcn)
 #		ifdef NET2_FTS
 		arcn->sb = ftent->fts_statb;
 #		else
-		arcn->sb = *(ftent->fts_statp);
+		memcpy(&arcn->sb, ftent->fts_statp, sizeof(arcn->sb));
 #		endif
 
 		/*
