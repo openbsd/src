@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.2 2004/08/23 18:58:37 pvalchev Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.3 2004/09/09 17:45:26 pefo Exp $	*/
 /*	$NetBSD: crt0.c,v 1.7 1995/06/03 13:16:15 pk Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: crt0.c,v 1.2 2004/08/23 18:58:37 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: crt0.c,v 1.3 2004/09/09 17:45:26 pefo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -71,7 +71,7 @@ void
 __start()
 {
 	struct kframe {
-		int	kargc;
+		long	kargc;
 		char	*kargv[1];	/* size depends on kargc */
 		char	kargstr[1];	/* size varies */
 		char	kenvstr[1];	/* size varies */
@@ -87,7 +87,11 @@ __start()
 	asm("	la	$28,_gp");
 	asm("	addiu	%0,$29,32" : "=r" (kfp));
 #else
-	asm("	addiu	%0,$29,48" : "=r" (kfp));
+#ifdef __LP64__
+	asm("	addiu	%0,$29,80" : "=r" (kfp));
+#else
+	asm("	addiu	%0,$29,56" : "=r" (kfp));
+#endif
 #endif
 	/* just above the saved frame pointer
 	kfp = (struct kframe *) (&param-1);*/
