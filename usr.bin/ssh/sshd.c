@@ -11,7 +11,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.82 2000/01/27 20:20:02 markus Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.83 2000/01/31 23:57:01 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -1982,6 +1982,7 @@ do_exec_pty(const char *command, int ptyfd, int ttyfd,
 	    const char *auth_data)
 {
 	int pid, fdout;
+	int ptymaster;
 	const char *hostname;
 	time_t last_login_time;
 	char buf[100], *time_string;
@@ -2111,7 +2112,12 @@ do_exec_pty(const char *command, int ptyfd, int ttyfd,
 	 */
 	fdout = dup(ptyfd);
 	if (fdout < 0)
-		packet_disconnect("dup failed: %.100s", strerror(errno));
+		packet_disconnect("dup #1 failed: %.100s", strerror(errno));
+
+	/* we keep a reference to the pty master */
+	ptymaster = dup(ptyfd);
+	if (ptymaster < 0)
+		packet_disconnect("dup #2 failed: %.100s", strerror(errno));
 
 	/*
 	 * Add a cleanup function to clear the utmp entry and record logout
@@ -2139,8 +2145,8 @@ do_exec_pty(const char *command, int ptyfd, int ttyfd,
 	 * the pty cleanup, so that another process doesn't get this pty
 	 * while we're still cleaning up.
 	 */
-	close(ptyfd);
-	close(fdout);
+	if (close(ptymaster) < 0)
+		error("close(ptymaster): %s", strerror(errno));
 }
 
 /*
