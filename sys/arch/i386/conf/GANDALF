@@ -1,7 +1,7 @@
 #
 #	GANDALF -- Dual Tyan P5/133 PCI/EISA bus
 #
-#	$OpenBSD: GANDALF,v 1.19 1996/12/28 01:01:02 tholo Exp $
+#	$OpenBSD: GANDALF,v 1.20 1997/02/08 22:47:45 tholo Exp $
 #
 
 machine		i386		# architecture, used by config; REQUIRED
@@ -10,6 +10,11 @@ machine		i386		# architecture, used by config; REQUIRED
 #option		I486_CPU
 option		I586_CPU
 #option		GPL_MATH_EMULATE	# floating point emulation
+
+# Some BIOSes don't get the size of extended memory right.  If you
+# have a broken BIOS, uncomment the following and set the value
+# properly for your system.
+option		EXTMEM_SIZE=130048 # size of extended memory
 
 option		PCIVERBOSE	# verbose PCI device information
 option		EISAVERBOSE	# verbose EISA device information
