@@ -151,10 +151,10 @@ install-info-files: installdirs $(srcdir)/gmp.info
 	cd $(srcdir); for f in gmp.info*; \
 	do $(INSTALL_DATA) $$f $(infodir)/$$f; done
 	-chmod a-x $(infodir)/gmp.info*
-	# Attempt to edit the info directory node
-	if $(SHELL) -c 'install-info --version' >/dev/null 2>&1; then \
-	  install-info --dir-file=$(infodir)/dir $(infodir)/gmp.info; \
-	  else true; fi
+#	# Attempt to edit the info directory node
+#	if $(SHELL) -c 'install-info --version' >/dev/null 2>&1; then \
+#	  install-info --dir-file=$(infodir)/dir $(infodir)/gmp.info; \
+#	  else true; fi
 
 installdirs: $(srcdir)/mkinstalldirs
 	$(srcdir)/mkinstalldirs $(includedir) $(libdir) $(infodir)
