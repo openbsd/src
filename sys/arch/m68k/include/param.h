@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.1 1997/07/06 07:46:26 downsj Exp $	*/
+/*	$OpenBSD: param.h,v 1.2 1997/09/17 17:45:20 downsj Exp $	*/
 /*	$NetBSD: param.h,v 1.2 1997/06/10 18:21:23 veego Exp $	*/
 
 /*
@@ -108,9 +108,9 @@
 #define	MCLOFSET	(MCLBYTES - 1)
 #ifndef NMBCLUSTERS
 #ifdef GATEWAY
-# define	NMBCLUSTERS	512	/* map size, max cluster allocation */
+# define	NMBCLUSTERS	1024	/* map size, max cluster allocation */
 #else
-# define	NMBCLUSTERS	256	/* map size, max cluster allocation */
+# define	NMBCLUSTERS	512	/* map size, max cluster allocation */
 #endif
 #endif
 
