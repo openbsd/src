@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.8 1997/04/26 10:38:30 tholo Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.9 1997/04/28 01:33:47 niklas Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -191,8 +191,8 @@ sys_nanosleep(p, v, retval)
 	struct timeval atv, utv;
 	int error, s, timo;
 
-	error = copyin((const caddr_t)SCARG(uap, rqtp), (caddr_t)&rqt,
-		       sizeof(struct timespec));
+	error = copyin((const void *)SCARG(uap, rqtp), (void *)&rqt,
+	    sizeof(struct timespec));
 	if (error)
 		return (error);
 
@@ -227,9 +227,9 @@ sys_nanosleep(p, v, retval)
 		if (utv.tv_sec < 0)
 			timerclear(&utv);
 
-		TIMEVAL_TO_TIMESPEC(&utv,&rmt);
-		error = copyout((caddr_t)&rmt, (caddr_t)SCARG(uap,rmtp),
-			sizeof(rmt));		
+		TIMEVAL_TO_TIMESPEC(&utv, &rmt);
+		error = copyout((void *)&rmt, (void *)SCARG(uap,rmtp),
+		    sizeof(rmt));		
 		if (error)
 			return (error);
 	}
@@ -253,12 +253,12 @@ sys_gettimeofday(p, v, retval)
 
 	if (SCARG(uap, tp)) {
 		microtime(&atv);
-		if ((error = copyout((caddr_t)&atv, (caddr_t)SCARG(uap, tp),
+		if ((error = copyout((void *)&atv, (void *)SCARG(uap, tp),
 		    sizeof (atv))))
 			return (error);
 	}
 	if (SCARG(uap, tzp))
-		error = copyout((caddr_t)&tz, (caddr_t)SCARG(uap, tzp),
+		error = copyout((void *)&tz, (void *)SCARG(uap, tzp),
 		    sizeof (tz));
 	return (error);
 }
@@ -281,11 +281,11 @@ sys_settimeofday(p, v, retval)
 	if ((error = suser(p->p_ucred, &p->p_acflag)))
 		return (error);
 	/* Verify all parameters before changing time. */
-	if (SCARG(uap, tv) && (error = copyin((caddr_t)SCARG(uap, tv),
-	    (caddr_t)&atv, sizeof(atv))))
+	if (SCARG(uap, tv) && (error = copyin((void *)SCARG(uap, tv),
+	    (void *)&atv, sizeof(atv))))
 		return (error);
-	if (SCARG(uap, tzp) && (error = copyin((caddr_t)SCARG(uap, tzp),
-	    (caddr_t)&atz, sizeof(atz))))
+	if (SCARG(uap, tzp) && (error = copyin((void *)SCARG(uap, tzp),
+	    (void *)&atz, sizeof(atz))))
 		return (error);
 	if (SCARG(uap, tv))
 		settime(&atv);
@@ -315,7 +315,7 @@ sys_adjtime(p, v, retval)
 
 	if ((error = suser(p->p_ucred, &p->p_acflag)))
 		return (error);
-	if ((error = copyin((caddr_t)SCARG(uap, delta), (caddr_t)&atv,
+	if ((error = copyin((void *)SCARG(uap, delta), (void *)&atv,
 	    sizeof(struct timeval))))
 		return (error);
 
@@ -350,7 +350,7 @@ sys_adjtime(p, v, retval)
 	if (SCARG(uap, olddelta)) {
 		atv.tv_sec = odelta / 1000000;
 		atv.tv_usec = odelta % 1000000;
-		(void) copyout((caddr_t)&atv, (caddr_t)SCARG(uap, olddelta),
+		(void)copyout((void *)&atv, (void *)SCARG(uap, olddelta),
 		    sizeof(struct timeval));
 	}
 	return (0);
@@ -410,7 +410,7 @@ sys_getitimer(p, v, retval)
 	} else
 		aitv = p->p_stats->p_timer[SCARG(uap, which)];
 	splx(s);
-	return (copyout((caddr_t)&aitv, (caddr_t)SCARG(uap, itv),
+	return (copyout((void *)&aitv, (void *)SCARG(uap, itv),
 	    sizeof (struct itimerval)));
 }
 
@@ -433,7 +433,7 @@ sys_setitimer(p, v, retval)
 	if (SCARG(uap, which) > ITIMER_PROF)
 		return (EINVAL);
 	itvp = SCARG(uap, itv);
-	if (itvp && (error = copyin((caddr_t)itvp, (caddr_t)&aitv,
+	if (itvp && (error = copyin((void *)itvp, (void *)&aitv,
 	    sizeof(struct itimerval))))
 		return (error);
 	if ((SCARG(uap, itv) = SCARG(uap, oitv)) &&
@@ -445,10 +445,10 @@ sys_setitimer(p, v, retval)
 		return (EINVAL);
 	s = splclock();
 	if (SCARG(uap, which) == ITIMER_REAL) {
-		untimeout(realitexpire, (caddr_t)p);
+		untimeout(realitexpire, (void *)p);
 		if (timerisset(&aitv.it_value)) {
 			timeradd(&aitv.it_value, &time, &aitv.it_value);
-			timeout(realitexpire, (caddr_t)p, hzto(&aitv.it_value));
+			timeout(realitexpire, (void *)p, hzto(&aitv.it_value));
 		}
 		p->p_realtimer = aitv;
 	} else
@@ -483,7 +483,7 @@ realitexpire(arg)
 		timeradd(&p->p_realtimer.it_value,
 		    &p->p_realtimer.it_interval, &p->p_realtimer.it_value);
 		if (timercmp(&p->p_realtimer.it_value, &time, >)) {
-			timeout(realitexpire, (caddr_t)p,
+			timeout(realitexpire, (void *)p,
 			    hzto(&p->p_realtimer.it_value));
 			splx(s);
 			return;
