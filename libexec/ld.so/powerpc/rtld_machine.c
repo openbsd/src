@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.20 2003/01/24 00:43:29 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.21 2003/01/30 06:40:38 drahn Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -515,10 +515,11 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 		_dl_dcbf(&r_addr[0]);
 		_dl_dcbf(&r_addr[2]);
 	}
-	if (object->got_addr != NULL && object->got_size != 0) 
+	if (object->got_addr != NULL && object->got_size != 0) {
 		_dl_mprotect((void*)object->got_addr, object->got_size,
 		    PROT_READ|PROT_EXEC); /* only PPC is PROT_EXE */
 		_dl_syncicache((void*)object->got_addr, 4);
+	}
 	if (object->plt_addr != NULL && object->plt_size != 0) 
 		_dl_mprotect((void*)object->plt_addr, object->plt_size,
 		    PROT_READ|PROT_EXEC);
