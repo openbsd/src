@@ -1,5 +1,5 @@
-/*	$OpenBSD: log.c,v 1.4 1998/12/21 01:02:26 niklas Exp $	*/
-/*	$EOM: log.c,v 1.14 1998/12/01 10:19:44 niklas Exp $	*/
+/*	$OpenBSD: log.c,v 1.5 1999/02/26 03:45:48 niklas Exp $	*/
+/*	$EOM: log.c,v 1.15 1999/02/25 11:39:10 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -43,6 +43,8 @@
 #else
 #include <varargs.h>
 #endif
+
+#include "sysdep.h"
 
 #include "log.h"
 
