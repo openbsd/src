@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.119 2002/11/25 03:38:17 deraadt Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.120 2002/11/25 03:44:12 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -406,7 +406,7 @@ Following the previous example, this would specify the two referenced
 queues, plus one child queue:
 .Pp
 .Bd -literal
-    queue qname1 bandwidth 50% cbq(default ecn) queue { qname1a }
+    queue qname1 bandwidth 50% cbq(default ecn) { qname1a }
     queue  qname1a bandwidth 1Mb cbq(borrow)
     queue qname2 bandwidth 1000 priority 3
 .Ed
