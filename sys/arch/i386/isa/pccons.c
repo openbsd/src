@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccons.c,v 1.28 1996/09/06 08:40:48 mickey Exp $	*/
+/*	$OpenBSD: pccons.c,v 1.29 1996/09/23 15:12:40 mickey Exp $	*/
 /*	$NetBSD: pccons.c,v 1.99.4.1 1996/06/04 20:03:53 cgd Exp $	*/
 
 /*-
@@ -68,6 +68,7 @@
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
+#include <dev/ic/mc6845.h>
 #include <i386/isa/isa_machdep.h>
 #include <i386/isa/kbdreg.h>
 
@@ -309,12 +310,10 @@ kbd_cmd(val, polling)
 void
 set_cursor_shape()
 {
-	register int iobase = addr_6845;
-
-	outb(iobase, 10);
-	outb(iobase+1, cursor_shape >> 8);
-	outb(iobase, 11);
-	outb(iobase+1, cursor_shape);
+	outb(addr_6845, CRTC_CURSTART);
+	outb(addr_6845+1, cursor_shape >> 8);
+	outb(addr_6845, CRTC_CUREND);
+	outb(addr_6845+1, cursor_shape);
 	old_cursor_shape = cursor_shape;
 }
 
@@ -322,12 +321,10 @@ set_cursor_shape()
 void
 get_cursor_shape()
 {
-	register int iobase = addr_6845;
-
-	outb(iobase, 10);
-	cursor_shape = inb(iobase+1) << 8;
-	outb(iobase, 11);
-	cursor_shape |= inb(iobase+1);
+	outb(addr_6845, CRTC_CURSTART);
+	cursor_shape = inb(addr_6845+1) << 8;
+	outb(addr_6845, CRTC_CUREND);
+	cursor_shape |= inb(addr_6845+1);
 
 	/*
 	 * real 6845's, as found on, MDA, Hercules or CGA cards, do
@@ -378,9 +375,9 @@ do_async_update(v)
 	pos = crtat - Crtat;
 	if (pos != old_pos) {
 		register int iobase = addr_6845;
-		outb(iobase, 14);
+		outb(iobase, CRTC_CURSORH);
 		outb(iobase+1, pos >> 8);
-		outb(iobase, 15);
+		outb(iobase, CRTC_CURSORL);
 		outb(iobase+1, pos);
 		old_pos = pos;
 	}
@@ -908,9 +905,9 @@ pcinit()
 	}
 
 	/* Extract cursor location */
-	outb(addr_6845, 14);
+	outb(addr_6845, CRTC_CURSORH);
 	cursorat = inb(addr_6845+1) << 8;
-	outb(addr_6845, 15);
+	outb(addr_6845, CRTC_CURSORL);
 	cursorat |= inb(addr_6845+1);
 
 #ifdef FAT_CURSOR
