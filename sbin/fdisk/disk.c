@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.15 2002/04/25 22:13:13 espie Exp $	*/
+/*	$OpenBSD: disk.c,v 1.16 2002/07/11 21:23:28 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 2001 Tobias Weingartner
@@ -92,6 +92,8 @@ DISK_getlabelmetrics(name)
 	/* Get label metrics */
 	if ((fd = DISK_open(name, O_RDONLY)) != -1) {
 		lm = malloc(sizeof(DISK_metrics));
+		if (lm == NULL)
+			err(1, "malloc");
 
 		if (ioctl(fd, DIOCGDINFO, &dl) == -1) {
 			warn("DIOCGDINFO");
@@ -154,6 +156,8 @@ DISK_getbiosmetrics(name)
 	}
 
 	bm = malloc(sizeof(di));
+	if (bm == NULL)
+		err(1, "malloc");
 	bm->cylinders = di.bios_cylinders;
 	bm->heads = di.bios_heads;
 	bm->sectors = di.bios_sectors;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.49 2002/06/29 23:19:49 deraadt Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.50 2002/07/11 21:23:29 deraadt Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -1092,6 +1092,8 @@ add_expdir(struct dirlist **dpp, char *cp, int len)
 	struct dirlist *dp;
 
 	dp = (struct dirlist *)malloc(sizeof (struct dirlist) + len);
+	if (dp == NULL)
+		out_of_mem();
 	dp->dp_left = *dpp;
 	dp->dp_right = NULL;
 	dp->dp_flag = 0;
@@ -1866,6 +1868,8 @@ get_mountlist(void)
 		if (host == NULL || dirp == NULL)
 			continue;
 		mlp = (struct mountlist *)malloc(sizeof (*mlp));
+		if (mlp == NULL)
+			out_of_mem();
 		strlcpy(mlp->ml_host, host, sizeof(mlp->ml_host));
 		strlcpy(mlp->ml_dirp, dirp, sizeof(mlp->ml_dirp));
 		mlp->ml_next = NULL;
@@ -1927,6 +1931,8 @@ add_mlist(char *hostp, char *dirp)
 		mlp = mlp->ml_next;
 	}
 	mlp = (struct mountlist *)malloc(sizeof (*mlp));
+	if (mlp == NULL)
+		out_of_mem();
 	strlcpy(mlp->ml_host, hostp, sizeof(mlp->ml_host));
 	strlcpy(mlp->ml_dirp, dirp, sizeof(mlp->ml_dirp));
 	mlp->ml_next = NULL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncheck_ffs.c,v 1.12 2002/07/03 22:32:33 deraadt Exp $	*/
+/*	$OpenBSD: ncheck_ffs.c,v 1.13 2002/07/11 21:23:29 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: ncheck_ffs.c,v 1.12 2002/07/03 22:32:33 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ncheck_ffs.c,v 1.13 2002/07/11 21:23:29 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -128,6 +128,8 @@ cacheino(ino_t ino, struct dinode *ip)
 		icache = realloc(icache, (nicache + 1) * sizeof(struct icache_s));
 	else
 		icache = malloc(sizeof(struct icache_s));
+	if (icache == NULL)
+		errx(1, "malloc");
 	icache[nicache].ino = ino;
 	icache[nicache++].di = *ip;
 }
@@ -383,6 +385,8 @@ searchdir(ino_t ino, daddr_t blkno, long size, long filesize,
 			}
 			len = strlen(path) + strlen(dp->d_name) + 2;
 			npath = malloc(len);
+			if (npath == NULL)
+				errx(1, "malloc");
 			snprintf(npath, len, "%s/%s", path, dp->d_name);
 			scanonedir(dp->d_ino, npath);
 			free(npath);

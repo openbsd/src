@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_portal.c,v 1.20 2002/05/26 09:24:35 deraadt Exp $	*/
+/*	$OpenBSD: mount_portal.c,v 1.21 2002/07/11 21:23:29 deraadt Exp $	*/
 /*	$NetBSD: mount_portal.c,v 1.8 1996/04/13 01:31:54 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_portal.c	8.6 (Berkeley) 4/26/95";
 #else
-static char rcsid[] = "$OpenBSD: mount_portal.c,v 1.20 2002/05/26 09:24:35 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mount_portal.c,v 1.21 2002/07/11 21:23:29 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -220,6 +220,8 @@ main(argc, argv)
 
 	fdssize = howmany(so+1, NFDBITS) * sizeof(fd_mask);
 	fdsp = (fd_set *)malloc(fdssize);
+	if (fdsp == NULL)
+		err(1, "malloc");
 
 	/*
 	 * Just loop waiting for new connections and activating them

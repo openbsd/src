@@ -1,4 +1,4 @@
-/* 	$OpenBSD: modload.c,v 1.34 2002/06/09 08:13:07 todd Exp $	*/
+/* 	$OpenBSD: modload.c,v 1.35 2002/07/11 21:23:28 deraadt Exp $	*/
 /*	$NetBSD: modload.c,v 1.30 2001/11/08 15:33:15 christos Exp $	*/
 
 /*
@@ -160,6 +160,8 @@ verify_entry(const char *entry, char *filename)
 
 	memset(names, 0, sizeof(names));
 	s = malloc(strlen(entry) + 2);
+	if (s == NULL)
+		err(1, "malloc");
 	sprintf(s, "_%s", entry);	/* safe */
 #ifdef	_AOUT_INCLUDE_
 	names[0].n_un.n_name = s;
@@ -323,6 +325,8 @@ main(int argc, char **argv)
 			else
 				p = modout;
 			entry = malloc(strlen(p) + strlen(DFLT_ENTRYEXT) + 1);
+			if (entry == NULL)
+				err(1, "malloc");
 			sprintf(entry, "%s%s", p, DFLT_ENTRYEXT); /* safe */
 			if (verify_entry(entry, modobj))
 				errx(1, "entry point _%s not found in %s",
