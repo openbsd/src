@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.16 2003/11/24 17:12:55 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.17 2003/12/03 21:30:12 espie Exp $
 
 MAN=		cccp.1 gcc.1 gcc-local.1 protoize.1 gcov.1
 MLINKS+=	gcc.1 cc.1
@@ -27,7 +27,7 @@ MAKE_FLAGS= 	CFLAGS="${GNUCFLAGS}" \
 		build_infodir=.
 
 .if ${MACHINE_ARCH} == "vax"
-MAKE_FLAGS+=	HOST_CFLAGS="${VAXHOST_CFLAGS}"
+MAKE_FLAGS+=	HOST_CFLAGS="${VAXHOST_CFLAGS} -I${LIBIBERTY_INCLUDES}"
 .endif
 
 GXX_INCDIR=	/usr/include/g++
