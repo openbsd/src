@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 1997/04/27 20:56:43 millert Exp $
+#	$OpenBSD: Makefile,v 1.8 1997/09/02 15:25:52 kstailey Exp $
 
 MAGIC=		/etc/magic
 MAGICOWN=	root
@@ -17,7 +17,7 @@ all:		file magic
 MAGFILES=	$(.CURDIR)/magdir/Header\
 		$(.CURDIR)/magdir/Localstuff\
 		$(.CURDIR)/magdir/OpenBSD\
-		$(.CURDIR)/magdir/[a-z]*
+		$(.CURDIR)/magdir/[0-9a-z]*
 magic:		$(MAGFILES)
 	cat $(MAGFILES) > $(.TARGET)
 
