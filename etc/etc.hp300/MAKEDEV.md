@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.8 2002/05/16 21:11:20 miod Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.9 2002/09/06 21:48:34 miod Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
@@ -149,8 +149,7 @@ ite*)
 grf*)
 	case $U in
 	0|1|2|3)
-		M grf$U c major_grf_c $U
-#		echo "grf$U: use MAKEDEV.hpux to make HP-UX names for device"
+		M grf$U c major_grf_c $U 600
 		;;
 	*)
 		echo bad unit for grf in: $i
@@ -158,10 +157,10 @@ grf*)
 	esac
 	;;
 
-hil*)
+hil)
 	for U in 0 1 2 3 4 5 6 7
 	do
-		M hil$U c 14 $U
+		M hil$U c 14 $U 600
 	done
 	MKlist="$MKlist;ln hil1 keyboard"
 	MKlist="$MKlist;ln hil3 locator"
