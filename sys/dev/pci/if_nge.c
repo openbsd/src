@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.3 2001/07/02 05:24:07 nate Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.4 2001/07/02 06:53:43 nate Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -179,11 +179,10 @@ int nge_list_tx_init	__P((struct nge_softc *));
 #define NGE_RID			NGE_PCI_LOMEM
 #endif
 
-#define NGE_DEBUG
 #ifdef NGE_DEBUG
 #define DPRINTF(x)	if (ngedebug) printf x
 #define DPRINTFN(n,x)	if (ngedebug >= (n)) printf x
-int	ngedebug = 10;
+int	ngedebug = 0;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
@@ -215,7 +214,7 @@ void nge_delay(sc)
 void nge_eeprom_idle(sc)
 	struct nge_softc	*sc;
 {
-	register int		i;
+	int		i;
 
 	SIO_SET(NGE_MEAR_EE_CSEL);
 	nge_delay(sc);
@@ -1397,8 +1396,8 @@ void nge_tick(xsc)
 		    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE) {
 			sc->nge_link++;
 			if (IFM_SUBTYPE(mii->mii_media_active) == IFM_1000_TX)
-				printf("%s: gigabit link up\n",
-				       sc->sc_dv.dv_xname);
+				DPRINTFN("%s: gigabit link up\n",
+					 sc->sc_dv.dv_xname);
 			if (ifp->if_snd.ifq_head != NULL)
 				nge_start(ifp);
 		} else
@@ -1460,8 +1459,27 @@ int nge_intr(arg)
 			nge_init(sc);
 		}
 
-		if (status & NGE_IMR_PHY_INTR) {
+		if (status & NGE_ISR_PHY_INTR) {
 			sc->nge_link = 0;
+			switch (sc->nge_mii.mii_media_active & 0x1F) {
+			case IFM_1000_TX:  /* Gigabit using GMII interface */
+			  NGE_SETBIT(sc, NGE_CFG, NGE_CFG_MODE_1000);
+			  NGE_CLRBIT(sc, NGE_CFG, NGE_CFG_TBI_EN);
+			  break;
+
+			case IFM_1000_SX:  /* Gigabit using TBI interface */
+			case IFM_1000_CX:
+			case IFM_1000_LX:
+			  NGE_CLRBIT(sc, NGE_CFG, NGE_CFG_MODE_1000);
+			  NGE_SETBIT(sc, NGE_CFG, NGE_CFG_TBI_EN);
+			  break;
+
+			default: /* Default to MII interface */
+			  NGE_CLRBIT(sc, NGE_CFG, NGE_CFG_MODE_1000|
+				     NGE_CFG_TBI_EN);
+			  break;
+			}
+
 			nge_tick(sc);
 		}
 	}
@@ -1618,6 +1636,9 @@ void nge_init(xsc)
 	nge_stop(sc);
 	nge_reset(sc);
 
+	/* Turn the receive filter off */
+	NGE_CLRBIT(sc, NGE_RXFILT_CTL, NGE_RXFILTCTL_ENABLE);
+
 	/* Set MAC address */
 	CSR_WRITE_4(sc, NGE_RXFILT_CTL, NGE_FILTADDR_PAR0);
 	CSR_WRITE_4(sc, NGE_RXFILT_DATA,
@@ -1686,6 +1707,7 @@ void nge_init(xsc)
 
 	/* Set RX configuration */
 	CSR_WRITE_4(sc, NGE_RX_CFG, NGE_RXCFG);
+
 	/*
 	 * Enable hardware checksum validation for all IPv4
 	 * packets, do not reject packets with bad checksums.
@@ -1739,8 +1761,10 @@ void nge_init(xsc)
 	 * Enable the delivery of PHY interrupts based on
 	 * link/speed/duplex status changes.
 	 */
-	NGE_SETBIT(sc, NGE_CFG, NGE_CFG_PHYINTR_SPD|NGE_CFG_MODE_1000|
-	    NGE_CFG_PHYINTR_LNK|NGE_CFG_PHYINTR_DUP);
+	NGE_SETBIT(sc, NGE_CFG, NGE_CFG_PHYINTR_SPD|NGE_CFG_PHYINTR_LNK|
+		   NGE_CFG_PHYINTR_DUP);
+
+	DPRINTFN("NGE_CFG: 0x%08X\n", CSR_READ_4(sc, NGE_CFG));
 
 	/*
 	 * Enable interrupts.
