@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.15 2004/07/02 16:29:55 niklas Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.16 2004/07/20 20:18:53 art Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.22 1996/05/03 19:42:00 christos Exp $	*/
 
 /* 
@@ -36,6 +36,7 @@
 #include <sys/proc.h>
 #include <sys/reboot.h>
 #include <sys/systm.h>
+#include <sys/mutex.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -116,12 +117,10 @@ kdb_trap(type, code, regs)
 	}
 
 #ifdef MULTIPROCESSOR
-	s = splhigh();
-	SIMPLE_LOCK(&ddb_mp_slock);
+	mtx_enter(&ddb_mp_mutex);
 	if (ddb_state == DDB_STATE_EXITING)
 		ddb_state = DDB_STATE_NOT_RUNNING;
-	SIMPLE_UNLOCK(&ddb_mp_slock);
-	splx(s);
+	mtx_leave(&ddb_mp_mutex);
 	while (db_enter_ddb()) {
 #endif /* MULTIPROCESSOR */
 
@@ -347,7 +346,6 @@ db_machine_init()
 		if (cpu_info[i] != NULL)
 			cpu_info[i]->ci_ddb_paused = CI_DDB_RUNNING;
 	}
-	SIMPLE_LOCK_INIT(&ddb_mp_slock);
 #endif /* MULTIPROCESSOR */
 }
 

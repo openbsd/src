@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.12 2004/07/02 16:29:55 niklas Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.13 2004/07/20 20:18:53 art Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.9 1996/05/03 19:23:59 christos Exp $	*/
 
 /* 
@@ -125,7 +125,7 @@ void db_startcpu(int cpu);
 void db_stopcpu(int cpu);
 void i386_ipi_db(struct cpu_info *);
 
-extern struct SIMPLELOCK ddb_mp_slock;
+extern struct mutex ddb_mp_mutex;
 
 /* For ddb_state */
 #define DDB_STATE_NOT_RUNNING	0
