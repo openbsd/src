@@ -26,9 +26,7 @@
  */
 
 
-// for printf() & sprintf()
 #include <stdio.h>
-// for malloc() & free()
 #include <stdlib.h>
 #include "DoSCSICommand.h"
 #include "SCSI_media.h"
@@ -774,6 +772,7 @@ step_scsi_iterator(MEDIA_ITERATOR m)
 {
     SCSI_MEDIA_ITERATOR a;
     char *result;
+    size_t len = 20;
 
     a = (SCSI_MEDIA_ITERATOR) m;
     if (a == 0) {
@@ -809,13 +808,13 @@ step_scsi_iterator(MEDIA_ITERATOR m)
 		    continue;   /* try again */
 		}
 		/* generate result */
-		result = (char *) malloc(20);
+		result = (char *) malloc(len);
 		if (result != NULL) {
 		    if (a->bus == 0xFF) {
-			sprintf(result, "/dev/scsi%c", '0'+a->id);
+			snprintf(result, len, "/dev/scsi%c", '0'+a->id);
 			probe_scsi_device(a->bus, a->id, 1);
 		    } else {
-			sprintf(result, "/dev/scsi%c.%c", '0'+a->bus, '0'+a->id);
+			snprintf(result, len, "/dev/scsi%c.%c", '0'+a->bus, '0'+a->id);
 			/* only probe out of iterate; so always added in order. */
 			probe_scsi_device(a->bus, a->id, 0);
 		    }
@@ -878,12 +877,13 @@ mklinux_scsi_name(long bus, long id)
     int is_cdrom;
     int unsure;
     char *suffix;
+    size_t len = 20;
 
     /* name is sda, sdb, sdc, ...
      * in order by buses and ids, but only count responding devices ...
      */
     if ((value = lookup_scsi_device(bus, id, &is_cdrom, &unsure)) >= 0) {
-	result = (char *) malloc(20);
+	result = (char *) malloc(len);
 	if (result != NULL) {
 	    if (unsure) {
 		suffix = " ?";
@@ -891,9 +891,9 @@ mklinux_scsi_name(long bus, long id)
 		suffix = "";
 	    }
 	    if (is_cdrom) {
-		sprintf(result, "/dev/scd%c%s", '0' + value, suffix);
+		snprintf(result, len, "/dev/scd%c%s", '0' + value, suffix);
 	    } else {
-		sprintf(result, "/dev/sd%c%s", 'a' + value, suffix);
+		snprintf(result, len, "/dev/sd%c%s", 'a' + value, suffix);
 	    }
 	}
     }

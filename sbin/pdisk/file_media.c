@@ -450,6 +450,7 @@ step_file_iterator(MEDIA_ITERATOR m)
     FILE_MEDIA_ITERATOR a;
     char *result;
     struct stat info;
+    size_t len = 20;
 
     a = (FILE_MEDIA_ITERATOR) m;
     if (a == 0) {
@@ -478,7 +479,7 @@ step_file_iterator(MEDIA_ITERATOR m)
 		}
 #endif
 		/* generate result */
-		result = (char *) malloc(20);
+		result = (char *) malloc(len);
 		if (result != NULL) {
 		    /*
 		     * for DR3 we should actually iterate through:
@@ -494,23 +495,23 @@ step_file_iterator(MEDIA_ITERATOR m)
 		    switch (a->style) {
 		    case kSCSI_Disks:
 #ifdef __OpenBSD__
-			sprintf(result, "/dev/sd%dc", (int)a->index);
+			snprintf(result, len, "/dev/sd%dc", (int)a->index);
 #else
-			sprintf(result, "/dev/sd%c", 'a'+(int)a->index);
+			snprintf(result, len, "/dev/sd%c", 'a'+(int)a->index);
 #endif
 			break;
 		    case kATA_Devices:
 #ifdef __OpenBSD__
-			sprintf(result, "/dev/wd%dc", (int)a->index);
+			snprintf(result, len, "/dev/wd%dc", (int)a->index);
 #else
-			sprintf(result, "/dev/hd%c", 'a'+(int)a->index);
+			snprintf(result, len, "/dev/hd%c", 'a'+(int)a->index);
 #endif
 			break;
 		    case kSCSI_CDs:
 #ifdef __OpenBSD__
-			sprintf(result, "/dev/cd%dc", (int)a->index);
+			snprintf(result, len, "/dev/cd%dc", (int)a->index);
 #else
-			sprintf(result, "/dev/scd%c", '0'+(int)a->index);
+			snprintf(result, len, "/dev/scd%c", '0'+(int)a->index);
 #endif
 			break;
 		    }

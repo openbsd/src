@@ -1072,6 +1072,7 @@ step_ata_iterator(MEDIA_ITERATOR m)
 {
     ATA_MEDIA_ITERATOR a;
     char *result;
+    size_t len = 20;
 
     a = (ATA_MEDIA_ITERATOR) m;
     if (a == 0) {
@@ -1100,9 +1101,9 @@ step_ata_iterator(MEDIA_ITERATOR m)
 		    continue;   /* try again */
 		}
 		/* generate result */
-		result = (char *) malloc(20);
+		result = (char *) malloc(len);
 		if (result != NULL) {
-		    sprintf(result, "/dev/ata%c.%c", '0'+a->bus, '0'+a->id);
+		    snprintf(result, len, "/dev/ata%c.%c", '0'+a->bus, '0'+a->id);
 		}
 
 		a->id += 1; /* next id */
@@ -1146,13 +1147,14 @@ char *
 mklinux_ata_name(long bus, long id)
 {
     char *result;
+    size_t len = 20;
 
-    result = (char *) malloc(20);
+    result = (char *) malloc(len);
     if (result != NULL) {
     	/* name is hda, hdb, hdc, hdd, ...
     	 * in order (0,0)  (0,1)  (1,0)  (1,1) ...
     	 */
-	sprintf(result, "/dev/hd%c", 'a' + (bus*2 + id));
+	snprintf(result, len, "/dev/hd%c", 'a' + (bus*2 + id));
     }
     return result;
 }

@@ -1037,8 +1037,7 @@ do_display_block(partition_map_header *map, char *alt_name)
 		return;
 	    }
 	} else {
-	    name = malloc(strlen(alt_name)+1);
-	    strcpy(name, alt_name);
+	    name = strdup(alt_name);
 	}
 	m = open_pathname_as_media(name, O_RDONLY);
 	if (m == 0) {

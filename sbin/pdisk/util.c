@@ -26,9 +26,7 @@
  */
 
 
-// for sprintf()
 #include <stdio.h>
-// for tolower()
 #include <ctype.h>
 
 #include "version.h"
@@ -145,18 +143,18 @@ get_version_string(void)
 
     if (kVersionBugFix != 0) {
 	if (kVersionStage == final) {
-	    sprintf(dynamic_version, "%d.%d.%d",
+	    snprintf(dynamic_version, sizeof dynamic_version, "%d.%d.%d",
 		    kVersionMajor, kVersionMinor, kVersionBugFix);
 	} else {
-	    sprintf(dynamic_version, "%d.%d.%d%c%d",
+	    snprintf(dynamic_version, sizeof dynamic_version, "%d.%d.%d%c%d",
 		    kVersionMajor, kVersionMinor, kVersionBugFix, stage, kVersionDelta);
 	}
     } else {
 	if (kVersionStage == final) {
-	    sprintf(dynamic_version, "%d.%d",
+	    snprintf(dynamic_version, sizeof dynamic_version, "%d.%d",
 		    kVersionMajor, kVersionMinor);
 	} else {
-	    sprintf(dynamic_version, "%d.%d%c%d",
+	    snprintf(dynamic_version, sizeof dynamic_version, "%d.%d%c%d",
 		    kVersionMajor, kVersionMinor, stage, kVersionDelta);
 	}
     }
