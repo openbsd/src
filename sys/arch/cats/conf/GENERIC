@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.7 2004/03/11 18:49:54 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.8 2004/04/07 03:38:57 drahn Exp $
 #
 # GENERIC machine description file
 # 
@@ -327,6 +327,8 @@ midi*	at pcppi?		# MIDI interface to the PC speaker
 
 # ISA joysticks. Probe is a little strange; add only if you have one.
 #joy0	at isa? port 0x201
+
+hifn*	at pci? dev ? function ?	# Hi/fn 7751 crypto card
 
 # Pseudo-Devices
 pseudo-device	wsmux		2	# mouse & keyboard multiplexor
