@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ncr.4,v 1.6 2001/03/08 20:11:51 aaron Exp $
+.\"	$OpenBSD: ncr.4,v 1.7 2001/04/11 20:48:03 miod Exp $
 .\"
 .\" Copyright (c) 1994 James A. Jegers
 .\" All rights reserved.
@@ -50,6 +50,11 @@ driver provides support for the NCR (now Symbios) 53C810, 53C815, 53C820,
 53C825, 53C860, 53C875, 53C876, 53C885, 53C895, 53C896, 53C1510, and 53C1510D
 .Tn SCSI
 controller chips.
+.Pp
+.Nm
+has been replaced by the
+.Nm siop
+driver.
 .Pp
 The following kernel configuration options are available:
 .Bl -ohang
@@ -129,5 +134,6 @@ in your kernel configuration file to disable tagged command queuing.
 .Xr intro 4 ,
 .Xr scsi 4 ,
 .Xr sd 4 ,
+.Xr siop 4 ,
 .Xr st 4 ,
 .Xr uk 4
