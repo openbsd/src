@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.50 1998/06/25 06:25:42 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.51 1998/07/07 18:49:01 art Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -35,9 +35,9 @@ LDIRS=	dev net netinet netccitt netiso netns netipx nfs sys ufs vm ddb \
 
 RDIRS=	../lib/libcom_err ../lib/libcompat ../lib/libcurses ../lib/libform \
 	../lib/libmenu ../lib/libocurses ../lib/libossaudio ../lib/libpanel \
-	../lib/librpcsvc ../lib/libskey ../lib/libss ../lib/libtermlib \
-	../lib/libedit ../lib/libpcap ../lib/libutil ../lib/libwrap \
-	../lib/libz ../sys/arch/${MACHINE}
+	../lib/librpcsvc ../lib/libskey ../lib/libtermlib ../lib/libedit \
+	../lib/libpcap ../lib/libutil ../lib/libwrap ../lib/libz \
+	../sys/arch/${MACHINE}
 
 WDIRS=	../gnu/lib/libg++/libg++ ../gnu/lib/libg++/libio \
 	../gnu/lib/libg++/librx ../gnu/lib/libg++/libstdc++ \
