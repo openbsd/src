@@ -59,7 +59,7 @@
 ./usr/lib/perl5/powerpc-openbsd/5.00404/pod/perldiag.pod
 ./usr/lib/perl5/site_perl/powerpc-openbsd
 ./usr/mdec/mbr
-./usr/mdec/msdos5mb.gz
+./usr/mdec/msdos1mb.gz
 ./usr/mdec/ofwboot
 ./usr/powerpc-unknown-openbsd2.3
 ./usr/powerpc-unknown-openbsd2.3/bin
