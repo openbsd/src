@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.5 1996/11/12 08:11:08 niklas Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.6 1997/01/04 12:59:49 niklas Exp $	*/
 /*
  * Copyright (c) 1996 Per Fogelstrom
  * Copyright (c) 1995 Theo de Raadt
@@ -41,7 +41,7 @@
  * from: Utah Hdr: autoconf.c 1.31 91/01/21
  *
  *	from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
- *      $Id: autoconf.c,v 1.5 1996/11/12 08:11:08 niklas Exp $
+ *      $Id: autoconf.c,v 1.6 1997/01/04 12:59:49 niklas Exp $
  */
 
 /*
@@ -239,7 +239,7 @@ setroot()
 
 	if (boothowto & RB_ASKNAME) {
 		for (;;) {
-			 printf("root device ");
+			printf("root device ");
 			if (bootdv != NULL)
 				 printf("(default %s%c)",
 					bootdv->dv_xname,
@@ -449,12 +449,18 @@ makebootdev(cp)
 			break;
 		dp++;
 	}
-	if (!dp)
+	if (!dp->attachment) {
+		printf("Warning: boot device unrecognized: %s\n", cp);
 		return;
+	}
 	ctrl = getpno(&cp);
 	if(*cp++ == ')')
 		unit = getpno(&cp);
-	sprintf(bootdev, "%s%d", dp->dev, ctrl*16 + unit);
+	if(*cp++ == ')')
+		getpno(&cp);
+	if(*cp++ == ')')
+		part = getpno(&cp) - 1;
+	sprintf(bootdev, "%s%d%c", dp->dev, ctrl*16 + unit, 'a' + part);
 }
 
 getpno(cp)
