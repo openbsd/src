@@ -1,4 +1,4 @@
-/*	$OpenBSD: mongoose.c,v 1.15 2004/04/07 18:24:19 mickey Exp $	*/
+/*	$OpenBSD: mongoose.c,v 1.16 2004/10/29 20:23:37 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -26,9 +26,6 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
-#define MONGOOSE_DEBUG 9
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -47,166 +44,14 @@
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 
-/* EISA Bus Adapter registers definitions */
-#define	MONGOOSE_MONGOOSE	0x10000
-struct mongoose_regs {
-	u_int8_t	version;
-	u_int8_t	lock;
-	u_int8_t	liowait;
-	u_int8_t	clock;
-	u_int8_t	reserved[0xf000 - 4];
-	u_int8_t	intack;
-};
+#include <hppa/dev/mongoosereg.h>
+#include <hppa/dev/mongoosevar.h>
 
-#define	MONGOOSE_CTRL		0x00000
-#define	MONGOOSE_NINTS		16
-struct mongoose_ctrl {
-	struct dma0 {
-		struct {
-			u_int32_t	addr : 8;
-			u_int32_t	count: 8;
-		} ch[4];
-		u_int8_t	command;
-		u_int8_t	request;
-		u_int8_t	mask_channel;
-		u_int8_t	mode;
-		u_int8_t	clr_byte_ptr;
-		u_int8_t	master_clear;
-		u_int8_t	mask_clear;
-		u_int8_t	master_write;
-		u_int8_t	pad[8];
-	}	dma0;
+void	mgattach_gedoens(struct device *, struct device *, void *);
+int	mgmatch_gedoens(struct device *, void *, void *);
 
-	u_int8_t	irr0;		/* 0x20 */
-	u_int8_t	imr0;
-	u_int8_t	iack;		/* 0x22 -- 2 b2b reads generate
-					(e)isa Iack cycle & returns int level */
-	u_int8_t	pad0[29];
-
-	struct timers {
-		u_int8_t	sysclk;
-		u_int8_t	refresh;
-		u_int8_t	spkr;
-		u_int8_t	ctrl;
-		u_int32_t	pad;
-	}	tmr[2];			/* 0x40 -- timers control */
-	u_int8_t	pad1[16];
-
-	u_int16_t	inmi;		/* 0x60 NMI control */
-	u_int8_t	pad2[30];
-	struct {
-		u_int8_t	pad0;
-		u_int8_t	ch2;
-		u_int8_t	ch3;
-		u_int8_t	ch1;
-		u_int8_t	pad1;
-		u_int8_t	pad2[3];
-		u_int8_t	ch0;
-		u_int8_t	pad4;
-		u_int8_t	ch6;
-		u_int8_t	ch7;
-		u_int8_t	ch5;
-		u_int8_t	pad5[3];
-		u_int8_t	pad6[16];
-	} pr;				/* 0x80 */
-
-	u_int8_t	irr1;		/* 0xa0 */
-	u_int8_t	imr1;
-	u_int8_t	pad3[30];
-
-	struct dma1 {
-		struct {
-			u_int32_t	addr : 8;
-			u_int32_t	pad0 : 8;
-			u_int32_t	count: 8;
-			u_int32_t	pad1 : 8;
-		} ch[4];
-		u_int8_t	command;
-		u_int8_t	pad0;
-		u_int8_t	request;
-		u_int8_t	pad1;
-		u_int8_t	mask_channel;
-		u_int8_t	pad2;
-		u_int8_t	mode;
-		u_int8_t	pad3;
-		u_int8_t	clr_byte_ptr;
-		u_int8_t	pad4;
-		u_int8_t	master_clear;
-		u_int8_t	pad5;
-		u_int8_t	mask_clear;
-		u_int8_t	pad6;
-		u_int8_t	master_write;
-		u_int8_t	pad7;
-	}	dma1;			/* 0xc0 */
-
-	u_int8_t	master_req;	/* 0xe0 master request register */
-	u_int8_t	pad4[31];
-
-	u_int8_t	pad5[0x3d0];	/* 0x4d0 */
-	u_int8_t	pic0;		/* 0 - edge, 1 - level */
-	u_int8_t	pic1;
-	u_int8_t	pad6[0x460];
-	u_int8_t	nmi;
-	u_int8_t	nmi_ext;
-#define	MONGOOSE_NMI_BUSRESET	0x01
-#define	MONGOOSE_NMI_IOPORT_EN	0x02
-#define	MONGOOSE_NMI_EN		0x04
-#define	MONGOOSE_NMI_MTMO_EN	0x08
-#define	MONGOOSE_NMI_RES4	0x10
-#define	MONGOOSE_NMI_IOPORT_INT	0x20
-#define	MONGOOSE_NMI_MASTER_INT	0x40
-#define	MONGOOSE_NMI_INT	0x80
-};
-
-#define	MONGOOSE_IOMAP	0x100000
-
-struct hppa_isa_iv {
-	const char *iv_name;
-	int (*iv_handler)(void *arg);
-	void *iv_arg;
-	int iv_pri;
-
-	struct evcnt iv_evcnt;
-	/* don't do sharing, we won't have many slots anyway
-	struct hppa_isa_iv *iv_next;
-	*/
-};
-
-struct mongoose_softc {
-	struct  device sc_dev;
-	void *sc_ih;
-
-	bus_space_tag_t sc_bt;
-	volatile struct mongoose_regs *sc_regs;
-	volatile struct mongoose_ctrl *sc_ctrl;
-	bus_addr_t sc_iomap;
-
-	/* interrupts section */
-	struct hppa_eisa_chipset sc_ec;
-	struct hppa_isa_chipset sc_ic;
-	struct hppa_isa_iv sc_iv[MONGOOSE_NINTS];
-
-	/* isa/eisa bus guts */
-	struct hppa_bus_space_tag sc_eiot;
-	struct hppa_bus_space_tag sc_ememt;
-	struct hppa_bus_dma_tag sc_edmat;
-	struct hppa_bus_space_tag sc_iiot;
-	struct hppa_bus_space_tag sc_imemt;
-	struct hppa_bus_dma_tag sc_idmat;
-};
-
-union mongoose_attach_args {
-	char *mongoose_name;
-	struct eisabus_attach_args mongoose_eisa;
-	struct isabus_attach_args mongoose_isa;
-};
-
-int	mgmatch(struct device *, void *, void *);
-void	mgattach(struct device *, struct device *, void *);
-int	mgprint(void *aux, const char *pnp);
-
-struct cfattach mongoose_ca = {
-	sizeof(struct mongoose_softc), mgmatch, mgattach
+struct cfattach mg_gedoens_ca = {
+	sizeof(struct mongoose_softc), mgmatch_gedoens, mgattach_gedoens
 };
 
 struct cfdriver mongoose_cd = {
@@ -519,47 +364,12 @@ mg_isa_sr_4(void *v, bus_space_handle_t h, bus_size_t o, u_int32_t vv, bus_size_
 }
 
 int
-mgmatch(parent, cfdata, aux)   
-	struct device *parent;
-	void *cfdata;
-	void *aux;
+mgattach_common(sc)
+	struct mongoose_softc *sc;
 {
-	register struct confargs *ca = aux;
-	/* struct cfdata *cf = cfdata; */
-	bus_space_handle_t ioh;
-
-	if (ca->ca_type.iodc_type != HPPA_TYPE_BHA ||
-	    (ca->ca_type.iodc_sv_model != HPPA_BHA_EISA &&
-	     ca->ca_type.iodc_sv_model != HPPA_BHA_WEISA))
-		return 0;
-
-	if (bus_space_map(ca->ca_iot, ca->ca_hpa + MONGOOSE_MONGOOSE,
-	    IOMOD_HPASIZE, 0, &ioh))
-		return 0;
-
-	/* XXX check EISA signature */
-
-	bus_space_unmap(ca->ca_iot, ioh, IOMOD_HPASIZE);
-
-	return 1;
-}
-
-void
-mgattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
-{
-	register struct confargs *ca = aux;
-	register struct mongoose_softc *sc = (struct mongoose_softc *)self;
 	struct hppa_bus_space_tag *bt;
 	union mongoose_attach_args ea;
 	char brid[EISA_IDSTRINGLEN];
-
-	sc->sc_bt = ca->ca_iot;
-	sc->sc_iomap = ca->ca_hpa;
-	sc->sc_regs = (struct mongoose_regs *)(ca->ca_hpa + MONGOOSE_MONGOOSE);
-	sc->sc_ctrl = (struct mongoose_ctrl *)(ca->ca_hpa + MONGOOSE_CTRL);
 
 	viper_eisa_en();
 
@@ -572,7 +382,7 @@ mgattach(parent, self, aux)
 	/* determine eisa board id */
 	{
 		u_int8_t id[4], *p;
-		p = (u_int8_t *)(ca->ca_hpa + EISA_SLOTOFF_VID);
+		p = (u_int8_t *)(sc->sc_iomap + EISA_SLOTOFF_VID);
 		id[0] = *p++;
 		id[1] = *p++;
 		id[2] = *p++;
@@ -602,7 +412,7 @@ mgattach(parent, self, aux)
 	sc->sc_ec.ec_intr_map = mg_intr_map;
 	/* inherit the bus tags for eisa from the mainbus */
 	bt = &sc->sc_eiot;
-	bcopy(ca->ca_iot, bt, sizeof(*bt));
+	bcopy(sc->sc_bt, bt, sizeof(*bt));
 	bt->hbt_cookie = sc;
 	bt->hbt_map = mg_eisa_iomap;
 #define	R(n)	bt->__CONCAT(hbt_,n) = &__CONCAT(mg_isa_,n)
@@ -612,7 +422,7 @@ mgattach(parent, self, aux)
 	R(rr_2);R(rr_4);R(wr_2);R(wr_4);R(sr_2);R(sr_4);
 
 	bt = &sc->sc_ememt;
-	bcopy(ca->ca_iot, bt, sizeof(*bt));
+	bcopy(sc->sc_bt, bt, sizeof(*bt));
 	bt->hbt_cookie = sc;
 	bt->hbt_map = mg_eisa_memmap;
 	bt->hbt_unmap = mg_eisa_memunmap;
@@ -622,7 +432,7 @@ mgattach(parent, self, aux)
 	ea.mongoose_eisa.eba_memt = &sc->sc_ememt;
 	ea.mongoose_eisa.eba_dmat = NULL /* &sc->sc_edmat */;
 	ea.mongoose_eisa.eba_ec = &sc->sc_ec;
-	config_found(self, &ea.mongoose_eisa, mgprint);
+	config_found((struct device *)sc, &ea.mongoose_eisa, mgprint);
 
 	sc->sc_ic.ic_v = sc;
 	sc->sc_ic.ic_attach_hook = mg_isa_attach_hook;
@@ -643,12 +453,10 @@ mgattach(parent, self, aux)
 	ea.mongoose_isa.iba_dmat = &sc->sc_idmat;
 #endif
 	ea.mongoose_isa.iba_ic = &sc->sc_ic;
-	config_found(self, &ea.mongoose_isa, mgprint);
+	config_found((struct device *)sc, &ea.mongoose_isa, mgprint);
 #undef	R
 
-	/* attach interrupt */
-	sc->sc_ih = cpu_intr_establish(IPL_HIGH, ca->ca_irq,
-				       mg_intr, sc, sc->sc_dev.dv_xname);
+	return (0);
 }
 
 int
@@ -664,3 +472,50 @@ mgprint(aux, pnp)
 	return (UNCONF);
 }
 
+int
+mgmatch_gedoens(parent, cfdata, aux)   
+	struct device *parent;
+	void *cfdata;
+	void *aux;
+{
+	register struct confargs *ca = aux;
+	/* struct cfdata *cf = cfdata; */
+	bus_space_handle_t ioh;
+
+	if (ca->ca_type.iodc_type != HPPA_TYPE_BHA ||
+	    (ca->ca_type.iodc_sv_model != HPPA_BHA_EISA &&
+	     ca->ca_type.iodc_sv_model != HPPA_BHA_WEISA))
+		return 0;
+
+	if (bus_space_map(ca->ca_iot, ca->ca_hpa + MONGOOSE_MONGOOSE,
+	    IOMOD_HPASIZE, 0, &ioh))
+		return 0;
+
+	/* XXX check EISA signature */
+
+	bus_space_unmap(ca->ca_iot, ioh, IOMOD_HPASIZE);
+
+	return 1;
+}
+
+void
+mgattach_gedoens(parent, self, aux)
+	struct device *parent;
+	struct device *self;
+	void *aux;
+{
+	register struct confargs *ca = aux;
+	register struct mongoose_softc *sc = (struct mongoose_softc *)self;
+
+	sc->sc_bt = ca->ca_iot;
+	sc->sc_iomap = ca->ca_hpa;
+	sc->sc_regs = (struct mongoose_regs *)(ca->ca_hpa + MONGOOSE_MONGOOSE);
+	sc->sc_ctrl = (struct mongoose_ctrl *)(ca->ca_hpa + MONGOOSE_CTRL);
+
+	if (mgattach_common(sc) != 0)
+		return;
+
+	/* attach interrupt */
+	sc->sc_ih = cpu_intr_establish(IPL_HIGH, ca->ca_irq,
+				       mg_intr, sc, sc->sc_dev.dv_xname);
+}

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.56 2004/10/14 19:46:35 mickey Exp $
+#	$OpenBSD: files.hppa,v 1.57 2004/10/29 20:23:35 miod Exp $
 #
 # hppa-specific configuration info
 
@@ -133,7 +133,7 @@ attach	wax at gedoens
 file	arch/hppa/dev/wax.c		wax
 
 device	mongoose: isabus, eisabus
-attach	mongoose at gedoens
+attach	mongoose at gedoens with mg_gedoens
 file	arch/hppa/dev/mongoose.c	mongoose
 
 define	dinobus {[offset = -1], [irq = -1]}
@@ -179,6 +179,9 @@ file	arch/hppa/gsc/com_gsc.c		com_gsc
 
 attach	lpt at gsc with lpt_gsc
 file	arch/hppa/gsc/lpt_gsc.c		lpt_gsc
+
+attach	mongoose at gsc with mg_gsc
+file	arch/hppa/gsc/mongoose_gsc.c	mg_gsc
 
 #include "dev/fdc/files.fdc"
 #major	{ fd = 7 }
