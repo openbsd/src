@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.2 1996/03/03 17:20:27 niklas Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.3 1996/10/28 02:57:18 tholo Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -86,7 +86,7 @@ namei(ndp)
 	register struct vnode *dp;	/* the directory we are searching */
 	struct iovec aiov;		/* uio for reading symbolic links */
 	struct uio auio;
-	int error, linklen;
+	int error, linklen, dironly = 0;
 	struct componentname *cnp = &ndp->ni_cnd;
 
 	ndp->ni_cnd.cn_cred = ndp->ni_cnd.cn_proc->p_ucred;
@@ -112,16 +112,40 @@ namei(ndp)
 	else
 		error = copyinstr(ndp->ni_dirp, cnp->cn_pnbuf,
 			    MAXPATHLEN, &ndp->ni_pathlen);
+
+#ifdef KTRACE
+	if (KTRPOINT(cnp->cn_proc, KTR_NAMEI))
+		ktrnamei(cnp->cn_proc->p_tracep, cnp->cn_pnbuf);
+#endif
+
+	/*
+	 * Fail on null pathnames
+	 */
+	if (error == 0 && ndp->ni_pathlen == 1)
+		error = ENOENT;
 	if (error) {
 		free(cnp->cn_pnbuf, M_NAMEI);
 		ndp->ni_vp = NULL;
 		return (error);
 	}
+
+	/*
+	 * Ignore trailing /'s, except require the last path element
+	 * to be a directory
+	 */
+	if (ndp->ni_pathlen > 2 && cnp->cn_pnbuf[ndp->ni_pathlen - 2] == '/') {
+		/*
+		 * Since the last name is no longer the terminal,
+		 * force the FOLLOW flag
+		 */
+		cnp->cn_flags |= FOLLOW;
+		dironly = 1;
+		while (ndp->ni_pathlen > 2 &&
+		       cnp->cn_pnbuf[ndp->ni_pathlen - 2] == '/')
+			cnp->cn_pnbuf[--ndp->ni_pathlen - 1] = '\0';
+	}
+
 	ndp->ni_loopcnt = 0;
-#ifdef KTRACE
-	if (KTRPOINT(cnp->cn_proc, KTR_NAMEI))
-		ktrnamei(cnp->cn_proc->p_tracep, cnp->cn_pnbuf);
-#endif
 
 	/*
 	 * Get starting point for the translation.
@@ -154,6 +178,17 @@ namei(ndp)
 		 * Check for symbolic link
 		 */
 		if ((cnp->cn_flags & ISSYMLINK) == 0) {
+			/*
+			 * Check for directory if dironly
+			 */
+			if (dironly && ndp->ni_vp->v_type != VDIR) {
+				if (cnp->cn_flags & LOCKPARENT)
+					VOP_UNLOCK(ndp->ni_dvp);
+				if (cnp->cn_flags & LOCKLEAF)
+					VOP_UNLOCK(ndp->ni_vp);
+				error = ENOTDIR;
+				break;
+			}
 			if ((cnp->cn_flags & (SAVENAME | SAVESTART)) == 0)
 				FREE(cnp->cn_pnbuf, M_NAMEI);
 			else
