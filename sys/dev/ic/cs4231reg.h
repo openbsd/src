@@ -1,4 +1,4 @@
-/* $OpenBSD: cs4231reg.h,v 1.3 1996/10/31 01:01:27 niklas Exp $ */
+/* $OpenBSD: cs4231reg.h,v 1.4 1999/03/08 22:54:33 jason Exp $ */
 /* $NetBSD: cs4231reg.h,v 1.4 1996/02/16 08:12:33 mycroft Exp $ */
 
 /*-
@@ -75,6 +75,8 @@
  *						 v        v
  *     	       	       	       	       	       	  Pc BUS (DISK) ???
  *
+ * Documentation for this chip can be found at:
+ *	http://www.cirrus.com/products/overviews/cs4231.html
  */
 
 /* CS4231/AD1845 mode2 registers; added to AD1848 registers */
