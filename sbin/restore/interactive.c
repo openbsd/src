@@ -1,4 +1,4 @@
-/*	$OpenBSD: interactive.c,v 1.7 1998/06/23 22:40:31 millert Exp $	*/
+/*	$OpenBSD: interactive.c,v 1.8 1998/09/18 18:48:11 deraadt Exp $	*/
 /*	$NetBSD: interactive.c,v 1.10 1997/03/19 08:42:52 lukem Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)interactive.c	8.3 (Berkeley) 9/13/94";
 #else
-static char rcsid[] = "$OpenBSD: interactive.c,v 1.7 1998/06/23 22:40:31 millert Exp $";
+static char rcsid[] = "$OpenBSD: interactive.c,v 1.8 1998/09/18 18:48:11 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -157,7 +157,7 @@ loop:
 			fprintf(stderr, "%s: not a directory\n", name);
 			break;
 		}
-		(void)strcpy(curdir, name);
+		(void)strlcpy(curdir, name, sizeof curdir);
 		break;
 	/*
 	 * Delete elements from the extraction list.
@@ -348,7 +348,7 @@ getcmd(curdir, cmd, name, ap)
 	 * If no argument, use curdir as the default.
 	 */
 	if (*cp == '\0') {
-		(void)strcpy(name, curdir);
+		(void)strlcpy(name, curdir, MAXPATHLEN);
 		return;
 	}
 	nextarg = cp;
@@ -371,9 +371,7 @@ getnext:
 		 * For relative pathnames, prepend the current directory to
 		 * it then canonicalize and return it.
 		 */
-		(void)strcpy(output, curdir);
-		(void)strcat(output, "/");
-		(void)strcat(output, rawname);
+		snprintf(output, sizeof(output), "%s/%s", curdir, rawname);
 		canon(output, name);
 	}
 	if (glob(name, GLOB_ALTDIRFUNC | GLOB_NOESCAPE, NULL, &ap->glob) < 0)
@@ -384,7 +382,8 @@ getnext:
 	ap->argcnt = ap->glob.gl_pathc;
 
 retnext:
-	strcpy(name, ap->glob.gl_pathv[ap->glob.gl_pathc - ap->argcnt]);
+	strlcpy(name, ap->glob.gl_pathv[ap->glob.gl_pathc - ap->argcnt],
+	    MAXPATHLEN);
 	if (--ap->argcnt == 0) {
 		ap->freeglob = 0;
 		globfree(&ap->glob);
@@ -457,7 +456,7 @@ canon(rawname, canonname)
 		(void)strcpy(canonname, ".");
 	else
 		(void)strcpy(canonname, "./");
-	(void)strcat(canonname, rawname);
+	(void)strlcat(canonname, rawname, MAXPATHLEN);
 	/*
 	 * Eliminate multiple and trailing '/'s
 	 */
