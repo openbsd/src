@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 1997/05/24 23:16:48 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.6 1997/05/30 17:29:39 grr Exp $
 #	$NetBSD: Makefile,v 1.2.4.3 1996/07/04 07:05:32 leo Exp $
 
 # Revision is 2.1
@@ -61,7 +61,7 @@ ${FLOPPY}:	bsd.gz ${BOOT} ${BOOTXX}
 	disklabel -w ${RAWLABEL} ${VND} ${FLOPPYTYPE}
 	newfs ${NEWFSOPTS_FD} ${VND_RDEV} ${FLOPPYTYPE}
 	mount ${VND_DEV} ${MOUNT_POINT}
-	cp ${BOOT} ${MOUNT_POINT}
+	cp ${BOOT} ${MOUNT_POINT}/boot
 	cp bsd.gz ${MOUNT_POINT}/bsd
 	${INSTALLBOOT} -v ${MOUNT_POINT}/boot ${BOOTXX} ${VND_RDEV}
 	@echo ""
