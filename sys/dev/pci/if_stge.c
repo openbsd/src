@@ -825,7 +825,7 @@ stge_start(struct ifnet *ifp)
 		/*
 		 * Load the DMA map.  If this fails, the packet either
 		 * didn't fit in the alloted number of segments, or we
-		 * were short on resources.  For the too-may-segments
+		 * were short on resources.  For the too-many-segments
 		 * case, we simply report an error and drop the packet,
 		 * since we can't sanely copy a jumbo packet to a single
 		 * buffer.
