@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.99 1999/08/02 19:50:08 jakob Exp $
+#	$OpenBSD: Makefile,v 1.100 1999/09/28 07:19:27 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -200,6 +200,7 @@ distribution-etc-root-var: distrib-dirs
 .endif
 	(cd ../usr.sbin/sendmail/cf/cf; ${MAKE} distribution)
 	(cd ../usr.sbin/ypserv/ypinit; ${MAKE} distribution)
+	(cd ../usr.bin/ssh; ${MAKE} distribution)
 	(cd ../usr.sbin/httpd; ${MAKE} distribution)
 	(cd ../lib/libssl; ${MAKE} -f Makefile.bsd-wrapper distribution)
 	(cd ../gnu/usr.bin/lynx; ${MAKE} -f Makefile.bsd-wrapper distribution)
