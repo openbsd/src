@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.14 1999/08/15 05:32:13 deraadt Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.15 1999/08/15 19:10:31 fgsch Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -239,13 +239,15 @@ struct ne2000dev {
       PCMCIA_CIS_SMC_EZCARD,
       0, 0x01c0, { 0x00, 0xe0, 0x29 } },
 
+    { PCMCIA_STR_COREGA_LA_PCM,
+      PCMCIA_VENDOR_COREGA, PCMCIA_PRODUCT_COREGA_LA_PCM,
+      PCMCIA_CIS_COREGA_LA_PCM,
+      0, 0x0ff0, { 0x00, 0x00, 0xf4 } },
+
 #if 0
     /* the rest of these are stolen from the linux pcnet pcmcia device
        driver.  Since I don't know the manfid or cis info strings for
        any of them, they're not compiled in until I do. */
-    { "Allied Telesis LA-PCM",
-      0x0000, 0x0000, NULL, NULL, 0,
-      0x0ff0, { 0x00, 0x00, 0xf4 } },
     { "APEX MultiCard",
       0x0000, 0x0000, NULL, NULL, 0,
       0x03f4, { 0x00, 0x20, 0xe5 } },

@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.20 1999/08/14 05:47:41 fgsch Exp $
+	$OpenBSD: pcmciadevs,v 1.21 1999/08/15 19:10:32 fgsch Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -73,6 +73,9 @@ vendor HAGIWARASYSCOM		0xc012	Hagiwara SYS-COM
 /* Adaptec Products */
 product ADAPTEC APA1460_1	0x0001 Adaptec APA-1460/A SCSI Host Adapter
 product ADAPTEC APA1460_2	0x0002 Adaptec APA-1460/B SCSI Host Adapter
+
+/* Allied Telesis */
+product COREGA LA_PCM		0x0002 Allied Telesis LA-PCM
 
 /* BreezeCOM Products */
 product BREEZECOM BREEZENET	0x0102 BreezeCOM BreezeNET IEEE 802.11 FHSS
