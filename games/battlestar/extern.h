@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.5 1999/09/25 20:30:45 pjanzen Exp $	*/
+/*	$OpenBSD: extern.h,v 1.6 2000/07/03 05:23:45 pjanzen Exp $	*/
 /*	$NetBSD: extern.h,v 1.5 1995/04/24 12:22:18 cgd Exp $	*/
 
 /*
@@ -137,7 +137,7 @@
 #define CAR		60
 #define POT		61
 #define BAR		62
-#define	BLOCK		63
+#define BLOCK		63
 #define NUMOFOBJECTS	64
  /* non-objects below */
 #define UP	1000
@@ -154,7 +154,7 @@
 #define SOUTH	1011
 #define EAST	1012
 #define WEST	1013
-#define SU      1014
+#define SU	1014
 #define DROP	1015
 #define TAKEOFF	1016
 #define DRAW	1017
@@ -178,7 +178,7 @@
 #define SMITE	1035
 #define SHOOT	1036
 #define ON	1037
-#define	OFF	1038
+#define OFF	1038
 #define TIME	1039
 #define SLEEP	1040
 #define DIG	1041
@@ -193,6 +193,9 @@
 #define BURY	1050
 #define JUMP	1051
 #define KICK	1052
+#define OPEN	1053
+#define VERBOSE	1054
+#define BRIEF	1055
 
  /* injuries */
 #define ARM	6		/* broken arm */
@@ -211,6 +214,9 @@
 #define JINXED		4
 #define DUG		5
 #define NUMOFNOTES	6
+
+ /* number of times room description shown */
+#define ROOMDESC	3
 
  /* fundamental constants */
 #define NUMOFROOMS	275
@@ -267,7 +273,7 @@ extern int     left, right, ahead, back;
 extern int     ourclock, fuel, torps;
 extern int     carrying, encumber;
 extern int     rythmn;
-extern int followfight;
+extern int     followfight;
 extern int     ate;
 extern int     snooze;
 extern int     meetgirl;
@@ -288,6 +294,7 @@ extern unsigned int inven[NUMOFWORDS];
 extern unsigned int wear[NUMOFWORDS];
 extern char    beenthere[NUMOFROOMS+1];
 extern char    injuries[NUMOFINJURIES];
+extern int     verbose;
 
 extern char    username[LOGIN_NAME_MAX + 1];
 
@@ -319,6 +326,7 @@ void crash __P((void));
 int cypher __P((void));
 void die __P((int));
 void dig __P((void));
+void dooropen __P((void));
 int draw __P((void));
 void drink __P((void));
 int drive __P((void));

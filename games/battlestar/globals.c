@@ -1,4 +1,4 @@
-/*	$OpenBSD: globals.c,v 1.5 1999/09/25 20:30:45 pjanzen Exp $	*/
+/*	$OpenBSD: globals.c,v 1.6 2000/07/03 05:23:45 pjanzen Exp $	*/
 /*	$NetBSD: globals.c,v 1.3 1995/03/21 15:07:32 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)globals.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: globals.c,v 1.5 1999/09/25 20:30:45 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: globals.c,v 1.6 2000/07/03 05:23:45 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -48,7 +48,7 @@ int     WEIGHT = MAXWEIGHT;
 int     CUMBER = MAXCUMBER;
 
 const char   *const objdes[NUMOFOBJECTS] = {
-	"There is a knife here",
+	"There is a knife here.",
 	"There are an exquisitely crafted sword and scabbard here.",
 	0,			/* can land from here */
 	"There is a fierce woodsman here brandishing a heavy mallet.",
@@ -73,14 +73,14 @@ const char   *const objdes[NUMOFOBJECTS] = {
 	"There is a laser pistol here.",
 	"A flower-like young goddess is bathing in the hot mineral pools. She is \nwatching you, but continues to steep and sing softly.",
 	"The goddess is reclining on a bed of ferns and studying you intently.",
-	"There is a grenade here",
+	"There is a grenade here.",
 	"There is a length of heavy chain here.",
 	"There is a stout rope here.",
 	"There is a pair of Levi's here.",
 	"A bloody mace is lying on the ground here.",
 	"There is a shovel here.",
 	"A long, sharp halberd is propped up here.",
-	"There is a compass here",
+	"There is a compass here.",
 	"Wreckage and smoldering debris from a crash litter the ground here.",
 	"A woodland Elf armed with a shield and deadly halberd lunges toward you!",
 	"I think I hear footsteps behind us.",
@@ -256,6 +256,7 @@ unsigned int inven[NUMOFWORDS];
 unsigned int wear[NUMOFWORDS];
 char    beenthere[NUMOFROOMS + 1];
 char    injuries[NUMOFINJURIES];
+int     verbose = 0;
 
 char    username[LOGIN_NAME_MAX + 1];
 

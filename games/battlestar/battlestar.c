@@ -1,4 +1,4 @@
-/*	$OpenBSD: battlestar.c,v 1.7 1999/09/25 20:30:45 pjanzen Exp $	*/
+/*	$OpenBSD: battlestar.c,v 1.8 2000/07/03 05:23:43 pjanzen Exp $	*/
 /*	$NetBSD: battlestar.c,v 1.3 1995/03/21 15:06:47 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)battlestar.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: battlestar.c,v 1.7 1999/09/25 20:30:45 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: battlestar.c,v 1.8 2000/07/03 05:23:43 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -82,7 +82,8 @@ main(argc, argv)
 		initialize(argv[1]);
 start:
 	news();
-	beenthere[position]++;
+	if (beenthere[position] <= ROOMDESC)
+	     beenthere[position]++;
 	if (notes[LAUNCHED])
 		crash();	/* decrements fuel & crash */
 	if (matchlight) {

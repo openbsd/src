@@ -1,4 +1,4 @@
-/*	$OpenBSD: com1.c,v 1.7 1999/09/25 20:30:45 pjanzen Exp $	*/
+/*	$OpenBSD: com1.c,v 1.8 2000/07/03 05:23:44 pjanzen Exp $	*/
 /*	$NetBSD: com1.c,v 1.3 1995/03/21 15:06:51 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com1.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: com1.c,v 1.7 1999/09/25 20:30:45 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: com1.c,v 1.8 2000/07/03 05:23:44 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -126,10 +126,10 @@ news()
 			convert(TONIGHT);
 			ClearBit(location[POOLS].objects, BATHGOD);
 			if (OUTSIDE && ourtime - rythmn - CYCLE < 10) {
-				puts("The dying sun sinks into the ocean, leaving a blood stained sunset.");
+				puts("The dying sun sinks into the ocean, leaving a blood-stained sunset.");
 				puts("The sky slowly fades from orange to violet to black.  A few stars");
 				puts("flicker on, and it is night.");
-				puts("The world seems completly different at night.");
+				puts("The world seems completely different at night.");
 			}
 		}
 		rythmn = ourtime - ourtime % CYCLE;

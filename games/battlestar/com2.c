@@ -1,4 +1,4 @@
-/*	$OpenBSD: com2.c,v 1.7 1999/09/25 20:30:45 pjanzen Exp $	*/
+/*	$OpenBSD: com2.c,v 1.8 2000/07/03 05:23:44 pjanzen Exp $	*/
 /*	$NetBSD: com2.c,v 1.3 1995/03/21 15:06:55 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com2.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: com2.c,v 1.7 1999/09/25 20:30:45 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: com2.c,v 1.8 2000/07/03 05:23:44 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -178,12 +178,39 @@ murder()
 {
 	int     n;
 
-	for (n = 0; !((n == SWORD || n == KNIFE || n == TWO_HANDED || n == MACE || n == CLEAVER || n == BROAD || n == CHAIN || n == SHOVEL || n == HALBERD) && TestBit(inven, n)) && n < NUMOFOBJECTS; n++);
-	if (n == NUMOFOBJECTS)
-		puts("You don't have suitable weapons to kill.");
-	else {
+	for (n = 0; !((n == SWORD || n == KNIFE || n == TWO_HANDED || n == MACE || n == CLEAVER || n == BROAD || n == CHAIN || n == SHOVEL || n == HALBERD) && TestBit(inven, n)) && n < NUMOFOBJECTS; n++)
+		;
+	if (n == NUMOFOBJECTS) {
+		if (TestBit(inven, LASER)) {
+			printf("Your laser should do the trick.\n");
+			n = wordnumber;
+			while (wordtype[++n] == ADJS)
+				;
+			switch(wordvalue[n]) {
+			case NORMGOD:
+			case TIMER:
+			case NATIVE:
+			case MAN:
+				wordvalue[wordnumber] = SHOOT;
+				cypher();
+				break;
+			case -1:
+				puts("Kill what?");
+				break;
+			default:
+				if (wordtype[n] != OBJECT)
+					puts("You can't kill that!");
+				else
+					printf("You can't kill the %s!\n",
+				    	objsht[wordvalue[n]]);
+				break;
+			}
+		} else
+			puts("You don't have suitable weapons to kill.");
+	} else {
 		printf("Your %s should do the trick.\n", objsht[n]);
-		while (wordtype[++wordnumber] == ADJS);
+		while (wordtype[++wordnumber] == ADJS)
+			;
 		switch (wordvalue[wordnumber]) {
 
 		case NORMGOD:
@@ -236,8 +263,8 @@ murder()
 			break;
 
 		default:
-			if (wordtype[wordnumber] != NOUNS)
-				puts("Kill what?");
+			if (wordtype[wordnumber] != OBJECT)
+				puts("You can't kill that!");
 			else
 				printf("You can't kill the %s!\n",
 				    objsht[wordvalue[wordnumber]]);
@@ -249,12 +276,16 @@ void
 ravage()
 {
 	while (wordtype[++wordnumber] != NOUNS && wordnumber <= wordcount);
-	if (wordtype[wordnumber] == NOUNS && TestBit(location[position].objects, wordvalue[wordnumber])) {
+	if (wordtype[wordnumber] == NOUNS && (TestBit(location[position].objects, wordvalue[wordnumber])
+	    || (wordvalue[wordnumber] == NORMGOD && TestBit(location[position].objects, BATHGOD)))) {
 		ourtime++;
 		switch (wordvalue[wordnumber]) {
 		case NORMGOD:
 			puts("You attack the goddess, and she screams as you beat her.  She falls down");
-			puts("crying and tries to hold her torn and bloodied dress around her.");
+			if (TestBit(location[position].objects, BATHGOD))
+				puts("crying and tries to cover her nakedness.");
+			else
+				puts("crying and tries to hold her torn and bloodied dress around her.");
 			power += 5;
 			pleasure += 8;
 			ego -= 10;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: com5.c,v 1.5 1999/09/25 20:30:45 pjanzen Exp $	*/
+/*	$OpenBSD: com5.c,v 1.6 2000/07/03 05:23:44 pjanzen Exp $	*/
 /*	$NetBSD: com5.c,v 1.3 1995/03/21 15:07:07 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com5.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: com5.c,v 1.5 1999/09/25 20:30:45 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: com5.c,v 1.6 2000/07/03 05:23:44 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -47,14 +47,22 @@ static char rcsid[] = "$OpenBSD: com5.c,v 1.5 1999/09/25 20:30:45 pjanzen Exp $"
 void
 kiss()
 {
-	while (wordtype[++wordnumber] != NOUNS && wordnumber <= wordcount);
-	if (wordtype[wordnumber] == NOUNS &&
-	    TestBit(location[position].objects, wordvalue[wordnumber])) {
+	while (wordtype[++wordnumber] != NOUNS && wordnumber <= wordcount)
+		;
+	/* The goddess must be "taken" first if bathing. */
+	if (wordtype[wordnumber] == NOUNS && wordvalue[wordnumber] == NORMGOD
+	    && TestBit(location[position].objects, BATHGOD)) {
+		wordvalue[--wordnumber] = TAKE;
+		cypher();
+		return;
+	}
+	if (wordtype[wordnumber] == NOUNS) {
+	    if (TestBit(location[position].objects, wordvalue[wordnumber])) {
 		pleasure++;
 		printf("Kissed.\n");
 		switch (wordvalue[wordnumber]) {
 		case NORMGOD:
-			switch (godready++) {
+ 			switch (godready++) {
 			case 0:
 				puts("She squirms and avoids your advances.");
 				break;
@@ -62,7 +70,7 @@ kiss()
 				puts("She is coming around; she didn't fight it as much.");
 				break;
 			case 2:
-				puts("She's begining to like it.");
+				puts("She's beginning to like it.");
 				break;
 			default:
 				puts("She's gone limp.");
@@ -70,7 +78,7 @@ kiss()
 			}
 			break;
 		case NATIVE:
-			puts("The lips are warm and her body robust.  She pulls you down to the ground.");
+			puts("Her lips are warm and her body robust.  She pulls you down to the ground.");
 			break;
 		case TIMER:
 			puts("The old man blushes.");
@@ -81,6 +89,8 @@ kiss()
 		default:
 			pleasure--;
 		}
+	    } else
+		puts("I see nothing like that here.");
 	} else
 		puts("I'd prefer not to.");
 }
@@ -90,9 +100,12 @@ love()
 {
 	int     n;
 
-	while (wordtype[++wordnumber] != NOUNS && wordnumber <= wordcount);
-	if (wordtype[wordnumber] == NOUNS && TestBit(location[position].objects, wordvalue[wordnumber])) {
-		if (wordvalue[wordnumber] == NORMGOD && !loved) {
+	while (wordtype[++wordnumber] != NOUNS && wordnumber <= wordcount)
+		;
+	if (wordtype[wordnumber] == NOUNS) {
+	    if ((TestBit(location[position].objects, BATHGOD) ||
+	        TestBit(location[position].objects, NORMGOD)) &&
+		wordvalue[wordnumber] == NORMGOD && !loved) {
 			if (godready >= 2) {
 				puts("She cuddles up to you, and her mouth starts to work:\n'That was my sister's amulet.  The lovely goddess, Purl, was she.  The Empire\ncaptured her just after the Darkness came.  My other sister, Vert, was killed\nby the Dark Lord himself.  He took her amulet and warped its power.\nYour quest was foretold by my father before he died, but to get the Dark Lord's\namulet you must use cunning and skill.  I will leave you my amulet,");
 				puts("which you may use as you wish.  As for me, I am the last goddess of the\nwaters.  My father was the Island King, and the rule is rightfully mine.'\n\nShe pulls the throne out into a large bed.");
@@ -111,21 +124,30 @@ love()
 					SetBit(location[position].objects, MEDALION);
 				loved = 1;
 				ourtime += 10;
+				printf("Loved.\n");
 				zzz();
 			} else {
 				puts("You wish!");
 				return;
 			}
 		}
+	    if (TestBit(location[position].objects, wordvalue[wordnumber])) {
 		if (wordvalue[wordnumber] == NATIVE) {
 			puts("The girl is easy prey.  She peels off her sarong and indulges you.");
 			power++;
 			pleasure += 5;
 			printf("Girl:\n");
 			ourtime += 10;
+			printf("Loved.\n");
 			zzz();
 		}
-		printf("Loved.\n");
+		if (wordvalue[wordnumber] == MAN ||
+		    wordvalue[wordnumber] == BODY ||
+		    wordvalue[wordnumber] == ELF ||
+		    wordvalue[wordnumber] == TIMER)
+			puts("Kinky!");
+	    } else
+		puts("Where's your lover?");
 	} else
 		puts("It doesn't seem to work.");
 }

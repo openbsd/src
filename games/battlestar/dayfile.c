@@ -1,4 +1,4 @@
-/*	$OpenBSD: dayfile.c,v 1.6 1999/09/25 20:30:45 pjanzen Exp $	*/
+/*	$OpenBSD: dayfile.c,v 1.7 2000/07/03 05:23:45 pjanzen Exp $	*/
 /*	$NetBSD: dayfile.c,v 1.3 1995/03/21 15:07:18 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dayfile.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: dayfile.c,v 1.6 1999/09/25 20:30:45 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: dayfile.c,v 1.7 2000/07/03 05:23:45 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,7 +72,7 @@ A staircase leads down. * There is a way -. **        \n" },
 "From the launch tubes here fighters blast off into space. Only one is left,\n\
 and it is guarded by two fierce men. A staircase leads up from here.\n\
 There is a cluttered workbench +. From the main hangar come sounds of great\n\
-explosions.  The main hangar is +. The viper launch tubes are to the -.*\n" },
+explosions.  The main hangar is +. The viper launch tubes are -.*\n" },
 	{ "You are at the workbench.",
 		{ 0, 5, 7, 0, 0, 0, 0, 0 },
 "Strange and unwieldy tools are arranged here including a lunch box \n\
@@ -128,8 +128,8 @@ continues -. The armory is +.**\n" },
 		{ 20, 13, 21, 22, 23, 1, 24, 0 },
 "Luxurious staterooms carpeted with crushed velvet and adorned with beaten\n\
 gold open onto this parlor. A wide staircase with ivory banisters leads\n\
-up or down. This parlor leads into a hallway +. The bridal suite is +.\n\
-Other rooms lie - and +.\n" },
+up or down. This parlor leads into a hallway +. The bridal suite is\n\
++. Other rooms lie - and +.\n" },
 	{ "You're in a long dimly lit hallway.",
 		{ 0, 14, 25, 0, 0, 0, 0, 0 },
 "This part of the walkway is deserted. There is a dead end +. The\n\
@@ -165,7 +165,7 @@ room +, and a doorway +.*\n" },
 	{ "You are at the entrance to the dining hall.",
 		{ 0, 0, 28, 0, 0, 0, 16, 0 },
 "A wide staircase with ebony banisters leads down here.**\n\
-The dining hall is to the -.*\n" },
+The dining hall is -.*\n" },
 	{ "This was once the first class lounge.",
 		{ 0, 0, 29, 0, 16, 1, 0, 0 },
 "There is much rubble and destruction here that was not apparent elsewhere.\n\
@@ -433,7 +433,7 @@ There is an open bungalow +.*  The road continues - and -.\n" },
 	{ "You are at the sea plane dock.",
 		{ 121, 122, 123, 124, 82, 0, 0, 0 },
 "Native girls with skin of gold, clad only in fragrant leis and lavalavas,\n\
-line the dockside to greet you. A couple of ukulele-plucking islanders and a\n\
+line the dockside to greet you. A couple of ukulele=plucking islanders and a\n\
 keyboard player are adding appropriate music. A road crosses the clearing \n\
 +*.  There are some tables set up +.*\n" },
 	{ "You are flying over the ocean.",
@@ -748,7 +748,7 @@ The road is +.*\n" },
 	{ "You are in the living room.",
 		{ 0, 117, 217, 218, 0, 0, 0, 0 },
 "A decorative entry with fresh flowers and wall to wall carpeting leads into\n\
-the living room here where a couch and two chairs converse with an end table.\n\
+the living room here where a couch and two chairs converge with an end table.\n\
 *The exit is +.* The bedroom is +.\n" },
 	{ "You are at the lagoon.",
 		{ 118, 0, 167, 168, 81, 0, 0, 0 },
@@ -854,7 +854,7 @@ from the ground itself.* The canyon continues - and -.\n" },
 	{ "You are in the drawing room.",
 		{ 0, 134, 0, 0, 0, 0, 0, 0 },
 "Exquisitely decorated with plants and antique furniture of superb\n\
-craftsmanship, the parlor reflects its owners impeccable taste.  The tropical\n\
+craftsmanship, the parlor reflects its owner's impeccable taste.  The tropical\n\
 sun is streaming in through open shutters *+.  There doesn't seem \n\
 to be anybody around.  A large immaculate oaken desk is visible in the\n\
 study and it even has a old fashioned telephone to complete the decor.**\n" },
@@ -996,7 +996,7 @@ when they get this far into the woods.** The trail goes -.*\n" },
 	{ "You are just inside the cave.",
 		{ 181, 267, 0, 0, 0, 0, 0, 0 },
 "A steamy hot breath is belching from the depths of the earth within.* The\n\
-cave  continues -.**\n" },
+cave continues -.**\n" },
 	{ "You are just inside the cave entrance.",
 		{ 274, 0, 0, 0, 0, 0, 0, 0 },
 "The air is hot and sticky inside. The cave continues -. There is a \n\
@@ -1180,7 +1180,7 @@ The trail winds + and +.**\n" },
 		{ 267, 0, 0, 269, 0, 0, 269, 0 },
 "Beds of ferns and palm leaves make several cozy nests along the walls. In the\n\
 center of the room is a throne of gold and silver which pulls out into a bed\n\
-of enormous size.***  A passageway leads down to the -.\n" },
+of enormous size.***  A passageway - leads down.\n" },
 	{ "You are walking along the edge of a huge abyss.",
 		{ 0, 0, 268, 0, 268, 1, 270, 0 },
 "Steam is rising in great clouds from the immeasurable depths.  A very narrow\n\

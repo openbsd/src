@@ -1,4 +1,4 @@
-/*	$OpenBSD: nightfile.c,v 1.6 1999/09/25 20:30:46 pjanzen Exp $	*/
+/*	$OpenBSD: nightfile.c,v 1.7 2000/07/03 05:23:45 pjanzen Exp $	*/
 /*	$NetBSD: nightfile.c,v 1.3 1995/03/21 15:07:41 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)nightfile.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: nightfile.c,v 1.6 1999/09/25 20:30:46 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: nightfile.c,v 1.7 2000/07/03 05:23:45 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,7 +72,7 @@ A staircase leads down. * There is a way -. **        \n" },
 "From the launch tubes here fighters blast off into space. Only one is left,\n\
 and it is guarded by two fierce men. A staircase leads up from here.\n\
 There is a cluttered workbench +. From the main hangar come sounds of great\n\
-explosions.  The main hangar is +. The viper launch tubes are to the -.*\n" },
+explosions.  The main hangar is +. The viper launch tubes are -.*\n" },
 	{ "You are at the workbench.",
 		{ 0, 5, 7, 0, 0, 0, 0, 0 },
 "Strange and unwieldy tools are arranged here including a lunch box \n\
@@ -128,8 +128,8 @@ continues -. The armory is +.**\n" },
 		{ 20, 13, 21, 22, 23, 1, 24, 0 },
 "Luxurious staterooms carpeted with crushed velvet and adorned with beaten\n\
 gold open onto this parlor. A wide staircase with ivory banisters leads\n\
-up or down. This parlor leads into a hallway +. The bridal suite is +.\n\
-Other rooms lie - and +.\n" },
+up or down. This parlor leads into a hallway +. The bridal suite is\n\
++. Other rooms lie - and +.\n" },
 	{ "You're in a long dimly lit hallway.",
 		{ 0, 14, 25, 0, 0, 0, 0, 0 },
 "This part of the walkway is deserted. There is a dead end +. The\n\
@@ -165,7 +165,7 @@ room +, and a doorway +.*\n" },
 	{ "You are at the entrance to the dining hall.",
 		{ 0, 0, 28, 0, 0, 0, 16, 0 },
 "A wide staircase with ebony banisters leads down here.**\n\
-The dining hall is to the -.*\n" },
+The dining hall is -.*\n" },
 	{ "This was once the first class lounge.",
 		{ 0, 0, 29, 0, 16, 1, 0, 0 },
 "There is much rubble and destruction here that was not apparent elsewhere.\n\
@@ -331,7 +331,8 @@ like jagged teeth from black gums.  The land rises sharply +.  The shore\n\
 line stretches on *+.*\n" },
 	{ "You are flying over a mountainous region.",
 		{ 75, 73, 76, 77, 68, 1, 0, 1 },
-"Below is a shadow-filled canyon with luminous waterfalls plummeting down beyond sight and looming spires and pinnacles.  **The ocean is +.*\n" },
+"Below is a shadow=filled canyon with looming spires and pinnacles and\n\
+luminous waterfalls plummeting down beyond sight.  **The ocean is +.*\n" },
 	{ "You are flying over the ocean.",
 		{ 74, 78, 78, 78, 68, 1, 0, 1 },
 "You bank over the water and your wingtips dip low to the green waves.  The\n\
@@ -579,8 +580,9 @@ There may be poison oak here.  What was that?  A lantern just flickered by in\n\
 the dark!  The sound of rushing water is coming from *+.**\n" },
 	{ "You are on a dirt trail.",
 		{ 179, 181, 98, 0, 84, 0, 0, 0 },
-"The trail seems to start here and head towards the forest +.**  High, dark\n\
-cliffs border the trail +.  Some crickets are chirping noisily.\n" },
+"The trail seems to start here and head towards the forest +.**  High,\n\
+dark cliffs border the trail +.  Some crickets are chirping\n\
+noisily.\n" },
 	{ "You are  walking along the beach.",
 		{ 183, 101, 184, 0, 87, 0, 0, 0 },
 "The surf is rather tame tonight.  The beach continues + and +.**\n" },
@@ -725,12 +727,12 @@ Broad leafed plants at the roadside whisper in the darkness.  Something\n\
 just darted across the road and into the bushes *+.  Let's go *-.\n" },
 	{ "You have discovered a hidden thicket near the road.",
 		{ 163, 142, 116, 106, 73, 0, 0, 0 },
-"I would think it best to stay n the road.  The forest seems very unfriendly\n\
+"I would think it best to stay on the road.  The forest seems very unfriendly\n\
 at night.  The road is **+.*\n" },
 	{ "You are in the living room.",
 		{ 0, 117, 217, 218, 0, 0, 0, 0 },
 "A decorative entry with fresh flowers and wall to wall carpeting leads into\n\
-the living room here where a couch and two chairs converse with an end table.\n\
+the living room here where a couch and two chairs converge with an end table.\n\
 *The exit is +.* The bedroom is +.\n" },
 	{ "You are at the lagoon.",
 		{ 118, 0, 167, 168, 81, 0, 0, 0 },
@@ -839,7 +841,7 @@ from the ground itself.* The canyon continues - and -.\n" },
 	{ "You are in the drawing room.",
 		{ 0, 134, 0, 0, 0, 0, 0, 0 },
 "Exquisitely decorated with plants and antique furniture of superb\n\
-craftsmanship, the parlor reflects its owners impeccable taste.  The tropical\n\
+craftsmanship, the parlor reflects its owner's impeccable taste.  The tropical\n\
 night air pours in through open shutters *+.  There doesn't seem \n\
 to be anybody around.  A large immaculate oaken desk is visible in the\n\
 study and it even has a old fashioned telephone to complete the decor.**\n" },
@@ -980,7 +982,7 @@ Let's go -.*\n" },
 	{ "You are just inside the cave.",
 		{ 181, 267, 0, 0, 0, 0, 0, 0 },
 "A steamy hot breath is belching from the depths of the earth within.* The\n\
-cave  continues -.**\n" },
+cave continues -.**\n" },
 	{ "You are just inside the cave entrance.",
 		{ 274, 0, 0, 0, 0, 0, 0, 0 },
 "The air is hot and sticky inside. The cave continues -. There is a \n\
