@@ -1,5 +1,5 @@
-/* $OpenBSD: tsort.c,v 1.14 2002/02/27 20:26:37 espie Exp $ */
-/* ex:ts=8 sw=4: 
+/* $OpenBSD: tsort.c,v 1.15 2002/07/17 11:21:43 espie Exp $ */
+/* ex:ts=8 sw=4:
  */
 
 /*
@@ -13,10 +13,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- * This product includes software developed by Marc Espie for the OpenBSD
- * Project.
  *
  * THIS SOFTWARE IS PROVIDED BY THE OPENBSD PROJECT AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -44,18 +40,18 @@
 #include <sysexits.h>
 #include <unistd.h>
 
-/* The complexity of topological sorting is O(e), where e is the 
+/* The complexity of topological sorting is O(e), where e is the
  * size of input.  While reading input, vertices have to be identified,
  * thus add the complexity of e keys retrieval among v keys using
- * an appropriate data structure.  This program uses open double hashing 
- * for that purpose.  See Knuth for the expected complexity of double 
+ * an appropriate data structure.  This program uses open double hashing
+ * for that purpose.  See Knuth for the expected complexity of double
  * hashing (Brent variation should probably be used if v << e, as a user
  * option).
  *
  * The algorithm used for longest cycle reporting is accurate, but somewhat
  * expensive.  It may need to build all free paths of the graph (a free
  * path is a path that never goes twice through the same node), whose
- * number can be as high as O(2^e).  Usually, the number of free paths is 
+ * number can be as high as O(2^e).  Usually, the number of free paths is
  * much smaller though.  This program's author does not believe that a
  * significantly better worst-case complexity algorithm exists.
  *
@@ -70,8 +66,8 @@
  * In practice, it is much faster.
  *
  * The simple topological sort algorithm detects cycles.  This program
- * goes further, breaking cycles through the use of simple heuristics.  
- * Each cycle break checks the whole set of nodes, hence if c cycles break 
+ * goes further, breaking cycles through the use of simple heuristics.
+ * Each cycle break checks the whole set of nodes, hence if c cycles break
  * are needed, this is an extra cost of O(c v).
  *
  * Possible heuristics are as follows:
@@ -80,7 +76,7 @@
  * - break cycle at next node from the hints file.
  *
  * Except for the hints file case, which sets an explicit constraint on
- * which cycle to break, those heuristics locally result in the smallest 
+ * which cycle to break, those heuristics locally result in the smallest
  * number of broken edges.
  *
  * Those are admittedly greedy strategies, as is the selection of the next
@@ -105,8 +101,8 @@ struct link {
 #define NO_ORDER	UINT_MAX
 
 struct node {
-	unsigned int refs;	/* Number of arcs left, coming into this node . 
-				 * Note that nodes with a null count can't 
+	unsigned int refs;	/* Number of arcs left, coming into this node.
+				 * Note that nodes with a null count can't
 				 * be part of cycles.  */
 	struct link  *arcs;	/* List of forward arcs.  */
 
@@ -132,7 +128,7 @@ static struct node *node_lookup(struct ohash *, const char *, const char *);
 static void usage(void);
 static struct node *new_node(const char *, const char *);
 
-static unsigned int read_pairs(FILE *, struct ohash *, int, 
+static unsigned int read_pairs(FILE *, struct ohash *, int,
     const char *, unsigned int, int);
 static void split_nodes(struct ohash *, struct array *, struct array *);
 static void make_transparent(struct ohash *);
@@ -143,7 +139,7 @@ static void dump_node(struct node *);
 static void dump_array(struct array *);
 static void dump_hash(struct ohash *);
 #endif
-static unsigned int read_hints(FILE *, struct ohash *, int, 
+static unsigned int read_hints(FILE *, struct ohash *, int,
     const char *, unsigned int);
 static struct node *find_smallest_node(struct array *);
 static struct node *find_good_cycle_break(struct array *);
@@ -167,7 +163,7 @@ static void* entry_alloc(size_t, void *);
 static void *emalloc(size_t);
 static void *emem(void *);
 #define DEBUG_TRAVERSE 0
-static struct ohash_info node_info = { 
+static struct ohash_info node_info = {
 	offsetof(struct node, k), NULL, hash_alloc, hash_free, entry_alloc };
 
 
@@ -175,7 +171,7 @@ int main(int, char *[]);
 
 
 /***
- *** Memory handling. 
+ *** Memory handling.
  ***/
 
 static void *
@@ -212,7 +208,7 @@ emalloc(size_t s)
 }
 
 
-/*** 
+/***
  *** Hash table.
  ***/
 
@@ -234,7 +230,7 @@ new_node(const char *start, const char *end)
 }
 
 
-static void 
+static void
 nodes_init(struct ohash *h)
 {
 	ohash_init(h, HASH_START, &node_info);
@@ -278,7 +274,7 @@ dump_array(struct array *a)
 		dump_node(a->t[i]);
 }
 		
-static void 
+static void
 dump_hash(struct ohash *h)
 {
 	unsigned int 	i;
@@ -294,7 +290,7 @@ dump_hash(struct ohash *h)
  *** Reading data.
  ***/
 
-static void 
+static void
 insert_arc(struct node *a, struct node *b)
 {
 	struct link 	*l;
@@ -312,7 +308,7 @@ insert_arc(struct node *a, struct node *b)
 }
 
 static unsigned int
-read_pairs(FILE *f, struct ohash *h, int reverse, const char *name, 
+read_pairs(FILE *f, struct ohash *h, int reverse, const char *name,
     unsigned int order, int hint)
 {
 	int 		toggle;
@@ -330,7 +326,7 @@ read_pairs(FILE *f, struct ohash *h, int reverse, const char *name,
 		for (;;) {
 			char *e;
 
-			while (isspace(*str) && str < sentinel) 
+			while (isspace(*str) && str < sentinel)
 				str++;
 			if (str == sentinel)
 				break;
@@ -346,9 +342,9 @@ read_pairs(FILE *f, struct ohash *h, int reverse, const char *name,
 				b = node_lookup(h, str, e);
 				assert(a != NULL);
 				if (b != a) {
-					if (reverse) 
+					if (reverse)
 						insert_arc(b, a);
-					else 
+					else
 						insert_arc(a, b);
 				}
 			}
@@ -364,7 +360,7 @@ read_pairs(FILE *f, struct ohash *h, int reverse, const char *name,
 }
 
 static unsigned int
-read_hints(FILE *f, struct ohash *h, int quiet, const char *name, 
+read_hints(FILE *f, struct ohash *h, int quiet, const char *name,
     unsigned int order)
 {
 	char 		*str;
@@ -378,7 +374,7 @@ read_hints(FILE *f, struct ohash *h, int quiet, const char *name,
 			char *e;
 			struct node *a;
 
-			while (isspace(*str) && str < sentinel) 
+			while (isspace(*str) && str < sentinel)
 				str++;
 			if (str == sentinel)
 				break;
@@ -400,10 +396,10 @@ read_hints(FILE *f, struct ohash *h, int quiet, const char *name,
 
 
 /***
- *** Standard heap handling routines.  
+ *** Standard heap handling routines.
  ***/
 
-static void 
+static void
 heap_down(struct array *h, unsigned int i)
 {
 	unsigned int 	j;
@@ -420,7 +416,7 @@ heap_down(struct array *h, unsigned int i)
 	}
 }
 
-static void 
+static void
 heapify(struct array *h, int verbose)
 {
 	unsigned int 	i;
@@ -458,7 +454,7 @@ dequeue(struct array *h)
 		(h)->t[(h)->entries++] = (n);	\
 	} while(0);
 
-static void 
+static void
 enqueue(struct array *h, struct node *n)
 {
 	unsigned int 	i, j;
@@ -476,7 +472,7 @@ enqueue(struct array *h, struct node *n)
 }
 
 /* Nodes without order should not hinder direct dependencies.
- * Iterate until no nodes are left. 
+ * Iterate until no nodes are left.
  */
 static void
 make_transparent(struct ohash *hash)
@@ -492,7 +488,7 @@ make_transparent(struct ohash *hash)
 	do {
 		adjusted = 0;
 		bad = 0;
-		for (n = ohash_first(hash, &i); n != NULL; 
+		for (n = ohash_first(hash, &i); n != NULL;
 		    n = ohash_next(hash, &i)) {
 			if (n->order == NO_ORDER) {
 				min = NO_ORDER;
@@ -517,7 +513,7 @@ make_transparent(struct ohash *hash)
 	/* then, if incomplete nodes are left, do them */
 	if (bad) do {
 		adjusted = 0;
-		for (n = ohash_first(hash, &i); n != NULL; 
+		for (n = ohash_first(hash, &i); n != NULL;
 		    n = ohash_next(hash, &i))
 			if (n->order == NO_ORDER)
 				for (l = n->arcs; l != NULL; l = l->next)
@@ -547,7 +543,7 @@ split_nodes(struct ohash *hash, struct array *heap, struct array *remaining)
 	remaining->entries = 0;
 
 	for (n = ohash_first(hash, &i); n != NULL; n = ohash_next(hash, &i)) {
-		if (n->refs == 0) 
+		if (n->refs == 0)
 			heap->t[heap->entries++] = n;
 		else
 			remaining->t[remaining->entries++] = n;
@@ -559,8 +555,8 @@ static struct node *
 find_good_cycle_break(struct array *h)
 {
 	unsigned int 	i;
-	unsigned int 	best; 
-	struct node 	*u; 
+	unsigned int 	best;
+	struct node 	*u;
 
 	best = UINT_MAX;
 	u = NULL;
@@ -581,7 +577,7 @@ find_good_cycle_break(struct array *h)
 }
 			
 /*  Retrieve the node with the smallest order.  */
-static struct node * 
+static struct node *
 find_smallest_node(struct array *h)
 {
 	unsigned int 	i;
@@ -608,9 +604,9 @@ find_smallest_node(struct array *h)
  *** Graph algorithms.
  ***/
 
-/* Explore the nodes reachable from i to find a cycle, store it in c.  
+/* Explore the nodes reachable from i to find a cycle, store it in c.
  * This may fail.  */
-static struct node * 
+static struct node *
 find_cycle_from(struct node *i, struct array *c)
 {
 	struct node 	*n;
@@ -622,7 +618,7 @@ find_cycle_from(struct node *i, struct array *c)
 	for (;;) {
 		/* Note that all marks are reversed before this code exits.  */
 		n->mark = 1;
-		if (n->traverse) 
+		if (n->traverse)
 			n->traverse = n->traverse->next;
 		else
 			n->traverse = n->arcs;
@@ -649,7 +645,7 @@ find_cycle_from(struct node *i, struct array *c)
 		} else {
 			n->mark = 0;
 			n = n->from;
-			if (n == NULL) 
+			if (n == NULL)
 				return NULL;
 		}
 	}
@@ -683,7 +679,7 @@ find_predecessor(struct array *a, struct node *n)
    Start numbering them at o. Return the maximum order reached.
    Update the largest cycle found so far.
  */
-static unsigned int 
+static unsigned int
 traverse_node(struct node *n, unsigned int o, struct array *c)
 {
 	unsigned int 	min, max;
@@ -697,7 +693,7 @@ traverse_node(struct node *n, unsigned int o, struct array *c)
 		if (DEBUG_TRAVERSE)
 			printf("%s(%u) ", n->k, n->mark);
 		/* Find next arc to explore.  */
-		if (n->traverse) 
+		if (n->traverse)
 			n->traverse = n->traverse->next;
 		else
 			n->traverse = n->arcs;
@@ -709,7 +705,7 @@ traverse_node(struct node *n, unsigned int o, struct array *c)
 			struct node 	*go;
 
 			go = n->traverse->node;
-			/* Optimisation: if go->mark < min, we already 
+			/* Optimisation: if go->mark < min, we already
 			 * visited this strongly-connected component in
 			 * a previous pass.  Hence, this can yield no new
 			 * cycle.  */
@@ -777,7 +773,7 @@ find_longest_cycle(struct array *h, struct array *c)
 
 	/* Reset the set of marks, except the first time around.  */
 	if (notfirst) {
-		for (i = 0; i < h->entries; i++) 
+		for (i = 0; i < h->entries; i++)
 			h->t[i]->mark = 0;
 	} else
 		notfirst = 1;
@@ -811,17 +807,17 @@ find_longest_cycle(struct array *h, struct array *c)
 
 #define plural(n) ((n) > 1 ? "s" : "")
 
-int 
+int
 main(int argc, char *argv[])
 {
 	struct ohash 	pairs;
-	int 		reverse_flag, quiet_flag, long_flag, 
+	int 		reverse_flag, quiet_flag, long_flag,
 			    warn_flag, hints_flag, verbose_flag;
 	unsigned int	order;
 
 	order = 0;
 
-	reverse_flag = quiet_flag = long_flag = 
+	reverse_flag = quiet_flag = long_flag =
 		warn_flag = hints_flag = verbose_flag = 0;
 	nodes_init(&pairs);
 
@@ -921,11 +917,11 @@ main(int argc, char *argv[])
 			    left--;
 			    /* We can't free nodes, as we don't know which
 			     * entry we can remove in the hash table.  We
-			     * rely on refs == 0 to recognize live nodes.  
+			     * rely on refs == 0 to recognize live nodes.
 			     * Decrease ref count of live nodes, enter new
 			     * candidates into the unrefed list.  */
-			    for (l = n->arcs; l != NULL; l = l->next) 
-				    if (l->node->refs != 0 && 
+			    for (l = n->arcs; l != NULL; l = l->next)
+				    if (l->node->refs != 0 &&
 					--l->node->refs == 0) {
 					    ENQUEUE(&aux, l->node);
 				    }
@@ -943,9 +939,9 @@ main(int argc, char *argv[])
 			    } else {
 				    struct node *b;
 
-				    if (hints_flag) 
+				    if (hints_flag)
 					    n = find_smallest_node(&remaining);
-				    else 
+				    else
 					    n = find_good_cycle_break(&remaining);
 				    while ((b = find_cycle_from(n, &aux)) == NULL)
 					    n = find_predecessor(&remaining, n);
@@ -971,7 +967,7 @@ main(int argc, char *argv[])
 		    warnx("%u cycle%s broken, for a total of %u edge%s",
 			broken_cycles, plural(broken_cycles),
 			broken_arcs, plural(broken_arcs));
-	    if (warn_flag) 
+	    if (warn_flag)
 		    exit(broken_cycles < 256 ? broken_cycles : 255);
 	    else
 		    exit(EX_OK);
