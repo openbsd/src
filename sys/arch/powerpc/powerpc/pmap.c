@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.41 2001/08/25 05:06:29 drahn Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.42 2001/09/03 21:45:08 drahn Exp $	*/
 /*	$NetBSD: pmap.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -645,6 +645,7 @@ avail_end = npgs * NBPG;
 	}
 	
 	for (mp = avail; mp->size; mp++) {
+		bzero((void*)mp->start, mp->size);
 		uvm_page_physload(atop(mp->start), atop(mp->start + mp->size),
 			atop(mp->start), atop(mp->start + mp->size),
 			VM_FREELIST_DEFAULT);
