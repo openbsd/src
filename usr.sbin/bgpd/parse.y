@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.16 2003/12/25 18:04:10 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.17 2003/12/25 18:35:17 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Henning Brauer <henning@openbsd.org>
@@ -568,10 +568,12 @@ parse_config(char *filename, struct bgpd_config *xconf,
 		if ((conf->opts & BGPD_OPT_VERBOSE2) && !sym->used)
 			fprintf(stderr, "warning: macro '%s' not "
 			    "used\n", sym->nam);
-		free(sym->nam);
-		free(sym->val);
-		TAILQ_REMOVE(&symhead, sym, entries);
-		free(sym);
+		if (!sym->persist) {
+			free(sym->nam);
+			free(sym->val);
+			TAILQ_REMOVE(&symhead, sym, entries);
+			free(sym);
+		}
 	}
 
 	errors += merge_config(xconf, conf);
