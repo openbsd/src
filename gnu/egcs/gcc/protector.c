@@ -755,7 +755,8 @@ rtl_epilogue (insn)
   rtx _val;
   rtx funcname;
   tree funcstr;
-  rtx return_reg = DECL_RTL (DECL_RESULT (current_function_decl)), return_save;
+  rtx return_reg = DECL_RTL (DECL_RESULT (current_function_decl)),
+    return_save = 0;
   int  flag_have_return = FALSE;
 		
   start_sequence ();
@@ -786,7 +787,10 @@ rtl_epilogue (insn)
 
   if (return_reg
       && ! (current_function_returns_struct
-	    || current_function_returns_pcc_struct))
+	    || current_function_returns_pcc_struct)
+      /* If scalar return value was NOT computed in a pseudo-reg */
+      && ! (GET_CODE (return_reg) == REG
+	    && REGNO (return_reg) >= FIRST_PSEUDO_REGISTER))
     {
       return_save = GET_CODE (return_reg)==REG?
 	gen_reg_rtx (GET_MODE (return_reg)):return_reg;
@@ -826,9 +830,8 @@ rtl_epilogue (insn)
   /* generate RTL to return from the current function */
   if (return_reg)
     {
-      if (!current_function_returns_struct && !current_function_returns_pcc_struct)
+      if (return_save)
 	expand_value_return (return_save);
-	
 
       /* If returning a structure, arrange to return the address of the value
 	 in a place where debuggers expect to find it.
@@ -836,7 +839,8 @@ rtl_epilogue (insn)
 	 If returning a structure PCC style,
 	 the caller also depends on this value.
 	 And current_function_returns_pcc_struct is not necessarily set.  */
-      else
+      else if (current_function_returns_struct
+	       || current_function_returns_pcc_struct)
 	{
 	  rtx value_address = XEXP (DECL_RTL (DECL_RESULT (current_function_decl)), 0);
 	  tree type = TREE_TYPE (DECL_RESULT (current_function_decl));
@@ -857,6 +861,14 @@ rtl_epilogue (insn)
 	  emit_move_insn (outgoing, value_address);
 	  use_variable (outgoing);
 	}
+
+      else if (GET_CODE (return_reg) == REG
+	       && REGNO (return_reg) >= FIRST_PSEUDO_REGISTER) {
+	/* If scalar return value was computed in a pseudo-reg,
+	   copy that to the hard return register.  */
+	emit_move_insn (current_function_return_rtx, return_reg);
+	emit_insn (gen_rtx_USE (VOIDmode, current_function_return_rtx));
+      }
     }
 
 #ifdef HAVE_return
