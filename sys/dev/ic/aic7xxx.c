@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx.c,v 1.62 2005/01/12 00:35:32 krw Exp $	*/
+/*	$OpenBSD: aic7xxx.c,v 1.63 2005/02/20 15:35:35 miod Exp $	*/
 /*	$NetBSD: aic7xxx.c,v 1.108 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.62 2005/01/12 00:35:32 krw Exp $
+ * $Id: aic7xxx.c,v 1.63 2005/02/20 15:35:35 miod Exp $
  */
 /*
  * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc. - April 2003
@@ -6592,7 +6592,7 @@ ahc_dump_card_state(struct ahc_softc *ahc)
 
 	saved_scbptr = ahc_inb(ahc, SCBPTR);
 	last_phase = ahc_inb(ahc, LASTPHASE);
-	printf(">>>>>>>>>>>>>>>>>> Dump Card State Begins <<<<<<<<<<<<<<<<<\n"
+	printf("================== Dump Card State Begins =================\n"
 	       "%s: Dumping Card State %s, at SEQADDR 0x%x\n",
 	       ahc_name(ahc), ahc_lookup_phase_entry(last_phase)->phasemsg,
 	       ahc_inb(ahc, SEQADDR0) | (ahc_inb(ahc, SEQADDR1) << 8));
@@ -6743,7 +6743,7 @@ ahc_dump_card_state(struct ahc_softc *ahc)
 	}
 
 	ahc_platform_dump_card_state(ahc);
-	printf("\n<<<<<<<<<<<<<<<<< Dump Card State Ends >>>>>>>>>>>>>>>>>>\n");
+	printf("\n================= Dump Card State Ends ==================\n");
 	ahc_outb(ahc, SCBPTR, saved_scbptr);
 	if (paused == 0)
 		ahc_unpause(ahc);
