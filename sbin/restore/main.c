@@ -1,4 +1,5 @@
-/*	$NetBSD: main.c,v 1.10 1996/02/06 00:00:22 mrg Exp $	*/
+/*	$OpenBSD: main.c,v 1.3 1996/03/21 00:16:29 niklas Exp $	*/
+/*	$NetBSD: main.c,v 1.11 1996/03/15 22:39:39 scottr Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 9/13/94";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.10 1996/02/06 00:00:22 mrg Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.11 1996/03/15 22:39:39 scottr Exp $";
 #endif
 #endif /* not lint */
 
@@ -77,6 +78,8 @@ ino_t	maxino;
 time_t	dumptime;
 time_t	dumpdate;
 FILE 	*terminal;
+uid_t	uid;		/* real uid */
+uid_t	euid;		/* effective uid */
 
 static void obsolete __P((int *, char **[]));
 static void usage __P((void));
@@ -91,6 +94,10 @@ main(argc, argv)
 	char *inputdev;
 	char *symtbl = "./restoresymtable";
 	char *p, name[MAXPATHLEN];
+
+	uid = getuid();
+	euid = geteuid();
+	(void) seteuid(uid);
 
 	if (argc < 2)
 		usage();

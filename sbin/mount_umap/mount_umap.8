@@ -1,4 +1,5 @@
-.\"	$NetBSD: mount_umap.8,v 1.2 1995/03/18 14:58:16 cgd Exp $
+.\"	$OpenBSD: mount_umap.8,v 1.3 1996/03/21 00:16:06 niklas Exp $
+.\"	$NetBSD: mount_umap.8,v 1.4 1996/03/05 02:36:42 thorpej Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -46,10 +47,12 @@
 .Sh SYNOPSIS
 .Nm mount_umap
 .Op Fl o Ar options
+-u
+.Ar uid-mapfile
+-g
+.Ar gid-mapfile
 .Ar target
 .Ar mount-point
-.Ar uid-mapfile
-.Ar gid-mapfile
 .Sh DESCRIPTION
 The
 .Nm mount_umap

@@ -1,4 +1,5 @@
-/*	$NetBSD: dumprmt.c,v 1.9 1995/03/18 14:54:59 cgd Exp $	*/
+/*	$OpenBSD: dumprmt.c,v 1.2 1996/03/21 00:15:35 niklas Exp $	*/
+/*	$NetBSD: dumprmt.c,v 1.10 1996/03/15 22:39:26 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -37,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dumprmt.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: dumprmt.c,v 1.9 1995/03/18 14:54:59 cgd Exp $";
+static char rcsid[] = "$NetBSD: dumprmt.c,v 1.10 1996/03/15 22:39:26 scottr Exp $";
 #endif
 #endif /* not lint */
 
@@ -90,6 +91,8 @@ static	void rmtgets __P((char *, int));
 static	int rmtreply __P((char *));
 
 extern	int ntrec;		/* blocking factor on tape */
+extern	uid_t uid;		/* real uid */
+extern	uid_t euid;		/* effective uid */
 
 int
 rmthost(host)
@@ -144,8 +147,12 @@ rmtgetconn()
 		rmtpeer = ++cp;
 	} else
 		tuser = pwd->pw_name;
+
+	(void) seteuid(euid);
 	rmtape = rcmd(&rmtpeer, (u_short)sp->s_port, pwd->pw_name, tuser,
 	    _PATH_RMT, (int *)0);
+	(void) setuid(uid);	/* Just to be Really Really safe */
+
 	size = ntrec * TP_BSIZE;
 	if (size > 60 * 1024)		/* XXX */
 		size = 60 * 1024;

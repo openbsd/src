@@ -1,4 +1,5 @@
-/*	$NetBSD: disklabel.c,v 1.29 1995/06/26 23:17:26 jtc Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.3 1996/03/21 00:15:31 niklas Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +48,7 @@ static char copyright[] =
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 static char sccsid[] = "@(#)disklabel.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$NetBSD: disklabel.c,v 1.29 1995/06/26 23:17:26 jtc Exp $";
+static char rcsid[] = "$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson Exp $";
 #endif
 #endif /* not lint */
 
@@ -781,17 +782,20 @@ display(f, lp)
 	if (lp->d_flags & D_BADSECT)
 		fprintf(f, " badsect");
 	fprintf(f, "\n");
-	fprintf(f, "bytes/sector: %d\n", lp->d_secsize);
-	fprintf(f, "sectors/track: %d\n", lp->d_nsectors);
-	fprintf(f, "tracks/cylinder: %d\n", lp->d_ntracks);
-	fprintf(f, "sectors/cylinder: %d\n", lp->d_secpercyl);
-	fprintf(f, "cylinders: %d\n", lp->d_ncylinders);
-	fprintf(f, "rpm: %d\n", lp->d_rpm);
-	fprintf(f, "interleave: %d\n", lp->d_interleave);
-	fprintf(f, "trackskew: %d\n", lp->d_trackskew);
-	fprintf(f, "cylinderskew: %d\n", lp->d_cylskew);
-	fprintf(f, "headswitch: %d\t\t# milliseconds\n", lp->d_headswitch);
-	fprintf(f, "track-to-track seek: %d\t# milliseconds\n", lp->d_trkseek);
+	fprintf(f, "bytes/sector: %ld\n", (long) lp->d_secsize);
+	fprintf(f, "sectors/track: %ld\n", (long) lp->d_nsectors);
+	fprintf(f, "tracks/cylinder: %ld\n", (long) lp->d_ntracks);
+	fprintf(f, "sectors/cylinder: %ld\n", (long) lp->d_secpercyl);
+	fprintf(f, "cylinders: %ld\n", (long) lp->d_ncylinders);
+	fprintf(f, "total sectors: %ld\n", (long) lp->d_secperunit);
+	fprintf(f, "rpm: %ld\n", (long) lp->d_rpm);
+	fprintf(f, "interleave: %ld\n", (long) lp->d_interleave);
+	fprintf(f, "trackskew: %ld\n", (long) lp->d_trackskew);
+	fprintf(f, "cylinderskew: %ld\n", (long) lp->d_cylskew);
+	fprintf(f, "headswitch: %ld\t\t# milliseconds\n",
+		(long) lp->d_headswitch);
+	fprintf(f, "track-to-track seek: %ld\t# milliseconds\n",
+		(long) lp->d_trkseek);
 	fprintf(f, "drivedata: ");
 	for (i = NDDATA - 1; i >= 0; i--)
 		if (lp->d_drivedata[i])
@@ -1096,6 +1100,15 @@ getasciilabel(f, lp)
 				errors++;
 			} else
 				lp->d_ncylinders = v;
+			continue;
+		}
+		if (!strcmp(cp, "total sectors")) {
+			v = atoi(tp);
+			if (v <= 0) {
+				warnx("line %d: bad %s: %s", lineno, cp, tp);
+				errors++;
+			} else
+				lp->d_secperunit = v;
 			continue;
 		}
 		if (!strcmp(cp, "rpm")) {
