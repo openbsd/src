@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.30 2003/06/27 22:11:39 deraadt Exp $ */
+/*	$OpenBSD: arp.c,v 1.31 2005/01/04 10:57:23 pascoe Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)arp.c	8.2 (Berkeley) 1/2/94";*/
-static char *rcsid = "$OpenBSD: arp.c,v 1.30 2003/06/27 22:11:39 deraadt Exp $";
+static char *rcsid = "$OpenBSD: arp.c,v 1.31 2005/01/04 10:57:23 pascoe Exp $";
 #endif /* not lint */
 
 /*
@@ -303,7 +303,7 @@ tryagain:
 		    !(rtm->rtm_flags & RTF_GATEWAY)) {
 			switch (sdl->sdl_type) {
 			case IFT_ETHER: case IFT_FDDI: case IFT_ISO88023:
-			case IFT_ISO88024: case IFT_ISO88025:
+			case IFT_ISO88024: case IFT_ISO88025: case IFT_CARP:
 				goto overwrite;
 			}
 		}
@@ -384,7 +384,7 @@ tryagain:
 		    !(rtm->rtm_flags & RTF_GATEWAY)) {
 			switch (sdl->sdl_type) {
 			case IFT_ETHER: case IFT_FDDI: case IFT_ISO88023:
-			case IFT_ISO88024: case IFT_ISO88025:
+			case IFT_ISO88024: case IFT_ISO88025: case IFT_CARP:
 				goto delete;
 			}
 		}
