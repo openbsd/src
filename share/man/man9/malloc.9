@@ -1,4 +1,4 @@
-.\"	$OpenBSD: malloc.9,v 1.21 2002/12/20 06:05:31 art Exp $
+.\"	$OpenBSD: malloc.9,v 1.22 2002/12/20 06:10:27 art Exp $
 .\"	$NetBSD: malloc.9,v 1.2 1996/10/30 05:29:54 lukem Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -408,19 +408,18 @@ panic:
 .Sh DEBUGGING
 A kernel compiled with the
 .Cm MALLOC_DEBUG
-option allows for more extensive
-debugging of memory allocations.
-You can choose which allocation to debug with the
+option allows for more extensive debugging of memory allocations.
+The
 .Va debug_malloc_type ,
 .Va debug_malloc_size ,
 .Va debug_malloc_size_lo
 and
 .Va debug_malloc_size_hi
-variables.
+variables choose which allocation to debug.
 .Va debug_malloc_type
 should be set to the memory type and
 .Va debug_malloc_size
-should be set to the memory size you want to debug.
+should be set to the memory size to debug.
 0 can be used as a wildcard.
 .Va debug_malloc_size_lo
 and
@@ -452,17 +451,17 @@ freed memory.
 There are no special diagnostics if any errors are caught by the debugging
 malloc.
 The errors will look like normal access to unmapped memory.
-When you get a memory access error, invoke the
+On a memory access error, the
 .Ic show malloc
 command in
 .Xr ddb 4
-to see what memory areas are allocated and freed.
+can be invoked to see what memory areas are allocated and freed.
 If the faulting address is within two pages from an address on the allocated
-list, you have gotten an access outside the allocated area.
+list, there was an access outside the allocated area.
 If the faulting address is within two pages from an address on the free list,
-you have gotten an access to freed memory.
+there was an access to freed memory.
 .Pp
-You have to be very careful when using the
+Care needs to be taken when using the
 .Cm MALLOC_DEBUG
 option:  the memory consumption can run away pretty quickly and there is
 a severe performance degradation when allocating and freeing debugged memory
