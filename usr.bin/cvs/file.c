@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.20 2004/08/03 04:41:19 jfb Exp $	*/
+/*	$OpenBSD: file.c,v 1.21 2004/08/06 12:09:25 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -259,14 +259,12 @@ cvs_file_create(const char *path, u_int type, mode_t mode)
  * Load a cvs_file structure with all the information pertaining to the file
  * <path>.
  * The <flags> parameter specifies various flags that alter the behaviour of
- * the function.  The CF_STAT flag is used to keep stat information of the
- * file in the structure after it is used (it is lost otherwise).  The
- * CF_RECURSE flag causes the function to recursively load subdirectories
- * when <path> is a directory.  The CF_SORT flag causes the files to be
- * sorted in alphabetical order upon loading.
- * The special case of "." as a path specification generates recursion for
- * a single level and is equivalent to calling cvs_file_get() on all files
- * of that directory.
+ * the function.  The CF_RECURSE flag causes the function to recursively load
+ * subdirectories when <path> is a directory.
+ * The CF_SORT flag causes the files to be sorted in alphabetical order upon
+ * loading.  The special case of "." as a path specification generates
+ * recursion for a single level and is equivalent to calling cvs_file_get() on
+ * all files of that directory.
  * Returns a pointer to the cvs file structure, which must later be freed
  * with cvs_file_free().
  */
@@ -469,8 +467,6 @@ cvs_file_free(CVSFILE *cf)
 {
 	if (cf->cf_path != NULL)
 		free(cf->cf_path);
-	if (cf->cf_stat != NULL)
-		free(cf->cf_stat);
 	if (cf->cf_ddat != NULL)
 		cvs_file_freedir(cf->cf_ddat);
 	free(cf);
@@ -720,8 +716,6 @@ cvs_file_lget(const char *path, int flags, CVSFILE *parent)
 
 	if ((cfp->cf_type == DT_DIR) && ((flags & CF_RECURSE) || cwd)) {
 		if ((flags & CF_KNOWN) && (cfp->cf_cvstat == CVS_FST_UNKNOWN)) {
-			free(cfp->cf_ddat);
-			cfp->cf_ddat = NULL;
 		}
 		else if (cvs_file_getdir(cfp, flags) < 0) {
 			cvs_file_free(cfp);
@@ -729,18 +723,5 @@ cvs_file_lget(const char *path, int flags, CVSFILE *parent)
 		}
 	}
 
-	if (flags & CF_STAT) {
-		cfp->cf_stat = (struct stat *)malloc(sizeof(struct stat));
-		if (cfp->cf_stat == NULL) {
-			cvs_log(LP_ERRNO, "failed to allocate stat structure");
-			cvs_file_free(cfp);
-			return (NULL);
-		}
-
-		memcpy(cfp->cf_stat, &st, sizeof(struct stat));
-	}
-
 	return (cfp);
 }
-
-

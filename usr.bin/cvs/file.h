@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.5 2004/08/02 22:49:50 jfb Exp $	*/
+/*	$OpenBSD: file.h,v 1.6 2004/08/06 12:09:26 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -36,7 +36,7 @@ struct cvs_dir;
 struct cvs_entries;
 
 
-#define CF_STAT     0x01  /* allocate space for file stats */
+#define CF_STAT     0x01  /* obsolete */
 #define CF_IGNORE   0x02  /* apply regular ignore rules */
 #define CF_RECURSE  0x04  /* recurse on directory operations */
 #define CF_SORT     0x08  /* all files are sorted alphabetically */
@@ -77,7 +77,6 @@ typedef struct cvs_file {
 	char            *cf_name;
 	u_int16_t        cf_cvstat;  /* cvs status of the file */
 	u_int16_t        cf_type;    /* uses values from dirent.h */
-	struct stat     *cf_stat;    /* only available with CF_STAT flag */
 	struct cvs_dir  *cf_ddat;    /* only for directories */
 
 	TAILQ_ENTRY(cvs_file)  cf_list;
