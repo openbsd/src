@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_configure.c,v 1.9 2002/06/09 08:13:09 todd Exp $	*/
+/*	$OpenBSD: rf_configure.c,v 1.10 2002/12/16 07:01:33 tdeval Exp $	*/
 /*	$NetBSD: rf_configure.c,v 1.14 2001/02/04 21:05:42 christos Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
 
 /***************************************************************
  *
- * rf_configure.c -- code related to configuring the raidframe system
+ * rf_configure.c -- code related to configuring the RAIDframe system
  *
  * configuration is complicated by the fact that we want the same
  * driver to work both in the kernel and at user level.  In the
@@ -492,7 +492,7 @@ rf_get_next_nonblank_line(buf, len, fp, errmsg)
  * Allocates an array for the spare table, and initializes it from a file.
  * In the user-level version, this is called when recon is initiated.
  * When/if I move recon into the kernel, there'll be a daemon that does
- * an ioctl into raidframe which will block until a spare table is needed.
+ * an ioctl into RAIDframe which will block until a spare table is needed.
  * When it returns, it will read a spare table from the file system,
  * pass it into the kernel via a different ioctl, and then block again
  * on the original ioctl.
