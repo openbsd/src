@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.86 2003/10/25 20:27:07 mcbride Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.87 2003/11/02 01:33:56 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -773,9 +773,11 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = EEXIST;
 		else {
 			u_int32_t states = pf_status.states;
+			u_int32_t debug = pf_status.debug;
 			bzero(&pf_status, sizeof(struct pf_status));
 			pf_status.running = 1;
 			pf_status.states = states;
+			pf_status.debug = debug;
 			pf_status.since = time.tv_sec;
 			if (status_ifp != NULL)
 				strlcpy(pf_status.ifname,
