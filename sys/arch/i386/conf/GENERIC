@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.269 2001/06/29 06:12:03 niklas Exp $
+#	$OpenBSD: GENERIC,v 1.270 2001/07/02 07:03:15 nate Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -326,6 +326,7 @@ skc*	at pci? dev ? function ?		# SysKonnect GEnesis 984x
 sk*	at skc?					#  each port of above
 wx*	at pci? dev ? function ?		# Intel Pro/1000 ethernet
 txp*	at pci? dev ? function ?		# 3com 3CR990
+nge*	at pci? dev ? function ?		# NS DP83820/DP83821 GigE
 
 # Wireless network cards
 wi*	at pci? dev ? function ?		# WaveLAN IEEE 802.11DS
@@ -355,6 +356,7 @@ bmtphy*	at mii? phy ?				# Broadcom 10/100 PHYs
 brgphy*	at mii? phy ?				# Broadcom Gigabit PHYs
 eephy* at mii? phy ?				# Marvell 88E1000 series PHY
 xmphy*	at mii? phy ?				# XaQti XMAC-II PHYs
+nsgphy*	at mii? phy ?				# NS gigabit PHYs
 ukphy*	at mii? phy ?				# "unknown" PHYs
 
 pss0	at isa? port 0x220 irq 7 drq 6		# Personal Sound System
