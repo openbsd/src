@@ -1,4 +1,4 @@
-/*	$OpenBSD: gsckbdmap.c,v 1.2 2003/02/16 01:43:17 miod Exp $	*/
+/*	$OpenBSD: gsckbdmap.c,v 1.3 2003/05/27 15:32:39 mickey Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -160,7 +160,45 @@ static const keysym_t gsckbd_keydesc_us[] = {
 /* initially KC(219),	KS_Meta_L,	*/
 /* initially KC(220),	KS_Meta_R,	*/
 /* initially KC(221),	KS_Menu,	*/
-    KC(241),	KS_Delete,
+    KC(241),	KS_Delete
+};
+
+static const keysym_t pckbd_keydesc_precisionbook[] = {
+/*  pos      command		normal		shifted */
+    KC(7),   KS_Cmd_Screen0,	KS_f1,
+    KC(15),  KS_Cmd_Screen1,	KS_f2,
+    KC(23),  KS_Cmd_Screen2,	KS_f3,
+    KC(31),  KS_Cmd_Screen3,	KS_f4,
+    KC(39),  KS_Cmd_Screen4,	KS_f5,
+    KC(47),  KS_Cmd_Screen5,	KS_f6,
+    KC(55),  KS_Cmd_Screen6,	KS_f7,
+    KC(63),  KS_Cmd_Screen7,	KS_f8,
+    KC(71),  KS_Cmd_Screen8,	KS_f9,
+    KC(79),  KS_Cmd_Screen9,	KS_f10,
+    KC(86),  KS_Cmd_Screen10,	KS_f11,
+    KC(94),  KS_Cmd_Screen11,	KS_f12,
+    KC(8),   KS_Cmd_Debugger,	KS_Escape,
+    KC(87),			KS_Print_Screen,
+    KC(92),			KS_backslash,	KS_bar,
+    KC(96),			KS_KP_Down,	KS_KP_2,
+    KC(95),			KS_Hold_Screen,
+    KC(97),			KS_KP_Left,	KS_KP_4,
+    KC(98),			KS_Pause, /* Break */
+    KC(99),			KS_KP_Up,	KS_KP_8,
+    KC(100),			KS_KP_Delete,	KS_KP_Decimal,
+    KC(101),			KS_KP_End,	KS_KP_1,
+    KC(103),			KS_KP_Insert,	KS_KP_0,
+    KC(106),			KS_KP_Right,	KS_KP_6,
+    KC(109),			KS_KP_Next,	KS_KP_3,
+    KC(110),			KS_KP_Home,	KS_KP_7,
+    KC(111),			KS_KP_Prior,	KS_KP_9,
+    KC(20),			KS_Caps_Lock,
+    KC(17),  KS_Cmd1,		KS_Control_L,
+    KC(88),  KS_Cmd1,		KS_Control_R,
+    KC(25),  KS_Cmd2,		KS_Alt_L,
+    KC(57),  KS_Cmd2,		KS_Alt_R,	KS_Multi_key,
+    KC(139),			KS_Meta_L,
+    KC(140),			KS_Meta_R,
 };
 
 static const keysym_t gsckbd_keydesc_de[] = {
@@ -842,6 +880,7 @@ const struct wscons_keydesc gsckbd_keydesctab[] = {
 	KBD_MAP(KB_TR,			KB_US,	gsckbd_keydesc_tr),
 	KBD_MAP(KB_TR | KB_NODEAD,	KB_TR,	gsckbd_keydesc_tr_nodead),
 	KBD_MAP(KB_PL,			KB_US,	gsckbd_keydesc_pl),
+	KBD_MAP(KB_US | KB_MACHDEP,	KB_US,	pckbd_keydesc_precisionbook),
 	{0, 0, 0, 0}
 };
 
