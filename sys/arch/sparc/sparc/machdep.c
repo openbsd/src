@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.35 1999/04/22 18:51:49 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:30 weingart Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -410,7 +410,6 @@ allocsys(v)
 #define	valloc(name, type, num) \
 	    v = (caddr_t)(((name) = (type *)v) + (num))
 	valloc(callout, struct callout, ncallout);
-	valloc(swapmap, struct map, nswapmap = maxproc * 2);
 #ifdef SYSVSHM
 	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
 #endif

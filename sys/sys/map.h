@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.h,v 1.2 1996/03/03 12:11:59 niklas Exp $	*/
+/*	$OpenBSD: map.h,v 1.3 1999/05/22 21:22:33 weingart Exp $	*/
 /*	$NetBSD: map.h,v 1.10 1995/09/15 05:32:45 jtc Exp $	*/
 
 /*-
@@ -64,6 +64,10 @@
  * N.B.: The address 0 in the resource address space is not available
  * as it is used internally by the resource map routines.
  */
+
+#ifndef _SYS_MAP_H_
+#define _SYS_MAP_H_
+
 struct map {
 	struct	mapent *m_limit;	/* first slot beyond map */
 	char	*m_name;		/* name of resource, for messages */
@@ -75,10 +79,9 @@ struct mapent {
 };
 
 #ifdef _KERNEL
-struct	map *swapmap;
-int	nswapmap;
 
 long	rmalloc __P((struct map *, long));
 void	rmfree __P((struct map *, long, long));
 void	rminit __P((struct map *, long, long, char *, int));
-#endif
+#endif /* _KERNEL */
+#endif /* _SYS_MAP_H_ */
