@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetnamadr.c,v 1.2 1997/04/03 02:15:16 kstailey Exp $	*/
+/*	$OpenBSD: getnetnamadr.c,v 1.3 1997/04/03 07:31:55 downsj Exp $	*/
 
 /* Copyright (c) 1993 Carlos Leandro and Rui Salgueiro
  *	Dep. Matematica Universidade de Coimbra, Portugal, Europe
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)getnetbyaddr.c	8.1 (Berkeley) 6/4/93";
 static char sccsid_[] = "from getnetnamadr.c	1.4 (Coimbra) 93/06/03";
 static char rcsid[] = "$From: getnetnamadr.c,v 8.7 1996/08/05 08:31:35 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: getnetnamadr.c,v 1.2 1997/04/03 02:15:16 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: getnetnamadr.c,v 1.3 1997/04/03 07:31:55 downsj Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -103,8 +103,8 @@ getnetanswer(answer, anslen, net_i)
 	int type, class, buflen, ancount, qdcount, haveanswer, i, nchar;
 	char aux1[30], aux2[30], ans[30], *in, *st, *pauxt, *bp, **ap,
 		*paux1 = &aux1[0], *paux2 = &aux2[0], flag = 0;
-static	struct netent net_entry;
-static	char *net_aliases[MAXALIASES], netbuf[BUFSIZ+1];
+	static	struct netent net_entry;
+	static	char *net_aliases[MAXALIASES], netbuf[BUFSIZ+1];
 
 	/*
 	 * find first satisfactory answer
@@ -217,8 +217,8 @@ getnetbyaddr(net, net_type)
 	char lookups[MAXDNSLUS];
 	int i;
 
-	if (net_type != AF_INET)
-		return (_getnetbyaddr(net, net_type));
+	if ((_res.options & RES_INIT) == 0 && res_init() == -1)
+		return(_getnetbyaddr(net, net_type));
 
 	bcopy(_res.lookups, lookups, sizeof lookups);
 	if (lookups[0] == '\0')
@@ -226,60 +226,67 @@ getnetbyaddr(net, net_type)
 
 	for (i = 0; i < MAXDNSLUS && lookups[i]; i++) {
 		switch (lookups[i]) {
-#if 0 /* def YP */
+#ifdef YP
 		case 'y':
-			/* YP only supports AF_INET. */
-			if (af == AF_INET)
-				hp = _yp_gethtbyaddr(addr);
+			/* There is no YP support. */
 			break;
-#endif
+#endif	/* YP */
 		case 'b':
+			if (net_type != AF_INET)
+				break;	/* DNS only supports AF_INET? */
+
+			for (nn = 4, net2 = net; net2; net2 >>= 8)
+				netbr[--nn] = net2 & 0xff;
+			switch (nn) {
+			case 3: 	/* Class A */
+				snprintf(qbuf, sizeof(qbuf),
+				    "0.0.0.%u.in-addr.arpa", netbr[3]);
+				break;
+			case 2: 	/* Class B */
+				snprintf(qbuf, sizeof(qbuf),
+				    "0.0.%u.%u.in-addr.arpa",
+		    		    netbr[3], netbr[2]);
+				break;
+			case 1: 	/* Class C */
+				snprintf(qbuf, sizeof(qbuf),
+				    "0.%u.%u.%u.in-addr.arpa",
+		    		    netbr[3], netbr[2], netbr[1]);
+				break;
+			case 0: 	/* Class D - E */
+				snprintf(qbuf, sizeof(qbuf),
+				    "%u.%u.%u.%u.in-addr.arpa",
+				    netbr[3], netbr[2], netbr[1], netbr[0]);
+				break;
+			}
+			anslen = res_query(qbuf, C_IN, T_PTR, (u_char *)&buf,
+			    sizeof(buf));
+			if (anslen < 0) {
+#ifdef DEBUG
+				if (_res.options & RES_DEBUG)
+					printf("res_query failed\n");
+#endif
+				break;
+			}
+			net_entry = getnetanswer(&buf, anslen, BYADDR);
+			if (net_entry != NULL) {
+				unsigned u_net = net;	/* maybe net should be unsigned ? */
+
+				/* Strip trailing zeros */
+				while ((u_net & 0xff) == 0 && u_net != 0)
+					u_net >>= 8;
+				net_entry->n_net = u_net;
+				return (net_entry);
+			}
 			break;
 		case 'f':
-			return (_getnetbyaddr(net, net_type));
+			net_entry = _getnetbyaddr(net, net_type);
+			if (net_entry != NULL)
+				return (net_entry);
 		}
 	}
 
-	for (nn = 4, net2 = net; net2; net2 >>= 8)
-		netbr[--nn] = net2 & 0xff;
-	switch (nn) {
-	case 3: 	/* Class A */
-		snprintf(qbuf, sizeof(qbuf), "0.0.0.%u.in-addr.arpa", netbr[3]);
-		break;
-	case 2: 	/* Class B */
-		snprintf(qbuf, sizeof(qbuf), "0.0.%u.%u.in-addr.arpa",
-		    netbr[3], netbr[2]);
-		break;
-	case 1: 	/* Class C */
-		snprintf(qbuf, sizeof(qbuf), "0.%u.%u.%u.in-addr.arpa",
-		    netbr[3], netbr[2], netbr[1]);
-		break;
-	case 0: 	/* Class D - E */
-		snprintf(qbuf, sizeof(qbuf), "%u.%u.%u.%u.in-addr.arpa",
-		    netbr[3], netbr[2], netbr[1], netbr[0]);
-		break;
-	}
-	anslen = res_query(qbuf, C_IN, T_PTR, (u_char *)&buf, sizeof(buf));
-	if (anslen < 0) {
-#ifdef DEBUG
-		if (_res.options & RES_DEBUG)
-			printf("res_query failed\n");
-#endif
-		if (errno == ECONNREFUSED)
-			return (_getnetbyaddr(net, net_type));
-		return (NULL);
-	}
-	net_entry = getnetanswer(&buf, anslen, BYADDR);
-	if (net_entry) {
-		unsigned u_net = net;	/* maybe net should be unsigned ? */
-
-		/* Strip trailing zeros */
-		while ((u_net & 0xff) == 0 && u_net != 0)
-			u_net >>= 8;
-		net_entry->n_net = u_net;
-		return (net_entry);
-	}
-	return (_getnetbyaddr(net, net_type));
+	/* Nothing matched. */
+	return (NULL);
 }
 
 struct netent *
@@ -290,24 +297,46 @@ getnetbyname(net)
 	querybuf buf;
 	char qbuf[MAXDNAME];
 	struct netent *net_entry;
+	char lookups[MAXDNSLUS];
+	int i;
 
-	if ((_res.options & RES_INIT) == 0 && res_init() == -1) {
-		h_errno = NETDB_INTERNAL;
-		return (NULL);
-	}
-	strcpy(&qbuf[0], net);
-	anslen = res_search(qbuf, C_IN, T_PTR, (u_char *)&buf, sizeof(buf));
-	if (anslen < 0) {
-#ifdef DEBUG
-		if (_res.options & RES_DEBUG)
-			printf("res_query failed\n");
-#endif
-		if (errno == ECONNREFUSED)
-			return (_getnetbyname(net));
+	if ((_res.options & RES_INIT) == 0 && res_init() == -1)
 		return (_getnetbyname(net));
+
+	bcopy(_res.lookups, lookups, sizeof lookups);
+	if (lookups[0] == '\0')
+		strncpy(lookups, "bf", sizeof lookups);
+
+	for (i = 0; i < MAXDNSLUS && lookups[i]; i++) {
+		switch (lookups[i]) {
+#ifdef YP
+		case 'y':
+			/* There is no YP support. */
+			break;
+#endif	/* YP */
+		case 'b':
+			strcpy(&qbuf[0], net);
+			anslen = res_search(qbuf, C_IN, T_PTR, (u_char *)&buf,
+			    sizeof(buf));
+			if (anslen < 0) {
+#ifdef DEBUG
+				if (_res.options & RES_DEBUG)
+					printf("res_query failed\n");
+#endif
+				break;
+			}
+			net_entry = getnetanswer(&buf, anslen, BYNAME);
+			if (net_entry != NULL)
+				return (net_entry);
+			break;
+		case 'f':
+			net_entry = _getnetbyname(net);
+			if (net_entry != NULL)
+				return (net_entry);
+			break;
+		}
 	}
-	net_entry = getnetanswer(&buf, anslen, BYNAME);
-	if (net_entry)
-		return (net_entry);
-	return (_getnetbyname(net));
+
+	/* Nothing matched. */
+	return (NULL);
 }
