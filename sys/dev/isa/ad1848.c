@@ -1,4 +1,4 @@
-/*	$OpenBSD: ad1848.c,v 1.5 1996/05/07 07:35:55 deraadt Exp $	*/
+/*	$OpenBSD: ad1848.c,v 1.6 1996/07/04 21:00:57 deraadt Exp $	*/
 /*	$NetBSD: ad1848.c,v 1.10 1996/04/29 20:02:32 christos Exp $	*/
 
 /*
@@ -119,9 +119,9 @@ static int ad1848_init_values[] = {
     0x19,		/* Left DAC output Control */
     0x19,		/* Right DAC output Control */
     			/* Clock and Data Format */
-    CLOCK_XTAL1|FMT_PCM8|AUTO_CAL_ENABLE,
+    CLOCK_XTAL1|FMT_PCM8,
     			/* Interface Config */
-    SINGLE_DMA,
+    SINGLE_DMA|AUTO_CAL_ENABLE,
     INTERRUPT_ENABLE,	/* Pin control */
     0x00,		/* Test and Init */
     0xca,		/* Misc control */

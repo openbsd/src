@@ -104,7 +104,7 @@
 #define CAPTURE_READY		0x20
 #define CAPTURE_LEFT		0x40
 /* cpright is not left */
-#define CAPTURE_UPPER		0x08
+#define CAPTURE_UPPER		0x80
 /* cplower is not upper */
 
 /* Input & Output regs bits */
