@@ -30,10 +30,10 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)intro.4	5.2 (Berkeley) 3/27/91
-.\"	$Id: intro.4,v 1.3 1999/05/16 19:57:11 alex Exp $
+.\"	$Id: intro.4,v 1.4 2000/01/24 05:00:08 smurph Exp $
 .\"
 .Dd August 30, 1994
-.Dt INTRO 4 amiga
+.Dt INTRO 4 mvme68k
 .Os
 .Sh NAME
 .Nm intro
@@ -64,9 +64,9 @@ which may be configured into the system
 and network related information.
 The networking support is introduced in
 .Xr netintro 4 .
-.Sh AMIGA DEVICE SUPPORT
+.Sh MVME68K DEVICE SUPPORT
 This section describes the hardware supported on the
-.Tn Amiga .
+.Tn mvme68k platform .
 Software support for these devices comes in two forms.  A hardware
 device may be supported with a character or block
 .Em device driver ,
@@ -94,10 +94,10 @@ The autoconfiguration system is described in
 A list of the supported devices is given below.
 .Sh HISTORY
 The
-.Tn Amiga
+.Tn mvme68k
 .Nm intro
 man page first appeared in
-.Nx 1.0a
+.Ox 2.6
 .Sh SEE ALSO
 .Xr autoconf 4 ,
 .Xr intro 4 ,
@@ -107,54 +107,18 @@ The devices listed below are supported in this incarnation of
 the system.  Pseudo-devices are not listed.
 Devices are indicated by their functional interface.
 .Bl -tag -width "zbus" -compact -offset indent
-.It Em afsc
-A4091 low level SCSI adapter interface
-.It Em ahsc
-A3000 low level SCSI adapter interface
-.It Em atzsc
-A2091 low level SCSI adapter interface
-.It Em ed
-DP8390-based ethernet interface
-.It Em es
-SMC91C90-based ethernet interface
-.It Em fdc
-Floppy disk controller device
-.It Em fd
-Floppy disk device
-.It Em grf
-Custom Chips/Retina/Retina ZIII frame buffer
-.It Em gtsc
-GVP low level SCSI adapter interface
-.It Em gvpbus
-GVP custom bus
-.It Em kbd
-Amiga Keyboard device
+.It Em siop
+NCR53710 low level SCSI adapter interface
+.It Em vs
+MVME328 low level SCSI adapter interface
+.It Em le
+On board and MVME376 AMD 7990 Lance-based ethernet interface
+.It Em ie
+Intel-based ethernet interface
+.It Em vme
+VME bus support
 .It Em kmem
 kernel virtual memory
-.It Em ite
-Amiga Internal Terminal Emulator
-.It Em ivsc
-IVS low level SCSI adapter interface
-.It Em le
-AMD 7990 Lance-based ethernet interface
 .It Em mem
 physical memory
-.It Em mfcs
-MultiFaceCard II/II serial interface
-.It Em mgnsc
-Magnum 40 low level SCSI adapter interface
-.It Em otgsc
-12 Gauge low level SCSI adapter interface
-.It Em par
-8520 built-in parallel interface
-.It Em ser
-8520 built-in serial interface
-.It Em wesc
-Warp Engine low level SCSI adapter interface
-.It Em wstsc
-Wordsync II low level SCSI adapter interface
-.It Em zssc
-Zeus low level SCSI adapter interface
-.It Em zbus
-Amiga Zorro II/III bus
 .El

@@ -35,16 +35,17 @@
 .\"
 .\"	from: Header: le.4,v 1.2 92/10/13 05:31:33 leres Exp
 .\"	from: @(#)le.4	8.1 (Berkeley) 6/9/93
-.\"	$Id: le.4,v 1.4 1999/07/09 13:35:40 aaron Exp $
+.\"	$Id: le.4,v 1.5 2000/01/24 05:00:08 smurph Exp $
 .\"
 .Dd August 30, 1994
-.Dt LE 4 amiga
+.Dt LE 4 mvme68k
 .Os
 .Sh NAME
 .Nm le
 .Nd Ethernet driver for AMD7990(LANCE)-based boards
 .Sh SYNOPSIS
-.Cd "le* at zbus0"
+.Cd "le* at pcc0 offset 0x1800 ipl 1"
+.Cd "le* at vmes0 addr 0xffff1200 ipl 1 vec 0x74 len 0x100"
 .Sh DESCRIPTION
 The
 .Nm
@@ -67,19 +68,19 @@ network.
 .Sh HARDWARE
 The
 .Nm
-interface supports the following Zorro II expansion cards:
-.Bl -tag -width "AMERISTAR" -offset indent
-.It Em A2065
-Commodore's ethernet card, manufacturer\ 514, product\ 112
-.It Em AMERISTAR
-Ameristar's ethernet card, manufacturer\ 1053, product\ 1
+interface supports the following mvme68k hardware:
+.Bl -tag -width "ON BOARD" -offset indent
+.It Em ON BOARD
+Motorola's MVME147 on board ethernet interface
+.It Em MVME376
+Motorola's VME bus ethernet card
 .El
 .Sh HISTORY
 The
-.Tn Amiga
+.Tn mvme68k
 .Nm
 interface first appeared in
-.Nx 0.9a
+.Ox 2.0
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr inet 4 ,
