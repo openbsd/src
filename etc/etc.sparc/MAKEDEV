@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.30 1997/08/08 09:43:02 downsj Exp $
+#	$OpenBSD: MAKEDEV,v 1.31 1997/08/24 22:44:08 deraadt Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -226,7 +226,7 @@ cgthree*)
 	mknod cgthree$unit	c 55 $unit; chmod 666 cgthree$unit
 	;;
 
-cgfour*)
+cgfour[0-9]*)
 	mknod cgfour$unit	c 39 $unit; chmod 666 cgfour$unit
 	;;
 
