@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.21 1997/02/11 18:04:03 deraadt Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.22 1997/02/13 16:26:58 deraadt Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -826,7 +826,7 @@ ip_dooptions(m)
 			ipt = (struct ip_timestamp *)cp;
 			if (ipt->ipt_ptr < 5 || ipt->ipt_len < 5)
 				goto bad;
-			if (ipt->ipt_ptr > ipt->ipt_len - sizeof (int32_t)) {
+			if (ipt->ipt_ptr - 1 + sizeof(n_time) > ipt->ipt_len) {
 				if (++ipt->ipt_oflw == 0)
 					goto bad;
 				break;
@@ -838,7 +838,7 @@ ip_dooptions(m)
 				break;
 
 			case IPOPT_TS_TSANDADDR:
-				if (ipt->ipt_ptr + sizeof(n_time) +
+				if (ipt->ipt_ptr - 1 + sizeof(n_time) +
 				    sizeof(struct in_addr) > ipt->ipt_len)
 					goto bad;
 				ipaddr.sin_addr = dst;
@@ -852,7 +852,7 @@ ip_dooptions(m)
 				break;
 
 			case IPOPT_TS_PRESPEC:
-				if (ipt->ipt_ptr + sizeof(n_time) +
+				if (ipt->ipt_ptr - 1 + sizeof(n_time) +
 				    sizeof(struct in_addr) > ipt->ipt_len)
 					goto bad;
 				bcopy((caddr_t)sin, (caddr_t)&ipaddr.sin_addr,
