@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.4 2003/10/22 19:53:15 deraadt Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.5 2004/01/15 20:10:43 canacar Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -41,7 +41,7 @@
 
 enum cmd_types {
 	PRIV_SET_SNAPLEN,	/* set the snaplength */
-	PRIV_OPEN_LOG,		/* open logfile for appending */
+	PRIV_OPEN_LOG		/* open logfile for appending */
 };
 
 static int priv_fd = -1;
@@ -51,6 +51,7 @@ volatile sig_atomic_t gotsig_chld = 0;
 
 static void sig_pass_to_chld(int);
 static void sig_chld(int);
+static int  may_read(int, void *, size_t);
 static void must_read(int, void *, size_t);
 static void must_write(int, void *, size_t);
 static int  set_snaplen(int snap);
@@ -119,7 +120,8 @@ priv_init(void)
 	close(socks[1]);
 
 	while (!gotsig_chld) {
-		must_read(socks[0], &cmd, sizeof(int));
+		if (may_read(socks[0], &cmd, sizeof(int)))
+			break;
 		switch (cmd) {
 		case PRIV_SET_SNAPLEN:
 			logmsg(LOG_DEBUG,
@@ -228,6 +230,28 @@ static void
 sig_chld(int sig)
 {
 	gotsig_chld = 1;
+}
+
+/* Read all data or return 1 for error.  */
+static int
+may_read(int fd, void *buf, size_t n)
+{
+	char *s = buf;
+	ssize_t res, pos = 0;
+
+	while (n > pos) {
+		res = read(fd, s + pos, n - pos);
+		switch (res) {
+		case -1:
+			if (errno == EINTR || errno == EAGAIN)
+				continue;
+		case 0:
+			return (1);
+		default:
+			pos += res;
+		}
+	}
+	return (0);
 }
 
 /* Read data with the assertion that it all must come through, or
