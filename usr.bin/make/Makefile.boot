@@ -1,5 +1,5 @@
 #	$OpenPackages: Makefile.boot,v 1.5 2001/04/06 00:09:55 will Exp $
-#	$OpenBSD: Makefile.boot,v 1.7 2001/05/03 14:06:19 espie Exp $
+#	$OpenBSD: Makefile.boot,v 1.8 2001/05/29 12:41:18 espie Exp $
 #
 # a very simple makefile...
 #
@@ -19,7 +19,8 @@ LIBS= ohash/libohash.a
 
 OBJ=arch.o buf.o compat.o cond.o dir.o for.o job.o main.o make.o \
     parse.o str.o suff.o targ.o var.o util.o error.o lowparse.o \
-    varmodifiers.o
+    varmodifiers.o memory.o cmd_exec.o timestamp.o parsevar.o \
+    varname.o init.o
 
 LIBOBJ=	lst.lib/lstAddNew.o lst.lib/lstAppend.o \
 	lst.lib/lstConcat.o lst.lib/lstConcatDestroy.o lst.lib/lstDeQueue.o \
@@ -35,7 +36,7 @@ bmake: varhashconsts.h ${OBJ} ${LIBOBJ}
 #	nroff -h -man make.1 > make.0
 #	@echo 'make of make and make.0 completed.'
 
-GENOBJ= generate.o stats.o error.o ohash/libohash.a
+GENOBJ= generate.o stats.o memory.o ohash/libohash.a
 
 OHASHOBJ= ohash/ohash_create_entry.o ohash/ohash_delete.o ohash/ohash_do.o \
 	ohash/ohash_entries.o ohash/ohash_enum.o ohash/ohash_init.o \
