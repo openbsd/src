@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: bc.y,v 1.22 2004/01/13 08:43:23 otto Exp $	*/
+/*	$OpenBSD: bc.y,v 1.23 2004/02/18 07:43:58 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bc.y,v 1.22 2004/01/13 08:43:23 otto Exp $";
+static const char rcsid[] = "$OpenBSD: bc.y,v 1.23 2004/02/18 07:43:58 otto Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -94,6 +94,7 @@ static ssize_t		prologue;
 static ssize_t		epilogue;
 static bool		st_has_continue;
 static char		str_table[UCHAR_MAX][2];
+static int		fileindex;
 static int		sargc;
 static char		**sargv;
 static char		*filename;
@@ -923,15 +924,15 @@ add_local(ssize_t n)
 int
 yywrap(void)
 {
-	if (optind < sargc) {
-		filename = sargv[optind++];
+	if (fileindex < sargc) {
+		filename = sargv[fileindex++];
 		yyin = fopen(filename, "r");
 		lineno = 1;
 		if (yyin == NULL)
 			err(1, "cannot open %s", filename);
 		return 0;
-	} else if (optind == sargc) {
-		optind++;
+	} else if (fileindex == sargc) {
+		fileindex++;
 		yyin = stdin;
 		lineno = 1;
 		filename = "stdin";
@@ -1055,11 +1056,15 @@ escape(const char *str)
 int
 main(int argc, char *argv[])
 {
-	int	ch, ret;
+	int	i, ch, ret;
 	int	p[2];
 
 	init();
 	setlinebuf(stdout);
+
+	sargv = malloc(argc * sizeof(char *));
+	if (sargv == NULL)
+		err(1, NULL);
 
 	/* The d debug option is 4.4 BSD dc(1) compatible */
 	while ((ch = getopt(argc, argv, "cdl")) != -1) {
@@ -1069,16 +1074,18 @@ main(int argc, char *argv[])
 			do_fork = false;
 			break;
 		case 'l':
-			argv[1] = _PATH_LIBB;
-			optind = 1;
+			sargv[sargc++] = _PATH_LIBB;
 			break;
 		default:
 			usage();
 		}
 	}
 
-	sargc = argc;
-	sargv = argv;
+	argc -= optind;
+	argv += optind;
+
+	for (i = 0; i < argc; i++)
+		sargv[sargc++] = argv[i];
 
 	if (do_fork) {
 		if (pipe(p) == -1)
