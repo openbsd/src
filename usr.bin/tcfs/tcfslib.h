@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfslib.h,v 1.6 2000/06/19 20:35:48 fgsch Exp $	*/
+/*	$OpenBSD: tcfslib.h,v 1.7 2000/06/20 07:09:46 fgsch Exp $	*/
 
 /*
  *	Transparent Cryptographic File System (TCFS) for NetBSD 
@@ -48,3 +48,8 @@ extern tcfspwdb *
 extern int	tcfs_putpwnam __P((char *, tcfspwdb *, int));
 
 extern int	unix_auth __P((char **, char **, int));
+extern tcfsgpwdb *
+		tcfs_ggetpwnam __P((char *, gid_t, tcfsgpwdb **));
+extern int	tcfs_gputpwnam __P((char *, tcfsgpwdb *, int));
+extern int	tcfs_get_label __P((char *, char *, int *));
+extern int	tcfs_verify_fs __P((char *));

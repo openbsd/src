@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfs_getfspath.c,v 1.4 2000/06/19 23:06:24 aaron Exp $	*/
+/*	$OpenBSD: tcfs_getfspath.c,v 1.5 2000/06/20 07:09:45 fgsch Exp $	*/
 
 /*
  *	Transparent Cryptographic File System (TCFS) for NetBSD 
@@ -16,6 +16,9 @@
 #include <strings.h>
 #include <stdlib.h>
 #include <fstab.h>
+
+#include <miscfs/tcfs/tcfs.h>
+#include "tcfslib.h"
 
 #define WHITESPACE " \t\r\n"
 

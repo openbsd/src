@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfs_dbmaint.c,v 1.8 2000/06/19 23:06:24 aaron Exp $	*/
+/*	$OpenBSD: tcfs_dbmaint.c,v 1.9 2000/06/20 07:09:45 fgsch Exp $	*/
 
 /*
  *	Transparent Cryptographic File System (TCFS) for NetBSD 
@@ -25,7 +25,6 @@
 
 #include <miscfs/tcfs/tcfs.h>
 #include "tcfslib.h"
-#include "tcfspwdb.h"
 
 #define PERM_SECURE	(S_IRUSR|S_IWUSR)
 
