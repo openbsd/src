@@ -12,7 +12,7 @@
  *
  * S/KEY verification check, lookups, and authentication.
  * 
- * $OpenBSD: skeylogin.c,v 1.36 2000/11/20 23:46:39 millert Exp $
+ * $OpenBSD: skeylogin.c,v 1.37 2001/01/04 21:51:52 todd Exp $
  */
 
 #include <sys/param.h>
@@ -346,7 +346,7 @@ skeyverify(mp, response)
 /*
  * skey_haskey()
  *
- * Returns: 1 user doesnt exist, -1 file error, 0 user exists.
+ * Returns: 1 user doesn't exist, -1 file error, 0 user exists.
  *
  */
 int
