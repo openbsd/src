@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.45 2004/02/12 18:07:29 henning Exp $ */
+/*	$OpenBSD: if_vlan.c,v 1.46 2004/03/27 23:41:04 deraadt Exp $ */
 /*
  * Copyright 1998 Massachusetts Institute of Technology
  *
@@ -551,7 +551,7 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct ifreq *ifr;
 	struct ifvlan *ifv;
 	struct vlanreq vlr;
-	int error = 0, p_mtu = 0;
+	int error = 0, p_mtu = 0, s;
 
 	ifr = (struct ifreq *)data;
 	ifa = (struct ifaddr *)data;
@@ -608,9 +608,11 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if ((error = copyin(ifr->ifr_data, &vlr, sizeof vlr)))
 			break;
 		if (vlr.vlr_parent[0] == '\0') {
+			s = splimp();
 			vlan_unconfig(ifp);
 			if_down(ifp);
 			ifp->if_flags &= ~(IFF_UP|IFF_RUNNING);
+			splx(s);
 			break;
 		}
 		if (vlr.vlr_tag != EVL_VLANOFTAG(vlr.vlr_tag)) {
