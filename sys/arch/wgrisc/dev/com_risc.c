@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_risc.c,v 1.1.1.1 1997/02/06 16:02:42 pefo Exp $	*/
+/*	$OpenBSD: com_risc.c,v 1.2 1997/07/07 17:09:07 niklas Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -108,7 +108,7 @@ com_risc_probe(parent, match, aux)
 		rv = 0;
 		goto out;
 	}
-	rv = comprobe1(iot, ioh, iobase);
+	rv = comprobe1(iot, ioh);
 	if (needioh)
 		bus_space_unmap(iot, ioh, COM_NPORTS);
 
