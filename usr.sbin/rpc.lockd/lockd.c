@@ -1,4 +1,4 @@
-/*	$OpenBSD: lockd.c,v 1.6 2003/06/11 23:33:29 deraadt Exp $	*/
+/*	$OpenBSD: lockd.c,v 1.7 2003/07/06 21:26:14 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -49,17 +49,15 @@
 
 #include "lockd.h"
 
-extern void nlm_prog_1(struct svc_req, SVCXPRT);
-extern void nlm_prog_3(struct svc_req, SVCXPRT);
+extern void nlm_prog_1(struct svc_req *, SVCXPRT *);
+extern void nlm_prog_3(struct svc_req *, SVCXPRT *);
 
 int     debug_level = 0;	/* Zero means no debugging syslog() calls	 */
 
 int     _rpcsvcdirty;
 
 int
-main(argc, argv)
-	int     argc;
-	char  **argv;
+main(int argc, char *argv[])
 {
 	SVCXPRT *transp;
 
@@ -84,12 +82,12 @@ main(argc, argv)
 		exit(1);
 	}
 	if (!svc_register(transp, NLM_PROG, NLM_VERS,
-	    (void (*) ()) nlm_prog_1, IPPROTO_UDP)) {
+	    (void (*) (struct svc_req *, SVCXPRT *)) nlm_prog_1, IPPROTO_UDP)) {
 		fprintf(stderr, "unable to register (NLM_PROG, NLM_VERS, udp).\n");
 		exit(1);
 	}
 	if (!svc_register(transp, NLM_PROG, NLM_VERSX,
-	    (void (*) ()) nlm_prog_3, IPPROTO_UDP)) {
+	    (void (*) (struct svc_req *, SVCXPRT *)) nlm_prog_3, IPPROTO_UDP)) {
 		fprintf(stderr, "unable to register (NLM_PROG, NLM_VERSX, udp).\n");
 		exit(1);
 	}
@@ -99,12 +97,12 @@ main(argc, argv)
 		exit(1);
 	}
 	if (!svc_register(transp, NLM_PROG, NLM_VERS,
-	    (void (*) ()) nlm_prog_1, IPPROTO_TCP)) {
+	    (void (*) (struct svc_req *, SVCXPRT *)) nlm_prog_1, IPPROTO_TCP)) {
 		fprintf(stderr, "unable to register (NLM_PROG, NLM_VERS, tcp).\n");
 		exit(1);
 	}
 	if (!svc_register(transp, NLM_PROG, NLM_VERSX,
-	    (void (*) ()) nlm_prog_3, IPPROTO_TCP)) {
+	    (void (*) (struct svc_req *, SVCXPRT *)) nlm_prog_3, IPPROTO_TCP)) {
 		fprintf(stderr, "unable to register (NLM_PROG, NLM_VERSX, tcp).\n");
 		exit(1);
 	}

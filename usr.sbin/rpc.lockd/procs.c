@@ -1,4 +1,4 @@
-/*	$OpenBSD: procs.c,v 1.10 2002/05/29 18:39:00 deraadt Exp $	*/
+/*	$OpenBSD: procs.c,v 1.11 2003/07/06 21:26:14 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -53,9 +53,7 @@
 #define	CLIENT_CACHE_LIFETIME	120	/* In seconds			 */
 
 static void 
-log_from_addr(fun_name, req)
-	char *fun_name;
-	struct svc_req *req;
+log_from_addr(char *fun_name, struct svc_req *req)
 {
 	struct	sockaddr_in *addr;
 	struct	hostent *host;
@@ -78,8 +76,7 @@ static struct in_addr clnt_cache_addr[CLIENT_CACHE_SIZE];
 static int clnt_cache_next_to_use = 0;
 
 static CLIENT *
-get_client(host_addr)
-	struct sockaddr_in *host_addr;
+get_client(struct sockaddr_in *host_addr)
 {
 	CLIENT *client;
 	int     sock_no, i;
@@ -145,10 +142,7 @@ get_client(host_addr)
 
 
 static void 
-transmit_result(opcode, result, req)
-	int opcode;
-	nlm_res *result;
-	struct svc_req *req;
+transmit_result(int opcode, nlm_res *result, struct svc_req *req)
 {
 	static char dummy;
 	struct sockaddr_in *addr;
@@ -169,9 +163,7 @@ transmit_result(opcode, result, req)
 }
 
 nlm_testres *
-nlm_test_1_svc(arg, rqstp)
-	nlm_testargs *arg;
-	struct svc_req *rqstp;
+nlm_test_1_svc(nlm_testargs *arg, struct svc_req *rqstp)
 {
 	static nlm_testres res;
 
@@ -183,9 +175,7 @@ nlm_test_1_svc(arg, rqstp)
 }
 
 void *
-nlm_test_msg_1_svc(arg, rqstp)
-	nlm_testargs *arg;
-	struct svc_req *rqstp;
+nlm_test_msg_1_svc(nlm_testargs *arg, struct svc_req *rqstp)
 {
 	nlm_testres res;
 	static char dummy;
@@ -213,9 +203,7 @@ nlm_test_msg_1_svc(arg, rqstp)
 }
 
 nlm_res *
-nlm_lock_1_svc(arg, rqstp)
-	nlm_lockargs *arg;
-	struct svc_req *rqstp;
+nlm_lock_1_svc(nlm_lockargs *arg, struct svc_req *rqstp)
 {
 	static nlm_res res;
 
@@ -227,9 +215,7 @@ nlm_lock_1_svc(arg, rqstp)
 }
 
 void *
-nlm_lock_msg_1_svc(arg, rqstp)
-	nlm_lockargs *arg;
-	struct svc_req *rqstp;
+nlm_lock_msg_1_svc(nlm_lockargs *arg, struct svc_req *rqstp)
 {
 	static nlm_res res;
 
@@ -242,9 +228,7 @@ nlm_lock_msg_1_svc(arg, rqstp)
 }
 
 nlm_res *
-nlm_cancel_1_svc(arg, rqstp)
-	nlm_cancargs *arg;
-	struct svc_req *rqstp;
+nlm_cancel_1_svc(nlm_cancargs *arg, struct svc_req *rqstp)
 {
 	static nlm_res res;
 
@@ -256,9 +240,7 @@ nlm_cancel_1_svc(arg, rqstp)
 }
 
 void *
-nlm_cancel_msg_1_svc(arg, rqstp)
-	nlm_cancargs *arg;
-	struct svc_req *rqstp;
+nlm_cancel_msg_1_svc(nlm_cancargs *arg, struct svc_req *rqstp)
 {
 	static nlm_res res;
 
@@ -271,9 +253,7 @@ nlm_cancel_msg_1_svc(arg, rqstp)
 }
 
 nlm_res *
-nlm_unlock_1_svc(arg, rqstp)
-	nlm_unlockargs *arg;
-	struct svc_req *rqstp;
+nlm_unlock_1_svc(nlm_unlockargs *arg, struct svc_req *rqstp)
 {
 	static nlm_res res;
 
@@ -285,9 +265,7 @@ nlm_unlock_1_svc(arg, rqstp)
 }
 
 void *
-nlm_unlock_msg_1_svc(arg, rqstp)
-	nlm_unlockargs *arg;
-	struct svc_req *rqstp;
+nlm_unlock_msg_1_svc(nlm_unlockargs *arg, struct svc_req *rqstp)
 {
 	static nlm_res res;
 
@@ -300,9 +278,7 @@ nlm_unlock_msg_1_svc(arg, rqstp)
 }
 
 nlm_res *
-nlm_granted_1_svc(arg, rqstp)
-	nlm_testargs *arg;
-	struct svc_req *rqstp;
+nlm_granted_1_svc(nlm_testargs *arg, struct svc_req *rqstp)
 {
 	static nlm_res res;
 
@@ -314,9 +290,7 @@ nlm_granted_1_svc(arg, rqstp)
 }
 
 void *
-nlm_granted_msg_1_svc(arg, rqstp)
-	nlm_testargs *arg;
-	struct svc_req *rqstp;
+nlm_granted_msg_1_svc(nlm_testargs *arg, struct svc_req *rqstp)
 {
 	nlm_res res;
 
@@ -329,9 +303,7 @@ nlm_granted_msg_1_svc(arg, rqstp)
 }
 
 void *
-nlm_test_res_1_svc(arg, rqstp)
-	nlm_testres *arg;
-	struct svc_req *rqstp;
+nlm_test_res_1_svc(nlm_testres *arg, struct svc_req *rqstp)
 {
 	if (debug_level)
 		log_from_addr("nlm_test_res", rqstp);
@@ -339,9 +311,7 @@ nlm_test_res_1_svc(arg, rqstp)
 }
 
 void *
-nlm_lock_res_1_svc(arg, rqstp)
-	nlm_res *arg;
-	struct svc_req *rqstp;
+nlm_lock_res_1_svc(nlm_res *arg, struct svc_req *rqstp)
 {
 	if (debug_level)
 		log_from_addr("nlm_lock_res", rqstp);
@@ -350,9 +320,7 @@ nlm_lock_res_1_svc(arg, rqstp)
 }
 
 void *
-nlm_cancel_res_1_svc(arg, rqstp)
-        nlm_res *arg;
-        struct svc_req *rqstp;
+nlm_cancel_res_1_svc(nlm_res *arg, struct svc_req *rqstp)
 {
 	if (debug_level)
 		log_from_addr("nlm_cancel_res", rqstp);
@@ -360,9 +328,7 @@ nlm_cancel_res_1_svc(arg, rqstp)
 }
 
 void *
-nlm_unlock_res_1_svc(arg, rqstp)
-	nlm_res *arg;
-	struct svc_req *rqstp;
+nlm_unlock_res_1_svc(nlm_res *arg, struct svc_req *rqstp)
 {
 	if (debug_level)
 		log_from_addr("nlm_unlock_res", rqstp);
@@ -370,9 +336,7 @@ nlm_unlock_res_1_svc(arg, rqstp)
 }
 
 void *
-nlm_granted_res_1_svc(arg, rqstp)
-	nlm_res *arg;
-	struct svc_req *rqstp;
+nlm_granted_res_1_svc(nlm_res *arg, struct svc_req *rqstp)
 {
 	if (debug_level)
 		log_from_addr("nlm_granted_res", rqstp);
@@ -380,9 +344,7 @@ nlm_granted_res_1_svc(arg, rqstp)
 }
 
 nlm_shareres *
-nlm_share_3_svc(arg, rqstp)
-	nlm_shareargs *arg;
-	struct svc_req *rqstp;
+nlm_share_3_svc(nlm_shareargs *arg, struct svc_req *rqstp)
 {
 	static nlm_shareres res;
 
@@ -395,9 +357,7 @@ nlm_share_3_svc(arg, rqstp)
 }
 
 nlm_shareres *
-nlm_unshare_3_svc(arg, rqstp)
-	nlm_shareargs *arg;
-	struct svc_req *rqstp;
+nlm_unshare_3_svc(nlm_shareargs *arg, struct svc_req *rqstp)
 {
 	static nlm_shareres res;
 
@@ -410,9 +370,7 @@ nlm_unshare_3_svc(arg, rqstp)
 }
 
 nlm_res *
-nlm_nm_lock_3_svc(arg, rqstp)
-	nlm_lockargs *arg;
-	struct svc_req *rqstp;
+nlm_nm_lock_3_svc(nlm_lockargs *arg, struct svc_req *rqstp)
 {
 	static nlm_res res;
 
@@ -424,9 +382,7 @@ nlm_nm_lock_3_svc(arg, rqstp)
 }
 
 void *
-nlm_free_all_3_svc(arg, rqstp)
-	nlm_notify *arg;
-	struct svc_req *rqstp;
+nlm_free_all_3_svc(nlm_notify *arg, struct svc_req *rqstp)
 {
 	static char dummy;
 
