@@ -19,7 +19,7 @@ kernel_spec() {
 if2ip_kernel() {
     T=`echo "pass in on tun100 from $1" | pfctl -a _regress/if2ip -f- \
 	-vf- | awk '{ print $6}' | tr -d "()"` 
-    pfctl -a _pf/_if -t "$T" -Ts | sort
+    pfctl -a _pf -t "$T" -Ts | sort
     pfctl -a _regress/if2ip -qFr
 }
 
