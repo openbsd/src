@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.10 2002/05/16 21:11:15 miod Exp $ */
+/*	$OpenBSD: conf.c,v 1.11 2002/06/07 07:13:31 miod Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -136,7 +136,6 @@ cdev_decl(uscanner);
 #include "inet.h"
 
 #include "apm.h"
-cdev_decl(apm);
 
 #include "wsmux.h"
 
