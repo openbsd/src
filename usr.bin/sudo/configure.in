@@ -191,9 +191,9 @@ AC_ARG_WITH(libraries, [  --with-libraries        additional libraries to link w
 		;;
 esac])
 
-AC_ARG_WITH(devel, [  --with-devel            add developement options],
+AC_ARG_WITH(devel, [  --with-devel            add development options],
 [case $with_devel in  
-    yes)	echo 'Setting up for developement: -Wall, flex, yacc'
+    yes)	echo 'Setting up for development: -Wall, flex, yacc'
 		PROGS="${PROGS} testsudoers"
 		OSDEFS="${OSDEFS} -DSUDO_DEVEL"
 		DEV=""

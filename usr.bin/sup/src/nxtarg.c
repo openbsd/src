@@ -1,4 +1,4 @@
-/*	$OpenBSD: nxtarg.c,v 1.5 2001/05/04 22:16:15 millert Exp $	*/
+/*	$OpenBSD: nxtarg.c,v 1.6 2003/03/10 03:53:32 david Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -36,7 +36,7 @@
  *	q points to remainder of string
  *
  *  Leading blanks and tabs are skipped; the argument ends at the
- *  first occurence of one of the characters in the string "brk".
+ *  first occurrence of one of the characters in the string "brk".
  *  When such a character is found, it is put into the external
  *  variable "_argbreak", and replaced by a null character; if the
  *  arg string ends before that, then the null character is

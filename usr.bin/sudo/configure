@@ -691,7 +691,7 @@ Optional Packages:
   --with-incpath          additional places to look for include files
   --with-libpath          additional places to look for libraries
   --with-libraries        additional libraries to link with
-  --with-devel            add developement options
+  --with-devel            add development options
   --with-efence           link with -lefence for malloc() debugging
   --with-csops            add CSOps standard options
   --without-passwd        don't use passwd/shadow file for authentication
@@ -1203,7 +1203,7 @@ fi;
 if test "${with_devel+set}" = set; then
   withval="$with_devel"
   case $with_devel in
-    yes)	echo 'Setting up for developement: -Wall, flex, yacc'
+    yes)	echo 'Setting up for development: -Wall, flex, yacc'
 		PROGS="${PROGS} testsudoers"
 		OSDEFS="${OSDEFS} -DSUDO_DEVEL"
 		DEV=""
