@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.33 2003/07/29 18:38:36 deraadt Exp $	*/
+/*	$OpenBSD: init.c,v 1.34 2003/10/30 23:58:52 deraadt Exp $	*/
 /*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: init.c,v 1.33 2003/07/29 18:38:36 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.34 2003/10/30 23:58:52 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -918,12 +918,16 @@ setupargv(session_t *sp, struct ttyent *typ)
 		if (sp->se_window)
 			free(sp->se_window);
 		sp->se_window = strdup(typ->ty_window);
+		if (sp->se_window == NULL) {
+			warning("can't allocate window");
+			return (0);
+		}
 		sp->se_window_argv = construct_argv(sp->se_window);
-		if (sp->se_window_argv == 0) {
+		if (sp->se_window_argv == NULL) {
 			warning("can't parse window for port %s",
 			    sp->se_device);
 			free(sp->se_window);
-			sp->se_window = 0;
+			sp->se_window = NULL;
 			return (0);
 		}
 	}
