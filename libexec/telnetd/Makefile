@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2001/05/25 10:25:22 hin Exp $
+#	$OpenBSD: Makefile,v 1.11 2001/06/22 16:14:55 hin Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 12/15/93
 #	$NetBSD: Makefile,v 1.6 1996/02/24 01:22:12 jtk Exp $
 
@@ -21,7 +21,7 @@ DPADD+= ${LIBDES} ${LIBKRB}
 .endif
 
 .if (${KERBEROS5:L} == "yes")
-LDADD+=	-lkrb5
+LDADD+=	-lkrb5 -lasn1 -lcrypto
 .endif
 
 .include <bsd.prog.mk>
