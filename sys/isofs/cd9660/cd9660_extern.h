@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_extern.h,v 1.4 2000/02/07 04:57:15 assar Exp $	*/
+/*	$OpenBSD: cd9660_extern.h,v 1.5 2000/06/07 23:25:08 millert Exp $	*/
 /*	$NetBSD: cd9660_extern.h,v 1.1 1997/01/24 00:24:53 cgd Exp $	*/
 
 /*-
@@ -84,8 +84,8 @@ struct iso_mnt {
 #define lblkno(imp, loc)	((loc) >> (imp)->im_bshift)
 #define blksize(imp, ip, lbn)	((imp)->logical_block_size)
 
-int cd9660_mount __P((struct mount *,
-	    const char *, caddr_t, struct nameidata *, struct proc *));
+int cd9660_mount __P((struct mount *, const char *, caddr_t,
+                      struct nameidata *, struct proc *));
 int cd9660_start __P((struct mount *, int, struct proc *));
 int cd9660_unmount __P((struct mount *, int, struct proc *));
 int cd9660_root __P((struct mount *, struct vnode **));
@@ -96,6 +96,8 @@ int cd9660_vget __P((struct mount *, ino_t, struct vnode **));
 int cd9660_fhtovp __P((struct mount *, struct fid *, struct vnode **));
 int cd9660_vptofh __P((struct vnode *, struct fid *));
 int cd9660_init __P((struct vfsconf *));
+int cd9660_check_export __P((struct mount *, struct mbuf *, int *,
+                             struct ucred **));
 #define cd9660_sysctl ((int (*) __P((int *, u_int, void *, size_t *, void *, \
                                     size_t, struct proc *)))eopnotsupp)
 
