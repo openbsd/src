@@ -1,4 +1,4 @@
-/*	$OpenBSD: natparse.c,v 1.5 2000/05/01 06:16:48 kjell Exp $	*/
+/*	$OpenBSD: natparse.c,v 1.6 2000/08/10 05:50:27 kjell Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -55,7 +55,7 @@ extern	char	*sys_errlist[];
 
 #if !defined(lint)
 static const char sccsid[] ="@(#)ipnat.c	1.9 6/5/96 (C) 1993 Darren Reed";
-static const char rcsid[] = "@(#)$IPFilter: natparse.c,v 1.2.2.2 2000/03/25 00:37:37 darrenr Exp $";
+static const char rcsid[] = "@(#)$IPFilter: natparse.c,v 1.2.2.3 2000/06/25 07:13:28 darrenr Exp $";
 #endif
 
 
@@ -746,7 +746,11 @@ char	*msk;
 	if (strchr(msk, '.'))
 		return inet_addr(msk);
 	if (strchr(msk, 'x'))
-		return (u_32_t)strtol(msk, NULL, 0);
+#if defined(sun) && !defined(__SVR4) && !defined(__svr4__)
+		return (u_32_t)htonl(strtol(msk, NULL, 0));
+#else
+		return (u_32_t)htonl(strtoul(msk, NULL, 0));
+#endif
 	/*
 	 * set x most significant bits
 	 */

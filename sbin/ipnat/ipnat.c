@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipnat.c,v 1.37 2000/07/26 20:33:01 mickey Exp $	*/
+/*	$OpenBSD: ipnat.c,v 1.38 2000/08/10 05:50:27 kjell Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -58,7 +58,7 @@ extern	char	*sys_errlist[];
 
 #if !defined(lint)
 static const char sccsid[] ="@(#)ipnat.c	1.9 6/5/96 (C) 1993 Darren Reed";
-static const char rcsid[] = "@(#)$IPFilter: ipnat.c,v 2.1.2.2 1999/12/04 02:09:30 darrenr Exp $";
+static const char rcsid[] = "@(#)$IPFilter: ipnat.c,v 2.1.2.3 2000/07/27 13:07:07 darrenr Exp $";
 #endif
 
 

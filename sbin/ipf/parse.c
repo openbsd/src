@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.34 2000/04/05 05:35:28 kjell Exp $	*/
+/*	$OpenBSD: parse.c,v 1.35 2000/08/10 05:50:27 kjell Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -43,7 +43,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)parse.c	1.44 6/5/96 (C) 1993-1996 Darren Reed";
-static const char rcsid[] = "@(#)$IPFilter: parse.c,v 2.1.2.12 2000/03/08 11:43:55 darrenr Exp $";
+static const char rcsid[] = "@(#)$IPFilter: parse.c,v 2.1.2.14 2000/06/21 14:50:52 darrenr Exp $";
 #endif
 
 extern	struct	ipopt_names	ionames[], secclass[];
@@ -1268,14 +1268,20 @@ int     linenum;
 				linenum, **cp);
 			return -1;
 		}
-		fp->fr_icmp |= (u_short)i;
-		fp->fr_icmpm = (u_short)0xffff;
-		(*cp)++;
-		return 0;
+	} else {
+		i = icmpcode(**cp);
+		if (i == -1) {
+			fprintf(stderr, 
+				"%d: Invalid icmp code (%s) specified\n",
+				linenum, **cp);
+			return -1;
+		}
 	}
-	fprintf(stderr, "%d: Invalid icmp code (%s) specified\n",
-		linenum, **cp);
-	return -1;
+	i &= 0xff;
+	fp->fr_icmp |= (u_short)i;
+	fp->fr_icmpm = (u_short)0xffff;
+	(*cp)++;
+	return 0;
 }
 
 
@@ -1295,9 +1301,8 @@ char *str;
 	char	*s;
 	int	i, len;
 
-	if (!(s = strrchr(str, ')')))
-		return -1;
-	*s = '\0';
+	if ((s = strrchr(str, ')')))
+		*s = '\0';
 	if (isdigit(*str)) {
 		if (!ratoi(str, &i, 0, 255))
 			return -1;
@@ -1565,7 +1570,7 @@ struct	frentry	*fp;
 			printf(" icmp-type %s", icmptypes[type]);
 		else
 			printf(" icmp-type %d", type);
-		if (code)
+		if (ntohs(fp->fr_icmpm) & 0xff)
 			printf(" code %d", code);
 	}
 	if (fp->fr_proto == IPPROTO_TCP && (fp->fr_tcpf || fp->fr_tcpfm)) {

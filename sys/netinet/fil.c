@@ -1,4 +1,4 @@
-/*	$OpenBSD: fil.c,v 1.25 2000/05/24 21:59:10 kjell Exp $	*/
+/*	$OpenBSD: fil.c,v 1.26 2000/08/10 05:50:25 kjell Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-1996 Darren Reed";
-static const char rcsid[] = "@(#)$IPFilter: fil.c,v 2.3.2.20 2000/05/22 06:57:42 darrenr Exp $";
+static const char rcsid[] = "@(#)$IPFilter: fil.c,v 2.3.2.22 2000/07/08 02:13:28 darrenr Exp $";
 #endif
 
 #include <sys/errno.h>
@@ -23,6 +23,9 @@ static const char rcsid[] = "@(#)$IPFilter: fil.c,v 2.3.2.20 2000/05/22 06:57:42
 #endif
 #if (defined(KERNEL) || defined(_KERNEL)) && defined(__FreeBSD_version) && \
     (__FreeBSD_version >= 220000)
+# if (__FreeBSD_version >= 400019)
+#  define CSUM_DELAY_DATA
+# endif
 # include <sys/filio.h>
 # include <sys/fcntl.h>
 #else
@@ -1187,7 +1190,7 @@ nodata:
  * SUCH DAMAGE.
  *
  *	@(#)uipc_mbuf.c	8.2 (Berkeley) 1/4/94
- * $IPFilter: fil.c,v 2.3.2.20 2000/05/22 06:57:42 darrenr Exp $
+ * $IPFilter: fil.c,v 2.3.2.22 2000/07/08 02:13:28 darrenr Exp $
  */
 /*
  * Copy data from an mbuf chain starting "off" bytes from the beginning,
@@ -1592,6 +1595,7 @@ void frsync()
 		ip_natsync(ifp);
 		ip_statesync(ifp);
 	}
+	ip_natsync((struct ifnet *)-1);
 # endif
 
 	WRITE_ENTER(&ipf_mutex);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_state.c,v 1.22 2000/05/24 21:59:11 kjell Exp $	*/
+/*	$OpenBSD: ip_state.c,v 1.23 2000/08/10 05:50:26 kjell Exp $	*/
 
 /*
  * Copyright (C) 1995-1998 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-1995 Darren Reed";
-static const char rcsid[] = "@(#)$IPFilter: ip_state.c,v 2.3.2.25 2000/05/22 06:57:53 darrenr Exp $";
+static const char rcsid[] = "@(#)$IPFilter: ip_state.c,v 2.3.2.28 2000/08/08 16:00:35 darrenr Exp $";
 #endif
 
 #include <sys/errno.h>
@@ -152,7 +152,7 @@ static ips_stat_t *fr_statetstats()
  * flush state tables.  two actions currently defined:
  * which == 0 : flush all state table entries
  * which == 1 : flush TCP connections which have started to close but are
- *              stuck for some reason.
+ *	        stuck for some reason.
  */
 static int fr_state_flush(which)
 int which;
@@ -679,12 +679,12 @@ fr_info_t *fin;
 	register u_char	pr;
 	struct icmp *ic;
 	u_short savelen;
+	icmphdr_t *icmp;
 	fr_info_t ofin;
 	tcphdr_t *tcp;
-	icmphdr_t *icmp;
+	int type, len;
 	frentry_t *fr;
 	ip_t *oip;
-	int type;
 	u_int hv;
 
 	/*
@@ -707,6 +707,38 @@ fr_info_t *fin;
 	oip = (ip_t *)((char *)fin->fin_dp + ICMPERR_ICMPHLEN);
 	if (ip->ip_len < ICMPERR_MAXPKTLEN + ((oip->ip_hl - 5) << 2))
 		return NULL;
+
+	/*
+	 * Sanity Checks.
+	 */
+	len = fin->fin_dlen - ICMPERR_ICMPHLEN;
+	if ((len <= 0) || ((oip->ip_hl << 2) > len))
+		return NULL;
+
+	/*
+	 * Is the buffer big enough for all of it ?  It's the size of the IP
+	 * header claimed in the encapsulated part which is of concern.  It
+	 * may be too big to be in this buffer but not so big that it's
+	 * outside the ICMP packet, leading to TCP deref's causing problems.
+	 * This is possible because we don't know how big oip_hl is when we
+	 * do the pullup early in fr_check() and thus can't gaurantee it is
+	 * all here now.
+	 */
+#ifdef  _KERNEL
+	{
+	mb_t *m;
+
+# if SOLARIS
+	m = fin->fin_qfm;
+	if ((char *)oip + len > (char *)m->b_wptr)
+		return NULL;
+# else
+	m = *(mb_t **)fin->fin_mp;
+	if ((char *)oip + len > (char *)ip + m->m_len)
+		return NULL;
+# endif
+	}
+#endif
 
 	if (oip->ip_p == IPPROTO_ICMP) {
 
@@ -738,9 +770,10 @@ fr_info_t *fin;
 		}
 		hv %= fr_statesize;
 
-		oip->ip_len = ntohs(oip->ip_len);
+		savelen = oip->ip_len;
+		oip->ip_len = len;
 		fr_makefrip(oip->ip_hl << 2, oip, &ofin);
-		oip->ip_len = htons(oip->ip_len);
+		oip->ip_len = savelen;
 		ofin.fin_ifp = fin->fin_ifp;
 		ofin.fin_out = !fin->fin_out;
 		ofin.fin_mp = NULL; /* if dereferenced, panic XXX */
@@ -795,7 +828,7 @@ fr_info_t *fin;
 	 * order. Any change we make must be undone afterwards.
 	 */
 	savelen = oip->ip_len;
-	oip->ip_len = ip->ip_len - (ip->ip_hl << 2) - ICMPERR_ICMPHLEN;
+	oip->ip_len = len;
 	fr_makefrip(oip->ip_hl << 2, oip, &ofin);
 	oip->ip_len = savelen;
 	ofin.fin_ifp = fin->fin_ifp;
@@ -899,7 +932,15 @@ fr_info_t *fin;
 	case IPPROTO_TCP :
 	    {
 		register u_short dport = tcp->th_dport, sport = tcp->th_sport;
+		register int i;
 
+		i = tcp->th_flags;
+		/*
+		 * Just plain ignore RST flag set with either FIN or SYN.
+		 */
+		if ((i & TH_RST) &&
+		    ((i & (TH_FIN|TH_SYN|TH_RST)) != TH_RST))
+			break;
 		tryagain = 0;
 retry_tcp:
 		hvm = hv % fr_statesize;

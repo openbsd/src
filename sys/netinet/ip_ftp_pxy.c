@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ftp_pxy.c,v 1.10 2000/04/12 21:32:39 kjell Exp $	*/
+/*	$OpenBSD: ip_ftp_pxy.c,v 1.11 2000/08/10 05:50:26 kjell Exp $	*/
 
 /*
  * Simple FTP transparent proxy for in-kernel use.  For use with the NAT
@@ -9,7 +9,10 @@ extern	kmutex_t	ipf_rw;
 #endif
 
 #define	isdigit(x)	((x) >= '0' && (x) <= '9')
-#define	isupper(x)	((unsigned)((x) - 'A') <= 'Z' - 'A')
+#define	isupper(x)	(((unsigned)(x) >= 'A') && ((unsigned)(x) <= 'Z'))
+#define	islower(x)	(((unsigned)(x) >= 'a') && ((unsigned)(x) <= 'z'))
+#define	isalpha(x)	(isupper(x) || islower(x))
+#define	toupper(x)	(isupper(x) ? (x) : (x) - 'a' + 'A')
 
 #define	IPF_FTP_PROXY
 
@@ -26,7 +29,7 @@ int ippr_ftp_out __P((fr_info_t *, ip_t *, ap_session_t *, nat_t *));
 int ippr_ftp_in __P((fr_info_t *, ip_t *, ap_session_t *, nat_t *));
 int ippr_ftp_portmsg __P((fr_info_t *, ip_t *, nat_t *));
 int ippr_ftp_pasvmsg __P((fr_info_t *, ip_t *, nat_t *));
-int ippr_ftp_complete __P((char *, size_t));
+int ippr_ftp_complete __P((char *, size_t, char *));
 
 u_short ipf_ftp_atoi __P((char **));
 
@@ -46,8 +49,8 @@ int ippr_ftp_init()
 }
 
 
-int ippr_ftp_complete(buf, len)
-char *buf;
+int ippr_ftp_complete(buf, len, cbuf)
+char *buf, *cbuf;
 size_t len;
 {
 	register char *s, c;
@@ -74,17 +77,22 @@ size_t len;
 				return -1;
 		} else
 			return -1;
-	} else if (isupper(c)) {
+	} else if (isalpha(c)) {
+		cbuf[0] = toupper(c);
 		c = *s++;
 		i--;
-		if (isupper(c)) {
+		if (isalpha(c)) {
+			cbuf[1] = toupper(c);
 			c = *s++;
 			i--;
-			if (isupper(c)) {
+			if (isalpha(c)) {
+				cbuf[2] = toupper(c);
 				c = *s++;
 				i--;
-				if (isupper(c)) {
+				if (isalpha(c)) {
+					cbuf[3] = toupper(c);
 					c = *s++;
+					cbuf[4] = c;
 					i--;
 					if (c != ' ')
 						return -1;
@@ -164,7 +172,7 @@ fr_info_t *fin;
 ip_t *ip;
 nat_t *nat;
 {
-	char portbuf[IPF_FTPBUFSZ], newbuf[IPF_FTPBUFSZ], *s;
+	char portbuf[IPF_FTPBUFSZ], newbuf[IPF_FTPBUFSZ], *s, cmd[6];
 	tcphdr_t *tcp, tcph, *tcp2 = &tcph;
 	size_t nlen = 0, dlen, olen;
 	u_short a5, a6, sp, dp;
@@ -196,26 +204,27 @@ nat_t *nat;
 	if (dlen > 0)
 		m_copydata(m, off, MIN(sizeof(portbuf), dlen), portbuf);
 #endif
-	if (dlen == 0)
+	if (dlen <= 0)
 		return 0;
+	bzero(cmd, sizeof(cmd));
 	portbuf[sizeof(portbuf) - 1] = '\0';
 	*newbuf = '\0';
 
 	/*
 	 * Check that a user is progressing through the login ok.
 	 */
-	if (ippr_ftp_complete(portbuf, dlen))
+	if (ippr_ftp_complete(portbuf, dlen, cmd))
 		return 0;
 
 	ftp = nat->nat_aps->aps_data;
 	switch (ftp->ftp_passok)
 	{
 	case 0 :
-		if (!strncmp(portbuf, "USER ", 5))
+		if (!strncmp(cmd, "USER ", 5))
 			ftp->ftp_passok = 1;
 		break;
 	case 2 :
-		if (!strncmp(portbuf, "PASS ", 5))
+		if (!strncmp(cmd, "PASS ", 5))
 			ftp->ftp_passok = 3;
 		break;
 	}
@@ -224,7 +233,7 @@ nat_t *nat;
 	/*
 	 * Check for client sending out PORT message.
 	 */
-	if (!ippr_ftp_pasvonly && !strncmp(portbuf, "PORT ", 5)) { 
+	if (!ippr_ftp_pasvonly && !strncmp(cmd, "PORT ", 5)) { 
 		if (dlen < IPF_MINPORTLEN)
 			return 0;
 	} else
@@ -391,7 +400,7 @@ fr_info_t *fin;
 ip_t *ip;
 nat_t *nat;
 {
-	char portbuf[IPF_FTPBUFSZ], newbuf[IPF_FTPBUFSZ], *s;
+	char portbuf[IPF_FTPBUFSZ], newbuf[IPF_FTPBUFSZ], *s, cmd[6];
 	int off, olen, dlen, nlen = 0, inc = 0;
 	tcphdr_t tcph, *tcp2 = &tcph;
 	struct in_addr swip, swip2;
@@ -422,8 +431,9 @@ nat_t *nat;
 	if (dlen > 0)
 		m_copydata(m, off, MIN(sizeof(portbuf), dlen), portbuf);
 #endif
-	if (dlen == 0)
+	if (dlen <= 0)
 		return 0;
+	bzero(cmd, sizeof(cmd));
 	portbuf[sizeof(portbuf) - 1] = '\0';
 	*newbuf = '\0';
 
@@ -450,7 +460,7 @@ nat_t *nat;
 		break;
 	}
 
-	if (ippr_ftp_complete(portbuf, dlen) || (ftp->ftp_passok != 4))
+	if (ippr_ftp_complete(portbuf, dlen, cmd) || (ftp->ftp_passok != 4))
 		return 0;
 
 	/*

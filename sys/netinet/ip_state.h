@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_state.h,v 1.14 2000/04/13 17:13:42 kjell Exp $	*/
+/*	$OpenBSD: ip_state.h,v 1.15 2000/08/10 05:50:26 kjell Exp $	*/
 
 /*
  * Copyright (C) 1995-1998 by Darren Reed.
@@ -8,17 +8,17 @@
  * to the original author and the contributors.
  *
  * @(#)ip_state.h	1.3 1/12/96 (C) 1995 Darren Reed
- * $IPFilter: ip_state.h,v 2.1.2.4 2000/02/23 15:23:27 darrenr Exp $
+ * $IPFilter: ip_state.h,v 2.1.2.5 2000/07/08 02:15:56 darrenr Exp $
  */
 #ifndef	__IP_STATE_H__
 #define	__IP_STATE_H__
 
 #ifndef 	IPSTATE_SIZE
-# define	IPSTATE_SIZE	257
+# define	IPSTATE_SIZE	5737
 #endif
 
 #ifndef		IPSTATE_MAX
-# define	IPSTATE_MAX	2048	/* Maximum number of states held */
+# define	IPSTATE_MAX	4013	/* Maximum number of states held */
 #endif
 
 #define	PAIRS(s1,d1,s2,d2)	((((s1) == (s2)) && ((d1) == (d2))) ||\

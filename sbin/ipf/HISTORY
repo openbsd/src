@@ -1,4 +1,4 @@
-#	$OpenBSD: HISTORY,v 1.8 2000/05/24 21:59:11 kjell Exp $
+#	$OpenBSD: HISTORY,v 1.9 2000/08/10 05:50:27 kjell Exp $
 #
 # NOTE: Quite a few patches and suggestions come from other sources, to whom
 #       I'm greatly indebted, even if no names are mentioned.
@@ -21,6 +21,30 @@
 # and especially those who have found the time to port IP Filter to new
 # platforms.
 #
+3.3.18	08/08/2000 - Released
+
+fix up command checking in the ftp proxy
+
+fix getting the version from the kernel for solaris
+
+fix icmp state checking bug
+
+print out better information for ICMP packets in ipmon
+
+open ipfilter device read only if we know we can
+
+3.3.17	08/07/2000 - Released
+
+increase default state table sizes
+
+don't apply patches to FreeBSD twice
+
+fix parsing of icmp code when using words
+
+fix printing of icmp code when it is 0
+
+add compatibility #ifdef for FreeBSD's CSUM_DELAY_DATA
+
 3.3.16	23/05/2000 - Released
 
 don't add TCP state if it is an RST packet and (attempt) to send out

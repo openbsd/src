@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_frag.c,v 1.17 2000/03/13 23:40:18 kjell Exp $	*/
+/*	$OpenBSD: ip_frag.c,v 1.18 2000/08/10 05:50:26 kjell Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_frag.c	1.11 3/24/96 (C) 1993-1995 Darren Reed";
-static const char rcsid[] = "@(#)$IPFilter: ip_frag.c,v 2.4.2.4 1999/11/28 04:52:10 darrenr Exp $";
+static const char rcsid[] = "@(#)$IPFilter: ip_frag.c,v 2.4.2.5 2000/06/06 15:50:48 darrenr Exp $";
 #endif
 
 #if defined(KERNEL) && !defined(_KERNEL)
@@ -138,6 +138,9 @@ ipfr_t *table[];
 {
 	ipfr_t	**fp, *fra, frag;
 	u_int	idx;
+
+	if (ipfr_inuse >= IPFT_SIZE)
+		return NULL;
 
 	frag.ipfr_p = ip->ip_p;
 	idx = ip->ip_p;

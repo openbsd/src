@@ -1,4 +1,4 @@
-/*	$OpenBSD: fils.c,v 1.20 2000/03/13 23:40:19 kjell Exp $	*/
+/*	$OpenBSD: fils.c,v 1.21 2000/08/10 05:50:27 kjell Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -53,7 +53,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)fils.c	1.21 4/20/96 (C) 1993-1996 Darren Reed";
-static const char rcsid[] = "@(#)$IPFilter: fils.c,v 2.2.2.6 2000/02/23 11:16:35 darrenr Exp $";
+static const char rcsid[] = "@(#)$IPFilter: fils.c,v 2.2.2.7 2000/05/24 20:34:56 darrenr Exp $";
 #endif
 
 #define	F_IN	0
@@ -314,15 +314,15 @@ frentry_t *fp;
 			fp->fr_flags |= FR_OUTQUE;
 		if (opts & (OPT_HITS|OPT_VERBOSE))
 #ifdef	USE_QUAD_T
-			printf("%qd ", fp->fr_hits);
+			printf("%qu ", fp->fr_hits);
 #else
-			printf("%ld ", fp->fr_hits);
+			printf("%lu ", fp->fr_hits);
 #endif
 		if (opts & (OPT_ACCNT|OPT_VERBOSE))
 #ifdef	USE_QUAD_T
-			printf("%qd ", fp->fr_bytes);
+			printf("%qu ", fp->fr_bytes);
 #else
-			printf("%ld ", fp->fr_bytes);
+			printf("%lu ", fp->fr_bytes);
 #endif
 		if (opts & OPT_SHOWLINENO)
 			printf("@%d ", n);
