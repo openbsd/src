@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.41 2000/09/21 15:15:57 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.42 2001/01/16 20:22:31 espie Exp $
 
 NEW_BINUTILS=alpha mips powerpc hppa
 
@@ -43,7 +43,7 @@ all:	config.status
 	    scriptdir=${PREFIX}/libdata \
 	    tooldir=${PREFIX} \
 	    ALL_MODULES="${ALL_MODULES}" \
-	    ALL_X11_MODULES="${ALL_X11_MODULES}"
+	    ALL_X11_MODULES="${ALL_X11_MODULES}" all info
 	cd ${.OBJDIR}/binutils && \
 	    ${MAKE} CC="${CC}" CFLAGS="${CFLAGS} ${COPTS}" \
 	    LDFLAGS=${LDSTATIC} objdump
