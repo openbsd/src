@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.88 2004/12/22 17:42:00 danh Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.89 2005/03/12 08:05:58 markus Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.88 2004/12/22 17:42:00 danh Exp $";
+static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.89 2005/03/12 08:05:58 markus Exp $";
 #endif
 #endif /* not lint */
 
@@ -375,9 +375,13 @@ main(int argc, char *argv[])
 				die(0);
 		} else {
 			InetInuse = 1;
-			double_rbuf(fd);
 			pfd[PFD_INET].fd = fd;
-			pfd[PFD_INET].events = POLLIN;
+			if (SecureMode) {
+				shutdown(fd, SHUT_RD);
+			} else {
+				double_rbuf(fd);
+				pfd[PFD_INET].events = POLLIN;
+			}
 		}
 	}
 
@@ -525,18 +529,14 @@ main(int argc, char *argv[])
 			len = sizeof(frominet);
 			i = recvfrom(pfd[PFD_INET].fd, line, MAXLINE, 0,
 			    (struct sockaddr *)&frominet, &len);
-			if (SecureMode) {
-				/* silently drop it */
-			} else {
-				if (i > 0) {
-					line[i] = '\0';
-					cvthname(&frominet, resolve,
-					    sizeof resolve);
-					dprintf("cvthname res: %s\n", resolve);
-					printline(resolve, line);
-				} else if (i < 0 && errno != EINTR)
-					logerror("recvfrom inet");
-			}
+			if (i > 0) {
+				line[i] = '\0';
+				cvthname(&frominet, resolve,
+				    sizeof resolve);
+				dprintf("cvthname res: %s\n", resolve);
+				printline(resolve, line);
+			} else if (i < 0 && errno != EINTR)
+				logerror("recvfrom inet");
 		}
 		if ((pfd[PFD_CTLSOCK].revents & POLLIN) != 0)
 			ctlsock_accept_handler();
