@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.55 2004/06/22 23:05:28 deraadt Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.56 2004/06/23 05:15:21 deraadt Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -174,6 +174,7 @@ routehandler(struct protocol *p)
 	struct ifa_msghdr *ifam;
 	struct if_announcemsghdr *ifan;
 	struct client_lease *l;
+	time_t t = time(NULL);
 	struct sockaddr *sa;
 	struct iaddr a;
 	ssize_t n;
@@ -216,10 +217,9 @@ routehandler(struct protocol *p)
 			break;
 		if (findproto((char *)(ifam + 1), ifam->ifam_addrs) != AF_INET)
 			break;
-		if (scripttime && time(NULL) > scripttime &&
-		    time(NULL) < scripttime + 5)
-			goto die;
-		break;
+		if (scripttime == 0 || t < scripttime + 1)
+			break;
+		goto die;
 	case RTM_IFINFO:
 		ifm = (struct if_msghdr *)rtm;
 		if (ifm->ifm_index != ifi->index)
@@ -1926,6 +1926,8 @@ script_write_params(char *prefix, struct client_lease *lease)
 
 	for (i = 0; i < 256; i++)
 		hdr.len += sizeof(int) + lease->options[i].len;
+
+	scripttime = time(NULL);
 
 	if ((buf = buf_open(hdr.len)) == NULL)
 		error("buf_open: %m");
