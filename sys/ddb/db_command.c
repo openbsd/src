@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.12 1997/07/07 19:45:20 niklas Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.13 1997/09/08 19:46:37 deraadt Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /* 
@@ -83,7 +83,6 @@ db_skip_to_eol()
 #define	CMD_FOUND	1
 #define	CMD_NONE	2
 #define	CMD_AMBIGUOUS	3
-#define	CMD_HELP	4
 
 /*
  * Search for command prefix.
@@ -126,12 +125,6 @@ db_cmd_search(name, table, cmdp)
 		    result = CMD_FOUND;
 		}
 	    }
-	}
-	if (result == CMD_NONE) {
-	    /* check for 'help' */
-		if (name[0] == 'h' && name[1] == 'e'
-		    && name[2] == 'l' && name[3] == 'p')
-			result = CMD_HELP;
 	}
 	return (result);
 }
@@ -193,10 +186,6 @@ db_command(last_cmdp, cmd_table)
 			return;
 		    case CMD_AMBIGUOUS:
 			db_printf("Ambiguous\n");
-			db_flush_lex();
-			return;
-		    case CMD_HELP:
-			db_cmd_list(cmd_table);
 			db_flush_lex();
 			return;
 		    default:
@@ -376,6 +365,7 @@ struct db_command db_command_table[] = {
 	{ "callout",	db_show_callout,	0,		NULL },
 	{ "show",	NULL,			0,		db_show_cmds },
 	{ "boot",	NULL,			0,		db_boot_cmds },
+	{ "help",	db_help_cmd,		0,		NULL },
 	{ "hangman",	db_hangman,		0,		NULL },
 	{ NULL, 	NULL,			0,		NULL }
 };
@@ -396,15 +386,13 @@ struct db_command *ptr;
 struct db_command	*db_last_command = 0;
 
 void
-db_help_cmd()
+db_help_cmd(addr, haddr, count, modif)
+	db_expr_t addr;
+	int	haddr;
+	db_expr_t count;
+	char	*modif;
 {
-	struct db_command *cmd = db_command_table;
-
-	while (cmd->name != 0) {
-	    db_printf("%-12s", cmd->name);
-	    db_end_line(12);
-	    cmd++;
-	}
+	db_cmd_list(db_command_table);
 }
 
 void
