@@ -1,10 +1,9 @@
-#	$OpenBSD: M187,v 1.11 2001/06/27 05:46:21 art Exp $
+#	$OpenBSD: M187,v 1.12 2001/08/23 22:04:32 miod Exp $
 
 machine mvme88k
 
 include "../../../conf/GENERIC"
 
-option		"M88000"	# support for 88K
 option		MVME187		# support for 187
 option		"NCPUS=1"	# Number of cpus supported (max 4)
 option		BUGMAP		# use Bug Rom VME Mappings
