@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.406 2003/08/18 11:08:10 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.407 2003/08/20 13:02:52 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1002,8 +1002,10 @@ queuespec	: QUEUE STRING interface queue_opts qassign {
 			a.qlimit = $4.qlimit;
 			a.scheduler = $4.scheduler.qtype;
 			if (expand_queue(&a, $3, $5, $4.queue_bwspec,
-			    &$4.scheduler))
+			    &$4.scheduler)) {
+				yyerror("errors in queue definition");
 				YYERROR;
+			}
 		}
 		;
 
