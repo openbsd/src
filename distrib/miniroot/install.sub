@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.338 2004/04/12 22:55:11 krw Exp $
+#	$OpenBSD: install.sub,v 1.339 2004/06/13 22:00:50 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2004 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1734,7 +1734,7 @@ DEVSMADE=
 # Selected sets will be installed in the order they are listed in $THESETS.
 # Ensure that siteXX.tgz is the *last* set listed so its contents overwrite
 # the contents of the other sets, not the other way around.
-THESETS="bsd bsd.rd $MDSETS"
+THESETS="bsd bsd.rd bsd.mp $MDSETS"
 DEFAULTSETS="bsd"
 for _set in base etc misc comp man game xbase xshare xfont xserv site ; do
 	[[ $MODE == upgrade && $_set == etc ]] && continue
