@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.1 2000/01/07 21:37:30 angelos Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.2 2000/01/07 21:55:05 angelos Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -50,22 +50,11 @@
 
 #include <sys/param.h>
 #include <sys/proc.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
-#include <sys/buf.h>
-#include <sys/dkstat.h>
-#include <sys/protosw.h>
 #include <sys/socket.h>
-#include <sys/ioctl.h>
 #include <sys/sockio.h>
-#include <sys/file.h>
-#include <sys/tty.h>
 #include <sys/kernel.h>
-#include <sys/conf.h>
 #include <sys/systm.h>
-#include <sys/sysctl.h>
-
-#include <machine/cpu.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -95,7 +84,6 @@
 #endif
 
 #if NBPFILTER > 0
-#include <sys/time.h>
 #include <net/bpf.h>
 #endif
 
@@ -379,9 +367,8 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	int s;
 	struct sockaddr_in si;
 	struct sockaddr *sa = NULL;
-	int error;
-
-	error = 0;
+	int error = 0;
+	struct proc *prc = curproc;             /* XXX */
 
 	s = splimp();
 	switch(cmd) {
@@ -440,6 +427,10 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		break;
 	case GRESPROTO:
+	        /* Check for superuser */
+	        if ((error = suser(prc->p_ucred, &prc->p_acflag)) != 0)
+		        break;
+
 		sc->g_proto = ifr->ifr_flags;
 		switch (sc->g_proto) {
 		case IPPROTO_GRE :
@@ -459,6 +450,10 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case GRESADDRS:
 	case GRESADDRD:
+	        /* Check for superuser */
+	        if ((error = suser(prc->p_ucred, &prc->p_acflag)) != 0)
+		        break;
+
 		/*
 	         * set tunnel endpoints, compute a less specific route
 	         * to the remote end and mark if as up
