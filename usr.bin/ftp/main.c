@@ -74,6 +74,7 @@ main(argc, argv)
 	int ch, top;
 	struct passwd *pw = NULL;
 	char *cp, homedir[MAXPATHLEN];
+	int force_port = 0;
 
 	sp = getservbyname("ftp", "tcp");
 	if (sp == 0)
@@ -82,7 +83,7 @@ main(argc, argv)
 	interactive = 1;
 	autologin = 1;
 
-	while ((ch = getopt(argc, argv, "dgintv")) != EOF) {
+	while ((ch = getopt(argc, argv, "p:dgintv")) != EOF) {
 		switch (ch) {
 		case 'd':
 			options |= SO_DEBUG;
@@ -99,6 +100,10 @@ main(argc, argv)
 
 		case 'n':
 			autologin = 0;
+			break;
+
+		case 'p':
+			force_port = atoi(optarg);
 			break;
 
 		case 't':
@@ -138,6 +143,84 @@ main(argc, argv)
 	if (pw != NULL) {
 		home = homedir;
 		(void) strcpy(home, pw->pw_dir);
+	}
+	if (argc > 0 && strchr(argv[0], ':')) {
+		int ret = 0;
+		anonftp = 1;
+
+		while (argc > 0 && strchr(argv[0], ':')) {
+			char *xargv[5];
+			extern char *__progname;
+			char portstr[20], *p, *bufp;
+			int xargc = 2;
+
+			if (setjmp(toplevel))
+				exit(0);
+			(void) signal(SIGINT, intr);
+			(void) signal(SIGPIPE, lostpeer);
+			xargv[0] = __progname;
+
+			/* connect to host */
+			bufp = xargv[1] = strdup(argv[0]);
+			p = strchr(xargv[1], ':');
+			*p = '\0';
+			xargv[2] = NULL;
+			if (force_port) {
+				xargv[2] = portstr;
+				snprintf(portstr, sizeof portstr, "%d",
+				    force_port);
+				xargc++;
+			}
+			setpeer(xargc, xargv);
+			if (!connected) {
+				printf("failed to connect to %s\n", xargv[1]);
+				ret = 1;
+				goto bail;
+			}
+			free(bufp);
+
+			setbinary(NULL, 0);
+
+			/* cd into correct directory */
+			bufp = xargv[1] = strdup(argv[0]);
+			if (xargv[1] == NULL) {
+				ret = 1;
+				goto bail;
+			}
+			xargv[1] = strchr(xargv[1], ':');
+			xargv[1]++;
+			p = strrchr(xargv[1], '/');
+			if (p)
+				*p = '\0';
+			xargv[2] = NULL;
+			xargc = 2;
+			cd(xargc, xargv);
+			free(bufp);
+
+			/* fetch file */
+			bufp = xargv[1] = strdup(argv[0]);
+			if (xargv[1] == NULL) {
+				ret = 1;
+				goto bail;
+			}
+			xargv[1] = strchr(xargv[1], ':');
+			xargv[1]++;
+			p = strrchr(xargv[1], '/');
+			if (p)
+				xargv[1] = p + 1;
+			xargv[2] = NULL;
+			xargc = 2;
+			get(xargc, xargv);
+			free(bufp);
+
+			/* get ready for the next file */
+bail:
+			if (connected)
+				disconnect(1, xargv);
+			--argc;
+			argv++;
+		}
+		exit(ret);
 	}
 	if (argc > 0) {
 		char *xargv[5];

@@ -201,11 +201,20 @@ login(host)
 	char tmp[80];
 	char *user, *pass, *acct;
 	int n, aflag = 0;
+	char anonpass[MAXHOSTNAMELEN+2+32];
 
 	user = pass = acct = 0;
 	if (ruserpass(host, &user, &pass, &acct) < 0) {
 		code = -1;
 		return (0);
+	}
+	if (anonftp) {
+		user = getlogin();
+		strncpy(anonpass, user, 32);
+		strcat(anonpass, "@");
+		gethostname(&anonpass[strlen(anonpass)-1], MAXHOSTNAMELEN);
+		pass = anonpass;
+		user = "anonymous";
 	}
 	while (user == NULL) {
 		char *myname = getlogin();

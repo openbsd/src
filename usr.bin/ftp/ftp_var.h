@@ -85,6 +85,7 @@ char	modename[32];		/* name of file transfer mode */
 int	mode;			/* file transfer mode */
 char	bytename[32];		/* local byte size in ascii */
 int	bytesize;		/* local byte size in binary */
+int	anonftp;		/* force an anonftp login */
 
 char	*hostname;		/* name of host connected to */
 int	unix_server;		/* server is unix, can use binary for ascii */
