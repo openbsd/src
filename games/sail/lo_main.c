@@ -1,4 +1,4 @@
-/*	$OpenBSD: lo_main.c,v 1.2 1999/01/18 06:20:52 pjanzen Exp $	*/
+/*	$OpenBSD: lo_main.c,v 1.3 2001/03/09 08:36:24 pjanzen Exp $	*/
 /*	$NetBSD: lo_main.c,v 1.3 1995/04/22 10:36:59 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lo_main.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: lo_main.c,v 1.2 1999/01/18 06:20:52 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: lo_main.c,v 1.3 2001/03/09 08:36:24 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -47,6 +47,7 @@ static char rcsid[] = "$OpenBSD: lo_main.c,v 1.2 1999/01/18 06:20:52 pjanzen Exp
  *
  * -l force a long listing (print out real usernames)
  */
+#include <sys/param.h>
 #include <sys/types.h>
 #include <pwd.h>
 #include "extern.h"
@@ -62,7 +63,7 @@ int
 lo_main()
 {
 	FILE *fp;
-	char sbuf[32];
+	char sbuf[20+MAXLOGNAME];
 	int n = 0, people;
 	struct passwd *pass;
 	struct logs log;
