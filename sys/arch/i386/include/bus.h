@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.11 1998/02/08 04:14:13 niklas Exp $	*/
+/*	$OpenBSD: bus.h,v 1.12 1998/09/06 23:10:57 niklas Exp $	*/
 /*	$NetBSD: bus.h,v 1.6 1996/11/10 03:19:25 thorpej Exp $	*/
 
 /*-
@@ -291,6 +291,28 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 #endif
 
 /*
+ *	void bus_space_read_raw_region_N __P((bus_space_tag_t tag,
+ *	    bus_space_handle_t bsh, bus_size_t offset,
+ *	    u_int8_t *addr, size_t count));
+ *
+ * Read `count' bytes in 2, 4 or 8 byte wide quantities from bus space
+ * described by tag/handle and starting at `offset' and copy into
+ * buffer provided.  The buffer must have proper alignment for the N byte
+ * wide entities.  Furthermore possible byte-swapping should be done by
+ * these functions.
+ */
+
+#define	bus_space_read_raw_region_2(t, h, o, a, c) \
+    bus_space_read_region_2((t), (h), (o), (u_int16_t *)(a), (c) >> 1)
+#define	bus_space_read_raw_region_4(t, h, o, a, c) \
+    bus_space_read_region_4((t), (h), (o), (u_int32_t *)(a), (c) >> 2)
+
+#if 0	/* Cause a link error for bus_space_read_raw_region_8 */
+#define	bus_space_read_raw_region_8 \
+    !!! bus_space_read_raw_region_8 unimplemented !!!
+#endif
+
+/*
  *	void bus_space_write_N __P((bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
  *	    u_intN_t value));
@@ -386,7 +408,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 /*
  *	void bus_space_write_raw_multi_N __P((bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
- *	    u_int8_t *addr, size_t count));
+ *	    const u_int8_t *addr, size_t count));
  *
  * Write `count' bytes in 2, 4 or 8 byte wide quantities from the buffer
  * provided to bus space described by tag/handle/offset.  The buffer
@@ -395,9 +417,9 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
  */
 
 #define	bus_space_write_raw_multi_2(t, h, o, a, c) \
-    bus_space_write_multi_2((t), (h), (o), (u_int16_t *)(a), (c) >> 1)
+    bus_space_write_multi_2((t), (h), (o), (const u_int16_t *)(a), (c) >> 1)
 #define	bus_space_write_raw_multi_4(t, h, o, a, c) \
-    bus_space_write_multi_4((t), (h), (o), (u_int32_t *)(a), (c) >> 2)
+    bus_space_write_multi_4((t), (h), (o), (const u_int32_t *)(a), (c) >> 2)
 
 #if 0	/* Cause a link error for bus_space_write_raw_multi_8 */
 #define	bus_space_write_raw_multi_8 \
@@ -482,6 +504,28 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 #if 0	/* Cause a link error for bus_space_write_region_8 */
 #define	bus_space_write_region_8					\
 			!!! bus_space_write_region_8 unimplemented !!!
+#endif
+
+/*
+ *	void bus_space_write_raw_region_N __P((bus_space_tag_t tag,
+ *	    bus_space_handle_t bsh, bus_size_t offset,
+ *	    const u_int8_t *addr, size_t count));
+ *
+ * Write `count' bytes in 2, 4 or 8 byte wide quantities to bus space
+ * described by tag/handle and starting at `offset' from the
+ * buffer provided.  The buffer must have proper alignment for the N byte
+ * wide entities.  Furthermore possible byte-swapping should be done by
+ * these functions.
+ */
+
+#define	bus_space_write_raw_region_2(t, h, o, a, c) \
+    bus_space_write_region_2((t), (h), (o), (const u_int16_t *)(a), (c) >> 1)
+#define	bus_space_write_raw_region_4(t, h, o, a, c) \
+    bus_space_write_region_4((t), (h), (o), (const u_int32_t *)(a), (c) >> 2)
+
+#if 0	/* Cause a link error for bus_space_write_raw_region_8 */
+#define	bus_space_write_raw_region_8 \
+    !!! bus_space_write_raw_region_8 unimplemented !!!
 #endif
 
 /*
@@ -731,8 +775,11 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
  */
 #define	bus_space_barrier(t, h, o, l, f)	\
 	((void)((void)(t), (void)(h), (void)(o), (void)(l), (void)(f)))
-#define	BUS_BARRIER_READ	0x01		/* force read barrier */
-#define	BUS_BARRIER_WRITE	0x02		/* force write barrier */
+#define	BUS_SPACE_BARRIER_READ	0x01		/* force read barrier */
+#define	BUS_SPACE_BARRIER_WRITE	0x02		/* force write barrier */
+/* Compatibility defines */
+#define	BUS_BARRIER_READ	BUS_SPACE_BARRIER_READ
+#define	BUS_BARRIER_WRITE	BUS_SPACE_BARRIER_WRITE
 
 /*
  * Flags used in various bus DMA methods.
