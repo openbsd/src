@@ -1,4 +1,4 @@
-/*	$OpenBSD: openbsd-syscalls.c,v 1.22 2003/10/08 16:32:44 sturm Exp $	*/
+/*	$OpenBSD: openbsd-syscalls.c,v 1.23 2003/10/22 21:03:35 sturm Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -104,7 +104,7 @@ static struct emulation emulations[] = {
 	{ "bsdos",	bsdos_syscallnames,	BSDOS_SYS_MAXSYSCALL },
 	{ "freebsd",	freebsd_syscallnames,	FREEBSD_SYS_MAXSYSCALL },
 	{ "netbsd",	netbsd_syscallnames,	NETBSD_SYS_MAXSYSCALL },
-	{ NULL,		NULL,			NULL }
+	{ NULL,		NULL,			0 }
 };
 
 struct obsd_data {
