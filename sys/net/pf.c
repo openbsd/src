@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.89 2001/06/29 16:48:02 niklas Exp $ */
+/*	$OpenBSD: pf.c,v 1.90 2001/07/01 11:22:45 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -1180,13 +1180,14 @@ void
 pf_change_icmp(u_int32_t *ia, u_int16_t *ip, u_int32_t *oa, u_int32_t na,
     u_int16_t np, u_int16_t *pc, u_int16_t *h2c, u_int16_t *ic, u_int16_t *hc)
 {
-	u_int32_t oia = *ia, ooa = *oa, opc = *pc, oh2c = *h2c;
+	u_int32_t oia = *ia, ooa = *oa, opc, oh2c = *h2c;
 	u_int16_t oip = *ip;
+	if (pc != NULL) opc = *pc;
 	/* Change inner protocol port, fix inner protocol checksum. */
 	*ip = np;
-	*pc = pf_cksum_fixup(*pc, oip, *ip);
+	if (pc != NULL) *pc = pf_cksum_fixup(*pc, oip, *ip);
 	*ic = pf_cksum_fixup(*ic, oip, *ip);
-	*ic = pf_cksum_fixup(*ic, opc, *pc);
+	if (pc != NULL) *ic = pf_cksum_fixup(*ic, opc, *pc);
 	/* Change inner ip address, fix inner ip checksum and icmp checksum. */
 	*ia = na;
 	*h2c = pf_cksum_fixup(pf_cksum_fixup(*h2c, oia / 65536, *ia / 65536),
@@ -2045,7 +2046,7 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 		ipoff2 = off + 8;	/* offset of h2 in mbuf chain */
 		if (!pf_pull_hdr(ifp, m, 0, ipoff2, &h2, sizeof(h2), h,
 			      NULL, NULL)) {
-			printf("pf: ICMP error message too short\n");
+			printf("pf: ICMP error message too short (ip)\n");
 			return (NULL);
 		}
 
@@ -2059,12 +2060,16 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 			struct pf_state *s;
 			struct pf_tree_key key;
 			struct pf_state_peer *src, *dst;
-			int ackskew;
 
-			if (!pf_pull_hdr(ifp, m, ipoff2, off2, &th, sizeof(th),
+			/*
+			 * Only the first 8 bytes of the TCP header can be
+			 * expected. Don't access any TCP header fields after
+			 * th_seq, an ackskew test is not possible.
+			 */
+			if (!pf_pull_hdr(ifp, m, ipoff2, off2, &th, 8,
 			    &h2, NULL, NULL)) {
 				printf("pf: "
-				    "ICMP error message too short\n");
+				    "ICMP error message too short (tcp)\n");
 				return (NULL);
 			}
 			seq = ntohl(th.th_seq);
@@ -2086,18 +2091,11 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 			src = (direction == s->direction) ?  &s->dst : &s->src;
 			dst = (direction == s->direction) ?  &s->src : &s->dst;
 
-			if ((th.th_flags & TH_ACK) == 0 && th.th_ack == 0)
-				ackskew = 0;
-			else
-				ackskew = dst->seqlo - ntohl(th.th_ack);
 			if (!SEQ_GEQ(src->seqhi, end) ||
-			    !SEQ_GEQ(seq, src->seqlo - dst->max_win) ||
-			    !(ackskew >= -MAXACKWINDOW) ||
-			    !(ackskew <= MAXACKWINDOW)) {
+			    !SEQ_GEQ(seq, src->seqlo - dst->max_win)) {
 
 				printf("pf: BAD ICMP state: ");
 				pf_print_state(direction, s);
-				pf_print_flags(th.th_flags);
 				printf(" seq=%lu\n", seq);
 				return (NULL);
 			}
@@ -2108,13 +2106,13 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 					pf_change_icmp(&h2.ip_src.s_addr,
 					    &th.th_sport, &h->ip_dst.s_addr,
 					    s->lan.addr, s->lan.port,
-					    &th.th_sum, &h2.ip_sum,
+					    NULL, &h2.ip_sum,
 					    &ih->icmp_cksum, &h->ip_sum);
 				} else {
 					pf_change_icmp(&h2.ip_dst.s_addr,
 					    &th.th_dport, &h->ip_src.s_addr,
 					    s->gwy.addr, s->gwy.port,
-					    &th.th_sum, &h2.ip_sum,
+					    NULL, &h2.ip_sum,
 					    &ih->icmp_cksum, &h->ip_sum);
 				}
 				rewrite++;
@@ -2128,7 +2126,7 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 				m_copyback(m, off, sizeof(*ih), (caddr_t)ih);
 				m_copyback(m, ipoff2, sizeof(h2),
 				    (caddr_t)&h2);
-				m_copyback(m, off2, sizeof(th),
+				m_copyback(m, off2, 8,
 				    (caddr_t)&th);
 			}
 
@@ -2142,7 +2140,7 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 
 			if (!pf_pull_hdr(ifp, m, ipoff2, off2, &uh, sizeof(uh),
 			    &h2, NULL, NULL)) {
-				printf("pf: ICMP error message too short\n");
+				printf("pf: ICMP error message too short (udp)\n");
 				return (NULL);
 			}
 
