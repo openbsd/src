@@ -1212,3 +1212,6 @@
 ./usr/share/man/cat9/splx.0
 ./usr/share/man/man4/alpha
 ./usr/share/man/man4/pmax
+./usr/share/man/cat8/mount_afs.0
+./usr/share/man/cat8/mount_xfs.0
+./usr/share/man/cat4/ifmedia.0

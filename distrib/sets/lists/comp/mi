@@ -596,6 +596,7 @@
 ./usr/include/menu.h
 ./usr/include/mpool.h
 ./usr/include/ndbm.h
+./usr/include/net/if_media.h
 ./usr/include/net/bpf.h
 ./usr/include/net/bpfdesc.h
 ./usr/include/net/encap.h

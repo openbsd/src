@@ -285,6 +285,7 @@
 ./usr/lib/perl5/i386-openbsd/5.00404/pod
 ./usr/lib/perl5/i386-openbsd/5.00404/pod/perldiag.pod
 ./usr/lib/perl5/site_perl/i386-openbsd
+./usr/lib/perl5/site_perl/i386-openbsd/net/if_media.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/a.out.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/ar.ph
 ./usr/lib/perl5/site_perl/i386-openbsd/arpa

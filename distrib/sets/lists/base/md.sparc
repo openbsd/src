@@ -123,6 +123,7 @@
 ./usr/lib/perl5/site_perl/sparc-openbsd/net/bpf.ph
 ./usr/lib/perl5/site_perl/sparc-openbsd/net/bpfdesc.ph
 ./usr/lib/perl5/site_perl/sparc-openbsd/net/encap.ph
+./usr/lib/perl5/site_perl/sparc-openbsd/net/if_media.ph
 ./usr/lib/perl5/site_perl/sparc-openbsd/net/if.ph
 ./usr/lib/perl5/site_perl/sparc-openbsd/net/if_arp.ph
 ./usr/lib/perl5/site_perl/sparc-openbsd/net/if_atm.ph
