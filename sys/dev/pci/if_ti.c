@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.47 2003/10/26 15:07:26 jmc Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.48 2003/12/16 08:20:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1756,7 +1756,7 @@ ti_attach(parent, self, aux)
 		/*
 		 * Copper cards allow manual 10/100 mode selection,
 		 * but not manual 1000baseTX mode selection. Why?
-		 * Becuase currently there's no way to specify the
+		 * Because currently there's no way to specify the
 		 * master/slave setting through the firmware interface,
 		 * so Alteon decided to just bag it and handle it
 		 * via autonegotiation.
