@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_map.h,v 1.6 1997/11/06 05:59:34 csapuntz Exp $	*/
+/*	$OpenBSD: vm_map.h,v 1.7 1997/11/11 20:16:41 millert Exp $	*/
 /*	$NetBSD: vm_map.h,v 1.11 1995/03/26 20:39:10 jtc Exp $	*/
 
 /* 
@@ -206,8 +206,12 @@ typedef struct {
 #define		vm_map_pmap(map)	((map)->pmap)
 
 /* XXX: number of kernel maps and entries to statically allocate */
-#define MAX_KMAP	10
-#define	MAX_KMAPENT	500
+#ifndef	MAX_KMAP
+#define	MAX_KMAP	20
+#endif
+#ifndef	MAX_KMAPENT
+#define	MAX_KMAPENT	1000
+#endif
 
 #ifdef _KERNEL
 boolean_t	 vm_map_check_protection __P((vm_map_t,
