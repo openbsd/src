@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.15 2002/02/21 00:02:04 deraadt Exp $	*/
+/*	$OpenBSD: tty.c,v 1.16 2002/02/21 04:16:23 deraadt Exp $	*/
 
 /*
  * Terminfo display driver
@@ -56,12 +56,7 @@ ttinit()
 {
 	char	*tv_stype, *p;
 
-/* system dependent function to determine terminal type, if necessary. */
-#ifndef gettermtype
-	char	*gettermtype();
-#endif /* gettermtype */
-
-	if ((tv_stype = gettermtype()) == NULL)
+	if ((tv_stype = getenv("TERM")) == NULL)
 		panic("Could not determine terminal type!");
 
 	if (setupterm(tv_stype, 1, NULL)) {

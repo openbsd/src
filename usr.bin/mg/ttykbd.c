@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttykbd.c,v 1.9 2001/05/24 03:05:27 mickey Exp $	*/
+/*	$OpenBSD: ttykbd.c,v 1.10 2002/02/21 04:16:23 deraadt Exp $	*/
 
 /*
  * Name:	MG 2a
@@ -56,7 +56,7 @@ ttykeymapinit()
 #endif /* FKEYS */
 
 #ifndef	NO_STARTUP
-	if ((cp = gettermtype())) {
+	if ((cp = getenv("TERM"))) {
 		if (((cp = startupfile(cp)) != NULL) && (load(cp) != TRUE))
 			ewprintf("Error reading key initialization file");
 	}
