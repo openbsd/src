@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.16 2002/05/30 09:11:59 form Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.17 2002/06/07 08:36:56 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -70,28 +70,31 @@ int Rdr_Action = PF_CHANGE_ADD_HEAD;
 int dev;			/* pf device */
 int Delete_Rules;		/* for parse_rules callbacks */
 
+FILE *pidfp;
+int ufd = -1;
 char *infile;			/* infile name needed by parse_[rules|nat] */
-char luser[MAXLOGNAME] = "";	/* username */
-char ipsrc[256] = "";		/* ip as a string */
+char luser[MAXLOGNAME];		/* username */
+char ipsrc[256];		/* ip as a string */
 char pidfile[MAXPATHLEN];	/* we save pid in this file. */
 char userfile[MAXPATHLEN];	/* we save username in this file */
 
 struct timeval Tstart, Tend;		/* start and end times of session */
-static volatile sig_atomic_t want_death;
 
 int	pfctl_add_rule(struct pfctl *, struct pf_rule *);
 int	pfctl_add_nat(struct pfctl *, struct pf_nat *);
 int	pfctl_add_rdr(struct pfctl *, struct pf_rdr *);
 int	pfctl_add_binat(struct pfctl *, struct pf_binat *);
 
-static void	read_config(void);
+static int	read_config(FILE *);
 static void	print_message(char *);
 static int	allowed_luser(char *);
 static int	check_luser(char *, char *);
 static int	changefilter(int, char *, char *);
 static void	authpf_kill_states(void);
-static void	need_death(int s);
-static __dead void	do_death(void);
+
+volatile sig_atomic_t want_death;
+static void	need_death(int signo);
+static __dead void do_death(int);
 
 /*
  * User shell for authenticating gateways. sole purpose is to allow
@@ -102,85 +105,62 @@ static __dead void	do_death(void);
 int
 main(int argc, char *argv[])
 {
-	int pidfd, ufd, namelen;
-	int lockcnt = 0;
-	char *foo, *cp;
-	FILE *fp = NULL;
-	struct passwd *pwp;
-	struct sockaddr *namep;
-	struct sockaddr_in peer;
-	char bannedir[] = PATH_BAN_DIR;
+	int lockcnt = 0, pidfd;
+	FILE *config;
+	struct in_addr ina;
+	struct passwd *pw;
+	char *cp;
+	uid_t uid;
 
-	namep = (struct sockaddr *)&peer;
-	namelen = sizeof(peer);
-
-	read_config();
-
-	memset(namep, 0, namelen);
-
-	pwp = getpwuid(getuid());
-	if (pwp == NULL) {
-		syslog(LOG_ERR, "can't find user for uid %d", getuid());
+	config = fopen(PATH_CONFFILE, "r");
+	if (config == NULL)
 		exit(1);
-	}
 
-	if (strcmp(pwp->pw_shell, PATH_AUTHPF_SHELL)) {
-		syslog(LOG_ERR, "wrong shell for user %s, uid %u",
-		    pwp->pw_name, pwp->pw_uid);
-		exit(1);
-	}
-
-	strlcpy(luser, pwp->pw_name, sizeof(luser));
-
-	if ((foo = getenv("SSH_CLIENT")) != NULL) {
-		struct in_addr jnk;
-		strlcpy(ipsrc, foo, sizeof(ipsrc));
-		cp = ipsrc;
-		while (*cp != '\0') {
-			if (*cp == ' ')
-				*cp = '\0';
-			else
-				cp++;
-		}
-		if (inet_pton(AF_INET, ipsrc, &jnk) != 1) {
-			syslog(LOG_ERR, "Can't get IP from SSH_CLIENT %s",
-			    ipsrc);
-			exit(1);
-		}
-
-	} else {
+	if ((cp = getenv("SSH_CLIENT")) == NULL) {
 		syslog(LOG_ERR, "Can't determine connection source");
 		exit(1);
 	}
-	if (!check_luser(bannedir, luser) || !allowed_luser(luser)) {
-		/* give the luser time to read our nastygram on the screen */
-		sleep(180);
+
+	strlcpy(ipsrc, cp, sizeof(ipsrc));
+	cp = strchr(ipsrc, ' ');
+	if (!cp) {
+		syslog(LOG_ERR, "Corrupt SSH_CLIENT variable %s", ipsrc);
+		exit(1);
+	}
+	*cp = '\0';
+	if (inet_pton(AF_INET, ipsrc, &ina) != 1) {
+		syslog(LOG_ERR,
+		    "Cannot determine IP from SSH_CLIENT %s", ipsrc);
 		exit(1);
 	}
 
-	/*
-	 * make ourselves an entry in /var/run as /var/run/authpf-ipaddr,
-	 * so that things may find us easily to kill us if necessary.
-	 */
-	if (snprintf(pidfile, sizeof pidfile, "%s-%s", PATH_PIDFILE, ipsrc) >=
-	    sizeof pidfile) {
-		fprintf(stderr, "Sorry, host too long for me to handle..\n");
-		syslog(LOG_ERR, "snprintf pidfile bogosity  - exiting");
-		goto dogdeath;
+	/* open the pf device */
+	dev = open(PATH_DEVFILE, O_RDWR);
+	if (dev == -1) {
+		syslog(LOG_ERR, "Can't open filter device (%m)");
+		goto die;
 	}
 
-	if ((pidfd = open(pidfile, O_RDWR|O_CREAT, 0644)) == -1 ||
-	    (fp = fdopen(pidfd, "r+")) == NULL) {
-		syslog(LOG_ERR, "can't open or create %s: %s",
-		    pidfile, strerror(errno));
-		goto dogdeath;
+	uid = getuid();
+	pw = getpwuid(uid);
+	if (pw == NULL) {
+		syslog(LOG_ERR, "can't find user for uid %u", uid);
+		goto die;
 	}
+	if (strcmp(pw->pw_shell, PATH_AUTHPF_SHELL)) {
+		syslog(LOG_ERR, "wrong shell for user %s, uid %u",
+		    pw->pw_name, pw->pw_uid);
+		goto die;
+	}
+	strlcpy(luser, pw->pw_name, sizeof(luser));
+
+	/* Make our entry in /var/run as /var/run/authpf-ipaddr */
+	snprintf(pidfile, sizeof pidfile, "%s-%s", PATH_PIDFILE, ipsrc);
 
 	/*
 	 * If someone else is already using this ip, then this person
-	 * wants to switch users - so kill the old process and we
-	 * exit as well. Of course, this will only work if we are
-	 * running with priviledge.
+	 * wants to switch users - so kill the old process and exit
+	 * as well.
 	 *
 	 * Note, we could print a message and tell them to log out, but the
 	 * usual case of this is that someone has left themselves logged in,
@@ -191,17 +171,29 @@ main(int argc, char *argv[])
 	 * tell them to log out before switching users it is an invitation
 	 * for abuse.
 	 */
-	while (flock(pidfd, LOCK_EX|LOCK_NB) == -1 && errno != EBADF) {
-		int otherpid = -1;
-		int save_errno = errno;
+	do {
+		int save_errno, otherpid = -1;
 
-		lockcnt++;
-		fscanf(fp, "%d", &otherpid);
-		syslog(LOG_DEBUG, "Tried to lock %s, in use by pid %d: %s",
+		if ((pidfd = open(pidfile, O_RDWR|O_CREAT, 0644)) == -1 ||
+		    (pidfp = fdopen(pidfd, "r+")) == NULL) {
+			if (pidfd == -1)
+				close(pidfd);
+			syslog(LOG_ERR, "can't open or create %s: %s", pidfile,
+			    strerror(errno));
+			goto die;
+		}
+
+		if (flock(fileno(pidfp), LOCK_EX|LOCK_NB) == 0)
+			break;
+		save_errno = errno;
+
+		rewind(pidfp);
+		if (fscanf(pidfp, "%d", &otherpid) != 1)
+			otherpid = -1;
+		syslog(LOG_DEBUG,
+		    "Tried to lock %s, in use by pid %d: %s",
 		    pidfile, otherpid, strerror(save_errno));
-		fclose(fp);
 
-		close(pidfd);
 		if (otherpid > 0) {
 			syslog(LOG_INFO,
 			    "killing prior auth (pid %d) of %s by user %s",
@@ -214,33 +206,26 @@ main(int argc, char *argv[])
 		}
 
 		/*
-		 * we try to kill the previous process and aquire the lock
+		 * we try to kill the previous process and acquire the lock
 		 * for 10 seconds, trying once a second. if we can't after
 		 * 10 attempts we log an error and give up
 		 */
-		if (lockcnt > 10) {
+		if (++lockcnt > 10) {
 			syslog(LOG_ERR, "Can't kill previous authpf (pid %d)",
 			    otherpid);
 			goto dogdeath;
 		}
 		sleep(1);
-	}
 
-	fp = fopen(pidfile, "w+");
-	rewind(fp);
-	fprintf(fp, "%d\n", getpid());
-	fflush(fp);
-	(void) ftruncate(fileno(fp), ftell(fp));
-
-	/* open the pf device */
-	dev = open (PATH_DEVFILE, O_RDWR);
-	if (dev == -1) {
-		syslog(LOG_ERR, "Can't open filter device (%m)");
-		goto dogdeath;
-	}
+		/* re-open, and try again. The previous authpf process
+		 * we killed above should unlink the file and release
+		 * it's lock, giving us a chance to get it now
+		 */
+		fclose(pidfp);
+	} while (1);
 
 	/*
-	 * make an entry in file /var/authpf/ipaddr, containing the username.
+	 * Make an entry in file /var/authpf/ipaddr, containing the username.
 	 * this lets external applications check for authentication by looking
 	 * for the ipaddress in that directory, and retrieving the username
 	 * from it.
@@ -251,12 +236,33 @@ main(int argc, char *argv[])
 		goto dogdeath;
 	}
 
+	/* revoke privs */
+	seteuid(getuid());
+	setuid(getuid());
+
+	/*
+	 * Now we are unable to unlink /var/authpf/$ipsec and /var/run/$pid
+	 * and instead have to settle for only truncating them.
+	 */
+
+	if (!check_luser(PATH_BAN_DIR, luser) || !allowed_luser(luser))
+		do_death(0);
+
+	if (read_config(config))
+		do_death(0);
+
+	/* We appear to be making headway, so actually mark our pid */
+	rewind(pidfp);
+	fprintf(pidfp, "%ld\n", (long)getpid());
+	fflush(pidfp);
+	(void) ftruncate(fileno(pidfp), ftell(pidfp));
+
 	write(ufd, luser, strlen(luser));
 	write(ufd, "\n", 1);
-	close(ufd);
 
 	if (changefilter(1, luser, ipsrc) == -1) {
-		/* XXX */
+		printf("Unable to modify filters\r\n");
+		do_death(1);
 	}
 
 	signal(SIGTERM, need_death);
@@ -273,37 +279,30 @@ main(int argc, char *argv[])
 		while (1) {
 			sleep(10);
 			if (want_death)
-				do_death();
+				do_death(1);
 		}
 	}
+
 	/* NOTREACHED */
- dogdeath:
+dogdeath:
 	printf("\r\n\r\nSorry, this service is currently unavailable due to ");
 	printf("technical difficulties\r\n\r\n");
 	print_message(PATH_PROBLEM);
 	printf("\r\nYour authentication process (pid %d) was unable to run\n",
 	    getpid());
 	sleep(180); /* them lusers read reaaaaal slow */
-	if (pidfile[0] != '\0')
-		unlink(pidfile); /* fail silently */
-	if (userfile[0] != '\0')
-		unlink(userfile); /* fail silently */
-	exit(1);
+die:
+	do_death(0);
 }
 
 /*
  * reads config file in PATH_CONFFILE to set optional behaviours up
  */
-static void
-read_config(void)
+static int
+read_config(FILE *f)
 {
 	char buf[1024];
 	int i = 0;
-	FILE *f;
-
-	f = fopen(PATH_CONFFILE, "r");
-	if (f == NULL) 
-		exit(1); /* exit silently if we have no config file */
 
 	openlog("authpf", LOG_PID | LOG_NDELAY, LOG_DAEMON);
 
@@ -313,14 +312,14 @@ read_config(void)
 
 		if (fgets(buf, sizeof(buf), f) == NULL) {
 			fclose(f);
-			return;
+			return (0);
 		}
 		i++;
 		len = strlen(buf);
 		if (buf[len - 1] != '\n' && !feof(f)) {
 			syslog(LOG_ERR, "line %d too long in %s", i,
 			    PATH_CONFFILE);
-			exit(1);
+			return (1);
 		}
 		buf[len - 1] = '\0';
 
@@ -367,11 +366,11 @@ read_config(void)
 		}
 	} while (!feof(f) && !ferror(f));
 	fclose(f);
-	return;
- parse_error:
+	return (0);
+parse_error:
 	fclose(f);
 	syslog(LOG_ERR, "parse error, line %d of %s", i, PATH_CONFFILE);
-	exit(1);
+	return (1);
 }
 
 
@@ -410,23 +409,22 @@ print_message(char *filename)
  * use this gateway. If /etc/authpf.allow does exist, then a
  * user must be listed if the connection is to continue, else
  * the session terminates in the same manner as being banned.
- *
  */
 static int
 allowed_luser(char *luser)
 {
 	char *buf, *lbuf;
+	int matched;
 	size_t len;
 	FILE *f;
-	int matched;
 
 	if ((f = fopen(PATH_ALLOWFILE, "r")) == NULL) {
 		if (errno == ENOENT) {
 			/*
-			 * PATH_ALLOWFILE doesn't exist, this this gateway
+			 * allowfile doesn't exist, this this gateway
 			 * isn't restricted to certain users...
 			 */
-			return (1);
+			return(1);
 		}
 
 		/*
@@ -436,7 +434,7 @@ allowed_luser(char *luser)
 		 */
 		syslog(LOG_ERR, "Can't open allowed users file %s (%s)",
 		    PATH_ALLOWFILE, strerror(errno));
-		return (0);
+		return(0);
 	} else {
 		/*
 		 * /etc/authpf.allow exists, thus we do a linear
@@ -465,7 +463,7 @@ allowed_luser(char *luser)
 			}
 
 			if (matched)
-				return (1); /* matched an allowed username */
+				return(1); /* matched an allowed username */
 		}
 		syslog(LOG_INFO, "Denied access to %s: not listed in %s",
 		    luser, PATH_ALLOWFILE);
@@ -475,7 +473,7 @@ allowed_luser(char *luser)
 		fputs(buf, stdout);
 	}
 	fflush(stdout);
-	return (0);
+	return(0);
 }
 
 /*
@@ -498,7 +496,7 @@ check_luser(char *luserdir, char *luser)
 	    sizeof(tmp)) {
 		syslog(LOG_ERR, "Provided banned directory line too long (%s)",
 		    luserdir);
-		return (0);
+		return(0);
 	}
 	if ((f = fopen(tmp, "r")) == NULL) {
 		if (errno == ENOENT) {
@@ -506,7 +504,7 @@ check_luser(char *luserdir, char *luser)
 			 * file or dir doesn't exist, so therefore
 			 * this luser isn't banned..  all is well
 			 */
-			return (1);
+			return(1);
 		} else {
 			/*
 			 * luser may in fact be banned, but we can't open the
@@ -515,7 +513,7 @@ check_luser(char *luserdir, char *luser)
 			 */
 			syslog(LOG_ERR, "Can't open banned file %s (%s)",
 			    tmp, strerror(errno));
-			return (0);
+			return(0);
 		}
 	} else {
 		/*
@@ -531,12 +529,12 @@ check_luser(char *luserdir, char *luser)
 		while ((fputs(tmp, stdout) != EOF) && !feof(f)) {
 			if (fgets(tmp, sizeof(tmp), f) == NULL) {
 				fflush(stdout);
-				return (0);
+				return(0);
 			}
 		}
 	}
 	fflush(stdout);
-	return (0);
+	return(0);
 }
 
 
@@ -770,7 +768,7 @@ changefilter(int add, char *luser, char *ipsrc)
 		syslog(LOG_INFO, "Removed %s, user %s - duration %ld seconds",
 		    ipsrc, luser, Tend.tv_sec - Tstart.tv_sec);
 	}
-	return (ret);
+	return(ret);
 }
 
 /*
@@ -807,7 +805,7 @@ authpf_kill_states()
 
 /* signal handler that makes us go away properly */
 static void
-need_death(int s)
+need_death(int signo)
 {
 	want_death = 1;
 }
@@ -816,20 +814,22 @@ need_death(int s)
  * function that removes our stuff when we go away.
  */
 static __dead void
-do_death(void)
+do_death(int active)
 {
 	int ret = 0;
 
-	changefilter(0, luser, ipsrc);
-	authpf_kill_states();
-	if (unlink(pidfile) != 0) {
-		syslog(LOG_ERR, "Couldn't unlink %s! (%m)", pidfile);
-		ret = 1;
+	if (active) {
+		changefilter(0, luser, ipsrc);
+		authpf_kill_states();
 	}
-	if (unlink(userfile) != 0) {
-		syslog(LOG_ERR, "Couldn't unlink %s! (%m)", userfile);
-		ret = 1;
-	}
+	if (pidfp)
+		ftruncate(fileno(pidfp), 0);
+	if (pidfile[0])
+		unlink(pidfile);
+	if (ufd)
+		ftruncate(ufd, 0);
+	if (userfile[0])
+		unlink(userfile);
 	exit(ret);
 }
 
