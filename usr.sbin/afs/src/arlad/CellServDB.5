@@ -1,8 +1,8 @@
-.\"     $OpenBSD: CellServDB.5,v 1.3 2002/06/07 06:54:39 hin Exp $
+.\"     $OpenBSD: CellServDB.5,v 1.4 2002/06/07 07:54:45 hin Exp $
 .\"	$KTH: CellServDB.5,v 1.3 2000/09/25 07:24:18 lha Exp $
 .Dd April 19, 2000
 .Dt CellServDB 5
-.Os
+.Os Arla
 .Sh NAME
 .Nm CellServDB
 .Nd AFS cells and database servers
@@ -23,23 +23,24 @@ ip-address              #third.server.for.cell
 .Pp
 .Nm
 is read when 
-.Nm arlad
+.Nm
 is started, normally when the system boots.
 .Pp
-The text after the # is NOT a comment, it the hostname of the
+The text after the # is NOT a comment, it's the hostname of the
 db-server, and it's used to lookup the address. The address is only
-used when the hostname doesn't resolve.
+used when the hostname is not found in DNS.
 .Pp
-Entires in the file are searched and expanded by many programs
+Entries in the file are searched and expanded by many programs.
 .Pp
-There is better way to distribute database-server location then
-CellServDB and that is via a DNS resource record called AFSDB.  This
-is better since there will be no more obsolete CellServDB files laying
-around with no longer valid information.
+In most cases it is better to distribute the information in
+.Nm
+with the AFSDB DNS resource records. This avoids having out of date
+information in
+.Nm Ns .
 .Pp
-When useing AFSDB-rr, entries entries should still be listed, but
-without listing any hosts. This is needed for dynroot to work.
+When using AFSDB DNS resource records, entries entries should still
+be listed, but without any hosts. This is needed for dynroot to work.
 .Sh FILES
-.Pa /usr/arla/etc/CellServDB
+.Pa /etc/afs/CellServDB
 .Sh SEE ALSO
-.Xr arlad 8
+.Xr afsd 8
