@@ -1,55 +1,30 @@
-/*	$OpenBSD: impyu.S,v 1.6 2002/02/04 23:04:18 mickey Exp $	*/
-
+/*	$OpenBSD: impyu.S,v 1.7 2002/05/07 22:19:30 mickey Exp $	*/
 /*
- * Copyright 1996 1995 by Open Software Foundation, Inc.
- *              All Rights Reserved
- *
- * Permission to use, copy, modify, and distribute this software and
- * its documentation for any purpose and without fee is hereby granted,
- * provided that the above copyright notice appears in all copies and
- * that both the copyright notice and this permission notice appear in
- * supporting documentation.
- *
- * OSF DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE
- * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
- * FOR A PARTICULAR PURPOSE.
- *
- * IN NO EVENT SHALL OSF BE LIABLE FOR ANY SPECIAL, INDIRECT, OR
- * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
- * LOSS OF USE, DATA OR PROFITS, WHETHER IN ACTION OF CONTRACT,
- * NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- *
- */
-/*
- * pmk1.1
- */
-/*
- * (c) Copyright 1986 HEWLETT-PACKARD COMPANY
- *
- * To anyone who acknowledges that this file is provided "AS IS"
- * without any express or implied warranty:
- *     permission to use, copy, modify, and distribute this file
- * for any purpose is hereby granted without fee, provided that
- * the above copyright notice and this notice appears in all
- * copies, and that the name of Hewlett-Packard Company not be
- * used in advertising or publicity pertaining to distribution
- * of the software without specific, written prior permission.
- * Hewlett-Packard Company makes no representations about the
- * suitability of this software for any purpose.
- */
+  (c) Copyright 1986 HEWLETT-PACKARD COMPANY
+  To anyone who acknowledges that this file is provided "AS IS"
+  without any express or implied warranty:
+      permission to use, copy, modify, and distribute this file
+  for any purpose is hereby granted without fee, provided that
+  the above copyright notice and this notice appears in all
+  copies, and that the name of Hewlett-Packard Company not be
+  used in advertising or publicity pertaining to distribution
+  of the software without specific, written prior permission.
+  Hewlett-Packard Company makes no representations about the
+  suitability of this software for any purpose.
+*/
+/* @(#)impyu.s: Revision: 1.11.88.1 Date: 93/12/07 15:06:31 */
 
 #include <machine/asm.h>
 
-/****************************************************************************
- *
- *Implement an integer multiply routine for 32-bit operands and 64-bit product
- * with operand values of zero (multiplicand only) and 2**32reated specially.
- * The algorithm uses the multiplier, four bits at a time, from right to left,
- * to generate partial product.  Execution speed is more important than program
- * size in this implementation.
- *
- *****************************************************************************/
+;****************************************************************************
+;
+;Implement an integer multiply routine for 32-bit operands and 64-bit product 
+; with operand values of zero (multiplicand only) and 2**32reated specially.
+; The algorithm uses the multiplier, four bits at a time, from right to left,
+; to generate partial product.  Execution speed is more important than program
+; size in this implementation. 
+;
+;******************************************************************************
 ;
 ; Definitions - General registers
 ;
@@ -60,12 +35,14 @@ op2	.equ		4		; multiplier
 op1	.equ		5		; multiplicand
 cnt	.equ		6		; count in multiply
 brindex	.equ		7		; index into the br. table
-saveop2	.equ		8		; save op2 if high bit of multiplicand
+saveop2	.equ		8		; save op2 if high bit of multiplicand 
 					; is set
 pc	.equ		9		; carry bit of product, = 00...01
 pm	.equ	       10		; value of -1 used in shifting
 temp	.equ		6
 
+;****************************************************************************
+	.text
 LEAF_ENTRY(impyu)
 	stws,ma		pu,4(sp)		; save registers on stack
 	stws,ma		pl,4(sp)		; save registers on stack
@@ -92,20 +69,20 @@ LEAF_ENTRY(impyu)
 	b		mpy1			; if op1 < 2**32, start multiply
 	add		op2,gr0,saveop2		;   save op2 in saveop2
 	shd		gr0,op2,1,pu		; shift op2 left 31 for result
-	b		fini			; go to finish
+	b		fini			; go to finish 
 	shd		op2,gr0,1,pl
 ;
-mpy1	addi		-1,gr0,pm		; initialize pm to 111...1
+mpy1 	addi		-1,gr0,pm		; initialize pm to 111...1
 	addi		1,gr0,pc		; initialize pc to 00...01
 	movib,tr	8,cnt,mloop		; set count for mpy loop
-	extru		op2,31,4,brindex	; 4 bits as index into table
+	extru		op2,31,4,brindex	; 4 bits as index into table 
 ;
 	.align		8
 ;
 	b		sh4c			; br. if sign overflow
 sh4n	shd		pu,pl,4,pl		; shift product right 4 bits
 	addib,<=	-1,cnt,mulend		; reduce count by 1, exit if
-	extru		pu,27,28,pu		;   <= zero
+	extru  		pu,27,28,pu		;   <= zero
 ;
 mloop	blr		brindex,gr0		; br. into table
 						;   entries of 2 words
@@ -128,13 +105,13 @@ mtable						; two words per entry
 ;
 ;  ----	bits = 0010 ---- add op1, add op1, then shift 4 bits
 ;
-	addb,tr		op1,pu,sh4n		; add 2*op1, to shift
-	addb,uv		op1,pu,sh4c		;   product right 4 bits
+	addb,tr		op1,pu,sh4n		; add 2*op1, to shift 
+	addb,uv 	op1,pu,sh4c		;   product right 4 bits
 ;
 ;  ---- bits = 0011 ---- add op1, add 2*op1, shift 4 bits
 ;
-	addb,tr		op1,pu,sh4n-4		; add op1 & 2*op1, shift
-	sh1add,nuv	op1,pu,pu			;   product right 4 bits
+	addb,tr		op1,pu,sh4n-4		; add op1 & 2*op1, shift 
+	sh1add,nuv 	op1,pu,pu			;   product right 4 bits
 ;
 ;  ----	bits = 0100 ---- shift 2, add op1, shift 2
 ;
@@ -242,8 +219,8 @@ sh1	addib,>		-1,cnt,mloop		; loop if count > 0
 sh2ns	addib,tr	1,brindex,sh2sb+4	; increment index
 	extru		pu,29,30,pu		; shift unsigned
 ;
-sh2s	shd		pu,pl,2,pl		; shift with minus sign
-	shd		pm,pu,2,pu		;
+sh2s	shd		pu,pl,2,pl		; shift with minus sign 
+	shd		pm,pu,2,pu		; 
 	sub		pu,op1,pu		; subtract op1
 	shd		pu,pl,2,pl		; shift with minus sign
 	addib,>		-1,cnt,mloop		; decrement count, loop if > 0
@@ -263,7 +240,7 @@ sh1sa	extrs		pu,30,31,pu		;   signed
 	sub		pu,op1,pu		; subtract op1 from product
 	shd		pu,pl,3,pl		; shift 3 with minus sign
 	addib,>		-1,cnt,mloop		; decrement count, loop if >0
-	shd		pm,pu,3,pu
+	shd		pm,pu,3,pu		 
 	addb,tr		op1,pu,lastadd		; do one more add, then finish
 	addb,=,n	saveop2,gr0,fini	; check saveop2
 ;
@@ -274,7 +251,7 @@ sh2us	extru		pu,29,30,pu		; shift 2 unsigned
 	addb,tr		op1,pu,sh2a		; add op1
 	shd		pu,pl,2,pl		; shift 2 bits
 ;
-sh2c	shd		pu,pl,2,pl
+sh2c	shd		pu,pl,2,pl	
 	shd		pc,pu,2,pu		; shift with carry
 	addb,tr		op1,pu,sh2a		; add op1 to product
 	shd		pu,pl,2,pl		; br. to sh2 to shift pu
@@ -306,7 +283,6 @@ fini	stws		pu,0(arg2)		; save high part of result
 	ldws,mb		-4(sp),pl		; restore registers
 	bv		0(rp)			; return
 	ldws,mb		-4(sp),pu		; restore registers
-
-EXIT(impyu)
+EXIT(impu)
 
 	.end

@@ -1,58 +1,32 @@
-/*	$OpenBSD: fcnvxf.c,v 1.5 2001/03/29 03:58:18 mickey Exp $	*/
+/*	$OpenBSD: fcnvxf.c,v 1.6 2002/05/07 22:19:30 mickey Exp $	*/
+/*
+  (c) Copyright 1986 HEWLETT-PACKARD COMPANY
+  To anyone who acknowledges that this file is provided "AS IS"
+  without any express or implied warranty:
+      permission to use, copy, modify, and distribute this file
+  for any purpose is hereby granted without fee, provided that
+  the above copyright notice and this notice appears in all
+  copies, and that the name of Hewlett-Packard Company not be
+  used in advertising or publicity pertaining to distribution
+  of the software without specific, written prior permission.
+  Hewlett-Packard Company makes no representations about the
+  suitability of this software for any purpose.
+*/
+/* @(#)fcnvxf.c: Revision: 2.7.88.1 Date: 93/12/07 15:06:16 */
 
-/*
- * Copyright 1996 1995 by Open Software Foundation, Inc.
- *              All Rights Reserved
- *
- * Permission to use, copy, modify, and distribute this software and
- * its documentation for any purpose and without fee is hereby granted,
- * provided that the above copyright notice appears in all copies and
- * that both the copyright notice and this permission notice appear in
- * supporting documentation.
- *
- * OSF DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE
- * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
- * FOR A PARTICULAR PURPOSE.
- *
- * IN NO EVENT SHALL OSF BE LIABLE FOR ANY SPECIAL, INDIRECT, OR
- * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
- * LOSS OF USE, DATA OR PROFITS, WHETHER IN ACTION OF CONTRACT,
- * NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- *
- */
-/*
- * pmk1.1
- */
-/*
- * (c) Copyright 1986 HEWLETT-PACKARD COMPANY
- *
- * To anyone who acknowledges that this file is provided "AS IS"
- * without any express or implied warranty:
- *     permission to use, copy, modify, and distribute this file
- * for any purpose is hereby granted without fee, provided that
- * the above copyright notice and this notice appears in all
- * copies, and that the name of Hewlett-Packard Company not be
- * used in advertising or publicity pertaining to distribution
- * of the software without specific, written prior permission.
- * Hewlett-Packard Company makes no representations about the
- * suitability of this software for any purpose.
- */
-
-#include "../spmath/float.h"
-#include "../spmath/sgl_float.h"
-#include "../spmath/dbl_float.h"
-#include "../spmath/cnv_float.h"
+#include "float.h"
+#include "sgl_float.h"
+#include "dbl_float.h"
+#include "cnv_float.h"
 
 /*
  *  Convert single fixed-point to single floating-point format
  */
 int
 sgl_to_sgl_fcnvxf(srcptr,dstptr,status)
-
-int *srcptr;
-sgl_floating_point *dstptr;
-unsigned int *status;
+	int *srcptr;
+	sgl_floating_point *dstptr;
+	unsigned int *status;
 {
 	register int src, dst_exponent;
 	register unsigned int result = 0;
@@ -119,10 +93,9 @@ unsigned int *status;
  */
 int
 sgl_to_dbl_fcnvxf(srcptr,dstptr,status)
-
-int *srcptr;
-dbl_floating_point *dstptr;
-unsigned int *status;
+	int *srcptr;
+	dbl_floating_point *dstptr;
+	unsigned int *status;
 {
 	register int src, dst_exponent;
 	register unsigned int resultp1 = 0, resultp2 = 0;
@@ -169,10 +142,9 @@ unsigned int *status;
  */
 int
 dbl_to_sgl_fcnvxf(srcptr,dstptr,status)
-
-dbl_integer *srcptr;
-sgl_floating_point *dstptr;
-unsigned int *status;
+	dbl_integer *srcptr;
+	sgl_floating_point *dstptr;
+	unsigned int *status;
 {
 	int dst_exponent, srcp1;
 	unsigned int result = 0, srcp2;
@@ -273,10 +245,9 @@ unsigned int *status;
  */
 int
 dbl_to_dbl_fcnvxf(srcptr,dstptr,status)
-
-dbl_integer *srcptr;
-dbl_floating_point *dstptr;
-unsigned int *status;
+	dbl_integer *srcptr;
+	dbl_floating_point *dstptr;
+	unsigned int *status;
 {
 	register int srcp1, dst_exponent;
 	register unsigned int srcp2, resultp1 = 0, resultp2 = 0;
