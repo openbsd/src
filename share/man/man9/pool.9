@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pool.9,v 1.27 2003/12/31 00:38:27 jmc Exp $
+.\"	$OpenBSD: pool.9,v 1.28 2004/01/20 18:37:37 tedu Exp $
 .\"	$NetBSD: pool.9,v 1.18 2001/06/21 11:59:01 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,13 @@
 .Nm pool_put ,
 .Nm pool_prime ,
 .Nm pool_sethiwat ,
-.Nm pool_setlowat
+.Nm pool_setlowat ,
+.Nm pool_cache_init ,
+.Nm pool_cache_destroy ,
+.Nm pool_cache_get ,
+.Nm pool_cache_put ,
+.Nm pool_cache_destruct_object ,
+.Nm pool_cache_invalidate
 .Nd resource-pool manager
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
@@ -87,6 +93,24 @@
 .Fa "const char *warnmess"
 .Fa "int ratecap"
 .Fc
+.Ft void
+.Fo pool_cache_init
+.Fa "struct pool_cache *pc"
+.Fa "struct pool *pp"
+.Fa "int (*ctor)(void *, void *, int)"
+.Fa "void (*dtor)(void *, void *)"
+.Fa "void *arg"
+.Fc
+.Ft void
+.Fn pool_cache_destroy "struct pool_cache *pc"
+.Ft void *
+.Fn pool_cache_get "struct pool_cache *pc" "int flags"
+.Ft void
+.Fn pool_cache_put "struct pool_cache *pc" "void *object"
+.Ft void
+.Fn pool_cache_destruct_object "struct pool_cache *pc" "void *object"
+.Ft void
+.Fn pool_cache_invalidate "struct pool_cache *pc"
 .Sh DESCRIPTION
 These utility routines provide management of pools of fixed-sized
 areas of memory.
@@ -326,6 +350,42 @@ The pool resource code uses a per-pool lock to protect its internal state.
 If any pool functions are called in an interrupt context,
 the caller must block all interrupts that might cause the
 code to be reentered.
+.Ss POOL CACHES
+Another set of functions are available as extensions to the pool manager.
+The pool cache functions automatically call constructors and destructors
+when objects are allocated from the pool or returned to it.
+They have similar semantics as the other pool functions.
+The
+.Fa pp
+argument to
+.Fn pool_cache_init
+must already be initialized.
+.Pp
+Objects are not immediately deconstructed when put into the pool cache.
+Instead, they are maintained for future allocations.
+When the system determines that memory needs to be reclaimed, then the
+deconstructor is called on each free object and it is placed back into the
+pool.
+The
+.Fa ctor
+and
+.Fa dtor
+functions are passed
+.Fa arg
+and a pointer to the object, in that order.
+The
+.Fa ctor
+is also passed the same
+.Fa flags
+that are passed to
+.Fn pool_cache_get .
+The
+.Fn pool_cache_destruct_object
+function deconstructs and puts an object back into the pool immediately.
+.Fn pool_cache_invalidate
+deconstructs all cached objects and releases their memory.
+.Pp
+Pool caches are also commonly referred to as a slab allocator.
 .Ss DIAGNOSTICS
 Pool usage logs can be enabled by defining the compile-time option
 .Dv POOL_DIAGNOSTIC .
