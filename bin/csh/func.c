@@ -1,4 +1,4 @@
-/*    $OpenBSD: func.c,v 1.18 2003/06/11 21:09:50 deraadt Exp $       */
+/*    $OpenBSD: func.c,v 1.19 2003/06/23 16:42:15 deraadt Exp $       */
 /*    $NetBSD: func.c,v 1.11 1996/02/09 02:28:29 christos Exp $       */
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)func.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: func.c,v 1.18 2003/06/11 21:09:50 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: func.c,v 1.19 2003/06/23 16:42:15 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -1415,35 +1415,5 @@ doeval(Char **v, struct command *t)
     resexit(osetexit);
     gv = savegv;
     if (my_reenter)
-	stderror(ERR_SILENT);
-}
-
-void
-/*ARGSUSED*/
-doprintf(Char **v, struct command *t)
-{
-    Char **newv;
-    char **c;
-    extern int progprintf(int, char **);
-    int ret;
-
-    gflag = 0;
-    tglob(v);
-    if (gflag) {
-	newv = globall(v);
-	if (newv == 0) {
-	    stderror(ERR_NAME | ERR_NOMATCH);
-	    return;
-	}
-	v = newv;
-	gargv = 0;
-    }
-
-    ret = progprintf(blklen(v), c = short2blk(v));
-    (void) fflush(cshout);
-    (void) fflush(csherr);
-
-    blkfree((Char **) c);
-    if (ret)
 	stderror(ERR_SILENT);
 }
