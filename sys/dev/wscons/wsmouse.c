@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouse.c,v 1.4 2001/02/18 15:18:49 aaron Exp $ */
+/* $OpenBSD: wsmouse.c,v 1.5 2001/03/30 16:38:14 aaron Exp $ */
 /* $NetBSD: wsmouse.c,v 1.12 2000/05/01 07:36:58 takemura Exp $ */
 
 /*
@@ -166,7 +166,7 @@ cdev_decl(wsmouse);
 
 #if NWSMUX > 0
 struct wsmuxops wsmouse_muxops = {
-	wsmouseopen, wsmousedoclose, wsmousedoioctl, 0, 0
+	wsmouseopen, wsmousedoclose, wsmousedoioctl, 0, 0, 0
 };
 #endif
 

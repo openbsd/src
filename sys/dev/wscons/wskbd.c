@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.11 2001/03/01 23:28:46 aaron Exp $ */
+/* $OpenBSD: wskbd.c,v 1.12 2001/03/30 16:38:13 aaron Exp $ */
 /* $NetBSD: wskbd.c,v 1.38 2000/03/23 07:01:47 thorpej Exp $ */
 
 /*
@@ -212,6 +212,7 @@ int	wskbd_activate __P((struct device *, enum devact));
 int wskbd_displayioctl
 	    __P((struct device *, u_long, caddr_t, int, struct proc *p));
 int	wskbd_set_display __P((struct device *, struct wsmux_softc *));
+int	wskbd_isset_display __P((struct device *));
 
 inline void update_leds __P((struct wskbd_internal *));
 inline void update_modifier __P((struct wskbd_internal *, u_int, int, int));
@@ -278,7 +279,7 @@ cdev_decl(wskbd);
 #if NWSMUX > 0 || NWSDISPLAY > 0
 struct wsmuxops wskbd_muxops = {
 	wskbdopen, wskbddoclose, wskbddoioctl, wskbd_displayioctl,
-	wskbd_set_display
+	wskbd_set_display, wskbd_isset_display
 };
 #endif
 
@@ -1140,6 +1141,18 @@ wskbd_set_display(dv, muxsc)
 	else
 		printf("%s: disconnecting from %s\n",
 		       sc->sc_dv.dv_xname, odisplaydv->dv_xname);
+
+	return (0);
+}
+
+int
+wskbd_isset_display(dv)
+	struct device *dv;
+{
+	struct wskbd_softc *sc = (struct wskbd_softc *)dv;
+
+	if (sc->sc_displaydv != NULL)
+		return (1);
 
 	return (0);
 }
