@@ -1,4 +1,4 @@
-/*	$OpenBSD: modload.c,v 1.6 1996/08/05 11:01:17 mickey Exp $	*/
+/*	$OpenBSD: modload.c,v 1.7 1996/08/13 17:56:06 deraadt Exp $	*/
 /*	$NetBSD: modload.c,v 1.13 1995/05/28 05:21:58 jtc Exp $	*/
 
 /*
@@ -227,7 +227,7 @@ main(argc, argv)
 			p++;                    /* skip over '/' */
 		else
 			p = modobj;
-		sprintf(modout, "%s%sut", _PATH_TMP, p);
+		snprintf(modout, sizeof modout, "%s%sut", _PATH_TMP, p);
 		out = modout;
 		/*
 		 * reverse meaning of -u - if we've generated a /tmp
