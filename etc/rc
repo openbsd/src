@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.164 2001/02/23 06:50:10 deraadt Exp $
+#	$OpenBSD: rc,v 1.165 2001/03/02 06:22:39 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -252,11 +252,8 @@ if [ X${nfs_server} = X"YES" -a -s /etc/exports -a \
 	fi
 fi
 
-if [ X${amd} = X"YES" -a -d ${amd_dir} -a -e ${amd_master} ]; then
+if [ X${amd} = X"YES" -a -e ${amd_master} ]; then
 	echo -n ' amd'
-	if [ ! -d ${amd_dir} ]; then
-		mkdir -p -m 755 ${amd_dir}
-	fi
 	(cd /etc/amd; amd -l syslog -x error,noinfo,nostats -p \
 	    -a ${amd_dir} `cat ${amd_master}` > /var/run/amd.pid )
 fi
