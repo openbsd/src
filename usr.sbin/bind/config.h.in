@@ -78,6 +78,9 @@
 /* define if chroot() is available */
 #undef HAVE_CHROOT
 
+/* define if tzset() is available */
+#undef HAVE_TZSET
+
 /* define if struct addrinfo exists */
 #undef HAVE_ADDRINFO
 
