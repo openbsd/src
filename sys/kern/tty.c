@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.6 1996/06/10 07:26:22 deraadt Exp $	*/
+/*	$OpenBSD: tty.c,v 1.7 1996/06/17 05:25:03 downsj Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -739,7 +739,7 @@ ttioctl(tp, cmd, data, flag, p)
 		*(struct winsize *)data = tp->t_winsize;
 		break;
 	case TIOCGPGRP:			/* get pgrp of tty */
-		if (!isctty(p, tp))
+		if (!isctty(p, tp) && suser(p->p_ucred, &p->p_acflag))
 			return (ENOTTY);
 		*(int *)data = tp->t_pgrp ? tp->t_pgrp->pg_id : NO_PID;
 		break;
