@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.h,v 1.22 2002/12/15 21:07:26 mickey Exp $	*/
+/*	$OpenBSD: pdc.h,v 1.23 2003/03/29 01:00:49 mickey Exp $	*/
 
 /*
  * Copyright (c) 1990 mt Xinu, Inc.  All rights reserved.
@@ -24,6 +24,7 @@
  * improvements that they make and grant CSL redistribution rights.
  *
  *	Utah $Hdr: pdc.h 1.12 94/12/14$
+ *	Author: Jeff Forys (CSS), Dave Slattengren (mtXinu)
  */
 
 #ifndef	_MACHINE_PDC_H_
