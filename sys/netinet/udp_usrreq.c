@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.59 2001/05/27 00:39:27 angelos Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.60 2001/05/27 03:13:30 angelos Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -528,9 +528,9 @@ udp_input(m, va_alist)
 	    IPSP_DIRECTION_IN, tdb, inp);
         splx(s);
 
-	/* No SA latching done for UDP */
+	/* No SA latching done for UDP. */
 
-	/* Error or otherwise drop-packet indication */
+	/* Error or otherwise drop-packet indication. */
 	if (error)
 		goto bad;
 #endif /*IPSEC */
@@ -1113,9 +1113,6 @@ udp_usrreq(so, req, m, addr, control)
 		break;
 
 	case PRU_SEND:
-#ifdef IPSEC
-	    /* XXX Find IPsec TDB */
-#endif
 #ifdef INET6
 		if (inp->inp_flags & INP_IPV6)
 			return (udp6_output(inp, m, addr, control));
