@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.71 2001/11/28 16:13:28 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.72 2001/11/29 22:50:03 millert Exp $	*/
 /*	$NetBSD: machdep.c,v 1.121 1999/03/26 23:41:29 mycroft Exp $	*/
 
 /*
@@ -318,7 +318,7 @@ cpu_startup()
 				panic("cpu_startup: not enough memory for "
 				    "buffer cache");
 
-			pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
+			pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
 			    VM_PROT_READ|VM_PROT_WRITE);
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;
