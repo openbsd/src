@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo.c,v 1.9 2000/01/26 06:51:26 itojun Exp $	*/
+/*	$OpenBSD: getaddrinfo.c,v 1.10 2000/02/09 12:22:09 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -30,13 +30,18 @@
  */
 
 /*
- * "#ifdef FAITH" part is local hack for supporting IPv4-v6 translator.
- *
  * Issues to be discussed:
  * - Thread safe-ness must be checked.
  * - Return values.  There are nonstandard return values defined and used
  *   in the source code.  This is because RFC2553 is silent about which error
  *   code must be returned for which situation.
+ * - IPv4 classful (shortened) form.  RFC2553 is silent about it.  XNET 5.2
+ *   says to use inet_aton() to convert IPv4 numeric to binary (alows
+ *   classful form as a result).
+ *   current code - disallow classful form for IPv4 (due to use of inet_pton).
+ * - freeaddrinfo(NULL).  RFC2553 is silent about it.  XNET 5.2 says it is
+ *   invalid.
+ *   current code - SEGV on freeaddrinfo(NULL)
  * Note:
  * - We use getipnodebyname() just for thread-safeness.  There's no intent
  *   to let it do PF_UNSPEC (actually we never pass PF_UNSPEC to
@@ -70,11 +75,6 @@
 #define ANY 0
 #define YES 1
 #define NO  0
-
-#ifdef FAITH
-static int translate = NO;
-static struct in6_addr faith_prefix = IN6ADDR_ANY_INIT;
-#endif
 
 static const char in_addrany[] = { 0, 0, 0, 0 };
 static const char in6_addrany[] = {
@@ -150,7 +150,7 @@ static const struct explore explore[] = {
 static int str_isnumber __P((const char *));
 static int explore_fqdn __P((const struct addrinfo *, const char *,
 	const char *, struct addrinfo **));
-static int explore_null __P((const struct addrinfo *, const char *,
+static int explore_null __P((const struct addrinfo *,
 	const char *, struct addrinfo **));
 static int explore_numeric __P((const struct addrinfo *, const char *,
 	const char *, struct addrinfo **));
@@ -163,6 +163,12 @@ static struct addrinfo *get_ai __P((const struct addrinfo *,
 static int get_portmatch __P((const struct addrinfo *, const char *));
 static int get_port __P((struct addrinfo *, const char *, int));
 static const struct afd *find_afd __P((int));
+#ifdef AI_ADDRCONFIG
+static int addrconfig __P((const struct addrinfo *));
+#endif
+#ifdef INET6
+static int ip6_str2scopeid __P((char *, struct sockaddr_in6 *));
+#endif 
 
 /* XXX macros that make external reference is BAD. */
 
@@ -174,7 +180,7 @@ do { \
 		error = EAI_MEMORY; \
 		goto free; \
 	} \
-} while (0)
+} while (/*CONSTCOND*/0)
 
 #define GET_PORT(ai, serv) \
 do { \
@@ -182,7 +188,7 @@ do { \
 	error = get_port((ai), (serv), 0); \
 	if (error != 0) \
 		goto free; \
-} while (0)
+} while (/*CONSTCOND*/0)
 
 #define GET_CANONNAME(ai, str) \
 do { \
@@ -190,27 +196,27 @@ do { \
 	error = get_canonname(pai, (ai), (str)); \
 	if (error != 0) \
 		goto free; \
-} while (0)
+} while (/*CONSTCOND*/0)
 
 #define ERR(err) \
 do { \
 	/* external reference: error, and label bad */ \
 	error = (err); \
 	goto bad; \
-} while (0)
+} while (/*CONSTCOND*/0)
 
 #define MATCH_FAMILY(x, y, w) \
-	((x) == (y) || ((w) && ((x) == PF_UNSPEC || (y) == PF_UNSPEC)))
+	((x) == (y) || (/*CONSTCOND*/(w) && ((x) == PF_UNSPEC || (y) == PF_UNSPEC)))
 #define MATCH(x, y, w) \
-	((x) == (y) || ((w) && ((x) == ANY || (y) == ANY)))
+	((x) == (y) || (/*CONSTCOND*/(w) && ((x) == ANY || (y) == ANY)))
 
 static int
 str_isnumber(p)
 	const char *p;
 {
-	char *q = (char *)p;
+	const char *q = (const char *)p;
 	while (*q) {
-		if (! isdigit(*q))
+		if (!isdigit(*q))
 			return NO;
 		q++;
 	}
@@ -231,21 +237,6 @@ getaddrinfo(hostname, servname, hints, res)
 	struct addrinfo *pai;
 	const struct afd *afd;
 	const struct explore *ex;
-#ifndef AI_MASK
-#define AI_MASK (AI_PASSIVE | AI_CANONNAME | AI_NUMERICHOST)
-#endif
-
-#ifdef FAITH
-	static int firsttime = 1;
-
-	if (firsttime) {
-		/* translator hack */
-		char *q = getenv("GAI");
-		if (q && inet_pton(AF_INET6, q, &faith_prefix) == 1)
-			translate = YES;
-		firsttime = 0;
-	}
-#endif
 
 	sentinel.ai_next = NULL;
 	cur = &sentinel;
@@ -306,11 +297,19 @@ getaddrinfo(hostname, servname, hints, res)
 	 * for raw and other inet{,6} sockets.
 	 */
 	if (MATCH_FAMILY(pai->ai_family, PF_INET, 1)
-	 || MATCH_FAMILY(pai->ai_family, PF_INET6, 1)) {
-		ai0 = *pai;
+#ifdef PF_INET6
+	 || MATCH_FAMILY(pai->ai_family, PF_INET6, 1)
+#endif
+	    ) {
+		ai0 = *pai;	/* backup *pai */
 
-		if (pai->ai_family == PF_UNSPEC)
+		if (pai->ai_family == PF_UNSPEC) {
+#ifdef PF_INET6
 			pai->ai_family = PF_INET6;
+#else
+			pai->ai_family = PF_INET;
+#endif
+		}
 		error = get_portmatch(pai, servname);
 		if (error)
 			ERR(error);
@@ -339,7 +338,7 @@ getaddrinfo(hostname, servname, hints, res)
 			pai->ai_protocol = ex->e_protocol;
 
 		if (hostname == NULL)
-			error = explore_null(pai, hostname, servname, &cur->ai_next);
+			error = explore_null(pai, servname, &cur->ai_next);
 		else
 			error = explore_numeric_scope(pai, hostname, servname, &cur->ai_next);
 
@@ -445,21 +444,22 @@ explore_fqdn(pai, hostname, servname, res)
 	char *ap;
 	struct addrinfo sentinel, *cur;
 	int i;
-#ifndef USE_GETIPNODEBY
 	int naddrs;
-#endif
 	const struct afd *afd;
-	int error;
+	int error = 0;
 
 	*res = NULL;
 	sentinel.ai_next = NULL;
 	cur = &sentinel;
 
+#ifdef AI_ADDRCONFIG
 	/*
-	 * Do not filter unsupported AFs here.  We need to honor content of
-	 * databases (/etc/hosts, DNS and others).  Otherwise we cannot
-	 * replace gethostbyname() by getaddrinfo().
+	 * If AI_ADDRCONFIG is specified, check if we are expected to
+	 * return the address family or not.
 	 */
+	if ((pai->ai_flags & AI_ADDRCONFIG) != 0 && !addrconfig(pai))
+		return 0;
+#endif
 
 	/*
 	 * if the servname does not match socktype/protocol, ignore it.
@@ -469,17 +469,8 @@ explore_fqdn(pai, hostname, servname, res)
 
 	afd = find_afd(pai->ai_family);
 
-	/*
-	 * post-RFC2553: should look at (pai->ai_flags & AI_ADDRCONFIG)
-	 * rather than hardcoding it.  we may need to add AI_ADDRCONFIG
-	 * handling code by ourselves in case we don't have getipnodebyname().
-	 */
-#ifdef USE_GETIPNODEBY
-	hp = getipnodebyname(hostname, pai->ai_family, AI_ADDRCONFIG, &h_error);
-#else
 	hp = gethostbyname2(hostname, pai->ai_family);
 	h_error = h_errno;
-#endif
 
 	if (hp == NULL) {
 		switch (h_error) {
@@ -498,9 +489,6 @@ explore_fqdn(pai, hostname, servname, res)
 		}
 	} else if ((hp->h_name == NULL) || (hp->h_name[0] == 0)
 			|| (hp->h_addr_list[0] == NULL)) {
-#ifdef USE_GETIPNODEBY
-		freehostent(hp);
-#endif
 		hp = NULL;
 		error = EAI_FAIL;
 	}
@@ -508,9 +496,6 @@ explore_fqdn(pai, hostname, servname, res)
 	if (hp == NULL)
 		goto free;
 
-#ifdef USE_GETIPNODEBY
-	aplist = hp->h_addr_list;
-#else
 	/*
 	 * hp will be overwritten if we use gethostbyname2().
 	 * always deep copy for simplification.
@@ -519,7 +504,7 @@ explore_fqdn(pai, hostname, servname, res)
 		;
 	naddrs++;
 	aplist = (char **)malloc(sizeof(aplist[0]) * naddrs);
-	apbuf = (char *)malloc(hp->h_length * naddrs);
+	apbuf = (char *)malloc((size_t)hp->h_length * naddrs);
 	if (aplist == NULL || apbuf == NULL) {
 		error = EAI_MEMORY;
 		goto free;
@@ -531,20 +516,21 @@ explore_fqdn(pai, hostname, servname, res)
 			continue;
 		}
 		memcpy(&apbuf[i * hp->h_length], hp->h_addr_list[i],
-			hp->h_length);
+			(size_t)hp->h_length);
 		aplist[i] = &apbuf[i * hp->h_length];
 	}
-#endif
 
 	for (i = 0; aplist[i] != NULL; i++) {
 		af = hp->h_addrtype;
 		ap = aplist[i];
+#ifdef AF_INET6
 		if (af == AF_INET6
 		 && IN6_IS_ADDR_V4MAPPED((struct in6_addr *)ap)) {
 			af = AF_INET;
 			ap = ap + sizeof(struct in6_addr)
 				- sizeof(struct in_addr);
 		}
+#endif
 
 		if (af != pai->ai_family)
 			continue;
@@ -587,9 +573,8 @@ free:
  * non-passive socket -> localhost (127.0.0.1 or ::1)
  */
 static int
-explore_null(pai, hostname, servname, res)
+explore_null(pai, servname, res)
 	const struct addrinfo *pai;
-	const char *hostname;
 	const char *servname;
 	struct addrinfo **res;
 {
@@ -676,15 +661,33 @@ explore_numeric(pai, hostname, servname, res)
 	afd = find_afd(pai->ai_family);
 	flags = pai->ai_flags;
 
-	if (inet_pton(afd->a_af, hostname, pton) == 1) {
-		if (pai->ai_family == afd->a_af ||
-		    pai->ai_family == PF_UNSPEC /*?*/) {
-			GET_AI(cur->ai_next, afd, pton);
-			GET_PORT(cur->ai_next, servname);
-			while (cur && cur->ai_next)
-				cur = cur->ai_next;
-		} else 
-			ERR(EAI_FAMILY);	/*xxx*/
+	switch (afd->a_af) {
+#if 0 /*X/Open spec*/
+	case AF_INET:
+		if (inet_aton(hostname, (struct in_addr *)pton) == 1) {
+			if (pai->ai_family == afd->a_af ||
+			    pai->ai_family == PF_UNSPEC /*?*/) {
+				GET_AI(cur->ai_next, afd, pton);
+				GET_PORT(cur->ai_next, servname);
+				while (cur && cur->ai_next)
+					cur = cur->ai_next;
+			} else 
+				ERR(EAI_FAMILY);	/*xxx*/
+		}
+		break;
+#endif
+	default:
+		if (inet_pton(afd->a_af, hostname, pton) == 1) {
+			if (pai->ai_family == afd->a_af ||
+			    pai->ai_family == PF_UNSPEC /*?*/) {
+				GET_AI(cur->ai_next, afd, pton);
+				GET_PORT(cur->ai_next, servname);
+				while (cur && cur->ai_next)
+					cur = cur->ai_next;
+			} else 
+				ERR(EAI_FAMILY);	/*xxx*/
+		}
+		break;
 	}
 
 	*res = sentinel.ai_next;
@@ -713,8 +716,7 @@ explore_numeric_scope(pai, hostname, servname, res)
 	const struct afd *afd;
 	struct addrinfo *cur;
 	int error;
-	char *cp, *hostname2 = NULL;
-	int scope;
+	char *cp, *hostname2 = NULL, *scope;
 	struct sockaddr_in6 *sin6;
 
 	/*
@@ -732,36 +734,29 @@ explore_numeric_scope(pai, hostname, servname, res)
 		return explore_numeric(pai, hostname, servname, res);
 
 	/*
-	 * Handle special case of <scoped_address><delimiter><scope id>
+	 * Handle special case of <scope id><delimiter><scoped_address>
 	 */
 	hostname2 = strdup(hostname);
 	if (hostname2 == NULL)
 		return EAI_MEMORY;
 	/* terminate at the delimiter */
 	hostname2[cp - hostname] = '\0';
-
+	scope = hostname2;
 	cp++;
-	switch (pai->ai_family) {
-#ifdef INET6
-	case AF_INET6:
-		scope = if_nametoindex(cp);
-		if (scope == 0) {
-			free(hostname2);
-			return (EAI_NONAME);
-		}
-		break;
-#endif
-	}
 
-	error = explore_numeric(pai, hostname2, servname, res);
+	error = explore_numeric(pai, cp, servname, res);
 	if (error == 0) {
+		int scopeid;
+
 		for (cur = *res; cur; cur = cur->ai_next) {
 			if (cur->ai_family != AF_INET6)
 				continue;
 			sin6 = (struct sockaddr_in6 *)cur->ai_addr;
-			if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr) ||
-			    IN6_IS_ADDR_MC_LINKLOCAL(&sin6->sin6_addr))
-				sin6->sin6_scope_id = scope;
+			if ((scopeid = ip6_str2scopeid(scope, sin6)) == -1) {
+				free(hostname2);
+				return(EAI_NONAME); /* XXX: is return OK? */
+			}
+			sin6->sin6_scope_id = scopeid;
 		}
 	}
 
@@ -802,12 +797,12 @@ get_ai(pai, afd, addr)
 
 	memcpy(ai, pai, sizeof(struct addrinfo));
 	ai->ai_addr = (struct sockaddr *)(ai + 1);
-	memset(ai->ai_addr, 0, afd->a_socklen);
+	memset(ai->ai_addr, 0, (size_t)afd->a_socklen);
 	ai->ai_addr->sa_len = afd->a_socklen;
 	ai->ai_addrlen = afd->a_socklen;
 	ai->ai_addr->sa_family = ai->ai_family = afd->a_af;
 	p = (char *)(ai->ai_addr);
-	memcpy(p + afd->a_off, addr, afd->a_addrlen);
+	memcpy(p + afd->a_off, addr, (size_t)afd->a_addrlen);
 	return ai;
 }
 
@@ -834,8 +829,15 @@ get_port(ai, servname, matchonly)
 
 	if (servname == NULL)
 		return 0;
-	if (ai->ai_family != AF_INET && ai->ai_family != AF_INET6)
+	switch (ai->ai_family) {
+	case AF_INET:
+#ifdef AF_INET6
+	case AF_INET6:
+#endif
+		break;
+	default:
 		return 0;
+	}
 
 	switch (ai->ai_socktype) {
 	case SOCK_RAW:
@@ -905,3 +907,70 @@ find_afd(af)
 	}
 	return NULL;
 }
+
+#ifdef AI_ADDRCONFIG
+/*
+ * post-2553: AI_ADDRCONFIG check.  if we use getipnodeby* as backend, backend
+ * will take care of it.
+ * the semantics of AI_ADDRCONFIG is not defined well.  we are not sure
+ * if the code is right or not.
+ */
+static int
+addrconfig(pai)
+	const struct addrinfo *pai;
+{
+#ifdef USE_GETIPNODEBY
+	return 1;
+#else
+	int s;
+
+	/* XXX errno */
+	s = socket(pai->ai_family, SOCK_DGRAM, 0);
+	if (s < 0)
+		return 0;
+	close(s);
+	return 1;
+#endif
+}
+#endif
+
+#ifdef INET6
+/* convert a string to a scope identifier. XXX: IPv6 specific */
+static int
+ip6_str2scopeid(scope, sin6)
+	char *scope;
+	struct sockaddr_in6 *sin6;
+{
+	int scopeid;
+	struct in6_addr *a6 = &sin6->sin6_addr;
+	char *ep;
+
+	if (IN6_IS_ADDR_LINKLOCAL(a6) || IN6_IS_ADDR_MC_LINKLOCAL(a6)) {
+		/*
+		 * We currently assume a one-to-one mapping between links
+		 * and interfaces, so we simply use interface indices for
+		 * like-local scopes.
+		 */
+		scopeid = if_nametoindex(scope);
+		if (scopeid == 0)
+			goto trynumeric;
+		return(scopeid);
+	}
+
+	/* still unclear about literal, allow numeric only - placeholder */
+	if (IN6_IS_ADDR_SITELOCAL(a6) || IN6_IS_ADDR_MC_SITELOCAL(a6))
+		goto trynumeric;
+	if (IN6_IS_ADDR_MC_ORGLOCAL(a6))
+		goto trynumeric;
+	else
+		goto trynumeric;	/* global */
+
+	/* try to convert to a numeric id as a last resort */
+  trynumeric:
+	scopeid = (int)strtoul(scope, &ep, 10);
+	if (*ep == '\0')
+		return scopeid;
+	else
+		return -1;
+}
+#endif 

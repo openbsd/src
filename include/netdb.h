@@ -1,4 +1,4 @@
-/*	$OpenBSD: netdb.h,v 1.8 1999/12/30 08:54:20 itojun Exp $	*/
+/*	$OpenBSD: netdb.h,v 1.9 2000/02/09 12:22:08 itojun Exp $	*/
 
 /*
  * ++Copyright++ 1980, 1983, 1988, 1993
@@ -142,6 +142,8 @@ struct	protoent {
 #define AI_CANONNAME	2	/* request for canonical name */
 #define AI_NUMERICHOST	4	/* don't ever try nameservice */
 #define AI_EXT		8	/* enable non-portable extensions */
+/* valid flags for addrinfo */
+#define AI_MASK		(AI_PASSIVE | AI_CANONNAME | AI_NUMERICHOST)
 
 #define NI_NUMERICHOST	1	/* return the host address, not the name */
 #define NI_NUMERICSERV	2	/* return the service address, not the name */
@@ -156,7 +158,7 @@ struct	protoent {
 /*
  * Scope delimit character (KAME hack)
  */
-#define SCOPE_DELIMITER '@'
+#define SCOPE_DELIMITER '%'
 
 #define EAI_BADFLAGS	-1	/* invalid value for ai_flags */
 #define EAI_NONAME	-2	/* name or service is not known */
