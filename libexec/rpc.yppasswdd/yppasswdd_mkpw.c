@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: yppasswdd_mkpw.c,v 1.10 1997/02/18 14:05:40 provos Exp $";
+static char rcsid[] = "$Id: yppasswdd_mkpw.c,v 1.11 1997/02/18 22:44:49 provos Exp $";
 #endif
 
 #include <sys/types.h>
@@ -64,7 +64,7 @@ badchars(base)
 		if (strchr(":\n\t\r", *s))
 			return 1;
 	}
-	if (ampr > _PASSWORD_LEN)
+	if (ampr > 10)
 		return 1;
 	return 0;
 }
@@ -75,7 +75,7 @@ make_passwd(argp)
 {
 	struct passwd *pw;
 	int     pfd, tfd;
-	char	buf[_PASSWORD_LEN], *p;
+	char	buf[10], *p;
 	int	alen;
 
 	pw = getpwnam(argp->newpw.pw_name);
