@@ -1,73 +1,20 @@
-#	$OpenBSD: M197,v 1.1 1999/09/27 21:21:15 smurph Exp $
+#	$OpenBSD: M197,v 1.2 2001/03/07 02:00:08 miod Exp $
 
 machine mvme88k
 
-maxusers 64
-
-option		TIMEZONE=300, DST=1
+include "../../../conf/GENERIC"
 
 # processors this kernel should support
 
 option		"M88000"	# support for 88K
 option 		MVME197		# support for 197
+option		UVM
+option		FFS_SOFTUPDATES	# Soft Updates
 option		BUGMAP		# use Bug Rom VME Mappings
 
-option		SWAPPAGER	# Pager for processes (Required)
-option		VNODEPAGER	# Pager for vnodes (Required)
-option		DEVPAGER	# Pager for devices (Required)
+maxusers 64
 
-option		SYSVSHM
-option		SYSVSEM
-option		SYSVMSG
-
-# File system related options
-
-#option		QUOTA		# Disk quotas for local disks
-option		NFSSERVER	# Network File System server side code
-option		NFSCLIENT	# Network File System client side code
-
-# File systems
-
-option		FFS		# Berkeley fast file system
-option		MFS		# Memory based filesystem
-option		FIFO		# FIFO operations on vnodes (Recommended)
-option		CD9660		# ISO 9660 + Rock Ridge file system
-#option		MSDOSFS		# MS-DOS file system
-option		FDESC		# /dev/fd
-option		KERNFS		# /kern
-option		NULLFS		# loopback file system
-#option		PORTAL		# ?
-option		PROCFS		# /proc
-#option		UMAPFS		# NULLFS + uid and gid remapping
-option		UNION		# union file system
-
-# Networking options
-
-option		NTP		# hooks supporting the Network Time Protocol
-option		IPFILTER	# IP packet filter for security
-option		IPFILTER_LOG	# use /dev/ipl to log IPF
-option		INET
-option		GATEWAY		# IP packet forwarding
-#option		TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
-#option		ISO		# OSI networking
-#option		TPIP
-#option		EON
-#option		COMPAT_43
-#option		EXEC_COFF
-#option		LKM
-
-# Support for various kernel options
-
-#option		DIAGNOSTIC	# Add additional error checking code
-#option		"NKMEMCLUSTERS=512"	# Size of kernel malloc area
-
-# Misc. debuging options
-
-option		PANICWAIT	# Require keystroke to dump/reboot
-#option		DEBUG		# Add debugging statements
-option		DDB		# Kernel debugger
-#option		SYSCALL_DEBUG	# debug all syscalls.
-option		KTRACE		# debug all syscalls.
+config	bsd swap on generic
 
 # ------------------------------ devices --------------------------------
 mainbus0 at root
@@ -85,7 +32,7 @@ sclock0	at pcctwo0 ipl 5
 vme0	at pcctwo0 offset 0x40000
 nvram0	at pcctwo0 offset 0xc0000
 ie0	at pcctwo0 offset 0x46000 ipl 1
-siop0	at pcctwo0 offset 0x47000 ipl 2
+ssh0	at pcctwo0 offset 0x47000 ipl 2
 cl0	at pcctwo0 offset 0x45000 ipl 3
 #lptwo0	at pcctwo0 addr 0xfff45000 ipl 1 size
 #memc0	at pcctwo0 addr 0xfff43000
@@ -113,8 +60,8 @@ vs5	at vmes0 addr 0xffff7800 ipl 2 vec 0x8a len 0x800
 # ------------------------------ svme0 devices -------------------------
 scsibus* at vs?
 
-# ------------------------------ siop0 devices -------------------------
-scsibus* at siop?
+# ------------------------------ ssh0 devices --------------------------
+scsibus* at ssh?
 
 # ------------------------------ scsibus? devices ----------------------
 sd*	at scsibus? target ? lun ?
@@ -122,16 +69,7 @@ st*	at scsibus? target ? lun ?
 cd*	at scsibus? target ? lun ?
 
 # ------------------------------ pseudo devices ------------------------
-pseudo-device	vnd	4	# paging to files
-pseudo-device	bpfilter 8	# packet filter
-pseudo-device	sl 	2	# CSLIP
-pseudo-device	tun	2	# network tunneling over tty
-pseudo-device	ppp 	2	# PPP
-pseudo-device	pty	64	# pseudo-terminals
-pseudo-device	loop	2	# network loopback
-pseudo-device	tb	1	# tablet line discipline
-pseudo-device	enc	1	# encryption device
-pseudo-device	ccd	4	# concatenated disk devices
-pseudo-device	rd 	2	# ram disk drives
-
-config	bsd swap on generic
+pseudo-device	rd 	2
+# for IPv6
+pseudo-device	gif	4
+pseudo-device	faith	1
