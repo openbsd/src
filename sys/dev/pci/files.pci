@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.50 1999/10/05 19:24:41 csapuntz Exp $
+#	$OpenBSD: files.pci,v 1.51 1999/10/26 13:06:14 downsj Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -208,3 +208,10 @@ attach	skc at pci
 device	sk: ether, ifnet, ifmedia
 attach	sk at skc
 file	dev/pci/if_sk.c			skc | sk
+
+# PCI "universal" communication device driver, for PCI com, lpt, etc. ports
+# (see documentation in the driver for what, exactly, should be supported)
+device	puc { port = -1 }
+attach	puc at pci
+file	dev/pci/puc.c			puc
+file	dev/pci/pucdata.c		puc
