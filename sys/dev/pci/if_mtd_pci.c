@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mtd_pci.c,v 1.4 2003/08/19 11:57:07 mickey Exp $	*/
+/*	$OpenBSD: if_mtd_pci.c,v 1.5 2003/08/19 12:25:52 mickey Exp $	*/
 
 /*
  * Copyright (c) 2003 Oleg Safiullin
@@ -78,8 +78,6 @@ mtd_pci_attach(struct device *parent, struct device *self, void *aux)
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
 	bus_size_t iosize;
-
-	command = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 
 #ifndef MTD_USE_IO
 	if (pci_mapreg_map(pa, MTD_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
