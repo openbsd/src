@@ -1,4 +1,4 @@
-.\"	$OpenBSD: crl.4,v 1.3 1999/06/05 13:18:37 aaron Exp $
+.\"	$OpenBSD: crl.4,v 1.4 2000/07/22 05:01:13 bjc Exp $
 .\"	$NetBSD: crl.4,v 1.3 1996/03/03 17:13:15 thorpej Exp $
 .\"
 .\" Copyright (c) 1986, 1991 Regents of the University of California.
@@ -48,7 +48,7 @@ interface
 This is a simple interface to the
 .Tn DEC
 .Tn RL Ns 02
-disk unit which is part of the console
+disk unit, which is part of the console
 subsystem on the
 .Tn VAX
 8600 and 8650.
@@ -76,8 +76,6 @@ operations only on 512-byte boundaries.)
 .Bl -tag -width /dev/crl -compact
 .It Pa /dev/crl
 .El
-.Sh SEE ALSO
-.Xr arff 8
 .Sh HISTORY
 The
 .Nm

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mt.4,v 1.3 1999/06/05 13:18:39 aaron Exp $
+.\"	$OpenBSD: mt.4,v 1.4 2000/07/22 05:01:13 bjc Exp $
 .\"	$NetBSD: mt.4,v 1.3 1996/03/03 17:13:52 thorpej Exp $
 .\"
 .\" Copyright (c) 1980, 1991 Regents of the University of California.
@@ -44,7 +44,7 @@
 .Tn MASSBUS
 magtape interface
 .Sh SYNOPSIS
-.Cd "master mt0 at mba? drive ? tape mu0 at mt0 slave 0"
+.Cd	"mt* at mscpbus? drive?"
 .Sh DESCRIPTION
 The
 .Tn TM78 Ns / Tn TU-78
