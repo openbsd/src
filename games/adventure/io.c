@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.10 2001/08/06 22:59:05 pjanzen Exp $	*/
+/*	$OpenBSD: io.c,v 1.11 2002/02/18 06:38:42 deraadt Exp $	*/
 /*	$NetBSD: io.c,v 1.3 1995/04/24 12:21:37 cgd Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: io.c,v 1.10 2001/08/06 22:59:05 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: io.c,v 1.11 2002/02/18 06:38:42 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -161,7 +161,7 @@ yesm(x, y, z)			/* confirm with mspeak		*/
 	int     x, y, z;
 {
 	int     result;
-	char    ch;
+	int    ch;
 
 	for (;;) {
 		mspeak(x);	/* tell him what we want	*/
