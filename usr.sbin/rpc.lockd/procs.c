@@ -1,4 +1,4 @@
-/*	$OpenBSD: procs.c,v 1.8 1998/07/10 08:06:52 deraadt Exp $	*/
+/*	$OpenBSD: procs.c,v 1.9 2000/06/29 00:30:39 millert Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -122,7 +122,7 @@ get_client(host_addr)
 	host_addr->sin_port = 0;
 	client = clntudp_create(host_addr, NLM_PROG, NLM_VERS, retry_time, &sock_no);
 	if (!client) {
-		syslog(LOG_ERR, clnt_spcreateerror("clntudp_create"));
+		syslog(LOG_ERR, "%s", clnt_spcreateerror("clntudp_create"));
 		syslog(LOG_ERR, "Unable to return result to %s",
 		    inet_ntoa(host_addr->sin_addr));
 		return (NULL);
