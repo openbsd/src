@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.25 2003/12/13 20:10:38 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.26 2003/12/19 14:52:15 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -2404,26 +2404,21 @@ DSA parameters is often used to generate several distinct keys.
 .Nm openssl enc
 .Bk -words
 .Fl ciphername
-.Op Fl in Ar filename
-.Op Fl out Ar filename
-.Op Fl pass Ar arg
-.Op Fl salt
-.Op Fl nosalt
-.Op Fl e
-.Op Fl d
-.Op Fl a
-.Op Fl A
-.Op Fl k Ar password
-.Op Fl kfile Ar filename
-.Op Fl S Ar salt
-.Op Fl K Ar key
-.Op Fl iv Ar IV
-.Op Fl p
-.Op Fl P
-.Op Fl bufsize Ar number
-.Op Fl nopad
+.Op Fl AadePp
 .Op Fl debug
 .Op Fl engine Ar id
+.Op Fl nopad
+.Op Fl nosalt
+.Op Fl salt
+.Op Fl bufsize Ar number
+.Op Fl in Ar filename
+.Op Fl iv Ar IV
+.Op Fl K Ar key
+.Op Fl k Ar password
+.Op Fl kfile Ar filename
+.Op Fl out Ar filename
+.Op Fl pass Ar arg
+.Op Fl S Ar salt
 .Ek
 .Pp
 The symmetric cipher commands allow data to be encrypted or decrypted
@@ -2434,79 +2429,53 @@ or in addition to the encryption or decryption.
 .Pp
 The options are as follows:
 .Bl -tag -width "XXXX"
-.It Fl in Ar filename
-The input
-.Ar filename ,
-standard input by default.
-.It Fl out Ar filename
-The output
-.Ar filename ,
-standard output by default.
-.It Fl pass Ar arg
-The password source.
-For more information about the format of
-.Ar arg ,
-see the
-.Sx PASS PHRASE ARGUMENTS
-section above.
-.It Fl salt
-Use a
-.Ar salt
-in the key derivation routines.
-This option should
-.Em ALWAYS
-be used unless compatibility with previous versions of
-.Nm OpenSSL
-or
-.Nm SSLeay
-is required.
-This option is only present on
-.Nm OpenSSL
-versions 0.9.5 or above.
-.It Fl nosalt
-Don't use a
-.Ar salt
-in the key derivation routines.
-This is the default for compatibility with previous versions of
-.Nm OpenSSL
-and
-.Nm SSLeay .
-.It Fl e
-Encrypt the input data: this is the default.
-.It Fl d
-Decrypt the input data.
+.It Fl A
+If the
+.Fl a
+option is set, then base64 process the data on one line.
 .It Fl a
 Base64 process the data.
 This means that if encryption is taking place, the data is base64 encoded
 after encryption.
 If decryption is set, then the input data is base64 decoded before
 being decrypted.
-.It Fl A
-If the
-.Fl a
-option is set, then base64 process the data on one line.
-.It Fl k Ar password
-The
-.Ar password
-to derive the key from.
-This is for compatibility with previous versions of
-.Nm OpenSSL .
-Superseded by the
-.Fl pass
-option.
-.It Fl kfile Ar filename
-Read the password to derive the key from the first line of
-.Ar filename .
-This is for compatibility with previous versions of
-.Nm OpenSSL .
-Superseded by the
-.Fl pass
-option.
-.It Fl S Ar salt
+.It Fl bufsize Ar number
+Set the buffer size for I/O.
+.It Fl d
+Decrypt the input data.
+.It Fl debug
+Debug the BIOs used for I/O.
+.It Fl e
+Encrypt the input data: this is the default.
+.It Fl engine Ar id
+Specifying an engine (by it's unique
+.Ar id
+string) will cause
+.Nm enc
+to attempt to obtain a functional reference to the specified engine,
+thus initialising it if needed.
+The engine will then be set as the default for all available algorithms.
+.It Fl in Ar filename
+The input
+.Ar filename ;
+standard input by default.
+.It Fl iv Ar IV
 The actual
-.Ar salt
+.Ar IV
+.Pq initialisation vector
 to use:
 this must be represented as a string comprised only of hex digits.
+When only the
+.Ar key
+is specified using the
+.Fl K
+option, the
+.Ar IV
+must explicitly be defined.
+When a password is being specified using one of the other options,
+the
+.Ar IV
+is generated from this password.
 .It Fl K Ar key
 The actual
 .Ar key
@@ -2514,7 +2483,7 @@ to use:
 this must be represented as a string comprised only of hex digits.
 If only the key is specified, the
 .Ar IV
-must additionally specified using the
+must be additionally specified using the
 .Fl iv
 option.
 When both a
@@ -2532,47 +2501,78 @@ It probably does not make much sense to specify both
 .Ar key
 and
 .Ar password .
-.It Fl iv Ar IV
-The actual
-.Ar IV
-to use:
-this must be represented as a string comprised only of hex digits.
-When only the
-.Ar key
-is specified using the
-.Fl K
-option, the
-.Ar IV
-must explicitly be defined.
-When a password is being specified using one of the other options,
-the
-.Ar IV
-is generated from this password.
-.It Fl p
-Print out the key and
-.Ar IV
-used.
-.It Fl P
-Print out the
-.Ar key
-and
-.Ar IV
-used then immediately exit:
-don't do any encryption or decryption.
-.It Fl bufsize Ar number
-Set the buffer size for I/O.
+.It Fl k Ar password
+The
+.Ar password
+to derive the key from.
+This is for compatibility with previous versions of
+.Nm OpenSSL .
+Superseded by the
+.Fl pass
+option.
+.It Fl kfile Ar filename
+Read the password to derive the key from the first line of
+.Ar filename .
+This is for compatibility with previous versions of
+.Nm OpenSSL .
+Superseded by the
+.Fl pass
+option.
 .It Fl nopad
 Disable standard block padding.
-.It Fl debug
-Debug the BIOs used for I/O.
-.It Fl engine Ar id
-Specifying an engine (by it's unique
-.Ar id
-string) will cause
-.Nm enc
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed.
-The engine will then be set as the default for all available algorithms.
+.It Fl nosalt
+Don't use a
+.Ar salt
+in the key derivation routines.
+This is the default for compatibility with previous versions of
+.Nm OpenSSL
+and
+.Nm SSLeay .
+.It Fl out Ar filename
+The output
+.Ar filename ,
+standard output by default.
+.It Fl P
+Print out the
+.Ar salt ,
+.Ar key ,
+and
+.Ar IV
+used, then immediately exit;
+don't do any encryption or decryption.
+.It Fl p
+Print out the
+.Ar salt ,
+.Ar key ,
+and
+.Ar IV
+used.
+.It Fl pass Ar arg
+The password source.
+For more information about the format of
+.Ar arg ,
+see the
+.Sx PASS PHRASE ARGUMENTS
+section above.
+.It Fl S Ar salt
+The actual
+.Ar salt
+to use:
+this must be represented as a string comprised only of hex digits.
+.It Fl salt
+Use a
+.Ar salt
+in the key derivation routines.
+This option should
+.Em ALWAYS
+be used unless compatibility with previous versions of
+.Nm OpenSSL
+or
+.Nm SSLeay
+is required.
+This option is only present on
+.Nm OpenSSL
+versions 0.9.5 or above.
 .El
 .Sh ENC NOTES
 The program can be called either as
@@ -2668,8 +2668,8 @@ cast5-ofb          CAST5 in OFB mode
 des-cbc            DES in CBC mode
 des                Alias for des-cbc
 des-cfb            DES in CBC mode
-des-ofb            DES in OFB mode
 des-ecb            DES in ECB mode
+des-ofb            DES in OFB mode
 
 des-ede-cbc        Two key triple DES EDE in CBC mode
 des-ede            Alias for des-ede
@@ -2711,7 +2711,7 @@ Encrypt a file using triple DES in CBC mode using a prompted password:
 .Pp
 Decrypt a file using a supplied password:
 .Pp
-.Dl "$ openssl des3 -d -salt -in file.des3 -out file.txt -k mypassword"
+.Dl "$ openssl des3 -d -in file.des3 -out file.txt -k mypassword"
 .Pp
 Encrypt a file then base64 encode it
 (so it can be sent via mail for example)
@@ -2721,11 +2721,7 @@ using Blowfish in CBC mode:
 .Pp
 Base64 decode a file then decrypt it:
 .Pp
-.Dl "$ openssl bf -d -salt -a -in file.bf -out file.txt"
-.Pp
-Decrypt some data using a supplied 40-bit RC4 key:
-.Pp
-.Dl $ openssl rc4-40 -in file.rc4 -out file.txt -K 0102030405
+.Dl "$ openssl bf -d -a -in file.bf -out file.txt"
 .Sh ENC BUGS
 The
 .Fl A
