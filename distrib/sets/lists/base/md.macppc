@@ -936,10 +936,13 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/sbus/bereg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/sbus/cs4231var.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/sbus/lebuffervar.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/sbus/magmareg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/sbus/qecreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/sbus/qecvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/sbus/qereg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/sbus/sbusvar.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/sbus/spifreg.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/sbus/spifvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/sequencervar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/sun
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/sun/disklabel.ph

@@ -33,7 +33,6 @@
 ./usr/include/machine/mmu.h
 ./usr/include/machine/param.h
 ./usr/include/machine/pcb.h
-./usr/include/machine/pcctworeg.h
 ./usr/include/machine/pmap.h
 ./usr/include/machine/pmap_table.h
 ./usr/include/machine/proc.h

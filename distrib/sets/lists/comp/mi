@@ -557,10 +557,13 @@
 ./usr/include/dev/sbus/bereg.h
 ./usr/include/dev/sbus/cs4231var.h
 ./usr/include/dev/sbus/lebuffervar.h
+./usr/include/dev/sbus/magmareg.h
 ./usr/include/dev/sbus/qecreg.h
 ./usr/include/dev/sbus/qecvar.h
 ./usr/include/dev/sbus/qereg.h
 ./usr/include/dev/sbus/sbusvar.h
+./usr/include/dev/sbus/spifreg.h
+./usr/include/dev/sbus/spifvar.h
 ./usr/include/dev/sequencervar.h
 ./usr/include/dev/sun
 ./usr/include/dev/sun/disklabel.h

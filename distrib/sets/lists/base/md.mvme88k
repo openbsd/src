@@ -145,7 +145,6 @@
 ./usr/lib/perl5/site_perl/m88k-openbsd/machine/mmu.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/machine/param.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/machine/pcb.ph
-./usr/lib/perl5/site_perl/m88k-openbsd/machine/pcctworeg.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/machine/pmap.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/machine/pmap_table.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/machine/proc.ph
@@ -479,10 +478,13 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/sbus/bereg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/sbus/cs4231var.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/sbus/lebuffervar.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/sbus/magmareg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/sbus/qecreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/sbus/qecvar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/sbus/qereg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/sbus/sbusvar.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/sbus/spifreg.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/sbus/spifvar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/sun/disklabel.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/sun/kbd_ms_ttyvar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/usb/ezload.ph

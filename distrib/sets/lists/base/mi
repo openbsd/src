@@ -1809,6 +1809,7 @@
 ./usr/share/sendmail/cf/generic-hpux10.mc
 ./usr/share/sendmail/cf/generic-hpux9.mc
 ./usr/share/sendmail/cf/generic-linux.mc
+./usr/share/sendmail/cf/generic-mpeix.mc
 ./usr/share/sendmail/cf/generic-nextstep3.3.mc
 ./usr/share/sendmail/cf/generic-osf1.mc
 ./usr/share/sendmail/cf/generic-solaris.mc
@@ -1927,6 +1928,7 @@
 ./usr/share/sendmail/ostype/domainos.m4
 ./usr/share/sendmail/ostype/dynix3.2.m4
 ./usr/share/sendmail/ostype/freebsd4.m4
+./usr/share/sendmail/ostype/freebsd5.m4
 ./usr/share/sendmail/ostype/gnu.m4
 ./usr/share/sendmail/ostype/hpux10.m4
 ./usr/share/sendmail/ostype/hpux11.m4
@@ -1938,6 +1940,7 @@
 ./usr/share/sendmail/ostype/linux.m4
 ./usr/share/sendmail/ostype/maxion.m4
 ./usr/share/sendmail/ostype/mklinux.m4
+./usr/share/sendmail/ostype/mpeix.m4
 ./usr/share/sendmail/ostype/nextstep.m4
 ./usr/share/sendmail/ostype/openbsd.m4
 ./usr/share/sendmail/ostype/osf1.m4
