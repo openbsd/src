@@ -220,13 +220,16 @@ if test -n "$GENERATE_SHLIB_SCRIPT"; then
     rm -f ${COMBRELOC}
     COMBRELOC=
   fi
+  unset CREATE_SHLIB
 fi
 
 LD_FLAG=Z
 DATA_ALIGNMENT=${DATA_ALIGNMENT_}
 RELOCATING=" "
-(. ${srcdir}/scripttempl/${SCRIPT_NAME}.sc) | sed -e '/^ *$/d' > \
-  ldscripts/${EMULATION_NAME}.xz
+( echo "/* Script for -Z: traditional binaries with no PLT/GOT padding */"
+  . ${srcdir}/emulparams/${EMULATION_NAME}.sh
+  . ${srcdir}/scripttempl/${SCRIPT_NAME}.sc
+) | sed -e '/^ *$/d;s/[ 	]*$//' > ldscripts/${EMULATION_NAME}.xz
 
 case " $EMULATION_LIBPATH " in
     *" ${EMULATION_NAME} "*) COMPILE_IN=true;;

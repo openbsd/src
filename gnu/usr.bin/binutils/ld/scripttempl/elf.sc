@@ -121,6 +121,7 @@ test "$NO_PAD" = "y" && PAD_PLT0="${RELOCATING+. = ALIGN(${MAXPAGESIZE}) + (. & 
 test "$NO_PAD" = "y" && PAD_PLT1=".pltpad1 ${RELOCATING-0} : { ${RELOCATING+__plt_end = .;}} ${RELOCATING+. = ALIGN(${MAXPAGESIZE}) + (. & (${MAXPAGESIZE} - 1));}"
 test "$NO_PAD" = "y" && PAD_GOT0="${RELOCATING+. = ALIGN(${MAXPAGESIZE}) + (. & (${MAXPAGESIZE} - 1));} .gotpad0 ${RELOCATING-0} : { ${RELOCATING+__got_start = .;} }"
 test "$NO_PAD" = "y" && PAD_GOT1=".gotpad1 ${RELOCATING-0} : { ${RELOCATING+__got_end = .;}} ${RELOCATING+. = ALIGN(${MAXPAGESIZE}) + (. & (${MAXPAGESIZE} - 1));}"
+test "$NO_PAD" = "y" && PAD_CDTOR=
 
 CTOR=".ctors        ${CONSTRUCTING-0} : 
   {
@@ -326,6 +327,8 @@ cat <<EOF
   ${WRITABLE_RODATA+${RODATA}}
   ${OTHER_READWRITE_SECTIONS}
   ${TEXT_DYNAMIC-${DYNAMIC}}
+  ${PAD_CDTOR-${RELOCATING+${CTOR}}}
+  ${PAD_CDTOR-${RELOCATING+${DTOR}}}
   .jcr          ${RELOCATING-0} : { KEEP (*(.jcr)) }
 
   /* pad CTOR/DTOR, GOT (and PLT if DATA_PLT) to page aligned if PAD_GOT */
@@ -336,12 +339,12 @@ cat <<EOF
   ${DATA_NONEXEC_PLT+${PLT}}
   ${RELOCATING+${OTHER_GOT_SYMBOLS}}
   .got          ${RELOCATING-0} : { *(.got.plt) *(.got) }
-  /* CTOR and DTOR relocated here to receive mprotect protection after,
-     relocation are finished same as GOT */
-  ${RELOCATING+${CTOR}}
-  ${RELOCATING+${DTOR}}
-  ${PAD_GOT+${PAD_GOT1}}
+  /* If PAD_CDTOR, CTOR and DTOR relocated here to receive mprotect
+     protection after relocation are finished same as GOT  */
+  ${PAD_CDTOR+${RELOCATING+${CTOR}}}
+  ${PAD_CDTOR+${RELOCATING+${DTOR}}}
   ${OTHER_GOT_SECTIONS}
+  ${PAD_GOT+${PAD_GOT1}}
   ${CREATE_SHLIB+${SDATA2}}
   ${CREATE_SHLIB+${SBSS2}}
   ${SDATA}
