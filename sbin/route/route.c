@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.76 2004/09/23 20:20:19 henning Exp $	*/
+/*	$OpenBSD: route.c,v 1.77 2004/09/24 01:24:30 jaredy Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static const char rcsid[] = "$OpenBSD: route.c,v 1.76 2004/09/23 20:20:19 henning Exp $";
+static const char rcsid[] = "$OpenBSD: route.c,v 1.77 2004/09/24 01:24:30 jaredy Exp $";
 #endif
 #endif /* not lint */
 
@@ -117,7 +117,6 @@ int	 getaddr(int, char *, struct hostent **);
 int	 rtmsg(int, int);
 int	 x25_makemask(void);
 __dead void usage(char *);
-void	quit(char *);
 void	set_metric(char *, int);
 void	inet_makenetandmask(u_int32_t, struct sockaddr_in *, int);
 void	interfaces(void);
@@ -126,27 +125,16 @@ void	getlabel(char *);
 __dead void
 usage(char *cp)
 {
+	extern char *__progname;
+
 	if (cp)
-		(void) fprintf(stderr, "route: botched keyword: %s\n", cp);
+		warnx("botched keyword: %s", cp);
 	(void) fprintf(stderr,
-	    "usage: route [ -nqSv ] cmd [[ -<modifiers> ] args ]\n");
+	    "usage: %s [-dnqtv] command [[modifiers] args]\n",
+	    __progname);
 	(void) fprintf(stderr,
-	    "keywords: get, add, change, delete, show, flush, monitor.\n");
+	    "commands: add, change, delete, flush, get, monitor, show\n");
 	exit(1);
-	/* NOTREACHED */
-}
-
-void
-quit(char *s)
-{
-	int sverrno = errno;
-
-	(void) fprintf(stderr, "route: ");
-	if (s)
-		(void) fprintf(stderr, "%s: ", s);
-	(void) fprintf(stderr, "%s\n", strerror(sverrno));
-	exit(1);
-	/* NOTREACHED */
 }
 
 #define ROUNDUP(a) \
@@ -192,7 +180,7 @@ main(int argc, char **argv)
 	else
 		s = socket(PF_ROUTE, SOCK_RAW, 0);
 	if (s < 0)
-		quit("socket");
+		err(1, "socket");
 	if (*argv == NULL)
 		goto no_cmd;
 	switch (keyword(*argv)) {
@@ -234,10 +222,8 @@ flushroutes(int argc, char **argv)
 	struct rt_msghdr *rtm;
 	struct sockaddr *sa;
 
-	if (uid) {
-		errno = EACCES;
-		quit("must be root to alter routing table");
-	}
+	if (uid)
+		errx(1, "must be root to alter routing table");
 	shutdown(s, 0); /* Don't want to read back our messages */
 	if (argc > 1) {
 		argv++;
@@ -272,12 +258,12 @@ bad:			usage(*argv);
 	mib[4] = NET_RT_DUMP;
 	mib[5] = 0;		/* no flags */
 	if (sysctl(mib, 6, NULL, &needed, NULL, 0) < 0)
-		quit("route-sysctl-estimate");
+		err(1, "route-sysctl-estimate");
 	if (needed) {
 		if ((buf = malloc(needed)) == NULL)
-			quit("malloc");
+			err(1, "malloc");
 		if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0)
-			quit("actual retrieval of routing table");
+			err(1, "actual retrieval of routing table");
 		lim = buf + needed;
 	}
 	if (verbose) {
@@ -308,9 +294,7 @@ bad:			usage(*argv);
 		rtm->rtm_seq = seqno;
 		rlen = write(s, next, rtm->rtm_msglen);
 		if (rlen < (int)rtm->rtm_msglen) {
-			(void) fprintf(stderr,
-			    "route: write to routing socket: %s\n",
-			    strerror(errno));
+			warn("write to routing socket");
 			(void) printf("got only %d for rlen\n", rlen);
 			break;
 		}
@@ -365,10 +349,8 @@ newroute(int argc, char **argv)
 	int key, mpath = 0;
 	struct hostent *hp = 0;
 
-	if (uid) {
-		errno = EACCES;
-		quit("must be root to alter routing table");
-	}
+	if (uid)
+		errx(1, "must be root to alter routing table");
 	cmd = argv[0];
 	if (*cmd != 'g')
 		shutdown(s, 0); /* Don't want to read back our messages */
@@ -775,20 +757,13 @@ getaddr(int which, char *s, struct hostent **hpp)
 		hints.ai_socktype = SOCK_DGRAM;		/*dummy*/
 		if (getaddrinfo(s, "0", &hints, &res) != 0) {
 			hints.ai_flags = 0;
-			if (getaddrinfo(s, "0", &hints, &res) != 0) {
-				(void) fprintf(stderr, "%s: bad value\n", s);
-				exit(1);
-			}
+			if (getaddrinfo(s, "0", &hints, &res) != 0)
+				errx(1, "%s: bad value", s);
 		}
-		if (sizeof(su->sin6) != res->ai_addrlen) {
-			(void) fprintf(stderr, "%s: bad value\n", s);
-			exit(1);
-		}
-		if (res->ai_next) {
-			(void) fprintf(stderr,
-			    "%s: resolved to multiple values\n", s);
-			exit(1);
-		}
+		if (sizeof(su->sin6) != res->ai_addrlen)
+			errx(1, "%s: bad value", s);
+		if (res->ai_next)
+			errx(1, "%s: resolved to multiple values", s);
 		memcpy(&su->sin6, res->ai_addr, sizeof(su->sin6));
 		freeaddrinfo(res);
 #ifdef __KAME__
@@ -889,16 +864,12 @@ prefixlen(char *s)
 		break;
 #endif
 	default:
-		(void) fprintf(stderr,
-		    "prefixlen is not supported with af %d\n", af);
-		exit(1);
+		errx(1, "prefixlen is not supported with af %d", af);
 	}
 
 	rtm_addrs |= RTA_NETMASK;
-	if (len < -1 || len > max) {
-		(void) fprintf(stderr, "%s: bad value\n", s);
-		exit(1);
-	}
+	if (len < -1 || len > max)
+		errx(1, "%s: bad value", s);
 
 	q = len >> 3;
 	r = len & 7;
@@ -956,12 +927,12 @@ interfaces(void)
 	mib[4] = NET_RT_IFLIST;
 	mib[5] = 0;		/* no flags */
 	if (sysctl(mib, 6, NULL, &needed, NULL, 0) < 0)
-		quit("route-sysctl-estimate");
+		err(1, "route-sysctl-estimate");
 	if (needed) {
 		if ((buf = malloc(needed)) == NULL)
-			quit("malloc");
+			err(1, "malloc");
 		if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0)
-			quit("actual retrieval of interface table");
+			err(1, "actual retrieval of interface table");
 		lim = buf + needed;
 		for (next = buf; next < lim; next += rtm->rtm_msglen) {
 			rtm = (struct rt_msghdr *)next;
@@ -1053,7 +1024,7 @@ rtmsg(int cmd, int flags)
 		return (0);
 	if (write(s, (char *)&m_rtmsg, l) != l) {
 		if (qflag == 0)
-			perror("writing to routing socket");
+			warn("writing to routing socket");
 		return (-1);
 	}
 	if (cmd == RTM_GET) {
@@ -1061,9 +1032,7 @@ rtmsg(int cmd, int flags)
 			l = read(s, (char *)&m_rtmsg, sizeof(m_rtmsg));
 		} while (l > 0 && (rtm.rtm_seq != seq || rtm.rtm_pid != pid));
 		if (l == -1)
-			(void) fprintf(stderr,
-			    "route: read from routing socket: %s\n",
-			    strerror(errno));
+			warn("read from routing socket");
 		else
 			print_getmsg(&rtm, l);
 	}
@@ -1210,18 +1179,16 @@ print_getmsg(struct rt_msghdr *rtm, int msglen)
 
 	(void) printf("   route to: %s\n", routename(&so_dst.sa));
 	if (rtm->rtm_version != RTM_VERSION) {
-		(void)fprintf(stderr,
-		    "routing message version %d not understood\n",
+		warnx("routing message version %d not understood",
 		    rtm->rtm_version);
 		return;
 	}
 	if (rtm->rtm_msglen > msglen) {
-		(void)fprintf(stderr,
-		    "message length mismatch, in packet %d, returned %d\n",
+		warnx("message length mismatch, in packet %d, returned %d",
 		    rtm->rtm_msglen, msglen);
 	}
 	if (rtm->rtm_errno)  {
-		(void) fprintf(stderr, "RTM_GET: %s (errno %d)\n",
+		warnx("RTM_GET: %s (errno %d)\n",
 		    strerror(rtm->rtm_errno), rtm->rtm_errno);
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.36 2004/09/22 01:07:10 jaredy Exp $	*/
+/*	$OpenBSD: show.c,v 1.37 2004/09/24 01:24:30 jaredy Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static const char rcsid[] = "$OpenBSD: show.c,v 1.36 2004/09/22 01:07:10 jaredy Exp $";
+static const char rcsid[] = "$OpenBSD: show.c,v 1.37 2004/09/24 01:24:30 jaredy Exp $";
 #endif
 #endif /* not lint */
 
@@ -55,6 +55,7 @@ static const char rcsid[] = "$OpenBSD: show.c,v 1.36 2004/09/22 01:07:10 jaredy 
 
 #include <sys/sysctl.h>
 
+#include <err.h>
 #include <netdb.h>
 #include <stdio.h>
 #include <stddef.h>
@@ -127,19 +128,13 @@ p_rttables(int af, int Aflag)
 	mib[3] = af;
 	mib[4] = NET_RT_DUMP;
 	mib[5] = 0;
-	if (sysctl(mib, 6, NULL, &needed, NULL, 0) < 0)	{
-		perror("route-sysctl-estimate");
-		exit(1);
-	}
+	if (sysctl(mib, 6, NULL, &needed, NULL, 0) < 0)
+		err(1, "route-sysctl-estimate");
 	if (needed > 0) {
-		if ((buf = malloc(needed)) == 0) {
-			printf("out of space\n");
-			exit(1);
-		}
-		if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0) {
-			perror("sysctl of routing table");
-			exit(1);
-		}
+		if ((buf = malloc(needed)) == 0)
+			err(1, NULL);
+		if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0)
+			err(1, "sysctl of routing table");
 		lim  = buf + needed;
 	}
 
@@ -596,7 +591,7 @@ netname6(struct sockaddr_in6 *sa6, struct sockaddr_in6 *mask)
 		return("default");
 
 	if (illegal)
-		fprintf(stderr, "illegal prefixlen\n");
+		warnx("illegal prefixlen");
 
 	if (nflag)
 		flag |= NI_NUMERICHOST;
