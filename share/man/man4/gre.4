@@ -1,4 +1,4 @@
-.\" $OpenBSD: gre.4,v 1.11 2002/04/03 20:32:13 angelos Exp $
+.\" $OpenBSD: gre.4,v 1.12 2002/06/10 02:45:30 itojun Exp $
 .\" $NetBSD: gre.4,v 1.10 1999/12/22 14:55:49 kleink Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ This driver currently supports the following modes of operation:
 Encapsulated datagrams are prepended by a outer datagram and a GRE header.
 The GRE header specifies the type of the encapsulated datagram
 and thus allows for tunneling other protocols than IP like
-e.g. AppleTalk (not yet supported).
+e.g. AppleTalk.
 GRE mode is the default tunnel mode on Cisco routers.
 This is also the default mode of operation of the
 .Sy gre Ns Ar X
@@ -219,8 +219,7 @@ This implies that the GRE packet destination and the remote host are not
 the same IP addresses, and that the GRE destination does not route over
 the greX interface itself.
 .Pp
-GRE RFC not yet fully implemented (no GRE options), no other protocols
-yet than IP over IP.
+GRE RFC not yet fully implemented (no GRE options).
 .Pp
 For the WCCP GRE encapsulated packets we can only reliably accept
 WCCPv1 format; WCCPv2 formatted packets add another header which will
