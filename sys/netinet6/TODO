@@ -1,7 +1,7 @@
 TODOs for KAME/OpenBSD
 Jun-ichiro Hagino, KAME project
 KAME Id: TODO,v 1.32 1999/12/08 05:49:27 itojun Exp
-$OpenBSD: TODO,v 1.5 2000/02/14 05:53:19 itojun Exp $
+$OpenBSD: TODO,v 1.6 2000/02/25 07:31:21 itojun Exp $
 
 
 Please refrain from making too much changes to sys/netinet6 tree (even if
@@ -38,6 +38,4 @@ Cleanup todo:
 - nuke unnecessary #ifdef in NRL tcp/udp layer, for more readability
 	(is it okay to do it?)
 - security auditing :-)
-- when both INET and INET6 listening sockets are available, route IPv4
-  connection to INET socket (instead of INET6 socket with using mapped addr).
 - tcp/udp/raw socket code has too many #ifdefs
