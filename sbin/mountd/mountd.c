@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.16 1997/05/04 21:05:28 millert Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.17 1997/06/24 20:59:10 deraadt Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -119,9 +119,9 @@ struct exportlist {
 #define	EX_LINKED	0x1
 
 struct netmsk {
-	u_long	nt_net;
-	u_long	nt_mask;
-	char *nt_name;
+	in_addr_t	nt_net;
+	in_addr_t	nt_mask;
+	char		*nt_name;
 };
 
 union grouptypes {
@@ -163,7 +163,7 @@ void	add_dlist __P((struct dirlist **, struct dirlist *,
 void	add_mlist __P((char *, char *));
 int	check_dirpath __P((char *));
 int	check_options __P((struct dirlist *));
-int	chk_host __P((struct dirlist *, u_long, int *, int *));
+int	chk_host __P((struct dirlist *, in_addr_t, int *, int *));
 void	del_mlist __P((char *, char *));
 struct dirlist *dirp_search __P((struct dirlist *, char *));
 int	do_mount __P((struct exportlist *, struct grouplist *, int,
@@ -192,7 +192,7 @@ void	nextfield __P((char **, char **));
 void	out_of_mem __P((void));
 void	parsecred __P((char *, struct ucred *));
 int	put_exlist __P((struct dirlist *, XDR *, struct dirlist *, int *));
-int	scan_tree __P((struct dirlist *, u_long));
+int	scan_tree __P((struct dirlist *, in_addr_t));
 void	send_umntall __P((void));
 int	umntall_each __P((caddr_t, struct sockaddr_in *));
 int	xdr_dir __P((XDR *, char *));
@@ -340,7 +340,7 @@ mntsrv(rqstp, transp)
 	struct stat stb;
 	struct statfs fsb;
 	struct hostent *hp;
-	u_long saddr;
+	in_addr_t saddr;
 	u_short sport;
 	char rpcpath[RPCMNT_PATHLEN+1], dirpath[MAXPATHLEN];
 	long bad = 0;
@@ -1171,7 +1171,7 @@ dirp_search(dp, dirpath)
 int
 chk_host(dp, saddr, defsetp, hostsetp)
 	struct dirlist *dp;
-	u_long saddr;
+	in_addr_t saddr;
 	int *defsetp;
 	int *hostsetp;
 {
@@ -1217,7 +1217,7 @@ chk_host(dp, saddr, defsetp, hostsetp)
 int
 scan_tree(dp, saddr)
 	struct dirlist *dp;
-	u_long saddr;
+	in_addr_t saddr;
 {
 	int defset, hostset;
 
@@ -1375,7 +1375,7 @@ get_host(cp, grp, tgrp)
 	char **addrp, **naddrp;
 	struct hostent t_host;
 	int i;
-	u_long saddr;
+	in_addr_t saddr;
 	char *aptr[2];
 
 	if (grp->gr_type != GT_NULL)
@@ -1566,7 +1566,7 @@ do_mount(ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
 		struct msdosfs_args da;
 		struct adosfs_args aa;
 	} args;
-	u_long net;
+	in_addr_t net;
 
 	args.ua.fspec = 0;
 	args.ua.export.ex_flags = exflags;
@@ -1700,7 +1700,7 @@ get_net(cp, net, maskflg)
 	int maskflg;
 {
 	struct netent *np;
-	long netaddr;
+	in_addr_t netaddr;
 	struct in_addr inetaddr, inetaddr2;
 	char *name;
 
