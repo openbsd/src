@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.5 1996/03/14 08:28:58 tholo Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.6 1996/03/15 07:24:42 tholo Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -259,23 +259,6 @@ rip_ctloutput(op, so, level, optname, m)
 			m_free(*m);
 		return (EOPNOTSUPP);
 #endif
-
-	default:
-		if (optname >= MRT_INIT) {
-#ifdef MROUTING
-			if (op == PRCO_SETOPT) {
-				error = ip_mrouter_cmd(optname, so, *m);
-				if (*m)
-					(void)m_free(*m);
-			} else
-				error = EINVAL;
-			return (error);
-#else
-			if (op == PRCO_SETOPT && *m)
-				(void)m_free(*m);
-			return (EOPNOTSUPP);
-#endif
-		}
 	}
 	return (ip_ctloutput(op, so, level, optname, m));
 }
