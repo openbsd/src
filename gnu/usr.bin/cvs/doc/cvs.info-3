@@ -22,7 +22,66 @@ and this permission notice may be included in translations approved by
 the Free Software Foundation instead of in the original English.
 
 
-File: cvs.info,  Node: Sticky tags,  Prev: Creating a branch,  Up: Branches
+File: cvs.info,  Node: Creating a branch,  Next: Sticky tags,  Prev: Branches motivation,  Up: Revisions and branches
+
+Creating a branch
+=================
+
+   The `rtag' command can be used to create a branch.  The `rtag'
+command is much like `tag', but it does not require that you have a
+working copy of the module.  *Note rtag::.  (You can also use the `tag'
+command; *note tag::.).
+
+     $ cvs rtag -b -r release-1-0 release-1-0-patches tc
+
+   The `-b' flag makes `rtag' create a branch (rather than just a
+symbolic revision name).  `-r release-1-0' says that this branch should
+be rooted at the node (in the revision tree) that corresponds to the tag
+`release-1-0'.  Note that the numeric revision number that matches
+`release-1-0' will probably be different from file to file.  The name
+of the new branch is `release-1-0-patches', and the module affected is
+`tc'.
+
+   To fix the problem in release 1.0, you need a working copy of the
+branch you just created.
+
+     $ cvs checkout -r release-1-0-patches tc
+     $ cvs status -v driver.c backend.c
+     ===================================================================
+     File: driver.c          Status: Up-to-date
+     
+         Version:            1.7     Sat Dec  5 18:25:54 1992
+         RCS Version:        1.7     /usr/local/cvsroot/yoyodyne/tc/driver.c,v
+         Sticky Tag:         release-1-0-patches (branch: 1.7.2)
+         Sticky Date:        (none)
+         Sticky Options:     (none)
+     
+         Existing Tags:
+             release-1-0-patches             (branch: 1.7.2)
+             release-1-0                     (revision: 1.7)
+     
+     ===================================================================
+     File: backend.c         Status: Up-to-date
+     
+         Version:            1.4     Tue Dec  1 14:39:01 1992
+         RCS Version:        1.4     /usr/local/cvsroot/yoyodyne/tc/backend.c,v
+         Sticky Tag:         release-1-0-patches (branch: 1.4.2)
+         Sticky Date:        (none)
+         Sticky Options:     (none)
+     
+         Existing Tags:
+             release-1-0-patches             (branch: 1.4.2)
+             release-1-0                     (revision: 1.4)
+             release-0-4                     (revision: 1.4)
+
+   As the output from the `status' command shows the branch number is
+created by adding a digit at the tail of the revision number it is
+based on.  (If `release-1-0' corresponds to revision 1.4, the branch's
+revision number will be 1.4.2.  For obscure reasons CVS always gives
+branches even numbers, starting at 2.  *Note Revision numbers::.).
+
+
+File: cvs.info,  Node: Sticky tags,  Prev: Creating a branch,  Up: Revisions and branches
 
 Sticky tags
 ===========
@@ -97,7 +156,7 @@ contents it had previously.  Here is how to do it:
      $
 
 
-File: cvs.info,  Node: Merging,  Next: Recursive behavior,  Prev: Branches,  Up: Top
+File: cvs.info,  Node: Merging,  Next: Recursive behavior,  Prev: Revisions and branches,  Up: Top
 
 Merging
 *******
@@ -374,8 +433,9 @@ repository:
      $ cvs commit -m "Early version. Not yet compilable." backend.c
 
    When you add a file it is added only on the branch which you are
-working on (*note Branches::.).  You can later merge the additions to
-another branch if you want (*note Merging adds and removals::.).
+working on (*note Revisions and branches::.).  You can later merge the
+additions to another branch if you want (*note Merging adds and
+removals::.).
 
 
 File: cvs.info,  Node: Removing files,  Next: Removing directories,  Prev: Adding files,  Up: Top
@@ -454,8 +514,9 @@ can use `update' to resurrect the file:
      U oj.c
 
    When you remove a file it is removed only on the branch which you
-are working on (*note Branches::.).  You can later merge the removals
-to another branch if you want (*note Merging adds and removals::.).
+are working on (*note Revisions and branches::.).  You can later merge
+the removals to another branch if you want (*note Merging adds and
+removals::.).
 
 
 File: cvs.info,  Node: Removing directories,  Next: Tracking sources,  Prev: Removing files,  Up: Top
@@ -885,8 +946,8 @@ file.
 * Avoiding substitution::       Avoiding substitution
 * Substitution modes::          Substitution modes
 * Log keyword::                 Problems with the $Log: cvs.info-3,v $
-* Log keyword::                 Problems with the Revision 1.1.1.7  1997/03/18 02:05:54  tholo
-* Log keyword::                 Problems with the Files missed from previous import
+* Log keyword::                 Problems with the Revision 1.1.1.8  1997/03/29 04:46:01  tholo
+* Log keyword::                 Problems with the Latest release from Cyclic Software
 * Log keyword::                 Problems with the keyword.
 
 
@@ -901,17 +962,17 @@ RCS Keywords
 `$Author: tholo $'
      The login name of the user who checked in the revision.
 
-`$Date: 1997/03/18 02:05:54 $'
+`$Date: 1997/03/29 04:46:01 $'
      The date and time (UTC) the revision was checked in.
 
-`$Header: /home/cvs/src/gnu/usr.bin/cvs/doc/cvs.info-3,v 1.1.1.7 1997/03/18 02:05:54 tholo Exp $'
+`$Header: /home/cvs/src/gnu/usr.bin/cvs/doc/cvs.info-3,v 1.1.1.8 1997/03/29 04:46:01 tholo Exp $'
      A standard header containing the full pathname of the RCS file,
      the revision number, the date (UTC), the author, the state, and
      the locker (if locked).  Files will normally never be locked when
      you use CVS.
 
-`$Id: cvs.info-3,v 1.1.1.7 1997/03/18 02:05:54 tholo Exp $'
-     Same as `$Header: /home/cvs/src/gnu/usr.bin/cvs/doc/cvs.info-3,v 1.1.1.7 1997/03/18 02:05:54 tholo Exp $', except that the RCS filename is without a path.
+`$Id: cvs.info-3,v 1.1.1.8 1997/03/29 04:46:01 tholo Exp $'
+     Same as `$Header: /home/cvs/src/gnu/usr.bin/cvs/doc/cvs.info-3,v 1.1.1.8 1997/03/29 04:46:01 tholo Exp $', except that the RCS filename is without a path.
 
 `$Name:  $'
      Tag name used to check out this file.
@@ -921,15 +982,15 @@ RCS Keywords
      locked, and thus almost always useless when you are using CVS).
 
 `$Log: cvs.info-3,v $
-`Revision 1.1.1.7  1997/03/18 02:05:54  tholo
-`Files missed from previous import
+`Revision 1.1.1.8  1997/03/29 04:46:01  tholo
+`Latest release from Cyclic Software
 `'
      The log message supplied during commit, preceded by a header
      containing the RCS filename, the revision number, the author, and
      the date (UTC).  Existing log messages are *not* replaced.
      Instead, the new log message is inserted after `$Log: cvs.info-3,v $
-     Instead, the new log message is inserted after `Revision 1.1.1.7  1997/03/18 02:05:54  tholo
-     Instead, the new log message is inserted after `Files missed from previous import
+     Instead, the new log message is inserted after `Revision 1.1.1.8  1997/03/29 04:46:01  tholo
+     Instead, the new log message is inserted after `Latest release from Cyclic Software
      Instead, the new log message is inserted after `'.  Each
      new line is prefixed with a "comment leader" which RCS guesses
      from the file name extension.  It can be changed with `cvs admin
@@ -940,7 +1001,7 @@ RCS Keywords
 `$RCSfile: cvs.info-3,v $'
      The name of the RCS file without a path.
 
-`$Revision: 1.1.1.7 $'
+`$Revision: 1.1.1.8 $'
      The revision number assigned to the revision.
 
 `$Source: /home/cvs/src/gnu/usr.bin/cvs/doc/cvs.info-3,v $'
@@ -957,14 +1018,14 @@ Using keywords
 ==============
 
    To include a keyword string you simply include the relevant text
-string, such as `$Id: cvs.info-3,v 1.1.1.7 1997/03/18 02:05:54 tholo Exp $', inside the file, and commit the file.  CVS will
+string, such as `$Id: cvs.info-3,v 1.1.1.8 1997/03/29 04:46:01 tholo Exp $', inside the file, and commit the file.  CVS will
 automatically expand the string as part of the commit operation.
 
-   It is common to embed `$Id: cvs.info-3,v 1.1.1.7 1997/03/18 02:05:54 tholo Exp $' string in the C source code.  This
+   It is common to embed `$Id: cvs.info-3,v 1.1.1.8 1997/03/29 04:46:01 tholo Exp $' string in the C source code.  This
 example shows the first few lines of a typical file, after keyword
 substitution has been performed:
 
-     static char *rcsid="$Id: cvs.info-3,v 1.1.1.7 1997/03/18 02:05:54 tholo Exp $";
+     static char *rcsid="$Id: cvs.info-3,v 1.1.1.8 1997/03/29 04:46:01 tholo Exp $";
      /* The following lines will prevent `gcc' version 2.X
         from issuing an "unused variable" warning. */
      #if __GNUC__ == 2
@@ -984,11 +1045,11 @@ binary files.
 
      $ ident samp.c
      samp.c:
-          $Id: cvs.info-3,v 1.1.1.7 1997/03/18 02:05:54 tholo Exp $
+          $Id: cvs.info-3,v 1.1.1.8 1997/03/29 04:46:01 tholo Exp $
      $ gcc samp.c
      $ ident a.out
      a.out:
-          $Id: cvs.info-3,v 1.1.1.7 1997/03/18 02:05:54 tholo Exp $
+          $Id: cvs.info-3,v 1.1.1.8 1997/03/29 04:46:01 tholo Exp $
 
    SCCS is another popular revision control system.  It has a command,
 `what', which is very similar to `ident' and used for the same purpose.
@@ -997,7 +1058,7 @@ character sequence `@(#)' it is easy to include keywords that are
 detected by either command.  Simply prefix the RCS keyword with the
 magic SCCS phrase, like this:
 
-     static char *id="@(#) $Id: cvs.info-3,v 1.1.1.7 1997/03/18 02:05:54 tholo Exp $";
+     static char *id="@(#) $Id: cvs.info-3,v 1.1.1.8 1997/03/29 04:46:01 tholo Exp $";
 
 
 File: cvs.info,  Node: Avoiding substitution,  Next: Substitution modes,  Prev: Using keywords,  Up: Keyword substitution
@@ -1046,15 +1107,15 @@ also has a `-k' option.  For some examples, *Note Binary files::.
 `-kk'
      Generate only keyword names in keyword strings; omit their values.
      For example, for the `Revision' keyword, generate the string
-     `$Revision: 1.1.1.7 $' instead of `$Revision: 1.1.1.7 $'.  This option is useful
+     `$Revision: 1.1.1.8 $' instead of `$Revision: 1.1.1.8 $'.  This option is useful
      to ignore differences due to keyword substitution when comparing
      different revisions of a file.
 
 `-ko'
      Generate the old keyword string, present in the working file just
      before it was checked in.  For example, for the `Revision'
-     keyword, generate the string `$Revision: 1.1.1.7 $' instead of
-     `$Revision: 1.1.1.7 $' if that is how the string appeared when the
+     keyword, generate the string `$Revision: 1.1.1.8 $' instead of
+     `$Revision: 1.1.1.8 $' if that is how the string appeared when the
      file was checked in.
 
 `-kb'
@@ -1068,9 +1129,9 @@ also has a `-k' option.  For some examples, *Note Binary files::.
 `-kv'
      Generate only keyword values for keyword strings.  For example,
      for the `Revision' keyword, generate the string `5.7' instead of
-     `$Revision: 1.1.1.7 $'.  This can help generate files in programming
+     `$Revision: 1.1.1.8 $'.  This can help generate files in programming
      languages where it is hard to strip keyword delimiters like
-     `$Revision: 1.1.1.7 $' from a string.  However, further keyword
+     `$Revision: 1.1.1.8 $' from a string.  However, further keyword
      substitution cannot be performed once the keyword names are
      removed, so this option should be used with care.
 
@@ -1082,25 +1143,25 @@ also has a `-k' option.  For some examples, *Note Binary files::.
 File: cvs.info,  Node: Log keyword,  Prev: Substitution modes,  Up: Keyword substitution
 
 Problems with the $Log: cvs.info-3,v $
-Problems with the Revision 1.1.1.7  1997/03/18 02:05:54  tholo
-Problems with the Files missed from previous import
+Problems with the Revision 1.1.1.8  1997/03/29 04:46:01  tholo
+Problems with the Latest release from Cyclic Software
 Problems with the keyword.
 ================================
 
    The `$Log: cvs.info-3,v $
-   The `Revision 1.1.1.7  1997/03/18 02:05:54  tholo
-   The `Files missed from previous import
+   The `Revision 1.1.1.8  1997/03/29 04:46:01  tholo
+   The `Latest release from Cyclic Software
    The `' keyword is somewhat controversial.  As long as you are
 working on your development system the information is easily accessible
 even if you do not use the `$Log: cvs.info-3,v $
-even if you do not use the `Revision 1.1.1.7  1997/03/18 02:05:54  tholo
-even if you do not use the `Files missed from previous import
+even if you do not use the `Revision 1.1.1.8  1997/03/29 04:46:01  tholo
+even if you do not use the `Latest release from Cyclic Software
 even if you do not use the `' keyword--just do a `cvs log'.  Once
 you export the file the history information might be useless anyhow.
 
    A more serious concern is that RCS is not good at handling `$Log: cvs.info-3,v $
-   A more serious concern is that RCS is not good at handling `Revision 1.1.1.7  1997/03/18 02:05:54  tholo
-   A more serious concern is that RCS is not good at handling `Files missed from previous import
+   A more serious concern is that RCS is not good at handling `Revision 1.1.1.8  1997/03/29 04:46:01  tholo
+   A more serious concern is that RCS is not good at handling `Latest release from Cyclic Software
    A more serious concern is that RCS is not good at handling `'
 entries when a branch is merged onto the main trunk.  Conflicts often
 result from the merging operation.
@@ -1111,8 +1172,8 @@ information from `cvs log' will not be consistent with the information
 inside the file.  This may or may not be a problem in real life.
 
    It has been suggested that the `$Log: cvs.info-3,v $
-   It has been suggested that the `Revision 1.1.1.7  1997/03/18 02:05:54  tholo
-   It has been suggested that the `Files missed from previous import
+   It has been suggested that the `Revision 1.1.1.8  1997/03/29 04:46:01  tholo
+   It has been suggested that the `Latest release from Cyclic Software
    It has been suggested that the `' keyword should be inserted
 *last* in the file, and not in the files header, if it is to be used at
 all.  That way the long list of change messages will not interfere with
@@ -1145,14 +1206,14 @@ which supports `-kb'.
    Here is an example of how you can create a new file using the `-kb'
 flag:
 
-     $ echo '$Id: cvs.info-3,v 1.1.1.7 1997/03/18 02:05:54 tholo Exp $' > kotest
+     $ echo '$Id: cvs.info-3,v 1.1.1.8 1997/03/29 04:46:01 tholo Exp $' > kotest
      $ cvs add -kb -m"A test file" kotest
      $ cvs ci -m"First checkin; contains a keyword" kotest
 
    If a file accidentally gets added without `-kb', one can use the
 `cvs admin' command to recover.  For example:
 
-     $ echo '$Id: cvs.info-3,v 1.1.1.7 1997/03/18 02:05:54 tholo Exp $' > kotest
+     $ echo '$Id: cvs.info-3,v 1.1.1.8 1997/03/29 04:46:01 tholo Exp $' > kotest
      $ cvs add -m"A test file" kotest
      $ cvs ci -m"First checkin; contains a keyword" kotest
      $ cvs admin -kb kotest
@@ -1228,69 +1289,4 @@ found in many operating systems, or the `VPATH' feature found in many
 versions of `make'.  One build tool which is designed to help with this
 kind of thing is Odin (see
 `ftp://ftp.cs.colorado.edu/pub/distribs/odin').
-
-
-File: cvs.info,  Node: Compatibility,  Next: Revision management,  Prev: Builds,  Up: Top
-
-Compatibility between CVS Versions
-**********************************
-
-   The repository format is compatible going back to CVS 1.3.  But see
-*Note Watches Compatibility::, if you have copies of CVS 1.6 or older
-and you want to use the optional developer communication features.
-
-   The working directory format is compatible going back to CVS 1.5.
-It did change between CVS 1.3 and CVS 1.5.  If you run CVS 1.5 or newer
-on a working directory checked out with CVS 1.3, CVS will convert it,
-but to go back to CVS 1.3 you need to check out a new working directory
-with CVS 1.3.
-
-   The remote protocol is interoperable going back to CVS 1.5, but no
-further (1.5 was the first official release with the remote protocol,
-but some older versions might still be floating around).  In many cases
-you need to upgrade both the client and the server to take advantage of
-new features and bugfixes, however.
-
-
-File: cvs.info,  Node: Revision management,  Next: CVS commands,  Prev: Compatibility,  Up: Top
-
-Revision management
-*******************
-
-   If you have read this far, you probably have a pretty good grasp on
-what CVS can do for you.  This chapter talks a little about things that
-you still have to decide.
-
-   If you are doing development on your own using CVS you could
-probably skip this chapter.  The questions this chapter takes up become
-more important when more than one person is working in a repository.
-
-* Menu:
-
-* When to commit::              Some discussion on the subject
-
-
-File: cvs.info,  Node: When to commit,  Up: Revision management
-
-When to commit?
-===============
-
-   Your group should decide which policy to use regarding commits.
-Several policies are possible, and as your experience with CVS grows
-you will probably find out what works for you.
-
-   If you commit files too quickly you might commit files that do not
-even compile.  If your partner updates his working sources to include
-your buggy file, he will be unable to compile the code.  On the other
-hand, other persons will not be able to benefit from the improvements
-you make to the code if you commit very seldom, and conflicts will
-probably be more common.
-
-   It is common to only commit files after making sure that they can be
-compiled.  Some sites require that the files pass a test suite.
-Policies like this can be enforced using the commitinfo file (*note
-commitinfo::.), but you should think twice before you enforce such a
-convention.  By making the development environment too controlled it
-might become too regimented and thus counter-productive to the real
-goal, which is to get software written.
 

@@ -9,7 +9,7 @@ CVS Client/Server
 
    This document describes the client/server protocol used by CVS.  It
 does not describe how to use or administer client/server CVS; see the
-regular CVS manual for that.  This is version 1.9.4 of the protocol
+regular CVS manual for that.  This is version 1.9.6 of the protocol
 specification--*Note Introduction::, for more on what this version
 number means.
 
@@ -57,7 +57,7 @@ you are reading now) of this document, `cvsclient.texi', can be found
 at the usual GNU FTP sites, with a filename such as
 `cvs-VERSION.tar.gz'.
 
-   This is version 1.9.4 of the protocol specification.  This version
+   This is version 1.9.6 of the protocol specification.  This version
 number is intended only to aid in distinguishing different versions of
 this specification.  Although the specification is currently maintained
 in conjunction with the CVS implementation, and carries the same
@@ -425,11 +425,20 @@ compressed form) ends with a newline.
 
 `Case \n'
      Response expected: no.  Tell the server that filenames should be
-     matched against ignore patterns in a case-insensitive fashion.
-     Note that this does not apply to other comparisons--for example
-     the filenames given in `Entry' and `Modified' requests for the
-     same file must match in case regardless of whether the `Case'
-     request is sent.
+     matched in a case-insensitive fashion.  Note that this is not the
+     primary mechanism for achieving case-insensitivity; for the most
+     part the client keeps track of the case which the server wants to
+     use and takes care to always use that case regardless of what the
+     user specifies.  For example the filenames given in `Entry' and
+     `Modified' requests for the same file must match in case
+     regardless of whether the `Case' request is sent.  The latter
+     mechanism is more general (it could also be used for 8.3
+     filenames, VMS filenames with more than one `.', and any other
+     situation in which there is a predictable mapping between
+     filenames in the working directory and filenames in the protocol),
+     but there are some situations it cannot handle (ignore patterns, or
+     situations where the user specifies a filename and the client does
+     not know about that file).
 
 `Argument TEXT \n'
      Response expected: no.  Save argument for use in a subsequent
@@ -713,9 +722,11 @@ the response is over.
      Additional data: TAGSPEC \n.  Tell the client to set a sticky tag
      or date, which should be supplied with the `Sticky' request for
      future operations.  PATHNAME ends in a slash; its purpose is to
-     specify a directory, not a file within a directory.  The first
-     character of TAGSPEC is `T' for a tag, or `D' for a date.  The
-     remainder of TAGSPEC contains the actual tag or date.
+     specify a directory, not a file within a directory.  The client
+     should store TAGSPEC and pass it back to the server as-is, to
+     allow for future expansion.  The first character of TAGSPEC is `T'
+     for a tag, `D' for a date, or something else for future expansion.
+     The remainder of TAGSPEC contains the actual tag or date.
 
 `Clear-sticky PATHNAME \n'
      Clear any sticky tag or date set by `Set-sticky'.
@@ -940,9 +951,9 @@ Node: Entries Lines10159
 Node: Modes10867
 Node: Filenames12390
 Node: Requests13141
-Node: Responses27266
-Node: Example36257
-Node: Requirements40184
-Node: Obsolete41092
+Node: Responses27895
+Node: Example37034
+Node: Requirements40961
+Node: Obsolete41869
 
 End Tag Table

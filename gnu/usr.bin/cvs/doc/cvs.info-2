@@ -22,83 +22,6 @@ and this permission notice may be included in translations approved by
 the Free Software Foundation instead of in the original English.
 
 
-File: cvs.info,  Node: Password authentication client,  Next: Password authentication security,  Prev: Password authentication server,  Up: Password authenticated
-
-Using the client with password authentication
-.............................................
-
-   Before connecting to the server, the client must "log in" with the
-command `cvs login'.  Logging in verifies a password with the server,
-and also records the password for later transactions with the server.
-The `cvs login' command needs to know the username, server hostname,
-and full repository path, and it gets this information from the
-repository argument or the `CVSROOT' environment variable.
-
-   `cvs login' is interactive -- it prompts for a password:
-
-     cvs -d :pserver:bach@chainsaw.brickyard.com:/usr/local/cvsroot login
-     CVS password:
-
-   The password is checked with the server; if it is correct, the
-`login' succeeds, else it fails, complaining that the password was
-incorrect.
-
-   Once you have logged in, you can force CVS to connect directly to
-the server and authenticate with the stored password:
-
-     cvs -d :pserver:bach@chainsaw.brickyard.com:/usr/local/cvsroot checkout foo
-
-   The `:pserver:' is necessary because without it, CVS will assume it
-should use `rsh' to connect with the server (*note Connecting via
-rsh::.).  (Once you have a working copy checked out and are running CVS
-commands from within it, there is no longer any need to specify the
-repository explicitly, because CVS records it in the working copy's
-`CVS' subdirectory.)
-
-   Passwords are stored by default in the file `$HOME/.cvspass'.  Its
-format is human-readable, but don't edit it unless you know what you
-are doing.  The passwords are not stored in cleartext, but are
-trivially encoded to protect them from "innocent" compromise (i.e.,
-inadvertently being seen by a system administrator who happens to look
-at that file).
-
-   The password for the currently choosen remote repository can be
-removed from the CVS_PASSFILE by using the `cvs logout' command.
-
-   The `CVS_PASSFILE' environment variable overrides this default.  If
-you use this variable, make sure you set it *before* `cvs login' is
-run.  If you were to set it after running `cvs login', then later CVS
-commands would be unable to look up the password for transmission to
-the server.
-
-
-File: cvs.info,  Node: Password authentication security,  Prev: Password authentication client,  Up: Password authenticated
-
-Security considerations with password authentication
-....................................................
-
-   The passwords are stored on the client side in a trivial encoding of
-the cleartext, and transmitted in the same encoding.  The encoding is
-done only to prevent inadvertent password compromises (i.e., a system
-administrator accidentally looking at the file), and will not prevent
-even a naive attacker from gaining the password.
-
-   The separate CVS password file (*note Password authentication
-server::.) allows people to use a different password for repository
-access than for login access.  On the other hand, once a user has
-access to the repository, she can execute programs on the server system
-through a variety of means.  Thus, repository access implies fairly
-broad system access as well.  It might be possible to modify CVS to
-prevent that, but no one has done so as of this writing.  Furthermore,
-there may be other ways in which having access to CVS allows people to
-gain more general access to the system; noone has done a careful audit.
-
-   In summary, anyone who gets the password gets repository access, and
-some measure of general system access as well.  The password is
-available to anyone who can sniff network packets or read a protected
-(i.e., user read-only) file.  If you want real security, get Kerberos.
-
-
 File: cvs.info,  Node: Kerberos authenticated,  Prev: Password authenticated,  Up: Remote repositories
 
 Direct connection with kerberos
@@ -375,7 +298,7 @@ together related files and directories.
           $ cvs release -d CVSROOT
 
 
-File: cvs.info,  Node: Multiple developers,  Next: Branches,  Prev: Starting a new project,  Up: Top
+File: cvs.info,  Node: Multiple developers,  Next: Revisions and branches,  Prev: Starting a new project,  Up: Top
 
 Multiple developers
 *******************
@@ -1005,27 +928,145 @@ considered the best of both the reserved checkout and unreserved
 checkout worlds.
 
 
-File: cvs.info,  Node: Branches,  Next: Merging,  Prev: Multiple developers,  Up: Top
+File: cvs.info,  Node: Revisions and branches,  Next: Merging,  Prev: Multiple developers,  Up: Top
 
-Branches
-********
+Revisions and branches
+**********************
 
-   So far, all revisions shown in this manual have been on the "main
-trunk" of the revision tree, i.e., all revision numbers have been of
-the form X.Y.  One useful feature, especially when maintaining several
-releases of a software product at once, is the ability to make branches
-on the revision tree.  "Tags", symbolic names for revisions, will also
-be introduced in this chapter.
+   For many uses of CVS, one doesn't need to worry too much about
+revision numbers; CVS assigns numbers such as `1.1', `1.2', and so on,
+and that is all one needs to know.  However, some people prefer to have
+more knowledge and control concerning how CVS assigns revision numbers.
+
+   If one wants to keep track of a set of revisions involving more than
+one file, such as which revisions went into a particular release, one
+uses a "tag", which is a symbolic revision which can be assigned to a
+numeric revision in each file.
+
+   Another useful feature, especially when maintaining several releases
+of a software product at once, is the ability to make branches on the
+revision tree.
 
 * Menu:
 
+* Revision numbers::            The meaning of a revision number
+* Versions revisions releases::  Terminology used in this manual
+* Assigning revisions::         Assigning revisions
 * Tags::                        Tags-Symbolic revisions
 * Branches motivation::         What branches are good for
 * Creating a branch::           Creating a branch
 * Sticky tags::                 Sticky tags
 
 
-File: cvs.info,  Node: Tags,  Next: Branches motivation,  Up: Branches
+File: cvs.info,  Node: Revision numbers,  Next: Versions revisions releases,  Up: Revisions and branches
+
+Revision numbers
+================
+
+   Each version of a file has a unique "revision number".  Revision
+numbers look like `1.1', `1.2', `1.3.2.2' or even `1.3.2.2.4.5'.  A
+revision number always has an even number of period-separated decimal
+integers.  By default revision 1.1 is the first revision of a file.
+Each successive revision is given a new number by increasing the
+rightmost number by one.  The following figure displays a few
+revisions, with newer revisions to the right.
+
+            +-----+    +-----+    +-----+    +-----+    +-----+
+            ! 1.1 !----! 1.2 !----! 1.3 !----! 1.4 !----! 1.5 !
+            +-----+    +-----+    +-----+    +-----+    +-----+
+
+   CVS is not limited to linear development.  The "revision tree" can
+be split into "branches", where each branch is a self-maintained line of
+development.  Changes made on one branch can easily be moved back to
+the main trunk.
+
+   Each branch has a "branch number", consisting of an odd number of
+period-separated decimal integers.  The branch number is created by
+appending an integer to the revision number where the corresponding
+branch forked off.  Having branch numbers allows more than one branch
+to be forked off from a certain revision.
+
+   All revisions on a branch have revision numbers formed by appending
+an ordinal number to the branch number.  The following figure
+illustrates branching with an example.
+
+                                                          +-------------+
+                               Branch 1.2.2.3.2 ->        ! 1.2.2.3.2.1 !
+                                                        / +-------------+
+                                                       /
+                                                      /
+                      +---------+    +---------+    +---------+    +---------+
+     Branch 1.2.2 -> _! 1.2.2.1 !----! 1.2.2.2 !----! 1.2.2.3 !----! 1.2.2.4 !
+                    / +---------+    +---------+    +---------+    +---------+
+                   /
+                  /
+     +-----+    +-----+    +-----+    +-----+    +-----+
+     ! 1.1 !----! 1.2 !----! 1.3 !----! 1.4 !----! 1.5 !      <- The main trunk
+     +-----+    +-----+    +-----+    +-----+    +-----+
+                     !
+                     !
+                     !   +---------+    +---------+    +---------+
+     Branch 1.2.4 -> +---! 1.2.4.1 !----! 1.2.4.2 !----! 1.2.4.3 !
+                         +---------+    +---------+    +---------+
+
+   The exact details of how the branch number is constructed is not
+something you normally need to be concerned about, but here is how it
+works: When CVS creates a branch number it picks the first unused even
+integer, starting with 2.  So when you want to create a branch from
+revision 6.4 it will be numbered 6.4.2.  All branch numbers ending in a
+zero (such as 6.4.0) are used internally by CVS (*note Magic branch
+numbers::.).  The branch 1.1.1 has a special meaning.  *Note Tracking
+sources::.
+
+
+File: cvs.info,  Node: Versions revisions releases,  Next: Assigning revisions,  Prev: Revision numbers,  Up: Revisions and branches
+
+Versions, revisions and releases
+================================
+
+   A file can have several versions, as described above.  Likewise, a
+software product can have several versions.  A software product is
+often given a version number such as `4.1.1'.
+
+   Versions in the first sense are called "revisions" in this document,
+and versions in the second sense are called "releases".  To avoid
+confusion, the word "version" is almost never used in this document.
+
+
+File: cvs.info,  Node: Assigning revisions,  Next: Tags,  Prev: Versions revisions releases,  Up: Revisions and branches
+
+Assigning revisions
+===================
+
+   By default, CVS will assign numeric revisions by leaving the first
+number the same and incrementing the second number.  For example,
+`1.1', `1.2', `1.3', etc.
+
+   When adding a new file, the second number will always be one and the
+first number will equal the highest first number of any file in that
+directory.  For example, the current directory contains files whose
+highest numbered revisions are `1.7', `3.1', and `4.12', then an added
+file will be given the numeric revision `4.1'.
+
+   Normally there is no reason to care about the revision numbers--it
+is easier to treat them as internal numbers that CVS maintains, and tags
+provide a better way to distinguish between things like release 1
+versus release 2 of your product (*note Tags::.).  However, if you want
+to set the numeric revisions, the `-r' option to `cvs commit' can do
+that.
+
+   For example, to bring all your files up to the RCS revision 3.0
+(including those that haven't changed), you might invoke:
+
+     $ cvs commit -r 3.0
+
+   Note that the number you specify with `-r' must be larger than any
+existing revision number.  That is, if revision 3.0 exists, you cannot
+`cvs commit -r 1.3'.  If you want to maintain several releases in
+parallel, you need to use a branch (*note Revisions and branches::.).
+
+
+File: cvs.info,  Node: Tags,  Next: Branches motivation,  Prev: Assigning revisions,  Up: Revisions and branches
 
 Tags-Symbolic revisions
 =======================
@@ -1151,7 +1192,7 @@ of revisions that is "flat" along the tagged revisions, like this:
                                      1.5
 
 
-File: cvs.info,  Node: Branches motivation,  Next: Creating a branch,  Prev: Tags,  Up: Branches
+File: cvs.info,  Node: Branches motivation,  Next: Creating a branch,  Prev: Tags,  Up: Revisions and branches
 
 What branches are good for
 ==========================
@@ -1170,63 +1211,4 @@ the revision trees for all the files that make up release 1.0 of tc.
 You can then make modifications to the branch without disturbing the
 main trunk.  When the modifications are finished you can select to
 either incorporate them on the main trunk, or leave them on the branch.
-
-
-File: cvs.info,  Node: Creating a branch,  Next: Sticky tags,  Prev: Branches motivation,  Up: Branches
-
-Creating a branch
-=================
-
-   The `rtag' command can be used to create a branch.  The `rtag'
-command is much like `tag', but it does not require that you have a
-working copy of the module.  *Note rtag::.  (You can also use the `tag'
-command; *note tag::.).
-
-     $ cvs rtag -b -r release-1-0 release-1-0-patches tc
-
-   The `-b' flag makes `rtag' create a branch (rather than just a
-symbolic revision name).  `-r release-1-0' says that this branch should
-be rooted at the node (in the revision tree) that corresponds to the tag
-`release-1-0'.  Note that the numeric revision number that matches
-`release-1-0' will probably be different from file to file.  The name
-of the new branch is `release-1-0-patches', and the module affected is
-`tc'.
-
-   To fix the problem in release 1.0, you need a working copy of the
-branch you just created.
-
-     $ cvs checkout -r release-1-0-patches tc
-     $ cvs status -v driver.c backend.c
-     ===================================================================
-     File: driver.c          Status: Up-to-date
-     
-         Version:            1.7     Sat Dec  5 18:25:54 1992
-         RCS Version:        1.7     /usr/local/cvsroot/yoyodyne/tc/driver.c,v
-         Sticky Tag:         release-1-0-patches (branch: 1.7.2)
-         Sticky Date:        (none)
-         Sticky Options:     (none)
-     
-         Existing Tags:
-             release-1-0-patches             (branch: 1.7.2)
-             release-1-0                     (revision: 1.7)
-     
-     ===================================================================
-     File: backend.c         Status: Up-to-date
-     
-         Version:            1.4     Tue Dec  1 14:39:01 1992
-         RCS Version:        1.4     /usr/local/cvsroot/yoyodyne/tc/backend.c,v
-         Sticky Tag:         release-1-0-patches (branch: 1.4.2)
-         Sticky Date:        (none)
-         Sticky Options:     (none)
-     
-         Existing Tags:
-             release-1-0-patches             (branch: 1.4.2)
-             release-1-0                     (revision: 1.4)
-             release-0-4                     (revision: 1.4)
-
-   As the output from the `status' command shows the branch number is
-created by adding a digit at the tail of the revision number it is
-based on.  (If `release-1-0' corresponds to revision 1.4, the branch's
-revision number will be 1.4.2.  For obscure reasons CVS always gives
-branches even numbers, starting at 2.  *Note Revision numbers::.).
 

@@ -27,18 +27,17 @@ File: cvs.info,  Node: Top,  Next: Preface,  Up: (dir)
 
 
    This info manual describes how to use and administer CVS version
-1.9.4.
+1.9.6.
 
 * Menu:
 
 * Preface::                     About this manual
 * What is CVS?::                What is CVS?
-* Basic concepts::              Basic concepts of revision management
 * A sample session::            A tour of basic CVS usage
 * Repository::                  Where all your sources are stored
 * Starting a new project::      Starting a project with CVS
 * Multiple developers::         How CVS helps a group of developers
-* Branches::                    Parallel development explained
+* Revisions and branches::      Numeric, symbolic, and branch revisions
 * Merging::                     How to move changes between branches
 * Recursive behavior::          CVS descends directories
 * Adding files::                Adding files
@@ -204,7 +203,7 @@ above-mentioned shortcomings.
                                                          Per Cederqvist
 
 
-File: cvs.info,  Node: What is CVS?,  Next: Basic concepts,  Prev: Preface,  Up: Top
+File: cvs.info,  Node: What is CVS?,  Next: A sample session,  Prev: Preface,  Up: Top
 
 What is CVS?
 ************
@@ -380,107 +379,15 @@ CVS does not have a builtin process model
      once they have been proven.
 
 
-File: cvs.info,  Node: Basic concepts,  Next: A sample session,  Prev: What is CVS?,  Up: Top
-
-Basic concepts
-**************
-
-   CVS stores all files in a centralized "repository" (*note
-Repository::.).
-
-   The repository contains directories and files, in an arbitrary tree.
-The "modules" feature can be used to group together a set of
-directories or files into a single entity (*note modules::.).  A
-typical usage is to define one module per project.
-
-* Menu:
-
-* Revision numbers::            The meaning of a revision number
-* Versions revisions releases::  Terminology used in this manual
-
-
-File: cvs.info,  Node: Revision numbers,  Next: Versions revisions releases,  Up: Basic concepts
-
-Revision numbers
-================
-
-   Each version of a file has a unique "revision number".  Revision
-numbers look like `1.1', `1.2', `1.3.2.2' or even `1.3.2.2.4.5'.  A
-revision number always has an even number of period-separated decimal
-integers.  By default revision 1.1 is the first revision of a file.
-Each successive revision is given a new number by increasing the
-rightmost number by one.  The following figure displays a few
-revisions, with newer revisions to the right.
-
-            +-----+    +-----+    +-----+    +-----+    +-----+
-            ! 1.1 !----! 1.2 !----! 1.3 !----! 1.4 !----! 1.5 !
-            +-----+    +-----+    +-----+    +-----+    +-----+
-
-   CVS is not limited to linear development.  The "revision tree" can
-be split into "branches", where each branch is a self-maintained line of
-development.  Changes made on one branch can easily be moved back to
-the main trunk.
-
-   Each branch has a "branch number", consisting of an odd number of
-period-separated decimal integers.  The branch number is created by
-appending an integer to the revision number where the corresponding
-branch forked off.  Having branch numbers allows more than one branch
-to be forked off from a certain revision.
-
-   All revisions on a branch have revision numbers formed by appending
-an ordinal number to the branch number.  The following figure
-illustrates branching with an example.
-
-                                                          +-------------+
-                               Branch 1.2.2.3.2 ->        ! 1.2.2.3.2.1 !
-                                                        / +-------------+
-                                                       /
-                                                      /
-                      +---------+    +---------+    +---------+    +---------+
-     Branch 1.2.2 -> _! 1.2.2.1 !----! 1.2.2.2 !----! 1.2.2.3 !----! 1.2.2.4 !
-                    / +---------+    +---------+    +---------+    +---------+
-                   /
-                  /
-     +-----+    +-----+    +-----+    +-----+    +-----+
-     ! 1.1 !----! 1.2 !----! 1.3 !----! 1.4 !----! 1.5 !      <- The main trunk
-     +-----+    +-----+    +-----+    +-----+    +-----+
-                     !
-                     !
-                     !   +---------+    +---------+    +---------+
-     Branch 1.2.4 -> +---! 1.2.4.1 !----! 1.2.4.2 !----! 1.2.4.3 !
-                         +---------+    +---------+    +---------+
-
-   The exact details of how the branch number is constructed is not
-something you normally need to be concerned about, but here is how it
-works: When CVS creates a branch number it picks the first unused even
-integer, starting with 2.  So when you want to create a branch from
-revision 6.4 it will be numbered 6.4.2.  All branch numbers ending in a
-zero (such as 6.4.0) are used internally by CVS (*note Magic branch
-numbers::.).  The branch 1.1.1 has a special meaning.  *Note Tracking
-sources::.
-
-
-File: cvs.info,  Node: Versions revisions releases,  Prev: Revision numbers,  Up: Basic concepts
-
-Versions, revisions and releases
-================================
-
-   A file can have several versions, as described above.  Likewise, a
-software product can have several versions.  A software product is
-often given a version number such as `4.1.1'.
-
-   Versions in the first sense are called "revisions" in this document,
-and versions in the second sense are called "releases".  To avoid
-confusion, the word "version" is almost never used in this document.
-
-
-File: cvs.info,  Node: A sample session,  Next: Repository,  Prev: Basic concepts,  Up: Top
+File: cvs.info,  Node: A sample session,  Next: Repository,  Prev: What is CVS?,  Up: Top
 
 A sample session
 ****************
 
-   This section describes a typical work-session using CVS.  It assumes
-that a repository is set up (*note Repository::.).
+   As a way of introducing CVS, we'll go through a typical work-session
+using CVS.  The first thing to understand is that CVS stores all files
+in a centralized "repository" (*note Repository::.); this section
+assumes that a repository is set up.
 
    Suppose you are working on a simple compiler.  The source consists
 of a handful of C files and a `Makefile'.  The compiler is called `tc'
@@ -1188,4 +1095,81 @@ as well.
    Right now, the only way to put a password in the CVS `passwd' file
 is to paste it there from somewhere else.  Someday, there may be a `cvs
 passwd' command.
+
+
+File: cvs.info,  Node: Password authentication client,  Next: Password authentication security,  Prev: Password authentication server,  Up: Password authenticated
+
+Using the client with password authentication
+.............................................
+
+   Before connecting to the server, the client must "log in" with the
+command `cvs login'.  Logging in verifies a password with the server,
+and also records the password for later transactions with the server.
+The `cvs login' command needs to know the username, server hostname,
+and full repository path, and it gets this information from the
+repository argument or the `CVSROOT' environment variable.
+
+   `cvs login' is interactive -- it prompts for a password:
+
+     cvs -d :pserver:bach@chainsaw.brickyard.com:/usr/local/cvsroot login
+     CVS password:
+
+   The password is checked with the server; if it is correct, the
+`login' succeeds, else it fails, complaining that the password was
+incorrect.
+
+   Once you have logged in, you can force CVS to connect directly to
+the server and authenticate with the stored password:
+
+     cvs -d :pserver:bach@chainsaw.brickyard.com:/usr/local/cvsroot checkout foo
+
+   The `:pserver:' is necessary because without it, CVS will assume it
+should use `rsh' to connect with the server (*note Connecting via
+rsh::.).  (Once you have a working copy checked out and are running CVS
+commands from within it, there is no longer any need to specify the
+repository explicitly, because CVS records it in the working copy's
+`CVS' subdirectory.)
+
+   Passwords are stored by default in the file `$HOME/.cvspass'.  Its
+format is human-readable, but don't edit it unless you know what you
+are doing.  The passwords are not stored in cleartext, but are
+trivially encoded to protect them from "innocent" compromise (i.e.,
+inadvertently being seen by a system administrator who happens to look
+at that file).
+
+   The password for the currently choosen remote repository can be
+removed from the CVS_PASSFILE by using the `cvs logout' command.
+
+   The `CVS_PASSFILE' environment variable overrides this default.  If
+you use this variable, make sure you set it *before* `cvs login' is
+run.  If you were to set it after running `cvs login', then later CVS
+commands would be unable to look up the password for transmission to
+the server.
+
+
+File: cvs.info,  Node: Password authentication security,  Prev: Password authentication client,  Up: Password authenticated
+
+Security considerations with password authentication
+....................................................
+
+   The passwords are stored on the client side in a trivial encoding of
+the cleartext, and transmitted in the same encoding.  The encoding is
+done only to prevent inadvertent password compromises (i.e., a system
+administrator accidentally looking at the file), and will not prevent
+even a naive attacker from gaining the password.
+
+   The separate CVS password file (*note Password authentication
+server::.) allows people to use a different password for repository
+access than for login access.  On the other hand, once a user has
+access to the repository, she can execute programs on the server system
+through a variety of means.  Thus, repository access implies fairly
+broad system access as well.  It might be possible to modify CVS to
+prevent that, but no one has done so as of this writing.  Furthermore,
+there may be other ways in which having access to CVS allows people to
+gain more general access to the system; noone has done a careful audit.
+
+   In summary, anyone who gets the password gets repository access, and
+some measure of general system access as well.  The password is
+available to anyone who can sniff network packets or read a protected
+(i.e., user read-only) file.  If you want real security, get Kerberos.
 

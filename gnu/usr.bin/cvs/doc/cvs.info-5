@@ -22,6 +22,122 @@ and this permission notice may be included in translations approved by
 the Free Software Foundation instead of in the original English.
 
 
+File: cvs.info,  Node: history options,  Up: history
+
+history options
+---------------
+
+   Several options (shown above as `-report')  control  what kind of
+report is generated:
+
+`-c'
+     Report on each time commit was used (i.e., each time the
+     repository was modified).
+
+`-e'
+     Everything (all record types); equivalent to specifying
+     `-xMACFROGWUT'.
+
+`-m MODULE'
+     Report on a particular module.  (You can meaningfully use `-m'
+     more than once on the command line.)
+
+`-o'
+     Report on checked-out modules.
+
+`-T'
+     Report on all tags.
+
+`-x TYPE'
+     Extract a particular set of record types TYPE from the CVS
+     history.  The types are indicated by single letters, which you may
+     specify in combination.
+
+     Certain commands have a single record type:
+
+    `F'
+          release
+
+    `O'
+          checkout
+
+    `E'
+          export
+
+    `T'
+          rtag
+
+     One of four record types may result from an update:
+
+    `C'
+          A merge was necessary but collisions were detected (requiring
+          manual merging).
+
+    `G'
+          A merge was necessary and it succeeded.
+
+    `U'
+          A working file was copied from the repository.
+
+    `W'
+          The working copy of a file was deleted during update (because
+          it was gone from the repository).
+
+     One of three record types results from commit:
+
+    `A'
+          A file was added for the first time.
+
+    `M'
+          A file was modified.
+
+    `R'
+          A file was removed.
+
+   The options shown as `-flags' constrain or expand the report without
+requiring option arguments:
+
+`-a'
+     Show data for all users (the default is to show data only for the
+     user executing `history').
+
+`-l'
+     Show last modification only.
+
+`-w'
+     Show only the records for modifications done from the same working
+     directory where `history' is executing.
+
+   The options shown as `-options ARGS' constrain the report based on
+an argument:
+
+`-b STR'
+     Show data back to a record containing  the  string STR  in  either
+     the module name, the file name, or the repository path.
+
+`-D DATE'
+     Show data since DATE.  This is slightly different from the normal
+     use of `-D DATE', which selects the newest revision older than
+     DATE.
+
+`-p REPOSITORY'
+     Show data for a particular source repository  (you can specify
+     several `-p' options on the same command line).
+
+`-r REV'
+     Show records referring to revisions since the revision or tag
+     named REV appears in individual RCS files.  Each RCS file is
+     searched for the revision or tag.
+
+`-t TAG'
+     Show records since tag TAG was last added to the the history file.
+     This differs from the `-r' flag above in that it reads only the
+     history file, not the RCS files, and is much faster.
+
+`-u NAME'
+     Show records for user NAME.
+
+
 File: cvs.info,  Node: import,  Next: log,  Prev: history,  Up: CVS commands
 
 import--Import sources into CVS, using vendor branches
@@ -600,7 +716,7 @@ options::., for a complete description of them):
      files get removed from the up-coming distribution).
 
 `-b'
-     Make the tag a branch tag.  *Note Branches::.
+     Make the tag a branch tag.  *Note Revisions and branches::.
 
 `-d'
      Delete the tag instead of creating it.
@@ -725,9 +841,9 @@ options::., for a complete description of them):
    Two special options are available:
 
 `-b'
-     The -b option makes the tag a branch tag (*note Branches::.),
-     allowing concurrent, isolated development.  This is most useful
-     for creating a patch to a previously released software
+     The -b option makes the tag a branch tag (*note Revisions and
+     branches::.), allowing concurrent, isolated development.  This is
+     most useful for creating a patch to a previously released software
      distribution.
 
 `-c'
@@ -942,630 +1058,4 @@ without actually change anything in your working directory.  It can be
 used to check what has been going on with the project.
 
      $ cvs -n -q update
-
-
-File: cvs.info,  Node: Invoking CVS,  Next: Administrative files,  Prev: CVS commands,  Up: Top
-
-Quick reference to CVS commands
-*******************************
-
-   This appendix describes how to invoke CVS, with references to where
-each command or feature is described in detail.  Other relevant
-references are the `--help'/`-H' option to CVS (*note Global
-options::.) and *Note Index::.
-
-`add [OPTIONS] [FILES...]'
-     Add a new file/directory.  See *Note Adding files::.
-
-    `-k KFLAG'
-          Set keyword expansion.
-
-    `-m MSG'
-          Set file description.
-
-`admin [OPTIONS] [FILES...]'
-     Administration of history files in the repository.  See *Note
-     admin::.
-
-    `-b[REV]'
-          Set default branch.
-
-    `-cSTRING'
-          Set comment leader.
-
-    `-kSUBST'
-          Set keyword substitution.  See *Note Keyword substitution::.
-
-    `-l[REV]'
-          Lock revision REV, or latest revision.
-
-    `-mREV:MSG'
-          Replace the log message of revision REV with MSG.
-
-    `-oRANGE'
-          Delete revisions from the history files
-
-    `-q'
-          Run quietly; do not print diagnostics.
-
-    `-sSTATE[:REV]'
-          Set the state.
-
-    `-t'
-          Set file description from standard input.
-
-    `-tFILE'
-          Set file description from FILE.
-
-    `-t-STRING'
-          Set file description to STRING.
-
-    `-u[REV]'
-          Unlock revision REV, or latest revision.
-
-`annotate [OPTIONS] [FILES...]'
-     Show last revision where each line was modified.  See *Note
-     annotate::.
-
-    `-D DATE'
-          Annotate the most recent revision no later than DATE.  See
-          *Note Common options::.
-
-    `-f'
-          Use head revision if tag/date not found.  See *Note Common
-          options::.
-
-    `-l'
-          Local; run only in current working directory.  *Note
-          Recursive behavior::.
-
-    `-r TAG'
-          Annotate revision TAG.  See *Note Common options::.
-
-`checkout [OPTIONS] MODULES...'
-     Get a copy of the sources.  See *Note checkout::.
-
-    `-A'
-          Reset any sticky tags/date/kopts.  See *Note Sticky tags::
-          and *Note Keyword substitution::.
-
-    `-c'
-          Output the module database.  See *Note checkout options::.
-
-    `-D DATE'
-          Check out revisions as of DATE (is sticky).  See *Note Common
-          options::.
-
-    `-d DIR'
-          Check out into DIR.  See *Note checkout options::.
-
-    `-f'
-          Use head revision if tag/date not found.  See *Note Common
-          options::.
-
-    `-j REV'
-          Merge in changes.  See *Note checkout options::.
-
-    `-k KFLAG'
-          Use KFLAG keyword expansion.  See *Note Substitution modes::.
-
-    `-l'
-          Local; run only in current working directory.  *Note
-          Recursive behavior::.
-
-    `-N'
-          Don't shorten module paths if -d specified.  See *Note
-          checkout options::.
-
-    `-n'
-          Do not run module program (if any).  See *Note checkout
-          options::.
-
-    `-P'
-          Prune empty directories.  See *Note Moving directories::.
-
-    `-p'
-          Check out files to standard output (avoids stickiness).  See
-          *Note checkout options::.
-
-    `-r TAG'
-          Checkout revision TAG (is sticky).  See *Note Common
-          options::.
-
-    `-s'
-          Like -c, but include module status.  See *Note checkout
-          options::.
-
-`commit [OPTIONS] [FILES...]'
-     Check changes into the repository.  See *Note commit::.
-
-    `-F FILE'
-          Read log message from FILE.  See *Note commit options::.
-
-    `-f'
-          Force the file to be committed; disables recursion.  See
-          *Note commit options::.
-
-    `-l'
-          Local; run only in current working directory.  See *Note
-          Recursive behavior::.
-
-    `-m MSG'
-          Use MSG as log message.  See *Note commit options::.
-
-    `-n'
-          Do not run module program (if any).  See *Note commit
-          options::.
-
-    `-R'
-          Operate recursively (default).  *Note Recursive behavior::.
-
-    `-r REV'
-          Commit to REV.  See *Note commit options::.
-
-`diff [OPTIONS] [FILES...]'
-     Show differences between revisions.  See *Note diff::.  In
-     addition to the options shown below, accepts a wide variety of
-     options to control output style, for example `-c' for context
-     diffs.
-
-    `-D DATE1'
-          Diff revision for date against working file.  See *Note diff
-          options::.
-
-    `-D DATE2'
-          Diff REV1/DATE1 against DATE2.  See *Note diff options::.
-
-    `-l'
-          Local; run only in current working directory.  See *Note
-          Recursive behavior::.
-
-    `-N'
-          Include diffs for added and removed files.  See *Note diff
-          options::.
-
-    `-r REV1'
-          Diff revision for REV1 against working file.  See *Note diff
-          options::.
-
-    `-r REV2'
-          Diff rev1/date1 against rev2.  See *Note diff options::.
-
-`edit [OPTIONS] [FILES...]'
-     Get ready to edit a watched file.  See *Note Editing files::.
-
-    `-a ACTIONS'
-          Specify actions for temporary watch, where ACTIONS is `edit',
-          `unedit', `commit', `all', or `none'.  See *Note Editing
-          files::.
-
-    `-l'
-          Local; run only in current working directory.  See *Note
-          Recursive behavior::.
-
-`editors [OPTIONS] [FILES...]'
-     See who is editing a watched file.  See *Note Watch information::.
-
-    `-l'
-          Local; run only in current working directory.  See *Note
-          Recursive behavior::.
-
-`export [OPTIONS] MODULES...'
-     Export files from CVS.  See *Note export::.
-
-    `-D DATE'
-          Check out revisions as of DATE.  See *Note Common options::.
-
-    `-d DIR'
-          Check out into DIR.  See *Note export options::.
-
-    `-f'
-          Use head revision if tag/date not found.  See *Note Common
-          options::.
-
-    `-k KFLAG'
-          Use KFLAG keyword expansion.  See *Note Substitution modes::.
-
-    `-l'
-          Local; run only in current working directory.  *Note
-          Recursive behavior::.
-
-    `-N'
-          Don't shorten module paths if -d specified.  See *Note export
-          options::.
-
-    `-n'
-          Do not run module program (if any).  See *Note export
-          options::.
-
-    `-P'
-          Prune empty directories.  See *Note Moving directories::.
-
-    `-r TAG'
-          Checkout revision TAG (is sticky).  See *Note Common
-          options::.
-
-`history [OPTIONS] [FILES...]'
-     Show repository access history.  See *Note history::.
-
-    `-a'
-          All users (default is self).  See *Note history options::.
-
-    `-b STR'
-          Back to record with STR in module/file/repos field.  See
-          *Note history options::.
-
-    `-c'
-          Report on committed (modified) files.  See *Note history
-          options::.
-
-    `-D DATE'
-          Since DATE.  See *Note history options::.
-
-    `-e'
-          Report on all record types.  See *Note history options::.
-
-    `-l'
-          Last modified (committed or modified report).  See *Note
-          history options::.
-
-    `-m MODULE'
-          Report on MODULE (repeatable).  See *Note history options::.
-
-    `-n MODULE'
-          In MODULE.  See *Note history options::.
-
-    `-o'
-          Report on checked out modules.  See *Note history options::.
-
-    `-r REV'
-          Since revision REV.  See *Note history options::.
-
-    `-T'
-          Produce report on all TAGs.  See *Note history options::.
-
-    `-t TAG'
-          Since tag record placed in history file (by anyone).  See
-          *Note history options::.
-
-    `-u USER'
-          For user USER (repeatable).  See *Note history options::.
-
-    `-w'
-          Working directory must match.  See *Note history options::.
-
-    `-x TYPES'
-          Report on TYPES, one or more of `TOEFWUCGMAR'.  See *Note
-          history options::.
-
-    `-z ZONE'
-          Output for time zone ZONE.  See *Note history options::.
-
-`import [OPTIONS] REPOSITORY VENDOR-TAG RELEASE-TAGS...'
-     Import files into CVS, using vendor branches.  See *Note import::.
-
-    `-b BRA'
-          Import to vendor branch BRA.  See *Note import options::.
-
-    `-d'
-          Use the file's modification time as the time of import.  See
-          *Note import options::.
-
-    `-k KFLAG'
-          Set default RCS keyword substitution mode.  See *Note import
-          options::.
-
-    `-m MSG'
-          Use MSG for log message.  See *Note import options::.
-
-    `-I IGN'
-          More files to ignore (! to reset).  See *Note import
-          options::.
-
-    `-W SPEC'
-          More wrappers.  See *Note import options::.
-
-`init'
-     Create a CVS repository if it doesn't exist.  See *Note Creating a
-     repository::.
-
-`log [OPTIONS] [FILES...]'
-     Print out history information for files.  See *Note log::.
-
-    `-b'
-          Only list revisions on the default branch.  See *Note log
-          options::.
-
-    `-d DATES'
-          Specify dates (D1<D2 for range, D for latest before).  See
-          *Note log options::.
-
-    `-h'
-          Only print header.  See *Note log options::.
-
-    `-l'
-          Local; run only in current working directory.  See *Note
-          Recursive behavior::.
-
-    `-N'
-          Do not list tags.  See *Note log options::.
-
-    `-R'
-          Only print name of RCS file.  See *Note log options::.
-
-    `-r REVS'
-          Only list revisions REVS.  See *Note log options::.
-
-    `-s STATES'
-          Only list revisions with specified states.  See *Note log
-          options::.
-
-    `-t'
-          Only print header and descriptive text.  See *Note log
-          options::.
-
-    `-w LOGINS'
-          Only list revisions checked in by specified logins.  See
-          *Note log options::.
-
-`login'
-     Prompt for password for authenticating server.  See *Note Password
-     authentication client::.
-
-`logout'
-     Remove stored password for authenticating server.  See *Note
-     Password authentication client::.
-
-`rdiff [OPTIONS] MODULES...'
-     Show differences between releases.  See *Note rdiff::.
-
-    `-c'
-          Context diff output format (default).  See *Note rdiff
-          options::.
-
-    `-D DATE'
-          Select revisions based on DATE.  See *Note Common options::.
-
-    `-f'
-          Use head revision if tag/date not found.  See *Note Common
-          options::.
-
-    `-l'
-          Local; run only in current working directory.  See *Note
-          Recursive behavior::.
-
-    `-r REV'
-          Select revisions based on REV.  See *Note Common options::.
-
-    `-s'
-          Short patch - one liner per file.  See *Note rdiff options::.
-
-    `-t'
-          Top two diffs - last change made to the file.  See *Note diff
-          options::.
-
-    `-u'
-          Unidiff output format.  See *Note rdiff options::.
-
-    `-V VERS'
-          Use RCS Version VERS for keyword expansion.  See *Note rdiff
-          options::.
-
-`release [OPTIONS] DIRECTORY'
-     Indicate that a directory is no longer in use.  See *Note
-     release::.
-
-    `-d'
-          Delete the given directory.  See *Note release options::.
-
-`remove [OPTIONS] [FILES...]'
-     Remove an entry from the repository.  See *Note Removing files::.
-
-    `-f'
-          Delete the file before removing it.  See *Note Removing
-          files::.
-
-    `-l'
-          Local; run only in current working directory.  See *Note
-          Recursive behavior::.
-
-    `-R'
-          Operate recursively (default).  *Note Recursive behavior::.
-
-`rtag [OPTIONS] TAG MODULES...'
-     Add a symbolic tag to a module.  See *Note rtag::.
-
-    `-a'
-          Clear tag from removed files that would not otherwise be
-          tagged.  See *Note rtag options::.
-
-    `-b'
-          Create a branch named TAG.  See *Note rtag options::.
-
-    `-D DATE'
-          Tag revisions as of DATE.  See *Note rtag options::.
-
-    `-d'
-          Delete the given tag.  See *Note rtag options::.
-
-    `-F'
-          Move tag if it already exists.  See *Note rtag options::.
-
-    `-f'
-          Force a head revision match if tag/date not found.  See *Note
-          rtag options::.
-
-    `-l'
-          Local; run only in current working directory.  See *Note
-          Recursive behavior::.
-
-    `-n'
-          No execution of tag program.  See *Note rtag options::.
-
-    `-R'
-          Operate recursively (default).  *Note Recursive behavior::.
-
-    `-r TAG'
-          Tag existing tag TAG.  See *Note rtag options::.
-
-`status [OPTIONS] FILES...'
-     Display status information in a working directory.  See *Note
-     status::.
-
-    `-l'
-          Local; run only in current working directory.  See *Note
-          Recursive behavior::.
-
-    `-R'
-          Operate recursively (default).  *Note Recursive behavior::.
-
-    `-v'
-          Include tag information for file.  See *Note status options::.
-
-`tag [OPTIONS] TAG [FILES...]'
-     Add a symbolic tag to checked out version of files.  See *Note
-     tag::.
-
-    `-b'
-          Create a branch named TAG.  See *Note tag options::.
-
-    `-D DATE'
-          Tag revisions as of DATE.  See *Note tag options::.
-
-    `-d'
-          Delete the given tag.  See *Note tag options::.
-
-    `-F'
-          Move tag if it already exists.  See *Note tag options::.
-
-    `-f'
-          Force a head revision match if tag/date not found.  See *Note
-          tag options::.
-
-    `-l'
-          Local; run only in current working directory.  See *Note
-          Recursive behavior::.
-
-    `-n'
-          No execution of tag program.  See *Note tag options::.
-
-    `-R'
-          Operate recursively (default).  *Note Recursive behavior::.
-
-    `-r TAG'
-          Tag existing tag TAG.  See *Note tag options::.
-
-`unedit [OPTIONS] [FILES...]'
-     Undo an edit command.  See *Note Editing files::.
-
-    `-a ACTIONS'
-          Specify actions for temporary watch, where ACTIONS is `edit',
-          `unedit', `commit', `all', or `none'.  See *Note Editing
-          files::.
-
-    `-l'
-          Local; run only in current working directory.  See *Note
-          Recursive behavior::.
-
-`update [OPTIONS] [FILES...]'
-     Bring work tree in sync with repository.  See *Note update::.
-
-    `-A'
-          Reset any sticky tags/date/kopts.  See *Note Sticky tags::
-          and *Note Keyword substitution::.
-
-    `-D DATE'
-          Check out revisions as of DATE (is sticky).  See *Note Common
-          options::.
-
-    `-d'
-          Create directories.  See *Note update options::.
-
-    `-f'
-          Use head revision if tag/date not found.  See *Note Common
-          options::.
-
-    `-I IGN'
-          More files to ignore (! to reset).  See *Note import
-          options::.
-
-    `-j REV'
-          Merge in changes.  See *Note update options::.
-
-    `-k KFLAG'
-          Use KFLAG keyword expansion.  See *Note Substitution modes::.
-
-    `-l'
-          Local; run only in current working directory.  *Note
-          Recursive behavior::.
-
-    `-P'
-          Prune empty directories.  See *Note Moving directories::.
-
-    `-p'
-          Check out files to standard output (avoids stickiness).  See
-          *Note update options::.
-
-    `-R'
-          Operate recursively (default).  *Note Recursive behavior::.
-
-    `-r TAG'
-          Checkout revision TAG (is sticky).  See *Note Common
-          options::.
-
-    `-W SPEC'
-          More wrappers.  See *Note import options::.
-
-`watch [on|off|add|remove] [OPTIONS] [FILES...]'
-     on/off: turn on/off read-only checkouts of files.  See *Note
-     Setting a watch::.
-
-     add/remove: add or remove notification on actions.  See *Note
-     Getting Notified::.
-
-    `-a ACTIONS'
-          Specify actions for temporary watch, where ACTIONS is `edit',
-          `unedit', `commit', `all', or `none'.  See *Note Editing
-          files::.
-
-    `-l'
-          Local; run only in current working directory.  See *Note
-          Recursive behavior::.
-
-`watchers [OPTIONS] [FILES...]'
-     See who is watching a file.  See *Note Watch information::.
-
-    `-l'
-          Local; run only in current working directory.  See *Note
-          Recursive behavior::.
-
-
-File: cvs.info,  Node: Administrative files,  Next: Environment variables,  Prev: Invoking CVS,  Up: Top
-
-Reference manual for the Administrative files
-*********************************************
-
-   Inside the repository, in the directory `$CVSROOT/CVSROOT', there
-are a number of supportive files for CVS.  You can use CVS in a limited
-fashion without any of them, but if they are set up properly they can
-help make life easier.  For a discussion of how to edit them, *Note
-Intro administrative files::.
-
-   The most important of these files is the `modules' file, which
-defines the modules inside the repository.
-
-* Menu:
-
-* modules::                     Defining modules
-* Wrappers::                    Treat directories as files
-* commit files::                The commit support files
-* commitinfo::                  Pre-commit checking
-* verifymsg::                   How are log messages evaluated?
-* editinfo::                    Specifying how log messages are created
-                                (obsolete)
-* loginfo::                     Where should log messages be sent?
-* rcsinfo::                     Templates for the log messages
-* cvsignore::                   Ignoring files via cvsignore
-* history file::                History information
-* Variables::                   Various variables are expanded
 
