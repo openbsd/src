@@ -182,7 +182,7 @@ _rl_get_screen_size (tty, ignore_env)
      is unset. */
   if (screenwidth <= 0)
     {
-      if (ignore_env == 0 && (ss = get_env_value ("COLUMNS")))
+      if (ignore_env == 0 && (ss = get_env_value ("COLUMNS")) && *ss != '\0')
 	screenwidth = atoi (ss);
 
 #if !defined (__DJGPP__)
@@ -195,7 +195,7 @@ _rl_get_screen_size (tty, ignore_env)
      is unset. */
   if (screenheight <= 0)
     {
-      if (ignore_env == 0 && (ss = get_env_value ("LINES")))
+      if (ignore_env == 0 && (ss = get_env_value ("LINES")) && *ss != '\0')
 	screenheight = atoi (ss);
 
 #if !defined (__DJGPP__)
@@ -315,7 +315,7 @@ _rl_init_terminal_io (terminal_name)
   tty = rl_instream ? fileno (rl_instream) : 0;
   screenwidth = screenheight = 0;
 
-  if (term == 0)
+  if (term == 0 || *term == '\0')
     term = "dumb";
 
   /* I've separated this out for later work on not calling tgetent at all

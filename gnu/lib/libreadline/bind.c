@@ -681,7 +681,7 @@ rl_read_init_file (filename)
       filename = last_readline_init_file;
       if (filename == 0)
         filename = get_env_value ("INPUTRC");
-      if (filename == 0)
+      if (filename == 0 || *filename == '\0')
 	filename = DEFAULT_INPUTRC;
     }
 

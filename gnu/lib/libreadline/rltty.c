@@ -190,7 +190,7 @@ save_tty_chars (tiop)
       _rl_tty_chars.t_intr = tiop->tchars.t_intrc;
       _rl_tty_chars.t_quit = tiop->tchars.t_quitc;
       _rl_tty_chars.t_start = tiop->tchars.t_startc;
-      _rl_tty_chars.t_stop = tiop->tchars.t_stopc
+      _rl_tty_chars.t_stop = tiop->tchars.t_stopc;
       _rl_tty_chars.t_eof = tiop->tchars.t_eofc;
       _rl_tty_chars.t_eol = '\n';
       _rl_tty_chars.t_eol2 = tiop->tchars.t_brkc;

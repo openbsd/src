@@ -325,7 +325,7 @@ tilde_expand_word (filename)
 
       /* If there is no HOME variable, look up the directory in
 	 the password database. */
-      if (expansion == 0)
+      if (expansion == 0 || *expansion == '\0')
 	expansion = get_home_dir ();
 
       return (glue_prefix_and_suffix (expansion, filename, 1));

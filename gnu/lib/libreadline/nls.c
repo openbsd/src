@@ -106,9 +106,9 @@ _rl_init_eightbit ()
      appropriate variables and set eight-bit mode if they have the right
      values. */
   lspec = get_env_value ("LC_ALL");
-  if (lspec == 0) lspec = get_env_value ("LC_CTYPE");
-  if (lspec == 0) lspec = get_env_value ("LANG");
-  if (lspec == 0 || (t = normalize_codeset (lspec)) == 0)
+  if (lspec == 0 || *lspec == '\0') lspec = get_env_value ("LC_CTYPE");
+  if (lspec == 0 || *lspec == '\0') lspec = get_env_value ("LANG");
+  if (lspec == 0 || *lspec == '\0' || (t = normalize_codeset (lspec)) == 0)
     return (0);
   for (i = 0; t && legal_lang_values[i]; i++)
     if (STREQ (t, legal_lang_values[i]))
