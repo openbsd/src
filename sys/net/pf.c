@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.372 2003/06/29 23:37:12 itojun Exp $ */
+/*	$OpenBSD: pf.c,v 1.373 2003/07/04 08:24:52 markus Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2287,7 +2287,6 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 			s->ext.port = th->th_dport;
 			if (nat != NULL) {
 				PF_ACPY(&s->lan.addr, &baddr, af);
-				s->lan.addr = baddr;
 				s->lan.port = bport;
 			} else {
 				PF_ACPY(&s->lan.addr, &s->gwy.addr, af);
