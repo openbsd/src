@@ -1,4 +1,4 @@
-/*	$OpenBSD: do_command.c,v 1.25 2003/07/30 20:20:01 millert Exp $	*/
+/*	$OpenBSD: do_command.c,v 1.26 2004/04/26 17:15:37 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: do_command.c,v 1.25 2003/07/30 20:20:01 millert Exp $";
+static char const rcsid[] = "$OpenBSD: do_command.c,v 1.26 2004/04/26 17:15:37 millert Exp $";
 #endif
 
 #include "cron.h"
@@ -509,7 +509,8 @@ safe_p(const char *usernm, const char *s) {
 
 	for (t = s, first = 1; (ch = *t++) != '\0'; first = 0) {
 		if (isascii(ch) && isprint(ch) &&
-		    (isalnum(ch) || (!first && strchr(safe_delim, ch))))
+		    (isalnum(ch) || ch == '_' ||
+		    (!first && strchr(safe_delim, ch))))
 			continue;
 		log_it(usernm, getpid(), "UNSAFE", s);
 		return (FALSE);
