@@ -349,10 +349,10 @@ struct route6
 };
 #endif RTM_VERSION 
 
-#ifdef KERNEL
+#ifdef _KERNEL
 /* Function prototypes go here. */
 int in6_cksum __P((struct mbuf *,int, u_int, u_int));
-#endif /* KERNEL */
+#endif /* _KERNEL */
 #endif /* __linux__ */
 
 extern const struct in6_addr in6addr_any;

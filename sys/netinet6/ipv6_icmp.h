@@ -231,7 +231,7 @@ struct ext_mtu      /* Recommended link MTU. */
 
 #define	ICMPV6_INFOTYPE(type) ((type) >= 128)
 
-#ifdef KERNEL
+#ifdef _KERNEL
 #include <netinet6/ipv6_var.h>
 
 /* Function prototypes */

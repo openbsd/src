@@ -46,7 +46,7 @@ struct icmpv6stat
 	0, \
 }
 
-#ifdef KERNEL
+#ifdef _KERNEL
 struct	icmpv6stat icmpv6stat;
 #endif
 #endif /* _NETINET6_ICMPV6_VAR_H */
