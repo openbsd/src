@@ -1,4 +1,4 @@
-/*	$OpenBSD: kernfsmod.c,v 1.3 2000/03/02 14:46:41 todd Exp $	*/
+/*	$OpenBSD: kernfsmod.c,v 1.4 2004/04/05 07:19:26 deraadt Exp $	*/
 /*
  * kernfsmod.c
  *
@@ -69,7 +69,7 @@ struct vfsconf kernfs_vfsconf = {
  * change the file system operation: for instance, in ISOFS, this
  * could be used to enable/disable Rockridge extensions.
  */
-MOD_VFS("kernfs", -1, &kernfs_vfsconf)
+MOD_VFS("kernfsmod", -1, &kernfs_vfsconf)
 
 /*
  * External entry point; should generally match name of .o file.  The
