@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_pci.c,v 1.6 1996/11/28 23:28:01 niklas Exp $	*/
+/*	$OpenBSD: ahc_pci.c,v 1.7 1997/08/05 05:38:22 niklas Exp $	*/
 /*	$NetBSD: ahc_pci.c,v 1.9 1996/10/21 22:56:24 thorpej Exp $	*/
 
 /*
@@ -458,11 +458,12 @@ ahc_pci_attach(parent, self, aux)
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
-	ahc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, ahc_intr, ahc
-#ifdef __OpenBSD__
-	    , ahc->sc_dev.dv_xname
+#ifndef __OpenBSD__
+	ahc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, ahc_intr, ahc);
+#else
+	ahc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, ahc_intr, ahc,
+	    ahc->sc_dev.dv_xname);
 #endif
-	    );
 	if (ahc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt",
 		       ahc->sc_dev.dv_xname);
