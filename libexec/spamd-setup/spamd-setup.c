@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd-setup.c,v 1.10 2003/05/16 01:01:33 beck Exp $ */
+/*	$OpenBSD: spamd-setup.c,v 1.11 2003/06/11 14:24:46 deraadt Exp $ */
 /*
  * Copyright (c) 2003 Bob Beck.  All rights reserved.
  *
@@ -652,15 +652,13 @@ getlist(char ** db_array, char *name, struct blacklist *blist,
 		blc = blistnew->blc;
 		bls = blistnew->bls;
 		bl = blistnew->bl;
-	}
-	else if (cgetcap(buf, "white", ':') != NULL) {
+	} else if (cgetcap(buf, "white", ':') != NULL) {
 		/* apply to most recent blacklist */
 		black = 0;
 		blc = blist->blc;
 		bls = blist->bls;
 		bl = blist->bl;
-	}
-	else
+	} else
 		errx(1, "Must have \"black\" or \"white\" in %s", name);
 
 	switch (cgetstr(buf, "msg", &message)) {

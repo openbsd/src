@@ -1,4 +1,4 @@
-/*	$OpenBSD: logutmp.c,v 1.5 2003/06/04 16:08:08 deraadt Exp $	*/
+/*	$OpenBSD: logutmp.c,v 1.6 2003/06/11 14:24:46 deraadt Exp $	*/
 /*
  * Portions Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -50,8 +50,7 @@ static int topslot = -1;
  */
 
 void
-login(ut)
-	UTMP *ut;
+login(UTMP *ut)
 {
 	UTMP ubuf;
 
@@ -90,8 +89,7 @@ login(ut)
 }
 
 int
-logout(line)
-	char *line;
+logout(char *line)
 {
 	UTMP ut;
 	int rval;

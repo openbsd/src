@@ -1,4 +1,4 @@
-/*	$OpenBSD: logwtmp.c,v 1.6 2003/06/02 19:38:24 millert Exp $	*/
+/*	$OpenBSD: logwtmp.c,v 1.7 2003/06/11 14:24:46 deraadt Exp $	*/
 /*	$NetBSD: logwtmp.c,v 1.4 1995/04/11 02:44:58 cgd Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
 static const char sccsid[] = "@(#)logwtmp.c	8.1 (Berkeley) 6/4/93";
 #else
 static const char rcsid[] = 
-    "$OpenBSD: logwtmp.c,v 1.6 2003/06/02 19:38:24 millert Exp $";
+    "$OpenBSD: logwtmp.c,v 1.7 2003/06/11 14:24:46 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -61,8 +61,7 @@ static int fd = -1;
  * after login, but before logout).
  */
 void
-ftpdlogwtmp(line, name, host)
-	char *line, *name, *host;
+ftpdlogwtmp(char *line, char *name, char *host)
 {
 	struct utmp ut;
 	struct stat buf;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.6 2003/06/02 19:38:24 millert Exp $	*/
+/*	$OpenBSD: print.c,v 1.7 2003/06/11 14:24:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)print.c	5.8 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: print.c,v 1.6 2003/06/02 19:38:24 millert Exp $";
+static char rcsid[] = "$Id: print.c,v 1.7 2003/06/11 14:24:46 deraadt Exp $";
 #endif /* not lint */
 
 /* debug print routines */
@@ -52,9 +52,7 @@ static	char *answers[] =
 #define	NANSWERS	(sizeof(answers) / sizeof(answers[0]))
 
 void
-print_request(cp, mp)
-	char *cp;
-	CTL_MSG *mp;
+print_request(char *cp, CTL_MSG *mp)
 {
 	char tbuf[80], *tp;
 	
@@ -68,9 +66,7 @@ print_request(cp, mp)
 }
 
 void
-print_response(cp, rp)
-	char *cp;
-	CTL_RESPONSE *rp;
+print_response(char *cp, CTL_RESPONSE *rp)
 {
 	char tbuf[80], *tp, abuf[80], *ap;
 	

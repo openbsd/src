@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.34 2003/05/17 02:41:19 beck Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.35 2003/06/11 14:24:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -90,7 +90,7 @@ char    *doreply(struct con *);
 void     setlog(char *, size_t, char *);
 void     initcon(struct con *, int, struct sockaddr_in *);
 void     closecon(struct con *);
-int      match(char *, char *);
+int      match(const char *, const char *);
 void     nextstate(struct con *);
 void     handler(struct con *);
 void     handlew(struct con *, int one);
@@ -551,7 +551,7 @@ closecon(struct con *cp)
 }
 
 int
-match(char *s1, char *s2)
+match(const char *s1, const char *s2)
 {
 	return (strncasecmp(s1, s2, strlen(s2)) == 0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.9 2003/06/02 19:38:24 millert Exp $	*/
+/*	$OpenBSD: table.c,v 1.10 2003/06/11 14:24:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)table.c	5.7 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: table.c,v 1.9 2003/06/02 19:38:24 millert Exp $";
+static char rcsid[] = "$Id: table.c,v 1.10 2003/06/11 14:24:46 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -74,7 +74,7 @@ static void	delete(TABLE_ENTRY *);
  * Init the table
  */
 void
-init_table()
+init_table(void)
 {
 	TAILQ_INIT(&table);
 }
@@ -84,8 +84,7 @@ init_table()
  * request looking for an invitation
  */
 CTL_MSG *
-find_match(request)
-	CTL_MSG *request;
+find_match(CTL_MSG *request)
 {
 	TABLE_ENTRY *ptr;
 	time_t current_time;
@@ -121,8 +120,7 @@ find_match(request)
  * one as find_match does 
  */
 CTL_MSG *
-find_request(request)
-	CTL_MSG *request;
+find_request(CTL_MSG *request)
 {
 	TABLE_ENTRY *ptr;
 	time_t current_time;
@@ -159,9 +157,7 @@ find_request(request)
 }
 
 void
-insert_table(request, response)
-	CTL_MSG *request;
-	CTL_RESPONSE *response;
+insert_table(CTL_MSG *request, CTL_RESPONSE *response)
 {
 	TABLE_ENTRY *ptr;
 	time_t current_time;
@@ -202,8 +198,7 @@ new_id(void)
  * Delete the invitation with id 'id_num'
  */
 int
-delete_invite(id_num)
-	int id_num;
+delete_invite(int id_num)
 {
 	TABLE_ENTRY *ptr;
 
@@ -226,8 +221,7 @@ delete_invite(id_num)
  * Classic delete from a double-linked list
  */
 static void
-delete(ptr)
-	TABLE_ENTRY *ptr;
+delete(TABLE_ENTRY *ptr)
 {
 
 	if (debug)

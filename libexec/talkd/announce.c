@@ -1,4 +1,4 @@
-/*	$OpenBSD: announce.c,v 1.17 2003/06/02 19:38:24 millert Exp $	*/
+/*	$OpenBSD: announce.c,v 1.18 2003/06/11 14:24:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)announce.c	5.9 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: announce.c,v 1.17 2003/06/02 19:38:24 millert Exp $";
+static char rcsid[] = "$Id: announce.c,v 1.18 2003/06/11 14:24:46 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -58,9 +58,7 @@ static void	print_mesg(FILE *,CTL_MSG *,char *);
  * accepting messages, announce that a talk is requested.
  */
 int
-announce(request, remote_machine)
-	CTL_MSG *request;
-	char *remote_machine;
+announce(CTL_MSG *request, char *remote_machine)
 {
 	char full_tty[MAXPATHLEN];
 	FILE *tf;
@@ -92,10 +90,7 @@ announce(request, remote_machine)
  * is in vi at the time
  */
 static void
-print_mesg(tf, request, remote_machine)
-	FILE *tf;
-	CTL_MSG *request;
-	char *remote_machine;
+print_mesg(FILE *tf, CTL_MSG *request, char *remote_machine)
 {
 	struct timeval clock;
 	time_t clocktime;
