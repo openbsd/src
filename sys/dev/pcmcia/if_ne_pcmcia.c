@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.20 1999/10/31 17:53:47 fgsch Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.21 1999/12/22 21:15:53 fgsch Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -230,6 +230,10 @@ struct ne2000dev {
     { PCMCIA_VENDOR_SOCKET, PCMCIA_PRODUCT_SOCKET_LP_ETHER_CF,
       PCMCIA_CIS_SOCKET_LP_ETHER_CF,
       0, -1, { 0x00, 0xc0, 0x1b} },
+
+    { PCMCIA_VENDOR_DUAL, PCMCIA_PRODUCT_DUAL_NE2000,
+      PCMCIA_CIS_DUAL_NE2000,
+      0, 0x0ff0, { 0x00, 0xa0, 0x0c } },
 
 #if 0
     /* the rest of these are stolen from the linux pcnet pcmcia device
