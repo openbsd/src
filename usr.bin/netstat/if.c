@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.42 2005/03/13 16:05:50 mpf Exp $	*/
+/*	$OpenBSD: if.c,v 1.43 2005/03/25 17:01:03 jaredy Exp $	*/
 /*	$NetBSD: if.c,v 1.16.4.2 1996/06/07 21:46:46 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-static char *rcsid = "$OpenBSD: if.c,v 1.42 2005/03/13 16:05:50 mpf Exp $";
+static char *rcsid = "$OpenBSD: if.c,v 1.43 2005/03/25 17:01:03 jaredy Exp $";
 #endif
 #endif /* not lint */
 
@@ -106,7 +106,7 @@ intpr(int interval, u_long ifnetaddr)
 	 * the pointer to the TAILQ_HEAD with the actual pointer
 	 * to the first list element.
 	 */
-	if (kread(ifnetaddr, (char *)&ifhead, sizeof ifhead))
+	if (kread(ifnetaddr, &ifhead, sizeof ifhead))
 		return;
 	ifnetaddr = (u_long)ifhead.tqh_first;
 
@@ -132,7 +132,7 @@ intpr(int interval, u_long ifnetaddr)
 		int n, m;
 
 		if (ifaddraddr == 0) {
-			if (kread(ifnetaddr, (char *)&ifnet, sizeof ifnet))
+			if (kread(ifnetaddr, &ifnet, sizeof ifnet))
 				return;
 			bcopy(ifnet.if_xname, name, IFNAMSIZ);
 			name[IFNAMSIZ - 1] = '\0';	/* sanity */
@@ -166,7 +166,7 @@ intpr(int interval, u_long ifnetaddr)
 			printf("%-11.11s ", "none");
 			printf("%-17.17s ", "none");
 		} else {
-			if (kread(ifaddraddr, (char *)&ifaddr, sizeof ifaddr)) {
+			if (kread(ifaddraddr, &ifaddr, sizeof ifaddr)) {
 				ifaddraddr = 0;
 				continue;
 			}
@@ -210,8 +210,7 @@ intpr(int interval, u_long ifnetaddr)
 
 					multiaddr = (u_long)ifaddr.in.ia_multiaddrs.lh_first;
 					while (multiaddr != 0) {
-						kread(multiaddr, (char *)&inm,
-						    sizeof inm);
+						kread(multiaddr, &inm, sizeof inm);
 						printf("\n%25s %-17.17s ", "",
 						    routename(inm.inm_addr.s_addr));
 						multiaddr = (u_long)inm.inm_list.le_next;
@@ -250,8 +249,7 @@ intpr(int interval, u_long ifnetaddr)
 
 					multiaddr = (u_long)ifaddr.in6.ia6_multiaddrs.lh_first;
 					while (multiaddr != 0) {
-						kread(multiaddr, (char *)&inm,
-						    sizeof inm);
+						kread(multiaddr, &inm, sizeof inm);
 						memset(&m6, 0, sizeof(m6));
 						m6.sin6_len = sizeof(struct sockaddr_in6);
 						m6.sin6_family = AF_INET6;
@@ -401,7 +399,7 @@ sidewaysintpr(unsigned int interval, u_long off)
 	 * the pointer to the TAILQ_HEAD with the actual pointer
 	 * to the first list element.
 	 */
-	if (kread(off, (char *)&ifhead, sizeof ifhead))
+	if (kread(off, &ifhead, sizeof ifhead))
 		return;
 	firstifnet = (u_long)ifhead.tqh_first;
 
@@ -410,7 +408,7 @@ sidewaysintpr(unsigned int interval, u_long off)
 	total = sum - 1;
 	interesting = (interface == NULL) ? iftot : NULL;
 	for (off = firstifnet, ip = iftot; off;) {
-		if (kread(off, (char *)&ifnet, sizeof ifnet))
+		if (kread(off, &ifnet, sizeof ifnet))
 			break;
 		bzero(ip->ift_name, sizeof(ip->ift_name));
 		snprintf(ip->ift_name, IFNAMSIZ, "%s", ifnet.if_xname);
@@ -494,7 +492,7 @@ loop:
 	sum->ift_co = 0;
 	sum->ift_dr = 0;
 	for (off = firstifnet, ip = iftot; off && ip < lastif; ip++) {
-		if (kread(off, (char *)&ifnet, sizeof ifnet)) {
+		if (kread(off, &ifnet, sizeof ifnet)) {
 			off = 0;
 			continue;
 		}

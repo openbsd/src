@@ -1,4 +1,4 @@
-/*	$OpenBSD: mroute6.c,v 1.7 2003/06/03 02:56:13 millert Exp $	*/
+/*	$OpenBSD: mroute6.c,v 1.8 2005/03/25 17:01:04 jaredy Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -102,7 +102,7 @@ mroute6pr(u_long mrpaddr, u_long mfcaddr, u_long mifaddr)
 		return;
 	}
 
-	kread(mrpaddr, (char *)&mrtproto, sizeof(mrtproto));
+	kread(mrpaddr, &mrtproto, sizeof(mrtproto));
 	switch (mrtproto) {
 
 	case 0:
@@ -130,7 +130,7 @@ mroute6pr(u_long mrpaddr, u_long mfcaddr, u_long mifaddr)
 	saved_nflag = nflag;
 	nflag = 1;
 
-	kread(mifaddr, (char *)&mif6table, sizeof(mif6table));
+	kread(mifaddr, &mif6table, sizeof(mif6table));
 	banner_printed = 0;
 	for (mifi = 0, mifp = mif6table; mifi < MAXMIFS; ++mifi, ++mifp) {
 		struct ifnet ifnet;
@@ -139,7 +139,7 @@ mroute6pr(u_long mrpaddr, u_long mfcaddr, u_long mifaddr)
 		if (mifp->m6_ifp == NULL)
 			continue;
 
-		kread((u_long)mifp->m6_ifp, (char *)&ifnet, sizeof(ifnet));
+		kread((u_long)mifp->m6_ifp, &ifnet, sizeof(ifnet));
 		maxmif = mifi;
 		if (!banner_printed) {
 			printf("\nIPv6 Multicast Interface Table\n"
@@ -158,12 +158,12 @@ mroute6pr(u_long mrpaddr, u_long mfcaddr, u_long mifaddr)
 	if (!banner_printed)
 		printf("\nIPv6 Multicast Interface Table is empty\n");
 
-	kread(mfcaddr, (char *)&mf6ctable, sizeof(mf6ctable));
+	kread(mfcaddr, &mf6ctable, sizeof(mf6ctable));
 	banner_printed = 0;
 	for (i = 0; i < MF6CTBLSIZ; ++i) {
 		mfcp = mf6ctable[i];
 		while (mfcp) {
-			kread((u_long)mfcp, (char *)&mfc, sizeof(mfc));
+			kread((u_long)mfcp, &mfc, sizeof(mfc));
 			if (!banner_printed) {
 				printf ("\nIPv6 Multicast Forwarding Cache\n");
 				printf(" %-*.*s %-*.*s %s",
@@ -181,7 +181,7 @@ mroute6pr(u_long mrpaddr, u_long mfcaddr, u_long mifaddr)
 
 			for (waitings = 0, rtep = mfc.mf6c_stall; rtep; ) {
 				waitings++;
-				kread((u_long)rtep, (char *)&rte, sizeof(rte));
+				kread((u_long)rtep, &rte, sizeof(rte));
 				rtep = rte.next;
 			}
 			printf("   %3d", waitings);
@@ -217,7 +217,7 @@ mrt6_stats(u_long mrpaddr, u_long mstaddr)
 		return;
 	}
 
-	kread(mrpaddr, (char *)&mrtproto, sizeof(mrtproto));
+	kread(mrpaddr, &mrtproto, sizeof(mrtproto));
 	switch (mrtproto) {
 	case 0:
 		 printf("no IPv6 multicast routing compiled into this system\n");
@@ -237,7 +237,7 @@ mrt6_stats(u_long mrpaddr, u_long mstaddr)
 		return;
 	}
 
-	kread(mstaddr, (char *)&mrtstat, sizeof(mrtstat));
+	kread(mstaddr, &mrtstat, sizeof(mrtstat));
 	printf("multicast forwarding:\n");
 	printf(" %10qu multicast forwarding cache lookup%s\n",
 	    mrtstat.mrt6s_mfc_lookups, plural(mrtstat.mrt6s_mfc_lookups));

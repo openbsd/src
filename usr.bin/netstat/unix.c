@@ -1,4 +1,4 @@
-/*	$OpenBSD: unix.c,v 1.11 2004/03/13 22:02:13 deraadt Exp $	*/
+/*	$OpenBSD: unix.c,v 1.12 2005/03/25 17:01:04 jaredy Exp $	*/
 /*	$NetBSD: unix.c,v 1.13 1995/10/03 21:42:48 thorpej Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)unix.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: unix.c,v 1.11 2004/03/13 22:02:13 deraadt Exp $";
+static char *rcsid = "$OpenBSD: unix.c,v 1.12 2005/03/25 17:01:04 jaredy Exp $";
 #endif
 #endif /* not lint */
 
@@ -76,7 +76,7 @@ unixpr(u_long off)
 	char *filebuf;
 	struct protosw *unixsw = (struct protosw *)off;
 
-	filebuf = (char *)kvm_getfiles(kvmd, KERN_FILE, 0, &nfiles);
+	filebuf = kvm_getfiles(kvmd, KERN_FILE, 0, &nfiles);
 	if (filebuf == NULL) {
 		printf("Out of memory (file table).\n");
 		return;
@@ -86,7 +86,7 @@ unixpr(u_long off)
 	for (fp = file; fp < fileNFILE; fp++) {
 		if (fp->f_count == 0 || fp->f_type != DTYPE_SOCKET)
 			continue;
-		if (kread((u_long)fp->f_data, (char *)so, sizeof (*so)))
+		if (kread((u_long)fp->f_data, so, sizeof (*so)))
 			continue;
 		/* kludge */
 		if (so->so_proto >= unixsw && so->so_proto <= unixsw + 2)
@@ -106,11 +106,11 @@ unixdomainpr(struct socket *so, caddr_t soaddr)
 	struct sockaddr_un *sa = NULL;
 	static int first = 1;
 
-	if (kread((u_long)so->so_pcb, (char *)unp, sizeof (*unp)))
+	if (kread((u_long)so->so_pcb, unp, sizeof (*unp)))
 		return;
 	if (unp->unp_addr) {
 		m = &mbuf;
-		if (kread((u_long)unp->unp_addr, (char *)m, sizeof (*m)))
+		if (kread((u_long)unp->unp_addr, m, sizeof (*m)))
 			m = NULL;
 		sa = (struct sockaddr_un *)(m->m_dat);
 	} else

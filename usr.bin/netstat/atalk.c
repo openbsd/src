@@ -1,4 +1,4 @@
-/*	$OpenBSD: atalk.c,v 1.12 2004/03/13 22:02:13 deraadt Exp $	*/
+/*	$OpenBSD: atalk.c,v 1.13 2005/03/25 17:01:03 jaredy Exp $	*/
 /*	$NetBSD: atalk.c,v 1.2 1997/05/22 17:21:26 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from @(#)atalk.c	1.1 (Whistle) 6/6/96";
 #else
-static char rcsid[] = "$OpenBSD: atalk.c,v 1.12 2004/03/13 22:02:13 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: atalk.c,v 1.13 2005/03/25 17:01:03 jaredy Exp $";
 #endif
 #endif /* not lint */
 
@@ -251,14 +251,14 @@ atalkprotopr(u_long off, char *name)
 
 	if (off == 0)
 		return;
-	if (kread(off, (char *) &initial, sizeof(struct ddpcb *)) < 0)
+	if (kread(off, &initial, sizeof(struct ddpcb *)) < 0)
 		return;
 	ddpcb = cb;
 	prev = (struct ddpcb *) off;
 	for (next = initial; next != NULL; prev = next) {
 		u_long	ppcb = (u_long) next;
 
-		if (kread((u_long) next, (char *) &ddpcb, sizeof(ddpcb)) < 0)
+		if (kread((u_long) next, &ddpcb, sizeof(ddpcb)) < 0)
 			return;
 		next = ddpcb.ddp_next;
 #if 0
@@ -266,8 +266,8 @@ atalkprotopr(u_long off, char *name)
 			continue;
 		}
 #endif
-		if (kread((u_long) ddpcb.ddp_socket,
-		    (char *) &sockb, sizeof(sockb)) < 0)
+		if (kread((u_long) ddpcb.ddp_socket, &sockb,
+		    sizeof(sockb)) < 0)
 			return;
 		if (first) {
 			printf("Active ATALK connections");
@@ -312,7 +312,7 @@ ddp_stats(u_long off, char *name)
 
 	if (off == 0)
 		return;
-	if (kread(off, (char *) &ddpstat, sizeof(ddpstat)) < 0)
+	if (kread(off, &ddpstat, sizeof(ddpstat)) < 0)
 		return;
 	printf("%s:\n", name);
 	p(ddps_short, "\t%ld packet%s with short headers\n");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mroute.c,v 1.12 2005/01/14 15:00:44 mcbride Exp $	*/
+/*	$OpenBSD: mroute.c,v 1.13 2005/03/25 17:01:04 jaredy Exp $	*/
 /*	$NetBSD: mroute.c,v 1.10 1996/05/11 13:51:27 mycroft Exp $	*/
 
 /*
@@ -103,7 +103,7 @@ mroutepr(u_long mrpaddr, u_long mfchashtbladdr, u_long mfchashaddr, u_long vifad
 		return;
 	}
 
-	kread(mrpaddr, (char *)&mrtproto, sizeof(mrtproto));
+	kread(mrpaddr, &mrtproto, sizeof(mrtproto));
 	switch (mrtproto) {
 	case 0:
 		printf("no multicast routing compiled into this system\n");
@@ -133,7 +133,7 @@ mroutepr(u_long mrpaddr, u_long mfchashtbladdr, u_long mfchashaddr, u_long vifad
 	saved_nflag = nflag;
 	nflag = 1;
 
-	kread(vifaddr, (char *)&viftable, sizeof(viftable));
+	kread(vifaddr, &viftable, sizeof(viftable));
 	banner_printed = 0;
 	numvifs = 0;
 
@@ -159,14 +159,14 @@ mroutepr(u_long mrpaddr, u_long mfchashtbladdr, u_long mfchashaddr, u_long vifad
 	if (!banner_printed)
 		printf("\nVirtual Interface Table is empty\n");
 
-	kread(mfchashtbladdr, (char *)&mfchashtbl, sizeof(mfchashtbl));
-	kread(mfchashaddr, (char *)&mfchash, sizeof(mfchash));
+	kread(mfchashtbladdr, &mfchashtbl, sizeof(mfchashtbl));
+	kread(mfchashaddr, &mfchash, sizeof(mfchash));
 	banner_printed = 0;
 	nmfc = 0;
 
 	if (mfchashtbl != 0)
 		for (i = 0; i <= mfchash; ++i) {
-			kread((u_long)&mfchashtbl[i], (char *)&mfcp, sizeof(mfcp));
+			kread((u_long)&mfchashtbl[i], &mfcp, sizeof(mfcp));
 
 			for (; mfcp != 0; mfcp = mfc.mfc_hash.le_next) {
 				if (!banner_printed) {
@@ -176,7 +176,7 @@ mroutepr(u_long mrpaddr, u_long mfchashtbladdr, u_long mfchashaddr, u_long vifad
 					banner_printed = 1;
 				}
 
-				kread((u_long)mfcp, (char *)&mfc, sizeof(mfc));
+				kread((u_long)mfcp, &mfc, sizeof(mfc));
 				printf("  %3u  %-15.15s",
 				    i, routename(mfc.mfc_origin.s_addr));
 				printf("  %-15.15s  %7s     %3u ",
@@ -197,7 +197,7 @@ mroutepr(u_long mrpaddr, u_long mfchashtbladdr, u_long mfchashaddr, u_long vifad
 					bwm = mfc.mfc_bw_meter;
 					while (bwm) {
 						kread((u_long)bwm,
-						      (char *)&bw_meter,
+						      &bw_meter,
 						      sizeof bw_meter);
 						print_bw_meter(&bw_meter,
 							       &banner_printed2);
@@ -309,7 +309,7 @@ mrt_stats(u_long mrpaddr, u_long mstaddr)
 		return;
 	}
 
-	kread(mrpaddr, (char *)&mrtproto, sizeof(mrtproto));
+	kread(mrpaddr, &mrtproto, sizeof(mrtproto));
 	switch (mrtproto) {
 	case 0:
 		printf("no multicast routing compiled into this system\n");
@@ -328,7 +328,7 @@ mrt_stats(u_long mrpaddr, u_long mstaddr)
 		return;
 	}
 
-	kread(mstaddr, (char *)&mrtstat, sizeof(mrtstat));
+	kread(mstaddr, &mrtstat, sizeof(mrtstat));
 	printf("multicast routing:\n");
 	printf("\t%lu datagram%s with no route for origin\n",
 	    mrtstat.mrts_no_route, plural(mrtstat.mrts_no_route));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.52 2005/02/10 14:25:08 itojun Exp $	*/
+/*	$OpenBSD: main.c,v 1.53 2005/03/25 17:01:04 jaredy Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-static char *rcsid = "$OpenBSD: main.c,v 1.52 2005/02/10 14:25:08 itojun Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.53 2005/03/25 17:01:04 jaredy Exp $";
 #endif
 #endif /* not lint */
 
@@ -561,7 +561,7 @@ printproto(struct protox *tp, char *name)
  * Read kernel memory, return 0 on success.
  */
 int
-kread(u_long addr, char *buf, int size)
+kread(u_long addr, void *buf, int size)
 {
 
 	if (kvm_read(kvmd, addr, buf, size) != size) {

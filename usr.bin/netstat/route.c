@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.66 2004/11/17 01:47:20 itojun Exp $	*/
+/*	$OpenBSD: route.c,v 1.67 2005/03/25 17:01:04 jaredy Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: route.c,v 1.66 2004/11/17 01:47:20 itojun Exp $";
+static char *rcsid = "$OpenBSD: route.c,v 1.67 2005/03/25 17:01:04 jaredy Exp $";
 #endif
 #endif /* not lint */
 
@@ -77,7 +77,7 @@ static char *rcsid = "$OpenBSD: route.c,v 1.66 2004/11/17 01:47:20 itojun Exp $"
 #include <netinet/ip_ipsp.h>
 #include "netstat.h"
 
-#define kget(p, d) (kread((u_long)(p), (char *)&(d), sizeof (d)))
+#define kget(p, d) (kread((u_long)(p), &(d), sizeof (d)))
 
 /* alignment constraint for routing socket */
 #define ROUNDUP(a) \
@@ -278,7 +278,7 @@ kgetsa(struct sockaddr *dst)
 
 	kget(dst, pt_u.u_sa);
 	if (pt_u.u_sa.sa_len > sizeof (pt_u.u_sa))
-		kread((u_long)dst, (char *)pt_u.u_data, pt_u.u_sa.sa_len);
+		kread((u_long)dst, pt_u.u_data, pt_u.u_sa.sa_len);
 	return (&pt_u.u_sa);
 }
 
@@ -854,7 +854,7 @@ rt_stats(u_long off)
 		printf("rtstat: symbol not in namelist\n");
 		return;
 	}
-	kread(off, (char *)&rtstat, sizeof (rtstat));
+	kread(off, &rtstat, sizeof (rtstat));
 	printf("routing:\n");
 	printf("\t%u bad routing redirect%s\n",
 	    rtstat.rts_badredirect, plural(rtstat.rts_badredirect));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.92 2005/02/10 14:25:08 itojun Exp $	*/
+/*	$OpenBSD: inet.c,v 1.93 2005/03/25 17:01:03 jaredy Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static const char *rcsid = "$OpenBSD: inet.c,v 1.92 2005/02/10 14:25:08 itojun Exp $";
+static const char *rcsid = "$OpenBSD: inet.c,v 1.93 2005/03/25 17:01:03 jaredy Exp $";
 #endif
 #endif /* not lint */
 
@@ -138,13 +138,13 @@ protopr0(u_long off, char *name, int af)
 		return;
 	istcp = strcmp(name, "tcp") == 0;
 	israw = strncmp(name, "ip", 2) == 0;
-	kread(off, (char *)&table, sizeof table);
+	kread(off, &table, sizeof table);
 	prev = head =
 	    (struct inpcb *)&((struct inpcbtable *)off)->inpt_queue.cqh_first;
 	next = table.inpt_queue.cqh_first;
 
 	while (next != head) {
-		kread((u_long)next, (char *)&inpcb, sizeof inpcb);
+		kread((u_long)next, &inpcb, sizeof inpcb);
 		if (inpcb.inp_queue.cqe_prev != prev) {
 			printf("???\n");
 			break;
@@ -168,10 +168,9 @@ protopr0(u_long off, char *name, int af)
 		if (!aflag &&
 		    inet_lnaof(inpcb.inp_laddr) == INADDR_ANY)
 			continue;
-		kread((u_long)inpcb.inp_socket, (char *)&sockb, sizeof (sockb));
+		kread((u_long)inpcb.inp_socket, &sockb, sizeof (sockb));
 		if (istcp) {
-			kread((u_long)inpcb.inp_ppcb,
-			    (char *)&tcpcb, sizeof (tcpcb));
+			kread((u_long)inpcb.inp_ppcb, &tcpcb, sizeof (tcpcb));
 		}
 		if (first) {
 			printf("Active Internet connections");
@@ -250,7 +249,7 @@ tcp_stats(u_long off, char *name)
 	if (off == 0)
 		return;
 	printf("%s:\n", name);
-	kread(off, (char *)&tcpstat, sizeof (tcpstat));
+	kread(off, &tcpstat, sizeof (tcpstat));
 
 #define	p(f, m) if (tcpstat.f || sflag <= 1) \
 	printf(m, tcpstat.f, plural(tcpstat.f))
@@ -366,7 +365,7 @@ udp_stats(u_long off, char *name)
 
 	if (off == 0)
 		return;
-	kread(off, (char *)&udpstat, sizeof (udpstat));
+	kread(off, &udpstat, sizeof (udpstat));
 	printf("%s:\n", name);
 #define	p(f, m) if (udpstat.f || sflag <= 1) \
 	printf(m, udpstat.f, plural(udpstat.f))
@@ -406,7 +405,7 @@ ip_stats(u_long off, char *name)
 
 	if (off == 0)
 		return;
-	kread(off, (char *)&ipstat, sizeof (ipstat));
+	kread(off, &ipstat, sizeof (ipstat));
 	printf("%s:\n", name);
 
 #define	p(f, m) if (ipstat.f || sflag <= 1) \
@@ -504,7 +503,7 @@ icmp_stats(u_long off, char *name)
 
 	if (off == 0)
 		return;
-	kread(off, (char *)&icmpstat, sizeof (icmpstat));
+	kread(off, &icmpstat, sizeof (icmpstat));
 	printf("%s:\n", name);
 
 #define	p(f, m) if (icmpstat.f || sflag <= 1) \
@@ -555,7 +554,7 @@ igmp_stats(u_long off, char *name)
 
 	if (off == 0)
 		return;
-	kread(off, (char *)&igmpstat, sizeof (igmpstat));
+	kread(off, &igmpstat, sizeof (igmpstat));
 	printf("%s:\n", name);
 
 #define	p(f, m) if (igmpstat.f || sflag <= 1) \
@@ -586,7 +585,7 @@ pim_stats(u_long off, char *name)
 
 	if (off == 0)
 		return;
-	if (kread(off, (char *)&pimstat, sizeof (pimstat)) != 0) {
+	if (kread(off, &pimstat, sizeof (pimstat)) != 0) {
 		/* XXX: PIM is probably not enabled in the kernel */
 		return;
 	}
@@ -637,7 +636,7 @@ getrpcportnam(in_port_t port, int proto)
 
 	if (first == 0) {
 		first = 1;
-		memset((char *)&server_addr, 0, sizeof server_addr);
+		memset(&server_addr, 0, sizeof server_addr);
 		server_addr.sin_family = AF_INET;
 		if ((hp = gethostbyname("localhost")) != NULL)
 			memmove((caddr_t)&server_addr.sin_addr, hp->h_addr,
@@ -779,7 +778,7 @@ ah_stats(u_long off, char *name)
 
 	if (off == 0)
 		return;
-	kread(off, (char *)&ahstat, sizeof (ahstat));
+	kread(off, &ahstat, sizeof (ahstat));
 	printf("%s:\n", name);
 
 #define p(f, m) if (ahstat.f || sflag <= 1) \
@@ -820,7 +819,7 @@ etherip_stats(u_long off, char *name)
 
 	if (off == 0)
 		return;
-	kread(off, (char *)&etheripstat, sizeof (etheripstat));
+	kread(off, &etheripstat, sizeof (etheripstat));
 	printf("%s:\n", name);
 
 #define p(f, m) if (etheripstat.f || sflag <= 1) \
@@ -848,7 +847,7 @@ esp_stats(u_long off, char *name)
 
 	if (off == 0)
 		return;
-	kread(off, (char *)&espstat, sizeof (espstat));
+	kread(off, &espstat, sizeof (espstat));
 	printf("%s:\n", name);
 
 #define p(f, m) if (espstat.f || sflag <= 1) \
@@ -890,7 +889,7 @@ ipip_stats(u_long off, char *name)
 
 	if (off == 0)
 		return;
-	kread(off, (char *)&ipipstat, sizeof (ipipstat));
+	kread(off, &ipipstat, sizeof (ipipstat));
 	printf("%s:\n", name);
 
 #define p(f, m) if (ipipstat.f || sflag <= 1) \
@@ -919,7 +918,7 @@ carp_stats(u_long off, char *name)
 
 	if (off == 0)
 		return;
-	kread(off, (char *)&carpstat, sizeof(carpstat));
+	kread(off, &carpstat, sizeof(carpstat));
 	printf("%s:\n", name);
 
 #define p(f, m) if (carpstat.f || sflag <= 1) \
@@ -955,7 +954,7 @@ pfsync_stats(u_long off, char *name)
 
 	if (off == 0)
 		return;
-	kread(off, (char *)&pfsyncstat, sizeof(pfsyncstat));
+	kread(off, &pfsyncstat, sizeof(pfsyncstat));
 	printf("%s:\n", name);
 
 #define p(f, m) if (pfsyncstat.f || sflag <= 1) \
@@ -993,7 +992,7 @@ ipcomp_stats(u_long off, char *name)
 
 	if (off == 0)
 		return;
-	kread(off, (char *)&ipcompstat, sizeof (ipcompstat));
+	kread(off, &ipcompstat, sizeof (ipcompstat));
 	printf("%s:\n", name);
 
 #define p(f, m) if (ipcompstat.f || sflag <= 1) \

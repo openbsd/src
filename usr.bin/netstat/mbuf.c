@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.c,v 1.21 2004/04/16 23:06:56 tedu Exp $	*/
+/*	$OpenBSD: mbuf.c,v 1.22 2005/03/25 17:01:04 jaredy Exp $	*/
 /*	$NetBSD: mbuf.c,v 1.9 1996/05/07 02:55:03 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)mbuf.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: mbuf.c,v 1.21 2004/04/16 23:06:56 tedu Exp $";
+static char *rcsid = "$OpenBSD: mbuf.c,v 1.22 2005/03/25 17:01:04 jaredy Exp $";
 #endif
 #endif /* not lint */
 
@@ -105,12 +105,12 @@ mbpr(u_long mbaddr, u_long mbpooladdr, u_long mclpooladdr)
 			return;
 		}
 
-		if (kread(mbaddr, (char *)&mbstat, sizeof (mbstat)))
+		if (kread(mbaddr, &mbstat, sizeof (mbstat)))
 			return;
-		if (kread(mbpooladdr, (char *)&mbpool, sizeof (mbpool)))
+		if (kread(mbpooladdr, &mbpool, sizeof (mbpool)))
 			return;
 
-		if (kread(mclpooladdr, (char *)&mclpool, sizeof (mclpool)))
+		if (kread(mclpooladdr, &mclpool, sizeof (mclpool)))
 			return;
 	} else {
 		mib[0] = CTL_KERN;

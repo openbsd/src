@@ -1,4 +1,4 @@
-/*	$OpenBSD: ns.c,v 1.11 2003/06/03 02:56:13 millert Exp $	*/
+/*	$OpenBSD: ns.c,v 1.12 2005/03/25 17:01:04 jaredy Exp $	*/
 /*	$NetBSD: ns.c,v 1.8 1995/10/03 21:42:46 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)ns.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: ns.c,v 1.11 2003/06/03 02:56:13 millert Exp $";
+static char *rcsid = "$OpenBSD: ns.c,v 1.12 2005/03/25 17:01:04 jaredy Exp $";
 #endif
 #endif /* not lint */
 
@@ -94,7 +94,7 @@ nsprotopr(u_long off, char *name)
 	if (off == 0)
 		return;
 	isspp = strcmp(name, "spp") == 0;
-	kread(off, (char *)&cb, sizeof (struct nspcb));
+	kread(off, &cb, sizeof (struct nspcb));
 	nspcb = cb;
 	prev = (struct nspcb *)off;
 	if (nspcb.nsp_next == (struct nspcb *)off)
@@ -103,7 +103,7 @@ nsprotopr(u_long off, char *name)
 		u_long ppcb;
 
 		next = nspcb.nsp_next;
-		kread((u_long)next, (char *)&nspcb, sizeof (nspcb));
+		kread((u_long)next, &nspcb, sizeof (nspcb));
 		if (nspcb.nsp_prev != prev) {
 			printf("???\n");
 			break;
@@ -111,12 +111,11 @@ nsprotopr(u_long off, char *name)
 		if (!aflag && ns_nullhost(nspcb.nsp_faddr) ) {
 			continue;
 		}
-		kread((u_long)nspcb.nsp_socket,
-				(char *)&sockb, sizeof (sockb));
+		kread((u_long)nspcb.nsp_socket, &sockb, sizeof (sockb));
 		ppcb = (u_long) nspcb.nsp_pcb;
 		if (ppcb) {
 			if (isspp) {
-				kread(ppcb, (char *)&sppcb, sizeof (sppcb));
+				kread(ppcb, &sppcb, sizeof (sppcb));
 			} else continue;
 		} else if (isspp)
 			continue;
@@ -165,7 +164,7 @@ spp_stats(u_long off, char *name)
 
 	if (off == 0)
 		return;
-	kread(off, (char *)&spp_istat, sizeof (spp_istat));
+	kread(off, &spp_istat, sizeof (spp_istat));
 	printf("%s:\n", name);
 	ANY((long)spp_istat.nonucn, "connection",
 	    " dropped due to no new sockets ");
@@ -245,7 +244,7 @@ idp_stats(u_long off, char *name)
 
 	if (off == 0)
 		return;
-	kread(off, (char *)&idpstat, sizeof (idpstat));
+	kread(off, &idpstat, sizeof (idpstat));
 	printf("%s:\n", name);
 	ANY(idpstat.idps_toosmall, "packet", " smaller than a header");
 	ANY(idpstat.idps_tooshort, "packet", " smaller than advertised");
@@ -282,7 +281,7 @@ nserr_stats(u_long off, char *name)
 
 	if (off == 0)
 		return;
-	kread(off, (char *)&ns_errstat, sizeof (ns_errstat));
+	kread(off, &ns_errstat, sizeof (ns_errstat));
 	printf("NS error statistics:\n");
 	ANY(ns_errstat.ns_es_error, "call", " to ns_error");
 	ANY(ns_errstat.ns_es_oldshort, "error",

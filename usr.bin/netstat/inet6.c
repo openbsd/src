@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet6.c,v 1.31 2004/11/17 01:47:20 itojun Exp $	*/
+/*	$OpenBSD: inet6.c,v 1.32 2005/03/25 17:01:03 jaredy Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-/*__RCSID("$OpenBSD: inet6.c,v 1.31 2004/11/17 01:47:20 itojun Exp $");*/
+/*__RCSID("$OpenBSD: inet6.c,v 1.32 2005/03/25 17:01:03 jaredy Exp $");*/
 /*__RCSID("KAME Id: inet6.c,v 1.10 2000/02/09 10:49:31 itojun Exp");*/
 #endif
 #endif /* not lint */
@@ -352,7 +352,7 @@ ip6_stats(u_long off, char *name)
 	if (off == 0)
 		return;
 
-	kread(off, (char *)&ip6stat, sizeof (ip6stat));
+	kread(off, &ip6stat, sizeof (ip6stat));
 	printf("%s:\n", name);
 
 #define	p(f, m) if (ip6stat.f || sflag <= 1) \
@@ -523,7 +523,7 @@ ip6_ifstats(char *ifname)
 	strlcpy(ifr.ifr_name, ifname, sizeof ifr.ifr_name);
 	printf("ip6 on %s:\n", ifr.ifr_name);
 
-	if (ioctl(s, SIOCGIFSTAT_IN6, (char *)&ifr) < 0) {
+	if (ioctl(s, SIOCGIFSTAT_IN6, &ifr) < 0) {
 		perror("Warning: ioctl(SIOCGIFSTAT_IN6)");
 		goto end;
 	}
@@ -828,7 +828,7 @@ icmp6_stats(u_long off, char *name)
 
 	if (off == 0)
 		return;
-	kread(off, (char *)&icmp6stat, sizeof (icmp6stat));
+	kread(off, &icmp6stat, sizeof (icmp6stat));
 	printf("%s:\n", name);
 
 #define	p(f, m) if (icmp6stat.f || sflag <= 1) \
@@ -912,7 +912,7 @@ icmp6_ifstats(char *ifname)
 	strlcpy(ifr.ifr_name, ifname, sizeof ifr.ifr_name);
 	printf("icmp6 on %s:\n", ifr.ifr_name);
 
-	if (ioctl(s, SIOCGIFSTAT_ICMP6, (char *)&ifr) < 0) {
+	if (ioctl(s, SIOCGIFSTAT_ICMP6, &ifr) < 0) {
 		perror("Warning: ioctl(SIOCGIFSTAT_ICMP6)");
 		goto end;
 	}
@@ -968,7 +968,7 @@ pim6_stats(u_long off, char *name)
 
 	if (off == 0)
 		return;
-	kread(off, (char *)&pim6stat, sizeof(pim6stat));
+	kread(off, &pim6stat, sizeof(pim6stat));
 	printf("%s:\n", name);
 
 #define	p(f, m) if (pim6stat.f || sflag <= 1) \
@@ -995,7 +995,7 @@ rip6_stats(u_long off, char *name)
 
 	if (off == 0)
 		return;
-	kread(off, (char *)&rip6stat, sizeof(rip6stat));
+	kread(off, &rip6stat, sizeof(rip6stat));
 	printf("%s:\n", name);
 
 #define	p(f, m) if (rip6stat.f || sflag <= 1) \
@@ -1136,7 +1136,7 @@ tcp6_dump(u_long pcbaddr)
 	struct tcp6cb tcp6cb;
 	int i;
 
-	kread(pcbaddr, (char *)&tcp6cb, sizeof(tcp6cb));
+	kread(pcbaddr, &tcp6cb, sizeof(tcp6cb));
 
 	printf("TCP Protocol Control Block at 0x%08lx:\n\n", pcbaddr);
 

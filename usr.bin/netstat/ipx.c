@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx.c,v 1.15 2003/11/08 19:17:29 jmc Exp $	*/
+/*	$OpenBSD: ipx.c,v 1.16 2005/03/25 17:01:03 jaredy Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)ns.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: ipx.c,v 1.15 2003/11/08 19:17:29 jmc Exp $";
+static char *rcsid = "$OpenBSD: ipx.c,v 1.16 2005/03/25 17:01:03 jaredy Exp $";
 #endif
 #endif /* not lint */
 
@@ -97,13 +97,13 @@ ipxprotopr(u_long off, char *name)
 	if (off == 0)
 		return;
 	isspx = strcmp(name, "spx") == 0;
-	kread(off, (char *)&table, sizeof (table));
+	kread(off, &table, sizeof (table));
 	prev = head = (struct ipxpcb *)
 		&((struct ipxpcbtable *)off)->ipxpt_queue.cqh_first;
 	next = table.ipxpt_queue.cqh_first;
 
 	while (next != head) {
-		kread((u_long)next, (char *)&ipxpcb, sizeof (ipxpcb));
+		kread((u_long)next, &ipxpcb, sizeof (ipxpcb));
 		if (ipxpcb.ipxp_queue.cqe_prev != prev) {
 			printf("???\n");
 			break;
@@ -114,11 +114,10 @@ ipxprotopr(u_long off, char *name)
 		if (!aflag && ipx_nullhost(ipxpcb.ipxp_faddr) )
 			continue;
 
-		kread((u_long)ipxpcb.ipxp_socket,
-				(char *)&sockb, sizeof (sockb));
+		kread((u_long)ipxpcb.ipxp_socket, &sockb, sizeof (sockb));
 		if (isspx) {
-			kread((u_long)ipxpcb.ipxp_ppcb,
-			    (char *)&spxpcb, sizeof (spxpcb));
+			kread((u_long)ipxpcb.ipxp_ppcb, &spxpcb,
+			    sizeof (spxpcb));
 		}
 		if (first) {
 			printf("Active Internetwork Packet Exchange connections");
@@ -167,7 +166,7 @@ spx_stats(u_long off, char *name)
 
 	if (off == 0)
 		return;
-	kread(off, (char *)&spx_istat, sizeof (spx_istat));
+	kread(off, &spx_istat, sizeof (spx_istat));
 	printf("%s:\n", name);
 	ANY((long)spx_istat.nonucn, "connection", " dropped due to no new sockets ");
 	ANY((long)spx_istat.gonawy, "connection", " terminated due to our end dying");
@@ -242,7 +241,7 @@ ipx_stats(u_long off, char *name)
 
 	if (off == 0)
 		return;
-	kread(off, (char *)&ipxstat, sizeof (ipxstat));
+	kread(off, &ipxstat, sizeof (ipxstat));
 	printf("%s:\n", name);
 	ANY(ipxstat.ipxs_toosmall, "packet", " smaller than a header");
 	ANY(ipxstat.ipxs_tooshort, "packet", " smaller than advertised");
@@ -280,7 +279,7 @@ ipxerr_stats(u_long off, char *name)
 
 	if (off == 0)
 		return;
-	kread(off, (char *)&ipx_errstat, sizeof (ipx_errstat));
+	kread(off, &ipx_errstat, sizeof (ipx_errstat));
 	printf("IPX error statistics:\n");
 	ANY(ipx_errstat.ipx_es_error, "call", " to ipx_error");
 	ANY(ipx_errstat.ipx_es_oldshort, "error",
