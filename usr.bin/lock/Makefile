@@ -1,15 +1,8 @@
-#	$OpenBSD: Makefile,v 1.9 2000/09/03 18:41:17 espie Exp $
+#	$OpenBSD: Makefile,v 1.10 2001/05/29 21:38:14 millert Exp $
 
 PROG=	lock
 BINOWN= root
-BINMODE=4555
-
-.include <bsd.own.mk>
-
-.if (${SKEY:L} == "yes")
-CFLAGS+=-DSKEY
-LDADD+= -lskey
-DPADD+= ${LIBSKEY}
-.endif
+BINGRP= auth
+BINMODE=2555
 
 .include <bsd.prog.mk>
