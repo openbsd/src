@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.80 2002/06/09 04:50:27 deraadt Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.81 2002/06/09 08:53:08 pb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -379,6 +379,12 @@ struct pf_rdr {
 	u_int8_t		 no;
 };
 
+struct pf_port_node {
+	LIST_ENTRY(pf_port_node)	next;
+	u_int16_t			port;
+};
+LIST_HEAD(pf_port_list, pf_port_node);
+
 TAILQ_HEAD(pf_rulequeue, pf_rule);
 
 struct pf_pdesc {
@@ -614,7 +620,67 @@ struct pfioc_limit {
 #define DIOCSETLIMIT	_IOWR('D', 40, struct pfioc_limit)
 #define DIOCKILLSTATES	_IOWR('D', 41, struct pfioc_state_kill)
 
+
 #ifdef _KERNEL
+RB_HEAD(pf_state_tree, pf_tree_node);
+RB_PROTOTYPE(pf_state_tree, pf_tree_node, entry, pf_state_compare);
+extern struct pf_state_tree tree_lan_ext, tree_ext_gwy;
+
+extern struct pf_rulequeue		 pf_rules[2];
+TAILQ_HEAD(pf_natqueue, pf_nat);
+extern struct pf_natqueue		 pf_nats[2];
+TAILQ_HEAD(pf_binatqueue, pf_binat);
+extern struct pf_binatqueue		 pf_binats[2];
+TAILQ_HEAD(pf_rdrqueue, pf_rdr);
+extern struct pf_rdrqueue		 pf_rdrs[2];
+
+
+extern u_int32_t		 ticket_rules_active;
+extern u_int32_t		 ticket_rules_active;
+extern u_int32_t		 ticket_rules_inactive;
+extern u_int32_t		 ticket_nats_active;
+extern u_int32_t		 ticket_nats_inactive;
+extern u_int32_t		 ticket_binats_active;
+extern u_int32_t		 ticket_binats_inactive;
+extern u_int32_t		 ticket_rdrs_active;
+extern u_int32_t		 ticket_rdrs_inactive;
+extern u_int32_t		 ticket_rules_inactive;
+extern struct pf_rulequeue	*pf_rules_active;
+extern struct pf_rulequeue	*pf_rules_inactive;
+extern struct pf_natqueue	*pf_nats_active;
+extern struct pf_natqueue	*pf_nats_inactive;
+extern struct pf_binatqueue	*pf_binats_active;
+extern struct pf_binatqueue	*pf_binats_inactive;
+extern struct pf_rdrqueue	*pf_rdrs_active;
+extern struct pf_rdrqueue	*pf_rdrs_inactive;
+extern struct pf_port_list	 pf_tcp_ports;
+extern struct pf_port_list	 pf_udp_ports;
+extern void			 pf_dynaddr_remove(struct pf_addr_wrap *);
+extern int			 pf_dynaddr_setup(struct pf_addr_wrap *,
+				    u_int8_t);
+extern void			 pf_calc_skip_steps(struct pf_rulequeue *);
+extern void			 pf_dynaddr_copyout(struct pf_addr_wrap *);
+extern struct pool		 pf_tree_pl, pf_rule_pl, pf_nat_pl, pf_sport_pl;
+extern struct pool		 pf_rdr_pl, pf_state_pl, pf_binat_pl,
+				    pf_addr_pl;
+extern void			 pf_purge_timeout(void *);
+extern int			 pftm_interval;
+extern int			 pf_compare_rules(struct pf_rule *,
+				    struct pf_rule *);
+extern int			 pf_compare_nats(struct pf_nat *,
+				    struct pf_nat *);
+extern int			 pf_compare_binats(struct pf_binat *,
+				    struct pf_binat *);
+extern int			 pf_compare_rdrs(struct pf_rdr *,
+				    struct pf_rdr *);
+extern void			 pf_purge_expired_states(void);
+extern int			 pf_insert_state(struct pf_state *);
+extern struct pf_state		*pf_find_state(struct pf_state_tree *,
+				    struct pf_tree_node *);
+extern struct ifnet		*status_ifp;
+extern int			*pftm_timeouts[PFTM_MAX];
+extern void			 pf_addrcpy(struct pf_addr *, struct pf_addr *,
+				    u_int8_t);
 
 #ifdef INET
 int	pf_test(int, struct ifnet *, struct mbuf **);
@@ -641,6 +707,11 @@ int	pf_routable(struct pf_addr *addr, int af);
 extern struct pf_rulequeue *pf_rules_active;
 extern struct pf_status pf_status;
 extern struct pool pf_frent_pl, pf_frag_pl;
+struct pf_pool_limit {
+	void		*pp;
+	unsigned	 limit;
+};
+extern struct pf_pool_limit pf_pool_limits[PF_LIMIT_MAX];
 
 #endif /* _KERNEL */
 
