@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.27 2000/11/28 23:14:05 jason Exp $	*/
+/*	$OpenBSD: hme.c,v 1.28 2001/01/23 16:47:47 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -326,7 +326,7 @@ hmestop(sc)
 	int tries = 0;
 
 	sc->sc_gr->reset = GR_RESET_ALL;
-	while (sc->sc_gr->reset && (tries != MAX_STOP_TRIES))
+	while (sc->sc_gr->reset && (++tries != MAX_STOP_TRIES))
 		DELAY(20);
 	if (tries == MAX_STOP_TRIES)
 		printf("%s: stop failed\n", sc->sc_dev.dv_xname);
@@ -633,7 +633,7 @@ hme_reset_tx(sc)
 	struct hme_cr *cr = sc->sc_cr;
 
 	cr->tx_swreset = 0;
-	while (tries-- && (cr->tx_swreset & 1))
+	while (--tries && (cr->tx_swreset & 1))
 		DELAY(20);
 
 	if (!tries)
@@ -648,7 +648,7 @@ hme_reset_rx(sc)
 	struct hme_cr *cr = sc->sc_cr;
 
 	cr->rx_swreset = 0;
-	while (tries-- && (cr->rx_swreset & 1))
+	while (--tries && (cr->rx_swreset & 1))
 		DELAY(20);
 
 	if (!tries)
