@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.206 1999/12/16 22:15:45 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.207 1999/12/17 11:42:06 fgsch Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -907,10 +907,6 @@ product ES FREEDOM		0x0001	Freedom PCI-GBus
 product FORE PCA200		0x0210	ATM PCA-200
 product FORE PCA200E		0x0300	ATM PCA-200e
 
-/* Fujtsu products */
-product LUCENT LTMODEM		0x0440	K56flex DSVD LTMODEM
-product	LUCENT USBHC		0x5801	USB
-
 /* Future Domain products */
 product FUTUREDOMAIN TMC_18C30	0x0000	TMC-18C30 (36C70)
 
@@ -1032,6 +1028,11 @@ product LEADTEK S3_805		0x0000	S3 805
 /* Lite-On Communications */
 product LITEON	PNIC		0x0002	PNIC
 product LITEON	PNICII		0xc115	PNIC-II
+
+/* Lucent products */
+product LUCENT LTMODEM		0x0440	K56flex DSVD LTMODEM
+product	LUCENT LTWINV90		0x0449	Win Modem V.90
+product	LUCENT USBHC		0x5801	USB
 
 /* LuxSonor */
 product LUXSONOR LS242		0x0020	LS242 DVD Decoder
