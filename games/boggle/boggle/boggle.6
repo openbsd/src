@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boggle.6,v 1.6 2001/06/03 23:25:35 pjanzen Exp $
+.\"	$OpenBSD: boggle.6,v 1.7 2001/06/03 23:39:23 pjanzen Exp $
 .\"	$NetBSD: boggle.6,v 1.2 1995/03/21 12:14:35 cgd Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
@@ -135,6 +135,14 @@ listing the board left to right and top to bottom, in lower case.
 Help is available during play by typing
 .Sq ? .
 More detailed information on the game is given there.
+.Sh FILES
+.Bl -tag -width 36n -compact
+.It Pa /usr/share/games/boggle/dictionary
+compressed dictionary
+.It Pa /usr/share/games/boggle/dictindex
+dictionary index
+.It Pa /usr/share/games/boggle/helpfile
+online help file
 .Sh BUGS
 If there are a great many words in the cube, the final display of the words
 may scroll off the screen.
