@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockio.h,v 1.11 1999/12/26 09:12:46 angelos Exp $	*/
+/*	$OpenBSD: sockio.h,v 1.12 1999/12/26 09:18:21 angelos Exp $	*/
 /*	$NetBSD: sockio.h,v 1.5 1995/08/23 00:40:47 thorpej Exp $	*/
 
 /*-
@@ -107,8 +107,8 @@
 #define	SIOCBRDGDADDR	_IOWR('i', 71, struct ifbareq)	/* delete addr */
 #define	SIOCBRDGFLUSH	_IOWR('i', 72, struct ifbreq)	/* flush addr cache */
 
-#define SIOCGIFSA	_IOWR('i', 73, struct ifsa)	/* get enc sa */
-#define SIOCSIFSA	_IOW('i', 74, struct ifsa)	/* set enc sa */
+#define SIOCGENCSA	_IOWR('i', 73, struct ifsa)	/* get enc sa */
+#define SIOCSENCSA	_IOW('i', 74, struct ifsa)	/* set enc sa */
 
 #define	SIOCSIFMTU	 _IOW('i', 127, struct ifreq)	/* set ifnet mtu */
 #define	SIOCGIFMTU	_IOWR('i', 126, struct ifreq)	/* get ifnet mtu */
