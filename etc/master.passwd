@@ -23,4 +23,5 @@ _syslogd:*:73:73::0:0:Syslog Daemon:/var/empty:/sbin/nologin
 _pflogd:*:74:74::0:0:pflogd privsep:/var/empty:/sbin/nologin
 _bgpd:*:75:75::0:0:BGP Daemon:/var/empty:/sbin/nologin
 _tcpdump:*:76:76::0:0:tcpdump:/var/empty:/sbin/nologin
+_dhcp:*:77:77::0:0:dhcp programs:/var/empty:/sbin/nologin
 nobody:*:32767:32767::0:0:Unprivileged user:/nonexistent:/sbin/nologin
