@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.5 1996/01/06 20:19:59 leo Exp $
+#	$NetBSD: MAKEDEV,v 1.7 1996/01/11 21:34:48 leo Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -75,6 +75,7 @@
 #	aconf	autoconfig information (not yet)
 #	lkm	loadable kernel modules interface.
 #	bpf*	Berkeley Packet Filter
+#	tun*	network tunnel driver
 
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 umask 77
@@ -82,16 +83,17 @@ for i
 do
 case $i in
 all)
-	sh MAKEDEV std fd st0 ttye0 ttye1 ttye2 mouse0 mouse1 grf0 grf1 grf2
+	sh MAKEDEV std fd st0 ttye0 ttye1 ttye2 ttye3 ttye4 ttye5 grf0 grf1
+	sh MAKEDEV grf2 grf3 grf4 grf5 mouse0 mouse1
 	sh MAKEDEV kbd sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9 vnd0 vnd1 vnd2
 	sh MAKEDEV vnd3 vnd4 view00 view01 view02 view03 view04 view05 pty0 
-	sh MAKEDEV vnd5 vnd6 cd0 fd0 fd1 fd2 fd3 bpf0 bpf1 bpf2 bpf3 ipl
+	sh MAKEDEV vnd5 vnd6 cd0 fd0 fd1 fd2 fd3 bpf0 bpf1 bpf2 bpf3
 	sh MAKEDEV ccd0 ccd1 ccd2 ccd3
-	sh MAKEDEV lkm ser02 mdm02 local
+	sh MAKEDEV tun0 tun1 lkm ser02 mdm02 local
 	;;
 
 floppy)
-	sh MAKEDEV std st0 ttye0 ttye1 ttye2 grf0 grf1 grf2 kbd
+	sh MAKEDEV std st0 ttye0 ttye1 ttye2 grf0 grf1 grf2 kbd tun0 tun1
 	sh MAKEDEV sd0 sd1 sd2 sd3 sd4 sd5 sd6 cd0 fd0 fd1 rd0
 	;;
 
@@ -102,8 +104,8 @@ std)
 	mknod drum		c 3 0	; chmod 640 drum ; chgrp kmem drum
 	mknod kmem		c 2 1	; chmod 640 kmem ; chgrp kmem kmem
 	mknod mem		c 2 0	; chmod 640 mem ; chgrp kmem mem
-	mknod reload		c 2 20	; chmod 640 mem ; chgrp kmem mem
-	mknod nvram		c 2 11	; chmod 640 mem ; chgrp kmem mem
+	mknod nvram		c 2 11	; chmod 640 nvram ; chgrp kmem nvram
+	mknod reload		c 2 20	; chmod 640 reload ; chgrp kmem reload
 	mknod zero		c 2 12	; chmod 666 zero
 	mknod null		c 2 2	; chmod 666 null
 	mknod tty		c 1 0	; chmod 666 tty
@@ -278,7 +280,7 @@ ttye*)
 	rm -f ttye${unit}
 	rm -f ite*
 	case $unit in
-	0|1|2)
+	0|1|2|3|4|5|6|7|8|9)
 		mknod ttye${unit} c 12 ${unit}
 		;;
 	*)
@@ -291,7 +293,7 @@ grf*)
 	unit=`expr $i : 'grf\(.*\)'`
 	rm -f grf${unit}
 	case $unit in
-	0|1|2)
+	0|1|2|3|4|5|6|7|8|9)
 		mknod grf${unit} c 11 ${unit}; chmod 666 grf${unit}
 		;;
 	*)
@@ -369,9 +371,12 @@ bpf*)
 	chown root.wheel bpf$unit
 	;;
 
-ipl)
-	mknod ipl c 29 0
-	chown root.wheel ipl
+tun*)
+	unit=`expr $i : 'tun\(.*\)'`
+	rm -f tun$unit
+	mknod tun$unit c 28 $unit
+	chmod 600 tun$unit
+	chown root.wheel tun$unit
 	;;
 
 lkm)
