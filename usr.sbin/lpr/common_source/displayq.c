@@ -165,13 +165,16 @@ displayq(format)
 				cp++;
 			*cp = '\0';
 			i = atoi(current);
-			if (i <= 0) {
+			if (i <= 0)
+				ret = -1;
+			else {
 				seteuid(euid);
 				ret = kill(i, 0);
 				seteuid(uid);
 			}
-				ret = -1;
-			if (ret < 0) {
+			if (ret < 0)
+				warn();
+			else {
 				/* read current file name */
 				cp = current;
 				while ((*cp = getc(fp)) != EOF && *cp != '\n')

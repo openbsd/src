@@ -210,7 +210,7 @@ process(file)
 	while (getline(cfp)) {
 		switch (line[0]) {
 		case 'U':  /* unlink associated files */
-			do_unlink(file);
+			do_unlink(line+1);
 		}
 	}
 	(void) fclose(cfp);
