@@ -19,13 +19,16 @@
 ./usr/include/hppa/db_machdep.h
 ./usr/include/hppa/disklabel.h
 ./usr/include/hppa/endian.h
+./usr/include/hppa/eisa_machdep.h
 ./usr/include/hppa/exec.h
 ./usr/include/hppa/float.h
 ./usr/include/hppa/frame.h
+./usr/include/hppa/hil_machdep.h
 ./usr/include/hppa/ieee.h
 ./usr/include/hppa/ieeefp.h
 ./usr/include/hppa/internal_types.h
 ./usr/include/hppa/intr.h
+./usr/include/hppa/isa_machdep.h
 ./usr/include/hppa/iomod.h
 ./usr/include/hppa/kcore.h
 ./usr/include/hppa/limits.h
@@ -75,7 +78,6 @@
 ./usr/lib/libmmalloc.a
 ./usr/lib/libopcodes.a
 ./usr/lib/libreadline.a
-./usr/lib/mcrt0.o
 ./usr/lib/scrt0.o
 ./usr/libdata/ldscripts
 ./usr/libdata/ldscripts/hppaobsd.x
@@ -84,6 +86,7 @@
 ./usr/libdata/ldscripts/hppaobsd.xr
 ./usr/libdata/ldscripts/hppaobsd.xs
 ./usr/libdata/ldscripts/hppaobsd.xu
+./usr/libdata/ldscripts/hppaobsd.xz
 ./usr/share/man/cat1/gdb.0
 ./usr/share/man/cat1/objcopy.0
 ./usr/share/man/cat1/objdump.0
