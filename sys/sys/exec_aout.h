@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_aout.h,v 1.15 2002/03/14 01:27:14 millert Exp $	*/
+/*	$OpenBSD: exec_aout.h,v 1.16 2002/03/28 07:02:03 deraadt Exp $	*/
 /*	$NetBSD: exec_aout.h,v 1.15 1996/05/18 17:20:54 christos Exp $	*/
 
 /*
@@ -80,6 +80,7 @@ struct exec {
 #define	MID_VAX		150	/* vax */
 #define	MID_SPARC64	151	/* LP64 sparc */
 #define	MID_M88K	153	/* m88k BSD binary */ 
+#define	MID_HPPA	154	/* hppa */
 #define	MID_HP200	200	/* hp200 (68010) BSD binary */
 #define	MID_HP300	300	/* hp300 (68020+68881) BSD binary */
 #define	MID_HPUX	0x20C	/* hp200/300 HP-UX binary */
