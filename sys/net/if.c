@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.105 2005/03/30 02:55:36 tedu Exp $	*/
+/*	$OpenBSD: if.c,v 1.106 2005/04/05 12:19:37 claudio Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1352,12 +1352,14 @@ ifioctl(so, cmd, data, p)
 	                return (error);
 	        ifa = ifnet_addrs[ifp->if_index];
 	        if (ifa == NULL)
-	                return(EINVAL);
+	                return (EINVAL);
 	        sdl = (struct sockaddr_dl *)ifa->ifa_addr;
 	        if (sdl == NULL)
-	                return(EINVAL);
+	                return (EINVAL);
 	        if (ifr->ifr_addr.sa_len != ETHER_ADDR_LEN)
-	                return(EINVAL);
+	                return (EINVAL);
+		if (ETHER_IS_MULTICAST(ifr->ifr_addr.sa_data))
+			return (EINVAL);
 	        switch (ifp->if_type) {
 		case IFT_ETHER:
 		case IFT_FDDI:
@@ -1365,7 +1367,8 @@ ifioctl(so, cmd, data, p)
 		case IFT_ISO88025:
 		case IFT_L2VLAN:
 	                bcopy((caddr_t)ifr->ifr_addr.sa_data,
-			      (caddr_t)((struct arpcom *)ifp)->ac_enaddr, ETHER_ADDR_LEN);
+			      (caddr_t)((struct arpcom *)ifp)->ac_enaddr,
+			      ETHER_ADDR_LEN);
 			/* fall through */
 		case IFT_ARCNET:
                         bcopy((caddr_t)ifr->ifr_addr.sa_data,
