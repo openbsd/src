@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.27 1998/10/13 06:49:46 niklas Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.28 1998/11/16 04:06:45 deraadt Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -283,7 +283,7 @@ reserve_spi(u_int32_t tspi, struct in_addr src, u_int8_t proto, int *errval)
     
     while (1)
     {
-	while (spi <= 255)		/* Get a new SPI */
+	while (ntohl(spi) <= 255)		/* Get a new SPI */
 	  get_random_bytes((void *) &spi, sizeof(spi));
 	
 	/* Check whether we're using this SPI already */
