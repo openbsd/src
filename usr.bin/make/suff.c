@@ -1,4 +1,4 @@
-/*	$OpenBSD: suff.c,v 1.23 2000/03/14 19:00:32 espie Exp $	*/
+/*	$OpenBSD: suff.c,v 1.24 2000/03/26 15:51:31 espie Exp $	*/
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-static char rcsid[] = "$OpenBSD: suff.c,v 1.23 2000/03/14 19:00:32 espie Exp $";
+static char rcsid[] = "$OpenBSD: suff.c,v 1.24 2000/03/26 15:51:31 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -125,7 +125,6 @@ typedef struct _Suff {
     Lst    	 searchPath;	/* The path along which files of this suffix
 				 * may be found */
     int          sNum;	      	/* The suffix number */
-    int		 refCount;	/* Reference count of list membership */
     Lst          parents;	/* Suffixes we have a transformation to */
     Lst          children;	/* Suffixes we have a transformation from */
     Lst		 ref;		/* List of lists this suffix is referenced */
@@ -170,7 +169,7 @@ static int SuffGNHasNameP __P((ClientData, ClientData));
 static void SuffUnRef __P((ClientData, ClientData));
 static void SuffFree __P((ClientData));
 static void SuffInsert __P((Lst, Suff *));
-static Suff *SuffRemove __P((Lst, Suff *));
+static void SuffRemove __P((Lst, Suff *));
 static Boolean SuffParseTransform __P((char *, Suff **, Suff **));
 static int SuffRebuildGraph __P((ClientData, ClientData));
 static int SuffAddSrc __P((ClientData, ClientData));
@@ -342,10 +341,8 @@ SuffUnRef(lp, sp)
     Lst l = (Lst) lp;
 
     LstNode ln = Lst_Member(l, sp);
-    if (ln != NULL) {
+    if (ln != NULL)
 	Lst_Remove(l, ln);
-	((Suff *) sp)->refCount--;
-    }
 }
 
 /*-
@@ -372,13 +369,6 @@ SuffFree (sp)
     if (s == emptySuff)
 	emptySuff = NULL;
 
-#ifdef notdef
-    /* We don't delete suffixes in order, so we cannot use this */
-    if (s->refCount)
-	Punt("Internal error deleting suffix `%s' with refcount = %d", s->name,
-	    s->refCount); 
-#endif
-
     Lst_Destroy (s->ref, NOFREE);
     Lst_Destroy (s->children, NOFREE);
     Lst_Destroy (s->parents, NOFREE);
@@ -391,30 +381,15 @@ SuffFree (sp)
 /*-
  *-----------------------------------------------------------------------
  * SuffRemove  --
- *	Remove the suffix into the list
- *
- * Results:
- *	None
- *
- * Side Effects:
- *	The reference count for the suffix is decremented and the
- *	suffix is possibly freed
+ *	Remove the suffix from the list
  *-----------------------------------------------------------------------
  */
-static Suff *
+static void
 SuffRemove(l, s)
     Lst l;
     Suff *s;
 {
     SuffUnRef((ClientData) l, (ClientData) s);
-#if 0
-    if (s->refCount == 0) {
-	SuffUnRef ((ClientData) sufflist, (ClientData) s);
-	SuffFree((ClientData) s);
-	s = NULL;
-    }
-#endif
-    return (s);
 }
 
 /*-
@@ -457,14 +432,12 @@ SuffInsert (l, s)
 	    printf("at end of list\n");
 	}
 	Lst_AtEnd (l, (ClientData)s);
-	s->refCount++;
 	Lst_AtEnd(s->ref, (ClientData) l);
     } else if (s2->sNum != s->sNum) {
 	if (DEBUG(SUFF)) {
 	    printf("before %s(%d)\n", s2->name, s2->sNum);
 	}
 	Lst_Insert(l, ln, (ClientData)s);
-	s->refCount++;
 	Lst_AtEnd(s->ref, (ClientData) l);
     } else if (DEBUG(SUFF)) {
 	printf("already there\n");
@@ -701,20 +674,17 @@ Suff_EndTransform(gnp, dummy)
 	}
 
 	/*
-	 * Remove the source from the target's children list. We check for a
-	 * null return to handle a beanhead saying something like
-	 *  .c.o .c.o:
+	 * Remove the source from the target's children list. 
 	 *
 	 * We'll be called twice when the next target is seen, but .c and .o
 	 * are only linked once...
 	 */
-	s = SuffRemove(t->children, s);
+	SuffRemove(t->children, s);
 
 	/*
 	 * Remove the target from the source's parents list
 	 */
-	if (s != NULL)
-	    SuffRemove(s->parents, t);
+	SuffRemove(s->parents, t);
     } else if ((gn->type & OP_TRANSFORM) && DEBUG(SUFF)) {
 	printf("transformation %s complete\n", gn->name);
     }
@@ -829,7 +799,6 @@ Suff_AddSuffix (str)
 	s->ref = 	Lst_Init();
 	s->sNum =   	sNum++;
 	s->flags =  	0;
-	s->refCount =	0;
 
 	Lst_AtEnd(sufflist, (ClientData)s);
 	/*
@@ -1033,7 +1002,6 @@ SuffAddSrc (sp, lsp)
 	s2->parent = 	targ;
 	s2->node =  	NULL;
 	s2->suff =  	s;
-	s->refCount++;
 	s2->children =	0;
 	targ->children += 1;
 	Lst_AtEnd(ls->l, (ClientData)s2);
@@ -1051,7 +1019,6 @@ SuffAddSrc (sp, lsp)
     s2->parent =    targ;
     s2->node = 	    NULL;
     s2->suff = 	    s;
-    s->refCount++;
     s2->children =  0;
     targ->children += 1;
     Lst_AtEnd(ls->l, (ClientData)s2);
@@ -1292,7 +1259,6 @@ SuffFindCmds (targ, slst)
 		    ret->file = estrdup(s->name);
 		    ret->pref = targ->pref;
 		    ret->suff = suff;
-		    suff->refCount++;
 		    ret->parent = targ;
 		    ret->node = s;
 		    ret->children = 0;
@@ -1874,7 +1840,6 @@ SuffFindNormalDeps(gn, slst)
 	    targ = (Src *)emalloc(sizeof (Src));
 	    targ->file = estrdup(gn->name);
 	    targ->suff = (Suff *)Lst_Datum(ln);
-	    targ->suff->refCount++;
 	    targ->node = gn;
 	    targ->parent = (Src *)NULL;
 	    targ->children = 0;
@@ -1919,7 +1884,6 @@ SuffFindNormalDeps(gn, slst)
 	targ = (Src *)emalloc(sizeof (Src));
 	targ->file = estrdup(gn->name);
 	targ->suff = suffNull;
-	targ->suff->refCount++;
 	targ->node = gn;
 	targ->parent = (Src *)NULL;
 	targ->children = 0;
@@ -2016,10 +1980,7 @@ sfnd_abort:
 		    int		savep = strlen(gn->path) - targ->suff->nameLen;
 		    char	savec;
 
-		    if (gn->suffix)
-			gn->suffix->refCount--;
 		    gn->suffix = targ->suff;
-		    gn->suffix->refCount++;
 
 		    savec = gn->path[savep];
 		    gn->path[savep] = '\0';
@@ -2037,8 +1998,6 @@ sfnd_abort:
 		     * The .PREFIX gets the full path if the target has
 		     * no known suffix.
 		     */
-		    if (gn->suffix)
-			gn->suffix->refCount--;
 		    gn->suffix = NULL;
 
 		    if ((ptr = strrchr(gn->path, '/')) != NULL)
@@ -2055,11 +2014,7 @@ sfnd_abort:
 	     * path to be the name so Dir_MTime won't go grovelling for
 	     * it.
 	     */
-	    if (gn->suffix)
-		gn->suffix->refCount--;
 	    gn->suffix = (targ == NULL) ? NULL : targ->suff;
-	    if (gn->suffix)
-		gn->suffix->refCount++;
 	    efree(gn->path);
 	    gn->path = estrdup(gn->name);
 	}
@@ -2122,10 +2077,7 @@ sfnd_abort:
     for (src = bottom; src->parent != (Src *)NULL; src = src->parent) {
 	targ = src->parent;
 
-	if (src->node->suffix)
-	    src->node->suffix->refCount--;
 	src->node->suffix = src->suff;
-	src->node->suffix->refCount++;
 
 	if (targ->node == NULL) {
 	    targ->node = Targ_FindNode(targ->file, TARG_CREATE);
@@ -2152,10 +2104,7 @@ sfnd_abort:
 	}
     }
 
-    if (gn->suffix)
-	gn->suffix->refCount--;
     gn->suffix = src->suff;
-    gn->suffix->refCount++;
 
     /*
      * So Dir_MTime doesn't go questing for it...
@@ -2252,11 +2201,8 @@ SuffFindDeps (gn, slst)
 	Suff	*s;
 
 	ln = Lst_Find(sufflist, SuffSuffHasNameP, (ClientData)LIBSUFF);
-	if (gn->suffix)
-	    gn->suffix->refCount--;
 	if (ln != NULL) {
 	    gn->suffix = s = (Suff *) Lst_Datum (ln);
-	    gn->suffix->refCount++;
 	    Arch_FindLib (gn, s->searchPath);
 	} else {
 	    gn->suffix = NULL;
@@ -2353,7 +2299,6 @@ Suff_Init ()
     suffNull->ref =	    Lst_Init();
     suffNull->sNum =   	    sNum++;
     suffNull->flags =  	    SUFF_NULL;
-    suffNull->refCount =    1;
 
 }
 
@@ -2404,7 +2349,7 @@ SuffPrintSuff (sp, dummy)
     int	    flags;
     int	    flag;
 
-    printf ("# `%s' [%d] ", s->name, s->refCount);
+    printf ("# `%s' ", s->name);
 
     flags = s->flags;
     if (flags) {
