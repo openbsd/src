@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.24 2004/09/14 22:26:09 henning Exp $ */
+/*	$OpenBSD: buffer.c,v 1.25 2004/09/16 01:33:53 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -87,7 +87,7 @@ buf_write(int sock, struct buf *buf)
 
 	if ((n = write(sock, buf->buf + buf->rpos,
 	    buf->size - buf->rpos)) == -1) {
-		if (errno == EAGAIN)	/* cannot write immediately */
+		if (errno == EAGAIN || errno == ENOBUFS)	/* try later */
 			return (0);
 		else
 			return (-1);
