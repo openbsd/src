@@ -19,7 +19,7 @@ installed with further documentation resources; to read info pages type "info".
 If you have installed the X11 packages during the install process, you can find
 further information regarding configuration in the file /usr/X11R6/README.
 
-Binary packages of emacs 20.2, bash 2.01.1, tcsh-6.07.02, and pine-3.96 are
+Binary packages of emacs-20.2, bash-2.01.1, tcsh-6.07.02, and pine-3.96 are
 available on most architectures. The files are in the directory
 	ftp://ftp.openbsd.org/pub/OpenBSD/2.3/packages/
 or	CD2:/packages/   (ie. mount /dev/cd0a /mnt; cd /mnt/packages)
