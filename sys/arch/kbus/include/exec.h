@@ -57,6 +57,8 @@ struct relocation_info_sparc {
 };
 #define relocation_info	relocation_info_sparc
 
+#define ARCH_ELFSIZE		32
+
 #define	ELF_TARG_CLASS	ELFCLASS32
 #define	ELF_TARG_DATA	ELFDATA2MSB
 #define	ELF_TARG_MACH	EM_SPARC

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.5 1997/10/13 10:53:43 pefo Exp $ */
+/*	$OpenBSD: exec.h,v 1.6 2001/01/22 14:51:06 art Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom, Opsycon AB.
@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: exec.h,v 1.5 1997/10/13 10:53:43 pefo Exp $
+ *	$Id: exec.h,v 1.6 2001/01/22 14:51:06 art Exp $
  */
 
 #ifndef _MACHINE_EXEC_H_
@@ -43,6 +43,8 @@
  */
 #define NATIVE_EXEC_ELF
 #define	EXEC_SCRIPT
+
+#define ARCH_ELFSIZE		32
 
 #define ELF_TARG_CLASS          ELFCLASS32
 #define ELF_TARG_DATA           ELFDATA2MSB

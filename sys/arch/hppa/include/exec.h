@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.5 1999/11/16 16:44:04 mickey Exp $	*/
+/*	$OpenBSD: exec.h,v 1.6 2001/01/22 14:51:03 art Exp $	*/
 
 /* 
  * Copyright (c) 1994, The University of Utah and
@@ -30,6 +30,8 @@
 
 /* Size of a page in an object file. */
 #define	__LDPGSZ	4096
+
+#define ARCH_ELFSIZE		32
 
 #define ELF_TARG_CLASS          ELFCLASS32
 #define ELF_TARG_DATA           ELFDATA2MSB

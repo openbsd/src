@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.7 1997/08/08 08:26:16 downsj Exp $	*/
+/*	$OpenBSD: exec.h,v 1.8 2001/01/22 14:51:06 art Exp $	*/
 /*	$NetBSD: exec.h,v 1.7 1994/11/20 20:53:02 deraadt Exp $ */
 
 /*
@@ -57,6 +57,8 @@ struct relocation_info_sparc {
 	long r_addend;			/* relocation addend */
 };
 #define relocation_info	relocation_info_sparc
+
+#define ARCH_ELFSIZE		32
 
 #define	ELF_TARG_CLASS	ELFCLASS32
 #define	ELF_TARG_DATA	ELFDATA2MSB

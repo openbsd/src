@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.7 1997/09/21 04:21:08 niklas Exp $	*/
+/*	$OpenBSD: exec.h,v 1.8 2001/01/22 14:51:07 art Exp $	*/
 /*	$NetBSD: exec.h,v 1.8 1994/11/21 21:33:39 gwr Exp $	*/
 
 /*
@@ -46,6 +46,8 @@ struct relocation_info_m68k {
 			  r_copy :  1;	/* run time copy */
 };
 #define relocation_info	relocation_info_m68k
+
+#define ARCH_ELFSIZE		32
 
 #define ELF_TARG_CLASS          ELFCLASS32
 #define ELF_TARG_DATA           ELFDATA2MSB

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.8 2001/01/14 20:25:24 smurph Exp $ */
+/*	$OpenBSD: exec.h,v 1.9 2001/01/22 14:51:05 art Exp $ */
 #ifndef __MACHINE_EXEC_H__
 #define __MACHINE_EXEC_H__
 
@@ -16,6 +16,8 @@ struct relocation_info_m88k {
         int r_addend;
 };
 #define relocation_info relocation_info_m88k
+
+#define ARCH_ELFSIZE		32
 
 #define ELF_TARG_CLASS		ELFCLASS32
 #define ELF_TARG_DATA		ELFDATA2MSB

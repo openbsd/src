@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.6 2000/12/14 16:53:27 art Exp $	*/
+/*	$OpenBSD: exec.h,v 1.7 2001/01/22 14:51:02 art Exp $	*/
 /*	$NetBSD: exec.h,v 1.1 1995/02/13 23:07:37 cgd Exp $	*/
 
 /*
@@ -37,6 +37,8 @@
 #define	__LDPGSZ	8192
 
 #define NATIVE_EXEC_ELF
+
+#define ARCH_ELFSIZE		64
 
 #define ELF_TARG_CLASS		ELFCLASS64
 #define ELF_TARG_DATA		ELFDATA2LSB
