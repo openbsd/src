@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.25 2000/01/30 09:59:46 niklas Exp $	*/
+/*	$OpenBSD: message.c,v 1.26 2000/01/30 10:11:57 niklas Exp $	*/
 /*	$EOM: message.c,v 1.140 2000/01/30 10:04:08 niklas Exp $	*/
 
 /*
@@ -868,7 +868,7 @@ message_recv (struct message *msg)
 	{
 	  msg->exchange
 	    = exchange_lookup_from_icookie (buf + ISAKMP_HDR_ICOOKIE_OFF);
-	  if (msg->exchange && msg->exchange->phase == 1 &&
+	  if (msg->exchange && msg->exchange->phase == 1
 	      && zero_test (msg->exchange->cookies + ISAKMP_HDR_RCOOKIE_OFF,
 			    ISAKMP_HDR_RCOOKIE_LEN))
 	    exchange_upgrade_p1 (msg);
