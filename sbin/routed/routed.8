@@ -1,4 +1,4 @@
-.\"	$OpenBSD: routed.8,v 1.6 1996/10/02 06:51:46 mickey Exp $
+.\"	$OpenBSD: routed.8,v 1.7 1997/01/21 19:33:15 deraadt Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -139,7 +139,7 @@ When an update is applied,
 .Nm
 records the change in its own tables and updates the kernel routing table
 if the best route to the destination changes.
-The change in the kernel routing tableis reflected in the next batch of
+The change in the kernel routing table is reflected in the next batch of
 .Em response
 packets sent.
 If the next response is not scheduled for a while, a
@@ -216,11 +216,6 @@ on the command line or
 in the
 .Pa /etc/gateways
 file.
-.Pp
-While using Router Discovery (which happens by default when
-the system has a single network interface and a Router Discover Advertisement
-is received), there is a single default route and a variable number of
-redirected host routes in the kernel table.
 .Pp
 See the
 .Cm pm_rdisc
