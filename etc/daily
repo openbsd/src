@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: daily,v 1.47 2004/11/15 18:10:48 nick Exp $
+#	$OpenBSD: daily,v 1.48 2004/12/07 19:08:15 millert Exp $
 #	From: @(#)daily	8.2 (Berkeley) 1/25/94
 #
 PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin
@@ -91,13 +91,11 @@ fi
 # if filesystem named /altroot is type ffs, on /dev/* and mounted "xx",
 # use it as a backup root filesystem to be updated daily.
 [ "X$ROOTBACKUP" = X1 ] && {
-	rootdev=`awk '$2 == "/" && $1 ~ /^\/dev\// && $3 == "ffs" && \
-	    $4 ~ /rw/ \
-		 { print substr($1, 6) }' < /etc/fstab`
+	rootdev=`df -n / | awk '/^\/dev\// { print substr($1, 6) }'`
 	rootbak=`awk '$2 == "/altroot" && $1 ~ /^\/dev\// && $3 == "ffs" && \
 	    $4 ~ /xx/ \
 		{ print substr($1, 6) }' < /etc/fstab`
-	[ X$rootdev != X -a X$rootbak != X ] && {
+	[ X$rootdev != X -a X$rootbak != X -a X$rootdev != X$rootbak ] && {
 		sync
 		echo ""
 		echo "Backing up root filesystem:"
