@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.55 2000/01/02 04:38:17 todd Exp $
+#	$OpenBSD: netstart,v 1.56 2000/01/02 05:14:52 itojun Exp $
 
 # Returns true if $1 contains only alphanumerics
 isalphanumeric() {
@@ -53,6 +53,8 @@ if ifconfig lo0 inet6 >/dev/null 2>&1; then
 	# disallow "internal" addresses to appear on the wire.
 	route add -inet6 ::ffff:0.0.0.0 -prefixlen 96 ::1 -reject
 	route add -inet6 ::0.0.0.0 -prefixlen 96 ::1 -reject
+
+	rtsolif=""
 else
 	ip6kernel=NO
 fi
@@ -94,6 +96,9 @@ for hn in /etc/hostname.*; do
 	"dhcp")
 	    ifconfig $if $name $mask $bcaddr $ext1 $ext2 down
 	    cmd="dhclient $if"
+	    ;;
+	"rtsol")
+	    rtsolif="$rtsolif $if"
 	    ;;
 	"up")
 	    # The only one of these guaranteed to be set is $if
@@ -143,6 +148,17 @@ for hn in /etc/hostname.*; do
 	eval "$cmd"
     done < /etc/hostname.$if
 done
+
+if [ "$ip6kernel" = "YES" -a "x$rtsolif" != "x" ]; then
+	fw=`sysctl -n net.inet6.ip6.forwarding`
+	ra=`sysctl -n net.inet6.ip6.accept_rtadv`
+	if [ "x$fw" = "x0" -a "x$ra" = "x1" ]; then
+		rtsol $rtsolif
+	else
+		echo "WARNING: inconsistent config - check /etc/sysctl.conf for IPv6 autoconf"
+	fi
+fi
+
 for bn in /etc/bridgename.*; do
     # Strip off /etc/bridgename. prefix
     if=${bn#/etc/bridgename.}
