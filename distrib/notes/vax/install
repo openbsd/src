@@ -2,7 +2,7 @@ OpenBSDInstallPrelude
 
 At the moment, the only way to install OpenBSD/vax is via diskless 
 booting over an Ethernet network.  You will need both the "boot.mop" 
-image and the "bsd" kernel to boot.  You will also need a machine 
+image and the "bsd.rd" kernel to boot.  You will also need a machine 
 configured as a rarp, MOP, bootparam, and NFS server.  
 
 This document will give a few examples on how to set up each of these 
@@ -13,8 +13,12 @@ bootparams(5), nfsd(8), mountd(8), and diskless(8).  Also, Brian Chase
 network; this was written for NetBSD/vax, but the procedure is virtually 
 identical for OpenBSD/vax, and the document covers the use of several 
 different platforms as servers.
+
 The guide is available at:
 http://world.std.com/~bdc/projects/vaxen/VAX-netboot-HOWTO
+
+If this is your first time installing over a network it is STRONGLY
+suggested you read this guide.
 
 Configuring the Server:
 ---------------------
@@ -35,9 +39,11 @@ example:
 
 Then start rarpd (or configure /etc/rc.conf to always start rarpd).
 
-Copy boot.mop into /tftpboot/mop/AABBCCDDEEFF.SYS, where "AABBCCDDEEFF"
+Copy boot.mop into /tftpboot/mop/1a2b3c4d5e6f.SYS, where "1a2b3c4d5e6f"
 represents the six octets of your ethernet address.  For example, the 
 filename for the machine described above would be "08002b247200.SYS".
+Note that all non alphanumeric characters must be stripped and the
+mac portion must be lower case, the extension upper.
 Start mopd by typing "mopd -a".
 
 rpc.bootparamd's configuration file is /etc/bootparams.  The format for this
@@ -47,11 +53,11 @@ Also, make sure "portmap" is "YES"; you will need portmap running.
 
 nfsd and mountd configuration are described in their respective manual pages.
 Make a separate directory for your VAX's /, make sure it is exported via NFS, 
-and place "miniroot.fs" there.
+and place "bsd.rd" there.
 
 Typing "B <DEVICE>", where <DEVICE> is your VAX's ethernet device, at the 
 chevron prompt should then load the OpenBSD booter.  A countdown should begin;
-type any key on the console and type "boot miniroot.fs".  
+type any key on the console and type "boot bsd.rd".  
 
 OpenBSDBootMsgs
 

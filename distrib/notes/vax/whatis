@@ -1,2 +1,5 @@
-OpenBSD OSREV is a relatively new port; there is still much support
-planned.
+OpenBSD/vax OSREV is a new port. OSREV represents its first release
+for this reason it is still quite "rough".
+
+Development is ongoing, and support for a greater variety of hardware
+as well as new features is in the works.
