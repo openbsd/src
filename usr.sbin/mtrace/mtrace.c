@@ -52,7 +52,7 @@
 
 #ifndef lint
 static char rcsid[] =
-    "@(#) $Id: mtrace.c,v 1.14 2002/06/14 21:35:01 todd Exp $";
+    "@(#) $Id: mtrace.c,v 1.15 2002/08/09 02:12:15 itojun Exp $";
 #endif
 
 #include <netdb.h>
@@ -457,6 +457,8 @@ send_recv(dst, type, code, tries, save)
 	 */
 	while (TRUE) {
 	    FD_ZERO(&fds);
+	    if (igmp_socket >= FD_SETSIZE)
+		log(LOG_ERR, 0, "descriptor too big");
 	    FD_SET(igmp_socket, &fds);
 	    gettimeofday(&tv, 0);
 	    tv.tv_sec = tq.tv_sec + timeout - tv.tv_sec;
@@ -624,8 +626,6 @@ passive_mode()
     int ipdatalen, iphdrlen, igmpdatalen;
     int len, recvlen, dummy = 0;
     u_int32_t smask;
-
-    init_igmp();
 
     if (raddr) {
 	if (IN_MULTICAST(ntohl(raddr))) k_join(raddr, INADDR_ANY);
@@ -1676,18 +1676,16 @@ void
 log(int severity, int syserr, char *format, ...)
 {
     va_list ap;
-    char    fmt[100];
 
     switch (debug) {
 	case 0: if (severity > LOG_WARNING) return;
 	case 1: if (severity > LOG_NOTICE) return;
 	case 2: if (severity > LOG_INFO  ) return;
 	default:
-	    fmt[0] = '\0';
-	    if (severity == LOG_WARNING) strcat(fmt, "warning - ");
-	    strncat(fmt, format, 80);
+	    if (severity == LOG_WARNING)
+		fprintf(stderr, "warning - ");
 	    va_start(ap, format);
-	    vfprintf(stderr, fmt, ap);
+	    vfprintf(stderr, format, ap);
 	    va_end(ap);
 	    if (syserr == 0)
 		fprintf(stderr, "\n");
