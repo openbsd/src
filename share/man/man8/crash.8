@@ -1,4 +1,4 @@
-.\"	$OpenBSD: crash.8,v 1.5 2000/04/17 02:32:47 aaron Exp $
+.\"	$OpenBSD: crash.8,v 1.6 2000/09/06 16:43:17 deraadt Exp $
 .\"
 .\" Copyright (c) 1980, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -102,7 +102,9 @@ to be futile.  Late in the bootstrap procedure, the system was unable to
 locate and execute the initialization process,
 .Xr init 8 .
 The root filesystem is incorrect or has been corrupted, or the mode
-or type of /sbin/init forbids execution.
+or type of
+.Pa /sbin/init
+forbids execution.
 .It timeout table overflow
 .ns
 This really shouldn't be a panic, but until the data structure
@@ -153,8 +155,17 @@ you should run
 loading in the images with the following commands:
 .Pp
 .Bd -literal
-	file /var/crash/bsd.0
-        target kcore /var/crash/bsd.0.core
+    # gdb
+    GNU gdb 4.16.1
+    Copyright 1996 Free Software Foundation, Inc.
+    GDB is free software, covered by the GNU General Public License, and you are
+    welcome to change it and/or distribute copies of it under certain conditions.
+    Type "show copying" to see the conditions.
+    There is absolutely no warranty for GDB.  Type "show warranty" for details.
+    This GDB was configured as "i386-unknown-openbsd2.8".
+    (gdb) file /var/crash/bsd.0
+    Reading symbols from /var/crash/bsd.0...(no debugging symbols found)...done.
+    (gdb) target kcore /var/crash/bsd.0.core
 .Ed
 .Pp
 After this, you can use the
@@ -175,6 +186,124 @@ thus allowing
 .Xr gdb 1
 to show symbolic names for addresses and line numbers from the source.
 .Pp
+Analyzing saved system images is sometimes called post-mortem
+debugging.  There are a class of analysis tools designed to work on
+both live sysems and saved images, most of them are linked with the
+.Xr kvm 3
+library and share option flags to specify the kernel and memory image.
+These tools typically take the following flags:
+.Bl -tag -width indent
+.It Fl N Ar system
+Takes a kernel
+.Ar system
+image as an argument.
+This is where the symbolic information is gotten from,
+which means the image cannot be stripped.
+In some cases, using a
+.Pa bsd.gdb
+version of the kernel can assist even more.
+.It Fl M Ar core
+Normally this
+.Ar core 
+is an image produced by
+.Xr savecore 8
+but it can be
+.Pa /dev/mem
+too, if you are looking at the live system.
+.El
+.Pp
+Commands that understands these options consists of:
+.Xr fstat 1 ,
+.Xr netstat 1 ,
+.Xr ps 1 ,
+.Xr w 1 ,
+.Xr dmesg 8 ,
+.Xr iostat 8 ,
+.Xr kgmon 8 ,
+.Xr nfsstat 8 ,
+.Xr pstat 8 ,
+.Xr slstats 8 ,
+.Xr systat 8 ,
+.Xr trpt 8 ,
+.Xr trsp 8 ,
+.Xr vmstat 8
+and many others.
+There are exceptions too, for instance,
+.Xr ipcs 1
+has renamed the
+.Fl M
+argument to be
+.Fl C
+instead.
+.Pp
+Examples of use:
+.Pp
+.Bd -literal
+    # ps -N /var/crash/bsd.0 -M /var/crash/bsd.0.core -O paddr
+.Ed
+.Pp
+The "-O paddr" option gives the last 6 hexadecimal digits of the
+struct proc pointer for each process.  This is very useful
+information if you are analyzing process contexts in
+.Xr gdb 1 .
+The preceeding digits has to be guessed, but it is hardly very
+difficult, it's the start of the kvm space and is defined by
+machine dependent sizes given in
+.Pa /usr/include/sys/vmparam.h .
+.Pp
+.Bd -literal
+    # vmstat -N /var/crash/bsd.0 -M /var/crash/bsd.0.core -m
+.Ed
+.Pp
+This analyzes memory allocations at the time of the crash.  Perhaps some
+resource was starving the system?
+.Pp
+.Sh CRASH LOCATION DETERMINATION
+The following example should make it easier for a novice kernel
+developer to find out where the kernel crashed.
+
+First, in
+.Xr ddb 4
+find the function that caused the crash. It is either the function
+in top on the trace or the function under the call to
+"panic()" or "uvm_fault".
+.Pp
+The point of the crash usually looks something like this "function+0x4711".
+.Pp
+Find the function in the sources, let's say that the function is in "foo.c".
+.Pp
+Goto the kernel build directory, i.e.
+.Pa /sys/arch/ARCH/compile/GENERIC .
+.Pp
+Do the following:
+.Bd -literal
+    # rm foo.o
+    # make -n foo.o | sed 's,-c,-g -c,' | sh
+    # objdump -S foo.o | less
+.Ed
+.Pp
+Find the function in the output. The function will look something like this:
+.Pp
+.Bd -literal
+     0: 17 47 11 42         foo %x, bar, %y
+     4: foo bar             allan %kaka
+     8: XXXX                boink %bloyt
+    etc.
+.Ed
+.Pp
+The first number is the offset.
+Find the offset that you got in the ddb trace
+(in this case it's 4711).
+.Pp
+When reporting data collected in this way, include ~20 lines before and ~10 lines
+after the offset from the objdump output in the crash report, as well as the output
+of
+.Xr ddb 4 Ns 's
+"show registers" command.
+It's important that the output from objdump includes at least two or
+three lines of C code.
+.Pp
+.Sh REPORTING
 If you are sure you have found a reproducible software bug in the kernel,
 and need help in further diagnosis, or already have a fix, use
 .Xr sendbug 1
