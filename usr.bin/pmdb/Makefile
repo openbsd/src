@@ -2,8 +2,6 @@
 
 .include <bsd.own.mk>
 
-BINDIR=/usr/local/bin
-
 PROG=pmdb
 SRCS=pmdb.c symbol.c clit.c process.c signal.c break.c
 
