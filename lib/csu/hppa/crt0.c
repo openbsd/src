@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.8 2003/06/04 04:43:56 deraadt Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.9 2003/12/04 23:10:37 mickey Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -30,7 +30,7 @@ int	global __asm ("$global$") = 0;
 int	sh_func_adrs __asm ("$$sh_func_adrs") = 0;
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: crt0.c,v 1.8 2003/06/04 04:43:56 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: crt0.c,v 1.9 2003/12/04 23:10:37 mickey Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -64,8 +64,31 @@ static char *__strrchr(const char *p, char ch);
 char *__progname = "";
 char __progname_storage[NAME_MAX+1];
 
+void __start(char **sp, void (*cleanup)(void), const Obj_Entry *obj);
+
+__asm(
+	".import $global$, data\n\t"
+	".import ___start, code\n\t"
+	".text\n\t"
+	".align	4\n\t"
+	".export _start, entry\n\t"
+	".export __start, entry\n\t"
+	".type	_start,@function\n\t"
+	".type	__start,@function\n\t"
+	".label _start\n\t"
+	".label __start\n\t"
+	".proc\n\t"
+	".callinfo frame=0, calls\n\t"
+	".entry\n\t"
+	"ldil	L%$global$, %r27\n\t"
+	".call\n\t"
+	"b	___start\n\t"
+	"ldo	R%$global$(%r27), %r27\n\t"
+	".exit\n\t"
+	".procend\n\t");
+
 void
-__start(sp, cleanup, obj)
+___start(sp, cleanup, obj)
 	char **sp;
 	void (*cleanup)(void);			/* from shared loader */
 	const Obj_Entry *obj;			/* from shared loader */
@@ -73,10 +96,6 @@ __start(sp, cleanup, obj)
 	struct ps_strings *arginfo = (struct ps_strings *)sp;
 	char **argv, *namep;
 	char *s;
-
-	__asm __volatile (".import $global$, data\n\t"
-			  "ldil L%%$global$, %%r27\n\t"
-			  "ldo	R%%$global$(%%r27), %%r27" ::: "r27");
 
 	argv = arginfo->ps_argvstr;
 	environ = arginfo->ps_envstr;
