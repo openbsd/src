@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.160 2002/12/28 22:15:47 mcbride Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.161 2002/12/30 11:26:20 dhartmei Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1572,7 +1572,7 @@ filteropt      = [ user ] | [ group ] | [ flags ] |
                  [ "max-mss" number ] [ fragmentation ] [ "allow-opts" ] |
                  [ "label" string ] | [ "queue" string ]
 
-nat-rule       = [ "no" ] "nat" "on" ifspec  [ af ] [ protospec ] hosts
+nat-rule       = [ "no" ] "nat" "on" ifspec  [ af ] [ protospec ]
                  "from" ipspec "to" ipspec [ portspec ]
                  [ "->" ( redirhost | "{" redirhost-list "}" )
                  [ portspec ] ] [ pooltype ] [ "static-port" ]
