@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.c,v 1.16 2001/02/05 00:31:51 deraadt Exp $	*/
+/*	$OpenBSD: ps.c,v 1.17 2001/04/15 23:32:31 millert Exp $	*/
 /*	$NetBSD: ps.c,v 1.15 1995/05/18 20:33:25 mycroft Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: ps.c,v 1.16 2001/02/05 00:31:51 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ps.c,v 1.17 2001/04/15 23:32:31 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -85,7 +85,7 @@ int	totwidth;		/* calculated width of requested variables */
 
 int	needuser, needcomm, needenv, commandonly;
 
-enum sort { DEFAULT, SORTMEM, SORTCPU } sortby = DEFAULT;
+enum sort { DEFAULT, SORTMEM, SORTCPU, SORTSTART } sortby = SORTSTART;
 
 static char	*kludge_oldps_options __P((char *));
 static int	 pscomp __P((const void *, const void *));
@@ -296,6 +296,9 @@ main(argc, argv)
 	if (!all && ttydev == NODEV && pid == -1 && uid == (uid_t)-1)
 		uid = getuid();
 
+	if (sortby == SORTSTART)
+		needuser = 1;
+
 	/*
 	 * scan requested variables, noting what structures are needed,
 	 * and adjusting header widths as appropiate.
@@ -418,11 +421,19 @@ pscomp(a, b)
 	int i;
 #define VSIZE(k) (KI_EPROC(k)->e_vm.vm_dsize + KI_EPROC(k)->e_vm.vm_ssize + \
 		  KI_EPROC(k)->e_vm.vm_tsize)
+#define STARTTIME(k) (k->ki_u.u_start.tv_sec)
+#define STARTuTIME(k) (k->ki_u.u_start.tv_usec)
 
 	if (sortby == SORTCPU)
 		return (getpcpu((KINFO *)b) - getpcpu((KINFO *)a));
 	if (sortby == SORTMEM)
 		return (VSIZE((KINFO *)b) - VSIZE((KINFO *)a));
+	if (sortby == SORTSTART) {
+		i = STARTTIME(((KINFO *)a)) - STARTTIME(((KINFO *)b));
+		if (i == 0)
+			i = STARTuTIME(((KINFO *)a)) - STARTuTIME(((KINFO *)b));
+		return (i);
+	}
 	i =  KI_EPROC((KINFO *)a)->e_tdev - KI_EPROC((KINFO *)b)->e_tdev;
 	if (i == 0)
 		i = KI_PROC((KINFO *)a)->p_pid - KI_PROC((KINFO *)b)->p_pid;
