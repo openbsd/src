@@ -1110,6 +1110,7 @@ fdcretry(fdc)
 	case 0:
 		/* try again */
 		fdc->sc_state = SEEKCOMPLETE;
+		disk_busy(&fd->sc_dk);
 		break;
 
 	case 1: case 2: case 3:
