@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.24 2004/07/05 16:54:53 henning Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.25 2004/08/02 12:30:15 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -173,6 +173,8 @@ print_peer(struct peer_config *p)
 		printf("%s\tannounce none\n", c);
 	else if (p->announce_type == ANNOUNCE_ALL)
 		printf("%s\tannounce all\n", c);
+	else if (p->announce_type == ANNOUNCE_DEFAULT_ROUTE)
+		printf("%s\tannounce default-route\n", c);
 	else
 		printf("%s\tannounce ???\n", c);
 
