@@ -26,8 +26,9 @@ Supported devices {:-include-:}:
 		Internal modems not supported on all models.
 
 	Ethernet adapters:
-		Digital DC21x4x-based PCI Ethernet adapters, including:
+		Digital DC21x4x-based PCI Ethernet adapters (de), including:
 			Znyx ZX34X
+		Digital DC21x43 clone-based PCI Ethernet adapters (dc)
 		Onboard Older iMac 10-100Mbs (bm) Ethernet. 
 		Onboard G4/PowerBook/Newer iMac (gm) ethernet.
 
@@ -60,5 +61,8 @@ Supported devices {:-include-:}:
 		USB Hubs.
 		USB printers.
 
-The built-in firewire (IEEE1394) ports available in some machines is
+	Cryptography Accelerators:
+		Hifn 7751/Hifn 7951
+
+The built-in firewire (IEEE1394) ports available in some machines are
 not supported.
