@@ -42,7 +42,7 @@ available.
 
 To integrate more smoothly in other environments, OpenBSD OSREV has
 significantly enhanced the binary emulation subsystem (which includes
-iBCS2, Linux, OSF/1, SunOS, SVR4, Solaris and Ultrix compatibility)
+iBCS2, Linux, OSF/1, SunOS, SVR4, Solaris, and Ultrix compatibility)
 and several kernel subsystems have been generalized to support this
 more readily.  The binary emulation strategy is aimed at making the
 emulation as accurate as possible so that it is transparent to the
