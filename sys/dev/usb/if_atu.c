@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.34 2004/12/05 01:51:20 dlg Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.35 2004/12/05 02:04:36 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -1090,7 +1090,9 @@ USB_MATCH(atu)
 int
 atu_media_change(struct ifnet *ifp)
 {
+#ifdef ATU_DEBUG
 	struct atu_softc	*sc = ifp->if_softc;
+#endif /* ATU_DEBUG */
 	int			err;
 
 	DPRINTFN(10, ("%s: atu_media_change\n", USBDEVNAME(sc->atu_dev)));
@@ -1109,7 +1111,9 @@ atu_media_change(struct ifnet *ifp)
 void
 atu_media_status(struct ifnet *ifp, struct ifmediareq *req)
 {
+#ifdef ATU_DEBUG
 	struct atu_softc	*sc = ifp->if_softc;
+#endif /* ATU_DEBUG */
 
 	DPRINTFN(10, ("%s: atu_media_status\n", USBDEVNAME(sc->atu_dev)));
 
