@@ -1,4 +1,4 @@
-/* $OpenBSD: display.c,v 1.14 2003/06/13 21:52:24 deraadt Exp $	 */
+/* $OpenBSD: display.c,v 1.15 2003/06/18 08:36:31 deraadt Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -91,11 +91,9 @@ static char   **memory_names;
 
 static int      num_procstates;
 static int      num_cpustates;
-static int      num_memory;
 
 static int     *lprocstates;
 static int     *lcpustates;
-static int     *lmemory;
 
 static int     *cpustate_columns;
 static int      cpustate_total_length;
@@ -158,8 +156,6 @@ display_init(struct statics * statics)
 		cpustate_columns = (int *) malloc(num_cpustates * sizeof(int));
 
 		memory_names = statics->memory_names;
-		num_memory = string_count(memory_names);
-		lmemory = (int *) malloc(num_memory * sizeof(int));
 
 		/* calculate starting columns where needed */
 		cpustate_total_length = 0;

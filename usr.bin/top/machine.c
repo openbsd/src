@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.34 2003/06/17 00:51:29 jfb Exp $	 */
+/* $OpenBSD: machine.c,v 1.35 2003/06/18 08:36:31 deraadt Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -216,25 +216,22 @@ get_system_info(struct system_info *si)
 	struct loadavg sysload;
 	struct vmtotal vmtotal;
 	double *infoloadp;
-	int total, i;
 	size_t size;
+	int i;
 
 	size = sizeof(cp_time);
-	if (sysctl(cp_time_mib, 2, &cp_time, &size, NULL, 0) < 0) {
+	if (sysctl(cp_time_mib, 2, &cp_time, &size, NULL, 0) < 0)
 		warn("sysctl kern.cp_time failed");
-		total = 0;
-	}
+
 	size = sizeof(sysload);
-	if (sysctl(sysload_mib, 2, &sysload, &size, NULL, 0) < 0) {
+	if (sysctl(sysload_mib, 2, &sysload, &size, NULL, 0) < 0)
 		warn("sysctl failed");
-		total = 0;
-	}
 	infoloadp = si->load_avg;
 	for (i = 0; i < 3; i++)
 		*infoloadp++ = ((double) sysload.ldavg[i]) / sysload.fscale;
 
 	/* convert cp_time counts to percentages */
-	total = percentages(CPUSTATES, cpu_states, cp_time, cp_old, cp_diff);
+	(void) percentages(CPUSTATES, cpu_states, cp_time, cp_old, cp_diff);
 
 	/* get total -- systemwide main memory usage structure */
 	size = sizeof(vmtotal);

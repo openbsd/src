@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.23 2003/06/16 17:24:44 millert Exp $	*/
+/*	$OpenBSD: top.c,v 1.24 2003/06/18 08:36:31 deraadt Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -37,7 +37,6 @@ const char      copyright[] = "Copyright (c) 1984 through 1996, William LeFebvre
 #include <stdio.h>
 #include <ctype.h>
 #include <signal.h>
-#include <setjmp.h>
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -74,11 +73,7 @@ volatile sig_atomic_t winchflag;
 static void     reset_display(void);
 int		rundisplay(void);
 
-/* values which need to be accessed by signal handlers */
 static int      max_topn;	/* maximum displayable processes */
-
-/* miscellaneous things */
-jmp_buf         jmp_int;
 
 extern int      (*proc_compares[])(const void *, const void *);
 int order_index;
@@ -101,7 +96,7 @@ char warnings = 0;
 double delay = Default_DELAY;
 char *order_name = NULL;
 int topn = Default_TOPN;
-int no_command = 1;
+int no_command = Yes;
 
 #if Default_TOPN == Infinity
 char topn_specified = No;
