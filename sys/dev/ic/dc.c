@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.8 2000/08/02 19:01:06 aaron Exp $	*/
+/*	$OpenBSD: dc.c,v 1.9 2000/08/08 16:43:50 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1179,11 +1179,15 @@ void dc_setcfg(sc, media)
 		if (sc->dc_pmode == DC_PMODE_MII) {
 			int watchdogreg;
 
+			if (DC_IS_INTEL(sc)) {
 			/* there's a write enable bit here that reads as 1 */
-			watchdogreg = CSR_READ_4(sc, DC_WATCHDOG);
-			watchdogreg &= ~DC_WDOG_CTLWREN;
-			watchdogreg |= DC_WDOG_JABBERDIS;
-			CSR_WRITE_4(sc, DC_WATCHDOG, watchdogreg);
+				watchdogreg = CSR_READ_4(sc, DC_WATCHDOG);
+				watchdogreg &= ~DC_WDOG_CTLWREN;
+				watchdogreg |= DC_WDOG_JABBERDIS;
+				CSR_WRITE_4(sc, DC_WATCHDOG, watchdogreg);
+			} else {
+				DC_SETBIT(sc, DC_WATCHDOG, DC_WDOG_JABBERDIS);
+			}
 			DC_CLRBIT(sc, DC_NETCFG, (DC_NETCFG_PCS|
 			    DC_NETCFG_PORTSEL|DC_NETCFG_SCRAMBLER));
 			if (sc->dc_type == DC_TYPE_98713)
@@ -1210,11 +1214,15 @@ void dc_setcfg(sc, media)
 		if (sc->dc_pmode == DC_PMODE_MII) {
 			int watchdogreg;
 
+			if (DC_IS_INTEL(sc)) {
 			/* there's a write enable bit here that reads as 1 */
-			watchdogreg = CSR_READ_4(sc, DC_WATCHDOG);
-			watchdogreg &= ~DC_WDOG_CTLWREN;
-			watchdogreg |= DC_WDOG_JABBERDIS;
-			CSR_WRITE_4(sc, DC_WATCHDOG, watchdogreg);
+				watchdogreg = CSR_READ_4(sc, DC_WATCHDOG);
+				watchdogreg &= ~DC_WDOG_CTLWREN;
+				watchdogreg |= DC_WDOG_JABBERDIS;
+				CSR_WRITE_4(sc, DC_WATCHDOG, watchdogreg);
+			} else {
+				DC_SETBIT(sc, DC_WATCHDOG, DC_WDOG_JABBERDIS);
+			}
 			DC_CLRBIT(sc, DC_NETCFG, (DC_NETCFG_PCS|
 			    DC_NETCFG_PORTSEL|DC_NETCFG_SCRAMBLER));
 			if (sc->dc_type == DC_TYPE_98713)
