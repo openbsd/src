@@ -1,4 +1,4 @@
-/*	$OpenBSD: vigra.c,v 1.5 2002/11/06 21:06:20 miod Exp $	*/
+/*	$OpenBSD: vigra.c,v 1.6 2003/04/06 16:59:33 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Miodrag Vallat.  All rights reserved.
@@ -206,9 +206,11 @@ vigraattach(parent, self, args)
 
 	isconsole = node == fbnode;
 
-	if (ca->ca_ra.ra_nreg < VIGRA_NREG)
-		panic("expected %d registers, got %d",
-		    VIGRA_NREG, ca->ca_ra.ra_nreg);
+	if (ca->ca_ra.ra_nreg < VIGRA_NREG) {
+		printf("\n%s: expected %d registers, got %d",
+		    self->dv_xname, VIGRA_NREG, ca->ca_ra.ra_nreg);
+		return;
+	}
 
 	sc->sc_regs = mapiodev(&ca->ca_ra.ra_reg[VIGRA_REG_G300], 0,
 	    sizeof(*sc->sc_regs));
