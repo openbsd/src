@@ -1,5 +1,6 @@
-/*	$OpenBSD: rf_netbsd.h,v 1.3 1999/07/30 14:45:32 peter Exp $	*/
+/*	$OpenBSD: rf_netbsd.h,v 1.4 1999/08/02 12:29:31 peter Exp $	*/
 /*	$NetBSD: rf_netbsd.h,v 1.6 1999/05/13 21:46:17 ad Exp $	*/
+
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.

@@ -252,8 +252,8 @@ struct raidbuf {
 struct raid_softc {
 	int     sc_flags;	/* flags */
 	int     sc_cflags;	/* configuration flags */
-	size_t  sc_size;/* size of the raid device */
-	dev_t   sc_dev;	/* our device.. */
+	size_t  sc_size;        /* size of the raid device */
+	dev_t   sc_dev;	        /* our device.. */
 	char    sc_xname[20];	/* XXX external name */
 	struct disk sc_dkdev;	/* generic disk device info */
 	struct pool sc_cbufpool;	/* component buffer pool */
@@ -299,8 +299,8 @@ void
 raidattach(num)
 	int     num;
 {
-	int     raidID;
- 	int i, rc;
+	int raidID;
+	int i, rc;
 
 #ifdef DEBUG
 	printf("raidattach: Asked for %d units\n", num);
@@ -351,10 +351,10 @@ raidattach(num)
 	}
 	numraid = num;
 	bzero(raid_softc, num * sizeof(struct raid_softc));
-
+	
 	for (raidID = 0; raidID < num; raidID++) {
 		RF_Calloc(raidPtrs[raidID], 1, sizeof(RF_Raid_t),
-		    (RF_Raid_t *));
+			  (RF_Raid_t *));
 		if (raidPtrs[raidID] == NULL) {
 			printf("raidPtrs[%d] is NULL\n", raidID);
 		}
@@ -520,15 +520,15 @@ raidclose(dev, flags, fmt, p)
 	}
 	rs->sc_dkdev.dk_openmask =
 	    rs->sc_dkdev.dk_copenmask | rs->sc_dkdev.dk_bopenmask;
-  	
- 	if ((rs->sc_dkdev.dk_openmask == 0) &&
- 	    ((rs->sc_flags & RAIDF_INITED) != 0)) {
- 		/* Last one... device is not unconfigured yet.  
- 		   Device shutdown has taken care of setting the 
- 		   clean bits if RAIDF_INITED is not set 
- 		   mark things as clean... */
- 		rf_update_component_labels( raidPtrs[unit] );
- 	}
+	
+	if ((rs->sc_dkdev.dk_openmask == 0) &&
+	    ((rs->sc_flags & RAIDF_INITED) != 0)) {
+		/* Last one... device is not unconfigured yet.  
+		   Device shutdown has taken care of setting the 
+		   clean bits if RAIDF_INITED is not set 
+		   mark things as clean... */
+		rf_update_component_labels( raidPtrs[unit] );
+	}
 
 	raidunlock(rs);
 	return (0);
@@ -680,17 +680,17 @@ raidioctl(dev, cmd, data, flag, p)
 	/* struct raidbuf *raidbp; */
 	RF_Config_t *k_cfg, *u_cfg;
 	u_char *specific_buf;
-	int     retcode = 0;
-	int     row;
- 	int column;
- 	int s;
-  	struct rf_recon_req *rrcopy, *rr;
- 	RF_ComponentLabel_t *component_label;
- 	RF_ComponentLabel_t ci_label;
- 	RF_ComponentLabel_t **c_label_ptr;
- 	RF_SingleComponent_t *sparePtr,*componentPtr;
- 	RF_SingleComponent_t hot_spare;
- 	RF_SingleComponent_t component;
+	int retcode = 0;
+	int row;
+	int column;
+	int s;
+	struct rf_recon_req *rrcopy, *rr;
+	RF_ComponentLabel_t *component_label;
+	RF_ComponentLabel_t ci_label;
+	RF_ComponentLabel_t **c_label_ptr;
+	RF_SingleComponent_t *sparePtr,*componentPtr;
+	RF_SingleComponent_t hot_spare;
+	RF_SingleComponent_t component;
 
 	if (unit >= numraid)
 		return (ENXIO);
@@ -863,7 +863,6 @@ raidioctl(dev, cmd, data, flag, p)
 		raidunlock(rs);
 
 		return (retcode);
-
 	case RAIDFRAME_GET_COMPONENT_LABEL:
 		c_label_ptr = (RF_ComponentLabel_t **) data;
 		/* need to read the component label for the disk indicated
@@ -879,15 +878,15 @@ raidioctl(dev, cmd, data, flag, p)
 			return (ENOMEM);
 
 		bzero((char *) component_label, sizeof(RF_ComponentLabel_t));
-
+		
 		retcode = copyin( *c_label_ptr, component_label, 
 				  sizeof(RF_ComponentLabel_t));
 
 		if (retcode) {
 			return(retcode);
 		}
- 
- 		row = component_label->row;
+
+		row = component_label->row;
 		printf("Row: %d\n",row);
 		if (row > raidPtrs[unit]->numRow) {
 			row = 0; /* XXX */
@@ -937,7 +936,7 @@ raidioctl(dev, cmd, data, flag, p)
 			return(EINVAL);
 		}
 
- 		/* XXX this isn't allowed to do anything for now :-) */
+		/* XXX this isn't allowed to do anything for now :-) */
 #if 0
 		raidwrite_component_label( 
                             raidPtrs[unit]->Disks[row][column].dev, 
@@ -977,21 +976,15 @@ raidioctl(dev, cmd, data, flag, p)
 		}
 
 		return (retcode);
-  
 
 		/* initialize all parity */
 	case RAIDFRAME_REWRITEPARITY:
-  
+
 		if (raidPtrs[unit]->Layout.map->faultsTolerated == 0) {
 			/* Parity for RAID 0 is trivially correct */
 			raidPtrs[unit]->parity_good = RF_RAID_CLEAN;
 			return(0);
 		}
-
-  		/* borrow the thread of the requesting process */
-  		raidPtrs[unit]->proc = p;	/* Blah... :-p GO */
-  		retcode = rf_RewriteParity(raidPtrs[unit]);
-  		/* return I/O Error if the parity rewrite fails */
 
 		/* borrow the thread of the requesting process */
 		raidPtrs[unit]->proc = p;	/* Blah... :-p GO */
@@ -1036,7 +1029,7 @@ raidioctl(dev, cmd, data, flag, p)
 		raidPtrs[unit]->proc = p;	/* Blah... :-p GO */
 		retcode = rf_ReconstructInPlace(raidPtrs[unit], row, column);
 		splx(s);
-		return (retcode);
+		return(retcode);
 
 		/* issue a test-unit-ready through raidframe to the indicated
 		 * device */
@@ -1056,7 +1049,7 @@ raidioctl(dev, cmd, data, flag, p)
 				return (ENODEV);
 			ucfgp = (RF_DeviceConfig_t **) data;
 			RF_Malloc(cfg, sizeof(RF_DeviceConfig_t),
-			    (RF_DeviceConfig_t *));
+				  (RF_DeviceConfig_t *));
 			if (cfg == NULL)
 				return (ENOMEM);
 			bzero((char *) cfg, sizeof(RF_DeviceConfig_t));
@@ -1084,7 +1077,7 @@ raidioctl(dev, cmd, data, flag, p)
 				cfg->spares[i] = raid->Disks[0][j];
 			}
 			retcode = copyout((caddr_t) cfg, (caddr_t) * ucfgp,
-			    sizeof(RF_DeviceConfig_t));
+					  sizeof(RF_DeviceConfig_t));
 			RF_Free(cfg, sizeof(RF_DeviceConfig_t));
 
 			return (retcode);
@@ -1322,7 +1315,7 @@ raidinit(dev, raidPtr, unit)
 
 	rs = &raid_softc[unit];
 	pool_init(&rs->sc_cbufpool, sizeof(struct raidbuf), 0,
-	    0, 0, "raidpl", 0, NULL, NULL, M_RAIDFRAME);
+		  0, 0, "raidpl", 0, NULL, NULL, M_RAIDFRAME);
 
 
 	/* XXX should check return code first... */
