@@ -1,4 +1,4 @@
-/*	$OpenBSD: harmony.c,v 1.5 2003/01/27 02:32:36 jason Exp $	*/
+/*	$OpenBSD: harmony.c,v 1.6 2003/01/27 08:12:32 jason Exp $	*/
 
 /*
  * Copyright (c) 2003 Jason L. Wright (jason@thought.net)
@@ -31,6 +31,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Harmony (CS4215/AD1849 LASI) audio interface.
+ */
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
@@ -51,60 +55,7 @@
 
 #include <hppa/dev/cpudevs.h>
 #include <hppa/gsc/gscbusvar.h>
-
-#define	HARMONY_NREGS	0x40
-
-#define	HARMONY_ID		0x00
-#define	HARMONY_RESET		0x04
-#define	HARMONY_CNTL		0x08
-#define	HARMONY_GAINCTL		0x0c		/* gain control */
-#define	HARMONY_PLAYNXT		0x10		/* play next address */
-#define	HARMONY_PLAYCUR		0x14		/* play current address */
-#define	HARMONY_CAPTNXT		0x18		/* capture next address */
-#define	HARMONY_CAPTCUR		0x1c		/* capture current address */
-#define	HARMONY_DSTATUS		0x20		/* device status */
-#define	HARMONY_OV		0x24
-#define	HARMONY_PIO		0x28
-#define	HARMONY_DIAG		0x3c
-
-#define	CNTL_INCNTL		0x80000000
-#define	CNTL_FORMAT_MASK	0x000000c0
-#define	CNTL_FORMAT_SLINEAR16BE	0x00000000
-#define	CNTL_FORMAT_ULAW	0x00000040
-#define	CNTL_FORMAT_ALAW	0x00000080
-#define	CNTL_CHANS_MASK		0x00000020
-#define	CNTL_CHANS_MONO		0x00000000
-#define	CNTL_CHANS_STEREO	0x00000020
-#define	CNTL_RATE_MASK		0x0000001f
-#define	CNTL_RATE_5125		0x00000010
-#define	CNTL_RATE_6615		0x00000017
-#define	CNTL_RATE_8000		0x00000008
-#define	CNTL_RATE_9600		0x0000000f
-#define	CNTL_RATE_11025		0x00000011
-#define	CNTL_RATE_16000		0x00000009
-#define	CNTL_RATE_18900		0x00000012
-#define	CNTL_RATE_22050		0x00000013
-#define	CNTL_RATE_27428		0x0000000a
-#define	CNTL_RATE_32000		0x0000000b
-#define	CNTL_RATE_33075		0x00000016
-#define	CNTL_RATE_37800		0x00000014
-#define	CNTL_RATE_44100		0x00000015
-#define	CNTL_RATE_48000		0x0000000e
-
-#define	GAINCTL_INPUT_LEFT_M	0x0000f000
-#define	GAINCTL_INPUT_LEFT_S	12
-#define	GAINCTL_INPUT_RIGHT_M	0x000f0000
-#define	GAINCTL_INPUT_RIGHT_S	16
-#define	GAINCTL_MONITOR_M	0x00f00000
-#define	GAINCTL_MONITOR_S	20
-#define	GAINCTL_OUTPUT_LEFT_M	0x00000fc0
-#define	GAINCTL_OUTPUT_LEFT_S	6
-#define	GAINCTL_OUTPUT_RIGHT_M	0x0000003f
-#define	GAINCTL_OUTPUT_RIGHT_S	0
-
-#define	DSTATUS_INTRENA		0x80000000
-#define	DSTATUS_PLAYNXT		0x00000200
-#define	DSTATUS_CAPTNXT		0x00000002
+#include <hppa/gsc/harmonyreg.h>
 
 #define HARMONY_PORT_INPUT_LVL		0
 #define	HARMONY_PORT_OUTPUT_LVL		1
@@ -116,6 +67,10 @@
 #define	PLAYBACK_EMPTYS			3	/* playback empty buffers */
 #define	CAPTURE_EMPTYS			3	/* capture empty buffers */
 #define	HARMONY_BUFSIZE			4096
+
+struct harmony_volume {
+	u_char left, right;
+};
 
 struct harmony_empty {
 	u_int8_t	playback[PLAYBACK_EMPTYS][HARMONY_BUFSIZE];
@@ -146,7 +101,6 @@ struct harmony_softc {
 	bus_space_tag_t sc_bt;
 	bus_space_handle_t sc_bh;
 	int sc_open;
-	u_int32_t sc_gainctl;
 	u_int32_t sc_cntlbits;
 	int sc_need_commit;
 	int sc_playback_empty;
@@ -159,7 +113,8 @@ struct harmony_softc {
 	struct harmony_empty *sc_empty_kva;
 	struct harmony_dma *sc_dmas;
 	int sc_playing, sc_capturing;
-	struct harmony_channel sc_playback;
+	struct harmony_channel sc_playback, sc_capture;
+	struct harmony_volume sc_monitor_lvl, sc_input_lvl, sc_output_lvl;
 };
 
 int     harmony_open(void *, int);
@@ -227,6 +182,7 @@ void harmony_intr_disable(struct harmony_softc *);
 void harmony_wait(struct harmony_softc *);
 void harmony_set_gainctl(struct harmony_softc *, u_int32_t);
 u_int32_t harmony_speed_bits(struct harmony_softc *, u_long *);
+void harmony_set_volume(struct harmony_softc *);
 
 int
 harmony_match(parent, match, aux)
@@ -318,13 +274,9 @@ harmony_attach(parent, self, aux)
 	    IPL_AUDIO, ga->ga_irq, harmony_intr, sc, &sc->sc_dv);
 
 	/* set default gains */
-	sc->sc_gainctl =
-	    ((0x2 << GAINCTL_OUTPUT_LEFT_S) & GAINCTL_OUTPUT_LEFT_M) |
-	    ((0x2 << GAINCTL_OUTPUT_RIGHT_S) & GAINCTL_OUTPUT_RIGHT_M) |
-	    ((0xf << GAINCTL_INPUT_LEFT_S) & GAINCTL_INPUT_LEFT_M) |
-	    ((0xf << GAINCTL_INPUT_RIGHT_S) & GAINCTL_INPUT_RIGHT_M) |
-	    ((0x2 << GAINCTL_MONITOR_S) & GAINCTL_MONITOR_M) |
-	    0x0f000000;
+	sc->sc_input_lvl.left = sc->sc_input_lvl.right = 240;
+	sc->sc_output_lvl.left = sc->sc_output_lvl.right = 244;
+	sc->sc_monitor_lvl.left = sc->sc_monitor_lvl.right = 208;
 
 	/* reset codec */
 	harmony_set_gainctl(sc, GAINCTL_OUTPUT_LEFT_M |
@@ -356,13 +308,13 @@ harmony_intr(vsc)
 
 	dstatus = bus_space_read_4(sc->sc_bt, sc->sc_bh, HARMONY_DSTATUS);
 
-	if (dstatus & DSTATUS_PLAYNXT) {
+	if (dstatus & DSTATUS_PN) {
 		r = 1;
 		if (sc->sc_playing == 0) {
-			bus_space_write_4(sc->sc_bt, sc->sc_bh, HARMONY_PLAYNXT,
+			bus_space_write_4(sc->sc_bt, sc->sc_bh, HARMONY_PNXTADD,
 			    sc->sc_playback_paddrs[sc->sc_playback_empty]);
 			bus_space_barrier(sc->sc_bt, sc->sc_bh,
-			    HARMONY_PLAYNXT, sizeof(u_int32_t),
+			    HARMONY_PNXTADD, sizeof(u_int32_t),
 			    BUS_SPACE_BARRIER_WRITE);
 			if (++sc->sc_playback_empty == PLAYBACK_EMPTYS)
 				sc->sc_playback_empty = 0;
@@ -389,9 +341,9 @@ harmony_intr(vsc)
 			    c->c_blksz, BUS_DMASYNC_PREWRITE);
 
 			bus_space_write_4(sc->sc_bt, sc->sc_bh,
-			    HARMONY_PLAYNXT, nextaddr);
+			    HARMONY_PNXTADD, nextaddr);
 			bus_space_barrier(sc->sc_bt, sc->sc_bh,
-			    HARMONY_PLAYNXT, sizeof(u_int32_t),
+			    HARMONY_PNXTADD, sizeof(u_int32_t),
 			    BUS_SPACE_BARRIER_WRITE);
 			c->c_lastaddr = nextaddr + togo;
 
@@ -400,12 +352,45 @@ harmony_intr(vsc)
 		}
 	}
 
-	if (dstatus & DSTATUS_CAPTNXT) {
+	if (dstatus & DSTATUS_RN) {
 		r = 1;
-		bus_space_write_4(sc->sc_bt, sc->sc_bh, HARMONY_CAPTNXT,
-		    sc->sc_capture_paddrs[sc->sc_capture_empty]);
-		if (++sc->sc_capture_empty == CAPTURE_EMPTYS)
-			sc->sc_capture_empty = 0;
+		if (sc->sc_capturing == 0) {
+			bus_space_write_4(sc->sc_bt, sc->sc_bh, HARMONY_RNXTADD,
+			    sc->sc_capture_paddrs[sc->sc_capture_empty]);
+			if (++sc->sc_capture_empty == CAPTURE_EMPTYS)
+				sc->sc_capture_empty = 0;
+		} else {
+			struct harmony_channel *c = &sc->sc_capture;
+			struct harmony_dma *d;
+			bus_addr_t nextaddr;
+			bus_size_t togo;
+
+			d = c->c_current;
+			togo = c->c_segsz - c->c_cnt;
+			if (togo == 0) {
+				nextaddr = d->d_map->dm_segs[0].ds_addr;
+				c->c_cnt = togo = c->c_blksz;
+			} else {
+				nextaddr = c->c_lastaddr;
+				if (togo > c->c_blksz)
+					togo = c->c_blksz;
+				c->c_cnt += togo;
+			}
+
+			bus_dmamap_sync(sc->sc_dmat, d->d_map,
+			    nextaddr - d->d_map->dm_segs[0].ds_addr,
+			    c->c_blksz, BUS_DMASYNC_PREWRITE);
+
+			bus_space_write_4(sc->sc_bt, sc->sc_bh,
+			    HARMONY_RNXTADD, nextaddr);
+			bus_space_barrier(sc->sc_bt, sc->sc_bh,
+			    HARMONY_RNXTADD, sizeof(u_int32_t),
+			    BUS_SPACE_BARRIER_WRITE);
+			c->c_lastaddr = nextaddr + togo;
+
+			if (c->c_intr != NULL)
+				(*c->c_intr)(c->c_intrarg);
+		}
 	}
 
 	harmony_intr_enable(sc);
@@ -418,7 +403,7 @@ harmony_intr_enable(struct harmony_softc *sc)
 {
 	harmony_wait(sc);
 	bus_space_write_4(sc->sc_bt, sc->sc_bh,
-	    HARMONY_DSTATUS, DSTATUS_INTRENA);
+	    HARMONY_DSTATUS, DSTATUS_IE);
 	bus_space_barrier(sc->sc_bt, sc->sc_bh, HARMONY_DSTATUS,
 	    sizeof(u_int32_t), BUS_SPACE_BARRIER_WRITE);
 }
@@ -439,7 +424,7 @@ harmony_wait(struct harmony_softc *sc)
 
 	for (i = 5000; i > 0; i++)
 		if (((bus_space_read_4(sc->sc_bt, sc->sc_bh, HARMONY_CNTL)
-		    & CNTL_INCNTL)) == 0)
+		    & CNTL_C)) == 0)
 			return;
 	printf("%s: wait timeout\n", sc->sc_dv.dv_xname);
 }
@@ -459,9 +444,7 @@ harmony_open(void *vsc, int flags)
 	if (sc->sc_open)
 		return (EBUSY);
 	sc->sc_open = 1;
-
-	harmony_set_gainctl(sc, sc->sc_gainctl);
-
+	harmony_set_volume(sc);
 	return (0);
 }
 
@@ -594,7 +577,7 @@ harmony_commit_settings(void *vsc)
 
 	harmony_wait(sc);
 	bus_space_write_4(sc->sc_bt, sc->sc_bh, HARMONY_CNTL,
-	    sc->sc_cntlbits | CNTL_INCNTL);
+	    sc->sc_cntlbits | CNTL_C);
 
 	/* set the silence character based on the encoding type */
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_empty_map,
@@ -618,6 +601,8 @@ harmony_commit_settings(void *vsc)
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_empty_map,
 	    offsetof(struct harmony_empty, playback[0][0]),
 	    PLAYBACK_EMPTYS * HARMONY_BUFSIZE, BUS_DMASYNC_PREWRITE);
+
+	harmony_set_volume(sc);
 	sc->sc_need_commit = 0;
 
 	return (0);
@@ -658,53 +643,33 @@ harmony_set_port(void *vsc, mixer_ctrl_t *cp)
 	case HARMONY_PORT_INPUT_LVL:
 		if (cp->type != AUDIO_MIXER_VALUE)
 			break;
-		if (cp->un.value.num_channels == 1) {
-			sc->sc_gainctl &=
-			    ~(GAINCTL_INPUT_LEFT_M | GAINCTL_INPUT_RIGHT_M);
-			sc->sc_gainctl |=
-			    (cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] <<
-			    GAINCTL_INPUT_LEFT_S) & GAINCTL_INPUT_LEFT_M;
-			sc->sc_gainctl |=
-			    (cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] <<
-			    GAINCTL_INPUT_RIGHT_S) & GAINCTL_INPUT_RIGHT_M;
-		} else if (cp->un.value.num_channels == 2) {
-			sc->sc_gainctl &=
-			    ~(GAINCTL_INPUT_LEFT_M | GAINCTL_INPUT_RIGHT_M);
-			sc->sc_gainctl |=
-			    (cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] <<
-			    GAINCTL_INPUT_RIGHT_S) & GAINCTL_INPUT_RIGHT_M;
-			sc->sc_gainctl |=
-			    (cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT] <<
-			    GAINCTL_INPUT_RIGHT_S) & GAINCTL_INPUT_RIGHT_M;
+		if (cp->un.value.num_channels == 1)
+			sc->sc_input_lvl.left = sc->sc_input_lvl.right =
+			    cp->un.value.level[AUDIO_MIXER_LEVEL_MONO];
+		else if (cp->un.value.num_channels == 2) {
+			sc->sc_input_lvl.left =
+			    cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT];
+			sc->sc_input_lvl.right =
+			    cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT];
 		} else
 			break;
-		harmony_set_gainctl(sc, sc->sc_gainctl);
+		sc->sc_need_commit = 1;
 		err = 0;
 		break;
 	case HARMONY_PORT_OUTPUT_LVL:
 		if (cp->type != AUDIO_MIXER_VALUE)
 			break;
-		if (cp->un.value.num_channels == 1) {
-			sc->sc_gainctl &=
-			    ~(GAINCTL_OUTPUT_LEFT_M | GAINCTL_OUTPUT_RIGHT_M);
-			sc->sc_gainctl |=
-			    (cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] <<
-			    GAINCTL_OUTPUT_LEFT_S) & GAINCTL_OUTPUT_LEFT_M;
-			sc->sc_gainctl |=
-			    (cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] <<
-			    GAINCTL_OUTPUT_RIGHT_S) & GAINCTL_OUTPUT_RIGHT_M;
-		} else if (cp->un.value.num_channels == 2) {
-			sc->sc_gainctl &=
-			    ~(GAINCTL_OUTPUT_LEFT_M | GAINCTL_OUTPUT_RIGHT_M);
-			sc->sc_gainctl |=
-			    (cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] <<
-			    GAINCTL_OUTPUT_RIGHT_S) & GAINCTL_OUTPUT_RIGHT_M;
-			sc->sc_gainctl |=
-			    (cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT] <<
-			    GAINCTL_OUTPUT_RIGHT_S) & GAINCTL_OUTPUT_RIGHT_M;
+		if (cp->un.value.num_channels == 1)
+			sc->sc_output_lvl.left = sc->sc_output_lvl.right =
+			    cp->un.value.level[AUDIO_MIXER_LEVEL_MONO];
+		else if (cp->un.value.num_channels == 2) {
+			sc->sc_output_lvl.left =
+			    cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT];
+			sc->sc_output_lvl.right =
+			    cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT];
 		} else
 			break;
-		harmony_set_gainctl(sc, sc->sc_gainctl);
+		sc->sc_need_commit = 1;
 		err = 0;
 		break;
 	case HARMONY_PORT_MONITOR_LVL:
@@ -712,11 +677,9 @@ harmony_set_port(void *vsc, mixer_ctrl_t *cp)
 			break;
 		if (cp->un.value.num_channels != 1)
 			break;
-		sc->sc_gainctl &= ~GAINCTL_MONITOR_M;
-		sc->sc_gainctl |=
-		    (cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] <<
-		    GAINCTL_MONITOR_S) & GAINCTL_MONITOR_M;
-		harmony_set_gainctl(sc, sc->sc_gainctl);
+		sc->sc_monitor_lvl.left = sc->sc_input_lvl.right =
+		    cp->un.value.level[AUDIO_MIXER_LEVEL_MONO];
+		sc->sc_need_commit = 1;
 		err = 0;
 		break;
 	}
@@ -736,15 +699,12 @@ harmony_get_port(void *vsc, mixer_ctrl_t *cp)
 			break;
 		if (cp->un.value.num_channels == 1) {
 			cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] =
-			    (sc->sc_gainctl & GAINCTL_INPUT_LEFT_M) >>
-			    GAINCTL_INPUT_LEFT_S;
+			    sc->sc_input_lvl.left;
 		} else if (cp->un.value.num_channels == 2) {
 			cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT] =
-			    (sc->sc_gainctl & GAINCTL_INPUT_LEFT_M) >>
-			    GAINCTL_INPUT_LEFT_S;
+			    sc->sc_input_lvl.left;
 			cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] =
-			    (sc->sc_gainctl & GAINCTL_INPUT_RIGHT_M) >>
-			    GAINCTL_INPUT_RIGHT_S;
+			    sc->sc_input_lvl.right;
 		} else
 			break;
 		err = 0;
@@ -754,15 +714,12 @@ harmony_get_port(void *vsc, mixer_ctrl_t *cp)
 			break;
 		if (cp->un.value.num_channels == 1) {
 			cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] =
-			    (sc->sc_gainctl & GAINCTL_OUTPUT_LEFT_M) >>
-			    GAINCTL_OUTPUT_LEFT_S;
+			    sc->sc_output_lvl.left;
 		} else if (cp->un.value.num_channels == 2) {
 			cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT] =
-			    (sc->sc_gainctl & GAINCTL_OUTPUT_LEFT_M) >>
-			    GAINCTL_OUTPUT_LEFT_S;
+			    sc->sc_output_lvl.left;
 			cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] =
-			    (sc->sc_gainctl & GAINCTL_OUTPUT_RIGHT_M) >>
-			    GAINCTL_OUTPUT_RIGHT_S;
+			    sc->sc_output_lvl.right;
 		} else
 			break;
 		err = 0;
@@ -773,8 +730,7 @@ harmony_get_port(void *vsc, mixer_ctrl_t *cp)
 		if (cp->un.value.num_channels != 1)
 			break;
 		cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] =
-		    (sc->sc_gainctl & GAINCTL_MONITOR_M) >>
-		    GAINCTL_MONITOR_S;
+		    sc->sc_monitor_lvl.left;
 		err = 0;
 		break;
 	}
@@ -946,9 +902,9 @@ harmony_trigger_output(void *vsc, void *start, void *end, int blksize,
 	sc->sc_playing = 1;
 	bus_dmamap_sync(sc->sc_dmat, d->d_map, 0, c->c_blksz,
 	    BUS_DMASYNC_PREWRITE);
-	bus_space_write_4(sc->sc_bt, sc->sc_bh, HARMONY_PLAYNXT,
+	bus_space_write_4(sc->sc_bt, sc->sc_bh, HARMONY_PNXTADD,
 	    d->d_map->dm_segs[0].ds_addr);
-	bus_space_barrier(sc->sc_bt, sc->sc_bh, HARMONY_PLAYNXT,
+	bus_space_barrier(sc->sc_bt, sc->sc_bh, HARMONY_PNXTADD,
 	    sizeof(u_int32_t), BUS_SPACE_BARRIER_WRITE);
 
 	harmony_intr_enable(sc);
@@ -957,14 +913,37 @@ harmony_trigger_output(void *vsc, void *start, void *end, int blksize,
 
 int
 harmony_trigger_input(void *vsc, void *start, void *end, int blksize,
-    void (*intr)(void *), void *arg, struct audio_params *param)
+    void (*intr)(void *), void *intrarg, struct audio_params *param)
 {
 	struct harmony_softc *sc = vsc;
+	struct harmony_channel *c = &sc->sc_capture;
+	struct harmony_dma *d;
+	bus_size_t n;
 
-	bus_space_write_4(sc->sc_bt, sc->sc_bh, HARMONY_CAPTNXT,
-	    sc->sc_capture_paddrs[sc->sc_capture_empty]);
-	if (++sc->sc_capture_empty == CAPTURE_EMPTYS)
-		sc->sc_capture_empty = 0;
+	for (d = sc->sc_dmas; d->d_kva != start; d = d->d_next)
+		/*EMPTY*/;
+	if (d == NULL) {
+		printf("%s: trigger_input: bad addr: %p\n",
+		    sc->sc_dv.dv_xname, start);
+		return (EINVAL);
+	}
+
+	c->c_intr = intr;
+	c->c_intrarg = intrarg;
+	n = (char *)end - (char *)start;
+	c->c_blksz = blksize;
+	c->c_current = d;
+	c->c_segsz = n;
+	if (n > c->c_blksz)
+		n = c->c_blksz;
+	c->c_cnt = n;
+	c->c_lastaddr = d->d_map->dm_segs[0].ds_addr + c->c_blksz;
+
+	bus_space_write_4(sc->sc_bt, sc->sc_bh, HARMONY_RNXTADD,
+	    d->d_map->dm_segs[0].ds_addr);
+	bus_space_barrier(sc->sc_bt, sc->sc_bh, HARMONY_RNXTADD,
+	    sizeof(u_int32_t), BUS_SPACE_BARRIER_WRITE);
+
 	sc->sc_capturing = 1;
 	harmony_intr_enable(sc);
 	return (0);
@@ -1023,6 +1002,36 @@ harmony_speed_bits(struct harmony_softc *sc, u_long *speedp)
 
 	*speedp = harmony_speeds[selected].speed;
 	return (harmony_speeds[selected].bits);
+}
+
+void
+harmony_set_volume(struct harmony_softc *sc)
+{
+	/* master (monitor) and playback are inverted */
+	u_int32_t bits, mask, val;
+
+	bits = 0x0f000000;	/* XXX I hate linux */
+
+	/* input level */
+	bits |= ((sc->sc_input_lvl.left >> (8 - GAINCTL_INPUT_BITS)) <<
+	    GAINCTL_INPUT_LEFT_S) & GAINCTL_INPUT_LEFT_M;
+	bits |= ((sc->sc_input_lvl.right >> (8 - GAINCTL_INPUT_BITS)) <<
+	    GAINCTL_INPUT_RIGHT_S) & GAINCTL_INPUT_RIGHT_M;
+
+	/* output level (inverted) */
+	mask = (1 << GAINCTL_OUTPUT_BITS) - 1;
+	val = mask - (sc->sc_output_lvl.left >> (8 - GAINCTL_OUTPUT_BITS));
+	bits |= (val << GAINCTL_OUTPUT_LEFT_S) & GAINCTL_OUTPUT_LEFT_M;
+	val = mask - (sc->sc_output_lvl.right >> (8 - GAINCTL_OUTPUT_BITS));
+	bits |= (val << GAINCTL_OUTPUT_RIGHT_S) & GAINCTL_OUTPUT_RIGHT_M;
+
+	/* monitor level (inverted) */
+	mask = (1 << GAINCTL_MONITOR_BITS) - 1;
+	val = mask - (sc->sc_monitor_lvl.left >> (8 - GAINCTL_MONITOR_BITS));
+	bits |= (val << GAINCTL_MONITOR_S) & GAINCTL_MONITOR_M;
+
+	printf("%s: gainctl(%x)\n", sc->sc_dv.dv_xname, bits);
+	harmony_set_gainctl(sc, bits);
 }
 
 struct cfdriver harmony_cd = {
