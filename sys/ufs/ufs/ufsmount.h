@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufsmount.h,v 1.2 1996/06/24 03:35:05 downsj Exp $	*/
+/*	$OpenBSD: ufsmount.h,v 1.3 1996/06/27 06:42:09 downsj Exp $	*/
 /*	$NetBSD: ufsmount.h,v 1.4 1994/12/21 20:00:23 mycroft Exp $	*/
 
 /*
@@ -71,6 +71,7 @@ struct ufsmount {
 	char	um_qflags[MAXQUOTAS];		/* quota specific flags */
 	struct	netexport um_export;		/* export information */
 	u_int64_t um_savedmaxfilesize;		/* XXX - limit maxfilesize */
+	struct	ufs_dirops *um_dirops;		/* per-fs directory ops. */
 };
 
 /*

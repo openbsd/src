@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.h,v 1.3 1996/06/24 10:23:22 downsj Exp $	*/
+/*	$OpenBSD: inode.h,v 1.4 1996/06/27 06:42:08 downsj Exp $	*/
 /*	$NetBSD: inode.h,v 1.8 1995/06/15 23:22:50 cgd Exp $	*/
 
 /*
@@ -45,6 +45,17 @@
 #include <ufs/ufs/dir.h>
 
 /*
+ * Per-filesystem inode extensions.
+ */
+struct ext2_inode_ext {
+	int32_t block_group;
+	int32_t next_alloc_block;
+	int32_t next_alloc_goal;
+	int32_t prealloc_block;
+	int32_t prealloc_count;
+};
+
+/*
  * The inode is used to describe each active (or recently active) file in the
  * UFS filesystem. It is composed of two types of information. The first part
  * is the information that is needed only while the file is active (such as
@@ -85,14 +96,20 @@ struct inode {
 	doff_t	  i_offset;	/* Offset of free space in directory. */
 	ino_t	  i_ino;	/* Inode number of found directory. */
 	u_int32_t i_reclen;	/* Size of found directory entry. */
+
 	/*
-	 * Directory operations pointers.
+	 * Inode extensions.
 	 */
-	struct ufs_dirops 	*i_dirops;
-	/*
-	 * Ext2fs inode extensions.
-	 */
-	struct ext2_inode_info	*i_e2ext;
+	union {
+		/* Other extensions could go here... */
+		struct ext2_inode_ext	e2ext;
+	} inode_ext;
+#define i_block_group		inode_ext.e2ext.block_group
+#define i_next_alloc_block	inode_ext.e2ext.next_alloc_block
+#define i_next_alloc_goal	inode_ext.e2ext.next_alloc_goal
+#define i_prealloc_block	inode_ext.e2ext.prealloc_block
+#define i_prealloc_count	inode_ext.e2ext.prealloc_count
+
 	/*
 	 * The on-disk dinode itself.
 	 */

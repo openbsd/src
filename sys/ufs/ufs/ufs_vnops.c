@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.5 1996/06/24 03:35:04 downsj Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.6 1996/06/27 06:42:09 downsj Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -633,7 +633,7 @@ ufs_remove(v)
 		error = EPERM;
 		goto out;
 	}
-	error = VTOI(dvp)->i_dirops->dirremove(dvp, ap->a_cnp);
+	error = VN_DIRREMOVE(dvp, ap->a_cnp);
 	if (error == 0) {
 		ip->i_nlink--;
 		ip->i_flag |= IN_CHANGE;
@@ -700,7 +700,7 @@ ufs_link(v)
 	TIMEVAL_TO_TIMESPEC(&time, &ts);
 	error = VOP_UPDATE(vp, &ts, &ts, 1);
 	if (!error)
-		error = VTOI(dvp)->i_dirops->direnter(ip, dvp, cnp);
+		error = VN_DIRENTER(ip, dvp, cnp);
 
 	if (error) {
 		ip->i_nlink--;
@@ -752,7 +752,7 @@ ufs_whiteout(v)
 		newdir.d_namlen = cnp->cn_namelen;
 		bcopy(cnp->cn_nameptr, newdir.d_name, (unsigned)cnp->cn_namelen + 1);
 		newdir.d_type = DT_WHT;
-		error = ufs_direnter2(dvp, &newdir, cnp->cn_cred, cnp->cn_proc);
+		error = ufs_direnter2(dvp, &newdir, cnp->cn_cred, cnp->cn_proc); /* FIXME */
 		break;
 
 	case DELETE:
@@ -763,7 +763,7 @@ ufs_whiteout(v)
 #endif
 
 		cnp->cn_flags &= ~DOWHITEOUT;
-		error = ufs_dirremove(dvp, cnp);
+		error = VN_DIRREMOVE(dvp, cnp);
 		break;
 	}
 	if (cnp->cn_flags & HASBUF) {
@@ -946,7 +946,7 @@ abortit:
 			goto bad;
 		if (xp != NULL)
 			vput(tvp);
-		error = VTOI(tdvp)->i_dirops->checkpath(ip, dp, tcnp->cn_cred);
+		error = VN_CHECKPATH(tdvp, ip, dp, tcnp->cn_cred);
 		if (error != 0)
 			goto out;
 		if ((tcnp->cn_flags & SAVESTART) == 0)
@@ -983,7 +983,7 @@ abortit:
 			if ((error = VOP_UPDATE(tdvp, &ts, &ts, 1)) != 0)
 				goto bad;
 		}
-		error = VTOI(tdvp)->i_dirops->direnter(ip, tdvp, tcnp);
+		error = VN_DIRENTER(ip, tdvp, tcnp);
 		if (error != 0) {
 			if (doingdirectory && newparent) {
 				dp->i_nlink--;
@@ -1019,9 +1019,8 @@ abortit:
 		 * (both directories, or both not directories).
 		 */
 		if ((xp->i_mode&IFMT) == IFDIR) {
-			if (! xp->i_dirops->dirempty
-				(xp, dp->i_number, tcnp->cn_cred) || 
-			    xp->i_nlink > 2) {
+			if (!VN_DIREMPTY(ITOV(xp), xp, dp->i_number,
+					  tcnp->cn_cred) || xp->i_nlink > 2) {
 				error = ENOTEMPTY;
 				goto bad;
 			}
@@ -1034,7 +1033,7 @@ abortit:
 			error = EISDIR;
 			goto bad;
 		}
-		error = dp->i_dirops->dirrewrite(dp, ip, tcnp);
+		error = VN_DIRREWRITE(ITOV(dp), dp, ip, tcnp);
 		if (error != 0)
 			goto bad;
 		/*
@@ -1149,7 +1148,7 @@ abortit:
 				}
 			}
 		}
-		error = VTOI(fdvp)->i_dirops->dirremove(fdvp, fcnp);
+		error = VN_DIRREMOVE(fdvp, fcnp);
 		if (!error) {
 			xp->i_nlink--;
 			xp->i_flag |= IN_CHANGE;
@@ -1303,7 +1302,7 @@ ufs_mkdir(v)
 	}
 
 	/* Directory set up, now install it's entry in the parent directory. */
-	error = VTOI(dvp)->i_dirops->direnter(ip, dvp, cnp);
+	error = VN_DIRENTER(ip, dvp, cnp);
 	if (error != 0) {
 		dp->i_nlink--;
 		dp->i_flag |= IN_CHANGE;
@@ -1366,7 +1365,7 @@ ufs_rmdir(v)
 	 */
 	error = 0;
 	if (ip->i_nlink != 2 ||
-	    !ip->i_dirops->dirempty(ip, dp->i_number, cnp->cn_cred)) {
+	    !VN_DIREMPTY(ITOV(ip), ip, dp->i_number, cnp->cn_cred)) {
 		error = ENOTEMPTY;
 		goto out;
 	}
@@ -1379,7 +1378,7 @@ ufs_rmdir(v)
 	 * inode.  If we crash in between, the directory
 	 * will be reattached to lost+found,
 	 */
-	error = VTOI(dvp)->i_dirops->dirremove(dvp, cnp);
+	error = VN_DIRREMOVE(dvp, cnp);
 	if (error != 0)
 		goto out;
 	dp->i_nlink--;
@@ -2082,7 +2081,7 @@ ufs_makeinode(mode, dvp, vpp, cnp)
 	TIMEVAL_TO_TIMESPEC(&time, &ts);
 	if ((error = VOP_UPDATE(tvp, &ts, &ts, 1)) != 0)
 		goto bad;
-	error = VTOI(dvp)->i_dirops->direnter(ip, dvp, cnp);
+	error = VN_DIRENTER(ip, dvp, cnp);
 	if (error != 0)
 		goto bad;
 	if ((cnp->cn_flags & SAVESTART) == 0)

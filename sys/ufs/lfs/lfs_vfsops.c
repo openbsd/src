@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs_vfsops.c,v 1.4 1996/06/24 03:35:02 downsj Exp $	*/
+/*	$OpenBSD: lfs_vfsops.c,v 1.5 1996/06/27 06:42:07 downsj Exp $	*/
 /*	$NetBSD: lfs_vfsops.c,v 1.11 1996/03/25 12:53:35 pk Exp $	*/
 
 /*
@@ -79,7 +79,7 @@ struct vfsops lfs_vfsops = {
 	lfs_init,
 };
 
-static struct ufs_dirops lfs_dirops = {
+static struct ufs_dirops xlfs_dirops = {
 	ufs_dirremove,
 	ufs_direnter,
 	ufs_dirempty,
@@ -318,6 +318,7 @@ lfs_mountfs(devvp, mp, p)
 	ump->um_bptrtodb = 0;
 	ump->um_seqinc = 1 << fs->lfs_fsbtodb;
 	ump->um_nindir = fs->lfs_nindir;
+	ump->um_dirops = &xlfs_dirops;
 	for (i = 0; i < MAXQUOTAS; i++)
 		ump->um_quotas[i] = NULLVP;
 	devvp->v_specflags |= SI_MOUNTEDON;
@@ -523,7 +524,6 @@ lfs_vget(mp, ino, vpp)
 	 * Ask Kirk.
 	 */
 	ip->i_lfs = ump->um_lfs;
-	ip->i_dirops = &lfs_dirops;
 
 	/* Read in the disk contents for the inode, copy into the inode. */
 	error = bread(ump->um_devvp, daddr, (int)fs->lfs_bsize, NOCRED, &bp);

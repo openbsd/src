@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.h,v 1.4 1996/06/24 23:16:01 tholo Exp $	*/
+/*	$OpenBSD: dir.h,v 1.5 1996/06/27 06:42:08 downsj Exp $	*/
 /*	$NetBSD: dir.h,v 1.8 1996/03/09 19:42:41 scottr Exp $	*/
 
 /*
@@ -178,6 +178,21 @@ struct ufs_dirops {
 	int (*checkpath) __P((struct inode *, struct inode *,
 				struct ucred *));
 };
+
+/*
+ * Macros for accessing the above.
+ */
+#define VN_DIRREMOVE(vn, cm) \
+	VFSTOUFS(vn->v_mount)->um_dirops->dirremove(vn, cm)
+#define VN_DIRENTER(in, vn, cm) \
+	VFSTOUFS(vn->v_mount)->um_dirops->direnter(in, vn, cm)
+#define VN_DIREMPTY(vn, in, it, uc) \
+	VFSTOUFS(vn->v_mount)->um_dirops->dirempty(in, it, uc)
+#define VN_DIRREWRITE(vn, in1, in2, cm) \
+	VFSTOUFS(vn->v_mount)->um_dirops->dirrewrite(in1, in2, cm)
+#define VN_CHECKPATH(vn, in1, in2, uc) \
+	VFSTOUFS(vn->v_mount)->um_dirops->checkpath(in1, in2, uc)
+
 #endif /* _KERNEL */
 
 #endif /* !_DIR_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.5 1996/06/24 03:35:01 downsj Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.6 1996/06/27 06:42:06 downsj Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -531,6 +531,7 @@ ffs_mountfs(devvp, mp, p)
 	ump->um_nindir = fs->fs_nindir;
 	ump->um_bptrtodb = fs->fs_fsbtodb;
 	ump->um_seqinc = fs->fs_frag;
+	ump->um_dirops = &ffs_dirops;
 	for (i = 0; i < MAXQUOTAS; i++)
 		ump->um_quotas[i] = NULLVP;
 	devvp->v_specflags |= SI_MOUNTEDON;
@@ -803,7 +804,6 @@ ffs_vget(mp, ino, vpp)
 	ip->i_fs = fs = ump->um_fs;
 	ip->i_dev = dev;
 	ip->i_number = ino;
-	ip->i_dirops = &ffs_dirops;
 #ifdef QUOTA
 	{
 		int i;
