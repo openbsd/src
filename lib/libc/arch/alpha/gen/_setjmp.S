@@ -1,4 +1,4 @@
-/*	$OpenBSD: _setjmp.S,v 1.3 1996/11/13 21:20:09 niklas Exp $	*/
+/*	$OpenBSD: _setjmp.S,v 1.4 2002/01/04 13:51:20 art Exp $	*/
 /*	$NetBSD: _setjmp.S,v 1.2 1996/10/17 03:08:03 cgd Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: _setjmp.S,v 1.3 1996/11/13 21:20:09 niklas Exp $"
+	.asciz "$OpenBSD: _setjmp.S,v 1.4 2002/01/04 13:51:20 art Exp $"
 #endif
 
 /*
@@ -119,6 +119,9 @@ LEAF(_longjmp, 2)
 	ldt	ft0, (69 * 8)(a0)		/* get sc_fpcr */
 	mt_fpcr	ft0				/* and restore it. */
 
+	bne	a1, 1f
+	addq	a1, 1, a1
+1:
 	mov	a1, v0				/* return second arg */
 	RET
 

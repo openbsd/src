@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.S,v 1.3 1996/11/13 21:20:21 niklas Exp $	*/
+/*	$OpenBSD: setjmp.S,v 1.4 2002/01/04 13:51:20 art Exp $	*/
 /*	$NetBSD: setjmp.S,v 1.2 1996/10/17 03:08:06 cgd Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: setjmp.S,v 1.3 1996/11/13 21:20:21 niklas Exp $"
+	.asciz "$OpenBSD: setjmp.S,v 1.4 2002/01/04 13:51:20 art Exp $"
 #endif
 
 /*
@@ -120,6 +120,9 @@ END(setjmp)
 
 LEAF(longjmp, 2)
 	LDGP(pv)
+	bne	a1, 1f
+	addq	a1, 1, a1
+1:
 	stq	a1, (( 0 + 4) * 8)(a0)		/* save return value */
 	CALL(sigreturn)				/* use sigreturn to return */
 
@@ -128,3 +131,4 @@ botch:
 	CALL(abort)
 	RET					/* "can't" get here... */
 END(longjmp)
+
