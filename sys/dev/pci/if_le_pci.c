@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_pci.c,v 1.10 1998/09/16 22:41:21 jason Exp $	*/
+/*	$OpenBSD: if_le_pci.c,v 1.11 1999/08/10 07:24:33 deraadt Exp $	*/
 /*	$NetBSD: if_le_pci.c,v 1.13 1996/10/25 21:33:32 cgd Exp $	*/
 
 /*-
@@ -138,6 +138,7 @@ le_pci_match(parent, match, aux)
 
 	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_AMD_PCNET_PCI:
+	case PCI_DEVICE_ID_PCHOME_PCI:
 		return (1);
 	}
 
