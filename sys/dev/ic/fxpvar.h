@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxpvar.h,v 1.5 2001/06/13 23:19:17 jason Exp $	*/
+/*	$OpenBSD: fxpvar.h,v 1.6 2001/08/09 21:12:51 jason Exp $	*/
 /*	$NetBSD: if_fxpvar.h,v 1.1 1997/06/05 02:01:58 thorpej Exp $	*/
 
 /*                  
@@ -37,33 +37,51 @@
  * Misc. defintions for the Intel EtherExpress Pro/100B PCI Fast
  * Ethernet driver
  */
+
+/*
+ * Number of transmit control blocks. This determines the number
+ * of transmit buffers that can be chained in the CB list.
+ * This must be a power of two.
+ */
+#define FXP_NTXCB	128
+
 /*
  * NOTE: Elements are ordered for optimal cacheline behavior, and NOT
  *	 for functional grouping.
  */
+struct fxp_txsw {
+	struct mbuf *tx_mbuf;
+	bus_dmamap_t tx_map;
+	struct fxp_cb_tx *tx_cb;
+};
+
+struct fxp_ctrl {
+	struct fxp_cb_tx tx_cb[FXP_NTXCB];
+	struct fxp_stats stats;
+	union {
+		struct fxp_cb_mcs mcs;
+		struct fxp_cb_ias ias;
+		struct fxp_cb_config cfg;
+	} u;
+};
+
 struct fxp_softc {
 	struct device sc_dev;		/* generic device structures */
 	void *sc_ih;			/* interrupt handler cookie */
 	bus_space_tag_t sc_st;		/* bus space tag */
 	bus_space_handle_t sc_sh;	/* bus space handle */
+	bus_dma_tag_t sc_dmat;		/* bus dma tag */
 	struct arpcom arpcom;		/* per-interface network data */
 	struct mii_data sc_mii;		/* MII media information */
 	struct mbuf *rfa_headm;		/* first mbuf in receive frame area */
 	struct mbuf *rfa_tailm;		/* last mbuf in receive frame area */
-	struct fxp_cb_tx *cbl_first;	/* first active TxCB in list */
 	int sc_flags;			/* misc. flags */
 #define	FXPF_HAS_RESUME_BUG	0x08	/* has the resume bug */
 #define	FXPF_FIX_RESUME_BUG	0x10	/* currently need to work-around
 					   the resume bug */
-	int tx_queued;			/* # of active TxCB's */
-	int need_mcsetup;		/* multicast filter needs programming */
-	struct fxp_cb_tx *cbl_last;	/* last active TxCB in list */
-	struct fxp_stats *fxp_stats;	/* Pointer to interface stats */
 	struct timeout stats_update_to; /* Pointer to timeout structure */
 	int rx_idle_secs;		/* # of seconds RX has been idle */
 	struct fxp_cb_tx *cbl_base;	/* base of TxCB list */
-	struct fxp_cb_mcs *mcsp;	/* Pointer to mcast setup descriptor */
-	int all_mcasts;			/* receive all multicasts */
 	int phy_primary_addr;		/* address of primary PHY */
 	int phy_primary_device;		/* device type of primary PHY */
 	int phy_10Mbps_only;		/* PHY is 10Mbps-only device */
@@ -71,6 +89,12 @@ struct fxp_softc {
 	int not_82557;			/* yes if we are 82558/82559 */
 	void *sc_sdhook;		/* shutdownhook */
 	void *sc_powerhook;		/* powerhook */
+	struct fxp_txsw txs[FXP_NTXCB];
+	int tx_cons, tx_prod, tx_cnt;
+	bus_dmamap_t tx_cb_map;
+	bus_dma_segment_t sc_cb_seg;
+	int sc_cb_nseg;
+	struct fxp_ctrl *sc_ctrl;
 };
 
 /* Macros to ease CSR access. */

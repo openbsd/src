@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxpreg.h,v 1.2 2000/04/26 19:12:08 chris Exp $	*/
+/*	$OpenBSD: fxpreg.h,v 1.3 2001/08/09 21:12:51 jason Exp $	*/
 
 /*
  * Copyright (c) 1995, David Greenman
@@ -106,7 +106,6 @@ struct fxp_cb_nop {
 	volatile u_int32_t link_addr;
 };
 struct fxp_cb_ias {
-	void *fill[2];
 	volatile u_int16_t cb_status;
 	volatile u_int16_t cb_command;
 	volatile u_int32_t link_addr;
@@ -114,7 +113,6 @@ struct fxp_cb_ias {
 };
 /* I hate bit-fields :-( */
 struct fxp_cb_config {
-	void *fill[2];
 	volatile u_int16_t	cb_status;
 	volatile u_int16_t	cb_command;
 	volatile u_int32_t	link_addr;
@@ -176,8 +174,6 @@ struct fxp_cb_config {
 
 #define MAXMCADDR 80
 struct fxp_cb_mcs {
-	struct fxp_cb_tx *next;
-	struct mbuf *mb_head;
 	volatile u_int16_t cb_status;
 	volatile u_int16_t cb_command;
 	volatile u_int32_t link_addr;
@@ -193,9 +189,9 @@ struct fxp_cb_mcs {
  * 
  */
 #ifdef __alpha__ /* XXX - should be conditional on pointer size */
-#define FXP_NTXSEG      28
+#define FXP_NTXSEG      30
 #else
-#define FXP_NTXSEG      29
+#define FXP_NTXSEG      31
 #endif
 
 struct fxp_tbd {
@@ -203,8 +199,6 @@ struct fxp_tbd {
 	volatile u_int32_t tb_size;
 };
 struct fxp_cb_tx {
-	struct fxp_cb_tx *next;
-	struct mbuf *mb_head;
 	volatile u_int16_t cb_status;
 	volatile u_int16_t cb_command;
 	volatile u_int32_t link_addr;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.22 2001/08/03 23:28:49 chris Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.23 2001/08/09 21:12:51 jason Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -158,17 +158,9 @@ static u_char fxp_cb_config_template[] = {
 	0x5	/* 21 */
 };
 
-/* Supported media types. */
-struct fxp_supported_media {
-	const int	fsm_phy;	/* PHY type */
-	const int	*fsm_media;	/* the media array */
-	const int	fsm_nmedia;	/* the number of supported media */
-	const int	fsm_defmedia;	/* default media for this PHY */
-};
-
 int fxp_mediachange		__P((struct ifnet *));
 void fxp_mediastatus		__P((struct ifnet *, struct ifmediareq *));
-static inline void fxp_scb_wait	__P((struct fxp_softc *));
+void fxp_scb_wait	__P((struct fxp_softc *));
 void fxp_start			__P((struct ifnet *));
 int fxp_ioctl			__P((struct ifnet *, u_long, caddr_t));
 void fxp_init			__P((void *));
@@ -182,8 +174,8 @@ void fxp_statchg		__P((struct device *));
 void fxp_read_eeprom		__P((struct fxp_softc *, u_int16_t *,
 				    int, int));
 void fxp_stats_update		__P((void *));
-void fxp_mc_setup		__P((struct fxp_softc *));
-static __inline void fxp_scb_cmd __P((struct fxp_softc *, u_int8_t));
+void fxp_mc_setup		__P((struct fxp_softc *, int));
+void fxp_scb_cmd		__P((struct fxp_softc *, u_int8_t));
 
 /*
  * Set initial transmit threshold at 64 (512 bytes). This is
@@ -191,13 +183,6 @@ static __inline void fxp_scb_cmd __P((struct fxp_softc *, u_int8_t));
  * (1536 bytes), if an underrun occurs.
  */
 static int tx_threshold = 64;
-
-/*
- * Number of transmit control blocks. This determines the number
- * of transmit buffers that can be chained in the CB list.
- * This must be a power of two.
- */
-#define FXP_NTXCB	128
 
 /*
  * Number of completed TX commands at which point an interrupt
@@ -231,20 +216,21 @@ static int tx_threshold = 64;
  * Wait for the previous command to be accepted (but not necessarily
  * completed).
  */
-static inline void
+void
 fxp_scb_wait(sc)
 	struct fxp_softc *sc;
 {
 	int i = 10000;
 
-	while (CSR_READ_1(sc, FXP_CSR_SCB_COMMAND) && --i);
+	while (CSR_READ_1(sc, FXP_CSR_SCB_COMMAND) && --i)
+		DELAY(2);
+	if (i == 0)
+		printf("%s: warning: SCB timed out\n", sc->sc_dev.dv_xname);
 }
 
 /*************************************************************
  * Operating system-specific autoconfiguration glue
  *************************************************************/
-
-void fxp_attach __P((struct device *, struct device *, void *));
 
 void	fxp_shutdown __P((void *));
 void	fxp_power __P((int, void *));
@@ -280,7 +266,7 @@ fxp_power(why, arg)
 	struct ifnet *ifp;
 	int s;
 
-	s = splnet();
+	s = splimp();
 	if (why != PWR_RESUME)
 		fxp_stop(sc, 0);
 	else {
@@ -306,28 +292,50 @@ fxp_attach_common(sc, enaddr, intrstr)
 {
 	struct ifnet *ifp;
 	u_int16_t data;
-	int i;
+	int i, err;
 
 	/*
 	 * Reset to a stable state.
 	 */
-	CSR_WRITE_4(sc, FXP_CSR_PORT, FXP_PORT_SELECTIVE_RESET);
+	CSR_WRITE_4(sc, FXP_CSR_PORT, FXP_PORT_SOFTWARE_RESET);
 	DELAY(10);
 
-	sc->cbl_base = malloc(sizeof(struct fxp_cb_tx) * FXP_NTXCB,
-	    M_DEVBUF, M_NOWAIT);
-	if (sc->cbl_base == NULL)
+	if (bus_dmamem_alloc(sc->sc_dmat, sizeof(struct fxp_ctrl),
+	    PAGE_SIZE, 0, &sc->sc_cb_seg, 1, &sc->sc_cb_nseg, BUS_DMA_NOWAIT))
 		goto fail;
-	memset(sc->cbl_base, 0, sizeof(struct fxp_cb_tx) * FXP_NTXCB);
+	if (bus_dmamem_map(sc->sc_dmat, &sc->sc_cb_seg, sc->sc_cb_nseg,
+	    sizeof(struct fxp_ctrl), (caddr_t *)&sc->sc_ctrl,
+	    BUS_DMA_NOWAIT)) {
+		bus_dmamem_free(sc->sc_dmat, &sc->sc_cb_seg, sc->sc_cb_nseg);
+		goto fail;
+	}
+	if (bus_dmamap_create(sc->sc_dmat, sizeof(struct fxp_ctrl),
+	    1, sizeof(struct fxp_ctrl), 0, BUS_DMA_NOWAIT,
+	    &sc->tx_cb_map)) {
+		bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_ctrl,
+		    sizeof(struct fxp_ctrl));
+		bus_dmamem_free(sc->sc_dmat, &sc->sc_cb_seg, sc->sc_cb_nseg);
+		goto fail;
+	}
+	if (bus_dmamap_load(sc->sc_dmat, sc->tx_cb_map, (caddr_t)sc->sc_ctrl,
+	    sizeof(struct fxp_ctrl), NULL, BUS_DMA_NOWAIT)) {
+		bus_dmamap_destroy(sc->sc_dmat, sc->tx_cb_map);
+		bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_ctrl,
+		    sizeof(struct fxp_ctrl));
+		bus_dmamem_free(sc->sc_dmat, &sc->sc_cb_seg, sc->sc_cb_nseg);
+	}
 
-	sc->fxp_stats = malloc(sizeof(struct fxp_stats), M_DEVBUF, M_NOWAIT);
-	if (sc->fxp_stats == NULL)
-		goto fail;
-	bzero(sc->fxp_stats, sizeof(struct fxp_stats));
-
-	sc->mcsp = malloc(sizeof(struct fxp_cb_mcs), M_DEVBUF, M_NOWAIT);
-	if (sc->mcsp == NULL)
-		goto fail;
+	for (i = 0; i < FXP_NTXCB; i++) {
+		if ((err = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
+		    FXP_NTXSEG, MCLBYTES, 0, 0, &sc->txs[i].tx_map)) != 0) {
+			printf("%s: unable to create tx dma map %d, error %d\n",
+			    sc->sc_dev.dv_xname, i, err);
+			goto fail;
+		}
+		sc->txs[i].tx_mbuf = NULL;
+		sc->txs[i].tx_cb = sc->sc_ctrl->tx_cb + i;
+	}
+	bzero(sc->sc_ctrl, sizeof(struct fxp_ctrl));
 
 	/*
 	 * Pre-allocate our receive buffers.
@@ -367,11 +375,11 @@ fxp_attach_common(sc, enaddr, intrstr)
 	IFQ_SET_READY(&ifp->if_snd);
 
 #if NVLAN > 0
-	if (sc->not_82557)
-		ifp->if_capabilities |= IFCAP_VLAN_MTU;
 	/*
 	 * Only 82558 and newer cards have a bit to ignore oversized frames.
 	 */
+	if (sc->not_82557)
+		ifp->if_capabilities |= IFCAP_VLAN_MTU;
 #endif
 
 	printf(": %s, address %s\n", intrstr,
@@ -435,12 +443,13 @@ fxp_attach_common(sc, enaddr, intrstr)
 
  fail:
 	printf("%s: Failed to malloc memory\n", sc->sc_dev.dv_xname);
-	if (sc->cbl_base)
-		free(sc->cbl_base, M_DEVBUF);
-	if (sc->fxp_stats)
-		free(sc->fxp_stats, M_DEVBUF);
-	if (sc->mcsp)
-		free(sc->mcsp, M_DEVBUF);
+	if (sc->tx_cb_map != NULL) {
+		bus_dmamap_unload(sc->sc_dmat, sc->tx_cb_map);
+		bus_dmamap_destroy(sc->sc_dmat, sc->tx_cb_map);
+		bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_ctrl,
+		    sizeof(struct fxp_cb_tx) * FXP_NTXCB);
+		bus_dmamem_free(sc->sc_dmat, &sc->sc_cb_seg, sc->sc_cb_nseg);
+	}
 	/* frees entire chain */
 	if (sc->rfa_headm)
 		m_freem(sc->rfa_headm);
@@ -622,143 +631,102 @@ fxp_start(ifp)
 	struct ifnet *ifp;
 {
 	struct fxp_softc *sc = ifp->if_softc;
-	struct fxp_cb_tx *txp;
+	struct fxp_txsw *txs;
+	struct fxp_cb_tx *txc;
+	struct mbuf *m0, *m = NULL;
+	int prod, oprod, cnt, seg;
 
-	/*
-	 * See if we need to suspend xmit until the multicast filter
-	 * has been reprogrammed (which can only be done at the head
-	 * of the command chain).
-	 */
-	if (sc->need_mcsetup)
+	if ((ifp->if_flags & (IFF_OACTIVE | IFF_RUNNING)) != IFF_RUNNING)
 		return;
 
-	txp = NULL;
+	prod = sc->tx_prod;
+	oprod = (prod == 0) ? oprod = FXP_NTXCB - 1 : prod - 1;
+	cnt = sc->tx_cnt;
+	txs = &sc->txs[prod];
 
-	/*
-	 * We're finished if there is nothing more to add to the list or if
-	 * we're all filled up with buffers to transmit.
-	 * NOTE: One TxCB is reserved to guarantee that fxp_mc_setup() can add
-	 *       a NOP command when needed.
-	 */
-	while (IFQ_IS_EMPTY(&ifp->if_snd) == 0 && sc->tx_queued < FXP_NTXCB - 1) {
-		struct mbuf *m, *mb_head;
-		int segment;
+	while (1) {
+		if (cnt >= (FXP_NTXCB - 1)) {
+			ifp->if_flags |= IFF_OACTIVE;
+			break;
+		}
 
-		/*
-		 * Grab a packet to transmit.
-		 */
-		IFQ_DEQUEUE(&ifp->if_snd, mb_head);
-		if (mb_head == NULL)
+		IFQ_POLL(&ifp->if_snd, m0);
+		if (m0 == NULL)
 			break;
 
-		/*
-		 * Get pointer to next available tx desc.
-		 */
-		txp = sc->cbl_last->next;
-
-		/*
-		 * Go through each of the mbufs in the chain and initialize
-		 * the transmit buffer descriptors with the physical address
-		 * and size of the mbuf.
-		 */
-tbdinit:
-		for (m = mb_head, segment = 0; m != NULL; m = m->m_next) {
-			if (m->m_len != 0) {
-				if (segment == FXP_NTXSEG)
-					break;
-				txp->tbd[segment].tb_addr =
-				    vtophys(mtod(m, vaddr_t));
-				txp->tbd[segment].tb_size = m->m_len;
-				segment++;
-			}
-		}
-		if (m != NULL) {
-			struct mbuf *mn;
-
-			/*
-			 * We ran out of segments. We have to recopy this mbuf
-			 * chain first. Bail out if we can't get the new
-			 * buffers.
-			 */
-			MGETHDR(mn, M_DONTWAIT, MT_DATA);
-			if (mn == NULL) {
-				m_freem(mb_head);
+		if (bus_dmamap_load_mbuf(sc->sc_dmat, txs->tx_map,
+		    m0, BUS_DMA_NOWAIT) != 0) {
+			MGETHDR(m, M_DONTWAIT, MT_DATA);
+			if (m == NULL)
 				break;
-			}
-			if (mb_head->m_pkthdr.len > MHLEN) {
-				MCLGET(mn, M_DONTWAIT);
-				if ((mn->m_flags & M_EXT) == 0) {
-					m_freem(mn);
-					m_freem(mb_head);
+			if (m0->m_pkthdr.len > MHLEN) {
+				MCLGET(m, M_DONTWAIT);
+				if (!(m->m_flags & M_EXT)) {
+					m_freem(m);
 					break;
 				}
 			}
-			m_copydata(mb_head, 0, mb_head->m_pkthdr.len,
-			    mtod(mn, caddr_t));
-			mn->m_pkthdr.len = mn->m_len = mb_head->m_pkthdr.len;
-			m_freem(mb_head);
-			mb_head = mn;
-			goto tbdinit;
+			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, caddr_t));
+			m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
+			if (bus_dmamap_load_mbuf(sc->sc_dmat, txs->tx_map,
+			    m, BUS_DMA_NOWAIT) != 0)
+				break;
 		}
 
-		txp->tbd_number = segment;
-		txp->mb_head = mb_head;
-		txp->cb_status = 0;
-		if (sc->tx_queued != FXP_CXINT_THRESH - 1) {
-			txp->cb_command =
-			    FXP_CB_COMMAND_XMIT | FXP_CB_COMMAND_SF | FXP_CB_COMMAND_S;
-		} else {
-			txp->cb_command =
-			    FXP_CB_COMMAND_XMIT | FXP_CB_COMMAND_SF | FXP_CB_COMMAND_S | FXP_CB_COMMAND_I;
-			/*
-			 * Set a 5 second timer just in case we don't hear from the
-			 * card again.
-			 */
-			ifp->if_timer = 5;
+		IFQ_DEQUEUE(&ifp->if_snd, m0);
+		if (m != NULL) {
+			m_freem(m0);
+			m0 = m;
+			m = NULL;
 		}
-		txp->tx_threshold = tx_threshold;
-	
-		/*
-		 * Advance the end of list forward.
-		 */
-		sc->cbl_last->cb_command &= ~FXP_CB_COMMAND_S;
-		sc->cbl_last = txp;
 
-		/*
-		 * Advance the beginning of the list forward if there are
-		 * no other packets queued (when nothing is queued, cbl_first
-		 * sits on the last TxCB that was sent out).
-		 */
-		if (sc->tx_queued == 0)
-			sc->cbl_first = txp;
-
-		sc->tx_queued++;
+		txs->tx_mbuf = m0;
 
 #if NBPFILTER > 0
-		/*
-		 * Pass packet to bpf if there is a listener.
-		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, mb_head);
+			bpf_mtap(ifp->if_bpf, m0);
 #endif
+
+		bus_dmamap_sync(sc->sc_dmat, txs->tx_map, BUS_DMASYNC_PREREAD);
+
+		txc = txs->tx_cb;
+		txc->tbd_number = txs->tx_map->dm_nsegs;
+		txc->cb_status = 0;
+		txc->cb_command = FXP_CB_COMMAND_XMIT | FXP_CB_COMMAND_SF;
+		txc->tx_threshold = tx_threshold;
+		for (seg = 0; seg < txs->tx_map->dm_nsegs; seg++) {
+			txc->tbd[seg].tb_addr =
+			    txs->tx_map->dm_segs[seg].ds_addr;
+			txc->tbd[seg].tb_size =
+			    txs->tx_map->dm_segs[seg].ds_len;
+		}
+
+		++cnt;
+		if (++prod == FXP_NTXCB) {
+			prod = 0;
+			txs = sc->txs;
+		} else
+			txs++;
 	}
 
-	/*
-	 * We're finished. If we added to the list, issue a RESUME to get DMA
-	 * going again if suspended.
-	 */
-	if (txp != NULL) {
-#ifdef ALTQ
-		/* if tb regulator is used, we need tx complete interrupt */
-		if (TBR_IS_ENABLED(&ifp->if_snd))
-			txp->cb_command |= FXP_CB_COMMAND_I;
-#endif
+	if (cnt != sc->tx_cnt) {
+		/* We enqueued at least one. */
+		ifp->if_timer = 5;
+
+		txc->cb_command |= FXP_CB_COMMAND_I | FXP_CB_COMMAND_S;
+		sc->txs[oprod].tx_cb->cb_command &=
+		    ~(FXP_CB_COMMAND_S);
+
+		bus_dmamap_sync(sc->sc_dmat, sc->tx_cb_map,
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+
 		fxp_scb_wait(sc);
-		CSR_WRITE_1(sc, FXP_CSR_SCB_COMMAND, FXP_SCB_COMMAND_CU_RESUME);
+		fxp_scb_cmd(sc, FXP_SCB_COMMAND_CU_RESUME);
+
+		sc->tx_prod = prod;
+		sc->tx_cnt = cnt;
 	}
 }
-
-volatile int _fxp_debugit;
 
 /*
  * Process interface interrupts.
@@ -797,31 +765,43 @@ fxp_intr(arg)
 		/*
 		 * Free any finished transmit mbuf chains.
 		 */
-		if (statack & FXP_SCB_STATACK_CXTNO) {
-			struct fxp_cb_tx *txp;
+		if (statack & (FXP_SCB_STATACK_CXTNO|FXP_SCB_STATACK_CNA)) {
+			int txcnt = sc->tx_cnt, txcons = sc->tx_cons;
+			struct fxp_txsw *txs = &sc->txs[txcons];
+			struct fxp_cb_tx *txc = txs->tx_cb;
 
-			for (txp = sc->cbl_first; sc->tx_queued &&
-			    (txp->cb_status & FXP_CB_STATUS_C) != 0;
-			    txp = txp->next) {
-				if (txp->mb_head != NULL) {
-					_fxp_debugit = 1;
-					m_freem(txp->mb_head);
-					_fxp_debugit = 0;
-					txp->mb_head = NULL;
+			bus_dmamap_sync(sc->sc_dmat, sc->tx_cb_map,
+			    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+
+			while ((txcnt > 0) &&
+			    (txc->cb_status & FXP_CB_STATUS_C)) {
+				if (txs->tx_mbuf != NULL) {
+					bus_dmamap_sync(sc->sc_dmat,
+					    txs->tx_map, BUS_DMASYNC_POSTREAD);
+					bus_dmamap_unload(sc->sc_dmat,
+					    txs->tx_map);
+					m_freem(txs->tx_mbuf);
+					txs->tx_mbuf = NULL;
 				}
-				sc->tx_queued--;
+				--txcnt;
+				if (++txcons == FXP_NTXCB) {
+					txs = sc->txs;
+					txcons = 0;
+				} else
+					txs++;
+				txc = txs->tx_cb;
 			}
-			sc->cbl_first = txp;
+			sc->tx_cons = txcons;
+			sc->tx_cnt = txcnt;
 			ifp->if_timer = 0;
-			if (sc->tx_queued == 0) {
-				if (sc->need_mcsetup)
-					fxp_mc_setup(sc);
-			}
-			/*
-			 * Try to start more packets transmitting.
-			 */
-			if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
+			ifp->if_flags &= ~IFF_OACTIVE;
+
+			if (!IFQ_IS_EMPTY(&ifp->if_snd)) {
+				/*
+				 * Try to start more packets transmitting.
+				 */
 				fxp_start(ifp);
+			}
 		}
 		/*
 		 * Process receiver interrupts. If a no-resource (RNR)
@@ -863,9 +843,7 @@ rcvloop:
 					    (MCLBYTES - 1);
 					if (total_len <
 					    sizeof(struct ether_header)) {
-						_fxp_debugit = 2;
 						m_freem(m);
-						_fxp_debugit = 0;
 						goto rcvloop;
 					}
 					m->m_pkthdr.rcvif = ifp;
@@ -907,7 +885,7 @@ fxp_stats_update(arg)
 {
 	struct fxp_softc *sc = arg;
 	struct ifnet *ifp = &sc->arpcom.ac_if;
-	struct fxp_stats *sp = sc->fxp_stats;
+	struct fxp_stats *sp = &sc->sc_ctrl->stats;
 	int s;
 
 	ifp->if_opackets += sp->tx_good;
@@ -945,7 +923,8 @@ fxp_stats_update(arg)
 	 */
 	if (sc->rx_idle_secs > FXP_MAX_RX_IDLE) {
 		sc->rx_idle_secs = 0;
-		fxp_mc_setup(sc);
+		fxp_init(sc);
+		return;
 	}
 	/*
 	 * If there is no pending command, start another stats
@@ -993,7 +972,6 @@ fxp_stop(sc, drain)
 	int drain;
 {
 	struct ifnet *ifp = &sc->arpcom.ac_if;
-	struct fxp_cb_tx *txp;
 	int i;
 
 	/*
@@ -1007,6 +985,7 @@ fxp_stop(sc, drain)
 	 * Cancel stats updater.
 	 */
 	timeout_del(&sc->stats_update_to);
+	mii_down(&sc->sc_mii);
 
 	/*
 	 * Issue software reset
@@ -1017,13 +996,12 @@ fxp_stop(sc, drain)
 	/*
 	 * Release any xmit buffers.
 	 */
-	txp = sc->cbl_base;
 	for (i = 0; i < FXP_NTXCB; i++) {
-		if (txp[i].mb_head != NULL)
-			m_freem(txp[i].mb_head);
-		txp[i].mb_head = NULL;
+		bus_dmamap_unload(sc->sc_dmat, sc->txs[i].tx_map);
+		m_freem(sc->txs[i].tx_mbuf);
+		sc->txs[i].tx_mbuf = NULL;
 	}
-	sc->tx_queued = 0;
+	sc->tx_prod = sc->tx_cons = sc->tx_cnt = 0;
 
 	if (drain) {
 		/*
@@ -1044,7 +1022,6 @@ fxp_stop(sc, drain)
 			}
 		}
 	}
-
 }
 
 /*
@@ -1068,7 +1045,7 @@ fxp_watchdog(ifp)
 /*
  * Submit a command to the i82557.
  */
-static __inline void
+void
 fxp_scb_cmd(sc, cmd)
 	struct fxp_softc *sc;
 	u_int8_t cmd;
@@ -1090,40 +1067,40 @@ fxp_init(xsc)
 	struct fxp_cb_config *cbp;
 	struct fxp_cb_ias *cb_ias;
 	struct fxp_cb_tx *txp;
-	int i, s, prm;
+	int i, prm, allm, s;
 
 	s = splimp();
+
 	/*
 	 * Cancel any pending I/O
 	 */
 	fxp_stop(sc, 0);
 
-	prm = (ifp->if_flags & IFF_PROMISC) ? 1 : 0;
-
 	/*
 	 * Initialize base of CBL and RFA memory. Loading with zero
 	 * sets it up for regular linear addressing.
 	 */
+	fxp_scb_wait(sc);
 	CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL, 0);
 	fxp_scb_cmd(sc, FXP_SCB_COMMAND_CU_BASE);
 
 	fxp_scb_wait(sc);
+	CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL, 0);
 	fxp_scb_cmd(sc, FXP_SCB_COMMAND_RU_BASE);
+
+	/* Once through to set flags */
+	fxp_mc_setup(sc, 0);
 
 	/*
 	 * Initialize base of dump-stats buffer.
 	 */
 	fxp_scb_wait(sc);
-	CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL, vtophys((vaddr_t)sc->fxp_stats));
+	CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL,
+	    sc->tx_cb_map->dm_segs->ds_addr +
+	    offsetof(struct fxp_ctrl, stats));
 	fxp_scb_cmd(sc, FXP_SCB_COMMAND_CU_DUMP_ADR);
 
-	/*
-	 * We temporarily use memory that contains the TxCB list to
-	 * construct the config CB. The TxCB list memory is rebuilt
-	 * later.
-	 */
-	cbp = (struct fxp_cb_config *) sc->cbl_base;
-
+	cbp = &sc->sc_ctrl->u.cfg;
 	/*
 	 * This bcopy is kind of disgusting, but there are a bunch of must be
 	 * zero and must be one bits in this structure and this is the easiest
@@ -1132,10 +1109,13 @@ fxp_init(xsc)
 	bcopy(fxp_cb_config_template, (void *)&cbp->cb_status,
 		sizeof(fxp_cb_config_template));
 
+	prm = (ifp->if_flags & IFF_PROMISC) ? 1 : 0;
+	allm = (ifp->if_flags & IFF_ALLMULTI) ? 1 : 0;
+
 	cbp->cb_status =	0;
 	cbp->cb_command =	FXP_CB_COMMAND_CONFIG | FXP_CB_COMMAND_EL;
-	cbp->link_addr =	-1;	/* (no) next command */
-	cbp->byte_count =	22;	/* (22) bytes to config */
+	cbp->link_addr =	0xffffffff;	/* (no) next command */
+	cbp->byte_count =	22;		/* (22) bytes to config */
 	cbp->rx_fifo_limit =	8;	/* rx fifo threshold (32 bytes) */
 	cbp->tx_fifo_limit =	0;	/* tx fifo threshold (0 bytes) */
 	cbp->adaptive_ifs =	0;	/* (no) adaptive interframe spacing */
@@ -1165,25 +1145,31 @@ fxp_init(xsc)
 	cbp->force_fdx =	0;	/* (don't) force full duplex */
 	cbp->fdx_pin_en =	1;	/* (enable) FDX# pin */
 	cbp->multi_ia =		0;	/* (don't) accept multiple IAs */
-	cbp->mc_all =		sc->all_mcasts;/* accept all multicasts */
+	cbp->mc_all =		allm;
 
 	/*
 	 * Start the config command/DMA.
 	 */
 	fxp_scb_wait(sc);
-	CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL, vtophys((vaddr_t)&cbp->cb_status));
+	CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL, sc->tx_cb_map->dm_segs->ds_addr +
+	    offsetof(struct fxp_ctrl, u.cfg));
 	fxp_scb_cmd(sc, FXP_SCB_COMMAND_CU_START);
 	/* ...and wait for it to complete. */
-	while (!(cbp->cb_status & FXP_CB_STATUS_C));
+	bus_dmamap_sync(sc->sc_dmat, sc->tx_cb_map,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	do {
+		DELAY(1);
+		bus_dmamap_sync(sc->sc_dmat, sc->tx_cb_map,
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+	} while ((cbp->cb_status & FXP_CB_STATUS_C) == 0);
 
 	/*
-	 * Now initialize the station address. Temporarily use the TxCB
-	 * memory area like we did above for the config CB.
+	 * Now initialize the station address.
 	 */
-	cb_ias = (struct fxp_cb_ias *) sc->cbl_base;
+	cb_ias = &sc->sc_ctrl->u.ias;
 	cb_ias->cb_status = 0;
 	cb_ias->cb_command = FXP_CB_COMMAND_IAS | FXP_CB_COMMAND_EL;
-	cb_ias->link_addr = -1;
+	cb_ias->link_addr = 0xffffffff;
 	bcopy(sc->arpcom.ac_enaddr, (void *)cb_ias->macaddr,
 	    sizeof(sc->arpcom.ac_enaddr));
 
@@ -1191,32 +1177,48 @@ fxp_init(xsc)
 	 * Start the IAS (Individual Address Setup) command/DMA.
 	 */
 	fxp_scb_wait(sc);
+	CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL, sc->tx_cb_map->dm_segs->ds_addr +
+	    offsetof(struct fxp_ctrl, u.ias));
 	fxp_scb_cmd(sc, FXP_SCB_COMMAND_CU_START);
 	/* ...and wait for it to complete. */
-	while (!(cb_ias->cb_status & FXP_CB_STATUS_C));
+	bus_dmamap_sync(sc->sc_dmat, sc->tx_cb_map,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	do {
+		DELAY(1);
+		bus_dmamap_sync(sc->sc_dmat, sc->tx_cb_map,
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+	} while (!(cb_ias->cb_status & FXP_CB_STATUS_C));
+
+	/* Again, this time really upload the multicast addresses */
+	fxp_mc_setup(sc, 1);
 
 	/*
 	 * Initialize transmit control block (TxCB) list.
 	 */
-
-	txp = sc->cbl_base;
-	bzero(txp, sizeof(struct fxp_cb_tx) * FXP_NTXCB);
+	bzero(sc->sc_ctrl->tx_cb, sizeof(struct fxp_cb_tx) * FXP_NTXCB);
+	txp = sc->sc_ctrl->tx_cb;
 	for (i = 0; i < FXP_NTXCB; i++) {
-		txp[i].cb_status = FXP_CB_STATUS_C | FXP_CB_STATUS_OK;
 		txp[i].cb_command = FXP_CB_COMMAND_NOP;
-		txp[i].link_addr = vtophys((vaddr_t)&txp[(i + 1) & FXP_TXCB_MASK].cb_status);
-		txp[i].tbd_array_addr = vtophys((vaddr_t)&txp[i].tbd[0]);
-		txp[i].next = &txp[(i + 1) & FXP_TXCB_MASK];
+		txp[i].link_addr = sc->tx_cb_map->dm_segs->ds_addr +
+		    offsetof(struct fxp_ctrl, tx_cb[(i + 1) & FXP_TXCB_MASK]);
+		txp[i].tbd_array_addr = sc->tx_cb_map->dm_segs->ds_addr +
+		    offsetof(struct fxp_ctrl, tx_cb[i].tbd[0]);
 	}
 	/*
 	 * Set the suspend flag on the first TxCB and start the control
 	 * unit. It will execute the NOP and then suspend.
 	 */
-	txp->cb_command = FXP_CB_COMMAND_NOP | FXP_CB_COMMAND_S;
-	sc->cbl_first = sc->cbl_last = txp;
-	sc->tx_queued = 1;
+	sc->tx_cons = 0;
+	sc->tx_prod = 1;
+	sc->tx_cnt = 1;
+	sc->sc_ctrl->tx_cb[0].cb_command = FXP_CB_COMMAND_NOP |
+	    FXP_CB_COMMAND_S | FXP_CB_COMMAND_I;
+	bus_dmamap_sync(sc->sc_dmat, sc->tx_cb_map,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	fxp_scb_wait(sc);
+	CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL, sc->tx_cb_map->dm_segs->ds_addr +
+	    offsetof(struct fxp_ctrl, tx_cb[0]));
 	fxp_scb_cmd(sc, FXP_SCB_COMMAND_CU_START);
 
 	/*
@@ -1249,9 +1251,9 @@ int
 fxp_mediachange(ifp)
 	struct ifnet *ifp;
 {
+	struct fxp_softc *sc = ifp->if_softc;
 
-	if (ifp->if_flags & IFF_UP)
-		fxp_init(ifp->if_softc);
+	mii_mediachg(&sc->sc_mii);
 	return (0);
 }
 
@@ -1478,25 +1480,20 @@ fxp_ioctl(ifp, command, data)
 		break;
 
 	case SIOCSIFFLAGS:
-		sc->all_mcasts = (ifp->if_flags & IFF_ALLMULTI) ? 1 : 0;
-
 		/*
 		 * If interface is marked up and not running, then start it.
 		 * If it is marked down and running, stop it.
 		 * XXX If it's up then re-initialize it. This is so flags
 		 * such as IFF_PROMISC are handled.
 		 */
-		if (ifp->if_flags & IFF_UP) {
+		if (ifp->if_flags & IFF_UP)
 			fxp_init(sc);
-		} else {
-			if (ifp->if_flags & IFF_RUNNING)
-				fxp_stop(sc, 1);
-		}
+		else if (ifp->if_flags & IFF_RUNNING)
+			fxp_stop(sc, 1);
 		break;
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		sc->all_mcasts = (ifp->if_flags & IFF_ALLMULTI) ? 1 : 0;
 		error = (command == SIOCADDMULTI) ?
 		    ether_addmulti(ifr, &sc->arpcom) :
 		    ether_delmulti(ifr, &sc->arpcom);
@@ -1505,14 +1502,7 @@ fxp_ioctl(ifp, command, data)
 			 * Multicast list has changed; set the hardware
 			 * filter accordingly.
 			 */
-			if (!sc->all_mcasts)
-				fxp_mc_setup(sc);
-			/*
-			 * fxp_mc_setup() can turn on all_mcasts if we run
-			 * out of space, so check it again rather than else {}.
-			 */
-			if (sc->all_mcasts)
-				fxp_init(sc);
+			fxp_init(sc);
 			error = 0;
 		}
 		break;
@@ -1544,75 +1534,29 @@ fxp_ioctl(ifp, command, data)
  * This function must be called at splimp.
  */
 void
-fxp_mc_setup(sc)
+fxp_mc_setup(sc, doit)
 	struct fxp_softc *sc;
+	int doit;
 {
-	struct fxp_cb_mcs *mcsp = sc->mcsp;
+	struct fxp_cb_mcs *mcsp = &sc->sc_ctrl->u.mcs;
 	struct ifnet *ifp = &sc->arpcom.ac_if;
 	struct ether_multistep step;
 	struct ether_multi *enm;
 	int nmcasts;
 
 	/*
-	 * If there are queued commands, we must wait until they are all
-	 * completed. If we are already waiting, then add a NOP command
-	 * with interrupt option so that we're notified when all commands
-	 * have been completed - fxp_start() ensures that no additional
-	 * TX commands will be added when need_mcsetup is true.
-	 */
-	if (sc->tx_queued) {
-		struct fxp_cb_tx *txp;
-
-		/*
-		 * need_mcsetup will be true if we are already waiting for the
-		 * NOP command to be completed (see below). In this case, bail.
-		 */
-		if (sc->need_mcsetup)
-			return;
-		sc->need_mcsetup = 1;
-
-		/*
-		 * Add a NOP command with interrupt so that we are notified when all
-		 * TX commands have been processed.
-		 */
-		txp = sc->cbl_last->next;
-		txp->mb_head = NULL;
-		txp->cb_status = 0;
-		txp->cb_command = FXP_CB_COMMAND_NOP | FXP_CB_COMMAND_S | FXP_CB_COMMAND_I;
-		/*
-		 * Advance the end of list forward.
-		 */
-		sc->cbl_last->cb_command &= ~FXP_CB_COMMAND_S;
-		sc->cbl_last = txp;
-		sc->tx_queued++;
-		/*
-		 * Issue a resume in case the CU has just suspended.
-		 */
-		fxp_scb_wait(sc);
-		fxp_scb_cmd(sc, FXP_SCB_COMMAND_CU_RESUME);
-
-		/* Set a 5 watchdog timer in case the chip flakes out. */
-		ifp->if_timer = 5;
-
-		return;
-	}
-	sc->need_mcsetup = 0;
-
-	/*
 	 * Initialize multicast setup descriptor.
 	 */
-	mcsp->next = sc->cbl_base;
-	mcsp->mb_head = NULL;
 	mcsp->cb_status = 0;
-	mcsp->cb_command = FXP_CB_COMMAND_MCAS | FXP_CB_COMMAND_S | FXP_CB_COMMAND_I;
-	mcsp->link_addr = vtophys((vaddr_t)&sc->cbl_base->cb_status);
+	mcsp->cb_command = FXP_CB_COMMAND_MCAS | FXP_CB_COMMAND_EL;
+	mcsp->link_addr = -1;
 
 	nmcasts = 0;
-	if (!sc->all_mcasts) {
+	if (!(ifp->if_flags & IFF_ALLMULTI)) {
 		ETHER_FIRST_MULTI(step, &sc->arpcom, enm);
 		while (enm != NULL) {
 			if (nmcasts >= MAXMCADDR) {
-				sc->all_mcasts = 1;
+				ifp->if_flags |= IFF_ALLMULTI;
 				nmcasts = 0;
 				break;
 			}
@@ -1620,34 +1564,40 @@ fxp_mc_setup(sc)
 			/* Punt on ranges. */
 			if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
 			    sizeof(enm->enm_addrlo)) != 0) {
-				sc->all_mcasts = 1;
+				ifp->if_flags |= IFF_ALLMULTI;
 				nmcasts = 0;
 				break;
 			}
 			bcopy(enm->enm_addrlo,
-			    (void *) &sc->mcsp->mc_addr[nmcasts][0], 6);
+			    (void *)&mcsp->mc_addr[nmcasts][0], ETHER_ADDR_LEN);
 			nmcasts++;
 			ETHER_NEXT_MULTI(step, enm);
 		}
 	}
-	mcsp->mc_cnt = nmcasts * 6;
-	sc->cbl_first = sc->cbl_last = (struct fxp_cb_tx *) mcsp;
-	sc->tx_queued = 1;
+	if (doit == 0)
+		return;
+	mcsp->mc_cnt = nmcasts * ETHER_ADDR_LEN;
 
 	/*
 	 * Wait until command unit is not active. This should never
 	 * be the case when nothing is queued, but make sure anyway.
 	 */
-	while ((CSR_READ_1(sc, FXP_CSR_SCB_RUSCUS) >> 6) ==
-	    FXP_SCB_CUS_ACTIVE) ;
+	while ((CSR_READ_1(sc, FXP_CSR_SCB_RUSCUS) >> 6) != FXP_SCB_CUS_IDLE);
 
 	/*
 	 * Start the multicast setup command.
 	 */
 	fxp_scb_wait(sc);
-	CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL, vtophys((vaddr_t)&mcsp->cb_status));
+	CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL, sc->tx_cb_map->dm_segs->ds_addr +
+	    offsetof(struct fxp_ctrl, u.mcs));
 	fxp_scb_cmd(sc, FXP_SCB_COMMAND_CU_START);
 
-	ifp->if_timer = 2;
-	return;
+	bus_dmamap_sync(sc->sc_dmat, sc->tx_cb_map,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+
+	do {
+		DELAY(1);
+		bus_dmamap_sync(sc->sc_dmat, sc->tx_cb_map,
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+	} while (!(mcsp->cb_status & FXP_CB_STATUS_C));
 }
