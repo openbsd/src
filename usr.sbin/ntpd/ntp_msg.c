@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp_msg.c,v 1.7 2004/09/24 14:51:16 henning Exp $ */
+/*	$OpenBSD: ntp_msg.c,v 1.8 2004/10/13 12:37:47 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -29,13 +29,7 @@
 int
 ntp_getmsg(char *p, ssize_t len, struct ntp_msg *msg)
 {
-	int		 auth, i;
-
-	if (len == NTP_MSGSIZE)
-		auth = 1;
-	else if (len == NTP_MSGSIZE_NOAUTH)
-		auth = 0;
-	else {
+	if (len != NTP_MSGSIZE_NOAUTH && len != NTP_MSGSIZE) {
 		log_warnx("malformed packet received");
 		return (-1);
 	}
@@ -74,17 +68,6 @@ ntp_getmsg(char *p, ssize_t len, struct ntp_msg *msg)
 	p += sizeof(msg->xmttime.int_part);
 	memcpy(&msg->xmttime.fraction, p, sizeof(msg->xmttime.fraction));
 	p += sizeof(msg->xmttime.fraction);
-
-	if (auth) {
-		memcpy(&msg->keyid, p, sizeof(msg->keyid));
-		p += sizeof(msg->keyid);
-		for (i = 0; i < NTP_DIGESTSIZE; i++) {
-			memcpy(&msg->digest[i], p, sizeof(msg->digest[i]));
-			p += sizeof(msg->digest[i]);
-		}
-
-		/* XXX check auth */
-	}
 
 	return (0);
 }
@@ -132,10 +115,6 @@ ntp_sendmsg(int fd, struct sockaddr *sa, struct ntp_msg *msg, ssize_t len,
 	p += sizeof(msg->xmttime.int_part);
 	memcpy(p, &msg->xmttime.fraction, sizeof(msg->xmttime.fraction));
 	p += sizeof(msg->xmttime.fraction);
-
-	if (auth) {
-		/* XXX */
-	}
 
 	if (sa != NULL)
 		sa_len = SA_LEN(sa);
