@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.11 1999/02/24 22:32:58 angelos Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.12 1999/04/09 23:28:45 niklas Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -112,6 +112,7 @@ void	iplinit __P((void));
 
 #ifdef IPSEC
 #include <netinet/ip_ipsp.h>
+#include <netinet/ip_ip4.h>
 
 extern void ah_input __P((struct mbuf *, ...));
 extern void esp_input __P((struct mbuf *, ...));
@@ -153,7 +154,7 @@ struct protosw inetsw[] = {
 { SOCK_RAW,	&inetdomain,	IPPROTO_IPIP,	PR_ATOMIC|PR_ADDR,
   ip4_input,	rip_output,	0,		rip_ctloutput,
   rip_usrreq,	/* XXX */
-  0,		0,		0,		0,
+  0,		0,		0,		0,		ip4_sysctl
 },
 #elif defined(MROUTING)
 { SOCK_RAW,     &inetdomain,    IPPROTO_IPIP,   PR_ATOMIC|PR_ADDR,

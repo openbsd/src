@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ip4.c,v 1.27 1999/04/09 19:42:09 angelos Exp $	*/
+/*	$OpenBSD: ip_ip4.c,v 1.28 1999/04/09 23:28:45 niklas Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -50,6 +50,7 @@
 #include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
+#include <sys/sysctl.h>
 #include <machine/cpu.h>
 
 #include <net/if.h>
@@ -76,6 +77,13 @@
 #else
 #define DPRINTF(x)
 #endif
+
+/*
+ * We can control the acceptance of IP4 packets by altering the sysctl
+ * net.inet.ip4.allow value.  Zero means drop them, all ilse is acceptance.
+ */
+int ip4_allow = 0;
+struct ip4stat ip4stat;
 
 /*
  * ip4_input gets called when we receive an encapsulated packet,
@@ -108,6 +116,15 @@ ip4_input(m, va_alist)
 
     ip4stat.ip4s_ipackets++;
 
+    /* If we do not accept IP4 explicitly, drop.  */
+    if (!ip4_allow && (m->m_flags & (M_AUTH|M_CONF)) == 0)
+    {
+	DPRINTF(("ip4_input(): dropped due to policy\n"));
+	ip4stat.ip4s_pdrops++;
+	m_freem(m);
+	return;
+    }
+
     /*
      * Strip IP options, if any.
      */
@@ -133,6 +150,7 @@ ip4_input(m, va_alist)
 	{
 	    DPRINTF(("ip4_input(): m_pullup() failed\n"));
 	    ip4stat.ip4s_hdrops++;
+	    m_freem(m);
 	    return;
 	}
 
@@ -155,6 +173,19 @@ ip4_input(m, va_alist)
 	return;
     }
 
+     /*
+      * If we do not accept IP4 other than part of ESP & AH, we should
+      * not accept a packet with double ip4 headers neither.
+      */
+ 
+     if (!ip4_allow && ipi->ip_p == IPPROTO_IPIP)
+     {
+ 	DPRINTF(("ip4_input(): dropped due to policy\n"));
+ 	ip4stat.ip4s_pdrops++;
+ 	m_freem(m);
+ 	return;
+     }
+ 
     /*
      * Check for local address spoofing.
      */
@@ -171,6 +202,7 @@ ip4_input(m, va_alist)
 	  if (sin->sin_addr.s_addr == ipi->ip_src.s_addr)
 	  {
 	      DPRINTF(("ip_input(): possible local address spoofing detected on packet from %s to %s (%s->%s)\n", inet_ntoa4(ipo->ip_src), inet_ntoa4(ipo->ip_dst), inet_ntoa4(ipi->ip_src), inet_ntoa4(ipi->ip_dst)));
+ 	      ip4stat.ip4s_spoof++;
 	      m_freem(m);
 	      return;
 	  }
@@ -313,4 +345,26 @@ ipe4_input(struct mbuf *m, ...)
     printf("ipe4_input(): should never be called\n");
     if (m)
       m_freem(m);
+}
+
+int
+ip4_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
+	int *name;
+	u_int namelen;
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+{
+	/* All sysctl names at this level are terminal. */
+	if (namelen != 1)
+		return (ENOTDIR);
+
+	switch (name[0]) {
+	case IP4CTL_ALLOW:
+		return (sysctl_int(oldp, oldlenp, newp, newlen, &ip4_allow));
+	default:
+		return (ENOPROTOOPT);
+	}
+	/* NOTREACHED */
 }

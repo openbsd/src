@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ip4.h,v 1.13 1999/02/24 23:45:51 angelos Exp $	*/
+/*	$OpenBSD: ip_ip4.h,v 1.14 1999/04/09 23:28:45 niklas Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -50,11 +50,27 @@ struct ip4stat
     u_int32_t	ip4s_qfull;
     u_int64_t   ip4s_ibytes;
     u_int64_t   ip4s_obytes;
+    u_int32_t	ip4s_pdrops;		/* packet dropped due to policy */
+    u_int32_t	ip4s_spoof;		/* IP spoofing attempts */
 };
 
 #define IP4_DEFAULT_TTL    0
 #define IP4_SAME_TTL	  -1
 
+/*
+ * Names for IP4 sysctl objects
+ */
+#define	IP4CTL_ALLOW	1		/* accept incoming IP4 packets */
+#define IP4CTL_MAXID	2
+
+#define IP4CTL_NAMES { \
+	{ 0, 0 }, \
+	{ "allow", CTLTYPE_INT }, \
+}
+
 #ifdef _KERNEL
-struct ip4stat ip4stat;
+int	ip4_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
+
+extern int ip4_allow;
+extern struct ip4stat ip4stat;
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.21 1999/03/27 21:04:21 provos Exp $	*/
+/*	$OpenBSD: in.h,v 1.22 1999/04/09 23:28:44 niklas Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -463,7 +463,7 @@ struct in6_pktinfo {
 	{ "icmp", CTLTYPE_NODE }, \
 	{ "igmp", CTLTYPE_NODE }, \
 	{ "ggp", CTLTYPE_NODE }, \
-	{ 0, 0 }, \
+	{ "ip4", CTLTYPE_NODE }, \
 	{ 0, 0 }, \
 	{ "tcp", CTLTYPE_NODE }, \
 	{ 0, 0 }, \
