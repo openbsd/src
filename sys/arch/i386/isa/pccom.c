@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccom.c,v 1.10 1996/12/18 16:51:45 millert Exp $	*/
+/*	$OpenBSD: pccom.c,v 1.11 1997/07/07 17:08:04 niklas Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*-
@@ -359,10 +359,9 @@ comspeed(speed)
 }
 
 int
-comprobe1(iot, ioh, iobase)
+comprobe1(iot, ioh)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
-	int iobase;
 {
 	int i, k;
 
@@ -503,7 +502,7 @@ comprobe(parent, match, aux)
 		rv = 0;
 		goto out;
 	}
-	rv = comprobe1(iot, ioh, iobase);
+	rv = comprobe1(iot, ioh);
 	if (needioh)
 		bus_space_unmap(iot, ioh, COM_NPORTS);
 
@@ -1612,7 +1611,7 @@ comcnprobe(cp)
 		cp->cn_pri = CN_DEAD;
 		return;
 	}
-	found = comprobe1(iot, ioh, CONADDR);
+	found = comprobe1(iot, ioh);
 	bus_space_unmap(iot, ioh, COM_NPORTS);
 	if (!found) {
 		cp->cn_pri = CN_DEAD;

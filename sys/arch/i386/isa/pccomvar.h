@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccomvar.h,v 1.3 1996/12/18 16:51:44 millert Exp $	*/
+/*	$OpenBSD: pccomvar.h,v 1.4 1997/07/07 17:08:05 niklas Exp $	*/
 /*	$NetBSD: comvar.h,v 1.5 1996/05/05 19:50:47 christos Exp $	*/
 
 /*
@@ -92,7 +92,7 @@ struct com_softc {
 	int sc_tbc;
 };
 
-int	comprobe1 __P((bus_space_tag_t, bus_space_handle_t, int));
+int	comprobe1 __P((bus_space_tag_t, bus_space_handle_t));
 void	cominit __P((bus_space_tag_t, bus_space_handle_t, int));
 int	comintr __P((void *));
 void	com_absent_notify __P((struct com_softc *sc));
