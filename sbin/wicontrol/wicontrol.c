@@ -1,4 +1,4 @@
-/*	$OpenBSD: wicontrol.c,v 1.32 2002/04/06 23:51:10 millert Exp $	*/
+/*	$OpenBSD: wicontrol.c,v 1.33 2002/04/11 19:48:04 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -69,7 +69,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $OpenBSD: wicontrol.c,v 1.32 2002/04/06 23:51:10 millert Exp $";
+	"@(#) $OpenBSD: wicontrol.c,v 1.33 2002/04/11 19:48:04 millert Exp $";
 #endif
 
 void wi_getval(char *, struct wi_req *);
@@ -889,6 +889,8 @@ portid(char *name)
 	else if (strcasecmp(name, "adhoc") == 0 ||
 	    strcasecmp(name, "ad-hoc") == 0)
 		id = "3";
+	else if (strcasecmp(name, "ibss") == 0)
+		id = "4";
 	else if (strcasecmp(name, "hostap") == 0)
 		id = "6";
 	else
