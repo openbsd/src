@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.28 2002/03/16 19:30:29 vincent Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.29 2002/06/19 22:05:58 vincent Exp $	*/
 
 /*
  *		Buffer handling.
@@ -441,19 +441,19 @@ bfind(const char *bname, int cflag)
 	}
 	if (cflag != TRUE)
 		return NULL;
-	/* NOSTRICT */
-	if ((bp = (BUFFER *) malloc(sizeof(BUFFER))) == NULL) {
+
+	if ((bp = malloc(sizeof(BUFFER))) == NULL) {
 		ewprintf("Can't get %d bytes", sizeof(BUFFER));
 		return NULL;
 	}
 	if ((bp->b_bname = strdup(bname)) == NULL) {
 		ewprintf("Can't get %d bytes", strlen(bname) + 1);
-		free((char *) bp);
+		free(bp);
 		return NULL;
 	}
 	if ((lp = lalloc(0)) == NULL) {
 		free((char *) bp->b_bname);
-		free((char *) bp);
+		free(bp);
 		return NULL;
 	}
 	bp->b_altb = bp->b_bufp = NULL;
@@ -466,6 +466,8 @@ bfind(const char *bname, int cflag)
 	bp->b_linep = lp;
 	bp->b_nmodes = defb_nmodes;
 	LIST_INIT(&bp->b_undo);
+	bp->b_undoptr = NULL;
+	memset(&bp->b_undopos, 0, sizeof bp->b_undopos);
 	i = 0;
 	do {
 		bp->b_modes[i] = defb_modes[i];
