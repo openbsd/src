@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.17 1999/04/16 14:04:41 deraadt Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.18 2000/11/10 18:15:48 art Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -116,7 +116,7 @@ namei(ndp)
 
 #ifdef KTRACE
 	if (KTRPOINT(cnp->cn_proc, KTR_NAMEI))
-		ktrnamei(cnp->cn_proc->p_tracep, cnp->cn_pnbuf);
+		ktrnamei(cnp->cn_proc, cnp->cn_pnbuf);
 #endif
 
 	/*

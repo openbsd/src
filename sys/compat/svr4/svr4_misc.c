@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_misc.c,v 1.27 2000/06/28 23:48:15 fgsch Exp $	 */
+/*	$OpenBSD: svr4_misc.c,v 1.28 2000/11/10 18:15:46 art Exp $	 */
 /*	$NetBSD: svr4_misc.c,v 1.42 1996/12/06 03:22:34 christos Exp $	 */
 
 /*
@@ -1611,7 +1611,7 @@ svr4_sys_setegid(p, v, retval)
 		p->p_os = OOS_LINUX;
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_EMUL))
-			ktremul(p->p_tracep, p->p_emul->e_name);
+			ktremul(p, p->p_emul->e_name);
 #endif
 		return (0);
 	}

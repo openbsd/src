@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.44 2000/09/28 13:41:39 art Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.45 2000/11/10 18:15:46 art Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -618,7 +618,7 @@ sys_execve(p, v, retval)
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_EMUL))
-		ktremul(p->p_tracep, p->p_emul->e_name);
+		ktremul(p, p->p_emul->e_name);
 #endif
 	return (0);
 

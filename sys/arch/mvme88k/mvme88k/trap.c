@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.9 2000/06/08 22:25:21 niklas Exp $	*/
+/*	$OpenBSD: trap.c,v 1.10 2000/11/10 18:15:40 art Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -1302,7 +1302,7 @@ syscall(register_t code, struct m88100_saved_state *tf)
 #endif
 #ifdef KTRACE
    if (KTRPOINT(p, KTR_SYSCALL))
-      ktrsyscall(p->p_tracep, code, callp->sy_argsize, args.i);
+      ktrsyscall(p, code, callp->sy_argsize, args.i);
 #endif
    rval[0] = 0;
    rval[1] = 0;
@@ -1378,7 +1378,7 @@ syscall(register_t code, struct m88100_saved_state *tf)
    userret(p, tf, sticks);
 #ifdef KTRACE
    if (KTRPOINT(p, KTR_SYSRET))
-      ktrsysret(p->p_tracep, code, error, rval[0]);
+      ktrsysret(p, code, error, rval[0]);
 #endif
 }
 
@@ -1458,7 +1458,7 @@ m197_syscall(register_t code, struct m88100_saved_state *tf)
 #endif
 #ifdef KTRACE
    if (KTRPOINT(p, KTR_SYSCALL))
-      ktrsyscall(p->p_tracep, code, callp->sy_argsize, args.i);
+      ktrsyscall(p, code, callp->sy_argsize, args.i);
 #endif
    rval[0] = 0;
    rval[1] = 0;
@@ -1530,7 +1530,7 @@ m197_syscall(register_t code, struct m88100_saved_state *tf)
    userret(p, tf, sticks);
 #ifdef KTRACE
    if (KTRPOINT(p, KTR_SYSRET))
-      ktrsysret(p->p_tracep, code, error, rval[0]);
+      ktrsysret(p, code, error, rval[0]);
 #endif
 }
 
@@ -1558,7 +1558,7 @@ child_return(struct proc *p)
    userret(p, tf, p->p_sticks);
 #ifdef KTRACE
    if (KTRPOINT(p, KTR_SYSRET))
-      ktrsysret(p->p_tracep, SYS_fork, 0, 0);
+      ktrsysret(p, SYS_fork, 0, 0);
 #endif
 }
 

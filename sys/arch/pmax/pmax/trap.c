@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.21 2000/06/08 09:46:27 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.22 2000/11/10 18:15:41 art Exp $	*/
 /*	$NetBSD: trap.c,v 1.50 1996/10/13 21:37:49 jonathan Exp $	*/
 
 /*
@@ -658,7 +658,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 #endif
 #ifdef KTRACE
 					if (KTRPOINT(p, KTR_SYSCALL))
-						ktrsyscall(p->p_tracep, code,
+						ktrsyscall(p, code,
 							callp->sy_argsize,
 							args.i);
 #endif
@@ -693,7 +693,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 #endif
 #ifdef KTRACE
 					if (KTRPOINT(p, KTR_SYSCALL))
-						ktrsyscall(p->p_tracep, code,
+						ktrsyscall(p, code,
 							callp->sy_argsize,
 							args.i);
 #endif
@@ -725,7 +725,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 #endif
 #ifdef KTRACE
 					if (KTRPOINT(p, KTR_SYSCALL))
-						ktrsyscall(p->p_tracep, code,
+						ktrsyscall(p, code,
 							callp->sy_argsize,
 							args.i);
 #endif
@@ -738,7 +738,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 #endif
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_SYSCALL))
-			ktrsyscall(p->p_tracep, code, callp->sy_argsize, args.i);
+			ktrsyscall(p, code, callp->sy_argsize, args.i);
 #endif
 		rval[0] = 0;
 		rval[1] = locr0[V1];
@@ -801,7 +801,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 #endif
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_SYSRET))
-			ktrsysret(p->p_tracep, code, i, rval[0]); /*XXX*/
+			ktrsysret(p, code, i, rval[0]); /*XXX*/
 #endif
 		goto out;
 	    }

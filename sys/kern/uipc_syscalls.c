@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.32 2000/10/12 09:58:05 itojun Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.33 2000/11/10 18:15:48 art Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -504,8 +504,7 @@ sendit(p, s, mp, flags, retsize)
 #ifdef KTRACE
 	if (ktriov != NULL) {
 		if (error == 0)
-			ktrgenio(p->p_tracep, s, UIO_WRITE,
-				ktriov, *retsize, error);
+			ktrgenio(p, s, UIO_WRITE, ktriov, *retsize, error);
 		free(ktriov, M_TEMP);
 	}
 #endif
@@ -655,7 +654,7 @@ recvit(p, s, mp, namelenp, retsize)
 #ifdef KTRACE
 	if (ktriov != NULL) {
 		if (error == 0)
-			ktrgenio(p->p_tracep, s, UIO_READ,
+			ktrgenio(p, s, UIO_READ,
 				ktriov, len - auio.uio_resid, error);
 		free(ktriov, M_TEMP);
 	}

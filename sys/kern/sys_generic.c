@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.27 2000/09/27 16:13:46 mickey Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.28 2000/11/10 18:15:47 art Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -154,7 +154,7 @@ dofileread(p, fd, fp, buf, nbyte, offset, retval)
 	cnt -= auio.uio_resid;
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_GENIO) && error == 0)
-		ktrgenio(p->p_tracep, fd, UIO_READ, &ktriov, cnt, error);
+		ktrgenio(p, fd, UIO_READ, &ktriov, cnt, error);
 #endif
 	*retval = cnt;
  out:
@@ -275,7 +275,7 @@ dofilereadv(p, fd, fp, iovp, iovcnt, offset, retval)
 #ifdef KTRACE
 	if (ktriov != NULL) {
 		if (error == 0) 
-			ktrgenio(p->p_tracep, fd, UIO_READ, ktriov, cnt,
+			ktrgenio(p, fd, UIO_READ, ktriov, cnt,
 			    error);
 		free(ktriov, M_TEMP);
 	}
@@ -380,7 +380,7 @@ dofilewrite(p, fd, fp, buf, nbyte, offset, retval)
 	cnt -= auio.uio_resid;
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_GENIO) && error == 0)
-		ktrgenio(p->p_tracep, fd, UIO_WRITE, &ktriov, cnt, error);
+		ktrgenio(p, fd, UIO_WRITE, &ktriov, cnt, error);
 #endif
 	*retval = cnt;
  out:
@@ -502,7 +502,7 @@ dofilewritev(p, fd, fp, iovp, iovcnt, offset, retval)
 #ifdef KTRACE
 	if (ktriov != NULL) {
 		if (error == 0) 
-			ktrgenio(p->p_tracep, fd, UIO_WRITE, ktriov, cnt,
+			ktrgenio(p, fd, UIO_WRITE, ktriov, cnt,
 			    error);
 		free(ktriov, M_TEMP);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.22 2000/11/08 16:22:36 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.23 2000/11/10 18:15:38 art Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Michael Shalayeff
@@ -454,7 +454,7 @@ child_return(p)
 	userret(p, p->p_md.md_regs->tf_iioq_head, 0);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p->p_tracep, SYS_fork, 0, 0);
+		ktrsysret(p, SYS_fork, 0, 0);
 #endif
 }
 
@@ -508,7 +508,7 @@ syscall(frame, args)
 #endif
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p->p_tracep, code, argsize, args);
+		ktrsyscall(p, code, argsize, args);
 #endif
 
 	rval[0] = 0;
@@ -540,7 +540,7 @@ syscall(frame, args)
 	userret(p, frame->tf_iioq_head, 0);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p->p_tracep, code, error, rval[0]);
+		ktrsysret(p, code, error, rval[0]);
 #endif
 }
 

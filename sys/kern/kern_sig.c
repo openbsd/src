@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.38 2000/06/05 11:02:50 art Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.39 2000/11/10 18:15:47 art Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -641,7 +641,7 @@ trapsignal(p, signum, code, type, sigval)
 		p->p_stats->p_ru.ru_nsignals++;
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_PSIG))
-			ktrpsig(p->p_tracep, signum, ps->ps_sigact[signum], 
+			ktrpsig(p, signum, ps->ps_sigact[signum], 
 				p->p_sigmask, code);
 #endif
 		(*p->p_emul->e_sendsig)(ps->ps_sigact[signum], signum,
@@ -1062,8 +1062,7 @@ postsig(signum)
 	action = ps->ps_sigact[signum];
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_PSIG))
-		ktrpsig(p->p_tracep,
-		    signum, action, ps->ps_flags & SAS_OLDMASK ?
+		ktrpsig(p, signum, action, ps->ps_flags & SAS_OLDMASK ?
 		    ps->ps_oldmask : p->p_sigmask, 0);
 #endif
 	if (action == SIG_DFL) {

@@ -930,7 +930,7 @@ syscall(code, tf, pc)
 			if (error) {
 #ifdef KTRACE
 				if (KTRPOINT(p, KTR_SYSCALL))
-					ktrsyscall(p->p_tracep, code,
+					ktrsyscall(p, code,
 					    callp->sy_argsize, args.i);
 #endif
 				goto bad;
@@ -941,7 +941,7 @@ syscall(code, tf, pc)
 	}
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p->p_tracep, code, callp->sy_argsize, args.i);
+		ktrsyscall(p, code, callp->sy_argsize, args.i);
 #endif
 	rval[0] = 0;
 	rval[1] = tf->tf_out[1];
@@ -980,7 +980,7 @@ bad:
 	userret(p, pc, sticks);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p->p_tracep, code, error, rval[0]);
+		ktrsysret(p, code, error, rval[0]);
 #endif
 	share_fpu(p, tf);
 }
@@ -999,7 +999,7 @@ child_return(p)
 	userret(p, p->p_md.md_tf->tf_pc, 0);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p->p_tracep,
+		ktrsysret(p,
 			  (p->p_flag & P_PPWAIT) ? SYS_vfork : SYS_fork, 0, 0);
 #endif
 }

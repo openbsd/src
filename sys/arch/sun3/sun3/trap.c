@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.21 2000/06/08 09:40:03 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.22 2000/11/10 18:15:43 art Exp $	*/
 /*	$NetBSD: trap.c,v 1.63-1.65ish 1997/01/16 15:41:40 gwr Exp $	*/
 
 /*
@@ -706,7 +706,7 @@ syscall(code, frame)
 #endif
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p->p_tracep, code, argsize, args);
+		ktrsyscall(p, code, argsize, args);
 #endif
 	if (error)
 		goto bad;
@@ -752,7 +752,7 @@ syscall(code, frame)
 	userret(p, &frame, sticks);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p->p_tracep, code, error, rval[0]);
+		ktrsysret(p, code, error, rval[0]);
 #endif
 }
 
@@ -778,7 +778,7 @@ child_return(p)
 	userret((struct proc *)p, f, 0);
 #ifdef KTRACE
 	if (KTRPOINT((struct proc *)p, KTR_SYSRET))
-		ktrsysret(((struct proc *)p)->p_tracep, SYS_fork, 0, 0);
+		ktrsysret(((struct proc *)p), SYS_fork, 0, 0);
 #endif
 }
 

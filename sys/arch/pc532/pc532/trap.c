@@ -429,7 +429,7 @@ syscall(frame)
 #endif
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_SYSCALL))
-			ktrsyscall(p->p_tracep, code, i, &args);
+			ktrsyscall(p, code, i, &args);
 #endif
 		goto done;
 	}
@@ -438,7 +438,7 @@ syscall(frame)
 #endif
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p->p_tracep, code, i, &args);
+		ktrsyscall(p, code, i, &args);
 #endif
 	rval[0] = 0;
 	rval[1] = 0;
@@ -507,7 +507,7 @@ done:
 #endif
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p->p_tracep, code, error, rval[0]);
+		ktrsysret(p, code, error, rval[0]);
 #endif
 
 }

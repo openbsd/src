@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.12 2000/04/27 01:10:14 bjc Exp $     */
+/*	$OpenBSD: trap.c,v 1.13 2000/11/10 18:15:43 art Exp $     */
 /*	$NetBSD: trap.c,v 1.47 1999/08/21 19:26:20 matt Exp $     */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -369,7 +369,7 @@ if(startsysc)printf("trap syscall %s pc %lx, psl %lx, sp %lx, pid %d, frame %p\n
 		if (err) {
 #ifdef KTRACE
 			if (KTRPOINT(p, KTR_SYSCALL))
-				ktrsyscall(p->p_tracep, frame->code,
+				ktrsyscall(p, frame->code,
 				    callp->sy_argsize, args);
 #endif
 			goto bad;
@@ -399,7 +399,7 @@ if(startsysc)printf("trap syscall %s pc %lx, psl %lx, sp %lx, pid %d, frame %p\n
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p->p_tracep, frame->code, callp->sy_argsize, args);
+		ktrsyscall(p, frame->code, callp->sy_argsize, args);
 #endif
 	err = (*callp->sy_call)(curproc, args, rval);
 	exptr = curproc->p_addr->u_pcb.framep;
@@ -456,6 +456,6 @@ bad:
 	}
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p->p_tracep, frame->code, err, rval[0]);
+		ktrsysret(p, frame->code, err, rval[0]);
 #endif
 }

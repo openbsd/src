@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.28 2000/08/03 14:36:36 mickey Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.29 2000/11/10 18:15:47 art Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -357,7 +357,7 @@ tsleep(ident, priority, wmesg, timo)
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_CSW))
-		ktrcsw(p->p_tracep, 1, 0);
+		ktrcsw(p, 1, 0);
 #endif
 	s = splhigh();
 	if (cold || panicstr) {
@@ -426,7 +426,7 @@ resume:
 		if (sig == 0) {
 #ifdef KTRACE
 			if (KTRPOINT(p, KTR_CSW))
-				ktrcsw(p->p_tracep, 0, 0);
+				ktrcsw(p, 0, 0);
 #endif
 			return (EWOULDBLOCK);
 		}
@@ -435,7 +435,7 @@ resume:
 	if (catch && (sig != 0 || (sig = CURSIG(p)) != 0)) {
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_CSW))
-			ktrcsw(p->p_tracep, 0, 0);
+			ktrcsw(p, 0, 0);
 #endif
 		if (p->p_sigacts->ps_sigintr & sigmask(sig))
 			return (EINTR);
@@ -443,7 +443,7 @@ resume:
 	}
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_CSW))
-		ktrcsw(p->p_tracep, 0, 0);
+		ktrcsw(p, 0, 0);
 #endif
 	return (0);
 }
@@ -523,7 +523,7 @@ sleep(ident, priority)
 	p->p_stats->p_ru.ru_nvcsw++;
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_CSW))
-		ktrcsw(p->p_tracep, 1, 0);
+		ktrcsw(p, 1, 0);
 #endif
 	mi_switch();
 #ifdef	DDB
@@ -532,7 +532,7 @@ sleep(ident, priority)
 #endif
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_CSW))
-		ktrcsw(p->p_tracep, 0, 0);
+		ktrcsw(p, 0, 0);
 #endif
 	curpriority = p->p_usrpri;
 	splx(s);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_pos_io.c,v 1.5 2000/04/19 08:34:57 csapuntz Exp $	*/
+/*	$OpenBSD: netbsd_pos_io.c,v 1.6 2000/11/10 18:15:45 art Exp $	*/
 
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
@@ -151,7 +151,7 @@ netbsd_sys_pread(p, v, retval)
 	cnt -= auio.uio_resid;
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_GENIO) && error == 0)
-		ktrgenio(p->p_tracep, SCARG(uap, fd), UIO_READ, &ktriov,
+		ktrgenio(p, SCARG(uap, fd), UIO_READ, &ktriov,
 		    cnt, error);
 #endif
 	*retval = cnt;
@@ -243,7 +243,7 @@ netbsd_sys_preadv(p, v, retval)
 #ifdef KTRACE
 	if (ktriov != NULL) {
 		if (error == 0)
-			ktrgenio(p->p_tracep, SCARG(uap, fd), UIO_READ, ktriov,
+			ktrgenio(p, SCARG(uap, fd), UIO_READ, ktriov,
 			    cnt, error);
 		FREE(ktriov, M_TEMP);
 	}
@@ -320,7 +320,7 @@ netbsd_sys_pwrite(p, v, retval)
 	cnt -= auio.uio_resid;
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_GENIO) && error == 0)
-		ktrgenio(p->p_tracep, SCARG(uap, fd), UIO_WRITE,
+		ktrgenio(p, SCARG(uap, fd), UIO_WRITE,
 		    &ktriov, cnt, error);
 #endif
 	*retval = cnt;
@@ -420,7 +420,7 @@ netbsd_sys_pwritev(p, v, retval)
 #ifdef KTRACE
 	if (ktriov != NULL) {
 		if (error == 0)
-			ktrgenio(p->p_tracep, SCARG(uap, fd), UIO_WRITE,
+			ktrgenio(p, SCARG(uap, fd), UIO_WRITE,
 				ktriov, cnt, error);
 		FREE(ktriov, M_TEMP);
 	}

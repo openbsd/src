@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.4 1999/05/24 23:09:10 jason Exp $	*/
+/*	$OpenBSD: trap.c,v 1.5 2000/11/10 18:15:44 art Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  * from: Utah Hdr: trap.c 1.32 91/04/06
  *
  *	from: @(#)trap.c	8.5 (Berkeley) 1/11/94
- *      $Id: trap.c,v 1.4 1999/05/24 23:09:10 jason Exp $
+ *      $Id: trap.c,v 1.5 2000/11/10 18:15:44 art Exp $
  */
 
 #include <sys/param.h>
@@ -594,7 +594,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 #endif
 #ifdef KTRACE
 					if (KTRPOINT(p, KTR_SYSCALL))
-						ktrsyscall(p->p_tracep, code,
+						ktrsyscall(p, code,
 							callp->sy_argsize,
 							args.i);
 #endif
@@ -629,7 +629,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 #endif
 #ifdef KTRACE
 					if (KTRPOINT(p, KTR_SYSCALL))
-						ktrsyscall(p->p_tracep, code,
+						ktrsyscall(p, code,
 							callp->sy_argsize,
 							args.i);
 #endif
@@ -661,7 +661,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 #endif
 #ifdef KTRACE
 					if (KTRPOINT(p, KTR_SYSCALL))
-						ktrsyscall(p->p_tracep, code,
+						ktrsyscall(p, code,
 							callp->sy_argsize,
 							args.i);
 #endif
@@ -674,7 +674,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 #endif
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_SYSCALL))
-			ktrsyscall(p->p_tracep, code, callp->sy_argsize, args.i);
+			ktrsyscall(p, code, callp->sy_argsize, args.i);
 #endif
 		rval[0] = 0;
 		rval[1] = locr0[V1];
@@ -735,7 +735,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 #endif
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_SYSRET))
-			ktrsysret(p->p_tracep, code, i, rval[0]);
+			ktrsysret(p, code, i, rval[0]);
 #endif
 		goto out;
 	    }
