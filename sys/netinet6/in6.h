@@ -1,5 +1,5 @@
-/*	$OpenBSD: in6.h,v 1.20 2001/02/16 16:38:14 itojun Exp $	*/
-/*	$KAME: in6.h,v 1.77 2001/02/09 06:17:40 jinmei Exp $	*/
+/*	$OpenBSD: in6.h,v 1.21 2001/03/02 04:55:12 itojun Exp $	*/
+/*	$KAME: in6.h,v 1.81 2001/03/02 04:54:45 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -74,9 +74,11 @@
 
 /*
  * Identification of the network protocol stack
+ * for *BSD-current/release: http://www.kame.net/dev/cvsweb.cgi/kame/COVERAGE
+ * has the table of implementation/integration differences.
  */
 #define __KAME__
-#define __KAME_VERSION		"19991208/OpenBSD-current"
+#define __KAME_VERSION		"OpenBSD-current"
 
 /*
  * Local port number conventions:
