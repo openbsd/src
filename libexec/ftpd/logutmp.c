@@ -1,4 +1,4 @@
-/*	$OpenBSD: logutmp.c,v 1.2 1998/07/13 02:11:17 millert Exp $	*/
+/*	$OpenBSD: logutmp.c,v 1.3 1999/12/10 10:41:03 deraadt Exp $	*/
 /*
  * Portions Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -68,8 +68,8 @@ login(ut)
 		while (getttyent() != (struct ttyent *)NULL)
 			topslot++;
 	}
-	if ((topslot < 0) || ((fd < 0)
-	    && (fd = open(_PATH_UTMP, O_RDWR|O_CREAT, 0644)) < 0))
+	if ((topslot < 0) || ((fd < 0) &&
+	    (fd = open(_PATH_UTMP, O_RDWR|O_CREAT, 0644)) < 0))
 	    	return;
 
 	/*
@@ -107,8 +107,8 @@ logout(line)
 	(void)lseek(fd, 0, SEEK_SET);
 
 	while (read(fd, &ut, sizeof(UTMP)) == sizeof(UTMP)) {
-		if (!ut.ut_name[0]
-		    || strncmp(ut.ut_line, line, UT_LINESIZE))
+		if (!ut.ut_name[0] ||
+		    strncmp(ut.ut_line, line, UT_LINESIZE))
 			continue;
 		bzero(ut.ut_name, UT_NAMESIZE);
 		bzero(ut.ut_host, UT_HOSTSIZE);
