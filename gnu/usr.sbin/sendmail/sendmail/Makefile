@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.20 2003/03/09 00:14:19 millert Exp $
+#	$OpenBSD: Makefile,v 1.21 2003/03/10 21:08:44 millert Exp $
 
 PROG=	sendmail
 
@@ -61,8 +61,6 @@ beforeinstall:
 	fi
 	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g wheel -m 444 \
 	    ${.CURDIR}/helpfile ${DESTDIR}/etc/mail/helpfile
-	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g wheel -m 644 \
-	    /dev/null ${DESTDIR}/var/log/sendmail.st
 
 .include "../../Makefile.inc"
 .include <bsd.prog.mk>
