@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.26 1999/12/04 23:26:27 angelos Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.27 1999/12/06 21:58:39 angelos Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -608,7 +608,8 @@ main(int argc, char **argv)
 	if (!strcmp(argv[i] + 1, "local") && iscmd(mode, FLOW))
 	{
 	    fprintf(stderr,
-		    "%s: Warning: option local has been deprecated\n", argv[0]);
+		    "%s: Warning: option local has been deprecated\n",
+		    argv[0]);
 	    continue;
 	}
 
