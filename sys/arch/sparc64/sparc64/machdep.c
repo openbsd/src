@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.52 2002/10/29 18:30:21 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.53 2002/11/03 01:59:28 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -367,7 +367,7 @@ cpu_startup()
 	pmapdebug = opmapdebug;
 #endif
 	printf("avail memory = %ld\n", (long)uvmexp.free * PAGE_SIZE);
-	printf("using %d buffers containing %ld of memory\n", nbuf,
+	printf("using %d buffers containing %ld bytes of memory\n", nbuf,
 		(long)bufpages * PAGE_SIZE);
 
 	/*
