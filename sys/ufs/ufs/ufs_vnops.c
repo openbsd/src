@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.22 1998/12/05 16:58:26 csapuntz Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.23 1999/01/16 12:56:27 niklas Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -312,7 +312,7 @@ ufs_getattr(v)
 		vap->va_blocksize = MAXBSIZE;
 	else
 		vap->va_blocksize = vp->v_mount->mnt_stat.f_iosize;
-	vap->va_bytes = dbtob(ip->i_ffs_blocks);
+	vap->va_bytes = dbtob((u_quad_t)ip->i_ffs_blocks);
 	vap->va_type = vp->v_type;
 	vap->va_filerev = ip->i_modrev;
 	return (0);
