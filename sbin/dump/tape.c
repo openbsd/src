@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.9 1999/02/21 00:07:16 millert Exp $	*/
+/*	$OpenBSD: tape.c,v 1.10 1999/02/28 06:50:14 deraadt Exp $	*/
 /*	$NetBSD: tape.c,v 1.11 1997/06/05 11:13:26 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.2 (Berkeley) 3/17/94";
 #else
-static char rcsid[] = "$OpenBSD: tape.c,v 1.9 1999/02/21 00:07:16 millert Exp $";
+static char rcsid[] = "$OpenBSD: tape.c,v 1.10 1999/02/28 06:50:14 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -794,8 +794,10 @@ killall()
 	register int i;
 
 	for (i = 0; i < SLAVES; i++)
-		if (slaves[i].pid > 0)
+		if (slaves[i].pid > 0) {
 			(void) kill(slaves[i].pid, SIGKILL);
+			slaves[i].pid = 0;
+		}
 }
 
 /*
