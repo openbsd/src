@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.45 2004/07/19 20:32:47 miod Exp $	*/
+/*	$OpenBSD: vs.c,v 1.46 2004/07/19 20:34:59 miod Exp $	*/
 
 /*
  * Copyright (c) 2004, Miodrag Vallat.
@@ -382,9 +382,9 @@ vs_scsicmd(struct scsi_xfer *xs)
 	vs_write(4, cqep + CQE_CTAG, (u_int32_t)m328_cmd);
 
 	if (crb_read(2, CRB_CRSW) & M_CRSW_AQ)
-		vs_write(2, cqep + CQE_QECR, M_QECR_AA);
-
-	vs_write(2, cqep + CQE_QECR, vs_read(2, cqep + CQE_QECR) | M_QECR_GO);
+		vs_write(2, cqep + CQE_QECR, M_QECR_AA | M_QECR_GO);
+	else
+		vs_write(2, cqep + CQE_QECR, M_QECR_GO);
 
 	if (flags & SCSI_POLL) {
 		/* poll for the command to complete */
