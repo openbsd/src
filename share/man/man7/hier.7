@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hier.7,v 1.41 2003/06/27 21:26:20 david Exp $
+.\"	$OpenBSD: hier.7,v 1.42 2003/10/01 08:13:46 jmc Exp $
 .\"	$NetBSD: hier.7,v 1.7 1994/11/30 19:07:10 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -66,6 +66,8 @@ File descriptor files (see
 .It /emul/
 Base directory for alternate areas searched first when system call
 emulation is in effect (see
+.Xr sysctl 8
+and the system compat pages:
 .Xr compat_bsdos 8 ,
 .Xr compat_freebsd 8 ,
 .Xr compat_hpux 8 ,
@@ -74,6 +76,7 @@ emulation is in effect (see
 .Xr compat_osf1 8 ,
 .Xr compat_sunos 8 ,
 .Xr compat_svr4 8 ,
+and
 .Xr compat_ultrix 8 ) .
 .It /etc/
 System configuration files and scripts.
@@ -582,7 +585,9 @@ files.
 .It db/
 Miscellaneous, automatically generated system-specific database files.
 .It empty/
-Generic chroot directory.
+Generic
+.Xr chroot 2
+directory.
 .It games/
 Miscellaneous game status and log files.
 .It log/
