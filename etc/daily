@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: daily,v 1.35 2001/03/06 20:29:48 niklas Exp $
+#	$OpenBSD: daily,v 1.36 2001/09/09 01:07:31 deraadt Exp $
 #	From: @(#)daily	8.2 (Berkeley) 1/25/94
 #
 PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin
@@ -128,12 +128,6 @@ fi
 
 # Rotation of mail log now handled automatically by cron and 'newsyslog'
 
-if [ -d /var/spool/uucp -a -f /etc/uuclean.daily ]; then
-	echo ""
-	echo "Cleaning up UUCP:"
-	echo /etc/uuclean.daily | su daemon
-fi
-
 echo ""
 echo "Checking subsystem status:"
 echo ""
@@ -148,15 +142,6 @@ if ! grep -q "^/var/spool/mqueue is empty$" $TMP; then
 	echo ""
 	echo "mail:"
 	cat $TMP
-fi
-
-if [ -d /var/spool/uucp ]; then
-	uustat -a > $TMP
-	if [ -s $TMP ]; then
-		echo ""
-		echo "uucp:"
-		cat $TMP
-	fi
 fi
 
 echo ""
