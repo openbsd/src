@@ -1,3 +1,5 @@
+/*	$OpenBSD: probe.c,v 1.2 1999/12/09 15:10:49 itojun Exp $	*/
+
 /*
  * Copyright (C) 1998 WIDE Project.
  * All rights reserved.
