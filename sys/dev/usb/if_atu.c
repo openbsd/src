@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.6 2004/11/11 00:08:29 deraadt Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.7 2004/11/11 00:35:00 deraadt Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -753,37 +753,6 @@ atu_send_packet(struct atu_softc *sc, struct atu_chain *c)
 		return(EIO);
 
 	pkt = (struct atu_txpkt *)c->atu_buf;
-	if (pkt->WiHeader.addr1[0]==0xff) {
-		printf("lal :)\n");
-
-		/* memcpy(pkt->WiHeader.addr1, sc->atu_bssid, 6); */
-		/*
-		pkt->WiHeader.addr1[0]=0xe3;
-		pkt->WiHeader.addr1[1]=0x13;
-		pkt->WiHeader.addr1[2]=0x41;
-		pkt->WiHeader.addr1[3]=0x25;
-		pkt->WiHeader.addr1[4]=0x61;
-		pkt->WiHeader.addr1[5]=0xe3;
-		*/
-
-		/*
-		pkt->WiHeader.addr1[0]=0x00;
-		pkt->WiHeader.addr1[1]=0x04;
-		pkt->WiHeader.addr1[2]=0xe2;
-		pkt->WiHeader.addr1[3]=0xa9;
-		pkt->WiHeader.addr1[4]=0xf5;
-		pkt->WiHeader.addr1[5]=0x28;
-		*/
-
-		/*
-		pkt->WiHeader.addr1[0]=0x0;
-		pkt->WiHeader.addr1[1]=0x0;
-		pkt->WiHeader.addr1[2]=0x0;
-		pkt->WiHeader.addr1[3]=0x0;
-		pkt->WiHeader.addr1[4]=0x0;
-		pkt->WiHeader.addr1[5]=0x0;
-		*/
-	}
 
 #ifdef ATU_NO_COPY_TX
 	usbd_setup_xfer(c->atu_xfer, sc->atu_ep[ATU_ENDPT_TX],
@@ -818,9 +787,6 @@ atu_send_mgmt_packet(struct atu_softc *sc, struct atu_chain *c,
 	packet->athdr.tx_rate = 4;
 	packet->athdr.padding = 0;
 	memset(packet->athdr.reserved, 0x00, 4);
-
-	/* DAAN Daan daan */
-	packet->athdr.tx_rate = 0;
 
 	packet->mgmt_hdr.duration = 0x8000;
 	memcpy(packet->mgmt_hdr.dst_addr, sc->atu_bssid, ETHER_ADDR_LEN);
@@ -2621,9 +2587,7 @@ atu_encap(struct atu_softc *sc, struct mbuf *m, struct atu_chain *c)
 
 	pkt = (struct atu_txpkt *)c->atu_buf;
 	pkt->AtHeader.wlength = total_len;
-	/*pkt->AtHeader.tx_rate = 4;			 rate = auto */
-	/* DAAN Daan daan !!! */
-	pkt->AtHeader.tx_rate = 0;
+	pkt->AtHeader.tx_rate = 4;			 /* rate = auto */
 	pkt->AtHeader.padding = 0;
 	memset(pkt->AtHeader.reserved, 0x00, 4);
 
