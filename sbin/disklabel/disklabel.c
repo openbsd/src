@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.65 1999/07/14 23:16:26 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.66 1999/08/13 02:06:58 deraadt Exp $	*/
 /*	$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: disklabel.c,v 1.65 1999/07/14 23:16:26 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: disklabel.c,v 1.66 1999/08/13 02:06:58 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1112,9 +1112,9 @@ display(f, lp)
 	fprintf(f, "interleave: %ld\n", (long)lp->d_interleave);
 	fprintf(f, "trackskew: %ld\n", (long)lp->d_trackskew);
 	fprintf(f, "cylinderskew: %ld\n", (long)lp->d_cylskew);
-	fprintf(f, "headswitch: %ld\t\t# milliseconds\n",
+	fprintf(f, "headswitch: %ld\t\t# microseconds\n",
 	    (long)lp->d_headswitch);
-	fprintf(f, "track-to-track seek: %ld\t# milliseconds\n",
+	fprintf(f, "track-to-track seek: %ld\t# microseconds\n",
 	    (long)lp->d_trkseek);
 	fprintf(f, "drivedata: ");
 	for (i = NDDATA - 1; i >= 0; i--)
