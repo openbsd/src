@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_cancel.c,v 1.9 2001/12/19 02:02:52 fgsch Exp $	*/
+/*	$OpenBSD: uthread_cancel.c,v 1.10 2001/12/20 07:50:08 fgsch Exp $	*/
 /*
  * David Leonard <d@openbsd.org>, 1999. Public domain.
  */
@@ -61,13 +61,11 @@ pthread_cancel(pthread)
 
 			case PS_JOIN:
 				/*
-				 * Disconnect the thread from the joinee and
-				 * detach:
+				 * Disconnect the thread from the joinee:
 				 */
-				if (pthread->data.thread != NULL) {
-					pthread->data.thread->joiner = NULL;
-					pthread_detach((pthread_t)
-					    pthread->data.thread);
+				if (pthread->join_status.thread != NULL) {
+					pthread->join_status.thread->joiner
+					    = NULL;
 				}
 				pthread->cancelflags |= PTHREAD_CANCELLING;
 				PTHREAD_NEW_STATE(pthread, PS_RUNNING);
