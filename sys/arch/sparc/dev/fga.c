@@ -1,4 +1,4 @@
-/*	$OpenBSD: fga.c,v 1.2 1999/07/25 23:49:37 jason Exp $	*/
+/*	$OpenBSD: fga.c,v 1.3 1999/08/29 07:01:31 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -150,7 +150,7 @@ fgaattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct confargs *ca = aux, oca[FVME_MAX_RANGES];
+	struct confargs *ca = aux, oca;
 	struct fga_softc *sc = (struct fga_softc *)self;
 	char *s;
 	int i, rlen;
@@ -209,17 +209,17 @@ fgaattach(parent, self, aux)
 	 * Map and attach vme<->sbus master ranges
 	 */
 	fga_vmerangemap(sc, 0xf0000000, 0x10000000,
-	    VME_MASTER_CAP_D32 | VME_MASTER_CAP_A32, 1, 0, oca);
+	    VME_MASTER_CAP_D32 | VME_MASTER_CAP_A32, 1, 0, &oca);
 	fga_vmerangemap(sc, 0xf0000000, 0x10000000,
-	    VME_MASTER_CAP_D16 | VME_MASTER_CAP_A32, 4, 0, oca);
+	    VME_MASTER_CAP_D16 | VME_MASTER_CAP_A32, 4, 0, &oca);
 	fga_vmerangemap(sc, 0x00000000, 0x01000000,
-	    VME_MASTER_CAP_D16 | VME_MASTER_CAP_A24, 5, 0xe000000, oca);
+	    VME_MASTER_CAP_D16 | VME_MASTER_CAP_A24, 5, 0xe000000, &oca);
 	fga_vmerangemap(sc, 0x00000000, 0x00010000,
-	    VME_MASTER_CAP_D8 | VME_MASTER_CAP_A16, 5, 0x0ffc0000, oca);
+	    VME_MASTER_CAP_D8 | VME_MASTER_CAP_A16, 5, 0x0ffc0000, &oca);
 	fga_vmerangemap(sc, 0x00000000, 0x00010000,
-	    VME_MASTER_CAP_D16 | VME_MASTER_CAP_A16, 5, 0x0ffd0000, oca);
+	    VME_MASTER_CAP_D16 | VME_MASTER_CAP_A16, 5, 0x0ffd0000, &oca);
 	fga_vmerangemap(sc, 0x00000000, 0x00010000,
-	    VME_MASTER_CAP_D32 | VME_MASTER_CAP_A16, 5, 0x0ffe0000, oca);
+	    VME_MASTER_CAP_D32 | VME_MASTER_CAP_A16, 5, 0x0ffe0000, &oca);
 
 #ifdef DDB
 	s = getpropstring(optionsnode, "abort-ena?");
@@ -278,18 +278,19 @@ fga_vmerangemap(sc, vmebase, vmelen, vmecap, sbusslot, sbusoffset, oca)
 	if (srange == sc->sc_nrange)
 		return (-1);
 
-	oca[range].ca_bustype = BUS_FGA;
-	oca[range].ca_slot = sbusslot;
-	oca[range].ca_offset = sc->sc_range[srange].poffset | sbusoffset;
-	oca[range].ca_ra.ra_name = "fvme";
-	oca[range].ca_ra.ra_nreg = 2;
-	oca[range].ca_ra.ra_reg[0].rr_len = vmelen;
-	oca[range].ca_ra.ra_reg[0].rr_paddr =
+	bzero(oca, sizeof(*oca));
+	oca->ca_bustype = BUS_FGA;
+	oca->ca_slot = sbusslot;
+	oca->ca_offset = sc->sc_range[srange].poffset | sbusoffset;
+	oca->ca_ra.ra_name = "fvme";
+	oca->ca_ra.ra_nreg = 2;
+	oca->ca_ra.ra_reg[0].rr_len = vmelen;
+	oca->ca_ra.ra_reg[0].rr_paddr =
 	    (void *)(sc->sc_range[srange].poffset | sbusoffset);
-	oca[range].ca_ra.ra_reg[0].rr_iospace = sbusslot;
-	oca[range].ca_ra.ra_reg[1].rr_iospace = vmecap;
-	oca[range].ca_ra.ra_reg[1].rr_paddr = (void*)vmebase;
-	oca[range].ca_ra.ra_reg[1].rr_len = vmelen;
+	oca->ca_ra.ra_reg[0].rr_iospace = sbusslot;
+	oca->ca_ra.ra_reg[1].rr_iospace = vmecap;
+	oca->ca_ra.ra_reg[1].rr_paddr = (void*)vmebase;
+	oca->ca_ra.ra_reg[1].rr_len = vmelen;
 
 	/* 1. Setup slot select register for this range. */
 	switch (sbusslot) {
@@ -335,7 +336,7 @@ fga_vmerangemap(sc, vmebase, vmelen, vmecap, sbusslot, sbusoffset, oca)
 	    ~(VME_MASTER_CAP_DATA | VME_MASTER_CAP_ADDR);
 	regs->vme_master_cap[range] |= vmecap;
 
-	(void)config_found(&sc->sc_dev, (void *)&oca[range], fgaprint);
+	(void)config_found(&sc->sc_dev, oca, fgaprint);
 
 	return (0);
 }
