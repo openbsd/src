@@ -1,8 +1,12 @@
 OpenBSD/MACHINE OSREV will run on most HP 9000/300- and 400-series
 machines.
-The lowest amount of RAM that has ever been tested is 7.5M, though it
-may run with less. A GENERIC kernel won't run in 4M, while a custom
-kernel can fit.  However, if you wish to run X, more RAM is recommended.
+6MB of RAM should be sufficient to boot and a minimal system can probably
+be squeezed onto a 100MB partition by installing just the minimum sets.
+To actually do much compiling or anything more interesting than
+booting, more RAM and disk space is highly recommended. About 250MB will be
+necessary to install all of the OpenBSD OSREV binary distribution (note that
+this does not count swap space!).  Much more disk space is required to
+install the source and objects as well (about another 600MB).
 
 The following HP hardware is supported:
 
