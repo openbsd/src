@@ -1,4 +1,4 @@
-/*	$OpenBSD: __eabi.c,v 1.2 1996/12/28 06:17:49 rahnds Exp $	*/
+/*	$OpenBSD: __eabi.c,v 1.3 2001/07/09 03:58:50 mickey Exp $	*/
 /*	$NetBSD: __main.c,v 1.3 1994/10/26 06:42:13 cgd Exp $	*/
 
 /*
@@ -30,6 +30,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+
+void __eabi __P((void));
 
 void
 __eabi()
