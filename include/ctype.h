@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctype.h,v 1.16 2004/01/15 20:01:27 millert Exp $	*/
+/*	$OpenBSD: ctype.h,v 1.17 2004/04/02 22:37:12 avsm Exp $	*/
 /*	$NetBSD: ctype.h,v 1.14 1994/10/26 00:55:47 cgd Exp $	*/
 
 /*
@@ -60,7 +60,7 @@ extern const short	*_toupper_tab_;
 #ifdef __GNUC__
 #define	__CTYPE_INLINE	extern __inline
 #else
-#define	__CTYPE_INLINE	static inline
+#define	__CTYPE_INLINE	static __inline
 #endif
 
 #if defined(__GNUC__) || defined(_ANSI_LIBRARY) || defined(lint)
