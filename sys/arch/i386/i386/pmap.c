@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.66 2003/04/07 06:14:30 niklas Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.67 2003/04/09 12:11:15 niklas Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -3196,12 +3196,6 @@ pmap_growkernel(maxkvaddr)
 			kpm->pm_stats.resident_count++;
 			continue;
 		}
-
-		/*
-		 * THIS *MUST* BE CODED SO AS TO WORK IN THE
-		 * pmap_initialized == FALSE CASE!  WE MAY BE
-		 * INVOKED WHILE pmap_init() IS RUNNING!
-		 */
 
 		/*
 		 * THIS *MUST* BE CODED SO AS TO WORK IN THE
