@@ -1,4 +1,4 @@
-/*	$OpenBSD: fish.c,v 1.3 1998/08/22 09:11:31 pjanzen Exp $	*/
+/*	$OpenBSD: fish.c,v 1.4 1999/03/26 03:16:10 pjanzen Exp $	*/
 /*	$NetBSD: fish.c,v 1.3 1995/03/23 08:28:18 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)fish.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: fish.c,v 1.3 1998/08/22 09:11:31 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: fish.c,v 1.4 1999/03/26 03:16:10 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -164,7 +164,7 @@ usermove()
 	for (;;) {
 		(void)printf("You ask me for: ");
 		(void)fflush(stdout);
-		if (fgets(buf, BUFSIZ, stdin) == NULL)
+		if (fgets(buf, sizeof(buf), stdin) == NULL)
 			exit(0);
 		if (buf[0] == '\0')
 			continue;
