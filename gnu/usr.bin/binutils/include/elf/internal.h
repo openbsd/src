@@ -214,6 +214,13 @@ typedef struct
   unsigned short int	si_flags;
 } Elf_Internal_Syminfo;
 
+/* This structure appears on the stack and in NT_AUXV core file notes.  */
+typedef struct
+{
+  bfd_vma a_type;
+  bfd_vma a_val;
+} Elf_Internal_Auxv;
+
 
 /* This structure is used to describe how sections should be assigned
    to program segments.  */

@@ -1,4 +1,4 @@
-@c Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 2000
+@c Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 2000, 2003
 @c Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
@@ -165,6 +165,15 @@ Assemble for the 68060.
 Assemble for the CPU32 family of chips.
 
 @item -m5200
+@item -m5202
+@item -m5204
+@item -m5206
+@item -m5206e
+@item -m528x
+@item -m5307
+@item -m5407
+@item -mcfv4
+@item -mcfv4e
 Assemble for the ColdFire family of chips.
 
 @item -m68881

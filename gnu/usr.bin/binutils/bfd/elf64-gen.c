@@ -1,5 +1,6 @@
 /* Generic support for 64-bit ELF
-   Copyright 1993, 1995, 1998, 1999, 2001, 2002 Free Software Foundation, Inc.
+   Copyright 1993, 1995, 1998, 1999, 2001, 2002, 2004
+   Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
 
@@ -87,7 +88,7 @@ elf64_generic_link_add_symbols (abfd, info)
 	return FALSE;
       }
 
-  return bfd_elf64_bfd_link_add_symbols (abfd, info);
+  return bfd_elf_link_add_symbols (abfd, info);
 }
 
 #define TARGET_LITTLE_SYM		bfd_elf64_little_generic_vec

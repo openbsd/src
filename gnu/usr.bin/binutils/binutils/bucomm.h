@@ -148,67 +148,50 @@ void *alloca ();
 #endif
 
 /* bucomm.c */
-void bfd_nonfatal
-  PARAMS ((const char *));
+void bfd_nonfatal (const char *);
 
-void bfd_fatal
-  PARAMS ((const char *)) ATTRIBUTE_NORETURN;
+void bfd_fatal (const char *) ATTRIBUTE_NORETURN;
 
-void report
-  PARAMS ((const char *, va_list));
+void report (const char *, va_list);
 
-void fatal
-  PARAMS ((const char *, ...)) ATTRIBUTE_PRINTF_1 ATTRIBUTE_NORETURN;
+void fatal (const char *, ...) ATTRIBUTE_PRINTF_1 ATTRIBUTE_NORETURN;
 
-void non_fatal
-  PARAMS ((const char *, ...)) ATTRIBUTE_PRINTF_1;
+void non_fatal (const char *, ...) ATTRIBUTE_PRINTF_1;
 
-void set_default_bfd_target
-  PARAMS ((void));
+void set_default_bfd_target (void);
 
-void list_matching_formats
-  PARAMS ((char **));
+void list_matching_formats (char **);
 
-void list_supported_targets
-  PARAMS ((const char *, FILE *));
+void list_supported_targets (const char *, FILE *);
 
-void list_supported_architectures
-  PARAMS ((const char *, FILE *));
+void list_supported_architectures (const char *, FILE *);
 
-int display_info
-  PARAMS ((void));
-  
-void print_arelt_descr
-  PARAMS ((FILE *, bfd *, bfd_boolean));
+int display_info (void);
 
-char *make_tempname
-  PARAMS ((char *, int));
+void print_arelt_descr (FILE *, bfd *, bfd_boolean);
 
-bfd_vma parse_vma
-  PARAMS ((const char *, const char *));
+char *make_tempname (char *, int);
+
+bfd_vma parse_vma (const char *, const char *);
+
+off_t get_file_size (const char *);
 
 extern char *program_name;
 
 /* filemode.c */
-void mode_string
-  PARAMS ((unsigned long, char *));
+void mode_string (unsigned long, char *);
 
 /* version.c */
-extern void print_version
-  PARAMS ((const char *));
+extern void print_version (const char *);
 
 /* rename.c */
-extern void set_times
-  PARAMS ((const char *, const struct stat *));
+extern void set_times (const char *, const struct stat *);
 
-extern int smart_rename
-  PARAMS ((const char *, const char *, int));
+extern int smart_rename (const char *, const char *, int);
 
 /* libiberty.  */
-PTR xmalloc
-  PARAMS ((size_t));
+void *xmalloc (size_t);
 
-PTR xrealloc
-  PARAMS ((PTR, size_t));
+void *xrealloc (void *, size_t);
 
 #endif /* _BUCOMM_H */

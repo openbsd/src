@@ -11,6 +11,7 @@ NONPAGED_TEXT_START_ADDR="0x120000000"
 ARCH=alpha
 MACHINE=
 GENERATE_SHLIB_SCRIPT=yes
+GENERATE_PIE_SCRIPT=yes
 DATA_PLT=
 # Note that the number is always big-endian, thus we have to 
 # reverse the digit string.

@@ -77,7 +77,7 @@ CC = @CC@
 CXX = @CXX@
 CXXCPP = @CXXCPP@
 DATADIRNAME = @DATADIRNAME@
-DEMANGLER_NAME = @DEMANGLER_NAME@
+#DEMANGLER_NAME = @DEMANGLER_NAME@
 DLLTOOL = @DLLTOOL@
 DLLTOOL_DEFS = @DLLTOOL_DEFS@
 EMULATION = @EMULATION@
@@ -153,7 +153,7 @@ OBJDUMP_PROG = objdump
 
 # This is the demangler, as a standalone program.
 # Note: This one is used as the installed name too, unlike the above.
-#DEMANGLER_PROG=cxxfilt
+#DEMANGLER_PROG = cxxfilt
 
 ADDR2LINE_PROG = addr2line
 
@@ -182,18 +182,38 @@ INCDIR = $(BASEDIR)/include
 
 MKDEP = gcc -MM
 
-INCLUDES = -D_GNU_SOURCE 	 -I. -I$(srcdir) -I../bfd -I$(BFDDIR) -I$(INCDIR) 	 @HDEFINES@ 	 -I$(srcdir)/../intl -I../intl 	 -DLOCALEDIR="\"$(prefix)/share/locale\"" 	 -Dbin_dummy_emulation=$(EMULATION_VECTOR)
+INCLUDES = -D_GNU_SOURCE \
+	 -I. -I$(srcdir) -I../bfd -I$(BFDDIR) -I$(INCDIR) \
+	 @HDEFINES@ \
+	 -I$(srcdir)/../intl -I../intl \
+	 -DLOCALEDIR="\"$(prefix)/share/locale\"" \
+	 -Dbin_dummy_emulation=$(EMULATION_VECTOR)
 
 
-HFILES =  	arsup.h binemul.h bucomm.h budbg.h budemang.h 	coffgrok.h debug.h dlltool.h nlmconv.h 	windres.h winduni.h
+HFILES = \
+	arsup.h binemul.h bucomm.h budbg.h budemang.h \
+	coffgrok.h debug.h dlltool.h nlmconv.h \
+	windres.h winduni.h
 
 
 GENERATED_HFILES = arparse.h sysroff.h sysinfo.h defparse.h rcparse.h
 
-CFILES =  	addr2line.c ar.c arsup.c binemul.c bucomm.c budemang.c 	coffdump.c coffgrok.c cxxfilt.c debug.c dlltool.c dllwrap.c 	emul_aix.c emul_vanilla.c filemode.c 	ieee.c is-ranlib.c is-strip.c maybe-ranlib.c maybe-strip.c 	nlmconv.c nm.c not-ranlib.c not-strip.c 	objcopy.c objdump.c prdbg.c 	rdcoff.c rddbg.c readelf.c rename.c 	resbin.c rescoff.c resrc.c resres.c 	size.c srconv.c stabs.c strings.c sysdump.c version.c 	windres.c winduni.c wrstabs.c
+CFILES = \
+	addr2line.c ar.c arsup.c binemul.c bucomm.c budemang.c \
+	coffdump.c coffgrok.c cxxfilt.c debug.c dlltool.c dllwrap.c \
+	emul_aix.c emul_vanilla.c filemode.c \
+	ieee.c is-ranlib.c is-strip.c maybe-ranlib.c maybe-strip.c \
+	nlmconv.c nm.c not-ranlib.c not-strip.c \
+	objcopy.c objdump.c prdbg.c \
+	rdcoff.c rddbg.c readelf.c rename.c \
+	resbin.c rescoff.c resrc.c resres.c \
+	size.c srconv.c stabs.c strings.c sysdump.c version.c \
+	windres.c winduni.c wrstabs.c
 
 
-GENERATED_CFILES =  	arparse.c arlex.c sysroff.c sysinfo.c syslex.c 	defparse.c deflex.c nlmheader.c rcparse.c rclex.c
+GENERATED_CFILES = \
+	arparse.c arlex.c sysroff.c sysinfo.c syslex.c \
+	defparse.c deflex.c nlmheader.c rcparse.c rclex.c
 
 
 DEBUG_SRCS = rddbg.c debug.c stabs.c ieee.c rdcoff.c
@@ -210,12 +230,29 @@ LIBIBERTY = -liberty
 
 POTFILES = $(CFILES) $(DEBUG_SRCS) $(HFILES)
 
-EXPECT = `if [ -f $$r/../expect/expect ] ; then           echo $$r/../expect/expect ;           else echo expect ; fi`
+EXPECT = `if [ -f $$r/../expect/expect ] ; then \
+          echo $$r/../expect/expect ; \
+          else echo expect ; fi`
 
-RUNTEST = `if [ -f ${srcdir}/../dejagnu/runtest ] ; then            echo ${srcdir}/../dejagnu/runtest ;            else echo runtest ;  fi`
+RUNTEST = `if [ -f ${srcdir}/../dejagnu/runtest ] ; then \
+           echo ${srcdir}/../dejagnu/runtest ; \
+           else echo runtest ;  fi`
 
 
-CC_FOR_TARGET = `   if [ -f $$r/../gcc/xgcc ] ; then     if [ -f $$r/../newlib/Makefile ] ; then       echo $$r/../gcc/xgcc -B$$r/../gcc/ -idirafter $$r/../newlib/targ-include -idirafter $${srcroot}/../newlib/libc/include -nostdinc;     else       echo $$r/../gcc/xgcc -B$$r/../gcc/;     fi;   else     if [ "@host@" = "@target@" ] ; then       echo $(CC);     else       echo gcc | sed '$(transform)';     fi;   fi`
+CC_FOR_TARGET = ` \
+  if [ -f $$r/../gcc/xgcc ] ; then \
+    if [ -f $$r/../newlib/Makefile ] ; then \
+      echo $$r/../gcc/xgcc -B$$r/../gcc/ -idirafter $$r/../newlib/targ-include -idirafter $${srcroot}/../newlib/libc/include -nostdinc; \
+    else \
+      echo $$r/../gcc/xgcc -B$$r/../gcc/; \
+    fi; \
+  else \
+    if [ "@host@" = "@target@" ] ; then \
+      echo $(CC); \
+    else \
+      echo gcc | sed '$(transform)'; \
+    fi; \
+  fi`
 
 
 LDADD = $(BFDLIB) $(LIBIBERTY) $(INTLLIBS)
@@ -238,11 +275,13 @@ objdump_LDADD = $(OPCODES) $(BFDLIB) $(LIBIBERTY) $(INTLLIBS)
 
 #cxxfilt_SOURCES = cxxfilt.c $(BULIBS)
 
-ar_SOURCES = arparse.y arlex.l ar.c not-ranlib.c arsup.c rename.c binemul.c 	emul_$(EMULATION).c $(BULIBS)
+ar_SOURCES = arparse.y arlex.l ar.c not-ranlib.c arsup.c rename.c binemul.c \
+	emul_$(EMULATION).c $(BULIBS)
 
 ar_LDADD = $(BFDLIB) $(LIBIBERTY) @LEXLIB@ $(INTLLIBS)
 
-ranlib_SOURCES = ar.c is-ranlib.c arparse.y arlex.l arsup.c rename.c 	binemul.c emul_$(EMULATION).c $(BULIBS)
+ranlib_SOURCES = ar.c is-ranlib.c arparse.y arlex.l arsup.c rename.c \
+	binemul.c emul_$(EMULATION).c $(BULIBS)
 
 ranlib_LDADD = $(BFDLIB) $(LIBIBERTY) @LEXLIB@ $(INTLLIBS)
 
@@ -259,17 +298,20 @@ sysdump_SOURCES = sysdump.c $(BULIBS)
 
 nlmconv_SOURCES = nlmconv.c nlmheader.y $(BULIBS)
 
-windres_SOURCES = windres.c resrc.c rescoff.c resbin.c rcparse.y rclex.l 	winduni.c resres.c $(BULIBS)
+windres_SOURCES = windres.c resrc.c rescoff.c resbin.c rcparse.y rclex.l \
+	winduni.c resres.c $(BULIBS)
 
 windres_LDADD = $(BFDLIB) $(LIBIBERTY) @LEXLIB@ $(INTLLIBS)
 
 dllwrap_SOURCES = dllwrap.c version.c
 dllwrap_LDADD = $(LIBIBERTY) $(INTLLIBS)
 
-EXTRA_DIST = arparse.c arparse.h arlex.c nlmheader.c sysinfo.c sysinfo.h 	syslex.c deflex.c defparse.h defparse.c rclex.c rcparse.h rcparse.c
+EXTRA_DIST = arparse.c arparse.h arlex.c nlmheader.c sysinfo.c sysinfo.h \
+	syslex.c deflex.c defparse.h defparse.c rclex.c rcparse.h rcparse.c
 
 
-DISTCLEANFILES = sysinfo sysroff.c sysroff.h 	site.exp site.bak
+DISTCLEANFILES = sysinfo sysroff.c sysroff.h \
+	site.exp site.bak
 
 
 ###
@@ -285,6 +327,7 @@ bin_PROGRAMS =  objdump$(EXEEXT) ar$(EXEEXT) \
 strings$(EXEEXT) ranlib$(EXEEXT) objcopy$(EXEEXT) @BUILD_NLMCONV@ \
 @BUILD_SRCONV@ @BUILD_DLLTOOL@ @BUILD_WINDRES@ addr2line$(EXEEXT) \
 readelf$(EXEEXT) @BUILD_DLLWRAP@ @BUILD_MISC@
+#noinst_PROGRAMS =  strip-new$(EXEEXT) cxxfilt$(EXEEXT)
 noinst_PROGRAMS =  strip-new$(EXEEXT)
 PROGRAMS =  $(bin_PROGRAMS) $(noinst_PROGRAMS)
 
@@ -591,6 +634,7 @@ nm-new$(EXEEXT): $(nm_new_OBJECTS) $(nm_new_DEPENDENCIES)
 strip-new$(EXEEXT): $(strip_new_OBJECTS) $(strip_new_DEPENDENCIES)
 	@rm -f strip-new$(EXEEXT)
 	$(LINK) $(strip_new_LDFLAGS) $(strip_new_OBJECTS) $(strip_new_LDADD) $(LIBS)
+
 .l.c:
 	$(SHELL) $(YLWRAP) "$(LEX)" $< $(LEX_OUTPUT_ROOT).c $@ -- $(AM_LFLAGS) $(LFLAGS)
 .y.c:
@@ -820,7 +864,7 @@ distclean-generic:
 	-test -z "$(DISTCLEANFILES)" || rm -f $(DISTCLEANFILES)
 
 maintainer-clean-generic:
-	-test -z "arlexcdeflexcrclexcarparseharparsecdefparsehdefparsecnlmheaderhnlmheadercrcparsehrcparsec" || rm -f arlexc deflexc rclexc arparseh arparsec defparseh defparsec nlmheaderh nlmheaderc rcparseh rcparsec
+	-test -z "arlex.cdeflex.crclex.carparse.harparse.cdefparse.hdefparse.cnlmheader.hnlmheader.crcparse.hrcparse.c" || rm -f arlex.c deflex.c rclex.c arparse.h arparse.c defparse.h defparse.c nlmheader.h nlmheader.c rcparse.h rcparse.c
 mostlyclean-am:  mostlyclean-hdr mostlyclean-binPROGRAMS \
 		mostlyclean-noinstPROGRAMS mostlyclean-compile \
 		mostlyclean-libtool mostlyclean-tags \
@@ -876,7 +920,7 @@ installdirs mostlyclean-generic distclean-generic clean-generic \
 maintainer-clean-generic clean mostlyclean distclean maintainer-clean
 
 po/POTFILES.in: @MAINT@ Makefile
-	for file in $(POTFILES); do echo $$file; done | sort > tmp \
+	for f in $(POTFILES); do echo $$f; done | LC_COLLATE= sort > tmp \
 	  && mv tmp $(srcdir)/po/POTFILES.in
 
 check-DEJAGNU: site.exp
@@ -1028,7 +1072,7 @@ install-exec-local: install-binPROGRAMS $(bin_PROGRAMS) $(noinst_PROGRAMS)
 	  if [ -f $$i$(EXEEXT) ]; then \
 	    j=`echo $$i | sed -e 's/-new//'`; \
 	    k=`echo $$j | sed '$(transform)'`; \
-	    if [ "$(DESTDIR)$(bindir)/$$k$(EXEEXT)" != "$(DESTDIR)$(tooldir)/bin/$$j$(EXEEXT)" ]; then \
+	    if [ "$(bindir)/$$k" != "$(tooldir)/bin/$$j" ]; then \
 	      rm -f $(DESTDIR)$(tooldir)/bin/$$j$(EXEEXT); \
 	      ln $(DESTDIR)$(bindir)/$$k$(EXEEXT) $(DESTDIR)$(tooldir)/bin/$$j$(EXEEXT) >/dev/null 2>/dev/null \
 		|| $(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $$i$(EXEEXT) $(DESTDIR)$(tooldir)/bin/$$j$(EXEEXT); \
@@ -1058,9 +1102,9 @@ binemul.o: binemul.c binemul.h ../bfd/bfd.h $(INCDIR)/ansidecl.h \
   $(INCDIR)/symcat.h bucomm.h config.h $(INCDIR)/bin-bugs.h \
   $(INCDIR)/fopen-same.h
 bucomm.o: bucomm.c ../bfd/bfd.h $(INCDIR)/ansidecl.h \
-  $(INCDIR)/symcat.h $(INCDIR)/libiberty.h bucomm.h config.h \
-  $(INCDIR)/bin-bugs.h $(INCDIR)/fopen-same.h $(INCDIR)/filenames.h \
-  ../bfd/bfdver.h $(BFDDIR)/libbfd.h
+  $(INCDIR)/symcat.h ../bfd/bfdver.h $(INCDIR)/libiberty.h \
+  bucomm.h config.h $(INCDIR)/bin-bugs.h $(INCDIR)/fopen-same.h \
+  $(INCDIR)/filenames.h $(BFDDIR)/libbfd.h
 budemang.o: budemang.c config.h ../bfd/bfd.h $(INCDIR)/ansidecl.h \
   $(INCDIR)/symcat.h $(INCDIR)/libiberty.h $(INCDIR)/demangle.h \
   budemang.h
@@ -1118,7 +1162,7 @@ not-strip.o: not-strip.c
 objcopy.o: objcopy.c ../bfd/bfd.h $(INCDIR)/ansidecl.h \
   $(INCDIR)/symcat.h $(INCDIR)/progress.h bucomm.h config.h \
   $(INCDIR)/bin-bugs.h $(INCDIR)/fopen-same.h $(INCDIR)/libiberty.h \
-  budbg.h $(INCDIR)/filenames.h
+  budbg.h $(INCDIR)/filenames.h $(INCDIR)/fnmatch.h
 objdump.o: objdump.c ../bfd/bfd.h $(INCDIR)/ansidecl.h \
   $(INCDIR)/symcat.h ../bfd/bfdver.h $(INCDIR)/progress.h \
   bucomm.h config.h $(INCDIR)/bin-bugs.h $(INCDIR)/fopen-same.h \
@@ -1154,8 +1198,9 @@ readelf.o: readelf.c ../bfd/bfd.h $(INCDIR)/ansidecl.h \
   $(INCDIR)/elf/ppc64.h $(INCDIR)/elf/s390.h $(INCDIR)/elf/sh.h \
   $(INCDIR)/elf/sparc.h $(INCDIR)/elf/v850.h $(INCDIR)/elf/vax.h \
   $(INCDIR)/elf/x86-64.h $(INCDIR)/elf/xstormy16.h $(INCDIR)/elf/iq2000.h \
-  bucomm.h config.h $(INCDIR)/bin-bugs.h $(INCDIR)/fopen-same.h \
-  unwind-ia64.h
+  $(INCDIR)/elf/xtensa.h $(INCDIR)/aout/ar.h bucomm.h \
+  config.h $(INCDIR)/bin-bugs.h $(INCDIR)/fopen-same.h \
+  $(INCDIR)/libiberty.h unwind-ia64.h
 rename.o: rename.c ../bfd/bfd.h $(INCDIR)/ansidecl.h \
   $(INCDIR)/symcat.h bucomm.h config.h $(INCDIR)/bin-bugs.h \
   $(INCDIR)/fopen-same.h

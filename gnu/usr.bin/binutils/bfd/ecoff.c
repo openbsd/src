@@ -81,8 +81,10 @@ static asection bfd_debug_section =
   "*DEBUG*", 0,   0,     NULL, 0,     0,            0,
   /* linker_mark, linker_has_input, gc_mark, segment_mark,         */
      0,           0,                0,       0,
-  /* sec_info_type, use_rela_p, has_tls_reloc, flag11, flag12,     */
-     0,		    0,		0,	       0,      0,
+  /* sec_info_type, use_rela_p, has_tls_reloc,                     */
+     0,		    0,		0,
+  /* need_finalize_relax, has_gp_reloc,                            */
+     0,			  0,
   /* flag13, flag14, flag15, flag16, flag20, flag24,               */
      0,      0,      0,      0,      0,	     0,
   /* vma, lma, _cooked_size, _raw_size,                            */
@@ -93,14 +95,14 @@ static asection bfd_debug_section =
      NULL,       NULL,        0,           0,       0,
   /* line_filepos, userdata, contents, lineno, lineno_count,       */
      0,            NULL,     NULL,     NULL,   0,
-  /* entsize, comdat, moving_line_filepos,                         */
-     0,       NULL,   0,
+  /* entsize, comdat, kept_section, moving_line_filepos,           */
+     0,       NULL,   NULL,         0,
   /* target_index, used_by_bfd, constructor_chain, owner,          */
      0,            NULL,        NULL,              NULL,
   /* symbol,                                                       */
-     (struct symbol_cache_entry *) NULL,
+     (struct bfd_symbol *) NULL,
   /* symbol_ptr_ptr,                                               */
-     (struct symbol_cache_entry **) NULL,
+     (struct bfd_symbol **) NULL,
   /* link_order_head, link_order_tail                              */
      NULL,            NULL
 };
@@ -1060,7 +1062,7 @@ _bfd_ecoff_get_symtab_upper_bound (abfd)
 /* Get the canonical symbols.  */
 
 long
-_bfd_ecoff_get_symtab (abfd, alocation)
+_bfd_ecoff_canonicalize_symtab (abfd, alocation)
      bfd *abfd;
      asymbol **alocation;
 {
@@ -2260,7 +2262,7 @@ bfd_boolean
 _bfd_ecoff_set_section_contents (abfd, section, location, offset, count)
      bfd *abfd;
      asection *section;
-     PTR location;
+     const PTR location;
      file_ptr offset;
      bfd_size_type count;
 {
@@ -3564,9 +3566,9 @@ ecoff_link_add_archive_symbols (abfd, info)
 	     entry if it is the tail, because that would lose any
 	     entries we add to the list later on.  */
 	  if (*pundef != info->hash->undefs_tail)
-	    *pundef = (*pundef)->next;
+	    *pundef = (*pundef)->und_next;
 	  else
-	    pundef = &(*pundef)->next;
+	    pundef = &(*pundef)->und_next;
 	  continue;
 	}
 
@@ -3576,7 +3578,7 @@ ecoff_link_add_archive_symbols (abfd, info)
 	 other object format.  */
       if (h->type != bfd_link_hash_undefined)
 	{
-	  pundef = &(*pundef)->next;
+	  pundef = &(*pundef)->und_next;
 	  continue;
 	}
 
@@ -3588,7 +3590,7 @@ ecoff_link_add_archive_symbols (abfd, info)
       if (file_offset == 0)
 	{
 	  /* Nothing in this slot.  */
-	  pundef = &(*pundef)->next;
+	  pundef = &(*pundef)->und_next;
 	  continue;
 	}
 
@@ -3619,7 +3621,7 @@ ecoff_link_add_archive_symbols (abfd, info)
 
 	  if (! found)
 	    {
-	      pundef = &(*pundef)->next;
+	      pundef = &(*pundef)->und_next;
 	      continue;
 	    }
 
@@ -3641,7 +3643,7 @@ ecoff_link_add_archive_symbols (abfd, info)
       if (! ecoff_link_add_object_symbols (element, info))
 	return FALSE;
 
-      pundef = &(*pundef)->next;
+      pundef = &(*pundef)->und_next;
     }
 
   return TRUE;
@@ -4127,7 +4129,7 @@ _bfd_ecoff_bfd_final_link (abfd, info)
 
       if (bfd_get_flavour (input_bfd) == bfd_target_ecoff_flavour)
 	{
-	  /* Abitrarily set the symbolic header vstamp to the vstamp
+	  /* Arbitrarily set the symbolic header vstamp to the vstamp
 	     of the first object file in the link.  */
 	  if (symhdr->vstamp == 0)
 	    symhdr->vstamp
@@ -4158,7 +4160,7 @@ _bfd_ecoff_bfd_final_link (abfd, info)
 			    ecoff_link_write_external,
 			    (PTR) &einfo);
 
-  if (info->relocateable)
+  if (info->relocatable)
     {
       /* We need to make a pass over the link_orders to count up the
 	 number of relocations we will need to output, so that we know
@@ -4188,7 +4190,7 @@ _bfd_ecoff_bfd_final_link (abfd, info)
 
   bfd_ecoff_debug_free (handle, abfd, debug, &backend->debug_swap, info);
 
-  if (info->relocateable)
+  if (info->relocatable)
     {
       /* Now reset the reloc_count field of the sections in the output
 	 BFD to 0, so that we can use them to keep track of how many
@@ -4208,7 +4210,7 @@ _bfd_ecoff_bfd_final_link (abfd, info)
 	ecoff_data (abfd)->gp = (h->u.def.value
 				 + h->u.def.section->output_section->vma
 				 + h->u.def.section->output_offset);
-      else if (info->relocateable)
+      else if (info->relocatable)
 	{
 	  bfd_vma lo;
 
@@ -4606,11 +4608,11 @@ ecoff_indirect_link_order (output_bfd, info, output_section, link_order)
 				  cooked_size))
     goto error_return;
 
-  /* If we are producing relocateable output, the relocs were
+  /* If we are producing relocatable output, the relocs were
      modified, and we write them out now.  We use the reloc_count
      field of output_section to keep track of the number of relocs we
      have output so far.  */
-  if (info->relocateable)
+  if (info->relocatable)
     {
       file_ptr pos = (output_section->rel_filepos
 		      + output_section->reloc_count * external_reloc_size);

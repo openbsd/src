@@ -1,5 +1,6 @@
 /* Support for 32-bit Alpha NLM (NetWare Loadable Module)
-   Copyright 1993, 1994, 2000, 2001, 2002 Free Software Foundation, Inc.
+   Copyright 1993, 1994, 2000, 2001, 2002, 2003
+   Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -40,7 +41,7 @@ static bfd_boolean nlm_alpha_write_prefix
 static bfd_boolean nlm_alpha_read_reloc
   PARAMS ((bfd *, nlmNAME(symbol_type) *, asection **, arelent *));
 static bfd_boolean nlm_alpha_mangle_relocs
-  PARAMS ((bfd *, asection *, PTR, bfd_vma, bfd_size_type));
+  PARAMS ((bfd *, asection *, const PTR, bfd_vma, bfd_size_type));
 static bfd_boolean nlm_alpha_read_import
   PARAMS ((bfd *, nlmNAME(symbol_type) *));
 static bfd_boolean nlm_alpha_write_import
@@ -96,6 +97,8 @@ nlm_alpha_write_prefix (abfd)
   return TRUE;
 }
 
+#define ONES(n) (((bfd_vma) 1 << ((n) - 1) << 1) - 1)
+
 /* How to process the various reloc types.  */
 
 static reloc_howto_type nlm32_alpha_howto_table[] =
@@ -143,8 +146,8 @@ static reloc_howto_type nlm32_alpha_howto_table[] =
 	 0,			/* special_function */
 	 "REFQUAD",		/* name */
 	 TRUE,			/* partial_inplace */
-	 0xffffffffffffffff,	/* src_mask */
-	 0xffffffffffffffff,	/* dst_mask */
+	 ONES (64),		/* src_mask */
+	 ONES (64),		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
   /* A 32 bit GP relative offset.  This is just like REFLONG except
@@ -303,8 +306,8 @@ static reloc_howto_type nlm32_alpha_howto_table[] =
 	 0,			/* special_function */
 	 "SREL64",		/* name */
 	 TRUE,			/* partial_inplace */
-	 0xffffffffffffffff,	/* src_mask */
-	 0xffffffffffffffff,	/* dst_mask */
+	 ONES (64),		/* src_mask */
+	 ONES (64),		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
   /* Push a value on the reloc evaluation stack.  */
@@ -335,7 +338,7 @@ static reloc_howto_type nlm32_alpha_howto_table[] =
 	 "OP_STORE",		/* name */
 	 FALSE,			/* partial_inplace */
 	 0,			/* src_mask */
-	 0xffffffffffffffff,	/* dst_mask */
+	 ONES (64),		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
 
   /* Subtract the reloc address from the value on the top of the
@@ -605,7 +608,7 @@ static bfd_boolean
 nlm_alpha_mangle_relocs (abfd, sec, data, offset, count)
      bfd *abfd ATTRIBUTE_UNUSED;
      asection *sec ATTRIBUTE_UNUSED;
-     PTR data ATTRIBUTE_UNUSED;
+     const PTR data ATTRIBUTE_UNUSED;
      bfd_vma offset ATTRIBUTE_UNUSED;
      bfd_size_type count ATTRIBUTE_UNUSED;
 {

@@ -157,16 +157,15 @@ extern LITTLENUM_TYPE generic_bignum[];
 
 typedef char operator_rankT;
 
-extern char get_symbol_end PARAMS ((void));
-extern void expr_begin PARAMS ((void));
-extern void expr_set_precedence PARAMS ((void));
-extern segT expr PARAMS ((int rank, expressionS * resultP));
-extern unsigned int get_single_number PARAMS ((void));
-extern symbolS *make_expr_symbol PARAMS ((expressionS * expressionP));
-extern int expr_symbol_where
-  PARAMS ((symbolS *, char **, unsigned int *));
+extern char get_symbol_end (void);
+extern void expr_begin (void);
+extern void expr_set_precedence (void);
+extern segT expr (int rank, expressionS * resultP);
+extern unsigned int get_single_number (void);
+extern symbolS *make_expr_symbol (expressionS * expressionP);
+extern int expr_symbol_where (symbolS *, char **, unsigned int *);
 
-extern symbolS *expr_build_uconstant PARAMS ((offsetT));
-extern symbolS *expr_build_unary PARAMS ((operatorT, symbolS *));
-extern symbolS *expr_build_binary PARAMS ((operatorT, symbolS *, symbolS *));
-extern symbolS *expr_build_dot PARAMS ((void));
+extern symbolS *expr_build_uconstant (offsetT);
+extern symbolS *expr_build_unary (operatorT, symbolS *);
+extern symbolS *expr_build_binary (operatorT, symbolS *, symbolS *);
+extern symbolS *expr_build_dot (void);

@@ -83,6 +83,7 @@ $ gcc 'c_flags'/Define=('C_DEFS') bignum-copy.c
 $ gcc 'c_flags'/Define=('C_DEFS') cond.c
 $ gcc 'c_flags'/Define=('C_DEFS') depend.c
 $ gcc 'c_flags'/Define=('C_DEFS') dwarf2dbg.c
+$ gcc 'c_flags'/Define=('C_DEFS') dw2gencfi.c
 $ gcc 'c_flags'/Define=('C_DEFS') ehopt.c
 $ gcc 'c_flags'/Define=('C_DEFS') expr.c
 $ gcc 'c_flags'/Define=('C_DEFS') flonum-konst.c
@@ -123,6 +124,7 @@ bignum-copy.obj,-
 cond.obj,-
 depend.obj,-
 dwarf2dbg.obj,-
+dw2gencfi.obj,-
 ehopt.obj,-
 expr.obj,-
 flonum-konst.obj,-

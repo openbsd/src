@@ -1,5 +1,5 @@
 /* stabs.c -- Parse COFF debugging information
-   Copyright 1996, 2000, 2002 Free Software Foundation, Inc.
+   Copyright 1996, 2000, 2002, 2003 Free Software Foundation, Inc.
    Written by Ian Lance Taylor <ian@cygnus.com>.
 
    This file is part of GNU Binutils.
@@ -82,32 +82,28 @@ struct coff_types
   debug_type basic[T_MAX + 1];
 };
 
-static debug_type *coff_get_slot
-  PARAMS ((struct coff_types *, int));
+static debug_type *coff_get_slot (struct coff_types *, int);
 static debug_type parse_coff_type
-  PARAMS ((bfd *, struct coff_symbols *, struct coff_types *, long, int,
-	   union internal_auxent *, bfd_boolean, PTR));
+  (bfd *, struct coff_symbols *, struct coff_types *, long, int,
+   union internal_auxent *, bfd_boolean, void *);
 static debug_type parse_coff_base_type
-  PARAMS ((bfd *, struct coff_symbols *, struct coff_types *, long, int,
-	   union internal_auxent *, PTR));
+  (bfd *, struct coff_symbols *, struct coff_types *, long, int,
+   union internal_auxent *, void *);
 static debug_type parse_coff_struct_type
-  PARAMS ((bfd *, struct coff_symbols *, struct coff_types *, int,
-	   union internal_auxent *, PTR));
+  (bfd *, struct coff_symbols *, struct coff_types *, int,
+   union internal_auxent *, void *);
 static debug_type parse_coff_enum_type
-  PARAMS ((bfd *, struct coff_symbols *, struct coff_types *,
-	   union internal_auxent *, PTR));
+  (bfd *, struct coff_symbols *, struct coff_types *,
+   union internal_auxent *, void *);
 static bfd_boolean parse_coff_symbol
-  PARAMS ((bfd *, struct coff_types *, asymbol *, long,
-	   struct internal_syment *, PTR, debug_type, bfd_boolean));
-static bfd_boolean external_coff_symbol_p
-  PARAMS ((int sym_class));
+  (bfd *, struct coff_types *, asymbol *, long, struct internal_syment *,
+   void *, debug_type, bfd_boolean);
+static bfd_boolean external_coff_symbol_p (int sym_class);
 
 /* Return the slot for a type.  */
 
 static debug_type *
-coff_get_slot (types, indx)
-     struct coff_types *types;
-     int indx;
+coff_get_slot (struct coff_types *types, int indx)
 {
   struct coff_slots **pps;
 
@@ -136,16 +132,10 @@ coff_get_slot (types, indx)
 /* Parse a COFF type code in NTYPE.  */
 
 static debug_type
-parse_coff_type (abfd, symbols, types, coff_symno, ntype, pauxent, useaux,
-		 dhandle)
-     bfd *abfd;
-     struct coff_symbols *symbols;
-     struct coff_types *types;
-     long coff_symno;
-     int ntype;
-     union internal_auxent *pauxent;
-     bfd_boolean useaux;
-     PTR dhandle;
+parse_coff_type (bfd *abfd, struct coff_symbols *symbols,
+		 struct coff_types *types, long coff_symno, int ntype,
+		 union internal_auxent *pauxent, bfd_boolean useaux,
+		 void *dhandle)
 {
   debug_type type;
 
@@ -239,15 +229,9 @@ parse_coff_type (abfd, symbols, types, coff_symno, ntype, pauxent, useaux,
 /* Parse a basic COFF type in NTYPE.  */
 
 static debug_type
-parse_coff_base_type (abfd, symbols, types, coff_symno, ntype, pauxent,
-		      dhandle)
-     bfd *abfd;
-     struct coff_symbols *symbols;
-     struct coff_types *types;
-     long coff_symno;
-     int ntype;
-     union internal_auxent *pauxent;
-     PTR dhandle;
+parse_coff_base_type (bfd *abfd, struct coff_symbols *symbols,
+		      struct coff_types *types, long coff_symno, int ntype,
+		      union internal_auxent *pauxent, void *dhandle)
 {
   debug_type ret;
   bfd_boolean set_basic;
@@ -385,13 +369,9 @@ parse_coff_base_type (abfd, symbols, types, coff_symno, ntype, pauxent,
 /* Parse a struct type.  */
 
 static debug_type
-parse_coff_struct_type (abfd, symbols, types, ntype, pauxent, dhandle)
-     bfd *abfd;
-     struct coff_symbols *symbols;
-     struct coff_types *types;
-     int ntype;
-     union internal_auxent *pauxent;
-     PTR dhandle;
+parse_coff_struct_type (bfd *abfd, struct coff_symbols *symbols,
+			struct coff_types *types, int ntype,
+			union internal_auxent *pauxent, void *dhandle)
 {
   long symend;
   int alloc;
@@ -496,12 +476,9 @@ parse_coff_struct_type (abfd, symbols, types, ntype, pauxent, dhandle)
 /* Parse an enum type.  */
 
 static debug_type
-parse_coff_enum_type (abfd, symbols, types, pauxent, dhandle)
-     bfd *abfd;
-     struct coff_symbols *symbols;
-     struct coff_types *types ATTRIBUTE_UNUSED;
-     union internal_auxent *pauxent;
-     PTR dhandle;
+parse_coff_enum_type (bfd *abfd, struct coff_symbols *symbols,
+		      struct coff_types *types ATTRIBUTE_UNUSED,
+		      union internal_auxent *pauxent, void *dhandle)
 {
   long symend;
   int alloc;
@@ -568,16 +545,10 @@ parse_coff_enum_type (abfd, symbols, types, pauxent, dhandle)
 /* Handle a single COFF symbol.  */
 
 static bfd_boolean
-parse_coff_symbol (abfd, types, sym, coff_symno, psyment, dhandle, type,
-		   within_function)
-     bfd *abfd ATTRIBUTE_UNUSED;
-     struct coff_types *types;
-     asymbol *sym;
-     long coff_symno;
-     struct internal_syment *psyment;
-     PTR dhandle;
-     debug_type type;
-     bfd_boolean within_function;
+parse_coff_symbol (bfd *abfd ATTRIBUTE_UNUSED, struct coff_types *types,
+		   asymbol *sym, long coff_symno,
+		   struct internal_syment *psyment, void *dhandle,
+		   debug_type type, bfd_boolean within_function)
 {
   switch (psyment->n_sclass)
     {
@@ -662,8 +633,7 @@ parse_coff_symbol (abfd, types, sym, coff_symno, psyment, dhandle, type,
 /* Determine if a symbol has external visibility.  */
 
 static bfd_boolean
-external_coff_symbol_p (sym_class)
-     int sym_class;
+external_coff_symbol_p (int sym_class)
 {
   switch (sym_class)
     {
@@ -680,11 +650,7 @@ external_coff_symbol_p (sym_class)
    handles them.  */
 
 bfd_boolean
-parse_coff (abfd, syms, symcount, dhandle)
-     bfd *abfd;
-     asymbol **syms;
-     long symcount;
-     PTR dhandle;
+parse_coff (bfd *abfd, asymbol **syms, long symcount, void *dhandle)
 {
   struct coff_symbols symbols;
   struct coff_types types;

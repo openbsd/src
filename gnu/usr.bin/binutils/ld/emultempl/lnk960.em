@@ -47,23 +47,9 @@ static lib_list_type **hll_list_tail = &hll_list;
 static lib_list_type *syslib_list;
 static lib_list_type **syslib_list_tail = &syslib_list;
 
-static void append PARAMS ((lib_list_type ***, char *));
-static void lnk960_hll PARAMS ((char *));
-static void lnk960_syslib PARAMS ((char *));
-static void lnk960_before_parse PARAMS ((void));
-static void add_on PARAMS ((lib_list_type *, lang_input_file_enum_type));
-static void lnk960_after_parse PARAMS ((void));
-static void lnk960_before_allocation PARAMS ((void));
-static void lnk960_after_allocation PARAMS ((void));
-static void lnk960_set_output_arch PARAMS ((void));
-static char *lnk960_choose_target PARAMS ((int, char **));
-static char *lnk960_get_script PARAMS ((int *));
-
 
 static void
-append (list, name)
-     lib_list_type ***list;
-     char *name;
+append (lib_list_type ***list, char *name)
 {
   lib_list_type *element = (lib_list_type *) xmalloc (sizeof (lib_list_type));
 
@@ -78,8 +64,7 @@ static bfd_boolean had_hll = FALSE;
 static bfd_boolean had_hll_name = FALSE;
 
 static void
-lnk960_hll (name)
-     char *name;
+lnk960_hll (char *name)
 {
   had_hll = TRUE;
   if (name != (char *) NULL)
@@ -89,9 +74,8 @@ lnk960_hll (name)
     }
 }
 
-static void 
-lnk960_syslib (name)
-     char *name;
+static void
+lnk960_syslib (char *name)
 {
   append (&syslib_list_tail, name);
 }
@@ -99,8 +83,8 @@ lnk960_syslib (name)
 
 #ifdef GNU960
 
-static void 
-lnk960_before_parse ()
+static void
+lnk960_before_parse (void)
 {
   static char *env_variables[] = { "G960LIB", "G960BASE", 0 };
   char **p;
@@ -123,8 +107,8 @@ lnk960_before_parse ()
 
 #else	/* not GNU960 */
 
-static void 
-lnk960_before_parse ()
+static void
+lnk960_before_parse (void)
 {
   char *name = getenv ("I960BASE");
 
@@ -145,9 +129,7 @@ lnk960_before_parse ()
 
 
 static void
-add_on (list, search)
-     lib_list_type *list;
-     lang_input_file_enum_type search;
+add_on (lib_list_type *list, lang_input_file_enum_type search)
 {
   while (list)
     {
@@ -155,15 +137,16 @@ add_on (list, search)
       list = list->next;
     }
 }
+
 static void
-lnk960_after_parse ()
+lnk960_after_parse (void)
 {
   /* If there has been no arch, default to -KB */
   if (ldfile_output_machine_name[0] == 0)
     ldfile_add_arch ("KB");
 
   /* if there has been no hll list then add our own */
-  
+
   if (had_hll && !had_hll_name)
     {
       append (&hll_list_tail, "cg");
@@ -171,20 +154,20 @@ lnk960_after_parse ()
 	  || ldfile_output_machine == bfd_mach_i960_ca)
 	append (&hll_list_tail, "fpg");
     }
-  
+
   add_on (hll_list, lang_input_file_is_l_enum);
   add_on (syslib_list, lang_input_file_is_search_file_enum);
 }
 
 static void
-lnk960_before_allocation ()
+lnk960_before_allocation (void)
 {
 }
 
 static void
-lnk960_after_allocation ()
+lnk960_after_allocation (void)
 {
-  if (!link_info.relocateable)
+  if (!link_info.relocatable)
     {
       lang_abs_symbol_at_end_of (".text", "_etext");
       lang_abs_symbol_at_end_of (".data", "_edata");
@@ -197,7 +180,7 @@ lnk960_after_allocation ()
 static struct
  {
    unsigned  long number;
-   char *name; 
+   char *name;
  }
 machine_table[] =
 {
@@ -227,7 +210,7 @@ machine_table[] =
 };
 
 static void
-lnk960_set_output_arch ()
+lnk960_set_output_arch (void)
 {
   /* Set the output architecture and machine if possible */
   unsigned int i;
@@ -245,9 +228,7 @@ lnk960_set_output_arch ()
 }
 
 static char *
-lnk960_choose_target (argc, argv)
-    int argc ATTRIBUTE_UNUSED;
-    char **argv ATTRIBUTE_UNUSED;
+lnk960_choose_target (int argc ATTRIBUTE_UNUSED, char **argv ATTRIBUTE_UNUSED)
 {
 #ifdef GNU960
 
@@ -268,8 +249,7 @@ lnk960_choose_target (argc, argv)
 }
 
 static char *
-lnk960_get_script (isfile)
-     int *isfile;
+lnk960_get_script (int *isfile)
 EOF
 
 if test -n "$COMPILE_IN"
@@ -280,14 +260,14 @@ then
 sc="-f stringify.sed"
 
 cat >>e${EMULATION_NAME}.c <<EOF
-{			     
+{
   *isfile = 0;
 
-  if (link_info.relocateable && config.build_constructors)
+  if (link_info.relocatable && config.build_constructors)
     return
 EOF
 sed $sc ldscripts/${EMULATION_NAME}.xu                 >> e${EMULATION_NAME}.c
-echo '  ; else if (link_info.relocateable) return'     >> e${EMULATION_NAME}.c
+echo '  ; else if (link_info.relocatable) return'     >> e${EMULATION_NAME}.c
 sed $sc ldscripts/${EMULATION_NAME}.xr                 >> e${EMULATION_NAME}.c
 echo '  ; else if (!config.text_read_only) return'     >> e${EMULATION_NAME}.c
 sed $sc ldscripts/${EMULATION_NAME}.xbn                >> e${EMULATION_NAME}.c
@@ -301,12 +281,12 @@ else
 # Scripts read from the filesystem.
 
 cat >>e${EMULATION_NAME}.c <<EOF
-{			     
+{
   *isfile = 1;
 
-  if (link_info.relocateable && config.build_constructors)
+  if (link_info.relocatable && config.build_constructors)
     return "ldscripts/${EMULATION_NAME}.xu";
-  else if (link_info.relocateable)
+  else if (link_info.relocatable)
     return "ldscripts/${EMULATION_NAME}.xr";
   else if (!config.text_read_only)
     return "ldscripts/${EMULATION_NAME}.xbn";
@@ -321,7 +301,7 @@ fi
 
 cat >>e${EMULATION_NAME}.c <<EOF
 
-struct ld_emulation_xfer_struct ld_lnk960_emulation = 
+struct ld_emulation_xfer_struct ld_lnk960_emulation =
 {
   lnk960_before_parse,
   lnk960_syslib,

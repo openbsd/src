@@ -1,6 +1,6 @@
 /* BFD back-end for a.out.adobe binaries.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998, 1999, 2000, 2001,
-   2002
+   2002, 2003
    Free Software Foundation, Inc.
    Written by Cygnus Support.  Based on bout.c.
 
@@ -47,7 +47,7 @@ static bfd_boolean aout_adobe_mkobject
 static bfd_boolean aout_adobe_write_object_contents
   PARAMS ((bfd *));
 static bfd_boolean aout_adobe_set_section_contents
-  PARAMS ((bfd *, asection *, PTR, file_ptr, bfd_size_type));
+  PARAMS ((bfd *, asection *, const PTR, file_ptr, bfd_size_type));
 static bfd_boolean aout_adobe_set_arch_mach
   PARAMS ((bfd *, enum bfd_architecture, unsigned long));
 static int     aout_adobe_sizeof_headers
@@ -415,7 +415,7 @@ static bfd_boolean
 aout_adobe_set_section_contents (abfd, section, location, offset, count)
      bfd *abfd;
      asection *section;
-     PTR location;
+     const PTR location;
      file_ptr offset;
      bfd_size_type count;
 {

@@ -67,16 +67,15 @@ extern void *alloca ();
 
 /* Internal functions.  */
 
-static int get_token PARAMS ((int, sb *, sb *));
-static int getstring PARAMS ((int, sb *, sb *));
-static int get_any_string PARAMS ((int, sb *, sb *, int, int));
-static int do_formals PARAMS ((macro_entry *, int, sb *));
-static int get_apost_token PARAMS ((int, sb *, sb *, int));
-static int sub_actual
-  PARAMS ((int, sb *, sb *, struct hash_control *, int, sb *, int));
+static int get_token (int, sb *, sb *);
+static int getstring (int, sb *, sb *);
+static int get_any_string (int, sb *, sb *, int, int);
+static int do_formals (macro_entry *, int, sb *);
+static int get_apost_token (int, sb *, sb *, int);
+static int sub_actual (int, sb *, sb *, struct hash_control *, int, sb *, int);
 static const char *macro_expand_body
-  PARAMS ((sb *, sb *, formal_entry *, struct hash_control *, int));
-static const char *macro_expand PARAMS ((int, sb *, macro_entry *, sb *));
+  (sb *, sb *, formal_entry *, struct hash_control *, int);
+static const char *macro_expand (int, sb *, macro_entry *, sb *);
 
 #define ISWHITE(x) ((x) == ' ' || (x) == '\t')
 
@@ -113,7 +112,7 @@ static int macro_strip_at;
 
 /* Function to use to parse an expression.  */
 
-static int (*macro_expr) PARAMS ((const char *, int, sb *, int *));
+static int (*macro_expr) (const char *, int, sb *, int *);
 
 /* Number of macro expansions that have been done.  */
 
@@ -122,11 +121,8 @@ static int macro_number;
 /* Initialize macro processing.  */
 
 void
-macro_init (alternate, mri, strip_at, expr)
-     int alternate;
-     int mri;
-     int strip_at;
-     int (*expr) PARAMS ((const char *, int, sb *, int *));
+macro_init (int alternate, int mri, int strip_at,
+	    int (*expr) (const char *, int, sb *, int *))
 {
   macro_hash = hash_new ();
   macro_defined = 0;
@@ -139,8 +135,7 @@ macro_init (alternate, mri, strip_at, expr)
 /* Switch in and out of MRI mode on the fly.  */
 
 void
-macro_mri_mode (mri)
-     int mri;
+macro_mri_mode (int mri)
 {
   macro_mri = mri;
 }
@@ -152,11 +147,8 @@ macro_mri_mode (mri)
    Return 1 on success, 0 on unexpected EOF.  */
 
 int
-buffer_and_nest (from, to, ptr, get_line)
-     const char *from;
-     const char *to;
-     sb *ptr;
-     int (*get_line) PARAMS ((sb *));
+buffer_and_nest (const char *from, const char *to, sb *ptr,
+		 int (*get_line) (sb *))
 {
   int from_len = strlen (from);
   int to_len = strlen (to);
@@ -235,10 +227,7 @@ buffer_and_nest (from, to, ptr, get_line)
 /* Pick up a token.  */
 
 static int
-get_token (idx, in, name)
-     int idx;
-     sb *in;
-     sb *name;
+get_token (int idx, sb *in, sb *name)
 {
   if (idx < in->len
       && (ISALPHA (in->ptr[idx])
@@ -263,10 +252,7 @@ get_token (idx, in, name)
 /* Pick up a string.  */
 
 static int
-getstring (idx, in, acc)
-     int idx;
-     sb *in;
-     sb *acc;
+getstring (int idx, sb *in, sb *acc)
 {
   idx = sb_skip_white (idx, in);
 
@@ -354,12 +340,7 @@ getstring (idx, in, acc)
 */
 
 static int
-get_any_string (idx, in, out, expand, pretend_quoted)
-     int idx;
-     sb *in;
-     sb *out;
-     int expand;
-     int pretend_quoted;
+get_any_string (int idx, sb *in, sb *out, int expand, int pretend_quoted)
 {
   sb_reset (out);
   idx = sb_skip_white (idx, in);
@@ -439,10 +420,7 @@ get_any_string (idx, in, out, expand, pretend_quoted)
 /* Pick up the formal parameters of a macro definition.  */
 
 static int
-do_formals (macro, idx, in)
-     macro_entry *macro;
-     int idx;
-     sb *in;
+do_formals (macro_entry *macro, int idx, sb *in)
 {
   formal_entry **p = &macro->formals;
 
@@ -522,12 +500,8 @@ do_formals (macro, idx, in)
    the macro which was defined.  */
 
 const char *
-define_macro (idx, in, label, get_line, namep)
-     int idx;
-     sb *in;
-     sb *label;
-     int (*get_line) PARAMS ((sb *));
-     const char **namep;
+define_macro (int idx, sb *in, sb *label,
+	      int (*get_line) (sb *), const char **namep)
 {
   macro_entry *macro;
   sb name;
@@ -583,11 +557,7 @@ define_macro (idx, in, label, get_line, namep)
 /* Scan a token, and then skip KIND.  */
 
 static int
-get_apost_token (idx, in, name, kind)
-     int idx;
-     sb *in;
-     sb *name;
-     int kind;
+get_apost_token (int idx, sb *in, sb *name, int kind)
 {
   idx = get_token (idx, in, name);
   if (idx < in->len
@@ -601,14 +571,8 @@ get_apost_token (idx, in, name, kind)
 /* Substitute the actual value for a formal parameter.  */
 
 static int
-sub_actual (start, in, t, formal_hash, kind, out, copyifnotthere)
-     int start;
-     sb *in;
-     sb *t;
-     struct hash_control *formal_hash;
-     int kind;
-     sb *out;
-     int copyifnotthere;
+sub_actual (int start, sb *in, sb *t, struct hash_control *formal_hash,
+	    int kind, sb *out, int copyifnotthere)
 {
   int src;
   formal_entry *ptr;
@@ -654,12 +618,8 @@ sub_actual (start, in, t, formal_hash, kind, out, copyifnotthere)
 /* Expand the body of a macro.  */
 
 static const char *
-macro_expand_body (in, out, formals, formal_hash, locals)
-     sb *in;
-     sb *out;
-     formal_entry *formals;
-     struct hash_control *formal_hash;
-     int locals;
+macro_expand_body (sb *in, sb *out, formal_entry *formals,
+		   struct hash_control *formal_hash, int locals)
 {
   sb t;
   int src = 0;
@@ -881,11 +841,7 @@ macro_expand_body (in, out, formals, formal_hash, locals)
    body.  */
 
 static const char *
-macro_expand (idx, in, m, out)
-     int idx;
-     sb *in;
-     macro_entry *m;
-     sb *out;
+macro_expand (int idx, sb *in, macro_entry *m, sb *out)
 {
   sb t;
   formal_entry *ptr;
@@ -1073,11 +1029,8 @@ macro_expand (idx, in, m, out)
    *EXPAND.  Return 1 if a macro is found, 0 otherwise.  */
 
 int
-check_macro (line, expand, error, info)
-     const char *line;
-     sb *expand;
-     const char **error;
-     macro_entry **info;
+check_macro (const char *line, sb *expand,
+	     const char **error, macro_entry **info)
 {
   const char *s;
   char *copy, *cs;
@@ -1127,8 +1080,7 @@ check_macro (line, expand, error, info)
 /* Delete a macro.  */
 
 void
-delete_macro (name)
-     const char *name;
+delete_macro (const char *name)
 {
   hash_delete (macro_hash, name);
 }
@@ -1138,12 +1090,7 @@ delete_macro (name)
    success, or an error message otherwise.  */
 
 const char *
-expand_irp (irpc, idx, in, out, get_line)
-     int irpc;
-     int idx;
-     sb *in;
-     sb *out;
-     int (*get_line) PARAMS ((sb *));
+expand_irp (int irpc, int idx, sb *in, sb *out, int (*get_line) (sb *))
 {
   const char *mn;
   sb sub;

@@ -2,7 +2,7 @@
    This was based on trad-core.c, which was written by John Gilmore of
         Cygnus Support.
    Copyright 1988, 1989, 1991, 1992, 1993, 1994, 1996, 1998, 1999, 2000,
-   2001, 2002
+   2001, 2002, 2004
    Free Software Foundation, Inc.
    Written by Minh Tran-Le <TRANLE@INTELLICORP.COM>.
    Converted to back end form by Ian Lance Taylor <ian@cygnus.com>.
@@ -222,9 +222,12 @@ swap_abort ()
   abort ();
 }
 
-#define	NO_GET	((bfd_vma (*) PARAMS ((const bfd_byte *))) swap_abort)
-#define NO_GETS ((bfd_signed_vma (*) PARAMS ((const bfd_byte *))) swap_abort)
-#define	NO_PUT	((void (*) PARAMS ((bfd_vma, bfd_byte *))) swap_abort)
+#define	NO_GET ((bfd_vma (*) (const void *)) swap_abort)
+#define	NO_PUT ((void (*) (bfd_vma, void *)) swap_abort)
+#define	NO_GETS ((bfd_signed_vma (*) (const void *)) swap_abort)
+#define	NO_GET64 ((bfd_uint64_t (*) (const void *)) swap_abort)
+#define	NO_PUT64 ((void (*) (bfd_uint64_t, void *)) swap_abort)
+#define	NO_GETS64 ((bfd_int64_t (*) (const void *)) swap_abort)
 
 const bfd_target aix386_core_vec = {
   "aix386-core",
@@ -239,10 +242,10 @@ const bfd_target aix386_core_vec = {
   0,				/* leading underscore */
   ' ',				/* ar_pad_char */
   16,				/* ar_max_namelen */
-  NO_GET, NO_GETS, NO_PUT,
+  NO_GET64, NO_GETS64, NO_PUT64,
   NO_GET, NO_GETS, NO_PUT,
   NO_GET, NO_GETS, NO_PUT,	/* data */
-  NO_GET, NO_GETS, NO_PUT,
+  NO_GET64, NO_GETS64, NO_PUT64,
   NO_GET, NO_GETS, NO_PUT,
   NO_GET, NO_GETS, NO_PUT,	/* hdrs */
 

@@ -1,5 +1,5 @@
 /* BFD back-end for Apollo 68000 COFF binaries.
-   Copyright 1990, 1991, 1992, 1993, 1994, 1999, 2000, 2001, 2002
+   Copyright 1990, 1991, 1992, 1993, 1994, 1999, 2000, 2001, 2002, 2003
    Free Software Foundation, Inc.
    By Troy Rollo (troy@cbme.unsw.edu.au)
    Based on m68k standard COFF version Written by Cygnus Support.
@@ -115,7 +115,7 @@ apollo_howto2rtype (internal)
 #endif
 
 #ifdef NAMES_HAVE_UNDERSCORE
-CREATE_BIG_COFF_TARGET_VEC (TARGET_SYM, TARGET_NAME, 0, 0, '_', NULL)
+CREATE_BIG_COFF_TARGET_VEC (TARGET_SYM, TARGET_NAME, 0, 0, '_', NULL, COFF_SWAP_TABLE)
 #else
-CREATE_BIG_COFF_TARGET_VEC (TARGET_SYM, TARGET_NAME, 0, 0, 0, NULL)
+CREATE_BIG_COFF_TARGET_VEC (TARGET_SYM, TARGET_NAME, 0, 0, 0, NULL, COFF_SWAP_TABLE)
 #endif

@@ -70,7 +70,7 @@ static int comp
 static bfd_boolean oasys_write_object_contents
   PARAMS ((bfd *));
 static bfd_boolean oasys_set_section_contents
-  PARAMS ((bfd *, sec_ptr, void *, file_ptr, bfd_size_type));
+  PARAMS ((bfd *, sec_ptr, const void *, file_ptr, bfd_size_type));
 static asymbol *oasys_make_empty_symbol
   PARAMS ((bfd *));
 static bfd *oasys_openr_next_archived_file
@@ -83,7 +83,7 @@ static int oasys_generic_stat_arch_elt
 static int oasys_sizeof_headers
   PARAMS ((bfd *, bfd_boolean));
 
-long oasys_get_symtab
+long oasys_canonicalize_symtab
   PARAMS ((bfd *, asymbol **));
 long oasys_canonicalize_reloc
   PARAMS ((bfd *, sec_ptr, arelent **, asymbol **));
@@ -271,7 +271,7 @@ oasys_get_symtab_upper_bound (abfd)
 extern const bfd_target oasys_vec;
 
 long
-oasys_get_symtab (abfd, location)
+oasys_canonicalize_symtab (abfd, location)
      bfd *abfd;
      asymbol **location;
 {
@@ -324,7 +324,7 @@ oasys_archive_p (abfd)
 
   /*
     There isn't a magic number in an Oasys archive, so the best we
-    can do to verify reasnableness is to make sure that the values in
+    can do to verify reasonableness is to make sure that the values in
     the header are too weird
     */
 
@@ -1346,7 +1346,7 @@ static bfd_boolean
 oasys_set_section_contents (abfd, section, location, offset, count)
      bfd *abfd;
      sec_ptr section;
-     PTR location;
+     const PTR location;
      file_ptr offset;
      bfd_size_type count;
 {

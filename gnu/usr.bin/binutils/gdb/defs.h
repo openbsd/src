@@ -65,7 +65,7 @@
 
 /* For BFD64 and bfd_vma.  */
 #include "bfd.h"
-#define bfd_section sec
+
 
 /* The target is partially multi-arched.  Both "tm.h" and the
    multi-arch vector provide definitions.  "tm.h" normally overrides

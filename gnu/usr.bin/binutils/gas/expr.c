@@ -32,17 +32,17 @@
 #include "safe-ctype.h"
 #include "obstack.h"
 
-static void floating_constant PARAMS ((expressionS * expressionP));
-static valueT generic_bignum_to_int32 PARAMS ((void));
+static void floating_constant (expressionS * expressionP);
+static valueT generic_bignum_to_int32 (void);
 #ifdef BFD64
-static valueT generic_bignum_to_int64 PARAMS ((void));
+static valueT generic_bignum_to_int64 (void);
 #endif
-static void integer_constant PARAMS ((int radix, expressionS * expressionP));
-static void mri_char_constant PARAMS ((expressionS *));
-static void current_location PARAMS ((expressionS *));
-static void clean_up_expression PARAMS ((expressionS * expressionP));
-static segT operand PARAMS ((expressionS *));
-static operatorT operator PARAMS ((int *));
+static void integer_constant (int radix, expressionS * expressionP);
+static void mri_char_constant (expressionS *);
+static void current_location (expressionS *);
+static void clean_up_expression (expressionS * expressionP);
+static segT operand (expressionS *);
+static operatorT operator (int *);
 
 extern const char EXP_CHARS[], FLT_CHARS[];
 
@@ -63,11 +63,9 @@ static struct expr_symbol_line *expr_symbol_lines;
    into the fake section expr_section.  */
 
 symbolS *
-make_expr_symbol (expressionP)
-     expressionS *expressionP;
+make_expr_symbol (expressionS *expressionP)
 {
   expressionS zero;
-  const char *fake;
   symbolS *symbolP;
   struct expr_symbol_line *n;
 
@@ -91,13 +89,11 @@ make_expr_symbol (expressionP)
       expressionP = &zero;
     }
 
-  fake = FAKE_LABEL_NAME;
-
   /* Putting constant symbols in absolute_section rather than
      expr_section is convenient for the old a.out code, for which
      S_GET_SEGMENT does not always retrieve the value put in by
      S_SET_SEGMENT.  */
-  symbolP = symbol_create (fake,
+  symbolP = symbol_create (FAKE_LABEL_NAME,
 			   (expressionP->X_op == O_constant
 			    ? absolute_section
 			    : expr_section),
@@ -121,10 +117,7 @@ make_expr_symbol (expressionP)
    the symbol.  */
 
 int
-expr_symbol_where (sym, pfile, pline)
-     symbolS *sym;
-     char **pfile;
-     unsigned int *pline;
+expr_symbol_where (symbolS *sym, char **pfile, unsigned int *pline)
 {
   register struct expr_symbol_line *l;
 
@@ -154,8 +147,7 @@ expr_symbol_where (sym, pfile, pline)
    but that seems more clumsy.  */
 
 symbolS *
-expr_build_uconstant (value)
-     offsetT value;
+expr_build_uconstant (offsetT value)
 {
   expressionS e;
 
@@ -168,9 +160,7 @@ expr_build_uconstant (value)
 /* Build an expression for OP s1.  */
 
 symbolS *
-expr_build_unary (op, s1)
-     operatorT op;
-     symbolS *s1;
+expr_build_unary (operatorT op, symbolS *s1)
 {
   expressionS e;
 
@@ -183,10 +173,7 @@ expr_build_unary (op, s1)
 /* Build an expression for s1 OP s2.  */
 
 symbolS *
-expr_build_binary (op, s1, s2)
-     operatorT op;
-     symbolS *s1;
-     symbolS *s2;
+expr_build_binary (operatorT op, symbolS *s1, symbolS *s2)
 {
   expressionS e;
 
@@ -200,7 +187,7 @@ expr_build_binary (op, s1, s2)
 /* Build an expression for the current location ('.').  */
 
 symbolS *
-expr_build_dot ()
+expr_build_dot (void)
 {
   expressionS e;
 
@@ -230,8 +217,7 @@ FLONUM_TYPE generic_floating_point_number = {
 int generic_floating_point_magic;
 
 static void
-floating_constant (expressionP)
-     expressionS *expressionP;
+floating_constant (expressionS *expressionP)
 {
   /* input_line_pointer -> floating-point constant.  */
   int error_code;
@@ -258,7 +244,7 @@ floating_constant (expressionP)
 }
 
 static valueT
-generic_bignum_to_int32 ()
+generic_bignum_to_int32 (void)
 {
   valueT number =
 	   ((generic_bignum[1] & LITTLENUM_MASK) << LITTLENUM_NUMBER_OF_BITS)
@@ -269,7 +255,7 @@ generic_bignum_to_int32 ()
 
 #ifdef BFD64
 static valueT
-generic_bignum_to_int64 ()
+generic_bignum_to_int64 (void)
 {
   valueT number =
     ((((((((valueT) generic_bignum[3] & LITTLENUM_MASK)
@@ -284,9 +270,7 @@ generic_bignum_to_int64 ()
 #endif
 
 static void
-integer_constant (radix, expressionP)
-     int radix;
-     expressionS *expressionP;
+integer_constant (int radix, expressionS *expressionP)
 {
   char *start;		/* Start of number.  */
   char *suffix = NULL;
@@ -645,8 +629,7 @@ integer_constant (radix, expressionP)
 /* Parse an MRI multi character constant.  */
 
 static void
-mri_char_constant (expressionP)
-     expressionS *expressionP;
+mri_char_constant (expressionS *expressionP)
 {
   int i;
 
@@ -735,8 +718,7 @@ mri_char_constant (expressionP)
    handles the magic symbol `.'.  */
 
 static void
-current_location (expressionp)
-     expressionS *expressionp;
+current_location (expressionS *expressionp)
 {
   if (now_seg == absolute_section)
     {
@@ -745,13 +727,8 @@ current_location (expressionp)
     }
   else
     {
-      symbolS *symbolp;
-
-      symbolp = symbol_new (FAKE_LABEL_NAME, now_seg,
-			    (valueT) frag_now_fix (),
-			    frag_now);
       expressionp->X_op = O_symbol;
-      expressionp->X_add_symbol = symbolp;
+      expressionp->X_add_symbol = symbol_temp_new_now ();
       expressionp->X_add_number = 0;
     }
 }
@@ -764,8 +741,7 @@ current_location (expressionp)
 	Input_line_pointer->(next non-blank) char after operand.  */
 
 static segT
-operand (expressionP)
-     expressionS *expressionP;
+operand (expressionS *expressionP)
 {
   char c;
   symbolS *symbolP;	/* Points to symbol.  */
@@ -1045,6 +1021,9 @@ operand (expressionP)
       break;
 
     case '+':
+      /* Do not accept ++e as +(+e) */
+      if (*input_line_pointer == '+')
+	goto target_op;
       (void) operand (expressionP);
       break;
 
@@ -1062,6 +1041,10 @@ operand (expressionP)
     case '!':
     case '-':
       {
+        /* Do not accept --e as -(-e) */
+	if (c == '-' && *input_line_pointer == '-')
+	  goto target_op;
+	
 	operand (expressionP);
 	if (expressionP->X_op == O_constant)
 	  {
@@ -1313,6 +1296,7 @@ operand (expressionP)
 	}
       else
 	{
+	target_op:
 	  /* Let the target try to parse it.  Success is indicated by changing
 	     the X_op field to something other than O_absent and pointing
 	     input_line_pointer past the expression.  If it can't parse the
@@ -1362,8 +1346,7 @@ operand (expressionP)
 	Unused fields zeroed to help expr ().  */
 
 static void
-clean_up_expression (expressionP)
-     expressionS *expressionP;
+clean_up_expression (expressionS *expressionP)
 {
   switch (expressionP->X_op)
     {
@@ -1514,7 +1497,7 @@ static operator_rankT op_rank[] = {
 #define MRI_MUL_PRECEDENCE 6
 
 void
-expr_set_precedence ()
+expr_set_precedence (void)
 {
   if (flag_m68k_mri)
     {
@@ -1533,7 +1516,7 @@ expr_set_precedence ()
 /* Initialize the expression parser.  */
 
 void
-expr_begin ()
+expr_begin (void)
 {
   expr_set_precedence ();
 
@@ -1550,8 +1533,7 @@ expr_begin ()
    Does not advance INPUT_LINE_POINTER.  */
 
 static inline operatorT
-operator (num_chars)
-     int *num_chars;
+operator (int *num_chars)
 {
   int c;
   operatorT ret;
@@ -1566,6 +1548,13 @@ operator (num_chars)
     {
     default:
       return op_encoding[c];
+
+    case '+':
+    case '-':
+      /* Do not allow a++b and a--b to be a + (+b) and a - (-b) */
+      if (input_line_pointer[1] != c)
+	return op_encoding[c];
+      return O_illegal;
 
     case '<':
       switch (input_line_pointer[1])
@@ -1639,9 +1628,8 @@ operator (num_chars)
 /* Parse an expression.  */
 
 segT
-expr (rankarg, resultP)
-     int rankarg;	/* Larger # is higher rank.  */
-     expressionS *resultP;	/* Deliver result here.  */
+expr (int rankarg,		/* Larger # is higher rank.  */
+      expressionS *resultP	/* Deliver result here.  */)
 {
   operator_rankT rank = (operator_rankT) rankarg;
   segT retval;
@@ -1899,7 +1887,7 @@ expr (rankarg, resultP)
    lines end in end-of-line.  */
 
 char
-get_symbol_end ()
+get_symbol_end (void)
 {
   char c;
 
@@ -1918,7 +1906,7 @@ get_symbol_end ()
 }
 
 unsigned int
-get_single_number ()
+get_single_number (void)
 {
   expressionS exp;
   operand (&exp);

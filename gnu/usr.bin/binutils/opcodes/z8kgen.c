@@ -1,4 +1,4 @@
-/* Copyright 2001, 2002 Free Software Foundation, Inc.
+/* Copyright 2001, 2002, 2003 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -17,7 +17,7 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
    USA.  */
 
-/* This program generates z8k-opc.h.  */
+/* This program generates z8k-opc.h.  Compile with -fwritable-strings.  */
 
 #include <stdio.h>
 #include "sysdep.h"
@@ -36,8 +36,12 @@ struct op
 };
 
 #define iswhite(x) ((x) == ' ' || (x) == '\t')
-struct op opt[] =
+static struct op opt[] =
 {
+  {"------", 2,  8, "0011 0110 0000 0000", "bpt", 0},   /* Breakpoint used by the simulator.  */
+  {"------", 10, 8, "0000 1111 0000 1100", "brk", 0},   /* Breakpoint used by real hardware.
+                                                           (ext0f #0x0c).  */
+
   {"------", 10, 8, "0000 1110 imm8", "ext0e imm8", 0},
   {"------", 10, 8, "0000 1111 imm8", "ext0f imm8", 0},
   {"------", 10, 8, "1000 1110 imm8", "ext8e imm8", 0},
@@ -79,7 +83,6 @@ struct op opt[] =
   {"CZSV--", 11, 16, "1011 1011 ssN0 0110 0000 rrrr ddN0 cccc", "cpsir @rd,@rs,rr,cc", 0},
   {"CZSV--", 11, 8, "1011 1010 ssN0 0110 0000 rrrr ddN0 cccc", "cpsirb @rd,@rs,rr,cc", 0},
 
-  {"------", 2, 8, "0011 0110 0000 0000", "bpt", 0},
   {"CZSV--", 5, 16, "1011 0101 ssss dddd", "adc rd,rs", 0},
   {"CZSVDH", 5, 8, "1011 0100 ssss dddd", "adcb rbd,rbs", 0},
   {"CZSV--", 7, 16, "0000 0001 ssN0 dddd", "add rd,@rs", 0},
@@ -209,8 +212,8 @@ struct op opt[] =
   {"------", 11, 32, "1011 0001 dddd 0111", "extsl rqd", 0},
 
   {"------", 8, 16, "0111 1010 0000 0000", "halt", 0},
-  {"------", 10, 16, "0011 1101 ssN0 dddd", "in rd,@rs", 0},
-  {"------", 12, 8, "0011 1100 ssN0 dddd", "inb rbd,@rs", 0},
+  {"------", 10, 16, "0011 1101 ssss dddd", "in rd,@ri", 0},
+  {"------", 12, 8, "0011 1100 ssss dddd", "inb rbd,@ri", 0},
   {"------", 12, 16, "0011 1011 dddd 0100 imm16", "in rd,imm16", 0},
   {"------", 10, 8, "0011 1010 dddd 0100 imm16", "inb rbd,imm16", 0},
   {"-ZSV--", 11, 16, "0010 1001 ddN0 imm4m1", "inc @rd,imm4m1", 0},
@@ -221,10 +224,14 @@ struct op opt[] =
   {"-ZSV--", 14, 8, "0110 1000 ddN0 imm4m1 address_dst", "incb address_dst(rd),imm4m1", 0},
   {"-ZSV--", 13, 8, "0110 1000 0000 imm4m1 address_dst", "incb address_dst,imm4m1", 0},
   {"-ZSV--", 4, 8, "1010 1000 dddd imm4m1", "incb rbd,imm4m1", 0},
-  {"---V--", 21, 16, "0011 1011 ssN0 1000 0000 aaaa ddN0 1000", "ind @rd,@rs,ra", 0},
-  {"---V--", 21, 8, "0011 1010 ssN0 1000 0000 aaaa ddN0 1000", "indb @rd,@rs,rba", 0},
-  {"---V--", 21, 8, "0011 1010 ssN0 0000 0000 aaaa ddN0 1000", "inib @rd,@rs,ra", 0},
-  {"---V--", 21, 16, "0011 1010 ssN0 0000 0000 aaaa ddN0 0000", "inibr @rd,@rs,ra", 0},
+  {"---V--", 21, 16, "0011 1011 ssss 1000 0000 aaaa ddN0 1000", "ind @rd,@ri,ra", 0},
+  {"---V--", 21, 8, "0011 1010 ssss 1000 0000 aaaa ddN0 1000", "indb @rd,@ri,ra", 0},
+  {"---V--", 11, 16, "0011 1011 ssss 1000 0000 aaaa ddN0 0000", "indr @rd,@ri,ra", 0},
+  {"---V--", 11, 8, "0011 1010 ssss 1000 0000 aaaa ddN0 0000", "indrb @rd,@ri,ra", 0},
+  {"---V--", 21, 16, "0011 1011 ssss 0000 0000 aaaa ddN0 1000", "ini @rd,@ri,ra", 0},
+  {"---V--", 21, 8, "0011 1010 ssss 0000 0000 aaaa ddN0 1000", "inib @rd,@ri,ra", 0},
+  {"---V--", 11, 16, "0011 1011 ssss 0000 0000 aaaa ddN0 0000", "inir @rd,@ri,ra", 0},
+  {"---V--", 11, 8, "0011 1010 ssss 0000 0000 aaaa ddN0 0000", "inirb @rd,@ri,ra", 0},
   {"CZSVDH", 13, 16, "0111 1011 0000 0000", "iret", 0},
   {"------", 10, 16, "0001 1110 ddN0 cccc", "jp cc,@rd", 0},
   {"------", 7, 16, "0101 1110 0000 cccc address_dst", "jp cc,address_dst", 0},
@@ -259,6 +266,7 @@ struct op opt[] =
   {"------", 9, 8, "0110 0000 0000 dddd address_src", "ldb rbd,address_src", 0},
   {"------", 10, 8, "0110 0000 ssN0 dddd address_src", "ldb rbd,address_src(rs)", 0},
   {"------", 5, 8, "1100 dddd imm8", "ldb rbd,imm8", 0},
+  {"------", 7, 8, "0010 0000 0000 dddd imm8 imm8", "ldb rbd,imm8", 0},
   {"------", 3, 8, "1010 0000 ssss dddd", "ldb rbd,rbs", 0},
   {"------", 14, 8, "0011 0000 ssN0 dddd imm16", "ldb rbd,rs(imm16)", 0},
   {"------", 14, 8, "0111 0000 ssN0 dddd 0000 xxxx 0000 0000", "ldb rbd,rs(rx)", 0},
@@ -342,15 +350,18 @@ struct op opt[] =
   {"CZSP--", 7, 8, "0000 0100 0000 dddd imm8 imm8", "orb rbd,imm8", 0},
   {"CZSP--", 4, 8, "1000 0100 ssss dddd", "orb rbd,rbs", 0},
 
-  {"---V--", 0, 16, "0011 1111 ddN0 ssss", "out @rd,rs", 0},
-  {"---V--", 0, 16, "0011 1011 ssss 0110 imm16", "out imm16,rs", 0},
-  {"---V--", 0, 8, "0011 1110 ddN0 ssss", "outb @rd,rbs", 0},
-  {"---V--", 0, 8, "0011 1010 ssss 0110 imm16", "outb imm16,rbs", 0},
-  {"---V--", 0, 16, "0011 1011 ssN0 1010 0000 aaaa ddN0 1000", "outd @rd,@rs,ra", 0},
-  {"---V--", 0, 16, "0011 1010 ssN0 1010 0000 aaaa ddN0 1000", "outdb @rd,@rs,rba", 0},
-  {"---V--", 0, 16, "0011 1011 ssN0 0010 0000 aaaa ddN0 1000", "outi @rd,@rs,ra", 0},
-  {"---V--", 0, 16, "0011 1010 ssN0 0010 0000 aaaa ddN0 1000", "outib @rd,@rs,ra", 0},
-  {"---V--", 0, 16, "0011 1010 ssN0 0010 0000 aaaa ddN0 0000", "outibr @rd,@rs,ra", 0},
+  {"------", 10, 16, "0011 1111 dddd ssss", "out @ro,rs", 0},
+  {"------", 12, 16, "0011 1011 ssss 0110 imm16", "out imm16,rs", 0},
+  {"------", 10, 8, "0011 1110 dddd ssss", "outb @ro,rbs", 0},
+  {"------", 12, 8, "0011 1010 ssss 0110 imm16", "outb imm16,rbs", 0},
+  {"---V--", 21, 16, "0011 1011 ssN0 1010 0000 aaaa dddd 1000", "outd @ro,@rs,ra", 0},
+  {"---V--", 21, 8, "0011 1010 ssN0 1010 0000 aaaa dddd 1000", "outdb @ro,@rs,ra", 0},
+  {"---V--", 11, 16, "0011 1011 ssN0 1010 0000 aaaa dddd 0000", "otdr @ro,@rs,ra", 0},
+  {"---V--", 11, 8, "0011 1010 ssN0 1010 0000 aaaa dddd 0000", "otdrb @ro,@rs,ra", 0},
+  {"---V--", 21, 16, "0011 1011 ssN0 0010 0000 aaaa dddd 1000", "outi @ro,@rs,ra", 0},
+  {"---V--", 21, 8, "0011 1010 ssN0 0010 0000 aaaa dddd 1000", "outib @ro,@rs,ra", 0},
+  {"---V--", 11, 16, "0011 1011 ssN0 0010 0000 aaaa dddd 0000", "otir @ro,@rs,ra", 0},
+  {"---V--", 11, 8, "0011 1010 ssN0 0010 0000 aaaa dddd 0000", "otirb @ro,@rs,ra", 0},
 
   {"------", 12, 16, "0001 0111 ssN0 ddN0", "pop @rd,@rs", 0},
   {"------", 16, 16, "0101 0111 ssN0 ddN0 address_dst", "pop address_dst(rd),@rs", 0},
@@ -427,12 +438,16 @@ struct op opt[] =
 
   {"CZSV--", 7, 16, "1000 1101 flags 0001", "setflg flags", 0},
 
-  {"------", 0, 8, "0011 1010 dddd 0101 imm16", "sinb rbd,imm16", 0},
-  {"------", 0, 8, "0011 1011 dddd 0101 imm16", "sin rd,imm16", 0},
-  {"------", 0, 16, "0011 1011 ssN0 1000 0001 aaaa ddN0 1000", "sind @rd,@rs,ra", 0},
-  {"------", 0, 8, "0011 1010 ssN0 1000 0001 aaaa ddN0 1000", "sindb @rd,@rs,rba", 0},
-  {"------", 0, 8, "0011 1010 ssN0 0001 0000 aaaa ddN0 1000", "sinib @rd,@rs,ra", 0},
-  {"------", 0, 16, "0011 1010 ssN0 0001 0000 aaaa ddN0 0000", "sinibr @rd,@rs,ra", 0},
+  {"------", 12, 16, "0011 1011 dddd 0101 imm16", "sin rd,imm16", 0},
+  {"------", 10, 8, "0011 1010 dddd 0101 imm16", "sinb rbd,imm16", 0},
+  {"---V--", 21, 16, "0011 1011 ssss 1001 0000 aaaa ddN0 1000", "sind @rd,@ri,ra", 0},
+  {"---V--", 21, 8, "0011 1010 ssss 1001 0000 aaaa ddN0 1000", "sindb @rd,@ri,ra", 0},
+  {"---V--", 11, 16, "0011 1011 ssss 1001 0000 aaaa ddN0 0000", "sindr @rd,@ri,ra", 0},
+  {"---V--", 11, 8, "0011 1010 ssss 1001 0000 aaaa ddN0 0000", "sindrb @rd,@ri,ra", 0},
+  {"---V--", 21, 16, "0011 1011 ssss 0001 0000 aaaa ddN0 1000", "sini @rd,@ri,ra", 0},
+  {"---V--", 21, 8, "0011 1010 ssss 0001 0000 aaaa ddN0 1000", "sinib @rd,@ri,ra", 0},
+  {"---V--", 11, 16, "0011 1011 ssss 0001 0000 aaaa ddN0 0000", "sinir @rd,@ri,ra", 0},
+  {"---V--", 11, 8, "0011 1010 ssss 0001 0000 aaaa ddN0 0000", "sinirb @rd,@ri,ra", 0},
 
   {"CZSV--", 13, 16, "1011 0011 dddd 1001 0000 0000 imm8", "sla rd,imm8", 0},
   {"CZSV--", 13, 8, "1011 0010 dddd 1001 iiii iiii 0000 imm4", "slab rbd,imm4", 0},
@@ -442,12 +457,16 @@ struct op opt[] =
   {"CZS---", 13, 8, "1011 0010 dddd 0001 iiii iiii 0000 imm4", "sllb rbd,imm4", 0},
   {"CZS---", 13, 32, "1011 0011 dddd 0101 0000 0000 imm8", "slll rrd,imm8", 0},
 
-  {"------", 0, 16, "0011 1011 ssss 0111 imm16", "sout imm16,rs", 0},
-  {"------", 0, 8, "0011 1010 ssss 0111 imm16", "soutb imm16,rbs", 0},
-  {"------", 0, 16, "0011 1011 ssN0 1011 0000 aaaa ddN0 1000", "soutd @rd,@rs,ra", 0},
-  {"------", 0, 8, "0011 1010 ssN0 1011 0000 aaaa ddN0 1000", "soutdb @rd,@rs,rba", 0},
-  {"------", 0, 8, "0011 1010 ssN0 0011 0000 aaaa ddN0 1000", "soutib @rd,@rs,ra", 0},
-  {"------", 0, 16, "0011 1010 ssN0 0011 0000 aaaa ddN0 0000", "soutibr @rd,@rs,ra", 0},
+  {"------", 12, 16, "0011 1011 ssss 0110 imm16", "sout imm16,rs", 0},
+  {"------", 12, 8, "0011 1010 ssss 0110 imm16", "soutb imm16,rbs", 0},
+  {"---V--", 21, 16, "0011 1011 ssN0 1011 0000 aaaa dddd 1000", "soutd @ro,@rs,ra", 0},
+  {"---V--", 21, 8, "0011 1010 ssN0 1011 0000 aaaa dddd 1000", "soutdb @ro,@rs,ra", 0},
+  {"---V--", 11, 16, "0011 1011 ssN0 1011 0000 aaaa dddd 0000", "sotdr @ro,@rs,ra", 0},
+  {"---V--", 11, 8, "0011 1010 ssN0 1011 0000 aaaa dddd 0000", "sotdrb @ro,@rs,ra", 0},
+  {"---V--", 21, 16, "0011 1011 ssN0 0011 0000 aaaa dddd 1000", "souti @ro,@rs,ra", 0},
+  {"---V--", 21, 8, "0011 1010 ssN0 0011 0000 aaaa dddd 1000", "soutib @ro,@rs,ra", 0},
+  {"---V--", 11, 16, "0011 1011 ssN0 0011 0000 aaaa dddd 0000", "sotir @ro,@rs,ra", 0},
+  {"---V--", 11, 8, "0011 1010 ssN0 0011 0000 aaaa dddd 0000", "sotirb @ro,@rs,ra", 0},
 
   {"CZSV--", 13, 16, "1011 0011 dddd 1001 1111 1111 nim8", "sra rd,imm8", 0},
   {"CZSV--", 13, 8, "1011 0010 dddd 1001 iiii iiii 1111 nim4", "srab rbd,imm4", 0},
@@ -532,8 +551,8 @@ struct op opt[] =
   {"*", 0, 0, 0, 0, 0}
 };
 
-int
-count ()
+static int
+count (void)
 {
   struct op *p = opt;
   int r = 0;
@@ -547,11 +566,8 @@ count ()
 
 }
 
-static
-int
-func (a, b)
-     struct op *a;
-     struct op *b;
+static int
+func (struct op *a, struct op *b)
 {
   return strcmp ((a)->name, (b)->name);
 }
@@ -565,15 +581,13 @@ func (a, b)
 
 struct tok_struct
 {
-
   char *match;
   char *token;
   int length;
 };
 
-struct tok_struct args[] =
+static struct tok_struct args[] =
 {
-
   {"address_src(rs)", "CLASS_X+(ARG_RS)",},
   {"address_dst(rd)", "CLASS_X+(ARG_RD)",},
 
@@ -616,6 +630,8 @@ struct tok_struct args[] =
   {"@ra", "CLASS_IR+(ARG_RA)",},
   {"@rb", "CLASS_IR+(ARG_RB)",},
   {"@rs", "CLASS_IR+(ARG_RS)",},
+  {"@ri", "CLASS_IRO+(ARG_RS)",},
+  {"@ro", "CLASS_IRO+(ARG_RD)",},
 
   {"imm8", "CLASS_IMM+(ARG_IMM8)",},
   {"i2", "CLASS_IMM+(ARG_IMM2)",},
@@ -631,7 +647,7 @@ struct tok_struct args[] =
   {0, 0}
 };
 
-struct tok_struct toks[] =
+static struct tok_struct toks[] =
 {
   {"0000", "CLASS_BIT+0", 1},
   {"0001", "CLASS_BIT+1", 1},
@@ -710,11 +726,8 @@ struct tok_struct toks[] =
   {0, 0}
 };
 
-char *
-translate (table, x, length)
-     struct tok_struct *table;
-     char *x;
-     int *length;
+static char *
+translate (struct tok_struct *table, char *x, int *length)
 {
 
   int found;
@@ -741,10 +754,8 @@ translate (table, x, length)
   return x;
 }
 
-void
-chewbits (bits, length)
-     char *bits;
-     int *length;
+static void
+chewbits (char *bits, int *length)
 {
   int n = 0;
 
@@ -769,11 +780,8 @@ chewbits (bits, length)
   printf ("}");
 }
 
-
-static
-int
-chewname (name)
-     char **name;
+static int
+chewname (char **name)
 {
   char *n;
   int nargs = 0;
@@ -813,11 +821,8 @@ chewname (name)
   return nargs;
 }
 
-static
-void
-sub (x, c)
-     char *x;
-     char c;
+static void
+sub (char *x, char c)
 {
   while (*x)
     {
@@ -835,8 +840,8 @@ sub (x, c)
 #if 0
 #define D(x) ((x) == '1' || (x) =='0')
 #define M(y) (strncmp(y,x,4)==0)
-printmangled (x)
-     char *x;
+static void
+printmangled (char *x)
 {
   return;
   while (*x)
@@ -866,12 +871,11 @@ printmangled (x)
     }
 
 }
-
 #endif
+
 /*#define WORK_TYPE*/
-void
-print_type (n)
-     struct op *n;
+static void
+print_type (struct op *n)
 {
 #ifdef WORK_TYPE
   while (*s && !iswhite (*s))
@@ -896,24 +900,21 @@ print_type (n)
 #endif
 }
 
-
-void
-internal ()
+static void
+internal (void)
 {
   int c = count ();
   struct op *new = (struct op *) xmalloc (sizeof (struct op) * c);
   struct op *p = opt;
   memcpy (new, p, c * sizeof (struct op));
 
-  /* sort all names in table alphabetically */
-  qsort (new, c, sizeof (struct op), func);
+  /* Sort all names in table alphabetically.  */
+  qsort (new, c, sizeof (struct op), (int (*)(const void *, const void *))func);
 
   p = new;
-  while (p->flags[0] != '*')
+  while (p->flags && p->flags[0] != '*')
   {
-    /* If there are any @rs, sub the ssss into a ssn0,
-       (rs), (ssn0)
-       */
+    /* If there are any @rs, sub the ssss into a ssn0, (rs), (ssn0).  */
     int loop = 1;
 
     printf ("\"%s\",%2d, ", p->flags, p->cycles);
@@ -928,7 +929,7 @@ internal ()
 	{
 	  char c;
 
-	  /* skip the r and sub the string */
+	  /* Skip the r and sub the string.  */
 	  s++;
 	  c = s[1];
 	  sub (p->bits, c);
@@ -952,9 +953,8 @@ internal ()
   }
 }
 
-static
-void
-gas ()
+static void
+gas (void)
 {
   int c = count ();
   struct op *p = opt;
@@ -964,260 +964,279 @@ gas ()
 
   memcpy (new, p, c * sizeof (struct op));
 
-  /* sort all names in table alphabetically */
-  qsort (new, c, sizeof (struct op), func);
+  /* Sort all names in table alphabetically.  */
+  qsort (new, c, sizeof (struct op), (int (*)(const void *, const void *))func);
 
   printf ("/* DO NOT EDIT!  -*- buffer-read-only: t -*-\n");
   printf ("   This file is automatically generated by z8kgen.  */\n\n");
 
-  printf ("#define ARG_MASK 0x0f\n");
+  printf ("#define ARG_MASK         0x0f\n");
 
-  printf ("#define ARG_SRC 0x01\n");
-  printf ("#define ARG_DST 0x02\n");
+  printf ("#define ARG_SRC          0x01\n");
+  printf ("#define ARG_DST          0x02\n");
 
-  printf ("#define ARG_RS 0x01\n");
-  printf ("#define ARG_RD 0x02\n");
-  printf ("#define ARG_RA 0x03\n");
-  printf ("#define ARG_RB 0x04\n");
-  printf ("#define ARG_RR 0x05\n");
-  printf ("#define ARG_RX 0x06\n");
-  printf ("#define ARG_IMM4 0x01\n");
-  printf ("#define ARG_IMM8 0x02\n");
-  printf ("#define ARG_IMM16 0x03\n");
-  printf ("#define ARG_IMM32 0x04\n");
-  printf ("#define ARG_IMMN 0x05\n");
-  printf ("#define ARG_IMMNMINUS1 0x05\n");
-  printf ("#define ARG_IMM_1 0x06\n");
-  printf ("#define ARG_IMM_2 0x07\n");
-  printf ("#define ARG_DISP16 0x08\n");
-  printf ("#define ARG_NIM8 0x09\n");
-  printf ("#define ARG_IMM2 0x0a\n");
-  printf ("#define ARG_IMM1OR2 0x0b\n");
+  printf ("#define ARG_RS           0x01\n");
+  printf ("#define ARG_RD           0x02\n");
+  printf ("#define ARG_RA           0x03\n");
+  printf ("#define ARG_RB           0x04\n");
+  printf ("#define ARG_RR           0x05\n");
+  printf ("#define ARG_RX           0x06\n");
 
-  printf ("#define ARG_DISP12 0x0b\n");
-  printf ("#define ARG_NIM4 0x0c\n");
-  printf ("#define ARG_DISP8 0x0c\n");
-  printf ("#define ARG_IMM4M1 0x0d\n");
-  printf ("#define CLASS_MASK 0x1fff0\n");
-  printf ("#define CLASS_X 0x10\n");
-  printf ("#define CLASS_BA 0x20\n");
-  printf ("#define CLASS_DA 0x30\n");
-  printf ("#define CLASS_BX 0x40\n");
-  printf ("#define CLASS_DISP 0x50\n");
-  printf ("#define CLASS_IMM 0x60\n");
-  printf ("#define CLASS_CC 0x70\n");
-  printf ("#define CLASS_CTRL 0x80\n");
-  printf ("#define CLASS_IGNORE 0x90\n");
-  printf ("#define CLASS_ADDRESS 0xd0\n");
-  printf ("#define CLASS_0CCC 0xe0\n");
-  printf ("#define CLASS_1CCC 0xf0\n");
-  printf ("#define CLASS_0DISP7 0x100\n");
-  printf ("#define CLASS_1DISP7 0x200\n");
-  printf ("#define CLASS_01II 0x300\n");
-  printf ("#define CLASS_00II 0x400\n");
-  printf ("#define CLASS_BIT 0x500\n");
-  printf ("#define CLASS_FLAGS 0x600\n");
-  printf ("#define CLASS_IR 0x700\n");
-  printf ("#define CLASS_DISP8 0x800\n");
+  printf ("#define ARG_IMM4         0x01\n");
+  printf ("#define ARG_IMM8         0x02\n");
+  printf ("#define ARG_IMM16        0x03\n");
+  printf ("#define ARG_IMM32        0x04\n");
+  printf ("#define ARG_IMMN         0x05\n");
+  printf ("#define ARG_IMMNMINUS1   0x05\n");
+  printf ("#define ARG_IMM_1        0x06\n");
+  printf ("#define ARG_IMM_2        0x07\n");
+  printf ("#define ARG_DISP16       0x08\n");
+  printf ("#define ARG_NIM8         0x09\n");
+  printf ("#define ARG_IMM2         0x0a\n");
+  printf ("#define ARG_IMM1OR2      0x0b\n");
 
-  printf ("#define CLASS_BIT_1OR2 0x900\n");
-  printf ("#define CLASS_REG 0x7000\n");
-  printf ("#define CLASS_REG_BYTE 0x2000\n");
-  printf ("#define CLASS_REG_WORD 0x3000\n");
-  printf ("#define CLASS_REG_QUAD 0x4000\n");
-  printf ("#define CLASS_REG_LONG 0x5000\n");
-  printf ("#define CLASS_REGN0 0x8000\n");
-  printf ("#define CLASS_PR 0x10000\n");
+  printf ("#define ARG_DISP12       0x0b\n");
+  printf ("#define ARG_NIM4         0x0c\n");
+  printf ("#define ARG_DISP8        0x0c\n");
+  printf ("#define ARG_IMM4M1       0x0d\n");
 
-  printf ("#define OPC_adc 0\n");
-  printf ("#define OPC_adcb 1\n");
-  printf ("#define OPC_add 2\n");
-  printf ("#define OPC_addb 3\n");
-  printf ("#define OPC_addl 4\n");
-  printf ("#define OPC_and 5\n");
-  printf ("#define OPC_andb 6\n");
-  printf ("#define OPC_bit 7\n");
-  printf ("#define OPC_bitb 8\n");
-  printf ("#define OPC_call 9\n");
-  printf ("#define OPC_calr 10\n");
-  printf ("#define OPC_clr 11\n");
-  printf ("#define OPC_clrb 12\n");
-  printf ("#define OPC_com 13\n");
-  printf ("#define OPC_comb 14\n");
-  printf ("#define OPC_comflg 15\n");
-  printf ("#define OPC_cp 16\n");
-  printf ("#define OPC_cpb 17\n");
-  printf ("#define OPC_cpd 18\n");
-  printf ("#define OPC_cpdb 19\n");
-  printf ("#define OPC_cpdr 20\n");
-  printf ("#define OPC_cpdrb 21\n");
-  printf ("#define OPC_cpi 22\n");
-  printf ("#define OPC_cpib 23\n");
-  printf ("#define OPC_cpir 24\n");
-  printf ("#define OPC_cpirb 25\n");
-  printf ("#define OPC_cpl 26\n");
-  printf ("#define OPC_cpsd 27\n");
-  printf ("#define OPC_cpsdb 28\n");
-  printf ("#define OPC_cpsdr 29\n");
-  printf ("#define OPC_cpsdrb 30\n");
-  printf ("#define OPC_cpsi 31\n");
-  printf ("#define OPC_cpsib 32\n");
-  printf ("#define OPC_cpsir 33\n");
-  printf ("#define OPC_cpsirb 34\n");
-  printf ("#define OPC_dab 35\n");
-  printf ("#define OPC_dbjnz 36\n");
-  printf ("#define OPC_dec 37\n");
-  printf ("#define OPC_decb 38\n");
-  printf ("#define OPC_di 39\n");
-  printf ("#define OPC_div 40\n");
-  printf ("#define OPC_divl 41\n");
-  printf ("#define OPC_djnz 42\n");
-  printf ("#define OPC_ei 43\n");
-  printf ("#define OPC_ex 44\n");
-  printf ("#define OPC_exb 45\n");
-  printf ("#define OPC_exts 46\n");
-  printf ("#define OPC_extsb 47\n");
-  printf ("#define OPC_extsl 48\n");
-  printf ("#define OPC_halt 49\n");
-  printf ("#define OPC_in 50\n");
-  printf ("#define OPC_inb 51\n");
-  printf ("#define OPC_inc 52\n");
-  printf ("#define OPC_incb 53\n");
-  printf ("#define OPC_ind 54\n");
-  printf ("#define OPC_indb 55\n");
-  printf ("#define OPC_inib 56\n");
-  printf ("#define OPC_inibr 57\n");
-  printf ("#define OPC_iret 58\n");
-  printf ("#define OPC_jp 59\n");
-  printf ("#define OPC_jr 60\n");
-  printf ("#define OPC_ld 61\n");
-  printf ("#define OPC_lda 62\n");
-  printf ("#define OPC_ldar 63\n");
-  printf ("#define OPC_ldb 64\n");
-  printf ("#define OPC_ldctl 65\n");
-  printf ("#define OPC_ldir 66\n");
-  printf ("#define OPC_ldirb 67\n");
-  printf ("#define OPC_ldk 68\n");
-  printf ("#define OPC_ldl 69\n");
-  printf ("#define OPC_ldm 70\n");
-  printf ("#define OPC_ldps 71\n");
-  printf ("#define OPC_ldr 72\n");
-  printf ("#define OPC_ldrb 73\n");
-  printf ("#define OPC_ldrl 74\n");
-  printf ("#define OPC_mbit 75\n");
-  printf ("#define OPC_mreq 76\n");
-  printf ("#define OPC_mres 77\n");
-  printf ("#define OPC_mset 78\n");
-  printf ("#define OPC_mult 79\n");
-  printf ("#define OPC_multl 80\n");
-  printf ("#define OPC_neg 81\n");
-  printf ("#define OPC_negb 82\n");
-  printf ("#define OPC_nop 83\n");
-  printf ("#define OPC_or 84\n");
-  printf ("#define OPC_orb 85\n");
-  printf ("#define OPC_out 86\n");
-  printf ("#define OPC_outb 87\n");
-  printf ("#define OPC_outd 88\n");
-  printf ("#define OPC_outdb 89\n");
-  printf ("#define OPC_outib 90\n");
-  printf ("#define OPC_outibr 91\n");
-  printf ("#define OPC_pop 92\n");
-  printf ("#define OPC_popl 93\n");
-  printf ("#define OPC_push 94\n");
-  printf ("#define OPC_pushl 95\n");
-  printf ("#define OPC_res 96\n");
-  printf ("#define OPC_resb 97\n");
-  printf ("#define OPC_resflg 98\n");
-  printf ("#define OPC_ret 99\n");
-  printf ("#define OPC_rl 100\n");
-  printf ("#define OPC_rlb 101\n");
-  printf ("#define OPC_rlc 102\n");
-  printf ("#define OPC_rlcb 103\n");
-  printf ("#define OPC_rldb 104\n");
-  printf ("#define OPC_rr 105\n");
-  printf ("#define OPC_rrb 106\n");
-  printf ("#define OPC_rrc 107\n");
-  printf ("#define OPC_rrcb 108\n");
-  printf ("#define OPC_rrdb 109\n");
-  printf ("#define OPC_sbc 110\n");
-  printf ("#define OPC_sbcb 111\n");
-  printf ("#define OPC_sda 112\n");
-  printf ("#define OPC_sdab 113\n");
-  printf ("#define OPC_sdal 114\n");
-  printf ("#define OPC_sdl 115\n");
-  printf ("#define OPC_sdlb 116\n");
-  printf ("#define OPC_sdll 117\n");
-  printf ("#define OPC_set 118\n");
-  printf ("#define OPC_setb 119\n");
-  printf ("#define OPC_setflg 120\n");
-  printf ("#define OPC_sinb 121\n");
-  printf ("#define OPC_sind 122\n");
-  printf ("#define OPC_sindb 123\n");
-  printf ("#define OPC_sinib 124\n");
-  printf ("#define OPC_sinibr 125\n");
-  printf ("#define OPC_sla 126\n");
-  printf ("#define OPC_slab 127\n");
-  printf ("#define OPC_slal 128\n");
-  printf ("#define OPC_sll 129\n");
-  printf ("#define OPC_sllb 130\n");
-  printf ("#define OPC_slll 131\n");
-  printf ("#define OPC_sout 132\n");
-  printf ("#define OPC_soutb 133\n");
-  printf ("#define OPC_soutd 134\n");
-  printf ("#define OPC_soutdb 135\n");
-  printf ("#define OPC_soutib 136\n");
-  printf ("#define OPC_soutibr 137\n");
-  printf ("#define OPC_sra 138\n");
-  printf ("#define OPC_srab 139\n");
-  printf ("#define OPC_sral 140\n");
-  printf ("#define OPC_srl 141\n");
-  printf ("#define OPC_srlb 142\n");
-  printf ("#define OPC_srll 143\n");
-  printf ("#define OPC_sub 144\n");
-  printf ("#define OPC_subb 145\n");
-  printf ("#define OPC_subl 146\n");
-  printf ("#define OPC_tcc 147\n");
-  printf ("#define OPC_tccb 148\n");
-  printf ("#define OPC_test 149\n");
-  printf ("#define OPC_testb 150\n");
-  printf ("#define OPC_testl 151\n");
-  printf ("#define OPC_trdb 152\n");
-  printf ("#define OPC_trdrb 153\n");
-  printf ("#define OPC_trib 154\n");
-  printf ("#define OPC_trirb 155\n");
-  printf ("#define OPC_trtdrb 156\n");
-  printf ("#define OPC_trtib 157\n");
-  printf ("#define OPC_trtirb 158\n");
-  printf ("#define OPC_trtrb 159\n");
-  printf ("#define OPC_tset 160\n");
-  printf ("#define OPC_tsetb 161\n");
-  printf ("#define OPC_xor 162\n");
-  printf ("#define OPC_xorb 163\n");
+  printf ("#define CLASS_X          0x10\n");
+  printf ("#define CLASS_BA         0x20\n");
+  printf ("#define CLASS_DA         0x30\n");
+  printf ("#define CLASS_BX         0x40\n");
+  printf ("#define CLASS_DISP       0x50\n");
+  printf ("#define CLASS_IMM        0x60\n");
+  printf ("#define CLASS_CC         0x70\n");
+  printf ("#define CLASS_CTRL       0x80\n");
+  printf ("#define CLASS_IGNORE     0x90\n");
+  printf ("#define CLASS_ADDRESS    0xd0\n");
+  printf ("#define CLASS_0CCC       0xe0\n");
+  printf ("#define CLASS_1CCC       0xf0\n");
+  printf ("#define CLASS_0DISP7    0x100\n");
+  printf ("#define CLASS_1DISP7    0x200\n");
+  printf ("#define CLASS_01II      0x300\n");
+  printf ("#define CLASS_00II      0x400\n");
+  printf ("#define CLASS_BIT       0x500\n");
+  printf ("#define CLASS_FLAGS     0x600\n");
+  printf ("#define CLASS_IR        0x700\n");
+  printf ("#define CLASS_IRO       0x800\n");
+  printf ("#define CLASS_DISP8     0x900\n");
 
-  printf ("#define OPC_ldd  164 \n");
-  printf ("#define OPC_lddb  165 \n");
-  printf ("#define OPC_lddr  166 \n");
-  printf ("#define OPC_lddrb 167  \n");
-  printf ("#define OPC_ldi  168 \n");
-  printf ("#define OPC_ldib 169  \n");
-  printf ("#define OPC_sc   170\n");
-  printf ("#define OPC_bpt   171\n");
-  printf ("#define OPC_ext0e 172\n");
-  printf ("#define OPC_ext0f 172\n");
-  printf ("#define OPC_ext8e 172\n");
-  printf ("#define OPC_ext8f 172\n");
-  printf ("#define OPC_rsvd36 172\n");
-  printf ("#define OPC_rsvd38 172\n");
-  printf ("#define OPC_rsvd78 172\n");
-  printf ("#define OPC_rsvd7e 172\n");
-  printf ("#define OPC_rsvd9d 172\n");
-  printf ("#define OPC_rsvd9f 172\n");
-  printf ("#define OPC_rsvdb9 172\n");
-  printf ("#define OPC_rsvdbf 172\n");
-  printf ("#define OPC_outi 173\n");
-  printf ("#define OPC_ldctlb 174\n");
-  printf ("#define OPC_sin 175\n");
-  printf ("#define OPC_trtdb 176\n");
+  printf ("#define CLASS_BIT_1OR2  0xa00\n");
+  printf ("#define CLASS_REG       0x7000\n");
+  printf ("#define CLASS_REG_BYTE  0x2000\n");
+  printf ("#define CLASS_REG_WORD  0x3000\n");
+  printf ("#define CLASS_REG_QUAD  0x4000\n");
+  printf ("#define CLASS_REG_LONG  0x5000\n");
+  printf ("#define CLASS_REGN0     0x8000\n");
+  printf ("#define CLASS_PR       0x10000\n");
+  printf ("#define CLASS_MASK     0x1fff0\n");
+
+  printf ("#define OPC_adc      0\n");
+  printf ("#define OPC_adcb     1\n");
+  printf ("#define OPC_add      2\n");
+  printf ("#define OPC_addb     3\n");
+  printf ("#define OPC_addl     4\n");
+  printf ("#define OPC_and      5\n");
+  printf ("#define OPC_andb     6\n");
+  printf ("#define OPC_bit      7\n");
+  printf ("#define OPC_bitb     8\n");
+  printf ("#define OPC_call     9\n");
+  printf ("#define OPC_calr    10\n");
+  printf ("#define OPC_clr     11\n");
+  printf ("#define OPC_clrb    12\n");
+  printf ("#define OPC_com     13\n");
+  printf ("#define OPC_comb    14\n");
+  printf ("#define OPC_comflg  15\n");
+  printf ("#define OPC_cp      16\n");
+  printf ("#define OPC_cpb     17\n");
+  printf ("#define OPC_cpd     18\n");
+  printf ("#define OPC_cpdb    19\n");
+  printf ("#define OPC_cpdr    20\n");
+  printf ("#define OPC_cpdrb   21\n");
+  printf ("#define OPC_cpi     22\n");
+  printf ("#define OPC_cpib    23\n");
+  printf ("#define OPC_cpir    24\n");
+  printf ("#define OPC_cpirb   25\n");
+  printf ("#define OPC_cpl     26\n");
+  printf ("#define OPC_cpsd    27\n");
+  printf ("#define OPC_cpsdb   28\n");
+  printf ("#define OPC_cpsdr   29\n");
+  printf ("#define OPC_cpsdrb  30\n");
+  printf ("#define OPC_cpsi    31\n");
+  printf ("#define OPC_cpsib   32\n");
+  printf ("#define OPC_cpsir   33\n");
+  printf ("#define OPC_cpsirb  34\n");
+  printf ("#define OPC_dab     35\n");
+  printf ("#define OPC_dbjnz   36\n");
+  printf ("#define OPC_dec     37\n");
+  printf ("#define OPC_decb    38\n");
+  printf ("#define OPC_di      39\n");
+  printf ("#define OPC_div     40\n");
+  printf ("#define OPC_divl    41\n");
+  printf ("#define OPC_djnz    42\n");
+  printf ("#define OPC_ei      43\n");
+  printf ("#define OPC_ex      44\n");
+  printf ("#define OPC_exb     45\n");
+  printf ("#define OPC_exts    46\n");
+  printf ("#define OPC_extsb   47\n");
+  printf ("#define OPC_extsl   48\n");
+  printf ("#define OPC_halt    49\n");
+  printf ("#define OPC_in      50\n");
+  printf ("#define OPC_inb     51\n");
+  printf ("#define OPC_inc     52\n");
+  printf ("#define OPC_incb    53\n");
+  printf ("#define OPC_ind     54\n");
+  printf ("#define OPC_indb    55\n");
+  printf ("#define OPC_indr    56\n");
+  printf ("#define OPC_indrb   57\n");
+  printf ("#define OPC_ini     58\n");
+  printf ("#define OPC_inib    59\n");
+  printf ("#define OPC_inir    60\n");
+  printf ("#define OPC_inirb   61\n");
+  printf ("#define OPC_iret    62\n");
+  printf ("#define OPC_jp      63\n");
+  printf ("#define OPC_jr      64\n");
+  printf ("#define OPC_ld      65\n");
+  printf ("#define OPC_lda     66\n");
+  printf ("#define OPC_ldar    67\n");
+  printf ("#define OPC_ldb     68\n");
+  printf ("#define OPC_ldctl   69\n");
+  printf ("#define OPC_ldir    70\n");
+  printf ("#define OPC_ldirb   71\n");
+  printf ("#define OPC_ldk     72\n");
+  printf ("#define OPC_ldl     73\n");
+  printf ("#define OPC_ldm     74\n");
+  printf ("#define OPC_ldps    75\n");
+  printf ("#define OPC_ldr     76\n");
+  printf ("#define OPC_ldrb    77\n");
+  printf ("#define OPC_ldrl    78\n");
+  printf ("#define OPC_mbit    79\n");
+  printf ("#define OPC_mreq    80\n");
+  printf ("#define OPC_mres    81\n");
+  printf ("#define OPC_mset    82\n");
+  printf ("#define OPC_mult    83\n");
+  printf ("#define OPC_multl   84\n");
+  printf ("#define OPC_neg     85\n");
+  printf ("#define OPC_negb    86\n");
+  printf ("#define OPC_nop     87\n");
+  printf ("#define OPC_or      88\n");
+  printf ("#define OPC_orb     89\n");
+  printf ("#define OPC_otdr    90\n");
+  printf ("#define OPC_otdrb   91\n");
+  printf ("#define OPC_otir    92\n");
+  printf ("#define OPC_otirb   93\n");
+  printf ("#define OPC_out     94\n");
+  printf ("#define OPC_outb    95\n");
+  printf ("#define OPC_outd    96\n");
+  printf ("#define OPC_outdb   97\n");
+  printf ("#define OPC_outi    98\n");
+  printf ("#define OPC_outib   99\n");
+  printf ("#define OPC_pop    100\n");
+  printf ("#define OPC_popl   101\n");
+  printf ("#define OPC_push   102\n");
+  printf ("#define OPC_pushl  103\n");
+  printf ("#define OPC_res    104\n");
+  printf ("#define OPC_resb   105\n");
+  printf ("#define OPC_resflg 106\n");
+  printf ("#define OPC_ret    107\n");
+  printf ("#define OPC_rl     108\n");
+  printf ("#define OPC_rlb    109\n");
+  printf ("#define OPC_rlc    110\n");
+  printf ("#define OPC_rlcb   111\n");
+  printf ("#define OPC_rldb   112\n");
+  printf ("#define OPC_rr     113\n");
+  printf ("#define OPC_rrb    114\n");
+  printf ("#define OPC_rrc    115\n");
+  printf ("#define OPC_rrcb   116\n");
+  printf ("#define OPC_rrdb   117\n");
+  printf ("#define OPC_sbc    118\n");
+  printf ("#define OPC_sbcb   119\n");
+  printf ("#define OPC_sda    120\n");
+  printf ("#define OPC_sdab   121\n");
+  printf ("#define OPC_sdal   122\n");
+  printf ("#define OPC_sdl    123\n");
+  printf ("#define OPC_sdlb   124\n");
+  printf ("#define OPC_sdll   125\n");
+  printf ("#define OPC_set    126\n");
+  printf ("#define OPC_setb   127\n");
+  printf ("#define OPC_setflg 128\n");
+  printf ("#define OPC_sin    129\n");
+  printf ("#define OPC_sinb   130\n");
+  printf ("#define OPC_sind   131\n");
+  printf ("#define OPC_sindb  132\n");
+  printf ("#define OPC_sindr  133\n");
+  printf ("#define OPC_sindrb 134\n");
+  printf ("#define OPC_sini   135\n");
+  printf ("#define OPC_sinib  136\n");
+  printf ("#define OPC_sinir  137\n");
+  printf ("#define OPC_sinirb 138\n");
+  printf ("#define OPC_sla    139\n");
+  printf ("#define OPC_slab   140\n");
+  printf ("#define OPC_slal   141\n");
+  printf ("#define OPC_sll    142\n");
+  printf ("#define OPC_sllb   143\n");
+  printf ("#define OPC_slll   144\n");
+  printf ("#define OPC_sotdr  145\n");
+  printf ("#define OPC_sotdrb 146\n");
+  printf ("#define OPC_sotir  147\n");
+  printf ("#define OPC_sotirb 148\n");
+  printf ("#define OPC_sout   149\n");
+  printf ("#define OPC_soutb  150\n");
+  printf ("#define OPC_soutd  151\n");
+  printf ("#define OPC_soutdb 152\n");
+  printf ("#define OPC_souti  153\n");
+  printf ("#define OPC_soutib 154\n");
+  printf ("#define OPC_sra    155\n");
+  printf ("#define OPC_srab   156\n");
+  printf ("#define OPC_sral   157\n");
+  printf ("#define OPC_srl    158\n");
+  printf ("#define OPC_srlb   159\n");
+  printf ("#define OPC_srll   160\n");
+  printf ("#define OPC_sub    161\n");
+  printf ("#define OPC_subb   162\n");
+  printf ("#define OPC_subl   163\n");
+  printf ("#define OPC_tcc    164\n");
+  printf ("#define OPC_tccb   165\n");
+  printf ("#define OPC_test   166\n");
+  printf ("#define OPC_testb  167\n");
+  printf ("#define OPC_testl  168\n");
+  printf ("#define OPC_trdb   169\n");
+  printf ("#define OPC_trdrb  170\n");
+  printf ("#define OPC_trib   171\n");
+  printf ("#define OPC_trirb  172\n");
+  printf ("#define OPC_trtdrb 173\n");
+  printf ("#define OPC_trtib  174\n");
+  printf ("#define OPC_trtirb 175\n");
+  printf ("#define OPC_trtrb  176\n");
+  printf ("#define OPC_tset   177\n");
+  printf ("#define OPC_tsetb  178\n");
+  printf ("#define OPC_xor    179\n");
+  printf ("#define OPC_xorb   180\n");
+
+  printf ("#define OPC_ldd    181\n");
+  printf ("#define OPC_lddb   182\n");
+  printf ("#define OPC_lddr   183\n");
+  printf ("#define OPC_lddrb  184\n");
+  printf ("#define OPC_ldi    185\n");
+  printf ("#define OPC_ldib   186\n");
+  printf ("#define OPC_sc     187\n");
+  printf ("#define OPC_bpt    188\n");
+  printf ("#define OPC_ext0e  188\n");
+  printf ("#define OPC_ext0f  188\n");
+  printf ("#define OPC_ext8e  188\n");
+  printf ("#define OPC_ext8f  188\n");
+  printf ("#define OPC_rsvd36 188\n");
+  printf ("#define OPC_rsvd38 188\n");
+  printf ("#define OPC_rsvd78 188\n");
+  printf ("#define OPC_rsvd7e 188\n");
+  printf ("#define OPC_rsvd9d 188\n");
+  printf ("#define OPC_rsvd9f 188\n");
+  printf ("#define OPC_rsvdb9 188\n");
+  printf ("#define OPC_rsvdbf 188\n");
+  printf ("#define OPC_ldctlb 189\n");
+  printf ("#define OPC_trtdb  190\n");
+  printf ("#define OPC_brk    191\n");
 #if 0
   for (i = 0; toks[i].token; i++)
     printf ("#define %s\t0x%x\n", toks[i].token, i * 16);
@@ -1290,11 +1309,8 @@ gas ()
   printf ("#endif\n");
 }
 
-
 int
-main (ac, av)
-     int ac;
-     char **av;
+main (int ac, char **av)
 {
   struct op *p = opt;
 
@@ -1315,16 +1331,11 @@ main (ac, av)
     {
       gas ();
     }
-  else if (ac == 2 && strcmp (av[1], "-d") == 0)
-    {
-      /*dis();*/
-    }
   else
     {
       printf ("Usage: %s -t\n", av[0]);
-      printf ("-t : generate new z8.c internal table\n");
+      printf ("-t : generate new internal table\n");
       printf ("-a : generate new table for gas\n");
-      printf ("-d : generate new table for disassemble\n");
       printf ("-h : generate new table for humans\n");
     }
   return 0;

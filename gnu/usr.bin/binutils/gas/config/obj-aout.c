@@ -464,14 +464,18 @@ obj_crawl_symbol_chain (headers)
       if (flag_readonly_data_in_text && (S_GET_SEGMENT (symbolP) == SEG_DATA))
 	{
 	  S_SET_SEGMENT (symbolP, SEG_TEXT);
-	}			/* if pusing data into text */
+	}			/* if pushing data into text */
 
       resolve_symbol_value (symbolP);
 
       /* Skip symbols which were equated to undefined or common
-	 symbols.  */
+	 symbols.  Also skip defined uncommon symbols which can
+	 be resolved since in this case they should have been
+	 resolved to a non-symbolic constant.  */
       if (symbolP->sy_value.X_op == O_symbol
-	  && (! S_IS_DEFINED (symbolP) || S_IS_COMMON (symbolP)))
+	  && (! S_IS_DEFINED (symbolP)
+	      || S_IS_COMMON (symbolP)
+	      || symbol_resolved_p (symbolP)))
 	{
 	  *symbolPP = symbol_next (symbolP);
 	  continue;
@@ -502,13 +506,13 @@ obj_crawl_symbol_chain (headers)
 	      || (S_GET_NAME (symbolP)[0] != '\001'
 		  && (flag_keep_locals || !S_LOCAL_NAME (symbolP))
 #if defined(TE_NetBSD) || defined(TE_OpenBSD)
-		  || (flag_pic && symbolP->sy_forceout)
+		 || (flag_pic && symbolP->sy_forceout)
 #endif
-		  ))
+		 ))
 #if defined(TE_NetBSD) || defined(TE_OpenBSD)
-	  && (!flag_pic || symbolP != GOT_symbol || got_referenced != 0)
+	 && (!flag_pic || symbolP != GOT_symbol || got_referenced != 0)
 #endif
-	  )
+         )
 	{
 	  symbolP->sy_number = symbol_number++;
 
@@ -527,10 +531,10 @@ obj_crawl_symbol_chain (headers)
       else
 	{
 	  if (S_IS_EXTERNAL (symbolP) || !S_IS_DEFINED (symbolP)
-#if defined(TE_NetBSD) || TE_OpenBSD)
-	      && (!flag_pic || symbolP != GOT_symbol || got_referenced != 0)
+#if defined(TE_NetBSD) || defined(TE_OpenBSD)
+	     && (!flag_pic || symbolP != GOT_symbol || got_referenced != 0)
 #endif
-	      )
+	     )
 	  if (S_IS_EXTERNAL (symbolP) || !S_IS_DEFINED (symbolP))
 	    /* This warning should never get triggered any more.
 	       Well, maybe if you're doing twisted things with

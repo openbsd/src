@@ -1,5 +1,5 @@
 /* BFD back-end for VERSAdos-E objects.
-   Copyright 1995, 1996, 1998, 1999, 2000, 2001, 2002
+   Copyright 1995, 1996, 1998, 1999, 2000, 2001, 2002, 2003
    Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support <sac@cygnus.com>.
 
@@ -23,18 +23,18 @@
 
 /*
    SUBSECTION
-   VERSAdos-E relocateable object file format
+   VERSAdos-E relocatable object file format
 
    DESCRIPTION
 
-   This module supports reading of VERSAdos relocateable
+   This module supports reading of VERSAdos relocatable
    object files.
 
    A VERSAdos file looks like contains
 
-   o Indentification Record
+   o Identification Record
    o External Symbol Definition Record
-   o Object Text Recrod
+   o Object Text Record
    o End Record
 
  */
@@ -55,10 +55,10 @@ static bfd_boolean versados_pass_2 PARAMS ((bfd *));
 static bfd_boolean versados_get_section_contents
   PARAMS ((bfd *, asection *, void *, file_ptr, bfd_size_type));
 static bfd_boolean versados_set_section_contents
-  PARAMS ((bfd *, sec_ptr, void *, file_ptr, bfd_size_type));
+  PARAMS ((bfd *, sec_ptr, const void *, file_ptr, bfd_size_type));
 static int versados_sizeof_headers PARAMS ((bfd *, bfd_boolean));
 static long int versados_get_symtab_upper_bound PARAMS ((bfd *));
-static long int versados_get_symtab PARAMS ((bfd *, asymbol **));
+static long int versados_canonicalize_symtab PARAMS ((bfd *, asymbol **));
 static void versados_get_symbol_info
   PARAMS ((bfd *, asymbol *, symbol_info *));
 static void versados_print_symbol
@@ -713,7 +713,7 @@ static bfd_boolean
 versados_set_section_contents (abfd, section, location, offset, bytes_to_do)
      bfd *abfd ATTRIBUTE_UNUSED;
      sec_ptr section ATTRIBUTE_UNUSED;
-     PTR location ATTRIBUTE_UNUSED;
+     const PTR location ATTRIBUTE_UNUSED;
      file_ptr offset ATTRIBUTE_UNUSED;
      bfd_size_type bytes_to_do ATTRIBUTE_UNUSED;
 {
@@ -740,7 +740,7 @@ versados_get_symtab_upper_bound (abfd)
 /* Return the symbol table.  */
 
 static long
-versados_get_symtab (abfd, alocation)
+versados_canonicalize_symtab (abfd, alocation)
      bfd *abfd;
      asymbol **alocation;
 {

@@ -5,9 +5,13 @@ dnl brackets, be sure changequote invocations surround it.
 dnl
 dnl
 dnl v2.5 needed for --bindir et al
-AC_PREREQ(2.13)
+AC_PREREQ(2.57)
 AC_INIT(as.h)
 
+dnl Autoconf 2.57 will find the aux dir without this.  However, unless
+dnl we specify this explicitly, automake-1.7 will assume that ylwrap is in
+dnl gas/ instead of gas/../.
+AC_CONFIG_AUX_DIR(..)
 AC_CANONICAL_SYSTEM
 AC_ISC_POSIX
 
@@ -70,10 +74,14 @@ AM_CONFIG_HEADER(config.h:config.in)
 
 # If we are on a DOS filesystem, we must use gdb.ini rather than
 # .gdbinit.
-GDBINIT=".gdbinit"
 case "${host}" in
   *-*-msdos* | *-*-go32* | *-*-mingw32* | *-*-windows*)
     GDBINIT="gdb.ini"
+    AC_CONFIG_FILES(gdb.ini:gdbinit.in)
+    ;;
+  *)
+    GDBINIT=".gdbinit"
+    AC_CONFIG_FILES(.gdbinit:gdbinit.in)
     ;;
 esac
 AC_SUBST(GDBINIT)
@@ -114,12 +122,14 @@ changequote([,])dnl
     arch=
     endian=
     case ${cpu} in
+      am33_2.0)		cpu_type=mn10300 endian=little ;;
       alpha*)		cpu_type=alpha ;;
       arm*b|xscale*b|strongarm*b) cpu_type=arm endian=big ;;
       arm*|xscale*|strongarm*)    cpu_type=arm endian=little ;;
+      c4x*)		cpu_type=tic4x ;;
       hppa*)		cpu_type=hppa ;;
 changequote(,)dnl
-      i[3456]86)	cpu_type=i386 arch=i386;;
+      i[3-7]86)		cpu_type=i386 arch=i386;;
       x86_64)		cpu_type=i386 arch=x86_64;;
       ia64)		cpu_type=ia64 ;;
       ip2k)             cpu_type=ip2k endian=big ;; 
@@ -154,6 +164,8 @@ changequote([,])dnl
       sparc*)		cpu_type=sparc arch=sparclite ;; # ??? See tc-sparc.c.
       v850*)		cpu_type=v850 ;;
       xtensa*)		cpu_type=xtensa arch=xtensa ;;
+      m32r)             cpu_type=m32r target_cpu=m32r endian=big ;;
+      m32rle)           cpu_type=m32r target_cpu=m32r endian=little ;;
       *)		cpu_type=${cpu} ;;
     esac
 
@@ -185,11 +197,14 @@ changequote([,])dnl
       alpha*-*-netbsd*)			fmt=elf em=nbsd ;;
       alpha*-*-openbsd*)		fmt=elf em=obsd ;;
 
+      # cpu_type for am33_2.0 is set to mn10300
+      mn10300-*-linux*)			fmt=elf bfd_gas=yes em=linux ;;
+
       arc-*-elf*)			fmt=elf ;;
 
       arm-*-aout)			fmt=aout ;;
       arm-*-coff | thumb-*-coff)	fmt=coff ;;
-      arm-*-rtems | thumb-*-rtems)	fmt=elf ;;
+      arm-*-rtems* | thumb-*-rtems*)	fmt=elf ;;
       arm-*-elf | thumb-*-elf)		fmt=elf ;;
       arm-*-kaos*)			fmt=elf ;;
       arm*-*-conix*)			fmt=elf ;;
@@ -202,13 +217,13 @@ changequote([,])dnl
       arm-**-nto*)			fmt=elf ;;
       arm-*-oabi | thumb-*-oabi)	fmt=elf ;;
       arm-epoc-pe | thumb-epoc-pe)	fmt=coff em=epoc-pe ;;
-      arm-*-wince)			fmt=coff em=wince-pe ;;
+      arm-wince-pe | arm-*-wince)       fmt=coff em=wince-pe ;;
       arm-*-pe | thumb-*-pe)		fmt=coff em=pe ;;
       arm-*-riscix*)			fmt=aout em=riscix ;;
-      arm-*-vxworks)			fmt=coff ;;
 
       avr-*-*)				fmt=elf ;;
 
+      cris-*-linux-gnu*)		fmt=multi bfd_gas=yes em=linux ;;
       cris-*-*)				fmt=multi bfd_gas=yes ;;
 
       d10v-*-*)				fmt=elf ;;
@@ -216,6 +231,7 @@ changequote([,])dnl
       dlx-*-*)				fmt=elf ;;
 
       fr30-*-*)				fmt=elf ;;
+      frv-*-*linux*)			fmt=elf em=linux;;
       frv-*-*)				fmt=elf ;;
 
       hppa-*-linux*)	case ${cpu} in
@@ -254,23 +270,24 @@ changequote([,])dnl
       i386-*-bsd*)			fmt=aout em=386bsd ;;
       i386-*-netbsd0.8)			fmt=aout em=386bsd ;;
       i386-*-netbsdpe*)			fmt=coff em=pe ;;
+      i386-*-netbsd*-gnu* | \
+      i386-*-knetbsd*-gnu | \
       i386-*-netbsdelf*)		fmt=elf em=nbsd ;;
       i386-*-netbsd*)	case ${cpu} in
 			    x86_64)	fmt=elf em=nbsd ;;
 			    *)		fmt=aout em=nbsd ;;
 			esac ;;
 changequote(,)dnl
-      i386-*-openbsd*)     em=obsd bfd_gas=yes
-                            case ${cpu} in
-                             x86_64)   fmt=elf ;;
-                             *) case ${os} in
-                                 openbsd[0-2].* | openbsd3.[0-2])
-                                    fmt=aout ;;
-                                 *)
-                                    fmt=elf ;;
-                              esac
-                            esac
-                           ;;
+      i386-*-openbsd*)			em=obsd bfd_gas=yes
+			case ${cpu} in
+			    x86_64)	fmt=elf ;;
+			    *) case ${os} in
+				openbsd[0-2].* | openbsd3.[0-2])
+					fmt=aout ;;
+			       *)
+					fmt=elf ;;
+			       esac
+			esac ;;
 changequote([,])dnl
       i386-*-linux*aout*)		fmt=aout em=linux ;;
       i386-*-linux*oldld)		fmt=aout em=linux ;;
@@ -285,6 +302,8 @@ changequote(,)dnl
       i386-*-freebsd[12].*)		fmt=aout em=386bsd ;;
       i386-*-freebsd[12])		fmt=aout em=386bsd ;;
 changequote([,])dnl
+      i386-*-freebsd* | i386-*-kfreebsd*-gnu)
+					fmt=elf em=freebsd ;;
       i386-*-sysv*)			fmt=coff ;;
       i386-*-sco3.2v5*coff)		fmt=coff ;;
       i386-*-isc*)			fmt=coff ;;
@@ -311,7 +330,6 @@ changequote([,])dnl
       i386-*-mingw32*)			fmt=coff em=pe ;;
       i386-*-nto-qnx*)			fmt=elf ;;
       i386-*-*nt*)			fmt=coff em=pe ;;
-      i386-*-vxworks*)			fmt=aout ;;
       i386-*-chaos)			fmt=elf ;;
 
       i860-*-*)				fmt=elf endian=little
@@ -335,7 +353,8 @@ changequote([,])dnl
 
       iq2000-*-elf)         		fmt=elf bfd_gas=yes ;;
 
-      m32r-*-*)				fmt=elf ;;
+      m32r-*-elf*)			fmt=elf ;;
+      m32r-*-linux*)			fmt=elf em=linux;;
 
       m68hc11-*-* | m6811-*-*)		fmt=elf ;;
       m68hc12-*-* | m6812-*-*)		fmt=elf ;;
@@ -354,6 +373,7 @@ changequote([,])dnl
       m68k-*-hpux*)			fmt=hp300 em=hp300 ;;
       m68k-*-linux*aout*)		fmt=aout em=linux ;;
       m68k-*-linux-gnu*)		fmt=elf em=linux ;;
+      m68k-*-uclinux*)			fmt=elf ;;
       m68k-*-gnu*)			fmt=elf ;;
       m68k-*-lynxos*)			fmt=coff em=lynx ;;
       m68k-*-netbsdelf*)		fmt=elf em=nbsd ;;
@@ -369,7 +389,6 @@ changequote([,])dnl
       mcore-*-pe)			fmt=coff em=pe bfd_gas=yes ;;
 
       # don't change em like *-*-bsd does
-      mips-dec-bsd*)			fmt=aout endian=little ;;
       mips-sony-bsd*)			fmt=ecoff ;;
       mips-*-bsd*)
 	    AC_MSG_ERROR(Unknown vendor for mips-bsd configuration.) ;;
@@ -387,28 +406,33 @@ changequote([,])dnl
       mips-*-sysv*)			fmt=ecoff ;;
       mips-*-elf* | mips-*-rtems*)	fmt=elf ;;
       mips-*-netbsd*)			fmt=elf ;;
-      mips-*-openbsd*)			fmt=elf ;;
-      mips-*-vxworks*)			fmt=elf ;;
+      mips-*-openbsd*)			fmt=elf em=tmips ;;
 
       mmix-*-*)				fmt=elf ;;
       mn10200-*-*)			fmt=elf ;;
       mn10300-*-*)			fmt=elf ;;
       msp430-*-*)			fmt=elf ;;
       openrisc-*-*)			fmt=elf ;;
-      or32-*-rtems*)			fmt=coff ;;
+      or32-*-rtems*)			fmt=elf ;;
       or32-*-coff)			fmt=coff ;;
       or32-*-elf)			fmt=elf ;;
       pj*)				fmt=elf ;;
 
       ppc-*-pe | ppc-*-cygwin*)		fmt=coff em=pe ;;
       ppc-*-winnt*)			fmt=coff em=pe ;;
-      ppc-*-aix5*)			fmt=coff em=aix5 ;;
+changequote(,)dnl
+      ppc-*-aix5.[01])			fmt=coff em=aix5 ;;
+changequote([,])dnl
+      ppc-*-aix5.*)			fmt=coff em=aix5
+      	AC_DEFINE(AIX_WEAK_SUPPORT, 1,
+		  [Define if using AIX 5.2 value for C_WEAKEXT.])
+      ;;
       ppc-*-aix*)			fmt=coff ;;
       ppc-*-beos*)			fmt=coff ;;
       ppc-*-netbsd* | ppc-*-elf*)	fmt=elf ;;
-      ppc-*-openbsd*)                   fmt=elf em=obsd ;;
+      ppc-*-openbsd*)			fmt=elf em=obsd ;;
       ppc-*-eabi* | ppc-*-sysv4*)	fmt=elf ;;
-      ppc-*-linux-gnu*)			fmt=elf
+      ppc-*-linux-gnu*)			fmt=elf em=linux
 	    case "$endian" in
 		big)  ;;
 		*)    AC_MSG_ERROR(GNU/Linux must be configured big endian) ;;
@@ -425,8 +449,6 @@ changequote([,])dnl
       ppc-*-macos* | ppc-*-mpw*)	fmt=coff em=macos ;;
       ppc-*-netware*)			fmt=elf em=ppcnw ;;
       ppc-**-nto*)			fmt=elf ;;
-      ppc-*-vxworks*)			fmt=elf ;;
-      ppc-*-windiss*)			fmt=elf ;;
       ppc-*-kaos*)			fmt=elf ;;
 
       s390x-*-linux-gnu*)		fmt=elf em=linux ;;
@@ -444,8 +466,8 @@ changequote([,])dnl
       sh-*-coff*)			fmt=coff ;;
       sh-*-nto*)			fmt=elf ;;
       sh-*-pe*)				fmt=coff em=pe bfd_gas=yes endian=little ;;
-      sh-*-rtemself*)			fmt=elf ;;
-      sh-*-rtems*)			fmt=coff ;;
+      sh-*-rtemscoff*)			fmt=coff ;;
+      sh-*-rtems*)			fmt=elf ;;
       sh-*-kaos*)			fmt=elf ;;
       shle*-*-kaos*)			fmt=elf ;;
       sh64-*-elf*)			fmt=elf ;;
@@ -474,14 +496,13 @@ changequote([,])dnl
 			    *)		fmt=aout em=nbsd ;;
 			esac ;;
 changequote(,)dnl
-      sparc-*-openbsd*)   em=obsd bfd_gas=yes
-                            case ${os} in
-                               openbsd[0-2].* | openbsd3.[0-1])
-                                  fmt=aout ;;
-                               *)
-                                  fmt=elf ;;
-                            esac
-                          ;;
+      sparc-*-openbsd*)			em=obsd bfd_gas=yes
+			case ${os} in
+			    openbsd[0-2].* | openbsd3.[0-1])
+					fmt=aout ;;
+			    *)
+					fmt=elf ;;
+			esac ;;
 changequote([,])dnl
       sparc64-*-openbsd*) em=obsd bfd_gas=yes fmt=elf ;;
       strongarm-*-coff)			fmt=coff ;;
@@ -503,6 +524,7 @@ changequote([,])dnl
       vax-*-netbsdelf*)			fmt=elf em=nbsd ;;
       vax-*-netbsd*)			fmt=aout em=nbsd ;;
       vax-*-bsd* | vax-*-ultrix*)	fmt=aout ;;
+      vax-*-linux-gnu*)			fmt=elf em=linux bfd_gas=yes ;;
       vax-*-vms)			fmt=vms ;;
 
       w65-*-*)				fmt=coff ;;
@@ -514,15 +536,15 @@ changequote([,])dnl
       z8k-*-coff | z8k-*-sim)		fmt=coff ;;
 
       *-*-aout | *-*-scout)		fmt=aout ;;
-      *-*-freebsd*)			fmt=elf em=freebsd ;;
+      *-*-freebsd* | *-*-kfreebsd*-gnu)	fmt=elf em=freebsd ;;
       *-*-nindy*)			fmt=bout ;;
       *-*-bsd*)				fmt=aout em=sun3 ;;
       *-*-generic)			fmt=generic ;;
       *-*-xray | *-*-hms)		fmt=coff ;;
       *-*-sim)				fmt=coff ;;
       *-*-elf | *-*-sysv4* | *-*-solaris*) fmt=elf dev=yes ;;
-      *-*-aros*)				fmt=elf em=linux bfd_gas=yes ;;
-      *-*-vxworks)			fmt=aout ;;
+      *-*-aros*)			fmt=elf em=linux bfd_gas=yes ;;
+      *-*-vxworks | *-*-windiss)	fmt=elf ;;
       *-*-netware)			fmt=elf ;;
     esac
 
@@ -564,13 +586,16 @@ changequote([,])dnl
 	  mipsisa64 | mipsisa64el)
 	    mips_cpu=mips64
 	    ;;
+	  mipsisa64r2 | mipsisa64r2el)
+	    mips_cpu=mips64r2
+	    ;;
 	  mipstx39 | mipstx39el)
 	    mips_cpu=r3900
 	    ;;
 	  mips64vr | mips64vrel)
 	    mips_cpu=vr4100
 	    ;;
-	  mipsisa32r2*)
+	  mipsisa32r2* | mipsisa64r2*)
 changequote(,)dnl
 	    mips_cpu=`echo $target_cpu | sed -e 's/[a-z]*..r2//' -e 's/el$//'`
 changequote([,])dnl
@@ -612,6 +637,9 @@ changequote([,])dnl
 	    ;;
 	  mips*-linux*)
 	    mips_default_abi=O32_ABI
+	    ;;
+	  mips64*-openbsd*)
+	    mips_default_abi=N64_ABI
 	    ;;
 	  *)
 	    mips_default_abi=NO_ABI
@@ -1062,7 +1090,8 @@ dnl the build directory which include the right .h file.  Make sure
 dnl the old symlinks don't exist, so that a reconfigure in an existing
 dnl directory behaves reasonably.
 
-AC_OUTPUT(Makefile doc/Makefile ${GDBINIT}:gdbinit.in po/Makefile.in:po/Make-in,
+AC_CONFIG_FILES(Makefile doc/Makefile po/Makefile.in:po/Make-in)
+AC_CONFIG_COMMANDS([default],
 [rm -f targ-cpu.c targ-cpu.h obj-format.h obj-format.c targ-env.h atof-targ.c itbl-cpu.h
  echo '#include "tc-'"${target_cpu_type}"'.h"' > targ-cpu.h
  echo '#include "obj-'"${obj_format}"'.h"' > obj-format.h
@@ -1077,3 +1106,5 @@ AC_OUTPUT(Makefile doc/Makefile ${GDBINIT}:gdbinit.in po/Makefile.in:po/Make-in,
  cgen_cpu_prefix=${cgen_cpu_prefix}
  obj_format=${obj_format}
  te_file=${te_file}])
+
+AC_OUTPUT

@@ -1,5 +1,5 @@
 /* Support for the generic parts of PE/PEI; the common executable parts.
-   Copyright 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003
+   Copyright 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004
    Free Software Foundation, Inc.
    Written by Cygnus Solutions.
 
@@ -570,8 +570,7 @@ _bfd_XXi_swap_aouthdr_out (abfd, in, out)
   struct internal_extra_pe_aouthdr *extra = &pe->pe_opthdr;
   PEAOUTHDR *aouthdr_out = (PEAOUTHDR *) out;
   bfd_vma sa, fa, ib;
-  IMAGE_DATA_DIRECTORY idata2, idata5;
-
+  IMAGE_DATA_DIRECTORY idata2, idata5, tls;
   
   if (pe->force_minimum_alignment)
     {
@@ -590,6 +589,7 @@ _bfd_XXi_swap_aouthdr_out (abfd, in, out)
 
   idata2 = pe->pe_opthdr.DataDirectory[1];
   idata5 = pe->pe_opthdr.DataDirectory[12];
+  tls = pe->pe_opthdr.DataDirectory[9];
   
   if (aouthdr_in->tsize)
     {
@@ -641,10 +641,11 @@ _bfd_XXi_swap_aouthdr_out (abfd, in, out)
      a final link is going to be performed, it can overwrite them.  */
   extra->DataDirectory[1]  = idata2;
   extra->DataDirectory[12] = idata5;
+  extra->DataDirectory[9] = tls;
 
   if (extra->DataDirectory[1].VirtualAddress == 0)
     /* Until other .idata fixes are made (pending patch), the entry for
-       .idata is needed for backwards compatability.  FIXME.  */
+       .idata is needed for backwards compatibility.  FIXME.  */
     add_data_entry (abfd, extra, 1, ".idata", ib);
     
   /* For some reason, the virtual size (which is what's set by
@@ -674,7 +675,9 @@ _bfd_XXi_swap_aouthdr_out (abfd, in, out)
 	   5.0 link.exe) where the file size of the .data segment is
 	   quite small compared to the virtual size.  Without this
 	   fix, strip munges the file.  */
-	isize += SA (FA (pei_section_data (abfd, sec)->virt_size));
+	if (coff_section_data (abfd, sec) != NULL
+	    && pei_section_data (abfd, sec) != NULL)
+	  isize += SA (FA (pei_section_data (abfd, sec)->virt_size));
       }
 
     aouthdr_in->dsize = dsize;
@@ -940,33 +943,76 @@ _bfd_XXi_swap_scnhdr_out (abfd, in, out)
   PUT_SCNHDR_LNNOPTR (abfd, scnhdr_int->s_lnnoptr,
 		      scnhdr_ext->s_lnnoptr);
 
-  /* Extra flags must be set when dealing with NT.  All sections should also
-     have the IMAGE_SCN_MEM_READ (0x40000000) flag set.  In addition, the
-     .text section must have IMAGE_SCN_MEM_EXECUTE (0x20000000) and the data
-     sections (.idata, .data, .bss, .CRT) must have IMAGE_SCN_MEM_WRITE set
-     (this is especially important when dealing with the .idata section since
-     the addresses for routines from .dlls must be overwritten).  If .reloc
-     section data is ever generated, we must add IMAGE_SCN_MEM_DISCARDABLE
-     (0x02000000).  Also, the resource data should also be read and
-     writable.  */
-
-  /* FIXME: alignment is also encoded in this field, at least on ppc (krk) */
-  /* FIXME: even worse, I don't see how to get the original alignment field*/
-  /*        back...                                                        */
-
   {
+    /* Extra flags must be set when dealing with PE.  All sections should also
+       have the IMAGE_SCN_MEM_READ (0x40000000) flag set.  In addition, the
+       .text section must have IMAGE_SCN_MEM_EXECUTE (0x20000000) and the data
+       sections (.idata, .data, .bss, .CRT) must have IMAGE_SCN_MEM_WRITE set
+       (this is especially important when dealing with the .idata section since
+       the addresses for routines from .dlls must be overwritten).  If .reloc
+       section data is ever generated, we must add IMAGE_SCN_MEM_DISCARDABLE
+       (0x02000000).  Also, the resource data should also be read and
+       writable.  */
+
+    /* FIXME: Alignment is also encoded in this field, at least on PPC and 
+       ARM-WINCE.  Although - how do we get the original alignment field
+       back ?  */
+
+    typedef struct
+    {
+      const char * 	section_name;
+      unsigned long	must_have;
+    }
+    pe_required_section_flags;
+    
+    pe_required_section_flags known_sections [] =
+      {
+	{ ".arch",  IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_DISCARDABLE | IMAGE_SCN_ALIGN_8BYTES },
+	{ ".bss",   IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_UNINITIALIZED_DATA | IMAGE_SCN_MEM_WRITE },
+	{ ".data",  IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_WRITE },
+	{ ".edata", IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_INITIALIZED_DATA },
+	{ ".idata", IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_WRITE },
+	{ ".pdata", IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_INITIALIZED_DATA },
+	{ ".rdata", IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_INITIALIZED_DATA },
+	{ ".reloc", IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_DISCARDABLE },
+	{ ".rsrc",  IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_WRITE },
+	{ ".text" , IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_CODE | IMAGE_SCN_MEM_EXECUTE },
+	{ ".tls",   IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_WRITE },
+	{ ".xdata", IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_INITIALIZED_DATA },
+	{ NULL, 0}
+      };
+
+    pe_required_section_flags * p;
     int flags = scnhdr_int->s_flags;
+
+    /* We have defaulted to adding the IMAGE_SCN_MEM_WRITE flag, but now
+       we know exactly what this specific section wants so we remove it
+       and then allow the must_have field to add it back in if necessary.
+       However, we don't remove IMAGE_SCN_MEM_WRITE flag from .text if the
+       default WP_TEXT file flag has been cleared.  WP_TEXT may be cleared
+       by ld --enable-auto-import (if auto-import is actually needed),
+       by ld --omagic, or by obcopy --writable-text.  */
+
+    for (p = known_sections; p->section_name; p++)
+      if (strcmp (scnhdr_int->s_name, p->section_name) == 0)
+	{
+	  if (strcmp (scnhdr_int->s_name, ".text")
+	      || (bfd_get_file_flags (abfd) & WP_TEXT))
+	    flags &= ~IMAGE_SCN_MEM_WRITE;
+	  flags |= p->must_have;
+	  break;
+	}
 
     H_PUT_32 (abfd, flags, scnhdr_ext->s_flags);
   }
 
   if (coff_data (abfd)->link_info
-      && ! coff_data (abfd)->link_info->relocateable
+      && ! coff_data (abfd)->link_info->relocatable
       && ! coff_data (abfd)->link_info->shared
       && strcmp (scnhdr_int->s_name, ".text") == 0)
     {
       /* By inference from looking at MS output, the 32 bit field
-	 which is the combintion of the number_of_relocs and
+	 which is the combination of the number_of_relocs and
 	 number_of_linenos is used for the line number count in
 	 executables.  A 16-bit field won't do for cc1.  The MS
 	 document says that the number of relocs is zero for
@@ -990,7 +1036,11 @@ _bfd_XXi_swap_scnhdr_out (abfd, in, out)
 	  ret = 0;
 	}
 
-      if (scnhdr_int->s_nreloc <= 0xffff)
+      /* Although we could encode 0xffff relocs here, we do not, to be
+         consistent with other parts of bfd. Also it lets us warn, as
+         we should never see 0xffff here w/o having the overflow flag
+         set.  */
+      if (scnhdr_int->s_nreloc < 0xffff)
 	H_PUT_16 (abfd, scnhdr_int->s_nreloc, scnhdr_ext->s_nreloc);
       else
 	{
@@ -2019,7 +2069,19 @@ _bfd_XXi_final_link_postscript (abfd, pfinfo)
 	  + h1->root.u.def.section->output_offset)
 	 - pe_data (abfd)->pe_opthdr.DataDirectory[12].VirtualAddress);      
     }
-  
+
+  h1 = coff_link_hash_lookup (coff_hash_table (info),
+			      "__tls_used", FALSE, FALSE, TRUE);
+  if (h1 != NULL)
+    {
+      pe_data (abfd)->pe_opthdr.DataDirectory[9].VirtualAddress =
+	(h1->root.u.def.value
+	 + h1->root.u.def.section->output_section->vma
+	 + h1->root.u.def.section->output_offset
+	 - pe_data (abfd)->pe_opthdr.ImageBase);
+      pe_data (abfd)->pe_opthdr.DataDirectory[9].Size = 0x18;
+    }
+
   /* If we couldn't find idata$2, we either have an excessively
      trivial program or are in DEEP trouble; we have to assume trivial
      program....  */

@@ -40,8 +40,8 @@ extern int a29k_unrecognized_line PARAMS ((int));
 #define BFD_ARCH bfd_arch_a29k
 #define COFF_MAGIC SIPFBOMAGIC
 /* Should the reloc be output ?
-	on the 29k, this is true only if there is a symbol attatched.
-	on the h8, this is allways true, since no fixup is done
+	on the 29k, this is true only if there is a symbol attached.
+	on the h8, this is always true, since no fixup is done
 */
 #define TC_COUNT_RELOC(x) (x->fx_addsy)
 #define TC_CONS_RELOC RELOC_32

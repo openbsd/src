@@ -70,7 +70,7 @@ static bfd_boolean MY(write_object_contents) PARAMS ((bfd *abfd));
 #include "aout-target.h"
 
 static bfd_reloc_status_type mips_fix_jmp_addr
-  PARAMS ((bfd *, arelent *, struct symbol_cache_entry *, PTR, asection *,
+  PARAMS ((bfd *, arelent *, struct bfd_symbol *, PTR, asection *,
 	   bfd *, char **));
 static reloc_howto_type *MY(reloc_howto_type_lookup)
   PARAMS ((bfd *, bfd_reloc_code_real_type));
@@ -203,7 +203,7 @@ mips_fix_jmp_addr (abfd, reloc_entry, symbol, data, input_section, output_bfd,
 		   error_message)
      bfd *abfd ATTRIBUTE_UNUSED;
      arelent *reloc_entry;
-     struct symbol_cache_entry *symbol;
+     struct bfd_symbol *symbol;
      PTR data ATTRIBUTE_UNUSED;
      asection *input_section;
      bfd *output_bfd;
@@ -220,7 +220,7 @@ mips_fix_jmp_addr (abfd, reloc_entry, symbol, data, input_section, output_bfd,
       && (symbol->flags & BSF_WEAK) == 0)
     return bfd_reloc_undefined;
 
-  /* Work out which section the relocation is targetted at and the
+  /* Work out which section the relocation is targeted at and the
      initial relocation command value.  */
   if (bfd_is_com_section (symbol->section))
     relocation = 0;
@@ -271,7 +271,7 @@ mips_fix_hi16_s (abfd, reloc_entry, symbol, data, input_section,
       && (symbol->flags & BSF_WEAK) == 0)
     return bfd_reloc_undefined;
 
-  /* Work out which section the relocation is targetted at and the
+  /* Work out which section the relocation is targeted at and the
      initial relocation command value.  */
   if (bfd_is_com_section (symbol->section))
     relocation = 0;

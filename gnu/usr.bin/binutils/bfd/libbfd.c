@@ -1,6 +1,6 @@
 /* Assorted BFD support routines, only used internally.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002
+   2000, 2001, 2002, 2003, 2004
    Free Software Foundation, Inc.
    Written by Cygnus Support.
 
@@ -42,8 +42,7 @@ DESCRIPTION
    operations.  */
 
 bfd_boolean
-bfd_false (ignore)
-     bfd *ignore ATTRIBUTE_UNUSED;
+bfd_false (bfd *ignore ATTRIBUTE_UNUSED)
 {
   bfd_set_error (bfd_error_invalid_operation);
   return FALSE;
@@ -53,8 +52,7 @@ bfd_false (ignore)
    which do not actually do anything.  */
 
 bfd_boolean
-bfd_true (ignore)
-     bfd *ignore ATTRIBUTE_UNUSED;
+bfd_true (bfd *ignore ATTRIBUTE_UNUSED)
 {
   return TRUE;
 }
@@ -62,31 +60,27 @@ bfd_true (ignore)
 /* A routine which is used in target vectors for unsupported
    operations which return a pointer value.  */
 
-PTR
-bfd_nullvoidptr (ignore)
-     bfd *ignore ATTRIBUTE_UNUSED;
+void *
+bfd_nullvoidptr (bfd *ignore ATTRIBUTE_UNUSED)
 {
   bfd_set_error (bfd_error_invalid_operation);
   return NULL;
 }
 
 int
-bfd_0 (ignore)
-     bfd *ignore ATTRIBUTE_UNUSED;
+bfd_0 (bfd *ignore ATTRIBUTE_UNUSED)
 {
   return 0;
 }
 
 unsigned int
-bfd_0u (ignore)
-     bfd *ignore ATTRIBUTE_UNUSED;
+bfd_0u (bfd *ignore ATTRIBUTE_UNUSED)
 {
    return 0;
 }
 
 long
-bfd_0l (ignore)
-     bfd *ignore ATTRIBUTE_UNUSED;
+bfd_0l (bfd *ignore ATTRIBUTE_UNUSED)
 {
   return 0;
 }
@@ -95,23 +89,21 @@ bfd_0l (ignore)
    operations which return -1 on error.  */
 
 long
-_bfd_n1 (ignore_abfd)
-     bfd *ignore_abfd ATTRIBUTE_UNUSED;
+_bfd_n1 (bfd *ignore_abfd ATTRIBUTE_UNUSED)
 {
   bfd_set_error (bfd_error_invalid_operation);
   return -1;
 }
 
 void
-bfd_void (ignore)
-     bfd *ignore ATTRIBUTE_UNUSED;
+bfd_void (bfd *ignore ATTRIBUTE_UNUSED)
 {
 }
 
 bfd_boolean
-_bfd_nocore_core_file_matches_executable_p (ignore_core_bfd, ignore_exec_bfd)
-     bfd *ignore_core_bfd ATTRIBUTE_UNUSED;
-     bfd *ignore_exec_bfd ATTRIBUTE_UNUSED;
+_bfd_nocore_core_file_matches_executable_p
+  (bfd *ignore_core_bfd ATTRIBUTE_UNUSED,
+   bfd *ignore_exec_bfd ATTRIBUTE_UNUSED)
 {
   bfd_set_error (bfd_error_invalid_operation);
   return FALSE;
@@ -121,27 +113,24 @@ _bfd_nocore_core_file_matches_executable_p (ignore_core_bfd, ignore_exec_bfd)
    without core file support.  */
 
 char *
-_bfd_nocore_core_file_failing_command (ignore_abfd)
-     bfd *ignore_abfd ATTRIBUTE_UNUSED;
+_bfd_nocore_core_file_failing_command (bfd *ignore_abfd ATTRIBUTE_UNUSED)
 {
   bfd_set_error (bfd_error_invalid_operation);
-  return (char *)NULL;
+  return NULL;
 }
 
 /* Routine to handle core_file_failing_signal entry point for targets
    without core file support.  */
 
 int
-_bfd_nocore_core_file_failing_signal (ignore_abfd)
-     bfd *ignore_abfd ATTRIBUTE_UNUSED;
+_bfd_nocore_core_file_failing_signal (bfd *ignore_abfd ATTRIBUTE_UNUSED)
 {
   bfd_set_error (bfd_error_invalid_operation);
   return 0;
 }
 
 const bfd_target *
-_bfd_dummy_target (ignore_abfd)
-     bfd *ignore_abfd ATTRIBUTE_UNUSED;
+_bfd_dummy_target (bfd *ignore_abfd ATTRIBUTE_UNUSED)
 {
   bfd_set_error (bfd_error_wrong_format);
   return 0;
@@ -149,11 +138,10 @@ _bfd_dummy_target (ignore_abfd)
 
 /* Allocate memory using malloc.  */
 
-PTR
-bfd_malloc (size)
-     bfd_size_type size;
+void *
+bfd_malloc (bfd_size_type size)
 {
-  PTR ptr;
+  void *ptr;
 
   if (size != (size_t) size)
     {
@@ -161,7 +149,7 @@ bfd_malloc (size)
       return NULL;
     }
 
-  ptr = (PTR) malloc ((size_t) size);
+  ptr = malloc ((size_t) size);
   if (ptr == NULL && (size_t) size != 0)
     bfd_set_error (bfd_error_no_memory);
 
@@ -170,12 +158,10 @@ bfd_malloc (size)
 
 /* Reallocate memory using realloc.  */
 
-PTR
-bfd_realloc (ptr, size)
-     PTR ptr;
-     bfd_size_type size;
+void *
+bfd_realloc (void *ptr, bfd_size_type size)
 {
-  PTR ret;
+  void *ret;
 
   if (size != (size_t) size)
     {
@@ -184,9 +170,9 @@ bfd_realloc (ptr, size)
     }
 
   if (ptr == NULL)
-    ret = (PTR) malloc ((size_t) size);
+    ret = malloc ((size_t) size);
   else
-    ret = (PTR) realloc (ptr, (size_t) size);
+    ret = realloc (ptr, (size_t) size);
 
   if (ret == NULL && (size_t) size != 0)
     bfd_set_error (bfd_error_no_memory);
@@ -196,11 +182,10 @@ bfd_realloc (ptr, size)
 
 /* Allocate memory using malloc and clear it.  */
 
-PTR
-bfd_zmalloc (size)
-     bfd_size_type size;
+void *
+bfd_zmalloc (bfd_size_type size)
 {
-  PTR ptr;
+  void *ptr;
 
   if (size != (size_t) size)
     {
@@ -208,7 +193,7 @@ bfd_zmalloc (size)
       return NULL;
     }
 
-  ptr = (PTR) malloc ((size_t) size);
+  ptr = malloc ((size_t) size);
 
   if ((size_t) size != 0)
     {
@@ -234,13 +219,11 @@ DESCRIPTION
 
 */
 bfd_boolean
-bfd_write_bigendian_4byte_int (abfd, i)
-     bfd *abfd;
-     unsigned int i;
+bfd_write_bigendian_4byte_int (bfd *abfd, unsigned int i)
 {
   bfd_byte buffer[4];
   bfd_putb32 ((bfd_vma) i, buffer);
-  return bfd_bwrite ((PTR) buffer, (bfd_size_type) 4, abfd) == 4;
+  return bfd_bwrite (buffer, (bfd_size_type) 4, abfd) == 4;
 }
 
 
@@ -283,54 +266,54 @@ DESCRIPTION
 .{* Byte swapping macros for user section data.  *}
 .
 .#define bfd_put_8(abfd, val, ptr) \
-.                ((void) (*((unsigned char *) (ptr)) = (unsigned char) (val)))
+.  ((void) (*((unsigned char *) (ptr)) = (val) & 0xff))
 .#define bfd_put_signed_8 \
-.		bfd_put_8
+.  bfd_put_8
 .#define bfd_get_8(abfd, ptr) \
-.                (*(unsigned char *) (ptr) & 0xff)
+.  (*(unsigned char *) (ptr) & 0xff)
 .#define bfd_get_signed_8(abfd, ptr) \
-.		(((*(unsigned char *) (ptr) & 0xff) ^ 0x80) - 0x80)
+.  (((*(unsigned char *) (ptr) & 0xff) ^ 0x80) - 0x80)
 .
 .#define bfd_put_16(abfd, val, ptr) \
-.                BFD_SEND(abfd, bfd_putx16, ((val),(ptr)))
+.  BFD_SEND (abfd, bfd_putx16, ((val),(ptr)))
 .#define bfd_put_signed_16 \
-.		 bfd_put_16
+.  bfd_put_16
 .#define bfd_get_16(abfd, ptr) \
-.                BFD_SEND(abfd, bfd_getx16, (ptr))
+.  BFD_SEND (abfd, bfd_getx16, (ptr))
 .#define bfd_get_signed_16(abfd, ptr) \
-.         	 BFD_SEND (abfd, bfd_getx_signed_16, (ptr))
+.  BFD_SEND (abfd, bfd_getx_signed_16, (ptr))
 .
 .#define bfd_put_32(abfd, val, ptr) \
-.                BFD_SEND(abfd, bfd_putx32, ((val),(ptr)))
+.  BFD_SEND (abfd, bfd_putx32, ((val),(ptr)))
 .#define bfd_put_signed_32 \
-.		 bfd_put_32
+.  bfd_put_32
 .#define bfd_get_32(abfd, ptr) \
-.                BFD_SEND(abfd, bfd_getx32, (ptr))
+.  BFD_SEND (abfd, bfd_getx32, (ptr))
 .#define bfd_get_signed_32(abfd, ptr) \
-.		 BFD_SEND(abfd, bfd_getx_signed_32, (ptr))
+.  BFD_SEND (abfd, bfd_getx_signed_32, (ptr))
 .
 .#define bfd_put_64(abfd, val, ptr) \
-.                BFD_SEND(abfd, bfd_putx64, ((val), (ptr)))
+.  BFD_SEND (abfd, bfd_putx64, ((val), (ptr)))
 .#define bfd_put_signed_64 \
-.		 bfd_put_64
+.  bfd_put_64
 .#define bfd_get_64(abfd, ptr) \
-.                BFD_SEND(abfd, bfd_getx64, (ptr))
+.  BFD_SEND (abfd, bfd_getx64, (ptr))
 .#define bfd_get_signed_64(abfd, ptr) \
-.		 BFD_SEND(abfd, bfd_getx_signed_64, (ptr))
+.  BFD_SEND (abfd, bfd_getx_signed_64, (ptr))
 .
-.#define bfd_get(bits, abfd, ptr)				\
-.                ( (bits) ==  8 ? (bfd_vma) bfd_get_8 (abfd, ptr)	\
-.		 : (bits) == 16 ? bfd_get_16 (abfd, ptr)	\
-.		 : (bits) == 32 ? bfd_get_32 (abfd, ptr)	\
-.		 : (bits) == 64 ? bfd_get_64 (abfd, ptr)	\
-.		 : (abort (), (bfd_vma) - 1))
+.#define bfd_get(bits, abfd, ptr)			\
+.  ((bits) == 8 ? (bfd_vma) bfd_get_8 (abfd, ptr)	\
+.   : (bits) == 16 ? bfd_get_16 (abfd, ptr)		\
+.   : (bits) == 32 ? bfd_get_32 (abfd, ptr)		\
+.   : (bits) == 64 ? bfd_get_64 (abfd, ptr)		\
+.   : (abort (), (bfd_vma) - 1))
 .
-.#define bfd_put(bits, abfd, val, ptr)				\
-.                ( (bits) ==  8 ? bfd_put_8  (abfd, val, ptr)	\
-.		 : (bits) == 16 ? bfd_put_16 (abfd, val, ptr)	\
-.		 : (bits) == 32 ? bfd_put_32 (abfd, val, ptr)	\
-.		 : (bits) == 64 ? bfd_put_64 (abfd, val, ptr)	\
-.		 : (abort (), (void) 0))
+.#define bfd_put(bits, abfd, val, ptr)			\
+.  ((bits) == 8 ? bfd_put_8  (abfd, val, ptr)		\
+.   : (bits) == 16 ? bfd_put_16 (abfd, val, ptr)		\
+.   : (bits) == 32 ? bfd_put_32 (abfd, val, ptr)		\
+.   : (bits) == 64 ? bfd_put_64 (abfd, val, ptr)		\
+.   : (abort (), (void) 0))
 .
 */
 
@@ -384,139 +367,108 @@ DESCRIPTION
 .#define bfd_h_get_signed_64(abfd, ptr) \
 .  BFD_SEND (abfd, bfd_h_getx_signed_64, (ptr))
 .
-.{* Refinements on the above, which should eventually go away.  Save
-.   cluttering the source with (bfd_vma) and (bfd_byte *) casts.  *}
+.{* Aliases for the above, which should eventually go away.  *}
 .
-.#define H_PUT_64(abfd, val, where) \
-.  bfd_h_put_64 ((abfd), (bfd_vma) (val), (bfd_byte *) (where))
-.
-.#define H_PUT_32(abfd, val, where) \
-.  bfd_h_put_32 ((abfd), (bfd_vma) (val), (bfd_byte *) (where))
-.
-.#define H_PUT_16(abfd, val, where) \
-.  bfd_h_put_16 ((abfd), (bfd_vma) (val), (bfd_byte *) (where))
-.
-.#define H_PUT_8 bfd_h_put_8
-.
-.#define H_PUT_S64(abfd, val, where) \
-.  bfd_h_put_signed_64 ((abfd), (bfd_vma) (val), (bfd_byte *) (where))
-.
-.#define H_PUT_S32(abfd, val, where) \
-.  bfd_h_put_signed_32 ((abfd), (bfd_vma) (val), (bfd_byte *) (where))
-.
-.#define H_PUT_S16(abfd, val, where) \
-.  bfd_h_put_signed_16 ((abfd), (bfd_vma) (val), (bfd_byte *) (where))
-.
-.#define H_PUT_S8 bfd_h_put_signed_8
-.
-.#define H_GET_64(abfd, where) \
-.  bfd_h_get_64 ((abfd), (bfd_byte *) (where))
-.
-.#define H_GET_32(abfd, where) \
-.  bfd_h_get_32 ((abfd), (bfd_byte *) (where))
-.
-.#define H_GET_16(abfd, where) \
-.  bfd_h_get_16 ((abfd), (bfd_byte *) (where))
-.
-.#define H_GET_8 bfd_h_get_8
-.
-.#define H_GET_S64(abfd, where) \
-.  bfd_h_get_signed_64 ((abfd), (bfd_byte *) (where))
-.
-.#define H_GET_S32(abfd, where) \
-.  bfd_h_get_signed_32 ((abfd), (bfd_byte *) (where))
-.
-.#define H_GET_S16(abfd, where) \
-.  bfd_h_get_signed_16 ((abfd), (bfd_byte *) (where))
-.
-.#define H_GET_S8 bfd_h_get_signed_8
+.#define H_PUT_64  bfd_h_put_64
+.#define H_PUT_32  bfd_h_put_32
+.#define H_PUT_16  bfd_h_put_16
+.#define H_PUT_8   bfd_h_put_8
+.#define H_PUT_S64 bfd_h_put_signed_64
+.#define H_PUT_S32 bfd_h_put_signed_32
+.#define H_PUT_S16 bfd_h_put_signed_16
+.#define H_PUT_S8  bfd_h_put_signed_8
+.#define H_GET_64  bfd_h_get_64
+.#define H_GET_32  bfd_h_get_32
+.#define H_GET_16  bfd_h_get_16
+.#define H_GET_8   bfd_h_get_8
+.#define H_GET_S64 bfd_h_get_signed_64
+.#define H_GET_S32 bfd_h_get_signed_32
+.#define H_GET_S16 bfd_h_get_signed_16
+.#define H_GET_S8  bfd_h_get_signed_8
 .
 .*/
 
 /* Sign extension to bfd_signed_vma.  */
 #define COERCE16(x) (((bfd_signed_vma) (x) ^ 0x8000) - 0x8000)
-#define COERCE32(x) \
-  ((bfd_signed_vma) (long) (((unsigned long) (x) ^ 0x80000000) - 0x80000000))
-#define EIGHT_GAZILLION (((BFD_HOST_64_BIT)0x80000000) << 32)
+#define COERCE32(x) (((bfd_signed_vma) (x) ^ 0x80000000) - 0x80000000)
+#define EIGHT_GAZILLION ((bfd_int64_t) 1 << 63)
 #define COERCE64(x) \
-  (((bfd_signed_vma) (x) ^ EIGHT_GAZILLION) - EIGHT_GAZILLION)
+  (((bfd_int64_t) (x) ^ EIGHT_GAZILLION) - EIGHT_GAZILLION)
 
 bfd_vma
-bfd_getb16 (addr)
-     register const bfd_byte *addr;
+bfd_getb16 (const void *p)
 {
+  const bfd_byte *addr = p;
   return (addr[0] << 8) | addr[1];
 }
 
 bfd_vma
-bfd_getl16 (addr)
-     register const bfd_byte *addr;
+bfd_getl16 (const void *p)
 {
+  const bfd_byte *addr = p;
   return (addr[1] << 8) | addr[0];
 }
 
 bfd_signed_vma
-bfd_getb_signed_16 (addr)
-     register const bfd_byte *addr;
+bfd_getb_signed_16 (const void *p)
 {
-  return COERCE16((addr[0] << 8) | addr[1]);
+  const bfd_byte *addr = p;
+  return COERCE16 ((addr[0] << 8) | addr[1]);
 }
 
 bfd_signed_vma
-bfd_getl_signed_16 (addr)
-     register const bfd_byte *addr;
+bfd_getl_signed_16 (const void *p)
 {
-  return COERCE16((addr[1] << 8) | addr[0]);
+  const bfd_byte *addr = p;
+  return COERCE16 ((addr[1] << 8) | addr[0]);
 }
 
 void
-bfd_putb16 (data, addr)
-     bfd_vma data;
-     register bfd_byte *addr;
+bfd_putb16 (bfd_vma data, void *p)
 {
-  addr[0] = (bfd_byte) (data >> 8);
-  addr[1] = (bfd_byte) data;
+  bfd_byte *addr = p;
+  addr[0] = (data >> 8) & 0xff;
+  addr[1] = data & 0xff;
 }
 
 void
-bfd_putl16 (data, addr)
-     bfd_vma data;
-     register bfd_byte *addr;
+bfd_putl16 (bfd_vma data, void *p)
 {
-  addr[0] = (bfd_byte) data;
-  addr[1] = (bfd_byte) (data >> 8);
+  bfd_byte *addr = p;
+  addr[0] = data & 0xff;
+  addr[1] = (data >> 8) & 0xff;
 }
 
 bfd_vma
-bfd_getb32 (addr)
-     register const bfd_byte *addr;
+bfd_getb32 (const void *p)
 {
+  const bfd_byte *addr = p;
   unsigned long v;
 
   v = (unsigned long) addr[0] << 24;
   v |= (unsigned long) addr[1] << 16;
   v |= (unsigned long) addr[2] << 8;
   v |= (unsigned long) addr[3];
-  return (bfd_vma) v;
+  return v;
 }
 
 bfd_vma
-bfd_getl32 (addr)
-     register const bfd_byte *addr;
+bfd_getl32 (const void *p)
 {
+  const bfd_byte *addr = p;
   unsigned long v;
 
   v = (unsigned long) addr[0];
   v |= (unsigned long) addr[1] << 8;
   v |= (unsigned long) addr[2] << 16;
   v |= (unsigned long) addr[3] << 24;
-  return (bfd_vma) v;
+  return v;
 }
 
 bfd_signed_vma
-bfd_getb_signed_32 (addr)
-     register const bfd_byte *addr;
+bfd_getb_signed_32 (const void *p)
 {
+  const bfd_byte *addr = p;
   unsigned long v;
 
   v = (unsigned long) addr[0] << 24;
@@ -527,9 +479,9 @@ bfd_getb_signed_32 (addr)
 }
 
 bfd_signed_vma
-bfd_getl_signed_32 (addr)
-     register const bfd_byte *addr;
+bfd_getl_signed_32 (const void *p)
 {
+  const bfd_byte *addr = p;
   unsigned long v;
 
   v = (unsigned long) addr[0];
@@ -539,47 +491,46 @@ bfd_getl_signed_32 (addr)
   return COERCE32 (v);
 }
 
-bfd_vma
-bfd_getb64 (addr)
-     register const bfd_byte *addr ATTRIBUTE_UNUSED;
+bfd_uint64_t
+bfd_getb64 (const void *p ATTRIBUTE_UNUSED)
 {
-#ifdef BFD64
-  bfd_vma low, high;
+#ifdef BFD_HOST_64_BIT
+  const bfd_byte *addr = p;
+  bfd_uint64_t v;
 
-  high= ((((((((addr[0]) << 8) |
-              addr[1]) << 8) |
-            addr[2]) << 8) |
-          addr[3]) );
+  v  = addr[0]; v <<= 8;
+  v |= addr[1]; v <<= 8;
+  v |= addr[2]; v <<= 8;
+  v |= addr[3]; v <<= 8;
+  v |= addr[4]; v <<= 8;
+  v |= addr[5]; v <<= 8;
+  v |= addr[6]; v <<= 8;
+  v |= addr[7];
 
-  low = (((((((((bfd_vma)addr[4]) << 8) |
-              addr[5]) << 8) |
-            addr[6]) << 8) |
-          addr[7]));
-
-  return high << 32 | low;
+  return v;
 #else
   BFD_FAIL();
   return 0;
 #endif
 }
 
-bfd_vma
-bfd_getl64 (addr)
-     register const bfd_byte *addr ATTRIBUTE_UNUSED;
+bfd_uint64_t
+bfd_getl64 (const void *p ATTRIBUTE_UNUSED)
 {
-#ifdef BFD64
-  bfd_vma low, high;
-  high= (((((((addr[7] << 8) |
-              addr[6]) << 8) |
-            addr[5]) << 8) |
-          addr[4]));
+#ifdef BFD_HOST_64_BIT
+  const bfd_byte *addr = p;
+  bfd_uint64_t v;
 
-  low = ((((((((bfd_vma)addr[3] << 8) |
-              addr[2]) << 8) |
-            addr[1]) << 8) |
-          addr[0]) );
+  v  = addr[7]; v <<= 8;
+  v |= addr[6]; v <<= 8;
+  v |= addr[5]; v <<= 8;
+  v |= addr[4]; v <<= 8;
+  v |= addr[3]; v <<= 8;
+  v |= addr[2]; v <<= 8;
+  v |= addr[1]; v <<= 8;
+  v |= addr[0];
 
-  return high << 32 | low;
+  return v;
 #else
   BFD_FAIL();
   return 0;
@@ -587,47 +538,46 @@ bfd_getl64 (addr)
 
 }
 
-bfd_signed_vma
-bfd_getb_signed_64 (addr)
-     register const bfd_byte *addr ATTRIBUTE_UNUSED;
+bfd_int64_t
+bfd_getb_signed_64 (const void *p ATTRIBUTE_UNUSED)
 {
-#ifdef BFD64
-  bfd_vma low, high;
+#ifdef BFD_HOST_64_BIT
+  const bfd_byte *addr = p;
+  bfd_uint64_t v;
 
-  high= ((((((((addr[0]) << 8) |
-              addr[1]) << 8) |
-            addr[2]) << 8) |
-          addr[3]) );
+  v  = addr[0]; v <<= 8;
+  v |= addr[1]; v <<= 8;
+  v |= addr[2]; v <<= 8;
+  v |= addr[3]; v <<= 8;
+  v |= addr[4]; v <<= 8;
+  v |= addr[5]; v <<= 8;
+  v |= addr[6]; v <<= 8;
+  v |= addr[7];
 
-  low = (((((((((bfd_vma)addr[4]) << 8) |
-              addr[5]) << 8) |
-            addr[6]) << 8) |
-          addr[7]));
-
-  return COERCE64(high << 32 | low);
+  return COERCE64 (v);
 #else
   BFD_FAIL();
   return 0;
 #endif
 }
 
-bfd_signed_vma
-bfd_getl_signed_64 (addr)
-     register const bfd_byte *addr ATTRIBUTE_UNUSED;
+bfd_int64_t
+bfd_getl_signed_64 (const void *p ATTRIBUTE_UNUSED)
 {
-#ifdef BFD64
-  bfd_vma low, high;
-  high= (((((((addr[7] << 8) |
-              addr[6]) << 8) |
-            addr[5]) << 8) |
-          addr[4]));
+#ifdef BFD_HOST_64_BIT
+  const bfd_byte *addr = p;
+  bfd_uint64_t v;
 
-  low = ((((((((bfd_vma)addr[3] << 8) |
-              addr[2]) << 8) |
-            addr[1]) << 8) |
-          addr[0]) );
+  v  = addr[7]; v <<= 8;
+  v |= addr[6]; v <<= 8;
+  v |= addr[5]; v <<= 8;
+  v |= addr[4]; v <<= 8;
+  v |= addr[3]; v <<= 8;
+  v |= addr[2]; v <<= 8;
+  v |= addr[1]; v <<= 8;
+  v |= addr[0];
 
-  return COERCE64(high << 32 | low);
+  return COERCE64 (v);
 #else
   BFD_FAIL();
   return 0;
@@ -635,72 +585,65 @@ bfd_getl_signed_64 (addr)
 }
 
 void
-bfd_putb32 (data, addr)
-     bfd_vma data;
-     register bfd_byte *addr;
+bfd_putb32 (bfd_vma data, void *p)
 {
-        addr[0] = (bfd_byte) (data >> 24);
-        addr[1] = (bfd_byte) (data >> 16);
-        addr[2] = (bfd_byte) (data >>  8);
-        addr[3] = (bfd_byte) data;
+  bfd_byte *addr = p;
+  addr[0] = (data >> 24) & 0xff;
+  addr[1] = (data >> 16) & 0xff;
+  addr[2] = (data >>  8) & 0xff;
+  addr[3] = data & 0xff;
 }
 
 void
-bfd_putl32 (data, addr)
-     bfd_vma data;
-     register bfd_byte *addr;
+bfd_putl32 (bfd_vma data, void *p)
 {
-        addr[0] = (bfd_byte) data;
-        addr[1] = (bfd_byte) (data >>  8);
-        addr[2] = (bfd_byte) (data >> 16);
-        addr[3] = (bfd_byte) (data >> 24);
+  bfd_byte *addr = p;
+  addr[0] = data & 0xff;
+  addr[1] = (data >>  8) & 0xff;
+  addr[2] = (data >> 16) & 0xff;
+  addr[3] = (data >> 24) & 0xff;
 }
 
 void
-bfd_putb64 (data, addr)
-     bfd_vma data ATTRIBUTE_UNUSED;
-     register bfd_byte *addr ATTRIBUTE_UNUSED;
+bfd_putb64 (bfd_uint64_t data ATTRIBUTE_UNUSED, void *p ATTRIBUTE_UNUSED)
 {
-#ifdef BFD64
-  addr[0] = (bfd_byte) (data >> (7*8));
-  addr[1] = (bfd_byte) (data >> (6*8));
-  addr[2] = (bfd_byte) (data >> (5*8));
-  addr[3] = (bfd_byte) (data >> (4*8));
-  addr[4] = (bfd_byte) (data >> (3*8));
-  addr[5] = (bfd_byte) (data >> (2*8));
-  addr[6] = (bfd_byte) (data >> (1*8));
-  addr[7] = (bfd_byte) (data >> (0*8));
+#ifdef BFD_HOST_64_BIT
+  bfd_byte *addr = p;
+  addr[0] = (data >> (7*8)) & 0xff;
+  addr[1] = (data >> (6*8)) & 0xff;
+  addr[2] = (data >> (5*8)) & 0xff;
+  addr[3] = (data >> (4*8)) & 0xff;
+  addr[4] = (data >> (3*8)) & 0xff;
+  addr[5] = (data >> (2*8)) & 0xff;
+  addr[6] = (data >> (1*8)) & 0xff;
+  addr[7] = (data >> (0*8)) & 0xff;
 #else
   BFD_FAIL();
 #endif
 }
 
 void
-bfd_putl64 (data, addr)
-     bfd_vma data ATTRIBUTE_UNUSED;
-     register bfd_byte *addr ATTRIBUTE_UNUSED;
+bfd_putl64 (bfd_uint64_t data ATTRIBUTE_UNUSED, void *p ATTRIBUTE_UNUSED)
 {
-#ifdef BFD64
-  addr[7] = (bfd_byte) (data >> (7*8));
-  addr[6] = (bfd_byte) (data >> (6*8));
-  addr[5] = (bfd_byte) (data >> (5*8));
-  addr[4] = (bfd_byte) (data >> (4*8));
-  addr[3] = (bfd_byte) (data >> (3*8));
-  addr[2] = (bfd_byte) (data >> (2*8));
-  addr[1] = (bfd_byte) (data >> (1*8));
-  addr[0] = (bfd_byte) (data >> (0*8));
+#ifdef BFD_HOST_64_BIT
+  bfd_byte *addr = p;
+  addr[7] = (data >> (7*8)) & 0xff;
+  addr[6] = (data >> (6*8)) & 0xff;
+  addr[5] = (data >> (5*8)) & 0xff;
+  addr[4] = (data >> (4*8)) & 0xff;
+  addr[3] = (data >> (3*8)) & 0xff;
+  addr[2] = (data >> (2*8)) & 0xff;
+  addr[1] = (data >> (1*8)) & 0xff;
+  addr[0] = (data >> (0*8)) & 0xff;
 #else
   BFD_FAIL();
 #endif
 }
 
 void
-bfd_put_bits (data, addr, bits, big_p)
-     bfd_vma data;
-     bfd_byte *addr;
-     int bits;
-     bfd_boolean big_p;
+bfd_put_bits (bfd_uint64_t data, void *p, int bits, bfd_boolean big_p)
 {
+  bfd_byte *addr = p;
   int i;
   int bytes;
 
@@ -712,18 +655,16 @@ bfd_put_bits (data, addr, bits, big_p)
     {
       int index = big_p ? bytes - i - 1 : i;
 
-      addr[index] = (bfd_byte) data;
+      addr[index] = data & 0xff;
       data >>= 8;
     }
 }
 
-bfd_vma
-bfd_get_bits (addr, bits, big_p)
-     bfd_byte *addr;
-     int bits;
-     bfd_boolean big_p;
+bfd_uint64_t
+bfd_get_bits (const void *p, int bits, bfd_boolean big_p)
 {
-  bfd_vma data;
+  const bfd_byte *addr = p;
+  bfd_uint64_t data;
   int i;
   int bytes;
 
@@ -745,12 +686,11 @@ bfd_get_bits (addr, bits, big_p)
 /* Default implementation */
 
 bfd_boolean
-_bfd_generic_get_section_contents (abfd, section, location, offset, count)
-     bfd *abfd;
-     sec_ptr section;
-     PTR location;
-     file_ptr offset;
-     bfd_size_type count;
+_bfd_generic_get_section_contents (bfd *abfd,
+				   sec_ptr section,
+				   void *location,
+				   file_ptr offset,
+				   bfd_size_type count)
 {
   if (count == 0)
     return TRUE;
@@ -769,17 +709,18 @@ _bfd_generic_get_section_contents (abfd, section, location, offset, count)
 }
 
 bfd_boolean
-_bfd_generic_get_section_contents_in_window (abfd, section, w, offset, count)
-     bfd *abfd ATTRIBUTE_UNUSED;
-     sec_ptr section ATTRIBUTE_UNUSED;
-     bfd_window *w ATTRIBUTE_UNUSED;
-     file_ptr offset ATTRIBUTE_UNUSED;
-     bfd_size_type count ATTRIBUTE_UNUSED;
+_bfd_generic_get_section_contents_in_window
+  (bfd *abfd ATTRIBUTE_UNUSED,
+   sec_ptr section ATTRIBUTE_UNUSED,
+   bfd_window *w ATTRIBUTE_UNUSED,
+   file_ptr offset ATTRIBUTE_UNUSED,
+   bfd_size_type count ATTRIBUTE_UNUSED)
 {
 #ifdef USE_MMAP
   if (count == 0)
     return TRUE;
-  if (abfd->xvec->_bfd_get_section_contents != _bfd_generic_get_section_contents)
+  if (abfd->xvec->_bfd_get_section_contents
+      != _bfd_generic_get_section_contents)
     {
       /* We don't know what changes the bfd's get_section_contents
 	 method may have to make.  So punt trying to map the file
@@ -787,11 +728,10 @@ _bfd_generic_get_section_contents_in_window (abfd, section, w, offset, count)
       /* @@ FIXME : If the internal window has a refcount of 1 and was
 	 allocated with malloc instead of mmap, just reuse it.  */
       bfd_free_window (w);
-      w->i = ((bfd_window_internal *)
-	      bfd_zmalloc ((bfd_size_type) sizeof (bfd_window_internal)));
+      w->i = bfd_zmalloc (sizeof (bfd_window_internal));
       if (w->i == NULL)
 	return FALSE;
-      w->i->data = (PTR) bfd_malloc (count);
+      w->i->data = bfd_malloc (count);
       if (w->i->data == NULL)
 	{
 	  free (w->i);
@@ -819,12 +759,11 @@ _bfd_generic_get_section_contents_in_window (abfd, section, w, offset, count)
    in read-write files, though.  See other set_section_contents functions
    to see why it doesn't work for new sections.  */
 bfd_boolean
-_bfd_generic_set_section_contents (abfd, section, location, offset, count)
-     bfd *abfd;
-     sec_ptr section;
-     PTR location;
-     file_ptr offset;
-     bfd_size_type count;
+_bfd_generic_set_section_contents (bfd *abfd,
+				   sec_ptr section,
+				   const void *location,
+				   file_ptr offset,
+				   bfd_size_type count)
 {
   if (count == 0)
     return TRUE;
@@ -849,8 +788,7 @@ DESCRIPTION
 */
 
 unsigned int
-bfd_log2 (x)
-     bfd_vma x;
+bfd_log2 (bfd_vma x)
 {
   unsigned int result = 0;
 
@@ -860,9 +798,7 @@ bfd_log2 (x)
 }
 
 bfd_boolean
-bfd_generic_is_local_label_name (abfd, name)
-     bfd *abfd;
-     const char *name;
+bfd_generic_is_local_label_name (bfd *abfd, const char *name)
 {
   char locals_prefix = (bfd_get_symbol_leading_char (abfd) == '_') ? 'L' : '.';
 
@@ -873,9 +809,7 @@ bfd_generic_is_local_label_name (abfd, name)
     endianness matches between input and output file.  Returns
     TRUE for a match, otherwise returns FALSE and emits an error.  */
 bfd_boolean
-_bfd_generic_verify_endian_match (ibfd, obfd)
-     bfd *ibfd;
-     bfd *obfd;
+_bfd_generic_verify_endian_match (bfd *ibfd, bfd *obfd)
 {
   if (ibfd->xvec->byteorder != obfd->xvec->byteorder
       && ibfd->xvec->byteorder != BFD_ENDIAN_UNKNOWN
@@ -901,11 +835,10 @@ _bfd_generic_verify_endian_match (ibfd, obfd)
    old routines.  */
 
 void
-warn_deprecated (what, file, line, func)
-     const char *what;
-     const char *file;
-     int line;
-     const char *func;
+warn_deprecated (const char *what,
+		 const char *file,
+		 int line,
+		 const char *func)
 {
   /* Poor man's tracking of functions we've already warned about.  */
   static size_t mask = 0;

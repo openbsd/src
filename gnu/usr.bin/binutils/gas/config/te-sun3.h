@@ -20,7 +20,7 @@
 
 /* This header file contains the #defines specific
    to SUN computer SUN 3 series computers.  (The only kind
-   we have around here, unfortunatly.)
+   we have around here, unfortunately.)
 
    Rumor has it that this file will work on the Sun-2 if the assembler
    is called with -m68010  This is not tested.  */

@@ -1,6 +1,6 @@
 /* BFD back-end for s-record objects.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002
+   2000, 2001, 2002, 2003
    Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support <sac@cygnus.com>.
 
@@ -132,13 +132,13 @@ static bfd_boolean srec_get_section_contents
 static bfd_boolean srec_set_arch_mach
   PARAMS ((bfd *, enum bfd_architecture, unsigned long));
 static bfd_boolean srec_set_section_contents
-  PARAMS ((bfd *, sec_ptr, PTR, file_ptr, bfd_size_type));
+  PARAMS ((bfd *, sec_ptr, const PTR, file_ptr, bfd_size_type));
 static bfd_boolean internal_srec_write_object_contents PARAMS ((bfd *, int));
 static bfd_boolean srec_write_object_contents PARAMS ((bfd *));
 static bfd_boolean symbolsrec_write_object_contents PARAMS ((bfd *));
 static int srec_sizeof_headers PARAMS ((bfd *, bfd_boolean));
 static long srec_get_symtab_upper_bound PARAMS ((bfd *));
-static long srec_get_symtab PARAMS ((bfd *, asymbol **));
+static long srec_canonicalize_symtab PARAMS ((bfd *, asymbol **));
 
 /* Macros for converting between hex and binary.  */
 
@@ -872,7 +872,7 @@ static bfd_boolean
 srec_set_section_contents (abfd, section, location, offset, bytes_to_do)
      bfd *abfd;
      sec_ptr section;
-     PTR location;
+     const PTR location;
      file_ptr offset;
      bfd_size_type bytes_to_do;
 {
@@ -1009,7 +1009,7 @@ srec_write_header (abfd)
 {
   unsigned int len = strlen (abfd->filename);
 
-  /* I'll put an arbitary 40 char limit on header size.  */
+  /* I'll put an arbitrary 40 char limit on header size.  */
   if (len > 40)
     len = 40;
 
@@ -1188,7 +1188,7 @@ srec_get_symtab_upper_bound (abfd)
 /* Return the symbol table.  */
 
 static long
-srec_get_symtab (abfd, alocation)
+srec_canonicalize_symtab (abfd, alocation)
      bfd *abfd;
      asymbol **alocation;
 {

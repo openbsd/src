@@ -258,7 +258,7 @@ obj_crawl_symbol_chain (headers)
       if (flag_readonly_data_in_text && (S_GET_SEGMENT (symbolP) == SEG_DATA))
 	{
 	  S_SET_SEGMENT (symbolP, SEG_TEXT);
-	}			/* if pusing data into text  */
+	}			/* if pushing data into text  */
 
       resolve_symbol_value (symbolP);
 

@@ -1,6 +1,6 @@
 /* BFD back-end for MIPS Extended-Coff files.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002
+   2000, 2001, 2002, 2003
    Free Software Foundation, Inc.
    Original version by Per Bothner.
    Full support added by Ian Lance Taylor, ian@cygnus.com.
@@ -551,7 +551,7 @@ mips_adjust_reloc_out (abfd, rel, intern)
 }
 
 /* ECOFF relocs are either against external symbols, or against
-   sections.  If we are producing relocateable output, and the reloc
+   sections.  If we are producing relocatable output, and the reloc
    is against an external symbol, and nothing has given us any
    additional addend, the resulting reloc will also be against the
    same symbol.  In such a case, we don't want to change anything
@@ -559,7 +559,7 @@ mips_adjust_reloc_out (abfd, rel, intern)
    final link time.  Rather than put special case code into
    bfd_perform_relocation, all the reloc types use this howto
    function.  It just short circuits the reloc if producing
-   relocateable output against an external symbol.  */
+   relocatable output against an external symbol.  */
 
 static bfd_reloc_status_type
 mips_generic_reloc (abfd,
@@ -758,7 +758,7 @@ mips_gprel_reloc (abfd,
      bfd *output_bfd;
      char **error_message;
 {
-  bfd_boolean relocateable;
+  bfd_boolean relocatable;
   bfd_vma gp;
   bfd_vma relocation;
   unsigned long val;
@@ -777,27 +777,27 @@ mips_gprel_reloc (abfd,
     }
 
   if (output_bfd != (bfd *) NULL)
-    relocateable = TRUE;
+    relocatable = TRUE;
   else
     {
-      relocateable = FALSE;
+      relocatable = FALSE;
       output_bfd = symbol->section->output_section->owner;
     }
 
-  if (bfd_is_und_section (symbol->section) && ! relocateable)
+  if (bfd_is_und_section (symbol->section) && ! relocatable)
     return bfd_reloc_undefined;
 
   /* We have to figure out the gp value, so that we can adjust the
      symbol value correctly.  We look up the symbol _gp in the output
      BFD.  If we can't find it, we're stuck.  We cache it in the ECOFF
      target data.  We don't need to adjust the symbol value for an
-     external symbol if we are producing relocateable output.  */
+     external symbol if we are producing relocatable output.  */
   gp = _bfd_get_gp_value (output_bfd);
   if (gp == 0
-      && (! relocateable
+      && (! relocatable
 	  || (symbol->flags & BSF_SECTION_SYM) != 0))
     {
-      if (relocateable)
+      if (relocatable)
 	{
 	  /* Make up a value.  */
 	  gp = symbol->section->output_section->vma + 0x4000;
@@ -861,16 +861,16 @@ mips_gprel_reloc (abfd,
     val -= 0x10000;
 
   /* Adjust val for the final section location and GP value.  If we
-     are producing relocateable output, we don't want to do this for
+     are producing relocatable output, we don't want to do this for
      an external symbol.  */
-  if (! relocateable
+  if (! relocatable
       || (symbol->flags & BSF_SECTION_SYM) != 0)
     val += relocation - gp;
 
   insn = (insn &~ (unsigned) 0xffff) | (val & 0xffff);
   bfd_put_32 (abfd, (bfd_vma) insn, (bfd_byte *) data + reloc_entry->address);
 
-  if (relocateable)
+  if (relocatable)
     reloc_entry->address += input_section->output_offset;
 
   /* Make sure it fit in 16 bits.  */
@@ -1046,7 +1046,7 @@ mips_rello_reloc (abfd,
     }
 
   /* bfd_perform_relocation does not handle pcrel_offset relocations
-     correctly when generating a relocateable file, so handle them
+     correctly when generating a relocatable file, so handle them
      directly here.  */
   if (output_bfd != (bfd *) NULL)
     {
@@ -1413,7 +1413,7 @@ mips_relocate_section (output_bfd, info, input_bfd, input_section,
 		 and the GP value of OUTPUT_BFD (which is in GP).  */
 	      addend = ecoff_data (input_bfd)->gp - gp;
 	    }
-	  else if (! info->relocateable
+	  else if (! info->relocatable
 		   || h->root.type == bfd_link_hash_defined
 		   || h->root.type == bfd_link_hash_defweak)
 	    {
@@ -1432,7 +1432,7 @@ mips_relocate_section (output_bfd, info, input_bfd, input_section,
 	      /* This is a relocation against an undefined or common
 		 symbol.  The current addend in the instruction is
 		 simply the desired offset into the symbol (normally
-		 zero).  We are generating relocateable output, and we
+		 zero).  We are generating relocatable output, and we
 		 aren't going to define this symbol, so we just leave
 		 the instruction alone.  */
 	      addend = 0;
@@ -1446,7 +1446,7 @@ mips_relocate_section (output_bfd, info, input_bfd, input_section,
       if (offsets != NULL
 	  && offsets[i] != 0)
 	{
-	  BFD_ASSERT (! info->relocateable);
+	  BFD_ASSERT (! info->relocatable);
 	  BFD_ASSERT (int_rel.r_type == MIPS_R_PCREL16
 		      || int_rel.r_type == MIPS_R_RELHI
 		      || int_rel.r_type == MIPS_R_RELLO);
@@ -1524,9 +1524,9 @@ mips_relocate_section (output_bfd, info, input_bfd, input_section,
 	    }
 	}
 
-      if (info->relocateable)
+      if (info->relocatable)
 	{
-	  /* We are generating relocateable output, and must convert
+	  /* We are generating relocatable output, and must convert
 	     the existing reloc.  */
 	  if (int_rel.r_extern)
 	    {
@@ -2348,7 +2348,7 @@ bfd_mips_ecoff_create_embedded_relocs (abfd, info, datasec, relsec, errmsg)
   bfd_byte *p;
   bfd_size_type amt;
 
-  BFD_ASSERT (! info->relocateable);
+  BFD_ASSERT (! info->relocatable);
 
   *errmsg = NULL;
 

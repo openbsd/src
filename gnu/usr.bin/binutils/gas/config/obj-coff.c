@@ -143,7 +143,7 @@ stack_pop (st)
 }
 
 /*
- * Maintain a list of the tagnames of the structres.
+ * Maintain a list of the tagnames of the structures.
  */
 
 static struct hash_control *tag_hash;
@@ -1472,9 +1472,9 @@ obj_coff_section (ignore)
 		case 'd': flags |= SEC_DATA | SEC_LOAD; /* fall through */
 		case 'w': flags &=~ SEC_READONLY; break;
 
-		case 'a': break; /* For compatability with ELF.  */
+		case 'a': break; /* For compatibility with ELF.  */
 		case 'x': flags |= SEC_CODE | SEC_LOAD; break;
-		case 'r': flags |= SEC_READONLY; break;
+		case 'r': flags |= SEC_DATA | SEC_LOAD | SEC_READONLY; break;
 
 		case 'i': /* STYP_INFO */
 		case 'l': /* STYP_LIB */
@@ -2038,7 +2038,7 @@ do_relocs_for (abfd, h, file_cursor)
 		      ext_ptr++;
 #if defined(TC_A29K)
 		      /* The 29k has a special kludge for the high 16 bit
-			 reloc.  Two relocations are emited, R_IHIHALF,
+			 reloc.  Two relocations are emitted, R_IHIHALF,
 			 and R_IHCONST. The second one doesn't contain a
 			 symbol, but uses the value for offset.  */
 		      if (intr.r_type == R_IHIHALF)
@@ -2052,7 +2052,7 @@ do_relocs_for (abfd, h, file_cursor)
 #endif
 #if defined(TC_OR32)
 		      /* The or32 has a special kludge for the high 16 bit
-			 reloc.  Two relocations are emited, R_IHIHALF,
+			 reloc.  Two relocations are emitted, R_IHIHALF,
 			 and R_IHCONST. The second one doesn't contain a
 			 symbol, but uses the value for offset.  */
 		      if (intr.r_type == R_IHIHALF)
@@ -2096,7 +2096,7 @@ do_relocs_for (abfd, h, file_cursor)
 }
 
 /* Run through a frag chain and write out the data to go with it, fill
-   in the scnhdrs with the info on the file postions.  */
+   in the scnhdrs with the info on the file positions.  */
 
 static void
 fill_section (abfd, h, file_cursor)
@@ -2964,7 +2964,7 @@ yank_symbols ()
 	      /* FIXME-SOON: where do dups come from?
 		 Maybe tag references before definitions? xoxorich.  */
 	      /* Move the debug data from the debug symbol to the
-		 real symbol. Do NOT do the oposite (i.e. move from
+		 real symbol. Do NOT do the opposite (i.e. move from
 		 real symbol to debug symbol and remove real symbol from the
 		 list.) Because some pointers refer to the real symbol
 		 whereas no pointers refer to the debug symbol.  */
@@ -3428,7 +3428,7 @@ int coff_flags;
 
 #ifndef SUB_SEGMENT_ALIGN
 #ifdef HANDLE_ALIGN
-/* The last subsegment gets an aligment corresponding to the alignment
+/* The last subsegment gets an alignment corresponding to the alignment
    of the section.  This allows proper nop-filling at the end of
    code-bearing sections.  */
 #define SUB_SEGMENT_ALIGN(SEG, FRCHAIN)					\

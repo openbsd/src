@@ -1,5 +1,5 @@
 /* tc-ppc.h -- Header file for tc-ppc.c.
-   Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002
+   Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003
    Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
 
@@ -206,6 +206,9 @@ do {								\
 
 #endif /* OBJ_XCOFF */
 
+extern const char       ppc_symbol_chars[];
+#define tc_symbol_chars ppc_symbol_chars
+
 #ifdef OBJ_ELF
 
 /* Support for SHF_EXCLUDE and SHT_ORDERED */
@@ -218,22 +221,6 @@ extern int ppc_section_flags PARAMS ((int, int, int));
 #define md_elf_section_type(STR, LEN)		ppc_section_type (STR, LEN)
 #define md_elf_section_word(STR, LEN)		ppc_section_word (STR, LEN)
 #define md_elf_section_flags(FLAGS, ATTR, TYPE)	ppc_section_flags (FLAGS, ATTR, TYPE)
-
-/* Add extra PPC sections -- Note, for now, make .sbss2 and .PPC.EMB.sbss0 a
-   normal section, and not a bss section so that the linker doesn't crater
-   when trying to make more than 2 sections.  */
-#define ELF_TC_SPECIAL_SECTIONS \
-  { ".tags",		SHT_ORDERED,	SHF_ALLOC },			\
-  { ".sdata",		SHT_PROGBITS,	SHF_ALLOC + SHF_WRITE },	\
-  { ".sbss",		SHT_NOBITS,	SHF_ALLOC + SHF_WRITE },	\
-  { ".sdata2",		SHT_PROGBITS,	SHF_ALLOC },			\
-  { ".sbss2",		SHT_PROGBITS,	SHF_ALLOC },			\
-  { ".PPC.EMB.apuinfo",       SHT_NOTE,       0 }, \
-  { ".PPC.EMB.sdata0",	SHT_PROGBITS,	SHF_ALLOC },			\
-  { ".PPC.EMB.sbss0",	SHT_PROGBITS,	SHF_ALLOC },			\
-  /* Extra sections for 64-bit ELF PPC.  */				\
-  { ".toc",		SHT_PROGBITS,	SHF_ALLOC + SHF_WRITE},		\
-  { ".tocbss",		SHT_NOBITS,	SHF_ALLOC + SHF_WRITE},
 
 #define tc_comment_chars ppc_comment_chars
 extern const char *ppc_comment_chars;
@@ -248,11 +235,12 @@ extern int ppc_fix_adjustable PARAMS ((struct fix *));
 #define tc_frob_file_before_adjust ppc_frob_file_before_adjust
 extern void ppc_frob_file_before_adjust PARAMS ((void));
 
-#define DWARF2_LINE_MIN_INSN_LENGTH 4
 #endif /* OBJ_ELF */
 
+#if defined (OBJ_ELF) || defined (OBJ_XCOFF)
 #define TC_FORCE_RELOCATION(FIX) ppc_force_relocation (FIX)
 extern int ppc_force_relocation PARAMS ((struct fix *));
+#endif
 
 /* call md_pcrel_from_section, not md_pcrel_from */
 #define MD_PCREL_FROM_SECTION(FIX, SEC) md_pcrel_from_section(FIX, SEC)
@@ -265,3 +253,17 @@ extern int ppc_parse_name PARAMS ((const char *, struct expressionS *));
 
 #define md_cleanup() ppc_cleanup ()
  extern void ppc_cleanup PARAMS ((void));
+
+#define TARGET_USE_CFIPOP 1
+
+#define tc_cfi_frame_initial_instructions ppc_cfi_frame_initial_instructions
+extern void ppc_cfi_frame_initial_instructions PARAMS ((void));
+
+#define tc_regname_to_dw2regnum tc_ppc_regname_to_dw2regnum
+extern int tc_ppc_regname_to_dw2regnum PARAMS ((const char *regname));
+
+extern int ppc_cie_data_alignment;
+
+#define DWARF2_LINE_MIN_INSN_LENGTH     4
+#define DWARF2_DEFAULT_RETURN_COLUMN    0x41
+#define DWARF2_CIE_DATA_ALIGNMENT       ppc_cie_data_alignment

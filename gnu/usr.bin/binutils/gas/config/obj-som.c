@@ -306,7 +306,7 @@ adjust_stab_sections (abfd, sec, xxx)
   bfd_h_put_32 (abfd, (bfd_vma) strsz, (bfd_byte *) p + 8);
 }
 
-/* Called late in the asssembly phase to adjust the special
+/* Called late in the assembly phase to adjust the special
    stab entry and to set the starting address for each code subspace.  */
 
 void

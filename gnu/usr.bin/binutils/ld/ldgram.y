@@ -1,6 +1,6 @@
 /* A YACC grammar to parse a superset of the AT&T linker scripting language.
    Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-   2001, 2002 Free Software Foundation, Inc.
+   2001, 2002, 2003 Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support (steve@cygnus.com).
 
 This file is part of GNU ld.
@@ -94,7 +94,7 @@ static int error_index;
 }
 
 %type <etree> exp opt_exp_with_type mustbe_exp opt_at phdr_type phdr_val
-%type <etree> opt_exp_without_type
+%type <etree> opt_exp_without_type opt_subalign
 %type <fill> fill_opt fill_exp
 %type <name_list> exclude_name_list
 %type <wildcard_list> file_NAME_list
@@ -142,7 +142,7 @@ static int error_index;
 %token STARTUP HLL SYSLIB FLOAT NOFLOAT NOCROSSREFS
 %token ORIGIN FILL
 %token LENGTH CREATE_OBJECT_SYMBOLS INPUT GROUP OUTPUT CONSTRUCTORS
-%token ALIGNMOD AT PROVIDE
+%token ALIGNMOD AT SUBALIGN PROVIDE
 %type <token> assign_op atype attributes_opt
 %type <name>  filename
 %token CHIP LIST SECT ABSOLUTE  LOAD NEWLINE ENDWORD ORDER NAMEWORD ASSERT_K
@@ -328,7 +328,7 @@ ifile_p1:
 	|	OUTPUT_FORMAT '(' NAME ',' NAME ',' NAME ')'
 		  { lang_add_output_format ($3, $5, $7, 1); }
         |	OUTPUT_ARCH '(' NAME ')'
-		  { ldfile_set_output_arch($3); }
+		  { ldfile_set_output_arch ($3, bfd_arch_unknown); }
 	|	FORCE_COMMON_ALLOCATION
 		{ command_line.force_common_definition = TRUE ; }
 	|	INHIBIT_COMMON_ALLOCATION
@@ -386,6 +386,9 @@ statement_anywhere:
 		ENTRY '(' NAME ')'
 		{ lang_add_entry ($3, FALSE); }
 	|	assignment end
+	|	ASSERT_K  {ldlex_expression ();} '(' exp ',' NAME ')'
+		{ ldlex_popstate ();
+		  lang_add_assignment (exp_assert ($4, $6)); }
 	;
 
 /* The '*' and '?' cases are there because the lexer returns them as
@@ -627,7 +630,7 @@ memory_spec_list:
 
 
 memory_spec: 	NAME
-		{ region = lang_memory_region_lookup($1); }
+		{ region = lang_memory_region_lookup ($1, TRUE); }
 		attributes_opt ':'
 		origin_spec opt_comma length_spec
 		{}
@@ -801,6 +804,8 @@ exp	:
 			{ $$ = exp_unop(ABSOLUTE, $3); }
 	|	ALIGN_K '(' exp ')'
 			{ $$ = exp_unop(ALIGN_K,$3); }
+	|	ALIGN_K '(' exp ',' exp ')'
+			{ $$ = exp_binop(ALIGN_K,$3,$5); }
 	|	DATA_SEGMENT_ALIGN '(' exp ',' exp ')'
 			{ $$ = exp_binop (DATA_SEGMENT_ALIGN, $3, $5); }
 	|	DATA_SEGMENT_END '(' exp ')'
@@ -828,31 +833,37 @@ opt_at:
 	|	{ $$ = 0; }
 	;
 
+opt_subalign:
+		SUBALIGN '(' exp ')' { $$ = $3; }
+	|	{ $$ = 0; }
+	;
+
 section:	NAME 		{ ldlex_expression(); }
 		opt_exp_with_type
-		opt_at   	{ ldlex_popstate (); ldlex_script (); }
+		opt_at
+		opt_subalign	{ ldlex_popstate (); ldlex_script (); }
 		'{'
 			{
 			  lang_enter_output_section_statement($1, $3,
 							      sectype,
-							      0, 0, 0, $4);
+							      0, $5, $4);
 			}
 		statement_list_opt
  		'}' { ldlex_popstate (); ldlex_expression (); }
 		memspec_opt memspec_at_opt phdr_opt fill_opt
 		{
 		  ldlex_popstate ();
-		  lang_leave_output_section_statement ($14, $11, $13, $12);
+		  lang_leave_output_section_statement ($15, $12, $14, $13);
 		}
 		opt_comma
 		{}
 	|	OVERLAY
 			{ ldlex_expression (); }
-		opt_exp_without_type opt_nocrossrefs opt_at
+		opt_exp_without_type opt_nocrossrefs opt_at opt_subalign
 			{ ldlex_popstate (); ldlex_script (); }
 		'{'
 			{
-			  lang_enter_overlay ($3);
+			  lang_enter_overlay ($3, $6);
 			}
 		overlay_section
 		'}'
@@ -861,7 +872,7 @@ section:	NAME 		{ ldlex_expression(); }
 			{
 			  ldlex_popstate ();
 			  lang_leave_overlay ($5, (int) $4,
-					      $15, $12, $14, $13);
+					      $16, $13, $15, $14);
 			}
 		opt_comma
 	|	/* The GROUP case is just enough to support the gcc
@@ -918,7 +929,7 @@ opt_nocrossrefs:
 memspec_opt:
 		'>' NAME
 		{ $$ = $2; }
-	|	{ $$ = "*default*"; }
+	|	{ $$ = DEFAULT_MEMORY_REGION; }
 	;
 
 phdr_opt:
@@ -1006,6 +1017,8 @@ phdr_type:
 			{
 			  if (strcmp (s, "PT_GNU_EH_FRAME") == 0)
 			    $$ = exp_intop (0x6474e550);
+			  else if (strcmp (s, "PT_GNU_STACK") == 0)
+			    $$ = exp_intop (0x6474e551);
 			  else
 			    {
 			      einfo (_("\

@@ -1,6 +1,6 @@
 /* Support for the generic parts of COFF, for BFD.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002
+   2000, 2001, 2002, 2003
    Free Software Foundation, Inc.
    Written by Cygnus Support.
 
@@ -329,7 +329,7 @@ coff_section_from_bfd_index (abfd, index)
      bfd *abfd;
      int index;
 {
-  struct sec *answer = abfd->sections;
+  struct bfd_section *answer = abfd->sections;
 
   if (index == N_ABS)
     return bfd_abs_section_ptr;
@@ -365,7 +365,7 @@ coff_get_symtab_upper_bound (abfd)
 /* Canonicalize a COFF symbol table.  */
 
 long
-coff_get_symtab (abfd, alocation)
+coff_canonicalize_symtab (abfd, alocation)
      bfd *abfd;
      asymbol **alocation;
 {

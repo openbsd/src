@@ -1,6 +1,6 @@
 /* Define a target vector and some small routines for a variant of a.out.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002
+   2000, 2001, 2002, 2003
    Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -443,7 +443,7 @@ MY_bfd_final_link (abfd, info)
 #endif
 #ifndef MY_bfd_debug_info_accumulate
 #define MY_bfd_debug_info_accumulate	\
-			(void (*) PARAMS ((bfd*, struct sec *))) bfd_void
+		(void (*) PARAMS ((bfd*, struct bfd_section *))) bfd_void
 #endif
 
 #ifndef MY_core_file_failing_command
@@ -470,8 +470,8 @@ MY_bfd_final_link (abfd, info)
 #ifndef MY_get_symtab_upper_bound
 #define MY_get_symtab_upper_bound NAME(aout,get_symtab_upper_bound)
 #endif
-#ifndef MY_get_symtab
-#define MY_get_symtab NAME(aout,get_symtab)
+#ifndef MY_canonicalize_symtab
+#define MY_canonicalize_symtab NAME(aout,canonicalize_symtab)
 #endif
 #ifndef MY_get_reloc_upper_bound
 #define MY_get_reloc_upper_bound NAME(aout,get_reloc_upper_bound)

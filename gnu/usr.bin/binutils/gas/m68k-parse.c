@@ -24,7 +24,7 @@
 #include "safe-ctype.h"
 
 /* Remap normal yacc parser interface names (yyparse, yylex, yyerror,
-   etc), as well as gratuitiously global symbol names If other parser
+   etc), as well as gratuitously global symbol names If other parser
    generators (bison, byacc, etc) produce additional global names that
    conflict at link time, then those parser generators need to be
    fixed instead of adding those names to this list. */

@@ -469,7 +469,7 @@ typedef struct
 #endif
 /* Symbol table macros and constants.  */
 
-/* Possible and usefull section number in symbol table
+/* Possible and useful section number in symbol table
    The values of TEXT, DATA and BSS may not be portable.  */
 
 #define C_ABS_SECTION		N_ABS
@@ -480,7 +480,7 @@ typedef struct
 #define C_REGISTER_SECTION	50
 
 /* Macros to extract information from a symbol table entry.
-   This syntaxic indirection allows independence regarding a.out or coff.
+   This syntactic indirection allows independence regarding a.out or coff.
    The argument (s) of all these macros is a pointer to a symbol table entry.  */
 
 /* Predicates.  */
@@ -795,7 +795,7 @@ typedef struct
 #define H_SET_SYMBOL_TABLE_SIZE(h,v)    ((h)->filehdr.f_nsyms = (v))
 #define H_SET_SIZEOF_OPTIONAL_HEADER(h,v) ((h)->filehdr.f_opthdr = (v))
 #define H_SET_FLAGS(h,v)		((h)->filehdr.f_flags = (v))
-/* Extra fields to achieve bsd a.out compatibility and for convinience.  */
+/* Extra fields to achieve bsd a.out compatibility and for convenience.  */
 #define H_SET_RELOCATION_SIZE(h,t,d) 	((h)->relocation_size = (t)+(d))
 #define H_SET_STRING_SIZE(h,v)          ((h)->string_table_size = (v))
 #define H_SET_LINENO_SIZE(h,v)          ((h)->lineno_size = (v))

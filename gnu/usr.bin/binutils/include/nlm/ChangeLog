@@ -1,3 +1,7 @@
+2003-08-07  Alan Modra  <amodra@bigpond.net.au>
+
+	* internal.h (Nlm_Internal_Custom_Header): Replace PTR with void *.
+
 2001-10-02  Alan Modra  <amodra@bigpond.net.au>
 
 	* common.h (NLM_CAT, NLM_CAT3): Don't define.

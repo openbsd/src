@@ -1,6 +1,6 @@
 /* BFD back-end for MS-DOS executables.
-   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998, 1999, 2001, 2002
-   Free Software Foundation, Inc.
+   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998, 1999, 2001, 2002,
+   2003 Free Software Foundation, Inc.
    Written by Bryan Ford of the University of Utah.
 
    Contributed by the Center for Software Science at the
@@ -61,7 +61,7 @@ static int msdos_sizeof_headers
 static bfd_boolean msdos_write_object_contents
   PARAMS ((bfd *));
 static bfd_boolean msdos_set_section_contents
-  PARAMS ((bfd *, sec_ptr, PTR, file_ptr, bfd_size_type));
+  PARAMS ((bfd *, sec_ptr, const PTR, file_ptr, bfd_size_type));
 
 static int
 msdos_sizeof_headers (abfd, exec)
@@ -139,7 +139,7 @@ static bfd_boolean
 msdos_set_section_contents (abfd, section, location, offset, count)
      bfd *abfd;
      sec_ptr section;
-     PTR location;
+     const PTR location;
      file_ptr offset;
      bfd_size_type count;
 {
@@ -186,7 +186,7 @@ msdos_set_section_contents (abfd, section, location, offset, count)
 #define msdos_set_arch_mach _bfd_generic_set_arch_mach
 
 #define msdos_get_symtab_upper_bound _bfd_nosymbols_get_symtab_upper_bound
-#define msdos_get_symtab _bfd_nosymbols_get_symtab
+#define msdos_canonicalize_symtab _bfd_nosymbols_canonicalize_symtab
 #define msdos_print_symbol _bfd_nosymbols_print_symbol
 #define msdos_get_symbol_info _bfd_nosymbols_get_symbol_info
 #define msdos_find_nearest_line _bfd_nosymbols_find_nearest_line

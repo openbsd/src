@@ -1,5 +1,5 @@
 /* NLM (NetWare Loadable Module) support for BFD.
-   Copyright 1993, 1994 Free Software Foundation, Inc.
+   Copyright 1993, 1994, 2003 Free Software Foundation, Inc.
 
    Written by Fred Fish @ Cygnus Support.
 
@@ -282,7 +282,7 @@ typedef struct nlm_internal_custom_header
   file_ptr dataOffset;
   bfd_size_type dataLength;
   char dataStamp[8];
-  PTR hdr;
+  void *hdr;
 } Nlm_Internal_Custom_Header;
 
 #define nlm32_internal_custom_header nlm_internal_custom_header

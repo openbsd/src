@@ -86,4 +86,15 @@ extern int target_big_endian;
    visible symbols can be overridden.  */
 #define EXTERN_FORCE_RELOC 0
 
+/* Bits for post-processing of a user defined label to check if
+   it has a double colon (Intel syntax only).  */
+extern void i860_check_label (symbolS *labelsym);
+#define tc_check_label(ls)	i860_check_label (ls)
+
+/* Bits for filling in rs_align_code fragments with NOPs.  */
+extern void i860_handle_align (struct frag *);
+#define HANDLE_ALIGN(fragp) i860_handle_align (fragp)
+
+#define MAX_MEM_FOR_RS_ALIGN_CODE  (3 + 4 + 4)
+
 #endif /* TC_I860 */

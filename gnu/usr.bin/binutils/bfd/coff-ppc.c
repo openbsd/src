@@ -929,7 +929,7 @@ ppc_record_toc_entry(abfd, info, sec, sym, toc_kind)
 	  local_syms[sym] = global_toc_size;
 	  global_toc_size += 4;
 
-	  /* The size must fit in a 16bit displacment.  */
+	  /* The size must fit in a 16-bit displacement.  */
 	  if (global_toc_size > 65535)
 	    {
 	      (*_bfd_error_handler) (_("TOC overflow"));
@@ -949,7 +949,7 @@ ppc_record_toc_entry(abfd, info, sec, sym, toc_kind)
 	  h->toc_offset = global_toc_size;
 	  global_toc_size += 4;
 
-	  /* The size must fit in a 16bit displacment.  */
+	  /* The size must fit in a 16-bit displacement.  */
 	  if (global_toc_size >= 65535)
 	    {
 	      (*_bfd_error_handler) (_("TOC overflow"));
@@ -1088,10 +1088,10 @@ coff_ppc_relocate_section (output_bfd, info, input_bfd, input_section,
   bfd_vma relocation;
   reloc_howto_type *howto = 0;
 
-  /* If we are performing a relocateable link, we don't need to do a
+  /* If we are performing a relocatable link, we don't need to do a
      thing.  The caller will take care of adjusting the reloc
      addresses and symbol indices.  */
-  if (info->relocateable)
+  if (info->relocatable)
     return TRUE;
 
   hihalf = FALSE;
@@ -1274,7 +1274,7 @@ coff_ppc_relocate_section (output_bfd, info, input_bfd, input_section,
 		    our_toc_offset = val - (toc_section->output_section->vma
 					    + toc_section->output_offset);
 
-		    /* The size must still fit in a 16bit displacment.  */
+		    /* The size must still fit in a 16-bit displacement.  */
 		    if ((bfd_vma) our_toc_offset >= 65535)
 		      {
 			(*_bfd_error_handler)
@@ -1931,7 +1931,7 @@ ppc_imglue_reloc (abfd, reloc_entry, symbol, data,
 #define MAX_RELOC_INDEX  \
       (sizeof (ppc_coff_howto_table) / sizeof (ppc_coff_howto_table[0]) - 1)
 
-/* FIXME: There is a possiblity that when we read in a reloc from a file,
+/* FIXME: There is a possibility that when we read in a reloc from a file,
           that there are some bits encoded in the upper portion of the
 	  type field. Not yet implemented.  */
 static void ppc_coff_rtype2howto PARAMS ((arelent *, struct internal_reloc *));
@@ -2325,7 +2325,7 @@ ppc_bfd_coff_final_link (abfd, info)
 		  || info->strip == strip_some)
 		o->lineno_count += sec->lineno_count;
 
-	      if (info->relocateable)
+	      if (info->relocatable)
 		o->reloc_count += sec->reloc_count;
 
 	      if (sec->_raw_size > max_contents_size)
@@ -2335,7 +2335,7 @@ ppc_bfd_coff_final_link (abfd, info)
 	      if (sec->reloc_count > max_reloc_count)
 		max_reloc_count = sec->reloc_count;
 	    }
-	  else if (info->relocateable
+	  else if (info->relocatable
 		   && (p->type == bfd_section_reloc_link_order
 		       || p->type == bfd_symbol_reloc_link_order))
 	    ++o->reloc_count;
@@ -2350,9 +2350,9 @@ ppc_bfd_coff_final_link (abfd, info)
 	}
     }
 
-  /* If doing a relocateable link, allocate space for the pointers we
+  /* If doing a relocatable link, allocate space for the pointers we
      need to keep.  */
-  if (info->relocateable)
+  if (info->relocatable)
     {
       unsigned int i;
 
@@ -2401,9 +2401,9 @@ ppc_bfd_coff_final_link (abfd, info)
 
 	     Because of this problem, we also keep the relocs in
 	     memory until the end of the link.  This wastes memory,
-	     but only when doing a relocateable link, which is not the
+	     but only when doing a relocatable link, which is not the
 	     common case.  */
-	  BFD_ASSERT (info->relocateable);
+	  BFD_ASSERT (info->relocatable);
 	  amt = o->reloc_count;
 	  amt *= sizeof (struct internal_reloc);
 	  finfo.section_info[o->target_index].relocs =
@@ -2455,7 +2455,7 @@ ppc_bfd_coff_final_link (abfd, info)
   finfo.linenos = (bfd_byte *) bfd_malloc (amt);
   finfo.contents = (bfd_byte *) bfd_malloc (max_contents_size);
   finfo.external_relocs = (bfd_byte *) bfd_malloc (max_reloc_count * relsz);
-  if (! info->relocateable)
+  if (! info->relocatable)
     {
       amt = max_reloc_count * sizeof (struct internal_reloc);
       finfo.internal_relocs = (struct internal_reloc *) bfd_malloc (amt);
@@ -2467,7 +2467,7 @@ ppc_bfd_coff_final_link (abfd, info)
       || (finfo.linenos == NULL && max_lineno_count > 0)
       || (finfo.contents == NULL && max_contents_size > 0)
       || (finfo.external_relocs == NULL && max_reloc_count > 0)
-      || (! info->relocateable
+      || (! info->relocatable
 	  && finfo.internal_relocs == NULL
 	  && max_reloc_count > 0))
     goto error_return;
@@ -2602,7 +2602,7 @@ ppc_bfd_coff_final_link (abfd, info)
       finfo.outsyms = NULL;
     }
 
-  if (info->relocateable)
+  if (info->relocatable)
     {
       /* Now that we have written out all the global symbols, we know
 	 the symbol indices to use for relocs against them, and we can

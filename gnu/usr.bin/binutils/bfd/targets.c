@@ -1,6 +1,6 @@
 /* Generic target-file-type support for the BFD library.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003
+   2000, 2001, 2002, 2003, 2004
    Free Software Foundation, Inc.
    Written by Cygnus Support.
 
@@ -30,7 +30,7 @@ SECTION
 	Targets
 
 DESCRIPTION
-	Each port of BFD to a different machine requries the creation
+	Each port of BFD to a different machine requires the creation
 	of a target back end. All the back end provides to the root
 	part of BFD is a structure containing pointers to functions
 	which perform certain low level operations on files. BFD
@@ -103,7 +103,7 @@ DESCRIPTION
 	someone wants to fix this and not break the above, please do.
 
 .#define BFD_SEND(bfd, message, arglist) \
-.               ((*((bfd)->xvec->message)) arglist)
+.  ((*((bfd)->xvec->message)) arglist)
 .
 .#ifdef DEBUG_BFD_SEND
 .#undef BFD_SEND
@@ -116,7 +116,7 @@ DESCRIPTION
 	For operations which index on the BFD format:
 
 .#define BFD_SEND_FMT(bfd, message, arglist) \
-.            (((bfd)->xvec->message[(int) ((bfd)->format)]) arglist)
+.  (((bfd)->xvec->message[(int) ((bfd)->format)]) arglist)
 .
 .#ifdef DEBUG_BFD_SEND
 .#undef BFD_SEND_FMT
@@ -203,264 +203,266 @@ DESCRIPTION
 .  {* Entries for byte swapping for data. These are different from the
 .     other entry points, since they don't take a BFD asthe first argument.
 .     Certain other handlers could do the same.  *}
-.  bfd_vma        (*bfd_getx64) PARAMS ((const bfd_byte *));
-.  bfd_signed_vma (*bfd_getx_signed_64) PARAMS ((const bfd_byte *));
-.  void           (*bfd_putx64) PARAMS ((bfd_vma, bfd_byte *));
-.  bfd_vma        (*bfd_getx32) PARAMS ((const bfd_byte *));
-.  bfd_signed_vma (*bfd_getx_signed_32) PARAMS ((const bfd_byte *));
-.  void           (*bfd_putx32) PARAMS ((bfd_vma, bfd_byte *));
-.  bfd_vma        (*bfd_getx16) PARAMS ((const bfd_byte *));
-.  bfd_signed_vma (*bfd_getx_signed_16) PARAMS ((const bfd_byte *));
-.  void           (*bfd_putx16) PARAMS ((bfd_vma, bfd_byte *));
+.  bfd_uint64_t   (*bfd_getx64) (const void *);
+.  bfd_int64_t    (*bfd_getx_signed_64) (const void *);
+.  void           (*bfd_putx64) (bfd_uint64_t, void *);
+.  bfd_vma        (*bfd_getx32) (const void *);
+.  bfd_signed_vma (*bfd_getx_signed_32) (const void *);
+.  void           (*bfd_putx32) (bfd_vma, void *);
+.  bfd_vma        (*bfd_getx16) (const void *);
+.  bfd_signed_vma (*bfd_getx_signed_16) (const void *);
+.  void           (*bfd_putx16) (bfd_vma, void *);
 .
 .  {* Byte swapping for the headers.  *}
-.  bfd_vma        (*bfd_h_getx64) PARAMS ((const bfd_byte *));
-.  bfd_signed_vma (*bfd_h_getx_signed_64) PARAMS ((const bfd_byte *));
-.  void           (*bfd_h_putx64) PARAMS ((bfd_vma, bfd_byte *));
-.  bfd_vma        (*bfd_h_getx32) PARAMS ((const bfd_byte *));
-.  bfd_signed_vma (*bfd_h_getx_signed_32) PARAMS ((const bfd_byte *));
-.  void           (*bfd_h_putx32) PARAMS ((bfd_vma, bfd_byte *));
-.  bfd_vma        (*bfd_h_getx16) PARAMS ((const bfd_byte *));
-.  bfd_signed_vma (*bfd_h_getx_signed_16) PARAMS ((const bfd_byte *));
-.  void           (*bfd_h_putx16) PARAMS ((bfd_vma, bfd_byte *));
+.  bfd_uint64_t   (*bfd_h_getx64) (const void *);
+.  bfd_int64_t    (*bfd_h_getx_signed_64) (const void *);
+.  void           (*bfd_h_putx64) (bfd_uint64_t, void *);
+.  bfd_vma        (*bfd_h_getx32) (const void *);
+.  bfd_signed_vma (*bfd_h_getx_signed_32) (const void *);
+.  void           (*bfd_h_putx32) (bfd_vma, void *);
+.  bfd_vma        (*bfd_h_getx16) (const void *);
+.  bfd_signed_vma (*bfd_h_getx_signed_16) (const void *);
+.  void           (*bfd_h_putx16) (bfd_vma, void *);
 .
 .  {* Format dependent routines: these are vectors of entry points
 .     within the target vector structure, one for each format to check.  *}
 .
 .  {* Check the format of a file being read.  Return a <<bfd_target *>> or zero.  *}
-.  const struct bfd_target *(*_bfd_check_format[bfd_type_end]) PARAMS ((bfd *));
+.  const struct bfd_target *(*_bfd_check_format[bfd_type_end]) (bfd *);
 .
 .  {* Set the format of a file being written.  *}
-.  bfd_boolean (*_bfd_set_format[bfd_type_end]) PARAMS ((bfd *));
+.  bfd_boolean (*_bfd_set_format[bfd_type_end]) (bfd *);
 .
 .  {* Write cached information into a file being written, at <<bfd_close>>.  *}
-.  bfd_boolean (*_bfd_write_contents[bfd_type_end]) PARAMS ((bfd *));
+.  bfd_boolean (*_bfd_write_contents[bfd_type_end]) (bfd *);
 .
 The general target vector.  These vectors are initialized using the
 BFD_JUMP_TABLE macros.
 .
 .  {* Generic entry points.  *}
-Do not "beautify" the CONCAT* macro args.  Traditional C will not
-remove whitespace added here, and thus will fail to concatenate
-the tokens.
 .#define BFD_JUMP_TABLE_GENERIC(NAME) \
-.CONCAT2 (NAME,_close_and_cleanup), \
-.CONCAT2 (NAME,_bfd_free_cached_info), \
-.CONCAT2 (NAME,_new_section_hook), \
-.CONCAT2 (NAME,_get_section_contents), \
-.CONCAT2 (NAME,_get_section_contents_in_window)
+.  NAME##_close_and_cleanup, \
+.  NAME##_bfd_free_cached_info, \
+.  NAME##_new_section_hook, \
+.  NAME##_get_section_contents, \
+.  NAME##_get_section_contents_in_window
 .
 .  {* Called when the BFD is being closed to do any necessary cleanup.  *}
-.  bfd_boolean (*_close_and_cleanup) PARAMS ((bfd *));
+.  bfd_boolean (*_close_and_cleanup) (bfd *);
 .  {* Ask the BFD to free all cached information.  *}
-.  bfd_boolean (*_bfd_free_cached_info) PARAMS ((bfd *));
+.  bfd_boolean (*_bfd_free_cached_info) (bfd *);
 .  {* Called when a new section is created.  *}
-.  bfd_boolean (*_new_section_hook) PARAMS ((bfd *, sec_ptr));
+.  bfd_boolean (*_new_section_hook) (bfd *, sec_ptr);
 .  {* Read the contents of a section.  *}
 .  bfd_boolean (*_bfd_get_section_contents)
-.    PARAMS ((bfd *, sec_ptr, PTR, file_ptr, bfd_size_type));
+.    (bfd *, sec_ptr, void *, file_ptr, bfd_size_type);
 .  bfd_boolean (*_bfd_get_section_contents_in_window)
-.    PARAMS ((bfd *, sec_ptr, bfd_window *, file_ptr, bfd_size_type));
+.    (bfd *, sec_ptr, bfd_window *, file_ptr, bfd_size_type);
 .
 .  {* Entry points to copy private data.  *}
 .#define BFD_JUMP_TABLE_COPY(NAME) \
-.CONCAT2 (NAME,_bfd_copy_private_bfd_data), \
-.CONCAT2 (NAME,_bfd_merge_private_bfd_data), \
-.CONCAT2 (NAME,_bfd_copy_private_section_data), \
-.CONCAT2 (NAME,_bfd_copy_private_symbol_data), \
-.CONCAT2 (NAME,_bfd_set_private_flags), \
-.CONCAT2 (NAME,_bfd_print_private_bfd_data) \
+.  NAME##_bfd_copy_private_bfd_data, \
+.  NAME##_bfd_merge_private_bfd_data, \
+.  NAME##_bfd_copy_private_section_data, \
+.  NAME##_bfd_copy_private_symbol_data, \
+.  NAME##_bfd_set_private_flags, \
+.  NAME##_bfd_print_private_bfd_data
+.
 .  {* Called to copy BFD general private data from one object file
 .     to another.  *}
-.  bfd_boolean (*_bfd_copy_private_bfd_data) PARAMS ((bfd *, bfd *));
+.  bfd_boolean (*_bfd_copy_private_bfd_data) (bfd *, bfd *);
 .  {* Called to merge BFD general private data from one object file
 .     to a common output file when linking.  *}
-.  bfd_boolean (*_bfd_merge_private_bfd_data) PARAMS ((bfd *, bfd *));
+.  bfd_boolean (*_bfd_merge_private_bfd_data) (bfd *, bfd *);
 .  {* Called to copy BFD private section data from one object file
 .     to another.  *}
 .  bfd_boolean (*_bfd_copy_private_section_data)
-.    PARAMS ((bfd *, sec_ptr, bfd *, sec_ptr));
+.    (bfd *, sec_ptr, bfd *, sec_ptr);
 .  {* Called to copy BFD private symbol data from one symbol
 .     to another.  *}
 .  bfd_boolean (*_bfd_copy_private_symbol_data)
-.    PARAMS ((bfd *, asymbol *, bfd *, asymbol *));
+.    (bfd *, asymbol *, bfd *, asymbol *);
 .  {* Called to set private backend flags.  *}
-.  bfd_boolean (*_bfd_set_private_flags) PARAMS ((bfd *, flagword));
+.  bfd_boolean (*_bfd_set_private_flags) (bfd *, flagword);
 .
 .  {* Called to print private BFD data.  *}
-.  bfd_boolean (*_bfd_print_private_bfd_data) PARAMS ((bfd *, PTR));
+.  bfd_boolean (*_bfd_print_private_bfd_data) (bfd *, void *);
 .
 .  {* Core file entry points.  *}
 .#define BFD_JUMP_TABLE_CORE(NAME) \
-.CONCAT2 (NAME,_core_file_failing_command), \
-.CONCAT2 (NAME,_core_file_failing_signal), \
-.CONCAT2 (NAME,_core_file_matches_executable_p)
-.  char *      (*_core_file_failing_command) PARAMS ((bfd *));
-.  int         (*_core_file_failing_signal) PARAMS ((bfd *));
-.  bfd_boolean (*_core_file_matches_executable_p) PARAMS ((bfd *, bfd *));
+.  NAME##_core_file_failing_command, \
+.  NAME##_core_file_failing_signal, \
+.  NAME##_core_file_matches_executable_p
+.
+.  char *      (*_core_file_failing_command) (bfd *);
+.  int         (*_core_file_failing_signal) (bfd *);
+.  bfd_boolean (*_core_file_matches_executable_p) (bfd *, bfd *);
 .
 .  {* Archive entry points.  *}
 .#define BFD_JUMP_TABLE_ARCHIVE(NAME) \
-.CONCAT2 (NAME,_slurp_armap), \
-.CONCAT2 (NAME,_slurp_extended_name_table), \
-.CONCAT2 (NAME,_construct_extended_name_table), \
-.CONCAT2 (NAME,_truncate_arname), \
-.CONCAT2 (NAME,_write_armap), \
-.CONCAT2 (NAME,_read_ar_hdr), \
-.CONCAT2 (NAME,_openr_next_archived_file), \
-.CONCAT2 (NAME,_get_elt_at_index), \
-.CONCAT2 (NAME,_generic_stat_arch_elt), \
-.CONCAT2 (NAME,_update_armap_timestamp)
-.  bfd_boolean (*_bfd_slurp_armap) PARAMS ((bfd *));
-.  bfd_boolean (*_bfd_slurp_extended_name_table) PARAMS ((bfd *));
+.  NAME##_slurp_armap, \
+.  NAME##_slurp_extended_name_table, \
+.  NAME##_construct_extended_name_table, \
+.  NAME##_truncate_arname, \
+.  NAME##_write_armap, \
+.  NAME##_read_ar_hdr, \
+.  NAME##_openr_next_archived_file, \
+.  NAME##_get_elt_at_index, \
+.  NAME##_generic_stat_arch_elt, \
+.  NAME##_update_armap_timestamp
+.
+.  bfd_boolean (*_bfd_slurp_armap) (bfd *);
+.  bfd_boolean (*_bfd_slurp_extended_name_table) (bfd *);
 .  bfd_boolean (*_bfd_construct_extended_name_table)
-.    PARAMS ((bfd *, char **, bfd_size_type *, const char **));
-.  void        (*_bfd_truncate_arname) PARAMS ((bfd *, const char *, char *));
+.    (bfd *, char **, bfd_size_type *, const char **);
+.  void        (*_bfd_truncate_arname) (bfd *, const char *, char *);
 .  bfd_boolean (*write_armap)
-.    PARAMS ((bfd *, unsigned int, struct orl *, unsigned int, int));
-.  PTR         (*_bfd_read_ar_hdr_fn) PARAMS ((bfd *));
-.  bfd *       (*openr_next_archived_file) PARAMS ((bfd *, bfd *));
-.#define bfd_get_elt_at_index(b,i) BFD_SEND(b, _bfd_get_elt_at_index, (b,i))
-.  bfd *       (*_bfd_get_elt_at_index) PARAMS ((bfd *, symindex));
-.  int         (*_bfd_stat_arch_elt) PARAMS ((bfd *, struct stat *));
-.  bfd_boolean (*_bfd_update_armap_timestamp) PARAMS ((bfd *));
+.    (bfd *, unsigned int, struct orl *, unsigned int, int);
+.  void *      (*_bfd_read_ar_hdr_fn) (bfd *);
+.  bfd *       (*openr_next_archived_file) (bfd *, bfd *);
+.#define bfd_get_elt_at_index(b,i) BFD_SEND (b, _bfd_get_elt_at_index, (b,i))
+.  bfd *       (*_bfd_get_elt_at_index) (bfd *, symindex);
+.  int         (*_bfd_stat_arch_elt) (bfd *, struct stat *);
+.  bfd_boolean (*_bfd_update_armap_timestamp) (bfd *);
 .
 .  {* Entry points used for symbols.  *}
 .#define BFD_JUMP_TABLE_SYMBOLS(NAME) \
-.CONCAT2 (NAME,_get_symtab_upper_bound), \
-.CONCAT2 (NAME,_get_symtab), \
-.CONCAT2 (NAME,_make_empty_symbol), \
-.CONCAT2 (NAME,_print_symbol), \
-.CONCAT2 (NAME,_get_symbol_info), \
-.CONCAT2 (NAME,_bfd_is_local_label_name), \
-.CONCAT2 (NAME,_get_lineno), \
-.CONCAT2 (NAME,_find_nearest_line), \
-.CONCAT2 (NAME,_bfd_make_debug_symbol), \
-.CONCAT2 (NAME,_read_minisymbols), \
-.CONCAT2 (NAME,_minisymbol_to_symbol)
-.  long        (*_bfd_get_symtab_upper_bound) PARAMS ((bfd *));
-.  long        (*_bfd_canonicalize_symtab) PARAMS ((bfd *,
-.                                                struct symbol_cache_entry **));
-.  struct symbol_cache_entry *
-.              (*_bfd_make_empty_symbol) PARAMS ((bfd *));
-.  void        (*_bfd_print_symbol)
-.    PARAMS ((bfd *, PTR, struct symbol_cache_entry *, bfd_print_symbol_type));
-.#define bfd_print_symbol(b,p,s,e) BFD_SEND(b, _bfd_print_symbol, (b,p,s,e))
-.  void        (*_bfd_get_symbol_info)
-.    PARAMS ((bfd *, struct symbol_cache_entry *, symbol_info *));
-.#define bfd_get_symbol_info(b,p,e) BFD_SEND(b, _bfd_get_symbol_info, (b,p,e))
-.  bfd_boolean (*_bfd_is_local_label_name) PARAMS ((bfd *, const char *));
+.  NAME##_get_symtab_upper_bound, \
+.  NAME##_canonicalize_symtab, \
+.  NAME##_make_empty_symbol, \
+.  NAME##_print_symbol, \
+.  NAME##_get_symbol_info, \
+.  NAME##_bfd_is_local_label_name, \
+.  NAME##_get_lineno, \
+.  NAME##_find_nearest_line, \
+.  NAME##_bfd_make_debug_symbol, \
+.  NAME##_read_minisymbols, \
+.  NAME##_minisymbol_to_symbol
 .
-.  alent *     (*_get_lineno) PARAMS ((bfd *, struct symbol_cache_entry *));
+.  long        (*_bfd_get_symtab_upper_bound) (bfd *);
+.  long        (*_bfd_canonicalize_symtab)
+.    (bfd *, struct bfd_symbol **);
+.  struct bfd_symbol *
+.              (*_bfd_make_empty_symbol) (bfd *);
+.  void        (*_bfd_print_symbol)
+.    (bfd *, void *, struct bfd_symbol *, bfd_print_symbol_type);
+.#define bfd_print_symbol(b,p,s,e) BFD_SEND (b, _bfd_print_symbol, (b,p,s,e))
+.  void        (*_bfd_get_symbol_info)
+.    (bfd *, struct bfd_symbol *, symbol_info *);
+.#define bfd_get_symbol_info(b,p,e) BFD_SEND (b, _bfd_get_symbol_info, (b,p,e))
+.  bfd_boolean (*_bfd_is_local_label_name) (bfd *, const char *);
+.
+.  alent *     (*_get_lineno) (bfd *, struct bfd_symbol *);
 .  bfd_boolean (*_bfd_find_nearest_line)
-.    PARAMS ((bfd *, struct sec *, struct symbol_cache_entry **, bfd_vma,
-.             const char **, const char **, unsigned int *));
+.    (bfd *, struct bfd_section *, struct bfd_symbol **, bfd_vma,
+.     const char **, const char **, unsigned int *);
 . {* Back-door to allow format-aware applications to create debug symbols
 .    while using BFD for everything else.  Currently used by the assembler
 .    when creating COFF files.  *}
 .  asymbol *   (*_bfd_make_debug_symbol)
-.    PARAMS ((bfd *, void *, unsigned long size));
+.    (bfd *, void *, unsigned long size);
 .#define bfd_read_minisymbols(b, d, m, s) \
 .  BFD_SEND (b, _read_minisymbols, (b, d, m, s))
 .  long        (*_read_minisymbols)
-.    PARAMS ((bfd *, bfd_boolean, PTR *, unsigned int *));
+.    (bfd *, bfd_boolean, void **, unsigned int *);
 .#define bfd_minisymbol_to_symbol(b, d, m, f) \
 .  BFD_SEND (b, _minisymbol_to_symbol, (b, d, m, f))
 .  asymbol *   (*_minisymbol_to_symbol)
-.    PARAMS ((bfd *, bfd_boolean, const PTR, asymbol *));
+.    (bfd *, bfd_boolean, const void *, asymbol *);
 .
 .  {* Routines for relocs.  *}
 .#define BFD_JUMP_TABLE_RELOCS(NAME) \
-.CONCAT2 (NAME,_get_reloc_upper_bound), \
-.CONCAT2 (NAME,_canonicalize_reloc), \
-.CONCAT2 (NAME,_bfd_reloc_type_lookup)
-.  long        (*_get_reloc_upper_bound) PARAMS ((bfd *, sec_ptr));
+.  NAME##_get_reloc_upper_bound, \
+.  NAME##_canonicalize_reloc, \
+.  NAME##_bfd_reloc_type_lookup
+.
+.  long        (*_get_reloc_upper_bound) (bfd *, sec_ptr);
 .  long        (*_bfd_canonicalize_reloc)
-.    PARAMS ((bfd *, sec_ptr, arelent **, struct symbol_cache_entry **));
+.    (bfd *, sec_ptr, arelent **, struct bfd_symbol **);
 .  {* See documentation on reloc types.  *}
 .  reloc_howto_type *
-.              (*reloc_type_lookup) PARAMS ((bfd *, bfd_reloc_code_real_type));
+.              (*reloc_type_lookup) (bfd *, bfd_reloc_code_real_type);
 .
 .  {* Routines used when writing an object file.  *}
 .#define BFD_JUMP_TABLE_WRITE(NAME) \
-.CONCAT2 (NAME,_set_arch_mach), \
-.CONCAT2 (NAME,_set_section_contents)
+.  NAME##_set_arch_mach, \
+.  NAME##_set_section_contents
+.
 .  bfd_boolean (*_bfd_set_arch_mach)
-.    PARAMS ((bfd *, enum bfd_architecture, unsigned long));
+.    (bfd *, enum bfd_architecture, unsigned long);
 .  bfd_boolean (*_bfd_set_section_contents)
-.    PARAMS ((bfd *, sec_ptr, PTR, file_ptr, bfd_size_type));
+.    (bfd *, sec_ptr, const void *, file_ptr, bfd_size_type);
 .
 .  {* Routines used by the linker.  *}
 .#define BFD_JUMP_TABLE_LINK(NAME) \
-.CONCAT2 (NAME,_sizeof_headers), \
-.CONCAT2 (NAME,_bfd_get_relocated_section_contents), \
-.CONCAT2 (NAME,_bfd_relax_section), \
-.CONCAT2 (NAME,_bfd_link_hash_table_create), \
-.CONCAT2 (NAME,_bfd_link_hash_table_free), \
-.CONCAT2 (NAME,_bfd_link_add_symbols), \
-.CONCAT2 (NAME,_bfd_link_just_syms), \
-.CONCAT2 (NAME,_bfd_final_link), \
-.CONCAT2 (NAME,_bfd_link_split_section), \
-.CONCAT2 (NAME,_bfd_gc_sections), \
-.CONCAT2 (NAME,_bfd_merge_sections), \
-.CONCAT2 (NAME,_bfd_discard_group)
-.  int         (*_bfd_sizeof_headers) PARAMS ((bfd *, bfd_boolean));
+.  NAME##_sizeof_headers, \
+.  NAME##_bfd_get_relocated_section_contents, \
+.  NAME##_bfd_relax_section, \
+.  NAME##_bfd_link_hash_table_create, \
+.  NAME##_bfd_link_hash_table_free, \
+.  NAME##_bfd_link_add_symbols, \
+.  NAME##_bfd_link_just_syms, \
+.  NAME##_bfd_final_link, \
+.  NAME##_bfd_link_split_section, \
+.  NAME##_bfd_gc_sections, \
+.  NAME##_bfd_merge_sections, \
+.  NAME##_bfd_discard_group
+.
+.  int         (*_bfd_sizeof_headers) (bfd *, bfd_boolean);
 .  bfd_byte *  (*_bfd_get_relocated_section_contents)
-.    PARAMS ((bfd *, struct bfd_link_info *, struct bfd_link_order *,
-.             bfd_byte *, bfd_boolean, struct symbol_cache_entry **));
+.    (bfd *, struct bfd_link_info *, struct bfd_link_order *,
+.     bfd_byte *, bfd_boolean, struct bfd_symbol **);
 .
 .  bfd_boolean (*_bfd_relax_section)
-.    PARAMS ((bfd *, struct sec *, struct bfd_link_info *, bfd_boolean *));
+.    (bfd *, struct bfd_section *, struct bfd_link_info *, bfd_boolean *);
 .
 .  {* Create a hash table for the linker.  Different backends store
 .     different information in this table.  *}
 .  struct bfd_link_hash_table *
-.              (*_bfd_link_hash_table_create) PARAMS ((bfd *));
+.              (*_bfd_link_hash_table_create) (bfd *);
 .
 .  {* Release the memory associated with the linker hash table.  *}
-.  void        (*_bfd_link_hash_table_free)
-.    PARAMS ((struct bfd_link_hash_table *));
+.  void        (*_bfd_link_hash_table_free) (struct bfd_link_hash_table *);
 .
 .  {* Add symbols from this object file into the hash table.  *}
-.  bfd_boolean (*_bfd_link_add_symbols)
-.    PARAMS ((bfd *, struct bfd_link_info *));
+.  bfd_boolean (*_bfd_link_add_symbols) (bfd *, struct bfd_link_info *);
 .
 .  {* Indicate that we are only retrieving symbol values from this section.  *}
-.  void        (*_bfd_link_just_syms)
-.    PARAMS ((asection *, struct bfd_link_info *));
+.  void        (*_bfd_link_just_syms) (asection *, struct bfd_link_info *);
 .
 .  {* Do a link based on the link_order structures attached to each
 .     section of the BFD.  *}
-.  bfd_boolean (*_bfd_final_link) PARAMS ((bfd *, struct bfd_link_info *));
+.  bfd_boolean (*_bfd_final_link) (bfd *, struct bfd_link_info *);
 .
 .  {* Should this section be split up into smaller pieces during linking.  *}
-.  bfd_boolean (*_bfd_link_split_section) PARAMS ((bfd *, struct sec *));
+.  bfd_boolean (*_bfd_link_split_section) (bfd *, struct bfd_section *);
 .
 .  {* Remove sections that are not referenced from the output.  *}
-.  bfd_boolean (*_bfd_gc_sections) PARAMS ((bfd *, struct bfd_link_info *));
+.  bfd_boolean (*_bfd_gc_sections) (bfd *, struct bfd_link_info *);
 .
 .  {* Attempt to merge SEC_MERGE sections.  *}
-.  bfd_boolean (*_bfd_merge_sections) PARAMS ((bfd *, struct bfd_link_info *));
+.  bfd_boolean (*_bfd_merge_sections) (bfd *, struct bfd_link_info *);
 .
 .  {* Discard members of a group.  *}
-.  bfd_boolean (*_bfd_discard_group) PARAMS ((bfd *, struct sec *));
+.  bfd_boolean (*_bfd_discard_group) (bfd *, struct bfd_section *);
 .
 .  {* Routines to handle dynamic symbols and relocs.  *}
 .#define BFD_JUMP_TABLE_DYNAMIC(NAME) \
-.CONCAT2 (NAME,_get_dynamic_symtab_upper_bound), \
-.CONCAT2 (NAME,_canonicalize_dynamic_symtab), \
-.CONCAT2 (NAME,_get_dynamic_reloc_upper_bound), \
-.CONCAT2 (NAME,_canonicalize_dynamic_reloc)
+.  NAME##_get_dynamic_symtab_upper_bound, \
+.  NAME##_canonicalize_dynamic_symtab, \
+.  NAME##_get_dynamic_reloc_upper_bound, \
+.  NAME##_canonicalize_dynamic_reloc
+.
 .  {* Get the amount of memory required to hold the dynamic symbols.  *}
-.  long        (*_bfd_get_dynamic_symtab_upper_bound) PARAMS ((bfd *));
+.  long        (*_bfd_get_dynamic_symtab_upper_bound) (bfd *);
 .  {* Read in the dynamic symbols.  *}
 .  long        (*_bfd_canonicalize_dynamic_symtab)
-.    PARAMS ((bfd *, struct symbol_cache_entry **));
+.    (bfd *, struct bfd_symbol **);
 .  {* Get the amount of memory required to hold the dynamic relocs.  *}
-.  long        (*_bfd_get_dynamic_reloc_upper_bound) PARAMS ((bfd *));
+.  long        (*_bfd_get_dynamic_reloc_upper_bound) (bfd *);
 .  {* Read in the dynamic relocs.  *}
 .  long        (*_bfd_canonicalize_dynamic_reloc)
-.    PARAMS ((bfd *, arelent **, struct symbol_cache_entry **));
+.    (bfd *, arelent **, struct bfd_symbol **);
 .
 
 A pointer to an alternative bfd_target in case the current one is not
@@ -475,7 +477,7 @@ to find an alternative output format that is suitable.
 
 .  {* Data for use by back-end routines, which isn't
 .     generic enough to belong in this structure.  *}
-.  PTR backend_data;
+.  const void *backend_data;
 .
 .} bfd_target;
 .
@@ -521,6 +523,7 @@ extern const bfd_target bfd_elf32_d30v_vec;
 extern const bfd_target bfd_elf32_dlx_big_vec;
 extern const bfd_target bfd_elf32_fr30_vec;
 extern const bfd_target bfd_elf32_frv_vec;
+extern const bfd_target bfd_elf32_frvfdpic_vec;
 extern const bfd_target bfd_elf32_h8300_vec;
 extern const bfd_target bfd_elf32_hppa_linux_vec;
 extern const bfd_target bfd_elf32_hppa_vec;
@@ -540,6 +543,9 @@ extern const bfd_target bfd_elf32_littlearm_oabi_vec;
 extern const bfd_target bfd_elf32_littlearm_vec;
 extern const bfd_target bfd_elf32_littlemips_vec;
 extern const bfd_target bfd_elf32_m32r_vec;
+extern const bfd_target bfd_elf32_m32rle_vec;
+extern const bfd_target bfd_elf32_m32rlin_vec;
+extern const bfd_target bfd_elf32_m32rlelin_vec;
 extern const bfd_target bfd_elf32_m68hc11_vec;
 extern const bfd_target bfd_elf32_m68hc12_vec;
 extern const bfd_target bfd_elf32_m68k_vec;
@@ -587,8 +593,6 @@ extern const bfd_target bfd_elf64_big_generic_vec;
 extern const bfd_target bfd_elf64_bigmips_vec;
 extern const bfd_target bfd_elf64_hppa_linux_vec;
 extern const bfd_target bfd_elf64_hppa_vec;
-extern const bfd_target bfd_elf64_ia64_aix_big_vec;
-extern const bfd_target bfd_elf64_ia64_aix_little_vec;
 extern const bfd_target bfd_elf64_ia64_big_vec;
 extern const bfd_target bfd_elf64_ia64_hpux_big_vec;
 extern const bfd_target bfd_elf64_ia64_little_vec;
@@ -742,6 +746,7 @@ extern const bfd_target ptrace_core_vec;
 extern const bfd_target sco5_core_vec;
 extern const bfd_target trad_core_vec;
 
+extern const bfd_target bfd_elf32_am33lin_vec;
 static const bfd_target * const _bfd_target_vector[] = {
 
 #ifdef SELECT_VECS
@@ -810,6 +815,7 @@ static const bfd_target * const _bfd_target_vector[] = {
 	&bfd_elf32_dlx_big_vec,
 	&bfd_elf32_fr30_vec,
 	&bfd_elf32_frv_vec,
+	&bfd_elf32_frvfdpic_vec,
 	&bfd_elf32_h8300_vec,
 	&bfd_elf32_hppa_linux_vec,
 	&bfd_elf32_hppa_vec,
@@ -831,6 +837,9 @@ static const bfd_target * const _bfd_target_vector[] = {
 	&bfd_elf32_littlearm_vec,
 	&bfd_elf32_littlemips_vec,
 	&bfd_elf32_m32r_vec,
+        &bfd_elf32_m32rle_vec,
+        &bfd_elf32_m32rlin_vec,
+        &bfd_elf32_m32rlelin_vec,
 	&bfd_elf32_m68hc11_vec,
 	&bfd_elf32_m68hc12_vec,
 	&bfd_elf32_m68k_vec,
@@ -883,8 +892,6 @@ static const bfd_target * const _bfd_target_vector[] = {
 	&bfd_elf64_bigmips_vec,
 	&bfd_elf64_hppa_linux_vec,
 	&bfd_elf64_hppa_vec,
-	&bfd_elf64_ia64_aix_big_vec,
-	&bfd_elf64_ia64_aix_little_vec,
 	&bfd_elf64_ia64_big_vec,
 	&bfd_elf64_ia64_hpux_big_vec,
 	&bfd_elf64_ia64_little_vec,
@@ -900,9 +907,7 @@ static const bfd_target * const _bfd_target_vector[] = {
 	&bfd_elf64_sh64nbsd_vec,
 	&bfd_elf64_sh64lin_vec,
 	&bfd_elf64_sh64blin_vec,
-#if 0
 	&bfd_elf64_sparc_vec,
-#endif
 	&bfd_elf64_tradbigmips_vec,
 	&bfd_elf64_tradlittlemips_vec,
 	&bfd_elf64_x86_64_vec,
@@ -1061,6 +1066,7 @@ static const bfd_target * const _bfd_target_vector[] = {
 	&w65_vec,
 	&we32kcoff_vec,
 	&z8kcoff_vec,
+	&bfd_elf32_am33lin_vec,
 #endif /* not SELECT_VECS */
 
 /* Always support S-records, for convenience.  */
@@ -1158,13 +1164,10 @@ static const struct targmatch bfd_target_match[] = {
   { NULL, NULL }
 };
 
-static const bfd_target *find_target PARAMS ((const char *));
-
 /* Find a target vector, given a name or configuration triplet.  */
 
 static const bfd_target *
-find_target (name)
-     const char *name;
+find_target (const char *name)
 {
   const bfd_target * const *target;
   const struct targmatch *match;
@@ -1205,8 +1208,7 @@ DESCRIPTION
 */
 
 bfd_boolean
-bfd_set_default_target (name)
-     const char *name;
+bfd_set_default_target (const char *name)
 {
   const bfd_target *target;
 
@@ -1242,9 +1244,7 @@ DESCRIPTION
 */
 
 const bfd_target *
-bfd_find_target (target_name, abfd)
-     const char *target_name;
-     bfd *abfd;
+bfd_find_target (const char *target_name, bfd *abfd)
 {
   const char *targname;
   const bfd_target *target;
@@ -1290,9 +1290,9 @@ DESCRIPTION
 */
 
 const char **
-bfd_target_list ()
+bfd_target_list (void)
 {
-  int vec_length= 0;
+  int vec_length = 0;
   bfd_size_type amt;
 #if defined (HOST_HPPAHPUX) && ! defined (__STDC__)
   /* The native compiler on the HP9000/700 has a bug which causes it
@@ -1306,7 +1306,7 @@ bfd_target_list ()
     vec_length++;
 
   amt = (vec_length + 1) * sizeof (char **);
-  name_ptr = name_list = (const char **) bfd_malloc (amt);
+  name_ptr = name_list = bfd_malloc (amt);
 
   if (name_list == NULL)
     return NULL;
@@ -1325,9 +1325,9 @@ FUNCTION
 	bfd_seach_for_target
 
 SYNOPSIS
-	const bfd_target * bfd_search_for_target (int (* search_func)
-						  (const bfd_target *, void *),
-						  void *);
+	const bfd_target *bfd_search_for_target
+	  (int (*search_func) (const bfd_target *, void *),
+	   void *);
 
 DESCRIPTION
 	Return a pointer to the first transfer vector in the list of
@@ -1338,15 +1338,14 @@ DESCRIPTION
 */
 
 const bfd_target *
-bfd_search_for_target (search_func, data)
-     int (* search_func) PARAMS ((const bfd_target * target, void * data));
-     void * data;
+bfd_search_for_target (int (*search_func) (const bfd_target *, void *),
+		       void *data)
 {
-  const bfd_target * const * target;
+  const bfd_target * const *target;
 
-  for (target = bfd_target_vector; * target != NULL; target ++)
-    if (search_func (* target, data))
-      return * target;
+  for (target = bfd_target_vector; *target != NULL; target ++)
+    if (search_func (*target, data))
+      return *target;
 
   return NULL;
 }

@@ -1,9 +1,11 @@
 /* tc-arm.c -- Assemble for the ARM
-   Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003
+   Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004
    Free Software Foundation, Inc.
    Contributed by Richard Earnshaw (rwe@pegasus.esprit.ec.org)
 	Modified by David Taylor (dtaylor@armltd.co.uk)
 	Cirrus coprocessor mods by Aldy Hernandez (aldyh@redhat.com)
+	Cirrus coprocessor fixes by Petko Manolov (petkan@nucleusys.com)
+	Cirrus coprocessor fixes by Vladimir Ivanov (vladitx@nucleusys.com)
 
    This file is part of GAS, the GNU Assembler.
 
@@ -55,6 +57,7 @@
 #define ARM_EXT_V5ExP	 0x00000200	/* DSP core set.           */
 #define ARM_EXT_V5E	 0x00000400	/* DSP Double transfers.   */
 #define ARM_EXT_V5J	 0x00000800	/* Jazelle extension.	   */
+#define ARM_EXT_V6       0x00001000     /* ARM V6.                 */
 
 /* Co-processor space extensions.  */
 #define ARM_CEXT_XSCALE   0x00800000	/* Allow MIA etc.          */
@@ -82,6 +85,7 @@
 #define ARM_ARCH_V5TExP	(ARM_ARCH_V5T	| ARM_EXT_V5ExP)
 #define ARM_ARCH_V5TE	(ARM_ARCH_V5TExP | ARM_EXT_V5E)
 #define ARM_ARCH_V5TEJ	(ARM_ARCH_V5TE	| ARM_EXT_V5J)
+#define ARM_ARCH_V6     (ARM_ARCH_V5TEJ | ARM_EXT_V6)
 
 /* Processors with specific extensions in the co-processor space.  */
 #define ARM_ARCH_XSCALE	(ARM_ARCH_V5TE	| ARM_CEXT_XSCALE)
@@ -100,6 +104,7 @@
 #define FPU_VFP_EXT_V1xD 0x10000000	/* Base VFP instruction set.  */
 #define FPU_VFP_EXT_V1	 0x08000000	/* Double-precision insns.    */
 #define FPU_VFP_EXT_V2	 0x04000000	/* ARM10E VFPr1.	      */
+#define FPU_MAVERICK	 0x02000000	/* Cirrus Maverick.	      */
 #define FPU_NONE	 0
 
 #define FPU_ARCH_FPE	 FPU_FPA_EXT_V1
@@ -109,6 +114,15 @@
 #define FPU_ARCH_VFP_V1xD (FPU_VFP_EXT_V1xD | FPU_VFP_EXT_NONE)
 #define FPU_ARCH_VFP_V1   (FPU_ARCH_VFP_V1xD | FPU_VFP_EXT_V1)
 #define FPU_ARCH_VFP_V2	  (FPU_ARCH_VFP_V1 | FPU_VFP_EXT_V2)
+
+#define FPU_ARCH_MAVERICK  FPU_MAVERICK
+
+enum arm_float_abi
+{
+  ARM_FLOAT_ABI_HARD,
+  ARM_FLOAT_ABI_SOFTFP,
+  ARM_FLOAT_ABI_SOFT
+};
 
 /* Types of processor to assemble for.  */
 #define ARM_1		ARM_ARCH_V1
@@ -140,9 +154,10 @@
 
 #if defined(TE_NetBSD) || defined(TE_OpenBSD)
 #ifdef OBJ_ELF
-#define FPU_DEFAULT FPU_ARCH_VFP  /* Soft-float, but VFP order. */
+#define FPU_DEFAULT FPU_ARCH_VFP	/* Soft-float, but VFP order.  */
 #else
-#define FPU_DEFAULT FPU_ARCH_FPA  /* Soft-float, but FPA order. */
+/* Legacy a.out format.  */
+#define FPU_DEFAULT FPU_ARCH_FPA	/* Soft-float, but FPA order.  */
 #endif
 #endif
 
@@ -175,6 +190,7 @@ static int mcpu_fpu_opt = -1;
 static int march_cpu_opt = -1;
 static int march_fpu_opt = -1;
 static int mfpu_opt = -1;
+static int mfloat_abi_opt = -1;
 
 /* This array holds the chars that always start a comment.  If the
    pre-processor is disabled, these aren't very useful.  */
@@ -287,8 +303,16 @@ static const struct asm_shift_name shift_names [] =
   { "RRX", shift_properties + SHIFT_RRX }
 };
 
+/* Any kind of shift is accepted.  */
 #define NO_SHIFT_RESTRICT 1
-#define SHIFT_RESTRICT	  0
+/* The shift operand must be an immediate value, not a register.  */
+#define SHIFT_IMMEDIATE	  0
+/* The shift must be LSL or ASR and the operand must be an immediate.  */
+#define SHIFT_LSL_OR_ASR_IMMEDIATE 2
+/* The shift must be ASR and the operand must be an immediate.  */
+#define SHIFT_ASR_IMMEDIATE 3
+/* The shift must be LSL and the operand must be an immediate.  */
+#define SHIFT_LSL_IMMEDIATE 4
 
 #define NUM_FLOAT_VALS 8
 
@@ -361,7 +385,7 @@ struct asm_psr
   unsigned long field;
 };
 
-/* The bit that distnguishes CPSR and SPSR.  */
+/* The bit that distinguishes CPSR and SPSR.  */
 #define SPSR_BIT   (1 << 22)
 
 /* How many bits to shift the PSR_xxx bits up by.  */
@@ -579,6 +603,7 @@ struct reg_entry
 {
   const char * name;
   int          number;
+  bfd_boolean  builtin;
 };
 
 /* Some well known registers that we refer to directly elsewhere.  */
@@ -590,23 +615,24 @@ struct reg_entry
 #define wc_register(reg)  ((reg ^ WC_PREFIX) >= 0 && (reg ^ WC_PREFIX) <= 15)
 #define wcg_register(reg) ((reg ^ WC_PREFIX) >= 8 && (reg ^ WC_PREFIX) <= 11)
 
-/* These are the standard names.  Users can add aliases with .req.  */
+/* These are the standard names.  Users can add aliases with .req.
+   and delete them with .unreq.  */
+
 /* Integer Register Numbers.  */
 static const struct reg_entry rn_table[] =
 {
-  {"r0",  0},  {"r1",  1},      {"r2",  2},      {"r3",  3},
-  {"r4",  4},  {"r5",  5},      {"r6",  6},      {"r7",  7},
-  {"r8",  8},  {"r9",  9},      {"r10", 10},     {"r11", 11},
-  {"r12", 12}, {"r13", REG_SP}, {"r14", REG_LR}, {"r15", REG_PC},
+  {"r0",  0, TRUE},  {"r1",  1, TRUE},      {"r2",  2, TRUE},      {"r3",  3, TRUE},
+  {"r4",  4, TRUE},  {"r5",  5, TRUE},      {"r6",  6, TRUE},      {"r7",  7, TRUE},
+  {"r8",  8, TRUE},  {"r9",  9, TRUE},      {"r10", 10, TRUE},     {"r11", 11, TRUE},
+  {"r12", 12, TRUE}, {"r13", REG_SP, TRUE}, {"r14", REG_LR, TRUE}, {"r15", REG_PC, TRUE},
   /* ATPCS Synonyms.  */
-  {"a1",  0},  {"a2",  1},      {"a3",  2},      {"a4",  3},
-  {"v1",  4},  {"v2",  5},      {"v3",  6},      {"v4",  7},
-  {"v5",  8},  {"v6",  9},      {"v7",  10},     {"v8",  11},
+  {"a1",  0, TRUE},  {"a2",  1, TRUE},      {"a3",  2, TRUE},      {"a4",  3, TRUE},
+  {"v1",  4, TRUE},  {"v2",  5, TRUE},      {"v3",  6, TRUE},      {"v4",  7, TRUE},
+  {"v5",  8, TRUE},  {"v6",  9, TRUE},      {"v7",  10, TRUE},     {"v8",  11, TRUE},
   /* Well-known aliases.  */
-						 {"wr",  7},
-	       {"sb",  9},      {"sl",  10},     {"fp",  11},
-  {"ip",  12}, {"sp",  REG_SP}, {"lr",  REG_LR}, {"pc",  REG_PC},
-  {NULL, 0}
+  {"wr",  7, TRUE},  {"sb",  9, TRUE},      {"sl",  10, TRUE},     {"fp",  11, TRUE},
+  {"ip",  12, TRUE}, {"sp",  REG_SP, TRUE}, {"lr",  REG_LR, TRUE}, {"pc",  REG_PC, TRUE},
+  {NULL, 0, TRUE}
 };
 
 #define WR_PREFIX 0x200
@@ -615,138 +641,138 @@ static const struct reg_entry rn_table[] =
 static const struct reg_entry iwmmxt_table[] =
 {
   /* Intel Wireless MMX technology register names.  */
-  {  "wr0", 0x0 | WR_PREFIX},   {"wr1", 0x1 | WR_PREFIX},
-  {  "wr2", 0x2 | WR_PREFIX},   {"wr3", 0x3 | WR_PREFIX},
-  {  "wr4", 0x4 | WR_PREFIX},   {"wr5", 0x5 | WR_PREFIX},
-  {  "wr6", 0x6 | WR_PREFIX},   {"wr7", 0x7 | WR_PREFIX},
-  {  "wr8", 0x8 | WR_PREFIX},   {"wr9", 0x9 | WR_PREFIX},
-  { "wr10", 0xa | WR_PREFIX},  {"wr11", 0xb | WR_PREFIX},
-  { "wr12", 0xc | WR_PREFIX},  {"wr13", 0xd | WR_PREFIX},
-  { "wr14", 0xe | WR_PREFIX},  {"wr15", 0xf | WR_PREFIX},
-  { "wcid", 0x0 | WC_PREFIX},  {"wcon", 0x1 | WC_PREFIX},
-  {"wcssf", 0x2 | WC_PREFIX}, {"wcasf", 0x3 | WC_PREFIX},
-  {"wcgr0", 0x8 | WC_PREFIX}, {"wcgr1", 0x9 | WC_PREFIX},
-  {"wcgr2", 0xa | WC_PREFIX}, {"wcgr3", 0xb | WC_PREFIX},
+  {  "wr0", 0x0 | WR_PREFIX, TRUE},   {"wr1", 0x1 | WR_PREFIX, TRUE},
+  {  "wr2", 0x2 | WR_PREFIX, TRUE},   {"wr3", 0x3 | WR_PREFIX, TRUE},
+  {  "wr4", 0x4 | WR_PREFIX, TRUE},   {"wr5", 0x5 | WR_PREFIX, TRUE},
+  {  "wr6", 0x6 | WR_PREFIX, TRUE},   {"wr7", 0x7 | WR_PREFIX, TRUE},
+  {  "wr8", 0x8 | WR_PREFIX, TRUE},   {"wr9", 0x9 | WR_PREFIX, TRUE},
+  { "wr10", 0xa | WR_PREFIX, TRUE},  {"wr11", 0xb | WR_PREFIX, TRUE},
+  { "wr12", 0xc | WR_PREFIX, TRUE},  {"wr13", 0xd | WR_PREFIX, TRUE},
+  { "wr14", 0xe | WR_PREFIX, TRUE},  {"wr15", 0xf | WR_PREFIX, TRUE},
+  { "wcid", 0x0 | WC_PREFIX, TRUE},  {"wcon", 0x1 | WC_PREFIX, TRUE},
+  {"wcssf", 0x2 | WC_PREFIX, TRUE}, {"wcasf", 0x3 | WC_PREFIX, TRUE},
+  {"wcgr0", 0x8 | WC_PREFIX, TRUE}, {"wcgr1", 0x9 | WC_PREFIX, TRUE},
+  {"wcgr2", 0xa | WC_PREFIX, TRUE}, {"wcgr3", 0xb | WC_PREFIX, TRUE},
 
-  {  "wR0", 0x0 | WR_PREFIX},   {"wR1", 0x1 | WR_PREFIX},
-  {  "wR2", 0x2 | WR_PREFIX},   {"wR3", 0x3 | WR_PREFIX},
-  {  "wR4", 0x4 | WR_PREFIX},   {"wR5", 0x5 | WR_PREFIX},
-  {  "wR6", 0x6 | WR_PREFIX},   {"wR7", 0x7 | WR_PREFIX},
-  {  "wR8", 0x8 | WR_PREFIX},   {"wR9", 0x9 | WR_PREFIX},
-  { "wR10", 0xa | WR_PREFIX},  {"wR11", 0xb | WR_PREFIX},
-  { "wR12", 0xc | WR_PREFIX},  {"wR13", 0xd | WR_PREFIX},
-  { "wR14", 0xe | WR_PREFIX},  {"wR15", 0xf | WR_PREFIX},
-  { "wCID", 0x0 | WC_PREFIX},  {"wCon", 0x1 | WC_PREFIX},
-  {"wCSSF", 0x2 | WC_PREFIX}, {"wCASF", 0x3 | WC_PREFIX},
-  {"wCGR0", 0x8 | WC_PREFIX}, {"wCGR1", 0x9 | WC_PREFIX},
-  {"wCGR2", 0xa | WC_PREFIX}, {"wCGR3", 0xb | WC_PREFIX},
-  {NULL, 0}
+  {  "wR0", 0x0 | WR_PREFIX, TRUE},   {"wR1", 0x1 | WR_PREFIX, TRUE},
+  {  "wR2", 0x2 | WR_PREFIX, TRUE},   {"wR3", 0x3 | WR_PREFIX, TRUE},
+  {  "wR4", 0x4 | WR_PREFIX, TRUE},   {"wR5", 0x5 | WR_PREFIX, TRUE},
+  {  "wR6", 0x6 | WR_PREFIX, TRUE},   {"wR7", 0x7 | WR_PREFIX, TRUE},
+  {  "wR8", 0x8 | WR_PREFIX, TRUE},   {"wR9", 0x9 | WR_PREFIX, TRUE},
+  { "wR10", 0xa | WR_PREFIX, TRUE},  {"wR11", 0xb | WR_PREFIX, TRUE},
+  { "wR12", 0xc | WR_PREFIX, TRUE},  {"wR13", 0xd | WR_PREFIX, TRUE},
+  { "wR14", 0xe | WR_PREFIX, TRUE},  {"wR15", 0xf | WR_PREFIX, TRUE},
+  { "wCID", 0x0 | WC_PREFIX, TRUE},  {"wCon", 0x1 | WC_PREFIX, TRUE},
+  {"wCSSF", 0x2 | WC_PREFIX, TRUE}, {"wCASF", 0x3 | WC_PREFIX, TRUE},
+  {"wCGR0", 0x8 | WC_PREFIX, TRUE}, {"wCGR1", 0x9 | WC_PREFIX, TRUE},
+  {"wCGR2", 0xa | WC_PREFIX, TRUE}, {"wCGR3", 0xb | WC_PREFIX, TRUE},
+  {NULL, 0, TRUE}
 };
 
 /* Co-processor Numbers.  */
 static const struct reg_entry cp_table[] =
 {
-  {"p0",  0},  {"p1",  1},  {"p2",  2},  {"p3", 3},
-  {"p4",  4},  {"p5",  5},  {"p6",  6},  {"p7", 7},
-  {"p8",  8},  {"p9",  9},  {"p10", 10}, {"p11", 11},
-  {"p12", 12}, {"p13", 13}, {"p14", 14}, {"p15", 15},
-  {NULL, 0}
+  {"p0",  0, TRUE},  {"p1",  1, TRUE},  {"p2",  2, TRUE},  {"p3", 3, TRUE},
+  {"p4",  4, TRUE},  {"p5",  5, TRUE},  {"p6",  6, TRUE},  {"p7", 7, TRUE},
+  {"p8",  8, TRUE},  {"p9",  9, TRUE},  {"p10", 10, TRUE}, {"p11", 11, TRUE},
+  {"p12", 12, TRUE}, {"p13", 13, TRUE}, {"p14", 14, TRUE}, {"p15", 15, TRUE},
+  {NULL, 0, TRUE}
 };
 
 /* Co-processor Register Numbers.  */
 static const struct reg_entry cn_table[] =
 {
-  {"c0",   0},  {"c1",   1},  {"c2",   2},  {"c3",   3},
-  {"c4",   4},  {"c5",   5},  {"c6",   6},  {"c7",   7},
-  {"c8",   8},  {"c9",   9},  {"c10",  10}, {"c11",  11},
-  {"c12",  12}, {"c13",  13}, {"c14",  14}, {"c15",  15},
+  {"c0",   0, TRUE},  {"c1",   1, TRUE},  {"c2",   2, TRUE},  {"c3",   3, TRUE},
+  {"c4",   4, TRUE},  {"c5",   5, TRUE},  {"c6",   6, TRUE},  {"c7",   7, TRUE},
+  {"c8",   8, TRUE},  {"c9",   9, TRUE},  {"c10",  10, TRUE}, {"c11",  11, TRUE},
+  {"c12",  12, TRUE}, {"c13",  13, TRUE}, {"c14",  14, TRUE}, {"c15",  15, TRUE},
   /* Not really valid, but kept for back-wards compatibility.  */
-  {"cr0",  0},  {"cr1",  1},  {"cr2",  2},  {"cr3",  3},
-  {"cr4",  4},  {"cr5",  5},  {"cr6",  6},  {"cr7",  7},
-  {"cr8",  8},  {"cr9",  9},  {"cr10", 10}, {"cr11", 11},
-  {"cr12", 12}, {"cr13", 13}, {"cr14", 14}, {"cr15", 15},
-  {NULL, 0}
+  {"cr0",  0, TRUE},  {"cr1",  1, TRUE},  {"cr2",  2, TRUE},  {"cr3",  3, TRUE},
+  {"cr4",  4, TRUE},  {"cr5",  5, TRUE},  {"cr6",  6, TRUE},  {"cr7",  7, TRUE},
+  {"cr8",  8, TRUE},  {"cr9",  9, TRUE},  {"cr10", 10, TRUE}, {"cr11", 11, TRUE},
+  {"cr12", 12, TRUE}, {"cr13", 13, TRUE}, {"cr14", 14, TRUE}, {"cr15", 15, TRUE},
+  {NULL, 0, TRUE}
 };
 
 /* FPA Registers.  */
 static const struct reg_entry fn_table[] =
 {
-  {"f0", 0},   {"f1", 1},   {"f2", 2},   {"f3", 3},
-  {"f4", 4},   {"f5", 5},   {"f6", 6},   {"f7", 7},
-  {NULL, 0}
+  {"f0", 0, TRUE},   {"f1", 1, TRUE},   {"f2", 2, TRUE},   {"f3", 3, TRUE},
+  {"f4", 4, TRUE},   {"f5", 5, TRUE},   {"f6", 6, TRUE},   {"f7", 7, TRUE},
+  {NULL, 0, TRUE}
 };
 
 /* VFP SP Registers.  */
 static const struct reg_entry sn_table[] =
 {
-  {"s0",  0},  {"s1",  1},  {"s2",  2},	 {"s3", 3},
-  {"s4",  4},  {"s5",  5},  {"s6",  6},	 {"s7", 7},
-  {"s8",  8},  {"s9",  9},  {"s10", 10}, {"s11", 11},
-  {"s12", 12}, {"s13", 13}, {"s14", 14}, {"s15", 15},
-  {"s16", 16}, {"s17", 17}, {"s18", 18}, {"s19", 19},
-  {"s20", 20}, {"s21", 21}, {"s22", 22}, {"s23", 23},
-  {"s24", 24}, {"s25", 25}, {"s26", 26}, {"s27", 27},
-  {"s28", 28}, {"s29", 29}, {"s30", 30}, {"s31", 31},
-  {NULL, 0}
+  {"s0",  0, TRUE},  {"s1",  1, TRUE},  {"s2",  2, TRUE},  {"s3", 3, TRUE},
+  {"s4",  4, TRUE},  {"s5",  5, TRUE},  {"s6",  6, TRUE},  {"s7", 7, TRUE},
+  {"s8",  8, TRUE},  {"s9",  9, TRUE},  {"s10", 10, TRUE}, {"s11", 11, TRUE},
+  {"s12", 12, TRUE}, {"s13", 13, TRUE}, {"s14", 14, TRUE}, {"s15", 15, TRUE},
+  {"s16", 16, TRUE}, {"s17", 17, TRUE}, {"s18", 18, TRUE}, {"s19", 19, TRUE},
+  {"s20", 20, TRUE}, {"s21", 21, TRUE}, {"s22", 22, TRUE}, {"s23", 23, TRUE},
+  {"s24", 24, TRUE}, {"s25", 25, TRUE}, {"s26", 26, TRUE}, {"s27", 27, TRUE},
+  {"s28", 28, TRUE}, {"s29", 29, TRUE}, {"s30", 30, TRUE}, {"s31", 31, TRUE},
+  {NULL, 0, TRUE}
 };
 
 /* VFP DP Registers.  */
 static const struct reg_entry dn_table[] =
 {
-  {"d0",  0},  {"d1",  1},  {"d2",  2},	 {"d3", 3},
-  {"d4",  4},  {"d5",  5},  {"d6",  6},	 {"d7", 7},
-  {"d8",  8},  {"d9",  9},  {"d10", 10}, {"d11", 11},
-  {"d12", 12}, {"d13", 13}, {"d14", 14}, {"d15", 15},
-  {NULL, 0}
+  {"d0",  0, TRUE},  {"d1",  1, TRUE},  {"d2",  2, TRUE},  {"d3", 3, TRUE},
+  {"d4",  4, TRUE},  {"d5",  5, TRUE},  {"d6",  6, TRUE},  {"d7", 7, TRUE},
+  {"d8",  8, TRUE},  {"d9",  9, TRUE},  {"d10", 10, TRUE}, {"d11", 11, TRUE},
+  {"d12", 12, TRUE}, {"d13", 13, TRUE}, {"d14", 14, TRUE}, {"d15", 15, TRUE},
+  {NULL, 0, TRUE}
 };
 
 /* Maverick DSP coprocessor registers.  */
 static const struct reg_entry mav_mvf_table[] =
 {
-  {"mvf0",  0},  {"mvf1",  1},  {"mvf2",  2},  {"mvf3",  3},
-  {"mvf4",  4},  {"mvf5",  5},  {"mvf6",  6},  {"mvf7",  7},
-  {"mvf8",  8},  {"mvf9",  9},  {"mvf10", 10}, {"mvf11", 11},
-  {"mvf12", 12}, {"mvf13", 13}, {"mvf14", 14}, {"mvf15", 15},
-  {NULL, 0}
+  {"mvf0",  0, TRUE},  {"mvf1",  1, TRUE},  {"mvf2",  2, TRUE},  {"mvf3",  3, TRUE},
+  {"mvf4",  4, TRUE},  {"mvf5",  5, TRUE},  {"mvf6",  6, TRUE},  {"mvf7",  7, TRUE},
+  {"mvf8",  8, TRUE},  {"mvf9",  9, TRUE},  {"mvf10", 10, TRUE}, {"mvf11", 11, TRUE},
+  {"mvf12", 12, TRUE}, {"mvf13", 13, TRUE}, {"mvf14", 14, TRUE}, {"mvf15", 15, TRUE},
+  {NULL, 0, TRUE}
 };
 
 static const struct reg_entry mav_mvd_table[] =
 {
-  {"mvd0",  0},  {"mvd1",  1},  {"mvd2",  2},  {"mvd3",  3},
-  {"mvd4",  4},  {"mvd5",  5},  {"mvd6",  6},  {"mvd7",  7},
-  {"mvd8",  8},  {"mvd9",  9},  {"mvd10", 10}, {"mvd11", 11},
-  {"mvd12", 12}, {"mvd13", 13}, {"mvd14", 14}, {"mvd15", 15},
-  {NULL, 0}
+  {"mvd0",  0, TRUE},  {"mvd1",  1, TRUE},  {"mvd2",  2, TRUE},  {"mvd3",  3, TRUE},
+  {"mvd4",  4, TRUE},  {"mvd5",  5, TRUE},  {"mvd6",  6, TRUE},  {"mvd7",  7, TRUE},
+  {"mvd8",  8, TRUE},  {"mvd9",  9, TRUE},  {"mvd10", 10, TRUE}, {"mvd11", 11, TRUE},
+  {"mvd12", 12, TRUE}, {"mvd13", 13, TRUE}, {"mvd14", 14, TRUE}, {"mvd15", 15, TRUE},
+  {NULL, 0, TRUE}
 };
 
 static const struct reg_entry mav_mvfx_table[] =
 {
-  {"mvfx0",  0},  {"mvfx1",  1},  {"mvfx2",  2},  {"mvfx3",  3},
-  {"mvfx4",  4},  {"mvfx5",  5},  {"mvfx6",  6},  {"mvfx7",  7},
-  {"mvfx8",  8},  {"mvfx9",  9},  {"mvfx10", 10}, {"mvfx11", 11},
-  {"mvfx12", 12}, {"mvfx13", 13}, {"mvfx14", 14}, {"mvfx15", 15},
-  {NULL, 0}
+  {"mvfx0",  0, TRUE},  {"mvfx1",  1, TRUE},  {"mvfx2",  2, TRUE},  {"mvfx3",  3, TRUE},
+  {"mvfx4",  4, TRUE},  {"mvfx5",  5, TRUE},  {"mvfx6",  6, TRUE},  {"mvfx7",  7, TRUE},
+  {"mvfx8",  8, TRUE},  {"mvfx9",  9, TRUE},  {"mvfx10", 10, TRUE}, {"mvfx11", 11, TRUE},
+  {"mvfx12", 12, TRUE}, {"mvfx13", 13, TRUE}, {"mvfx14", 14, TRUE}, {"mvfx15", 15, TRUE},
+  {NULL, 0, TRUE}
 };
 
 static const struct reg_entry mav_mvdx_table[] =
 {
-  {"mvdx0",  0},  {"mvdx1",  1},  {"mvdx2",  2},  {"mvdx3",  3},
-  {"mvdx4",  4},  {"mvdx5",  5},  {"mvdx6",  6},  {"mvdx7",  7},
-  {"mvdx8",  8},  {"mvdx9",  9},  {"mvdx10", 10}, {"mvdx11", 11},
-  {"mvdx12", 12}, {"mvdx13", 13}, {"mvdx14", 14}, {"mvdx15", 15},
-  {NULL, 0}
+  {"mvdx0",  0, TRUE},  {"mvdx1",  1, TRUE},  {"mvdx2",  2, TRUE},  {"mvdx3",  3, TRUE},
+  {"mvdx4",  4, TRUE},  {"mvdx5",  5, TRUE},  {"mvdx6",  6, TRUE},  {"mvdx7",  7, TRUE},
+  {"mvdx8",  8, TRUE},  {"mvdx9",  9, TRUE},  {"mvdx10", 10, TRUE}, {"mvdx11", 11, TRUE},
+  {"mvdx12", 12, TRUE}, {"mvdx13", 13, TRUE}, {"mvdx14", 14, TRUE}, {"mvdx15", 15, TRUE},
+  {NULL, 0, TRUE}
 };
 
 static const struct reg_entry mav_mvax_table[] =
 {
-  {"mvax0", 0}, {"mvax1", 1}, {"mvax2", 2}, {"mvax3", 3},
-  {NULL, 0}
+  {"mvax0", 0, TRUE}, {"mvax1", 1, TRUE}, {"mvax2", 2, TRUE}, {"mvax3", 3, TRUE},
+  {NULL, 0, TRUE}
 };
 
 static const struct reg_entry mav_dspsc_table[] =
 {
-  {"dspsc", 0},
-  {NULL, 0}
+  {"dspsc", 0, TRUE},
+  {NULL, 0, TRUE}
 };
 
 struct reg_map
@@ -768,7 +794,7 @@ struct reg_map all_reg_maps[] =
   {mav_mvf_table,   15, NULL, N_("Maverick MVF register expected")},
   {mav_mvd_table,   15, NULL, N_("Maverick MVD register expected")},
   {mav_mvfx_table,  15, NULL, N_("Maverick MVFX register expected")},
-  {mav_mvdx_table,  15, NULL, N_("Maverick MVFX register expected")},
+  {mav_mvdx_table,  15, NULL, N_("Maverick MVDX register expected")},
   {mav_mvax_table,   3, NULL, N_("Maverick MVAX register expected")},
   {mav_dspsc_table,  0, NULL, N_("Maverick DSPSC register expected")},
   {iwmmxt_table,    23, NULL, N_("Intel Wireless MMX technology register expected")},
@@ -853,6 +879,36 @@ static void do_co_reg2c		PARAMS ((char *));
 /* ARM v5TEJ.  */
 static void do_bxj		PARAMS ((char *));
 
+/* ARM V6. */
+static void do_cps              PARAMS ((char *));
+static void do_cpsi             PARAMS ((char *));
+static void do_ldrex            PARAMS ((char *));
+static void do_pkhbt            PARAMS ((char *));
+static void do_pkhtb            PARAMS ((char *));
+static void do_qadd16           PARAMS ((char *));
+static void do_rev              PARAMS ((char *));
+static void do_rfe              PARAMS ((char *));
+static void do_sxtah            PARAMS ((char *));
+static void do_sxth             PARAMS ((char *));
+static void do_setend           PARAMS ((char *));
+static void do_smlad            PARAMS ((char *));
+static void do_smlald           PARAMS ((char *));
+static void do_smmul            PARAMS ((char *));
+static void do_ssat             PARAMS ((char *));
+static void do_usat             PARAMS ((char *));
+static void do_srs              PARAMS ((char *));
+static void do_ssat16           PARAMS ((char *));
+static void do_usat16           PARAMS ((char *));
+static void do_strex            PARAMS ((char *));
+static void do_umaal            PARAMS ((char *));
+
+static void do_cps_mode         PARAMS ((char **));
+static void do_cps_flags        PARAMS ((char **, int));
+static int do_endian_specifier  PARAMS ((char *));
+static void do_pkh_core         PARAMS ((char *, int));
+static void do_sat              PARAMS ((char **, int));
+static void do_sat16            PARAMS ((char **, int));
+
 /* Coprocessor Instructions.  */
 static void do_cdp		PARAMS ((char *));
 static void do_lstc		PARAMS ((char *));
@@ -875,7 +931,8 @@ static void do_vfp_sp_dyadic	PARAMS ((char *));
 static void do_vfp_dp_dyadic	PARAMS ((char *));
 static void do_vfp_reg_from_sp  PARAMS ((char *));
 static void do_vfp_sp_from_reg  PARAMS ((char *));
-static void do_vfp_sp_reg2	PARAMS ((char *));
+static void do_vfp_reg2_from_sp2 PARAMS ((char *));
+static void do_vfp_sp2_from_reg2 PARAMS ((char *));
 static void do_vfp_reg_from_dp  PARAMS ((char *));
 static void do_vfp_reg2_from_dp PARAMS ((char *));
 static void do_vfp_dp_from_reg  PARAMS ((char *));
@@ -1056,8 +1113,8 @@ static int cp_byte_address_required_here  PARAMS ((char **));
 /* "INSN<cond> X,Y" where X:bit16, Y:bit12.  */
 #define MAV_MODE2	0x0c10
 
-/* "INSN<cond> X,Y" where X:0, Y:bit16.  */
-#define MAV_MODE3	0x1000
+/* "INSN<cond> X,Y" where X:bit12, Y:bit16.  */
+#define MAV_MODE3	0x100c
 
 /* "INSN<cond> X,Y,Z" where X:16, Y:0, Z:12.  */
 #define MAV_MODE4	0x0c0010
@@ -1177,7 +1234,7 @@ static const struct asm_opcode insns[] =
   {"mla",        0xe0200090, 3,  ARM_EXT_V2,       do_mla},
   {"mlas",       0xe0300090, 3,  ARM_EXT_V2,       do_mla},
 
-  /* Generic copressor instructions.  */
+  /* Generic coprocessor instructions.  */
   {"cdp",        0xee000000, 3,  ARM_EXT_V2,       do_cdp},
   {"ldc",        0xec100000, 3,  ARM_EXT_V2,       do_lstc},
   {"ldcl",       0xec500000, 3,  ARM_EXT_V2,       do_lstc},
@@ -1269,6 +1326,107 @@ static const struct asm_opcode insns[] =
 
   /*  ARM Architecture 5TEJ.  */
   {"bxj",	 0xe12fff20, 3,  ARM_EXT_V5J,	   do_bxj},
+
+  /*  ARM V6.  */
+  { "cps",       0xf1020000, 0,  ARM_EXT_V6,       do_cps},
+  { "cpsie",     0xf1080000, 0,  ARM_EXT_V6,       do_cpsi},
+  { "cpsid",     0xf10C0000, 0,  ARM_EXT_V6,       do_cpsi},
+  { "ldrex",     0xe1900f9f, 5,  ARM_EXT_V6,       do_ldrex},
+  { "mcrr2",     0xfc400000, 0,  ARM_EXT_V6,       do_co_reg2c},
+  { "mrrc2",     0xfc500000, 0,  ARM_EXT_V6,       do_co_reg2c},
+  { "pkhbt",     0xe6800010, 5,  ARM_EXT_V6,       do_pkhbt},
+  { "pkhtb",     0xe6800050, 5,  ARM_EXT_V6,       do_pkhtb},
+  { "qadd16",    0xe6200f10, 6,  ARM_EXT_V6,       do_qadd16},
+  { "qadd8",     0xe6200f90, 5,  ARM_EXT_V6,       do_qadd16},
+  { "qaddsubx",  0xe6200f30, 8,  ARM_EXT_V6,       do_qadd16},
+  { "qsub16",    0xe6200f70, 6,  ARM_EXT_V6,       do_qadd16},
+  { "qsub8",     0xe6200ff0, 5,  ARM_EXT_V6,       do_qadd16},
+  { "qsubaddx",  0xe6200f50, 8,  ARM_EXT_V6,       do_qadd16},
+  { "sadd16",    0xe6100f10, 6,  ARM_EXT_V6,       do_qadd16},
+  { "sadd8",     0xe6100f90, 5,  ARM_EXT_V6,       do_qadd16},
+  { "saddsubx",  0xe6100f30, 8,  ARM_EXT_V6,       do_qadd16},
+  { "shadd16",   0xe6300f10, 7,  ARM_EXT_V6,       do_qadd16},
+  { "shadd8",    0xe6300f90, 6,  ARM_EXT_V6,       do_qadd16},
+  { "shaddsubx", 0xe6300f30, 9,  ARM_EXT_V6,       do_qadd16},
+  { "shsub16",   0xe6300f70, 7,  ARM_EXT_V6,       do_qadd16},
+  { "shsub8",    0xe6300ff0, 6,  ARM_EXT_V6,       do_qadd16},
+  { "shsubaddx", 0xe6300f50, 9,  ARM_EXT_V6,       do_qadd16},
+  { "ssub16",    0xe6100f70, 6,  ARM_EXT_V6,       do_qadd16},
+  { "ssub8",     0xe6100ff0, 5,  ARM_EXT_V6,       do_qadd16},
+  { "ssubaddx",  0xe6100f50, 8,  ARM_EXT_V6,       do_qadd16},
+  { "uadd16",    0xe6500f10, 6,  ARM_EXT_V6,       do_qadd16},
+  { "uadd8",     0xe6500f90, 5,  ARM_EXT_V6,       do_qadd16},
+  { "uaddsubx",  0xe6500f30, 8,  ARM_EXT_V6,       do_qadd16},
+  { "uhadd16",   0xe6700f10, 7,  ARM_EXT_V6,       do_qadd16},
+  { "uhadd8",    0xe6700f90, 6,  ARM_EXT_V6,       do_qadd16},
+  { "uhaddsubx", 0xe6700f30, 9,  ARM_EXT_V6,       do_qadd16},
+  { "uhsub16",   0xe6700f70, 7,  ARM_EXT_V6,       do_qadd16},
+  { "uhsub8",    0xe6700ff0, 6,  ARM_EXT_V6,       do_qadd16},
+  { "uhsubaddx", 0xe6700f50, 9,  ARM_EXT_V6,       do_qadd16},
+  { "uqadd16",   0xe6600f10, 7,  ARM_EXT_V6,       do_qadd16},
+  { "uqadd8",    0xe6600f90, 6,  ARM_EXT_V6,       do_qadd16},
+  { "uqaddsubx", 0xe6600f30, 9,  ARM_EXT_V6,       do_qadd16},
+  { "uqsub16",   0xe6600f70, 7,  ARM_EXT_V6,       do_qadd16},
+  { "uqsub8",    0xe6600ff0, 6,  ARM_EXT_V6,       do_qadd16},
+  { "uqsubaddx", 0xe6600f50, 9,  ARM_EXT_V6,       do_qadd16},
+  { "usub16",    0xe6500f70, 6,  ARM_EXT_V6,       do_qadd16},
+  { "usub8",     0xe6500ff0, 5,  ARM_EXT_V6,       do_qadd16},
+  { "usubaddx",  0xe6500f50, 8,  ARM_EXT_V6,       do_qadd16},
+  { "rev",       0xe6bf0f30, 3,  ARM_EXT_V6,       do_rev},
+  { "rev16",     0xe6bf0fb0, 5,  ARM_EXT_V6,       do_rev},
+  { "revsh",     0xe6ff0fb0, 5,  ARM_EXT_V6,       do_rev},
+  { "rfeia",     0xf8900a00, 0,  ARM_EXT_V6,       do_rfe},
+  { "rfeib",     0xf9900a00, 0,  ARM_EXT_V6,       do_rfe},
+  { "rfeda",     0xf8100a00, 0,  ARM_EXT_V6,       do_rfe},
+  { "rfedb",     0xf9100a00, 0,  ARM_EXT_V6,       do_rfe},
+  { "rfefd",     0xf8900a00, 0,  ARM_EXT_V6,       do_rfe},
+  { "rfefa",     0xf9900a00, 0,  ARM_EXT_V6,       do_rfe},
+  { "rfeea",     0xf8100a00, 0,  ARM_EXT_V6,       do_rfe},
+  { "rfeed",     0xf9100a00, 0,  ARM_EXT_V6,       do_rfe},
+  { "sxtah",     0xe6b00070, 5,  ARM_EXT_V6,       do_sxtah},
+  { "sxtab16",   0xe6800070, 7,  ARM_EXT_V6,       do_sxtah},
+  { "sxtab",     0xe6a00070, 5,  ARM_EXT_V6,       do_sxtah},
+  { "sxth",      0xe6bf0070, 4,  ARM_EXT_V6,       do_sxth},
+  { "sxtb16",    0xe68f0070, 6,  ARM_EXT_V6,       do_sxth},
+  { "sxtb",      0xe6af0070, 4,  ARM_EXT_V6,       do_sxth},
+  { "uxtah",     0xe6f00070, 5,  ARM_EXT_V6,       do_sxtah},
+  { "uxtab16",   0xe6c00070, 7,  ARM_EXT_V6,       do_sxtah},
+  { "uxtab",     0xe6e00070, 5,  ARM_EXT_V6,       do_sxtah},
+  { "uxth",      0xe6ff0070, 4,  ARM_EXT_V6,       do_sxth},
+  { "uxtb16",    0xe6cf0070, 6,  ARM_EXT_V6,       do_sxth},
+  { "uxtb",      0xe6ef0070, 4,  ARM_EXT_V6,       do_sxth},
+  { "sel",       0xe68000b0, 3,  ARM_EXT_V6,       do_qadd16},
+  { "setend",    0xf1010000, 0,  ARM_EXT_V6,       do_setend},
+  { "smlad",     0xe7000010, 5,  ARM_EXT_V6,       do_smlad},
+  { "smladx",    0xe7000030, 6,  ARM_EXT_V6,       do_smlad},
+  { "smlald",    0xe7400010, 6,  ARM_EXT_V6,       do_smlald},
+  { "smlaldx",   0xe7400030, 7,  ARM_EXT_V6,       do_smlald},
+  { "smlsd",     0xe7000050, 5,  ARM_EXT_V6,       do_smlad},
+  { "smlsdx",    0xe7000070, 6,  ARM_EXT_V6,       do_smlad},
+  { "smlsld",    0xe7400050, 6,  ARM_EXT_V6,       do_smlald},
+  { "smlsldx",   0xe7400070, 7,  ARM_EXT_V6,       do_smlald},
+  { "smmla",     0xe7500010, 5,  ARM_EXT_V6,       do_smlad},
+  { "smmlar",    0xe7500030, 6,  ARM_EXT_V6,       do_smlad},
+  { "smmls",     0xe75000d0, 5,  ARM_EXT_V6,       do_smlad},
+  { "smmlsr",    0xe75000f0, 6,  ARM_EXT_V6,       do_smlad},
+  { "smmul",     0xe750f010, 5,  ARM_EXT_V6,       do_smmul},
+  { "smmulr",    0xe750f030, 6,  ARM_EXT_V6,       do_smmul},
+  { "smuad",     0xe700f010, 5,  ARM_EXT_V6,       do_smmul},
+  { "smuadx",    0xe700f030, 6,  ARM_EXT_V6,       do_smmul},
+  { "smusd",     0xe700f050, 5,  ARM_EXT_V6,       do_smmul},
+  { "smusdx",    0xe700f070, 6,  ARM_EXT_V6,       do_smmul},
+  { "srsia",     0xf8cd0500, 0,  ARM_EXT_V6,       do_srs},
+  { "srsib",     0xf9cd0500, 0,  ARM_EXT_V6,       do_srs},
+  { "srsda",     0xf84d0500, 0,  ARM_EXT_V6,       do_srs},
+  { "srsdb",     0xf94d0500, 0,  ARM_EXT_V6,       do_srs},
+  { "ssat",      0xe6a00010, 4,  ARM_EXT_V6,       do_ssat},
+  { "ssat16",    0xe6a00f30, 6,  ARM_EXT_V6,       do_ssat16},
+  { "strex",     0xe1800f90, 5,  ARM_EXT_V6,       do_strex},
+  { "umaal",     0xe0400090, 5,  ARM_EXT_V6,       do_umaal},
+  { "usad8",     0xe780f010, 5,  ARM_EXT_V6,       do_smmul},
+  { "usada8",    0xe7800010, 6,  ARM_EXT_V6,       do_smlad},
+  { "usat",      0xe6e00010, 4,  ARM_EXT_V6,       do_usat},
+  { "usat16",    0xe6e00f30, 6,  ARM_EXT_V6,       do_usat16},
 
   /* Core FPA instruction set (V1).  */
   {"wfs",        0xee200110, 3,  FPU_FPA_EXT_V1,   do_fpa_ctrl},
@@ -1821,8 +1979,8 @@ static const struct asm_opcode insns[] =
   {"fcmpezd", 0xeeb50bc0, 7, FPU_VFP_EXT_V1,   do_vfp_dp_compare_z},
 
   /* VFP V2.  */
-  {"fmsrr",   0xec400a10, 5, FPU_VFP_EXT_V2,   do_vfp_sp_reg2},
-  {"fmrrs",   0xec500a10, 5, FPU_VFP_EXT_V2,   do_vfp_sp_reg2},
+  {"fmsrr",   0xec400a10, 5, FPU_VFP_EXT_V2,   do_vfp_sp2_from_reg2},
+  {"fmrrs",   0xec500a10, 5, FPU_VFP_EXT_V2,   do_vfp_reg2_from_sp2},
   {"fmdrr",   0xec400b10, 5, FPU_VFP_EXT_V2,   do_vfp_dp_from_reg2},
   {"fmrrd",   0xec500b10, 5, FPU_VFP_EXT_V2,   do_vfp_reg2_from_dp},
 
@@ -2019,18 +2177,18 @@ static const struct asm_opcode insns[] =
   {"cfmvr64l",   0xee100510, 8,  ARM_CEXT_MAVERICK, do_mav_binops_1c},
   {"cfmv64hr",   0xee000530, 8,  ARM_CEXT_MAVERICK, do_mav_binops_2c},
   {"cfmvr64h",   0xee100530, 8,  ARM_CEXT_MAVERICK, do_mav_binops_1c},
-  {"cfmval32",   0xee100610, 8,  ARM_CEXT_MAVERICK, do_mav_binops_3a},
-  {"cfmv32al",   0xee000610, 8,  ARM_CEXT_MAVERICK, do_mav_binops_3b},
-  {"cfmvam32",   0xee100630, 8,  ARM_CEXT_MAVERICK, do_mav_binops_3a},
-  {"cfmv32am",   0xee000630, 8,  ARM_CEXT_MAVERICK, do_mav_binops_3b},
-  {"cfmvah32",   0xee100650, 8,  ARM_CEXT_MAVERICK, do_mav_binops_3a},
-  {"cfmv32ah",   0xee000650, 8,  ARM_CEXT_MAVERICK, do_mav_binops_3b},
-  {"cfmva32",    0xee100670, 7,  ARM_CEXT_MAVERICK, do_mav_binops_3a},
-  {"cfmv32a",    0xee000670, 7,  ARM_CEXT_MAVERICK, do_mav_binops_3b},
-  {"cfmva64",    0xee100690, 7,  ARM_CEXT_MAVERICK, do_mav_binops_3c},
-  {"cfmv64a",    0xee000690, 7,  ARM_CEXT_MAVERICK, do_mav_binops_3d},
-  {"cfmvsc32",   0xee1006b0, 8,  ARM_CEXT_MAVERICK, do_mav_dspsc_1},
-  {"cfmv32sc",   0xee0006b0, 8,  ARM_CEXT_MAVERICK, do_mav_dspsc_2},
+  {"cfmval32",   0xee200440, 8,  ARM_CEXT_MAVERICK, do_mav_binops_3a},
+  {"cfmv32al",   0xee100440, 8,  ARM_CEXT_MAVERICK, do_mav_binops_3b},
+  {"cfmvam32",   0xee200460, 8,  ARM_CEXT_MAVERICK, do_mav_binops_3a},
+  {"cfmv32am",   0xee100460, 8,  ARM_CEXT_MAVERICK, do_mav_binops_3b},
+  {"cfmvah32",   0xee200480, 8,  ARM_CEXT_MAVERICK, do_mav_binops_3a},
+  {"cfmv32ah",   0xee100480, 8,  ARM_CEXT_MAVERICK, do_mav_binops_3b},
+  {"cfmva32",    0xee2004a0, 7,  ARM_CEXT_MAVERICK, do_mav_binops_3a},
+  {"cfmv32a",    0xee1004a0, 7,  ARM_CEXT_MAVERICK, do_mav_binops_3b},
+  {"cfmva64",    0xee2004c0, 7,  ARM_CEXT_MAVERICK, do_mav_binops_3c},
+  {"cfmv64a",    0xee1004c0, 7,  ARM_CEXT_MAVERICK, do_mav_binops_3d},
+  {"cfmvsc32",   0xee2004e0, 8,  ARM_CEXT_MAVERICK, do_mav_dspsc_1},
+  {"cfmv32sc",   0xee1004e0, 8,  ARM_CEXT_MAVERICK, do_mav_dspsc_2},
   {"cfcpys",     0xee000400, 6,  ARM_CEXT_MAVERICK, do_mav_binops_1d},
   {"cfcpyd",     0xee000420, 6,  ARM_CEXT_MAVERICK, do_mav_binops_1e},
   {"cfcvtsd",    0xee000460, 7,  ARM_CEXT_MAVERICK, do_mav_binops_1f},
@@ -2143,6 +2301,11 @@ static void do_t_adr		PARAMS ((char *));
 static void do_t_blx		PARAMS ((char *));
 static void do_t_bkpt		PARAMS ((char *));
 
+/* ARM V6.  */
+static void do_t_cps            PARAMS ((char *));
+static void do_t_cpy            PARAMS ((char *));
+static void do_t_setend         PARAMS ((char *));;
+
 #define T_OPCODE_MUL 0x4340
 #define T_OPCODE_TST 0x4200
 #define T_OPCODE_CMN 0x42c0
@@ -2211,6 +2374,7 @@ static int thumb_reg		PARAMS ((char ** str, int hi_lo));
 
 #define THUMB_MOVE 0
 #define THUMB_COMPARE 1
+#define THUMB_CPY 2
 
 #define THUMB_LOAD 0
 #define THUMB_STORE 1
@@ -2303,6 +2467,19 @@ static const struct thumb_opcode tinsns[] =
   /* Thumb v2 (ARMv5T).  */
   {"blx",	0,		0,	ARM_EXT_V5T, do_t_blx},
   {"bkpt",	0xbe00,		2,	ARM_EXT_V5T, do_t_bkpt},
+
+  /* ARM V6.  */
+  {"cpsie",	0xb660,		2,	ARM_EXT_V6,  do_t_cps},
+  {"cpsid",     0xb670,		2,	ARM_EXT_V6,  do_t_cps},
+  {"cpy",	0x4600,		2,	ARM_EXT_V6,  do_t_cpy},
+  {"rev",	0xba00,		2,	ARM_EXT_V6,  do_t_arit},
+  {"rev16",	0xba40,		2,	ARM_EXT_V6,  do_t_arit},
+  {"revsh",	0xbac0,		2,	ARM_EXT_V6,  do_t_arit},
+  {"setend",	0xb650,		2,	ARM_EXT_V6,  do_t_setend},
+  {"sxth",	0xb200,		2,	ARM_EXT_V6,  do_t_arit},
+  {"sxtb",	0xb240,		2,	ARM_EXT_V6,  do_t_arit},
+  {"uxth",	0xb280,		2,	ARM_EXT_V6,  do_t_arit},
+  {"uxtb",	0xb2c0,		2,	ARM_EXT_V6,  do_t_arit},
 };
 
 #define BAD_ARGS 	_("bad arguments to instruction")
@@ -2323,6 +2500,7 @@ static struct hash_control * arm_psr_hsh   = NULL;
      Integer arg to pass to the function.  */
 
 static void s_req PARAMS ((int));
+static void s_unreq PARAMS ((int));
 static void s_align PARAMS ((int));
 static void s_bss PARAMS ((int));
 static void s_even PARAMS ((int));
@@ -2341,8 +2519,9 @@ static int my_get_expression PARAMS ((expressionS *, char **));
 
 const pseudo_typeS md_pseudo_table[] =
 {
-  /* Never called becasue '.req' does not start line.  */
+  /* Never called because '.req' does not start a line.  */
   { "req",         s_req,         0 },
+  { "unreq",       s_unreq,       0 },
   { "bss",         s_bss,         0 },
   { "align",       s_align,       0 },
   { "arm",         s_arm,         0 },
@@ -2357,8 +2536,6 @@ const pseudo_typeS md_pseudo_table[] =
 #ifdef OBJ_ELF
   { "word",        s_arm_elf_cons, 4 },
   { "long",        s_arm_elf_cons, 4 },
-  { "file",        (void (*) PARAMS ((int))) dwarf2_directive_file, 0 },
-  { "loc",         dwarf2_directive_loc,  0 },
 #else
   { "word",        cons, 4},
 #endif
@@ -2373,8 +2550,11 @@ static int arm_parse_extension PARAMS ((char *, int *));
 static int arm_parse_cpu PARAMS ((char *));
 static int arm_parse_arch PARAMS ((char *));
 static int arm_parse_fpu PARAMS ((char *));
+static int arm_parse_float_abi PARAMS ((char *));
+#if 0 /* Suppressed - for now.  */
 #if defined OBJ_COFF || defined OBJ_ELF
 static void arm_add_note PARAMS ((const char *, const char *, unsigned int));
+#endif
 #endif
 
 /* Stuff needed to resolve the label ambiguity
@@ -2592,7 +2772,7 @@ validate_immediate (val)
   return FAIL;
 }
 
-/* Check to see if an immediate can be computed as two seperate immediate
+/* Check to see if an immediate can be computed as two separate immediate
    values, added together.  We already know that this value cannot be
    computed by just one ARM instruction.  */
 
@@ -2641,11 +2821,243 @@ validate_offset_imm (val, hwse)
   return val;
 }
 
+
+#ifdef OBJ_ELF
+/* This code is to handle mapping symbols as defined in the ARM ELF spec.
+   (This text is taken from version B-02 of the spec):
+
+      4.4.7 Mapping and tagging symbols
+
+      A section of an ARM ELF file can contain a mixture of ARM code,
+      Thumb code, and data.  There are inline transitions between code
+      and data at literal pool boundaries. There can also be inline
+      transitions between ARM code and Thumb code, for example in
+      ARM-Thumb inter-working veneers.  Linkers, machine-level
+      debuggers, profiling tools, and disassembly tools need to map
+      images accurately. For example, setting an ARM breakpoint on a
+      Thumb location, or in a literal pool, can crash the program
+      being debugged, ruining the debugging session.
+
+      ARM ELF entities are mapped (see section 4.4.7.1 below) and
+      tagged (see section 4.4.7.2 below) using local symbols (with
+      binding STB_LOCAL).  To assist consumers, mapping and tagging
+      symbols should be collated first in the symbol table, before
+      other symbols with binding STB_LOCAL.
+
+      To allow properly collated mapping and tagging symbols to be
+      skipped by consumers that have no interest in them, the first
+      such symbol should have the name $m and its st_value field equal
+      to the total number of mapping and tagging symbols (including
+      the $m) in the symbol table.
+
+      4.4.7.1 Mapping symbols
+
+      $a    Labels the first byte of a sequence of ARM instructions.
+            Its type is STT_FUNC.
+
+      $d    Labels the first byte of a sequence of data items.
+            Its type is STT_OBJECT.
+
+      $t    Labels the first byte of a sequence of Thumb instructions.
+            Its type is STT_FUNC.
+
+      This list of mapping symbols may be extended in the future.
+
+      Section-relative mapping symbols
+
+      Mapping symbols defined in a section define a sequence of
+      half-open address intervals that cover the address range of the
+      section. Each interval starts at the address defined by a
+      mapping symbol, and continues up to, but not including, the
+      address defined by the next (in address order) mapping symbol or
+      the end of the section. A corollary is that there must be a
+      mapping symbol defined at the beginning of each section.
+      Consumers can ignore the size of a section-relative mapping
+      symbol. Producers can set it to 0.
+
+      Absolute mapping symbols
+
+      Because of the need to crystallize a Thumb address with the
+      Thumb-bit set, absolute symbol of type STT_FUNC (symbols of type
+      STT_FUNC defined in section SHN_ABS) need to be mapped with $a
+      or $t.
+
+      The extent of a mapping symbol defined in SHN_ABS is [st_value,
+      st_value + st_size), or [st_value, st_value + 1) if st_size = 0,
+      where [x, y) denotes the half-open address range from x,
+      inclusive, to y, exclusive.
+
+      In the absence of a mapping symbol, a consumer can interpret a
+      function symbol with an odd value as the Thumb code address
+      obtained by clearing the least significant bit of the
+      value. This interpretation is deprecated, and it may not work in
+      the future.
+
+   Note - the Tagging symbols ($b, $f, $p $m) have been dropped from
+   the EABI (which is still under development), so they are not
+   implemented here.  */
+
+static enum mstate mapstate = MAP_UNDEFINED;
+
+static void
+mapping_state (enum mstate state)
+{
+  symbolS * symbolP;
+  const char * symname;
+  int type;
+
+  if (mapstate == state)
+    /* The mapping symbol has already been emitted.
+       There is nothing else to do.  */
+    return;
+
+  mapstate = state;
+
+  switch (state)
+    {
+    case MAP_DATA:
+      symname = "$d";
+      type = BSF_OBJECT;
+      break;
+    case MAP_ARM:
+      symname = "$a";
+      type = BSF_FUNCTION;
+      break;
+    case MAP_THUMB:
+      symname = "$t";
+      type = BSF_FUNCTION;
+      break;
+    case MAP_UNDEFINED:
+      return;     
+    default:
+      abort ();
+    }
+
+  seg_info (now_seg)->tc_segment_info_data = state;
+
+  symbolP = symbol_new (symname, now_seg, (valueT) frag_now_fix (), frag_now);
+  symbol_table_insert (symbolP);
+  symbol_get_bfdsym (symbolP)->flags |= type | BSF_LOCAL;
+  
+  switch (state)
+    {
+    case MAP_ARM:
+      THUMB_SET_FUNC (symbolP, 0);
+      ARM_SET_THUMB (symbolP, 0);
+      ARM_SET_INTERWORK (symbolP, support_interwork);
+      break;
+      
+    case MAP_THUMB:
+      THUMB_SET_FUNC (symbolP, 1);
+      ARM_SET_THUMB (symbolP, 1);
+      ARM_SET_INTERWORK (symbolP, support_interwork);
+      break;
+      
+    case MAP_DATA:
+    default:
+      return;
+    }
+}
+
+/* When we change sections we need to issue a new mapping symbol.  */
+
+void
+arm_elf_change_section (void)
+{
+  flagword flags;
+
+  if (!SEG_NORMAL (now_seg))
+    return;
+
+  flags = bfd_get_section_flags (stdoutput, now_seg);
+
+  /* We can ignore sections that only contain debug info.  */
+  if ((flags & SEC_ALLOC) == 0)
+    return;
+
+  mapstate = seg_info (now_seg)->tc_segment_info_data;
+}
+#else
+#define mapping_state(a)
+#endif /* OBJ_ELF */
+
+
 static void
 s_req (a)
      int a ATTRIBUTE_UNUSED;
 {
   as_bad (_("invalid syntax for .req directive"));
+}
+
+/* The .unreq directive deletes an alias which was previously defined
+   by .req.  For example:
+
+       my_alias .req r11
+       .unreq my_alias    */
+
+static void
+s_unreq (int a ATTRIBUTE_UNUSED)
+{
+  char *name;
+  char saved_char;
+
+  skip_whitespace (input_line_pointer);
+  name = input_line_pointer;
+
+  while (*input_line_pointer != 0
+	 && *input_line_pointer != ' '
+	 && *input_line_pointer != '\n')
+    ++input_line_pointer;
+
+  saved_char = *input_line_pointer;
+  *input_line_pointer = 0;
+
+  if (*name)
+    {
+      enum arm_reg_type req_type = arm_reg_parse_any (name);
+
+      if (req_type != REG_TYPE_MAX)
+	{
+	  char *temp_name = name;
+	  int req_no = arm_reg_parse (&temp_name, all_reg_maps[req_type].htab);
+
+	  if (req_no != FAIL)
+	    {
+	      struct reg_entry *req_entry;
+
+	      /* Check to see if this alias is a builtin one.  */
+	      req_entry = hash_delete (all_reg_maps[req_type].htab, name);
+
+	      if (!req_entry)
+		as_bad (_("unreq: missing hash entry for \"%s\""), name);
+	      else if (req_entry->builtin)
+		/* FIXME: We are deleting a built in register alias which
+		   points to a const data structure, so we only need to
+		   free up the memory used by the key in the hash table.
+		   Unfortunately we have not recorded this value, so this
+		   is a memory leak.  */
+		  /* FIXME: Should we issue a warning message ?  */
+		;
+	      else
+		{
+		  /* Deleting a user defined alias.  We need to free the
+		     key and the value, but fortunately the key is the same
+		     as the value->name field.  */
+		  free ((char *) req_entry->name);
+		  free (req_entry);
+		}
+	    }
+          else
+            as_bad (_(".unreq: unrecognized symbol \"%s\""), name);
+	}
+      else
+        as_bad (_(".unreq: unrecognized symbol \"%s\""), name);
+    }
+  else
+    as_bad (_("invalid syntax for .unreq directive"));
+
+  *input_line_pointer = saved_char;
+  demand_empty_rest_of_line ();
 }
 
 static void
@@ -2656,6 +3068,7 @@ s_bss (ignore)
      marking in_bss, then looking at s_skip for clues.  */
   subseg_set (bss_section, 0);
   demand_empty_rest_of_line ();
+  mapping_state (MAP_DATA);
 }
 
 static void
@@ -2684,6 +3097,8 @@ s_ltorg (ignored)
       || pool->symbol == NULL
       || pool->next_free_entry == 0)
     return;
+
+  mapping_state (MAP_DATA);
 
   /* Align pool as you have word accesses.
      Only make a frag if we have to.  */
@@ -2894,6 +3309,7 @@ opcode_select (width)
              coming from ARM mode, which is word-aligned.  */
 	  record_alignment (now_seg, 1);
 	}
+      mapping_state (MAP_THUMB);
       break;
 
     case 32:
@@ -2909,6 +3325,7 @@ opcode_select (width)
 
 	  record_alignment (now_seg, 1);
 	}
+      mapping_state (MAP_ARM);
       break;
 
     default:
@@ -3330,22 +3747,96 @@ cp_address_required_here (str, wb_ok)
 	{
 	  p++;
 
-	  if (wb_ok && skip_past_comma (& p) == SUCCESS)
-	    {
-	      /* [Rn], #expr  */
-	      write_back = WRITE_BACK;
+	  skip_whitespace (p);
 
-	      if (reg == REG_PC)
+	  if (*p == '\0')
+	    {
+	      /* As an extension to the official ARM syntax we allow:
+		 
+		   [Rn]
+		   
+	         as a short hand for:
+
+		   [Rn,#0]  */
+	      inst.instruction |= PRE_INDEX | INDEX_UP;
+	      *str = p;
+	      return SUCCESS;
+	    }
+	  
+	  if (skip_past_comma (& p) == FAIL)
+	    {
+	      inst.error = _("comma expected after closing square bracket");
+	      return FAIL;
+	    }
+
+	  skip_whitespace (p);
+
+	  if (*p == '#')
+	    {
+	      if (wb_ok)
 		{
-		  inst.error = _("pc may not be used in post-increment");
+		  /* [Rn], #expr  */
+		  write_back = WRITE_BACK;
+
+		  if (reg == REG_PC)
+		    {
+		      inst.error = _("pc may not be used in post-increment");
+		      return FAIL;
+		    }
+
+		  if (cp_address_offset (& p) == FAIL)
+		    return FAIL;
+		}
+	      else
+		pre_inc = PRE_INDEX | INDEX_UP;
+	    }
+	  else if (*p == '{')
+	    {
+	      int option;
+
+	      /* [Rn], {<expr>}  */
+	      p++;
+
+	      skip_whitespace (p);
+
+	      if (my_get_expression (& inst.reloc.exp, & p))
+		return FAIL;
+
+	      if (inst.reloc.exp.X_op == O_constant)
+		{
+		  option = inst.reloc.exp.X_add_number;
+
+		  if (option > 255 || option < 0)
+		    {
+		      inst.error = _("'option' field too large");
+		      return FAIL;
+		    }
+
+		  skip_whitespace (p);
+
+		  if (*p != '}')
+		    {
+		      inst.error = _("'}' expected at end of 'option' field");
+		      return FAIL;
+		    }
+		  else
+		    {
+		      p++;
+		      inst.instruction |= option;
+		      inst.instruction |= INDEX_UP;
+		    }
+		}
+	      else
+		{
+		  inst.error = _("non-constant expressions for 'option' field not supported");
 		  return FAIL;
 		}
-
-	      if (cp_address_offset (& p) == FAIL)
-		return FAIL;
 	    }
 	  else
-	    pre_inc = PRE_INDEX | INDEX_UP;
+	    {
+	      inst.error = _("# or { expected after comma");
+	      return FAIL;	      
+	    }
 	}
       else
 	{
@@ -3546,7 +4037,6 @@ do_empty (str)
 {
   /* Do nothing really.  */
   end_of_line (str);
-  return;
 }
 
 static void
@@ -3574,12 +4064,12 @@ do_mrs (str)
 
   if (   strcmp (str, "CPSR") == 0
       || strcmp (str, "SPSR") == 0
-	 /* Lower case versions for backwards compatability.  */
+	 /* Lower case versions for backwards compatibility.  */
       || strcmp (str, "cpsr") == 0
       || strcmp (str, "spsr") == 0)
     skip = 4;
 
-  /* This is for backwards compatability with older toolchains.  */
+  /* This is for backwards compatibility with older toolchains.  */
   else if (   strcmp (str, "cpsr_all") == 0
 	   || strcmp (str, "spsr_all") == 0)
     skip = 8;
@@ -3730,7 +4220,6 @@ do_mull (str)
     }
 
   end_of_line (str);
-  return;
 }
 
 static void
@@ -3784,7 +4273,6 @@ do_mul (str)
     }
 
   end_of_line (str);
-  return;
 }
 
 static void
@@ -3840,7 +4328,6 @@ do_mla (str)
     }
 
   end_of_line (str);
-  return;
 }
 
 /* Expects *str -> the characters "acc0", possibly with leading blanks.
@@ -4197,7 +4684,7 @@ do_clz (str)
 /* ARM V5 (argument parse)
      LDC2{L} <coproc>, <CRd>, <addressing mode>
      STC2{L} <coproc>, <CRd>, <addressing mode>
-     Instruction is not conditional, and has 0xf in the codition field.
+     Instruction is not conditional, and has 0xf in the condition field.
      Otherwise, it's the same as LDC/STC.  */
 
 static void
@@ -4374,6 +4861,950 @@ do_bxj (str)
     as_tsktsk (_("use of r15 in bxj is not really useful"));
 
   end_of_line (str);
+}
+
+/* ARM V6 umaal (argument parse). */
+
+static void
+do_umaal (str)
+     char *str;
+{
+
+  int rdlo, rdhi, rm, rs;
+
+  skip_whitespace (str);
+  if ((rdlo = reg_required_here (& str, 12)) == FAIL
+      || skip_past_comma (& str) == FAIL
+      || (rdhi = reg_required_here (& str, 16)) == FAIL
+      || skip_past_comma (& str) == FAIL
+      || (rm = reg_required_here (& str, 0)) == FAIL
+      || skip_past_comma (& str) == FAIL
+      || (rs = reg_required_here (& str, 8)) == FAIL)
+    {
+      inst.error = BAD_ARGS;
+      return;      
+    }
+
+  if (rdlo == REG_PC || rdhi == REG_PC || rm == REG_PC || rs == REG_PC)
+    {
+      inst.error = BAD_PC;
+      return;
+    }
+
+  end_of_line (str);
+}
+
+/* ARM V6 strex (argument parse). */
+
+static void 
+do_strex (str)
+     char *str;
+{
+  int rd, rm, rn;
+
+  /* Parse Rd, Rm,. */
+  skip_whitespace (str);
+  if ((rd = reg_required_here (& str, 12)) == FAIL
+      || skip_past_comma (& str) == FAIL
+      || (rm = reg_required_here (& str, 0)) == FAIL
+      || skip_past_comma (& str) == FAIL)
+    {
+      inst.error = BAD_ARGS;
+      return;
+    }
+  if (rd == REG_PC || rm == REG_PC)
+    {
+      inst.error = BAD_PC;
+      return;
+    }
+  if (rd == rm)
+    {
+      inst.error = _("Rd equal to Rm or Rn yields unpredictable results");
+      return;
+    }
+
+  /* Skip past '['. */
+  if ((strlen (str) >= 1) 
+      && strncmp (str, "[", 1) == 0)
+    str+=1;
+  skip_whitespace (str);  
+
+  /* Parse Rn. */
+  if ((rn = reg_required_here (& str, 16)) == FAIL)
+    {
+      inst.error = BAD_ARGS;
+      return;
+    }
+  else if (rn == REG_PC)
+    {
+      inst.error = BAD_PC;
+      return;
+    }
+  if (rd == rn)
+    {
+      inst.error = _("Rd equal to Rm or Rn yields unpredictable results");
+      return;
+    }
+  skip_whitespace (str);  
+
+  /* Skip past ']'. */
+  if ((strlen (str) >= 1) 
+      && strncmp (str, "]", 1) == 0)
+    str+=1;
+  
+  end_of_line (str);
+}
+
+/* ARM V6 ssat (argument parse). */
+
+static void
+do_ssat (str)
+     char* str;
+{
+  do_sat (&str, /*bias=*/-1);
+  end_of_line (str);
+}
+
+/* ARM V6 usat (argument parse). */
+
+static void
+do_usat (str)
+     char* str;
+{
+  do_sat (&str, /*bias=*/0);
+  end_of_line (str);
+}
+
+static void
+do_sat (str, bias)
+     char **str;
+     int    bias;
+{
+  int rd, rm;
+  expressionS expr;
+
+  skip_whitespace (*str);
+  
+  /* Parse <Rd>, field. */
+  if ((rd = reg_required_here (str, 12)) == FAIL
+      || skip_past_comma (str) == FAIL)
+    {
+      inst.error = BAD_ARGS;
+      return;
+    }
+  if (rd == REG_PC)
+    {
+      inst.error = BAD_PC;
+      return;
+    }
+
+  /* Parse #<immed>,  field. */
+  if (is_immediate_prefix (**str))
+    (*str)++;
+  else
+    {
+      inst.error = _("immediate expression expected");
+      return;
+    }
+  if (my_get_expression (&expr, str))
+    {
+      inst.error = _("bad expression");
+      return;
+    }
+  if (expr.X_op != O_constant)
+    {
+      inst.error = _("constant expression expected");
+      return;
+    }
+  if (expr.X_add_number + bias < 0
+      || expr.X_add_number + bias > 31)
+    {
+      inst.error = _("immediate value out of range");
+      return;
+    }
+  inst.instruction |= (expr.X_add_number + bias) << 16;
+  if (skip_past_comma (str) == FAIL)
+    {
+      inst.error = BAD_ARGS;
+      return;
+    }
+
+  /* Parse <Rm> field. */
+  if ((rm = reg_required_here (str, 0)) == FAIL)
+    {
+      inst.error = BAD_ARGS;
+      return;
+    }
+  if (rm == REG_PC)
+    {
+      inst.error = BAD_PC;
+      return;
+    }
+
+  if (skip_past_comma (str) == SUCCESS)
+    decode_shift (str, SHIFT_LSL_OR_ASR_IMMEDIATE);
+}
+
+/* ARM V6 ssat16 (argument parse). */
+
+static void
+do_ssat16 (str)
+     char *str;
+{
+  do_sat16 (&str, /*bias=*/-1);
+  end_of_line (str);
+}
+
+static void
+do_usat16 (str)
+     char *str;
+{
+  do_sat16 (&str, /*bias=*/0);
+  end_of_line (str);
+}
+
+static void
+do_sat16 (str, bias)
+     char **str;
+     int bias;
+{
+  int rd, rm;
+  expressionS expr;
+
+  skip_whitespace (*str);
+
+  /* Parse the <Rd> field. */
+  if ((rd = reg_required_here (str, 12)) == FAIL
+      || skip_past_comma (str) == FAIL)
+    {
+      inst.error = BAD_ARGS;
+      return;
+    }
+  if (rd == REG_PC)
+    {
+      inst.error = BAD_PC;
+      return;
+    }
+
+  /* Parse #<immed>, field. */
+  if (is_immediate_prefix (**str))
+    (*str)++;
+  else
+    {
+      inst.error = _("immediate expression expected");
+      return;
+    }
+  if (my_get_expression (&expr, str))
+    {
+      inst.error = _("bad expression");
+      return;
+    }
+  if (expr.X_op != O_constant)
+    {
+      inst.error = _("constant expression expected");
+      return;
+    }
+  if (expr.X_add_number + bias < 0
+      || expr.X_add_number + bias > 15)
+    {
+      inst.error = _("immediate value out of range");
+      return;
+    }
+  inst.instruction |= (expr.X_add_number + bias) << 16;
+  if (skip_past_comma (str) == FAIL)
+    {
+      inst.error = BAD_ARGS;
+      return;
+    }
+
+  /* Parse <Rm> field. */
+  if ((rm = reg_required_here (str, 0)) == FAIL)
+    {
+      inst.error = BAD_ARGS;
+      return;
+    }
+  if (rm == REG_PC)
+    {
+      inst.error = BAD_PC;
+      return;
+    }
+}
+
+/* ARM V6 srs (argument parse). */
+
+static void
+do_srs (str)
+     char* str;
+{
+  char *exclam;
+  skip_whitespace (str);
+  exclam = strchr (str, '!');
+  if (exclam)
+    *exclam = '\0';
+  do_cps_mode (&str);
+  if (exclam)
+    *exclam = '!';
+  if (*str == '!') 
+    {
+      inst.instruction |= WRITE_BACK;
+      str++;
+    }
+  end_of_line (str);
+}
+
+/* ARM V6 SMMUL (argument parse). */
+
+static void
+do_smmul (str)
+     char* str;
+{
+  int rd, rm, rs;
+  
+  skip_whitespace (str);
+  if ((rd = reg_required_here (&str, 16)) == FAIL
+      || skip_past_comma (&str) == FAIL
+      || (rm = reg_required_here (&str, 0)) == FAIL
+      || skip_past_comma (&str) == FAIL
+      || (rs = reg_required_here (&str, 8)) == FAIL)
+    {
+      inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (rd == REG_PC 
+      || rm == REG_PC
+      || rs == REG_PC)
+    {
+      inst.error = BAD_PC;
+      return;
+    }
+
+  end_of_line (str);
+  
+}
+
+/* ARM V6 SMLALD (argument parse). */
+
+static void
+do_smlald (str)
+    char* str;
+{
+  int rdlo, rdhi, rm, rs;
+  skip_whitespace (str);
+  if ((rdlo = reg_required_here (&str, 12)) == FAIL
+      || skip_past_comma (&str) == FAIL
+      || (rdhi = reg_required_here (&str, 16)) == FAIL
+      || skip_past_comma (&str) == FAIL
+      || (rm = reg_required_here (&str, 0)) == FAIL
+      || skip_past_comma (&str) == FAIL
+      || (rs = reg_required_here (&str, 8)) == FAIL)
+    {
+      inst.error = BAD_ARGS;
+      return;
+    }
+
+  if (rdlo == REG_PC 
+      || rdhi == REG_PC 
+      || rm == REG_PC
+      || rs == REG_PC)
+    {
+      inst.error = BAD_PC;
+      return;
+    }
+
+  end_of_line (str);
+}
+
+/* ARM V6 SMLAD (argument parse).  Signed multiply accumulate dual. 
+   smlad{x}{<cond>} Rd, Rm, Rs, Rn */
+
+static void 
+do_smlad (str)
+     char *str;
+{
+  int rd, rm, rs, rn;
+  
+  skip_whitespace (str);
+  if ((rd = reg_required_here (&str, 16)) == FAIL
+      || skip_past_comma (&str) == FAIL
+      || (rm = reg_required_here (&str, 0)) == FAIL
+      || skip_past_comma (&str) == FAIL
+      || (rs = reg_required_here (&str, 8)) == FAIL
+      || skip_past_comma (&str) == FAIL
+      || (rn = reg_required_here (&str, 12)) == FAIL)
+    {
+      inst.error = BAD_ARGS;
+      return;
+    }
+  
+  if (rd == REG_PC 
+      || rn == REG_PC 
+      || rs == REG_PC
+      || rm == REG_PC)
+    {
+      inst.error = BAD_PC;
+      return;
+    }
+
+  end_of_line (str);
+} 
+
+/* ARM V6 SETEND (argument parse).  Sets the E bit in the CPSR while
+   preserving the other bits.
+
+   setend <endian_specifier>, where <endian_specifier> is either 
+   BE or LE. */
+
+static void 
+do_setend (str)
+     char *str;
+{
+  if (do_endian_specifier (str))
+    inst.instruction |= 0x200;
+}
+
+/* Returns true if the endian-specifier indicates big-endianness.  */
+
+static int
+do_endian_specifier (str)
+     char *str;
+{
+  int big_endian = 0;
+
+  skip_whitespace (str);
+  if (strlen (str) < 2)
+    inst.error = _("missing endian specifier");
+  else if (strncasecmp (str, "BE", 2) == 0)
+    {
+      str += 2;
+      big_endian = 1;
+    }
+  else if (strncasecmp (str, "LE", 2) == 0)
+    str += 2;
+  else
+    inst.error = _("valid endian specifiers are be or le");
+
+  end_of_line (str);
+
+  return big_endian;
+}
+
+/* ARM V6 SXTH.
+
+   SXTH {<cond>} <Rd>, <Rm>{, <rotation>}
+   Condition defaults to COND_ALWAYS.
+   Error if any register uses R15. */
+
+static void 
+do_sxth (str)
+     char *str;
+{
+  int rd, rm;
+  expressionS expr;
+  int rotation_clear_mask = 0xfffff3ff;
+  int rotation_eight_mask = 0x00000400;
+  int rotation_sixteen_mask = 0x00000800;
+  int rotation_twenty_four_mask = 0x00000c00;
+  
+  skip_whitespace (str);
+  if ((rd = reg_required_here (&str, 12)) == FAIL
+      || skip_past_comma (&str) == FAIL
+      || (rm = reg_required_here (&str, 0)) == FAIL)
+    {
+      inst.error = BAD_ARGS;
+      return;
+    }
+
+  else if (rd == REG_PC || rm == REG_PC)
+    {
+      inst.error = BAD_PC;
+      return;
+    }
+  
+  /* Zero out the rotation field. */
+  inst.instruction &= rotation_clear_mask;
+  
+  /* Check for lack of optional rotation field. */
+  if (skip_past_comma (&str) == FAIL)
+    {
+      end_of_line (str);
+      return;
+    }
+  
+  /* Move past 'ROR'. */
+  skip_whitespace (str);
+  if (strncasecmp (str, "ROR", 3) == 0)
+    str+=3;
+  else
+    {
+      inst.error = _("missing rotation field after comma");
+      return;
+    }
+  
+  /* Get the immediate constant. */
+  skip_whitespace (str);
+  if (is_immediate_prefix (* str))
+    str++;
+  else
+    {
+      inst.error = _("immediate expression expected");
+      return;
+    }
+  
+  if (my_get_expression (&expr, &str))
+    {
+      inst.error = _("bad expression");
+      return;
+    }
+
+  if (expr.X_op != O_constant)
+    {
+      inst.error = _("constant expression expected");
+      return;
+    }
+  
+  switch (expr.X_add_number) 
+    {
+    case 0:
+      /* Rotation field has already been zeroed. */
+      break;
+    case 8:
+      inst.instruction |= rotation_eight_mask;
+      break;
+
+    case 16:
+      inst.instruction |= rotation_sixteen_mask;
+      break;
+      
+    case 24:
+      inst.instruction |= rotation_twenty_four_mask;
+      break;
+
+    default:
+      inst.error = _("rotation can be 8, 16, 24 or 0 when field is ommited");
+      break;
+    }
+
+  end_of_line (str);
+  
+}
+
+/* ARM V6 SXTAH extracts a 16-bit value from a register, sign
+   extends it to 32-bits, and adds the result to a value in another
+   register.  You can specify a rotation by 0, 8, 16, or 24 bits
+   before extracting the 16-bit value.
+   SXTAH{<cond>} <Rd>, <Rn>, <Rm>{, <rotation>}
+   Condition defaults to COND_ALWAYS.
+   Error if any register uses R15. */
+
+static void 
+do_sxtah (str)
+     char *str;
+{
+  int rd, rn, rm;
+  expressionS expr;
+  int rotation_clear_mask = 0xfffff3ff;
+  int rotation_eight_mask = 0x00000400;
+  int rotation_sixteen_mask = 0x00000800;
+  int rotation_twenty_four_mask = 0x00000c00;
+  
+  skip_whitespace (str);
+  if ((rd = reg_required_here (&str, 12)) == FAIL
+      || skip_past_comma (&str) == FAIL
+      || (rn = reg_required_here (&str, 16)) == FAIL
+      || skip_past_comma (&str) == FAIL
+      || (rm = reg_required_here (&str, 0)) == FAIL)
+    {
+      inst.error = BAD_ARGS;
+      return;
+    }
+
+  else if (rd == REG_PC || rn == REG_PC || rm == REG_PC)
+    {
+      inst.error = BAD_PC;
+      return;
+    }
+  
+  /* Zero out the rotation field. */
+  inst.instruction &= rotation_clear_mask;
+  
+  /* Check for lack of optional rotation field. */
+  if (skip_past_comma (&str) == FAIL)
+    {
+      end_of_line (str);
+      return;
+    }
+  
+  /* Move past 'ROR'. */
+  skip_whitespace (str);
+  if (strncasecmp (str, "ROR", 3) == 0)
+    str+=3;
+  else
+    {
+      inst.error = _("missing rotation field after comma");
+      return;
+    }
+  
+  /* Get the immediate constant. */
+  skip_whitespace (str);
+  if (is_immediate_prefix (* str))
+    str++;
+  else
+    {
+      inst.error = _("immediate expression expected");
+      return;
+    }
+  
+  if (my_get_expression (&expr, &str))
+    {
+      inst.error = _("bad expression");
+      return;
+    }
+
+  if (expr.X_op != O_constant)
+    {
+      inst.error = _("constant expression expected");
+      return;
+    }
+  
+  switch (expr.X_add_number) 
+    {
+    case 0:
+      /* Rotation field has already been zeroed. */
+      break;
+
+    case 8:
+      inst.instruction |= rotation_eight_mask;
+      break;
+
+    case 16:
+      inst.instruction |= rotation_sixteen_mask;
+      break;
+      
+    case 24:
+      inst.instruction |= rotation_twenty_four_mask;
+      break;
+
+    default:
+      inst.error = _("rotation can be 8, 16, 24 or 0 when field is ommited");
+      break;
+    }
+
+  end_of_line (str);
+  
+}
+   
+
+/* ARM V6 RFE (Return from Exception) loads the PC and CPSR from the
+   word at the specified address and the following word
+   respectively. 
+   Unconditionally executed.
+   Error if Rn is R15.   
+*/
+
+static void
+do_rfe (str)
+     char *str;
+{
+  int rn;
+
+  skip_whitespace (str);
+  
+  if ((rn = reg_required_here (&str, 16)) == FAIL)
+    return;
+
+  if (rn == REG_PC)
+    {
+      inst.error = BAD_PC;
+      return;
+    }
+
+  skip_whitespace (str);
+  
+  if (*str == '!')
+    {
+      inst.instruction |= WRITE_BACK;
+      str++;
+    }
+  end_of_line (str);
+}
+
+/* ARM V6 REV (Byte Reverse Word) reverses the byte order in a 32-bit
+   register (argument parse).
+   REV{<cond>} Rd, Rm.
+   Condition defaults to COND_ALWAYS.
+   Error if Rd or Rm are R15. */ 
+
+static void
+do_rev (str)
+     char* str;
+{
+  int rd, rm;
+
+  skip_whitespace (str);
+
+  if ((rd = reg_required_here (&str, 12)) == FAIL
+      || skip_past_comma (&str) == FAIL
+      || (rm = reg_required_here (&str, 0)) == FAIL)
+    inst.error = BAD_ARGS;
+
+  else if (rd == REG_PC || rm == REG_PC)
+    inst.error = BAD_PC;
+
+  else
+    end_of_line (str);
+}
+
+/* ARM V6 Perform Two Sixteen Bit Integer Additions. (argument parse).
+   QADD16{<cond>} <Rd>, <Rn>, <Rm>  
+   Condition defaults to COND_ALWAYS.
+   Error if Rd, Rn or Rm are R15.  */
+
+static void
+do_qadd16 (str) 
+     char* str;
+{
+  int rd, rm, rn;
+
+  skip_whitespace (str);
+
+  if ((rd = reg_required_here (&str, 12)) == FAIL
+      || skip_past_comma (&str) == FAIL
+      || (rn = reg_required_here (&str, 16)) == FAIL
+      || skip_past_comma (&str) == FAIL
+      || (rm = reg_required_here (&str, 0)) == FAIL)
+    inst.error = BAD_ARGS;
+
+  else if (rd == REG_PC || rm == REG_PC || rn == REG_PC)
+    inst.error = BAD_PC;
+
+  else
+    end_of_line (str);
+}
+
+/* ARM V6 Pack Halfword Bottom Top instruction (argument parse).
+   PKHBT {<cond>} <Rd>, <Rn>, <Rm> {, LSL #<shift_imm>} 
+   Condition defaults to COND_ALWAYS.
+   Error if Rd, Rn or Rm are R15.  */
+
+static void 
+do_pkhbt (str)
+     char* str;
+{
+  do_pkh_core (str, SHIFT_LSL_IMMEDIATE);
+}
+
+/* ARM V6 PKHTB (Argument Parse). */
+
+static void 
+do_pkhtb (str)
+     char* str;
+{
+  do_pkh_core (str, SHIFT_ASR_IMMEDIATE);
+}
+
+static void
+do_pkh_core (str, shift)
+     char* str;
+     int shift;
+{
+  int rd, rn, rm;
+
+  skip_whitespace (str);
+  if (((rd = reg_required_here (&str, 12)) == FAIL)
+      || (skip_past_comma (&str) == FAIL)
+      || ((rn = reg_required_here (&str, 16)) == FAIL)
+      || (skip_past_comma (&str) == FAIL)
+      || ((rm = reg_required_here (&str, 0)) == FAIL))
+    {
+      inst.error = BAD_ARGS;
+      return;
+    }
+
+  else if (rd == REG_PC || rn == REG_PC || rm == REG_PC)
+    {
+      inst.error = BAD_PC;
+      return;
+    }
+
+  /* Check for optional shift immediate constant. */
+  if (skip_past_comma (&str) == FAIL) 
+    {
+      if (shift == SHIFT_ASR_IMMEDIATE)
+	{
+	  /* If the shift specifier is ommited, turn the instruction
+	     into pkhbt rd, rm, rn.  First, switch the instruction
+	     code, and clear the rn and rm fields.  */
+	  inst.instruction &= 0xfff0f010;
+	  /* Now, re-encode the registers.  */
+	  inst.instruction |= (rm << 16) | rn;
+	}
+      return;
+    }
+
+  decode_shift (&str, shift);
+}
+
+/* ARM V6 Load Register Exclusive instruction (argument parse).
+   LDREX{<cond>} <Rd, [<Rn>]
+   Condition defaults to COND_ALWAYS.
+   Error if Rd or Rn are R15. 
+   See ARMARMv6 A4.1.27: LDREX. */
+
+
+static void
+do_ldrex (str)
+     char * str;
+{
+  int rd, rn;
+
+  skip_whitespace (str);
+
+  /* Parse Rd. */
+  if (((rd = reg_required_here (&str, 12)) == FAIL)
+      || (skip_past_comma (&str) == FAIL))
+    {
+      inst.error = BAD_ARGS;
+      return;
+    }
+  else if (rd == REG_PC)
+    {
+      inst.error = BAD_PC;
+      return;
+    }
+  skip_whitespace (str);  
+
+  /* Skip past '['. */
+  if ((strlen (str) >= 1) 
+      &&strncmp (str, "[", 1) == 0)
+    str+=1;
+  skip_whitespace (str);  
+
+  /* Parse Rn. */
+  if ((rn = reg_required_here (&str, 16)) == FAIL)
+    {
+      inst.error = BAD_ARGS;
+      return;
+    }
+  else if (rn == REG_PC)
+    {
+      inst.error = BAD_PC;
+      return;
+    }
+  skip_whitespace (str);  
+
+  /* Skip past ']'. */
+  if ((strlen (str) >= 1) 
+      && strncmp (str, "]", 1) == 0)
+    str+=1;
+  
+  end_of_line (str);
+}
+
+/* ARM V6 change processor state instruction (argument parse)
+      CPS, CPSIE, CSPID . */
+
+static void
+do_cps (str)
+     char * str;
+{
+  do_cps_mode (&str);
+  end_of_line (str);
+}
+
+static void
+do_cpsi (str)
+     char * str;
+{
+  do_cps_flags (&str, /*thumb_p=*/0);
+
+  if (skip_past_comma (&str) == SUCCESS)
+    {
+      skip_whitespace (str);
+      do_cps_mode (&str);
+    }
+  end_of_line (str);
+}
+
+static void
+do_cps_mode (str)
+     char **str;
+{
+  expressionS expr;
+
+  skip_whitespace (*str);
+
+  if (! is_immediate_prefix (**str))
+    {
+      inst.error = _("immediate expression expected");
+      return;
+    }
+
+  (*str)++; /* Strip off the immediate signifier. */
+  if (my_get_expression (&expr, str))
+    {
+      inst.error = _("bad expression");
+      return;
+    }
+
+  if (expr.X_op != O_constant)
+    {
+      inst.error = _("constant expression expected");
+      return;
+    }
+  
+  /* The mode is a 5 bit field.  Valid values are 0-31. */
+  if (((unsigned) expr.X_add_number) > 31
+      || (inst.reloc.exp.X_add_number) < 0)
+    {
+      inst.error = _("invalid constant");
+      return;
+    }
+  
+  inst.instruction |= expr.X_add_number;
+}
+
+static void
+do_cps_flags (str, thumb_p)
+     char **str;
+     int    thumb_p;
+{
+  struct cps_flag { 
+    char character;
+    unsigned long arm_value;
+    unsigned long thumb_value;
+  };
+  static struct cps_flag flag_table[] = {
+    {'a', 0x100, 0x4 },
+    {'i', 0x080, 0x2 },
+    {'f', 0x040, 0x1 }
+  };
+
+  int saw_a_flag = 0;
+
+  skip_whitespace (*str);
+
+  /* Get the a, f and i flags. */
+  while (**str && **str != ',')
+    {
+      struct cps_flag *p;
+      struct cps_flag *q = flag_table + sizeof (flag_table)/sizeof (*p);
+      for (p = flag_table; p < q; ++p)
+	if (strncasecmp (*str, &p->character, 1) == 0)
+	  {
+	    inst.instruction |= (thumb_p ? p->thumb_value : p->arm_value);
+	    saw_a_flag = 1;
+	    break;
+	  }
+      if (p == q)
+	{
+	  inst.error = _("unrecognized flag");
+	  return;
+	}
+      (*str)++;
+    }
+  if (!saw_a_flag) 
+    inst.error = _("no 'a', 'i', or 'f' flags for 'cps'");
 }
 
 /* THUMB V5 breakpoint instruction (argument parse)
@@ -4605,6 +6036,35 @@ do_bkpt (str)
   end_of_line (str);
 }
 
+/* THUMB CPS instruction (argument parse).  */
+
+static void
+do_t_cps (str)
+     char *str;
+{
+  do_cps_flags (&str, /*thumb_p=*/1);
+  end_of_line (str);
+}
+
+/* THUMB CPY instruction (argument parse).  */
+
+static void
+do_t_cpy (str)
+     char *str;
+{
+  thumb_mov_compare (str, THUMB_CPY);
+}
+
+/* THUMB SETEND instruction (argument parse).  */
+
+static void
+do_t_setend (str)
+     char *str;
+{
+  if (do_endian_specifier (str))
+    inst.instruction |= 0x8;
+}
+
 static unsigned long check_iwmmxt_insn PARAMS ((char *, enum iwmmxt_insn_type, int));
 
 /* Parse INSN_TYPE insn STR having a possible IMMEDIATE_SIZE immediate.  */
@@ -4817,6 +6277,7 @@ do_iwmmxt_byte_addr (str)
 
   if (wc_register (reg))
     {
+      as_bad (_("non-word size not supported with control register"));
       inst.instruction |=  0xf0000100;
       inst.instruction &= ~0x00400000;
     }
@@ -4832,7 +6293,6 @@ do_iwmmxt_tandc (str)
 
   if (reg != REG_PC && !inst.error)
     inst.error = _("only r15 allowed here");
-  return;
 }
 
 static void
@@ -4840,8 +6300,6 @@ do_iwmmxt_tbcst (str)
      char * str;
 {
   check_iwmmxt_insn (str, check_tbcst, 0);
-
-  return;
 }
 
 static void
@@ -4854,7 +6312,6 @@ do_iwmmxt_textrc (str)
     return;
 
   inst.instruction |= number & 0x7;
-  return;
 }
 
 static void
@@ -4879,7 +6336,6 @@ do_iwmmxt_tinsr (str)
     return;
 
   inst.instruction |= number & 0x7;
-  return;
 }
 
 static void
@@ -4887,8 +6343,6 @@ do_iwmmxt_tmcr (str)
      char * str;
 {
   check_iwmmxt_insn (str, check_tmcr, 0);
-
-  return;
 }
 
 static void
@@ -4896,8 +6350,6 @@ do_iwmmxt_tmcrr (str)
      char * str;
 {
   check_iwmmxt_insn (str, check_tmcrr, 0);
-
-  return;
 }
 
 static void
@@ -4905,8 +6357,6 @@ do_iwmmxt_tmia (str)
      char * str;
 {
   check_iwmmxt_insn (str, check_tmia, 0);
-
-  return;
 }
 
 static void
@@ -4914,8 +6364,6 @@ do_iwmmxt_tmovmsk (str)
      char * str;
 {
   check_iwmmxt_insn (str, check_tmovmsk, 0);
-
-  return;
 }
 
 static void
@@ -4923,8 +6371,6 @@ do_iwmmxt_tmrc (str)
      char * str;
 {
   check_iwmmxt_insn (str, check_tmrc, 0);
-
-  return;
 }
 
 static void
@@ -4932,8 +6378,6 @@ do_iwmmxt_tmrrc (str)
      char * str;
 {
   check_iwmmxt_insn (str, check_tmrrc, 0);
-
-  return;
 }
 
 static void
@@ -4941,7 +6385,6 @@ do_iwmmxt_torc (str)
      char * str;
 {
   check_iwmmxt_insn (str, check_rd, 0);
-  return;
 }
 
 static void
@@ -4954,7 +6397,6 @@ do_iwmmxt_waligni (str)
     return;
 
   inst.instruction |= ((number & 0x7) << 20);
-  return;
 }
 
 static void
@@ -4965,7 +6407,6 @@ do_iwmmxt_wmov (str)
     return;
   
   inst.instruction |= ((inst.instruction >> 16) & 0xf);
-  return;
 }
 
 static void
@@ -4992,6 +6433,10 @@ do_iwmmxt_word_addr (str)
 
   if (wc_register (reg))
     {
+      if ((inst.instruction & COND_MASK) != COND_ALWAYS)
+	as_bad (_("conditional execution not supported with control register"));
+      if (op != 2)
+	as_bad (_("non-word size not supported with control register"));
       inst.instruction |=  0xf0000100;
       inst.instruction &= ~0x00400000;
     }
@@ -5002,8 +6447,6 @@ do_iwmmxt_wrwr (str)
      char * str;
 {
   check_iwmmxt_insn (str, check_wrwr, 0);
-  
-  return;
 }
 
 static void
@@ -5011,8 +6454,6 @@ do_iwmmxt_wrwrwcg (str)
      char * str;
 {
   check_iwmmxt_insn (str, check_wrwrwcg, 0);
-
-  return;
 }
 
 static void
@@ -5020,8 +6461,6 @@ do_iwmmxt_wrwrwr (str)
      char * str;
 {
   check_iwmmxt_insn (str, check_wrwrwr, 0);
-
-  return;
 }
 
 static void
@@ -5034,7 +6473,6 @@ do_iwmmxt_wshufh (str)
     return;
 
   inst.instruction |= ((number & 0xf0) << 16) | (number & 0xf);
-  return;
 }
 
 static void
@@ -5045,7 +6483,6 @@ do_iwmmxt_wzero (str)
     return;
 
   inst.instruction |= ((inst.instruction & 0xf) << 12) | ((inst.instruction & 0xf) << 16);
-  return;
 }
 
 /* Xscale multiply-accumulate (argument parse)
@@ -5447,13 +6884,12 @@ md_operand (expr)
     }
 }
 
-/* UNRESTRICT should be one if <shift> <register> is permitted for this
-   instruction.  */
+/* KIND indicates what kind of shifts are accepted.  */
 
 static int
-decode_shift (str, unrestrict)
+decode_shift (str, kind)
      char ** str;
-     int     unrestrict;
+     int     kind;
 {
   const struct asm_shift_name * shift;
   char * p;
@@ -5483,6 +6919,26 @@ decode_shift (str, unrestrict)
 
   assert (shift->properties->index == shift_properties[shift->properties->index].index);
 
+  if (kind == SHIFT_LSL_OR_ASR_IMMEDIATE
+      && shift->properties->index != SHIFT_LSL
+      && shift->properties->index != SHIFT_ASR)
+    {
+      inst.error = _("'LSL' or 'ASR' required");
+      return FAIL;
+    }
+  else if (kind == SHIFT_LSL_IMMEDIATE
+	   && shift->properties->index != SHIFT_LSL)
+    {
+      inst.error = _("'LSL' required");
+      return FAIL;
+    }
+  else if (kind == SHIFT_ASR_IMMEDIATE
+	   && shift->properties->index != SHIFT_ASR)
+    {
+      inst.error = _("'ASR' required");
+      return FAIL;
+    }
+    
   if (shift->properties->index == SHIFT_RRX)
     {
       * str = p;
@@ -5492,7 +6948,7 @@ decode_shift (str, unrestrict)
 
   skip_whitespace (p);
 
-  if (unrestrict && reg_required_here (& p, 8) != FAIL)
+  if (kind == NO_SHIFT_RESTRICT && reg_required_here (& p, 8) != FAIL)
     {
       inst.instruction |= shift->properties->bit_field | SHIFT_BY_REG;
       * str = p;
@@ -5500,7 +6956,7 @@ decode_shift (str, unrestrict)
     }
   else if (! is_immediate_prefix (* p))
     {
-      inst.error = (unrestrict
+      inst.error = (NO_SHIFT_RESTRICT
 		    ? _("shift requires register or #expression")
 		    : _("shift requires #expression"));
       * str = p;
@@ -5562,7 +7018,7 @@ decode_shift (str, unrestrict)
 }
 
 /* Do those data_ops which can take a negative immediate constant
-   by altering the instuction.  A bit of a hack really.
+   by altering the instruction.  A bit of a hack really.
         MOV <-> MVN
         AND <-> BIC
         ADC <-> SBC
@@ -5815,7 +7271,6 @@ do_arit (str)
     }
 
   end_of_line (str);
-  return;
 }
 
 static void
@@ -5838,7 +7293,9 @@ do_adr (str)
   /* Frag hacking will turn this into a sub instruction if the offset turns
      out to be negative.  */
   inst.reloc.type = BFD_RELOC_ARM_IMMEDIATE;
+#ifndef TE_WINCE
   inst.reloc.exp.X_add_number -= 8; /* PC relative adjust.  */
+#endif
   inst.reloc.pc_rel = 1;
 
   end_of_line (str);
@@ -5869,11 +7326,11 @@ do_adrl (str)
   /* Frag hacking will turn this into a sub instruction if the offset turns
      out to be negative.  */
   inst.reloc.type              = BFD_RELOC_ARM_ADRL_IMMEDIATE;
+#ifndef TE_WINCE  
   inst.reloc.exp.X_add_number -= 8; /* PC relative adjust  */
+#endif
   inst.reloc.pc_rel            = 1;
   inst.size                    = INSN_SIZE * 2;
-
-  return;
 }
 
 static void
@@ -5898,7 +7355,6 @@ do_cmp (str)
     }
 
   end_of_line (str);
-  return;
 }
 
 static void
@@ -5923,7 +7379,6 @@ do_mov (str)
     }
 
   end_of_line (str);
-  return;
 }
 
 static int
@@ -5979,7 +7434,7 @@ ldst_extend (str)
 
       inst.instruction |= add | OFFSET_REG;
       if (skip_past_comma (str) == SUCCESS)
-	return decode_shift (str, SHIFT_RESTRICT);
+	return decode_shift (str, SHIFT_IMMEDIATE);
 
       return SUCCESS;
     }
@@ -6174,7 +7629,6 @@ do_ldst (str)
 
   inst.instruction |= (pre_inc ? PRE_INDEX : 0);
   end_of_line (str);
-  return;
 }
 
 static void
@@ -6253,7 +7707,6 @@ do_ldstt (str)
     }
 
   end_of_line (str);
-  return;
 }
 
 static int
@@ -6509,7 +7962,6 @@ do_ldstv4 (str)
 
   inst.instruction |= (pre_inc ? PRE_INDEX : 0);
   end_of_line (str);
-  return;
 }
 
 static long
@@ -6706,7 +8158,6 @@ do_ldmstm (str)
 
   inst.instruction |= range;
   end_of_line (str);
-  return;
 }
 
 static void
@@ -6725,8 +8176,6 @@ do_swi (str)
   inst.reloc.type = BFD_RELOC_ARM_SWI;
   inst.reloc.pc_rel = 0;
   end_of_line (str);
-
-  return;
 }
 
 static void
@@ -6787,7 +8236,6 @@ do_swap (str)
     }
 
   end_of_line (str);
-  return;
 }
 
 static void
@@ -6832,7 +8280,6 @@ do_branch (str)
 #endif /* OBJ_ELF  */
 
   end_of_line (str);
-  return;
 }
 
 static void
@@ -6914,7 +8361,6 @@ do_cdp (str)
     }
 
   end_of_line (str);
-  return;
 }
 
 static void
@@ -6950,7 +8396,6 @@ do_lstc (str)
     }
 
   end_of_line (str);
-  return;
 }
 
 static void
@@ -7012,7 +8457,6 @@ do_co_reg (str)
     }
 
   end_of_line (str);
-  return;
 }
 
 static void
@@ -7032,7 +8476,6 @@ do_fpa_ctrl (str)
     }
 
   end_of_line (str);
-  return;
 }
 
 static void
@@ -7228,7 +8671,6 @@ do_fpa_dyadic (str)
     }
 
   end_of_line (str);
-  return;
 }
 
 static void
@@ -7253,7 +8695,6 @@ do_fpa_monadic (str)
     }
 
   end_of_line (str);
-  return;
 }
 
 static void
@@ -7278,7 +8719,6 @@ do_fpa_cmp (str)
     }
 
   end_of_line (str);
-  return;
 }
 
 static void
@@ -7303,7 +8743,6 @@ do_fpa_from_reg (str)
     }
 
   end_of_line (str);
-  return;
 }
 
 static void
@@ -7324,7 +8763,6 @@ do_fpa_to_reg (str)
     }
 
   end_of_line (str);
-  return;
 }
 
 static int
@@ -7423,7 +8861,6 @@ do_vfp_sp_monadic (str)
     }
 
   end_of_line (str);
-  return;
 }
 
 static void
@@ -7444,7 +8881,6 @@ do_vfp_dp_monadic (str)
     }
 
   end_of_line (str);
-  return;
 }
 
 static void
@@ -7467,7 +8903,6 @@ do_vfp_sp_dyadic (str)
     }
 
   end_of_line (str);
-  return;
 }
 
 static void
@@ -7490,7 +8925,6 @@ do_vfp_dp_dyadic (str)
     }
 
   end_of_line (str);
-  return;
 }
 
 static void
@@ -7511,19 +8945,16 @@ do_vfp_reg_from_sp (str)
     }
 
   end_of_line (str);
-  return;
 }
 
 static void
-do_vfp_sp_reg2 (str)
+do_vfp_reg2_from_sp2 (str)
      char *str;
 {
   skip_whitespace (str);
 
-  if (reg_required_here (&str, 12) == FAIL)
-    return;
-
-  if (skip_past_comma (&str) == FAIL
+  if (reg_required_here (&str, 12) == FAIL
+      || skip_past_comma (&str) == FAIL
       || reg_required_here (&str, 16) == FAIL
       || skip_past_comma (&str) == FAIL)
     {
@@ -7540,7 +8971,6 @@ do_vfp_sp_reg2 (str)
     }
 
   end_of_line (str);
-  return;
 }
 
 static void
@@ -7561,7 +8991,32 @@ do_vfp_sp_from_reg (str)
     }
 
   end_of_line (str);
-  return;
+}
+
+static void
+do_vfp_sp2_from_reg2 (str)
+     char *str;
+{
+  skip_whitespace (str);
+
+  /* We require exactly two consecutive SP registers.  */
+  if (vfp_sp_reg_list (&str, VFP_REG_Sm) != 2)
+    {
+      if (! inst.error)
+	inst.error = _("only two consecutive VFP SP registers allowed here");
+    }
+
+  if (skip_past_comma (&str) == FAIL
+      || reg_required_here (&str, 12) == FAIL
+      || skip_past_comma (&str) == FAIL
+      || reg_required_here (&str, 16) == FAIL)
+    {
+      if (! inst.error)
+	inst.error = BAD_ARGS;
+      return;
+    }
+
+  end_of_line (str);
 }
 
 static void
@@ -7582,7 +9037,6 @@ do_vfp_reg_from_dp (str)
     }
 
   end_of_line (str);
-  return;
 }
 
 static void
@@ -7605,7 +9059,6 @@ do_vfp_reg2_from_dp (str)
     }
 
   end_of_line (str);
-  return;
 }
 
 static void
@@ -7626,7 +9079,6 @@ do_vfp_dp_from_reg (str)
     }
 
   end_of_line (str);
-  return;
 }
 
 static void
@@ -7641,7 +9093,7 @@ do_vfp_dp_from_reg2 (str)
   if (skip_past_comma (&str) == FAIL
       || reg_required_here (&str, 12) == FAIL
       || skip_past_comma (&str) == FAIL
-      || reg_required_here (&str, 16))
+      || reg_required_here (&str, 16) == FAIL)
     {
       if (! inst.error)
 	inst.error = BAD_ARGS;
@@ -7649,7 +9101,6 @@ do_vfp_dp_from_reg2 (str)
     }
 
   end_of_line (str);
-  return;
 }
 
 static const struct vfp_reg *
@@ -7728,7 +9179,6 @@ do_vfp_reg_from_ctrl (str)
     }
 
   end_of_line (str);
-  return;
 }
 
 static void
@@ -7749,7 +9199,6 @@ do_vfp_ctrl_from_reg (str)
     }
 
   end_of_line (str);
-  return;
 }
 
 static void
@@ -7774,7 +9223,6 @@ do_vfp_sp_ldst (str)
     }
 
   end_of_line (str);
-  return;
 }
 
 static void
@@ -7799,7 +9247,6 @@ do_vfp_dp_ldst (str)
     }
 
   end_of_line (str);
-  return;
 }
 
 /* Parse and encode a VFP SP register list, storing the initial
@@ -8166,7 +9613,6 @@ do_vfp_sp_compare_z (str)
     }
 
   end_of_line (str);
-  return;
 }
 
 static void
@@ -8183,7 +9629,6 @@ do_vfp_dp_compare_z (str)
     }
 
   end_of_line (str);
-  return;
 }
 
 static void
@@ -8204,7 +9649,6 @@ do_vfp_dp_sp_cvt (str)
     }
 
   end_of_line (str);
-  return;
 }
 
 static void
@@ -8225,7 +9669,6 @@ do_vfp_sp_dp_cvt (str)
     }
 
   end_of_line (str);
-  return;
 }
 
 /* Thumb specific routines.  */
@@ -8570,7 +10013,7 @@ thumb_mov_compare (str, move)
       return;
     }
 
-  if (is_immediate_prefix (*str))
+  if (move != THUMB_CPY && is_immediate_prefix (*str))
     {
       str++;
       if (my_get_expression (&inst.reloc.exp, &str))
@@ -8581,7 +10024,7 @@ thumb_mov_compare (str, move)
 
   if (Rs != FAIL)
     {
-      if (Rs < 8 && Rd < 8)
+      if (move != THUMB_CPY && Rs < 8 && Rd < 8)
 	{
 	  if (move == THUMB_MOVE)
 	    /* A move of two lowregs is encoded as ADD Rd, Rs, #0
@@ -8595,7 +10038,7 @@ thumb_mov_compare (str, move)
 	{
 	  if (move == THUMB_MOVE)
 	    inst.instruction = T_OPCODE_MOV_HR;
-	  else
+	  else if (move != THUMB_CPY)
 	    inst.instruction = T_OPCODE_CMP_HR;
 
 	  if (Rd > 7)
@@ -9125,7 +10568,7 @@ do_mav_quad_6b (str)
 	     REG_TYPE_MVFX);
 }
 
-/* cfmvsc32<cond> DSPSC,MVFX[15:0].  */
+/* cfmvsc32<cond> DSPSC,MVDX[15:0].  */
 static void
 do_mav_dspsc_1 (str)
      char * str;
@@ -9135,7 +10578,7 @@ do_mav_dspsc_1 (str)
   /* cfmvsc32.  */
   if (mav_reg_required_here (&str, -1, REG_TYPE_DSPSC) == FAIL
       || skip_past_comma (&str) == FAIL
-      || mav_reg_required_here (&str, 16, REG_TYPE_MVFX) == FAIL)
+      || mav_reg_required_here (&str, 12, REG_TYPE_MVDX) == FAIL)
     {
       if (!inst.error)
 	inst.error = BAD_ARGS;
@@ -9146,7 +10589,7 @@ do_mav_dspsc_1 (str)
   end_of_line (str);
 }
 
-/* cfmv32sc<cond> MVFX[15:0],DSPSC.  */
+/* cfmv32sc<cond> MVDX[15:0],DSPSC.  */
 static void
 do_mav_dspsc_2 (str)
      char * str;
@@ -9154,7 +10597,7 @@ do_mav_dspsc_2 (str)
   skip_whitespace (str);
 
   /* cfmv32sc.  */
-  if (mav_reg_required_here (&str, 0, REG_TYPE_MVFX) == FAIL
+  if (mav_reg_required_here (&str, 12, REG_TYPE_MVDX) == FAIL
       || skip_past_comma (&str) == FAIL
       || mav_reg_required_here (&str, -1, REG_TYPE_DSPSC) == FAIL)
     {
@@ -9475,7 +10918,7 @@ do_mav_ldst (str, reg0)
   if (negative)
     offset = -offset;
   else
-    inst.instruction |= CP_T_UD; /* Postive, so set bit U.  */
+    inst.instruction |= CP_T_UD; /* Positive, so set bit U.  */
 
   inst.instruction |= offset >> 2;
   end_of_line (str);
@@ -9484,7 +10927,6 @@ do_mav_ldst (str, reg0)
 fail_ldst:
   if (!inst.error)
      inst.error = BAD_ARGS;
-  return;
 }
 
 static void
@@ -9493,7 +10935,6 @@ do_t_nop (str)
 {
   /* Do nothing.  */
   end_of_line (str);
-  return;
 }
 
 /* Handle the Format 4 instructions that do not have equivalents in other
@@ -9595,7 +11036,7 @@ find_real_start (symbolP)
   const char * name = S_GET_NAME (symbolP);
   symbolS *    new_target;
 
-  /* This definiton must agree with the one in gcc/config/arm/thumb.c.  */
+  /* This definition must agree with the one in gcc/config/arm/thumb.c.  */
 #define STUB_NAME ".real_start_of"
 
   if (name == NULL)
@@ -9867,7 +11308,6 @@ do_t_swi (str)
 
   inst.reloc.type = BFD_RELOC_ARM_SWI;
   end_of_line (str);
-  return;
 }
 
 static void
@@ -9943,20 +11383,29 @@ insert_reg_alias (str, regnum, htab)
      int regnum;
      struct hash_control *htab;
 {
-  struct reg_entry *new =
-    (struct reg_entry *) xmalloc (sizeof (struct reg_entry));
-  char *name = xmalloc (strlen (str) + 1);
-  strcpy (name, str);
-
+  const char *error;
+  struct reg_entry *new = xmalloc (sizeof (struct reg_entry));
+  const char *name = xmalloc (strlen (str) + 1);
+  
+  strcpy ((char *) name, str);
+  
   new->name = name;
   new->number = regnum;
+  new->builtin = FALSE;
 
-  hash_insert (htab, name, (PTR) new);
+  error = hash_insert (htab, name, (PTR) new);
+  if (error)
+    {
+      as_bad (_("failed to create an alias for %s, reason: %s"),
+	    str, error);
+      free ((char *) name);
+      free (new);
+    }
 }
 
 /* Look for the .req directive.  This is of the form:
 
-   	newname .req existing_name
+   	new_register_name .req existing_register_name
 
    If we find one, or if it looks sufficiently like one that we want to
    handle any error here, return non-zero.  Otherwise return zero.  */
@@ -10036,6 +11485,7 @@ create_register_alias (newname, p)
       *p = c;
       return 1;
     }
+  
   *p = c;
   return 0;
 }
@@ -10098,6 +11548,7 @@ build_arm_ops_hsh ()
     }
 }
 
+#if 0 /* Suppressed - for now.  */
 #if defined OBJ_ELF || defined OBJ_COFF
 
 #ifdef OBJ_ELF
@@ -10144,6 +11595,7 @@ arm_add_note (name, description, type)
   strncpy (p, description, ARM_NOTE_DESCRIPTION_LENGTH);
   frag_align (2, 0, 0);
 }
+#endif
 #endif
 
 void
@@ -10197,9 +11649,9 @@ md_begin ()
     }
   else if (mfpu_opt == -1)
     {
-#if !(defined (TE_LINUX) || defined(TE_NetBSD) || defined(TE_OpenBSD))
-      /* Some environments specify a default FPU.  If they don't, infer
-	 it from the processor.  */
+#if !(defined (TE_LINUX) || defined (TE_NetBSD) || defined(TE_OpenBSD))
+      /* Some environments specify a default FPU.  If they don't, infer it
+	 from the processor.  */
       if (mcpu_fpu_opt != -1)
 	mfpu_opt = mcpu_fpu_opt;
       else
@@ -10234,17 +11686,28 @@ md_begin ()
     if (uses_apcs_float)   flags |= F_APCS_FLOAT;
     if (pic_code)          flags |= F_PIC;
     if ((cpu_variant & FPU_ANY) == FPU_NONE
-	|| (cpu_variant & FPU_ANY) == FPU_ARCH_VFP) /* VFP layout only.  */
-      flags |= F_SOFT_FLOAT;
+	 || (cpu_variant & FPU_ANY) == FPU_ARCH_VFP) /* VFP layout only.  */
+      {
+	flags |= F_SOFT_FLOAT;
+      }
+    switch (mfloat_abi_opt)
+      {
+      case ARM_FLOAT_ABI_SOFT:
+      case ARM_FLOAT_ABI_SOFTFP:
+	flags |= F_SOFT_FLOAT;
+	break;
+
+      case ARM_FLOAT_ABI_HARD:
+	if (flags & F_SOFT_FLOAT)
+	  as_bad (_("hard-float conflicts with specified fpu"));
+	break;
+      }
     /* Using VFP conventions (even if soft-float).  */
     if (cpu_variant & FPU_VFP_EXT_NONE) flags |= F_VFP_FLOAT;
 
 #if defined OBJ_ELF
-    if (cpu_variant & ARM_CEXT_MAVERICK)
-      {
-	flags ^= F_SOFT_FLOAT;
+    if (cpu_variant & FPU_ARCH_MAVERICK)
 	flags |= EF_ARM_MAVERICK_FLOAT;
-      }
 #endif
 
     bfd_set_private_flags (stdoutput, flags);
@@ -10339,6 +11802,9 @@ md_begin ()
     bfd_set_section_flags (stdoutput, arm_arch,
 			   SEC_DATA | SEC_ALLOC | SEC_LOAD | SEC_LINK_ONCE \
 			   | SEC_HAS_CONTENTS);
+#else
+    bfd_set_section_flags (stdoutput, arm_arch,
+			   SEC_READONLY | SEC_HAS_CONTENTS);
 #endif
     arm_arch->output_section = arm_arch;
     subseg_set (arm_arch, 0);
@@ -10530,8 +11996,8 @@ md_pcrel_from (fixP)
     }
 
 #ifdef TE_WINCE
-  /* The pattern was adjusted to accomodate CE's off-by-one fixups,
-     so we un-adjust here to compensate for the accomodation.  */
+  /* The pattern was adjusted to accommodate CE's off-by-one fixups,
+     so we un-adjust here to compensate for the accommodation.  */
   return fixP->fx_where + fixP->fx_frag->fr_address + 8;
 #else
   return fixP->fx_where + fixP->fx_frag->fr_address;
@@ -10896,7 +12362,7 @@ md_apply_fix3 (fixP, valP, seg)
 	     the absolute address that is the destination of the branch in the
 	     24 bits of the branch instruction.  If however, we happen to know
 	     that the destination of the branch is in the same section as the
-	     branch instruciton itself, then we can compute the relocation for
+	     branch instruction itself, then we can compute the relocation for
 	     ourselves and not have to bother the linker with it.
 
 	     FIXME: The tests for OBJ_ELF and ! target_oabi are only here
@@ -11353,6 +12819,16 @@ tc_gen_reloc (section, fixp)
       return NULL;
 
     case BFD_RELOC_ARM_OFFSET_IMM:
+      if (fixp->fx_addsy != NULL
+	  && !S_IS_DEFINED (fixp->fx_addsy)
+	  && S_IS_LOCAL (fixp->fx_addsy))
+	{
+	  as_bad_where (fixp->fx_file, fixp->fx_line,
+			_("undefined local label `%s'"),
+			S_GET_NAME (fixp->fx_addsy));
+	  return NULL;
+	}
+
       as_bad_where (fixp->fx_file, fixp->fx_line,
 		    _("internal_relocation (type: OFFSET_IMM) not fixed up"));
       return NULL;
@@ -11514,6 +12990,7 @@ md_assemble (str)
 	      return;
 	    }
 
+	  mapping_state (MAP_THUMB);
 	  inst.instruction = opcode->value;
 	  inst.size = opcode->size;
 	  (*opcode->parms) (p);
@@ -11539,6 +13016,7 @@ md_assemble (str)
 	      return;
 	    }
 
+          mapping_state (MAP_ARM);
 	  inst.instruction = opcode->value;
 	  inst.size = INSN_SIZE;
 	  (*opcode->parms) (p);
@@ -11844,6 +13322,7 @@ static struct arm_cpu_option_table arm_cpus[] =
   {"arm9e-r0",		ARM_ARCH_V5TExP, FPU_ARCH_VFP_V2},
   {"arm9e",		ARM_ARCH_V5TE,   FPU_ARCH_VFP_V2},
   {"arm926ej",		ARM_ARCH_V5TEJ,	 FPU_ARCH_VFP_V2},
+  {"arm926ejs",		ARM_ARCH_V5TEJ,	 FPU_ARCH_VFP_V2},
   {"arm946e-r0",	ARM_ARCH_V5TExP, FPU_ARCH_VFP_V2},
   {"arm946e",		ARM_ARCH_V5TE,   FPU_ARCH_VFP_V2},
   {"arm966e-r0",	ARM_ARCH_V5TExP, FPU_ARCH_VFP_V2},
@@ -11853,13 +13332,16 @@ static struct arm_cpu_option_table arm_cpus[] =
   {"arm1020",		ARM_ARCH_V5TE,	 FPU_ARCH_VFP_V2},
   {"arm1020t",		ARM_ARCH_V5T,	 FPU_ARCH_VFP_V1},
   {"arm1020e",		ARM_ARCH_V5TE,	 FPU_ARCH_VFP_V2},
+  {"arm1026ejs",	ARM_ARCH_V5TE,	 FPU_ARCH_VFP_V2},
+  {"arm1136js",		ARM_ARCH_V6,     FPU_NONE},
+  {"arm1136jfs",	ARM_ARCH_V6,     FPU_ARCH_VFP_V2},
   /* ??? XSCALE is really an architecture.  */
   {"xscale",		ARM_ARCH_XSCALE, FPU_ARCH_VFP_V2},
   /* ??? iwmmxt is not a processor.  */
   {"iwmmxt",		ARM_ARCH_IWMMXT, FPU_ARCH_VFP_V2},
   {"i80200",		ARM_ARCH_XSCALE, FPU_ARCH_VFP_V2},
   /* Maverick */
-  {"ep9312",		ARM_ARCH_V4T | ARM_CEXT_MAVERICK, FPU_NONE},
+  {"ep9312",		ARM_ARCH_V4T | ARM_CEXT_MAVERICK, FPU_ARCH_MAVERICK},
   {NULL, 0, 0}
 };
 
@@ -11891,7 +13373,10 @@ static struct arm_arch_option_table arm_archs[] =
   {"armv5te",		ARM_ARCH_V5TE,	 FPU_ARCH_VFP},
   {"armv5texp",		ARM_ARCH_V5TExP, FPU_ARCH_VFP},
   {"armv5tej",		ARM_ARCH_V5TEJ,  FPU_ARCH_VFP},
+  {"armv6",             ARM_ARCH_V6,     FPU_ARCH_VFP},
+  {"armv6j",            ARM_ARCH_V6,     FPU_ARCH_VFP},
   {"xscale",		ARM_ARCH_XSCALE, FPU_ARCH_VFP},
+  {"iwmmxt",		ARM_ARCH_IWMMXT, FPU_ARCH_VFP},
   {NULL, 0, 0}
 };
 
@@ -11937,6 +13422,22 @@ static struct arm_fpu_option_table arm_fpus[] =
   {"vfpxd",		FPU_ARCH_VFP_V1xD},
   {"arm1020t",		FPU_ARCH_VFP_V1},
   {"arm1020e",		FPU_ARCH_VFP_V2},
+  {"arm1136jfs",	FPU_ARCH_VFP_V2},
+  {"maverick",		FPU_ARCH_MAVERICK},
+  {NULL, 0}
+};
+
+struct arm_float_abi_option_table
+{
+  char *name;
+  int value;
+};
+
+static struct arm_float_abi_option_table arm_float_abis[] =
+{
+  {"hard",	ARM_FLOAT_ABI_HARD},
+  {"softfp",	ARM_FLOAT_ABI_SOFTFP},
+  {"soft",	ARM_FLOAT_ABI_SOFT},
   {NULL, 0}
 };
 
@@ -12086,6 +13587,23 @@ arm_parse_fpu (str)
   return 0;
 }
 
+static int
+arm_parse_float_abi (str)
+     char * str;
+{
+  struct arm_float_abi_option_table *opt;
+
+  for (opt = arm_float_abis; opt->name != NULL; opt++)
+    if (strcmp (opt->name, str) == 0)
+      {
+	mfloat_abi_opt = opt->value;
+	return 1;
+      }
+
+  as_bad (_("unknown floating point abi `%s'\n"), str);
+  return 0;
+}
+
 struct arm_long_option_table arm_long_opts[] =
 {
   {"mcpu=", N_("<cpu name>\t  assemble for CPU <cpu name>"),
@@ -12094,6 +13612,8 @@ struct arm_long_option_table arm_long_opts[] =
    arm_parse_arch, NULL},
   {"mfpu=", N_("<fpu name>\t  assemble for FPU architecture <fpu name>"),
    arm_parse_fpu, NULL},
+  {"mfloat-abi=", N_("<abi>\t  assemble for floating point ABI <abi>"),
+   arm_parse_float_abi, NULL},
   {NULL, NULL, 0, NULL}
 };
 
@@ -12239,8 +13759,6 @@ fix_new_arm (frag, where, size, exp, pc_rel, reloc)
   arm_data = (arm_fix_data *) obstack_alloc (& notes, sizeof (arm_fix_data));
   new_fix->tc_fix_data = (PTR) arm_data;
   arm_data->thumb_mode = thumb_mode;
-
-  return;
 }
 
 /* This fix_new is called by cons via TC_CONS_FIX_NEW.  */
@@ -12290,6 +13808,9 @@ arm_cleanup ()
     {
       /* Put it at the end of the relevent section.  */
       subseg_set (pool->section, pool->sub_section);
+#ifdef OBJ_ELF
+      arm_elf_change_section ();
+#endif
       s_ltorg (0);
     }
 }
@@ -12641,6 +14162,7 @@ s_arm_elf_cons (nbytes)
   md_cons_align (nbytes);
 #endif
 
+  mapping_state (MAP_DATA);
   do
     {
       bfd_reloc_code_real_type reloc;
@@ -12751,7 +14273,7 @@ arm_frag_align_code (n, max)
 {
   char * p;
 
-  /* We assume that there will never be a requirment
+  /* We assume that there will never be a requirement
      to support alignments greater than 32 bytes.  */
   if (max > MAX_MEM_FOR_RS_ALIGN_CODE)
     as_fatal (_("alignments greater than 32 bytes not supported in .text sections."));

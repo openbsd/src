@@ -1,6 +1,6 @@
 /* A.out "format 1" file handling code for BFD.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 2000,
-   2001, 2002
+   2001, 2002, 2003
    Free Software Foundation, Inc.
    Written by Cygnus Support.
 
@@ -834,7 +834,7 @@ static const struct aout_backend_data sunos4_aout_backend =
 #define MY_bfd_debug_info_start		bfd_void
 #define MY_bfd_debug_info_end		bfd_void
 #define MY_bfd_debug_info_accumulate	\
-			(void (*) PARAMS ((bfd *, struct sec *))) bfd_void
+		(void (*) PARAMS ((bfd *, struct bfd_section *))) bfd_void
 #define MY_core_file_p			sunos4_core_file_p
 #define MY_write_object_contents	NAME(aout,sunos4_write_object_contents)
 #define MY_backend_data			&sunos4_aout_backend

@@ -135,6 +135,12 @@ extern const struct mn10300_operand mn10300_operands[];
 
 #define MN10300_OPERAND_24BIT 0x800000
 
+#define MN10300_OPERAND_FSREG 0x1000000
+
+#define MN10300_OPERAND_FDREG 0x2000000
+
+#define MN10300_OPERAND_FPCR 0x4000000
+
 /* Opcode Formats.  */
 #define FMT_S0 1
 #define FMT_S1 2
@@ -151,11 +157,13 @@ extern const struct mn10300_operand mn10300_operands[];
 #define FMT_D8 13
 #define FMT_D9 14
 #define FMT_D10 15
+#define FMT_D3 16
 
 /* Variants of the mn10300 which have additional opcodes.  */
 #define MN103 300
 #define AM30  300
 
 #define AM33 330
+#define AM33_2 332
 
 #endif /* MN10300_H */

@@ -34,7 +34,11 @@ typedef enum
     HEX_D,
     HEX_E,
     HEX_F,
+    HEX_XX00,
+    HEX_00YY,
     REG_N,
+    REG_N_D,     /* nnn0 */
+    REG_N_B01,   /* nn01 */
     REG_M,
     SDT_REG_N,
     REG_NM,
@@ -60,9 +64,12 @@ typedef enum
     NOPY,
     MOVX,
     MOVY,
+    MOVX_NOPY,
+    MOVY_NOPX,
     PSH,
     PMUL,
     PPI3,
+    PPI3NC,
     PDC,
     PPIC,
     REPEAT
@@ -88,8 +95,6 @@ typedef enum
     A_INC_N,
     A_IND_M,
     A_IND_N,
-    A_PMOD_N,
-    A_PMODY_N,
     A_IND_R0_REG_M,
     A_IND_R0_REG_N,
     A_MACH,
@@ -113,6 +118,27 @@ typedef enum
     DSP_REG_E,
     DSP_REG_F,
     DSP_REG_G,
+    DSP_REG_A_M,
+    DSP_REG_AX,
+    DSP_REG_XY,
+    DSP_REG_AY,
+    DSP_REG_YX,
+    AX_INC_N,
+    AY_INC_N,
+    AXY_INC_N,
+    AYX_INC_N,
+    AX_IND_N,
+    AY_IND_N,
+    AXY_IND_N,
+    AYX_IND_N,
+    AX_PMOD_N,
+    AXY_PMOD_N,
+    AY_PMOD_N,
+    AYX_PMOD_N,
+    AS_DEC_N,
+    AS_INC_N,
+    AS_IND_N,
+    AS_PMOD_N,
     A_A0,
     A_X0,
     A_X1,
@@ -156,24 +182,34 @@ sh_dsp_reg_nums;
 #define arch_sh3e    0x0008
 #define arch_sh4     0x0010
 #define arch_sh2e    0x0020
+#define arch_sh4a    0x0040
 #define arch_sh_dsp  0x0100
 #define arch_sh3_dsp 0x0200
+#define arch_sh4al_dsp 0x0400
+#define arch_sh4_nofpu 0x1000
+#define arch_sh4a_nofpu 0x2000
 
 #define arch_sh1_up  (arch_sh1 | arch_sh2_up)
 #define arch_sh2_up  (arch_sh2 | arch_sh2e_up | arch_sh3_up | arch_sh_dsp)
 #define arch_sh2e_up (arch_sh2e | arch_sh3e_up)
-#define arch_sh3_up  (arch_sh3 | arch_sh3e_up | arch_sh3_dsp)
+#define arch_sh3_up  (arch_sh3 | arch_sh3e_up | arch_sh3_dsp_up \
+		      | arch_sh4_nofp_up)
 #define arch_sh3e_up (arch_sh3e | arch_sh4_up)
-#define arch_sh4_up  arch_sh4
+#define arch_sh4_up  (arch_sh4 | arch_sh4a_up)
+#define arch_sh4a_up (arch_sh4a)
 
 #define arch_sh_dsp_up (arch_sh_dsp | arch_sh3_dsp_up)
-#define arch_sh3_dsp_up arch_sh3_dsp
+#define arch_sh3_dsp_up (arch_sh3_dsp | arch_sh4al_dsp_up)
+#define arch_sh4al_dsp_up (arch_sh4al_dsp)
+
+#define arch_sh4_nofp_up (arch_sh4_nofpu | arch_sh4_up | arch_sh4a_nofp_up)
+#define arch_sh4a_nofp_up (arch_sh4a_nofpu | arch_sh4a_up | arch_sh4al_dsp_up)
 
 typedef struct
 {
   char *name;
   sh_arg_type arg[4];
-  sh_nibble_type nibbles[4];
+  sh_nibble_type nibbles[5];
   int arch;
 } sh_opcode_info;
 
@@ -210,6 +246,8 @@ const sh_opcode_info sh_table[] =
 /* 10001111i8p1.... bf.s <bdisp8>       */{"bf.s",{A_BDISP8},{HEX_8,HEX_F,BRANCH_8}, arch_sh2_up},
 
 /* 10001111i8p1.... bf/s <bdisp8>       */{"bf/s",{A_BDISP8},{HEX_8,HEX_F,BRANCH_8}, arch_sh2_up},
+
+/* 0000000010001000 clrdmxy             */{"clrdmxy",{0},{HEX_0,HEX_0,HEX_8,HEX_8}, arch_sh4al_dsp_up},
 
 /* 0000000000101000 clrmac              */{"clrmac",{0},{HEX_0,HEX_0,HEX_2,HEX_8}, arch_sh1_up},
 
@@ -249,6 +287,8 @@ const sh_opcode_info sh_table[] =
 
 /* 0110nnnnmmmm1101 extu.w <REG_M>,<REG_N>*/{"extu.w",{ A_REG_M,A_REG_N},{HEX_6,REG_N,REG_M,HEX_D}, arch_sh1_up},
 
+/* 0000nnnn11100011 icbi @<REG_N>       */{"icbi",{A_IND_N},{HEX_0,REG_N,HEX_E,HEX_3}, arch_sh4a_nofp_up},
+
 /* 0100nnnn00101011 jmp @<REG_N>        */{"jmp",{A_IND_N},{HEX_4,REG_N,HEX_2,HEX_B}, arch_sh1_up},
 
 /* 0100nnnn00001011 jsr @<REG_N>        */{"jsr",{A_IND_N},{HEX_4,REG_N,HEX_0,HEX_B}, arch_sh1_up},
@@ -269,7 +309,7 @@ const sh_opcode_info sh_table[] =
 
 /* 0100nnnn01001110 ldc <REG_N>,SPC     */{"ldc",{A_REG_N,A_SPC},{HEX_4,REG_N,HEX_4,HEX_E}, arch_sh3_up},
 
-/* 0100nnnn11111010 ldc <REG_N>,DBR     */{"ldc",{A_REG_N,A_DBR},{HEX_4,REG_N,HEX_F,HEX_A}, arch_sh4_up},
+/* 0100nnnn11111010 ldc <REG_N>,DBR     */{"ldc",{A_REG_N,A_DBR},{HEX_4,REG_N,HEX_F,HEX_A}, arch_sh4_nofp_up},
 
 /* 0100nnnn1xxx1110 ldc <REG_N>,Rn_BANK */{"ldc",{A_REG_N,A_REG_B},{HEX_4,REG_N,REG_B,HEX_E}, arch_sh3_up},
 
@@ -289,9 +329,12 @@ const sh_opcode_info sh_table[] =
 
 /* 0100nnnn01000111 ldc.l @<REG_N>+,SPC */{"ldc.l",{A_INC_N,A_SPC},{HEX_4,REG_N,HEX_4,HEX_7}, arch_sh3_up},
 
-/* 0100nnnn11110110 ldc.l @<REG_N>+,DBR */{"ldc.l",{A_INC_N,A_DBR},{HEX_4,REG_N,HEX_F,HEX_6}, arch_sh4_up},
+/* 0100nnnn11110110 ldc.l @<REG_N>+,DBR */{"ldc.l",{A_INC_N,A_DBR},{HEX_4,REG_N,HEX_F,HEX_6}, arch_sh4_nofp_up},
 
 /* 0100nnnn1xxx0111 ldc.l <REG_N>,Rn_BANK */{"ldc.l",{A_INC_N,A_REG_B},{HEX_4,REG_N,REG_B,HEX_7}, arch_sh3_up},
+
+/* 0100mmmm00110100 ldrc <REG_M>        */{"ldrc",{A_REG_M},{HEX_4,REG_M,HEX_3,HEX_4}, arch_sh4al_dsp_up},
+/* 10001010i8*1.... ldrc #<imm>         */{"ldrc",{A_IMM},{HEX_8,HEX_A,IMM0_8}, arch_sh4al_dsp_up},
 
 /* 10001110i8p2.... ldre @(<disp>,PC)	*/{"ldre",{A_DISP_PC},{HEX_8,HEX_E,PCRELIMM_8BY2}, arch_sh_dsp_up},
 
@@ -414,10 +457,15 @@ const sh_opcode_info sh_table[] =
 /* 11000001i8*2.... mov.w R0,@(<disp>,GBR)*/{"mov.w",{A_R0,A_DISP_GBR},{HEX_C,HEX_1,IMM1_8BY2}, arch_sh1_up},
 
 /* 11000111i8p4.... mova @(<disp>,PC),R0*/{"mova",{A_DISP_PC,A_R0},{HEX_C,HEX_7,PCRELIMM_8BY4}, arch_sh1_up},
-/* 0000nnnn11000011 movca.l R0,@<REG_N> */{"movca.l",{A_R0,A_IND_N},{HEX_0,REG_N,HEX_C,HEX_3}, arch_sh4_up},
+/* 0000nnnn11000011 movca.l R0,@<REG_N> */{"movca.l",{A_R0,A_IND_N},{HEX_0,REG_N,HEX_C,HEX_3}, arch_sh4_nofp_up},
 
+/* 0000nnnn01110011 movco.l r0,@<REG_N> */{"movco.l",{A_R0,A_IND_N},{HEX_0,REG_N,HEX_7,HEX_3}, arch_sh4a_nofp_up},
+/* 0000mmmm01100011 movli.l @<REG_M>,r0 */{"movli.l",{A_IND_M,A_R0},{HEX_0,REG_M,HEX_6,HEX_3}, arch_sh4a_nofp_up},
 
 /* 0000nnnn00101001 movt <REG_N>        */{"movt",{A_REG_N},{HEX_0,REG_N,HEX_2,HEX_9}, arch_sh1_up},
+
+/* 0100mmmm10101001 movua.l @<REG_M>,r0 */{"movua.l",{A_IND_M,A_R0},{HEX_4,REG_M,HEX_A,HEX_9}, arch_sh4a_nofp_up},
+/* 0100mmmm11101001 movua.l @<REG_M>+,r0 */{"movua.l",{A_INC_M,A_R0},{HEX_4,REG_M,HEX_E,HEX_9}, arch_sh4a_nofp_up},
 
 /* 0010nnnnmmmm1111 muls.w <REG_M>,<REG_N>*/{"muls.w",{ A_REG_M,A_REG_N},{HEX_2,REG_N,REG_M,HEX_F}, arch_sh1_up},
 /* 0010nnnnmmmm1111 muls <REG_M>,<REG_N>*/{"muls",{ A_REG_M,A_REG_N},{HEX_2,REG_N,REG_M,HEX_F}, arch_sh1_up},
@@ -434,11 +482,11 @@ const sh_opcode_info sh_table[] =
 /* 0000000000001001 nop                 */{"nop",{0},{HEX_0,HEX_0,HEX_0,HEX_9}, arch_sh1_up},
 
 /* 0110nnnnmmmm0111 not <REG_M>,<REG_N> */{"not",{ A_REG_M,A_REG_N},{HEX_6,REG_N,REG_M,HEX_7}, arch_sh1_up},
-/* 0000nnnn10010011 ocbi @<REG_N>       */{"ocbi",{A_IND_N},{HEX_0,REG_N,HEX_9,HEX_3}, arch_sh4_up},
+/* 0000nnnn10010011 ocbi @<REG_N>       */{"ocbi",{A_IND_N},{HEX_0,REG_N,HEX_9,HEX_3}, arch_sh4_nofp_up},
 
-/* 0000nnnn10100011 ocbp @<REG_N>       */{"ocbp",{A_IND_N},{HEX_0,REG_N,HEX_A,HEX_3}, arch_sh4_up},
+/* 0000nnnn10100011 ocbp @<REG_N>       */{"ocbp",{A_IND_N},{HEX_0,REG_N,HEX_A,HEX_3}, arch_sh4_nofp_up},
 
-/* 0000nnnn10110011 ocbwb @<REG_N>      */{"ocbwb",{A_IND_N},{HEX_0,REG_N,HEX_B,HEX_3}, arch_sh4_up},
+/* 0000nnnn10110011 ocbwb @<REG_N>      */{"ocbwb",{A_IND_N},{HEX_0,REG_N,HEX_B,HEX_3}, arch_sh4_nofp_up},
 
 
 /* 11001011i8*1.... or #<imm>,R0        */{"or",{A_IMM,A_R0},{HEX_C,HEX_B,IMM0_8}, arch_sh1_up},
@@ -447,7 +495,9 @@ const sh_opcode_info sh_table[] =
 
 /* 11001111i8*1.... or.b #<imm>,@(R0,GBR)*/{"or.b",{A_IMM,A_R0_GBR},{HEX_C,HEX_F,IMM0_8}, arch_sh1_up},
 
-/* 0000nnnn10000011 pref @<REG_N>       */{"pref",{A_IND_N},{HEX_0,REG_N,HEX_8,HEX_3}, arch_sh4_up},
+/* 0000nnnn10000011 pref @<REG_N>       */{"pref",{A_IND_N},{HEX_0,REG_N,HEX_8,HEX_3}, arch_sh4_nofp_up},
+
+/* 0000nnnn11010011 prefi @<REG_N>      */{"prefi",{A_IND_N},{HEX_0,REG_N,HEX_D,HEX_3}, arch_sh4a_nofp_up},
 
 /* 0100nnnn00100100 rotcl <REG_N>       */{"rotcl",{A_REG_N},{HEX_4,REG_N,HEX_2,HEX_4}, arch_sh1_up},
 
@@ -460,6 +510,9 @@ const sh_opcode_info sh_table[] =
 /* 0000000000101011 rte                 */{"rte",{0},{HEX_0,HEX_0,HEX_2,HEX_B}, arch_sh1_up},
 
 /* 0000000000001011 rts                 */{"rts",{0},{HEX_0,HEX_0,HEX_0,HEX_B}, arch_sh1_up},
+
+/* 0000000010011000 setdmx              */{"setdmx",{0},{HEX_0,HEX_0,HEX_9,HEX_8}, arch_sh4al_dsp_up},
+/* 0000000011001000 setdmy              */{"setdmy",{0},{HEX_0,HEX_0,HEX_C,HEX_8}, arch_sh4al_dsp_up},
 
 /* 0000000001011000 sets                */{"sets",{0},{HEX_0,HEX_0,HEX_5,HEX_8}, arch_sh1_up},
 /* 0000000000011000 sett                */{"sett",{0},{HEX_0,HEX_0,HEX_1,HEX_8}, arch_sh1_up},
@@ -514,9 +567,9 @@ const sh_opcode_info sh_table[] =
 
 /* 0000nnnn01000010 stc SPC,<REG_N>     */{"stc",{A_SPC,A_REG_N},{HEX_0,REG_N,HEX_4,HEX_2}, arch_sh3_up},
 
-/* 0000nnnn00111010 stc SGR,<REG_N>     */{"stc",{A_SGR,A_REG_N},{HEX_0,REG_N,HEX_3,HEX_A}, arch_sh4_up},
+/* 0000nnnn00111010 stc SGR,<REG_N>     */{"stc",{A_SGR,A_REG_N},{HEX_0,REG_N,HEX_3,HEX_A}, arch_sh4_nofp_up},
 
-/* 0000nnnn11111010 stc DBR,<REG_N>     */{"stc",{A_DBR,A_REG_N},{HEX_0,REG_N,HEX_F,HEX_A}, arch_sh4_up},
+/* 0000nnnn11111010 stc DBR,<REG_N>     */{"stc",{A_DBR,A_REG_N},{HEX_0,REG_N,HEX_F,HEX_A}, arch_sh4_nofp_up},
 
 /* 0000nnnn1xxx0010 stc Rn_BANK,<REG_N> */{"stc",{A_REG_B,A_REG_N},{HEX_0,REG_N,REG_B,HEX_2}, arch_sh3_up},
 
@@ -536,9 +589,9 @@ const sh_opcode_info sh_table[] =
 
 /* 0100nnnn00010011 stc.l GBR,@-<REG_N> */{"stc.l",{A_GBR,A_DEC_N},{HEX_4,REG_N,HEX_1,HEX_3}, arch_sh1_up},
 
-/* 0100nnnn00110010 stc.l SGR,@-<REG_N> */{"stc.l",{A_SGR,A_DEC_N},{HEX_4,REG_N,HEX_3,HEX_2}, arch_sh4_up},
+/* 0100nnnn00110010 stc.l SGR,@-<REG_N> */{"stc.l",{A_SGR,A_DEC_N},{HEX_4,REG_N,HEX_3,HEX_2}, arch_sh4_nofp_up},
 
-/* 0100nnnn11110010 stc.l DBR,@-<REG_N> */{"stc.l",{A_DBR,A_DEC_N},{HEX_4,REG_N,HEX_F,HEX_2}, arch_sh4_up},
+/* 0100nnnn11110010 stc.l DBR,@-<REG_N> */{"stc.l",{A_DBR,A_DEC_N},{HEX_4,REG_N,HEX_F,HEX_2}, arch_sh4_nofp_up},
 
 /* 0100nnnn1xxx0011 stc.l Rn_BANK,@-<REG_N> */{"stc.l",{A_REG_B,A_DEC_N},{HEX_4,REG_N,REG_B,HEX_3}, arch_sh3_up},
 
@@ -596,6 +649,8 @@ const sh_opcode_info sh_table[] =
 
 /* 0110nnnnmmmm1001 swap.w <REG_M>,<REG_N>*/{"swap.w",{ A_REG_M,A_REG_N},{HEX_6,REG_N,REG_M,HEX_9}, arch_sh1_up},
 
+/* 0000000010101011 synco               */{"synco",{0},{HEX_0,HEX_0,HEX_A,HEX_B}, arch_sh4a_nofp_up},
+
 /* 0100nnnn00011011 tas.b @<REG_N>      */{"tas.b",{A_IND_N},{HEX_4,REG_N,HEX_1,HEX_B}, arch_sh1_up},
 
 /* 11000011i8*1.... trapa #<imm>        */{"trapa",{A_IMM},{HEX_C,HEX_3,IMM0_8}, arch_sh1_up},
@@ -634,7 +689,7 @@ const sh_opcode_info sh_table[] =
 
 /* 111101nnmmmm0010 movs.w @<REG_N>+,<DSP_REG_M> */   {"movs.w",{A_INC_N,DSP_REG_M},{HEX_F,SDT_REG_N,REG_M,HEX_8}, arch_sh_dsp_up},
 
-/* 111101nnmmmm0011 movs.w @<REG_N>+r8,<DSP_REG_M> */ {"movs.w",{A_PMOD_N,DSP_REG_M},{HEX_F,SDT_REG_N,REG_M,HEX_C}, arch_sh_dsp_up},
+/* 111101nnmmmm0011 movs.w @<REG_N>+r8,<DSP_REG_M> */ {"movs.w",{AS_PMOD_N,DSP_REG_M},{HEX_F,SDT_REG_N,REG_M,HEX_C}, arch_sh_dsp_up},
 
 /* 111101nnmmmm0100 movs.w <DSP_REG_M>,@-<REG_N> */   {"movs.w",{DSP_REG_M,A_DEC_N},{HEX_F,SDT_REG_N,REG_M,HEX_1}, arch_sh_dsp_up},
 
@@ -642,7 +697,7 @@ const sh_opcode_info sh_table[] =
 
 /* 111101nnmmmm0110 movs.w <DSP_REG_M>,@<REG_N>+ */   {"movs.w",{DSP_REG_M,A_INC_N},{HEX_F,SDT_REG_N,REG_M,HEX_9}, arch_sh_dsp_up},
 
-/* 111101nnmmmm0111 movs.w <DSP_REG_M>,@<REG_N>+r8 */ {"movs.w",{DSP_REG_M,A_PMOD_N},{HEX_F,SDT_REG_N,REG_M,HEX_D}, arch_sh_dsp_up},
+/* 111101nnmmmm0111 movs.w <DSP_REG_M>,@<REG_N>+r8 */ {"movs.w",{DSP_REG_M,AS_PMOD_N},{HEX_F,SDT_REG_N,REG_M,HEX_D}, arch_sh_dsp_up},
 
 /* 111101nnmmmm1000 movs.l @-<REG_N>,<DSP_REG_M> */   {"movs.l",{A_DEC_N,DSP_REG_M},{HEX_F,SDT_REG_N,REG_M,HEX_2}, arch_sh_dsp_up},
 
@@ -650,7 +705,7 @@ const sh_opcode_info sh_table[] =
 
 /* 111101nnmmmm1010 movs.l @<REG_N>+,<DSP_REG_M> */   {"movs.l",{A_INC_N,DSP_REG_M},{HEX_F,SDT_REG_N,REG_M,HEX_A}, arch_sh_dsp_up},
 
-/* 111101nnmmmm1011 movs.l @<REG_N>+r8,<DSP_REG_M> */ {"movs.l",{A_PMOD_N,DSP_REG_M},{HEX_F,SDT_REG_N,REG_M,HEX_E}, arch_sh_dsp_up},
+/* 111101nnmmmm1011 movs.l @<REG_N>+r8,<DSP_REG_M> */ {"movs.l",{AS_PMOD_N,DSP_REG_M},{HEX_F,SDT_REG_N,REG_M,HEX_E}, arch_sh_dsp_up},
 
 /* 111101nnmmmm1100 movs.l <DSP_REG_M>,@-<REG_N> */   {"movs.l",{DSP_REG_M,A_DEC_N},{HEX_F,SDT_REG_N,REG_M,HEX_3}, arch_sh_dsp_up},
 
@@ -658,22 +713,51 @@ const sh_opcode_info sh_table[] =
 
 /* 111101nnmmmm1110 movs.l <DSP_REG_M>,@<REG_N>+ */   {"movs.l",{DSP_REG_M,A_INC_N},{HEX_F,SDT_REG_N,REG_M,HEX_B}, arch_sh_dsp_up},
 
-/* 111101nnmmmm1111 movs.l <DSP_REG_M>,@<REG_N>+r8 */ {"movs.l",{DSP_REG_M,A_PMOD_N},{HEX_F,SDT_REG_N,REG_M,HEX_F}, arch_sh_dsp_up},
+/* 111101nnmmmm1111 movs.l <DSP_REG_M>,@<REG_N>+r8 */ {"movs.l",{DSP_REG_M,AS_PMOD_N},{HEX_F,SDT_REG_N,REG_M,HEX_F}, arch_sh_dsp_up},
 
 /* 0*0*0*00** nopx */ {"nopx",{0},{PPI,NOPX}, arch_sh_dsp_up},
 /* *0*0*0**00 nopy */ {"nopy",{0},{PPI,NOPY}, arch_sh_dsp_up},
-/* n*m*0*01** movx.w @<REG_N>,<DSP_REG_X> */    {"movx.w",{A_IND_N,DSP_REG_X},{PPI,MOVX,HEX_1}, arch_sh_dsp_up},
-/* n*m*0*10** movx.w @<REG_N>+,<DSP_REG_X> */   {"movx.w",{A_INC_N,DSP_REG_X},{PPI,MOVX,HEX_2}, arch_sh_dsp_up},
-/* n*m*0*11** movx.w @<REG_N>+r8,<DSP_REG_X> */ {"movx.w",{A_PMOD_N,DSP_REG_X},{PPI,MOVX,HEX_3}, arch_sh_dsp_up},
-/* n*m*1*01** movx.w <DSP_REG_M>,@<REG_N> */    {"movx.w",{DSP_REG_M,A_IND_N},{PPI,MOVX,HEX_9}, arch_sh_dsp_up},
-/* n*m*1*10** movx.w <DSP_REG_M>,@<REG_N>+ */   {"movx.w",{DSP_REG_M,A_INC_N},{PPI,MOVX,HEX_A}, arch_sh_dsp_up},
-/* n*m*1*11** movx.w <DSP_REG_M>,@<REG_N>+r8 */ {"movx.w",{DSP_REG_M,A_PMOD_N},{PPI,MOVX,HEX_B}, arch_sh_dsp_up},
-/* *n*m*0**01 movy.w @<REG_N>,<DSP_REG_Y> */    {"movy.w",{A_IND_N,DSP_REG_Y},{PPI,MOVY,HEX_1}, arch_sh_dsp_up},
-/* *n*m*0**10 movy.w @<REG_N>+,<DSP_REG_Y> */   {"movy.w",{A_INC_N,DSP_REG_Y},{PPI,MOVY,HEX_2}, arch_sh_dsp_up},
-/* *n*m*0**11 movy.w @<REG_N>+r9,<DSP_REG_Y> */ {"movy.w",{A_PMODY_N,DSP_REG_Y},{PPI,MOVY,HEX_3}, arch_sh_dsp_up},
-/* *n*m*1**01 movy.w <DSP_REG_M>,@<REG_N> */    {"movy.w",{DSP_REG_M,A_IND_N},{PPI,MOVY,HEX_9}, arch_sh_dsp_up},
-/* *n*m*1**10 movy.w <DSP_REG_M>,@<REG_N>+ */   {"movy.w",{DSP_REG_M,A_INC_N},{PPI,MOVY,HEX_A}, arch_sh_dsp_up},
-/* *n*m*1**11 movy.w <DSP_REG_M>,@<REG_N>+r9 */ {"movy.w",{DSP_REG_M,A_PMODY_N},{PPI,MOVY,HEX_B}, arch_sh_dsp_up},
+/* n*m*0*01** movx.w @<REG_N>,<DSP_REG_X> */    {"movx.w",{AX_IND_N,DSP_REG_X},{PPI,MOVX,HEX_1}, arch_sh_dsp_up},
+/* n*m*0*10** movx.w @<REG_N>+,<DSP_REG_X> */   {"movx.w",{AX_INC_N,DSP_REG_X},{PPI,MOVX,HEX_2}, arch_sh_dsp_up},
+/* n*m*0*11** movx.w @<REG_N>+r8,<DSP_REG_X> */ {"movx.w",{AX_PMOD_N,DSP_REG_X},{PPI,MOVX,HEX_3}, arch_sh_dsp_up},
+/* n*m*1*01** movx.w <DSP_REG_M>,@<REG_N> */    {"movx.w",{DSP_REG_A_M,AX_IND_N},{PPI,MOVX,HEX_9}, arch_sh_dsp_up},
+/* n*m*1*10** movx.w <DSP_REG_M>,@<REG_N>+ */   {"movx.w",{DSP_REG_A_M,AX_INC_N},{PPI,MOVX,HEX_A}, arch_sh_dsp_up},
+/* n*m*1*11** movx.w <DSP_REG_M>,@<REG_N>+r8 */ {"movx.w",{DSP_REG_A_M,AX_PMOD_N},{PPI,MOVX,HEX_B}, arch_sh_dsp_up},
+
+/* nnmm000100 movx.w @<REG_Axy>,<DSP_REG_XY> */ {"movx.w",{AXY_IND_N,DSP_REG_XY},{PPI,MOVX_NOPY,HEX_0,HEX_4}, arch_sh4al_dsp_up},
+/* nnmm001000 movx.w @<REG_Axy>+,<DSP_REG_XY> */{"movx.w",{AXY_INC_N,DSP_REG_XY},{PPI,MOVX_NOPY,HEX_0,HEX_8}, arch_sh4al_dsp_up},
+/* nnmm001100 movx.w @<REG_Axy>+r8,<DSP_REG_XY> */{"movx.w",{AXY_PMOD_N,DSP_REG_XY},{PPI,MOVX_NOPY,HEX_0,HEX_C}, arch_sh4al_dsp_up},
+/* nnmm100100 movx.w <DSP_REG_AX>,@<REG_Axy> */ {"movx.w",{DSP_REG_AX,AXY_IND_N},{PPI,MOVX_NOPY,HEX_2,HEX_4}, arch_sh4al_dsp_up},
+/* nnmm101000 movx.w <DSP_REG_AX>,@<REG_Axy>+ */{"movx.w",{DSP_REG_AX,AXY_INC_N},{PPI,MOVX_NOPY,HEX_2,HEX_8}, arch_sh4al_dsp_up},
+/* nnmm101100 movx.w <DSP_REG_AX>,@<REG_Axy>+r8 */{"movx.w",{DSP_REG_AX,AXY_PMOD_N},{PPI,MOVX_NOPY,HEX_2,HEX_C}, arch_sh4al_dsp_up},
+
+/* nnmm010100 movx.l @<REG_Axy>,<DSP_REG_XY> */ {"movx.l",{AXY_IND_N,DSP_REG_XY},{PPI,MOVX_NOPY,HEX_1,HEX_4}, arch_sh4al_dsp_up},
+/* nnmm011000 movx.l @<REG_Axy>+,<DSP_REG_XY> */{"movx.l",{AXY_INC_N,DSP_REG_XY},{PPI,MOVX_NOPY,HEX_1,HEX_8}, arch_sh4al_dsp_up},
+/* nnmm011100 movx.l @<REG_Axy>+r8,<DSP_REG_XY> */{"movx.l",{AXY_PMOD_N,DSP_REG_XY},{PPI,MOVX_NOPY,HEX_1,HEX_C}, arch_sh4al_dsp_up},
+/* nnmm110100 movx.l <DSP_REG_AX>,@<REG_Axy> */ {"movx.l",{DSP_REG_AX,AXY_IND_N},{PPI,MOVX_NOPY,HEX_3,HEX_4}, arch_sh4al_dsp_up},
+/* nnmm111000 movx.l <DSP_REG_AX>,@<REG_Axy>+ */{"movx.l",{DSP_REG_AX,AXY_INC_N},{PPI,MOVX_NOPY,HEX_3,HEX_8}, arch_sh4al_dsp_up},
+/* nnmm111100 movx.l <DSP_REG_AX>,@<REG_Axy>+r8 */{"movx.l",{DSP_REG_AX,AXY_PMOD_N},{PPI,MOVX_NOPY,HEX_3,HEX_C}, arch_sh4al_dsp_up},
+
+/* *n*m*0**01 movy.w @<REG_N>,<DSP_REG_Y> */    {"movy.w",{AY_IND_N,DSP_REG_Y},{PPI,MOVY,HEX_1}, arch_sh_dsp_up},
+/* *n*m*0**10 movy.w @<REG_N>+,<DSP_REG_Y> */   {"movy.w",{AY_INC_N,DSP_REG_Y},{PPI,MOVY,HEX_2}, arch_sh_dsp_up},
+/* *n*m*0**11 movy.w @<REG_N>+r9,<DSP_REG_Y> */ {"movy.w",{AY_PMOD_N,DSP_REG_Y},{PPI,MOVY,HEX_3}, arch_sh_dsp_up},
+/* *n*m*1**01 movy.w <DSP_REG_M>,@<REG_N> */    {"movy.w",{DSP_REG_A_M,AY_IND_N},{PPI,MOVY,HEX_9}, arch_sh_dsp_up},
+/* *n*m*1**10 movy.w <DSP_REG_M>,@<REG_N>+ */   {"movy.w",{DSP_REG_A_M,AY_INC_N},{PPI,MOVY,HEX_A}, arch_sh_dsp_up},
+/* *n*m*1**11 movy.w <DSP_REG_M>,@<REG_N>+r9 */ {"movy.w",{DSP_REG_A_M,AY_PMOD_N},{PPI,MOVY,HEX_B}, arch_sh_dsp_up},
+
+/* nnmm000001 movy.w @<REG_Ayx>,<DSP_REG_YX> */ {"movy.w",{AYX_IND_N,DSP_REG_YX},{PPI,MOVY_NOPX,HEX_0,HEX_1}, arch_sh4al_dsp_up},
+/* nnmm000010 movy.w @<REG_Ayx>+,<DSP_REG_YX> */{"movy.w",{AYX_INC_N,DSP_REG_YX},{PPI,MOVY_NOPX,HEX_0,HEX_2}, arch_sh4al_dsp_up},
+/* nnmm000011 movy.w @<REG_Ayx>+r8,<DSP_REG_YX> */{"movy.w",{AYX_PMOD_N,DSP_REG_YX},{PPI,MOVY_NOPX,HEX_0,HEX_3}, arch_sh4al_dsp_up},
+/* nnmm010001 movy.w <DSP_REG_AY>,@<REG_Ayx> */ {"movy.w",{DSP_REG_AY,AYX_IND_N},{PPI,MOVY_NOPX,HEX_1,HEX_1}, arch_sh4al_dsp_up},
+/* nnmm010010 movy.w <DSP_REG_AY>,@<REG_Ayx>+ */{"movy.w",{DSP_REG_AY,AYX_INC_N},{PPI,MOVY_NOPX,HEX_1,HEX_2}, arch_sh4al_dsp_up},
+/* nnmm010011 movy.w <DSP_REG_AY>,@<REG_Ayx>+r8 */{"movy.w",{DSP_REG_AY,AYX_PMOD_N},{PPI,MOVY_NOPX,HEX_1,HEX_3}, arch_sh4al_dsp_up},
+
+/* nnmm100001 movy.l @<REG_Ayx>,<DSP_REG_YX> */ {"movy.l",{AYX_IND_N,DSP_REG_YX},{PPI,MOVY_NOPX,HEX_2,HEX_1}, arch_sh4al_dsp_up},
+/* nnmm100010 movy.l @<REG_Ayx>+,<DSP_REG_YX> */{"movy.l",{AYX_INC_N,DSP_REG_YX},{PPI,MOVY_NOPX,HEX_2,HEX_2}, arch_sh4al_dsp_up},
+/* nnmm100011 movy.l @<REG_Ayx>+r8,<DSP_REG_YX> */{"movy.l",{AYX_PMOD_N,DSP_REG_YX},{PPI,MOVY_NOPX,HEX_2,HEX_3}, arch_sh4al_dsp_up},
+/* nnmm110001 movy.l <DSP_REG_AY>,@<REG_Ayx> */ {"movy.l",{DSP_REG_AY,AYX_IND_N},{PPI,MOVY_NOPX,HEX_3,HEX_1}, arch_sh4al_dsp_up},
+/* nnmm110010 movy.l <DSP_REG_AY>,@<REG_Ayx>+ */{"movy.l",{DSP_REG_AY,AYX_INC_N},{PPI,MOVY_NOPX,HEX_3,HEX_2}, arch_sh4al_dsp_up},
+/* nnmm110011 movy.l <DSP_REG_AY>,@<REG_Ayx>+r8 */{"movy.l",{DSP_REG_AY,AYX_PMOD_N},{PPI,MOVY_NOPX,HEX_3,HEX_3}, arch_sh4al_dsp_up},
 
 /* 01aaeeffxxyyggnn pmuls Se,Sf,Dg */ {"pmuls",{DSP_REG_E,DSP_REG_F,DSP_REG_G},{PPI,PMUL}, arch_sh_dsp_up},
 /* 10100000xxyynnnn psubc <DSP_REG_X>,<DSP_REG_Y>,<DSP_REG_N> */
@@ -687,13 +771,21 @@ const sh_opcode_info sh_table[] =
 /* 10110100xxyynnnn pwad <DSP_REG_X>,<DSP_REG_Y>,<DSP_REG_N> */
 {"pwad", {DSP_REG_X,DSP_REG_Y,DSP_REG_N},{PPI,PPI3,HEX_B,HEX_4}, arch_sh_dsp_up},
 /* 10001000xxyynnnn pabs <DSP_REG_X>,<DSP_REG_N> */
-{"pabs", {DSP_REG_X,DSP_REG_N},{PPI,PPI3,HEX_8,HEX_8}, arch_sh_dsp_up},
+{"pabs", {DSP_REG_X,DSP_REG_N},{PPI,PPI3NC,HEX_8,HEX_8}, arch_sh_dsp_up},
+/* 1000100!xx01nnnn pabs <DSP_REG_X>,<DSP_REG_N> */
+{"pabs", {DSP_REG_X,DSP_REG_N},{PPI,PPIC,HEX_8,HEX_9,HEX_1}, arch_sh4al_dsp_up},
 /* 10101000xxyynnnn pabs <DSP_REG_Y>,<DSP_REG_N> */
-{"pabs", {DSP_REG_Y,DSP_REG_N},{PPI,PPI3,HEX_A,HEX_8}, arch_sh_dsp_up},
+{"pabs", {DSP_REG_Y,DSP_REG_N},{PPI,PPI3NC,HEX_A,HEX_8}, arch_sh_dsp_up},
+/* 1010100!01yynnnn pabs <DSP_REG_Y>,<DSP_REG_N> */
+{"pabs", {DSP_REG_Y,DSP_REG_N},{PPI,PPIC,HEX_A,HEX_9,HEX_4}, arch_sh4al_dsp_up},
 /* 10011000xxyynnnn prnd <DSP_REG_X>,<DSP_REG_N> */
-{"prnd", {DSP_REG_X,DSP_REG_N},{PPI,PPI3,HEX_9,HEX_8}, arch_sh_dsp_up},
+{"prnd", {DSP_REG_X,DSP_REG_N},{PPI,PPI3NC,HEX_9,HEX_8}, arch_sh_dsp_up},
+/* 1001100!xx01nnnn prnd <DSP_REG_X>,<DSP_REG_N> */
+{"prnd", {DSP_REG_X,DSP_REG_N},{PPI,PPIC,HEX_9,HEX_9,HEX_1}, arch_sh4al_dsp_up},
 /* 10111000xxyynnnn prnd <DSP_REG_Y>,<DSP_REG_N> */
-{"prnd", {DSP_REG_Y,DSP_REG_N},{PPI,PPI3,HEX_B,HEX_8}, arch_sh_dsp_up},
+{"prnd", {DSP_REG_Y,DSP_REG_N},{PPI,PPI3NC,HEX_B,HEX_8}, arch_sh_dsp_up},
+/* 1011100!01yynnnn prnd <DSP_REG_Y>,<DSP_REG_N> */
+{"prnd", {DSP_REG_Y,DSP_REG_N},{PPI,PPIC,HEX_B,HEX_9,HEX_4}, arch_sh4al_dsp_up},
 
 {"dct",{0},{PPI,PDC,HEX_1}, arch_sh_dsp_up},
 {"dcf",{0},{PPI,PDC,HEX_2}, arch_sh_dsp_up},
@@ -706,6 +798,8 @@ const sh_opcode_info sh_table[] =
 /* 00010iiiiiiinnnn psha #<imm>,<DSP_REG_N> */ {"psha",{A_IMM,DSP_REG_N},{PPI,PSH,HEX_1}, arch_sh_dsp_up},
 /* 10100001xxyynnnn psub <DSP_REG_X>,<DSP_REG_Y>,<DSP_REG_N> */
 {"psub", {DSP_REG_X,DSP_REG_Y,DSP_REG_N},{PPI,PPIC,HEX_A,HEX_1}, arch_sh_dsp_up},
+/* 10000101xxyynnnn psub <DSP_REG_Y>,<DSP_REG_X>,<DSP_REG_N> */
+{"psub", {DSP_REG_Y,DSP_REG_X,DSP_REG_N},{PPI,PPIC,HEX_8,HEX_5}, arch_sh4al_dsp_up},
 /* 10110001xxyynnnn padd <DSP_REG_X>,<DSP_REG_Y>,<DSP_REG_N> */
 {"padd", {DSP_REG_X,DSP_REG_Y,DSP_REG_N},{PPI,PPIC,HEX_B,HEX_1}, arch_sh_dsp_up},
 /* 10010101xxyynnnn pand <DSP_REG_X>,<DSP_REG_Y>,<DSP_REG_N> */
@@ -718,16 +812,16 @@ const sh_opcode_info sh_table[] =
 {"pdec", {DSP_REG_X,DSP_REG_N},{PPI,PPIC,HEX_8,HEX_9}, arch_sh_dsp_up},
 /* 10101001xxyynnnn pdec <DSP_REG_Y>,<DSP_REG_N> */
 {"pdec", {DSP_REG_Y,DSP_REG_N},{PPI,PPIC,HEX_A,HEX_9}, arch_sh_dsp_up},
-/* 10011001xxyynnnn pinc <DSP_REG_X>,<DSP_REG_N> */
-{"pinc", {DSP_REG_X,DSP_REG_N},{PPI,PPIC,HEX_9,HEX_9}, arch_sh_dsp_up},
-/* 10111001xxyynnnn pinc <DSP_REG_Y>,<DSP_REG_N> */
-{"pinc", {DSP_REG_Y,DSP_REG_N},{PPI,PPIC,HEX_B,HEX_9}, arch_sh_dsp_up},
+/* 10011001xx00nnnn pinc <DSP_REG_X>,<DSP_REG_N> */
+{"pinc", {DSP_REG_X,DSP_REG_N},{PPI,PPIC,HEX_9,HEX_9,HEX_XX00}, arch_sh_dsp_up},
+/* 1011100100yynnnn pinc <DSP_REG_Y>,<DSP_REG_N> */
+{"pinc", {DSP_REG_Y,DSP_REG_N},{PPI,PPIC,HEX_B,HEX_9,HEX_00YY}, arch_sh_dsp_up},
 /* 10001101xxyynnnn pclr <DSP_REG_N> */
 {"pclr", {DSP_REG_N},{PPI,PPIC,HEX_8,HEX_D}, arch_sh_dsp_up},
-/* 10011101xxyynnnn pdmsb <DSP_REG_X>,<DSP_REG_N> */
-{"pdmsb", {DSP_REG_X,DSP_REG_N},{PPI,PPIC,HEX_9,HEX_D}, arch_sh_dsp_up},
-/* 10111101xxyynnnn pdmsb <DSP_REG_Y>,<DSP_REG_N> */
-{"pdmsb", {DSP_REG_Y,DSP_REG_N},{PPI,PPIC,HEX_B,HEX_D}, arch_sh_dsp_up},
+/* 10011101xx00nnnn pdmsb <DSP_REG_X>,<DSP_REG_N> */
+{"pdmsb", {DSP_REG_X,DSP_REG_N},{PPI,PPIC,HEX_9,HEX_D,HEX_XX00}, arch_sh_dsp_up},
+/* 1011110100yynnnn pdmsb <DSP_REG_Y>,<DSP_REG_N> */
+{"pdmsb", {DSP_REG_Y,DSP_REG_N},{PPI,PPIC,HEX_B,HEX_D,HEX_00YY}, arch_sh_dsp_up},
 /* 11001001xxyynnnn pneg  <DSP_REG_X>,<DSP_REG_N> */
 {"pneg",  {DSP_REG_X,DSP_REG_N},{PPI,PPIC,HEX_C,HEX_9}, arch_sh_dsp_up},
 /* 11101001xxyynnnn pneg  <DSP_REG_Y>,<DSP_REG_N> */
@@ -744,9 +838,13 @@ const sh_opcode_info sh_table[] =
 {"plds", {DSP_REG_N,A_MACH},{PPI,PPIC,HEX_E,HEX_D}, arch_sh_dsp_up},
 /* 11111101xxyynnnn plds <DSP_REG_N>,MACL */
 {"plds", {DSP_REG_N,A_MACL},{PPI,PPIC,HEX_F,HEX_D}, arch_sh_dsp_up},
+/* 10011101xx01zzzz pswap <DSP_REG_X>,<DSP_REG_N> */
+{"pswap", {DSP_REG_X,DSP_REG_N},{PPI,PPIC,HEX_9,HEX_D,HEX_1}, arch_sh4al_dsp_up},
+/* 1011110101yyzzzz pswap <DSP_REG_Y>,<DSP_REG_N> */
+{"pswap", {DSP_REG_Y,DSP_REG_N},{PPI,PPIC,HEX_B,HEX_D,HEX_4}, arch_sh4al_dsp_up},
 
 /* 1111nnnn01011101 fabs <F_REG_N>     */{"fabs",{F_REG_N},{HEX_F,REG_N,HEX_5,HEX_D}, arch_sh2e_up},
-/* 1111nnnn01011101 fabs <D_REG_N>     */{"fabs",{D_REG_N},{HEX_F,REG_N,HEX_5,HEX_D}, arch_sh4_up},
+/* 1111nnn001011101 fabs <D_REG_N>     */{"fabs",{D_REG_N},{HEX_F,REG_N,HEX_5,HEX_D}, arch_sh4_up},
 
 /* 1111nnnnmmmm0000 fadd <F_REG_M>,<F_REG_N>*/{"fadd",{F_REG_M,F_REG_N},{HEX_F,REG_N,REG_M,HEX_0}, arch_sh2e_up},
 /* 1111nnn0mmm00000 fadd <D_REG_M>,<D_REG_N>*/{"fadd",{D_REG_M,D_REG_N},{HEX_F,REG_N,REG_M,HEX_0}, arch_sh4_up},
@@ -757,9 +855,9 @@ const sh_opcode_info sh_table[] =
 /* 1111nnnnmmmm0101 fcmp/gt <F_REG_M>,<F_REG_N>*/{"fcmp/gt",{F_REG_M,F_REG_N},{HEX_F,REG_N,REG_M,HEX_5}, arch_sh2e_up},
 /* 1111nnn0mmm00101 fcmp/gt <D_REG_M>,<D_REG_N>*/{"fcmp/gt",{D_REG_M,D_REG_N},{HEX_F,REG_N,REG_M,HEX_5}, arch_sh4_up},
 
-/* 1111nnn010111101 fcnvds <D_REG_N>,FPUL*/{"fcnvds",{D_REG_N,FPUL_M},{HEX_F,REG_N,HEX_B,HEX_D}, arch_sh4_up},
+/* 1111nnn010111101 fcnvds <D_REG_N>,FPUL*/{"fcnvds",{D_REG_N,FPUL_M},{HEX_F,REG_N_D,HEX_B,HEX_D}, arch_sh4_up},
 
-/* 1111nnn010101101 fcnvsd FPUL,<D_REG_N>*/{"fcnvsd",{FPUL_M,D_REG_N},{HEX_F,REG_N,HEX_A,HEX_D}, arch_sh4_up},
+/* 1111nnn010101101 fcnvsd FPUL,<D_REG_N>*/{"fcnvsd",{FPUL_M,D_REG_N},{HEX_F,REG_N_D,HEX_A,HEX_D}, arch_sh4_up},
 
 /* 1111nnnnmmmm0011 fdiv <F_REG_M>,<F_REG_N>*/{"fdiv",{F_REG_M,F_REG_N},{HEX_F,REG_N,REG_M,HEX_3}, arch_sh2e_up},
 /* 1111nnn0mmm00011 fdiv <D_REG_M>,<D_REG_N>*/{"fdiv",{D_REG_M,D_REG_N},{HEX_F,REG_N,REG_M,HEX_3}, arch_sh4_up},
@@ -773,42 +871,42 @@ const sh_opcode_info sh_table[] =
 /* 1111nnnn00011101 flds <F_REG_N>,FPUL*/{"flds",{F_REG_N,FPUL_M},{HEX_F,REG_N,HEX_1,HEX_D}, arch_sh2e_up},
 
 /* 1111nnnn00101101 float FPUL,<F_REG_N>*/{"float",{FPUL_M,F_REG_N},{HEX_F,REG_N,HEX_2,HEX_D}, arch_sh2e_up},
-/* 1111nnnn00101101 float FPUL,<D_REG_N>*/{"float",{FPUL_M,D_REG_N},{HEX_F,REG_N,HEX_2,HEX_D}, arch_sh4_up},
+/* 1111nnn000101101 float FPUL,<D_REG_N>*/{"float",{FPUL_M,D_REG_N},{HEX_F,REG_N,HEX_2,HEX_D}, arch_sh4_up},
 
 /* 1111nnnnmmmm1110 fmac FR0,<F_REG_M>,<F_REG_N>*/{"fmac",{F_FR0,F_REG_M,F_REG_N},{HEX_F,REG_N,REG_M,HEX_E}, arch_sh2e_up},
 
 /* 1111nnnnmmmm1100 fmov <F_REG_M>,<F_REG_N>*/{"fmov",{F_REG_M,F_REG_N},{HEX_F,REG_N,REG_M,HEX_C}, arch_sh2e_up},
-/* 1111nnnnmmmm1100 fmov <DX_REG_M>,<DX_REG_N>*/{"fmov",{DX_REG_M,DX_REG_N},{HEX_F,REG_N,REG_M,HEX_C}, arch_sh4_up},
+/* 1111nnn1mmmm1100 fmov <DX_REG_M>,<DX_REG_N>*/{"fmov",{DX_REG_M,DX_REG_N},{HEX_F,REG_N,REG_M,HEX_C}, arch_sh4_up},
 
 /* 1111nnnnmmmm1000 fmov @<REG_M>,<F_REG_N>*/{"fmov",{A_IND_M,F_REG_N},{HEX_F,REG_N,REG_M,HEX_8}, arch_sh2e_up},
-/* 1111nnnnmmmm1000 fmov @<REG_M>,<DX_REG_N>*/{"fmov",{A_IND_M,DX_REG_N},{HEX_F,REG_N,REG_M,HEX_8}, arch_sh4_up},
+/* 1111nnn1mmmm1000 fmov @<REG_M>,<DX_REG_N>*/{"fmov",{A_IND_M,DX_REG_N},{HEX_F,REG_N,REG_M,HEX_8}, arch_sh4_up},
 
 /* 1111nnnnmmmm1010 fmov <F_REG_M>,@<REG_N>*/{"fmov",{F_REG_M,A_IND_N},{HEX_F,REG_N,REG_M,HEX_A}, arch_sh2e_up},
-/* 1111nnnnmmmm1010 fmov <DX_REG_M>,@<REG_N>*/{"fmov",{DX_REG_M,A_IND_N},{HEX_F,REG_N,REG_M,HEX_A}, arch_sh4_up},
+/* 1111nnnnmmm11010 fmov <DX_REG_M>,@<REG_N>*/{"fmov",{DX_REG_M,A_IND_N},{HEX_F,REG_N,REG_M,HEX_A}, arch_sh4_up},
 
 /* 1111nnnnmmmm1001 fmov @<REG_M>+,<F_REG_N>*/{"fmov",{A_INC_M,F_REG_N},{HEX_F,REG_N,REG_M,HEX_9}, arch_sh2e_up},
-/* 1111nnnnmmmm1001 fmov @<REG_M>+,<DX_REG_N>*/{"fmov",{A_INC_M,DX_REG_N},{HEX_F,REG_N,REG_M,HEX_9}, arch_sh4_up},
+/* 1111nnn1mmmm1001 fmov @<REG_M>+,<DX_REG_N>*/{"fmov",{A_INC_M,DX_REG_N},{HEX_F,REG_N,REG_M,HEX_9}, arch_sh4_up},
 
 /* 1111nnnnmmmm1011 fmov <F_REG_M>,@-<REG_N>*/{"fmov",{F_REG_M,A_DEC_N},{HEX_F,REG_N,REG_M,HEX_B}, arch_sh2e_up},
-/* 1111nnnnmmmm1011 fmov <DX_REG_M>,@-<REG_N>*/{"fmov",{DX_REG_M,A_DEC_N},{HEX_F,REG_N,REG_M,HEX_B}, arch_sh4_up},
+/* 1111nnnnmmm11011 fmov <DX_REG_M>,@-<REG_N>*/{"fmov",{DX_REG_M,A_DEC_N},{HEX_F,REG_N,REG_M,HEX_B}, arch_sh4_up},
 
 /* 1111nnnnmmmm0110 fmov @(R0,<REG_M>),<F_REG_N>*/{"fmov",{A_IND_R0_REG_M,F_REG_N},{HEX_F,REG_N,REG_M,HEX_6}, arch_sh2e_up},
-/* 1111nnnnmmmm0110 fmov @(R0,<REG_M>),<DX_REG_N>*/{"fmov",{A_IND_R0_REG_M,DX_REG_N},{HEX_F,REG_N,REG_M,HEX_6}, arch_sh4_up},
+/* 1111nnn1mmmm0110 fmov @(R0,<REG_M>),<DX_REG_N>*/{"fmov",{A_IND_R0_REG_M,DX_REG_N},{HEX_F,REG_N,REG_M,HEX_6}, arch_sh4_up},
 
 /* 1111nnnnmmmm0111 fmov <F_REG_M>,@(R0,<REG_N>)*/{"fmov",{F_REG_M,A_IND_R0_REG_N},{HEX_F,REG_N,REG_M,HEX_7}, arch_sh2e_up},
-/* 1111nnnnmmmm0111 fmov <DX_REG_M>,@(R0,<REG_N>)*/{"fmov",{DX_REG_M,A_IND_R0_REG_N},{HEX_F,REG_N,REG_M,HEX_7}, arch_sh4_up},
+/* 1111nnnnmmm10111 fmov <DX_REG_M>,@(R0,<REG_N>)*/{"fmov",{DX_REG_M,A_IND_R0_REG_N},{HEX_F,REG_N,REG_M,HEX_7}, arch_sh4_up},
 
-/* 1111nnnnmmmm1000 fmov.d @<REG_M>,<DX_REG_N>*/{"fmov.d",{A_IND_M,DX_REG_N},{HEX_F,REG_N,REG_M,HEX_8}, arch_sh4_up},
+/* 1111nnn1mmmm1000 fmov.d @<REG_M>,<DX_REG_N>*/{"fmov.d",{A_IND_M,DX_REG_N},{HEX_F,REG_N,REG_M,HEX_8}, arch_sh4_up},
 
-/* 1111nnnnmmmm1010 fmov.d <DX_REG_M>,@<REG_N>*/{"fmov.d",{DX_REG_M,A_IND_N},{HEX_F,REG_N,REG_M,HEX_A}, arch_sh4_up},
+/* 1111nnnnmmm11010 fmov.d <DX_REG_M>,@<REG_N>*/{"fmov.d",{DX_REG_M,A_IND_N},{HEX_F,REG_N,REG_M,HEX_A}, arch_sh4_up},
 
-/* 1111nnnnmmmm1001 fmov.d @<REG_M>+,<DX_REG_N>*/{"fmov.d",{A_INC_M,DX_REG_N},{HEX_F,REG_N,REG_M,HEX_9}, arch_sh4_up},
+/* 1111nnn1mmmm1001 fmov.d @<REG_M>+,<DX_REG_N>*/{"fmov.d",{A_INC_M,DX_REG_N},{HEX_F,REG_N,REG_M,HEX_9}, arch_sh4_up},
 
-/* 1111nnnnmmmm1011 fmov.d <DX_REG_M>,@-<REG_N>*/{"fmov.d",{DX_REG_M,A_DEC_N},{HEX_F,REG_N,REG_M,HEX_B}, arch_sh4_up},
+/* 1111nnnnmmm11011 fmov.d <DX_REG_M>,@-<REG_N>*/{"fmov.d",{DX_REG_M,A_DEC_N},{HEX_F,REG_N,REG_M,HEX_B}, arch_sh4_up},
 
-/* 1111nnnnmmmm0110 fmov.d @(R0,<REG_M>),<DX_REG_N>*/{"fmov.d",{A_IND_R0_REG_M,DX_REG_N},{HEX_F,REG_N,REG_M,HEX_6}, arch_sh4_up},
+/* 1111nnn1mmmm0110 fmov.d @(R0,<REG_M>),<DX_REG_N>*/{"fmov.d",{A_IND_R0_REG_M,DX_REG_N},{HEX_F,REG_N,REG_M,HEX_6}, arch_sh4_up},
 
-/* 1111nnnnmmmm0111 fmov.d <DX_REG_M>,@(R0,<REG_N>)*/{"fmov.d",{DX_REG_M,A_IND_R0_REG_N},{HEX_F,REG_N,REG_M,HEX_7}, arch_sh4_up},
+/* 1111nnnnmmm10111 fmov.d <DX_REG_M>,@(R0,<REG_N>)*/{"fmov.d",{DX_REG_M,A_IND_R0_REG_N},{HEX_F,REG_N,REG_M,HEX_7}, arch_sh4_up},
 
 /* 1111nnnnmmmm1000 fmov.s @<REG_M>,<F_REG_N>*/{"fmov.s",{A_IND_M,F_REG_N},{HEX_F,REG_N,REG_M,HEX_8}, arch_sh2e_up},
 
@@ -826,14 +924,20 @@ const sh_opcode_info sh_table[] =
 /* 1111nnn0mmm00010 fmul <D_REG_M>,<D_REG_N>*/{"fmul",{D_REG_M,D_REG_N},{HEX_F,REG_N,REG_M,HEX_2}, arch_sh4_up},
 
 /* 1111nnnn01001101 fneg <F_REG_N>     */{"fneg",{F_REG_N},{HEX_F,REG_N,HEX_4,HEX_D}, arch_sh2e_up},
-/* 1111nnnn01001101 fneg <D_REG_N>     */{"fneg",{D_REG_N},{HEX_F,REG_N,HEX_4,HEX_D}, arch_sh4_up},
+/* 1111nnn001001101 fneg <D_REG_N>     */{"fneg",{D_REG_N},{HEX_F,REG_N,HEX_4,HEX_D}, arch_sh4_up},
+
+/* 1111011111111101 fpchg               */{"fpchg",{0},{HEX_F,HEX_7,HEX_F,HEX_D}, arch_sh4a_up},
 
 /* 1111101111111101 frchg               */{"frchg",{0},{HEX_F,HEX_B,HEX_F,HEX_D}, arch_sh4_up},
+
+/* 1111nnn011111101 fsca FPUL,<D_REG_N> */{"fsca",{FPUL_M,D_REG_N},{HEX_F,REG_N_D,HEX_F,HEX_D}, arch_sh4_up},
 
 /* 1111001111111101 fschg               */{"fschg",{0},{HEX_F,HEX_3,HEX_F,HEX_D}, arch_sh4_up},
 
 /* 1111nnnn01101101 fsqrt <F_REG_N>    */{"fsqrt",{F_REG_N},{HEX_F,REG_N,HEX_6,HEX_D}, arch_sh3e_up},
-/* 1111nnnn01101101 fsqrt <D_REG_N>    */{"fsqrt",{D_REG_N},{HEX_F,REG_N,HEX_6,HEX_D}, arch_sh4_up},
+/* 1111nnn001101101 fsqrt <D_REG_N>    */{"fsqrt",{D_REG_N},{HEX_F,REG_N,HEX_6,HEX_D}, arch_sh4_up},
+
+/* 1111nnnn01111101 fsrra <F_REG_N>    */{"fsrra",{F_REG_N},{HEX_F,REG_N,HEX_7,HEX_D}, arch_sh4_up},
 
 /* 1111nnnn00001101 fsts FPUL,<F_REG_N>*/{"fsts",{FPUL_M,F_REG_N},{HEX_F,REG_N,HEX_0,HEX_D}, arch_sh2e_up},
 
@@ -843,7 +947,7 @@ const sh_opcode_info sh_table[] =
 /* 1111nnnn00111101 ftrc <F_REG_N>,FPUL*/{"ftrc",{F_REG_N,FPUL_M},{HEX_F,REG_N,HEX_3,HEX_D}, arch_sh2e_up},
 /* 1111nnnn00111101 ftrc <D_REG_N>,FPUL*/{"ftrc",{D_REG_N,FPUL_M},{HEX_F,REG_N,HEX_3,HEX_D}, arch_sh4_up},
 
-/* 1111nn0111111101 ftrv XMTRX_M4,<V_REG_n>*/{"ftrv",{XMTRX_M4,V_REG_N},{HEX_F,REG_NM,HEX_F,HEX_D}, arch_sh4_up},
+/* 1111nn0111111101 ftrv XMTRX_M4,<V_REG_n>*/{"ftrv",{XMTRX_M4,V_REG_N},{HEX_F,REG_N_B01,HEX_F,HEX_D}, arch_sh4_up},
 
 { 0, {0}, {0}, 0 } 
 };

@@ -52,7 +52,7 @@ CODE_FRAGMENT
 .     is the result of an fopen on the filename.  However, if the
 .     BFD_IN_MEMORY flag is set, then iostream is actually a pointer
 .     to a bfd_in_memory struct.  *}
-.  PTR iostream;
+.  void *iostream;
 .
 .  {* Is the file descriptor being cached?  That is, can it be closed as
 .     needed, and re-opened when accessed later?  *}
@@ -113,10 +113,10 @@ CODE_FRAGMENT
 .  struct bfd_hash_table section_htab;
 .
 .  {* Pointer to linked list of sections.  *}
-.  struct sec *sections;
+.  struct bfd_section *sections;
 .
 .  {* The place where we add to the section list.  *}
-.  struct sec **section_tail;
+.  struct bfd_section **section_tail;
 .
 .  {* The number of sections.  *}
 .  unsigned int section_count;
@@ -129,7 +129,7 @@ CODE_FRAGMENT
 .  unsigned int symcount;
 .
 .  {* Symbol table for output BFD (with symcount entries).  *}
-.  struct symbol_cache_entry  **outsymbols;
+.  struct bfd_symbol  **outsymbols;
 .
 .  {* Used for slurped dynamic symbol tables.  *}
 .  unsigned int dynsymcount;
@@ -138,7 +138,7 @@ CODE_FRAGMENT
 .  const struct bfd_arch_info *arch_info;
 .
 .  {* Stuff only useful for archives.  *}
-.  PTR arelt_data;
+.  void *arelt_data;
 .  struct bfd *my_archive;      {* The containing archive BFD.  *}
 .  struct bfd *next;            {* The next BFD in the archive.  *}
 .  struct bfd *archive_head;    {* The first BFD in the archive.  *}
@@ -188,17 +188,17 @@ CODE_FRAGMENT
 .      struct bfd_pef_data_struct *pef_data;
 .      struct bfd_pef_xlib_data_struct *pef_xlib_data;
 .      struct bfd_sym_data_struct *sym_data;
-.      PTR any;
+.      void *any;
 .    }
 .  tdata;
 .
 .  {* Used by the application to hold private data.  *}
-.  PTR usrdata;
+.  void *usrdata;
 .
 .  {* Where all the allocated stuff under this BFD goes.  This is a
-.     struct objalloc *, but we use PTR to avoid requiring the inclusion of
-.     objalloc.h.  *}
-.  PTR memory;
+.     struct objalloc *, but we use void * to avoid requiring the inclusion
+.     of objalloc.h.  *}
+.  void *memory;
 .};
 .
 */
@@ -206,13 +206,7 @@ CODE_FRAGMENT
 #include "bfd.h"
 #include "bfdver.h"
 #include "sysdep.h"
-
-#ifdef ANSI_PROTOTYPES
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
 #include "libiberty.h"
 #include "safe-ctype.h"
 #include "bfdlink.h"
@@ -317,7 +311,7 @@ DESCRIPTION
 */
 
 bfd_error_type
-bfd_get_error ()
+bfd_get_error (void)
 {
   return bfd_error;
 }
@@ -334,8 +328,7 @@ DESCRIPTION
 */
 
 void
-bfd_set_error (error_tag)
-     bfd_error_type error_tag;
+bfd_set_error (bfd_error_type error_tag)
 {
   bfd_error = error_tag;
 }
@@ -353,8 +346,7 @@ DESCRIPTION
 */
 
 const char *
-bfd_errmsg (error_tag)
-     bfd_error_type error_tag;
+bfd_errmsg (bfd_error_type error_tag)
 {
 #ifndef errno
   extern int errno;
@@ -362,11 +354,10 @@ bfd_errmsg (error_tag)
   if (error_tag == bfd_error_system_call)
     return xstrerror (errno);
 
-  if ((((int) error_tag < (int) bfd_error_no_error) ||
-       ((int) error_tag > (int) bfd_error_invalid_error_code)))
-    error_tag = bfd_error_invalid_error_code;/* sanity check */
+  if (error_tag > bfd_error_invalid_error_code)
+    error_tag = bfd_error_invalid_error_code;	/* sanity check */
 
-  return _(bfd_errmsgs [(int)error_tag]);
+  return _(bfd_errmsgs [error_tag]);
 }
 
 /*
@@ -385,12 +376,11 @@ DESCRIPTION
 */
 
 void
-bfd_perror (message)
-     const char *message;
+bfd_perror (const char *message)
 {
   if (bfd_get_error () == bfd_error_system_call)
     /* Must be a system error then.  */
-    perror ((char *)message);
+    perror ((char *) message);
   else
     {
       if (message == NULL || *message == '\0')
@@ -406,13 +396,13 @@ SUBSECTION
 
 	Some BFD functions want to print messages describing the
 	problem.  They call a BFD error handler function.  This
-	function may be overriden by the program.
+	function may be overridden by the program.
 
 	The BFD error handler acts like printf.
 
 CODE_FRAGMENT
 .
-.typedef void (*bfd_error_handler_type) PARAMS ((const char *, ...));
+.typedef void (*bfd_error_handler_type) (const char *, ...);
 .
 */
 
@@ -422,20 +412,19 @@ static const char *_bfd_error_program_name;
 
 /* This is the default routine to handle BFD error messages.  */
 
-static void _bfd_default_error_handler PARAMS ((const char *s, ...));
-
 static void
-_bfd_default_error_handler VPARAMS ((const char *s, ...))
+_bfd_default_error_handler (const char *s, ...)
 {
+  va_list p;
+
   if (_bfd_error_program_name != NULL)
     fprintf (stderr, "%s: ", _bfd_error_program_name);
   else
     fprintf (stderr, "BFD: ");
 
-  VA_OPEN (p, s);
-  VA_FIXEDARG (p, const char *, s);
+  va_start (p, s);
   vfprintf (stderr, s, p);
-  VA_CLOSE (p);
+  va_end (p);
 
   fprintf (stderr, "\n");
 }
@@ -461,8 +450,7 @@ DESCRIPTION
 */
 
 bfd_error_handler_type
-bfd_set_error_handler (pnew)
-     bfd_error_handler_type pnew;
+bfd_set_error_handler (bfd_error_handler_type pnew)
 {
   bfd_error_handler_type pold;
 
@@ -486,8 +474,7 @@ DESCRIPTION
 */
 
 void
-bfd_set_error_program_name (name)
-     const char *name;
+bfd_set_error_program_name (const char *name)
 {
   _bfd_error_program_name = name;
 }
@@ -504,7 +491,7 @@ DESCRIPTION
 */
 
 bfd_error_handler_type
-bfd_get_error_handler ()
+bfd_get_error_handler (void)
 {
   return _bfd_error_handler;
 }
@@ -523,9 +510,11 @@ DESCRIPTION
 */
 
 const char *
-bfd_archive_filename (abfd)
-     bfd *abfd;
+bfd_archive_filename (bfd *abfd)
 {
+  if (abfd == NULL)
+    return _("<unknown>");
+  
   if (abfd->my_archive)
     {
       static size_t curr = 0;
@@ -539,7 +528,7 @@ bfd_archive_filename (abfd)
 	  if (curr)
 	    free (buf);
 	  curr = needed + (needed >> 1);
-	  buf = bfd_malloc ((bfd_size_type) curr);
+	  buf = bfd_malloc (curr);
 	  /* If we can't malloc, fail safe by returning just the file
 	     name. This function is only used when building error
 	     messages.  */
@@ -577,9 +566,7 @@ DESCRIPTION
 */
 
 long
-bfd_get_reloc_upper_bound (abfd, asect)
-     bfd *abfd;
-     sec_ptr asect;
+bfd_get_reloc_upper_bound (bfd *abfd, sec_ptr asect)
 {
   if (abfd->format != bfd_object)
     {
@@ -596,10 +583,7 @@ FUNCTION
 
 SYNOPSIS
 	long bfd_canonicalize_reloc
-        	(bfd *abfd,
-		asection *sec,
-		arelent **loc,
-		asymbol	**syms);
+	  (bfd *abfd, asection *sec, arelent **loc, asymbol **syms);
 
 DESCRIPTION
 	Call the back end associated with the open BFD
@@ -615,11 +599,10 @@ DESCRIPTION
 
 */
 long
-bfd_canonicalize_reloc (abfd, asect, location, symbols)
-     bfd *abfd;
-     sec_ptr asect;
-     arelent **location;
-     asymbol **symbols;
+bfd_canonicalize_reloc (bfd *abfd,
+			sec_ptr asect,
+			arelent **location,
+			asymbol **symbols)
 {
   if (abfd->format != bfd_object)
     {
@@ -647,11 +630,10 @@ DESCRIPTION
 */
 
 void
-bfd_set_reloc (ignore_abfd, asect, location, count)
-     bfd *ignore_abfd ATTRIBUTE_UNUSED;
-     sec_ptr asect;
-     arelent **location;
-     unsigned int count;
+bfd_set_reloc (bfd *ignore_abfd ATTRIBUTE_UNUSED,
+	       sec_ptr asect,
+	       arelent **location,
+	       unsigned int count)
 {
   asect->orelocation = location;
   asect->reloc_count = count;
@@ -678,9 +660,7 @@ DESCRIPTION
 */
 
 bfd_boolean
-bfd_set_file_flags (abfd, flags)
-     bfd *abfd;
-     flagword flags;
+bfd_set_file_flags (bfd *abfd, flagword flags)
 {
   if (abfd->format != bfd_object)
     {
@@ -705,9 +685,7 @@ bfd_set_file_flags (abfd, flags)
 }
 
 void
-bfd_assert (file, line)
-     const char *file;
-     int line;
+bfd_assert (const char *file, int line)
 {
   (*_bfd_error_handler) (_("BFD %s assertion fail %s:%d"),
 			 BFD_VERSION_STRING, file, line);
@@ -721,10 +699,7 @@ bfd_assert (file, line)
 #endif
 
 void
-_bfd_abort (file, line, fn)
-     const char *file;
-     int line;
-     const char *fn;
+_bfd_abort (const char *file, int line, const char *fn)
 {
   if (fn != NULL)
     (*_bfd_error_handler)
@@ -755,11 +730,10 @@ RETURNS
 */
 
 int
-bfd_get_arch_size (abfd)
-     bfd *abfd;
+bfd_get_arch_size (bfd *abfd)
 {
   if (abfd->xvec->flavour == bfd_target_elf_flavour)
-    return (get_elf_backend_data (abfd))->s->arch_size;
+    return get_elf_backend_data (abfd)->s->arch_size;
 
   return -1;
 }
@@ -786,13 +760,12 @@ RETURNS
 */
 
 int
-bfd_get_sign_extend_vma (abfd)
-     bfd *abfd;
+bfd_get_sign_extend_vma (bfd *abfd)
 {
   char *name;
 
   if (bfd_get_flavour (abfd) == bfd_target_elf_flavour)
-    return (get_elf_backend_data (abfd)->sign_extend_vma);
+    return get_elf_backend_data (abfd)->sign_extend_vma;
 
   name = bfd_get_target (abfd);
 
@@ -823,9 +796,7 @@ RETURNS
 */
 
 bfd_boolean
-bfd_set_start_address (abfd, vma)
-     bfd *abfd;
-     bfd_vma vma;
+bfd_set_start_address (bfd *abfd, bfd_vma vma)
 {
   abfd->start_address = vma;
   return TRUE;
@@ -845,8 +816,7 @@ DESCRIPTION
 */
 
 unsigned int
-bfd_get_gp_size (abfd)
-     bfd *abfd;
+bfd_get_gp_size (bfd *abfd)
 {
   if (abfd->format == bfd_object)
     {
@@ -872,9 +842,7 @@ DESCRIPTION
 */
 
 void
-bfd_set_gp_size (abfd, i)
-     bfd *abfd;
-     unsigned int i;
+bfd_set_gp_size (bfd *abfd, unsigned int i)
 {
   /* Don't try to set GP size on an archive or core file!  */
   if (abfd->format != bfd_object)
@@ -891,9 +859,10 @@ bfd_set_gp_size (abfd, i)
    register.  */
 
 bfd_vma
-_bfd_get_gp_value (abfd)
-     bfd *abfd;
+_bfd_get_gp_value (bfd *abfd)
 {
+  if (! abfd)
+    return 0;
   if (abfd->format != bfd_object)
     return 0;
 
@@ -908,10 +877,10 @@ _bfd_get_gp_value (abfd)
 /* Set the GP value.  */
 
 void
-_bfd_set_gp_value (abfd, v)
-     bfd *abfd;
-     bfd_vma v;
+_bfd_set_gp_value (bfd *abfd, bfd_vma v)
 {
+  if (! abfd)
+    BFD_FAIL ();
   if (abfd->format != bfd_object)
     return;
 
@@ -943,10 +912,7 @@ DESCRIPTION
 */
 
 bfd_vma
-bfd_scan_vma (string, end, base)
-     const char *string;
-     const char **end;
-     int base;
+bfd_scan_vma (const char *string, const char **end, int base)
 {
   bfd_vma value;
   bfd_vma cutoff;
@@ -955,7 +921,12 @@ bfd_scan_vma (string, end, base)
 
   /* Let the host do it if possible.  */
   if (sizeof (bfd_vma) <= sizeof (unsigned long))
-    return (bfd_vma) strtoul (string, (char **) end, base);
+    return strtoul (string, (char **) end, base);
+
+#ifdef HAVE_STRTOULL
+  if (sizeof (bfd_vma) <= sizeof (unsigned long long))
+    return strtoull (string, (char **) end, base);
+#endif
 
   if (base == 0)
     {
@@ -1151,27 +1122,23 @@ DESCRIPTION
 .	BFD_SEND (abfd, _bfd_canonicalize_dynamic_reloc, (abfd, arels, asyms))
 .
 .extern bfd_byte *bfd_get_relocated_section_contents
-.	PARAMS ((bfd *, struct bfd_link_info *,
-.		  struct bfd_link_order *, bfd_byte *,
-.		  bfd_boolean, asymbol **));
+.  (bfd *, struct bfd_link_info *, struct bfd_link_order *, bfd_byte *,
+.   bfd_boolean, asymbol **);
 .
 
 */
 
 bfd_byte *
-bfd_get_relocated_section_contents (abfd, link_info, link_order, data,
-				    relocateable, symbols)
-     bfd *abfd;
-     struct bfd_link_info *link_info;
-     struct bfd_link_order *link_order;
-     bfd_byte *data;
-     bfd_boolean relocateable;
-     asymbol **symbols;
+bfd_get_relocated_section_contents (bfd *abfd,
+				    struct bfd_link_info *link_info,
+				    struct bfd_link_order *link_order,
+				    bfd_byte *data,
+				    bfd_boolean relocatable,
+				    asymbol **symbols)
 {
   bfd *abfd2;
-  bfd_byte *(*fn) PARAMS ((bfd *, struct bfd_link_info *,
-			   struct bfd_link_order *, bfd_byte *, bfd_boolean,
-			   asymbol **));
+  bfd_byte *(*fn) (bfd *, struct bfd_link_info *, struct bfd_link_order *,
+		   bfd_byte *, bfd_boolean, asymbol **);
 
   if (link_order->type == bfd_indirect_link_order)
     {
@@ -1184,24 +1151,22 @@ bfd_get_relocated_section_contents (abfd, link_info, link_order, data,
 
   fn = abfd2->xvec->_bfd_get_relocated_section_contents;
 
-  return (*fn) (abfd, link_info, link_order, data, relocateable, symbols);
+  return (*fn) (abfd, link_info, link_order, data, relocatable, symbols);
 }
 
 /* Record information about an ELF program header.  */
 
 bfd_boolean
-bfd_record_phdr (abfd, type, flags_valid, flags, at_valid, at,
-		 includes_filehdr, includes_phdrs, count, secs)
-     bfd *abfd;
-     unsigned long type;
-     bfd_boolean flags_valid;
-     flagword flags;
-     bfd_boolean at_valid;
-     bfd_vma at;
-     bfd_boolean includes_filehdr;
-     bfd_boolean includes_phdrs;
-     unsigned int count;
-     asection **secs;
+bfd_record_phdr (bfd *abfd,
+		 unsigned long type,
+		 bfd_boolean flags_valid,
+		 flagword flags,
+		 bfd_boolean at_valid,
+		 bfd_vma at,
+		 bfd_boolean includes_filehdr,
+		 bfd_boolean includes_phdrs,
+		 unsigned int count,
+		 asection **secs)
 {
   struct elf_segment_map *m, **pm;
   bfd_size_type amt;
@@ -1211,7 +1176,7 @@ bfd_record_phdr (abfd, type, flags_valid, flags, at_valid, at,
 
   amt = sizeof (struct elf_segment_map);
   amt += ((bfd_size_type) count - 1) * sizeof (asection *);
-  m = (struct elf_segment_map *) bfd_alloc (abfd, amt);
+  m = bfd_alloc (abfd, amt);
   if (m == NULL)
     return FALSE;
 
@@ -1219,10 +1184,10 @@ bfd_record_phdr (abfd, type, flags_valid, flags, at_valid, at,
   m->p_type = type;
   m->p_flags = flags;
   m->p_paddr = at;
-  m->p_flags_valid = (unsigned int) flags_valid;
-  m->p_paddr_valid = (unsigned int) at_valid;
-  m->includes_filehdr = (unsigned int) includes_filehdr;
-  m->includes_phdrs = (unsigned int) includes_phdrs;
+  m->p_flags_valid = flags_valid;
+  m->p_paddr_valid = at_valid;
+  m->includes_filehdr = includes_filehdr;
+  m->includes_phdrs = includes_phdrs;
   m->count = count;
   if (count > 0)
     memcpy (m->sections, secs, count * sizeof (asection *));
@@ -1235,10 +1200,7 @@ bfd_record_phdr (abfd, type, flags_valid, flags, at_valid, at,
 }
 
 void
-bfd_sprintf_vma (abfd, buf, value)
-     bfd *abfd;
-     char *buf;
-     bfd_vma value;
+bfd_sprintf_vma (bfd *abfd, char *buf, bfd_vma value)
 {
   if (bfd_get_flavour (abfd) == bfd_target_elf_flavour)
     get_elf_backend_data (abfd)->elf_backend_sprintf_vma (abfd, buf, value);
@@ -1247,10 +1209,7 @@ bfd_sprintf_vma (abfd, buf, value)
 }
 
 void
-bfd_fprintf_vma (abfd, stream, value)
-     bfd *abfd;
-     PTR stream;
-     bfd_vma value;
+bfd_fprintf_vma (bfd *abfd, void *stream, bfd_vma value)
 {
   if (bfd_get_flavour (abfd) == bfd_target_elf_flavour)
     get_elf_backend_data (abfd)->elf_backend_fprintf_vma (abfd, stream, value);
@@ -1275,9 +1234,7 @@ DESCRIPTION
 */
 
 bfd_boolean
-bfd_alt_mach_code (abfd, alternative)
-     bfd *abfd;
-     int alternative;
+bfd_alt_mach_code (bfd *abfd, int alternative)
 {
   if (bfd_get_flavour (abfd) == bfd_target_elf_flavour)
     {
@@ -1318,12 +1275,12 @@ CODE_FRAGMENT
 
 .struct bfd_preserve
 .{
-.  PTR marker;
-.  PTR tdata;
+.  void *marker;
+.  void *tdata;
 .  flagword flags;
 .  const struct bfd_arch_info *arch_info;
-.  struct sec *sections;
-.  struct sec **section_tail;
+.  struct bfd_section *sections;
+.  struct bfd_section **section_tail;
 .  unsigned int section_count;
 .  struct bfd_hash_table section_htab;
 .};
@@ -1351,9 +1308,7 @@ DESCRIPTION
 */
 
 bfd_boolean
-bfd_preserve_save (abfd, preserve)
-     bfd *abfd;
-     struct bfd_preserve *preserve;
+bfd_preserve_save (bfd *abfd, struct bfd_preserve *preserve)
 {
   preserve->tdata = abfd->tdata.any;
   preserve->arch_info = abfd->arch_info;
@@ -1391,9 +1346,7 @@ DESCRIPTION
 */
 
 void
-bfd_preserve_restore (abfd, preserve)
-     bfd *abfd;
-     struct bfd_preserve *preserve;
+bfd_preserve_restore (bfd *abfd, struct bfd_preserve *preserve)
 {
   bfd_hash_table_free (&abfd->section_htab);
 
@@ -1429,9 +1382,7 @@ DESCRIPTION
 */
 
 void
-bfd_preserve_finish (abfd, preserve)
-     bfd *abfd ATTRIBUTE_UNUSED;
-     struct bfd_preserve *preserve;
+bfd_preserve_finish (bfd *abfd ATTRIBUTE_UNUSED, struct bfd_preserve *preserve)
 {
   /* It would be nice to be able to free more memory here, eg. old
      tdata, but that's not possible since these blocks are sitting

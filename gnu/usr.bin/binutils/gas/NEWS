@@ -1,5 +1,41 @@
 -*- text -*-
 
+* The MIPS -membedded-pic option (Embedded-PIC code generation) is
+  deprecated and will be removed in a future release.
+
+* Added PIC m32r Linux (ELF) and support to M32R assembler.
+
+* Added support for ARM V6.
+
+* Added support for sh4a and variants.
+
+* Support for Renesas M32R2 added.
+
+* Limited support for Mapping Symbols as specified in the ARM ELF
+  specification has been added to the arm assembler.
+
+* On ARM architectures, added a new gas directive ".unreq" that undoes
+  definitions created by ".req".
+
+* Support for Motorola ColdFire MCF528x added.
+
+* Added --gstabs+ switch to enable the generation of STABS debug format
+  information with GNU extensions.
+ 
+* Added support for MIPS64 Release 2.
+
+* Added support for v850e1.
+
+* Added -n switch for x86 assembler.  By default, x86 GAS replaces
+  multiple nop instructions used for alignment within code sections
+  with multi-byte nop instructions such as leal 0(%esi,1),%esi.  This
+  switch disables the optimization.
+
+* Removed -n option from MIPS assembler.  It was not useful, and confused the
+  existing -non_shared option.
+
+Changes in 2.14:
+
 * Added support for MIPS32 Release 2.
 
 * Added support for Xtensa architecture.

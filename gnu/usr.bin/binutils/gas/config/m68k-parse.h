@@ -1,6 +1,6 @@
 /* m68k-parse.h -- header file for m68k assembler
-   Copyright 1987, 1991, 1992, 1993, 1994, 1995, 1996, 1999, 2000
-   Free Software Foundation, Inc.
+   Copyright 1987, 1991, 1992, 1993, 1994, 1995, 1996, 1999, 2000,
+   2003 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -105,14 +105,23 @@ enum m68k_register
   TC,
   SRP,
   URP,
-  BUSCR,			/* 68060 added these */
+  BUSCR,			/* 68060 added these.  */
   PCR,
-  ROMBAR,			/* mcf5200 added these */
+  ROMBAR,			/* mcf5200 added these.  */
   RAMBAR0,
   RAMBAR1,
+  MMUBAR,			/* mcfv4e added these.  */
+  ROMBAR1,			/* mcfv4e added these.  */
+  MPCR, EDRAMBAR, SECMBAR,	/* mcfv4e added these.  */
+  PCR1U0, PCR1L0, PCR1U1, PCR1L1,/* mcfv4e added these.  */
+  PCR2U0, PCR2L0, PCR2U1, PCR2L1,/* mcfv4e added these.  */
+  PCR3U0, PCR3L0, PCR3U1, PCR3L1,/* mcfv4e added these.  */
+  MBAR0, MBAR1,			/* mcfv4e added these.  */
+  ACR0, ACR1, ACR2, ACR3,       /* mcf5200 added these.  */
+  FLASHBAR, RAMBAR,  		/* mcf528x added these.  */
   MBAR,
 #define last_movec_reg MBAR
-  /* end of movec ordering constraints */
+  /* End of movec ordering constraints.  */
 
   FPI,
   FPS,

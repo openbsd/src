@@ -1,6 +1,6 @@
 /* bfd back-end for mips support
-   Copyright 1990, 1991, 1993, 1994, 1995, 1996, 1997, 1998, 2000, 2002
-   Free Software Foundation, Inc.
+   Copyright 1990, 1991, 1993, 1994, 1995, 1996, 1997, 1998, 2000, 2001,
+   2002, 2003 Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -24,15 +24,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "libbfd.h"
 
 static const bfd_arch_info_type *mips_compatible
-  PARAMS ((const bfd_arch_info_type *, const bfd_arch_info_type *));
+  (const bfd_arch_info_type *, const bfd_arch_info_type *);
 
 /* The default routine tests bits_per_word, which is wrong on mips as
    mips word size doesn't correlate with reloc size.  */
 
 static const bfd_arch_info_type *
-mips_compatible (a, b)
-     const bfd_arch_info_type *a;
-     const bfd_arch_info_type *b;
+mips_compatible (const bfd_arch_info_type *a, const bfd_arch_info_type *b)
 {
   if (a->arch != b->arch)
     return NULL;
@@ -76,6 +74,7 @@ enum
   I_mips5400,
   I_mips5500,
   I_mips6000,
+  I_mips7000,
   I_mips8000,
   I_mips10000,
   I_mips12000,
@@ -84,6 +83,7 @@ enum
   I_mipsisa32,
   I_mipsisa32r2,
   I_mipsisa64,
+  I_mipsisa64r2,
   I_sb1,
 };
 
@@ -106,6 +106,7 @@ static const bfd_arch_info_type arch_info_struct[] =
   N (64, 64, bfd_mach_mips5400, "mips:5400",      FALSE, NN(I_mips5400)),
   N (64, 64, bfd_mach_mips5500, "mips:5500",      FALSE, NN(I_mips5500)),
   N (32, 32, bfd_mach_mips6000, "mips:6000",      FALSE, NN(I_mips6000)),
+  N (64, 64, bfd_mach_mips7000, "mips:7000",      FALSE, NN(I_mips7000)),
   N (64, 64, bfd_mach_mips8000, "mips:8000",      FALSE, NN(I_mips8000)),
   N (64, 64, bfd_mach_mips10000,"mips:10000",     FALSE, NN(I_mips10000)),
   N (64, 64, bfd_mach_mips12000,"mips:12000",     FALSE, NN(I_mips12000)),
@@ -114,6 +115,7 @@ static const bfd_arch_info_type arch_info_struct[] =
   N (32, 32, bfd_mach_mipsisa32,  "mips:isa32",   FALSE, NN(I_mipsisa32)),
   N (32, 32, bfd_mach_mipsisa32r2,"mips:isa32r2", FALSE, NN(I_mipsisa32r2)),
   N (64, 64, bfd_mach_mipsisa64,  "mips:isa64",   FALSE, NN(I_mipsisa64)),
+  N (64, 64, bfd_mach_mipsisa64r2,"mips:isa64r2", FALSE, NN(I_mipsisa64r2)),
   N (64, 64, bfd_mach_mips_sb1, "mips:sb1",       FALSE, 0),
 };
 

@@ -174,6 +174,21 @@ extern void cons_fix_new_sparc
     }									\
   while (0)
 
-#define DWARF2_LINE_MIN_INSN_LENGTH 4
+#define TARGET_USE_CFIPOP 1
+
+#define tc_cfi_frame_initial_instructions sparc_cfi_frame_initial_instructions
+extern void sparc_cfi_frame_initial_instructions PARAMS ((void));
+
+#define tc_regname_to_dw2regnum sparc_regname_to_dw2regnum
+extern int sparc_regname_to_dw2regnum PARAMS ((const char *regname));
+
+#define tc_cfi_emit_pcrel_expr sparc_cfi_emit_pcrel_expr
+extern void sparc_cfi_emit_pcrel_expr PARAMS ((expressionS *, unsigned int));
+
+extern int sparc_cie_data_alignment;
+
+#define DWARF2_LINE_MIN_INSN_LENGTH     4
+#define DWARF2_DEFAULT_RETURN_COLUMN    15
+#define DWARF2_CIE_DATA_ALIGNMENT       sparc_cie_data_alignment
 
 /* end of tc-sparc.h */

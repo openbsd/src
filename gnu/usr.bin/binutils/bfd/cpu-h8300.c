@@ -23,15 +23,8 @@
 #include "sysdep.h"
 #include "libbfd.h"
 
-static bfd_boolean h8300_scan
-  PARAMS ((const struct bfd_arch_info *, const char *));
-static const bfd_arch_info_type * compatible
-  PARAMS ((const bfd_arch_info_type *, const bfd_arch_info_type *));
-
 static bfd_boolean
-h8300_scan (info, string)
-     const struct bfd_arch_info *info;
-     const char *string;
+h8300_scan (const struct bfd_arch_info *info, const char *string)
 {
   if (*string != 'h' && *string != 'H')
     return FALSE;
@@ -81,6 +74,15 @@ h8300_scan (info, string)
       if (*string == 'n' || *string == 'N')
 	return (info->mach == bfd_mach_h8300sn);
 
+      if (*string == 'x' || *string == 'X')
+	{
+	  string++;
+	  if (*string == 'n' || *string == 'N')
+	    return (info->mach == bfd_mach_h8300sxn);
+
+	  return (info->mach == bfd_mach_h8300sx);
+	}
+      
       return (info->mach == bfd_mach_h8300s);
     }
   else
@@ -92,9 +94,7 @@ h8300_scan (info, string)
    info structure.  */
 
 static const bfd_arch_info_type *
-compatible (in, out)
-     const bfd_arch_info_type *in;
-     const bfd_arch_info_type *out;
+compatible (const bfd_arch_info_type *in, const bfd_arch_info_type *out)
 {
   /* It's really not a good idea to mix and match modes.  */
   if (in->arch != out->arch || in->mach != out->mach)
@@ -103,10 +103,42 @@ compatible (in, out)
     return in;
 }
 
+static const bfd_arch_info_type h8300sxn_info_struct =
+{
+  32,				/* 32 bits in a word */
+  16,				/* 16 bits in an address */
+  8,				/* 8 bits in a byte */
+  bfd_arch_h8300,
+  bfd_mach_h8300sxn,
+  "h8300sxn",			/* arch_name  */
+  "h8300sxn",			/* printable name */
+  1,
+  FALSE,			/* the default machine */
+  compatible,
+  h8300_scan,
+  0
+};
+
+static const bfd_arch_info_type h8300sx_info_struct =
+{
+  32,				/* 32 bits in a word */
+  32,				/* 32 bits in an address */
+  8,				/* 8 bits in a byte */
+  bfd_arch_h8300,
+  bfd_mach_h8300sx,
+  "h8300sx",			/* arch_name  */
+  "h8300sx",			/* printable name */
+  1,
+  FALSE,			/* the default machine */
+  compatible,
+  h8300_scan,
+  &h8300sxn_info_struct
+};
+
 static const bfd_arch_info_type h8300sn_info_struct =
 {
   32,				/* 32 bits in a word.  */
-  32,				/* 32 bits in an address.  */
+  16,				/* 16 bits in an address.  */
   8,				/* 8 bits in a byte.  */
   bfd_arch_h8300,
   bfd_mach_h8300sn,
@@ -116,14 +148,13 @@ static const bfd_arch_info_type h8300sn_info_struct =
   FALSE,			/* The default machine.  */
   compatible,
   h8300_scan,
-  0
+  &h8300sx_info_struct
 };
-
 
 static const bfd_arch_info_type h8300hn_info_struct =
 {
   32,				/* 32 bits in a word.  */
-  32,				/* 32 bits in an address.  */
+  16,				/* 16 bits in an address.  */
   8,				/* 8 bits in a byte.  */
   bfd_arch_h8300,
   bfd_mach_h8300hn,
@@ -183,3 +214,38 @@ const bfd_arch_info_type bfd_h8300_arch =
   h8300_scan,
   &h8300h_info_struct
 };
+
+/* Pad the given address to 32 bits, converting 16-bit and 24-bit
+   addresses into the values they would have had on a h8s target.  */
+
+bfd_vma
+bfd_h8300_pad_address (bfd *abfd, bfd_vma address)
+{
+  /* Cope with bfd_vma's larger than 32 bits.  */
+  address &= 0xffffffffu;
+
+  switch (bfd_get_mach (abfd))
+    {
+    case bfd_mach_h8300:
+    case bfd_mach_h8300hn:
+    case bfd_mach_h8300sn:
+    case bfd_mach_h8300sxn:
+      /* Sign extend a 16-bit address.  */
+      if (address >= 0x8000)
+	return address | 0xffff0000u;
+      return address;
+
+    case bfd_mach_h8300h:
+      /* Sign extend a 24-bit address.  */
+      if (address >= 0x800000)
+	return address | 0xff000000u;
+      return address;
+
+    case bfd_mach_h8300s:
+    case bfd_mach_h8300sx:
+      return address;
+
+    default:
+      abort ();
+    }
+}

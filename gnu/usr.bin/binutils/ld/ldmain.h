@@ -1,5 +1,5 @@
 /* ldmain.h -
-   Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1999, 2002, 2003
+   Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1999, 2002, 2003, 2004
    Free Software Foundation, Inc.
 
    This file is part of GLD, the Gnu Linker.
@@ -32,13 +32,15 @@ extern bfd_boolean trace_files;
 extern bfd_boolean trace_file_tries;
 extern bfd_boolean version_printed;
 extern bfd_boolean whole_archive;
+extern bfd_boolean as_needed;
 extern bfd_boolean demangling;
 extern int g_switch_value;
 extern const char *output_filename;
 extern struct bfd_link_info link_info;
+extern int overflow_cutoff_limit;
 
-extern void add_ysym PARAMS ((const char *));
-extern void add_wrap PARAMS ((const char *));
-extern void add_keepsyms_file PARAMS ((const char *));
+extern void add_ysym (const char *);
+extern void add_wrap (const char *);
+extern void add_keepsyms_file (const char *);
 
 #endif

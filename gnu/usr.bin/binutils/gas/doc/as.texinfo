@@ -1,6 +1,6 @@
 \input texinfo @c                               -*-Texinfo-*-
 @c  Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-@c  2001, 2002
+@c  2001, 2002, 2003, 2004
 @c  Free Software Foundation, Inc.
 @c UPDATE!!  On future updates--
 @c   (1)   check for new machine-dep cmdline options in
@@ -19,49 +19,13 @@
 @c defaults, config file may override:
 @set have-stabs
 @c ---
+@c man begin NAME
+@c ---
 @include asconfig.texi
 @include gasver.texi
 @c ---
-@c man begin NAME
-@ifset man
-@c Configure for the generation of man pages
-@set AS as
-@set TARGET TARGET
-@set GENERIC
-@set A29K
-@set ALPHA
-@set ARC
-@set ARM
-@set CRIS
-@set D10V
-@set D30V
-@set H8/300
-@set H8/500
-@set HPPA
-@set I370
-@set I80386
-@set I860
-@set I960
-@set IA-64
-@set IP2K
-@set M32R
-@set M68HC11
-@set M680X0
-@set M880X0
-@set MCORE
-@set MIPS
-@set MMIX
-@set PDP11
-@set PJ
-@set PPC
-@set SH
-@set SPARC
-@set TIC54X
-@set V850
-@set VAX
-@set XTENSA
-@end ifset
 @c man end
+@c ---
 @c common OR combinations of conditions
 @ifset COFF
 @set COFF-ELF
@@ -263,8 +227,8 @@ gcc(1), ld(1), and the Info entries for @file{binutils} and @file{ld}.
 @smallexample
 @c man begin SYNOPSIS
 @value{AS} [@b{-a}[@b{cdhlns}][=@var{file}]] [@b{-D}] [@b{--defsym} @var{sym}=@var{val}]
- [@b{-f}] [@b{--gstabs}] [@b{--gdwarf2}] [@b{--help}] [@b{-I} @var{dir}] 
- [@b{-J}] [@b{-K}] [@b{-L}]
+ [@b{-f}] [@b{--gstabs}] [@b{--gstabs+}] [@b{--gdwarf2}] [@b{--help}]
+ [@b{-I} @var{dir}] [@b{-J}] [@b{-K}] [@b{-L}]
  [@b{--listing-lhs-width}=@var{NUM}] [@b{--listing-lhs-width2}=@var{NUM}]
  [@b{--listing-rhs-width}=@var{NUM}] [@b{--listing-cont-lines}=@var{NUM}]
  [@b{--keep-locals}] [@b{-o} @var{objfile}] [@b{-R}] [@b{--statistics}] [@b{-v}]
@@ -297,7 +261,8 @@ gcc(1), ld(1), and the Info entries for @file{binutils} and @file{ld}.
 @c Don't document the deprecated options
    [@b{-mcpu}=@var{processor}[+@var{extension}@dots{}]]
    [@b{-march}=@var{architecture}[+@var{extension}@dots{}]]
-   [@b{-mfpu}=@var{floating-point-fromat}]
+   [@b{-mfpu}=@var{floating-point-format}]
+   [@b{-mfloat-abi}=@var{abi}]
    [@b{-mthumb}]
    [@b{-EB}|@b{-EL}]
    [@b{-mapcs-32}|@b{-mapcs-26}|@b{-mapcs-float}|
@@ -332,7 +297,7 @@ gcc(1), ld(1), and the Info entries for @file{binutils} and @file{ld}.
 @ifset I80386
 
 @emph{Target i386 options:}
-   [@b{--32}|@b{--64}]
+   [@b{--32}|@b{--64}] [@b{-n}]
 @end ifset
 @ifset I960
 
@@ -385,13 +350,13 @@ gcc(1), ld(1), and the Info entries for @file{binutils} and @file{ld}.
 @ifset MIPS
 
 @emph{Target MIPS options:}
-   [@b{-nocpp}] [@b{-EL}] [@b{-EB}] [@b{-n}] [@b{-O}[@var{optimization level}]]
+   [@b{-nocpp}] [@b{-EL}] [@b{-EB}] [@b{-O}[@var{optimization level}]]
    [@b{-g}[@var{debug level}]] [@b{-G} @var{num}] [@b{-KPIC}] [@b{-call_shared}]
    [@b{-non_shared}] [@b{-xgot}] [@b{--membedded-pic}]
    [@b{-mabi}=@var{ABI}] [@b{-32}] [@b{-n32}] [@b{-64}] [@b{-mfp32}] [@b{-mgp32}]
    [@b{-march}=@var{CPU}] [@b{-mtune}=@var{CPU}] [@b{-mips1}] [@b{-mips2}]
    [@b{-mips3}] [@b{-mips4}] [@b{-mips5}] [@b{-mips32}] [@b{-mips32r2}]
-   [@b{-mips64}]
+   [@b{-mips64}] [@b{-mips64r2}]
    [@b{-construct-floats}] [@b{-no-construct-floats}]
    [@b{-trap}] [@b{-no-break}] [@b{-break}] [@b{-no-trap}]
    [@b{-mfix7000}] [@b{-mno-fix7000}]
@@ -399,6 +364,7 @@ gcc(1), ld(1), and the Info entries for @file{binutils} and @file{ld}.
    [@b{-mips3d}] [@b{-no-mips3d}]
    [@b{-mdmx}] [@b{-no-mdmx}]
    [@b{-mdebug}] [@b{-no-mdebug}]
+   [@b{-mpdr}] [@b{-mno-pdr}]
 @end ifset
 @ifset MMIX
 
@@ -512,6 +478,13 @@ compiler output).
 @item --gstabs
 Generate stabs debugging information for each assembler line.  This
 may help debugging assembler code, if the debugger can handle it.
+
+@item --gstabs+
+Generate stabs debugging information for each assembler line, with GNU
+extensions that probably only gdb can handle, and that could make other
+debuggers crash or refuse to read your program.  This
+may help debugging assembler code.  Currently the only GNU extension is
+the location of the current working directory at assembling time.
 
 @item --gdwarf2
 Generate DWARF2 debugging information for each assembler line.  This
@@ -627,6 +600,8 @@ Specify which ARM processor variant is the target.
 Specify which ARM architecture variant is used by the target.
 @item -mfpu=@var{floating-point-format}
 Select which Floating Point architecture is the target.
+@item -mfloat-abi=@var{abi}
+Select which floating point ABI is in use.
 @item -mthumb
 Enable Thumb only instruction decoding.
 @item -mapcs-32 | -mapcs-26 | -mapcs-float | -mapcs-reentrant | -moabi
@@ -926,15 +901,17 @@ Generate ``little endian'' format output.
 @itemx -mips32
 @itemx -mips32r2
 @itemx -mips64
+@itemx -mips64r2
 Generate code for a particular @sc{mips} Instruction Set Architecture level.
 @samp{-mips1} is an alias for @samp{-march=r3000}, @samp{-mips2} is an
 alias for @samp{-march=r6000}, @samp{-mips3} is an alias for
 @samp{-march=r4000} and @samp{-mips4} is an alias for @samp{-march=r8000}.
-@samp{-mips5}, @samp{-mips32}, @samp{-mips32r2}, and @samp{-mips64}
+@samp{-mips5}, @samp{-mips32}, @samp{-mips32r2}, @samp{-mips64}, and
+@samp{-mips64r2}
 correspond to generic
-@samp{MIPS V}, @samp{MIPS32}, @samp{MIPS32 Release 2}, and
-@samp{MIPS64} ISA processors,
-respectively.
+@samp{MIPS V}, @samp{MIPS32}, @samp{MIPS32 Release 2}, @samp{MIPS64},
+and @samp{MIPS64 Release 2}
+ISA processors, respectively.
 
 @item -march=@var{CPU}
 Generate code for a particular @sc{mips} cpu.
@@ -951,6 +928,10 @@ of an mfhi or mflo instruction occurs in the following two instructions.
 @itemx -no-mdebug
 Cause stabs-style debugging output to go into an ECOFF-style .mdebug
 section instead of the standard ELF .stabs sections.
+
+@item -mpdr
+@itemx -mno-pdr
+Control generation of @code{.pdr} sections.
 
 @item -mgp32
 @itemx -mfp32
@@ -2085,7 +2066,7 @@ is considered a comment and is ignored.  The line comment character is
 @samp{;} for picoJava;
 @end ifset
 @ifset PPC
-@samp{;} for Motorola PowerPC;
+@samp{#} for Motorola PowerPC;
 @end ifset
 @ifset SH
 @samp{!} for the Renesas / SuperH SH;
@@ -3690,6 +3671,9 @@ Some machine configurations provide additional directives.
 * Balign::                      @code{.balign @var{abs-expr} , @var{abs-expr}}
 * Byte::                        @code{.byte @var{expressions}}
 * Comm::                        @code{.comm @var{symbol} , @var{length} }
+
+* CFI directives::		@code{.cfi_startproc}, @code{.cfi_endproc}, etc.
+
 * Data::                        @code{.data @var{subsection}}
 @ifset COFF
 * Def::                         @code{.def @var{name}}
@@ -3884,12 +3868,12 @@ required alignment; this can be useful if you want the alignment to be filled
 with no-op instructions when appropriate.
 
 The way the required alignment is specified varies from system to system.
-For the a29k, hppa, m68k, m88k, w65, sparc, Xtensa, and Renesas / SuperH SH,
-and i386 using ELF format,
-the first expression is the
+For the a29k, arc, hppa, i386 using ELF, i860, iq2000, m68k, m88k, or32,
+s390, sparc, tic4x, tic80 and xtensa, the first expression is the
 alignment request in bytes.  For example @samp{.align 8} advances
 the location counter until it is a multiple of 8.  If the location counter
-is already a multiple of 8, no change is needed.
+is already a multiple of 8, no change is needed.  For the tic54x, the
+first expression is the alignment request in words.
 
 For other systems, including the i386 using a.out format, and the arm and
 strongarm, it is the
@@ -3996,6 +3980,59 @@ maximum of 16.
 The syntax for @code{.comm} differs slightly on the HPPA.  The syntax is
 @samp{@var{symbol} .comm, @var{length}}; @var{symbol} is optional.
 @end ifset
+
+@node CFI directives
+@section @code{.cfi_startproc}
+@cindex @code{cfi_startproc} directive
+@code{.cfi_startproc} is used at the beginning of each function that
+should have an entry in @code{.eh_frame}. It initializes some internal
+data structures and emits architecture dependent initial CFI instructions.
+Don't forget to close the function by 
+@code{.cfi_endproc}.
+
+@section @code{.cfi_endproc}
+@cindex @code{cfi_endproc} directive
+@code{.cfi_endproc} is used at the end of a function where it closes its
+unwind entry previously opened by
+@code{.cfi_startproc}. and emits it to @code{.eh_frame}.
+
+@section @code{.cfi_def_cfa @var{register}, @var{offset}}
+@code{.cfi_def_cfa} defines a rule for computing CFA as: @i{take 
+address from @var{register} and add @var{offset} to it}.
+
+@section @code{.cfi_def_cfa_register @var{register}}
+@code{.cfi_def_cfa_register} modifies a rule for computing CFA. From
+now on @var{register} will be used instead of the old one. Offset
+remains the same.
+
+@section @code{.cfi_def_cfa_offset @var{offset}}
+@code{.cfi_def_cfa_offset} modifies a rule for computing CFA. Register
+remains the same, but @var{offset} is new. Note that it is the
+absolute offset that will be added to a defined register to compute
+CFA address.
+
+@section @code{.cfi_adjust_cfa_offset @var{offset}}
+Same as @code{.cfi_def_cfa_offset} but @var{offset} is a relative
+value that is added/substracted from the previous offset.
+
+@section @code{.cfi_offset @var{register}, @var{offset}}
+Previous value of @var{register} is saved at offset @var{offset} from
+CFA. 
+
+@section @code{.cfi_rel_offset @var{register}, @var{offset}}
+Previous value of @var{register} is saved at offset @var{offset} from
+the current CFA register.  This is transformed to @code{.cfi_offset}
+using the known displacement of the CFA register from the CFA.
+This is often easier to use, because the number will match the
+code it's annotating.
+
+@section @code{.cfi_window_save}
+SPARC register window has been saved.
+
+@section @code{.cfi_escape} @var{expression}[, @dots{}]
+Allows the user to add arbitrary bytes to the unwind info.  One
+might use this to add OS-specific CFI opcodes, or generic CFI
+opcodes that GAS does not yet support.
 
 @node Data
 @section @code{.data @var{subsection}}
@@ -4263,7 +4300,7 @@ in @sc{ieee} format.
 @cindex @code{func} directive
 @code{.func} emits debugging information to denote function @var{name}, and
 is ignored unless the file is assembled with debugging enabled.
-Only @samp{--gstabs} is currently supported.
+Only @samp{--gstabs[+]} is currently supported.
 @var{label} is the entry point of the function and if omitted @var{name}
 prepended with the @samp{leading char} is used.
 @samp{leading char} is usually @code{_} or nothing, depending on the target.

@@ -41,7 +41,7 @@ powerpc_compatible (a,b)
     case bfd_arch_powerpc:
       return bfd_default_compatible (a, b);
     case bfd_arch_rs6000:
-      if (a->mach == bfd_mach_ppc)
+      if (b->mach == bfd_mach_rs6k)
 	return a;
       return NULL;
     }

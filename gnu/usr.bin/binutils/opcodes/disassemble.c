@@ -141,9 +141,12 @@ disassembler (abfd)
 #endif
 #ifdef ARCH_h8300
     case bfd_arch_h8300:
-      if (bfd_get_mach(abfd) == bfd_mach_h8300h)
+      if (bfd_get_mach (abfd) == bfd_mach_h8300h
+	  || bfd_get_mach (abfd) == bfd_mach_h8300hn)
 	disassemble = print_insn_h8300h;
-      else if (bfd_get_mach(abfd) == bfd_mach_h8300s)
+      else if (bfd_get_mach (abfd) == bfd_mach_h8300s
+	       || bfd_get_mach (abfd) == bfd_mach_h8300sn
+	       || bfd_get_mach (abfd) == bfd_mach_h8300sx)
 	disassemble = print_insn_h8300s;
       else
 	disassemble = print_insn_h8300;
@@ -393,4 +396,22 @@ disassembler_usage (stream)
 #endif
 
   return;
+}
+
+void
+disassemble_init_for_target (struct disassemble_info * info)
+{
+  if (info == NULL)
+    return;
+
+  switch (info->arch)
+    {
+#ifdef ARCH_arm
+    case bfd_arch_arm:
+      info->symbol_is_valid = arm_symbol_is_valid;
+      break;
+#endif
+    default:
+      break;
+    }
 }

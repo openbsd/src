@@ -139,9 +139,66 @@ Send bug reports and patches to:
 
    bug-binutils@gnu.org.
 
+Please include the following in bug reports:
+
+- A description of exactly what went wrong, and exactly what should have
+  happened instead.
+
+- The configuration name(s) given to the "configure" script.  The
+  "config.status" file should have this information.  This is assuming
+  you built binutils yourself.  If you didn't build binutils youself,
+  then we need information regarding your machine and operating system,
+  and it may be more appropriate to report bugs to wherever you obtained
+  binutils.
+
+- The options given to the tool (gas, objcopy, ld etc.) at run time.
+
+- The actual input file that caused the problem.
+
 Always mention the version number you are running; this is printed by
 running any of the binutils with the --version option.  We appreciate
-reports about bugs, but we do not promise to fix them.
+reports about bugs, but we do not promise to fix them, particularly so
+when the bug report is against an old version.  If you are able, please
+consider building the latest tools from CVS to check that your bug has
+not already been fixed.
+
+When reporting problems about gas and ld, it's useful to provide a
+testcase that triggers the problem.  In the case of a gas problem, we
+want input files to gas and command line switches used.  The inputs to
+gas are _NOT_ .c or .i files, but rather .s files.  If your original
+source was a C program, you can generate the .s file and see the command
+line options by passing -v -save-temps to gcc in addition to all the
+usual options you use.  The reason we don't want C files is that we
+might not have a C compiler around for the target you use.  While it
+might be possible to build a compiler, that takes considerable time and
+disk space, and we might not end up with exactly the same compiler you
+use.
+
+In the case of a ld problem, the input files are .o, .a and .so files,
+and possibly a linker script specified with -T.  Again, when using gcc
+to link, you can see these files by adding options to the gcc command
+line.  Use -v -save-temps -Wl,-t, except that on targets that use gcc's
+collect2, you would add -v -save-temps -Wl,-t,-debug.  The -t option
+tells ld to print all files and libraries used, so that, for example,
+you can associate -lc on the ld command line with the actual libc used.
+Note that your simple two line C program to trigger a problem typically
+expands into several megabytes of objects by the time you include
+libraries.
+
+It is antisocial to post megabyte sized attachments to mailing lists, so
+please put large testcases somewhere on an ftp or web site so that only
+interested developers need to download them, or offer to email them on
+request.  Better still, try to reduce the testcase, for example, try to
+develop a ld testcase that doesn't use system libraries.  However,
+please be sure it is a complete testcase and that it really does
+demonstrate the problem.  Also, don't bother paring it down if that will
+cause large delays in filing the bug report.
+
+If you expect to be contributing a large number of test cases, it would
+be helpful if you would look at the test suite included in the release
+(based on the Deja Gnu testing framework, available from the usual ftp
+sites) and write test cases to fit into that framework.  This is
+certainly not required.
 
 VMS
 ===

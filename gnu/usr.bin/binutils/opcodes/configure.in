@@ -78,7 +78,7 @@ AC_EXEEXT
 
 AC_PROG_CC
 
-ALL_LINGUAS="fr sv tr es da de id pt_BR ro"
+ALL_LINGUAS="fr sv tr es da de id pt_BR ro nl"
 CY_GNU_GETTEXT
 
 . ${srcdir}/../bfd/configure.host

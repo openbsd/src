@@ -1,5 +1,5 @@
 /* Table of opcodes for the i860.
-   Copyright 1989, 1991, 2000 Free Software Foundation, Inc.
+   Copyright 1989, 1991, 2000, 2003 Free Software Foundation, Inc.
 
 This file is part of GAS, the GNU Assembler, and GDB, the GNU disassembler.
 
@@ -40,7 +40,7 @@ struct i860_opcode
 
 enum expand_type
 {
-    E_MOV = 1, E_ADDR, E_U32, E_AND, E_S32, E_DELAY
+    E_MOV = 1, E_ADDR, E_U32, E_AND, E_S32, E_DELAY, XP_ONLY
 };
 
 
@@ -135,6 +135,10 @@ static const struct i860_opcode i860_opcodes[] =
 { "pfld.d",	0x64000000, 0x98000007, "L(2),g", E_ADDR },	/* pfld.d #const(isrc2),fdest */
 { "pfld.d",	0x60000001, 0x9c000006, "1(2)++,g", 0 },	/* pfld.d isrc1(isrc2)++,fdest */
 { "pfld.d",	0x64000001, 0x98000006, "L(2)++,g", E_ADDR },	/* pfld.d #const(isrc2)++,fdest */
+{ "pfld.q",	0x60000004, 0x9c000003, "1(2),g", XP_ONLY },	/* pfld.q isrc1(isrc2),fdest */
+{ "pfld.q",	0x64000004, 0x98000003, "L(2),g", XP_ONLY },	/* pfld.q #const(isrc2),fdest */
+{ "pfld.q",	0x60000005, 0x9c000002, "1(2)++,g", XP_ONLY },	/* pfld.q isrc1(isrc2)++,fdest */
+{ "pfld.q",	0x64000005, 0x98000002, "L(2)++,g", XP_ONLY },	/* pfld.q #const(isrc2)++,fdest */
 
 { "fst.l",	0x28000002, 0xd4000001, "g,1(2)", 0 },	/* fst.l fdest,isrc1(isrc2) */
 { "fst.l",	0x2c000002, 0xd0000001, "g,K(2)", E_ADDR },	/* fst.l fdest,#const(isrc2) */
@@ -176,8 +180,8 @@ static const struct i860_opcode i860_opcodes[] =
 
 { "trap",	0x44000000, 0xb8000000, "1,2,d", 0 },	/* trap isrc1ni,isrc2,idest */
 
-{ "flush",	0x34000000, 0xc81f0001, "i(2)", E_ADDR },	/* flush #const(isrc2) */
-{ "flush",	0x34000001, 0xc81f0000, "i(2)++", E_ADDR },	/* flush #const(isrc2)++ */
+{ "flush",	0x34000004, 0xc81f0003, "L(2)", E_ADDR },	/* flush #const(isrc2) */
+{ "flush",	0x34000005, 0xc81f0002, "L(2)++", E_ADDR },	/* flush #const(isrc2)++ */
 
 { "and",	0xc0000000, 0x3c000000, "1,2,d", 0 },	/* and isrc1,isrc2,idest */
 { "and",	0xc4000000, 0x38000000, "i,2,d", E_AND },	/* and #const,isrc2,idest */
@@ -204,6 +208,16 @@ static const struct i860_opcode i860_opcodes[] =
 { "calli",	0x4c000002, 0xb000001d, "1", E_DELAY },	/* calli isrc1ni */
 { "intovr",	0x4c000004, 0xb000001b, "", 0 },	/* intovr trap on integer overflow */
 { "unlock",	0x4c000007, 0xb0000018, "", 0 },	/* unlock clear BL in dirbase */
+{ "ldio.l",	0x4c000408, 0xb00003f7, "2,d", XP_ONLY },	/* ldio.l isrc2,idest */
+{ "ldio.s",	0x4c000208, 0xb00005f7, "2,d", XP_ONLY },	/* ldio.s isrc2,idest */
+{ "ldio.b",	0x4c000008, 0xb00007f7, "2,d", XP_ONLY },	/* ldio.b isrc2,idest */
+{ "stio.l",	0x4c000409, 0xb00003f6, "1,2", XP_ONLY },	/* stio.l isrc1ni,isrc2 */
+{ "stio.s",	0x4c000209, 0xb00005f6, "1,2", XP_ONLY },	/* stio.s isrc1ni,isrc2 */
+{ "stio.b",	0x4c000009, 0xb00007f6, "1,2", XP_ONLY },	/* stio.b isrc1ni,isrc2 */
+{ "ldint.l",	0x4c00040a, 0xb00003f5, "2,d", XP_ONLY },	/* ldint.l isrc2,idest */
+{ "ldint.s",	0x4c00020a, 0xb00005f5, "2,d", XP_ONLY },	/* ldint.s isrc2,idest */
+{ "ldint.b",	0x4c00000a, 0xb00007f5, "2,d", XP_ONLY },	/* ldint.b isrc2,idest */
+{ "scyc.b",	0x4c00000b, 0xb00007f4, "2", XP_ONLY },		/* scyc.b isrc2 */
 
 /* CTRL-Format Instructions */
 { "br",		0x68000000, 0x94000000, "l", E_DELAY },	/* br lbroff */
@@ -433,10 +447,8 @@ static const struct i860_opcode i860_opcodes[] =
 { "pfsub.ss",	0x48000431, 0xb40001ce, "e,f,g", 0 },	/* pfsub.p fsrc1,fsrc2,fdest */
 { "pfsub.sd",	0x480004b1, 0xb400014e, "e,f,g", 0 },	/* pfsub.p fsrc1,fsrc2,fdest */
 { "pfsub.dd",	0x480005b1, 0xb400004e, "e,f,g", 0 },	/* pfsub.p fsrc1,fsrc2,fdest */
-{ "fix.ss",	0x48000032, 0xb40005cd, "e,g", 0 },	/* fix.p fsrc1,fdest */
 { "fix.sd",	0x480000b2, 0xb400054d, "e,g", 0 },	/* fix.p fsrc1,fdest */
 { "fix.dd",	0x480001b2, 0xb400044d, "e,g", 0 },	/* fix.p fsrc1,fdest */
-{ "pfix.ss",	0x48000432, 0xb40001cd, "e,g", 0 },	/* pfix.p fsrc1,fdest */
 { "pfix.sd",	0x480004b2, 0xb400014d, "e,g", 0 },	/* pfix.p fsrc1,fdest */
 { "pfix.dd",	0x480005b2, 0xb400004d, "e,g", 0 },	/* pfix.p fsrc1,fdest */
 { "famov.ss",	0x48000033, 0xb40005cc, "e,g", 0 },	/* famov.p fsrc1,fdest */
@@ -455,10 +467,8 @@ static const struct i860_opcode i860_opcodes[] =
 { "pfle.dd",	0x480005b4, 0xb400004b, "e,f,g", 0 },	/* pfle.p fsrc1,fsrc2,fdest */
 { "pfeq.ss",	0x48000435, 0xb40001ca, "e,f,g", 0 },	/* pfeq.p fsrc1,fsrc2,fdest */
 { "pfeq.dd",	0x48000535, 0xb40000ca, "e,f,g", 0 },	/* pfeq.p fsrc1,fsrc2,fdest */
-{ "ftrunc.ss",	0x4800003a, 0xb40005c5, "e,g", 0 },	/* ftrunc.p fsrc1,fdest */
 { "ftrunc.sd",	0x480000ba, 0xb4000545, "e,g", 0 },	/* ftrunc.p fsrc1,fdest */
 { "ftrunc.dd",	0x480001ba, 0xb4000445, "e,g", 0 },	/* ftrunc.p fsrc1,fdest */
-{ "pftrunc.ss",	0x4800043a, 0xb40001c5, "e,g", 0 },	/* pftrunc.p fsrc1,fdest */
 { "pftrunc.sd",	0x480004ba, 0xb4000145, "e,g", 0 },	/* pftrunc.p fsrc1,fdest */
 { "pftrunc.dd",	0x480005ba, 0xb4000045, "e,g", 0 },	/* pftrunc.p fsrc1,fdest */
 { "fxfr",	0x48000040, 0xb40005bf, "e,d", 0 },	/* fxfr fsrc1,idest */
@@ -472,10 +482,10 @@ static const struct i860_opcode i860_opcodes[] =
 { "pfisub.dd",	0x480005cd, 0xb4000032, "e,f,g", 0 },	/* pfisub.w fsrc1,fsrc2,fdest */
 { "fzchkl",	0x480001d7, 0xb4000428, "e,f,g", 0 },	/* fzchkl fsrc1,fsrc2,fdest */
 { "pfzchkl",	0x480005d7, 0xb4000028, "e,f,g", 0 },	/* pfzchkl fsrc1,fsrc2,fdest */
-{ "fzchks",	0x4800015f, 0xb4000420, "e,f,g", 0 },	/* fzchks fsrc1,fsrc2,fdest */
-{ "pfzchks",	0x4800055f, 0xb4000020, "e,f,g", 0 },	/* pfzchks fsrc1,fsrc2,fdest */
-{ "faddp",	0x48000050, 0xb40005af, "e,f,g", 0 },	/* faddp fsrc1,fsrc2,fdest */
-{ "pfaddp",	0x48000450, 0xb40001af, "e,f,g", 0 },	/* pfaddp fsrc1,fsrc2,fdest */
+{ "fzchks",	0x480001df, 0xb4000420, "e,f,g", 0 },	/* fzchks fsrc1,fsrc2,fdest */
+{ "pfzchks",	0x480005df, 0xb4000020, "e,f,g", 0 },	/* pfzchks fsrc1,fsrc2,fdest */
+{ "faddp",	0x480001d0, 0xb400042f, "e,f,g", 0 },	/* faddp fsrc1,fsrc2,fdest */
+{ "pfaddp",	0x480005d0, 0xb400002f, "e,f,g", 0 },	/* pfaddp fsrc1,fsrc2,fdest */
 { "faddz",	0x480001d1, 0xb400042e, "e,f,g", 0 },	/* faddz fsrc1,fsrc2,fdest */
 { "pfaddz",	0x480005d1, 0xb400002e, "e,f,g", 0 },	/* pfaddz fsrc1,fsrc2,fdest */
 { "form",	0x480001da, 0xb4000425, "e,g", 0 },	/* form fsrc1,fdest */
@@ -484,9 +494,9 @@ static const struct i860_opcode i860_opcodes[] =
 /* Floating point pseudo-instructions.  */
 { "fmov.ss",	0x48000049, 0xb7e005b6, "e,g", 0 },	/* fiadd.ss fsrc1,f0,fdest */
 { "fmov.dd",	0x480001c9, 0xb7e00436, "e,g", 0 },	/* fiadd.dd fsrc1,f0,fdest */
-{ "fmov.sd",	0x480000b0, 0xb7e0054f, "e,g", 0 },	/* fadd.sd fsrc1,f0,fdest */
-{ "fmov.ds",	0x48000130, 0xb7e004cf, "e,g", 0 },	/* fadd.ds fsrc1,f0,fdest */
-{ "pfmov.ds",	0x48000530, 0xb73000cf, "e,g", 0 },	/* pfadd.ds fsrc1,f0,fdest */
+{ "fmov.sd",	0x480000b3, 0xb400054c, "e,g", 0 },	/* famov.sd fsrc1,fdest */
+{ "fmov.ds",	0x48000133, 0xb40004cc, "e,g", 0 },	/* famov.ds fsrc1,fdest */
+{ "pfmov.ds",	0x48000533, 0xb40000cc, "e,g", 0 },	/* pfamov.ds fsrc1,fdest */
 { "pfmov.dd",	0x480005c9, 0xb7e00036, "e,g", 0 },	/* pfiadd.dd fsrc1,f0,fdest */
 { 0, 0, 0, 0, 0 },
 

@@ -1,3 +1,7 @@
+2004-01-06  Mark Kettenis  <kettenis@gnu.org>
+
+	* stab.def: Add N_PATCH to DO definition.
+
 2003-03-06  Elias Athanasopoulos  <elathan@phys.uoa.gr>
 
 	* aout64.h (BYTES_IN_WORD): Define if necessary.

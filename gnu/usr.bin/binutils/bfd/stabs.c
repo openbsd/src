@@ -1,23 +1,23 @@
 /* Stabs in sections linking support.
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002
+   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004
    Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
 
-This file is part of BFD, the Binary File Descriptor library.
+   This file is part of BFD, the Binary File Descriptor library.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2 of the License, or
+   (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 /* This file contains support for linking stabs in sections, as used
    on COFF and ELF.  */
@@ -56,12 +56,19 @@ struct stab_link_includes_table
 };
 
 /* A linked list of totals that we have found for a particular header
-   file.  */
+   file.  A total is a unique identifier for a particular BINCL...EINCL
+   sequence of STABs that can be used to identify duplicate sequences.
+   It consists of three fields, 'sum_chars' which is the sum of all the
+   STABS characters; 'num_chars' which is the number of these charactes
+   and 'symb' which is a buffer of all the symbols in the sequence.  This
+   buffer is only checked as a last resort.  */
 
 struct stab_link_includes_totals
 {
   struct stab_link_includes_totals *next;
-  bfd_vma total;
+  bfd_vma sum_chars;  /* Accumulated sum of STABS characters.  */
+  bfd_vma num_chars;  /* Number of STABS characters.  */
+  const char* symb;   /* The STABS characters themselves.  */
 };
 
 /* An entry in the header file hash table.  */
@@ -169,12 +176,13 @@ stab_link_includes_newfunc (entry, table, string)
    pass of the linker.  */
 
 bfd_boolean
-_bfd_link_section_stabs (abfd, psinfo, stabsec, stabstrsec, psecinfo)
+_bfd_link_section_stabs (abfd, psinfo, stabsec, stabstrsec, psecinfo, pstring_offset)
      bfd *abfd;
      PTR *psinfo;
      asection *stabsec;
      asection *stabstrsec;
      PTR *psecinfo;
+     bfd_size_type *pstring_offset;
 {
   bfd_boolean first;
   struct stab_info *sinfo;
@@ -276,7 +284,11 @@ _bfd_link_section_stabs (abfd, psinfo, stabsec, stabstrsec, psecinfo)
      and identify N_BINCL symbols which can be eliminated.  */
 
   stroff = 0;
-  next_stroff = 0;
+  /* The stabs sections can be split when
+     -split-by-reloc/-split-by-file is used.  We must keep track of
+     each stab section's place in the single concatenated string
+     table.  */
+  next_stroff = pstring_offset ? *pstring_offset : 0;
   skip = 0;
 
   symend = stabbuf + stabsec->_raw_size;
@@ -302,6 +314,8 @@ _bfd_link_section_stabs (abfd, psinfo, stabsec, stabstrsec, psecinfo)
 	     string table.  We only copy the very first one.  */
 	  stroff = next_stroff;
 	  next_stroff += bfd_get_32 (abfd, sym + 8);
+	  if (pstring_offset)
+	    *pstring_offset = next_stroff;
 	  if (! first)
 	    {
 	      *pstridx = (bfd_size_type) -1;
@@ -333,15 +347,21 @@ _bfd_link_section_stabs (abfd, psinfo, stabsec, stabstrsec, psecinfo)
 	 first number after an open parenthesis).  */
       if (type == (int) N_BINCL)
 	{
-	  bfd_vma val;
+	  bfd_vma sum_chars;
+	  bfd_vma num_chars;
+	  bfd_vma buf_len = 0;
+	  char * symb;
+	  char * symb_rover;
 	  int nest;
-	  bfd_byte *incl_sym;
-	  struct stab_link_includes_entry *incl_entry;
-	  struct stab_link_includes_totals *t;
-	  struct stab_excl_list *ne;
+	  bfd_byte * incl_sym;
+	  struct stab_link_includes_entry * incl_entry;
+	  struct stab_link_includes_totals * t;
+	  struct stab_excl_list * ne;
 
-	  val = 0;
+	  symb = symb_rover = NULL;
+	  sum_chars = num_chars = 0;
 	  nest = 0;
+
 	  for (incl_sym = sym + STABSIZE;
 	       incl_sym < symend;
 	       incl_sym += STABSIZE)
@@ -351,6 +371,8 @@ _bfd_link_section_stabs (abfd, psinfo, stabsec, stabstrsec, psecinfo)
 	      incl_type = incl_sym[TYPEOFF];
 	      if (incl_type == 0)
 		break;
+	      else if (incl_type == (int) N_EXCL)
+		continue;
 	      else if (incl_type == (int) N_EINCL)
 		{
 		  if (nest == 0)
@@ -368,7 +390,17 @@ _bfd_link_section_stabs (abfd, psinfo, stabsec, stabstrsec, psecinfo)
 			 + bfd_get_32 (abfd, incl_sym + STRDXOFF));
 		  for (; *str != '\0'; str++)
 		    {
-		      val += *str;
+		      if (num_chars >= buf_len)
+			{
+			  buf_len += 32 * 1024;
+			  symb = bfd_realloc (symb, buf_len);
+			  if (symb == NULL)
+			    goto error_return;
+			  symb_rover = symb + num_chars;
+			}
+		      * symb_rover ++ = * str;
+		      sum_chars += *str;
+		      num_chars ++;
 		      if (*str == '(')
 			{
 			  /* Skip the file number.  */
@@ -381,6 +413,8 @@ _bfd_link_section_stabs (abfd, psinfo, stabsec, stabstrsec, psecinfo)
 		}
 	    }
 
+	  BFD_ASSERT (num_chars == (bfd_vma) (symb_rover - symb));
+
 	  /* If we have already included a header file with the same
 	     value, then replaced this one with an N_EXCL symbol.  */
 	  incl_entry = stab_link_includes_lookup (&sinfo->includes, string,
@@ -389,7 +423,9 @@ _bfd_link_section_stabs (abfd, psinfo, stabsec, stabstrsec, psecinfo)
 	    goto error_return;
 
 	  for (t = incl_entry->totals; t != NULL; t = t->next)
-	    if (t->total == val)
+	    if (t->sum_chars == sum_chars
+		&& t->num_chars == num_chars
+		&& memcmp (t->symb, symb, num_chars) == 0)
 	      break;
 
 	  /* Record this symbol, so that we can set the value
@@ -399,7 +435,7 @@ _bfd_link_section_stabs (abfd, psinfo, stabsec, stabstrsec, psecinfo)
 	  if (ne == NULL)
 	    goto error_return;
 	  ne->offset = sym - stabbuf;
-	  ne->val = val;
+	  ne->val = sum_chars;
 	  ne->type = (int) N_BINCL;
 	  ne->next = secinfo->excls;
 	  secinfo->excls = ne;
@@ -412,7 +448,9 @@ _bfd_link_section_stabs (abfd, psinfo, stabsec, stabstrsec, psecinfo)
 		   bfd_hash_allocate (&sinfo->includes.root, sizeof *t));
 	      if (t == NULL)
 		goto error_return;
-	      t->total = val;
+	      t->sum_chars = sum_chars;
+	      t->num_chars = num_chars;
+	      t->symb = bfd_realloc (symb, num_chars); /* Trim data down.  */
 	      t->next = incl_entry->totals;
 	      incl_entry->totals = t;
 	    }
@@ -423,6 +461,9 @@ _bfd_link_section_stabs (abfd, psinfo, stabsec, stabstrsec, psecinfo)
 	      /* We have seen this header file before.  Tell the final
 		 pass to change the type to N_EXCL.  */
 	      ne->type = (int) N_EXCL;
+
+	      /* Free off superfluous symbols.  */
+	      free (symb);
 
 	      /* Mark the skipped symbols.  */
 
@@ -447,6 +488,9 @@ _bfd_link_section_stabs (abfd, psinfo, stabsec, stabstrsec, psecinfo)
 		    }
 		  else if (incl_type == (int) N_BINCL)
 		    ++nest;
+		  else if (incl_type == (int) N_EXCL)
+		    /* Keep existing exclusion marks.  */
+		    continue;   
 		  else if (nest == 0)
 		    {
 		      *incl_pstridx = (bfd_size_type) -1;

@@ -1,5 +1,5 @@
 /* MIPS ELF support for BFD.
-   Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001
+   Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2003
    Free Software Foundation, Inc.
 
    By Ian Lance Taylor, Cygnus Support, <ian@cygnus.com>, from
@@ -150,6 +150,9 @@ END_RELOC_NUMBERS (R_MIPS_maxext)
 
 /* -mips32r2 code.  */
 #define E_MIPS_ARCH_32R2        0x70000000
+
+/* -mips64r2 code.  */
+#define E_MIPS_ARCH_64R2        0x80000000
 
 /* The ABI of the file.  Also see EF_MIPS_ABI2 above. */
 #define EF_MIPS_ABI		0x0000F000
@@ -456,9 +459,9 @@ typedef struct
 
 /* MIPS ELF .reginfo swapping routines.  */
 extern void bfd_mips_elf32_swap_reginfo_in
-  PARAMS ((bfd *, const Elf32_External_RegInfo *, Elf32_RegInfo *));
+  (bfd *, const Elf32_External_RegInfo *, Elf32_RegInfo *);
 extern void bfd_mips_elf32_swap_reginfo_out
-  PARAMS ((bfd *, const Elf32_RegInfo *, Elf32_External_RegInfo *));
+  (bfd *, const Elf32_RegInfo *, Elf32_External_RegInfo *);
 
 /* Processor specific section flags.  */
 
@@ -822,9 +825,9 @@ typedef struct
 
 /* MIPS ELF option header swapping routines.  */
 extern void bfd_mips_elf_swap_options_in
-  PARAMS ((bfd *, const Elf_External_Options *, Elf_Internal_Options *));
+  (bfd *, const Elf_External_Options *, Elf_Internal_Options *);
 extern void bfd_mips_elf_swap_options_out
-  PARAMS ((bfd *, const Elf_Internal_Options *, Elf_External_Options *));
+  (bfd *, const Elf_Internal_Options *, Elf_External_Options *);
 
 /* Values which may appear in the kind field of an Elf_Options
    structure.  */
@@ -926,9 +929,9 @@ typedef struct
 
 /* MIPS ELF reginfo swapping routines.  */
 extern void bfd_mips_elf64_swap_reginfo_in
-  PARAMS ((bfd *, const Elf64_External_RegInfo *, Elf64_Internal_RegInfo *));
+  (bfd *, const Elf64_External_RegInfo *, Elf64_Internal_RegInfo *);
 extern void bfd_mips_elf64_swap_reginfo_out
-  PARAMS ((bfd *, const Elf64_Internal_RegInfo *, Elf64_External_RegInfo *));
+  (bfd *, const Elf64_Internal_RegInfo *, Elf64_External_RegInfo *);
 
 /* Masks for the info work of an ODK_EXCEPTIONS descriptor.  */
 #define OEX_FPU_MIN	0x1f	/* FPEs which must be enabled.  */

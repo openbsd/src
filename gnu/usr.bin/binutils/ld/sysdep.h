@@ -1,5 +1,6 @@
 /* sysdep.h -- handle host dependencies for the GNU linker
-   Copyright 1995, 1996, 1997, 1999, 2002 Free Software Foundation, Inc.
+   Copyright 1995, 1996, 1997, 1999, 2002, 2003
+   Free Software Foundation, Inc.
 
    This file is part of GLD, the Gnu Linker.
 
@@ -20,8 +21,6 @@
 
 #ifndef LD_SYSDEP_H
 #define LD_SYSDEP_H
-
-#include "ansidecl.h"
 
 #include "config.h"
 

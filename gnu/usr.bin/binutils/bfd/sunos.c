@@ -1,6 +1,6 @@
 /* BFD backend for SunOS binaries.
    Copyright 1990, 1991, 1992, 1994, 1995, 1996, 1997, 1998, 2000, 2001,
-   2002 Free Software Foundation, Inc.
+   2002, 2003 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -884,7 +884,7 @@ sunos_add_dynamic_symbols (abfd, info, symsp, sym_countp, stringsp)
     {
       if (! sunos_create_dynamic_sections (abfd, info,
 					   ((abfd->flags & DYNAMIC) != 0
-					    && !info->relocateable)))
+					    && !info->relocatable)))
 	return FALSE;
     }
 
@@ -911,7 +911,7 @@ sunos_add_dynamic_symbols (abfd, info, symsp, sym_countp, stringsp)
 
   /* The native linker seems to just ignore dynamic objects when -r is
      used.  */
-  if (info->relocateable)
+  if (info->relocatable)
     return TRUE;
 
   /* There's no hope of using a dynamic object which does not exactly
@@ -1246,7 +1246,6 @@ sunos_add_one_symbol (info, abfd, name, flags, section, value, string,
 
 /* Return the list of objects needed by BFD.  */
 
-/*ARGSUSED*/
 struct bfd_link_needed_list *
 bfd_sunos_get_needed_list (abfd, info)
      bfd *abfd ATTRIBUTE_UNUSED;
@@ -1326,7 +1325,7 @@ bfd_sunos_size_dynamic_sections (output_bfd, info, sdynptr, sneedptr,
   *sneedptr = NULL;
   *srulesptr = NULL;
 
-  if (info->relocateable)
+  if (info->relocatable)
     return TRUE;
 
   if (output_bfd->xvec != &MY(vec))
@@ -2165,7 +2164,6 @@ sunos_scan_dynamic_symbol (h, data)
    this point.  This entry point exists to prevent the regular linker
    code from doing anything with the object.  */
 
-/*ARGSUSED*/
 static bfd_boolean
 sunos_link_dynamic_object (info, abfd)
      struct bfd_link_info *info ATTRIBUTE_UNUSED;
@@ -2410,7 +2408,6 @@ sunos_write_dynamic_symbol (output_bfd, info, harg)
    copy it over, and tell the caller to not bother processing this
    reloc.  */
 
-/*ARGSUSED*/
 static bfd_boolean
 sunos_check_dynamic_reloc (info, input_bfd, input_section, harg, reloc,
 			   contents, skip, relocationp)

@@ -1,5 +1,5 @@
 /* tc-vax.c - vax-specific -
-   Copyright 1987, 1991, 1992, 1993, 1994, 1995, 1998, 2000, 2001, 2002
+   Copyright 1987, 1991, 1992, 1993, 1994, 1995, 1998, 2000, 2001, 2002, 2003
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -1912,7 +1912,7 @@ vip (vitP, instring)
 	  /*
 	   * We found a match! So let's pick up as many operands as the
 	   * instruction wants, and even gripe if there are too many.
-	   * We expect comma to seperate each operand.
+	   * We expect comma to separate each operand.
 	   * We let instring track the text, while p tracks a part of the
 	   * struct vot.
 	   */
@@ -2201,7 +2201,7 @@ vax_reg_parse (c1, c2, c3, c4)	/* 3 chars of register name */
  * There were a number of 'mismatched argument type' bugs to vip_op.
  * The most general solution is to typedef each (of many) arguments.
  * We used instead a typedef'd argument block. This is less modular
- * than using seperate return pointers for each result, but runs faster
+ * than using separate return pointers for each result, but runs faster
  * on most engines, and seems to keep programmers happy. It will have
  * to be done properly if we ever want to use vip_op as a general-purpose
  * module (it was designed to be).
@@ -2385,7 +2385,7 @@ vip_op_defaults (immediate, indirect, displen)
  * We don't limit your choice of width character.
  *
  * DEC operands are hard work to parse. For example, '@' as the first
- * character means indirect (deferred) mode but elswhere it is a shift
+ * character means indirect (deferred) mode but elsewhere it is a shift
  * operator.
  * The long-winded explanation of how this is supposed to work is
  * cancelled. Read a DEC vax manual.
@@ -2609,7 +2609,7 @@ vip_op (optext, vopP)
 	       */
 	      if (reg < 0)
 		{
-		  /* JF allow parenthasized expressions.  I hope this works */
+		  /* JF allow parenthesized expressions.  I hope this works */
 		  paren = 0;
 		  while (*q != ')')
 		    q++;
@@ -2961,7 +2961,7 @@ vip_op (optext, vopP)
    */
 
   /*
-   * Case of Rn. We seperate this one because it has a few special
+   * Case of Rn. We separate this one because it has a few special
    * errors the remaining modes lack.
    *
    * in:  at       optional
@@ -3256,12 +3256,16 @@ md_create_long_jump (ptr, from_addr, to_addr, frag, to_symbol)
 
 #ifdef OBJ_VMS
 const char *md_shortopts = "d:STt:V+1h:Hv::";
-#elif defined(OBJ_ELC)
-const char *md_shortopts = "d:STt:VkK";
+#elif defined(OBJ_ELF)
+const char *md_shortopts = "d:STt:VkKQ:";
 #else
 const char *md_shortopts = "d:STt:V";
 #endif
 struct option md_longopts[] = {
+#ifdef OBJ_ELF
+#define OPTION_PIC (OPTION_MD_BASE)
+  {"pic", no_argument, NULL, OPTION_PIC},
+#endif
   {NULL, no_argument, NULL, 0}
 };
 size_t md_longopts_size = sizeof (md_longopts);
@@ -3325,10 +3329,15 @@ md_parse_option (c, arg)
 #endif
 
 #ifdef OBJ_ELF
-    case 'K':
+    case OPTION_PIC:
     case 'k':
       flag_want_pic = 1;
       break;			/* -pic, Position Independent Code */
+
+     /* -Qy, -Qn: SVR4 arguments controlling whether a .comment
+	section should be emitted or not.  FIXME: Not implemented.  */
+    case 'Q':
+      break;
 #endif
 
     default:

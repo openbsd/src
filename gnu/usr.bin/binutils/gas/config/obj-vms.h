@@ -127,7 +127,7 @@ typedef struct nlist obj_symbol_type;	/* Symbol table entry */
 
 /*
  *  Macros to extract information from a symbol table entry.
- *  This syntaxic indirection allows independence regarding a.out or coff.
+ *  This syntactic indirection allows independence regarding a.out or coff.
  *  The argument (s) of all these macros is a pointer to a symbol table entry.
  */
 
@@ -217,7 +217,7 @@ typedef struct nlist obj_symbol_type;	/* Symbol table entry */
 #define obj_symbol_new_hook(s)	{;}
 
 /* Force structure tags into scope so that their use in prototypes
-   will never be their first occurance.  */
+   will never be their first occurrence.  */
 struct fix;
 struct frag;
 

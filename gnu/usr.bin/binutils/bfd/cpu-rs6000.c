@@ -1,5 +1,5 @@
 /* BFD back-end for rs6000 support
-   Copyright 1990, 1991, 1993, 1995, 2000, 2002
+   Copyright 1990, 1991, 1993, 1995, 2000, 2002, 2003
    Free Software Foundation, Inc.
    FIXME: Can someone provide a transliteration of this name into ASCII?
    Using the following chars caused a compiler warning on HIUX (so I replaced
@@ -47,7 +47,7 @@ rs6000_compatible (a,b)
     case bfd_arch_rs6000:
       return bfd_default_compatible (a, b);
     case bfd_arch_powerpc:
-      if (b->mach == bfd_mach_rs6k)
+      if (a->mach == bfd_mach_rs6k)
 	return b;
       return NULL;
     }

@@ -1,5 +1,6 @@
 /* BFD library support routines for the H8/500 architecture.
-   Copyright 1993, 1995, 2000, 2001, 2002 Free Software Foundation, Inc.
+   Copyright 1993, 1995, 2000, 2001, 2002, 2003
+   Free Software Foundation, Inc.
    Hacked by Steve Chamberlain of Cygnus Support.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -35,7 +36,7 @@ howto16_callback (abfd, reloc_entry, symbol_in, data,
 		  ignore_input_section, ignore_bfd)
      bfd *abfd;
      arelent *reloc_entry;
-     struct symbol_cache_entry *symbol_in;
+     struct bfd_symbol *symbol_in;
      PTR data;
      asection *ignore_input_section;
      bfd *ignore_bfd;
@@ -57,7 +58,7 @@ howto8_callback (abfd, reloc_entry, symbol_in, data,
 		 ignore_input_section, ignore_bfd)
      bfd *abfd;
      arelent *reloc_entry;
-     struct symbol_cache_entry *symbol_in;
+     struct bfd_symbol *symbol_in;
      PTR data;
      asection *ignore_input_section;
      bfd *ignore_bfd;
@@ -79,7 +80,7 @@ howto8_FFnn_callback (abfd, reloc_entry, symbol_in, data,
 		      ignore_input_section, ignore_bfd)
      bfd *abfd;
      arelent *reloc_entry;
-     struct symbol_cache_entry *symbol_in;
+     struct bfd_symbol *symbol_in;
      PTR data;
      asection *ignore_input_section;
      bfd *ignore_bfd;
@@ -102,7 +103,7 @@ howto8_pcrel_callback (abfd, reloc_entry, symbol_in, data,
 		       ignore_input_section, ignore_bfd)
      bfd *abfd;
      arelent *reloc_entry;
-     struct symbol_cache_entry *symbol_in;
+     struct bfd_symbol *symbol_in;
      PTR data;
      asection *ignore_input_section;
      bfd *ignore_bfd;

@@ -35,17 +35,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "ldfile.h"
 #include "ldemul.h"
 
-static void vanilla_before_parse PARAMS ((void));
-static void vanilla_set_output_arch PARAMS ((void));
-static char *vanilla_get_script PARAMS ((int *));
-
-
-static void vanilla_before_parse()
+static void vanilla_before_parse (void)
 {
 }
 
 static void
-vanilla_set_output_arch()
+vanilla_set_output_arch (void)
 {
   /* Set the output architecture and machine if possible */
   unsigned long  machine = 0;
@@ -53,14 +48,13 @@ vanilla_set_output_arch()
 }
 
 static char *
-vanilla_get_script(isfile)
-     int *isfile;
+vanilla_get_script (int *isfile)
 {
   *isfile = 0;
   return "";
 }
 
-struct ld_emulation_xfer_struct ld_vanilla_emulation = 
+struct ld_emulation_xfer_struct ld_vanilla_emulation =
 {
   vanilla_before_parse,
   syslib_default,

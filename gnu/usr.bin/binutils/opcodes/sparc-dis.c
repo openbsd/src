@@ -1,6 +1,6 @@
 /* Print SPARC instructions.
    Copyright 1989, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2002, 2003 Free Software Foundation, Inc.
+   2000, 2002, 2003, 2004 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -224,7 +224,7 @@ print_insn_sparc (memaddr, info)
   static int opcodes_initialized = 0;
   /* bfd mach number of last call.  */
   static unsigned long current_mach = 0;
-  bfd_vma (*getword) PARAMS ((const unsigned char *));
+  bfd_vma (*getword) (const void *);
 
   if (!opcodes_initialized
       || info->mach != current_mach)

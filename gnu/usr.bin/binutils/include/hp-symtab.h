@@ -4,7 +4,7 @@
    Written by the Center for Software Science at the University of Utah
    and by Cygnus Support.
 
-   Copyright 1994, 1995, 1998, 1999 Free Software Foundation, Inc.
+   Copyright 1994, 1995, 1998, 1999, 2003 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -191,11 +191,11 @@ typedef union dnttpointer
 #define SLTNIL (-1)
 typedef int sltpointer;
 
-/* Index into DOC (= "Debugging Optimized Code") line table */
+/* Index into DOC (= "Debugging Optimized Code") line table.  */
 #define LTNIL (-1)
 typedef int ltpointer;
 
-/* Index into context table */
+/* Index into context table.  */
 #define CTXTNIL (-1)
 typedef int ctxtpointer;
 
@@ -371,7 +371,7 @@ struct dntt_type_module
    ADDRESS points to an SLT entry from which line number and code locations
    may be determined.
 
-   ENTRYADDR is the memory address corresponding the the function's entry point
+   ENTRYADDR is the memory address corresponding the function's entry point
 
    RETVAL points to a LNTT entry describing the function's return value.
 
@@ -633,18 +633,16 @@ struct dntt_type_type
 {
   unsigned int extension:	1;
   unsigned int kind:		10;    /* DNTT_TYPE_TYPEDEF or 
-                                          DNTT_TYPE_TAGDEF 
-                                        */
+                                          DNTT_TYPE_TAGDEF.  */
   unsigned int global:		1;
   unsigned int typeinfo:	1;
   unsigned int unused:		19;
   vtpointer name;
   dnttpointer type;                    /* Underlying type, which for TAGDEF's may be
-                                        * DNTT_TYPE_STRUCT, DNTT_TYPE_UNION,
-                                        * DNTT_TYPE_ENUM, or DNTT_TYPE_CLASS. 
-                                        * For TYPEDEF's other underlying types
-                                        * are also possible.
-                                        */
+                                          DNTT_TYPE_STRUCT, DNTT_TYPE_UNION,
+                                          DNTT_TYPE_ENUM, or DNTT_TYPE_CLASS. 
+                                          For TYPEDEF's other underlying types
+                                          are also possible.  */
 };
 
 /* DNTT_TYPE_POINTER:
@@ -737,7 +735,7 @@ struct dntt_type_set
 
      00 for a constant lower bound (found in LOWBOUND).
 
-     01 for a dynamic lower bound with the lower bound found in the the
+     01 for a dynamic lower bound with the lower bound found in the
      memory address pointed to by LOWBOUND.
 
      10 for a dynamic lower bound described by an variable found in the
@@ -934,10 +932,10 @@ struct dntt_type_functype
    infers the "with" semantics when it sees a "this" argument to the member
    function. So GDB can safely ignore the DNTT_TYPE_WITH record.
 
-   A DNTT_TYPE_WITH has a matching DNTT_TYPE_END symbol 
- */
+   A DNTT_TYPE_WITH has a matching DNTT_TYPE_END symbol.  */
 
-struct dntt_type_with {
+struct dntt_type_with
+{
   unsigned int extension:	1;    /* always zero */
   unsigned int kind:		10;   /* always DNTT_TYPE_WITH */
   unsigned int addrtype:  	2;    /* 0 => STATTYPE                */
@@ -994,86 +992,86 @@ struct dntt_type_with {
     CLASS_SCOPE is what is used to indicate it is really a method.
     
 
-   A DNTT_TYPE_CLASS_SCOPE symbol must have a matching DNTT_TYPE_END symbol 
-*/
+   A DNTT_TYPE_CLASS_SCOPE symbol must have a matching DNTT_TYPE_END symbol.  */
 
-struct dntt_type_class_scope {
-  unsigned int extension:   1;	   /* always zero */
-  unsigned int kind:       10;     /* always DNTT_TYPE_CLASS_SCOPE */
+struct dntt_type_class_scope
+{
+  unsigned int extension:   1;	   /* Always zero.  */
+  unsigned int kind:       10;     /* Always DNTT_TYPE_CLASS_SCOPE.  */
   unsigned int unused:     21; 
-  sltpointer address         ;    /* pointer to SLT entry */
-  dnttpointer type           ;     /* pointer to class type DNTT */
+  sltpointer address         ;     /* Pointer to SLT entry.  */
+  dnttpointer type           ;     /* Pointer to class type DNTT.  */
 };
 
 /* C++ reference parameter.
    The structure of this record is the same as DNTT_TYPE_POINTER - 
-   refer to struct dntt_type_pointer.
- */
+   refer to struct dntt_type_pointer.  */
 
 /* The next two describe C++ pointer-to-data-member type, and 
    pointer-to-member-function type, respectively.
-   DNTT_TYPE_PTRMEM and DNTT_TYPE_PTRMEMFUNC have the same structure 
- */
+   DNTT_TYPE_PTRMEM and DNTT_TYPE_PTRMEMFUNC have the same structure.  */
 
-struct dntt_type_ptrmem {
-  unsigned int extension:   1;	   /* always zero */
-  unsigned int kind:       10;     /* always DNTT_TYPE_PTRMEM */
+struct dntt_type_ptrmem
+{
+  unsigned int extension:   1;	   /* Always zero.  */
+  unsigned int kind:       10;     /* Always DNTT_TYPE_PTRMEM.  */
   unsigned int unused:	   21;
-  dnttpointer pointsto	     ;     /* pointer to class DNTT         */
-  dnttpointer memtype 	     ;     /* type of member                */
+  dnttpointer pointsto	     ;     /* Pointer to class DNTT.  */
+  dnttpointer memtype 	     ;     /* Type of member.  */
 };
 
-struct dntt_type_ptrmemfunc {
-  unsigned int extension:   1;	   /* always zero */
-  unsigned int kind:       10;     /* always DNTT_TYPE_PTRMEMFUNC */
+struct dntt_type_ptrmemfunc
+{
+  unsigned int extension:   1;	   /* Always zero.  */
+  unsigned int kind:       10;     /* Always DNTT_TYPE_PTRMEMFUNC.  */
   unsigned int unused:	   21;
-  dnttpointer pointsto	     ;     /* pointer to class DNTT         */
-  dnttpointer memtype 	     ;     /* type of member                */
+  dnttpointer pointsto	     ;     /* Pointer to class DNTT.  */
+  dnttpointer memtype 	     ;     /* Type of member.  */
 };
 
 /* The DNTT_TYPE_CLASS symbol is emitted to describe a class type.
- * "memberlist" points to a chained list of FIELD or GENFIELD records
- * indicating the class members. "parentlist" points to a chained list
- * of INHERITANCE records indicating classes from which we inherit
- * fields.
- */
+   "memberlist" points to a chained list of FIELD or GENFIELD records
+   indicating the class members. "parentlist" points to a chained list
+   of INHERITANCE records indicating classes from which we inherit
+   fields.  */
 
 struct dntt_type_class 
 {
-  unsigned int extension:   1;     /* always 0 */
-  unsigned int kind:       10;     /* always DNTT_TYPE_CLASS */
-  unsigned int abstract:    1;     /* is this an abstract class?    */
-  unsigned int class_decl:  2;     /* 0=class,1=union,2=struct      */
-  unsigned int expansion:   1;     /* 1=template expansion          */
+  unsigned int extension:   1;     /* Always zero.  */
+  unsigned int kind:       10;     /* Always DNTT_TYPE_CLASS.  */
+  unsigned int abstract:    1;     /* Is this an abstract class?  */
+  unsigned int class_decl:  2;     /* 0=class,1=union,2=struct.  */
+  unsigned int expansion:   1;     /* 1=template expansion.  */
   unsigned int unused:     17;     
-  dnttpointer memberlist     ;     /* ptr to chain of [GEN]FIELDs */
-  unsigned long vtbl_loc     ;     /* offset in obj of ptr to vtbl  */
-  dnttpointer parentlist     ;     /* ptr to K_INHERITANCE list     */
-  unsigned long bitlength    ;     /* total at this level           */
-  dnttpointer identlist      ;     /* ptr to chain of class ident's */
-  dnttpointer friendlist     ;     /* ptr to K_FRIEND list          */
-  dnttpointer templateptr    ;     /* ptr to template               */
-  dnttpointer nextexp        ;     /* ptr to next expansion         */
+  dnttpointer memberlist     ;     /* Ptr to chain of [GEN]FIELDs.  */
+  unsigned long vtbl_loc     ;     /* Offset in obj of ptr to vtbl.  */
+  dnttpointer parentlist     ;     /* Ptr to K_INHERITANCE list.  */
+  unsigned long bitlength    ;     /* Total at this level.  */
+  dnttpointer identlist      ;     /* Ptr to chain of class ident's.  */
+  dnttpointer friendlist     ;     /* Ptr to K_FRIEND list.  */
+  dnttpointer templateptr    ;     /* Ptr to template.  */
+  dnttpointer nextexp        ;     /* Ptr to next expansion.  */
 };
 
 /* Class members are indicated via either the FIELD record (for
    data members, same as for C struct fields), or by the GENFIELD record
-   (for member functions).
- */
+   (for member functions).  */
 
-struct dntt_type_genfield {
-  unsigned int extension:   1;	   /* always zero */
-  unsigned int kind:       10;     /* always DNTT_TYPE_GENFIELD */
-  unsigned int visibility:  2;     /* pub = 0, prot = 1, priv = 2   */
-  unsigned int a_union:     1;     /* 1 => anonymous union member   */
+struct dntt_type_genfield
+{
+  unsigned int extension:   1;	   /* Always zero.  */
+  unsigned int kind:       10;     /* Always DNTT_TYPE_GENFIELD.  */
+  unsigned int visibility:  2;     /* Pub = 0, prot = 1, priv = 2.  */
+  unsigned int a_union:     1;     /* 1 => anonymous union member.  */
   unsigned int unused:	   18;
-  dnttpointer field	     ;     /* pointer to field or qualifier */
-  dnttpointer nextfield      ;     /* pointer to next field         */
+  dnttpointer field	     ;     /* Pointer to field or qualifier.  */
+  dnttpointer nextfield      ;     /* Pointer to next field.  */
 };
 
-/* C++ virtual functions */
+/* C++ virtual functions.  */
 
-struct dntt_type_vfunc {
+struct dntt_type_vfunc
+{
   unsigned int extension:   1;	   /* always zero */
   unsigned int kind:       10;     /* always DNTT_TYPE_VFUNC */
   unsigned int pure:        1;     /* pure virtual function ?       */
@@ -1082,9 +1080,10 @@ struct dntt_type_vfunc {
   unsigned long vtbl_offset  ;     /* offset into vtbl for virtual  */
 };
 
-/* Not precisely sure what this is intended for - DDE ignores it */
+/* Not precisely sure what this is intended for - DDE ignores it.  */
 
-struct dntt_type_memaccess {
+struct dntt_type_memaccess
+{
   unsigned int extension:   1;	   /* always zero */
   unsigned int kind:       10;     /* always DNTT_TYPE_MEMACCESS */
   unsigned int unused:	   21;
@@ -1093,12 +1092,12 @@ struct dntt_type_memaccess {
 };
 
 /* The DNTT_TYPE_INHERITANCE record describes derived classes.
- * In particular, the "parentlist" field of the CLASS record points
- * to a list of INHERITANCE records for classes from which we 
- * inherit members.
- */
+   In particular, the "parentlist" field of the CLASS record points
+   to a list of INHERITANCE records for classes from which we 
+   inherit members.  */
 
-struct dntt_type_inheritance {
+struct dntt_type_inheritance
+{
   unsigned int extension:   1;	   /* always zero */
   unsigned int kind:       10;     /* always DNTT_TYPE_INHERITANCE */
   unsigned int Virtual:     1;     /* virtual base class ?          */
@@ -1112,7 +1111,8 @@ struct dntt_type_inheritance {
 
 /* C++ "friend" classes ... */
 
-struct dntt_type_friend_class {
+struct dntt_type_friend_class
+{
   unsigned int extension:   1;	   /* always zero */
   unsigned int kind:       10;     /* always DNTT_TYPE_FRIEND_CLASS */
   unsigned int unused:	   21;
@@ -1120,7 +1120,8 @@ struct dntt_type_friend_class {
   dnttpointer next           ;     /* next DNTT_FRIEND              */
 };
 
-struct dntt_type_friend_func {
+struct dntt_type_friend_func
+{
   unsigned int extension:   1;	   /* always zero */
   unsigned int kind:       10;     /* always DNTT_TYPE_FRIEND_FUNC */
   unsigned int unused:	   21;
@@ -1131,11 +1132,11 @@ struct dntt_type_friend_func {
 };
 
 /* DDE appears to ignore the DNTT_TYPE_MODIFIER record.
- * It could perhaps be used to give better "ptype" output in GDB;
- * otherwise it is probably safe for GDB to ignore it also.
- */
+   It could perhaps be used to give better "ptype" output in GDB;
+   otherwise it is probably safe for GDB to ignore it also.  */
 
-struct dntt_type_modifier {
+struct dntt_type_modifier
+{
   unsigned int extension:   1;	   /* always zero */
   unsigned int kind:       10;     /* always DNTT_TYPE_MODIFIER */
   unsigned int m_const:     1;     /* const                         */
@@ -1148,9 +1149,10 @@ struct dntt_type_modifier {
   unsigned long future       ;     /* padding to 3-word block end   */
 };
 
-/* I'm not sure what this was intended for - DDE ignores it */
+/* I'm not sure what this was intended for - DDE ignores it.  */
 
-struct dntt_type_object_id {
+struct dntt_type_object_id
+{
   unsigned int extension:   1;	   /* always zero */
   unsigned int kind:       10;     /* always DNTT_TYPE_OBJECT_ID */
   unsigned int indirect:    1;     /* Is object_ident addr of addr? */
@@ -1165,16 +1167,15 @@ struct dntt_type_object_id {
 /* No separate dntt_type_memfunc; same as dntt_type_func */
 
 /* Symbol records to support templates. These only get used
- * in DDE's "describe" output (like GDB's "ptype").
- */
+   in DDE's "describe" output (like GDB's "ptype").  */
 
 /* The TEMPLATE record is the header for a template-class.
- * Like the CLASS record, a TEMPLATE record has a memberlist that
- * points to a list of template members. It also has an arglist
- * pointing to a list of TEMPLATE_ARG records.
- */
+   Like the CLASS record, a TEMPLATE record has a memberlist that
+   points to a list of template members. It also has an arglist
+   pointing to a list of TEMPLATE_ARG records.  */
 
-struct dntt_type_template {
+struct dntt_type_template
+{
   unsigned int extension:   1;	   /* always zero */
   unsigned int kind:       10;     /* always DNTT_TYPE_TEMPLATE */
   unsigned int abstract:    1;     /* is this an abstract class?    */
@@ -1191,12 +1192,15 @@ struct dntt_type_template {
 };
 
 /* Template-class arguments are a list of TEMPL_ARG records
- * chained together. The "name" field is the name of the formal.
- * E.g.:
- * template <class T> class q { ... };
- * Then "T" is the name of the formal argument.
- */
-struct dntt_type_templ_arg {
+   chained together. The "name" field is the name of the formal.
+   E.g.:
+   
+     template <class T> class q { ... };
+   
+   Then "T" is the name of the formal argument.  */
+
+struct dntt_type_templ_arg
+{
   unsigned int extension:   1;	   /* always zero */
   unsigned int kind:       10;     /* always DNTT_TYPE_TEMPL_ARG */
   unsigned int usagetype:   1;     /* 0 type-name 1 expression     */
@@ -1208,19 +1212,22 @@ struct dntt_type_templ_arg {
 };
 
 /* FUNC_TEMPLATE records are sort of like FUNCTION, but are emitted
- * for template member functions. E.g.,
- * template <class T> class q { 
-      ...
-      void f();
-      ... 
-   };
- * Within the list of FIELDs/GENFIELDs defining the member list
- * of the template "q", "f" would appear as a FUNC_TEMPLATE.
- * We'll also see instances of FUNCTION "f" records for each 
- * instantiation of the template.
- */
+   for template member functions. E.g.,
+   
+     template <class T> class q
+     {
+        ...
+        void f();
+        ... 
+     };
+   
+   Within the list of FIELDs/GENFIELDs defining the member list
+   of the template "q", "f" would appear as a FUNC_TEMPLATE.
+   We'll also see instances of FUNCTION "f" records for each 
+   instantiation of the template.  */
 
-struct dntt_type_func_template {
+struct dntt_type_func_template
+{
   unsigned int extension:   1;	   /* always zero */
   unsigned int kind:       10;     /* always DNTT_TYPE_FUNC_TEMPLATE */
   unsigned int public:      1;     /* 1 => globally visible        */
@@ -1240,13 +1247,13 @@ struct dntt_type_func_template {
 };
 
 /* LINK is apparently intended to link together function template
- * definitions with their instantiations. However, it is not clear
- * why this would be needed, except to provide the information on
- * a "ptype" command. And as far as I can tell, aCC does not 
- * generate this record.
- */
+   definitions with their instantiations. However, it is not clear
+   why this would be needed, except to provide the information on
+   a "ptype" command. And as far as I can tell, aCC does not 
+   generate this record.  */
 
-struct dntt_type_link {
+struct dntt_type_link
+{
   unsigned int extension:   1;	   /* always zero */
   unsigned int kind:       10;     /* always DNTT_TYPE_LINK */
   unsigned int linkKind:    4;     /* always LINK_UNKNOWN          */
@@ -1257,7 +1264,7 @@ struct dntt_type_link {
   long future[2]             ;     /* padding to 3-word block end  */
 };
 
-/* end of C++ specific SOM's */
+/* end of C++ specific SOM's.  */
 
 /* DNTT_TYPE_DYN_ARRAY_DESC is unused by GDB */
 /* DNTT_TYPE_DESC_SUBRANGE is unused by GDB */
@@ -1266,7 +1273,8 @@ struct dntt_type_link {
 /* DNTT_TYPE_INLN_LIST is unused by GDB */
 /* DNTT_TYPE_ALIAS is unused by GDB */
 
-struct dntt_type_doc_function {
+struct dntt_type_doc_function
+{
   unsigned int extension: 1;   /* always zero                  */
   unsigned int kind:     10;   /* K_DOC_FUNCTION or            */
                                /* K_DOC_MEMFUNC                */
@@ -1311,8 +1319,8 @@ struct dntt_type_block
 };
 
 /* One entry in a DNTT (either the LNTT or GNTT).  
- * This is a union of the above 60 or so structure definitions.
- */
+   This is a union of the above 60 or so structure definitions.  */
+
 union dnttentry
 {
   struct dntt_type_srcfile dsfile;
@@ -1438,163 +1446,163 @@ union sltentry
   struct slt_generic sgeneric;
 };
 
-/*  $LINES$ declarations
- *  This is the line table used for optimized code, which is only present 
- *  in the new $PROGRAM_INFO$ debug space.  
- */
+/* $LINES$ declarations
+   This is the line table used for optimized code, which is only present 
+   in the new $PROGRAM_INFO$ debug space.  */
 
 #define DST_LN_ESCAPE_FLAG1   15
 #define DST_LN_ESCAPE_FLAG2   14
 #define DST_LN_CTX_SPEC1      13  
 #define DST_LN_CTX_SPEC2      12
 
-/*
-  Escape function codes:
-*/
-typedef enum
-    {
-    dst_ln_pad,          /* pad byte */
-    dst_ln_escape_1,     /* reserved */
-    dst_ln_dpc1_dln1,    /* 1 byte line delta, 1 byte pc delta */
-    dst_ln_dpc2_dln2,    /* 2 bytes line delta, 2 bytes pc delta */
-    dst_ln_pc4_ln4,      /* 4 bytes ABSOLUTE line number, 4 bytes ABSOLUTE pc */
-    dst_ln_dpc0_dln1,    /* 1 byte line delta, pc delta = 0 */
-    dst_ln_ln_off_1,     /* statement escape, stmt # = 1 (2nd stmt on line) */
-    dst_ln_ln_off,       /* statement escape, stmt # = next byte */
-    dst_ln_entry,        /* entry escape, next byte is entry number */
-    dst_ln_exit,         /* exit escape */
-    dst_ln_stmt_end,     /* gap escape, 4 bytes pc delta */
-    dst_ln_stmt_cp,      /* current stmt is a critical point */
-    dst_ln_escape_12,    /* reserved */
-    dst_ln_escape_13,    /* this is an exception site record */
-    dst_ln_nxt_byte,     /* next byte contains the real escape code */
-    dst_ln_end,          /* end escape, final entry follows */
-    dst_ln_escape1_END_OF_ENUM
-    }
-    dst_ln_escape1_t;
+/* Escape function codes:  */
 
 typedef enum
-    {
-    dst_ln_ctx_1,        /* next byte describes context switch with 5-bit */
-                         /* index into the image table and 3-bit run length. */
-                         /* If run length is 0, end with another cxt specifier or ctx_end */
-    dst_ln_ctx_2,        /* next 2 bytes switch context: 13 bit index, 3 bit run length */
-    dst_ln_ctx_4,        /* next 4 bytes switch context: 29 bit index, 3 bit run length */
-    dst_ln_ctx_end,      /* end current context */
-    dst_ln_col_run_1,    /* next byte is column position of start of next statement, */
-                         /* following byte is length of statement */
-    dst_ln_col_run_2,    /* next 2 bytes is column position of start of next statement, */
-                         /* following 2 bytes is length of statement */
-    dst_ln_init_base1,   /* next 4 bytes are absolute PC, followed by 1 byte of line number */
-    dst_ln_init_base2,   /* next 4 bytes are absolute PC, followed by 2 bytes of line number */
-    dst_ln_init_base3,   /* next 4 bytes are absolute PC, followed by 3 bytes of line number */
-    dst_ln_escape2_END_OF_ENUM
-    }
-    dst_ln_escape2_t;           
+{
+  dst_ln_pad,          /* pad byte */
+  dst_ln_escape_1,     /* reserved */
+  dst_ln_dpc1_dln1,    /* 1 byte line delta, 1 byte pc delta */
+  dst_ln_dpc2_dln2,    /* 2 bytes line delta, 2 bytes pc delta */
+  dst_ln_pc4_ln4,      /* 4 bytes ABSOLUTE line number, 4 bytes ABSOLUTE pc */
+  dst_ln_dpc0_dln1,    /* 1 byte line delta, pc delta = 0 */
+  dst_ln_ln_off_1,     /* statement escape, stmt # = 1 (2nd stmt on line) */
+  dst_ln_ln_off,       /* statement escape, stmt # = next byte */
+  dst_ln_entry,        /* entry escape, next byte is entry number */
+  dst_ln_exit,         /* exit escape */
+  dst_ln_stmt_end,     /* gap escape, 4 bytes pc delta */
+  dst_ln_stmt_cp,      /* current stmt is a critical point */
+  dst_ln_escape_12,    /* reserved */
+  dst_ln_escape_13,    /* this is an exception site record */
+  dst_ln_nxt_byte,     /* next byte contains the real escape code */
+  dst_ln_end,          /* end escape, final entry follows */
+  dst_ln_escape1_END_OF_ENUM
+}
+dst_ln_escape1_t;
+
+typedef enum
+{
+  dst_ln_ctx_1,        	/* next byte describes context switch with 5-bit */
+  			/* index into the image table and 3-bit run length. */
+			/* If run length is 0, end with another cxt specifier or ctx_end */
+  dst_ln_ctx_2,        	/* next 2 bytes switch context: 13 bit index, 3 bit run length */
+  dst_ln_ctx_4,        	/* next 4 bytes switch context: 29 bit index, 3 bit run length */
+  dst_ln_ctx_end,      	/* end current context */
+  dst_ln_col_run_1,    	/* next byte is column position of start of next statement, */
+                        /* following byte is length of statement */
+  dst_ln_col_run_2,    	/* next 2 bytes is column position of start of next statement, */
+                        /* following 2 bytes is length of statement */
+  dst_ln_init_base1,   	/* next 4 bytes are absolute PC, followed by 1 byte of line number */
+  dst_ln_init_base2,   	/* next 4 bytes are absolute PC, followed by 2 bytes of line number */
+  dst_ln_init_base3,   	/* next 4 bytes are absolute PC, followed by 3 bytes of line number */
+  dst_ln_escape2_END_OF_ENUM
+}
+dst_ln_escape2_t;           
 
 typedef union
-    {
-    struct
-        {
-        unsigned int      pc_delta : 4;      /* 4 bit pc delta */
-        int               ln_delta : 4;      /* 4 bit line number delta */
-        }
-        delta;
+{
+  struct
+  {
+    unsigned int     pc_delta : 4;      /* 4 bit pc delta */
+    int              ln_delta : 4;      /* 4 bit line number delta */
+  }
+  delta;
 
-    struct
-        {
-        unsigned int      esc_flag : 4;      /* alias for pc_delta  */
-        unsigned int      esc_code : 4;      /* escape function code (dst_ln_escape1_t, or ...2_t */
-        }
-        esc;
+  struct
+  {
+    unsigned int     esc_flag : 4;      /* alias for pc_delta  */
+    unsigned int     esc_code : 4;      /* escape function code (dst_ln_escape1_t, or ...2_t */
+  }
+  esc;
 
-    struct
-        {
-        unsigned int      esc_flag : 4;      /* dst_ln_ctx_spec1, or dst_ln_ctx_spec2 */
-        unsigned int      run_length : 2;      
-        unsigned int      ctx_index : 2;      /* ...spec2 contains index;  ...spec1, index - 4 */
-        }
-        ctx_spec;
+  struct
+  {
+    unsigned int     esc_flag   : 4;      /* dst_ln_ctx_spec1, or dst_ln_ctx_spec2 */
+    unsigned int     run_length : 2;      
+    unsigned int     ctx_index  : 2;      /* ...spec2 contains index;  ...spec1, index - 4 */
+  }
+  ctx_spec;
 
-    char               sdata;               /* signed data byte */
-    unsigned char      udata;               /* unsigned data byte */
-    }
-    dst_ln_entry_t,
-    *dst_ln_entry_ptr_t;
+  char               sdata;               /* signed data byte */
+  unsigned char      udata;               /* unsigned data byte */
+}
+dst_ln_entry_t,
+  * dst_ln_entry_ptr_t;
 
 /* Warning: although the above union occupies only 1 byte the compiler treats
- * it as having size 2 (the minimum size of a struct).  Therefore a sequence of
- * dst_ln_entry_t's cannot be described as an array, and walking through such a
- * sequence requires convoluted code such as
- *      ln_ptr = (dst_ln_entry_ptr_t) (char*) ln_ptr + 1
- * We regret the inconvenience. */
+   it as having size 2 (the minimum size of a struct).  Therefore a sequence of
+   dst_ln_entry_t's cannot be described as an array, and walking through such a
+   sequence requires convoluted code such as
+        ln_ptr = (dst_ln_entry_ptr_t) (char*) ln_ptr + 1
+   We regret the inconvenience.  */
 
-/* Structure for interpreting the byte following a dst_ln_ctx1 entry */
-typedef struct {
-    unsigned  int          ctx1_index : 5;      /* 5 bit index into context table */
-    unsigned  int          ctx1_run_length : 3; /* 3 bit run length */
+/* Structure for interpreting the byte following a dst_ln_ctx1 entry.  */
+typedef struct
+{
+    unsigned int          ctx1_index : 5;      /* 5 bit index into context table */
+    unsigned int          ctx1_run_length : 3; /* 3 bit run length */
 } dst_ln_ctx1_t,
   *dst_ln_ctx1_ptr_t;
 
-/* Structure for interpreting the bytes following a dst_ln_ctx2 entry */
-typedef struct {
-    unsigned  int          ctx2_index : 13;     /* 13 bit index into context table */
-    unsigned  int          ctx2_run_length : 3; /* 3 bit run length */
+/* Structure for interpreting the bytes following a dst_ln_ctx2 entry.  */
+typedef struct
+{
+    unsigned int          ctx2_index : 13;     /* 13 bit index into context table */
+    unsigned int          ctx2_run_length : 3; /* 3 bit run length */
 } dst_ln_ctx2_t,
   *dst_ln_ctx2_ptr_t;
 
-/* Structure for interpreting the bytes following a dst_ln_ctx4 entry */
-typedef struct {
-    unsigned  int          ctx4_index : 29;     /* 29 bit index into context table */
-    unsigned  int          ctx4_run_length : 3; /* 3 bit run length */
+/* Structure for interpreting the bytes following a dst_ln_ctx4 entry.  */
+typedef struct
+{
+    unsigned int          ctx4_index : 29;     /* 29 bit index into context table */
+    unsigned int          ctx4_run_length : 3; /* 3 bit run length */
 } dst_ln_ctx4_t,
   *dst_ln_ctx4_ptr_t;
 
 
 /*  PXDB definitions.
- *
- * PXDB is a post-processor which takes the executable file
- * and massages the debug information so that the debugger may
- * start up and run more efficiently.  Some of the tasks
- * performed by PXDB are:
- *
- * o   Remove duplicate global type and variable information
- *     from the GNTT,
- *
- * o   Append the GNTT onto the end of the LNTT and place both
- *     back in the LNTT section,
- *
- * o   Build quick look-up tables (description follows) for
- *     files, procedures, modules, and paragraphs (for Cobol),
- *     placing these in the GNTT section,
- *
- * o   Reconstruct the header appearing in the header section
- *     to access this information.
- *
- * The "quick look-up" tables are in the $GNTT$ sub-space, in
- * the following order:
- *
- *     Procedures    -sorted by address
- *     Source files  -sorted by address (of the
- *                    generated code from routines)
- *     Modules       -sorted by address
- *     Classes       -<unsorted?>
- *     Address Alias -sorted by index <?>
- *     Object IDs    -sorted by object identifier
- *
- * Most quick entries have (0-based) indices into the LNTT tables to
- * the full entries for the item it describes.
- *
- * The post-PXDB header is in the $HEADER$ sub-space.  Alas, it
- * occurs in different forms, depending on the optimization level
- * in the compilation step and whether PXDB was run or not. The
- * worst part is the forms aren't self-describing, so we'll have
- * to grovel in the bits to figure out what kind we're looking at
- * (see hp_get_header in hp-psymtab-read.c).
- */
+  
+   PXDB is a post-processor which takes the executable file
+   and massages the debug information so that the debugger may
+   start up and run more efficiently.  Some of the tasks
+   performed by PXDB are:
+  
+   o   Remove duplicate global type and variable information
+       from the GNTT,
+  
+   o   Append the GNTT onto the end of the LNTT and place both
+       back in the LNTT section,
+  
+   o   Build quick look-up tables (description follows) for
+       files, procedures, modules, and paragraphs (for Cobol),
+       placing these in the GNTT section,
+  
+   o   Reconstruct the header appearing in the header section
+       to access this information.
+  
+   The "quick look-up" tables are in the $GNTT$ sub-space, in
+   the following order:
+  
+       Procedures    -sorted by address
+       Source files  -sorted by address (of the
+                      generated code from routines)
+       Modules       -sorted by address
+       Classes       -<unsorted?>
+       Address Alias -sorted by index <?>
+       Object IDs    -sorted by object identifier
+  
+   Most quick entries have (0-based) indices into the LNTT tables to
+   the full entries for the item it describes.
+  
+   The post-PXDB header is in the $HEADER$ sub-space.  Alas, it
+   occurs in different forms, depending on the optimization level
+   in the compilation step and whether PXDB was run or not. The
+   worst part is the forms aren't self-describing, so we'll have
+   to grovel in the bits to figure out what kind we're looking at
+   (see hp_get_header in hp-psymtab-read.c).  */
 
-/* PXDB versions
- */
+/* PXDB versions.  */
+
 #define PXDB_VERSION_CPLUSPLUS	1
 #define PXDB_VERSION_7_4	2
 #define PXDB_VERSION_CPP_30	3
@@ -1605,118 +1613,106 @@ typedef struct {
 #define PXDB_VERSION_2_1	1
 
 /* Header version for the case that there is no DOC info
- * but the executable has been processed by pxdb (the easy
- * case, from "cc -g").
- */
-typedef struct PXDB_struct {
-    int              pd_entries;   /* # of entries in function look-up table */
-    int              fd_entries;   /* # of entries in file look-up table */
-    int              md_entries;   /* # of entries in module look-up table */
-    unsigned int     pxdbed : 1;   /* 1 => file has been preprocessed      */
-    unsigned int     bighdr : 1;   /* 1 => this header contains 'time' word */
-    unsigned int     sa_header : 1;/* 1 => created by SA version of pxdb */
+   but the executable has been processed by pxdb (the easy
+   case, from "cc -g").  */
+
+typedef struct PXDB_struct
+{
+  int              pd_entries;   /* # of entries in function look-up table */
+  int              fd_entries;   /* # of entries in file look-up table */
+  int              md_entries;   /* # of entries in module look-up table */
+  unsigned int     pxdbed : 1;   /* 1 => file has been preprocessed      */
+  unsigned int     bighdr : 1;   /* 1 => this header contains 'time' word */
+  unsigned int     sa_header : 1;/* 1 => created by SA version of pxdb */
 			           /*   used for version check in xdb */
-    unsigned int     inlined: 1;   /* one or more functions have been inlined */
-    unsigned int     spare:12;
-    short            version;      /* pxdb header version */
-    int              globals;      /* index into the DNTT where GNTT begins */
-    unsigned int     time;         /* modify time of file before being pxdbed */
-    int              pg_entries;   /* # of entries in label look-up table */
-    int              functions;    /* actual number of functions */
-    int              files;        /* actual number of files */
-    int              cd_entries;   /* # of entries in class look-up table */
-    int              aa_entries;   /* # of entries in addr alias look-up table */
-    int              oi_entries;   /* # of entries in object id look-up table */
+  unsigned int     inlined: 1;   /* one or more functions have been inlined */
+  unsigned int     spare:12;
+  short            version;      /* pxdb header version */
+  int              globals;      /* index into the DNTT where GNTT begins */
+  unsigned int     time;         /* modify time of file before being pxdbed */
+  int              pg_entries;   /* # of entries in label look-up table */
+  int              functions;    /* actual number of functions */
+  int              files;        /* actual number of files */
+  int              cd_entries;   /* # of entries in class look-up table */
+  int              aa_entries;   /* # of entries in addr alias look-up table */
+  int              oi_entries;   /* # of entries in object id look-up table */
 } PXDB_header, *PXDB_header_ptr;
 
 /* Header version for the case that there is no DOC info and the
- * executable has NOT been processed by pxdb.
- */
-typedef struct XDB_header_struct {
-    long gntt_length; 
-    long lntt_length; 
-    long slt_length; 
-    long vt_length; 
-    long xt_length; 
+   executable has NOT been processed by pxdb.  */
+
+typedef struct XDB_header_struct
+{
+  long gntt_length; 
+  long lntt_length; 
+  long slt_length; 
+  long vt_length; 
+  long xt_length; 
 } XDB_header;
 
 /* Header version for the case that there is DOC info and the
- * executable has been processed by pxdb.
- */
-typedef struct DOC_info_PXDB_header_struct {
-        unsigned int xdb_header: 1; 	    /* bit set if this is post-3.1 xdb */ 
-        unsigned int doc_header: 1;         /* bit set if this is doc-style header*/
-        unsigned int version: 8;            /* version of pxdb see defines
-					     * PXDB_VERSION_* in this file */
-        unsigned int reserved_for_flags: 16;/* for future use; -- must be 
-                                             *  set to zero               
-                                             */
-        unsigned int has_aux_pd_table: 1;   /* $GNTT$ has aux PD table */
-        unsigned int has_expr_table: 1;     /* space has $EXPR$ */       
-        unsigned int has_range_table: 1;    /* space has $RANGE$ */       
-        unsigned int has_context_table: 1;  /* space has $SRC_CTXT$ */    
-        unsigned int has_lines_table: 1;    /* space contains a $LINES$
-                                             *  subspace for line tables.
-                                             */
-        unsigned int has_lt_offset_map: 1;  /* space contains an lt_offset
-                                             *  subspace for line table mapping
-                                             */
-     /* the following fields are the same as those in the PXDB_header in $DEBUG$ */
-        int      pd_entries;   /* # of entries in function look-up table */
-        int      fd_entries;   /* # of entries in file look-up table */
-        int      md_entries;   /* # of entries in module look-up table */
-        unsigned int     pxdbed : 1;   /* 1 => file has been preprocessed      */
-        unsigned int     bighdr : 1;   /* 1 => this header contains 'time' word */
-        unsigned int     sa_header : 1;/* 1 => created by SA version of pxdb */
-                               /*   used for version check in xdb */
-        unsigned int     inlined: 1;   /* one or more functions have been inlined */
-        unsigned int     spare : 28;
-        int      globals;      /* index into the DNTT where GNTT begins */
-        unsigned int     time;         /* modify time of file before being pxdbed */
-        int      pg_entries;   /* # of entries in label look-up table */
-        int      functions;    /* actual number of functions */
-        int      files;        /* actual number of files */
-        int      cd_entries;   /* # of entries in class look-up table */
-        int      aa_entries;   /* # of entries in addr alias look-up table */
-        int      oi_entries;   /* # of entries in object id look-up table */
+   executable has been processed by pxdb. */
+
+typedef struct DOC_info_PXDB_header_struct
+{
+  unsigned int xdb_header: 1; 	      /* bit set if this is post-3.1 xdb */ 
+  unsigned int doc_header: 1;         /* bit set if this is doc-style header */
+  unsigned int version: 8;            /* version of pxdb see defines
+				         PXDB_VERSION_* in this file.  */
+  unsigned int reserved_for_flags: 16;/* for future use; -- must be 
+                                         set to zero.  */
+  unsigned int has_aux_pd_table: 1;   /* $GNTT$ has aux PD table */
+  unsigned int has_expr_table: 1;     /* space has $EXPR$ */       
+  unsigned int has_range_table: 1;    /* space has $RANGE$ */       
+  unsigned int has_context_table: 1;  /* space has $SRC_CTXT$ */    
+  unsigned int has_lines_table: 1;    /* space contains a $LINES$
+                                         subspace for line tables.  */
+  unsigned int has_lt_offset_map: 1;  /* space contains an lt_offset
+                                         subspace for line table mapping.  */
+  /* The following fields are the same as those in the PXDB_header in $DEBUG$ */
+  int           pd_entries;   /* # of entries in function look-up table */
+  int           fd_entries;   /* # of entries in file look-up table */
+  int           md_entries;   /* # of entries in module look-up table */
+  unsigned int  pxdbed : 1;   /* 1 => file has been preprocessed      */
+  unsigned int  bighdr : 1;   /* 1 => this header contains 'time' word */
+  unsigned int  sa_header : 1;/* 1 => created by SA version of pxdb */
+                              /*   used for version check in xdb */
+  unsigned int  inlined: 1;   /* one or more functions have been inlined */
+  unsigned int  spare : 28;
+  int      	globals;      /* index into the DNTT where GNTT begins */
+  unsigned int  time;         /* modify time of file before being pxdbed */
+  int           pg_entries;   /* # of entries in label look-up table */
+  int           functions;    /* actual number of functions */
+  int           files;        /* actual number of files */
+  int           cd_entries;   /* # of entries in class look-up table */
+  int           aa_entries;   /* # of entries in addr alias look-up table */
+  int           oi_entries;   /* # of entries in object id look-up table */
 } DOC_info_PXDB_header;
 
 /* Header version for the case that there is DOC info and the
- * executable has NOT been processed by pxdb.
- */
-typedef struct DOC_info_header_struct {
-        unsigned int xdb_header: 1; 	/* bit set if this is post-3.1 xdb */ 
-        unsigned int doc_header: 1;     /* bit set if this is doc-style header*/
-        unsigned int version: 8;             /* version of debug/header 
-                                                format. For 10.0 the value 
-                                                will be 1. For "Davis" the
-						value is 2.
-                                              */
-	unsigned int reserved_for_flags: 18; /* for future use; -- must be 
-                                                set to zero               
-                                              */
-        unsigned int has_range_table: 1;     /* space contains a $RANGE$
-                                                subspace for variable ranges.
-                                              */
-        unsigned int has_context_table: 1;     /* space contains a $CTXT$
-                                                subspace for context/inline
-                                                table.
-                                              */
-	unsigned int has_lines_table: 1;     /* space contains a $LINES$
-                                                subspace for line tables.
-                                              */
-	unsigned int has_lt_offset_map: 1;   /* space contains an lt_offset
-                                                subspace for line table mapping
-                                              */
+   executable has NOT been processed by pxdb.  */
 
-        long   gntt_length;  /* same as old header */
-        long   lntt_length;  /* same as old header */
-        long   slt_length;   /* same as old header */
-        long   vt_length;    /* same as old header */
-        long   xt_length;    /* same as old header */
-        long   ctxt_length;  /* present only if version >= 2 */
-        long   range_length;  /* present only if version >= 2 */
-        long   expr_length;  /* present only if version >= 2 */
+typedef struct DOC_info_header_struct
+{
+  unsigned int xdb_header: 1; 	/* bit set if this is post-3.1 xdb */ 
+  unsigned int doc_header: 1;     /* bit set if this is doc-style header*/
+  unsigned int version: 8;      /* version of debug/header 
+                                   format. For 10.0 the value 
+                                   will be 1. For "Davis" the value is 2.  */
+  unsigned int reserved_for_flags: 18; /* for future use; -- must be set to zero.  */
+  unsigned int has_range_table: 1;     /* space contains a $RANGE$ subspace for variable ranges.  */
+  unsigned int has_context_table: 1;   /* space contains a $CTXT$ subspace for context/inline table.  */
+  unsigned int has_lines_table: 1;     /* space contains a $LINES$ subspace for line tables. */
+  unsigned int has_lt_offset_map: 1;   /* space contains an lt_offset subspace for line table mapping.  */
+
+  long   gntt_length;  /* same as old header */
+  long   lntt_length;  /* same as old header */
+  long   slt_length;   /* same as old header */
+  long   vt_length;    /* same as old header */
+  long   xt_length;    /* same as old header */
+  long   ctxt_length;  /* present only if version >= 2 */
+  long   range_length; /* present only if version >= 2 */
+  long   expr_length;  /* present only if version >= 2 */
 
 } DOC_info_header;
 
@@ -1730,145 +1726,141 @@ typedef union GenericDebugHeader_union
 
 
 /*  Procedure Descriptor:
- *
- *  An element of the procedure quick look-up table
- */
-typedef struct quick_procedure {
-        long             isym;		/* 0-based index of first symbol*/
-                                        /*   for procedure in $LNTT$,   */
-                                        /*   i.e. the procedure itself  */
-        CORE_ADDR	 adrStart;	/* memory adr of start of proc	*/
-        CORE_ADDR	 adrEnd;	/* memory adr of end of proc	*/
-        char           	*sbAlias;	/* alias name of procedure	*/
-        char            *sbProc;	/* real name of procedure	*/
-        CORE_ADDR	 adrBp;		/* address of entry breakpoint  */
-        CORE_ADDR	 adrExitBp;	/* address of exit breakpoint   */
-	int              icd;           /* member of this class (index) */	
-	unsigned int	 ipd;		/* index of template for this   */
-                                        /*   function (index)           */
-        unsigned int	 unused:    5;
-        unsigned int	 no_lt_offset: 1;/* no entry in lt_offset table */
-        unsigned int	 fTemplate: 1;	/* function template		*/
-        unsigned int	 fExpansion: 1;	/* function expansion		*/
-	unsigned int	 linked	  : 1;	/* linked with other expansions	*/
-	unsigned int	 duplicate: 1;  /* clone of another procedure   */
-	unsigned int	 overloaded:1;  /* overloaded function          */
-	unsigned int	 member:    1;  /* class member function        */
-	unsigned int	 constructor:1; /* constructor function         */
-	unsigned int	 destructor:1;  /* destructor function          */
-	unsigned int     Static:    1;  /* static function              */
-	unsigned int     Virtual:   1;  /* virtual function             */
-	unsigned int     constant:  1;  /* constant function            */
-	unsigned int     pure:      1;  /* pure (virtual) function      */
-	unsigned int     language:  4;  /* procedure's language         */
-	unsigned int     inlined:   1;  /* function has been inlined    */
-	unsigned int     Operator:  1;  /* operator function            */
-	unsigned int	 stub:      1;  /* bodyless function            */
-        unsigned int	 optimize:  2;	/* optimization level   	*/
-        unsigned int	 level:     5;	/* nesting level (top=0)	*/
+    An element of the procedure quick look-up table.  */
+
+typedef struct quick_procedure
+{
+  long           isym;		/* 0-based index of first symbol
+                                   for procedure in $LNTT$, 
+                                   i.e. the procedure itself.  */
+  CORE_ADDR	 adrStart;	/* memory adr of start of proc	*/
+  CORE_ADDR	 adrEnd;	/* memory adr of end of proc	*/
+  char         	*sbAlias;	/* alias name of procedure	*/
+  char          *sbProc;	/* real name of procedure	*/
+  CORE_ADDR	 adrBp;		/* address of entry breakpoint  */
+  CORE_ADDR	 adrExitBp;	/* address of exit breakpoint   */
+  int            icd;           /* member of this class (index) */	
+  unsigned int	 ipd;		/* index of template for this   */
+                                /* function (index)           */
+  unsigned int	 unused:    5;
+  unsigned int	 no_lt_offset: 1;/* no entry in lt_offset table */
+  unsigned int	 fTemplate: 1;	/* function template		*/
+  unsigned int	 fExpansion: 1;	/* function expansion		*/
+  unsigned int	 linked	  : 1;	/* linked with other expansions	*/
+  unsigned int	 duplicate: 1;  /* clone of another procedure   */
+  unsigned int	 overloaded:1;  /* overloaded function          */
+  unsigned int	 member:    1;  /* class member function        */
+  unsigned int	 constructor:1; /* constructor function         */
+  unsigned int	 destructor:1;  /* destructor function          */
+  unsigned int   Static:    1;  /* static function              */
+  unsigned int   Virtual:   1;  /* virtual function             */
+  unsigned int   constant:  1;  /* constant function            */
+  unsigned int   pure:      1;  /* pure (virtual) function      */
+  unsigned int   language:  4;  /* procedure's language         */
+  unsigned int   inlined:   1;  /* function has been inlined    */
+  unsigned int   Operator:  1;  /* operator function            */
+  unsigned int	 stub:      1;  /* bodyless function            */
+  unsigned int	 optimize:  2;	/* optimization level   	*/
+  unsigned int	 level:     5;	/* nesting level (top=0)	*/
 } quick_procedure_entry, *quick_procedure_entry_ptr;
 
 /*  Source File Descriptor:
- *
- *  An element of the source file quick look-up table
- */
-typedef struct quick_source {
-        long	       isym;		/* 0-based index in $LNTT$ of      */
-                                        /*   first symbol for this file    */
-        CORE_ADDR      adrStart;	/* mem adr of start of file's code */
-        CORE_ADDR      adrEnd;		/* mem adr of end of file's code   */
-        char	      *sbFile;		/* name of source file		   */
-        unsigned int   fHasDecl: 1;	/* do we have a .d file?	   */
-        unsigned int   fWarned:  1;	/* have warned about age problems? */
-	unsigned int   fSrcfile: 1;     /* 0 => include 1=> source         */
-        unsigned short ilnMac;		/* lines in file (0 if don't know) */
-        int	       ipd;		/* 0-based index of first procedure*/
-                                        /*   in this file, in the quick    */
-                                        /*   look-up table of procedures   */
-        unsigned int  *rgLn;		/* line pointer array, if any	   */
+    An element of the source file quick look-up table.  */
+
+typedef struct quick_source
+{
+  long	         isym;		/* 0-based index in $LNTT$ of
+                                   first symbol for this file.     */
+  CORE_ADDR      adrStart;	/* mem adr of start of file's code */
+  CORE_ADDR      adrEnd;	/* mem adr of end of file's code   */
+  char	        *sbFile;	/* name of source file		   */
+  unsigned int   fHasDecl: 1;	/* do we have a .d file?	   */
+  unsigned int   fWarned:  1;	/* have warned about age problems? */
+  unsigned int   fSrcfile: 1;   /* 0 => include 1=> source         */
+  unsigned short ilnMac;	/* lines in file (0 if don't know) */
+  int	         ipd;		/* 0-based index of first procedure
+                                   in this file, in the quick
+                                   look-up table of procedures.    */
+  unsigned int  *rgLn;		/* line pointer array, if any	   */
 } quick_file_entry, *quick_file_entry_ptr;
 
 /*  Module Descriptor:
- *
- *  An element of the module quick reference table
- */
-typedef struct quick_module {
-        long             isym;		   /* 0-based index of first    */
-                                           /*   symbol for module       */
-        CORE_ADDR	 adrStart;	   /* adr of start of mod.	*/
-        CORE_ADDR	 adrEnd;	   /* adr of end of mod.	*/
-        char	        *sbAlias;	   /* alias name of module   	*/
-        char	        *sbMod;		   /* real name of module	*/
-        unsigned int     imports:       1; /* module have any imports?  */
-        unsigned int     vars_in_front: 1; /* module globals in front?  */
-        unsigned int     vars_in_gaps:  1; /* module globals in gaps?   */
-        unsigned int     language:      4; /* type of language          */
-        unsigned int     unused      : 25;
-        unsigned int     unused2;	   /* space for future stuff	*/
+    An element of the module quick reference table.  */
+
+typedef struct quick_module
+{
+  long           isym;		   /* 0-based index of first
+                                      symbol for module.        */
+  CORE_ADDR	 adrStart;	   /* adr of start of mod.	*/
+  CORE_ADDR	 adrEnd;	   /* adr of end of mod.	*/
+  char	        *sbAlias;	   /* alias name of module   	*/
+  char	        *sbMod;		   /* real name of module	*/
+  unsigned int   imports:       1; /* module have any imports?  */
+  unsigned int   vars_in_front: 1; /* module globals in front?  */
+  unsigned int   vars_in_gaps:  1; /* module globals in gaps?   */
+  unsigned int   language:      4; /* type of language          */
+  unsigned int   unused      : 25;
+  unsigned int   unused2;	   /* space for future stuff	*/
 } quick_module_entry, *quick_module_entry_ptr;
 
 /*  Auxiliary Procedure Descriptor:
- *
- *  An element of the auxiliary procedure quick look-up table
- */
-typedef struct quick_aux_procedure {
-        long	 isym_inln;	/* start on inline list for proc */
-	long     spare;
+    An element of the auxiliary procedure quick look-up table.  */
+
+typedef struct quick_aux_procedure
+{
+  long	 isym_inln;	/* start on inline list for proc */
+  long   spare;
 } quick_aux_procedure_entry, *quick_aux_procedure_entry_ptr;
 
 /*  Paragraph Descriptor:
- *
- *  An element of the paragraph quick look-up table
- */
-typedef struct quick_paragraph {
-        long             isym;       /* first symbol for label (index)  */
-        CORE_ADDR        adrStart;   /* memory adr of start of label    */
-        CORE_ADDR        adrEnd;     /* memory adr of end of label      */
-        char            *sbLab;      /* name of label                   */
-        unsigned int     inst;       /* Used in xdb to store inst @ bp  */
-        unsigned int     sect:    1; /* true = section, false = parag.  */
-        unsigned int     unused: 31; /* future use                      */
+    An element of the paragraph quick look-up table.  */
+
+typedef struct quick_paragraph
+{
+  long             isym;       /* first symbol for label (index)  */
+  CORE_ADDR        adrStart;   /* memory adr of start of label    */
+  CORE_ADDR        adrEnd;     /* memory adr of end of label      */
+  char            *sbLab;      /* name of label                   */
+  unsigned int     inst;       /* Used in xdb to store inst @ bp  */
+  unsigned int     sect:    1; /* true = section, false = parag.  */
+  unsigned int     unused: 31; /* future use                      */
 } quick_paragraph_entry, *quick_paragraph_entry_ptr;
 
-/*
- *  Class Descriptor:
- *
- *  An element of the class quick look-up table
- */
-typedef struct quick_class {
-        char	         *sbClass;	/* name of class	        */
-        long              isym;         /* class symbol (tag)           */
-	unsigned int	  type : 2;	/* 0=class, 1=union, 2=struct   */
-	unsigned int	  fTemplate : 1;/* class template               */
-	unsigned int	  expansion : 1;/* template expansion           */
-	unsigned int	  unused    :28;
-	sltpointer        lowscope;	/* beginning of defined scope   */
-	sltpointer        hiscope;	/* end of defined scope         */
+/* Class Descriptor:
+   An element of the class quick look-up table.  */
+
+typedef struct quick_class
+{
+  char	         *sbClass;	/* name of class	        */
+  long            isym;         /* class symbol (tag)           */
+  unsigned int	  type : 2;	/* 0=class, 1=union, 2=struct   */
+  unsigned int	  fTemplate : 1;/* class template               */
+  unsigned int	  expansion : 1;/* template expansion           */
+  unsigned int	  unused    :28;
+  sltpointer      lowscope;	/* beginning of defined scope   */
+  sltpointer      hiscope;	/* end of defined scope         */
 } quick_class_entry, *quick_class_entry_ptr;
 
-/*  Address Alias Entry
- *
- *  An element of the address alias quick look-up table
- */
-typedef struct quick_alias {
-	CORE_ADDR       low;
-	CORE_ADDR       high;
-	int             index;
-	unsigned int	unused : 31;
-	unsigned int	alternate : 1;	/* alternate unnamed aliases?   */
+/* Address Alias Entry
+   An element of the address alias quick look-up table.  */
+
+typedef struct quick_alias
+{
+  CORE_ADDR     low;
+  CORE_ADDR     high;
+  int           index;
+  unsigned int	unused : 31;
+  unsigned int	alternate : 1;	/* alternate unnamed aliases?   */
 } quick_alias_entry, *quick_alias_entry_ptr;
 
-/*  Object Identification Entry
- *
- *  An element of the object identification quick look-up table
- */
+/* Object Identification Entry
+   An element of the object identification quick look-up table.  */
 
-typedef struct quick_obj_ID {
-	CORE_ADDR    obj_ident;		/* class identifier         */
-	long         isym;		/* class symbol             */
-	long         offset;		/* offset to object start   */
+typedef struct quick_obj_ID
+{
+  CORE_ADDR    obj_ident;	/* class identifier         */
+  long         isym;		/* class symbol             */
+  long         offset;		/* offset to object start   */
 } quick_obj_ID_entry, *quick_obj_ID_entry_ptr;
 
-
 #endif /* HP_SYMTAB_INCLUDED */
-

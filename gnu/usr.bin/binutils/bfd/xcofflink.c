@@ -1,5 +1,5 @@
 /* POWER/PowerPC XCOFF linker support.
-   Copyright 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002
+   Copyright 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003
    Free Software Foundation, Inc.
    Written by Ian Lance Taylor <ian@cygnus.com>, Cygnus Support.
 
@@ -1248,7 +1248,7 @@ xcoff_link_add_symbols (abfd, info)
 		}
 	      linoff = (auxlin.x_sym.x_fcnary.x_fcn.x_lnnoptr
 			- enclosing->line_filepos);
-	      /* explict cast to bfd_signed_vma for compiler */
+	      /* explicit cast to bfd_signed_vma for compiler */
 	      if (linoff < (bfd_signed_vma) (enclosing->lineno_count * linesz))
 		{
 		  struct internal_lineno lin;
@@ -1827,7 +1827,7 @@ xcoff_link_add_symbols (abfd, info)
 		      section = bfd_und_section_ptr;
 		      value = 0;
 		    }
-		  else if ((*sym_hash)->root.next != NULL
+		  else if ((*sym_hash)->root.und_next != NULL
 			   || info->hash->undefs_tail == &(*sym_hash)->root)
 		    {
 		      /* This symbol has been referenced.  In this
@@ -2898,7 +2898,7 @@ bfd_xcoff_size_dynamic_sections (output_bfd, info, libpath, entry,
       xcoff_mark_symbol (info, hsym);
       hsym->flags |= (XCOFF_DEF_REGULAR | XCOFF_RTINIT);
 
-      /* __rtinit initalized */
+      /* __rtinit initialized */
       amt = sizeof (struct internal_ldsym);
       ldsym = (struct internal_ldsym *) bfd_malloc (amt);
 
@@ -2932,7 +2932,7 @@ bfd_xcoff_size_dynamic_sections (output_bfd, info, libpath, entry,
     }
 
   /* Garbage collect unused sections.  */
-  if (info->relocateable
+  if (info->relocatable
       || ! gc
       || hentry == NULL
       || (hentry->root.type != bfd_link_hash_defined
@@ -5294,7 +5294,7 @@ xcoff_link_input_bfd (finfo, input_bfd)
 		    }
 		  else
 		    {
-		      if (! finfo->info->relocateable
+		      if (! finfo->info->relocatable
 			  && (h->flags & XCOFF_DEF_DYNAMIC) == 0
 			  && (h->flags & XCOFF_IMPORT) == 0)
 			{

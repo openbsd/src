@@ -1,5 +1,5 @@
 /* Disassemble z8000 code.
-   Copyright 1992, 1993, 1998, 2000, 2001, 2002
+   Copyright 1992, 1993, 1998, 2000, 2001, 2002, 2003
    Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
@@ -24,9 +24,9 @@
 
 #define DEFINE_TABLE
 #include "z8k-opc.h"
-
+
 #include <setjmp.h>
-
+
 typedef struct
 {
   /* These are all indexed by nibble number (i.e only every other entry
@@ -40,7 +40,7 @@ typedef struct
   bfd_vma insn_start;
   jmp_buf bailout;
 
-  long tabl_index;
+  int tabl_index;
   char instr_asmsrc[80];
   unsigned long arg_reg[0x0f];
   unsigned long immediate;
@@ -53,9 +53,6 @@ typedef struct
 }
 instr_data_s;
 
-static int fetch_data PARAMS ((struct disassemble_info *, int));
-
-
 /* Make sure that bytes from INFO->PRIVATE_DATA->BUFFER (inclusive)
    to ADDR (exclusive) are valid.  Returns 1 for success, longjmps
    on error.  */
@@ -64,9 +61,7 @@ static int fetch_data PARAMS ((struct disassemble_info *, int));
    ? 1 : fetch_data ((info), (nibble)))
 
 static int
-fetch_data (info, nibble)
-     struct disassemble_info *info;
-     int nibble;
+fetch_data (struct disassemble_info *info, int nibble)
 {
   unsigned char mybuf[20];
   int status;
@@ -142,18 +137,13 @@ static char *ctrl_names[8] =
   };
 
 static int seg_length;
-static int print_insn_z8k PARAMS ((bfd_vma, disassemble_info *, int));
-int z8k_lookup_instr PARAMS ((unsigned char *, disassemble_info *));
-static void output_instr
-  PARAMS ((instr_data_s *, unsigned long, disassemble_info *));
-static void unpack_instr PARAMS ((instr_data_s *, int, disassemble_info *));
-static void unparse_instr PARAMS ((instr_data_s *, int));
+int z8k_lookup_instr (unsigned char *, disassemble_info *);
+static void output_instr (instr_data_s *, unsigned long, disassemble_info *);
+static void unpack_instr (instr_data_s *, int, disassemble_info *);
+static void unparse_instr (instr_data_s *, int);
 
 static int
-print_insn_z8k (addr, info, is_segmented)
-     bfd_vma addr;
-     disassemble_info *info;
-     int is_segmented;
+print_insn_z8k (bfd_vma addr, disassemble_info *info, int is_segmented)
 {
   instr_data_s instr_data;
 
@@ -169,7 +159,7 @@ print_insn_z8k (addr, info, is_segmented)
   info->display_endian = BFD_ENDIAN_BIG;
 
   instr_data.tabl_index = z8k_lookup_instr (instr_data.nibbles, info);
-  if (instr_data.tabl_index > 0)
+  if (instr_data.tabl_index >= 0)
     {
       unpack_instr (&instr_data, is_segmented, info);
       unparse_instr (&instr_data, is_segmented);
@@ -186,27 +176,20 @@ print_insn_z8k (addr, info, is_segmented)
 }
 
 int
-print_insn_z8001 (addr, info)
-     bfd_vma addr;
-     disassemble_info *info;
+print_insn_z8001 (bfd_vma addr, disassemble_info *info)
 {
   return print_insn_z8k (addr, info, 1);
 }
 
 int
-print_insn_z8002 (addr, info)
-     bfd_vma addr;
-     disassemble_info *info;
+print_insn_z8002 (bfd_vma addr, disassemble_info *info)
 {
   return print_insn_z8k (addr, info, 0);
 }
 
 int
-z8k_lookup_instr (nibbles, info)
-     unsigned char *nibbles;
-     disassemble_info *info;
+z8k_lookup_instr (unsigned char *nibbles, disassemble_info *info)
 {
-
   int nibl_index, tabl_index;
   int nibl_matched;
   int need_fetch = 0;
@@ -295,10 +278,9 @@ z8k_lookup_instr (nibbles, info)
 }
 
 static void
-output_instr (instr_data, addr, info)
-     instr_data_s *instr_data;
-     unsigned long addr ATTRIBUTE_UNUSED;
-     disassemble_info *info;
+output_instr (instr_data_s *instr_data,
+              unsigned long addr ATTRIBUTE_UNUSED,
+              disassemble_info *info)
 {
   int num_bytes;
   char out_str[100];
@@ -314,10 +296,7 @@ output_instr (instr_data, addr, info)
 }
 
 static void
-unpack_instr (instr_data, is_segmented, info)
-     instr_data_s *instr_data;
-     int is_segmented;
-     disassemble_info *info;
+unpack_instr (instr_data_s *instr_data, int is_segmented, disassemble_info *info)
 {
   int nibl_count, loop;
   unsigned short instr_nibl, instr_byte, instr_word;
@@ -493,17 +472,56 @@ unpack_instr (instr_data, is_segmented, info)
     }
 }
 
-static char *intr_names[] = {
-  "all",    /* 0 */
-  "vi",     /* 1 */
-  "nvi",    /* 2 */
-  "none"    /* 3 */
-};
+static void
+print_intr(char *tmp_str, unsigned long interrupts)
+{
+  int comma = 0;
+
+  *tmp_str = 0;
+  if (! (interrupts & 2))
+    {
+      strcat (tmp_str, "vi");
+      comma = 1;
+    }
+  if (! (interrupts & 1))
+    {
+      if (comma) strcat (tmp_str, ",");
+      strcat (tmp_str, "nvi");
+    }
+}
 
 static void
-unparse_instr (instr_data, is_segmented)
-     instr_data_s *instr_data;
-     int is_segmented;
+print_flags(char *tmp_str, unsigned long flags)
+{
+  int comma = 0;
+
+  *tmp_str = 0;
+  if (flags & 8)
+    {
+      strcat (tmp_str, "c");
+      comma = 1;
+    }
+  if (flags & 4)
+    {
+      if (comma) strcat (tmp_str, ",");
+      strcat (tmp_str, "z");
+      comma = 1;
+    }
+  if (flags & 2)
+    {
+      if (comma) strcat (tmp_str, ",");
+      strcat (tmp_str, "s");
+      comma = 1;
+    }
+  if (flags & 1)
+    {
+      if (comma) strcat (tmp_str, ",");
+      strcat (tmp_str, "p");
+    }
+}
+
+static void
+unparse_instr (instr_data_s *instr_data, int is_segmented)
 {
   unsigned short datum_value;
   unsigned int tabl_datum, datum_class;
@@ -552,12 +570,12 @@ unparse_instr (instr_data, is_segmented)
 	  strcat (out_str, tmp_str);
 	  break;
 	case CLASS_IMM:
-          if (datum_value == ARG_IMM2)  /* True with EI/DI instructions only.  */
-            {
-              sprintf (tmp_str, "%s", intr_names[instr_data->interrupts]);
-              strcat (out_str, tmp_str);
-              break;
-            }
+	  if (datum_value == ARG_IMM2)	/* True with EI/DI instructions only.  */
+	    {
+	      print_intr (tmp_str, instr_data->interrupts);
+	      strcat (out_str, tmp_str);
+	      break;
+	    }
 	  sprintf (tmp_str, "#0x%0lx", instr_data->immediate);
 	  strcat (out_str, tmp_str);
 	  break;
@@ -581,8 +599,12 @@ unparse_instr (instr_data, is_segmented)
 	    sprintf (tmp_str, "@r%ld", instr_data->arg_reg[datum_value]);
 	  strcat (out_str, tmp_str);
 	  break;
+	case CLASS_IRO:
+          sprintf (tmp_str, "@r%ld", instr_data->arg_reg[datum_value]);
+	  strcat (out_str, tmp_str);
+	  break;
 	case CLASS_FLAGS:
-	  sprintf (tmp_str, "0x%0lx", instr_data->flags);
+	  print_flags(tmp_str, instr_data->flags);
 	  strcat (out_str, tmp_str);
 	  break;
 	case CLASS_REG_BYTE:

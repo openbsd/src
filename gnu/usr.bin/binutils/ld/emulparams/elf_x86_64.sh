@@ -10,6 +10,7 @@ MACHINE=
 NOP=0x90909090
 TEMPLATE_NAME=elf32
 GENERATE_SHLIB_SCRIPT=yes
+GENERATE_PIE_SCRIPT=yes
 NO_SMALL_DATA=yes
 
 if [ "x${host}" = "x${target}" ]; then

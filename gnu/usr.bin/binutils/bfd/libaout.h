@@ -1,6 +1,6 @@
 /* BFD back-end data structures for a.out (and similar) files.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002
+   2000, 2001, 2002, 2003
    Free Software Foundation, Inc.
    Written by Cygnus Support.
 
@@ -29,51 +29,23 @@
 
 #include "bfdlink.h"
 
-/* Macros for accessing components in an aout header.  Saves cluttering
-   the source with (bfd_vma) and (bfd_byte *) casts.  */
+/* Macros for accessing components in an aout header.  */
 
-#define H_PUT_64(abfd, val, where) \
-  bfd_h_put_64 ((abfd), (bfd_vma) (val), (bfd_byte *) (where))
-
-#define H_PUT_32(abfd, val, where) \
-  bfd_h_put_32 ((abfd), (bfd_vma) (val), (bfd_byte *) (where))
-
-#define H_PUT_16(abfd, val, where) \
-  bfd_h_put_16 ((abfd), (bfd_vma) (val), (bfd_byte *) (where))
-
+#define H_PUT_64 bfd_h_put_64
+#define H_PUT_32 bfd_h_put_32
+#define H_PUT_16 bfd_h_put_16
 #define H_PUT_8 bfd_h_put_8
-
-#define H_PUT_S64(abfd, val, where) \
-  bfd_h_put_signed_64 ((abfd), (bfd_vma) (val), (bfd_byte *) (where))
-
-#define H_PUT_S32(abfd, val, where) \
-  bfd_h_put_signed_32 ((abfd), (bfd_vma) (val), (bfd_byte *) (where))
-
-#define H_PUT_S16(abfd, val, where) \
-  bfd_h_put_signed_16 ((abfd), (bfd_vma) (val), (bfd_byte *) (where))
-
+#define H_PUT_S64 bfd_h_put_signed_64
+#define H_PUT_S32 bfd_h_put_signed_32
+#define H_PUT_S16 bfd_h_put_signed_16
 #define H_PUT_S8 bfd_h_put_signed_8
-
-#define H_GET_64(abfd, where) \
-  bfd_h_get_64 ((abfd), (bfd_byte *) (where))
-
-#define H_GET_32(abfd, where) \
-  bfd_h_get_32 ((abfd), (bfd_byte *) (where))
-
-#define H_GET_16(abfd, where) \
-  bfd_h_get_16 ((abfd), (bfd_byte *) (where))
-
+#define H_GET_64 bfd_h_get_64
+#define H_GET_32 bfd_h_get_32
+#define H_GET_16 bfd_h_get_16
 #define H_GET_8 bfd_h_get_8
-
-#define H_GET_S64(abfd, where) \
-  bfd_h_get_signed_64 ((abfd), (bfd_byte *) (where))
-
-#define H_GET_S32(abfd, where) \
-  bfd_h_get_signed_32 ((abfd), (bfd_byte *) (where))
-
-#define H_GET_S16(abfd, where) \
-  bfd_h_get_signed_16 ((abfd), (bfd_byte *) (where))
-
+#define H_GET_S64 bfd_h_get_signed_64
+#define H_GET_S32 bfd_h_get_signed_32
+#define H_GET_S16 bfd_h_get_signed_16
 #define H_GET_S8 bfd_h_get_signed_8
 
 /* Parameterize the a.out code based on whether it is being built
@@ -518,7 +490,7 @@ extern bfd_boolean NAME(aout,new_section_hook)
   PARAMS ((bfd *, asection *));
 
 extern bfd_boolean NAME(aout,set_section_contents)
-  PARAMS ((bfd *, sec_ptr, PTR, file_ptr, bfd_size_type));
+  PARAMS ((bfd *, sec_ptr, const PTR, file_ptr, bfd_size_type));
 
 extern asymbol * NAME(aout,make_empty_symbol)
   PARAMS ((bfd *));
@@ -539,7 +511,7 @@ extern void NAME(aout,reclaim_symbol_table)
 extern long NAME(aout,get_symtab_upper_bound)
   PARAMS ((bfd *));
 
-extern long NAME(aout,get_symtab)
+extern long NAME(aout,canonicalize_symtab)
   PARAMS ((bfd *, asymbol **));
 
 extern void NAME(aout,swap_ext_reloc_in)

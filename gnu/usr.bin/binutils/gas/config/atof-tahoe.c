@@ -5,7 +5,7 @@
    and then shaved it down. I don't even know how it works. (Don't you find
    my honesty refreshing?  Devon E Bowen <bowen@cs.buffalo.edu>
 
-   I don't allow uppercase letters in the precision descrpitors.
+   I don't allow uppercase letters in the precision descriptors.
    i.e. 'f' and 'd' are allowed but 'F' and 'D' aren't.  */
 
 #include "as.h"

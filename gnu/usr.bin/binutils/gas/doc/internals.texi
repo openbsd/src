@@ -704,9 +704,10 @@ processing.  After this point, it is safe to operate on one chain per section.
 
 The assembler always has a current frag, named @code{frag_now}.  More space is
 allocated for the current frag using the @code{frag_more} function; this
-returns a pointer to the amount of requested space.  Relaxing is done using
-variant frags allocated by @code{frag_var} or @code{frag_variant}
-(@pxref{Relaxation}).
+returns a pointer to the amount of requested space.  The function
+@code{frag_room} says by how much the current frag can be extended.
+Relaxing is done using variant frags allocated by @code{frag_var}
+or @code{frag_variant} (@pxref{Relaxation}).
 
 @node GAS processing
 @section What GAS does when it runs
@@ -1031,6 +1032,11 @@ arguments, the character before the @kbd{=} character, and the value of
 @cindex TC_EOL_IN_INSN
 If you define this macro, it should return nonzero if the current input line
 pointer should be treated as the end of a line.
+
+@item TC_CASE_SENSITIVE
+@cindex TC_CASE_SENSITIVE
+Define this macro if instruction mnemonics and pseudos are case sensitive.
+The default is to have it undefined giving case insensitive names.
 
 @item md_parse_name
 @cindex md_parse_name
@@ -1740,7 +1746,7 @@ Usually, if the symbol is in the same section as the frag (given by the
 @var{sec} argument), the narrowest likely relaxation mode is stored in
 @code{fr_subtype}, and that's that.
 
-If the symbol is undefined, or in a different section (and therefore moveable
+If the symbol is undefined, or in a different section (and therefore movable
 to an arbitrarily large distance), the largest available relaxation mode is
 specified, @code{fix_new} is called to produce the relocation record,
 @code{fr_fix} is increased to include the relocated field (remember, this

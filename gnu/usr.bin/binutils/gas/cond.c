@@ -55,8 +55,8 @@ struct conditional_frame {
   int macro_nest;
 };
 
-static void initialize_cframe PARAMS ((struct conditional_frame *cframe));
-static char *get_mri_string PARAMS ((int, int *));
+static void initialize_cframe (struct conditional_frame *cframe);
+static char *get_mri_string (int, int *);
 
 static struct conditional_frame *current_cframe = NULL;
 
@@ -64,8 +64,7 @@ static struct conditional_frame *current_cframe = NULL;
    the .ifndef (test_defined == 0) pseudo op.  */
 
 void
-s_ifdef (test_defined)
-     int test_defined;
+s_ifdef (int test_defined)
 {
   /* Points to name of symbol.  */
   char *name;
@@ -123,8 +122,7 @@ s_ifdef (test_defined)
 }
 
 void
-s_if (arg)
-     int arg;
+s_if (int arg)
 {
   expressionS operand;
   struct conditional_frame cframe;
@@ -186,9 +184,7 @@ s_if (arg)
 /* Get a string for the MRI IFC or IFNC pseudo-ops.  */
 
 static char *
-get_mri_string (terminator, len)
-     int terminator;
-     int *len;
+get_mri_string (int terminator, int *len)
 {
   char *ret;
   char *s;
@@ -228,8 +224,7 @@ get_mri_string (terminator, len)
 /* The MRI IFC and IFNC pseudo-ops.  */
 
 void
-s_ifc (arg)
-     int arg;
+s_ifc (int arg)
 {
   char *stop = NULL;
   char stopc;
@@ -270,8 +265,7 @@ s_ifc (arg)
 }
 
 void
-s_elseif (arg)
-     int arg;
+s_elseif (int arg)
 {
   if (current_cframe == NULL)
     {
@@ -346,8 +340,7 @@ s_elseif (arg)
 }
 
 void
-s_endif (arg)
-     int arg ATTRIBUTE_UNUSED;
+s_endif (int arg ATTRIBUTE_UNUSED)
 {
   struct conditional_frame *hold;
 
@@ -378,8 +371,7 @@ s_endif (arg)
 }
 
 void
-s_else (arg)
-     int arg ATTRIBUTE_UNUSED;
+s_else (int arg ATTRIBUTE_UNUSED)
 {
   if (current_cframe == NULL)
     {
@@ -426,8 +418,7 @@ s_else (arg)
 }
 
 void
-s_ifeqs (arg)
-     int arg;
+s_ifeqs (int arg)
 {
   char *s1, *s2;
   int len1, len2;
@@ -465,7 +456,7 @@ s_ifeqs (arg)
 }
 
 int
-ignore_input ()
+ignore_input (void)
 {
   char *s;
 
@@ -499,8 +490,7 @@ ignore_input ()
 }
 
 static void
-initialize_cframe (cframe)
-     struct conditional_frame *cframe;
+initialize_cframe (struct conditional_frame *cframe)
 {
   memset (cframe, 0, sizeof (*cframe));
   as_where (&cframe->if_file_line.file,
@@ -516,8 +506,7 @@ initialize_cframe (cframe)
    negative, we are being called at the of the input files.  */
 
 void
-cond_finish_check (nest)
-     int nest;
+cond_finish_check (int nest)
 {
   if (current_cframe != NULL && current_cframe->macro_nest >= nest)
     {
@@ -540,8 +529,7 @@ cond_finish_check (nest)
    nested, and just pop them off the stack.  */
 
 void
-cond_exit_macro (nest)
-     int nest;
+cond_exit_macro (int nest)
 {
   while (current_cframe != NULL && current_cframe->macro_nest >= nest)
     {

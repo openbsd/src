@@ -1,4 +1,4 @@
-# Makefile.in generated automatically by automake 1.4-p6 from Makefile.am
+# Makefile.in generated automatically by automake 1.4-p5 from Makefile.am
 
 # Copyright (C) 1994, 1995-8, 1999, 2001 Free Software Foundation, Inc.
 # This Makefile.in is free software; the Free Software Foundation
@@ -120,13 +120,19 @@ INCLUDES = -D_GNU_SOURCE -DDEBUG -I../bfd -I$(srcdir)/../include -I$(srcdir)/../
 
 bin_PROGRAMS = gprof
 
-sources = basic_blocks.c call_graph.c cg_arcs.c cg_dfn.c 	cg_print.c corefile.c gmon_io.c gprof.c hertz.c hist.c source.c 	search_list.c symtab.c sym_ids.c utils.c 	i386.c alpha.c vax.c tahoe.c sparc.c mips.c
+sources = basic_blocks.c call_graph.c cg_arcs.c cg_dfn.c \
+	cg_print.c corefile.c gmon_io.c gprof.c hertz.c hist.c source.c \
+	search_list.c symtab.c sym_ids.c utils.c \
+	i386.c alpha.c vax.c tahoe.c sparc.c mips.c
 
 gprof_SOURCES = $(sources) flat_bl.c bsd_callg_bl.c fsf_callg_bl.c
 gprof_DEPENDENCIES = ../bfd/libbfd.la $(INTLDEPS)
 gprof_LDADD = ../bfd/libbfd.la -liberty $(INTLLIBS)
 
-noinst_HEADERS =  	basic_blocks.h call_graph.h cg_arcs.h cg_dfn.h cg_print.h 	corefile.h gmon.h gmon_io.h gmon_out.h gprof.h hertz.h hist.h 	search_list.h source.h sym_ids.h symtab.h utils.h
+noinst_HEADERS = \
+	basic_blocks.h call_graph.h cg_arcs.h cg_dfn.h cg_print.h \
+	corefile.h gmon.h gmon_io.h gmon_out.h gprof.h hertz.h hist.h \
+	search_list.h source.h sym_ids.h symtab.h utils.h
 
 
 BUILT_SOURCES = flat_bl.c bsd_callg_bl.c fsf_callg_bl.c
@@ -186,7 +192,7 @@ TODO acinclude.m4 aclocal.m4 configure configure.in gconfig.in
 
 DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
 
-TAR = tar
+TAR = gtar
 GZIP_ENV = --best
 SOURCES = $(gprof_SOURCES)
 OBJECTS = $(gprof_OBJECTS)
@@ -713,7 +719,7 @@ diststuff: $(BUILT_SOURCES) info $(man_MANS)
 	    FUNCTION=`(echo $*|sed -e 's,.*/,,g' -e 's/_bl//')`_blurb \
 	    FILE=$*.m $(srcdir)/$*.m
 po/POTFILES.in: @MAINT@ Makefile
-	for file in $(POTFILES); do echo $$file; done | sort > tmp \
+	for f in $(POTFILES); do echo $$f; done | LC_COLLATE= sort > tmp \
 	  && mv tmp $(srcdir)/po/POTFILES.in
 
 # Build the man page from the texinfo file

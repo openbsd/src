@@ -55,7 +55,7 @@ info_TEXINFOS = bfd.texinfo
 MKDOC = chew$(EXEEXT_FOR_BUILD)
 
 $(MKDOC): chew.o
-	$(CC_FOR_BUILD) -o $(MKDOC) chew.o $(LOADLIBES) $(LDFLAGS)
+	$(CC_FOR_BUILD) -o $(MKDOC) chew.o $(CFLAGS) $(LOADLIBES) $(LDFLAGS)
 
 chew.o: chew.c
 	$(CC_FOR_BUILD) -c -I.. -I$(srcdir)/.. -I$(srcdir)/../../include -I$(srcdir)/../../intl -I../../intl $(H_CFLAGS) $(CFLAGS) $(srcdir)/chew.c

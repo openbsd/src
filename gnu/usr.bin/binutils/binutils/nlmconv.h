@@ -1,5 +1,5 @@
 /* nlmconv.h -- header file for NLM conversion program
-   Copyright 1993, 2002 Free Software Foundation, Inc.
+   Copyright 1993, 2002, 2003 Free Software Foundation, Inc.
 
 This file is part of GNU Binutils.
 
@@ -78,7 +78,7 @@ extern char *rpc_file;
 extern int parse_errors;
 
 /* The parser.  */
-extern int yyparse PARAMS ((void));
+extern int yyparse (void);
 
 /* Tell the lexer what file to read.  */
-extern bfd_boolean nlmlex_file PARAMS ((const char *));
+extern bfd_boolean nlmlex_file (const char *);

@@ -87,6 +87,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  *
 #define I32	INSN_ISA32
 #define I64     INSN_ISA64
 #define I33	INSN_ISA32R2
+#define I65	INSN_ISA64R2
 
 /* MIPS64 MIPS-3D ASE support.  */
 #define I16     INSN_MIPS16
@@ -481,6 +482,10 @@ const struct mips_opcode mips_builtin_opcodes[] =
 {"dctr",    "o(b)",	0xbc050000, 0xfc1f0000, RD_b,			I3	},
 {"dctw",    "o(b)",	0xbc090000, 0xfc1f0000, RD_b,			I3	},
 {"deret",   "",         0x4200001f, 0xffffffff, 0, 			I32|G2	},
+{"dext",    "t,r,I,+I",	0,    (int) M_DEXT,	INSN_MACRO,		I65	},
+{"dext",    "t,r,+A,+C", 0x7c000003, 0xfc00003f, WR_t|RD_s,    		I65	},
+{"dextm",   "t,r,+A,+G", 0x7c000001, 0xfc00003f, WR_t|RD_s,    		I65	},
+{"dextu",   "t,r,+E,+H", 0x7c000002, 0xfc00003f, WR_t|RD_s,    		I65	},
 /* For ddiv, see the comments about div.  */
 {"ddiv",    "z,s,t",    0x0000001e, 0xfc00ffff, RD_s|RD_t|WR_HILO,      I3      },
 {"ddiv",    "d,v,t",	0,    (int) M_DDIV_3,	INSN_MACRO,		I3	},
@@ -491,6 +496,10 @@ const struct mips_opcode mips_builtin_opcodes[] =
 {"ddivu",   "d,v,I",	0,    (int) M_DDIVU_3I,	INSN_MACRO,		I3	},
 {"di",      "",		0x41606000, 0xffffffff,	WR_t|WR_C0,		I33	},
 {"di",      "t",	0x41606000, 0xffe0ffff,	WR_t|WR_C0,		I33	},
+{"dins",    "t,r,I,+I",	0,    (int) M_DINS,	INSN_MACRO,		I65	},
+{"dins",    "t,r,+A,+B", 0x7c000007, 0xfc00003f, WR_t|RD_s,    		I65	},
+{"dinsm",   "t,r,+A,+F", 0x7c000005, 0xfc00003f, WR_t|RD_s,    		I65	},
+{"dinsu",   "t,r,+E,+F", 0x7c000006, 0xfc00003f, WR_t|RD_s,    		I65	},
 /* The MIPS assembler treats the div opcode with two operands as
    though the first operand appeared twice (the first operand is both
    a source and a destination).  To get the div machine instruction,
@@ -508,6 +517,7 @@ const struct mips_opcode mips_builtin_opcodes[] =
 {"divu",    "d,v,t",	0,    (int) M_DIVU_3,	INSN_MACRO,		I1	},
 {"divu",    "d,v,I",	0,    (int) M_DIVU_3I,	INSN_MACRO,		I1	},
 {"dla",     "t,A(b)",	0,    (int) M_DLA_AB,	INSN_MACRO,		I3	},
+{"dlca",    "t,A(b)",	0,    (int) M_DLCA_AB,	INSN_MACRO,		I3	},
 {"dli",     "t,j",      0x24000000, 0xffe00000, WR_t,			I3	}, /* addiu */
 {"dli",	    "t,i",	0x34000000, 0xffe00000, WR_t,			I3	}, /* ori */
 {"dli",     "t,I",	0,    (int) M_DLI,	INSN_MACRO,		I3	},
@@ -559,9 +569,17 @@ const struct mips_opcode mips_builtin_opcodes[] =
 {"drol",    "d,v,I",	0,    (int) M_DROL_I,	INSN_MACRO,		I3	},
 {"dror",    "d,v,t",	0,    (int) M_DROR,	INSN_MACRO,		I3	},
 {"dror",    "d,v,I",	0,    (int) M_DROR_I,	INSN_MACRO,		I3	},
-{"dror",    "d,w,<",	0x0020003a, 0xffe0003f,	WR_d|RD_t,		N5	},
-{"drorv",   "d,t,s",	0x00000056, 0xfc0007ff,	RD_t|RD_s|WR_d,		N5	},
-{"dror32",  "d,w,<",	0x0020003e, 0xffe0003f,	WR_d|RD_t,		N5	},
+{"dror",    "d,w,<",	0x0020003a, 0xffe0003f,	WR_d|RD_t,		N5|I65	},
+{"drorv",   "d,t,s",	0x00000056, 0xfc0007ff,	RD_t|RD_s|WR_d,		N5|I65	},
+{"dror32",  "d,w,<",	0x0020003e, 0xffe0003f,	WR_d|RD_t,		N5|I65	},
+{"drotl",   "d,v,t",	0,    (int) M_DROL,	INSN_MACRO,		I65	},
+{"drotl",   "d,v,I",	0,    (int) M_DROL_I,	INSN_MACRO,		I65	},
+{"drotr",   "d,v,t",	0,    (int) M_DROR,	INSN_MACRO,		I65	},
+{"drotr",   "d,v,I",	0,    (int) M_DROR_I,	INSN_MACRO,		I65	},
+{"drotrv",  "d,t,s",	0x00000056, 0xfc0007ff,	RD_t|RD_s|WR_d,		I65	},
+{"drotr32", "d,w,<",	0x0020003e, 0xffe0003f,	WR_d|RD_t,		I65	},
+{"dsbh",    "d,w",	0x7c0000a4, 0xffe007ff,	WR_d|RD_t,		I65	},
+{"dshd",    "d,w",	0x7c000164, 0xffe007ff,	WR_d|RD_t,		I65	},
 {"dsllv",   "d,t,s",	0x00000014, 0xfc0007ff,	WR_d|RD_t|RD_s,		I3	},
 {"dsll32",  "d,w,<",	0x0000003c, 0xffe0003f, WR_d|RD_t,		I3	},
 {"dsll",    "d,w,s",	0x00000014, 0xfc0007ff,	WR_d|RD_t|RD_s,		I3	}, /* dsllv */
@@ -623,6 +641,7 @@ const struct mips_opcode mips_builtin_opcodes[] =
 {"lb",      "t,A(b)",	0,    (int) M_LB_AB,	INSN_MACRO,		I1	},
 {"lbu",     "t,o(b)",	0x90000000, 0xfc000000,	LDD|RD_b|WR_t,		I1	},
 {"lbu",     "t,A(b)",	0,    (int) M_LBU_AB,	INSN_MACRO,		I1	},
+{"lca",     "t,A(b)",	0,    (int) M_LCA_AB,	INSN_MACRO,		I1	},
 {"ld",	    "t,o(b)",   0xdc000000, 0xfc000000, WR_t|RD_b,		I3	},
 {"ld",      "t,o(b)",	0,    (int) M_LD_OB,	INSN_MACRO,		I1	},
 {"ld",      "t,A(b)",	0,    (int) M_LD_AB,	INSN_MACRO,		I1	},

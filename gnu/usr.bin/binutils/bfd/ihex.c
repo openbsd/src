@@ -1,5 +1,5 @@
 /* BFD back-end for Intel Hex objects.
-   Copyright 1995, 1996, 1998, 1999, 2000, 2001, 2002
+   Copyright 1995, 1996, 1998, 1999, 2000, 2001, 2002, 2003
    Free Software Foundation, Inc.
    Written by Ian Lance Taylor of Cygnus Support <ian@cygnus.com>.
 
@@ -142,7 +142,7 @@ static bfd_boolean ihex_read_section
 static bfd_boolean ihex_get_section_contents
   PARAMS ((bfd *, asection *, PTR, file_ptr, bfd_size_type));
 static bfd_boolean ihex_set_section_contents
-  PARAMS ((bfd *, asection *, PTR, file_ptr, bfd_size_type));
+  PARAMS ((bfd *, asection *, const PTR, file_ptr, bfd_size_type));
 static bfd_boolean ihex_write_record
   PARAMS ((bfd *, size_t, unsigned int, unsigned int, bfd_byte *));
 static bfd_boolean ihex_write_object_contents
@@ -699,7 +699,7 @@ static bfd_boolean
 ihex_set_section_contents (abfd, section, location, offset, count)
      bfd *abfd;
      asection *section;
-     PTR location;
+     const PTR location;
      file_ptr offset;
      bfd_size_type count;
 {
@@ -948,7 +948,6 @@ ihex_set_arch_mach (abfd, arch, mach)
 
 /* Get the size of the headers, for the linker.  */
 
-/*ARGSUSED*/
 static int
 ihex_sizeof_headers (abfd, exec)
      bfd *abfd ATTRIBUTE_UNUSED;
@@ -966,7 +965,7 @@ ihex_sizeof_headers (abfd, exec)
   _bfd_generic_get_section_contents_in_window
 
 #define ihex_get_symtab_upper_bound bfd_0l
-#define ihex_get_symtab \
+#define ihex_canonicalize_symtab \
   ((long (*) PARAMS ((bfd *, asymbol **))) bfd_0l)
 #define ihex_make_empty_symbol _bfd_generic_make_empty_symbol
 #define ihex_print_symbol _bfd_nosymbols_print_symbol

@@ -48,14 +48,14 @@
 #ifdef OBJ_ELF
 #if TARGET_ARCH_SIZE == 64
 #include "bfd/elf64-hppa.h"
-#ifdef TE_LINUX
+#if defined (TE_LINUX) || defined (TE_NetBSD)
 #define TARGET_FORMAT "elf64-hppa-linux"
 #else
 #define TARGET_FORMAT "elf64-hppa"
 #endif
 #else /* TARGET_ARCH_SIZE == 32 */
 #include "bfd/elf32-hppa.h"
-#ifdef TE_LINUX
+#if defined (TE_LINUX) || defined (TE_NetBSD)
 #define TARGET_FORMAT "elf32-hppa-linux"
 #else
 #define TARGET_FORMAT "elf32-hppa"
@@ -105,6 +105,9 @@ extern void pa_check_eof PARAMS ((void));
 #define tc_frob_file pa_check_eof
 
 #define tc_frob_label(sym) pa_define_label (sym)
+
+extern const char	hppa_symbol_chars[];
+#define tc_symbol_chars	hppa_symbol_chars
 
 /* The PA does not need support for either of these.  */
 #define tc_crawl_symbol_chain(headers) {;}

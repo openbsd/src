@@ -1,5 +1,5 @@
 /* NLM (NetWare Loadable Module) executable support for BFD.
-   Copyright 1993, 1994, 1995, 1998, 2000, 2001, 2002
+   Copyright 1993, 1994, 1995, 1998, 2000, 2001, 2002, 2003
    Free Software Foundation, Inc.
 
    Written by Fred Fish @ Cygnus Support, using ELF support as the
@@ -42,7 +42,7 @@
 
 #define nlm_symbol_type			nlmNAME(symbol_type)
 #define nlm_get_symtab_upper_bound	nlmNAME(get_symtab_upper_bound)
-#define nlm_get_symtab			nlmNAME(get_symtab)
+#define nlm_canonicalize_symtab		nlmNAME(canonicalize_symtab)
 #define nlm_make_empty_symbol		nlmNAME(make_empty_symbol)
 #define nlm_print_symbol		nlmNAME(print_symbol)
 #define nlm_get_symbol_info		nlmNAME(get_symbol_info)
@@ -918,7 +918,7 @@ nlm_get_symtab_upper_bound (abfd)
    symbol table fails.  */
 
 long
-nlm_get_symtab (abfd, alocation)
+nlm_canonicalize_symtab (abfd, alocation)
      bfd *abfd;
      asymbol **alocation;
 {
@@ -1568,7 +1568,7 @@ bfd_boolean
 nlm_set_section_contents (abfd, section, location, offset, count)
      bfd *abfd;
      asection *section;
-     PTR location;
+     const PTR location;
      file_ptr offset;
      bfd_size_type count;
 {
@@ -1586,7 +1586,7 @@ nlm_set_section_contents (abfd, section, location, offset, count)
   if (section->reloc_count != 0)
     {
       bfd_boolean (*mangle_relocs_func)
-	PARAMS ((bfd *, asection *, PTR, bfd_vma, bfd_size_type));
+	PARAMS ((bfd *, asection *, const PTR, bfd_vma, bfd_size_type));
 
       mangle_relocs_func = nlm_mangle_relocs_func (abfd);
       if (mangle_relocs_func != NULL)

@@ -1,4 +1,4 @@
-@c Copyright 1991, 1992, 1993, 1994, 1995, 1998
+@c Copyright 1991, 1992, 1993, 1994, 1995, 1998, 2004
 @c Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
@@ -181,7 +181,7 @@ Define @var{name} as a label for the current assembly location.
 Not yet supported; the assembler rejects programs containing this directive.
 
 @item .origin @var{lc}
-Advance location counter to @var{lc}. Synonym for the @code{@value{as}}
+Advance location counter to @var{lc}. Synonym for the @code{@value{AS}}
 portable directive @code{.org}.
 
 @item .param @var{name} [ ,@var{typ} ]  [ ,@var{param}=@var{r} ]

@@ -1,5 +1,5 @@
-/* BFD back-end for Intel 860 COFF files.
-   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1999, 2000, 2001, 2002
+/* BFD back-end for Intel i860 COFF files.
+   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1999, 2000, 2001, 2002, 2003
    Free Software Foundation, Inc.
    Created mostly by substituting "860" for "386" in coff-i386.c
    Harry Dolan <dolan@ssd.intel.com>, October 1995
@@ -30,13 +30,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #include "libcoff.h"
 
-static bfd_reloc_status_type coff_i860_reloc
-  PARAMS ((bfd *, arelent *, asymbol *, PTR, asection *, bfd *, char **));
-static reloc_howto_type *coff_i860_rtype_to_howto
-  PARAMS ((bfd *, asection *, struct internal_reloc *,
-	   struct coff_link_hash_entry *, struct internal_syment *,
-	   bfd_vma *));
-static const bfd_target * i3coff_object_p PARAMS ((bfd *));
 
 #define COFF_DEFAULT_SECTION_ALIGNMENT_POWER (2)
 /* The page size is a guess based on ELF.  */
@@ -47,21 +40,19 @@ static const bfd_target * i3coff_object_p PARAMS ((bfd *));
    section for a reference to a common symbol is the value itself plus
    any desired offset.  Ian Taylor, Cygnus Support.  */
 
-/* If we are producing relocateable output, we need to do some
+/* If we are producing relocatable output, we need to do some
    adjustments to the object file that are not done by the
    bfd_perform_relocation function.  This function is called by every
    reloc type to make any required adjustments.  */
 
 static bfd_reloc_status_type
-coff_i860_reloc (abfd, reloc_entry, symbol, data, input_section, output_bfd,
-		 error_message)
-     bfd *abfd;
-     arelent *reloc_entry;
-     asymbol *symbol;
-     PTR data;
-     asection *input_section ATTRIBUTE_UNUSED;
-     bfd *output_bfd;
-     char **error_message ATTRIBUTE_UNUSED;
+coff_i860_reloc (bfd *abfd,
+		 arelent *reloc_entry,
+		 asymbol *symbol,
+		 void *data,
+		 asection *input_section ATTRIBUTE_UNUSED,
+		 bfd *output_bfd,
+		 char **error_message ATTRIBUTE_UNUSED)
 {
   symvalue diff;
 
@@ -87,7 +78,7 @@ coff_i860_reloc (abfd, reloc_entry, symbol, data, input_section, output_bfd,
     {
       /* For some reason bfd_perform_relocation always effectively
 	 ignores the addend for a COFF target when producing
-	 relocateable output.  This seems to be always wrong for 860
+	 relocatable output.  This seems to be always wrong for 860
 	 COFF, so we handle the addend here instead.  */
       diff = reloc_entry->addend;
     }
@@ -133,6 +124,23 @@ coff_i860_reloc (abfd, reloc_entry, symbol, data, input_section, output_bfd,
 
   /* Now let bfd_perform_relocation finish everything up.  */
   return bfd_reloc_continue;
+}
+
+/* This is just a temporary measure until we teach bfd to generate 
+   these relocations.  */
+
+static bfd_reloc_status_type
+coff_i860_reloc_nyi (bfd *abfd ATTRIBUTE_UNUSED,
+		     arelent *reloc_entry,
+		     asymbol *symbol ATTRIBUTE_UNUSED,
+		     void *data ATTRIBUTE_UNUSED,
+		     asection *input_section ATTRIBUTE_UNUSED,
+		     bfd *output_bfd ATTRIBUTE_UNUSED,
+		     char **error_message ATTRIBUTE_UNUSED)
+{
+  reloc_howto_type *howto = reloc_entry->howto;
+  fprintf (stderr, _("Relocation `%s' not yet implemented\n"), howto->name);
+  return bfd_reloc_notsupported;
 }
 
 #ifndef PCRELOFFSET
@@ -258,17 +266,184 @@ static reloc_howto_type howto_table[] =
 	 TRUE,			/* partial_inplace */
 	 0xffffffff,		/* src_mask */
 	 0xffffffff,		/* dst_mask */
-	 PCRELOFFSET)		/* pcrel_offset */
+	 PCRELOFFSET),		/* pcrel_offset */
+  EMPTY_HOWTO (0x15),
+  EMPTY_HOWTO (0x16),
+  EMPTY_HOWTO (0x17),
+  EMPTY_HOWTO (0x18),
+  EMPTY_HOWTO (0x19),
+  EMPTY_HOWTO (0x1a),
+  EMPTY_HOWTO (0x1b),
+  HOWTO (COFF860_R_PAIR,	/* type */
+	 0,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 16,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_dont, /* complain_on_overflow */
+	 coff_i860_reloc_nyi,	/* special_function */
+	 "PAIR",		/* name */
+	 FALSE,			/* partial_inplace */
+	 0xffff,		/* src_mask */
+	 0xffff,		/* dst_mask */
+	 FALSE),	        /* pcrel_offset */
+  EMPTY_HOWTO (0x1d),
+  HOWTO (COFF860_R_HIGH,	/* type */
+	 16,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 16,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_dont, /* complain_on_overflow */
+	 coff_i860_reloc,	/* special_function */
+	 "HIGH",		/* name */
+	 FALSE,			/* partial_inplace */
+	 0xffff,		/* src_mask */
+	 0xffff,		/* dst_mask */
+	 FALSE),	        /* pcrel_offset */
+  HOWTO (COFF860_R_LOW0,        /* type */
+	 0,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 16,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_dont, /* complain_on_overflow */
+	 coff_i860_reloc,	/* special_function */
+	 "LOW0",		/* name */
+	 FALSE,			/* partial_inplace */
+	 0xffff,		/* src_mask */
+	 0xffff,		/* dst_mask */
+	 FALSE),	        /* pcrel_offset */
+  HOWTO (COFF860_R_LOW1,        /* type */
+	 0,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 16,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_dont, /* complain_on_overflow */
+	 coff_i860_reloc,	/* special_function */
+	 "LOW1",		/* name */
+	 FALSE,			/* partial_inplace */
+	 0xfffe,		/* src_mask */
+	 0xfffe,		/* dst_mask */
+	 FALSE),	        /* pcrel_offset */
+  HOWTO (COFF860_R_LOW2,        /* type */
+	 0,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 16,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_dont, /* complain_on_overflow */
+	 coff_i860_reloc,	/* special_function */
+	 "LOW2",		/* name */
+	 FALSE,			/* partial_inplace */
+	 0xfffc,		/* src_mask */
+	 0xfffc,		/* dst_mask */
+	 FALSE),	        /* pcrel_offset */
+  HOWTO (COFF860_R_LOW3,        /* type */
+	 0,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 16,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_dont, /* complain_on_overflow */
+	 coff_i860_reloc,	/* special_function */
+	 "LOW3",		/* name */
+	 FALSE,			/* partial_inplace */
+	 0xfff8,		/* src_mask */
+	 0xfff8,		/* dst_mask */
+	 FALSE),	        /* pcrel_offset */
+  HOWTO (COFF860_R_LOW4,        /* type */
+	 0,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 16,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_dont, /* complain_on_overflow */
+	 coff_i860_reloc,	/* special_function */
+	 "LOW4",		/* name */
+	 FALSE,			/* partial_inplace */
+	 0xfff0,		/* src_mask */
+	 0xfff0,		/* dst_mask */
+	 FALSE),	        /* pcrel_offset */
+  HOWTO (COFF860_R_SPLIT0,      /* type */
+	 0,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 16,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_dont, /* complain_on_overflow */
+	 coff_i860_reloc_nyi,	/* special_function */
+	 "SPLIT0",		/* name */
+	 FALSE,			/* partial_inplace */
+	 0x1f07ff,		/* src_mask */
+	 0x1f07ff,		/* dst_mask */
+	 FALSE),	        /* pcrel_offset */
+  HOWTO (COFF860_R_SPLIT1,      /* type */
+	 0,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 16,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_dont, /* complain_on_overflow */
+	 coff_i860_reloc_nyi,	/* special_function */
+	 "SPLIT1",		/* name */
+	 FALSE,			/* partial_inplace */
+	 0x1f07fe,		/* src_mask */
+	 0x1f07fe,		/* dst_mask */
+	 FALSE),	        /* pcrel_offset */
+  HOWTO (COFF860_R_SPLIT2,      /* type */
+	 0,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 16,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_dont, /* complain_on_overflow */
+	 coff_i860_reloc_nyi,	/* special_function */
+	 "SPLIT2",		/* name */
+	 FALSE,			/* partial_inplace */
+	 0x1f07fc,		/* src_mask */
+	 0x1f07fc,		/* dst_mask */
+	 FALSE),	        /* pcrel_offset */
+  HOWTO (COFF860_R_HIGHADJ,     /* type */
+	 0,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 16,			/* bitsize */
+	 FALSE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_dont, /* complain_on_overflow */
+	 coff_i860_reloc_nyi,	/* special_function */
+	 "HIGHADJ",		/* name */
+	 FALSE,			/* partial_inplace */
+	 0xffff,		/* src_mask */
+	 0xffff,		/* dst_mask */
+	 FALSE),	        /* pcrel_offset */
+  HOWTO (COFF860_R_BRADDR,      /* type */
+	 2,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 26,			/* bitsize */
+	 TRUE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_bitfield, /* complain_on_overflow */
+	 coff_i860_reloc_nyi,	/* special_function */
+	 "BRADDR",		/* name */
+	 FALSE,			/* partial_inplace */
+	 0x3ffffff,		/* src_mask */
+	 0x3ffffff,		/* dst_mask */
+	 TRUE)		        /* pcrel_offset */
 };
 
-/* Turn a howto into a reloc  nunmber */
+/* Turn a howto into a reloc number.  */
 
 #define SELECT_RELOC(x,howto) { x.r_type = howto->type; }
 #define BADMAG(x) I860BADMAG(x)
 #define I860 1			/* Customize coffcode.h */
 
-#define RTYPE2HOWTO(cache_ptr, dst) \
-	    (cache_ptr)->howto = howto_table + (dst)->r_type;
+#define RTYPE2HOWTO(cache_ptr, dst)					\
+  ((cache_ptr)->howto =							\
+   ((dst)->r_type < sizeof (howto_table) / sizeof (howto_table[0])	\
+    ? howto_table + (dst)->r_type					\
+    : NULL))
 
 /* For 860 COFF a STYP_NOLOAD | STYP_BSS section is part of a shared
    library.  On some other COFF targets STYP_BSS is normally
@@ -288,6 +463,9 @@ static reloc_howto_type howto_table[] =
    FIXME: This macro refers to symbols and asect; these are from the
    calling function, not the macro arguments.  */
 
+/* FIXME: This was copied from the i386 version originally but
+   appears to be wrong for i860.  For now we'll do nothing.  */
+#if 0
 #define CALC_ADDEND(abfd, ptr, reloc, cache_ptr)		\
   {								\
     coff_symbol_type *coffsym = (coff_symbol_type *) NULL;	\
@@ -307,21 +485,29 @@ static reloc_howto_type howto_table[] =
     if (ptr && howto_table[reloc.r_type].pc_relative)		\
       cache_ptr->addend += asect->vma;				\
   }
+#else
+#define CALC_ADDEND(abfd, ptr, reloc, cache_ptr)
+#endif
 
 /* We use the special COFF backend linker.  */
 #define coff_relocate_section _bfd_coff_generic_relocate_section
 
 static reloc_howto_type *
-coff_i860_rtype_to_howto (abfd, sec, rel, h, sym, addendp)
-     bfd *abfd ATTRIBUTE_UNUSED;
-     asection *sec;
-     struct internal_reloc *rel;
-     struct coff_link_hash_entry *h;
-     struct internal_syment *sym;
-     bfd_vma *addendp;
+coff_i860_rtype_to_howto (bfd *abfd ATTRIBUTE_UNUSED,
+			  asection *sec,
+			  struct internal_reloc *rel,
+			  struct coff_link_hash_entry *h,
+			  struct internal_syment *sym,
+			  bfd_vma *addendp)
 {
 
   reloc_howto_type *howto;
+
+  if (rel->r_type > sizeof (howto_table) / sizeof (howto_table[0]))
+    {
+      bfd_set_error (bfd_error_bad_value);
+      return NULL;
+    }
 
   howto = howto_table + rel->r_type;
 
@@ -339,7 +525,7 @@ coff_i860_rtype_to_howto (abfd, sec, rel, h, sym, addendp)
       BFD_ASSERT (h != NULL);
 
       /* I think we *do* want to bypass this.  If we don't, I have seen some data
-	 parameters get the wrong relcation address.  If I link two versions
+	 parameters get the wrong relocation address.  If I link two versions
 	 with and without this section bypassed and then do a binary comparison,
 	 the addresses which are different can be looked up in the map.  The
 	 case in which this section has been bypassed has addresses which correspond
@@ -348,7 +534,7 @@ coff_i860_rtype_to_howto (abfd, sec, rel, h, sym, addendp)
     }
 
   /* If the output symbol is common (in which case this must be a
-     relocateable link), we need to add in the final size of the
+     relocatable link), we need to add in the final size of the
      common symbol.  */
   if (h != NULL && h->root.type == bfd_link_hash_common)
     *addendp += h->root.u.c.size;
@@ -356,13 +542,116 @@ coff_i860_rtype_to_howto (abfd, sec, rel, h, sym, addendp)
   return howto;
 }
 
-#define coff_rtype_to_howto coff_i860_rtype_to_howto
+static reloc_howto_type *
+coff_i860_reloc_type_lookup (bfd *abfd ATTRIBUTE_UNUSED,
+			     bfd_reloc_code_real_type code)
+{
+  switch (code)
+    {
+    case BFD_RELOC_32:
+      return howto_table + R_DIR32;
+    case BFD_RELOC_860_PC26:
+      return howto_table + COFF860_R_BRADDR;
+    case BFD_RELOC_860_PC16:
+      /* ??? How to handle PC16 for COFF?  SPLIT0 is close for now.  */
+      return howto_table + COFF860_R_SPLIT0;
+    case BFD_RELOC_860_LOW0:
+      return howto_table + COFF860_R_LOW0;
+    case BFD_RELOC_860_SPLIT0:
+      return howto_table + COFF860_R_SPLIT0;
+    case BFD_RELOC_860_LOW1:
+      return howto_table + COFF860_R_LOW1;
+    case BFD_RELOC_860_SPLIT1:
+      return howto_table + COFF860_R_SPLIT1;
+    case BFD_RELOC_860_LOW2:
+      return howto_table + COFF860_R_LOW2;
+    case BFD_RELOC_860_SPLIT2:
+      return howto_table + COFF860_R_SPLIT2;
+    case BFD_RELOC_860_LOW3:
+      return howto_table + COFF860_R_LOW3;
+    case BFD_RELOC_860_HIGHADJ:
+      return howto_table + COFF860_R_HIGHADJ;
+    case BFD_RELOC_860_HIGH:
+      return howto_table + COFF860_R_HIGH;
+    default:
+      BFD_FAIL ();
+      return 0;
+    }
+}
+
+/* This is called from coff_slurp_reloc_table for each relocation
+   entry.  This special handling is due to the `PAIR' relocation
+   which has a different meaning for the `r_symndx' field.  */
+
+static void
+i860_reloc_processing (arelent *cache_ptr, struct internal_reloc *dst,
+		       asymbol **symbols, bfd *abfd, asection *asect)
+{
+  if (dst->r_type == COFF860_R_PAIR)
+    {
+      /* Handle the PAIR relocation specially.  */
+      cache_ptr->howto = howto_table + dst->r_type;
+      cache_ptr->address = dst->r_vaddr;
+      cache_ptr->addend = dst->r_symndx;
+      cache_ptr->sym_ptr_ptr= bfd_abs_section_ptr->symbol_ptr_ptr;
+    }
+  else
+    {
+      /* For every other relocation, do exactly what coff_slurp_reloc_table
+         would do (which this code is taken directly from).  */
+      asymbol *ptr = NULL;
+      cache_ptr->address = dst->r_vaddr;
+
+      if (dst->r_symndx != -1)
+	{
+	  if (dst->r_symndx < 0 || dst->r_symndx >= obj_conv_table_size (abfd))
+	    {
+	      (*_bfd_error_handler)
+		(_("%s: warning: illegal symbol index %ld in relocs"),
+		 bfd_archive_filename (abfd), dst->r_symndx);
+	      cache_ptr->sym_ptr_ptr = bfd_abs_section_ptr->symbol_ptr_ptr;
+	      ptr = NULL;
+	    }
+	  else
+	    {
+	      cache_ptr->sym_ptr_ptr = (symbols
+					+ obj_convert (abfd)[dst->r_symndx]);
+	      ptr = *(cache_ptr->sym_ptr_ptr);
+	    }
+	}
+      else
+	{
+	  cache_ptr->sym_ptr_ptr = bfd_abs_section_ptr->symbol_ptr_ptr;
+	  ptr = NULL;
+	}
+
+      /* The symbols definitions that we have read in have been
+	 relocated as if their sections started at 0. But the offsets
+	 refering to the symbols in the raw data have not been
+	 modified, so we have to have a negative addend to compensate.
+
+	 Note that symbols which used to be common must be left alone.  */
+
+      /* Calculate any reloc addend by looking at the symbol.  */
+      CALC_ADDEND (abfd, ptr, (*dst), cache_ptr);
+
+      cache_ptr->address -= asect->vma;
+
+      /* Fill in the cache_ptr->howto field from dst->r_type.  */
+      RTYPE2HOWTO (cache_ptr, dst);
+    }
+}
+
+#define coff_rtype_to_howto		coff_i860_rtype_to_howto
+#define coff_bfd_reloc_type_lookup	coff_i860_reloc_type_lookup
+
+#define RELOC_PROCESSING(relent, reloc, symbols, abfd, section) \
+  i860_reloc_processing (relent, reloc, symbols, abfd, section)
 
 #include "coffcode.h"
 
 static const bfd_target *
-i3coff_object_p(a)
-     bfd *a;
+i3coff_object_p(bfd *a)
 {
   return coff_object_p (a);
 }

@@ -1,6 +1,6 @@
 /* strings -- print the strings of printable characters in files
    Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001,
-   2002 Free Software Foundation, Inc.
+   2002, 2003 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -143,28 +143,18 @@ static struct option long_options[] =
   {NULL, 0, NULL, 0}
 };
 
-static void strings_a_section
-  PARAMS ((bfd *, asection *, PTR));
-static bfd_boolean strings_object_file
-  PARAMS ((const char *));
-static bfd_boolean strings_file
-  PARAMS ((char *file));
-static int integer_arg
-  PARAMS ((char *s));
-static void print_strings
-  PARAMS ((const char *, FILE *, file_off, int, int, char *));
-static void usage
-  PARAMS ((FILE *, int));
-static long get_char
-  PARAMS ((FILE *, file_off *, int *, char **));
+static void strings_a_section (bfd *, asection *, void *);
+static bfd_boolean strings_object_file (const char *);
+static bfd_boolean strings_file (char *file);
+static int integer_arg (char *s);
+static void print_strings (const char *, FILE *, file_off, int, int, char *);
+static void usage (FILE *, int);
+static long get_char (FILE *, file_off *, int *, char **);
 
-int main
-  PARAMS ((int, char **));
+int main (int, char **);
 
 int
-main (argc, argv)
-     int argc;
-     char **argv;
+main (int argc, char **argv)
 {
   int optc;
   int exit_status = 0;
@@ -321,17 +311,14 @@ main (argc, argv)
    set `got_a_section' and print the strings in it.  */
 
 static void
-strings_a_section (abfd, sect, filearg)
-     bfd *abfd;
-     asection *sect;
-     PTR filearg;
+strings_a_section (bfd *abfd, asection *sect, void *filearg)
 {
   const char *file = (const char *) filearg;
 
   if ((sect->flags & DATA_FLAGS) == DATA_FLAGS)
     {
       bfd_size_type sz = bfd_get_section_size_before_reloc (sect);
-      PTR mem = xmalloc (sz);
+      void *mem = xmalloc (sz);
 
       if (bfd_get_section_contents (abfd, sect, mem, (file_ptr) 0, sz))
 	{
@@ -349,8 +336,7 @@ strings_a_section (abfd, sect, filearg)
    FALSE if not (such as if FILE is not an object file).  */
 
 static bfd_boolean
-strings_object_file (file)
-     const char *file;
+strings_object_file (const char *file)
 {
   bfd *abfd = bfd_openr (file, target);
 
@@ -368,7 +354,7 @@ strings_object_file (file)
     }
 
   got_a_section = FALSE;
-  bfd_map_over_sections (abfd, strings_a_section, (PTR) file);
+  bfd_map_over_sections (abfd, strings_a_section, (void *) file);
 
   if (!bfd_close (abfd))
     {
@@ -382,9 +368,11 @@ strings_object_file (file)
 /* Print the strings in FILE.  Return TRUE if ok, FALSE if an error occurs.  */
 
 static bfd_boolean
-strings_file (file)
-     char *file;
+strings_file (char *file)
 {
+  if (get_file_size (file) < 1)
+    return FALSE;
+
   /* If we weren't told to scan the whole file,
      try to open it as an object file and only look at
      initialized data sections.  If that fails, fall back to the
@@ -425,11 +413,7 @@ strings_file (file)
    MAGICCOUNT is how many characters are in it.  */
 
 static long
-get_char (stream, address, magiccount, magic)
-     FILE *stream;
-     file_off *address;
-     int *magiccount;
-     char **magic;
+get_char (FILE *stream, file_off *address, int *magiccount, char **magic)
 {
   int c, i;
   long r = EOF;
@@ -500,13 +484,8 @@ get_char (stream, address, magiccount, magic)
    Those characters come at address ADDRESS and the data in STREAM follow.  */
 
 static void
-print_strings (filename, stream, address, stop_point, magiccount, magic)
-     const char *filename;
-     FILE *stream;
-     file_off address;
-     int stop_point;
-     int magiccount;
-     char *magic;
+print_strings (const char *filename, FILE *stream, file_off address,
+	       int stop_point, int magiccount, char *magic)
 {
   char *buf = (char *) xmalloc (sizeof (char) * (string_min + 1));
 
@@ -607,8 +586,7 @@ print_strings (filename, stream, address, stop_point, magiccount, magic)
    but allowing octal and hex numbers as in C.  */
 
 static int
-integer_arg (s)
-     char *s;
+integer_arg (char *s)
 {
   int value;
   int radix = 10;
@@ -650,9 +628,7 @@ integer_arg (s)
 }
 
 static void
-usage (stream, status)
-     FILE *stream;
-     int status;
+usage (FILE *stream, int status)
 {
   fprintf (stream, _("Usage: %s [option(s)] [file(s)]\n"), program_name);
   fprintf (stream, _(" Display printable strings in [file(s)] (stdin by default)\n"));

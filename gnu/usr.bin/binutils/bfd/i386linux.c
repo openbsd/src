@@ -112,7 +112,7 @@ i386linux_write_object_contents (abfd)
 #endif
 
 /* This special symbol is a set vector that contains a list of
-   pointers to fixup tables.  It will be present in any dynamicly
+   pointers to fixup tables.  It will be present in any dynamically
    linked file.  The linker generated fixup table should also be added
    to the list, and it should always appear in the second slot (the
    first one is a dummy with a magic number that is defined in
@@ -353,7 +353,7 @@ linux_add_one_symbol (info, abfd, name, flags, section, value, string,
 
   insert = FALSE;
 
-  if (! info->relocateable
+  if (! info->relocatable
       && linux_hash_table (info)->dynobj == NULL
       && strcmp (name, SHARABLE_CONFLICTS) == 0
       && (flags & BSF_CONSTRUCTOR) != 0

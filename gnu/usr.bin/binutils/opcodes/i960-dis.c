@@ -1,5 +1,5 @@
 /* Disassemble i80960 instructions.
-   Copyright 1990, 1991, 1993, 1994, 1995, 1996, 1998, 1999, 2000, 2001
+   Copyright 1990, 1991, 1993, 1994, 1995, 1996, 1998, 1999, 2000, 2001, 2003
    Free Software Foundation, Inc.
 
 This program is free software; you can redistribute it and/or modify
@@ -31,26 +31,24 @@ static const char *const reg_names[] = {
 
 static FILE *stream;		/* Output goes here */
 static struct disassemble_info *info;
-static void print_addr PARAMS ((bfd_vma));
-static void ctrl PARAMS ((bfd_vma, unsigned long, unsigned long));
-static void cobr PARAMS ((bfd_vma, unsigned long, unsigned long));
-static void reg PARAMS ((unsigned long));
-static int mem PARAMS ((bfd_vma, unsigned long, unsigned long, int));
-static void ea PARAMS ((bfd_vma, int, const char *, const char *, int, unsigned int));
-static void dstop PARAMS ((int, int, int));
-static void regop PARAMS ((int, int, int, int));
-static void invalid PARAMS ((int));
-static int pinsn PARAMS ((bfd_vma, unsigned long, unsigned long));
-static void put_abs PARAMS ((unsigned long, unsigned long));
+static void print_addr (bfd_vma);
+static void ctrl (bfd_vma, unsigned long, unsigned long);
+static void cobr (bfd_vma, unsigned long, unsigned long);
+static void reg (unsigned long);
+static int mem (bfd_vma, unsigned long, unsigned long, int);
+static void ea (bfd_vma, int, const char *, const char *, int, unsigned int);
+static void dstop (int, int, int);
+static void regop (int, int, int, int);
+static void invalid (int);
+static int pinsn (bfd_vma, unsigned long, unsigned long);
+static void put_abs (unsigned long, unsigned long);
 
 
 /* Print the i960 instruction at address 'memaddr' in debugged memory,
    on INFO->STREAM.  Returns length of the instruction, in bytes.  */
 
 int
-print_insn_i960 (memaddr, info_arg)
-    bfd_vma memaddr;
-    struct disassemble_info *info_arg;
+print_insn_i960 (bfd_vma memaddr, struct disassemble_info *info_arg)
 {
   unsigned int word1, word2 = 0xdeadbeef;
   bfd_byte buffer[8];
@@ -118,12 +116,10 @@ struct sparse_tabent {
 };
 
 static int
-pinsn (memaddr, word1, word2)
-     bfd_vma memaddr;
-     unsigned long word1, word2;
+pinsn (bfd_vma memaddr, unsigned long word1, unsigned long word2)
 {
   int instr_len;
-  
+
   instr_len = 4;
   put_abs (word1, word2);
 
@@ -161,10 +157,7 @@ pinsn (memaddr, word1, word2)
 /* CTRL format.. */
 
 static void
-ctrl (memaddr, word1, word2)
-     bfd_vma memaddr;
-     unsigned long word1;
-     unsigned long word2 ATTRIBUTE_UNUSED;
+ctrl (bfd_vma memaddr, unsigned long word1, unsigned long word2 ATTRIBUTE_UNUSED)
 {
   int i;
   static const struct tabent ctrl_tab[] = {
@@ -233,15 +226,12 @@ ctrl (memaddr, word1, word2)
 /* COBR format.  */
 
 static void
-cobr (memaddr, word1, word2)
-     bfd_vma memaddr;
-     unsigned long word1;
-     unsigned long word2 ATTRIBUTE_UNUSED;
+cobr (bfd_vma memaddr, unsigned long word1, unsigned long word2 ATTRIBUTE_UNUSED)
 {
   int src1;
   int src2;
   int i;
-  
+
   static const struct tabent cobr_tab[] = {
     { "testno",	1, },	/* 0x20 */
     { "testg",	1, },	/* 0x21 */
@@ -324,18 +314,14 @@ cobr (memaddr, word1, word2)
 /* Returns instruction length: 4 or 8.  */
 
 static int
-mem (memaddr, word1, word2, noprint)
-     bfd_vma memaddr;
-     unsigned long word1, word2;
-     int noprint;		/* If TRUE, return instruction length, but
-				   don't output any text.  */
+mem (bfd_vma memaddr, unsigned long word1, unsigned long word2, int noprint)
 {
   int i, j;
   int len;
   int mode;
   int offset;
   const char *reg1, *reg2, *reg3;
-  
+
   /* This lookup table is too sparse to make it worth typing in, but not
      so large as to make a sparse array necessary.  We create the table
      at runtime.  */
@@ -395,7 +381,7 @@ mem (memaddr, word1, word2, noprint)
       && ((mode == 5) || (mode >= 12)))
     /* With 32-bit displacement.  */
     len = 8;
-  else 
+  else
     len = 4;
 
   if (noprint)
@@ -426,7 +412,7 @@ mem (memaddr, word1, word2, noprint)
 	{				/* MEMA FORMAT */
 	  (*info->fprintf_func) (stream, "0x%x", (unsigned) offset);
 
-	  if (mode & 8) 
+	  if (mode & 8)
 	    (*info->fprintf_func) (stream, "(%s)", reg2);
 
 	  (*info->fprintf_func)(stream, ",%s", reg1);
@@ -445,7 +431,7 @@ mem (memaddr, word1, word2, noprint)
 	  /* MEMA FORMAT */
 	  (*info->fprintf_func) (stream, "%s,0x%x", reg1, (unsigned) offset);
 
-	  if (mode & 8) 
+	  if (mode & 8)
 	    (*info->fprintf_func) (stream, "(%s)", reg2);
 	}
       break;
@@ -472,8 +458,7 @@ mem (memaddr, word1, word2, noprint)
 /* REG format.  */
 
 static void
-reg (word1)
-     unsigned long word1;
+reg (unsigned long word1)
 {
   int i, j;
   int opcode;
@@ -488,14 +473,14 @@ reg (word1)
      at runtime.  */
 
   /* NOTE: In this table, the meaning of 'numops' is:
-   	 1: single operand, which is NOT a destination.
-   	-1: single operand, which IS a destination.
-   	 2: 2 operands, the 2nd of which is NOT a destination.
-   	-2: 2 operands, the 2nd of which IS a destination.
-   	 3: 3 operands
-   
-   	If an opcode mnemonic begins with "F", it is a floating-point
-   	opcode (the "F" is not printed).  */
+	 1: single operand, which is NOT a destination.
+	-1: single operand, which IS a destination.
+	 2: 2 operands, the 2nd of which is NOT a destination.
+	-2: 2 operands, the 2nd of which IS a destination.
+	 3: 3 operands
+
+	If an opcode mnemonic begins with "F", it is a floating-point
+	opcode (the "F" is not printed).  */
 
   static struct tabent *reg_tab;
   static const struct sparse_tabent reg_init[] =
@@ -777,13 +762,8 @@ reg (word1)
 /* Print out effective address for memb instructions.  */
 
 static void
-ea (memaddr, mode, reg2, reg3, word1, word2)
-     bfd_vma memaddr;
-     int mode;
-     const char *reg2;
-     const char *reg3;
-     int word1;
-     unsigned int word2;
+ea (bfd_vma memaddr, int mode, const char *reg2, const char *reg3, int word1,
+    unsigned int word2)
 {
   int scale;
   static const int scale_tab[] = { 1, 2, 4, 8, 16 };
@@ -842,8 +822,7 @@ ea (memaddr, mode, reg2, reg3, word1, word2)
 /* Register Instruction Operand.  */
 
 static void
-regop (mode, spec, reg, fp)
-     int mode, spec, reg, fp;
+regop (int mode, int spec, int reg, int fp)
 {
   if (fp)
     {
@@ -897,8 +876,7 @@ regop (mode, spec, reg, fp)
 /* Register Instruction Destination Operand.  */
 
 static void
-dstop (mode, reg, fp)
-     int mode, reg, fp;
+dstop (int mode, int reg, int fp)
 {
   /* 'dst' operand can't be a literal. On non-FP instructions,  register
      mode is assumed and "m3" acts as if were "s3";  on FP-instructions,
@@ -910,23 +888,20 @@ dstop (mode, reg, fp)
 }
 
 static void
-invalid (word1)
-     int word1;
+invalid (int word1)
 {
   (*info->fprintf_func) (stream, ".word\t0x%08x", (unsigned) word1);
 }
 
 static void
-print_addr (a)
-     bfd_vma a;
+print_addr (bfd_vma a)
 {
   (*info->print_address_func) (a, info);
 }
 
 static void
-put_abs (word1, word2)
-     unsigned long word1 ATTRIBUTE_UNUSED;
-     unsigned long word2 ATTRIBUTE_UNUSED;
+put_abs (unsigned long word1 ATTRIBUTE_UNUSED,
+	 unsigned long word2 ATTRIBUTE_UNUSED)
 {
 #ifdef IN_GDB
   return;

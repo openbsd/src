@@ -1,5 +1,5 @@
 /* tc-mn10200.c -- Assembler code for the Matsushita 10200
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002
+   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -1232,6 +1232,21 @@ tc_gen_reloc (seg, fixp)
 {
   arelent *reloc;
   reloc = (arelent *) xmalloc (sizeof (arelent));
+
+  if (fixp->fx_subsy != NULL)
+    {
+      /* FIXME: We should resolve difference expressions if possible
+	 here.  At least this is better than silently ignoring the
+	 subtrahend.  */
+      as_bad_where (fixp->fx_file, fixp->fx_line,
+		    _("can't resolve `%s' {%s section} - `%s' {%s section}"),
+		    fixp->fx_addsy ? S_GET_NAME (fixp->fx_addsy) : "0",
+		    segment_name (fixp->fx_addsy
+				  ? S_GET_SEGMENT (fixp->fx_addsy)
+				  : absolute_section),
+		    S_GET_NAME (fixp->fx_subsy),
+		    segment_name (S_GET_SEGMENT (fixp->fx_addsy)));
+    }
 
   reloc->howto = bfd_reloc_type_lookup (stdoutput, fixp->fx_r_type);
   if (reloc->howto == (reloc_howto_type *) NULL)

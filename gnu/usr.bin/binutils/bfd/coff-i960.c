@@ -1,6 +1,6 @@
 /* BFD back-end for Intel 960 COFF files.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1997, 1999, 2000, 2001,
-   2002 Free Software Foundation, Inc.
+   2002, 2003 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -180,12 +180,12 @@ optcall_callback (abfd, reloc_entry, symbol_in, data,
    same object file.  It appears to simply discard such relocs, rather
    than adding their values into the object file.  We handle this here
    by converting all relocs against defined symbols into relocs
-   against the section symbol, when generating a relocateable output
+   against the section symbol, when generating a relocatable output
    file.
 
    Note that this function is only called if we are not using the COFF
    specific backend linker.  It only does something when doing a
-   relocateable link, which will almost certainly fail when not
+   relocatable link, which will almost certainly fail when not
    generating COFF i960 output, so this function is actually no longer
    useful.  It was used before this target was converted to use the
    COFF specific backend linker.  */
@@ -205,7 +205,7 @@ coff_i960_relocate (abfd, reloc_entry, symbol, data, input_section,
 
   if (output_bfd == NULL)
     {
-      /* Not generating relocateable output file.  */
+      /* Not generating relocatable output file.  */
       return bfd_reloc_continue;
     }
 
@@ -328,7 +328,7 @@ coff_i960_start_final_link (abfd, info)
   asection *o;
   bfd_byte *esym;
 
-  if (! info->relocateable)
+  if (! info->relocatable)
     return TRUE;
 
   esym = (bfd_byte *) bfd_malloc (symesz);
@@ -455,7 +455,7 @@ coff_i960_relocate_section (output_bfd, info, input_bfd, input_section,
 		     + sec->output_section->vma
 		     + sec->output_offset);
 	    }
-	  else if (! info->relocateable)
+	  else if (! info->relocatable)
 	    {
 	      if (! ((*info->callbacks->undefined_symbol)
 		     (info, h->root.root.string, input_bfd, input_section,
@@ -466,7 +466,7 @@ coff_i960_relocate_section (output_bfd, info, input_bfd, input_section,
 
       done = FALSE;
 
-      if (howto->type == R_OPTCALL && ! info->relocateable && symndx != -1)
+      if (howto->type == R_OPTCALL && ! info->relocatable && symndx != -1)
 	{
 	  int class;
 
@@ -617,7 +617,7 @@ coff_i960_adjust_symndx (obfd, info, ibfd, sec, irel, adjustedp)
 
 extern const bfd_target icoff_big_vec;
 
-CREATE_LITTLE_COFF_TARGET_VEC (icoff_little_vec, "coff-Intel-little", 0, 0, '_', & icoff_big_vec)
+CREATE_LITTLE_COFF_TARGET_VEC (icoff_little_vec, "coff-Intel-little", 0, 0, '_', & icoff_big_vec, COFF_SWAP_TABLE)
 
 const bfd_target icoff_big_vec =
 {

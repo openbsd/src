@@ -175,7 +175,7 @@ static unsigned int som_set_reloc_info
 	   asymbol **, bfd_boolean));
 static bfd_boolean som_slurp_reloc_table
   PARAMS ((bfd *, asection *, asymbol **, bfd_boolean));
-static long som_get_symtab
+static long som_canonicalize_symtab
   PARAMS ((bfd *, asymbol **));
 static asymbol * som_make_empty_symbol
   PARAMS ((bfd *));
@@ -1715,7 +1715,7 @@ hppa_som_gen_reloc_type (abfd, base_type, format, field, sym_diff, sym)
 #ifndef NO_PCREL_MODES
 	/* If we have short and long pcrel modes, then generate the proper
 	   mode selector, then the pcrel relocation.  Redundant selectors
-	   will be eliminted as the relocs are sized and emitted.  */
+	   will be eliminated as the relocs are sized and emitted.  */
 	bfd_size_type amt = sizeof (int);
 	final_types[0] = (int *) bfd_alloc (abfd, amt);
 	if (!final_types[0])
@@ -2480,7 +2480,7 @@ som_is_subspace (section)
   return TRUE;
 }
 
-/* Return TRUE if the given space containins the given subspace.  It
+/* Return TRUE if the given space contains the given subspace.  It
    is safe to assume space really is a space, and subspace really
    is a subspace.  */
 
@@ -2734,7 +2734,7 @@ som_write_fixups (abfd, current_offset, total_reloc_sizep)
 	    continue;
 
 	  /* If this subspace does not have real data, then we are
-	     finised with it.  */
+	     finished with it.  */
 	  if ((subsection->flags & SEC_HAS_CONTENTS) == 0)
 	    {
 	      som_section_data (subsection)->subspace_dict->fixup_request_index
@@ -3200,7 +3200,7 @@ som_write_symbol_strings (abfd, current_offset, syms, num_syms, string_sizep,
   /* This gets a bit gruesome because of the compilation unit.  The
      strings within the compilation unit are part of the symbol
      strings, but don't have symbol_dictionary entries.  So, manually
-     write them and update the compliation unit header.  On input, the
+     write them and update the compilation unit header.  On input, the
      compilation unit header contains local copies of the strings.
      Move them aside.  */
   if (compilation_unit)
@@ -3906,7 +3906,7 @@ som_finish_writing (abfd)
       section = section->next;
     }
 
-  /* All the subspace dictiondary records are written, and all the
+  /* All the subspace dictionary records are written, and all the
      fields are set up in the space dictionary records.
 
      Seek to the right location and start writing the space
@@ -3978,7 +3978,7 @@ som_finish_writing (abfd)
       exec_header->exec_flags = obj_som_exec_data (abfd)->exec_flags;
 
       /* Oh joys.  Ram some of the BSS data into the DATA section
-	 to be compatable with how the hp linker makes objects
+	 to be compatible with how the hp linker makes objects
 	 (saves memory space).  */
       tmp = exec_header->exec_dsize;
       tmp = SOM_ALIGN (tmp, PA_PAGESIZE);
@@ -4520,7 +4520,7 @@ som_slurp_symbol_table (abfd)
    in the symbol table.  */
 
 static long
-som_get_symtab (abfd, location)
+som_canonicalize_symtab (abfd, location)
      bfd *abfd;
      asymbol **location;
 {
@@ -5780,7 +5780,7 @@ som_slurp_armap (abfd)
 		       + sizeof (struct lst_header)), SEEK_SET) != 0)
     return FALSE;
 
-  /* Initializae the cache and allocate space for the library symbols.  */
+  /* Initialize the cache and allocate space for the library symbols.  */
   ardata->cache = 0;
   amt = ardata->symdef_count;
   amt *= sizeof (carsym);

@@ -60,6 +60,7 @@
 #ifdef OBJ_ELF
 #include "elf/alpha.h"
 #include "dwarf2dbg.h"
+#include "dw2gencfi.h"
 #endif
 
 #include "safe-ctype.h"
@@ -266,6 +267,7 @@ static void s_alpha_file PARAMS ((int));
 static void s_alpha_loc PARAMS ((int));
 static void s_alpha_stab PARAMS ((int));
 static void s_alpha_coff_wrapper PARAMS ((int));
+static void s_alpha_usepv PARAMS ((int));
 #endif
 #ifdef OBJ_EVAX
 static void s_alpha_section PARAMS ((int));
@@ -407,11 +409,6 @@ static symbolS *alpha_lit8_symbol;
 static offsetT alpha_lit8_literal;
 #endif
 
-#ifdef OBJ_ELF
-/* The active .ent symbol.  */
-static symbolS *alpha_cur_ent_sym;
-#endif
-
 /* Is the assembler not allowed to use $at?  */
 static int alpha_noat_on = 0;
 
@@ -536,7 +533,7 @@ static const int alpha_num_reloc_op
 /* Maximum # digits needed to hold the largest sequence # */
 #define ALPHA_RELOC_DIGITS 25
 
-/* Structure to hold explict sequence information.  */
+/* Structure to hold explicit sequence information.  */
 struct alpha_reloc_tag
 {
   fixS *master;			/* the literal reloc */
@@ -1730,7 +1727,7 @@ alpha_adjust_relocs (abfd, sec, ptr)
   if (! seginfo->fix_root)
     return;
 
-  /* First rebuild the fixup chain without the expicit lituse and
+  /* First rebuild the fixup chain without the explicit lituse and
      gpdisp_lo16 relocs.  */
   prevP = &seginfo->fix_root;
   for (fixp = seginfo->fix_root; fixp; fixp = next)
@@ -3017,7 +3014,7 @@ add_to_link_pool (basesym, sym, addend)
    but this is what OSF/1 does.
 
    If explicit relocations of the form !literal!<number> are allowed,
-   and used, then explict_reloc with be an expression pointer.
+   and used, then explicit_reloc with be an expression pointer.
 
    Finally, the return value is nonzero if the calling macro may emit
    a LITUSE reloc if otherwise appropriate; the return value is the
@@ -3368,7 +3365,7 @@ load_expression (targreg, exp, pbasereg, poffset)
 }
 
 /* The lda macro differs from the lda instruction in that it handles
-   most simple expressions, particualrly symbol address loads and
+   most simple expressions, particularly symbol address loads and
    large constants.  */
 
 static void
@@ -4382,6 +4379,25 @@ s_alpha_sdata (ignore)
 #endif
 
 #ifdef OBJ_ELF
+struct alpha_elf_frame_data
+{
+  symbolS *func_sym;
+  symbolS *func_end_sym;
+  symbolS *prologue_sym;
+  unsigned int mask;
+  unsigned int fmask;
+  int fp_regno;
+  int ra_regno;
+  offsetT frame_size;
+  offsetT mask_offset;
+  offsetT fmask_offset;
+
+  struct alpha_elf_frame_data *next;
+};
+
+static struct alpha_elf_frame_data *all_frame_data;
+static struct alpha_elf_frame_data **plast_frame_data = &all_frame_data;
+static struct alpha_elf_frame_data *cur_frame_data;
 
 /* Handle the .section pseudo-op.  This is like the usual one, but it
    clears alpha_insn_label and restores auto alignment.  */
@@ -4418,12 +4434,21 @@ s_alpha_ent (dummy)
 	{
 	  symbolS *sym;
 
-	  if (alpha_cur_ent_sym)
+	  if (cur_frame_data)
 	    as_warn (_("nested .ent directives"));
 
 	  sym = symbol_find_or_make (name);
 	  symbol_get_bfdsym (sym)->flags |= BSF_FUNCTION;
-	  alpha_cur_ent_sym = sym;
+
+	  cur_frame_data = calloc (1, sizeof (*cur_frame_data));
+	  cur_frame_data->func_sym = sym;
+
+	  /* Provide sensible defaults.  */
+	  cur_frame_data->fp_regno = 30;	/* sp */
+	  cur_frame_data->ra_regno = 26;	/* ra */
+
+	  *plast_frame_data = cur_frame_data;
+	  plast_frame_data = &cur_frame_data->next;
 
 	  /* The .ent directive is sometimes followed by a number.  Not sure
 	     what it really means, but ignore it.  */
@@ -4463,22 +4488,27 @@ s_alpha_end (dummy)
 	  symbolS *sym;
 
 	  sym = symbol_find (name);
-	  if (sym != alpha_cur_ent_sym)
+	  if (!cur_frame_data)
+	    as_warn (_(".end directive without matching .ent"));
+	  else if (sym != cur_frame_data->func_sym)
 	    as_warn (_(".end directive names different symbol than .ent"));
 
 	  /* Create an expression to calculate the size of the function.  */
-	  if (sym)
+	  if (sym && cur_frame_data)
 	    {
-	      symbol_get_obj (sym)->size =
-		(expressionS *) xmalloc (sizeof (expressionS));
-	      symbol_get_obj (sym)->size->X_op = O_subtract;
-	      symbol_get_obj (sym)->size->X_add_symbol
-		= symbol_new ("L0\001", now_seg, frag_now_fix (), frag_now);
-	      symbol_get_obj (sym)->size->X_op_symbol = sym;
-	      symbol_get_obj (sym)->size->X_add_number = 0;
+	      OBJ_SYMFIELD_TYPE *obj = symbol_get_obj (sym);
+	      expressionS *exp = xmalloc (sizeof (expressionS));
+
+	      obj->size = exp;
+	      exp->X_op = O_subtract;
+	      exp->X_add_symbol = symbol_temp_new_now ();
+	      exp->X_op_symbol = sym;
+	      exp->X_add_number = 0;
+
+	      cur_frame_data->func_end_sym = exp->X_add_symbol;
 	    }
 
-	  alpha_cur_ent_sym = NULL;
+	  cur_frame_data = NULL;
 
 	  *input_line_pointer = name_end;
 	}
@@ -4498,7 +4528,45 @@ s_alpha_mask (fp)
 	ecoff_directive_mask (0);
     }
   else
-    discard_rest_of_line ();
+    {
+      long val;
+      offsetT offset;
+
+      if (!cur_frame_data)
+	{
+	  if (fp)
+	    as_warn (_(".fmask outside of .ent"));
+	  else
+	    as_warn (_(".mask outside of .ent"));
+	  discard_rest_of_line ();
+	  return;
+	}
+
+      if (get_absolute_expression_and_terminator (&val) != ',')
+	{
+	  if (fp)
+	    as_warn (_("bad .fmask directive"));
+	  else
+	    as_warn (_("bad .mask directive"));
+	  --input_line_pointer;
+	  discard_rest_of_line ();
+	  return;
+	}
+
+      offset = get_absolute_expression ();
+      demand_empty_rest_of_line ();
+
+      if (fp)
+	{
+	  cur_frame_data->fmask = val;
+          cur_frame_data->fmask_offset = offset;
+	}
+      else
+	{
+	  cur_frame_data->mask = val;
+	  cur_frame_data->mask_offset = offset;
+	}
+    }
 }
 
 static void
@@ -4508,7 +4576,36 @@ s_alpha_frame (dummy)
   if (ECOFF_DEBUGGING)
     ecoff_directive_frame (0);
   else
-    discard_rest_of_line ();
+    {
+      long val;
+
+      if (!cur_frame_data)
+	{
+	  as_warn (_(".frame outside of .ent"));
+	  discard_rest_of_line ();
+	  return;
+	}
+
+      cur_frame_data->fp_regno = tc_get_register (1);
+
+      SKIP_WHITESPACE ();
+      if (*input_line_pointer++ != ','
+	  || get_absolute_expression_and_terminator (&val) != ',')
+	{
+	  as_warn (_("bad .frame directive"));
+	  --input_line_pointer;
+	  discard_rest_of_line ();
+	  return;
+	}
+      cur_frame_data->frame_size = val;
+
+      cur_frame_data->ra_regno = tc_get_register (0);
+
+      /* Next comes the "offset of saved $a0 from $sp".  In gcc terms
+	 this is current_function_pretend_args_size.  There's no place
+	 to put this value, so ignore it.  */
+      s_ignore (42);
+    }
 }
 
 static void
@@ -4524,7 +4621,7 @@ s_alpha_prologue (ignore)
   if (ECOFF_DEBUGGING)
     sym = ecoff_get_cur_proc_sym ();
   else
-    sym = alpha_cur_ent_sym;
+    sym = cur_frame_data ? cur_frame_data->func_sym : NULL;
 
   if (sym == NULL)
     {
@@ -4549,6 +4646,9 @@ s_alpha_prologue (ignore)
       as_bad (_("Invalid argument %d to .prologue."), arg);
       break;
     }
+
+  if (cur_frame_data)
+    cur_frame_data->prologue_sym = symbol_temp_new_now ();
 }
 
 static char *first_file_directive;
@@ -4642,7 +4742,145 @@ s_alpha_coff_wrapper (which)
       ignore_rest_of_line ();
     }
 }
+
+/* Called at the end of assembly.  Here we emit unwind info for frames
+   unless the compiler has done it for us.  */
+
+void
+alpha_elf_md_end (void)
+{
+  struct alpha_elf_frame_data *p;
+
+  if (cur_frame_data)
+    as_warn (_(".ent directive without matching .end"));
+
+  /* If someone has generated the unwind info themselves, great.  */
+  if (bfd_get_section_by_name (stdoutput, ".eh_frame") != NULL)
+    return;
+
+  /* Generate .eh_frame data for the unwind directives specified.  */
+  for (p = all_frame_data; p ; p = p->next)
+    if (p->prologue_sym)
+      {
+	/* Create a temporary symbol at the same location as our
+	   function symbol.  This prevents problems with globals.  */
+	cfi_new_fde (symbol_temp_new (S_GET_SEGMENT (p->func_sym),
+				      S_GET_VALUE (p->func_sym),
+				      symbol_get_frag (p->func_sym)));
+
+	cfi_set_return_column (p->ra_regno);
+	cfi_add_CFA_def_cfa_register (30);
+	if (p->fp_regno != 30 || p->mask || p->fmask || p->frame_size)
+	  {
+	    unsigned int mask;
+	    offsetT offset;
+
+	    cfi_add_advance_loc (p->prologue_sym);
+
+	    if (p->fp_regno != 30)
+	      if (p->frame_size != 0)
+		cfi_add_CFA_def_cfa (p->fp_regno, p->frame_size);
+	      else
+		cfi_add_CFA_def_cfa_register (p->fp_regno);
+	    else if (p->frame_size != 0)
+	      cfi_add_CFA_def_cfa_offset (p->frame_size);
+
+	    mask = p->mask;
+	    offset = p->mask_offset;
+
+	    /* Recall that $26 is special-cased and stored first.  */
+	    if ((mask >> 26) & 1)
+	      {
+	        cfi_add_CFA_offset (26, offset);
+		offset += 8;
+		mask &= ~(1 << 26);
+	      }
+	    while (mask)
+	      {
+		unsigned int i;
+		i = mask & -mask;
+		mask ^= i;
+		i = ffs (i) - 1;
+
+		cfi_add_CFA_offset (i, offset);
+		offset += 8;
+	      }
+
+	    mask = p->fmask;
+	    offset = p->fmask_offset;
+	    while (mask)
+	      {
+		unsigned int i;
+		i = mask & -mask;
+		mask ^= i;
+		i = ffs (i) - 1;
+
+		cfi_add_CFA_offset (i + 32, offset);
+		offset += 8;
+	      }
+	  }
+
+	cfi_end_fde (p->func_end_sym);
+      }
+}
+
+static void
+s_alpha_usepv (int unused ATTRIBUTE_UNUSED)
+{
+  char *name, name_end;
+  char *which, which_end;
+  symbolS *sym;
+  int other;
+
+  name = input_line_pointer;
+  name_end = get_symbol_end ();
+
+  if (! is_name_beginner (*name))
+    {
+      as_bad (_(".usepv directive has no name"));
+      *input_line_pointer = name_end;
+      ignore_rest_of_line ();
+      return;
+    }
+
+  sym = symbol_find_or_make (name);
+  *input_line_pointer++ = name_end;
+
+  if (name_end != ',')
+    {
+      as_bad (_(".usepv directive has no type"));
+      ignore_rest_of_line ();
+      return;
+    }
+
+  SKIP_WHITESPACE ();
+  which = input_line_pointer;
+  which_end = get_symbol_end ();
+
+  if (strcmp (which, "no") == 0)
+    other = STO_ALPHA_NOPV;
+  else if (strcmp (which, "std") == 0)
+    other = STO_ALPHA_STD_GPLOAD;
+  else
+    {
+      as_bad (_("unknown argument for .usepv"));
+      other = 0;
+    }
+  
+  *input_line_pointer = which_end;
+  demand_empty_rest_of_line ();
+
+  S_SET_OTHER (sym, other | (S_GET_OTHER (sym) & ~STO_ALPHA_STD_GPLOAD));
+}
 #endif /* OBJ_ELF */
+
+/* Standard calling conventions leaves the CFA at $30 on entry.  */
+
+void
+alpha_cfi_frame_initial_instructions ()
+{
+  cfi_add_CFA_def_cfa_register (30);
+}
 
 #ifdef OBJ_EVAX
 
@@ -4705,7 +4943,6 @@ s_alpha_ent (ignore)
   alpha_evax_proc.symbol = symbol;
 
   demand_empty_rest_of_line ();
-  return;
 }
 
 /* Parse .frame <framreg>,<framesize>,RA,<rsa_offset> directives.  */
@@ -4740,8 +4977,6 @@ s_alpha_frame (ignore)
       return;
     }
   alpha_evax_proc.rsa_offset = get_absolute_expression ();
-
-  return;
 }
 
 static void
@@ -4891,8 +5126,6 @@ s_alpha_pdesc (ignore)
 
   md_number_to_chars (p, alpha_evax_proc.imask, 4);
   md_number_to_chars (p + 4, alpha_evax_proc.fmask, 4);
-
-  return;
 }
 
 /* Support for crash debug on vms.  */
@@ -4931,8 +5164,6 @@ s_alpha_name (ignore)
   seginfo->literal_pool_size += 8;
 
   fix_new_exp (frag_now, p - frag_now->fr_literal, 8, &exp, 0, BFD_RELOC_64);
-
-  return;
 }
 
 static void
@@ -4959,8 +5190,6 @@ s_alpha_linkage (ignore)
 		   BFD_RELOC_ALPHA_LINKAGE);
     }
   demand_empty_rest_of_line ();
-
-  return;
 }
 
 static void
@@ -4987,8 +5216,6 @@ s_alpha_code_address (ignore)
 		   BFD_RELOC_ALPHA_CODEADDR);
     }
   demand_empty_rest_of_line ();
-
-  return;
 }
 
 static void
@@ -4999,7 +5226,6 @@ s_alpha_fp_save (ignore)
   alpha_evax_proc.fp_save = tc_get_register (1);
 
   demand_empty_rest_of_line ();
-  return;
 }
 
 static void
@@ -5019,8 +5245,6 @@ s_alpha_mask (ignore)
       (void) get_absolute_expression ();
     }
   demand_empty_rest_of_line ();
-
-  return;
 }
 
 static void
@@ -5040,8 +5264,6 @@ s_alpha_fmask (ignore)
       (void) get_absolute_expression ();
     }
   demand_empty_rest_of_line ();
-
-  return;
 }
 
 static void
@@ -5054,8 +5276,6 @@ s_alpha_end (ignore)
   *input_line_pointer = c;
   demand_empty_rest_of_line ();
   alpha_evax_proc.symbol = 0;
-
-  return;
 }
 
 static void
@@ -5065,8 +5285,6 @@ s_alpha_file (ignore)
   symbolS *s;
   int length;
   static char case_hack[32];
-
-  extern char *demand_copy_string PARAMS ((int *lenP));
 
   sprintf (case_hack, "<CASE:%01d%01d>",
 	   alpha_flag_hash_long_names, alpha_flag_show_after_trunc);
@@ -5078,8 +5296,6 @@ s_alpha_file (ignore)
   s = symbol_find_or_make (demand_copy_string (&length));
   symbol_get_bfdsym (s)->flags |= BSF_FILE;
   demand_empty_rest_of_line ();
-
-  return;
 }
 #endif /* OBJ_EVAX  */
 
@@ -5439,7 +5655,6 @@ alpha_print_token (f, exp)
       print_expr (f, exp);
       break;
     }
-  return;
 }
 #endif
 
@@ -5491,6 +5706,7 @@ const pseudo_typeS md_pseudo_table[] = {
   {"loc", s_alpha_loc, 9},
   {"stabs", s_alpha_stab, 's'},
   {"stabn", s_alpha_stab, 'n'},
+  {"usepv", s_alpha_usepv, 0},
   /* COFF debugging related pseudos.  */
   {"begin", s_alpha_coff_wrapper, 0},
   {"bend", s_alpha_coff_wrapper, 1},
@@ -5637,7 +5853,7 @@ alpha_elf_section_letter (letter, ptr_msg)
     return SHF_ALPHA_GPREL;
 
   *ptr_msg = _("Bad .section directive: want a,s,w,x,M,S,G,T in string");
-  return 0;
+  return -1;
 }
 
 /* Map SHF_ALPHA_GPREL to SEC_SMALL_DATA.  */

@@ -23,21 +23,6 @@
 #include "sysdep.h"
 #include "libbfd.h"
 
-#if 0
-/* This routine is provided two arch_infos and returns whether
-   they'd be compatible.  */
-
-static const bfd_arch_info_type *
-compatible (a,b)
-     const bfd_arch_info_type *a;
-     const bfd_arch_info_type *b;
-{
-  if (a->arch != b->arch || a->mach != b->mach)
-    return NULL;
-  return a;
-}
-#endif
-
 #define SH_NEXT      &arch_info_struct[0]
 #define SH2_NEXT     &arch_info_struct[1]
 #define SH2E_NEXT    &arch_info_struct[2]
@@ -46,6 +31,10 @@ compatible (a,b)
 #define SH3_DSP_NEXT &arch_info_struct[5]
 #define SH3E_NEXT    &arch_info_struct[6]
 #define SH4_NEXT     &arch_info_struct[7]
+#define SH4A_NEXT    &arch_info_struct[8]
+#define SH4AL_DSP_NEXT &arch_info_struct[9]
+#define SH4_NOFPU_NEXT &arch_info_struct[10]
+#define SH4A_NOFPU_NEXT &arch_info_struct[11]
 #define SH64_NEXT    NULL
 
 static const bfd_arch_info_type arch_info_struct[] =
@@ -147,6 +136,62 @@ static const bfd_arch_info_type arch_info_struct[] =
     bfd_default_compatible,
     bfd_default_scan,
     SH4_NEXT
+  },
+  {
+    32,				/* 32 bits in a word */
+    32,				/* 32 bits in an address */
+    8,				/* 8 bits in a byte */
+    bfd_arch_sh,
+    bfd_mach_sh4a,
+    "sh",			/* arch_name  */
+    "sh4a",			/* printable name */
+    1,
+    FALSE,			/* not the default */
+    bfd_default_compatible,
+    bfd_default_scan,
+    SH4A_NEXT
+  },
+  {
+    32,				/* 32 bits in a word */
+    32,				/* 32 bits in an address */
+    8,				/* 8 bits in a byte */
+    bfd_arch_sh,
+    bfd_mach_sh4al_dsp,
+    "sh",			/* arch_name  */
+    "sh4al-dsp",		/* printable name */
+    1,
+    FALSE,			/* not the default */
+    bfd_default_compatible,
+    bfd_default_scan,
+    SH4AL_DSP_NEXT
+  },
+  {
+    32,				/* 32 bits in a word */
+    32,				/* 32 bits in an address */
+    8,				/* 8 bits in a byte */
+    bfd_arch_sh,
+    bfd_mach_sh4_nofpu,
+    "sh",			/* arch_name  */
+    "sh4-nofpu",		/* printable name */
+    1,
+    FALSE,			/* not the default */
+    bfd_default_compatible,
+    bfd_default_scan,
+    SH4_NOFPU_NEXT
+  },
+  {
+    32,				/* 32 bits in a word */
+    32,				/* 32 bits in an address */
+    8,				/* 8 bits in a byte */
+    bfd_arch_sh,
+    bfd_mach_sh4a_nofpu,
+    "sh",			/* arch_name  */
+    "sh4a-nofpu",		/* printable name */
+    1,
+    FALSE,			/* not the default */
+    bfd_default_compatible,
+    bfd_default_scan,
+    SH4A_NOFPU_NEXT
   },
   {
     64,				/* 64 bits in a word */

@@ -5,7 +5,7 @@
    February 1994.
 
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998, 1999, 2000,
-   2002 Free Software Foundation, Inc.
+   2002, 2003 Free Software Foundation, Inc.
 
    Written by:
 
@@ -37,27 +37,26 @@
 #include "elf/hppa.h"
 
 int elf32_hppa_setup_section_lists
-  PARAMS ((bfd *, struct bfd_link_info *));
+  (bfd *, struct bfd_link_info *);
 
 void elf32_hppa_next_input_section
-  PARAMS ((struct bfd_link_info *, asection *));
+  (struct bfd_link_info *, asection *);
 
 bfd_boolean elf32_hppa_size_stubs
-  PARAMS ((bfd *, bfd *, struct bfd_link_info *, bfd_boolean, bfd_signed_vma,
-	   asection * (*) PARAMS ((const char *, asection *)),
-	   void (*) PARAMS ((void))));
+  (bfd *, bfd *, struct bfd_link_info *, bfd_boolean, bfd_signed_vma,
+   asection * (*) (const char *, asection *), void (*) (void));
 
 bfd_boolean elf32_hppa_set_gp
-  PARAMS ((bfd *, struct bfd_link_info *));
+  (bfd *, struct bfd_link_info *);
 
 bfd_boolean elf32_hppa_build_stubs
-  PARAMS ((struct bfd_link_info *));
+  (struct bfd_link_info *);
 
 elf_hppa_reloc_type elf32_hppa_reloc_final_type
-  PARAMS ((bfd *, elf_hppa_reloc_type, int, unsigned int));
+  (bfd *, elf_hppa_reloc_type, int, unsigned int);
 
 extern elf_hppa_reloc_type ** _bfd_elf32_hppa_gen_reloc_type
-  PARAMS ((bfd *, elf_hppa_reloc_type, int, unsigned int, int, asymbol *));
+  (bfd *, elf_hppa_reloc_type, int, unsigned int, int, asymbol *);
 
 /* Define groups of basic relocations.  FIXME:  These should
    be the only basic relocations created by GAS.  The rest

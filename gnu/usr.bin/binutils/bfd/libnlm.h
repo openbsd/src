@@ -1,5 +1,5 @@
 /* BFD back-end data structures for NLM (NetWare Loadable Modules) files.
-   Copyright 1993, 1994, 2001, 2002 Free Software Foundation, Inc.
+   Copyright 1993, 1994, 2001, 2002, 2003 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -61,7 +61,7 @@ extern void nlmNAME(get_symbol_info)
   PARAMS ((bfd *, asymbol *, symbol_info *));
 extern long nlmNAME(get_symtab_upper_bound)
   PARAMS ((bfd *));
-extern long nlmNAME(get_symtab)
+extern long nlmNAME(canonicalize_symtab)
   PARAMS ((bfd *, asymbol **));
 extern asymbol *nlmNAME(make_empty_symbol)
   PARAMS ((bfd *));
@@ -76,7 +76,7 @@ extern const bfd_target *nlmNAME(object_p)
 extern bfd_boolean nlmNAME(set_arch_mach)
   PARAMS ((bfd *, enum bfd_architecture, unsigned long));
 extern bfd_boolean nlmNAME(set_section_contents)
-  PARAMS ((bfd *, asection *, PTR, file_ptr, bfd_size_type));
+  PARAMS ((bfd *, asection *, const PTR, file_ptr, bfd_size_type));
 extern bfd_boolean nlmNAME(write_object_contents)
   PARAMS ((bfd *));
 
@@ -188,7 +188,8 @@ struct nlm_backend_data
   /* To make objcopy to an i386 NLM work, the i386 backend needs a
      chance to work over the relocs.  This is a bit icky.  */
   bfd_boolean (*nlm_mangle_relocs)
-    PARAMS ((bfd *, asection *, PTR data, bfd_vma offset, bfd_size_type count));
+    PARAMS ((bfd *, asection *, const PTR data, bfd_vma offset,
+	     bfd_size_type count));
   /* Read an import record from abfd.  It would be nice if this
      were in a machine-dependent format, but it doesn't seem to be. */
   bfd_boolean (*nlm_read_import) PARAMS ((bfd *, nlmNAME(symbol_type) *));

@@ -1,5 +1,5 @@
 /* Routines to link ECOFF debugging information.
-   Copyright 1993, 1994, 1995, 1996, 1997, 2000, 2001, 2002
+   Copyright 1993, 1994, 1995, 1996, 1997, 2000, 2001, 2002, 2003
    Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support, <ian@cygnus.com>.
 
@@ -526,7 +526,7 @@ bfd_ecoff_debug_init (output_bfd, output_debug, output_swap, info)
 
   ainfo->largest_file_shuffle = 0;
 
-  if (! info->relocateable)
+  if (! info->relocatable)
     {
       if (! bfd_hash_table_init (&ainfo->str_hash.table, string_hash_newfunc))
 	return NULL;
@@ -559,7 +559,7 @@ bfd_ecoff_debug_free (handle, output_bfd, output_debug, output_swap, info)
 
   bfd_hash_table_free (&ainfo->fdr_hash.table);
 
-  if (! info->relocateable)
+  if (! info->relocatable)
     bfd_hash_table_free (&ainfo->str_hash.table);
 
   objalloc_free (ainfo->memory);
@@ -879,9 +879,9 @@ bfd_ecoff_debug_accumulate (handle, output_bfd, output_debug, output_swap,
 	  /* If we are doing a final link, we hash all the strings in
 	     the local symbol table together.  This reduces the amount
 	     of space required by debugging information.  We don't do
-	     this when performing a relocateable link because it would
+	     this when performing a relocatable link because it would
 	     prevent us from easily merging different FDR's.  */
-	  if (! info->relocateable)
+	  if (! info->relocatable)
 	    {
 	      bfd_boolean ffilename;
 	      const char *name;
@@ -958,7 +958,7 @@ bfd_ecoff_debug_accumulate (handle, output_bfd, output_debug, output_swap,
 	  fdr.iauxBase = output_symhdr->iauxMax;
 	  output_symhdr->iauxMax += fdr.caux;
 	}
-      if (! info->relocateable)
+      if (! info->relocatable)
 	{
 
 	  /* When are are hashing strings, we lie about the number of
@@ -1127,7 +1127,7 @@ ecoff_add_string (ainfo, info, debug, fdr, string)
 
   symhdr = &debug->symbolic_header;
   len = strlen (string);
-  if (info->relocateable)
+  if (info->relocatable)
     {
       if (!add_memory_shuffle (ainfo, &ainfo->ss, &ainfo->ss_end, (PTR) string,
 			       len + 1))
@@ -1287,12 +1287,12 @@ bfd_ecoff_debug_accumulate_other (handle, output_bfd, output_debug,
    this interface, so that must be changed to do something else.  */
 
 bfd_boolean
-bfd_ecoff_debug_externals (abfd, debug, swap, relocateable, get_extr,
+bfd_ecoff_debug_externals (abfd, debug, swap, relocatable, get_extr,
 			   set_index)
      bfd *abfd;
      struct ecoff_debug_info *debug;
      const struct ecoff_debug_swap *swap;
-     bfd_boolean relocateable;
+     bfd_boolean relocatable;
      bfd_boolean (*get_extr) PARAMS ((asymbol *, EXTR *));
      void (*set_index) PARAMS ((asymbol *, bfd_size_type));
 {
@@ -1317,7 +1317,7 @@ bfd_ecoff_debug_externals (abfd, debug, swap, relocateable, get_extr,
 
       /* If we're producing an executable, move common symbols into
 	 bss.  */
-      if (! relocateable)
+      if (! relocatable)
 	{
 	  if (esym.asym.sc == scCommon)
 	    esym.asym.sc = scBss;
@@ -1694,7 +1694,7 @@ bfd_ecoff_write_accumulated_debug (handle, abfd, debug, swap, info, where)
 
   /* The string table is written out from the hash table if this is a
      final link.  */
-  if (info->relocateable)
+  if (info->relocatable)
     {
       BFD_ASSERT (ainfo->ss_hash == (struct string_hash_entry *) NULL);
       if (! ecoff_write_shuffle (abfd, swap, ainfo->ss, space))
@@ -2007,7 +2007,7 @@ lookup_line (abfd, debug_info, debug_swap, line_info)
   /* eraxxon: 'fdrtab_lookup' doesn't give what we want, at least for Compaq's
      C++ compiler 6.2.  Consider three FDRs with starting addresses of x, y,
      and z, respectively, such that x < y < z.  Assume further that
-     y < 'offset' < z.  It is possble at times that the PDR for 'offset' is
+     y < 'offset' < z.  It is possible at times that the PDR for 'offset' is
      associated with FDR x and *not* with FDR y.  Erg!!
 
      From a binary dump of my C++ test case 'moo' using Compaq's coffobjanl
@@ -2030,7 +2030,7 @@ lookup_line (abfd, debug_info, debug_swap, line_info)
 
      Since the FDRs that are causing so much havok (in this case) 1) do not
      describe actual files (fdr.rss == -1), and 2) contain only compiler
-     genarated routines, I thought a simple fix would be to exclude them from
+     generated routines, I thought a simple fix would be to exclude them from
      the FDR table in 'mk_fdrtab'.  But, besides not knowing for certain
      whether this would be correct, it creates an additional problem.  If we
      happen to ask for source file info on a compiler generated (procedure)

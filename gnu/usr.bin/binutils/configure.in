@@ -1,5 +1,5 @@
 #   Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 1998,
-#   1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
+#   1999, 2000, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -22,6 +22,9 @@ AC_INIT(move-if-change)
 AC_PREREQ(2.13)
 AC_CANONICAL_SYSTEM
 AC_ARG_PROGRAM
+
+# Get 'install' or 'install-sh' and its variants.
+AC_PROG_INSTALL
 
 sinclude(config/acx.m4)
 
@@ -63,8 +66,14 @@ progname=$0
 # if PWD already has a value, it is probably wrong.
 if test -n "$PWD" ; then PWD=`${PWDCMD-pwd}`; fi
 
-# Export original configure arguments for use by sub-configures.
-TOPLEVEL_CONFIGURE_ARGUMENTS="$progname $@"
+# Export original configure arguments for use by sub-configures.  These
+# will be expanded by make, so quote '$'.
+tmp="$progname $@"
+sed -e 's,\$,$$,g' <<EOF_SED > conftestsed.out
+$tmp
+EOF_SED
+TOPLEVEL_CONFIGURE_ARGUMENTS=`cat conftestsed.out`
+rm -f conftestsed.out
 AC_SUBST(TOPLEVEL_CONFIGURE_ARGUMENTS)
 
 moveifchange=${srcdir}/move-if-change
@@ -136,18 +145,18 @@ libgcj="target-libffi \
 # these libraries are built for the target environment, and are built after
 # the host libraries and the host tools (which may be a cross compiler)
 #
-target_libs="target-libiberty \
-		target-libgloss \
+target_libraries="target-libgloss \
 		target-newlib \
 		target-libstdc++-v3 \
 		target-libf2c \
 		${libgcj} \
-		target-libobjc"
+		target-libobjc \
+		target-libada"
 
-# these tools are built using the target libs, and are intended to run only
-# in the target environment
+# these tools are built using the target libraries, and are intended to
+# run only in the target environment
 #
-# note: any program that *uses* libraries that are in the "target_libs"
+# note: any program that *uses* libraries that are in the "target_libraries"
 # list belongs in this list.  those programs are also very likely
 # candidates for the "native_only" list which follows
 #
@@ -162,7 +171,17 @@ target_tools="target-examples target-groff target-gperf target-rda"
 ## ${target_configdirs} is directories we build using the target tools.
 #
 configdirs=`echo ${host_libs} ${host_tools}`
-target_configdirs=`echo ${target_libs} ${target_tools}`
+target_configdirs=`echo ${target_libraries} ${target_tools}`
+
+# Only make build modules if build != host.
+# This should be done more generally, but at the moment it doesn't matter.
+if test ${host_alias} != ${build_alias} ; then
+  # This is the only build module.
+  build_modules=libiberty
+else
+  build_modules=
+fi
+
 
 ################################################################################
 
@@ -179,30 +198,8 @@ else
   is_cross_compiler=yes
 fi	
 
-# We always want to use the same name for this directory, so that dejagnu
-# can reliably find it.
-target_subdir=${target_alias}
-
-if test ! -d ${target_subdir} ; then
-  if mkdir ${target_subdir} ; then true
-  else
-    echo "'*** could not make ${PWD=`${PWDCMD-pwd}`}/${target_subdir}" 1>&2
-    exit 1
-  fi
-fi
-
-build_prefix=build-
-build_subdir=${build_prefix}${build_alias}
-
-if test x"${build_alias}" != x"${host}" ; then
-  if test ! -d ${build_subdir} ; then
-    if mkdir ${build_subdir} ; then true
-    else
-      echo "'*** could not make ${PWD=`${PWDCMD-pwd}`}/${build_subdir}" 1>&2
-      exit 1
-    fi
-  fi
-fi
+# Find the build and target subdir names.
+GCC_TOPLEV_SUBDIRS
 
 # Skipdirs are removed silently.
 skipdirs=
@@ -251,7 +248,8 @@ esac
 
 # If both --with-headers and --with-libs are specified, default to
 # --without-newlib.
-if test x"${with_headers}" != x && test x"${with_libs}" != x ; then
+if test x"${with_headers}" != x && test x"${with_headers} != xno \
+   && test x"${with_libs}" != x && test x"${with_libs} != xno ; then
   if test x"${with_newlib}" = x ; then
     with_newlib=no
   fi
@@ -278,27 +276,27 @@ case "${host}" in
   hppa*64*-*-*)
     noconfigdirs="$noconfigdirs byacc"
     ;;
-  i[[3456]]86-*-vsta)
-    noconfigdirs="tcl expect dejagnu make texinfo bison patch flex byacc send-pr gprof uudecode dejagnu diff guile perl itcl tix gnuserv gettext"
+  i[[3456789]]86-*-vsta)
+    noconfigdirs="$noconfigdirs tcl expect dejagnu make texinfo bison patch flex byacc send-pr gprof uudecode dejagnu diff guile perl itcl tix gnuserv gettext"
     ;;
-  i[[3456]]86-*-go32* | i[[3456]]86-*-msdosdjgpp*)
-    noconfigdirs="tcl tk expect dejagnu send-pr uudecode guile itcl tix gnuserv libffi"
+  i[[3456789]]86-*-go32* | i[[3456789]]86-*-msdosdjgpp*)
+    noconfigdirs="$noconfigdirs tcl tk expect dejagnu send-pr uudecode guile itcl tix gnuserv libffi"
     ;;
-  i[[3456]]86-*-mingw32*)
+  i[[3456789]]86-*-mingw32*)
     # noconfigdirs="tcl tk expect dejagnu make texinfo bison patch flex byacc send-pr uudecode dejagnu diff guile perl itcl tix gnuserv"
-    noconfigdirs="expect dejagnu autoconf automake send-pr rcs guile perl texinfo libtool"
+    noconfigdirs="$noconfigdirs expect dejagnu autoconf automake send-pr rcs guile perl texinfo libtool"
     ;;
-  i[[3456]]86-*-beos*)
+  i[[3456789]]86-*-beos*)
     noconfigdirs="$noconfigdirs tk itcl tix libgui gdb"
     ;;
   *-*-cygwin*)
-    noconfigdirs="autoconf automake send-pr rcs guile perl"
+    noconfigdirs="$noconfigdirs autoconf automake send-pr rcs guile perl"
     ;;
   *-*-netbsd*)
-    noconfigdirs="rcs"
+    noconfigdirs="$noconfigdirs rcs"
     ;;
   ppc*-*-pe)
-    noconfigdirs="patch diff make tk tcl expect dejagnu autoconf automake texinfo bison send-pr gprof rcs guile perl itcl tix gnuserv"
+    noconfigdirs="$noconfigdirs patch diff make tk tcl expect dejagnu autoconf automake texinfo bison send-pr gprof rcs guile perl itcl tix gnuserv"
     ;;
   powerpc-*-beos*)
     noconfigdirs="$noconfigdirs tk itcl tix libgui gdb dejagnu readline"
@@ -307,6 +305,14 @@ case "${host}" in
     noconfigdirs="$noconfigdirs tk itcl tix libgui"
     ;;
 esac
+
+AC_ARG_ENABLE(libada,
+[  --enable-libada        Builds libada directory],
+ENABLE_LIBADA=$enableval,
+ENABLE_LIBADA=yes)
+if test "${ENABLE_LIBADA}" != "yes" ; then
+  noconfigdirs="$noconfigdirs target-libada"
+fi
 
 # Save it here so that, even in case of --enable-libgcj, if the Java
 # front-end isn't enabled, we still get libgcj disabled.
@@ -325,8 +331,19 @@ no)
 esac
 
 case "${target}" in
+  *-*-openbsd.*)
+    noconfigdirs="$noconfigdirs target-libiberty"
+    noconfigdirs="$noconfigdirs gdb"
+   ;;
+esac
+
+case "${target}" in
   *-*-chorusos)
     noconfigdirs="$noconfigdirs target-newlib target-libgloss ${libgcj}"
+    ;;
+  powerpc-*-darwin*)
+    noconfigdirs="$noconfigdirs bfd binutils ld gas opcodes gdb gprof"
+    noconfigdirs="$noconfigdirs target-libobjc"
     ;;
   *-*-darwin*)
     noconfigdirs="$noconfigdirs bfd binutils ld gas opcodes gdb gprof"
@@ -367,8 +384,11 @@ case "${target}" in
         *) ;;
     esac
     ;;
+  *-*-uclinux*)
+    noconfigdirs="$noconfigdirs target-newlib target-libgloss target-rda ${libgcj}"
+    ;;
   *-*-vxworks*)
-    noconfigdirs="$noconfigdirs target-newlib target-libgloss ${libgcj}"
+    noconfigdirs="$noconfigdirs target-newlib target-libgloss target-libiberty ${libgcj}"
     ;;
   alpha*-dec-osf*)
     # ld works, but does not support shared libraries.
@@ -383,12 +403,15 @@ case "${target}" in
     # newlib is not 64 bit ready
     noconfigdirs="$noconfigdirs target-newlib target-libgloss"
     ;;
-  alpha*-*-freebsd*)
+  alpha*-*-freebsd* | alpha*-*-kfreebsd*-gnu)
     noconfigdirs="$noconfigdirs target-newlib target-libgloss"
     ;;
   alpha*-*-*)
     # newlib is not 64 bit ready
     noconfigdirs="$noconfigdirs target-newlib target-libgloss ${libgcj}"
+    ;;
+  am33_2.0-*-linux*)
+    noconfigdirs="$noconfigdirs ${libgcj} target-newlib target-libgloss"
     ;;
   sh-*-linux*)
     noconfigdirs="$noconfigdirs ${libgcj} target-newlib target-libgloss"
@@ -448,22 +471,22 @@ case "${target}" in
     noconfigdirs="$noconfigdirs target-libstdc++-v3 target-libgloss ${libgcj} gcc gdb newlib"
     ;;
   cris-*-*)
-    noconfigdirs="$noconfigdirs ${libgcj}"
+    noconfigdirs="$noconfigdirs ${libgcj} target-newlib target-libgloss"
     ;;
   d10v-*-*)
     noconfigdirs="$noconfigdirs target-libstdc++-v3 target-libgloss ${libgcj}"
     ;;
   d30v-*-*)
-    noconfigdirs="$noconfigdirs ${libgcj}"
+    noconfigdirs="$noconfigdirs ${libgcj} gdb"
     ;;
   fr30-*-elf*)
-    noconfigdirs="$noconfigdirs ${libgcj}"
+    noconfigdirs="$noconfigdirs ${libgcj} gdb"
     ;;
   frv-*-*)
     noconfigdirs="$noconfigdirs ${libgcj}"
     ;;
   h8300*-*-*)
-    noconfigdirs="$noconfigdirs target-libgloss"
+    noconfigdirs="$noconfigdirs target-libgloss ${libgcj} target-libf2c"
     ;;
   h8500-*-*)
     noconfigdirs="$noconfigdirs target-libstdc++-v3 target-libgloss ${libgcj} target-libf2c"
@@ -487,21 +510,24 @@ case "${target}" in
     # build on HP-UX 10.20.
     noconfigdirs="$noconfigdirs ld shellutils ${libgcj}"
     ;;
+  i960-*-*)
+    noconfigdirs="$noconfigdirs ${libgcj} gdb"
+    ;;
   ia64*-*-elf*)
     # No gdb support yet.
     noconfigdirs="$noconfigdirs tix readline mmalloc libgui itcl gdb"
     ;;
   ia64*-**-hpux*)
     # No gdb or ld support yet.
-    noconfigdirs="$noconfigdirs tix readline mmalloc libgui itcl gdb ld"
+    noconfigdirs="$noconfigdirs ${libgcj} tix readline mmalloc libgui itcl gdb ld"
     ;;
-  i[[3456]]86-*-coff | i[[3456]]86-*-elf)
+  i[[3456789]]86-*-coff | i[[3456789]]86-*-elf)
     noconfigdirs="$noconfigdirs ${libgcj}"
     ;;
-  i[[34567]]86-*-freebsd*)
+  i[[3456789]]86-*-freebsd* | i[[3456789]]86-*-kfreebsd*-gnu)
     noconfigdirs="$noconfigdirs target-newlib target-libgloss"
     ;;
-  i[[3456]]86-*-linux*)
+  i[[3456789]]86-*-linux*)
     # The GCC port for glibc1 has no MD_FALLBACK_FRAME_STATE_FOR, so let's
     # not build java stuff by default.
     case "${target}" in
@@ -520,13 +546,13 @@ case "${target}" in
     # if the --with-newlib option has been given, because otherwise
     # 'target-newlib' will appear in skipdirs.
     ;;
-  i[[3456]]86-*-mingw32*)
+  i[[3456789]]86-*-mingw32*)
     target_configdirs="$target_configdirs target-mingw"
     noconfigdirs="$noconfigdirs expect target-libgloss ${libgcj}"
 
     # Can't build gdb for mingw32 if not native.
     case "${host}" in
-      i[[3456]]86-*-mingw32) ;; # keep gdb tcl tk expect etc.
+      i[[3456789]]86-*-mingw32) ;; # keep gdb tcl tk expect etc.
       *) noconfigdirs="$noconfigdirs gdb tcl tk expect itcl tix gnuserv"
          ;;
     esac
@@ -544,25 +570,28 @@ case "${target}" in
          ;;
     esac
     ;;    
-  i[[3456]]86-*-pe)
+  i[[3456789]]86-*-pe)
     noconfigdirs="$noconfigdirs target-libstdc++-v3 target-libgloss ${libgcj}"
     ;;
-  i[[3456]]86-*-sco3.2v5*)
+  i[[3456789]]86-*-sco3.2v5*)
     # The linker does not yet know about weak symbols in COFF,
     # and is not configured to handle mixed ELF and COFF.
     noconfigdirs="$noconfigdirs ld target-libgloss ${libgcj}"
     ;;
-  i[[3456]]86-*-sco*)
+  i[[3456789]]86-*-sco*)
     noconfigdirs="$noconfigdirs gprof target-libgloss ${libgcj}"
     ;;
-  i[[3456]]86-*-solaris2*)
+  i[[3456789]]86-*-solaris2*)
     noconfigdirs="$noconfigdirs target-libgloss"
     ;;
-  i[[3456]]86-*-sysv4*)
+  i[[3456789]]86-*-sysv4*)
     noconfigdirs="$noconfigdirs target-libgloss ${libgcj}"
     ;;
-  i[[3456]]86-*-beos*)
+  i[[3456789]]86-*-beos*)
     noconfigdirs="$noconfigdirs gdb target-newlib target-libgloss ${libgcj}"
+    ;;
+  m32r-*-*)
+    noconfigdirs="$noconfigdirs ${libgcj}"
     ;;
   m68hc11-*-*|m6811-*-*|m68hc12-*-*|m6812-*-*)
     noconfigdirs="$noconfigdirs target-libiberty target-libstdc++-v3 ${libgcj}"
@@ -589,7 +618,7 @@ case "${target}" in
     ;;
   powerpc-*-aix*)
     # copied from rs6000-*-* entry
-    noconfigdirs="$noconfigdirs gprof target-libgloss ${libgcj}"
+    noconfigdirs="$noconfigdirs gprof target-libada target-libgloss ${libgcj}"
     ;;
   powerpc*-*-winnt* | powerpc*-*-pe* | ppc*-*-pe)
     target_configdirs="$target_configdirs target-winsup"
@@ -611,7 +640,7 @@ case "${target}" in
     noconfigdirs="$noconfigdirs target-newlib gprof ${libgcj}"
     ;;
   rs6000-*-aix*)
-    noconfigdirs="$noconfigdirs gprof ${libgcj}"
+    noconfigdirs="$noconfigdirs gprof target-libada target-libgloss ${libgcj}"
     ;;
   rs6000-*-*)
     noconfigdirs="$noconfigdirs gprof ${libgcj}"
@@ -620,8 +649,7 @@ case "${target}" in
     noconfigdirs="$noconfigdirs ld binutils gprof target-libgloss ${libgcj}"
     ;;
   mips*-*-irix5*)
-    # The GNU linker does not support shared libraries.
-    noconfigdirs="$noconfigdirs ld gprof target-libgloss ${libgcj}"
+    noconfigdirs="$noconfigdirs gprof target-libgloss ${libgcj}"
     ;;
   mips*-*-irix6*)
     # Linking libjava exceeds command-line length limits on at least
@@ -634,7 +662,7 @@ case "${target}" in
     noconfigdirs="$noconfigdirs gprof target-libgloss ${libgcj}"
     ;;
   mips*-*-openbsd*)
-    noconfigdirs="$noconfigdirs target-libgloss target-libffi ${libgcj}"
+    noconfigdirs="$noconfigdirs target-libgloss ${libgcj}"
     ;;
   mips*-*-bsd*)
     noconfigdirs="$noconfigdirs gprof target-libgloss ${libgcj}"
@@ -653,9 +681,9 @@ case "${target}" in
     ;;
   sh-*-*)
     case "${host}" in
-      i[[3456]]86-*-vsta) ;; # don't add gprof back in
-      i[[3456]]86-*-go32*) ;; # don't add gprof back in
-      i[[3456]]86-*-msdosdjgpp*) ;; # don't add gprof back in
+      i[[3456789]]86-*-vsta) ;; # don't add gprof back in
+      i[[3456789]]86-*-go32*) ;; # don't add gprof back in
+      i[[3456789]]86-*-msdosdjgpp*) ;; # don't add gprof back in
       *) skipdirs=`echo " ${skipdirs} " | sed -e 's/ gprof / /'` ;;
     esac
     noconfigdirs="$noconfigdirs target-libgloss ${libgcj}"
@@ -703,6 +731,9 @@ case "${target}" in
   vax-*-*)
     noconfigdirs="$noconfigdirs target-newlib target-libgloss ${libgcj}"
     ;;
+  xtensa-*-*)
+    noconfigdirs="$noconfigdirs ${libgcj}"
+    ;;
   ip2k-*-*)
     noconfigdirs="$noconfigdirs target-libiberty target-libstdc++-v3 ${libgcj}"
     ;;
@@ -749,24 +780,24 @@ enable_languages=`echo "${enable_languages}" | sed -e 's/[[ 	,]][[ 	,]]*/,/g' -e
 # First scan to see if an enabled language requires some other language.
 # We assume that a given config-lang.in will list all the language
 # front ends it requires, even if some are required indirectly.
-for lang in ${srcdir}/gcc/*/config-lang.in ..
-do
-  case $lang in
+for lang_frag in ${srcdir}/gcc/*/config-lang.in .. ; do
+  case ${lang_frag} in
     ..) ;;
     # The odd quoting in the next line works around
     # an apparent bug in bash 1.12 on linux.
     ${srcdir}/gcc/[[*]]/config-lang.in) ;;
     *)
-      lang_alias=`sed -n -e 's,^language=[['"'"'"'"]]\(.*\)[["'"'"'"']].*$,\1,p' -e 's,^language=\([[^ 	]]*\).*$,\1,p' $lang`
-      this_lang_requires=`sed -n -e 's,^lang_requires=[['"'"'"'"]]\(.*\)[["'"'"'"']].*$,\1,p' -e 's,^lang_requires=\([[^ 	]]*\).*$,\1,p' $lang`
-      for other in $this_lang_requires
-      do
+      # From the config-lang.in, get $language, $lang_requires
+      language=
+      lang_requires=
+      . ${lang_frag}
+      for other in ${lang_requires} ; do
         case ,${enable_languages}, in
 	  *,$other,*) ;;
 	  *,all,*) ;;
-	  *,$lang_alias,*)
-	    echo " \`$other' language required by \`$lang_alias'; enabling" 1>&2
-	    enable_languages="$enable_languages,$other"
+	  *,$language,*)
+	    echo " \`$other' language required by \`$language'; enabling" 1>&2
+	    enable_languages="${enable_languages},${other}"
 	    ;;
 	esac
       done
@@ -774,35 +805,44 @@ do
   esac
 done
 
-subdirs=
-for lang in ${srcdir}/gcc/*/config-lang.in ..
-do
-  case $lang in
+for lang_frag in ${srcdir}/gcc/*/config-lang.in .. ; do
+  case ${lang_frag} in
     ..) ;;
     # The odd quoting in the next line works around
     # an apparent bug in bash 1.12 on linux.
     ${srcdir}/gcc/[[*]]/config-lang.in) ;;
     *)
-      lang_alias=`sed -n -e 's,^language=[['"'"'"'"]]\(.*\)[["'"'"'"']].*$,\1,p' -e 's,^language=\([[^ 	]]*\).*$,\1,p' $lang`
-      this_lang_libs=`sed -n -e 's,^target_libs=[['"'"'"'"]]\(.*\)[["'"'"'"']].*$,\1,p' -e 's,^target_libs=\([[^ 	]]*\).*$,\1,p' $lang`
-      this_lang_dirs=`sed -n -e 's,^lang_dirs=[['"'"'"'"]]\(.*\)[["'"'"'"']].*$,\1,p' -e 's,^lang_dirs=\([[^ 	]]*\).*$,\1,p' $lang`
-      build_by_default=`sed -n -e 's,^build_by_default=[['"'"'"'"]]\(.*\)[["'"'"'"']].*$,\1,p' -e 's,^build_by_default=\([[^ 	]]*\).*$,\1,p' $lang`
-      if test "x$lang_alias" = x
-         then
-        echo "$lang doesn't set \$language." 1>&2
+      # From the config-lang.in, get $language, $target_libs, 
+      # $lang_dirs, and $build_by_default
+      language=
+      target_libs=
+      lang_dirs=
+      build_by_default=
+      . ${lang_frag}
+      if test "x$language" = x ; then
+        echo "${lang_frag} doesn't set \$language." 1>&2
         exit 1
       fi
-      case ${build_by_default},${enable_languages}, in
-        *,$lang_alias,*) add_this_lang=yes ;;
-        no,*) add_this_lang=no ;;
-        *,all,*) add_this_lang=yes ;;
+      case ,${enable_languages}, in
+        *,${language},*)
+          # Language was explicitly selected; include it.
+          add_this_lang=yes
+          ;;
+        *,all,*)
+          # 'all' was selected; include 'default' languages.
+          case ${build_by_default} in
+            no) add_this_lang=no ;;
+            *) add_this_lang=yes ;;
+          esac 
+          ;;
         *) add_this_lang=no ;;
       esac
-      if test x"${add_this_lang}" = xyes; then
-        eval target_libs='"$target_libs "'\"$this_lang_libs\"
-      else
-        eval noconfigdirs='"$noconfigdirs "'\"$this_lang_libs $this_lang_dirs\"
-      fi
+      case ${add_this_lang} in
+        no)
+          # Remove language-dependent dirs.
+          eval noconfigdirs='"$noconfigdirs "'\"$target_libs $lang_dirs\"
+          ;;
+      esac
       ;;
   esac
 done
@@ -916,7 +956,7 @@ copy_dirs=
 
 # Handle --with-headers=XXX.  If the value is not "yes", the contents of
 # the named directory are copied to $(tooldir)/sys-include.
-if test x"${with_headers}" != x ; then
+if test x"${with_headers}" != x && test x"${with_headers}" != xno ; then
   if test x${is_cross_compiler} = xno ; then
     echo 1>&2 '***' --with-headers is only supported when cross compiling
     exit 1
@@ -933,7 +973,7 @@ fi
 # Handle --with-libs=XXX.  If the value is not "yes", the contents of
 # the name directories are copied to $(tooldir)/lib.  Multiple directories
 # are permitted.
-if test x"${with_libs}" != x ; then
+if test x"${with_libs}" != x && test x"${with_libs}" != xno ; then
   if test x${is_cross_compiler} = xno ; then
     echo 1>&2 '***' --with-libs is only supported when cross compiling
     exit 1
@@ -1053,19 +1093,19 @@ case "${host}" in
   i370-ibm-opened*)
     tentative_cc="c89"
     ;;
-  i[[3456]]86-*-sysv5*)
+  i[[3456789]]86-*-sysv5*)
     host_makefile_frag="config/mh-sysv5"
     ;;
-  i[[3456]]86-*-dgux*)
+  i[[3456789]]86-*-dgux*)
     tentative_cc="gcc -Wall -ansi -D__using_DGUX"
     host_makefile_frag="config/mh-dgux386"
     ;;
-  i[[3456]]86-ncr-sysv4.3*)
+  i[[3456789]]86-ncr-sysv4.3*)
     # The MetaWare compiler will generate a copyright message unless you
     # turn it off by adding the -Hnocopyr flag.
     tentative_cc="cc -Hnocopyr"
     ;;
-  i[[3456]]86-ncr-sysv4*)
+  i[[3456789]]86-ncr-sysv4*)
     # for an NCR 3000 (i486/SVR4) system.
     # The NCR 3000 ships with a MetaWare compiler installed as /bin/cc.
     # This compiler not only emits obnoxious copyright messages every time
@@ -1074,21 +1114,21 @@ case "${host}" in
     tentative_cc="/usr/ccs/ATT/cc"
     host_makefile_frag="config/mh-ncr3000"
     ;;
-  i[[3456]]86-*-sco3.2v5*)
+  i[[3456789]]86-*-sco3.2v5*)
     ;;
-  i[[3456]]86-*-sco*)
+  i[[3456789]]86-*-sco*)
     # The native C compiler botches some simple uses of const.  Unfortunately,
     # it doesn't defined anything like "__sco__" for us to test for in ansidecl.h.
     tentative_cc="cc -Dconst="
     host_makefile_frag="config/mh-sco"
     ;;
-  i[[3456]]86-*-udk*)
+  i[[3456789]]86-*-udk*)
     host_makefile_frag="config/mh-sysv5"
     ;;
-  i[[3456]]86-*-solaris2*)
+  i[[3456789]]86-*-solaris2*)
     host_makefile_frag="config/mh-sysv4"
     ;;
-  i[[3456]]86-*-msdosdjgpp*)
+  i[[3456789]]86-*-msdosdjgpp*)
     host_makefile_frag="config/mh-djgpp"
     ;;
   *-cygwin*)
@@ -1138,7 +1178,7 @@ extra_nmflags_for_target=
 extra_ranlibflags_for_target=
 target_makefile_frag=/dev/null
 case "${target}" in
-  i[[3456]]86-*-netware*)
+  i[[3456789]]86-*-netware*)
     target_makefile_frag="config/mt-netware"
     ;;
   powerpc-*-netware*)
@@ -1230,11 +1270,7 @@ fi
 # Default to using --with-stabs for certain targets.
 if test x${with_stabs} = x ; then
   case "${target}" in
-  mips*-*-irix6*o32)
-    with_stabs=yes;
-    extra_host_args="${extra_host_args} --with-stabs"
-    ;;
-  mips*-*-irix6*)
+  mips*-*-irix[[56]]*)
     ;;
   mips*-*-* | alpha*-*-osf*)
     with_stabs=yes;
@@ -1272,7 +1308,7 @@ fi
 
 # Some systems (e.g., one of the i386-aix systems the gas testers are
 # using) don't handle "\$" correctly, so don't use it here.
-tooldir='$(exec_prefix)'/${target_alias}
+tooldir='${exec_prefix}'/${target_alias}
 build_tooldir=${tooldir}
 
 # Generate a default definition for YACC.  This is used if the makefile can't
@@ -1610,59 +1646,14 @@ esac
 target_configdirs=`echo "${target_configdirs}" | sed -e 's/target-//g'`
 
 # This is the final value for target_configdirs.  configdirs already
-# has its final value.  It's time to create some lists of valid targets.
-
-# While at that, we remove Makefiles if we were started for recursive
-# configuration, such that the top-level Makefile reconfigures them,
-# like we used to do when configure itself was recursive.
+# has its final value, as does build_modules.  It's time to create some 
+# lists of valid targets.
 
 all_build_modules=
 configure_build_modules=
-# Only make build modules if build != host.
-# This should be done more generally, but at the moment it doesn't matter.
-if test ${host_alias} != ${build_alias} ; then
-  for module in libiberty ; do
-    all_build_modules=all-build-${module}
-    configure_build_modules=configure-build-${module}
-    if test -z "${no_recursion}" \
-       && test -f ${build_subdir}/${module}/Makefile; then
-      echo 1>&2 "*** removing ${build_subdir}/${module}/Makefile to force reconfigure"
-      rm -f ${build_subdir}/${module}/Makefile
-    fi
-  done
-fi
-
-all_host_modules=
-check_host_modules=
-install_host_modules=
-configure_host_modules=
-for module in ${configdirs} ; do
-  all_host_modules="${all_host_modules} all-${module}"
-  check_host_modules="${check_host_modules} check-${module}"
-  install_host_modules="${install_host_modules} install-${module}"
-  configure_host_modules="${configure_host_modules} configure-${module}"
-  if test -z "${no_recursion}" \
-     && test -f ${module}/Makefile; then
-    echo 1>&2 "*** removing ${module}/Makefile to force reconfigure"
-    rm -f ${module}/Makefile
-  fi
-done
-install_host_modules_nogcc=`echo "${install_host_modules}" | sed -e 's/install-gcc//g'`
-
-all_target_modules=
-check_target_modules=
-install_target_modules=
-configure_target_modules=
-for module in ${target_configdirs} ; do
-  all_target_modules="${all_target_modules} all-target-${module}"
-  check_target_modules="${check_target_modules} check-target-${module}"
-  install_target_modules="${install_target_modules} install-target-${module}"
-  configure_target_modules="${configure_target_modules} configure-target-${module}"
-  if test -z "${no_recursion}" \
-     && test -f ${target_subdir}/${module}/Makefile; then
-    echo 1>&2 "*** removing ${target_subdir}/${module}/Makefile to force reconfigure"
-    rm -f ${target_subdir}/${module}/Makefile
-  fi
+for module in ${build_modules} ; do
+  all_build_modules=all-build-${module}
+  configure_build_modules=configure-build-${module}
 done
 
 # Determine whether gdb needs tk/tcl or not.
@@ -1692,13 +1683,50 @@ case "$enable_gdbtk" in
 esac
 
 # Create the 'maybe dependencies'.  This uses a temporary file.
+
+# While at that, we remove Makefiles if we were started for recursive
+# configuration, so that the top-level Makefile reconfigures them,
+# like we used to do when configure itself was recursive.
 rm -f maybedep.tmp
 echo '# maybedep.tmp' > maybedep.tmp
-for item in ${all_build_modules} ${all_host_modules} ${all_target_modules} \
-	${install_host_modules} ${install_target_modules} \
-	${configure_build_modules} ${configure_host_modules} ${configure_target_modules} \
-	; do
-  echo "maybe-${item}: ${item}" >> maybedep.tmp
+
+# Make-targets which may need maybe dependencies.
+mts="configure all install check clean distclean dvi info install-info"
+mts="${mts} installcheck mostlyclean maintainer-clean TAGS"
+
+# Loop over modules and make-targets.
+for module in ${build_modules} ; do
+  if test -z "${no_recursion}" \
+     && test -f ${build_subdir}/${module}/Makefile; then
+    echo 1>&2 "*** removing ${build_subdir}/${module}/Makefile to force reconfigure"
+    rm -f ${build_subdir}/${module}/Makefile
+  fi
+  for mt in ${mts} ; do
+    case ${mt} in
+      install) ;; # No installing build modules.
+      *) echo "maybe-${mt}-build-${module}: ${mt}-build-${module}" >> maybedep.tmp ;;
+    esac
+  done
+done
+for module in ${configdirs} ; do
+  if test -z "${no_recursion}" \
+     && test -f ${module}/Makefile; then
+    echo 1>&2 "*** removing ${module}/Makefile to force reconfigure"
+    rm -f ${module}/Makefile
+  fi
+  for mt in ${mts} ; do
+    echo "maybe-${mt}-${module}: ${mt}-${module}" >> maybedep.tmp
+  done
+done
+for module in ${target_configdirs} ; do
+  if test -z "${no_recursion}" \
+     && test -f ${target_subdir}/${module}/Makefile; then
+    echo 1>&2 "*** removing ${target_subdir}/${module}/Makefile to force reconfigure"
+    rm -f ${target_subdir}/${module}/Makefile
+  fi
+  for mt in ${mts} ; do
+    echo "maybe-${mt}-target-${module}: ${mt}-target-${module}" >> maybedep.tmp
+  done
 done
 maybe_dependencies=maybedep.tmp
 AC_SUBST_FILE(maybe_dependencies)
@@ -1706,18 +1734,25 @@ AC_SUBST_FILE(maybe_dependencies)
 # Create the serialization dependencies.  This uses a temporary file.
 
 AC_ARG_ENABLE([serial-configure],
-[  --disable-serial-[{host,target,build}-]configure
-                          Don't force sequential configuration of
+[  --enable-serial-[{host,target,build}-]configure
+                          Force sequential configuration of
                           sub-packages for the host, target or build
-			  machine, or of any sub-packages at all])
+			  machine, or all sub-packages])
+
+case ${enable_serial_configure} in
+  yes)
+    enable_serial_build_configure=yes
+    enable_serial_host_configure=yes
+    enable_serial_target_configure=yes
+    ;;
+esac
 
 # These force 'configure's to be done one at a time, to avoid problems
 # with contention over a shared config.cache.
 rm -f serdep.tmp
 echo '# serdep.tmp' > serdep.tmp
 olditem=
-test "x${enable_serial_configure}" = xno ||
-test "x${enable_serial_build_configure}" = xno ||
+test "x${enable_serial_build_configure}" = xyes &&
 for item in ${build_configdirs} ; do
   case ${olditem} in
     "") ;;
@@ -1726,8 +1761,7 @@ for item in ${build_configdirs} ; do
   olditem=${item}
 done
 olditem=
-test "x${enable_serial_configure}" = xno ||
-test "x${enable_serial_host_configure}" = xno ||
+test "x${enable_serial_host_configure}" = xyes &&
 for item in ${configdirs} ; do
   case ${olditem} in
     "") ;;
@@ -1736,8 +1770,7 @@ for item in ${configdirs} ; do
   olditem=${item}
 done
 olditem=
-test "x${enable_serial_configure}" = xno ||
-test "x${enable_serial_target_configure}" = xno ||
+test "x${enable_serial_target_configure}" = xyes &&
 for item in ${target_configdirs} ; do
   case ${olditem} in
     "") ;;
@@ -1752,21 +1785,53 @@ AC_SUBST_FILE(serialization_dependencies)
 
 # Base args.  Strip norecursion, cache-file, srcdir, host, build,
 # target and nonopt.  These are the ones we might not want to pass
-# down to subconfigures.
-baseargs=`echo " ${ac_configure_args} " | \
-	sed -e 's/ --no[[^ ]]* / /' \
-	    -e 's/ --c[[a-z-]]*[[= ]][[^ ]]* / /' \
-	    -e 's/ --sr[[a-z-]]*[[= ]][[^ ]]* / /' \
-	    -e 's/ --ho[[a-z-]]*[[= ]][[^ ]]* / /' \
-	    -e 's/ --bu[[a-z-]]*[[= ]][[^ ]]* / /' \
-	    -e 's/ --t[[a-z-]]*[[= ]][[^ ]]* / /' \
-	    -e 's/ -cache-file[[= ]][[^ ]]* / /' \
-	    -e 's/ -srcdir[[= ]][[^ ]]* / /' \
-	    -e 's/ -host[[= ]][[^ ]]* / /' \
-	    -e 's/ -build[[= ]][[^ ]]* / /' \
-	    -e 's/ -target[[= ]][[^ ]]* / /' \
-	    -e "s/ [[^' -][^ ]*] / /" \
-	    -e 's/^ *//;s/ *$//'`
+# down to subconfigures.  Also strip program-prefix, program-suffix,
+# and program-transform-name, so that we can pass down a consistent
+# program-transform-name.  If autoconf has put single quotes around
+# any of these arguments (because they contain shell metacharacters)
+# then this will fail; in practice this only happens for
+# --program-transform-name, so be sure to override --program-transform-name
+# at the end of the argument list.
+# These will be expanded by make, so quote '$'.
+cat <<\EOF_SED > conftestsed
+s/ --no[[^ ]]* / /
+s/ --c[[a-z-]]*[[= ]][[^ ]]* / /
+s/ --sr[[a-z-]]*[[= ]][[^ ]]* / /
+s/ --ho[[a-z-]]*[[= ]][[^ ]]* / /
+s/ --bu[[a-z-]]*[[= ]][[^ ]]* / /
+s/ --t[[a-z-]]*[[= ]][[^ ]]* / /
+s/ --program-[[pst]][[a-z-]]*[[= ]][[^ ]]* / /
+s/ -cache-file[[= ]][[^ ]]* / /
+s/ -srcdir[[= ]][[^ ]]* / /
+s/ -host[[= ]][[^ ]]* / /
+s/ -build[[= ]][[^ ]]* / /
+s/ -target[[= ]][[^ ]]* / /
+s/ -program-prefix[[= ]][[^ ]]* / /
+s/ -program-suffix[[= ]][[^ ]]* / /
+s/ -program-transform-name[[= ]][[^ ]]* / /
+s/ [[^' -][^ ]*] / /
+s/^ *//;s/ *$//
+s,\$,$$,g
+EOF_SED
+sed -f conftestsed <<EOF_SED > conftestsed.out
+ ${ac_configure_args} 
+EOF_SED
+baseargs=`cat conftestsed.out`
+rm -f conftestsed conftestsed.out
+
+# Add in --program-transform-name, after --program-prefix and
+# --program-suffix have been applied to it.  Autoconf has already
+# doubled dollar signs and backslashes in program_transform_name; we want
+# the backslashes un-doubled, and then the entire thing wrapped in single
+# quotes, because this will be expanded first by make and then by the shell. 
+# Also, because we want to override the logic in subdir configure scripts to
+# choose program_transform_name, replace any s,x,x, with s,y,y,.
+sed -e "s,\\\\\\\\,\\\\,g; s,','\\\\'',g; s/s,x,x,/s,y,y,/" <<EOF_SED > conftestsed.out
+${program_transform_name}
+EOF_SED
+gcc_transform_name=`cat conftestsed.out`
+rm -f conftestsed.out
+baseargs="$baseargs --program-transform-name='${gcc_transform_name}'"
 
 # For the build-side libraries, we just need to pretend we're native,
 # and not use the same cache file.  Multilibs are neither needed nor
@@ -1783,7 +1848,9 @@ case "${cache_file}" in
   cache_file_option="--cache-file=../${cache_file}" ;;
 esac
 
-host_configargs="${cache_file_option} --build=${build_alias} --host=${host_alias} --target=${target_alias} ${extra_host_args} ${baseargs}"
+# Host dirs don't like to share a cache file either, horribly enough.
+# This seems to be due to autoconf 2.5x stupidity.
+host_configargs="--cache-file=./config.cache --build=${build_alias} --host=${host_alias} --target=${target_alias} ${extra_host_args} ${baseargs}"
 
 target_configargs=${baseargs}
 
@@ -1807,8 +1874,17 @@ if test x${with_newlib} != xno && echo " ${target_configdirs} " | grep " newlib 
   target_configargs="--with-newlib ${target_configargs}"
 fi
 
+# Different target subdirs use different values of certain variables
+# (notably CXX).  Worse, multilibs use *lots* of different values.
+# Worse yet, autoconf 2.5x makes some of these 'precious', meaning that
+# it doesn't automatically accept command-line overrides of them.
+# This means it's not safe for target subdirs to share a cache file,
+# which is disgusting, but there you have it.  Hopefully this can be
+# fixed in future.  It's still worthwhile to use a cache file for each
+# directory.  I think.
+
 # Pass the appropriate --host, --build, and --cache-file arguments.
-target_configargs="--cache-file=../config.cache --host=${target_alias} --build=${build_alias} ${target_configargs}"
+target_configargs="--cache-file=./config.cache --host=${target_alias} --build=${build_alias} ${target_configargs}"
 
 # provide a proper gxx_include_dir.
 # Note, if you change the default, make sure to fix both here and in
@@ -1835,7 +1911,7 @@ case " $target_configdirs " in
   *" --with-newlib "*)
    case "$target" in
    *-cygwin*)
-     FLAGS_FOR_TARGET=$FLAGS_FOR_TARGET' -L$$r/$(TARGET_SUBDIR)/winsup -L$$r/$(TARGET_SUBDIR)/winsup/cygwin -L$$r/$(TARGET_SUBDIR)/winsup/w32api/lib -isystem $$s/winsup/include -isystem $$s/winsup/cygwin/include -isystem $$s/winsup/w32api/include -isystem $$s/newlib/libc/sys/cygwin -isystem $$s/newlib/libc/sys/cygwin32' ;;
+     FLAGS_FOR_TARGET=$FLAGS_FOR_TARGET' -L$$r/$(TARGET_SUBDIR)/winsup -L$$r/$(TARGET_SUBDIR)/winsup/cygwin -L$$r/$(TARGET_SUBDIR)/winsup/w32api/lib -isystem $$s/winsup/include -isystem $$s/winsup/cygwin/include -isystem $$s/winsup/w32api/include' ;;
    esac
 
    # If we're not building GCC, don't discard standard headers.
@@ -1862,7 +1938,7 @@ case " $target_configdirs " in
    fi
 
    case "${target}-${is_cross_compiler}" in
-   i[[3456]]86-*-linux*-no)
+   i[[3456789]]86-*-linux*-no)
       # Here host == target, so we don't need to build gcc,
       # so we don't want to discard standard headers.
       FLAGS_FOR_TARGET=`echo " $FLAGS_FOR_TARGET " | sed -e 's/ -nostdinc / /'`
@@ -1878,6 +1954,10 @@ case " $target_configdirs " in
   esac
   ;;
 esac
+
+# Allow the user to override the flags for
+# our build compiler if desired.
+CFLAGS_FOR_BUILD=${CFLAGS_FOR_BUILD-${CFLAGS}}
 
 # On Canadian crosses, we'll be searching the right directories for
 # the previously-installed cross compiler, so don't bother to add
@@ -1917,11 +1997,13 @@ fi
 GCJ_FOR_TARGET=$GCJ_FOR_TARGET' $(FLAGS_FOR_TARGET)'
 
 # Don't use libstdc++-v3's flags to configure/build itself.
-libstdcxx_flags='`test ! -f $$r/$(TARGET_SUBDIR)/libstdc++-v3/testsuite_flags || $(SHELL) $$r/$(TARGET_SUBDIR)/libstdc++-v3/testsuite_flags --build-includes` -L$$r/$(TARGET_SUBDIR)/libstdc++-v3/src -L$$r/$(TARGET_SUBDIR)/libstdc++-v3/src/.libs'
-raw_libstdcxx_flags=' -L$$r/$(TARGET_SUBDIR)/libstdc++-v3/src -L$$r/$(TARGET_SUBDIR)/libstdc++-v3/src/.libs'
+libstdcxx_flags='`test ! -f $$r/$(TARGET_SUBDIR)/libstdc++-v3/scripts/testsuite_flags || $(SHELL) $$r/$(TARGET_SUBDIR)/libstdc++-v3/scripts/testsuite_flags --build-includes` -L$$r/$(TARGET_SUBDIR)/libstdc++-v3/src -L$$r/$(TARGET_SUBDIR)/libstdc++-v3/src/.libs'
+raw_libstdcxx_flags='-L$$r/$(TARGET_SUBDIR)/libstdc++-v3/src -L$$r/$(TARGET_SUBDIR)/libstdc++-v3/src/.libs'
 
 if test "x${CXX_FOR_TARGET+set}" = xset; then
-  :
+  if test "x${RAW_CXX_FOR_TARGET+set}" != xset; then
+    RAW_CXX_FOR_TARGET=${CXX_FOR_TARGET}
+  fi
 elif test -d ${srcdir}/gcc; then
   # We add -shared-libgcc to CXX_FOR_TARGET whenever we use xgcc instead
   # of g++ for linking C++ or Java, because g++ has -shared-libgcc by
@@ -1985,7 +2067,6 @@ AC_SUBST(gxx_include_dir)
 AC_SUBST(libstdcxx_incdir)
 
 # Build module lists & subconfigure args.
-AC_SUBST(build_subdir)
 AC_SUBST(build_configargs)
 AC_SUBST(configure_build_modules)
 AC_SUBST(all_build_modules)
@@ -1993,20 +2074,10 @@ AC_SUBST(all_build_modules)
 # Host module lists & subconfigure args.
 AC_SUBST(host_configargs)
 AC_SUBST(configdirs)
-AC_SUBST(configure_host_modules)
-AC_SUBST(all_host_modules)
-AC_SUBST(check_host_modules)
-AC_SUBST(install_host_modules)
-AC_SUBST(install_host_modules_nogcc)
 
 # Target module lists & subconfigure args.
-AC_SUBST(target_subdir)
 AC_SUBST(target_configargs)
 AC_SUBST(target_configdirs)
-AC_SUBST(configure_target_modules)
-AC_SUBST(all_target_modules)
-AC_SUBST(check_target_modules)
-AC_SUBST(install_target_modules)
 
 # Build tools.
 AC_SUBST(BISON)
@@ -2029,6 +2100,7 @@ NCN_STRICT_CHECK_TOOL(OBJDUMP, objdump)
 AC_SUBST(CC)
 AC_SUBST(CXX)
 AC_SUBST(CFLAGS)
+AC_SUBST(CFLAGS_FOR_BUILD)
 AC_SUBST(CXXFLAGS)
 AC_SUBST(DEFAULT_YACC)
 AC_SUBST(DEFAULT_LEX)

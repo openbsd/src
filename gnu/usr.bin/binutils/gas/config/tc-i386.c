@@ -1,6 +1,6 @@
 /* i386.c -- Assemble code for the Intel 80386
    Copyright 1989, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003
+   2000, 2001, 2002, 2003, 2004
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -23,6 +23,7 @@
 /* Intel 80386 machine specific gas.
    Written by Eliot Dresselhaus (eliot@mgm.mit.edu).
    x86_64 support by Jan Hubicka (jh@suse.cz)
+   VIA PadLock support by Michal Ludvig (mludvig@suse.cz)
    Bugs & suggestions are completely welcome.  This is free software.
    Please help us make it better.  */
 
@@ -30,6 +31,7 @@
 #include "safe-ctype.h"
 #include "subsegs.h"
 #include "dwarf2dbg.h"
+#include "dw2gencfi.h"
 #include "opcode/i386.h"
 
 #ifndef REGISTER_WARNINGS
@@ -46,12 +48,6 @@
    `mov (%ebx),%al'.  To slavishly follow what the programmer
    specified, set SCALE1_WHEN_NO_INDEX to 0.  */
 #define SCALE1_WHEN_NO_INDEX 1
-#endif
-
-#ifdef BFD_ASSEMBLER
-#define RELOC_ENUM enum bfd_reloc_code_real
-#else
-#define RELOC_ENUM int
 #endif
 
 #ifndef DEFAULT_ARCH
@@ -154,7 +150,7 @@ struct _i386_insn
 #define Operand_PCrel 1
 
     /* Relocation type for operand */
-    RELOC_ENUM reloc[MAX_OPERANDS];
+    enum bfd_reloc_code_real reloc[MAX_OPERANDS];
 
     /* BASE_REG, INDEX_REG, and LOG2_SCALE_FACTOR are used to encode
        the base index byte below.  */
@@ -245,7 +241,7 @@ static char digit_chars[256];
 #define is_identifier_char(x) (identifier_chars[(unsigned char) x])
 #define is_digit_char(x) (digit_chars[(unsigned char) x])
 
-/* All non-digit non-letter charcters that may occur in an operand.  */
+/* All non-digit non-letter characters that may occur in an operand.  */
 static char operand_special_chars[] = "%$-+(,)*._~/<>|&^!:[@]";
 
 /* md_assemble() always leaves the strings it's passed unaltered.  To
@@ -303,6 +299,9 @@ static int allow_naked_reg = 0;
    frame as in 32 bit mode.  */
 static char stackop_size = '\0';
 
+/* Non-zero to optimize code alignment.  */
+int optimize_align_code = 1;
+
 /* Non-zero to quieten some warnings.  */
 static int quiet_warnings = 0;
 
@@ -318,6 +317,12 @@ static unsigned int no_cond_jump_promotion = 0;
 
 /* Pre-defined "_GLOBAL_OFFSET_TABLE_".  */
 symbolS *GOT_symbol;
+
+/* The dwarf2 return column, adjusted for 32 or 64 bit.  */
+unsigned int x86_dwarf2_return_column;
+
+/* The dwarf2 data alignment, adjusted for 32 or 64 bit.  */
+int x86_cie_data_alignment;
 
 /* Interface to relax_segment.
    There are 3 major relax states for 386 jump insns because the
@@ -796,15 +801,8 @@ set_intel_syntax (syntax_flag)
   intel_syntax = syntax_flag;
 
   if (ask_naked_reg == 0)
-    {
-#ifdef BFD_ASSEMBLER
-      allow_naked_reg = (intel_syntax
-			 && (bfd_get_symbol_leading_char (stdoutput) != '\0'));
-#else
-      /* Conservative default.  */
-      allow_naked_reg = 0;
-#endif
-    }
+    allow_naked_reg = (intel_syntax
+		       && (bfd_get_symbol_leading_char (stdoutput) != '\0'));
   else
     allow_naked_reg = (ask_naked_reg < 0);
 }
@@ -859,7 +857,6 @@ set_cpu_arch (dummy)
   demand_empty_rest_of_line ();
 }
 
-#ifdef BFD_ASSEMBLER
 unsigned long
 i386_mach ()
 {
@@ -870,7 +867,6 @@ i386_mach ()
   else
     as_fatal (_("Unknown architecture"));
 }
-#endif
 
 void
 md_begin ()
@@ -988,6 +984,17 @@ md_begin ()
       record_alignment (bss_section, 2);
     }
 #endif
+
+  if (flag_code == CODE_64BIT)
+    {
+      x86_dwarf2_return_column = 16;
+      x86_cie_data_alignment = -8;
+    }
+  else
+    {
+      x86_dwarf2_return_column = 8;
+      x86_cie_data_alignment = -4;
+    }
 }
 
 void
@@ -1153,7 +1160,6 @@ pt (t)
 
 #endif /* DEBUG386 */
 
-#ifdef BFD_ASSEMBLER
 static bfd_reloc_code_real_type reloc
   PARAMS ((int, int, int, bfd_reloc_code_real_type));
 
@@ -1222,6 +1228,12 @@ tc_i386_fix_adjustable (fixP)
       && fixP->fx_pcrel)
     return 0;
 
+  /* The x86_64 GOTPCREL are represented as 32bit PCrel relocations
+     and changed later by validate_fix.  */
+  if (GOT_symbol && fixP->fx_subsy == GOT_symbol
+      && fixP->fx_r_type == BFD_RELOC_32_PCREL)
+    return 0;
+
   /* adjust_reloc_syms doesn't know about the GOT.  */
   if (fixP->fx_r_type == BFD_RELOC_386_GOTOFF
       || fixP->fx_r_type == BFD_RELOC_386_PLT32
@@ -1248,34 +1260,6 @@ tc_i386_fix_adjustable (fixP)
 #endif
   return 1;
 }
-#else
-#define reloc(SIZE,PCREL,SIGN,OTHER)	0
-#define BFD_RELOC_8			0
-#define BFD_RELOC_16			0
-#define BFD_RELOC_32			0
-#define BFD_RELOC_8_PCREL		0
-#define BFD_RELOC_16_PCREL		0
-#define BFD_RELOC_32_PCREL		0
-#define BFD_RELOC_386_PLT32		0
-#define BFD_RELOC_386_GOT32		0
-#define BFD_RELOC_386_GOTOFF		0
-#define BFD_RELOC_386_TLS_GD		0
-#define BFD_RELOC_386_TLS_LDM		0
-#define BFD_RELOC_386_TLS_LDO_32	0
-#define BFD_RELOC_386_TLS_IE_32		0
-#define BFD_RELOC_386_TLS_IE		0
-#define BFD_RELOC_386_TLS_GOTIE		0
-#define BFD_RELOC_386_TLS_LE_32		0
-#define BFD_RELOC_386_TLS_LE		0
-#define BFD_RELOC_X86_64_PLT32		0
-#define BFD_RELOC_X86_64_GOT32		0
-#define BFD_RELOC_X86_64_GOTPCREL	0
-#define BFD_RELOC_X86_64_TLSGD		0
-#define BFD_RELOC_X86_64_TLSLD		0
-#define BFD_RELOC_X86_64_DTPOFF32	0
-#define BFD_RELOC_X86_64_GOTTPOFF	0
-#define BFD_RELOC_X86_64_TPOFF32	0
-#endif
 
 static int intel_float_operand PARAMS ((const char *mnemonic));
 
@@ -1394,12 +1378,27 @@ md_assemble (line)
 
   if (i.tm.opcode_modifier & ImmExt)
     {
+      expressionS *exp;
+
+      if ((i.tm.cpu_flags & CpuPNI) && i.operands > 0)
+	{
+	  /* These Intel Prescott New Instructions have the fixed
+	     operands with an opcode suffix which is coded in the same
+	     place as an 8-bit immediate field would be. Here we check
+	     those operands and remove them afterwards.  */
+	  unsigned int x;
+
+	  for (x = 0; x < i.operands; x++)
+	    if (i.op[x].regs->reg_num != x)
+	      as_bad (_("can't use register '%%%s' as operand %d in '%s'."),
+			i.op[x].regs->reg_name, x + 1, i.tm.name);
+	  i.operands = 0;
+ 	}
+
       /* These AMD 3DNow! and Intel Katmai New Instructions have an
 	 opcode suffix which is coded in the same place as an 8-bit
 	 immediate field would be.  Here we fake an 8-bit immediate
 	 operand from the opcode suffix stored in tm.extension_opcode.  */
-
-      expressionS *exp;
 
       assert (i.imm_operands == 0 && i.operands <= 2 && 2 < MAX_OPERANDS);
 
@@ -1785,7 +1784,7 @@ swap_operands ()
 {
   union i386_op temp_op;
   unsigned int temp_type;
-  RELOC_ENUM temp_reloc;
+  enum bfd_reloc_code_real temp_reloc;
   int xchg1 = 0;
   int xchg2 = 0;
 
@@ -3127,7 +3126,6 @@ output_interseg_jump ()
   md_number_to_chars (p + size, (valueT) i.op[0].imms->X_add_number, 2);
 }
 
-
 static void
 output_insn ()
 {
@@ -3155,10 +3153,23 @@ output_insn ()
       char *p;
       unsigned char *q;
 
-      /* All opcodes on i386 have either 1 or 2 bytes.  We may use third
-	 byte for the SSE instructions to specify a prefix they require.  */
-      if (i.tm.base_opcode & 0xff0000)
-	add_prefix ((i.tm.base_opcode >> 16) & 0xff);
+      /* All opcodes on i386 have either 1 or 2 bytes, PadLock instructions
+	 have 3 bytes.  We may use one more higher byte to specify a prefix
+	 the instruction requires.  */
+      if ((i.tm.cpu_flags & CpuPadLock) != 0
+	  && (i.tm.base_opcode & 0xff000000) != 0)
+        {
+	  unsigned int prefix;
+	  prefix = (i.tm.base_opcode >> 24) & 0xff;
+
+	  if (prefix != REPE_PREFIX_OPCODE
+	      || i.prefix[LOCKREP_PREFIX] != REPE_PREFIX_OPCODE)
+	    add_prefix (prefix);
+	}
+      else
+	if ((i.tm.cpu_flags & CpuPadLock) == 0
+	    && (i.tm.base_opcode & 0xff0000) != 0)
+	  add_prefix ((i.tm.base_opcode >> 16) & 0xff);
 
       /* The prefix bytes.  */
       for (q = i.prefix;
@@ -3179,7 +3190,14 @@ output_insn ()
 	}
       else
 	{
-	  p = frag_more (2);
+	  if ((i.tm.cpu_flags & CpuPadLock) != 0)
+	    {
+	      p = frag_more (3);
+	      *p++ = (i.tm.base_opcode >> 16) & 0xff;
+	    }
+	  else
+	    p = frag_more (2);
+
 	  /* Put out high byte first: can't use md_number_to_chars!  */
 	  *p++ = (i.tm.base_opcode >> 8) & 0xff;
 	  *p = i.tm.base_opcode & 0xff;
@@ -3259,7 +3277,7 @@ output_disp (insn_start_frag, insn_start_off)
 	    }
 	  else
 	    {
-	      RELOC_ENUM reloc_type;
+	      enum bfd_reloc_code_real reloc_type;
 	      int size = 4;
 	      int sign = 0;
 	      int pcrel = (i.flags[n] & Operand_PCrel) != 0;
@@ -3303,7 +3321,6 @@ output_disp (insn_start_frag, insn_start_off)
 
 	      p = frag_more (size);
 	      reloc_type = reloc (size, pcrel, sign, i.reloc[n]);
-#ifdef BFD_ASSEMBLER
 	      if (reloc_type == BFD_RELOC_32
 		  && GOT_symbol
 		  && GOT_symbol == i.op[n].disps->X_add_symbol
@@ -3334,7 +3351,6 @@ output_disp (insn_start_frag, insn_start_off)
 		  reloc_type = BFD_RELOC_386_GOTPC;
 		  i.op[n].disps->X_add_number += add;
 		}
-#endif
 	      fix_new_exp (frag_now, p - frag_now->fr_literal, size,
 			   i.op[n].disps, pcrel, reloc_type);
 	    }
@@ -3379,7 +3395,7 @@ output_imm (insn_start_frag, insn_start_off)
 		 Need a 32-bit fixup (don't support 8bit
 		 non-absolute imms).  Try to support other
 		 sizes ...  */
-	      RELOC_ENUM reloc_type;
+	      enum bfd_reloc_code_real reloc_type;
 	      int size = 4;
 	      int sign = 0;
 
@@ -3397,7 +3413,7 @@ output_imm (insn_start_frag, insn_start_off)
 
 	      p = frag_more (size);
 	      reloc_type = reloc (size, 0, sign, i.reloc[n]);
-#ifdef BFD_ASSEMBLER
+
 	      /*   This is tough to explain.  We end up with this one if we
 	       * have operands that look like
 	       * "_GLOBAL_OFFSET_TABLE_+[.-.L284]".  The goal here is to
@@ -3470,7 +3486,6 @@ output_imm (insn_start_frag, insn_start_off)
 		  reloc_type = BFD_RELOC_386_GOTPC;
 		  i.op[n].imms->X_add_number += add;
 		}
-#endif
 	      fix_new_exp (frag_now, p - frag_now->fr_literal, size,
 			   i.op[n].imms, 0, reloc_type);
 	    }
@@ -3479,7 +3494,7 @@ output_imm (insn_start_frag, insn_start_off)
 }
 
 #ifndef LEX_AT
-static char *lex_got PARAMS ((RELOC_ENUM *, int *));
+static char *lex_got PARAMS ((enum bfd_reloc_code_real *, int *));
 
 /* Parse operands of the form
    <symbol>@GOTOFF+<nnn>
@@ -3492,13 +3507,13 @@ static char *lex_got PARAMS ((RELOC_ENUM *, int *));
    input line.  Otherwise return NULL.  */
 static char *
 lex_got (reloc, adjust)
-     RELOC_ENUM *reloc;
+     enum bfd_reloc_code_real *reloc;
      int *adjust;
 {
   static const char * const mode_name[NUM_FLAG_CODE] = { "32", "16", "64" };
   static const struct {
     const char *str;
-    const RELOC_ENUM rel[NUM_FLAG_CODE];
+    const enum bfd_reloc_code_real rel[NUM_FLAG_CODE];
   } gotrel[] = {
     { "PLT",      { BFD_RELOC_386_PLT32,      0, BFD_RELOC_X86_64_PLT32    } },
     { "GOTOFF",   { BFD_RELOC_386_GOTOFF,     0, 0                         } },
@@ -3576,7 +3591,7 @@ lex_got (reloc, adjust)
 
 /* x86_cons_fix_new is called via the expression parsing code when a
    reloc is needed.  We use this hook to get the correct .got reloc.  */
-static RELOC_ENUM got_reloc = NO_RELOC;
+static enum bfd_reloc_code_real got_reloc = NO_RELOC;
 
 void
 x86_cons_fix_new (frag, off, len, exp)
@@ -3585,7 +3600,7 @@ x86_cons_fix_new (frag, off, len, exp)
      unsigned int len;
      expressionS *exp;
 {
-  RELOC_ENUM r = reloc (len, 0, 0, got_reloc);
+  enum bfd_reloc_code_real r = reloc (len, 0, 0, got_reloc);
   got_reloc = NO_RELOC;
   fix_new_exp (frag, off, len, exp, 0, r);
 }
@@ -3691,25 +3706,15 @@ i386_immediate (imm_start)
 	  exp->X_add_number = (exp->X_add_number ^ ((addressT) 1 << 31)) - ((addressT) 1 << 31);
     }
 #if (defined (OBJ_AOUT) || defined (OBJ_MAYBE_AOUT))
-  else if (1
-#ifdef BFD_ASSEMBLER
-	   && OUTPUT_FLAVOR == bfd_target_aout_flavour
-#endif
+  else if (OUTPUT_FLAVOR == bfd_target_aout_flavour
 	   && exp_seg != absolute_section
 	   && exp_seg != text_section
 	   && exp_seg != data_section
 	   && exp_seg != bss_section
 	   && exp_seg != undefined_section
-#ifdef BFD_ASSEMBLER
-	   && !bfd_is_com_section (exp_seg)
-#endif
-	   )
+	   && !bfd_is_com_section (exp_seg))
     {
-#ifdef BFD_ASSEMBLER
       as_bad (_("unimplemented segment %s in operand"), exp_seg->name);
-#else
-      as_bad (_("unimplemented segment type %d in operand"), exp_seg);
-#endif
       return 0;
     }
 #endif
@@ -3866,7 +3871,6 @@ i386_displacement (disp_start, disp_end)
     free (gotfree_input_line);
 #endif
 
-#ifdef BFD_ASSEMBLER
   /* We do this to make sure that the section symbol is in
      the symbol table.  We will ultimately change the relocation
      to be relative to the beginning of the section.  */
@@ -3892,7 +3896,6 @@ i386_displacement (disp_start, disp_end)
       else
 	i.reloc[this_operand] = BFD_RELOC_32;
     }
-#endif
 
   if (exp->X_op == O_absent || exp->X_op == O_big)
     {
@@ -3907,24 +3910,15 @@ i386_displacement (disp_start, disp_end)
 
 #if (defined (OBJ_AOUT) || defined (OBJ_MAYBE_AOUT))
   if (exp->X_op != O_constant
-#ifdef BFD_ASSEMBLER
       && OUTPUT_FLAVOR == bfd_target_aout_flavour
-#endif
       && exp_seg != absolute_section
       && exp_seg != text_section
       && exp_seg != data_section
       && exp_seg != bss_section
       && exp_seg != undefined_section
-#ifdef BFD_ASSEMBLER
-      && !bfd_is_com_section (exp_seg)
-#endif
-      )
+      && !bfd_is_com_section (exp_seg))
     {
-#ifdef BFD_ASSEMBLER
       as_bad (_("unimplemented segment %s in operand"), exp_seg->name);
-#else
-      as_bad (_("unimplemented segment type %d in operand"), exp_seg);
-#endif
       return 0;
     }
 #endif
@@ -4353,7 +4347,7 @@ md_estimate_size_before_relax (fragP, segment)
       /* Symbol is undefined in this segment, or we need to keep a
 	 reloc so that weak symbols can be overridden.  */
       int size = (fragP->fr_subtype & CODE16) ? 2 : 4;
-      RELOC_ENUM reloc_type;
+      enum bfd_reloc_code_real reloc_type;
       unsigned char *opcode;
       int old_fr_fix;
 
@@ -4452,19 +4446,11 @@ md_estimate_size_before_relax (fragP, segment)
    Out:	Any fixSs and constants are set up.
 	Caller will turn frag into a ".space 0".  */
 
-#ifndef BFD_ASSEMBLER
-void
-md_convert_frag (headers, sec, fragP)
-     object_headers *headers ATTRIBUTE_UNUSED;
-     segT sec ATTRIBUTE_UNUSED;
-     fragS *fragP;
-#else
 void
 md_convert_frag (abfd, sec, fragP)
      bfd *abfd ATTRIBUTE_UNUSED;
      segT sec ATTRIBUTE_UNUSED;
      fragS *fragP;
-#endif
 {
   unsigned char *opcode;
   unsigned char *where_to_put_displacement = NULL;
@@ -4603,7 +4589,7 @@ md_apply_fix3 (fixP, valP, seg)
   char *p = fixP->fx_where + fixP->fx_frag->fr_literal;
   valueT value = *valP;
 
-#if defined (BFD_ASSEMBLER) && !defined (TE_Mach)
+#if !defined (TE_Mach)
   if (fixP->fx_pcrel)
     {
       switch (fixP->fx_r_type)
@@ -4668,7 +4654,7 @@ md_apply_fix3 (fixP, valP, seg)
     }
 
   /* Fix a few things - the dynamic linker expects certain values here,
-     and we must not dissappoint it.  */
+     and we must not disappoint it.  */
 #if defined (OBJ_ELF) || defined (OBJ_MAYBE_ELF)
   if (OUTPUT_FLAVOR == bfd_target_elf_flavour
       && fixP->fx_addsy)
@@ -4714,12 +4700,11 @@ md_apply_fix3 (fixP, valP, seg)
       }
 #endif /* defined (OBJ_ELF) || defined (OBJ_MAYBE_ELF)  */
   *valP = value;
-#endif /* defined (BFD_ASSEMBLER) && !defined (TE_Mach)  */
+#endif /* !defined (TE_Mach)  */
 
   /* Are we finished with this relocation now?  */
   if (fixP->fx_addsy == NULL)
     fixP->fx_done = 1;
-#ifdef BFD_ASSEMBLER
   else if (use_rela_relocations)
     {
       fixP->fx_no_overflow = 1;
@@ -4727,7 +4712,7 @@ md_apply_fix3 (fixP, valP, seg)
       fixP->fx_addnumber = value;
       value = 0;
     }
-#endif
+
   md_number_to_chars (p, value, fixP->fx_size);
 }
 
@@ -4873,9 +4858,9 @@ parse_register (reg_string, end_op)
 }
 
 #if defined (OBJ_ELF) || defined (OBJ_MAYBE_ELF)
-const char *md_shortopts = "kVQ:sq";
+const char *md_shortopts = "kVQ:sqn";
 #else
-const char *md_shortopts = "q";
+const char *md_shortopts = "qn";
 #endif
 
 struct option md_longopts[] = {
@@ -4896,6 +4881,10 @@ md_parse_option (c, arg)
 {
   switch (c)
     {
+    case 'n':
+      optimize_align_code = 0;
+      break;
+
     case 'q':
       quiet_warnings = 1;
       break;
@@ -4957,15 +4946,16 @@ md_show_usage (stream)
   -Q                      ignored\n\
   -V                      print assembler version number\n\
   -k                      ignored\n\
+  -n                      Do not optimize code alignment\n\
   -q                      quieten some warnings\n\
   -s                      ignored\n"));
 #else
   fprintf (stream, _("\
+  -n                      Do not optimize code alignment\n\
   -q                      quieten some warnings\n"));
 #endif
 }
 
-#ifdef BFD_ASSEMBLER
 #if ((defined (OBJ_MAYBE_COFF) && defined (OBJ_MAYBE_AOUT)) \
      || defined (OBJ_ELF) || defined (OBJ_MAYBE_ELF))
 
@@ -5047,7 +5037,6 @@ void i386_elf_emit_arch_note ()
     }
 }
 #endif
-#endif /* BFD_ASSEMBLER  */
 
 symbolS *
 md_undefined_symbol (name)
@@ -5077,7 +5066,6 @@ md_section_align (segment, size)
      segT segment ATTRIBUTE_UNUSED;
      valueT size;
 {
-#ifdef BFD_ASSEMBLER
 #if (defined (OBJ_AOUT) || defined (OBJ_MAYBE_AOUT))
   if (OUTPUT_FLAVOR == bfd_target_aout_flavour)
     {
@@ -5091,7 +5079,6 @@ md_section_align (segment, size)
       align = bfd_get_section_alignment (stdoutput, segment);
       size = ((size + (1 << align) - 1) & ((valueT) -1 << align));
     }
-#endif
 #endif
 
   return size;
@@ -5122,8 +5109,6 @@ s_bss (ignore)
 }
 
 #endif
-
-#ifdef BFD_ASSEMBLER
 
 void
 i386_validate_fix (fixp)
@@ -5284,73 +5269,6 @@ tc_gen_reloc (section, fixp)
   return rel;
 }
 
-#else /* !BFD_ASSEMBLER  */
-
-#if (defined(OBJ_AOUT) | defined(OBJ_BOUT))
-void
-tc_aout_fix_to_chars (where, fixP, segment_address_in_file)
-     char *where;
-     fixS *fixP;
-     relax_addressT segment_address_in_file;
-{
-  /* In:  length of relocation (or of address) in chars: 1, 2 or 4.
-     Out: GNU LD relocation length code: 0, 1, or 2.  */
-
-  static const unsigned char nbytes_r_length[] = { 42, 0, 1, 42, 2 };
-  long r_symbolnum;
-
-  know (fixP->fx_addsy != NULL);
-
-  md_number_to_chars (where,
-		      (valueT) (fixP->fx_frag->fr_address
-				+ fixP->fx_where - segment_address_in_file),
-		      4);
-
-  r_symbolnum = (S_IS_DEFINED (fixP->fx_addsy)
-		 ? S_GET_TYPE (fixP->fx_addsy)
-		 : fixP->fx_addsy->sy_number);
-
-  where[6] = (r_symbolnum >> 16) & 0x0ff;
-  where[5] = (r_symbolnum >> 8) & 0x0ff;
-  where[4] = r_symbolnum & 0x0ff;
-  where[7] = ((((!S_IS_DEFINED (fixP->fx_addsy)) << 3) & 0x08)
-	      | ((nbytes_r_length[fixP->fx_size] << 1) & 0x06)
-	      | (((fixP->fx_pcrel << 0) & 0x01) & 0x0f));
-}
-
-#endif /* OBJ_AOUT or OBJ_BOUT.  */
-
-#if defined (I386COFF)
-
-short
-tc_coff_fix2rtype (fixP)
-     fixS *fixP;
-{
-  if (fixP->fx_r_type == R_IMAGEBASE)
-    return R_IMAGEBASE;
-
-  return (fixP->fx_pcrel ?
-	  (fixP->fx_size == 1 ? R_PCRBYTE :
-	   fixP->fx_size == 2 ? R_PCRWORD :
-	   R_PCRLONG) :
-	  (fixP->fx_size == 1 ? R_RELBYTE :
-	   fixP->fx_size == 2 ? R_RELWORD :
-	   R_DIR32));
-}
-
-int
-tc_coff_sizemachdep (frag)
-     fragS *frag;
-{
-  if (frag->fr_next)
-    return (frag->fr_next->fr_address - frag->fr_address);
-  else
-    return 0;
-}
-
-#endif /* I386COFF  */
-
-#endif /* !BFD_ASSEMBLER  */
 
 /* Parse operands using Intel syntax. This implements a recursive descent
    parser based on the BNF grammar published in Appendix B of the MASM 6.1
@@ -5581,8 +5499,9 @@ i386_intel_operand (operand_string, got_a_float)
 
 	      /* Add the displacement expression.  */
 	      if (*s != '\0')
-		ret = i386_displacement (s, s + strlen (s))
-		      && i386_index_check (s);
+		ret = i386_displacement (s, s + strlen (s));
+	      if (ret)
+		ret = i386_index_check (operand_string);
 	    }
 	}
 
@@ -6300,4 +6219,56 @@ intel_putback_token ()
   prev_token.code = T_NIL;
   prev_token.reg = NULL;
   prev_token.str = NULL;
+}
+
+int
+tc_x86_regname_to_dw2regnum (const char *regname)
+{
+  unsigned int regnum;
+  unsigned int regnames_count;
+  char *regnames_32[] =
+    {
+      "eax", "ecx", "edx", "ebx",
+      "esp", "ebp", "esi", "edi",
+      "eip"
+    };
+  char *regnames_64[] =
+    {
+      "rax", "rbx", "rcx", "rdx",
+      "rdi", "rsi", "rbp", "rsp",
+      "r8", "r9", "r10", "r11",
+      "r12", "r13", "r14", "r15",
+      "rip"
+    };
+  char **regnames;
+
+  if (flag_code == CODE_64BIT)
+    {
+      regnames = regnames_64;
+      regnames_count = ARRAY_SIZE (regnames_64);
+    }
+  else
+    {
+      regnames = regnames_32;
+      regnames_count = ARRAY_SIZE (regnames_32);
+    }
+
+  for (regnum = 0; regnum < regnames_count; regnum++)
+    if (strcmp (regname, regnames[regnum]) == 0)
+      return regnum;
+
+  return -1;
+}
+
+void
+tc_x86_frame_initial_instructions (void)
+{
+  static unsigned int sp_regno;
+
+  if (!sp_regno)
+    sp_regno = tc_x86_regname_to_dw2regnum (flag_code == CODE_64BIT
+					    ? "rsp" : "esp");
+
+  cfi_add_CFA_def_cfa (sp_regno, -x86_cie_data_alignment);
+  cfi_add_CFA_offset (x86_dwarf2_return_column, x86_cie_data_alignment);
 }

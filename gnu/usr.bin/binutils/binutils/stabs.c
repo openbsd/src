@@ -1,5 +1,5 @@
 /* stabs.c -- Parse stabs debugging information
-   Copyright 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003
+   Copyright 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004
    Free Software Foundation, Inc.
    Written by Ian Lance Taylor <ian@cygnus.com>.
 
@@ -147,86 +147,70 @@ struct stab_tag
   debug_type type;
 };
 
-static char *savestring
-  PARAMS ((const char *, int));
-static bfd_vma parse_number
-  PARAMS ((const char **, bfd_boolean *));
-static void bad_stab
-  PARAMS ((const char *));
-static void warn_stab
-  PARAMS ((const char *, const char *));
+static char *savestring (const char *, int);
+static bfd_vma parse_number (const char **, bfd_boolean *);
+static void bad_stab (const char *);
+static void warn_stab (const char *, const char *);
 static bfd_boolean parse_stab_string
-  PARAMS ((PTR, struct stab_handle *, int, int, bfd_vma, const char *));
+  (void *, struct stab_handle *, int, int, bfd_vma, const char *);
 static debug_type parse_stab_type
-  PARAMS ((PTR, struct stab_handle *, const char *, const char **,
-	   debug_type **));
-static bfd_boolean parse_stab_type_number
-  PARAMS ((const char **, int *));
+  (void *, struct stab_handle *, const char *, const char **, debug_type **);
+static bfd_boolean parse_stab_type_number (const char **, int *);
 static debug_type parse_stab_range_type
-  PARAMS ((PTR, struct stab_handle *, const char *, const char **,
-	   const int *));
-static debug_type parse_stab_sun_builtin_type
-  PARAMS ((PTR, const char **));
-static debug_type parse_stab_sun_floating_type
-  PARAMS ((PTR, const char **));
-static debug_type parse_stab_enum_type
-  PARAMS ((PTR, const char **));
+  (void *, struct stab_handle *, const char *, const char **, const int *);
+static debug_type parse_stab_sun_builtin_type (void *, const char **);
+static debug_type parse_stab_sun_floating_type (void *, const char **);
+static debug_type parse_stab_enum_type (void *, const char **);
 static debug_type parse_stab_struct_type
-  PARAMS ((PTR, struct stab_handle *, const char *, const char **,
-	   bfd_boolean, const int *));
+  (void *, struct stab_handle *, const char *, const char **,
+   bfd_boolean, const int *);
 static bfd_boolean parse_stab_baseclasses
-  PARAMS ((PTR, struct stab_handle *, const char **, debug_baseclass **));
+  (void *, struct stab_handle *, const char **, debug_baseclass **);
 static bfd_boolean parse_stab_struct_fields
-  PARAMS ((PTR, struct stab_handle *, const char **, debug_field **,
-	   bfd_boolean *));
+  (void *, struct stab_handle *, const char **, debug_field **, bfd_boolean *);
 static bfd_boolean parse_stab_cpp_abbrev
-  PARAMS ((PTR, struct stab_handle *, const char **, debug_field *));
+  (void *, struct stab_handle *, const char **, debug_field *);
 static bfd_boolean parse_stab_one_struct_field
-  PARAMS ((PTR, struct stab_handle *, const char **, const char *,
-	   debug_field *, bfd_boolean *));
+  (void *, struct stab_handle *, const char **, const char *,
+   debug_field *, bfd_boolean *);
 static bfd_boolean parse_stab_members
-  PARAMS ((PTR, struct stab_handle *, const char *, const char **,
-	   const int *, debug_method **));
+  (void *, struct stab_handle *, const char *, const char **, const int *,
+   debug_method **);
 static debug_type parse_stab_argtypes
-  PARAMS ((PTR, struct stab_handle *, debug_type, const char *, const char *,
-	   debug_type, const char *, bfd_boolean, bfd_boolean, const char **));
+  (void *, struct stab_handle *, debug_type, const char *, const char *,
+   debug_type, const char *, bfd_boolean, bfd_boolean, const char **);
 static bfd_boolean parse_stab_tilde_field
-  PARAMS ((PTR, struct stab_handle *, const char **, const int *,
-	   debug_type *, bfd_boolean *));
+  (void *, struct stab_handle *, const char **, const int *, debug_type *,
+   bfd_boolean *);
 static debug_type parse_stab_array_type
-  PARAMS ((PTR, struct stab_handle *, const char **, bfd_boolean));
-static void push_bincl
-  PARAMS ((struct stab_handle *, const char *, bfd_vma));
-static const char *pop_bincl
-  PARAMS ((struct stab_handle *));
-static bfd_boolean find_excl
-  PARAMS ((struct stab_handle *, const char *, bfd_vma));
+  (void *, struct stab_handle *, const char **, bfd_boolean);
+static void push_bincl (struct stab_handle *, const char *, bfd_vma);
+static const char *pop_bincl (struct stab_handle *);
+static bfd_boolean find_excl (struct stab_handle *, const char *, bfd_vma);
 static bfd_boolean stab_record_variable
-  PARAMS ((PTR, struct stab_handle *, const char *, debug_type,
-	   enum debug_var_kind, bfd_vma));
-static bfd_boolean stab_emit_pending_vars
-  PARAMS ((PTR, struct stab_handle *));
-static debug_type *stab_find_slot
-  PARAMS ((struct stab_handle *, const int *));
-static debug_type stab_find_type
-  PARAMS ((PTR, struct stab_handle *, const int *));
+  (void *, struct stab_handle *, const char *, debug_type,
+   enum debug_var_kind, bfd_vma);
+static bfd_boolean stab_emit_pending_vars (void *, struct stab_handle *);
+static debug_type *stab_find_slot (struct stab_handle *, const int *);
+static debug_type stab_find_type (void *, struct stab_handle *, const int *);
 static bfd_boolean stab_record_type
-  PARAMS ((PTR, struct stab_handle *, const int *, debug_type));
+  (void *, struct stab_handle *, const int *, debug_type);
 static debug_type stab_xcoff_builtin_type
-  PARAMS ((PTR, struct stab_handle *, int));
+  (void *, struct stab_handle *, int);
 static debug_type stab_find_tagged_type
-  PARAMS ((PTR, struct stab_handle *, const char *, int,
-	   enum debug_type_kind));
+  (void *, struct stab_handle *, const char *, int, enum debug_type_kind);
 static debug_type *stab_demangle_argtypes
-  PARAMS ((PTR, struct stab_handle *, const char *, bfd_boolean *,
-	   unsigned int));
+  (void *, struct stab_handle *, const char *, bfd_boolean *, unsigned int);
+static debug_type *stab_demangle_v3_argtypes
+  (void *, struct stab_handle *, const char *, bfd_boolean *);
+static debug_type stab_demangle_v3_arg
+  (void *, struct stab_handle *, struct demangle_component *, debug_type,
+   bfd_boolean *);
 
 /* Save a string in memory.  */
 
 static char *
-savestring (start, len)
-     const char *start;
-     int len;
+savestring (const char *start, int len)
 {
   char *ret;
 
@@ -239,9 +223,7 @@ savestring (start, len)
 /* Read a number from a string.  */
 
 static bfd_vma
-parse_number (pp, poverflow)
-     const char **pp;
-     bfd_boolean *poverflow;
+parse_number (const char **pp, bfd_boolean *poverflow)
 {
   unsigned long ul;
   const char *orig;
@@ -351,8 +333,7 @@ parse_number (pp, poverflow)
 /* Give an error for a bad stab string.  */
 
 static void
-bad_stab (p)
-     const char *p;
+bad_stab (const char *p)
 {
   fprintf (stderr, _("Bad stab: %s\n"), p);
 }
@@ -360,22 +341,16 @@ bad_stab (p)
 /* Warn about something in a stab string.  */
 
 static void
-warn_stab (p, err)
-     const char *p;
-     const char *err;
+warn_stab (const char *p, const char *err)
 {
   fprintf (stderr, _("Warning: %s: %s\n"), err, p);
 }
 
 /* Create a handle to parse stabs symbols with.  */
 
-PTR
-start_stab (dhandle, abfd, sections, syms, symcount)
-     PTR dhandle ATTRIBUTE_UNUSED;
-     bfd *abfd;
-     bfd_boolean sections;
-     asymbol **syms;
-     long symcount;
+void *
+start_stab (void *dhandle ATTRIBUTE_UNUSED, bfd *abfd, bfd_boolean sections,
+	    asymbol **syms, long symcount)
 {
   struct stab_handle *ret;
 
@@ -389,16 +364,14 @@ start_stab (dhandle, abfd, sections, syms, symcount)
   ret->file_types = (struct stab_types **) xmalloc (sizeof *ret->file_types);
   ret->file_types[0] = NULL;
   ret->function_end = (bfd_vma) -1;
-  return (PTR) ret;
+  return (void *) ret;
 }
 
 /* When we have processed all the stabs information, we need to go
    through and fill in all the undefined tags.  */
 
 bfd_boolean
-finish_stab (dhandle, handle)
-     PTR dhandle;
-     PTR handle;
+finish_stab (void *dhandle, void *handle)
 {
   struct stab_handle *info = (struct stab_handle *) handle;
   struct stab_tag *st;
@@ -430,13 +403,8 @@ finish_stab (dhandle, handle)
 /* Handle a single stabs symbol.  */
 
 bfd_boolean
-parse_stab (dhandle, handle, type, desc, value, string)
-     PTR dhandle;
-     PTR handle;
-     int type;
-     int desc;
-     bfd_vma value;
-     const char *string;
+parse_stab (void *dhandle, void *handle, int type, int desc, bfd_vma value,
+	    const char *string)
 {
   struct stab_handle *info = (struct stab_handle *) handle;
 
@@ -708,13 +676,8 @@ parse_stab (dhandle, handle, type, desc, value, string)
 /* Parse the stabs string.  */
 
 static bfd_boolean
-parse_stab_string (dhandle, info, stabtype, desc, value, string)
-     PTR dhandle;
-     struct stab_handle *info;
-     int stabtype;
-     int desc;
-     bfd_vma value;
-     const char *string;
+parse_stab_string (void *dhandle, struct stab_handle *info, int stabtype,
+		   int desc, bfd_vma value, const char *string)
 {
   const char *p;
   char *name;
@@ -1159,12 +1122,7 @@ parse_stab_string (dhandle, info, stabtype, desc, value, string)
    store the slot used if the type is being defined.  */
 
 static debug_type
-parse_stab_type (dhandle, info, typename, pp, slotp)
-     PTR dhandle;
-     struct stab_handle *info;
-     const char *typename;
-     const char **pp;
-     debug_type **slotp;
+parse_stab_type (void *dhandle, struct stab_handle *info, const char *typename, const char **pp, debug_type **slotp)
 {
   const char *orig;
   int typenums[2];
@@ -1529,7 +1487,7 @@ parse_stab_type (dhandle, info, typename, pp, slotp)
 		{
 		  alloc += 10;
 		  args = ((debug_type *)
-			  xrealloc ((PTR) args, alloc * sizeof *args));
+			  xrealloc (args, alloc * sizeof *args));
 		}
 
 	      args[n] = parse_stab_type (dhandle, info, (const char *) NULL,
@@ -1637,9 +1595,7 @@ parse_stab_type (dhandle, info, typename, pp, slotp)
    storing them in the vector TYPENUMS.  */
 
 static bfd_boolean
-parse_stab_type_number (pp, typenums)
-     const char **pp;
-     int *typenums;
+parse_stab_type_number (const char **pp, int *typenums)
 {
   const char *orig;
 
@@ -1675,12 +1631,7 @@ parse_stab_type_number (pp, typenums)
 /* Parse a range type.  */
 
 static debug_type
-parse_stab_range_type (dhandle, info, typename, pp, typenums)
-     PTR dhandle;
-     struct stab_handle *info;
-     const char *typename;
-     const char **pp;
-     const int *typenums;
+parse_stab_range_type (void *dhandle, struct stab_handle *info, const char *typename, const char **pp, const int *typenums)
 {
   const char *orig;
   int rangenums[2];
@@ -1864,9 +1815,7 @@ parse_stab_range_type (dhandle, info, typename, pp, typenums)
    FIXME.  */
 
 static debug_type
-parse_stab_sun_builtin_type (dhandle, pp)
-     PTR dhandle;
-     const char **pp;
+parse_stab_sun_builtin_type (void *dhandle, const char **pp)
 {
   const char *orig;
   bfd_boolean unsignedp;
@@ -1937,9 +1886,7 @@ parse_stab_sun_builtin_type (dhandle, pp)
 /* Parse a builtin floating type generated by the Sun compiler.  */
 
 static debug_type
-parse_stab_sun_floating_type (dhandle, pp)
-     PTR dhandle;
-     const char **pp;
+parse_stab_sun_floating_type (void *dhandle, const char **pp)
 {
   const char *orig;
   bfd_vma details;
@@ -1975,9 +1922,7 @@ parse_stab_sun_floating_type (dhandle, pp)
 /* Handle an enum type.  */
 
 static debug_type
-parse_stab_enum_type (dhandle, pp)
-     PTR dhandle;
-     const char **pp;
+parse_stab_enum_type (void *dhandle, const char **pp)
 {
   const char *orig;
   const char **names;
@@ -2030,9 +1975,9 @@ parse_stab_enum_type (dhandle, pp)
 	{
 	  alloc += 10;
 	  names = ((const char **)
-		   xrealloc ((PTR) names, alloc * sizeof *names));
+		   xrealloc (names, alloc * sizeof *names));
 	  values = ((bfd_signed_vma *)
-		    xrealloc ((PTR) values, alloc * sizeof *values));
+		    xrealloc (values, alloc * sizeof *values));
 	}
 
       names[n] = name;
@@ -2053,17 +1998,13 @@ parse_stab_enum_type (dhandle, pp)
    describing the type.
 
    PP points to a character pointer that points to the next unconsumed token
-   in the the stabs string.  For example, given stabs "A:T4=s4a:1,0,32;;",
+   in the stabs string.  For example, given stabs "A:T4=s4a:1,0,32;;",
    *PP will point to "4a:1,0,32;;".  */
 
 static debug_type
-parse_stab_struct_type (dhandle, info, tagname, pp, structp, typenums)
-     PTR dhandle;
-     struct stab_handle *info;
-     const char *tagname;
-     const char **pp;
-     bfd_boolean structp;
-     const int *typenums;
+parse_stab_struct_type (void *dhandle, struct stab_handle *info,
+			const char *tagname, const char **pp,
+			bfd_boolean structp, const int *typenums)
 {
   const char *orig;
   bfd_vma size;
@@ -2110,7 +2051,7 @@ parse_stab_struct_type (dhandle, info, tagname, pp, structp, typenums)
    the type for the base class, and a terminating semicolon.
 
    A typical example, with two base classes, would be "!2,020,19;0264,21;".
-   						       ^^ ^ ^ ^  ^ ^  ^
+						       ^^ ^ ^ ^  ^ ^  ^
 	Baseclass information marker __________________|| | | |  | |  |
 	Number of baseclasses __________________________| | | |  | |  |
 	Visibility specifiers (2) ________________________| | |  | |  |
@@ -2123,11 +2064,8 @@ parse_stab_struct_type (dhandle, info, tagname, pp, structp, typenums)
   Return TRUE for success, FALSE for failure.  */
 
 static bfd_boolean
-parse_stab_baseclasses (dhandle, info, pp, retp)
-     PTR dhandle;
-     struct stab_handle *info;
-     const char **pp;
-     debug_baseclass **retp;
+parse_stab_baseclasses (void *dhandle, struct stab_handle *info,
+			const char **pp, debug_baseclass **retp)
 {
   const char *orig;
   unsigned int c, i;
@@ -2230,7 +2168,7 @@ parse_stab_baseclasses (dhandle, info, pp, retp)
 
 /* Read struct or class data fields.  They have the form:
 
-   	NAME : [VISIBILITY] TYPENUM , BITPOS , BITSIZE ;
+	NAME : [VISIBILITY] TYPENUM , BITPOS , BITSIZE ;
 
    At the end, we see a semicolon instead of a field.
 
@@ -2239,7 +2177,7 @@ parse_stab_baseclasses (dhandle, info, pp, retp)
 
    The optional VISIBILITY is one of:
 
-   	'/0'	(VISIBILITY_PRIVATE)
+	'/0'	(VISIBILITY_PRIVATE)
 	'/1'	(VISIBILITY_PROTECTED)
 	'/2'	(VISIBILITY_PUBLIC)
 	'/9'	(VISIBILITY_IGNORE)
@@ -2249,12 +2187,9 @@ parse_stab_baseclasses (dhandle, info, pp, retp)
    Returns 1 for success, 0 for failure.  */
 
 static bfd_boolean
-parse_stab_struct_fields (dhandle, info, pp, retp, staticsp)
-     PTR dhandle;
-     struct stab_handle *info;
-     const char **pp;
-     debug_field **retp;
-     bfd_boolean *staticsp;
+parse_stab_struct_fields (void *dhandle, struct stab_handle *info,
+			  const char **pp, debug_field **retp,
+			  bfd_boolean *staticsp)
 {
   const char *orig;
   const char *p;
@@ -2281,7 +2216,7 @@ parse_stab_struct_fields (dhandle, info, pp, retp, staticsp)
 	{
 	  alloc += 10;
 	  fields = ((debug_field *)
-		    xrealloc ((PTR) fields, alloc * sizeof *fields));
+		    xrealloc (fields, alloc * sizeof *fields));
 	}
 
       /* If it starts with CPLUS_MARKER it is a special abbreviation,
@@ -2332,11 +2267,8 @@ parse_stab_struct_fields (dhandle, info, pp, retp, staticsp)
 /* Special GNU C++ name.  */
 
 static bfd_boolean
-parse_stab_cpp_abbrev (dhandle, info, pp, retp)
-     PTR dhandle;
-     struct stab_handle *info;
-     const char **pp;
-     debug_field *retp;
+parse_stab_cpp_abbrev (void *dhandle, struct stab_handle *info,
+		       const char **pp, debug_field *retp)
 {
   const char *orig;
   int cpp_abbrev;
@@ -2427,13 +2359,9 @@ parse_stab_cpp_abbrev (dhandle, info, pp, retp)
 /* Parse a single field in a struct or union.  */
 
 static bfd_boolean
-parse_stab_one_struct_field (dhandle, info, pp, p, retp, staticsp)
-     PTR dhandle;
-     struct stab_handle *info;
-     const char **pp;
-     const char *p;
-     debug_field *retp;
-     bfd_boolean *staticsp;
+parse_stab_one_struct_field (void *dhandle, struct stab_handle *info,
+			     const char **pp, const char *p,
+			     debug_field *retp, bfd_boolean *staticsp)
 {
   const char *orig;
   char *name;
@@ -2565,13 +2493,9 @@ parse_stab_one_struct_field (dhandle, info, pp, p, retp, staticsp)
    name (such as `+=') and `.' marks the end of the operator name.  */
 
 static bfd_boolean
-parse_stab_members (dhandle, info, tagname, pp, typenums, retp)
-     PTR dhandle;
-     struct stab_handle *info;
-     const char *tagname;
-     const char **pp;
-     const int *typenums;
-     debug_method **retp;
+parse_stab_members (void *dhandle, struct stab_handle *info,
+		    const char *tagname, const char **pp,
+		    const int *typenums, debug_method **retp)
 {
   const char *orig;
   debug_method *methods;
@@ -2607,7 +2531,7 @@ parse_stab_members (dhandle, info, tagname, pp, typenums, retp)
 	}
       else
 	{
-	  /* This is a completely wierd case.  In order to stuff in the
+	  /* This is a completely weird case.  In order to stuff in the
 	     names that might contain colons (the usual name delimiter),
 	     Mike Tiemann defined a different name format which is
 	     signalled if the identifier is "op$".  In that case, the
@@ -2831,7 +2755,7 @@ parse_stab_members (dhandle, info, tagname, pp, typenums, retp)
 	    {
 	      allocvars += 10;
 	      variants = ((debug_method_variant *)
-			  xrealloc ((PTR) variants,
+			  xrealloc (variants,
 				    allocvars * sizeof *variants));
 	    }
 
@@ -2863,7 +2787,7 @@ parse_stab_members (dhandle, info, tagname, pp, typenums, retp)
 	{
 	  alloc += 10;
 	  methods = ((debug_method *)
-		     xrealloc ((PTR) methods, alloc * sizeof *methods));
+		     xrealloc (methods, alloc * sizeof *methods));
 	}
 
       methods[c] = debug_make_method (dhandle, name, variants);
@@ -2886,18 +2810,11 @@ parse_stab_members (dhandle, info, tagname, pp, typenums, retp)
    the tag name.  */
 
 static debug_type
-parse_stab_argtypes (dhandle, info, class_type, fieldname, tagname,
-		     return_type, argtypes, constp, volatilep, pphysname)
-     PTR dhandle;
-     struct stab_handle *info;
-     debug_type class_type;
-     const char *fieldname;
-     const char *tagname;
-     debug_type return_type;
-     const char *argtypes;
-     bfd_boolean constp;
-     bfd_boolean volatilep;
-     const char **pphysname;
+parse_stab_argtypes (void *dhandle, struct stab_handle *info,
+		     debug_type class_type, const char *fieldname,
+		     const char *tagname, debug_type return_type,
+		     const char *argtypes, bfd_boolean constp,
+		     bfd_boolean volatilep, const char **pphysname)
 {
   bfd_boolean is_full_physname_constructor;
   bfd_boolean is_constructor;
@@ -3015,13 +2932,9 @@ parse_stab_argtypes (dhandle, info, class_type, fieldname, tagname,
    so we can look for the vptr base class info.  */
 
 static bfd_boolean
-parse_stab_tilde_field (dhandle, info, pp, typenums, retvptrbase, retownvptr)
-     PTR dhandle;
-     struct stab_handle *info;
-     const char **pp;
-     const int *typenums;
-     debug_type *retvptrbase;
-     bfd_boolean *retownvptr;
+parse_stab_tilde_field (void *dhandle, struct stab_handle *info,
+			const char **pp, const int *typenums,
+			debug_type *retvptrbase, bfd_boolean *retownvptr)
 {
   const char *orig;
   const char *hold;
@@ -3091,11 +3004,8 @@ parse_stab_tilde_field (dhandle, info, pp, typenums, retvptrbase, retownvptr)
 /* Read a definition of an array type.  */
 
 static debug_type
-parse_stab_array_type (dhandle, info, pp, stringp)
-     PTR dhandle;
-     struct stab_handle *info;
-     const char **pp;
-     bfd_boolean stringp;
+parse_stab_array_type (void *dhandle, struct stab_handle *info,
+		       const char **pp, bfd_boolean stringp)
 {
   const char *orig;
   const char *p;
@@ -3211,10 +3121,7 @@ struct bincl_file
 /* Start a new N_BINCL file, pushing it onto the stack.  */
 
 static void
-push_bincl (info, name, hash)
-     struct stab_handle *info;
-     const char *name;
-     bfd_vma hash;
+push_bincl (struct stab_handle *info, const char *name, bfd_vma hash)
 {
   struct bincl_file *n;
 
@@ -3230,7 +3137,7 @@ push_bincl (info, name, hash)
 
   ++info->files;
   info->file_types = ((struct stab_types **)
-		      xrealloc ((PTR) info->file_types,
+		      xrealloc (info->file_types,
 				(info->files
 				 * sizeof *info->file_types)));
   info->file_types[n->file] = NULL;
@@ -3240,8 +3147,7 @@ push_bincl (info, name, hash)
    stack.  */
 
 static const char *
-pop_bincl (info)
-     struct stab_handle *info;
+pop_bincl (struct stab_handle *info)
 {
   struct bincl_file *o;
 
@@ -3260,16 +3166,13 @@ pop_bincl (info)
 /* Handle an N_EXCL: get the types from the corresponding N_BINCL.  */
 
 static bfd_boolean
-find_excl (info, name, hash)
-     struct stab_handle *info;
-     const char *name;
-     bfd_vma hash;
+find_excl (struct stab_handle *info, const char *name, bfd_vma hash)
 {
   struct bincl_file *l;
 
   ++info->files;
   info->file_types = ((struct stab_types **)
-		      xrealloc ((PTR) info->file_types,
+		      xrealloc (info->file_types,
 				(info->files
 				 * sizeof *info->file_types)));
 
@@ -3294,13 +3197,9 @@ find_excl (info, name, hash)
    N_LBRAC, so we can call debug_record_variable immediately.  */
 
 static bfd_boolean
-stab_record_variable (dhandle, info, name, type, kind, val)
-     PTR dhandle;
-     struct stab_handle *info;
-     const char *name;
-     debug_type type;
-     enum debug_var_kind kind;
-     bfd_vma val;
+stab_record_variable (void *dhandle, struct stab_handle *info,
+		      const char *name, debug_type type,
+		      enum debug_var_kind kind, bfd_vma val)
 {
   struct stab_pending_var *v;
 
@@ -3326,9 +3225,7 @@ stab_record_variable (dhandle, info, name, type, kind, val)
    N_LBRAC that starts the block.  */
 
 static bfd_boolean
-stab_emit_pending_vars (dhandle, info)
-     PTR dhandle;
-     struct stab_handle *info;
+stab_emit_pending_vars (void *dhandle, struct stab_handle *info)
 {
   struct stab_pending_var *v;
 
@@ -3353,9 +3250,7 @@ stab_emit_pending_vars (dhandle, info)
 /* Find the slot for a type in the database.  */
 
 static debug_type *
-stab_find_slot (info, typenums)
-     struct stab_handle *info;
-     const int *typenums;
+stab_find_slot (struct stab_handle *info, const int *typenums)
 {
   int filenum;
   int index;
@@ -3400,10 +3295,7 @@ stab_find_slot (info, typenums)
    allocated yet, create an indirect type.  */
 
 static debug_type
-stab_find_type (dhandle, info, typenums)
-     PTR dhandle;
-     struct stab_handle *info;
-     const int *typenums;
+stab_find_type (void *dhandle, struct stab_handle *info, const int *typenums)
 {
   debug_type *slot;
 
@@ -3426,11 +3318,8 @@ stab_find_type (dhandle, info, typenums)
 /* Record that a given type number refers to a given type.  */
 
 static bfd_boolean
-stab_record_type (dhandle, info, typenums, type)
-     PTR dhandle ATTRIBUTE_UNUSED;
-     struct stab_handle *info;
-     const int *typenums;
-     debug_type type;
+stab_record_type (void *dhandle ATTRIBUTE_UNUSED, struct stab_handle *info,
+		  const int *typenums, debug_type type)
 {
   debug_type *slot;
 
@@ -3448,10 +3337,8 @@ stab_record_type (dhandle, info, typenums, type)
 /* Return an XCOFF builtin type.  */
 
 static debug_type
-stab_xcoff_builtin_type (dhandle, info, typenum)
-     PTR dhandle;
-     struct stab_handle *info;
-     int typenum;
+stab_xcoff_builtin_type (void *dhandle, struct stab_handle *info,
+			 int typenum)
 {
   debug_type rettype;
   const char *name;
@@ -3627,12 +3514,8 @@ stab_xcoff_builtin_type (dhandle, info, typenum)
 /* Find or create a tagged type.  */
 
 static debug_type
-stab_find_tagged_type (dhandle, info, p, len, kind)
-     PTR dhandle;
-     struct stab_handle *info;
-     const char *p;
-     int len;
-     enum debug_type_kind kind;
+stab_find_tagged_type (void *dhandle, struct stab_handle *info,
+		       const char *p, int len, enum debug_type_kind kind)
 {
   char *name;
   debug_type dtype;
@@ -3707,7 +3590,7 @@ struct stab_demangle_typestring
 struct stab_demangle_info
 {
   /* The debugging information handle.  */
-  PTR dhandle;
+  void *dhandle;
   /* The stab information handle.  */
   struct stab_handle *info;
   /* The array of arguments we are building.  */
@@ -3722,42 +3605,37 @@ struct stab_demangle_info
   unsigned int typestring_alloc;
 };
 
-static void stab_bad_demangle
-  PARAMS ((const char *));
-static unsigned int stab_demangle_count
-  PARAMS ((const char **));
-static bfd_boolean stab_demangle_get_count
-  PARAMS ((const char **, unsigned int *));
+static void stab_bad_demangle (const char *);
+static unsigned int stab_demangle_count (const char **);
+static bfd_boolean stab_demangle_get_count (const char **, unsigned int *);
 static bfd_boolean stab_demangle_prefix
-  PARAMS ((struct stab_demangle_info *, const char **, unsigned int));
+  (struct stab_demangle_info *, const char **, unsigned int);
 static bfd_boolean stab_demangle_function_name
-  PARAMS ((struct stab_demangle_info *, const char **, const char *));
+  (struct stab_demangle_info *, const char **, const char *);
 static bfd_boolean stab_demangle_signature
-  PARAMS ((struct stab_demangle_info *, const char **));
+  (struct stab_demangle_info *, const char **);
 static bfd_boolean stab_demangle_qualified
-  PARAMS ((struct stab_demangle_info *, const char **, debug_type *));
+  (struct stab_demangle_info *, const char **, debug_type *);
 static bfd_boolean stab_demangle_template
-  PARAMS ((struct stab_demangle_info *, const char **, char **));
+  (struct stab_demangle_info *, const char **, char **);
 static bfd_boolean stab_demangle_class
-  PARAMS ((struct stab_demangle_info *, const char **, const char **));
+  (struct stab_demangle_info *, const char **, const char **);
 static bfd_boolean stab_demangle_args
-  PARAMS ((struct stab_demangle_info *, const char **, debug_type **,
-	   bfd_boolean *));
+  (struct stab_demangle_info *, const char **, debug_type **, bfd_boolean *);
 static bfd_boolean stab_demangle_arg
-  PARAMS ((struct stab_demangle_info *, const char **, debug_type **,
-	   unsigned int *, unsigned int *));
+  (struct stab_demangle_info *, const char **, debug_type **,
+   unsigned int *, unsigned int *);
 static bfd_boolean stab_demangle_type
-  PARAMS ((struct stab_demangle_info *, const char **, debug_type *));
+  (struct stab_demangle_info *, const char **, debug_type *);
 static bfd_boolean stab_demangle_fund_type
-  PARAMS ((struct stab_demangle_info *, const char **, debug_type *));
+  (struct stab_demangle_info *, const char **, debug_type *);
 static bfd_boolean stab_demangle_remember_type
-  PARAMS ((struct stab_demangle_info *, const char *, int));
+  (struct stab_demangle_info *, const char *, int);
 
 /* Warn about a bad demangling.  */
 
 static void
-stab_bad_demangle (s)
-     const char *s;
+stab_bad_demangle (const char *s)
 {
   fprintf (stderr, _("bad mangled name `%s'\n"), s);
 }
@@ -3765,8 +3643,7 @@ stab_bad_demangle (s)
 /* Get a count from a stab string.  */
 
 static unsigned int
-stab_demangle_count (pp)
-     const char **pp;
+stab_demangle_count (const char **pp)
 {
   unsigned int count;
 
@@ -3784,9 +3661,7 @@ stab_demangle_count (pp)
    which case it must end in an underscore.  */
 
 static bfd_boolean
-stab_demangle_get_count (pp, pi)
-     const char **pp;
-     unsigned int *pi;
+stab_demangle_get_count (const char **pp, unsigned int *pi)
 {
   if (! ISDIGIT (**pp))
     return FALSE;
@@ -3821,12 +3696,9 @@ stab_demangle_get_count (pp, pi)
    terminated array of argument types.  */
 
 static debug_type *
-stab_demangle_argtypes (dhandle, info, physname, pvarargs, physname_len)
-     PTR dhandle;
-     struct stab_handle *info;
-     const char *physname;
-     bfd_boolean *pvarargs;
-     unsigned int physname_len;
+stab_demangle_argtypes (void *dhandle, struct stab_handle *info,
+			const char *physname, bfd_boolean *pvarargs,
+			unsigned int physname_len)
 {
   struct stab_demangle_info minfo;
 
@@ -3870,10 +3742,8 @@ stab_demangle_argtypes (dhandle, info, physname, pvarargs, physname_len)
 /* Demangle the prefix of the mangled name.  */
 
 static bfd_boolean
-stab_demangle_prefix (minfo, pp, physname_len)
-     struct stab_demangle_info *minfo;
-     const char **pp;
-     unsigned int physname_len;
+stab_demangle_prefix (struct stab_demangle_info *minfo, const char **pp,
+		      unsigned int physname_len)
 {
   const char *scan;
   unsigned int i;
@@ -3949,10 +3819,8 @@ stab_demangle_prefix (minfo, pp, physname_len)
    signature.  */
 
 static bfd_boolean
-stab_demangle_function_name (minfo, pp, scan)
-     struct stab_demangle_info *minfo;
-     const char **pp;
-     const char *scan;
+stab_demangle_function_name (struct stab_demangle_info *minfo,
+			     const char **pp, const char *scan)
 {
   const char *name;
 
@@ -3995,9 +3863,7 @@ stab_demangle_function_name (minfo, pp, scan)
    found.  */
 
 static bfd_boolean
-stab_demangle_signature (minfo, pp)
-     struct stab_demangle_info *minfo;
-     const char **pp;
+stab_demangle_signature (struct stab_demangle_info *minfo, const char **pp)
 {
   const char *orig;
   bfd_boolean expect_func, func_done;
@@ -4111,10 +3977,8 @@ stab_demangle_signature (minfo, pp)
    mangled form of "Outer::Inner".  */
 
 static bfd_boolean
-stab_demangle_qualified (minfo, pp, ptype)
-     struct stab_demangle_info *minfo;
-     const char **pp;
-     debug_type *ptype;
+stab_demangle_qualified (struct stab_demangle_info *minfo, const char **pp,
+			 debug_type *ptype)
 {
   const char *orig;
   const char *p;
@@ -4284,10 +4148,8 @@ stab_demangle_qualified (minfo, pp, ptype)
    string representation of the template.  */
 
 static bfd_boolean
-stab_demangle_template (minfo, pp, pname)
-     struct stab_demangle_info *minfo;
-     const char **pp;
-     char **pname;
+stab_demangle_template (struct stab_demangle_info *minfo, const char **pp,
+			char **pname)
 {
   const char *orig;
   unsigned int r, i;
@@ -4507,10 +4369,8 @@ stab_demangle_template (minfo, pp, pname)
 /* Demangle a class name.  */
 
 static bfd_boolean
-stab_demangle_class (minfo, pp, pstart)
-     struct stab_demangle_info *minfo ATTRIBUTE_UNUSED;
-     const char **pp;
-     const char **pstart;
+stab_demangle_class (struct stab_demangle_info *minfo ATTRIBUTE_UNUSED,
+		     const char **pp, const char **pstart)
 {
   const char *orig;
   unsigned int n;
@@ -4536,11 +4396,8 @@ stab_demangle_class (minfo, pp, pstart)
    is set to a NULL terminated array holding the arguments.  */
 
 static bfd_boolean
-stab_demangle_args (minfo, pp, pargs, pvarargs)
-     struct stab_demangle_info *minfo;
-     const char **pp;
-     debug_type **pargs;
-     bfd_boolean *pvarargs;
+stab_demangle_args (struct stab_demangle_info *minfo, const char **pp,
+		    debug_type **pargs, bfd_boolean *pvarargs)
 {
   const char *orig;
   unsigned int alloc, count;
@@ -4619,12 +4476,9 @@ stab_demangle_args (minfo, pp, pargs, pvarargs)
 /* Demangle a single argument.  */
 
 static bfd_boolean
-stab_demangle_arg (minfo, pp, pargs, pcount, palloc)
-     struct stab_demangle_info *minfo;
-     const char **pp;
-     debug_type **pargs;
-     unsigned int *pcount;
-     unsigned int *palloc;
+stab_demangle_arg (struct stab_demangle_info *minfo, const char **pp,
+		   debug_type **pargs, unsigned int *pcount,
+		   unsigned int *palloc)
 {
   const char *start;
   debug_type type;
@@ -4657,10 +4511,8 @@ stab_demangle_arg (minfo, pp, pargs, pcount, palloc)
    to the newly allocated type.  */
 
 static bfd_boolean
-stab_demangle_type (minfo, pp, ptype)
-     struct stab_demangle_info *minfo;
-     const char **pp;
-     debug_type *ptype;
+stab_demangle_type (struct stab_demangle_info *minfo, const char **pp,
+		    debug_type *ptype)
 {
   const char *orig;
 
@@ -4926,10 +4778,8 @@ stab_demangle_type (minfo, pp, ptype)
    *ptype is set to the newly allocated type.  */
 
 static bfd_boolean
-stab_demangle_fund_type (minfo, pp, ptype)
-     struct stab_demangle_info *minfo;
-     const char **pp;
-     debug_type *ptype;
+stab_demangle_fund_type (struct stab_demangle_info *minfo, const char **pp,
+			 debug_type *ptype)
 {
   const char *orig;
   bfd_boolean constp, volatilep, unsignedp, signedp;
@@ -5182,10 +5032,8 @@ stab_demangle_fund_type (minfo, pp, ptype)
 /* Remember a type string in a demangled string.  */
 
 static bfd_boolean
-stab_demangle_remember_type (minfo, p, len)
-     struct stab_demangle_info *minfo;
-     const char *p;
-     int len;
+stab_demangle_remember_type (struct stab_demangle_info *minfo,
+			     const char *p, int len)
 {
   if (minfo->typestring_count >= minfo->typestring_alloc)
     {

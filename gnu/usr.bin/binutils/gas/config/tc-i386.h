@@ -1,6 +1,6 @@
 /* tc-i386.h -- Header file for tc-i386.c
    Copyright 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-   2001, 2002, 2003
+   2001, 2002, 2003, 2004
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -23,6 +23,10 @@
 #ifndef TC_I386
 #define TC_I386 1
 
+#ifndef BFD_ASSEMBLER
+#error So, do you know what you are doing?
+#endif
+
 #ifdef ANSI_PROTOTYPES
 struct fix;
 #endif
@@ -33,7 +37,6 @@ struct fix;
 #define TARGET_FORMAT		"coff-i386-lynx"
 #endif
 
-#ifdef BFD_ASSEMBLER
 #define TARGET_ARCH		bfd_arch_i386
 #define TARGET_MACH		(i386_mach ())
 extern unsigned long i386_mach PARAMS ((void));
@@ -86,59 +89,6 @@ extern void i386_elf_emit_arch_note PARAMS ((void));
 #endif
 
 #define SUB_SEGMENT_ALIGN(SEG, FRCHAIN) 0
-
-#else /* ! BFD_ASSEMBLER */
-
-/* COFF STUFF */
-
-#define COFF_MAGIC I386MAGIC
-#define BFD_ARCH bfd_arch_i386
-#define COFF_FLAGS F_AR32WR
-#define TC_COUNT_RELOC(x) ((x)->fx_addsy || (x)->fx_r_type==7)
-#define TC_COFF_FIX2RTYPE(FIX) tc_coff_fix2rtype(FIX)
-extern short tc_coff_fix2rtype PARAMS ((struct fix *));
-#define TC_COFF_SIZEMACHDEP(frag) tc_coff_sizemachdep (frag)
-extern int tc_coff_sizemachdep PARAMS ((fragS *frag));
-
-#ifdef TE_GO32
-/* DJGPP now expects some sections to be 2**4 aligned.  */
-#define SUB_SEGMENT_ALIGN(SEG, FRCHAIN)					\
-  ((strcmp (obj_segment_name (SEG), ".text") == 0			\
-    || strcmp (obj_segment_name (SEG), ".data") == 0			\
-    || strcmp (obj_segment_name (SEG), ".bss") == 0			\
-    || strncmp (obj_segment_name (SEG), ".gnu.linkonce.t", 15) == 0	\
-    || strncmp (obj_segment_name (SEG), ".gnu.linkonce.d", 15) == 0	\
-    || strncmp (obj_segment_name (SEG), ".gnu.linkonce.r", 15) == 0)	\
-   ? 4									\
-   : 2)
-#else
-#define SUB_SEGMENT_ALIGN(SEG, FRCHAIN) 2
-#endif
-
-#ifdef TE_386BSD
-/* The BSDI linker apparently rejects objects with a machine type of
-   M_386 (100).  */
-#define AOUT_MACHTYPE 0
-#else
-#define AOUT_MACHTYPE 100
-#endif
-
-#ifndef OBJ_AOUT
-#ifndef TE_PE
-#ifndef TE_GO32
-/* Local labels starts with .L */
-#define LOCAL_LABEL(name) (name[0] == '.' \
-		 && (name[1] == 'L' || name[1] == 'X' || name[1] == '.'))
-#endif
-#endif
-#endif
-
-#define tc_aout_pre_write_hook(x)	{;}	/* not used */
-#define tc_crawl_symbol_chain(a)	{;}	/* not used */
-#define tc_headers_hook(a)		{;}	/* not used */
-#define tc_coff_symbol_emit_hook(a)	{;}	/* not used */
-
-#endif /* ! BFD_ASSEMBLER */
 
 #define LOCAL_LABELS_FB 1
 
@@ -243,13 +193,15 @@ typedef struct
 #define CpuSSE	       0x1000	/* Streaming SIMD extensions required */
 #define CpuSSE2	       0x2000	/* Streaming SIMD extensions 2 required */
 #define Cpu3dnow       0x4000	/* 3dnow! support required */
+#define CpuPNI	       0x8000	/* Prescott New Instructions required */
+#define CpuPadLock    0x10000	/* VIA PadLock required */
 
   /* These flags are set by gas depending on the flag_code.  */
 #define Cpu64	     0x4000000   /* 64bit support required  */
 #define CpuNo64      0x8000000   /* Not supported in the 64bit mode  */
 
   /* The default value for unknown CPUs - enable all features to avoid problems.  */
-#define CpuUnknownFlags (Cpu086|Cpu186|Cpu286|Cpu386|Cpu486|Cpu586|Cpu686|CpuP4|CpuSledgehammer|CpuMMX|CpuSSE|CpuSSE2|Cpu3dnow|CpuK6|CpuAthlon)
+#define CpuUnknownFlags (Cpu086|Cpu186|Cpu286|Cpu386|Cpu486|Cpu586|Cpu686|CpuP4|CpuSledgehammer|CpuMMX|CpuSSE|CpuSSE2|CpuPNI|Cpu3dnow|CpuK6|CpuAthlon|CpuPadLock)
 
   /* the bits in opcode_modifier are used to generate the final opcode from
      the base_opcode.  These bits also are used to detect alternate forms of
@@ -462,7 +414,6 @@ extern void x86_cons_fix_new
 
 #define DIFF_EXPR_OK    /* foo-. gets turned into PC relative relocs */
 
-#ifdef BFD_ASSEMBLER
 #define NO_RELOC BFD_RELOC_NONE
 
 void i386_validate_fix PARAMS ((struct fix *));
@@ -499,30 +450,19 @@ extern int tc_i386_fix_adjustable PARAMS ((struct fix *));
    || (FIX)->fx_r_type == BFD_RELOC_386_GOTPC		\
    || TC_FORCE_RELOCATION (FIX))
 
-#else /* ! BFD_ASSEMBLER */
-
-#define NO_RELOC 0
-
-#define TC_RVA_RELOC 7
-
-/* Need this for PIC relocations */
-#define NEED_FX_R_TYPE
-
-#undef REVERSE_SORT_RELOCS
-
-/* For COFF.  */
-#define TC_FORCE_RELOCATION(FIX)			\
-  ((FIX)->fx_r_type == 7 || generic_force_reloc (FIX))
-#endif /* ! BFD_ASSEMBLER */
-
 #define md_operand(x)
 
 extern const struct relax_type md_relax_table[];
 #define TC_GENERIC_RELAX_TABLE md_relax_table
 
+extern int optimize_align_code;
+
 #define md_do_align(n, fill, len, max, around)				\
-if ((n) && !need_pass_2							\
-    && (!(fill) || ((char)*(fill) == (char)0x90 && (len) == 1))		\
+if ((n)									\
+    && !need_pass_2							\
+    && optimize_align_code						\
+    && (!(fill)								\
+	|| ((char)*(fill) == (char)0x90 && (len) == 1))			\
     && subseg_text_p (now_seg))						\
   {									\
     frag_align_code ((n), (max));					\
@@ -548,5 +488,20 @@ void i386_print_statistics PARAMS ((FILE *));
 #define tc_init_after_args() sco_id ()
 extern void sco_id PARAMS ((void));
 #endif
+
+/* We want .cfi_* pseudo-ops for generating unwind info.  */
+#define TARGET_USE_CFIPOP 1
+
+extern unsigned int x86_dwarf2_return_column;
+#define DWARF2_DEFAULT_RETURN_COLUMN x86_dwarf2_return_column
+
+extern int x86_cie_data_alignment;
+#define DWARF2_CIE_DATA_ALIGNMENT x86_cie_data_alignment
+
+#define tc_regname_to_dw2regnum tc_x86_regname_to_dw2regnum
+extern int tc_x86_regname_to_dw2regnum PARAMS ((const char *regname));
+
+#define tc_cfi_frame_initial_instructions tc_x86_frame_initial_instructions
+extern void tc_x86_frame_initial_instructions PARAMS ((void));
 
 #endif /* TC_I386 */

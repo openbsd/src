@@ -236,18 +236,15 @@ extern bfd_boolean force_make_executable;
 /* Non-zero if we are processing a --defsym from the command line.  */
 extern int parsing_defsym;
 
-extern int yyparse PARAMS ((void));
-
-extern void add_cref PARAMS ((const char *, bfd *, asection *, bfd_vma));
-extern void output_cref PARAMS ((FILE *));
-extern void check_nocrossrefs PARAMS ((void));
-
-extern void ld_abort PARAMS ((const char *, int, const char *))
-     ATTRIBUTE_NORETURN;
+extern int yyparse (void);
+extern void add_cref (const char *, bfd *, asection *, bfd_vma);
+extern void output_cref (FILE *);
+extern void check_nocrossrefs (void);
+extern void ld_abort (const char *, int, const char *) ATTRIBUTE_NORETURN;
 
 /* If gcc >= 2.6, we can give a function name, too.  */
 #if __GNUC__ < 2 || (__GNUC__ == 2 && __GNUC_MINOR__ < 6)
-#define __PRETTY_FUNCTION__  ((char*) NULL)
+#define __PRETTY_FUNCTION__  NULL
 #endif
 
 #undef abort

@@ -1,6 +1,6 @@
 /* Print i386 instructions for GDB, the GNU debugger.
    Copyright 1988, 1989, 1991, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2001, 2002, 2003 Free Software Foundation, Inc.
+   2001, 2002, 2003, 2004 Free Software Foundation, Inc.
 
 This file is part of GDB.
 
@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
  * July 1988
  *  modified by John Hassey (hassey@dg-rtp.dg.com)
  *  x86-64 support added by Jan Hubicka (jh@suse.cz)
+ *  VIA PadLock support by Michal Ludvig (mludvig@suse.cz)
  */
 
 /*
@@ -48,54 +49,59 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define UNIXWARE_COMPAT 1
 #endif
 
-static int fetch_data PARAMS ((struct disassemble_info *, bfd_byte *));
-static void ckprefix PARAMS ((void));
-static const char *prefix_name PARAMS ((int, int));
-static int print_insn PARAMS ((bfd_vma, disassemble_info *));
-static void dofloat PARAMS ((int));
-static void OP_ST PARAMS ((int, int));
-static void OP_STi  PARAMS ((int, int));
-static int putop PARAMS ((const char *, int));
-static void oappend PARAMS ((const char *));
-static void append_seg PARAMS ((void));
-static void OP_indirE PARAMS ((int, int));
-static void print_operand_value PARAMS ((char *, int, bfd_vma));
-static void OP_E PARAMS ((int, int));
-static void OP_G PARAMS ((int, int));
-static bfd_vma get64 PARAMS ((void));
-static bfd_signed_vma get32 PARAMS ((void));
-static bfd_signed_vma get32s PARAMS ((void));
-static int get16 PARAMS ((void));
-static void set_op PARAMS ((bfd_vma, int));
-static void OP_REG PARAMS ((int, int));
-static void OP_IMREG PARAMS ((int, int));
-static void OP_I PARAMS ((int, int));
-static void OP_I64 PARAMS ((int, int));
-static void OP_sI PARAMS ((int, int));
-static void OP_J PARAMS ((int, int));
-static void OP_SEG PARAMS ((int, int));
-static void OP_DIR PARAMS ((int, int));
-static void OP_OFF PARAMS ((int, int));
-static void OP_OFF64 PARAMS ((int, int));
-static void ptr_reg PARAMS ((int, int));
-static void OP_ESreg PARAMS ((int, int));
-static void OP_DSreg PARAMS ((int, int));
-static void OP_C PARAMS ((int, int));
-static void OP_D PARAMS ((int, int));
-static void OP_T PARAMS ((int, int));
-static void OP_Rd PARAMS ((int, int));
-static void OP_MMX PARAMS ((int, int));
-static void OP_XMM PARAMS ((int, int));
-static void OP_EM PARAMS ((int, int));
-static void OP_EX PARAMS ((int, int));
-static void OP_MS PARAMS ((int, int));
-static void OP_XS PARAMS ((int, int));
-static void OP_3DNowSuffix PARAMS ((int, int));
-static void OP_xcrypt2 PARAMS ((int, int));
-static void OP_xcrypt PARAMS ((int, int));
-static void OP_SIMD_Suffix PARAMS ((int, int));
-static void SIMD_Fixup PARAMS ((int, int));
-static void BadOp PARAMS ((void));
+static int fetch_data (struct disassemble_info *, bfd_byte *);
+static void ckprefix (void);
+static const char *prefix_name (int, int);
+static int print_insn (bfd_vma, disassemble_info *);
+static void dofloat (int);
+static void OP_ST (int, int);
+static void OP_STi (int, int);
+static int putop (const char *, int);
+static void oappend (const char *);
+static void append_seg (void);
+static void OP_indirE (int, int);
+static void print_operand_value (char *, int, bfd_vma);
+static void OP_E (int, int);
+static void OP_G (int, int);
+static bfd_vma get64 (void);
+static bfd_signed_vma get32 (void);
+static bfd_signed_vma get32s (void);
+static int get16 (void);
+static void set_op (bfd_vma, int);
+static void OP_REG (int, int);
+static void OP_IMREG (int, int);
+static void OP_I (int, int);
+static void OP_I64 (int, int);
+static void OP_sI (int, int);
+static void OP_J (int, int);
+static void OP_SEG (int, int);
+static void OP_DIR (int, int);
+static void OP_OFF (int, int);
+static void OP_OFF64 (int, int);
+static void ptr_reg (int, int);
+static void OP_ESreg (int, int);
+static void OP_DSreg (int, int);
+static void OP_C (int, int);
+static void OP_D (int, int);
+static void OP_T (int, int);
+static void OP_Rd (int, int);
+static void OP_MMX (int, int);
+static void OP_XMM (int, int);
+static void OP_EM (int, int);
+static void OP_EX (int, int);
+static void OP_MS (int, int);
+static void OP_XS (int, int);
+static void OP_M (int, int);
+static void OP_0fae (int, int);
+static void NOP_Fixup (int, int);
+static void OP_3DNowSuffix (int, int);
+static void OP_xcrypt2 (int, int);
+static void OP_xcrypt (int, int);
+static void OP_SIMD_Suffix (int, int);
+static void SIMD_Fixup (int, int);
+static void PNI_Fixup (int, int);
+static void INVLPG_Fixup (int, int);
+static void BadOp (void);
 
 struct dis_private {
   /* Points to first byte not fetched.  */
@@ -162,9 +168,7 @@ static int used_prefixes;
    ? 1 : fetch_data ((info), (addr)))
 
 static int
-fetch_data (info, addr)
-     struct disassemble_info *info;
-     bfd_byte *addr;
+fetch_data (struct disassemble_info *info, bfd_byte *addr)
 {
   int status;
   struct dis_private *priv = (struct dis_private *) info->private_data;
@@ -199,8 +203,8 @@ fetch_data (info, addr)
 #define indirEv OP_indirE, v_mode
 #define Ew OP_E, w_mode
 #define Ma OP_E, v_mode
-#define M OP_E, 0		/* lea, lgdt, etc. */
-#define Mp OP_E, 0		/* 32 or 48 bit memory operand for LDS, LES etc */
+#define M OP_M, 0		/* lea, lgdt, etc. */
+#define Mp OP_M, 0		/* 32 or 48 bit memory operand for LDS, LES etc */
 #define Gb OP_G, b_mode
 #define Gv OP_G, v_mode
 #define Gd OP_G, d_mode
@@ -293,7 +297,6 @@ fetch_data (info, addr)
 #define EX OP_EX, v_mode
 #define MS OP_MS, v_mode
 #define XS OP_XS, v_mode
-#define None OP_E, 0
 #define OPSUF OP_3DNowSuffix, 0
 #define OPXCRYPT OP_xcrypt, 0
 #define OPXCRYPT2 OP_xcrypt2, 0
@@ -421,10 +424,16 @@ fetch_data (info, addr)
 #define PREGRP24  NULL, NULL, USE_PREFIX_USER_TABLE, NULL, 24, NULL, 0
 #define PREGRP25  NULL, NULL, USE_PREFIX_USER_TABLE, NULL, 25, NULL, 0
 #define PREGRP26  NULL, NULL, USE_PREFIX_USER_TABLE, NULL, 26, NULL, 0
+#define PREGRP27  NULL, NULL, USE_PREFIX_USER_TABLE, NULL, 27, NULL, 0
+#define PREGRP28  NULL, NULL, USE_PREFIX_USER_TABLE, NULL, 28, NULL, 0
+#define PREGRP29  NULL, NULL, USE_PREFIX_USER_TABLE, NULL, 29, NULL, 0
+#define PREGRP30  NULL, NULL, USE_PREFIX_USER_TABLE, NULL, 30, NULL, 0
+#define PREGRP31  NULL, NULL, USE_PREFIX_USER_TABLE, NULL, 31, NULL, 0
+#define PREGRP32  NULL, NULL, USE_PREFIX_USER_TABLE, NULL, 32, NULL, 0
 
 #define X86_64_0  NULL, NULL, X86_64_SPECIAL, NULL,  0, NULL, 0
 
-typedef void (*op_rtn) PARAMS ((int bytemode, int sizeflag));
+typedef void (*op_rtn) (int bytemode, int sizeflag);
 
 struct dis386 {
   const char *name;
@@ -630,8 +639,7 @@ static const struct dis386 dis386[] = {
   { "movQ",		Sw, Ev, XX },
   { "popU",		Ev, XX, XX },
   /* 90 */
-  { "nop",		XX, XX, XX },
-  /* FIXME: NOP with REPz prefix is called PAUSE.  */
+  { "nop",		NOP_Fixup, 0, XX, XX },
   { "xchgS",		RMeCX, eAX, XX },
   { "xchgS",		RMeDX, eAX, XX },
   { "xchgS",		RMeBX, eAX, XX },
@@ -780,11 +788,11 @@ static const struct dis386 dis386_twobyte[] = {
   /* 10 */
   { PREGRP8 },
   { PREGRP9 },
-  { "movlpX",		XM, EX, SIMD_Fixup, 'h' }, /* really only 2 operands */
+  { PREGRP30 },
   { "movlpX",		EX, XM, SIMD_Fixup, 'h' },
   { "unpcklpX",		XM, EX, XX },
   { "unpckhpX",		XM, EX, XX },
-  { "movhpX",		XM, EX, SIMD_Fixup, 'l' },
+  { PREGRP31 },
   { "movhpX",		EX, XM, SIMD_Fixup, 'l' },
   /* 18 */
   { GRP14 },
@@ -899,8 +907,8 @@ static const struct dis386 dis386_twobyte[] = {
   { "(bad)",		XX, XX, XX },
   { "(bad)",		XX, XX, XX },
   { "(bad)",		XX, XX, XX },
-  { "(bad)",		XX, XX, XX },
-  { "(bad)",		XX, XX, XX },
+  { PREGRP28 },
+  { PREGRP29 },
   { PREGRP23 },
   { PREGRP20 },
   /* 80 */
@@ -946,6 +954,7 @@ static const struct dis386 dis386_twobyte[] = {
   { "btS",		Ev, Gv, XX },
   { "shldS",		Ev, Gv, Ib },
   { "shldS",		Ev, Gv, CL },
+  { "(bad)",		XX, XX, XX },
   { "",			OPXCRYPT2, XX, XX },
   { "",			OPXCRYPT, XX, XX },
   /* a8 */
@@ -994,7 +1003,7 @@ static const struct dis386 dis386_twobyte[] = {
   { "bswap",		RMeSI, XX, XX },
   { "bswap",		RMeDI, XX, XX },
   /* d0 */
-  { "(bad)",		XX, XX, XX },
+  { PREGRP27 },
   { "psrlw",		MX, EM, XX },
   { "psrld",		MX, EM, XX },
   { "psrlq",		MX, EM, XX },
@@ -1030,7 +1039,7 @@ static const struct dis386 dis386_twobyte[] = {
   { "pmaxsw",		MX, EM, XX },
   { "pxor",		MX, EM, XX },
   /* f0 */
-  { "(bad)",		XX, XX, XX },
+  { PREGRP32 },
   { "psllw",		MX, EM, XX },
   { "pslld",		MX, EM, XX },
   { "psllq",		MX, EM, XX },
@@ -1082,15 +1091,15 @@ static const unsigned char twobyte_has_modrm[256] = {
   /* 40 */ 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, /* 4f */
   /* 50 */ 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, /* 5f */
   /* 60 */ 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, /* 6f */
-  /* 70 */ 1,1,1,1,1,1,1,0,0,0,0,0,0,0,1,1, /* 7f */
+  /* 70 */ 1,1,1,1,1,1,1,0,0,0,0,0,1,1,1,1, /* 7f */
   /* 80 */ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 8f */
   /* 90 */ 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, /* 9f */
-  /* a0 */ 0,0,0,1,1,1,0,0,0,0,0,1,1,1,1,1, /* af */
+  /* a0 */ 0,0,0,1,1,1,0,1,0,0,0,1,1,1,1,1, /* af */
   /* b0 */ 1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,1, /* bf */
   /* c0 */ 1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0, /* cf */
-  /* d0 */ 0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, /* df */
+  /* d0 */ 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, /* df */
   /* e0 */ 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, /* ef */
-  /* f0 */ 0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0  /* ff */
+  /* f0 */ 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0  /* ff */
   /*       -------------------------------        */
   /*       0 1 2 3 4 5 6 7 8 9 a b c d e f        */
 };
@@ -1099,21 +1108,21 @@ static const unsigned char twobyte_uses_SSE_prefix[256] = {
   /*       0 1 2 3 4 5 6 7 8 9 a b c d e f        */
   /*       -------------------------------        */
   /* 00 */ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 0f */
-  /* 10 */ 1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 1f */
+  /* 10 */ 1,1,1,0,0,0,1,0,0,0,0,0,0,0,0,0, /* 1f */
   /* 20 */ 0,0,0,0,0,0,0,0,0,0,1,0,1,1,0,0, /* 2f */
   /* 30 */ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 3f */
   /* 40 */ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 4f */
   /* 50 */ 0,1,1,1,0,0,0,0,1,1,1,1,1,1,1,1, /* 5f */
   /* 60 */ 0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1, /* 6f */
-  /* 70 */ 1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1, /* 7f */
+  /* 70 */ 1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1, /* 7f */
   /* 80 */ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 8f */
   /* 90 */ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 9f */
   /* a0 */ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* af */
   /* b0 */ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* bf */
   /* c0 */ 0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0, /* cf */
-  /* d0 */ 0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0, /* df */
+  /* d0 */ 1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0, /* df */
   /* e0 */ 0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0, /* ef */
-  /* f0 */ 0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0  /* ff */
+  /* f0 */ 1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0  /* ff */
   /*       -------------------------------        */
   /*       0 1 2 3 4 5 6 7 8 9 a b c d e f        */
 };
@@ -1353,13 +1362,13 @@ static const struct dis386 grps[][8] = {
   /* GRP7 */
   {
     { "sgdtQ",	 M, XX, XX },
-    { "sidtQ",	 M, XX, XX },
+    { "sidtQ", PNI_Fixup, 0, XX, XX },
     { "lgdtQ",	 M, XX, XX },
     { "lidtQ",	 M, XX, XX },
     { "smswQ",	Ev, XX, XX },
     { "(bad)",	XX, XX, XX },
     { "lmsw",	Ew, XX, XX },
-    { "invlpg",	Ew, XX, XX },
+    { "invlpg",	INVLPG_Fixup, w_mode, XX, XX },
   },
   /* GRP8 */
   {
@@ -1423,10 +1432,9 @@ static const struct dis386 grps[][8] = {
     { "ldmxcsr", Ev, XX, XX },
     { "stmxcsr", Ev, XX, XX },
     { "(bad)",	XX, XX, XX },
-    { "lfence", None, XX, XX },
-    { "mfence", None, XX, XX },
-    { "sfence", None, XX, XX },
-    /* FIXME: the sfence with memory operand is clflush!  */
+    { "lfence", OP_0fae, 0, XX, XX },
+    { "mfence", OP_0fae, 0, XX, XX },
+    { "clflush", OP_0fae, 0, XX, XX },
   },
   /* GRP14 */
   {
@@ -1449,7 +1457,7 @@ static const struct dis386 grps[][8] = {
     { "(bad)",	XX, XX, XX },
     { "(bad)",	XX, XX, XX },
     { "(bad)",	XX, XX, XX },
-  }
+  },
 };
 
 static const struct dis386 prefix_user_table[][4] = {
@@ -1642,6 +1650,48 @@ static const struct dis386 prefix_user_table[][4] = {
     { "punpcklqdq", XM, EX, XX },
     { "(bad)", XM, EX, XX },
   },
+  /* PREGRP27 */
+  {
+    { "(bad)", MX, EX, XX },
+    { "(bad)", XM, EX, XX },
+    { "addsubpd", XM, EX, XX },
+    { "addsubps", XM, EX, XX },
+  },
+  /* PREGRP28 */
+  {
+    { "(bad)", MX, EX, XX },
+    { "(bad)", XM, EX, XX },
+    { "haddpd", XM, EX, XX },
+    { "haddps", XM, EX, XX },
+  },
+  /* PREGRP29 */
+  {
+    { "(bad)", MX, EX, XX },
+    { "(bad)", XM, EX, XX },
+    { "hsubpd", XM, EX, XX },
+    { "hsubps", XM, EX, XX },
+  },
+  /* PREGRP30 */
+  {
+    { "movlpX", XM, EX, SIMD_Fixup, 'h' }, /* really only 2 operands */
+    { "movsldup", XM, EX, XX },
+    { "movlpd", XM, EX, XX },
+    { "movddup", XM, EX, XX },
+  },
+  /* PREGRP31 */
+  {
+    { "movhpX", XM, EX, SIMD_Fixup, 'l' },
+    { "movshdup", XM, EX, XX },
+    { "movhpd", XM, EX, XX },
+    { "(bad)", XM, EX, XX },
+  },
+  /* PREGRP32 */
+  {
+    { "(bad)", XM, EX, XX },
+    { "(bad)", XM, EX, XX },
+    { "(bad)", XM, EX, XX },
+    { "lddqu", XM, M, XX },
+  },
 };
 
 static const struct dis386 x86_64_table[][2] = {
@@ -1654,7 +1704,7 @@ static const struct dis386 x86_64_table[][2] = {
 #define INTERNAL_DISASSEMBLER_ERROR _("<internal disassembler error>")
 
 static void
-ckprefix ()
+ckprefix (void)
 {
   int newrex;
   rex = 0;
@@ -1752,9 +1802,7 @@ ckprefix ()
    prefix byte.  */
 
 static const char *
-prefix_name (pref, sizeflag)
-     int pref;
-     int sizeflag;
+prefix_name (int pref, int sizeflag)
 {
   switch (pref)
     {
@@ -1848,9 +1896,7 @@ static char scale_char;
    print_insn_i386_att and print_insn_i386_intel these functions can
    disappear, and print_insn_i386 be merged into print_insn.  */
 int
-print_insn_i386_att (pc, info)
-     bfd_vma pc;
-     disassemble_info *info;
+print_insn_i386_att (bfd_vma pc, disassemble_info *info)
 {
   intel_syntax = 0;
 
@@ -1858,9 +1904,7 @@ print_insn_i386_att (pc, info)
 }
 
 int
-print_insn_i386_intel (pc, info)
-     bfd_vma pc;
-     disassemble_info *info;
+print_insn_i386_intel (bfd_vma pc, disassemble_info *info)
 {
   intel_syntax = 1;
 
@@ -1868,9 +1912,7 @@ print_insn_i386_intel (pc, info)
 }
 
 int
-print_insn_i386 (pc, info)
-     bfd_vma pc;
-     disassemble_info *info;
+print_insn_i386 (bfd_vma pc, disassemble_info *info)
 {
   intel_syntax = -1;
 
@@ -1878,9 +1920,7 @@ print_insn_i386 (pc, info)
 }
 
 static int
-print_insn (pc, info)
-     bfd_vma pc;
-     disassemble_info *info;
+print_insn (bfd_vma pc, disassemble_info *info)
 {
   const struct dis386 *dp;
   int i;
@@ -1989,7 +2029,7 @@ print_insn (pc, info)
      puts most long word instructions on a single line.  */
   info->bytes_per_line = 7;
 
-  info->private_data = (PTR) &priv;
+  info->private_data = &priv;
   priv.max_fetched = priv.the_buffer;
   priv.insn_start = pc;
 
@@ -2298,7 +2338,7 @@ static const char *float_mem[] = {
   "fidivr{l||l|}",
   /* db */
   "fild{l||l|}",
-  "(bad)",
+  "fisttp{l||l|}",
   "fist{l||l|}",
   "fistp{l||l|}",
   "(bad)",
@@ -2316,7 +2356,7 @@ static const char *float_mem[] = {
   "fdivr{l||l|}",
   /* dd */
   "fld{l||l|}",
-  "(bad)",
+  "fisttpll",
   "fst{l||l|}",
   "fstp{l||l|}",
   "frstor",
@@ -2334,7 +2374,7 @@ static const char *float_mem[] = {
   "fidivr",
   /* df */
   "fild",
-  "(bad)",
+  "fisttp",
   "fist",
   "fistp",
   "fbld",
@@ -2510,8 +2550,7 @@ static char *fgrps[][8] = {
 };
 
 static void
-dofloat (sizeflag)
-     int sizeflag;
+dofloat (int sizeflag)
 {
   const struct dis386 *dp;
   unsigned char floatop;
@@ -2557,17 +2596,13 @@ dofloat (sizeflag)
 }
 
 static void
-OP_ST (bytemode, sizeflag)
-     int bytemode ATTRIBUTE_UNUSED;
-     int sizeflag ATTRIBUTE_UNUSED;
+OP_ST (int bytemode ATTRIBUTE_UNUSED, int sizeflag ATTRIBUTE_UNUSED)
 {
   oappend ("%st");
 }
 
 static void
-OP_STi (bytemode, sizeflag)
-     int bytemode ATTRIBUTE_UNUSED;
-     int sizeflag ATTRIBUTE_UNUSED;
+OP_STi (int bytemode ATTRIBUTE_UNUSED, int sizeflag ATTRIBUTE_UNUSED)
 {
   sprintf (scratchbuf, "%%st(%d)", rm);
   oappend (scratchbuf + intel_syntax);
@@ -2575,9 +2610,7 @@ OP_STi (bytemode, sizeflag)
 
 /* Capital letters in template are macros.  */
 static int
-putop (template, sizeflag)
-     const char *template;
-     int sizeflag;
+putop (const char *template, int sizeflag)
 {
   const char *p;
   int alt;
@@ -2850,15 +2883,14 @@ putop (template, sizeflag)
 }
 
 static void
-oappend (s)
-     const char *s;
+oappend (const char *s)
 {
   strcpy (obufp, s);
   obufp += strlen (s);
 }
 
 static void
-append_seg ()
+append_seg (void)
 {
   if (prefixes & PREFIX_CS)
     {
@@ -2893,9 +2925,7 @@ append_seg ()
 }
 
 static void
-OP_indirE (bytemode, sizeflag)
-     int bytemode;
-     int sizeflag;
+OP_indirE (int bytemode, int sizeflag)
 {
   if (!intel_syntax)
     oappend ("*");
@@ -2903,10 +2933,7 @@ OP_indirE (bytemode, sizeflag)
 }
 
 static void
-print_operand_value (buf, hex, disp)
-  char *buf;
-  int hex;
-  bfd_vma disp;
+print_operand_value (char *buf, int hex, bfd_vma disp)
 {
   if (mode_64bit)
     {
@@ -2963,9 +2990,7 @@ print_operand_value (buf, hex, disp)
 }
 
 static void
-OP_E (bytemode, sizeflag)
-     int bytemode;
-     int sizeflag;
+OP_E (int bytemode, int sizeflag)
 {
   bfd_vma disp;
   int add = 0;
@@ -3016,10 +3041,6 @@ OP_E (bytemode, sizeflag)
 	  used_prefixes |= (prefixes & PREFIX_DATA);
 	  break;
 	case 0:
-	  if (!(codep[-2] == 0xAE && codep[-1] == 0xF8 /* sfence */)
-	      && !(codep[-2] == 0xAE && codep[-1] == 0xF0 /* mfence */)
-	      && !(codep[-2] == 0xAE && codep[-1] == 0xe8 /* lfence */))
-	    BadOp ();	/* bad sfence,lea,lds,les,lfs,lgs,lss modrm */
 	  break;
 	default:
 	  oappend (INTERNAL_DISASSEMBLER_ERROR);
@@ -3155,11 +3176,7 @@ OP_E (bytemode, sizeflag)
 			     ? names64[index] : names32[index]);
 		  oappend (scratchbuf);
 		}
-	      if (!intel_syntax
-		  || (intel_syntax
-		      && bytemode != b_mode
-		      && bytemode != w_mode
-		      && bytemode != v_mode))
+	      if (scale != 0 || (!intel_syntax && index != 4))
 		{
 		  *obufp++ = scale_char;
 		  *obufp = '\0';
@@ -3248,9 +3265,7 @@ OP_E (bytemode, sizeflag)
 }
 
 static void
-OP_G (bytemode, sizeflag)
-     int bytemode;
-     int sizeflag;
+OP_G (int bytemode, int sizeflag)
 {
   int add = 0;
   USED_REX (REX_EXTX);
@@ -3291,7 +3306,7 @@ OP_G (bytemode, sizeflag)
 }
 
 static bfd_vma
-get64 ()
+get64 (void)
 {
   bfd_vma x;
 #ifdef BFD64
@@ -3316,7 +3331,7 @@ get64 ()
 }
 
 static bfd_signed_vma
-get32 ()
+get32 (void)
 {
   bfd_signed_vma x = 0;
 
@@ -3329,7 +3344,7 @@ get32 ()
 }
 
 static bfd_signed_vma
-get32s ()
+get32s (void)
 {
   bfd_signed_vma x = 0;
 
@@ -3345,7 +3360,7 @@ get32s ()
 }
 
 static int
-get16 ()
+get16 (void)
 {
   int x = 0;
 
@@ -3356,9 +3371,7 @@ get16 ()
 }
 
 static void
-set_op (op, riprel)
-     bfd_vma op;
-     int riprel;
+set_op (bfd_vma op, int riprel)
 {
   op_index[op_ad] = op_ad;
   if (mode_64bit)
@@ -3375,9 +3388,7 @@ set_op (op, riprel)
 }
 
 static void
-OP_REG (code, sizeflag)
-     int code;
-     int sizeflag;
+OP_REG (int code, int sizeflag)
 {
   const char *s;
   int add = 0;
@@ -3437,9 +3448,7 @@ OP_REG (code, sizeflag)
 }
 
 static void
-OP_IMREG (code, sizeflag)
-     int code;
-     int sizeflag;
+OP_IMREG (int code, int sizeflag)
 {
   const char *s;
 
@@ -3486,9 +3495,7 @@ OP_IMREG (code, sizeflag)
 }
 
 static void
-OP_I (bytemode, sizeflag)
-     int bytemode;
-     int sizeflag;
+OP_I (int bytemode, int sizeflag)
 {
   bfd_signed_vma op;
   bfd_signed_vma mask = -1;
@@ -3540,9 +3547,7 @@ OP_I (bytemode, sizeflag)
 }
 
 static void
-OP_I64 (bytemode, sizeflag)
-     int bytemode;
-     int sizeflag;
+OP_I64 (int bytemode, int sizeflag)
 {
   bfd_signed_vma op;
   bfd_signed_vma mask = -1;
@@ -3593,9 +3598,7 @@ OP_I64 (bytemode, sizeflag)
 }
 
 static void
-OP_sI (bytemode, sizeflag)
-     int bytemode;
-     int sizeflag;
+OP_sI (int bytemode, int sizeflag)
 {
   bfd_signed_vma op;
   bfd_signed_vma mask = -1;
@@ -3644,9 +3647,7 @@ OP_sI (bytemode, sizeflag)
 }
 
 static void
-OP_J (bytemode, sizeflag)
-     int bytemode;
-     int sizeflag;
+OP_J (int bytemode, int sizeflag)
 {
   bfd_vma disp;
   bfd_vma mask = -1;
@@ -3682,17 +3683,13 @@ OP_J (bytemode, sizeflag)
 }
 
 static void
-OP_SEG (dummy, sizeflag)
-     int dummy ATTRIBUTE_UNUSED;
-     int sizeflag ATTRIBUTE_UNUSED;
+OP_SEG (int dummy ATTRIBUTE_UNUSED, int sizeflag ATTRIBUTE_UNUSED)
 {
   oappend (names_seg[reg]);
 }
 
 static void
-OP_DIR (dummy, sizeflag)
-     int dummy ATTRIBUTE_UNUSED;
-     int sizeflag;
+OP_DIR (int dummy ATTRIBUTE_UNUSED, int sizeflag)
 {
   int seg, offset;
 
@@ -3715,9 +3712,7 @@ OP_DIR (dummy, sizeflag)
 }
 
 static void
-OP_OFF (bytemode, sizeflag)
-     int bytemode ATTRIBUTE_UNUSED;
-     int sizeflag;
+OP_OFF (int bytemode ATTRIBUTE_UNUSED, int sizeflag)
 {
   bfd_vma off;
 
@@ -3742,9 +3737,7 @@ OP_OFF (bytemode, sizeflag)
 }
 
 static void
-OP_OFF64 (bytemode, sizeflag)
-     int bytemode ATTRIBUTE_UNUSED;
-     int sizeflag ATTRIBUTE_UNUSED;
+OP_OFF64 (int bytemode ATTRIBUTE_UNUSED, int sizeflag ATTRIBUTE_UNUSED)
 {
   bfd_vma off;
 
@@ -3772,9 +3765,7 @@ OP_OFF64 (bytemode, sizeflag)
 }
 
 static void
-ptr_reg (code, sizeflag)
-     int code;
-     int sizeflag;
+ptr_reg (int code, int sizeflag)
 {
   const char *s;
   if (intel_syntax)
@@ -3802,18 +3793,14 @@ ptr_reg (code, sizeflag)
 }
 
 static void
-OP_ESreg (code, sizeflag)
-     int code;
-     int sizeflag;
+OP_ESreg (int code, int sizeflag)
 {
   oappend ("%es:" + intel_syntax);
   ptr_reg (code, sizeflag);
 }
 
 static void
-OP_DSreg (code, sizeflag)
-     int code;
-     int sizeflag;
+OP_DSreg (int code, int sizeflag)
 {
   if ((prefixes
        & (PREFIX_CS
@@ -3828,9 +3815,7 @@ OP_DSreg (code, sizeflag)
 }
 
 static void
-OP_C (dummy, sizeflag)
-     int dummy ATTRIBUTE_UNUSED;
-     int sizeflag ATTRIBUTE_UNUSED;
+OP_C (int dummy ATTRIBUTE_UNUSED, int sizeflag ATTRIBUTE_UNUSED)
 {
   int add = 0;
   USED_REX (REX_EXTX);
@@ -3841,9 +3826,7 @@ OP_C (dummy, sizeflag)
 }
 
 static void
-OP_D (dummy, sizeflag)
-     int dummy ATTRIBUTE_UNUSED;
-     int sizeflag ATTRIBUTE_UNUSED;
+OP_D (int dummy ATTRIBUTE_UNUSED, int sizeflag ATTRIBUTE_UNUSED)
 {
   int add = 0;
   USED_REX (REX_EXTX);
@@ -3857,18 +3840,14 @@ OP_D (dummy, sizeflag)
 }
 
 static void
-OP_T (dummy, sizeflag)
-     int dummy ATTRIBUTE_UNUSED;
-     int sizeflag ATTRIBUTE_UNUSED;
+OP_T (int dummy ATTRIBUTE_UNUSED, int sizeflag ATTRIBUTE_UNUSED)
 {
   sprintf (scratchbuf, "%%tr%d", reg);
   oappend (scratchbuf + intel_syntax);
 }
 
 static void
-OP_Rd (bytemode, sizeflag)
-     int bytemode;
-     int sizeflag;
+OP_Rd (int bytemode, int sizeflag)
 {
   if (mod == 3)
     OP_E (bytemode, sizeflag);
@@ -3877,9 +3856,7 @@ OP_Rd (bytemode, sizeflag)
 }
 
 static void
-OP_MMX (bytemode, sizeflag)
-     int bytemode ATTRIBUTE_UNUSED;
-     int sizeflag ATTRIBUTE_UNUSED;
+OP_MMX (int bytemode ATTRIBUTE_UNUSED, int sizeflag ATTRIBUTE_UNUSED)
 {
   int add = 0;
   USED_REX (REX_EXTX);
@@ -3894,9 +3871,7 @@ OP_MMX (bytemode, sizeflag)
 }
 
 static void
-OP_XMM (bytemode, sizeflag)
-     int bytemode ATTRIBUTE_UNUSED;
-     int sizeflag ATTRIBUTE_UNUSED;
+OP_XMM (int bytemode ATTRIBUTE_UNUSED, int sizeflag ATTRIBUTE_UNUSED)
 {
   int add = 0;
   USED_REX (REX_EXTX);
@@ -3907,9 +3882,7 @@ OP_XMM (bytemode, sizeflag)
 }
 
 static void
-OP_EM (bytemode, sizeflag)
-     int bytemode;
-     int sizeflag;
+OP_EM (int bytemode, int sizeflag)
 {
   int add = 0;
   if (mod != 3)
@@ -3933,9 +3906,7 @@ OP_EM (bytemode, sizeflag)
 }
 
 static void
-OP_EX (bytemode, sizeflag)
-     int bytemode;
-     int sizeflag;
+OP_EX (int bytemode, int sizeflag)
 {
   int add = 0;
   if (mod != 3)
@@ -3955,9 +3926,7 @@ OP_EX (bytemode, sizeflag)
 }
 
 static void
-OP_MS (bytemode, sizeflag)
-     int bytemode;
-     int sizeflag;
+OP_MS (int bytemode, int sizeflag)
 {
   if (mod == 3)
     OP_EM (bytemode, sizeflag);
@@ -3966,9 +3935,7 @@ OP_MS (bytemode, sizeflag)
 }
 
 static void
-OP_XS (bytemode, sizeflag)
-     int bytemode;
-     int sizeflag;
+OP_XS (int bytemode, int sizeflag)
 {
   if (mod == 3)
     OP_EX (bytemode, sizeflag);
@@ -3976,26 +3943,45 @@ OP_XS (bytemode, sizeflag)
     BadOp ();
 }
 
-static struct {
-     unsigned char opc;
-     char *name;
-} xcrypt[] = {
-  {  0xc0, "xstore-rng" },
-  {  0xc8, "xcrypt-ecb" },
-  {  0xd0, "xcrypt-cbc" },
-  {  0xd8, "xcrypt-ctr" },
-  {  0xe0, "xcrypt-cfb" },
-  {  0xe8, "xcrypt-ofb" },
-};
+static void
+OP_M (int bytemode, int sizeflag)
+{
+  if (mod == 3)
+    BadOp ();	/* bad lea,lds,les,lfs,lgs,lss modrm */
+  else
+    OP_E (bytemode, sizeflag);
+}
 
-static struct {
-     unsigned char opc;
-     char *name;
-} xcrypt2[] = {
-  {  0xc0, "montmul" },
-  {  0xc8, "xsha1" },
-  {  0xd0, "xsha256" },
-};
+static void
+OP_0fae (int bytemode, int sizeflag)
+{
+  if (mod == 3)
+    {
+      if (reg == 7)
+	strcpy (obuf + strlen (obuf) - sizeof ("clflush") + 1, "sfence");
+
+      if (reg < 5 || rm != 0)
+	{
+	  BadOp ();	/* bad sfence, mfence, or lfence */
+	  return;
+	}
+    }
+  else if (reg != 7)
+    {
+      BadOp ();		/* bad clflush */
+      return;
+    }
+
+  OP_E (bytemode, sizeflag);
+}
+
+static void
+NOP_Fixup (int bytemode ATTRIBUTE_UNUSED, int sizeflag ATTRIBUTE_UNUSED)
+{
+  /* NOP with REPZ prefix is called PAUSE.  */
+  if (prefixes == PREFIX_REPZ)
+    strcpy (obuf, "pause");
+}
 
 static const char *const Suffix3DNow[] = {
 /* 00 */	NULL,		NULL,		NULL,		NULL,
@@ -4065,9 +4051,7 @@ static const char *const Suffix3DNow[] = {
 };
 
 static void
-OP_3DNowSuffix (bytemode, sizeflag)
-     int bytemode ATTRIBUTE_UNUSED;
-     int sizeflag ATTRIBUTE_UNUSED;
+OP_3DNowSuffix (int bytemode ATTRIBUTE_UNUSED, int sizeflag ATTRIBUTE_UNUSED)
 {
   const char *mnemonic;
 
@@ -4090,6 +4074,134 @@ OP_3DNowSuffix (bytemode, sizeflag)
       BadOp ();
     }
 }
+
+static const char *simd_cmp_op[] = {
+  "eq",
+  "lt",
+  "le",
+  "unord",
+  "neq",
+  "nlt",
+  "nle",
+  "ord"
+};
+
+static void
+OP_SIMD_Suffix (int bytemode ATTRIBUTE_UNUSED, int sizeflag ATTRIBUTE_UNUSED)
+{
+  unsigned int cmp_type;
+
+  FETCH_DATA (the_info, codep + 1);
+  obufp = obuf + strlen (obuf);
+  cmp_type = *codep++ & 0xff;
+  if (cmp_type < 8)
+    {
+      char suffix1 = 'p', suffix2 = 's';
+      used_prefixes |= (prefixes & PREFIX_REPZ);
+      if (prefixes & PREFIX_REPZ)
+	suffix1 = 's';
+      else
+	{
+	  used_prefixes |= (prefixes & PREFIX_DATA);
+	  if (prefixes & PREFIX_DATA)
+	    suffix2 = 'd';
+	  else
+	    {
+	      used_prefixes |= (prefixes & PREFIX_REPNZ);
+	      if (prefixes & PREFIX_REPNZ)
+		suffix1 = 's', suffix2 = 'd';
+	    }
+	}
+      sprintf (scratchbuf, "cmp%s%c%c",
+	       simd_cmp_op[cmp_type], suffix1, suffix2);
+      used_prefixes |= (prefixes & PREFIX_REPZ);
+      oappend (scratchbuf);
+    }
+  else
+    {
+      /* We have a bad extension byte.  Clean up.  */
+      op1out[0] = '\0';
+      op2out[0] = '\0';
+      BadOp ();
+    }
+}
+
+static void
+SIMD_Fixup (int extrachar, int sizeflag ATTRIBUTE_UNUSED)
+{
+  /* Change movlps/movhps to movhlps/movlhps for 2 register operand
+     forms of these instructions.  */
+  if (mod == 3)
+    {
+      char *p = obuf + strlen (obuf);
+      *(p + 1) = '\0';
+      *p       = *(p - 1);
+      *(p - 1) = *(p - 2);
+      *(p - 2) = *(p - 3);
+      *(p - 3) = extrachar;
+    }
+}
+
+static void
+PNI_Fixup (int extrachar ATTRIBUTE_UNUSED, int sizeflag)
+{
+  if (mod == 3 && reg == 1)
+    {
+      char *p = obuf + strlen (obuf);
+
+      /* Override "sidt".  */
+      if (rm)
+	{
+	  /* mwait %eax,%ecx  */
+	  strcpy (p - 4, "mwait   %eax,%ecx");
+	}
+      else
+	{
+	  /* monitor %eax,%ecx,%edx"  */
+	  strcpy (p - 4, "monitor %eax,%ecx,%edx");
+	}
+
+      codep++;
+    }
+  else
+    OP_E (0, sizeflag);
+}
+
+static void
+INVLPG_Fixup (int bytemode, int sizeflag)
+{
+  if (*codep == 0xf8)
+    {
+      char *p = obuf + strlen (obuf);
+
+      /* Override "invlpg".  */
+      strcpy (p - 6, "swapgs");
+      codep++;
+    }
+  else
+    OP_E (bytemode, sizeflag);
+}
+
+static struct {
+     unsigned char opc;
+     char *name;
+} xcrypt[] = {
+  {  0xc0, "xstore-rng" },
+  {  0xc8, "xcrypt-ecb" },
+  {  0xd0, "xcrypt-cbc" },
+  {  0xd8, "xcrypt-ctr" },
+  {  0xe0, "xcrypt-cfb" },
+  {  0xe8, "xcrypt-ofb" },
+};
+
+static struct {
+     unsigned char opc;
+     char *name;
+} xcrypt2[] = {
+  {  0xc0, "montmul" },
+  {  0xc8, "xsha1" },
+  {  0xd0, "xsha256" },
+};
 
 static void
 OP_xcrypt (bytemode, sizeflag)
@@ -4137,78 +4249,7 @@ OP_xcrypt2 (bytemode, sizeflag)
     oappend (mnemonic);
   else
     BadOp();
-}
-
-static const char *simd_cmp_op[] = {
-  "eq",
-  "lt",
-  "le",
-  "unord",
-  "neq",
-  "nlt",
-  "nle",
-  "ord"
-};
-
-static void
-OP_SIMD_Suffix (bytemode, sizeflag)
-     int bytemode ATTRIBUTE_UNUSED;
-     int sizeflag ATTRIBUTE_UNUSED;
-{
-  unsigned int cmp_type;
-
-  FETCH_DATA (the_info, codep + 1);
-  obufp = obuf + strlen (obuf);
-  cmp_type = *codep++ & 0xff;
-  if (cmp_type < 8)
-    {
-      char suffix1 = 'p', suffix2 = 's';
-      used_prefixes |= (prefixes & PREFIX_REPZ);
-      if (prefixes & PREFIX_REPZ)
-	suffix1 = 's';
-      else
-	{
-	  used_prefixes |= (prefixes & PREFIX_DATA);
-	  if (prefixes & PREFIX_DATA)
-	    suffix2 = 'd';
-	  else
-	    {
-	      used_prefixes |= (prefixes & PREFIX_REPNZ);
-	      if (prefixes & PREFIX_REPNZ)
-		suffix1 = 's', suffix2 = 'd';
-	    }
-	}
-      sprintf (scratchbuf, "cmp%s%c%c",
-	       simd_cmp_op[cmp_type], suffix1, suffix2);
-      used_prefixes |= (prefixes & PREFIX_REPZ);
-      oappend (scratchbuf);
-    }
-  else
-    {
-      /* We have a bad extension byte.  Clean up.  */
-      op1out[0] = '\0';
-      op2out[0] = '\0';
-      BadOp ();
-    }
-}
-
-static void
-SIMD_Fixup (extrachar, sizeflag)
-     int extrachar;
-     int sizeflag ATTRIBUTE_UNUSED;
-{
-  /* Change movlps/movhps to movhlps/movlhps for 2 register operand
-     forms of these instructions.  */
-  if (mod == 3)
-    {
-      char *p = obuf + strlen (obuf);
-      *(p + 1) = '\0';
-      *p       = *(p - 1);
-      *(p - 1) = *(p - 2);
-      *(p - 2) = *(p - 3);
-      *(p - 3) = extrachar;
-    }
-}
+ }
 
 static void
 BadOp (void)

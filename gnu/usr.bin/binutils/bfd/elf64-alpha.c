@@ -1,5 +1,5 @@
 /* Alpha specific support for 64-bit ELF
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003
+   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004
    Free Software Foundation, Inc.
    Contributed by Richard Henderson <rth@tamu.edu>.
 
@@ -47,7 +47,7 @@
 #define ECOFF_64
 #include "ecoffswap.h"
 
-static int alpha_elf_dynamic_symbol_p
+static bfd_boolean alpha_elf_dynamic_symbol_p
   PARAMS ((struct elf_link_hash_entry *, struct bfd_link_info *));
 static struct bfd_hash_entry * elf64_alpha_link_hash_newfunc
   PARAMS ((struct bfd_hash_entry *, struct bfd_hash_table *, const char *));
@@ -123,7 +123,7 @@ static bfd_boolean elf64_alpha_size_rela_got_section
 static bfd_boolean elf64_alpha_size_rela_got_1
   PARAMS ((struct alpha_elf_link_hash_entry *, struct bfd_link_info *));
 static bfd_boolean elf64_alpha_add_symbol_hook
-  PARAMS ((bfd *, struct bfd_link_info *, const Elf_Internal_Sym *,
+  PARAMS ((bfd *, struct bfd_link_info *, Elf_Internal_Sym *,
 	   const char **, flagword *, asection **, bfd_vma *));
 static struct alpha_elf_got_entry *get_got_entry
   PARAMS ((bfd *, struct alpha_elf_link_hash_entry *, unsigned long,
@@ -269,49 +269,17 @@ struct alpha_elf_link_hash_table
 #define alpha_elf_sym_hashes(abfd) \
   ((struct alpha_elf_link_hash_entry **)elf_sym_hashes(abfd))
 
-/* Should we do dynamic things to this symbol?  */
+/* Should we do dynamic things to this symbol?  This differs from the 
+   generic version in that we never need to consider function pointer
+   equality wrt PLT entries -- we don't create a PLT entry if a symbol's
+   address is ever taken.  */
 
-static int
+static inline bfd_boolean
 alpha_elf_dynamic_symbol_p (h, info)
      struct elf_link_hash_entry *h;
      struct bfd_link_info *info;
 {
-  if (h == NULL)
-    return FALSE;
-
-  while (h->root.type == bfd_link_hash_indirect
-	 || h->root.type == bfd_link_hash_warning)
-    h = (struct elf_link_hash_entry *) h->root.u.i.link;
-
-  if (h->dynindx == -1)
-    return FALSE;
-
-  if (h->root.type == bfd_link_hash_undefweak
-      || h->root.type == bfd_link_hash_defweak)
-    return TRUE;
-
-  switch (ELF_ST_VISIBILITY (h->other))
-    {
-    case STV_DEFAULT:
-      break;
-    case STV_HIDDEN:
-    case STV_INTERNAL:
-      return FALSE;
-    case STV_PROTECTED:
-      if (h->elf_link_hash_flags & ELF_LINK_HASH_DEF_REGULAR)
-        return FALSE;
-      break;
-    }
-
-  if ((info->shared && !info->symbolic)
-      || ((h->elf_link_hash_flags
-	   & (ELF_LINK_HASH_DEF_DYNAMIC
-	      | ELF_LINK_HASH_DEF_REGULAR
-	      | ELF_LINK_HASH_REF_REGULAR))
-	  == (ELF_LINK_HASH_DEF_DYNAMIC | ELF_LINK_HASH_REF_REGULAR)))
-    return TRUE;
-
-  return FALSE;
+  return _bfd_elf_dynamic_symbol_p (h, info, 0);
 }
 
 /* Create an entry in a Alpha ELF linker hash table.  */
@@ -425,15 +393,6 @@ static bfd_boolean
 elf64_alpha_object_p (abfd)
      bfd *abfd;
 {
-  /* Allocate our special target data.  */
-  struct alpha_elf_obj_tdata *new_tdata;
-  bfd_size_type amt = sizeof (struct alpha_elf_obj_tdata);
-  new_tdata = bfd_zalloc (abfd, amt);
-  if (new_tdata == NULL)
-    return FALSE;
-  new_tdata->root = *abfd->tdata.elf_obj_data;
-  abfd->tdata.any = new_tdata;
-
   /* Set the right machine number for an Alpha ELF file.  */
   return bfd_default_set_arch_mach (abfd, bfd_arch_alpha, 0);
 }
@@ -1190,13 +1149,15 @@ elf64_alpha_info_to_howto (abfd, cache_ptr, dst)
   (r_type == R_ALPHA_TLSGD || r_type == R_ALPHA_TLSLDM ? 16 : 8)
 
 /* This is PT_TLS segment p_vaddr.  */
-#define alpha_get_dtprel_base(tlss) \
-  ((tlss)->start)
+#define alpha_get_dtprel_base(info) \
+  (elf_hash_table (info)->tls_sec->vma)
 
 /* Main program TLS (whose template starts at PT_TLS p_vaddr)
    is assigned offset round(16, PT_TLS p_align).  */
-#define alpha_get_tprel_base(tlss) \
-  ((tlss)->start - align_power ((bfd_vma) 16, (tlss)->align))
+#define alpha_get_tprel_base(info) \
+  (elf_hash_table (info)->tls_sec->vma					\
+   - align_power ((bfd_vma) 16,						\
+		  elf_hash_table (info)->tls_sec->alignment_power))
 
 /* These functions do relaxation for Alpha ELF.
 
@@ -1230,7 +1191,6 @@ struct alpha_relax_info
   Elf_Internal_Shdr *symtab_hdr;
   Elf_Internal_Rela *relocs, *relend;
   struct bfd_link_info *link_info;
-  struct elf_link_tls_segment *tls_segment;
   bfd_vma gp;
   bfd *gotobj;
   asection *tsec;
@@ -1256,8 +1216,6 @@ static bfd_boolean elf64_alpha_relax_gprelhilo
 static bfd_boolean elf64_alpha_relax_tls_get_addr
   PARAMS((struct alpha_relax_info *info, bfd_vma symval,
           Elf_Internal_Rela *irel, bfd_boolean));
-static struct elf_link_tls_segment *elf64_alpha_relax_find_tls_segment
-  PARAMS((struct alpha_relax_info *, struct elf_link_tls_segment *));
 static bfd_boolean elf64_alpha_relax_section
   PARAMS((bfd *abfd, asection *sec, struct bfd_link_info *link_info,
 	  bfd_boolean *again));
@@ -1556,7 +1514,7 @@ elf64_alpha_relax_opt_call (info, symval)
 	}
       else
 	{
-	  tsec_relocs = (_bfd_elf64_link_read_relocs
+	  tsec_relocs = (_bfd_elf_link_read_relocs
 		         (info->abfd, info->tsec, (PTR) NULL,
 			 (Elf_Internal_Rela *) NULL,
 			 info->link_info->keep_memory));
@@ -1630,9 +1588,9 @@ elf64_alpha_relax_got_load (info, symval, irel, r_type)
     {
       bfd_vma dtp_base, tp_base;
 
-      BFD_ASSERT (info->tls_segment != NULL);
-      dtp_base = alpha_get_dtprel_base (info->tls_segment);
-      tp_base = alpha_get_tprel_base (info->tls_segment);
+      BFD_ASSERT (elf_hash_table (info->link_info)->tls_sec != NULL);
+      dtp_base = alpha_get_dtprel_base (info->link_info);
+      tp_base = alpha_get_tprel_base (info->link_info);
       disp = symval - (r_type == R_ALPHA_GOTDTPREL ? dtp_base : tp_base);
     }
 
@@ -1877,8 +1835,8 @@ elf64_alpha_relax_tls_get_addr (info, symval, irel, is_gd)
 	bfd_vma tp_base;
 	bfd_signed_vma disp;
 
-	BFD_ASSERT (info->tls_segment != NULL);
-	tp_base = alpha_get_tprel_base (info->tls_segment);
+	BFD_ASSERT (elf_hash_table (info->link_info)->tls_sec != NULL);
+	tp_base = alpha_get_tprel_base (info->link_info);
 	disp = symval - tp_base;
 
 	if (disp >= -0x8000 && disp < 0x8000)
@@ -1993,53 +1951,6 @@ elf64_alpha_relax_tls_get_addr (info, symval, irel, is_gd)
   return TRUE;
 }
 
-static struct elf_link_tls_segment *
-elf64_alpha_relax_find_tls_segment (info, seg)
-     struct alpha_relax_info *info;
-     struct elf_link_tls_segment *seg;
-{
-  bfd *output_bfd = info->sec->output_section->owner;
-  asection *o;
-  unsigned int align;
-  bfd_vma base, end;
-
-  for (o = output_bfd->sections; o ; o = o->next)
-    if ((o->flags & SEC_THREAD_LOCAL) != 0
-        && (o->flags & SEC_LOAD) != 0)
-      break;
-  if (!o)
-    return NULL;
-
-  base = o->vma;
-  align = 0;
-
-  do
-    {
-      bfd_vma size;
-
-      if (bfd_get_section_alignment (output_bfd, o) > align)
-	align = bfd_get_section_alignment (output_bfd, o);
-
-      size = o->_raw_size;
-      if (size == 0 && (o->flags & SEC_HAS_CONTENTS) == 0)
-	{
-	  struct bfd_link_order *lo;
-	  for (lo = o->link_order_head; lo ; lo = lo->next)
-	    if (size < lo->offset + lo->size)
-	      size = lo->offset + lo->size;
-	}
-      end = o->vma + size;
-      o = o->next;
-    }
-  while (o && (o->flags & SEC_THREAD_LOCAL));
-
-  seg->start = base;
-  seg->size = end - base;
-  seg->align = align;
-
-  return seg;
-}
-
 static bfd_boolean
 elf64_alpha_relax_section (abfd, sec, link_info, again)
      bfd *abfd;
@@ -2053,12 +1964,11 @@ elf64_alpha_relax_section (abfd, sec, link_info, again)
   Elf_Internal_Sym *isymbuf = NULL;
   struct alpha_elf_got_entry **local_got_entries;
   struct alpha_relax_info info;
-  struct elf_link_tls_segment tls_segment;
 
   /* We are not currently changing any sizes, so only one pass.  */
   *again = FALSE;
 
-  if (link_info->relocateable
+  if (link_info->relocatable
       || (sec->flags & SEC_RELOC) == 0
       || sec->reloc_count == 0)
     return TRUE;
@@ -2072,7 +1982,7 @@ elf64_alpha_relax_section (abfd, sec, link_info, again)
   local_got_entries = alpha_elf_tdata(abfd)->local_got_entries;
 
   /* Load the relocations for this section.  */
-  internal_relocs = (_bfd_elf64_link_read_relocs
+  internal_relocs = (_bfd_elf_link_read_relocs
 		     (abfd, sec, (PTR) NULL, (Elf_Internal_Rela *) NULL,
 		      link_info->keep_memory));
   if (internal_relocs == NULL)
@@ -2110,11 +2020,6 @@ elf64_alpha_relax_section (abfd, sec, link_info, again)
 				      (file_ptr) 0, sec->_raw_size))
 	goto error_return;
     }
-
-  /* Compute the TLS segment information.  The version normally found in
-     elf_hash_table (link_info)->tls_segment isn't built until final_link.
-     ??? Probably should look into extracting this into a common function.  */
-  info.tls_segment = elf64_alpha_relax_find_tls_segment (&info, &tls_segment);
 
   for (irel = internal_relocs; irel < irelend; irel++)
     {
@@ -2169,7 +2074,7 @@ elf64_alpha_relax_section (abfd, sec, link_info, again)
 	  if (r_type == R_ALPHA_TLSLDM)
 	    {
 	      info.tsec = bfd_abs_section_ptr;
-	      symval = alpha_get_tprel_base (info.tls_segment);
+	      symval = alpha_get_tprel_base (info.link_info);
 	    }
 	  else
 	    {
@@ -2458,14 +2363,14 @@ static bfd_boolean
 elf64_alpha_add_symbol_hook (abfd, info, sym, namep, flagsp, secp, valp)
      bfd *abfd;
      struct bfd_link_info *info;
-     const Elf_Internal_Sym *sym;
+     Elf_Internal_Sym *sym;
      const char **namep ATTRIBUTE_UNUSED;
      flagword *flagsp ATTRIBUTE_UNUSED;
      asection **secp;
      bfd_vma *valp;
 {
   if (sym->st_shndx == SHN_COMMON
-      && !info->relocateable
+      && !info->relocatable
       && sym->st_size <= elf_gp_size (abfd))
     {
       /* Common symbols less than or equal to -G nn bytes are
@@ -2499,8 +2404,13 @@ elf64_alpha_create_got_section(abfd, info)
 {
   asection *s;
 
-  if (bfd_get_section_by_name (abfd, ".got"))
-    return TRUE;
+  if ((s = bfd_get_section_by_name (abfd, ".got")))
+    {
+      /* Check for a non-linker created .got?  */
+      if (alpha_elf_tdata (abfd)->got == NULL)
+	alpha_elf_tdata (abfd)->got = s;
+      return TRUE;
+    }
 
   s = bfd_make_section (abfd, ".got");
   if (s == NULL
@@ -2552,7 +2462,7 @@ elf64_alpha_create_dynamic_sections (abfd, info)
   h->type = STT_OBJECT;
 
   if (info->shared
-      && ! _bfd_elf_link_record_dynamic_symbol (info, h))
+      && ! bfd_elf_link_record_dynamic_symbol (info, h))
     return FALSE;
 
   s = bfd_make_section (abfd, ".rela.plt");
@@ -2596,7 +2506,7 @@ elf64_alpha_create_dynamic_sections (abfd, info)
   h->type = STT_OBJECT;
 
   if (info->shared
-      && ! _bfd_elf_link_record_dynamic_symbol (info, h))
+      && ! bfd_elf_link_record_dynamic_symbol (info, h))
     return FALSE;
 
   elf_hash_table (info)->hgot = h;
@@ -3057,7 +2967,7 @@ elf64_alpha_check_relocs (abfd, info, sec, relocs)
   bfd_boolean got_created;
   bfd_size_type amt;
 
-  if (info->relocateable)
+  if (info->relocatable)
     return TRUE;
 
   dynobj = elf_hash_table(info)->dynobj;
@@ -3106,7 +3016,7 @@ elf64_alpha_check_relocs (abfd, info, sec, relocs)
          this may help reduce memory usage and processing time later.  */
       maybe_dynamic = FALSE;
       if (h && ((info->shared
-		 && (!info->symbolic || info->allow_shlib_undefined))
+		 && (!info->symbolic || info->unresolved_syms_in_shared_libs == RM_IGNORE))
 		|| ! (h->root.elf_link_hash_flags & ELF_LINK_HASH_DEF_REGULAR)
 		|| h->root.root.type == bfd_link_hash_defweak))
         maybe_dynamic = TRUE;
@@ -3637,6 +3547,7 @@ elf64_alpha_calc_got_offsets_for_symbol (h, arg)
      struct alpha_elf_link_hash_entry *h;
      PTR arg ATTRIBUTE_UNUSED;
 {
+  bfd_boolean result = TRUE;
   struct alpha_elf_got_entry *gotent;
 
   if (h->root.root.type == bfd_link_hash_warning)
@@ -3645,14 +3556,23 @@ elf64_alpha_calc_got_offsets_for_symbol (h, arg)
   for (gotent = h->got_entries; gotent; gotent = gotent->next)
     if (gotent->use_count > 0)
       {
-	bfd_size_type *plge
-	  = &alpha_elf_tdata (gotent->gotobj)->got->_raw_size;
+	struct alpha_elf_obj_tdata *td;
+	bfd_size_type *plge;
 
+	td = alpha_elf_tdata (gotent->gotobj);
+	if (td == NULL)
+	  {
+	    _bfd_error_handler (_("Symbol %s has no GOT subsection for offset 0x%x"),
+				h->root.root.root.string, gotent->got_offset);
+	    result = FALSE;
+	    continue;
+	  }
+	plge = &td->got->_raw_size;
 	gotent->got_offset = *plge;
 	*plge += alpha_got_entry_size (gotent->reloc_type);
       }
 
-  return TRUE;
+  return result;
 }
 
 static void
@@ -3721,7 +3641,7 @@ elf64_alpha_size_got_sections (info)
 	  if (this_got == NULL)
 	    continue;
 
-	  /* We are assuming no merging has yet ocurred.  */
+	  /* We are assuming no merging has yet occurred.  */
 	  BFD_ASSERT (this_got == i);
 
           if (alpha_elf_tdata (this_got)->total_got_size > MAX_GOT_SIZE)
@@ -3863,7 +3783,7 @@ elf64_alpha_always_size_sections (output_bfd, info)
 {
   bfd *i;
 
-  if (info->relocateable)
+  if (info->relocatable)
     return TRUE;
 
   /* First, take care of the indirect symbols created by versioning.  */
@@ -4090,7 +4010,7 @@ elf64_alpha_size_dynamic_sections (output_bfd, info)
   if (elf_hash_table (info)->dynamic_sections_created)
     {
       /* Set the contents of the .interp section to the interpreter.  */
-      if (!info->shared)
+      if (info->executable)
 	{
 	  s = bfd_get_section_by_name (dynobj, ".interp");
 	  BFD_ASSERT (s != NULL);
@@ -4174,9 +4094,9 @@ elf64_alpha_size_dynamic_sections (output_bfd, info)
 	 the .dynamic section.  The DT_DEBUG entry is filled in by the
 	 dynamic linker and used by the debugger.  */
 #define add_dynamic_entry(TAG, VAL) \
-  bfd_elf64_add_dynamic_entry (info, (bfd_vma) (TAG), (bfd_vma) (VAL))
+  _bfd_elf_add_dynamic_entry (info, TAG, VAL)
 
-      if (!info->shared)
+      if (info->executable)
 	{
 	  if (!add_dynamic_entry (DT_DEBUG, 0))
 	    return FALSE;
@@ -4321,7 +4241,6 @@ elf64_alpha_relocate_section (output_bfd, info, input_bfd, input_section,
   Elf_Internal_Shdr *symtab_hdr;
   Elf_Internal_Rela *rel;
   Elf_Internal_Rela *relend;
-  struct elf_link_tls_segment *tls_segment;
   asection *sgot, *srel, *srelgot;
   bfd *dynobj, *gotobj;
   bfd_vma gp, tp_base, dtp_base;
@@ -4330,7 +4249,7 @@ elf64_alpha_relocate_section (output_bfd, info, input_bfd, input_section,
   const char *section_name;
 
   /* Handle relocatable links with a smaller loop.  */
-  if (info->relocateable)
+  if (info->relocatable)
     return elf64_alpha_relocate_section_r (output_bfd, info, input_bfd,
 					   input_section, contents, relocs,
 					   local_syms, local_sections);
@@ -4375,11 +4294,10 @@ elf64_alpha_relocate_section (output_bfd, info, input_bfd, input_section,
 
   local_got_entries = alpha_elf_tdata(input_bfd)->local_got_entries;
 
-  tls_segment = elf_hash_table (info)->tls_segment;
-  if (tls_segment)
+  if (elf_hash_table (info)->tls_sec != NULL)
     {
-      dtp_base = alpha_get_dtprel_base (tls_segment);
-      tp_base = alpha_get_tprel_base (tls_segment);
+      dtp_base = alpha_get_dtprel_base (info);
+      tp_base = alpha_get_tprel_base (info);
     }
   else
     dtp_base = tp_base = 0;
@@ -4421,9 +4339,11 @@ elf64_alpha_relocate_section (output_bfd, info, input_bfd, input_section,
 
       if (r_symndx < symtab_hdr->sh_info)
 	{
+	  asection *msec;
 	  sym = local_syms + r_symndx;
 	  sec = local_sections[r_symndx];
-	  value = _bfd_elf_rela_local_sym (output_bfd, sym, sec, rel);
+	  msec = sec;
+	  value = _bfd_elf_rela_local_sym (output_bfd, sym, &msec, rel);
 
 	  /* If this is a tp-relative relocation against sym 0,
 	     this is hackery from relax_section.  Force the value to
@@ -4451,7 +4371,6 @@ elf64_alpha_relocate_section (output_bfd, info, input_bfd, input_section,
 	      && !gotent->reloc_xlated)
 	    {
 	      struct alpha_elf_got_entry *ent;
-	      asection *msec;
 
 	      for (ent = gotent; ent; ent = ent->next)
 		{
@@ -4477,48 +4396,25 @@ elf64_alpha_relocate_section (output_bfd, info, input_bfd, input_section,
 	}
       else
 	{
-	  h = alpha_elf_sym_hashes (input_bfd)[r_symndx - symtab_hdr->sh_info];
+	  bfd_boolean warned;
+	  bfd_boolean unresolved_reloc;
+	  struct elf_link_hash_entry *hh;
+	  struct elf_link_hash_entry **sym_hashes = elf_sym_hashes (input_bfd);
 
-	  while (h->root.root.type == bfd_link_hash_indirect
-		 || h->root.root.type == bfd_link_hash_warning)
-	    h = (struct alpha_elf_link_hash_entry *)h->root.root.u.i.link;
+	  RELOC_FOR_GLOBAL_SYMBOL (info, input_bfd, input_section, rel,
+				   r_symndx, symtab_hdr, sym_hashes,
+				   hh, sec, value,
+				   unresolved_reloc, warned);
 
-	  value = 0;
-	  if (h->root.root.type == bfd_link_hash_defined
-	      || h->root.root.type == bfd_link_hash_defweak)
-	    {
-	      sec = h->root.root.u.def.section;
+	  if (warned)
+	    continue;
 
-	      /* Detect the cases that sym_sec->output_section is
-		 expected to be NULL -- all cases in which the symbol
-		 is defined in another shared module.  This includes
-		 PLT relocs for which we've created a PLT entry and
-		 other relocs for which we're prepared to create
-		 dynamic relocations.  */
-	      /* ??? Just accept it NULL and continue.  */
-
-	      if (sec->output_section != NULL)
-		value = (h->root.root.u.def.value
-			 + sec->output_section->vma
-			      + sec->output_offset);
-	    }
-	  else if (h->root.root.type == bfd_link_hash_undefweak)
+	  if (value == 0
+	      && ! unresolved_reloc
+	      && hh->root.type == bfd_link_hash_undefweak)
 	    undef_weak_ref = TRUE;
-	  else if (info->shared
-		   && !info->no_undefined
-		   && ELF_ST_VISIBILITY (h->root.other) == STV_DEFAULT)
-	    ;
-	  else
-	    {
-	      if (!((*info->callbacks->undefined_symbol)
-		    (info, h->root.root.root.string, input_bfd,
-		     input_section, rel->r_offset,
-		     (!info->shared || info->no_undefined
-		      || ELF_ST_VISIBILITY (h->root.other)))))
-		return FALSE;
-	      continue;
-	    }
 
+	  h = (struct alpha_elf_link_hash_entry *) hh;
           dynamic_symbol_p = alpha_elf_dynamic_symbol_p (&h->root, info);
 	  gotent = h->got_entries;
 	}
@@ -4724,13 +4620,13 @@ elf64_alpha_relocate_section (output_bfd, info, input_bfd, input_section,
 	      }
 	    else if (r_type == R_ALPHA_DTPREL64)
 	      {
-		BFD_ASSERT(tls_segment != NULL);
+		BFD_ASSERT (elf_hash_table (info)->tls_sec != NULL);
 		value -= dtp_base;
 		goto default_reloc;
 	      }
 	    else if (r_type == R_ALPHA_TPREL64)
 	      {
-		BFD_ASSERT(tls_segment != NULL);
+		BFD_ASSERT (elf_hash_table (info)->tls_sec != NULL);
 		if (!info->shared)
 		  {
 		    value -= tp_base;
@@ -4810,7 +4706,7 @@ elf64_alpha_relocate_section (output_bfd, info, input_bfd, input_section,
 		value = 0;
 	      else
 		{
-		  BFD_ASSERT(tls_segment != NULL);
+		  BFD_ASSERT (elf_hash_table (info)->tls_sec != NULL);
 	          value -= dtp_base;
 		}
 	      bfd_put_64 (output_bfd, value,
@@ -4833,7 +4729,7 @@ elf64_alpha_relocate_section (output_bfd, info, input_bfd, input_section,
                  bfd_archive_filename (input_bfd), h->root.root.root.string);
               ret_val = FALSE;
             }
-	  BFD_ASSERT(tls_segment != NULL);
+	  BFD_ASSERT (elf_hash_table (info)->tls_sec != NULL);
 	  value -= dtp_base;
 	  if (r_type == R_ALPHA_DTPRELHI)
 	    value = ((bfd_signed_vma) value >> 16) + ((value >> 15) & 1);
@@ -4856,7 +4752,7 @@ elf64_alpha_relocate_section (output_bfd, info, input_bfd, input_section,
                  bfd_archive_filename (input_bfd), h->root.root.root.string);
               ret_val = FALSE;
             }
-	  BFD_ASSERT(tls_segment != NULL);
+	  BFD_ASSERT (elf_hash_table (info)->tls_sec != NULL);
 	  value -= tp_base;
 	  if (r_type == R_ALPHA_TPRELHI)
 	    value = ((bfd_signed_vma) value >> 16) + ((value >> 15) & 1);
@@ -4877,7 +4773,7 @@ elf64_alpha_relocate_section (output_bfd, info, input_bfd, input_section,
 		value = 0;
 	      else
 		{
-		  BFD_ASSERT(tls_segment != NULL);
+		  BFD_ASSERT (elf_hash_table (info)->tls_sec != NULL);
 		  if (r_type == R_ALPHA_GOTDTPREL)
 		    value -= dtp_base;
 		  else if (!info->shared)
@@ -5439,7 +5335,7 @@ elf64_alpha_final_link (abfd, info)
     }
 
   /* Invoke the regular ELF backend linker to do all the work.  */
-  if (! bfd_elf64_bfd_final_link (abfd, info))
+  if (! bfd_elf_final_link (abfd, info))
     return FALSE;
 
   /* Now write out the computed sections.  */
@@ -5497,6 +5393,13 @@ elf64_alpha_reloc_type_class (rela)
     }
 }
 
+static struct bfd_elf_special_section const elf64_alpha_special_sections[]=
+{
+  { ".sdata", 6, -2, SHT_PROGBITS, SHF_ALLOC + SHF_WRITE + SHF_ALPHA_GPREL },
+  { ".sbss",  5, -2, SHT_NOBITS,   SHF_ALLOC + SHF_WRITE + SHF_ALPHA_GPREL },
+  { NULL,     0,  0, 0,            0 }
+};
+
 /* ECOFF swapping routines.  These are used when dealing with the
    .mdebug section, which is in the ECOFF debugging format.  Copied
    from elf32-mips.c.  */
@@ -5556,7 +5459,7 @@ static const struct elf_size_info alpha_elf_size_info =
   sizeof (Elf_External_Note),
   8,
   1,
-  64, 8,
+  64, 3,
   ELFCLASS64, EV_CURRENT,
   bfd_elf64_write_out_phdrs,
   bfd_elf64_write_shdrs_and_ehdr,
@@ -5635,12 +5538,14 @@ static const struct elf_size_info alpha_elf_size_info =
 #define elf_backend_size_info \
   alpha_elf_size_info
 
+#define elf_backend_special_sections \
+  elf64_alpha_special_sections
+
 /* A few constants that determine how the .plt section is set up.  */
 #define elf_backend_want_got_plt 0
 #define elf_backend_plt_readonly 0
 #define elf_backend_want_plt_sym 1
 #define elf_backend_got_header_size 0
-#define elf_backend_plt_header_size PLT_HEADER_SIZE
 
 #include "elf64-target.h"
 

@@ -176,7 +176,7 @@ char *input_line_pointer;
 
   	 3,	the entry is a pointer at a bignum struct
 
-   The low-order-byte coresponds to low physical memory.
+   The low-order-byte corresponds to low physical memory.
    Obviously a FRAGment must be created for each valid disp in PART whose
    datalength is undefined (to bad) .
    The case where just the expression is undefined is less severe and is
@@ -332,7 +332,7 @@ const pseudo_typeS md_pseudo_table[] =
 #define DOUBLE		2
 #define UNDEF           3
 /* Those limits are calculated from the displacement start in memory.
-   The ns32k uses the begining of the instruction as displacement
+   The ns32k uses the beginning of the instruction as displacement
    base.  This type of displacements could be handled here by moving
    the limit window up or down. I choose to use an internal
    displacement base-adjust as there are other routines that must
@@ -441,7 +441,7 @@ addr_mode (operand, addr_modeP, recursive_level)
 	    case '+':
 	      if (str[2] != '\000')
 		{
-		  addr_modeP->mode = 27;	/* pc-relativ */
+		  addr_modeP->mode = 27;	/* pc-relative */
 		  addr_modeP->disp[0] = str + 2;
 		  return -1;
 		}
@@ -675,9 +675,9 @@ get_addr_mode (ptr, addr_modeP)
 
   if (addr_modeP->mode == DEFAULT || addr_modeP->scaled_mode == -1)
     {
-      /* Resolve ambigious operands, this shouldn't be necessary if
+      /* Resolve ambiguous operands, this shouldn't be necessary if
 	 one uses standard NSC operand syntax. But the sequent
-	 compiler doesn't!!!  This finds a proper addressinging mode
+	 compiler doesn't!!!  This finds a proper addressing mode
 	 if it is implicitly stated. See ns32k-opcode.h.  */
       (void) evaluate_expr (&exprP, ptr); /* This call takes time Sigh!  */
 
@@ -888,7 +888,7 @@ evaluate_expr (resultP, ptr)
    Operands are parsed in such an order that the opcode is updated from
    its most significant bit, that is when the operand need to alter the
    opcode.
-   Be carefull not to put to objects in the same iif-slot.  */
+   Be careful not to put to objects in the same iif-slot.  */
 
 static void encode_operand
   PARAMS ((int, char **, const char *, const char *, char, char));
@@ -979,7 +979,7 @@ encode_operand (argc, argv, operandsP, suffixP, im_size, opcode_bit_ptr)
 	  freeptr++;		/* OVE:this is an useful hack.  */
 	  sprintf (freeptr, "((%s-1)*%d)", argv[i], desc->im_size);
 	  argv[i] = freeptr;
-	  pcrel -= 1;		/* Make pcrel 0 inspite of what case 'p':
+	  pcrel -= 1;		/* Make pcrel 0 in spite of what case 'p':
 				   wants.  */
 	  /* fall thru */
 	case 'p':		/* Displacement - pc relative addressing.  */
@@ -1258,7 +1258,7 @@ parse (line, recursive_level)
    assembler. You only need to know if it's possible to reduce your
    cpu-instruction to iif-format (takes some work) and adopt the other
    md_? parts according to given instructions Note that iif was
-   invented for the clean ns32k`s architecure.  */
+   invented for the clean ns32k`s architecture.  */
 
 /* GAS for the ns32k has a problem. PC relative displacements are
    relative to the address of the opcode, not the address of the
@@ -1640,8 +1640,9 @@ md_begin ()
   /* Build a hashtable of the instructions.  */
   const struct ns32k_opcode *ptr;
   const char *stat;
-  inst_hash_handle = hash_new ();
   const struct ns32k_opcode *endop;
+
+  inst_hash_handle = hash_new ();
 
   endop = ns32k_opcodes + sizeof (ns32k_opcodes) / sizeof (ns32k_opcodes[0]);
   for (ptr = ns32k_opcodes; ptr < endop; ptr++)
@@ -2435,4 +2436,4 @@ cons_fix_new_ns32k (where, fixP, segment_address_in_file)
 }
 
 #endif /* OBJ_AOUT */
-#endif /* BFD_ASSMEBLER */
+#endif /* BFD_ASSEMBLER */

@@ -80,6 +80,21 @@ extern valueT alpha_gp_value;
 	: BFD_RELOC_ALPHA_LINKAGE);
 #endif
 
+#ifndef VMS
+#define TC_IMPLICIT_LCOMM_ALIGNMENT(size, align) \
+  do							\
+    {							\
+      align = 0;					\
+      if (size > 1)					\
+	{						\
+	  addressT temp = 1;				\
+	  while ((size & temp) == 0)			\
+	    ++align, temp <<= 1;			\
+	}						\
+    }							\
+  while (0)
+#endif
+
 #define md_number_to_chars		number_to_chars_littleendian
 
 extern int tc_get_register PARAMS ((int frame));
@@ -104,17 +119,13 @@ extern void alpha_frob_file_before_adjust PARAMS ((void));
 #define DIFF_EXPR_OK   /* foo-. gets turned into PC relative relocs */
 
 #ifdef OBJ_ELF
-#define ELF_TC_SPECIAL_SECTIONS \
-  { ".sdata",   SHT_PROGBITS,   SHF_ALLOC + SHF_WRITE + SHF_ALPHA_GPREL  }, \
-  { ".sbss",    SHT_NOBITS,     SHF_ALLOC + SHF_WRITE + SHF_ALPHA_GPREL  },
-
 #define md_elf_section_letter		alpha_elf_section_letter
 extern int alpha_elf_section_letter PARAMS ((int, char **));
 #define md_elf_section_flags		alpha_elf_section_flags
 extern flagword alpha_elf_section_flags PARAMS ((flagword, int, int));
 #endif
 
-/* Whether to add support for explict !relocation_op!sequence_number.  At the
+/* Whether to add support for explicit !relocation_op!sequence_number.  At the
    moment, only do this for ELF, though ECOFF could use it as well.  */
 
 #ifdef OBJ_ELF
@@ -127,6 +138,11 @@ extern flagword alpha_elf_section_flags PARAMS ((flagword, int, int));
    appropriate linker relocations.  */
 #define tc_frob_file_before_fix() alpha_before_fix ()
 extern void alpha_before_fix PARAMS ((void));
+
+#ifdef OBJ_ELF
+#define md_end  alpha_elf_md_end
+extern void alpha_elf_md_end PARAMS ((void));
+#endif
 
 /* New fields for supporting explicit relocations (such as !literal to mark
    where a pointer is loaded from the global table, and !lituse_base to track
@@ -156,4 +172,11 @@ do {									\
 	     (long) FIX->tc_fix_data.next_reloc);			\
 } while (0)
 
-#define DWARF2_LINE_MIN_INSN_LENGTH 4
+#define TARGET_USE_CFIPOP 1
+
+#define tc_cfi_frame_initial_instructions alpha_cfi_frame_initial_instructions
+extern void alpha_cfi_frame_initial_instructions(void);
+
+#define DWARF2_LINE_MIN_INSN_LENGTH	4
+#define DWARF2_DEFAULT_RETURN_COLUMN	26
+#define DWARF2_CIE_DATA_ALIGNMENT	-8

@@ -42,23 +42,20 @@ extern int sh_small;
 /* Don't try to break words.  */
 #define WORKING_DOT_WORD
 
-/* All SH instructions are multiples of 16 bits.  */
-#define DWARF2_LINE_MIN_INSN_LENGTH 2
-
 /* We require .long, et. al., to be aligned correctly.  */
 #define md_cons_align(nbytes) sh_cons_align (nbytes)
-extern void sh_cons_align PARAMS ((int));
+extern void sh_cons_align (int);
 
 /* When relaxing, we need to generate relocations for alignment
    directives.  */
 #define HANDLE_ALIGN(frag) sh_handle_align (frag)
-extern void sh_handle_align PARAMS ((fragS *));
+extern void sh_handle_align (fragS *);
 
 #define MAX_MEM_FOR_RS_ALIGN_CODE (1 + 2)
 
 /* We need to force out some relocations when relaxing.  */
 #define TC_FORCE_RELOCATION(fix) sh_force_relocation (fix)
-extern int sh_force_relocation PARAMS ((struct fix *));
+extern int sh_force_relocation (struct fix *);
 
 /* This macro decides whether a particular reloc is an entry in a
    switch table.  It is used when relaxing, because the linker needs
@@ -95,7 +92,7 @@ extern int sh_force_relocation PARAMS ((struct fix *));
   (sh_relax && SWITCH_TABLE (FIX))
 
 #define MD_PCREL_FROM_SECTION(FIX, SEC) md_pcrel_from_section (FIX, SEC)
-extern long md_pcrel_from_section PARAMS ((struct fix *, segT));
+extern long md_pcrel_from_section (struct fix *, segT);
 
 #define IGNORE_NONSTANDARD_ESCAPES
 
@@ -119,12 +116,12 @@ struct sh_segment_info_type
 
 /* We call a routine to emit a reloc for a label, so that the linker
    can align loads and stores without crossing a label.  */
-extern void sh_frob_label PARAMS ((void));
+extern void sh_frob_label (void);
 #define tc_frob_label(sym) sh_frob_label ()
 
 /* We call a routine to flush pending output in order to output a DATA
    reloc when required.  */
-extern void sh_flush_pending_output PARAMS ((void));
+extern void sh_flush_pending_output (void);
 #define md_flush_pending_output() sh_flush_pending_output ()
 
 #ifdef BFD_ASSEMBLER
@@ -132,7 +129,7 @@ extern void sh_flush_pending_output PARAMS ((void));
 #else
 #define tc_frob_file sh_frob_file
 #endif
-extern void sh_frob_file PARAMS ((void));
+extern void sh_frob_file (void);
 
 
 #ifdef OBJ_COFF
@@ -153,8 +150,8 @@ extern void sh_frob_file PARAMS ((void));
 #define TC_RELOC_MANGLE(seg, fix, int, paddr) \
   sh_coff_reloc_mangle ((seg), (fix), (int), (paddr))
 extern void sh_coff_reloc_mangle
-  PARAMS ((struct segment_info_struct *, struct fix *,
-	   struct internal_reloc *, unsigned int));
+  (struct segment_info_struct *, struct fix *,
+   struct internal_reloc *, unsigned int);
 
 #define tc_coff_symbol_emit_hook(a) ; /* not used */
 
@@ -163,7 +160,7 @@ extern void sh_coff_reloc_mangle
 #define TC_KEEP_FX_OFFSET 1
 
 #define TC_COFF_SIZEMACHDEP(frag) tc_coff_sizemachdep(frag)
-extern int tc_coff_sizemachdep PARAMS ((fragS *));
+extern int tc_coff_sizemachdep (fragS *);
 
 #ifdef BFD_ASSEMBLER
 #define SEG_NAME(SEG) segment_name (SEG)
@@ -197,7 +194,7 @@ extern int target_big_endian;
 #endif
 
 #define elf_tc_final_processing sh_elf_final_processing
-extern void sh_elf_final_processing PARAMS ((void));
+extern void sh_elf_final_processing (void);
 
 #define DIFF_EXPR_OK		/* foo-. gets turned into PC relative relocs */
 
@@ -213,7 +210,7 @@ extern void sh_elf_final_processing PARAMS ((void));
 #define TC_RELOC_GLOBAL_OFFSET_TABLE BFD_RELOC_SH_GOTPC
 
 #define tc_fix_adjustable(FIX) sh_fix_adjustable(FIX)
-extern bfd_boolean sh_fix_adjustable PARAMS ((struct fix *));
+extern bfd_boolean sh_fix_adjustable (struct fix *);
 
 /* Values passed to md_apply_fix3 don't include symbol values.  */
 #define MD_APPLY_SYM_VALUE(FIX) 0
@@ -251,16 +248,27 @@ extern bfd_boolean sh_fix_adjustable PARAMS ((struct fix *));
 
 #define md_parse_name(name, exprP, nextcharP) \
   sh_parse_name ((name), (exprP), (nextcharP))
-int sh_parse_name PARAMS ((char const *name,
-			   expressionS *exprP,
-			   char *nextchar));
+int sh_parse_name (char const *name, expressionS *exprP, char *nextchar);
 
 #define TC_CONS_FIX_NEW(FRAG, OFF, LEN, EXP) \
   sh_cons_fix_new ((FRAG), (OFF), (LEN), (EXP))
-void sh_cons_fix_new PARAMS ((fragS *, int, int, expressionS *));
+void sh_cons_fix_new (fragS *, int, int, expressionS *);
 
 /* This is used to construct expressions out of @GOTOFF, @PLT and @GOT
    symbols.  The relocation type is stored in X_md.  */
 #define O_PIC_reloc O_md1
+
+#define TARGET_USE_CFIPOP 1
+
+#define tc_cfi_frame_initial_instructions sh_cfi_frame_initial_instructions
+extern void sh_cfi_frame_initial_instructions (void);
+
+#define tc_regname_to_dw2regnum sh_regname_to_dw2regnum
+extern int sh_regname_to_dw2regnum (const char *regname);
+
+/* All SH instructions are multiples of 16 bits.  */
+#define DWARF2_LINE_MIN_INSN_LENGTH 2
+#define DWARF2_DEFAULT_RETURN_COLUMN 17
+#define DWARF2_CIE_DATA_ALIGNMENT -4
 
 #endif /* OBJ_ELF */

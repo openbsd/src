@@ -1,5 +1,5 @@
 /* BFD back-end for IBM RS/6000 "XCOFF" files.
-   Copyright 1990-1999, 2000, 2001, 2002
+   Copyright 1990-1999, 2000, 2001, 2002, 2003
    Free Software Foundation, Inc.
    FIXME: Can someone provide a transliteration of this name into ASCII?
    Using the following chars caused a compiler warning on HIUX (so I replaced
@@ -1006,7 +1006,7 @@ xcoff_rtype2howto (relent, internal)
   /* Default howto layout works most of the time */
   relent->howto = &xcoff_howto_table[internal->r_type];
 
-  /* Special case some 16 bit reoloc */
+  /* Special case some 16 bit reloc */
   if (15 == (internal->r_size & 0x1f))
     {
       if (R_BA == internal->r_type)
@@ -1575,7 +1575,6 @@ normalize_filename (abfd)
 
 /* Write out an XCOFF armap.  */
 
-/*ARGSUSED*/
 static bfd_boolean
 xcoff_write_armap_old (abfd, elength, map, orl_count, stridx)
      bfd *abfd;
@@ -3426,7 +3425,7 @@ xcoff_ppc_relocate_section (output_bfd, info, input_bfd,
 
 		}
 	      else if ((0 == (h->flags & (XCOFF_DEF_DYNAMIC | XCOFF_IMPORT)))
-		       && ! info->relocateable)
+		       && ! info->relocatable)
 		{
 		  if (! ((*info->callbacks->undefined_symbol)
 			 (info, h->root.root.string, input_bfd, input_section,
@@ -4165,7 +4164,7 @@ const bfd_target rs6000coff_vec =
 
     /* Symbols */
     coff_get_symtab_upper_bound,
-    coff_get_symtab,
+    coff_canonicalize_symtab,
     coff_make_empty_symbol,
     coff_print_symbol,
     coff_get_symbol_info,
@@ -4407,7 +4406,7 @@ const bfd_target pmac_xcoff_vec =
 
     /* Symbols */
     coff_get_symtab_upper_bound,
-    coff_get_symtab,
+    coff_canonicalize_symtab,
     coff_make_empty_symbol,
     coff_print_symbol,
     coff_get_symbol_info,

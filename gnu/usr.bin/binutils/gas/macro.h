@@ -35,7 +35,7 @@
    list of formal arguments, and also keeps a hash table which points
    into the list to speed up formal search.  Each formal knows its
    name and its default value.  Each time the macro is expanded, the
-   formals get the actual values attatched to them.  */
+   formals get the actual values attached to them.  */
 
 /* Describe the formal arguments to a macro.  */
 
@@ -70,19 +70,14 @@ extern int macro_defined;
 
 extern int macro_nest;
 
-extern int buffer_and_nest
-  PARAMS ((const char *, const char *, sb *, int (*) PARAMS ((sb *))));
+extern int buffer_and_nest (const char *, const char *, sb *, int (*) (sb *));
 extern void macro_init
-  PARAMS ((int, int, int, int (*) PARAMS ((const char *, int, sb *, int *))));
-extern void macro_mri_mode
-  PARAMS ((int));
+  (int, int, int, int (*) (const char *, int, sb *, int *));
+extern void macro_mri_mode (int);
 extern const char *define_macro
-  PARAMS ((int, sb *, sb *, int (*) PARAMS ((sb *)), const char **));
-extern int check_macro
-  PARAMS ((const char *, sb *, const char **, macro_entry **));
-extern void delete_macro
-  PARAMS ((const char *));
-extern const char *expand_irp
-  PARAMS ((int, int, sb *, sb *, int (*) PARAMS ((sb *))));
+  (int, sb *, sb *, int (*) (sb *), const char **);
+extern int check_macro (const char *, sb *, const char **, macro_entry **);
+extern void delete_macro (const char *);
+extern const char *expand_irp (int, int, sb *, sb *, int (*) (sb *));
 
 #endif

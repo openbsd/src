@@ -43,7 +43,7 @@ error only one of OBJ_ELF and OBJ_SOM can be defined
 #ifdef OBJ_ELF
 #include "dwarf2dbg.h"
 
-/* A "convient" place to put object file dependencies which do
+/* A "convenient" place to put object file dependencies which do
    not need to be seen outside of tc-hppa.c.  */
 
 /* Object file formats specify relocation types.  */
@@ -490,7 +490,7 @@ struct selector_entry
 static void pa_check_current_space_and_subspace PARAMS ((void));
 #endif
 
-#if !(defined (OBJ_ELF) && defined (TE_LINUX))
+#if !(defined (OBJ_ELF) && (defined (TE_LINUX) || defined (TE_NetBSD)))
 static void pa_text PARAMS ((int));
 static void pa_data PARAMS ((int));
 static void pa_comm PARAMS ((int));
@@ -596,7 +596,7 @@ static void pa_vtable_entry PARAMS ((int));
 static void pa_vtable_inherit  PARAMS ((int));
 #endif
 
-/* File and gloally scoped variable declarations.  */
+/* File and globally scoped variable declarations.  */
 
 #ifdef OBJ_SOM
 /* Root and final entry in the space chain.  */
@@ -622,6 +622,11 @@ static struct call_desc last_call_desc;
 /* handle of the OPCODE hash table */
 static struct hash_control *op_hash = NULL;
 
+/* These characters can be suffixes of opcode names and they may be
+   followed by meaningful whitespace.  We don't include `,' and `!'
+   as they never appear followed by meaningful whitespace.  */
+const char hppa_symbol_chars[] = "*?=<>";
+
 /* Table of pseudo ops for the PA.  FIXME -- how many of these
    are now redundant with the overall GAS and the object file
    dependent tables?  */
@@ -642,7 +647,7 @@ const pseudo_typeS md_pseudo_table[] =
   {"byte", pa_cons, 1},
   {"call", pa_call, 0},
   {"callinfo", pa_callinfo, 0},
-#if defined (OBJ_ELF) && defined (TE_LINUX)
+#if defined (OBJ_ELF) && (defined (TE_LINUX) || defined (TE_NetBSD))
   {"code", obj_elf_text, 0},
 #else
   {"code", pa_text, 0},
@@ -652,14 +657,14 @@ const pseudo_typeS md_pseudo_table[] =
   {"compiler", pa_compiler, 0},
 #endif
   {"copyright", pa_copyright, 0},
-#if !(defined (OBJ_ELF) && defined (TE_LINUX))
+#if !(defined (OBJ_ELF) && (defined (TE_LINUX) || defined (TE_NetBSD)))
   {"data", pa_data, 0},
 #endif
   {"double", pa_float_cons, 'd'},
   {"dword", pa_cons, 8},
   {"end", pa_end, 0},
   {"end_brtab", pa_brtab, 0},
-#if !(defined (OBJ_ELF) && defined (TE_LINUX))
+#if !(defined (OBJ_ELF) && (defined (TE_LINUX) || defined (TE_NetBSD)))
   {"end_try", pa_try, 0},
 #endif
   {"enter", pa_enter, 0},
@@ -667,9 +672,6 @@ const pseudo_typeS md_pseudo_table[] =
   {"equ", pa_equ, 0},
   {"exit", pa_exit, 0},
   {"export", pa_export, 0},
-#ifdef OBJ_ELF
-  {"file", (void (*) PARAMS ((int))) dwarf2_directive_file, 0 },
-#endif
   {"fill", pa_fill, 0},
   {"float", pa_float_cons, 'f'},
   {"half", pa_cons, 2},
@@ -679,9 +681,6 @@ const pseudo_typeS md_pseudo_table[] =
   {"lcomm", pa_lcomm, 0},
   {"leave", pa_leave, 0},
   {"level", pa_level, 0},
-#ifdef OBJ_ELF
-  {"loc", dwarf2_directive_loc, 0 },
-#endif
   {"long", pa_cons, 4},
   {"lsym", pa_lsym, 0},
 #ifdef OBJ_SOM
@@ -706,7 +705,7 @@ const pseudo_typeS md_pseudo_table[] =
 #ifdef OBJ_SOM
   {"subspa", pa_subspace, 0},
 #endif
-#if !(defined (OBJ_ELF) && defined (TE_LINUX))
+#if !(defined (OBJ_ELF) && (defined (TE_LINUX) || defined (TE_NetBSD)))
   {"text", pa_text, 0},
 #endif
   {"version", pa_version, 0},
@@ -749,7 +748,7 @@ const char FLT_CHARS[] = "rRsSfFdDxXpP";
 
 static struct pa_it the_insn;
 
-/* Points to the end of an expression just parsed by get_expressoin
+/* Points to the end of an expression just parsed by get_expression
    and friends.  FIXME.  This shouldn't be handled with a file-global
    variable.  */
 static char *expr_end;
@@ -853,6 +852,10 @@ static const struct pd_reg pre_defined_registers[] =
   {"%dp",    27},
   {"%eiem",  15},
   {"%eirr",  23},
+  {"%farg0",  5},
+  {"%farg1",  6},
+  {"%farg2",  7},
+  {"%farg3",  8},
   {"%fr0",    0 + FP_REG_BASE},
   {"%fr0l",   0 + FP_REG_BASE},
   {"%fr0r",   0 + FP_REG_BASE + FP_REG_RSEL},
@@ -949,6 +952,7 @@ static const struct pd_reg pre_defined_registers[] =
   {"%fr9",    9 + FP_REG_BASE},
   {"%fr9l",   9 + FP_REG_BASE},
   {"%fr9r",   9 + FP_REG_BASE + FP_REG_RSEL},
+  {"%fret",   4},
   {"%hta",   25},
   {"%iir",   19},
   {"%ior",   21},
@@ -1014,6 +1018,14 @@ static const struct pd_reg pre_defined_registers[] =
   {"%sr5",    5},
   {"%sr6",    6},
   {"%sr7",    7},
+  {"%t1",    22},
+  {"%t2",    21},
+  {"%t3",    20},
+  {"%t4",    19},
+  {"%tf1",   11},
+  {"%tf2",   10},
+  {"%tf3",    9},
+  {"%tf4",    8},
   {"%tr0",   24},
   {"%tr1",   25},
   {"%tr2",   26},
@@ -1146,7 +1158,7 @@ static struct default_space_dict pa_def_spaces[] =
     continue; \
   }
 
-/* Simple range checking for FIELD againt HIGH and LOW bounds.
+/* Simple range checking for FIELD against HIGH and LOW bounds.
    IGNORE is used to suppress the error message.  */
 
 #define CHECK_FIELD(FIELD, HIGH, LOW, IGNORE) \
@@ -1174,7 +1186,7 @@ static struct default_space_dict pa_def_spaces[] =
       } \
   }
 
-/* Simple alignment checking for FIELD againt ALIGN (a power of two).
+/* Simple alignment checking for FIELD against ALIGN (a power of two).
    IGNORE is used to suppress the error message.  */
 
 #define CHECK_ALIGN(FIELD, ALIGN, IGNORE) \
@@ -1387,6 +1399,8 @@ cons_fix_new_hppa (frag, where, size, exp)
   /* Get a base relocation type.  */
   if (is_DP_relative (*exp))
     rel_type = R_HPPA_GOTOFF;
+  else if (is_PC_relative (*exp))
+    rel_type = R_HPPA_PCREL_CALL;
   else if (is_complex (*exp))
     rel_type = R_HPPA_COMPLEX;
   else
@@ -1531,7 +1545,7 @@ md_assemble (str)
   /* Assemble the instruction.  Results are saved into "the_insn".  */
   pa_ip (str);
 
-  /* Get somewhere to put the assembled instrution.  */
+  /* Get somewhere to put the assembled instruction.  */
   to = frag_more (4);
 
   /* Output the opcode.  */
@@ -1627,7 +1641,7 @@ pa_ip (str)
       /* If this instruction is specific to a particular architecture,
 	 then set a new architecture.  */
       /* But do not automatically promote to pa2.0.  The automatic promotion
-	 crud is for compatability with HP's old assemblers only.  */
+	 crud is for compatibility with HP's old assemblers only.  */
       if (insn->arch < 20
 	  && bfd_get_mach (stdoutput) < insn->arch)
 	{
@@ -2358,7 +2372,6 @@ pa_ip (str)
 			  }
 			else if (*s == '*')
 			  break;
-			name = s;
 
 			name = s;
 			while (*s != ',' && *s != ' ' && *s != '\t')
@@ -2420,7 +2433,7 @@ pa_ip (str)
 			    flag = 1;
 			  }
 			/* ",*" is a valid condition.  */
-			else if (*args == 'a')
+			else if (*args == 'a' || *name)
 			  as_bad (_("Invalid Add Condition: %s"), name);
 			*s = c;
 		      }
@@ -2526,7 +2539,6 @@ pa_ip (str)
 			  }
 			else if (*s == '*')
 			  break;
-			name = s;
 
 			name = s;
 			while (*s != ',' && *s != ' ' && *s != '\t')
@@ -2588,7 +2600,7 @@ pa_ip (str)
 			    flag = 1;
 			  }
 			/* ",*" is a valid condition.  */
-			else if (*args != 'S')
+			else if (*args != 'S' || *name)
 			  as_bad (_("Invalid Compare/Subtract Condition: %s"),
 				  name);
 			*s = c;
@@ -2711,7 +2723,7 @@ pa_ip (str)
 			    flag = 1;
 			  }
 			/* ",*" is a valid condition.  */
-			else if (*args != 'L')
+			else if (*args != 'L' || *name)
 			  as_bad (_("Invalid Logical Instruction Condition."));
 			*s = c;
 		      }
@@ -2766,7 +2778,7 @@ pa_ip (str)
 			    continue;
 			  }
 			/* ",*" is a valid condition.  */
-			else if (*args != 'X')
+			else if (*args != 'X' || *name)
 			  as_bad (_("Invalid Shift/Extract/Deposit Condition."));
 			*s = c;
 		      }
@@ -2878,7 +2890,7 @@ pa_ip (str)
 			    s += 3;
 			  }
 			/* ",*" is a valid condition.  */
-			else if (*args != 'U')
+			else if (*args != 'U' || (*s != ' ' && *s != '\t'))
 			  as_bad (_("Invalid Unit Instruction Condition."));
 		      }
 		    opcode |= cmpltr << 13;
@@ -4835,7 +4847,7 @@ pa_parse_number (s, is_float)
 	  /* There is where we'd come for an undefined symbol
 	     or for an empty string.  For an empty string we
 	     will return zero.  That's a concession made for
-	     compatability with the braindamaged HP assemblers.  */
+	     compatibility with the braindamaged HP assemblers.  */
 	  if (*name == 0)
 	    num = 0;
 	  else
@@ -5206,11 +5218,11 @@ pa_get_absolute_expression (insn, strp)
   expression (&insn->exp);
   /* This is not perfect, but is a huge improvement over doing nothing.
 
-     The PA assembly syntax is ambigious in a variety of ways.  Consider
+     The PA assembly syntax is ambiguous in a variety of ways.  Consider
      this string "4 %r5"  Is that the number 4 followed by the register
      r5, or is that 4 MOD r5?
 
-     If we get a modulo expresion When looking for an absolute, we try
+     If we get a modulo expression when looking for an absolute, we try
      again cutting off the input string at the first whitespace character.  */
   if (insn->exp.X_op == O_modulus)
     {
@@ -5348,7 +5360,7 @@ pa_parse_nullif (s)
 }
 
 /* Parse a non-negated compare/subtract completer returning the
-   number (for encoding in instrutions) of the given completer.  */
+   number (for encoding in instructions) of the given completer.  */
 
 static int
 pa_parse_nonneg_cmpsub_cmpltr (s)
@@ -5419,7 +5431,7 @@ pa_parse_nonneg_cmpsub_cmpltr (s)
 }
 
 /* Parse a negated compare/subtract completer returning the
-   number (for encoding in instrutions) of the given completer.  */
+   number (for encoding in instructions) of the given completer.  */
 
 static int
 pa_parse_neg_cmpsub_cmpltr (s)
@@ -5494,7 +5506,7 @@ pa_parse_neg_cmpsub_cmpltr (s)
 }
 
 /* Parse a 64 bit compare and branch completer returning the number (for
-   encoding in instrutions) of the given completer.
+   encoding in instructions) of the given completer.
 
    Nonnegated comparisons are returned as 0-7, negated comparisons are
    returned as 8-15.  */
@@ -5591,7 +5603,7 @@ pa_parse_cmpb_64_cmpltr (s)
 }
 
 /* Parse a 64 bit compare immediate and branch completer returning the number
-   (for encoding in instrutions) of the given completer.  */
+   (for encoding in instructions) of the given completer.  */
 
 static int
 pa_parse_cmpib_64_cmpltr (s)
@@ -5653,7 +5665,7 @@ pa_parse_cmpib_64_cmpltr (s)
 }
 
 /* Parse a non-negated addition completer returning the number
-   (for encoding in instrutions) of the given completer.  */
+   (for encoding in instructions) of the given completer.  */
 
 static int
 pa_parse_nonneg_add_cmpltr (s)
@@ -5723,7 +5735,7 @@ pa_parse_nonneg_add_cmpltr (s)
 }
 
 /* Parse a negated addition completer returning the number
-   (for encoding in instrutions) of the given completer.  */
+   (for encoding in instructions) of the given completer.  */
 
 static int
 pa_parse_neg_add_cmpltr (s)
@@ -5797,7 +5809,7 @@ pa_parse_neg_add_cmpltr (s)
 }
 
 /* Parse a 64 bit wide mode add and branch completer returning the number (for
-   encoding in instrutions) of the given completer.  */
+   encoding in instructions) of the given completer.  */
 
 static int
 pa_parse_addb_64_cmpltr (s)
@@ -5964,7 +5976,7 @@ pa_brtab (begin)
 {
 
 #ifdef OBJ_SOM
-  /* The BRTAB relocations are only availble in SOM (to denote
+  /* The BRTAB relocations are only available in SOM (to denote
      the beginning and end of branch tables).  */
   char *where = frag_more (0);
 
@@ -5990,7 +6002,7 @@ pa_try (begin)
   if (! begin)
     expression (&exp);
 
-  /* The TRY relocations are only availble in SOM (to denote
+  /* The TRY relocations are only available in SOM (to denote
      the beginning and end of exception handling regions).  */
 
   fix_new_hppa (frag_now, where - frag_now->fr_literal, 0,
@@ -6307,7 +6319,7 @@ pa_callinfo (unused)
   demand_empty_rest_of_line ();
 }
 
-#if !(defined (OBJ_ELF) && defined (TE_LINUX))
+#if !(defined (OBJ_ELF) && (defined (TE_LINUX) || defined (TE_NetBSD)))
 /* Switch to the text space.  Like s_text, but delete our
    label when finished.  */
 static void
@@ -6376,6 +6388,7 @@ pa_comm (unused)
 
   if (symbol)
     {
+      symbol_get_bfdsym (symbol)->flags |= BSF_OBJECT;
       S_SET_VALUE (symbol, size);
       S_SET_SEGMENT (symbol, bfd_und_section_ptr);
       S_SET_EXTERNAL (symbol);
@@ -6387,7 +6400,7 @@ pa_comm (unused)
     }
   demand_empty_rest_of_line ();
 }
-#endif /* !(defined (OBJ_ELF) && defined (TE_LINUX)) */
+#endif /* !(defined (OBJ_ELF) && (defined (TE_LINUX) || defined (TE_NetBSD))) */
 
 /* Process a .END pseudo-op.  */
 
@@ -6413,7 +6426,7 @@ pa_enter (unused)
 }
 
 /* Process a .ENTRY pseudo-op.  .ENTRY marks the beginning of the
-   procesure.  */
+   procedure.  */
 static void
 pa_entry (unused)
      int unused ATTRIBUTE_UNUSED;
@@ -6771,7 +6784,7 @@ pa_type_args (symbolP, is_export)
 #endif
 	  *input_line_pointer = c;
 	}
-      /* Privelege level.  */
+      /* Privilege level.  */
       else if ((strncasecmp (name, "priv_lev", 8)) == 0)
 	{
 	  p = input_line_pointer;
@@ -6826,7 +6839,7 @@ pa_import (unused)
 	}
       else
 	{
-	  /* Sigh.  To be compatable with the HP assembler and to help
+	  /* Sigh.  To be compatible with the HP assembler and to help
 	     poorly written assembly code, we assign a type based on
 	     the current segment.  Note only BSF_FUNCTION really
 	     matters, we do not need to set the full SYMBOL_TYPE_* info.  */
@@ -7055,7 +7068,7 @@ pa_proc (unused)
   demand_empty_rest_of_line ();
 }
 
-/* Process the syntatical end of a procedure.  Make sure all the
+/* Process the syntactical end of a procedure.  Make sure all the
    appropriate pseudo-ops were found within the procedure.  */
 
 static void
@@ -7264,7 +7277,7 @@ pa_parse_space_stmt (space_name, create_flag)
   /* If create_flag is nonzero, then create the new space with
      the attributes computed above.  Else set the values in
      an already existing space -- this can only happen for
-     the first occurence of a built-in space.  */
+     the first occurrence of a built-in space.  */
   if (create_flag)
     space = create_new_space (space_name, spnum, loadable, defined,
 			      private, sort, seg, 1);
@@ -8452,7 +8465,7 @@ hppa_fix_adjustable (fixp)
      .			RR%sect+4092 == (R%sect)+4092
      .			RR%sect+4096 == (R%sect)-4096
      and the last address loses because rounding the addend to 8k
-     mutiples takes us up to 8192 with an offset of -4096.
+     multiples takes us up to 8192 with an offset of -4096.
 
      In cases where the LR% expression is identical to the RR% one we
      will never have a problem, but is so happens that gcc rounds

@@ -1,5 +1,5 @@
 /* hash.c -- hash table routines for BFD
-   Copyright 1993, 1994, 1995, 1997, 1999, 2001, 2002
+   Copyright 1993, 1994, 1995, 1997, 1999, 2001, 2002, 2003
    Free Software Foundation, Inc.
    Written by Steve Chamberlain <sac@cygnus.com>
 
@@ -446,7 +446,6 @@ bfd_hash_replace (table, old, nw)
 
 /* Base method for creating a new hash table entry.  */
 
-/*ARGSUSED*/
 struct bfd_hash_entry *
 bfd_hash_newfunc (entry, table, string)
      struct bfd_hash_entry *entry;

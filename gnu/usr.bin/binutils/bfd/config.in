@@ -25,9 +25,6 @@
 /* Define to `long' if <sys/types.h> doesn't define.  */
 #undef off_t
 
-/* Define if you need to in order for stat and other things to work.  */
-#undef _POSIX_SOURCE
-
 /* Define to `unsigned' if <sys/types.h> doesn't define.  */
 #undef size_t
 
@@ -63,6 +60,18 @@
 
 /* Define if you have the fdopen function.  */
 #undef HAVE_FDOPEN
+
+/* Define if you have the fseeko function.  */
+#undef HAVE_FSEEKO
+
+/* Define if you have the fseeko64 function.  */
+#undef HAVE_FSEEKO64
+
+/* Define if you have the ftello function.  */
+#undef HAVE_FTELLO
+
+/* Define if you have the ftello64 function.  */
+#undef HAVE_FTELLO64
 
 /* Define if you have the getcwd function.  */
 #undef HAVE_GETCWD
@@ -105,6 +114,9 @@
 
 /* Define if you have the strchr function.  */
 #undef HAVE_STRCHR
+
+/* Define if you have the strtoull function.  */
+#undef HAVE_STRTOULL
 
 /* Define if you have the sysconf function.  */
 #undef HAVE_SYSCONF
@@ -160,14 +172,8 @@
 /* Define if you have the <sys/procfs.h> header file.  */
 #undef HAVE_SYS_PROCFS_H
 
-/* Define if you have the <sys/stat.h> header file.  */
-#undef HAVE_SYS_STAT_H
-
 /* Define if you have the <sys/time.h> header file.  */
 #undef HAVE_SYS_TIME_H
-
-/* Define if you have the <sys/types.h> header file.  */
-#undef HAVE_SYS_TYPES_H
 
 /* Define if you have the <time.h> header file.  */
 #undef HAVE_TIME_H
@@ -195,6 +201,12 @@
 
 /* Define as 1 if you have gettext and don't want to use GNU gettext. */
 #undef HAVE_GETTEXT
+
+/* The number of bytes in type long long */
+#undef SIZEOF_LONG_LONG
+
+/* The number of bytes in type long */
+#undef SIZEOF_LONG
 
 /* Use b modifier when opening binary files? */
 #undef USE_BINARY_FOPEN
@@ -267,6 +279,9 @@
 
 /* Name of host specific header file to include in trad-core.c. */
 #undef TRAD_HEADER
+
+/* The number of bytes in type off_t */
+#undef SIZEOF_OFF_T
 
 /* Use mmap if it's available? */
 #undef USE_MMAP

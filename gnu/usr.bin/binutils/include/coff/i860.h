@@ -1,6 +1,6 @@
-/* coff information for Intel 860.
+/* COFF information for the Intel i860.
    
-   Copyright 2001 Free Software Foundation, Inc.
+   Copyright 2001, 2003 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -37,6 +37,9 @@
 
 #define I860BADMAG(x)   ((x).f_magic != I860MAGIC)
 
+#undef AOUTSZ
+#define AOUTSZ 36
+
 /* FIXME: What are the a.out magic numbers?  */
 
 #define _ETEXT	"etext"
@@ -52,3 +55,32 @@ struct external_reloc
 
 #define RELOC struct external_reloc
 #define RELSZ 10
+
+/* The relocation directory entry types.
+     PAIR   : The low half that follows relates to the preceeding HIGH[ADJ].
+     HIGH   : The high half of a 32-bit constant.
+     LOWn   : The low half, insn bits 15..(n-1), 2^n-byte aligned. 
+     SPLITn : The low half, insn bits 20..16 and 10..(n-1), 2^n-byte aligned. 
+     HIGHADJ: Similar to HIGH, but with adjustment.
+     BRADDR : 26-bit branch displacement.
+
+   Note: The Intel assembler manual lists LOW4 as one of the
+   relocation types, but it appears to be useless for the i860.
+   We will recognize it anyway, just in case it actually appears in
+   any object files.  */
+
+enum {
+  COFF860_R_PAIR	= 0x1c,
+  COFF860_R_HIGH	= 0x1e,
+  COFF860_R_LOW0	= 0x1f,
+  COFF860_R_LOW1	= 0x20,
+  COFF860_R_LOW2	= 0x21,
+  COFF860_R_LOW3	= 0x22,
+  COFF860_R_LOW4	= 0x23,
+  COFF860_R_SPLIT0	= 0x24,
+  COFF860_R_SPLIT1	= 0x25,
+  COFF860_R_SPLIT2	= 0x26,
+  COFF860_R_HIGHADJ	= 0x27,
+  COFF860_R_BRADDR	= 0x28
+};
+

@@ -171,7 +171,7 @@ struct relocation_info
 
 /*
  *  Macros to extract information from a symbol table entry.
- *  This syntaxic indirection allows independence regarding a.out or coff.
+ *  This syntactic indirection allows independence regarding a.out or coff.
  *  The argument (s) of all these macros is a pointer to a symbol table entry.
  */
 

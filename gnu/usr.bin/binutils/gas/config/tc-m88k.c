@@ -1062,7 +1062,7 @@ md_estimate_size_before_relax (fragP, segment_type)
 
 /* These functions are needed if we are linking with obj-coffbfd.c.
    That file may be replaced by a more BFD oriented version at some
-   point.  If that happens, these functions should be rexamined.
+   point.  If that happens, these functions should be reexamined.
 
    Ian Lance Taylor, Cygnus Support, 13 July 1993.  */
 

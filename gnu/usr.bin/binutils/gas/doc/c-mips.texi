@@ -1,4 +1,5 @@
-@c Copyright 1991, 1992, 1993, 1994, 1995, 1997, 1999, 2000
+@c Copyright 1991, 1992, 1993, 1994, 1995, 1997, 1999, 2000, 2001,
+@c 2002, 2003, 2004
 @c Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
@@ -67,14 +68,17 @@ to select big-endian output, and @samp{-EL} for little-endian.
 @itemx -mips32
 @itemx -mips32r2
 @itemx -mips64
+@itemx -mips64r2
 Generate code for a particular MIPS Instruction Set Architecture level.
 @samp{-mips1} corresponds to the @sc{r2000} and @sc{r3000} processors,
 @samp{-mips2} to the @sc{r6000} processor, @samp{-mips3} to the
 @sc{r4000} processor, and @samp{-mips4} to the @sc{r8000} and
-@sc{r10000} processors.  @samp{-mips5}, @samp{-mips32}, @samp{-mips32r2}, and
-@samp{-mips64} correspond to generic @sc{MIPS V}, @sc{MIPS32},
-@sc{MIPS32 Release 2}, and
-@sc{MIPS64} ISA processors, respectively.  You can also switch
+@sc{r10000} processors.  @samp{-mips5}, @samp{-mips32}, @samp{-mips32r2},
+@samp{-mips64}, and @samp{-mips64r2}
+correspond to generic
+@sc{MIPS V}, @sc{MIPS32}, @sc{MIPS32 Release 2}, @sc{MIPS64},
+and @sc{MIPS64 Release 2}
+ISA processors, respectively.  You can also switch
 instruction sets during the assembly; see @ref{MIPS ISA, Directives to
 override the ISA level}.
 
@@ -118,11 +122,11 @@ This tells the assembler to accept MDMX instructions.
 Cause nops to be inserted if the read of the destination register
 of an mfhi or mflo instruction occurs in the following two instructions.
 
-@item -mfix-vr4122-bugs
-@itemx -no-mfix-vr4122-bugs
-Insert @samp{nop} instructions to avoid errors in certain versions of
-the vr4122 core.  This option is intended to be used on GCC-generated
-code: it is not designed to catch errors in hand-written assembler code.
+@item -mfix-vr4120
+@itemx -no-mfix-vr4120
+Insert nops to work around certain VR4120 errata.  This option is
+intended to be used on GCC-generated code: it is not designed to catch
+all problems in hand-written assembler code.
 
 @item -m4010
 @itemx -no-m4010
@@ -178,6 +182,7 @@ vr5500,
 6000,
 rm7000,
 8000,
+rm9000,
 10000,
 12000,
 mips32-4k,
@@ -229,9 +234,10 @@ are only supported at Instruction Set Architecture level 2 and higher.
 Generate code to take a break exception rather than a trap exception when an
 error is detected.  This is the default.
 
-@item -n
-When this option is used, @code{@value{AS}} will issue a warning every
-time it generates a nop instruction from a macro.
+@item -mpdr
+@itemx -mno-pdr
+Control generation of @code{.pdr} sections.  Off by default on IRIX, on
+elsewhere.
 @end table
 
 @node MIPS Object
@@ -288,7 +294,8 @@ assembly language programmers!
 @kindex @code{.set mips@var{n}}
 @sc{gnu} @code{@value{AS}} supports an additional directive to change
 the @sc{mips} Instruction Set Architecture level on the fly: @code{.set
-mips@var{n}}.  @var{n} should be a number from 0 to 5, or 32, 32r2, or 64.
+mips@var{n}}.  @var{n} should be a number from 0 to 5, or 32, 32r2, 64
+or 64r2.
 The values other than 0 make the assembler accept instructions
 for the corresponding @sc{isa} level, from that point on in the
 assembly.  @code{.set mips@var{n}} affects not only which instructions

@@ -39,7 +39,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #define NN(index) (&arch_info_struct[index])
 
-/* These exist only so that we can resonably disassemble PALcode.  */
+/* These exist only so that we can reasonably disassemble PALcode.  */
 static const bfd_arch_info_type arch_info_struct[] =
 {
   N (64, 64, bfd_mach_alpha_ev4, "alpha:ev4", FALSE, NN(1)),

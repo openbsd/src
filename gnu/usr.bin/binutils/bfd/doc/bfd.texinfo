@@ -64,7 +64,7 @@ notice identical to this one except for the removal of this paragraph
 
 @tex
 \def\$#1${{#1}}  % Kluge: collect RCS revision info without $...$
-\xdef\manvers{\1.5}  % For use in headers, footers too
+\xdef\manvers{1.5}  % For use in headers, footers too
 {\parskip=0pt
 \hfill Free Software Foundation\par
 \hfill sac\@www.gnu.org\par

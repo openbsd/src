@@ -1,5 +1,29 @@
 -*- text -*-
 
+* objcopy and strip can now take wildcard patterns in symbol names specified on
+  the command line provided that the --wildcard switch is used to enable them.
+
+* readelf can now parse archives.
+
+* objdump now accepts --debugging-tags to print the debug information in a
+  format compatible with ctags tool.
+
+* objcopy and strip now accept --only-keep-debug to create a file containing
+  those sections that would be stripped out by --strip-debug.  The idea is that
+  this can be used in conjunction with the --add-gnu-debuglink switch to create
+  a two part program distribution - one a stripped executable and the other the
+  debugging info.
+
+* objcopy now accepts --add-gnu-debuglink=<file> to insert a .gnu_debuglink
+  section into a (presumably stripped) executable.  This allows the debug
+  information for the file to be held in a separate file.
+  
+* BFD marks the sections .comment and .note as 'n' in the BSD/POSIX
+  single-character representation.  This can be checked by running nm
+  with the -a switch.
+
+Changes in 2.14:
+
 * Added --info switch to objcopy and strip.
 
 * Support for Vitesse IQ2000 added by Red Hat.
@@ -173,7 +197,7 @@ Changes in binutils 2.6:
 Changes in binutils 2.5:
 
 * Changed objdump -dr to dump the relocs interspersed with the assembly
-  listing, for a more useful listing of relocateable files.
+  listing, for a more useful listing of relocatable files.
 
 * Changed objdump -d/--disassemble to only disassemble SEC_CODE sections.
   Added -D/--disassemble-all option to disassemble all sections.

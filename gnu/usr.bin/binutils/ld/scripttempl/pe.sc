@@ -25,6 +25,10 @@ if test "${RELOCATING}"; then
     SORT(*)(.idata$6)
     SORT(*)(.idata$7)'
   R_CRT='*(SORT(.CRT$*))'
+  R_TLS='
+    *(.tls)
+    *(.tls$)
+    *(SORT(.tls$*))'
   R_RSRC='*(SORT(.rsrc$*))'
 else
   R_TEXT=
@@ -127,6 +131,11 @@ SECTIONS
   .CRT ${RELOCATING+BLOCK(__section_alignment__)} :
   { 					
     ${R_CRT}
+  }
+
+  .tls ${RELOCATING+BLOCK(__section_alignment__)} :
+  { 					
+    ${R_TLS}
   }
 
   .endjunk ${RELOCATING+BLOCK(__section_alignment__)} :

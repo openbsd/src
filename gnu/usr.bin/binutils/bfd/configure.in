@@ -7,9 +7,9 @@ AC_INIT(libbfd.c)
 AC_CANONICAL_SYSTEM
 AC_ISC_POSIX
 
-AM_INIT_AUTOMAKE(bfd, 2.14)
+AM_INIT_AUTOMAKE(bfd, 2.15)
 # Uncomment the next line to remove the date from the reported bfd version
-#is_release=y
+is_release=y
 
 changequote(,)dnl
 bfd_version=`echo "${VERSION}" | sed -e 's/\([^\.]*\)\.*\([^\.]*\)\.*\([^\.]*\)\.*\([^\.]*\)\.*\([^\.]*\).*/\1.00\2.00\3.00\4.00\5/' -e 's/\([^\.]*\)\..*\(..\)\..*\(..\)\..*\(..\)\..*\(..\)$/\1\2\3\4\5/'`
@@ -103,7 +103,7 @@ bfd_default_target_size=32
 
 AC_PROG_CC
 
-ALL_LINGUAS="fr tr ja es sv da zh_CN"
+ALL_LINGUAS="fr tr ja es sv da zh_CN ro"
 CY_GNU_GETTEXT
 
 # Permit host specific settings.
@@ -113,17 +113,41 @@ AC_SUBST(HDEFINES)
 AC_PROG_INSTALL
 
 BFD_HOST_64BIT_LONG=0
+BFD_HOST_LONG_LONG=0
 BFD_HOST_64_BIT_DEFINED=0
 BFD_HOST_64_BIT=
 BFD_HOST_U_64_BIT=
-if test "x${HOST_64BIT_TYPE}" = "xlong"; then
-  BFD_HOST_64BIT_LONG=1
-elif test "x${HOST_64BIT_TYPE}" != "x"; then
-  BFD_HOST_64_BIT_DEFINED=1
-  BFD_HOST_64_BIT=${HOST_64BIT_TYPE}
-  BFD_HOST_U_64_BIT=${HOST_U_64BIT_TYPE}
+
+AC_MSG_CHECKING([for long long])
+AC_CACHE_VAL(bfd_cv_has_long_long,
+[AC_TRY_COMPILE(,
+[unsigned long long ll = 18446744073709551615ULL;],
+bfd_cv_has_long_long=yes, bfd_cv_has_long_long=no)])
+AC_MSG_RESULT($bfd_cv_has_long_long)
+if test $bfd_cv_has_long_long = yes; then
+  BFD_HOST_LONG_LONG=1
+  AC_COMPILE_CHECK_SIZEOF(long long)
 fi
+
+AC_COMPILE_CHECK_SIZEOF(long)
+if test "x${ac_cv_sizeof_long}" = "x8"; then
+  host64=true
+  BFD_HOST_64BIT_LONG=1
+  test -n "${HOST_64BIT_TYPE}" || HOST_64BIT_TYPE="long"
+  test -n "${HOST_U_64BIT_TYPE}" || HOST_U_64BIT_TYPE="unsigned long"
+elif test "x${ac_cv_sizeof_long_long}" = "x8"; then
+  test -n "${HOST_64BIT_TYPE}" || HOST_64BIT_TYPE="long long"
+  test -n "${HOST_U_64BIT_TYPE}" || HOST_U_64BIT_TYPE="unsigned long long"
+fi
+
+if test -n "${HOST_64BIT_TYPE}" -a -n "${HOST_U_64BIT_TYPE}"; then
+  BFD_HOST_64_BIT_DEFINED=1
+  BFD_HOST_64_BIT="${HOST_64BIT_TYPE}"
+  BFD_HOST_U_64_BIT="${HOST_U_64BIT_TYPE}"
+fi
+
 AC_SUBST(BFD_HOST_64BIT_LONG)
+AC_SUBST(BFD_HOST_LONG_LONG)
 AC_SUBST(BFD_HOST_64_BIT_DEFINED)
 AC_SUBST(BFD_HOST_64_BIT)
 AC_SUBST(BFD_HOST_U_64_BIT)
@@ -135,6 +159,7 @@ AC_CHECK_HEADERS(fcntl.h sys/file.h sys/time.h)
 AC_HEADER_TIME
 AC_HEADER_DIRENT
 AC_CHECK_FUNCS(fcntl getpagesize setitimer sysconf fdopen getuid getgid)
+AC_CHECK_FUNCS(strtoull)
 
 BFD_BINARY_FOPEN
 
@@ -150,7 +175,7 @@ COREFLAG=
 TRAD_HEADER=
 if test "${target}" = "${host}"; then
   case "${host}" in
-  alpha*-*-freebsd*)
+  alpha*-*-freebsd* | alpha*-*-kfreebsd*-gnu)
 	COREFILE=''
 	;;
   alpha*-*-linux-gnu*)
@@ -161,8 +186,10 @@ if test "${target}" = "${host}"; then
 	COREFILE=netbsd-core.lo
 	;;
   alpha*-*-*)		COREFILE=osf-core.lo ;;
-  arm-*-freebsd*)	COREFILE='' ;;
-  arm-*-netbsd* | arm-*-openbsd*) COREFILE=netbsd-core.lo ;;
+  arm-*-freebsd* | arm-*-kfreebsd*-gnu)
+			COREFILE='' ;;
+  arm-*-netbsd* | arm-*-openbsd*)
+			COREFILE=netbsd-core.lo ;;
   arm-*-riscix)		COREFILE=trad-core.lo ;;
   hppa*-*-hpux*)	COREFILE=hpux-core.lo ;;
   hppa*-*-hiux*)	COREFILE=hpux-core.lo ;;
@@ -177,84 +204,76 @@ if test "${target}" = "${host}"; then
 	;;
 
 changequote(,)dnl
-  i[3456]86-sequent-bsd*)
+  i[3-7]86-sequent-bsd*)
 changequote([,])dnl
 	COREFILE=trad-core.lo
 	TRAD_HEADER='"hosts/symmetry.h"'
 	;;
 changequote(,)dnl
-  i[3456]86-sequent-sysv4*) ;;
-  i[3456]86-sequent-sysv*)
+  i[3-7]86-sequent-sysv4*) ;;
+  i[3-7]86-sequent-sysv*)
 changequote([,])dnl
 	COREFILE=trad-core.lo
 	TRAD_HEADER='"hosts/symmetry.h"'
 	;;
 changequote(,)dnl
-  i[3456]86-*-bsdi)
+  i[3-7]86-*-bsdi)
 changequote([,])dnl
 	COREFILE=
 	;;
 changequote(,)dnl
-  i[3456]86-*-bsd* | i[34567]86-*-freebsd[123] | i[34567]86-*-freebsd[123]\.* | i[34567]86-*-freebsd4\.[01234]* | i[34567]86-*-freebsd*aout*)
+  i[3-7]86-*-bsd* | i[3-7]86-*-freebsd[123] | i[3-7]86-*-freebsd[123]\.* | i[3-7]86-*-freebsd4\.[01234]* | i[3-7]86-*-freebsd*aout*)
 changequote([,])dnl
 	COREFILE=trad-core.lo
 	TRAD_HEADER='"hosts/i386bsd.h"'
 	;;
 changequote(,)dnl
-  i[3456]86-*-freebsd*)
+  i[3-7]86-*-freebsd* | i[3-7]86-*-kfreebsd*-gnu)
 changequote([,])dnl
 	COREFILE=''
 	TRAD_HEADER='"hosts/i386bsd.h"'
 	;;
 changequote(,)dnl
-  i[3456]86-*-netbsd* | i[3456]86-*-openbsd*)
+  i[3-7]86-*-netbsd* | i[3-7]86-*-knetbsd*-gnu | i[3-7]86-*-openbsd*)
 changequote([,])dnl
 	COREFILE=netbsd-core.lo
 	;;
 changequote(,)dnl
-  i[3456]86-esix-sysv3*)
+  i[3-7]86-esix-sysv3*)
 changequote([,])dnl
 	COREFILE=trad-core.lo
 	TRAD_HEADER='"hosts/esix.h"'
 	;;
 changequote(,)dnl
-  i[3456]86-*-sco3.2v5*)
+  i[3-7]86-*-sco3.2v5*)
 changequote([,])dnl
 	COREFILE=sco5-core.lo
 	;;
 changequote(,)dnl
-  i[3456]86-*-sco* | i[3456]86-*-isc*)
+  i[3-7]86-*-sco* | i[3-7]86-*-isc*)
 changequote([,])dnl
 	COREFILE=trad-core.lo
 	TRAD_HEADER='"hosts/i386sco.h"'
 	;;
 changequote(,)dnl
-  i[3456]86-*-mach3*)
+  i[3-7]86-*-mach3*)
 changequote([,])dnl
 	COREFILE=trad-core.lo
 	TRAD_HEADER='"hosts/i386mach3.h"'
 	;;
 changequote(,)dnl
-  i[3456]86-*-linux-gnu*)
+  i[3-7]86-*-linux-gnu*)
 changequote([,])dnl
 	COREFILE=trad-core.lo
 	TRAD_HEADER='"hosts/i386linux.h"'
 	;;
 changequote(,)dnl
-  i[3456]86-*-isc*)	COREFILE=trad-core.lo ;;
-  i[3456]86-*-aix*)	COREFILE=aix386-core.lo ;;
+  i[3-7]86-*-isc*)	COREFILE=trad-core.lo ;;
+  i[3-7]86-*-aix*)	COREFILE=aix386-core.lo ;;
 changequote([,])dnl
   i860-*-mach3* | i860-*-osf1*)
 	COREFILE=trad-core.lo
 	TRAD_HEADER='"hosts/i860mach3.h"'
-	;;
-  mips-dec-bsd*)
-	COREFILE=trad-core.lo
-	TRAD_HEADER='"hosts/mipsbsd.h"'
-	;;
-  mips-dec-mach3*)
-	COREFILE=trad-core.lo
-	TRAD_HEADER='"hosts/mipsmach3.h"'
 	;;
   mips-*-netbsd* | mips*-*-openbsd*)
 	COREFILE=netbsd-core.lo
@@ -266,10 +285,6 @@ changequote([,])dnl
   mips-sgi-irix4*)	COREFILE=irix-core.lo ;;
   mips-sgi-irix5*)	COREFILE=irix-core.lo ;;
   mips-sgi-irix6*)	COREFILE=irix-core.lo ;;
-  mips-*-mach3*)
-	COREFILE=trad-core.lo
-	TRAD_HEADER='"hosts/mipsmach3.h"'
-	;;
   mips-*-sysv4*)	;;
   mips-*-sysv* | mips-*-riscos*)
 	COREFILE=trad-core.lo
@@ -352,7 +367,8 @@ changequote([,])dnl
   powerpc-*-aix4*)	COREFILE=rs6000-core.lo ;;
   powerpc-*-aix*)	COREFILE=rs6000-core.lo ;;
   powerpc-*-beos*)	;;
-  powerpc-*-freebsd*)	COREFILE='' ;;
+  powerpc-*-freebsd* | powerpc-*-kfreebsd*-gnu)
+		        COREFILE='' ;;
   powerpc-*-netbsd*)	COREFILE=netbsd-core.lo ;;
   powerpc-*-*bsd*)	COREFILE=netbsd-core.lo ;;
   s390*-*-*)            COREFILE=trad-core.lo ;;
@@ -364,7 +380,9 @@ changequote([,])dnl
 	COREFILE=trad-core.lo
 	TRAD_HEADER='"hosts/tahoe.h"'
 	;;
-  vax-*-netbsd* | vax-*-openbsd*)	COREFILE=netbsd-core.lo ;;
+  vax-*-netbsd* | vax-*-openbsd*)
+  	COREFILE=netbsd-core.lo
+	;;
   vax-*-ultrix2*)
 	COREFILE=trad-core.lo
 	TRAD_HEADER='"hosts/vaxult2.h"'
@@ -372,6 +390,10 @@ changequote([,])dnl
   vax-*-ultrix*)
 	COREFILE=trad-core.lo
 	TRAD_HEADER='"hosts/vaxult2.h"'
+	;;
+  vax-*-linux-gnu*)
+	COREFILE=trad-core.lo
+	TRAD_HEADER='"hosts/vaxlinux.h"'
 	;;
   vax-*-*)
 	COREFILE=trad-core.lo
@@ -555,8 +577,6 @@ do
     aout0_big_vec)		tb="$tb aout0.lo aout32.lo" ;;
     aout_arm_big_vec)		tb="$tb aout-arm.lo aout32.lo" ;;
     aout_arm_little_vec)	tb="$tb aout-arm.lo aout32.lo" ;;
-    aout_mips_big_vec)		tb="$tb mipsbsd.lo aout32.lo" ;;
-    aout_mips_little_vec)	tb="$tb mipsbsd.lo aout32.lo" ;;
     apollocoff_vec)		tb="$tb coff-apollo.lo" ;;
     arm_epoc_pe_big_vec)	tb="$tb epoc-pe-arm.lo peigen.lo cofflink.lo " ;;
     arm_epoc_pe_little_vec)	tb="$tb epoc-pe-arm.lo peigen.lo cofflink.lo " ;;
@@ -573,6 +593,7 @@ do
     b_out_vec_little_host)	tb="$tb bout.lo aout32.lo" ;;
     bfd_efi_app_ia32_vec)	tb="$tb efi-app-ia32.lo peigen.lo cofflink.lo" ;;
     bfd_efi_app_ia64_vec)	tb="$tb efi-app-ia64.lo pepigen.lo cofflink.lo"; target_size=64 ;;
+    bfd_elf32_am33lin_vec)	tb="$tb elf32-am33lin.lo elf32.lo $elf" ;;
     bfd_elf32_avr_vec)		tb="$tb elf32-avr.lo elf32.lo $elf" ;;
     bfd_elf32_big_generic_vec) 	tb="$tb elf32-gen.lo elf32.lo $elf" ;;
     bfd_elf32_bigarc_vec)	tb="$tb elf32-arc.lo elf32.lo $elf" ;;
@@ -585,6 +606,7 @@ do
     bfd_elf32_dlx_big_vec)	tb="$tb elf32-dlx.lo elf32.lo $elf" ;;
     bfd_elf32_fr30_vec)		tb="$tb elf32-fr30.lo elf32.lo $elf" ;;
     bfd_elf32_frv_vec)		tb="$tb elf32-frv.lo elf32.lo $elf" ;;
+    bfd_elf32_frvfdpic_vec)	tb="$tb elf32-frv.lo elf32.lo $elf" ;;
     bfd_elf32_h8300_vec)	tb="$tb elf32-h8300.lo elf32.lo $elf" ;;
     bfd_elf32_hppa_linux_vec)	tb="$tb elf32-hppa.lo elf32.lo $elf" ;;
     bfd_elf32_hppa_vec)		tb="$tb elf32-hppa.lo elf32.lo $elf" ;;
@@ -604,6 +626,9 @@ do
     bfd_elf32_littlearm_vec)	tb="$tb elfarm-nabi.lo elf32.lo $elf" ;;
     bfd_elf32_littlemips_vec) 	tb="$tb elf32-mips.lo elfxx-mips.lo elf32.lo $elf ecofflink.lo" ;;
     bfd_elf32_m32r_vec)		tb="$tb elf32-m32r.lo elf32.lo $elf" ;;
+    bfd_elf32_m32rle_vec)       tb="$tb elf32-m32r.lo elf32.lo $elf" ;;
+    bfd_elf32_m32rlin_vec)      tb="$tb elf32-m32r.lo elf32.lo $elf" ;;
+    bfd_elf32_m32rlelin_vec)    tb="$tb elf32-m32r.lo elf32.lo $elf" ;;
     bfd_elf32_m68hc11_vec)	tb="$tb elf32-m68hc11.lo elf32-m68hc1x.lo elf32.lo $elf" ;;
     bfd_elf32_m68hc12_vec)	tb="$tb elf32-m68hc12.lo elf32-m68hc1x.lo elf32.lo $elf" ;;
     bfd_elf32_m68k_vec)		tb="$tb elf32-m68k.lo elf32.lo $elf" ;;
@@ -654,8 +679,6 @@ do
     bfd_elf64_bigmips_vec) 	tb="$tb elf64-mips.lo elf64.lo elfxx-mips.lo elf32.lo $elf ecofflink.lo"; target_size=64 ;;
     bfd_elf64_hppa_linux_vec)	tb="$tb elf64-hppa.lo elf64.lo $elf"; target_size=64 ;;
     bfd_elf64_hppa_vec)		tb="$tb elf64-hppa.lo elf64.lo $elf"; target_size=64 ;;
-    bfd_elf64_ia64_aix_big_vec)	tb="$tb elf64-ia64.lo elf64.lo $elf"; target_size=64 ;;
-    bfd_elf64_ia64_aix_little_vec) tb="$tb elf64-ia64.lo elf64.lo $elf"; target_size=64 ;;
     bfd_elf64_ia64_big_vec)	tb="$tb elf64-ia64.lo elf64.lo $elf"; target_size=64 ;;
     bfd_elf64_ia64_hpux_big_vec) tb="$tb elf64-ia64.lo elf64.lo $elf"; target_size=64 ;;
     bfd_elf64_ia64_little_vec)	tb="$tb elf64-ia64.lo elf64.lo $elf"; target_size=64 ;;
@@ -859,7 +882,7 @@ case ${host64}-${target64}-${want64} in
     wordsize=64
     bfd_libs='$(BFD64_LIBS) $(BFD32_LIBS)'
     all_backends='$(BFD64_BACKENDS) $(BFD32_BACKENDS)'
-    if test -z "$GCC" && test "$BFD_HOST_64BIT_LONG" = "0" && test "$BFD_HOST_64_BIT_DEFINED" = "0"; then
+    if test $BFD_HOST_64_BIT_DEFINED = 0; then
       AC_MSG_WARN([You have requested a 64 bit BFD configuration, but])
       AC_MSG_WARN([your compiler may not have a 64 bit integral type])
     fi
@@ -889,6 +912,28 @@ AC_SUBST(all_backends)
 AC_SUBST(bfd_backends)
 AC_SUBST(bfd_machines)
 AC_SUBST(bfd_default_target_size)
+
+# Determine the host dependant file_ptr a.k.a. off_t type.  In order
+# prefer: off64_t - if ftello64 and fseeko64, off_t - if ftello and
+# fseeko, long.  This assumes that sizeof off_t is .ge. sizeof long.
+# Hopefully a reasonable assumption since fseeko et.al. should be
+# upward compatible.
+AC_CHECK_FUNCS(ftello ftello64 fseeko fseeko64)
+if test x"$ac_cv_func_ftello" = xyes -a x"$ac_cv_func_fseeko" = xyes; then
+    AC_COMPILE_CHECK_SIZEOF(off_t)
+fi
+AC_MSG_CHECKING([file_ptr type])
+bfd_file_ptr="long"
+bfd_ufile_ptr="unsigned long"
+if test x"$ac_cv_func_ftello64" = xyes -a x"$ac_cv_func_fseeko64" = xyes \
+	-o x"${ac_cv_sizeof_off_t}" = x8; then
+    bfd_file_ptr=BFD_HOST_64_BIT
+    bfd_ufile_ptr=BFD_HOST_U_64_BIT
+fi
+AC_MSG_RESULT($bfd_file_ptr)
+AC_SUBST(bfd_file_ptr)
+AC_SUBST(bfd_ufile_ptr)
+
 
 tdefaults=""
 test -n "${defvec}" && tdefaults="${tdefaults} -DDEFAULT_VECTOR=${defvec}"

@@ -1,21 +1,21 @@
 /* Print Motorola 68k instructions.
    Copyright 1986, 1987, 1989, 1991, 1992, 1993, 1994, 1995, 1996, 1997,
-   1998, 1999, 2000, 2001, 2002
+   1998, 1999, 2000, 2001, 2002, 2003
    Free Software Foundation, Inc.
 
-This file is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
+   This file is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2 of the License, or
+   (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #include "sysdep.h"
 #include "dis-asm.h"
@@ -263,6 +263,9 @@ print_insn_m68k (memaddr, info)
     case bfd_mach_mcf5200:
       arch_mask = mcf5200;
       break;
+    case bfd_mach_mcf528x:
+      arch_mask = mcf528x;
+      break;
     case bfd_mach_mcf5206e:
       arch_mask = mcf5206e;
       break;
@@ -342,7 +345,7 @@ print_insn_m68k (memaddr, info)
   /* Point at first word of argument data,
      and at descriptor for first argument.  */
   p = buffer + 2;
-  
+
   /* Figure out how long the fixed-size portion of the instruction is.
      The only place this is stored in the opcode table is
      in the arguments--look for arguments which specify fields in the 2nd
@@ -406,10 +409,10 @@ print_insn_m68k (memaddr, info)
     }
 
   FETCH_DATA (info, p);
-  
+
   d = best->args;
 
-  /* We can the operands twice.  The first time we don't print anything,
+  /* We scan the operands twice.  The first time we don't print anything,
      but look for errors. */
 
   save_p = p;
@@ -537,12 +540,16 @@ print_insn_arg (d, buffer, p0, addr, info)
 
     case 'J':
       {
+	/* FIXME: There's a problem here, different m68k processors call the
+	   same address different names. This table can't get it right
+	   because it doesn't know which processor it's disassembling for.  */
 	static const struct { char *name; int value; } names[]
 	  = {{"%sfc", 0x000}, {"%dfc", 0x001}, {"%cacr", 0x002},
 	     {"%tc",  0x003}, {"%itt0",0x004}, {"%itt1", 0x005},
              {"%dtt0",0x006}, {"%dtt1",0x007}, {"%buscr",0x008},
 	     {"%usp", 0x800}, {"%vbr", 0x801}, {"%caar", 0x802},
 	     {"%msp", 0x803}, {"%isp", 0x804},
+	     {"%flashbar", 0xc04}, {"%rambar", 0xc05}, /* mcf528x added these.  */
 
 	     /* Should we be calling this psr like we do in case 'Y'?  */
 	     {"%mmusr",0x805},
@@ -566,6 +573,14 @@ print_insn_arg (d, buffer, p0, addr, info)
       /* 0 means 8, except for the bkpt instruction... */
       if (val == 0 && d[1] != 's')
 	val = 8;
+      (*info->fprintf_func) (info->stream, "#%d", val);
+      break;
+
+    case 'x':
+      val = fetch_arg (buffer, place, 3, info);
+      /* 0 means -1.  */
+      if (val == 0)
+	val = -1;
       (*info->fprintf_func) (info->stream, "#%d", val);
       break;
 
@@ -724,7 +739,7 @@ print_insn_arg (d, buffer, p0, addr, info)
     case 'I':
       /* Get coprocessor ID... */
       val = fetch_arg (buffer, 'd', 3, info);
-      
+
       if (val != 1)				/* Unusual coprocessor ID? */
 	(*info->fprintf_func) (info->stream, "(cpid=%d) ", val);
       break;
@@ -748,7 +763,10 @@ print_insn_arg (d, buffer, p0, addr, info)
     case 'p':
     case 'q':
     case 'v':
-
+    case 'b':
+    case 'w':
+    case 'y':
+    case 'z':
       if (place == 'd')
 	{
 	  val = fetch_arg (buffer, 'x', 6, info);
@@ -1023,7 +1041,7 @@ print_insn_arg (d, buffer, p0, addr, info)
       {
 	short is_upper = 0;
 	int reg = fetch_arg (buffer, place, 5, info);
-	
+
 	if (reg & 0x10)
 	  {
 	    is_upper = 1;
@@ -1034,7 +1052,7 @@ print_insn_arg (d, buffer, p0, addr, info)
 			       is_upper ? "u" : "l");
       }
       break;
-	
+
     default:
       return -2;
     }
@@ -1121,7 +1139,7 @@ fetch_arg (buffer, code, bits, info)
       val = (buffer[2] << 8) + buffer[3];
       val >>= 7;
       break;
-      
+
     case '8':
       FETCH_DATA (info, buffer + 3);
       val = (buffer[2] << 8) + buffer[3];
@@ -1138,13 +1156,13 @@ fetch_arg (buffer, code, bits, info)
       val = (buffer[1] >> 6);
       break;
 
-    case 'm': 
+    case 'm':
       val = (buffer[1] & 0x40 ? 0x8 : 0)
 	| ((buffer[0] >> 1) & 0x7)
 	| (buffer[3] & 0x80 ? 0x10 : 0);
       break;
 
-    case 'n': 
+    case 'n':
       val = (buffer[1] & 0x40 ? 0x8 : 0) | ((buffer[0] >> 1) & 0x7);
       break;
 

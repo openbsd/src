@@ -1,5 +1,5 @@
 /* BFD backend for Extended Tektronix Hex Format  objects.
-   Copyright 1992, 1993, 1994, 1995, 1996, 1998, 1999, 2000, 2001, 2002
+   Copyright 1992, 1993, 1994, 1995, 1996, 1998, 1999, 2000, 2001, 2002, 2003
    Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support <sac@cygnus.com>.
 
@@ -29,7 +29,7 @@ DESCRIPTION
 	relocations. Their main application is communication with
 	devices like PROM programmers and ICE equipment.
 
-	It seems that the sections are descibed as being really big,
+	It seems that the sections are described as being really big,
         the example I have says that the text section is 0..ffffffff.
 	BFD would barf with this, many apps would try to alloc 4GB to
 	read in the file.
@@ -110,17 +110,17 @@ static void out PARAMS ((bfd *, int, char *, char *));
 static void writesym PARAMS ((char **, const char *));
 static void writevalue PARAMS ((char **, bfd_vma));
 static bfd_boolean tekhex_set_section_contents
- PARAMS ((bfd*, sec_ptr, PTR, file_ptr, bfd_size_type));
+ PARAMS ((bfd*, sec_ptr, const PTR, file_ptr, bfd_size_type));
 static bfd_boolean tekhex_set_arch_mach
  PARAMS ((bfd *, enum bfd_architecture, unsigned long));
 static bfd_boolean tekhex_get_section_contents
  PARAMS ((bfd *, asection *, PTR, file_ptr, bfd_size_type));
 static void move_section_contents
- PARAMS ((bfd *, asection *, PTR, file_ptr, bfd_size_type, bfd_boolean));
+ PARAMS ((bfd *, asection *, const PTR, file_ptr, bfd_size_type, bfd_boolean));
 static const bfd_target *tekhex_object_p PARAMS ((bfd *));
 static bfd_boolean tekhex_mkobject PARAMS ((bfd *));
 static long tekhex_get_symtab_upper_bound PARAMS ((bfd *));
-static long tekhex_get_symtab PARAMS ((bfd *, asymbol **));
+static long tekhex_canonicalize_symtab PARAMS ((bfd *, asymbol **));
 static void pass_over PARAMS ((bfd *, void (*) (bfd*, int, char *)));
 static void first_phase PARAMS ((bfd *, int, char *));
 static void insert_byte PARAMS ((bfd *, int, bfd_vma));
@@ -522,7 +522,7 @@ pass_over (abfd, func)
 }
 
 static long
-tekhex_get_symtab (abfd, table)
+tekhex_canonicalize_symtab (abfd, table)
      bfd *abfd;
      asymbol **table;
 {
@@ -593,7 +593,7 @@ static void
 move_section_contents (abfd, section, locationp, offset, count, get)
      bfd *abfd;
      asection *section;
-     PTR locationp;
+     const PTR locationp;
      file_ptr offset;
      bfd_size_type count;
      bfd_boolean get;
@@ -672,7 +672,7 @@ static bfd_boolean
 tekhex_set_section_contents (abfd, section, locationp, offset, bytes_to_do)
      bfd *abfd;
      sec_ptr section;
-     PTR locationp;
+     const PTR locationp;
      file_ptr offset;
      bfd_size_type bytes_to_do;
 {

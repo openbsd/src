@@ -1,5 +1,6 @@
 /* Support for 32-bit PowerPC NLM (NetWare Loadable Module)
-   Copyright 1994, 1995, 2000, 2001, 2002 Free Software Foundation, Inc.
+   Copyright 1994, 1995, 2000, 2001, 2002, 2003
+   Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
 
@@ -41,7 +42,7 @@ static bfd_boolean nlm_powerpc_write_prefix
 static bfd_boolean nlm_powerpc_read_reloc
   PARAMS ((bfd *, nlmNAME(symbol_type) *, asection **, arelent *));
 static bfd_boolean nlm_powerpc_mangle_relocs
-  PARAMS ((bfd *, asection *, PTR, bfd_vma, bfd_size_type));
+  PARAMS ((bfd *, asection *, const PTR, bfd_vma, bfd_size_type));
 static bfd_boolean nlm_powerpc_read_import
   PARAMS ((bfd *, nlmNAME(symbol_type) *));
 
@@ -641,7 +642,7 @@ static bfd_boolean
 nlm_powerpc_mangle_relocs (abfd, sec, data, offset, count)
      bfd *abfd ATTRIBUTE_UNUSED;
      asection *sec ATTRIBUTE_UNUSED;
-     PTR data ATTRIBUTE_UNUSED;
+     const PTR data ATTRIBUTE_UNUSED;
      bfd_vma offset ATTRIBUTE_UNUSED;
      bfd_size_type count ATTRIBUTE_UNUSED;
 {

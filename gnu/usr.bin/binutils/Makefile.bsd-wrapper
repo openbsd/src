@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.59 2004/10/21 20:47:29 grange Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.60 2004/11/02 20:44:57 miod Exp $
 
-NEW_BINUTILS=alpha arm hppa i386 mips powerpc sparc sparc64 amd64
+NEW_BINUTILS=amd64 alpha arm hppa i386 mips64 powerpc sparc sparc64
 
 .for _arch in ${MACHINE_ARCH}
 .  if !empty(NEW_BINUTILS:M${_arch})
@@ -35,7 +35,7 @@ MANDIR=${PREFIX}/share/man/cat
 
 MAN=		binutils/objdump.1 c++filt.1
 
-.if (${MACHINE_ARCH} != "unknown")
+.if (${MACHINE_ARCH} != "mips64")
 CONF_SUBDIRS+=	gdb
 SUBDIRS+=	gdb
 INST_SUBDIRS+=	gdb
@@ -64,14 +64,9 @@ CONFIGURE_MODULES=${CONF_SUBDIRS:S/^/configure-/g}
 CONFIGURE_HOST_MODULES=${CONF_SUBDIRS:S/^/configure-/g}
 ALL_HOST_MODULES=${SUBDIRS:S/^/all-/g}
 INSTALL_MODULES=${INST_SUBDIRS:S/^/install-/g}
+INFO_HOST_MODULES=${SUBDIRS:S/^/info-/g}
+INSTALL_INFO_HOST_MODULES=${INST_SUBDIRS:S/^/install-info-/g}
 	
-# cross-compilation
-.if defined(TARGET_ARCH)
-CONFIGTARGET=--target=${TARGET_ARCH}-unknown-openbsd${OSREV}
-.else
-CONFIGTARGET=
-.endif
-
 all:	config.status
 	SUBDIRS='${SUBDIRS}' \
 	  CONFIGURE_HOST_MODULES='${CONFIGURE_HOST_MODULES}' \
@@ -82,7 +77,8 @@ all:	config.status
 	    BSDSRCDIR=${BSDSRCDIR} \
 	    ALL_MODULES="${ALL_MODULES}" \
 	    ALL_HOST_MODULES='${ALL_HOST_MODULES}' \
-	    ALL_X11_MODULES="${ALL_X11_MODULES}" all info
+	    ALL_X11_MODULES="${ALL_X11_MODULES}" \
+	    INFO_HOST_MODULES='${INFO_HOST_MODULES}' all info
 .if ${USING_NEW_BINUTILS} != "yes"
 	cd ${.OBJDIR}/binutils && \
 	    ${MAKE} CC="${CC}" CFLAGS="${CFLAGS} ${COPTS}" \
@@ -101,13 +97,18 @@ do-config: .USE
 	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	sh ${.CURDIR}/configure --prefix=${PREFIX} \
 	    --infodir='$${prefix}/share/info' \
-	    --disable-nls --disable-gdbtk --disable-commonbfdlib ${CF} \
-	    ${CONFIGTARGET}
+	    --disable-nls --disable-gdbtk --disable-commonbfdlib ${CF}
 	cd ${.OBJDIR} && \
 	    sed -e 's,SUBDIRS *=,SUBDIRS ?=,' <Makefile >Makefile.tmp && \
 	    mv -f Makefile.tmp Makefile
 	cd ${.OBJDIR} && \
 	    ${MAKE} ${CONFIGURE_MODULES}
+.if ${USING_NEW_BINUTILS} == "yes"
+	# We need to generate as.1 and ld.1 immediately after config.status
+	# for the manpage machinery to work properly.
+	cd ${.OBJDIR}/gas/doc && ${MAKE} as.1
+	cd ${.OBJDIR}/ld && ${MAKE} ld.1
+.endif
 
 config: do-config
 .ifndef GLOBAL_AUTOCONF_CACHE
@@ -124,7 +125,9 @@ install: maninstall
 	    scriptdir=${PREFIX}/libdata \
 	    tooldir=${PREFIX} \
 	    BSDSRCDIR=${BSDSRCDIR} \
-	    INSTALL_MODULES='${INSTALL_MODULES}' install install-info
+	    INSTALL_MODULES='${INSTALL_MODULES}' \
+	    INSTALL_INFO_HOST_MODULES='${INSTALL_INFO_HOST_MODULES}' \
+	      install install-info
 .if ${USING_NEW_BINUTILS} != "yes"
 	cd ${.OBJDIR}/binutils && \
 		${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP} -o ${BINOWN} \

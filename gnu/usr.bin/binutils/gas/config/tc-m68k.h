@@ -1,6 +1,6 @@
 /* This file is tc-m68k.h
    Copyright 1987, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997,
-   1998, 1999, 2000, 2001, 2002, 2003
+   1998, 1999, 2000, 2001, 2002, 2003, 2004
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -169,8 +169,11 @@ while (0)
 #define tc_fix_adjustable(X) tc_m68k_fix_adjustable(X)
 extern int tc_m68k_fix_adjustable PARAMS ((struct fix *));
 
-/* Target *-*-elf implies an embedded target.  No shared libs.  */
-#define EXTERN_FORCE_RELOC (strcmp (TARGET_OS, "elf") != 0)
+/* Target *-*-elf implies an embedded target.  No shared libs.
+   *-*-uclinux also requires special casing to prevent GAS from
+   generating unsupported R_68K_PC16 relocs.  */
+#define EXTERN_FORCE_RELOC \
+  ((strcmp (TARGET_OS, "elf") != 0) && (strcmp (TARGET_OS, "uclinux") != 0))
 
 /* Values passed to md_apply_fix3 don't include symbol values.  */
 #define MD_APPLY_SYM_VALUE(FIX) 0
@@ -220,3 +223,15 @@ extern struct relax_type md_relax_table[];
   while (0)
 
 #define DWARF2_LINE_MIN_INSN_LENGTH 2
+
+/* We want .cfi_* pseudo-ops for generating unwind info.  */
+#define TARGET_USE_CFIPOP 1
+
+#define DWARF2_DEFAULT_RETURN_COLUMN 24
+#define DWARF2_CIE_DATA_ALIGNMENT (-4)
+
+#define tc_regname_to_dw2regnum tc_m68k_regname_to_dw2regnum
+extern int tc_m68k_regname_to_dw2regnum (const char *regname);
+
+#define tc_cfi_frame_initial_instructions tc_m68k_frame_initial_instructions
+extern void tc_m68k_frame_initial_instructions (void);

@@ -347,6 +347,10 @@ const struct mips_arch_choice mips_arch_choices[] = {
     mips_cp0_names_numeric, NULL, 0, mips_hwr_names_numeric },
   { "r6000",	1, bfd_mach_mips6000, CPU_R6000, ISA_MIPS2,
     mips_cp0_names_numeric, NULL, 0, mips_hwr_names_numeric },
+  { "rm7000",	1, bfd_mach_mips7000, CPU_RM7000, ISA_MIPS4,
+    mips_cp0_names_numeric, NULL, 0, mips_hwr_names_numeric },
+  { "rm9000",	1, bfd_mach_mips7000, CPU_RM7000, ISA_MIPS4,
+    mips_cp0_names_numeric, NULL, 0, mips_hwr_names_numeric },
   { "r8000",	1, bfd_mach_mips8000, CPU_R8000, ISA_MIPS4,
     mips_cp0_names_numeric, NULL, 0, mips_hwr_names_numeric },
   { "r10000",	1, bfd_mach_mips10000, CPU_R10000, ISA_MIPS4,
@@ -379,6 +383,12 @@ const struct mips_arch_choice mips_arch_choices[] = {
     mips_cp0_names_mips3264,
     mips_cp0sel_names_mips3264, ARRAY_SIZE (mips_cp0sel_names_mips3264),
     mips_hwr_names_numeric },
+
+  { "mips64r2",	1, bfd_mach_mipsisa64r2, CPU_MIPS64R2,
+    ISA_MIPS64R2 | INSN_MIPS16 | INSN_MIPS3D | INSN_MDMX,
+    mips_cp0_names_mips3264r2,
+    mips_cp0sel_names_mips3264r2, ARRAY_SIZE (mips_cp0sel_names_mips3264r2),
+    mips_hwr_names_mips3264r2 },
 
   { "sb1",	1, bfd_mach_mips_sb1, CPU_SB1,
     ISA_MIPS64 | INSN_MIPS3D | INSN_SB1,
@@ -495,11 +505,11 @@ set_default_mips_dis_options (info)
   mips_hwr_names = mips_hwr_names_numeric;
 
   /* If an ELF "newabi" binary, use the n32/(n)64 GPR names.  */
-  if (info->flavour == bfd_target_elf_flavour && info->symbols != NULL)
+  if (info->flavour == bfd_target_elf_flavour && info->section != NULL)
     {
       Elf_Internal_Ehdr *header;
 
-      header = elf_elfheader (bfd_asymbol_bfd (*(info->symbols)));
+      header = elf_elfheader (info->section->owner);
       if (is_newabi (header))
 	mips_gpr_names = mips_gpr_names_newabi;
     }
@@ -710,6 +720,7 @@ print_insn_args (d, l, pc, info)
 	      break;
 
 	    case 'C':
+	    case 'H':
 	      msbd = (l >> OP_SH_EXTMSBD) & OP_MASK_EXTMSBD;
 	      (*info->fprintf_func) (info->stream, "0x%x", msbd + 1);
 	      break;
@@ -735,6 +746,21 @@ print_insn_args (d, l, pc, info)
 		  (*info->fprintf_func) (info->stream, "$%d,%d", cp0reg, sel);
 		break;
 	      }
+
+	    case 'E':
+	      lsb = ((l >> OP_SH_SHAMT) & OP_MASK_SHAMT) + 32;
+	      (*info->fprintf_func) (info->stream, "0x%x", lsb);
+	      break;
+	
+	    case 'F':
+	      msb = ((l >> OP_SH_INSMSB) & OP_MASK_INSMSB) + 32;
+	      (*info->fprintf_func) (info->stream, "0x%x", msb - lsb + 1);
+	      break;
+
+	    case 'G':
+	      msbd = ((l >> OP_SH_EXTMSBD) & OP_MASK_EXTMSBD) + 32;
+	      (*info->fprintf_func) (info->stream, "0x%x", msbd + 1);
+	      break;
 
 	    default:
 	      /* xgettext:c-format */
