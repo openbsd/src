@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd_scsi.c,v 1.1 1999/07/25 07:09:19 csapuntz Exp $	*/
+/*	$OpenBSD: sd_scsi.c,v 1.2 2000/08/05 18:45:42 niklas Exp $	*/
 /*	$NetBSD: sd_scsi.c,v 1.8 1998/10/08 20:21:13 thorpej Exp $	*/
 
 /*-
@@ -76,20 +76,20 @@ struct sd_scsibus_mode_sense_data {
 	union scsi_disk_pages pages;
 };
 
-static int	sd_scsibus_mode_sense __P((struct sd_softc *,
-		    struct sd_scsibus_mode_sense_data *, int, int));
-static int	sd_scsibus_get_parms __P((struct sd_softc *,
-		    struct disk_parms *, int));
-static int	sd_scsibus_get_optparms __P((struct sd_softc *,
-		    struct disk_parms *, int));
-static void	sd_scsibus_flush __P((struct sd_softc *, int));
+int	sd_scsibus_mode_sense __P((struct sd_softc *,
+	    struct sd_scsibus_mode_sense_data *, int, int));
+int	sd_scsibus_get_parms __P((struct sd_softc *,
+	    struct disk_parms *, int));
+int	sd_scsibus_get_optparms __P((struct sd_softc *,
+	    struct disk_parms *, int));
+void	sd_scsibus_flush __P((struct sd_softc *, int));
 
 const struct sd_ops sd_scsibus_ops = {
 	sd_scsibus_get_parms,
 	sd_scsibus_flush,
 };
 
-static int
+int
 sd_scsibus_mode_sense(sd, scsi_sense, page, flags)
 	struct sd_softc *sd;
 	struct sd_scsibus_mode_sense_data *scsi_sense;
@@ -118,7 +118,7 @@ sd_scsibus_mode_sense(sd, scsi_sense, page, flags)
 	    SDRETRIES, 6000, NULL, flags | SCSI_DATA_IN | SCSI_SILENT));
 }
 
-static int
+int
 sd_scsibus_get_optparms(sd, dp, flags)
 	struct sd_softc *sd;
 	struct disk_parms *dp;
@@ -170,7 +170,7 @@ sd_scsibus_get_optparms(sd, dp, flags)
  * Get the scsi driver to send a full inquiry to the * device and use the
  * results to fill out the disk parameter structure.
  */
-static int
+int
 sd_scsibus_get_parms(sd, dp, flags)
 	struct sd_softc *sd;
 	struct disk_parms *dp;
@@ -264,7 +264,7 @@ fake_it:
 	return (SDGP_RESULT_OK);
 }
 
-static void
+void
 sd_scsibus_flush(sd, flags)
 	struct sd_softc *sd;
 	int flags;
