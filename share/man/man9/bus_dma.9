@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bus_dma.9,v 1.18 2003/06/06 20:56:32 jmc Exp $
+.\"	$OpenBSD: bus_dma.9,v 1.19 2004/05/10 18:14:42 pvalchev Exp $
 .\" $NetBSD: bus_dma.9,v 1.14 2000/06/14 06:49:19 cgd Exp $
 .\"
 .\" Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -414,6 +414,7 @@ will never block on resources if the handle was created with
 .nr nS 1
 .Ft void
 .Fn bus_dmamap_sync "bus_dma_tag_t tag" "bus_dmamap_t dmam" \
+                    "bus_addr_t offset" "bus_size_t size" \
                     "bus_dmasync_op_t ops"
 .nr nS 0
 .Pp
@@ -432,6 +433,10 @@ This is the bus_dma_tag_t passed down from the parent driver via
 .Fa <bus>_attach_args .
 .It Fa dmam
 The DMA mapping to be synchronized.
+.It Fa offset
+Offset in the DMA mapping to be synchronized.
+.It Fa size
+The size of the region to be synchronized.
 .It Fa ops
 One or more synchronization operations to perform.
 The following DMA synchronization operations are defined:
