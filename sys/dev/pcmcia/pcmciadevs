@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.25 1999/10/31 17:24:04 fgsch Exp $
+	$OpenBSD: pcmciadevs,v 1.26 1999/11/05 04:34:21 angelos Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -61,6 +61,7 @@ vendor LUCENT			0x0156	Lucent Technologies
 vendor COMPAQ2			0x0183	Compaq
 vendor KINGSTON			0x0186	Kingston
 vendor DAYNA			0x0194	Dayna
+vendor BAY                      0x01eb  Bay Networks
 vendor IODATA			0x01bf	I-O DATA
 vendor BREEZECOM		0x0a02	BreezeCOM
 vendor LASAT			0x3401	Lasat Communications A/S
@@ -140,6 +141,9 @@ product LINKSYS COMBO_ECARD	0xc1ab Linksys Combo EthernetCard
 
 /* Lucent technologies corporation */
 product LUCENT WAVELAN		0x0002 Lucent WaveLAN IEEE 802.11 DSSS
+
+/* BayStack 650 FH 802.11 */
+product	BAY STACK_650		0x0804 BayStack 650 Wireless LAN
 
 /* Megahertz */
 product MEGAHERTZ XJ4288	0x0023 Megahertz XJ4288 Modem

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.29 1999/10/31 17:34:49 fgsch Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.30 1999/11/05 04:34:21 angelos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -68,6 +68,7 @@
 #define	PCMCIA_VENDOR_COMPAQ2	0x0183	/* Compaq */
 #define	PCMCIA_VENDOR_KINGSTON	0x0186	/* Kingston */
 #define	PCMCIA_VENDOR_DAYNA	0x0194	/* Dayna */
+#define	PCMCIA_VENDOR_BAY	0x01eb	/* Bay Networks */
 #define	PCMCIA_VENDOR_IODATA	0x01bf	/* I-O DATA */
 #define	PCMCIA_VENDOR_BREEZECOM	0x0a02	/* BreezeCOM */
 #define	PCMCIA_VENDOR_LASAT	0x3401	/* Lasat Communications A/S */
@@ -215,6 +216,11 @@
 #define	PCMCIA_CIS_LUCENT_WAVELAN	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_LUCENT_WAVELAN	0x0002
 #define	PCMCIA_STR_LUCENT_WAVELAN	"Lucent WaveLAN IEEE 802.11 DSSS"
+
+/* BayStack 650 FH 802.11 */
+#define	PCMCIA_CIS_BAY_STACK_650	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_BAY_STACK_650	0x0804
+#define	PCMCIA_STR_BAY_STACK_650	"BayStack 650 Wireless LAN"
 
 /* Megahertz */
 #define	PCMCIA_CIS_MEGAHERTZ_XJ4288	{ NULL, NULL, NULL, NULL }
