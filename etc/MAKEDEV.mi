@@ -1,6 +1,6 @@
 include(MAKEDEV.sub)dnl
 dnl
-vers(a,{-$OpenBSD: MAKEDEV.mi,v 1.13 2002/01/08 03:14:50 todd Exp $-})dnl
+vers(a,{-$OpenBSD: MAKEDEV.mi,v 1.14 2002/01/08 03:26:04 todd Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -116,7 +116,6 @@ _dl({-std-},{-std-},
 {-ccd-},{-ccd0 ccd1 ccd2 ccd3-},
 {-wd-},{-wd0 wd1 wd2 wd3-},
 {-raid-},{-raid0 raid1 raid2 raid3-},
-{-ofdisk-},{-ofdisk0 ofdisk1 ofdisk2 ofdisk3 ofdisk4-},
 {-xy-},{-xy0 xy1 xy2 xy3-},
 {-xd-},{-xd0 xd1 xd2 xd3-},
 {-hd-},{-hd0 hd1 hd2 hd3 hd4-},
@@ -259,7 +258,6 @@ __devitem(mt,mt*,(Magnetic) 9-track reel tape)dnl
 __devtitle(dis,Disks)dnl
 __devitem(rz,rz*,SCSI disks)dnl
 __devitem(sd,{-sd*-},SCSI disks{-,-} includes flopticals)dnl
-__devitem(ofdisk,ofdisk*,OpenFirmware disks)dnl
 __devitem(hd,{-hd*-},HP300 HP-IB disks)dnl
 __devitem(cd,{-cd*-},SCSI cdrom drives)dnl
 __devitem(acd,acd*,ATAPI cdrom drives)dnl
@@ -335,7 +333,6 @@ dnl
 disk_q({-xy-})dnl
 disk_q({-xd-})dnl
 disk_q({-hd-})dnl
-disk_q({-ofdisk-})dnl
 disk_q({-rz-})dnl
 disk_q({-wd-})dnl
 disk_q({-raid-})dnl
