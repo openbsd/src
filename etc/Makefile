@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.85 1998/04/07 23:24:06 ryker Exp $
+#	$OpenBSD: Makefile,v 1.86 1998/05/05 21:51:51 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -18,7 +18,7 @@ BIN1=	aliases bootptab changelist ccd.conf csh.cshrc csh.login csh.logout \
 	locate.rc man.conf monthly motd mrouted.conf myname ipnat.rules \
 	netstart networks newsyslog.conf passwd.conf phones printcap \
 	protocols rbootd.conf rc rc.conf rc.local rc.securelevel remote rpc \
-	security services shells sysctl.conf syslog.conf weekly \
+	security services shells syslog.conf weekly \
 	etc.${MACHINE}/disktab
 
 # -rw-rw-r--
@@ -54,6 +54,10 @@ distribution-etc-root-var: distrib-dirs
 	cat etc.${MACHINE}/ttys ttys.pty > ${DESTDIR}/etc/ttys && \
 	    chown ${BINOWN} ${DESTDIR}/etc/ttys && \
 	    chgrp ${BINGRP} ${DESTDIR}/etc/ttys && \
+	    chmod 644 ${DESTDIR}/etc/ttys
+	cat sysctl.conf etc.${MACHINE}/sysctl.conf > ${DESTDIR}/etc/sysctl.conf && \
+	    chown ${BINOWN} ${DESTDIR}/etc/sysctl.conf && \
+	    chgrp ${BINGRP} ${DESTDIR}/etc/sysctl.conf && \
 	    chmod 644 ${DESTDIR}/etc/ttys
 	cat fbtab.head etc.${MACHINE}/fbtab fbtab.tail > ${DESTDIR}/etc/fbtab && \
 	    chown ${BINOWN} ${DESTDIR}/etc/fbtab && \
