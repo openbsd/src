@@ -35,11 +35,6 @@
  * Hewlett-Packard Company makes no representations about the 
  * suitability of this software for any purpose.
  */
-/*
- * @(#)cnv_float.h: $Revision: 1.1 $ $Date: 1998/06/23 20:33:50 $
- * $Locker:  $
- * 
- */
 
 /*
  * Some more constants

@@ -35,11 +35,6 @@
  * Hewlett-Packard Company makes no representations about the 
  * suitability of this software for any purpose.
  */
-/* $Source: /home/cvs/src/sys/arch/hppa/spmath/dfcmp.c,v $
- * $Revision: 1.1 $	$Author: mickey $
- * $State: Exp $   	$Locker:  $
- * $Date: 1998/06/23 20:33:52 $
- */
 
 
 #include "../spmath/float.h"

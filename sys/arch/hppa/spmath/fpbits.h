@@ -35,11 +35,6 @@
  * Hewlett-Packard Company makes no representations about the 
  * suitability of this software for any purpose.
  */
-/*
- * @(#)fpbits.h: $Revision: 1.1 $ $Date: 1998/06/23 20:34:00 $
- * $Locker:  $
- * 
- */
 
 /*
  *  These macros are designed to be portable to all machines that have

@@ -35,11 +35,6 @@
  * Hewlett-Packard Company makes no representations about the 
  * suitability of this software for any purpose.
  */
-/* $Source: /home/cvs/src/sys/arch/hppa/spmath/dfadd.c,v $
- * $Revision: 1.1 $	$Author: mickey $
- * $State: Exp $   	$Locker:  $
- * $Date: 1998/06/23 20:33:51 $
- */
 
 #include "../spmath/float.h"
 #include "../spmath/dbl_float.h"

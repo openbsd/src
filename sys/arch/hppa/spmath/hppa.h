@@ -35,10 +35,6 @@
  * Hewlett-Packard Company makes no representations about the 
  * suitability of this software for any purpose.
  */
-/*
- * @(#)hppa.h: $Revision: 1.1 $ $Date: 1998/06/23 20:34:01 $
- * $Locker:  $
- */
 
 /* amount is assumed to be a constant between 0 and 32 (non-inclusive) */
 #define Shiftdouble(left,right,amount,dest)			\

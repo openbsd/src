@@ -36,11 +36,6 @@
  * Hewlett-Packard Company makes no representations about the 
  * suitability of this software for any purpose.
  */
-/* $Source: /home/cvs/src/sys/arch/hppa/spmath/impyu.S,v $
- * $Revision: 1.1 $	$Author: mickey $
- * $State: Exp $   	$Locker:  $
- * $Date: 1998/06/23 20:34:02 $
- */
 
 #include <machine/asm.h>
 
