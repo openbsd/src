@@ -1,4 +1,4 @@
-$OpenBSD: TO-DO,v 1.19 2000/04/07 22:49:46 niklas Exp $
+$OpenBSD: TO-DO,v 1.20 2001/04/12 15:51:33 ho Exp $
 $EOM: TO-DO,v 1.45 2000/04/07 22:47:38 niklas Exp $
 
 This file mixes small nitpicks with large projects to be done.
@@ -135,3 +135,7 @@ This file mixes small nitpicks with large projects to be done.
 * Replace ui's fifo with a slightly more versatile interface.
 
 * Report current configuration.
+
+* IPv6
+
+* AES in phase 1
