@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.112 2004/04/06 21:08:42 millert Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.113 2004/05/11 04:38:25 deraadt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.110 2004/04/06 21:08:25 millert Exp 
+ *		OpenBSD: pcmciadevs,v 1.111 2004/05/11 04:38:17 deraadt Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -280,6 +280,8 @@
 /* I-O DATA */
 #define	PCMCIA_CIS_IODATA_PCLATE	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_IODATA_PCLATE	0x2216
+#define	PCMCIA_CIS_IODATA_8041TX	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_IODATA_8041TX	0x8041
 #define	PCMCIA_CIS_IODATA2_WNB11PCM	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_IODATA2_WNB11PCM	0x0002
 
