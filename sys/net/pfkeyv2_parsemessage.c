@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_parsemessage.c,v 1.29 2001/07/01 08:21:15 angelos Exp $	*/
+/*	$OpenBSD: pfkeyv2_parsemessage.c,v 1.30 2001/07/03 05:16:09 angelos Exp $	*/
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -739,8 +739,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 					return EINVAL;
 				}
 
-				j = ((strlen(c) + sizeof(uint64_t)) &
-				    ~(sizeof(uint64_t)-1)) +
+				j = PADUP(strlen(c) + 1) +
 				    sizeof(struct sadb_ident);
 
 				if (i != j) {
