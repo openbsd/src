@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.17 2004/01/27 00:08:31 espie Exp $
+# $OpenBSD: pkg_delete,v 1.18 2004/01/27 00:13:04 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -255,7 +255,7 @@ sub remove_packing_info
 	for my $fname (info_names()) {
 		unlink($dir.$fname);
 	}
-	rmdir($dir) or die "Can't finish removing directory $dir";
+	rmdir($dir) or die "Can't finish removing directory $dir: $!";
 }
 
 sub delete_package

@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.6 2003/12/26 16:44:31 espie Exp $
+# $OpenBSD: pkg_create,v 1.7 2004/01/27 00:13:04 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -158,7 +158,7 @@ if (defined $opt_f) {
 
 if (defined $opt_c) {
     if ($opt_c =~ /^\-/) {
-	open(my $fh, '>', $dir.COMMENT) or die "Can't write to COMMENT";
+	open(my $fh, '>', $dir.COMMENT) or die "Can't write to COMMENT: $!";
 	print $fh $';
 	close($fh);
     } else {
@@ -170,7 +170,7 @@ if (defined $opt_c) {
 
 if (defined $opt_d) {
     if ($opt_d =~ /^\-/) {
-	open(my $fh, '>', $dir.DESC) or die "Can't write to DESC";
+	open(my $fh, '>', $dir.DESC) or die "Can't write to DESC: $!";
 	print $fh $';
 	close($fh);
     } else {
