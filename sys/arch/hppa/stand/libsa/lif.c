@@ -1,4 +1,4 @@
-/*	$OpenBSD: lif.c,v 1.2 1998/09/29 07:17:00 mickey Exp $	*/
+/*	$OpenBSD: lif.c,v 1.3 1999/01/25 20:15:23 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -58,7 +58,7 @@ lif_open (path, f)
 {
 	register struct file *fp;
 	register struct lifdir *dp;
-	register char *p, *q;
+	register char *p = NULL, *q = NULL; /* XXX shut up gcc */
 	struct load load;
 	int err, buf_size, l;
 
