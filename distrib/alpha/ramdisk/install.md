@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.9 1997/07/09 15:11:10 millert Exp $
+#       $OpenBSD: install.md,v 1.10 1997/07/31 17:10:14 millert Exp $
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
@@ -72,8 +72,8 @@ md_set_term() {
 	if [ ! -z "$TERM" ]; then
 		return
 	fi
-	echo -n "Specify terminal type [ansi-mini]: "
-	getresp "ansi-mini"
+	echo -n "Specify terminal type [sun]: "
+	getresp "sun"
 	TERM="$resp"
 	export TERM
 }
