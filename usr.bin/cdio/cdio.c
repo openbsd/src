@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.36 2005/01/04 18:30:38 moritz Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.37 2005/01/08 21:16:02 alek Exp $	*/
 
 /*  Copyright (c) 1995 Serge V. Vakulenko
  * All rights reserved.
@@ -109,7 +109,7 @@ struct cmdtab {
 	char *args;
 } cmdtab[] = {
 { CMD_CLOSE,    "close",        1, "" },
-{ CMD_DEBUG,    "debug",        1, "on | off" },
+{ CMD_DEBUG,    "debug",        3, "on | off" },
 { CMD_DEVICE,   "device",       1, "devname" },
 { CMD_EJECT,    "eject",        1, "" },
 { CMD_HELP,     "?",            1, 0 },
