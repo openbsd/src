@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.155 2001/04/09 07:14:15 tholo Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.156 2001/04/30 13:23:11 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -361,8 +361,6 @@ cpu_startup()
 	caddr_t v;
 	int sz;
 	vm_offset_t minaddr, maxaddr, pa;
-	struct pcb *pcb;
-	int x;
 
 	/*
 	 * Initialize error message buffer (at end of core).
@@ -472,10 +470,18 @@ cpu_startup()
 	}
 	ioport_malloc_safe = 1;
 	configure();
+}
 
-	/*
-	 * Set up proc0's TSS and LDT.
-	 */
+/*
+ * Set up proc0's TSS and LDT.
+ */
+void
+i386_proc0_tss_ldt_init()
+{
+	struct pcb *pcb;
+	int x;
+
+	gdt_init();
 	curpcb = pcb = &proc0.p_addr->u_pcb;
 	pcb->pcb_flags = 0;
 	pcb->pcb_tss.tss_ioopt =
@@ -484,7 +490,7 @@ cpu_startup()
 		pcb->pcb_iomap[x] = 0xffffffff;
 	pcb->pcb_iomap_pad = 0xff;
 
-	pcb->pcb_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
+	pcb->pcb_ldt_sel = pmap_kernel()->pm_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
 	pcb->pcb_cr0 = rcr0();
 	pcb->pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
 	pcb->pcb_tss.tss_esp0 = (int)proc0.p_addr + USPACE - 16;

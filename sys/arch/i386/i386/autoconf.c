@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.33 2000/08/17 20:15:39 mickey Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.34 2001/04/30 13:23:11 art Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -100,6 +100,9 @@ configure()
 	 */
 	md_diskconf = diskconf;
 	cold = 0;
+
+	/* Set up proc0's TSS and LDT (after the FPU is configured). */
+	i386_proc0_tss_ldt_init();
 }
 
 /*
