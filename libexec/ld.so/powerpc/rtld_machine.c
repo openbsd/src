@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.6 2002/05/24 03:44:38 deraadt Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.7 2002/05/24 04:17:01 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -69,7 +69,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 
 	Elf32_Addr *first_rela;
 
-	loff   = object->load_offs;
+	loff = object->load_offs;
 	numrela = object->Dyn.info[relasz] / sizeof(Elf32_Rela);
 	relas = (Elf32_Rela *)(object->Dyn.info[rel]);
 
@@ -108,7 +108,7 @@ _dl_printf("object relocation size %x, numrela %x\n",
 		val = ((Elf32_Addr)plttable >> 16) +
 		    (((Elf32_Addr)plttable & 0x00008000) >> 15);
 		pltcall[0] = 0x3d6b0000 | val;  /* addis r11,r11,.PLTtable@ha*/
-		val  = (Elf32_Addr)plttable & 0x0000ffff;
+		val = (Elf32_Addr)plttable & 0x0000ffff;
 		pltcall[1] = 0x816b0000 | val;	/* lwz r11,plttable@l(r11) */
 		pltcall[2] = 0x7d6903a6;	/* mtctr r12 */
 		pltcall[3] = 0x4e800420;	/* bctr */
@@ -161,7 +161,7 @@ _dl_printf("object relocation size %x, numrela %x\n",
 		case RELOC_32:
 			if (ELF32_ST_BIND(sym->st_info) == STB_LOCAL &&
 			   (ELF32_ST_TYPE(sym->st_info) == STT_SECTION ||
-			    ELF32_ST_TYPE(sym->st_info) == STT_NOTYPE) ) {
+			   ELF32_ST_TYPE(sym->st_info) == STT_NOTYPE) ) {
 				*r_addr = ooff + relas->r_addend;
 			} else {
 				*r_addr = ooff + this->st_value +
@@ -172,7 +172,7 @@ _dl_printf("object relocation size %x, numrela %x\n",
 		case RELOC_RELATIVE:
 			if (ELF32_ST_BIND(sym->st_info) == STB_LOCAL &&
 			   (ELF32_ST_TYPE(sym->st_info) == STT_SECTION ||
-			    ELF32_ST_TYPE(sym->st_info) == STT_NOTYPE) ) {
+			   ELF32_ST_TYPE(sym->st_info) == STT_NOTYPE) ) {
 				*r_addr = loff + relas->r_addend;
 
 #ifdef DL_PRINTF_DEBUG
@@ -186,7 +186,7 @@ _dl_printf("rel1 r_addr %x val %x loff %x ooff %x addend %x\n", r_addr,
 			}
 			break;
 		case RELOC_JMP_SLOT:
-		   {
+		    {
 			Elf32_Addr val = ooff + this->st_value +
 			    relas->r_addend - (Elf32_Addr)r_addr;
 			if (!(((val & 0xfe000000) == 0x00000000) ||
@@ -210,7 +210,7 @@ _dl_printf(" ooff %x, sym val %x, addend %x"
 					    (Elf32_Addr)&r_addr[2];
 					r_addr[1] = 0x396b0000 | val;
 					val &= ~0xfc000000;
-					val |=  0x48000000;
+					val |= 0x48000000;
 					r_addr[2] = val;
 				} else {
 #ifdef DL_PRINTF_DEBUG
@@ -222,7 +222,7 @@ _dl_printf("  index %d, pltcall %x r_addr %x\n",
 					val = (Elf32_Addr)pltcall -
 					    (Elf32_Addr)&r_addr[1];
 					val &= ~0xfc000000;
-					val |=  0x48000000;
+					val |= 0x48000000;
 					r_addr[1] = val;
 
 				}
@@ -239,11 +239,11 @@ _dl_printf(" symn [%s] val 0x%x\n", symn, val);
 				 * branch directy to the dest
 				 */
 				val &= ~0xfc000000;
-				val |=  0x48000000;
+				val |= 0x48000000;
 				*r_addr = val;
 				_dl_dcbf(r_addr);
 			}
-		   }
+		    }
 
 			break;
 		case RELOC_GLOB_DAT:
@@ -261,7 +261,7 @@ _dl_printf(" symn [%s] val 0x%x\n", symn, val);
 				_dl_exit(20);
 			}
 			val &= ~0xfc000003;
-			val |=  (*r_addr & 0xfc000003);
+			val |= (*r_addr & 0xfc000003);
 			*r_addr = val;
 
 _dl_dcbf(r_addr);
@@ -317,7 +317,7 @@ _dl_dcbf(r_addr);
 				_dl_exit(20);
 			}
 			val &= ~0xffff0003;
-			val |=  (*r_addr & 0xffff0003);
+			val |= (*r_addr & 0xffff0003);
 			*r_addr = val;
 #ifdef DL_PRINTF_DEBUG
 			_dl_printf("rel 14 %x val %x\n", r_addr, val);
@@ -355,7 +355,7 @@ _dl_dcbf(r_addr);
 			if (cpysrc == NULL) {
 				_dl_printf("symbol not found [%s] \n", symn);
 			} else {
-				size  = sym->st_size;
+				size = sym->st_size;
 				if (sym->st_size != cpysrc->st_size) {
 					_dl_printf("symbols size differ [%s] \n",
 					    symn);

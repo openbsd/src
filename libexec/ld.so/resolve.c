@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.8 2002/05/24 03:44:37 deraadt Exp $ */
+/*	$OpenBSD: resolve.c,v 1.9 2002/05/24 04:17:00 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -120,9 +120,9 @@ d_un.d_val;
 		Elf_Word *hashtab = (Elf_Word *)object->Dyn.info[DT_HASH];
 
 		object->nbuckets = hashtab[0];
-		object->nchains  = hashtab[1];
+		object->nchains = hashtab[1];
 		object->buckets = hashtab + 2;
-		object->chains   = object->buckets + object->nbuckets;
+		object->chains = object->buckets + object->nbuckets;
 	}
 
 	if (dl_data) {
@@ -228,8 +228,7 @@ _dl_find_symbol(const char *name, elf_object_t *startlook,
 		}
 	}
 	if (warnnotfound) {
-		if (!weak_sym &&
-		    *ref &&
+		if (!weak_sym && *ref &&
 		    ELF_ST_BIND((*ref)->st_info) != STB_WEAK) {
 			_dl_printf("%s: undefined symbol '%s'\n",
 			    _dl_progname, name);

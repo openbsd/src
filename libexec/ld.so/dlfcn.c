@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.15 2002/05/24 03:44:37 deraadt Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.16 2002/05/24 04:17:00 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -80,11 +80,11 @@ dlopen(const char *libname, int how)
 	while (dynobj) {
 		elf_object_t *tmpobj = dynobj;
 
-                for (dynp = dynobj->load_dyn; dynp->d_tag; dynp++) {
+		for (dynp = dynobj->load_dyn; dynp->d_tag; dynp++) {
 			const char *libname;
 			elf_object_t *depobj;
 
-                        if (dynp->d_tag != DT_NEEDED)
+			if (dynp->d_tag != DT_NEEDED)
 				continue;
 
 			libname = dynobj->dyn.strtab + dynp->d_un.d_val;
@@ -95,9 +95,9 @@ dlopen(const char *libname, int how)
 			tmpobj->dep_next = _dl_malloc(sizeof(elf_object_t));
 			tmpobj->dep_next->next = depobj;
 			tmpobj = tmpobj->dep_next;
-                }
-                dynobj = dynobj->next;
-        }
+		}
+		dynobj = dynobj->next;
+	}
 
 	_dl_rtld(object);
 	_dl_call_init(object);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.3 2002/05/24 03:44:38 deraadt Exp $ */
+/*	$OpenBSD: syscall.h,v 1.4 2002/05/24 04:17:00 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -59,7 +59,7 @@ _dl_exit (int status)
 	__asm__ volatile ("move  $4,%2\n\t"
 	    "syscall"
 	    : "=r" (__status)
-            : "0" (SYS_exit), "r" (status)
+	    : "0" (SYS_exit), "r" (status)
 	    : "$2", "$3", "$4", "$5", "$6", "$7", "$8", "$9",
 	    "$10","$11","$12","$13","$14","$15","$24","$25");
 	while (1)
@@ -73,7 +73,7 @@ _dl_open (const char* addr, unsigned int flags)
 
 	__asm__ volatile ("move  $4,%2\n\t"
 	    "move  $5,%3\n\t"
-            "syscall\n\t"
+	    "syscall\n\t"
 	    "beq   $7,$0,1f\n\t"
 	    "li    $2,-1\n\t"
 	    "1:"
@@ -141,7 +141,7 @@ _dl_read (int fd, const char* buf, int len)
 
 extern inline int
 _dl_mmap (void *addr, unsigned int size, unsigned int prot,
-	        unsigned int flags, int fd, unsigned int f_offset)
+    unsigned int flags, int fd, unsigned int f_offset)
 {
 	register int malloc_buffer __asm__ ("$2");
 

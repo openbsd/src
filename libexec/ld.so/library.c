@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.11 2002/05/24 03:44:37 deraadt Exp $ */
+/*	$OpenBSD: library.c,v 1.12 2002/05/24 04:17:00 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -190,7 +190,7 @@ _dl_tryload_shlib(const char *libname, int type)
 	char	hbuf[4096];
 	Elf_Ehdr *ehdr;
 	Elf_Phdr *phdp;
-	Elf_Dyn  *dynp = 0;
+	Elf_Dyn *dynp = 0;
 	Elf_Addr maxva = 0;
 	Elf_Addr minva = 0x7fffffff;	/* XXX Correct for 64bit? */
 	Elf_Addr libaddr;
@@ -269,7 +269,8 @@ _dl_tryload_shlib(const char *libname, int type)
 		if (phdp->p_type == PT_LOAD) {
 			int res;
 			char *start = (char *)(phdp->p_vaddr & ~align) + loff;
-			int size  = (phdp->p_vaddr & align) + phdp->p_filesz;
+			int size = (phdp->p_vaddr & align) + phdp->p_filesz;
+
 			res = _dl_mmap(start, size, PFLAGS(phdp->p_flags),
 			    MAP_FIXED|MAP_PRIVATE, libfile,
 			    phdp->p_offset & ~align);
@@ -294,8 +295,8 @@ _dl_tryload_shlib(const char *libname, int type)
 					_dl_memset(start + size, 0,
 					    _dl_pagesz - (size & align));
 				start = start + ((size + align) & ~align);
-				size  = size - (phdp->p_vaddr & align);
-				size  = phdp->p_memsz - size;
+				size = size - (phdp->p_vaddr & align);
+				size = phdp->p_memsz - size;
 				res = _dl_mmap(start, size,
 				    PFLAGS(phdp->p_flags),
 				    MAP_FIXED|MAP_PRIVATE|MAP_ANON,

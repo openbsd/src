@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.3 2002/05/24 03:44:38 deraadt Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.4 2002/05/24 04:17:01 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -110,7 +110,7 @@ ENTRY(_dl_start)
 	/* This cheats and calculates the address of _DYNAMIC
 	 * the same way that the GLOBAL_OFFSET_TABLE was calcuated
 	 */
-	lwz     18, 4(5)
+	lwz	18, 4(5)
 	rlwinm 18,18,0,8,30	# mask off the offset portion of the instr.
 	add	8, 18, 5	# address of _DYNAMIC (arg6 for _dl_boot)
 	addi	18, 8, 4	# correction.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.6 2002/05/24 03:44:37 deraadt Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.7 2002/05/24 04:17:00 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -194,7 +194,7 @@ L100:	LDGP(t0)
 	imb
 
 	/* Pop the stack frame and turn control to the destination. */
-	lda     sp, 168(sp)
+	lda	sp, 168(sp)
 	jmp	zero, (pv)
 END(_dl_bind_start)
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.29 2002/05/24 03:44:37 deraadt Exp $ */
+/*	$OpenBSD: loader.c,v 1.30 2002/05/24 04:17:00 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -114,7 +114,7 @@ _dl_boot(const char **argv, const char **envp, const long loff,
 	_dl_preload = _dl_getenv("LD_PRELOAD", envp);
 	_dl_bindnow = _dl_getenv("LD_BIND_NOW", envp);
 	_dl_traceld = _dl_getenv("LD_TRACE_LOADED_OBJECTS", envp);
-	_dl_debug   = _dl_getenv("LD_DEBUG", envp);
+	_dl_debug = _dl_getenv("LD_DEBUG", envp);
 
 	_dl_progname = argv[0];
 	if (dl_data[AUX_pagesz] != 0)
@@ -205,7 +205,7 @@ _dl_boot(const char **argv, const char **envp, const long loff,
 	 * Do not schedule destructors if run from ldd.
 	 */
 	if (_dl_traceld == NULL) {
-		const Elf_Sym  *sym;
+		const Elf_Sym *sym;
 		Elf_Addr ooff;
 
 		sym = NULL;
@@ -370,16 +370,16 @@ _dl_boot_bind(const long sp, long loff, Elf_Dyn *dynamicp, long *dl_data)
 	}
 
 	{
-		int	  i;
+		int	i;
 		u_int32_t rs;
-		Elf_Rel  *rp;
+		Elf_Rel *rp;
 
 		rp = (Elf_Rel *)(dynld.Dyn.info[DT_REL]);
 		rs = dynld.dyn.relsz;
 
 		for (i = 0; i < rs; i += sizeof (Elf_Rel)) {
 			Elf_Addr *ra;
-			const Elf_Sym  *sp;
+			const Elf_Sym *sp;
 
 			sp = dynld.dyn.symtab;
 			sp += ELF_R_SYM(rp->r_info);
@@ -405,9 +405,9 @@ _dl_boot_bind(const long sp, long loff, Elf_Dyn *dynamicp, long *dl_data)
 	}
 
 	for (n = 0; n < 2; n++) {
-		int	  i;
+		int	i;
 		unsigned long rs;
-		Elf_RelA  *rp;
+		Elf_RelA *rp;
 
 		switch (n) {
 		case 0:
@@ -424,7 +424,7 @@ _dl_boot_bind(const long sp, long loff, Elf_Dyn *dynamicp, long *dl_data)
 		}
 		for (i = 0; i < rs; i += sizeof (Elf_RelA)) {
 			Elf_Addr *ra;
-			const Elf_Sym  *sp;
+			const Elf_Sym *sp;
 
 			sp = dynld.dyn.symtab;
 			sp += ELF_R_SYM(rp->r_info);
@@ -472,7 +472,7 @@ void
 _dl_call_init(elf_object_t *object)
 {
 	Elf_Addr ooff;
-	const Elf_Sym  *sym;
+	const Elf_Sym *sym;
 
 	if (object->next)
 		_dl_call_init(object->next);

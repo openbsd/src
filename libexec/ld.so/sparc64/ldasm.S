@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.10 2002/05/24 03:44:38 deraadt Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.11 2002/05/24 04:17:01 deraadt Exp $	*/
 /*	$NetBSD: rtld_start.S,v 1.5 2001/08/14 22:17:48 eeh Exp $	*/
 
 /*
@@ -50,8 +50,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -164,7 +164,7 @@ _dl_start:
 _dl_bind_start_0:	# (x, y)
 #if 0
 	call	_dl_bind_start_0_stub
-	 ldx     [%o1 + (10*4)], %l7
+	 ldx	[%o1 + (10*4)], %l7
 	mov	%o0, %o1
 
 	call	_dl_bind

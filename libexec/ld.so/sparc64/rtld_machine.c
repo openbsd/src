@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.12 2002/05/24 03:44:38 deraadt Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.13 2002/05/24 04:17:01 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -50,8 +50,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -225,7 +225,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 	Elf_RelA *relas;
 	load_list_t *llist;
 
-	loff   = object->load_offs;
+	loff = object->load_offs;
 	numrela = object->Dyn.info[relasz] / sizeof(Elf64_Rela);
 	relas = (Elf64_Rela *)(object->Dyn.info[rel]);
 

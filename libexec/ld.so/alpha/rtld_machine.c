@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.9 2002/05/24 03:44:37 deraadt Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.10 2002/05/24 04:17:00 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -71,7 +71,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 	Elf64_Rela  *relas;
 	load_list_t *llist;
 
-	loff   = object->load_offs;
+	loff = object->load_offs;
 	numrela = object->Dyn.info[relasz] / sizeof(Elf64_Rela);
 	relas = (Elf64_Rela *)(object->Dyn.info[rel]);
 
@@ -81,7 +81,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 	/*
 	 * unprotect some segments if we need it.
 	 * XXX - we unprotect waay to much. only the text can have cow
-	 *       relocations.
+	 * relocations.
 	 */
 	if ((rel == DT_REL || rel == DT_RELA)) {
 		for (llist = object->load_list; llist != NULL; llist = llist->next) {

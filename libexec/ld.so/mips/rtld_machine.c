@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.2 2002/05/24 03:44:38 deraadt Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.4 2002/05/24 04:21:27 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -41,7 +41,6 @@
 #include "syscall.h"
 #include "archdep.h"
 
-
 int
 _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 {
@@ -51,13 +50,12 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 	Elf32_Addr loff;
 	Elf32_Rel  *relocs;
 
-	loff   = object->load_offs;
+	loff = object->load_offs;
 	numrel = object->Dyn.info[relsz] / sizeof(Elf32_Rel);
 	relocs = (Elf32_Rel *)(object->Dyn.info[rel]);
 
-	if ((object->status & STAT_RELOC_DONE) || !relocs) {
+	if ((object->status & STAT_RELOC_DONE) || !relocs)
 		return(0);
-	}
 
 	for (i = 0; i < numrel; i++, relocs++) {
 		Elf32_Addr r_addr = relocs->r_offset + loff;
@@ -74,8 +72,8 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 		symn = object->dyn.strtab + sym->st_name;
 
 		if (ELF32_R_SYM(relocs->r_info) &&
-		   !(ELF32_ST_BIND(sym->st_info) == STB_LOCAL &&
-		     ELF32_ST_TYPE (sym->st_info) == STT_NOTYPE)) {
+		    !(ELF32_ST_BIND(sym->st_info) == STB_LOCAL &&
+		    ELF32_ST_TYPE (sym->st_info) == STT_NOTYPE)) {
 			ooff = _dl_find_symbol(symn, _dl_objects, &this, 0, 1);
 			if (!this && ELF32_ST_BIND(sym->st_info) == STB_GLOBAL) {
 				_dl_printf("%s: can't resolve reference '%s'\n",
@@ -88,12 +86,11 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 		switch (ELF32_R_TYPE(relocs->r_info)) {
 		case R_MIPS_REL32:
 			if (ELF32_ST_BIND(sym->st_info) == STB_LOCAL &&
-			   (ELF32_ST_TYPE(sym->st_info) == STT_SECTION ||
+			    (ELF32_ST_TYPE(sym->st_info) == STT_SECTION ||
 			    ELF32_ST_TYPE(sym->st_info) == STT_NOTYPE) ) {
 				*(u_int32_t *)r_addr += loff;
-			} else if (this) {
+			} else if (this)
 				*(u_int32_t *)r_addr += this->st_value + ooff;
-			}
 			break;
 
 		case R_MIPS_NONE:
@@ -101,7 +98,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 
 		default:
 			_dl_printf("%s: unsupported relocation '%s'\n",
-					_dl_progname, symn);
+			    _dl_progname, symn);
 			_dl_exit(1);
 		}
 	}
@@ -133,11 +130,10 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	loff = object->load_offs;
 	strt = object->dyn.strtab;
 	gotp = object->dyn.pltgot;
-	n    = object->Dyn.info[DT_MIPS_LOCAL_GOTNO - DT_LOPROC + DT_NUM];
+	n = object->Dyn.info[DT_MIPS_LOCAL_GOTNO - DT_LOPROC + DT_NUM];
 
-	if (object->status & STAT_GOT_DONE) {
+	if (object->status & STAT_GOT_DONE)
 		return;
-	}
 
 	/*
 	 *  Set up pointers for run time (lazy) resolving.
@@ -158,8 +154,8 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 
 	symp =  object->dyn.symtab;
 	symp += object->Dyn.info[DT_MIPS_GOTSYM - DT_LOPROC + DT_NUM];
-	n    =  object->Dyn.info[DT_MIPS_SYMTABNO - DT_LOPROC + DT_NUM] -
-		object->Dyn.info[DT_MIPS_GOTSYM - DT_LOPROC + DT_NUM];
+	n =  object->Dyn.info[DT_MIPS_SYMTABNO - DT_LOPROC + DT_NUM] -
+	    object->Dyn.info[DT_MIPS_GOTSYM - DT_LOPROC + DT_NUM];
 
 	/*
 	 *  Then do all global references according to the ABI.
@@ -167,26 +163,23 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	 */
 	while (n--) {
 		if (symp->st_shndx == SHN_UNDEF &&
-		   ELF32_ST_TYPE(symp->st_info) == STT_FUNC) {
+		    ELF32_ST_TYPE(symp->st_info) == STT_FUNC) {
 _dl_printf("undef: %s = %X\n", strt + symp->st_name, symp->st_value);
 			if (symp->st_value == 0 || !lazy) {
 				this = 0;
 				ooff = _dl_find_symbol(strt + symp->st_name,
-						_dl_objects, &this, 0, 1);
-				if (this) {
+				    _dl_objects, &this, 0, 1);
+				if (this)
 					*gotp = this->st_value + ooff;
-				}
-			} else {
+			} else
 				*gotp = symp->st_value + ooff;
-			}
 		} else if (symp->st_shndx == SHN_COMMON ||
 			symp->st_shndx == SHN_UNDEF) {
 			this = 0;
 			ooff = _dl_find_symbol(strt + symp->st_name,
-						_dl_objects, &this, 0, 1);
-			if (this) {
+			    _dl_objects, &this, 0, 1);
+			if (this)
 				*gotp = this->st_value + ooff;
-			}
 		} else if (ELF32_ST_TYPE(symp->st_info) == STT_FUNC) {
 			*gotp += loff;
 		} else {	/* XXX ??? */	/* Resolve all others immediatly */

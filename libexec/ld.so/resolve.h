@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.9 2002/05/24 03:44:37 deraadt Exp $ */
+/*	$OpenBSD: resolve.h,v 1.10 2002/05/24 04:17:00 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -39,9 +39,9 @@
 
 typedef struct load_list {
 	struct load_list *next;
-	char       *start;
-	size_t     size;
-	int        prot;
+	char	*start;
+	size_t	size;
+	int	prot;
 } load_list_t;
 
 /*
@@ -52,8 +52,8 @@ typedef struct load_list {
 typedef struct elf_object {
 	Elf_Addr load_addr;		/* Real load address */
 	Elf_Addr load_offs;		/* Load offset from link address */
-	char	   *load_name;		/* Pointer to object name */
-	Elf_Dyn  *load_dyn;		/* Pointer to object dynamic data */
+	char	*load_name;		/* Pointer to object name */
+	Elf_Dyn *load_dyn;		/* Pointer to object dynamic data */
 	struct elf_object *next;
 	struct elf_object *prev;
 /* End struct link_map compatible */
@@ -124,11 +124,11 @@ extern void _dl_rt_resolve(void);
 extern elf_object_t *_dl_add_object(const char *objname, Elf_Dyn *dynp,
 				    const u_long *, const int objtype,
 				    const long laddr, const long loff);
-extern void         _dl_remove_object(elf_object_t *object);
+extern void	_dl_remove_object(elf_object_t *object);
 
 extern elf_object_t *_dl_lookup_object(const char *objname);
 extern elf_object_t *_dl_load_shlib(const char *, elf_object_t *, int);
-extern void         _dl_unload_shlib(elf_object_t *object);
+extern void	_dl_unload_shlib(elf_object_t *object);
 
 extern int  _dl_md_reloc(elf_object_t *object, int rel, int relsz);
 extern void _dl_md_reloc_got(elf_object_t *object, int lazy);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: shlib.c,v 1.5 2002/05/24 03:44:37 deraadt Exp $	*/
+/*	$OpenBSD: shlib.c,v 1.6 2002/05/24 04:17:00 deraadt Exp $	*/
 /*	$NetBSD: shlib.c,v 1.13 1998/04/04 01:00:29 fvdl Exp $	*/
 
 /*
@@ -15,7 +15,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Paul Kranenburg.
+ *	This product includes software developed by Paul Kranenburg.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
@@ -113,7 +113,7 @@ remove_search_dir(name)
 		free(search_dirs[i]);
 		if (i < (n_search_dirs - 1))
 			bcopy(&search_dirs[i+1], &search_dirs[i],
-			      (n_search_dirs - i - 1) * sizeof search_dirs[0]);
+			    (n_search_dirs - i - 1) * sizeof search_dirs[0]);
 		n_search_dirs--;
 		search_dirs = (char **)xrealloc(search_dirs,
 			n_search_dirs * sizeof search_dirs[0]);
