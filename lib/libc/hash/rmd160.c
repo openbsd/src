@@ -371,12 +371,14 @@ void RMD160Final(digest, context)
 	    (context->length[1] << 3);
 	RMD160Transform(context->state, context->buffer);
 
-	for (i = 0; i < 20; i += 4) {
-		/* extracts the 8 least significant bits. */
-		digest[i]     =  context->state[i>>2];
-		digest[i + 1] = (context->state[i>>2] >>  8);
-		digest[i + 2] = (context->state[i>>2] >> 16);
-		digest[i + 3] = (context->state[i>>2] >> 24);
+	if (digest != NULL) {
+		for (i = 0; i < 20; i += 4) {
+			/* extracts the 8 least significant bits. */
+			digest[i]     =  context->state[i>>2];
+			digest[i + 1] = (context->state[i>>2] >>  8);
+			digest[i + 2] = (context->state[i>>2] >> 16);
+			digest[i + 3] = (context->state[i>>2] >> 24);
+		}
 	}
 }
 
