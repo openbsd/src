@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommureg.h,v 1.6 2003/03/06 08:26:08 henric Exp $	*/
+/*	$OpenBSD: iommureg.h,v 1.7 2003/05/16 17:18:14 jason Exp $	*/
 /*	$NetBSD: iommureg.h,v 1.6 2001/07/20 00:07:13 eeh Exp $	*/
 
 /*
@@ -165,5 +165,7 @@ struct iommu_strbuf {
 #define	INTPCI_MAXOBINO	0x16		/* maximum OBIO INO value for PCI */
 #define	INTPCIOBINOX(x)	((x)&0x1f)	/* OBIO ino index (for PCI machines) */
 #define	INTPCIINOX(x)	(((x)&0x1c)>>2)	/* PCI ino index */
+
+#define	INTCLR_IDLE	0
 
 #endif /* _SPARC64_DEV_IOMMUREG_H_ */
