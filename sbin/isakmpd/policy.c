@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.37 2001/07/01 19:48:44 niklas Exp $	*/
+/*	$OpenBSD: policy.c,v 1.38 2001/07/03 08:07:22 ho Exp $	*/
 /*	$EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -651,7 +651,7 @@ policy_callback (char *name)
 	  log_error ("policy_callback: sockaddr2text failed");
 	  goto bad;
 	}
-      memcpy (local_ike_address, addr, sizeof local_ike_address);
+      strlcpy (local_ike_address, addr, sizeof local_ike_address);
       free (addr);
 
       policy_sa->transport->vtbl->get_dst (policy_sa->transport, &sin);
@@ -660,7 +660,7 @@ policy_callback (char *name)
 	  log_error ("policy_callback: sockaddr2text failed");
 	  goto bad;
 	}
-      memcpy (remote_ike_address, addr, sizeof remote_ike_address);
+      strlcpy (remote_ike_address, addr, sizeof remote_ike_address);
       free (addr);
 
       switch (policy_isakmp_sa->exch_type)
