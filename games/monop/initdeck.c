@@ -64,7 +64,7 @@ static char rcsid[] = "$NetBSD: initdeck.c,v 1.3 1995/03/23 08:34:43 cgd Exp $";
 # define	TRUE	1
 # define	FALSE	0
 
-# define	bool	char
+# define	bool	int8_t
 # define	reg	register
 
 char	*infile		= "cards.inp",		/* input file		*/
@@ -80,6 +80,7 @@ FILE	*inf, *outf;
 main(ac, av)
 int	ac;
 char	*av[]; {
+	int n;
 
 	getargs(ac, av);
 	if ((inf = fopen(infile, "r")) == NULL) {
@@ -90,24 +91,52 @@ char	*av[]; {
 	/*
 	 * allocate space for pointers.
 	 */
-	CC_D.offsets = (long *)calloc(CC_D.num_cards + 1, sizeof (long));
-	CH_D.offsets = (long *)calloc(CH_D.num_cards + 1, sizeof (long));
+	CC_D.offsets = (int32_t *)calloc(CC_D.num_cards + 1, sizeof (int32_t));
+	CH_D.offsets = (int32_t *)calloc(CH_D.num_cards + 1, sizeof (int32_t));
 	fseek(inf, 0L, 0);
 	if ((outf = fopen(outfile, "w")) == NULL) {
 		perror(outfile);
 		exit(0);
 	}
 
-	fwrite(deck, sizeof (DECK), 2, outf);
-	fwrite(CC_D.offsets, sizeof (long), CC_D.num_cards, outf);
-	fwrite(CH_D.offsets, sizeof (long), CH_D.num_cards, outf);
+	fwrite(&deck[0].num_cards, sizeof(deck[0].num_cards), 1, outf);
+	fwrite(&deck[0].last_card, sizeof(deck[0].last_card), 1, outf);
+	fwrite(&deck[0].gojf_used, sizeof(deck[0].gojf_used), 1, outf);
+
+	fwrite(&deck[0].num_cards, sizeof(deck[0].num_cards), 1, outf);
+	fwrite(&deck[0].last_card, sizeof(deck[0].last_card), 1, outf);
+	fwrite(&deck[0].gojf_used, sizeof(deck[0].gojf_used), 1, outf);
+
+	fwrite(CC_D.offsets, sizeof(CC_D.offsets[0]), CC_D.num_cards, outf);
+	fwrite(CH_D.offsets, sizeof(CH_D.offsets[0]), CH_D.num_cards, outf);
 	putem();
 
 	fclose(inf);
 	fseek(outf, 0, 0L);
-	fwrite(deck, sizeof (DECK), 2, outf);
-	fwrite(CC_D.offsets, sizeof (long), CC_D.num_cards, outf);
-	fwrite(CH_D.offsets, sizeof (long), CH_D.num_cards, outf);
+
+	deck[0].num_cards = htons(deck[0].num_cards);
+	fwrite(&deck[0].num_cards, sizeof(deck[0].num_cards), 1, outf);
+	deck[0].last_card = htons(deck[0].last_card);
+	fwrite(&deck[0].last_card, sizeof(deck[0].last_card), 1, outf);
+	fwrite(&deck[0].gojf_used, sizeof(deck[0].gojf_used), 1, outf);
+	deck[0].num_cards = ntohs(deck[0].num_cards);
+
+	deck[1].num_cards = htons(deck[1].num_cards);
+	fwrite(&deck[1].num_cards, sizeof(deck[1].num_cards), 1, outf);
+	deck[1].last_card = htons(deck[1].last_card);
+	fwrite(&deck[1].last_card, sizeof(deck[1].last_card), 1, outf);
+	fwrite(&deck[1].gojf_used, sizeof(deck[1].gojf_used), 1, outf);
+	deck[1].num_cards = ntohs(deck[1].num_cards);
+
+	for (n = 0 ; n < CC_D.num_cards ; n++) {
+		CC_D.offsets[n] = htonl(CC_D.offsets[n]);
+		fwrite(&CC_D.offsets[n], sizeof(CC_D.offsets[n]), 1, outf);
+	}
+	for (n = 0 ; n < CH_D.num_cards ; n++) {
+		CH_D.offsets[n] = htonl(CH_D.offsets[n]);
+		fwrite(&CH_D.offsets[n], sizeof(CH_D.offsets[n]), 1, outf);
+	}
+
 	fclose(outf);
 	printf("There were %d com. chest and %d chance cards\n", CC_D.num_cards, CH_D.num_cards);
 	exit(0);
@@ -153,7 +182,7 @@ putem() {
 	reg bool	newline;
 	reg DECK	*in_deck;
 	reg char	c;
-	reg int		num;
+	int16_t		num;
 
 	in_deck = &CC_D;
 	CC_D.num_cards = 1;
@@ -163,7 +192,8 @@ putem() {
 	putc(getc(inf), outf);
 	for (num = 0; (c=getc(inf)) != '\n'; )
 		num = num * 10 + (c - '0');
-	putw(num, outf);
+	num = htons(num);
+	fwrite(&num, sizeof(num), 1, outf);
 	newline = FALSE;
 	while ((c=getc(inf)) != EOF)
 		if (newline && c == '%') {
@@ -180,7 +210,8 @@ putem() {
 			putc(c = getc(inf), outf);
 			for (num = 0; (c=getc(inf)) != EOF && c != '\n'; )
 				num = num * 10 + (c - '0');
-			putw(num, outf);
+			num = htons(num);
+			fwrite(&num, sizeof(num), 1, outf);
 		}
 		else {
 			putc(c, outf);

@@ -41,7 +41,7 @@
 
 # define	reg	register
 # define	shrt	char
-# define	bool	char
+# define	bool	int8_t
 # define	unsgn	unsigned
 
 # define	TRUE	(1)

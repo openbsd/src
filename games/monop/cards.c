@@ -69,8 +69,24 @@ file_err:
 		perror(cardfile);
 		exit(1);
 	}
-	if (fread(deck, sizeof (DECK), 2, deckf) != 2)
+	if (fread(&deck[0].num_cards, sizeof(deck[0].num_cards), 1, deckf) != 1)
 		goto file_err;
+	if (fread(&deck[0].last_card, sizeof(deck[0].last_card), 1, deckf) != 1)
+		goto file_err;
+	if (fread(&deck[0].gojf_used, sizeof(deck[0].gojf_used), 1, deckf) != 1)
+		goto file_err;
+	deck[0].num_cards = ntohs(deck[0].num_cards);
+	deck[0].last_card = ntohs(deck[0].last_card);
+
+	if (fread(&deck[1].num_cards, sizeof(deck[1].num_cards), 1, deckf) != 1)
+		goto file_err;
+	if (fread(&deck[1].last_card, sizeof(deck[1].last_card), 1, deckf) != 1)
+		goto file_err;
+	if (fread(&deck[1].gojf_used, sizeof(deck[1].gojf_used), 1, deckf) != 1)
+		goto file_err;
+	deck[1].num_cards = ntohs(deck[1].num_cards);
+	deck[1].last_card = ntohs(deck[1].last_card);
+
 	set_up(&CC_D);
 	set_up(&CH_D);
 }
@@ -83,10 +99,13 @@ DECK	*dp; {
 	reg int	r1, r2;
 	int	i;
 
-	dp->offsets = (long *) calloc(sizeof (long), dp->num_cards);
-	if (fread(dp->offsets, sizeof(long), dp->num_cards, deckf) != dp->num_cards) {
-		perror(cardfile);
-		exit(1);
+	dp->offsets = (int32_t *) calloc(sizeof (int32_t), dp->num_cards);
+	for (i = 0 ; i < dp->num_cards ; i++) {
+		if (fread(&dp->offsets[i], sizeof(dp->offsets[i]), 1, deckf) != 1) {
+			perror(cardfile);
+			exit(1);
+		}
+		dp->offsets[i] = ntohl(dp->offsets[i]);
 	}
 	dp->last_card = 0;
 	dp->gojf_used = FALSE;
@@ -107,7 +126,7 @@ get_card(dp)
 DECK	*dp; {
 
 	reg char	type_maj, type_min;
-	reg int		num;
+	int16_t		num;
 	int		i, per_h, per_H, num_h, num_H;
 	OWN		*op;
 
@@ -117,7 +136,8 @@ DECK	*dp; {
 		type_maj = getc(deckf);
 	} while (dp->gojf_used && type_maj == GOJF);
 	type_min = getc(deckf);
-	num = getw(deckf);
+	fread(&num, sizeof(num), 1, deckf);
+	num = ntohs(num);
 	printmes();
 	switch (type_maj) {
 	  case '+':		/* get money		*/
