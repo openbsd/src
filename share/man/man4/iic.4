@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iic.4,v 1.1 2004/05/23 18:37:06 grange Exp $
+.\"	$OpenBSD: iic.4,v 1.2 2004/05/23 22:17:48 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -32,7 +32,7 @@ and other types of integrated circuits.
 .Pp
 The
 .Nm
-driver provides uniform programming interface layer between
+driver provides a uniform programming interface layer between
 .Tn I2C
 master controllers and various
 .Tn I2C
@@ -40,16 +40,16 @@ slave devices.
 Each
 .Tn I2C
 master controller attaches an
-.Xr iic 4
-framework, several slave devices can be attached then to the
-.Xr iic 4
+.Nm
+framework; several slave devices can then be attached to the
+.Nm
 bus.
 .Pp
 All
 .Tn I2C
 slave devices are uniquely identified by the address on the bus.
-Master accesses particular slave device using its address.
-Device address should be specified in the kernel configuration file
+The master accesses a particular slave device using its address.
+Device addresses should be specified in the kernel configuration file
 with the
 .Cd addr
 locator.
@@ -65,6 +65,7 @@ commands.
 .It Xr gscsio 4
 National Semiconductor Geode SC1100 Super I/O ACCESS.bus
 .El
+.Pp
 .It Slave devices
 .Bl -tag -width XXXX -compact
 .It Xr lmtemp 4
