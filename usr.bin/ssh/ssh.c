@@ -11,7 +11,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: ssh.c,v 1.33 1999/11/24 19:53:52 markus Exp $");
+RCSID("$Id: ssh.c,v 1.34 1999/11/24 20:15:35 markus Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -592,15 +592,6 @@ main(int ac, char **av)
 	/* Close connection cleanly after attack. */
 	cipher_attack_detected = packet_disconnect;
 
-	/* If requested, fork and let ssh continue in the background. */
-	if (fork_after_authentication_flag) {
-		int ret = fork();
-		if (ret == -1)
-			fatal("fork failed: %.100s", strerror(errno));
-		if (ret != 0)
-			exit(0);
-		setsid();
-	}
 	/* Enable compression if requested. */
 	if (options.compression) {
 		debug("Requesting compression at level %d.", options.compression_level);
@@ -754,6 +745,11 @@ main(int ac, char **av)
 						  options.remote_forwards[i].host,
 				   		  options.remote_forwards[i].host_port);
 	}
+
+	/* If requested, let ssh continue in the background. */
+	if (fork_after_authentication_flag) 
+		if (daemon(1, 1) < 0)
+			fatal("daemon() failed: %.200s", strerror(errno));
 
 	/*
 	 * If a command was specified on the command line, execute the
