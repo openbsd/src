@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.24 1999/07/02 19:23:50 deraadt Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.25 1999/10/29 14:06:16 art Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fstat.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: fstat.c,v 1.24 1999/07/02 19:23:50 deraadt Exp $";
+static char *rcsid = "$OpenBSD: fstat.c,v 1.25 1999/10/29 14:06:16 art Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -81,8 +81,6 @@ static char *rcsid = "$OpenBSD: fstat.c,v 1.24 1999/07/02 19:23:50 deraadt Exp $
 
 #include <arpa/inet.h>
 
-#define PIPE_NODIRECT		/* XXX - define here, since it's not defined
-				   outside _KERNEL */
 #include <sys/pipe.h>
 
 #include <ctype.h>
