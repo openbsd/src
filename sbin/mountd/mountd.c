@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.9 1996/08/29 17:41:32 deraadt Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.10 1996/09/19 06:12:08 deraadt Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -336,7 +336,8 @@ mntsrv(rqstp, transp)
 	u_long saddr;
 	u_short sport;
 	char rpcpath[RPCMNT_PATHLEN+1], dirpath[MAXPATHLEN];
-	int bad = ENOENT, defset, hostset;
+	long bad = ENOENT;
+	int defset, hostset;
 	sigset_t sighup_mask;
 
 	sigemptyset(&sighup_mask);
