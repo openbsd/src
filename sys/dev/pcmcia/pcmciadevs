@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.114 2004/06/04 18:03:35 millert Exp $
+	$OpenBSD: pcmciadevs,v 1.115 2004/09/25 01:57:08 fgsch Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -38,6 +38,7 @@
 
 vendor FUJITSU			0x0004	Fujitsu
 vendor NETGEAR2			0x000b	Netgear
+vendor SENAO			0x000b	Senao
 vendor PANASONIC		0x0032	Matsushita Electric Industrial Co.
 vendor SANDISK			0x0045	Sandisk
 vendor NEWMEDIA			0x0057	NewMedia
@@ -324,6 +325,10 @@ product	SAMSUNG SWL_2000N	0x0002 Samsung MagicLAN SWL-2000N
 
 /* Sandisk */
 product SANDISK SDCFB		0x0401 Sandisk CompactFlash
+
+/* Senao */
+product SENAO EL2511CD2EM	0x7100 Senao EL2511CD2EM
+product SENAO EL2511CDM		0x7110 Senao EL2511CDM
 
 /* Simple Technology */
 product SIMPLETECH COMMUNICATOR288 0x0100 Simple Technology 28.8 Communicator
