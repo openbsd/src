@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.7 1999/12/15 05:20:26 kjell Exp $
+#	$OpenBSD: Makefile,v 1.8 1999/12/16 07:38:45 kjell Exp $
 
 PROG=	ipftest 
 MAN=	ipftest.1	
 SRCS=	ipt.c fil.c ipft_hx.c ipft_sn.c ipft_ef.c ipft_td.c ipft_pc.c \
 	ipft_tx.c misc.c parse.c opt.c ip_frag.c ip_nat.c ip_state.c \
-	ip_auth.c ip_fil.c ip_proxy.c facpri.c natparse.c
+	ip_auth.c ip_fil.c ip_proxy.c facpri.c natparse.c ifaddr.c
 
 .PATH: 	${.CURDIR}/../../sbin/ipf ${.CURDIR}/../../sbin/ipfstat \
 	${.CURDIR}/../../sys/netinet ${.CURDIR}/../../sbin/ipnat

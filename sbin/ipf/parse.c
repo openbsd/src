@@ -1,4 +1,4 @@
-/* $OpenBSD: parse.c,v 1.27 1999/12/15 05:20:24 kjell Exp $ */
+/* $OpenBSD: parse.c,v 1.28 1999/12/16 07:38:45 kjell Exp $ */
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
  *
@@ -42,7 +42,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)parse.c	1.44 6/5/96 (C) 1993-1996 Darren Reed";
-static const char rcsid[] = "@(#)$Id: parse.c,v 1.27 1999/12/15 05:20:24 kjell Exp $";
+static const char rcsid[] = "@(#)$Id: parse.c,v 1.28 1999/12/16 07:38:45 kjell Exp $";
 #endif
 
 extern	struct	ipopt_names	ionames[], secclass[];
@@ -67,7 +67,9 @@ void	optprint __P((u_short *, u_long, u_long));
 int	countbits __P((u_32_t));
 char	*portname __P((int, int));
 int	ratoi __P((char *, int *, int, int));
-
+#if defined(__OpenBSD__)
+extern int     if_addr __P((char *, struct in_addr *));
+#endif
 
 char	*proto = NULL;
 char	flagset[] = "FSRPAU";
@@ -723,6 +725,9 @@ int     linenum;
 	struct	hostent	*hp;
 	struct	netent	*np;
 	struct	in_addr	ip;
+#if defined(__OpenBSD__)
+        struct in_addr  addr;
+#endif
 
 	*resolved = 0;
 	if (!strcasecmp("any", host))
@@ -732,6 +737,12 @@ int     linenum;
 
 	if (!strcasecmp("<thishost>", host))
 		host = thishost;
+
+#if defined(__OpenBSD__)
+        /* attempt a map from interface name to address */
+        if (if_addr(host, &addr))
+                return (u_32_t)addr.s_addr;
+#endif
 
 	if (!(hp = gethostbyname(host))) {
 		if (!(np = getnetbyname(host))) {
