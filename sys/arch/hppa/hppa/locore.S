@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.105 2003/02/18 21:06:43 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.106 2003/04/07 16:20:38 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -2390,7 +2390,7 @@ EXIT(ficache)
 LEAF_ENTRY(setjmp)
 /*
  * Save the other general registers whose contents are expected to remain
- * across function calls.  According to the "HP9000 Series 800 Assembly
+ * across function calls.  According to the "HP 9000 Series 800 Assembly
  * Language Reference Manual", procedures can use general registers 19-26,
  * 28, 29, 1, and 31 without restoring them.  Hence, we do not save these.
  */
