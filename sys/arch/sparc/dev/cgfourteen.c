@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgfourteen.c,v 1.31 2005/03/23 17:16:34 miod Exp $	*/
+/*	$OpenBSD: cgfourteen.c,v 1.32 2005/03/23 17:17:15 miod Exp $	*/
 /*	$NetBSD: cgfourteen.c,v 1.7 1997/05/24 20:16:08 pk Exp $ */
 
 /*
@@ -451,7 +451,7 @@ cgfourteen_reset(struct cgfourteen_softc *sc, int depth)
 			 * Clear the screen to black
 			 */
 			bzero(sc->sc_sunfb.sf_ro.ri_bits,
-			    sc->sc_sunfb.sf_fbsize * 4);
+			    sc->sc_sunfb.sf_fbsize);
 
 			/*
 			 * Enable the video, and put in 32 bit mode
