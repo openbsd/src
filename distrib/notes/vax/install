@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.13 2002/06/09 05:53:55 todd Exp $
+dnl	$OpenBSD: install,v 1.14 2002/09/23 17:09:11 hugh Exp $
 OpenBSDInstallPrelude
 
 For most systems, the easiest way to install OpenBSD/MACHINE OSREV is via
@@ -6,10 +6,10 @@ diskless booting over an Ethernet network.  You will need both the
 "boot.mop" image and the "bsd.rd" kernel to boot.  You will also need a
 machine configured as a rarp, MOP, bootparam, and NFS server.
 
-Should your VAX support SCSI, however, we provide a floppy image that can be
-written onto a disk in another system, and when booted on the VAX will
-present you with the standard install prompt. If this is the case, you can
-skip ahead to the "ready to install OpenBSD" section.
+However, should your VAX support local storage, we provide a floppy sized
+image that can be written onto a disk in another machine, and when booted
+on the VAX will present you with the standard install prompt. If you used
+this method you can skip ahead to the "ready to install OpenBSD" section.
 
 Booting from Network:
 
@@ -20,12 +20,11 @@ such programs as mopd can be found in OpenBSD's source tree, and should be
 reasonably portable to other UN*X-like operating systems. More information
 on diskless booting can be found in the OpenBSD diskless(8) manual page.
 
-When you turn on your VAX, it will run a set of self-diagnostic ROM
-routines. Depending on the model of VAX you have, it may take quite a while.
-When it is done, you will see a >>> prompt (also called the chevron prompt)
-on the console.  Typing "show dev" or "show ethernet" to get the VAX
-ethernet device's MAC address usually works; also try "TEST 50" on
-MicroVAXen 2000 and 3100.
+When you turn on your VAX, it will run an extensive and model specific set
+of self-diagnostic ROM routines. When it is done, you should see a >>>
+prompt (also called the chevron prompt) on the console.  Typing "show dev"
+or "show ethernet" to get the VAX ethernet device's MAC address usually
+works; also try "TEST 50" on MicroVAXen 2000 and 3100.
 
 You will need to create an /etc/ethers file on the bootserver.  This file
 will be used by rarpd to answer rarp (ethernet address->IP address) requests.
