@@ -427,7 +427,7 @@ then
 	
 	# This way of testing the result of a command substitution is
 	# defined by Posix.2 (section 3.9.1) as well as traditional shells.
-	elif build=`${srcdir}/config.guess`
+	elif build=`sh ${srcdir}/config.guess`
 	then
 		echo "This appears to be a ${build} system." 1>&2
 

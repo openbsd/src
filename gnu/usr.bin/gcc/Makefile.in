@@ -1065,13 +1065,13 @@ c-parse.y: c-parse.in
 	sed -e "/^ifobjc$$/,/^end ifobjc$$/d" \
 	  -e "/^ifc$$/d" -e "/^end ifc$$/d" \
 	  $(srcdir)/c-parse.in >tmp-c-parse.y
-	$(srcdir)/move-if-change tmp-c-parse.y c-parse.y
+	sh $(srcdir)/move-if-change tmp-c-parse.y c-parse.y
 
 # XXX OpenBSD
 #$(srcdir)/c-gperf.h: c-parse.gperf
 #	gperf -p -j1 -i 1 -g -o -t -G -N is_reserved_word -k1,3,$$ \
 #	   $(srcdir)/c-parse.gperf >tmp-gperf.h
-#	 $(srcdir)/move-if-change tmp-gperf.h $(srcdir)/c-gperf.h
+#	 sh $(srcdir)/move-if-change tmp-gperf.h $(srcdir)/c-gperf.h
 
 c-decl.o : c-decl.c $(CONFIG_H) $(TREE_H) c-tree.h c-lex.h flags.h output.h
 c-typeck.o : c-typeck.c $(CONFIG_H) $(TREE_H) c-tree.h flags.h output.h
@@ -1113,7 +1113,7 @@ stamp-under: $(GCC_PASSES)
 	else \
 	  echo "int prepends_underscore = 0;" >>tmp-under.c; \
 	fi
-	$(srcdir)/move-if-change tmp-under.c underscore.c
+	sh $(srcdir)/move-if-change tmp-under.c underscore.c
 	-rm -f tmp-dum.c tmp-dum.s
 	touch stamp-under
 
@@ -1128,7 +1128,7 @@ objc-parse.y: c-parse.in
 	sed -e "/^ifc$$/,/^end ifc$$/d" \
 	  -e "/^ifobjc$$/d" -e "/^end ifobjc$$/d" \
 	  $(srcdir)/c-parse.in >tmp-objc-prs.y
-	$(srcdir)/move-if-change tmp-objc-prs.y objc-parse.y
+	sh $(srcdir)/move-if-change tmp-objc-prs.y objc-parse.y
 
 objc-act.o : objc-act.c $(CONFIG_H) $(TREE_H) $(RTL_H) c-tree.h c-lex.h \
    flags.h objc-act.h input.h function.h c-parse.h
@@ -1311,19 +1311,19 @@ alloca.o:	alloca.c
 insn-config.h: stamp-config ; @true
 stamp-config : $(md_file) genconfig $(srcdir)/move-if-change
 	./genconfig $(md_file) > tmp-config.h
-	$(srcdir)/move-if-change tmp-config.h insn-config.h
+	sh $(srcdir)/move-if-change tmp-config.h insn-config.h
 	touch stamp-config
 
 insn-flags.h: stamp-flags ; @true
 stamp-flags : $(md_file) genflags $(srcdir)/move-if-change
 	./genflags $(md_file) > tmp-flags.h
-	$(srcdir)/move-if-change tmp-flags.h insn-flags.h
+	sh $(srcdir)/move-if-change tmp-flags.h insn-flags.h
 	touch stamp-flags
 
 insn-codes.h: stamp-codes ; @true
 stamp-codes : $(md_file) gencodes $(srcdir)/move-if-change
 	./gencodes $(md_file) > tmp-codes.h
-	$(srcdir)/move-if-change tmp-codes.h insn-codes.h
+	sh $(srcdir)/move-if-change tmp-codes.h insn-codes.h
 	touch stamp-codes
 
 insn-emit.o : insn-emit.c $(CONFIG_H) $(RTL_H) expr.h real.h output.h \
@@ -1333,7 +1333,7 @@ insn-emit.o : insn-emit.c $(CONFIG_H) $(RTL_H) expr.h real.h output.h \
 insn-emit.c: stamp-emit ; @true
 stamp-emit : $(md_file) genemit $(srcdir)/move-if-change
 	./genemit $(md_file) > tmp-emit.c
-	$(srcdir)/move-if-change tmp-emit.c insn-emit.c
+	sh $(srcdir)/move-if-change tmp-emit.c insn-emit.c
 	touch stamp-emit
 
 insn-recog.o : insn-recog.c $(CONFIG_H) $(RTL_H) insn-config.h recog.h \
@@ -1343,7 +1343,7 @@ insn-recog.o : insn-recog.c $(CONFIG_H) $(RTL_H) insn-config.h recog.h \
 insn-recog.c: stamp-recog ; @true
 stamp-recog : $(md_file) genrecog $(srcdir)/move-if-change
 	./genrecog $(md_file) > tmp-recog.c
-	$(srcdir)/move-if-change tmp-recog.c insn-recog.c
+	sh $(srcdir)/move-if-change tmp-recog.c insn-recog.c
 	touch stamp-recog
 
 insn-opinit.o : insn-opinit.c $(CONFIG_H) $(RTL_H) insn-codes.h insn-flags.h \
@@ -1353,7 +1353,7 @@ insn-opinit.o : insn-opinit.c $(CONFIG_H) $(RTL_H) insn-codes.h insn-flags.h \
 insn-opinit.c: stamp-opinit ; @true
 stamp-opinit : $(md_file) genopinit $(srcdir)/move-if-change
 	./genopinit $(md_file) > tmp-opinit.c
-	$(srcdir)/move-if-change tmp-opinit.c insn-opinit.c
+	sh $(srcdir)/move-if-change tmp-opinit.c insn-opinit.c
 	touch stamp-opinit
 
 insn-extract.o : insn-extract.c $(CONFIG_H) $(RTL_H)
@@ -1362,7 +1362,7 @@ insn-extract.o : insn-extract.c $(CONFIG_H) $(RTL_H)
 insn-extract.c: stamp-extract ; @true
 stamp-extract : $(md_file) genextract $(srcdir)/move-if-change
 	./genextract $(md_file) > tmp-extract.c
-	$(srcdir)/move-if-change tmp-extract.c insn-extract.c
+	sh $(srcdir)/move-if-change tmp-extract.c insn-extract.c
 	touch stamp-extract
 
 insn-peep.o : insn-peep.c $(CONFIG_H) $(RTL_H) regs.h output.h real.h
@@ -1371,7 +1371,7 @@ insn-peep.o : insn-peep.c $(CONFIG_H) $(RTL_H) regs.h output.h real.h
 insn-peep.c: stamp-peep ; @true
 stamp-peep : $(md_file) genpeep $(srcdir)/move-if-change
 	./genpeep $(md_file) > tmp-peep.c
-	$(srcdir)/move-if-change tmp-peep.c insn-peep.c
+	sh $(srcdir)/move-if-change tmp-peep.c insn-peep.c
 	touch stamp-peep
 
 insn-attrtab.o : insn-attrtab.c $(CONFIG_H) $(RTL_H) regs.h real.h output.h \
@@ -1381,7 +1381,7 @@ insn-attrtab.o : insn-attrtab.c $(CONFIG_H) $(RTL_H) regs.h real.h output.h \
 insn-attr.h: stamp-attr ; @true
 stamp-attr : $(md_file) genattr $(srcdir)/move-if-change
 	./genattr $(md_file) > tmp-attr.h
-	$(srcdir)/move-if-change tmp-attr.h insn-attr.h
+	sh $(srcdir)/move-if-change tmp-attr.h insn-attr.h
 	touch stamp-attr
 
 insn-attrtab.c: stamp-attrtab ; @true
@@ -1393,7 +1393,7 @@ stamp-attrtab : $(md_file) genattrtab $(srcdir)/move-if-change
 	else					\
 	  ./genattrtab $(md_file) > tmp-attrtab.c;	\
 	fi
-	$(srcdir)/move-if-change tmp-attrtab.c insn-attrtab.c
+	sh $(srcdir)/move-if-change tmp-attrtab.c insn-attrtab.c
 	touch stamp-attrtab
 
 insn-output.o : insn-output.c $(CONFIG_H) $(RTL_H) regs.h real.h conditions.h \
@@ -1404,7 +1404,7 @@ insn-output.o : insn-output.c $(CONFIG_H) $(RTL_H) regs.h real.h conditions.h \
 insn-output.c: stamp-output ; @true
 stamp-output : $(md_file) genoutput $(srcdir)/move-if-change
 	./genoutput $(md_file) > tmp-output.c
-	$(srcdir)/move-if-change tmp-output.c insn-output.c
+	sh $(srcdir)/move-if-change tmp-output.c insn-output.c
 	touch stamp-output
 
 # Compile the programs that generate insn-* from the machine description.
@@ -1583,19 +1583,19 @@ bi-reverse.o: bi-reverse.c bi-defs.h
 bc-arity.h: stamp-bcarity ; @true
 stamp-bcarity : $(srcdir)/bytecode.def bi-arity $(srcdir)/move-if-change
 	./bi-arity < $(srcdir)/bytecode.def >tmp-bc-arity.h
-	$(srcdir)/move-if-change tmp-bc-arity.h bc-arity.h
+	sh $(srcdir)/move-if-change tmp-bc-arity.h bc-arity.h
 	touch stamp-bcarity
 
 bc-opcode.h: stamp-bcopcode ; @true
 stamp-bcopcode : $(srcdir)/bytecode.def bi-opcode $(srcdir)/move-if-change
 	./bi-opcode < $(srcdir)/bytecode.def >tmp-bcopcd.h
-	$(srcdir)/move-if-change tmp-bcopcd.h bc-opcode.h
+	sh $(srcdir)/move-if-change tmp-bcopcd.h bc-opcode.h
 	touch stamp-bcopcode
 
 bc-opname.h: stamp-bcopname ; @true
 stamp-bcopname : $(srcdir)/bytecode.def bi-opname $(srcdir)/move-if-change
 	./bi-opname < $(srcdir)/bytecode.def >tmp-bcopnm.h
-	$(srcdir)/move-if-change tmp-bcopnm.h bc-opname.h
+	sh $(srcdir)/move-if-change tmp-bcopnm.h bc-opname.h
 	touch stamp-bcopname
 
 bytecode.mostlyclean:
