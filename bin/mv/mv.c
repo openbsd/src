@@ -1,4 +1,4 @@
-/*	$OpenBSD: mv.c,v 1.10 1998/05/18 19:11:45 deraadt Exp $	*/
+/*	$OpenBSD: mv.c,v 1.11 1998/07/02 15:58:52 csapuntz Exp $	*/
 /*	$NetBSD: mv.c,v 1.9 1995/03/21 09:06:52 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mv.c	8.2 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: mv.c,v 1.10 1998/05/18 19:11:45 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mv.c,v 1.11 1998/07/02 15:58:52 csapuntz Exp $";
 #endif
 #endif /* not lint */
 
@@ -130,16 +130,35 @@ main(argc, argv)
 		++baselen;
 	}
 	for (rval = 0; --argc; ++argv) {
-		if ((p = strrchr(*argv, '/')) == NULL)
-			p = *argv;
-		else
-			++p;
+		char *current_arg = *argv;
+
+		/* Get the name of the file to create from
+		   the argument. This is a bit tricky because
+		   in the case of b/ we actually want b and empty
+		   string */
+		if ((p = strrchr(current_arg, '/')) == NULL)
+			p = current_arg;
+		else {
+			/* Special case foo/ */
+			if (!*(p+1)) {
+				while ((p >= current_arg) &&
+				       *p == '/')
+					p--;
+
+				while ((p >= current_arg) &&
+				       *p != '/')
+					p--;
+			}
+
+			p++;
+		}
+
 		if ((baselen + (len = strlen(p))) >= MAXPATHLEN) {
 			warnx("%s: destination pathname too long", *argv);
 			rval = 1;
 		} else {
 			memmove(endp, p, len + 1);
-			if (do_move(*argv, path))
+			if (do_move(current_arg, path))
 				rval = 1;
 		}
 	}
