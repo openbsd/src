@@ -1,4 +1,4 @@
-/*	$OpenBSD: limits.h,v 1.2 2000/07/31 20:06:02 millert Exp $	*/
+/*	$OpenBSD: limits.h,v 1.3 2002/02/04 20:08:21 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1992-1994, The University of Utah and
@@ -91,8 +91,8 @@
 #define	INT_MAX		2147483647	/* max value for an int */
 #define	INT_MIN		(-2147483647-1)	/* min value for an int */
 
-#define	ULONG_MAX	0xffffffff	/* max value for an unsigned long */
-#define	LONG_MAX	2147483647	/* max value for a long */
+#define	ULONG_MAX	0xffffffffUL	/* max value for an unsigned long */
+#define	LONG_MAX	2147483647L	/* max value for a long */
 #define	LONG_MIN	(-2147483647-1)	/* min value for a long */
 
 #if !defined(_ANSI_SOURCE)
