@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.16 1997/01/15 22:33:53 kstailey Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.17 1997/02/04 03:03:18 dm Exp $	*/
 
 /*
  * random.c -- A strong random number generator
@@ -311,7 +311,8 @@ struct arc4_stream {
 #define ENT_TTY		0x300
 
 static struct random_bucket random_state;
-struct arc4_stream arc4random_state;
+static int arc4random_uninitialized = 2;
+static struct arc4_stream arc4random_state;
 static u_int32_t random_pool[POOLWORDS];
 static struct timer_rand_state mouse_timer_state;
 static struct timer_rand_state extract_timer_state;
@@ -330,6 +331,7 @@ void	add_timer_randomness __P((struct random_bucket *,
 	    struct timer_rand_state *, u_int));
 static __inline int extract_entropy __P((struct random_bucket *, char *, int));
 void	arc4_init __P((struct arc4_stream *, u_char *, int));
+static __inline void arc4_stir (struct arc4_stream *);
 static __inline u_char arc4_getbyte __P((struct arc4_stream *));
 
 /* Arcfour random stream generator.  This code is derived from section
@@ -380,9 +382,22 @@ arc4_getbyte (struct arc4_stream *as)
 	return (as->s[(si + sj) & 0xff]);
 }
 
+static inline void
+arc4maybeinit (void)
+{
+  if (arc4random_uninitialized) {
+    if (arc4random_uninitialized > 1
+	|| random_state.entropy_count >= 128) {
+      arc4random_uninitialized--;
+      arc4_stir (&arc4random_state);
+    }
+  }
+}
+
 u_int32_t
 arc4random (void)
 {
+  arc4maybeinit ();
   return ((arc4_getbyte (&arc4random_state) << 24)
 	  | (arc4_getbyte (&arc4random_state) << 16)
 	  | (arc4_getbyte (&arc4random_state) << 8)
@@ -737,6 +752,7 @@ randomread(dev, uio, ioflag)
 		    {
 			u_char *cp = (u_char *) buf;
 			u_char *end = cp + n;
+			arc4maybeinit ();
 			while (cp < end)
 				*cp++ = arc4_getbyte (&arc4random_state);
 			break;
@@ -767,14 +783,12 @@ randomselect(dev, rw, p)
 static __inline void
 arc4_stir (struct arc4_stream *as)
 {
-	int rsec = random_state.entropy_count >> 3;
-	u_int buf[2 + POOLWORDS];
-	int n = min (sizeof(buf) - 2 * sizeof (u_int), rsec);
+	u_char buf[256];
 
 	microtime ((struct timeval *) buf);
-	get_random_bytes (buf + 2, n);
-	arc4_init (&arc4random_state, (u_char *) buf,
-		   2 * sizeof (u_int) + n);
+	get_random_bytes (buf + sizeof (struct timeval),
+			  sizeof (buf) - sizeof (struct timeval));
+	arc4_init (&arc4random_state, buf, sizeof (buf));
 }
 
 int
