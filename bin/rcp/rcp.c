@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcp.c,v 1.36 2003/07/18 00:44:50 deraadt Exp $	*/
+/*	$OpenBSD: rcp.c,v 1.37 2003/07/28 06:05:35 tedu Exp $	*/
 /*	$NetBSD: rcp.c,v 1.9 1995/03/21 08:19:06 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rcp.c	8.2 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: rcp.c,v 1.9 1995/03/21 08:19:06 cgd Exp $";
+static const char rcsid[] = "$OpenBSD: rcp.c,v 1.37 2003/07/28 06:05:35 tedu Exp $";
 #endif
 #endif /* not lint */
 
