@@ -137,7 +137,7 @@ setarp(s, ia, ha, len)
 	snprintf(buf, sizeof(buf), "arp -d %s; arp -s %s %s temp",
 		a, a, haddrtoa(ha, len));
 	if (debug > 2)
-		report(LOG_INFO, buf);
+		report(LOG_INFO, "%s", buf);
 	status = system(buf);
 	if (status)
 		report(LOG_ERR, "arp failed, exit code=0x%x", status);
