@@ -1,4 +1,4 @@
-/*	$OpenBSD: est.c,v 1.6 2004/02/27 21:15:45 grange Exp $ */
+/*	$OpenBSD: est.c,v 1.7 2004/02/27 21:46:44 grange Exp $ */
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -190,6 +190,8 @@ static const struct est_cpu est_cpus[] = {
 #define MSR2MV(msr)		(((int) (msr) & 0xff) * 16 + 700)
 
 static const struct fqlist *est_fqlist;
+
+extern int setperf_prio;
 
 void
 est_init(const char *cpu_device)

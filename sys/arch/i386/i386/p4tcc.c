@@ -1,4 +1,4 @@
-/*	$OpenBSD: p4tcc.c,v 1.3 2004/02/27 21:15:45 grange Exp $ */
+/*	$OpenBSD: p4tcc.c,v 1.4 2004/02/27 21:46:44 grange Exp $ */
 /*
  * Copyright (c) 2003 Ted Unangst
  * All rights reserved.
@@ -58,6 +58,8 @@ static struct {
 };
 
 #define TCC_LEVELS sizeof(tcc) / sizeof(tcc[0])
+
+extern int setperf_prio;
 
 void
 p4tcc_init(int model, int step)
