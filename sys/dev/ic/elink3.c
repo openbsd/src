@@ -84,7 +84,7 @@ void epstart __P((struct ifnet *));
 void epwatchdog __P((struct ifnet *));
 void epreset __P((struct ep_softc *));
 void epread __P((struct ep_softc *));
-struct mbuf *epget __P((struct ep_softc *, struct ether_header *, int));
+struct mbuf *epget __P((struct ep_softc *, int));
 void epmbuffill __P((void *));
 void epmbufempty __P((struct ep_softc *));
 void epsetfilter __P((struct ep_softc *));
@@ -620,7 +620,7 @@ again:
 	len &= RX_BYTES_MASK;	/* Lower 11 bits = RX bytes. */
 
 	/* Pull packet off interface. */
-	m = epget(sc, &eh, len);
+	m = epget(sc, len);
 	if (m == 0) {
 		ifp->if_ierrors++;
 		goto abort;
@@ -651,6 +651,8 @@ again:
 	}
 #endif
 
+	bcopy(m->m_data, &eh, sizeof(struct ether_header));
+	m_adj(m, sizeof(struct ether_header));
 	ether_input(ifp, &eh, m);
 
 	/*
@@ -691,9 +693,8 @@ abort:
 }
 
 struct mbuf *
-epget(sc, eh, totlen)
+epget(sc, totlen)
 	struct ep_softc *sc;
-	struct ether_header *eh;
 	int totlen;
 {
 	bus_chipset_tag_t bc = sc->sc_bc;
@@ -719,6 +720,7 @@ epget(sc, eh, totlen)
 		m->m_flags = M_PKTHDR;
 	}
 	m->m_pkthdr.rcvif = ifp;
+	m->m_pkthdr.len = totlen;
 	len = MHLEN;
 	top = 0;
 	mp = &top;
@@ -729,13 +731,6 @@ epget(sc, eh, totlen)
 	 * reading it.  We may still lose packets at other times.
 	 */
 	sh = splhigh();
-
-	if(totlen > sizeof(struct ether_header)) {
-		bus_io_read_multi_2(bc, ioh,
-		    EP_W1_RX_PIO_RD_1, eh, sizeof(struct ether_header) / 2);
-		totlen -= sizeof(struct ether_header);
-	}
-	m->m_pkthdr.len = totlen;
 
 	while (totlen > 0) {
 		if (top) {
