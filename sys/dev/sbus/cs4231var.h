@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4231var.h,v 1.1 2001/09/30 00:45:17 jason Exp $	*/
+/*	$OpenBSD: cs4231var.h,v 1.2 2001/10/01 04:10:49 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -78,6 +78,7 @@ struct cs4231_softc {
 	int sc_precision;
 	int sc_need_commit;
 	int sc_channels;
+	u_int sc_last_format;
 	u_int32_t	sc_blksz;
 	u_int32_t	sc_playcnt;
 	u_int32_t	sc_playsegsz;

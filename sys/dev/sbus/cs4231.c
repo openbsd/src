@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4231.c,v 1.6 2001/10/01 03:31:03 jason Exp $	*/
+/*	$OpenBSD: cs4231.c,v 1.7 2001/10/01 04:10:49 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -123,7 +123,6 @@ void	cs4231_attach	__P((struct device *, struct device *, void *));
 int	cs4231_intr	__P((void *));
 
 int	cs4231_set_speed	__P((struct cs4231_softc *, u_long *));
-void	cs4231_mute_monitor	__P((struct cs4231_softc *, int));
 void	cs4231_setup_output	__P((struct cs4231_softc *sc));
 
 void		cs4231_write	__P((struct cs4231_softc *, u_int8_t, u_int8_t));
@@ -217,6 +216,8 @@ cs4231_attach(parent, self, aux)
 
 	node = sa->sa_node;
 
+	sc->sc_last_format = 0xffffffff;
+
 	/* Pass on the bus tags */
 	sc->sc_bustag = sa->sa_bustag;
 	sc->sc_dmatag = sa->sa_dmatag;
@@ -266,6 +267,7 @@ cs4231_attach(parent, self, aux)
 	/* Default to speaker, unmuted, reasonable volume */
 	sc->sc_out_port = CSPORT_SPEAKER;
 	sc->sc_mute[CSPORT_SPEAKER] = 1;
+	sc->sc_mute[CSPORT_MONITOR] = 1;
 	sc->sc_volume[CSPORT_SPEAKER].left = 192;
 	sc->sc_volume[CSPORT_SPEAKER].right = 192;
 }
@@ -292,26 +294,6 @@ cs4231_read(sc, r)
 {
 	CS_WRITE(sc, AD1848_IADDR, r);
 	return (CS_READ(sc, AD1848_IDATA));
-}
-
-void
-cs4231_mute_monitor(sc, mute)
-	struct cs4231_softc *sc;
-	int mute;
-{
-	u_int8_t lv, rv;
-
-	lv = cs4231_read(sc, SP_LEFT_OUTPUT_CONTROL);
-	rv = cs4231_read(sc, SP_RIGHT_OUTPUT_CONTROL);
-	if (mute) {
-		lv |= OUTPUT_MUTE;
-		rv |= OUTPUT_MUTE;
-	} else {
-		lv &= ~OUTPUT_MUTE;
-		rv &= ~OUTPUT_MUTE;
-	}
-	cs4231_write(sc, SP_LEFT_OUTPUT_CONTROL, lv);
-	cs4231_write(sc, SP_RIGHT_OUTPUT_CONTROL, rv);
 }
 
 int
@@ -432,51 +414,46 @@ void
 cs4231_setup_output(sc)
 	struct cs4231_softc *sc;
 {
-	u_int8_t r;
+	u_int8_t pc, mi, rm, lm;
 
-	r = cs4231_read(sc, SP_PIN_CONTROL);
-	r |= CS_PC_HDPHMUTE | CS_PC_LINEMUTE;
-	cs4231_write(sc, SP_PIN_CONTROL, r);
+	pc = cs4231_read(sc, SP_PIN_CONTROL) | CS_PC_HDPHMUTE | CS_PC_LINEMUTE;
 
-	r = cs4231_read(sc, CS_MONO_IO_CONTROL);
-	r |= MONO_OUTPUT_MUTE;
-	cs4231_write(sc, CS_MONO_IO_CONTROL, r);
+	mi = cs4231_read(sc, CS_MONO_IO_CONTROL) | MONO_OUTPUT_MUTE;
+
+	lm = cs4231_read(sc, SP_LEFT_OUTPUT_CONTROL);
+	lm &= ~OUTPUT_ATTEN_BITS;
+	lm |= ((~(sc->sc_volume[CSPORT_SPEAKER].left >> 2)) &
+	    OUTPUT_ATTEN_BITS) | OUTPUT_MUTE;
+
+	rm = cs4231_read(sc, SP_RIGHT_OUTPUT_CONTROL);
+	rm &= ~OUTPUT_ATTEN_BITS;
+	rm |= ((~(sc->sc_volume[CSPORT_SPEAKER].right >> 2)) &
+	    OUTPUT_ATTEN_BITS) | OUTPUT_MUTE;
+
+	if (sc->sc_mute[CSPORT_MONITOR]) {
+		lm &= ~OUTPUT_MUTE;
+		rm &= ~OUTPUT_MUTE;
+	}
 
 	switch (sc->sc_out_port) {
 	case CSPORT_HEADPHONE:
-		if (sc->sc_mute[CSPORT_SPEAKER]) {
-			r = cs4231_read(sc, SP_PIN_CONTROL);
-			r &= ~CS_PC_HDPHMUTE;
-			cs4231_write(sc, SP_PIN_CONTROL, r);
-		}
+		if (sc->sc_mute[CSPORT_SPEAKER])
+			pc &= ~CS_PC_HDPHMUTE;
 		break;
 	case CSPORT_SPEAKER:
-		if (sc->sc_mute[CSPORT_SPEAKER]) {
-			r = cs4231_read(sc, CS_MONO_IO_CONTROL);
-			r &= ~MONO_OUTPUT_MUTE;
-			cs4231_write(sc, CS_MONO_IO_CONTROL, r);
-		}
+		if (sc->sc_mute[CSPORT_SPEAKER])
+			mi &= ~MONO_OUTPUT_MUTE;
 		break;
 	case CSPORT_LINEOUT:
-		if (sc->sc_mute[CSPORT_SPEAKER]) {
-			r = cs4231_read(sc, SP_PIN_CONTROL);
-			r &= ~CS_PC_LINEMUTE;
-			cs4231_write(sc, SP_PIN_CONTROL, r);
-		}
+		if (sc->sc_mute[CSPORT_SPEAKER])
+			pc &= ~CS_PC_LINEMUTE;
 		break;
 	}
 
-	r = cs4231_read(sc, SP_LEFT_OUTPUT_CONTROL);
-	r &= ~OUTPUT_ATTEN_BITS;
-	r |= (~(sc->sc_volume[CSPORT_SPEAKER].left >> 2)) &
-	    OUTPUT_ATTEN_BITS;
-	cs4231_write(sc, SP_LEFT_OUTPUT_CONTROL, r);
-
-	r = cs4231_read(sc, SP_RIGHT_OUTPUT_CONTROL);
-	r &= ~OUTPUT_ATTEN_BITS;
-	r |= (~(sc->sc_volume[CSPORT_SPEAKER].right >> 2)) &
-	    OUTPUT_ATTEN_BITS;
-	cs4231_write(sc, SP_RIGHT_OUTPUT_CONTROL, r);
+	cs4231_write(sc, SP_LEFT_OUTPUT_CONTROL, lm);
+	cs4231_write(sc, SP_RIGHT_OUTPUT_CONTROL, rm);
+	cs4231_write(sc, SP_PIN_CONTROL, pc);
+	cs4231_write(sc, CS_MONO_IO_CONTROL, mi);
 }
 
 void
@@ -655,26 +632,29 @@ cs4231_commit_settings(addr)
 {
 	struct cs4231_softc *sc = (struct cs4231_softc *)addr;
 	int s, tries;
-	u_int8_t r;
+	u_int8_t r, fs;
 
 	if (sc->sc_need_commit == 0)
 		return (0);
 
-	s = splaudio();
+	fs = sc->sc_speed_bits | (sc->sc_format_bits << 5);
+	if (sc->sc_channels == 2)
+		fs |= FMT_STEREO;
 
-	cs4231_mute_monitor(sc, 1);
+	if (sc->sc_last_format == fs) {
+		sc->sc_need_commit = 0;
+		return (0);
+	}
+
+	s = splaudio();
 
 	r = cs4231_read(sc, SP_INTERFACE_CONFIG) | AUTO_CAL_ENABLE;
 	CS_WRITE(sc, AD1848_IADDR, MODE_CHANGE_ENABLE);
 	CS_WRITE(sc, AD1848_IADDR, MODE_CHANGE_ENABLE | SP_INTERFACE_CONFIG);
 	CS_WRITE(sc, AD1848_IDATA, r);
 
-	r = sc->sc_speed_bits | (sc->sc_format_bits << 5);
-	if (sc->sc_channels == 2)
-		r |= FMT_STEREO;
-
 	CS_WRITE(sc, AD1848_IADDR, MODE_CHANGE_ENABLE | SP_CLOCK_DATA_FORMAT);
-	CS_WRITE(sc, AD1848_IDATA, r);
+	CS_WRITE(sc, AD1848_IDATA, fs);
 	CS_READ(sc, AD1848_IDATA);
 	CS_READ(sc, AD1848_IDATA);
 	tries = CS_TIMEOUT;
@@ -685,7 +665,7 @@ cs4231_commit_settings(addr)
 		printf("%s: timeout committing fspb\n", sc->sc_dev.dv_xname);
 
 	CS_WRITE(sc, AD1848_IADDR, MODE_CHANGE_ENABLE | CS_REC_FORMAT);
-	CS_WRITE(sc, AD1848_IDATA, r);
+	CS_WRITE(sc, AD1848_IDATA, fs);
 	CS_READ(sc, AD1848_IDATA);
 	CS_READ(sc, AD1848_IDATA);
 	for (tries = CS_TIMEOUT;
@@ -708,8 +688,6 @@ cs4231_commit_settings(addr)
 	if (tries == 0)
 		printf("%s: timeout waiting for autocalibration\n",
 		    sc->sc_dev.dv_xname);
-
-	cs4231_mute_monitor(sc, 0);
 
 	splx(s);
 
