@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.67 2004/04/18 18:00:18 pvalchev Exp $
+dnl	$OpenBSD: hardware,v 1.68 2004/04/19 22:54:07 pvalchev Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	- SBUS based workstations:
 		Ultra 1
@@ -189,6 +189,21 @@ Supported devices {:-include-:}:
 		    NDC/Sohoware NCP130 PCI
 		    Netgear MA301 PCI
 		    US Robotics 2415 PCI (rebadged WL11000P)
+		USB Adapters
+		    Acer Warplink USB-400
+		    Actiontec HWU01170
+		    Corega WLUSB-11
+		    I-O DATA WN-B11/USB
+		    Intel PRO/Wireless 2011B
+		    Intersil Prism 2X
+		    JVC MP-XP7250
+		    Linksys WUSB11 v3.0
+		    Linksys WUSB12
+		    Melco WLI-USB-KS11G
+		    MicroSoft MN510
+		    Netgear MA111
+		    Siemens SpeedStream SS1022
+		    Syntax USB-400
 
 	Universal Serial Bus (USB) Devices
 		USB Audio
