@@ -1,4 +1,4 @@
-/* $OpenBSD: exchange.c,v 1.105 2004/12/06 12:28:21 ho Exp $	 */
+/* $OpenBSD: exchange.c,v 1.106 2005/01/31 10:30:49 hshoexer Exp $	 */
 /* $EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	 */
 
 /*
@@ -1141,9 +1141,9 @@ exchange_setup_p2(struct message *msg, u_int8_t doi)
 	    exchange->cookies + ISAKMP_HDR_ICOOKIE_LEN);
 	GET_ISAKMP_HDR_MESSAGE_ID(buf, exchange->message_id);
 #if defined (USE_NAT_TRAVERSAL)
-	if (msg->isakmp_sa->flags & SA_FLAG_NAT_T_ENABLE)
+	if (msg->isakmp_sa && (msg->isakmp_sa->flags & SA_FLAG_NAT_T_ENABLE))
 		exchange->flags |= EXCHANGE_FLAG_NAT_T_ENABLE;
-	if (msg->isakmp_sa->flags & SA_FLAG_NAT_T_KEEPALIVE)
+	if (msg->isakmp_sa && (msg->isakmp_sa->flags & SA_FLAG_NAT_T_KEEPALIVE))
 		exchange->flags |= EXCHANGE_FLAG_NAT_T_KEEPALIVE;
 #endif
 	exchange_enter(exchange);
