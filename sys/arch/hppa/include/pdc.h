@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.h,v 1.17 2002/02/08 20:43:16 miod Exp $	*/
+/*	$OpenBSD: pdc.h,v 1.18 2002/02/08 21:15:35 miod Exp $	*/
 
 /*
  * Copyright (c) 1990 mt Xinu, Inc.  All rights reserved.
@@ -529,7 +529,7 @@ struct device_path {
 #define	PZL_SPEED(l)	(((l) & 0x3c0) >> 6)
 #define	PZL_ENCODE(bits, parity, speed) \
 	(((bits) - 5) & 0x03) | (((parity) & 0x3) << 3) | \
-	(((speed) & 0x10) << 6)
+	(((speed) & 0x0f) << 6)
 
 /*
  * A processors Stable Storage is accessed through the PDC.  There are
