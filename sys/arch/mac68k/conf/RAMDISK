@@ -38,7 +38,7 @@ options		COMPAT_09
 options		COMPAT_10
 options		MACHINE_NONCONTIG
 
-config		netbsd	root on rd0a swap on rd0b
+config		bsd	root on rd0a swap on rd0b
 
 rd0 at mainbus?
 

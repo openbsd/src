@@ -61,7 +61,7 @@ options		COMPAT_09
 options		COMPAT_10
 options		MACHINE_NONCONTIG
 
-config		netbsd	swap generic
+config		bsd	swap generic
 options		GENERIC
 
 ae*	at nubus0	slot -1   id ?   claimed 0

@@ -47,7 +47,7 @@ options		COMPAT_SUNOS
 options		COMPAT_09
 options		COMPAT_10
 
-config		netbsd	root on sd0 swap on sd0 and sd1 and vnd0a dumps on sd1b
+config		bsd	root on sd0 swap on sd0 and sd1 and vnd0a dumps on sd1b
 
 ae*	at nubus0	slot -1   id ?   claimed 0
 
