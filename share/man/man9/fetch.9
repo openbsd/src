@@ -72,6 +72,12 @@ This function is safe to call during an interrupt context.
 Fetches a word of data from the user-space address
 .Pa base .
 .El
+.Sh NOTE
+The
+.Nm
+routines are deprecated.
+All new code should use 
+.Fn copyin .
 .Sh RETURN VALUES
 The
 .Nm

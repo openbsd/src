@@ -42,13 +42,13 @@
 .Fd #include <sys/types.h>
 .Fd #include <sys/systm.h>
 .Ft int
-.Fn subyte "void *base"
+.Fn subyte "void *base" "unsigned char c"
 .Ft int
-.Fn susword "void *base"
+.Fn susword "void *base" "unsigned short s"
 .Ft int
-.Fn suswintr "void *base"
+.Fn suswintr "void *base" "unsigned short s"
 .Ft int
-.Fn suword "void *base"
+.Fn suword "void *base" "unsigned long l"
 .Sh DESCRIPTION
 The
 .Nm
@@ -59,19 +59,33 @@ The
 routines provide the following functionality:
 .Bl -tag -width "suswintr()"
 .It Fn subyte
-Stores a byte of data to the user-space address
+Stores a byte of data,
+.Pa c ,
+to the user-space address
 .Pa base .
 .It Fn susword
-Stores a short word of data to the user-space address
+Stores a short word of data,
+.Pa s ,
+to the user-space address
 .Pa base .
 .It Fn suswintr
-Stores a short word of data to the user-space address
+Stores a short word of data,
+.Pa s ,
+to the user-space address
 .Pa base .
 This function is safe to call during an interrupt context.
 .It Fn suword
-Stores a word of data to the user-space address
+Stores a word of data,
+.Pa l ,
+to the user-space address
 .Pa base .
 .El
+.Sh NOTE
+The
+.Nm
+routines are deprecated.
+All new code should use 
+.Fn copyout .
 .Sh RETURN VALUES
 The
 .Nm
