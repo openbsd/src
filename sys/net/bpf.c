@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.5 1996/06/18 16:12:17 deraadt Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.6 1996/12/07 09:17:46 deraadt Exp $	*/
 /*	$NetBSD: bpf.c,v 1.27 1996/05/07 05:26:02 thorpej Exp $	*/
 
 /*
@@ -552,7 +552,7 @@ bpfwrite(dev, uio, ioflag)
 	struct ifnet *ifp;
 	struct mbuf *m;
 	int error, s;
-	static struct sockaddr dst;
+	struct sockaddr dst;
 
 	if (d->bd_bif == 0)
 		return (ENXIO);
@@ -566,8 +566,10 @@ bpfwrite(dev, uio, ioflag)
 	if (error)
 		return (error);
 
-	if (m->m_pkthdr.len > ifp->if_mtu)
+	if (m->m_pkthdr.len > ifp->if_mtu) {
+		m_freem(m);
 		return (EMSGSIZE);
+	}
 
 	s = splsoftnet();
 #if BSD >= 199103
