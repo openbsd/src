@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi.c,v 1.4 2001/09/06 01:36:04 deraadt Exp $	*/
+/*	$OpenBSD: scsi.c,v 1.5 2002/08/23 23:47:32 deraadt Exp $	*/
 
 /* Copyright (c) 1994 HD Associates
  * (contact: dufault@hda.com)
@@ -984,7 +984,7 @@ static u_long g_u_long(u_char *s)
 
 /* In the old software you could patch in a special error table:
  */
-scsi_assoc_t *error_table = 0;
+static scsi_assoc_t *error_table = 0;
 
 static void sense_7x_dump(FILE *f, scsireq_t *scsireq)
 {
