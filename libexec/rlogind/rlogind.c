@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlogind.c,v 1.30 2001/12/07 18:45:33 mpech Exp $	*/
+/*	$OpenBSD: rlogind.c,v 1.31 2002/01/07 03:44:30 millert Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1988, 1989, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)rlogind.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$OpenBSD: rlogind.c,v 1.30 2001/12/07 18:45:33 mpech Exp $";
+static char *rcsid = "$OpenBSD: rlogind.c,v 1.31 2002/01/07 03:44:30 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -377,7 +377,7 @@ doit(f, fromp)
 	ioctl(master, TIOCPKT, &on);
 	signal(SIGCHLD, cleanup);
 	protocol(f, master);
-	signal(SIGCHLD, SIG_IGN);
+	signal(SIGCHLD, SIG_DFL);
 	cleanup(0);
 }
 

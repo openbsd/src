@@ -1,4 +1,4 @@
-/*	$OpenBSD: pl_1.c,v 1.5 1999/01/18 21:53:22 pjanzen Exp $	*/
+/*	$OpenBSD: pl_1.c,v 1.6 2002/01/07 03:44:29 millert Exp $	*/
 /*	$NetBSD: pl_1.c,v 1.3 1995/04/22 10:37:07 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_1.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: pl_1.c,v 1.5 1999/01/18 21:53:22 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: pl_1.c,v 1.6 2002/01/07 03:44:29 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -68,7 +68,7 @@ leave(conditions)
 	(void) signal(SIGINT, SIG_IGN);
 	(void) signal(SIGQUIT, SIG_IGN);
 	(void) signal(SIGALRM, SIG_IGN);
-	(void) signal(SIGCHLD, SIG_IGN);
+	(void) signal(SIGCHLD, SIG_DFL);
 
 	if (done_curses) {
 		Msg("It looks like you've had it!");
@@ -139,7 +139,7 @@ child(n)
 	int pid;
 	int save_errno = errno;
 	
-	(void) signal(SIGCHLD, SIG_IGN);
+	(void) signal(SIGCHLD, SIG_DFL);
 	do {
 		pid = wait3((int *)&status, WNOHANG, (struct rusage *)0);
 		if (pid < 0 || (pid > 0 && !WIFSTOPPED(status)))
