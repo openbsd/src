@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldd.c,v 1.5 2001/06/08 05:20:38 deraadt Exp $	*/
+/*	$OpenBSD: ldd.c,v 1.6 2001/06/13 19:43:21 deraadt Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -96,6 +96,8 @@ doit(char *name)
 	Elf_Phdr *phdr;
 	char *buf;
 	int fd, i, size, status;
+
+	printf("%s:\n", name);
 
 	if ((fd = open(name, O_RDONLY)) < 0) {
 		warn("%s", name);
