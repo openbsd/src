@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.49 2003/12/15 09:00:55 deraadt Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.50 2003/12/15 22:03:41 millert Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -697,9 +697,7 @@ mi_switch()
 {
 	struct proc *p = curproc;	/* XXX */
 	struct rlimit *rlim;
-	long s, u;
 	struct timeval tv;
-	rlim_t rs;
 
 	splassert(IPL_STATCLOCK);
 
@@ -708,26 +706,18 @@ mi_switch()
 	 * process was running, and add that to its total so far.
 	 */
 	microtime(&tv);
-	u = p->p_rtime.tv_usec + (tv.tv_usec - runtime.tv_usec);
-	s = p->p_rtime.tv_sec + (tv.tv_sec - runtime.tv_sec);
-	if (u < 0) {
-		u += 1000000;
-		s--;
-	} else if (u >= 1000000) {
-		u -= 1000000;
-		s++;
-	}
-	p->p_rtime.tv_usec = u;
-	p->p_rtime.tv_sec = s;
+	timersub(&tv, &runtime, &tv);
+	timeradd(&p->p_rtime, &tv, &p->p_rtime);
+	if (p->p_rtime.tv_sec < 0)
+		p->p_rtime.tv_sec = p->p_rtime.tv_usec = 0;
 
 	/*
 	 * Check if the process exceeds its cpu resource allocation.
 	 * If over max, kill it.
 	 */
 	rlim = &p->p_rlimit[RLIMIT_CPU];
-	rs = (rlim_t)(unsigned)s;
-	if (rs >= rlim->rlim_cur) {
-		if (rs >= rlim->rlim_max) {
+	if ((rlim_t)p->p_rtime.tv_sec >= rlim->rlim_cur) {
+		if ((rlim_t)p->p_rtime.tv_sec >= rlim->rlim_max) {
 			psignal(p, SIGKILL);
 		} else {
 			psignal(p, SIGXCPU);
