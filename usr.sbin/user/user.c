@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.4 2000/04/24 22:38:31 jakob Exp $ */
+/* $OpenBSD: user.c,v 1.5 2000/04/24 22:40:11 jakob Exp $ */
 /* $NetBSD: user.c,v 1.17 2000/04/14 06:26:55 simonb Exp $ */
 
 /*
@@ -195,6 +195,7 @@ asystem(char *fmt, ...)
 	}
 	return ret;
 }
+
 
 /* return 1 if all of `s' is numeric */
 static int
@@ -966,7 +967,11 @@ usermgmt_usage(char *prog)
 		(void) fprintf(stderr, "Usage: %s [-g gid] [-o] [-n newname] "
 		    "[-v] group\n", prog);
 	} else if (strcmp(prog, "user") == 0 || strcmp(prog, "group") == 0) {
-		(void) fprintf(stderr, "Usage: %s ( add | del | mod ) ...\n",
+		(void) fprintf(stderr, "Usage: %s ( add | del | mod "
+#ifdef EXTENSIONS
+		"| info "
+#endif
+		") ...\n",
 		    prog);
 #ifdef EXTENSIONS
 	} else if (strcmp(prog, "groupinfo") == 0) {
