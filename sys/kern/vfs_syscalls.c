@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.9 1996/06/02 16:24:42 niklas Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.10 1996/08/02 19:59:01 tholo Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1164,6 +1164,8 @@ sys_access(p, v, retval)
 	int error, flags, t_gid, t_uid;
 	struct nameidata nd;
 
+	if (SCARG(uap, flags) & ~(R_OK | W_OK | X_OK))
+		return (EINVAL);
 	t_uid = cred->cr_uid;
 	t_gid = cred->cr_gid;
 	cred->cr_uid = p->p_cred->p_ruid;
