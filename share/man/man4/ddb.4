@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.16 1999/09/05 16:20:15 espie Exp $
+.\"	$OpenBSD: ddb.4,v 1.17 1999/09/21 22:30:08 d Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -273,7 +273,7 @@ is used as the start address.
 Print each
 .Ar addr
 according to the modifier character.
-The valid modifiers act are a subset of those from the
+The valid modifiers are a subset of those from the
 .Ic examine
 command, and act as described there.
 If no modifier is specified, the last one specified in a
@@ -698,14 +698,17 @@ is greater than
 .It Va \&$maxwidth
 The width of the displayed lines.
 .It Va \&$lines
-The number of lines to page.  It is used by "more" feature.
+The number of lines to page.
+This is used by the
+.Dq more
+feature.
 .It Va \&$tabstops
 Tab stop width.
 .It Va \&$work Ns Ar xx
 Work variables.
 The suffix
 .Ar xx
-can be a number from 0 to 31.
+is a number from 0 to 31.
 .El
 .Sh EXPRESSIONS
 Almost all expression operators in C are supported except for
