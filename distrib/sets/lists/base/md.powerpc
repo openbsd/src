@@ -386,3 +386,4 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/ataio.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/sched.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/stdbool.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/dvdio.ph
