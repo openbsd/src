@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.210 2002/12/13 10:20:25 henning Exp $
+#	$OpenBSD: rc,v 1.211 2002/12/24 15:53:17 mcbride Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -119,7 +119,7 @@ echo 'setting tty flags'
 ttyflags -a
 
 if [ "X${pf}" != X"NO" ]; then
-	RULES="block in all\nblock out all"
+	RULES="block all"
 	RULES="$RULES\npass in proto tcp from any to any port 22 keep state"
 	RULES="$RULES\npass out proto { tcp, udp } from any to any port 53 keep state"
 	case `sysctl vfs.mounts.nfs 2>/dev/null` in
