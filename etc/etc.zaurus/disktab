@@ -1,0 +1,868 @@
+# $OpenBSD: disktab,v 1.1 2004/12/31 00:06:15 drahn Exp $
+#
+#	@(#)disktab	5.5 (Berkeley) 2/27/91
+#
+# Disk geometry and partition layout tables.
+# Key:
+#	ty	type of disk
+#	ns	#sectors/track
+#	nt	#tracks/cylinder
+#	nc	#cylinders/disk
+#	rm	rpm, 3600 default
+#	se	sector size, 512 default
+#	sf	supports bad144-style bad sector forwarding
+#	so	partition offsets in sectors
+#	p[a-h]	partition sizes in sectors
+#	b[a-h]	partition block sizes in bytes
+#	f[a-h]	partition fragment sizes in bytes
+#
+
+
+# Leave nc=16; adjust size using: ns
+rdroot|ramdiskroot|RAM-disk root FS image:\
+	:ty=simulated:se#512:nc#16:nt#2:ns#256:\
+	:ta=4.2BSD:oa#0:pa#8192:fa#512:ba#4096:\
+	:ob#0:pb#0:oc#0:pc#8192:
+
+# pseudo-geometry taken from rd7945
+miniroot:\
+	:ty=winchester:ns#16:nt#7:nc#968:\
+	:pa#10240:ba#8192:fa#1024:
+
+floppy|floppy3|3in|3.5in High Density Floppy:\
+	:ty=floppy:se#512:nt#2:rm#300:ns#18:nc#80:\
+	:pa#2880:oa#0:ba#4096:fa#512:\
+	:pb#2880:ob#0:\
+	:pc#2880:oc#0:
+
+ASI-1.0GIBM:\
+	:ty#winchester:ns#80:nt#15:nc#1632:
+
+Arte DEC DSP3160S:\
+	:ty#winchester:ns#112:nt#16:nc#1744:
+
+CDC 9720-850:\
+	:ty#XD7053:ns#66:nt#15:nc#1358:
+
+CDC EMD 9720:\
+	:ty#XD7053:ns#48:nt#10:nc#1147:
+
+CDC EMD 9720-1230:\
+	:ty#XD7053:ns#82:nt#15:nc#1633:
+
+CDC IPI 9720:\
+	:ty#ISP-80:ns#82:nt#15:nc#1631:\
+	:pa#33210:oa#0:ba#8192:\
+	:pb#131610:ob#33210:\
+	:pc#2006130:oc#0:\
+	:pg#196800:og#164820:\
+	:ph#1644510:oh#361620:
+
+CDC IPI 9722:\
+	:ty#ISP-80:ns#156:nt#7:nc#1630:\
+	:pa#33852:oa#0:ba#8192:\
+	:pb#132132:ob#33852:\
+	:pc#1779960:oc#0:\
+	:pg#197652:og#165984:\
+	:ph#1416324:oh#363636:
+
+CDC Wren IV 94171-344:\
+	:ty#winchester:ns#46:nt#9:nc#1545:
+
+CONNER 30170E:\
+	:ty#winchester:ns#46:nt#8:nc#897:\
+	:pa#14720:oa#0:ba#8192:\
+	:pb#40480:ob#14720:\
+	:pc#330096:oc#0:\
+	:pg#274896:og#55200:
+
+CONNER 30200:\
+	:ty#winchester:ns#49:nt#4:nc#2121:\
+	:pc#415716:oc#0:
+
+CONNER CFP4207S  4.28GB:\
+	:ty#winchester:ns#125:nt#20:nc#3353:\
+	:pc#8382500:oc#0:
+
+CONNER CP3500-540MB-3.5:\
+	:ty#winchester:ns#50:nt#12:nc#1768:\
+	:pc#1060800:oc#0:
+
+CP3100:\
+	:ty#winchester:ns#49:nt#4:nc#1023:\
+	:pc#204864:oc#0:
+
+Conner CFP1060:\
+	:ty#winchester:ns#111:nt#8:nc#2329:
+
+Conner CP3540:\
+	:ty#winchester:ns#49:nt#12:nc#1805:
+
+DEC DSP3107L:\
+	:ty#winchester:ns#83:nt#8:nc#3147:\
+	:pc#2089608:oc#0:
+
+DEC DSP3210 2 GB:\
+	:ty#winchester:ns#86:nt#16:nc#3040:\
+	:pc#4183040:oc#0:
+
+DEC DSP5200:\
+	:ty#winchester:ns#71:nt#21:nc#2619:\
+	:pa#32802:oa#0:ba#8192:\
+	:pb#65604:ob#32802:\
+	:pc#3904929:oc#0:\
+	:pg#3806523:og#98406:
+
+DEC DSP5350:\
+	:ty#winchester:ns#91:nt#25:nc#3053:
+
+DEC_RZ26:\
+	:ty#winchester:ns#57:nt#14:nc#2568:\
+	:pa#66234:oa#0:ba#8192:\
+	:pb#132468:ob#66234:\
+	:pc#2049264:oc#0:\
+	:pg#1850562:og#198702:
+
+DEC_RZ28:\
+	:ty#winchester:ns#84:nt#16:nc#3043:\
+	:pa#64512:oa#0:ba#8192:\
+	:pb#196224:ob#64512:\
+	:pc#4089792:oc#0:\
+	:pg#3827712:og#260736:
+
+DEC_RZ58:\
+	:ty#winchester:ns#85:nt#15:nc#2112:
+
+DEC_RZ58_whole_disk:\
+	:\
+	:pc#2692800:oc#0:
+
+DEC_RZ74:\
+	:ty#winchester:ns#91:nt#25:nc#3053:\
+	:pa#65975:oa#0:ba#8192:\
+	:pb#193375:ob#65975:\
+	:pc#4192825:oc#0:\
+	:pg#3931200:og#259350:\
+	:ph#2752750:oh#4192825:
+
+Fujitsu M2243AS:\
+	:ty#ACB4000:ns#17:nt#11:nc#752:
+
+Fujitsu M2246E:\
+	:ty#winchester:ns#35:nt#6:nc#1196:\
+	:pa#16170:oa#0:ba#8192:\
+	:pb#28140:ob#16170:\
+	:pc#251160:oc#0:\
+	:pg#206850:og#44310:
+
+Fujitsu M2263SA:\
+	:ty#winchester:ns#53:nt#15:nc#1652:
+
+Fujitsu M2266SA 1.2GB:\
+	:ty#winchester:ns#85:nt#15:nc#1652:
+
+Fujitsu M2266SA 1GB:\
+	:ty#winchester:ns#85:nt#15:nc#1642:
+
+Fujitsu M2344K:\
+	:ty#XD7053:ns#64:nt#27:nc#622:
+
+Fujitsu M2511A:\
+	:ty#winchester:ns#25:nt#1:nc#9950:
+
+Fujitsu M2512A small:\
+	:ty#winchester:ns#25:nt#1:nc#9950:\
+	:pc#248750:oc#0:
+
+Fujitsu M2512A v2:\
+	:ty#winchester:ns#25:nt#1:nc#17840:\
+	:pc#446000:oc#0:
+
+Fujitsu M2622SA:\
+	:ty#winchester:ns#64:nt#7:nc#1429:\
+	:pc#640192:oc#0:
+
+Fujitsu M2624FA:\
+	:ty#winchester:ns#64:nt#11:nc#1440:\
+	:pa#22528:oa#0:ba#8192:\
+	:pb#67584:ob#22528:\
+	:pc#1013760:oc#0:\
+	:pg#450560:og#90112:\
+	:ph#473088:oh#540672:
+
+Fujitsu M2652SA:\
+	:ty#winchester:ns#88:nt#20:nc#1935:
+
+Fujitsu M2654SA:\
+	:ty#winchester:ns#88:nt#21:nc#2174:
+
+Fujitsu M2684S:\
+	:ty#SCSI:ns#74:nt#6:nc#2338:
+
+Fujitsu-M2284/M2322:\
+	:ty#XY450:ns#32:nt#10:nc#821:
+
+Fujitsu-M2312K:\
+	:ty#XY450:ns#32:nt#7:nc#587:
+
+Fujitsu-M2333:\
+	:ty#XD7053:ns#67:nt#10:nc#821:
+
+Fujitsu-M2351 Eagle:\
+	:ty#XD7053:ns#46:nt#20:nc#840:
+
+Fujitsu-M2361 Eagle:\
+	:ty#XD7053:ns#67:nt#20:nc#840:
+
+Fujitsu-M2372K:\
+	:ty#XD7053:ns#67:nt#27:nc#743:
+
+Fujitsu-M2382:\
+	:ty#XD7053:ns#81:nt#27:nc#743:\
+	:pa#80919:oa#0:ba#8192:\
+	:pb#129033:ob#80919:\
+	:pc#1624941:oc#0:\
+	:pd#470205:od#209952:\
+	:pe#944784:oe#680157:\
+	:pf#209952:of#0:\
+	:pg#1414989:og#209952:\
+	:ph#1544022:oh#80919:
+
+Fujitsu-M2624S-512:\
+	:ty#winchester:ns#64:nt#11:nc#1429:
+
+Fujitsu-M2651SA:\
+	:ty#winchester:ns#88:nt#16:nc#1934:\
+	:pc#2723072:oc#0:
+
+Fujitsu-M2694ESA:\
+	:ty#winchester:ns#77:nt#15:nc#1830:
+
+HP 97549T:\
+	:ty#winchester:ns#64:nt#16:nc#1909:
+
+HP 97556:\
+	:ty#winchester:ns#72:nt#11:nc#1668:
+
+HP 97558:\
+	:ty#winchester:ns#72:nt#15:nc#1933:
+
+HP 97560:\
+	:ty#winchester:ns#72:nt#19:nc#1933:
+
+HP C2247 1.05GB:\
+	:ty#winchester:ns#95:nt#13:nc#1661:\
+	:pc#2051335:oc#0:\
+	:pg#1640080:og#0:\
+	:ph#411255:oh#1640080:
+
+HP C3010 / Cranel 2.0GB Fast SCSI2 H10:\
+	:ty#winchester:ns#95:nt#19:nc#2165:
+
+HP97548SU 664MB:\
+	:ty#winchester:ns#56:nt#16:nc#1445:\
+	:pa#35840:oa#0:ba#8192:\
+	:pb#71680:ob#35840:\
+	:pc#1294720:oc#0:\
+	:pg#197120:og#215040:\
+	:ph#342720:oh#609280:
+
+Hewlett Packard C2490A:\
+	:ty#winchester:ns#107:nt#18:nc#2159:
+
+Hewlett Packard C3323A:\
+	:ty#winchester:ns#98:nt#7:nc#2995:
+
+Hewlett Packard C3725S:\
+	:ty#winchester:ns#140:nt#9:nc#3362:\
+	:pc#4236120:oc#0:\
+	:ph#4193280:oh#1260:
+
+Hitachi DK315C-10:\
+	:ty#winchester:ns#75:nt#11:nc#2467:
+
+Hitachi DK315C-11:\
+	:ty#winchester:ns#58:nt#15:nc#2478:
+
+Hitachi DK315C-14:\
+	:ty#winchester:ns#75:nt#15:nc#2462:
+
+Hitachi DK326C-10:\
+	:ty#winchester:ns#87:nt#7:nc#3200:
+
+Hitachi DK326C-6:\
+	:ty#winchester:ns#87:nt#4:nc#3200:
+
+Hitachi DK515C-78:\
+	:ty#winchester:ns#69:nt#14:nc#1354:
+
+Hitachi DK516C-16:\
+	:ty#winchester:ns#80:nt#15:nc#2170:
+
+Hitachi DK517C-37:\
+	:ty#winchester:ns#81:nt#21:nc#3297:
+
+Hitachi DK815-10:\
+	:ty#XD7053:ns#67:nt#15:nc#1735:
+
+IBM 0662-S12:\
+	:ty#winchester:ns#114:nt#6:nc#3002:
+
+IBM 0662S12:\
+	:ty#winchester:ns#108:nt#5:nc#3803:
+
+IBM 0663-E15:\
+	:ty#winchester:ns#37:nt#20:nc#3182:
+
+IBM 0663L12:\
+	:ty#winchester:ns#66:nt#15:nc#1979:\
+	:pc#1959210:oc#0:
+
+IBM 0664-M1H/N1H:\
+	:ty#winchester:ns#86:nt#16:nc#2856:
+
+IBM 0664CSH:\
+	:ty#winchester:ns#125:nt#30:nc#2787:
+
+IBM 0664M1H:\
+	:ty#winchester:ns#94:nt#15:nc#2787:
+
+IBM DFHSS1x:\
+	:ty#winchester:ns#125:nt#4:nc#4383:
+
+IBM DFHSS2x:\
+	:ty#winchester:ns#125:nt#8:nc#4388:
+
+IBM DFHSS4x:\
+	:ty#winchester:ns#125:nt#16:nc#4390:
+
+IBM DPES-31080:\
+	:ty#winchester:ns#108:nt#4:nc#4901:\
+	:pc#2117232:oc#0:
+
+IBM DSAS-3270:\
+	:ty#winchester:ns#108:nt#2:nc#2542:
+
+IBM DSAS-3360:\
+	:ty#winchester:ns#108:nt#2:nc#3297:
+
+IBM DSAS-3540:\
+	:ty#winchester:ns#108:nt#3:nc#3259:
+
+IBM DSAS-3720:\
+	:ty#winchester:ns#108:nt#4:nc#3292:
+
+IBM OEM 0664M1H:\
+	:ty#winchester:ns#94:nt#15:nc#2787:
+
+IBM OEM DFHSS2F:\
+	:ty#winchester:ns#135:nt#8:nc#4076:\
+	:pa#4100760:oa#0:ba#8192:\
+	:pb#301320:ob#4100760:
+
+MAXOPTIX (NON-ISO, 1024b) DATA:\
+	:ty#winchester:ns#66:nt#1:nc#15104:
+
+MAXOPTIX (NON-ISO, 1024b) SYSTEM:\
+	:ty#winchester:ns#66:nt#1:nc#15104:
+
+MAXOPTIX (NON-ISO, 512b) DATA:\
+	:ty#winchester:ns#60:nt#1:nc#15081:
+
+MAXOPTIX (NON-ISO, 512b) SYSTEM:\
+	:ty#winchester:ns#60:nt#1:nc#15081:
+
+MICROP 4221-09MZ  10204:\
+	:ty#winchester:ns#139:nt#9:nc#3198:\
+	:pc#4000698:oc#0:
+
+MICROPOLIS 1991-27:\
+	:ty#winchester:ns#149:nt#27:nc#4400:
+
+MICROPOLIS 3243-19:\
+	:ty#winchester:ns#106:nt#19:nc#4139:
+
+MICROPOLIS 4110-09:\
+	:ty#winchester:ns#95:nt#9:nc#2283:
+
+Maxtor 7213SR NB:\
+	:ty#winchester:ns#65:nt#4:nc#1595:\
+	:pc#414700:oc#0:\
+	:pg#414700:og#0:
+
+Maxtor DXP3105S:\
+	:ty#winchester:ns#57:nt#14:nc#2568:
+
+Maxtor LXT-200S:\
+	:ty#winchester:ns#43:nt#7:nc#1117:
+
+Maxtor LXT-340SY:\
+	:ty#winchester:ns#70:nt#7:nc#1355:
+
+Maxtor LXT535ST:\
+	:ty#winchester:ns#61:nt#11:nc#1547:\
+	:pc#1038037:oc#0:
+
+Maxtor MXT1240S:\
+	:ty#winchester:ns#70:nt#15:nc#2306:\
+	:pc#2421300:oc#0:\
+	:pg#2421300:og#0:
+
+Maxtor P0-12S (1632):\
+	:ty#winchester:ns#90:nt#15:nc#1478:\
+	:pc#1995300:oc#0:\
+	:pg#1995300:og#0:
+
+Maxtor P0-12S (1795):\
+	:ty#winchester:ns#90:nt#15:nc#1510:\
+	:pc#2038500:oc#0:\
+	:pg#2038500:og#0:
+
+Maxtor P1-17S:\
+	:ty#winchester:ns#83:nt#19:nc#1816:\
+	:pa#78850:oa#0:ba#8192:\
+	:pb#78850:ob#78850:\
+	:pc#2863832:oc#0:\
+	:pd#78850:od#157700:\
+	:pg#2469582:og#236550:\
+	:ph#78850:oh#2706132:
+
+Maxtor P1-17S NB:\
+	:ty#winchester:ns#90:nt#19:nc#1711:\
+	:pc#2925810:oc#0:\
+	:pg#2925810:og#0:
+
+Maxtor XT-1050:\
+	:ty#ACB4000:ns#17:nt#5:nc#1020:
+
+Maxtor XT-3280S:\
+	:ty#winchester:ns#25:nt#15:nc#1222:
+
+Maxtor XT-4380S:\
+	:ty#winchester:ns#36:nt#15:nc#1202:
+
+Maxtor XT-8380S:\
+	:ty#winchester:ns#53:nt#8:nc#1626:
+
+Maxtor XT-8610E:\
+	:ty#winchester:ns#52:nt#12:nc#1626:
+
+Maxtor XT-8760E:\
+	:ty#winchester:ns#50:nt#15:nc#1616:\
+	:pa#97500:oa#0:ba#8192:\
+	:pb#63750:ob#658500:\
+	:pc#1212000:oc#0:\
+	:pd#280500:od#97500:\
+	:pe#280500:oe#378000:\
+	:pf#489750:of#722250:\
+	:pg#561000:og#97500:\
+	:ph#658500:oh#0:
+
+Maxtor XT-8760S:\
+	:ty#winchester:ns#54:nt#15:nc#1614:
+
+Micropolis 1304:\
+	:ty#ACB4000:ns#17:nt#6:nc#825:
+
+Micropolis 1325:\
+	:ty#ACB4000:ns#17:nt#8:nc#1022:
+
+Micropolis 1355:\
+	:ty#winchester:ns#34:nt#8:nc#1018:
+
+Micropolis 1528-15:\
+	:ty#winchester:ns#83:nt#15:nc#2102:\
+	:pa#32370:oa#0:ba#8192:\
+	:pb#64740:ob#32370:\
+	:pc#2616990:oc#0:\
+	:pg#2519880:og#97110:
+
+Micropolis 1548-15:\
+	:ty#winchester:ns#131:nt#15:nc#1701:\
+	:pa#33405:oa#0:ba#8192:\
+	:pb#66810:ob#33405:\
+	:pc#3342465:oc#0:\
+	:pg#3242250:og#100215:
+
+Micropolis 1558:\
+	:ty#winchester:ns#35:nt#15:nc#1218:
+
+Micropolis 1578-15:\
+	:ty#winchester:ns#35:nt#15:nc#1231:\
+	:pa#32550:oa#0:ba#8192:\
+	:pb#65100:ob#32550:\
+	:pc#646275:oc#0:\
+	:pg#548625:og#97650:
+
+Micropolis 1588-15:\
+	:ty#winchester:ns#53:nt#15:nc#1637:\
+	:pa#32595:oa#0:ba#8192:\
+	:pb#65190:ob#32595:\
+	:pc#1301415:oc#0:\
+	:pg#1203630:og#97785:
+
+Micropolis 1598-15:\
+	:ty#winchester:ns#70:nt#15:nc#1931:\
+	:pa#32550:oa#0:ba#8192:\
+	:pb#65100:ob#32550:\
+	:pc#2027550:oc#0:\
+	:pg#1929900:og#97650:
+
+Micropolis 1624-7:\
+	:ty#winchester:ns#114:nt#7:nc#1647:\
+	:pa#32718:oa#0:ba#8192:\
+	:pb#65436:ob#32718:\
+	:pc#1314306:oc#0:\
+	:pg#1216152:og#98154:
+
+Micropolis 1674-7:\
+	:ty#winchester:ns#35:nt#7:nc#1255:\
+	:pa#16415:oa#0:ba#8192:\
+	:pb#32830:ob#16415:\
+	:pc#307475:oc#0:\
+	:pg#258230:og#49245:
+
+Micropolis 1684-7:\
+	:ty#winchester:ns#53:nt#7:nc#1785:\
+	:pa#32648:oa#0:ba#8192:\
+	:pb#65296:ob#32648:\
+	:pc#662235:oc#0:\
+	:pg#564291:og#97944:
+
+Micropolis 1908-15:\
+	:ty#winchester:ns#95:nt#15:nc#1890:\
+	:pa#32775:oa#0:ba#8192:\
+	:pb#65550:ob#32775:\
+	:pc#2693250:oc#0:\
+	:pg#2594925:og#98325:
+
+Micropolis 1924-21:\
+	:ty#winchester:ns#94:nt#21:nc#2072:\
+	:pa#33558:oa#0:ba#8192:\
+	:pb#67116:ob#33558:\
+	:pc#4090128:oc#0:\
+	:pg#3989454:og#100674:
+
+Micropolis 1926-15:\
+	:ty#winchester:ns#101:nt#15:nc#2769:\
+	:pa#33330:oa#0:ba#8192:\
+	:pb#66660:ob#33330:\
+	:pc#4195035:oc#0:\
+	:pg#4095045:og#99990:
+
+Micropolis 1936-21:\
+	:ty#winchester:ns#101:nt#21:nc#2772:\
+	:pa#33936:oa#0:ba#8192:\
+	:pb#67872:ob#33936:\
+	:pc#5879412:oc#0:\
+	:pg#2846382:og#101808:\
+	:ph#2931222:oh#2948190:
+
+Micropolis 2105-8:\
+	:ty#winchester:ns#94:nt#8:nc#1448:\
+	:pa#32336:oa#0:ba#8192:\
+	:pb#64672:ob#32336:\
+	:pc#1088896:oc#0:\
+	:pg#991888:og#97008:
+
+Micropolis 2108-10:\
+	:ty#winchester:ns#94:nt#10:nc#1450:\
+	:pa#31960:oa#0:ba#8192:\
+	:pb#63920:ob#31960:\
+	:pc#1363000:oc#0:\
+	:pg#1267120:og#95880:
+
+Micropolis 2112-15:\
+	:ty#winchester:ns#94:nt#15:nc#1452:\
+	:pa#33840:oa#0:ba#8192:\
+	:pb#67680:ob#33840:\
+	:pc#2047320:oc#0:\
+	:pg#1945800:og#101520:
+
+Micropolis 2205-05:\
+	:ty#winchester:ns#109:nt#5:nc#2088:\
+	:pa#32700:oa#0:ba#8192:\
+	:pb#65400:ob#32700:\
+	:pc#1137960:oc#0:\
+	:pg#1039860:og#98100:
+
+Micropolis 2210-09:\
+	:ty#winchester:ns#109:nt#9:nc#2099:\
+	:pa#33354:oa#0:ba#8192:\
+	:pb#66708:ob#33354:\
+	:pc#2059119:oc#0:\
+	:pg#1959057:og#100062:
+
+Micropolis 2217-15:\
+	:ty#winchester:ns#109:nt#15:nc#2105:\
+	:pa#32700:oa#0:ba#8192:\
+	:pb#65400:ob#32700:\
+	:pc#3441675:oc#0:\
+	:pg#3343575:og#98100:
+
+Micropolis 4110:\
+	:ty#winchester:ns#114:nt#9:nc#1998:
+
+Micropolis 4221:\
+	:ty#winchester:ns#109:nt#9:nc#4079:\
+	:pa#4001499:oa#0:ba#8192:\
+	:pc#4001499:oc#0:
+
+NEC D2363:\
+	:ty#XD7053:ns#67:nt#27:nc#964:
+
+NEC-D2352:\
+	:ty#XD7053:ns#57:nt#19:nc#758:
+
+QUANTUM EMPIRE_2100S:\
+	:ty#winchester:ns#137:nt#12:nc#2497:\
+	:pc#4105068:oc#0:
+
+QUANTUM LPS540S:\
+	:ty#winchester:ns#125:nt#4:nc#2113:
+
+QUANTUM PD1050iS:\
+	:ty#winchester:ns#92:nt#12:nc#1859:\
+	:pc#2052336:oc#0:
+
+QUANTUM XP34301:\
+	:ty#winchester:ns#118:nt#20:nc#3561:
+
+Quantum ELS 127S:\
+	:ty#winchester:ns#54:nt#3:nc#1541:
+
+Quantum ELS 170S:\
+	:ty#winchester:ns#54:nt#4:nc#1542:
+
+Quantum ELS 85S:\
+	:ty#winchester:ns#54:nt#2:nc#1535:
+
+Quantum Empire 1080S:\
+	:ty#winchester:ns#92:nt#16:nc#1431:
+
+Quantum Empire 540S:\
+	:ty#winchester:ns#92:nt#8:nc#1431:
+
+Quantum GoDrive 120S:\
+	:ty#winchester:ns#56:nt#4:nc#1067:
+
+Quantum GoDrive 160S:\
+	:ty#winchester:ns#58:nt#4:nc#1413:
+
+Quantum LPS 105S:\
+	:ty#winchester:ns#42:nt#4:nc#1221:
+
+Quantum LPS 120S:\
+	:ty#winchester:ns#60:nt#2:nc#1987:
+
+Quantum LPS 240S:\
+	:ty#winchester:ns#60:nt#4:nc#1995:
+
+Quantum LPS 270S:\
+	:ty#winchester:ns#76:nt#7:nc#992:
+
+Quantum LPS 525S:\
+	:ty#winchester:ns#70:nt#6:nc#2444:
+
+Quantum Lightning 730S:\
+	:ty#winchester:ns#63:nt#16:nc#1415:\
+	:pa#161280:oa#0:ba#8192:\
+	:pb#96768:ob#161280:\
+	:pc#1426320:oc#0:\
+	:pg#1168272:og#258048:
+
+Quantum PD 1050S:\
+	:ty#winchester:ns#70:nt#12:nc#2444:
+
+Quantum PD 120S:\
+	:ty#winchester:ns#42:nt#5:nc#1114:
+
+Quantum PD 1225S:\
+	:ty#winchester:ns#70:nt#14:nc#2442:
+
+Quantum PD 170S:\
+	:ty#winchester:ns#42:nt#7:nc#1117:
+
+Quantum PD 210S:\
+	:ty#winchester:ns#49:nt#7:nc#1189:
+
+Quantum PD 425S:\
+	:ty#winchester:ns#60:nt#9:nc#1540:
+
+Quantum PD 700S:\
+	:ty#winchester:ns#70:nt#8:nc#2441:
+
+Quantum ProDrive 80S:\
+	:ty#winchester:ns#34:nt#6:nc#832:
+
+Quantum XP32150:\
+	:ty#winchester:ns#109:nt#10:nc#3850:
+
+RICOH RO-5031E:\
+	:ty#winchester:ns#54:nt#15:nc#710:\
+	:pc#575100:oc#0:
+
+RZ24:\
+	:ty#winchester:ns#38:nt#8:nc#1344:\
+	:pc#409792:oc#0:
+
+RZ55:\
+	:ty#winchester:ns#35:nt#15:nc#1218:\
+	:pa#32025:oa#0:ba#8192:\
+	:pb#59850:ob#32025:\
+	:pc#639450:oc#0:\
+	:pg#547575:og#91875:
+
+SEAGATE ST11950N:\
+	:ty#winchester:ns#81:nt#15:nc#2715:\
+	:pc#3298725:oc#0:
+
+SEAGATE ST15230N:\
+	:ty#winchester:ns#111:nt#19:nc#3974:
+
+SEAGATE ST31200N:\
+	:ty#winchester:ns#85:nt#9:nc#2692:
+
+SEAGATE ST31230N:\
+	:ty#winchester:ns#104:nt#5:nc#3978:\
+	:pc#2068560:oc#0:
+
+SEAGATE ST32550N:\
+	:ty#winchester:ns#109:nt#11:nc#3495:\
+	:pc#4190505:oc#0:
+
+SEAGATE ST3600N:\
+	:ty#winchester:ns#79:nt#7:nc#1853:\
+	:pc#1024709:oc#0:
+
+ST83220K:\
+	:ty#"ISP-80":ns#102:nt#19:nc#2652:
+
+SUN0104:\
+	:ty#winchester:ns#35:nt#6:nc#974:
+
+SUN0121:\
+	:ty#winchester:ns#39:nt#4:nc#1520:
+
+SUN0207:\
+	:ty#winchester:ns#36:nt#9:nc#1254:
+
+SUN0327:\
+	:ty#winchester:ns#46:nt#9:nc#1545:
+
+SUN0424:\
+	:ty#winchester:ns#80:nt#9:nc#1151:
+
+SUN0535:\
+	:ty#winchester:ns#80:nt#7:nc#1866:
+
+SUN0669:\
+	:ty#winchester:ns#54:nt#15:nc#1614:
+
+SUN1.3G:\
+	:ty#winchester:ns#80:nt#17:nc#1965:
+
+SUN2.1G:\
+	:ty#winchester:ns#80:nt#19:nc#2733:
+
+Sabre ST82500J:\
+	:ty#XD7053:ns#82:nt#19:nc#2609:
+
+Seagate (CDC) Wren V 94181-702:\
+	:ty#winchester:ns#48:nt#15:nc#1543:
+
+Seagate (CDC) Wren VI 94191-766:\
+	:ty#winchester:ns#52:nt#15:nc#1659:
+
+Seagate (CDC) Wren VII 94601-1.2G SunOS 4.1.1:\
+	:ty#winchester:ns#70:nt#15:nc#1925:
+
+Seagate (CDC) Wren VII 94601-15:\
+	:ty#winchester:ns#71:nt#15:nc#1905:
+
+Seagate (CDC) Wren VIII ST41650N:\
+	:ty#winchester:ns#89:nt#15:nc#2070:
+
+Seagate Elite ST43400N-3.5G:\
+	:ty#winchester:ns#99:nt#21:nc#2736:\
+	:pa#2843360:oa#0:ba#8192:\
+	:pb#2843360:ob#2841993:
+
+Seagate IPI ZBR Elite:\
+	:ty#"ISP-80":ns#78:nt#17:nc#1893:\
+	:pa#34476:oa#0:ba#8192:\
+	:pb#132600:ob#34476:\
+	:pc#2510118:oc#0:\
+	:pg#663000:og#167076:\
+	:ph#1680042:oh#830076:
+
+Seagate ST11200N:\
+	:ty#winchester:ns#80:nt#15:nc#1714:\
+	:pa#2056800:oa#0:ba#8192:\
+	:pc#2056800:oc#0:
+
+Seagate ST11900N:\
+	:ty#winchester:ns#83:nt#15:nc#2619:\
+	:pb#498000:ob#0:\
+	:pc#3260655:oc#0:\
+	:ph#2761410:oh#498000:
+
+Seagate ST1239N SWIFT:\
+	:ty#winchester:ns#35:nt#9:nc#1264:
+
+Seagate ST12400N 2.4GB:\
+	:ty#winchester:ns#82:nt#19:nc#2668:\
+	:pa#32718:oa#0:ba#8192:\
+	:pb#65436:ob#32718:\
+	:pc#4156744:oc#0:\
+	:pg#4058590:og#98154:
+
+Seagate ST12550N:\
+	:ty#winchester:ns#80:nt#19:nc#2747:
+
+Seagate ST1480N:\
+	:ty#winchester:ns#64:nt#9:nc#1456:
+
+Seagate ST15150N:\
+	:ty#winchester:ns#78:nt#21:nc#5119:\
+	:pc#8384922:oc#0:
+
+Seagate ST410800N Elite 9:\
+	:ty#winchester:ns#108:nt#27:nc#6087:\
+	:pc#17749692:oc#0:
+
+Seagate ST42100N - Wren 9:\
+	:ty#winchester:ns#96:nt#15:nc#2574:\
+	:pc#3706560:oc#0:
+
+Seagate ST42400N Elite 2:\
+	:ty#winchester:ns#84:nt#19:nc#2604:\
+	:pc#4155984:oc#0:
+
+Seagate Sabre-5 ST81236J:\
+	:ty#XD7053:ns#82:nt#15:nc#1633:\
+	:pa#99630:oa#0:ba#8192:\
+	:pb#261990:ob#99630:\
+	:pc#2008590:oc#0:\
+	:pd#548580:od#361620:\
+	:pe#1098390:oe#910200:\
+	:pf#361620:of#0:\
+	:pg#1646970:og#361620:\
+	:ph#1908960:oh#99630:
+
+SeagateST3283N:\
+	:ty#winchester:ns#57:nt#5:nc#1689:
+
+Sun1.0G:\
+	:ty#winchester:ns#80:nt#15:nc#1703:
+
+SyQuest SQ555:\
+	:ty#winchester:ns#34:nt#2:nc#1273:\
+	:pc#86564:oc#0:
+
+Toshiba MK 156F:\
+	:ty#winchester:ns#34:nt#10:nc#815:
+
+Vertex V185:\
+	:ty#ACB4000:ns#17:nt#7:nc#1163:
+
