@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.57 2001/06/07 07:35:15 angelos Exp $	*/
+/*	$OpenBSD: x509.c,v 1.58 2001/06/22 16:21:43 provos Exp $	*/
 /*	$EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	*/
 
 /*
@@ -685,6 +685,22 @@ x509_read_from_dir (X509_STORE *ctx, char *name, int hash)
 
   while ((file = readdir (dir)) != NULL)
     {
+      strncpy (fullname + off, file->d_name, size);
+      fullname[off + size] = 0;
+
+      if (file->d_type != DT_UNKNOWN)
+      {
+	 if (file->d_type != DT_REG && file->d_type != DT_LNK)
+	   continue;
+      }
+      else
+      {
+	struct stat sb;
+
+	if (stat(fullname, &sb) == -1 || !(sb.st_mode & S_IFREG))
+          continue;
+      }
+
       if (file->d_type != DT_REG && file->d_type != DT_LNK)
 	continue;
 
@@ -697,9 +713,6 @@ x509_read_from_dir (X509_STORE *ctx, char *name, int hash)
 	  log_error ("x509_read_from_dir: BIO_new (BIO_s_file ()) failed");
 	  continue;
 	}
-
-      strncpy (fullname + off, file->d_name, size);
-      fullname[off + size] = 0;
 
       if (LC (BIO_read_filename, (certh, fullname)) == -1)
 	{
