@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1995/12/18 22:47:26 pk Exp $
+#	$NetBSD: Makefile,v 1.2 1996/01/06 22:40:58 pk Exp $
 
 # Revision is 1.1A
 REV=		11A
@@ -47,7 +47,8 @@ ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	make -f ${CBIN}.mk all
 
 clean cleandir:
-	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.lo *.c
+	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
+	${CBIN}.conf *.o *.lo *.c
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
