@@ -1,0 +1,101 @@
+#	$OpenBSD: files.luna88k,v 1.1.1.1 2004/04/21 15:23:47 aoyama Exp $
+#	
+maxpartitions 16
+
+device 	mainbus {}
+attach 	mainbus at root
+file	arch/luna88k/luna88k/mainbus.c
+
+device clock
+attach clock at mainbus
+file	arch/luna88k/dev/timekeeper.c			clock
+
+attach le at mainbus
+file	arch/luna88k/dev/if_le.c			le
+
+device sio { [channel = -1] }
+attach sio at mainbus
+file	arch/luna88k/dev/sio.c				sio
+
+# this should be removed after bringup
+#device romtty: tty
+#attach romtty at mainbus
+#file	arch/luna88k/dev/romtty.c			romtty needs-flag
+
+device siotty: tty
+attach siotty at sio
+file	arch/luna88k/dev/siotty.c			siotty needs-flag
+
+device ws: wskbddev,wsmousedev
+attach ws at sio
+file arch/luna88k/dev/lunaws.c				ws
+
+device fb: wsemuldisplaydev,wsrasteremulops
+attach fb at mainbus
+file arch/luna88k/dev/lunafb.c				fb
+file arch/luna88k/dev/omrasops.c			fb
+
+# Raster operations
+include "dev/rasops/files.rasops"
+include "dev/wsfont/files.wsfont"
+# "Workstation Console" glue.
+include "dev/wscons/files.wscons"
+
+device cpu
+attach cpu at mainbus
+
+include "../../../scsi/files.scsi"
+
+major { sd = 4 }
+major { st = 5 }
+major { cd = 6 }
+major { rd = 7 }
+major { vnd = 8 }
+
+device spc: scsi
+attach spc at mainbus
+file arch/luna88k/dev/spc.c				spc
+file arch/luna88k/dev/mb89352.c				spc
+
+# XXX: now testing
+#device pcm: audio, auconv, mulaw
+#attach pcm at mainbus
+#file arch/luna88k/dev/nec86.c				pcm needs-flag
+#file arch/luna88k/dev/nec86hw.c				pcm needs-flag
+#file arch/luna88k/dev/nec86_luna88k.c			pcm needs-flag
+
+# list of standard files
+file	dev/cons.c
+file	dev/cninit.c
+file	dev/clock_subr.c
+
+file	netinet/in_cksum.c
+file	netns/ns_cksum.c				ns
+
+file	arch/luna88k/luna88k/clock.c
+
+file	arch/luna88k/luna88k/autoconf.c
+file	arch/luna88k/luna88k/conf.c
+file	arch/luna88k/luna88k/cmmu.c
+file	arch/luna88k/luna88k/m8820x.c
+file	arch/luna88k/luna88k/disksubr.c
+#file	arch/luna88k/luna88k/dkbad.c
+file	arch/luna88k/luna88k/eh.S
+file	arch/luna88k/luna88k/isr.c
+file	arch/luna88k/luna88k/locore_asm_routines.S
+file	arch/luna88k/luna88k/locore_c_routines.c
+file	arch/luna88k/luna88k/m88100_fp.S
+file	arch/luna88k/luna88k/machdep.c
+file	arch/luna88k/luna88k/mem.c
+file	arch/luna88k/luna88k/pmap.c
+file	arch/luna88k/luna88k/pmap_table.c
+file	arch/luna88k/luna88k/process.S
+file	arch/luna88k/luna88k/process_machdep.c
+file	arch/luna88k/luna88k/trap.c
+file	arch/luna88k/luna88k/vectors_88100.S
+file	arch/luna88k/luna88k/vm_machdep.c
+file	arch/luna88k/ddb/db_disasm.c			ddb
+file	arch/luna88k/ddb/db_interface.c			ddb
+file	arch/luna88k/ddb/db_sstep.c			ddb
+file	arch/luna88k/ddb/db_trace.c			ddb
+file	arch/luna88k/dev/lcd.c

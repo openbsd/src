@@ -1,0 +1,144 @@
+#	$OpenBSD: genassym.cf,v 1.1.1.1 2004/04/21 15:24:00 aoyama Exp $
+#
+# Copyright (c) 1982, 1990 The Regents of the University of California.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. Neither the name of the University nor the names of its contributors
+#    may be used to endorse or promote products derived from this software
+#    without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+#
+#	@(#)genassym.c	7.8 (Berkeley) 5/7/91
+#	$Id: genassym.cf,v 1.1.1.1 2004/04/21 15:24:00 aoyama Exp $
+#
+
+include <sys/param.h>
+include <sys/buf.h>
+include <sys/time.h>
+include <sys/proc.h>
+include <sys/mbuf.h>
+include <sys/msgbuf.h>
+include <machine/cpu.h>
+include <machine/trap.h>
+include <machine/psl.h>
+include <machine/vmparam.h>
+include <sys/syscall.h>
+include <sys/user.h>
+
+# proc fields and values
+struct	proc
+member	p_forw
+member	p_back
+member	p_addr
+member	p_stat
+member	p_wchan
+
+export	SRUN
+
+# general constants
+export	UPAGES
+define	USIZE			USPACE
+
+# pcb fields
+struct	pcb
+member	pcb_onfault
+member	PCB_USER_STATE		user_state
+
+# system calls
+export	SYS_exit
+export	SYS_sigreturn
+
+# trapframe element indexes
+define	EF_R0		offsetof(struct trapframe, tf_r[0]) / sizeof(int)
+define	EF_FPSR		offsetof(struct trapframe, tf_fpsr) / sizeof(int)
+define	EF_FPCR		offsetof(struct trapframe, tf_fpcr) / sizeof(int)
+define	EF_EPSR		offsetof(struct trapframe, tf_epsr) / sizeof(int)
+define	EF_SXIP		offsetof(struct trapframe, tf_sxip) / sizeof(int)
+define	EF_SFIP		offsetof(struct trapframe, tf_sfip) / sizeof(int)
+define	EF_SNIP		offsetof(struct trapframe, tf_snip) / sizeof(int)
+define	EF_SSBR		offsetof(struct trapframe, tf_ssbr) / sizeof(int)
+define	EF_DMT0		offsetof(struct trapframe, tf_dmt0) / sizeof(int)
+define	EF_DMD0		offsetof(struct trapframe, tf_dmd0) / sizeof(int)
+define	EF_DMA0		offsetof(struct trapframe, tf_dma0) / sizeof(int)
+define	EF_DMT1		offsetof(struct trapframe, tf_dmt1) / sizeof(int)
+define	EF_DMD1		offsetof(struct trapframe, tf_dmd1) / sizeof(int)
+define	EF_DMA1		offsetof(struct trapframe, tf_dma1) / sizeof(int)
+define	EF_DMT2		offsetof(struct trapframe, tf_dmt2) / sizeof(int)
+define	EF_DMD2		offsetof(struct trapframe, tf_dmd2) / sizeof(int)
+define	EF_DMA2		offsetof(struct trapframe, tf_dma2) / sizeof(int)
+define	EF_FPECR	offsetof(struct trapframe, tf_fpecr) / sizeof(int)
+define	EF_FPHS1	offsetof(struct trapframe, tf_fphs1) / sizeof(int)
+define	EF_FPLS1	offsetof(struct trapframe, tf_fpls1) / sizeof(int)
+define	EF_FPHS2	offsetof(struct trapframe, tf_fphs2) / sizeof(int)
+define	EF_FPLS2	offsetof(struct trapframe, tf_fpls2) / sizeof(int)
+define	EF_FPPT		offsetof(struct trapframe, tf_fppt) / sizeof(int)
+define	EF_FPRH		offsetof(struct trapframe, tf_fprh) / sizeof(int)
+define	EF_FPRL		offsetof(struct trapframe, tf_fprl) / sizeof(int)
+define	EF_FPIT		offsetof(struct trapframe, tf_fpit) / sizeof(int)
+define	EF_VECTOR	offsetof(struct trapframe, tf_vector) / sizeof(int)
+define	EF_MASK		offsetof(struct trapframe, tf_mask) / sizeof(int)
+define	EF_MODE		offsetof(struct trapframe, tf_mode) / sizeof(int)
+define	EF_RET		offsetof(struct trapframe, tf_scratch1) / sizeof(int)
+define	EF_IPFSR	offsetof(struct trapframe, tf_ipfsr) / sizeof(int)
+define	EF_DPFSR	offsetof(struct trapframe, tf_dpfsr) / sizeof(int)
+define	EF_CPU		offsetof(struct trapframe, tf_cpu) / sizeof(int)
+
+# m88110 trapframe element indexes
+define	EF_EXIP		offsetof(struct trapframe, tf_exip) / sizeof(int)
+define	EF_ENIP		offsetof(struct trapframe, tf_enip) / sizeof(int)
+define	EF_DSR		offsetof(struct trapframe, tf_dsr) / sizeof(int)
+define	EF_DLAR		offsetof(struct trapframe, tf_dlar) / sizeof(int)
+define	EF_DPAR		offsetof(struct trapframe, tf_dpar) / sizeof(int)
+define	EF_ISR		offsetof(struct trapframe, tf_isr) / sizeof(int)
+define	EF_ILAR		offsetof(struct trapframe, tf_ilar) / sizeof(int)
+define	EF_IPAR		offsetof(struct trapframe, tf_ipar) / sizeof(int)
+define	EF_ISAP		offsetof(struct trapframe, tf_isap) / sizeof(int)
+define	EF_DSAP		offsetof(struct trapframe, tf_dsap) / sizeof(int)
+define	EF_IUAP		offsetof(struct trapframe, tf_iuap) / sizeof(int)
+define	EF_DUAP		offsetof(struct trapframe, tf_duap) / sizeof(int)
+
+define	SIZEOF_EF	sizeof(struct trapframe)
+
+# more (machine-dependent) pcb fields
+struct	m88100_pcb
+member	pcb_pc
+member	pcb_ipl
+member	pcb_r14
+member	pcb_r15
+member	pcb_r16
+member	pcb_r17
+member	pcb_r18
+member	pcb_r19
+member	pcb_r20
+member	pcb_r21
+member	pcb_r22
+member	pcb_r23
+member	pcb_r24
+member	pcb_r25
+member	pcb_r26
+member	pcb_r27
+member	pcb_r28
+member	pcb_r29
+member	pcb_r30
+member	pcb_sp
+member	pcb_fcr62
+member	pcb_fcr63

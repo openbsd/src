@@ -1,0 +1,46 @@
+#	$OpenBSD: GENERIC,v 1.1.1.1 2004/04/21 15:23:44 aoyama Exp $
+
+machine		luna88k 
+
+include "../../../conf/GENERIC"
+
+option		"NCPUS=1"	# number of CPUs supported (max 4)
+#option		DEBUG		# print debugging statements
+#option		EH_DEBUG	# debugging code for exception handlers
+
+# Define this if your processor has the xxx.usr bug (mask C82N)
+option		ERRATA__XXX_USR	
+
+maxusers	64
+
+config		bsd		swap generic
+
+#
+# devices
+#
+
+mainbus0 at root
+clock0   at mainbus0
+le0      at mainbus0
+sio0     at mainbus0
+siotty0  at sio0
+ws0      at sio0
+fb0      at mainbus0
+spc0     at mainbus0
+spc1     at mainbus0
+
+# Workstation Console attachments
+wsdisplay* at fb?
+wskbd*     at ws? console ?
+wsmouse*   at ws?
+
+# SCSI bus support
+scsibus*   at spc?
+
+# SCSI devices
+sd* at scsibus? target ? lun ?
+st* at scsibus? target ? lun ?
+cd* at scsibus? target ? lun ?
+ch* at scsibus? target ? lun ?
+ss* at scsibus? target ? lun ?
+uk* at scsibus? target ? lun ?

@@ -1,0 +1,206 @@
+#	$OpenBSD: Makefile.luna88k,v 1.1.1.1 2004/04/21 15:23:47 aoyama Exp $
+#
+# Makefile for OpenBSD
+#
+# This makefile is constructed from a machine description:
+#	config machineid
+# Most changes should be made in the machine description
+#	/sys/arch/luna88k/conf/``machineid''
+# after which you should do
+#	 config machineid
+# Machine generic makefile changes should be made in
+#	/sys/arch/luna88k/conf/Makefile.luna88k
+# after which config should be rerun for all machines of that type.
+#
+# N.B.: NO DEPENDENCIES ON FOLLOWING FLAGS ARE VISIBLE TO MAKEFILE
+#	IF YOU CHANGE THE DEFINITION OF ANY OF THESE RECOMPILE EVERYTHING
+#
+# -DTRACE	compile in kernel tracing hooks
+# -DQUOTA	compile in file system quotas
+
+# DEBUG is set to -g by config if debugging is requested (config -g).
+# PROF is set to -pg by config if profiling is requested (config -p).
+
+.include <bsd.own.mk>
+
+MKDEP?=	mkdep
+SIZE?=	size
+STRIP?= strip
+
+# source tree is located via $S relative to the compilation directory
+.ifndef S
+S!=	cd ../../../..; pwd
+.endif
+LUNA88K=	$S/arch/luna88k
+
+INCLUDES=	-nostdinc -I. -I$S/arch -I$S
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dluna88k -Dm88k
+CWARNFLAGS=	-Wall -Werror -Wmissing-prototypes \
+		-Wno-uninitialized -Wno-format -Wno-main -Wstrict-prototypes
+CMACHFLAGS=	-mno-check-zero-division -mmemcpy \
+		-fno-builtin-printf -fno-builtin-log
+.if ${IDENT:M-DNO_PROPOLICE}
+CMACHFLAGS+=	-fno-stack-protector
+.endif
+COPTS?=		-O2
+CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
+AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE ${CMACHFLAGS}
+LINKFLAGS=	-N -Ttext 0x20000 -e start
+STRIPFLAGS=	-d
+
+HOSTCC?=	${CC}
+HOSTED_CPPFLAGS?=${CPPFLAGS:S/^-nostdinc$//}
+HOSTED_CFLAGS?=	${CFLAGS}
+
+### CPU configuration
+
+CPPFLAGS+=	-DM88100
+
+### find out what to use for libkern
+.include "$S/lib/libkern/Makefile.inc"
+.ifndef PROF
+LIBKERN=	${KERNLIB}
+.else
+LIBKERN=	${KERNLIB_PROF}
+.endif
+
+### find out what to use for libcompat
+.include "$S/compat/common/Makefile.inc"
+.ifndef PROF
+LIBCOMPAT=	${COMPATLIB}
+.else
+LIBCOMPAT=	${COMPATLIB_PROF}
+.endif
+
+# compile rules: rules are named ${TYPE}_${SUFFIX}${CONFIG_DEP}
+# where TYPE is NORMAL, DRIVER, or PROFILE}; SUFFIX is the file suffix,
+# capitalized (e.g. C for a .c file), and CONFIG_DEP is _C if the file
+# is marked as config-dependent.
+
+NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
+NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
+
+HOSTED_C=	${HOSTCC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} -c $<
+
+PROFILE_C=	${CC} -S -c ${CFLAGS} ${CPPFLAGS} $<; \
+		sed -e s/_mcount/mcount/ -e s/subrmcount/subr_mcount/ <$*.s | \
+		${AS} -o $@; \
+		rm -f $*.s
+
+%OBJS
+
+%CFILES
+
+%SFILES
+
+# load lines for config "xxx" will be emitted as:
+# xxx: ${SYSTEM_DEP} swapxxx.o
+#	${SYSTEM_LD_HEAD}
+#	${SYSTEM_LD} swapxxx.o
+#	${SYSTEM_LD_TAIL}
+# Kernel is linked as a ZMAGIC executable, with start at 10020
+SYSTEM_OBJ=	locore.o \
+		param.o ioconf.o ${OBJS} ${LIBKERN} ${LIBCOMPAT}
+SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
+SYSTEM_LD_HEAD=	@rm -f $@
+SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o; \
+		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} vers.o
+SYSTEM_LD_TAIL=	@${SIZE} $@; chmod 755 $@;
+
+DEBUG?=
+.if ${DEBUG} == "-g"
+LINKFLAGS+=	-X
+SYSTEM_LD_TAIL+= \
+		echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
+		echo ${STRIP} ${STRIPFLAGS} $@; ${STRIP} ${STRIPFLAGS} $@
+.else
+LINKFLAGS+=	-x
+.endif
+
+%LOAD
+
+assym.h: $S/kern/genassym.sh ${LUNA88K}/luna88k/genassym.cf Makefile
+	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} \
+	    ${PARAM} < ${LUNA88K}/luna88k/genassym.cf > assym.h.tmp && \
+	    mv -f assym.h.tmp assym.h
+
+param.c: $S/conf/param.c
+	rm -f param.c
+	cp $S/conf/param.c .
+
+param.o: param.c Makefile
+	${NORMAL_C}
+
+ioconf.o: ioconf.c
+	${NORMAL_C}
+
+newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
+	sh $S/conf/newvers.sh
+	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
+
+clean::
+	rm -f eddep *bsd bsd.gdb tags *.[io] [a-z]*.s \
+		[Ee]rrs linterrs makelinks assym.h
+
+lint:
+	@lint -hbxncez -DGENERIC -Dvolatile= ${CPPFLAGS} ${PARAM} -UKGDB \
+	    ${CFILES} ioconf.c param.c | \
+	    grep -v 'struct/union .* never defined' | \
+	    grep -v 'possible pointer alignment problem'
+
+tags:
+	@echo "see $S/kern/Makefile for tags"
+
+links:
+	egrep '#if' ${CFILES} | sed -f $S/conf/defines | \
+	  sed -e 's/:.*//' -e 's/\.c/.o/' | sort -u > dontlink
+	echo ${CFILES} | tr -s ' ' '\12' | sed 's/\.c/.o/' | \
+	  sort -u | comm -23 - dontlink | \
+	  sed 's,../.*/\(.*.o\),rm -f \1;ln -s ../GENERIC/\1 \1,' > makelinks
+	sh makelinks && rm -f dontlink
+
+SRCS=	param.c ioconf.c ${CFILES} ${SFILES}
+
+depend:: .depend
+.depend: ${SRCS} assym.h param.c 
+	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
+.if !empty(SFILES)
+	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
+.endif
+	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
+	    ${CPPFLAGS} < ${LUNA88K}/luna88k/genassym.cf
+	@sed -e 's/.*\.o:.* /assym.h: /' < assym.dep >> .depend
+	@rm -f assym.dep
+
+# depend on root or device configuration
+autoconf.o conf.o: Makefile
+ 
+# depend on network or filesystem configuration 
+uipc_domain.o uipc_proto.o vfs_conf.o: Makefile 
+if_tun.o if_loop.o if_ethersubr.o: Makefile
+in_proto.o: Makefile
+
+# depend on maxusers
+assym.h machdep.o: Makefile
+
+# depend on CPU configuration 
+locore.o machdep.o: Makefile
+process.o locore_asm_routines.o eh.o: assym.h
+m88100_fp.o : assym.h
+
+locore.o: ${LUNA88K}/luna88k/locore.S assym.h
+	${NORMAL_S}
+
+# The install target can be redefined by putting a
+# install-kernel-${MACHINE_NAME} target into /etc/mk.conf
+MACHINE_NAME!=  uname -n
+install: install-kernel-${MACHINE_NAME}
+.if !target(install-kernel-${MACHINE_NAME}})
+install-kernel-${MACHINE_NAME}:
+	rm -f /obsd
+	ln /bsd /obsd
+	cp bsd /nbsd
+	mv /nbsd /bsd
+.endif
+
+%RULES
