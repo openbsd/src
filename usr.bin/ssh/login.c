@@ -18,7 +18,7 @@ on a tty.
 */
 
 #include "includes.h"
-RCSID("$Id: login.c,v 1.3 1999/09/29 21:14:16 deraadt Exp $");
+RCSID("$Id: login.c,v 1.4 1999/09/30 04:10:28 deraadt Exp $");
 
 #ifdef HAVE_LIBUTIL_LOGIN
 #include <util.h>
@@ -50,18 +50,8 @@ unsigned long get_last_login_time(uid_t uid, const char *name,
   char lastlogfile[500];
   int fd;
 
-#ifdef _PATH_LASTLOG
   snprintf(lastlogfile, sizeof lastlogfile, "%.200s/%.200s",
     _PATH_LASTLOG, name);
-#else
-#ifdef LASTLOG_FILE
-  snprintf(lastlogfile, sizeof lastlogfile, "%.200s/%.200s",
-    LASTLOG_FILE, name);
-#else
-  snprintf(lastlogfile, sizeof lastlogfile, "%.200s/%.200s",
-    SSH_LASTLOG, name);
-#endif
-#endif
 
   buf[0] = '\0';
 
@@ -101,15 +91,7 @@ unsigned long get_last_login_time(uid_t uid, const char *logname,
   char *lastlog;
   int fd;
 
-#ifdef _PATH_LASTLOG
   lastlog = _PATH_LASTLOG;
-#else
-#ifdef LASTLOG_FILE
-  lastlog = LASTLOG_FILE;
-#else
-  lastlog = SSH_LASTLOG;
-#endif
-#endif
 
   buf[0] = '\0';
 
@@ -222,18 +204,8 @@ void record_login(int pid, const char *ttyname, const char *user, uid_t uid,
 #endif
 
   /* Figure out the file names. */
-#ifdef _PATH_UTMP
   utmp = _PATH_UTMP;
   wtmp = _PATH_WTMP;
-#else
-#ifdef UTMP_FILE
-  utmp = UTMP_FILE;
-  wtmp = WTMP_FILE;
-#else
-  utmp = SSH_UTMP;
-  wtmp = SSH_WTMP;
-#endif
-#endif
   
 #ifdef HAVE_LIBUTIL_LOGIN
   login(&u);
@@ -318,15 +290,7 @@ void record_login(int pid, const char *ttyname, const char *user, uid_t uid,
 
 #if defined(HAVE_LASTLOG_H) || defined(HAVE_LASTLOG)
 
-#ifdef _PATH_LASTLOG
   lastlog = _PATH_LASTLOG;
-#else
-#ifdef LASTLOG_FILE
-  lastlog = LASTLOG_FILE;
-#else
-  lastlog = SSH_LASTLOG;
-#endif
-#endif
 
   /* Update lastlog unless actually recording a logout. */
   if (strcmp(user, "") != 0)

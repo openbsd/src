@@ -120,20 +120,8 @@ static /**/const char *const rcsid[] = { (char *)rcsid, "\100(#)" msg }
 /* Define to use RSAREF. */
 /* #undef RSAREF */
 
-/* Define this to be the path of the rsh program to support executing rsh. */
-#define RSH_PATH "/usr/bin/rsh"
-
 /* Define this to be the path of the xauth program. */
 #define XAUTH_PATH "/usr/X11R6/bin/xauth"
-
-/* Default path for utmp.  Determined by configure. */
-#define SSH_UTMP "/var/run/utmp"
-
-/* Default path for wtmp.  Determined by configure. */
-#define SSH_WTMP "/var/log/wtmp"
-
-/* Default path for lastlog.  Determined by configure. */
-#define SSH_LASTLOG "/var/log/lastlog"
 
 /* This is defined if we found a lastlog file.  The presence of lastlog.h
    alone is not a sufficient indicator (at least newer BSD systems have
@@ -149,10 +137,6 @@ static /**/const char *const rcsid[] = { (char *)rcsid, "\100(#)" msg }
 
 /* Defined if mail goes to $HOME/newmail instead of a global mail spool. */
 /* #undef HAVE_TILDE_NEWMAIL */
-
-/* Define this to be the default user path if you don't like the default. 
-   See the --with-path=<path> configure option. */
-/* #undef DEFAULT_PATH */
 
 /* Define this if O_NONBLOCK does not work on your system (e.g., Ultrix). */
 /* #undef O_NONBLOCK_BROKEN */

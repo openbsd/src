@@ -18,7 +18,7 @@ agent connections.
 */
 
 #include "includes.h"
-RCSID("$Id: sshd.c,v 1.8 1999/09/29 22:08:13 dugsong Exp $");
+RCSID("$Id: sshd.c,v 1.9 1999/09/30 04:10:29 deraadt Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -46,20 +46,6 @@ RCSID("$Id: sshd.c,v 1.8 1999/09/29 22:08:13 dugsong Exp $");
 int allow_severity = LOG_INFO;
 int deny_severity = LOG_WARNING;
 #endif /* LIBWRAP */
-
-#ifdef _PATH_BSHELL
-#define DEFAULT_SHELL		_PATH_BSHELL
-#else
-#define DEFAULT_SHELL		"/bin/sh"
-#endif
-
-#ifndef DEFAULT_PATH
-#ifdef _PATH_USERPATH
-#define DEFAULT_PATH		_PATH_USERPATH
-#else
-#define DEFAULT_PATH	"/bin:/usr/bin:/usr/ucb:/usr/bin/X11:/usr/local/bin"
-#endif
-#endif /* DEFAULT_PATH */
 
 #ifndef O_NOCTTY
 #define O_NOCTTY	0
@@ -2004,7 +1990,7 @@ void read_etc_default_login(char ***env, unsigned int *envsize,
   if (def != NULL)
     child_set_env(env, envsize, "PATH", def);
   else
-    child_set_env(env, envsize, "PATH", DEFAULT_PATH);
+    child_set_env(env, envsize, "PATH", _PATH_STDPATH);
 
   /* Set TZ if TIMEZONE is defined and we haven't inherited a value
      for TZ. */
@@ -2123,7 +2109,7 @@ void do_child(const char *command, struct passwd *pw, const char *term,
 
   /* Get the shell from the password data.  An empty shell field is legal,
      and means /bin/sh. */
-  shell = (pw->pw_shell[0] == '\0') ? DEFAULT_SHELL : pw->pw_shell;
+  shell = (pw->pw_shell[0] == '\0') ? _PATH_BSHELL : pw->pw_shell;
 
 #ifdef AFS
   /* Try to get AFS tokens for the local cell. */
@@ -2147,7 +2133,7 @@ void do_child(const char *command, struct passwd *pw, const char *term,
   child_set_env(&env, &envsize, "USER", pw->pw_name);
   child_set_env(&env, &envsize, "LOGNAME", pw->pw_name);
   child_set_env(&env, &envsize, "HOME", pw->pw_dir);
-  child_set_env(&env, &envsize, "PATH", DEFAULT_PATH);
+  child_set_env(&env, &envsize, "PATH", _PATH_STDPATH);
 
   /* Let it inherit timezone if we have one. */
   if (getenv("TZ"))
