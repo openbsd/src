@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.171 2004/10/17 17:42:01 grange Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.172 2004/10/17 17:52:45 grange Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -107,6 +107,7 @@ int wdcdebug_pciide_mask = WDCDEBUG_PCIIDE_MASK;
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
+
 #include <dev/pci/pciidereg.h>
 #include <dev/pci/pciidevar.h>
 #include <dev/pci/pciide_piix_reg.h>
