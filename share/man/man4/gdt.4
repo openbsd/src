@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gdt.4,v 1.5 2000/07/04 22:20:02 aaron Exp $
+.\"	$OpenBSD: gdt.4,v 1.6 2000/07/04 22:27:17 aaron Exp $
 .\"
 .\" Copyright (c) 2000 Niklas Hallqvist.  All rights reserved.
 .\"
@@ -13,7 +13,7 @@
 .Sh SYNOPSIS
 .Cd "gdt* at pci? dev ? function ?"
 .Cd "scsibus* at gdt?"
-.Sh HARDWARE
+.Sh DESCRIPTION
 The
 .Nm
 driver provides support for the following adapters:
@@ -64,7 +64,7 @@ has been tested as that was the adapter that was available to the author.
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr scsi 4 ,
-.Xr sd 4 .
+.Xr sd 4
 .Sh AUTHOR
 The
 .Nm
