@@ -44,7 +44,7 @@ check_noident(homedir)
 
 	if (!homedir)
 		return 0;
-	if (snprintf(path, sizeof path, "%s/.noindent", homedir) >= sizeof path)
+	if (snprintf(path, sizeof path, "%s/.noident", homedir) >= sizeof path)
 		return 0;
 	if (stat(path, &st) == 0)
 		return 1;
