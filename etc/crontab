@@ -1,4 +1,4 @@
-#	$OpenBSD: crontab,v 1.5 1997/04/03 20:12:07 gene Exp $
+#	$OpenBSD: crontab,v 1.6 1997/07/07 23:19:41 downsj Exp $
 #
 # /var/cron/tabs/root - root's crontab
 #
@@ -12,6 +12,8 @@ HOME=/var/log
 #
 # rotate log files every hour, if necessary
 0	*	*	*	*	/usr/bin/newsyslog
+# send log file notifications, if necessary
+#*/1	*	*	*	*	/usr/bin/newsyslog -m
 #
 # do daily/weekly/monthly maintenance
 30	1	*	*	*	/bin/sh /etc/daily 2>&1 | tee /var/log/daily.out | mail -s "daily output" root
