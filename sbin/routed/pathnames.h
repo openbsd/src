@@ -1,5 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.2 1996/06/23 14:32:30 deraadt Exp $	*/
-/*	$NetBSD: pathnames.h,v 1.6 1995/03/18 15:00:37 cgd Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.3 1996/09/05 14:31:38 mickey Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,8 +33,16 @@
  * SUCH DAMAGE.
  *
  *	@(#)pathnames.h	8.1 (Berkeley) 6/5/93
+ *
  */
 
 #include <paths.h>
 
 #define	_PATH_GATEWAYS	"/etc/gateways"
+
+/* All remotely requested trace files must either start with this prefix
+ * or be the same as the tracefile specified when the daemon was started.
+ * If this is a directory, routed will create log files in it.  That
+ * might be a security problem.
+ */
+#define _PATH_TRACE	"/tmp/routed.log"

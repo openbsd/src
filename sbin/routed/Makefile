@@ -1,13 +1,15 @@
-#	$OpenBSD: Makefile,v 1.3 1996/06/23 14:32:24 deraadt Exp $
-#	$NetBSD: Makefile,v 1.14 1995/06/20 22:25:51 christos Exp $
-
-# disable an undesirable feature
-#CFLAGS=-DTRACING
+#	$OpenBSD: Makefile,v 1.4 1996/09/05 14:31:10 mickey Exp $
+#	@(#)Makefile	8.1 (Berkeley) 6/19/93
 
 PROG=	routed
-SRCS=	af.c if.c input.c main.c output.c startup.c tables.c timer.c \
-	trace.c inet.c
+SRCS=	if.c input.c main.c output.c parms.c radix.c rdisc.c table.c trace.c
 MAN=	routed.8
-#SUBDIR=	query trace
+CFLAGS+=-D_ROUTED -D'min(a,b)=(a < b ? a : b)' -D'log=syslog'
+CFLAGS+=-D'panic(s)={log(LOG_ERR,s); exit(1);}'
+SUBDIR=	rtquery
+DPADD=	${LIBCOMPAT}
+LDADD=	-lcompat
+
+.PATH: ${.CURDIR}/../../sys/net
 
 .include <bsd.prog.mk>
