@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.10 1998/08/04 23:28:06 millert Exp $	*/
+/*	$OpenBSD: st.c,v 1.11 1999/09/18 22:48:28 downsj Exp $	*/
 /*	$NetBSD: st.c,v 1.22 1997/04/02 22:37:38 scottr Exp $	*/
 
 /*
@@ -343,7 +343,7 @@ stopen(dev, flag, type, p)
 		{ CMD_MODE_SENSE, 0, 0, 0, sizeof(mode), 0 }
 	};
 
-	if (UNIT(dev) > st_cd.cd_ndevs ||
+	if (UNIT(dev) >= st_cd.cd_ndevs ||
 	    (sc = st_cd.cd_devs[UNIT(dev)]) == NULL ||
 	    (sc->sc_flags & STF_ALIVE) == 0)
 		return (ENXIO);
