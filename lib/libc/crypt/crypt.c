@@ -50,7 +50,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: crypt.c,v 1.11 1997/07/09 01:08:14 millert Exp $";
+static char rcsid[] = "$OpenBSD: crypt.c,v 1.12 1997/09/10 23:15:43 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -595,13 +595,14 @@ crypt(key, setting)
 	extern char	*md5crypt __P((const char *, const char *));
 	extern char	*bcrypt __P((const char *, const char *));
 
-	if( setting[0] == '$' )
-		switch(setting[1]) {
-			case '1':
-				return (md5crypt(key, setting));
-			default:
-				return bcrypt(key, setting);
+	if (setting[0] == '$') {
+		switch (setting[1]) {
+		case '1':
+			return (md5crypt(key, setting));
+		default:
+			return bcrypt(key, setting);
 		}
+	}
 
 	if (!des_initialised)
 		des_init();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcrypt.c,v 1.9 1997/07/25 20:29:59 mickey Exp $	*/
+/*	$OpenBSD: bcrypt.c,v 1.10 1997/09/10 23:15:42 deraadt Exp $	*/
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -218,7 +218,7 @@ bcrypt(key, salt)
 
 	/* Check for minor versions */
 	if (salt[1] != '$') {
-		 switch(salt[1]) {
+		 switch (salt[1]) {
 		 case 'a':
 			 /* 'ab' should not yield the same as 'abab' */
 			 minor = salt[1];
