@@ -1,4 +1,4 @@
-/*	$OpenBSD: announce.c,v 1.18 2003/06/11 14:24:46 deraadt Exp $	*/
+/*	$OpenBSD: announce.c,v 1.19 2004/03/10 03:45:24 tedu Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)announce.c	5.9 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: announce.c,v 1.18 2003/06/11 14:24:46 deraadt Exp $";
+static char rcsid[] = "$Id: announce.c,v 1.19 2004/03/10 03:45:24 tedu Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -70,10 +70,14 @@ announce(CTL_MSG *request, char *remote_machine)
 		return (FAILED);
 	if ((tf = fopen(full_tty, "w")) == NULL)
 		return (PERMISSION_DENIED);
-	if (fstat(fileno(tf), &stbuf) < 0)
+	if (fstat(fileno(tf), &stbuf) < 0) {
+		fclose(tf);
 		return (PERMISSION_DENIED);
-	if ((stbuf.st_mode&S_IWGRP) == 0)
+	}
+	if ((stbuf.st_mode & S_IWGRP) == 0) {
+		fclose(tf);
 		return (PERMISSION_DENIED);
+	}
 	print_mesg(tf, request, remote_machine);
 	fclose(tf);
 	return (SUCCESS);
