@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.44 1999/07/24 13:16:01 deraadt Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.45 1999/07/24 23:56:43 deraadt Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -447,7 +447,7 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_DIRECT, T_FIXED,
 	 "SEAGATE ", "ST296N          ", ""},     SDEV_NOLUNS},
 	{{T_DIRECT, T_FIXED,
-	 "SEAGATE ", "ST19171FC", ""},            SDEV_NOMODESENSE},
+	 "SEAGATE ", "ST19171FC",	 ""},	  SDEV_NOMODESENSE},
 	{{T_DIRECT, T_FIXED,
 	 "SEAGATE ", "ST34501FC       ", ""},     SDEV_NOMODESENSE},
         {{T_DIRECT, T_FIXED,
@@ -459,14 +459,14 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_DIRECT, T_REMOV,
 	 "IOMEGA", "ZIP 250",		 ""},	  SDEV_NOMODESENSE},
 	{{T_DIRECT, T_REMOV,
-	 "IOMEGA", "LS-120 VER5   00",	 ""},	  SDEV_NOMODESENSE},
+	 "MATSHITA", "LS-120 VER5   00", ""},	  SDEV_NOMODESENSE},
 	{{T_DIRECT, T_FIXED,
 	 "IBM", "0661467",               "G"},    SDEV_NOMODESENSE},
 	/* Letting the motor run kills floppy drives and disks quit fast. */
 	{{T_DIRECT, T_REMOV,
 	 "TEAC", "FC-1",                 ""},     SDEV_NOSTARTUNIT},
 	{{T_DIRECT, T_FIXED,
-	 "NEC ", "SD120S-200      ", "0001"},     SDEV_NOLUNS},
+	 "NEC ", "SD120S-200      ",	 "0001"}, SDEV_NOLUNS},
 
 	/* XXX: QIC-36 tape behind Emulex adapter.  Very broken. */
 	{{T_SEQUENTIAL, T_REMOV,
