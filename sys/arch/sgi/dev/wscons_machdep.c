@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.1 2004/08/06 21:12:18 pefo Exp $ */
+/*	$OpenBSD: wscons_machdep.c,v 1.2 2004/10/05 14:33:17 miod Exp $ */
 
 /*
  * Copyright (c) 2001 Aaron Campbell
@@ -55,12 +55,7 @@
 #include <dev/wscons/wsconsio.h>
 #include <dev/usb/ukbdvar.h>
 
-void wscnprobe(struct consdev *);
-void wscninit(struct consdev *);
-void wscnputc(dev_t, char);
-int wscngetc(dev_t);
-void wscnpollc(dev_t, int);
-
+cons_decl(ws);
 
 void
 wscnprobe(cp)
@@ -105,9 +100,9 @@ static int initted;
 void
 wscnputc(dev, i)
 	dev_t dev;
-	char i;
+	int i;
 {
-	wsdisplay_cnputc(dev, (int)i);
+	wsdisplay_cnputc(dev, i);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.3 2003/06/04 19:36:33 deraadt Exp $ */
+/*	$OpenBSD: wscons_machdep.c,v 1.4 2004/10/05 14:33:17 miod Exp $ */
 
 /*
  * Copyright (c) 2001 Aaron Campbell
@@ -42,11 +42,7 @@
 #include <dev/wscons/wsdisplayvar.h>
 #endif
 
-void wscnprobe(struct consdev *);
-void wscninit(struct consdev *);
-void wscnputc(dev_t, char);
-int wscngetc(dev_t);
-void wscnpollc(dev_t, int);
+cons_decl(ws);
 
 void
 wscnprobe(cp)
@@ -79,9 +75,9 @@ wscninit(cp)
 void
 wscnputc(dev, i)
 	dev_t dev;
-	char i;
+	int i;
 {
-	wsdisplay_cnputc(dev, (int)i);
+	wsdisplay_cnputc(dev, i);
 }
 
 int
