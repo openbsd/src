@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.3 2003/06/02 23:27:46 millert Exp $	*/
+/*	$OpenBSD: sd.c,v 1.4 2004/08/03 21:44:35 miod Exp $	*/
 /*	$NetBSD: sd.c,v 1.9 1996/12/21 21:34:41 thorpej Exp $	*/
 
 /*
@@ -51,7 +51,7 @@
 #include "samachdep.h"
 
 #define _IOCTL_
-#include <hp300/dev/scsireg.h>
+#include "scsireg.h"
 
 struct	disklabel sdlabel;
 
