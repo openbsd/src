@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.7 1996/09/02 20:45:45 imp Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.8 1996/09/02 21:33:29 imp Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	8.3 (Berkeley) 1/12/94
- *      $Id: machdep.c,v 1.7 1996/09/02 20:45:45 imp Exp $
+ *      $Id: machdep.c,v 1.8 1996/09/02 21:33:29 imp Exp $
  */
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
@@ -142,8 +142,6 @@ int	(*Mach_spltty)() = splhigh;
 int	(*Mach_splclock)() = splhigh;
 int	(*Mach_splstatclock)() = splhigh;
 
-typedef void * (*FUNCPTR)();
-
 void vid_print_string(const char *str);
 void vid_putchar(dev_t dev, char c);
 
@@ -177,20 +175,10 @@ mips_init(argc, argv, code)
 	extern char edata[], end[];
 	extern char MachTLBMiss[], MachTLBMissEnd[];
 	extern char MachException[], MachExceptionEnd[];
-	struct sid {
-		char vendor[8];
-		u_char prodid[8];
-	} *sys_id;
 
 	/* clear the BSS segment in OpenBSD code */
 	v = (caddr_t)mips_round_page(end);
 	bzero(edata, v - edata);
-
-	/* check what model platform we are running on */
-
-	/* I just hate function pointer pointers.... */
-	sys_id = (struct sid *)((*(FUNCPTR)((*(caddr_t **)0x80001020))[17])());
-
 
 	cputype = ACER_PICA_61; /* FIXME find systemtype */
 
@@ -204,23 +192,79 @@ mips_init(argc, argv, code)
 	case ACER_PICA_61:	/* ALI PICA 61 */
 		memcfg = in32(PICA_MEMORY_SIZE_REG);
 		brdcfg = in32(PICA_CONFIG_REG);
+	picacommon:
 		isa_io_base = PICA_V_ISA_IO;
 		isa_mem_base = PICA_V_ISA_MEM;
+		strcpy(cpu_model, "ACER PICA-61");
+		/*
+		 * Set up interrupt handling and I/O addresses.
+		 */
+#if 0 /* XXX FIXME */
+		Mach_splnet = Mach_spl1;
+		Mach_splbio = Mach_spl0;
+		Mach_splimp = Mach_spl1;
+		Mach_spltty = Mach_spl2;
+		Mach_splstatclock = Mach_spl3;
+#endif
+
+		/*
+		 * Size is determined from the memory config register.
+		 *  d0-d2 = bank 0 size (sim id)
+		 *  d3-d5 = bank 1 size
+		 *  d6 = bus width. (doubels memory size)
+		 */
+		if((memcfg & 7) <= 5)
+			physmem = 2097152 << (memcfg & 7);
+		if(((memcfg >> 3) & 7) <= 5)
+			physmem += 2097152 << ((memcfg >> 3) & 7);
+
+		if((memcfg & 0x40) == 0)
+			physmem += physmem;	/* 128 bit config */
+
+		mem_layout[0].mem_start = 0x00100000;
+		mem_layout[0].mem_size = physmem - mem_layout[0].mem_start;
+		mem_layout[1].mem_start = 0x00020000;
+		mem_layout[1].mem_size =  0x00100000 - mem_layout[1].mem_start;
+		mem_layout[2].mem_start = 0x0;
 		break;
 
 	case MAGNUM:
+		strcpy(cpu_model, "MIPS MAGNUM");
+
+		/* XXX this is likely broken */
+		memcfg = in32(R4030_SYS_CONFIG);
+		goto picacommon;
 		break;
 
 	case DESKSTATION_RPC44:
+		strcpy(cpu_model, "Deskstation rPC44");
+
+		/*XXX Need to find out how to size mem */
+		physmem = 1024 * 1024 * 32;
+		mem_layout[0].mem_start = 0x00100000;
+		mem_layout[0].mem_size = physmem - mem_layout[0].mem_start;
+		mem_layout[1].mem_start = 0x00008000;
+		mem_layout[1].mem_size = 0x000a0000 - mem_layout[1].mem_start;
+		mem_layout[2].mem_start = 0x0;
 		break;
 
 	case DESKSTATION_TYNE:
+		strcpy(cpu_model, "Deskstation Tyne");
+
+		/*XXX Need to find out how to size mem */
+		physmem = 1024 * 1024 * 32;
+		mem_layout[0].mem_start = 0x00100000;
+		mem_layout[0].mem_size = physmem - mem_layout[0].mem_start;
+		mem_layout[1].mem_start = 0x00020000;
+		mem_layout[1].mem_size =  0x00100000 - mem_layout[1].mem_start;
+		mem_layout[2].mem_start = 0x0;
 		break;
 
 	default:
-		memcfg = -1;
-		break;
+		printf("kernel not configured for systype 0x%x\n", i);
+		boot(RB_HALT | RB_NOSYNC);
 	}
+	physmem = btoc(physmem);
 
 	/* look at argv[0] and compute bootdev */
 	makebootdev(argv[0]);
@@ -374,110 +418,10 @@ mips_init(argc, argv, code)
 	cpucfg = R4K_ConfigCache();
 	R4K_FlushCache();
 
-	/* check what model platform we are running on */
-	switch (cputype) {
-	case ACER_PICA_61:	/* ALI PICA 61 */
-		/*
-		 * Set up interrupt handling and I/O addresses.
-		 */
-#if 0 /* XXX FIXME */
-		Mach_splnet = Mach_spl1;
-		Mach_splbio = Mach_spl0;
-		Mach_splimp = Mach_spl1;
-		Mach_spltty = Mach_spl2;
-		Mach_splstatclock = Mach_spl3;
-#endif
-		strcpy(cpu_model, "ACER PICA_61");
-		break;
-
-	case MAGNUM:
-		strcpy(cpu_model, "MIPS MAGNUM");
-		break;
-
-	case DESKSTATION_RPC44:
-		strcpy(cpu_model, "DESKSTATION_RPC44");
-		break;
-
-	case DESKSTATION_TYNE:
-		strcpy(cpu_model, "DESKSTATION_TYNE");
-		break;
-
-	default:
-		printf("kernel not configured for systype 0x%x\n", i);
-		boot(RB_HALT | RB_NOSYNC);
-	}
-
 	/*
 	 * Find out how much memory is available.
 	 */
-
-	switch (cputype) {
-	case ACER_PICA_61:
-		/*
-		 * Size is determined from the memory config register.
-		 *  d0-d2 = bank 0 size (sim id)
-		 *  d3-d5 = bank 1 size
-		 *  d6 = bus width. (doubels memory size)
-		 */
-		if((memcfg & 7) <= 5)
-			physmem = 2097152 << (memcfg & 7);
-		if(((memcfg >> 3) & 7) <= 5)
-			physmem += 2097152 << ((memcfg >> 3) & 7);
-
-		if((memcfg & 0x40) == 0)
-			physmem += physmem;	/* 128 bit config */
-
-		mem_layout[0].mem_start = 0x00100000;
-		mem_layout[0].mem_size = physmem - mem_layout[0].mem_start;
-		mem_layout[1].mem_start = 0x00020000;
-		mem_layout[1].mem_size =  0x00100000 - mem_layout[1].mem_start;
-		mem_layout[2].mem_start = 0x0;
-		
-		physmem = btoc(physmem);
-		break;
-
-	case DESKSTATION_RPC44:
-	case DESKSTATION_TYNE:
-		/*XXX Need to find out how to size mem */
-		physmem = 1024 * 1024 * 32;
-		mem_layout[0].mem_start = 0x00100000;
-		mem_layout[0].mem_size = physmem - mem_layout[0].mem_start;
-		mem_layout[1].mem_start = 0x00008000;
-		mem_layout[1].mem_size = 0x000a0000 - mem_layout[1].mem_start;
-		mem_layout[2].mem_start = 0x0;
-
-		physmem = btoc(physmem);
-		break;
-
-	case MAGNUM:
-		memcfg = in32(R4030_SYS_CONFIG);
-
-		physmem = btoc(physmem);
-		break;
-
-	default:
-		physmem = btoc((u_int)v - KERNBASE);
-		cp = (char *)PHYS_TO_UNCACHED(physmem << PGSHIFT);
-		while (cp < (char *)MAX_MEM_ADDR) {
-			if (badaddr(cp, 4))
-				break;
-			i = *(int *)cp;
-			*(int *)cp = 0xa5a5a5a5;
-			/*
-			 * Data will persist on the bus if we read it right away
-			 * Have to be tricky here.
-			 */
-			((int *)cp)[4] = 0x5a5a5a5a;
-			wbflush();
-			if (*(int *)cp != 0xa5a5a5a5)
-				break;
-			*(int *)cp = i;
-			cp += NBPG;
-			physmem++;
-		}
-		break;
-	}
-
+	/* Already know from above!!! */
 	maxmem = physmem;
 
 	/*
