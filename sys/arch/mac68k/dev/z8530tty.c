@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530tty.c,v 1.13 2003/08/15 20:32:13 tedu Exp $	*/
+/*	$OpenBSD: z8530tty.c,v 1.14 2003/10/03 16:44:49 miod Exp $	*/
 /*	$NetBSD: z8530tty.c,v 1.10 1996/12/18 05:17:44 scottr Exp $	*/
 
 /*
@@ -197,7 +197,6 @@ zstty_attach(parent, self, aux)
 	tp->t_hwiflow = zshwiflow;
 	ttychars(tp);
 	bcopy(tp->t_cc, zst->zst_cc, sizeof(tp->t_cc));
-	tty_attach(tp);
 
 	zst->zst_tty = tp;
 	zst->zst_rbhiwat =  zstty_rbuf_size;	/* impossible value */

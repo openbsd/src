@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.61 2003/09/23 16:51:12 millert Exp $	*/
+/*	$OpenBSD: tty.c,v 1.62 2003/10/03 16:44:51 miod Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -2260,45 +2260,8 @@ tty_init()
 }
 
 /*
- * Attach a tty to the tty list.
- *
- * This should be called ONLY once per real tty (including pty's).
- * eg, on the sparc, the keyboard and mouse have struct tty's that are
- * distinctly NOT usable as tty's, and thus should not be attached to
- * the ttylist.  This is why this call is not done from ttymalloc().
- *
- * Device drivers should attach tty's at a similar time that they are
- * ttymalloc()'ed, or, for the case of statically allocated struct tty's
- * either in the attach or (first) open routine.
- */
-void
-tty_attach(tp)
-	struct tty *tp;
-{
-
-	TAILQ_INSERT_TAIL(&ttylist, tp, tty_link);
-	++tty_count;
-	timeout_set(&tp->t_rstrt_to, ttrstrt, tp);
-}
-
-/*
- * Remove a tty from the tty list.
- */
-void
-tty_detach(tp)
-	struct tty *tp;
-{
-
-	--tty_count;
-#ifdef DIAGNOSTIC
-	if (tty_count < 0)
-		panic("tty_detach: tty_count < 0");
-#endif
-	TAILQ_REMOVE(&ttylist, tp, tty_link);
-}
-
-/*
- * Allocate a tty structure and its associated buffers.
+ * Allocate a tty structure and its associated buffers, and attach it to the
+ * tty list.
  */
 struct tty *
 ttymalloc()
@@ -2312,19 +2275,29 @@ ttymalloc()
 	clalloc(&tp->t_canq, 1024, 1);
 	/* output queue doesn't need quoting */
 	clalloc(&tp->t_outq, 1024, 0);
+
+	TAILQ_INSERT_TAIL(&ttylist, tp, tty_link);
+	++tty_count;
+	timeout_set(&tp->t_rstrt_to, ttrstrt, tp);
+
 	return(tp);
 }
 
+
 /*
- * Free a tty structure and its buffers.
- *
- * Be sure to call tty_detach() for any tty that has been
- * tty_attach()ed.
+ * Free a tty structure and its buffers, after removing it from the tty list.
  */
 void
 ttyfree(tp)
 	struct tty *tp;
 {
+
+	--tty_count;
+#ifdef DIAGNOSTIC
+	if (tty_count < 0)
+		panic("ttyfree: tty_count < 0");
+#endif
+	TAILQ_REMOVE(&ttylist, tp, tty_link);
 
 	clfree(&tp->t_rawq);
 	clfree(&tp->t_canq);

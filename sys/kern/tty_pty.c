@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.15 2003/09/23 16:51:12 millert Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.16 2003/10/03 16:44:51 miod Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -116,9 +116,7 @@ ptsopen(dev, flag, devtype, p)
 	pti = &pt_softc[minor(dev)];
 	if (!pti->pt_tty) {
 		tp = pti->pt_tty = ttymalloc();
-		tty_attach(tp);
-	}
-	else
+	} else
 		tp = pti->pt_tty;
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 		tp->t_state |= TS_WOPEN;
@@ -312,9 +310,7 @@ ptcopen(dev, flag, devtype, p)
 	pti = &pt_softc[minor(dev)];
 	if (!pti->pt_tty) {
 		tp = pti->pt_tty = ttymalloc();
-		tty_attach(tp);
-	}
-	else
+	} else
 		tp = pti->pt_tty;
 	if (tp->t_oproc)
 		return (EIO);

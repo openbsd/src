@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.51 2003/09/23 16:51:12 millert Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.52 2003/10/03 16:44:51 miod Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.37.4.1 2000/06/30 16:27:53 simonb Exp $ */
 
 /*
@@ -315,7 +315,6 @@ wsscreen_attach(sc, console, emul, type, cookie, ccol, crow, defattr)
 	scr->scr_dconf = dconf;
 
 	scr->scr_tty = ttymalloc();
-	tty_attach(scr->scr_tty);
 	scr->scr_hold_screen = 0;
 	if (WSSCREEN_HAS_EMULATOR(scr))
 		scr->scr_flags = 0;
@@ -339,7 +338,6 @@ wsscreen_detach(scr)
 
 	if (WSSCREEN_HAS_TTY(scr)) {
 		timeout_del(&scr->scr_tty->t_rstrt_to);
-		tty_detach(scr->scr_tty);
 		ttyfree(scr->scr_tty);
 	}
 	if (WSSCREEN_HAS_EMULATOR(scr))

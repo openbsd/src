@@ -1,4 +1,4 @@
-/*	$OpenBSD: cy.c,v 1.23 2003/08/15 20:32:17 tedu Exp $	*/
+/*	$OpenBSD: cy.c,v 1.24 2003/10/03 16:44:51 miod Exp $	*/
 /*
  * Copyright (c) 1996 Timo Rossi.
  * All rights reserved.
@@ -300,17 +300,10 @@ cyopen(dev, flag, mode, p)
 
 	s = spltty();
 	if (cy->cy_tty == NULL) {
-		if ((cy->cy_tty = ttymalloc()) == NULL) {
-			splx(s);
-			printf("%s port %d open: can't allocate tty\n",
-			    sc->sc_dev.dv_xname, port);
-			return (ENOMEM);
-		}
+		cy->cy_tty = ttymalloc();
 	}
 	splx(s);
 
-	tp = cy->cy_tty;
-	tty_attach(tp);
 	tp = cy->cy_tty;
 	tp->t_oproc = cystart;
 	tp->t_param = cyparam;

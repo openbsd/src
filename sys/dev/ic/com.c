@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.93 2003/09/23 16:51:12 millert Exp $	*/
+/*	$OpenBSD: com.c,v 1.94 2003/10/03 16:44:51 miod Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -403,7 +403,6 @@ com_detach(self, flags)
 
 	/* Detach and free the tty. */
 	if (sc->sc_tty) {
-		tty_detach(sc->sc_tty);
 		ttyfree(sc->sc_tty);
 	}
 
@@ -483,7 +482,6 @@ comopen(dev, flag, mode, p)
 	s = spltty();
 	if (!sc->sc_tty) {
 		tp = sc->sc_tty = ttymalloc();
-		tty_attach(tp);
 	} else
 		tp = sc->sc_tty;
 	splx(s);

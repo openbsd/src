@@ -1,4 +1,4 @@
-/*	$OpenBSD: dl.c,v 1.4 2003/06/02 23:27:58 millert Exp $	*/
+/*	$OpenBSD: dl.c,v 1.5 2003/10/03 16:44:50 miod Exp $	*/
 /*	$NetBSD: dl.c,v 1.11 2000/01/24 02:40:29 matt Exp $	*/
 
 /*-
@@ -214,7 +214,6 @@ dl_attach (parent, self, aux)
 	/* Initialize our softc structure. Should be done in open? */
 	
 	sc->sc_tty = ttymalloc();
-	tty_attach(sc->sc_tty);
 
 	/* Now register the TX & RX interrupt handlers */
 	uba_intr_establish(ua->ua_icookie, ua->ua_cvec    , dlxint, sc);

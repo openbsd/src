@@ -1,4 +1,4 @@
-/*	$OpenBSD: bugtty.c,v 1.10 2003/08/15 20:32:14 tedu Exp $ */
+/*	$OpenBSD: bugtty.c,v 1.11 2003/10/03 16:44:50 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn.
@@ -171,7 +171,6 @@ bugttyopen(dev, flag, mode, p)
 		tp = bugtty_tty[unit];
 	} else {
 		tp = bugtty_tty[unit] = ttymalloc();
-		tty_attach(tp);
 	}
 	tp->t_oproc = bugttyoutput;
 	tp->t_param = NULL;

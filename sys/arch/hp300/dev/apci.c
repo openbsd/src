@@ -1,4 +1,4 @@
-/*	$OpenBSD: apci.c,v 1.14 2003/08/15 20:32:12 tedu Exp $	*/
+/*	$OpenBSD: apci.c,v 1.15 2003/10/03 16:44:49 miod Exp $	*/
 /*	$NetBSD: apci.c,v 1.9 2000/11/02 00:35:05 eeh Exp $	*/
 
 /*-
@@ -304,7 +304,6 @@ apciopen(dev, flag, mode, p)
 	s = spltty();
 	if (sc->sc_tty == NULL) {
 		tp = sc->sc_tty = ttymalloc();
-		tty_attach(tp);
 	} else
 		tp = sc->sc_tty;
 	splx(s);
@@ -439,7 +438,6 @@ apciclose(dev, flag, mode, p)
 	splx(s);
 	ttyclose(tp);
 #if 0
-	tty_detach(tp);
 	ttyfree(tp);
 	sc->sc_tty = NULL;
 #endif

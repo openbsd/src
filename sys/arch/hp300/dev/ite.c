@@ -1,4 +1,4 @@
-/*	$OpenBSD: ite.c,v 1.15 2003/06/02 23:27:45 millert Exp $	*/
+/*	$OpenBSD: ite.c,v 1.16 2003/10/03 16:44:49 miod Exp $	*/
 /*	$NetBSD: ite.c,v 1.38 1997/03/31 07:37:25 scottr Exp $	*/
 
 /*
@@ -301,7 +301,6 @@ iteopen(dev, mode, devtype, p)
 
 	if (ip->tty == NULL) {
 	 	tp = ip->tty = ttymalloc();
-		tty_attach(tp);
 	} else
 		tp = ip->tty;
 	if ((tp->t_state&(TS_ISOPEN|TS_XCLUDE)) == (TS_ISOPEN|TS_XCLUDE)
@@ -350,7 +349,6 @@ iteclose(dev, flag, mode, p)
 	ttyclose(tp);
 	iteoff(ip, 0);
 #if 0
-	tty_detach(tp);
 	ttyfree(tp);
 	ip->tty = (struct tty *)0;
 #endif
