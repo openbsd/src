@@ -1,5 +1,5 @@
-/*	$OpenBSD: ipsec.c,v 1.4 1998/12/21 01:02:24 niklas Exp $	*/
-/*	$EOM: ipsec.c,v 1.75 1998/12/15 09:11:57 niklas Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.5 1999/02/26 03:43:41 niklas Exp $	*/
+/*	$EOM: ipsec.c,v 1.82 1999/02/25 13:35:41 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -41,6 +41,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "sysdep.h"
+
 #include "attribute.h"
 #include "conf.h"
 #include "constants.h"
@@ -60,10 +62,12 @@
 #include "message.h"
 #include "prf.h"
 #include "sa.h"
-#include "sysdep.h"
 #include "timer.h"
 #include "transport.h"
 #include "util.h"
+
+/* The replay window size used for all IPSec protocols if not overridden.  */
+#define DEFAULT_REPLAY_WINDOW 16
 
 struct ipsec_decode_arg {
   struct message *msg;
@@ -81,6 +85,7 @@ static void ipsec_free_sa_data (void *);
 static struct keystate *ipsec_get_keystate (struct message *);
 static u_int8_t *ipsec_get_spi (size_t *, u_int8_t, struct message *);
 static int ipsec_initiator (struct message *);
+static void ipsec_proto_init (struct proto *, char *);
 static int ipsec_responder (struct message *);
 static void ipsec_setup_situation (u_int8_t *);
 static size_t ipsec_situation_size (void);
@@ -109,6 +114,7 @@ static struct doi ipsec_doi = {
   ipsec_get_keystate,
   ipsec_get_spi,
   ipsec_is_attribute_incompatible,
+  ipsec_proto_init,
   ipsec_setup_situation,
   ipsec_situation_size,
   ipsec_spi_size,
@@ -180,14 +186,28 @@ ipsec_finalize_exchange (struct message *msg)
 	  break;
 	}
 
-      /* If a lifetime was negotiated setup the death timer.  */
+      /* If a lifetime was negotiated setup the expiration timers.  */
       if (isakmp_sa->seconds)
 	{
 	  gettimeofday(&expiration, 0);
+	  expiration.tv_sec += isakmp_sa->seconds * 9 / 10;
+	  isakmp_sa->soft_death
+	    = timer_add_event ("sa_soft_expire",
+			       (void (*) (void *))sa_soft_expire, isakmp_sa,
+			       &expiration);
+	  if (!isakmp_sa->soft_death)
+	    {
+	      /* If we don't give up we might start leaking... */
+	      sa_delete (isakmp_sa, 1);
+	      return;
+	    }
+
+	  gettimeofday(&expiration, 0);
 	  expiration.tv_sec += isakmp_sa->seconds;
-	  isakmp_sa->death = timer_add_event ("sa_rekey_p1",
-					      (void (*) (void *))sa_rekey_p1,
-					      isakmp_sa, &expiration);
+	  isakmp_sa->death
+	    = timer_add_event ("sa_hard_expire",
+			       (void (*) (void *))sa_hard_expire, isakmp_sa,
+			       &expiration);
 	  if (!isakmp_sa->death)
 	    {
 	      /* If we don't give up we might start leaking... */
@@ -270,7 +290,7 @@ ipsec_finalize_exchange (struct message *msg)
 			 isa->src_net, isa->src_mask, isa->dst_net,
 			 isa->dst_mask);
 
-	      if (sysdep_ipsec_enable_spi (sa, initiator))
+	      if (sysdep_ipsec_enable_sa (sa, initiator))
 		/* XXX Tear down this exchange.  */
 		return;
 	    }
@@ -1150,6 +1170,117 @@ ipsec_keymat_length (struct proto *proto)
 }
 
 /*
+ * Out of a named section SECTION in the configuration file find out
+ * the network address and mask as well as the ID type.  Put the info
+ * in the areas pointed to by ADDR, MASK and ID respectively.  Return
+ * 0 on success and -1 on failure.
+ */
+int
+ipsec_get_id (char *section, int *id, struct in_addr *addr,
+	      struct in_addr *mask)
+{
+  char *type, *address, *netmask;
+
+  type = conf_get_str (section, "ID-type");
+  if (!type)
+    {
+      log_print ("ipsec_get_id: section %s has no \"ID-type\" tag", section);
+      return -1;
+    }
+
+  *id = constant_value (ipsec_id_cst, type);
+  switch (*id)
+    {
+    case IPSEC_ID_IPV4_ADDR:
+      address = conf_get_str (section, "Address");
+      if (!address)
+	{
+	  log_print ("ipsec_get_id: section %s has no \"Address\" tag",
+		     section);
+	  return -1;
+	}
+
+      if (!inet_aton (address, addr))
+	{
+	  log_print ("ipsec_get_id: invalid address %s in section %s", section,
+		     address);
+	  return -1;
+	}
+      break;
+
+#ifdef notyet
+    case IPSEC_ID_FQDN:
+      return -1;
+
+    case IPSEC_ID_USER_FQDN:
+      return -1;
+#endif
+
+    case IPSEC_ID_IPV4_ADDR_SUBNET:
+      address = conf_get_str (section, "Network");
+      if (!address)
+	{
+	  log_print ("ipsec_get_id: section %s has no \"Network\" tag",
+		     section);
+	  return -1;
+	}
+
+      if (!inet_aton (address, addr))
+	{
+	  log_print ("ipsec_get_id: invalid section %s network %s", section,
+		     address);
+	  return -1;
+	}
+
+      netmask = conf_get_str (section, "Netmask");
+      if (!netmask)
+	{
+	  log_print ("ipsec_get_id: section %s has no \"Netmask\" tag",
+		     section);
+	  return -1;
+	}
+
+      if (!inet_aton (netmask, mask))
+	{
+	  log_print ("ipsec_id_build: invalid section %s network %s", section,
+		     netmask);
+	  return -1;
+	}
+      break;
+
+#ifdef notyet
+    case IPSEC_ID_IPV6_ADDR:
+      return -1;
+
+    case IPSEC_ID_IPV6_ADDR_SUBNET:
+      return -1;
+
+    case IPSEC_ID_IPV4_RANGE:
+      return -1;
+
+    case IPSEC_ID_IPV6_RANGE:
+      return -1;
+
+    case IPSEC_ID_DER_ASN1_DN:
+      return -1;
+
+    case IPSEC_ID_DER_ASN1_GN:
+      return -1;
+
+    case IPSEC_ID_KEY_ID:
+      return -1;
+#endif
+
+    default:
+      log_print ("ipsec_get_id: unknown ID type \"%s\" in section %s", type,
+		 section);
+      return -1;
+    }
+
+  return 0;
+}
+
+/*
  * Out of a named section SECTION in the configuration file build an
  * ISAKMP ID payload.  Ths payload size should be stashed in SZ.
  * The caller is responsible for freeing the payload.
@@ -1157,111 +1288,22 @@ ipsec_keymat_length (struct proto *proto)
 u_int8_t *
 ipsec_build_id (char *section, size_t *sz)
 {
-  char *type, *address, *netmask;
   struct in_addr addr, mask;
   u_int8_t *p;
   int id;
 
-  type = conf_get_str (section, "ID-type");
-  if (!type)
-    {
-      log_print ("ipsec_build_id: section %s has no ID-type", section);
-      return 0;
-    }
+  if (ipsec_get_id (section, &id, &addr, &mask))
+    return 0;
 
   *sz = ISAKMP_ID_SZ;
-
-  id = constant_value (ipsec_id_cst, type);
   switch (id)
     {
     case IPSEC_ID_IPV4_ADDR:
-      address = conf_get_str (section, "Address");
-      if (!address)
-	{
-	  log_print ("ipsec_id_build: section %s has no \"Address\" tag",
-		     section);
-	  return 0;
-	}
-
-      if (!inet_aton (address, &addr))
-	{
-	  log_print ("ipsec_id_build: invalid section %s address %s", section,
-		     address);
-	  return 0;
-	}
-
-      *sz += sizeof (in_addr_t);
+      *sz += sizeof addr;
       break;
-
-#ifdef notyet
-    case IPSEC_ID_FQDN:
-      return 0;
-
-    case IPSEC_ID_USER_FQDN:
-      return 0;
-#endif
-
     case IPSEC_ID_IPV4_ADDR_SUBNET:
-      address = conf_get_str (section, "Network");
-      if (!address)
-	{
-	  log_print ("ipsec_id_build: section %s has no \"Network\" tag",
-		     section);
-	  return 0;
-	}
-
-      if (!inet_aton (address, &addr))
-	{
-	  log_print ("ipsec_id_build: invalid section %s network %s", section,
-		     address);
-	  return 0;
-	}
-
-      netmask = conf_get_str (section, "Netmask");
-      if (!netmask)
-	{
-	  log_print ("ipsec_id_build: section %s has no \"Netmask\" tag",
-		     section);
-	  return 0;
-	}
-
-      if (!inet_aton (netmask, &mask))
-	{
-	  log_print ("ipsec_id_build: invalid section %s network %s", section,
-		     netmask);
-	  return 0;
-	}
-
-      *sz += 2 * sizeof (in_addr_t);
+      *sz += sizeof addr + sizeof mask;
       break;
-
-#ifdef notyet
-    case IPSEC_ID_IPV6_ADDR:
-      return 0;
-
-    case IPSEC_ID_IPV6_ADDR_SUBNET:
-      return 0;
-
-    case IPSEC_ID_IPV4_RANGE:
-      return 0;
-
-    case IPSEC_ID_IPV6_RANGE:
-      return 0;
-
-    case IPSEC_ID_DER_ASN1_DN:
-      return 0;
-
-    case IPSEC_ID_DER_ASN1_GN:
-      return 0;
-
-    case IPSEC_ID_KEY_ID:
-      return 0;
-#endif
-
-    default:
-      log_print ("ipsec_build_id: unknown ID type \"%s\" in section %s", type,
-		 section);
-      return 0;
     }
 
   p = malloc (*sz);
@@ -1286,4 +1328,62 @@ ipsec_build_id (char *section, size_t *sz)
     }
 
   return p;
+}
+
+struct dst_spi_proto_arg {
+  in_addr_t dst;
+  u_int32_t spi;
+  u_int8_t proto;
+};
+
+static int
+ipsec_sa_check (struct sa *sa, void *v_arg)
+{
+  struct dst_spi_proto_arg *arg = v_arg;
+  struct proto *proto;
+  struct sockaddr *dst, *src;
+  int dstlen, srclen;
+  int incoming;
+
+  sa->transport->vtbl->get_dst (sa->transport, &dst, &dstlen);
+  if (((struct sockaddr_in *)dst)->sin_addr.s_addr == arg->dst)
+    incoming = 0;
+  else
+    {
+      sa->transport->vtbl->get_src (sa->transport, &src, &srclen);
+      if (((struct sockaddr_in *)src)->sin_addr.s_addr == arg->dst)
+	incoming = 1;
+      else
+	return 0;
+    }
+
+  for (proto = TAILQ_FIRST (&sa->protos); proto;
+       proto = TAILQ_NEXT (proto, link))
+    if (proto->proto == arg->proto
+	&& memcmp (proto->spi[incoming], &arg->spi, sizeof arg->spi) == 0)
+      return 1;
+  return 0;
+}
+
+struct sa *
+ipsec_sa_lookup (in_addr_t dst, u_int32_t spi, u_int8_t proto)
+{
+  struct dst_spi_proto_arg arg = { dst, spi, proto };
+
+  return sa_find (ipsec_sa_check, &arg);
+}
+
+/*
+ * IPSec-specific PROTO initializations.  SECTION is only set if we are the
+ * initiator thus only usable there.
+ * XXX I want to fix this later.
+ */
+void
+ipsec_proto_init (struct proto *proto, char *section)
+{
+  struct ipsec_proto *iproto = proto->data;
+
+  if (proto->sa->phase == 2 && section)
+    iproto->replay_window
+      = conf_get_num (section, "ReplayWindow", DEFAULT_REPLAY_WINDOW);
 }
