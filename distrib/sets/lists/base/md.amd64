@@ -58,9 +58,9 @@
 ./usr/lib/apache/modules/mod_usertrack.so
 ./usr/lib/apache/modules/mod_vhost_alias.so
 ./usr/lib/gcc-lib/x86_64-unknown-openbsd3.6
-./usr/lib/gcc-lib/x86_64-unknown-openbsd3.6/3.3.2
-./usr/lib/gcc-lib/x86_64-unknown-openbsd3.6/3.3.2/collect2
-./usr/lib/gcc-lib/x86_64-unknown-openbsd3.6/3.3.2/specs
+./usr/lib/gcc-lib/x86_64-unknown-openbsd3.6/3.3.5
+./usr/lib/gcc-lib/x86_64-unknown-openbsd3.6/3.3.5/collect2
+./usr/lib/gcc-lib/x86_64-unknown-openbsd3.6/3.3.5/specs
 ./usr/lib/libasn1.so.15.0
 ./usr/lib/libc.so.34.2
 ./usr/lib/libcom_err.so.15.0

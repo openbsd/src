@@ -256,9 +256,9 @@
 ./usr/lib/crtbeginS.o
 ./usr/lib/crtend.o
 ./usr/lib/crtendS.o
-./usr/lib/gcc-lib/arm-unknown-openbsd3.6/3.3.2/include
-./usr/lib/gcc-lib/arm-unknown-openbsd3.6/3.3.2/include/unwind.h
-./usr/lib/gcc-lib/arm-unknown-openbsd3.6/3.3.2/libgcc.a
+./usr/lib/gcc-lib/arm-unknown-openbsd3.6/3.3.5/include
+./usr/lib/gcc-lib/arm-unknown-openbsd3.6/3.3.5/include/unwind.h
+./usr/lib/gcc-lib/arm-unknown-openbsd3.6/3.3.5/libgcc.a
 ./usr/lib/libasn1_pic.a
 ./usr/lib/libbfd.a
 ./usr/lib/libbfd.la
