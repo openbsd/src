@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: svc_tcp.c,v 1.17 1998/05/22 04:21:38 deraadt Exp $";
+static char *rcsid = "$OpenBSD: svc_tcp.c,v 1.18 1998/05/22 04:23:01 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -450,6 +450,7 @@ svctcp_recv(xprt, msg)
 		cd->x_id = msg->rm_xid;
 		return (TRUE);
 	}
+	cd->strm_stat = XPRT_DIED;	/* XXX */
 	return (FALSE);
 }
 
