@@ -1,3 +1,4 @@
+/*	$OpenBSD: krpc_subr.c,v 1.3 1996/04/17 04:50:22 mickey Exp $	*/
 /*	$NetBSD: krpc_subr.c,v 1.11 1995/12/19 23:07:19 cgd Exp $	*/
 
 /*

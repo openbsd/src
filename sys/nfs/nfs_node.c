@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_node.c,v 1.4 1996/03/31 13:15:36 mickey Exp $	*/
+/*	$OpenBSD: nfs_node.c,v 1.5 1996/04/17 04:50:25 mickey Exp $	*/
 /*	$NetBSD: nfs_node.c,v 1.16 1996/02/18 11:53:42 fvdl Exp $	*/
 
 /*
@@ -177,8 +177,8 @@ nfs_inactive(v)
 	if (ap->a_vp->v_type != VDIR)
 		sp = np->n_sillyrename;
 	else
-		sp = (struct sillyrename *)0;
-	np->n_sillyrename = (struct sillyrename *)0;
+		sp = NULL;
+	np->n_sillyrename = NULL;
 	if (sp) {
 		/*
 		 * Remove the silly file that was rename'd earlier
@@ -244,7 +244,7 @@ nfs_reclaim(v)
 
 	cache_purge(vp);
 	FREE(vp->v_data, M_NFSNODE);
-	vp->v_data = (void *)0;
+	vp->v_data = NULL;
 	return (0);
 }
 

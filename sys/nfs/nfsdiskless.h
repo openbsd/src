@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsdiskless.h,v 1.3 1996/03/31 13:16:07 mickey Exp $	*/
+/*	$OpenBSD: nfsdiskless.h,v 1.4 1996/04/17 04:50:37 mickey Exp $	*/
 /*	$NetBSD: nfsdiskless.h,v 1.9 1996/02/18 11:54:00 fvdl Exp $	*/
 
 /*
@@ -36,8 +36,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)nfsdiskless.h	8.1 (Berkeley) 6/10/93
+ *	@(#)nfsdiskless.h	8.2 (Berkeley) 3/30/95
  */
+
+#ifndef _NFS_DISKLESS_H_
+#define _NFS_DISKLESS_H_
 
 /*
  * Structure that must be initialized for a diskless nfs client.
@@ -64,4 +67,5 @@ struct nfs_diskless {
 int nfs_boot_init __P((struct nfs_diskless *nd, struct proc *procp));
 void nfs_boot_getfh __P((struct sockaddr_in *bpsin, char *key,
 		struct nfs_dlmount *ndmntp));
+#endif  _NFS_DISKLESS_H_
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.4 1996/03/31 13:15:41 mickey Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.5 1996/04/17 04:50:27 mickey Exp $	*/
 /*	$NetBSD: nfs_serv.c,v 1.25 1996/03/02 15:55:52 jtk Exp $	*/
 
 /*
@@ -127,7 +127,7 @@ nfsrv3_access(nfsd, slp, procp, mrq)
 	    (nfsd->nd_flag & ND_KERBAUTH));
 	if (error) {
 		nfsm_reply(NFSX_UNSIGNED);
-		nfsm_srvpostop_attr(1, (struct vattr *)0);
+		nfsm_srvpostop_attr(1, (struct vattr *)NULL);
 		return (0);
 	}
 	nfsmode = fxdr_unsigned(u_int32_t, *tl);
@@ -471,13 +471,13 @@ nfsrv_readlink(nfsd, slp, procp, mrq)
 	uiop->uio_resid = len;
 	uiop->uio_rw = UIO_READ;
 	uiop->uio_segflg = UIO_SYSSPACE;
-	uiop->uio_procp = (struct proc *)0;
+	uiop->uio_procp = (struct proc *)NULL;
 	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam,
 		 &rdonly, (nfsd->nd_flag & ND_KERBAUTH));
 	if (error) {
 		m_freem(mp3);
 		nfsm_reply(2 * NFSX_UNSIGNED);
-		nfsm_srvpostop_attr(1, (struct vattr *)0);
+		nfsm_srvpostop_attr(1, (struct vattr *)NULL);
 		return (0);
 	}
 	if (vp->v_type != VLNK) {
@@ -560,7 +560,7 @@ nfsrv_read(nfsd, slp, procp, mrq)
 		 &rdonly, (nfsd->nd_flag & ND_KERBAUTH));
 	if (error) {
 		nfsm_reply(2 * NFSX_UNSIGNED);
-		nfsm_srvpostop_attr(1, (struct vattr *)0);
+		nfsm_srvpostop_attr(1, (struct vattr *)NULL);
 		return (0);
 	}
 	if (vp->v_type != VREG) {
@@ -825,7 +825,7 @@ nfsrv_write(nfsd, slp, procp, mrq)
 	    uiop->uio_resid = len;
 	    uiop->uio_rw = UIO_WRITE;
 	    uiop->uio_segflg = UIO_SYSSPACE;
-	    uiop->uio_procp = (struct proc *)0;
+	    uiop->uio_procp = (struct proc *)NULL;
 	    uiop->uio_offset = off;
 	    error = VOP_WRITE(vp, uiop, ioflags, cred);
 	    nfsstats.srvvop_writes++;
@@ -1061,7 +1061,7 @@ loop1:
 		    ioflags = (IO_METASYNC | IO_SYNC | IO_NODELOCKED);
 		uiop->uio_rw = UIO_WRITE;
 		uiop->uio_segflg = UIO_SYSSPACE;
-		uiop->uio_procp = (struct proc *)0;
+		uiop->uio_procp = (struct proc *)NULL;
 		uiop->uio_offset = nfsd->nd_off;
 		uiop->uio_resid = nfsd->nd_eoff - nfsd->nd_off;
 		if (uiop->uio_resid > 0) {
@@ -1235,7 +1235,7 @@ nfsrv_create(nfsd, slp, procp, mrq)
 	register int32_t t1;
 	caddr_t bpos;
 	int error = 0, cache, len, tsize, dirfor_ret = 1, diraft_ret = 1;
-	int rdev = 0;
+	dev_t rdev = 0;
 	int v3 = (nfsd->nd_flag & ND_NFSV3), how, exclusive_flag = 0;
 	char *cp2;
 	struct mbuf *mb, *mb2, *mreq;
@@ -1260,7 +1260,7 @@ nfsrv_create(nfsd, slp, procp, mrq)
 				procp);
 		else {
 			vrele(dirp);
-			dirp = (struct vnode *)0;
+			dirp = (struct vnode *)NULL;
 		}
 	}
 	if (error) {
@@ -1307,7 +1307,7 @@ nfsrv_create(nfsd, slp, procp, mrq)
 		case VCHR:
 		case VBLK:
 		case VFIFO:
-			rdev = fxdr_unsigned(int32_t, sp->sa_size);
+			rdev = (dev_t)fxdr_unsigned(int32_t, sp->sa_size);
 			break;
 		default:
 			break;
@@ -1339,8 +1339,7 @@ nfsrv_create(nfsd, slp, procp, mrq)
 			va.va_type == VFIFO) {
 			if (va.va_type == VCHR && rdev == 0xffffffff)
 				va.va_type = VFIFO;
-			error = suser(cred, (u_short *)0);
-			if (error) {
+			if ((error = suser(cred, NULL)) != 0) {
 				vrele(nd.ni_startdir);
 				free(nd.ni_cnd.cn_pnbuf, M_NAMEI);
 				VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
@@ -1473,7 +1472,7 @@ nfsrv_mknod(nfsd, slp, procp, mrq)
 	enum vtype vtyp;
 	char *cp2;
 	struct mbuf *mb, *mb2, *mreq;
-	struct vnode *vp, *dirp = (struct vnode *)0;
+	struct vnode *vp, *dirp = NULL;
 	nfsfh_t nfh;
 	fhandle_t *fhp;
 	u_quad_t frev;
@@ -1534,8 +1533,7 @@ nfsrv_mknod(nfsd, slp, procp, mrq)
 		if (!error)
 			FREE(nd.ni_cnd.cn_pnbuf, M_NAMEI);
 	} else {
-		error = suser(cred, (u_short *)0);
-		if (error) {
+		if ((error = suser(cred, NULL)) != 0) {
 			vrele(nd.ni_startdir);
 			free((caddr_t)nd.ni_cnd.cn_pnbuf, M_NAMEI);
 			VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
@@ -1621,15 +1619,12 @@ nfsrv_remove(nfsd, slp, procp, mrq)
 	int v3 = (nfsd->nd_flag & ND_NFSV3);
 	char *cp2;
 	struct mbuf *mb, *mreq;
-	struct vnode *vp, *dirp;
+	struct vnode *vp = NULL, *dirp;
 	struct vattr dirfor, diraft;
 	nfsfh_t nfh;
 	fhandle_t *fhp;
 	u_quad_t frev;
 
-#ifndef nolint
-	vp = (struct vnode *)0;
-#endif
 	fhp = &nfh.fh_generic;
 	nfsm_srvmtofh(fhp);
 	nfsm_srvnamesiz(len);
@@ -1648,7 +1643,7 @@ nfsrv_remove(nfsd, slp, procp, mrq)
 	if (!error) {
 		vp = nd.ni_vp;
 		if (vp->v_type == VDIR &&
-		    (error = suser(cred, (u_short *)0)) != 0)
+		    (error = suser(cred, NULL)) != 0)
 			goto out;
 		/*
 		 * The root of a mounted filesystem cannot be deleted.
@@ -1708,17 +1703,14 @@ nfsrv_rename(nfsd, slp, procp, mrq)
 	char *cp2;
 	struct mbuf *mb, *mreq;
 	struct nameidata fromnd, tond;
-	struct vnode *fvp, *tvp, *tdvp, *fdirp = (struct vnode *)0;
-	struct vnode *tdirp = (struct vnode *)0;
+	struct vnode *fvp = NULL, *tvp, *tdvp, *fdirp = NULL;
+	struct vnode *tdirp = NULL;
 	struct vattr fdirfor, fdiraft, tdirfor, tdiraft;
 	nfsfh_t fnfh, tnfh;
 	fhandle_t *ffhp, *tfhp;
 	u_quad_t frev;
 	uid_t saved_uid;
 
-#ifndef nolint
-	fvp = (struct vnode *)0;
-#endif
 	ffhp = &fnfh.fh_generic;
 	tfhp = &tnfh.fh_generic;
 	fromnd.ni_cnd.cn_nameiop = 0;
@@ -1741,7 +1733,7 @@ nfsrv_rename(nfsd, slp, procp, mrq)
 				procp);
 		else {
 			vrele(fdirp);
-			fdirp = (struct vnode *)0;
+			fdirp = (struct vnode *)NULL;
 		}
 	}
 	if (error) {
@@ -1767,7 +1759,7 @@ nfsrv_rename(nfsd, slp, procp, mrq)
 				procp);
 		else {
 			vrele(tdirp);
-			tdirp = (struct vnode *)0;
+			tdirp = (struct vnode *)NULL;
 		}
 	}
 	if (error) {
@@ -1912,7 +1904,7 @@ nfsrv_link(nfsd, slp, procp, mrq)
 	int getret = 1, v3 = (nfsd->nd_flag & ND_NFSV3);
 	char *cp2;
 	struct mbuf *mb, *mreq;
-	struct vnode *vp, *xp, *dirp = (struct vnode *)0;
+	struct vnode *vp, *xp, *dirp = NULL;
 	struct vattr dirfor, diraft, at;
 	nfsfh_t nfh, dnfh;
 	fhandle_t *fhp, *dfhp;
@@ -1931,7 +1923,7 @@ nfsrv_link(nfsd, slp, procp, mrq)
 		nfsm_srvwcc_data(dirfor_ret, &dirfor, diraft_ret, &diraft);
 		return (0);
 	}
-	if (vp->v_type == VDIR && (error = suser(cred, (u_short *)0)) != 0)
+	if (vp->v_type == VDIR && (error = suser(cred, NULL)) != 0)
 		goto out1;
 	nd.ni_cnd.cn_cred = cred;
 	nd.ni_cnd.cn_nameiop = CREATE;
@@ -1944,7 +1936,7 @@ nfsrv_link(nfsd, slp, procp, mrq)
 				procp);
 		else {
 			vrele(dirp);
-			dirp = (struct vnode *)0;
+			dirp = (struct vnode *)NULL;
 		}
 	}
 	if (error)
@@ -2013,7 +2005,7 @@ nfsrv_symlink(nfsd, slp, procp, mrq)
 	int error = 0, cache, len, len2, dirfor_ret = 1, diraft_ret = 1;
 	int v3 = (nfsd->nd_flag & ND_NFSV3);
 	struct mbuf *mb, *mreq, *mb2;
-	struct vnode *dirp = (struct vnode *)0;
+	struct vnode *dirp = NULL;
 	nfsfh_t nfh;
 	fhandle_t *fhp;
 	u_quad_t frev;
@@ -2033,7 +2025,7 @@ nfsrv_symlink(nfsd, slp, procp, mrq)
 				procp);
 		else {
 			vrele(dirp);
-			dirp = (struct vnode *)0;
+			dirp = (struct vnode *)NULL;
 		}
 	}
 	if (error)
@@ -2051,7 +2043,7 @@ nfsrv_symlink(nfsd, slp, procp, mrq)
 	io.uio_iovcnt = 1;
 	io.uio_segflg = UIO_SYSSPACE;
 	io.uio_rw = UIO_READ;
-	io.uio_procp = (struct proc *)0;
+	io.uio_procp = (struct proc *)NULL;
 	nfsm_mtouio(&io, len2);
 	if (!v3) {
 		nfsm_dissect(sp, struct nfsv2_sattr *, NFSX_V2SATTR);
@@ -2155,7 +2147,7 @@ nfsrv_mkdir(nfsd, slp, procp, mrq)
 	int v3 = (nfsd->nd_flag & ND_NFSV3);
 	char *cp2;
 	struct mbuf *mb, *mb2, *mreq;
-	struct vnode *vp, *dirp = (struct vnode *)0;
+	struct vnode *vp, *dirp = NULL;
 	nfsfh_t nfh;
 	fhandle_t *fhp;
 	u_quad_t frev;
@@ -2174,7 +2166,7 @@ nfsrv_mkdir(nfsd, slp, procp, mrq)
 				procp);
 		else {
 			vrele(dirp);
-			dirp = (struct vnode *)0;
+			dirp = (struct vnode *)NULL;
 		}
 	}
 	if (error) {
@@ -2266,7 +2258,7 @@ nfsrv_rmdir(nfsd, slp, procp, mrq)
 	int v3 = (nfsd->nd_flag & ND_NFSV3);
 	char *cp2;
 	struct mbuf *mb, *mreq;
-	struct vnode *vp, *dirp = (struct vnode *)0;
+	struct vnode *vp, *dirp = (struct vnode *)NULL;
 	struct vattr dirfor, diraft;
 	nfsfh_t nfh;
 	fhandle_t *fhp;
@@ -2287,7 +2279,7 @@ nfsrv_rmdir(nfsd, slp, procp, mrq)
 				procp);
 		else {
 			vrele(dirp);
-			dirp = (struct vnode *)0;
+			dirp = (struct vnode *)NULL;
 		}
 	}
 	if (error) {
@@ -2474,7 +2466,7 @@ again:
 	io.uio_resid = fullsiz;
 	io.uio_segflg = UIO_SYSSPACE;
 	io.uio_rw = UIO_READ;
-	io.uio_procp = (struct proc *)0;
+	io.uio_procp = (struct proc *)NULL;
 	eofflag = 0;
 #ifdef Lite2_integrated
 	VOP_LOCK(vp, 0, procp);
@@ -2743,7 +2735,7 @@ again:
 	io.uio_resid = fullsiz;
 	io.uio_segflg = UIO_SYSSPACE;
 	io.uio_rw = UIO_READ;
-	io.uio_procp = (struct proc *)0;
+	io.uio_procp = (struct proc *)NULL;
 	eofflag = 0;
 
 #ifdef Lite2_integrated

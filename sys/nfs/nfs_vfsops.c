@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.6 1996/03/31 13:16:00 mickey Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.7 1996/04/17 04:50:34 mickey Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46 1996/03/24 23:58:10 fvdl Exp $	*/
 
 /*
@@ -117,7 +117,7 @@ nfs_statfs(mp, sbp, p)
 	struct proc *p;
 {
 	register struct vnode *vp;
-	register struct nfs_statfs *sfp;
+	register struct nfs_statfs *sfp = NULL;
 	register caddr_t cp;
 	register u_int32_t *tl;
 	register int32_t t1, t2;
@@ -129,9 +129,6 @@ nfs_statfs(mp, sbp, p)
 	struct nfsnode *np;
 	u_quad_t tquad;
 
-#ifndef nolint
-	sfp = (struct nfs_statfs *)0;
-#endif
 	error = nfs_nget(mp, (nfsfh_t *)nmp->nm_fh, nmp->nm_fhsize, &np);
 	if (error)
 		return (error);
@@ -549,7 +546,7 @@ nfs_decode_args(nmp, argp)
 	if (nmp->nm_so && adjsock) {
 		nfs_disconnect(nmp);
 		if (nmp->nm_sotype == SOCK_DGRAM)
-			while (nfs_connect(nmp, (struct nfsreq *)0)) {
+			while (nfs_connect(nmp, (struct nfsreq *)NULL)) {
 				printf("nfs_args: retrying connect\n");
 				(void) tsleep((caddr_t)&lbolt,
 					      PSOCK, "nfscon", 0);
@@ -692,7 +689,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp)
 	 * the first request, in case the server is not responding.
 	 */
 	if (nmp->nm_sotype == SOCK_DGRAM &&
-		(error = nfs_connect(nmp, (struct nfsreq *)0)))
+		(error = nfs_connect(nmp, (struct nfsreq *)NULL)))
 		goto bad;
 
 	/*

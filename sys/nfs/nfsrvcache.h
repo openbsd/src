@@ -1,3 +1,4 @@
+/*	$OpenBSD: nfsrvcache.h,v 1.4 1996/04/17 04:50:40 mickey Exp $	*/
 /*	$NetBSD: nfsrvcache.h,v 1.10 1996/02/18 11:54:08 fvdl Exp $	*/
 
 /*

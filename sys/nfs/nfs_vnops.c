@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.5 1996/03/31 13:16:03 mickey Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.6 1996/04/17 04:50:35 mickey Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.60 1996/03/05 05:30:09 jtk Exp $	*/
 
 /*
@@ -587,6 +587,7 @@ nfs_setattr(v)
 	    vap->va_mtime.tv_sec != VNOVAL || vap->va_mode != (mode_t)VNOVAL) &&
 	    (vp->v_mount->mnt_flag & MNT_RDONLY))
 		return (EROFS);
+
 	if (vap->va_size != VNOVAL) {
  		switch (vp->v_type) {
  		case VDIR:
@@ -610,12 +611,9 @@ nfs_setattr(v)
 			 */
 			if (vp->v_mount->mnt_flag & MNT_RDONLY)
 				return (EROFS);
- 			if (vap->va_size == 0)
- 				error = nfs_vinvalbuf(vp, 0,
+ 			error = nfs_vinvalbuf(vp,
+				((vap->va_size == 0)? 0 : V_SAVE),
  				     ap->a_cred, ap->a_p, 1);
-			else
-				error = nfs_vinvalbuf(vp, V_SAVE,
-				     ap->a_cred, ap->a_p, 1);
 			if (error)
 				return (error);
  			tsize = np->n_size;
@@ -628,6 +626,7 @@ nfs_setattr(v)
   		(error = nfs_vinvalbuf(vp, V_SAVE, ap->a_cred,
 		 ap->a_p, 1)) == EINTR)
 		return (error);
+
 	error = nfs_setattrrpc(vp, vap, ap->a_cred, ap->a_p);
 	if (error && vap->va_size != VNOVAL) {
 		np->n_size = np->n_vattr.va_size = tsize;
@@ -741,7 +740,7 @@ nfs_setattrrpc(vp, vap, cred, procp)
 	if (v3) {
 		nfsm_wcc_data(vp, wccflag);
 	} else
-		nfsm_loadattr(vp, (struct vattr *)0);
+		nfsm_loadattr(vp, (struct vattr *)NULL);
 	nfsm_reqdone;
 	return (error);
 }
@@ -858,7 +857,7 @@ nfs_lookup(v)
 			nfsm_postop_attr(newvp, attrflag);
 			nfsm_postop_attr(dvp, attrflag);
 		} else
-			nfsm_loadattr(newvp, (struct vattr *)0);
+			nfsm_loadattr(newvp, (struct vattr *)NULL);
 		*vpp = newvp;
 		m_freem(mrep);
 		cnp->cn_flags |= SAVENAME;
@@ -880,7 +879,7 @@ nfs_lookup(v)
 		nfsm_postop_attr(newvp, attrflag);
 		nfsm_postop_attr(dvp, attrflag);
 	} else
-		nfsm_loadattr(newvp, (struct vattr *)0);
+		nfsm_loadattr(newvp, (struct vattr *)NULL);
 	if (cnp->cn_nameiop != LOOKUP && (flags & ISLASTCN))
 		cnp->cn_flags |= SAVENAME;
 	if ((cnp->cn_flags & MAKEENTRY) &&
@@ -1028,7 +1027,7 @@ nfs_readrpc(vp, uiop, cred)
 			nfsm_dissect(tl, u_int32_t *, 2 * NFSX_UNSIGNED);
 			eof = fxdr_unsigned(int, *(tl + 1));
 		} else
-			nfsm_loadattr(vp, (struct vattr *)0);
+			nfsm_loadattr(vp, (struct vattr *)NULL);
 		nfsm_strsiz(retlen, nmp->nm_rsize);
 		nfsm_mtouio(uiop, retlen);
 		m_freem(mrep);
@@ -1139,7 +1138,7 @@ nfs_writerpc(vp, uiop, cred, iomode, must_commit)
 				}
 			}
 		} else
-		    nfsm_loadattr(vp, (struct vattr *)0);
+		    nfsm_loadattr(vp, (struct vattr *)NULL);
 		if (wccflag)
 		    VTONFS(vp)->n_mtime = VTONFS(vp)->n_vattr.va_mtime.tv_sec;
 		m_freem(mrep);
@@ -1169,7 +1168,7 @@ nfs_mknodrpc(dvp, vpp, cnp, vap)
 	register u_int32_t *tl;
 	register caddr_t cp;
 	register int32_t t1, t2;
-	struct vnode *newvp = (struct vnode *)0;
+	struct vnode *newvp = NULL;
 	struct nfsnode *np;
 	char *cp2;
 	caddr_t bpos, dpos;
@@ -1217,7 +1216,7 @@ nfs_mknodrpc(dvp, vpp, cnp, vap)
 		if (!gotvp) {
 			if (newvp) {
 				vrele(newvp);
-				newvp = (struct vnode *)0;
+				newvp = (struct vnode *)NULL;
 			}
 			error = nfs_lookitup(dvp, cnp->cn_nameptr,
 			    cnp->cn_namelen, cnp->cn_cred, cnp->cn_proc, &np);
@@ -1290,8 +1289,8 @@ nfs_create(v)
 	register u_int32_t *tl;
 	register caddr_t cp;
 	register int32_t t1, t2;
-	struct nfsnode *np = (struct nfsnode *)0;
-	struct vnode *newvp = (struct vnode *)0;
+	struct nfsnode *np = NULL;
+	struct vnode *newvp = NULL;
 	caddr_t bpos, dpos, cp2;
 	int error = 0, wccflag = NFSV3_WCCRATTR, gotvp = 0, fmode = 0;
 	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
@@ -1344,7 +1343,7 @@ again:
 		if (!gotvp) {
 			if (newvp) {
 				vrele(newvp);
-				newvp = (struct vnode *)0;
+				newvp = (struct vnode *)NULL;
 			}
 			error = nfs_lookitup(dvp, cnp->cn_nameptr,
 			    cnp->cn_namelen, cnp->cn_cred, cnp->cn_proc, &np);
@@ -1457,7 +1456,7 @@ nfs_removeit(sp)
 {
 
 	return (nfs_removerpc(sp->s_dvp, sp->s_name, sp->s_namlen, sp->s_cred,
-		(struct proc *)0));
+		(struct proc *)NULL));
 }
 
 /*
@@ -1715,7 +1714,7 @@ nfs_symlink(v)
 	caddr_t bpos, dpos, cp2;
 	int slen, error = 0, wccflag = NFSV3_WCCRATTR, gotvp;
 	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
-	struct vnode *newvp = (struct vnode *)0;
+	struct vnode *newvp = NULL;
 	int v3 = NFS_ISV3(dvp);
 
 	nfsstats.rpccnt[NFSPROC_SYMLINK]++;
@@ -1782,8 +1781,8 @@ nfs_mkdir(v)
 	register caddr_t cp;
 	register int32_t t1, t2;
 	register int len;
-	struct nfsnode *np = (struct nfsnode *)0;
-	struct vnode *newvp = (struct vnode *)0;
+	struct nfsnode *np = NULL;
+	struct vnode *newvp = NULL;
 	caddr_t bpos, dpos, cp2;
 	int error = 0, wccflag = NFSV3_WCCRATTR;
 	int gotvp = 0;
@@ -1824,7 +1823,7 @@ nfs_mkdir(v)
 	if (error == EEXIST || (!error && !gotvp)) {
 		if (newvp) {
 			vrele(newvp);
-			newvp = (struct vnode *)0;
+			newvp = (struct vnode *)NULL;
 		}
 		error = nfs_lookitup(dvp, cnp->cn_nameptr, len, cnp->cn_cred,
 			cnp->cn_proc, &np);
@@ -2330,7 +2329,7 @@ nfs_readdirplusrpc(vp, uiop, cred)
 				dpos = dpossav1;
 				mdsav2 = md;
 				md = mdsav1;
-				nfsm_loadattr(newvp, (struct vattr *)0);
+				nfsm_loadattr(newvp, (struct vattr *)NULL);
 				dpos = dpossav2;
 				md = mdsav2;
 				dp->d_type =
@@ -2438,7 +2437,7 @@ nfs_sillyrename(dvp, vp, cnp)
 
 	/* Try lookitups until we get one that isn't there */
 	while (nfs_lookitup(dvp, sp->s_name, sp->s_namlen, sp->s_cred,
-		cnp->cn_proc, (struct nfsnode **)0) == 0) {
+		cnp->cn_proc, (struct nfsnode **)NULL) == 0) {
 		sp->s_name[4]++;
 		if (sp->s_name[4] > 'z') {
 			error = EINVAL;
@@ -2479,7 +2478,7 @@ nfs_lookitup(dvp, name, len, cred, procp, npp)
 	register u_int32_t *tl;
 	register caddr_t cp;
 	register int32_t t1, t2;
-	struct vnode *newvp = (struct vnode *)0;
+	struct vnode *newvp = NULL;
 	struct nfsnode *np, *dnp = VTONFS(dvp);
 	caddr_t bpos, dpos, cp2;
 	int error = 0, fhlen, attrflag;
@@ -2524,7 +2523,7 @@ nfs_lookitup(dvp, name, len, cred, procp, npp)
 				return (ENOENT);
 			}
 		} else
-			nfsm_loadattr(newvp, (struct vattr *)0);
+			nfsm_loadattr(newvp, (struct vattr *)NULL);
 	}
 	nfsm_reqdone;
 	if (npp && *npp == NULL) {
@@ -2628,7 +2627,7 @@ nfs_strategy(v)
 	if ((bp->b_flags & (B_PHYS|B_ASYNC)) == (B_PHYS|B_ASYNC))
 		panic("nfs physio/async");
 	if (bp->b_flags & B_ASYNC)
-		p = (struct proc *)0;
+		p = (struct proc *)NULL;
 	else
 		p = curproc;	/* XXX */
 	if (bp->b_flags & B_READ)
@@ -2827,7 +2826,7 @@ loop:
 				"nfsfsync", slptimeo);
 			splx(s);
 			if (error) {
-			    if (nfs_sigintr(nmp, (struct nfsreq *)0, p))
+			    if (nfs_sigintr(nmp, (struct nfsreq *)NULL, p))
 				return (EINTR);
 			    if (slpflag == PCATCH) {
 				slpflag = 0;
@@ -2860,7 +2859,7 @@ loop:
 			error = tsleep((caddr_t)&vp->v_numoutput,
 				slpflag | (PRIBIO + 1), "nfsfsync", slptimeo);
 			if (error) {
-			    if (nfs_sigintr(nmp, (struct nfsreq *)0, p))
+			    if (nfs_sigintr(nmp, (struct nfsreq *)NULL, p))
 				return (EINTR);
 			    if (slpflag == PCATCH) {
 				slpflag = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.5 1996/03/31 13:15:53 mickey Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.6 1996/04/17 04:50:31 mickey Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.26 1996/03/13 00:44:17 fvdl Exp $	*/
 
 /*
@@ -728,7 +728,7 @@ nfsm_rpchead(cr, nmflag, procid, auth_type, auth_len, auth_str, verf_len,
 	}
 	mb->m_next = mrest;
 	mreq->m_pkthdr.len = authsiz + 10 * NFSX_UNSIGNED + mrest_len;
-	mreq->m_pkthdr.rcvif = (struct ifnet *)0;
+	mreq->m_pkthdr.rcvif = (struct ifnet *)NULL;
 	*mbp = mb;
 	return (mreq);
 }
@@ -1103,7 +1103,7 @@ nfs_init()
 #ifdef NFSCLIENT
 	/* Ensure async daemons disabled */
 	for (i = 0; i < NFS_MAXASYNCDAEMON; i++)
-		nfs_iodwant[i] = (struct proc *)0;
+		nfs_iodwant[i] = (struct proc *)NULL;
 	TAILQ_INIT(&nfs_bufq);
 	nfs_nhinit();			/* Init the nfsnode table */
 #endif /* NFSCLIENT */
@@ -1364,7 +1364,7 @@ nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, retdirp, p, kerbflag)
 	int error, rdonly;
 	struct componentname *cnp = &ndp->ni_cnd;
 
-	*retdirp = (struct vnode *)0;
+	*retdirp = (struct vnode *)NULL;
 	MALLOC(cnp->cn_pnbuf, char *, len + 1, M_NAMEI, M_WAITOK);
 	/*
 	 * Copy the name from the mbuf list to ndp->ni_pnbuf
@@ -1374,6 +1374,7 @@ nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, retdirp, p, kerbflag)
 	tocp = cnp->cn_pnbuf;
 	md = *mdp;
 	rem = mtod(md, caddr_t) + md->m_len - fromcp;
+	cnp->cn_hash = 0;
 	for (i = 0; i < len; i++) {
 		while (rem == 0) {
 			md = md->m_next;
@@ -1388,6 +1389,7 @@ nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, retdirp, p, kerbflag)
 			error = EACCES;
 			goto out;
 		}
+		cnp->cn_hash += (u_char)*fromcp;
 		*tocp++ = *fromcp++;
 		rem--;
 	}
@@ -1426,8 +1428,7 @@ nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, retdirp, p, kerbflag)
 	 * And call lookup() to do the real work
 	 */
 	cnp->cn_proc = p;
-	error = lookup(ndp);
-	if (error)
+	if ((error = lookup(ndp)) != 0)
 		goto out;
 	/*
 	 * Check for encountering a symbolic link
@@ -1479,7 +1480,7 @@ nfsm_adj(mp, len, nul)
 	m = mp;
 	for (;;) {
 		count += m->m_len;
-		if (m->m_next == (struct mbuf *)0)
+		if (m->m_next == (struct mbuf *)NULL)
 			break;
 		m = m->m_next;
 	}
@@ -1645,7 +1646,7 @@ nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp, kerbflag)
 	struct ucred *credanon;
 	int error, exflags;
 
-	*vpp = (struct vnode *)0;
+	*vpp = (struct vnode *)NULL;
 #ifdef Lite2_integrated
 	mp = vfs_getvfs(&fhp->fh_fsid);
 #else
@@ -1761,14 +1762,14 @@ nfs_getcookie(np, off, add)
 			dp->ndm_eocookie = 0;
 			LIST_INSERT_HEAD(&np->n_cookies, dp, ndm_list);
 		} else
-			return ((nfsuint64 *)0);
+			return ((nfsuint64 *)NULL);
 	}
 	while (pos >= NFSNUMCOOKIES) {
 		pos -= NFSNUMCOOKIES;
 		if (dp->ndm_list.le_next) {
 			if (!add && dp->ndm_eocookie < NFSNUMCOOKIES &&
 				pos >= dp->ndm_eocookie)
-				return ((nfsuint64 *)0);
+				return ((nfsuint64 *)NULL);
 			dp = dp->ndm_list.le_next;
 		} else if (add) {
 			MALLOC(dp2, struct nfsdmap *, sizeof (struct nfsdmap),
@@ -1777,13 +1778,13 @@ nfs_getcookie(np, off, add)
 			LIST_INSERT_AFTER(dp, dp2, ndm_list);
 			dp = dp2;
 		} else
-			return ((nfsuint64 *)0);
+			return ((nfsuint64 *)NULL);
 	}
 	if (pos >= dp->ndm_eocookie) {
 		if (add)
 			dp->ndm_eocookie = pos + 1;
 		else
-			return ((nfsuint64 *)0);
+			return ((nfsuint64 *)NULL);
 	}
 	return (&dp->ndm_cookies[pos]);
 }
