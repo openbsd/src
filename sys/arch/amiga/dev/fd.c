@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.6 1996/05/02 06:43:38 niklas Exp $	*/
+/*	$OpenBSD: fd.c,v 1.7 1996/05/04 09:17:35 niklas Exp $	*/
 /*	$NetBSD: fd.c,v 1.30 1996/04/29 06:23:47 mhitch Exp $	*/
 
 /*
@@ -42,7 +42,6 @@
 #include <sys/disk.h>
 #include <sys/dkbad.h>
 #include <sys/proc.h>
-#include <sys/cpu.h>
 #include <machine/cpu.h>
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/custom.h>
