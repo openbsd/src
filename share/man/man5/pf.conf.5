@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.76 2002/08/04 14:27:48 pb Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.77 2002/08/08 15:16:42 pb Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -57,40 +57,6 @@ other utilities may be written using the
 .Xr ioctl 2
 interface described in
 .Xr pf 4 .
-Filter and NAT rules are loaded from a text file into the kernel using
-.Pp
-.Cm # pfctl -f file
-.Pp
-which replaces the active rule set with the new one.
-To load only the filter rules from a file, one would use the command
-.Pp
-.Cm # pfctl -R -f file
-.Pp
-To load only the NAT rules from a file, one would use the command
-.Pp
-.Cm # pfctl -N -f file
-.Pp
-To load only the options from a file, one would use the command
-.Pp
-.Cm # pfctl -O -f file
-.Pp
-The active filter rule set can be displayed using
-.Pp
-.Cm # pfctl -s r
-.Pp
-The active translation rule set can be displayed using
-.Pp
-.Cm # pfctl -s n
-.Pp
-The active options can be displayed using pfctl as well:
-.Pp
-.Cm # pfctl -s t
-.Pp
-shows the current timeouts.
-.Pp
-.Cm # pfctl -s m
-.Pp
-shows the current limits.
 .Pp
 For each packet processed by the packet filter, the filter rules are
 evaluated in sequential order, from first to last.
@@ -332,12 +298,8 @@ This interface is monitored by the
 logging daemon which dumps the logged packets to the file
 .Em /var/log/pflog
 in
-.Xr tcpdump 8
+.Xr pcap 3
 binary format.
-The log files can be read using tcpdump:
-.Bd -literal
-.Cm # tcpdump -n -e -ttt -r /var/log/pflog
-.Ed
 .Sh QUICK
 If a packet matches a rule which has the 
 .Sq quick
