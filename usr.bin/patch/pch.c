@@ -1,7 +1,7 @@
-/* $OpenBSD: pch.c,v 1.17 2003/07/21 14:00:41 deraadt Exp $	 */
+/* $OpenBSD: pch.c,v 1.18 2003/07/21 14:27:35 deraadt Exp $	 */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: pch.c,v 1.17 2003/07/21 14:00:41 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: pch.c,v 1.18 2003/07/21 14:27:35 deraadt Exp $";
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -246,9 +246,11 @@ intuit_diff_type(void)
 		else if (strnEQ(s, "Index:", 6))
 			indtmp = savestr(s + 6);
 		else if (strnEQ(s, "Prereq:", 7)) {
-			for (t = s + 7; isspace(*t); t++);
+			for (t = s + 7; isspace(*t); t++)
+				;
 			revision = savestr(t);
-			for (t = revision; *t && !isspace(*t); t++);
+			for (t = revision; *t && !isspace(*t); t++)
+				;
 			*t = '\0';
 			if (!*revision) {
 				free(revision);
@@ -527,7 +529,8 @@ another_hunk(void)
 				while (isdigit(*s))
 					s++;
 				if (*s == ',') {
-					for (; *s && !isdigit(*s); s++);
+					for (; *s && !isdigit(*s); s++)
+						;
 					if (!*s)
 						malformed();
 					p_ptrn_lines = ((LINENUM) atol(s)) - p_first + 1;
@@ -956,7 +959,8 @@ hunk_done:
 			return FALSE;
 		}
 		p_first = (LINENUM) atol(buf);
-		for (s = buf; isdigit(*s); s++);
+		for (s = buf; isdigit(*s); s++)
+			;
 		if (*s == ',') {
 			p_ptrn_lines = (LINENUM) atol(++s) - p_first + 1;
 			while (isdigit(*s))
@@ -967,7 +971,8 @@ hunk_done:
 		if (hunk_type == 'a')
 			p_first++;	/* do append rather than insert */
 		min = (LINENUM) atol(++s);
-		for (; isdigit(*s); s++);
+		for (; isdigit(*s); s++)
+			;
 		if (*s == ',')
 			max = (LINENUM) atol(++s);
 		else
@@ -1322,7 +1327,8 @@ do_ed_script(void)
 			break;
 		}
 		p_input_line++;
-		for (t = buf; isdigit(*t) || *t == ','; t++);
+		for (t = buf; isdigit(*t) || *t == ','; t++)
+			;
 		this_line_is_command = (isdigit(*buf) &&
 		    (*t == 'd' || *t == 'c' || *t == 'a'));
 		if (this_line_is_command) {
