@@ -1,4 +1,4 @@
-#	$OpenBSD: ipsec_num.cst,v 1.14 2003/12/15 10:06:42 hshoexer Exp $
+#	$OpenBSD: ipsec_num.cst,v 1.15 2004/04/28 14:40:00 ho Exp $
 #	$EOM: ipsec_num.cst,v 1.5 2000/10/13 17:56:52 angelos Exp $
 
 #
@@ -62,8 +62,10 @@ IPSEC_DURATION
 IPSEC_ENCAP
   TUNNEL				1
   TRANSPORT				2
-  UDP_ENCAP_TUNNEL			3
-  UDP_ENCAP_TRANSPORT			4
+  FUTURE_UDP_ENCAP_TUNNEL		3	# XXX Not yet assigned
+  FUTURE_UDP_ENCAP_TRANSPORT		4	# XXX Not yet assigned
+  UDP_ENCAP_TUNNEL			61443	# draft-ietf-ipsec-nat-t-ike
+  UDP_ENCAP_TRANSPORT			61443	# draft-ietf-ipsec-nat-t-ike
 .
 
 # IPSEC authentication algorithm.

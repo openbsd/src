@@ -1,4 +1,4 @@
-#	$OpenBSD: isakmp_num.cst,v 1.7 2003/06/03 14:28:16 ho Exp $
+#	$OpenBSD: isakmp_num.cst,v 1.8 2004/04/28 14:40:00 ho Exp $
 #	$EOM: isakmp_num.cst,v 1.3 2000/05/17 03:09:50 angelos Exp $
 
 #
@@ -52,11 +52,16 @@ ISAKMP_PAYLOAD
   VENDOR			13
 # XXX the following is not quite legitimate according to the IETF process
   ATTRIBUTE			14	# IKE Mode-Config attribute
-  NAT_D				15	# NAT Discovery payload
-  NAT_OA			16	# NAT Original Address payload
-  RESERVED_MIN			15	# XXX Change to 17 to accept NAT-T
+  RESERVED_MIN			15	# XXX For now
+  SAK				15	# RFC 3547, SA KEK Payload
+  SAT				16	# RFC 3547, SA TEK Payload
+  KD				17	# RFC 3547, Key Download
+  SEQ				18	# RFC 3547, Sequence Number
+  POP				19	# RFC 3547, Proof of possession
   RESERVED_MAX			127
   PRIVATE_MIN			128
+  NAT_D				130	# NAT Discovery payload
+  NAT_OA			131	# NAT Original Address payload
   PRIVATE_MAX			255
 .
 
