@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.9 1996/06/14 04:41:09 tholo Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.10 1996/07/23 21:32:33 deraadt Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62 1996/05/11 18:26:49 mycroft Exp $	*/
 
 /*
@@ -697,7 +697,7 @@ nfs_setattrrpc(vp, vap, cred, procp)
 			if (vap->va_atime.tv_sec != time.tv_sec) {
 				nfsm_build(tl, u_int32_t *, 3 * NFSX_UNSIGNED);
 				*tl++ = txdr_unsigned(NFSV3SATTRTIME_TOCLIENT);
-				txdr_nfsv3time(&vap->va_atime, tl);
+				txdr_nfsv3time(&vap->va_mtime, tl);
 			} else {
 				nfsm_build(tl, u_int32_t *, NFSX_UNSIGNED);
 				*tl = txdr_unsigned(NFSV3SATTRTIME_TOSERVER);

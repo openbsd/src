@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.8 1996/05/28 13:44:08 deraadt Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.9 1996/07/23 21:32:31 deraadt Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.1 1996/05/25 22:40:34 fvdl Exp $	*/
 
 /*
@@ -56,6 +56,7 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/malloc.h>
+#include <sys/time.h>
 
 #include <vm/vm.h>
 
@@ -610,6 +611,8 @@ nfsm_rpchead(cr, nmflag, procid, auth_type, auth_len, auth_str, verf_len,
 	register int i;
 	struct mbuf *mreq, *mb2;
 	int siz, grpsiz, authsiz;
+	struct timeval tv;
+	static u_long base;
 
 	authsiz = nfsm_rndup(auth_len);
 	MGETHDR(mb, M_WAIT, MT_DATA);
@@ -628,8 +631,22 @@ nfsm_rpchead(cr, nmflag, procid, auth_type, auth_len, auth_str, verf_len,
 	 * First the RPC header.
 	 */
 	nfsm_build(tl, u_int32_t *, 8 * NFSX_UNSIGNED);
+
+	/*
+	 * derive initial xid from system time
+	 * XXX time is invalid if root not yet mounted
+	 */
+	if (!base && (rootvp)) {
+		microtime(&tv);
+		base = tv.tv_sec << 12;
+		nfs_xid = base;
+	}
+	/*
+	 * Skip zero xid if it should ever happen.
+	 */
 	if (++nfs_xid == 0)
 		nfs_xid++;
+
 	*tl++ = *xidp = txdr_unsigned(nfs_xid);
 	*tl++ = rpc_call;
 	*tl++ = rpc_vers;
