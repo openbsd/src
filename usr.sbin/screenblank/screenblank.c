@@ -1,4 +1,4 @@
-/*	$OpenBSD: screenblank.c,v 1.3 1997/06/11 08:16:59 deraadt Exp $	*/
+/*	$OpenBSD: screenblank.c,v 1.4 1998/06/03 08:04:01 deraadt Exp $	*/
 /*	$NetBSD: screenblank.c,v 1.2 1996/02/28 01:18:34 thorpej Exp $	*/
 
 /*-
@@ -159,7 +159,7 @@ main(argc, argv)
 	 * killed.
 	 */
 	sa.sa_handler = sighandler;
-	sa.sa_mask = 0;
+	sigemptyset(&sa.sa_mask);
 	sa.sa_flags = SA_NOCLDSTOP;
 	if (sigaction(SIGINT, &sa, NULL) || sigaction(SIGTERM, &sa, NULL) ||
 	    sigaction(SIGHUP, &sa, NULL))

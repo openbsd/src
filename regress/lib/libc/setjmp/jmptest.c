@@ -102,7 +102,7 @@ main(argc, argv)
 #endif
 
 	sa.sa_handler = aborthandler;
-	sa.sa_mask = 0;
+	sigemptyset(&sa.sa_mask);
 	sa.sa_flags = 0;
 	if (sigaction(SIGABRT, &sa, NULL) == -1)
 		err(1, "sigaction failed");
