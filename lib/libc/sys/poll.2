@@ -1,4 +1,4 @@
-.\"	$OpenBSD: poll.2,v 1.15 2003/08/19 22:16:39 deraadt Exp $
+.\"	$OpenBSD: poll.2,v 1.16 2003/09/08 18:29:15 millert Exp $
 .\"
 .\" Copyright (c) 1994 Jason R. Thorpe
 .\" All rights reserved.
@@ -45,9 +45,9 @@ descriptors.
 .Pp
 The arguments are as follows:
 .Bl -tag -width timeout
-.It Pa fds
+.It Fa fds
 Points to an array of
-.Nm pollfd
+.Fa pollfd
 structures, which are defined as:
 .Bd -literal -offset indent
 struct pollfd {
@@ -58,28 +58,28 @@ struct pollfd {
 .Ed
 .Pp
 The
-.Pa fd
+.Fa fd
 member is an open file descriptor.
 If
-.Pa fd
+.Fa fd
 is -1,
 the
-.Nm pollfd
+.Fa pollfd
 structure is considered unused, and
-.Pa revents
+.Fa revents
 will be cleared.
 .Pp
 The
-.Pa events
+.Fa events
 and
-.Pa revents
+.Fa revents
 members are bitmasks of conditions to monitor and conditions found,
 respectively.
-.It Pa nfds
+.It Fa nfds
 The number of
-.Nm pollfd
+.Fa pollfd
 structures in the array.
-.It Pa timeout
+.It Fa timeout
 Maximum interval to wait for the poll to complete, in milliseconds.
 If this value is 0, then
 .Fn poll
@@ -90,73 +90,78 @@ will block indefinitely until a condition is found.
 .El
 .Pp
 The calling process sets the
-.Pa events
+.Fa events
 bitmask and
 .Fn poll
 sets the
-.Pa revents
+.Fa revents
 bitmask.
 Each call to
 .Fn poll
 resets the
-.Pa revents
+.Fa revents
 bitmask for accuracy.
 The condition flags in the bitmasks are defined as:
 .Bl -tag -width POLLRDNORM
-.It Nm POLLIN
-Data is available on the file descriptor for reading.
-.It Nm POLLNORM
+.It Dv POLLIN
+Data other than high-priority data may be read without blocking.
+.It Dv POLLRDNORM
+Normal data may be read without blocking.
+.It Dv POLLRDBAND
+Priority data may be read without blocking.
+.It Dv POLLNORM
 Same as
-.Nm POLLIN .
-.It Nm POLLPRI
+.Dv POLLRDNORM .
+This flag is provided for source code compatibility with older
+programs and should not be used in new code.
+.It Dv POLLPRI
+High-priority data may be read without blocking.
+.It Dv POLLOUT
+Normal data may be written without blocking.
+.It Dv POLLWRNORM
 Same as
-.Nm POLLIN .
-.It Nm POLLOUT
-Data can be written to the file descriptor without blocking.
-.It Nm POLLERR
-This flag is not used in this implementation and is provided only for source
-code compatibility.
-.It Nm POLLHUP
-The file descriptor was valid before the polling process and invalid after.
-Presumably, this means that the file descriptor was closed sometime during
-the poll.
-.It Nm POLLNVAL
+.Dv POLLOUT .
+.It Dv POLLWRBAND
+Priority data may be written.
+.It Dv POLLERR
+An error has occurred on the device or socket.
+This flag is only valid in the
+.Fa revents
+bitmask; it is ignored in the
+.Fa events
+member.
+.It Dv POLLHUP
+The device or socket has been disconnected.
+This event and
+.Dv POLLOUT
+are mutually-exclusive; a descriptor can never be writable if a hangup has
+occurred.
+However, this event and
+.Dv POLLIN ,
+.Dv POLLRDNORM ,
+.Dv POLLRDBAND ,
+or
+.Dv POLLPRI
+are not mutually-exclusive.
+This flag is only valid in the
+.Fa revents
+bitmask; it is ignored in the
+.Fa events
+member.
+.It Dv POLLNVAL
 The corresponding file descriptor is invalid.
-.It Nm POLLRDNORM
-Same as
-.Nm POLLIN .
-.It Nm POLLRDBAND
-Same as
-.Nm POLLIN .
-.It Nm POLLWRNORM
-Same as
-.Nm POLLOUT .
-.It Nm POLLWRBAND
-Same as
-.Nm POLLOUT .
+This flag is only valid in the
+.Fa revents
+bitmask; it is ignored in the
+.Fa events
+member.
 .El
-.Pp
-All flags except
-.Nm POLLIN ,
-.Nm POLLOUT ,
-and their synonyms are for use only in the
-.Pa revents
-member of the
-.Nm pollfd
-structure.
-An attempt to set any of these flags in the
-.Pa events
-member will generate an error condition.
 .Pp
 In addition to I/O multiplexing,
 .Fn poll
 can be used to generate simple timeouts.
 This functionality may be achieved by passing a null pointer for
-.Pa fds .
-.Sh WARNINGS
-The
-.Nm POLLHUP
-flag is only a close approximation and may not always be accurate.
+.Fa fds .
 .Sh RETURN VALUES
 Upon error,
 .Fn poll
@@ -168,22 +173,16 @@ a 0 is returned.
 Otherwise,
 .Fn poll
 returns the number of file descriptors for which
-.Pa revents
+.Fa revents
 is non-zero.
 .Sh ERRORS
 .Fn poll
 will fail if:
 .Bl -tag -width "EINVAL   "
 .It Bq Er EINVAL
-.Pa nfds
+.Fa nfds
 was either a negative number or greater than the number of available
 file descriptors.
-.It Bq Er EINVAL
-An invalid flag was set in the
-.Pa events
-member of the
-.Nm pollfd
-structure.
 .It Bq Er EINVAL
 The timeout passed to
 .Fn poll
@@ -199,10 +198,41 @@ may succeed.
 caught a signal during the polling process.
 .El
 .Sh SEE ALSO
+.Xr getrlimit 2 ,
+.Xr read 2 ,
 .Xr select 2 ,
-.Xr sysconf 3
+.Xr write 2
 .Sh HISTORY
 A
 .Fn poll
 system call appeared in
-.At V .
+.At V.3 .
+.Sh BUGS
+The
+.Dv POLLHUP
+and
+.Dv POLLERR
+flags are currently unimplemented in
+.Ox .
+.Pp
+Because
+.Ox
+does not implement
+.Tn STREAMS ,
+there is no distinction between some of the fields in the
+.Fa events
+and
+.Fa revents
+bitmasks.
+As a result, the
+.Dv POLLIN ,
+.Dv POLLNORM ,
+.Dv POLLPRI ,
+.Dv POLLRDNORM
+and
+.Dv POLLRDBAND
+flags are all equivalent.
+Also, the
+.Dv POLLWRBAND
+flag is equivalent to
+.Dv POLLWRNORM .
