@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.h,v 1.2 2002/06/04 19:15:54 deraadt Exp $	*/
+/*	$OpenBSD: systrace.h,v 1.3 2002/06/04 19:43:35 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -32,6 +32,8 @@
 #ifndef _SYSTRACE_H_
 #define _SYSTRACE_H_
 #include <sys/queue.h>
+
+#define _PATH_XSYSTRACE	"/usr/X11R6/bin/xsystrace"
 
 enum logicop { LOGIC_AND, LOGIC_OR, LOGIC_NOT, LOGIC_SINGLE };
 

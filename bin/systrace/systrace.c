@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.4 2002/06/04 19:25:54 provos Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.5 2002/06/04 19:43:35 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -357,7 +357,7 @@ requestor_start(char *path)
 
 		execvp(path, argv);
 
-		err(1, "execvp");
+		err(1, "execvp: %s", path);
 	}
 
 	close(pair[1]);
@@ -434,7 +434,7 @@ main(int argc, char **argv)
 		err(1, "attach");
 
 	if (usex11 && !automatic)
-		requestor_start("./notification/src/notification");
+		requestor_start(_PATH_XSYSTRACE);
 
 	if (kill(pid, SIGCONT) == -1)
 		err(1, "kill");
