@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.33 2004/12/22 17:14:34 millert Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.34 2004/12/23 11:29:02 jsg Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -37,11 +37,8 @@ struct	x_ftab  {
 	short		xf_flags;
 };
 
-/* index into struct x_ftab x_ftab[] - small is good */
-typedef unsigned char Findex;
-
 struct x_defbindings {
-	Findex		xdb_func;	/* XFUNC_* */
+	u_char		xdb_func;	/* XFUNC_* */
 	unsigned char	xdb_tab;
 	unsigned char	xdb_char;
 };
@@ -98,8 +95,8 @@ static	int	x_prefix1 = CTRL('['), x_prefix2 = CTRL('X');
 static	char   **x_histp;	/* history position */
 static	int	x_nextcmd;	/* for newline-and-next */
 static	char	*xmp;		/* mark pointer */
-static	Findex   x_last_command;
-static	Findex (*x_tab)[X_TABSZ];	/* key definition */
+static	u_char	x_last_command;
+static	u_char	(*x_tab)[X_TABSZ];	/* key definition */
 static	char    *(*x_atab)[X_TABSZ];	/* macro definitions */
 static	unsigned char	x_bound[(X_TABSZ * X_NTABS + 7) / 8];
 #define	KILLSIZE	20
@@ -312,7 +309,7 @@ x_emacs(char *buf, size_t len)
 	int	c;
 	const char *p;
 	int	i;
-	Findex	f;
+	u_char f;
 
 	xbp = xbuf = buf; xend = buf + len;
 	xlp = xcp = xep = buf;
@@ -867,7 +864,7 @@ x_search_hist(int c)
 	int offset = -1;	/* offset of match in xbuf, else -1 */
 	char pat [256+1];	/* pattern buffer */
 	char *p = pat;
-	Findex f;
+	u_char f;
 
 	*p = '\0';
 	while (1) {
@@ -1306,7 +1303,7 @@ x_bind( const char *a1, const char *a2,
 	int macro,		/* bind -m */
 	int list)		/* bind -l */
 {
-	Findex f;
+	u_char f;
 	int prefix, key;
 	char *sp = NULL;
 	char *m1, *m2;
@@ -1402,7 +1399,7 @@ x_init_emacs(void)
 	ainit(AEDIT);
 	x_nextcmd = -1;
 
-	x_tab = (Findex (*)[X_TABSZ]) alloc(sizeofN(*x_tab, X_NTABS), AEDIT);
+	x_tab = (u_char (*)[X_TABSZ]) alloc(sizeofN(*x_tab, X_NTABS), AEDIT);
 	for (j = 0; j < X_TABSZ; j++)
 		x_tab[0][j] = XFUNC_insert;
 	for (i = 1; i < X_NTABS; i++)
