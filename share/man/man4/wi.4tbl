@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4tbl,v 1.70 2005/03/12 10:32:40 jmc Exp $
+.\"	$OpenBSD: wi.4tbl,v 1.71 2005/03/24 13:58:28 dhartmei Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -292,6 +292,7 @@ Apacer Wireless Steno MB112:Prism-3:USB
 Apple Airport:Hermes:macobio
 ARtem Onair:Hermes:PCMCIA
 ASUS SpaceLink WL-100:Prism-2.5:PCMCIA
+ASUS SpaceLink WL-110:Prism-2.5:CF
 ASUS WL-140:Prism-3:USB
 Belkin F5D6020 (version 1 only):Prism-2:PCMCIA
 Belkin F5D6001 (version 1 only):Prism-2:PCI
