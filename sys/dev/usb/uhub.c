@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.24 2004/07/08 22:18:44 deraadt Exp $ */
+/*	$OpenBSD: uhub.c,v 1.25 2004/07/11 05:29:16 deraadt Exp $ */
 /*	$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -181,7 +181,7 @@ USB_ATTACH(uhub)
 	/* Get hub descriptor. */
 	req.bmRequestType = UT_READ_CLASS_DEVICE;
 	req.bRequest = UR_GET_DESCRIPTOR;
-	USETW(req.wValue, 0);
+	USETW2(req.wValue, UDESC_HUB, 0);
 	USETW(req.wIndex, 0);
 	USETW(req.wLength, USB_HUB_DESCRIPTOR_SIZE);
 	DPRINTFN(1,("usb_init_hub: getting hub descriptor\n"));
