@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmdb_machdep.h,v 1.2 2003/01/27 02:32:58 fgsch Exp $	*/
+/*	$OpenBSD: pmdb_machdep.h,v 1.3 2003/05/30 19:33:36 miod Exp $	*/
 /*
  * Copyright (c) 2002 Federico Schwindt <fgsch@openbsd.org>
  * All rights reserved. 
@@ -26,4 +26,4 @@
 
 #define BREAKPOINT		{ 0x03 }
 #define BREAKPOINT_LEN		1
-#define BREAKPOINT_DECR_PC	0
+#define BREAKPOINT_DECR_PC	1
