@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.86 2001/05/21 03:02:19 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.87 2001/05/21 03:23:36 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -156,10 +156,10 @@ struct sockaddr_encap
 
 struct ipsec_ref
 {
-    int ref_type;		/* Subtype of data */
-    int ref_len;		/* Length of data following */
-    int ref_count;		/* Reference count */
-    int ref_malloctype;		/* malloc(9) type, for free'ing purposes */
+    u_int16_t ref_type;		/* Subtype of data */
+    int16_t   ref_len;		/* Length of data following */
+    int       ref_count;	/* Reference count */
+    int       ref_malloctype;	/* malloc(9) type, for freeing purposes */
 };
 
 struct ipsec_acquire
