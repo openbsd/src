@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigsetjmp.S,v 1.1 2001/08/29 01:45:24 art Exp $	*/
+/*	$OpenBSD: sigsetjmp.S,v 1.2 2001/10/11 21:56:53 millert Exp $	*/
 /*	$NetBSD: sigsetjmp.S,v 1.5 2000/08/28 00:45:59 eeh Exp $	*/
 /*
  * Copyright (c) 1995 Paul Kranenburg
@@ -42,12 +42,12 @@ ENTRY(sigsetjmp)
 	movrnz	%o1, %o2, %o3
 	ldx [%g1+%o3], %g1
 	jmp %g1
-	 st	%o1,[%o0+0x48]		! jmpbuf[JBLEN]
+	 st	%o1,[%o0 + 8*14]	! jmpbuf[JBLEN]
 
 
 ENTRY(siglongjmp)
 	PIC_PROLOGUE(%g1,%o2)		! %g1 = _GLOBAL_OFFSET_TABLE
-	ld	[%o0 + 0x48],%o2	! jmpbuf[JBLEN]
+	ld	[%o0 + 8*14],%o2	! jmpbuf[JBLEN]
 	set	_C_LABEL(longjmp), %o3	! if (%o2 != 0) goto _longjmp;
 	set	_C_LABEL(_longjmp), %o4	! else goto __longjmp;
 	movrnz	%o2, %o3, %o4 
@@ -60,13 +60,13 @@ ENTRY(siglongjmp)
 
 ENTRY(sigsetjmp)
 	brz,pt	%o1,_C_LABEL(_setjmp)
-	 st	%o1,[%o0+0x48]		! jmpbuf[JBLEN]
+	 st	%o1,[%o0 + 8*14]	! jmpbuf[JBLEN]
 	ba,a,pt	%icc,_C_LABEL(setjmp)
 	 nop				! spitfire bug
 	unimp 0
 
 ENTRY(siglongjmp)
-	ld	[%o0 + 0x48], %g1
+	ld	[%o0 + 8*14], %g1
 	brz,pt	%g1, _C_LABEL(_longjmp)
 	 nop
 	ba,a,pt	%icc, _C_LABEL(longjmp)
