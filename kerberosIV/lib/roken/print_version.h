@@ -1,5 +1,7 @@
-/*	$OpenBSD: print_version.h,v 1.4 2001/05/03 19:21:51 hin Exp $	*/
+/*	$OpenBSD: print_version.h,v 1.5 2001/05/11 14:06:41 hin Exp $	*/
 
-#include <version.h>
+#include <config.h>
+
+#define KRB4_VERSION PACKAGE "-" VERSION
 
 #define VERSIONLIST { KRB4_VERSION }
