@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr.c,v 1.48 2000/02/06 22:03:19 niklas Exp $	*/
+/*	$OpenBSD: ncr.c,v 1.49 2000/02/07 23:09:53 deraadt Exp $	*/
 /*	$NetBSD: ncr.c,v 1.63 1997/09/23 02:39:15 perry Exp $	*/
 
 /**************************************************************************
@@ -1466,7 +1466,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$OpenBSD: ncr.c,v 1.48 2000/02/06 22:03:19 niklas Exp $\n";
+	"\n$OpenBSD: ncr.c,v 1.49 2000/02/07 23:09:53 deraadt Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -3449,48 +3449,48 @@ typedef struct {
 } ncr_chip;
 
 static ncr_chip ncr_chip_table[] = {
- {NCR_810_ID, 0x00,	"ncr 53c810 fast10 scsi",		4,  8, 4,
+ {NCR_810_ID, 0x00,	"fast10",			4,  8, 4,
  FE_ERL}
  ,
- {NCR_810_ID, 0x10,	"ncr 53c810a fast10 scsi",		4,  8, 4,
+ {NCR_810_ID, 0x10,	"fast10",			4,  8, 4,
  FE_ERL|FE_LDSTR|FE_PFEN|FE_BOF}
  ,
- {NCR_815_ID, 0x00,	"ncr 53c815 fast10 scsi", 		4,  8, 4,
+ {NCR_815_ID, 0x00,	"fast10", 			4,  8, 4,
  FE_ERL|FE_BOF}
  ,
- {NCR_820_ID, 0x00,	"ncr 53c820 fast10 wide scsi", 		4,  8, 4,
+ {NCR_820_ID, 0x00,	"fast10 wide", 		4,  8, 4,
  FE_WIDE|FE_ERL}
  ,
- {NCR_825_ID, 0x00,	"ncr 53c825 fast10 wide scsi",		4,  8, 4,
+ {NCR_825_ID, 0x00,	"fast10 wide",		4,  8, 4,
  FE_WIDE|FE_ERL|FE_BOF}
  ,
- {NCR_825_ID, 0x10,	"ncr 53c825a fast10 wide scsi",		7,  8, 4,
+ {NCR_825_ID, 0x10,	"fast10 wide",		7,  8, 4,
  FE_WIDE|FE_CACHE_SET|FE_DFS|FE_LDSTR|FE_PFEN|FE_RAM}
  ,
- {NCR_860_ID, 0x00,	"ncr 53c860 fast20 scsi",		4,  8, 5,
+ {NCR_860_ID, 0x00,	"fast20",			4,  8, 5,
  FE_ULTRA|FE_CLK80|FE_CACHE_SET|FE_LDSTR|FE_PFEN}
  ,
- {NCR_875_ID, 0x00,	"ncr 53c875 fast20 wide scsi",		7, 16, 5,
+ {NCR_875_ID, 0x00,	"fast20 wide",		7, 16, 5,
  FE_WIDE|FE_ULTRA|FE_CLK80|FE_CACHE_SET|FE_DFS|FE_LDSTR|FE_PFEN|FE_RAM}
  ,
- {NCR_875_ID, 0x02,	"ncr 53c875 fast20 wide scsi",		7, 16, 5,
+ {NCR_875_ID, 0x02,	"fast20 wide",		7, 16, 5,
  FE_WIDE|FE_ULTRA|FE_DBLR|FE_CACHE_SET|FE_DFS|FE_LDSTR|FE_PFEN|FE_RAM}
  ,
 #ifdef NCR_NARROW_875J
- {NCR_875_ID2, 0x00,	"ncr 53c875j fast20 scsi",		4,  8, 5,
+ {NCR_875_ID2, 0x00,	"fast20",			4,  8, 5,
  FE_ULTRA|FE_DBLR|FE_CACHE_SET|FE_DFS|FE_LDSTR|FE_PFEN|FE_RAM}
 #else
- {NCR_875_ID2, 0x00,	"ncr 53c875j fast20 wide scsi",		7, 16, 5,
+ {NCR_875_ID2, 0x00,	"fast20 wide",		7, 16, 5,
  FE_WIDE|FE_ULTRA|FE_DBLR|FE_CACHE_SET|FE_DFS|FE_LDSTR|FE_PFEN|FE_RAM}
 #endif
  ,
- {NCR_885_ID, 0x00,	"ncr 53c885 fast20 wide scsi",		7, 16, 5,
+ {NCR_885_ID, 0x00,	"fast20 wide",		7, 16, 5,
  FE_WIDE|FE_ULTRA|FE_DBLR|FE_CACHE_SET|FE_DFS|FE_LDSTR|FE_PFEN|FE_RAM}
  ,
- {NCR_895_ID, 0x00,	"ncr 53c895 fast40 wide scsi",		7, 31, 7,
+ {NCR_895_ID, 0x00,	"fast40 wide",		7, 31, 7,
  FE_WIDE|FE_ULTRA2|FE_QUAD|FE_CACHE_SET|FE_DFS|FE_LDSTR|FE_PFEN|FE_RAM}
  ,
- {NCR_896_ID, 0x00,	"ncr 53c896 fast40 wide scsi",		7, 31, 7,
+ {NCR_896_ID, 0x00,	"fast40 wide",		7, 31, 7,
  FE_WIDE|FE_ULTRA2|FE_QUAD|FE_CACHE_SET|FE_DFS|FE_LDSTR|FE_PFEN|FE_RAM}
 };
 
