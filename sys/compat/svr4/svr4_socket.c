@@ -1,5 +1,5 @@
-/*	$OpenBSD: svr4_socket.c,v 1.2 1997/02/13 19:45:22 niklas Exp $	*/
-/*	$NetBSD: svr4_socket.c,v 1.3 1996/10/28 08:46:36 fvdl Exp $	*/
+/*	$OpenBSD: svr4_socket.c,v 1.3 1997/08/29 19:56:37 kstailey Exp $	*/
+/*	$NetBSD: svr4_socket.c,v 1.4 1997/07/21 23:02:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -47,13 +47,19 @@
 #include <sys/queue.h>
 #include <sys/mbuf.h>
 #include <sys/file.h>
+#include <sys/mount.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
+#include <sys/syscallargs.h>
 #include <sys/un.h>
 #include <sys/stat.h>
 
+#include <compat/svr4/svr4_types.h>
 #include <compat/svr4/svr4_util.h>
 #include <compat/svr4/svr4_socket.h>
+#include <compat/svr4/svr4_signal.h>
+#include <compat/svr4/svr4_sockmod.h>
+#include <compat/svr4/svr4_syscallargs.h>
 
 struct svr4_sockcache_entry {
 	struct proc *p;		/* Process for the socket		*/
@@ -162,4 +168,39 @@ svr4_add_socket(p, path, st)
 	DPRINTF(("svr4_add_socket: %s [%p,%d,%d]\n", e->sock.sun_path,
 		 p, e->dev, e->ino));
 	return 0;
+}
+
+
+int
+svr4_sys_socket(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct svr4_sys_socket_args *uap = v;
+
+	switch (SCARG(uap, type)) {
+	case SVR4_SOCK_DGRAM:
+		SCARG(uap, type) = SOCK_DGRAM;
+		break;
+
+	case SVR4_SOCK_STREAM:
+		SCARG(uap, type) = SOCK_STREAM;
+		break;
+
+	case SVR4_SOCK_RAW:
+		SCARG(uap, type) = SOCK_RAW;
+		break;
+
+	case SVR4_SOCK_RDM:
+		SCARG(uap, type) = SOCK_RDM;
+		break;
+
+	case SVR4_SOCK_SEQPACKET:
+		SCARG(uap, type) = SOCK_SEQPACKET;
+		break;
+	default:
+		return EINVAL;
+	}
+	return sys_socket(p, uap, retval);
 }

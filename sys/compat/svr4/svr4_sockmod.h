@@ -1,5 +1,5 @@
-/*	$OpenBSD: svr4_sockmod.h,v 1.3 1996/08/02 20:35:41 niklas Exp $	 */
-/*	$NetBSD: svr4_sockmod.h,v 1.4 1996/05/13 16:57:53 christos Exp $	 */
+/*	$OpenBSD: svr4_sockmod.h,v 1.4 1997/08/29 19:56:38 kstailey Exp $	 */
+/*	$NetBSD: svr4_sockmod.h,v 1.5 1997/07/21 23:02:38 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -45,9 +45,12 @@
 #define SVR4_SI_GETUDATA	(SVR4_SIMOD|110)
 
 
-#define SVR4_SOCK_RAW		1
+#define SVR4_SOCK_DGRAM		1
 #define SVR4_SOCK_STREAM	2
-#define SVR4_SOCK_DGRAM		3
+#define SVR4_SOCK_STREAM_ORD	3
+#define SVR4_SOCK_RAW		4
+#define SVR4_SOCK_RDM		5
+#define SVR4_SOCK_SEQPACKET	6
 
 struct svr4_si_sockparms {
 	int	family;
