@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.30 2003/02/12 14:41:07 jason Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.31 2003/05/12 19:56:03 mickey Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /* 
@@ -376,6 +376,20 @@ db_pool_print_cmd(addr, have_addr, count, modif)
 
 /*ARGSUSED*/
 void
+db_proc_print_cmd(addr, have_addr, count, modif)
+	db_expr_t	addr;
+	int		have_addr;
+	db_expr_t	count;
+	char *		modif;
+{
+	if (!have_addr)
+		addr = (db_expr_t)curproc;
+
+	proc_printit((struct proc *)addr, modif, db_printf);
+}
+
+/*ARGSUSED*/
+void
 db_uvmexp_print_cmd(addr, have_addr, count, modif)
 	db_expr_t	addr;
 	int		have_addr;
@@ -404,6 +418,7 @@ struct db_command db_show_cmds[] = {
 	{ "object",	db_object_print_cmd,	0,	NULL },
 	{ "page",	db_page_print_cmd,	0,	NULL },
 	{ "pool",	db_pool_print_cmd,	0,	NULL },
+	{ "proc",	db_proc_print_cmd,	0,	NULL },
 	{ "registers",	db_show_regs,		0,	NULL },
 	{ "uvmexp",	db_uvmexp_print_cmd,	0,	NULL },
 	{ "watches",	db_listwatch_cmd, 	0,	NULL },
