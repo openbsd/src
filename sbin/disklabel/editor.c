@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.15 1997/10/16 10:40:50 deraadt Exp $	*/
+/*	$OpenBSD: editor.c,v 1.16 1997/10/17 04:37:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.15 1997/10/16 10:40:50 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.16 1997/10/17 04:37:52 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -101,7 +101,7 @@ editor(lp, f)
 		    label.d_partitions[i].p_size > 0)
 			freeblocks -= label.d_partitions[i].p_size;
 
-	puts("Initial label editor (enter '?' for help at any prompt)\n");
+	puts("Initial label editor (enter '?' for help at any prompt)");
 	if (has_overlap(&label, &freeblocks, 1))
 		errx(1, "can't run when there is partition overlap.");
 
@@ -128,8 +128,9 @@ editor(lp, f)
 		switch (*cmd) {
 
 		case '?':
-			puts("Available commands:\n");
-			puts("\tp [suffix] - print label.");
+		case 'h':
+			puts("Available commands:");
+			puts("\tp [unit]   - print label.");
 			puts("\tM          - show entire OpenBSD man page for disklabel.");
 			puts("\te          - edit drive parameters.");
 			puts("\ta [part]   - add new partition.");
@@ -141,8 +142,8 @@ editor(lp, f)
 			puts("\tw          - write label to disk.");
 			puts("\tq          - quit and save changes.");
 			puts("\tx          - exit without saving changes.");
-			puts("\t?          - this message.\n");
-			puts("Numeric parameters may use suffixes to indicate units:\n\t'b' for bytes, 'c' for cylinders, 'k' for kilobytes, 'm' for megabytes,\n\t'g' for gigabytes or no suffix for blocks (usually 512 bytes).\n\tNon-block units will be rounded to the nearest cylinder.\nThe (optional) argument to p[rint] may be one of the aforementioned units.\n");
+			puts("\t?          - this message.");
+			puts("Numeric parameters may use suffixes to indicate units:\n\t'b' for bytes, 'c' for cylinders, 'k' for kilobytes, 'm' for megabytes,\n\t'g' for gigabytes or no suffix for blocks (usually 512 bytes).\n\tNon-block units will be rounded to the nearest cylinder.");
 			break;
 
 		case 'a':
@@ -1105,7 +1106,7 @@ edit_parms(lp, freep)
 	char *p;
 	u_int32_t ui;
 
-	printf("Changing device parameters for %s\n\n", specname);
+	printf("Changing device parameters for %s:\n", specname);
 
 	/* disk type */
 	for (;;) {
