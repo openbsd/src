@@ -1,4 +1,8 @@
 #!/bin/ksh
+KT_A=0`vmstat -m | awk '/pfrktable/{print $3}'`
+KT_R=0`vmstat -m | awk '/pfrktable/{print $5}'`
+KE_A=0`vmstat -m | awk '/pfrkentry/{print $3}'`
+KE_R=0`vmstat -m | awk '/pfrkentry/{print $5}'`
 pfctl -t regress -qTk 2>&1 || exit 1
 echo "# create"
 pfctl -t regress -Tc 2>&1 || exit 1
@@ -39,3 +43,13 @@ echo "# table -v"
 pfctl -vsT | grep regress 2>&1 || exit 1
 echo "# kill"
 pfctl -t regress -Tk 2>&1 || exit 1
+let KT_A=`vmstat -m | awk '/pfrktable/{print $3}'`-$KT_A
+let KT_R=`vmstat -m | awk '/pfrktable/{print $5}'`-$KT_R
+let KT_L=$KT_A-$KT_R
+let KE_A=`vmstat -m | awk '/pfrkentry/{print $3}'`-$KE_A
+let KE_R=`vmstat -m | awk '/pfrkentry/{print $5}'`-$KE_R
+let KE_L=$KE_A-$KE_R
+echo "ktable: $KT_A allocated, $KT_R released, $KT_L leaked."
+echo "kentry: $KE_A allocated, $KE_R released, $KE_L leaked."
+[ "$KT_L" = "0" -a "$KE_L" = "0" ] || exit 1
+
