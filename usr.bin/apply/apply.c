@@ -1,4 +1,4 @@
-/*	$OpenBSD: apply.c,v 1.3 1997/01/15 23:42:09 millert Exp $	*/
+/*	$OpenBSD: apply.c,v 1.4 1997/07/29 02:54:07 bitblt Exp $	*/
 /*	$NetBSD: apply.c,v 1.3 1995/03/25 03:38:23 glass Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)apply.c	8.4 (Berkeley) 4/4/94";
 #else
-static char rcsid[] = "$OpenBSD: apply.c,v 1.3 1997/01/15 23:42:09 millert Exp $";
+static char rcsid[] = "$OpenBSD: apply.c,v 1.4 1997/07/29 02:54:07 bitblt Exp $";
 #endif
 #endif /* not lint */
 
@@ -214,7 +214,7 @@ system(command)
 		return(1);
 
 	omask = sigblock(sigmask(SIGCHLD));
-	switch(pid = vfork()) {
+	switch(pid = fork()) {
 	case -1:			/* error */
 		err(1, "fork");
 	case 0:				/* child */
