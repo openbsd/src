@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.19 2004/12/13 16:59:50 jfb Exp $	*/
+/*	$OpenBSD: util.c,v 1.20 2004/12/22 00:38:26 david Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -363,7 +363,7 @@ cvs_splitpath(const char *path, char *base, size_t blen, char **file)
  * Parse a line contained in <line> and generate an argument vector by
  * splitting the line on spaces and tabs.  The resulting vector is stored in
  * <argv>, which can accept up to <argvlen> entries.
- * Returns the number of arguments in the vector, or -1 if an error occured.
+ * Returns the number of arguments in the vector, or -1 if an error occurred.
  */
 int
 cvs_getargv(const char *line, char **argv, int argvlen)
@@ -439,7 +439,7 @@ cvs_getargv(const char *line, char **argv, int argvlen)
 /*
  * cvs_makeargv()
  *
- * Allocate an argument vector large enough to accomodate for all the
+ * Allocate an argument vector large enough to accommodate for all the
  * arguments found in <line> and return it.
  */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.36 2004/12/16 17:09:33 jfb Exp $	*/
+/*	$OpenBSD: proto.c,v 1.37 2004/12/22 00:38:25 david Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -166,7 +166,7 @@ u_int cvs_version_sent = 0;
 static char  cvs_proto_buf[4096];
 
 /*
- * Output files for protocol logging when the CVS_CLIENT_LOG enviroment
+ * Output files for protocol logging when the CVS_CLIENT_LOG environment
  * variable is set.
  */
 static int   cvs_server_logon = 0;
@@ -717,7 +717,7 @@ cvs_sendreq(struct cvsroot *root, u_int rid, const char *arg)
  *
  * Get a response from the server.  This call will actually read and handle
  * responses from the server until one of the response handlers returns
- * non-zero (either an error occured or the end of the response was reached).
+ * non-zero (either an error occurred or the end of the response was reached).
  * Returns the number of handled commands on success, or -1 on failure.
  */
 int

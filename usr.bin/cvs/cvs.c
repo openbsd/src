@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.28 2004/12/21 20:59:57 xsa Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.29 2004/12/22 00:38:25 david Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -79,7 +79,7 @@ static TAILQ_HEAD(, cvs_var) cvs_variables;
  * The synopsis field should only contain the list of arguments that the
  * command supports, without the actual command's name.
  *
- * Command handlers are expected to return 0 if no error occured, or one of
+ * Command handlers are expected to return 0 if no error occurred, or one of
  * the values known in sysexits.h in case of an error.  In case the error
  * returned is EX_USAGE, the command's usage string is printed to standard
  * error before returning.
