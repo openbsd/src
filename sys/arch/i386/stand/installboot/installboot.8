@@ -1,4 +1,4 @@
-.\"	$OpenBSD: installboot.8,v 1.11 1997/10/07 05:01:57 deraadt Exp $
+.\"	$OpenBSD: installboot.8,v 1.12 1997/10/07 08:09:31 deraadt Exp $
 .\"
 .\" Copyright (c) 1997 Michael Shalayeff
 .\" All rights reserved.
@@ -136,14 +136,11 @@ the above steps with some more steps... and do the following:
 .Dl # cp /usr/mdec/boot /mnt/boot
 .Dl # /usr/mdec/installboot -v /mnt/boot /usr/mdec/biosboot sd0
 .Pp
-If you are replacing much older versions of the bootblocks on your
-drive, you will need to use the
+If you need to find the BIOS geometry of the disk for
 .Fl s
 and
-.Fl h 
-arguments to installboot to properly install the bootblocks.  You can
-either get these figures in your BIOS, or by booting a new floppy
-and typing
+.Fl h
+you can use the boot block command:
 .Pp
 .Dl boot> machine diskinfo
 .Pp
