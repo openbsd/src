@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdev.c,v 1.6 2000/11/13 13:38:42 niklas Exp $	*/
+/*	$OpenBSD: ofdev.c,v 1.7 2001/02/09 05:22:05 drahn Exp $	*/
 /*	$NetBSD: ofdev.c,v 1.1 1997/04/16 20:29:20 thorpej Exp $	*/
 
 /*
@@ -42,6 +42,7 @@
 #include <lib/libsa/ufs.h>
 #include <lib/libsa/cd9660.h>
 #include <lib/libsa/nfs.h>
+#include <hfs.h>
 
 #include <powerpc/stand/ofdev.h>
 
@@ -155,6 +156,9 @@ static struct fs_ops file_system_ufs = {
 static struct fs_ops file_system_cd9660 = {
 	cd9660_open, cd9660_close, cd9660_read, cd9660_write, cd9660_seek,
 	    cd9660_stat
+};
+static struct fs_ops file_system_hfs = {
+	hfs_open, hfs_close, hfs_read, hfs_write, hfs_seek, hfs_stat
 };
 static struct fs_ops file_system_nfs = {
 	nfs_open, nfs_close, nfs_read, nfs_write, nfs_seek, nfs_stat
@@ -326,7 +330,9 @@ devopen(of, name, file)
 		bcopy(&file_system_ufs, file_system, sizeof file_system[0]);
 		bcopy(&file_system_cd9660, file_system + 1,
 		    sizeof file_system[0]);
-		nfsys = 2;
+		bcopy(&file_system_hfs, file_system + 2,
+		    sizeof file_system[0]);
+		nfsys = 3;
 		return 0;
 	}
 	if (!strcmp(buf, "network")) {
