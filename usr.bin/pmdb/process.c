@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.7 2002/07/22 01:26:08 art Exp $	*/
+/*	$OpenBSD: process.c,v 1.8 2002/07/22 03:06:00 art Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -134,8 +134,7 @@ process_read(struct pstate *ps, off_t from, void *to, size_t size)
 	if (((ps->ps_state == NONE) || (ps->ps_state == LOADED) ||
 	    (ps->ps_state == TERMINATED)) && (ps->ps_flags & PSF_CORE)) {
 		return core_read(ps, from, to, size);
-	}
-	else {
+	} else {
 		piod.piod_op = PIOD_READ_D;
 		piod.piod_offs = (void *)(long)from;
 		piod.piod_addr = to;
@@ -150,9 +149,9 @@ process_write(struct pstate *ps, off_t to, void *from, size_t size)
 {
 	struct ptrace_io_desc piod;
 
-	if ((ps->ps_state == NONE) && (ps->ps_flags & PSF_CORE))
+	if ((ps->ps_state == NONE) && (ps->ps_flags & PSF_CORE)) {
 		return core_write(ps, to, from, size);
-	else {
+	} else {
 		piod.piod_op = PIOD_WRITE_D;
 		piod.piod_offs = (void *)(long)to;
 		piod.piod_addr = from;
@@ -167,7 +166,7 @@ process_getregs(struct pstate *ps, struct reg *r)
 {
 
 	if (ps->ps_state == STOPPED) {
-		if (ptrace(PT_GETREGS, ps->ps_pid, (caddr_t)&r, 0) != 0)
+		if (ptrace(PT_GETREGS, ps->ps_pid, (caddr_t)r, 0) != 0)
 			return (-1);
 	} else if (ps->ps_flags & PSF_CORE) {
 		memcpy(r, ps->ps_core->regs, sizeof(*r));
