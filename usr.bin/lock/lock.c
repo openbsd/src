@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.c,v 1.6 1996/09/06 01:57:15 downsj Exp $	*/
+/*	$OpenBSD: lock.c,v 1.7 1996/10/16 00:09:20 millert Exp $	*/
 /*	$NetBSD: lock.c,v 1.8 1996/05/07 18:32:31 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)lock.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: lock.c,v 1.6 1996/09/06 01:57:15 downsj Exp $";
+static char rcsid[] = "$OpenBSD: lock.c,v 1.7 1996/10/16 00:09:20 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -72,6 +72,10 @@ static char rcsid[] = "$OpenBSD: lock.c,v 1.6 1996/09/06 01:57:15 downsj Exp $";
 #include <termios.h>
 #include <unistd.h>
 
+#ifdef SKEY
+#include <skey.h>
+#endif
+
 #define	TIMEOUT	15
 
 void quit(), bye(), hi();
@@ -87,7 +91,6 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	extern char *optarg;
 	struct passwd *pw;
 	struct timeval timval;
 	struct itimerval ntimer, otimer;
@@ -96,7 +99,6 @@ main(argc, argv)
 	int ch, sectimeout, usemine;
 	char *ap, *mypw, *ttynam, *tzn;
 	char hostname[MAXHOSTNAMELEN], s[BUFSIZ], s1[BUFSIZ];
-	char *crypt();
 
 	sectimeout = TIMEOUT;
 	mypw = NULL;
@@ -126,7 +128,7 @@ main(argc, argv)
 	}
 	timeout.tv_sec = sectimeout * 60;
 
-	setuid(getuid());		/* discard privs */
+	seteuid(getuid());		/* discard what privs we can */
 
 	if (tcgetattr(0, &tty) < 0)	/* get information for header */
 		exit(1);
@@ -159,7 +161,7 @@ main(argc, argv)
 		(void)fgets(s1, sizeof(s1), stdin);
 		(void)putchar('\n');
 		if (strcmp(s1, s)) {
-			(void)printf("\alock: passwords didn't match.\n");
+			(void)puts("\alock: passwords didn't match.");
 			(void)tcsetattr(0, TCSADRAIN, &tty);
 			exit(1);
 		}
@@ -198,7 +200,11 @@ main(argc, argv)
 			s[strlen(s) - 1] = '\0';
 #ifdef SKEY
 			if (strcasecmp(s, "s/key") == 0) {
-				if (skey_auth(pw->pw_name))
+				/* S/Key lookup needs to be done as root */
+				seteuid(0);
+				ch = skey_auth(pw->pw_name);
+				seteuid(getuid());
+				if (ch)
 					break;
 			}
 #endif
@@ -224,11 +230,11 @@ int
 skey_auth(user)
 	char *user;
 {
-	char s[128], *ask, *skey_keyinfo __P((char *name));
+	char s[256], *ask;
 	int ret = 0;
 
 	if (!skey_haskey(user) && (ask = skey_keyinfo(user))) {
-		printf("\n[%s]\nResponse: ", ask);		
+		printf("\n%s\nResponse: ", ask);		
 		if (!fgets(s, sizeof(s), stdin) || *s == '\n')
 			clearerr(stdin);
 		else {
