@@ -51,12 +51,12 @@ no_slash_found:
 	.globl __init
 call_main:	
 #ifdef MCRT0
-	addis	3, 3, _mcleanup@ha
+	lis	3, _mcleanup@ha
 	addi	3, 3, _mcleanup@l
 	bl atexit
-	addis	3, 3, eprol@ha
+	lis	3, eprol@ha
 	addi	3, 3, eprol@l
-	addis	4, 4, _etext@ha
+	lis	4, _etext@ha
 	addi	4, 4, _etext@l
 	bl monstartup
 #endif
