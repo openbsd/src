@@ -33,7 +33,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.139 2002/06/23 20:39:45 deraadt Exp $");
+RCSID("$OpenBSD: session.c,v 1.140 2002/06/23 21:06:41 deraadt Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -1770,9 +1770,9 @@ session_setup_x11fwd(Session *s)
 		debug("X11 display already set.");
 		return 0;
 	}
-	s->display_number = x11_create_display_inet(options.x11_display_offset,
-	    options.x11_use_localhost, s->single_connection);
-	if (s->display_number == -1) {
+	if (x11_create_display_inet(options.x11_display_offset,
+	    options.x11_use_localhost, s->single_connection,
+	    &s->display_number) == -1) {
 		debug("x11_create_display_inet failed.");
 		return 0;
 	}
@@ -1786,14 +1786,14 @@ session_setup_x11fwd(Session *s)
 	 * different than the DISPLAY string for localhost displays.
 	 */
 	if (options.x11_use_localhost) {
-		snprintf(display, sizeof display, "localhost:%d.%d",
+		snprintf(display, sizeof display, "localhost:%u.%u",
 		    s->display_number, s->screen);
-		snprintf(auth_display, sizeof auth_display, "unix:%d.%d",
+		snprintf(auth_display, sizeof auth_display, "unix:%u.%u",
 		    s->display_number, s->screen);
 		s->display = xstrdup(display);
 		s->auth_display = xstrdup(auth_display);
 	} else {
-		snprintf(display, sizeof display, "%.400s:%d.%d", hostname,
+		snprintf(display, sizeof display, "%.400s:%u.%u", hostname,
 		    s->display_number, s->screen);
 		s->display = xstrdup(display);
 		s->auth_display = xstrdup(display);
