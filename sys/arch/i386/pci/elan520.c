@@ -1,4 +1,4 @@
-/*	$OpenBSD: elan520.c,v 1.9 2004/06/06 17:34:37 grange Exp $	*/
+/*	$OpenBSD: elan520.c,v 1.10 2004/06/09 11:17:59 djm Exp $	*/
 /*	$NetBSD: elan520.c,v 1.4 2002/10/02 05:47:15 thorpej Exp $	*/
 
 /*-
@@ -269,12 +269,16 @@ elansc_wdogctl_cb(void *self, int period)
 void
 elansc_update_cpuspeed(void)
 {
+#ifdef I586_CPU
 	static const int elansc_mhz[] = { 0, 100, 133, 999 };
+#endif
 	uint8_t cpuctl;
 
 	cpuctl = bus_space_read_1(elansc->sc_memt, elansc->sc_memh,
 	    MMCR_CPUCTL);
+#ifdef I586_CPU
 	pentium_mhz = elansc_mhz[cpuctl & CPUCTL_CPU_CLK_SPD_MASK];
+#endif
 }
 
 int
