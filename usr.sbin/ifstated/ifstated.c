@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.3 2004/02/05 02:18:55 mcbride Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.4 2004/02/12 00:04:08 henning Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -46,7 +46,6 @@
 #include <ifaddrs.h>
 
 #include "ifstated.h"
-
 
 struct	 ifsd_config conf;
 
@@ -135,7 +134,7 @@ main(int argc, char *argv[])
 	if (conf.opts & IFSD_OPT_NOACTION) {
 		if (parse_config(configfile, &conf) != 0)
 			exit(1);
-		printf("configuration OK\n");
+		warnx("configuration OK\n");
 		exit(0);
 	}
 
@@ -145,7 +144,7 @@ main(int argc, char *argv[])
 	}
 
 	if ((rt_fd = socket(PF_ROUTE, SOCK_RAW, 0)) < 0)
-                errx(1, "no routing socket");
+		err(1, "no routing socket");
 
 	event_set(&rt_msg_ev, rt_fd, EV_READ|EV_PERSIST,
 	    rt_msg_handler, &rt_msg_ev);
@@ -205,7 +204,7 @@ rt_msg_handler(int fd, short event, void *arg)
 	char msg[2048];
 	struct rt_msghdr *rtm = (struct rt_msghdr *)&msg;
 	int len;
-        
+
 	len = read(fd, msg, sizeof(msg)); 
 
 	/* XXX ignore errors? */
@@ -551,7 +550,7 @@ fetch_state(void)
 	int sock = socket(AF_INET, SOCK_DGRAM, 0);
 	
 	if (getifaddrs(&ifap) != 0)
-                err(1, "getifaddrs");
+		err(1, "getifaddrs");
 
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
 		struct ifreq ifr;
