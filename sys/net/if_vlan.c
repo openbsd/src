@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.5 2000/08/15 22:21:17 chris Exp $ */
+/*	$OpenBSD: if_vlan.c,v 1.6 2000/10/18 15:55:48 chris Exp $ */
 /*
  * Copyright 1998 Massachusetts Institute of Technology
  *
@@ -329,12 +329,13 @@ vlan_input(eh, m)
 {
 	int i;
 	struct ifvlan *ifv;
+	u_int tag;
+
+	tag = EVL_VLANOFTAG(ntohs(*mtod(m, u_int16_t *)));
 
 	for (i = 0; i < NVLAN; i++) {
 		ifv = &ifv_softc[i];
-		if (m->m_pkthdr.rcvif == ifv->ifv_p
-		    && (EVL_VLANOFTAG(ntohs(*mtod(m, u_int16_t *)))
-			== ifv->ifv_tag))
+		if (m->m_pkthdr.rcvif == ifv->ifv_p && tag == ifv->ifv_tag)
 			break;
 	}
 
@@ -476,16 +477,20 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	switch (cmd) {
 	case SIOCSIFADDR:
-		ifp->if_flags |= IFF_UP;
+		if (ifv->ifv_p != NULL) {
+			ifp->if_flags |= IFF_UP;
 
-		switch (ifa->ifa_addr->sa_family) {
+			switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
-		case AF_INET:
-			arp_ifinit(&ifv->ifv_ac, ifa);
-			break;
+			case AF_INET:
+				arp_ifinit(&ifv->ifv_ac, ifa);
+				break;
 #endif
-		default:
-			break;
+			default:
+				break;
+			}
+		} else {
+			error = EINVAL;
 		}
 		break;
 
@@ -563,7 +568,11 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		error = vlan_setmulti(ifp);
+		if (ifv->ifv_p != NULL) {
+			error = vlan_setmulti(ifp);
+		} else {
+			error = EINVAL;
+		}
 		break;
 	default:
 		error = EINVAL;
