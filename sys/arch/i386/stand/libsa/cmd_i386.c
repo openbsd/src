@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd_i386.c,v 1.1 1997/09/02 20:58:15 mickey Exp $	*/
+/*	$OpenBSD: cmd_i386.c,v 1.2 1997/09/02 22:42:26 weingart Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff, Tobias Weingartner
@@ -33,6 +33,8 @@
  */
 
 #include <sys/param.h>
+#include <machine/biosvar.h>
+#include "biosdev.h"
 #include "libsa.h"
 #include <cmd.h>
 
@@ -46,6 +48,15 @@ const struct cmd_table cmd_machine[] = {
 static int
 Xdiskinfo()
 {
+	u_int16_t di;
+	int i;
+
+	for(i = 0x80; i < 0x85; i++){
+		di = biosdinfo(i);
+		printf("\t0x%x => Heads %d, Sectors %d\n",
+			i, BIOSNHEADS(di), BIOSNSECTS(di));
+	}
+
 	return 0;
 }
 

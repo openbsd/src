@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.28 1997/09/02 19:24:29 mickey Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.29 1997/09/02 22:42:25 weingart Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -57,7 +57,7 @@ struct biosdisk {
  * of sectors and heads for this device
  *
  */
-static u_int16_t
+u_int16_t
 biosdinfo(int dev)
 {
 	int f, rv;
