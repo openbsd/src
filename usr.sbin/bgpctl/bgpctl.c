@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.5 2004/01/03 16:46:08 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.6 2004/01/03 20:39:51 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -25,6 +25,7 @@
 #include <unistd.h>
 
 #include "bgpd.h"
+#include "session.h"
 
 int	main(int, char *[]);
 void	summary_head(void);
