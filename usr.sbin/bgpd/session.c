@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.73 2004/01/07 01:15:54 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.74 2004/01/07 01:41:49 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -348,11 +348,6 @@ init_peer(struct peer *p)
 
 	change_state(p, STATE_IDLE, EVNT_NONE);
 	p->IdleHoldTimer = time(NULL);	/* start ASAP */
-	
-	if (!p->conf.holdtime)
-		p->conf.holdtime = conf->holdtime;
-	if (!p->conf.min_holdtime)
-		p->conf.min_holdtime = conf->min_holdtime;
 }
 
 void
@@ -836,7 +831,10 @@ session_open(struct peer *peer)
 	msg.header.type = OPEN;
 	msg.version = 4;
 	msg.myas = htons(conf->as);
-	msg.holdtime = htons(peer->conf.holdtime);
+	if (peer->conf.holdtime)
+		msg.holdtime = htons(peer->conf.holdtime);
+	else
+		msg.holdtime = htons(conf->holdtime);
 	msg.bgpid = conf->bgpid;	/* is already in network byte order */
 	msg.optparamlen = 0;
 
@@ -1188,7 +1186,7 @@ parse_open(struct peer *peer)
 	u_char		*p;
 	u_int8_t	 version;
 	u_int16_t	 as;
-	u_int16_t	 holdtime, oholdtime;
+	u_int16_t	 holdtime, oholdtime, myholdtime;
 	u_int32_t	 bgpid;
 	u_int8_t	 optparamlen;
 
@@ -1227,10 +1225,14 @@ parse_open(struct peer *peer)
 		    NULL, 0);
 		return (-1);
 	}
-	if (holdtime < peer->conf.holdtime)
+
+	myholdtime = peer->conf.holdtime;
+	if (!myholdtime)
+		myholdtime = conf->holdtime;
+	if (holdtime < myholdtime)
 		peer->holdtime = holdtime;
 	else
-		peer->holdtime = peer->conf.holdtime;
+		peer->holdtime = myholdtime;
 
 	memcpy(&bgpid, p, sizeof(bgpid));
 	p += sizeof(bgpid);
