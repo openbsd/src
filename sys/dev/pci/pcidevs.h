@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.602 2003/03/05 23:39:55 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.603 2003/03/08 23:01:29 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2068,6 +2068,9 @@
 #define	PCI_PRODUCT_RICOH_RF5C476	0x0476		/* 5C476 PCI-CardBus */
 #define	PCI_PRODUCT_RICOH_RF5C477	0x0477		/* 5C477 PCI-CardBus */
 #define	PCI_PRODUCT_RICOH_RF5C478	0x0478		/* 5C478 PCI-CardBus */
+#define	PCI_PRODUCT_RICOH_R5C521	0x0521		/* 5C521 PCI-Firewire */
+#define	PCI_PRODUCT_RICOH_R5C551	0x0551		/* 5C551 PCI-Firewire */
+#define	PCI_PRODUCT_RICOH_RL5C552	0x0552		/* 5C552 PCI-Firewire */
 
 /* Rockwell products */
 #define	PCI_PRODUCT_ROCKWELL_RS56SP_PCI11P1	0x2005		/* RS56/SP-PCI11P1 Modem */
@@ -2267,6 +2270,7 @@
 #define	PCI_PRODUCT_TI_PCI4410_FW	0x8017		/* PCI4410 FireWire */
 #define	PCI_PRODUCT_TI_TSB12LV23	0x8019		/* TSB12LV23 FireWire */
 #define	PCI_PRODUCT_TI_TSB12LV26	0x8020		/* TSB12LV26 FireWire */
+#define	PCI_PRODUCT_TI_TSB43AA22	0x8021		/* TSB43AA22 FireWire */
 #define	PCI_PRODUCT_TI_TSB43AB22	0x8023		/* TSB43AB22 FireWire */
 #define	PCI_PRODUCT_TI_TSB43AB21	0x8026		/* TSB43AB21 FireWire */
 #define	PCI_PRODUCT_TI_PCI4451_FW	0x8027		/* PCI4451 FireWire */

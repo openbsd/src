@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.602 2003/03/05 23:39:55 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.603 2003/03/08 23:01:29 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -4687,6 +4687,18 @@ static const struct pci_known_product pci_known_products[] = {
 	    "5C478 PCI-CardBus",
 	},
 	{
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_R5C521,
+	    "5C521 PCI-Firewire",
+	},
+	{
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_R5C551,
+	    "5C551 PCI-Firewire",
+	},
+	{
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_RL5C552,
+	    "5C552 PCI-Firewire",
+	},
+	{
 	    PCI_VENDOR_ROCKWELL, PCI_PRODUCT_ROCKWELL_RS56SP_PCI11P1,
 	    "RS56/SP-PCI11P1 Modem",
 	},
@@ -5289,6 +5301,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB12LV26,
 	    "TSB12LV26 FireWire",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB43AA22,
+	    "TSB43AA22 FireWire",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB43AB22,
