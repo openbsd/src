@@ -1,5 +1,6 @@
-/*	$OpenBSD: trap.c,v 1.4 2004/06/03 05:18:43 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.5 2004/06/07 10:28:47 miod Exp $	*/
 /*
+ * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -92,6 +93,7 @@ extern int procfs_domem(struct proc *, struct proc *, void *, struct uio *);
 
 __dead void panictrap(int, struct trapframe *);
 __dead void error_fatal(struct trapframe *);
+int double_reg_fixup(struct trapframe *);
 
 extern void regdump(struct trapframe *f);
 
@@ -485,7 +487,8 @@ user_fault:
 		}
 		break;
 	case T_MISALGNFLT+T_USER:
-		sig = SIGBUS;
+		/* Fix any misaligned ld.d or st.d instructions */
+		sig = double_reg_fixup(frame);
 		fault_type = BUS_ADRALN;
 		break;
 	case T_PRIVINFLT+T_USER:
@@ -1023,7 +1026,8 @@ m88110_user_fault:
 		}
 		break;
 	case T_MISALGNFLT+T_USER:
-		sig = SIGBUS;
+		/* Fix any misaligned ld.d or st.d instructions */
+		sig = double_reg_fixup(frame);
 		fault_type = BUS_ADRALN;
 		break;
 	case T_PRIVINFLT+T_USER:
@@ -1795,3 +1799,102 @@ splassert_check(int wantipl, const char *func)
 	}
 }
 #endif
+
+/*
+ * ld.d and st.d instructions referencing long aligned but not long long
+ * aligned addresses will trigger a misaligned address exception.
+ *
+ * This routine attempts to recover these (valid) statements, by simulating
+ * the splitted form of the instruction. If it fails, it returns the
+ * appropriate signal number to deliver.
+ */
+int
+double_reg_fixup(struct trapframe *frame)
+{
+	u_int32_t pc, instr, value;
+	int regno, store;
+	vaddr_t addr;
+
+	/*
+	 * Decode the faulting instruction.
+	 */
+
+	pc = PC_REGS(&frame->tf_regs);
+	if (copyin((void *)pc, &instr, sizeof(u_int32_t)) != 0)
+		return SIGSEGV;
+
+	switch (instr & 0xfc00ff00) {
+	case 0xf4001000:	/* ld.d rD, rS1, rS2 */
+		addr = frame->tf_r[(instr >> 16) & 0x1f]
+		    + frame->tf_r[(instr & 0x1f)];
+		store = 0;
+		break;
+	case 0xf4001200:	/* ld.d rD, rS1[rS2] */
+		addr = frame->tf_r[(instr >> 16) & 0x1f]
+		    + (frame->tf_r[(instr & 0x1f)] << 3);
+		store = 0;
+		break;
+	case 0xf4002000:	/* st.d rD, rS1, rS2 */
+		addr = frame->tf_r[(instr >> 16) & 0x1f]
+		    + frame->tf_r[(instr & 0x1f)];
+		store = 1;
+		break;
+	case 0xf4002200:	/* st.d rD, rS1[rS2] */
+		addr = frame->tf_r[(instr >> 16) & 0x1f]
+		    + (frame->tf_r[(instr & 0x1f)] << 3);
+		store = 1;
+		break;
+	default:
+		switch (instr & 0xfc000000) {
+		case 0x10000000:	/* ld.d rD, rS, imm16 */
+			addr = (instr & 0x0000ffff) +
+			    frame->tf_r[(instr >> 16) & 0x1f];
+			store = 0;
+			break;
+		case 0x20000000:	/* st.d rD, rS, imm16 */
+			addr = (instr & 0x0000ffff) +
+			    frame->tf_r[(instr >> 16) & 0x1f];
+			store = 1;
+			break;
+		default:
+			return SIGBUS;
+		}
+		break;
+	}
+
+	/* We only handle long but not long long aligned access here */
+	if ((addr & 0x07) != 4)
+		return SIGBUS;
+
+	regno = (instr >> 21) & 0x1f;
+
+	if (store) {
+		/*
+		 * Two word stores.
+		 */
+		value = frame->tf_r[regno++];
+		if (copyout(&value, (void *)addr, sizeof(u_int32_t)) != 0)
+			return SIGSEGV;
+		if (regno == 32)
+			value = 0;
+		else
+			value = frame->tf_r[regno];
+		if (copyout(&value, (void *)(addr + 4), sizeof(u_int32_t)) != 0)
+			return SIGSEGV;
+	} else {
+		/*
+		 * Two word loads. r0 should be left unaltered, but the
+		 * value should still be fetched even if it is discarded.
+		 */
+		if (copyin((void *)addr, &value, sizeof(u_int32_t)) != 0)
+			return SIGSEGV;
+		if (regno != 0)
+			frame->tf_r[regno] = value;
+		if (copyin((void *)(addr + 4), &value, sizeof(u_int32_t)) != 0)
+			return SIGSEGV;
+		if (regno != 31)
+			frame->tf_r[regno + 1] = value;
+	}
+
+	return 0;
+}
