@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd.h,v 1.5 2001/05/23 16:14:00 art Exp $	*/
+/*	$OpenBSD: kbd.h,v 1.6 2001/05/23 16:18:56 art Exp $	*/
 
 /*
  * kbd.h: type definitions for symbol.c and kbd.c for mg experimental
@@ -26,8 +26,6 @@ typedef struct {
 	MAP_ELEMENT map_element[NUM];	/* really [e_max] */		\
 }
 typedef struct keymap_s KEYMAPE(1) KEYMAP;
-
-#define none	ctrlg
 
 /* Number of map_elements to grow an overflowed keymap by */
 #define IMAPEXT 0
