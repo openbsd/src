@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.19 2003/06/03 02:56:14 millert Exp $	*/
+/*	$OpenBSD: client.c,v 1.20 2004/10/04 05:21:27 jsg Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -38,7 +38,7 @@ static char RCSid[] __attribute__((__unused__)) =
 "$From: client.c,v 1.13 1999/11/01 00:22:14 christos Exp $";
 #else
 static char RCSid[] __attribute__((__unused__)) = 
-"$OpenBSD: client.c,v 1.19 2003/06/03 02:56:14 millert Exp $";
+"$OpenBSD: client.c,v 1.20 2004/10/04 05:21:27 jsg Exp $";
 #endif
 
 static char sccsid[] __attribute__((__unused__)) =
@@ -1261,7 +1261,7 @@ install(char *src, char *dest, int ddir, int destdir, opt_t opts)
 		ptarget++;
 	/*
 	 * If we are renaming a directory and we want to preserve
-	 * the directory heirarchy (-w), we must strip off the leading
+	 * the directory hierarchy (-w), we must strip off the leading
 	 * directory name and preserve the rest.
 	 */
 	if (IS_ON(opts, DO_WHOLE)) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xinstall.c,v 1.41 2004/07/01 18:25:48 otto Exp $	*/
+/*	$OpenBSD: xinstall.c,v 1.42 2004/10/04 05:21:27 jsg Exp $	*/
 /*	$NetBSD: xinstall.c,v 1.9 1995/12/20 10:25:17 jonathan Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #endif
-static char rcsid[] = "$OpenBSD: xinstall.c,v 1.41 2004/07/01 18:25:48 otto Exp $";
+static char rcsid[] = "$OpenBSD: xinstall.c,v 1.42 2004/10/04 05:21:27 jsg Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -564,7 +564,7 @@ strip(char *to_name)
 
 /*
  * install_dir --
- *	build directory heirarchy
+ *	build directory hierarchy
  */
 void
 install_dir(char *path)
