@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: memchr.c,v 1.2 1996/08/19 08:34:04 tholo Exp $";
+static char *rcsid = "$OpenBSD: memchr.c,v 1.3 1999/11/14 20:28:24 espie Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <string.h>
@@ -43,11 +43,11 @@ static char *rcsid = "$OpenBSD: memchr.c,v 1.2 1996/08/19 08:34:04 tholo Exp $";
 void *
 memchr(s, c, n)
 	const void *s;
-	register unsigned char c;
-	register size_t n;
+	int c;
+	size_t n;
 {
 	if (n != 0) {
-		register const unsigned char *p = s;
+		const unsigned char *p = s;
 
 		do {
 			if (*p++ == c)
