@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.85 1999/04/20 18:04:27 espie Exp $
+#	$OpenBSD: bsd.port.mk,v 1.86 1999/04/20 18:06:40 espie Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -28,7 +28,7 @@ OpenBSD_MAINTAINER=	marc@OpenBSD.ORG
 # NEED_VERSION: we need at least this version of bsd.port.mk for this 
 # port  to build
 
-FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.85 1999/04/20 18:04:27 espie Exp $$
+FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.86 1999/04/20 18:06:40 espie Exp $$
 .if defined(NEED_VERSION)
 _VERSION_REVISION=${FULL_REVISION:M[0-9]*.*}
 
@@ -949,8 +949,6 @@ MAINTAINER?=	ports@OpenBSD.ORG
 	@${FALSE}
 .endif
 
-# Note this has to start with a capital letter (or more accurately, it
-#  shouldn't match "[a-z]*"), see the target "delete-package-links" below.
 PKGREPOSITORYSUBDIR?=	All
 PKGREPOSITORY?=		${PACKAGES}/${PKGREPOSITORYSUBDIR}
 .if exists(${PACKAGES})
@@ -1493,7 +1491,7 @@ package-links:
 
 .if !target(delete-package-links)
 delete-package-links:
-	@${RM} -f ${PACKAGES}/[a-z]*/${PKGNAME}${PKG_SUFX};
+	@find ${PACKAGES} -type l -name ${PKGNAME}${PKG_SUFX}|xargs ${RM} -f
 .endif
 
 .if !target(delete-package)
