@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.11 1997/09/29 03:42:24 mickey Exp $	*/
+/*	$OpenBSD: apm.c,v 1.12 1997/10/13 00:09:20 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1995 John T. Kohl.  All rights reserved.
@@ -441,6 +441,7 @@ apm_powmgt_enable(onoff)
 	int onoff;
 {
 	struct apmregs regs;
+	bzero(&regs, sizeof(regs));
 	regs.cx = onoff ? APM_MGT_ENABLE : APM_MGT_DISABLE;
 	if (apmcall(APM_PWR_MGT_ENABLE,
 		    (apm_minver? APM_DEV_APM_BIOS : APM_MGT_ALL), &regs) != 0)
@@ -456,6 +457,7 @@ apm_powmgt_engage(onoff, dev)
 	struct apmregs regs;
 	if (apm_minver == 0)
 		return;
+	bzero(&regs, sizeof(regs));
 	regs.cx = onoff ? APM_MGT_ENGAGE : APM_MGT_DISENGAGE;
 	if (apmcall(APM_PWR_MGT_ENGAGE, dev, &regs) != 0)
 		printf("APM power mgmt engage (device %x): %s (%d)\n",
@@ -475,6 +477,7 @@ apm_devpowmgt_enable(onoff, dev)
 	/* enable is auto BIOS managment.
 	 * disable is program control.
 	 */
+	bzero(&regs, sizeof(regs));
 	regs.cx = onoff ? APM_MGT_ENABLE : APM_MGT_DISABLE;
 	if (apmcall(APM_DEVICE_MGMT_ENABLE, dev, &regs) != 0)
 		printf("APM device engage (device %x): %s (%d)\n",
@@ -490,6 +493,7 @@ apm_set_powstate(dev, state)
 	struct apmregs regs;
 	if (!apminited || (apm_minver == 0 && state > APM_SYS_OFF))
 		return EINVAL;
+	bzero(&regs, sizeof(regs));
 	regs.cx = state;
 	if (apmcall(APM_SET_PWR_STATE, dev, &regs) != 0) {
 		apm_perror("set power state", &regs);
@@ -510,6 +514,7 @@ apm_cpu_busy()
 	struct apmregs regs;
 	if (!apminited || !apmidleon)
 		return;
+	bzero(&regs, sizeof(regs));
 	if ((apm_flags & APM_IDLE_SLOWS) &&
 	    apmcall(APM_CPU_BUSY, 0, &regs) != 0)
 		apm_perror("set CPU busy", &regs);
@@ -521,6 +526,7 @@ apm_cpu_idle()
 	struct apmregs regs;
 	if (!apminited || !apmidleon)
 		return;
+	bzero(&regs, sizeof(regs));
 	if (apmcall(APM_CPU_IDLE, 0, &regs) != 0)
 		apm_perror("set CPU idle", &regs);
 }
@@ -538,6 +544,7 @@ apm_set_ver(self)
 	struct apmregs regs;
 	int error;
 
+	bzero(&regs, sizeof(regs));
 	regs.cx = 0x0101;	/* APM Version 1.1 */
 	
 	if (apm_v11_enabled && (error =
@@ -573,6 +580,7 @@ apm_disconnect(xxx)
 	void *xxx;
 {
 	struct apmregs regs;
+	bzero(&regs, sizeof(regs));
 	if (apmcall(APM_SYSTEM_DEFAULTS,
 	    (apm_minver == 1 ? APM_DEV_ALLDEVS : APM_DEFAULTS_ALL), &regs))
 		apm_perror("system defaults failed", &regs);
@@ -767,6 +775,7 @@ apmioctl(dev, cmd, data, flag, p)
 		{
 			struct apmregs regs;
 			
+			bzero(&regs, sizeof(regs));
 			if (!apmcall(APM_GET_POWER_STATE, actl->dev, &regs))
 				printf("%s: dev %04x state %04x\n",
 				       sc->sc_dev.dv_xname, dev, regs.cx);
