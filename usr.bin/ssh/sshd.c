@@ -18,7 +18,7 @@ agent connections.
 */
 
 #include "includes.h"
-RCSID("$Id: sshd.c,v 1.17 1999/10/03 19:22:39 deraadt Exp $");
+RCSID("$Id: sshd.c,v 1.18 1999/10/03 21:02:12 deraadt Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -167,9 +167,11 @@ void sigterm_handler(int sig)
 
 void main_sigchld_handler(int sig)
 {
+  int save_errno = errno;
   int status;
   wait(&status);
   signal(SIGCHLD, main_sigchld_handler);
+  errno = save_errno;
 }
 
 /* Signal handler for the alarm after the login grace period has expired. */
@@ -190,6 +192,8 @@ void grace_alarm_handler(int sig)
 
 void key_regeneration_alarm(int sig)
 {
+  int save_errno = errno;
+
   /* Check if we should generate a new key. */
   if (key_used)
     {
@@ -214,6 +218,7 @@ void key_regeneration_alarm(int sig)
   /* Reschedule the alarm. */
   signal(SIGALRM, key_regeneration_alarm);
   alarm(options.key_regeneration_time);
+  errno = save_errno;
 }
 
 /* Main program for the daemon. */

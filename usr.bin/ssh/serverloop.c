@@ -49,6 +49,7 @@ static volatile int child_wait_status;	/* Status from wait(). */
 
 void sigchld_handler(int sig)
 {
+  int save_errno = errno;
   int wait_pid;
   debug("Received SIGCHLD.");
   wait_pid = wait((int *)&child_wait_status);
@@ -62,6 +63,7 @@ void sigchld_handler(int sig)
 	child_terminated = 1;
     }
   signal(SIGCHLD, sigchld_handler);
+  errno = save_errno;
 }
 
 /* Process any buffered packets that have been received from the client. */
