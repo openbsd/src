@@ -1,4 +1,4 @@
-/*	$OpenBSD: transport.h,v 1.8 2001/06/29 18:52:17 ho Exp $	*/
+/*	$OpenBSD: transport.h,v 1.9 2001/08/11 05:29:23 angelos Exp $	*/
 /*	$EOM: transport.h,v 1.16 2000/07/17 18:57:59 provos Exp $	*/
 
 /*
@@ -119,6 +119,8 @@ struct transport {
 
 /* Set if this is a transport we want to listen on.  */
 #define TRANSPORT_LISTEN	1
+/* Used for mark-and-sweep-type garbage collection of transports */
+#define TRANSPORT_MARK		2
 
 extern void transport_add (struct transport *);
 extern struct transport *transport_create (char *, char *);
