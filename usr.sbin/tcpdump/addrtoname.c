@@ -1,4 +1,4 @@
-/*	$OpenBSD: addrtoname.c,v 1.24 2004/02/13 17:56:29 canacar Exp $	*/
+/*	$OpenBSD: addrtoname.c,v 1.25 2004/12/13 05:37:25 itojun Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -25,7 +25,7 @@
  */
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/addrtoname.c,v 1.24 2004/02/13 17:56:29 canacar Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/addrtoname.c,v 1.25 2004/12/13 05:37:25 itojun Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -665,7 +665,7 @@ init_servarray(void)
 	int i, port;
 	char buf[sizeof("0000000000")];
 	char service[BUFSIZ];
-	char protocol[sizeof("tcp")];
+	char protocol[BUFSIZ];
 
 	priv_getserventries();
 	while (priv_getserventry(service, sizeof(service), &port, protocol,
