@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_machdep.c,v 1.16 2003/06/04 22:08:14 deraadt Exp $	*/
+/*	$OpenBSD: hpux_machdep.c,v 1.17 2003/08/01 18:37:26 miod Exp $	*/
 /*	$NetBSD: hpux_machdep.c,v 1.19 1998/02/16 20:58:30 thorpej Exp $	*/
 
 /*
@@ -419,24 +419,6 @@ hpux_sendsig(catcher, sig, mask, code, type, val)
 		       p->p_pid, sig, &oonstack, fp, &fp->hsf_sc, ft);
 #endif
 
-	if (uvm_useracc((caddr_t)fp, fsize, B_WRITE) == 0) {
-#ifdef DEBUG
-		if ((hpuxsigdebug & SDB_KSTACK) && p->p_pid == hpuxsigpid)
-			printf("hpux_sendsig(%d): useracc failed on sig %d\n",
-			       p->p_pid, sig);
-#endif
-		/*
-		 * Process has trashed its stack; give it an illegal
-		 * instruction to halt it in its tracks.
-		 */
-		SIGACTION(p, SIGILL) = SIG_DFL;
-		sig = sigmask(SIGILL);
-		p->p_sigignore &= ~sig;
-		p->p_sigcatch &= ~sig;
-		p->p_sigmask &= ~sig;
-		psignal(p, SIGILL);
-		return;
-	}
 	kfp = (struct hpuxsigframe *)malloc((u_long)fsize, M_TEMP, M_WAITOK);
 
 	/* 
@@ -514,7 +496,24 @@ hpux_sendsig(catcher, sig, mask, code, type, val)
 	kfp->hsf_sc._hsc_pad	= 0;
 	kfp->hsf_sc._hsc_ap	= (int)&fp->hsf_sigstate;
 
-	(void) copyout((caddr_t)kfp, (caddr_t)fp, fsize);
+	if (copyout((caddr_t)kfp, (caddr_t)fp, fsize) != 0) {
+#ifdef DEBUG
+		if ((hpuxsigdebug & SDB_KSTACK) && p->p_pid == hpuxsigpid)
+			printf("hpux_sendsig(%d): copyout failed on sig %d\n",
+			       p->p_pid, sig);
+#endif
+		/*
+		 * Process has trashed its stack; give it an illegal
+		 * instruction to halt it in its tracks.
+		 */
+		SIGACTION(p, SIGILL) = SIG_DFL;
+		sig = sigmask(SIGILL);
+		p->p_sigignore &= ~sig;
+		p->p_sigcatch &= ~sig;
+		p->p_sigmask &= ~sig;
+		psignal(p, SIGILL);
+		return;
+	}
 	frame->f_regs[SP] = (int)fp;
 
 #ifdef DEBUG
@@ -577,8 +576,7 @@ hpux_sys_sigreturn(p, v, retval)
 	 * Fetch and test the HP-UX context structure.
 	 * We grab it all at once for speed.
 	 */
-	if (uvm_useracc((caddr_t)scp, sizeof (*scp), B_WRITE) == 0 ||
-	    copyin((caddr_t)scp, (caddr_t)&tsigc, sizeof tsigc))
+	if (copyin((caddr_t)scp, (caddr_t)&tsigc, sizeof tsigc))
 		return (EINVAL);
 	scp = &tsigc;
 	if ((scp->hsc_ps & (PSL_MBZ|PSL_IPL|PSL_S)) != 0)

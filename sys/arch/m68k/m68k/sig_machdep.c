@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.13 2003/06/02 23:27:48 millert Exp $	*/
+/*	$OpenBSD: sig_machdep.c,v 1.14 2003/08/01 18:37:28 miod Exp $	*/
 /*	$NetBSD: sig_machdep.c,v 1.3 1997/04/30 23:28:03 gwr Exp $	*/
 
 /*
@@ -162,24 +162,6 @@ sendsig(catcher, sig, mask, code, type, val)
 		printf("sendsig(%d): sig %d ssp %p usp %p scp %p ft %d\n",
 		       p->p_pid, sig, &oonstack, fp, &fp->sf_sc, ft);
 #endif
-	if (uvm_useracc((caddr_t)fp, fsize, B_WRITE) == 0) {
-#ifdef DEBUG
-		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-			printf("sendsig(%d): useracc failed on sig %d\n",
-			       p->p_pid, sig);
-#endif
-		/*
-		 * Process has trashed its stack; give it an illegal
-		 * instruction to halt it in its tracks.
-		 */
-		SIGACTION(p, SIGILL) = SIG_DFL;
-		sig = sigmask(SIGILL);
-		p->p_sigignore &= ~sig;
-		p->p_sigcatch &= ~sig;
-		p->p_sigmask &= ~sig;
-		psignal(p, SIGILL);
-		return;
-	}
 	kfp = (struct sigframe *)malloc((u_long)fsize, M_TEMP, M_WAITOK);
 	/* 
 	 * Build the argument list for the signal handler.
@@ -254,7 +236,25 @@ sendsig(catcher, sig, mask, code, type, val)
 	}
 
 	/* XXX do not copy out siginfo if not needed */
-	(void) copyout((caddr_t)kfp, (caddr_t)fp, fsize);
+	if (copyout((caddr_t)kfp, (caddr_t)fp, fsize) != 0) {
+#ifdef DEBUG
+		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
+			printf("sendsig(%d): copyout failed on sig %d\n",
+			       p->p_pid, sig);
+#endif
+		/*
+		 * Process has trashed its stack; give it an illegal
+		 * instruction to halt it in its tracks.
+		 */
+		SIGACTION(p, SIGILL) = SIG_DFL;
+		sig = sigmask(SIGILL);
+		p->p_sigignore &= ~sig;
+		p->p_sigcatch &= ~sig;
+		p->p_sigmask &= ~sig;
+		psignal(p, SIGILL);
+		free((caddr_t)kfp, M_TEMP);
+		return;
+	}
 	frame->f_regs[SP] = (int)fp;
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
@@ -312,8 +312,7 @@ sys_sigreturn(p, v, retval)
 	 * Test and fetch the context structure.
 	 * We grab it all at once for speed.
 	 */
-	if (uvm_useracc((caddr_t)scp, sizeof (*scp), B_WRITE) == 0 ||
-	    copyin((caddr_t)scp, (caddr_t)&tsigc, sizeof tsigc))
+	if (copyin((caddr_t)scp, (caddr_t)&tsigc, sizeof tsigc))
 		return (EINVAL);
 	scp = &tsigc;
 	if ((scp->sc_ps & (PSL_MBZ|PSL_IPL|PSL_S)) != 0)
