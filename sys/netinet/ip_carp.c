@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.74 2004/12/08 06:57:55 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.75 2004/12/08 07:05:18 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -105,10 +105,8 @@ struct carp_softc {
 	struct arpcom sc_ac;
 #define sc_carpdev sc_ac.ac_if.if_carpdev
 	int if_flags;			/* current flags to treat UP/DOWN */
-	struct in_ifaddr *sc_ia;	/* primary iface address */
 	struct ip_moptions sc_imo;
 #ifdef INET6
-	struct in6_ifaddr *sc_ia6;	/* primary iface address v6 */
 	struct ip6_moptions sc_im6o;
 #endif /* INET6 */
 	TAILQ_ENTRY(carp_softc) sc_list;
@@ -743,8 +741,8 @@ carp_clone_destroy(struct ifnet *ifp)
 	if (sc->sc_carpdev != NULL) {
 		cif = (struct carp_if *)sc->sc_carpdev->if_carp;
 		TAILQ_REMOVE(&cif->vhif_vrs, sc, sc_list);
-		if (cif->vhif_nvrs) {
-
+		if (!--cif->vhif_nvrs) {
+			ifpromisc(sc->sc_carpdev, 0);
 			sc->sc_carpdev->if_carp = NULL;
 			FREE(cif, M_IFADDR);
 		}
@@ -1532,7 +1530,7 @@ carp_set_addr(struct carp_softc *sc, struct sockaddr_in *sin)
 		return (0);
 	}
 
-	/* we have to do it by hands to check we won't match on us */
+	/* we have to do this by hand to ensure we don't match on ourselves */
 	ia_if = NULL; own = 0;
 	for (ia = TAILQ_FIRST(&in_ifaddr); ia;
 	    ia = TAILQ_NEXT(ia, ia_list)) {
@@ -1619,7 +1617,7 @@ carp_set_addr6(struct carp_softc *sc, struct sockaddr_in6 *sin6)
 		return (0);
 	}
 
-	/* we have to do it by hands to check we won't match on us */
+	/* we have to do this by hand to ensure we don't match on ourselves */
 	ia_if = NULL; own = 0;
 	for (ia = in6_ifaddr; ia; ia = ia->ia_next) {
 		int i;
