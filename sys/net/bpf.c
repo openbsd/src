@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.42 2003/12/10 07:22:42 itojun Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.43 2004/02/06 22:38:58 tedu Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -59,7 +59,7 @@
 #include <netinet/if_arc.h>
 #include <netinet/if_ether.h>
 
-#define BPF_BUFSIZE 9216	/* 8192 too small for ATM frames */
+#define BPF_BUFSIZE 32768
 
 #define PRINET  26			/* interruptible */
 
@@ -67,6 +67,7 @@
  * The default read buffer size is patchable.
  */
 int bpf_bufsize = BPF_BUFSIZE;
+int bpf_maxbufsize = BPF_MAXBUFSIZE;
 
 /*
  *  bpf_iflist is the list of interfaces; each corresponds to an ifnet
@@ -658,8 +659,8 @@ bpfioctl(dev, cmd, addr, flag, p)
 		else {
 			u_int size = *(u_int *)addr;
 
-			if (size > BPF_MAXBUFSIZE)
-				*(u_int *)addr = size = BPF_MAXBUFSIZE;
+			if (size > bpf_maxbufsize)
+				*(u_int *)addr = size = bpf_maxbufsize;
 			else if (size < BPF_MINBUFSIZE)
 				*(u_int *)addr = size = BPF_MINBUFSIZE;
 			d->bd_bufsize = size;
