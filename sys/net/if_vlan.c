@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.4 2000/05/15 19:15:00 chris Exp $ */
+/*	$OpenBSD: if_vlan.c,v 1.5 2000/08/15 22:21:17 chris Exp $ */
 /*
  * Copyright 1998 Massachusetts Institute of Technology
  *
@@ -263,6 +263,9 @@ vlan_start(struct ifnet *ifp)
 			m_freem(m);
 			continue;
 		}
+		p->if_obytes += m->m_pkthdr.len;
+		if (m->m_flags & M_MCAST)
+			p->if_omcasts++;
 		IF_ENQUEUE(&p->if_snd, m);
 		if ((p->if_flags & IFF_OACTIVE) == 0) {
 			p->if_start(p);
