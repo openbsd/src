@@ -1,7 +1,8 @@
-/*	$OpenBSD: svr4_fcntl.c,v 1.12 1997/12/17 07:25:51 deraadt Exp $	 */
+/*	$OpenBSD: svr4_fcntl.c,v 1.13 1997/12/20 16:32:08 deraadt Exp $	 */
 /*	$NetBSD: svr4_fcntl.c,v 1.14 1995/10/14 20:24:24 christos Exp $	 */
 
 /*
+ * Copyright (c) 1997 Theo de Raadt
  * Copyright (c) 1994 Christos Zoulas
  * All rights reserved.
  *

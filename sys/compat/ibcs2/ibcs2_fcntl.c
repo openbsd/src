@@ -1,7 +1,8 @@
-/*	$OpenBSD: ibcs2_fcntl.c,v 1.4 1996/08/02 20:35:05 niklas Exp $	*/
+/*	$OpenBSD: ibcs2_fcntl.c,v 1.5 1997/12/20 16:32:10 deraadt Exp $	*/
 /*	$NetBSD: ibcs2_fcntl.c,v 1.6 1996/05/03 17:05:20 christos Exp $	*/
 
 /*
+ * Copyright (c) 1997 Theo de Raadt
  * Copyright (c) 1995 Scott Bartram
  * All rights reserved.
  *
@@ -367,6 +368,61 @@ ibcs2_sys_fcntl(p, v, retval)
 		SCARG(&fa, cmd) = F_SETLKW;
 		SCARG(&fa, arg) = (void *)flp;
 		return sys_fcntl(p, &fa, retval);
+	    }
+	case IBCS2_F_FREESP:
+	    {
+		struct ibcs2_flock	ifl;
+		off_t			off, cur;
+		caddr_t			sg = stackgap_init(p->p_emul);
+		struct sys_fstat_args	ofst;
+		struct stat		ost;
+		struct sys_lseek_args	ols;
+		struct sys_ftruncate_args /* {
+			syscallarg(int) fd;
+			syscallarg(int) pad;
+			syscallarg(off_t) length;
+		} */ nuap;
+
+		error = copyin(SCARG(uap, arg), &ifl, sizeof ifl);
+		if (error)
+			return error;
+
+		SCARG(&ofst, fd) = SCARG(uap, fd);
+		SCARG(&ofst, sb) = stackgap_alloc(&sg,
+		    sizeof(struct stat));
+		if ((error = sys_fstat(p, &ofst, retval)) != 0)
+			return error;
+		if ((error = copyin(SCARG(&ofst, sb), &ost,
+		    sizeof ost)) != 0)
+			return error;
+
+		SCARG(&ols, fd) = SCARG(uap, fd);
+		SCARG(&ols, whence) = SEEK_CUR;
+		SCARG(&ols, offset) = 0;
+		if ((error = sys_lseek(p, &ols, (register_t *)&cur)) != 0)
+			return error;
+
+		off = (off_t)ifl.l_start;
+		switch (ifl.l_whence) {
+		case 0:
+			off = (off_t)ifl.l_start;
+			break;
+		case 1:
+			off = ost.st_size + (off_t)ifl.l_start;
+			break;
+		case 2:
+			off = cur - (off_t)ifl.l_start;
+			break;
+		default:
+			return EINVAL;
+		}
+
+		if (ifl.l_len != 0 && off + ifl.l_len != ost.st_size)
+			return EINVAL;	/* Sorry, cannot truncate in middle */
+
+		SCARG(&nuap, fd) = SCARG(uap, fd);
+		SCARG(&nuap, length) = off;
+		return (sys_ftruncate(p, &nuap, retval));
 	    }
 	}
 	return ENOSYS;
