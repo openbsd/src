@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.21 2001/01/27 12:03:34 niklas Exp $	*/
+/*	$OpenBSD: policy.c,v 1.22 2001/03/07 07:33:53 angelos Exp $	*/
 /*	$EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -132,6 +132,11 @@ struct exchange *policy_exchange = 0;
 struct sa *policy_sa = 0;
 struct sa *policy_isakmp_sa = 0;
 
+static const char hextab[] = {
+     '0', '1', '2', '3', '4', '5', '6', '7',
+     '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
+};
+
 /*
  * Adaptation of Vixie's inet_ntop4 ()
  */
@@ -167,7 +172,7 @@ policy_callback (char *name)
   struct sockaddr_in *sin;
   struct ipsec_exch *ie;
   struct ipsec_sa *is;
-  int fmt, lifetype = 0;
+  int fmt, i, lifetype = 0;
   in_addr_t net, subnet;
   u_int16_t len, type;
   time_t tt;
@@ -786,8 +791,22 @@ policy_callback (char *name)
 	  remote_id_type = "ASN1 GN";
 	  break;
 
-	case IPSEC_ID_KEY_ID: /* XXX -- hex-encode this.  */
+	case IPSEC_ID_KEY_ID:
 	  remote_id_type = "Key ID";
+	  remote_id = calloc (2 * (id_sz - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ) +
+			      1, sizeof (char));
+	  if (!remote_id)
+	    {
+		log_print ("policy_callback: calloc (%d, %d) failed",
+			   2 * (id_sz - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ) + 1,
+			   sizeof (char));
+		goto bad;
+	    }
+          for (i = 0; i < id_sz - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ; i++)
+	    {
+		remote_id[2 * i] = hextab[*(id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ) >> 4];
+		remote_id[2 * i + 1] = hextab[*(id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ) & 0xF];
+	    }
 	  break;
 
 	default:
@@ -966,8 +985,19 @@ policy_callback (char *name)
 	      remote_filter_type = "ASN1 GN";
 	      break;
 
-	    case IPSEC_ID_KEY_ID: /* XXX -- hex-encode this.  */
+	    case IPSEC_ID_KEY_ID:
 	      remote_filter_type = "Key ID";
+	      remote_filter = calloc (2 * (idremotesz - ISAKMP_ID_DATA_OFF) + 1, sizeof (char));
+	      if (!remote_filter)
+	        {
+		    log_print ("policy_callback: calloc (%d, %d) failed", 2 * (idremotesz - ISAKMP_ID_DATA_OFF) + 1, sizeof (char));
+		    goto bad;
+	        }
+              for (i = 0; i < id_sz - ISAKMP_ID_DATA_OFF; i++)
+	        {
+		    remote_filter[2 * i] = hextab[*(idremote + ISAKMP_ID_DATA_OFF) >> 4];
+		    remote_filter[2 * i + 1] = hextab[*(idremote + ISAKMP_ID_DATA_OFF) & 0xF];
+	        }
 	      break;
 
 	    default:
@@ -1149,8 +1179,19 @@ policy_callback (char *name)
 	      local_filter_type = "ASN1 GN";
 	      break;
 
-	    case IPSEC_ID_KEY_ID: /* XXX -- hex-encode this.  */
+	    case IPSEC_ID_KEY_ID:
 	      local_filter_type = "Key ID";
+	      local_filter = calloc (2 * (idlocalsz - ISAKMP_ID_DATA_OFF) + 1, sizeof (char));
+	      if (!local_filter)
+	        {
+		    log_print ("policy_callback: calloc (%d, %d) failed", 2 * (idlocalsz - ISAKMP_ID_DATA_OFF) + 1, sizeof (char));
+		    goto bad;
+	        }
+              for (i = 0; i < id_sz - ISAKMP_ID_DATA_OFF; i++)
+	        {
+		    local_filter[2 * i] = hextab[*(idlocal + ISAKMP_ID_DATA_OFF) >> 4];
+		    local_filter[2 * i + 1] = hextab[*(idlocal + ISAKMP_ID_DATA_OFF) & 0xF];
+	        }
 	      break;
 
 	    default:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_phase_1.c,v 1.21 2000/12/12 01:45:45 niklas Exp $	*/
+/*	$OpenBSD: ike_phase_1.c,v 1.22 2001/03/07 07:33:53 angelos Exp $	*/
 /*	$EOM: ike_phase_1.c,v 1.31 2000/12/11 23:47:56 niklas Exp $	*/
 
 /*
@@ -824,6 +824,7 @@ ike_phase_1_send_ID (struct message *msg)
 	  break;
 	case IPSEC_ID_FQDN:
 	case IPSEC_ID_USER_FQDN:
+	case IPSEC_ID_KEY_ID:
 	  memcpy (buf + ISAKMP_ID_DATA_OFF, conf_get_str (my_id, "Name"),
 		  sz - ISAKMP_ID_DATA_OFF);
 	  break;

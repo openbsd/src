@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.policy.5,v 1.16 2001/02/19 16:58:05 angelos Exp $
+.\" $OpenBSD: isakmpd.policy.5,v 1.17 2001/03/07 07:33:53 angelos Exp $
 .\" $EOM: isakmpd.policy.5,v 1.24 2000/11/23 12:55:25 niklas Exp $
 .\"
 .\" Copyright (c) 1999, Angelos D. Keromytis.  All rights reserved.
@@ -460,6 +460,8 @@ subnet, these are set to the upper and lower part of the address
 space separated by a dash ('-') character (if the type specifies a
 single address, they are set to that address).
 For FQDN and User FQDN types, these are set to the respective string.
+For Key ID, these are set to the hexadecimal representation of the
+associated byte string (lower-case letters used).
 .It remote_filter_port, local_filter_port, remote_id_port
 Set to the transport protocol port.
 .It remote_filter_proto, local_filter_proto, remote_id_proto

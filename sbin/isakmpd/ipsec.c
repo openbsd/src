@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec.c,v 1.39 2001/02/24 03:59:55 angelos Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.40 2001/03/07 07:33:53 angelos Exp $	*/
 /*	$EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	*/
 
 /*
@@ -2108,6 +2108,7 @@ ipsec_id_size (char *section, u_int8_t *id)
       return 2 * sizeof (in_addr_t);
     case IPSEC_ID_FQDN:
     case IPSEC_ID_USER_FQDN:
+    case IPSEC_ID_KEY_ID:
       data = conf_get_str (section, "Name");
       if (!data)
 	{
