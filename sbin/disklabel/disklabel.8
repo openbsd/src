@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.5 1997/10/02 00:09:06 millert Exp $
+.\"	$OpenBSD: disklabel.8,v 1.6 1997/10/15 09:08:26 deraadt Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -293,12 +293,15 @@ Display the in-core label for sd0 as obtained via
 .Pp
 Create a label for sd0 based on information for ``sd2212'' found in
 .Pa /etc/disktab .
-Any existing bootstrap code will be clobbered.
+Any existing bootstrap code will be clobbered.  (Normally you do not
+want to use the -r flag though.)
 .Pp
 .Dl disklabel -e -r sd0
 .Pp
 Read the on-disk label for sd0, edit it and reinstall in-core as well
 as on-disk.
+(Normally you do not
+want to use the -r flag though.)
 Existing bootstrap code is unaffected.
 .Pp
 .Dl disklabel -R sd0 mylabel
