@@ -23,7 +23,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: compat.c,v 1.38 2001/03/10 15:31:00 deraadt Exp $");
+RCSID("$OpenBSD: compat.c,v 1.39 2001/03/18 23:30:55 deraadt Exp $");
 
 #include <regex.h>
 
@@ -89,6 +89,8 @@ compat_datafellows(const char *version)
 		{ "^OSU_1\\.[0-4]",	SSH_BUG_PASSWORDPAD },
 		{ "^OSU_1\\.5alpha[1-3]",
 					SSH_BUG_PASSWORDPAD },
+		{ "^SSH_Version_Mapper",
+					SSH_BUG_SCANNER },
 		{ NULL,			0 }
 	};
 	/* process table, return first match */
