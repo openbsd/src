@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.43 2004/03/26 08:31:58 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.44 2004/03/26 17:47:20 markus Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -391,6 +391,7 @@ carp6_input(struct mbuf **mp, int *offp, int proto)
 	struct mbuf *m = *mp;
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
 	struct carp_header *ch;
+	u_int len;
 
 	carpstats.carps_ipackets6++;
 
@@ -417,11 +418,11 @@ carp6_input(struct mbuf **mp, int *offp, int proto)
 	}
 
 	/* verify that we have a complete carp packet */
+	len = m->m_len;
 	IP6_EXTHDR_GET(ch, struct carp_header *, m, *offp, sizeof(*ch));
 	if (ch == NULL) {
 		carpstats.carps_badlen++;
-		CARP_LOG("packet size %d too small", m->m_len);
-		m_freem(m);
+		CARP_LOG("packet size %u too small", len);
 		return (IPPROTO_DONE);
 	}
 
