@@ -1,4 +1,4 @@
-/*	$OpenBSD: autri.c,v 1.7 2002/03/14 03:16:06 millert Exp $	*/
+/*	$OpenBSD: autri.c,v 1.8 2002/09/26 22:14:50 mickey Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -292,9 +292,10 @@ autri_read_codec(sc_, index, data)
 	}
 
 	/* wait for 'Ready to Read' */
-	for (count=0; count<0xffff; count++) {
+	for (count=0; count < 0xffff; count++) {
 		if ((TREAD4(sc, addr) & busy) == 0)
 			break;
+		DELAY(1);
 	}
 
 	if (count == 0xffff) {
@@ -307,10 +308,11 @@ autri_read_codec(sc_, index, data)
 	TWRITE4(sc, addr, (index & 0x7f) | cmd);
 
 	/* wait for 'Returned data is avalable' */
-	for (count=0; count<0xffff; count++) {
+	for (count=0; count < 0xffff; count++) {
 		status = TREAD4(sc, addr);
 		if ((status & busy) == 0)
 			break;
+		DELAY(1);
 	}
 
 	if (count == 0xffff) {
@@ -367,9 +369,10 @@ autri_write_codec(sc_, index, data)
 	}
 
 	/* wait for 'Ready to Write' */
-	for (count=0; count<0xffff; count++) {
+	for (count=0; count < 0xffff; count++) {
 		if ((TREAD4(sc, addr) & busy) == 0)
 			break;
+		DELAY(1);
 	}
 
 	if (count == 0xffff) {
