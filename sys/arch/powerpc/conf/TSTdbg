@@ -49,7 +49,7 @@ options		NMBCLUSTERS=1024
 options		MAXUSERS=20
 options		TARGET_ELF
 
-config		netbsd	swap generic
+config		bsd	swap generic
 
 ofroot*		at root
 

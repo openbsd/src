@@ -44,7 +44,7 @@ options		UNION
 options		INET
 options		NMBCLUSTERS=1024
 
-config		netbsd	swap generic
+config		bsd	swap generic
 
 ofroot*		at root
 
