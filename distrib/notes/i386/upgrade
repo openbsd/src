@@ -1,8 +1,8 @@
-dnl	$OpenBSD: upgrade,v 1.19 2003/09/07 12:01:56 krw Exp $
+dnl	$OpenBSD: upgrade,v 1.20 2003/09/09 22:03:56 miod Exp $
 dnl OpenBSDUpgrade({:-the CD-ROM or an installation floppy as you would do for
 dnl a new installation-:})
 Due to the change from a.out to ELF binary format in OpenBSD OSREV,
-upgrades can be a complex, delicate process.  The best solution, whenever
+upgrades can be a complex, delicate process. The best solution, whenever
 possible, is to backup your data and reinstall from scratch.
 
 The second best solution is to remove all ports, third party programs and
@@ -21,7 +21,7 @@ existing a.out binary files, then the rest of this section will guide you
 through that process.
 
 The two main hurdles in upgrading from an a.out system to an ELF OpenBSD
-OSREV system while preserving the functioning of a.out binaryies are:
+OSREV system while preserving the functioning of a.out binaries are:
 - the a.out binary emulation, required for compatibility with a.out
   binaries using shared libraries, is not enabled by default, and requires
   an explicit configuration change.
@@ -29,36 +29,33 @@ OSREV system while preserving the functioning of a.out binaryies are:
   for proper operation of older binaries.
 
 Before you start the upgrade process, the a.out emulation area needs to be
-setup. It needs to be put inside a /emul/a.out hierarchy. This directory can,
+set up. It needs to be put inside a /emul/a.out hierarchy. This directory can,
 however, be a symbolic link, should the available space in the root partition
 not be enough.
+
+It is recommended that the following instructions and commands are issued in
+single-user mode.
 
 The /emul/a.out hierarchy should be populated by the a.out shared libraries.
 An easy way to do it is to run the following commands as root:
 
-   mkdir -p /emul/a.out/sbin /emul/a.out/var/run
-   tar cf - `/sbin/ldconfig -r | awk '/=>/ { print $3 }'` |
+   mkdir -p /emul/a.out/var/run
+   tar cf - /sbin/ldconfig /usr/bin/ldd /usr/libexec/ld.so |
        tar -C /emul/a.out -xpf -
-   cp -p /sbin/ldconfig /emul/a.out/sbin
+   for lib in $(/sbin/ldconfig -r |
+     awk '/=>/ { print $3 }');
+   do
+     dirname $lib;
+   done | sort -u > /root/a.out-libdirs
+   tar cf - $(find $(< /root/a.out-libdirs) -name "lib*.so.*") |
+       tar -C /emul/a.out -xpf -
 
 Then, a cache of these shared libraries must be generated with:
 
    cp /var/run/ld.so.hints /var/run/ld.so.hints.backup
-   for lib in `/sbin/ldconfig -r |
-       awk '/=>/ { printf("/emul/a.out%s\n", $3"); }'`;
-   do
-       dirname $lib;
-   done | sort | uniq > /root/a.out-newlibdirs
-   /sbin/ldconfig -s `cat /root/a.out-newlibdirs`
+   /sbin/ldconfig -s $(/usr/bin/sed 's,^/,/emul/a.out/,' /root/a.out-libdirs) 
    /bin/mv /var/run/ld.so.hints /emul/a.out/var/run
    /bin/mv /var/run/ld.so.hints.backups /var/run/ld.so.hints
-   rm -f /root/a.out-newlibdirs
-
-Finally, it is a good idea to keep a list of the various shared libraries
-which have been copied to the /emul/a.out hierarchy, as they will need to
-be removed after the upgrade is completed:
-
-  /sbin/ldconfig -r | awk '/=>/ { print $3 }' > /root/a.out-sharedlibs
 
 The last step before the upgrade is to enable the a.out emulation, in
 order to be sure that /etc/rc.local or any other customization you have
@@ -74,10 +71,10 @@ option at the prompt in the install process.
 
 The upgrade script will ask you for the existing root partition, and
 will use the existing filesystems defined in /etc/fstab to install the
-new system in.  It will also use your existing network parameters.
+new system in. It will also use your existing network parameters.
 
 From then, the upgrade procedure is very close to the installation
-procedure described earlier in this document.  Note that the upgrade
+procedure described earlier in this document. Note that the upgrade
 procedure will not let you pick the ``etc{:--:}OSrev.tgz'' set, so as to
 preserve your files in `/etc' which you are likely to have customized
 since a previous installation.
@@ -93,5 +90,6 @@ updated.
 After the upgrade is completed, it is now possible to remove the old a.out
 shared libraries from their initial locations:
 
-  rm -f `cat /root/a.out-sharedlibs`
-  rm -f /root/a.out-sharedlibs
+  rm -f $(file $(find $(< /root/a.out-libdirs) -name "lib*.so.*") |
+    awk -F: '/demand paged/ { print $1 }')
+  rm -f /root/a.out-libdirs
