@@ -1,7 +1,7 @@
-/*	$OpenBSD: hppa.c,v 1.4 2002/07/22 02:54:23 art Exp $	*/
+/*	$OpenBSD: hppa.c,v 1.5 2003/01/15 22:05:06 mickey Exp $	*/
 
 /*
- * Copyright (c) 2002 Michael Shalayeff
+ * Copyright (c) 2002-2003 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -51,7 +51,7 @@ md_def_init(void)
 int
 md_getframe(struct pstate *ps, int frame, struct md_frame *fram)
 {
-	reg fr[16];
+	reg fr[32];
 	struct reg r;
 	reg fp, pc, rp;
 	int i;
@@ -61,12 +61,12 @@ md_getframe(struct pstate *ps, int frame, struct md_frame *fram)
 
 	if (frame == 0) {
 		fram->pc = r.r_pc;
-		fram->fp = r.r_reg[3];
+		fram->fp = r.r_regs[3];
 		return (0);
 	}
 
-	rp = r.r_reg[2];
-	fp = r.r_reg[3];
+	rp = r.r_regs[2];
+	fp = r.r_regs[3];
 	pc = r.r_pc;
 
 	for (i = 1; i < frame; i++) {
@@ -82,10 +82,10 @@ md_getframe(struct pstate *ps, int frame, struct md_frame *fram)
 	fram->fp = fp;
 
 	fram->nargs = 4;		/* XXX real number is in the symtab */
-	fram->args[0] = fr.r_arg0;
-	fram->args[1] = fr.r_arg1;
-	fram->args[2] = fr.r_arg2;
-	fram->args[3] = fr.r_arg3;
+	fram->args[3] = fr[23];
+	fram->args[2] = fr[24];
+	fram->args[1] = fr[25];
+	fram->args[0] = fr[26];
 
 	return (0);
 }
@@ -103,7 +103,7 @@ md_getregs(struct pstate *ps, reg *regs)
 	regs[1] = r.r_npc;
 
 	for (i = 0; i < 32; i++)
-		regs[2 + i] = r.r_out[i];
+		regs[2 + i] = r.r_regs[i];
 
 	return (0);
 }
