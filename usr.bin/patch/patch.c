@@ -1,4 +1,4 @@
-/*	$OpenBSD: patch.c,v 1.17 2003/07/02 00:21:16 avsm Exp $	*/
+/*	$OpenBSD: patch.c,v 1.18 2003/07/16 16:06:53 otto Exp $	*/
 
 /* patch - a program to apply diffs to original files
  *
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: patch.c,v 1.17 2003/07/02 00:21:16 avsm Exp $";
+static char rcsid[] = "$OpenBSD: patch.c,v 1.18 2003/07/16 16:06:53 otto Exp $";
 #endif /* not lint */
 
 #include "INTERN.h"
@@ -881,8 +881,11 @@ LINENUM line;
     Reg1 char *s;
     Reg2 char R_newline = '\n';
 
+    s = ifetch(line, 0);
+    if (s == NULL)
+	return;
     /* Note: string is not null terminated. */
-    for (s=ifetch(line, 0); putc(*s, ofp) != R_newline; s++) ;
+    for (; putc(*s, ofp) != R_newline; s++) ;
 }
 
 /* Does the patch pattern match at line base+offset? */
@@ -920,6 +923,8 @@ Reg1 char *a;
 Reg2 char *b;
 Reg3 int len;
 {
+    if (a == NULL || b == NULL)
+	return FALSE;
     while (len) {
 	if (isspace(*b)) {		/* whitespace (or \n) to match? */
 	    if (!isspace(*a))		/* no corresponding whitespace? */
