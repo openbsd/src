@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.178 2003/02/10 11:09:10 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.179 2003/02/10 11:26:30 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -57,7 +57,7 @@ Options tune the behaviour of the packet filtering engine.
 Traffic normalization protects internal machines against inconsistencies
 in Internet protocols and implementations.
 .It Cm Queueing
-Queuing provides rule-based bandwidth control.
+Queueing provides rule-based bandwidth control.
 .It Cm Translation Li (Various forms of NAT)
 Translation rules specify how addresses are to be mapped or redirected to
 other addresses.
@@ -496,7 +496,7 @@ rules will be queued, while for
 rules it specifies where any resulting ICMP or TCP RST
 packets should be queued.
 .Pp
-The interfaces on which queuing should be activated are declared using
+The interfaces on which queueing should be activated are declared using
 the
 .Ar altq on
 declaration.
