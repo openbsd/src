@@ -1,4 +1,4 @@
-#	$OpenBSD: std.alpha,v 1.5 1997/01/24 19:57:04 niklas Exp $
+#	$OpenBSD: std.alpha,v 1.6 1997/06/02 13:21:19 deraadt Exp $
 #	$NetBSD: std.alpha,v 1.11 1996/11/15 19:37:34 cgd Exp $
 #
 # Standard/required configuration info for OpenBSD/alpha.
@@ -16,5 +16,4 @@ options		EXEC_SCRIPT	# shell script support
 
 # VM pager support
 options		SWAPPAGER	# paging; REQUIRED
-options		VNODEPAGER	# mmap() of files; REQUIRED
 options		DEVPAGER	# mmap() of devices; REQUIRED
