@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdl.c,v 1.8 2003/08/22 21:50:34 david Exp $ */
+/*	$OpenBSD: sdl.c,v 1.9 2003/09/20 00:43:10 deraadt Exp $ */
 /*
  * Copyright (c) 2003 Bob Beck.  All rights reserved.
  *
@@ -68,8 +68,8 @@ sdl_add(char *sdname, char *sdstring, char ** addrs, int addrc)
 	 */
 	for (i = 0; i < blu; i++) {
 		if (strcmp(blacklists[i].tag, sdname) == 0) {
-				index = i;
-				break;
+			index = i;
+			break;
 		}
 	}
 	if (index != -1) {
@@ -83,7 +83,8 @@ sdl_add(char *sdname, char *sdstring, char ** addrs, int addrc)
 	}
 	if (index == blu && blu == blc) {
 		struct sdlist *tmp;
-		tmp = realloc (blacklists, (blc + 128) *
+
+		tmp = realloc(blacklists, (blc + 128) *
 		    sizeof(struct sdlist));
 		if (tmp == NULL)
 			return (-1);
