@@ -1,4 +1,4 @@
-.\"	$OpenBSD: awk.1,v 1.4 1998/02/03 00:24:01 millert Exp $
+.\"	$OpenBSD: awk.1,v 1.5 1998/03/03 01:56:00 angelos Exp $
 .de EX
 .nf
 .ft CW
@@ -21,6 +21,9 @@ awk \- pattern-directed scanning and processing language
 [
 .BI \-v
 .I var=value
+]
+[
+.BI \-safe
 ]
 [
 .BI \-mr n
@@ -79,6 +82,11 @@ The
 .IR fs
 option defines the input field separator to be the regular expression
 .IR fs.
+The
+.B \-safe
+option disables file output (print >, print >>), process creation
+(cmd|getline, print |, system), and access to the environment (ENVIRON). This
+is a first (and not very reliable) approximation to a "safe" version of awk.
 .PP
 An input line is normally made up of fields separated by white space,
 or by regular expression
