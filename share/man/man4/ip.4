@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ip.4,v 1.18 2001/11/13 13:54:25 mpech Exp $
+.\"	$OpenBSD: ip.4,v 1.19 2002/12/04 00:55:08 ho Exp $
 .\"	$NetBSD: ip.4,v 1.3 1994/11/30 16:22:19 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -105,7 +105,7 @@ and
 sockets.
 For example,
 .Bd -literal
-int tos = IPTOS_LOWDELAY;       /* see <netinet/in.h> */
+int tos = IPTOS_LOWDELAY;       /* see <netinet/ip.h> */
 setsockopt(s, IPPROTO_IP, IP_TOS, &tos, sizeof(tos));
 
 int ttl = 60;                   /* max = 255 */
