@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: pppctl.c,v 1.5 2000/08/16 12:02:40 brian Exp $
+ *	$Id: pppctl.c,v 1.6 2001/03/05 01:02:55 brian Exp $
  */
 
 #include <sys/types.h>
@@ -392,6 +392,10 @@ main(int argc, char **argv)
                 History *hist;
                 const char *l, *env;
                 int size;
+#ifdef __NetBSD__
+                HistEvent hev = { 0, "" };
+#endif
+
 
                 hist = history_init();
                 if ((env = getenv("EL_SIZE"))) {
@@ -401,7 +405,7 @@ main(int argc, char **argv)
                 } else
                     size = 20;
 #ifdef __NetBSD__
-                history(hist, NULL, H_SETSIZE, size);
+                history(hist, &hev, H_SETSIZE, size);
 #else
                 history(hist, H_EVENT, size);
 #endif
@@ -419,7 +423,7 @@ main(int argc, char **argv)
                 while ((l = smartgets(edit, &len, fd))) {
                     if (len > 1)
 #ifdef __NetBSD__
-                        history(hist, NULL, H_ENTER, l);
+                        history(hist, &hev, H_ENTER, l);
 #else
                         history(hist, H_ENTER, l);
 #endif
