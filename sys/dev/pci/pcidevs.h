@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.444 2001/09/15 06:55:17 jason Exp 
+ *		OpenBSD: pcidevs,v 1.445 2001/09/20 04:14:21 nate Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -584,6 +584,7 @@
 
 /* 3Com Products */
 #define	PCI_PRODUCT_3COM_3C985	0x0001		/* 3c985 */
+#define	PCI_PRODUCT_3COM_3C996	0x0003		/* 3c996 */
 #define	PCI_PRODUCT_3COM_3C_MPCI_MODEM	0x1007		/* Mini-PCI V.90 Modem */
 #define	PCI_PRODUCT_3COM_3C339	0x3390		/* 3c339 */
 #define	PCI_PRODUCT_3COM_3C359	0x3590		/* 3c359 */
@@ -759,6 +760,8 @@
 /* Alteon products */
 #define	PCI_PRODUCT_ALTEON_ACENIC	0x0001		/* Acenic */
 #define	PCI_PRODUCT_ALTEON_ACENICT	0x0002		/* Acenic Copper */
+#define	PCI_PRODUCT_ALTEON_BCM5700	0x0003		/* BCM5700 (Broadcom) */
+#define	PCI_PRODUCT_ALTEON_BCM5701	0x0004		/* BCM5701 (Broadcom) */
 
 /* AMD products */
 #define	PCI_PRODUCT_AMD_PCNET_PCI	0x2000		/* 79c970 PCnet-PCI LANCE */
@@ -893,6 +896,7 @@
 
 /* Broadcom */
 #define	PCI_PRODUCT_BROADCOM_BCM5700	0x1644		/* BCM5700 */
+#define	PCI_PRODUCT_BROADCOM_BCM5701	0x1645		/* BCM5701 */
 #define	PCI_PRODUCT_BROADCOM_5805	0x5805		/* 5805 */
 #define	PCI_PRODUCT_BROADCOM_5820	0x5820		/* 5820 */
 
@@ -1724,6 +1728,7 @@
 
 /* Schneider & Koch (SysKonnect) */
 #define	PCI_PRODUCT_SCHNEIDERKOCH_GE	0x4300		/* 984x GE */
+#define	PCI_PRODUCT_SCHNEIDERKOCH_SK9D21	0x4400		/* SK-9D21 */
 
 /* SGI products */
 #define	PCI_PRODUCT_SGI_TIGON	0x0009		/* Tigon */

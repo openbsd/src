@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.444 2001/09/15 06:55:17 jason Exp 
+ *		OpenBSD: pcidevs,v 1.445 2001/09/20 04:14:21 nate Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -45,6 +45,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C985,
 	    "3c985",
+	},
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C996,
+	    "3c996",
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C_MPCI_MODEM,
@@ -619,6 +623,14 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Acenic Copper",
 	},
 	{
+	    PCI_VENDOR_ALTEON, PCI_PRODUCT_ALTEON_BCM5700,
+	    "BCM5700 (Broadcom)",
+	},
+	{
+	    PCI_VENDOR_ALTEON, PCI_PRODUCT_ALTEON_BCM5701,
+	    "BCM5701 (Broadcom)",
+	},
+	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCNET_PCI,
 	    "79c970 PCnet-PCI LANCE",
 	},
@@ -1037,6 +1049,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5700,
 	    "BCM5700",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5701,
+	    "BCM5701",
 	},
 	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_5805,
@@ -3537,6 +3553,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_GE,
 	    "984x GE",
+	},
+	{
+	    PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_SK9D21,
+	    "SK-9D21",
 	},
 	{
 	    PCI_VENDOR_SGI, PCI_PRODUCT_SGI_TIGON,
