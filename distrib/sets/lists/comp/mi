@@ -265,7 +265,6 @@
 ./usr/include/dev/pci/if_lmc_types.h
 ./usr/include/dev/pci/if_lmcioctl.h
 ./usr/include/dev/pci/if_lmcvar.h
-./usr/include/dev/pci/if_pnreg.h
 ./usr/include/dev/pci/if_rlreg.h
 ./usr/include/dev/pci/if_sfreg.h
 ./usr/include/dev/pci/if_sisreg.h
@@ -317,7 +316,6 @@
 ./usr/include/dev/raidframe/rf_chaindecluster.h
 ./usr/include/dev/raidframe/rf_configure.h
 ./usr/include/dev/raidframe/rf_copyback.h
-./usr/include/dev/raidframe/rf_cpuutil.h
 ./usr/include/dev/raidframe/rf_cvscan.h
 ./usr/include/dev/raidframe/rf_dag.h
 ./usr/include/dev/raidframe/rf_dagdegrd.h
@@ -334,7 +332,6 @@
 ./usr/include/dev/raidframe/rf_desc.h
 ./usr/include/dev/raidframe/rf_diskqueue.h
 ./usr/include/dev/raidframe/rf_disks.h
-./usr/include/dev/raidframe/rf_diskthreads.h
 ./usr/include/dev/raidframe/rf_driver.h
 ./usr/include/dev/raidframe/rf_engine.h
 ./usr/include/dev/raidframe/rf_etimer.h
@@ -382,7 +379,6 @@
 ./usr/include/dev/raidframe/rf_sstf.h
 ./usr/include/dev/raidframe/rf_states.h
 ./usr/include/dev/raidframe/rf_stripelocks.h
-./usr/include/dev/raidframe/rf_threadid.h
 ./usr/include/dev/raidframe/rf_threadstuff.h
 ./usr/include/dev/raidframe/rf_types.h
 ./usr/include/dev/raidframe/rf_utils.h
@@ -795,7 +791,6 @@
 ./usr/include/netinet6/tcpipv6.h
 ./usr/include/netipx
 ./usr/include/netipx/ipx.h
-./usr/include/netipx/ipx_error.h
 ./usr/include/netipx/ipx_if.h
 ./usr/include/netipx/ipx_ip.h
 ./usr/include/netipx/ipx_pcb.h
