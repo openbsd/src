@@ -1,4 +1,4 @@
-/*	$OpenBSD: m18x_cmmu.c,v 1.9 2001/06/14 21:30:45 miod Exp $	*/
+/*	$OpenBSD: m18x_cmmu.c,v 1.10 2001/08/11 01:55:55 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -172,13 +172,6 @@ error("ack gag barf!");
  * May be used from "db_interface.c".
  */
 
-extern unsigned cache_policy;
-extern unsigned cpu_sets[];
-extern unsigned number_cpus;
-extern unsigned master_cpu;
-extern int      max_cpus, max_cmmus;
-extern int      cpu_cmmu_ratio;
-
 int      vme188_config;
 
 /* prototypes */
@@ -350,11 +343,6 @@ m18x_setup_board_config()
 	switch (cputyp) {
 #ifdef MVME187
 	case CPU_187:
-#endif
-#ifdef MVME197
-	case CPU_197:
-#endif
-#if defined(MVME187) || defined(MVME197)
 		vme188_config = 10; /* There is no WHOAMI reg on MVME1x7 - fake it... */
 		cmmu[0].cmmu_regs = (void *)SBC_CMMU_I;
 		cmmu[0].cmmu_cpu = 0;
@@ -369,7 +357,7 @@ m18x_setup_board_config()
 		max_cpus = 1;
 		max_cmmus = 2;
 		break;
-#endif /* defined(MVME187) || defined(MVME197) */
+#endif /* defined(MVME187) */
 #ifdef MVME188
 	case CPU_188:
 		whoami = (volatile unsigned long *)MVME188_WHOAMI;
@@ -638,13 +626,8 @@ m18x_cmmu_dump_config()
 	switch (cputyp) {
 #ifdef MVME187
 	case CPU_187:
-#endif
-#ifdef MVME197
-	case CPU_197:
-#endif
-#if defined(MVME187) || defined(MVME197)
 		DEBUG_MSG("VME1x7 split mode\n\n");
-#endif /* defined(MVME187) || defined(MVME197) */
+#endif /* defined(MVME187) */
 #ifdef MVME188
 	case CPU_188:
 		DEBUG_MSG("VME188 address decoder: PCNFA = 0x%1x, PCNFB = 0x%1x\n\n", *pcnfa & 0xf, *pcnfb & 0xf);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: m197_cmmu.c,v 1.4 2001/08/07 22:12:31 miod Exp $	*/
+/*	$OpenBSD: m197_cmmu.c,v 1.5 2001/08/11 01:55:55 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -90,13 +90,6 @@ unsigned int debuglevel = 0;
  *
  * May be used from "db_interface.c".
  */
-
-extern unsigned cache_policy;
-extern unsigned cpu_sets[];
-extern unsigned number_cpus;
-extern unsigned master_cpu;
-extern int      cpu_cmmu_ratio;
-int init_done;
 
 /* FORWARDS */
 void m197_setup_cmmu_config(void);
