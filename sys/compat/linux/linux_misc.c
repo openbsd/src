@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.51 2003/07/23 17:42:09 tedu Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.52 2003/08/14 18:50:13 fgsch Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*-
@@ -1536,4 +1536,10 @@ linux_sys_sysinfo(p, v, retval)
 	si.mem_unit = 1;
 
 	return (copyout(&si, SCARG(uap, sysinfo), sizeof(si)));
+}
+
+int
+linux_sys_exit_group(struct proc *p, void *v, register_t *retval)
+{
+	return (sys_exit(p, v, retval));
 }
