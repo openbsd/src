@@ -1,15 +1,13 @@
-#	$OpenBSD: list,v 1.12 2001/07/03 00:12:07 deraadt Exp $
+#	$OpenBSD: list,v 1.13 2002/04/21 17:11:27 deraadt Exp $
 #	$NetBSD: list,v 1.2.4.2 1996/06/26 19:25:00 pk Exp $
 
 # Sparc extra's
 LINK	instbin			sbin/disklabel
-
-SYMLINK	../../instbin		usr/bin/basename
-SYMLINK ../../instbin		usr/bin/grep usr/bin/egrep usr/bin/fgrep
-SYMLINK ../../instbin		usr/bin/rsh
-SYMLINK ../../instbin		usr/bin/tset usr/bin/reset
-SYMLINK	../../instbin		usr/bin/less usr/bin/more
-SYMLINK	../../instbin		usr/sbin/installboot
+LINK	instbin			usr/bin/grep usr/bin/egrep usr/bin/fgrep
+LINK	instbin			usr/bin/tset usr/bin/reset
+LINK	instbin			usr/bin/less usr/bin/more
+LINK	instbin			usr/sbin/installboot
+SPECIAL /bin/rm instbin
 
 SRCDIRS	sys/arch/sparc/stand
 
@@ -17,7 +15,7 @@ SRCDIRS	sys/arch/sparc/stand
 SYMLINK	/tmp	var/tmp
 
 # copy the MAKEDEV script and make some devices
-COPY	${DESTDIR}/dev/MAKEDEV		dev/MAKEDEV
+SPECIAL sed -e '/^[ 	]*#[ 	].*$/d' -e '/^[ 	]*#$/d' < ${DESTDIR}/dev/MAKEDEV	 > dev/MAKEDEV
 SPECIAL	cd dev; sh MAKEDEV ramdisk
 
 # we need the contents of /usr/mdec (but not boot or binstall)
@@ -35,5 +33,5 @@ SYMLINK	/tmp/resolv.conf.shadow		etc/resolv.conf
 SYMLINK	/tmp/hosts			etc/hosts
 
 # and the installation tools
-COPY	${ARCHDIR}/../ramdisk/dot.profile	.profile
-SPECIAL sed -e '/^#[ 	].*$/d' -e "s/^ARCH=ARCH$/ARCH=`arch -s`/" < ${ARCHDIR}/../install.md	 > install.md
+SPECIAL sed -e '/^[ 	]*#[ 	].*$/d' -e '/^[ 	]*#$/d' < ${ARCHDIR}/../dot.profile	 > .profile
+SPECIAL sed -e '/^[ 	]*#[ 	].*$/d' -e '/^[ 	]*#$/d' -e "s/^ARCH=ARCH$/ARCH=`arch -ks`/" < ${ARCHDIR}/../install.md	 > install.md

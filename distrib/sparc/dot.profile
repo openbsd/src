@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.profile,v 1.22 2002/04/13 17:36:56 deraadt Exp $
+#	$OpenBSD: dot.profile,v 1.1 2002/04/21 17:11:27 deraadt Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/12/18 22:54:43 pk Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
@@ -35,14 +35,6 @@ export PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
 umask 022
 set -o emacs # emacs-style command line editing
 
-# XXX
-# the TERM/EDITOR stuff is really well enough parameterized to be moved
-# into install.sub where it could use the routines there and be invoked
-# from the various (semi) MI install and upgrade scripts
-# terminals believed to be in termcap, default TERM
-TERMS="sun vt* pcvt* dumb"
-TERM=sun
-
 rootdisk=`dmesg|sed -n -e '/OpenBSD /h' -e '//!H' -e '${
 	g
 	p
@@ -59,17 +51,6 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	# set up some sane defaults
 	echo 'erase ^?, werase ^W, kill ^U, intr ^C, status ^T'
 	stty newcrt werase ^W intr ^C kill ^U erase ^? status ^T 9600
-
-	# get the terminal type
-	_forceloop=""
-	while [ "X$_forceloop" = X"" ]; do
-		echo "Supported terminals are: $TERMS"
-		eval `tset -s -m ":?$TERM"`
-		if [ "X$TERM" != X"unknown" ]; then
-			_forceloop="done"
-		fi
-	done
-	export TERM
 
 	# Installing or upgrading?
 	_forceloop=""
