@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.34 2003/07/14 18:42:20 mickey Exp $	*/
+/*	$OpenBSD: main.c,v 1.35 2003/07/14 18:57:31 millert Exp $	*/
 
 static const char copyright[] =
 "@(#) Copyright (c) 1992, 1993\n\
@@ -35,7 +35,7 @@ static const char license[] =
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-static const char main_rcsid[] = "$OpenBSD: main.c,v 1.34 2003/07/14 18:42:20 mickey Exp $";
+static const char main_rcsid[] = "$OpenBSD: main.c,v 1.35 2003/07/14 18:57:31 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -94,6 +94,7 @@ int compress(const char *, const char *, const struct compressor *,
 int decompress(const char *, const char *, const struct compressor *,
     int, struct stat *);
 const struct compressor *check_method(int, struct stat *, const char *);
+char *set_outfile(char *, char *, size_t);
 
 #define	OPTSTRING	"123456789ab:cdfghlLnNOo:qrS:tvV"
 const struct option longopts[] = {
@@ -347,24 +348,13 @@ main(int argc, char *argv[])
 			strlcpy(outfile, "/dev/stdout", sizeof outfile);
 		else if (!oflag) {
 			if (decomp) {
-				const struct compressor *m = method;
-
-				if ((s = strrchr(infile, '.')) != NULL &&
-				    strcmp(s, suffix) != 0) {
-					for (m = &c_table[0];
-					    m->name && strcmp(s, m->suffix);
-					    m++)
-						;
-				}
-				if (s == NULL || m->name == NULL) {
+				if (set_outfile(infile, outfile,
+				    sizeof outfile) == NULL) {
 					if (!recurse)
 						warnx("%s: unknown suffix: "
 						    "ignored", infile);
 					continue;
 				}
-				method = m;
-				strlcpy(outfile, infile,
-				    min(sizeof(outfile), (s - infile) + 1));
 			} else {
 				if (snprintf(outfile, sizeof(outfile),
 				    "%s%s", infile, suffix) >= sizeof(outfile)) {
@@ -637,6 +627,45 @@ permission(const char *fname)
 	while (ch != '\n' && ch != EOF)
 		ch = getchar();
 	return (first == 'y');
+}
+
+/*
+ * Set outfile based on the suffix.  In most cases we just strip
+ * off the suffix but things like .tgz and .taz are special.
+ */
+char *
+set_outfile(char *infile, char *outfile, size_t osize)
+{
+	int i;
+	char *s;
+	static char *suffixes[] = { ".Z", ".gz", ".z", ".tgz", ".taz",
+				    "-Z", "-gz", "-z", "_Z", "_gz", "_z",
+				    NULL };
+
+	if ((s = strrchr(infile, '.')) == NULL &&
+	    (s = strrchr(infile, '-')) == NULL &&
+	    (s = strrchr(infile, '_')) == NULL)
+		return (NULL);
+
+	for (i = 0; suffixes[i] != NULL; i++) {
+		if (strcmp(s, suffixes[i]) == 0) {
+			(void)strlcpy(outfile, infile, osize);
+			s = outfile + (s - infile);
+			/*
+			 * Convert .tgz and .taz -> .tar,
+			 * else drop the suffix.
+			 */
+			if (strcmp(s, ".tgz") == 0) {
+				s[2] = 'a';
+				s[3] = 'r';
+			} else if (strcmp(s, ".taz") == 0)
+				s[3] = 'r';
+			else
+				s[0] = '\0';
+			return (outfile);
+		}
+	}
+	return (NULL);
 }
 
 __dead void
