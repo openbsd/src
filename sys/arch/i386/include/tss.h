@@ -38,8 +38,8 @@
  *	@(#)tss.h	5.4 (Berkeley) 1/18/91
  */
 
-#ifndef __I386_TSS_H__
-#define __I386_TSS_H__
+#ifndef _I386_TSS_H_
+#define _I386_TSS_H_
 
 /*
  * Intel 386 Context Data Type
@@ -74,4 +74,4 @@ struct i386tss {
 	int	tss_ioopt;	/* options and I/O permission map offset */
 };
 
-#endif /* __I386_TSS_H__ */
+#endif /* _I386_TSS_H_ */
