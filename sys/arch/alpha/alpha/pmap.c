@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.11 2001/03/16 14:10:23 art Exp $ */
+/* $OpenBSD: pmap.c,v 1.12 2001/04/10 06:59:13 niklas Exp $ */
 /* $NetBSD: pmap.c,v 1.148 2000/09/22 05:23:37 thorpej Exp $ */
 
 /*-
@@ -1065,14 +1065,8 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 #endif
 
 	for (bank = 0; bank < vm_nphysseg; bank++) {
-#if 0
 		if (uvm.page_init_done == TRUE)
 			panic("pmap_steal_memory: called _after_ bootstrap");
-#else
-		/* XXXX */
-		if (vm_physmem[0].pgs)
-			panic("vm_page_physget: called _after_ bootstrap");
-#endif
 
 
 #if 0
@@ -3448,11 +3442,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 			/*
 			 * XXX PGU_NORMAL?  It's not a "traditional" PT page.
 			 */
-#ifdef notyet
 			if (uvm.page_init_done == FALSE) {
-#else
-			if (vm_physmem[0].pgs == NULL) {
-#endif
 				/*
 				 * We're growing the kernel pmap early (from
 				 * uvm_pageboot_alloc()).  This case must
@@ -3493,11 +3483,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 		 */
 		l2pte = pmap_l2pte(kpm, va, l1pte);
 		KASSERT(pmap_pte_v(l2pte) == 0);
-#ifdef notyet
 		if (uvm.page_init_done == FALSE) {
-#else
-		if (vm_physmem[0].pgs == NULL) {
-#endif
 			/*
 			 * See above.
 			 */

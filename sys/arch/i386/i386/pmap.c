@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.38 2001/03/22 23:36:51 niklas Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.39 2001/04/10 06:59:13 niklas Exp $	*/
 /*	$NetBSD: pmap.c,v 1.84 2000/02/21 02:01:24 chs Exp $	*/
 
 /*
@@ -3658,7 +3658,7 @@ pmap_growkernel(maxkvaddr)
 
 	for (/*null*/ ; nkpde < needed_kpde ; nkpde++) {
 
-		if (pmap_initialized == FALSE) {
+		if (uvm.page_init_done == FALSE) {
 
 			/*
 			 * we're growing the kernel pmap early (from
@@ -3676,6 +3676,12 @@ pmap_growkernel(maxkvaddr)
 			kpm->pm_stats.resident_count++;
 			continue;
 		}
+
+		/*
+		 * THIS *MUST* BE CODED SO AS TO WORK IN THE
+		 * pmap_initialized == FALSE CASE!  WE MAY BE
+		 * INVOKED WHILE pmap_init() IS RUNNING!
+		 */
 
 		if (pmap_alloc_ptp(kpm, PDSLOT_KERN + nkpde, FALSE) == NULL) {
 			panic("pmap_growkernel: alloc ptp failed");

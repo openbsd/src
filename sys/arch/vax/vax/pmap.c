@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.12 2000/10/11 11:40:17 bjc Exp $ */
+/*	$OpenBSD: pmap.c,v 1.13 2001/04/10 06:59:13 niklas Exp $ */
 /*	$NetBSD: pmap.c,v 1.74 1999/11/13 21:32:25 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
@@ -297,13 +297,14 @@ pmap_steal_memory(size, vstartp, vendp)
 	size = round_page(size);
 	npgs = btoc(size);
 
+#ifdef DIAGNOSTIC
+	if (uvm.page_init_done == TRUE)
+		panic("pmap_steal_memory: called _after_ bootstrap");
+#endif
+
 	/*
 	 * A vax only have one segment of memory.
 	 */
-#ifdef DIAGNOSTIC
-	if (vm_physmem[0].pgs)
-		panic("pmap_steal_memory: called _after_ bootstrap");
-#endif
 
 	v = (vm_physmem[0].avail_start << PGSHIFT) | KERNBASE;
 	vm_physmem[0].avail_start += npgs;
