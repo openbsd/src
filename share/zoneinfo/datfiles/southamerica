@@ -1,5 +1,5 @@
-# $OpenBSD: southamerica,v 1.16 2003/10/13 19:33:38 millert Exp $
-# @(#)southamerica	7.49
+# $OpenBSD: southamerica,v 1.17 2004/06/28 13:43:32 millert Exp $
+# @(#)southamerica	7.51
 
 # This data is by no means authoritative; if you think you know better,
 # go ahead and edit the file (and please send any changes to
@@ -142,6 +142,13 @@ Rule	Arg	2000	only	-	Mar	Sun>=1	0:00	0	-
 # This kind of things had always been done this way in Argentina.
 # We are still -03:00 all year round in all of the country.
 #
+# From Mariano Absatz (2004-05-21):
+# Today it was officially published that the Province of Mendoza is changing
+# its timezone this winter... starting tomorrow night....
+# http://www.gobernac.mendoza.gov.ar/boletin/pdf/20040521-27158-normas.pdf
+# From Paul Eggert (2004-05-24):
+# It's Law No. 7,210.  This change is due to a public power emergency, so for
+# now we'll assume it's for this year only.
 #
 # From Paul Eggert (2002-01-22):
 # <a href="http://www.spicasc.net/horvera.html">
@@ -233,6 +240,8 @@ Zone America/Mendoza	-4:35:16 -	LMT	1894 Oct 31
 			-4:00	-	WART	1992 Oct 18
 			-3:00	Arg	AR%sT	1999 Oct  3
 			-4:00	Arg	AR%sT	2000 Mar  3
+			-3:00	-	ART	2004 May 23
+			-4:00	-	WART	2004 Oct 17
 			-3:00	-	ART
 
 # Aruba
@@ -390,10 +399,10 @@ Rule	Brazil	1992	only	-	Oct	25	 0:00	1:00	S
 Rule	Brazil	1993	only	-	Jan	31	 0:00	0	-
 # Decree <a href="http://pcdsh01.on.br/HV942.htm">942</a> (1993-09-28)
 # adopted by same states, plus AM.
-# Decree <a href="http://pcdsh01.on.br/HV1252.htm">1,252</a> (1994-09-22)
-# adopted by same states, minus AM.
+# Decree <a href="http://pcdsh01.on.br/HV1252.htm">1,252</a> (1994-09-22;
+# web page corrected 2004-01-07) adopted by same states, minus AM.
 # Decree <a href="http://pcdsh01.on.br/HV1636.htm">1,636</a> (1995-09-14)
-# adopted by same states, plus TO.
+# adopted by same states, plus MT and TO.
 # Decree <a href="http://pcdsh01.on.br/HV1674.htm">1,674</a> (1995-10-13)
 # adds AL, SE.
 Rule	Brazil	1993	1995	-	Oct	Sun>=11	 0:00	1:00	S
@@ -456,11 +465,19 @@ Rule	Brazil	2003	max	-	Oct	Sun>=15	 0:00	1:00	S
 
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 #
-# Atlantic islands: Fernando de Noronha, Trindade, Martin Vaz,
-# Atol das Rocas, and Penedos de Sao Pedro e Sao Paulo
+# Fernando de Noronha (administratively part of PE)
 Zone America/Noronha	-2:09:40 -	LMT	1914
 			-2:00	Brazil	FN%sT	1990 Sep 17
+			-2:00	-	FNT	1999 Sep 30
+			-2:00	Brazil	FN%sT	2000 Oct 15
+			-2:00	-	FNT	2001 Sep 13
+			-2:00	Brazil	FN%sT	2002 Oct  1
 			-2:00	-	FNT
+# Other Atlantic islands have no permanent settlement.
+# These include Trindade and Martin Vaz (administratively part of ES),
+# Atol das Rocas (RN), and Penedos de Sao Pedro e Sao Paulo (PE).
+# Fernando de Noronha was a separate territory from 1942-09-02 to 1989-01-01;
+# it also included the Penedos.
 #
 # Amapa (AP), east Para (PA)
 # East Para includes Belem, Maraba, Serra Norte, and Sao Felix do Xingu.
@@ -812,13 +829,22 @@ Zone America/Asuncion	-3:50:40 -	LMT	1890
 			-4:00	Para	PY%sT
 
 # Peru
+#
+# <a href="news:xrGmb.39935$gA1.13896113@news4.srv.hcvlny.cv.net">
+# From Evelyn C. Leeper via Mark Brader (2003-10-26):</a>
+# When we were in Peru in 1985-1986, they apparently switched over 
+# sometime between December 29 and January 3 while we were on the Amazon.
+#
+# From Paul Eggert (2003-11-02):
+# Shanks doesn't have this transition.  Assume 1986 was like 1987.
+
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	Peru	1938	only	-	Jan	 1	0:00	1:00	S
 Rule	Peru	1938	only	-	Apr	 1	0:00	0	-
 Rule	Peru	1938	1939	-	Sep	lastSun	0:00	1:00	S
 Rule	Peru	1939	1940	-	Mar	Sun>=24	0:00	0	-
-Rule	Peru	1987	only	-	Jan	 1	0:00	1:00	S
-Rule	Peru	1987	only	-	Apr	 1	0:00	0	-
+Rule	Peru	1986	1987	-	Jan	 1	0:00	1:00	S
+Rule	Peru	1986	1987	-	Apr	 1	0:00	0	-
 Rule	Peru	1990	only	-	Jan	 1	0:00	1:00	S
 Rule	Peru	1990	only	-	Apr	 1	0:00	0	-
 # IATA is ambiguous for 1993/1995; go with Shanks.

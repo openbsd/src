@@ -1,5 +1,5 @@
-# $OpenBSD: backward,v 1.12 2003/10/13 19:33:37 millert Exp $
-# @(#)backward	7.24
+# $OpenBSD: backward,v 1.13 2004/06/28 13:43:32 millert Exp $
+# @(#)backward	7.25
 
 # This file provides links between current names for time zones
 # and their old names.  Many names changed in late 1993.
@@ -66,7 +66,7 @@ Link	Africa/Tripoli		Libya
 Link	America/Tijuana		Mexico/BajaNorte
 Link	America/Mazatlan	Mexico/BajaSur
 Link	America/Mexico_City	Mexico/General
-Link	America/Denver		Navajo
+Link	America/Shiprock	Navajo
 Link	Pacific/Auckland	NZ
 Link	Pacific/Chatham		NZ-CHAT
 Link	Pacific/Pago_Pago	Pacific/Samoa
