@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsec.4,v 1.5 1998/03/05 09:30:59 provos Exp $
+.\" $OpenBSD: ipsec.4,v 1.6 1998/05/18 21:12:50 provos Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -89,8 +89,84 @@ the
 utility or the
 .Xr photurisd 8
 key management daemon.
+.Pp
+The following
+.Tn IP-level
+.Xr setsockopt 2 / Ns
+.Xr getsockopt 2
+are specific to
+.Xr ipsec 4 .
+A socket can specifiy security levels for three different categories:
+.Bl -tag -width IP_ESP_NETWORK_LEVEL
+.It IP_AUTH_LEVEL
+Specifies the use of authentication for packets sent or received by the
+socket.
+.It IP_ESP_TRANS_LEVEL
+Specifies the use of encryption in transport mode for packets sent or
+received by the socket.
+.It IP_ESP_NETWORK_LEVEL
+Specifies the use of encryption in tunnel mode.
+.El
+.Pp
+For each of the categories there are five possible levels which specify the
+security policy used for each category:
+.Bl -tag -width IPSEC_LEVEL_REQUIRE
+.It IPSEC_LEVEL_BYPASS
+Bypass the default system security policy, this options can only be used
+by privileged processes. This level is necessary for key management daemons
+like
+.Xr photurisd 8 .
+.It IPSEC_LEVEL_AVAIL
+If a Security Association is available it will be used for sending packets
+by that socket.
+.It IPSEC_LEVEL_USE
+Use IP Security for sending packets but still accept packets which are not
+secured.
+.It IPSEC_LEVEL_REQUIRE
+Use IP Security for sending packets and also require IP Security for receiving
+data.
+.It IPSEC_LEVEL_UNIQUE
+The outbound Security Association will only be used by this socket.
+.El
+.Pp 
+When a socket gets created it is assigned the default system security level
+for each category which can be queried with
+.Xr getsockopt 2 . 
+Only a privileged process can lower the security level with a
+.Xr setsockopt 2 
+call.
+.Pp
+For example, a server process might want to accept only authenticated 
+connections to prevent session hijacking. It would issue the following
+.Xr setsockopt 2 
+call:
+.Bd -literal
+int level = IPSEC_LEVEL_REQUIRE;
+error = setsockopt(s, IPPROTO_IP, IP_AUTH_LEVEL, (u_char *)&level, 
+		   sizeof(int));
+.Ed
+.Pp
+The system can not guarantee that it will be able to establish the
+required security associations, in any case a properly configured
+key management daemon is required which listens to 
+.Dv EMT_NOTIFY 
+messages on a 
+.Dv PF_ENCAP
+socket.
+.Sh DIAGNOSTICS
+A socket operation may fail with one of the following errors returned:
+.Bl -tag -width [EINVAL]
+.It Bq Er EACESS
+when an attempt is made to lower the security level below the system default
+by a non-privileged process.
+.It Bq Er EINVAL
+The length of option field did not match or an unknown security level
+was given.
+.El
 .Sh BUGS
 There's a lot more to be said on this subject. This is just a beginning.
+.Br
+At the moment the socket options are not fully implemented.
 .Sh SEE ALSO
 .Xr ip 4 ,
 .Xr intro 4 ,
@@ -110,6 +186,12 @@ Eric Young's libdeslite was used in this implementation for the
 DES algorithm.
 .Pp
 Steve Reid's SHA-1 code was also used.
+.Pp
+The 
+.Xr setsockopt 2 / Ns
+.Xr getsockotp 2 
+interface follows somewhat loosely the draft-mcdonald-simple-ipsec-api,
+which is work in progress.
 .Sh HISTORY
 The IPsec protocol started in 1992, by John Ioannidis, Phil Karn 
 and William Allen Simpson. In 1995, the former wrote an
