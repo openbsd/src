@@ -28,66 +28,35 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: yppasswdd_proc.c,v 1.1 1995/10/23 07:44:43 deraadt Exp $";
+static char rcsid[] = "$Id: yppasswdd_proc.c,v 1.2 1995/11/01 17:40:36 deraadt Exp $";
 #endif
 
+#include <sys/types.h>
 #include <rpc/rpc.h>
-#include <rpcsvc/yppasswd.h>
 #include <stdio.h>
 #include <string.h>
-#include "yplog.h"
 
-extern int make_passwd();
+#include "yppasswd.h"
+
+int make_passwd __P((yppasswd *));
 
 int *
-yppasswdproc_update_1(argp, rqstp, transp)
+yppasswdproc_update_1_svc(argp, rqstp, transp)
 	yppasswd *argp;
         struct svc_req *rqstp;
 	SVCXPRT *transp;
 {
 	static int res;
-	char	numstr[20];
 
 	bzero((char *)&res, sizeof(res));
-
-	yplog_date("yppasswdd_update_1: this code isn't tested");
-	yplog_call(transp);
-#ifdef DEBUG
-	yplog_str (" oldpass: "); yplog_cat(argp->oldpass); yplog_cat("\n");
-	yplog_line("   newpw:");
-	yplog_str ("        name: "); yplog_cat(argp->newpw.pw_name);
-	yplog_cat ("\n");
-	yplog_str ("      passwd: "); yplog_cat(argp->newpw.pw_passwd);
-	yplog_cat ("\n");
-	yplog_str ("         uid: ");
-	sprintf(numstr,"%d\n",argp->newpw.pw_uid);
-	yplog_cat (numstr);
-	yplog_str ("         gid: ");
-	sprintf(numstr,"%d\n",argp->newpw.pw_gid);
-	yplog_cat (numstr);
-	yplog_str ("       gecos: "); yplog_cat(argp->newpw.pw_gecos);
-	yplog_cat ("\n");
-	yplog_str ("         dir: "); yplog_cat(argp->newpw.pw_dir);
-	yplog_cat ("\n");
-	yplog_str ("       shell: "); yplog_cat(argp->newpw.pw_shell);
-	yplog_cat ("\n");
-#endif
-	
 	res = make_passwd(argp);
 
-	yplog_line("after make_passwd");
-	
-	if (!svc_sendreply(transp, xdr_int, (char *) &res)) {
+	if (!svc_sendreply(transp, xdr_int, (char *)&res))
 		svcerr_systemerr(transp);
-	}
-	
-	if (!svc_freeargs(transp, xdr_yppasswd, argp)) {
+
+	if (!svc_freeargs(transp, xdr_yppasswd, (caddr_t) argp)) {
 		(void)fprintf(stderr, "unable to free arguments\n");
 		exit(1);
 	}
-	
-	yplog_line("exit yppasswdproc_update_1");
-	
 	return ((void *)&res);
 }
-

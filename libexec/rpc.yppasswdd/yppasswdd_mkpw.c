@@ -28,7 +28,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: yppasswdd_mkpw.c,v 1.1 1995/10/23 07:44:42 deraadt Exp $";
+static char rcsid[] = "$Id: yppasswdd_mkpw.c,v 1.2 1995/11/01 17:40:35 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -39,7 +39,9 @@ static char rcsid[] = "$Id: yppasswdd_mkpw.c,v 1.1 1995/10/23 07:44:42 deraadt E
 #include <pwd.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include "yplog.h"
+
+#include "pw_util.h"
+#include "pw_copy.h"
 
 extern int noshell;
 extern int nogecos;
@@ -52,25 +54,14 @@ make_passwd(argp)
 	yppasswd *argp;
 {
 	struct passwd *pw;
-	int pfd, tfd;
-	
-	yplog_line("enter make_passwd");
+	int     pfd, tfd;
 
-	if (!(pw = getpwnam(argp->newpw.pw_name))) {
-	  yplog_date("yppasswdd: unknown user");
-	  yplog_line(argp->newpw.pw_name);
-	  return(TRUE);
-	}
-	
-	yplog_line("get user done");
+	pw = getpwnam(argp->newpw.pw_name);
+	if (!pw)
+		return (1);
 
-	if (strcmp(crypt(argp->oldpass, pw->pw_passwd), pw->pw_passwd) != 0) {
-	  yplog_date("yppasswdd: incorrect password");
-	  yplog_line(argp->newpw.pw_name);
-	  return(TRUE);
-	}
-	
-	yplog_line("password ok");
+	if (strcmp(crypt(argp->oldpass, pw->pw_passwd), pw->pw_passwd) != 0)
+		return (1);
 
 	pw_init();
 	pfd = pw_lock();
@@ -81,45 +72,26 @@ make_passwd(argp)
 	 * classes are implemented, go and get the "offset" value for this
 	 * class and reset the timer.
 	 */
-	if (!(nopw)) {
-	  pw->pw_passwd = argp->newpw.pw_passwd;
-	  pw->pw_change = 0;
+	if (!nopw) {
+		pw->pw_passwd = argp->newpw.pw_passwd;
+		pw->pw_change = 0;
 	}
-
-	if (!(nogecos)) {
-	  pw->pw_gecos = argp->newpw.pw_gecos;
-	}
-
-	if (!(noshell)) {
-	  pw->pw_shell = argp->newpw.pw_shell;
-	}
-
-	yplog_line("before pw_copy");
+	if (!nogecos)
+		pw->pw_gecos = argp->newpw.pw_gecos;
+	if (!noshell)
+		pw->pw_shell = argp->newpw.pw_shell;
 
 	pw_copy(pfd, tfd, pw);
-
-	yplog_line("before pw_mkdb");
-
-/*
-	if (!pw_mkdb())
-		pw_error((char *)NULL, 0, 0);
-*/
 	pw_mkdb();
 
-	yplog_line("before fork");
-
 	if (fork() == 0) {
-	  chdir("/var/yp");
-	  (void) umask(022);
-	  system(make_arg);
-	  exit(0);
+		chdir("/var/yp");
+		(void) umask(022);
+		system(make_arg);
+		exit(0);
 	}
-	
-	yplog_line("exit make_passwd");
-
-	return(FALSE);
-
-};
+	return (0);
+}
 
 /*
 int

@@ -28,14 +28,11 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: yppasswdd_xdr.c,v 1.1 1995/10/23 07:44:44 deraadt Exp $";
+static char rcsid[] = "$Id: yppasswdd_xdr.c,v 1.2 1995/11/01 17:40:37 deraadt Exp $";
 #endif
-
-
 
 #include <rpc/rpc.h>
 #include <rpcsvc/yppasswd.h>
-
 
 bool_t
 xdr_x_passwd(xdrs, objp)
@@ -66,9 +63,6 @@ xdr_x_passwd(xdrs, objp)
 	return (TRUE);
 }
 
-
-
-
 bool_t
 xdr_yppasswd(xdrs, objp)
 	XDR *xdrs;
@@ -82,5 +76,3 @@ xdr_yppasswd(xdrs, objp)
 	}
 	return (TRUE);
 }
-
-
