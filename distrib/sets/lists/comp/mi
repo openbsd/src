@@ -2307,6 +2307,7 @@
 ./usr/share/man/cat3/SLIST_ENTRY.0
 ./usr/share/man/cat3/SLIST_FIRST.0
 ./usr/share/man/cat3/SLIST_FOREACH.0
+./usr/share/man/cat3/SLIST_FOREACH_PREVPTR.0
 ./usr/share/man/cat3/SLIST_HEAD.0
 ./usr/share/man/cat3/SLIST_HEAD_INITIALIZER.0
 ./usr/share/man/cat3/SLIST_INIT.0
@@ -2315,6 +2316,7 @@
 ./usr/share/man/cat3/SLIST_NEXT.0
 ./usr/share/man/cat3/SLIST_REMOVE.0
 ./usr/share/man/cat3/SLIST_REMOVE_HEAD.0
+./usr/share/man/cat3/SLIST_REMOVE_NEXT.0
 ./usr/share/man/cat3/SPLAY_EMPTY.0
 ./usr/share/man/cat3/SPLAY_ENTRY.0
 ./usr/share/man/cat3/SPLAY_FIND.0
@@ -2656,6 +2658,7 @@
 ./usr/share/man/cat3/beep.0
 ./usr/share/man/cat3/betoh16.0
 ./usr/share/man/cat3/betoh32.0
+./usr/share/man/cat3/betoh64.0
 ./usr/share/man/cat3/bindresvport.0
 ./usr/share/man/cat3/bindresvport_sa.0
 ./usr/share/man/cat3/bit_alloc.0
@@ -3311,9 +3314,11 @@
 ./usr/share/man/cat3/hstrerror.0
 ./usr/share/man/cat3/htobe16.0
 ./usr/share/man/cat3/htobe32.0
+./usr/share/man/cat3/htobe64.0
 ./usr/share/man/cat3/htoi.0
 ./usr/share/man/cat3/htole16.0
 ./usr/share/man/cat3/htole32.0
+./usr/share/man/cat3/htole64.0
 ./usr/share/man/cat3/htonl.0
 ./usr/share/man/cat3/htons.0
 ./usr/share/man/cat3/hypot.0
@@ -3600,10 +3605,13 @@
 ./usr/share/man/cat3/kvm_dump_mkheader.0
 ./usr/share/man/cat3/kvm_dump_wrtheader.0
 ./usr/share/man/cat3/kvm_getargv.0
+./usr/share/man/cat3/kvm_getargv2.0
 ./usr/share/man/cat3/kvm_getenvv.0
+./usr/share/man/cat3/kvm_getenvv2.0
 ./usr/share/man/cat3/kvm_geterr.0
 ./usr/share/man/cat3/kvm_getfiles.0
 ./usr/share/man/cat3/kvm_getloadavg.0
+./usr/share/man/cat3/kvm_getproc2.0
 ./usr/share/man/cat3/kvm_getprocs.0
 ./usr/share/man/cat3/kvm_nlist.0
 ./usr/share/man/cat3/kvm_open.0
@@ -3618,6 +3626,7 @@
 ./usr/share/man/cat3/leaveok.0
 ./usr/share/man/cat3/letoh16.0
 ./usr/share/man/cat3/letoh32.0
+./usr/share/man/cat3/letoh64.0
 ./usr/share/man/cat3/lfind.0
 ./usr/share/man/cat3/lgamma.0
 ./usr/share/man/cat3/lgammaf.0
@@ -3685,7 +3694,6 @@
 ./usr/share/man/cat3/memcmp.0
 ./usr/share/man/cat3/memcpy.0
 ./usr/share/man/cat3/memmove.0
-./usr/share/man/cat3/memory.0
 ./usr/share/man/cat3/memset.0
 ./usr/share/man/cat3/menu.0
 ./usr/share/man/cat3/menu_attributes.0
@@ -3985,8 +3993,10 @@
 ./usr/share/man/cat3/pthread_setspecific.0
 ./usr/share/man/cat3/pthread_sigmask.0
 ./usr/share/man/cat3/pthread_single_np.0
+./usr/share/man/cat3/pthread_stackseg_np.0
 ./usr/share/man/cat3/pthread_suspend_np.0
 ./usr/share/man/cat3/pthread_testcancel.0
+./usr/share/man/cat3/pthread_yield.0
 ./usr/share/man/cat3/pthreads.0
 ./usr/share/man/cat3/put8.0
 ./usr/share/man/cat3/putc.0
@@ -4378,6 +4388,7 @@
 ./usr/share/man/cat3/swab.0
 ./usr/share/man/cat3/swap16.0
 ./usr/share/man/cat3/swap32.0
+./usr/share/man/cat3/swap64.0
 ./usr/share/man/cat3/syncok.0
 ./usr/share/man/cat3/sys_siglist.0
 ./usr/share/man/cat3/sys_signame.0
