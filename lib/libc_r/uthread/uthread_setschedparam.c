@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_setschedparam.c,v 1.2 1999/11/25 07:01:43 d Exp $	*/
+/*	$OpenBSD: uthread_setschedparam.c,v 1.3 2001/08/15 15:45:47 fgsch Exp $	*/
 /*
  * Copyright (c) 1998 Daniel Eischen <eischen@vigrid.com>.
  * All rights reserved.
@@ -43,14 +43,20 @@ pthread_setschedparam(pthread_t pthread, int policy, const struct sched_param *p
 {
 	int old_prio, in_readyq = 0, ret = 0;
 
-	if ((param == NULL) || (param->sched_priority < PTHREAD_MIN_PRIORITY) ||
-	    (param->sched_priority > PTHREAD_MAX_PRIORITY) ||
-	    (policy < SCHED_FIFO) || (policy > SCHED_RR))
+	if ((param == NULL) || (policy < SCHED_FIFO) || (policy > SCHED_RR)) {
 		/* Return an invalid argument error: */
 		ret = EINVAL;
+	} else if ((param->sched_priority < PTHREAD_MIN_PRIORITY) ||
+	    (param->sched_priority > PTHREAD_MAX_PRIORITY)) {
+		/* Return an unsupported value error. */
+#ifdef NOT_YET
+		ret = ENOTSUP;
+#else
+		ret = EOPNOTSUPP;
+#endif
 
 	/* Find the thread in the list of active threads: */
-	else if ((ret = _find_thread(pthread)) == 0) {
+	} else if ((ret = _find_thread(pthread)) == 0) {
 		/*
 		 * Defer signals to protect the scheduling queues from
 		 * access by the signal handler:
