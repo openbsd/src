@@ -1,4 +1,4 @@
-.\"	$OpenBSD: altq.9,v 1.1 2001/07/12 12:15:02 kjc Exp $
+.\"	$OpenBSD: altq.9,v 1.2 2001/07/12 12:33:28 itojun Exp $
 .\"
 .\" Copyright (C) 2001
 .\" Sony Computer Science Laboratories Inc.  All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .Dd July 10, 2001
 .Dt ALTQ 9
-.Os KAME
+.Os
 .\"
 .Sh NAME
 .Nm ALTQ
@@ -398,11 +398,12 @@ It is guaranteed that
 immediately after
 .Fn IFQ_POLL
 returns the same packet.
-(They need to be guarded by 
+.Po
+They need to be guarded by 
 .Fn splimp
 if called from outside of
-.Fn if_start .
-)
+.Fn if_start
+.Pc .
 .Ss Eliminating IF_PREPEND
 If the code uses
 .Fn IF_PREPEND ,
@@ -492,11 +493,12 @@ struct sl_softc {
 };
 .Ed
 The driver doesn't compile in the new model since it has the following
-line (
+line
+.Po
 .Fa if_snd
 is no longer a type of
-.Dv struct ifqueue .
-)
+.Dv struct ifqueue
+.Pc .
 .Bd -literal
 	struct ifqueue *ifq = &ifp->if_snd;
 .Ed
@@ -554,9 +556,10 @@ The dequeue operations looks like:
 .Sh QUEUEING DISCIPLINES
 Queueing disciplines need to maintain
 .Fa ifq_len .
-(used by
+.Po
+used by
 .Fn IFQ_IS_EMPTY
-).
+.Pc .
 Queueing disciplines also need to guarantee the same mbuf is returned if
 .Fn IFQ_DEQUEUE
 is called immediately after
