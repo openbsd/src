@@ -29,10 +29,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: aic7xxx_openbsd.c,v 1.8 2002/07/05 05:41:03 smurph Exp $
+ * $Id: aic7xxx_openbsd.c,v 1.9 2002/09/06 05:04:41 smurph Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx_freebsd.c,v 1.26 2001/07/18 21:39:47 gibbs Exp $
- * $OpenBSD: aic7xxx_openbsd.c,v 1.8 2002/07/05 05:41:03 smurph Exp $
+ * $OpenBSD: aic7xxx_openbsd.c,v 1.9 2002/09/06 05:04:41 smurph Exp $
  */
 
 #include <dev/ic/aic7xxx_openbsd.h>
@@ -580,7 +580,8 @@ ahc_platform_intr(arg)
 	void *arg;
 {
 	struct	ahc_softc *ahc;
-	u_int	intstat;
+	u_int	intstat = 0;
+	u_int	errstat = 0;
 
 	/*
 	 * Any interrupts to process?
@@ -589,17 +590,23 @@ ahc_platform_intr(arg)
 	
 	intstat = ahc_inb(ahc, INTSTAT);
 	
-	if ((intstat & INT_PEND) == 0) {
-		if (ahc->unsolicited_ints > 500) {
-			ahc->unsolicited_ints = 0;
-			if ((ahc->chip & AHC_PCI) != 0
-			 && (ahc_inb(ahc, ERROR) & PCIERRSTAT) != 0){
+	/* Only check PCI error on PCI cards */
+        if ((ahc->chip & AHC_PCI) != 0) {
+		errstat = ahc_inb(ahc, ERROR);
+		if ((intstat & INT_PEND) == 0 && (errstat & PCIERRSTAT)) {
+			if (ahc->unsolicited_ints > 500) {
+				ahc->unsolicited_ints = 0;
 				ahc->bus_intr(ahc);
-
 			}
+			ahc->unsolicited_ints++;
+			/* claim the interrupt */
+			return 1;
 		}
-		ahc->unsolicited_ints++;
-		return 1;
+	}
+	
+	if ((intstat & INT_PEND) == 0){
+		/* This interrupt is not for us */
+		return 0;
 	}
 	
 	ahc_intr(ahc);
@@ -1779,6 +1786,7 @@ void ahc_set_transaction_tag(scb, enabled, type)
 	struct scsi_xfer *xs = scb->io_ctx;
 	switch (type) {
 	case MSG_SIMPLE_TASK:
+	case MSG_ORDERED_TASK:
 		if (enabled)
 			xs->sc_link->quirks &= ~SDEV_NOTAGS;
 		else
