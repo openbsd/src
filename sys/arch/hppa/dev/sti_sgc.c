@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_sgc.c,v 1.13 2003/05/20 20:54:43 mickey Exp $	*/
+/*	$OpenBSD: sti_sgc.c,v 1.14 2003/07/16 06:42:06 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -83,7 +83,8 @@ sti_sgc_getrom(struct confargs *ca)
 	paddr_t rom;
 
 	if (PAGE0->pd_resv2[1] < HPPA_IOBEGIN)
-		if (ca->ca_type.iodc_revision == STI_INEG_REV)
+		if (ca->ca_type.iodc_sv_model == HPPA_FIO_GSGC &&
+		    ca->ca_type.iodc_revision == STI_INEG_REV)
 			rom = STI_INEG_PROM;
 		else
 			rom = ca->ca_hpa;
