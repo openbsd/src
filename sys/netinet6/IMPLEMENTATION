@@ -1,4 +1,4 @@
-$OpenBSD: IMPLEMENTATION,v 1.6 2000/03/22 08:15:41 itojun Exp $
+$OpenBSD: IMPLEMENTATION,v 1.7 2000/06/03 13:50:51 itojun Exp $
 
 # NOTE: this is from original KAME distribution.
 # Some portion of this document is not applicable to the code merged into
@@ -8,7 +8,7 @@ $OpenBSD: IMPLEMENTATION,v 1.6 2000/03/22 08:15:41 itojun Exp $
 
 			KAME Project
 			http://www.kame.net/
-			KAME Date: 2000/03/22 07:52:30
+			KAME Date: 2000/06/01 02:42:10
 
 1. IPv6
 
@@ -91,24 +91,25 @@ RFC2711: IPv6 router alert option
 RFC2732: Format for Literal IPv6 Addresses in URL's
     * The spec is implemented in programs that handle URLs
       (like freebsd ftpio(3) and fetch(1), or netbsd ftp(1))
-draft-ietf-ipngwg-router-renum-08: Router renumbering for IPv6
+draft-ietf-ipngwg-router-renum-10: Router renumbering for IPv6
 draft-ietf-ipngwg-icmp-name-lookups-05: IPv6 Name Lookups Through ICMP
-draft-ietf-pim-ipv6-01.txt: PIM for IPv6
-    * pim6dd implements dense mode.  pim6sd implements sparse mode.
-draft-ietf-dhc-dhcpv6-14.txt: DHCPv6
-draft-ietf-dhc-v6exts-11.txt: Extensions for DHCPv6
-    * kame/dhcp6 has test implementation, which will not be compiled in
-      default compilation.
 draft-itojun-ipv6-tcp-to-anycast-00.txt:
 	Disconnecting TCP connection toward IPv6 anycast address
-draft-yamamoto-wideipv6-comm-model-00.txt
-    * See 1.6 in this document for details.
 draft-ietf-ipngwg-scopedaddr-format-01.txt:
 	An Extension of Format for IPv6 Scoped Addresses
-draft-ietf-ngtrans-tcpudp-relay-00.txt:
+draft-ietf-ngtrans-tcpudp-relay-01.txt:
 	An IPv6-to-IPv4 transport relay translator
     * FAITH tcp relay translator (faithd) implements this.  See 3.1 for more
       details.
+http://playground.iijlab.net/i-d/draft-itojun-ipv6-transition-abuse-00.txt:
+	Possible abuse against IPv6 transition technologies
+    * KAME does not implement RFC1933 automatic tunnel.
+    * "stf" interface implements some address filters.  Refer to stf(4)
+      for details.  Since there's no way to make 6to4 interface 100% secure,
+      we do not include "stf" interface into GENERIC.v6 compilation.
+    * kame/openbsd completely disables IPv4 mapped address support.
+    * kame/netbsd makes IPv4 mapped address support off by default.
+    * See section 12.6 and 14 for more details.
 
 1.2 Neighbor Discovery
 
@@ -179,6 +180,13 @@ There are certain limitations, though:
 - RFC2461 is unclear about if it is legal for a host to perform proxy ND.
   We do not prohibit hosts from doing proxy ND, but there will be very limited
   use in it.
+
+Starting mid March 2000, we support Neighbor Unreachability Detection (NUD)
+on p2p interfaces, including tunnel interfaces (gif).  NUD is turned on by
+default.  Before March 2000 KAME stack did not perform NUD on p2p interfaces.
+If the change raises any interoperability issues, you can turn off/on NUD
+by per-interface basis.  Use "ndp -i interface -nud" to turn it off.
+Consult ndp(8) for details.
 
 1.3 Scope Index
 
@@ -408,53 +416,102 @@ automatically assigned to the gif interface.
 
 1.6 Source Address Selection
 
-Source selection of KAME is scope oriented (there are some exceptions -
-see below).  For a given destination, a source IPv6 address is selected
-by the following rule:
-    1. If the source address is explicitly specified by the user
-       (e.g. via the advanced API), the specified address is used.
-    2. If there is an address assigned to the outgoing interface
-       (which is usually determined by looking up the routing table)
-       that has the same scope as the destination address, the address
-       is used.
-       This is the most typical case.
-    3. If there is no address that satisfies the above condition,
-       choose a global address assigned to one of the interfaces
-       on the sending node.
-    4. If there is no address that satisfies the above condition and
-       there is no global address on the sending node, choose the
-       address associated with the routing table entry for the destination.
-       This is the last resort, which may cause scope violation.
+KAME's source address selection takes care of the following
+conditions:
+- address scope
+- prefix matching against the destination
+- outgoing interface
+- whether an address is deprecated
 
-For instance, ::1 is selected for ff01::1, fe80:1::200:f8ff:fe01:6317
-for fe80:1::2a0:24ff:feab:839b (note that embedded interface index -
-described in 1.3 - helps us choose the right source address.  Those
-embedded indices will not be on the wire).
-If the outgoing interface has multiple address for the scope,
-a source is selected longest match basis (rule 3).  Suppose
+Roughly speaking, the selection policy is as follows:
+- always use an address that belongs to the same scope zone as the
+  destination.
+- addresses that have equal or larger scope than the scope of the
+  destination are preferred.
+- if multiple addresses have the equal scope, one which is longest
+  prefix matching against the destination is preferred.
+- a deprecated address is not used in new communications if an
+  alternate (non-deprecated) address is available and has sufficient
+  scope.
+- if none of above conditions tie-breaks, addresses assigned on the
+  outgoing interface are preferred.
+
+For instance, ::1 is selected for ff01::1,
+fe80::200:f8ff:fe01:6317%ne0 for fe80::2a0:24ff:feab:839b%ne0.
+To see how longest-matching works, suppose that
 3ffe:501:808:1:200:f8ff:fe01:6317 and 3ffe:2001:9:124:200:f8ff:fe01:6317
-are given to the outgoing interface.  3ffe:501:808:1:200:f8ff:fe01:6317
-is chosen as the source for the destination 3ffe:501:800::1.
+are given on the outgoing interface. Then the former is chosen as the
+source for the destination 3ffe:501:800::1. Note that even if all
+available addresses have smaller scope than the scope of the
+destination, we choose one anyway. For example, if we have link-local
+and site-local addresses only, we choose a site-local addresses for a
+global destination. If the packet is going to break a site boundary,
+the boundary router will return an ICMPv6 destination unreachable
+error with code 2 - beyond scope of source address.
 
-Note that the above rule is not documented in the IPv6 spec.  It is
-considered "up to implementation" item.
+The precise desripction of the algorithm is quite complicated. To
+describe the algorithm, we introduce the following notation:
+
+For a given destination D,
+  samescope(D): A set of addresses that have the same scope as D.
+  largerscope(D): A set of addresses that have a larger scope than D.
+  smallerscope(D): A set of addresses that have a smaller scope than D.
+
+For a given set of addresses A,
+  DEP(A): a set of deprecated addresses in A.
+  nonDEP(A): A - DEP(A).
+
+Also, the algorithm assumes that the outgoing interface for the
+destination D is determined. We call the interface "I".
+
+The algorithm is as follows. Selection proceeds step by step as
+described; For example, if an address is selected by item 1, item 2 or
+later are not considered at all.
+
+  0. If there is no address in the same scope zone as D, just give up;
+     the packet will not be sent.
+  1. If nonDEP(samescope(D)) is not empty,
+     choose a longest matching address against D. If more than one
+     address is longest matching, choose arbitrary one provided that
+     an address on I is always preferred.
+  2. If nonDEP(largerscope(D)) is not empty,
+     choose an address that has the smallest scope. If more than one
+     address has the smallest scope, choose arbitrary one provided
+     that an address on I is always preferred.
+  3. If DEP(samescope(D)) is not empty,
+     choose a longest matching address against D. If more than one
+     address is longest matching, choose arbitrary one provided that
+     an address on I is always preferred.
+  4. If DEP(largerscope(D)) is not empty,
+     choose an address that has the smallest scope. If more than one
+     address has the smallest scope, choose arbitrary one provided
+     that an address on I is always preferred.
+  5. if nonDEP(smallerscope(D)) is not empty,
+     choose an address that has the largest scope. If more than one
+     address has the largest scope, choose arbitrary one provided
+     that an address on I is always preferred.
+  6. if DEP(smallerscope(D)) is not empty,
+     choose an address that has the largest scope. If more than one
+     address has the largest scope, choose arbitrary one provided
+     that an address on I is always preferred.
+
+There exists a document about source address selection
+(draft-ietf-ipngwg-default-addr-select-xx.txt). KAME's algorithm
+described above takes a similar approach to the document, but there
+are some differences. See the document for more details.
+
 There are some cases where we do not use the above rule.  One
-example is connected TCP session, and we use the address kept in tcb
-as the source.
+example is connected TCP session, and we use the address kept in TCP
+protocol control block (tcb) as the source.
 Another example is source address for Neighbor Advertisement.
 Under the spec (RFC2461 7.2.2) NA's source should be the target
 address of the corresponding NS's target.  In this case we follow
 the spec rather than the above longest-match rule.
 
-For new connections (when rule 1 does not apply), deprecated addresses
-(addresses with preferred lifetime = 0) will not be chosen as source address
-if other choices are available.  If no other choices are available,
-deprecated address will be used as a last resort.  If there are multiple
-choice of deprecated addresses, the above scope rule will be used to choose
-from those deprecated addresses.  If you would like to prohibit the use
-of deprecated address for some reason, configure net.inet6.ip6.use_deprecated
-to 0.  The issue related to deprecated address is described in RFC2462 5.5.4
-(NOTE: there is some debate underway in IETF ipngwg on how to use
+If you would like to prohibit the use of deprecated address for some
+reason, configure net.inet6.ip6.use_deprecated to 0.  The issue
+related to deprecated address is described in RFC2462 5.5.4 (NOTE:
+there is some debate underway in IETF ipngwg on how to use
 "deprecated" address).
 
 1.7 Jumbo Payload
@@ -510,20 +567,20 @@ and this makes it real hard to authenticate inbound packet with jumbo payload
 option as well as AH).
 
 There are fundamental issues in *BSD support for jumbograms.  We would like to
-address those, but we need more time to finalize these.  To name a few:
-- mbuf pkthdr.len field is typed as "int" in 4.4BSD, so it will not hold
+address those, but we need more time to finalize the task.  To name a few:
+- mbuf pkthdr.len field is typed as "int" in 4.4BSD, so it cannot hold
   jumbogram with len > 2G on 32bit architecture CPUs.  If we would like to
   support jumbogram properly, the field must be expanded to hold 4G +
   IPv6 header + link-layer header.  Therefore, it must be expanded to at least
   int64_t (u_int32_t is NOT enough).
 - We mistakingly use "int" to hold packet length in many places.  We need
-  to convert them into larger integral type.  It needs a great care, as we may
+  to convert them into larger numeric type.  It needs a great care, as we may
   experience overflow during packet length computation.
 - We mistakingly check for ip6_plen field of IPv6 header for packet payload
   length in various places.  We should be checking mbuf pkthdr.len instead.
   ip6_input() will perform sanity check on jumbo payload option on input,
   and we can safely use mbuf pkthdr.len afterwards.
-- TCP code needs a careful update in bunch of places, of course.
+- TCP code needs careful updates in bunch of places, of course.
 
 1.8 Loop prevention in header processing
 
@@ -646,10 +703,8 @@ KAME/FreeBSD3x	configurable		supported
 		default: enabled
 KAME/NetBSD	configurable		supported
 		default: disabled 
-KAME/BSDI4	enabled			supported		(*)
+KAME/BSDI4	enabled			supported
 KAME/OpenBSD	not supported		not supported
-
-(*) on KAME/BSDI4, port number space is not always separated.
 
 The following sections will give you more details, and how you can
 configure the behavior.
@@ -657,8 +712,9 @@ configure the behavior.
 Comments on listening side:
 
 It looks that RFC2553 talks too little on wildcard bind issue,
-especially on the port space issue, failure mode and relationship
-between AF_INET/INET6 wildcard bind.  There can be several separate
+specifically on (1) port space issue, (2) failure mode, (3) relationship
+between AF_INET/INET6 wildcard bind like ordering constraint, and (4) behavior
+when conflicting socket is opened/closed.  There can be several separate
 interpretation for this RFC which conform to it but behaves differently.
 So, to implement portable application you should assume nothing
 about the behavior in the kernel.  Using getaddrinfo() is the safest way.
@@ -726,21 +782,15 @@ udp4/6 code (from sys/netinet/udp*).  It uses unified inpcb/in6pcb structure.
 1.12.2.1 KAME/FreeBSD3x, listening side
 
 The platform can be configured to support IPv4 mapped address/special
-AF_INET6 wildcard bind (enabled by default).  Kernel configuration is
-summarized as follows:
-- By default, MAPPED_ADDR_ENABLED option is defined in the kernel
-  configuration file.  In this case, AF_INET6 socket will grab IPv4
-  connections in certain condition.  You can disable it with sysctl, or
-  setsockopt.
-- If you remove MAPPED_ADDR_ENABLED option, the code to perform special
-  behavior will not be compiled.  It behaves as described in 1.12.1. 
+AF_INET6 wildcard bind (enabled by default).  There is no kernel compilation
+option to disable it.  You can enable/disable the behavior with sysctl
+(per-node), or setsockopt (per-socket).
 
 Wildcard AF_INET6 socket grabs IPv4 connection if and only if the following 
 conditions are satisfied:
 - there's no AF_INET socket that matches the IPv4 connection
 - the AF_INET6 socket is configured to accept IPv4 traffic, i.e.
   getsockopt(IPV6_BINDV6ONLY) returns 0.
-There's no problem with open/close ordering.
 
 (XXX need checking)
 
@@ -782,7 +832,9 @@ conditions are satisfied:
 - there's no AF_INET socket that matches the IPv4 connection
 - the AF_INET6 socket is configured to accept IPv4 traffic, i.e.
   getsockopt(IPV6_BINDV6ONLY) returns 0.
-There's no problem with open/close ordering.
+
+You cannot bind(2) with IPv4 mapped address.  This is a workaround for port
+number duplicate and other twists.
 
 1.12.3.2 KAME/NetBSD, initiating side
 
@@ -801,14 +853,11 @@ different from other KAME/*BSDs.
 1.12.4.1 KAME/BSDI4, listening side
 
 NRL inpcb layer supports special behavior of AF_INET6 wildcard socket.
-It grabs IPv4 connection under certain condition.  NRL inpcb layer has
-different behavior than KAME implementation, namely:
-- If you bind(2) a socket to IPv6 wildcard address (::) then bind(2)
-  another socket to IPv4 wildcard address (0.0.0.0), the latter will fail
-  with EADDRINUSE.
-- If you bind(2) to IPv4 wildcard address then IPv6 wildcard address,
-  both will success.  However, all IPv4 traffic (and IPv6 traffic) will be
-  captured by IPv6 wildcard socket.
+There is no way to disable the behavior.
+
+Wildcard AF_INET6 socket grabs IPv4 connection if and only if the following 
+condition is satisfied:
+- there's no AF_INET socket that matches the IPv4 connection
 
 1.12.4.2 KAME/BSDI4, initiating side
 
@@ -835,6 +884,43 @@ KAME/FreeBSD228 (see 1.12.1 for more detail).
 
 KAME/OpenBSD does not support connection initiation to IPv4 mapped address
 (like ::ffff:10.1.1.1).
+
+1.12.6 More issues
+
+The meaning of IPv4 mapped address is defined locally in a node.  It seems
+that there are people using IPv4 mapped address in native IPv6 header - namely
+SIIT.  The lack of concrete agreement adds many mess to IPv6 API.
+Here we would like to summarize couple of items we came to notice.
+- By enabling kernel support for IPv4 mapped address (outgoing direction),
+  servers on the kernel can be hosed by IPv6 native packet that has IPv4
+  mapped address in IPv6 header source.  If we had concrete agreement,
+  we could have just rejected such packets.
+  http://playground.iijlab.net/i-d/draft-itojun-ipv6-transition-abuse-00.txt
+  talks more about this scenario.
+- If a protocol on top of IPv4 is defined differently with IPv6, we will get
+  very tricky situation.  FTP protocol is a good example.
+  FTP client needs to behave differently on nodes that interprets IPv4 mapped
+  address as "an IPv6 address that embeds IPv4 address", and on nodes that
+  interpret IPv4 mapped address as a native IPv6 address.
+  In the former case, if a user gives IPv4 mapped address to ftp(1), ftp(1)
+  needs to handle it as IPv4 address, and use PASV/PORT FTP subcommands to
+  talk with the peer.  In the latter case, ftp(1) needs to handle it as
+  native IPv6 address, and use EPSV/EPRT (or LPSV/LPRT) FTP subcommadns to
+  talk with the peer.  The only way to solve this issue is to have additional
+  getsockopt to get the "real" peername/sockname.  In the former case the
+  getsockopt would return an AF_INET address.  In the latter case the
+  getsockopt would return an AF_INET6 address.
+
+Due to the above twists, some of KAME userland programs has restrictions on
+the use of IPv4 mapped addresses:
+- rshd/rlogind do not accept connections from IPv4 mapped address.
+  This is to avoid malicious use of IPv4 mapped address in IPv6 native
+  packet, to bypass source-address based authentication.
+- ftpd/ftp assume that an IPv4 mapped address identifies IPv4 node, and
+  AF_INET socket is available for talking to that IPv4 node.
+  Hence, ftpd/ftp does not support network environment with SIIT translator.
+  To support SIIT environment, we need to pass IPv4 mapped address to AF_INET6
+  socket directly, AND use PASV/PORT.
 
 1.13 sockaddr_storage
 
@@ -877,19 +963,80 @@ dealing with it is to:
 
 1.14 Invalid addresses on the wire
 
-IPv6 specifications reserve IPv6 address range that are used internally
-in IPv6 nodes (not on the wire).  They are:
-- IPv4 mapped address (like ::ffff:10.1.1.1)
-- IPv4 compatible address (like ::10.1.1.1)
-They are defined and used to ease IPv4-to-IPv6 transition.  However,
-if they mistakingly appear on the wire, they can confuse IPv6 implementations.
-It is also possible to use the above addresses as tools to attack IPv6 hosts,
-to bypass certain security checks (like using source address of
+Some of IPv6 transition technologies embed IPv4 address into IPv6 address.
+These specifications themselves are fine, however, there can be certain
+set of attacks enabled by these specifications.  Recent speicifcation
+documents covers up those issues, however, there are already-published RFCs
+that does not have protection against those (like using source address of
 ::ffff:127.0.0.1 to bypass "reject packet from remote" filter).
 
+To name a few, these address ranges can be used to hose an IPv6 implementation,
+or bypass security controls:
+- IPv4 mapped address that embeds unspecified/multicast/loopback/broadcast
+  IPv4 address (if they are in IPv6 native packet header, they are malicious)
+	::ffff:0.0.0.0/104	::ffff:127.0.0.0/104
+	::ffff:224.0.0.0/100	::ffff:255.0.0.0/104 
+- 6to4 prefix generated from unspecified/multicast/loopback/broadcast/private
+  IPv4 address
+	2002:0000::/24		2002:7f00::/24		2002:e000::/24
+	2002:ff00::/24		2002:0a00::/24		2002:ac10::/28	
+	2002:c0a8::/32
+
+Also, since KAME does not support RFC1933 auto tunnels, seeing IPv4 compatible
+is very rare.  You should take caution if you see those on the wire.
+
 KAME code is carefully written to avoid such incidents.  More specifically,
-KAME kernel will reject packets if the above addresses are used in IPv6
-source/dstination address, or IPv6 routing header.
+KAME kernel will reject packets with certain source/dstination address in IPv6
+base header, or IPv6 routing header.  Also, KAME default configuration file
+is written carefully, to avoid those attacks.
+
+http://playground.iijlab.net/i-d/draft-itojun-ipv6-transition-abuse-00.txt
+talks about more about this.
+
+1.15 Node's required addresses
+
+RFC2373 section 2.8 talks about required addresses for an IPv6
+node.  The section talks about how KAME stack manages those required
+addresses.
+
+1.15.1 Host case
+
+The following items are automatically assigned to the node (or the node will
+automatically joins the group), at bootstrap time:
+- Loopback address
+- All-nodes multicast addresses (ff01::1)
+
+The following items will be automatically handled when the interface becomes
+IFF_UP:
+- Its link-local address for each interface
+- Solicited-node multicast address for link-local addresses
+- Link-local allnodes multicast address (ff02::1)
+
+The following items need to be configured manually by ifconfig(8) or prefix(8).
+Alternatively, these can be autoconfigured by using stateless address
+autoconfiguration.
+- Assigned unicast/anycast addresses
+- Solicited-Node multicast address for assigned unicast address
+
+Users can join groups by using appropriate system calls like setsockopt(2).
+
+1.15.2 Router case
+
+In addition to the above, routers needs to handle the following items.
+
+The following items need to be configured manually by using ifconfig(8).
+o The subnet-router anycast addresses for the interfaces it is configured
+  to act as a router on (prefix::/64)
+o All other anycast addresses with which the router has been configured
+
+The router will join the following multicast group when rtadvd(8) is available
+for the interface.
+o All-Routers Multicast Addresses (ff02::2)
+
+Routing daemons will join appropriate multicast groups, as necessary,
+like ff02::9 for RIPng.
+
+Users can join groups by using appropriate system calls like setsockopt(2).
 
 2. Network Drivers
 
@@ -917,8 +1064,7 @@ in6_ifattach().  We have no such requirement any more)
 
 Here is a list of FreeBSD 2.2.x-RELEASE drivers and its conditions:
 
-	driver	mbuf(1)		multicast(2)	official
-						support?
+	driver	mbuf(1)		multicast(2)	official support?
 	---	---		---		---
 	(Ethernet)
 	ar	looks ok	-		-
@@ -954,8 +1100,7 @@ frame-relay support to come back, please contact KAME developers.
 
 The following lists BSD/OS 3.x device drivers and its conditions:
 
-	driver	mbuf(1)		multicast(2)	official
-						support?
+	driver	mbuf(1)		multicast(2)	official support?
 	---	---		---		---
 	(Ethernet)
 	cnw	ok		ok		yes
@@ -983,8 +1128,7 @@ You may want to use "@insert" directive in /etc/pccard.conf to invoke
 
 The following table lists the network drivers we have tried so far.
 
-	driver		mbuf(1)	multicast(2)	official
-						support?
+	driver		mbuf(1)	multicast(2)	official support?
 	---		---	---		---
 	(Ethernet)
 	awi pcmcia/i386	ok	ok		-
@@ -993,6 +1137,7 @@ The following table lists the network drivers we have tried so far.
 	ep pcmcia/i386	ok	ok		-
 	le sbus/sparc	ok	ok		yes
 	ne pci/i386	ok	ok		yes
+	ne pcmcia/i386	ok	ok		yes
 	wi pcmcia/i386	ok	ok		yes
 	(ATM)
 	en pci/i386	ok	ok		-
@@ -1003,19 +1148,18 @@ The following table lists the network drivers we have tried so far.
 
 Here is a list of FreeBSD 3.x-RELEASE drivers and its conditions:
 
-	driver	mbuf(1)		multicast(2)	official
-						support?
+	driver	mbuf(1)		multicast(2)	official support?
 	---	---		---		---
 	(Ethernet)
+	cnw	ok		ok		-(*)
+	ed	?		ok		-
+	ep	ok		ok		-
 	fe	ok		ok		yes
 	fxp	?(**)
-	wi	ok		ok		yes
 	lnc	?		ok		-
-	cnw	ok		ok		-(*)
-	ep	ok		ok		-
 	sn	?		?		-(*)
+	wi	ok		ok		yes
 	xl	?		ok		-
-	ed	?		ok		-
 
 (*) These drivers are distributed with PAO as PAO3
     (http://www.jp.freebsd.org/PAO/).
@@ -1028,31 +1172,34 @@ been checked yet.
 
 Here is a list of OpenBSD 2.x drivers and its conditions:
 
-	driver		mbuf(1)		multicast(2)	official
-							support?
+	driver		mbuf(1)		multicast(2)	official support?
 	---		---		---		---
 	(Ethernet)
-	le sbus/sparc	ok		ok		yes
+	de pci/i386	ok		ok		yes
 	fxp pci/i386	?(*)
+	le sbus/sparc	ok		ok		yes
 	ne pci/i386	ok		ok		yes
 	ne pcmcia/i386	ok		ok		yes
 
 (*) There seem to be some problem in driver, with multicast filter
 configuration.  This happens with certain revision of chipset on the card.
-Should be fixed by now but still not sure.
+Should be fixed by now by workaround in sys/net/if.c, but still not sure.
 
 2.6 BSD/OS 4.x
 
 The following lists BSD/OS 4.x device drivers and its conditions:
 
-	driver	mbuf(1)		multicast(2)	official
-						support?
+	driver	mbuf(1)		multicast(2)	official support?
 	---	---		---		---
 	(Ethernet)
 	de	ok		ok		yes
+	exp	(*)
 
 You may want to use "@insert" directive in /etc/pccard.conf to invoke
 "rtsol" command right after dynamic insertion of PCMCIA ethernet cards.
+
+(*) exp driver has serious conflict with KAME initialization sequence.
+A workaround is committed into sys/i386/pci/if_exp.c, and should be okay by now.
 
 3. Translator
 
@@ -1097,7 +1244,8 @@ the connection will be relayed toward IPv4 destination 163.221.202.12.
 
 faithd must be invoked on FAITH-relay dual stack node.
 
-For more details, consult kame/kame/faithd/README.
+For more details, consult kame/kame/faithd/README and
+draft-ietf-ngtrans-tcpudp-relay-01.txt.
 
 3.2 IPv6-to-IPv4 header translator
 
