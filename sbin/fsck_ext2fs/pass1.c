@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass1.c,v 1.3 1997/06/14 04:16:54 downsj Exp $	*/
+/*	$OpenBSD: pass1.c,v 1.4 1998/11/11 08:10:36 deraadt Exp $	*/
 /*	$NetBSD: pass1.c,v 1.1 1997/06/11 11:21:51 bouyer Exp $	*/
 
 /*
@@ -42,7 +42,7 @@ static char sccsid[] = "@(#)pass1.c	8.1 (Berkeley) 6/5/93";
 #if 0
 static char rcsid[] = "$NetBSD: pass1.c,v 1.1 1997/06/11 11:21:51 bouyer Exp $";
 #else
-static char rcsid[] = "$OpenBSD: pass1.c,v 1.3 1997/06/14 04:16:54 downsj Exp $";
+static char rcsid[] = "$OpenBSD: pass1.c,v 1.4 1998/11/11 08:10:36 deraadt Exp $";
 #endif
 #endif
 #endif /* not lint */
@@ -107,6 +107,8 @@ pass1()
 	}
 	freeinodebuf();
 }
+
+#define MODE_USES_BLOCKS( mode ) (mode == IFREG || mode == IFDIR || mode == IFLNK)
 
 static void
 checkinode(inumber, idesc)
@@ -180,46 +182,48 @@ checkinode(inumber, idesc)
 		dp->e2di_mode = IFREG|0600;
 		inodirty();
 	}
-	ndb = howmany(dp->e2di_size, sblock.e2fs_bsize);
-	if (ndb < 0) {
-		if (debug)
-			printf("bad size %qu ndb %d:",
-				dp->e2di_size, ndb);
-		goto unknown;
-	}
-	if (mode == IFBLK || mode == IFCHR)
-		ndb++;
-	if (mode == IFLNK) {
-		/*
-		 * Fake ndb value so direct/indirect block checks below
-		 * will detect any garbage after symlink string.
-		 */
-		if (dp->e2di_size < EXT2_MAXSYMLINKLEN ||
-		    (EXT2_MAXSYMLINKLEN == 0 && dp->e2di_blocks == 0)) {
-			ndb = howmany(dp->e2di_size, sizeof(u_int32_t));
-			if (ndb > NDADDR) {
-				j = ndb - NDADDR;
-				for (ndb = 1; j > 1; j--)
-					ndb *= NINDIR(&sblock);
-				ndb += NDADDR;
+	if (MODE_USES_BLOCKS( mode )) {
+		ndb = howmany(dp->e2di_size, sblock.e2fs_bsize);
+		if (ndb < 0) {
+			if (debug)
+				printf("bad size %qu ndb %d:",
+					dp->e2di_size, ndb);
+			goto unknown;
+		}
+		if (mode == IFBLK || mode == IFCHR)
+			ndb++;
+		if (mode == IFLNK) {
+			/*
+		 	 * Fake ndb value so direct/indirect block checks below
+		 	 * will detect any garbage after symlink string.
+		 	 */
+			if (dp->e2di_size < EXT2_MAXSYMLINKLEN ||
+		    	(EXT2_MAXSYMLINKLEN == 0 && dp->e2di_blocks == 0)) {
+				ndb = howmany(dp->e2di_size, sizeof(u_int32_t));
+				if (ndb > NDADDR) {
+					j = ndb - NDADDR;
+					for (ndb = 1; j > 1; j--)
+						ndb *= NINDIR(&sblock);
+					ndb += NDADDR;
+				}
 			}
 		}
+		for (j = ndb; j < NDADDR; j++)
+			if (dp->e2di_blocks[j] != 0) {
+				if (debug)
+					printf("bad direct addr: %d\n", dp->e2di_blocks[j]);
+				goto unknown;
+			}
+		for (j = 0, ndb -= NDADDR; ndb > 0; j++)
+			ndb /= NINDIR(&sblock);
+		for (; j < NIADDR; j++)
+			if (dp->e2di_blocks[j+NDADDR] != 0) {
+				if (debug)
+					printf("bad indirect addr: %d\n",
+						dp->e2di_blocks[j+NDADDR]);
+				goto unknown;
+			}
 	}
-	for (j = ndb; j < NDADDR; j++)
-		if (dp->e2di_blocks[j] != 0) {
-			if (debug)
-				printf("bad direct addr: %d\n", dp->e2di_blocks[j]);
-			goto unknown;
-		}
-	for (j = 0, ndb -= NDADDR; ndb > 0; j++)
-		ndb /= NINDIR(&sblock);
-	for (; j < NIADDR; j++)
-		if (dp->e2di_blocks[j+NDADDR] != 0) {
-			if (debug)
-				printf("bad indirect addr: %d\n",
-					dp->e2di_blocks[j+NDADDR]);
-			goto unknown;
-		}
 	if (ftypeok(dp) == 0)
 		goto unknown;
 	n_files++;
@@ -245,20 +249,22 @@ checkinode(inumber, idesc)
 	} else {
 		statemap[inumber] = FSTATE;
 	}
-	badblk = dupblk = 0;
-	idesc->id_number = inumber;
-	(void)ckinode(dp, idesc);
-	idesc->id_entryno *= btodb(sblock.e2fs_bsize);
-	if (dp->e2di_nblock != idesc->id_entryno) {
-		pwarn("INCORRECT BLOCK COUNT I=%u (%d should be %d)",
-		    inumber, dp->e2di_nblock, idesc->id_entryno);
-		if (preen)
-			printf(" (CORRECTED)\n");
-		else if (reply("CORRECT") == 0)
-			return;
-		dp = ginode(inumber);
-		dp->e2di_nblock = idesc->id_entryno;
-		inodirty();
+	if (MODE_USES_BLOCKS( mode )) {	
+		badblk = dupblk = 0;
+		idesc->id_number = inumber;
+		(void)ckinode(dp, idesc);
+		idesc->id_entryno *= btodb(sblock.e2fs_bsize);
+		if (dp->e2di_nblock != idesc->id_entryno) {
+			pwarn("INCORRECT BLOCK COUNT I=%u (%d should be %d)",
+		    	inumber, dp->e2di_nblock, idesc->id_entryno);
+			if (preen)
+				printf(" (CORRECTED)\n");
+			else if (reply("CORRECT") == 0)
+				return;
+			dp = ginode(inumber);
+			dp->e2di_nblock = idesc->id_entryno;
+			inodirty();
+		}
 	}
 	return;
 unknown:
