@@ -1,4 +1,4 @@
-#	$Id: Makefile.bsd-wrapper,v 1.8 1996/07/20 09:05:10 deraadt Exp $
+#	$Id: Makefile.bsd-wrapper,v 1.9 1997/06/23 12:13:45 kstailey Exp $
 
 INFODIR=	infodir=${DESTDIR}/usr/share/info
 INFOPATH=	DEFAULT_INFOPATH=/usr/local/info:/usr/share/info:.
@@ -42,4 +42,6 @@ tags:
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
+.ifndef NOMAN
 .include <bsd.man.mk>
+.endif

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.7 1997/04/22 14:07:25 kstailey Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.8 1997/06/23 12:13:47 kstailey Exp $
 
 #
 # groff config
@@ -106,4 +106,6 @@ tags:
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
+.ifndef NOMAN
 .include <bsd.man.mk>
+.endif
