@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.33 1998/03/25 07:54:59 jason Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.34 1999/03/01 04:56:05 jason Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -492,7 +492,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 			led_blink((caddr_t *)0);
 #endif
 #if NLED > 0
-			led_sun4_cycle((caddr_t *)0);
+			led_cycle((caddr_t *)led_sc);
 #endif
 		}
 

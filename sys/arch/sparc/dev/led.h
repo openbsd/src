@@ -1,4 +1,4 @@
-/*	$OpenBSD: led.h,v 1.2 1998/03/26 07:04:31 jason Exp $	*/
+/*	$OpenBSD: led.h,v 1.3 1999/03/01 04:56:05 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -32,7 +32,15 @@
  */
 
 /*
- * Sun-4 diag register.
+ * Driver for leds on the 4/100, 4/200, 4/300, and 4/600
  */
 
-void led_sun4_cycle __P((void *));
+struct led_softc {
+	struct		device sc_dev;		/* base device */
+	int		sc_node;		/* which node */
+	u_int16_t *	sc_reg;			/* register (4/600) */
+	int		sc_index;		/* index into patterns */
+};
+extern struct led_softc *led_sc;
+
+void	led_cycle	__P((void *));

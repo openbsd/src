@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.37 1999/02/16 21:30:21 art Exp $
+#	$OpenBSD: GENERIC,v 1.38 1999/03/01 04:56:03 jason Exp $
 # 	$NetBSD: GENERIC,v 1.48 1997/08/23 19:19:01 mjacob Exp $
 
 # Machine architecture; required by config(8)
@@ -79,8 +79,9 @@ timer0	at obio0 addr 0xef000000		# sun4/300
 eeprom0	at obio0 addr 0xf2000000		# sun4/200
 eeprom0	at obio0 addr 0x02000000		# sun4/100
 
-# 8 segment led display on sun4 systems
+# 8 segment led display on sun4/sun4m systems
 led0 at mainbus0				# sun4
+led0 at obio0					# sun4/600
 
 # Zilog 8530 serial chips.  Each has two-channels.
 # zs0 is ttya and ttyb.  zs1 is the keyboard and mouse.

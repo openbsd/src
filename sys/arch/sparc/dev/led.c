@@ -1,4 +1,4 @@
-/*	$OpenBSD: led.c,v 1.4 1998/09/15 04:27:08 jason Exp $	*/
+/*	$OpenBSD: led.c,v 1.5 1999/03/01 04:56:05 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -31,88 +31,132 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Driver for leds on the 4/100, 4/200, 4/300, and 4/600. (sun4 & sun4m)
+ */
+
 #include <sys/param.h>
-#include <sys/device.h>
-#include <sys/kernel.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/errno.h>
+#include <sys/socket.h>
+#include <sys/syslog.h>
+#include <sys/device.h>
+#include <sys/malloc.h>
 
 #include <machine/autoconf.h>
 #include <machine/ctlreg.h>
 #include <sparc/sparc/asm.h>
+#include <sparc/cpu.h>
+#include <sparc/sparc/cpuvar.h>
 #include <sparc/dev/led.h>
 
-/*
- * This is the driver for the "led" register available on some Sun4
- * machines.
- */
-
-static int ledmatch __P((struct device *, void *, void *));
-static void ledattach __P((struct device *, struct device *, void *));
+int	ledmatch	__P((struct device *, void *, void *));
+void	ledattach	__P((struct device *, struct device *, void *));
+void	led_cycle	__P((void *));
 
 struct cfattach led_ca = {
-	sizeof(struct device), ledmatch, ledattach
+	sizeof (struct led_softc), ledmatch, ledattach
 };
 
 struct cfdriver led_cd = {
-	NULL, "led", DV_DULL
+	NULL, "led", DV_IFNET
 };
 
-extern int sparc_led_blink;     /* from machdep */
+static u_int8_t led_pattern[] = {
+	0xff, 0xfe, 0xfd, 0xfb, 0xf7, 0xef, 0xdf, 0xbf, 0x7f,
+	0xff, 0x7f, 0xbf, 0xdf, 0xef, 0xf7, 0xfb, 0xfd, 0xfe,
+};
 
-static char led_attached = 0;
-static int led_index = 0;
-/*
- * These led patterns produce a line that scrolls across the display, then
- * back again.  Note that a value of 0 for a particular bit lights the
- * corresponding LED, and 1 leaves it dark.
- */
-static char led_patterns[] =
-	{ 0xff, 0x7f, 0xbf, 0xdf, 0xef, 0xf7, 0xfb, 0xfd, 0xfe,
-	  0xff, 0xfe, 0xfd, 0xfb, 0xf7, 0xef, 0xdf, 0xbf, 0x7f, };
+struct led_softc *led_sc = NULL;
+extern int sparc_led_blink;	/* from machdep */
 
-static int
+int
 ledmatch(parent, vcf, aux)
 	struct device *parent;
-	void *aux, *vcf;
+	void *vcf, *aux;
 {
-	register struct confargs *ca = aux;
+#if defined(SUN4)
+	struct cfdata *cf = vcf;
+#endif
+	struct confargs *ca = aux;
+	register struct romaux *ra = &ca->ca_ra;
 
-	if (CPU_ISSUN4)
-		return (strcmp("led", ca->ca_ra.ra_name) == 0);
+#if defined(SUN4M)
+	if (ca->ca_bustype == BUS_OBIO) {
+		if (strcmp("leds", ra->ra_name))
+			return (0);
+		return (1);
+	}
+#endif
+
+#if defined(SUN4)
+	if (ca->ca_bustype == BUS_MAIN) {
+		if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
+			return (0);
+		if (CPU_ISSUN4)
+			return (1);
+		return (0);
+	}
+#endif
+
 	return (0);
 }
 
-/* ARGSUSED */
-static void
+void    
 ledattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	led_attached = 1;
-	printf("\n");
+	struct confargs *ca = aux;
+	struct led_softc *sc = (struct led_softc *)self;
 
-	/* In case it's initialized to true... */
+	sc->sc_node = ca->ca_ra.ra_node;
+
+	if (CPU_ISSUN4M)
+		sc->sc_reg = mapiodev(&(ca->ca_ra.ra_reg[0]), 0,
+		    ca->ca_ra.ra_reg[0].rr_len);
+
+	led_sc = sc;
 	if (sparc_led_blink)
-		led_sun4_cycle((caddr_t)0);
+		led_cycle(sc);
+	printf("\n");
 }
 
-/*
- * Check to see whether we were configured and whether machdep.led_blink != 0.
- * If so, put a new pattern into the register and schedule ourselves to
- * be called again later.  The timeout is set to: [(1/8) * loadavg] seconds.
- */
 void
-led_sun4_cycle(zero)
-	void *zero;
+led_cycle(v)
+	void *v;
 {
+	struct led_softc *sc = v;
 	int s;
 
-	if (!sparc_led_blink || !led_attached)
+	if (sc == NULL)
 		return;
-	led_index = (led_index + 1) % sizeof(led_patterns);
-	s = splhigh();
-	stba(AC_DIAG_REG, ASI_CONTROL, led_patterns[led_index]);
-	splx(s);
-	s = (((averunnable.ldavg[0] + FSCALE) * hz) >> (FSHIFT + 3));
-	timeout(led_sun4_cycle, (caddr_t)0, s);
+
+	sc->sc_index = (sc->sc_index + 1) %
+			(sizeof(led_pattern)/sizeof(led_pattern[0]));
+
+	if (sparc_led_blink == 0)
+		sc->sc_index = 0;
+
+#if defined(SUN4M)
+	if (CPU_ISSUN4M) {
+		s = splhigh();
+		(*sc->sc_reg) = led_pattern[sc->sc_index] | 0xff00;
+		splx(s);
+	}
+#endif
+
+#if defined(SUN4)
+	if (CPU_ISSUN4) {
+		s = splhigh();
+		stba(AC_DIAG_REG, ASI_CONTROL, led_pattern[sc->sc_index]);
+		splx(s);
+	}
+#endif
+
+	if (sparc_led_blink != 0) {
+		s = (((averunnable.ldavg[0] + FSCALE) * hz) >> (FSHIFT + 3));
+		timeout(led_cycle, sc, s);
+	}
 }
