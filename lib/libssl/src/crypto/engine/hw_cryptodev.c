@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2002 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2002 Theo de Raadt
+ * Copyright (c) 2002 Markus Friedl
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -77,9 +78,9 @@ static struct {
 } ciphers[] = {
 	{ CRYPTO_DES_CBC,		NID_des_cbc,		8,	 8, },
 	{ CRYPTO_3DES_CBC,		NID_des_ede3_cbc,	8,	24, },
-	{ CRYPTO_AES_CBC,		NID_undef,		8,	24, },
+	{ CRYPTO_AES_CBC,		NID_aes_128_cbc,	16,	16, },
 	{ CRYPTO_BLF_CBC,		NID_bf_cbc,		8,	16, },
-	{ CRYPTO_CAST_CBC,		NID_cast5_cbc,		8,	 8, },
+	{ CRYPTO_CAST_CBC, 		NID_cast5_cbc,		8, 	16, },
 	{ CRYPTO_SKIPJACK_CBC,		NID_undef,		0,	 0, },
 	{ CRYPTO_ARC4,			NID_rc4,		8,	16, },
 	{ 0,				NID_undef,		0,	 0, },
@@ -476,6 +477,44 @@ const EVP_CIPHER cryptodev_3des_cbc = {
 	NULL
 };
 
+const EVP_CIPHER cryptodev_bf_cbc = {
+	NID_bf_cbc,
+	8, 16, 8,
+	EVP_CIPH_CBC_MODE,
+	cryptodev_init_key,
+	cryptodev_cipher,
+	cryptodev_cleanup,
+	sizeof(struct session_op),
+	EVP_CIPHER_set_asn1_iv,
+	EVP_CIPHER_get_asn1_iv,
+	NULL
+};
+
+const EVP_CIPHER cryptodev_cast_cbc = {
+	NID_cast5_cbc,
+	8, 16, 8,
+	EVP_CIPH_CBC_MODE,
+	cryptodev_init_key,
+	cryptodev_cipher,
+	cryptodev_cleanup,
+	sizeof(struct session_op),
+	EVP_CIPHER_set_asn1_iv,
+	EVP_CIPHER_get_asn1_iv,
+	NULL
+};
+
+const EVP_CIPHER cryptodev_aes_cbc = {
+	NID_aes_128_cbc,
+	16, 16, 16,
+	EVP_CIPH_CBC_MODE,
+	cryptodev_init_key,
+	cryptodev_cipher,
+	cryptodev_cleanup,
+	sizeof(struct session_op),
+	EVP_CIPHER_set_asn1_iv,
+	EVP_CIPHER_get_asn1_iv,
+	NULL
+};
 
 /*
  * Registered by the ENGINE when used to find out how to deal with
@@ -498,6 +537,15 @@ cryptodev_engine_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
 		break;
 	case NID_des_cbc:
 		*cipher = &cryptodev_des_cbc;
+		break;
+	case NID_bf_cbc:
+		*cipher = &cryptodev_bf_cbc;
+		break;
+	case NID_cast5_cbc:
+		*cipher = &cryptodev_cast_cbc;
+		break;
+	case NID_aes_128_cbc:
+		*cipher = &cryptodev_aes_cbc;
 		break;
 	default:
 		*cipher = NULL;
