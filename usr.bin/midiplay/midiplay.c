@@ -1,4 +1,4 @@
-/*	$OpenBSD: midiplay.c,v 1.4 2003/06/10 22:20:48 deraadt Exp $	*/
+/*	$OpenBSD: midiplay.c,v 1.5 2004/05/14 04:27:26 tedu Exp $	*/
 /*	$NetBSD: midiplay.c,v 1.8 1998/11/25 22:17:07 augustss Exp $	*/
 
 /*
@@ -37,16 +37,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <fcntl.h>
-#include <err.h>
-#include <unistd.h>
-#include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/midiio.h>
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <limits.h>
+#include <fcntl.h>
+#include <err.h>
+#include <unistd.h>
+#include <string.h>
 
 #define DEVMUSIC "/dev/music"
 
@@ -130,8 +132,8 @@ u_char sample[] = {
 void
 usage(void)
 {
-	printf("Usage: %s [-d unit] [-f file] [-l] [-m] [-q] [-t tempo] [-v] [-x] [file ...]\n",
-		__progname);
+	printf("Usage: %s [-d unit] [-f file] [-l] [-m] [-q] [-t tempo]"
+	    "[-v] [-x] [file ...]\n", __progname);
 	exit(1);
 }
 
@@ -244,8 +246,8 @@ send_sysex(u_char *p, u_int l)
 void
 playfile(FILE *f, char *name)
 {
-	u_char *buf;
-	u_int tot, n, size, nread;
+	u_char *buf, *newbuf;
+	u_int tot, n, size, newsize, nread;
 
 	/* 
 	 * We need to read the whole file into memory for easy processing.
@@ -255,8 +257,8 @@ playfile(FILE *f, char *name)
 	 */
 	size = 1000;
 	buf = malloc(size);
-	if (buf == 0)
-		errx(1, "malloc() failed");
+	if (buf == NULL)
+		err(1, "malloc() failed");
 	nread = size;
 	tot = 0;
 	for (;;) {
@@ -266,10 +268,12 @@ playfile(FILE *f, char *name)
 			break;
 		/* There must be more to read. */
 		nread = size;
-		size *= 2;
-		buf = realloc(buf, size);
-		if (buf == NULL)
-			errx(1, "realloc() failed");
+		newsize = size * 2;
+		newbuf = realloc(buf, newsize);
+		if (newbuf == NULL)
+			err(1, "realloc() failed");
+		buf = newbuf;
+		size = newsize;
 	}
 	playdata(buf, tot, name);
 	free(buf);
@@ -318,7 +322,7 @@ playdata(u_char *buf, u_int tot, char *name)
 		return;
 	tracks = malloc(ntrks * sizeof(struct track));
 	if (tracks == NULL)
-		errx(1, "malloc() tracks failed");
+		err(1, "malloc() tracks failed");
 	for (t = 0; t < ntrks; ) {
 		if (p >= end - MARK_LEN - SIZE_LEN) {
 			warnx("Cannot find track %d", t);
@@ -484,11 +488,14 @@ main(int argc, char **argv)
 	char *file = DEVMUSIC;
 	struct synth_info info;
 	FILE *f;
+	const char *errstr;
 
 	while ((ch = getopt(argc, argv, "?d:f:lmqt:vx")) != -1) {
-		switch(ch) {
+		switch (ch) {
 		case 'd':
-			unit = atoi(optarg);
+			unit = strtonum(optarg, 0, INT_MAX, &errstr);
+			if (errstr)
+				errx(1, "unit is %s: %s", errstr, optarg);
 			break;
 		case 'f':
 			file = optarg;
@@ -503,7 +510,9 @@ main(int argc, char **argv)
 			play = 0;
 			break;
 		case 't':
-			ttempo = atoi(optarg);
+			ttempo = strtonum(optarg, 0, INT_MAX, &errstr);
+			if (errstr)
+				errx(1, "tempo is %s: %s", errstr, optarg);
 			break;
 		case 'v':
 			verbose++;
