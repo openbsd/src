@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.15 2004/06/22 04:55:35 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.16 2004/06/26 20:58:13 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -384,7 +384,7 @@ void
 m88110_cmmu_flush_tlb(unsigned cpu, unsigned kernel, vaddr_t vaddr,
     vsize_t size)
 {
-	int s = splhigh();	/* XXX really disable interrupts? */
+	u_int32_t psr = disable_interrupts_return_psr();
 
 	CMMU_LOCK;
 	if (kernel) {
@@ -396,7 +396,7 @@ m88110_cmmu_flush_tlb(unsigned cpu, unsigned kernel, vaddr_t vaddr,
 	}
 	CMMU_UNLOCK;
 
-	splx(s);
+	set_psr(psr);
 }
 
 /*
@@ -457,13 +457,13 @@ m88110_cmmu_pmap_activate(unsigned cpu, unsigned uapr,
 void
 m88110_cmmu_flush_cache(int cpu, paddr_t physaddr, psize_t size)
 {
-	int s = splhigh();	/* XXX really disable interrupts? */
+	u_int32_t psr = disable_interrupts_return_psr();
 
 	mc88110_inval_inst();
 	mc88110_flush_data();
 	if (mc88410_present())
 		mc88410_flush();
-	splx(s);
+	set_psr(psr);
 }
 
 /*
@@ -472,10 +472,10 @@ m88110_cmmu_flush_cache(int cpu, paddr_t physaddr, psize_t size)
 void
 m88110_cmmu_flush_inst_cache(int cpu, paddr_t physaddr, psize_t size)
 {
-	int s = splhigh();	/* XXX really disable interrupts? */
+	u_int32_t psr = disable_interrupts_return_psr();
 
 	mc88110_inval_inst();
-	splx(s);
+	set_psr(psr);
 }
 
 /*
@@ -484,12 +484,12 @@ m88110_cmmu_flush_inst_cache(int cpu, paddr_t physaddr, psize_t size)
 void
 m88110_cmmu_flush_data_cache(int cpu, paddr_t physaddr, psize_t size)
 {
-	int s = splhigh();	/* XXX really disable interrupts? */
+	u_int32_t psr = disable_interrupts_return_psr();
 
 	mc88110_flush_data();
 	if (mc88410_present())
 		mc88410_flush();
-	splx(s);
+	set_psr(psr);
 }
 
 /*
@@ -498,36 +498,36 @@ m88110_cmmu_flush_data_cache(int cpu, paddr_t physaddr, psize_t size)
 void
 m88110_cmmu_sync_cache(paddr_t physaddr, psize_t size)
 {
-	int s = splhigh();	/* XXX really disable interrupts? */
+	u_int32_t psr = disable_interrupts_return_psr();
 
 	mc88110_inval_inst();
 	mc88110_flush_data();
 	if (mc88410_present())
 		mc88410_flush();
-	splx(s);
+	set_psr(psr);
 }
 
 void
 m88110_cmmu_sync_inval_cache(paddr_t physaddr, psize_t size)
 {
-	int s = splhigh();	/* XXX really disable interrupts? */
+	u_int32_t psr = disable_interrupts_return_psr();
 
 	mc88110_sync_data();
 	if (mc88410_present())
 		mc88410_sync();
-	splx(s);
+	set_psr(psr);
 }
 
 void
 m88110_cmmu_inval_cache(paddr_t physaddr, psize_t size)
 {
-	int s = splhigh();	/* XXX really disable interrupts? */
+	u_int32_t psr = disable_interrupts_return_psr();
 
 	mc88110_inval_inst();
 	mc88110_inval_data();
 	if (mc88410_present())
 		mc88410_inval();
-	splx(s);
+	set_psr(psr);
 }
 
 void
