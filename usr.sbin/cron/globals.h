@@ -1,4 +1,4 @@
-/*	$OpenBSD: globals.h,v 1.4 2002/07/15 19:13:29 millert Exp $	*/
+/*	$OpenBSD: globals.h,v 1.5 2003/02/17 18:40:11 millert Exp $	*/
 
 /*
  * Copyright (c) 1997,2000 by Internet Software Consortium, Inc.
@@ -58,6 +58,7 @@ XTRN const char *DowNames[]
 XTRN char	*ProgramName INIT("amnesia");
 XTRN int	LineNumber INIT(0);
 XTRN time_t	StartTime INIT(0);
+XTRN int	NoFork INIT(0);
 
 #if DEBUGGING
 XTRN int	DebugFlags INIT(0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cron.c,v 1.28 2002/08/08 18:13:35 millert Exp $	*/
+/*	$OpenBSD: cron.c,v 1.29 2003/02/17 18:40:11 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static const char rcsid[] = "$OpenBSD: cron.c,v 1.28 2002/08/08 18:13:35 millert Exp $";
+static const char rcsid[] = "$OpenBSD: cron.c,v 1.29 2003/02/17 18:40:11 millert Exp $";
 #endif
 
 #define	MAIN_PROGRAM
@@ -54,7 +54,7 @@ static void
 usage(void) {
 	const char **dflags;
 
-	fprintf(stderr, "usage:  %s [-l load_avg] [-x [", ProgramName);
+	fprintf(stderr, "usage:  %s [-l load_avg] [-n] [-x [", ProgramName);
 	for (dflags = DebugFlagNames; *dflags; dflags++)
 		fprintf(stderr, "%s%s", *dflags, dflags[1] ? "," : "]");
 	fprintf(stderr, "]\n");
@@ -75,6 +75,7 @@ main(int argc, char *argv[]) {
 	setlinebuf(stderr);
 #endif
 
+	NoFork = 0;
 	parse_args(argc, argv);
 
 	bzero((char *)&sact, sizeof sact);
@@ -109,7 +110,7 @@ main(int argc, char *argv[]) {
 #if DEBUGGING
 		(void) fprintf(stderr, "[%ld] cron started\n", (long)getpid());
 #endif
-	} else {
+	} else if (NoFork == 0) {
 		switch (fork()) {
 		case -1:
 			log_it("CRON",getpid(),"DEATH","can't fork");
@@ -117,7 +118,7 @@ main(int argc, char *argv[]) {
 			break;
 		case 0:
 			/* child process */
-			log_it("CRON",getpid(),"STARTUP","fork ok");
+			log_it("CRON",getpid(),"STARTUP","CRON_VERSION");
 			(void) setsid();
 			if ((fd = open(_PATH_DEVNULL, O_RDWR, 0)) >= 0) {
 				(void) dup2(fd, STDIN);
@@ -496,7 +497,7 @@ parse_args(int argc, char *argv[]) {
 	int argch;
 	char *ep;
 
-	while (-1 != (argch = getopt(argc, argv, "l:x:"))) {
+	while (-1 != (argch = getopt(argc, argv, "l:nx:"))) {
 		switch (argch) {
 		case 'l':
 			errno = 0;
@@ -507,6 +508,9 @@ parse_args(int argc, char *argv[]) {
 				    optarg);
 				usage();
 			}
+			break;
+		case 'n':
+			NoFork = 1;
 			break;
 		case 'x':
 			if (!set_debug_flags(optarg))

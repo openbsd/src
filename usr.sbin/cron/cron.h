@@ -1,4 +1,4 @@
-/*	$OpenBSD: cron.h,v 1.7 2002/07/08 23:42:17 millert Exp $	*/
+/*	$OpenBSD: cron.h,v 1.8 2003/02/17 18:40:11 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -28,6 +28,7 @@
  * vix 30dec86 [written]
  */
 
+#define CRON_VERSION "V5.0"
 #include "config.h"
 #include "externs.h"
 #include "pathnames.h"
