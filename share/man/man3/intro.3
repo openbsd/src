@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.3,v 1.19 2003/10/23 18:23:33 jmc Exp $
+.\"	$OpenBSD: intro.3,v 1.20 2003/10/23 19:07:54 jmc Exp $
 .\"	$NetBSD: intro.3,v 1.5 1995/05/10 22:46:24 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -431,8 +431,8 @@ an LALR parser generator.
 .Pp
 .It libz Pq Fl lz
 General purpose data compression library.
-The functions in this library are documented in the header file
-.Aq Pa zlib.h .
+The functions in this library are documented in
+.Xr compress 3 .
 The data format is described in RFCs 1950 \- 1952.
 .El
 .Pp
@@ -651,6 +651,7 @@ for more details.
 .Xr ranlib 1 ,
 .Xr yacc 1 ,
 .Xr intro 2 ,
+.Xr compress 3 ,
 .Xr crypto 3 ,
 .Xr curses 3 ,
 .Xr des_crypt 3 ,
