@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.c,v 1.41 2001/02/24 03:59:54 angelos Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.42 2001/03/28 22:33:48 angelos Exp $	*/
 /*	$EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	*/
 
 /*
@@ -1239,13 +1239,37 @@ static int
 exchange_check_old_sa (struct sa *sa, void *v_arg)
 {
   struct sa *new_sa = v_arg;
-  
+  char res1[1024];
+
   if (sa == new_sa || !sa->name || !(sa->flags & SA_FLAG_READY) || 
       (sa->flags & SA_FLAG_REPLACED))
     return 0;
 
-  return sa->phase == new_sa->phase && new_sa->name &&
-    strcasecmp (sa->name, new_sa->name) == 0;
+  if (sa->phase != new_sa->phase || new_sa->name == NULL ||
+      strcasecmp (sa->name, new_sa->name))
+    return 0;
+
+  if (sa->initiator)
+    strlcpy (res1, ipsec_decode_ids ("%s %s", sa->id_i, sa->id_i_len, sa->id_r,
+				     sa->id_r_len, 0), sizeof res1);
+  else
+    strlcpy (res1, ipsec_decode_ids ("%s %s", sa->id_r, sa->id_r_len, sa->id_i,
+				     sa->id_i_len, 0), sizeof res1);
+
+  LOG_DBG ((LOG_EXCHANGE, 30,
+	    "checking whether new SA replaces existing SA with IDs %s",
+	    res1));
+
+  if (new_sa->initiator)
+    return strcasecmp (res1, ipsec_decode_ids ("%s %s", new_sa->id_i,
+					       new_sa->id_i_len,
+					       new_sa->id_r,
+					       new_sa->id_r_len, 0)) == 0;
+  else
+    return strcasecmp (res1, ipsec_decode_ids ("%s %s", new_sa->id_r,
+					       new_sa->id_r_len,
+					       new_sa->id_i,
+					       new_sa->id_i_len, 0)) == 0;
 }
 
 void
