@@ -1,4 +1,4 @@
-/*	$OpenBSD: ibcs2_exec.c,v 1.16 2003/11/17 16:18:28 tedu Exp $	*/
+/*	$OpenBSD: ibcs2_exec.c,v 1.17 2003/11/18 06:26:15 tedu Exp $	*/
 /*	$NetBSD: ibcs2_exec.c,v 1.12 1996/10/12 02:13:52 thorpej Exp $	*/
 
 /*
@@ -425,7 +425,7 @@ n	 */
 		size_t resid;
 		struct coff_slhdr *slhdr;
 		char buf[128], *bufp;	/* FIXME */
-		unsigned int len = sh.s_size, path_index, entry_len;
+		unsigned int len = sh.s_size, entry_len;
 		
 		/* DPRINTF(("COFF shlib size %d offset %d\n",
 			 sh.s_size, sh.s_scnptr)); */
@@ -444,7 +444,9 @@ n	 */
 		bufp = buf;
 		while (len) {
 			slhdr = (struct coff_slhdr *)bufp;
+#ifdef notyet
 			path_index = slhdr->path_index * sizeof(long);
+#endif
 			entry_len = slhdr->entry_len * sizeof(long);
 
 			/* DPRINTF(("path_index: %d entry_len: %d name: %s\n",
