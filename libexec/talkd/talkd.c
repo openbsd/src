@@ -1,4 +1,4 @@
-/*	$OpenBSD: talkd.c,v 1.16 2002/10/08 02:53:54 itojun Exp $	*/
+/*	$OpenBSD: talkd.c,v 1.17 2002/11/25 07:40:09 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)talkd.c	5.8 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: talkd.c,v 1.16 2002/10/08 02:53:54 itojun Exp $";
+static char rcsid[] = "$Id: talkd.c,v 1.17 2002/11/25 07:40:09 itojun Exp $";
 #endif /* not lint */
 
 /*
@@ -84,7 +84,7 @@ main(argc, argv)
 		exit(1);
 	}
 	openlog("talkd", LOG_PID, LOG_DAEMON);
-	if (gethostname(hostname, sizeof (hostname)) < 0) {
+	if (gethostname(hostname, sizeof(hostname)) < 0) {
 		syslog(LOG_ERR, "gethostname: %m");
 		_exit(1);
 	}
@@ -107,9 +107,9 @@ main(argc, argv)
 
 		memset(&response, 0, sizeof(response));
 		cc = recvfrom(STDIN_FILENO, (char *)&request,
-		    sizeof (request), 0, (struct sockaddr *)&response.addr,
+		    sizeof(request), 0, (struct sockaddr *)&response.addr,
 		    &len);
-		if (cc != sizeof (request)) {
+		if (cc != sizeof(request)) {
 			if (cc < 0 && errno != EINTR)
 				syslog(LOG_WARNING, "recvfrom: %m");
 			continue;
@@ -130,8 +130,8 @@ main(argc, argv)
 		process_request(&request, &response);
 		/* can block here, is this what I want? */
 		cc = sendto(STDOUT_FILENO, (char *)&response,
-		    sizeof (response), 0, &ctl_addr, sizeof (ctl_addr));
-		if (cc != sizeof (response))
+		    sizeof(response), 0, &ctl_addr, sizeof(ctl_addr));
+		if (cc != sizeof(response))
 			syslog(LOG_WARNING, "sendto: %m");
 	}
 }

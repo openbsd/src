@@ -1,4 +1,4 @@
-/*	$OpenBSD: talkd.h,v 1.6 2002/05/22 00:32:27 deraadt Exp $	*/
+/*	$OpenBSD: talkd.h,v 1.7 2002/11/25 07:40:09 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -48,7 +48,7 @@ int	delete_invite(int);
 /* process.c */
 void	process_request( CTL_MSG *, CTL_RESPONSE *);
 void	do_announce(CTL_MSG *, CTL_RESPONSE *);
-int	find_user(char *name, char *tty, int ttyl);
+int	find_user(char *name, char *tty, size_t ttyl);
 
 /* announce.c */
 int	announce(CTL_MSG *,char *);

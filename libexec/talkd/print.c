@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.4 2002/05/22 00:33:39 deraadt Exp $	*/
+/*	$OpenBSD: print.c,v 1.5 2002/11/25 07:40:09 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)print.c	5.8 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: print.c,v 1.4 2002/05/22 00:33:39 deraadt Exp $";
+static char rcsid[] = "$Id: print.c,v 1.5 2002/11/25 07:40:09 itojun Exp $";
 #endif /* not lint */
 
 /* debug print routines */
@@ -49,11 +49,11 @@ static char rcsid[] = "$Id: print.c,v 1.4 2002/05/22 00:33:39 deraadt Exp $";
 
 static	char *types[] =
     { "leave_invite", "look_up", "delete", "announce" };
-#define	NTYPES	(sizeof (types) / sizeof (types[0]))
+#define	NTYPES	(sizeof(types) / sizeof(types[0]))
 static	char *answers[] = 
     { "success", "not_here", "failed", "machine_unknown", "permission_denied",
       "unknown_request", "badversion", "badaddr", "badctladdr" };
-#define	NANSWERS	(sizeof (answers) / sizeof (answers[0]))
+#define	NANSWERS	(sizeof(answers) / sizeof(answers[0]))
 
 void
 print_request(cp, mp)
@@ -63,7 +63,7 @@ print_request(cp, mp)
 	char tbuf[80], *tp;
 	
 	if (mp->type > NTYPES) {
-		(void)snprintf(tbuf, sizeof tbuf, "type %d", mp->type);
+		(void)snprintf(tbuf, sizeof(tbuf), "type %d", mp->type);
 		tp = tbuf;
 	} else
 		tp = types[mp->type];
@@ -79,12 +79,12 @@ print_response(cp, rp)
 	char tbuf[80], *tp, abuf[80], *ap;
 	
 	if (rp->type > NTYPES) {
-		(void)snprintf(tbuf, sizeof tbuf, "type %d", rp->type);
+		(void)snprintf(tbuf, sizeof(tbuf), "type %d", rp->type);
 		tp = tbuf;
 	} else
 		tp = types[rp->type];
 	if (rp->answer > NANSWERS) {
-		(void)snprintf(abuf, sizeof abuf, "answer %d", rp->answer);
+		(void)snprintf(abuf, sizeof(abuf), "answer %d", rp->answer);
 		ap = abuf;
 	} else
 		ap = answers[rp->answer];

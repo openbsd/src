@@ -1,4 +1,4 @@
-/*	$OpenBSD: announce.c,v 1.15 2002/09/24 17:36:53 millert Exp $	*/
+/*	$OpenBSD: announce.c,v 1.16 2002/11/25 07:40:09 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)announce.c	5.9 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: announce.c,v 1.15 2002/09/24 17:36:53 millert Exp $";
+static char rcsid[] = "$Id: announce.c,v 1.16 2002/11/25 07:40:09 itojun Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -70,7 +70,7 @@ announce(request, remote_machine)
 	FILE *tf;
 	struct stat stbuf;
 
-	(void)snprintf(full_tty, sizeof full_tty, "%s/%s", _PATH_DEV,
+	(void)snprintf(full_tty, sizeof(full_tty), "%s/%s", _PATH_DEV,
 	    request->r_tty);
 	if (access(full_tty, 0) != 0)
 		return (FAILED);

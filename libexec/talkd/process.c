@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.13 2002/05/22 20:16:17 millert Exp $	*/
+/*	$OpenBSD: process.c,v 1.14 2002/11/25 07:40:09 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)process.c	5.10 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: process.c,v 1.13 2002/05/22 20:16:17 millert Exp $";
+static char rcsid[] = "$Id: process.c,v 1.14 2002/11/25 07:40:09 itojun Exp $";
 #endif /* not lint */
 
 /*
@@ -103,9 +103,9 @@ process_request(mp, rp)
 		char buf1[32], buf2[32];
 
 		strlcpy(buf1, inet_ntoa(satosin(&rp->addr)->sin_addr),
-		    sizeof buf1);
+		    sizeof(buf1));
 		strlcpy(buf2, inet_ntoa(satosin(&mp->ctl_addr)->sin_addr),
-		    sizeof buf2);
+		    sizeof(buf2));
 		syslog(LOG_WARNING, "addresses are different, %s != %s",
 		       buf1, buf2);
 	}
@@ -161,13 +161,13 @@ do_announce(mp, rp)
 	int result;
 
 	/* see if the user is logged */
-	result = find_user(mp->r_name, mp->r_tty, sizeof mp->r_tty);
+	result = find_user(mp->r_name, mp->r_tty, sizeof(mp->r_tty));
 	if (result != SUCCESS) {
 		rp->answer = result;
 		return;
 	}
 	hp = gethostbyaddr((char *)&satosin(&mp->ctl_addr)->sin_addr,
-		sizeof (struct in_addr), AF_INET);
+		sizeof(struct in_addr), AF_INET);
 	if (hp == (struct hostent *)0) {
 		rp->answer = MACHINE_UNKNOWN;
 		return;
@@ -201,7 +201,7 @@ do_announce(mp, rp)
 int
 find_user(name, tty, ttyl)
 	char *name, *tty;
-	int ttyl;
+	size_t ttyl;
 {
 	struct utmp ubuf, ubuf1;
 	int status;
@@ -216,10 +216,10 @@ find_user(name, tty, ttyl)
 		fprintf(stderr, "talkd: can't read %s.\n", _PATH_UTMP);
 		return (FAILED);
 	}
-#define SCMPN(a, b)	strncmp(a, b, sizeof (a))
+#define SCMPN(a, b)	strncmp(a, b, sizeof(a))
 	status = NOT_HERE;
-	(void) strlcpy(ftty, _PATH_DEV, sizeof ftty);
-	while (fread((char *) &ubuf, sizeof ubuf, 1, fd) == 1)
+	(void) strlcpy(ftty, _PATH_DEV, sizeof(ftty));
+	while (fread((char *) &ubuf, sizeof(ubuf), 1, fd) == 1)
 		if (SCMPN(ubuf.ut_name, name) == 0) {
 			if (*tty == '\0') {
 				/* no particular tty was requested */
