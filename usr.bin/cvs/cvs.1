@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.2 2004/07/25 03:23:57 jfb Exp $
+.\"	$OpenBSD: cvs.1,v 1.3 2004/07/26 15:55:27 jfb Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .Os
 .Sh NAME
 .Nm cvs
-.Nd OpenCVS Concurrent Versioning System client/server
+.Nd OpenCVS Concurrent Versioning System client
 .Sh SYNOPSIS
 .Nm
 .Op Fl flQqv
@@ -71,26 +71,69 @@ Be quiet about reporting.
 Display version information and exit.
 .El
 .Sh COMMANDS
-.Bl -tag -width Ds
-.Ic add
+The following commands are supported by
+.Nm .
+.Bl -tag -width "xxxxxxxxxxxxxxxxx"
+.It Xo Sy add Op Fl m Ar msg
 .Ar file Op ...
+.Xc
 Before a file is known to CVS, it must be added to the repository using
 this command.
 Adding a file does not actually publish the contents of the
 file, so you must commit the first revision in order to let other users
 see the file with the
-.Ic update
+.Sy update
 command.
 .Pp
-.Ic commit
+.It Xo Sy commit
+.Op Fl flnR
 .Op Fl m Ar msg
+.Op Fl F Ar logfile
+.Op Fl r Ar rev
+.Xc
 The
-.Ic commit
+.Sy commit
 command is used to send local changes back to the server and update the
 repository's information to reflect the changes.
 .Pp
-.Ic update
-.Op Fl dP
+.It Xo Sy diff Op Fl cilu
+.Op Fl D Ar date
+.Op Fl r Ar rev
+.Xc
+The
+.Sy diff
+command is very similar to the
+.Xr diff 1
+program, except that the differential comparations that it generates are
+between local or remote revisions of files stored in the CVS repository.
+.It Xo Sy update
+.Op Fl ACdP
+.Xc
+The
+.Sy update
+command is used to merge any of the changes that have occured on the remote
+repository into the local one where the command was run.
+.Pp
+The
+.Fl A
+flag resets any sticky tags, dates or kopts that have been set on the tree.
+The
+.Fl l
+flag is used to specify a local change only and disables the recursive
+behaviour.
+The
+.Fl P
+flag causes
+.Nm
+to prune any directories that have become empty as a result of the update.
+.It Sy version
+Causes
+.Nm
+to print its version information.
+If this command is issued within a local copy of a repository located on
+an other machine,
+.Nm
+will also connect to the server and ask it to print its version information.
 .El
 .Sh FILES
 .Bl -tag -width Ds
@@ -143,8 +186,13 @@ input and ".out" for the server's output.
 .Xr cvsd 8
 .Sh CAVEATS
 This CVS implementation does not fully conform to the GNU CVS version.
-In many cases, this was done explicitly because GNU CVS has inconsistencies
+In some cases, this was done explicitly because GNU CVS has inconsistencies
 or ambiguous behaviour.
+Some things have also been left out or modified to enhance the overall
+security of the system.
+.Pp
+Among other things, support for the pserver connection mechanism has been
+dropped because of security issues with the authentication mechanism.
 .Sh HISTORY
 The OpenCVS project is a BSD-licensed rewrite of the original
 Concurrent Versioning System written by Jean-Francois Brousseau.
