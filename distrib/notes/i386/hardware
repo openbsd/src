@@ -191,7 +191,7 @@ Supported hardware {:-include-:}:
 		3Com 3c507
 		3Com 3c509, 3c579, and 3c59x
 		3Com 3c515 [*] [+]
-		3Com 3c9xx Etherlink XL adapters, including
+		3Com 3c9xx Etherlink XL adapters, including:
 			3Com 3c900/3c900B PCI adapters
 			3Com 3c905/3c905B/3c905C PCI adapters
 			3Com 3c980/3c980C server adapters
@@ -204,8 +204,12 @@ Supported hardware {:-include-:}:
 			Dell OptiPlex GX1 on-board 3c918
 			Dell Latitude laptop docking station embedded
 				3c905
-		Adaptec "Starfire" AIC-6915 based PCI adapters,
-			including
+		3Com 3c990 3XP Typhoon/Sidewinder PCI adapters, including:
+			3C990-TX-95
+			3C990-TX-97
+			3C990-TX-SVR95
+			3C990-TX-SVR97
+		Adaptec "Starfire" AIC-6915 based PCI adapters, including:
 			Adaptec Single32 ANA-69011
 			Adaptec Single64 ANA-62011 and ANA-62020
 			Adaptec Duo64 ANA-62022
@@ -357,7 +361,7 @@ Supported hardware {:-include-:}:
 		Broadcom Bluesteelnet uBsec 5501, 5601, 5805
 		Hi/Fn 7751-based boards, including:
 			GTGI PowerCrypt Encryption Accelerator
-			NetSec 7751
+			NETSEC 7751
 			HiFn reference board
 			Invertex AEON
 	PC Cards (PCMCIA and Carbus)
@@ -501,8 +505,6 @@ about:
 	Winmodems
 	Infrared devices, such as commonly found on laptops
 	Firewire
-	3c990 Hardware Crypto Accelerators (3Com will not make specs
-		public)
 	Mylex and Intel RAID controllers
 	PCMCIA:
 		Memory cards
