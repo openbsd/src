@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfctl.8,v 1.3 2005/01/28 18:11:54 jmc Exp $
+.\"	$OpenBSD: ospfctl.8,v 1.4 2005/03/14 18:21:28 norby Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
 .\"
@@ -35,10 +35,12 @@ The following commands are available:
 .Bl -tag -width Ds
 .It Cm show database
 Show the entire link state database.
-.It Cm show neighbor
-Show neighbor summary.
 .It Cm show interfaces
 Show interface summary.
+.It Cm show neighbor
+Show neighbor summary.
+.It Cm show summary
+Show summary status.
 .El
 .Sh FILES
 .Bl -tag -width "/etc/ospfd.confXXXX" -compact

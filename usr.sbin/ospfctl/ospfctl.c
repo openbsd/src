@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfctl.c,v 1.6 2005/03/12 11:03:05 norby Exp $ */
+/*	$OpenBSD: ospfctl.c,v 1.7 2005/03/14 18:21:29 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -37,7 +37,7 @@
 #include "log.h"
 
 __dead void	 usage(void);
-int		 show_summary_msg(struct imsg *, int);
+int		 show_summary_msg(struct imsg *);
 int		 show_interface_msg(struct imsg *);
 void		 print_baudrate(u_long);
 const char	*print_if_type(enum iface_type type);
@@ -82,7 +82,6 @@ main(int argc, char *argv[])
 	struct imsg		 imsg;
 	unsigned int		 ifidx = 0;
 	int			 ctl_sock;
-	int			 nodescr = 0;
 	int			 done = 0;
 	int			 n;
 
@@ -111,7 +110,8 @@ main(int argc, char *argv[])
 		usage();
 		/* not reached */
 	case SHOW:
-	case SHOW_SUMMARY:
+	case SHOW_SUM:
+		imsg_compose(ibuf, IMSG_CTL_SHOW_SUM, 0, 0, -1, NULL, 0);
 		break;
 	case SHOW_IFACE:
 		if (*res->ifname) {
@@ -165,8 +165,8 @@ main(int argc, char *argv[])
 				break;
 			switch (res->action) {
 			case SHOW:
-			case SHOW_SUMMARY:
-				done = show_summary_msg(&imsg, nodescr);
+			case SHOW_SUM:
+				done = show_summary_msg(&imsg);
 				break;
 			case SHOW_IFACE:
 				done = show_interface_msg(&imsg);
@@ -201,8 +201,44 @@ main(int argc, char *argv[])
 }
 
 int
-show_summary_msg(struct imsg *imsg, int nodescr)
+show_summary_msg(struct imsg *imsg)
 {
+	struct ctl_sum		*sum;
+	struct ctl_sum_area	*sumarea;
+
+	switch (imsg->hdr.type) {
+	case IMSG_CTL_SHOW_SUM:
+		sum = imsg->data;
+		printf("Router ID: %s\n", inet_ntoa(sum->rtr_id));
+		printf("RFC1583 compatibility flag is ");
+		if (sum->rfc1583compat)
+			printf("enabled\n");
+		else
+			printf("disabled\n");
+
+		printf("SPF delay is %d sec(s), hold time between two SPFs "
+		    "is %d sec(s)\n", sum->spf_delay, sum->spf_hold_time);
+		printf("Number of external LSA(s) %d\n", sum->num_ext_lsa);
+		printf("Number of areas attached to this router: %d\n",
+		    sum->num_area);
+		break;
+	case IMSG_CTL_SHOW_SUM_AREA:
+		sumarea = imsg->data;
+		printf("\nArea ID: %s\n", inet_ntoa(sumarea->area));
+		printf("  Number of interfaces in this area: %d\n",
+		    sumarea->num_iface);
+		printf("  Number of fully adjacent neighbors in this "
+		    "area: %d\n", sumarea->num_adj_nbr);
+		printf("  SPF algorithm executed %d time(s)\n",
+		    sumarea->num_spf_calc);
+		printf("  Number LSA(s) %d\n", sumarea->num_lsa);
+		break;
+	case IMSG_CTL_END:
+		printf("\n");
+		return (1);
+	default:
+		break;
+	}
 
 	return (0);
 }
@@ -225,7 +261,7 @@ show_interface_msg(struct imsg *imsg)
 		printf("  Router ID %s, network type %s, cost: %d\n",
 		    inet_ntoa(iface->rtr_id),
 		    print_if_type(iface->type), iface->metric);
-		printf("  Transmit delay is %d sec, state %s, priority %d\n",
+		printf("  Transmit delay is %d sec(s), state %s, priority %d\n",
 		    iface->transfer_delay, print_if_state(iface->state),
 		    iface->priority);
 		printf("  Designated Router (ID) %s, ",

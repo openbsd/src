@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.5 2005/03/12 11:03:05 norby Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.6 2005/03/14 18:21:29 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -243,7 +243,7 @@ spf_calc(struct area *area)
 				    PT_INTRA_AREA, DT_NET);
 			}
 
-			/* routers */
+			/* router */
 			addr.s_addr = htonl(v->ls_id);
 			adv_rtr.s_addr = htonl(v->adv_rtr);
 
@@ -299,6 +299,7 @@ spf_calc(struct area *area)
 	log_debug("spf_calc: calculation ended, area ID %s",
 	    inet_ntoa(area->id));
 
+	area->num_spf_calc++;
 	start_spf_timer(rdeconf);
 
 	return;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.9 2005/03/12 11:03:05 norby Exp $ */
+/*	$OpenBSD: rde.c,v 1.10 2005/03/14 18:21:29 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -41,7 +41,8 @@
 void		 rde_sig_handler(int sig, short, void *);
 void		 rde_shutdown(void);
 void		 rde_dispatch_imsg(int, short, void *);
-
+void		 rde_send_summary(pid_t);
+void		 rde_send_summary_area(struct area *, pid_t);
 void		 rde_nbr_init(u_int32_t);
 struct rde_nbr	*rde_nbr_find(u_int32_t);
 struct rde_nbr	*rde_nbr_new(u_int32_t, struct rde_nbr *);
@@ -470,6 +471,13 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 			imsg_compose(ibuf_ospfe, IMSG_CTL_END, 0, imsg.hdr.pid,
 			    -1, NULL, 0);
 			break;
+		case IMSG_CTL_SHOW_SUM:
+			rde_send_summary(imsg.hdr.pid);
+			LIST_FOREACH(area, &rdeconf->area_list, entry)
+				rde_send_summary_area(area, imsg.hdr.pid);
+			imsg_compose(ibuf_ospfe, IMSG_CTL_END, 0, imsg.hdr.pid,
+			    -1, NULL, 0);
+			break;
 		default:
 			log_debug("rde_dispatch_msg: unexpected imsg %d",
 			    imsg.hdr.type);
@@ -510,6 +518,60 @@ rde_send_delete_kroute(struct rt_node *r)
 	kr.prefixlen = r->prefixlen;
 
 	imsg_compose(ibuf_main, IMSG_KROUTE_DELETE, 0, 0, -1, &kr, sizeof(kr));
+}
+
+void
+rde_send_summary(pid_t pid)
+{
+	static struct ctl_sum	 sumctl;
+	struct lsa_tree		*tree = &rdeconf->lsa_tree;
+	struct area		*area;
+	struct vertex		*v;
+
+	bzero(&sumctl, sizeof(struct ctl_sum));
+
+	sumctl.rtr_id.s_addr = rde_router_id();
+	sumctl.spf_delay = rdeconf->spf_delay;
+	sumctl.spf_hold_time = rdeconf->spf_hold_time;
+
+	LIST_FOREACH(area, &rdeconf->area_list, entry)
+		sumctl.num_area++;
+
+	RB_FOREACH(v, lsa_tree, tree)
+		sumctl.num_ext_lsa++;
+
+	sumctl.rfc1583compat = rdeconf->rfc1583compat;
+
+	rde_imsg_compose_ospfe(IMSG_CTL_SHOW_SUM, 0, pid, &sumctl,
+	    sizeof(sumctl));
+}
+
+void
+rde_send_summary_area(struct area *area, pid_t pid)
+{
+	static struct ctl_sum_area	 sumareactl;
+	struct iface			*iface;
+	struct rde_nbr			*nbr;
+	struct lsa_tree			*tree = &area->lsa_tree;
+	struct vertex			*v;
+
+	bzero(&sumareactl, sizeof(struct ctl_sum_area));
+
+	sumareactl.area.s_addr = area->id.s_addr;
+	sumareactl.num_spf_calc = area->num_spf_calc;
+
+	LIST_FOREACH(iface, &area->iface_list, entry)
+		sumareactl.num_iface++;
+
+	LIST_FOREACH(nbr, &area->nbr_list, entry)
+		if (nbr->state == NBR_STA_FULL && !nbr->self)
+			sumareactl.num_adj_nbr++;
+
+	RB_FOREACH(v, lsa_tree, tree)
+		sumareactl.num_lsa++;
+
+	rde_imsg_compose_ospfe(IMSG_CTL_SHOW_SUM_AREA, 0, pid, &sumareactl,
+	    sizeof(sumareactl));
 }
 
 LIST_HEAD(rde_nbr_head, rde_nbr);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.14 2005/03/12 11:03:05 norby Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.15 2005/03/14 18:21:29 norby Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -92,6 +92,8 @@ enum imsg_type {
 	IMSG_CTL_SHOW_DATABASE,
 	IMSG_CTL_SHOW_NBR,
 	IMSG_CTL_SHOW_RIB,
+	IMSG_CTL_SHOW_SUM,
+	IMSG_CTL_SHOW_SUM_AREA,
 	IMSG_CTL_FIB_COUPLE,
 	IMSG_CTL_FIB_DECOUPLE,
 	IMSG_CTL_AREA,
@@ -139,13 +141,13 @@ RB_HEAD(lsa_tree, vertex);
 struct area {
 	LIST_ENTRY(area)	 entry;
 	struct in_addr		 id;
-
 	struct lsa_tree		 lsa_tree;
+
 	LIST_HEAD(, iface)	 iface_list;
 	LIST_HEAD(, rde_nbr)	 nbr_list;
 /*	list			 addr_range_list; */
 	u_int32_t		 stub_default_cost;
-
+	u_int32_t		 num_spf_calc;
 	u_int32_t		 dead_interval;
 	u_int16_t		 transfer_delay;
 	u_int16_t		 hello_interval;
@@ -322,6 +324,7 @@ struct ospfd_conf {
 	int			ospf_socket;
 	int			flags;
 	int			options; /* OSPF options */
+	u_int8_t		rfc1583compat;
 };
 
 /* kroute */
@@ -401,6 +404,23 @@ struct ctl_rt {
 	enum path_type		 p_type;
 	enum dst_type		 d_type;
 	u_int8_t		 prefixlen;
+};
+
+struct ctl_sum {
+	struct in_addr		 rtr_id;
+	u_int32_t		 spf_delay;
+	u_int32_t		 spf_hold_time;
+	u_int32_t		 num_ext_lsa;
+	u_int32_t		 num_area;
+	u_int8_t		 rfc1583compat;
+};
+
+struct ctl_sum_area {
+	struct in_addr		 area;
+	u_int32_t		 num_iface;
+	u_int32_t		 num_adj_nbr;
+	u_int32_t		 num_spf_calc;
+	u_int32_t		 num_lsa;
 };
 
 void		 show_config(struct ospfd_conf *xconf);
