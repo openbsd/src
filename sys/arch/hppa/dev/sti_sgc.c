@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_sgc.c,v 1.28 2005/03/17 22:15:15 mickey Exp $	*/
+/*	$OpenBSD: sti_sgc.c,v 1.29 2005/03/17 22:31:53 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -90,7 +90,7 @@ sti_sgc_getrom(int unit, struct confargs *ca)
 		     ca->ca_type.iodc_revision == STI_GOPT3_REV ||
 		     ca->ca_type.iodc_revision == STI_GOPT4_REV ||
 		     ca->ca_type.iodc_revision == STI_GOPT5_REV))
-			/* these three share the onboard's prom */ ;
+			/* these share the onboard's prom */ ;
 		else
 			rom = 0;
 	}
