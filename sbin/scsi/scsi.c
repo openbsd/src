@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi.c,v 1.8 2001/07/07 18:26:21 deraadt Exp $	*/
+/*	$OpenBSD: scsi.c,v 1.9 2003/02/20 21:47:27 millert Exp $	*/
 /*	$FreeBSD: scsi.c,v 1.11 1996/04/06 11:00:28 joerg Exp $	*/
 
 /*
@@ -391,7 +391,7 @@ do_cmd(int fd, char *fmt, int argc, char **argv)
 		if (strcmp(data_fmt, "-") == 0)	/* stdout */
 		{
 			bp = (char *)scsireq->databuf;
-			while (count > 0 && (amount = write(1, bp, count)) > 0)
+			while (count > 0 && (amount = write(STDOUT_FILENO, bp, count)) > 0)
 			{
 				count -= amount;
 				bp += amount;
