@@ -1,4 +1,4 @@
-/*	$OpenBSD: kentry.c,v 1.1 1997/07/18 01:09:53 mickey Exp $	*/
+/*	$OpenBSD: kentry.c,v 1.1 1997/08/02 22:23:08 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -34,12 +34,23 @@
 
 #include <sys/param.h>
 #include <machine/biosvar.h>
-
+#include "cmd.h"
 
 int
 kentry(cmd, data)
 	u_int cmd;
 	void *data;
 {
+	switch(cmd) {
+	case BOOTC_CHECK:
+		return 0;
+	case BOOTC_BOOT:
+		return 0;
+	case BOOTC_GETENV:
+		return 0;
+	case BOOTC_SETENV:
+		return 0;
+	}
+
 	return -1;
 }

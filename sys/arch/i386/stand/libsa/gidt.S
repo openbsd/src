@@ -1,4 +1,4 @@
-/*	$OpenBSD: gidt.S,v 1.12 1997/08/01 21:06:03 mickey Exp $	*/
+/*	$OpenBSD: gidt.S,v 1.13 1997/08/02 22:23:09 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -228,8 +228,6 @@ idt:
 	idtb(30); idtb(31); idtb(32); idtb(33); idtb(34); idtb(35)
 	idtb(36); idtb(37); idtb(38); idtb(39); idtb(40); idtb(41)
 	idtb(42); idtb(43); idtb(44); idtb(45); idtb(46); idtb(47)
-		/* kernel entry point */
-	idte(kent)
 #undef idte
 Idtr:	.word	. - idt - 1
 	.long	idt
@@ -410,28 +408,6 @@ intno	= . - 1
 	movl	%ebp, _C_LABEL(BIOS_regs)+biosr_bp
 	movl	%esi, _C_LABEL(BIOS_regs)+biosr_si
 	movl	%edi, _C_LABEL(BIOS_regs)+biosr_di
-
-	popl	%gs
-	popl	%fs
-	popl	%es
-	popl	%ds
-	popal
-	iret
-
-	.globl	_C_LABEL(kentry)
-
-IPROC(kent):
-	pushal
-	pushl	%ds
-	pushl	%es
-	pushl	%fs
-	pushl	%gs
-
-	/* call kent */
-	pushl	%edx
-	pushl	%eax
-	call	_C_LABEL(kentry)
-	addl	$8, %esp
 
 	popl	%gs
 	popl	%fs
