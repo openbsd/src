@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.32 2002/04/30 23:01:55 mickey Exp $ */
+/* $OpenBSD: wskbd.c,v 1.33 2002/05/20 23:29:39 miod Exp $ */
 /* $NetBSD: wskbd.c,v 1.38 2000/03/23 07:01:47 thorpej Exp $ */
 
 /*
@@ -1421,13 +1421,17 @@ internal_command(sc, type, ksym, ksym2)
 	case KS_Cmd_Screen9:
 	case KS_Cmd_Screen10:
 	case KS_Cmd_Screen11:
-		wsdisplay_switch(sc->sc_displaydv, ksym - KS_Cmd_Screen0, 0);
+		if (sc->sc_displaydv != NULL)
+			wsdisplay_switch(sc->sc_displaydv,
+			    ksym - KS_Cmd_Screen0, 0);
 		return (1);
 	case KS_Cmd_ResetEmul:
-		wsdisplay_reset(sc->sc_displaydv, WSDISPLAY_RESETEMUL);
+		if (sc->sc_displaydv != NULL)
+			wsdisplay_reset(sc->sc_displaydv, WSDISPLAY_RESETEMUL);
 		return (1);
 	case KS_Cmd_ResetClose:
-		wsdisplay_reset(sc->sc_displaydv, WSDISPLAY_RESETCLOSE);
+		if (sc->sc_displaydv != NULL)
+			wsdisplay_reset(sc->sc_displaydv, WSDISPLAY_RESETCLOSE);
 		return (1);
 #ifdef __i386__
 	case KS_Cmd_KbdReset:
