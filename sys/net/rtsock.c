@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.26 2003/02/16 21:30:13 deraadt Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.27 2003/04/23 01:36:52 jason Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -450,60 +450,6 @@ rt_xaddrs(cp, cplim, rtinfo)
 		rtinfo->rti_info[i] = sa = (struct sockaddr *)cp;
 		ADVANCE(cp, sa);
 	}
-}
-
-/*
- * Copy data from a buffer back into the indicated mbuf chain,
- * starting "off" bytes from the beginning, extending the mbuf
- * chain if necessary. The mbuf needs to be properly initialized
- * including the setting of m_len.
- */
-void
-m_copyback(m0, off, len, cp)
-	struct	mbuf *m0;
-	register int off;
-	register int len;
-	caddr_t cp;
-{
-	register int mlen;
-	register struct mbuf *m = m0, *n;
-	int totlen = 0;
-
-	if (m0 == 0)
-		return;
-	while (off > (mlen = m->m_len)) {
-		off -= mlen;
-		totlen += mlen;
-		if (m->m_next == 0) {
-			n = m_getclr(M_DONTWAIT, m->m_type);
-			if (n == 0)
-				goto out;
-			n->m_len = min(MLEN, len + off);
-			m->m_next = n;
-		}
-		m = m->m_next;
-	}
-	while (len > 0) {
-		mlen = min (m->m_len - off, len);
-		bcopy(cp, off + mtod(m, caddr_t), (unsigned)mlen);
-		cp += mlen;
-		len -= mlen;
-		mlen += off;
-		off = 0;
-		totlen += mlen;
-		if (len == 0)
-			break;
-		if (m->m_next == 0) {
-			n = m_get(M_DONTWAIT, m->m_type);
-			if (n == 0)
-				break;
-			n->m_len = min(MLEN, len);
-			m->m_next = n;
-		}
-		m = m->m_next;
-	}
-out:	if (((m = m0)->m_flags & M_PKTHDR) && (m->m_pkthdr.len < totlen))
-		m->m_pkthdr.len = totlen;
 }
 
 static struct mbuf *
