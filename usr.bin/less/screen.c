@@ -763,7 +763,7 @@ get_term()
 	 * that switch to/from an alternate screen, and we're in quit_at_eof
 	 * (eg, more(1)).
 	 */
-	if (!quit_at_eof && !more_mode) {
+	if (!more_mode) {
 		sc_init = tgetstr("ti", &sp);
 		sc_deinit = tgetstr("te", &sp);
 	}
