@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.30 2000/02/18 05:46:10 itojun Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.31 2000/02/18 08:13:31 itojun Exp $	*/
 /*      $NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $      */
 
 /*
@@ -81,7 +81,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.30 2000/02/18 05:46:10 itojun Exp $";
+static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.31 2000/02/18 08:13:31 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -580,9 +580,11 @@ printif(ifrm, ifaliases)
 	ifreq.ifr_name[0] = '\0';
 	for (i = 0; i < ifc.ifc_len; ) {
 		ifrp = (struct ifreq *)((caddr_t)ifc.ifc_req + i);
-		siz = sizeof(ifrp->ifr_name) +
-		    (ifrp->ifr_addr.sa_len > sizeof(struct sockaddr) ?
-		    ifrp->ifr_addr.sa_len : sizeof(struct sockaddr));
+		memcpy(ifrbuf, ifrp, sizeof(*ifrp));
+		siz = ((struct ifreq *)ifrbuf)->ifr_addr.sa_len;
+		if (siz < sizeof(ifrp->ifr_addr))
+			siz = sizeof(ifrp->ifr_addr);
+		siz += sizeof(ifrp->ifr_name);
 		i += siz;
 		/* avoid alignment issue */
 		if (sizeof(ifrbuf) < siz)
@@ -595,8 +597,7 @@ printif(ifrm, ifaliases)
 			continue;
 		strncpy(name, ifrp->ifr_name, sizeof(ifrp->ifr_name));
 		if (ifrp->ifr_addr.sa_family == AF_LINK) {
-			memcpy(&ifr, ifrp, sizeof(ifr));
-			ifreq = ifr;
+			ifreq = ifr = *ifrp;
 			if (getinfo(&ifreq) < 0)
 				continue;
 			status(1);
@@ -612,7 +613,7 @@ printif(ifrm, ifaliases)
 			if (ifaliases == 0 && noinet == 0)
 				continue;
 #endif
-			memcpy(&ifr, ifrp, sizeof(ifr));
+			ifr = *ifrp;
 #ifdef INET6
 			/* quickhack: sizeof(ifr) < sizeof(ifr6) */
 			if (ifrp->ifr_addr.sa_family == AF_INET6)
