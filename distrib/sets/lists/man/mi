@@ -594,15 +594,6 @@
 ./usr/share/man/cat2/fhopen.0
 ./usr/share/man/cat2/fhstat.0
 ./usr/share/man/cat2/fhstatfs.0
-./usr/share/man/cat3/asctime_r.0
-./usr/share/man/cat3/ctime_r.0
-./usr/share/man/cat3/freeifaddrs.0
-./usr/share/man/cat3/getgrgid_r.0
-./usr/share/man/cat3/getgrnam_r.0
-./usr/share/man/cat3/getifaddrs.0
-./usr/share/man/cat3/gmtime_r.0
-./usr/share/man/cat3/localtime_r.0
-./usr/share/man/cat3/readdir_r.0
 ./usr/share/man/cat3p/AnyDBM_File.0
 ./usr/share/man/cat3p/AutoLoader.0
 ./usr/share/man/cat3p/AutoSplit.0

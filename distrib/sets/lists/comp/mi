@@ -3424,7 +3424,6 @@
 ./usr/share/man/cat3/ssl.0
 ./usr/share/man/cat3/lh_stats.0
 ./usr/share/man/cat3/lhash.0
-./usr/share/man/cat3/buffer.0
 ./usr/share/man/cat3/crypto.0
 ./usr/share/man/cat3/curses_version.0
 ./usr/share/man/cat3/d2i_DHparams.0
@@ -3599,3 +3598,13 @@
 ./usr/share/man/cat1/f77.0
 ./usr/include/dev/usb/if_auereg.h
 ./usr/include/dev/usb/if_cuereg.h
+./usr/share/man/cat3/kafs.0
+./usr/share/man/cat3/asctime_r.0
+./usr/share/man/cat3/ctime_r.0
+./usr/share/man/cat3/freeifaddrs.0
+./usr/share/man/cat3/getgrgid_r.0
+./usr/share/man/cat3/getgrnam_r.0
+./usr/share/man/cat3/getifaddrs.0
+./usr/share/man/cat3/gmtime_r.0
+./usr/share/man/cat3/localtime_r.0
+./usr/share/man/cat3/readdir_r.0
