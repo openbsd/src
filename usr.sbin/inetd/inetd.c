@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.32 1997/06/26 06:26:15 denny Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.33 1997/06/26 17:31:22 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.32 1997/06/26 06:26:15 denny Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.33 1997/06/26 17:31:22 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -365,7 +365,7 @@ main(argc, argv, envp)
 	}
 #endif
 
-	bzero((char *)&sv, sizeof(sv));
+	memset((char *)&sv, 0, sizeof(sv));
 	sv.sv_mask = SIGBLOCK;
 	sv.sv_handler = retry;
 	sigvec(SIGALRM, &sv, (struct sigvec *)0);
@@ -1091,7 +1091,7 @@ more:
 #endif
 	if (cp == NULL)
 		return ((struct servtab *)0);
-	bzero((char *)sep, sizeof *sep);
+	memset((char *)sep, 0, sizeof *sep);
 	arg = skip(&cp);
 	if (arg == NULL) {
 		/* A blank line. */
@@ -1267,6 +1267,7 @@ more:
 			else if (!inet_aton(nsep->se_hostaddr,
 			    &nsep->se_ctrladdr_in.sin_addr)) {
 				struct hostent *hp;
+
 				hp = gethostbyname(nsep->se_hostaddr);
 				if (hp == 0) {
 					syslog(LOG_ERR, "%s: unknown host",
@@ -1283,20 +1284,19 @@ more:
 				} else {
 					int i = 1;
 
-					bcopy(hp->h_addr_list[0],
-						&nsep->se_ctrladdr_in.sin_addr,
-						sizeof(struct in_addr));
+					memmove(&nsep->se_ctrladdr_in.sin_addr,
+					    hp->h_addr_list[0],
+					    sizeof(struct in_addr));
 					while (hp->h_addr_list[i] != NULL) {
 						psep = dupconfig(nsep);
 						psep->se_hostaddr = newstr(
 						    nsep->se_hostaddr);
 						psep->se_checked = 1;
-						bcopy(
+						memmove(&psep->se_ctrladdr_in.sin_addr,
 						    hp->h_addr_list[i],
-				    &psep->se_ctrladdr_in.sin_addr,
 						    sizeof(struct in_addr));
 						psep->se_ctrladdr_size =
-						  sizeof(psep->se_ctrladdr_in);
+						    sizeof(psep->se_ctrladdr_in);
 						i++;
 
 						/*
@@ -1437,7 +1437,7 @@ dupconfig(sep)
 		exit (-1);
 	}
 
-	bzero ((char *)newtab, sizeof(struct servtab));
+	memset((char *)newtab, 0, sizeof(struct servtab));
 
 	newtab->se_service = sep->se_service ? newstr(sep->se_service) : NULL;
 	newtab->se_socktype = sep->se_socktype;
@@ -1640,10 +1640,10 @@ chargen_stream(s, sep)		/* Character generator */
 	text[LINESIZ + 1] = '\n';
 	for (rs = ring;;) {
 		if ((len = endring - rs) >= LINESIZ)
-			bcopy(rs, text, LINESIZ);
+			memmove(text, rs, LINESIZ);
 		else {
-			bcopy(rs, text, len);
-			bcopy(ring, text + len, LINESIZ - len);
+			memmove(text, rs, len);
+			memmove(text + len, ring, LINESIZ - len);
 		}
 		if (++rs == endring)
 			rs = ring;
@@ -1676,10 +1676,10 @@ chargen_dg(s, sep)		/* Character generator */
 		return;
 
 	if ((len = endring - rs) >= LINESIZ)
-		bcopy(rs, text, LINESIZ);
+		memmove(text, rs, LINESIZ);
 	else {
-		bcopy(rs, text, len);
-		bcopy(ring, text + len, LINESIZ - len);
+		memmove(text, rs, len);
+		memmove(text + len, ring, LINESIZ - len);
 	}
 	if (++rs == endring)
 		rs = ring;
