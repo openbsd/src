@@ -212,10 +212,10 @@
 #define splsoftclock()  spl1()	/* disallow softclock */
 #define splsoftnet()    spl1()	/* disallow network */
 #define splclock()      spl1()	/* disallow clock interrupt */
+#define spltty()        spl1()	/* disallow tty (softserial&adb) interrupts */
 #define splbio()        spl2()	/* disallow block I/O */
 #define splnet()        spl2()	/* disallow network */
-#define spltty()        spl4()	/* disallow tty interrupts (serial) */
-#define splimp()        spl4()	/* disallow imput */
+#define splimp()        spl2()	/* disallow imput */
 #define splhigh()       spl7()	/* disallow everything */
 #define splsched()      spl7()	/* disallow scheduling */
 
