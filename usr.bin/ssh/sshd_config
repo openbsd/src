@@ -1,10 +1,10 @@
-#	$OpenBSD: sshd_config,v 1.37 2001/04/15 21:05:49 stevesk Exp $
+#	$OpenBSD: sshd_config,v 1.38 2001/04/15 21:41:29 deraadt Exp $
 
 # This is the sshd server system-wide configuration file.  See sshd(8)
 # for more information.
 
 Port 22
-#Protocol 2
+#Protocol 2,1
 #ListenAddress 0.0.0.0
 #ListenAddress ::
 HostKey /etc/ssh_host_key
