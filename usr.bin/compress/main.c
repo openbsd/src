@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.7 1997/08/19 06:32:36 denny Exp $	*/
+/*	$OpenBSD: main.c,v 1.8 1998/02/13 16:36:24 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.7 1997/08/19 06:32:36 denny Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.8 1998/02/13 16:36:24 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -489,7 +489,7 @@ setfile(name, fs)
 	if (chmod(name, fs->st_mode))
 		warn("chown: %s", name);
 
-	if (chflags(name, fs->st_flags))
+	if (fs->st_flags && chflags(name, fs->st_flags))
 		warn("chflags: %s", name);
 }
 
