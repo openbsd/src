@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.8,v 1.7 1995/04/11 02:44:53 cgd Exp $
+.\"	$NetBSD: ftpd.8,v 1.8 1996/01/14 20:55:23 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -263,8 +263,8 @@ This program should be mode 111.
 Make this directory owned by
 .Dq root
 and unwritable by anyone (mode 555).
-The files
-.Xr passwd 5
+The files pwd.db (see
+.Xr passwd 5 )
 and
 .Xr group 5
 must be present for the 
