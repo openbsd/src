@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.59 2001/05/11 15:01:15 deraadt Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.60 2001/05/13 15:39:27 deraadt Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -93,7 +93,7 @@ int	hifn_newsession __P((u_int32_t *, struct cryptoini *));
 int	hifn_freesession __P((u_int64_t));
 int	hifn_process __P((struct cryptop *));
 void	hifn_callback __P((struct hifn_softc *, struct hifn_command *, u_int8_t *));
-int	hifn_crypto __P((struct hifn_softc *, hifn_command_t *));
+int	hifn_crypto __P((struct hifn_softc *, hifn_command_t *, struct cryptop *));
 int	hifn_readramaddr __P((struct hifn_softc *, int, u_int8_t *, int));
 int	hifn_writeramaddr __P((struct hifn_softc *, int, u_int8_t *, int));
 
@@ -856,22 +856,32 @@ hifn_write_command(cmd, buf)
 }
 
 int 
-hifn_crypto(sc, cmd)
+hifn_crypto(sc, cmd, crp)
 	struct hifn_softc *sc;
 	struct hifn_command *cmd;
+	struct cryptop *crp;
 {
 	u_int32_t cmdlen;
 	struct	hifn_dma *dma = sc->sc_dma;
 	int	cmdi, srci, dsti, resi, nicealign = 0;
 	int     s, i;
 
-	if (cmd->src_npa == 0 && cmd->src_m)
-		cmd->src_l = mbuf2pages(cmd->src_m, &cmd->src_npa,
-		    cmd->src_packp, cmd->src_packl, MAX_SCATTER, &nicealign);
+	if (cmd->src_npa == 0 && cmd->src_m) {
+		if (crp->crp_flags & CRYPTO_F_IMBUF)
+			cmd->src_l = mbuf2pages(cmd->src_m, &cmd->src_npa,
+			    cmd->src_packp, cmd->src_packl, MAX_SCATTER,
+			    &nicealign);
+		else if (crp->crp_flags & CRYPTO_F_IOV)
+			cmd->src_l = iov2pages(cmd->src_io, &cmd->src_npa,
+			    cmd->src_packp, cmd->src_packl, MAX_SCATTER,
+			    &nicealign);
+	}
 	if (cmd->src_l == 0)
 		return (-1);
 
-	if (nicealign == 0) {
+	if (!nicealign && (crp->crp_flags & CRYPTO_F_IOV)) {
+		return (-1);
+	} else if (!nicealign && (crp->crp_flags & CRYPTO_F_IMBUF)) {
 		int totlen, len;
 		struct mbuf *m, *top, **mp;
 
@@ -916,12 +926,15 @@ hifn_crypto(sc, cmd)
 			mp = &m->m_next;
 		}
 		cmd->dst_m = top;
-	}
-	else
+	} else
 		cmd->dst_m = cmd->src_m;
 
-	cmd->dst_l = mbuf2pages(cmd->dst_m, &cmd->dst_npa,
-	    cmd->dst_packp, cmd->dst_packl, MAX_SCATTER, NULL);
+	if (crp->crp_flags & CRYPTO_F_IMBUF)
+		cmd->dst_l = mbuf2pages(cmd->dst_m, &cmd->dst_npa,
+		    cmd->dst_packp, cmd->dst_packl, MAX_SCATTER, NULL);
+	else if (crp->crp_flags & CRYPTO_F_IOV)
+		cmd->dst_l = iov2pages(cmd->dst_io, &cmd->dst_npa,
+		    cmd->dst_packp, cmd->dst_packl, MAX_SCATTER, NULL);
 	if (cmd->dst_l == 0)
 		return (-1);
 
@@ -1249,6 +1262,9 @@ hifn_process(crp)
 	if (crp->crp_flags & CRYPTO_F_IMBUF) {
 		cmd->src_m = (struct mbuf *)crp->crp_buf;
 		cmd->dst_m = (struct mbuf *)crp->crp_buf;
+	} if (crp->crp_flags & CRYPTO_F_IOV) {
+		cmd->src_io = (struct criov *)crp->crp_buf;
+		cmd->dst_io = (struct criov *)crp->crp_buf;
 	} else {
 		err = EINVAL;
 		goto errout;	/* XXX only handle mbufs right now */
@@ -1312,15 +1328,31 @@ hifn_process(crp)
 				bcopy(sc->sc_sessions[session].hs_iv,
 				    cmd->iv, HIFN_IV_LENGTH);
 
-			if ((enccrd->crd_flags & CRD_F_IV_PRESENT) == 0)
-				m_copyback(cmd->src_m, enccrd->crd_inject,
-				    HIFN_IV_LENGTH, cmd->iv);
+			if ((enccrd->crd_flags & CRD_F_IV_PRESENT) == 0) {
+				if (crp->crp_flags & CRYPTO_F_IMBUF)
+					m_copyback(cmd->src_m, enccrd->crd_inject,
+					    HIFN_IV_LENGTH, cmd->iv);
+				else if (crp->crp_flags & CRYPTO_F_IOV) {
+					if (crp->crp_iv == NULL) {
+						err = EINVAL;
+						goto errout;
+					}
+					bcopy(crp->crp_iv, cmd->iv, 8);
+				}
+			}
 		} else {
 			if (enccrd->crd_flags & CRD_F_IV_EXPLICIT)
 				bcopy(enccrd->crd_iv, cmd->iv, HIFN_IV_LENGTH);
-			else
+			else if (crp->crp_flags & CRYPTO_F_IMBUF)
 				m_copydata(cmd->src_m, enccrd->crd_inject,
 				    HIFN_IV_LENGTH, cmd->iv);
+			else if (crp->crp_flags & CRYPTO_F_IOV) {
+				if (crp->crp_iv == NULL) {
+					err = EINVAL;
+					goto errout;
+				}
+				bcopy(crp->crp_iv, cmd->iv, 8);
+			}
 		}
 
 		if (enccrd->crd_alg == CRYPTO_DES_CBC)
@@ -1365,7 +1397,7 @@ hifn_process(crp)
 	cmd->session_num = session;
 	cmd->softc = sc;
 
-	if (hifn_crypto(sc, cmd) == 0)
+	if (hifn_crypto(sc, cmd, crp) == 0)
 		return (0);
 
 	err = ENOMEM;
@@ -1399,25 +1431,27 @@ hifn_callback(sc, cmd, macbuf)
 		crp->crp_buf = (caddr_t)cmd->dst_m;
 	}
 
-	if ((m = cmd->dst_m) != NULL) {
-		totlen = cmd->src_l;
-		hifnstats.hst_obytes += totlen;
-		while (m) {
-			if (totlen < m->m_len) {
-				m->m_len = totlen;
-				totlen = 0;
-			} else
-				totlen -= m->m_len;
-			m = m->m_next;
+	if (crp->crp_flags & CRYPTO_F_IMBUF) {
+		if ((m = cmd->dst_m) != NULL) {
+			totlen = cmd->src_l;
+			hifnstats.hst_obytes += totlen;
+			while (m) {
+				if (totlen < m->m_len) {
+					m->m_len = totlen;
+					totlen = 0;
+				} else
+					totlen -= m->m_len;
+				m = m->m_next;
+				if (++dma->dstk == HIFN_D_DST_RSIZE)
+					dma->dstk = 0;
+				dma->dstu--;
+			}
+		} else {
+			hifnstats.hst_obytes += dma->dstr[dma->dstk].l & HIFN_D_LENGTH;
 			if (++dma->dstk == HIFN_D_DST_RSIZE)
 				dma->dstk = 0;
 			dma->dstu--;
 		}
-	} else {
-		hifnstats.hst_obytes += dma->dstr[dma->dstk].l & HIFN_D_LENGTH;
-		if (++dma->dstk == HIFN_D_DST_RSIZE)
-			dma->dstk = 0;
-		dma->dstu--;
 	}
 
 	if ((cmd->base_masks & (HIFN_BASE_CMD_CRYPT | HIFN_BASE_CMD_DECODE)) ==
@@ -1426,10 +1460,17 @@ hifn_callback(sc, cmd, macbuf)
 			if (crd->crd_alg != CRYPTO_DES_CBC &&
 			    crd->crd_alg != CRYPTO_3DES_CBC)
 				continue;
-			m_copydata((struct mbuf *)crp->crp_buf,
-			    crd->crd_skip + crd->crd_len - HIFN_IV_LENGTH,
-			    HIFN_IV_LENGTH,
-			    cmd->softc->sc_sessions[cmd->session_num].hs_iv);
+			if (crp->crp_flags & CRYPTO_F_IMBUF)
+				m_copydata((struct mbuf *)crp->crp_buf,
+				    crd->crd_skip + crd->crd_len - HIFN_IV_LENGTH,
+				    HIFN_IV_LENGTH,
+				    cmd->softc->sc_sessions[cmd->session_num].hs_iv);
+			else if (crp->crp_flags & CRYPTO_F_IOV) {
+				criov_copydata((struct criov *)crp->crp_buf,
+				    crd->crd_skip + crd->crd_len - HIFN_IV_LENGTH,
+				    HIFN_IV_LENGTH,
+				    cmd->softc->sc_sessions[cmd->session_num].hs_iv);
+			}
 			break;
 		}
 	}
@@ -1439,8 +1480,11 @@ hifn_callback(sc, cmd, macbuf)
 			if (crd->crd_alg != CRYPTO_MD5_HMAC &&
 			    crd->crd_alg != CRYPTO_SHA1_HMAC)
 				continue;
-			m_copyback((struct mbuf *)crp->crp_buf,
-			    crd->crd_inject, 12, macbuf);
+			if (crp->crp_flags & CRYPTO_F_IMBUF)
+				m_copyback((struct mbuf *)crp->crp_buf,
+				    crd->crd_inject, 12, macbuf);
+			else if ((crp->crp_flags & CRYPTO_F_IOV) && crp->crp_mac)
+				bcopy((caddr_t)macbuf, crp->crp_mac, 12);
 			break;
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.57 2001/05/12 18:09:02 angelos Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.58 2001/05/13 15:39:27 deraadt Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -238,7 +238,7 @@ esp_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
     }
 
     return crypto_newsession(&tdbp->tdb_cryptoid,
-			     (tdbp->tdb_encalgxform ? &crie : &cria));
+      (tdbp->tdb_encalgxform ? &crie : &cria), 0);
 }
 
 /*

@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.198 2001/05/11 07:13:14 deraadt Exp $
+#	$OpenBSD: files,v 1.199 2001/05/13 15:39:26 deraadt Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -283,6 +283,7 @@ pseudo-device sppp: ifnet
 pseudo-device faith: ifnet
 pseudo-device gif: ifnet
 pseudo-device gre: ifnet
+pseudo-device crypto: ifnet
 
 pseudo-device sequencer
 
@@ -624,6 +625,8 @@ file crypto/ecb_enc.c			(inet & ipsec) | crypto | tcfs
 file crypto/set_key.c			(inet & ipsec) | crypto | tcfs
 file crypto/ecb3_enc.c			(inet & ipsec) | crypto | tcfs
 file crypto/crypto.c			(inet & ipsec) | crypto
+file crypto/cryptodev.c			((inet & ipsec) | crypto)	needs-flag
+file crypto/criov.c			(inet & ipsec) | crypto
 file crypto/cryptosoft.c		(inet & ipsec) | crypto
 file crypto/mbuf.c			(inet & ipsec) | crypto
 file crypto/xform.c			(inet & ipsec) | crypto

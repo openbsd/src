@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.51 2001/05/12 18:09:02 angelos Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.52 2001/05/13 15:39:27 deraadt Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -155,7 +155,7 @@ ah_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
     cria.cri_klen = ii->ii_authkeylen * 8;
     cria.cri_key = ii->ii_authkey;
 
-    return crypto_newsession(&tdbp->tdb_cryptoid, &cria);
+    return crypto_newsession(&tdbp->tdb_cryptoid, &cria, 0);
 }
 
 /*

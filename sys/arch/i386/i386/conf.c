@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.68 2001/05/01 19:15:16 aaron Exp $	*/
+/*	$OpenBSD: conf.c,v 1.69 2001/05/13 15:39:26 deraadt Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -40,6 +40,8 @@
 #include <sys/vnode.h>
 
 #include <machine/conf.h>
+
+#include "inet.h"
 
 #include "wd.h"
 bdev_decl(wd);
@@ -141,6 +143,7 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 cdev_decl(mm);
 cdev_decl(wd);
 cdev_decl(sw);
+cdev_decl(crypto);
 #include "pty.h"
 #include "com.h"
 #include "pccom.h"
@@ -321,6 +324,7 @@ struct cdevsw	cdevsw[] =
 	cdev_mouse_init(NWSMOUSE,	/* 68: mice */
 	    wsmouse),
 	cdev_mouse_init(NWSMUX, wsmux),	/* 69: ws multiplexor */
+	cdev_crypto_init(NCRYPTO,crypto), /* 70: /dev/crypto */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

@@ -70,6 +70,7 @@ struct cryptoini
     int                cri_rnd;     /* Algorithm rounds, where relevant */
     caddr_t            cri_key;     /* key to use */
     u_int8_t           cri_iv[EALG_MAX_BLOCK_LEN];      /* IV to use */
+    int		       cri_insert;  /* XXX Number of bytes MAC "uses" */
     struct cryptoini  *cri_next;
 };
 
@@ -115,7 +116,9 @@ struct cryptop
 				   */
     int                crp_flags;
 
-#define CRYPTO_F_IMBUF 0x0001    /* Input is an mbuf chain, otherwise contig */
+#define CRYPTO_F_IMBUF 0x0001  /* Input/output are mbuf chains, otherwise contig */
+#define CRYPTO_F_IOV   0x0002  /* Input/output are uio */
+#define CRYPTO_F_REL   0x0004  /* Must return data in same place */
 
     caddr_t            crp_buf;   /* Data to be processed */
 
@@ -126,6 +129,11 @@ struct cryptop
     int (*crp_callback) (struct cryptop *); /* Callback function */
 
     struct cryptop    *crp_next;
+
+    caddr_t            crp_iv;
+    caddr_t            crp_mac;
+    int                        crp_mac_trunc_len;
+
 };
 
 #define CRYPTO_BUF_CONTIG     0x1
@@ -142,6 +150,7 @@ struct cryptocap
     u_int8_t          cc_alg[CRYPTO_ALGORITHM_MAX + 1]; /* Supported */
     u_int8_t          cc_flags;
 #define CRYPTOCAP_F_CLEANUP   0x1
+#define CRYPTOCAP_F_SOFTWARE  0x02
 
     int             (*cc_newsession) (u_int32_t *, struct cryptoini *);
     int             (*cc_process) (struct cryptop *);
@@ -149,8 +158,13 @@ struct cryptocap
 };
 
 
+struct criov {
+       int niov;
+       struct iovec iov[IOV_MAX];
+};
+
 #ifdef _KERNEL
-extern int crypto_newsession(u_int64_t *, struct cryptoini *);
+extern int crypto_newsession(u_int64_t *, struct cryptoini *, int);
 extern int crypto_freesession(u_int64_t);
 extern int crypto_dispatch(struct cryptop *);
 extern int crypto_register(u_int32_t, int,
@@ -163,7 +177,10 @@ extern int crypto_invoke(struct cryptop *);
 extern void crypto_done(struct cryptop *);
 
 struct mbuf;
-int	mbuf2pages(struct mbuf *, int *, long *, int *, int, int *);
+int	mbuf2pages __P((struct mbuf *, int *, long *, int *, int, int *));
+int	iov2pages __P((struct criov *, int *, long *, int *, int, int *));
+void	criov_copydata __P((struct criov *, int, int, caddr_t));
+void	criov_copyback __P((struct criov *, int, int, caddr_t));
 
 extern struct cryptop *crypto_getreq(int);
 extern void crypto_freereq(struct cryptop *);

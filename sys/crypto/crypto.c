@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.16 2001/05/05 00:31:34 angelos Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.17 2001/05/13 15:39:26 deraadt Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -53,7 +53,7 @@ struct cryptop **crp_req_queue_tail = NULL;
  * Create a new session.
  */
 int
-crypto_newsession(u_int64_t *sid, struct cryptoini *cri)
+crypto_newsession(u_int64_t *sid, struct cryptoini *cri, int hard)
 {
     struct cryptoini *cr;
     u_int32_t hid, lid;
@@ -78,6 +78,11 @@ crypto_newsession(u_int64_t *sid, struct cryptoini *cri)
          */
 	if ((crypto_drivers[hid].cc_newsession == NULL) ||
 	    (crypto_drivers[hid].cc_flags & CRYPTOCAP_F_CLEANUP))
+	  continue;
+
+	/* hardware requested -- ignore software drivers */
+	if (hard &&
+	    (crypto_drivers[hid].cc_flags & CRYPTOCAP_F_SOFTWARE))
 	  continue;
 
 	/* See if all the algorithms are supported */
@@ -325,7 +330,7 @@ crypto_invoke(struct cryptop *crp)
 	for (crd = crp->crp_desc; crd->crd_next; crd = crd->crd_next)
 	  crd->CRD_INI.cri_next = &(crd->crd_next->CRD_INI);
 
-	if (crypto_newsession(&nid, &(crp->crp_desc->CRD_INI)) == 0)
+	if (crypto_newsession(&nid, &(crp->crp_desc->CRD_INI), 0) == 0)
 	  crp->crp_sid = nid;
 
 	crp->crp_etype = EAGAIN;
@@ -342,7 +347,7 @@ crypto_invoke(struct cryptop *crp)
 	for (crd = crp->crp_desc; crd->crd_next; crd = crd->crd_next)
 	  crd->CRD_INI.cri_next = &(crd->crd_next->CRD_INI);
 
-	if (crypto_newsession(&nid, &(crp->crp_desc->CRD_INI)) == 0)
+	if (crypto_newsession(&nid, &(crp->crp_desc->CRD_INI), 0) == 0)
 	  crp->crp_sid = nid;
 
 	crp->crp_etype = EAGAIN;

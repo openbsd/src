@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.39 2001/03/01 20:54:35 provos Exp $	*/
+/*	$OpenBSD: conf.h,v 1.40 2001/05/13 15:39:26 deraadt Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -256,6 +256,12 @@ extern struct cdevsw cdevsw[];
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, 0, seltrue, dev_init(c,n,mmap) }
+
+/* open, close, read, write, ioctl, mmap */
+#define cdev_crypto_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
+	0, (dev_type_select((*))) enodev, (dev_type_mmap((*))) enodev }
 
 /* read, write */
 #define cdev_swap_init(c,n) { \
