@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mpool.3,v 1.5 1999/05/16 19:54:47 alex Exp $
+.\"	$OpenBSD: mpool.3,v 1.6 1999/05/27 16:20:59 aaron Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -124,7 +124,7 @@ address.
 Otherwise,
 .Dv NULL
 is returned and errno is set.  The flags value is formed by
-.Em or Ns 'ing
+.Em OR Ns 'ing
 the following values:
 .Bl -tag -width Ds
 .It MPOOL_PAGE_REQUEST
@@ -157,7 +157,7 @@ must be an address previously returned by
 or
 .Fn mpool_new .
 The flags value is formed by
-.Em or Ns 'ing
+.Em OR Ns 'ing
 the following values:
 .Bl -tag -width Ds
 .It MPOOL_DIRTY
