@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_attr_setschedpolicy.c,v 1.4 2002/01/19 23:49:32 fgsch Exp $	*/
+/*	$OpenBSD: uthread_attr_setschedpolicy.c,v 1.5 2004/04/10 06:41:42 brad Exp $	*/
 /*
  * Copyright (c) 1998 Daniel Eischen <eischen@vigrid.com>.
  * All rights reserved.
@@ -49,6 +49,6 @@ pthread_attr_setschedpolicy(pthread_attr_t *attr, int policy)
 	} else
 		(*attr)->sched_policy = policy;
 
-	return (ret);
+	return(ret);
 }
 #endif
