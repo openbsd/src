@@ -1,5 +1,5 @@
-/*	$OpenBSD: exchange.c,v 1.7 1998/12/21 01:02:23 niklas Exp $	*/
-/*	$EOM: exchange.c,v 1.60 1998/12/21 00:34:12 niklas Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.8 1999/02/26 03:37:56 niklas Exp $	*/
+/*	$EOM: exchange.c,v 1.64 1999/02/25 11:38:53 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -40,6 +40,8 @@
 #include <arpa/inet.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "sysdep.h"
 
 #include "cert.h"
 #include "conf.h"
@@ -428,8 +430,8 @@ exchange_lookup_from_icookie (u_int8_t *cookie)
   return 0;
 }
 
-/* Lookup a phase 1 exchange out of the name.  */
-static struct exchange *
+/* Lookup an exchange out of the name and phase.  */
+struct exchange *
 exchange_lookup_by_name (char *name, int phase)
 {
   int i;
@@ -558,9 +560,7 @@ exchange_create (int phase, int initiator, int doi, int type)
     }
 
   gettimeofday(&expiration, 0);
-  delta = conf_get_num ("General", "Exchange-max-time");
-  if (!delta)
-    delta = EXCHANGE_MAX_TIME;
+  delta = conf_get_num ("General", "Exchange-max-time", EXCHANGE_MAX_TIME);
   expiration.tv_sec += delta;
   exchange->death = timer_add_event ("exchange_free_aux",
 				     (void (*) (void *))exchange_free_aux,
@@ -623,7 +623,7 @@ exchange_establish_p1 (struct transport *t, u_int8_t type, u_int32_t doi,
 #endif
 	}
 
-      /* Figure out the DOI.  */
+      /* Figure out the DOI.  XXX Factor out?  */
       str = conf_get_str (tag, "DOI");
       if (!str)
 	{
@@ -1223,7 +1223,7 @@ exchange_establish (char *name, void (*finalize) (void *), void *arg)
   char *peer;
   struct sa *isakmp_sa;
 
-  phase = conf_get_num (name, "Phase");
+  phase = conf_get_num (name, "Phase", 0);
   switch (phase)
     {
     case 1:
