@@ -1,4 +1,4 @@
-#	$OpenBSD: FILIPPA,v 1.15 1997/02/21 11:21:57 niklas Exp $
+#	$OpenBSD: FILIPPA,v 1.16 1997/02/22 00:29:56 niklas Exp $
 
 #
 # Niklas' AMIGA with ISA support
@@ -261,6 +261,7 @@ pseudo-device	loop			# network loopback
 pseudo-device	vnd	4
 pseudo-device	bpfilter	2	# berkeley packet filters
 pseudo-device	tun 2
+pseudo-device	enc 4
 
 config	bsd root on sd1a swap on sd1b dumps on sd1b
 #config	bsd swap on generic
