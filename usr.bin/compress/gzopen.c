@@ -1,4 +1,4 @@
-/*	$OpenBSD: gzopen.c,v 1.21 2004/02/23 21:07:30 deraadt Exp $	*/
+/*	$OpenBSD: gzopen.c,v 1.22 2004/09/06 21:24:11 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -60,7 +60,7 @@
 
 #ifndef SMALL
 const char gz_rcsid[] =
-    "$OpenBSD: gzopen.c,v 1.21 2004/02/23 21:07:30 deraadt Exp $";
+    "$OpenBSD: gzopen.c,v 1.22 2004/09/06 21:24:11 mickey Exp $";
 #endif
 
 #include <sys/param.h>
@@ -103,7 +103,7 @@ static const u_char gz_magic[2] = {0x1f, 0x8b}; /* gzip magic header */
 static int put_int32(gz_stream *, u_int32_t);
 static u_int32_t get_int32(gz_stream *);
 static int get_header(gz_stream *, char *, int);
-static int put_header(gz_stream *, char *, u_int32_t);
+static int put_header(gz_stream *, char *, u_int32_t, int);
 static int get_byte(gz_stream *);
 
 void *
@@ -162,7 +162,7 @@ gz_open(int fd, const char *mode, char *name, int bits,
 
 	if (s->z_mode == 'w') {
 		/* write the .gz header */
-		if (put_header(s, name, mtime) != 0) {
+		if (put_header(s, name, mtime, bits) != 0) {
 			gz_close(s, NULL);
 			s = NULL;
 		}
@@ -386,7 +386,7 @@ get_header(gz_stream *s, char *name, int gotmagic)
 }
 
 static int
-put_header(gz_stream *s, char *name, u_int32_t mtime)
+put_header(gz_stream *s, char *name, u_int32_t mtime, int bits)
 {
 	struct iovec iov[2];
 	u_char buf[10];
@@ -399,7 +399,7 @@ put_header(gz_stream *s, char *name, u_int32_t mtime)
 	buf[5] = (mtime >> 8) & 0xff;
 	buf[6] = (mtime >> 16) & 0xff;
 	buf[7] = (mtime >> 24) & 0xff;
-	buf[8] = 0 /* xflags */;
+	buf[8] = bits == 1 ? 4 : bits == 9 ? 2 : 0;	/* xflags */
 	buf[9] = OS_CODE;
 	iov[0].iov_base = buf;
 	iov[0].iov_len = sizeof(buf);
