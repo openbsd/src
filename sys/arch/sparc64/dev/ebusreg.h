@@ -1,4 +1,4 @@
-/*	$OpenBSD: ebusreg.h,v 1.2 2001/08/20 20:23:52 jason Exp $	*/
+/*	$OpenBSD: ebusreg.h,v 1.3 2001/10/01 05:48:11 jason Exp $	*/
 /*	$NetBSD: ebusreg.h,v 1.1 1999/06/04 13:29:13 mrg Exp $	*/
 
 /*
@@ -92,5 +92,38 @@ struct ebus_interrupt_map_mask {
 	u_int32_t	lo;		/* low phys addr */
 	u_int32_t	intr;		/* interrupt */
 };
+
+/* EBUS dma registers */
+#define	EBDMA_DCSR		0x0		/* control/status */
+#define	EBDMA_DADDR		0x4		/* DMA address */
+#define	EBDMA_DCNT		0x8		/* DMA count */
+
+/* EBUS DMA control/status (EBDMA_DCSR) */
+#define	EBDCSR_INT		0x00000001	/* interrupt pending */
+#define	EBDCSR_ERR		0x00000002	/* error pending */
+#define	EBDCSR_DRAIN		0x00000004	/* drain */
+#define	EBDCSR_INTEN		0x00000010	/* interrupt enable */
+#define	EBDCSR_RESET		0x00000080	/* reset */
+#define	EBDCSR_WRITE		0x00000100	/* write */
+#define	EBDCSR_DMAEN		0x00000200	/* dma enable */
+#define	EBDCSR_CYC		0x00000400	/* cyc pending */
+#define	EBDCSR_DIAGRD		0x00000800	/* diagnostic read done */
+#define	EBDCSR_DIAGWR		0x00001000	/* diagnostic write done */
+#define	EBDCSR_CNTEN		0x00002000	/* count enable */
+#define	EBDCSR_TC		0x00004000	/* tc */
+#define	EBDCSR_CSRDRNDIS	0x00010000	/* disable csr drain */
+#define	EBDCSR_BURSTMASK	0x000c0000	/* burst size mask */
+#define	EBDCSR_BURST_1		0x00080000	/* burst 1 */
+#define	EBDCSR_BURST_4		0x00000000	/* burst 4 */
+#define	EBDCSR_BURST_8		0x00040000	/* burst 8 */
+#define	EBDCSR_BURST_16		0x000c0000	/* burst 16 */
+#define	EBDCSR_DIAGEN		0x00100000	/* enable diagnostics */
+#define	EBDCSR_ERRDIS		0x00400000	/* disable error pending */
+#define	EBDCSR_TCIDIS		0x00800000	/* disable TCI */
+#define	EBDCSR_NEXTEN		0x01000000	/* enable next */
+#define	EBDCSR_DMAON		0x02000000	/* dma on */
+#define	EBDCSR_A_LOADED		0x04000000	/* address loaded */
+#define	EBDCSR_NA_LOADED	0x08000000	/* next address loaded */
+#define	EBDCSR_DEVMASK		0xf0000000	/* device id mask */
 
 #endif /* _SPARC64_DEV_EBUSREG_H_ */
