@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.23 1997/07/25 01:34:00 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.24 1997/07/25 01:46:11 mickey Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 #undef DEBUG
@@ -438,7 +438,7 @@ trap(frame)
 			    map, va, ftype, rv);
 			goto we_re_toast;
 		}
-		trapsignal(p, SIGSEGV, vftype, SEGV_MAPERR, vv);
+		trapsignal(p, SIGSEGV, vftype, SEGV_MAPERR, (caddr_t)rcr2());
 		break;
 	}
 
