@@ -1,11 +1,7 @@
-#	$OpenBSD: bsd.nls.mk,v 1.5 1997/04/27 21:38:31 millert Exp $
+#	$OpenBSD: bsd.nls.mk,v 1.6 2002/11/21 03:08:44 marc Exp $
 #	$NetBSD: bsd.nls.mk,v 1.2 1995/04/27 18:05:38 jtc Exp $
 
 .if !target(.MAIN)
-.if exists(${.CURDIR}/../Makefile.inc)
-.include "${.CURDIR}/../Makefile.inc"
-.endif
-
 .MAIN: all
 .endif
 
