@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpu_isa.c,v 1.2 2003/01/29 20:32:23 mickey Exp $	*/
+/*	$OpenBSD: mpu_isa.c,v 1.3 2003/01/29 20:35:13 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002 Sergey Smitienko. All rights reserved.
@@ -94,7 +94,7 @@ mpu_test (iot, iobase)
 		goto done;
 
 	for (i = 0; i < MPU_MAXWAIT; i++) {
-		if (!MPU_GETSTATUS(iot, ioh) & MPU_OUTPUT_BUSY)) {
+		if (!(MPU_GETSTATUS(iot, ioh) & MPU_OUTPUT_BUSY)) {
 			rc = 1;
 			break;
 		}
