@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.56 2003/06/28 01:52:17 tedu Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.57 2003/12/21 15:30:21 miod Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -601,19 +601,6 @@ vsnprintf(char *buf, size_t size, const char *fmt, va_list ap)
  *
  *	reg=3<BITTWO,BITONE>
  *
- * The format %: passes an additional format string and argument list
- * recursively.  Its usage is:
- *
- * fn(char *fmt, ...)
- * {
- *	va_list ap;
- *	va_start(ap, fmt);
- *	printf("prefix: %: suffix\n", fmt, ap);
- *	va_end(ap);
- * }
- *
- * this is the actual printf innards
- *
  * This code is large and complicated...
  */
 
@@ -714,16 +701,6 @@ kprintf(const char *fmt0, int oflags, void *vp, char *sbuf, va_list ap)
 
 rflag:		ch = *fmt++;
 reswitch:	switch (ch) {
-		/* XXX: non-standard '%:' format */
-#ifndef __powerpc__
-		case ':':
-			if (!(oflags & TOBUFONLY)) {
-				cp = va_arg(ap, char *);
-				kprintf(cp, oflags, vp,
-				    NULL, va_arg(ap, va_list));
-			}
-			continue;	/* no output */
-#endif
 		/* XXX: non-standard '%b' format */
 		case 'b': {
 			char *b, *z;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pk_subr.c,v 1.9 2003/12/10 07:22:43 itojun Exp $	*/
+/*	$OpenBSD: pk_subr.c,v 1.10 2003/12/21 15:30:21 miod Exp $	*/
 /*	$NetBSD: pk_subr.c,v 1.12 1996/03/30 21:54:33 christos Exp $	*/
 
 /*
@@ -1153,8 +1153,9 @@ pk_message(int lcn, struct x25config * xcp, char * fmt,...)
 		printf("X.25: ");
 
 	va_start(ap, fmt);
-	printf("%:\n", fmt, ap);
+	vprintf(fmt, ap);
 	va_end(ap);
+	printf("\n");
 }
 
 int

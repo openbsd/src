@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.9,v 1.10 2003/06/13 01:14:54 tedu Exp $
+.\"	$OpenBSD: printf.9,v 1.11 2003/12/21 15:30:20 miod Exp $
 .\"     $NetBSD: kprintf.9,v 1.6 1999/03/16 00:40:47 garbled Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -173,13 +173,6 @@ Description strings are delimited by the next bit position value character
 encountered
 .Pq "distinguishable by its value being \(<= 32" ,
 or the end of the decoding directive string itself.
-.It Li %:
-Inline format continuation.
-This format specifier allows for recursive formatted output.
-Its argument is the new formatting string to obey and the argument which
-follows it is a
-.Va va_list
-argument vector from which to obtain the data to be formatted.
 .It Li %r
 Displays an integer using the current
 .Tn DDB
@@ -215,23 +208,6 @@ printf("enablereg=%b\en", 0xe860,
        "\ex0bLORES\ex0aFPA\ex09DIAG\ex07CACHE"
        "\ex06IOCACHE\ex05LOOPBACK\ex04DBGCACHE")
 \(rA "enablereg=e860<NOTBOOT,FPP,SDVMA,VIDEO,CACHE,IOCACHE>"
-.Ed
-.Pp
-Use of the
-.Li %:
-format specifier for recursive formatting.
-.Bd -literal -offset indent
-void
-bail(char *fmt, ...)
-{
-        va_list ap;
-        va_start (ap, fmt);
-        printf("bailing out: %:\en", fmt, ap);
-        va_end(ap);
-}
-
-bail("descriptor %d is invalid.", 5)
-\(rA "bailing out: descriptor 5 is invalid"
 .Ed
 .Sh SEE ALSO
 .Xr revoke 2 ,

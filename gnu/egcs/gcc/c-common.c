@@ -1466,8 +1466,6 @@ static format_char_info kprintf_char_table[] = {
   { "p",	1,	T_V,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	"-w"		},
 /* Kernel bitmap formatting */
   { "b",	1,	T_C,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	"" 		},
-/* Kernel recursive format */
-  { ":",	1,	T_V,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	"" 		},
 /* Kernel debugger auto-radix printing */
   { "nrz",	0,	T_I,	T_I,	T_I,	T_L,	T_LL,	T_LL,	NULL,	"-wp0# +" 	},
   { NULL }
