@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: upgrade.sh,v 1.45 2002/11/07 01:28:52 krw Exp $
+#	$OpenBSD: upgrade.sh,v 1.46 2002/11/10 01:26:50 krw Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -119,13 +119,12 @@ The fstab is configured as follows:
 
 $(</tmp/fstab)
 
-You can edit the fstab now, before it is used, but the edited fstab will
-only be used during the upgrade. It will not be copied back to disk.
+For the ${MODE}, filesystems in the fstab will be automatically mounted if the
+'noauto' option is absent, and /sbin/mount_<fstype> is found, and the fstype is
+not nfs. Non-ffs filesystems will be mounted read-only.
 
-Filesystems in the fstab will be mounted only if the 'noauto' option is
-absent, /sbin/mount_<fstype> is found, and the fstype is not nfs. Only
-filesystems with a fstype of ffs will be mounted read-write.
-
+You can edit the fstab now, before it is used, but the edited fstab will only
+be used during the upgrade. It will not be copied back to disk.
 __EOT
 ask "Edit the fstab with ${EDITOR}?" n
 case $resp in
