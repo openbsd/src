@@ -1,4 +1,5 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.3 1995/10/07 06:26:31 mycroft Exp $	*/
+/*	$OpenBSD: vfs_syscalls_43.c,v 1.2 1996/04/18 21:21:36 niklas Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.4 1996/03/14 19:31:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -62,10 +63,12 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
+static void cvtstat __P((struct stat *, struct ostat *));
+
 /*
  * Convert from an old to a new stat structure.
  */
-static int
+static void
 cvtstat(st, ost)
 	struct stat *st;
 	struct ostat *ost;
@@ -112,7 +115,7 @@ compat_43_sys_stat(p, v, retval)
 
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
 	    SCARG(uap, path), p);
-	if (error = namei(&nd))
+	if ((error = namei(&nd)) != 0)
 		return (error);
 	error = vn_stat(nd.ni_vp, &sb, p);
 	vput(nd.ni_vp);
@@ -146,7 +149,7 @@ compat_43_sys_lstat(p, v, retval)
 
 	NDINIT(&nd, LOOKUP, NOFOLLOW | LOCKLEAF | LOCKPARENT, UIO_USERSPACE,
 	    SCARG(uap, path), p);
-	if (error = namei(&nd))
+	if ((error = namei(&nd)) != 0)
 		return (error);
 	/*
 	 * For symbolic links, always return the attributes of its
@@ -190,6 +193,7 @@ compat_43_sys_lstat(p, v, retval)
  * Return status information about a file descriptor.
  */
 /* ARGSUSED */
+int
 compat_43_sys_fstat(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -375,7 +379,7 @@ compat_43_sys_getdirentries(p, v, retval)
 	int error, eofflag, readcnt;
 	long loff;
 
-	if (error = getvnode(p->p_fd, SCARG(uap, fd), &fp))
+	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	if ((fp->f_flag & FREAD) == 0)
 		return (EBADF);
@@ -450,7 +454,7 @@ unionread:
 
 #ifdef UNION
 {
-	extern int (**union_vnodeop_p)();
+	extern int (**union_vnodeop_p) __P((void *));
 	extern struct vnode *union_dircache __P((struct vnode *));
 
 	if ((SCARG(uap, count) == auio.uio_resid) &&

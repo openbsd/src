@@ -1,4 +1,5 @@
-/*	$NetBSD: kern_sig_43.c,v 1.6 1996/01/04 22:23:01 jtc Exp $	*/
+/*	$OpenBSD: kern_sig_43.c,v 1.3 1996/04/18 21:21:34 niklas Exp $	*/
+/*	$NetBSD: kern_sig_43.c,v 1.7 1996/03/14 19:31:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -126,8 +127,9 @@ compat_43_sys_sigstack(p, v, retval)
 		return (error);
 	if (SCARG(uap, nss) == 0)
 		return (0);
-	if (error = copyin((caddr_t)SCARG(uap, nss), (caddr_t)&ss,
-	    sizeof (ss)))
+	error = copyin((caddr_t)SCARG(uap, nss), (caddr_t)&ss,
+	    sizeof (ss));
+	if (error)
 		return (error);
 	psp->ps_flags |= SAS_ALTSTACK;
 	psp->ps_sigstk.ss_sp = ss.ss_sp;
@@ -176,13 +178,15 @@ compat_43_sys_sigvec(p, v, retval)
 		if (p->p_flag & P_NOCLDSTOP)
 			sv->sv_flags |= SA_NOCLDSTOP;
 		sv->sv_mask &= ~bit;
-		if (error = copyout((caddr_t)sv, (caddr_t)SCARG(uap, osv),
-		    sizeof (vec)))
+		error = copyout((caddr_t)sv, (caddr_t)SCARG(uap, osv),
+		    sizeof (vec));
+		if (error)
 			return (error);
 	}
 	if (SCARG(uap, nsv)) {
-		if (error = copyin((caddr_t)SCARG(uap, nsv), (caddr_t)sv,
-		    sizeof (vec)))
+		error = copyin((caddr_t)SCARG(uap, nsv), (caddr_t)sv,
+		    sizeof (vec));
+		if (error)
 			return (error);
 		sv->sv_flags ^= SA_RESTART;	/* opposite of SV_INTERRUPT */
 		setsigvec(p, signum, (struct sigaction *)sv);

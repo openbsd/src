@@ -1,4 +1,5 @@
-/*	$NetBSD: sunos_misc.c,v 1.60 1996/01/05 16:53:14 pk Exp $	*/
+/*	$OpenBSD: sunos_misc.c,v 1.5 1996/04/18 21:21:45 niklas Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.64 1996/03/14 19:33:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,7 +58,7 @@
 #include <sys/systm.h>
 #include <sys/namei.h>
 #include <sys/proc.h>
-#include <sys/dir.h>
+#include <sys/dirent.h>
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/filedesc.h>
@@ -81,6 +82,9 @@
 #include <sys/utsname.h>
 #include <sys/unistd.h>
 #include <sys/syscallargs.h>
+#include <sys/conf.h>
+#include <sys/socketvar.h>
+#include <sys/cpu.h>
 
 #include <compat/sunos/sunos.h>
 #include <compat/sunos/sunos_syscallargs.h>
@@ -92,11 +96,14 @@
 #include <miscfs/specfs/specdev.h>
 
 #include <nfs/rpcv2.h>
-#include <nfs/nfsv2.h>
+#include <nfs/nfsproto.h>
 #include <nfs/nfs.h>
 
 #include <vm/vm.h>
 
+static int sunstatfs __P((struct statfs *, caddr_t));
+static void sunos_pollscan __P((struct proc *, struct sunos_pollfd *, 
+				int, register_t *));
 int
 sunos_sys_wait4(p, v, retval)
 	struct proc *p;
@@ -218,6 +225,30 @@ sunos_sys_unmount(p, v, retval)
 	return (sys_unmount(p, &ouap, retval));
 }
 
+/*
+ * Conversion table for SunOS NFS mount flags.
+ */
+static struct {
+	int	sun_flg;
+	int	bsd_flg;
+} sunnfs_flgtab[] = {
+	{ SUNNFS_SOFT,		NFSMNT_SOFT },
+	{ SUNNFS_WSIZE,		NFSMNT_WSIZE },
+	{ SUNNFS_RSIZE,		NFSMNT_RSIZE },
+	{ SUNNFS_TIMEO,		NFSMNT_TIMEO },
+	{ SUNNFS_RETRANS,	NFSMNT_RETRANS },
+	{ SUNNFS_HOSTNAME,	0 },			/* Ignored */
+	{ SUNNFS_INT,		NFSMNT_INT },
+	{ SUNNFS_NOAC,		0 },			/* Ignored */
+	{ SUNNFS_ACREGMIN,	0 },			/* Ignored */
+	{ SUNNFS_ACREGMAX,	0 },			/* Ignored */
+	{ SUNNFS_ACDIRMIN,	0 },			/* Ignored */
+	{ SUNNFS_ACDIRMAX,	0 },			/* Ignored */
+	{ SUNNFS_SECURE,	0 },			/* Ignored */
+	{ SUNNFS_NOCTO,		0 },			/* Ignored */
+	{ SUNNFS_POSIX,		0 }			/* Ignored */
+};
+
 int
 sunos_sys_mount(p, v, retval)
 	struct proc *p;
@@ -242,42 +273,60 @@ sunos_sys_mount(p, v, retval)
 		nflags |= MNT_UPDATE;
 	SCARG(uap, flags) = nflags;
 
-	if (error = copyinstr((caddr_t)SCARG(uap, type), fsname,
-	    sizeof fsname, (size_t *)0))
+	error = copyinstr((caddr_t)SCARG(uap, type), fsname,
+	    sizeof fsname, (size_t *)0);
+	if (error)
 		return (error);
 
 	if (strncmp(fsname, "4.2", sizeof fsname) == 0) {
 		SCARG(uap, type) = STACKGAPBASE;
-		if (error = copyout("ffs", SCARG(uap, type), sizeof("ffs")))
+		error = copyout("ffs", SCARG(uap, type), sizeof("ffs"));
+		if (error)
 			return (error);
 	} else if (strncmp(fsname, "nfs", sizeof fsname) == 0) {
 		struct sunos_nfs_args sna;
 		struct sockaddr_in sain;
 		struct nfs_args na;
 		struct sockaddr sa;
+		int n;
 
-		if (error = copyin(SCARG(uap, data), &sna, sizeof sna))
+		error = copyin(SCARG(uap, data), &sna, sizeof sna);
+		if (error)
 			return (error);
-		if (error = copyin(sna.addr, &sain, sizeof sain))
+		error = copyin(sna.addr, &sain, sizeof sain);
+		if (error)
 			return (error);
 		bcopy(&sain, &sa, sizeof sa);
 		sa.sa_len = sizeof(sain);
 		SCARG(uap, data) = STACKGAPBASE;
-		na.addr = (struct sockaddr *)((int)SCARG(uap, data) + sizeof na);
+		na.version = NFS_ARGSVERSION;
+		na.addr = (struct sockaddr *)
+			  ((int)SCARG(uap, data) + sizeof na);
 		na.addrlen = sizeof(struct sockaddr);
 		na.sotype = SOCK_DGRAM;
 		na.proto = IPPROTO_UDP;
-		na.fh = (nfsv2fh_t *)sna.fh;
-		na.flags = sna.flags;
+		na.fh = (void *)sna.fh;
+		na.fhsize = NFSX_V2FH;
+		na.flags = 0;
+		n = sizeof(sunnfs_flgtab) / sizeof(sunnfs_flgtab[0]);
+		while (--n >= 0)
+			if (sna.flags & sunnfs_flgtab[n].sun_flg)
+				na.flags |= sunnfs_flgtab[n].bsd_flg;
 		na.wsize = sna.wsize;
 		na.rsize = sna.rsize;
+		if (na.flags & NFSMNT_RSIZE) {
+			na.flags |= NFSMNT_READDIRSIZE;
+			na.readdirsize = na.rsize;
+		}
 		na.timeo = sna.timeo;
 		na.retrans = sna.retrans;
 		na.hostname = sna.hostname;
 
-		if (error = copyout(&sa, na.addr, sizeof sa))
+		error = copyout(&sa, na.addr, sizeof sa);
+		if (error)
 			return (error);
-		if (error = copyout(&na, SCARG(uap, data), sizeof na))
+		error = copyout(&na, SCARG(uap, data), sizeof na);
+		if (error)
 			return (error);
 	}
 	return (sys_mount(p, (struct sys_mount_args *)uap, retval));
@@ -519,7 +568,7 @@ sunos_sys_setsockopt(p, v, retval)
 	struct mbuf *m = NULL;
 	int error;
 
-	if (error = getsock(p->p_fd, SCARG(uap, s), &fp))
+	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)) != 0)
 		return (error);
 #define	SO_DONTLINGER (~SO_LINGER)
 	if (SCARG(uap, name) == SO_DONTLINGER) {
@@ -556,8 +605,9 @@ sunos_sys_setsockopt(p, v, retval)
 		m = m_get(M_WAIT, MT_SOOPTS);
 		if (m == NULL)
 			return (ENOBUFS);
-		if (error = copyin(SCARG(uap, val), mtod(m, caddr_t),
-		    (u_int)SCARG(uap, valsize))) {
+		error = copyin(SCARG(uap, val), mtod(m, caddr_t),
+		    (u_int)SCARG(uap, valsize));
+		if (error) {
 			(void) m_free(m);
 			return (error);
 		}
@@ -699,13 +749,13 @@ sunos_sys_nfssvc(p, v, retval)
 	void *v;
 	register_t *retval;
 {
+#if 0
 	struct sunos_sys_nfssvc_args *uap = v;
 	struct emul *e = p->p_emul;
 	struct sys_nfssvc_args outuap;
 	struct sockaddr sa;
 	int error;
 
-#if 0
 	bzero(&outuap, sizeof outuap);
 	SCARG(&outuap, fd) = SCARG(uap, fd);
 	SCARG(&outuap, mskval) = STACKGAPBASE;
@@ -743,7 +793,7 @@ sunos_sys_ustat(p, v, retval)
 	 * How do we translate dev -> fstat? (and then to sunos_ustat)
 	 */
 
-	if (error = copyout(&us, SCARG(uap, buf), sizeof us))
+	if ((error = copyout(&us, SCARG(uap, buf), sizeof us)) != 0)
 		return (error);
 	return 0;
 }
@@ -754,7 +804,6 @@ sunos_sys_quotactl(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct sunos_sys_quotactl_args *uap = v;
 
 	return EINVAL;
 }
@@ -765,7 +814,6 @@ sunos_sys_vhangup(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct sunos_vhangup_args *uap = v;
 	struct session *sp = p->p_session;
 
 	if (sp->s_ttyvp == 0)
@@ -784,7 +832,7 @@ sunos_sys_vhangup(p, v, retval)
 	return 0;
 }
 
-static
+static int
 sunstatfs(sp, buf)
 	struct statfs *sp;
 	caddr_t buf;
@@ -819,12 +867,12 @@ sunos_sys_statfs(p, v, retval)
 	SUNOS_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
-	if (error = namei(&nd))
+	if ((error = namei(&nd)) != 0)
 		return (error);
 	mp = nd.ni_vp->v_mount;
 	sp = &mp->mnt_stat;
 	vrele(nd.ni_vp);
-	if (error = VFS_STATFS(mp, sp, p))
+	if ((error = VFS_STATFS(mp, sp, p)) != 0)
 		return (error);
 	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
 	return sunstatfs(sp, (caddr_t)SCARG(uap, buf));
@@ -842,11 +890,11 @@ sunos_sys_fstatfs(p, v, retval)
 	register struct statfs *sp;
 	int error;
 
-	if (error = getvnode(p->p_fd, SCARG(uap, fd), &fp))
+	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	sp = &mp->mnt_stat;
-	if (error = VFS_STATFS(mp, sp, p))
+	if ((error = VFS_STATFS(mp, sp, p)) != 0)
 		return (error);
 	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
 	return sunstatfs(sp, (caddr_t)SCARG(uap, buf));
@@ -858,8 +906,6 @@ sunos_sys_exportfs(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct sunos_sys_exportfs_args *uap = v;
-
 	/*
 	 * XXX: should perhaps translate into a mount(2)
 	 * with MOUNT_EXPORT?
@@ -990,6 +1036,7 @@ static int sreq2breq[] = {
 };
 static int nreqs = sizeof(sreq2breq) / sizeof(sreq2breq[0]);
 
+int
 sunos_sys_ptrace(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -1075,13 +1122,12 @@ sunos_sys_poll(p, v, retval)
 	int msec = SCARG(uap, timeout);
 	struct timeval atv;
 	int timo;
-	u_int ni;
 	int ncoll;
 	extern int nselcoll, selwait;
 
 	pl = (struct sunos_pollfd *) malloc(sz, M_TEMP, M_WAITOK);
 
-	if (error = copyin(SCARG(uap, fds), pl, sz))
+	if ((error = copyin(SCARG(uap, fds), pl, sz)) != 0)
 		goto bad;
 
 	for (i = 0; i < SCARG(uap, nfds); i++)
@@ -1136,7 +1182,7 @@ done:
 	if (error == EWOULDBLOCK)
 		error = 0;
 
-	if (error2 = copyout(pl, SCARG(uap, fds), sz))
+	if ((error2 = copyout(pl, SCARG(uap, fds), sz)) != 0)
 		error = error2;
 
 bad:
@@ -1173,7 +1219,7 @@ sunos_sys_reboot(p, v, retval)
 	struct sunos_howto_conv *convp;
 	int error, bsd_howto, sun_howto;
 
-	if (error = suser(p->p_ucred, &p->p_acflag))
+	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
 
 	/*
@@ -1206,7 +1252,8 @@ sunos_sys_reboot(p, v, retval)
 	}
 #endif	/* sun3 */
 
-	return (boot(bsd_howto));
+	boot(bsd_howto);
+	return 0;
 }
 
 /*
@@ -1247,13 +1294,15 @@ sunos_sys_sigvec(p, v, retval)
 		if ((ps->ps_sigreset & bit) != 0)
 			sv->sv_flags |= SA_RESETHAND;
 		sv->sv_mask &= ~bit;
-		if (error = copyout((caddr_t)sv, (caddr_t)SCARG(uap, osv),
-		    sizeof (vec)))
+		error = copyout((caddr_t)sv, (caddr_t)SCARG(uap, osv),
+		    sizeof (vec));
+		if (error)
 			return (error);
 	}
 	if (SCARG(uap, nsv)) {
-		if (error = copyin((caddr_t)SCARG(uap, nsv), (caddr_t)sv,
-		    sizeof (vec)))
+		error = copyin((caddr_t)SCARG(uap, nsv), (caddr_t)sv,
+		    sizeof (vec));
+		if (error)
 			return (error);
 		/*
 		 * SunOS uses the mask 0x0004 as SV_RESETHAND

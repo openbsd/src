@@ -1,4 +1,5 @@
-/*	$NetBSD: sunos.h,v 1.5 1995/10/09 16:54:48 mycroft Exp $	*/
+/*	$OpenBSD: sunos.h,v 1.2 1996/04/18 21:21:42 niklas Exp $	*/
+/*	$NetBSD: sunos.h,v 1.6 1996/02/18 14:46:28 pk Exp $	*/
 
 #define	SUNM_RDONLY	0x01	/* mount fs read-only */
 #define	SUNM_NOSUID	0x02	/* mount fs with setuid disallowed */
@@ -25,6 +26,22 @@ struct sunos_nfs_args {
 	char	*netname;		/* server's netname */
 	struct	pathcnf *pathconf;	/* static pathconf kludge */
 };
+/* SunOS nfs flag values: */
+#define SUNNFS_SOFT	0x1
+#define SUNNFS_WSIZE	0x2
+#define SUNNFS_RSIZE	0x4
+#define SUNNFS_TIMEO	0x8
+#define SUNNFS_RETRANS	0x10
+#define SUNNFS_HOSTNAME	0x20
+#define SUNNFS_INT	0x40
+#define SUNNFS_NOAC	0x80
+#define SUNNFS_ACREGMIN	0x100
+#define SUNNFS_ACREGMAX	0x200
+#define SUNNFS_ACDIRMIN	0x400
+#define SUNNFS_ACDIRMAX	0x800
+#define SUNNFS_SECURE	0x1000
+#define SUNNFS_NOCTO	0x2000
+#define SUNNFS_POSIX	0x4000
 
 
 struct sunos_ustat {

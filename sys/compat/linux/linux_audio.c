@@ -1,3 +1,5 @@
+/*	$OpenBSD: linux_audio.c,v 1.2 1996/04/18 21:21:38 niklas Exp $	*/
+
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>

@@ -1,5 +1,5 @@
-/*	$OpenBSD: tty_43.c,v 1.1 1996/02/26 23:26:53 niklas Exp $	*/
-/*	$NetBSD: tty_43.c,v 1.2 1996/02/10 00:12:44 christos Exp $	*/
+/*	$OpenBSD: tty_43.c,v 1.2 1996/04/18 21:21:34 niklas Exp $	*/
+/*	$NetBSD: tty_43.c,v 1.3 1996/03/14 19:31:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -85,7 +85,12 @@ static int compatspcodes[] = {
 #define	CLR(t, f)	(t) &= ~(f)
 #define	ISSET(t, f)	((t) & (f))
 
+int ttcompatgetflags __P((struct tty *));
+void ttcompatsetflags __P((struct tty *, struct termios *));
+void ttcompatsetlflags __P((struct tty *, struct termios *));
+
 /*ARGSUSED*/
+int
 ttcompat(tp, com, data, flag, p)
 	register struct tty *tp;
 	u_long com;
@@ -315,6 +320,7 @@ ttcompatgetflags(tp)
 	return (flags);
 }
 
+void
 ttcompatsetflags(tp, t)
 	register struct tty *tp;
 	register struct termios *t;
@@ -402,6 +408,7 @@ ttcompatsetflags(tp, t)
 	t->c_cflag = cflag;
 }
 
+void
 ttcompatsetlflags(tp, t)
 	register struct tty *tp;
 	register struct termios *t;

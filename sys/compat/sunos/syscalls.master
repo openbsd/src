@@ -1,4 +1,5 @@
-	$NetBSD: syscalls.master,v 1.32 1995/10/07 06:27:35 mycroft Exp $
+	$OpenBSD: syscalls.master,v 1.2 1996/04/18 21:21:48 niklas Exp $
+;	$NetBSD: syscalls.master,v 1.33 1996/02/28 16:05:43 pk Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -146,7 +147,7 @@
 89	NOARGS		{ int compat_43_sys_getdtablesize(void); }
 90	NOARGS		{ int sys_dup2(u_int from, u_int to); }
 91	UNIMPL		getdopt
-92	NOARGS		{ int sys_fcntl(int fd, int cmd, void *arg); }
+92	STD		{ int sunos_sys_fcntl(int fd, int cmd, void *arg); }
 93	NOARGS		{ int sys_select(u_int nd, fd_set *in, fd_set *ou, \
 			    fd_set *ex, struct timeval *tv); }
 94	UNIMPL		setdopt

@@ -1,4 +1,5 @@
-/*	$NetBSD: ultrix_fs.c,v 1.2 1995/12/26 10:06:14 jonathan Exp $	*/
+/*	$OpenBSD: ultrix_fs.c,v 1.2 1996/04/18 21:21:49 niklas Exp $	*/
+/*	$NetBSD: ultrix_fs.c,v 1.3 1996/02/19 15:41:39 pk Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -37,6 +38,9 @@
 #include <net/if.h>
 #include <netinet/in.h>
 
+#include <nfs/rpcv2.h>
+#include <nfs/nfsproto.h>
+#include <nfs/nfs.h>
 
 #include <sys/syscallargs.h>
 #include <compat/ultrix/ultrix_syscallargs.h>
@@ -292,7 +296,7 @@ struct osockaddr_in {
  */
 struct	ultrix_nfs_args {
 	struct	osockaddr_in *addr;	/* file server address */
-	nfsv2fh_t *fh;			/* file handle to be mounted */
+	void	*fh;			/* file handle to be mounted */
 	int	flags;			/* flags */
 	int	wsize;			/* write size in bytes */
 	int	rsize;			/* read size in bytes */
@@ -415,12 +419,14 @@ ultrix_sys_mount(p, v, retval)
 		SCARG(&nuap, data) = usp;
 		usp +=  sizeof (na);
 		/* allocate space above caller's stack for server sockaddr */
+		na.version = NFS_ARGSVERSION;
 		na.addr = (struct sockaddr *)usp;
 		usp += sizeof(*sap);
 		na.addrlen = sap->sin_len;
 		na.sotype = SOCK_DGRAM;
 		na.proto = IPPROTO_UDP;
 		na.fh = una.fh;
+		na.fhsize = NFSX_V2FH;
 		na.flags = /*una.flags;*/ NFSMNT_NOCONN | NFSMNT_RESVPORT;
 		na.wsize = una.wsize;
 		na.rsize = una.rsize;

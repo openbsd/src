@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_net.c,v 1.4 1996/04/17 05:24:19 mickey Exp $	 */
+/*	$OpenBSD: svr4_net.c,v 1.5 1996/04/18 21:21:28 niklas Exp $	 */
 /*	$NetBSD: svr4_net.c,v 1.8 1996/03/30 22:41:02 christos Exp $	 */
 
 /*
@@ -58,6 +58,7 @@
 #include <compat/svr4/svr4_syscallargs.h>
 #include <compat/svr4/svr4_ioctl.h>
 #include <compat/svr4/svr4_stropts.h>
+#include <compat/svr4/svr4_conf.h>
 
 /*
  * Device minor numbers

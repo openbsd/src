@@ -1,4 +1,5 @@
-/*	$NetBSD: kern_resource_43.c,v 1.3 1995/10/07 06:26:28 mycroft Exp $	*/
+/*	$OpenBSD: kern_resource_43.c,v 1.2 1996/04/18 21:21:33 niklas Exp $	*/
+/*	$NetBSD: kern_resource_43.c,v 1.4 1996/03/14 19:31:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -93,8 +94,9 @@ compat_43_sys_setrlimit(p, v, retval)
 	struct rlimit lim;
 	int error;
 
-	if (error = copyin((caddr_t)SCARG(uap, rlp), (caddr_t)&olim,
-	    sizeof (struct orlimit)))
+	error = copyin((caddr_t)SCARG(uap, rlp), (caddr_t)&olim,
+	    sizeof (struct orlimit));
+	if (error)
 		return (error);
 	lim.rlim_cur = olim.rlim_cur;
 	lim.rlim_max = olim.rlim_max;
