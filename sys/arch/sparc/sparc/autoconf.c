@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.37 2001/01/29 03:59:05 jason Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.38 2001/04/30 16:42:25 art Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -62,6 +62,7 @@
 #include <sys/socket.h>
 #include <sys/malloc.h>
 #include <sys/queue.h>
+#include <sys/user.h>
 
 #include <net/if.h>
 
@@ -791,6 +792,8 @@ configure()
 	struct confargs oca;
 	register int node = 0;
 	register char *cp;
+	int s;
+	extern struct user *proc0paddr;
 
 	/* Initialize the mountroot_hook list. */
 	LIST_INIT(&mrh_list);
@@ -885,6 +888,18 @@ configure()
 	setroot();
 	swapconf();
 	cold = 0;
+
+
+	/*
+	 * Re-zero proc0's user area, to nullify the effect of the
+	 * stack running into it during auto-configuration.
+	 * XXX - should fix stack usage.
+	 */
+	s = splhigh();
+	bzero(proc0paddr, sizeof(struct user));
+
+	pmap_redzone();
+	splx(s);
 }
 
 /*

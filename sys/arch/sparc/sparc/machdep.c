@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.52 2000/11/07 11:25:24 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.53 2001/04/30 16:42:26 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -378,16 +378,6 @@ cpu_startup()
 	 * Configure the system.  The cpu code will turn on the cache.
 	 */
 	configure();
-
-	/*
-	 * Re-zero proc0's user area, to nullify the effect of the
-	 * stack running into it during auto-configuration.
-	 * XXX - should fix stack usage.
-	 * XXX - there's a race here, as interrupts are enabled
-	 */
-	bzero(proc0paddr, sizeof(struct user));
-
-	pmap_redzone();
 }
 
 /*
