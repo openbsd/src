@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.16 2001/10/31 04:24:44 nate Exp $	*/
+/*	$OpenBSD: usb.c,v 1.17 2002/05/02 20:08:04 nate Exp $	*/
 /*	$NetBSD: usb.c,v 1.53 2001/01/23 17:04:30 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.c,v 1.20 1999/11/17 22:33:46 n_hibma Exp $	*/
 
@@ -413,11 +413,11 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case USB_REQUEST:
 	{
 		struct usb_ctl_request *ur = (void *)data;
-		int len = UGETW(ur->request.wLength);
+		int len = UGETW(ur->ucr_request.wLength);
 		struct iovec iov;
 		struct uio uio;
 		void *ptr = 0;
-		int addr = ur->addr;
+		int addr = ur->ucr_addr;
 		usbd_status err;
 		int error = 0;
 
@@ -428,7 +428,7 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct proc *p)
 		    sc->sc_bus->devices[addr] == 0)
 			return (EINVAL);
 		if (len != 0) {
-			iov.iov_base = (caddr_t)ur->data;
+			iov.iov_base = (caddr_t)ur->ucr_data;
 			iov.iov_len = len;
 			uio.uio_iov = &iov;
 			uio.uio_iovcnt = 1;
@@ -436,7 +436,7 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct proc *p)
 			uio.uio_offset = 0;
 			uio.uio_segflg = UIO_USERSPACE;
 			uio.uio_rw =
-				ur->request.bmRequestType & UT_READ ? 
+				ur->ucr_request.bmRequestType & UT_READ ? 
 				UIO_READ : UIO_WRITE;
 			uio.uio_procp = p;
 			ptr = malloc(len, M_TEMP, M_WAITOK);
@@ -447,7 +447,8 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct proc *p)
 			}
 		}
 		err = usbd_do_request_flags(sc->sc_bus->devices[addr],
-			  &ur->request, ptr, ur->flags, &ur->actlen);
+			  &ur->ucr_request, ptr, ur->ucr_flags,
+			  &ur->ucr_actlen);
 		if (err) {
 			error = EIO;
 			goto ret;
@@ -468,7 +469,7 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case USB_DEVICEINFO:
 	{
 		struct usb_device_info *di = (void *)data;
-		int addr = di->addr;
+		int addr = di->udi_addr;
 		usbd_device_handle dev;
 
 		if (addr < 1 || addr >= USB_MAX_DEVICES)

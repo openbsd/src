@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.15 2002/04/01 21:47:07 nate Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.16 2002/05/02 20:08:04 nate Exp $ */
 /*	$NetBSD: usbdi.c,v 1.81 2001/04/17 00:05:33 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -765,7 +765,7 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 		    repeat, SIMPLEQ_FIRST(&pipe->queue)));
 
 	/* Count completed transfers. */
-	++pipe->device->bus->stats.requests
+	++pipe->device->bus->stats.uds_requests
 		[pipe->endpoint->edesc->bmAttributes & UE_XFERTYPE];
 
 	xfer->done = 1;

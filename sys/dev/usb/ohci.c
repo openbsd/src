@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.25 2002/03/14 03:16:08 millert Exp $ */
+/*	$OpenBSD: ohci.c,v 1.26 2002/05/02 20:08:04 nate Exp $ */
 /*	$NetBSD: ohci.c,v 1.104 2001/09/28 23:57:21 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -205,6 +205,7 @@ Static int		ohci_str(usb_string_descriptor_t *, int, char *);
 
 Static void		ohci_timeout(void *);
 Static void		ohci_rhsc_able(ohci_softc_t *, int);
+Static void		ohci_rhsc_enable(void *sc);
 
 Static void		ohci_close_pipe(usbd_pipe_handle, ohci_soft_ed_t *);
 Static void		ohci_abort_xfer(usbd_xfer_handle, usbd_status);
@@ -636,6 +637,15 @@ ohci_free_sitd(ohci_softc_t *sc, ohci_soft_itd_t *sitd)
 	splx(s);
 }
 
+void
+ohci_reset(ohci_softc_t *sc)
+{
+	ohci_shutdown(sc);
+	/* disable all interrupts and then switch on all desired
+           interrupts */
+	OWRITE4(sc, OHCI_INTERRUPT_DISABLE, OHCI_ALL_INTRS);
+}
+
 usbd_status
 ohci_init(ohci_softc_t *sc)
 {
@@ -860,6 +870,9 @@ ohci_init(ohci_softc_t *sc)
 	sc->sc_control = sc->sc_intre = 0;
 	sc->sc_powerhook = powerhook_establish(ohci_power, sc);
 	sc->sc_shutdownhook = shutdownhook_establish(ohci_shutdown, sc);
+#endif
+#if defined(__OpenBSD__)
+	timeout_set(&sc->sc_tmo_rhsc, ohci_rhsc_enable, sc);
 #endif
 
 	return (USBD_NORMAL_COMPLETION);
