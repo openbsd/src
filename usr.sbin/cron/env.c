@@ -16,7 +16,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: env.c,v 1.1.1.1 1995/10/18 08:47:30 deraadt Exp $";
+static char rcsid[] = "$Id: env.c,v 1.2 1996/09/25 02:06:27 bitblt Exp $";
 #endif
 
 
@@ -115,7 +115,7 @@ load_env(envstr, f)
 {
 	long	filepos;
 	int	fileline;
-	char	name[MAX_TEMPSTR], val[MAX_ENVSTR];
+	char	name[MAX_ENVSTR], val[MAX_ENVSTR];
 	int	fields;
 
 	filepos = ftell(f);
