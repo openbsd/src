@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_i386.c,v 1.11 2003/06/02 20:18:40 millert Exp $ */
+/*	$OpenBSD: kvm_i386.c,v 1.12 2004/06/15 03:52:59 deraadt Exp $ */
 /*	$NetBSD: kvm_i386.c,v 1.9 1996/03/18 22:33:38 thorpej Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_i386.c,v 1.11 2003/06/02 20:18:40 millert Exp $";
+static char *rcsid = "$OpenBSD: kvm_i386.c,v 1.12 2004/06/15 03:52:59 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -72,23 +72,22 @@ struct vmstate {
 };
 
 void
-_kvm_freevtop(kd)
-	kvm_t *kd;
+_kvm_freevtop(kvm_t *kd)
 {
-	if (kd->vmst != 0) {
-		if (kd->vmst->PTD != 0)
+	if (kd->vmst != NULL) {
+		if (kd->vmst->PTD != NULL)
 			free(kd->vmst->PTD);
 
 		free(kd->vmst);
+		kd->vmst = NULL;
 	}
 }
 
 int
-_kvm_initvtop(kd)
-	kvm_t *kd;
+_kvm_initvtop(kvm_t *kd)
 {
-	struct vmstate *vm;
 	struct nlist nlist[2];
+	struct vmstate *vm;
 	u_long pa;
 
 	vm = (struct vmstate *)_kvm_malloc(kd, sizeof(*vm));
@@ -106,15 +105,15 @@ _kvm_initvtop(kd)
 
 	vm->PTD = 0;
 
-	if (_kvm_pread(kd, kd->pmfd, &pa, sizeof pa, (off_t)_kvm_pa2off(kd, nlist[0].n_value - KERNBASE)) != sizeof pa) {
+	if (_kvm_pread(kd, kd->pmfd, &pa, sizeof pa,
+	    (off_t)_kvm_pa2off(kd, nlist[0].n_value - KERNBASE)) != sizeof pa)
 		goto invalid;
-	}
 
 	vm->PTD = (pd_entry_t *)_kvm_malloc(kd, NBPG);
 
-	if (_kvm_pread(kd, kd->pmfd, vm->PTD, NBPG, (off_t)_kvm_pa2off(kd, pa)) != NBPG) {
+	if (_kvm_pread(kd, kd->pmfd, vm->PTD, NBPG,
+	    (off_t)_kvm_pa2off(kd, pa)) != NBPG)
 		goto invalid;
-	}
 
 	return (0);
 
@@ -128,43 +127,38 @@ invalid:
  * Translate a kernel virtual address to a physical address.
  */
 int
-_kvm_kvatop(kd, va, pa)
-	kvm_t *kd;
-	u_long va;
-	u_long *pa;
+_kvm_kvatop(kvm_t *kd, u_long va, u_long *pa)
 {
+	u_long offset, pte_pa;
 	struct vmstate *vm;
-	u_long offset;
-	u_long pte_pa;
 	pt_entry_t pte;
 
 	if (ISALIVE(kd)) {
 		_kvm_err(kd, 0, "vatop called in live kernel!");
-		return(0);
+		return (0);
 	}
 
 	vm = kd->vmst;
 	offset = va & PGOFSET;
 
-        /*
-         * If we are initializing (kernel page table descriptor pointer
+	/*
+	 * If we are initializing (kernel page table descriptor pointer
 	 * not yet set) * then return pa == va to avoid infinite recursion.
-         */
-        if (vm->PTD == 0) {
-                *pa = va;
-                return (NBPG - offset);
-        }
+	 */
+	if (vm->PTD == 0) {
+		*pa = va;
+		return (NBPG - offset);
+	}
 	if ((vm->PTD[pdei(va)] & PG_V) == 0)
 		goto invalid;
 
 	pte_pa = (vm->PTD[pdei(va)] & PG_FRAME) +
 	    (ptei(va) * sizeof(pt_entry_t));
+
 	/* XXX READ PHYSICAL XXX */
-	{
-		if (_kvm_pread(kd, kd->pmfd, &pte, sizeof pte, (off_t)_kvm_pa2off(kd, pte_pa)) != sizeof pte) {
-			goto invalid;
-		}
-	}
+	if (_kvm_pread(kd, kd->pmfd, &pte, sizeof pte,
+	    (off_t)_kvm_pa2off(kd, pte_pa)) != sizeof pte)
+		goto invalid;
 
 	*pa = (pte & PG_FRAME) + offset;
 	return (NBPG - offset);
@@ -178,9 +172,7 @@ invalid:
  * Translate a physical address to a file-offset in the crash-dump.
  */
 off_t
-_kvm_pa2off(kd, pa)
-	kvm_t *kd;
-	u_long pa;
+_kvm_pa2off(kvm_t *kd, u_long pa)
 {
-	return((off_t)(kd->dump_off + pa));
+	return ((off_t)(kd->dump_off + pa));
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_sparc64.c,v 1.4 2003/06/02 20:18:41 millert Exp $	*/
+/*	$OpenBSD: kvm_sparc64.c,v 1.5 2004/06/15 03:52:59 deraadt Exp $	*/
 /*	$NetBSD: kvm_sparc64.c,v 1.7 2001/08/05 03:33:15 matt Exp $	*/
 
 /*-
@@ -66,12 +66,11 @@
 int _kvm_kvatop(kvm_t *, u_long, u_long *);
 
 void
-_kvm_freevtop(kd)
-	kvm_t *kd;
+_kvm_freevtop(kvm_t *kd)
 {
-	if (kd->vmst != 0) {
+	if (kd->vmst != NULL) {
 		_kvm_err(kd, kd->program, "_kvm_freevtop: internal error");
-		kd->vmst = 0;
+		kd->vmst = NULL;
 	}
 }
 
@@ -83,8 +82,7 @@ _kvm_freevtop(kd)
  * We should read in and cache the ksegs here to speed up operations...
  */
 int
-_kvm_initvtop(kd)
-	kvm_t *kd;
+_kvm_initvtop(kvm_t *kd)
 {
 	kd->nbpg = 0x2000;
 
@@ -98,10 +96,7 @@ _kvm_initvtop(kd)
  * physical address.  This routine is used only for crashdumps.
  */
 int
-_kvm_kvatop(kd, va, pa)
-	kvm_t *kd;
-	u_long va;
-	u_long *pa;
+_kvm_kvatop(kvm_t *kd, u_long va, u_long *pa)
 {
 	cpu_kcore_hdr_t *cpup = kd->cpu_data;
 	u_long kernbase = cpup->kernbase;
@@ -134,8 +129,7 @@ _kvm_kvatop(kd, va, pa)
 	 */
 	pseg = (uint64_t *)(u_long)cpup->segmapoffset;
 	if (pread(kd->pmfd, &pdir, sizeof(pdir),
-		_kvm_pa2off(kd, (u_long)&pseg[va_to_seg(va)])) 
-		!= sizeof(pdir)) {
+	    _kvm_pa2off(kd, (u_long)&pseg[va_to_seg(va)])) != sizeof(pdir)) {
 		_kvm_syserr(kd, 0, "could not read L1 PTE");
 		goto lose;
 	}
@@ -146,8 +140,7 @@ _kvm_kvatop(kd, va, pa)
 	}
 
 	if (pread(kd->pmfd, &ptbl, sizeof(ptbl),
-		_kvm_pa2off(kd, (u_long)&pdir[va_to_dir(va)])) 
-		!= sizeof(ptbl)) {
+	    _kvm_pa2off(kd, (u_long)&pdir[va_to_dir(va)])) != sizeof(ptbl)) {
 		_kvm_syserr(kd, 0, "could not read L2 PTE");
 		goto lose;
 	}
@@ -158,8 +151,7 @@ _kvm_kvatop(kd, va, pa)
 	}
 
 	if (pread(kd->pmfd, &data, sizeof(data),
-		_kvm_pa2off(kd, (u_long)&ptbl[va_to_pte(va)])) 
-		!= sizeof(data)) {
+	    _kvm_pa2off(kd, (u_long)&ptbl[va_to_pte(va)])) != sizeof(data)) {
 		_kvm_syserr(kd, 0, "could not read TTE");
 		goto lose;
 	}
@@ -168,8 +160,8 @@ _kvm_kvatop(kd, va, pa)
 		_kvm_err(kd, 0, "invalid L2 TTE");
 		goto lose;
 	}
-	
-	/* 
+
+	/*
 	 * Calculate page offsets and things.
 	 *
 	 * XXXX -- We could support multiple page sizes.
@@ -179,9 +171,8 @@ _kvm_kvatop(kd, va, pa)
 	*pa = data + va;
 
 	/*
-	 * Parse and trnslate our TTE.
+	 * Parse and translate our TTE.
 	 */
-
 	return (kd->nbpg - va);
 
 lose:
@@ -195,9 +186,7 @@ lose:
  * Translate a physical address to a file-offset in the crash-dump.
  */
 off_t
-_kvm_pa2off(kd, pa)
-	kvm_t   *kd;
-	u_long  pa;
+_kvm_pa2off(kvm_t *kd, u_long pa)
 {
 	cpu_kcore_hdr_t *cpup = kd->cpu_data;
 	phys_ram_seg_t *mp;
@@ -226,4 +215,3 @@ _kvm_pa2off(kd, pa)
 
 	return (kd->dump_off + off + pa - mp->start);
 }
-

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_arm.c,v 1.1 2004/02/09 04:06:13 drahn Exp $	*/
+/*	$OpenBSD: kvm_arm.c,v 1.2 2004/06/15 03:52:59 deraadt Exp $	*/
 
 /*-
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -44,35 +44,30 @@
 #include "kvm_private.h"
 
 void
-_kvm_freevtop(kd)
-	kvm_t *kd;
+_kvm_freevtop(kvm_t *kd)
 {
-	if (kd->vmst != 0)
+	if (kd->vmst != NULL) {
 		free(kd->vmst);
+		kd->vmst = NULL;
+	}
 }
 
 int
-_kvm_initvtop(kd)
-	kvm_t *kd;
+_kvm_initvtop(kvm_t *kd)
 {
-	return 0;
+	return (0);
 }
 
 int
-_kvm_kvatop(kd, va, pa)
-	kvm_t *kd;
-	u_long va;
-	u_long *pa;
+_kvm_kvatop(kvm_t *kd, u_long va, u_long *pa)
 {
 	_kvm_err(kd, 0, "vatop not yet implemented!");
-	return 0;
+	return (0);
 }
 
 off_t
-_kvm_pa2off(kd, pa)
-	kvm_t *kd;
-	u_long pa;
+_kvm_pa2off(kvm_t *kd, u_long pa)
 {
 	_kvm_err(kd, 0, "pa2off not yet implemented!");
-	return 0;
+	return (0);
 }

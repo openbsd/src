@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_getloadavg.c,v 1.5 2003/07/18 23:05:13 david Exp $ */
+/*	$OpenBSD: kvm_getloadavg.c,v 1.6 2004/06/15 03:52:59 deraadt Exp $ */
 /*	$NetBSD: kvm_getloadavg.c,v 1.2 1996/03/18 22:33:31 thorpej Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_getloadavg.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_getloadavg.c,v 1.5 2003/07/18 23:05:13 david Exp $";
+static char *rcsid = "$OpenBSD: kvm_getloadavg.c,v 1.6 2004/06/15 03:52:59 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -68,10 +68,7 @@ static struct nlist nl[] = {
  * Return number of samples retrieved, or -1 on error.
  */
 int
-kvm_getloadavg(kd, loadavg, nelem)
-	kvm_t *kd;
-	double loadavg[];
-	int nelem;
+kvm_getloadavg(kvm_t *kd, double loadavg[], int nelem)
 {
 	struct loadavg loadinfo;
 	struct nlist *p;
@@ -81,7 +78,8 @@ kvm_getloadavg(kd, loadavg, nelem)
 		return (getloadavg(loadavg, nelem));
 
 	if (kvm_nlist(kd, nl) != 0) {
-		for (p = nl; p->n_type != 0; ++p);
+		for (p = nl; p->n_type != 0; ++p)
+			;
 		_kvm_err(kd, kd->program,
 		    "%s: no such symbol", p->n_name);
 		return (-1);

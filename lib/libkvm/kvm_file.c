@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_file.c,v 1.10 2004/04/28 03:16:31 millert Exp $ */
+/*	$OpenBSD: kvm_file.c,v 1.11 2004/06/15 03:52:59 deraadt Exp $ */
 /*	$NetBSD: kvm_file.c,v 1.5 1996/03/18 22:33:18 thorpej Exp $	*/
 
 /*-
@@ -34,12 +34,12 @@
 #if 0
 static char sccsid[] = "@(#)kvm_file.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_file.c,v 1.10 2004/04/28 03:16:31 millert Exp $";
+static char *rcsid = "$OpenBSD: kvm_file.c,v 1.11 2004/06/15 03:52:59 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 /*
- * File list interface for kvm.  pstat, fstat and netstat are 
+ * File list interface for kvm.  pstat, fstat and netstat are
  * users of this code, so we've factored it out into a separate module.
  * Thus, we keep this grunge out of the other kvm applications (i.e.,
  * most other applications are interested only in open/close/read/nlist).
@@ -76,16 +76,12 @@ static int kvm_deadfiles(kvm_t *kd, int op, int arg, long filehead_o,
  * Get file structures.
  */
 static int
-kvm_deadfiles(kd, op, arg, filehead_o, nfiles)
-	kvm_t *kd;
-	int op, arg, nfiles;
-	long filehead_o;
+kvm_deadfiles(kvm_t *kd, int op, int arg, long filehead_o, int nfiles)
 {
 	int buflen = kd->arglen, needed = buflen, error, n = 0;
+	char *where = kd->argspc, *start = where;
 	struct file *fp, file;
 	struct filelist filehead;
-	register char *where = kd->argspc;
-	char *start = where;
 
 	/*
 	 * first copyout filehead
@@ -122,15 +118,12 @@ kvm_deadfiles(kd, op, arg, filehead_o, nfiles)
 }
 
 char *
-kvm_getfiles(kd, op, arg, cnt)
-	kvm_t *kd;
-	int op, arg;
-	int *cnt;
+kvm_getfiles(kvm_t *kd, int op, int arg, int *cnt)
 {
-	size_t size;
-	int mib[2], st, nfiles;
-	struct file *fp, *fplim;
 	struct filelist filehead;
+	struct file *fp, *fplim;
+	int mib[2], st, nfiles;
+	size_t size;
 
 	if (ISALIVE(kd)) {
 		size = 0;

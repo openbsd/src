@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_vax.c,v 1.8 2003/06/02 20:18:41 millert Exp $ */
+/*	$OpenBSD: kvm_vax.c,v 1.9 2004/06/15 03:52:59 deraadt Exp $ */
 /*	$NetBSD: kvm_vax.c,v 1.3 1996/03/18 22:34:06 thorpej Exp $ */
 
 /*-
@@ -63,22 +63,21 @@ struct vmstate {
 };
 
 void
-_kvm_freevtop(kd)
-	kvm_t *kd;
+_kvm_freevtop(kvm_t *kd)
 {
-	if (kd->vmst != 0)
+	if (kd->vmst != NULL) {
 		free(kd->vmst);
+		kd->vmst = NULL;
+	}
 }
 
 int
-_kvm_initvtop(kd)
-	kvm_t *kd;
+_kvm_initvtop(kvm_t *kd)
 {
-	register int i;
-	register int off;
-	register struct vmstate *vm;
-	struct stat st;
 	struct nlist nlist[2];
+	struct vmstate *vm;
+	struct stat st;
+	int i, off;
 
 	vm = (struct vmstate *)_kvm_malloc(kd, sizeof(*vm));
 	if (vm == 0)
@@ -106,16 +105,13 @@ _kvm_initvtop(kd)
 /*
  * Translate a kernel virtual address to a physical address using the
  * mapping information in kd->vm.  Returns the result in pa, and returns
- * the number of bytes that are contiguously available from this 
+ * the number of bytes that are contiguously available from this
  * physical address.  This routine is used only for crashdumps.
  */
 int
-_kvm_kvatop(kd, va, pa)
-	kvm_t *kd;
-	u_long va;
-	u_long *pa;
+_kvm_kvatop(kvm_t *kd, u_long va, u_long *pa)
 {
-	register u_long end;
+	u_long end;
 
 	if (va < KERNBASE) {
 		_kvm_err(kd, 0, "invalid address (%lx<%lx)", va, KERNBASE);
@@ -132,14 +128,12 @@ _kvm_kvatop(kd, va, pa)
 	return (end - va);
 }
 
-/*  
+/*
  * Translate a physical address to an offset in the crash dump
  * XXX crashdumps not working yet anyway
  */
 off_t
-_kvm_pa2off(kd, pa)
-	kvm_t	*kd;
-	u_long	pa;
+_kvm_pa2off(kvm_t *kd, u_long pa)
 {
-	return(kd->dump_off+pa);
+	return (kd->dump_off+pa);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_alpha.c,v 1.10 2001/12/05 02:23:11 art Exp $	*/
+/*	$OpenBSD: kvm_alpha.c,v 1.11 2004/06/15 03:52:59 deraadt Exp $	*/
 /*	$NetBSD: kvm_alpha.c,v 1.5 1996/10/01 21:12:05 cgd Exp $	*/
 
 /*
@@ -6,17 +6,17 @@
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -28,7 +28,7 @@
  * rights to redistribute these changes.
  */
 
-#define __KVM_ALPHA_PRIVATE             /* see <machine/pte.h> */
+#define __KVM_ALPHA_PRIVATE	     /* see <machine/pte.h> */
 
 #include <sys/param.h>
 #include <sys/user.h>
@@ -54,46 +54,43 @@ struct vmstate {
 };
 
 void
-_kvm_freevtop(kd)
-	kvm_t *kd;
+_kvm_freevtop(kvm_t *kd)
 {
 
 	/* Not actually used for anything right now, but safe. */
-	if (kd->vmst != 0)
+	if (kd->vmst != NULL) {
 		free(kd->vmst);
+		kd->vmst = NULL;
+	}
 }
 
 int
-_kvm_initvtop(kd)
-	kvm_t *kd;
+_kvm_initvtop(kvm_t *kd)
 {
-        cpu_kcore_hdr_t *cpu_kh;
-        struct vmstate *vm;
+	cpu_kcore_hdr_t *cpu_kh;
+	struct vmstate *vm;
 
-        vm = (struct vmstate *)_kvm_malloc(kd, sizeof(*vm));
-        if (vm == NULL)
-                return (-1);
+	vm = (struct vmstate *)_kvm_malloc(kd, sizeof(*vm));
+	if (vm == NULL)
+		return (-1);
 
-        cpu_kh = kd->cpu_data;
+	cpu_kh = kd->cpu_data;
 
-        /* Compute page_shift. */
-        for (vm->page_shift = 0; (1L << vm->page_shift) < cpu_kh->page_size;
-             vm->page_shift++)
-                /* nothing */ ;
-        if ((1L << vm->page_shift) != cpu_kh->page_size) {
-                free(vm);
-                return (-1);
-        }
+	/* Compute page_shift. */
+	for (vm->page_shift = 0; (1L << vm->page_shift) < cpu_kh->page_size;
+	    vm->page_shift++)
+		/* nothing */ ;
+	if ((1L << vm->page_shift) != cpu_kh->page_size) {
+		free(vm);
+		return (-1);
+	}
 
-        kd->vmst = vm;
+	kd->vmst = vm;
 	return (0);
 }
 
 int
-_kvm_kvatop(kd, va, pa)
-	kvm_t *kd;
-	u_long va;
-	u_long *pa;
+_kvm_kvatop(kvm_t *kd, u_long va, u_long *pa)
 {
 	cpu_kcore_hdr_t *cpu_kh;
 	struct vmstate *vm;
@@ -101,17 +98,17 @@ _kvm_kvatop(kd, va, pa)
 	alpha_pt_entry_t pte;
 	off_t pteoff;
 
-        if (ISALIVE(kd)) {
-                _kvm_err(kd, 0, "vatop called in live kernel!");
-                return(0);
-        }
+	if (ISALIVE(kd)) {
+		_kvm_err(kd, 0, "vatop called in live kernel!");
+		return (0);
+	}
 
 	cpu_kh = kd->cpu_data;
 	vm = kd->vmst;
 	page_off = va & (cpu_kh->page_size - 1);
 
 #ifndef PAGE_SHIFT
-#define        PAGE_SHIFT      vm->page_shift
+#define	PAGE_SHIFT      vm->page_shift
 #endif
 
 	if (va >= ALPHA_K0SEG_BASE && va <= ALPHA_K0SEG_END) {
@@ -129,7 +126,8 @@ _kvm_kvatop(kd, va, pa)
 		/* Find and read the L1 PTE. */
 		pteoff = cpu_kh->lev1map_pa +
 		    l1pte_index(va) * sizeof(alpha_pt_entry_t);
-		if (_kvm_pread(kd, kd->pmfd, (char *)&pte, sizeof(pte), (off_t)_kvm_pa2off(kd, pteoff)) != sizeof(pte)) {
+		if (_kvm_pread(kd, kd->pmfd, (char *)&pte, sizeof(pte),
+		    (off_t)_kvm_pa2off(kd, pteoff)) != sizeof(pte)) {
 			_kvm_syserr(kd, 0, "could not read L1 PTE");
 			goto lose;
 		}
@@ -141,7 +139,8 @@ _kvm_kvatop(kd, va, pa)
 		}
 		pteoff = ALPHA_PTE_TO_PFN(pte) * cpu_kh->page_size +
 		    l2pte_index(va) * sizeof(alpha_pt_entry_t);
-		if (_kvm_pread(kd, kd->pmfd, (char *)&pte, sizeof(pte), (off_t)_kvm_pa2off(kd, pteoff)) != sizeof(pte)) {
+		if (_kvm_pread(kd, kd->pmfd, (char *)&pte, sizeof(pte),
+		    (off_t)_kvm_pa2off(kd, pteoff)) != sizeof(pte)) {
 			_kvm_syserr(kd, 0, "could not read L2 PTE");
 			goto lose;
 		}
@@ -153,7 +152,8 @@ _kvm_kvatop(kd, va, pa)
 		}
 		pteoff = ALPHA_PTE_TO_PFN(pte) * cpu_kh->page_size +
 		    l3pte_index(va) * sizeof(alpha_pt_entry_t);
-		if (_kvm_pread(kd, kd->pmfd, (char *)&pte, sizeof(pte), (off_t)_kvm_pa2off(kd, pteoff)) != sizeof(pte)) {
+		if (_kvm_pread(kd, kd->pmfd, (char *)&pte, sizeof(pte),
+		    (off_t)_kvm_pa2off(kd, pteoff)) != sizeof(pte)) {
 			_kvm_syserr(kd, 0, "could not read L3 PTE");
 			goto lose;
 		}
@@ -182,10 +182,8 @@ lose:
 /*
  * Translate a physical address to a file-offset in the crash-dump.
  */
-off_t   
-_kvm_pa2off(kd, pa)
-	kvm_t *kd;
-	u_long pa;
+off_t
+_kvm_pa2off(kvm_t *kd, u_long pa)
 {
 	cpu_kcore_hdr_t *cpu_kh;
 	phys_ram_seg_t *ramsegs;

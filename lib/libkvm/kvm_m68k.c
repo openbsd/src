@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_m68k.c,v 1.12 2003/06/02 20:18:40 millert Exp $ */
+/*	$OpenBSD: kvm_m68k.c,v 1.13 2004/06/15 03:52:59 deraadt Exp $ */
 /*	$NetBSD: kvm_m68k.c,v 1.9 1996/05/07 06:09:11 leo Exp $	*/
 
 /*-
@@ -38,12 +38,12 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_m68k.c,v 1.12 2003/06/02 20:18:40 millert Exp $";
+static char *rcsid = "$OpenBSD: kvm_m68k.c,v 1.13 2004/06/15 03:52:59 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 /*
- * m68k machine dependent routines for kvm.  Hopefully, the forthcoming 
+ * m68k machine dependent routines for kvm.  Hopefully, the forthcoming
  * vm code will one day obsolete this module.
  */
 
@@ -82,35 +82,29 @@ static char *rcsid = "$OpenBSD: kvm_m68k.c,v 1.12 2003/06/02 20:18:40 millert Ex
 	(kvm_read(kd, addr, (char *)(p), sizeof(*(p))) != sizeof(*(p)))
 
 void
-_kvm_freevtop(kd)
-	kvm_t *kd;
+_kvm_freevtop(kvm_t *kd)
 {
-	if (kd->vmst != 0)
+	if (kd->vmst != NULL) {
 		free(kd->vmst);
-}
+		kd->vmst = NULL;
+	}
 
 int
-_kvm_initvtop(kd)
-	kvm_t *kd;
+_kvm_initvtop(kvm_t *kd)
 {
 	return (0);
 }
 
 static int
-_kvm_vatop(kd, sta, va, pa)
-	kvm_t *kd;
-	st_entry_t *sta;
-	u_long va;
-	u_long *pa;
+_kvm_vatop(kvm_t *kd, st_entry_t *sta, u_long va, u_long *pa)
 {
-	register cpu_kcore_hdr_t *cpu_kh;
-	register u_long addr;
-	int p, ste, pte;
-	int offset;
+	cpu_kcore_hdr_t *cpu_kh;
+	int p, ste, pte, offset;
+	u_long addr;
 
 	if (ISALIVE(kd)) {
 		_kvm_err(kd, 0, "vatop called in live kernel!");
-		return((off_t)0);
+		return (0);
 	}
 	offset = va & PGOFSET;
 	cpu_kh = kd->cpu_data;
@@ -128,17 +122,18 @@ _kvm_vatop(kd, sta, va, pa)
 		addr = (u_long)&sta[va >> SG4_SHIFT1];
 		/*
 		 * Can't use KREAD to read kernel segment table entries.
-		 * Fortunately it is 1-to-1 mapped so we don't have to. 
+		 * Fortunately it is 1-to-1 mapped so we don't have to.
 		 */
 		if (sta == cpu_kh->sysseg_pa) {
-			if (_kvm_pread(kd, kd->pmfd, (char *)&ste, sizeof(ste), (off_t)_kvm_pa2off(kd, addr)) < 0)
+			if (_kvm_pread(kd, kd->pmfd, (char *)&ste, sizeof(ste),
+			    (off_t)_kvm_pa2off(kd, addr)) < 0)
 				goto invalid;
 		} else if (KREAD(kd, addr, &ste))
 			goto invalid;
 		if ((ste & SG_V) == 0) {
 			_kvm_err(kd, 0, "invalid level 1 descriptor (%x)",
-				 ste);
-			return((off_t)0);
+			    ste);
+			return (0);
 		}
 		sta2 = (st_entry_t *)(ste & SG4_ADDR1);
 		addr = (u_long)&sta2[(va & SG4_MASK2) >> SG4_SHIFT2];
@@ -146,12 +141,13 @@ _kvm_vatop(kd, sta, va, pa)
 		 * Address from level 1 STE is a physical address,
 		 * so don't use kvm_read.
 		 */
-		if (_kvm_pread(kd, kd->pmfd, (char *)&ste, sizeof(ste), (off_t)_kvm_pa2off(kd, addr)) < 0)
+		if (_kvm_pread(kd, kd->pmfd, (char *)&ste, sizeof(ste),
+		    (off_t)_kvm_pa2off(kd, addr)) < 0)
 			goto invalid;
 		if ((ste & SG_V) == 0) {
 			_kvm_err(kd, 0, "invalid level 2 descriptor (%x)",
-				 ste);
-			return((off_t)0);
+			    ste);
+			return (0);
 		}
 		sta2 = (st_entry_t *)(ste & SG4_ADDR2);
 		addr = (u_long)&sta2[(va & SG4_MASK3) >> SG4_SHIFT3];
@@ -159,16 +155,17 @@ _kvm_vatop(kd, sta, va, pa)
 		addr = (u_long)&sta[va >> SEGSHIFT];
 		/*
 		 * Can't use KREAD to read kernel segment table entries.
-		 * Fortunately it is 1-to-1 mapped so we don't have to. 
+		 * Fortunately it is 1-to-1 mapped so we don't have to.
 		 */
 		if (sta == cpu_kh->sysseg_pa) {
-			if (_kvm_pread(kd, kd->pmfd, (char *)&ste, sizeof(ste), (off_t)_kvm_pa2off(kd, addr)) < 0)
+			if (_kvm_pread(kd, kd->pmfd, (char *)&ste,
+			    sizeof(ste), (off_t)_kvm_pa2off(kd, addr)) < 0)
 				goto invalid;
 		} else if (KREAD(kd, addr, &ste))
 			goto invalid;
 		if ((ste & SG_V) == 0) {
 			_kvm_err(kd, 0, "invalid segment (%x)", ste);
-			return((off_t)0);
+			return (0);
 		}
 		p = btop(va & SG_PMASK);
 		addr = (ste & SG_FRAME) + (p * sizeof(pt_entry_t));
@@ -176,7 +173,8 @@ _kvm_vatop(kd, sta, va, pa)
 	/*
 	 * Address from STE is a physical address so don't use kvm_read.
 	 */
-	if (_kvm_pread(kd, kd->pmfd, (char *)&pte, sizeof(pte), (off_t)_kvm_pa2off(kd, addr)) < 0)
+	if (_kvm_pread(kd, kd->pmfd, (char *)&pte, sizeof(pte),
+	    (off_t)_kvm_pa2off(kd, addr)) < 0)
 		goto invalid;
 	addr = pte & PG_FRAME;
 	if (pte == PG_NV) {
@@ -184,20 +182,17 @@ _kvm_vatop(kd, sta, va, pa)
 		return (0);
 	}
 	*pa = addr + offset;
-	
+
 	return (NBPG - offset);
 invalid:
 	_kvm_err(kd, 0, "invalid address (%lx)", va);
 	return (0);
 }
-
+n
 int
-_kvm_kvatop(kd, va, pa)
-	kvm_t *kd;
-	u_long va;
-	u_long *pa;
+_kvm_kvatop(kvm_t *kd, u_long va, u_long *pa)
 {
-	register cpu_kcore_hdr_t *cpu_kh;
+	cpu_kcore_hdr_t *cpu_kh;
 
 	cpu_kh = kd->cpu_data;
 	return (_kvm_vatop(kd, (u_long)cpu_kh->sysseg_pa, va, pa));
@@ -207,13 +202,11 @@ _kvm_kvatop(kd, va, pa)
  * Translate a physical address to a file-offset in the crash-dump.
  */
 off_t
-_kvm_pa2off(kd, pa)
-	kvm_t	*kd;
-	u_long	pa;
+_kvm_pa2off(kvm_t *kd, u_long pa)
 {
-	off_t		off;
+	cpu_kcore_hdr_t *cpu_kh;
 	phys_ram_seg_t	*rsp;
-	register cpu_kcore_hdr_t *cpu_kh;
+	off_t off;
 
 	cpu_kh = kd->cpu_data;
 	off = 0;
@@ -224,5 +217,5 @@ _kvm_pa2off(kd, pa)
 		}
 		off += rsp->size;
 	}
-	return(kd->dump_off + off + pa);
+	return (kd->dump_off + off + pa);
 }

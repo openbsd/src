@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_amd64.c,v 1.2 2004/05/05 16:45:55 marc Exp $	*/
+/*	$OpenBSD: kvm_amd64.c,v 1.3 2004/06/15 03:52:59 deraadt Exp $	*/
 /*	$NetBSD: kvm_x86_64.c,v 1.3 2002/06/05 22:01:55 fvdl Exp $	*/
 
 /*-
@@ -67,19 +67,19 @@
 #include <machine/vmparam.h>
 
 void
-_kvm_freevtop(kd)
-	kvm_t *kd;
+_kvm_freevtop(kvm_t *kd)
 {
 
 	/* Not actually used for anything right now, but safe. */
-	if (kd->vmst != 0)
+	if (kd->vmst != NULL) {
 		free(kd->vmst);
+		kd->vmst = NULL;
+	}
 }
 
 /*ARGSUSED*/
 int
-_kvm_initvtop(kd)
-	kvm_t *kd;
+_kvm_initvtop(kvm_t *kd)
 {
 
 	return (0);
@@ -89,16 +89,13 @@ _kvm_initvtop(kd)
  * Translate a kernel virtual address to a physical address.
  */
 int
-_kvm_kvatop(kd, va, pa)
-	kvm_t *kd;
-	u_long va;
-	u_long *pa;
+_kvm_kvatop(kvm_t *kd, u_long va, u_long *pa)
 {
 	cpu_kcore_hdr_t *cpu_kh;
+	paddr_t pde_pa, pte_pa;
 	u_long page_off;
 	pd_entry_t pde;
 	pt_entry_t pte;
-	paddr_t pde_pa, pte_pa;
 
 	if (ISALIVE(kd)) {
 		_kvm_err(kd, 0, "vatop called in live kernel!");
@@ -183,9 +180,7 @@ _kvm_kvatop(kd, va, pa)
  * Translate a physical address to a file-offset in the crash dump.
  */
 off_t
-_kvm_pa2off(kd, pa)
-	kvm_t *kd;
-	u_long pa;
+_kvm_pa2off(kvm_t *kd, u_long pa)
 {
 	cpu_kcore_hdr_t *cpu_kh;
 	phys_ram_seg_t *ramsegs;

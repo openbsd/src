@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.37 2004/02/23 23:19:09 deraadt Exp $ */
+/*	$OpenBSD: kvm.c,v 1.38 2004/06/15 03:52:58 deraadt Exp $ */
 /*	$NetBSD: kvm.c,v 1.43 1996/05/05 04:31:59 gwr Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-static char *rcsid = "$OpenBSD: kvm.c,v 1.37 2004/02/23 23:19:09 deraadt Exp $";
+static char *rcsid = "$OpenBSD: kvm.c,v 1.38 2004/06/15 03:52:58 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -96,7 +96,7 @@ _kvm_pread(kvm_t *kd, int fd, void *buf, size_t nbytes, off_t offset)
 	if (rval == -1 || errno != 0) {
 		_kvm_syserr(kd, kd->program, "pread");
 	}
-	return(rval);
+	return (rval);
 }
 
 /*
@@ -112,7 +112,7 @@ _kvm_pwrite(kvm_t *kd, int fd, void *buf, size_t nbytes, off_t offset)
 	if (rval == -1 || errno != 0) {
 		_kvm_syserr(kd, kd->program, "pwrite");
 	}
-	return(rval);
+	return (rval);
 }
 
 /*
@@ -142,7 +142,7 @@ void
 _kvm_syserr(kvm_t *kd, const char *program, const char *fmt, ...)
 {
 	va_list ap;
-	register int n;
+	int n;
 
 	va_start(ap, fmt);
 	if (program != NULL) {
@@ -150,7 +150,7 @@ _kvm_syserr(kvm_t *kd, const char *program, const char *fmt, ...)
 		(void)vfprintf(stderr, fmt, ap);
 		(void)fprintf(stderr, ": %s\n", strerror(errno));
 	} else {
-		register char *cp = kd->errbuf;
+		char *cp = kd->errbuf;
 
 		(void)vsnprintf(cp, sizeof(kd->errbuf), (char *)fmt, ap);
 		n = strlen(cp);
@@ -161,9 +161,7 @@ _kvm_syserr(kvm_t *kd, const char *program, const char *fmt, ...)
 }
 
 void *
-_kvm_malloc(kd, n)
-	register kvm_t *kd;
-	register size_t n;
+_kvm_malloc(kvm_t *kd, size_t n)
 {
 	void *p;
 
@@ -173,13 +171,8 @@ _kvm_malloc(kd, n)
 }
 
 static kvm_t *
-_kvm_open(kd, uf, mf, sf, flag, errout)
-	register kvm_t *kd;
-	const char *uf;
-	const char *mf;
-	const char *sf;
-	int flag;
-	char *errout;
+_kvm_open(kvm_t *kd, const char *uf, const char *mf, const char *sf,
+    int flag, char *errout)
 {
 	struct stat st;
 
@@ -196,7 +189,7 @@ _kvm_open(kd, uf, mf, sf, flag, errout)
 	kd->argspc = 0;
 	kd->argbuf = 0;
 	kd->argv = 0;
-	kd->vmst = 0;
+	kd->vmst = NULL;
 	kd->vm_page_buckets = 0;
 	kd->kcore_hdr = 0;
 	kd->cpu_dsize = 0;
@@ -206,7 +199,7 @@ _kvm_open(kd, uf, mf, sf, flag, errout)
 	if (flag & KVM_NO_FILES) {
 		kd->alive = 1;
 		return (kd);
-	}	
+	}
 
 	if (uf && strlen(uf) >= MAXPATHLEN) {
 		_kvm_err(kd, kd->program, "exec file name too long");
@@ -283,7 +276,7 @@ _kvm_open(kd, uf, mf, sf, flag, errout)
 
 		/*
 		 * If there is no valid core header, fail silently here.
-		 * The address translations however will fail without 
+		 * The address translations however will fail without
 		 * header. Things can be made to run by calling
 		 * kvm_dump_mkheader() before doing any translation.
 		 */
@@ -313,13 +306,12 @@ failed:
  *    (opaque)    cpu_data; (size is cpu_hdr.c_size)
  *    kcore_seg_t mem_hdr;
  *    (memory)    mem_data; (size is mem_hdr.c_size)
- *    
+ *
  * Note: khdr is padded to khdr.c_hdrsize;
  * cpu_hdr and mem_hdr are padded to khdr.c_seghdrsize
  */
 static int
-_kvm_get_header(kd)
-	kvm_t	*kd;
+_kvm_get_header(kvm_t *kd)
 {
 	kcore_hdr_t	kcore_hdr;
 	kcore_seg_t	cpu_hdr;
@@ -367,7 +359,7 @@ _kvm_get_header(kd)
 	if (sz != sizeof(cpu_hdr)) {
 		goto fail;
 	}
-	
+
 	if ((CORE_GETMAGIC(cpu_hdr) != KCORESEG_MAGIC) ||
 	    (CORE_GETFLAG(cpu_hdr) != CORE_CPU))
 		goto fail;
@@ -427,9 +419,7 @@ fail:
  *    (memory)    mem_data; (size is mem_hdr.c_size)
  */
 int
-kvm_dump_mkheader(kd, dump_off)
-kvm_t	*kd;
-off_t	dump_off;
+kvm_dump_mkheader(kvm_t *kd, off_t dump_off)
 {
 	kcore_seg_t	cpu_hdr;
 	int	hdr_size, sz;
@@ -516,10 +506,7 @@ fail:
 }
 
 static int
-clear_gap(kd, fp, size)
-kvm_t	*kd;
-FILE	*fp;
-int	size;
+clear_gap(kvm_t *kd, FILE *fp, int size)
 {
 	if (size <= 0) /* XXX - < 0 should never happen */
 		return (0);
@@ -537,10 +524,7 @@ int	size;
  * because 'fp' might be a file pointer obtained by zopen().
  */
 int
-kvm_dump_wrtheader(kd, fp, dumpsize)
-kvm_t	*kd;
-FILE	*fp;
-int	dumpsize;
+kvm_dump_wrtheader(kvm_t *kd, FILE *fp, int dumpsize)
 {
 	kcore_seg_t	seghdr;
 	long		offset;
@@ -605,14 +589,10 @@ int	dumpsize;
 }
 
 kvm_t *
-kvm_openfiles(uf, mf, sf, flag, errout)
-	const char *uf;
-	const char *mf;
-	const char *sf;
-	int flag;
-	char *errout;
+kvm_openfiles(const char *uf, const char *mf, const char *sf,
+    int flag, char *errout)
 {
-	register kvm_t *kd;
+	kvm_t *kd;
 
 	if ((kd = malloc(sizeof(*kd))) == NULL) {
 		(void)strlcpy(errout, strerror(errno), _POSIX2_LINE_MAX);
@@ -623,14 +603,10 @@ kvm_openfiles(uf, mf, sf, flag, errout)
 }
 
 kvm_t *
-kvm_open(uf, mf, sf, flag, program)
-	const char *uf;
-	const char *mf;
-	const char *sf;
-	int flag;
-	const char *program;
+kvm_open(const char *uf, const char *mf, const char *sf, int flag,
+    const char *program)
 {
-	register kvm_t *kd;
+	kvm_t *kd;
 
 	if ((kd = malloc(sizeof(*kd))) == NULL && program != NULL) {
 		(void)fprintf(stderr, "%s: %s\n", program, strerror(errno));
@@ -641,10 +617,9 @@ kvm_open(uf, mf, sf, flag, program)
 }
 
 int
-kvm_close(kd)
-	kvm_t *kd;
+kvm_close(kvm_t *kd)
 {
-	register int error = 0;
+	int error = 0;
 
 	if (kd->pmfd >= 0)
 		error |= close(kd->pmfd);
@@ -681,21 +656,18 @@ kvm_close(kd)
 
 /*
  * Set up state necessary to do queries on the kernel namelist
- * data base.  If the data base is out-of-data/incompatible with 
+ * data base.  If the data base is out-of-data/incompatible with
  * given executable, set up things so we revert to standard nlist call.
  * Only called for live kernels.  Return 0 on success, -1 on failure.
  */
 static int
-kvm_dbopen(kd, uf)
-	kvm_t *kd;
-	const char *uf;
+kvm_dbopen(kvm_t *kd, const char *uf)
 {
-	DBT rec;
-	int dbversionlen;
-	struct nlist nitem;
-	char dbversion[_POSIX2_LINE_MAX];
-	char kversion[_POSIX2_LINE_MAX];
+	char dbversion[_POSIX2_LINE_MAX], kversion[_POSIX2_LINE_MAX];
 	char dbname[MAXPATHLEN];
+	struct nlist nitem;
+	int dbversionlen;
+	DBT rec;
 
 	uf = basename((char *)uf);
 
@@ -745,7 +717,7 @@ kvm_dbopen(kd, uf)
 	if (rec.data == 0 || rec.size != sizeof(struct nlist))
 		goto close;
 	bcopy((char *)rec.data, (char *)&nitem, sizeof(nitem));
-	if (kvm_read(kd, (u_long)nitem.n_value, kversion, dbversionlen) != 
+	if (kvm_read(kd, (u_long)nitem.n_value, kversion, dbversionlen) !=
 	    dbversionlen)
 		goto close;
 	/*
@@ -762,15 +734,13 @@ close:
 }
 
 int
-kvm_nlist(kd, nl)
-	kvm_t *kd;
-	struct nlist *nl;
+kvm_nlist(kvm_t *kd, struct nlist *nl)
 {
-	register struct nlist *p;
-	register int nvalid, rv;
+	struct nlist *p;
+	int nvalid, rv;
 
 	/*
-	 * If we can't use the data base, revert to the 
+	 * If we can't use the data base, revert to the
 	 * slow library call.
 	 */
 	if (kd->db == 0) {
@@ -786,7 +756,7 @@ kvm_nlist(kd, nl)
 	 */
 	nvalid = 0;
 	for (p = nl; p->n_name && p->n_name[0]; ++p) {
-		register int len;
+		int len;
 		DBT rec;
 
 		if ((len = strlen(p->n_name)) > 4096) {
@@ -811,11 +781,9 @@ kvm_nlist(kd, nl)
 		 * Avoid alignment issues.
 		 */
 		bcopy((char *)&((struct nlist *)rec.data)->n_type,
-		      (char *)&p->n_type, 
-		      sizeof(p->n_type));
+		    (char *)&p->n_type, sizeof(p->n_type));
 		bcopy((char *)&((struct nlist *)rec.data)->n_value,
-		      (char *)&p->n_value, 
-		      sizeof(p->n_value));
+		    (char *)&p->n_value, sizeof(p->n_value));
 	}
 	/*
 	 * Return the number of entries that weren't found.
@@ -823,8 +791,8 @@ kvm_nlist(kd, nl)
 	return ((p - nl) - nvalid);
 }
 
-int kvm_dump_inval(kd)
-kvm_t	*kd;
+int
+kvm_dump_inval(kvm_t *kd)
 {
 	struct nlist	nlist[2];
 	u_long		pa, x;
@@ -853,14 +821,10 @@ kvm_t	*kd;
 }
 
 ssize_t
-kvm_read(kd, kva, buf, len)
-	kvm_t *kd;
-	register u_long kva;
-	register void *buf;
-	register size_t len;
+kvm_read(kvm_t *kd, u_long kva, void *buf, size_t len)
 {
-	register int cc;
-	register void *cp;
+	int cc;
+	void *cp;
 
 	if (ISALIVE(kd)) {
 		/*
@@ -882,7 +846,7 @@ kvm_read(kd, kva, buf, len)
 		cp = buf;
 		while (len > 0) {
 			u_long	pa;
-		
+
 			/* In case of error, _kvm_kvatop sets the err string */
 			cc = _kvm_kvatop(kd, kva, &pa);
 			if (cc == 0)
@@ -913,13 +877,9 @@ kvm_read(kd, kva, buf, len)
 }
 
 ssize_t
-kvm_write(kd, kva, buf, len)
-	kvm_t *kd;
-	register u_long kva;
-	register const void *buf;
-	register size_t len;
+kvm_write(kvm_t *kd, u_long kva, const void *buf, size_t len)
 {
-	register int cc;
+	int cc;
 
 	if (ISALIVE(kd)) {
 		/*
@@ -941,8 +901,7 @@ kvm_write(kd, kva, buf, len)
 }
 
 static int
-kvm_setfd(kd)
-	kvm_t *kd;
+kvm_setfd(kvm_t *kd)
 {
 	if (kd->pmfd >= 0 && fcntl(kd->pmfd, F_SETFD, FD_CLOEXEC) < 0)
 		return (-1);

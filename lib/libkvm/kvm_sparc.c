@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_sparc.c,v 1.9 2003/06/02 20:18:41 millert Exp $ */
+/*	$OpenBSD: kvm_sparc.c,v 1.10 2004/06/15 03:52:59 deraadt Exp $ */
 /*	$NetBSD: kvm_sparc.c,v 1.9 1996/04/01 19:23:03 cgd Exp $	*/
 
 /*-
@@ -38,12 +38,12 @@
 #if 0
 static char sccsid[] = "@(#)kvm_sparc.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_sparc.c,v 1.9 2003/06/02 20:18:41 millert Exp $";
+static char *rcsid = "$OpenBSD: kvm_sparc.c,v 1.10 2004/06/15 03:52:59 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 /*
- * Sparc machine dependent routines for kvm.  Hopefully, the forthcoming 
+ * Sparc machine dependent routines for kvm.  Hopefully, the forthcoming
  * vm code will one day obsolete this module.
  */
 
@@ -81,12 +81,11 @@ static int nptesg;	/* [sun4/sun4c] only */
 
 
 void
-_kvm_freevtop(kd)
-	kvm_t *kd;
+_kvm_freevtop(kvm_t *kd)
 {
-	if (kd->vmst != 0) {
+	if (kd->vmst != NULL) {
 		_kvm_err(kd, kd->program, "_kvm_freevtop: internal error");
-		kd->vmst = 0;
+		kd->vmst = NULL;
 	}
 }
 
@@ -96,8 +95,7 @@ _kvm_freevtop(kd)
  * front of the crash dump by pmap_dumpmmu().
  */
 int
-_kvm_initvtop(kd)
-	kvm_t *kd;
+_kvm_initvtop(kvm_t *kd)
 {
 	cpu_kcore_hdr_t *cpup = kd->cpu_data;
 
@@ -122,38 +120,30 @@ _kvm_initvtop(kd)
 /*
  * Translate a kernel virtual address to a physical address using the
  * mapping information in kd->vm.  Returns the result in pa, and returns
- * the number of bytes that are contiguously available from this 
+ * the number of bytes that are contiguously available from this
  * physical address.  This routine is used only for crashdumps.
  */
 int
-_kvm_kvatop(kd, va, pa)
-	kvm_t *kd;
-	u_long va;
-	u_long *pa;
+_kvm_kvatop(kvm_t *kd, u_long va, u_long *pa)
 {
 	if (cputyp == -1)
 		if (_kvm_initvtop(kd) != 0)
-		return (-1);
+			return (-1);
 
-	return ((cputyp == CPU_SUN4M)
-		? _kvm_kvatop4m(kd, va, pa)
-		: _kvm_kvatop44c(kd, va, pa));
+	return ((cputyp == CPU_SUN4M) ? _kvm_kvatop4m(kd, va, pa) :
+	    _kvm_kvatop44c(kd, va, pa));
 }
 
 /*
  * (note: sun4 3-level MMU not yet supported)
  */
 int
-_kvm_kvatop44c(kd, va, pa)
-	kvm_t *kd;
-	u_long va;
-	u_long *pa;
+_kvm_kvatop44c(kvm_t *kd, u_long va, u_long *pa)
 {
-	register int vr, vs, pte;
 	cpu_kcore_hdr_t *cpup = kd->cpu_data;
+	int vr, vs, pte, *ptes;
 	struct regmap *rp;
 	struct segmap *sp;
-	int *ptes;
 
 	if (va < KERNBASE)
 		goto err;
@@ -177,7 +167,7 @@ _kvm_kvatop44c(kd, va, pa)
 		goto err;
 	pte = ptes[sp->sg_pmeg * nptesg + VA_VPG(va)];
 	if ((pte & PG_V) != 0) {
-		register long p, off = VA_OFF(va);
+		long p, off = VA_OFF(va);
 
 		p = (pte & PG_PFNUM) << pgshift;
 		*pa = p + off;
@@ -189,17 +179,13 @@ err:
 }
 
 int
-_kvm_kvatop4m(kd, va, pa)
-	kvm_t *kd;
-	u_long va;
-	u_long *pa;
+_kvm_kvatop4m(kvm_t *kd, u_long va, u_long *pa)
 {
 	cpu_kcore_hdr_t *cpup = kd->cpu_data;
-	register int vr, vs;
-	int pte;
-	off_t foff;
 	struct regmap *rp;
 	struct segmap *sp;
+	int vr, vs, pte;
+	off_t foff;
 
 	if (va < KERNBASE)
 		goto err;
@@ -210,7 +196,6 @@ _kvm_kvatop4m(kd, va, pa)
 	 *	[alignment]
 	 *	phys_ram_seg_t[cpup->nmemseg];
 	 */
-
 	vr = VA_VREG(va);
 	vs = VA_VSEG(va);
 
@@ -229,7 +214,7 @@ _kvm_kvatop4m(kd, va, pa)
 	}
 
 	if ((pte & SRMMU_TETYPE) == SRMMU_TEPTE) {
-		register long p, off = VA_OFF(va);
+		long p, off = VA_OFF(va);
 
 		p = (pte & SRMMU_PPNMASK) << SRMMU_PPNPASHIFT;
 		*pa = p + off;
@@ -240,13 +225,11 @@ err:
 	return (0);
 }
 
-/*       
+/*
  * Translate a physical address to a file-offset in the crash-dump.
- */     
+ */
 off_t
-_kvm_pa2off(kd, pa)
-	kvm_t   *kd;
-	u_long  pa;
+_kvm_pa2off(kvm_t *kd, u_long pa)
 {
 	cpu_kcore_hdr_t *cpup = kd->cpu_data;
 	phys_ram_seg_t *mp;
