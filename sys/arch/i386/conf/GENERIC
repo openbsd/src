@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.405 2005/03/16 20:24:55 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.406 2005/03/18 22:39:59 deraadt Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -271,8 +271,8 @@ gdt*	at pci?			# ICP Vortex GDT RAID controllers
 scsibus* at gdt?
 twe*	at pci?			# 3ware Escalade RAID controllers
 scsibus* at twe?
-aac*	at pci?			# Adaptec FSA RAID controllers
-scsibus* at aac?
+#aac*	at pci?			# Adaptec FSA RAID controllers
+#scsibus* at aac?
 ami*	at pci?			# AMI MegaRAID controllers
 scsibus* at ami?
 cac*	at pci?			# Compaq Smart ARRAY RAID controllers

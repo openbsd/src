@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKB,v 1.79 2005/03/18 19:16:10 deraadt Exp $
+#	$OpenBSD: RAMDISKB,v 1.80 2005/03/18 22:39:59 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -138,8 +138,8 @@ dpt*	at eisa?		# DPT SmartCache/SmartRAID EISA
 scsibus* at dpt?
 gdt*	at pci?			# ICP Vortex GDT RAID controllers
 scsibus* at gdt?
-aac*	at pci?			# Adaptec FSA RAID controllers
-scsibus* at aac?
+#aac*	at pci?			# Adaptec FSA RAID controllers
+#scsibus* at aac?
 ami*	at pci?			# AMI MegaRAID controllers
 scsibus* at ami?
 cac*	at pci?			# Compaq Smart ARRAY RAID controllers
