@@ -1,4 +1,4 @@
-#	$OpenBSD: BABY,v 1.25 1997/10/08 21:53:30 deraadt Exp $
+#	$OpenBSD: BABY,v 1.26 1997/11/30 05:15:27 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -82,6 +82,10 @@ option		IPFILTER_LOG	# use /dev/ipl to log IPF
 config		bsd	root on sd0 swap on sd0 and sd1 and sd2 and sd3 and sd4 dumps on sd2
 
 mainbus0 at root
+
+bios0	at mainbus0
+apm0	at bios0
+option	APM_NOIDLE
 
 isa0	at mainbus0
 eisa0	at mainbus0
