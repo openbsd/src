@@ -8,7 +8,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: auth-passwd.c,v 1.13 1999/12/01 16:54:35 markus Exp $");
+RCSID("$Id: auth-passwd.c,v 1.14 1999/12/29 12:47:46 markus Exp $");
 
 #include "packet.h"
 #include "ssh.h"
@@ -25,12 +25,12 @@ auth_password(struct passwd * pw, const char *password)
 	extern ServerOptions options;
 	char *encrypted_password;
 
+	/* deny if no user. */
+	if (pw == NULL)
+		return 0;
 	if (pw->pw_uid == 0 && options.permit_root_login == 2)
 		return 0;
 	if (*password == '\0' && options.permit_empty_passwd == 0)
-		return 0;
-	/* deny if no user. */
-	if (pw == NULL)
 		return 0;
 
 #ifdef SKEY
