@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdump.c,v 1.43 2005/03/25 13:45:30 moritz Exp $	*/
+/*	$OpenBSD: tcpdump.c,v 1.44 2005/03/30 22:13:54 moritz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@ static const char copyright[] =
     "@(#) Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n";
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.43 2005/03/25 13:45:30 moritz Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.44 2005/03/30 22:13:54 moritz Exp $ (LBL)";
 #endif
 
 /*
@@ -570,14 +570,14 @@ cleanup(int signo)
 		if (pcap_stats(pd, &stat) < 0) {
 			(void)snprintf(buf, sizeof buf,
 			    "pcap_stats: %s\n", pcap_geterr(pd));
-			write(STDOUT_FILENO, buf, strlen(buf));
+			write(STDERR_FILENO, buf, strlen(buf));
 		} else {
 			(void)snprintf(buf, sizeof buf,
 			    "%d packets received by filter\n", stat.ps_recv);
-			write(STDOUT_FILENO, buf, strlen(buf));
+			write(STDERR_FILENO, buf, strlen(buf));
 			(void)snprintf(buf, sizeof buf,
 			    "%d packets dropped by kernel\n", stat.ps_drop);
-			write(STDOUT_FILENO, buf, strlen(buf));
+			write(STDERR_FILENO, buf, strlen(buf));
 		}
 	}
 	_exit(0);
