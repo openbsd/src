@@ -1,4 +1,4 @@
-/*	$OpenBSD: stand.h,v 1.11 1996/10/17 06:49:58 mickey Exp $	*/
+/*	$OpenBSD: stand.h,v 1.12 1996/10/23 09:02:54 mickey Exp $	*/
 /*	$NetBSD: stand.h,v 1.13 1996/01/13 22:25:42 leo Exp $	*/
 
 /*-
@@ -94,6 +94,17 @@ struct devsw {
 extern struct devsw devsw[];	/* device array */
 extern int ndevs;		/* number of elements in devsw[] */
 
+struct consw {
+	char	*name;	/* console driver name */
+	int	(*cn_probe) __P((void));	/* probe device for presence */
+	void	(*cn_putc) __P((int c));	/* print char */
+	int	(*cn_getc) __P((void));		/* read char */
+	int	(*cn_ischar) __P((void));	/* check input */
+};
+
+extern struct consw consw[];
+extern int ncons;
+
 struct open_file {
 	int		f_flags;	/* see F_* below */
 	struct devsw	*f_dev;		/* pointer to device operations */
@@ -119,7 +130,11 @@ extern struct open_file files[];
 #define isspace(c)	((c) == ' ' || (c) == '\t')
 #define isdigit(c)	((c) >= '0' && (c) <= '9')
 
-int	devopen __P((struct open_file *, const char *, char **));
+#define	btochs(b,c,h,s,nh,ns)			\
+	c = (b) / ((nh) * (ns));		\
+	h = ((b) % ((nh) * (ns))) / (ns);	\
+	s = ((b) % ((nh) * (ns))) % (ns);
+
 void	*alloc __P((unsigned int));
 void	free __P((void *, unsigned int));
 struct	disklabel;
@@ -167,6 +182,7 @@ int	null_stat __P((struct open_file *f, struct stat *sb));
 int	null_readdir __P((struct open_file *f, char *name));
 
 /* Machine dependent functions */
+int	devopen __P((struct open_file *, const char *, char **));
 void	machdep_start __P((char *, int, char *, char *, char *));
 int	getchar __P((void));
 void	putchar __P((int));    
