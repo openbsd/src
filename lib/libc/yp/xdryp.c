@@ -1,7 +1,7 @@
 /*	$NetBSD: xdryp.c,v 1.9 1995/07/14 21:04:17 christos Exp $	*/
 
 /*
- * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
+ * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@theos.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

@@ -1,7 +1,7 @@
 /*	$NetBSD: yplib.c,v 1.16 1995/07/14 21:04:24 christos Exp $	 */
 
 /*
- * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
+ * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@theos.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -408,7 +408,7 @@ yp_match(indomain, inmap, inkey, inkeylen, outval, outvallen)
 	struct ypresp_val yprv;
 	struct timeval  tv;
 	struct ypreq_key yprk;
-	int             r;
+	int             r = 0;
 
 	*outval = NULL;
 	*outvallen = 0;
@@ -421,11 +421,13 @@ again:
 	if (!strcmp(_yp_domain, indomain) && ypmatch_find(inmap, inkey,
 			 inkeylen, &yprv.valdat.dptr, &yprv.valdat.dsize)) {
 		*outvallen = yprv.valdat.dsize;
-		if ((*outval = malloc(*outvallen + 1)) == NULL)
-			return YPERR_YPERR;
+		if ((*outval = malloc(*outvallen + 1)) == NULL) {
+			r = YPERR_YPERR;
+			goto out;
+		}
 		(void)memcpy(*outval, yprv.valdat.dptr, *outvallen);
 		(*outval)[*outvallen] = '\0';
-		return 0;
+		goto out;
 	}
 #endif
 
@@ -448,8 +450,10 @@ again:
 	}
 	if (!(r = ypprot_err(yprv.status))) {
 		*outvallen = yprv.valdat.dsize;
-		if ((*outval = malloc(*outvallen + 1)) == NULL)
-			return YPERR_YPERR;
+		if ((*outval = malloc(*outvallen + 1)) == NULL) {
+			r = YPERR_YPERR;
+			goto out;
+		}
 		(void)memcpy(*outval, yprv.valdat.dptr, *outvallen);
 		(*outval)[*outvallen] = '\0';
 #ifdef YPMATCHCACHE
@@ -459,6 +463,7 @@ again:
 				r = RPC_SYSTEMERROR;
 #endif
 	}
+out:
 	xdr_free(xdr_ypresp_val, (char *) &yprv);
 	_yp_unbind(ysd);
 	return r;
@@ -607,6 +612,7 @@ yp_all(indomain, inmap, incallback)
 	CLIENT         *clnt;
 	u_long          status;
 	int             clnt_sock;
+	int		r = 0;
 
 	if (_yp_dobind(indomain, &ysd) != 0)
 		return YPERR_DOMAIN;
@@ -619,7 +625,8 @@ yp_all(indomain, inmap, incallback)
 	clnt = clnttcp_create(&clnt_sin, YPPROG, YPVERS, &clnt_sock, 0, 0);
 	if (clnt == NULL) {
 		printf("clnttcp_create failed\n");
-		return YPERR_PMAP;
+		r = YPERR_PMAP;
+		goto out;
 	}
 	yprnk.domain = indomain;
 	yprnk.map = inmap;
@@ -629,13 +636,13 @@ yp_all(indomain, inmap, incallback)
 	(void) clnt_call(clnt, YPPROC_ALL,
 		  xdr_ypreq_nokey, &yprnk, xdr_ypresp_all_seq, &status, tv);
 	clnt_destroy(clnt);
-	/* not really needed... */
 	xdr_free(xdr_ypresp_all_seq, (char *) &status);
+out:
 	_yp_unbind(ysd);
 
 	if (status != YP_FALSE)
 		return ypprot_err(status);
-	return 0;
+	return r;
 }
 
 int
