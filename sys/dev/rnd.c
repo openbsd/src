@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.75 2005/01/27 18:18:20 mickey Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.76 2005/03/04 17:09:21 robert Exp $	*/
 
 /*
  * rnd.c -- A strong random number generator
@@ -708,7 +708,7 @@ add_entropy_words(buf, n)
  * delays.  It uses the timer_rand_state structure to make an estimate
  * of how many bits of entropy this call has added to the pool.
  *
- * The number "num" is also added to the pool - it should somehow describe
+ * The number "val" is also added to the pool - it should somehow describe
  * the type of event which just happened.  Currently the values of 0-255
  * are for keyboard scan codes, 256 and upwards - for interrupts.
  * On the i386, this is assumed to be at most 16 bits, and the high bits
