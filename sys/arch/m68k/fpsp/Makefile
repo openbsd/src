@@ -336,6 +336,8 @@ clean cleandir:
 
 _SUBDIRUSE:
 
+depend:
+
 install:
 
 .include <bsd.obj.mk>
