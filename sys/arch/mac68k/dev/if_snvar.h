@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_snvar.h,v 1.5 1997/04/13 14:14:52 briggs Exp $       */
+/*      $OpenBSD: if_snvar.h,v 1.6 1997/04/23 00:28:22 gene Exp $       */
 
 /*
  * Copyright (c) 1991   Algorithmics Ltd (http://www.algor.co.uk)
@@ -7,7 +7,7 @@
  */
 
 /*
- * if_snvar.h -- National Semiconductor DP83932BVF (SONIC) NetBSD/mac68k vars
+ * if_snvar.h -- National Semiconductor DP83932BVF (SONIC) OpenBSD/mac68k vars
  */
 
 /*
