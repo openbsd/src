@@ -1,4 +1,4 @@
-.\"	$OpenBSD: authenticate.3,v 1.4 2002/03/16 18:30:35 millert Exp $
+.\"	$OpenBSD: authenticate.3,v 1.5 2002/10/15 17:27:44 millert Exp $
 .\"
 .\" Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
 .\"
@@ -247,6 +247,11 @@ and
 .Ar name
 arguments, if not
 .Dv NULL .
+Values for the style and user name in an existing BSD Authentication
+session will be replaced and the old values freed (if the calling program
+has obtained pointers to the style or user name via
+.Xr auth_getitem 3 ,
+those pointers will become invalid).
 The variable arguments are passed to
 .Fn auth_call
 via the
