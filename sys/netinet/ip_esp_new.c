@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_new.c,v 1.14 1997/11/24 19:14:14 provos Exp $	*/
+/*	$OpenBSD: ip_esp_new.c,v 1.15 1998/01/21 18:43:33 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -468,7 +468,6 @@ esp_new_input(struct mbuf *m, struct tdb *tdb)
     struct mbuf *mi, *mo;
     u_char *idat, *odat;
     struct esp_new *esp;
-    struct ifnet *rcvif;
     struct ip *ip, ipo;
     u_int32_t btsx;
     union {
@@ -486,16 +485,6 @@ esp_new_input(struct mbuf *m, struct tdb *tdb)
       alen = AH_HMAC_HASHLEN;
     else
       alen = 0;
-
-    rcvif = m->m_pkthdr.rcvif;
-    if (rcvif == NULL)
-    {
-#ifdef ENCDEBUG
-	if (encdebug)
-	  printf("esp_new_input(): receive interface is NULL!!!\n");
-#endif /* ENCDEBUG */
-	rcvif = &enc_softc;
-    }
 
     if (m->m_len < sizeof(struct ip))
     {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_old.c,v 1.11 1997/11/15 00:07:09 deraadt Exp $	*/
+/*	$OpenBSD: ip_esp_old.c,v 1.12 1998/01/21 18:43:34 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -298,23 +298,12 @@ esp_old_input(struct mbuf *m, struct tdb *tdb)
     u_char iv[ESP_3DES_IVS], niv[ESP_3DES_IVS], blk[ESP_3DES_BLKS], opts[40];
     u_char *idat, *odat;
     struct esp_old *esp;
-    struct ifnet *rcvif;
     int ohlen, plen, ilen, olen, i, blks;
     struct mbuf *mi, *mo;
 
     xd = (struct esp_old_xdata *) tdb->tdb_xdata;
 
     blks = xd->edx_xform->blocksize;
-
-    rcvif = m->m_pkthdr.rcvif;
-    if (rcvif == NULL)
-    {
-#ifdef ENCDEBUG
-	if (encdebug)
-	  printf("esp_old_input(): receive interface is NULL!!!\n");
-#endif /* ENCDEBUG */
-	rcvif = &enc_softc;
-    }
 
     if (m->m_len < sizeof(struct ip))
     {

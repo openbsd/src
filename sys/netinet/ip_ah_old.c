@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah_old.c,v 1.10 1997/11/15 00:07:07 deraadt Exp $	*/
+/*	$OpenBSD: ip_ah_old.c,v 1.11 1998/01/21 18:43:33 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -228,7 +228,6 @@ ah_old_input(struct mbuf *m, struct tdb *tdb)
     struct ah_old_xdata *xd;
     struct ip *ip, ipo;
     struct ah_old *ah, *aho;
-    struct ifnet *rcvif;
     int ohlen, len, count, off, alen;
     struct mbuf *m0;
     union {
@@ -246,16 +245,6 @@ ah_old_input(struct mbuf *m, struct tdb *tdb)
 
     ohlen = sizeof(struct ip) + AH_OLD_FLENGTH + alen;
 
-    rcvif = m->m_pkthdr.rcvif;
-    if (rcvif == NULL)
-    {
-#ifdef ENCDEBUG
-	if (encdebug)
-	  printf("ah_old_input(): receive interface is NULL!\n");
-#endif /* ENCDEBUG */
-	rcvif = &enc_softc;
-    }
-	
     if (m->m_len < ohlen)
     {
 	if ((m = m_pullup(m, ohlen)) == NULL)
@@ -401,7 +390,6 @@ ah_old_input(struct mbuf *m, struct tdb *tdb)
     m->m_len -= (AH_OLD_FLENGTH + alen);
     m->m_data += (AH_OLD_FLENGTH + alen);
     m->m_pkthdr.len -= (AH_OLD_FLENGTH + alen);
-    m->m_pkthdr.rcvif = rcvif;	/* this should not be necessary */
 
     ip = mtod(m, struct ip *);
     *ip = ipo;

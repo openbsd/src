@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah_new.c,v 1.14 1997/11/24 19:14:12 provos Exp $	*/
+/*	$OpenBSD: ip_ah_new.c,v 1.15 1998/01/21 18:43:32 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -271,7 +271,6 @@ ah_new_input(struct mbuf *m, struct tdb *tdb)
     struct ah_new_xdata *xd;
     struct ip *ip, ipo;
     struct ah_new *aho, *ah;
-    struct ifnet *rcvif;
     int ohlen, len, count, off, errc;
     u_int32_t btsx;
     struct mbuf *m0;
@@ -289,16 +288,6 @@ ah_new_input(struct mbuf *m, struct tdb *tdb)
 
     ohlen = sizeof(struct ip) + AH_NEW_FLENGTH;
 
-    rcvif = m->m_pkthdr.rcvif;
-    if (rcvif == NULL)
-    {
-#ifdef ENCDEBUG
-	if (encdebug)
-	  printf("ah_new_input(): receive interface is NULL!!!\n");
-#endif /* ENCDEBUG */
-	rcvif = &enc_softc;
-    }
-	
     if (m->m_len < ohlen)
     {
 	if ((m = m_pullup(m, ohlen)) == NULL)
@@ -501,7 +490,6 @@ ah_new_input(struct mbuf *m, struct tdb *tdb)
     m->m_len -= AH_NEW_FLENGTH;
     m->m_data += AH_NEW_FLENGTH;
     m->m_pkthdr.len -= AH_NEW_FLENGTH;
-    m->m_pkthdr.rcvif = rcvif;	/* this should not be necessary */
 
     ip = mtod(m, struct ip *);
     *ip = ipo;
