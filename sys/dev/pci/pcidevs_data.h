@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.485 2002/01/23 18:08:13 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.486 2002/02/08 22:29:42 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1847,12 +1847,20 @@ static const struct pci_known_product pci_known_products[] = {
 	    "MAXIRADIO",
 	},
 	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_A4977A,
+	    "A4977A Visualize EG",
+	},
+	{
 	    PCI_VENDOR_HP, PCI_PRODUCT_HP_J2585A,
 	    "J2585A",
 	},
 	{
 	    PCI_VENDOR_HP, PCI_PRODUCT_HP_J2585B,
 	    "J2585B",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_82557B,
+	    "82557B 10/100 NIC",
 	},
 	{
 	    PCI_VENDOR_HP, PCI_PRODUCT_HP_NETRAID_4M,

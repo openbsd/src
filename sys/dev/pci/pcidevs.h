@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.485 2002/01/23 18:08:13 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.486 2002/02/08 22:29:42 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1188,8 +1188,10 @@
 #define	PCI_PRODUCT_GUILLEMOT_MAXIRADIO	0x1001		/* MAXIRADIO */
 
 /* Hewlett-Packard products */
+#define	PCI_PRODUCT_HP_A4977A	0x1005		/* A4977A Visualize EG */
 #define	PCI_PRODUCT_HP_J2585A	0x1030		/* J2585A */
 #define	PCI_PRODUCT_HP_J2585B	0x1031		/* J2585B */
+#define	PCI_PRODUCT_HP_82557B	0x1200		/* 82557B 10/100 NIC */
 #define	PCI_PRODUCT_HP_NETRAID_4M	0x10c2		/* NetRaid-4M */
 
 /* Hifn products */
