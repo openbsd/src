@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcreg.h,v 1.25 2002/06/09 03:14:18 todd Exp $ */
+/*	$OpenBSD: dcreg.h,v 1.26 2002/06/11 18:28:30 aaron Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -469,7 +469,7 @@ struct dc_list_data {
 /* software descriptor */
 struct dc_swdesc {
 	bus_dmamap_t		sd_map;
-	struct mbuf *		sd_mbuf;
+	struct mbuf		*sd_mbuf;
 };
 
 struct dc_chain_data {
