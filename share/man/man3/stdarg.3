@@ -1,4 +1,4 @@
-.\"	$OpenBSD: stdarg.3,v 1.12 2003/06/02 23:30:12 millert Exp $
+.\"	$OpenBSD: stdarg.3,v 1.13 2003/06/03 19:11:04 jmc Exp $
 .\"	$NetBSD: stdarg.3,v 1.15 2002/08/18 08:57:07 yamt Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -226,6 +226,13 @@ foo(char *fmt, ...)
 }
 .Ed
 .Sh STANDARDS
+These macros are
+.Em not
+compatible with the historic macros they replace.
+A backward compatible version can be found in the include
+file
+.Aq Pa varargs.h .
+.Pp
 The
 .Fn va_start ,
 .Fn va_arg
@@ -245,13 +252,6 @@ The
 .Fn va_copy
 macro was introduced in
 .St -ansiC-99 .
-.Sh COMPATIBILITY
-These macros are
-.Em not
-compatible with the historic macros they replace.
-A backward compatible version can be found in the include
-file
-.Aq Pa varargs.h .
 .Sh BUGS
 Unlike the
 .Em varargs
