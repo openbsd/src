@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.25 1999/01/11 15:05:32 niklas Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.26 1999/01/15 12:01:06 niklas Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -980,7 +980,7 @@ findpcb:
 				goto drop;
 		} else
 #endif /* INET6 */
-		if (IN_MULTICAST(ntohl(ti->ti_dst.s_addr)))
+		if (IN_MULTICAST(ti->ti_dst.s_addr))
 			goto drop;
 		am = m_get(M_DONTWAIT, MT_SONAME);	/* XXX */
 		if (am == NULL)
@@ -2065,7 +2065,7 @@ dropwithreset:
 	    goto drop;
 	} else {
 #endif /* INET6 */
-	    if (IN_MULTICAST(ntohl(ti->ti_dst.s_addr)))
+	    if (IN_MULTICAST(ti->ti_dst.s_addr))
 	      goto drop;
 #ifdef INET6
 	}
