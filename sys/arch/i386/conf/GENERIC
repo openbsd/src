@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.305 2002/06/11 06:56:51 nate Exp $
+#	$OpenBSD: GENERIC,v 1.306 2002/06/11 07:52:41 nate Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -105,6 +105,7 @@ ucom*   at uplcom? portno ?
 #umct*   at uhub? port ?			# MCT USB-RS232 serial adapter
 #ucom*   at umct? portno ? 
 uaudio* at uhub? port ? configuration ?	# USB Audio
+#umidi* at uhub? port ? configuration ?
 ulpt*	at uhub? port ? configuration ? # USB Printers
 umass*	at uhub? port ? configuration ? # USB Mass Storage devices
 scsibus* at umass?
