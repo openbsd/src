@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: vfprintf.c,v 1.21 2004/09/14 22:20:21 deraadt Exp $";
+static char *rcsid = "$OpenBSD: vfprintf.c,v 1.22 2004/09/16 20:21:03 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -907,7 +907,12 @@ reswitch:	switch (ch) {
 			flags |= SHORTINT;
 			goto rflag;
 		case 'l':
-			flags |= LONGINT;
+			if (*fmt == 'l') {
+				fmt++;
+				flags |= QUADINT;
+			} else {
+				flags |= LONGINT;
+			}
 			goto rflag;
 		case 'q':
 			flags |= QUADINT;
