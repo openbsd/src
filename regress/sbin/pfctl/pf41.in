@@ -1,3 +1,17 @@
+nat-anchor foo
+nat-anchor foo all
+nat-anchor foo from any to any
+nat-anchor foo inet proto tcp from 10.0.0.0/8 to !1.2.3.4
+nat-anchor foo inet proto { udp, tcp } from { 10.1.2.3, 10.2.3.4 } port { 2000, < 2100 } to { 10.3.4.5, 10.4.5.6 } port { < 1000, > 1100 }
+rdr-anchor bar 
+rdr-anchor bar all
+rdr-anchor bar from any to any
+rdr-anchor bar inet proto tcp from 10.0.0.0/8 to !1.2.3.4
+rdr-anchor bar inet proto { udp, tcp } from any to 10.1.2.3/24 port 25
+binat-anchor baz
+binat-anchor baz all
+binat-anchor baz from any to any
+binat-anchor baz inet proto tcp from any to any
 anchor foo
 anchor bar all
 anchor bar from any to any
