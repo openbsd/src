@@ -63,13 +63,18 @@ Supported devices {:-include-:}:
 		Xylogics 450/451 VME disk controller ("xy")
 		[note: VME/IPI disks are not supported]
 
+	Audio:
+		sun4m (ss4/ss5) CS4231 audio.
+		Sun SBus Expansion Subsystem (SUNW,xbox)
+
 	Miscellaneous devices:
 		Sun floppy disk drive on sun4c machines.
 		Sun keyboard and mouse.
 		sun4c/Classic AMD audio.
-		sun4m (ss4/ss5) CS4231 audio.
-		Sun SBus Expansion Subsystem (SUNW,xbox)
 		Tadpole microcontroller (tctrl)
+		Force FGA5000 SBus/VME bridge
+		Force system configuration registers
+		Force flash memory
 
 Hardware the we do NOT currently support, but get many questions about:
 	Multiprocessor machines (Will not boot correctly on multiple CPU sun4m)
@@ -91,12 +96,12 @@ Hardware the we do NOT currently support, but get many questions about:
 
 *** Note: sun4m and general sparc caveats
 
-As of of the OpenBSD OSREV release there are still some outstanding problems
-with OpenBSD on the various Sparc architectures.  The sun4m architecture,
-particularly the Viking/SuperSPARC implementations, is probably the least
-stable and is also lacking useful floppy/audio support.  The 600MP support is
-less stable than the other sun4m machines, and there is currently no support
-for the VME bus found on this machine.
+As of the OpenBSD OSREV release there are still a few outstanding problems
+with OpenBSD on some Sparc architectures.  Certain lower end CPU modules are
+known to have problems, in particular the cache-less SM30 and SM40.
+Support for the Viking/SuperSPARC implementations with cache has improved
+dramatically.  Some sun4m machines are lacking useful floppy/audio support
+and the VME bus on the 600MP is unsupported.
 
 The supplied GENERIC kernel is the best attempt at a configuration that
 works on the widest range of machinery (sun4, sun4c, and sun4m).  
