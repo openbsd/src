@@ -24,7 +24,7 @@ smtpfwdd_flags=""       # for 'normal' use: smtpfwdd_flags="", no -bd above.
 
 
 2) edit /etc/inetd.conf
-   uncomment the line :	
+   add a line :	
 
 smtp		stream	tcp	nowait	root	/usr/libexec/smtpd	smtpd
 
