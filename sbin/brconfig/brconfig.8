@@ -1,4 +1,4 @@
-.\"	$OpenBSD: brconfig.8,v 1.15 2000/10/24 18:39:34 provos Exp $
+.\"	$OpenBSD: brconfig.8,v 1.16 2000/10/26 18:32:29 jason Exp $
 .\"
 .\" Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -261,22 +261,22 @@ Create Security Associations (SAs) between the external IP address of each
 bridge:
 .Bd -literal
 # ipsecadm new esp -spi 4242 -dst 4.3.2.1 -src 1.2.3.4 \e\ 
-	-enc 3des -auth md5 -keyfile keyfile -authkey authkeyfile
+	-enc 3des -auth md5 -keyfile keyfile -authkeyfile authkeyfile
 .Ed
 .Pp
 .Bd -literal
 # ipsecadm new esp -spi 4243 -dst 1.2.3.4 -src 4.3.2.1 \e\ 
-	-enc 3des -auth md5 -keyfile keyfile -authkey authkeyfile
+	-enc 3des -auth md5 -keyfile keyfile -authkeyfile authkeyfile
 .Ed
 .Pp
 Setup ingress flows so that traffic is allowed between the two bridges
 for the above associations:
 .Bd -literal
-(on bridge1) # ipsecadm flow -dst 1.2.3.4 -spi 4243 -ingress \e\ 
-	-transport etherip \e\ 
+(on bridge1) # ipsecadm flow -dst 1.2.3.4 -in \e\ 
+	-transport etherip -require \e\ 
 	-addr 4.3.2.1 255.255.255.255 1.2.3.4 255.255.255.255
-(on bridge2) # ipsecadm flow -dst 4.3.2.1 -spi 4242 -ingress \e\ 
-	-transport etherip \e\ 
+(on bridge2) # ipsecadm flow -dst 4.3.2.1 -in \e\ 
+	-transport etherip -require \e\ 
 	-addr 1.2.3.4 255.255.255.255 4.3.2.1 255.255.255.255
 .Ed
 .Pp
