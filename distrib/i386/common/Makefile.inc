@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.5 2002/04/30 03:23:57 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.6 2002/05/19 08:55:12 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -21,7 +21,7 @@ VND_RDEV=	/dev/r${VND}a
 VND_CRDEV=	/dev/r${VND}c
 PID!=		echo $$$$
 REALIMAGE!=	echo /var/tmp/image.${PID}
-LISTFLOPPY?=	${.CURDIR}/../common/list_floppy
+BOOT=		${DESTDIR}/usr/mdec/boot
 FLOPPYSIZE?=	144
 FLOPPYSECS?=	18
 FLOPPYTYPE?=	floppy3
@@ -34,9 +34,9 @@ ${FS}:	bsd.gz
 	disklabel -w -r ${VND} ${FLOPPYTYPE}
 	newfs -m 0 -o space -i 524288 -c 80 ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
-	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
-	    TARGDIR=${MOUNT_POINT} UTILS=${UTILS} \
-	    sh ${UTILS}/runlist.sh ${LISTFLOPPY}
+	cp ${BOOT} ${MOUNT_POINT}/
+	strip ${MOUNT_POINT}/boot
+	cp bsd.gz ${MOUNT_POINT}/bsd
 	/usr/mdec/installboot -v -s ${FLOPPYSECS} -h 2 ${MOUNT_POINT}/boot \
 	    ${DESTDIR}/usr/mdec/biosboot ${VND_CRDEV}
 	@echo ""
