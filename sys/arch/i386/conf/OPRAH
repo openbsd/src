@@ -1,4 +1,4 @@
-#	$OpenBSD: OPRAH,v 1.23 1999/01/02 00:38:15 niklas Exp $
+#	$OpenBSD: OPRAH,v 1.24 1999/02/04 23:16:06 niklas Exp $
 #
 #	OPRAH -- Niklas Hallqvist's test machine
 #
@@ -132,5 +132,6 @@ pseudo-device	tun	2		# network tunneling over tty
 
 pseudo-device	pty	64		# pseudo-terminals
 #pseudo-device	tb	1		# tablet line discipline
-pseudo-device	vnd	4		# paging to files
+pseudo-device	vnd	4		# vnode disk
+pseudo-device	ccd	4		# concatenated disk
 pseudo-device	enc

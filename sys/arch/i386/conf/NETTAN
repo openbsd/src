@@ -1,4 +1,4 @@
-#	$OpenBSD: NETTAN,v 1.32 1999/01/11 14:33:39 niklas Exp $
+#	$OpenBSD: NETTAN,v 1.33 1999/02/04 23:16:06 niklas Exp $
 #
 #	NETTAN -- Applitron Datasystem AB
 #
@@ -6,7 +6,7 @@
 machine		i386		# architecture, used by config; REQUIRED
 
 #include "../../../conf/GENERIC"
-#	$OpenBSD: NETTAN,v 1.32 1999/01/11 14:33:39 niklas Exp $
+#	$OpenBSD: NETTAN,v 1.33 1999/02/04 23:16:06 niklas Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -171,13 +171,13 @@ pccom0	at isa? port 0x3f8 irq 4	# standard PC serial ports
 pccom1	at isa? port 0x2f8 irq 3
 pccom2	at isa? port 0x3e8 irq 5
 #pccom3	at isa? port 0x2e8 irq 9	# (conflicts with some video cards)
-ast0	at isa? port 0x1a0 irq 5	# AST 4-port serial card
+#ast0	at isa? port 0x1a0 irq 5	# AST 4-port serial card
 #ast1	at isa? port 0x2a0 irq 6	# 2nd AST 4-port serial card
-pccom*	at ast? slave ?
+#pccom*	at ast? slave ?
 #boca0	at isa? port 0x100 irq 5	# BOCA 8-port serial cards
 boca0	at isa? port 0x180 irq 12	# BOCA 8-port serial cards
 boca1	at isa? port 0x1c0 irq 12	# BOCA 8-port serial cards
-#pccom*	at boca? slave ?
+pccom*	at boca? slave ?
 #rtfps0	at isa? port 0x1230 irq 10	# RT 4-port serial cars
 #pccom*	at rtfps? slave ?
 pccom*	at pcmcia? function ?		# PCMCIA modems/serial ports
@@ -212,7 +212,7 @@ scsibus* at ahb?
 ahc0	at isa? port ? irq ?		# Adaptec 284x SCSI controllers
 ahc*	at eisa? slot ?			# Adaptec 274x, aic7770 SCSI controllers
 ahc*	at pci? dev ? function ?	# Adaptec 2940 SCSI controllers
-scsibus0 at ahc?
+#scsibus0 at ahc?
 scsibus* at ahc?
 isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
 scsibus* at isp?
@@ -235,8 +235,8 @@ wds0	at isa? port 0x350 irq 15 drq 6	# WD7000 and TMC-7000 controllers
 #wds1	at isa? port 0x358 irq 11 drq 5
 scsibus* at wds?
 
-sd0	at scsibus0 target 0 lun ?	# Conner 2GB
-sd1	at scsibus0 target 2 lun ?	# Quantum Atlas 4GB
+#sd0	at scsibus0 target 0 lun ?	# Conner 2GB
+#sd1	at scsibus0 target 2 lun ?	# Quantum Atlas 4GB
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
 st*	at scsibus? target ? lun ?	# SCSI tape drives
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
@@ -352,5 +352,6 @@ joy*	at isapnp?
 
 pseudo-device	pctr		1
 pseudo-device	sequencer	1
+pseudo-device	raid		4	# RAIDframe disk driver
 
 #option DEBUG_ISAPNP

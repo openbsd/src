@@ -1,4 +1,4 @@
-#	$OpenBSD: WALDORF,v 1.19 1999/01/02 00:38:15 niklas Exp $
+#	$OpenBSD: WALDORF,v 1.20 1999/02/04 23:16:06 niklas Exp $
 #
 #	WALDORF -- a 486 kernel config Applitron use for some gateway
 #		   machines (waldorf and neuro).
@@ -70,6 +70,7 @@ option		FIFO		# FIFOs; RECOMMENDED
 
 option		GATEWAY		# packet forwarding
 option		INET		# IP + ICMP + TCP + UDP
+option		IPSEC		# IPsec
 option		IPFILTER	# IP firewall
 option		IPFILTER_LOG	# use /dev/ipl to log IPF
 #option		NS		# XNS
@@ -88,6 +89,7 @@ pci0	at mainbus?
 
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
 isadma0	at isa?
+isapnp0	at isa?
 
 #pc0	at isa? port 0x60 irq 1		# generic PC console device
 vt0	at isa? port 0x60 irq 1
@@ -162,9 +164,12 @@ fd*	at fdc? drive ?
 
 #wt0	at isa? port 0x308 irq 5 drq 1	# Archive and Wangtek QIC tape drives
 
-ed0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC, 3C503, and NE[12]000
-ed1	at isa? port 0x250 iomem 0xd8000 irq 9	#   ethernet cards
-ed2	at isa? port 0x300 iomem 0xcc000 irq 10
+we0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC 80x3 ethernet series
+we1	at isa? port 0x300 iomem 0xcc000 irq 10	#
+ec0	at isa? port 0x250 iomem 0xd8000 irq 9	# 3C503 ethernet cards
+ne0	at isa? port 0x280 iomem 0xd8000 irq 9	# NE[12]000 ethernet cards
+ne1	at isa? port 0x300 irq 10		# NE[12]000 ethernet cards
+ne*	at isapnp?				# NE[12]000 PnP ethernet cards
 #eg0	at isa? ...				# 3C505 ethernet cards
 #el0	at isa? port 0x300 irq 9		# 3C501 ethernet cards
 #ep0	at isa? port ? irq ?			# 3C509 ethernet cards
@@ -172,6 +177,9 @@ ed2	at isa? port 0x300 iomem 0xcc000 irq 10
 #le0	at isa? port 0x320 irq 10 drq 7		# IsoLan, NE2100, and DEPCA
 #le*	at pci? bus ? dev ?
 #de*	at pci? bus ? dev ?
+#ep0	at pci? dev ? function ?		# 3C590 ethernet cards
+ep*	at pci? dev ? function ?		# 3C590 ethernet cards
+fxp*	at pci? dev ? function ?		# EtherExpress 10/100B ethernet cards
 
 #pss0	at isa? port 0x220 irq 7 drq 6  # Personal Sound System
 #sp0	at pss0 port 0x530 irq 10 drq 0	# 	sound port driver
@@ -186,6 +194,7 @@ pseudo-device	bpfilter 8		# packet filter
 #pseudo-device	sl	2		# CSLIP
 #pseudo-device	ppp	2		# PPP
 #pseudo-device	tun	2		# network tunneling over tty
+pseudo-device	enc	1		# encryption device
 
 pseudo-device	pty	64		# pseudo-terminals
 #pseudo-device	tb	1		# tablet line discipline
