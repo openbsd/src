@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.38 2000/11/16 15:52:32 ericj Exp $
+#	$OpenBSD: files.alpha,v 1.39 2000/11/25 00:38:31 art Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -213,9 +213,9 @@ file	arch/alpha/pci/pci_6600.c	dec_6600
 
 file	arch/alpha/pci/pci_machdep.c	pci
 
-device	sio: isabus, alpha_shared_intr
+device	sio: isabus, alpha_shared_intr, cy82c693
 attach	sio at pci
-device	pceb: isabus, eisabus
+device	pceb: isabus, eisabus, cy82c693
 attach	pceb at pci
 file	arch/alpha/pci/sio.c		sio | pceb	needs-flag
 file	arch/alpha/pci/sio_pic.c	sio | pceb
