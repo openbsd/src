@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.41 2005/03/06 21:09:00 joris Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.42 2005/03/08 16:13:30 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -309,8 +309,8 @@ static struct cvs_cmd {
 
 void             usage        (void);
 void             sigchld_hdlr (int);
-void             cvs_read_rcfile   (void);
-struct cvs_cmd*  cvs_findcmd  (const char *); 
+static void             cvs_read_rcfile   (void);
+static struct cvs_cmd*  cvs_findcmd  (const char *); 
 int              cvs_getopt   (int, char **); 
 
 
@@ -538,7 +538,7 @@ cvs_getopt(int argc, char **argv)
  * aliases matches <cmd>.
  * Returns a pointer to the command entry on success, NULL on failure.
  */
-struct cvs_cmd*
+static struct cvs_cmd*
 cvs_findcmd(const char *cmd)
 {
 	u_int i, j;
@@ -570,7 +570,7 @@ cvs_findcmd(const char *cmd)
  * exists, it should contain a list of arguments that should always be given
  * implicitly to the specified commands.
  */
-void
+static void
 cvs_read_rcfile(void)
 {
 	char rcpath[MAXPATHLEN], linebuf[128], *lp;
