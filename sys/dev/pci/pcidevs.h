@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.247 2000/04/14 09:05:42 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.248 2000/04/15 19:16:08 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -963,6 +963,7 @@
 
 /* Hi/Fn products */
 #define	PCI_PRODUCT_HIFN_7751	0x0005		/* 7751 */
+#define	PCI_PRODUCT_HIFN_6500	0x0006		/* 6500 */
 
 /* IBM products */
 #define	PCI_PRODUCT_IBM_0x0002	0x0002		/* MCA */
@@ -1254,8 +1255,9 @@
 #define	PCI_PRODUCT_PCTECH_RZ1000	0x1000		/* RZ1000 */
 
 /* Pequr products */
-#define	PCI_PRODUCT_RCC_PCIBRIDGE	0x0200		/* PCI */
+#define	PCI_PRODUCT_RCC_SOUTH	0x0200		/* ROSB-4 SouthBridge */
 #define	PCI_PRODUCT_RCC_XX5	0x0005		/* PCIHB5 */
+#define	PCI_PRODUCT_RCC_CIOB20	0x0006		/* I/O Bridge */
 #define	PCI_PRODUCT_RCC_XX7	0x0007		/* PCIHB7 */
 #define	PCI_PRODUCT_RCC_CNB20HE	0x0008		/* CNB20HE Host */
 #define	PCI_PRODUCT_RCC_CNB20LE	0x0009		/* CNB20LE Host */
