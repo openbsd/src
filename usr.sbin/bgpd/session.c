@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.51 2003/12/30 19:54:23 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.52 2003/12/30 21:05:09 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -789,8 +789,10 @@ session_open(struct peer *peer)
 	msg.bgpid = conf->bgpid;	/* is already in network byte order */
 	msg.optparamlen = 0;
 
-	if ((buf = buf_open(len)) == NULL)
+	if ((buf = buf_open(len)) == NULL) {
 		bgp_fsm(peer, EVNT_CON_FATAL);
+		return;
+	}
 	errs += buf_add(buf, &msg.header.marker, sizeof(msg.header.marker));
 	errs += buf_add(buf, &msg.header.len, sizeof(msg.header.len));
 	errs += buf_add(buf, &msg.header.type, sizeof(msg.header.type));
@@ -829,8 +831,10 @@ session_keepalive(struct peer *peer)
 	msg.len = htons(len);
 	msg.type = KEEPALIVE;
 
-	if ((buf = buf_open(len)) == NULL)
+	if ((buf = buf_open(len)) == NULL) {
 		bgp_fsm(peer, EVNT_CON_FATAL);
+		return;
+	}
 	errs += buf_add(buf, &msg.marker, sizeof(msg.marker));
 	errs += buf_add(buf, &msg.len, sizeof(msg.len));
 	errs += buf_add(buf, &msg.type, sizeof(msg.type));
@@ -848,6 +852,7 @@ session_keepalive(struct peer *peer)
 			log_peer_err(peer, "Write error");
 		buf_free(buf);
 		bgp_fsm(peer, EVNT_CON_FATAL);
+		return;
 	}
 
 	start_timer_keepalive(peer);
@@ -874,8 +879,10 @@ session_notification(struct peer *peer, u_int8_t errcode, u_int8_t subcode,
 	msg.len = htons(len);
 	msg.type = NOTIFICATION;
 
-	if ((buf = buf_open(len)) == NULL)
+	if ((buf = buf_open(len)) == NULL) {
 		bgp_fsm(peer, EVNT_CON_FATAL);
+		return;
+	}
 	errs += buf_add(buf, &msg.marker, sizeof(msg.marker));
 	errs += buf_add(buf, &msg.len, sizeof(msg.len));
 	errs += buf_add(buf, &msg.type, sizeof(msg.type));
