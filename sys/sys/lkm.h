@@ -1,4 +1,4 @@
-/*	$OpenBSD: lkm.h,v 1.10 2002/01/07 19:23:32 ericj Exp $	*/
+/*	$OpenBSD: lkm.h,v 1.11 2002/01/09 18:20:52 ericj Exp $	*/
 /*	$NetBSD: lkm.h,v 1.12 1996/02/09 18:25:13 christos Exp $	*/
 
 /*
@@ -51,7 +51,6 @@ typedef enum loadmod {
 	LM_SYSCALL,
 	LM_VFS,
 	LM_DEV,
-	LM_STRMOD,
 	LM_EXEC,
 	LM_MISC
 } MODTYPE;
@@ -158,7 +157,6 @@ union lkm_generic {
 	struct lkm_syscall	*lkm_syscall;
 	struct lkm_vfs		*lkm_vfs;
 	struct lkm_dev		*lkm_dev;
-	struct lkm_strmod	*lkm_strmod;
 	struct lkm_exec		*lkm_exec;
 	struct lkm_misc		*lkm_misc;
 };
