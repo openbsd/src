@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.23 2004/02/29 21:49:36 henning Exp $ */
+/*	$OpenBSD: control.c,v 1.24 2004/02/29 22:48:01 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -179,6 +179,7 @@ control_close(int fd)
 		return;
 	}
 
+	msgbuf_clear(&c->ibuf.w);
 	TAILQ_REMOVE(&ctl_conns, c, entries);
 
 	close(c->ibuf.sock);
