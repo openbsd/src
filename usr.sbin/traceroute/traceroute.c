@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.34 2000/08/28 22:43:17 deraadt Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.35 2001/03/15 17:52:54 deraadt Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -525,6 +525,11 @@ main(argc, argv)
 		if (inet_aton(source, &from.sin_addr) == 0)
 			errx(1, "unknown host %s", source);
 		ip->ip_src = from.sin_addr;
+		if (getuid() != 0 &&
+		    (ntohl(from.sin_addr.s_addr) & 0xff000000U) == 0x7f000000U &&
+		    (ntohl(to.sin_addr.s_addr) & 0xff000000U) != 0x7f000000U)
+			errx(1, "source is on 127/8, destination is not");
+
 		if (getuid() &&
 		    bind(sndsock, (struct sockaddr *)&from, sizeof(from)) < 0)
 			err(1, "bind");
