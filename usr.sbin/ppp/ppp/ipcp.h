@@ -15,7 +15,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: ipcp.h,v 1.1 1998/08/31 00:22:22 brian Exp $
+ * $Id: ipcp.h,v 1.2 1998/10/29 02:21:45 brian Exp $
  *
  *	TODO:
  */
@@ -57,6 +57,9 @@ struct ipcp {
     struct in_range  peer_range;	/* HISADDR spec */
     struct iplist    peer_list;		/* Ranges of HISADDR values */
 
+    u_long sendpipe;			/* route sendpipe size */
+    u_long recvpipe;			/* route recvpipe size */
+
     struct in_addr   TriggerAddress;	/* Address to suggest in REQ */
     unsigned HaveTriggerAddress : 1;	/* Trigger address specified */
 
@@ -86,9 +89,6 @@ struct ipcp {
 
   u_int32_t peer_reject;		/* Request codes rejected by peer */
   u_int32_t my_reject;			/* Request codes I have rejected */
-
-  struct in_addr my_ifip;		/* My configured interface address */
-  struct in_addr peer_ifip;		/* My congigured destination address */
 
   struct pppThroughput throughput;	/* throughput statistics */
   struct mqueue Queue[PRI_FAST + 1];	/* Output packet queues */

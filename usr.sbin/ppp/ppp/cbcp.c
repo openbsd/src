@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: cbcp.c,v 1.1 1998/08/31 00:22:16 brian Exp $
+ *	$Id: cbcp.c,v 1.2 1998/10/29 02:21:44 brian Exp $
  */
 
 #include <sys/types.h>
@@ -293,7 +293,7 @@ cbcp_SendReq(struct cbcp *cbcp)
       break;
 
     default:
-      data.length = 2;
+      data.length = (char *)&data.delay - (char *)&data;
       break;
   }
 
@@ -471,7 +471,9 @@ cbcp_SendResponse(struct cbcp *cbcp)
   data.type = cbcp->fsm.type;
   data.delay = cbcp->fsm.delay;
   addr = (struct cbcp_addr *)data.addr_start;
-  if (*cbcp->fsm.phone) {
+  if (data.type == CBCP_NONUM)
+    data.length = (char *)&data.delay - (char *)&data;
+  else if (*cbcp->fsm.phone) {
     addr->type = CBCP_ADDR_PSTN;
     strcpy(addr->addr, cbcp->fsm.phone);
     data.length = (addr->addr + strlen(addr->addr) + 1) - (char *)&data;
@@ -548,6 +550,13 @@ cbcp_CheckResponse(struct cbcp *cbcp, struct cbcp_data *data)
     log_Printf(LogPHASE, "Internal CBCP error - agreed on %d ??!?\n",
                (int)cbcp->fsm.type);
     return CBCP_ACTION_DOWN;
+  } else if (data->type == CBCP_NONUM && cbcp->fsm.type == CBCP_CLIENTNUM) {
+    /*
+     * Client doesn't want CBCP after all....
+     * We only allow this when ``set cbcp *'' has been specified.
+     */
+    cbcp->fsm.type = CBCP_NONUM;
+    return CBCP_ACTION_ACK;
   }
   log_Printf(LogCBCP, "Invalid peer RESPONSE\n");
   return CBCP_ACTION_REQ;
@@ -557,6 +566,7 @@ static void
 cbcp_SendAck(struct cbcp *cbcp)
 {
   struct cbcp_data data;
+  char *end;
 
   /* Only callees send ACKs */
 
@@ -565,7 +575,8 @@ cbcp_SendAck(struct cbcp *cbcp)
 
   data.type = cbcp->fsm.type;
   data.delay = cbcp->fsm.delay;
-  data.length = data.addr_start - (char *)&data;
+  end = data.type == CBCP_NONUM ? (char *)&data.delay : data.addr_start;
+  data.length = end - (char *)&data;
 
   cbcp_data_Show(&data);
   cbcp_Output(cbcp, CBCP_ACK, &data);
@@ -610,6 +621,7 @@ cbcp_Input(struct physical *p, struct mbuf *bp)
         timer_Stop(&cbcp->fsm.timer);
         if (cbcp_AdjustResponse(cbcp, data)) {
           cbcp->fsm.restart = DEF_REQs;
+          cbcp->fsm.id = head->id;
           cbcp_SendResponse(cbcp);
         } else
           datalink_CBCPFailed(cbcp->p->dl);
@@ -621,6 +633,11 @@ cbcp_Input(struct physical *p, struct mbuf *bp)
       log_Printf(LogCBCP, "%s: RecvResponse(%d) state = %s\n",
 	         p->dl->name, head->id, cbcpstate(cbcp->fsm.state));
       cbcp_data_Show(data);
+      if (cbcp->fsm.id != head->id) {
+        log_Printf(LogCBCP, "Warning: Expected id was %d, not %d\n",
+                   cbcp->fsm.id, head->id);
+        cbcp->fsm.id = head->id;
+      }
       if (cbcp->fsm.state == CBCP_REQSENT || cbcp->fsm.state == CBCP_ACKSENT) {
         timer_Stop(&cbcp->fsm.timer);
         switch (cbcp_CheckResponse(cbcp, data)) {
@@ -653,6 +670,11 @@ cbcp_Input(struct physical *p, struct mbuf *bp)
       log_Printf(LogCBCP, "%s: RecvAck(%d) state = %s\n",
 	         p->dl->name, head->id, cbcpstate(cbcp->fsm.state));
       cbcp_data_Show(data);
+      if (cbcp->fsm.id != head->id) {
+        log_Printf(LogCBCP, "Warning: Expected id was %d, not %d\n",
+                   cbcp->fsm.id, head->id);
+        cbcp->fsm.id = head->id;
+      }
       if (cbcp->fsm.state == CBCP_RESPSENT) {
         timer_Stop(&cbcp->fsm.timer);
         datalink_CBCPComplete(cbcp->p->dl);

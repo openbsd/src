@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: main.c,v 1.2 1998/08/31 08:16:41 brian Exp $
+ * $Id: main.c,v 1.3 1998/10/29 02:21:45 brian Exp $
  *
  *	TODO:
  */
@@ -75,6 +75,7 @@
 #include "chap.h"
 #include "cbcp.h"
 #include "datalink.h"
+#include "iface.h"
 
 #ifndef O_NONBLOCK
 #ifdef O_NDELAY
@@ -329,10 +330,12 @@ main(int argc, char **argv)
   }
   if (prompt) {
     prompt->bundle = bundle;	/* couldn't do it earlier */
-    prompt_Printf(prompt, "Using interface: %s\n", bundle->ifp.Name);
+    prompt_Printf(prompt, "Using interface: %s\n", bundle->iface->name);
   }
   SignalBundle = bundle;
   bundle->AliasEnabled = alias;
+  if (alias)
+    bundle->cfg.opt |= OPT_IFACEALIAS;
 
   if (system_Select(bundle, "default", CONFFILE, prompt, NULL) < 0)
     prompt_Printf(prompt, "Warning: No default entry found in config file.\n");

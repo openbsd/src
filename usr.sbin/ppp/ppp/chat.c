@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: chat.c,v 1.1 1998/08/31 00:22:18 brian Exp $
+ *	$Id: chat.c,v 1.2 1998/10/29 02:21:44 brian Exp $
  */
 
 #include <sys/types.h>
@@ -429,6 +429,7 @@ chat_Read(struct descriptor *d, struct bundle *bundle, const fd_set *fdset)
       if (begin >= ebegin && begin < eend &&
           !strncmp(begin, c->argptr, c->arglen)) {
         /* Got it ! */
+        timer_Stop(&c->timeout);
         if (memchr(begin + c->arglen - 1, '\n',
             c->bufend - begin - c->arglen + 1) == NULL) { 
           /* force it into the log */
