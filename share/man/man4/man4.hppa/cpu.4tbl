@@ -1,4 +1,4 @@
-.\" $OpenBSD: cpu.4tbl,v 1.20 2004/08/29 08:18:34 mickey Exp $
+.\" $OpenBSD: cpu.4tbl,v 1.21 2004/08/30 09:14:52 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Michael Shalayeff
 .\" All rights reserved.
@@ -44,7 +44,7 @@ for the reverse list).
 .Pp
 .in +\n(dIu
 .TS
-tab (:) ;   
+tab (:) ;
 l l l l l l l
 l l l l l l l
 _ _ _ _ _ _ _
@@ -95,7 +95,7 @@ processors.
 .Pp
 .in +\n(dIu
 .TS
-tab (:) ;   
+tab (:) nokeep ;
 l l
 _ _
 l l .
@@ -121,13 +121,13 @@ processors.
 .Pp
 .in +\n(dIu
 .TS
-nokeep tab (:) ;   
+tab (:) nokeep ;
 l l l
 _ _ _
 l l l .
 CPU:Units:Bundles
 7100:1 integer ALU:load-store/fp
-    :1 FP         :int/fp 
+    :1 FP         :int/fp
     :             :branch/*
 7100LC:2 integer ALU:load-store/int
       :1 FP	    :load-store/fp
@@ -136,7 +136,7 @@ CPU:Units:Bundles
 7200:2 integer ALU:load-store/int
     :1 FP         :load-store/fp
     :        :int/int
-    :        :int/fp 
+    :        :int/fp
     :        :branch/*
 7300LC:2 integer ALU:load-store/int
       :1 FP         :load-store/fp
@@ -161,8 +161,8 @@ together through the pipeline, they are divided into classes:
 .Pp
 .in +\n(dIu
 .TS
-tab (:) ;   
-l l 
+tab (:) ;
+l l
 _ _
 l l .
 Class:Description
@@ -184,8 +184,8 @@ concurrently:
 .Pp
 .in +\n(dIu
 .TS
-tab (:) ;   
-l l 
+tab (:) ;
+l l
 _ _
 l l .
 First:Second instruction
