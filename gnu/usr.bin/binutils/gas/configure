@@ -2348,7 +2348,7 @@ for this_target in $target $canon_targets ; do
       i386-*-bsd*)          fmt=aout em=386bsd ;;
       i386-*-netbsd0.8)     fmt=aout em=386bsd ;;
       i386-*-netbsd*)       fmt=aout em=nbsd bfd_gas=yes;;
-      i386-*-openbsd*)      fmt=aout em=nbsd bfd_gas=yes;;
+      i386-*-openbsd*)      fmt=elf em=nbsd;;
       i386-*-linux*aout* | i386-*-linux*oldld)   fmt=aout em=linux ;;
       i386-*-linux*coff*)   fmt=coff em=linux ;;
       i386-*-linux-gnu*)    fmt=elf em=linux bfd_gas=yes ;;

@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.50 2003/02/16 15:09:03 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.51 2003/04/17 03:44:21 drahn Exp $
 
-NEW_BINUTILS=alpha mips powerpc hppa sparc64 sparc
+NEW_BINUTILS=alpha hppa i386 mips powerpc sparc sparc64
 
 SUBDIRS=	opcodes bfd
 ALL_X11_MODULES=
