@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.7 1997/10/22 23:41:15 mickey Exp $	*/
+/*	$OpenBSD: disk.c,v 1.8 1997/10/26 00:47:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -39,6 +39,7 @@
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/reboot.h>
 #include <sys/disklabel.h>
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -118,26 +119,33 @@ DISK_metrics *
 DISK_getbiosmetrics(name)
 	char *name;
 {
-	DISK_metrics *bm;
 	bios_diskinfo_t di;
-	int biosdev;
-	int mib[4], size;
+	DISK_metrics *bm;
+	struct stat st;
+	int mib[4], size, fd;
+	dev_t devno;
+
+	if ((fd = DISK_open(name, O_RDONLY)) < 0)
+		return (NULL);
+	fstat(fd, &st);
+	DISK_close(fd);
 
 	/* Get BIOS metrics */
 	mib[0] = CTL_MACHDEP;
-	mib[1] = CPU_BIOS;
-	mib[2] = BIOS_DEV;
-	size = sizeof(biosdev);
-
-	if (sysctl(mib, 3, &biosdev, &size, NULL, 0) < 0) {
-		warn("sysctl");
+	mib[1] = CPU_CHR2BLK;
+	mib[2] = st.st_rdev;
+	size = sizeof(devno);
+	if (sysctl(mib, 3, &devno, &size, NULL, 0) < 0) {
+		warn("sysctl(machdep.chr2blk)");
 		return (NULL);
 	}
+	devno = MAKEBOOTDEV(major(devno), 0, 0, DISKUNIT(devno), 0);
 
+	mib[0] = CTL_MACHDEP;
+	mib[1] = CPU_BIOS;
 	mib[2] = BIOS_DISKINFO;
-	mib[3] = biosdev;
+	mib[3] = devno;
 	size = sizeof(di);
-
 	if (sysctl(mib, 4, &di, &size, NULL, 0) < 0) {
 		warn("sysctl");
 		return (NULL);
