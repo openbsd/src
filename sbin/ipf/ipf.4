@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipf.4,v 1.9 1998/01/26 04:13:33 dgregor Exp $
+.\"	$OpenBSD: ipf.4,v 1.10 1998/07/20 07:18:39 deraadt Exp $
 .TH IPF 4
 .SH NAME
 ipf \- packet filtering kernel interface
@@ -19,8 +19,8 @@ for use.  The ioctls are called as:
 However, the full complement is as follows:
 .LP
 .nf
-	ioctl(fd, SIOCADAFR, struct frentry *) (same as SUICADDFR)
-	ioctl(fd, SIOCRMAFR, struct frentry *) (same as SUICDELFR)
+	ioctl(fd, SIOCADAFR, struct frentry *) (same as SIOCADDFR)
+	ioctl(fd, SIOCRMAFR, struct frentry *) (same as SIOCDELFR)
 	ioctl(fd, SIOCADIFR, struct frentry *)
 	ioctl(fd, SIOCRMIFR, struct frentry *)
 	ioctl(fd, SIOCINAFR, struct frentry *)
