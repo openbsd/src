@@ -1,0 +1,107 @@
+.\"	$OpenBSD: cvsacl.5,v 1.1.1.1 2004/07/13 22:02:40 jfb Exp $
+.\"
+.\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd June 22, 2004
+.Dt CVSACL 5
+.Os
+.Sh NAME
+.Nm cvsacl
+.Nd CVS Access Control Lists format
+.Sh DESCRIPTION
+The
+.Nm
+file format is the format understood by the
+.Xr cvsd 8
+daemon for performing access control on files within the CVS repository.
+It is composed of access rules, each on a single line, which either allow
+or deny certain operations on files or entire directories.
+.Sh GRAMMAR
+The
+.Nm
+grammar is expressed in BNF (Backus-Naur Form) notation.
+Terminals are displayed as normal text.
+Nonterminals are in bold.
+Anything enclosed between angle brackets
+.Po
+.Ql [
+and
+.Ql \&]
+.Pc
+is optional.
+The pipe character
+.Pq Ql \&|
+is used to separate multiple choices.
+.Pp
+Here is the BNF syntax for
+.Nm
+rules:
+.Bl -tag -width "this is a test"
+.It Ic line
+::=
+.It Ic rule
+::=
+.Ic action
+.Bo
+.Ic optlist
+.Bc
+.Ic op
+[ branch
+.Ic branch
+]
+.Pp
+[ from
+.Ic userlist
+]
+.It Ic action
+::= allow | deny
+.It Ic option
+::= quick | log
+.It Ic optlist
+::=
+.Ic option
+|
+.Ic optlist ,
+.Ic option
+.It Ic op
+::= add | commit | tag | update
+.It Ic userlist
+::=
+.El
+.Pp
+.Sh EXAMPLES
+The following rule denies all operations:
+.Bd -literal
+	deny quick
+.Ed
+.Sh SEE ALSO
+.Xr cvs 1 ,
+.Xr cvsd 8
+.Sh HISTORY
+The
+.Nm
+file format appeared with the OpenCVS project.
+.Sh AUTHORS
+.An Jean-Francois Brousseau
