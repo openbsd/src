@@ -1,4 +1,4 @@
-/*	$OpenBSD: loadbsd.c,v 1.16 2002/03/14 03:15:52 millert Exp $	*/
+/*	$OpenBSD: loadbsd.c,v 1.17 2002/06/11 05:18:22 jsyn Exp $	*/
 /*	$NetBSD: loadbsd.c,v 1.22 1996/10/13 13:39:52 is Exp $	*/
 
 /*
@@ -329,11 +329,11 @@ main(argc, argv)
 		printf("kernel size: %d\n", ksize);
 	}
 	if (kp == NULL)
-		err(20, "failed malloc %d\n", ksize);
+		err(20, "failed malloc %d", ksize);
 
 	if (read(fd, kp, e.a_text) != e.a_text 
 	    || read(fd, kp + textsz, e.a_data) != e.a_data)
-		err(20, "unable to read kernel image\n");
+		err(20, "unable to read kernel image");
 
 	if (k_flag) {
 		fmem += 4 * 1024 * 1024;
@@ -352,7 +352,7 @@ main(argc, argv)
 	    (fmemsz & 0xfffff) ? 'K' : 'M', fmem, cmemsz >> 20);
 	kvers = (u_short *)(kp + e.a_entry - 2);
 	if (*kvers > KERNEL_STARTUP_VERSION_MAX && *kvers != 0x4e73)
-		err(20, "newer loadbsd required: %d\n", *kvers);
+		err(20, "newer loadbsd required: %d", *kvers);
 	if (*kvers > KERNEL_STARTUP_VERSION) {
 		printf("****************************************************\n");
 		printf("*** Notice:  this kernel has features which require\n");
