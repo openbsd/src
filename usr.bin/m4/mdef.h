@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdef.h,v 1.17 2000/07/24 23:08:25 espie Exp $	*/
+/*	$OpenBSD: mdef.h,v 1.18 2001/06/15 14:01:39 espie Exp $	*/
 /*	$NetBSD: mdef.h,v 1.7 1996/01/13 23:25:27 pk Exp $	*/
 
 /*
@@ -111,11 +111,10 @@
 #define EOS             '\0'
 #define MAXINP          10              /* maximum include files   	    */
 #define MAXOUT          10              /* maximum # of diversions 	    */
-#define MAXSTR          512             /* maximum size of string  	    */
 #define BUFSIZE         4096            /* starting size of pushback buffer */
 #define INITSTACKMAX    4096           	/* starting size of call stack      */
 #define STRSPMAX        4096            /* starting size of string space    */
-#define MAXTOK          MAXSTR          /* maximum chars in a tokn 	    */
+#define MAXTOK          512          	/* maximum chars in a tokn 	    */
 #define HASHSIZE        199             /* maximum size of hashtab 	    */
 #define MAXCCHARS	5		/* max size of comment/quote delim  */
  
