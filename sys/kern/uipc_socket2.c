@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.15 2000/11/16 20:02:19 provos Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.16 2001/05/02 08:33:49 provos Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -394,7 +394,8 @@ sbreserve(sb, cc)
 	u_long cc;
 {
 
-	if (cc == 0 || cc > sb_max * MCLBYTES / (MSIZE + MCLBYTES))
+	if (cc == 0 ||
+	    (u_int64_t)cc > (u_int64_t)sb_max * MCLBYTES / (MSIZE + MCLBYTES))
 		return (0);
 	sb->sb_hiwat = cc;
 	sb->sb_mbmax = min(cc * 2, sb_max);
