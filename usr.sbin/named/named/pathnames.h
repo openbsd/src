@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.6 1998/05/23 19:28:34 millert Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.7 1998/05/24 16:28:41 millert Exp $	*/
 
 /*
  *	@(#)pathnames.h	5.4 (Berkeley) 6/1/90
@@ -67,6 +67,7 @@
 #ifdef __OpenBSD__
 #ifndef _PATH_XFER
 #define	_PATH_XFER	"/var/named/named-xfer"
+#endif
 #define	_PATH_BOOT	"/var/named/named.boot"
 #elif defined (__sgi) && !defined(_SYSTYPE_SVR4) && !defined(__SYSTYPE_SVR4)
 #define	_PATH_BOOT	"/usr/etc/named.d/named.boot"
