@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.43 2001/06/26 04:17:11 frantzen Exp $ */
+/*	$OpenBSD: pf.c,v 1.44 2001/06/26 04:24:45 itojun Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -148,18 +148,18 @@ int		 match_addr(u_int8_t, u_int32_t, u_int32_t, u_int32_t);
 int		 match_port(u_int8_t, u_int16_t, u_int16_t, u_int16_t);
 struct pf_nat	*get_nat(struct ifnet *, u_int8_t, u_int32_t);
 struct pf_rdr	*get_rdr(struct ifnet *, u_int8_t, u_int32_t, u_int16_t);
-int		 pf_test_tcp(int, struct ifnet *, struct mbuf **, int,
-		    struct ip *, struct tcphdr *);
+int		 pf_test_tcp(int, struct ifnet *, struct mbuf **,
+		    int, int, struct ip *, struct tcphdr *);
 int		 pf_test_udp(int, struct ifnet *, struct mbuf **,
-		    int, struct ip *, struct udphdr *);
+		    int, int, struct ip *, struct udphdr *);
 int		 pf_test_icmp(int, struct ifnet *, struct mbuf **,
-		    int, struct ip *, struct icmp *);
-struct pf_state	*pf_test_state_tcp(int, struct ifnet *, struct mbuf **, int,
-		    struct ip *, struct tcphdr *);
-struct pf_state	*pf_test_state_udp(int, struct ifnet *, struct mbuf **, int,
-		    struct ip *, struct udphdr *);
-struct pf_state	*pf_test_state_icmp(int, struct ifnet *, struct mbuf **, int,
-		    struct ip *, struct icmp *);
+		    int, int, struct ip *, struct icmp *);
+struct pf_state	*pf_test_state_tcp(int, struct ifnet *, struct mbuf **,
+		    int, int, struct ip *, struct tcphdr *);
+struct pf_state	*pf_test_state_udp(int, struct ifnet *, struct mbuf **,
+		    int, int, struct ip *, struct udphdr *);
+struct pf_state	*pf_test_state_icmp(int, struct ifnet *, struct mbuf **,
+		    int, int, struct ip *, struct icmp *);
 void		*pull_hdr(struct ifnet *, struct mbuf **, int, int, int,
 		    struct ip *, int *);
 int		 pf_test(int, struct ifnet *, struct mbuf **);
@@ -1214,8 +1214,8 @@ get_rdr(struct ifnet *ifp, u_int8_t proto, u_int32_t addr, u_int16_t port)
 }
 
 int
-pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
-    struct ip *h, struct tcphdr *th)
+pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf **m,
+    int ipoff, int off, struct ip *h, struct tcphdr *th)
 {
 	struct pf_nat *nat = NULL;
 	struct pf_rdr *rdr = NULL;
@@ -1347,8 +1347,8 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
 }
 
 int
-pf_test_udp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
-    struct ip *h, struct udphdr *uh)
+pf_test_udp(int direction, struct ifnet *ifp, struct mbuf **m,
+    int ipoff, int off, struct ip *h, struct udphdr *uh)
 {
 	struct pf_nat *nat = NULL;
 	struct pf_rdr *rdr = NULL;
@@ -1463,8 +1463,8 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
 }
 
 int
-pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
-	     struct ip *h, struct icmp *ih)
+pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf **m,
+    int ipoff, int off, struct ip *h, struct icmp *ih)
 {
 	struct pf_nat *nat = NULL;
 	u_int32_t baddr;
@@ -1553,8 +1553,8 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
 }
 
 struct pf_state *
-pf_test_state_tcp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
-    struct ip *h, struct tcphdr *th)
+pf_test_state_tcp(int direction, struct ifnet *ifp, struct mbuf **m,
+    int ipoff, int off, struct ip *h, struct tcphdr *th)
 {
 	struct pf_state *s;
 	struct pf_tree_key key;
@@ -1702,8 +1702,8 @@ pf_test_state_tcp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
 }
 
 struct pf_state *
-pf_test_state_udp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
-    struct ip *h, struct udphdr *uh)
+pf_test_state_udp(int direction, struct ifnet *ifp, struct mbuf **m,
+    int ipoff, int off, struct ip *h, struct udphdr *uh)
 {
 	struct pf_state *s;
 	struct pf_tree_key key;
@@ -1762,8 +1762,8 @@ pf_test_state_udp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
 }
 
 struct pf_state *
-pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
-    struct ip *h, struct icmp *ih)
+pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf **m,
+    int ipoff, int off, struct ip *h, struct icmp *ih)
 {
 	u_int16_t len = h->ip_len - off - sizeof(*ih);
 
@@ -2039,10 +2039,10 @@ pf_test(int direction, struct ifnet *ifp, struct mbuf **m)
 
 		if (th == NULL)
 			goto done;
-		if (pf_test_state_tcp(direction, ifp, m, off, h, th))
+		if (pf_test_state_tcp(direction, ifp, m, 0, off, h, th))
 			action = PF_PASS;
 		else
-			action = pf_test_tcp(direction, ifp, m, off, h, th);
+			action = pf_test_tcp(direction, ifp, m, 0, off, h, th);
 		break;
 	}
 
@@ -2052,10 +2052,10 @@ pf_test(int direction, struct ifnet *ifp, struct mbuf **m)
 
 		if (uh == NULL)
 			goto done;
-		if (pf_test_state_udp(direction, ifp, m, off, h, uh))
+		if (pf_test_state_udp(direction, ifp, m, 0, off, h, uh))
 			action = PF_PASS;
 		else
-			action = pf_test_udp(direction, ifp, m, off, h, uh);
+			action = pf_test_udp(direction, ifp, m, 0, off, h, uh);
 		break;
 	}
 
@@ -2065,10 +2065,10 @@ pf_test(int direction, struct ifnet *ifp, struct mbuf **m)
 
 		if (ih == NULL)
 			goto done;
-		if (pf_test_state_icmp(direction, ifp, m, off, h, ih))
+		if (pf_test_state_icmp(direction, ifp, m, 0, off, h, ih))
 			action = PF_PASS;
 		else
-			action = pf_test_icmp(direction, ifp, m, off, h, ih);
+			action = pf_test_icmp(direction, ifp, m, 0, off, h, ih);
 		break;
 	}
 
