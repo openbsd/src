@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.34 2001/01/31 09:59:50 deraadt Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.35 2001/03/16 08:49:08 art Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -437,6 +437,9 @@ int cpu_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
 		    struct proc *));
 int vfs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
 		    struct proc *));
+
+void sysctl_init __P((void));
+
 #else	/* !_KERNEL */
 #include <sys/cdefs.h>
 

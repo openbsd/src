@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.38 2001/01/31 09:59:51 deraadt Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.39 2001/03/16 08:49:09 art Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -74,13 +74,16 @@
 #endif
 
 /*
- * Locking and stats
+ * Lock to avoid too many processes vslocking a large amount of memory
+ * at the same time.
  */
-static struct sysctl_lock {
-	int	sl_lock;
-	int	sl_want;
-	int	sl_locked;
-} memlock;
+struct lock sysctl_lock;
+
+void
+sysctl_init()
+{
+	lockinit(&sysctl_lock, PLOCK|PCATCH, "sysctl", 0, 0);
+}
 
 int
 sys___sysctl(p, v, retval)
@@ -166,12 +169,8 @@ sys___sysctl(p, v, retval)
 		if (!useracc(SCARG(uap, old), oldlen, B_WRITE))
 #endif
 			return (EFAULT);
-		while (memlock.sl_lock) {
-			memlock.sl_want = 1;
-			sleep((caddr_t)&memlock, PRIBIO+1);
-			memlock.sl_locked++;
-		}
-		memlock.sl_lock = 1;
+		if ((error = lockmgr(&sysctl_lock, LK_EXCLUSIVE, NULL, p)) != 0)
+			return (error);
 		if (dolock)
 #if defined(UVM)
 			uvm_vslock(p, SCARG(uap, old), oldlen, VM_PROT_NONE);
@@ -189,11 +188,7 @@ sys___sysctl(p, v, retval)
 #else
 			vsunlock(SCARG(uap, old), savelen);
 #endif
-		memlock.sl_lock = 0;
-		if (memlock.sl_want) {
-			memlock.sl_want = 0;
-			wakeup((caddr_t)&memlock);
-		}
+		lockmgr(&sysctl_lock, LK_RELEASE, NULL, p);
 	}
 	if (error)
 		return (error);
