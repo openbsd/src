@@ -43,6 +43,11 @@ file    arch/powerpc/powerpc/db_trace.c                 ddb
 file    arch/powerpc/powerpc/ofwreal.S
 
 #
+# Media Indepedent Interface (mii)
+#
+include "../../../dev/mii/files.mii"
+
+#
 # MAC generic
 #
 file	arch/powerpc/mac/dbdma.c
@@ -155,6 +160,10 @@ file arch/powerpc/mac/am79c950.c		mc
 device bm: ether, ifnet, ifmedia
 attach bm at obio
 file arch/powerpc/mac/if_bm.c			bm
+
+device gm: ether, ifnet, ifmedia, mii
+attach gm at obio
+file arch/powerpc/mac/if_gm.c			gm
 
 device macintr {}
 attach macintr at obio

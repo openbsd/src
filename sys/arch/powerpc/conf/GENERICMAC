@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERICMAC,v 1.5 2000/03/20 07:14:59 rahnds Exp $
+#	$OpenBSD: GENERICMAC,v 1.6 2000/03/23 04:08:12 rahnds Exp $
 #
 # PPC GENERIC config file
 #
@@ -54,11 +54,25 @@ de*		at pci? dev ? function ?
 #macofcons0 at pci? dev ? function ?    # OpenFirmware console (for debugging)
 obio0   at pci? dev ? function ?
 
-#nsphy*  at mii? phy ?                   # NS83840 PHYs   
+# how many of these are needed?
+exphy*  at mii? phy ?                   # 3Com internal PHYs
+inphy*  at mii? phy ?                   # Intel 82555 PHYs
+iophy*  at mii? phy ?                   # Intel 82553 PHYs
+icsphy* at mii? phy ?                   # Integrated Circuit Systems ICS1890
+#lxtphy* at mii? phy ?                   # Level One LXT-970 PHYs
+nsphy*  at mii? phy ?                   # NS83840 PHYs
+#nsphyter* at mii? phy ?                 # NS83843 PHYs
+#qsphy*  at mii? phy ?                   # Quality Semiconductor QS6612 PHYs
+sqphy*  at mii? phy ?                   # Seeq 80220/80221/80223 PHYs
+#tlphy*  at mii? phy ?                   # ThunderLAN PHYs
+#tqphy*  at mii? phy ?                   # TDK Semiconductor PHYs
+ukphy*  at mii? phy ?                   # generic unknown PHYs
+
 
 macintr0 at obio?                        # old interrupt controller
 openpic0 at obio?                        # openpic interrupt controller
 bm*     at obio?                        # bmac ethernet
+gm*     at obio?                        # gmac ethernet  G4 
 #mc*     at obio?                        # MACE ethernet
 #esp*    at obio? flags 0x00ff           # 53c9x SCSI
 #mesh*   at obio? flags 0xffff           # MESH SCSI
@@ -87,7 +101,6 @@ wdc*    at obio? flags 0x0
 wd*     at wdc? drive ? flags 0x0000
 
 atapiscsi* at wdc? channel ? flags 0x0000
-#atapibus* at wdc? 
 
 # ATAPI<->SCSI
 scsibus* at atapiscsi?
