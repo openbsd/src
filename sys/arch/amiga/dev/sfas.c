@@ -1404,54 +1404,57 @@ sfas_postaction(dev, rp, nexus)
 		 * from the DMA block. */
 		dev->sc_setup_dma(dev, 0, 0, SFAS_DMA_CLEAR);
 		if (dev->sc_cur_link < dev->sc_max_link) {
-		  if (!dev->sc_dma_blk_len) {
-		    dev->sc_dma_blk_ptr = dev->sc_chain[dev->sc_cur_link].ptr;
-		    dev->sc_dma_blk_len = dev->sc_chain[dev->sc_cur_link].len;
-		    dev->sc_dma_blk_flg = dev->sc_chain[dev->sc_cur_link].flg;
-		  }
+			if (!dev->sc_dma_blk_len) {
+				dev->sc_dma_blk_ptr =
+				    dev->sc_chain[dev->sc_cur_link].ptr;
+				dev->sc_dma_blk_len =
+				    dev->sc_chain[dev->sc_cur_link].len;
+				dev->sc_dma_blk_flg =
+				    dev->sc_chain[dev->sc_cur_link].flg;
+			}
 
-		  /* We should use polled IO here. */
-		  if (dev->sc_dma_blk_flg == SFAS_CHAIN_PRG) {
-			sfas_ixfer(dev);
-			dev->sc_cur_link++;
-			dev->sc_dma_len = 0;
-			break;
-		  }
-		  else if (dev->sc_dma_blk_flg == SFAS_CHAIN_BUMP)
-			len = dev->sc_dma_blk_len;
-		  else
-			len = dev->sc_need_bump(dev, dev->sc_dma_blk_ptr,
-						dev->sc_dma_blk_len);
+			/* We should use polled IO here. */
+			if (dev->sc_dma_blk_flg == SFAS_CHAIN_PRG) {
+				sfas_ixfer(dev);
+				dev->sc_cur_link++;
+				dev->sc_dma_len = 0;
+				break;
+			} else if (dev->sc_dma_blk_flg == SFAS_CHAIN_BUMP)
+				len = dev->sc_dma_blk_len;
+			else
+				len = dev->sc_need_bump(dev,
+				    dev->sc_dma_blk_ptr, dev->sc_dma_blk_len);
 
-		  /*
-		   * If len != 0 we must bump the data, else we just DMA it
-		   * straight into memory.
-		   */
-		  if (len) {
-			dev->sc_dma_buf = dev->sc_bump_pa;
-			dev->sc_dma_len = len;
+			/*
+			 * If len != 0 we must bump the data, else we just
+			 * DMA it straight into memory.
+			 */
+			if (len) {
+				dev->sc_dma_buf = dev->sc_bump_pa;
+				dev->sc_dma_len = len;
 
-			if (nexus->state == SFAS_NS_DATA_OUT)
-			  bcopy(dev->sc_buf, dev->sc_bump_va, dev->sc_dma_len);
-		  } else {
-			dev->sc_dma_buf = dev->sc_dma_blk_ptr;
-			dev->sc_dma_len = dev->sc_dma_blk_len;
-		  }
+				if (nexus->state == SFAS_NS_DATA_OUT)
+					bcopy(dev->sc_buf, dev->sc_bump_va,
+					    dev->sc_dma_len);
+			} else {
+				dev->sc_dma_buf = dev->sc_dma_blk_ptr;
+				dev->sc_dma_len = dev->sc_dma_blk_len;
+			}
 
-		  /* Load DMA with adress and length of transfer. */
-		  dev->sc_setup_dma(dev, dev->sc_dma_buf, dev->sc_dma_len,
-				    ((nexus->state == SFAS_NS_DATA_OUT) ?
-				     SFAS_DMA_WRITE : SFAS_DMA_READ));
+			/* Load DMA with adress and length of transfer. */
+			dev->sc_setup_dma(dev, dev->sc_dma_buf, dev->sc_dma_len,
+			    ((nexus->state == SFAS_NS_DATA_OUT)
+			    ?  SFAS_DMA_WRITE : SFAS_DMA_READ));
 
-		  cmd = SFAS_CMD_TRANSFER_INFO | SFAS_CMD_DMA;
+			cmd = SFAS_CMD_TRANSFER_INFO | SFAS_CMD_DMA;
 		} else {
 			/*
 			 * Hmmm, the unit wants more info than we have or has
 			 * more than we want. Let the chip handle that.
 			 */
 
-			*rp->sfas_tc_low = 256;
-			*rp->sfas_tc_mid = 0;
+			*rp->sfas_tc_low = 0;
+			*rp->sfas_tc_mid = 1;
 			*rp->sfas_tc_high = 0;
 			cmd = SFAS_CMD_TRANSFER_PAD;
 		}
