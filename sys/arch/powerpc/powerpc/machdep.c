@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.45 2000/09/06 02:45:11 rahnds Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.46 2000/09/06 23:05:17 rahnds Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -369,7 +369,11 @@ where = 3;
 	printf("inited\n");
 	/* while using openfirmware, run userconfig */
 	if (boothowto & RB_CONFIG) {
+#ifdef BOOT_CONFIG
 		user_config();
+#else
+		printf("kernel does not support -c; continuing..\n");
+#endif
 	}
 	/*
 	 * Replace with real console.
