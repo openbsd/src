@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.5 2001/08/12 20:05:18 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.6 2001/08/20 22:37:46 miod Exp $
 #	$NetBSD: genassym.cf,v 1.7 1998/01/06 08:46:16 thorpej Exp $
 
 #
@@ -113,8 +113,12 @@ define	DC_CLEAR		DC_CLEAR
 
 define	PG_FRAME		PG_FRAME
 
-define	SIZEOF_PCB		sizeof(struct pcb)
+define	PCB_PS			offsetof(struct pcb, pcb_ps)
+define	PCB_USP			offsetof(struct pcb, pcb_usp)
+define	PCB_REGS		offsetof(struct pcb, pcb_regs)
 define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
+define	PCB_FPCTX		offsetof(struct pcb, pcb_fpregs)
+define	SIZEOF_PCB		sizeof(struct pcb)
 
 define	FR_SP			offsetof(struct frame, f_regs[15])
 define	FR_HW			offsetof(struct frame, f_sr)
