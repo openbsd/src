@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.5 2003/12/21 22:16:53 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.6 2003/12/22 19:36:19 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Henning Brauer <henning@openbsd.org>
@@ -34,12 +34,6 @@
 
 #include "bgpd.h"
 
-enum parse_state {
-	PSTATE_MAIN,
-	PSTATE_GROUP,
-	PSTATE_NEIGHBOR
-};
-
 static struct bgpd_config	*conf;
 static struct mrt_config	*mrtconf;
 static struct peer		*curpeer;
@@ -48,7 +42,6 @@ static FILE			*fin = NULL;
 static int			 lineno = 1;
 static int			 errors = 0;
 static int			 pdebug = 1;
-static int			 pstate = PSTATE_MAIN;
 char				*infile;
 
 int	 yyerror(const char *, ...);
@@ -76,8 +69,6 @@ struct sym {
 int	 symset(const char *, const char *, int);
 char	*symget(const char *);
 int	 atoul(char *, u_long *);
-int	 check_state_peeropts(void);
-int	 check_state_main(void);
 
 typedef struct {
 	union {
@@ -104,11 +95,9 @@ typedef struct {
 grammar		: /* empty */
 		| grammar '\n'
 		| grammar conf_main '\n'
+		| grammar varset '\n'
 		| grammar neighbor '\n'
 		| grammar group '\n'
-		| grammar peeropts '\n'
-		| grammar endsection '\n'
-		| grammar varset '\n'
 		| grammar error '\n'		{ errors++; }
 		;
 
@@ -141,18 +130,12 @@ varset		: STRING '=' string		{
 		;
 
 conf_main	: AS number		{
-			if (check_state_main())
-				YYERROR;
 			conf->as = $2;
 		}
 		| BGPID address		{
-			if (check_state_main())
-				YYERROR;
 			conf->bgpid = $2.s_addr;
 		}
 		| HOLDTIME number	{
-			if (check_state_main())
-				YYERROR;
 			if ($2 < MIN_HOLDTIME) {
 				yyerror("holdtime must be at least %u",
 				    MIN_HOLDTIME);
@@ -161,8 +144,6 @@ conf_main	: AS number		{
 			conf->holdtime = $2;
 		}
 		| HOLDTIME_MIN number	{
-			if (check_state_main())
-				YYERROR;
 			if ($2 < MIN_HOLDTIME) {
 				yyerror("holdtime_min must be at least %u",
 				    MIN_HOLDTIME);
@@ -176,8 +157,6 @@ conf_main	: AS number		{
 		 *  b) there are multiple dump types
 		 */
 		| MRTDUMP STRING STRING number	{
-			if (check_state_main())
-				YYERROR;
 			if (strcmp($2, "table") == 0) {
 				if (add_mrtconfig(MRT_TABLE_DUMP, $3, $4) == -1)
 					YYERROR;
@@ -202,13 +181,11 @@ address		: STRING		{
 		}
 		;
 
-neighbor	: NEIGHBOR address '{'	{
-			if (pstate >= PSTATE_NEIGHBOR) {
-				yyerror("neighbor statment not allowed in this "
-				    "context");
-				YYERROR;
-			}
-			pstate = PSTATE_NEIGHBOR;
+optnl		: '\n' optnl 
+		|
+		;
+
+neighbor	: NEIGHBOR address optnl '{' optnl {
 			curpeer = new_peer();
 			curpeer->conf.remote_addr.sin_len =
 			    sizeof(curpeer->conf.remote_addr);
@@ -216,15 +193,14 @@ neighbor	: NEIGHBOR address '{'	{
 			curpeer->conf.remote_addr.sin_port = htons(BGP_PORT);
 			curpeer->conf.remote_addr.sin_addr.s_addr = $2.s_addr;
 		}
+		  peeropts_l optnl '}' {
+			curpeer->next = conf->peers;
+			conf->peers = curpeer;
+			curpeer = NULL;
+		}
 		;
 
-group		: GROUP string '{'	{
-			if (pstate >= PSTATE_GROUP) {
-				yyerror("group statment not allowed in this "
-				    "context");
-				YYERROR;
-			}
-			pstate = PSTATE_GROUP;
+group		: GROUP string optnl '{' optnl {
 			curgroup = curpeer = new_group();
 			if (strlcpy(curgroup->conf.group, $2,
 			    sizeof(curgroup->conf.group)) >
@@ -234,16 +210,33 @@ group		: GROUP string '{'	{
 				YYERROR;
 			}
 		}
+		   groupopts_l optnl '}' {
+			free(curgroup);
+			curgroup = NULL;
+		}
+		;
+
+groupopts_l	: groupopts_l groupoptsl
+		| groupoptsl
+		;
+
+groupoptsl	: peeropts '\n'
+		| neighbor '\n'
+		| error '\n'
+		;
+
+peeropts_l	: peeropts_l peeroptsl
+		| peeroptsl
+		;
+
+peeroptsl	: peeropts '\n'
+		| error '\n'
 		;
 
 peeropts	: REMOTEAS number	{
-			if (check_state_peeropts())
-				YYERROR;
 			curpeer->conf.remote_as = $2;
 		}
 		| DESCR string		{
-			if (check_state_peeropts())
-				YYERROR;
 			if (strlcpy(curpeer->conf.descr, $2,
 			    sizeof(curpeer->conf.descr)) >
 			    sizeof(curpeer->conf.descr)) {
@@ -254,16 +247,12 @@ peeropts	: REMOTEAS number	{
 			free($2);
 		}
 		| LOCALADDR address	{
-			if (check_state_peeropts())
-				YYERROR;
 			curpeer->conf.local_addr.sin_len =
 			    sizeof(curpeer->conf.local_addr);
 			curpeer->conf.local_addr.sin_family = AF_INET;
 			curpeer->conf.local_addr.sin_addr.s_addr = $2.s_addr;
 		}
 		| MULTIHOP number	{
-			if (check_state_peeropts())
-				YYERROR;
 			if ($2 < 2 || $2 > 255) {
 				yyerror("invalid multihop distance %d", $2);
 				YYERROR;
@@ -272,29 +261,6 @@ peeropts	: REMOTEAS number	{
 		}
 		;
 
-endsection	: '}'			{
-			switch (pstate) {
-			case PSTATE_GROUP:
-				free(curgroup);
-				curgroup = NULL;
-				pstate = PSTATE_MAIN;
-				break;
-			case PSTATE_NEIGHBOR:
-				curpeer->next = conf->peers;
-				conf->peers = curpeer;
-				curpeer = NULL;
-				if (curgroup == NULL)
-					pstate = PSTATE_MAIN;
-				else
-					pstate = PSTATE_GROUP;
-				break;
-			default:
-				yyerror("\"}\" not allowed in this context");
-				YYERROR;
-				break;
-			}
-		}
-		;
 %%
 
 struct keywords {
@@ -743,26 +709,4 @@ add_mrtconfig(enum mrtdump_type type, char *name, time_t timeout)
 	LIST_INSERT_HEAD(mrtconf, n, list);
 
 	return (0);
-}
-
-int
-check_state_peeropts(void)
-{
-	if (pstate != PSTATE_GROUP &&
-	    pstate != PSTATE_NEIGHBOR) {
-		yyerror("statement not allowed in this context");
-		return (-1);
-	} else
-		return (0);
-}
-
-int
-check_state_main(void)
-{
-	if (pstate != PSTATE_MAIN) {
-		yyerror("This statement is only valid outside "
-		    "group or neighbor definitions");
-		return (-1);
-	} else
-		return (0);
 }
