@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.13 2002/07/31 16:47:50 jason Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.14 2002/08/12 10:45:06 miod Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
@@ -25,6 +25,38 @@ dnl OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 dnl ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 dnl
 dnl
+dnl
+dnl *** some sparc-specific devices
+dnl
+twrget(all, s64_tzs, tty, a, b, c, d)dnl
+twrget(all, s64_czs, cua, a, b, c, d)dnl
+__devitem(s64_tzs, tty[a-z]*, Zilog 8530 Serial Port)dnl
+__devitem(s64_czs, cua[a-z]*, Zilog 8530 Serial Port)dnl
+_mkdev(s64_tzs, {-tty[a-z]-}, {-u=${i#tty*}
+	case $u in
+	a) n=0 ;;
+	b) n=1 ;;
+	c) n=2 ;;
+	d) n=3 ;;
+	e) n=4;;
+	f) n=5;;
+	*) echo unknown tty device $i ;;
+	esac
+	M tty$u c major_s64_tzs_c $n 660 dialer uucp-})dnl
+_mkdev(s64_czs, cua[a-z], {-u=${i#cua*}
+	case $u in
+	a) n=0 ;;
+	b) n=1 ;;
+	c) n=2 ;;
+	d) n=3 ;;
+	e) n=4;;
+	f) n=5;;
+	*) echo unknown cua device $i ;;
+	esac
+	M cua$u c major_s64_czs_c Add($n, 128) 660 dialer uucp-})dnl
+dnl
+dnl *** MAKEDEV itself
+dnl
 _TITLE(make)
 _DEV(all)
 _DEV(std)
@@ -47,20 +79,19 @@ _TITLE(pty)
 _DEV(tty, 20)
 _DEV(pty, 21)
 _TITLE(prn)
+_TITLE(cons)
+_DEV(wscons)
+_DEV(wsdisp, 78)
+_DEV(wskbd, 79)
+_DEV(wsmux, 81)
+_TITLE(point)
+_DEV(wsmouse, 80)
 _TITLE(term)
-_DEV(tzs, 12)
-_DEV(czs, 12)
+_DEV(s64_tzs, 12)
+_DEV(s64_czs, 12)
 _TITLE(spec)
 _DEV(au, 69)
 _DEV(oppr)
-_DEV(btw, 27)
-_DEV(ctw, 31)
-_DEV(ctr, 55)
-_DEV(cfr, 39)
-_DEV(csx, 67)
-_DEV(ceg, 64)
-_DEV(cfo, 99)
-_DEV(tcx, 109)
 _DEV(bpf, 105)
 _DEV(pf, 59)
 _DEV(altq, 125)
@@ -87,7 +118,4 @@ ramdisk)
 _std(2, 3, 122, 7, 16)
 	M eeprom	c 3 11	640 kmem
 	M openprom	c 70 0	640 kmem
-	M fb		c 22 0
-	M mouse		c 13 0
-	M kbd		c 29 0
 	;;
