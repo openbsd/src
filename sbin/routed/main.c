@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.7 1997/07/30 23:28:42 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.8 1998/07/09 06:12:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ char copyright[] =
 #if !defined(lint)
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.7 1997/07/30 23:28:42 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.8 1998/07/09 06:12:45 deraadt Exp $";
 #endif
 
 #include "defs.h"
@@ -54,7 +54,7 @@ static char rcsid[] = "$OpenBSD: main.c,v 1.7 1997/07/30 23:28:42 deraadt Exp $"
 pid_t	mypid;
 
 naddr	myaddr;				/* system address */
-char	myname[MAXHOSTNAMELEN+1];
+char	myname[MAXHOSTNAMELEN];
 
 int	supplier;			/* supply or broadcast updates */
 int	supplier_set;
@@ -117,7 +117,7 @@ main(int argc,
 	now_garbage = EPOCH - GARBAGE_TIME;
 	wtime.tv_sec = 0;
 
-	(void)gethostname(myname, sizeof(myname)-1);
+	(void)gethostname(myname, sizeof(myname));
 	(void)gethost(myname, &myaddr);
 
 	while ((n = getopt(argc, argv, "sqdghmpAtT:F:P:")) != -1) {
