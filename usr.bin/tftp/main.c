@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.11 2003/03/13 09:09:35 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.12 2003/04/17 17:17:27 henning Exp $	*/
 /*	$NetBSD: main.c,v 1.6 1995/05/21 16:54:10 mycroft Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char copyright[] =
+static const char copyright[] =
 "@(#) Copyright (c) 1983, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: main.c,v 1.11 2003/03/13 09:09:35 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: main.c,v 1.12 2003/04/17 17:17:27 henning Exp $";
 #endif /* not lint */
 
 /* Many bug fixes are from Jim Guyton <guyton@rand-unix> */
@@ -379,10 +379,9 @@ put(argc, argv)
 	}
 				/* this assumes the target is a directory */
 				/* on a remote unix system.  hmmmm.  */
-	cp = strchr(targ, '\0');
-	*cp++ = '/';
 	for (n = 1; n < argc - 1; n++) {
-		strcpy(cp, tail(argv[n]));
+		if (asprintf(&cp, "%s/%s", targ, tail(argv[n])) == -1)
+			err(1, "asprintf");
 		fd = open(argv[n], O_RDONLY);
 		if (fd < 0) {
 			warn("open: %s", argv[n]);
@@ -390,9 +389,10 @@ put(argc, argv)
 		}
 		if (verbose)
 			printf("putting %s to %s:%s [%s]\n",
-				argv[n], hostname, targ, mode);
+				argv[n], hostname, cp, mode);
 		peeraddr.sin_port = port;
-		sendfile(fd, targ, mode);
+		sendfile(fd, cp, mode);
+		free(cp);
 	}
 }
 
