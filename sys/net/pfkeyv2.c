@@ -1214,6 +1214,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	    }
 
 	    ipsec_in_use++;
+	    sa2->tdb_cur_allocations++;
 	}
 	
 	/* If this is a "local" packet flow */
@@ -1258,7 +1259,24 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		}
 
 		ipsec_in_use++;
+		sa2->tdb_cur_allocations++;
 	    }
+	}
+
+	/* If we are adding flows, check for allocation expirations */
+	if (!delflag) {
+	    if ((sa2->tdb_flags & TDBF_ALLOCATIONS) &&
+		(sa2->tdb_cur_allocations > sa2->tdb_exp_allocations)) {
+		/* XXX expiration notification */
+
+		tdb_delete(sa2, 0);
+		break;
+	    } else 
+	      if ((sa2->tdb_flags & TDBF_SOFT_ALLOCATIONS) &&
+		  (sa2->tdb_cur_allocations > sa2->tdb_soft_allocations)) {
+		  /* XXX expiration notification */
+		  sa2->tdb_flags &= ~TDBF_SOFT_ALLOCATIONS;
+	      }
 	}
     }
 
