@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.18 1997/10/07 08:56:18 mickey Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.19 1997/10/12 19:39:48 weingart Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -425,6 +425,8 @@ loadblocknums(boot, devfd, dl)
 	 * Have the inode.  Figure out how many blocks we need.
 	 */
 	ndb = howmany(ip->di_size, fs->fs_bsize);
+	if (ndb <= 0)
+		errx(1, "No blocks to load");
 	if (ndb > maxblocknum)
 		errx(1, "Too many blocks");
 	if (verbose)
