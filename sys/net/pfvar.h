@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.116 2002/12/22 02:33:14 mcbride Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.117 2002/12/22 19:59:13 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -685,15 +685,10 @@ struct pfioc_limit {
 };
 
 struct pfioc_altq {
+	u_int32_t	 action;
 	u_int32_t	 ticket;
 	u_int32_t	 nr;
 	struct pf_altq	 altq;
-};
-
-struct pfioc_changealtq {
-	u_int32_t	 action;
-	struct pf_altq	 oldaltq;
-	struct pf_altq	 newaltq;
 };
 
 struct pfioc_qstats {
