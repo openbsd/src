@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.36 2004/01/06 17:28:32 markus Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.37 2004/08/24 20:31:16 brad Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.27 1996/05/07 02:40:50 thorpej Exp $	*/
 
 /*
@@ -353,23 +353,27 @@ ip_mrouter_get(cmd, so, m)
  * Handle ioctl commands to obtain information from the cache
  */
 int
-mrt_ioctl(cmd, data)
+mrt_ioctl(so, cmd, data)
+	struct socket *so;
 	u_long cmd;
 	caddr_t data;
 {
 	int error;
 
-	switch (cmd) {
-	case SIOCGETVIFCNT:
-		error = get_vif_cnt((struct sioc_vif_req *)data);
-		break;
-	case SIOCGETSGCNT:
-		error = get_sg_cnt((struct sioc_sg_req *)data);
-		break;
-	default:
+	if (so != ip_mrouter)
 		error = EINVAL;
-		break;
-	}
+	else
+		switch (cmd) {
+		case SIOCGETVIFCNT:
+			error = get_vif_cnt((struct sioc_vif_req *)data);
+			break;
+		case SIOCGETSGCNT:
+			error = get_sg_cnt((struct sioc_sg_req *)data);
+			break;
+		default:
+			error = EINVAL;
+			break;
+		}
 
 	return (error);
 }
