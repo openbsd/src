@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.12 1997/03/07 12:57:55 kstailey Exp $	*/
+/*	$OpenBSD: ss.c,v 1.13 1997/03/08 02:15:05 kstailey Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -79,7 +79,9 @@ void    ssstrategy __P((struct buf *));
 void    ssstart __P((void *));
 void	ssminphys __P((struct buf *));
 
+#ifdef NOTYET
 static int ss_set_window __P((struct ss_softc *, struct scan_io *));
+#endif
 
 struct scsi_device ss_switch = {
 	NULL,
