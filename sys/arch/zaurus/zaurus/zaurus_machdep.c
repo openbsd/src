@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_machdep.c,v 1.10 2005/02/13 22:20:03 miod Exp $	*/
+/*	$OpenBSD: zaurus_machdep.c,v 1.11 2005/02/23 00:01:09 drahn Exp $	*/
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -1345,73 +1345,4 @@ board_startup(void)
 		printf("kernel does not support -c; continuing..\n");
 #endif
 	}
-}
-
-/*
- * Cotulla's integrated ICU doesn't have IRQ0..7, so
- * we map software interrupts to bit 0..3
- */
-#define SI_TO_IRQBIT(si)  (1U<<(si))
-
-void
-pxa2x0_setipl(int new)
-{
-	current_spl_level = new;
-	intr_mask = pxa2x0_imask[current_spl_level];
-	write_icu( SAIPIC_MR, intr_mask );
-}
-
-
-void
-pxa2x0_splx(int new)
-{
-	int psw;
-
-	psw = disable_interrupts(I32_bit);
-	pxa2x0_setipl(new);
-	restore_interrupts(psw);
-
-	/* If there are software interrupts to process, do it. */
-	if (softint_pending & intr_mask)
-		pxa2x0_do_pending();
-}
-
-
-int
-pxa2x0_splraise(int ipl)
-{
-	int	old, psw;
-
-	old = current_spl_level;
-	if( ipl > current_spl_level ){
-		psw = disable_interrupts(I32_bit);
-		pxa2x0_setipl(ipl);
-		restore_interrupts(psw);
-	}
-
-	return (old);
-}
-
-int
-pxa2x0_spllower(int ipl)
-{
-	int old = current_spl_level;
-	int psw = disable_interrupts(I32_bit);
-	pxa2x0_splx(ipl);
-	restore_interrupts(psw);
-	return(old);
-}
-
-void
-pxa2x0_setsoftintr(int si)
-{
-#if 0
-	atomic_set_bit( (u_int *)&softint_pending, SI_TO_IRQBIT(si) );
-#else
-	softint_pending |=  SI_TO_IRQBIT(si);
-#endif
-
-	/* Process unmasked pending soft interrupts. */
-	if ( softint_pending & intr_mask )
-		pxa2x0_do_pending();
 }
