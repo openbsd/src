@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.441 2004/02/11 18:34:51 cedric Exp $	*/
+/*	$OpenBSD: parse.y,v 1.442 2004/02/24 11:16:26 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -3397,6 +3397,10 @@ filter_consistent(struct pf_rule *r)
 	}
 	if (r->rule_flag & PFRULE_RETURNRST && r->proto != IPPROTO_TCP) {
 		yyerror("return-rst can only be applied to TCP rules");
+		problems++;
+	}
+	if (r->mak_src_nodes && !(r->rule_flag & PFRULE_RULESRCTRACK)) {
+		yyerror("max-src-nodes requires 'source-track rule'");
 		problems++;
 	}
 	if (r->action == PF_DROP && r->keep_state) {
