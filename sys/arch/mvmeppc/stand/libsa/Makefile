@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2003/06/01 17:00:38 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.3 2004/01/24 21:11:56 miod Exp $
 
 LIB=sa
 
@@ -17,6 +17,7 @@ SRC_net= arp.c ether.c in_cksum.c net.c netif.c rpc.c nfs.c \
 
 SRC_sa=	alloc.c memcpy.c exit.c getfile.c gets.c globals.c \
 	printf.c strerror.c memset.c memcmp.c strncpy.c strcmp.c strlen.c \
+	strlcpy.c strlcat.c snprintf.c \
 	close.c closeall.c dev.c disklabel.c dkcksum.c \
 	lseek.c open.c nullfs.c read.c fstat.c \
 	ufs.c cread.c
