@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.28 2001/01/28 00:56:07 weingart Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.29 2002/01/18 08:33:10 kjell Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -175,15 +175,20 @@ Xedit(cmd, disk, mbr, tt, offset)
 		u_int m;
 
 		/* Get data */
-		EDIT("Partition offset", ASK_DEC, pp->bs, 0,
-		    disk->real->size, NULL);
+		pp->bs = getuint(disk, "offset",
+		   "Starting sector for this partition.", pp->bs,
+		   disk->real->size, 0, DO_CONVERSIONS |
+		   (pp->id == FS_BSDFFS ? DO_ROUNDING : 0));
+
 		m = MAX(pp->ns, disk->real->size - pp->bs);
 		if ( m > disk->real->size - pp->bs) {
 			/* dont have default value extend beyond end of disk */
 			m = disk->real->size - pp->bs;
 		}
-		EDIT("Partition size", ASK_DEC, pp->ns, 1,
-		    m, NULL);
+		pp->ns = getuint(disk, "size", "Size of the partition.",
+		    pp->ns, m, pp->bs , DO_CONVERSIONS |
+		    ((pp->id == FS_BSDFFS || pp->id == FS_SWAP) ?
+		    DO_ROUNDING : 0));
 
 		/* Fix up CHS values */
 		PRT_fix_CHS(disk, pp, pn);

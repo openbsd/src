@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.h,v 1.4 2001/08/12 12:03:01 heko Exp $	*/
+/*	$OpenBSD: misc.h,v 1.5 2002/01/18 08:33:10 kjell Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -39,6 +39,8 @@
 /* Constants */
 #define ASK_HEX 0x01
 #define ASK_DEC 0x02
+#define	DO_CONVERSIONS	0x00000001
+#define	DO_ROUNDING	0x00000002
 
 /* Prototypes */
 int ask_cmd __P((cmd_t *));
@@ -48,6 +50,7 @@ u_int16_t getshort __P((void *));
 u_int32_t getlong __P((void *));
 void putshort __P((void *, u_int16_t));
 void putlong __P((void *, u_int32_t));
+u_int32_t getuint __P((disk_t *, char *, char *, u_int32_t, u_int32_t, u_int32_t, int));
 
 #endif /* _MISC_H */
 
