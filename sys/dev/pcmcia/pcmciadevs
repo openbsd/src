@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.102 2003/05/24 19:01:03 henning Exp $
+	$OpenBSD: pcmciadevs,v 1.103 2003/06/01 20:15:50 fgsch Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -220,6 +220,7 @@ product INTEL PRO_WLAN_2011	0x0001 Intel PRO/Wireless 2011
 product INTEL EEPRO100		0x010a Intel EtherExpress PRO/100
 
 /* Kingston */
+product KINGSTON KNE_PCM	0x0001 Kingston KNE-PCM
 product KINGSTON KNE_PC2	0x0100 Kingston KNE-PC2
 
 /* Lasat */
