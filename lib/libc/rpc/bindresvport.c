@@ -1,4 +1,4 @@
-/*	$OpenBSD: bindresvport.c,v 1.5 1996/07/30 10:52:49 deraadt Exp $	*/
+/*	$OpenBSD: bindresvport.c,v 1.6 1996/07/30 10:55:22 deraadt Exp $	*/
 /*	$NetBSD: bindresvport.c,v 1.5 1995/06/03 22:37:19 mycroft Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)bindresvport.c 1.8 88/02/08 SMI";*/
 /*static char *sccsid = "from: @(#)bindresvport.c	2.2 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$OpenBSD: bindresvport.c,v 1.5 1996/07/30 10:52:49 deraadt Exp $";
+static char *rcsid = "$OpenBSD: bindresvport.c,v 1.6 1996/07/30 10:55:22 deraadt Exp $";
 #endif
 
 /*
@@ -86,7 +86,7 @@ bindresvport(sd, sin)
 
 	error = bind(sd, (struct sockaddr *)sin, sizeof(*sin));
 
-	if (sin.sin_port == 0) {
+	if (sin->sin_port == 0) {
 		int saved_errno = errno;
 
 		if (error) {
@@ -97,9 +97,11 @@ bindresvport(sd, sin)
 		}
 
 		if (sin != &myaddr) {
+			int sinlen = sizeof(*sin);
+
 			/* Hmm, what did the kernel assign... */
 			if (getsockname(sd, (struct sockaddr *)sin,
-			    sizeof(*sin)) < 0)
+			    &sinlen) < 0)
 				saved_errno = errno;
 			return (error);
 		}
