@@ -1,4 +1,4 @@
-/*	$OpenBSD: magmareg.h,v 1.8 2003/02/11 19:20:26 mickey Exp $	*/
+/*	$OpenBSD: magmareg.h,v 1.9 2004/11/02 21:16:10 miod Exp $	*/
 
 /* magmareg.h
  *
@@ -31,12 +31,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-
-#ifdef MAGMA_DEBUG
-#define dprintf(x) printf x
-#else
-#define dprintf(x)
-#endif
 
 /*  The mapping of minor device number -> card and port is done as
  * follows by default:
@@ -117,7 +111,7 @@ struct magma_softc {
 	int ms_ncd1190;
 	struct cd1190 ms_cd1190[MAGMA_MAX_CD1190];
 
-	struct magma_board_info *ms_board;	/* what am I? */
+	const struct magma_board_info *ms_board;	/* what am I? */
 
 	struct mtty_softc *ms_mtty;
 	struct mbpp_softc *ms_mbpp;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: magma.c,v 1.18 2004/09/29 07:35:11 miod Exp $	*/
+/*	$OpenBSD: magma.c,v 1.19 2004/11/02 21:16:10 miod Exp $	*/
 /*
  * magma.c
  *
@@ -30,7 +30,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
-#define MAGMA_DEBUG
  */
 
 /*
@@ -39,7 +38,6 @@
  */
 
 #include "magma.h"
-#if NMAGMA > 0
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,10 +64,10 @@
 #include <dev/ic/cd1190reg.h>
 
 #include <sparc/bppioctl.h>
-#include "magmareg.h"
+#include <sparc/dev/magmareg.h>
 
 /*
- * Select tty soft interrupt bit based on TTY ipl. (stole from zs.c)
+ * Select tty soft interrupt bit based on TTY ipl. (stolen from zs.c)
  */
 #if IPL_TTY == 1
 # define IE_MSOFT IE_L1
@@ -81,7 +79,14 @@
 # error "no suitable software interrupt bit"
 #endif
 
-/* supported cards
+#ifdef MAGMA_DEBUG
+#define dprintf(x) printf x
+#else
+#define dprintf(x)
+#endif
+
+/*
+ * Supported cards table.
  *
  *  The table below lists the cards that this driver is likely to
  *  be able to support.
@@ -93,7 +98,7 @@
  *
  *  Thanks to Bruce at Magma for telling me the hardware offsets.
  */
-static struct magma_board_info supported_cards[] = {
+static const struct magma_board_info supported_cards[] = {
 	{
 		"MAGMA_Sp", "MAGMA,4_Sp", "Magma 4 Sp", 4, 0,
 		1, 0xa000, 0xc000, 0xe000, { 0x8000, 0, 0, 0 },
@@ -222,25 +227,25 @@ struct cfdriver mbpp_cd = {
  */
 int
 cd1400_compute_baud(speed, clock, cor, bpr)
-speed_t speed;
-int clock;
-int *cor, *bpr;
+	speed_t speed;
+	int clock;
+	int *cor, *bpr;
 {
-int c, co, br;
+	int c, co, br;
 
-	if( speed < 50 || speed > 150000 )
-		return(1);
+	if (speed < 50 || speed > 150000)
+		return (1);
 
-	for( c = 0, co = 8 ; co <= 2048 ; co <<= 2, c++ ) {
+	for (c = 0, co = 8 ; co <= 2048 ; co <<= 2, c++) {
 		br = ((clock * 1000000) + (co * speed) / 2) / (co * speed);
-		if( br < 0x100 ) {
+		if (br < 0x100) {
 			*bpr = br;
 			*cor = c;
-			return(0);
+			return (0);
 		}
 	}
 
-	return(1);
+	return (1);
 }
 
 /*
@@ -248,10 +253,10 @@ int c, co, br;
  */
 __inline void
 cd1400_write_ccr(cd, cmd)
-struct cd1400 *cd;
-u_char cmd;
+	struct cd1400 *cd;
+	u_char cmd;
 {
-	while( cd1400_read_reg(cd, CD1400_CCR) )
+	while (cd1400_read_reg(cd, CD1400_CCR))
 		;
 
 	cd1400_write_reg(cd, CD1400_CCR, cmd);
@@ -262,10 +267,10 @@ u_char cmd;
  */
 __inline u_char
 cd1400_read_reg(cd, reg)
-struct cd1400 *cd;
-int reg;
+	struct cd1400 *cd;
+	int reg;
 {
-	return(cd->cd_reg[reg]);
+	return (cd->cd_reg[reg]);
 }
 
 /*
@@ -273,9 +278,9 @@ int reg;
  */
 __inline void
 cd1400_write_reg(cd, reg, value)
-struct cd1400 *cd;
-int reg;
-u_char value;
+	struct cd1400 *cd;
+	int reg;
+	u_char value;
 {
 	cd->cd_reg[reg] = value;
 }
@@ -285,10 +290,10 @@ u_char value;
  */
 void
 cd1400_enable_transmitter(cd, channel)
-struct cd1400 *cd;
-int channel;
+	struct cd1400 *cd;
+	int channel;
 {
-register int s, srer;
+	register int s, srer;
 
 	s = spltty();
 	cd1400_write_reg(cd, CD1400_CAR, channel);
@@ -303,7 +308,7 @@ register int s, srer;
  *  CD1190 Routines
  */
 
-/* well, there are none yet */
+/* XXX well, there are none yet */
 
 /************************************************************************
  *
@@ -322,7 +327,7 @@ magma_match(parent, vcf, args)
 {
 	struct confargs *ca = args;
 	struct romaux *ra = &ca->ca_ra;
-	struct magma_board_info *card;
+	const struct magma_board_info *card;
 
 	for (card = supported_cards; ; card++) {
 		if (card->mb_sbusname == NULL)
@@ -334,18 +339,26 @@ magma_match(parent, vcf, args)
 
 #if defined(MAGMA_DEBUG)
 {
-int i;
+	int i;
 
-	printf("magma: matched `%s', nvaddrs %d, nreg %d, nintr %d\n", ra->ra_name, ra->ra_nvaddrs, ra->ra_nreg, ra->ra_nintr);
-	printf("magma: magma_prom `%s'\n", getpropstring(ra->ra_node, "magma_prom"));
-	printf("magma: intlevels `%s'\n", getpropstring(ra->ra_node, "intlevels"));
-	printf("magma: chiprev `%s'\n", getpropstring(ra->ra_node, "chiprev"));
-	printf("magma: clock `%s'\n", getpropstring(ra->ra_node, "clock"));
+	printf("magma: matched `%s', nvaddrs %d, nreg %d, nintr %d\n",
+	    ra->ra_name, ra->ra_nvaddrs, ra->ra_nreg, ra->ra_nintr);
+	printf("magma: magma_prom `%s'\n",
+	    getpropstring(ra->ra_node, "magma_prom"));
+	printf("magma: intlevels `%s'\n",
+	    getpropstring(ra->ra_node, "intlevels"));
+	printf("magma: chiprev `%s'\n",
+	    getpropstring(ra->ra_node, "chiprev"));
+	printf("magma: clock `%s'\n",
+	    getpropstring(ra->ra_node, "clock"));
 
-	for( i = 0 ; i < ra->ra_nreg ; i++ )
-		printf("magma: reg  %d; ra_iospace = %d, ra_paddr = 0x%x, ra_len = %d\n", i, ra->ra_reg[i].rr_iospace, (int)ra->ra_reg[i].rr_paddr, ra->ra_reg[i].rr_len);
-	for( i = 0 ; i < ra->ra_nintr ; i++ )
-		printf("magma: intr %d; pri = %d, vec = %d\n", i, ra->ra_intr[i].int_pri, ra->ra_intr[i].int_vec);
+	for (i = 0 ; i < ra->ra_nreg ; i++)
+		printf("magma: reg  %d; ra_iospace = %d, ra_paddr = 0x%x, ra_len = %d\n",
+		    i, ra->ra_reg[i].rr_iospace,
+		    (int)ra->ra_reg[i].rr_paddr, ra->ra_reg[i].rr_len);
+	for (i = 0 ; i < ra->ra_nintr ; i++)
+		printf("magma: intr %d; pri = %d, vec = %d\n",
+		    i, ra->ra_intr[i].int_pri, ra->ra_intr[i].int_vec);
 }
 #endif
 
@@ -354,18 +367,17 @@ int i;
 
 void
 magma_attach(parent, dev, args)
-struct device *parent;
-struct device *dev;
-void *args;
+	struct device *parent;
+	struct device *dev;
+	void *args;
 {
-struct confargs *ca = args;
-struct romaux *ra = &ca->ca_ra;
-struct magma_softc *sc = (struct magma_softc *)dev;
-struct magma_board_info *card;
-char magma_prom[40], *clockstr;
-int chip, cd_clock, len;
-void *base;
-
+	struct confargs *ca = args;
+	struct romaux *ra = &ca->ca_ra;
+	struct magma_softc *sc = (struct magma_softc *)dev;
+	const struct magma_board_info *card;
+	char magma_prom[40], *clockstr;
+	int chip, cd_clock, len;
+	void *base;
 
 	len = getprop(ra->ra_node, "magma_prom",
 	    magma_prom, sizeof(magma_prom) - 1);
@@ -380,7 +392,7 @@ void *base;
 			break;
 	}
 
-	if( card->mb_name == NULL ) {
+	if (card->mb_name == NULL) {
 		printf(" %s (unsupported)\n", magma_prom);
 		return;
 	}
@@ -410,8 +422,8 @@ void *base;
 	sc->ms_svcackt = base + card->mb_svcackt;
 	sc->ms_svcackm = base + card->mb_svcackm;
 
-	/* init the cd1400 chips */
-	for( chip = 0 ; chip < card->mb_ncd1400 ; chip++ ) {
+	/* Init the cd1400 chips */
+	for (chip = 0 ; chip < card->mb_ncd1400 ; chip++) {
 		struct cd1400 *cd = &sc->ms_cd1400[chip];
 
 		cd->cd_reg = base + card->mb_cd1400[chip];
@@ -422,7 +434,9 @@ void *base;
 		/* seemingly the Magma drivers just ignore the propstring */
 		cd->cd_chiprev = cd1400_read_reg(cd, CD1400_GFRCR);
 
-		dprintf(("%s attach CD1400 %d addr 0x%x rev %x clock %dMHz\n", sc->ms_dev.dv_xname, chip, cd->cd_reg, cd->cd_chiprev, cd->cd_clock));
+		dprintf(("%s attach CD1400 %d addr 0x%x rev %x clock %dMHz\n",
+		    sc->ms_dev.dv_xname, chip,
+		    cd->cd_reg, cd->cd_chiprev, cd->cd_clock));
 
 		/* clear GFRCR */
 		cd1400_write_reg(cd, CD1400_GFRCR, 0x00);
@@ -431,28 +445,33 @@ void *base;
 		cd1400_write_ccr(cd, CD1400_CCR_CMDRESET | CD1400_CCR_FULLRESET);
 
 		/* wait for revision code to be restored */
-		while( cd1400_read_reg(cd, CD1400_GFRCR) != cd->cd_chiprev )
+		while (cd1400_read_reg(cd, CD1400_GFRCR) != cd->cd_chiprev)
 		        ;
 
 		/* set the Prescaler Period Register to tick at 1ms */
-		cd1400_write_reg(cd, CD1400_PPR, ((cd->cd_clock * 1000000 / CD1400_PPR_PRESCALER + 500) / 1000));
+		cd1400_write_reg(cd, CD1400_PPR,
+		    ((cd->cd_clock * 1000000 / CD1400_PPR_PRESCALER + 500) /
+		    1000));
 
-		/* The LC2+1Sp card is the only card that doesn't have a CD1190 for the
-		 * parallel port, but uses channel 0 of the CD1400, so we make a note
-		 * of it for later and set up the CD1400 for parallel mode operation.
+		/*
+		 * The LC2+1Sp card is the only card that doesn't have a CD1190
+		 * for the parallel port, but uses channel 0 of the CD1400, so
+		 * we make a note of it for later and set up the CD1400 for
+		 * parallel mode operation.
 		 */
-		if( card->mb_npar && card->mb_ncd1190 == 0 ) {
+		if (card->mb_npar && card->mb_ncd1190 == 0) {
 			cd1400_write_reg(cd, CD1400_GCR, CD1400_GCR_PARALLEL);
 			cd->cd_parmode = 1;
 		}
 	}
 
 	/* init the cd1190 chips */
-	for( chip = 0 ; chip < card->mb_ncd1190 ; chip++ ) {
-	struct cd1190 *cd = &sc->ms_cd1190[chip];
+	for (chip = 0 ; chip < card->mb_ncd1190 ; chip++) {
+		struct cd1190 *cd = &sc->ms_cd1190[chip];
 
 		cd->cd_reg = base + card->mb_cd1190[chip];
-		dprintf(("%s attach CD1190 %d addr 0x%x (failed)\n", sc->ms_dev.dv_xname, chip, cd->cd_reg));
+		dprintf(("%s attach CD1190 %d addr 0x%x (failed)\n",
+		    sc->ms_dev.dv_xname, chip, cd->cd_reg));
 		/* XXX don't know anything about these chips yet */
 	}
 
@@ -482,25 +501,26 @@ void *base;
  */
 int
 magma_hard(arg)
-void *arg;
+	void *arg;
 {
-struct magma_softc *sc = arg;
-struct cd1400 *cd;
-int chip, status = 0;
-int serviced = 0;
-int needsoftint = 0;
+	struct magma_softc *sc = arg;
+	struct cd1400 *cd;
+	int chip, status = 0;
+	int serviced = 0;
+	int needsoftint = 0;
 
 	/*
 	 * check status of all the CD1400 chips
 	 */
-	for( chip = 0 ; chip < sc->ms_ncd1400 ; chip++ )
+	for (chip = 0 ; chip < sc->ms_ncd1400 ; chip++)
 		status |= cd1400_read_reg(&sc->ms_cd1400[chip], CD1400_SVRR);
 
-	if( ISSET(status, CD1400_SVRR_RXRDY) ) {
-	u_char rivr = *sc->ms_svcackr;	/* enter rx service context */
-	int port = rivr >> 4;
+	if (ISSET(status, CD1400_SVRR_RXRDY)) {
+		/* enter rx service context */
+		u_char rivr = *sc->ms_svcackr;
+		int port = rivr >> 4;
 
-		if( rivr & (1<<3) ) {			/* parallel port */
+		if (rivr & (1 << 3)) {			/* parallel port */
 		struct mbpp_port *mbpp;
 		int n_chars;
 
@@ -509,8 +529,8 @@ int needsoftint = 0;
 
 			/* don't think we have to handle exceptions */
 			n_chars = cd1400_read_reg(cd, CD1400_RDCR);
-			while( n_chars-- ) {
-				if( mbpp->mp_cnt == 0 ) {
+			while (n_chars--) {
+				if (mbpp->mp_cnt == 0) {
 					SET(mbpp->mp_flags, MBPPF_WAKEUP);
 					needsoftint = 1;
 					break;
@@ -520,13 +540,13 @@ int needsoftint = 0;
 				mbpp->mp_cnt--;
 			}
 		} else {				/* serial port */
-		register struct mtty_port *mtty;
-		register u_char *ptr, n_chars, line_stat;
+			register struct mtty_port *mtty;
+			register u_char *ptr, n_chars, line_stat;
 
 			mtty = &sc->ms_mtty->ms_port[port];
 			cd = mtty->mp_cd1400;
 
-			if( ISSET(rivr, CD1400_RIVR_EXCEPTION) ) {
+			if (ISSET(rivr, CD1400_RIVR_EXCEPTION)) {
 				line_stat = cd1400_read_reg(cd, CD1400_RDSR);
 				n_chars = 1;
 			} else { /* no exception, received data OK */
@@ -535,12 +555,14 @@ int needsoftint = 0;
 			}
 
 			ptr = mtty->mp_rput;
-			while( n_chars-- ) {
+			while (n_chars--) {
 				*ptr++ = line_stat;
 				*ptr++ = cd1400_read_reg(cd, CD1400_RDSR);
-				if( ptr == mtty->mp_rend ) ptr = mtty->mp_rbuf;
-				if( ptr == mtty->mp_rget ) {
-					if( ptr == mtty->mp_rbuf ) ptr = mtty->mp_rend;
+				if (ptr == mtty->mp_rend)
+				    ptr = mtty->mp_rbuf;
+				if (ptr == mtty->mp_rget) {
+					if (ptr == mtty->mp_rbuf)
+					    ptr = mtty->mp_rend;
 					ptr -= 2;
 					SET(mtty->mp_flags, MTTYF_RING_OVERFLOW);
 					break;
@@ -551,16 +573,18 @@ int needsoftint = 0;
 			needsoftint = 1;
 		}
 
-		cd1400_write_reg(cd, CD1400_EOSRR, 0);	/* end service context */
+		/* end service context */
+		cd1400_write_reg(cd, CD1400_EOSRR, 0);
 		serviced = 1;
-	} /* if(rx_service...) */
+	} /* if (rx_service...) */
 
-	if( ISSET(status, CD1400_SVRR_MDMCH) ) {
-	u_char mivr = *sc->ms_svcackm;	/* enter mdm service context */
-	int port = mivr >> 4;
-	struct mtty_port *mtty;
-	int carrier;
-	u_char msvr;
+	if (ISSET(status, CD1400_SVRR_MDMCH)) {
+		/* enter mdm service context */
+		u_char mivr = *sc->ms_svcackm;
+		int port = mivr >> 4;
+		struct mtty_port *mtty;
+		int carrier;
+		u_char msvr;
 
 		/*
 		 * Handle CD (LC2+1Sp = DSR) changes.
@@ -568,60 +592,67 @@ int needsoftint = 0;
 		mtty = &sc->ms_mtty->ms_port[port];
 		cd = mtty->mp_cd1400;
 		msvr = cd1400_read_reg(cd, CD1400_MSVR2);
-		carrier = ISSET(msvr, cd->cd_parmode ? CD1400_MSVR2_DSR : CD1400_MSVR2_CD);
+		carrier = ISSET(msvr,
+		    cd->cd_parmode ? CD1400_MSVR2_DSR : CD1400_MSVR2_CD);
 
-		if( mtty->mp_carrier != carrier ) {
+		if (mtty->mp_carrier != carrier) {
 			SET(mtty->mp_flags, MTTYF_CARRIER_CHANGED);
 			mtty->mp_carrier = carrier;
 			needsoftint = 1;
 		}
 
-		cd1400_write_reg(cd, CD1400_EOSRR, 0);	/* end service context */
+		/* end service context */
+		cd1400_write_reg(cd, CD1400_EOSRR, 0);
 		serviced = 1;
-	} /* if(mdm_service...) */
+	} /* if (mdm_service...) */
 
-	if( ISSET(status, CD1400_SVRR_TXRDY) ) {
-	u_char tivr = *sc->ms_svcackt;	/* enter tx service context */
-	int port = tivr >> 4;
+	if (ISSET(status, CD1400_SVRR_TXRDY)) {
+		/* enter tx service context */
+		u_char tivr = *sc->ms_svcackt;
+		int port = tivr >> 4;
 
-		if( tivr & (1<<3) ) {	/* parallel port */
-		struct mbpp_port *mbpp;
+		if (tivr & (1 << 3)) {	/* parallel port */
+			struct mbpp_port *mbpp;
 
 			mbpp = &sc->ms_mbpp->ms_port[port];
 			cd = mbpp->mp_cd1400;
 
-			if( mbpp->mp_cnt ) {
-			int count = 0;
+			if (mbpp->mp_cnt) {
+				int count = 0;
 
 				/* fill the fifo */
-				while( mbpp->mp_cnt && count++ < CD1400_PAR_FIFO_SIZE ) {
-					cd1400_write_reg(cd, CD1400_TDR, *mbpp->mp_ptr);
+				while (mbpp->mp_cnt &&
+				    count++ < CD1400_PAR_FIFO_SIZE) {
+					cd1400_write_reg(cd, CD1400_TDR,
+					    *mbpp->mp_ptr);
 					mbpp->mp_ptr++;
 					mbpp->mp_cnt--;
 				}
 			} else {
-				/* fifo is empty and we got no more data to send, so shut
-				 * off interrupts and signal for a wakeup, which can't be
-				 * done here in case we beat mbpp_send to the tsleep call
-				 * (we are running at >spltty)
+				/*
+				 * fifo is empty and we got no more data to
+				 * send, so shut off interrupts and signal for
+				 * a wakeup, which can't be done here in case
+				 * we beat mbpp_send to the tsleep call
+				 * (we are running at psl > spltty).
 				 */
 				cd1400_write_reg(cd, CD1400_SRER, 0);
 				SET(mbpp->mp_flags, MBPPF_WAKEUP);
 				needsoftint = 1;
 			}
 		} else {		/* serial port */
-		struct mtty_port *mtty;
-		struct tty *tp;
+			struct mtty_port *mtty;
+			struct tty *tp;
 
 			mtty = &sc->ms_mtty->ms_port[port];
 			cd = mtty->mp_cd1400;
 			tp = mtty->mp_tty;
 
-			if( !ISSET(mtty->mp_flags, MTTYF_STOP) ) {
-			register int count = 0;
+			if (!ISSET(mtty->mp_flags, MTTYF_STOP)) {
+				register int count = 0;
 
 				/* check if we should start/stop a break */
-				if( ISSET(mtty->mp_flags, MTTYF_SET_BREAK) ) {
+				if (ISSET(mtty->mp_flags, MTTYF_SET_BREAK)) {
 					cd1400_write_reg(cd, CD1400_TDR, 0);
 					cd1400_write_reg(cd, CD1400_TDR, 0x81);
 					/* should we delay too? */
@@ -629,27 +660,31 @@ int needsoftint = 0;
 					count += 2;
 				}
 
-				if( ISSET(mtty->mp_flags, MTTYF_CLR_BREAK) ) {
+				if (ISSET(mtty->mp_flags, MTTYF_CLR_BREAK)) {
 					cd1400_write_reg(cd, CD1400_TDR, 0);
 					cd1400_write_reg(cd, CD1400_TDR, 0x83);
 					CLR(mtty->mp_flags, MTTYF_CLR_BREAK);
 					count += 2;
 				}
 
-				/* I don't quite fill the fifo in case the last one is a
-				 * NULL which I have to double up because its the escape
-				 * code for embedded transmit characters.
+				/*
+				 * I don't quite fill the fifo in case the last
+				 * one is a NULL which I have to double up
+				 * because its the escape code for embedded
+				 * transmit characters.
 				 */
-				while( mtty->mp_txc > 0 && count < CD1400_TX_FIFO_SIZE - 1 ) {
-				register u_char ch;
+				while (mtty->mp_txc > 0 &&
+				    count < CD1400_TX_FIFO_SIZE - 1) {
+					register u_char ch;
 
 					ch = *mtty->mp_txp;
 
 					mtty->mp_txc--;
 					mtty->mp_txp++;
 
-					if( ch == 0 ) {
-						cd1400_write_reg(cd, CD1400_TDR, ch);
+					if (ch == 0) {
+						cd1400_write_reg(cd,
+						    CD1400_TDR, ch);
 						count++;
 					}
 
@@ -658,12 +693,14 @@ int needsoftint = 0;
 				}
 			}
 
-			/* if we ran out of work or are requested to STOP then
-			 * shut off the txrdy interrupts and signal DONE to flush
-			 * out the chars we have sent.
+			/*
+			 * If we ran out of work or are requested to STOP then
+			 * shut off the txrdy interrupts and signal DONE to
+			 * flush out the chars we have sent.
 			 */
-			if( mtty->mp_txc == 0 || ISSET(mtty->mp_flags, MTTYF_STOP) ) {
-			register int srer;
+			if (mtty->mp_txc == 0 ||
+			    ISSET(mtty->mp_flags, MTTYF_STOP)) {
+				register int srer;
 
 				srer = cd1400_read_reg(cd, CD1400_SRER);
 				CLR(srer, CD1400_SRER_TXRDY);
@@ -675,25 +712,26 @@ int needsoftint = 0;
 			}
 		}
 
-		cd1400_write_reg(cd, CD1400_EOSRR, 0);	/* end service context */
+		/* end service context */
+		cd1400_write_reg(cd, CD1400_EOSRR, 0);
 		serviced = 1;
-	} /* if(tx_service...) */
+	} /* if (tx_service...) */
 
 	/* XXX service CD1190 interrupts too
-	for( chip = 0 ; chip < sc->ms_ncd1190 ; chip++ ) {
+	for (chip = 0 ; chip < sc->ms_ncd1190 ; chip++) {
 	}
 	*/
 
-	if( needsoftint ) {	/* trigger the soft interrupt */
+	if (needsoftint) {	/* trigger the soft interrupt */
 #if defined(SUN4M)
-		if( CPU_ISSUN4M )
+		if (CPU_ISSUN4M)
 			raise(0, IPL_TTY);
 		else
 #endif
 			ienab_bis(IE_MSOFT);
 	}
 
-	return(serviced);
+	return (serviced);
 }
 
 /*
@@ -705,43 +743,48 @@ int needsoftint = 0;
  */
 int
 magma_soft(arg)
-void *arg;
+	void *arg;
 {
-struct magma_softc *sc = arg;
-struct mtty_softc *mtty = sc->ms_mtty;
-struct mbpp_softc *mbpp = sc->ms_mbpp;
-int port;
-int serviced = 0;
-int s, flags;
+	struct magma_softc *sc = arg;
+	struct mtty_softc *mtty = sc->ms_mtty;
+	struct mbpp_softc *mbpp = sc->ms_mbpp;
+	int port;
+	int serviced = 0;
+	int s, flags;
 
 	/*
 	 * check the tty ports (if any) to see what needs doing
 	 */
-	if( mtty ) {
-		for( port = 0 ; port < mtty->ms_nports ; port++ ) {
-		struct mtty_port *mp = &mtty->ms_port[port];
-		struct tty *tp = mp->mp_tty;
+	if (mtty) {
+		for (port = 0 ; port < mtty->ms_nports ; port++) {
+			struct mtty_port *mp = &mtty->ms_port[port];
+			struct tty *tp = mp->mp_tty;
 
-			if( !ISSET(tp->t_state, TS_ISOPEN) ) continue;
+			if (!ISSET(tp->t_state, TS_ISOPEN))
+				continue;
 
 			/*
 			 * handle any received data
 			 */
-			while( mp->mp_rget != mp->mp_rput ) {
-			u_char stat;
-			int data;
+			while (mp->mp_rget != mp->mp_rput) {
+				u_char stat;
+				int data;
 
 				stat = mp->mp_rget[0];
 				data = mp->mp_rget[1];
-				mp->mp_rget = ((mp->mp_rget + 2) == mp->mp_rend) ? mp->mp_rbuf : (mp->mp_rget + 2);
+				mp->mp_rget =
+				    ((mp->mp_rget + 2) == mp->mp_rend) ?
+				      mp->mp_rbuf : (mp->mp_rget + 2);
 
-				if( stat & (CD1400_RDSR_BREAK | CD1400_RDSR_FE) )
+				if (stat & (CD1400_RDSR_BREAK | CD1400_RDSR_FE))
 					data |= TTY_FE;
-				if( stat & CD1400_RDSR_PE )
+				if (stat & CD1400_RDSR_PE)
 					data |= TTY_PE;
 
-				if( stat & CD1400_RDSR_OE )
-					log(LOG_WARNING, "%s%x: fifo overflow\n", mtty->ms_dev.dv_xname, port);
+				if (stat & CD1400_RDSR_OE)
+					log(LOG_WARNING,
+					    "%s%x: fifo overflow\n",
+					    mtty->ms_dev.dv_xname, port);
 
 				(*linesw[tp->t_line].l_rint)(data, tp);
 				serviced = 1;
@@ -749,51 +792,60 @@ int s, flags;
 
 			s = splhigh();	/* block out hard interrupt routine */
 			flags = mp->mp_flags;
-			CLR(mp->mp_flags, MTTYF_DONE | MTTYF_CARRIER_CHANGED | MTTYF_RING_OVERFLOW);
+			CLR(mp->mp_flags, MTTYF_DONE | MTTYF_CARRIER_CHANGED |
+			    MTTYF_RING_OVERFLOW);
 			splx(s);	/* ok */
 
-			if( ISSET(flags, MTTYF_CARRIER_CHANGED) ) {
-				dprintf(("%s%x: cd %s\n", mtty->ms_dev.dv_xname, port, mp->mp_carrier ? "on" : "off"));
-				(*linesw[tp->t_line].l_modem)(tp, mp->mp_carrier);
+			if (ISSET(flags, MTTYF_CARRIER_CHANGED)) {
+				dprintf(("%s%x: cd %s\n",
+				    mtty->ms_dev.dv_xname, port,
+				    mp->mp_carrier ? "on" : "off"));
+				(*linesw[tp->t_line].l_modem)(tp,
+				    mp->mp_carrier);
 				serviced = 1;
 			}
 
-			if( ISSET(flags, MTTYF_RING_OVERFLOW) ) {
-				log(LOG_WARNING, "%s%x: ring buffer overflow\n", mtty->ms_dev.dv_xname, port);
+			if (ISSET(flags, MTTYF_RING_OVERFLOW)) {
+				log(LOG_WARNING,
+				    "%s%x: ring buffer overflow\n",
+				    mtty->ms_dev.dv_xname, port);
 				serviced = 1;
 			}
 
-			if( ISSET(flags, MTTYF_DONE) ) {
-				ndflush(&tp->t_outq, mp->mp_txp - tp->t_outq.c_cf);
+			if (ISSET(flags, MTTYF_DONE)) {
+				ndflush(&tp->t_outq,
+				    mp->mp_txp - tp->t_outq.c_cf);
 				CLR(tp->t_state, TS_BUSY);
-				(*linesw[tp->t_line].l_start)(tp);	/* might be some more */
+				/* might be some more */
+				(*linesw[tp->t_line].l_start)(tp);
 				serviced = 1;
 			}
-		} /* for(each mtty...) */
+		} /* for (each mtty...) */
 	}
 
 	/*
 	 * check the bpp ports (if any) to see what needs doing
 	 */
-	if( mbpp ) {
-		for( port = 0 ; port < mbpp->ms_nports ; port++ ) {
-		struct mbpp_port *mp = &mbpp->ms_port[port];
+	if (mbpp) {
+		for (port = 0 ; port < mbpp->ms_nports ; port++) {
+			struct mbpp_port *mp = &mbpp->ms_port[port];
 
-			if( !ISSET(mp->mp_flags, MBPPF_OPEN) ) continue;
+			if (!ISSET(mp->mp_flags, MBPPF_OPEN))
+				continue;
 
 			s = splhigh();	/* block out hard intr routine */
 			flags = mp->mp_flags;
 			CLR(mp->mp_flags, MBPPF_WAKEUP);
 			splx(s);
 
-			if( ISSET(flags, MBPPF_WAKEUP) ) {
+			if (ISSET(flags, MBPPF_WAKEUP)) {
 				wakeup(mp);
 				serviced = 1;
 			}
-		} /* for(each mbpp...) */
+		} /* for (each mbpp...) */
 	}
 
-	return(serviced);
+	return (serviced);
 }
 
 /************************************************************************
@@ -816,33 +868,35 @@ int s, flags;
 
 int
 mtty_match(parent, vcf, args)
-struct device *parent;
-void *vcf, *args;
+	struct device *parent;
+	void *vcf, *args;
 {
-struct magma_softc *sc = (struct magma_softc *)parent;
+	struct magma_softc *sc = (struct magma_softc *)parent;
 
-	return( args == mtty_match && sc->ms_board->mb_nser && sc->ms_mtty == NULL );
+	return (args == mtty_match && sc->ms_board->mb_nser &&
+	    sc->ms_mtty == NULL);
 }
 
 void
 mtty_attach(parent, dev, args)
-struct device *parent;
-struct device *dev;
-void *args;
+	struct device *parent;
+	struct device *dev;
+	void *args;
 {
-struct magma_softc *sc = (struct magma_softc *)parent;
-struct mtty_softc *ms = (struct mtty_softc *)dev;
-int port, chip, chan;
+	struct magma_softc *sc = (struct magma_softc *)parent;
+	struct mtty_softc *ms = (struct mtty_softc *)dev;
+	int port, chip, chan;
 
 	sc->ms_mtty = ms;
 	dprintf((" addr 0x%x", ms));
 
-	for( port = 0, chip = 0, chan = 0 ; port < sc->ms_board->mb_nser ; port++ ) {
-	struct mtty_port *mp = &ms->ms_port[port];
-	struct tty *tp;
+	for (port = chip = chan = 0 ; port < sc->ms_board->mb_nser ; port++) {
+		struct mtty_port *mp = &ms->ms_port[port];
+		struct tty *tp;
 
 		mp->mp_cd1400 = &sc->ms_cd1400[chip];
-		if( mp->mp_cd1400->cd_parmode && chan == 0 ) chan = 1; /* skip channel 0 if parmode */
+		if (mp->mp_cd1400->cd_parmode && chan == 0)
+			chan = 1; /* skip channel 0 if parmode */
 		mp->mp_channel = chan;
 
 		tp = ttymalloc();
@@ -852,12 +906,14 @@ int port, chip, chan;
 		mp->mp_tty = tp;
 
 		mp->mp_rbuf = malloc(MTTY_RBUF_SIZE, M_DEVBUF, M_NOWAIT);
-		if( mp->mp_rbuf == NULL ) break;
+		if (mp->mp_rbuf == NULL)
+			break;
 
 		mp->mp_rend = mp->mp_rbuf + MTTY_RBUF_SIZE;
 
 		chan = (chan + 1) % CD1400_NO_OF_CHANNELS;
-		if( chan == 0 ) chip++;
+		if (chan == 0)
+			chip++;
 	}
 
 	ms->ms_nports = port;
@@ -869,27 +925,28 @@ int port, chip, chan;
  */
 int
 mttyopen(dev, flags, mode, p)
-dev_t dev;
-int flags;
-int mode;
-struct proc *p;
+	dev_t dev;
+	int flags;
+	int mode;
+	struct proc *p;
 {
-int card = MAGMA_CARD(dev);
-int port = MAGMA_PORT(dev);
-struct mtty_softc *ms;
-struct mtty_port *mp;
-struct tty *tp;
-struct cd1400 *cd;
-int s;
+	int card = MAGMA_CARD(dev);
+	int port = MAGMA_PORT(dev);
+	struct mtty_softc *ms;
+	struct mtty_port *mp;
+	struct tty *tp;
+	struct cd1400 *cd;
+	int s;
 
-	if( card >= mtty_cd.cd_ndevs || (ms = mtty_cd.cd_devs[card]) == NULL || port >= ms->ms_nports )
-		return(ENXIO);	/* device not configured */
+	if (card >= mtty_cd.cd_ndevs || (ms = mtty_cd.cd_devs[card]) == NULL ||
+	    port >= ms->ms_nports)
+		return (ENXIO);	/* device not configured */
 
 	mp = &ms->ms_port[port];
 	tp = mp->mp_tty;
 	tp->t_dev = dev;
 
-	if( !ISSET(tp->t_state, TS_ISOPEN) ) {
+	if (!ISSET(tp->t_state, TS_ISOPEN)) {
 		SET(tp->t_state, TS_WOPEN);
 
 		/* set defaults */
@@ -897,11 +954,11 @@ int s;
 		tp->t_iflag = TTYDEF_IFLAG;
 		tp->t_oflag = TTYDEF_OFLAG;
 		tp->t_cflag = TTYDEF_CFLAG;
-		if( ISSET(mp->mp_openflags, TIOCFLAG_CLOCAL) )
+		if (ISSET(mp->mp_openflags, TIOCFLAG_CLOCAL))
 			SET(tp->t_cflag, CLOCAL);
-		if( ISSET(mp->mp_openflags, TIOCFLAG_CRTSCTS) )
+		if (ISSET(mp->mp_openflags, TIOCFLAG_CRTSCTS))
 			SET(tp->t_cflag, CRTSCTS);
-		if( ISSET(mp->mp_openflags, TIOCFLAG_MDMBUF) )
+		if (ISSET(mp->mp_openflags, TIOCFLAG_MDMBUF))
 			SET(tp->t_cflag, MDMBUF);
 		tp->t_lflag = TTYDEF_LFLAG;
 		tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
@@ -917,7 +974,7 @@ int s;
 		cd1400_write_ccr(cd, CD1400_CCR_CMDRESET);
 
 		/* encode the port number in top half of LIVR */
-		cd1400_write_reg(cd, CD1400_LIVR, port << 4 );
+		cd1400_write_reg(cd, CD1400_LIVR, port << 4);
 
 		/* sets parameters and raises DTR */
 		(void)mtty_param(tp, &tp->t_termios);
@@ -926,37 +983,40 @@ int s;
 		ttsetwater(tp);
 
 		/* enable service requests */
-		cd1400_write_reg(cd, CD1400_SRER, CD1400_SRER_RXDATA | CD1400_SRER_MDMCH);
+		cd1400_write_reg(cd, CD1400_SRER,
+		    CD1400_SRER_RXDATA | CD1400_SRER_MDMCH);
 
 		/* tell the tty about the carrier status */
-		if( ISSET(mp->mp_openflags, TIOCFLAG_SOFTCAR) || mp->mp_carrier )
+		if (ISSET(mp->mp_openflags, TIOCFLAG_SOFTCAR) || mp->mp_carrier)
 			SET(tp->t_state, TS_CARR_ON);
 		else
 			CLR(tp->t_state, TS_CARR_ON);
-	} else if( ISSET(tp->t_state, TS_XCLUDE) && p->p_ucred->cr_uid != 0 ) {
-		return(EBUSY);	/* superuser can break exclusive access */
+	} else if (ISSET(tp->t_state, TS_XCLUDE) && p->p_ucred->cr_uid != 0) {
+		return (EBUSY);	/* superuser can break exclusive access */
 	} else {
 		s = spltty();
 	}
 
 	/* wait for carrier if necessary */
-	if( !ISSET(flags, O_NONBLOCK) ) {
-		while( !ISSET(tp->t_cflag, CLOCAL) && !ISSET(tp->t_state, TS_CARR_ON) ) {
-		int error;
+	if (!ISSET(flags, O_NONBLOCK)) {
+		while (!ISSET(tp->t_cflag, CLOCAL) &&
+		    !ISSET(tp->t_state, TS_CARR_ON)) {
+			int error;
 
 			SET(tp->t_state, TS_WOPEN);
-			error = ttysleep(tp, &tp->t_rawq, TTIPRI | PCATCH, "mttydcd", 0);
-			if( error != 0 ) {
+			error = ttysleep(tp, &tp->t_rawq, TTIPRI | PCATCH,
+			    "mttydcd", 0);
+			if (error != 0) {
 				splx(s);
 				CLR(tp->t_state, TS_WOPEN);
-				return(error);
+				return (error);
 			}
 		}
 	}
 
 	splx(s);
 
-	return( (*linesw[tp->t_line].l_open)(dev, tp) );
+	return ((*linesw[tp->t_line].l_open)(dev, tp));
 }
 
 /*
@@ -964,26 +1024,27 @@ int s;
  */
 int
 mttyclose(dev, flag, mode, p)
-dev_t dev;
-int flag;
-int mode;
-struct proc *p;
+	dev_t dev;
+	int flag;
+	int mode;
+	struct proc *p;
 {
-struct mtty_softc *ms = mtty_cd.cd_devs[MAGMA_CARD(dev)];
-struct mtty_port *mp = &ms->ms_port[MAGMA_PORT(dev)];
-struct tty *tp = mp->mp_tty;
-int s;
+	struct mtty_softc *ms = mtty_cd.cd_devs[MAGMA_CARD(dev)];
+	struct mtty_port *mp = &ms->ms_port[MAGMA_PORT(dev)];
+	struct tty *tp = mp->mp_tty;
+	int s;
 
 	(*linesw[tp->t_line].l_close)(tp, flag);
 	s = spltty();
 
-	/* if HUPCL is set, and the tty is no longer open
-	 * shut down the port
+	/*
+	 * If HUPCL is set, and the tty is no longer open,
+	 * shut down the port.
 	 */
-	if( ISSET(tp->t_cflag, HUPCL) || !ISSET(tp->t_state, TS_ISOPEN) ) {
-	/* XXX wait until FIFO is empty before turning off the channel
-	struct cd1400 *cd = mp->mp_cd1400;
-	*/
+	if (ISSET(tp->t_cflag, HUPCL) || !ISSET(tp->t_state, TS_ISOPEN)) {
+		/* XXX wait until FIFO is empty before turning off the channel
+		struct cd1400 *cd = mp->mp_cd1400;
+		*/
 
 		/* drop DTR and RTS */
 		(void)mtty_modem_control(mp, 0, DMSET);
@@ -997,7 +1058,7 @@ int s;
 	splx(s);
 	ttyclose(tp);
 
-	return(0);
+	return (0);
 }
 
 /*
@@ -1005,15 +1066,15 @@ int s;
  */
 int
 mttyread(dev, uio, flags)
-dev_t dev;
-struct uio *uio;
-int flags;
+	dev_t dev;
+	struct uio *uio;
+	int flags;
 {
-struct mtty_softc *ms = mtty_cd.cd_devs[MAGMA_CARD(dev)];
-struct mtty_port *mp = &ms->ms_port[MAGMA_PORT(dev)];
-struct tty *tp = mp->mp_tty;
+	struct mtty_softc *ms = mtty_cd.cd_devs[MAGMA_CARD(dev)];
+	struct mtty_port *mp = &ms->ms_port[MAGMA_PORT(dev)];
+	struct tty *tp = mp->mp_tty;
 
-	return( (*linesw[tp->t_line].l_read)(tp, uio, flags) );
+	return ((*linesw[tp->t_line].l_read)(tp, uio, flags));
 }
 
 /*
@@ -1021,15 +1082,15 @@ struct tty *tp = mp->mp_tty;
  */
 int
 mttywrite(dev, uio, flags)
-dev_t dev;
-struct uio *uio;
-int flags;
+	dev_t dev;
+	struct uio *uio;
+	int flags;
 {
-struct mtty_softc *ms = mtty_cd.cd_devs[MAGMA_CARD(dev)];
-struct mtty_port *mp = &ms->ms_port[MAGMA_PORT(dev)];
-struct tty *tp = mp->mp_tty;
+	struct mtty_softc *ms = mtty_cd.cd_devs[MAGMA_CARD(dev)];
+	struct mtty_port *mp = &ms->ms_port[MAGMA_PORT(dev)];
+	struct tty *tp = mp->mp_tty;
 
-	return( (*linesw[tp->t_line].l_write)(tp, uio, flags) );
+	return ((*linesw[tp->t_line].l_write)(tp, uio, flags));
 }
 
 /*
@@ -1037,12 +1098,12 @@ struct tty *tp = mp->mp_tty;
  */
 struct tty *
 mttytty(dev)
-dev_t dev;
+	dev_t dev;
 {
-struct mtty_softc *ms = mtty_cd.cd_devs[MAGMA_CARD(dev)];
-struct mtty_port *mp = &ms->ms_port[MAGMA_PORT(dev)];
+	struct mtty_softc *ms = mtty_cd.cd_devs[MAGMA_CARD(dev)];
+	struct mtty_port *mp = &ms->ms_port[MAGMA_PORT(dev)];
 
-	return(mp->mp_tty);
+	return (mp->mp_tty);
 }
 
 /*
@@ -1050,22 +1111,24 @@ struct mtty_port *mp = &ms->ms_port[MAGMA_PORT(dev)];
  */
 int
 mttyioctl(dev, cmd, data, flags, p)
-dev_t dev;
-u_long cmd;
-caddr_t data;
-int flags;
-struct proc *p;
+	dev_t dev;
+	u_long cmd;
+	caddr_t data;
+	int flags;
+	struct proc *p;
 {
-struct mtty_softc *ms = mtty_cd.cd_devs[MAGMA_CARD(dev)];
-struct mtty_port *mp = &ms->ms_port[MAGMA_PORT(dev)];
-struct tty *tp = mp->mp_tty;
-int error;
+	struct mtty_softc *ms = mtty_cd.cd_devs[MAGMA_CARD(dev)];
+	struct mtty_port *mp = &ms->ms_port[MAGMA_PORT(dev)];
+	struct tty *tp = mp->mp_tty;
+	int error;
 
 	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flags, p);
-	if( error >= 0 ) return(error);
+	if (error >= 0)
+		return (error);
 
 	error = ttioctl(tp, cmd, data, flags, p);
-	if( error >= 0 ) return(error);
+	if (error >= 0)
+		return (error);
 
 	error = 0;
 
@@ -1109,7 +1172,7 @@ int error;
 		break;
 
 	case TIOCSFLAGS:
-		if( suser(p, 0) )
+		if (suser(p, 0))
 			error = EPERM;
 		else
 			mp->mp_openflags = *((int *)data) &
@@ -1121,7 +1184,7 @@ int error;
 		error = ENOTTY;
 	}
 
-	return(error);
+	return (error);
 }
 
 /*
@@ -1129,17 +1192,17 @@ int error;
  */
 int
 mttystop(tp, flags)
-struct tty *tp;
-int flags;
+	struct tty *tp;
+	int flags;
 {
-struct mtty_softc *ms = mtty_cd.cd_devs[MAGMA_CARD(tp->t_dev)];
-struct mtty_port *mp = &ms->ms_port[MAGMA_PORT(tp->t_dev)];
-int s;
+	struct mtty_softc *ms = mtty_cd.cd_devs[MAGMA_CARD(tp->t_dev)];
+	struct mtty_port *mp = &ms->ms_port[MAGMA_PORT(tp->t_dev)];
+	int s;
 
 	s = spltty();
 
-	if( ISSET(tp->t_state, TS_BUSY) ) {
-		if( !ISSET(tp->t_state, TS_TTSTOP) )
+	if (ISSET(tp->t_state, TS_BUSY)) {
+		if (!ISSET(tp->t_state, TS_TTSTOP))
 			SET(tp->t_state, TS_FLUSH);
 
 		/*
@@ -1150,7 +1213,7 @@ int s;
 	}
 
 	splx(s);
-	return(0);
+	return (0);
 }
 
 /*
@@ -1158,24 +1221,26 @@ int s;
  */
 void
 mtty_start(tp)
-struct tty *tp;
+	struct tty *tp;
 {
-struct mtty_softc *ms = mtty_cd.cd_devs[MAGMA_CARD(tp->t_dev)];
-struct mtty_port *mp = &ms->ms_port[MAGMA_PORT(tp->t_dev)];
-int s;
+	struct mtty_softc *ms = mtty_cd.cd_devs[MAGMA_CARD(tp->t_dev)];
+	struct mtty_port *mp = &ms->ms_port[MAGMA_PORT(tp->t_dev)];
+	int s;
 
 	s = spltty();
 
-	/* we only need to do something if we are not already busy
-	 * or delaying or stopped
+	/*
+	 * We only need to do something if we are not already busy
+	 * or delaying or stopped.
 	 */
-	if( !ISSET(tp->t_state, TS_TTSTOP | TS_TIMEOUT | TS_BUSY) ) {
+	if (!ISSET(tp->t_state, TS_TTSTOP | TS_TIMEOUT | TS_BUSY)) {
 
-		/* if we are sleeping and output has drained below
-		 * low water mark, awaken
+		/*
+		 * If we are sleeping and output has drained below
+		 * low water mark, awaken.
 		 */
-		if( tp->t_outq.c_cc <= tp->t_lowat ) {
-			if( ISSET(tp->t_state, TS_ASLEEP) ) {
+		if (tp->t_outq.c_cc <= tp->t_lowat) {
+			if (ISSET(tp->t_state, TS_ASLEEP)) {
 				CLR(tp->t_state, TS_ASLEEP);
 				wakeup(&tp->t_outq);
 			}
@@ -1183,13 +1248,15 @@ int s;
 			selwakeup(&tp->t_wsel);
 		}
 
-		/* if something to send, start transmitting
+		/*
+		 * If there is something to send, start transmitting.
 		 */
-		if( tp->t_outq.c_cc ) {
+		if (tp->t_outq.c_cc) {
 			mp->mp_txc = ndqb(&tp->t_outq, 0);
 			mp->mp_txp = tp->t_outq.c_cf;
 			SET(tp->t_state, TS_BUSY);
-			cd1400_enable_transmitter(mp->mp_cd1400, mp->mp_channel);
+			cd1400_enable_transmitter(mp->mp_cd1400,
+			    mp->mp_channel);
 		}
 	}
 
@@ -1208,13 +1275,13 @@ int s;
  */
 int
 mtty_modem_control(mp, bits, howto)
-struct mtty_port *mp;
-int bits;
-int howto;
+	struct mtty_port *mp;
+	int bits;
+	int howto;
 {
-struct cd1400 *cd = mp->mp_cd1400;
-struct tty *tp = mp->mp_tty;
-int s, msvr;
+	struct cd1400 *cd = mp->mp_cd1400;
+	struct tty *tp = mp->mp_tty;
+	int s, msvr;
 
 	s = spltty();
 
@@ -1227,46 +1294,54 @@ int s, msvr;
 		bits |= TIOCM_LE;
 
 		msvr = cd1400_read_reg(cd, CD1400_MSVR1);
-		if( msvr & CD1400_MSVR1_RTS ) bits |= TIOCM_DTR;
+		if (msvr & CD1400_MSVR1_RTS)
+			bits |= TIOCM_DTR;
 
 		msvr = cd1400_read_reg(cd, CD1400_MSVR2);
-		if( msvr & CD1400_MSVR2_DTR ) bits |= TIOCM_RTS;
-		if( msvr & CD1400_MSVR2_CTS ) bits |= TIOCM_CTS;
-		if( msvr & CD1400_MSVR2_RI ) bits |= TIOCM_RI;
-		if( msvr & CD1400_MSVR2_DSR ) bits |= (cd->cd_parmode ? TIOCM_CD : TIOCM_DSR);
-		if( msvr & CD1400_MSVR2_CD ) bits |= (cd->cd_parmode ? 0 : TIOCM_CD);
+		if (msvr & CD1400_MSVR2_DTR)
+			bits |= TIOCM_RTS;
+		if (msvr & CD1400_MSVR2_CTS)
+		    bits |= TIOCM_CTS;
+		if (msvr & CD1400_MSVR2_RI)
+		    bits |= TIOCM_RI;
+		if (msvr & CD1400_MSVR2_DSR)
+		    bits |= (cd->cd_parmode ? TIOCM_CD : TIOCM_DSR);
+		if (msvr & CD1400_MSVR2_CD)
+		    bits |= (cd->cd_parmode ? 0 : TIOCM_CD);
 
 		break;
 
 	case DMSET:	/* reset bits */
-		if( !ISSET(tp->t_cflag, CRTSCTS) )
-			cd1400_write_reg(cd, CD1400_MSVR2, ((bits & TIOCM_RTS) ? CD1400_MSVR2_DTR : 0));
+		if (!ISSET(tp->t_cflag, CRTSCTS))
+			cd1400_write_reg(cd, CD1400_MSVR2,
+			    ((bits & TIOCM_RTS) ? CD1400_MSVR2_DTR : 0));
 
-		cd1400_write_reg(cd, CD1400_MSVR1, ((bits & TIOCM_DTR) ? CD1400_MSVR1_RTS : 0));
+		cd1400_write_reg(cd, CD1400_MSVR1,
+		    ((bits & TIOCM_DTR) ? CD1400_MSVR1_RTS : 0));
 
 		break;
 
 	case DMBIS:	/* set bits */
-		if( (bits & TIOCM_RTS) && !ISSET(tp->t_cflag, CRTSCTS) )
+		if ((bits & TIOCM_RTS) && !ISSET(tp->t_cflag, CRTSCTS))
 			cd1400_write_reg(cd, CD1400_MSVR2, CD1400_MSVR2_DTR);
 
-		if( bits & TIOCM_DTR )
+		if (bits & TIOCM_DTR)
 			cd1400_write_reg(cd, CD1400_MSVR1, CD1400_MSVR1_RTS);
 
 		break;
 
 	case DMBIC:	/* clear bits */
-		if( (bits & TIOCM_RTS) && !ISSET(tp->t_cflag, CRTSCTS) )
+		if ((bits & TIOCM_RTS) && !ISSET(tp->t_cflag, CRTSCTS))
 			cd1400_write_reg(cd, CD1400_MSVR2, 0);
 
-		if( bits & TIOCM_DTR )
+		if (bits & TIOCM_DTR)
 			cd1400_write_reg(cd, CD1400_MSVR1, 0);
 
 		break;
 	}
 
 	splx(s);
-	return(bits);
+	return (bits);
 }
 
 /*
@@ -1274,38 +1349,41 @@ int s, msvr;
  */
 int
 mtty_param(tp, t)
-struct tty *tp;
-struct termios *t;
+	struct tty *tp;
+	struct termios *t;
 {
-struct mtty_softc *ms = mtty_cd.cd_devs[MAGMA_CARD(tp->t_dev)];
-struct mtty_port *mp = &ms->ms_port[MAGMA_PORT(tp->t_dev)];
-struct cd1400 *cd = mp->mp_cd1400;
-int rbpr, tbpr, rcor, tcor;
-u_char mcor1 = 0, mcor2 = 0;
-int s, opt;
+	struct mtty_softc *ms = mtty_cd.cd_devs[MAGMA_CARD(tp->t_dev)];
+	struct mtty_port *mp = &ms->ms_port[MAGMA_PORT(tp->t_dev)];
+	struct cd1400 *cd = mp->mp_cd1400;
+	int rbpr, tbpr, rcor, tcor;
+	u_char mcor1 = 0, mcor2 = 0;
+	int s, opt;
 
-	if( t->c_ospeed && cd1400_compute_baud(t->c_ospeed, cd->cd_clock, &tcor, &tbpr) )
-		return(EINVAL);
+	if (t->c_ospeed &&
+	    cd1400_compute_baud(t->c_ospeed, cd->cd_clock, &tcor, &tbpr))
+		return (EINVAL);
 
-	if( t->c_ispeed && cd1400_compute_baud(t->c_ispeed, cd->cd_clock, &rcor, &rbpr) )
-		return(EINVAL);
+	if (t->c_ispeed &&
+	    cd1400_compute_baud(t->c_ispeed, cd->cd_clock, &rcor, &rbpr))
+		return (EINVAL);
 
 	s = spltty();
 
 	/* hang up the line if ospeed is zero, else raise DTR */
-	(void)mtty_modem_control(mp, TIOCM_DTR, (t->c_ospeed == 0 ? DMBIC : DMBIS));
+	(void)mtty_modem_control(mp, TIOCM_DTR,
+	    (t->c_ospeed == 0 ? DMBIC : DMBIS));
 
 	/* select channel, done in mtty_modem_control() */
 	/* cd1400_write_reg(cd, CD1400_CAR, mp->mp_channel); */
 
 	/* set transmit speed */
-	if( t->c_ospeed ) {
+	if (t->c_ospeed) {
 		cd1400_write_reg(cd, CD1400_TCOR, tcor);
 		cd1400_write_reg(cd, CD1400_TBPR, tbpr);
 	}
 
 	/* set receive speed */
-	if( t->c_ispeed ) {
+	if (t->c_ispeed) {
 		cd1400_write_reg(cd, CD1400_RCOR, rcor);
 		cd1400_write_reg(cd, CD1400_RBPR, rbpr);
 	}
@@ -1316,16 +1394,17 @@ int s, opt;
 
 	/* set parity, data and stop bits */
 	opt = 0;
-	if( ISSET(t->c_cflag, PARENB) )
-		opt |= (ISSET(t->c_cflag, PARODD) ? CD1400_COR1_PARODD : CD1400_COR1_PARNORMAL);
+	if (ISSET(t->c_cflag, PARENB))
+		opt |= (ISSET(t->c_cflag, PARODD) ?
+		    CD1400_COR1_PARODD : CD1400_COR1_PARNORMAL);
 
-	if( !ISSET(t->c_iflag, INPCK) )
+	if (!ISSET(t->c_iflag, INPCK))
 		opt |= CD1400_COR1_NOINPCK; /* no parity checking */
 
-	if( ISSET(t->c_cflag, CSTOPB) )
+	if (ISSET(t->c_cflag, CSTOPB))
 		opt |= CD1400_COR1_STOP2;
 
-	switch( t->c_cflag & CSIZE ) {
+	switch (t->c_cflag & CSIZE) {
 	case CS5:
 		opt |= CD1400_COR1_CS5;
 		break;
@@ -1350,12 +1429,14 @@ int s, opt;
 	 * use the CD1400 automatic CTS flow control if CRTSCTS is set
 	 */
 	opt = CD1400_COR2_ETC;
-	if( ISSET(t->c_cflag, CRTSCTS) ) opt |= CD1400_COR2_CCTS_OFLOW;
+	if (ISSET(t->c_cflag, CRTSCTS))
+		opt |= CD1400_COR2_CCTS_OFLOW;
 	cd1400_write_reg(cd, CD1400_COR2, opt);
 
 	cd1400_write_reg(cd, CD1400_COR3, MTTY_RX_FIFO_THRESHOLD);
 
-	cd1400_write_ccr(cd, CD1400_CCR_CMDCORCHG | CD1400_CCR_COR1 | CD1400_CCR_COR2 | CD1400_CCR_COR3);
+	cd1400_write_ccr(cd, CD1400_CCR_CMDCORCHG | CD1400_CCR_COR1 |
+	    CD1400_CCR_COR2 | CD1400_CCR_COR3);
 
 	cd1400_write_reg(cd, CD1400_COR4, CD1400_COR4_PFO_EXCEPTION);
 	cd1400_write_reg(cd, CD1400_COR5, 0);
@@ -1364,11 +1445,11 @@ int s, opt;
 	 * if automatic RTS handshaking enabled, set DTR threshold
 	 * (RTS and DTR lines are switched, CD1400 thinks its DTR)
 	 */
-	if( ISSET(t->c_cflag, CRTSCTS) )
+	if (ISSET(t->c_cflag, CRTSCTS))
 		mcor1 = MTTY_RX_DTR_THRESHOLD;
 
 	/* set up `carrier detect' interrupts */
-	if( cd->cd_parmode ) {
+	if (cd->cd_parmode) {
 		SET(mcor1, CD1400_MCOR1_DSRzd);
 		SET(mcor2, CD1400_MCOR2_DSRod);
 	} else {
@@ -1383,7 +1464,7 @@ int s, opt;
 	cd1400_write_reg(cd, CD1400_RTPR, 2);
 
 	splx(s);
-	return(0);
+	return (0);
 }
 
 /************************************************************************
@@ -1407,32 +1488,33 @@ int s, opt;
 
 int
 mbpp_match(parent, vcf, args)
-struct device *parent;
-void *vcf, *args;
+	struct device *parent;
+	void *vcf, *args;
 {
-register struct magma_softc *sc = (struct magma_softc *)parent;
+	register struct magma_softc *sc = (struct magma_softc *)parent;
 
-	return( args == mbpp_match && sc->ms_board->mb_npar && sc->ms_mbpp == NULL );
+	return (args == mbpp_match && sc->ms_board->mb_npar &&
+	    sc->ms_mbpp == NULL);
 }
 
 void
 mbpp_attach(parent, dev, args)
-struct device *parent;
-struct device *dev;
-void *args;
+	struct device *parent;
+	struct device *dev;
+	void *args;
 {
-struct magma_softc *sc = (struct magma_softc *)parent;
-struct mbpp_softc *ms = (struct mbpp_softc *)dev;
-struct mbpp_port *mp;
-int port;
+	struct magma_softc *sc = (struct magma_softc *)parent;
+	struct mbpp_softc *ms = (struct mbpp_softc *)dev;
+	struct mbpp_port *mp;
+	int port;
 
 	sc->ms_mbpp = ms;
 	dprintf((" addr 0x%x", ms));
 
-	for( port = 0 ; port < sc->ms_board->mb_npar ; port++ ) {
+	for (port = 0 ; port < sc->ms_board->mb_npar ; port++) {
 		mp = &ms->ms_port[port];
 
-		if( sc->ms_ncd1190 )
+		if (sc->ms_ncd1190)
 			mp->mp_cd1190 = &sc->ms_cd1190[port];
 		else
 			mp->mp_cd1400 = &sc->ms_cd1400[0];
@@ -1450,26 +1532,27 @@ int port;
  */
 int
 mbppopen(dev, flags, mode, p)
-dev_t dev;
-int flags;
-int mode;
-struct proc *p;
+	dev_t dev;
+	int flags;
+	int mode;
+	struct proc *p;
 {
-int card = MAGMA_CARD(dev);
-int port = MAGMA_PORT(dev);
-struct mbpp_softc *ms;
-struct mbpp_port *mp;
-int s;
+	int card = MAGMA_CARD(dev);
+	int port = MAGMA_PORT(dev);
+	struct mbpp_softc *ms;
+	struct mbpp_port *mp;
+	int s;
 
-	if( card >= mbpp_cd.cd_ndevs || (ms = mbpp_cd.cd_devs[card]) == NULL || port >= ms->ms_nports )
-		return(ENXIO);
+	if (card >= mbpp_cd.cd_ndevs || (ms = mbpp_cd.cd_devs[card]) == NULL ||
+	    port >= ms->ms_nports)
+		return (ENXIO);
 
 	mp = &ms->ms_port[port];
 
 	s = spltty();
-	if( ISSET(mp->mp_flags, MBPPF_OPEN) ) {
+	if (ISSET(mp->mp_flags, MBPPF_OPEN)) {
 		splx(s);
-		return(EBUSY);
+		return (EBUSY);
 	}
 	SET(mp->mp_flags, MBPPF_OPEN);
 	splx(s);
@@ -1480,21 +1563,21 @@ int s;
 	mp->mp_delay = mbpp_mstohz(BPP_DELAY);
 
 	/* init chips */
-	if( mp->mp_cd1400 ) {	/* CD1400 */
-	struct cd1400 *cd = mp->mp_cd1400;
+	if (mp->mp_cd1400) {	/* CD1400 */
+		struct cd1400 *cd = mp->mp_cd1400;
 
 		/* set up CD1400 channel */
 		s = spltty();
 		cd1400_write_reg(cd, CD1400_CAR, 0);
 		cd1400_write_ccr(cd, CD1400_CCR_CMDRESET);
-		cd1400_write_reg(cd, CD1400_LIVR, (1<<3));
+		cd1400_write_reg(cd, CD1400_LIVR, (1 << 3));
 		splx(s);
 	} else {		/* CD1190 */
 		mp->mp_flags = 0;
-		return(ENXIO);
+		return (ENXIO);
 	}
 
-	return(0);
+	return (0);
 }
 
 /*
@@ -1502,16 +1585,16 @@ int s;
  */
 int
 mbppclose(dev, flag, mode, p)
-dev_t dev;
-int flag;
-int mode;
-struct proc *p;
+	dev_t dev;
+	int flag;
+	int mode;
+	struct proc *p;
 {
-struct mbpp_softc *ms = mbpp_cd.cd_devs[MAGMA_CARD(dev)];
-struct mbpp_port *mp = &ms->ms_port[MAGMA_PORT(dev)];
+	struct mbpp_softc *ms = mbpp_cd.cd_devs[MAGMA_CARD(dev)];
+	struct mbpp_port *mp = &ms->ms_port[MAGMA_PORT(dev)];
 
 	mp->mp_flags = 0;
-	return(0);
+	return (0);
 }
 
 /*
@@ -1519,11 +1602,11 @@ struct mbpp_port *mp = &ms->ms_port[MAGMA_PORT(dev)];
  */
 int
 mbppread(dev, uio, flags)
-dev_t dev;
-struct uio *uio;
-int flags;
+	dev_t dev;
+	struct uio *uio;
+	int flags;
 {
-	return( mbpp_rw(dev, uio) );
+	return (mbpp_rw(dev, uio));
 }
 
 /*
@@ -1531,11 +1614,11 @@ int flags;
  */
 int
 mbppwrite(dev, uio, flags)
-dev_t dev;
-struct uio *uio;
-int flags;
+	dev_t dev;
+	struct uio *uio;
+	int flags;
 {
-	return( mbpp_rw(dev, uio) );
+	return (mbpp_rw(dev, uio));
 }
 
 /*
@@ -1543,23 +1626,25 @@ int flags;
  */
 int
 mbppioctl(dev, cmd, data, flags, p)
-dev_t dev;
-u_long cmd;
-caddr_t data;
-int flags;
-struct proc *p;
+	dev_t dev;
+	u_long cmd;
+	caddr_t data;
+	int flags;
+	struct proc *p;
 {
-struct mbpp_softc *ms = mbpp_cd.cd_devs[MAGMA_CARD(dev)];
-register struct mbpp_port *mp = &ms->ms_port[MAGMA_PORT(dev)];
-struct bpp_param *bp;
-int error = 0;
-int s;
+	struct mbpp_softc *ms = mbpp_cd.cd_devs[MAGMA_CARD(dev)];
+	register struct mbpp_port *mp = &ms->ms_port[MAGMA_PORT(dev)];
+	struct bpp_param *bp;
+	int error = 0;
+	int s;
 
 	switch(cmd) {
 	case BPPIOCSPARAM:
 		bp = (struct bpp_param *)data;
-		if( bp->bp_burst < BPP_BURST_MIN || bp->bp_burst > BPP_BURST_MAX ||
-		    bp->bp_delay < BPP_DELAY_MIN || bp->bp_delay > BPP_DELAY_MIN ) {
+		if (bp->bp_burst < BPP_BURST_MIN ||
+		    bp->bp_burst > BPP_BURST_MAX ||
+		    bp->bp_delay < BPP_DELAY_MIN ||
+		    bp->bp_delay > BPP_DELAY_MIN) {
 			error = EINVAL;
 		} else {
 			mp->mp_burst = bp->bp_burst;
@@ -1584,7 +1669,7 @@ int s;
 		error = ENOTTY;
 	}
 
-	return(error);
+	return (error);
 }
 
 /*
@@ -1592,29 +1677,29 @@ int s;
  */
 int
 mbpppoll(dev, events, p)
-dev_t dev;
-int events;
-struct proc *p;
+	dev_t dev;
+	int events;
+	struct proc *p;
 {
-	return(seltrue(dev, events, p));
+	return (seltrue(dev, events, p));
 }
 
 int
 mbpp_rw(dev, uio)
-dev_t dev;
-struct uio *uio;
+	dev_t dev;
+	struct uio *uio;
 {
-int card = MAGMA_CARD(dev);
-int port = MAGMA_PORT(dev);
-struct mbpp_softc *ms = mbpp_cd.cd_devs[card];
-register struct mbpp_port *mp = &ms->ms_port[port];
-caddr_t buffer, ptr;
-int buflen, cnt, len;
-int s, error = 0;
-int gotdata = 0;
+	int card = MAGMA_CARD(dev);
+	int port = MAGMA_PORT(dev);
+	struct mbpp_softc *ms = mbpp_cd.cd_devs[card];
+	register struct mbpp_port *mp = &ms->ms_port[port];
+	caddr_t buffer, ptr;
+	int buflen, cnt, len;
+	int s, error = 0;
+	int gotdata = 0;
 
-	if( uio->uio_resid == 0 )
-		return(0);
+	if (uio->uio_resid == 0)
+		return (0);
 
 	buflen = min(uio->uio_resid, mp->mp_burst);
 	buffer = malloc(buflen, M_DEVBUF, M_WAITOK);
@@ -1624,64 +1709,68 @@ int gotdata = 0;
 	/*
 	 * start timeout, if needed
 	 */
-	if( mp->mp_timeout > 0 ) {
+	if (mp->mp_timeout > 0) {
 		SET(mp->mp_flags, MBPPF_TIMEOUT);
 		timeout_add(&mp->mp_timeout_tmo, mp->mp_timeout);
 	}
 
 	len = cnt = 0;
-	while( uio->uio_resid > 0 ) {
+	while (uio->uio_resid > 0) {
 		len = min(buflen, uio->uio_resid);
 		ptr = buffer;
 
-		if( uio->uio_rw == UIO_WRITE ) {
+		if (uio->uio_rw == UIO_WRITE) {
 			error = uiomove(ptr, len, uio);
-			if( error ) break;
+			if (error)
+				break;
 		}
 again:		/* goto bad */
 		/* timed out?  */
-		if( !ISSET(mp->mp_flags, MBPPF_UIO) )
+		if (!ISSET(mp->mp_flags, MBPPF_UIO))
 			break;
 
 		/*
 		 * perform the operation
 		 */
-		if( uio->uio_rw == UIO_WRITE ) {
+		if (uio->uio_rw == UIO_WRITE) {
 			cnt = mbpp_send(mp, ptr, len);
 		} else {
 			cnt = mbpp_recv(mp, ptr, len);
 		}
 
-		if( uio->uio_rw == UIO_READ ) {
-			if( cnt ) {
+		if (uio->uio_rw == UIO_READ) {
+			if (cnt) {
 				error = uiomove(ptr, cnt, uio);
-				if( error ) break;
+				if (error)
+					break;
 				gotdata++;
 			}
-			else if( gotdata )	/* consider us done */
+			else if (gotdata)	/* consider us done */
 				break;
 		}
 
 		/* timed out?  */
-		if( !ISSET(mp->mp_flags, MBPPF_UIO) )
+		if (!ISSET(mp->mp_flags, MBPPF_UIO))
 			break;
 
 		/*
 		 * poll delay?
 		 */
-		if( mp->mp_delay > 0 ) {
+		if (mp->mp_delay > 0) {
 			s = spltty();	/* XXX */
 			SET(mp->mp_flags, MBPPF_DELAY);
 			timeout_add(&mp->mp_start_tmo, mp->mp_delay);
 			error = tsleep(mp, PCATCH | PZERO, "mbppdelay", 0);
 			splx(s);
-			if( error ) break;
+			if (error)
+				break;
 		}
 
 		/*
-		 * don't call uiomove again until we used all the data we grabbed
+		 * Don't call uiomove again until we used all the data we
+		 * grabbed.
 		 */
-		if( uio->uio_rw == UIO_WRITE && cnt != len ) {
+		if (uio->uio_rw == UIO_WRITE && cnt != len) {
 			ptr += cnt;
 			len -= cnt;
 			cnt = 0;
@@ -1693,32 +1782,32 @@ again:		/* goto bad */
 	 * clear timeouts
 	 */
 	s = spltty();	/* XXX */
-	if( ISSET(mp->mp_flags, MBPPF_TIMEOUT) ) {
+	if (ISSET(mp->mp_flags, MBPPF_TIMEOUT)) {
 		timeout_del(&mp->mp_timeout_tmo);
 		CLR(mp->mp_flags, MBPPF_TIMEOUT);
 	}
-	if( ISSET(mp->mp_flags, MBPPF_DELAY) ) {
+	if (ISSET(mp->mp_flags, MBPPF_DELAY)) {
 		timeout_del(&mp->mp_start_tmo);
 		CLR(mp->mp_flags, MBPPF_DELAY);
 	}
 	splx(s);
 
 	/*
-	 * adjust for those chars that we uiomoved but never actually wrote
+	 * Adjust for those chars that we uiomoved but never actually wrote.
 	 */
-	if( uio->uio_rw == UIO_WRITE && cnt != len ) {
+	if (uio->uio_rw == UIO_WRITE && cnt != len) {
 		uio->uio_resid += (len - cnt);
 	}
 
 	free(buffer, M_DEVBUF);
-	return(error);
+	return (error);
 }
 
 void
 mbpp_timeout(arg)
-void *arg;
+	void *arg;
 {
-struct mbpp_port *mp = arg;
+	struct mbpp_port *mp = arg;
 
 	CLR(mp->mp_flags, MBPPF_UIO | MBPPF_TIMEOUT);
 	wakeup(mp);
@@ -1726,9 +1815,9 @@ struct mbpp_port *mp = arg;
 
 void
 mbpp_start(arg)
-void *arg;
+	void *arg;
 {
-struct mbpp_port *mp = arg;
+	struct mbpp_port *mp = arg;
 
 	CLR(mp->mp_flags, MBPPF_DELAY);
 	wakeup(mp);
@@ -1736,12 +1825,12 @@ struct mbpp_port *mp = arg;
 
 int
 mbpp_send(mp, ptr, len)
-struct mbpp_port *mp;
-caddr_t ptr;
-int len;
+	struct mbpp_port *mp;
+	caddr_t ptr;
+	int len;
 {
-int s;
-struct cd1400 *cd = mp->mp_cd1400;
+	int s;
+	struct cd1400 *cd = mp->mp_cd1400;
 
 	/* set up io information */
 	mp->mp_ptr = ptr;
@@ -1749,7 +1838,7 @@ struct cd1400 *cd = mp->mp_cd1400;
 
 	/* start transmitting */
 	s = spltty();
-	if( cd ) {
+	if (cd) {
 		cd1400_write_reg(cd, CD1400_CAR, 0);
 
 		/* output strobe width ~1microsecond */
@@ -1760,11 +1849,11 @@ struct cd1400 *cd = mp->mp_cd1400;
 		cd1400_write_reg(cd, CD1400_SRER, CD1400_SRER_TXRDY);
 	}
 
-	/* ZZzzz... */
+	/* zzz... */
 	tsleep(mp, PCATCH | PZERO, "mbpp_send", 0);
 
 	/* stop transmitting */
-	if( cd ) {
+	if (cd) {
 		cd1400_write_reg(cd, CD1400_CAR, 0);
 
 		/* disable transmitter */
@@ -1777,17 +1866,17 @@ struct cd1400 *cd = mp->mp_cd1400;
 	splx(s);
 
 	/* return number of chars sent */
-	return(len - mp->mp_cnt);
+	return (len - mp->mp_cnt);
 }
 
 int
 mbpp_recv(mp, ptr, len)
-struct mbpp_port *mp;
-caddr_t ptr;
-int len;
+	struct mbpp_port *mp;
+	caddr_t ptr;
+	int len;
 {
-int s;
-struct cd1400 *cd = mp->mp_cd1400;
+	int s;
+	struct cd1400 *cd = mp->mp_cd1400;
 
 	/* set up io information */
 	mp->mp_ptr = ptr;
@@ -1795,8 +1884,8 @@ struct cd1400 *cd = mp->mp_cd1400;
 
 	/* start receiving */
 	s = spltty();
-	if( cd ) {
-	int rcor, rbpr;
+	if (cd) {
+		int rcor, rbpr;
 
 		cd1400_write_reg(cd, CD1400_CAR, 0);
 
@@ -1814,11 +1903,11 @@ struct cd1400 *cd = mp->mp_cd1400;
 		cd1400_write_reg(cd, CD1400_SRER, CD1400_SRER_RXDATA);
 	}
 
-	/* ZZzzz... */
+	/* zzz... */
 	tsleep(mp, PCATCH | PZERO, "mbpp_recv", 0);
 
 	/* stop receiving */
-	if( cd ) {
+	if (cd) {
 		cd1400_write_reg(cd, CD1400_CAR, 0);
 
 		/* disable receiving */
@@ -1828,32 +1917,30 @@ struct cd1400 *cd = mp->mp_cd1400;
 	splx(s);
 
 	/* return number of chars received */
-	return(len - mp->mp_cnt);
+	return (len - mp->mp_cnt);
 }
 
 int
 mbpp_hztoms(h)
-int h;
+	int h;
 {
-int m = h;
+	int m = h;
 
-	if( m > 0 )
+	if (m > 0)
 		m = m * 1000 / hz;
-	return(m);
+	return (m);
 }
 
 int
 mbpp_mstohz(m)
-int m;
+	int m;
 {
-int h = m;
+	int h = m;
 
-	if( h > 0 ) {
+	if (h > 0) {
 		h = h * hz / 1000;
-		if( h == 0 )
+		if (h == 0)
 			h = 1000 / hz;
 	}
-	return(h);
+	return (h);
 }
-
-#endif /* NMAGMA */
