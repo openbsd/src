@@ -3114,9 +3114,11 @@
 ./usr/share/man/cat3/endnetent.0
 ./usr/share/man/cat3/endnetgrent.0
 ./usr/share/man/cat3/endprotoent.0
+./usr/share/man/cat3/endprotoent_r.0
 ./usr/share/man/cat3/endpwent.0
 ./usr/share/man/cat3/endrpcent.0
 ./usr/share/man/cat3/endservent.0
+./usr/share/man/cat3/endservent_r.0
 ./usr/share/man/cat3/endttyent.0
 ./usr/share/man/cat3/endusershell.0
 ./usr/share/man/cat3/endwin.0
@@ -3357,8 +3359,11 @@
 ./usr/share/man/cat3/getparyx.0
 ./usr/share/man/cat3/getpass.0
 ./usr/share/man/cat3/getprotobyname.0
+./usr/share/man/cat3/getprotobyname_r.0
 ./usr/share/man/cat3/getprotobynumber.0
+./usr/share/man/cat3/getprotobynumber_r.0
 ./usr/share/man/cat3/getprotoent.0
+./usr/share/man/cat3/getprotoent_r.0
 ./usr/share/man/cat3/getpwent.0
 ./usr/share/man/cat3/getpwnam.0
 ./usr/share/man/cat3/getpwuid.0
@@ -3370,8 +3375,11 @@
 ./usr/share/man/cat3/getrrsetbyname.0
 ./usr/share/man/cat3/gets.0
 ./usr/share/man/cat3/getservbyname.0
+./usr/share/man/cat3/getservbyname_r.0
 ./usr/share/man/cat3/getservbyport.0
+./usr/share/man/cat3/getservbyport_r.0
 ./usr/share/man/cat3/getservent.0
+./usr/share/man/cat3/getservent_r.0
 ./usr/share/man/cat3/getstr.0
 ./usr/share/man/cat3/getsubopt.0
 ./usr/share/man/cat3/getsyx.0
@@ -4346,6 +4354,7 @@
 ./usr/share/man/cat3/setpassent.0
 ./usr/share/man/cat3/setproctitle.0
 ./usr/share/man/cat3/setprotoent.0
+./usr/share/man/cat3/setprotoent_r.0
 ./usr/share/man/cat3/setpwent.0
 ./usr/share/man/cat3/setpwfile.0
 ./usr/share/man/cat3/setrgid.0
@@ -4353,6 +4362,7 @@
 ./usr/share/man/cat3/setruid.0
 ./usr/share/man/cat3/setscrreg.0
 ./usr/share/man/cat3/setservent.0
+./usr/share/man/cat3/setservent_r.0
 ./usr/share/man/cat3/setstate.0
 ./usr/share/man/cat3/setsyx.0
 ./usr/share/man/cat3/setterm.0

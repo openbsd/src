@@ -847,6 +847,7 @@
 ./usr/libdata/perl5/OpenBSD/PkgSpec.pm
 ./usr/libdata/perl5/OpenBSD/ProgressMeter.pm
 ./usr/libdata/perl5/OpenBSD/RequiredBy.pm
+./usr/libdata/perl5/OpenBSD/SharedItems.pm
 ./usr/libdata/perl5/OpenBSD/Temp.pm
 ./usr/libdata/perl5/OpenBSD/Ustar.pm
 ./usr/libdata/perl5/OpenBSD/Vstat.pm
