@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.110 2004/06/22 20:48:00 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.111 2004/08/16 03:42:22 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -126,7 +126,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.110 2004/06/22 20:48:00 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.111 2004/08/16 03:42:22 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -293,6 +293,8 @@ wi_attach(struct wi_softc *sc, struct wi_funcs *funcs)
 		/* older prism firmware is slow so crank the count */
 		if (sc->sc_sta_firmware_ver < 10000)
 			sc->wi_cmd_count = 5000;
+		else
+			sc->wi_cmd_count = 2000;
 		if (sc->sc_sta_firmware_ver >= 800) {
 #ifndef SMALL_KERNEL
 			if (sc->sc_sta_firmware_ver != 10402)
