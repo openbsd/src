@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.17 2003/06/02 23:28:12 millert Exp $	*/
+/*	$OpenBSD: route.h,v 1.18 2003/08/26 08:33:12 itojun Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -139,6 +139,7 @@ struct ortentry {
 #define RTF_PROTO3	0x2000		/* protocol specific routing flag */
 #define RTF_PROTO2	0x4000		/* protocol specific routing flag */
 #define RTF_PROTO1	0x8000		/* protocol specific routing flag */
+#define RTF_CLONED	0x10000		/* this is a cloned route */
 
 #ifndef _KERNEL
 /* obsoleted */

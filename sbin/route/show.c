@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.25 2003/07/02 21:44:58 deraadt Exp $	*/
+/*	$OpenBSD: show.c,v 1.26 2003/08/26 08:33:12 itojun Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: show.c,v 1.25 2003/07/02 21:44:58 deraadt Exp $";
+static char *rcsid = "$OpenBSD: show.c,v 1.26 2003/08/26 08:33:12 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -76,7 +76,7 @@ extern int nflag;
  * Definitions for showing gateway flags.
  */
 struct bits {
-	short	b_mask;
+	int	b_mask;
 	char	b_val;
 };
 static const struct bits bits[] = {
@@ -95,6 +95,8 @@ static const struct bits bits[] = {
 	{ RTF_STATIC,	'S' },
 	{ RTF_PROTO1,	'1' },
 	{ RTF_PROTO2,	'2' },
+	{ RTF_PROTO3,	'3' },
+	{ RTF_CLONED,	'c' },
 	{ 0 }
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.54 2003/06/26 21:59:11 deraadt Exp $	*/
+/*	$OpenBSD: route.c,v 1.55 2003/08/26 08:33:12 itojun Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: route.c,v 1.54 2003/06/26 21:59:11 deraadt Exp $";
+static char *rcsid = "$OpenBSD: route.c,v 1.55 2003/08/26 08:33:12 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -90,7 +90,7 @@ struct radix_node_head *rt_tables[AF_MAX+1];
  * Definitions for showing gateway flags.
  */
 struct bits {
-	short	b_mask;
+	int	b_mask;
 	char	b_val;
 } bits[] = {
 	{ RTF_UP,	'U' },
@@ -109,6 +109,7 @@ struct bits {
 	{ RTF_PROTO1,	'1' },
 	{ RTF_PROTO2,	'2' },
 	{ RTF_PROTO3,	'3' },
+	{ RTF_CLONED,	'c' },
 	{ 0 }
 };
 

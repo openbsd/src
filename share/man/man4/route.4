@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.4,v 1.13 2003/06/02 23:30:12 millert Exp $
+.\"	$OpenBSD: route.4,v 1.14 2003/08/26 08:33:12 itojun Exp $
 .\"	$NetBSD: route.4,v 1.3 1994/11/30 16:22:31 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -240,6 +240,7 @@ Flags include the values:
 #define	RTF_BLACKHOLE 0x1000    /* just discard pkts (during updates) */
 #define	RTF_PROTO2    0x4000    /* protocol specific routing flag #1 */
 #define	RTF_PROTO1    0x8000    /* protocol specific routing flag #2 */
+#define	RTF_CLONED    0x10000   /* this is a cloned route */
 .Ed
 .Pp
 Specifiers for metric values in rmx_locks and rtm_inits are:
