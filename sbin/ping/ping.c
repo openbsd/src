@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.63 2003/07/24 03:10:04 deraadt Exp $	*/
+/*	$OpenBSD: ping.c,v 1.64 2004/02/29 05:19:37 tedu Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char copyright[] =
+static const char copyright[] =
 "@(#) Copyright (c) 1989, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: ping.c,v 1.63 2003/07/24 03:10:04 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: ping.c,v 1.64 2004/02/29 05:19:37 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -137,7 +137,7 @@ char rcvd_tbl[MAX_DUP_CHK / 8];
 
 struct sockaddr whereto;	/* who to ping */
 struct sockaddr_in whence;		/* Which interface we come from */
-int datalen = DEFDATALEN;
+unsigned int datalen = DEFDATALEN;
 int s;				/* socket file descriptor */
 u_char outpackhdr[IP_MAXPACKET]; /* Max packet size = 65535 */
 u_char *outpack = outpackhdr+sizeof(struct ip);
@@ -147,16 +147,16 @@ char *hostname;
 int ident;			/* process id to identify our packets */
 
 /* counters */
-long npackets;			/* max packets to transmit */
-long nreceived;			/* # of packets we got back */
-long nrepeats;			/* number of duplicates */
-long ntransmitted;		/* sequence # for outbound packets = #sent */
+unsigned long npackets;		/* max packets to transmit */
+unsigned long nreceived;	/* # of packets we got back */
+unsigned long nrepeats;		/* number of duplicates */
+unsigned long ntransmitted;	/* sequence # for outbound packets = #sent */
 double interval = 1;		/* interval between packets */
 struct itimerval interstr;	/* interval structure for use with setitimer */
 
 /* timing */
 int timing;			/* flag to do timing */
-int maxwait = MAXWAIT_DEFAULT;	/* max seconds to wait for response */
+unsigned int maxwait = MAXWAIT_DEFAULT;	/* max seconds to wait for response */
 quad_t tmin = 999999999;	/* minimum round trip time in millisec */
 quad_t tmax = 0;		/* maximum round trip time in millisec */
 quad_t tsum = 0;		/* sum of all times in millisec, for doing average */
@@ -179,6 +179,8 @@ void pr_retip(struct ip *);
 quad_t qsqrt(quad_t);
 void pr_iph(struct ip *);
 void usage(void);
+static unsigned long strtonum(const char *, unsigned long, unsigned long,
+    const char *);
 
 int
 main(int argc, char *argv[])
@@ -212,10 +214,8 @@ main(int argc, char *argv[])
 	while ((ch = getopt(argc, argv, "DI:LRS:c:dfh:i:l:np:qrs:T:t:vw:")) != -1)
 		switch(ch) {
 		case 'c':
-			npackets = strtol(optarg, NULL, 0);
-			if (npackets <= 0)
-				errx(1, "bad number of packets to transmit: %s",
-				    optarg);
+			npackets = strtonum(optarg, 1, INT_MAX,
+			    "number of packets to transmit");
 			break;
 		case 'D':
 			options |= F_HDRINCL;
@@ -263,9 +263,7 @@ main(int argc, char *argv[])
 		case 'l':
 			if (getuid())
 				errx(1, "%s", strerror(EPERM));
-			preload = strtol(optarg, NULL, 0);
-			if (preload < 0)
-				errx(1, "bad preload value: %s", optarg);
+			preload = strtonum(optarg, 1, INT_MAX, "preload value");
 			break;
 		case 'n':
 			options |= F_NUMERIC;
@@ -284,33 +282,22 @@ main(int argc, char *argv[])
 			options |= F_SO_DONTROUTE;
 			break;
 		case 's':		/* size of packet to send */
-			datalen = strtol(optarg, NULL, 0);
-			if (datalen < 0)
-				errx(1, "bad packet size: %s", optarg);
-			if (datalen > MAXPAYLOAD)
-				errx(1, "packet size too large: %s", optarg);
+			datalen = strtonum(optarg, 0, MAXPAYLOAD,
+			    "packet size");
 			break;
 		case 'T':
 			options |= F_HDRINCL;
-			tos = strtoul(optarg, NULL, 0);
-			if (tos > 0xFF)
-				errx(1, "bad tos value: %s", optarg);
+			tos = strtonum(optarg, 0, 0xff, "tos value");
 			break;
 		case 't':
 			options |= F_TTL;
-			ttl = strtol(optarg, NULL, 0);
-			if (ttl <= 0)
-				errx(1, "bad ttl value: %s", optarg);
-			if (ttl > 255)
-				errx(1, "ttl value too large: %s", optarg);
+			ttl = strtonum(optarg, 1, 255, "ttl value");
 			break;
 		case 'v':
 			options |= F_VERBOSE;
 			break;
 		case 'w':
-			maxwait = strtol(optarg, NULL, 0);
-			if (maxwait <= 0)
-				errx(1, "bad maxwait value: %s", optarg);
+			maxwait = strtonum(optarg, 1, INT_MAX, "maxwait value");
 			break;
 		default:
 			usage();
@@ -538,7 +525,7 @@ void
 catcher(int signo)
 {
 	int save_errno = errno;
-	int waittime;
+	unsigned int waittime;
 
 	pinger();
 	(void)signal(SIGALRM, catcher);
@@ -552,7 +539,7 @@ catcher(int signo)
 		} else
 			waittime = maxwait;
 		(void)signal(SIGALRM, finish);
-		(void)alarm((u_int)waittime);
+		(void)alarm(waittime);
 	}
 	errno = save_errno;
 }
@@ -925,7 +912,7 @@ summary(int header, int sig)
 			snprintf(buft, sizeof buft,
 			    "-- somebody's duplicating packets!");
 		else
-			snprintf(buft, sizeof buft, "%.1lf%% packet loss",
+			snprintf(buft, sizeof buft, "%.1f%% packet loss",
 			    ((((double)ntransmitted - nreceived) * 100) /
 			    ntransmitted));
 		strlcat(buf, buft, sizeof buf);
@@ -1334,3 +1321,25 @@ usage(void)
 	    "\t[-w maxwait] host\n");
 	exit(1);
 }
+
+static unsigned long
+strtonum(const char *numstring, unsigned long minval, unsigned long maxval,
+    const char *errstring)
+{
+	char *ep;
+	unsigned long lval;
+
+	errno = 0;
+	lval = strtoul(numstring, &ep, 10);
+	if (numstring[0] == '\0' || *ep != '\0')
+		errx(1, "bad %s: %s", errstring, numstring);
+	if (errno == ERANGE && lval == ULONG_MAX)
+		errx(1, "bad %s: %s", errstring, numstring);
+	if (lval < minval)
+		errx(1, "%s too small: %s", errstring, numstring);
+	if (lval > maxval)
+		errx(1, "%s too large: %s", errstring, numstring);
+
+	return (lval);
+}
+
