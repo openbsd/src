@@ -56,7 +56,7 @@ options {\n\
 	host-statistics no;\n\
 	interface-interval 60;\n\
 	listen-on {any;};\n\
-	listen-on-v6 {none;};\n\
+	listen-on-v6 {any;};\n\
 	match-mapped-addresses no;\n\
 	memstatistics-file \"named.memstats\";\n\
 	multiple-cnames no;\n\
