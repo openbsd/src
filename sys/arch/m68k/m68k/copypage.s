@@ -1,4 +1,4 @@
-/*	$OpenBSD: copypage.s,v 1.2 1997/07/06 07:46:28 downsj Exp $	*/
+/*	$OpenBSD: copypage.s,v 1.3 2004/01/15 17:22:27 miod Exp $	*/
 /*	$NetBSD: copypage.s,v 1.4 1997/05/30 01:34:49 jtc Exp $	*/
 
 /*-
@@ -52,7 +52,7 @@
  * copypage040(fromaddr, toaddr)
  *
  * Optimized version of bcopy for a single page-aligned NBPG byte copy,
- * using instuctions only available on the mc68040 and later.
+ * using instructions only available on the mc68040 and later.
  */
 #if defined(M68040) || defined(M68060)
 ENTRY(copypage040)
