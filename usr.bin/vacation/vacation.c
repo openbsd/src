@@ -1,4 +1,4 @@
-/*	$OpenBSD: vacation.c,v 1.12 1999/06/03 20:20:26 marc Exp $	*/
+/*	$OpenBSD: vacation.c,v 1.13 2000/08/05 21:53:30 pjanzen Exp $	*/
 /*	$NetBSD: vacation.c,v 1.7 1995/04/29 05:58:27 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vacation.c	8.2 (Berkeley) 1/26/94";
 #endif
-static char rcsid[] = "$OpenBSD: vacation.c,v 1.12 1999/06/03 20:20:26 marc Exp $";
+static char rcsid[] = "$OpenBSD: vacation.c,v 1.13 2000/08/05 21:53:30 pjanzen Exp $";
 #endif /* not lint */
 
 /*
@@ -224,7 +224,7 @@ readheaders()
 					;
 				*p = '\0';
 				(void)strcpy(from, buf + 5);
-				if (p = strchr(from, '\n'))
+				if ((p = strchr(from, '\n')))
 					*p = '\0';
 				if (junkmail())
 					exit(0);
@@ -234,7 +234,7 @@ readheaders()
 			cont = 0;
 			if (strncasecmp(buf, "Return-Path:",
 					sizeof("Return-Path:")-1) ||
-			    buf[12] != ' ' && buf[12] != '\t')
+			    (buf[12] != ' ' && buf[12] != '\t'))
 				break;
 			for (p = buf + 12; *p && isspace(*p); ++p)
 				;
@@ -243,7 +243,7 @@ readheaders()
 				       "Return-Path %s exceeds limits", p);
 				exit(1);
 			}
-			if (p = strchr(from, '\n'))
+			if ((p = strchr(from, '\n')))
 				*p = '\0';
 			if (junkmail())
 				exit(0);
@@ -251,7 +251,8 @@ readheaders()
 		case 'P':		/* "Precedence:" */
 			cont = 0;
 			if (strncasecmp(buf, "Precedence", 10) ||
-			    buf[10] != ':' && buf[10] != ' ' && buf[10] != '\t')
+			    (buf[10] != ':' && buf[10] != ' ' &&
+			    buf[10] != '\t'))
 				break;
 			if (!(p = strchr(buf, ':')))
 				break;
@@ -267,7 +268,7 @@ readheaders()
 			cont = 0;
 			if (strncasecmp(buf, "Subject:",
 					sizeof("Subject:")-1) ||
-			    buf[8] != ' ' && buf[8] != '\t')
+			    (buf[8] != ' ' && buf[8] != '\t'))
 				break;
 			for (p = buf + 8; *p && isspace(*p); ++p)
 				;
@@ -276,7 +277,7 @@ readheaders()
 				       "Subject %s exceeds limits", p);
 				exit(1);
 			}
-			if (p = strchr(subj, '\n'))
+			if ((p = strchr(subj, '\n')))
 				*p = '\0';
 			break;
 		case 'C':		/* "Cc:" */
@@ -316,7 +317,7 @@ nsearch(name, str)
 	register int len;
 
 	for (len = strlen(name); *str; ++str)
-		if (*str == *name && !strncasecmp(name, str, len))
+		if (!strncasecmp(name, str, len))
 			return(1);
 	return(0);
 }
@@ -332,9 +333,13 @@ junkmail()
 		char	*name;
 		int	len;
 	} ignore[] = {
-		"-request", 8,		"postmaster", 10,	"uucp", 4,
-		"mailer-daemon", 13,	"mailer", 6,		"-relay", 6,
-		NULL, NULL,
+		{ "-request", 8 },
+		{ "postmaster", 10 },
+		{ "uucp", 4 },
+		{ "mailer-daemon", 13 },
+		{ "mailer", 6 },
+		{ "-relay", 6 },
+		{ NULL, 0 }
 	};
 	register struct ignore *cur;
 	register int len;
@@ -349,7 +354,7 @@ junkmail()
 	 */
 	if (!(p = strchr(from, '%')))
 		if (!(p = strchr(from, '@'))) {
-			if (p = strrchr(from, '!'))
+			if ((p = strrchr(from, '!')))
 				++p;
 			else
 				p = from;
