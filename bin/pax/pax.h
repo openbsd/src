@@ -228,9 +228,9 @@ typedef struct oplist {
 #ifndef MIN
 #define        MIN(a,b) (((a)<(b))?(a):(b))
 #endif
-#define MAJOR(x)        (((unsigned)(x) >> 8) & 0xff)
-#define MINOR(x)        ((x) & 0xff)
-#define TODEV(x, y)	(((unsigned)(x) << 8) | ((unsigned)(y)))
+#define MAJOR(x)        major(x)
+#define MINOR(x)        minor(x)
+#define TODEV(x, y)	makedev((x), (y))
 
 /*
  * General Defines
