@@ -1,4 +1,4 @@
-/*	$OpenBSD: safe.c,v 1.7 2003/08/20 16:28:35 jason Exp $	*/
+/*	$OpenBSD: safe.c,v 1.8 2003/08/20 20:17:11 jason Exp $	*/
 
 /*-
  * Copyright (c) 2003 Sam Leffler, Errno Consulting
@@ -279,7 +279,6 @@ safe_attach(struct device *parent, struct device *self, void *aux)
 	if (devinfo & SAFE_DEVINFO_RNG)
 		printf(" rng");
 
-#ifdef notyet
 	bzero(algs, sizeof(algs));
 	if (devinfo & SAFE_DEVINFO_PKEY) {
 		printf(" key");
@@ -287,7 +286,6 @@ safe_attach(struct device *parent, struct device *self, void *aux)
 		crypto_kregister(sc->sc_cid, algs, safe_kprocess);
 		timeout_set(&sc->sc_pkto, safe_kpoll, sc);
 	}
-#endif
 
 	bzero(algs, sizeof(algs));
 	if (devinfo & SAFE_DEVINFO_DES) {
@@ -1937,10 +1935,10 @@ safe_kstart(struct safe_softc *sc)
 	safe_kload_reg(sc, a_off, b_off - a_off,
 	    &krp->krp_param[SAFE_CRK_PARAM_EXP]);
 	WRITE_REG(sc, SAFE_PK_A_ADDR, a_off >> 2);
-	safe_kload_reg(sc, a_off, b_off - a_off,
+	safe_kload_reg(sc, b_off, b_off - a_off,
 	    &krp->krp_param[SAFE_CRK_PARAM_MOD]);
 	WRITE_REG(sc, SAFE_PK_B_ADDR, b_off >> 2);
-	safe_kload_reg(sc, a_off, b_off - a_off,
+	safe_kload_reg(sc, c_off, b_off - a_off,
 	    &krp->krp_param[SAFE_CRK_PARAM_BASE]);
 	WRITE_REG(sc, SAFE_PK_C_ADDR, c_off >> 2);
 	WRITE_REG(sc, SAFE_PK_D_ADDR, d_off >> 2);
@@ -2032,6 +2030,9 @@ safe_kpoll(void *vsc)
 	bcopy(buf, res->crp_p, sc->sc_pk_reslen);
 	res->crp_nbits = sc->sc_pk_reslen * 8;
 	res->crp_nbits = safe_ksigbits(res);
+
+	for (i = SAFE_PK_RAM_START; i < SAFE_PK_RAM_END; i += 4)
+		WRITE_REG(sc, i, 0);
 
 	crypto_kdone(q->pkq_krp);
 	free(q, M_DEVBUF);
