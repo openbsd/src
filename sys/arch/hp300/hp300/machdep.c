@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.14 1997/02/03 15:54:45 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.15 1997/02/04 06:21:30 downsj Exp $	*/
 /*	$NetBSD: machdep.c,v 1.77 1996/12/11 16:49:23 thorpej Exp $	*/
 
 /*
@@ -760,7 +760,6 @@ struct	hpuxsigcontext {
  */
 struct hpuxsigframe {
 	int	hsf_signum;
-	int	hsf_code;
 	struct	sigcontext *hsf_scp;
 	int	hsf_nothing;
 	struct	hpuxsigcontext hsf_sc;
@@ -924,7 +923,6 @@ sendsig(catcher, sig, mask, code, type, val)
 
 		hkfp = (struct hpuxsigframe *)&kfp[1];
 		hkfp->hsf_signum = bsdtohpuxsig(kfp->sf_signum);
-		hkfp->hsf_code = kfp->sf_code;
 		hkfp->hsf_scp = (struct sigcontext *)
 			&((struct hpuxsigframe *)(&fp[1]))->hsf_sc;
 		hkfp->hsf_sc.hsc_syscall = 0;		/* XXX */

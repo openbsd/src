@@ -1,5 +1,5 @@
-/*	$OpenBSD: param.h,v 1.5 1997/01/12 15:13:38 downsj Exp $	*/
-/*	$NetBSD: param.h,v 1.27 1996/12/09 03:04:48 thorpej Exp $	*/
+/*	$OpenBSD: param.h,v 1.6 1997/02/04 06:21:33 downsj Exp $	*/
+/*	$NetBSD: param.h,v 1.28 1997/02/02 09:34:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -155,6 +155,16 @@
         _spl_r; \
 })
 
+#define	_splraise(s) \
+({ \
+	register int _spl_r; \
+\
+	__asm __volatile ("clrl %0; movew sr,%0;" : "&=d" (_spl_r) : ); \
+	if ((_spl_r & PSL_IPL) < ((s) & PSL_IPL)) \
+		__asm __volatile ("movew %0,sr;" : : "di" (s)); \
+	_spl_r; \
+})
+
 /* spl0 requires checking for software interrupts */
 #define spl1()  _spl(PSL_S|PSL_IPL1)
 #define spl2()  _spl(PSL_S|PSL_IPL2)
@@ -175,12 +185,17 @@ extern	unsigned short hp300_ttyipl;
 extern	unsigned short hp300_impipl;
 #endif /* _KERNEL && !_LOCORE */
 
+/* These spl calls are _not_ to be used by machine-independent code. */
+#define splhil()	_splraise(PSL_S|PSL_IPL1)
+#define splkbd()	splhil()
+
+/* These spl calls are used by machine-independent code. */
 #define splsoftclock()	spl1()
 #define splsoftnet()	spl1()
-#define splbio()	_spl(hp300_bioipl)
-#define splnet()	_spl(hp300_netipl)
-#define spltty()	_spl(hp300_ttyipl)
-#define splimp()	_spl(hp300_impipl)
+#define splbio()	_splraise(hp300_bioipl)
+#define splnet()	_splraise(hp300_netipl)
+#define spltty()	_splraise(hp300_ttyipl)
+#define splimp()	_splraise(hp300_impipl)
 #define splclock()	spl6()
 #define splstatclock()	spl6()
 #define splvm()		spl6()

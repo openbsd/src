@@ -1,5 +1,5 @@
-/*	$OpenBSD: ite.c,v 1.7 1997/02/03 04:47:38 downsj Exp $	*/
-/*	$NetBSD: ite.c,v 1.35 1997/01/30 09:18:56 thorpej Exp $	*/
+/*	$OpenBSD: ite.c,v 1.8 1997/02/04 06:21:26 downsj Exp $	*/
+/*	$NetBSD: ite.c,v 1.37 1997/02/02 09:40:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -70,13 +70,6 @@
 
 #define set_attr(ip, attr)	((ip)->attribute |= (attr))
 #define clr_attr(ip, attr)	((ip)->attribute &= ~(attr))
-
-/*
- * No need to raise SPL above the HIL (the only thing that can
- * affect our state.
- */
-#include <hp300/dev/hilreg.h>
-#define splite()		splhil()
 
 /*
  * # of chars are output in a single itestart() call.
@@ -174,6 +167,7 @@ iteattach(parent, self, aux)
 			return;
 		}
 		bzero(ite->sc_data, sizeof(struct ite_data));
+		ite->sc_data->flags = ITE_ALIVE;
 	}
 
 	/*
@@ -427,12 +421,7 @@ itestart(tp)
 	sc = ite_cd.cd_devs[ITEUNIT(tp->t_dev)];
 	ip = sc->sc_data;
 
-	/*
-	 * (Potentially) lower priority.  We only need to protect ourselves
-	 * from keyboard interrupts since that is all that can affect the
-	 * state of our tty (kernel printf doesn't go through this routine).
-	 */
-	s = splite();
+	s = splkbd();
 	if (tp->t_state & (TS_TIMEOUT|TS_BUSY|TS_TTSTOP)) {
 		splx(s);
 		return;

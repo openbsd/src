@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.5 1997/02/03 04:47:59 downsj Exp $	*/
+/*	$OpenBSD: trap.c,v 1.6 1997/02/04 06:21:32 downsj Exp $	*/
 /*	$NetBSD: trap.c,v 1.47 1996/10/14 20:06:31 thorpej Exp $	*/
 
 /*
@@ -392,6 +392,7 @@ trap(type, code, v, frame)
 		i = SIGILL;
 		ucode = frame.f_format;	/* XXX was ILL_RESAD_FAULT */
 		typ = ILL_COPROC;
+		v = frame.f_pc;
 		break;
 
 #ifdef FPCOPROC
@@ -415,6 +416,7 @@ trap(type, code, v, frame)
 		typ = FPE_FLTRES;
 		ucode = code;
 		i = SIGFPE;
+		v = frame.f_pc;
 		break;
 #endif
 
@@ -429,6 +431,7 @@ trap(type, code, v, frame)
 		/* XXX need to FRESTORE */
 		typ = FPE_FLTINV;
 		i = SIGFPE;
+		v = frame.f_pc;
 		break;
 #endif
 
@@ -444,7 +447,9 @@ trap(type, code, v, frame)
 		ucode = frame.f_format;	/* XXX was ILL_PRIVIN_FAULT */
 		typ = ILL_ILLOPC;
 		i = SIGILL;
+		v = frame.f_pc;
 		break;
+
 	case T_PRIVINST|T_USER:	/* privileged instruction fault */
 #ifdef COMPAT_HPUX
 		if (p->p_emul == &emul_hpux)
@@ -454,6 +459,7 @@ trap(type, code, v, frame)
 		ucode = frame.f_format;	/* XXX was ILL_PRIVIN_FAULT */
 		typ = ILL_PRVOPC;
 		i = SIGILL;
+		v = frame.f_pc;
 		break;
 
 	case T_ZERODIV|T_USER:	/* Divide by zero */
@@ -465,6 +471,7 @@ trap(type, code, v, frame)
 		ucode = frame.f_format;	/* XXX was FPE_INTDIV_TRAP */
 		typ = FPE_INTDIV;
 		i = SIGFPE;
+		v = frame.f_pc;
 		break;
 
 	case T_CHKINST|T_USER:	/* CHK instruction trap */
@@ -479,6 +486,7 @@ trap(type, code, v, frame)
 		ucode = frame.f_format;	/* XXX was FPE_SUBRNG_TRAP */
 		typ = FPE_FLTSUB;
 		i = SIGFPE;
+		v = frame.f_pc;
 		break;
 
 	case T_TRAPVINST|T_USER:	/* TRAPV instruction trap */
@@ -491,8 +499,9 @@ trap(type, code, v, frame)
 		}
 #endif
 		ucode = frame.f_format;	/* XXX was FPE_INTOVF_TRAP */
-		typ = FPE_FLTOVF;
-		i = SIGFPE;
+		typ = ILL_ILLTRP;
+		i = SIGILL;
+		v = frame.f_pc;
 		break;
 
 	/*

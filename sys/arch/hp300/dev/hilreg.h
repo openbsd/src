@@ -1,5 +1,5 @@
-/*	$OpenBSD: hilreg.h,v 1.2 1997/01/12 15:12:44 downsj Exp $	*/
-/*	$NetBSD: hilreg.h,v 1.5 1994/10/26 07:24:15 cgd Exp $	*/
+/*	$OpenBSD: hilreg.h,v 1.3 1997/02/04 06:21:24 downsj Exp $	*/
+/*	$NetBSD: hilreg.h,v 1.6 1997/02/02 09:39:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -92,13 +92,6 @@ struct	hil_dev {
 #define WRITEHILDATA(x, y)	((x)->hil_data = ((y) << 24))
 #define WRITEHILSTAT(x, y)	((x)->hil_stat = ((y) << 24))
 #define WRITEHILCMD(x, y)	((x)->hil_cmd  = ((y) << 24))
-#endif
-
-#ifdef hp300
-#define splhil()		spl1()
-#else
-extern int hilspl;
-#define splhil()		splx(hilspl)
 #endif
 
 #define	HIL_BUSY		0x02

@@ -1,5 +1,5 @@
-/*	$OpenBSD: genassym.c,v 1.5 1997/01/12 15:13:16 downsj Exp $	*/
-/*	$NetBSD: genassym.c,v 1.21 1996/10/05 07:11:44 thorpej Exp $	*/
+/*	$OpenBSD: genassym.c,v 1.6 1997/02/04 06:21:29 downsj Exp $	*/
+/*	$NetBSD: genassym.c,v 1.22 1997/02/02 07:53:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -40,6 +40,10 @@
 #define _VA_LIST_ _BSD_VA_LIST_
 #define _PTRDIFF_T_ _BSD_PTRDIFF_T_
 
+#undef _KERNEL		/* XXX for errno declaration */
+#include <errno.h>
+#define _KERNEL
+
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/map.h>
@@ -62,12 +66,9 @@
 #include <hp300/hp300/led.h>
 #endif
 
-#include <errno.h>
 #include <stdio.h>
 #include <stddef.h>
 #include <string.h>
-
-extern int errno;
 
 void
 def(what, val)
@@ -126,6 +127,14 @@ main()
 	def("CPU_68020", CPU_68020);
 	def("CPU_68030", CPU_68030);
 	def("CPU_68040", CPU_68040);
+
+	/* FPU types */
+	def("FPU_NONE", FPU_NONE);
+	def("FPU_68881", FPU_68881);
+	def("FPU_68882", FPU_68882);
+	def("FPU_68040", FPU_68040);
+	def("FPU_68060", FPU_68060);
+	def("FPU_UNKNOWN", FPU_UNKNOWN);
 
 	/* values for machineid */
 	def("HP_320", HP_320);
