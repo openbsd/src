@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.11 2001/06/24 17:05:36 miod Exp $	*/
+/*	$OpenBSD: intr.h,v 1.12 2002/02/05 05:12:27 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1990,1991,1992,1994 The University of Utah and
@@ -49,7 +49,7 @@
 /*
  * Define the machine-independent SPL routines in terms of splx().
  */
-#define __splhigh(splhval)	({					\
+#define splraise(splhval)	({					\
 	register u_int _ctl_r;						\
 	__asm __volatile("mfctl	%%cr15,%0\n\t"				\
 			 "mtctl	%1,%%cr15"				\
@@ -57,7 +57,7 @@
 	_ctl_r;								\
 })
 
-#define __spllow(spllval)	({					\
+#define spllower(spllval)	({					\
 	register u_int _ctl_r;						\
 	__asm __volatile("mfctl	%%cr15,%0\n\t"				\
 			 "mtctl	%1,%%cr15"				\
@@ -73,19 +73,19 @@
 	_ctl_r;								\
 })
 
-#define	spl0()			__spllow(IPL_NONE)
-#define	splsoft()		__spllow(IPL_CLOCK)
+#define	spl0()			spllower(IPL_NONE)
+#define	splsoft()		spllower(IPL_CLOCK)
 #define	splsoftnet()		splsoft()
 #define	spllowersoftclock()	splsoft()
 #define	splsoftclock()		splsoft()
-#define	splbio()		__spllow(IPL_BIO)
-#define	splnet()		__spllow(IPL_NET)
-#define	spltty()		__spllow(IPL_TTY)
-#define	splimp()		__spllow(IPL_CLOCK)
-#define	splclock()		__spllow(IPL_CLOCK)
-#define	splstatclock()		__spllow(IPL_CLOCK)
-#define	splvm()			__spllow(IPL_CLOCK)
-#define	splhigh()		__splhigh(IPL_HIGH)
+#define	splbio()		spllower(IPL_BIO)
+#define	splnet()		spllower(IPL_NET)
+#define	spltty()		spllower(IPL_TTY)
+#define	splimp()		spllower(IPL_CLOCK)
+#define	splclock()		spllower(IPL_CLOCK)
+#define	splstatclock()		spllower(IPL_CLOCK)
+#define	splvm()			spllower(IPL_CLOCK)
+#define	splhigh()		splraise(IPL_HIGH)
 
 /* software interrupt register */
 extern u_int32_t sir;
