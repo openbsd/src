@@ -1,4 +1,4 @@
-/* $OpenBSD: zaurus_kbdmap.h,v 1.4 2005/01/14 00:39:55 drahn Exp $ */
+/* $OpenBSD: zaurus_kbdmap.h,v 1.5 2005/01/14 00:53:12 drahn Exp $ */
 
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
@@ -20,7 +20,7 @@
 
 static const keysym_t zkbd_keydesc_us[] = {
     KC(0),	KS_Control_L,
-    KC(2),	KS_Tab,
+    KC(2),	KS_Tab,		KS_Tab,		KS_Caps_Lock,
     /* KC(3),	Addr, */
     /* KC(4),	Cal, */
     /* KC(5),	Mail, */
@@ -44,7 +44,7 @@ static const keysym_t zkbd_keydesc_us[] = {
     KC(26),	KS_t,		KS_T,		KS_braceleft,
     KC(27),	KS_f,		KS_F,		KS_backslash,
     KC(28),	KS_c,
-    KC(29),	KS_minus,	KS_at,
+    KC(29),	KS_minus,	KS_minus,	KS_at,
     KC(30),	KS_Escape, /* Cancel */
     KC(32),	KS_6,	
     KC(33),	KS_y,		KS_Y,		KS_braceright,
@@ -65,23 +65,23 @@ static const keysym_t zkbd_keydesc_us[] = {
     KC(50),	KS_j,		KS_J,		KS_asterisk,
     KC(51),	KS_m,
     KC(52),	KS_period,	KS_question,	KS_less,
-    /* KC(54),	left, */
+    KC(54),	KS_KP_Left, /* left, */
     KC(56),	KS_0,		KS_asciitilde,
     KC(57),	KS_o,
     KC(58),	KS_k,
     KC(59),	KS_l,		KS_L,		KS_bar,
-    /* KC(61),	up, */
-    /* KC(62),	down, */
+    KC(61),	KS_KP_Up, /* up, */
+    KC(62),	KS_KP_Down, /* down, */
     KC(64),	KS_Delete,	KS_BackSpace,
     KC(65),	KS_p,
     KC(68),	KS_Return,
-    /* KC(70),	right, */
-    /* KC(80),	OK, (ext) */
-    /* KC(81),	tog left, */
+    KC(70),	KS_KP_Right, /* right, */
+    KC(80),	KS_KP_Next, /* OK, (ext) */
+    KC(81),	KS_KP_Next, /* tog left, */
     KC(83),	KS_Shift_R,
     KC(84),	KS_Shift_L,
-    /* KC(88),	cancel (ext), */
-    /* KC(89),	tog right, */
+    KC(88),	KS_KP_Prior, /* cancel (ext), */
+    KC(89),	KS_KP_Prior, /* tog right, */
     KC(93),	KS_Mode_switch /* Fn */
 };
 
