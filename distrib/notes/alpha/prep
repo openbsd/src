@@ -1,11 +1,31 @@
-dnl	$OpenBSD: prep,v 1.12 2002/04/01 00:50:20 miod Exp $
+dnl	$OpenBSD: prep,v 1.13 2002/04/07 22:13:01 miod Exp $
 OpenBSD/MACHINE requires the SRM console.  Some alphas come with
-the ARC firmware instead (this is what Windows NT uses).  It is
-fairly simple to replace the ARC firmware with the SRM version.
-You can get replacement firmware either from a firmware update
-CD or via ftp from ftp://ftp.digital.com/pub/DEC/Alpha/firmware/.
-Please refer to http://ftp.digital.com/pub/DEC/Alpha/firmware/readme.html
-for more information.
+the AlphaBIOS (also known as the ARC firmware on older machines) instead;
+this is what Windows NT uses. It is fairly simple to replace the AlphaBIOS
+with the SRM firmware.
+
+Switching your MACHINE to SRM console:
+    Recent machines (such as the Miata and later models) have enough flash
+    rom space to carry both the AlphaBIOS and the SRM console.
+    To switch to SRM from AlphaBIOS, do the following:
+    - enter the AlphaBIOS setup upon startup
+      (F2 key, or ^B from serial console)
+    - choose "CMOS Setup" from the menu
+    - select "Advanced CMOS Setup" (F6 key, or ^F from serial console)
+    - change the "Console Selection" setting to "OpenVMS console (SRM)"
+    - confirm your changes with F10 (or ^U) twice, then enter.
+    - power-cycle your system for the changes to take effect.
+
+    If you didn't find a "Console Selection" entry (for example on 164SX or
+    164LX), your system can not hold both the AlphaBIOS and SRM console in
+    flash, and you will have to upgrade your firmware.
+
+    You can get replacement firmware either from a firmware update CD or via
+    ftp from
+	ftp://ftp.digital.com/pub/DEC/Alpha/firmware/
+    Please refer to
+	http://ftp.digital.com/pub/DEC/Alpha/firmware/readme.html
+    for more information.
 
 AXPpci33 Motherboard specific notes:
     The 1994 version of the OEM guide has an incorrect pinout
@@ -37,15 +57,15 @@ Using the SRM console:
 			empty, "bsd" will be loaded.
 	boot_osflags	Flags to pass to the kernel.
 			IMPORTANT! For multiuser boot, this needs to be
-			set to "-a".
-	booted_osflags	Don't try to set this one directly.  It will
-			contain whatever flags the OS was last booted
-			with.
-			To set it indirectly, boot with the -flags
-			option; for example "b dka0 -flags a" will boot
-			multiuser from dka0 and set booted_osflags to "a".
+			set to "a".
     To see a list of all variables on your machine use the "show"
     command with no arguments.
+    
+    You can bypass the boot_file and boot_osflags values from the command
+    prompt, with the -fi (to override boot_file) and -fl (to override
+    boot_osflags) options. For example,
+	boot -fi bsd -fl ac dka0
+    will boot the "bsd" kernel with the "ac" flags on dka0.
 
 
 dnl Change back when TC support is back

@@ -1,7 +1,9 @@
+dnl	$OpenBSD: xfer,v 1.23 2002/04/07 22:13:01 miod Exp $
 Installation is supported from several media types, including:
 
 	CD-ROM (NOT supported if booting from floppy)
-	FFS partitions
+dnl uncomment once upgrade are available
+dnl	FFS partitions
 	Tape
 	FTP
 	HTTP
@@ -46,5 +48,6 @@ OpenBSDXferShortPrelude
 
 
 OpenBSDXferBareTape(xbase xfont xserv xshare)
-
-OpenBSDXferFFS
+dnl uncomment once upgrade are available
+dnl
+dnl OpenBSDXferFFS

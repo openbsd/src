@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.18 2002/03/30 22:52:57 miod Exp $
+dnl	$OpenBSD: install,v 1.19 2002/04/07 22:13:01 miod Exp $
 OpenBSDInstallPrelude
 
 dnl XXX document mopbooting from the SRM console.
@@ -10,7 +10,8 @@ installation floppies, if your machine has a floppy drive.
 
 Booting from Floppy Disk installation media:
 
-	At the SRM console prompt, enter "boot dva0" and hit return.
+	At the SRM console prompt, enter
+		boot dva0
 	You should see info about the primary and secondary boot
 	and then the kernel should start to load.  It will take a
 	while to load the kernel from the floppy, most likely more
@@ -22,16 +23,17 @@ Booting from Floppy Disk installation media:
 
 Booting from CD-ROM installation media:
 
-	At the SRM console prompt, enter "show device" and hit return
+	At the SRM console prompt, enter
+		show device
 	to find the device ID of your CD-ROM drive (the device ID is
-	in the second column and should start with DKA for a SCSI
-	CD-ROM drive).  If your drive shows up with a drive number
-	with trailing zeros, you will want to ignore them (unless
-	it is DKA0).  For example, if your CD-ROM drive is listed
+	usually in the second column (``bootdev'') and should start
+	with DKA for a SCSI CD-ROM drive).  If your drive shows up with
+	a drive number with trailing zeros, you will want to ignore them
+	(unless it is DKA0).  For example, if your CD-ROM drive is listed
 	as DKA600, you want to use dka6 (device ID's are case
 	insensitive).
 	Insert the OpenBSD/MACHINE CD and enter
-	"boot -fi OSREV/MACHINE/bsd.rd DEVICE"
+		boot -fi OSREV/MACHINE/bsd.rd DEVICE
 	where DEVICE is the dka device name.  Note that the argument
 	order is important here.
 	You should see info about the primary and secondary boot
@@ -50,32 +52,19 @@ OpenBSDInstallPart2
 
 OpenBSDBootMsgs
 
-	If you boot from a floppy, you will probably see several
-	warnings.  You should be warned that the kernel can't figure
-	out what device it booted from and that no swap space is
-	present.  Do not be alarmed, these are completely normal.
-	The first warning occurs because while OpenBSD/MACHINE can
-	boot from the floppy drive, the kernel itself lacks a floppy
-	driver.
-
 	You will next be asked for your terminal type.  If you are
-	installing from a non-serial console, the default of "sun"
+	installing from a non-serial console, the default of "vt220"
 	is correct.  If you are installing from a serial console
 	you should choose the terminal type from amongst those listed.
-	(If your terminal type is xterm, just use vt100).
+	(If your terminal type is xterm, just use vt220).
+
 OpenBSDInstallPart3({:- or "wd0" for IDE drives-:})
 
 OpenBSDInstallPart4
 
 OpenBSDInstallPart5(sd0)
 
-OpenBSDInstallNet(linkflags)dnl
- The flags usually carry the following
-	meaning:
-
-		-link0 -link1	Use BNC (coaxial) port [default]
-		link0 -link1	Use AUI port
-		link0 link1	Use UTP (twisted pair) port
+OpenBSDInstallNet
 
 OpenBSDInstallNet2({:-CD-ROM, -:},nofloppy)
 
