@@ -1,4 +1,4 @@
-/*	$OpenBSD: opti.c,v 1.3 1996/05/03 12:01:04 mickey Exp $	*/
+/*	$OpenBSD: opti.c,v 1.4 1996/05/27 07:57:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -36,7 +36,7 @@
  * Code to setup 82C929 chipset
  */
 
-/* #define	OPTI_DEBUG	9 /* */
+/* #define	OPTI_DEBUG	9 */
 
 #include <sys/param.h>
 #include <sys/types.h>
