@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.10 1996/07/28 09:00:11 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.11 1996/08/23 18:26:29 niklas Exp $
 #	$NetBSD: MAKEDEV,v 1.21 1996/05/19 21:03:49 veego Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -55,6 +55,8 @@
 #	cd*	SCSI cdrom discs
 #	vnd*	"file" pseudo-disks
 #	ccd*	concatenated disk driver
+#	wd*	ISA "winchester" disk drives (ST506,IDE,ESDI,RLL,...)
+#	acd*	ISA ATAPI CD-ROM
 #
 # Console ports:
 #	ttye*	ite bitmapped consoles
@@ -198,12 +200,13 @@ fd*)
 	umask 77
 	;;
 
-sd*|vnd*|ccd*)
+sd*|vnd*|ccd*|wd*)
 	umask 2 ; unit=`expr $i : '.*[^0-9]\([0-9]*\)'`
 	case $i in
 	sd*) name=sd; blk=4; chr=8;;
 	vnd*) name=vnd; blk=6; chr=19;;
 	ccd*) name=ccd; blk=8; chr=7;;
+	wd*) name=wd; blk=0; chr=37;;
 	esac
 	rm -f $name$unit? r$name$unit?
 	case $unit in
@@ -253,10 +256,11 @@ sd*|vnd*|ccd*)
 	umask 77
 	;;
 
-cd*)
+cd*|acd*)
 	umask 2 ; unit=`expr $i : '..\(.*\)'`
 	case $i in
 	cd*) name=cd; blk=7; chr=9;;
+	acd*) name=acd; blk=15; chr=38;;
 	esac
 	rm -f $name$unit? r$name$unit?
 	case $unit in
@@ -471,7 +475,7 @@ lkm)
 ss*)
 	unit=`expr $i : 'ss\(.*\)'`
 	rm -f ss$unit
-	mknod ss$unit c 35 $unit
+	mknod ss$unit c 25 $unit
 	chmod 600 ss$unit
 	chown root.wheel ss$unit
 	;;
