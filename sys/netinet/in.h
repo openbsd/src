@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.11 1997/11/30 18:50:19 millert Exp $	*/
+/*	$OpenBSD: in.h,v 1.12 1998/02/11 03:58:31 deraadt Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -110,13 +110,13 @@
  * for servers, not necessarily privileged.
  */
 #define	IPPORT_RESERVED		1024
-#define	IPPORT_USERRESERVED	5000
+#define	IPPORT_USERRESERVED	49151
 
 /*
  * Default local port range to use by setting IP_PORTRANGE_HIGH
  */
-#define IPPORT_HIFIRSTAUTO	40000
-#define IPPORT_HILASTAUTO	44999
+#define IPPORT_HIFIRSTAUTO	49152
+#define IPPORT_HILASTAUTO	65535
 
 /*
  * Internet address (a structure for historical reasons)
