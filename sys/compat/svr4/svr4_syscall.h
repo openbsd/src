@@ -88,6 +88,7 @@
 #define	SVR4_SYS_waitsys	107
 #define	SVR4_SYS_hrtsys	109
 #define	SVR4_SYS_pathconf	113
+#define	SVR4_SYS_mincore	114
 #define	SVR4_SYS_mmap	115
 #define	SVR4_SYS_mprotect	116
 #define	SVR4_SYS_munmap	117

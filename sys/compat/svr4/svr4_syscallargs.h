@@ -395,6 +395,7 @@ int	svr4_sys_fstatvfs	__P((struct proc *, void *, register_t *));
 int	svr4_sys_waitsys	__P((struct proc *, void *, register_t *));
 int	svr4_sys_hrtsys	__P((struct proc *, void *, register_t *));
 int	svr4_sys_pathconf	__P((struct proc *, void *, register_t *));
+int	sys_mincore	__P((struct proc *, void *, register_t *));
 int	svr4_sys_mmap	__P((struct proc *, void *, register_t *));
 int	sys_mprotect	__P((struct proc *, void *, register_t *));
 int	sys_munmap	__P((struct proc *, void *, register_t *));

@@ -286,8 +286,8 @@ struct sysent svr4_sysent[] = {
 	    sys_nosys },			/* 112 = unimplemented priocntlsys */
 	{ 2, s(struct svr4_sys_pathconf_args),
 	    svr4_sys_pathconf },		/* 113 = pathconf */
-	{ 0, 0,
-	    sys_nosys },			/* 114 = unimplemented mincore */
+	{ 3, s(struct sys_mincore_args),
+	    sys_mincore },			/* 114 = mincore */
 	{ 6, s(struct svr4_sys_mmap_args),
 	    svr4_sys_mmap },			/* 115 = mmap */
 	{ 3, s(struct sys_mprotect_args),
