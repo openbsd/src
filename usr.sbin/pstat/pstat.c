@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.40 2002/12/12 04:17:14 deraadt Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.41 2003/01/06 05:23:34 deraadt Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$OpenBSD: pstat.c,v 1.40 2002/12/12 04:17:14 deraadt Exp $";
+static char *rcsid = "$OpenBSD: pstat.c,v 1.41 2003/01/06 05:23:34 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -92,10 +92,10 @@ struct nlist nl[] = {
 	{"_tty_count"},
 #define V_NUMV		3		/* sysctl */
 	{ "_numvnodes" },
-#define	V_MOUNTLIST	4		/* no sysctl */
-	{ "_mountlist" },
-#define TTY_TTYLIST	5		/* sysctl */
+#define TTY_TTYLIST	4		/* sysctl */
 	{"_ttylist"},
+#define	V_MOUNTLIST	5		/* no sysctl */
+	{ "_mountlist" },
 	{ "" }
 };
 
@@ -104,7 +104,7 @@ int	totalflag;
 int	kflag;
 char	*nlistf	= NULL;
 char	*memf	= NULL;
-kvm_t	*kd = 0;
+kvm_t	*kd = NULL;
 
 #define	SVAR(var) __STRING(var)	/* to force expansion */
 #define	KGET(idx, var)							\
