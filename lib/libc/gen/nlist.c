@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: nlist.c,v 1.33 1999/08/17 09:13:12 millert Exp $";
+static char rcsid[] = "$OpenBSD: nlist.c,v 1.34 2000/10/12 12:47:58 art Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -337,7 +337,7 @@ __elf_fdnlist(fd, list)
 	/* mmap section header table */
 	shdr = (Elf32_Shdr *)mmap(NULL, (size_t)shdr_size, PROT_READ,
 	    MAP_COPY|MAP_FILE, fd, (off_t) ehdr.e_shoff);
-	if (shdr == (Elf32_Shdr *)-1)
+	if (shdr == MAP_FAILED)
 		return (-1);
 
 	/*
@@ -373,7 +373,7 @@ __elf_fdnlist(fd, list)
 	 */
 	strtab = mmap(NULL, (size_t)symstrsize, PROT_READ, MAP_COPY|MAP_FILE,
 	    fd, (off_t) symstroff);
-	if (strtab == (char *)-1)
+	if (strtab == MAP_FAILED)
 		return (-1);
 	/*
 	 * clean out any left-over information for all valid entries.
