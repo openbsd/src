@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rl.c,v 1.9 1998/12/22 04:23:58 jason Exp $	*/
+/*	$OpenBSD: if_rl.c,v 1.10 1998/12/31 02:35:14 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$FreeBSD: if_rl.c,v 1.7 1998/12/14 06:32:55 dillon Exp $
+ *	$FreeBSD: if_rl.c,v 1.8 1998/12/24 18:39:48 wpaul Exp $
  */
 
 /*
@@ -698,6 +698,15 @@ static void rl_rxeof(sc)
 		rx_bytes += total_len + 4;
 
 		/*
+		 * XXX The RealTek chip includes the CRC with every
+		 * received frame, and there's no way to turn this
+		 * behavior off (at least, I can't find anything in
+	 	 * the manual that explains how to do it) so we have
+		 * to trim off the CRC manually.
+		 */
+		total_len -= ETHER_CRC_LEN;
+
+		/*
 		 * Avoid trying to read more bytes than we know
 		 * the chip has prepared for us.
 		 */
@@ -719,12 +728,12 @@ static void rl_rxeof(sc)
 			else
 				m_copyback(m, wrap, total_len - wrap,
 					sc->rl_cdata.rl_rx_buf);
-			cur_rx = (total_len - wrap);
+			cur_rx = (total_len - wrap + ETHER_CRC_LEN);
 		} else {
 			m = m_devget(rxbufpos, total_len, 0, ifp, NULL);
 			if (m == NULL)
 				ifp->if_ierrors++;
-			cur_rx += total_len + 4;
+			cur_rx += total_len + 4 + ETHER_CRC_LEN;
 		}
 
 		/*

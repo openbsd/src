@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rlreg.h,v 1.5 1998/12/22 04:23:59 jason Exp $	*/
+/*	$OpenBSD: if_rlreg.h,v 1.6 1998/12/31 02:35:14 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -552,3 +552,11 @@ struct rl_softc {
 #define PHY_BMSR_LINKSTAT		0x0004
 #define PHY_BMSR_JABBER			0x0002
 #define PHY_BMSR_EXTENDED		0x0001
+
+/*
+ * FreeBSDism
+ */
+#ifndef	ETHER_CRC_LEN
+#define	ETHER_CRC_LEN		4
+#endif
+
