@@ -60,6 +60,7 @@
 #include <limits.h>
 #include "cryptlib.h"
 #include <openssl/asn1.h>
+#include <openssl/asn1_mac.h>
 
 static int asn1_get_length(unsigned char **pp,int *inf,long *rl,int max);
 static void asn1_put_length(unsigned char **pp, int length);

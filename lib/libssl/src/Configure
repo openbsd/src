@@ -134,7 +134,7 @@ my %table=(
 
 # Our development configs
 "purify",	"purify gcc:-g -DPURIFY -Wall::(unknown)::-lsocket -lnsl::::",
-"debug",	"gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -ggdb -g2 -Wformat -Wshadow -Wmissing-prototypes -Wmissing-declarations -Werror::(unknown)::-lefence::::",
+"debug",	"gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DOPENSSL_NO_ASM -ggdb -g2 -Wformat -Wshadow -Wmissing-prototypes -Wmissing-declarations -Werror::(unknown)::-lefence::::",
 "debug-ben",	"gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DPEDANTIC -DDEBUG_SAFESTACK -O2 -pedantic -Wall -Wshadow -Werror -pipe::(unknown)::::asm/bn86-elf.o asm/co86-elf.o",
 "debug-ben-openbsd","gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DPEDANTIC -DDEBUG_SAFESTACK -DOPENSSL_OPENBSD_DEV_CRYPTO -DOPENSSL_NO_ASM -O2 -pedantic -Wall -Wshadow -Werror -pipe::(unknown)::::",
 "debug-ben-openbsd-debug","gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DPEDANTIC -DDEBUG_SAFESTACK -DOPENSSL_OPENBSD_DEV_CRYPTO -DOPENSSL_NO_ASM -g3 -O2 -pedantic -Wall -Wshadow -Werror -pipe::(unknown)::::",
@@ -145,8 +145,8 @@ my %table=(
 "debug-ulf",	"gcc:-DL_ENDIAN -DREF_CHECK -DCONF_DEBUG -DBN_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -g -O2 -m486 -Wall -Werror -Wshadow -pipe::-D_REENTRANT:::${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}",
 "debug-steve",	"gcc:-DL_ENDIAN -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DDEBUG_SAFESTACK -DCRYPTO_MDEBUG_ALL -DPEDANTIC -g -mcpu=i486 -pedantic -Wall -Werror -Wshadow -pipe::-D_REENTRANT::-rdynamic -ldl:${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn",
 "debug-steve-linux-pseudo64",	"gcc:-DL_ENDIAN -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DDEBUG_SAFESTACK -DCRYPTO_MDEBUG_ALL -DOPENSSL_NO_ASM -g -mcpu=i486 -Wall -Werror -Wshadow -pipe::-D_REENTRANT::-rdynamic -ldl:SIXTY_FOUR_BIT::dlfcn",
-"debug-levitte-linux-elf","gcc:-DLEVITTE_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -D_POSIX_SOURCE -DPEDANTIC -ggdb -g3 -mcpu=i486 -pedantic -ansi -Wall -W -Wtraditional -Wundef -Wshadow -Wid-clash-31 -Wcast-align -Wconversion -Wno-long-long -pipe::-D_REENTRANT::-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"debug-levitte-linux-noasm","gcc:-DLEVITTE_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DOPENSSL_NO_ASM -DL_ENDIAN -DTERMIO -D_POSIX_SOURCE -DPEDANTIC -ggdb -g3 -mcpu=i486 -pedantic -ansi -Wall -W -Wtraditional -Wundef -Wshadow -Wid-clash-31 -Wcast-align -Wconversion -Wno-long-long -pipe::-D_REENTRANT::-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}::::::::::dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"debug-levitte-linux-elf","gcc:-DLEVITTE_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -D_POSIX_SOURCE -DPEDANTIC -ggdb -g3 -mcpu=i486 -pedantic -ansi -Wall -W -Wundef -Wshadow -Wid-clash-31 -Wcast-align -Wconversion -Wno-long-long -pipe::-D_REENTRANT::-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"debug-levitte-linux-noasm","gcc:-DLEVITTE_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DOPENSSL_NO_ASM -DL_ENDIAN -DTERMIO -D_POSIX_SOURCE -DPEDANTIC -ggdb -g3 -mcpu=i486 -pedantic -ansi -Wall -W -Wundef -Wshadow -Wid-clash-31 -Wcast-align -Wconversion -Wno-long-long -pipe::-D_REENTRANT::-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}::::::::::dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "dist",		"cc:-O::(unknown)::::::",
 
 # Basic configs that should work on any (32 and less bit) box
@@ -169,11 +169,11 @@ my %table=(
 "solaris-sparcv8-gcc","gcc:-mv8 -O3 -fomit-frame-pointer -Wall -DB_ENDIAN -DBN_DIV2W::-D_REENTRANT::-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:asm/sparcv8.o:::::::::dlfcn:solaris-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 # -m32 should be safe to add as long as driver recognizes -mcpu=ultrasparc
 "solaris-sparcv9-gcc","gcc:-m32 -mcpu=ultrasparc -O3 -fomit-frame-pointer -Wall -DB_ENDIAN -DBN_DIV2W::-D_REENTRANT:ULTRASPARC:-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:asm/sparcv8plus.o:::asm/md5-sparcv8plus.o::::::dlfcn:solaris-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"solaris64-sparcv9-gcc31","gcc:-mcpu=ultrasparc -m64 -O3 -fomit-frame-pointer -Wall -DB_ENDIAN::-D_REENTRANT:ULTRASPARC:-lsocket -lnsl -ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_PTR DES_RISC1 DES_UNROLL BF_PTR::::asm/md5-sparcv9.o::::::dlfcn:solaris-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"solaris64-sparcv9-gcc31","gcc:-mcpu=ultrasparc -m64 -O3 -fomit-frame-pointer -Wall -DB_ENDIAN::-D_REENTRANT:ULTRASPARC:-lsocket -lnsl -ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_PTR DES_RISC1 DES_UNROLL BF_PTR::::asm/md5-sparcv9.o::::::dlfcn:solaris-shared:-fPIC:-m64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 # gcc pre-2.8 doesn't understand -mcpu=ultrasparc, so fall down to -mv8
 # but keep the assembler modules.
 "solaris-sparcv9-gcc27","gcc:-mv8 -O3 -fomit-frame-pointer -Wall -DB_ENDIAN -DBN_DIV2W::-D_REENTRANT:ULTRASPARC:-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:asm/sparcv8plus-gcc27.o:::asm/md5-sparcv8plus-gcc27.o::::::dlfcn:solaris-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"solaris64-sparcv9-gcc","gcc:-m64 -mcpu=ultrasparc -O3 -Wall -DB_ENDIAN::-D_REENTRANT:ULTRASPARC:-lsocket -lnsl -ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_PTR DES_RISC1 DES_UNROLL BF_PTR::::asm/md5-sparcv9.o::::::dlfcn:solaris-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"solaris64-sparcv9-gcc","gcc:-m64 -mcpu=ultrasparc -O3 -Wall -DB_ENDIAN::-D_REENTRANT:ULTRASPARC:-lsocket -lnsl -ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_PTR DES_RISC1 DES_UNROLL BF_PTR::::asm/md5-sparcv9.o::::::dlfcn:solaris-shared:-fPIC:-m64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 
 ####
 "debug-solaris-sparcv8-gcc","gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -O -g -mv8 -Wall -DB_ENDIAN::-D_REENTRANT::-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:asm/sparcv8.o:::::::::dlfcn:solaris-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
@@ -256,6 +256,9 @@ my %table=(
 "hpux-parisc-cc-o4","cc:-Ae +O4 +ESlit -z -DB_ENDIAN -DBN_DIV2W -DMD32_XARRAY::::-ldld:BN_LLONG DES_PTR DES_UNROLL DES_RISC1::::::::::dl:hpux-shared:+Z::.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "hpux-parisc-gcc","gcc:-O3 -DB_ENDIAN -DBN_DIV2W::::-Wl,+s -ldld:BN_LLONG DES_PTR DES_UNROLL DES_RISC1::::::::::dl:hpux-shared:-fPIC::.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "hpux64-parisc-cc","cc:-Ae +DD64 +O3 +ESlit -z -DB_ENDIAN -DMD32_XARRAY::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT::::::::::dlfcn:hpux64-shared:+Z::.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+# 64bit PARISC for GCC without optimization, which seems to make problems.
+# Submitted by <ross.alexander@uk.neceur.com>
+"hpux64-parisc-gcc","gcc:-DB_ENDIAN -DMD32_XARRAY::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT::::::::::dlfcn:hpux64-shared:-fpic::.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 
 # IA-64 targets
 # I have no idea if this one actually works, feedback needed. <appro>
@@ -410,13 +413,13 @@ my %table=(
 "linux-elf-arm","gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::-D_REENTRANT:::BN_LLONG::::::::::dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 
 # UnixWare 2.0x fails destest with -O
-"unixware-2.0","cc:-DFILIO_H::-Kthread::-lsocket -lnsl -lx:${x86_gcc_des} ${x86_gcc_opts}:::",
-"unixware-2.0-pentium","cc:-DFILIO_H -Kpentium::-Kthread::-lsocket -lnsl -lx:MD2_CHAR RC4_INDEX ${x86_gcc_des}::",
+"unixware-2.0","cc:-DFILIO_H -DNO_STRINGS_H::-Kthread::-lsocket -lnsl -lresolv -lx:${x86_gcc_des} ${x86_gcc_opts}:::",
+"unixware-2.0-pentium","cc:-DFILIO_H -DNO_STRINGS_H -Kpentium::-Kthread::-lsocket -lnsl -lresolv -lx:MD2_CHAR RC4_INDEX ${x86_gcc_des}::",
 
 # UnixWare 2.1
-"unixware-2.1","cc:-O -DFILIO_H::-Kthread::-lsocket -lnsl -lx:${x86_gcc_des} ${x86_gcc_opts}:::",
-"unixware-2.1-pentium","cc:-O -DFILIO_H -Kpentium::-Kthread::-lsocket -lnsl -lx:MD2_CHAR RC4_INDEX ${x86_gcc_des}::",
-"unixware-2.1-p6","cc:-O -DFILIO_H -Kp6::-Kthread::-lsocket -lnsl -lx:MD2_CHAR RC4_INDEX ${x86_gcc_des}::",
+"unixware-2.1","cc:-O -DFILIO_H::-Kthread::-lsocket -lnsl -lresolv -lx:${x86_gcc_des} ${x86_gcc_opts}:::",
+"unixware-2.1-pentium","cc:-O -DFILIO_H -Kpentium::-Kthread::-lsocket -lnsl -lresolv -lx:MD2_CHAR RC4_INDEX ${x86_gcc_des}::",
+"unixware-2.1-p6","cc:-O -DFILIO_H -Kp6::-Kthread::-lsocket -lnsl -lresolv -lx:MD2_CHAR RC4_INDEX ${x86_gcc_des}::",
 
 # UnixWare 7
 "unixware-7","cc:-O -DFILIO_H -Kalloca::-Kthread::-lsocket -lnsl:BN_LLONG MD2_CHAR RC4_INDEX ${x86_gcc_des}::::::::::dlfcn:svr5-shared:-Kpic::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
@@ -509,9 +512,15 @@ my %table=(
 # and its library files in util/pl/*)
 "Mingw32", "gcc:-DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall:::::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}::::::::::win32",
 
+# UWIN 
+"UWIN", "cc:-DTERMIOS -DL_ENDIAN -O -Wall:::UWIN::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}::::::::::win32",
+
 # Cygwin
 "Cygwin-pre1.3", "gcc:-DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall::(unknown):CYGWIN32::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}::::::::::win32",
 "Cygwin", "gcc:-DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall:::CYGWIN32::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_out_asm}:win32:cygwin-shared:::.dll",
+
+# DJGPP
+"DJGPP", "gcc:-I/dev/env/DJDIR/watt32/inc -DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O2 -Wall:::MSDOS:-L/dev/env/DJDIR/watt32/lib -lwatt:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}::::::::::",
 
 # Ultrix from Bernhard Simon <simon@zid.tuwien.ac.at>
 "ultrix-cc","cc:-std1 -O -Olimit 1000 -DL_ENDIAN::(unknown):::::::",
@@ -534,8 +543,8 @@ my %table=(
 
 ##### MacOS X (a.k.a. Rhapsody or Darwin) setup
 "rhapsody-ppc-cc","cc:-O3 -DB_ENDIAN::(unknown):MACOSX::BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:::",
-"darwin-ppc-cc","cc:-O3 -nostdinc -I/System/Library/Frameworks/System.framework/Headers -I/System/Library/Frameworks/System.frameworks/Headers/bsd -I/usr/include -fomit-frame-pointer -Wall -DB_ENDIAN::(unknown):MACOSX::BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:::::::::::darwin-shared:-fPIC::.\$(SHLIB_MAJOR).\$(SHLIB_MINOR).dylib",
-"darwin-i386-cc","cc:-O3 -nostdinc -I/System/Library/Frameworks/System.framework/Headers -I/System/Library/Frameworks/System.frameworks/Headers/bsd -I/usr/include -fomit-frame-pointer -Wall -DB_ENDIAN::(unknown):MACOSX::BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:::::::::::darwin-shared:-fPIC::.\$(SHLIB_MAJOR).\$(SHLIB_MINOR).dylib",
+"darwin-ppc-cc","cc:-O3 -fomit-frame-pointer -fno-common -DB_ENDIAN::-D_REENTRANT:MACOSX::BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:::::::::::darwin-shared:-fPIC::.\$(SHLIB_MAJOR).\$(SHLIB_MINOR).dylib",
+"darwin-i386-cc","cc:-O3 -fomit-frame-pointer -fno-common -DB_ENDIAN::-D_REENTRANT:MACOSX::BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:::::::::::darwin-shared:-fPIC::.\$(SHLIB_MAJOR).\$(SHLIB_MINOR).dylib",
 
 ##### Sony NEWS-OS 4.x
 "newsos4-gcc","gcc:-O -DB_ENDIAN::(unknown):NEWS4:-lmld -liberty:BN_LLONG RC4_CHAR RC4_CHUNK DES_PTR DES_RISC1 DES_UNROLL BF_PTR::::",
@@ -637,6 +646,7 @@ my $libs;
 my $target;
 my $options;
 my $symlink;
+my $make_depend=0;
 my %withargs=();
 
 my @argvcopy=@ARGV;
@@ -894,6 +904,7 @@ print "Configuring for $target\n";
 my $IsWindows=scalar grep /^$target$/,@WinTargets;
 
 $exe_ext=".exe" if ($target eq "Cygwin");
+$exe_ext=".exe" if ($target eq "DJGPP");
 $openssldir="/usr/local/ssl" if ($openssldir eq "" and $prefix eq "");
 $prefix=$openssldir if $prefix eq "";
 
@@ -901,7 +912,7 @@ chop $openssldir if $openssldir =~ /\/$/;
 chop $prefix if $prefix =~ /\/$/;
 
 $openssldir=$prefix . "/ssl" if $openssldir eq "";
-$openssldir=$prefix . "/" . $openssldir if $openssldir !~ /^\//;
+$openssldir=$prefix . "/" . $openssldir if $openssldir !~ /(^\/|^[a-zA-Z]:[\\\/])/;
 
 
 print "IsWindows=$IsWindows\n";
@@ -1151,7 +1162,8 @@ if ($shlib_version_number =~ /(^[0-9]*)\.([0-9\.]*)/)
 	}
 
 open(IN,'<Makefile.org') || die "unable to read Makefile.org:$!\n";
-open(OUT,">$Makefile") || die "unable to create $Makefile:$!\n";
+unlink("$Makefile.new") || die "unable to remove old $Makefile.new:$!\n" if -e "$Makefile.new";
+open(OUT,">$Makefile.new") || die "unable to create $Makefile.new:$!\n";
 print OUT "### Generated automatically from Makefile.org by Configure.\n\n";
 my $sdirs=0;
 while (<IN>)
@@ -1225,6 +1237,8 @@ while (<IN>)
 	}
 close(IN);
 close(OUT);
+rename($Makefile,"$Makefile.bak") || die "unable to rename $Makefile\n" if -e $Makefile;
+rename("$Makefile.new",$Makefile) || die "unable to rename $Makefile.new\n";
 
 print "CC            =$cc\n";
 print "CFLAG         =$cflags\n";
@@ -1295,7 +1309,8 @@ foreach (sort split(/\s+/,$bn_ops))
 	}
 
 open(IN,'<crypto/opensslconf.h.in') || die "unable to read crypto/opensslconf.h.in:$!\n";
-open(OUT,'>crypto/opensslconf.h') || die "unable to create crypto/opensslconf.h:$!\n";
+unlink("crypto/opensslconf.h.new") || die "unable to remove old crypto/opensslconf.h.new:$!\n" if -e "crypto/opensslconf.h.new";
+open(OUT,'>crypto/opensslconf.h.new') || die "unable to create crypto/opensslconf.h.new:$!\n";
 print OUT "/* opensslconf.h */\n";
 print OUT "/* WARNING: Generated automatically from opensslconf.h.in by Configure. */\n\n";
 
@@ -1389,6 +1404,8 @@ while (<IN>)
 	}
 close(IN);
 close(OUT);
+rename("crypto/opensslconf.h","crypto/opensslconf.h.bak") || die "unable to rename crypto/opensslconf.h\n" if -e "crypto/opensslconf.h";
+rename("crypto/opensslconf.h.new","crypto/opensslconf.h") || die "unable to rename crypto/opensslconf.h.new\n";
 
 
 # Fix the date
@@ -1428,11 +1445,13 @@ if($IsWindows) {
 EOF
 	close(OUT);
 } else {
-	(system "make -f Makefile.ssl PERL=\'$perl\' links") == 0 or exit $?
-		if $symlink;
-	### (system 'make depend') == 0 or exit $? if $depflags ne "";
-	# Run "make depend" manually if you want to be able to delete
-	# the source code files of ciphers you left out.
+	my $make_command = "make -f Makefile.ssl PERL=\'$perl\'";
+	my $make_targets = "";
+	$make_targets .= " links" if $symlink;
+	$make_targets .= " depend" if $depflags ne "" && $make_depend;
+	$make_targets .= " gentests" if $symlink;
+	(system $make_command.$make_targets) == 0 or exit $?
+		if $make_targets ne "";
 	if ( $perl =~ m@^/@) {
 	    &dofile("tools/c_rehash",$perl,'^#!/', '#!%s','^my \$dir;$', 'my $dir = "' . $openssldir . '";');
 	    &dofile("apps/der_chop",$perl,'^#!/', '#!%s');
@@ -1442,7 +1461,16 @@ EOF
 	    &dofile("tools/c_rehash",'/usr/local/bin/perl','^#!/', '#!%s','^my \$dir;$', 'my $dir = "' . $openssldir . '";');
 	    &dofile("apps/der_chop",'/usr/local/bin/perl','^#!/', '#!%s');
 	    &dofile("apps/CA.pl",'/usr/local/bin/perl','^#!/', '#!%s');
-	}	    
+	}
+	if ($depflags ne "" && !$make_depend) {
+		print <<EOF;
+
+Since you've disabled at least one algorithm, you need to do the following
+before building:
+
+	make depend
+EOF
+	}
 }
 
 print <<EOF;

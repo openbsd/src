@@ -2,7 +2,50 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.6d and 0.9.7  [XX xxx 2002]
+ Changes between 0.9.6e and 0.9.7  [XX xxx 2002]
+
+  *) Make sure tests can be performed even if the corresponding algorithms
+     have been removed entirely.  This was also the last step to make
+     OpenSSL compilable with DJGPP under all reasonable conditions.
+     [Richard Levitte, Doug Kaufman <dkaufman@rahul.net>]
+
+  *) Add cipher selection rules COMPLEMENTOFALL and COMPLEMENTOFDEFAULT
+     to allow version independent disabling of normally unselected ciphers,
+     which may be activated as a side-effect of selecting a single cipher.
+
+     (E.g., cipher list string "RSA" enables ciphersuites that are left
+     out of "ALL" because they do not provide symmetric encryption.
+     "RSA:!COMPLEMEMENTOFALL" avoids these unsafe ciphersuites.)
+     [Lutz Jaenicke, Bodo Moeller]
+
+  *) Add appropriate support for separate platform-dependent build
+     directories.  The recommended way to make a platform-dependent
+     build directory is the following (tested on Linux), maybe with
+     some local tweaks:
+
+	# Place yourself outside of the OpenSSL source tree.  In
+	# this example, the environment variable OPENSSL_SOURCE
+	# is assumed to contain the absolute OpenSSL source directory.
+	mkdir -p objtree/"`uname -s`-`uname -r`-`uname -m`"
+	cd objtree/"`uname -s`-`uname -r`-`uname -m`"
+	(cd $OPENSSL_SOURCE; find . -type f -o -type l) | while read F; do
+		mkdir -p `dirname $F`
+		ln -s $OPENSSL_SOURCE/$F $F
+	done
+
+     To be absolutely sure not to disturb the source tree, a "make clean"
+     is a good thing.  If it isn't successfull, don't worry about it,
+     it probably means the source directory is very clean.
+     [Richard Levitte]
+
+  *) Make sure any ENGINE control commands make local copies of string
+     pointers passed to them whenever necessary. Otherwise it is possible
+     the caller may have overwritten (or deallocated) the original string
+     data when a later ENGINE operation tries to use the stored values.
+     [Götz Babin-Ebell <babinebell@trustcenter.de>]
+
+  *) Improve diagnostics in file reading and command-line digests.
+     [Ben Laurie aided and abetted by Solar Designer <solar@openwall.com>]
 
   *) Add AES modes CFB and OFB to the object database.  Correct an
      error in AES-CFB decryption.
@@ -29,6 +72,8 @@
      form for "surname", serialNumber has no short form.
      Use "mail" as the short name for "rfc822Mailbox" according to RFC2798;
      therefore remove "mail" short name for "internet 7".
+     The OID for unique identifiers in X509 certificates is
+     x500UniqueIdentifier, not uniqueIdentifier.
      Some more OID additions. (Michael Bell <michael.bell@rz.hu-berlin.de>)
      [Lutz Jaenicke]
 
@@ -335,6 +380,10 @@
      By default, clients may request session resumption even during
      renegotiation (if session ID contexts permit); with this option,
      session resumption is possible only in the first handshake.
+
+     SSL_OP_ALL is now 0x00000FFFL instead of 0x000FFFFFL.  This makes
+     more bits available for options that should not be part of
+     SSL_OP_ALL (such as SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION).
      [Bodo Moeller]
 
   *) Add some demos for certificate and certificate request creation.
@@ -455,8 +504,8 @@
      [Bodo Moeller, Lutz Jaenicke]
 
   *) Rationalise EVP so it can be extended: don't include a union of
-     cipher/digest structures, add init/cleanup functions. This also reduces
-     the number of header dependencies.
+     cipher/digest structures, add init/cleanup functions for EVP_MD_CTX
+     (similar to those existing for EVP_CIPHER_CTX).
      Usage example:
 
          EVP_MD_CTX md;
@@ -1040,14 +1089,15 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      handle the new API. Currently only ECB, CBC modes supported. Add new
      AES OIDs.
 
-     Add TLS AES ciphersuites as described in the "AES Ciphersuites
-     for TLS" draft-ietf-tls-ciphersuite-06.txt. As these are not yet
-     official, they are not enabled by default and are not even part
-     of the "ALL" ciphersuite alias; for now, they must be explicitly
-     requested by specifying the new "AESdraft" ciphersuite alias. If
-     you want the default ciphersuite list plus the new ciphersuites,
-     use "DEFAULT:AESdraft:@STRENGTH".
-     [Ben Laurie, Steve Henson, Bodo Moeller]
+     Add TLS AES ciphersuites as described in RFC3268, "Advanced
+     Encryption Standard (AES) Ciphersuites for Transport Layer
+     Security (TLS)".  (In beta versions of OpenSSL 0.9.7, these were
+     not enabled by default and were not part of the "ALL" ciphersuite
+     alias because they were not yet official; they could be
+     explicitly requested by specifying the "AESdraft" ciphersuite
+     group alias.  In the final release of OpenSSL 0.9.7, the group
+     alias is called "AES" and is part of "ALL".)
+     [Ben Laurie, Steve  Henson, Bodo Moeller]
 
   *) New function OCSP_copy_nonce() to copy nonce value (if present) from
      request to response.
@@ -1617,22 +1667,46 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
   *) Clean old EAY MD5 hack from e_os.h.
      [Richard Levitte]
 
- Changes between 0.9.6d and 0.9.6e  [XX xxx XXXX]
-
-  *) Fix EVP_dsa_sha macro.
-     [Nils Larsch]
-
- Changes in security patch
-
-Changes marked "(CHATS)" were sponsored by the Defense Advanced
-Research Projects Agency (DARPA) and Air Force Research Laboratory,
-Air Force Materiel Command, USAF, under agreement number
-F30602-01-2-0537.
+ Changes between 0.9.6d and 0.9.6e  [30 Jul 2002]
 
   *) Add various sanity checks to asn1_get_length() to reject
      the ASN1 length bytes if they exceed sizeof(long), will appear
      negative or the content length exceeds the length of the
      supplied buffer.
+     [Steve Henson, Adi Stav <stav@mercury.co.il>, James Yonan <jim@ntlp.com>]
+
+  *) Fix cipher selection routines: ciphers without encryption had no flags
+     for the cipher strength set and where therefore not handled correctly
+     by the selection routines (PR #130).
+     [Lutz Jaenicke]
+
+  *) Fix EVP_dsa_sha macro.
+     [Nils Larsch]
+
+  *) New option
+          SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS
+     for disabling the SSL 3.0/TLS 1.0 CBC vulnerability countermeasure
+     that was added in OpenSSL 0.9.6d.
+
+     As the countermeasure turned out to be incompatible with some
+     broken SSL implementations, the new option is part of SSL_OP_ALL.
+     SSL_OP_ALL is usually employed when compatibility with weird SSL
+     implementations is desired (e.g. '-bugs' option to 's_client' and
+     's_server'), so the new option is automatically set in many
+     applications.
+     [Bodo Moeller]
+
+  *) Changes in security patch:
+
+     Changes marked "(CHATS)" were sponsored by the Defense Advanced
+     Research Projects Agency (DARPA) and Air Force Research Laboratory,
+     Air Force Materiel Command, USAF, under agreement number
+     F30602-01-2-0537.
+
+  *) Add various sanity checks to asn1_get_length() to reject
+     the ASN1 length bytes if they exceed sizeof(long), will appear
+     negative or the content length exceeds the length of the
+     supplied buffer. (CAN-2002-0659)
      [Steve Henson, Adi Stav <stav@mercury.co.il>, James Yonan <jim@ntlp.com>]
 
   *) Assertions for various potential buffer overflows, not known to
@@ -1644,12 +1718,18 @@ F30602-01-2-0537.
      [Matthew Byng-Maddick <mbm@aldigital.co.uk> and Ben Laurie (CHATS)>
 
   *) Remote buffer overflow in SSL3 protocol - an attacker could
+     supply an oversized master key in Kerberos-enabled versions.
+     (CAN-2002-0657)
+     [Ben Laurie (CHATS)]
+
+  *) Remote buffer overflow in SSL3 protocol - an attacker could
      supply an oversized session ID to a client. (CAN-2002-0656)
      [Ben Laurie (CHATS)]
 
   *) Remote buffer overflow in SSL2 protocol - an attacker could
      supply an oversized client master key. (CAN-2002-0656)
      [Ben Laurie (CHATS)]
+
 
  Changes between 0.9.6c and 0.9.6d  [9 May 2002]
 

@@ -59,9 +59,9 @@
 
 #include <stdio.h>
 #include <string.h>
+#include "cryptlib.h"
 #include <openssl/crypto.h>
 #include <openssl/pem.h>
-#include "cryptlib.h"
 #include <openssl/dso.h>
 #include <openssl/engine.h>
 #include <openssl/ui.h>
@@ -109,11 +109,13 @@ static int hwcrhk_rsa_mod_exp(BIGNUM *r, const BIGNUM *I, RSA *rsa);
 static int hwcrhk_mod_exp_mont(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
 
+#ifndef OPENSSL_NO_DH
 /* DH stuff */
 /* This function is alised to mod_exp (with the DH and mont dropped). */
 static int hwcrhk_mod_exp_dh(const DH *dh, BIGNUM *r,
 	const BIGNUM *a, const BIGNUM *p,
 	const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
+#endif
 
 /* RAND stuff */
 static int hwcrhk_rand_bytes(unsigned char *buf, int num);
@@ -422,8 +424,24 @@ static HWCryptoHook_RSAUnloadKey_t *p_hwcrhk_RSAUnloadKey = NULL;
 static HWCryptoHook_ModExpCRT_t *p_hwcrhk_ModExpCRT = NULL;
 
 /* Used in the DSO operations. */
-static const char def_HWCRHK_LIBNAME[] = "nfhwcrhk";
-static const char *HWCRHK_LIBNAME = def_HWCRHK_LIBNAME;
+static const char *HWCRHK_LIBNAME = NULL;
+static void free_HWCRHK_LIBNAME(void)
+	{
+	if(HWCRHK_LIBNAME)
+		OPENSSL_free((void*)HWCRHK_LIBNAME);
+	HWCRHK_LIBNAME = NULL;
+	}
+static const char *get_HWCRHK_LIBNAME(void)
+	{
+	if(HWCRHK_LIBNAME)
+		return HWCRHK_LIBNAME;
+	return "nfhwcrhk";
+	}
+static long set_HWCRHK_LIBNAME(const char *name)
+	{
+	free_HWCRHK_LIBNAME();
+	return (((HWCRHK_LIBNAME = BUF_strdup(name)) != NULL) ? 1 : 0);
+	}
 static const char *n_hwcrhk_Init = "HWCryptoHook_Init";
 static const char *n_hwcrhk_Finish = "HWCryptoHook_Finish";
 static const char *n_hwcrhk_ModExp = "HWCryptoHook_ModExp";
@@ -469,6 +487,7 @@ static void release_context(HWCryptoHook_ContextHandle hac)
 /* Destructor (complements the "ENGINE_ncipher()" constructor) */
 static int hwcrhk_destroy(ENGINE *e)
 	{
+	free_HWCRHK_LIBNAME();
 	ERR_unload_HWCRHK_strings();
 	return 1;
 	}
@@ -494,7 +513,7 @@ static int hwcrhk_init(ENGINE *e)
 		goto err;
 		}
 	/* Attempt to load libnfhwcrhk.so/nfhwcrhk.dll/whatever. */
-	hwcrhk_dso = DSO_load(NULL, HWCRHK_LIBNAME, NULL, 0);
+	hwcrhk_dso = DSO_load(NULL, get_HWCRHK_LIBNAME(), NULL, 0);
 	if(hwcrhk_dso == NULL)
 		{
 		HWCRHKerr(HWCRHK_F_HWCRHK_INIT,HWCRHK_R_DSO_FAILURE);
@@ -586,6 +605,7 @@ err:
 static int hwcrhk_finish(ENGINE *e)
 	{
 	int to_return = 1;
+	free_HWCRHK_LIBNAME();
 	if(hwcrhk_dso == NULL)
 		{
 		HWCRHKerr(HWCRHK_F_HWCRHK_FINISH,HWCRHK_R_NOT_LOADED);
@@ -634,8 +654,7 @@ static int hwcrhk_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)())
 			HWCRHKerr(HWCRHK_F_HWCRHK_CTRL,ERR_R_PASSED_NULL_PARAMETER);
 			return 0;
 			}
-		HWCRHK_LIBNAME = (const char *)p;
-		return 1;
+		return set_HWCRHK_LIBNAME((const char *)p);
 	case ENGINE_CTRL_SET_LOGSTREAM:
 		{
 		BIO *bio = (BIO *)p;
@@ -1040,6 +1059,7 @@ static int hwcrhk_mod_exp_mont(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	return hwcrhk_mod_exp(r, a, p, m, ctx);
 	}
 
+#ifndef OPENSSL_NO_DH
 /* This function is aliased to mod_exp (with the dh and mont dropped). */
 static int hwcrhk_mod_exp_dh(const DH *dh, BIGNUM *r,
 		const BIGNUM *a, const BIGNUM *p,
@@ -1047,6 +1067,7 @@ static int hwcrhk_mod_exp_dh(const DH *dh, BIGNUM *r,
 	{
 	return hwcrhk_mod_exp(r, a, p, m, ctx);
 	}
+#endif
 
 /* Random bytes are good */
 static int hwcrhk_rand_bytes(unsigned char *buf, int num)

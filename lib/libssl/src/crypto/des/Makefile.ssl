@@ -108,7 +108,6 @@ files:
 
 links:
 	@sh $(TOP)/util/point.sh Makefile.ssl Makefile
-	@sh $(TOP)/util/point.sh ../../perlasm asm/perlasm
 	@$(PERL) $(TOP)/util/mklink.pl ../../include/openssl $(EXHEADER)
 	@$(PERL) $(TOP)/util/mklink.pl ../../test $(TEST)
 	@$(PERL) $(TOP)/util/mklink.pl ../../apps $(APPS)
@@ -131,7 +130,7 @@ lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
 depend:
-	$(MAKEDEPEND) $(INCLUDES) $(DEPFLAG) $(PROGS) $(LIBSRC)
+	$(MAKEDEPEND) $(CFLAG) $(INCLUDES) $(DEPFLAG) $(PROGS) $(LIBSRC)
 
 dclean:
 	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new

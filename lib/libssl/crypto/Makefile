@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.26 2002/09/05 22:12:11 markus Exp $
+# $OpenBSD: Makefile,v 1.27 2002/09/10 16:31:53 markus Exp $
 
 LIB=	crypto
 
@@ -51,9 +51,9 @@ SRCS+= aes_cbc.c aes_cfb.c aes_ctr.c aes_ecb.c aes_ofb.c aes_misc.c aes_core.c
 CFLAGS+= -I${LCRYPTO_SRC}/des
 SRCS+=	cbc_cksm.c cbc_enc.c cfb64enc.c cfb_enc.c \
 	ecb3_enc.c ecb_enc.c enc_read.c enc_writ.c \
-	fcrypt.c ofb64enc.c ofb_enc.c pcbc_enc.c \
+	ofb64enc.c ofb_enc.c pcbc_enc.c \
 	qud_cksm.c rand_key.c rpc_enc.c set_key.c \
-	des_enc.c des_old.c fcrypt_b.c \
+	des_enc.c des_old2.c fcrypt_b.c \
 	fcrypt.c xcbc_enc.c ede_cbcm_enc.c \
 	str2key.c cfb64ede.c ofb64ede.c \
 	des_old.c read2pwd.c
@@ -111,7 +111,7 @@ SRCS+= bio_b64.c e_bf.c m_sha.c p_open.c
 SRCS+= bio_enc.c e_cast.c e_xcbc_d.c m_dss.c m_sha1.c p_seal.c
 SRCS+= bio_md.c e_des.c encode.c m_dss1.c names.c p_sign.c
 SRCS+= bio_ok.c e_des3.c evp_enc.c m_md2.c p_verify.c
-SRCS+= c_all.c evp_err.c m_md4.c p5_crpt.c
+SRCS+= c_all.c evp_err.c evp_acnf.c m_md4.c p5_crpt.c
 SRCS+= c_allc.c evp_key.c m_md5.c p5_crpt2.c
 SRCS+= c_alld.c e_null.c evp_lib.c m_mdc2.c p_dec.c
 SRCS+= digest.c e_rc2.c evp_pbe.c m_null.c p_enc.c
@@ -147,6 +147,7 @@ SRCS+=	v3_lib.c v3_pku.c v3_prn.c v3_skey.c v3_sxnet.c v3_utl.c
 SRCS+=	v3err.c v3_info.c v3_purp.c v3_ocsp.c v3_akeya.c
 CFLAGS+= -I${LCRYPTO_SRC}/conf
 SRCS+=	conf_err.c conf_lib.c conf_def.c conf_api.c conf_mod.c conf_mall.c
+SRCS+=	conf_sap.c
 CFLAGS+= -I${LCRYPTO_SRC}/txt_db
 SRCS+=	txt_db.c							
 CFLAGS+= -I${LCRYPTO_SRC}/pkcs7
@@ -154,7 +155,7 @@ SRCS+= pk7_lib.c pkcs7err.c
 SRCS+= pk7_asn1.c pk7_doit.c pk7_mime.c 
 SRCS+= pk7_attr.c pk7_smime.c
 CFLAGS+= -I${LCRYPTO_SRC}/comp
-SRCS+=	c_rle.c c_zlib.c comp_lib.c
+SRCS+=	c_rle.c c_zlib.c comp_lib.c comp_err.c
 CFLAGS+= -I${LCRYPTO_SRC}/pkcs12
 SRCS+=	p12_add.c p12_crpt.c p12_init.c p12_mutl.c p12_p8e.c
 SRCS+=	p12_asn.c p12_crt.c p12_key.c p12_npas.c p12_utl.c

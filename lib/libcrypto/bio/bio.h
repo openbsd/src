@@ -554,7 +554,9 @@ BIO_METHOD *BIO_s_socket(void);
 BIO_METHOD *BIO_s_connect(void);
 BIO_METHOD *BIO_s_accept(void);
 BIO_METHOD *BIO_s_fd(void);
+#ifndef OPENSSL_SYS_OS2
 BIO_METHOD *BIO_s_log(void);
+#endif
 BIO_METHOD *BIO_s_bio(void);
 BIO_METHOD *BIO_s_null(void);
 BIO_METHOD *BIO_f_null(void);
@@ -647,6 +649,7 @@ void ERR_load_BIO_strings(void);
 #define BIO_F_CONN_CTRL					 127
 #define BIO_F_CONN_STATE				 115
 #define BIO_F_FILE_CTRL					 116
+#define BIO_F_FILE_READ					 130
 #define BIO_F_LINEBUFFER_CTRL				 129
 #define BIO_F_MEM_READ					 128
 #define BIO_F_MEM_WRITE					 117

@@ -91,6 +91,7 @@ extern "C" {
 
 /* size of string represenations */
 #define DECIMAL_SIZE(type)     ((sizeof(type)*8+2)/3+1)
+#define HEX_SIZE(type)         ((sizeof(type)*2)
 
 #ifdef  __cplusplus
 }

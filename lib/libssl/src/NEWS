@@ -21,9 +21,8 @@
         against libdes providing similar functions having the same name).
         Provide macros for backward compatibility (will be removed in the
         future).
-      o Unifiy handling of cryptographic algorithms (software and
-        engine) to be available via EVP routines for asymmetric and
-        symmetric ciphers.
+      o Unify handling of cryptographic algorithms (software and engine)
+        to be available via EVP routines for asymmetric and symmetric ciphers.
       o NCONF: new configuration handling routines.
       o Change API to use more 'const' modifiers to improve error checking
         and help optimizers.
@@ -31,6 +30,7 @@
       o Reworked parts of the BIGNUM code.
       o Support for new engines: Broadcom ubsec, Accelerated Encryption
         Processing, IBM 4758.
+      o Extended and corrected OID (object identifier) table.
       o PRNG: query at more locations for a random device, automatic query for
         EGD style random sources at several locations.
       o SSL/TLS: allow optional cipher choice according to server's preference.
@@ -38,7 +38,12 @@
       o SSL/TLS: support Kerberos cipher suites (RFC2712).
       o SSL/TLS: allow more precise control of renegotiations and sessions.
       o SSL/TLS: add callback to retrieve SSL/TLS messages.
-      o SSL/TLS: add draft AES ciphersuites (disabled unless explicitly requested).
+      o SSL/TLS: support AES cipher suites (RFC3268).
+
+  Major changes between OpenSSL 0.9.6d and OpenSSL 0.9.6e:
+
+      o Important security related bugfixes.
+      o Various SSL/TLS library bugfixes.
 
   Major changes between OpenSSL 0.9.6c and OpenSSL 0.9.6d:
 

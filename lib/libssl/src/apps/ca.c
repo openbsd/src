@@ -80,7 +80,11 @@
 #ifdef OPENSSL_SYS_WINDOWS
 #define strcasecmp _stricmp
 #else
-#include <strings.h>
+#  ifdef NO_STRINGS_H
+    int	strcasecmp();
+#  else
+#    include <strings.h>
+#  endif /* NO_STRINGS_H */
 #endif
 
 #ifndef W_OK
@@ -1450,13 +1454,13 @@ bad:
 			}
 		if ((crldays == 0) && (crlhours == 0))
 			{
-			BIO_printf(bio_err,"cannot lookup how long until the next CRL is issuer\n");
+			BIO_printf(bio_err,"cannot lookup how long until the next CRL is issued\n");
 			goto err;
 			}
 
 		if (verbose) BIO_printf(bio_err,"making CRL\n");
 		if ((crl=X509_CRL_new()) == NULL) goto err;
-		if (!X509_CRL_set_issuer_name(crl, X509_get_issuer_name(x509))) goto err;
+		if (!X509_CRL_set_issuer_name(crl, X509_get_subject_name(x509))) goto err;
 
 		tmptm = ASN1_TIME_new();
 		if (!tmptm) goto err;

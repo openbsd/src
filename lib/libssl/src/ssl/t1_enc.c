@@ -110,10 +110,10 @@
  */
 
 #include <stdio.h>
+#include "ssl_locl.h"
 #include <openssl/comp.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
-#include "ssl_locl.h"
 #include <openssl/md5.h>
 
 static void tls1_P_hash(const EVP_MD *md, const unsigned char *sec,
@@ -483,14 +483,25 @@ printf("\nkey block\n");
 { int z; for (z=0; z<num; z++) printf("%02X%c",p1[z],((z+1)%16)?' ':'\n'); }
 #endif
 
-	/* enable vulnerability countermeasure for CBC ciphers with
-	 * known-IV problem (http://www.openssl.org/~bodo/tls-cbc.txt) */
-	s->s3->need_empty_fragments = 1;
-#ifndef NO_RC4
-	if ((s->session->cipher != NULL) && ((s->session->cipher->algorithms & SSL_ENC_MASK) == SSL_RC4))
-		s->s3->need_empty_fragments = 0;
+	if (!(s->options & SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS))
+		{
+		/* enable vulnerability countermeasure for CBC ciphers with
+		 * known-IV problem (http://www.openssl.org/~bodo/tls-cbc.txt)
+		 */
+		s->s3->need_empty_fragments = 1;
+
+		if (s->session->cipher != NULL)
+			{
+			if ((s->session->cipher->algorithms & SSL_ENC_MASK) == SSL_eNULL)
+				s->s3->need_empty_fragments = 0;
+			
+#ifndef OPENSSL_NO_RC4
+			if ((s->session->cipher->algorithms & SSL_ENC_MASK) == SSL_RC4)
+				s->s3->need_empty_fragments = 0;
 #endif
-		
+			}
+		}
+
 	return(1);
 err:
 	SSLerr(SSL_F_TLS1_SETUP_KEY_BLOCK,ERR_R_MALLOC_FAILURE);

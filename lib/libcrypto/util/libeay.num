@@ -701,7 +701,7 @@ bn_mul_words                            707	EXIST::FUNCTION:
 BN_uadd                                 708	EXIST::FUNCTION:
 BN_usub                                 709	EXIST::FUNCTION:
 bn_sqr_words                            710	EXIST::FUNCTION:
-_ossl_old_crypt                         711	EXIST:!NeXT,!PERL5,!__FreeBSD__:FUNCTION:DES
+_ossl_old_crypt                         711	EXIST:!NeXT,!PERL5:FUNCTION:DES
 d2i_ASN1_BIT_STRING                     712	EXIST::FUNCTION:
 d2i_ASN1_BOOLEAN                        713	EXIST::FUNCTION:
 d2i_ASN1_HEADER                         714	EXIST::FUNCTION:
@@ -984,8 +984,8 @@ BIO_ghbn_ctrl                           1003	EXIST::FUNCTION:
 CRYPTO_free_ex_data                     1004	EXIST::FUNCTION:
 CRYPTO_get_ex_data                      1005	EXIST::FUNCTION:
 CRYPTO_set_ex_data                      1007	EXIST::FUNCTION:
-ERR_load_CRYPTO_strings                 1009	EXIST:!VMS,!WIN16:FUNCTION:
-ERR_load_CRYPTOlib_strings              1009	EXIST:VMS,WIN16:FUNCTION:
+ERR_load_CRYPTO_strings                 1009	EXIST:!OS2,!VMS,!WIN16:FUNCTION:
+ERR_load_CRYPTOlib_strings              1009	EXIST:OS2,VMS,WIN16:FUNCTION:
 EVP_PKEY_bits                           1010	EXIST::FUNCTION:
 MD5_Transform                           1011	EXIST::FUNCTION:MD5
 SHA1_Transform                          1012	EXIST::FUNCTION:SHA,SHA1
@@ -1216,7 +1216,7 @@ name_cmp                                1239	EXIST::FUNCTION:
 str_dup                                 1240	NOEXIST::FUNCTION:
 i2s_ASN1_ENUMERATED                     1241	EXIST::FUNCTION:
 i2s_ASN1_ENUMERATED_TABLE               1242	EXIST::FUNCTION:
-BIO_s_log                               1243	EXIST:!WIN16,!WIN32,!macintosh:FUNCTION:
+BIO_s_log                               1243	EXIST:!OS2,!WIN16,!WIN32,!macintosh:FUNCTION:
 BIO_f_reliable                          1244	EXIST::FUNCTION:BIO
 PKCS7_dataFinal                         1245	EXIST::FUNCTION:
 PKCS7_dataDecode                        1246	EXIST::FUNCTION:
@@ -2732,8 +2732,8 @@ EC_POINT_point2oct                      3178	EXIST::FUNCTION:EC
 KRB5_APREQ_free                         3179	EXIST::FUNCTION:
 ASN1_OBJECT_it                          3180	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 ASN1_OBJECT_it                          3180	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
-OCSP_crlID_new                          3181	EXIST:!VMS,!WIN16:FUNCTION:
-OCSP_crlID2_new                         3181	EXIST:VMS,WIN16:FUNCTION:
+OCSP_crlID_new                          3181	EXIST:!OS2,!VMS,!WIN16:FUNCTION:
+OCSP_crlID2_new                         3181	EXIST:OS2,VMS,WIN16:FUNCTION:
 CONF_modules_load_file                  3182	EXIST::FUNCTION:
 CONF_imodule_set_usr_data               3183	EXIST::FUNCTION:
 ENGINE_set_default_string               3184	EXIST::FUNCTION:
@@ -2780,3 +2780,15 @@ EVP_aes_128_cfb                         3222	EXIST::FUNCTION:AES
 EVP_aes_256_cfb                         3223	EXIST::FUNCTION:AES
 EVP_aes_128_ofb                         3224	EXIST::FUNCTION:AES
 EVP_aes_192_cfb                         3225	EXIST::FUNCTION:AES
+CONF_modules_free                       3226	EXIST::FUNCTION:
+NCONF_default                           3227	EXIST::FUNCTION:
+OPENSSL_no_config                       3228	EXIST::FUNCTION:
+NCONF_WIN32                             3229	EXIST::FUNCTION:
+ASN1_UNIVERSALSTRING_new                3230	EXIST::FUNCTION:
+EVP_des_ede_ecb                         3231	EXIST::FUNCTION:DES
+i2d_ASN1_UNIVERSALSTRING                3232	EXIST::FUNCTION:
+ASN1_UNIVERSALSTRING_free               3233	EXIST::FUNCTION:
+ASN1_UNIVERSALSTRING_it                 3234	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
+ASN1_UNIVERSALSTRING_it                 3234	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
+d2i_ASN1_UNIVERSALSTRING                3235	EXIST::FUNCTION:
+EVP_des_ede3_ecb                        3236	EXIST::FUNCTION:DES

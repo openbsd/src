@@ -144,7 +144,7 @@ int RAND_write_file(const char *file)
 	FILE *out = NULL;
 	int n;
 	struct stat sb;
-
+	
 	i=stat(file,&sb);
 	if (i != -1) { 
 	  if (sb.st_mode & (S_IFBLK | S_IFCHR)) {

@@ -129,7 +129,11 @@
 #ifdef OPENSSL_SYS_WINDOWS
 #define strcasecmp _stricmp
 #else
-#include <strings.h>
+#  ifdef NO_STRINGS_H
+    int	strcasecmp();
+#  else
+#    include <strings.h>
+#  endif /* NO_STRINGS_H */
 #endif
 
 #ifdef OPENSSL_SYS_WINDOWS
@@ -490,7 +494,7 @@ static int ui_close(UI *ui)
 	{
 	return UI_method_get_closer(UI_OpenSSL())(ui);
 	}
-int setup_ui_method()
+int setup_ui_method(void)
 	{
 	ui_method = UI_create_method("OpenSSL application user interface");
 	UI_method_set_opener(ui_method, ui_open);
@@ -499,7 +503,7 @@ int setup_ui_method()
 	UI_method_set_closer(ui_method, ui_close);
 	return 0;
 	}
-void destroy_ui_method()
+void destroy_ui_method(void)
 	{
 	if(ui_method)
 		{
@@ -925,7 +929,7 @@ EVP_PKEY *load_pubkey(BIO *err, const char *file, int format,
 	}
 
 #if !defined(OPENSSL_NO_RC4) && !defined(OPENSSL_NO_RSA)
-EVP_PKEY *
+static EVP_PKEY *
 load_netscape_key(BIO *err, BIO *key, const char *file,
 		const char *key_descrip, int format)
 	{
@@ -1213,7 +1217,7 @@ static int set_table_opts(unsigned long *flags, const char *arg, const NAME_EX_T
 
 void print_name(BIO *out, char *title, X509_NAME *nm, unsigned long lflags)
 {
-	char buf[256];
+	char *buf;
 	char mline = 0;
 	int indent = 0;
 	if(title) BIO_puts(out, title);
@@ -1222,9 +1226,10 @@ void print_name(BIO *out, char *title, X509_NAME *nm, unsigned long lflags)
 		indent = 4;
 	}
 	if(lflags == XN_FLAG_COMPAT) {
-		X509_NAME_oneline(nm,buf,256);
-		BIO_puts(out,buf);
+		buf = X509_NAME_oneline(nm, 0, 0);
+		BIO_puts(out, buf);
 		BIO_puts(out, "\n");
+		OPENSSL_free(buf);
 	} else {
 		if(mline) BIO_puts(out, "\n");
 		X509_NAME_print_ex(out, nm, indent, lflags);
@@ -1263,7 +1268,7 @@ X509_STORE *setup_verify(BIO *bp, char *CAfile, char *CApath)
 }
 
 /* Try to load an engine in a shareable library */
-ENGINE *try_load_engine(BIO *err, const char *engine, int debug)
+static ENGINE *try_load_engine(BIO *err, const char *engine, int debug)
 	{
 	ENGINE *e = ENGINE_by_id("dynamic");
 	if (e)

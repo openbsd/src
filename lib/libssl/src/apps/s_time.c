@@ -85,7 +85,7 @@
 #include OPENSSL_UNISTD
 #endif
 
-#if !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_VXWORKS) && (!defined(OPENSSL_SYS_VMS) || defined(__DECC)) && !defined(OPENSSL_SYS_MACOSX)
+#if !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_VXWORKS) && (!defined(OPENSSL_SYS_VMS) || defined(__DECC))
 #define TIMES
 #endif
 
@@ -107,10 +107,6 @@
 
 #if !defined(TIMES) && !defined(OPENSSL_SYS_VXWORKS)
 #include <sys/timeb.h>
-#endif
-
-#ifdef _AIX
-#include <sys/select.h>
 #endif
 
 #if defined(sun) || defined(__ultrix)

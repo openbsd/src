@@ -61,6 +61,11 @@
 
 #include <stdlib.h>
 #include <openssl/ossl_typ.h>
+#include <openssl/e_os2.h>
+
+#if defined(OPENSSL_SYS_WINDOWS)
+#include <windows.h>
+#endif
 
 #ifdef  __cplusplus
 extern "C" {
