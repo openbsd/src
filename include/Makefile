@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.18 1996/07/24 09:05:05 mickey Exp $
+#	$OpenBSD: Makefile,v 1.19 1996/07/27 02:39:40 tholo Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -30,7 +30,7 @@ LDIRS=	dev net netinet netccitt netiso netns nfs sys ufs vm ddb scsi
 
 RDIRS=	../lib/libcurses ../lib/libform ../lib/libmenu ../lib/libocurses \
 	../lib/libpanel ../lib/librpcsvc ../lib/libtermlib ../lib/libedit \
-	../lib/libpcap ../lib/libutil ../sys/arch/${MACHINE}
+	../lib/libpcap ../lib/libutil ../lib/libz ../sys/arch/${MACHINE}
 
 NOOBJ=	noobj
 
