@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.8,v 1.16 2003/07/14 15:38:51 jmc Exp $
+.\"	$OpenBSD: httpd.8,v 1.17 2004/12/04 02:30:33 jmc Exp $
 .\" Copyright (c) 1995-1997 David Robinson. All rights reserved.
 .\" Copyright (c) 1997-1999 The Apache Group. All rights reserved.
 .\" Copyright (c) 1998-1999 Bob Beck. All rights reserved.
@@ -59,12 +59,12 @@
 .Sh SYNOPSIS
 .Nm httpd
 .Bk -words
-.Op Fl FhlLStTuvVX
+.Op Fl FhLlSTtuVvX
+.Op Fl C Ar directive
+.Op Fl c Ar directive
+.Op Fl D Ar parameter
 .Op Fl d Ar serverroot
 .Op Fl f Ar config
-.Op Fl c Ar directive
-.Op Fl C Ar directive
-.Op Fl D Ar parameter
 .Op Fl R Ar libexecdir
 .Ek
 .Sh DESCRIPTION
@@ -108,6 +108,67 @@ by default with
 .Ox .
 .Sh OPTIONS
 .Bl -tag -width Ds
+.It Fl C Ar directive
+Process the configuration
+.Va directive
+before reading config files.
+.It Fl c Ar directive
+Process the configuration
+.Va directive
+after reading config files.
+.It Fl D Ar parameter
+Sets a configuration
+.Va parameter
+which can be used with
+<IfDefine>...</IfDefine> sections in the configuration files
+to conditionally skip or process commands.
+.It Fl d Ar serverroot
+Set the initial value for the ServerRoot directive to
+.Va serverroot .
+This can be overridden by the ServerRoot command in the configuration file.
+The default is
+.Pa /var/www .
+.It Fl F
+Run the main process in foreground.
+For process supervisors.
+.It Fl f Ar config
+Execute the commands in the file
+.Va config
+on startup.
+If
+.Va config
+does not begin with a /, then it is taken to be a path relative to
+the ServerRoot.
+The default is
+.Pa conf/httpd.conf .
+.It Fl h
+Output a short summary of available command line options.
+.It Fl L
+Output a list of directives together with expected arguments and
+places where the directive is valid.
+.It Fl l
+Output a list of modules compiled into the server.
+.It Fl R Ar libexecdir
+This option is only available if
+.Nm
+was built with the
+.Dv SHARED_CORE
+rule enabled which forces the
+.Nm
+core code to be placed into a dynamic shared object (DSO) file.
+This file is searched in a hardcoded path under ServerRoot per default.
+Use this option to override.
+.It Fl S
+Show the settings as parsed from the config file (currently only shows the
+virtualhost settings).
+.It Fl T
+Run syntax tests for configuration files only, without DocumentRoot checks.
+The program immediately exits after this syntax parsing with either a return
+code of 0 (Syntax OK) or return code not equal to 0 (Syntax Error).
+.It Fl t
+Run syntax tests for configuration files only, including DocumentRoot checks.
+The program immediately exits after this syntax parsing with either a return
+code of 0 (Syntax OK) or return code not equal to 0 (Syntax Error).
 .It Fl u
 By default
 .Nm
@@ -148,79 +209,18 @@ or group
 .Ar www
 are created inside the
 .Va ServerRoot .
-.It Fl R Ar libexecdir
-This option is only available if
-.Nm
-was built with the
-.Dv SHARED_CORE
-rule enabled which forces the
-.Nm
-core code to be placed into a dynamic shared object (DSO) file.
-This file is searched in a hardcoded path under ServerRoot per default.
-Use this option to override.
-.It Fl d Ar serverroot
-Set the initial value for the ServerRoot directive to
-.Va serverroot .
-This can be overridden by the ServerRoot command in the configuration file.
-The default is
-.Pa /var/www .
-.It Fl f Ar config
-Execute the commands in the file
-.Va config
-on startup.
-If
-.Va config
-does not begin with a /, then it is taken to be a path relative to
-the ServerRoot.
-The default is
-.Pa conf/httpd.conf .
-.It Fl C Ar directive
-Process the configuration
-.Va directive
-before reading config files.
-.It Fl c Ar directive
-Process the configuration
-.Va directive
-after reading config files.
-.It Fl D Ar parameter
-Sets a configuration
-.Va parameter
-which can be used with
-<IfDefine>...</IfDefine> sections in the configuration files
-to conditionally skip or process commands.
-.It Fl F
-Run the main process in foreground.
-For process supervisors.
-.It Fl h
-Output a short summary of available command line options.
-.It Fl l
-Output a list of modules compiled into the server.
-.It Fl L
-Output a list of directives together with expected arguments and
-places where the directive is valid.
-.It Fl S
-Show the settings as parsed from the config file (currently only shows the
-virtualhost settings).
-.It Fl t
-Run syntax tests for configuration files only, including DocumentRoot checks.
-The program immediately exits after this syntax parsing with either a return
-code of 0 (Syntax OK) or return code not equal to 0 (Syntax Error).
-.It Fl T
-Run syntax tests for configuration files only, without DocumentRoot checks.
-The program immediately exits after this syntax parsing with either a return
-code of 0 (Syntax OK) or return code not equal to 0 (Syntax Error).
-.It Fl X
-Run in single-process mode, for internal debugging purposes only; the daemon
-does not detach from the terminal or fork any children.
-Do NOT use this mode to provide ordinary web service.
-.It Fl v
-Print the version of
-.Nm httpd ,
-and then exit.
 .It Fl V
 Print the version and build parameters of
 .Nm httpd ,
 and then exit.
+.It Fl v
+Print the version of
+.Nm httpd ,
+and then exit.
+.It Fl X
+Run in single-process mode, for internal debugging purposes only; the daemon
+does not detach from the terminal or fork any children.
+Do NOT use this mode to provide ordinary web service.
 .El
 .Pp
 The documents served by
