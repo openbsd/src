@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: clnt_tcp.c,v 1.20 2005/01/08 19:17:39 krw Exp $";
+static char *rcsid = "$OpenBSD: clnt_tcp.c,v 1.21 2005/04/01 07:44:03 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
  
 /*
@@ -62,9 +62,6 @@ static char *rcsid = "$OpenBSD: clnt_tcp.c,v 1.20 2005/01/08 19:17:39 krw Exp $"
 
 #define MCALL_MSG_SIZE 24
 
-static int	readtcp();
-static int	writetcp();
-
 static enum clnt_stat	clnttcp_call(CLIENT *, u_long, xdrproc_t, caddr_t,
 			    xdrproc_t, caddr_t, struct timeval);
 static void		clnttcp_abort(CLIENT *);
@@ -94,6 +91,9 @@ struct ct_data {
 	XDR		ct_xdrs;
 };
 
+static int	readtcp(struct ct_data *, caddr_t, int);
+static int	writetcp(struct ct_data *, caddr_t, int);
+
 /*
  * Create a client handle for a tcp/ip connection.
  * If *sockp<0, *sockp is set to a newly created TCP socket and it is
@@ -109,13 +109,8 @@ struct ct_data {
  * something more useful.
  */
 CLIENT *
-clnttcp_create(raddr, prog, vers, sockp, sendsz, recvsz)
-	struct sockaddr_in *raddr;
-	u_long prog;
-	u_long vers;
-	int *sockp;
-	u_int sendsz;
-	u_int recvsz;
+clnttcp_create(struct sockaddr_in *raddr, u_long prog, u_long vers, int *sockp,
+    u_int sendsz, u_int recvsz)
 {
 	CLIENT *h;
 	struct ct_data *ct = NULL;
@@ -207,7 +202,8 @@ clnttcp_create(raddr, prog, vers, sockp, sendsz, recvsz)
 	 * and authnone for authentication.
 	 */
 	xdrrec_create(&(ct->ct_xdrs), sendsz, recvsz,
-	    (caddr_t)ct, readtcp, writetcp);
+	    (caddr_t)ct, (int(*)(caddr_t, caddr_t, int))readtcp,
+	    (int(*)(caddr_t, caddr_t, int))writetcp);
 	h->cl_ops = &tcp_ops;
 	h->cl_private = (caddr_t) ct;
 	h->cl_auth = authnone_create();
@@ -225,14 +221,8 @@ fooy:
 }
 
 static enum clnt_stat
-clnttcp_call(h, proc, xdr_args, args_ptr, xdr_results, results_ptr, timeout)
-	CLIENT *h;
-	u_long proc;
-	xdrproc_t xdr_args;
-	caddr_t args_ptr;
-	xdrproc_t xdr_results;
-	caddr_t results_ptr;
-	struct timeval timeout;
+clnttcp_call(CLIENT *h, u_long proc, xdrproc_t xdr_args, caddr_t args_ptr,
+    xdrproc_t xdr_results, caddr_t results_ptr, struct timeval timeout)
 {
 	struct ct_data *ct = (struct ct_data *) h->cl_private;
 	XDR *xdrs = &(ct->ct_xdrs);
@@ -322,9 +312,7 @@ call_again:
 }
 
 static void
-clnttcp_geterr(h, errp)
-	CLIENT *h;
-	struct rpc_err *errp;
+clnttcp_geterr(CLIENT *h, struct rpc_err *errp)
 {
 	struct ct_data *ct =
 	    (struct ct_data *) h->cl_private;
@@ -333,10 +321,7 @@ clnttcp_geterr(h, errp)
 }
 
 static bool_t
-clnttcp_freeres(cl, xdr_res, res_ptr)
-	CLIENT *cl;
-	xdrproc_t xdr_res;
-	caddr_t res_ptr;
+clnttcp_freeres(CLIENT *cl, xdrproc_t xdr_res, caddr_t res_ptr)
 {
 	struct ct_data *ct = (struct ct_data *)cl->cl_private;
 	XDR *xdrs = &(ct->ct_xdrs);
@@ -351,10 +336,7 @@ clnttcp_abort(CLIENT *clnt)
 }
 
 static bool_t
-clnttcp_control(cl, request, info)
-	CLIENT *cl;
-	u_int request;
-	void *info;
+clnttcp_control(CLIENT *cl, u_int request, void *info)
 {
 	struct ct_data *ct = (struct ct_data *)cl->cl_private;
 
@@ -377,8 +359,7 @@ clnttcp_control(cl, request, info)
 
 
 static void
-clnttcp_destroy(h)
-	CLIENT *h;
+clnttcp_destroy(CLIENT *h)
 {
 	struct ct_data *ct =
 	    (struct ct_data *) h->cl_private;
@@ -397,10 +378,7 @@ clnttcp_destroy(h)
  * around for the rpc level.
  */
 static int
-readtcp(ct, buf, len)
-	struct ct_data *ct;
-	caddr_t buf;
-	int len;
+readtcp(struct ct_data *ct, caddr_t buf, int len)
 {
 	struct pollfd pfd[1];
 	struct timeval start, after, duration, tmp;
@@ -462,10 +440,7 @@ readtcp(ct, buf, len)
 }
 
 static int
-writetcp(ct, buf, len)
-	struct ct_data *ct;
-	caddr_t buf;
-	int len;
+writetcp(struct ct_data *ct, caddr_t buf, int len)
 {
 	int i, cnt;
 

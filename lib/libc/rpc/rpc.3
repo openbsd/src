@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpc.3,v 1.35 2004/04/28 06:28:23 jmc Exp $
+.\"	$OpenBSD: rpc.3,v 1.36 2005/04/01 07:44:04 otto Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
 .\" All rights reserved.
@@ -193,7 +193,7 @@
 .Ft "enum clnt_stat"
 .Fn pmap_rmtcall "struct sockaddr_in *" "u_long prog, vers, proc" "xdrproc_t inp" "char *in" "xdrproc_t outp" "char *out" "struct timeval tv" "u_long *portp"
 .Ft int
-.Fn pmap_set "u_long prognum" "u_long versnum" "u_int protocol" "u_short port"
+.Fn pmap_set "u_long prognum" "u_long versnum" "u_int protocol" "int port"
 .Ft int
 .Fn pmap_unset "u_long prognum" "u_long versnum"
 .Ft int

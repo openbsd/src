@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: svc_raw.c,v 1.6 2001/09/15 13:51:01 deraadt Exp $";
+static char *rcsid = "$OpenBSD: svc_raw.c,v 1.7 2005/04/01 07:44:04 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -54,12 +54,14 @@ static struct svcraw_private {
 	char	verf_body[MAX_AUTH_BYTES];
 } *svcraw_private;
 
-static bool_t		svcraw_recv();
-static enum xprt_stat 	svcraw_stat();
-static bool_t		svcraw_getargs();
-static bool_t		svcraw_reply();
-static bool_t		svcraw_freeargs();
-static void		svcraw_destroy();
+static bool_t		svcraw_recv(SVCXPRT *xprt, struct rpc_msg *msg);
+static enum xprt_stat 	svcraw_stat(SVCXPRT *xprt);
+static bool_t		svcraw_getargs(SVCXPRT *xprt, xdrproc_t xdr_args,
+			    caddr_t args_ptr);
+static bool_t		svcraw_reply(SVCXPRT *xprt, struct rpc_msg *msg);
+static bool_t		svcraw_freeargs(SVCXPRT *xprt, xdrproc_t xdr_args,
+			    caddr_t args_ptr);
+static void		svcraw_destroy(SVCXPRT *xprt);
 
 static struct xp_ops server_ops = {
 	svcraw_recv,
@@ -71,7 +73,7 @@ static struct xp_ops server_ops = {
 };
 
 SVCXPRT *
-svcraw_create()
+svcraw_create(void)
 {
 	struct svcraw_private *srp = svcraw_private;
 
@@ -88,8 +90,9 @@ svcraw_create()
 	return (&srp->server);
 }
 
+/* ARGSUSED */
 static enum xprt_stat
-svcraw_stat()
+svcraw_stat(SVCXPRT *xprt)
 {
 
 	return (XPRT_IDLE);
@@ -97,9 +100,7 @@ svcraw_stat()
 
 /* ARGSUSED */
 static bool_t
-svcraw_recv(xprt, msg)
-	SVCXPRT *xprt;
-	struct rpc_msg *msg;
+svcraw_recv(SVCXPRT *xprt, struct rpc_msg *msg)
 {
 	struct svcraw_private *srp = svcraw_private;
 	XDR *xdrs;
@@ -116,9 +117,7 @@ svcraw_recv(xprt, msg)
 
 /* ARGSUSED */
 static bool_t
-svcraw_reply(xprt, msg)
-	SVCXPRT *xprt;
-	struct rpc_msg *msg;
+svcraw_reply(SVCXPRT *xprt, struct rpc_msg *msg)
 {
 	struct svcraw_private *srp = svcraw_private;
 	XDR *xdrs;
@@ -136,10 +135,7 @@ svcraw_reply(xprt, msg)
 
 /* ARGSUSED */
 static bool_t
-svcraw_getargs(xprt, xdr_args, args_ptr)
-	SVCXPRT *xprt;
-	xdrproc_t xdr_args;
-	caddr_t args_ptr;
+svcraw_getargs(SVCXPRT *xprt, xdrproc_t xdr_args, caddr_t args_ptr)
 {
 	struct svcraw_private *srp = svcraw_private;
 
@@ -150,10 +146,7 @@ svcraw_getargs(xprt, xdr_args, args_ptr)
 
 /* ARGSUSED */
 static bool_t
-svcraw_freeargs(xprt, xdr_args, args_ptr)
-	SVCXPRT *xprt;
-	xdrproc_t xdr_args;
-	caddr_t args_ptr;
+svcraw_freeargs(SVCXPRT *xprt, xdrproc_t xdr_args, caddr_t args_ptr)
 { 
 	struct svcraw_private *srp = svcraw_private;
 	XDR *xdrs;
@@ -165,7 +158,8 @@ svcraw_freeargs(xprt, xdr_args, args_ptr)
 	return ((*xdr_args)(xdrs, args_ptr));
 } 
 
+/* ARGSUSED */
 static void
-svcraw_destroy()
+svcraw_destroy(SVCXPRT *xprt)
 {
 }

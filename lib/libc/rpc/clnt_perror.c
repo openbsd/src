@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: clnt_perror.c,v 1.15 2002/09/10 05:39:07 deraadt Exp $";
+static char *rcsid = "$OpenBSD: clnt_perror.c,v 1.16 2005/04/01 07:44:03 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -51,7 +51,7 @@ static char *auth_errmsg(enum auth_stat stat);
 static char *buf;
 
 static char *
-_buf()
+_buf(void)
 {
 
 	if (buf == NULL)
@@ -63,9 +63,7 @@ _buf()
  * Print reply error info
  */
 char *
-clnt_sperror(rpch, s)
-	CLIENT *rpch;
-	char *s;
+clnt_sperror(CLIENT *rpch, char *s)
 {
 	char *err, *str = _buf(), *strstart;
 	struct rpc_err e;
@@ -148,9 +146,7 @@ truncated:
 }
 
 void
-clnt_perror(rpch, s)
-	CLIENT *rpch;
-	char *s;
+clnt_perror(CLIENT *rpch, char *s)
 {
 	(void) fprintf(stderr, "%s", clnt_sperror(rpch, s));
 }
@@ -181,8 +177,7 @@ static const char *const rpc_errlist[] = {
  * This interface for use by clntrpc
  */
 char *
-clnt_sperrno(stat)
-	enum clnt_stat stat;
+clnt_sperrno(enum clnt_stat stat)
 {
 	unsigned int errnum = stat;
 
@@ -193,16 +188,14 @@ clnt_sperrno(stat)
 }
 
 void
-clnt_perrno(num)
-	enum clnt_stat num;
+clnt_perrno(enum clnt_stat num)
 {
 	(void) fprintf(stderr, "%s\n", clnt_sperrno(num));
 }
 
 
 char *
-clnt_spcreateerror(s)
-	char *s;
+clnt_spcreateerror(char *s)
 {
 	char *str = _buf();
 
@@ -233,8 +226,7 @@ clnt_spcreateerror(s)
 }
 
 void
-clnt_pcreateerror(s)
-	char *s;
+clnt_pcreateerror(char *s)
 {
 	(void) fprintf(stderr, "%s", clnt_spcreateerror(s));
 }
@@ -251,8 +243,7 @@ static const char *const auth_errlist[] = {
 };
 
 static char *
-auth_errmsg(stat)
-	enum auth_stat stat;
+auth_errmsg(enum auth_stat stat)
 {
 	unsigned int errnum = stat;
 

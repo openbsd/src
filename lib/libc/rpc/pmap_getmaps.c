@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: pmap_getmaps.c,v 1.8 2005/01/08 19:17:39 krw Exp $";
+static char *rcsid = "$OpenBSD: pmap_getmaps.c,v 1.9 2005/04/01 07:44:03 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -57,8 +57,7 @@ static char *rcsid = "$OpenBSD: pmap_getmaps.c,v 1.8 2005/01/08 19:17:39 krw Exp
  * Calls the pmap service remotely to do get the maps.
  */
 struct pmaplist *
-pmap_getmaps(address)
-	 struct sockaddr_in *address;
+pmap_getmaps(struct sockaddr_in *address)
 {
 	struct pmaplist *head = NULL;
 	int sock = -1;

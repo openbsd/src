@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: svc_auth_unix.c,v 1.7 2001/09/15 13:51:01 deraadt Exp $";
+static char *rcsid = "$OpenBSD: svc_auth_unix.c,v 1.8 2005/04/01 07:44:04 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -50,9 +50,7 @@ static char *rcsid = "$OpenBSD: svc_auth_unix.c,v 1.7 2001/09/15 13:51:01 deraad
  * Unix longhand authenticator
  */
 enum auth_stat
-_svcauth_unix(rqst, msg)
-	struct svc_req *rqst;
-	struct rpc_msg *msg;
+_svcauth_unix(struct svc_req *rqst, struct rpc_msg *msg)
 {
 	enum auth_stat stat;
 	XDR xdrs;
@@ -127,9 +125,7 @@ done:
  */
 /*ARGSUSED*/
 enum auth_stat 
-_svcauth_short(rqst, msg)
-	struct svc_req *rqst;
-	struct rpc_msg *msg;
+_svcauth_short(struct svc_req *rqst, struct rpc_msg *msg)
 {
 	return (AUTH_REJECTEDCRED);
 }

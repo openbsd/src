@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: rpc_dtablesize.c,v 1.5 1997/09/22 05:11:09 millert Exp $";
+static char *rcsid = "$OpenBSD: rpc_dtablesize.c,v 1.6 2005/04/01 07:44:04 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <unistd.h>
@@ -39,7 +39,7 @@ static char *rcsid = "$OpenBSD: rpc_dtablesize.c,v 1.5 1997/09/22 05:11:09 mille
  * expensive system call every time.
  */
 int
-_rpc_dtablesize()
+_rpc_dtablesize(void)
 {
 	static int size;
 	

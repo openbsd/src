@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: auth_none.c,v 1.7 2001/09/15 13:51:00 deraadt Exp $";
+static char *rcsid = "$OpenBSD: auth_none.c,v 1.8 2005/04/01 07:44:03 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -70,7 +70,7 @@ static struct authnone_private {
 } *authnone_private;
 
 AUTH *
-authnone_create()
+authnone_create(void)
 {
 	struct authnone_private *ap = authnone_private;
 	XDR xdr_stream;
@@ -98,9 +98,7 @@ authnone_create()
 
 /*ARGSUSED*/
 static bool_t
-authnone_marshal(client, xdrs)
-	AUTH *client;
-	XDR *xdrs;
+authnone_marshal(AUTH *client, XDR *xdrs)
 {
 	struct authnone_private *ap = authnone_private;
 

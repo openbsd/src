@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: pmap_clnt.c,v 1.13 2005/01/08 19:17:39 krw Exp $";
+static char *rcsid = "$OpenBSD: pmap_clnt.c,v 1.14 2005/04/01 07:44:03 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -52,17 +52,14 @@ static struct timeval tottimeout = { 60, 0 };
  * Calls the pmap service remotely to do the mapping.
  */
 bool_t
-pmap_set(program, version, protocol, port)
-	u_long program;
-	u_long version;
-	u_int protocol;
-	u_short port;
+pmap_set(u_long program, u_long version, u_int protocol, int iport)
 {
 	struct sockaddr_in myaddress;
 	int sock = -1;
 	CLIENT *client;
 	struct pmap parms;
 	bool_t rslt;
+	u_short port = iport;
 
 	if (get_myaddress(&myaddress) != 0)
 		return (FALSE);
@@ -94,9 +91,7 @@ pmap_set(program, version, protocol, port)
  * Calls the pmap service remotely to do the un-mapping.
  */
 bool_t
-pmap_unset(program, version)
-	u_long program;
-	u_long version;
+pmap_unset(u_long program, u_long version)
 {
 	struct sockaddr_in myaddress;
 	int sock = -1;

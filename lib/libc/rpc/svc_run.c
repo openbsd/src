@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: svc_run.c,v 1.14 2003/12/31 03:27:23 millert Exp $";
+static char *rcsid = "$OpenBSD: svc_run.c,v 1.15 2005/04/01 07:44:04 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -43,7 +43,7 @@ static char *rcsid = "$OpenBSD: svc_run.c,v 1.14 2003/12/31 03:27:23 millert Exp
 #include <string.h>
 
 void
-svc_run()
+svc_run(void)
 {
 	struct pollfd *pfd = NULL;
 	int nready, saved_max_pollfd = 0;

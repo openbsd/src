@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: pmap_prot.c,v 1.4 2002/02/13 22:36:52 deraadt Exp $";
+static char *rcsid = "$OpenBSD: pmap_prot.c,v 1.5 2005/04/01 07:44:03 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -44,9 +44,7 @@ static char *rcsid = "$OpenBSD: pmap_prot.c,v 1.4 2002/02/13 22:36:52 deraadt Ex
 
 
 bool_t
-xdr_pmap(xdrs, regs)
-	XDR *xdrs;
-	struct pmap *regs;
+xdr_pmap(XDR *xdrs, struct pmap *regs)
 {
 
 	if (xdr_u_long(xdrs, &regs->pm_prog) && 

@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: clnt_raw.c,v 1.11 2004/12/16 20:45:07 krw Exp $";
+static char *rcsid = "$OpenBSD: clnt_raw.c,v 1.12 2005/04/01 07:44:03 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -76,15 +76,13 @@ static struct clnt_ops client_ops = {
 	clntraw_control
 };
 
-void	svc_getreq();
+void	svc_getreq(int rdfds);
 
 /*
  * Create a client handle for memory based rpc.
  */
 CLIENT *
-clntraw_create(prog, vers)
-	u_long prog;
-	u_long vers;
+clntraw_create(u_long prog, u_long vers)
 {
 	struct clntraw_private *clp = clntraw_private;
 	struct rpc_msg call_msg;
@@ -128,14 +126,8 @@ clntraw_create(prog, vers)
 
 /* ARGSUSED */
 static enum clnt_stat 
-clntraw_call(h, proc, xargs, argsp, xresults, resultsp, timeout)
-	CLIENT *h;
-	u_long proc;
-	xdrproc_t xargs;
-	caddr_t argsp;
-	xdrproc_t xresults;
-	caddr_t resultsp;
-	struct timeval timeout;
+clntraw_call(CLIENT *h, u_long proc, xdrproc_t xargs, caddr_t argsp,
+    xdrproc_t xresults, caddr_t resultsp, struct timeval timeout)
 {
 	struct clntraw_private *clp = clntraw_private;
 	XDR *xdrs;
@@ -216,10 +208,7 @@ clntraw_geterr(CLIENT *clnt, struct rpc_err *err)
 
 /* ARGSUSED */
 static bool_t
-clntraw_freeres(cl, xdr_res, res_ptr)
-	CLIENT *cl;
-	xdrproc_t xdr_res;
-	caddr_t res_ptr;
+clntraw_freeres(CLIENT *cl, xdrproc_t xdr_res, caddr_t res_ptr)
 {
 	struct clntraw_private *clp = clntraw_private;
 	XDR *xdrs;

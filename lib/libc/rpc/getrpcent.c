@@ -29,7 +29,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: getrpcent.c,v 1.11 2001/09/15 13:51:00 deraadt Exp $";
+static char *rcsid = "$OpenBSD: getrpcent.c,v 1.12 2005/04/01 07:44:03 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -54,14 +54,12 @@ struct rpcdata {
 	char	line[BUFSIZ+1];
 } *rpcdata;
 
-static	struct rpcent *interpret();
-struct	hostent *gethostent();
-char	*inet_ntoa();
+static	struct rpcent *interpret(char *val, int len);
 
 static char RPCDB[] = "/etc/rpc";
 
 static struct rpcdata *
-_rpcdata()
+_rpcdata(void)
 {
 	struct rpcdata *d = rpcdata;
 
@@ -73,8 +71,7 @@ _rpcdata()
 }
 
 struct rpcent *
-getrpcbynumber(number)
-	int number;
+getrpcbynumber(int number)
 {
 	struct rpcdata *d = _rpcdata();
 	struct rpcent *p;
@@ -91,8 +88,7 @@ getrpcbynumber(number)
 }
 
 struct rpcent *
-getrpcbyname(name)
-	char *name;
+getrpcbyname(char *name)
 {
 	struct rpcent *rpc;
 	char **rp;
@@ -112,8 +108,7 @@ done:
 }
 
 void
-setrpcent(f)
-	int f;
+setrpcent(int f)
 {
 	struct rpcdata *d = _rpcdata();
 
@@ -127,7 +122,7 @@ setrpcent(f)
 }
 
 void
-endrpcent()
+endrpcent(void)
 {
 	struct rpcdata *d = _rpcdata();
 
@@ -140,7 +135,7 @@ endrpcent()
 }
 
 struct rpcent *
-getrpcent()
+getrpcent(void)
 {
 	struct rpcdata *d = _rpcdata();
 
@@ -155,9 +150,7 @@ getrpcent()
 }
 
 static struct rpcent *
-interpret(val, len)
-	char *val;
-	int len;
+interpret(char *val, int len)
 {
 	struct rpcdata *d = _rpcdata();
 	char *p;
