@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.79 2004/01/23 02:44:21 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.80 2004/01/24 22:01:46 deraadt Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -654,6 +654,15 @@ scsi_probedev(scsi, inqbuflun0, target, lun)
 	    ((1 << lun) & scsidebug_luns))
 		sc_link->flags |= scsidebug_level;
 #endif /* SCSIDEBUG */
+
+#if defined(mvme68k) || defined(mvme88k)
+	if (lun == 0) {
+		/* XXX some drivers depend on this */
+		scsi_test_unit_ready(sc_link, TEST_READY_RETRIES_DEFAULT,
+		    scsi_autoconf | SCSI_IGNORE_ILLEGAL_REQUEST |
+		    SCSI_IGNORE_NOT_READY | SCSI_IGNORE_MEDIA_CHANGE);
+	}
+#endif
 
 #ifdef SCSI_2_DEF
 	/* Some devices need to be told to go to SCSI2. */
