@@ -2,16 +2,14 @@ divert(-1)
 #
 # Sendmail 8 configuration file for courtesan.com.
 # This machine gets a lot of mail so we use a queue-only config and:
-#	sendmail_flags="-L sm-mta -bd"
-# There is a separate sendmail for queue control started as:
-#	/usr/sbin/sendmail -L sm-queue -qp
+#	sendmail_flags="-L sm-mta -bd -q1s"
 # The queue group limits and confMIN_QUEUE_AGE keep things sane
 # and prevent a sendmail DoS when thousands of messages (bounces)
 # come in at once.
 #
 
 divert(0)dnl
-VERSIONID(`$OpenBSD: courtesan.mc,v 1.12 2003/08/13 23:43:56 millert Exp $')
+VERSIONID(`$OpenBSD: courtesan.mc,v 1.13 2004/01/13 19:44:20 millert Exp $')
 OSTYPE(openbsd)
 dnl
 dnl First, we override some default values
@@ -24,14 +22,14 @@ dnl Just queue incoming messages, we have a queue runner for actual delivery
 define(`confDELIVERY_MODE', `q')dnl
 dnl
 dnl Add X-Authentication-Warning: headers and disable EXPN and VRFY
-define(`confPRIVACY_FLAGS', `authwarnings,noexpn,novrfy')dnl
+define(`confPRIVACY_FLAGS', `authwarnings,needmailhelo,noexpn,novrfy,noetrn,noverb,nobodyreturn')dnl
 dnl
 dnl Some broken nameservers will return SERVFAIL (a temporary failure)
 dnl on T_AAAA (IPv6) lookups.
 define(`confBIND_OPTS', `WorkAroundBrokenAAAA')dnl
 dnl
-dnl Wait at least 27 minutes before trying to redeliver a message.
-define(`confMIN_QUEUE_AGE', `27m')dnl
+dnl Wait at least 15 minutes before trying to redeliver a message.
+define(`confMIN_QUEUE_AGE', `15m')dnl
 dnl
 dnl TLS certificates for encrypted mail
 define(`CERT_DIR', `MAIL_SETTINGS_DIR`'certs')dnl
@@ -106,6 +104,10 @@ LOCAL_CONFIG
 Kcheckaddress regex -a@MATCH
    ^([0-9]+<@(aol|msn)\.com|[0-9][^<]*<@juno\.com|.{20}[^<]+<@aol\.com)\.?>
 
+# Regex to catch sobig worm
+#
+KSobigWormMarker regex -f -aSOBIG multipart/mixed;boundary=_NextPart_000_........$
+
 #
 #  Names that won't be allowed in a To: line (local-part and domains)
 #
@@ -158,6 +160,11 @@ SLocal_check_mail
 R$*				$: $>Parse0 $>3 $1
 R$+				$: $(checkaddress $1 $)
 R@MATCH				$#error $: "553 Header error"
+
+# Catch Sobig.F
+SCheckContentType
+R$+				$: $(SobigWormMarker $1 $)
+RSOBIG				$#discard $: discard
 
 #
 # Reject some mail based on To: header
