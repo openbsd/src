@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.56 2000/10/30 18:21:37 espie Exp $
+.\"	$OpenBSD: afterboot.8,v 1.57 2000/10/30 18:22:31 deraadt Exp $
 .Dd October 20, 1997
 .Dt AFTERBOOT 8
 \!\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
@@ -687,35 +687,6 @@ command to find out information on your system's devices as probed by the
 kernel at boot.
 In particular, note which devices were not configured.
 This information will prove useful when editing kernel configuration files.
-.Pp
-To compile your own kernel off a CD-ROM do the following:
-.Sm off
-.Bd -literal -offset indent
-.Li #\  Xo
-.Ic cd\ /
-.Ar somedir
-.Xc
-.Li #\  Xo
-.Ic cp\ /usr/src/sys/arch/
-.Ar somearch
-.Ic /conf/
-.Ar SOMEFILE
-.Ic \ .
-.Xc
-.Li #\  Xo
-.Ic vi\ \&
-.Ar SOMEFILE
-.No \ \ \ (to\ make\ any\ changes)
-.Xc
-.Li #\  Xo
-.Ic config\ -s\ /usr/src/sys\ -b\ .\ \&
-.Ar SOMEFILE
-.Xc
-.Li #\  Xo
-.Ic make
-.Xc
-.Ed
-.Sm on
 .Pp
 To compile a kernel inside a writable source tree, do the following:
 .Sm off
