@@ -26,6 +26,16 @@
  * Not quite all the functionality of RFC-1853, but the main idea is there.
  */
 
+struct ip4_xdata
+{
+    int32_t ip4_ttl;
+};
+
+struct ip4_xencap
+{
+    int32_t ip4_ttl;
+};
+
 struct ip4stat
 {
 	u_long	ip4s_ipackets;		/* total input packets */
@@ -34,6 +44,9 @@ struct ip4stat
 	u_long	ip4s_notip4;
 	u_long	ip4s_qfull;
 };
+
+#define IP4_SAME_TTL 0
+#define IP4_DEFAULT_TTL -1
 
 #ifdef _KERNEL
 struct ip4stat ip4stat;

@@ -151,6 +151,7 @@ int
 ipe4_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, struct mbuf **mp)
 {
 	struct ip *ipo, *ipi;
+	struct ip4_xdata *xd;
 	ushort ilen;
 
 	ipi = mtod(m, struct ip *);
@@ -169,7 +170,19 @@ ipe4_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, struct m
 	/* ipo->ip_id = htons(ip_id++); */
 	get_random_bytes((void *)&(ipo->ip_id), sizeof(ipo->ip_id));
 	ipo->ip_off = ipi->ip_off & ~(IP_MF | IP_OFFMASK); /* keep C and DF */
-	ipo->ip_ttl = ipi->ip_ttl;	/* already decremented if fwding */
+	xd = (struct ip4_xdata *)tdb->tdb_xdata;
+	switch (xd->ip4_ttl)
+	{
+	    case IP4_SAME_TTL:
+		ipo->ip_ttl = ipi->ip_ttl;
+		break;
+	    case IP4_DEFAULT_TTL:
+		ipo->ip_ttl = ip_defttl;
+		break;
+	    default:
+		ipo->ip_ttl = xd->ip4_ttl;
+	}
+	
 	ipo->ip_p = IPPROTO_IPIP;
 	ipo->ip_sum = 0;
 	ipo->ip_src = gw->sen_ipsp_src;
@@ -197,17 +210,39 @@ ipe4_attach()
 int
 ipe4_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
 {
-	printf("ipe4_init: setting up\n");
+        struct ip4_xdata *xd;
+	struct ip4_xencap txd;
+	struct encap_msghdr *em;
+	
+#ifdef ENCDEBUG
+        if (encdebug)
+	  printf("ipe4_init: setting up\n");
+#endif
 	tdbp->tdb_xform = xsp;
-	if (m)
-	  m_freem(m);
+	MALLOC(tdbp->tdb_xdata, caddr_t, sizeof (struct ip4_xdata), M_XDATA,
+	       M_WAITOK);
+	if (tdbp->tdb_xdata == NULL)
+	  return ENOBUFS;
+	bzero(tdbp->tdb_xdata, sizeof (struct ip4_xdata));
+	xd = (struct ip4_xdata *)tdbp->tdb_xdata;
+	
+	em = mtod(m, struct encap_msghdr *);
+	if (em->em_msglen - EMT_SETSPI_FLEN > sizeof (struct ip4_xencap))
+	{
+	    free((caddr_t)tdbp->tdb_xdata, M_XDATA);
+	    tdbp->tdb_xdata = NULL;
+	    return EINVAL;
+	}
+	m_copydata(m, EMT_SETSPI_FLEN, em->em_msglen - EMT_SETSPI_FLEN,
+		   (caddr_t)&txd);
+	xd->ip4_ttl = txd.ip4_ttl;
 	return 0;
 }
 
 int
 ipe4_zeroize(struct tdb *tdbp)
 {
-	/* Nothing much really - we don't need any state */
+        FREE(tdbp->tdb_xdata, M_XDATA);
 	return 0;
 }
 
