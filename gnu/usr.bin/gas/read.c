@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.8 1998/11/01 01:38:13 smurph Exp $	*/
+/*	$OpenBSD: read.c,v 1.9 2001/08/01 22:05:52 espie Exp $	*/
 
 /* read.c - read a source file -
 
@@ -21,7 +21,7 @@
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: read.c,v 1.8 1998/11/01 01:38:13 smurph Exp $";
+static char rcsid[] = "$OpenBSD: read.c,v 1.9 2001/08/01 22:05:52 espie Exp $";
 #endif
 
 #define MASK_CHAR (0xFF)	/* If your chars aren't 8 bits, you will
@@ -194,10 +194,13 @@ struct hash_control *
 static const pseudo_typeS
     potable[] =
 {
+	{ "2bytes",	cons,		2	},
+	{ "4bytes",	cons,		4	},
 	{ "abort",	s_abort,	0	},
 	{ "align",	s_align_ptwo,	0	},
 	{ "ascii",	stringer,	0	},
 	{ "asciz",	stringer,	1	},
+	{ "balign",	s_align_bytes,	0	},
 	/* block */
 	{ "byte",	cons,		1	},
 	{ "comm",	s_comm,		0	},
@@ -251,6 +254,7 @@ static const pseudo_typeS
 #endif /* NO_LISTING */
 	{ "octa",	big_cons,	16	},
 	{ "org",	s_org,		0	},
+	{ "p2align",	s_align_ptwo,	0	},
 #ifdef NO_LISTING
 	{ "psize",	s_ignore,	0       },   /* set paper size */
 #else
