@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.9 1996/09/30 15:14:20 pefo Exp $
+#	$OpenBSD: GENERIC,v 1.10 1996/10/01 21:26:03 pefo Exp $
 #
 #	Generic configuration file for MIPS R4x00 ARC Systems
 #
@@ -16,9 +16,9 @@ options		SWAPPAGER		# swap pager (anonymous and swap space)
 options		DEVPAGER		# device pager (mapped devices)
 
 options		DIAGNOSTIC		# extra kernel debugging checks
+options 	KTRACE			# system call tracing support
 options		DEBUG			# extra kernel debugging support
 options		COMPAT_43		# compatibility with 4.3BSD binaries
-options 	KTRACE			# system call tracing support
 
 # System V options
 options		SYSVMSG		# System V-like message queues
@@ -40,17 +40,24 @@ options		NFSCLIENT	# Sun NFS-compatible filesystem (client)
 options		NFSSERVER	# Sun NFS-compatible filesystem (server)
 options 	NULLFS		# null layer filesystem
 options 	PORTAL		# portal filesystem (still experimental)
+option          PROCFS          # /proc
 options 	UMAPFS		# uid/gid remapping filesystem
+option          UNION           # union file system
+
 
 # Networking options
-options 	INET		# Internet protocols
-#options 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
 #options 	GATEWAY		# IP packet forwarding
+options 	INET		# Internet protocols
+#option         NS              # XNS
+#option         IPX             # IPX+SPX
+#options 	ISO,TPIP	# OSI networking
+#options 	EON		# OSI tunneling over IP
+#option         CCITT,LLC,HDLC  # X.25
+option          IPFILTER        # IP packet filter for security
+
+#options 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
 #options 	MULTICAST	# Multicast support
 #options 	MROUTING	# Multicast routing support
-#options 	ISO		# OSI networking
-#options 	TPIP
-#options 	EON
 
 # Special options
 options 	MACHINE_NONCONTIG # Support noncontigous memory.
@@ -123,11 +130,14 @@ ss*		at scsibus? target ? lun ?
 uk*		at scsibus? target ? lun ?
 
 #
+pseudo-device	loop		 1	# network loopback
+pseudo-device	bpfilter	 8	# packet filter ports
 pseudo-device	sl		 2	# serial-line IP ports
 pseudo-device	ppp		 2	# serial-line PPP ports
 pseudo-device	tun		 2	# network tunneling over tty
+
 pseudo-device	pty		64	# pseudo ptys
 pseudo-device	tb		 1	# tablet line discipline
-pseudo-device	bpfilter	 8	# packet filter ports
-pseudo-device	loop		 1	# network loopback
 pseudo-device	vnd		 4	# paging to files
+pseudo-device   ccd		 4	# concatenated disk devices
+
