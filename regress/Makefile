@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 2002/09/02 19:56:55 avsm Exp $
+#	$OpenBSD: Makefile,v 1.14 2002/09/02 22:37:18 avsm Exp $
 
 #
 # To run full regression tests you just need two steps:
@@ -40,13 +40,13 @@ _REGRESS_CLEAN=rm -f ${_REGRESS_TMP}
 .if ${.TARGETS:Mall} || ${.TARGETS:Mregress} 
 	echo ====================================================================
 .if empty(REGRESS_MAIL) || empty(_REGRESS_TMP)
-	echo Please mail a copy of these regression tests to regress@openbsd.org
-	echo to help with future development.
-	echo
-	echo You can do this automatically by setting the REGRESS_MAIL variable
-	echo $$ make REGRESS_MAIL=regress@openbsd.org regress
-	echo
-	echo You can also set REGRESS_LOG to point to a file and mail it manually.
+#	echo Please mail a copy of these regression tests to regress@openbsd.org
+#	echo to help with future development.
+#	echo
+#	echo You can do this automatically by setting the REGRESS_MAIL variable
+#	echo $$ make REGRESS_MAIL=regress@openbsd.org regress
+#	echo
+	echo You can set REGRESS_LOG to point to a file and mail it manually.
 	echo $$ make REGRESS_LOG=/var/log/regress-tests regress
 .else
 	echo Mailing regress results to ${REGRESS_MAIL} ...
