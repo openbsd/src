@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_msdos.8,v 1.19 2005/02/28 09:50:27 jmc Exp $
+.\"	$OpenBSD: mount_msdos.8,v 1.20 2005/02/28 16:00:37 tom Exp $
 .\"	$NetBSD: mount_msdos.8,v 1.10 1996/01/19 21:14:43 leo Exp $
 .\"
 .\" Copyright (c) 1993,1994 Christopher G. Demetriou
@@ -141,7 +141,7 @@ This forces
 .It Fl G
 This option causes the filesystem to be interpreted as an Atari-Gemdos
 filesystem.
-The differences to the msdos filesystem are minimal and
+The differences to the MS-DOS filesystem are minimal and
 limited to the boot block.
 This option enforces
 .Fl s .
@@ -168,6 +168,17 @@ and was abandoned in favor
 of the more aptly named
 .Nm mount_msdos .
 .Sh CAVEATS
+The maximum file size supported by the MS-DOS filesystem is
+one byte less than 4GB.
+This is a FAT filesystem limitation, documented by Microsoft
+in Knowledge Base article 314463.
+.Pp
+The MS-DOS filesystem (even with long filenames) does not support
+filenames with trailing dots or spaces.
+Any such characters will be silently removed before the directory entry
+is written.
+This too is a FAT filesystem limitation.
+.Pp
 The use of the
 .Fl 9
 flag could result in damaged filesystems,
