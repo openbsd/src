@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcmdsh.c,v 1.1 1996/08/22 20:11:20 millert Exp $	*/ 
+/*	$OpenBSD: rcmdsh.c,v 1.2 1996/09/01 20:28:22 millert Exp $	*/ 
 
 /*
  * This is an rcmd() replacement originally by 
@@ -6,7 +6,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: rcmdsh.c,v 1.1 1996/08/22 20:11:20 millert Exp $";
+static char *rcsid = "$OpenBSD: rcmdsh.c,v 1.2 1996/09/01 20:28:22 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include      <sys/types.h>
@@ -69,7 +69,7 @@ rcmdsh(ahost, rport, locuser, remuser, cmd, rshprog)
 		 * Child.  We use sp[1] to be stdin/stdout, and close sp[0].
 		 */
 		(void) close(sp[0]);
-		if (dup2(sp[1], 0) < 0 || dup2(0, 1) < 0 || dup2(0, 2) < 0) {
+		if (dup2(sp[1], 0) < 0 || dup2(0, 1) < 0) {
 			perror("rcmdsh: dup2 failed");
 			_exit(255);
 		}
