@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.107 2003/09/01 18:06:03 henning Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.108 2003/11/03 18:24:52 tedu Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -181,9 +181,6 @@ main(framep)
 	quad_t lim;
 	int s, i;
 	register_t rval[2];
-#if !defined(NO_PROPOLICE)
-	int *guard = (int *)&__guard[0];
-#endif
 	extern struct pdevinit pdevinit[];
 	extern void scheduler_start(void);
 	extern void disk_init(void);
@@ -372,8 +369,7 @@ main(framep)
 #endif
 
 #if !defined(NO_PROPOLICE)
-	for (i = 0; i < sizeof(__guard) / 4; i++)
-		guard[i] = arc4random();
+	arc4random_bytes(__guard, sizeof(__guard));
 #endif
 
 	/* init exec and emul */
