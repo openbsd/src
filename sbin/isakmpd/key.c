@@ -1,4 +1,4 @@
-/*	$OpenBSD: key.c,v 1.8 2002/03/06 10:02:32 ho Exp $	*/
+/*	$OpenBSD: key.c,v 1.9 2002/03/06 13:55:12 ho Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -124,7 +124,7 @@ key_printable (int type, int private, u_int8_t *data, int datalen)
 
 /* Convert from serialized to internal.  */
 void *
-key_internalize (int type, int private, const u_int8_t *data, int datalen)
+key_internalize (int type, int private, u_int8_t *data, int datalen)
 {
   switch (type)
     {
@@ -133,10 +133,19 @@ key_internalize (int type, int private, const u_int8_t *data, int datalen)
     case ISAKMP_KEY_RSA:
       switch (private)
 	{
+#if OPENSSL_VERSION_NUMBER >= 0x00907000L
+	case ISAKMP_KEYTYPE_PUBLIC:
+	  return LC (d2i_RSAPublicKey, (NULL, (const u_int8_t **)&data,
+					datalen));
+	case ISAKMP_KEYTYPE_PRIVATE:
+	  return LC (d2i_RSAPrivateKey, (NULL, (const u_int8_t **)&data,
+					 datalen));
+#else
 	case ISAKMP_KEYTYPE_PUBLIC:
 	  return LC (d2i_RSAPublicKey, (NULL, &data, datalen));
 	case ISAKMP_KEYTYPE_PRIVATE:
 	  return LC (d2i_RSAPrivateKey, (NULL, &data, datalen));
+#endif
 	default:
 	  log_error ("key_internalize: not public or private RSA key passed");
 	  return 0;
