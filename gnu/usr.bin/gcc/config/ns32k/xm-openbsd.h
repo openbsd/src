@@ -7,4 +7,3 @@
 #undef memcpy
 #undef memset
 
-#include <xm-openbsd.h>
