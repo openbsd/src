@@ -1,4 +1,4 @@
-/*	$OpenBSD: column.c,v 1.9 2003/06/10 22:20:45 deraadt Exp $	*/
+/*	$OpenBSD: column.c,v 1.10 2003/09/26 22:24:09 tedu Exp $	*/
 /*	$NetBSD: column.c,v 1.4 1995/09/02 05:53:03 jtc Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)column.c	8.4 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$OpenBSD: column.c,v 1.9 2003/06/10 22:20:45 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: column.c,v 1.10 2003/09/26 22:24:09 tedu Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -212,9 +212,9 @@ maketbl(void)
 	TBL *t;
 	int coloff, cnt;
 	char *p, **lp;
-	int *lens, maxcols;
+	int *lens, *lens2, maxcols;
 	TBL *tbl;
-	char **cols;
+	char **cols, **cols2;
 
 	t = tbl = emalloc(entries * sizeof(TBL));
 	cols = emalloc((maxcols = DEFCOLS) * sizeof(char *));
@@ -223,11 +223,13 @@ maketbl(void)
 		for (coloff = 0, p = *lp; (cols[coloff] = strtok(p, separator));
 		    p = NULL)
 			if (++coloff == maxcols) {
-				if (!(cols = realloc(cols, (u_int)maxcols +
+				if (!(cols2 = realloc(cols, (u_int)maxcols +
 				    DEFCOLS * sizeof(char *))) ||
-				    !(lens = realloc(lens,
+				    !(lens2 = realloc(lens,
 				    (u_int)maxcols + DEFCOLS * sizeof(int))))
 					err(1, NULL);
+				cols = cols2;
+				lens = lens2;
 				memset((char *)lens + maxcols * sizeof(int),
 				    0, DEFCOLS * sizeof(int));
 				maxcols += DEFCOLS;

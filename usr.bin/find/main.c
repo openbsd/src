@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.16 2003/06/10 22:20:46 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.17 2003/09/26 22:22:26 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -31,7 +31,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: main.c,v 1.16 2003/06/10 22:20:46 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.17 2003/09/26 22:22:26 tedu Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -63,7 +63,7 @@ int
 main(int argc, char *argv[])
 {
 	struct sigaction sa;
-	char **p, **paths;
+	char **p, **paths, **paths2;
 	int ch;
 
 	memset(&sa, 0, sizeof sa);
@@ -126,8 +126,9 @@ main(int argc, char *argv[])
 		usage();
 	*p = NULL;
 
-	if (!(paths = realloc(paths, sizeof(char *) * (p - paths + 1))))
+	if (!(paths2 = realloc(paths, sizeof(char *) * (p - paths + 1))))
 		err(1, NULL);
+	paths = paths2;
 
 	if ((dotfd = open(".", O_RDONLY, 0)) < 0)
 		err(1, ".:");

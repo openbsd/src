@@ -1,4 +1,4 @@
-/*	$OpenBSD: fold.c,v 1.9 2003/06/25 21:19:19 deraadt Exp $	*/
+/*	$OpenBSD: fold.c,v 1.10 2003/09/26 22:22:50 tedu Exp $	*/
 /*	$NetBSD: fold.c,v 1.6 1995/09/01 01:42:44 jtc Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)fold.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: fold.c,v 1.9 2003/06/25 21:19:19 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: fold.c,v 1.10 2003/09/26 22:22:50 tedu Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -172,12 +172,16 @@ fold(int width)
 		}
 
 		if (indx + 1 > buf_max) {
+			int newmax = buf_max + 2048;
+			char *newbuf;
+
 			/* Allocate buffer in LINE_MAX increments */
-			buf_max += 2048;
-			if((buf = realloc(buf, buf_max)) == NULL) {
+			if ((newbuf = realloc(buf, newmax)) == NULL) {
 				err(1, NULL);
 				/* NOTREACHED */
 			}
+			buf = newbuf;
+			buf_max = newmax;
 		}
 		buf[indx++] = ch;
 	}

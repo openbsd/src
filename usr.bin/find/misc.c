@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.9 2003/06/26 07:27:29 deraadt Exp $	*/
+/*	$OpenBSD: misc.c,v 1.10 2003/09/26 22:22:26 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)misc.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: misc.c,v 1.9 2003/06/26 07:27:29 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.10 2003/09/26 22:22:26 tedu Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -64,9 +64,15 @@ brace_subst(char *orig, char **store, char *path, int len)
 	plen = strlen(path);
 	for (p = *store; (ch = *orig); ++orig)
 		if (ch == '{' && orig[1] == '}') {
-			while ((p - *store) + plen > len)
-				if (!(*store = realloc(*store, len *= 2)))
+			while ((p - *store) + plen > len) {
+				int newlen = len * 2;
+				char *newstore;
+
+				if (!(newstore = realloc(*store, newlen)))
 					err(1, NULL);
+				*store = newstore;
+				len = newlen;
+			}
 			memmove(p, path, plen);
 			p += plen;
 			++orig;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.7 2003/06/03 02:56:09 millert Exp $	*/
+/*	$OpenBSD: io.c,v 1.8 2003/09/26 22:23:28 tedu Exp $	*/
 
 /*
  * Copyright (c) 1985 Sun Microsystems, Inc.
@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: io.c,v 1.7 2003/06/03 02:56:09 millert Exp $";
+static char rcsid[] = "$OpenBSD: io.c,v 1.8 2003/09/26 22:23:28 tedu Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -337,7 +337,7 @@ compute_label_target()
 void
 fill_buffer()
 {				/* this routine reads stuff from the input */
-    char *p;
+    char *p, *buf2;
     int i;
     FILE *f = input;
 
@@ -353,9 +353,10 @@ fill_buffer()
 	if (p >= in_buffer_limit) {
 	    int size = (in_buffer_limit - in_buffer) * 2 + 10;
 	    int offset = p - in_buffer;
-	    in_buffer = (char *) realloc(in_buffer, size);
-	    if (in_buffer == NULL)
+	    buf2 = realloc(in_buffer, size);
+	    if (buf2 == NULL)
 		errx(1, "input line too long");
+	    in_buffer = buf2;
 	    p = in_buffer + offset;
 	    in_buffer_limit = in_buffer + size - 2;
 	}
