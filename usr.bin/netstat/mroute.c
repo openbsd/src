@@ -1,4 +1,4 @@
-/*	$OpenBSD: mroute.c,v 1.7 2001/11/19 19:02:15 mpech Exp $	*/
+/*	$OpenBSD: mroute.c,v 1.8 2002/06/02 15:49:05 itojun Exp $	*/
 /*	$NetBSD: mroute.c,v 1.10 1996/05/11 13:51:27 mycroft Exp $	*/
 
 /*
@@ -238,26 +238,26 @@ mrt_stats(mrpaddr, mstaddr)
 
 	kread(mstaddr, (char *)&mrtstat, sizeof(mrtstat));
 	printf("multicast routing:\n");
-	printf("\t%ld datagram%s with no route for origin\n",
+	printf("\t%lu datagram%s with no route for origin\n",
 	    mrtstat.mrts_no_route, plural(mrtstat.mrts_no_route));
-	printf("\t%ld upcall%s made to mrouted\n",
+	printf("\t%lu upcall%s made to mrouted\n",
 	    mrtstat.mrts_upcalls, plural(mrtstat.mrts_upcalls));
-	printf("\t%ld datagram%s with malformed tunnel options\n",
+	printf("\t%lu datagram%s with malformed tunnel options\n",
 	    mrtstat.mrts_bad_tunnel, plural(mrtstat.mrts_bad_tunnel));
-	printf("\t%ld datagram%s with no room for tunnel options\n",
+	printf("\t%lu datagram%s with no room for tunnel options\n",
 	    mrtstat.mrts_cant_tunnel, plural(mrtstat.mrts_cant_tunnel));
-	printf("\t%ld datagram%s arrived on wrong interface\n",
+	printf("\t%lu datagram%s arrived on wrong interface\n",
 	    mrtstat.mrts_wrong_if, plural(mrtstat.mrts_wrong_if));
-	printf("\t%ld datagram%s dropped due to upcall Q overflow\n",
+	printf("\t%lu datagram%s dropped due to upcall Q overflow\n",
 	    mrtstat.mrts_upq_ovflw, plural(mrtstat.mrts_upq_ovflw));
-	printf("\t%ld datagram%s dropped due to upcall socket overflow\n",
+	printf("\t%lu datagram%s dropped due to upcall socket overflow\n",
 	    mrtstat.mrts_upq_sockfull, plural(mrtstat.mrts_upq_sockfull));
-	printf("\t%ld datagram%s cleaned up by the cache\n",
+	printf("\t%lu datagram%s cleaned up by the cache\n",
 	    mrtstat.mrts_cache_cleanups, plural(mrtstat.mrts_cache_cleanups));
-	printf("\t%ld datagram%s dropped selectively by ratelimiter\n",
+	printf("\t%lu datagram%s dropped selectively by ratelimiter\n",
 	    mrtstat.mrts_drop_sel, plural(mrtstat.mrts_drop_sel));
-	printf("\t%ld datagram%s dropped - bucket Q overflow\n",
+	printf("\t%lu datagram%s dropped - bucket Q overflow\n",
 	    mrtstat.mrts_q_overflow, plural(mrtstat.mrts_q_overflow));
-	printf("\t%ld datagram%s dropped - larger than bkt size\n",
+	printf("\t%lu datagram%s dropped - larger than bkt size\n",
 	    mrtstat.mrts_pkt2large, plural(mrtstat.mrts_pkt2large));
 }
