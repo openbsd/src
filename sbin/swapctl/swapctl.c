@@ -1,4 +1,4 @@
-/*	$OpenBSD: swapctl.c,v 1.7 2002/02/16 21:27:38 millert Exp $	*/
+/*	$OpenBSD: swapctl.c,v 1.8 2002/05/15 23:24:43 art Exp $	*/
 /*	$NetBSD: swapctl.c,v 1.9 1998/07/26 20:23:15 mycroft Exp $	*/
 
 /*
@@ -112,9 +112,6 @@ static	void del_swap(char *);
 static	void do_fstab(void);
 static	void usage(void);
 static	int  swapon_command(int, char **);
-#if 0
-static	void swapoff_command(int, char **);
-#endif
 
 extern	char *__progname;	/* from crt0.o */
 
@@ -127,13 +124,6 @@ main(argc, argv)
 
 	if (strcmp(__progname, "swapon") == 0)
 		return swapon_command(argc, argv);
-
-#if 0
-	if (strcmp(__progname, "swapoff") == 0) {
-		swapoff_command(argc, argv);
-		/* NOTREACHED */
-	}
-#endif
 
 	while ((c = getopt(argc, argv, "Aacdlkp:st:")) != -1) {
 		switch (c) {
