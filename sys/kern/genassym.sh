@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.sh,v 1.2 1997/07/25 05:20:52 mickey Exp $
+#	$OpenBSD: genassym.sh,v 1.3 1997/07/25 05:39:16 mickey Exp $
 #	$NetBSD: genassym.sh,v 1.7 1997/06/25 03:09:06 thorpej Exp $
 
 #
@@ -79,17 +79,17 @@ $0 ~ /^endif/ {
 /^struct[ \t]/ {
 	structname = $2;
 	$0 = "define " structname "_SIZEOF sizeof(struct " structname ")";
-	/* fall through */
+	# fall through
 }
 
 /^member[ \t]/ {
 	$0 = "define " $2 " offsetof(struct " structname ", " $2 ")";
-	/* fall through */
+	# fall through
 }
 
 /^export[ \t]/ {
 	$0 = "define " $2 " " $2;
-	/* fall through */
+	# fall through
 }
 
 /^define[ \t]/ {
