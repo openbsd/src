@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.15 1996/12/18 18:30:58 niklas Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.16 1997/04/25 09:30:14 deraadt Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -54,6 +54,7 @@
 #include <sys/namei.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
+#include <sys/socketvar.h>
 #include <sys/stat.h>
 #include <sys/malloc.h>
 #include <sys/time.h>
@@ -1703,6 +1704,7 @@ nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp, kerbflag)
 	register int i;
 	struct ucred *credanon;
 	int error, exflags;
+	struct sockaddr_in *saddr;
 
 	*vpp = (struct vnode *)0;
 #ifdef Lite2_integrated
@@ -1715,6 +1717,15 @@ nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp, kerbflag)
 	error = VFS_FHTOVP(mp, &fhp->fh_fid, nam, vpp, &exflags, &credanon);
 	if (error)
 		return (error);
+
+	saddr = mtod(nam, struct sockaddr_in *);
+	if (saddr->sin_family == AF_INET &&
+	    (ntohs(saddr->sin_port) >= IPPORT_RESERVED ||
+	    (slp->ns_so->so_type == SOCK_STREAM && ntohs(saddr->sin_port) == 20))) {
+		vput(*vpp);
+		return (NFSERR_AUTHERR | AUTH_TOOWEAK);
+	}
+
 	/*
 	 * Check/setup credentials.
 	 */
