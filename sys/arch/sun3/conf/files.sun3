@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sun3,v 1.13 1999/11/08 15:36:11 mickey Exp $
+#	$OpenBSD: files.sun3,v 1.14 2000/07/14 14:21:12 miod Exp $
 #	$NetBSD: files.sun3,v 1.26 1996/10/29 19:58:14 gwr Exp $
 
 #
@@ -6,7 +6,7 @@
 #
 
 # maxpartitions must be first item in files.${ARCH}.newconf
-maxpartitions 8
+maxpartitions 16
 
 maxusers 2 8 64
 
