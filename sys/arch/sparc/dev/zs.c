@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.19 1998/02/05 16:57:49 deraadt Exp $	*/
+/*	$OpenBSD: zs.c,v 1.20 1998/03/04 14:21:29 jason Exp $	*/
 /*	$NetBSD: zs.c,v 1.49 1997/08/31 21:26:37 pk Exp $ */
 
 /*
@@ -151,6 +151,7 @@ static void	zs_reset __P((volatile struct zschan *, int, int));
 #endif
 static void	zs_modem __P((struct zs_chanstate *, int));
 static void	zs_loadchannelregs __P((volatile struct zschan *, u_char *));
+static void	tiocm_to_zs __P((struct zs_chanstate *, int how, int data));
 
 /* Console stuff. */
 static struct tty *zs_ctty;	/* console `struct tty *' */
@@ -1299,9 +1300,30 @@ zsioctl(dev, cmd, data, flag, p)
 		zs_modem(cs, 0);
 		break;
 	case TIOCMSET:
-	case TIOCMGET:
+		tiocm_to_zs(cs, TIOCMSET, *(int *)data);
+		break;
 	case TIOCMBIS:
+		tiocm_to_zs(cs, TIOCMBIS, *(int *)data);
+		break;
 	case TIOCMBIC:
+		tiocm_to_zs(cs, TIOCMBIC, *(int *)data);
+		break;
+	case TIOCMGET: {
+		int bits = 0;
+		u_char m;
+
+		if (cs->cs_preg[5] & ZSWR5_DTR)
+			bits |= TIOCM_DTR;
+		if (cs->cs_preg[5] & ZSWR5_RTS)
+			bits |= TIOCM_RTS;
+		m = cs->cs_zc->zc_csr;
+		if (m & ZSRR0_DCD)
+			bits |= TIOCM_CD;
+		if (m & ZSRR0_CTS)
+			bits |= TIOCM_CTS;
+		*(int *)data = bits;
+		break;
+	}
 	default:
 		return (ENOTTY);
 	}
@@ -1575,6 +1597,46 @@ zs_loadchannelregs(zc, reg)
 	ZS_WRITE(zc, 15, reg[15]);
 	ZS_WRITE(zc, 3, reg[3]);
 	ZS_WRITE(zc, 5, reg[5]);
+}
+
+static void
+tiocm_to_zs(cs, how, val)
+	struct zs_chanstate *cs;
+	int how, val;
+{
+	int bits = 0, s;
+
+	if (val & TIOCM_DTR);
+		bits |= ZSWR5_DTR;
+	if (val & TIOCM_RTS)
+		bits |= ZSWR5_RTS;
+
+	s = splzs();
+	switch (how) {
+		case TIOCMBIC:
+			cs->cs_preg[5] &= ~bits;
+			break;
+		case TIOCMBIS:
+			cs->cs_preg[5] |= bits;
+			break;
+		case TIOCMSET:
+			cs->cs_preg[5] &= ~(ZSWR5_RTS | ZSWR5_DTR);
+			cs->cs_preg[5] |= bits;
+			break;
+	}
+
+	if (cs->cs_heldchange == 0) {
+		if (cs->cs_ttyp->t_state & TS_BUSY) {
+			cs->cs_heldtbc = cs->cs_tbc; 
+			cs->cs_tbc = 0;
+			cs->cs_heldchange = 1;
+		} else {
+			cs->cs_creg[5] = cs->cs_preg[5];
+			ZS_WRITE(cs->cs_zc, 5, cs->cs_creg[5]);
+		}
+	}
+	splx(s);
+
 }
 
 #ifdef KGDB
