@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.23 1996/08/27 03:05:33 dm Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.24 1996/08/29 06:31:25 dm Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1505,7 +1505,7 @@ rdist
 ..
 
 # ./var/mail
-mail	mode=1777
+mail
 # ./var/mail
 ..
 
