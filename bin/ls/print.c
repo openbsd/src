@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.2 1996/06/23 14:20:20 deraadt Exp $	*/
+/*	$OpenBSD: print.c,v 1.3 1996/08/02 11:45:01 deraadt Exp $	*/
 /*	$NetBSD: print.c,v 1.14 1995/09/07 06:43:00 jtc Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.5 (Berkeley) 7/28/94";
 #else
-static char rcsid[] = "$OpenBSD: print.c,v 1.2 1996/06/23 14:20:20 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: print.c,v 1.3 1996/08/02 11:45:01 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -59,7 +59,6 @@ static char rcsid[] = "$OpenBSD: print.c,v 1.2 1996/06/23 14:20:20 deraadt Exp $
 #include <time.h>
 #include <tzfile.h>
 #include <unistd.h>
-#include <utmp.h>
 
 #include "ls.h"
 #include "extern.h"
