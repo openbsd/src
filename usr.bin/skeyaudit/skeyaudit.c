@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyaudit.c,v 1.18 2003/05/06 10:45:49 mpech Exp $	*/
+/*	$OpenBSD: skeyaudit.c,v 1.19 2003/05/06 15:34:08 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 2000, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -209,7 +209,8 @@ runsendmail(struct passwd *pw, pid_t *pidp)
 		(void)close(pfd[0]);
 
 		/* Run sendmail as target user not root */
-		if (setusercontext(NULL, pw, pw->pw_uid, LOGIN_SETALL) != 0) {
+		if (getuid() == 0 &&
+		    setusercontext(NULL, pw, pw->pw_uid, LOGIN_SETALL) != 0) {
 			warn("cannot set user context");
 			_exit(127);
 		}
