@@ -7,7 +7,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: ssh-keygen.c,v 1.19 2000/04/26 20:56:29 markus Exp $");
+RCSID("$Id: ssh-keygen.c,v 1.20 2000/04/26 21:55:04 deraadt Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/pem.h>
@@ -519,7 +519,7 @@ main(int ac, char **av)
 		exit(1);
 	}
 
-	while ((opt = getopt(ac, av, "dqpclxXyb:f:P:N:C:")) != EOF) {
+	while ((opt = getopt(ac, av, "dqpclRxXyb:f:P:N:C:")) != EOF) {
 		switch (opt) {
 		case 'b':
 			bits = atoi(optarg);
@@ -560,6 +560,13 @@ main(int ac, char **av)
 
 		case 'q':
 			quiet = 1;
+			break;
+
+		case 'R':
+			if (rsa_alive() == 0)
+				exit(1);
+			else
+				exit(0);
 			break;
 
 		case 'x':
