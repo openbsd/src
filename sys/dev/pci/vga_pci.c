@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.13 2002/07/13 20:33:47 mickey Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.14 2002/07/15 13:23:48 mickey Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*-
@@ -688,12 +688,9 @@ agp_generic_bind_memory(struct vga_pci_softc *sc, struct agp_memory *mem,
 
 	for (contigpages = 32; contigpages > 0; contigpages >>= 1) {
 		nseg = (mem->am_size / (contigpages * PAGE_SIZE)) + 1;
-printf("nsegs=%d\n", nseg);
 		segs = malloc(nseg * sizeof *segs, M_DEVBUF, M_WAITOK);
 		if (segs == NULL)
-{ printf("malloc(%d) failed\n", nseg * sizeof *segs);
 			return ENOMEM;
-}
 		if ((error = bus_dmamem_alloc(sc->sc_dmat, mem->am_size, PAGE_SIZE, 0,
 		    segs, nseg, &mem->am_nseg, BUS_DMA_WAITOK)) != 0) {
 			free(segs, M_DEVBUF);

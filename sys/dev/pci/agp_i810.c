@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.1 2002/07/12 20:17:03 mickey Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.2 2002/07/15 13:23:48 mickey Exp $	*/
 /*	$NetBSD: agp_i810.c,v 1.8 2001/09/20 20:00:16 fvdl Exp $	*/
 
 /*-
@@ -244,17 +244,13 @@ agp_i810_alloc_memory(struct vga_pci_softc *sc, int type, vsize_t size)
 		 * Mapping local DRAM into GATT.
 		 */
 		if (size != isc->dcache_size)
-{ printf("agp: size(%d) != isc->dcache_size(%d)\n", size, isc->dcache_size);
 			return NULL;
-}
 	} else if (type == 2) {
 		/*
 		 * Bogus mapping of a single page for the hardware cursor.
 		 */
 		if (size != AGP_PAGE_SIZE)
-{ printf("agp: size(%d) != AGP_PAGE_SIZE(%d)\n", size, AGP_PAGE_SIZE);
 			return NULL;
-}
 	}
 
 	if ((mem = malloc(sizeof *mem, M_DEVBUF, M_WAITOK)) == NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: agpvar.h,v 1.1 2002/07/12 20:17:03 mickey Exp $	*/
+/*	$OpenBSD: agpvar.h,v 1.2 2002/07/15 13:23:48 mickey Exp $	*/
 /*	$NetBSD: agpvar.h,v 1.4 2001/10/01 21:54:48 fvdl Exp $	*/
 
 /*-
@@ -39,22 +39,22 @@
  * This structure is used to query the state of the AGP system.
  */
 struct agp_info {
-	u_int32_t	 ai_mode;
-	bus_addr_t	  ai_aperture_base;
-	bus_size_t	  ai_aperture_size;
-	vsize_t		       ai_memory_allowed;
-	vsize_t		       ai_memory_used;
-	u_int32_t	 ai_devid;
+	u_int32_t	ai_mode;
+	bus_addr_t	ai_aperture_base;
+	bus_size_t	ai_aperture_size;
+	vsize_t		ai_memory_allowed;
+	vsize_t		ai_memory_used;
+	u_int32_t	ai_devid;
 };
 
 struct agp_memory_info {
-	vsize_t		       ami_size;	/* size in bytes */
-	bus_addr_t	  ami_physical;	       /* bogus hack for i810 */
-	off_t		     ami_offset;	/* page offset if bound */
-	int		   ami_is_bound;	/* non-zero if bound */
+	vsize_t		ami_size;	/* size in bytes */
+	bus_addr_t	ami_physical;	/* bogus hack for i810 */
+	off_t		ami_offset;	/* page offset if bound */
+	int		ami_is_bound;	/* non-zero if bound */
 };
 
-#define	AGP_DEBUG
+/* #define	AGP_DEBUG */
 #ifdef AGP_DEBUG
 #define AGP_DPF(x...) do {			\
     printf("agp: ");				\
