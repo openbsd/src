@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.239 2002/07/15 18:07:17 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.240 2002/07/24 17:56:03 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -111,7 +111,7 @@ struct pf_port_list	 pf_udp_ports;
 /* Timeouts */
 int			 pftm_tcp_first_packet = 120;	/* First TCP packet */
 int			 pftm_tcp_opening = 30;		/* No response yet */
-int			 pftm_tcp_established = 24*60*60;  /* established  */
+int			 pftm_tcp_established = 24*60*60;  /* established */
 int			 pftm_tcp_closing = 15 * 60;	/* Half closed */
 int			 pftm_tcp_fin_wait = 45;	/* Got both FINs */
 int			 pftm_tcp_closed = 90;		/* Got a RST */
@@ -221,7 +221,7 @@ void			 pf_put_sport(u_int8_t, u_int16_t);
 int			 pf_add_sport(struct pf_port_list *, u_int16_t);
 int			 pf_chk_sport(struct pf_port_list *, u_int16_t);
 int			 pf_normalize_tcp(int, struct ifnet *, struct mbuf *,
-			     int, int, void *, struct pf_pdesc *);
+			    int, int, void *, struct pf_pdesc *);
 void			 pf_route(struct mbuf **, struct pf_rule *, int);
 void			 pf_route6(struct mbuf **, struct pf_rule *, int);
 int			 pf_socket_lookup(uid_t *, gid_t *, int, int, int,
@@ -2115,7 +2115,7 @@ pf_test_udp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 				s->gwy.port = s->lan.port;
 			}
 		}
-		s->src.seqlo  = 0;
+		s->src.seqlo = 0;
 		s->src.seqhi = 0;
 		s->src.seqdiff = 0;
 		s->src.max_win = 0;
@@ -2320,7 +2320,7 @@ pf_test_icmp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 
 	if (*rm != NULL) {
 		(*rm)->packets++;
-		(*rm)->bytes +=  pd->tot_len;
+		(*rm)->bytes += pd->tot_len;
 		REASON_SET(&reason, PFRES_MATCH);
 
 		if ((*rm)->log) {
@@ -2715,7 +2715,7 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 
 	seq = ntohl(th->th_seq);
 	if (src->seqlo == 0) {
-		/* First packet from this end.  Set its state */
+		/* First packet from this end. Set its state */
 
 		/* Deferred generation of sequence number modulator */
 		if (dst->seqdiff) {
@@ -2869,7 +2869,7 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 		 *     that web servers like to spew after a close)
 		 *
 		 * This must be a little more careful than the above code
-		 * since packet floods will also be caught here.  We don't
+		 * since packet floods will also be caught here. We don't
 		 * update the TTL here to mitigate the damage of a packet
 		 * flood and so the same code can handle awkward establishment
 		 * and a loosened connection close.
@@ -3212,7 +3212,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 					if (!pf_pull_hdr(m, off2, &opt6,
 					    sizeof(opt6), NULL, NULL, pd2.af)) {
 						DPFPRINTF(PF_DEBUG_MISC,
-						    ("pf:  ICMPv6 short opt\n"));
+						    ("pf: ICMPv6 short opt\n"));
 						return(PF_DROP);
 					}
 					if (pd2.proto == IPPROTO_AH)
@@ -4204,7 +4204,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 	}
 
 	if (ifp == status_ifp) {
-		pf_status.bcounters[1][dir] += h->ip6_plen;
+		pf_status.bcounters[1][dir] += pd.tot_len;
 		pf_status.pcounters[1][dir][action]++;
 	}
 
