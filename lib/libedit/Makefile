@@ -53,7 +53,7 @@ test:	libedit.a test.o
 includes:
 	-cd ${.CURDIR}; cmp -s histedit.h ${DESTDIR}/usr/include/histedit.h > \
 	    /dev/null 2>&1 || \
-	    install -c -o ${BINOWN} -g ${BINGRP} -m 444 histedit.h \
+	    ${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m 444 histedit.h \
 	    ${DESTDIR}/usr/include
 
 .include <bsd.lib.mk>

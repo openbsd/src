@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 1996/05/06 21:44:28 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.4 1996/12/08 15:22:31 downsj Exp $
 
 
 RPCSRCS=	bootparam_prot.x klm_prot.x mount.x nfs_prot.x\
@@ -16,18 +16,18 @@ all:		${HDRS}
 beforedepend:	${HDRS}
 
 includes:	${HDRS}
-	install -d -o ${BINOWN} -g ${BINGRP} -m 755 \
+	${INSTALL} -d -o ${BINOWN} -g ${BINGRP} -m 755 \
 		${DESTDIR}/usr/include/rpcsvc
 	@echo installing rpc .h and .x files
 	@for i in $(HDRS); do \
 	    cmp -s $$i ${DESTDIR}/usr/include/rpcsvc/$$i || \
-		{ j="install -c -o ${BINOWN} -g ${BINGRP} -m 444 $$i \
+		{ j="${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m 444 $$i \
 		${DESTDIR}/usr/include/rpcsvc"; \
 		echo $$j; $$j; } \
 	done
 	@cd ${.CURDIR}; for i in $(RPCSRCS); do \
 	    cmp -s $(.CURDIR)/$$i ${DESTDIR}/usr/include/rpcsvc/$$i || \
-		{ j="install -c -o ${BINOWN} -g ${BINGRP} -m 444 $$i \
+		{ j="${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m 444 $$i \
 		${DESTDIR}/usr/include/rpcsvc"; \
 		echo $$j; $$j; } \
 	done

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 1996/12/03 01:05:35 downsj Exp $
+#	$OpenBSD: Makefile,v 1.10 1996/12/08 15:22:34 downsj Exp $
 #	$NetBSD: Makefile,v 1.8 1996/05/16 07:03:28 thorpej Exp $
 
 LIB=	util
@@ -38,7 +38,7 @@ MLINKS+=scsi.3 scsi_debug_output.3
 includes:
 	@cd ${.CURDIR}; for i in $(HDRS); do \
 	    j="cmp -s $$i ${DESTDIR}/usr/include/$$i || \
-		install -c -o ${BINOWN} -g ${BINGRP} -m 444 $$i \
+		${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m 444 $$i \
 		${DESTDIR}/usr/include"; \
 	    echo $$j; \
 	    eval "$$j"; \

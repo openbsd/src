@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 1996/08/03 07:10:32 niklas Exp $
+#	$OpenBSD: Makefile,v 1.7 1996/12/08 15:22:30 downsj Exp $
 #	$NetBSD: Makefile,v 1.3 1996/05/10 21:54:24 cgd Exp $
 
 LIB=	pcap
@@ -24,7 +24,7 @@ scanner.c:	scanner.l grammar.c
 includes:
 	@cd ${.CURDIR}; for i in $(HDRS); do \
 	    j="cmp -s $$i ${DESTDIR}/usr/include/$$i || \
-		install -c -o ${BINOWN} -g ${BINGRP} -m 444 $$i \
+		${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m 444 $$i \
 		${DESTDIR}/usr/include"; \
 	    echo $$j; \
 	    eval "$$j"; \

@@ -12,7 +12,7 @@ MAN=	menu.3 menu_driver.3 menu_items.3 menu_opts.3 menu_userptr.3 \
 includes:
 	@cd ${.CURDIR}; for i in ${HDRS}; do \
 	  cmp -s $$i ${DESTDIR}/usr/include/$$i || \
-	  install -c -m 444 -o $(BINOWN) -g $(BINGRP) $$i \
+	  ${INSTALL} ${COPY} -m 444 -o $(BINOWN) -g $(BINGRP) $$i \
 	  ${DESTDIR}/usr/include; done
 
 .include <bsd.lib.mk>

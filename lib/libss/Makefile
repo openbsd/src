@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 1996/11/17 11:03:40 downsj Exp $
+#	$OpenBSD: Makefile,v 1.4 1996/12/08 15:22:32 downsj Exp $
 
 LIB=	ss
 HDRS=	ss.h ${.OBJDIR}/ss_err.h
@@ -22,7 +22,7 @@ std_rqs.c:		${.CURDIR}/std_rqs.ct
 includes: ss_err.h
 	@cd ${.CURDIR}; for i in $(HDRS); do \
 	    j="cmp -s $$i ${DESTDIR}/usr/include/ss/$$i || \
-		install -c -o ${BINOWN} -g ${BINGRP} -m 444 $$i \
+		${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m 444 $$i \
 		${DESTDIR}/usr/include/ss"; \
 	    echo $$j; \
 	    eval "$$j"; \
