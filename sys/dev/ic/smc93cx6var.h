@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc93cx6var.h,v 1.8 2002/03/19 02:49:20 millert Exp $	*/
+/*	$OpenBSD: smc93cx6var.h,v 1.9 2002/06/28 00:34:54 smurph Exp $	*/
 /* $FreeBSD: sys/dev/aic7xxx/93cx6.h,v 1.3 1999/12/29 04:35:33 peter Exp $ */
 /*
  * Interface to the 93C46 serial EEPROM that is used to store BIOS
@@ -36,6 +36,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+#ifndef _SMC93CX6VAR_H_
+#define _SMC93CX6VAR_H_
 
 #include <sys/param.h>
 #if !(defined(__NetBSD__) || defined(__OpenBSD__))
@@ -50,8 +52,7 @@ typedef enum {
 } seeprom_chip_t;
 
 struct seeprom_descriptor {
-	bus_space_tag_t sd_tag;             
-	bus_space_handle_t sd_bsh;
+	struct ahc_softc *sd_ahc;
 	bus_size_t sd_control_offset;
 	bus_size_t sd_status_offset;
 	bus_size_t sd_dataout_offset;
@@ -81,15 +82,21 @@ struct seeprom_descriptor {
  */
 
 #define	SEEPROM_INB(sd) \
-	bus_space_read_1(sd->sd_tag, sd->sd_bsh, sd->sd_control_offset)
+	ahc_inb(sd->sd_ahc, sd->sd_control_offset)
 #define	SEEPROM_OUTB(sd, value) \
-	bus_space_write_1(sd->sd_tag, sd->sd_bsh, sd->sd_control_offset, value)
+do {								\
+	ahc_outb(sd->sd_ahc, sd->sd_control_offset, value);	\
+	ahc_flush_device_writes(sd->sd_ahc);			\
+} while(0)
+
 #define	SEEPROM_STATUS_INB(sd) \
-	bus_space_read_1(sd->sd_tag, sd->sd_bsh, sd->sd_status_offset)
+	ahc_inb(sd->sd_ahc, sd->sd_status_offset)
 #define	SEEPROM_DATA_INB(sd) \
-	bus_space_read_1(sd->sd_tag, sd->sd_bsh, sd->sd_dataout_offset)
+	ahc_inb(sd->sd_ahc, sd->sd_dataout_offset)
 
 int read_seeprom(struct seeprom_descriptor *sd, u_int16_t *buf,
 		 bus_size_t start_addr, bus_size_t count);
+int verify_cksum(struct seeprom_config *sc);
 
 #endif /* _KERNEL */
+#endif /* SMC93CX6VAR_H_ */

@@ -2,7 +2,7 @@
 /*
  * Parser for the Aic7xxx SCSI Host adapter sequencer assembler.
  *
- * Copyright (c) 1997-1998 Justin T. Gibbs.
+ * Copyright (c) 1997, 1998, 2000 Justin T. Gibbs.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -13,6 +13,9 @@
  *    without modification.
  * 2. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
+ *
+ * Alternatively, this software may be distributed under the terms of the
+ * GNU Public License ("GPL").
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -26,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/dev/aic7xxx/aicasm_gram.y,v 1.8 1999/12/06 18:23:30 gibbs Exp $
+ * $FreeBSD: src/sys/dev/aic7xxx/aicasm/aicasm_gram.y,v 1.15 2001/07/18 21:03:32 gibbs Exp $
  */
 
 #include <stdio.h>
@@ -43,6 +46,7 @@
 
 int yylineno;
 char *yyfilename;
+char *versions;
 static symbol_t *cur_symbol;
 static symtype cur_symtype;
 static symbol_t *accumulator;
@@ -53,6 +57,7 @@ static symbol_ref_t sindex;
 static int instruction_ptr;
 static int sram_or_scb_offset;
 static int download_constant_count;
+static int in_critical_section;
 
 static void process_bitmask(int mask_type, symbol_t *sym, int mask);
 static void initialize_symbol(symbol_t *symbol);
@@ -68,6 +73,7 @@ static void test_writable_symbol(symbol_t *symbol);
 static void type_check(symbol_t *symbol, expression_t *expression, int and_op);
 static void make_expression(expression_t *immed, int value);
 static void add_conditional(symbol_t *symbol);
+static void add_version(const char *);
 static int  is_download_const(expression_t *immed);
 
 #define YYDEBUG 1
@@ -103,17 +109,21 @@ static int  is_download_const(expression_t *immed);
 
 %token <value> T_MODE
 
+%token T_BEGIN_CS
+
+%token T_END_CS
+
 %token T_BIT
 
 %token T_MASK
 
 %token <value> T_NUMBER
 
-%token <str> T_PATH
+%token <str> T_PATH T_STRING
 
 %token <sym> T_CEXPR
 
-%token T_EOF T_INCLUDE 
+%token T_EOF T_INCLUDE T_VERSION
 
 %token <value> T_SHR T_SHL T_ROR T_ROL
 
@@ -127,7 +137,7 @@ static int  is_download_const(expression_t *immed);
 
 %token <value> T_STC T_CLC
 
-%token <value> T_CMP T_XOR
+%token <value> T_CMP T_NOT T_XOR
 
 %token <value> T_TEST T_AND
 
@@ -165,6 +175,8 @@ static int  is_download_const(expression_t *immed);
 program:
 	include
 |	program include
+|       version
+|       program version
 |	register
 |	program register
 |	constant
@@ -175,6 +187,10 @@ program:
 |	program scb
 |	label
 |	program label
+|       critical_section_start
+|       program critical_section_start
+|       critical_section_end
+|       program critical_section_end
 |	conditional
 |	program conditional
 |	code
@@ -183,9 +199,18 @@ program:
 
 include:
 	T_INCLUDE '<' T_PATH '>'
-	{ include_file($3, BRACKETED_INCLUDE); }
+        {
+                include_file($3, BRACKETED_INCLUDE);
+        }
 |	T_INCLUDE '"' T_PATH '"'
-	{ include_file($3, QUOTED_INCLUDE); }
+        {
+                include_file($3, QUOTED_INCLUDE);
+        }
+;
+
+version:
+        T_VERSION '=' T_STRING
+        { add_version($3); }
 ;
 
 register:
@@ -524,6 +549,8 @@ scb:
 			}
 			cur_symbol->type = SCBLOC;
 			initialize_symbol(cur_symbol);
+                        /* 64 bytes of SCB space */
+                        cur_symbol->info.rinfo->size = 64;
 		}
 		reg_address
 		{
@@ -548,6 +575,21 @@ reg_symbol:
 		$$.symbol = $1;
 		$$.offset = 0;
 	}
+|       T_SYMBOL '[' T_SYMBOL ']'
+        {
+                process_register(&$1);
+                if ($3->type != CONST) {
+                        stop("register offset must be a constant", EX_DATAERR);
+                        /* NOTREACHED */
+                }
+                if (($3->info.cinfo->value + 1) > $1->info.rinfo->size) {
+                        stop("Accessing offset beyond range of register",
+                             EX_DATAERR);
+                        /* NOTREACHED */
+                }
+                $$.symbol = $1;
+                $$.offset = $3->info.cinfo->value;
+        }
 |	T_SYMBOL '[' T_NUMBER ']'
 	{
 		process_register(&$1);
@@ -617,6 +659,35 @@ ret:
 |	T_RET
 	{ $$ = 1; }
 ;
+
+critical_section_start:
+        T_BEGIN_CS
+        {
+                critical_section_t *cs;
+
+                if (in_critical_section != FALSE) {
+                        stop("Critical Section within Critical Section",
+                             EX_DATAERR);
+                        /* NOTREACHED */
+                }
+                cs = cs_alloc();
+                cs->begin_addr = instruction_ptr;
+                in_critical_section = TRUE;
+        }
+
+critical_section_end:
+        T_END_CS
+        {
+                critical_section_t *cs;
+
+                if (in_critical_section == FALSE) {
+                        stop("Unballanced 'end_cs'", EX_DATAERR);
+                        /* NOTREACHED */
+                }
+                cs = TAILQ_LAST(&cs_tailq, cs_tailq);
+                cs->end_addr = instruction_ptr;
+                in_critical_section = FALSE;
+        }
 
 label:
 	T_SYMBOL ':'
@@ -729,7 +800,6 @@ conditional:
 	'}'
 	{
 		scope_t *scope_context;
-		scope_t *last_scope;
 
 		scope_context = SLIST_FIRST(&scope_stack);
 		if (scope_context->type == SCOPE_ROOT) {
@@ -835,8 +905,8 @@ code:
 	{
 		expression_t immed;
 
-		make_expression(&immed, 0xff);
-		format_1_instr(AIC_OP_AND, &$2, &immed, &$4, $5);
+                make_expression(&immed, 1);
+                format_1_instr(AIC_OP_BMOV, &$2, &immed, &$4, $5);
 	}
 ;
 
@@ -844,6 +914,16 @@ code:
 	T_MVI destination ',' immediate_or_a ret ';'
 	{
 		format_1_instr(AIC_OP_OR, &$2, &$4, &allzeros, $5);
+        }
+;
+
+code:
+        T_NOT destination opt_source ret ';'
+        {
+                expression_t immed;
+
+                make_expression(&immed, 0xff);
+                format_1_instr(AIC_OP_XOR, &$2, &immed, &$3, $4);
 	}
 ;
 
@@ -1386,6 +1466,27 @@ add_conditional(symbol)
 	initialize_symbol(symbol);
 	symbol->info.condinfo->func_num = numfuncs++;
 	symlist_add(&patch_functions, symbol, SYMLIST_INSERT_HEAD);
+}
+
+static void
+add_version(verstring)
+const char *verstring;
+{
+        const char prefix[] = " * ";
+        int newlen;
+        int oldlen;
+
+        newlen = strlen(verstring) + strlen(prefix);
+        oldlen = 0;
+        if (versions != NULL)
+                oldlen = strlen(versions);
+        versions = realloc(versions, newlen + oldlen + 2);
+        if (versions == NULL)
+                stop("Can't allocate version string", EX_SOFTWARE);
+        strcpy(&versions[oldlen], prefix);
+        strcpy(&versions[oldlen + strlen(prefix)], verstring);
+        versions[newlen + oldlen] = '\n';
+        versions[newlen + oldlen + 1] = '\0';
 }
 
 void

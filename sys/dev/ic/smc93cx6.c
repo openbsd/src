@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc93cx6.c,v 1.9 2002/03/19 02:49:20 millert Exp $	*/
+/*	$OpenBSD: smc93cx6.c,v 1.10 2002/06/28 00:34:54 smurph Exp $	*/
 /* $FreeBSD: sys/dev/aic7xxx/93cx6.c,v 1.5 2000/01/07 23:08:17 gibbs Exp $ */
 /*
  * Interface for the 93C66/56/46/26/06 serial eeprom parts.
@@ -29,7 +29,7 @@
  *     -------------------------------------------------------------------
  *     READ        1    10   A5 - A0             Reads data stored in memory,
  *                                               starting at specified address
- *     EWEN        1    00   11XXXX              Write enable must preceed
+ *     EWEN        1    00   11XXXX              Write enable must precede
  *                                               all programming modes
  *     ERASE       1    11   A5 - A0             Erase register A5A4A3A2A1A0
  *     WRITE       1    01   A5 - A0   D15 - D0  Writes register
@@ -62,6 +62,10 @@
 #include <machine/bus_pio.h>
 #endif
 #include <machine/bus.h>
+#if defined(__OpenBSD__)
+#include <dev/ic/aic7xxx_openbsd.h>
+#endif 
+#include <dev/ic/aic7xxx_inline.h>
 #if !(defined(__NetBSD__) || defined(__OpenBSD__))
 #include <dev/aic7xxx/93cx6.h>
 #else
@@ -177,4 +181,26 @@ read_seeprom(sd, buf, start_addr, count)
 	printf ("\n");
 #endif
 	return (1);
+}
+
+int
+verify_cksum(struct seeprom_config *sc)
+{
+	int i;
+	int maxaddr;
+	u_int32_t checksum;
+	u_int16_t *scarray;
+
+	maxaddr = (sizeof(*sc)/2) - 1;
+	checksum = 0;
+	scarray = (uint16_t *)sc;
+
+	for (i = 0; i < maxaddr; i++)
+		checksum = checksum + scarray[i];
+	if (checksum == 0
+	 || (checksum & 0xFFFF) != sc->checksum) {
+		return (0);
+	} else {
+		return(1);
+	}
 }
