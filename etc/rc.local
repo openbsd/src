@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.local,v 1.5 1996/08/26 22:31:35 deraadt Exp $
+#	$OpenBSD: rc.local,v 1.6 1996/09/06 09:47:35 deraadt Exp $
 
 # site-specific startup actions, daemons
 # Add your local changes additions to this file
@@ -15,6 +15,10 @@ echo -n 'starting local daemons:'
 
 #if [ -x /usr/X11R6/bin/xdm ]; then
 #	echo -n ' xdm';		/usr/X11R6/bin/xdm
+#fi
+
+#if [ -x /usr/local/bin/xntpd ]; then
+#	echo -n ' xntpd';	/usr/local/bin/xntpd
 #fi
 
 echo '.'
