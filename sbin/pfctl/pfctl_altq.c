@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.32 2003/01/09 18:55:32 dhartmei Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.33 2003/01/20 19:05:46 camield Exp $	*/
 
 /*
  * Copyright (C) 2002
@@ -56,16 +56,16 @@
 TAILQ_HEAD(altqs, pf_altq) altqs = TAILQ_HEAD_INITIALIZER(altqs);
 LIST_HEAD(gen_sc, segment) rtsc, lssc;
 
-static int	eval_pfqueue_cbq(struct pfctl *pf, struct pf_altq *);
+static int	eval_pfqueue_cbq(struct pfctl *, struct pf_altq *);
 static int	cbq_compute_idletime(struct pfctl *, struct pf_altq *);
 static int	check_commit_cbq(int, int, struct pf_altq *);
 static void	print_cbq_opts(const struct pf_altq *);
 
-static int	eval_pfqueue_priq(struct pfctl *pf, struct pf_altq *);
+static int	eval_pfqueue_priq(struct pfctl *, struct pf_altq *);
 static int	check_commit_priq(int, int, struct pf_altq *);
 static void	print_priq_opts(const struct pf_altq *);
 
-static int	eval_pfqueue_hfsc(struct pfctl *pf, struct pf_altq *);
+static int	eval_pfqueue_hfsc(struct pfctl *, struct pf_altq *);
 static int	check_commit_hfsc(int, int, struct pf_altq *);
 static void	print_hfsc_opts(const struct pf_altq *);
 

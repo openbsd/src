@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.h,v 1.6 2003/01/20 17:16:56 cedric Exp $ */
+/*	$OpenBSD: pfctl.h,v 1.7 2003/01/20 19:05:46 camield Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -35,7 +35,7 @@
 
 void	 pfr_set_fd(int);
 int	 pfr_get_fd(void);
-int	 pfr_clr_tables(int *ndel, int);
+int	 pfr_clr_tables(int *, int);
 int	 pfr_add_tables(struct pfr_table *, int, int *, int);
 int	 pfr_del_tables(struct pfr_table *, int, int *, int);
 int	 pfr_get_tables(struct pfr_table *, int *, int);
@@ -90,7 +90,7 @@ void	 print_queue(const struct pf_altq *, unsigned);
 void	 print_addr(struct pf_addr_wrap *, sa_family_t, int);
 void	 print_host(struct pf_state_host *, sa_family_t, int);
 void	 print_seq(struct pf_state_peer *);
-void	 print_state(struct pf_state *s, int);
+void	 print_state(struct pf_state *, int);
 int	 unmask(struct pf_addr *, sa_family_t);
 
 #endif /* _PFCTL_H_ */
