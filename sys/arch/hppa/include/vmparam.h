@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.26 2003/04/04 00:41:34 mickey Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.27 2003/04/16 07:31:38 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -31,28 +31,23 @@
  */
 /*
  * USRTEXT is the start of the user text/data space, while USRSTACK
- * is the top (end) of the user stack.  LOWPAGES and HIGHPAGES are
- * the number of pages from the beginning of the P0 region to the
- * beginning of the text and from the beginning of the P1 region to the
- * beginning of the stack respectively.
+ * is the bottm (start) of the user stack.
  */
-#define	USRTEXT		0x00002000		/* Start of user .text */
+#define	USRTEXT		PAGE_SIZE		/* Start of user .text */
 #define	USRSTACK	0x68FF3000		/* Start of user stack */
-#define	LOWPAGES	0
-#define	HIGHPAGES	UPAGES
 #define	SYSCALLGATE	0xC0000000		/* syscall gateway page */
 
 /*
  * Virtual memory related constants, all in bytes
  */
 #ifndef MAXTSIZ
-#define	MAXTSIZ		(0x40000000)		/* max text size */
+#define	MAXTSIZ		(64*1024*1024)		/* max text size */
 #endif
 #ifndef DFLDSIZ
 #define	DFLDSIZ		(16*1024*1024)		/* initial data size limit */
 #endif
 #ifndef MAXDSIZ
-#define	MAXDSIZ		(USRSTACK-MAXTSIZ)	/* max data size */
+#define	MAXDSIZ		(1*1024*1024*1024)	/* max data size */
 #endif
 #ifndef	DFLSSIZ
 #define	DFLSSIZ		(512*1024)		/* initial stack size limit */
