@@ -1,7 +1,7 @@
-/*	$OpenBSD: perform.c,v 1.10 1999/10/09 20:35:45 beck Exp $	*/
+/*	$OpenBSD: perform.c,v 1.11 1999/11/03 17:23:48 espie Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: perform.c,v 1.10 1999/10/09 20:35:45 beck Exp $";
+static const char *rcsid = "$OpenBSD: perform.c,v 1.11 1999/11/03 17:23:48 espie Exp $";
 #endif
 
 /*
@@ -546,7 +546,7 @@ pkg_do(char *pkg)
 	    Pager = "/usr/bin/more";
 
 	snprintf(buf, sizeof buf, "%s/%s", LogDir, p->name);
-	if (!stat(buf,&sbuf) || vsystem("%s %s", Pager, buf)) 
+	if (stat(buf,&sbuf) == -1 || vsystem("%s %s", Pager, buf)) 
 	    warnx("cannot open `%s' as display file", buf);
     }
 
