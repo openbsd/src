@@ -1,4 +1,4 @@
-/*	$OpenBSD: hosts_access.c,v 1.1 1997/02/26 03:06:52 downsj Exp $	*/
+/*	$OpenBSD: hosts_access.c,v 1.2 1997/03/29 04:14:56 millert Exp $	*/
 
  /*
   * This module implements a simple access control language that is based on
@@ -23,7 +23,7 @@
 #if 0
 static char sccsid[] = "@(#) hosts_access.c 1.21 97/02/12 02:13:22";
 #else
-static char rcsid[] = "$OpenBSD: hosts_access.c,v 1.1 1997/02/26 03:06:52 downsj Exp $";
+static char rcsid[] = "$OpenBSD: hosts_access.c,v 1.2 1997/03/29 04:14:56 millert Exp $";
 #endif
 #endif
 
@@ -267,9 +267,9 @@ struct host_info *host;
 
     if (tok[0] == '@') {			/* netgroup: look it up */
 #ifdef  NETGROUP
-	static char *mydomain = 0;
-	if (mydomain == 0)
-	    yp_get_default_domain(&mydomain);
+	static char mydomain[MAXHOSTNAMELEN];
+	if (mydomain[0] == '\0')
+	    getdomainname(mydomain, sizeof(mydomain));
 	return (innetgr(tok + 1, eval_hostname(host), (char *) 0, mydomain));
 #else
 	tcpd_warn("netgroup support is disabled");	/* not tcpd_jump() */
