@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbootd.c,v 1.18 2003/06/27 22:34:25 deraadt Exp $	*/
+/*	$OpenBSD: rbootd.c,v 1.19 2004/01/23 03:48:43 deraadt Exp $	*/
 /*	$NetBSD: rbootd.c,v 1.5 1995/10/06 05:12:17 thorpej Exp $	*/
 
 /*
@@ -51,7 +51,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)rbootd.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$OpenBSD: rbootd.c,v 1.18 2003/06/27 22:34:25 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rbootd.c,v 1.19 2004/01/23 03:48:43 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -101,14 +101,7 @@ main(int argc, char *argv[])
 	 *  Temporarily leave stdin & stdout open for `-d',
 	 *  and stderr open for any pre-syslog error messages.
 	 */
-	{
-		int i, nfds = getdtablesize();
-
-		for (i = 0; i < nfds; i++)
-			if (i != fileno(stdin) && i != fileno(stdout) &&
-			    i != fileno(stderr))
-				(void) close(i);
-	}
+	closefrom(STDERR_FILENO + 1);
 
 	/*
 	 *  Parse any arguments.

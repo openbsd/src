@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth_subr.c,v 1.25 2004/01/10 16:45:56 millert Exp $	*/
+/*	$OpenBSD: auth_subr.c,v 1.26 2004/01/23 03:48:42 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996,1997 Berkeley Software Design, Inc.
@@ -827,9 +827,7 @@ auth_call(auth_session_t *as, char *path, ...)
 			close(pfd[1]);
 		}
 
-		for (status = getdtablesize() - 1; status > COMM_FD; status--)
-			close(status);
-
+		closefrom(COMM_FD + 1);
 		execve(path, argv, auth_environ);
 		syslog(LOG_ERR, "%s: %m", path);
 		err(1, "%s", path);

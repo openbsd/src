@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: bundle.c,v 1.67 2003/04/04 20:25:06 deraadt Exp $
+ *	$OpenBSD: bundle.c,v 1.68 2004/01/23 03:48:43 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -1791,8 +1791,8 @@ bundle_setsid(struct bundle *bundle, int holdsession)
         signal(SIGTERM, SIG_DFL);
         signal(SIGINT, SIG_DFL);
         signal(SIGQUIT, SIG_DFL);
-        for (fd = getdtablesize(); fd >= 0; fd--)
-          close(fd);
+	closefrom(0);
+
         /*
          * Reap the intermediate process.  As we're not exiting but the
          * intermediate is, we don't want it to become defunct.

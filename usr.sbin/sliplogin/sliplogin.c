@@ -35,7 +35,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)sliplogin.c	5.6 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: sliplogin.c,v 1.23 2003/06/26 21:36:39 deraadt Exp $";
+static char rcsid[] = "$Id: sliplogin.c,v 1.24 2004/01/23 03:48:43 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -193,9 +193,7 @@ main(int argc, char *argv[])
 		name = argv[0];
 	else
 		name++;
-	s = getdtablesize();
-	for (fd = 3 ; fd < s ; fd++)
-		(void) close(fd);
+	closefrom(3);
 	if (argc > 1 && strlen(argv[1]) > MAXLOGNAME)
 		errx(1, "login %s too long", argv[1]);
 	openlog(name, LOG_PID, LOG_DAEMON);

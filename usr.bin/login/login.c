@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.52 2003/11/09 20:13:57 otto Exp $	*/
+/*	$OpenBSD: login.c,v 1.53 2004/01/23 03:48:43 deraadt Exp $	*/
 /*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
@@ -73,7 +73,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-static const char rcsid[] = "$OpenBSD: login.c,v 1.52 2003/11/09 20:13:57 otto Exp $";
+static const char rcsid[] = "$OpenBSD: login.c,v 1.53 2004/01/23 03:48:43 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -276,8 +276,7 @@ main(int argc, char *argv[])
 	} else
 		ask = 1;
 
-	for (cnt = getdtablesize(); cnt > 2; cnt--)
-		(void)close(cnt);
+	closefrom(3);
 
 	/*
 	 * If effective user is not root, just run su(1) to emulate login(1).
@@ -759,8 +758,7 @@ failed:
 	 * Assume that stdin, stdout and stderr are 0, 1 and 2, and that
 	 * STDERR_FILENO is 2.
 	 */
-	for (cnt = getdtablesize(); cnt > STDERR_FILENO; cnt--)
-		(void)close(cnt);
+	closefrom(STDERR_FILENO + 1);
 
 	/*
 	 * Close the authentication session, make sure it is marked

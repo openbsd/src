@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: command.c,v 1.78 2003/04/04 20:28:57 deraadt Exp $
+ * $OpenBSD: command.c,v 1.79 2004/01/23 03:48:43 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -638,6 +638,7 @@ ShellCommand(struct cmdargs const *arg, int bg)
     dup2(fd, STDIN_FILENO);
     dup2(fd, STDOUT_FILENO);
     dup2(fd, STDERR_FILENO);
+/* fwalk */
     for (i = getdtablesize(); i > STDERR_FILENO; i--)
       fcntl(i, F_SETFD, 1);
 
