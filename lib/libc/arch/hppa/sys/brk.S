@@ -1,4 +1,4 @@
-/*	$OpenBSD: brk.S,v 1.7 2001/06/04 23:14:04 mickey Exp $	*/
+/*	$OpenBSD: brk.S,v 1.8 2002/10/07 09:35:34 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -35,21 +35,21 @@
 
 #ifdef SYSLIBC_SCCS
 	.text
-	.asciz "$OpenBSD: brk.S,v 1.7 2001/06/04 23:14:04 mickey Exp $"
+	.asciz "$OpenBSD: brk.S,v 1.8 2002/10/07 09:35:34 mickey Exp $"
 	.align	4
 #endif
 
-	.import	curbrk, data
+	.import	__curbrk, data
 	.import	end, data
 
 	.data
-	.export	minbrk, data
-minbrk
+	.export	__minbrk, data
+__minbrk
 	.long	end
 
 ENTRY(brk,0)
-	ldil	L%minbrk, t1
-	ldw	R%minbrk(t1), t2
+	ldil	L%__minbrk, t1
+	ldw	R%__minbrk(t1), t2
 	sub,<<	t2, arg0, r0
 	copy	t2, arg0
 	stw	arg0, HPPA_FRAME_ARG(0)(sp)
@@ -57,9 +57,9 @@ ENTRY(brk,0)
 	SYSCALL(break)
 
 	ldw	HPPA_FRAME_ARG(0)(sp), arg0
-	ldil	L%curbrk, t1
+	ldil	L%__curbrk, t1
 	bv	r0(rp)
-	stw	arg0, R%curbrk(t1)
+	stw	arg0, R%__curbrk(t1)
 EXIT(brk)
 
 	.end
