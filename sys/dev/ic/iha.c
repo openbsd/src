@@ -1,4 +1,4 @@
-/*	$OpenBSD: iha.c,v 1.18 2003/03/29 02:34:17 krw Exp $ */
+/*	$OpenBSD: iha.c,v 1.19 2003/03/29 17:52:01 krw Exp $ */
 /*-------------------------------------------------------------------------
  *
  * Device driver for the INI-9XXXU/UW or INIC-940/950  PCI SCSI Controller.
@@ -84,8 +84,9 @@ static const u_int8_t iha_rate_tbl[8] = {
 	62	/* 250ns, 4M	  */
 };
 
+int iha_setup_sg_list(struct iha_softc *, struct iha_scsi_req_q *);
 u_int8_t iha_data_over_run(struct iha_scsi_req_q *);
-void iha_push_sense_request(struct iha_softc *, struct iha_scsi_req_q *);
+int iha_push_sense_request(struct iha_softc *, struct iha_scsi_req_q *);
 void iha_timeout(void *);
 int  iha_alloc_scbs(struct iha_softc *);
 void iha_read_eeprom(bus_space_tag_t, bus_space_handle_t,
@@ -210,6 +211,47 @@ iha_intr(arg)
 }
 
 /*
+ * iha_setup_sg_list -	initialize scatter gather list of pScb from
+ *			pScb->SCB_DataDma.
+ */
+int
+iha_setup_sg_list(sc, pScb)
+	struct iha_softc *sc;
+	struct iha_scsi_req_q *pScb;
+{
+	bus_dma_segment_t *segs = pScb->SCB_DataDma->dm_segs;
+	int i, error, nseg = pScb->SCB_DataDma->dm_nsegs;
+
+	if (nseg > 1) {
+		pScb->SCB_Flags	|= FLAG_SG;
+		bzero(pScb->SCB_SGList, sizeof(pScb->SCB_SGList));
+
+		error = bus_dmamap_load(sc->sc_dmat, pScb->SCB_SGDma,
+				pScb->SCB_SGList, sizeof(pScb->SCB_SGList), NULL,
+				(pScb->SCB_Flags & SCSI_NOSLEEP) ?
+					BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
+		if (error) {
+			sc_print_addr(pScb->SCB_Xs->sc_link);
+			printf("error %d loading SG list dma map\n", error);
+			return (error);
+		}
+
+		pScb->SCB_SGIdx	  = 0;
+		pScb->SCB_SGCount = nseg;
+
+		for (i=0; i < nseg; i++) {
+			pScb->SCB_SGList[i].SG_Len  = segs[i].ds_len;
+			pScb->SCB_SGList[i].SG_Addr = segs[i].ds_addr;
+		}
+
+		bus_dmamap_sync(sc->sc_dmat, pScb->SCB_SGDma, 
+			0, sizeof(pScb->SCB_SGList), BUS_DMASYNC_PREWRITE);
+	}
+
+	return (0);
+}
+
+/*
  * iha_scsi_cmd - start execution of a SCSI command. This is called
  *		  from the generic SCSI driver via the field
  *		  sc_adapter.scsi_cmd of iha_softc.
@@ -219,11 +261,9 @@ iha_scsi_cmd(xs)
 	struct scsi_xfer *xs;
 {
 	struct iha_scsi_req_q *pScb;
-	struct iha_sg_element *sg;
 	struct scsi_link *sc_link = xs->sc_link;
 	struct iha_softc *sc = sc_link->adapter_softc;
-	bus_dmamap_t dm;
-	int error, nseg, i;
+	int error;
 
 	if ((xs->cmdlen > 12) || (sc_link->target >= IHA_MAX_TARGETS)) {
 		xs->error = XS_DRIVER_STUFFUP;
@@ -253,19 +293,19 @@ iha_scsi_cmd(xs)
 	pScb->SCB_CDBLen = xs->cmdlen;
 	bcopy(xs->cmd, &pScb->SCB_CDB, xs->cmdlen);
 
-	pScb->SCB_BufLen = xs->datalen;
+	pScb->SCB_BufCharsLeft = pScb->SCB_BufChars = xs->datalen;
 
-	if (pScb->SCB_BufLen > 0) {
+	if ((pScb->SCB_Flags & (SCSI_DATA_IN | SCSI_DATA_OUT)) != 0) {
 #ifdef TFS
 		if (pScb->SCB_Flags & SCSI_DATA_UIO)
 			error = bus_dmamap_load_uio(sc->sc_dmat,
-			    pScb->SCB_Dmamap, (struct uio *)xs->data,
+			    pScb->SCB_DataDma, (struct uio *)xs->data,
 			    (pScb->SCB_Flags & SCSI_NOSLEEP) ?
 			    BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
 		else
 #endif /* TFS */
-			error = bus_dmamap_load(sc->sc_dmat, pScb->SCB_Dmamap,
-			    xs->data, pScb->SCB_BufLen, NULL,
+			error = bus_dmamap_load(sc->sc_dmat, pScb->SCB_DataDma,
+			    xs->data, pScb->SCB_BufChars, NULL,
 			    (pScb->SCB_Flags & SCSI_NOSLEEP) ?
 			    BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
 
@@ -284,32 +324,18 @@ iha_scsi_cmd(xs)
 			return (COMPLETE);
 		}
 
-		dm   = pScb->SCB_Dmamap;
-		nseg = dm->dm_nsegs;
+		error = iha_setup_sg_list(sc, pScb);
+		if (error) {
+			bus_dmamap_unload(sc->sc_dmat, pScb->SCB_DataDma);
+			xs->error = XS_DRIVER_STUFFUP;
+			return (COMPLETE);
+		}
 
-		if (nseg > 1) {
-			sg = pScb->SCB_SGList;
-
-			for (i=0; i < nseg; i++) {
-				sg[i].SG_Len = dm->dm_segs[i].ds_len;
-				sg[i].SG_Ptr = dm->dm_segs[i].ds_addr;
-			}
-
-			pScb->SCB_Flags	  |= FLAG_SG;
-			pScb->SCB_SGLen	   = nseg;
-
-			pScb->SCB_BufPAddr = pScb->SCB_SGPAddr;
-		} else
-			pScb->SCB_BufPAddr = dm->dm_segs[0].ds_addr;
-
-		bus_dmamap_sync(sc->sc_dmat, pScb->SCB_Dmamap, 
-		    0, pScb->SCB_Dmamap->dm_mapsize,
-		    (pScb->SCB_Flags & SCSI_DATA_IN) ?
-		    BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
+		bus_dmamap_sync(sc->sc_dmat, pScb->SCB_DataDma, 
+			0, pScb->SCB_BufChars,
+			(pScb->SCB_Flags & SCSI_DATA_IN) ?
+				BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 	}
-
-	pScb->SCB_SGMax	  = pScb->SCB_SGLen;
-	pScb->SCB_Timeout = xs->timeout;
 
 	/*
 	 * Always initialize the stimeout structure as it may 
@@ -377,25 +403,29 @@ iha_init_tulip(sc)
 
 	for (i = 0, pScb = sc->HCS_Scb; i < IHA_MAX_SCB; i++, pScb++) {
 		pScb->SCB_TagId = i;
-		pScb->SCB_SGPAddr = sc->sc_dmamap->dm_segs[0].ds_addr
-		    + i*sizeof(struct iha_scsi_req_q)
-		    + offsetof(struct iha_scsi_req_q, SCB_SGList);
-
-		pScb->SCB_SenseLen   = sizeof(struct scsi_sense_data);
-		pScb->SCB_SensePAddr = sc->sc_dmamap->dm_segs[0].ds_addr
-		    + i*sizeof(struct iha_scsi_req_q)
-		    + offsetof(struct iha_scsi_req_q, SCB_ScsiSenseData);
 
 		error = bus_dmamap_create(sc->sc_dmat,
 		    (IHA_MAX_SG_ENTRIES-1) * PAGE_SIZE, IHA_MAX_SG_ENTRIES,
 		    (IHA_MAX_SG_ENTRIES-1) * PAGE_SIZE, 0,
-		    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &pScb->SCB_Dmamap);
+		    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &pScb->SCB_DataDma);
 
 		if (error != 0) {
-			printf("%s: couldn't create SCB DMA map, error = %d\n",
+			printf("%s: couldn't create SCB data DMA map, error = %d\n",
 			    sc->sc_dev.dv_xname, error);
 			return (error);
 		}
+
+		error = bus_dmamap_create(sc->sc_dmat,
+				sizeof(pScb->SCB_SGList), 1,
+				sizeof(pScb->SCB_SGList), 0,
+				BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
+				&pScb->SCB_SGDma);
+		if (error != 0) {
+			printf("%s: couldn't create SCB SG DMA map, error = %d\n",
+			    sc->sc_dev.dv_xname, error);
+			return (error);
+		}
+
 		TAILQ_INSERT_TAIL(&sc->HCS_FreeScb, pScb, SCB_ScbList);
 	}
 
@@ -518,35 +548,28 @@ iha_append_free_scb(sc, pScb)
 	if (pScb == sc->HCS_ActScb)
 		sc->HCS_ActScb = NULL;
 
-	pScb->SCB_Status  = STATUS_QUEUED;
-	pScb->SCB_HaStat  = HOST_OK;
-	pScb->SCB_TaStat  = SCSI_OK;
+	pScb->SCB_Status = STATUS_QUEUED;
+	pScb->SCB_HaStat = HOST_OK;
+	pScb->SCB_TaStat = SCSI_OK;
 
 	pScb->SCB_NxtStat  = 0;
-	pScb->SCB_SGIdx	   = 0;
-	pScb->SCB_SGMax	   = 0;
 	pScb->SCB_Flags	   = 0;
 	pScb->SCB_Target   = 0;
 	pScb->SCB_Lun	   = 0;
-	pScb->SCB_BufLen   = 0;
-	pScb->SCB_SGLen	   = 0;
 	pScb->SCB_CDBLen   = 0;
 	pScb->SCB_Ident	   = 0;
 	pScb->SCB_TagMsg   = 0;
-	pScb->SCB_Timeout  = 0;
-	pScb->SCB_BufPAddr = 0;
+
+	pScb->SCB_BufChars     = 0;
+	pScb->SCB_BufCharsLeft = 0;
 
 	pScb->SCB_Xs  = NULL;
 	pScb->SCB_Tcs = NULL;
 
-	bzero( pScb->SCB_CDB,		sizeof(pScb->SCB_CDB));
-	bzero(&pScb->SCB_ScsiSenseData, sizeof(pScb->SCB_ScsiSenseData));
-	bzero( pScb->SCB_SGList,	sizeof(pScb->SCB_SGList));
+	bzero(pScb->SCB_CDB, sizeof(pScb->SCB_CDB));
 
 	/*
-	 * SCB_TagId, SCB_SGPAddr, SCB_SenseLen, SCB_SGList
-	 * SCB_SensePtr are set at initialization
-	 * and never change
+	 * SCB_TagId is set at initialization and never changes
 	 */
 
 	TAILQ_INSERT_TAIL(&sc->HCS_FreeScb, pScb, SCB_ScbList);
@@ -808,18 +831,43 @@ iha_bad_seq(sc)
  *                          SCB needing it back onto the pending
  *			    queue with a REQUEST_SENSE CDB.
  */
-void
+int
 iha_push_sense_request(sc, pScb)
 	struct iha_softc *sc;
 	struct iha_scsi_req_q *pScb;
 {
 	struct scsi_sense *sensecmd;
+	int error;
 
-	pScb->SCB_BufLen   = pScb->SCB_SenseLen;
-	pScb->SCB_BufPAddr = pScb->SCB_SensePAddr;
-
-	pScb->SCB_Flags &= SCSI_POLL;
+	pScb->SCB_Flags &= SCSI_POLL | SCSI_NOSLEEP;
 	pScb->SCB_Flags |= FLAG_RSENS | SCSI_DATA_IN;
+
+	pScb->SCB_BufChars     = sizeof(pScb->SCB_ScsiSenseData);
+	pScb->SCB_BufCharsLeft = sizeof(pScb->SCB_ScsiSenseData);
+	bzero(&pScb->SCB_ScsiSenseData, sizeof(pScb->SCB_ScsiSenseData)); 
+
+	error = bus_dmamap_load(sc->sc_dmat, pScb->SCB_DataDma,
+			&pScb->SCB_ScsiSenseData,
+			sizeof(pScb->SCB_ScsiSenseData), NULL,
+			(pScb->SCB_Flags & SCSI_NOSLEEP) ?
+				BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
+	if (error) {
+		sc_print_addr(pScb->SCB_Xs->sc_link);
+		printf("error %d loading request sense buffer dma map\n",
+			error);
+		return (1);
+	}
+
+	error = iha_setup_sg_list(sc, pScb);
+	if (error) {
+		bus_dmamap_unload(sc->sc_dmat, pScb->SCB_DataDma);
+		return (error);
+	}
+
+	bus_dmamap_sync(sc->sc_dmat, pScb->SCB_DataDma, 
+		0, pScb->SCB_BufChars,
+		(pScb->SCB_Flags & SCSI_DATA_IN) ?
+			BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 
 	pScb->SCB_Ident &= ~MSG_IDENTIFY_DISCFLAG;
 
@@ -827,7 +875,6 @@ iha_push_sense_request(sc, pScb)
 	pScb->SCB_TaStat = SCSI_OK;
 
 	bzero(pScb->SCB_CDB, sizeof(pScb->SCB_CDB));
-	bzero(&pScb->SCB_ScsiSenseData, sizeof(pScb->SCB_ScsiSenseData)); 
 
 	sensecmd = (struct scsi_sense *)pScb->SCB_CDB;
 	pScb->SCB_CDBLen = sizeof(*sensecmd);
@@ -837,9 +884,11 @@ iha_push_sense_request(sc, pScb)
 
 	if ((pScb->SCB_Flags & SCSI_POLL) == 0)
 		timeout_add(&pScb->SCB_Xs->stimeout,
-		    (pScb->SCB_Timeout/1000) * hz);
+		    (pScb->SCB_Xs->timeout/1000) * hz);
 
 	iha_push_pend_scb(sc, pScb);
+
+	return (0);
 }
 
 /*
@@ -872,11 +921,9 @@ iha_scsi_label:
 				if ((pScb->SCB_Flags & FLAG_RSENS) != 0)
 					/* Check condition on check condition*/
 					pScb->SCB_HaStat = HOST_BAD_PHAS;
-
-				else {
-					iha_push_sense_request(sc, pScb);
+				else if (iha_push_sense_request(sc, pScb) == 0)
+					/* REQUEST SENSE ready to process */
 					goto iha_scsi_label;
-				}
 				break;
 
 			default:
@@ -918,6 +965,7 @@ iha_scsi(sc, iot, ioh)
 	struct iha_scsi_req_q *pScb;
 	struct tcs *pTcs;
 	u_int8_t stat;
+	int i;
 
 	/* service pending interrupts asap */
 
@@ -986,7 +1034,7 @@ iha_scsi(sc, iot, ioh)
 	}
 
 	if ((pScb->SCB_Flags & SCSI_POLL) != 0) {
-		for (; pScb->SCB_Timeout > 0; pScb->SCB_Timeout--) {
+		for (i = pScb->SCB_Xs->timeout; i > 0; i--) {
 			if (iha_wait(sc, iot, ioh, NO_OP) == -1)
 				break;
 			if (iha_next_state(sc, iot, ioh) == -1)
@@ -1001,7 +1049,7 @@ iha_scsi(sc, iot, ioh)
 		 *
 		 * Conversely, xs->error has not been set yet
 		 */
-		if (pScb->SCB_Timeout == 0)
+		if (i == 0)
 			iha_timeout(pScb);
 
 		else if ((pScb->SCB_CDB[0] == INQUIRY)
@@ -1013,7 +1061,7 @@ iha_scsi(sc, iot, ioh)
 }
 
 /*
- * iha_data_over_run - return HOST_OK for all SCSI opcodes where BufLen
+ * iha_data_over_run - return HOST_OK for all SCSI opcodes where BufCharsLeft
  *                     is an 'Allocation Length'. All other SCSI opcodes
  *		       get HOST_DO_DU as they SHOULD have xferred all the
  *		       data requested.
@@ -1310,7 +1358,7 @@ iha_state_4(sc, iot, ioh)
 		return (6); /* Both dir flags set => NO xfer was requested */
 
 	for (;;) {
-		if (pScb->SCB_BufLen == 0)
+		if (pScb->SCB_BufCharsLeft == 0)
 			return (6);
 
 		switch (sc->HCS_Phase) {
@@ -1329,7 +1377,7 @@ iha_state_4(sc, iot, ioh)
 
 		case PHASE_MSG_OUT:
 			if ((sc->HCS_JSStatus0 & SPERR) != 0) {
-				pScb->SCB_BufLen = 0;
+				pScb->SCB_BufCharsLeft = 0;
 				pScb->SCB_HaStat = HOST_SPERR;
 				if (iha_msgout(sc, iot, ioh,
 					MSG_INITIATOR_DET_ERR) == -1)
@@ -1373,7 +1421,6 @@ iha_state_5(sc, iot, ioh)
 	u_int16_t period;
 	u_int8_t stat;
 	long xcnt;  /* cannot use unsigned!! see code: if (xcnt < 0) */
-	int i;
 
 	cnt = bus_space_read_4(iot, ioh, TUL_STCNT0) & TCNT;
 	
@@ -1422,37 +1469,38 @@ iha_state_5(sc, iot, ioh)
 	}
 
 	if (cnt == 0) {
-		pScb->SCB_BufLen = 0;
+		pScb->SCB_BufCharsLeft = 0;
 		return (6);
 	}
 
 	/* Update active data pointer and restart the I/O at the new point */
 
-	xcnt		 = pScb->SCB_BufLen - cnt; /* xcnt == bytes xferred */
-	pScb->SCB_BufLen = cnt;			   /* cnt  == bytes left    */
+	xcnt = pScb->SCB_BufCharsLeft - cnt;	/* xcnt == bytes xferred */
+	pScb->SCB_BufCharsLeft = cnt;		/* cnt  == bytes left    */
+
+	bus_dmamap_sync(sc->sc_dmat, pScb->SCB_SGDma, 
+		0, sizeof(pScb->SCB_SGList), BUS_DMASYNC_POSTWRITE);
 
 	if ((pScb->SCB_Flags & FLAG_SG) != 0) {
 		pSg = &pScb->SCB_SGList[pScb->SCB_SGIdx];
-		for (i = pScb->SCB_SGIdx; i < pScb->SCB_SGMax; pSg++, i++) {
+		for (; pScb->SCB_SGIdx < pScb->SCB_SGCount; pSg++, pScb->SCB_SGIdx++) {
 			xcnt -= pSg->SG_Len;
 			if (xcnt < 0) {
 				xcnt += pSg->SG_Len;
 
-				pSg->SG_Ptr += xcnt;
+				pSg->SG_Addr += xcnt;
 				pSg->SG_Len -= xcnt;
 
-				pScb->SCB_BufPAddr += (i - pScb->SCB_SGIdx)
-					* sizeof(struct iha_sg_element);
-				pScb->SCB_SGLen	  = pScb->SCB_SGMax - i;
-				pScb->SCB_SGIdx	  = i;
+				bus_dmamap_sync(sc->sc_dmat, pScb->SCB_SGDma, 
+					0, sizeof(pScb->SCB_SGList),
+					BUS_DMASYNC_PREWRITE);
 
 				return (4);
 			}
 		}
 		return (6);
 
-	} else
-		pScb->SCB_BufPAddr += xcnt;
+	}
 
 	return (4);
 }
@@ -1562,25 +1610,30 @@ iha_xfer_data(pScb, iot, ioh, direction)
 	bus_space_handle_t ioh;
 	int direction;
 {
-	u_int32_t xferlen;
+	u_int32_t xferaddr, xferlen;
 	u_int8_t xfertype;
 
 	if ((pScb->SCB_Flags & FLAG_DIR) != direction)
 		return (6); /* wrong direction, abandon I/O */
 
-	bus_space_write_4(iot, ioh, TUL_STCNT0, pScb->SCB_BufLen);
+	bus_space_write_4(iot, ioh, TUL_STCNT0, pScb->SCB_BufCharsLeft);
 
 	if ((pScb->SCB_Flags & FLAG_SG) == 0) {
-		xferlen  = pScb->SCB_BufLen;
+		xferaddr = pScb->SCB_DataDma->dm_segs[0].ds_addr
+				+ (pScb->SCB_BufChars - pScb->SCB_BufCharsLeft);
+		xferlen  = pScb->SCB_BufCharsLeft;
 		xfertype = (direction == SCSI_DATA_IN) ? ST_X_IN : ST_X_OUT;
 
 	} else {
-		xferlen  = pScb->SCB_SGLen * sizeof(struct iha_sg_element);
+		xferaddr = pScb->SCB_SGDma->dm_segs[0].ds_addr
+				+ (pScb->SCB_SGIdx * sizeof(struct iha_sg_element));
+		xferlen  = (pScb->SCB_SGCount - pScb->SCB_SGIdx)
+				* sizeof(struct iha_sg_element);
 		xfertype = (direction == SCSI_DATA_IN) ? ST_SG_IN : ST_SG_OUT;
 	}
 
 	bus_space_write_4(iot, ioh, TUL_DXC,  xferlen);
-	bus_space_write_4(iot, ioh, TUL_DXPA, pScb->SCB_BufPAddr);
+	bus_space_write_4(iot, ioh, TUL_DXPA, xferaddr);
 	bus_space_write_1(iot, ioh, TUL_DCMD, xfertype);
 
 	bus_space_write_1(iot, ioh, TUL_SCMD,
@@ -2423,12 +2476,18 @@ iha_done_scb(sc, pScb)
 
 		xs->status = pScb->SCB_TaStat;
 
-		if (pScb->SCB_BufLen > 0) {
-			bus_dmamap_sync(sc->sc_dmat, pScb->SCB_Dmamap,
-			    0, pScb->SCB_Dmamap->dm_mapsize,
-			    ((pScb->SCB_Flags & SCSI_DATA_IN) ? 
-				BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE));
-			bus_dmamap_unload(sc->sc_dmat, pScb->SCB_Dmamap);
+		if ((pScb->SCB_Flags & (SCSI_DATA_IN | SCSI_DATA_OUT)) != 0) {
+			bus_dmamap_sync(sc->sc_dmat, pScb->SCB_DataDma,
+				0, pScb->SCB_BufChars,
+				((pScb->SCB_Flags & SCSI_DATA_IN) ? 
+					BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE));
+			bus_dmamap_unload(sc->sc_dmat, pScb->SCB_DataDma);
+		}
+		if ((pScb->SCB_Flags & FLAG_SG) != 0) {
+			bus_dmamap_sync(sc->sc_dmat, pScb->SCB_SGDma,
+				0, sizeof(pScb->SCB_SGList),
+				BUS_DMASYNC_POSTWRITE);
+			bus_dmamap_unload(sc->sc_dmat, pScb->SCB_SGDma);
 		}
 
 		switch (pScb->SCB_HaStat) {
@@ -2438,7 +2497,7 @@ iha_done_scb(sc, pScb)
 			case SCSI_COND_MET:
 			case SCSI_INTERM:
 			case SCSI_INTERM_COND_MET:
-				xs->resid = pScb->SCB_BufLen;
+				xs->resid = pScb->SCB_BufCharsLeft;
 				xs->error = XS_NOERROR;
 				break;
 
@@ -2625,28 +2684,6 @@ iha_alloc_scbs(sc)
 		       sc->sc_dev.dv_xname, error);
 		return (error);
 	}
-
-	/*
-	 * Create and load the DMA map used for the SCBs
-	 */
-	if ((error = bus_dmamap_create(sc->sc_dmat,
-		 sizeof(struct iha_scsi_req_q)*IHA_MAX_SCB,
-		 1, sizeof(struct iha_scsi_req_q)*IHA_MAX_SCB,
-		 0, BUS_DMA_NOWAIT, &sc->sc_dmamap))
-	    != 0) {
-		printf("%s: unable to create control DMA map, error = %d\n",
-		       sc->sc_dev.dv_xname, error);
-		return (error);
-	}
-	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_dmamap,
-		 sc->HCS_Scb, sizeof(struct iha_scsi_req_q)*IHA_MAX_SCB,
-		 NULL, BUS_DMA_NOWAIT))
-	    != 0) {
-		printf("%s: unable to load control DMA map, error = %d\n",
-		       sc->sc_dev.dv_xname, error);
-		return (error);
-	}
-
 	bzero(sc->HCS_Scb, sizeof(struct iha_scsi_req_q)*IHA_MAX_SCB);
 
 	return (0);
