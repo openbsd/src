@@ -1,44 +1,69 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.24 1998/09/15 10:23:23 pattonme Exp $
+#	$OpenBSD: MAKEDEV,v 1.25 1998/09/25 11:28:22 todd Exp $
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
 
 # Device "make" file.  Valid arguments:
-#	all	all devices
+#	all	makes all known devices, including local devices.
+#		Tries to make the ``standard'' number of each type.
 #	std	standard devices
 #	local	configuration specific devices
+#
 # Tapes:
 #	tz*	SCSI tapes, DEC TK50 cartridge tape
+#
 # Disks:
 #	rz*	SCSI disks
 #	vnd*	"file" pseudo-disks
-#	ccd*	concatenated disk driver
-# Terminal multiplexors:
-#	dc*	4 channel serial interface (keyboard, mouse, modem, printer)
+#	ccd*	concatenated disk devices
+#
+# Terminal ports:
+#	dc*	4 channel serial interface (keyboard, mouse,modem, printer)
 #	scc*	82530 serial interface
+#
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
+#
 # Printers:
+#
 # Call units:
+#
 # Special purpose devices:
-#	bpf*	packet filter
+#	bpf*	Berkeley Packet Filter
 #	lkm	loadable kernel modules interface
 #	tun*	network tunnel driver
-#	uk*	unknown SCSI
+#	uk*	SCSI Unknown device
 #	ss*	SCSI scanners
+#
 # Platform-specific devices:
 #	NOTE: /dev/mouse should be a link to one of the fb*'s.
 #	fb*	framebuffer device
-#	*random	random data source
+#	*random	inkernal random data source
 
-PATH=/sbin:/bin/:/usr/bin:/usr/sbin
+PATH=/sbin:/bin:/usr/bin:/usr/sbin
+this=$0
 umask 77
 
+# default shell support functions
+add ()
+{
+	tmp=0
+	while [ "$1" ]
+	do
+		tmp=$(( $1 + $tmp ))
+		shift
+	done
+	echo $tmp
+}
+mult ()
+{
+	echo "$(( $1 * $2 ))"
+}
 hex ()
 {
 	case $1 in
-		[0-9]) echo -n $1 ;;
+		[0-9]) echo -n $1;;
 		10) echo -n a;;
 		11) echo -n b;;
 		12) echo -n c;;
@@ -47,19 +72,50 @@ hex ()
 		15) echo -n f;;
 	esac
 }
+trunc ()
+{
+	# XXX pdksh can't seem to deal with locally scoped variables
+	# in ${foo#$bar} expansions
+	arg1="$1"
+	arg2="$2"
+	echo ${arg1#$arg2}
+}
+unt()
+{
+	# XXX pdksh can't seem to deal with locally scoped variables
+	# in ${foo#$bar} expansions
+	arg1="$1"
+	tmp="${arg1#[a-z]*}"
+	while [ "$tmp" != "$arg1" ]
+	do
+		arg1=$tmp
+		tmp="${arg1#[a-z]*}"
+	done
+	tmp="${arg1%*[a-z]}"
+	while [ "$tmp" != "$arg1" ]
+	do
+		arg1=$tmp
+		tmp="${arg1%*[a-z]}"
+	done
+	echo $arg1
+}
 
 for i
 do
+
+unit=`unt $1`
+[ "$unit" ] || unit=0
+
 case $i in
 
 all)
-	sh MAKEDEV std rz0 rz1 rz2 rz3 rz4 rz5 rz6 tz0 tz1
-	sh MAKEDEV std rz8 rz9 rz10 rz11 rz12 rz13 rz14 tz2 tz3
-	sh MAKEDEV pty0 vnd0 vnd1 vnd2 vnd3 ccd0 ccd1 ccd2 ccd3
-#	sh MAKEDEV tun0 tun1 tun2 tun3
-	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
-#	sh MAKEDEV lkm local
-	sh MAKEDEV fb0 fb1 fb2
+	sh $this std rz0 rz1 rz2 rz3 rz4 rz5 rz6 tz0 tz1
+	sh $this std rz8 rz9 rz10 rz11 rz12 rz13 rz14 tz2 tz3
+	sh $this pty0 vnd0 vnd1 vnd2 vnd3 ccd0 ccd1 ccd2 ccd3
+#	sh $this tun0 tun1 tun2 tun3
+	sh $this bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
+#	sh $this lkm local
+	sh $this fb0 fb1 fb2
        ;;
 
 std)
@@ -322,10 +378,16 @@ ss*)
 	rm -f scan$unit
 	ln -s ss$unit scan$unit
 	;;
+xfs*)
+	rm -f xfs$unit
+	mknod xfs$unit c 51 $unit 
+	chmod 600 xfs$unit 
+	chown root.wheel xfs$unit
+	;;
 
 local)
 	umask 0
-	test -s MAKEDEV.local && sh MAKEDEV.local
+	test -s MAKEDEV.local && sh $this.local
 	;;
 
 *)
