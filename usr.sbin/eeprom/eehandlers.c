@@ -1,4 +1,4 @@
-/*	$OpenBSD: eehandlers.c,v 1.8 2002/02/16 21:28:02 millert Exp $	*/
+/*	$OpenBSD: eehandlers.c,v 1.9 2002/05/29 09:48:14 deraadt Exp $	*/
 /*	$NetBSD: eehandlers.c,v 1.2 1996/02/28 01:13:22 thorpej Exp $	*/
 
 /*-
@@ -502,7 +502,7 @@ doio(ktent, buf, len, wr)
 
 	buf2 = (u_char *)calloc(1, len);
 	if (buf2 == NULL) {
-		sprintf(err_str, "memory allocation failed");
+		snprintf(err_str, sizeof err_str, "memory allocation failed");
 		return (1);
 	}
 
