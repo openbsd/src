@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.34 1998/04/14 20:02:48 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.35 1998/05/07 06:22:20 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.34 1998/04/14 20:02:48 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.35 1998/05/07 06:22:20 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -159,6 +159,10 @@ editor(lp, f)
 		if (label.d_sbsize == 0)
 			label.d_sbsize = SBSIZE;
 	}
+
+	/* Interleave must be >= 1 */
+	if (label.d_interleave == 0)
+		label.d_interleave = 1;
 
 	puts("\nInitial label editor (enter '?' for help at any prompt)");
 	lastlabel = label;
@@ -1528,6 +1532,22 @@ edit_parms(lp, freep)
 			break;
 	}
 	lp->d_rpm = ui;
+
+	/* interleave */
+	for (;;) {
+		ui = getuint(lp, 0, "interleave",
+		  "The physical sector interleave, set when formatting.  Almost always 1.",
+		  lp->d_interleave, lp->d_interleave, 0);
+		if (ui == UINT_MAX - 1) {
+			fputs("Command aborted\n", stderr);
+			*lp = oldlabel;		/* undo damage */
+			return;
+		} else if (ui == UINT_MAX || ui == 0)
+			fputs("Invalid entry\n", stderr);
+		else
+			break;
+	}
+	lp->d_interleave = ui;
 }
 
 struct partition **
