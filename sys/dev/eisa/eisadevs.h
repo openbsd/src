@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: eisadevs,v 1.11 1998/11/27 01:17:34 mickey Exp 
+ *	OpenBSD: eisadevs,v 1.12 1999/03/04 15:37:58 mickey Exp 
  */
 
 /*
@@ -56,6 +56,7 @@
 /* BusLogic products */
 #define	EISA_PRODUCT_BUS4201	"BusLogic Bt74xB SCSI"
 #define	EISA_PRODUCT_BUS4202	"BusLogic Bt74xC SCSI"
+#define	EISA_PRODUCT_BUS6301	"BusLogic Bt763E Ethernet"
 
 /* Digital Equipment products */
 #define	EISA_PRODUCT_DEC4250	"Digital Equipment DE425 Ethernet"

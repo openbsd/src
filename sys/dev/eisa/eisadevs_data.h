@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: eisadevs,v 1.11 1998/11/27 01:17:34 mickey Exp 
+ *	OpenBSD: eisadevs,v 1.12 1999/03/04 15:37:58 mickey Exp 
  */
 
 /*
@@ -91,6 +91,11 @@ struct eisa_knowndev eisa_knowndevs[] = {
 	    0,
 	    "BUS4202",
 	    EISA_PRODUCT_BUS4202,
+	},
+	{
+	    0,
+	    "BUS6301",
+	    EISA_PRODUCT_BUS6301,
 	},
 	{
 	    0,
