@@ -1,5 +1,5 @@
-/*	$OpenBSD: net_osdep.h,v 1.3 2001/02/06 00:22:22 mickey Exp $	*/
-/*	$KAME: net_osdep.h,v 1.23 2000/08/19 00:58:11 itojun Exp $	*/
+/*	$OpenBSD: net_osdep.h,v 1.4 2001/02/06 01:31:57 itojun Exp $	*/
+/*	$KAME: net_osdep.h,v 1.33 2001/01/31 09:36:16 jinmei Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -36,16 +36,30 @@
 /*
  * OS dependencies:
  *
+ * - ifa_ifwithaf()
+ *   bsdi[34], netbsd, and openbsd define it in sys/net/if.c
+ *   freebsd (all versions) does not have it.
+ *  
  * - struct rt_addrinfo
- *   all *BSDs except bsdi4 only have two members; rti_addrs and rti_info[].
- *   bsdi4 has additional members; rti_flags, rti_ifa, rti_ifp, and rti_rtm.
+ *   bsdi4, netbsd 1.5R and beyond: rti_addrs, rti_info[], rti_flags, rti_ifa,
+ *	rti_ifp, and rti_rtm.
+ *   others: rti_addrs and rti_info[] only.
+ *
+ * - ifa->ifa_rtrequest
+ *   bsdi4, netbsd 1.5R and beyond: rt_addrinfo *
+ *   others: sockaddr * (note that sys/net/route.c:rtrequest() has an unsafe
+ *	typecast code, from 4.3BSD-reno)
  *
  * - side effects of rtrequest[1](RTM_DELETE)
  *	BSDI[34]: delete all cloned routes underneath the route.
  *	FreeBSD[234]: delete all protocol-cloned routes underneath the route.
  *		      note that cloned routes from an interface direct route
  *		      still remain.
- *	NetBSD, OpenBSD: no side effects.
+ *	NetBSD: official release versions (the latest is 1.5 as of Jan. 2001)
+ *              have no side effects.  KAME for NetBSD has the same effects
+ *              as of BSDI.
+ *      OpenBSD: no side effects.
+ *
  * - privileged process
  *	NetBSD, FreeBSD 3
  *		struct proc *p;
@@ -65,9 +79,9 @@
  *	OpenBSD, BSDI [34], FreeBSD 2
  *		do not need struct proc *
  * - bpf:
- *	OpenBSD, NetBSD, BSDI [34]
+ *	OpenBSD, NetBSD 1.5, BSDI [34]
  *		need caddr_t * (= if_bpf **) and struct ifnet *
- *	FreeBSD 2, FreeBSD 3
+ *	FreeBSD 2, FreeBSD 3, NetBSD 1.6? (1.5N and later)
  *		need only struct ifnet * as argument
  * - struct ifnet
  *			use queue.h?	member names	if name
@@ -88,10 +102,12 @@
  *	FreeBSD 3
  *		non-mbuf manipulation using sooptcopy{in,out}()
  * - timeout() and untimeout()
- *	NetBSD, OpenBSD, BSDI [34], FreeBSD 2
+ *	NetBSD 1.4.x, OpenBSD, BSDI [34], FreeBSD 2
  *		timeout() is a void function
  *	FreeBSD 3
  *		timeout() is non-void, must keep returned value for untimeout()
+ *	NetBSD 1.5
+ *		timeout() is obsoleted, use callout_xx (sys/callout.h)
  * - sysctl
  *	NetBSD, OpenBSD
  *		foo_sysctl()
@@ -125,8 +141,7 @@
  * - struct ifnet for loopback interface
  *	BSDI3: struct ifnet loif;
  *	BSDI4: struct ifnet *loifp;
- *	NetBSD, FreeBSD2: struct ifnet loif[NLOOP];
- *	OpenBSD: lo0ifp
+ *	NetBSD, OpenBSD, FreeBSD2: struct ifnet loif[NLOOP];
  *
  *	odd thing is that many of them refers loif as ifnet *loif,
  *	not loif[NLOOP], from outside of if_loop.c.
@@ -146,6 +161,9 @@
  *	FreeBSD4: struct ipprotosw in netinet/ipprotosw.h
  *	others: struct protosw in sys/protosw.h
  *
+ * - protosw.  NetBSD 1.5 has extra member for ipfilter.  NetBSD 1.5 requires
+ *   PR_LISTEN flag bit with protocols that permit listen/accept (like tcp).
+ *
  * - header files with defopt (opt_xx.h)
  *	FreeBSD3: opt_{inet,ipsec,ip6fw,altq}.h
  *	FreeBSD4: opt_{inet,inet6,ipsec,ip6fw,altq}.h
@@ -158,6 +176,15 @@
  *
  * - (m->m_flags & M_EXT) != 0 does *not* mean that the max data length of
  *   the mbuf == MCLBYTES.
+ *
+ * - ifa_refcnt (struct ifaddr) management (IFAREF/IFAFREE).
+ *	NetBSD 1.5: always use IFAREF whenever reference gets added.
+ *		always use IFAFREE whenever reference gets freed.
+ *		IFAFREE frees ifaddr when ifa_refcnt reaches 0.
+ *	others: do not increase refcnt for ifp->if_addrlist and in_ifaddr.
+ *		use IFAFREE once when ifaddr is disconnected from
+ *		ifp->if_addrlist and in_ifaddr.  IFAFREE frees ifaddr when
+ *		ifa_refcnt goes negative.
  */
 
 #ifndef __NET_NET_OSDEP_H_DEFINED_
