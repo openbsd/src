@@ -2,4 +2,5 @@
 * cleanup the client/proto mess
 * find a way to make it easier to connect when acting as client
 * prevent reconnection when the cvsroot is the same as the previous one
-* escape the data that we store in delta texts of RCS files (BAD BAD)
+* make splitpath() require only one buffer that is MAXPATHLEN and the file
+  should be a char ** that points to the appropriate place in the dir buffer
