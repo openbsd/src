@@ -1,4 +1,4 @@
-#	$OpenBSD: disktab,v 1.9 1997/06/03 22:50:28 deraadt Exp $
+#	$OpenBSD: disktab,v 1.10 1997/06/03 22:51:41 deraadt Exp $
 #	$NetBSD: disktab,v 1.2 1995/10/13 03:09:39 cgd Exp $
 
 # A DEC RZ25, configured so that all of the free partition IDs are at
@@ -24,8 +24,8 @@ rdroot:\
 # test if not having an 'a' works?
 fakecdrom|Fake image for Bootable CDROM:\
 	:ty=winchester:se#2048:nt#1:rm#350:ns#160:nc#2048:\
-	:pa#1310720:oa#0:ba#8192:fa#1024:ta=ISO9660:\
-	:pc#1310720:oc#0:bc#8192:fc#1024:tc=ISO9660:\
+	:pa#327680:oa#0:ba#8192:fa#1024:ta=ISO9660:\
+	:pc#327680:oc#0:bc#8192:fc#1024:tc=ISO9660:\
 
 simpleroot:\
 	:ty=winchester:\
