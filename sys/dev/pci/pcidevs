@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.63 1998/07/07 18:41:27 deraadt Exp $
+$OpenBSD: pcidevs,v 1.64 1998/07/07 22:44:06 csapuntz Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -940,6 +940,7 @@ product S3 968_3		0x88f3	86C968-3 (Vision968)
 product S3 TRIO64V2_DX		0x8901	Trio64V2/DX
 product S3 PLATO		0x8902	Plato
 product S3 VIRGE_DX_GX		0x8a01	ViRGE DX/GX
+product S3 SONICVIBES		0xca00	SonicVibes
 
 /* SGS Thomson products */
 product SGSTHOMSON 2000		0x0008	STG 2000X

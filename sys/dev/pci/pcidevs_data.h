@@ -1677,6 +1677,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "ViRGE DX/GX",
 	},
 	{
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SONICVIBES,
+	    0,
+	    "S3",
+	    "SonicVibes",
+	},
+	{
 	    PCI_VENDOR_SGSTHOMSON, PCI_PRODUCT_SGSTHOMSON_2000,
 	    0,
 	    "SGS Thomson Microelectric",

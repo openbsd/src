@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.16 1998/06/02 23:12:31 provos Exp $
+#	$OpenBSD: files.pci,v 1.17 1998/07/07 22:44:05 csapuntz Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config.new file and device description for machine-independent PCI code.
@@ -79,3 +79,8 @@ file	dev/pci/cy_pci.c		cy_pci
 device	fxp: ether, ifnet
 attach	fxp at pci 
 file	dev/pci/if_fxp.c		fxp
+
+# S3 SonicVibes (S3 617)
+device	sv: audio, auconv, mulaw
+attach	sv at pci
+file	dev/pci/sv.c			sv

@@ -945,6 +945,7 @@
 #define	PCI_PRODUCT_S3_TRIO64V2_DX	0x8901		/* Trio64V2/DX */
 #define	PCI_PRODUCT_S3_PLATO	0x8902		/* Plato */
 #define	PCI_PRODUCT_S3_VIRGE_DX_GX	0x8a01		/* ViRGE DX/GX */
+#define	PCI_PRODUCT_S3_SONICVIBES	0xca00		/* SonicVibes */
 
 /* SGS Thomson products */
 #define	PCI_PRODUCT_SGSTHOMSON_2000	0x0008		/* STG 2000X */
