@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.59 2001/08/12 12:03:03 heko Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.60 2001/09/16 01:27:55 art Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -941,10 +941,12 @@ domem()
 			first = 0;
 		}
 		size = 1 << i;
-		(void)printf("%8d %8qu %6qu %18qu %7qu %10qu\n", size,
-			kp->kb_total - kp->kb_totalfree,
-			kp->kb_totalfree, kp->kb_calls,
-			kp->kb_highwat, kp->kb_couldfree);
+		(void)printf("%8d %8llu %6llu %18llu %7llu %10llu\n", size,
+			(unsigned long long)(kp->kb_total - kp->kb_totalfree),
+			(unsigned long long)kp->kb_totalfree,
+			(unsigned long long)kp->kb_calls,
+			(unsigned long long)kp->kb_highwat,
+			(unsigned long long)kp->kb_couldfree);
 		totfree += size * kp->kb_totalfree;
 	}
 
