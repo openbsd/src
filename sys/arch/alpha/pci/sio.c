@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio.c,v 1.10 1997/07/31 11:03:03 deraadt Exp $	*/
+/*	$OpenBSD: sio.c,v 1.11 1998/01/05 13:35:17 deraadt Exp $	*/
 /*	$NetBSD: sio.c,v 1.15 1996/12/05 01:39:36 cgd Exp $	*/
 
 /*
@@ -145,9 +145,7 @@ sioattach(parent, self, aux)
 	struct pci_attach_args *pa = aux;
 	char devinfo[256];
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
-	printf(": %s (rev. 0x%02x)\n", devinfo,
-	    PCI_REVISION(pa->pa_class));
+	printf("\n");
 
 	sc->sc_iot = pa->pa_iot;
 	sc->sc_memt = pa->pa_memt;

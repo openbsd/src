@@ -1,4 +1,4 @@
-/*	$OpenBSD: vga_pci.c,v 1.6 1997/11/06 12:26:56 niklas Exp $	*/
+/*	$OpenBSD: vga_pci.c,v 1.7 1998/01/05 13:35:27 deraadt Exp $	*/
 /*	$NetBSD: vga_pci.c,v 1.4 1996/12/05 01:39:38 cgd Exp $	*/
 
 /*
@@ -120,7 +120,6 @@ vga_pci_attach(parent, self, aux)
 	struct pci_attach_args *pa = aux;
 	struct vga_pci_softc *sc = (struct vga_pci_softc *)self;
 	struct vga_config *vc;
-	char devinfo[256];
 	int console;
 
 	console = (!bcmp(&pa->pa_tag, &vga_pci_console_tag, sizeof(pa->pa_tag)));
@@ -138,9 +137,7 @@ vga_pci_attach(parent, self, aux)
 
 	sc->sc_pcitag = pa->pa_tag;
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
-	printf(": %s (rev. 0x%02x)\n", devinfo,
-	    PCI_REVISION(pa->pa_class));
+	printf("\n");
 
 	vga_wscons_attach(self, vc, console);
 }

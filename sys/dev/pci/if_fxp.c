@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp.c,v 1.7 1997/07/31 01:14:59 downsj Exp $	*/
+/*	$OpenBSD: if_fxp.c,v 1.8 1998/01/05 13:35:20 deraadt Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -323,6 +323,8 @@ fxp_attach(parent, self, aux)
 	bus_size_t iosize;
 #endif
 
+	printf("\n");
+
 #ifndef __OpenBSD__
 	/*
 	 * Map control/status registers.
@@ -344,8 +346,6 @@ fxp_attach(parent, self, aux)
 	}
 	sc->sc_st = iot;
 #endif
-
-	printf(": Intel EtherExpress Pro 10/100B Ethernet\n");
 
 	/*
 	 * Allocate our interrupt.

@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.24 1998/01/03 08:27:57 deraadt Exp $
+$OpenBSD: pcidevs,v 1.25 1998/01/05 13:35:24 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -523,7 +523,7 @@ product	3COM 3C905TX	0x9050	3c905 100Base-TX
 product	3COM 3C905T4	0x9051	3c905 100Base-T4
 
 /* 3D Labs products */
-product 3DLABS 300SX	0x0001	300SX (\"Glint\")
+product 3DLABS 300SX	0x0001	300SX (Glint)
 
 /* ACC Products */
 product ACC 2188	0x0000	ACCM 2188 VL-PCI Bridge
@@ -647,7 +647,7 @@ product COMPAQ NF3P		0xf130	NetFlex 3/P
 product CONTAQ 82C599		0x0600	82C599 PCI-VLB Bridge
 
 /* Corollary Products */
-product COROLLARY CBUSII_PCIB	0x0014	\"C-Bus II\"-PCI Bridge
+product COROLLARY CBUSII_PCIB	0x0014	C-Bus II-PCI Bridge
 
 /* Cyclades products */
 product CYCLADES CYCLOMY_1	0x0100	Cyclom-Y below 1M
@@ -657,16 +657,16 @@ product CYCLADES CYCLOMZ_2	0x0201	Cyclom-Z above 1M
 
 /* DEC products */
 product DEC 21050	0x0001	DECchip 21050 PCI-PCI Bridge
-product DEC 21040	0x0002  DECchip 21040 (\"Tulip\")
-product DEC 21030	0x0004	DECchip 21030 (\"TGA\")
+product DEC 21040	0x0002  DECchip 21040 (Tulip)
+product DEC 21030	0x0004	DECchip 21030 (TGA)
 product DEC NVRAM	0x0007	Zephyr NV-RAM
 product DEC KZPSA	0x0008	KZPSA
-product DEC 21140	0x0009	DECchip 21140 (\"FasterNet\")
+product DEC 21140	0x0009	DECchip 21140 (FasterNet)
 product DEC PBXGB	0x000d	TGA2
 product DEC DEFPA	0x000f	DEFPA
 /* product DEC ???	0x0010	??? VME Interface */
-product DEC 21041	0x0014  DECchip 21041 (\"Tulip Pass 3\")
-product DEC DGLPB	0x0016	DGLPB (\"OPPO\")
+product DEC 21041	0x0014  DECchip 21041 (Tulip Pass 3)
+product DEC DGLPB	0x0016	DGLPB (OPPO)
 product DEC 21142	0x0019	DECchip 21142/3
 product DEC 21052	0x0021	DECchip 21052 PCI-PCI Bridge
 product DEC 21150	0x0022	DECchip 21150 PCI-PCI Bridge
@@ -681,7 +681,7 @@ product DIAMOND VIPER	0x9001	Viper/PCI
 product DPT SC_RAID	0xa400	SmartCache/Raid
 
 /* Emulex products */
-product EMULEX LPPFC	0x10df	\"Light Pulse\" FibreChannel adapter
+product EMULEX LPPFC	0x10df	Light Pulse FibreChannel adapter
 
 /* Essential Communications products */
 product ESSENTIAL RR_HIPPI	0x0001	RoadRunner HIPPI Interface
@@ -766,8 +766,8 @@ product MADGE COLLAGE155	0x1001	Collage 155 ATM adapter
 
 /* Matrox products */
 product MATROX IMPRESSION	0x0d10	MGA Impression
-product MATROX ATLAS		0x0518	MGA PX2085 (\"Atlas\")
-product MATROX MILLENIUM	0x0519	MGA Millenium 2064W (\"Storm\")
+product MATROX ATLAS		0x0518	MGA PX2085 (Atlas)
+product MATROX MILLENIUM	0x0519	MGA Millenium 2064W (Storm)
 product MATROX MYSTIQUE		0x102B	MGA 1064SG
 
 /* Mylex products */
@@ -834,18 +834,18 @@ product S3 TRIO64UVP	0x8814	Trio64UV+
 product S3 868		0x8880	868
 product S3 VIRGE_VX	0x883d	ViRGE/VX
 product S3 928		0x88b0	86C928
-product S3 864_0	0x88c0	86C864-0 (\"Vision864\")
-product S3 864_1	0x88c1	86C864-1 (\"Vision864\")
-product S3 864_2	0x88c2	86C864-2 (\"Vision864\")
-product S3 864_3	0x88c3	86C864-3 (\"Vision864\")
-product S3 964_0	0x88d0	86C964-0 (\"Vision964\")
-product S3 964_1	0x88d1	86C964-1 (\"Vision964\")
-product S3 964_2	0x88d2	86C964-2 (\"Vision964\")
-product S3 964_3	0x88d1	86C964-3 (\"Vision964\")
-product S3 968_0	0x88f0	86C968-0 (\"Vision968\")
-product S3 968_1	0x88f1	86C968-1 (\"Vision968\")
-product S3 968_2	0x88f2	86C968-2 (\"Vision968\")
-product S3 968_3	0x88f3	86C968-3 (\"Vision968\")
+product S3 864_0	0x88c0	86C864-0 (Vision864)
+product S3 864_1	0x88c1	86C864-1 (Vision864)
+product S3 864_2	0x88c2	86C864-2 (Vision864)
+product S3 864_3	0x88c3	86C864-3 (Vision864)
+product S3 964_0	0x88d0	86C964-0 (Vision964)
+product S3 964_1	0x88d1	86C964-1 (Vision964)
+product S3 964_2	0x88d2	86C964-2 (Vision964)
+product S3 964_3	0x88d1	86C964-3 (Vision964)
+product S3 968_0	0x88f0	86C968-0 (Vision968)
+product S3 968_1	0x88f1	86C968-1 (Vision968)
+product S3 968_2	0x88f2	86C968-2 (Vision968)
+product S3 968_3	0x88f3	86C968-3 (Vision968)
 
 /* SGS Thomson products */
 product SGSTHOMSON 2000	0x0008	STG 2000X
@@ -926,11 +926,11 @@ product V3 V960PBC	0x0960	V960PBC	i960 Host-PCI Bridge
 product V3 V96DPC	0xC960	V96DPC	i960 (Dual) Host-PCI Bridge
 
 /* VIA Technologies products */
-product VIATECH VT82C505	0x0505	VT82C505 (\"Pluto\") 
+product VIATECH VT82C505	0x0505	VT82C505 (Pluto) 
 product VIATECH VT82C561	0x0561	VT82C561
 product VIATECH VT82C576	0x0576	VT82C576 3V
-product VIATECH	VT82C570M	0x1000	VT82C570M (\"Apollo\") Host-PCI Bridge
-product VIATECH VT82C570MV	0x1006	VT82C570M (\"Apollo\") PCI-ISA Bridge
+product VIATECH	VT82C570M	0x1000	VT82C570M (Apollo) Host-PCI Bridge
+product VIATECH VT82C570MV	0x1006	VT82C570M (Apollo) PCI-ISA Bridge
 product VIATECH VT82C416MV	0x1571	VT82C416MV
 
 /* Vortex Computer Systems products */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_subr.c,v 1.4 1996/11/28 23:28:10 niklas Exp $	*/
+/*	$OpenBSD: pci_subr.c,v 1.5 1998/01/05 13:35:23 deraadt Exp $	*/
 /*	$NetBSD: pci_subr.c,v 1.19 1996/10/13 01:38:29 christos Exp $	*/
 
 /*
@@ -214,11 +214,11 @@ pci_devinfo(id_reg, class_reg, showclass, cp)
 		cp += sprintf(cp, "%svendor 0x%04x product 0x%04x",
 		    unmatched, vendor, product);
 	else if (product_namep != NULL)
-		cp += sprintf(cp, "%s %s", vendor_namep, product_namep);
+		cp += sprintf(cp, "\"%s %s\"", vendor_namep, product_namep);
 	else
-		cp += sprintf(cp, "vendor %s, unknown product 0x%x",
+		cp += sprintf(cp, "vendor \"%s\", unknown product 0x%x",
 		    vendor_namep, product);
-	if (showclass) {
+	if (showclass && product_namep == NULL) {
 		cp += sprintf(cp, " (");
 		if (classp->name == NULL)
 			cp += sprintf(cp,
@@ -236,6 +236,7 @@ pci_devinfo(id_reg, class_reg, showclass, cp)
 #if 0 /* not very useful */
 		cp += sprintf(cp, ", interface 0x%02x", interface);
 #endif
-		cp += sprintf(cp, ", revision 0x%02x)", revision);
-	}
+		cp += sprintf(cp, ", rev 0x%02x)", revision);
+	} else
+		cp += sprintf(cp, " (rev 0x%02x)", revision);
 }

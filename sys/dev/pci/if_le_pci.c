@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_pci.c,v 1.7 1997/11/07 08:07:28 niklas Exp $	*/
+/*	$OpenBSD: if_le_pci.c,v 1.8 1998/01/05 13:35:20 deraadt Exp $	*/
 /*	$NetBSD: if_le_pci.c,v 1.13 1996/10/25 21:33:32 cgd Exp $	*/
 
 /*-
@@ -159,20 +159,16 @@ le_pci_attach(parent, self, aux)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcireg_t csr;
 	int i;
-	const char *model, *intrstr;
+	const char *intrstr;
 
 	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_AMD_PCNET_PCI:
-		model = "PCnet-PCI Ethernet";
 		lesc->sc_rap = PCNET_PCI_RAP;
 		lesc->sc_rdp = PCNET_PCI_RDP;
 		break;
-
-	default:
-		model = "unknown model!";
 	}
 
-	printf(": %s\n", model);
+	printf("\n");
 
 	if (pci_io_find(pc, pa->pa_tag, PCI_CBIO, &iobase, &iosize)) {
 		printf("%s: can't find I/O base\n", sc->sc_dev.dv_xname);

@@ -528,7 +528,7 @@
 #define	PCI_PRODUCT_3COM_3C905T4	0x9051		/* 3c905 100Base-T4 */
 
 /* 3D Labs products */
-#define	PCI_PRODUCT_3DLABS_300SX	0x0001		/* 300SX (\"Glint\") */
+#define	PCI_PRODUCT_3DLABS_300SX	0x0001		/* 300SX (Glint) */
 
 /* ACC Products */
 #define	PCI_PRODUCT_ACC_2188	0x0000		/* ACCM 2188 VL-PCI Bridge */
@@ -652,7 +652,7 @@
 #define	PCI_PRODUCT_CONTAQ_82C599	0x0600		/* 82C599 PCI-VLB Bridge */
 
 /* Corollary Products */
-#define	PCI_PRODUCT_COROLLARY_CBUSII_PCIB	0x0014		/* \"C-Bus II\"-PCI Bridge */
+#define	PCI_PRODUCT_COROLLARY_CBUSII_PCIB	0x0014		/* C-Bus II-PCI Bridge */
 
 /* Cyclades products */
 #define	PCI_PRODUCT_CYCLADES_CYCLOMY_1	0x0100		/* Cyclom-Y below 1M */
@@ -662,16 +662,16 @@
 
 /* DEC products */
 #define	PCI_PRODUCT_DEC_21050	0x0001		/* DECchip 21050 PCI-PCI Bridge */
-#define	PCI_PRODUCT_DEC_21040	0x0002		/* DECchip 21040 (\"Tulip\") */
-#define	PCI_PRODUCT_DEC_21030	0x0004		/* DECchip 21030 (\"TGA\") */
+#define	PCI_PRODUCT_DEC_21040	0x0002		/* DECchip 21040 (Tulip) */
+#define	PCI_PRODUCT_DEC_21030	0x0004		/* DECchip 21030 (TGA) */
 #define	PCI_PRODUCT_DEC_NVRAM	0x0007		/* Zephyr NV-RAM */
 #define	PCI_PRODUCT_DEC_KZPSA	0x0008		/* KZPSA */
-#define	PCI_PRODUCT_DEC_21140	0x0009		/* DECchip 21140 (\"FasterNet\") */
+#define	PCI_PRODUCT_DEC_21140	0x0009		/* DECchip 21140 (FasterNet) */
 #define	PCI_PRODUCT_DEC_PBXGB	0x000d		/* TGA2 */
 #define	PCI_PRODUCT_DEC_DEFPA	0x000f		/* DEFPA */
 /* product DEC ???	0x0010	??? VME Interface */
-#define	PCI_PRODUCT_DEC_21041	0x0014		/* DECchip 21041 (\"Tulip Pass 3\") */
-#define	PCI_PRODUCT_DEC_DGLPB	0x0016		/* DGLPB (\"OPPO\") */
+#define	PCI_PRODUCT_DEC_21041	0x0014		/* DECchip 21041 (Tulip Pass 3) */
+#define	PCI_PRODUCT_DEC_DGLPB	0x0016		/* DGLPB (OPPO) */
 #define	PCI_PRODUCT_DEC_21142	0x0019		/* DECchip 21142/3 */
 #define	PCI_PRODUCT_DEC_21052	0x0021		/* DECchip 21052 PCI-PCI Bridge */
 #define	PCI_PRODUCT_DEC_21150	0x0022		/* DECchip 21150 PCI-PCI Bridge */
@@ -686,7 +686,7 @@
 #define	PCI_PRODUCT_DPT_SC_RAID	0xa400		/* SmartCache/Raid */
 
 /* Emulex products */
-#define	PCI_PRODUCT_EMULEX_LPPFC	0x10df		/* \"Light Pulse\" FibreChannel adapter */
+#define	PCI_PRODUCT_EMULEX_LPPFC	0x10df		/* Light Pulse FibreChannel adapter */
 
 /* Essential Communications products */
 #define	PCI_PRODUCT_ESSENTIAL_RR_HIPPI	0x0001		/* RoadRunner HIPPI Interface */
@@ -771,8 +771,8 @@
 
 /* Matrox products */
 #define	PCI_PRODUCT_MATROX_IMPRESSION	0x0d10		/* MGA Impression */
-#define	PCI_PRODUCT_MATROX_ATLAS	0x0518		/* MGA PX2085 (\"Atlas\") */
-#define	PCI_PRODUCT_MATROX_MILLENIUM	0x0519		/* MGA Millenium 2064W (\"Storm\") */
+#define	PCI_PRODUCT_MATROX_ATLAS	0x0518		/* MGA PX2085 (Atlas) */
+#define	PCI_PRODUCT_MATROX_MILLENIUM	0x0519		/* MGA Millenium 2064W (Storm) */
 #define	PCI_PRODUCT_MATROX_MYSTIQUE	0x102B		/* MGA 1064SG */
 
 /* Mylex products */
@@ -839,18 +839,18 @@
 #define	PCI_PRODUCT_S3_868	0x8880		/* 868 */
 #define	PCI_PRODUCT_S3_VIRGE_VX	0x883d		/* ViRGE/VX */
 #define	PCI_PRODUCT_S3_928	0x88b0		/* 86C928 */
-#define	PCI_PRODUCT_S3_864_0	0x88c0		/* 86C864-0 (\"Vision864\") */
-#define	PCI_PRODUCT_S3_864_1	0x88c1		/* 86C864-1 (\"Vision864\") */
-#define	PCI_PRODUCT_S3_864_2	0x88c2		/* 86C864-2 (\"Vision864\") */
-#define	PCI_PRODUCT_S3_864_3	0x88c3		/* 86C864-3 (\"Vision864\") */
-#define	PCI_PRODUCT_S3_964_0	0x88d0		/* 86C964-0 (\"Vision964\") */
-#define	PCI_PRODUCT_S3_964_1	0x88d1		/* 86C964-1 (\"Vision964\") */
-#define	PCI_PRODUCT_S3_964_2	0x88d2		/* 86C964-2 (\"Vision964\") */
-#define	PCI_PRODUCT_S3_964_3	0x88d1		/* 86C964-3 (\"Vision964\") */
-#define	PCI_PRODUCT_S3_968_0	0x88f0		/* 86C968-0 (\"Vision968\") */
-#define	PCI_PRODUCT_S3_968_1	0x88f1		/* 86C968-1 (\"Vision968\") */
-#define	PCI_PRODUCT_S3_968_2	0x88f2		/* 86C968-2 (\"Vision968\") */
-#define	PCI_PRODUCT_S3_968_3	0x88f3		/* 86C968-3 (\"Vision968\") */
+#define	PCI_PRODUCT_S3_864_0	0x88c0		/* 86C864-0 (Vision864) */
+#define	PCI_PRODUCT_S3_864_1	0x88c1		/* 86C864-1 (Vision864) */
+#define	PCI_PRODUCT_S3_864_2	0x88c2		/* 86C864-2 (Vision864) */
+#define	PCI_PRODUCT_S3_864_3	0x88c3		/* 86C864-3 (Vision864) */
+#define	PCI_PRODUCT_S3_964_0	0x88d0		/* 86C964-0 (Vision964) */
+#define	PCI_PRODUCT_S3_964_1	0x88d1		/* 86C964-1 (Vision964) */
+#define	PCI_PRODUCT_S3_964_2	0x88d2		/* 86C964-2 (Vision964) */
+#define	PCI_PRODUCT_S3_964_3	0x88d1		/* 86C964-3 (Vision964) */
+#define	PCI_PRODUCT_S3_968_0	0x88f0		/* 86C968-0 (Vision968) */
+#define	PCI_PRODUCT_S3_968_1	0x88f1		/* 86C968-1 (Vision968) */
+#define	PCI_PRODUCT_S3_968_2	0x88f2		/* 86C968-2 (Vision968) */
+#define	PCI_PRODUCT_S3_968_3	0x88f3		/* 86C968-3 (Vision968) */
 
 /* SGS Thomson products */
 #define	PCI_PRODUCT_SGSTHOMSON_2000	0x0008		/* STG 2000X */
@@ -931,11 +931,11 @@
 #define	PCI_PRODUCT_V3_V96DPC	0xC960		/* V96DPC i960 (Dual) Host-PCI Bridge */
 
 /* VIA Technologies products */
-#define	PCI_PRODUCT_VIATECH_VT82C505	0x0505		/* VT82C505 (\"Pluto\") */
+#define	PCI_PRODUCT_VIATECH_VT82C505	0x0505		/* VT82C505 (Pluto) */
 #define	PCI_PRODUCT_VIATECH_VT82C561	0x0561		/* VT82C561 */
 #define	PCI_PRODUCT_VIATECH_VT82C576	0x0576		/* VT82C576 3V */
-#define	PCI_PRODUCT_VIATECH_VT82C570M	0x1000		/* VT82C570M (\"Apollo\") Host-PCI Bridge */
-#define	PCI_PRODUCT_VIATECH_VT82C570MV	0x1006		/* VT82C570M (\"Apollo\") PCI-ISA Bridge */
+#define	PCI_PRODUCT_VIATECH_VT82C570M	0x1000		/* VT82C570M (Apollo) Host-PCI Bridge */
+#define	PCI_PRODUCT_VIATECH_VT82C570MV	0x1006		/* VT82C570M (Apollo) PCI-ISA Bridge */
 #define	PCI_PRODUCT_VIATECH_VT82C416MV	0x1571		/* VT82C416MV */
 
 /* Vortex Computer Systems products */

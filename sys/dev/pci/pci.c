@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.8 1997/10/11 09:14:53 pefo Exp $	*/
+/*	$OpenBSD: pci.c,v 1.9 1998/01/05 13:35:23 deraadt Exp $	*/
 /*	$NetBSD: pci.c,v 1.26 1996/12/05 01:25:30 cgd Exp $	*/
 
 /*
@@ -203,6 +203,11 @@ pciprint(aux, pnp)
 		printf("%s at %s", devinfo, pnp);
 	}
 	printf(" dev %d function %d", pa->pa_device, pa->pa_function);
+	if (!pnp) {
+		pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+		printf(": %s", devinfo);
+	}
+
 	return (UNCONF);
 }
 

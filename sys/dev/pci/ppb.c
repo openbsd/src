@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppb.c,v 1.5 1996/11/28 23:28:14 niklas Exp $	*/
+/*	$OpenBSD: ppb.c,v 1.6 1998/01/05 13:35:26 deraadt Exp $	*/
 /*	$NetBSD: ppb.c,v 1.12 1996/10/21 22:57:00 thorpej Exp $	*/
 
 /*
@@ -91,10 +91,8 @@ ppbattach(parent, self, aux)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	struct pcibus_attach_args pba;
 	pcireg_t busdata;
-	char devinfo[256];
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
-	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
+	printf("\n");
 
 	busdata = pci_conf_read(pc, pa->pa_tag, PPB_REG_BUSINFO);
 

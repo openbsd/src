@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_pci.c,v 1.7 1997/08/05 05:38:22 niklas Exp $	*/
+/*	$OpenBSD: ahc_pci.c,v 1.8 1998/01/05 13:35:18 deraadt Exp $	*/
 /*	$NetBSD: ahc_pci.c,v 1.9 1996/10/21 22:56:24 thorpej Exp $	*/
 
 /*
@@ -398,7 +398,6 @@ ahc_pci_attach(parent, self, aux)
 #if defined(__FreeBSD__)
 	ahc_reset(io_port);
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
-	printf("\n");
 	ahc_reset(ahc->sc_dev.dv_xname, pa->pa_iot, ioh);
 #endif
 
@@ -453,7 +452,7 @@ ahc_pci_attach(parent, self, aux)
 
 	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
 			 pa->pa_intrline, &ih)) {
-		printf("%s: couldn't map interrupt\n", ahc->sc_dev.dv_xname);
+		printf(", couldn't map interrupt\n");
 		ahc_free(ahc);
 		return;
 	}
@@ -465,8 +464,7 @@ ahc_pci_attach(parent, self, aux)
 	    ahc->sc_dev.dv_xname);
 #endif
 	if (ahc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt",
-		       ahc->sc_dev.dv_xname);
+		printf(", couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
@@ -474,8 +472,7 @@ ahc_pci_attach(parent, self, aux)
 		return;
 	}
 	if (intrstr != NULL)
-		printf("%s: interrupting at %s\n", ahc->sc_dev.dv_xname,
-		       intrstr);
+		printf(", %s\n", intrstr);
 #endif
 	/*
 	 * Protect ourself from spurrious interrupts during

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr.c,v 1.33 1997/12/03 21:43:35 millert Exp $	*/
+/*	$OpenBSD: ncr.c,v 1.34 1998/01/05 13:35:21 deraadt Exp $	*/
 /*	$NetBSD: ncr.c,v 1.63 1997/09/23 02:39:15 perry Exp $	*/
 
 /**************************************************************************
@@ -1461,7 +1461,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$OpenBSD: ncr.c,v 1.33 1997/12/03 21:43:35 millert Exp $\n";
+	"\n$OpenBSD: ncr.c,v 1.34 1998/01/05 13:35:21 deraadt Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -3701,9 +3701,9 @@ ncr_attach(parent, self, aux)
 
 	i = ncr_chip_lookup(pa->pa_id, rev);
 	if (intrstr != NULL)
-		printf(": %s, %s\n", ncr_chip_table[i].name, intrstr);
+		printf(" %s, %s\n", ncr_chip_table[i].name, intrstr);
 	else
-		printf(": %s\n", ncr_chip_table[i].name);
+		printf(" %s\n", ncr_chip_table[i].name);
 
 #else /* !__OpenBSD__ */
 

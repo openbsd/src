@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.26 1997/11/16 07:46:46 millert Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.27 1998/01/05 13:35:19 deraadt Exp $	*/
 /*	$NetBSD: if_de.c,v 1.45 1997/06/09 00:34:18 thorpej Exp $	*/
 
 /*-
@@ -4626,16 +4626,14 @@ tulip_attach(
 #if defined(__bsdi__)
 	   "\n"
 #endif
-	   TULIP_PRINTF_FMT ": %s%s pass %d.%d%s\n",
+	   TULIP_PRINTF_FMT ": %s%s pass %d.%d%s address " TULIP_EADDR_FMT "\n",
 	   TULIP_PRINTF_ARGS,
 	   sc->tulip_boardid,
 	   tulip_chipdescs[sc->tulip_chipid],
 	   (sc->tulip_revinfo & 0xF0) >> 4,
 	   sc->tulip_revinfo & 0x0F,
 	   (sc->tulip_features & (TULIP_HAVE_ISVSROM|TULIP_HAVE_OKSROM))
-		 == TULIP_HAVE_ISVSROM ? " (invalid EESPROM checksum)" : "");
-    printf(TULIP_PRINTF_FMT ": address " TULIP_EADDR_FMT "\n",
-	   TULIP_PRINTF_ARGS,
+		 == TULIP_HAVE_ISVSROM ? " (invalid EESPROM checksum)" : "",
 	   TULIP_EADDR_ARGS(sc->tulip_enaddr));
 #endif
 
@@ -5324,25 +5322,23 @@ tulip_pci_attach(
 	    pci_intr_handle_t intrhandle;
 	    const char *intrstr;
 
-	    printf("\n");
-
 	    if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
 			     pa->pa_intrline, &intrhandle)) {
-		printf("%s: couldn't map interrupt\n", sc->tulip_dev.dv_xname);
+		printf(", couldn't map interrupt\n");
 		return;
 	    }
 	    intrstr = pci_intr_string(pa->pa_pc, intrhandle);
 	    sc->tulip_ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_NET,
 					      intr_rtn, sc, self->dv_xname);
 	    if (sc->tulip_ih == NULL) {
-		printf("%s: couldn't establish interrupt",
+		printf(", couldn't establish interrupt",
 		       sc->tulip_dev.dv_xname);
 		if (intrstr != NULL)
 		    printf(" at %s", intrstr);
 		printf("\n");
 		return;
 	    }
-	    printf("%s: interrupting at %s\n", sc->tulip_dev.dv_xname, intrstr);
+	    printf(", %s\n", intrstr);
 	}
 	sc->tulip_ats = shutdownhook_establish(tulip_shutdown, sc);
 	if (sc->tulip_ats == NULL)
