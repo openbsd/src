@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.189 2001/03/07 23:59:02 mickey Exp $
+#	$OpenBSD: files,v 1.190 2001/03/11 02:48:19 aaron Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -61,6 +61,11 @@ file   dev/ic/pcdisplay_chars.c        pcdisplayops
 device  vga: wsemuldisplaydev, pcdisplayops
 file    dev/ic/vga.c            vga     needs-flag
 file    dev/ic/vga_subr.c       vga
+
+# Attribute for devices that read/write an IEEE 802.3u MII bus using the
+# bit-bang method.
+define	mii_bitbang
+file	dev/mii/mii_bitbang.c	mii_bitbang
 
 define  wdc_base
 define  ata {[channel = -1], [drive = -1]}
