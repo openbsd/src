@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.luna88k,v 1.4 2004/07/02 13:58:15 miod Exp $
+#	$OpenBSD: Makefile.luna88k,v 1.5 2004/07/13 09:47:05 miod Exp $
 #
 # Makefile for OpenBSD
 #
@@ -43,7 +43,7 @@ CMACHFLAGS=	-mno-check-zero-division -mmemcpy \
 .if ${IDENT:M-DNO_PROPOLICE}
 CMACHFLAGS+=	-fno-stack-protector
 .endif
-COPTS?=		-O2 -fno-rerun-cse-after-loop
+COPTS?=		-O2
 CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE ${CMACHFLAGS}
 LINKFLAGS=	-N -Ttext 0x20000 -e start
