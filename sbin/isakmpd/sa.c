@@ -1,5 +1,5 @@
-/*	$OpenBSD: sa.c,v 1.19 1999/05/06 22:44:42 niklas Exp $	*/
-/*	$EOM: sa.c,v 1.91 1999/05/06 21:43:12 niklas Exp $	*/
+/*	$OpenBSD: sa.c,v 1.20 1999/05/14 20:09:50 niklas Exp $	*/
+/*	$EOM: sa.c,v 1.92 1999/05/09 20:26:17 ho Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -665,7 +665,7 @@ sa_mark_replaced (struct sa *sa)
 int
 sa_setup_expirations (struct sa *sa)
 {
-  u_int64_t seconds;
+  u_int64_t seconds = sa->seconds;
   struct timeval expiration;
 
   /* 
