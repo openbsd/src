@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ngereg.h,v 1.1 2001/06/08 02:26:13 nate Exp $	*/
+/*	$OpenBSD: if_ngereg.h,v 1.2 2001/07/02 05:38:28 nate Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -129,6 +129,7 @@
 #define NGE_CFG_PHYINTR_LNK	0x00080000
 #define NGE_CFG_PHYINTR_DUP	0x00100000
 #define NGE_CFG_MODE_1000	0x00400000
+#define NGE_CFG_TBI_EN		0x01000000
 #define NGE_CFG_DUPLEX_STS	0x10000000
 #define NGE_CFG_SPEED_STS	0x60000000
 #define NGE_CFG_LINK_STS	0x80000000
@@ -147,6 +148,7 @@
 #define NGE_EECMD_ERASE		0x1c0
 
 #define NGE_EE_NODEADDR		0xA
+#define NGE_EE_GPIOR		0x4
 
 /* PCI control register */
 #define NGE_PCICTL_SRAMADDR	0x0000001F
