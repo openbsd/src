@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpc.5,v 1.4 1999/07/09 13:35:39 aaron Exp $
+.\"	$OpenBSD: rpc.5,v 1.5 2000/02/29 04:48:39 aaron Exp $
 .\"	$NetBSD: rpc.5,v 1.2 1994/11/30 19:31:30 jtc Exp $
 .\"	@(#)rpc.5	2.2 88/08/03 4.0 RPCSRC; from 1.4 87/11/27 SMI;
 .\"
@@ -29,10 +29,11 @@ aliases
 .Pp
 Items are separated by any number of blanks and/or
 tab characters.
-A
-.Dq #
-indicates the beginning of a comment; characters up to the end of
-the line are not interpreted by routines which search the file.
+.Pp
+A hash mark
+.Pq Ql #
+indicates the beginning of a comment; subsequent characters up to the end of
+the line are not interpreted by the routines which search the file.
 .Sh EXAMPLES
 Here is an example of the
 .Pa /etc/rpc
@@ -75,5 +76,6 @@ nsemntd		100039
 .Sh FILES
 .Bl -tag -width /etc/rpc -compact
 .It Pa /etc/rpc
+.El
 .Sh SEE ALSO
 .Xr getrpcent 3

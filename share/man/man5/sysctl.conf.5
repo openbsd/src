@@ -1,4 +1,4 @@
-.\" $OpenBSD: sysctl.conf.5,v 1.5 1999/07/07 10:50:09 aaron Exp $
+.\" $OpenBSD: sysctl.conf.5,v 1.6 2000/02/29 04:48:39 aaron Exp $
 .\"
 .\" Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
 .\" All rights reserved.
@@ -30,12 +30,12 @@
 .Os
 .Sh NAME
 .Nm sysctl.conf
-.Nd sysctl variables to set at bootup
+.Nd sysctl variables to set at system startup
 .Sh DESCRIPTION
 .Nm
 contains a list of
 .Xr sysctl 8
-variable assignments that is read on bootup by
+variable assignments that is read at system startup by
 .Xr rc 8
 early on in the boot sequence.
 .Pp

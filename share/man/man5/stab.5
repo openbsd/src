@@ -1,4 +1,4 @@
-.\"	$OpenBSD: stab.5,v 1.7 1999/07/09 13:35:39 aaron Exp $
+.\"	$OpenBSD: stab.5,v 1.8 2000/02/29 04:48:39 aaron Exp $
 .\"	$NetBSD: stab.5,v 1.3 1994/11/30 19:31:33 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -43,9 +43,9 @@
 .Sh SYNOPSIS
 .Fd #include <stab.h>
 .Sh DESCRIPTION
-The file
+The
 .Aq Pa stab.h
-defines some of the symbol table
+file defines some of the symbol table
 .Fa n_type
 field values for
 .Xr a.out 5
@@ -55,12 +55,19 @@ used by the old debugger
 .Em sdb
 and the Berkeley Pascal compiler
 .Xr pc 1 .
+.Pp
 Symbol table entries can be produced by the
 .Dq .stabs
 assembler directive.
 This allows one to specify a double-quote delimited name, a symbol type,
-one char and one short of information about the symbol, and an unsigned
-long (usually an address).
+one
+.Li char
+and one
+.Li short
+of information about the symbol, as well as an
+.Li unsigned long
+(usually an address).
+.Pp
 To avoid having to produce an explicit label for the address field,
 the
 .Dq .stabd
@@ -74,8 +81,7 @@ by
 directives.
 As described in
 .Xr a.out 5 ,
-an element of the symbol table
-consists of the following structure:
+an element of the symbol table consists of the following structure:
 .Bd -literal
 /*
 * Format of a symbol table entry.
@@ -118,7 +124,7 @@ bits set.
 The
 .Fa n_value
 field of a symbol is relocated by the linker,
-.Xr ld 1
+.Xr ld 1 ,
 as an address within the appropriate segment.
 .Fa n_value
 fields of symbols not in any segment are unchanged by the linker.
