@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.376 2001/03/14 04:42:23 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.377 2001/03/14 22:49:00 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2116,6 +2116,14 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_IOFLEX_2S_1,
+	    "Serial",
+	},
+	{
+	    PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_LAVAPORT_0,
+	    "Serial",
+	},
+	{
+	    PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_LAVAPORT_1,
 	    "Serial",
 	},
 	{
