@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcibiosvar.h,v 1.2 2001/01/24 23:16:14 mickey Exp $	*/
+/*	$OpenBSD: pcibiosvar.h,v 1.3 2001/01/24 23:40:29 mickey Exp $	*/
 /*	$NetBSD: pcibios.h,v 1.2 2000/04/28 17:15:16 uch Exp $	*/
 
 /*
@@ -95,6 +95,18 @@ extern struct pcibios_intr_routing *pcibios_pir_table;
 extern int pcibios_pir_table_nentries;
 extern int pcibios_max_bus;
 
+struct pciaddr {
+	struct extent *extent_mem;
+	struct extent *extent_port;
+	bus_addr_t mem_alloc_start;
+	bus_addr_t port_alloc_start;
+	int nbogus;
+};
+
+extern struct pciaddr pciaddr;
+
+int pcibios_flags;
+
 #ifdef PCIBIOSVERBOSE
 extern int pcibiosverbose;
 
@@ -114,7 +126,7 @@ extern int pcibiosverbose;
 #endif
 
 int  pci_bus_fixup __P((pci_chipset_tag_t, int));
+void pci_addr_fixup __P((pci_chipset_tag_t, int));
 void pci_device_foreach __P((pci_chipset_tag_t, int,
     void (*) __P((pci_chipset_tag_t, pcitag_t))));
 
-int pcibios_flags;
