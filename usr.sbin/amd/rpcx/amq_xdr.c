@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amq_xdr.c	8.1 (Berkeley) 6/6/93
- *	$Id: amq_xdr.c,v 1.3 2002/08/03 08:29:32 pvalchev Exp $
+ *	$Id: amq_xdr.c,v 1.4 2002/09/10 05:41:28 deraadt Exp $
  *
  */
 
@@ -97,10 +97,12 @@ xdr_amq_mount_tree(XDR *xdrs, amq_mount_tree *objp)
 	if (!xdr_int(xdrs, &objp->mt_statfs)) {
 		return (FALSE);
 	}
-	if (!xdr_pointer(xdrs, (char **)&objp->mt_next, sizeof(amq_mount_tree), xdr_amq_mount_tree)) {
+	if (!xdr_pointer(xdrs, (char **)&objp->mt_next,
+	    sizeof(amq_mount_tree), xdr_amq_mount_tree)) {
 		return (FALSE);
 	}
-	if (!xdr_pointer(xdrs, (char **)&objp->mt_child, sizeof(amq_mount_tree), xdr_amq_mount_tree)) {
+	if (!xdr_pointer(xdrs, (char **)&objp->mt_child,
+	    sizeof(amq_mount_tree), xdr_amq_mount_tree)) {
 		return (FALSE);
 	}
 	return (TRUE);
@@ -109,7 +111,8 @@ xdr_amq_mount_tree(XDR *xdrs, amq_mount_tree *objp)
 bool_t
 xdr_amq_mount_tree_p(XDR *xdrs, amq_mount_tree_p *objp)
 {
-	if (!xdr_pointer(xdrs, (char **)objp, sizeof(amq_mount_tree), xdr_amq_mount_tree)) {
+	if (!xdr_pointer(xdrs, (char **)objp, sizeof(amq_mount_tree),
+	    xdr_amq_mount_tree)) {
 		return (FALSE);
 	}
 	return (TRUE);
@@ -145,7 +148,9 @@ xdr_amq_mount_info(XDR *xdrs, amq_mount_info *objp)
 bool_t
 xdr_amq_mount_info_list(XDR *xdrs, amq_mount_info_list *objp)
 {
-	if (!xdr_array(xdrs, (char **)&objp->amq_mount_info_list_val, (u_int *)&objp->amq_mount_info_list_len, ~0, sizeof(amq_mount_info), xdr_amq_mount_info)) {
+	if (!xdr_array(xdrs, (char **)&objp->amq_mount_info_list_val,
+	    (u_int *)&objp->amq_mount_info_list_len, ~0,
+	    sizeof(amq_mount_info), xdr_amq_mount_info)) {
 		return (FALSE);
 	}
 	return (TRUE);
@@ -154,7 +159,9 @@ xdr_amq_mount_info_list(XDR *xdrs, amq_mount_info_list *objp)
 bool_t
 xdr_amq_mount_tree_list(XDR *xdrs, amq_mount_tree_list *objp)
 {
-	if (!xdr_array(xdrs, (char **)&objp->amq_mount_tree_list_val, (u_int *)&objp->amq_mount_tree_list_len, ~0, sizeof(amq_mount_tree_p), xdr_amq_mount_tree_p)) {
+	if (!xdr_array(xdrs, (char **)&objp->amq_mount_tree_list_val,
+	    (u_int *)&objp->amq_mount_tree_list_len, ~0,
+	    sizeof(amq_mount_tree_p), xdr_amq_mount_tree_p)) {
 		return (FALSE);
 	}
 	return (TRUE);
