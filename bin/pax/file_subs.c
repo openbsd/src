@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_subs.c,v 1.25 2003/10/20 06:22:27 jmc Exp $	*/
+/*	$OpenBSD: file_subs.c,v 1.26 2004/03/30 16:14:22 millert Exp $	*/
 /*	$NetBSD: file_subs.c,v 1.4 1995/03/21 09:07:18 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: file_subs.c,v 1.25 2003/10/20 06:22:27 jmc Exp $";
+static const char rcsid[] = "$OpenBSD: file_subs.c,v 1.26 2004/03/30 16:14:22 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -814,6 +814,7 @@ file_write(int fd, char *str, int cnt, int *rem, int *isempt, int sz,
 	char *end;
 	int wcnt;
 	char *st = str;
+	char **strp;
 
 	/*
 	 * while we have data to process
@@ -872,17 +873,28 @@ file_write(int fd, char *str, int cnt, int *rem, int *isempt, int sz,
 		/*
 		 * have non-zero data in this file system block, have to write
 		 */
-		if (fd == -1) {
-			/* GNU hack */
-			if (gnu_hack_string)
+		switch (fd) {
+		case -1:
+			strp = &gnu_name_string;
+			break;
+		case -2:
+			strp = &gnu_link_string;
+			break;
+		default:
+			strp = NULL;
+			break;
+		}
+		if (strp) {
+			if (*strp)
 				err(1, "WARNING! Major Internal Error! GNU hack Failing!");
-			gnu_hack_string = malloc(wcnt + 1);
-			if (gnu_hack_string == NULL) {
+			*strp = malloc(wcnt + 1);
+			if (*strp == NULL) {
 				paxwarn(1, "Out of memory");
 				return(-1);
 			}
-			memcpy(gnu_hack_string, st, wcnt);
-			gnu_hack_string[wcnt] = '\0';
+			memcpy(*strp, st, wcnt);
+			(*strp)[wcnt] = '\0';
+			break;
 		} else if (write(fd, st, wcnt) != wcnt) {
 			syswarn(1, errno, "Failed write to file %s", name);
 			return(-1);
