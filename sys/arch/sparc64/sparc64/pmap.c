@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.12 2002/03/14 03:16:01 millert Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.13 2002/06/11 11:16:46 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -1967,6 +1967,11 @@ pmap_kenter_pa(va, pa, prot)
 	ASSERT(va < INTSTACK || va > EINTSTACK);
 	ASSERT(va < kdata || va > ekdata);
 
+#ifdef DIAGNOSTIC
+	if (pa & (PMAP_NVC|PMAP_NC))
+		panic("pmap_kenter_pa: illegal cache flags %ld", pa);
+#endif
+
 	/*
 	 * Construct the TTE.
 	 */
@@ -1978,14 +1983,10 @@ pmap_kenter_pa(va, pa, prot)
 #ifdef DEBUG	     
 	enter_stats.unmanaged ++;
 #endif
-#ifdef DEBUG
-	if (pa & (PMAP_NVC|PMAP_NC)) 
-		enter_stats.ci ++;
-#endif
 	tte.tag = TSB_TAG(0,pm->pm_ctx,va);
 	tte.data = TSB_DATA(0, PGSZ_8K, pa, 1 /* Privileged */,
 				 (VM_PROT_WRITE & prot),
-				 (!(pa & PMAP_NC)), pa & (PMAP_NVC), 1, 0);
+				 1, 0, 1, 0);
 	/* We don't track modification here. */
 	if (VM_PROT_WRITE & prot) tte.data |= TLB_REAL_W|TLB_W; /* HWREF -- XXXX */
 	tte.data |= TLB_TSB_LOCK;	/* wired */
