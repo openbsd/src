@@ -1,4 +1,4 @@
-/*	$OpenBSD: amdpm.c,v 1.4 2004/07/28 17:15:12 tholo Exp $	*/
+/*	$OpenBSD: amdpm.c,v 1.5 2004/09/17 10:18:01 grange Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
 #include <dev/pci/amdpmreg.h>
 
 #ifdef __HAVE_TIMECOUNTER
-unsigned amdpm_get_timecount(struct timecounter *tc);
+u_int amdpm_get_timecount(struct timecounter *tc);
 
 #ifndef AMDPM_FREQUENCY
 #define AMDPM_FREQUENCY 3579545
@@ -218,13 +218,13 @@ amdpm_rnd_callout(void *v)
 }
 
 #ifdef __HAVE_TIMECOUNTER
-unsigned
+u_int
 amdpm_get_timecount(struct timecounter *tc)
 {
 	struct amdpm_softc *sc = tc->tc_priv;
-	unsigned u2;
+	u_int u2;
 #if 0
-	unsigned u1, u3;
+	u_int u1, u3;
 #endif
 
 	u2 = bus_space_read_4(sc->sc_iot, sc->sc_ioh, AMDPM_TMR);

@@ -6,7 +6,7 @@
  * this stuff is worth it, you can buy me a beer in return.   Poul-Henning Kamp
  * ----------------------------------------------------------------------------
  *
- *	$OpenBSD: piixpm.c,v 1.1 2004/07/28 17:15:12 tholo Exp $
+ *	$OpenBSD: piixpm.c,v 1.2 2004/09/17 10:18:01 grange Exp $
  *	$FreeBSD: /repoman/r/ncvs/src/sys/i386/i386/mp_clock.c,v 1.19 2004/05/30 20:34:57 phk Exp $
  */
 
@@ -65,7 +65,7 @@ int piixpm_probe(struct device *, void *, void *);
 void piixpm_attach(struct device *, struct device *, void *);
 
 #ifdef __HAVE_TIMECOUNTER
-unsigned piix_get_timecount(struct timecounter *tc);
+u_int piix_get_timecount(struct timecounter *tc);
 
 static u_int piix_freq = 14318182/4;
 
@@ -110,11 +110,11 @@ SYSCTL_PROC(_machdep, OID_AUTO, piix_freq, CTLTYPE_INT | CTLFLAG_RW,
 #endif
 
 #ifdef __HAVE_TIMECOUNTER
-unsigned
+u_int
 piix_get_timecount(struct timecounter *tc)
 {
 	struct piixpm_softc *sc = (struct piixpm_softc *) tc->tc_priv;
-	unsigned u1, u2, u3;
+	u_int u1, u2, u3;
 
 	u2 = bus_space_read_4(sc->sc_iot, sc->sc_ioh, 8);
 	u3 = bus_space_read_4(sc->sc_iot, sc->sc_ioh, 8);

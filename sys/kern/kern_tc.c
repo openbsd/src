@@ -6,7 +6,7 @@
  * this stuff is worth it, you can buy me a beer in return.   Poul-Henning Kamp
  * ----------------------------------------------------------------------------
  *
- * $OpenBSD: kern_tc.c,v 1.2 2004/08/04 15:36:44 art Exp $
+ * $OpenBSD: kern_tc.c,v 1.3 2004/09/17 10:18:01 grange Exp $
  * $FreeBSD: src/sys/kern/kern_tc.c,v 1.148 2003/03/18 08:45:23 phk Exp $
  */
 
@@ -27,6 +27,8 @@
  */
 #define LARGE_STEP	200
 
+u_int dummy_get_timecount(struct timecounter *);
+
 void ntp_update_second(int64_t *, time_t *);
 int sysctl_tc_hardware(void *, size_t *, void *, size_t);
 int sysctl_tc_choice(void *, size_t *, void *, size_t);
@@ -37,7 +39,7 @@ int sysctl_tc_choice(void *, size_t *, void *, size_t);
  * time services.
  */
 
-static u_int
+u_int
 dummy_get_timecount(struct timecounter *tc)
 {
 	static u_int now;
@@ -96,7 +98,7 @@ extern struct timeval adjtimedelta;
 static struct bintime boottimebin;
 static int timestepwarnings;
 
-static void tc_windup(void);
+void tc_windup(void);
 
 /*
  * Return the difference between the timehands' counter value now and what
@@ -261,7 +263,7 @@ getmicrotime(struct timeval *tvp)
 void
 tc_init(struct timecounter *tc)
 {
-	unsigned u;
+	u_int u;
 
 	u = tc->tc_frequency / tc->tc_counter_mask;
 	/* XXX: We need some margin here, 10% is a guess */
@@ -335,7 +337,7 @@ tc_setclock(struct timespec *ts)
  * it the active timehands.  Along the way we might switch to a different
  * timecounter and/or do seconds processing in NTP.  Slightly magic.
  */
-static void
+void
 tc_windup(void)
 {
 	struct bintime bt;
