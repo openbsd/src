@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.121 1999/04/07 08:47:34 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.122 1999/04/10 04:39:50 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -827,7 +827,7 @@ if [ "${_url_type}" = "ftp" -a "X$ftp_proxy" = "X" ]; then
 	echo "By default, ftp will attempt a passive connection and fall back to a normal"
 	echo "(active) connection if that doesn't work.  However, there are some very"
 	echo "old ftp servers that claim to support passive mode, but really do not."
-	echo "In this case, you should explicately request an active session."
+	echo "In this case, you should explicitly request an active session."
 	echo -n "Do you want to use active ftp? [${resp}] "
 	getresp "${resp}"
 	case "$resp" in

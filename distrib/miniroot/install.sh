@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.52 1999/04/10 04:09:22 millert Exp $
+#	$OpenBSD: install.sh,v 1.53 1999/04/10 04:38:30 deraadt Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -523,7 +523,7 @@ done
 
 resp=""		# force one iteration
 echo
-echo 'Please enter the initial password that the root acount will have.'
+echo 'Please enter the initial password that the root account will have.'
 while [ "X${resp}" = X"" ]; do
 	echo -n "Password (will not echo): "
 	stty -echo
