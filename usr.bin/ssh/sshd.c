@@ -11,7 +11,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.83 2000/01/31 23:57:01 markus Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.84 2000/02/01 13:52:26 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -2129,7 +2129,7 @@ do_exec_pty(const char *command, int ptyfd, int ttyfd,
 
 	/* Enter interactive session. */
 	server_loop(pid, ptyfd, fdout, -1);
-	/* server_loop has not closed ptyfd and fdout. */
+	/* server_loop _has_ closed ptyfd and fdout. */
 
 	/* Cancel the cleanup function. */
 	fatal_remove_cleanup(pty_cleanup_proc, (void *) &cleanup_context);
