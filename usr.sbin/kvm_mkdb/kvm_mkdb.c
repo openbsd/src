@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_mkdb.c,v 1.9 1999/03/29 20:42:50 millert Exp $	*/
+/*	$OpenBSD: kvm_mkdb.c,v 1.10 1999/04/18 17:11:11 espie Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)kvm_mkdb.c	8.3 (Berkeley) 5/4/95";
 #else
-static char *rcsid = "$OpenBSD: kvm_mkdb.c,v 1.9 1999/03/29 20:42:50 millert Exp $";
+static char *rcsid = "$OpenBSD: kvm_mkdb.c,v 1.10 1999/04/18 17:11:11 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -100,7 +100,6 @@ main(argc, argv)
 		case 'v':
 			verbose = 1;
 			break;
-		case '?':
 		default:
 			usage();
 		}
@@ -121,9 +120,10 @@ main(argc, argv)
 		nlistname = basename(_PATH_UNIX);
 		if ((fd = open((nlistpath = _PATH_KSYMS), O_RDONLY, 0)) == -1 ||
 		    (rval = kvm_mkdb(fd, nlistpath, nlistname, verbose)) != 0) {
-			if (fd != -1)
-				warnx("will try again using %s instead",
-				    _PATH_UNIX);
+			if (fd == -1) 
+				warnx("can't open %s", _PATH_KSYMS);
+			else
+				warnx("will try again using %s instead", _PATH_UNIX);
 			if ((fd = open((nlistpath = _PATH_UNIX), O_RDONLY, 0)) == -1)
 				err(1, "can't open %s", nlistpath);
 			rval = kvm_mkdb(fd, nlistpath, nlistname, verbose);
@@ -184,6 +184,6 @@ kvm_mkdb(fd, nlistpath, nlistname, verbose)
 void
 usage()
 {
-	(void)fprintf(stderr, "usage: kvm_mkdb [file]\n");
+	(void)fprintf(stderr, "usage: kvm_mkdb [-v] [file]\n");
 	exit(1);
 }

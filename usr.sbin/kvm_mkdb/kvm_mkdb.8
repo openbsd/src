@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)kvm_mkdb.8	8.1 (Berkeley) 6/9/93
-.\"	$Id: kvm_mkdb.8,v 1.4 1999/03/10 21:25:31 pjanzen Exp $
+.\"	$Id: kvm_mkdb.8,v 1.5 1999/04/18 17:11:10 espie Exp $
 .\"
 .Dd June 9, 1993
 .Dt KVM_MKDB 8
@@ -40,6 +40,7 @@
 .Nd create kernel database
 .Sh SYNOPSIS
 .Nm kvm_mkdb
+.Op Fl v
 .Op file
 .Sh DESCRIPTION
 .Nm Kvm_mkdb
@@ -57,6 +58,10 @@ used by the
 .Xr kvm_nlist 3
 function.  However, in the future the database may contain other static
 information about the current system.
+.Pp
+The
+.Fl v 
+option yields slightly more verbose operation.
 .Sh FILES
 .Bl -tag -width /var/db/kvm_bsd.db -compact
 .It Pa /bsd
