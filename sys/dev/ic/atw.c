@@ -1,5 +1,5 @@
-/*	$OpenBSD: atw.c,v 1.5 2004/07/07 19:19:37 millert Exp $	*/
-/*	$NetBSD: atw.c,v 1.37 2004/06/23 09:41:54 dyoung Exp $	*/
+/*	$OpenBSD: atw.c,v 1.6 2004/07/15 11:53:32 millert Exp $	*/
+/*	$NetBSD: atw.c,v 1.39 2004/07/15 05:54:13 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.37 2004/06/23 09:41:54 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.39 2004/07/15 05:54:13 dyoung Exp $");
 #endif
 
 #include "bpfilter.h"
@@ -133,10 +133,6 @@ __KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.37 2004/06/23 09:41:54 dyoung Exp $");
  *
  *    initialize rx/tx
  *
- * IBSS join/create
- *
- *    set ATW_NAR_EA (is set by ASIC?)
- *
  * BSS join: (re)association response
  *
  *    set ATW_FRCTL_AID
@@ -156,11 +152,6 @@ int atw_beacon_len_adjust = 4;
 int atw_dwelltime = 200;
 
 #ifdef ATW_DEBUG
-int atw_xhdrctl = 0;
-int atw_xrtylmt = ~0;
-int atw_xservice = IEEE80211_PLCP_SERVICE;
-int atw_xpaylen = 0;
-
 int atw_debug = 0;
 
 #define ATW_DPRINTF(x)	if (atw_debug > 0) printf x
@@ -170,9 +161,19 @@ int atw_debug = 0;
 #define	DPRINTF2(sc, x)	if ((sc)->sc_ic.ic_if.if_flags & IFF_DEBUG) ATW_DPRINTF2(x)
 #define	DPRINTF3(sc, x)	if ((sc)->sc_ic.ic_if.if_flags & IFF_DEBUG) ATW_DPRINTF3(x)
 void atw_print_regs(struct atw_softc *, const char *);
-void atw_rf3000_print(struct atw_softc *);
-void atw_si4126_print(struct atw_softc *);
 void atw_dump_pkt(struct ifnet *, struct mbuf *);
+
+/* Note well: I never got atw_rf3000_read or atw_si4126_read to work. */
+#	ifdef ATW_BBPDEBUG 
+int atw_rf3000_read(struct atw_softc *sc, u_int, u_int *);
+void atw_rf3000_print(struct atw_softc *);
+#	endif /* ATW_BBPDEBUG */
+
+#	ifdef ATW_SYNDEBUG 
+int atw_si4126_read(struct atw_softc *, u_int, u_int *);
+void atw_si4126_print(struct atw_softc *);
+#	endif /* ATW_SYNDEBUG */
+
 #else
 #define ATW_DPRINTF(x)
 #define ATW_DPRINTF2(x)
@@ -241,16 +242,10 @@ void	atw_rfio_enable(struct atw_softc *, int);
 int	atw_rf3000_init(struct atw_softc *);
 int	atw_rf3000_tune(struct atw_softc *, u_int8_t);
 int	atw_rf3000_write(struct atw_softc *, u_int, u_int);
-#ifdef ATW_DEBUG
-int	atw_rf3000_read(struct atw_softc *sc, u_int, u_int *);
-#endif /* ATW_DEBUG */
 
 /* Silicon Laboratories Si4126 RF/IF Synthesizer */
 int	atw_si4126_tune(struct atw_softc *, u_int8_t);
 int	atw_si4126_write(struct atw_softc *, u_int, u_int);
-#ifdef ATW_DEBUG
-int	atw_si4126_read(struct atw_softc *, u_int, u_int *);
-#endif /* ATW_DEBUG */
 
 const struct atw_txthresh_tab atw_txthresh_tab_lo[] = ATW_TXTHRESH_TAB_LO_RATE;
 const struct atw_txthresh_tab atw_txthresh_tab_hi[] = ATW_TXTHRESH_TAB_HI_RATE;
@@ -1216,15 +1211,12 @@ atw_init(struct ifnet *ifp)
 	ic->ic_flags &= ~IEEE80211_F_IBSSON;
 	switch (ic->ic_opmode) {
 	case IEEE80211_M_STA:
-		sc->sc_opmode &= ~ATW_NAR_EA;
 		break;
 	case IEEE80211_M_AHDEMO: /* XXX */
 	case IEEE80211_M_IBSS:
 		ic->ic_flags |= IEEE80211_F_IBSSON;
 		/*FALLTHROUGH*/
 	case IEEE80211_M_HOSTAP: /* XXX */
-		/* EA bit seems important for ad hoc reception. */
-		sc->sc_opmode |= ATW_NAR_EA;
 		break;
 	case IEEE80211_M_MONITOR: /* XXX */
 		break;
@@ -1340,7 +1332,7 @@ atw_tune(struct atw_softc *sc)
 	return rc;
 }
 
-#ifdef ATW_DEBUG
+#ifdef ATW_SYNDEBUG
 void
 atw_si4126_print(struct atw_softc *sc)
 {
@@ -1359,7 +1351,7 @@ atw_si4126_print(struct atw_softc *sc)
 		printf("%05x\n", val);
 	}
 }
-#endif /* ATW_DEBUG */
+#endif /* ATW_SYNDEBUG */
 
 /* Tune to channel chan by adjusting the Si4126 RF/IF synthesizer.
  *
@@ -1387,9 +1379,9 @@ atw_si4126_tune(struct atw_softc *sc, u_int8_t chan)
 	u_int32_t reg;
 	u_int16_t gain;
 
-#ifdef ATW_DEBUG
+#ifdef ATW_SYNDEBUG
 	atw_si4126_print(sc);
-#endif /* ATW_DEBUG */
+#endif /* ATW_SYNDEBUG */
 
 	if (chan == 14)
 		mhz = 2484;
@@ -1470,9 +1462,9 @@ atw_si4126_tune(struct atw_softc *sc, u_int8_t chan)
 		ATW_WRITE(sc, ATW_GPIO, reg);
 	}
 
-#ifdef ATW_DEBUG
+#ifdef ATW_SYNDEBUG
 	atw_si4126_print(sc);
-#endif /* ATW_DEBUG */
+#endif /* ATW_SYNDEBUG */
 
 out:
 	atw_rfio_enable(sc, 0);
@@ -1542,7 +1534,7 @@ out:
 	return rc;
 }
 
-#ifdef ATW_DEBUG
+#ifdef ATW_BBPDEBUG
 void
 atw_rf3000_print(struct atw_softc *sc)
 {
@@ -1561,7 +1553,7 @@ atw_rf3000_print(struct atw_softc *sc)
 		printf("%08x\n", val);
 	}
 }
-#endif /* ATW_DEBUG */
+#endif /* ATW_BBPDEBUG */
 
 /* Set the power settings on the BBP for channel `chan'. */
 int
@@ -1586,9 +1578,9 @@ atw_rf3000_tune(struct atw_softc *sc, u_int8_t chan)
 		lna_gs_thresh >>= 8;
 	}
 
-#ifdef ATW_DEBUG
+#ifdef ATW_BBPDEBUG
 	atw_rf3000_print(sc);
-#endif /* ATW_DEBUG */
+#endif /* ATW_BBPDEBUG */
 
 	DPRINTF(sc, ("%s: chan %d txpower %02x, lpf_cutoff %02x, "
 	    "lna_gs_thresh %02x\n",
@@ -1613,9 +1605,9 @@ atw_rf3000_tune(struct atw_softc *sc, u_int8_t chan)
 	    ATW_PLCPHD_SERVICE_MASK);
 	ATW_WRITE(sc, ATW_PLCPHD, reg);
 
-#ifdef ATW_DEBUG
+#ifdef ATW_BBPDEBUG
 	atw_rf3000_print(sc);
-#endif /* ATW_DEBUG */
+#endif /* ATW_BBPDEBUG */
 
 out:
 	atw_rfio_enable(sc, 0);
@@ -1679,7 +1671,7 @@ atw_rf3000_write(struct atw_softc *sc, u_int addr, u_int val)
  * of the magic I have derived from a binary-only driver concerns
  * the "chip address" (see the RF3000 manual).
  */
-#ifdef ATW_DEBUG
+#ifdef ATW_BBPDEBUG
 int
 atw_rf3000_read(struct atw_softc *sc, u_int addr, u_int *val)
 {
@@ -1719,7 +1711,7 @@ atw_rf3000_read(struct atw_softc *sc, u_int addr, u_int *val)
 		*val = MASK_AND_RSHIFT(reg, ATW_BBPCTL_DATA_MASK);
 	return 0;
 }
-#endif /* ATW_DEBUG */
+#endif /* ATW_BBPDEBUG */
 
 /* Write a register on the Si4126 RF/IF synthesizer using the registers
  * provided by the ADM8211 for that purpose.
@@ -1779,7 +1771,7 @@ atw_si4126_write(struct atw_softc *sc, u_int addr, u_int val)
  * XXX This does not seem to work. The ADM8211 must require more or
  * different magic to read the chip than to write it.
  */
-#ifdef ATW_DEBUG
+#ifdef ATW_SYNDEBUG
 int
 atw_si4126_read(struct atw_softc *sc, u_int addr, u_int *val)
 {
@@ -1822,7 +1814,7 @@ atw_si4126_read(struct atw_softc *sc, u_int addr, u_int *val)
 		                       ATW_SYNCTL_DATA_MASK);
 	return 0;
 }
-#endif /* ATW_DEBUG */
+#endif /* ATW_SYNDEBUG */
 
 /* XXX is the endianness correct? test. */
 #define	atw_calchash(addr) \
@@ -3491,17 +3483,7 @@ atw_start(struct ifnet *ifp)
 		hh->atw_paylen = htole16(m0->m_pkthdr.len -
 		    sizeof(struct atw_frame));
 
-#if 0
-		/* this virtually guaranteed that WEP-encrypted frames
-		 * are fragmented. oops.
-		 */
-		hh->atw_fragthr = htole16(m0->m_pkthdr.len -
-		    sizeof(struct atw_frame) + sizeof(struct ieee80211_frame));
-		hh->atw_fragthr &= htole16(ATW_FRAGTHR_FRAGTHR_MASK);
-#else
 		hh->atw_fragthr = htole16(ATW_FRAGTHR_FRAGTHR_MASK);
-#endif
-
 		hh->atw_rtylmt = 3;
 		hh->atw_hdrctl = htole16(ATW_HDRCTL_UNKNOWN1);
 		if (do_encrypt) {
@@ -3522,15 +3504,6 @@ atw_start(struct ifnet *ifp)
 		}
 
 #ifdef ATW_DEBUG
-		/* experimental stuff */
-		if (atw_xrtylmt != ~0)
-			hh->atw_rtylmt = atw_xrtylmt;
-		if (atw_xhdrctl != 0)
-			hh->atw_hdrctl |= htole16(atw_xhdrctl);
-		if (atw_xservice != IEEE80211_PLCP_SERVICE)
-			hh->atw_service = atw_xservice;
-		if (atw_xpaylen != 0)
-			hh->atw_paylen = htole16(atw_xpaylen);
 		hh->atw_fragnum = 0;
 
 		if ((ifp->if_flags & IFF_DEBUG) != 0 && atw_debug > 2) {
