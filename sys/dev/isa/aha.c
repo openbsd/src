@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha.c,v 1.22 1996/05/31 10:57:04 deraadt Exp $	*/
+/*	$OpenBSD: aha.c,v 1.23 1996/06/01 12:18:30 deraadt Exp $	*/
 /*	$NetBSD: aha.c,v 1.11 1996/05/12 23:51:23 mycroft Exp $	*/
 
 #define AHADIAG
@@ -1361,14 +1361,14 @@ aha_timeout(arg)
 	struct aha_softc *sc;
 	int s;
 
-	sc_print_addr(sc_link);
-	printf("timed out");
-
 	s = splbio();
 	isadma_copyfrombuf((caddr_t)ccb, CCB_PHYS_SIZE, 1, ccb->ccb_phys);
 	xs = ccb->xs;
 	sc_link = xs->sc_link;
 	sc = sc_link->adapter_softc;
+
+	sc_print_addr(sc_link);
+	printf("timed out");
 
 #ifdef AHADIAG
 	/*
