@@ -1,3 +1,4 @@
+dnl	$OpenBSD: packages,v 1.22 2002/03/30 16:13:39 miod Exp $
 As complete as your OpenBSD system is, you may want to add any of several
 excellent third party software applications.  There are several ways to do
 this.  You can:
@@ -17,9 +18,7 @@ If you purchased the OpenBSD CD-ROM set you already have several popular
 ``packages'', and the ``ports'' collection.
 
 Instructions for installing applications from the various sources using
-the different installation methods follow.  If emacs is to be installed
-it should be installed first as it creates the ``info'' directory file
-that may be modified by other applications.
+the different installation methods follow.
 
 You should also refer to the packages(7) manual page.
 
