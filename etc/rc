@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.15 1996/06/12 09:02:59 deraadt Exp $
+#	$OpenBSD: rc,v 1.16 1996/06/12 09:13:20 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -98,7 +98,7 @@ if [ -d /var/yp/binding ]; then
 	if [ -d /var/yp/`domainname` ]; then
 		# yp server capabilities needed...
 		echo -n ' ypserv';		ypserv -d
-		echo -n ' ypxfrd';		ypxfrd
+		#echo -n ' ypxfrd';		ypxfrd
 
 		# if we are the master server, run rpc.yppasswdd
 		_host1=`ypwhich -m passwd 2> /dev/null`
