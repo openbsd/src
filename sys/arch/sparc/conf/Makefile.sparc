@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sparc,v 1.20 2001/12/24 23:12:14 miod Exp $
+#	$OpenBSD: Makefile.sparc,v 1.21 2001/12/25 21:43:47 miod Exp $
 # 	$NetBSD: Makefile.sparc,v 1.32.4.1 1996/06/12 20:26:32 pk Exp $
 
 # Makefile for OpenBSD
@@ -29,6 +29,7 @@ CC?=	cc
 CPP?=	cpp
 LD?=	ld
 MKDEP?=	mkdep
+SIZE?=	size
 STRIP?=	strip
 
 # source tree is located via $S relative to the compilation directory

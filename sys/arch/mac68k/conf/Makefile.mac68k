@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.mac68k,v 1.24 2001/12/24 23:12:14 miod Exp $
+#	$OpenBSD: Makefile.mac68k,v 1.25 2001/12/25 21:43:45 miod Exp $
 #	$NetBSD: Makefile.mac68k,v 1.53 1997/04/15 06:11:38 scottr Exp $
 
 # Makefile for OpenBSD
@@ -29,6 +29,7 @@ CC?=	cc
 CPP?=	cpp
 LD?=	ld
 MKDEP?=	mkdep
+SIZE?=	size
 STRIP?=	strip
 
 # source tree is located via $S relative to the compilation directory
