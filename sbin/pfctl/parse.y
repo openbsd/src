@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.207 2002/11/23 18:32:29 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.208 2002/11/23 22:57:54 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2655,7 +2655,7 @@ expand_rule(struct pf_rule *r,
 		}
 
 		TAILQ_INIT(&r->rt_pool.list);
-		for (h = rt_pool_hosts; h; h = h->next) {
+		for (h = rt_pool_hosts; h != NULL; h = h->next) {
 			pa = calloc(1, sizeof(struct pf_pooladdr));
 			if (pa == NULL) {
 				yyerror("calloc");
@@ -2755,7 +2755,7 @@ expand_nat(struct pf_nat *n,
 		n->dst.port_op = dst_port->op;
 
 		TAILQ_INIT(&n->rpool.list);
-		for (h = rpool_hosts; h; h = h->next) {
+		for (h = rpool_hosts; h != NULL; h = h->next) {
 			pa = calloc(1, sizeof(struct pf_pooladdr));
 			if (pa == NULL) {
 				yyerror("calloc");
@@ -2768,7 +2768,7 @@ expand_nat(struct pf_nat *n,
 
 		TAILQ_INIT(&n->rpool.list);
 		for (h = rpool_hosts; h; h = h->next) {
-			pa = calloc(1, sizeof(struct pf_pooladdr));
+			pa = calloc(1, sizeof(struct pf_pooladdr));	
 			if (pa == NULL) {
 				yyerror("calloc");
 				error++;
@@ -2846,7 +2846,7 @@ expand_rdr(struct pf_rdr *r, struct node_if *interfaces,
 		r->daddr = dst_host->addr;
 
 		TAILQ_INIT(&r->rpool.list);
-		for (h = rpool_hosts; h; h = h->next) {
+		for (h = rpool_hosts; h != NULL; h = h->next) {
 			pa = calloc(1, sizeof(struct pf_pooladdr));
 			if (pa == NULL) {
 				yyerror("calloc");
