@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.h,v 1.18 2000/10/19 16:31:42 jason Exp $	*/
+/*	$OpenBSD: interface.h,v 1.19 2000/12/07 21:52:38 mickey Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/interface.h,v 1.18 2000/10/19 16:31:42 jason Exp $ (LBL)
+ * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/interface.h,v 1.19 2000/12/07 21:52:38 mickey Exp $ (LBL)
  */
 
 #ifndef tcpdump_interface_h
@@ -199,6 +199,7 @@ extern void isoclns_print(const u_char *, u_int, u_int, const u_char *,
 	const u_char *);
 extern void krb_print(const u_char *, u_int);
 extern void l2tp_print(const u_char *dat, u_int length);
+extern void vrrp_print(const u_char *bp, u_int len, int ttl);
 extern void nfsreply_print(const u_char *, u_int, const u_char *);
 extern void nfsreq_print(const u_char *, u_int, const u_char *);
 extern void ns_print(const u_char *, u_int);
@@ -238,3 +239,5 @@ extern int rt6_print(const u_char *, const u_char *);
 extern void ospf6_print(const u_char *, u_int);
 extern void dhcp6_print(const u_char *, u_int, u_short, u_short);
 #endif /*INET6*/
+
+extern u_short in_cksum(const u_short *addr, register int len, u_short csum);

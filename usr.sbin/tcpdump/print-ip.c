@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ip.c,v 1.11 2000/10/03 14:31:57 ho Exp $	*/
+/*	$OpenBSD: print-ip.c,v 1.12 2000/12/07 21:52:38 mickey Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ip.c,v 1.11 2000/10/03 14:31:57 ho Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ip.c,v 1.12 2000/12/07 21:52:38 mickey Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -318,23 +318,34 @@ ip_optprint(register const u_char *cp, u_int length)
  * compute an IP header checksum.
  * don't modifiy the packet.
  */
-static int
-in_cksum(const struct ip *ip)
+u_short
+in_cksum(const u_short *addr, register int len, u_short csum)
 {
-	register const u_short *sp = (u_short *)ip;
-	register u_int32_t sum = 0;
-	register int count;
+	int nleft = len;
+	const u_short *w = addr;
+	u_short answer;
+	int sum = csum;
+
+ 	/*
+	 *  Our algorithm is simple, using a 32 bit accumulator (sum),
+	 *  we add sequential 16 bit words to it, and at the end, fold
+	 *  back all the carry bits from the top 16 bits into the lower
+	 *  16 bits.
+ 	 */
+	while (nleft > 1)  {
+		sum += *w++;
+		nleft -= 2;
+	}
+	if (nleft == 1)
+		sum += htons(*(u_char *)w<<8);
 
 	/*
-	 * No need for endian conversions.
+	 * add back carry outs from top 16 bits to low 16 bits
 	 */
-	for (count = ip->ip_hl * 2; --count >= 0; )
-		sum += *sp++;
-	while (sum > 0xffff)
-		sum = (sum & 0xffff) + (sum >> 16);
-	sum = ~sum & 0xffff;
-
-	return (sum);
+	sum = (sum >> 16) + (sum & 0xffff);	/* add hi 16 to low 16 */
+	sum += (sum >> 16);			/* add carry */
+	answer = ~sum;				/* truncate to 16 bits */
+	return (answer);
 }
 
 /*
@@ -520,6 +531,12 @@ ip_print(register const u_char *bp, register u_int length)
 				return;
 			}
 			break;
+#ifndef IPPROTO_VRRP  
+#define IPPROTO_VRRP 112
+#endif
+		case IPPROTO_VRRP:
+			vrrp_print(cp, len, ip->ip_ttl);
+			break;
 
 		default:
 			(void)printf("%s > %s:", ipaddr_string(&ip->ip_src),
@@ -581,7 +598,7 @@ ip_print(register const u_char *bp, register u_int length)
 			sep = ", ";
 		}
 		if ((u_char *)ip + hlen <= snapend) {
-			sum = in_cksum(ip);
+			sum = in_cksum((const u_short *)ip, hlen, 0);
 			if (sum != 0) {
 				(void)printf("%sbad cksum %x!", sep,
 					     ntohs(ip->ip_sum));
