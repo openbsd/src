@@ -33,7 +33,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.108 2001/10/11 13:45:21 markus Exp $");
+RCSID("$OpenBSD: session.c,v 1.109 2001/11/29 21:10:51 stevesk Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -73,8 +73,10 @@ struct Session {
 	int	row, col, xpixel, ypixel;
 	char	tty[TTYSZ];
 	/* X11 */
+	int	display_number;
 	char	*display;
 	int	screen;
+	char	*auth_display;
 	char	*auth_proto;
 	char	*auth_data;
 	int	single_connection;
@@ -1030,33 +1032,20 @@ do_child(Session *s, const char *command)
 				    _PATH_SSH_SYSTEM_RC);
 		} else if (do_xauth && options.xauth_location != NULL) {
 			/* Add authority data to .Xauthority if appropriate. */
-			char *screen = strchr(s->display, ':');
 
 			if (debug_flag) {
 				fprintf(stderr,
 				    "Running %.100s add "
 				    "%.100s %.100s %.100s\n",
-				    options.xauth_location, s->display,
+				    options.xauth_location, s->auth_display,
 				    s->auth_proto, s->auth_data);
-				if (screen != NULL)
-					fprintf(stderr,
-					    "Adding %.*s/unix%s %s %s\n",
-					    (int)(screen - s->display),
-					    s->display, screen,
-					    s->auth_proto, s->auth_data);
 			}
 			snprintf(cmd, sizeof cmd, "%s -q -",
 			    options.xauth_location);
 			f = popen(cmd, "w");
 			if (f) {
-				fprintf(f, "add %s %s %s\n", s->display,
+				fprintf(f, "add %s %s %s\n", s->auth_display,
 				    s->auth_proto, s->auth_data);
-				if (screen != NULL)
-					fprintf(f, "add %.*s/unix%s %s %s\n",
-					    (int)(screen - s->display),
-					    s->display, screen,
-					    s->auth_proto,
-					    s->auth_data);
 				pclose(f);
 			} else {
 				fprintf(stderr, "Could not run %s\n",
@@ -1549,6 +1538,8 @@ session_close(Session *s)
 		xfree(s->term);
 	if (s->display)
 		xfree(s->display);
+	if (s->auth_display)
+		xfree(s->auth_display);
 	if (s->auth_data)
 		xfree(s->auth_data);
 	if (s->auth_proto)
@@ -1644,6 +1635,8 @@ int
 session_setup_x11fwd(Session *s)
 {
 	struct stat st;
+	char display[512], auth_display[512];
+	char hostname[MAXHOSTNAMELEN];
 
 	if (no_x11_forwarding_flag) {
 		packet_send_debug("X11 forwarding disabled in user configuration file.");
@@ -1667,11 +1660,35 @@ session_setup_x11fwd(Session *s)
 		debug("X11 display already set.");
 		return 0;
 	}
-	s->display = x11_create_display_inet(s->screen, options.x11_display_offset);
-	if (s->display == NULL) {
+	s->display_number = x11_create_display_inet(options.x11_display_offset,
+	    options.gateway_ports);
+	if (s->display_number == -1) {
 		debug("x11_create_display_inet failed.");
 		return 0;
 	}
+
+	/* Set up a suitable value for the DISPLAY variable. */
+	if (gethostname(hostname, sizeof(hostname)) < 0)
+		fatal("gethostname: %.100s", strerror(errno));
+	/*
+	 * auth_display must be used as the displayname when the
+	 * authorization entry is added with xauth(1).  This will be
+	 * different than the DISPLAY string for localhost displays.
+	 */
+	if (!options.gateway_ports) {
+		snprintf(display, sizeof display, "localhost:%d.%d",
+		    s->display_number, s->screen);
+		snprintf(auth_display, sizeof auth_display, "%.400s/unix:%d.%d",
+		    hostname, s->display_number, s->screen);
+		s->display = xstrdup(display);
+		s->auth_display = xstrdup(auth_display);
+	} else {
+		snprintf(display, sizeof display, "%.400s:%d.%d", hostname,
+		    s->display_number, s->screen);
+		s->display = xstrdup(display);
+		s->auth_display = xstrdup(display);
+	}
+
 	return 1;
 }
 
