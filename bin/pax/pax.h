@@ -1,4 +1,4 @@
-/*	$OpenBSD: pax.h,v 1.3 1996/06/23 14:20:40 deraadt Exp $	*/
+/*	$OpenBSD: pax.h,v 1.4 1996/09/22 20:09:54 tholo Exp $	*/
 /*	$NetBSD: pax.h,v 1.3 1995/03/21 09:07:41 cgd Exp $	*/
 
 /*-
@@ -72,6 +72,12 @@
 #define ISBLK		2	/* block device */
 #define ISTAPE		3	/* tape drive */
 #define ISPIPE		4	/* pipe/socket */
+
+/*
+ * Compression types
+ */
+#define	GZIP_CMP	1	/* gzip format */
+#define	COMPRESS_CMP	2	/* compress format */
 
 /*
  * Format Specific Routine Table

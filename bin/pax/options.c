@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.8 1996/08/10 03:08:00 tholo Exp $	*/
+/*	$OpenBSD: options.c,v 1.9 1996/09/22 20:09:54 tholo Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: options.c,v 1.8 1996/08/10 03:08:00 tholo Exp $";
+static char rcsid[] = "$OpenBSD: options.c,v 1.9 1996/09/22 20:09:54 tholo Exp $";
 #endif
 #endif /* not lint */
 
@@ -82,9 +82,6 @@ static void tar_usage __P((void));
 static void cpio_options __P((register int, register char **));
 static void cpio_usage __P((void));
 #endif
-
-#define GZIP_CMD	"gzip"		/* command to run as gzip */
-#define COMPRESS_CMD	"compress"	/* command to run as compress */
 
 /*
  *	Format specific routine table - MUST BE IN SORTED ORDER BY NAME
@@ -390,8 +387,7 @@ pax_options(argc, argv)
 			/*
 			 * use gzip.  Non standard option.
 			 */
-			zflag = 1;
-			gzip_program = GZIP_CMD;
+			zflag = GZIP_CMP;
 			break;
 		case 'B':
 			/*
@@ -703,8 +699,7 @@ tar_options(argc, argv)
 			/*
 			 * use gzip.  Non standard option.
 			 */
-			zflag = 1;
-			gzip_program = GZIP_CMD;
+			zflag = GZIP_CMP;
 			break;
 		case 'B':
 			/*
@@ -739,8 +734,7 @@ tar_options(argc, argv)
 			/*
 			 * use compress.
 			 */
-			zflag = 1;
-			gzip_program = COMPRESS_CMD;
+			zflag = COMPRESS_CMP;
 			break;
 		case '0':
 			arcname = DEV_0;
