@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.2 2004/02/24 00:20:45 mickey Exp $ */
+/*	$OpenBSD: mem.c,v 1.3 2004/07/22 00:48:41 art Exp $ */
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -172,8 +172,9 @@ mmrw(dev_t dev, struct uio *uio, int flags)
                                 if (v < (vaddr_t)&etext &&
                                     uio->uio_rw == UIO_WRITE)
                                         return EFAULT;
-                        } else if (!uvm_kernacc((caddr_t)v, c,
-			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
+                        } else if ((!uvm_kernacc((caddr_t)v, c,
+			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE)) &&
+			    (v < PMAP_DIRECT_BASE && v > PMAP_DIRECT_END))
 				return (EFAULT);
 			error = uiomove((caddr_t)v, c, uio);
 			continue;
