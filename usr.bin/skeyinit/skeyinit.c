@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.29 2001/06/23 22:29:14 millert Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.30 2001/11/01 18:26:58 miod Exp $	*/
 
 /* OpenBSD S/Key (skeyinit.c)
  *
@@ -294,7 +294,7 @@ main(argc, argv)
 	/* Don't save algorithm type for md4 (maintain record length) */
 	/* XXX - should check return values of fprintf + fclose */
 	if (oldmd4)
-		(void)fprintf(skey.keyfile, "%s %04d %-* %s %-21s\n",
+		(void)fprintf(skey.keyfile, "%s %04d %-*s %s %-21s\n",
 		    pp->pw_name, n, seedlen, seed, skey.val, tbuf);
 	else
 		(void)fprintf(skey.keyfile, "%s %s %04d %-*s %s %-21s\n",
