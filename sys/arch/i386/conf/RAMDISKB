@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKB,v 1.13 2000/03/02 18:38:27 mickey Exp $
+#	$OpenBSD: RAMDISKB,v 1.14 2000/04/03 21:14:13 deraadt Exp $
 #	from: OpenBSD: INST,v 1.19 1996/11/05 03:49:13 tholo Exp 
 #
 #	Install kernels no longer support X.
@@ -184,7 +184,7 @@ ep0	at isa? port ? irq ?			# 3C509 ethernet cards
 ep*	at isa? port ? irq ?			# 3C509 ethernet cards
 ef*	at isapnp?				# 3C515 PnP ethernet
 ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN and 3C507
-ie1	at isa? port 0x300 irq 10		# EtherExpress
+#ie1	at isa? port 0x300 irq 10		# EtherExpress
 le0	at isa? port 0x360 irq 15 drq 6		# IsoLan, NE2100, and DEPCA
 ex0	at isa? port 0x320 irq 5		# Intel EtherExpress PRO/10
 ep0	at eisa? slot ?
@@ -202,7 +202,6 @@ ne*	at pcmcia? function ?			# PCMCIA based NE2000 cards
 ep*	at pcmcia? function ?			# PCMCIA based 3c5xx cards
 sm*	at pcmcia? function ?			# PCMCIA based sm cards
 xe*	at pcmcia? function ?			# Xircom ethernet
-wi*	at pcmcia? function ?			# WaveLAN IEEE 802.11
 #fpa*	at pci? dev ? function ?		# DEC DEFPA FDDI cards
 xl*	at pci? dev ? function ?		# 3C9xx ethernet cards
 rl*	at pci? dev ? function ?		# RealTek 81[23]9 ethernet
@@ -211,6 +210,12 @@ tl*	at pci? dev ? function ?		# Compaq Thunderlan ethernet cards
 vr*	at pci? dev ? function ?		# VIA Rhine ethernet
 dc*	at pci? dev ? function ?		# 21143, "tulip" clone ethernet
 wb*	at pci? dev ? function ?		# Winbond W89C840F ethernet
+
+wi*	at pcmcia? function ?			# WaveLAN IEEE 802.11
+#awi*	at pcmcia? function ?			# Bay Networks IEEE 802.11FH
+#an*	at pcmcia? function ?			# Aironet IEEE 802.11DS
+#cnw*	at pcmcia? function ?			# Xircom Netwave
+#ray*	at pcmcia? function ?			# Raylink Aviator2.4/Pro 802.11FH
 
 # Media Independent Interface (mii) drivers
 exphy*	at mii? phy ?				# 3Com internal PHYs
