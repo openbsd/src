@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: pmap_rmt.c,v 1.16 1998/08/14 21:39:37 deraadt Exp $";
+static char *rcsid = "$OpenBSD: pmap_rmt.c,v 1.17 2000/05/19 17:33:42 itojun Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -52,6 +52,7 @@ static char *rcsid = "$OpenBSD: pmap_rmt.c,v 1.16 1998/08/14 21:39:37 deraadt Ex
 #include <net/if.h>
 #include <sys/ioctl.h>
 #include <arpa/inet.h>
+#include <ifaddrs.h>
 #define MAX_BROADCAST_SIZE 1400
 
 static struct timeval timeout = { 3, 0 };
@@ -166,69 +167,49 @@ newgetbroadcastnets(addrsp, sock)
 	struct in_addr **addrsp;
 	int sock;  /* any valid socket will do */
 {
-	char *inbuf = NULL, *ninbuf;
-	struct ifconf ifc;
-	struct ifreq ifreq, *ifr;
+	struct ifaddrs *ifap, *ifa;
 	struct sockaddr_in *sin;
-	char *cp, *cplim;
-	int inbuflen = 256;
 	struct in_addr *addrs;
-	int i = 0;
+	int i = 0, n = 0;
 
-	while (1) {
-		ifc.ifc_len = inbuflen;
-		ninbuf = realloc(inbuf, inbuflen);
-		if (ninbuf == NULL) {
-			if (inbuf)
-				free(inbuf);
-			return (0);
-		}
-		ifc.ifc_buf = inbuf = ninbuf;
-		if (ioctl(sock, SIOCGIFCONF, (char *)&ifc) < 0) {
-			perror("broadcast: ioctl (get interface configuration)");
-			free(inbuf);
-			return (0);
-		}
-		if (ifc.ifc_len + sizeof(ifreq) < inbuflen)
-			break;
-		inbuflen *= 2;
+	if (getifaddrs(&ifap) != 0) {
+		perror("broadcast: getifaddrs");
+		return 0;
 	}
-	addrs = (struct in_addr *)malloc((inbuflen / sizeof *sin) * sizeof sin);
+
+	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+		if (ifa->ifa_addr->sa_family != AF_INET)
+			continue;
+		if ((ifa->ifa_flags & IFF_BROADCAST) &&
+		    (ifa->ifa_flags & IFF_UP) &&
+		    ifa->ifa_broadaddr &&
+		    ifa->ifa_broadaddr->sa_family == AF_INET) {
+			n++;
+		}
+	}
+
+	addrs = (struct in_addr *)malloc(n * sizeof(*addrs));
 	if (addrs == NULL) {
+		freeifaddrs(ifap);
 		*addrsp = NULL;
-		free(inbuf);
-		return (0);
+		return 0;
 	}
 
-#define max(a, b) (a > b ? a : b)
-#define size(p)	max((p).sa_len, sizeof(p))
-	cplim = inbuf + ifc.ifc_len; /*skip over if's with big ifr_addr's */
-	for (cp = inbuf; cp < cplim;
-	    cp += sizeof (ifr->ifr_name) + size(ifr->ifr_addr)) {
-		ifr = (struct ifreq *)cp;
-		if (ifr->ifr_addr.sa_family != AF_INET)
+	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+		if (ifa->ifa_addr->sa_family != AF_INET)
 			continue;
-		ifreq = *ifr;
-		if (ioctl(sock, SIOCGIFFLAGS, (char *)&ifreq) < 0) {
-			perror("broadcast: ioctl (get interface flags)");
-			continue;
-		}
-		if ((ifreq.ifr_flags & IFF_BROADCAST) &&
-		    (ifreq.ifr_flags & IFF_UP)) {
-			sin = (struct sockaddr_in *)&ifr->ifr_addr;
-			if (ioctl(sock, SIOCGIFBRDADDR, (char *)&ifreq) < 0) {
-				addrs[i++] =
-				    inet_makeaddr(inet_netof(sin->sin_addr),
-				    INADDR_ANY);
-			} else {
-				addrs[i++] = ((struct sockaddr_in*)
-				  &ifreq.ifr_addr)->sin_addr;
-			}
+		if ((ifa->ifa_flags & IFF_BROADCAST) &&
+		    (ifa->ifa_flags & IFF_UP) &&
+		    ifa->ifa_broadaddr &&
+		    ifa->ifa_broadaddr->sa_family == AF_INET) {
+			sin = (struct sockaddr_in *)ifa->ifa_broadaddr;
+			addrs[i++] = sin->sin_addr;
 		}
 	}
-	free(inbuf);
+
+	freeifaddrs(ifap);
 	*addrsp = addrs;
-	return (i);
+	return i;
 }
 
 typedef bool_t (*resultproc_t)();
