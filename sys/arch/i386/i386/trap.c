@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.42 2001/09/13 14:37:52 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.43 2001/09/20 11:57:18 art Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -184,6 +184,7 @@ trap(frame)
 	int resume;
 	vm_prot_t vftype, ftype;
 	union sigval sv;
+	caddr_t onfault;
 
 	uvmexp.traps++;
 
@@ -464,7 +465,10 @@ trap(frame)
 			}
 		}
 
+		onfault = p->p_addr->u_pcb.pcb_onfault;
+		p->p_addr->u_pcb.pcb_onfault = NULL;
 		rv = uvm_fault(map, va, 0, ftype);
+		p->p_addr->u_pcb.pcb_onfault = onfault;
 		if (rv == KERN_SUCCESS) {
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;

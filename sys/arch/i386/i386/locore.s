@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.57 2001/08/26 17:45:00 deraadt Exp $	*/
+/*	$OpenBSD: locore.s,v 1.58 2001/09/20 11:57:18 art Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -862,12 +862,11 @@ ENTRY(memcpy)
 ENTRY(copyout)
 	pushl	%esi
 	pushl	%edi
-	movl	_curpcb,%eax
-	movl	$_copy_fault,PCB_ONFAULT(%eax)
+	pushl	$0	
 	
-	movl	12(%esp),%esi
-	movl	16(%esp),%edi
-	movl	20(%esp),%eax
+	movl	16(%esp),%esi
+	movl	20(%esp),%edi
+	movl	24(%esp),%eax
 
 	/*
 	 * We check that the end of the destination buffer is not past the end
@@ -932,7 +931,10 @@ ENTRY(copyout)
 	jmp	_copy_fault
 #endif /* I386_CPU */
 
-3:	/* bcopy(%esi, %edi, %eax); */
+3:	movl	_C_LABEL(curpcb),%edx
+	movl	$_C_LABEL(copy_fault),PCB_ONFAULT(%edx)
+
+	/* bcopy(%esi, %edi, %eax); */
 	cld
 	movl	%eax,%ecx
 	shrl	$2,%ecx
@@ -942,12 +944,11 @@ ENTRY(copyout)
 	andb	$3,%cl
 	rep
 	movsb
-	xorl	%eax,%eax
 
+	popl	PCB_ONFAULT(%edx)
 	popl	%edi
 	popl	%esi
-	movl	_curpcb,%edx
-	movl	%eax,PCB_ONFAULT(%edx)
+	xorl	%eax,%eax
 	ret
 
 /*
@@ -957,12 +958,13 @@ ENTRY(copyout)
 ENTRY(copyin)
 	pushl	%esi
 	pushl	%edi
-	movl	_curpcb,%eax
-	movl	$_copy_fault,PCB_ONFAULT(%eax)
+	movl	_C_LABEL(curpcb),%eax
+	pushl	$0
+	movl	$_C_LABEL(copy_fault),PCB_ONFAULT(%eax)
 	
-	movl	12(%esp),%esi
-	movl	16(%esp),%edi
-	movl	20(%esp),%eax
+	movl	16(%esp),%esi
+	movl	20(%esp),%edi
+	movl	24(%esp),%eax
 
 	/*
 	 * We check that the end of the destination buffer is not past the end
@@ -985,19 +987,19 @@ ENTRY(copyin)
 	andb	$3,%cl
 	rep
 	movsb
-	xorl	%eax,%eax
 
+	movl	_C_LABEL(curpcb),%edx
+	popl	PCB_ONFAULT(%edx)
 	popl	%edi
 	popl	%esi
-	movl	_curpcb,%edx
-	movl	%eax,PCB_ONFAULT(%edx)
+	xorl	%eax,%eax
 	ret
 
 ENTRY(copy_fault)
+	movl	_C_LABEL(curpcb),%edx
+	popl	PCB_ONFAULT(%edx)
 	popl	%edi
 	popl	%esi
-	movl	_curpcb,%edx
-	movl	$0,PCB_ONFAULT(%edx)
 	movl	$EFAULT,%eax
 	ret
 
