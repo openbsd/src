@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.39 2004/12/25 23:02:25 miod Exp $	*/
+/*	$OpenBSD: fd.c,v 1.40 2005/03/12 00:09:01 miod Exp $	*/
 /*	$NetBSD: fd.c,v 1.51 1997/05/24 20:16:19 pk Exp $	*/
 
 /*-
@@ -1409,7 +1409,7 @@ loop:
 		 block = (fd->sc_cylin * type->heads + head) * type->sectrac + sec;
 		 if (block != fd->sc_blkno) {
 			 printf("fdcintr: block %d != blkno %d\n", block, fd->sc_blkno);
-#ifdef DDB
+#if defined(FD_DEBUG) && defined(DDB)
 			 Debugger();
 #endif
 		 }}
