@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.53 2002/10/17 22:08:37 art Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.54 2002/10/29 01:26:58 art Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -1441,7 +1441,7 @@ uvm_unmap_remove(map, start, end, entry_list)
 				    entry->end - vm_map_min(kernel_map));
 			} else {
 				pmap_remove(pmap_kernel(), entry->start,
-				    entry->start + len);
+				    entry->end);
 				uvm_km_pgremove(entry->object.uvm_obj,
 				    entry->start - vm_map_min(kernel_map),
 				    entry->end - vm_map_min(kernel_map));
