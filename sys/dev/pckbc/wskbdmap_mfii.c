@@ -1,4 +1,4 @@
-/*	$OpenBSD: wskbdmap_mfii.c,v 1.25 2004/07/26 14:05:59 miod Exp $ */
+/*	$OpenBSD: wskbdmap_mfii.c,v 1.26 2005/02/22 19:41:44 mickey Exp $ */
 /*	$NetBSD: wskbdmap_mfii.c,v 1.15 2000/05/19 16:40:04 drochner Exp $	*/
 
 /*-
@@ -230,7 +230,7 @@ static const keysym_t pckbd_keydesc_sv[] = {
     KC(27),  KS_dead_diaeresis,	KS_dead_circumflex, KS_dead_tilde,
     KC(39),  KS_odiaeresis,
     KC(40),  KS_adiaeresis,
-    KC(41),  KS_paragraph,	KS_onehalf,
+    KC(41),  KS_section,	KS_onehalf,
     KC(86),  KS_less,		KS_greater,	KS_bar,
     KC(184), KS_Mode_switch,	KS_Multi_key,
 };
