@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.24 2003/06/03 14:28:16 ho Exp $	*/
+/*	$OpenBSD: cert.c,v 1.25 2004/03/31 10:54:46 ho Exp $	*/
 /*	$EOM: cert.c,v 1.18 2000/09/28 12:53:27 niklas Exp $	*/
 
 /*
@@ -78,7 +78,8 @@ struct cert_handler cert_handler[] = {
 int
 cert_init (void)
 {
-  int i, err = 1;
+  size_t i;
+  int err = 1;
 
   for (i = 0; i < sizeof cert_handler / sizeof cert_handler[0]; i++)
     if (cert_handler[i].cert_init && !(*cert_handler[i].cert_init) ())
@@ -90,7 +91,8 @@ cert_init (void)
 int
 crl_init (void)
 {
-  int i, err = 1;
+  size_t i;
+  int err = 1;
 
   for (i = 0; i < sizeof cert_handler / sizeof cert_handler[0]; i++)
     if (cert_handler[i].crl_init && !(*cert_handler[i].crl_init) ())
@@ -102,7 +104,7 @@ crl_init (void)
 struct cert_handler *
 cert_get (u_int16_t id)
 {
-  int i;
+  size_t i;
 
   for (i = 0; i < sizeof cert_handler / sizeof cert_handler[0]; i++)
     if (id == cert_handler[i].id)

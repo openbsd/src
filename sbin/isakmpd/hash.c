@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash.c,v 1.13 2003/06/03 14:28:16 ho Exp $	*/
+/*	$OpenBSD: hash.c,v 1.14 2004/03/31 10:54:46 ho Exp $	*/
 /*	$EOM: hash.c,v 1.10 1999/04/17 23:20:34 niklas Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static struct hash hashes[] = {
 struct hash *
 hash_get (enum hashes hashtype)
 {
-  int i;
+  size_t i;
 
   LOG_DBG ((LOG_CRYPTO, 60, "hash_get: requested algorithm %d", hashtype));
 

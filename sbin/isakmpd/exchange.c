@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.c,v 1.91 2004/02/16 20:40:34 markus Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.92 2004/03/31 10:54:46 ho Exp $	*/
 /*	$EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	*/
 
 /*
@@ -1194,7 +1194,7 @@ exchange_dump_real (char *header, struct exchange *exchange, int class,
 {
   char buf[LOG_SIZE];
   /* Don't risk overflowing the final log buffer.  */
-  int bufsize_max = LOG_SIZE - strlen (header) - 32;
+  size_t bufsize_max = LOG_SIZE - strlen (header) - 32;
   struct sa *sa;
 
   LOG_DBG ((class, level,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.18 2003/09/24 11:12:31 markus Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.19 2004/03/31 10:54:46 ho Exp $	*/
 /*	$EOM: crypto.c,v 1.32 2000/03/07 20:08:51 niklas Exp $	*/
 
 /*
@@ -291,7 +291,7 @@ aes_decrypt (struct keystate *ks, u_int8_t *data, u_int16_t len)
 struct crypto_xf *
 crypto_get (enum transform id)
 {
-  int i;
+  size_t i;
 
   for (i = 0; i < sizeof transforms / sizeof transforms[0]; i++)
     if (id == transforms[i].id)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_auth.c,v 1.83 2004/03/19 14:04:43 hshoexer Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.84 2004/03/31 10:54:46 ho Exp $	*/
 /*	$EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	*/
 
 /*
@@ -124,7 +124,7 @@ static struct ike_auth ike_auth[] = {
 struct ike_auth *
 ike_auth_get (u_int16_t id)
 {
-  int i;
+  size_t i;
 
   for (i = 0; i < sizeof ike_auth / sizeof ike_auth[0]; i++)
     if (id == ike_auth[i].id)
@@ -251,7 +251,7 @@ ike_auth_get_key (int type, char *id, char *local_id, size_t *keylen)
 	      return 0;
 	    }
 
-	  if (read (fd, buf, size) != size)
+	  if (read (fd, buf, size) != (ssize_t)size)
 	    {
 	      free (buf);
 	      log_print ("ike_auth_get_key: "
