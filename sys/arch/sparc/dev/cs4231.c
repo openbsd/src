@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4231.c,v 1.8 2002/01/11 16:51:14 jason Exp $	*/
+/*	$OpenBSD: cs4231.c,v 1.9 2002/01/11 22:12:18 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -56,6 +56,9 @@
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
 #include <dev/auconv.h>
+#include <dev/ic/apcdmareg.h>
+#include <dev/ic/ad1848reg.h>
+#include <dev/ic/cs4231reg.h>
 #include <sparc/dev/cs4231reg.h>
 #include <sparc/dev/cs4231var.h>
 
@@ -99,6 +102,13 @@
 #else
 #define	DPRINTF(x)
 #endif
+
+/* Sun uses these pins in pin control register as GPIO */
+#define	CS_PC_LINEMUTE		XCTL0_ENABLE	/* mute line */
+#define	CS_PC_HDPHMUTE		XCTL1_ENABLE	/* mute headphone */
+
+/* cs4231 playback interrupt */
+#define CS_AFS_PI		0x10		/* playback interrupt */
 
 int	cs4231_match	__P((struct device *, void *, void *));
 void	cs4231_attach	__P((struct device *, struct device *, void *));
@@ -259,26 +269,26 @@ cs4231_intr(v)
 	csr = regs->dma_csr;
 	regs->dma_csr = csr;
 
-	if ((csr & CS_DMACSR_EIE) && (csr & CS_DMACSR_EI)) {
+	if ((csr & APC_CSR_EIE) && (csr & APC_CSR_EI)) {
 		printf("%s: error interrupt\n", sc->sc_dev.dv_xname);
 		r = 1;
 	}
 
-	if ((csr & CS_DMACSR_PIE) && (csr & CS_DMACSR_PI)) {
+	if ((csr & APC_CSR_PIE) && (csr & APC_CSR_PI)) {
 		/* playback interrupt */
 		r = 1;
 	}
 
-	if ((csr & CS_DMACSR_GIE) && (csr & CS_DMACSR_GI)) {
+	if ((csr & APC_CSR_GIE) && (csr & APC_CSR_GI)) {
 		/* general interrupt */
 		status = regs->status;
-		if (status & (CS_STATUS_INT | CS_STATUS_SER)) {
-			regs->iar = CS_IAR_AFS;
+		if (status & (INTERRUPT_STATUS | SAMPLE_ERROR)) {
+			regs->iar = CS_IRQ_STATUS;
 			reg = regs->idr;
 			if (reg & CS_AFS_PI) {
-				regs->iar = CS_IAR_PBLB;
+				regs->iar = SP_LOWER_BASE_COUNT;
 				regs->idr = 0xff;
-				regs->iar = CS_IAR_PBUB;
+				regs->iar = SP_UPPER_BASE_COUNT;
 				regs->idr = 0xff;
 			}
 			regs->status = 0;
@@ -286,7 +296,7 @@ cs4231_intr(v)
 		r = 1;
 	}
 
-	if ((csr & CS_DMACSR_PMIE) && (csr & CS_DMACSR_PMI)) {
+	if ((csr & APC_CSR_PMIE) && (csr & APC_CSR_PMI)) {
 		u_int32_t nextaddr, togo;
 
 		p = sc->sc_nowplaying;
@@ -309,7 +319,7 @@ cs4231_intr(v)
 	}
 
 #if 0
-	if (csr & CS_DMACSR_CI) {
+	if (csr & APC_CSR_CI) {
 		if (sc->sc_rintr != NULL) {
 			r = 1;
 			(*sc->sc_rintr)(sc->sc_rarg);
@@ -328,23 +338,23 @@ cs4231_mute_monitor(sc, mute)
 	struct cs4231_regs *regs = sc->sc_regs;
 
 	if (mute) {
-		regs->iar = CS_IAR_LDACOUT;		/* left dac */
-		regs->idr |= CS_LDACOUT_LDM;
-		regs->iar = CS_IAR_RDACOUT;		/* right dac */
-		regs->idr |= CS_RDACOUT_RDM;
+		regs->iar = SP_LEFT_OUTPUT_CONTROL;	/* left dac */
+		regs->idr |= OUTPUT_MUTE;
+		regs->iar = SP_RIGHT_OUTPUT_CONTROL;	/* right dac */
+		regs->idr |= OUTPUT_MUTE;
 #if 0
-		regs->iar = CS_IAR_MONO;		/* mono */
-		regs->idr |= CS_MONO_MOM;
+		regs->iar = CS_MONO_IO_CONTROL;		/* mono */
+		regs->idr |= MONO_OUTPUT_MUTE;
 #endif
 	}
 	else {
-		regs->iar = CS_IAR_LDACOUT;		/* left dac */
-		regs->idr &= ~CS_LDACOUT_LDM;
-		regs->iar = CS_IAR_RDACOUT;		/* right dac */
-		regs->idr &= ~CS_RDACOUT_RDM;
+		regs->iar = SP_LEFT_OUTPUT_CONTROL;	/* left dac */
+		regs->idr &= ~OUTPUT_MUTE;
+		regs->iar = SP_RIGHT_OUTPUT_CONTROL;	/* right dac */
+		regs->idr &= ~OUTPUT_MUTE;
 #if 0
-		regs->iar = CS_IAR_MONO;		/* mono */
-		regs->idr &= ~CS_MONO_MOM;
+		regs->iar = CS_MONO_IO_CONTROL;		/* mono */
+		regs->idr &= ~MONO_OUTPUT_MUTE;
 #endif
 	}
 }
@@ -366,21 +376,21 @@ cs4231_set_speed(sc, argp)
 	u_long arg = *argp;
 
 	static speed_struct speed_table[] = {
-		{5510,	(0 << 1) | CS_FSPB_C2SL_XTAL2},
-		{5510,	(0 << 1) | CS_FSPB_C2SL_XTAL2},
-		{6620,	(7 << 1) | CS_FSPB_C2SL_XTAL2},
-		{8000,	(0 << 1) | CS_FSPB_C2SL_XTAL1},
-		{9600,	(7 << 1) | CS_FSPB_C2SL_XTAL1},
-		{11025,	(1 << 1) | CS_FSPB_C2SL_XTAL2},
-		{16000,	(1 << 1) | CS_FSPB_C2SL_XTAL1},
-		{18900,	(2 << 1) | CS_FSPB_C2SL_XTAL2},
-		{22050,	(3 << 1) | CS_FSPB_C2SL_XTAL2},
-		{27420,	(2 << 1) | CS_FSPB_C2SL_XTAL1},
-		{32000,	(3 << 1) | CS_FSPB_C2SL_XTAL1},
-		{33075,	(6 << 1) | CS_FSPB_C2SL_XTAL2},
-		{33075,	(4 << 1) | CS_FSPB_C2SL_XTAL2},
-		{44100,	(5 << 1) | CS_FSPB_C2SL_XTAL2},
-		{48000,	(6 << 1) | CS_FSPB_C2SL_XTAL1},
+		{5510,	(0 << 1) | CLOCK_XTAL2},
+		{5510,	(0 << 1) | CLOCK_XTAL2},
+		{6620,	(7 << 1) | CLOCK_XTAL2},
+		{8000,	(0 << 1) | CLOCK_XTAL1},
+		{9600,	(7 << 1) | CLOCK_XTAL1},
+		{11025,	(1 << 1) | CLOCK_XTAL2},
+		{16000,	(1 << 1) | CLOCK_XTAL1},
+		{18900,	(2 << 1) | CLOCK_XTAL2},
+		{22050,	(3 << 1) | CLOCK_XTAL2},
+		{27420,	(2 << 1) | CLOCK_XTAL1},
+		{32000,	(3 << 1) | CLOCK_XTAL1},
+		{33075,	(6 << 1) | CLOCK_XTAL2},
+		{33075,	(4 << 1) | CLOCK_XTAL2},
+		{44100,	(5 << 1) | CLOCK_XTAL2},
+		{48000,	(6 << 1) | CLOCK_XTAL1},
 	};
 
 	int i, n, selected = -1;
@@ -428,18 +438,18 @@ cs4231_wait(sc)
 
 	DELAY(100);
 
-	regs->iar = ~(CS_IAR_MCE);
+	regs->iar = ~(MODE_CHANGE_ENABLE);
 	tries = CS_TIMEOUT;
-	while (regs->iar == CS_IAR_INIT && tries--) {
+	while (regs->iar == SP_IN_INIT && tries--) {
 		DELAY(100);
 	}
 	if (!tries)
 		printf("%s: waited too long to reset iar\n",
 		    sc->sc_dev.dv_xname);
 
-	regs->iar = CS_IAR_ERRINIT;
+	regs->iar = SP_TEST_AND_INIT;
 	tries = CS_TIMEOUT;
-	while (regs->idr == CS_ERRINIT_ACI && tries--) {
+	while (regs->idr == AUTO_CAL_IN_PROG && tries--) {
 		DELAY(100);
 	}
 	if (!tries)
@@ -468,54 +478,36 @@ cs4231_open(addr, flags)
 	sc->sc_pintr = 0;
 	sc->sc_parg = 0;
 
-	regs->dma_csr = CS_DMACSR_RESET;
+	regs->dma_csr = APC_CSR_RESET;
 	DELAY(10);
 	regs->dma_csr = 0;
 	DELAY(10);
-	regs->dma_csr |= CS_DMACSR_CODEC_RESET;
+	regs->dma_csr |= APC_CSR_CODEC_RESET;
 
 	DELAY(20);
 
-	regs->dma_csr &= ~(CS_DMACSR_CODEC_RESET);
-	regs->iar |= CS_IAR_MCE;
+	regs->dma_csr &= ~(APC_CSR_CODEC_RESET);
+	regs->iar |= MODE_CHANGE_ENABLE;
 
 	cs4231_wait(sc);
 
-	regs->iar = CS_IAR_MCE | CS_IAR_MODEID;
-	regs->idr = CS_MODEID_MODE2;
-
-	regs->iar = CS_IAR_VID;
-	if ((regs->idr & CS_VID_CHIP_MASK) == CS_VID_CHIP_CS4231) {
-		switch (regs->idr & CS_VID_VER_MASK) {
-		case CS_VID_VER_CS4231A:
-		case CS_VID_VER_CS4231:
-		case CS_VID_VER_CS4232:
-			break;
-		default:
-			printf("%s: unknown CS version: %d\n",
-			    sc->sc_dev.dv_xname, regs->idr & CS_VID_VER_MASK);
-		}
-	}
-	else {
-		printf("%s: unknown CS chip/version: %d/%d\n",
-		    sc->sc_dev.dv_xname, regs->idr & CS_VID_CHIP_MASK,
-		    regs->idr & CS_VID_VER_MASK);
-	}
+	regs->iar = MODE_CHANGE_ENABLE | SP_MISC_INFO;
+	regs->idr = MODE2;
 
 	/* XXX TODO: setup some defaults */
 
-	regs->iar = ~(CS_IAR_MCE);
+	regs->iar = ~(MODE_CHANGE_ENABLE);
 	cs4231_wait(sc);
 
-	regs->iar = CS_IAR_PC;
-	regs->idr |= CS_PC_IEN;
+	regs->iar = SP_PIN_CONTROL;
+	regs->idr |= INTERRUPT_ENABLE;
 
-	regs->iar = CS_IAR_MCE | CS_IAR_IC;
+	regs->iar = MODE_CHANGE_ENABLE | SP_INTERFACE_CONFIG;
 	reg = regs->idr;
-	regs->iar = CS_IAR_MCE | CS_IAR_IC;
-	regs->idr = reg & ~(CS_IC_CAL_CONV);
+	regs->iar = MODE_CHANGE_ENABLE | SP_INTERFACE_CONFIG;
+	regs->idr = reg & ~(AUTO_CAL_ENABLE);
 
-	regs->iar = ~(CS_IAR_MCE);
+	regs->iar = ~(MODE_CHANGE_ENABLE);
 	cs4231_wait(sc);
 
 	cs4231_setup_output(sc);
@@ -528,40 +520,40 @@ cs4231_setup_output(sc)
 {
 	struct cs4231_regs *regs = sc->sc_regs;
 
-	regs->iar = CS_IAR_PC;
+	regs->iar = SP_PIN_CONTROL;
 	regs->idr |= CS_PC_HDPHMUTE | CS_PC_LINEMUTE;
-	regs->iar = CS_IAR_MONO;
-	regs->idr |= CS_MONO_MOM;
+	regs->iar = CS_MONO_IO_CONTROL;
+	regs->idr |= MONO_OUTPUT_MUTE;
 
 	switch (sc->sc_out_port) {
 	case CSPORT_HEADPHONE:
 		if (sc->sc_mute[CSPORT_SPEAKER]) {
-			regs->iar = CS_IAR_PC;
+			regs->iar = SP_PIN_CONTROL;
 			regs->idr &= ~CS_PC_HDPHMUTE;
 		}
 		break;
 	case CSPORT_SPEAKER:
 		if (sc->sc_mute[CSPORT_SPEAKER]) {
-			regs->iar = CS_IAR_MONO;
-			regs->idr &= ~CS_MONO_MOM;
+			regs->iar = CS_MONO_IO_CONTROL;
+			regs->idr &= ~MONO_OUTPUT_MUTE;
 		}
 		break;
 	case CSPORT_LINEOUT:
 		if (sc->sc_mute[CSPORT_SPEAKER]) {
-			regs->iar = CS_IAR_PC;
+			regs->iar = SP_PIN_CONTROL;
 			regs->idr &= ~CS_PC_LINEMUTE;
 		}
 		break;
 	}
 
-	regs->iar = CS_IAR_LDACOUT;
-	regs->idr &= ~CS_LDACOUT_LDA_MASK;
+	regs->iar = SP_LEFT_OUTPUT_CONTROL;
+	regs->idr &= ~OUTPUT_ATTEN_BITS;
 	regs->idr |= (~(sc->sc_volume[CSPORT_SPEAKER].left >> 2)) &
-	    CS_LDACOUT_LDA_MASK;
-	regs->iar = CS_IAR_RDACOUT;
-	regs->idr &= ~CS_RDACOUT_RDA_MASK;
+	    OUTPUT_ATTEN_BITS;
+	regs->iar = SP_RIGHT_OUTPUT_CONTROL;
+	regs->idr &= ~OUTPUT_ATTEN_BITS;
 	regs->idr |= (~(sc->sc_volume[CSPORT_SPEAKER].right >> 2)) &
-	    CS_RDACOUT_RDA_MASK;
+	    OUTPUT_ATTEN_BITS;
 }
 
 void
@@ -573,8 +565,8 @@ cs4231_close(addr)
 
 	cs4231_halt_input(sc);
 	cs4231_halt_output(sc);
-	regs->iar = CS_IAR_PC;
-	regs->idr &= ~CS_PC_IEN;
+	regs->iar = SP_PIN_CONTROL;
+	regs->idr &= ~INTERRUPT_ENABLE;
 	sc->sc_open = 0;
 }
 
@@ -682,29 +674,29 @@ cs4231_set_params(addr, setmode, usemode, p, r)
 
 	switch (enc) {
 	case AUDIO_ENCODING_ULAW:
-		bits = CS_CDF_FMT_ULAW >> 5;
+		bits = FMT_ULAW >> 5;
 		break;
 	case AUDIO_ENCODING_ALAW:
-		bits = CS_CDF_FMT_ALAW >> 5;
+		bits = FMT_ALAW >> 5;
 		break;
 	case AUDIO_ENCODING_ADPCM:
-		bits = CS_CDF_FMT_ADPCM >> 5;
+		bits = FMT_ADPCM >> 5;
 		break;
 	case AUDIO_ENCODING_SLINEAR_LE:
 		if (p->precision == 16)
-			bits = CS_CDF_FMT_LINEAR_LE >> 5;
+			bits = FMT_TWOS_COMP >> 5;
 		else
 			return (EINVAL);
 		break;
 	case AUDIO_ENCODING_SLINEAR_BE:
 		if (p->precision == 16)
-			bits = CS_CDF_FMT_LINEAR_BE >> 5;
+			bits = FMT_TWOS_COMP_BE >> 5;
 		else
 			return (EINVAL);
 		break;
 	case AUDIO_ENCODING_ULINEAR_LE:
 		if (p->precision == 8)
-			bits = CS_CDF_FMT_ULINEAR >> 5;
+			bits = FMT_PCM8 >> 5;
 		else
 			return (EINVAL);
 		break;
@@ -756,26 +748,26 @@ cs4231_commit_settings(addr)
 
 	fs = sc->sc_speed_bits | (sc->sc_format_bits << 5);
 	if (sc->sc_channels == 2)
-		fs |= CS_FSPB_SM_STEREO;
+		fs |= FMT_STEREO;
 
-	regs->iar = CS_IAR_MCE | CS_IAR_FSPB;
+	regs->iar = MODE_CHANGE_ENABLE | SP_CLOCK_DATA_FORMAT;
 	regs->idr = fs;
 	x = regs->idr;
 	x = regs->idr;
 	tries = 100000;
-	while (tries-- && regs->idr == CS_IAR_INIT);
+	while (tries-- && regs->idr == SP_IN_INIT);
 	if (tries == 0) {
 		printf("%s: timeout committing fspb\n", sc->sc_dev.dv_xname);
 		splx(s);
 		return (0);
 	}
 
-	regs->iar = CS_IAR_MCE | CS_IAR_CDF;
+	regs->iar = MODE_CHANGE_ENABLE | CS_REC_FORMAT;
 	regs->idr = fs;
 	x = regs->idr;
 	x = regs->idr;
 	tries = 100000;
-	while (tries-- && regs->idr == CS_IAR_INIT);
+	while (tries-- && regs->idr == SP_IN_INIT);
 	if (tries == 0) {
 		printf("%s: timeout committing cdf\n", sc->sc_dev.dv_xname);
 		splx(s);
@@ -800,11 +792,11 @@ cs4231_halt_output(addr)
 	struct cs4231_regs *regs = sc->sc_regs;
 	u_int8_t r;
 
-	regs->dma_csr &= ~(CS_DMACSR_EI | CS_DMACSR_GIE | CS_DMACSR_PIE |
-	    CS_DMACSR_EIE | CS_DMACSR_PDMA_GO | CS_DMACSR_PMIE);
-	regs->iar = CS_IAR_IC;
-	r = regs->idr & (~CS_IC_PEN);
-	regs->iar = CS_IAR_IC;
+	regs->dma_csr &= ~(APC_CSR_EI | APC_CSR_GIE | APC_CSR_PIE |
+	    APC_CSR_EIE | APC_CSR_PDMA_GO | APC_CSR_PMIE);
+	regs->iar = SP_INTERFACE_CONFIG;
+	r = regs->idr & (~PLAYBACK_ENABLE);
+	regs->iar = SP_INTERFACE_CONFIG;
 	regs->idr = r;
 	sc->sc_locked = 0;
 	return (0);
@@ -817,9 +809,9 @@ cs4231_halt_input(addr)
 	struct cs4231_softc *sc = (struct cs4231_softc *)addr;
 	struct cs4231_regs *regs = sc->sc_regs;
 
-	regs->dma_csr = CS_DMACSR_CAPTURE_PAUSE;
-	regs->iar = CS_IAR_IC;
-	regs->idr &= ~CS_IC_CEN;
+	regs->dma_csr = APC_CSR_CAPTURE_PAUSE;
+	regs->iar = SP_INTERFACE_CONFIG;
+	regs->idr &= ~CAPTURE_ENABLE;
 	sc->sc_locked = 0;
 	return (0);
 }
@@ -848,20 +840,20 @@ cs4231_set_port(addr, cp)
 		if (cp->type != AUDIO_MIXER_VALUE)
 			break;
 		if (cp->un.value.num_channels == 1) {
-			sc->sc_regs->iar = CS_IAR_LACIN1;
+			sc->sc_regs->iar = SP_LEFT_AUX1_CONTROL;
 			sc->sc_regs->idr =
 			    cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] &
-			    CS_LACIN1_GAIN_MASK;
+			    AUX_INPUT_ATTEN_BITS;
 		}
 		else if (cp->un.value.num_channels == 2) {
-			sc->sc_regs->iar = CS_IAR_LACIN1;
+			sc->sc_regs->iar = SP_LEFT_AUX1_CONTROL;
 			sc->sc_regs->idr =
 			    cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT] &
-			    CS_LACIN1_GAIN_MASK;
-			sc->sc_regs->iar = CS_IAR_RACIN1;
+			    AUX_INPUT_ATTEN_BITS;
+			sc->sc_regs->iar = SP_RIGHT_AUX1_CONTROL;
 			sc->sc_regs->idr =
 			    cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] &
-			    CS_RACIN1_GAIN_MASK;
+			    AUX_INPUT_ATTEN_BITS;
 		} else
 			break;
 		error = 0;
@@ -870,20 +862,20 @@ cs4231_set_port(addr, cp)
 		if (cp->type != AUDIO_MIXER_VALUE)
 			break;
 		if (cp->un.value.num_channels == 1) {
-			sc->sc_regs->iar = CS_IAR_LLI;
+			sc->sc_regs->iar = CS_LEFT_LINE_CONTROL;
 			sc->sc_regs->idr =
 			    cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] &
-			    CS_LLI_GAIN_MASK;
+			    AUX_INPUT_ATTEN_BITS;
 		}
 		else if (cp->un.value.num_channels == 2) {
-			sc->sc_regs->iar = CS_IAR_LLI;
+			sc->sc_regs->iar = CS_LEFT_LINE_CONTROL;
 			sc->sc_regs->idr =
 			    cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT] &
-			    CS_LLI_GAIN_MASK;
-			sc->sc_regs->iar = CS_IAR_RLI;
+			    AUX_INPUT_ATTEN_BITS;
+			sc->sc_regs->iar = CS_RIGHT_LINE_CONTROL;
 			sc->sc_regs->idr =
 			    cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] &
-			    CS_RLI_GAIN_MASK;
+			    AUX_INPUT_ATTEN_BITS;
 		} else
 			break;
 		error = 0;
@@ -893,10 +885,10 @@ cs4231_set_port(addr, cp)
 			break;
 		if (cp->un.value.num_channels == 1) {
 #if 0
-			sc->sc_regs->iar = CS_IAR_MONO;
+			sc->sc_regs->iar = CS_MONO_IO_CONTROL;
 			sc->sc_regs->idr =
 			    cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] &
-			    CS_MONO_MIA_MASK;
+			    MONO_INPUT_ATTEN_BITS;
 #endif
 		} else
 			break;
@@ -906,21 +898,21 @@ cs4231_set_port(addr, cp)
 		if (cp->type != AUDIO_MIXER_VALUE)
 			break;
 		if (cp->un.value.num_channels == 1) {
-			sc->sc_regs->iar = CS_IAR_LACIN2;
+			sc->sc_regs->iar = SP_LEFT_AUX2_CONTROL;
 			sc->sc_regs->idr =
 			    cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] &
-			    CS_LACIN2_GAIN_MASK;
+			    AUX_INPUT_ATTEN_BITS;
 			error = 0;
 		}
 		else if (cp->un.value.num_channels == 2) {
-			sc->sc_regs->iar = CS_IAR_LACIN2;
+			sc->sc_regs->iar = SP_LEFT_AUX2_CONTROL;
 			sc->sc_regs->idr =
 			    cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT] &
-			    CS_LACIN2_GAIN_MASK;
-			sc->sc_regs->iar = CS_IAR_RACIN2;
+			    AUX_INPUT_ATTEN_BITS;
+			sc->sc_regs->iar = SP_RIGHT_AUX2_CONTROL;
 			sc->sc_regs->idr =
 			    cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] &
-			    CS_RACIN2_GAIN_MASK;
+			    AUX_INPUT_ATTEN_BITS;
 			error = 0;
 		}
 		else
@@ -930,7 +922,7 @@ cs4231_set_port(addr, cp)
 		if (cp->type != AUDIO_MIXER_VALUE)
 			break;
 		if (cp->un.value.num_channels == 1) {
-			sc->sc_regs->iar = CS_IAR_LOOP;
+			sc->sc_regs->iar = SP_DIGITAL_MIX;
 			sc->sc_regs->idr =
 			    cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] << 2;
 		}
@@ -1033,17 +1025,17 @@ cs4231_get_port(addr, cp)
 		if (cp->type != AUDIO_MIXER_VALUE)
 			break;
 		if (cp->un.value.num_channels == 1) {
-			sc->sc_regs->iar = CS_IAR_LACIN1;
+			sc->sc_regs->iar = SP_LEFT_AUX1_CONTROL;
 			cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] =
-			    sc->sc_regs->idr & CS_LACIN1_GAIN_MASK;
+			    sc->sc_regs->idr & AUX_INPUT_ATTEN_BITS;
 		}
 		else if (cp->un.value.num_channels == 2) {
-			sc->sc_regs->iar = CS_IAR_LACIN1;
+			sc->sc_regs->iar = SP_LEFT_AUX1_CONTROL;
 			cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT] =
-			    sc->sc_regs->idr & CS_LACIN1_GAIN_MASK;
-			sc->sc_regs->iar = CS_IAR_RACIN1;
+			    sc->sc_regs->idr & AUX_INPUT_ATTEN_BITS;
+			sc->sc_regs->iar = SP_RIGHT_AUX1_CONTROL;
 			cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] =
-			    sc->sc_regs->idr & CS_RACIN1_GAIN_MASK;
+			    sc->sc_regs->idr & AUX_INPUT_ATTEN_BITS;
 		} else
 			break;
 		error = 0;
@@ -1052,17 +1044,17 @@ cs4231_get_port(addr, cp)
 		if (cp->type != AUDIO_MIXER_VALUE)
 			break;
 		if (cp->un.value.num_channels == 1) {
-			sc->sc_regs->iar = CS_IAR_LLI;
+			sc->sc_regs->iar = CS_LEFT_LINE_CONTROL;
 			cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] =
-			    sc->sc_regs->idr & CS_LLI_GAIN_MASK;
+			    sc->sc_regs->idr & AUX_INPUT_ATTEN_BITS;
 		}
 		else if (cp->un.value.num_channels == 2) {
-			sc->sc_regs->iar = CS_IAR_LLI;
+			sc->sc_regs->iar = CS_LEFT_LINE_CONTROL;
 			cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT] =
-			    sc->sc_regs->idr & CS_LLI_GAIN_MASK;
-			sc->sc_regs->iar = CS_IAR_RLI;
+			    sc->sc_regs->idr & AUX_INPUT_ATTEN_BITS;
+			sc->sc_regs->iar = CS_RIGHT_LINE_CONTROL;
 			cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] =
-			    sc->sc_regs->idr & CS_RLI_GAIN_MASK;
+			    sc->sc_regs->idr & AUX_INPUT_ATTEN_BITS;
 		} else
 			break;
 		error = 0;
@@ -1072,9 +1064,9 @@ cs4231_get_port(addr, cp)
 			break;
 		if (cp->un.value.num_channels == 1) {
 #if 0
-			sc->sc_regs->iar = CS_IAR_MONO;
+			sc->sc_regs->iar = CS_MONO_IO_CONTROL;
 			cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] =
-			    sc->sc_regs->idr & CS_MONO_MIA_MASK;
+			    sc->sc_regs->idr & MONO_INPUT_ATTEN_BITS;
 #endif
 		} else
 			break;
@@ -1084,18 +1076,18 @@ cs4231_get_port(addr, cp)
 		if (cp->type != AUDIO_MIXER_VALUE)
 			break;
 		if (cp->un.value.num_channels == 1) {
-			sc->sc_regs->iar = CS_IAR_LACIN2;
+			sc->sc_regs->iar = SP_LEFT_AUX2_CONTROL;
 			cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] =
-			    sc->sc_regs->idr & CS_LACIN2_GAIN_MASK;
+			    sc->sc_regs->idr & AUX_INPUT_ATTEN_BITS;
 			error = 0;
 		}
 		else if (cp->un.value.num_channels == 2) {
-			sc->sc_regs->iar = CS_IAR_LACIN2;
+			sc->sc_regs->iar = SP_LEFT_AUX2_CONTROL;
 			cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT] =
-			    sc->sc_regs->idr & CS_LACIN2_GAIN_MASK;
-			sc->sc_regs->iar = CS_IAR_RACIN2;
+			    sc->sc_regs->idr & AUX_INPUT_ATTEN_BITS;
+			sc->sc_regs->iar = SP_RIGHT_AUX2_CONTROL;
 			cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] =
-			    sc->sc_regs->idr & CS_RACIN2_GAIN_MASK;
+			    sc->sc_regs->idr & AUX_INPUT_ATTEN_BITS;
 			error = 0;
 		}
 		else
@@ -1105,7 +1097,7 @@ cs4231_get_port(addr, cp)
 		if (cp->type != AUDIO_MIXER_VALUE)
 			break;
 		if (cp->un.value.num_channels == 1) {
-			sc->sc_regs->iar = CS_IAR_LOOP;
+			sc->sc_regs->iar = SP_DIGITAL_MIX;
 			cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] =
 			    sc->sc_regs->idr >> 2;
 		}
@@ -1487,18 +1479,18 @@ cs4231_trigger_output(addr, start, end, blksize, intr, arg, param)
 	regs->dma_pnva = (u_int32_t)p->addr_dva;
 	regs->dma_pnc = n;
 
-	if ((csr & CS_DMACSR_PDMA_GO) == 0 || (csr & CS_DMACSR_PPAUSE) != 0) {
-		regs->dma_csr &= ~(CS_DMACSR_PIE | CS_DMACSR_PPAUSE);
-		regs->dma_csr |= CS_DMACSR_EI | CS_DMACSR_GIE |
-				 CS_DMACSR_PIE | CS_DMACSR_EIE |
-				 CS_DMACSR_PMIE | CS_DMACSR_PDMA_GO;
-		regs->iar = CS_IAR_PBLB;
+	if ((csr & APC_CSR_PDMA_GO) == 0 || (csr & APC_CSR_PPAUSE) != 0) {
+		regs->dma_csr &= ~(APC_CSR_PIE | APC_CSR_PPAUSE);
+		regs->dma_csr |= APC_CSR_EI | APC_CSR_GIE |
+				 APC_CSR_PIE | APC_CSR_EIE |
+				 APC_CSR_PMIE | APC_CSR_PDMA_GO;
+		regs->iar = SP_LOWER_BASE_COUNT;
 		regs->idr = 0xff;
-		regs->iar = CS_IAR_PBUB;
+		regs->iar = SP_UPPER_BASE_COUNT;
 		regs->idr = 0xff;
-		regs->iar = CS_IAR_IC;
-		reg = regs->idr | CS_IC_PEN;
-		regs->iar = CS_IAR_IC;
+		regs->iar = SP_INTERFACE_CONFIG;
+		reg = regs->idr | PLAYBACK_ENABLE;
+		regs->iar = SP_INTERFACE_CONFIG;
 		regs->idr = reg;
 	}
 	return (0);
