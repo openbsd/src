@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.91 2001/10/26 13:29:26 ho Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.92 2002/01/03 09:19:52 ho Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -273,7 +273,7 @@ pf_key_v2_seq (void)
 /*
  * Read a PF_KEY packet with SEQ as the sequence number, looping if necessary.
  * If SEQ is zero just read the first message we see, otherwise we queue
- * messages up untile both the PID and the sequence number match.
+ * messages up until both the PID and the sequence number match.
  */
 static struct pf_key_v2_msg *
 pf_key_v2_read (u_int32_t seq)
