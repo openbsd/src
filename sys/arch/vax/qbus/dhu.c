@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhu.c,v 1.5 2002/10/19 22:40:44 hugh Exp $	*/
+/*	$OpenBSD: dhu.c,v 1.6 2002/12/27 19:20:49 hugh Exp $	*/
 /*	$NetBSD: dhu.c,v 1.19 2000/06/04 06:17:01 matt Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
@@ -232,7 +232,19 @@ dhu_attach(parent, self, aux)
 	c = DHU_READ_WORD(DHU_UBA_STAT);
 
 	sc->sc_type = (c & DHU_STAT_DHU)? IS_DHU: IS_DHV;
-	printf("\n%s: DH%s-11\n", self->dv_xname, (c & DHU_STAT_DHU)?"U":"V");
+
+	if (sc->sc_type == IS_DHU) {
+		if (c & DHU_STAT_MDL)
+			i = 16;		/* "Modem Low" */
+		else
+			i = 8;		/* Has modem support */
+	} else
+		i = 8;
+
+	printf("\n%s: DH%s-11 %d lines\n", self->dv_xname,
+	    (sc->sc_type == IS_DHU) ? "U" : "V", i);
+
+	sc->sc_type = i;
 
 	for (i = 0; i < sc->sc_type; i++) {
 		struct tty *tp;

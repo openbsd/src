@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhureg.h,v 1.1 2000/04/27 03:14:47 bjc Exp $	*/
+/*	$OpenBSD: dhureg.h,v 1.2 2002/12/27 19:20:49 hugh Exp $	*/
 /*	$NetBSD: dhureg.h,v 1.4 1999/05/28 20:17:29 ragge Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
@@ -134,6 +134,7 @@ typedef struct DHUregs dhuregs;
 #define DHU_STAT_RI		0020000
 #define DHU_STAT_DCD		0010000
 #define DHU_STAT_CTS		0004000
+#define DHU_STAT_MDL		0001000
 #define DHU_STAT_DHU		0000400
 
 /* LNCTRL bits */
