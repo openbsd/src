@@ -1,6 +1,6 @@
-.\" $OpenBSD: curs_mouse.3tbl,v 1.2 1997/12/03 05:20:59 millert Exp $
+.\" $OpenBSD: curs_mouse.3tbl,v 1.3 1997/12/03 05:45:09 millert Exp $
 '\" t
-.TH curs_mouse 3X ""
+.TH curs_mouse 3 ""
 .SH NAME
 \fBgetmouse\fR, \fBungetmouse\fR, 
 \fBmousemask\fR - mouse interface through curses

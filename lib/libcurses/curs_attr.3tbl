@@ -1,6 +1,6 @@
-.\" $OpenBSD: curs_attr.3tbl,v 1.2 1997/12/03 05:20:51 millert Exp $
+.\" $OpenBSD: curs_attr.3tbl,v 1.3 1997/12/03 05:45:08 millert Exp $
 .\" Id: curs_attr.3x,v 1.12 1997/01/05 01:14:33 tom Exp $
-.TH curs_attr 3X ""
+.TH curs_attr 3 ""
 .SH NAME
 \fBattroff\fR, \fBwattroff\fR, \fBattron\fR, \fBwattron\fR,
 \fBattrset\fR, \fBwattrset\fR, \fBstandend\fR, \fBwstandend\fR, \fBstandout\fR,

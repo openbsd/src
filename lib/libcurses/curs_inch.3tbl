@@ -1,6 +1,6 @@
-.\" $OpenBSD: curs_inch.3tbl,v 1.2 1997/12/03 05:20:55 millert Exp $
+.\" $OpenBSD: curs_inch.3tbl,v 1.3 1997/12/03 05:45:09 millert Exp $
 .\" Id: curs_inch.3x,v 1.7 1997/01/05 01:29:23 tom Exp $
-.TH curs_inch 3X ""
+.TH curs_inch 3 ""
 .SH NAME
 \fBinch\fR, \fBwinch\fR, \fBmvinch\fR, \fBmvwinch\fR
 - get a character and attributes from a \fBcurses\fR window
