@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-gre.c,v 1.5 2002/09/18 20:40:06 jason Exp $	*/
+/*	$OpenBSD: print-gre.c,v 1.6 2002/10/30 03:04:04 fgsch Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -147,7 +147,7 @@ gre_print_0(const u_char *bp, u_int length)
 	if (flags & GRE_SP) {
 		if (len < 4)
 			goto trunc;
-		printf("seq=0x%x ", EXTRACT_32BITS(bp));
+		printf("seq %u ", EXTRACT_32BITS(bp));
 		bp += 4;
 		len -= 4;
 	}
@@ -218,19 +218,19 @@ gre_print_1(const u_char *bp, u_int length)
 	bp += 2;
 
 	if (flags & GRE_CP) {
-		printf("cpset! ");
+		printf("cpset!");
 		return;
 	}
 	if (flags & GRE_RP) {
-		printf("rpset! ");
+		printf("rpset!");
 		return;
 	}
-	if ((flags & GRE_KP) != 0) {
-		printf("kpunset! ");
+	if ((flags & GRE_KP) == 0) {
+		printf("kpunset!");
 		return;
 	}
 	if (flags & GRE_sP) {
-		printf("spset! ");
+		printf("spset!");
 		return;
 	}
 
@@ -240,7 +240,7 @@ gre_print_1(const u_char *bp, u_int length)
 		if (len < 4)
 			goto trunc;
 		k = EXTRACT_32BITS(bp);
-		printf("key=0x%x call=0x%x ", (k >> 16) & 0xffff, k & 0xffff);
+		printf("call %d ", k & 0xffff);
 		len -= 4;
 		bp += 4;
 	}
@@ -248,7 +248,7 @@ gre_print_1(const u_char *bp, u_int length)
 	if (flags & GRE_SP) {
 		if (len < 4)
 			goto trunc;
-		printf("seq=0x%x ", EXTRACT_32BITS(bp));
+		printf("seq %u ", EXTRACT_32BITS(bp));
 		bp += 4;
 		len -= 4;
 	}
@@ -256,22 +256,22 @@ gre_print_1(const u_char *bp, u_int length)
 	if (flags & GRE_AP) {
 		if (len < 4)
 			goto trunc;
-		printf("ack=0x%x ", EXTRACT_32BITS(bp));
+		printf("ack %u ", EXTRACT_32BITS(bp));
 		bp += 4;
 		len -= 4;
 	}
 
 	if ((flags & GRE_SP) == 0) {
-		printf("no-payload ");
+		printf("no-payload");
 		return;
 	}
 
 	switch (prot) {
 	case GREPROTO_PPP:
-		printf("gre-ppp-payload ");
+		printf("gre-ppp-payload");
 		break;
 	default:
-		printf("gre-proto-0x%x ", prot);
+		printf("gre-proto-0x%x", prot);
 		break;
 	}
 	return;
