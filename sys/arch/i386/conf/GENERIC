@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.104 1999/03/05 10:38:14 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.105 1999/03/11 18:52:05 jason Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -196,6 +196,7 @@ tl*	at pci? dev ? function ?		# Compaq Thunderlan ethernet
 mx*	at pci? dev ? function ?		# Macronix PMAC ethernet
 vr*	at pci? dev ? function ?		# VIA Rhine ethernet
 pn*	at pci? dev ? function ?		# Lite-On PNIC ethernet
+wb*	at pci? dev ? function ?		# Winbond W89C840F ethernet
 
 # Media Independent Interface (mii) drivers
 #exphy*	at mii? phy ?				# 3Com internal PHYs
