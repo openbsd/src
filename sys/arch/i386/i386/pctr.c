@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.c,v 1.11 1998/05/25 08:01:42 downsj Exp $	*/
+/*	$OpenBSD: pctr.c,v 1.12 1998/06/04 04:56:42 downsj Exp $	*/
 
 /*
  * Pentium performance counter driver for OpenBSD.
@@ -29,28 +29,30 @@ extern int cpu_id;
 extern int cpu_feature;
 extern char cpu_vendor[];
 
-static int isintel;
-static int iscyrix;
+int pctr_isintel;
 
 #define usetsc		(cpu_feature & CPUID_TSC)
-#define usep5ctr	(isintel && (((cpu_id >> 8) & 15) == 5) && \
+#define usep5ctr	(pctr_isintel && (((cpu_id >> 8) & 15) == 5) && \
 				(((cpu_id >> 4) & 15) > 0))
-/* I believe Cyrix supports RDPMC. */
-#define usep6ctr	((isintel || iscyrix) && ((cpu_id >> 8) & 15) == 6)
+#define usep6ctr	(pctr_isintel && ((cpu_id >> 8) & 15) == 6)
 
 void pctrattach __P((int));
 int pctropen __P((dev_t, int, int, struct proc *));
 int pctrclose __P((dev_t, int, int, struct proc *));
 int pctrioctl __P((dev_t, int, caddr_t, int, struct proc *));
+int p5ctrsel __P((int fflag, u_int cmd, u_int fn));
+static __inline void p5ctrrd __P((struct pctrst *st));
+int p6ctrsel __P((int fflag, u_int cmd, u_int fn));
+static __inline void p6ctrrd __P((struct pctrst *st));
 
 void
-pctrattach (int num)
+pctrattach (num)
+	int num;
 {
 	if (num > 1)
 		return;
 
-	isintel = (strcmp(cpu_vendor, "GenuineIntel") == 0);
-	iscyrix = (strcmp(cpu_vendor, "CyrixInstead") == 0);
+	pctr_isintel = (strcmp(cpu_vendor, "GenuineIntel") == 0);
 
 	if (usep6ctr)
 		/* Enable RDTSC and RDPMC instructions from user-level. */
@@ -77,7 +79,11 @@ pctrattach (int num)
 }
 
 int
-pctropen (dev_t dev, int oflags, int devtype, struct proc *p)
+pctropen (dev, oflags, devtype, p)
+	dev_t dev;
+	int oflags;
+	int devtype;
+	struct proc *p;
 {
 	if (minor (dev))
 		return ENXIO;
@@ -85,13 +91,20 @@ pctropen (dev_t dev, int oflags, int devtype, struct proc *p)
 }
 
 int
-pctrclose (dev_t dev, int oflags, int devtype, struct proc *p)
+pctrclose (dev, oflags, devtype, p)
+	dev_t dev;
+	int oflags;
+	int devtype;
+	struct proc *p;
 {
 	return 0;
 }
 
-static int
-p5ctrsel (int fflag, u_int cmd, u_int fn)
+int
+p5ctrsel (fflag, cmd, fn)
+	int fflag;
+	u_int cmd;
+	u_int fn;
 {
 	pctrval msr11;
 	int msr;
@@ -118,7 +131,8 @@ p5ctrsel (int fflag, u_int cmd, u_int fn)
 }
 
 static __inline void
-p5ctrrd (struct pctrst *st)
+p5ctrrd (st)
+	struct pctrst *st;
 {
 	u_int msr11;
 
@@ -132,8 +146,11 @@ p5ctrrd (struct pctrst *st)
 	__asm __volatile ("sti");
 }
 
-static int
-p6ctrsel (int fflag, u_int cmd, u_int fn)
+int
+p6ctrsel (fflag, cmd, fn)
+	int fflag;
+	u_int cmd;
+	u_int fn;
 {
 	int msrsel, msrval;
 
@@ -156,7 +173,8 @@ p6ctrsel (int fflag, u_int cmd, u_int fn)
 }
 
 static __inline void
-p6ctrrd (struct pctrst *st)
+p6ctrrd (st)
+	struct pctrst *st;
 {
 	st->pctr_fn[0] = rdmsr (P6MSR_CTRSEL0);
 	st->pctr_fn[1] = rdmsr (P6MSR_CTRSEL1);
@@ -169,7 +187,12 @@ p6ctrrd (struct pctrst *st)
 
 
 int
-pctrioctl (dev_t dev, int cmd, caddr_t data, int fflag, struct proc *p)
+pctrioctl (dev, cmd, data, fflag, p)
+	dev_t dev;
+	int cmd;
+	caddr_t data;
+	int fflag;
+	struct proc *p;
 {
 	switch (cmd) {
 	case PCIOCRD:
