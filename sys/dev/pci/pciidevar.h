@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciidevar.h,v 1.8 2004/09/24 07:38:38 grange Exp $	*/
+/*	$OpenBSD: pciidevar.h,v 1.9 2004/10/17 17:58:30 grange Exp $	*/
 /*	$NetBSD: pciidevar.h,v 1.6 2001/01/12 16:04:00 bouyer Exp $	*/
 
 /*
@@ -41,6 +41,14 @@
  */
 
 struct device;
+
+/*
+ * While standard PCI IDE controllers only have 2 channels, it is
+ * common for PCI SATA controllers to have more.  Here we define
+ * the maximum number of channels that any one PCI IDE device can
+ * have.
+ */
+#define PCIIDE_MAX_CHANNELS	4
 
 /*
  * Functions defined by machine-dependent code.
