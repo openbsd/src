@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.33 2004/11/24 01:25:42 mcbride Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.34 2004/11/25 21:42:08 markus Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -208,7 +208,7 @@ rip_output(struct mbuf *m, ...)
 		ip->ip_len = htons(m->m_pkthdr.len);
 		ip->ip_src = inp->inp_laddr;
 		ip->ip_dst.s_addr = dst;
-		ip->ip_ttl = MAXTTL;
+		ip->ip_ttl = inp->inp_ip.ip_ttl ? inp->inp_ip.ip_ttl : MAXTTL;
 	} else {
 		if (m->m_pkthdr.len > IP_MAXPACKET) {
 			m_freem(m);
