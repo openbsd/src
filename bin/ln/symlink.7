@@ -1,4 +1,4 @@
-.\"	$OpenBSD: symlink.7,v 1.14 2001/11/13 14:00:15 mpech Exp $
+.\"	$OpenBSD: symlink.7,v 1.15 2003/04/13 11:09:56 jmc Exp $
 .\"	$NetBSD: symlink.7,v 1.4 1996/04/25 15:44:56 mycroft Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@
 .Nd symbolic link handling
 .Sh DESCRIPTION
 Symbolic links are files that act as pointers to other files.
-To understand their behavior, you must first understand how hard links
+To understand their behavior, it is necessary to understand how hard links
 work.
 A hard link to a file is indistinguishable from the original file because
 it is a reference to the object underlying the original file name.
@@ -59,8 +59,8 @@ Because a symbolic link and its referenced object coexist in the filesystem
 name space, confusion can arise in distinguishing between the link itself
 and the referenced object.
 Historically, commands and system calls have adopted their own
-link-following conventions in a somewhat ad-hoc fashion.
-Rules for more a uniform approach, as they are implemented in this system,
+link-following conventions in a somewhat ad hoc fashion.
+Rules for a more uniform approach, as they are implemented in this system,
 are outlined here.
 It is important that local applications conform to these rules, too,
 so that the user interface can be as consistent as possible.
@@ -236,10 +236,10 @@ convention is followed.
 The
 .Bx 4.4
 system differs from historical 4BSD systems in that the
-.Nm chown ,
-.Nm chgrp ,
+.Xr chown 8 ,
+.Xr chgrp 1 ,
 and
-.Nm file
+.Xr file 1
 commands follow symbolic links specified on the command line
 (unless the
 .Fl h
@@ -285,9 +285,9 @@ as well as any symbolic links encountered in the tree traversal of
 .Dq Li directory ,
 because symbolic links may be removed.
 In no case will either
-.Nm chown
+.Xr chown 8
 or
-.Nm rm
+.Xr rm 1
 follow the symlink to affect the file which
 .Dq Li slink
 references.
@@ -303,7 +303,7 @@ walk, as opposed to a
 .Dq logical
 walk (where symbolic links referencing directories are followed).
 .Pp
-As consistently as possible, you can make commands doing a file tree
+As consistently as possible, it is possible to make commands doing a file tree
 walk follow any symbolic links named on the command line, regardless
 of the type of file they reference, by specifying the
 .Fl H
@@ -335,7 +335,7 @@ dereferenced both for the purposes of the action to be performed
 and the tree walk, and it is as if the user had specified the
 name of the file to which the symbolic link pointed.
 .Pp
-As consistently as possible, you can make commands doing a file tree
+As consistently as possible, it is possible to make commands doing a file tree
 walk follow any symbolic links named on the command line, as well as
 any symbolic links encountered during the traversal, regardless of
 the type of file they reference, by specifying the
@@ -367,7 +367,7 @@ In addition, if any symbolic links are encountered in any file tree that
 traverses, they will be treated in the same fashion as
 .Dq Li slink .
 .Pp
-As consistently as possible, you can specify the default behavior by
+As consistently as possible, it is possible to specify the default behavior by
 specifying the
 .Fl P
 (for
@@ -384,14 +384,14 @@ and
 flags are ignored if the
 .Fl R
 flag is not also specified.
-In addition, you may specify the
+In addition, the
 .Fl H ,
 .Fl L ,
 and
 .Fl P
-options more than once; the last one specified determines the
-command's behavior.
-This is intended to permit you to alias commands to behave one way
+options may be specified more than once;
+the last one specified determines the command's behavior.
+This is intended to permit aliasing commands to behave one way
 or the other, and then override that behavior on the command line.
 .Pp
 The
