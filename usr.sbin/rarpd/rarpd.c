@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarpd.c,v 1.20 1998/07/07 17:29:49 art Exp $ */
+/*	$OpenBSD: rarpd.c,v 1.21 1998/07/13 06:58:48 deraadt Exp $ */
 /*	$NetBSD: rarpd.c,v 1.25 1998/04/23 02:48:33 mrg Exp $	*/
 
 /*
@@ -28,7 +28,7 @@ char    copyright[] =
 #endif				/* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rarpd.c,v 1.20 1998/07/07 17:29:49 art Exp $";
+static char rcsid[] = "$OpenBSD: rarpd.c,v 1.21 1998/07/13 06:58:48 deraadt Exp $";
 #endif
 
 
@@ -303,11 +303,11 @@ bpf_open()
 {
 	int     fd;
 	int     n = 0;
-	char    device[sizeof "/dev/bpf000"];
+	char    device[sizeof "/dev/bpf0000000000"];
 
 	/* Go through all the minors and find one that isn't in use. */
 	do {
-		(void) sprintf(device, "/dev/bpf%d", n++);
+		(void) snprintf(device, sizeof device, "/dev/bpf%d", n++);
 		fd = open(device, O_RDWR);
 	} while (fd < 0 && errno == EBUSY);
 
@@ -529,10 +529,10 @@ rarp_bootable(addr)
 {
 	register struct dirent *dent;
 	register DIR *d;
-	char    ipname[9];
+	char    ipname[40];
 	static DIR *dd = 0;
 
-	(void) sprintf(ipname, "%08X", addr);
+	(void) snprintf(ipname, sizeof ipname, "%08X", addr);
 	/* If directory is already open, rewind it.  Otherwise, open it. */
 	if (d = dd)
 		rewinddir(d);
