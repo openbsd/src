@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)repquota.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: repquota.c,v 1.11 2000/09/11 18:47:29 millert Exp $";
+static char *rcsid = "$Id: repquota.c,v 1.12 2000/12/21 09:50:00 pjanzen Exp $";
 #endif /* not lint */
 
 /*
@@ -233,9 +233,12 @@ repquota(fs, type, qfpathname)
 			fup->fu_dqblk.dqb_isoftlimit &&
 			    fup->fu_dqblk.dqb_curinodes >=
 			    fup->fu_dqblk.dqb_isoftlimit ? '+' : '-',
-			dbtob(fup->fu_dqblk.dqb_curblocks) / 1024,
-			dbtob(fup->fu_dqblk.dqb_bsoftlimit) / 1024,
-			dbtob(fup->fu_dqblk.dqb_bhardlimit) / 1024,
+			(int)(dbtob((u_quad_t)fup->fu_dqblk.dqb_curblocks)
+			    / 1024),
+			(int)(dbtob((u_quad_t)fup->fu_dqblk.dqb_bsoftlimit)
+			    / 1024),
+			(int)(dbtob((u_quad_t)fup->fu_dqblk.dqb_bhardlimit)
+			    / 1024),
 			fup->fu_dqblk.dqb_bsoftlimit && 
 			    fup->fu_dqblk.dqb_curblocks >= 
 			    fup->fu_dqblk.dqb_bsoftlimit ?
@@ -284,11 +287,13 @@ hasquota(fs, type, qfnamep)
 	static char buf[BUFSIZ];
 
 	if (!initname) {
-		sprintf(usrname, "%s%s", qfextension[USRQUOTA], qfname);
-		sprintf(grpname, "%s%s", qfextension[GRPQUOTA], qfname);
+		(void)snprintf(usrname, sizeof usrname, "%s%s",
+		    qfextension[USRQUOTA], qfname);
+		(void)snprintf(grpname, sizeof grpname, "%s%s",
+		    qfextension[GRPQUOTA], qfname);
 		initname = 1;
 	}
-	strcpy(buf, fs->fs_mntops);
+	strlcpy(buf, fs->fs_mntops, sizeof buf);
 	for (opt = strtok(buf, ","); opt; opt = strtok(NULL, ",")) {
 		if ((cp = strchr(opt, '=')))
 			*cp++ = '\0';
@@ -303,7 +308,8 @@ hasquota(fs, type, qfnamep)
 		*qfnamep = cp;
 		return (1);
 	}
-	(void) sprintf(buf, "%s/%s.%s", fs->fs_file, qfname, qfextension[type]);
+	(void)snprintf(buf, sizeof buf, "%s/%s.%s",
+	    fs->fs_file, qfname, qfextension[type]);
 	*qfnamep = buf;
 	return (1);
 }
