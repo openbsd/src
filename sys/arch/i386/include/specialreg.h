@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.21 2004/02/19 22:33:29 grange Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.22 2004/04/02 22:28:41 tedu Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.7 1994/10/27 04:16:26 cgd Exp $	*/
 
 /*-
@@ -232,6 +232,9 @@
 #define MSR_MC3_STATUS		0x411
 #define MSR_MC3_ADDR		0x412
 #define MSR_MC3_MISC		0x413
+
+/* AMD MSRs */
+#define MSR_K6_EPMR		0xc0000086
 
 /*
  * Constants related to MTRRs

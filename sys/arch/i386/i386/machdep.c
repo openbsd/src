@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.287 2004/03/26 04:00:59 drahn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.288 2004/04/02 22:28:40 tedu Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1640,6 +1640,12 @@ amd_family5_setup(cpu_device, model, step)
 		 * XXX But pmap_pg_g is already initialized -- need to kick
 		 * XXX the pmap somehow.  How does the MP branch do this?
 		 */
+		break;
+	case 12:
+	case 13:
+#ifndef SMALL_KERNEL
+		k6_powernow_init();
+#endif
 		break;
 	}
 }

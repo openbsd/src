@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.58 2004/02/14 15:09:22 grange Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.59 2004/04/02 22:28:41 tedu Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -207,6 +207,10 @@ int	longrun_setperf(int);
 void	p4tcc_init(int, int);
 int     p4tcc_setperf(int);
 #endif
+
+void	k6_powernow_init(void);
+int	k6_powernow_setperf(int);
+
 
 /* npx.c */
 void	npxdrop(void);
