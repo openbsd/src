@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.24 2001/02/21 23:24:29 csapuntz Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.25 2001/04/06 14:37:50 angelos Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -92,7 +92,7 @@ long addrmask[] = { 0,
  * Normally the freelist structure is used only to hold the list pointer
  * for free objects.  However, when running with diagnostics, the first
  * 8 bytes of the structure is unused except for diagnostic information,
- * and the free list pointer is at offst 8 in the structure.  Since the
+ * and the free list pointer is at offset 8 in the structure.  Since the
  * first 8 bytes is the portion of the structure most often modified, this
  * helps to detect memory reuse problems and avoid free list corruption.
  */
