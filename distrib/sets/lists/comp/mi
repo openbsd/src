@@ -42,6 +42,7 @@
 ./usr/include/crypto/cast.h
 ./usr/include/crypto/castsb.h
 ./usr/include/crypto/crypto.h
+./usr/include/crypto/cryptosoft.h
 ./usr/include/crypto/des.h
 ./usr/include/crypto/des_locl.h
 ./usr/include/crypto/podd.h
@@ -316,6 +317,7 @@
 ./usr/include/dev/pci/xmaciireg.h
 ./usr/include/dev/pcmcia
 ./usr/include/dev/pcmcia/if_cnwreg.h
+./usr/include/dev/pcmcia/if_rayreg.h
 ./usr/include/dev/pcmcia/if_wavelan_ieee.h
 ./usr/include/dev/pcmcia/if_wireg.h
 ./usr/include/dev/pcmcia/if_xereg.h
@@ -3342,4 +3344,3 @@
 ./usr/share/mk/bsd.subdir.mk
 ./usr/share/mk/bsd.sys.mk
 ./var/db/libc.tags
-./usr/include/crypto/cryptosoft.h
