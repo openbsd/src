@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.21 2001/06/26 23:32:46 drahn Exp $
+#	$OpenBSD: list,v 1.22 2001/06/26 23:47:09 drahn Exp $
 
 SRCDIRS distrib/special
 SRCDIRS usr.bin bin sbin usr.sbin gnu/usr.bin
@@ -53,6 +53,7 @@ LINK	instbin			sbin/route
 #LINK	instbin			sbin/slattach
 LINK	instbin			sbin/scsi
 LINK	instbin			sbin/umount
+LINK	instbin			sbin/wicontrol
 LINK	instbin			usr/bin/grep usr/bin/fgrep usr/bin/egrep
 LINK	instbin			usr/bin/mg
 LINK	instbin			usr/bin/ftp
