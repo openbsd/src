@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.28 2001/11/19 19:02:16 mpech Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.29 2001/11/23 22:20:06 deraadt Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-static char rcsid[] = "$OpenBSD: vmstat.c,v 1.28 2001/11/19 19:02:16 mpech Exp $";
+static char rcsid[] = "$OpenBSD: vmstat.c,v 1.29 2001/11/23 22:20:06 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -88,7 +88,6 @@ static struct Info {
 #include "dkstats.h"
 extern struct _disk	cur;
 
-
 #define	cnt s.Cnt
 #define oldcnt s1.Cnt
 #define	total s.Total
@@ -118,7 +117,6 @@ static	int nextintsrow;
 
 struct	utmp utmp;
 
-
 WINDOW *
 openkre()
 {
@@ -143,22 +141,16 @@ closekre(w)
 
 
 static struct nlist namelist[] = {
-#define X_CPTIME	0
-	{ "_cp_time" },
-#define X_UVMEXP	1
-	{ "_uvmexp" },
-#define	X_NCHSTATS	2
-	{ "_nchstats" },
-#define	X_INTRNAMES	3
+#define	X_INTRNAMES	0
 	{ "_intrnames" },
-#define	X_EINTRNAMES	4
+#define	X_EINTRNAMES	1
 	{ "_eintrnames" },
-#define	X_INTRCNT	5
+#define	X_INTRCNT	2
 	{ "_intrcnt" },
-#define	X_EINTRCNT	6
+#define	X_EINTRCNT	3
 	{ "_eintrcnt" },
 #if defined(__i386__)
-#define	X_INTRHAND	7
+#define	X_INTRHAND	4
 	{ "_intrhand" },
 #endif
 	{ "" },
@@ -201,7 +193,6 @@ initkre()
 {
 	char *intrnamebuf, *cp;
 	int i, ret;
-	static int once = 0;
 
 	if (namelist[0].n_type == 0) {
 		if ((ret = kvm_nlist(kd, namelist)) == -1)
@@ -214,17 +205,8 @@ initkre()
 		}
 	}
 	hertz = stathz ? stathz : hz;
-	if (! dkinit(1))
+	if (!dkinit(1))
 		return(0);
-	if (dk_ndrive && !once) {
-#define	allocate(e, t) \
-    s./**/e = (t *)calloc(dk_ndrive, sizeof (t)); \
-    s1./**/e = (t *)calloc(dk_ndrive, sizeof (t)); \
-    s2./**/e = (t *)calloc(dk_ndrive, sizeof (t)); \
-    z./**/e = (t *)calloc(dk_ndrive, sizeof (t));
-		once = 1;
-#undef allocate
-	}
 	if (nintr == 0) {
 #if defined(__i386__)
 		struct intrhand *intrhand[16], *ihp, ih;
@@ -250,7 +232,7 @@ initkre()
 			while (ihp) {
 				KREAD(ihp, &ih, sizeof(ih));
 				KREAD(ih.ih_what, iname, 16);
-				/* XXX strcpy is safe, sized & malloc'd buffer */ 
+				/* XXX strcpy is safe, sized & malloc'd buffer */
 				strcpy(intrname[n++] = intrnamebuf + namelen, iname);
 				namelen += 1 + strlen(iname);
 				ihp = ih.ih_next;
@@ -258,11 +240,11 @@ initkre()
 		}
 #else
 		nintr = (namelist[X_EINTRCNT].n_value -
-			namelist[X_INTRCNT].n_value) / sizeof (long);
+		    namelist[X_INTRCNT].n_value) / sizeof (long);
 		intrloc = calloc(nintr, sizeof (long));
 		intrname = calloc(nintr, sizeof (long));
 		intrnamebuf = malloc(namelist[X_EINTRNAMES].n_value -
-			namelist[X_INTRNAMES].n_value);
+		    namelist[X_INTRNAMES].n_value);
 		if (intrnamebuf == 0 || intrname == 0 || intrloc == 0) {
 			error("Out of memory\n");
 			if (intrnamebuf)
@@ -275,7 +257,7 @@ initkre()
 			return(0);
 		}
 		NREAD(X_INTRNAMES, intrnamebuf, NVAL(X_EINTRNAMES) -
-			NVAL(X_INTRNAMES));
+		    NVAL(X_INTRNAMES));
 		for (cp = intrnamebuf, i = 0; i < nintr; i++) {
 			intrname[i] = cp;
 			cp += strlen(cp) + 1;
@@ -344,15 +326,15 @@ labelkre()
 	mvprintw(GENSTATROW, GENSTATCOL, "   Csw   Trp   Sys   Int   Sof  Flt");
 
 	mvprintw(GRAPHROW, GRAPHCOL,
-		"    . %% Sys    . %% User    . %% Nice    . %% Idle");
+	    "    . %% Sys    . %% User    . %% Nice    . %% Idle");
 	mvprintw(PROCSROW, PROCSCOL, "Proc:r  d  s  w");
 	mvprintw(GRAPHROW + 1, GRAPHCOL,
-		"|    |    |    |    |    |    |    |    |    |    |");
+	    "|    |    |    |    |    |    |    |    |    |    |");
 
 	mvprintw(NAMEIROW, NAMEICOL,
-		"Namei         Sys-cache    Proc-cache    No-cache");
+	    "Namei         Sys-cache    Proc-cache    No-cache");
 	mvprintw(NAMEIROW + 1, NAMEICOL,
-		"    Calls     hits    %%    hits     %%    miss   %%");
+	    "    Calls     hits    %%    hits     %%    miss   %%");
 	mvprintw(DISKROW, DISKCOL, "Discs");
 	mvprintw(DISKROW + 1, DISKCOL, "seeks");
 	mvprintw(DISKROW + 2, DISKCOL, "xfers");
@@ -362,7 +344,7 @@ labelkre()
 	for (i = 0; i < dk_ndrive && j < MAXDRIVES; i++)
 		if (dk_select[i]) {
 			mvprintw(DISKROW, DISKCOL + 5 + 5 * j,
-				" %4.4s", dr_name[j]);
+			    " %4.4s", dr_name[j]);
 			j++;
 		}
 	for (i = 0; i < nintr; i++) {
@@ -392,7 +374,6 @@ showkre()
 	int i, l, c;
 	static int failcnt = 0;
 
-	
 	if (state == TIME)
 		dkswap();
 	etime = 0;
@@ -424,7 +405,7 @@ showkre()
 				continue;
 			intrloc[i] = nextintsrow++;
 			mvprintw(intrloc[i], INTSCOL + 9, "%-8.8s",
-				intrname[i]);
+			    intrname[i]);
 		}
 		X(intrcnt);
 		l = (int)((float)s.intrcnt[i]/etime + 0.5);
@@ -442,7 +423,7 @@ showkre()
 	psiz = 0;
 	f2 = 0.0;
 
-	/* 
+	/*
 	 * Last CPU state not calculated yet.
 	 */
 	for (c = 0; c < CPUSTATES - 1; c++) {
@@ -454,7 +435,7 @@ showkre()
 			putfloat(f1, GRAPHROW, GRAPHCOL + 1, 5, 1, 0);
 		else
 			putfloat(f1, GRAPHROW, GRAPHCOL + 12 * c,
-				5, 1, 0);
+			    5, 1, 0);
 		move(GRAPHROW + 2, psiz);
 		psiz += l;
 		while (l-- > 0)
@@ -476,7 +457,7 @@ showkre()
 	putfloat(avenrun[1], STATROW, STATCOL + 23, 6, 2, 0);
 	putfloat(avenrun[2], STATROW, STATCOL + 29, 6, 2, 0);
 	mvaddstr(STATROW, STATCOL + 53, buf);
-#define pgtokb(pg)     ((pg) * s.uvmexp.pagesize / 1024)
+#define pgtokb(pg)	((pg) * s.uvmexp.pagesize / 1024)
 
 	putint(pgtokb(s.uvmexp.active), MEMROW + 2, MEMCOL + 6, 7);
 	putint(pgtokb(s.uvmexp.active + s.uvmexp.swpginuse),    /* XXX */
@@ -528,21 +509,21 @@ showkre()
 	for (i = 0, c = 0; i < dk_ndrive && c < MAXDRIVES; i++)
 		if (dk_select[i]) {
 			mvprintw(DISKROW, DISKCOL + 5 + 5 * c,
-				" %4.4s", dr_name[i]);
+			    " %4.4s", dr_name[i]);
 			dinfo(i, ++c);
 		}
 	putint(s.nchcount, NAMEIROW + 2, NAMEICOL, 9);
 	putint(nchtotal.ncs_goodhits, NAMEIROW + 2, NAMEICOL + 10, 8);
 #define nz(x)	((x) ? (x) : 1)
 	putfloat(nchtotal.ncs_goodhits * 100.0 / nz(s.nchcount),
-	   NAMEIROW + 2, NAMEICOL + 19, 4, 0, 1);
+	    NAMEIROW + 2, NAMEICOL + 19, 4, 0, 1);
 	putint(nchtotal.ncs_pass2, NAMEIROW + 2, NAMEICOL + 24, 7);
 	putfloat(nchtotal.ncs_pass2 * 100.0 / nz(s.nchcount),
-	   NAMEIROW + 2, NAMEICOL + 33, 4, 0, 1);
+	    NAMEIROW + 2, NAMEICOL + 33, 4, 0, 1);
 	putint(nchtotal.ncs_miss - nchtotal.ncs_pass2,
 	   NAMEIROW + 2, NAMEICOL + 38, 7);
 	putfloat((nchtotal.ncs_miss - nchtotal.ncs_pass2) *
-	   100.0 / nz(s.nchcount), NAMEIROW + 2, NAMEICOL + 45, 4, 0, 1);
+	    100.0 / nz(s.nchcount), NAMEIROW + 2, NAMEICOL + 45, 4, 0, 1);
 #undef nz
 }
 
@@ -652,18 +633,17 @@ getinfo(s, st)
 	struct Info *s;
 	enum state st;
 {
-	int mib[2];
+	static int cp_time_mib[] = { CTL_KERN, KERN_CPTIME };
+	static int nchstats_mib[2] = { CTL_KERN, KERN_NCHSTATS };
+	static int uvmexp_mib[2] = { CTL_VM, VM_UVMEXP };
+	static int vmtotal_mib[2] = { CTL_VM, VM_METER };
 	size_t size;
-	extern int errno;
 #if defined(__i386__)
 	struct intrhand *intrhand[16], *ihp, ih;
 	int i, n;
 #endif
 
 	dkreadstats();
-	NREAD(X_CPTIME, s->time, sizeof s->time);
-	NREAD(X_UVMEXP, &s->uvmexp, sizeof s->uvmexp);
-	NREAD(X_NCHSTATS, &s->nchstats, sizeof s->nchstats);
 #if defined(__i386__)
 	NREAD(X_INTRHAND, intrhand, sizeof(intrhand));
 	for (i = 0, n = 0; i < 16; i++) {
@@ -675,13 +655,29 @@ getinfo(s, st)
 		}
 	}
 #else
-	NREAD(X_INTRCNT, s->intrcnt, nintr * LONG);
+	NREAD(X_INTRCNT, s->intrcnt, nintr * sizeof(long));
 #endif
+	size = sizeof(s->time);
+	if (sysctl(cp_time_mib, 2, &s->time, &size, NULL, 0) < 0) {
+		error("Can't get KERN_CPTIME: %s\n", strerror(errno));
+		bzero(&s->time, sizeof(s->time));
+	}
+
+	size = sizeof(s->nchstats);
+	if (sysctl(nchstats_mib, 2, &s->nchstats, &size, NULL, 0) < 0) {
+		error("Can't get KERN_NCHSTATS: %s\n", strerror(errno));
+		bzero(&s->nchstats, sizeof(s->nchstats));
+	}
+
+	size = sizeof(s->uvmexp);
+	if (sysctl(uvmexp_mib, 2, &s->uvmexp, &size, NULL, 0) < 0) {
+		error("Can't get VM_UVMEXP: %s\n", strerror(errno));
+		bzero(&s->uvmexp, sizeof(s->uvmexp));
+	}
+
 	size = sizeof(s->Total);
-	mib[0] = CTL_VM;
-	mib[1] = VM_METER;
-	if (sysctl(mib, 2, &s->Total, &size, NULL, 0) < 0) {
-		error("Can't get kernel info: %s\n", strerror(errno));
+	if (sysctl(vmtotal_mib, 2, &s->Total, &size, NULL, 0) < 0) {
+		error("Can't get VM_METER: %s\n", strerror(errno));
 		bzero(&s->Total, sizeof(s->Total));
 	}
 }
@@ -717,7 +713,7 @@ dinfo(dn, c)
 
 	/* time busy in disk activity */
 	atime = (double)cur.dk_time[dn].tv_sec +
-		((double)cur.dk_time[dn].tv_usec / (double)1000000);
+	    ((double)cur.dk_time[dn].tv_usec / (double)1000000);
 
 	words = cur.dk_bytes[dn] / 1024.0;	/* # of K transferred */
 

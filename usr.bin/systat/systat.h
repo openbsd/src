@@ -1,4 +1,4 @@
-/*	$OpenBSD: systat.h,v 1.3 1997/06/23 22:21:49 millert Exp $	*/
+/*	$OpenBSD: systat.h,v 1.4 2001/11/23 22:20:06 deraadt Exp $	*/
 /*	$NetBSD: systat.h,v 1.2 1995/01/20 08:52:14 jtc Exp $	*/
 
 /*-
@@ -60,4 +60,3 @@ struct  cmdtab {
 #define NVAL(indx)  namelist[(indx)].n_value
 #define NPTR(indx)  (void *)NVAL((indx))
 #define NREAD(indx, buf, len) kvm_ckread(NPTR((indx)), (buf), (len))
-#define LONG	(sizeof (long))

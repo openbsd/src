@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.6 1997/11/04 12:20:18 kstailey Exp $	*/
+/*	$OpenBSD: extern.h,v 1.7 2001/11/23 22:20:06 deraadt Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1996/05/10 23:16:34 thorpej Exp $	*/
 
 /*-
@@ -75,8 +75,10 @@ int	 cmdkre __P((char *, char *));
 int	 cmdnetstat __P((char *, char *));
 struct	 cmdtab *lookup __P((char *));
 void	 command __P((char *));
-void	 die __P((int));
-void	 display __P((int));
+void	 sigdie __P((int));
+void	 die __P((void));
+void	 sigdisplay __P((int));
+void	 display __P((void));
 int	 dkinit __P((int));
 int	 dkcmd __P((char *, char *));
 void	 error __P((const char *fmt, ...));
@@ -111,7 +113,7 @@ WINDOW	*opennetstat __P((void));
 WINDOW	*openpigs __P((void));
 WINDOW	*openswap __P((void));
 int	 prefix __P((char *, char *));
-void	 resize __P((int));
+void	 sigwinch __P((int));
 void	 showiostat __P((void));
 void	 showkre __P((void));
 void	 showmbufs __P((void));
@@ -120,3 +122,11 @@ void	 showpigs __P((void));
 void	 showswap __P((void));
 void	 status __P((void));
 void	 suspend __P((int));
+void	 gethz __P((void));
+
+extern volatile sig_atomic_t gotdie;
+extern volatile sig_atomic_t gotdisplay;
+extern volatile sig_atomic_t gotwinch;
+
+extern double dellave;
+extern WINDOW *wload;
