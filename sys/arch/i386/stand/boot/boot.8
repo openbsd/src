@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot.8,v 1.16 1999/09/23 04:12:08 alex Exp $
+.\"	$OpenBSD: boot.8,v 1.17 2000/06/12 16:00:51 millert Exp $
 .\"
 .\" Copyright (c) 1997-1999 Michael Shalayeff
 .\" All rights reserved.
@@ -184,7 +184,7 @@ Variables include:
 .Pp
 .Bl -tag -compact -width boothow
 .It Nm addr
-Address at wich to load the kernel.
+Address at which to load the kernel.
 .It Nm howto
 Options to pass to the loaded kernel.
 .It Nm debug
@@ -192,9 +192,9 @@ Debug flag if
 .Nm
 was compiled with DEBUG defined.
 .It Nm device
-Boot device name (ie fd0a, sd0a).
+Boot device name (ie: fd0a, sd0a).
 .It Nm tty
-Active console device name.
+Active console device name (ie: com0, com1, pc0)
 .It Nm image
 File name containing the kernel image.
 .El
