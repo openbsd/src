@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.36 2000/10/04 23:17:27 itojun Exp $	*/
+/*	$OpenBSD: if.c,v 1.37 2000/10/05 02:12:51 itojun Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -788,7 +788,6 @@ ifioctl(so, cmd, data, p)
 	}
 
 	case SIOCSIFPHYADDR:
-	case SIOCDIFPHYADDR:
 #ifdef INET6
 	case SIOCSIFPHYADDR_IN6:
 #endif
