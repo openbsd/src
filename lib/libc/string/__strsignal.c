@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: __strsignal.c,v 1.2 1996/08/19 08:33:56 tholo Exp $";
+static char *rcsid = "$OpenBSD: __strsignal.c,v 1.3 1996/09/16 05:43:39 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef NLS
@@ -48,12 +48,27 @@ static char *rcsid = "$OpenBSD: __strsignal.c,v 1.2 1996/08/19 08:33:56 tholo Ex
 #include <signal.h>
 #include <string.h>
 
+static char *itoa(num)
+	int num;
+{
+	static char buffer[11];
+	char *p;
+
+	p = buffer + 4;
+	while (num >= 10) {
+		*--p = (num % 10) + '0';
+		num /= 10;
+	}
+	*p = (num % 10) + '0';
+	return p;
+}
+
 char *
 __strsignal(num, buf)
 	int num;
 	char *buf;
 {
-#define	UPREFIX	"Unknown signal: %u"
+#define	UPREFIX	"Unknown signal: "
 	register unsigned int signum;
 
 #ifdef NLS
@@ -71,10 +86,11 @@ __strsignal(num, buf)
 #endif
 	} else {
 #ifdef NLS
-		sprintf(buf, catgets(catd, 1, 0xffff, UPREFIX), signum);
+		strcpy(buf, catgets(catd, 1, 0xffff, UPREFIX));
 #else
-		sprintf(buf, UPREFIX, signum);
+		strcpy(buf, UPREFIX);
 #endif
+		strcat(buf, itoa(signum));
 	}
 
 #ifdef NLS

@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: __strerror.c,v 1.4 1996/09/15 09:31:53 tholo Exp $";
+static char *rcsid = "$OpenBSD: __strerror.c,v 1.5 1996/09/16 05:43:38 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef NLS
@@ -49,6 +49,21 @@ static char *rcsid = "$OpenBSD: __strerror.c,v 1.4 1996/09/15 09:31:53 tholo Exp
 #include <stdio.h>
 #include <string.h>
 
+static char *itoa(num)
+	int num;
+{
+	static char buffer[11];
+	char *p;
+
+	p = buffer + 4;
+	while (num >= 10) {
+		*--p = (num % 10) + '0';
+		num /= 10;
+	}
+	*p = (num % 10) + '0';
+	return p;
+}
+
 /*
  * Since perror() is not allowed to change the contents of strerror()'s
  * static buffer, both functions supply their own buffers to the
@@ -60,7 +75,7 @@ __strerror(num, buf)
 	int num;
 	char *buf;
 {
-#define	UPREFIX	"Unknown error: %u"
+#define	UPREFIX	"Unknown error: "
 	register unsigned int errnum;
 
 #ifdef NLS
@@ -78,10 +93,11 @@ __strerror(num, buf)
 #endif
 	} else {
 #ifdef NLS
-		sprintf(buf, catgets(catd, 1, 0xffff, UPREFIX), errnum);
+		strcpy(buf, catgets(catd, 1, 0xffff, UPREFIX));
 #else
-		sprintf(buf, UPREFIX, errnum);
+		strcpy(buf, UPREFIX);
 #endif
+		strcat(buf, itoa(errnum));
 	}
 
 #ifdef NLS

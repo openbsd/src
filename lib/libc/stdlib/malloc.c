@@ -8,7 +8,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: malloc.c,v 1.11 1996/09/15 09:31:49 tholo Exp $";
+static char rcsid[] = "$OpenBSD: malloc.c,v 1.12 1996/09/16 05:43:40 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -20,9 +20,9 @@ static char rcsid[] = "$OpenBSD: malloc.c,v 1.11 1996/09/15 09:31:49 tholo Exp $
 /*
  * Defining MALLOC_STATS will enable you to call malloc_dump() and set
  * the [dD] options in the MALLOC_OPTIONS environment variable.
- * It has no run-time performance hit.
+ * It has no run-time performance hit, but does pull in stdio...
  */
-#define MALLOC_STATS
+#undef MALLOC_STATS
 
 #if defined(EXTRA_SANITY) && !defined(MALLOC_STATS)
 # define MALLOC_STATS	/* required for EXTRA_SANITY */
