@@ -1,4 +1,4 @@
-/*	$OpenBSD: apply.c,v 1.4 1997/07/29 02:54:07 bitblt Exp $	*/
+/*	$OpenBSD: apply.c,v 1.5 1997/08/31 08:25:55 deraadt Exp $	*/
 /*	$NetBSD: apply.c,v 1.3 1995/03/25 03:38:23 glass Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)apply.c	8.4 (Berkeley) 4/4/94";
 #else
-static char rcsid[] = "$OpenBSD: apply.c,v 1.4 1997/07/29 02:54:07 bitblt Exp $";
+static char rcsid[] = "$OpenBSD: apply.c,v 1.5 1997/08/31 08:25:55 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -197,9 +197,8 @@ system(command)
 	const char *command;
 {
 	static char *name, *shell;
-	union wait pstat;
 	pid_t pid;
-	int omask;
+	int omask, pstat;
 	sig_t intsave, quitsave;
 
 	if (shell == NULL) {
@@ -224,11 +223,11 @@ system(command)
 	}
 	intsave = signal(SIGINT, SIG_IGN);
 	quitsave = signal(SIGQUIT, SIG_IGN);
-	pid = waitpid(pid, (int *)&pstat, 0);
+	pid = waitpid(pid, &pstat, 0);
 	(void)sigsetmask(omask);
 	(void)signal(SIGINT, intsave);
 	(void)signal(SIGQUIT, quitsave);
-	return(pid == -1 ? -1 : pstat.w_status);
+	return(pid == -1 ? -1 : pstat);
 }
 
 void

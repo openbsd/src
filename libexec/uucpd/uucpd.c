@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)uucpd.c	5.10 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: uucpd.c,v 1.10 1997/08/04 19:25:13 deraadt Exp $";
+static char rcsid[] = "$Id: uucpd.c,v 1.11 1997/08/31 08:24:01 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -245,14 +245,14 @@ struct	utmp utmp;
 void
 dologout()
 {
-	union wait status;
+	int status;
 	int save_errno = errno;
 	int pid, wtmp;
 
 #ifdef BSDINETD
-	while ((pid=wait((int *)&status)) > 0) {
+	while ((pid=wait(&status)) > 0) {
 #else  /* !BSDINETD */
-	while ((pid=wait3((int *)&status,WNOHANG,0)) > 0) {
+	while ((pid=wait3(&status, WNOHANG, 0)) > 0) {
 #endif /* !BSDINETD */
 		wtmp = open(_PATH_WTMP, O_WRONLY|O_APPEND);
 		if (wtmp >= 0) {
