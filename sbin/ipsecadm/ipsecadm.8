@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.8,v 1.57 2003/02/25 22:29:33 markus Exp $
+.\" $OpenBSD: ipsecadm.8,v 1.58 2003/02/26 12:22:34 markus Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -302,7 +302,9 @@ and
 Default action is to show all types of security associations
 from the kernel.
 .It monitor
-Continuously display all PFKEY messages exchanged with
+Continuously display all
+.Dv PF_KEY
+messages exchanged with
 the kernel.
 .It ipcomp
 Set up an IP Compression Association (IPCA) which will use the IPcomp
