@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote.3,v 1.22 2000/04/15 02:15:27 aaron Exp $
+.\" $OpenBSD: keynote.3,v 1.23 2000/05/17 05:38:19 angelos Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -112,6 +112,8 @@ struct keynote_keylist
 .Fn kn_sign_assertion "char *assertion" "int len" "char *key" "char *algorithm" "int vflag"
 .Ft int
 .Fn kn_verify_assertion "char *assertion" "int len"
+.Ft void
+.Fn kn_free_key "struct keynote_deckey *"
 .Fd Link options: -lkeynote -lm -lcrypto
 .Sh DESCRIPTION
 For more details on
@@ -821,6 +823,9 @@ if necessary memory could not be allocated, or
 .Er ERROR_SYNTAX
 if the assertion contained a syntactic error, or the cryptographic
 algorithm was not supported.
+.Pp
+.Fn kn_free_key
+frees the key.
 .Pp
 .Sh FILES
 .Bl -tag -width libkeynote.a -compact

@@ -1,4 +1,4 @@
-# $OpenBSD: README,v 1.8 1999/11/05 00:27:18 angelos Exp $
+# $OpenBSD: README,v 1.9 2000/05/17 05:38:18 angelos Exp $
 
 This is release 2.2 of the KeyNote trust management library reference
 implementation (in case you are wondering, there was never an official 1.0
@@ -19,11 +19,7 @@ A sample application is provided in sample-app.c. To build it, use
 
 Compile tips:
 - You need the SSLeay/OpenSSL library if you compile with crypto
-  (default), version 0.8.1b or later. You can find it in various
-  crypto software repositories, or at:
-	   ftp://ftp.psy.uq.oz.au/pub/Crypto/SSL/
-
-  OpenSSL can be found at:
+  (default), version 0.8.1b or later.  OpenSSL can be found at:
 	   http://www.openssl.org/
 
 The Makefile creates the libkeynote.a library and the keynote program.

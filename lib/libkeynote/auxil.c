@@ -1,4 +1,4 @@
-/* $OpenBSD: auxil.c,v 1.3 2000/02/01 03:17:36 angelos Exp $ */
+/* $OpenBSD: auxil.c,v 1.4 2000/05/17 05:38:18 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -292,6 +292,16 @@ keynote_keylist_free(struct keylist *kl)
 	free(kl);
 	kl = kl2;
     }
+}
+
+/*
+ * Free a key.
+ */
+void
+kn_free_key(struct keynote_deckey *dc)
+{
+    if (dc)
+      keynote_free_key(dc->dec_key, dc->dec_algorithm);
 }
 
 /*
