@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofcons.c,v 1.6 2001/08/21 01:55:50 drahn Exp $	*/
+/*	$OpenBSD: ofcons.c,v 1.7 2001/08/24 14:23:41 drahn Exp $	*/
 /*	$NetBSD: ofcons.c,v 1.3 1996/10/13 01:38:11 christos Exp $	*/
 
 /*
@@ -94,7 +94,7 @@ ofcattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct ofc_softc *sc = (void *)self:
+	struct ofc_softc *sc = (void *)self;
 
 	timeout_set(&sc->of_tmo, ofcpoll, sc);
 	printf("\n");
@@ -294,7 +294,7 @@ ofcpoll(aux)
 		if (tp && (tp->t_state & TS_ISOPEN))
 			(*linesw[tp->t_line].l_rint)(ch, tp);
 	}
-	timeout_add(&of->of_tmo, 1);
+	timeout_add(&sc->of_tmo, 1);
 }
 
 static int
@@ -374,12 +374,12 @@ ofccnpollc(dev, on)
 		return;
 	if (on) {
 		if (sc->of_flags & OFPOLL)
-			timeout_del(&of->of_tmo);
+			timeout_del(&sc->of_tmo);
 		sc->of_flags &= ~OFPOLL;
 	} else {
 		if (!(sc->of_flags & OFPOLL)) {
 			sc->of_flags |= OFPOLL;
-			timeout_add(&of->of_tmo, 1);
+			timeout_add(&sc->of_tmo, 1);
 		}
 	}
 }
