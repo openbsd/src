@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.11 2002/06/11 05:30:28 provos Exp $	*/
+/*	$OpenBSD: filter.c,v 1.12 2002/06/18 01:54:31 deraadt Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -327,7 +327,7 @@ filter_ask(struct intercept_tlq *tls, struct filterq *fls,
 			char compose[2*MAXPATHLEN], *l;
 			char *lst = NULL;
 			int set = 0;
-			
+
 			/* Explicitly match every component */
 			line[0] = '\0';
 			TAILQ_FOREACH(tl, tls, next) {
@@ -336,7 +336,7 @@ filter_ask(struct intercept_tlq *tls, struct filterq *fls,
 				l = intercept_translate_print(tl);
 				if (l == NULL)
 					continue;
-					
+
 				snprintf(compose, sizeof(compose),
 				    "%s%s eq \"%s\"",
 				    tl->name,
