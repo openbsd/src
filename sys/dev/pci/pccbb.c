@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.5 2000/07/06 19:49:10 aaron Exp $ */
+/*	$OpenBSD: pccbb.c,v 1.6 2000/07/25 00:04:59 mickey Exp $ */
 /*	$NetBSD: pccbb.c,v 1.42 2000/06/16 23:41:35 cgd Exp $	*/
 
 /*
@@ -487,6 +487,7 @@ pccbbattach(parent, self, aux)
 
 	shutdownhook_establish(pccbb_shutdown, sc);
 
+	timeout_set(&sc->sc_ins_tmo, pci113x_insert, sc);
 #if 0
 	config_defer(self, pccbb_pci_callback);
 #endif
@@ -946,9 +947,9 @@ pccbbintr(arg)
 		     */
 		    (sc->sc_flags & CBB_CARDEXIST) == 0) {
 			if (sc->sc_flags & CBB_INSERTING) {
-				untimeout(pci113x_insert, sc);
+				timeout_del(&sc->sc_ins_tmo);
 			}
-			timeout(pci113x_insert, sc, hz / 10);
+			timeout_add(&sc->sc_ins_tmo, hz / 10);
 			sc->sc_flags |= CBB_INSERTING;
 		}
 	}
@@ -1049,7 +1050,7 @@ pci113x_insert(arg)
 			/* who are you? */
 		}
 	} else {
-		timeout(pci113x_insert, sc, hz / 10);
+		timeout_add(&sc->sc_ins_tmo, hz / 10);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbbvar.h,v 1.2 2000/07/06 19:49:11 aaron Exp $ */
+/*	$OpenBSD: pccbbvar.h,v 1.3 2000/07/25 00:04:59 mickey Exp $ */
 /*	$NetBSD: pccbbvar.h,v 1.13 2000/06/08 10:28:29 haya Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
@@ -37,6 +37,8 @@
 
 #ifndef _DEV_PCI_PCCBBVAR_H_
 #define	_DEV_PCI_PCCBBVAR_H_
+
+#include <sys/timeout.h>
 
 #define	PCIC_FLAG_SOCKETP	0x0001
 #define	PCIC_FLAG_CARDP		0x0002
@@ -118,6 +120,7 @@ struct pccbb_softc {
 	bus_space_tag_t sc_base_memt;
 	bus_space_handle_t sc_base_memh;
 
+	struct timeout sc_ins_tmo;
 	void *sc_ih;			/* interrupt handler */
 	int sc_intrline;		/* interrupt line */
 	pcitag_t sc_intrtag;		/* copy of pa->pa_intrtag */
