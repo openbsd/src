@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.316 2000/09/14 11:52:43 niklas Exp 
+ *		OpenBSD: pcidevs,v 1.317 2000/09/14 13:18:50 niklas Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -733,12 +733,6 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Alliance Semiconductor",
 	    "AT24",
-	},
-	{
-	    PCI_VENDOR_ALTATECH, PCI_PRODUCT_ALTATECH_GNIC2,
-	    0,
-	    "Alta Technology",
-	    "PMC/GNIC2",
 	},
 	{
 	    PCI_VENDOR_ALTEON, PCI_PRODUCT_ALTEON_ACENIC,
@@ -3571,6 +3565,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Opti",
 	    "RM861HA",
+	},
+	{
+	    PCI_VENDOR_PE, PCI_PRODUCT_PE_GNIC2,
+	    0,
+	    "Packet Engines Inc.",
+	    "PMC/GNIC2",
 	},
 	{
 	    PCI_VENDOR_PCTECH, PCI_PRODUCT_PCTECH_RZ1000,
@@ -8295,9 +8295,9 @@ struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
-	    PCI_VENDOR_ALTATECH, 0,
+	    PCI_VENDOR_PE, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Alta Technology",
+	    "Packet Engines Inc.",
 	    NULL,
 	},
 	{
