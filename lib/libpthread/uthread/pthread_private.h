@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_private.h,v 1.26 2001/08/30 07:40:47 fgsch Exp $	*/
+/*	$OpenBSD: pthread_private.h,v 1.27 2001/08/30 17:47:57 todd Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -646,6 +646,12 @@ struct pthread {
 	long	slice_usec;
 
 	/*
+	 * Incremental priority accumulated by thread while it is ready to
+	 * run but is denied being run.
+	 */
+	int	inc_prio;
+
+	/*
 	 * Time to wake up thread. This is used for sleeping threads and
 	 * for any operation which may time out (such as select).
 	 */
@@ -873,6 +879,9 @@ SCLASS unsigned int volatile	_sched_ticks
 ;
 #endif
 
+/* Last time that an incremental priority update was performed: */
+extern struct timeval   kern_inc_prio_time;
+
 /* Dead threads: */
 SCLASS _thread_list_t		_dead_list
 #ifdef GLOBAL_PTHREAD_PRIVATE
@@ -976,13 +985,6 @@ SCLASS	pthread_cond_t  _gc_cond
 SCLASS struct  sigaction _thread_sigact[NSIG];
 
 /*
- * Array of counts of dummy handlers for SIG_DFL signals.  This is used to
- * assure that there is always a dummy signal handler installed while there is a
- * thread sigwait()ing on the corresponding signal.
- */
-SCLASS int	_thread_dfl_count[NSIG];
-
-/*
  * Scheduling queues:
  */
 SCLASS pq_queue_t		_readyq;
@@ -1067,7 +1069,7 @@ void    _thread_cleanupspecific(void);
 void    _thread_dump_info(void);
 void    _thread_init(void);
 void    _thread_kern_sched(struct sigcontext *);
-void    _thread_kern_sched_state(enum pthread_state,char *fname,int lineno);
+void    _thread_kern_sched_state(enum pthread_state,const char *fname,int lineno);
 void	_thread_kern_sched_state_unlock(enum pthread_state state,
 	    spinlock_t *lock, char *fname, int lineno);
 void    _thread_kern_set_timeout(const struct timespec *);

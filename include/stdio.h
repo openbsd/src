@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdio.h,v 1.16 2001/08/30 07:38:27 fgsch Exp $	*/
+/*	$OpenBSD: stdio.h,v 1.17 2001/08/30 17:47:57 todd Exp $	*/
 /*	$NetBSD: stdio.h,v 1.18 1996/04/25 18:29:21 jtc Exp $	*/
 
 /*-
@@ -277,7 +277,7 @@ int	 fileno __P((FILE *));
 void	 flockfile __P((FILE *));
 int	 ftrylockfile __P((FILE *));
 void	 funlockfile __P((FILE *));
-void	 _flockfile_debug __P((FILE *, char *, int));
+void	 _flockfile_debug __P((FILE *, const char *, int));
 int	 getc_unlocked __P((FILE *));
 int	 putc_unlocked __P((int, FILE *));
 int	 getchar_unlocked __P((void));

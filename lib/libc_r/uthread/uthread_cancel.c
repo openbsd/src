@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_cancel.c,v 1.4 2001/08/30 07:40:47 fgsch Exp $	*/
+/*	$OpenBSD: uthread_cancel.c,v 1.5 2001/08/30 17:47:57 todd Exp $	*/
 /*
  * David Leonard <d@openbsd.org>, 1999. Public domain.
  */
@@ -12,10 +12,7 @@ pthread_cancel(pthread)
 {
 	int ret;
 
-	if ((ret = _find_thread(pthread)) != 0) {
-		/* NOTHING */
-	} else if (pthread->state == PS_DEAD || pthread->state == PS_DEADLOCK) {
-		ret = 0;
+	if ((ret = _find_thread(pthread))) {
 	} else if ((pthread->flags & PTHREAD_FLAGS_CANCELED) == 0) {
 		/* Set the thread's I've-been-cancelled flag: */
 		pthread->flags |= PTHREAD_FLAGS_CANCELED;
