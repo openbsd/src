@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.105 2002/06/07 05:07:33 angelos Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.106 2002/06/07 06:37:08 ho Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -873,7 +873,7 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming,
 #if defined (SADB_X_CREDTYPE_NONE) || defined (SADB_X_AUTHTYPE_NONE)
   struct ipsec_sa *isa = sa->data;
   struct sadb_x_cred *cred;
-  struct sadb_protocol flowtype;
+  struct sadb_protocol flowtype, tprotocol;
 #endif
 #ifdef USE_DEBUG
   char *addr_str;
@@ -1500,12 +1500,12 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming,
   if (pf_key_v2_msg_add (update, (struct sadb_ext *)&flowtype, 0) == -1)
     goto cleanup;
 
-  bzero (&flowtype, sizeof flowtype);
-  flowtype.sadb_protocol_exttype = SADB_X_EXT_PROTOCOL;
-  flowtype.sadb_protocol_len = sizeof flowtype / PF_KEY_V2_CHUNK;
-  flowtype.sadb_protocol_proto = isa->tproto;
+  bzero (&tprotocol, sizeof tprotocol);
+  tprotocol.sadb_protocol_exttype = SADB_X_EXT_PROTOCOL;
+  tprotocol.sadb_protocol_len = sizeof tprotocol / PF_KEY_V2_CHUNK;
+  tprotocol.sadb_protocol_proto = isa->tproto;
 
-  if (pf_key_v2_msg_add (update, (struct sadb_ext *)&flowtype, 0) == -1)
+  if (pf_key_v2_msg_add (update, (struct sadb_ext *)&tprotocol, 0) == -1)
     goto cleanup;
 
   len = sizeof *addr + PF_KEY_V2_ROUND (sysdep_sa_len (isa->src_net));
