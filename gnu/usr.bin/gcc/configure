@@ -547,6 +547,14 @@ for machine in $canon_build $canon_host $canon_target; do
 	a29k-*-*)			# Default a29k environment.
 		use_collect2=yes
 		;;
+	alpha-*-openbsd*)
+		tm_file=alpha/openbsd.h
+		xm_file=alpha/xm-openbsd.h
+		# On OpenBSD, the headers are already okay.
+		fixincludes=Makefile.in
+		tmake_file=t-libc-ok
+		xmake_file=x-openbsd
+		;;
 	alpha-dec-osf[23456789]*)
 		tm_file=alpha/osf2.h
 		if [ x$stabs = xyes ]

@@ -1,4 +1,4 @@
-#	$Id: Makefile.bsd-wrapper,v 1.12 1996/07/27 02:50:15 downsj Exp $
+#	$Id: Makefile.bsd-wrapper,v 1.13 1996/07/31 00:18:13 niklas Exp $
 
 MAN=		cccp.1 gcc.1 cp/g++.1
 MLINKS+=	gcc.1 cc.1
@@ -12,7 +12,8 @@ CLEANFILES=	.gdbinit cp/.gdbinit *.info* bi-parser.c bi-parser.h \
 		objc-parse.c objc-parse.y
 
 all:	config.status
-	${MAKE} ${GNUCFLAGS} BISON=yacc LDFLAGS=${LDSTATIC}
+	${MAKE} ${GNUCFLAGS} BISON=yacc LDFLAGS=${LDSTATIC} \
+		build_infodir=. all doc
 
 .FORCE:	.IGNORE
 
@@ -28,6 +29,7 @@ config.status:
 install:	maninstall
 	${MAKE} ${GNUCFLAGS} prefix=${DESTDIR}/usr \
 		infodir=${DESTDIR}/usr/share/info \
+		build_infodir=. \
 		tooldir=/tmp assertdir=/tmp INSTALL_MAN= NO_TARGET_GCC=true \
 		bindir=${DESTDIR}/usr/bin install
 	ln -f ${DESTDIR}/usr/bin/gcc ${DESTDIR}/usr/bin/cc

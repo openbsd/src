@@ -117,11 +117,13 @@ g77-cross: f/g77.c version.o $(LIBDEPS)
 	   -DGCC_NAME=\"$(GCC_CROSS_NAME)\" $(srcdir)/f/g77.c version.o $(LIBS)
 
 # g77 documentation.
-$(srcdir)/f/g77.info: f/g77.texi f/bugs.texi f/install.texi f/news.texi
-	cd $(srcdir)/f; $(MAKEINFO) g77.texi
+$(build_infodir)/f/g77.info: f/g77.texi f/bugs.texi f/install.texi f/news.texi
+	$(MAKEINFO) -I$(srcdir)/f $(srcdir)/f/g77.texi \
+	   -o $(build_infodir)/f/g77.info
 
+# XXX OpenBSD What to do with dvi builds...?
 $(srcdir)/f/g77.dvi: f/g77.texi f/bugs.texi f/install.texi f/news.texi
-	cd $(srcdir)/f; $(TEXI2DVI) g77.texi
+	$(TEXI2DVI) $(srcdir)/f/g77.texi
 
 F77_SRCS = \
  $(srcdir)/f/assert.j \
@@ -297,7 +299,8 @@ f77.all.cross: g77-cross maybe-f2c
 f77.start.encap: g77 maybe-f2c
 f77.rest.encap:
 
-f77.info: $(srcdir)/f/g77.info
+f77.info: $(build_infodir)/f/g77.info
+# XXX OpenBSD What to do with dvi rules...?
 f77.dvi: $(srcdir)/f/g77.dvi
 
 $(srcdir)/f/BUGS: f/bugs0.texi f/bugs.texi
@@ -402,7 +405,7 @@ f77.install-common:
 
 f77.install-info:
 	-rm -f $(infodir)/g77.info*
-	cd $(srcdir)/f; for f in g77.info*; \
+	cd $(build_infodir)/f; for f in g77.info*; \
 	do $(INSTALL_DATA) $$f $(infodir)/$$f; done
 	-chmod a-x $(infodir)/g77.info*
 

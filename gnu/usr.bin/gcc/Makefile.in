@@ -208,6 +208,8 @@ includedir = $(local_prefix)/include
 assertdir = $(tooldir)/include
 # where the info files go
 infodir = $(prefix)/info
+# where the info-files get built
+build_infodir = $(srcdir)
 # Extension (if any) to put in installed man-page filename.
 manext = .1
 objext = .o
@@ -1870,14 +1872,14 @@ stmp-fixproto: fixhdr.ready fixproto stmp-headers
 # Remake the info files.
 
 doc: info
-info: cpp.info gcc.info lang.info
+info: $(build_infodir)/cpp.info $(build_infodir)/gcc.info lang.info
 
-cpp.info: cpp.texi
-	$(MAKEINFO) $(srcdir)/cpp.texi -o cpp.info
+$(build_infodir)/cpp.info: cpp.texi
+	$(MAKEINFO) $(srcdir)/cpp.texi -o $(build_infodir)/cpp.info
 
-gcc.info: gcc.texi extend.texi install.texi invoke.texi \
+$(build_infodir)/gcc.info: gcc.texi extend.texi install.texi invoke.texi \
 		md.texi rtl.texi tm.texi 
-	$(MAKEINFO) -I$(srcdir) $(srcdir)/gcc.texi -o gcc.info
+	$(MAKEINFO) -I$(srcdir) $(srcdir)/gcc.texi -o $(build_infodir)/gcc.info
 
 dvi: gcc.dvi cpp.dvi lang.dvi
 
@@ -2139,7 +2141,7 @@ install-driver: xgcc
 # Install the info files.
 install-info: doc install-dir lang.install-info
 	-rm -f $(infodir)/cpp.info* $(infodir)/gcc.info*
-	for f in cpp.info* gcc.info*; \
+	cd $(build_infodir); for f in cpp.info* gcc.info*; \
 	do $(INSTALL_DATA) $$f $(infodir)/$$f; done
 	-chmod a-x $(infodir)/cpp.info* $(infodir)/gcc.info*
 
