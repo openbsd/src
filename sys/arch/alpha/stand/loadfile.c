@@ -1,4 +1,4 @@
-/*	$OpenBSD: loadfile.c,v 1.5 1997/07/08 18:13:14 niklas Exp $	*/
+/*	$OpenBSD: loadfile.c,v 1.6 1997/07/08 20:22:16 niklas Exp $	*/
 /*	$NetBSD: loadfile.c,v 1.3 1997/04/06 08:40:59 cgd Exp $	*/
 
 /*
@@ -185,7 +185,7 @@ coff_exec(fd, coff, entryp)
 				printf("read data: %s\n", strerror(errno));
 				return (1);
 			}
-			symtab->n_un.n_strx = sym.es_strindex;
+			symtab->n_un.n_strx = sym.es_strindex + sizeof(int);
 			symtab->n_value = sym.es_value;
 			symtab->n_type = N_EXT;
 			if (sym.es_class == 1)		/* scText */
