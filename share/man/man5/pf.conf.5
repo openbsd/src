@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.203 2003/03/04 18:36:18 deraadt Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.204 2003/03/04 21:03:46 frantzen Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1406,32 +1406,35 @@ For instance:
 .Xc
 .Ed
 .Pp
-Caveat:  If
+There are two caveats associated with state modulation:
+A
+.Ar modulate state
+rule can not be applied to a pre-existing but unmodulated connection.
+Such an application would desynchronize TCP's strict
+sequencing between the two endpoints.
+Instead,
 .Xr pf 4
-picks up an already established connection
-.Po
-the firewall was rebooted, the state table was flushed, ...
-.Pc
-it will not be able to safely modulate the state of that connection.
-.Xr pf 4
-will fall back and operate as if
+will treat the
+.Ar modulate state
+modifier as a
 .Ar keep state
-was specified instead.
-Without this fallback, modulation would cause each host to
-think that the other end had somehow lost sync.
+modifier and the pre-existing connection will be inferred without
+the protection conferred by modulation.
 .Pp
-Caveat:  If the state table is flushed or the firewall is rebooted,
-currently modulated connections can not be continued or picked
-up again by the firewall.
-State modulation causes the firewall to phase
-shift the sequencing of each side of a connection
-.Po
-add a random number to each side.
-.Pc
-Both sides of the connection will notice that its peer has suddenly
-shifted its sequence by a random amount.
-Neither side
-will be able to recover and the connection will stall and eventually close.
+The other caveat affects currently modulated states when the state table
+is lost (firewall reboot, flushing the state table, etc...).
+.Xr pf 4
+will not be able to infer a connection again after the state table flushes
+the connection's modulator.
+When the state is lost, the connection may be left dangling until the
+respective endpoints time out the connection.
+It is possible on a fast local network for the endpoints to start an ACK
+storm while trying to resynchronize after the loss of the modulator.
+Using a
+.Ar flags S/SA
+modifier on
+.Ar modulate state
+rules between fast networks is suggested to prevent ACK storms.
 .Sh STATEFUL TRACKING OPTIONS
 Both
 .Ar keep state
