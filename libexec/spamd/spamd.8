@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.48 2004/03/15 21:53:39 beck Exp $
+.\"	$OpenBSD: spamd.8,v 1.49 2004/03/16 09:19:25 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -32,8 +32,8 @@
 .Nm spamd
 .Bk -words
 .Op Fl 45dgv
-.Op Fl b Ar address
 .Op Fl B Ar maxblack
+.Op Fl b Ar address
 .Op Fl c Ar maxcon
 .Op Fl G Ar passtime:greyexp:whiteexp
 .Op Fl n Ar name
@@ -58,6 +58,11 @@ The options are as follows:
 Return error code 450 to the spammer (default).
 .It Fl 5
 Return error code 550 to the spammer.
+.It Fl B Ar maxblack
+The maximum number of concurrent blacklisted connections to allow in
+greylisting mode.
+This value may not be greater than maxcon (see below).
+The default is maxcon \- 100
 .It Fl b Ar address
 Specify the local address to which
 .Nm
@@ -66,11 +71,6 @@ is to
 By default
 .Nm
 listens on all local addresses.
-.It Fl B Ar maxblack
-The maximum number of concurrent blacklisted connections to allow in
-greylisting mode. 
-This value may not be greater than maxcon (see below). 
-The default is maxcon - 100
 .It Fl c Ar maxcon
 The maximum number of concurrent connections to allow.
 The default is 800.
