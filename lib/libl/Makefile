@@ -1,14 +1,17 @@
 #	$NetBSD: Makefile,v 1.5 1995/02/25 09:02:37 cgd Exp $
+#	$OpenBSD: Makefile,v 1.3 2001/07/21 20:05:43 millert Exp $
 
 LIB=	l
 SRCS=	libmain.c libyywrap.c
 NOPIC=
 
-LINKS=	${LIBDIR}/libl.a ${LIBDIR}/libfl.a
-
 .PATH:	${.CURDIR}/../../usr.bin/lex
-.include <bsd.lib.mk>
 
+.include <bsd.own.mk>
+
+LINKS=	${LIBDIR}/libl.a ${LIBDIR}/libfl.a
 .if !defined(NOPROFILE)
 LINKS+=	${LIBDIR}/libl_p.a ${LIBDIR}/libfl_p.a
 .endif
+
+.include <bsd.lib.mk>
