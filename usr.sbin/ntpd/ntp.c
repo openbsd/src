@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.21 2004/07/09 15:00:43 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.22 2004/07/10 18:42:51 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -38,7 +38,6 @@ struct l_fixedpt	 ref_ts;
 void	ntp_sighdlr(int);
 int	ntp_dispatch_imsg(void);
 void	ntp_adjtime(struct ntpd_conf *);
-int	get_peer_update(struct ntp_peer *, double *);
 
 void
 ntp_sighdlr(int sig)
@@ -175,7 +174,7 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *conf)
 				    log_sockaddr(
 				    (struct sockaddr *)&p->addr->ss));
 				if (p->trustlevel >= TRUSTLEVEL_BADPEER &&
-				    --p->trustlevel < TRUSTLEVEL_BADPEER)
+				    (p->trustlevel /= 2) < TRUSTLEVEL_BADPEER)
 					log_info("peer %s now invalid",
 					    log_sockaddr(
 					    (struct sockaddr *)&p->addr->ss));
@@ -278,13 +277,18 @@ void
 ntp_adjtime(struct ntpd_conf *conf)
 {
 	struct ntp_peer	*p;
-	double		 offset, offset_median = 0;
+	double		 offset_median = 0;
 	int		 offset_cnt = 0;
 
 	TAILQ_FOREACH(p, &conf->ntp_peers, entry)
-		if (get_peer_update(p, &offset) == 0) {
-			offset_median += offset;
-			offset_cnt++;
+		if (p->update.good) {
+			if (p->update.rcvd + REPLY_MAXAGE < time(NULL))
+				p->update.good = 0;
+			else
+				if (p->trustlevel >= TRUSTLEVEL_BADPEER) {
+					offset_median += p->update.offset;
+					offset_cnt++;
+				}
 		}
 
 	if (offset_cnt > 0) {
@@ -292,52 +296,4 @@ ntp_adjtime(struct ntpd_conf *conf)
 		imsg_compose(&ibuf_main, IMSG_ADJTIME, 0,
 		    &offset_median, sizeof(offset_median));
 	}
-}
-
-int
-get_peer_update(struct ntp_peer *p, double *offset)
-{
-	int	i, best = 0, good = 0;
-
-	/*
-	 * clock filter
-	 * find the offset which arrived with the lowest delay
-	 * use that as the peer update
-	 * invalidate it and all older ones
-	 */
-
-	for (i = 0; good == 0 && i < OFFSET_ARRAY_SIZE; i++)
-		if (p->reply[i].good) {
-			good++;
-			best = i;
-		}
-
-	for (; i < OFFSET_ARRAY_SIZE; i++) {
-		if (p->reply[i].good &&
-		    p->reply[i].rcvd + REPLY_MAXAGE < time(NULL))
-			p->reply[i].good = 0;
-
-		if (p->reply[i].good)
-			good++;
-			if (p->reply[i].delay < p->reply[best].delay)
-				best = i;
-	}
-
-	/* lower trust in the peer when too few good replies received */
-	if (good < 8 && p->trustlevel > 0) {
-		if (p->trustlevel >= TRUSTLEVEL_BADPEER)
-			log_info("peer %s now invalid",
-			    log_sockaddr((struct sockaddr *)&p->addr->ss));
-		p->trustlevel /= 2;
-	}
-
-	if (good == 0 || p->trustlevel < TRUSTLEVEL_BADPEER)
-		return (-1);
-
-	for (i = 0; i < OFFSET_ARRAY_SIZE; i++)
-		if (p->reply[i].rcvd <= p->reply[best].rcvd)
-			p->reply[i].good = 0;
-
-	*offset = p->reply[best].offset;
-	return (0);
 }

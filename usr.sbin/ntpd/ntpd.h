@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.20 2004/07/09 19:44:18 deraadt Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.21 2004/07/10 18:42:51 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -46,8 +46,11 @@
 #define	TRUSTLEVEL_PATHETIC		2
 #define	TRUSTLEVEL_AGRESSIVE		8
 
+#define	QSCALE_OFF_MIN			0.05
+#define	QSCALE_OFF_MAX			1
+
 #define	QUERYTIME_MAX		15	/* single query might take n secs max */
-#define	REPLY_MAXAGE		300
+#define	REPLY_MAXAGE		720
 #define	OFFSET_ARRAY_SIZE	8
 
 enum client_state {
@@ -84,6 +87,7 @@ struct ntp_peer {
 	time_t				 next;
 	time_t				 deadline;
 	struct ntp_offset		 reply[OFFSET_ARRAY_SIZE];
+	struct ntp_offset		 update;
 	u_int8_t			 shift;
 	u_int8_t			 trustlevel;
 };

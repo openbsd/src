@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.19 2004/07/09 15:02:15 henning Exp $ */
+/*	$OpenBSD: client.c,v 1.20 2004/07/10 18:42:51 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -25,6 +25,8 @@
 #include <unistd.h>
 
 #include "ntpd.h"
+
+int	client_update(struct ntp_peer *);
 
 int
 client_peer_init(struct ntp_peer *p)
@@ -126,6 +128,8 @@ client_dispatch(struct ntp_peer *p)
 	ssize_t			 size;
 	struct ntp_msg		 msg;
 	double			 T1, T2, T3, T4;
+	double			 abs_offset;
+	time_t			 interval;
 
 	fsa_len = sizeof(fsa);
 	if ((size = recvfrom(p->query->fd, &buf, sizeof(buf), 0,
@@ -166,12 +170,26 @@ client_dispatch(struct ntp_peer *p)
 	p->reply[p->shift].good = 1;
 
 	if (p->trustlevel < TRUSTLEVEL_PATHETIC)
-		p->next = time(NULL) + INTERVAL_QUERY_PATHETIC;
+		interval = INTERVAL_QUERY_PATHETIC;
 	else if (p->trustlevel < TRUSTLEVEL_AGRESSIVE)
-		p->next = time(NULL) + INTERVAL_QUERY_AGRESSIVE;
-	else
-		p->next = time(NULL) + INTERVAL_QUERY_NORMAL;
+		interval = INTERVAL_QUERY_AGRESSIVE;
+	else {
+		if (p->update.offset < 0)
+			abs_offset = p->update.offset * -1;
+		else
+			abs_offset = p->update.offset;
+log_debug("offset %f, abs_offset %f", p->update.offset, abs_offset);
+		if (!p->update.good)
+			interval = INTERVAL_QUERY_NORMAL;
+		else if (abs_offset > QSCALE_OFF_MAX)
+			interval = INTERVAL_QUERY_NORMAL;
+		else if (abs_offset < QSCALE_OFF_MIN)
+			interval = INTERVAL_QUERY_NORMAL * (1 / QSCALE_OFF_MIN);
+		else
+			interval = INTERVAL_QUERY_NORMAL * (1 / abs_offset);
+	}
 
+	p->next = time(NULL) + interval;
 	p->deadline = 0;
 	p->state = STATE_REPLY_RECEIVED;
 
@@ -184,12 +202,55 @@ client_dispatch(struct ntp_peer *p)
 		p->trustlevel++;
 	}
 
-	log_debug("received reply from %s: offset %f delay %f",
-	    log_sockaddr((struct sockaddr *)&fsa), p->reply[p->shift].offset,
-	    p->reply[p->shift].delay);
+	log_debug("reply from %s: offset %f delay %f, "
+	    "next query %ds", log_sockaddr((struct sockaddr *)&fsa),
+	    p->reply[p->shift].offset, p->reply[p->shift].delay, interval);
 
-	if (++p->shift >= OFFSET_ARRAY_SIZE)
+	if (++p->shift >= OFFSET_ARRAY_SIZE) {
 		p->shift = 0;
+		client_update(p);
+	}
+
+	return (0);
+}
+
+int
+client_update(struct ntp_peer *p)
+{
+	int	i, best = 0, good = 0;
+
+	/*
+	 * clock filter
+	 * find the offset which arrived with the lowest delay
+	 * use that as the peer update
+	 * invalidate it and all older ones
+	 */
+
+	for (i = 0; good == 0 && i < OFFSET_ARRAY_SIZE; i++)
+		if (p->reply[i].good) {
+			good++;
+			best = i;
+		}
+
+	for (; i < OFFSET_ARRAY_SIZE; i++) {
+		if (p->reply[i].good &&
+		    p->reply[i].rcvd + REPLY_MAXAGE < time(NULL))
+			p->reply[i].good = 0;
+
+		if (p->reply[i].good)
+			good++;
+			if (p->reply[i].delay < p->reply[best].delay)
+				best = i;
+	}
+
+	if (good == 0)
+		return (-1);
+
+	memcpy(&p->update, &p->reply[best], sizeof(p->update));
+
+	for (i = 0; i < OFFSET_ARRAY_SIZE; i++)
+		if (p->reply[i].rcvd <= p->reply[best].rcvd)
+			p->reply[i].good = 0;
 
 	return (0);
 }
