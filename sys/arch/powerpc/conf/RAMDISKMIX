@@ -1,0 +1,93 @@
+#
+# RAMDISK install kernel definition.
+#
+
+machine		powerpc
+
+maxusers	8
+
+# Standard system options
+option		SWAPPAGER
+option		DEVPAGER
+
+option		FIREPOWERBUGS
+options		PPC_MPC106_BUG
+options		SYS_TYPE=OFWMACH
+
+#options		KTRACE
+#options		DEBUG
+
+option		NFSCLIENT
+#option		NFSSERVER
+
+option		CD9660
+option		MSDOSFS
+options		FIFO
+options		KERNFS
+option		FFS
+#option		QUOTA
+option		MFS
+
+options		INET
+
+# Specify storage configuration using ramdisk
+config		bsd	root on rd0a swap on rd0b
+
+mainbus0	at root
+cpu*		at mainbus0
+ofroot*		at mainbus0
+
+mpcpcibr*	at mainbus0	# MPC106 PCI Bridge.
+isabr*		at pci?	# ISA dev bridge.
+
+
+#### ISA Bus devices.
+# still using openfirmware for console
+
+isa*		at isabr?
+
+#com0		at isa? port 0x2e8 irq 5
+#com1		at isa? port 0x3e8 irq 1
+
+
+#### PCI Bus devices.
+
+pci*		at mpcpcibr?
+ncr*		at pci? dev ? function ?
+scsibus*	at ncr?
+de*		at pci? dev ? function ?
+#vme*		at pci? dev ? function ?
+
+
+#### SCSI Bus devices
+ 
+sd*		at scsibus? target ? lun ?
+st*		at scsibus? target ? lun ?            
+cd*		at scsibus? target ? lun ?
+
+#Openfirmware notes still used 
+ofbus*		at openfirm?
+#ofdisk*		at openfirm?
+#ofnet*		at openfirm?
+#ipkdbif0	at ofnet?
+ofcons*		at openfirm?
+ofrtc*		at openfirm?
+
+#### PSEUDO Devices
+
+pseudo-device	loop		 1	# network loopback
+#pseudo-device	bpfilter	 8	# packet filter ports
+#pseudo-device	sl		 2	# serial-line IP ports
+pseudo-device	ppp		 2	# serial-line PPP ports
+#pseudo-device	tun		 2	# network tunneling over tty
+
+#pseudo-device	pty		64	# pseudo ptys
+#pseudo-device	random		 1
+#pseudo-device	vnd		 4	# paging to files
+#pseudo-device	ccd		 4	# concatenated disk devices
+pseudo-device	rd		 1	# ram disk
+
+# RAMDISK stuff
+option		MINIROOTSIZE=8192
+option		RAMDISK_HOOKS
+

@@ -1,0 +1,97 @@
+#
+# First try for PPC GENERIC config file
+#
+
+machine		powerpc
+
+maxusers	32
+
+options		PPC_MPC106_BUG
+# Standard system options (should go into std.powerpc?)
+options		SWAPPAGER, VNODEPAGER, DEVPAGER
+options		SYS_TYPE=OFWMACH
+
+# various hacks due to bugs in Openfirmware implementation
+options		FIREPOWERBUGS
+
+#options		IPKDBUSERHACK
+#makeoptions	DEBUG="-g"
+
+options		DDB
+options		KTRACE
+options		SYSCALL_DEBUG
+options		TCP_COMPAT_42
+options		COMPAT_43
+#options		COMPAT_09
+#options		COMPAT_10
+#options		COMPAT_12
+
+options		FFS
+options		MFS
+
+options		NFSCLIENT
+options		NFSSERVER
+
+options		CD9660
+options		MSDOSFS
+options		FDESC
+options		FIFO
+options		KERNFS
+options		NULLFS
+options		PORTAL
+options		PROCFS
+options		UMAPFS
+options		UNION
+
+options		INET
+options		NMBCLUSTERS=1024
+
+# System V options                 
+option		SYSVMSG         # System V-like message queues
+option		SYSVSEM         # System V-like semaphores
+option		SYSVSHM         # System V-like memory sharing       
+#option		SHMMAXPGS=1024  # 1024 pages is the default
+
+#options		MAXUSERS=20
+#options		TARGET_ELF
+
+config		bsd	swap generic
+
+mainbus0	at root
+cpu*		at mainbus0
+ofroot*		at mainbus0
+mpcpcibr*	at mainbus0	# MPC106 PCI Bridge.
+isabr*		at pci?	# ISA dev bridge.
+
+pci*		at mpcpcibr?
+
+isa*		at isabr?
+#com0		at isa? port 0x2f8 irq 3
+#com1		at isa? port 0x3f8 irq 4
+
+ncr*		at pci? dev ? function ?
+de*		at pci? dev ? function ?
+
+scsibus*	at ncr?
+sd*		at scsibus? target ? lun ?
+st*		at scsibus? target ? lun ?            
+cd*		at scsibus? target ? lun ?
+
+
+ofbus*		at openfirm?
+
+#ofdisk*		at openfirm?
+
+#ofnet*		at openfirm?
+#ipkdbif0	at ofnet?
+
+ofcons*		at openfirm?
+
+ofrtc*		at openfirm?
+
+pseudo-device	loop
+pseudo-device	pty	64
+pseudo-device	random	1
+pseudo-device	rd
+pseudo-device	vnd	2
+pseudo-device   bpfilter 8              # packet filter
