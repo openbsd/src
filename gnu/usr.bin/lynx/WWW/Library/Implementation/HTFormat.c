@@ -16,6 +16,12 @@
 */
 #include <HTFormat.h>
 
+#ifdef USE_SSL
+#define free_func free__func
+#include <openssl/ssl.h>
+#undef free_func
+#endif /* USE_SSL */
+
 PUBLIC float HTMaxSecs = 1e10;		/* No effective limit */
 PUBLIC float HTMaxLength = 1e10;	/* No effective limit */
 PUBLIC long int HTMaxBytes  = 0;	/* No effective limit */
@@ -253,6 +259,39 @@ PUBLIC int HTGetCharacter NOARGS
 
     return FROMASCII((unsigned char)ch);
 }
+
+#ifdef USE_SSL
+PUBLIC char HTGetSSLCharacter ARGS1(void *, handle)
+{
+    char ch;
+    interrupted_in_htgetcharacter = 0;
+    if(!handle)
+	return (char)EOF;
+    do {
+	if (input_pointer >= input_limit) {
+	    int status = SSL_read((SSL *)handle,
+				 input_buffer, INPUT_BUFFER_SIZE);
+	    if (status <= 0) {
+		if (status == 0)
+		    return (char)EOF;
+		if (status == HT_INTERRUPTED) {
+		    CTRACE(tfp, "HTFormat: Interrupted in HTGetSSLCharacter\n");
+		    interrupted_in_htgetcharacter = 1;
+		    return (char)EOF;
+		}
+		CTRACE(tfp, "HTFormat: SSL_read error %d\n", status);
+		return (char)EOF; /* -1 is returned by UCX
+				     at end of HTTP link */
+	    }
+	    input_pointer = input_buffer;
+	    input_limit = input_buffer + status;
+	}
+	ch = *input_pointer++;
+    } while (ch == (char) 13); /* Ignore ASCII carriage return */
+
+    return FROMASCII(ch);
+}
+#endif /* USE_SSL */
 
 /*  Match maintype to any MIME type starting with maintype,
  *  for example:  image/gif should match image
@@ -624,7 +663,14 @@ PUBLIC int HTCopy ARGS4(
 	    goto finished;
 	}
 
+#ifdef USE_SSL
+	if (handle)
+	    status = SSL_read((SSL *)handle, input_buffer, INPUT_BUFFER_SIZE);
+	else
+	    status = NETREAD(file_number, input_buffer, INPUT_BUFFER_SIZE);
+#else
 	status = NETREAD(file_number, input_buffer, INPUT_BUFFER_SIZE);
+#endif /* USE_SSL */
 
 	if (status <= 0) {
 	    if (status == 0) {

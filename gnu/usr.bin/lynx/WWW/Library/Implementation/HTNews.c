@@ -35,9 +35,26 @@ PUBLIC int HTNewsMaxChunk = 40; /* Largest number of articles in one window */
 #define SERVER_FILE "/usr/local/lib/rn/server"
 #endif /* SERVER_FILE */
 
+#ifdef USE_SSL
+#define free_func free__func
+#include <openssl/ssl.h>
+#undef free_func
+extern SSL_CTX * ssl_ctx;
+extern SSL * HTGetSSLHandle NOPARAMS;
+PRIVATE SSL * Handle = NULL;
+PRIVATE int channel_s = 1;
+#define NEWS_NETWRITE(sock, buff, size) \
+	(Handle ? SSL_write(Handle, buff, size) : NETWRITE(sock, buff, size))
+#define NEWS_NETCLOSE(sock) \
+	{ (void)NETCLOSE(sock); if (Handle) SSL_free(Handle); Handle = NULL; }
+extern char HTGetSSLCharacter PARAMS((void *handle));
+PRIVATE char HTNewsGetCharacter NOPARAMS;
+#define NEXT_CHAR HTNewsGetCharacter()
+#else
 #define NEWS_NETWRITE  NETWRITE
 #define NEWS_NETCLOSE  NETCLOSE
 #define NEXT_CHAR HTGetCharacter()
+#endif /* USE_SSL */
 
 #include <HTML.h>
 #include <HTParse.h>
@@ -2121,11 +2138,13 @@ PRIVATE int HTLoadNews ARGS4(
 			  group_wanted) &&
 			strchr(arg, '@') == NULL) && (strchr(arg, '*') != NULL);
 
+#ifndef USE_SSL
 	if (!strncasecomp(arg, "snewspost:", 10) ||
 	    !strncasecomp(arg, "snewsreply:", 11)) {
 	    HTAlert(FAILED_CANNOT_POST_SSL);
 	    return HT_NOT_LOADED;
 	}
+#endif /* !USE_SSL */
 	if (post_wanted || reply_wanted || spost_wanted || sreply_wanted) {
 	    /*
 	    **	Make sure we have a non-zero path for the newsgroup(s). - FM
@@ -2213,8 +2232,43 @@ PRIVATE int HTLoadNews ARGS4(
 	    StrAllocCopy(NewsHREF, command);
 	}
 	else if (!strncasecomp(arg, "snews:", 6)) {
+#ifdef USE_SSL
+	    if (((*(arg + 6) == '\0') ||
+		 (!strcmp((arg + 6), "/") ||
+		  !strcmp((arg + 6), "//") ||
+		  !strcmp((arg + 6), "///"))) ||
+		((!strncmp((arg + 6), "//", 2)) &&
+		 (!(cp = strchr((arg + 8), '/')) || *(cp + 1) == '\0'))) {
+		p1 = "*";
+		group_wanted = FALSE;
+		list_wanted = TRUE;
+	    } else if (*(arg + 6) != '/') {
+		p1 = (arg + 6);
+	    } else if (*(arg + 6) == '/' && *(arg + 7) != '/') {
+		p1 = (arg + 7);
+	    } else {
+		p1 = (cp + 1);
+	    }
+	    if (!(cp = HTParse(arg, "", PARSE_HOST)) || *cp == '\0') {
+		if (s >= 0 && NewsHost && strcasecomp(NewsHost, HTNewsHost)) {
+		    NEWS_NETCLOSE(s);
+		    s = -1;
+		}
+		StrAllocCopy(NewsHost, HTNewsHost);
+	    } else {
+		if (s >= 0 && NewsHost && strcasecomp(NewsHost, cp)) {
+		    NEWS_NETCLOSE(s);
+		    s = -1;
+		}
+	    StrAllocCopy(NewsHost, cp);
+	    }
+	    FREE(cp);
+	    sprintf(command, "snews://%.250s/", NewsHost);
+	    StrAllocCopy(NewsHREF, command);
+#else
 	    HTAlert(gettext("This client does not contain support for SNEWS URLs."));
 	    return HT_NOT_LOADED;
+#endif /* USE_SSL */
 	}
 	else if (!strncasecomp (arg, "news:/", 6)) {
 	    if (((*(arg + 6) == '\0') ||
@@ -2426,7 +2480,18 @@ PRIVATE int HTLoadNews ARGS4(
 
 	    _HTProgress(gettext("Connecting to NewsHost ..."));
 
+#ifdef USE_SSL
+	    if (!using_proxy &&
+		(!strncmp(arg, "snews:", 6) ||
+		 !strncmp(arg, "snewspost:", 10) ||
+		 !strncmp(arg, "snewsreply:", 11)))
+		status = HTDoConnect (url, "NNTPS", SNEWS_PORT, &s);
+	    else
+		status = HTDoConnect (url, "NNTP", NEWS_PORT, &s);
+#else
 	    status = HTDoConnect (url, "NNTP", NEWS_PORT, &s);
+#endif /* USE_SSL */
+
 	    if (status == HT_INTERRUPTED) {
 		/*
 		**  Interrupt cleanly.
@@ -2442,6 +2507,12 @@ PRIVATE int HTLoadNews ARGS4(
 		FREE(ProxyHost);
 		FREE(ProxyHREF);
 		FREE(ListArg);
+#ifdef USE_SSL
+		if (Handle) {
+		    SSL_free(Handle);
+		    Handle = NULL;
+		}
+#endif /* USE_SSL */
 		if (postfile) {
 		    HTSYS_remove(postfile);
 		    FREE(postfile);
@@ -2472,6 +2543,49 @@ PRIVATE int HTLoadNews ARGS4(
 	    } else {
 		CTRACE(tfp, "HTNews: Connected to news host %s.\n",
 			    NewsHost);
+#ifdef USE_SSL
+		/*
+		**  If this is an snews url,
+		**  then do the SSL stuff here
+		*/
+		if (!using_proxy &&
+		    (!strncmp(url, "snews", 5) ||
+		     !strncmp(url, "snewspost:", 10) ||
+		     !strncmp(url, "snewsreply:", 11))) {
+		    Handle = HTGetSSLHandle();
+		    SSL_set_fd(Handle, s);
+		    status = SSL_connect(Handle);
+
+		    if (status <= 0) {
+			CTRACE(tfp,
+"HTNews: Unable to complete SSL handshake for remote host '%s' (SSLerror = %d)\n",
+			       url, status);
+			HTAlert(
+			    "Unable to make secure connection to remote host.");
+			NEWS_NETCLOSE(s);
+			s = -1;
+			if (!(post_wanted || reply_wanted ||
+			      spost_wanted || sreply_wanted))
+			    (*targetClass._abort)(target, NULL);
+			FREE(NewsHost);
+			FREE(NewsHREF);
+			FREE(ProxyHost);
+			FREE(ProxyHREF);
+			FREE(ListArg);
+			if (postfile) {
+#ifdef VMS
+			    while (remove(postfile) == 0)
+			    ; /* loop through all versions */
+#else
+			    remove(postfile);
+#endif /* VMS */
+			    FREE(postfile);
+			}
+			return HT_NOT_LOADED;
+		    }
+		    _HTProgress(SSL_get_cipher(Handle));
+		}
+#endif /* USE_SSL */
 		HTInitInput(s); 	/* set up buffering */
 		if (proxycmd[0]) {
 		    status = NEWS_NETWRITE(s, proxycmd, strlen(proxycmd));
@@ -2803,6 +2917,45 @@ PUBLIC void HTClearNNTPAuthInfo NOARGS
     */
     free_NNTP_AuthInfo();
 }
+
+#ifdef USE_SSL
+PRIVATE char HTNewsGetCharacter NOARGS
+{
+    if (!Handle)
+        return HTGetCharacter();
+    else
+        return HTGetSSLCharacter((void *)Handle);
+}
+
+PUBLIC int HTNewsProxyConnect ARGS5 (int, sock, CONST char *, url, 
+				     HTParentAnchor *, anAnchor,
+				     HTFormat, format_out,
+				     HTStream *, sink)
+{
+    int status;
+    CONST char * arg = url;
+
+    s = channel_s = sock;
+    Handle = HTGetSSLHandle();
+    SSL_set_fd(Handle, s);
+    status = SSL_connect(Handle);
+
+    if (status <= 0) {
+        channel_s = -1;
+	CTRACE(tfp,
+"HTTP: Unable to complete SSL handshake for remote host '%s' (SSLerror = %d)\n",
+		   url, status);
+	HTAlert("Unable to make secure connection to remote host.");
+	NEWS_NETCLOSE(s);
+	s = -1;
+	return HT_NOT_LOADED;
+    }
+    _HTProgress(SSL_get_cipher(Handle));
+    status = HTLoadNews(arg, anAnchor, format_out, sink);
+    channel_s = -1;
+    return status;
+}
+#endif /* USE_SSL */
 
 #ifdef GLOBALDEF_IS_MACRO
 #define _HTNEWS_C_1_INIT { "news", HTLoadNews, NULL }
