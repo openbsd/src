@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.c,v 1.10 1997/12/19 09:36:50 deraadt Exp $	*/
+/*	$OpenBSD: netstat.c,v 1.11 1999/12/08 10:50:04 angelos Exp $	*/
 /*	$NetBSD: netstat.c,v 1.3 1995/06/18 23:53:07 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)netstat.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: netstat.c,v 1.10 1997/12/19 09:36:50 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: netstat.c,v 1.11 1999/12/08 10:50:04 angelos Exp $";
 #endif /* not lint */
 
 /*
@@ -94,24 +94,24 @@ opennetstat()
 }
 
 struct netinfo {
-	struct	netinfo *ni_forw, *ni_prev;
-	short	ni_line;		/* line on screen */
-	short	ni_seen;		/* 0 when not present in list */
-	short	ni_flags;
+	struct	netinfo *nif_forw, *nif_prev;
+	short	nif_line;		/* line on screen */
+	short	nif_seen;		/* 0 when not present in list */
+	short	nif_flags;
 #define	NIF_LACHG	0x1		/* local address changed */
 #define	NIF_FACHG	0x2		/* foreign address changed */
-	short	ni_state;		/* tcp state */
-	char	*ni_proto;		/* protocol */
-	struct	in_addr ni_laddr;	/* local address */
-	long	ni_lport;		/* local port */
-	struct	in_addr	ni_faddr;	/* foreign address */
-	long	ni_fport;		/* foreign port */
-	long	ni_rcvcc;		/* rcv buffer character count */
-	long	ni_sndcc;		/* snd buffer character count */
+	short	nif_state;		/* tcp state */
+	char	*nif_proto;		/* protocol */
+	struct	in_addr nif_laddr;	/* local address */
+	long	nif_lport;		/* local port */
+	struct	in_addr	nif_faddr;	/* foreign address */
+	long	nif_fport;		/* foreign port */
+	long	nif_rcvcc;		/* rcv buffer character count */
+	long	nif_sndcc;		/* snd buffer character count */
 };
 
 static struct {
-	struct	netinfo *ni_forw, *ni_prev;
+	struct	netinfo *nif_forw, *nif_prev;
 } netcb;
 
 static	int aflag = 0;
@@ -128,12 +128,12 @@ closenetstat(w)
 
 	endhostent();
 	endnetent();
-	p = (struct netinfo *)netcb.ni_forw;
+	p = (struct netinfo *)netcb.nif_forw;
 	while (p != (struct netinfo *)&netcb) {
-		if (p->ni_line != -1)
+		if (p->nif_line != -1)
 			lastrow--;
-		p->ni_line = -1;
-		p = p->ni_forw;
+		p->nif_line = -1;
+		p = p->nif_forw;
 	}
         if (w != NULL) {
 		wclear(w);
@@ -161,7 +161,7 @@ initnetstat()
 		error("No symbols in namelist");
 		return(0);
 	}
-	netcb.ni_forw = netcb.ni_prev = (struct netinfo *)&netcb;
+	netcb.nif_forw = netcb.nif_prev = (struct netinfo *)&netcb;
 	protos = TCP|UDP;
 	return(1);
 }
@@ -180,8 +180,8 @@ fetchnetstat()
 
 	if (namelist[X_TCBTABLE].n_value == 0)
 		return;
-	for (p = netcb.ni_forw; p != (struct netinfo *)&netcb; p = p->ni_forw)
-		p->ni_seen = 0;
+	for (p = netcb.nif_forw; p != (struct netinfo *)&netcb; p = p->nif_forw)
+		p->nif_seen = 0;
 	if (protos&TCP) {
 		off = NPTR(X_TCBTABLE); 
 		istcp = 1;
@@ -202,9 +202,9 @@ again:
 		KREAD(next, &inpcb, sizeof (inpcb));
 		if (inpcb.inp_queue.cqe_prev != prev) {
 printf("prev = %x, head = %x, next = %x, inpcb...prev = %x\n", prev, head, next, inpcb.inp_queue.cqe_prev);
-			p = netcb.ni_forw;
-			for (; p != (struct netinfo *)&netcb; p = p->ni_forw)
-				p->ni_seen = 1;
+			p = netcb.nif_forw;
+			for (; p != (struct netinfo *)&netcb; p = p->nif_forw)
+				p->nif_seen = 1;
 			error("Kernel state in transition");
 			return;
 		}
@@ -247,14 +247,16 @@ enter(inp, so, state, proto)
 	 * will appear as ``not seen'' in the kernel
 	 * data structures.
 	 */
-	for (p = netcb.ni_forw; p != (struct netinfo *)&netcb; p = p->ni_forw) {
-		if (!streq(proto, p->ni_proto))
+	for (p = netcb.nif_forw;
+	     p != (struct netinfo *)&netcb;
+	     p = p->nif_forw) {
+		if (!streq(proto, p->nif_proto))
 			continue;
-		if (p->ni_lport != inp->inp_lport ||
-		    p->ni_laddr.s_addr != inp->inp_laddr.s_addr)
+		if (p->nif_lport != inp->inp_lport ||
+		    p->nif_laddr.s_addr != inp->inp_laddr.s_addr)
 			continue;
-		if (p->ni_faddr.s_addr == inp->inp_faddr.s_addr &&
-		    p->ni_fport == inp->inp_fport)
+		if (p->nif_faddr.s_addr == inp->inp_faddr.s_addr &&
+		    p->nif_fport == inp->inp_fport)
 			break;
 	}
 	if (p == (struct netinfo *)&netcb) {
@@ -262,22 +264,22 @@ enter(inp, so, state, proto)
 			error("Out of memory");
 			return;
 		}
-		p->ni_prev = (struct netinfo *)&netcb;
-		p->ni_forw = netcb.ni_forw;
-		netcb.ni_forw->ni_prev = p;
-		netcb.ni_forw = p;
-		p->ni_line = -1;
-		p->ni_laddr = inp->inp_laddr;
-		p->ni_lport = inp->inp_lport;
-		p->ni_faddr = inp->inp_faddr;
-		p->ni_fport = inp->inp_fport;
-		p->ni_proto = proto;
-		p->ni_flags = NIF_LACHG|NIF_FACHG;
+		p->nif_prev = (struct netinfo *)&netcb;
+		p->nif_forw = netcb.nif_forw;
+		netcb.nif_forw->nif_prev = p;
+		netcb.nif_forw = p;
+		p->nif_line = -1;
+		p->nif_laddr = inp->inp_laddr;
+		p->nif_lport = inp->inp_lport;
+		p->nif_faddr = inp->inp_faddr;
+		p->nif_fport = inp->inp_fport;
+		p->nif_proto = proto;
+		p->nif_flags = NIF_LACHG|NIF_FACHG;
 	}
-	p->ni_rcvcc = so->so_rcv.sb_cc;
-	p->ni_sndcc = so->so_snd.sb_cc;
-	p->ni_state = state;
-	p->ni_seen = 1;
+	p->nif_rcvcc = so->so_rcv.sb_cc;
+	p->nif_sndcc = so->so_snd.sb_cc;
+	p->nif_state = state;
+	p->nif_seen = 1;
 }
 
 /* column locations */
@@ -313,60 +315,62 @@ shownetstat()
 	 * away and adjust the position of connections
 	 * below to reflect the deleted line.
 	 */
-	p = netcb.ni_forw;
+	p = netcb.nif_forw;
 	while (p != (struct netinfo *)&netcb) {
-		if (p->ni_line == -1 || p->ni_seen) {
-			p = p->ni_forw;
+		if (p->nif_line == -1 || p->nif_seen) {
+			p = p->nif_forw;
 			continue;
 		}
-		wmove(wnd, p->ni_line, 0); wdeleteln(wnd);
-		q = netcb.ni_forw;
-		for (; q != (struct netinfo *)&netcb; q = q->ni_forw)
-			if (q != p && q->ni_line > p->ni_line) {
-				q->ni_line--;
+		wmove(wnd, p->nif_line, 0); wdeleteln(wnd);
+		q = netcb.nif_forw;
+		for (; q != (struct netinfo *)&netcb; q = q->nif_forw)
+			if (q != p && q->nif_line > p->nif_line) {
+				q->nif_line--;
 				/* this shouldn't be necessary */
-				q->ni_flags |= NIF_LACHG|NIF_FACHG;
+				q->nif_flags |= NIF_LACHG|NIF_FACHG;
 			}
 		lastrow--;
-		q = p->ni_forw;
-		p->ni_prev->ni_forw = p->ni_forw;
-		p->ni_forw->ni_prev = p->ni_prev;
+		q = p->nif_forw;
+		p->nif_prev->nif_forw = p->nif_forw;
+		p->nif_forw->nif_prev = p->nif_prev;
 		free(p);
 		p = q;
 	}
 	/*
 	 * Update existing connections and add new ones.
 	 */
-	for (p = netcb.ni_forw; p != (struct netinfo *)&netcb; p = p->ni_forw) {
-		if (p->ni_line == -1) {
+	for (p = netcb.nif_forw;
+	     p != (struct netinfo *)&netcb;
+	     p = p->nif_forw) {
+		if (p->nif_line == -1) {
 			/*
 			 * Add a new entry if possible.
 			 */
 			if (lastrow > YMAX(wnd))
 				continue;
-			p->ni_line = lastrow++;
-			p->ni_flags |= NIF_LACHG|NIF_FACHG;
+			p->nif_line = lastrow++;
+			p->nif_flags |= NIF_LACHG|NIF_FACHG;
 		}
-		if (p->ni_flags & NIF_LACHG) {
-			wmove(wnd, p->ni_line, LADDR);
-			inetprint(&p->ni_laddr, p->ni_lport, p->ni_proto);
-			p->ni_flags &= ~NIF_LACHG;
+		if (p->nif_flags & NIF_LACHG) {
+			wmove(wnd, p->nif_line, LADDR);
+			inetprint(&p->nif_laddr, p->nif_lport, p->nif_proto);
+			p->nif_flags &= ~NIF_LACHG;
 		}
-		if (p->ni_flags & NIF_FACHG) {
-			wmove(wnd, p->ni_line, FADDR);
-			inetprint(&p->ni_faddr, p->ni_fport, p->ni_proto);
-			p->ni_flags &= ~NIF_FACHG;
+		if (p->nif_flags & NIF_FACHG) {
+			wmove(wnd, p->nif_line, FADDR);
+			inetprint(&p->nif_faddr, p->nif_fport, p->nif_proto);
+			p->nif_flags &= ~NIF_FACHG;
 		}
-		mvwaddstr(wnd, p->ni_line, PROTO, p->ni_proto);
-		mvwprintw(wnd, p->ni_line, RCVCC, "%6d", p->ni_rcvcc);
-		mvwprintw(wnd, p->ni_line, SNDCC, "%6d", p->ni_sndcc);
-		if (streq(p->ni_proto, "tcp"))
-			if (p->ni_state < 0 || p->ni_state >= TCP_NSTATES)
-				mvwprintw(wnd, p->ni_line, STATE, "%d",
-				    p->ni_state);
+		mvwaddstr(wnd, p->nif_line, PROTO, p->nif_proto);
+		mvwprintw(wnd, p->nif_line, RCVCC, "%6d", p->nif_rcvcc);
+		mvwprintw(wnd, p->nif_line, SNDCC, "%6d", p->nif_sndcc);
+		if (streq(p->nif_proto, "tcp"))
+			if (p->nif_state < 0 || p->nif_state >= TCP_NSTATES)
+				mvwprintw(wnd, p->nif_line, STATE, "%d",
+				    p->nif_state);
 			else
-				mvwaddstr(wnd, p->ni_line, STATE,
-				    tcpstates[p->ni_state]);
+				mvwaddstr(wnd, p->nif_line, STATE,
+				    tcpstates[p->nif_state]);
 		wclrtoeol(wnd);
 	}
 	if (lastrow < YMAX(wnd)) {
@@ -466,11 +470,11 @@ cmdnetstat(cmd, args)
 		new = prefix(cmd, "numbers");
 		if (new == nflag)
 			return (1);
-		p = netcb.ni_forw;
-		for (; p != (struct netinfo *)&netcb; p = p->ni_forw) {
-			if (p->ni_line == -1)
+		p = netcb.nif_forw;
+		for (; p != (struct netinfo *)&netcb; p = p->nif_forw) {
+			if (p->nif_line == -1)
 				continue;
-			p->ni_flags |= NIF_LACHG|NIF_FACHG;
+			p->nif_flags |= NIF_LACHG|NIF_FACHG;
 		}
 		nflag = new;
 		wclear(wnd);
