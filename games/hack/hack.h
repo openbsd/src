@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.h,v 1.6 2003/03/16 21:22:35 camield Exp $*/
+/*	$OpenBSD: hack.h,v 1.7 2003/05/07 09:48:57 tdeval Exp $*/
 /*	$NetBSD: hack.h,v 1.3 1995/03/23 08:30:21 cgd Exp $*/
 
 /*
@@ -206,7 +206,7 @@ extern long moves;
 extern int multi;
 
 
-extern char lock[];
+extern char lock[PL_NSIZ+4];
 
 
 #define DIST(x1,y1,x2,y2)       (((x1)-(x2))*((x1)-(x2)) + ((y1)-(y2))*((y1)-(y2)))

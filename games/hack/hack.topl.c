@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.topl.c,v 1.6 2003/04/06 18:50:37 deraadt Exp $	*/
+/*	$OpenBSD: hack.topl.c,v 1.7 2003/05/07 09:48:57 tdeval Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,7 +62,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.topl.c,v 1.6 2003/04/06 18:50:37 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: hack.topl.c,v 1.7 2003/05/07 09:48:57 tdeval Exp $";
 #endif /* not lint */
 
 #include "hack.h"
@@ -106,16 +106,18 @@ redotoplin() {
 remember_topl() {
 register struct topl *tl;
 register int cnt = OTLMAX;
+register size_t slen;
 	if(last_redone_topl &&
 	   !strcmp(toplines, last_redone_topl->topl_text)) return;
 	if(old_toplines &&
 	   !strcmp(toplines, old_toplines->topl_text)) return;
 	last_redone_topl = 0;
+	slen = strlen(toplines) + 1;
 	tl = (struct topl *)
-		alloc((unsigned)(strlen(toplines) + sizeof(struct topl) + 1));
+		alloc(sizeof(struct topl) + slen);
 	tl->next_topl = old_toplines;
 	tl->topl_text = (char *)(tl + 1);
-	(void) strcpy(tl->topl_text, toplines);
+	(void) strlcpy(tl->topl_text, toplines, slen);
 	old_toplines = tl;
 	while(cnt && tl){
 		cnt--;
@@ -227,7 +229,9 @@ register char *line,*arg1,*arg2,*arg3,*arg4,*arg5,*arg6;
 			tl[--n0] = 0;
 
 		n0 = strlen(bp);
-		if(n0 && tl[0]) (void) strcat(tl, "\n");
+		if(n0 && tl[0])
+			(void) strlcat(tl, "\n",
+			    toplines + sizeof toplines - tl);
 	}
 	redotoplin();
 }

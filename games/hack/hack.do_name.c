@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.do_name.c,v 1.6 2003/04/06 18:50:37 deraadt Exp $	*/
+/*	$OpenBSD: hack.do_name.c,v 1.7 2003/05/07 09:48:57 tdeval Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,7 +62,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.do_name.c,v 1.6 2003/04/06 18:50:37 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: hack.do_name.c,v 1.7 2003/05/07 09:48:57 tdeval Exp $";
 #endif /* not lint */
 
 #include "hack.h"
@@ -150,7 +150,7 @@ extern char *lmonnam();
 	for(i=0; i<mtmp->mxlth; i++)
 		((char *) mtmp2->mextra)[i] = ((char *) mtmp->mextra)[i];
 	mtmp2->mnamelth = lth;
-	(void) strcpy(NAME(mtmp2), buf);
+	(void) strlcpy(NAME(mtmp2), buf, lth);
 	replmon(mtmp,mtmp2);
 	return(1);
 }
@@ -177,7 +177,7 @@ char buf[BUFSZ];
 	otmp2 = newobj(lth);
 	*otmp2 = *obj;
 	otmp2->onamelth = lth;
-	(void) strcpy(ONAME(otmp2), buf);
+	(void) strlcpy(ONAME(otmp2), buf, lth);
 
 	setworn((struct obj *) 0, obj->owornmask);
 	setworn(otmp2, otmp2->owornmask);
@@ -224,6 +224,7 @@ register struct obj *obj;
 	register char **str1;
 	extern char *xname();
 	register char *str;
+	size_t len;
 
 	otemp = *obj;
 	otemp.quan = 1;
@@ -234,8 +235,9 @@ register struct obj *obj;
 	clrlin();
 	if(!*buf || *buf == '\033')
 		return;
-	str = newstring(strlen(buf)+1);
-	(void) strcpy(str,buf);
+	len = strlen(buf) + 1;
+	str = newstring(len);
+	(void) strlcpy(str, buf, len);
 	str1 = &(objects[obj->otyp].oc_uname);
 	if(*str1) free(*str1);
 	*str1 = str;
@@ -262,7 +264,8 @@ extern char *shkname();
 		  if(!*gn) {		/* might also look in scorefile */
 		    gn = ghostnames[rn2(SIZE(ghostnames))];
 		    if(!rn2(2)) (void)
-		      strcpy((char *) mtmp->mextra, !rn2(5) ? plname : gn);
+		      strlcpy((char *) mtmp->mextra, !rn2(5) ? plname : gn,
+			mtmp->mxlth);
 		  }
 		  (void) snprintf(buf, sizeof buf, "%s's ghost", gn);
 		}

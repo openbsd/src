@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.dog.c,v 1.5 2003/03/16 21:22:35 camield Exp $	*/
+/*	$OpenBSD: hack.dog.c,v 1.6 2003/05/07 09:48:57 tdeval Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,7 +62,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.dog.c,v 1.5 2003/03/16 21:22:35 camield Exp $";
+static char rcsid[] = "$OpenBSD: hack.dog.c,v 1.6 2003/05/07 09:48:57 tdeval Exp $";
 #endif /* not lint */
 
 #include	"hack.h"
@@ -470,7 +470,8 @@ register struct obj *obj;
 	mtmp2 = newmonst(sizeof(struct edog) + mtmp->mnamelth);
 	*mtmp2 = *mtmp;
 	mtmp2->mxlth = sizeof(struct edog);
-	if(mtmp->mnamelth) (void) strcpy(NAME(mtmp2), NAME(mtmp));
+	if(mtmp->mnamelth)
+		(void) strlcpy(NAME(mtmp2), NAME(mtmp), mtmp2->mnamelth);
 	initedog(mtmp2);
 	replmon(mtmp,mtmp2);
 	return(1);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.main.c,v 1.10 2003/04/06 18:50:37 deraadt Exp $	*/
+/*	$OpenBSD: hack.main.c,v 1.11 2003/05/07 09:48:57 tdeval Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,7 +62,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.main.c,v 1.10 2003/04/06 18:50:37 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: hack.main.c,v 1.11 2003/05/07 09:48:57 tdeval Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -78,7 +78,7 @@ static char rcsid[] = "$OpenBSD: hack.main.c,v 1.10 2003/04/06 18:50:37 deraadt 
 extern char *getlogin(), *getenv();
 extern char plname[PL_NSIZ], pl_character[PL_CSIZ];
 extern struct permonst mons[CMNUM+2];
-extern char genocided[], fut_geno[];
+extern char genocided[60], fut_geno[60];
 
 int (*afternmv)();
 int (*occupation)();
@@ -277,12 +277,12 @@ char *argv[];
 		(void) signal(SIGQUIT,SIG_IGN);
 		(void) signal(SIGINT,SIG_IGN);
 		if(!locknum)
-			(void) strcpy(lock,plname);
+			(void) strlcpy(lock,plname,sizeof lock);
 		getlock();	/* sets lock if locknum != 0 */
 #ifdef WIZARD
 	} else {
 		register char *sfoo;
-		(void) strcpy(lock,plname);
+		(void) strlcpy(lock,plname,sizeof lock);
 		if(sfoo = getenv("MAGIC"))
 			while(*sfoo) {
 				switch(*sfoo++) {
@@ -302,8 +302,8 @@ char *argv[];
 				}
 				*gp = 0;
 			} else
-				(void) strcpy(genocided, sfoo);
-			(void) strcpy(fut_geno, genocided);
+				strlcpy(genocided, sfoo, sizeof genocided);
+			strlcpy(fut_geno, genocided, sizeof fut_geno);
 		}
 	}
 #endif
@@ -479,7 +479,7 @@ register foo;
 
 	tf = lock;
 	while(*tf && *tf != '.') tf++;
-	(void) sprintf(tf, ".%d", foo);
+	(void) snprintf(tf, lock + sizeof lock - tf, ".%d", foo);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.mkshop.c,v 1.4 2003/03/16 21:22:36 camield Exp $	*/
+/*	$OpenBSD: hack.mkshop.c,v 1.5 2003/05/07 09:48:57 tdeval Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,7 +62,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.mkshop.c,v 1.4 2003/03/16 21:22:36 camield Exp $";
+static char rcsid[] = "$OpenBSD: hack.mkshop.c,v 1.5 2003/05/07 09:48:57 tdeval Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -178,7 +178,7 @@ gottype:
 	ESHK->following = 0;
 	shk->mgold = 1000 + 30*rnd(100);	/* initial capital */
 	ESHK->billct = 0;
-	findname(ESHK->shknam, let);
+	findname(ESHK->shknam, sizeof ESHK->shknam, let);
 	for(sx = sroom->lx; sx <= sroom->hx; sx++)
 	for(sy = sroom->ly; sy <= sroom->hy; sy++){
 		register struct monst *mtmp;

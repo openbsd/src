@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.pager.c,v 1.8 2003/03/16 21:22:36 camield Exp $	*/
+/*	$OpenBSD: hack.pager.c,v 1.9 2003/05/07 09:48:57 tdeval Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,7 +62,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.pager.c,v 1.8 2003/03/16 21:22:36 camield Exp $";
+static char rcsid[] = "$OpenBSD: hack.pager.c,v 1.9 2003/05/07 09:48:57 tdeval Exp $";
 #endif /* not lint */
 
 /* This file contains the command routine dowhatis() and a pager. */
@@ -278,7 +278,7 @@ char *text;
 		alloc((unsigned)(len + sizeof(struct line) + 1));
 	    tl->next_line = 0;
 	    tl->line_text = (char *)(tl + 1);
-	    (void) strcpy(tl->line_text, text);
+	    (void) strlcpy(tl->line_text, text, len + 1);
 	    if(!texthead)
 		texthead = tl;
 	    else

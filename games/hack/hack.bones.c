@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.bones.c,v 1.5 2003/03/16 21:22:35 camield Exp $	*/
+/*	$OpenBSD: hack.bones.c,v 1.6 2003/05/07 09:48:56 tdeval Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,7 +62,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.bones.c,v 1.5 2003/03/16 21:22:35 camield Exp $";
+static char rcsid[] = "$OpenBSD: hack.bones.c,v 1.6 2003/05/07 09:48:56 tdeval Exp $";
 #endif /* not lint */
 
 #include "hack.h"
@@ -107,7 +107,7 @@ register struct monst *mtmp;
 	mtmp->mx = u.ux;
 	mtmp->my = u.uy;
 	mtmp->msleep = 1;
-	(void) strcpy((char *) mtmp->mextra, plname);
+	(void) strlcpy((char *) mtmp->mextra, plname, mtmp->mxlth);
 	mkgold(somegold() + d(dlevel,30), u.ux, u.uy);
 	for(mtmp = fmon; mtmp; mtmp = mtmp->nmon){
 		mtmp->m_id = 0;

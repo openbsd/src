@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.unix.c,v 1.11 2003/04/06 18:50:37 deraadt Exp $	*/
+/*	$OpenBSD: hack.unix.c,v 1.12 2003/05/07 09:48:57 tdeval Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,7 +62,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.unix.c,v 1.11 2003/04/06 18:50:37 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: hack.unix.c,v 1.12 2003/05/07 09:48:57 tdeval Exp $";
 #endif /* not lint */
 
 /* This file collects some Unix dependencies; hack.pager.c contains some more */
@@ -169,29 +169,32 @@ gethdate(name) char *name; {
  */
 #define		MAXPATHLEN	1024
 
-register char *np, *path;
+
+char *p, *np, *path;
 char filename[MAXPATHLEN+1];
-	if (strchr(name, '/') != NULL || (path = getenv("PATH")) == NULL)
-		path = "";
+	if (strchr(name, '/') != NULL || (p = getenv("PATH")) == NULL)
+		p = "";
+	np = path = strdup(p);	/* Make a copy for strsep. */
+	if (path == NULL)
+		err(1, NULL);
 
 	for (;;) {
-		if ((np = strchr(path, ':')) == NULL)
-			np = path + strlen(path);	/* point to end str */
-		if (np - path <= 1)			/* %% */
-			(void) strlcpy(filename, name, sizeof filename);
-		else {
-			(void) strncpy(filename, path, np - path);
-			filename[np - path] = '/';
-			(void) strcpy(filename + (np - path) + 1, name);
-		}
-		if (stat(filename, &hbuf) == 0)
-			return;
-		if (*np == '\0')
+		if ((p = strsep(&np, ":")) == NULL)
 			break;
-		path = np + 1;
+		if (*p == '\0')			/* :: */
+			(void) strlcpy(filename, name, sizeof filename);
+		else
+			(void) snprintf(filename, sizeof filename,
+			    "%s/%s", p, name);
+
+		if (stat(filename, &hbuf) == 0) {
+			free(path);
+			return;
+		}
 	}
 	error("Cannot get status of %s.",
-		(np = strrchr(name, '/')) ? np+1 : name);
+		(p = strrchr(name, '/')) ? p+1 : name);
+	free(path);
 }
 
 uptodate(fd) {

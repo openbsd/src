@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.engrave.c,v 1.3 2003/03/16 21:22:35 camield Exp $	*/
+/*	$OpenBSD: hack.engrave.c,v 1.4 2003/05/07 09:48:57 tdeval Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,7 +62,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.engrave.c,v 1.3 2003/03/16 21:22:35 camield Exp $";
+static char rcsid[] = "$OpenBSD: hack.engrave.c,v 1.4 2003/05/07 09:48:57 tdeval Exp $";
 #endif /* not lint */
 
 #include	"hack.h"
@@ -168,20 +168,21 @@ register int x,y;
 register char *s;
 {
 	register struct engr *ep;
+	register size_t len = strlen(s) + 1;
 
 	if(ep = engr_at(x,y))
 	    del_engr(ep);
 	ep = (struct engr *)
-	    alloc((unsigned)(sizeof(struct engr) + strlen(s) + 1));
+	    alloc((unsigned)(sizeof(struct engr) + len));
 	ep->nxt_engr = head_engr;
 	head_engr = ep;
 	ep->engr_x = x;
 	ep->engr_y = y;
 	ep->engr_txt = (char *)(ep + 1);
-	(void) strcpy(ep->engr_txt, s);
+	(void) strlcpy(ep->engr_txt, s, len);
 	ep->engr_time = 0;
 	ep->engr_type = DUST;
-	ep->engr_lth = strlen(s) + 1;
+	ep->engr_lth = len;
 }
 
 doengrave(){
@@ -306,11 +307,11 @@ register struct obj *otmp;
 	sp = (char *)(ep + 1);	/* (char *)ep + sizeof(struct engr) */
 	ep->engr_txt = sp;
 	if(oep) {
-		(void) strcpy(sp, oep->engr_txt);
-		(void) strcat(sp, buf);
+		(void) strlcpy(sp, oep->engr_txt, len + 1);
+		(void) strlcat(sp, buf, len + 1);
 		del_engr(oep);
 	} else
-		(void) strcpy(sp, buf);
+		(void) strlcpy(sp, buf, len + 1);
 	ep->engr_lth = len+1;
 	ep->engr_type = type;
 	ep->engr_time = moves-multi;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.pri.c,v 1.6 2003/04/06 18:50:37 deraadt Exp $	*/
+/*	$OpenBSD: hack.pri.c,v 1.7 2003/05/07 09:48:57 tdeval Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,7 +62,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.pri.c,v 1.6 2003/04/06 18:50:37 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: hack.pri.c,v 1.7 2003/05/07 09:48:57 tdeval Exp $";
 #endif /* not lint */
 
 #include "hack.h"
@@ -655,7 +655,7 @@ register int lth;
 
 bot()
 {
-register char *ob = oldbot, *nb = newbot;
+register char *ob = oldbot, *nb = newbot, *bp;
 register int i;
 extern char *eos();
 	if(flags.botlx) *ob = 0;
@@ -672,18 +672,28 @@ extern char *eos();
 	if(u.ustr>18) {
 	    if(u.ustr>117)
 		(void) strlcat(newbot,"18/**",sizeof newbot);
-	    else
-		(void) sprintf(eos(newbot), "18/%02d",u.ustr-18);
-	} else
-	    (void) sprintf(eos(newbot), "%-2d   ",u.ustr);
+	    else {
+		bp = eos(newbot);
+		(void) snprintf(bp, newbot + sizeof newbot - bp,
+		  "18/%02d",u.ustr-18);
+	    }
+	} else {
+	    bp = eos(newbot);
+	    (void) snprintf(bp, newbot + sizeof newbot - bp, "%-2d   ",u.ustr);
+	}
+	bp = eos(newbot);
 #ifdef EXP_ON_BOTL
-	(void) sprintf(eos(newbot), "  Exp %2d/%-5lu ", u.ulevel,u.uexp);
+	(void) snprintf(bp, newbot + sizeof newbot - bp,
+	  "  Exp %2d/%-5lu ", u.ulevel,u.uexp);
 #else
-	(void) sprintf(eos(newbot), "   Exp %2u  ", u.ulevel);
+	(void) snprintf(bp, newbot + sizeof newbot - bp,
+	  "   Exp %2u  ", u.ulevel);
 #endif /* EXP_ON_BOTL */
 	(void) strlcat(newbot, hu_stat[u.uhs], sizeof newbot);
-	if(flags.time)
-	    (void) sprintf(eos(newbot), "  %ld", moves);
+	if(flags.time) {
+	    bp = eos(newbot);
+	    (void) snprintf(bp, newbot + sizeof newbot - bp, "  %ld", moves);
+	}
 	if(strlen(newbot) >= COLNO) {
 		register char *bp0, *bp1;
 		bp0 = bp1 = newbot;
