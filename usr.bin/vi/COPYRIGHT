@@ -1,12 +1,9 @@
-#	@(#)LICENSE	8.7 (Berkeley) 3/4/96
-
-This work is copyrighted by The Regents of the University of California,
-and by Keith Bostic.  It may be freely redistributed under the following
-conditions, until one year after the release of any subsequent version of
-this software, at which point it may no longer be redistributed without
-written permission from Keith Bostic.
-
 /*-
+ * Copyright (c) 1991, 1992, 1993, 1994
+ *      The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1991, 1992, 1993, 1994, 1995, 1996
+ *	Keith Bostic.  All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -22,6 +19,16 @@ written permission from Keith Bostic.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
+ * 5. The editor's :version command and the message it displays may not be
+ *    altered in any way, without the written permission of Keith Bostic,
+ *    other than to add supplemental information to the version's release
+ *    number and release date.  For permission to change the :version command
+ *    or its message, contact Keith Bostic:
+ *
+ * 	Keith Bostic		+1-508-287-4781
+ * 	394 E. Riding Dr.	bostic@bostic.com
+ * 	Carlisle, MA 01741
+ * 	USA
  *
  * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
