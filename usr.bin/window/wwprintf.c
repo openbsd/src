@@ -1,4 +1,4 @@
-/*	$OpenBSD: wwprintf.c,v 1.6 2003/06/03 02:56:23 millert Exp $	*/
+/*	$OpenBSD: wwprintf.c,v 1.7 2003/08/01 22:01:37 david Exp $	*/
 /*	$NetBSD: wwprintf.c,v 1.3 1995/09/28 10:35:44 tls Exp $	*/
 
 /*
@@ -37,12 +37,13 @@
 #if 0
 static char sccsid[] = "@(#)wwprintf.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: wwprintf.c,v 1.6 2003/06/03 02:56:23 millert Exp $";
+static char rcsid[] = "$OpenBSD: wwprintf.c,v 1.7 2003/08/01 22:01:37 david Exp $";
 #endif
 #endif /* not lint */
 
 #include "ww.h"
 #include <stdarg.h>
+#include <stdio.h>
 
 wwprintf(struct ww *w, char *fmt, ...)
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wwrint.c,v 1.6 2003/06/03 02:56:23 millert Exp $	*/
+/*	$OpenBSD: wwrint.c,v 1.7 2003/08/01 22:01:38 david Exp $	*/
 /*	$NetBSD: wwrint.c,v 1.4 1995/12/21 10:46:24 mycroft Exp $	*/
 
 /*
@@ -37,12 +37,14 @@
 #if 0
 static char sccsid[] = "@(#)wwrint.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: wwrint.c,v 1.6 2003/06/03 02:56:23 millert Exp $";
+static char rcsid[] = "$OpenBSD: wwrint.c,v 1.7 2003/08/01 22:01:38 david Exp $";
 #endif
 #endif /* not lint */
 
 #include "ww.h"
 #include "tt.h"
+#include <sys/types.h>
+#include <unistd.h>
 
 /*
  * Tty input interrupt handler.
