@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.38 2003/05/16 19:54:05 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.39 2003/05/18 16:06:35 mickey Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -315,7 +315,7 @@ struct scsi_xfer {
 #define TEST_READY_RETRIES_DEFAULT	5
 #define TEST_READY_RETRIES_CD		10
 
-caddr_t scsi_inqmatch(struct scsi_inquiry_data *, caddr_t, int,
+const void *scsi_inqmatch(struct scsi_inquiry_data *, const void *, int,
 	    int, int *);
 
 void	scsi_init(void);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ch.c,v 1.15 2003/03/28 11:42:28 mickey Exp $	*/
+/*	$OpenBSD: ch.c,v 1.16 2003/05/18 16:06:35 mickey Exp $	*/
 /*	$NetBSD: ch.c,v 1.26 1997/02/21 22:06:52 thorpej Exp $	*/
 
 /*
@@ -105,7 +105,7 @@ struct cfdriver ch_cd = {
 	NULL, "ch", DV_DULL
 };
 
-struct scsi_inquiry_pattern ch_patterns[] = {
+const struct scsi_inquiry_pattern ch_patterns[] = {
 	{T_CHANGER, T_REMOV,
 	 "",		"",		""},
 };
@@ -146,7 +146,7 @@ chmatch(parent, match, aux)
 	int priority;
 
 	(void)scsi_inqmatch(sa->sa_inqbuf,
-	    (caddr_t)ch_patterns, sizeof(ch_patterns)/sizeof(ch_patterns[0]),
+	    ch_patterns, sizeof(ch_patterns)/sizeof(ch_patterns[0]),
 	    sizeof(ch_patterns[0]), &priority);
 
 	return (priority);
@@ -690,12 +690,12 @@ ch_get_quirks(sc, inqbuf)
 	struct ch_softc *sc;
 	struct scsi_inquiry_data *inqbuf;
 {
-	struct chquirk *match;
+	const struct chquirk *match;
 	int priority;
 
 	sc->sc_settledelay = 0;
 
-	match = (struct chquirk *)scsi_inqmatch(inqbuf,
+	match = (const struct chquirk *)scsi_inqmatch(inqbuf,
 	    (caddr_t)chquirks,
 	    sizeof(chquirks) / sizeof(chquirks[0]),
 	    sizeof(chquirks[0]), &priority);

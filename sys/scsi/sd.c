@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.59 2003/05/16 19:54:05 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.60 2003/05/18 16:06:35 mickey Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -124,7 +124,7 @@ struct scsi_device sd_switch = {
 	sddone,			/* deal with stats at interrupt time */
 };
 
-struct scsi_inquiry_pattern sd_patterns[] = {
+const struct scsi_inquiry_pattern sd_patterns[] = {
 	{T_DIRECT, T_FIXED,
 	 "",         "",                 ""},
 	{T_DIRECT, T_REMOV,
@@ -155,7 +155,7 @@ sdmatch(parent, match, aux)
 	int priority;
 
 	(void)scsi_inqmatch(sa->sa_inqbuf,
-	    (caddr_t)sd_patterns, sizeof(sd_patterns)/sizeof(sd_patterns[0]),
+	    sd_patterns, sizeof(sd_patterns)/sizeof(sd_patterns[0]),
 	    sizeof(sd_patterns[0]), &priority);
 	return (priority);
 }

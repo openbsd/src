@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.47 2002/12/30 21:50:29 grange Exp $	*/
+/*	$OpenBSD: ss.c,v 1.48 2003/05/18 16:06:35 mickey Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -142,7 +142,7 @@ void	get_buffer_status(struct ss_softc *, struct buf *);
  *  Fujitsu M3096G wants 40 <= x <= 248 (tested OK at 40 & 64.)
  */
 
-struct ss_quirk_inquiry_pattern ss_quirk_patterns[] = {
+const struct ss_quirk_inquiry_pattern ss_quirk_patterns[] = {
 	{{T_SCANNER, T_FIXED,
 	 "ULTIMA  ", "AT3     1.60    ", "    "}, {
 		 "Ultima AT3",
@@ -263,7 +263,7 @@ struct scsi_device ss_switch = {
 	NULL,
 };
 
-struct scsi_inquiry_pattern ss_patterns[] = {
+const struct scsi_inquiry_pattern ss_patterns[] = {
 	{T_SCANNER, T_FIXED,
 	 "",         "",                 ""},
 	{T_SCANNER, T_REMOV,
@@ -303,7 +303,7 @@ ssmatch(parent, match, aux)
 	int priority;
 
 	(void)scsi_inqmatch(sa->sa_inqbuf,
-	    (caddr_t)ss_patterns, sizeof(ss_patterns)/sizeof(ss_patterns[0]),
+	    ss_patterns, sizeof(ss_patterns)/sizeof(ss_patterns[0]),
 	    sizeof(ss_patterns[0]), &priority);
 	return (priority);
 }
@@ -370,14 +370,14 @@ ss_identify_scanner(ss, inqbuf)
 	struct ss_softc *ss;
 	struct scsi_inquiry_data *inqbuf;
 {
-	struct ss_quirk_inquiry_pattern *finger;
+	const struct ss_quirk_inquiry_pattern *finger;
 	int priority;
 	/*
 	 * look for non-standard scanners with help of the quirk table
 	 * and install functions for special handling
 	 */
-	finger = (struct ss_quirk_inquiry_pattern *)scsi_inqmatch(inqbuf,
-	    (caddr_t)ss_quirk_patterns,
+	finger = (const struct ss_quirk_inquiry_pattern *)scsi_inqmatch(inqbuf,
+	    ss_quirk_patterns,
 	    sizeof(ss_quirk_patterns)/sizeof(ss_quirk_patterns[0]),
 	    sizeof(ss_quirk_patterns[0]), &priority);
 	if (priority != 0) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.34 2003/03/11 01:12:09 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.35 2003/05/18 16:06:35 mickey Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -117,7 +117,7 @@ struct st_quirk_inquiry_pattern {
 	struct quirkdata quirkdata;
 };
 
-struct st_quirk_inquiry_pattern st_quirk_patterns[] = {
+const struct st_quirk_inquiry_pattern st_quirk_patterns[] = {
 	{{T_SEQUENTIAL, T_REMOV,
 	 "        ", "                ", "    "}, {0, 0, {
 		{ST_Q_FORCE_BLKSIZE, 512, 0},		/* minor 0-3 */
@@ -264,7 +264,7 @@ struct st_softc {
 /*--------------------parameters reported by the device ----------------------*/
 	int blkmin;		/* min blk size                       */
 	int blkmax;		/* max blk size                       */
-	struct quirkdata *quirkdata;	/* if we have a rogue entry           */
+	const struct quirkdata *quirkdata;	/* if we have a rogue entry */
 /*--------------------parameters reported by the device for this media--------*/
 	u_long numblks;		/* nominal blocks capacity            */
 	int media_blksize;	/* 0 if not ST_FIXEDBLOCKS            */
@@ -346,7 +346,7 @@ struct scsi_device st_switch = {
 			 ST_FIXEDBLOCKS | ST_READONLY | ST_FM_WRITTEN | \
 			 ST_2FM_AT_EOD | ST_PER_ACTION)
 
-struct scsi_inquiry_pattern st_patterns[] = {
+const struct scsi_inquiry_pattern st_patterns[] = {
 	{T_SEQUENTIAL, T_REMOV,
 	 "",         "",                 ""},
 };
@@ -360,7 +360,7 @@ stmatch(parent, match, aux)
 	int priority;
 
 	(void)scsi_inqmatch(sa->sa_inqbuf,
-	    (caddr_t)st_patterns, sizeof(st_patterns)/sizeof(st_patterns[0]),
+	    st_patterns, sizeof(st_patterns)/sizeof(st_patterns[0]),
 	    sizeof(st_patterns[0]), &priority);
 	return (priority);
 }
@@ -440,11 +440,11 @@ st_identify_drive(st, inqbuf)
 	struct st_softc *st;
 	struct scsi_inquiry_data *inqbuf;
 {
-	struct st_quirk_inquiry_pattern *finger;
+	const struct st_quirk_inquiry_pattern *finger;
 	int priority;
 
-	finger = (struct st_quirk_inquiry_pattern *)scsi_inqmatch(inqbuf,
-	    (caddr_t)st_quirk_patterns,
+	finger = (const struct st_quirk_inquiry_pattern *)scsi_inqmatch(inqbuf,
+	    st_quirk_patterns,
 	    sizeof(st_quirk_patterns)/sizeof(st_quirk_patterns[0]),
 	    sizeof(st_quirk_patterns[0]), &priority);
 	if (priority != 0) {
@@ -466,7 +466,7 @@ st_loadquirks(st)
 	struct st_softc *st;
 {
 	int i;
-	struct	modes *mode;
+	const struct	modes *mode;
 	struct	modes *mode2;
 
 	mode = st->quirkdata->modes;

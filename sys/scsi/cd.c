@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.70 2003/05/17 16:55:45 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.71 2003/05/18 16:06:35 mickey Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -162,7 +162,7 @@ struct scsi_device cd_switch = {
 	cddone,			/* deal with stats at interrupt time */
 };
 
-struct scsi_inquiry_pattern cd_patterns[] = {
+const struct scsi_inquiry_pattern cd_patterns[] = {
 	{T_CDROM, T_REMOV,
 	 "",         "",                 ""},
 	{T_WORM, T_REMOV,
@@ -191,7 +191,7 @@ cdmatch(parent, match, aux)
 	int priority;
 
 	(void)scsi_inqmatch(sa->sa_inqbuf,
-	    (caddr_t)cd_patterns, sizeof(cd_patterns)/sizeof(cd_patterns[0]),
+	    cd_patterns, sizeof(cd_patterns)/sizeof(cd_patterns[0]),
 	    sizeof(cd_patterns[0]), &priority);
 	return (priority);
 }

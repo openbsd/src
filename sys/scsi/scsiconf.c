@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.72 2003/05/17 06:08:39 nate Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.73 2003/05/18 16:06:35 mickey Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -379,7 +379,7 @@ struct scsi_quirk_inquiry_pattern {
 	u_int16_t quirks;
 };
 
-struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
+const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_CDROM, T_REMOV,
 	 "CHINON  ", "CD-ROM CDS-431  ", ""},     SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,
@@ -763,7 +763,7 @@ scsi_probedev(scsi, target, lun)
 {
 	struct scsi_link *sc_link;
 	static struct scsi_inquiry_data inqbuf;
-	struct scsi_quirk_inquiry_pattern *finger;
+	const struct scsi_quirk_inquiry_pattern *finger;
 	int checkdtype, priority;
 	struct scsibus_attach_args sa;
 	struct cfdata *cf;
@@ -831,8 +831,8 @@ scsi_probedev(scsi, target, lun)
 		}
 	}
 
-	finger = (struct scsi_quirk_inquiry_pattern *)scsi_inqmatch(&inqbuf,
-	    (caddr_t)scsi_quirk_patterns, 
+	finger = (const struct scsi_quirk_inquiry_pattern *)scsi_inqmatch(
+	    &inqbuf, scsi_quirk_patterns, 
 	    sizeof(scsi_quirk_patterns)/sizeof(scsi_quirk_patterns[0]),
 	    sizeof(scsi_quirk_patterns[0]), &priority);
 
@@ -946,16 +946,16 @@ bad:
  * Return a priority based on how much of the inquiry data matches
  * the patterns for the particular driver.
  */
-caddr_t
+const void *
 scsi_inqmatch(inqbuf, base, nmatches, matchsize, bestpriority)
 	struct scsi_inquiry_data *inqbuf;
-	caddr_t base;
+	const void *base;
 	int nmatches, matchsize;
 	int *bestpriority;
 {
 	u_int8_t type;
 	boolean removable;
-	caddr_t bestmatch;
+	const void *bestmatch;
 
 	/* Include the qualifier to catch vendor-unique types. */
 	type = inqbuf->device;
