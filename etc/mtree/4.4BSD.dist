@@ -1,5 +1,5 @@
 #	from: @(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
-#	$Id: 4.4BSD.dist,v 1.5 1995/12/15 15:38:01 deraadt Exp $
+#	$Id: 4.4BSD.dist,v 1.6 1995/12/19 10:28:15 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -838,6 +838,11 @@ generate
 ..
 
 # ./usr/share/groff_font
+..
+
+# ./usr/share/info
+info
+# ./usr/share/info
 ..
 
 # ./usr/share/lkm
