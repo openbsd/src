@@ -1,4 +1,4 @@
-/*	$OpenBSD: zbsdmod.c,v 1.3 2005/01/10 21:50:54 deraadt Exp $	*/
+/*	$OpenBSD: zbsdmod.c,v 1.4 2005/01/14 08:10:17 uwe Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -21,6 +21,7 @@
 #include "compat_linux.h"
 
 #define ZBOOTDEV_MAJOR	99
+#define ZBOOTDEV_MODE	0222
 #define ZBOOTDEV_NAME	"zboot"
 #define ZBOOTMOD_NAME	"zbsdmod"
 
@@ -127,12 +128,20 @@ elf32bsdboot(void)
 int
 init_module()
 {
+	struct proc_dir_entry *entry;
 	int rc;
 
 	rc = register_chrdev(ZBOOTDEV_MAJOR, ZBOOTDEV_NAME, &fops);
 	if (rc != 0) {
 		printk("%s: register_chrdev(%d, ...): error %d\n",
 		    ZBOOTMOD_NAME, -rc);
+		return 1;
+	}
+
+	entry = proc_mknod(ZBOOTDEV_NAME, ZBOOTDEV_MODE | S_IFCHR,
+	    &proc_root, MKDEV(ZBOOTDEV_MAJOR, 0));
+	if (entry == (struct proc_dir_entry *)0) {
+		(void)unregister_chrdev(ZBOOTDEV_MAJOR, ZBOOTDEV_NAME);
 		return 1;
 	}
 
@@ -150,6 +159,7 @@ cleanup_module()
 {
 
 	(void)unregister_chrdev(ZBOOTDEV_MAJOR, ZBOOTDEV_NAME);
+	remove_proc_entry(ZBOOTDEV_NAME, &proc_root);
 
 	printk("%s: OpenBSD/" MACHINE " bootstrap device unloaded\n",
 	    ZBOOTMOD_NAME);

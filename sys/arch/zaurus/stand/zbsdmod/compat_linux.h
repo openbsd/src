@@ -1,4 +1,4 @@
-/*	$OpenBSD: compat_linux.h,v 1.2 2005/01/10 21:10:58 uwe Exp $	*/
+/*	$OpenBSD: compat_linux.h,v 1.3 2005/01/14 08:10:17 uwe Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -46,7 +46,12 @@
  * Declare the things that we need from the Linux headers.
  */
 
-#define	IS_ERR(ptr) ((unsigned long)(ptr) > (unsigned long)-1000L)
+#define	IS_ERR(ptr)	((unsigned long)(ptr) > (unsigned long)-1000L)
+
+#define MKDEV(ma,mi)	((ma)<<8 | (mi))
+
+#define S_IFBLK		0060000
+#define S_IFCHR		0020000
 
 struct file;
 struct inode;
@@ -99,5 +104,32 @@ static const char __module_kernel_version[] __attribute__((section(".modinfo")))
 static const char __module_using_checksums[] __attribute__((section(".modinfo"))) =
 "using_checksums=1";
 #endif
+
+/* procfs support */
+struct proc_dir_entry {
+        unsigned short low_ino;
+        unsigned short namelen;
+        const char *name;
+        unsigned short mode;
+        unsigned short nlink;
+        unsigned short uid;
+        unsigned short gid;
+        unsigned long size;
+        void *proc_iops; /* inode operations */
+        struct file_operations * proc_fops;
+        void *get_info;
+        struct module *owner;
+        struct proc_dir_entry *next, *parent, *subdir;
+        void *data;
+        void *read_proc;
+        void *write_proc;
+        volatile int count;
+        int deleted;
+        unsigned short rdev;
+};
+extern	struct proc_dir_entry proc_root;
+extern	struct proc_dir_entry *proc_mknod(const char*, unsigned short,
+    struct proc_dir_entry*, unsigned short);
+extern	void remove_proc_entry(const char *, struct proc_dir_entry *);
 
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.2 2005/01/10 21:10:57 uwe Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.3 2005/01/14 08:10:16 uwe Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -16,4 +16,4 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#define _PATH_ZBOOT "/dev/zboot"
+#define _PATH_ZBOOT "/proc/zboot"
