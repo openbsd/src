@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lasi.4,v 1.23 2004/04/17 23:54:47 mickey Exp $
+.\"	$OpenBSD: lasi.4,v 1.24 2004/09/15 21:33:22 mickey Exp $
 .\"
 .\"
 .\" Copyright (c) 1999 Michael Shalayeff
@@ -36,6 +36,7 @@ workstations and single-board computers
 .Sh SYNOPSIS
 .Cd "lasi0   at mainbus? irq 28"
 .Cd "lasi0   at phantomas? irq 28"
+.Cd "lasi0   at uturn? irq 28"
 .Cd "gsc* at lasi?"
 .Sh DESCRIPTION
 The supported Core bus controllers are those used in conjunction with
@@ -108,6 +109,7 @@ SAIC Galaxy 1100
 .Xr io 4 ,
 .Xr phantomas 4 ,
 .Xr power 4 ,
+.Xr uturn 4 ,
 .Xr wax 4
 .Rs
 .%T "Precision I/O Architecture Reference Specification"
