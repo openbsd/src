@@ -33,7 +33,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getgrent.c,v 1.11 2000/01/06 08:19:48 d Exp $";
+static char rcsid[] = "$OpenBSD: getgrent.c,v 1.12 2000/01/08 08:07:24 d Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -308,7 +308,7 @@ grscan(search, gid, name, p_gr)
 			goto parse;
 		}
 #endif
-		if (!fgets(line, sizeof(line), _gr_fp))
+		if (!fgets(line, sizeof(gs->line), _gr_fp))
 			return(0);
 		bp = line;
 		/* skip lines that are too big */
