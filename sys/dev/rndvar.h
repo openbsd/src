@@ -1,4 +1,4 @@
-/*	$OpenBSD: rndvar.h,v 1.9 1997/06/22 04:58:06 flipk Exp $	*/
+/*	$OpenBSD: rndvar.h,v 1.10 1997/06/24 02:45:01 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff.
@@ -63,6 +63,9 @@ struct rndstats {
 	u_long rnd_deqs;  /* dequeue calls */
 	u_long rnd_drops; /* queue-full drops */
 	u_long rnd_drople;/* queue low watermark low entropy drops */
+
+	u_int rnd_asleep; /* sleeping for the data */
+	u_int rnd_queued; /* queued for processing */
 };
 
 #ifdef _KERNEL

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rndioctl.h,v 1.5 1997/06/22 04:58:06 flipk Exp $	*/
+/*	$OpenBSD: rndioctl.h,v 1.6 1997/06/24 02:45:01 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff.

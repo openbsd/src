@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.29 1997/06/22 05:05:00 flipk Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.30 1997/06/24 02:45:00 mickey Exp $	*/
 
 /*
  * random.c -- A strong random number generator
@@ -325,9 +325,7 @@ static struct timer_rand_state disk_timer_state;
 static struct timer_rand_state net_timer_state;
 static struct timer_rand_state tty_timer_state;
 static struct rand_event event_space[QEVLEN];
-static int rnd_sleep = 0;
 static int rnd_attached = 0;
-static int rnd_enqueued = 0;
 static struct rand_event *event_q = NULL;
 static struct rand_event *event_free;
 
@@ -566,7 +564,7 @@ enqueue_randomness(state, val)
 		for (nbits = 0; delta; nbits++)
 			delta >>= 1;
 
-		if (rnd_enqueued > QEVSLOW && nbits < QEVSBITS) {
+		if (rndstats.rnd_queued > QEVSLOW && nbits < QEVSBITS) {
 			rndstats.rnd_drople++;
 			return;
 		}
@@ -592,10 +590,10 @@ enqueue_randomness(state, val)
 	rep = rep->re_next;
 	splx(s);
 	rndstats.rnd_timer++;
-	rnd_enqueued++;
+	rndstats.rnd_queued++;
 
 	if (rep == NULL)
-		timeout(dequeue_randomness, NULL, 1);
+		timeout(dequeue_randomness, (void *)0xdeadd00d, 1);
 
 }
 
@@ -624,7 +622,6 @@ dequeue_randomness(v)
 		rep->re_next = event_free;
 		event_free = rep;
 		splx(s);
-		rnd_enqueued--;
 
 		/* Prevent overflow */
 		if ((random_state.entropy_count + nbits) > POOLBITS &&
@@ -639,14 +636,17 @@ dequeue_randomness(v)
 		if (random_state.entropy_count > POOLBITS)
 			random_state.entropy_count = POOLBITS;
 
-		if (random_state.entropy_count > 8 && rnd_sleep != 0) {
-			rnd_sleep--;
+		rndstats.rnd_queued--;
+		if (random_state.entropy_count > 8 &&
+		    rndstats.rnd_asleep != 0) {
 #ifdef	DEBUG
 			if (rnd_debug & RD_WAIT)
 				printf("rnd: wakeup[%d]{%u}\n",
-				       rnd_sleep, random_state.entropy_count);
+				       rndstats.rnd_asleep,
+				       random_state.entropy_count);
 #endif
-			wakeup(&rnd_sleep);
+			rndstats.rnd_asleep--;
+			wakeup(&rndstats.rnd_asleep);
 		}
 	} while(1);
 
@@ -825,12 +825,12 @@ randomread(dev, uio, ioflag)
 #ifdef	DEBUG
 				if (rnd_debug & RD_WAIT)
 					printf("rnd: sleep[%d]\n",
-					    rnd_sleep);
+					    rndstats.rnd_asleep);
 #endif
-				rnd_sleep++;
+				rndstats.rnd_asleep++;
 				rndstats.rnd_waits++;
-				ret = tsleep(&rnd_sleep, PWAIT | PCATCH,
-				    "rndrd", 0);
+				ret = tsleep(&rndstats.rnd_asleep,
+					     PWAIT | PCATCH, "rndrd", 0);
 #ifdef	DEBUG
 				if (rnd_debug & RD_WAIT)
 					printf("rnd: awakened(%d)\n", ret);
