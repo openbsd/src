@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.14 1999/12/31 18:27:40 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.15 2000/01/11 05:39:52 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -208,6 +208,19 @@ trap(type, frame)
 		printf ("trap: handicapped");
 		break;
 #endif
+
+#ifdef DIAGNOSTIC
+	case T_EXCEPTION:
+		panic("FPU/SFU emulation botch");
+
+		/* these just can't happen ever */
+	case T_PRIV_OP:
+	case T_PRIV_REG:
+		/* these just can't make it to the trap() ever */
+	case T_HPMC:      case T_HPMC | T_USER:
+	case T_EMULATION: case T_EMULATION | T_USER:
+	case T_TLB_DIRTY: case T_TLB_DIRTY | T_USER:
+#endif
 	case T_IBREAK:
 	case T_DATALIGN:
 	case T_DBREAK:
@@ -228,28 +241,11 @@ trap(type, frame)
 #endif
 		break;
 
-#ifdef DIAGNOSTIC
-		/* these just can't happen ever */
-	case T_PRIV_OP:
-	case T_PRIV_REG:
-		panic ("loss of mind");
-		break;
-
-		/* these just can't make it to the trap() ever */
-	case T_HPMC:      case T_HPMC | T_USER:
-	case T_EXCEPTION:
-	case T_EMULATION:
-	case T_TLB_DIRTY: case T_TLB_DIRTY | T_USER:
-		panic ("trap: impossible \'%s\' (%d)", tts, type);
-		break;
-#endif
-
 	case T_IBREAK | T_USER:
 	case T_DBREAK | T_USER:
 		/* pass to user debugger */
 		break;
 
-	case T_EMULATION | T_USER:
 	case T_EXCEPTION | T_USER:	/* co-proc assist trap */
 		sv.sival_int = va;
 		trapsignal(p, SIGFPE, type &~ T_USER, FPE_FLTINV, sv);
