@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_auth.c,v 1.92 2004/06/20 17:17:34 ho Exp $	 */
+/* $OpenBSD: ike_auth.c,v 1.93 2004/06/22 18:22:18 hshoexer Exp $	 */
 /* $EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	 */
 
 /*
@@ -256,9 +256,10 @@ ike_auth_get_key(int type, char *id, char *local_id, size_t *keylen)
 			buf2 = kn_get_string(buf);
 			free(buf);
 
-			if (kn_decode_key(&dc, buf2, KEYNOTE_PRIVATE_KEY)
-			    == -1) {
-				free(buf2);
+			if (!buf2 || kn_decode_key(&dc, buf2,
+			    KEYNOTE_PRIVATE_KEY) == -1) {
+				if (buf2)
+					free(buf2);
 				log_print("ike_auth_get_key: failed decoding "
 				    "key in \"%s\"", keyfile);
 				free(keyfile);
