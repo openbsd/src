@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.12 2001/03/23 07:45:42 jason Exp $ */
+/*	$OpenBSD: if_vlan.c,v 1.13 2001/03/26 19:00:58 jason Exp $ */
 /*
  * Copyright 1998 Massachusetts Institute of Technology
  *
@@ -48,7 +48,7 @@
  * one can change the behavior of the vlan interface by setting
  * the LINK0 flag on it (that is setting the vlan interface's LINK0
  * flag, _not_ the parent's LINK0 flag; we try to leave the parent
- * alone). If the interface as the LINK0 flag set, then it will
+ * alone). If the interface has the LINK0 flag set, then it will
  * not modify the ethernet header on output because the parent
  * can do that for itself. On input, the parent can call vlan_input_tag()
  * directly in order to supply us with an incoming mbuf and the vlan
@@ -97,6 +97,7 @@ int	vlan_setmulti (struct ifnet *ifp);
 int	vlan_unconfig (struct ifnet *ifp);
 int	vlan_config (struct ifvlan *ifv, struct ifnet *p);
 void	vlanattach (void *dummy);
+int	vlan_set_promisc (struct ifnet *ifp);
 
 /*
  * Program our multicast filter. What we're actually doing is
@@ -407,11 +408,14 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p)
 		return EBUSY;
 	ifv->ifv_p = p;
 	ifv->ifv_if.if_mtu = p->if_data.ifi_mtu;
+	ifv->ifv_if.if_flags = p->if_flags &
+	    (IFF_UP | IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST);
 
 	/*
-	 * Preserve the state of the LINK0 flag for ourselves.
+	 * Inherit the if_type from the parent.  This allows us to
+	 * participate in bridges of that type.
 	 */
-	ifv->ifv_if.if_flags = (p->if_flags & ~(IFF_LINK0));
+	ifv->ifv_if.if_type = p->if_type;
 
 	/*
 	 * Set up our ``Ethernet address'' to reflect the underlying
@@ -474,6 +478,29 @@ vlan_unconfig(struct ifnet *ifp)
 	bzero(ifv->ifv_ac.ac_enaddr, ETHER_ADDR_LEN);
 
 	return 0;
+}
+
+int
+vlan_set_promisc(struct ifnet *ifp)
+{
+	struct ifvlan *ifv = ifp->if_softc;
+	int error = 0;
+
+	if ((ifp->if_flags & IFF_PROMISC) != 0) {
+		if ((ifv->ifv_flags & IFVF_PROMISC) == 0) {
+			error = ifpromisc(ifv->ifv_p, 1);
+			if (error == 0)
+				ifv->ifv_flags |= IFVF_PROMISC;
+		}
+	} else {
+		if ((ifv->ifv_flags & IFVF_PROMISC) != 0) {
+			error = ifpromisc(ifv->ifv_p, 0);
+			if (error == 0)
+				ifv->ifv_flags &= ~IFVF_PROMISC;
+		}
+	}
+
+	return (0);
 }
 
 int
@@ -559,6 +586,9 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			break;
 		ifv->ifv_tag = vlr.vlr_tag;
 		ifp->if_flags |= IFF_RUNNING;
+
+		/* Update promiscuous mode, if necessary. */
+		vlan_set_promisc(ifp);
 		break;
 		
 	case SIOCGETVLAN:
@@ -573,14 +603,11 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		
 	case SIOCSIFFLAGS:
 		/*
-		 * We don't support promiscuous mode
-		 * right now because it would require help from the
-		 * underlying drivers, which hasn't been implemented.
+		 * For promiscuous mode, we enable promiscuous mode on
+		 * the parent if we need promiscuous on the VLAN interface.
 		 */
-		if (ifr->ifr_flags & (IFF_PROMISC)) {
-			ifp->if_flags &= ~(IFF_PROMISC);
-			error = EINVAL;
-		}
+		if (ifv->ifv_p != NULL)
+			error = vlan_set_promisc(ifp);
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:

@@ -47,9 +47,11 @@ struct	ifvlan {
 		u_int16_t ifvm_tag; /* tag to apply on packets leaving if */
 	}	ifv_mib;
 	SLIST_HEAD(__vlan_mchead, vlan_mc_entry)	vlan_mc_listhead;
+	int ifv_flags;
 };
 #define	ifv_if		ifv_ac.ac_if
 #define	ifv_tag		ifv_mib.ifvm_tag
+#define	IFVF_PROMISC	0x01
 #endif /* _KERNEL */
 
 struct	ether_vlan_header {
@@ -63,6 +65,9 @@ struct	ether_vlan_header {
 #define	EVL_VLANOFTAG(tag) ((tag) & 4095)
 #define	EVL_PRIOFTAG(tag) (((tag) >> 13) & 7)
 #define	EVL_ENCAPLEN	4	/* length in octets of encapsulation */
+
+/* When these sorts of interfaces get their own identifier... */
+#define	IFT_8021_VLAN	IFT_PROPVIRTUAL
 
 /* sysctl(3) tags, for compatibility purposes */
 #define	VLANCTL_PROTO	1
