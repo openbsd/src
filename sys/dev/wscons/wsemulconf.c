@@ -1,8 +1,8 @@
-/*	$OpenBSD: ms.h,v 1.2 1997/01/24 19:58:28 niklas Exp $ */
+/* $OpenBSD: wsemulconf.c,v 1.1 2000/05/16 23:49:11 mickey Exp $ */
+/* $NetBSD: wsemulconf.c,v 1.4 2000/01/05 11:19:37 drochner Exp $ */
 
 /*
- * Copyright (c) 1996 Niklas Hallqvist
- * All rights reserved.
+ * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -14,10 +14,10 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Niklas Hallqvist.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ *      This product includes software developed by Christopher G. Demetriou
+ *	for the NetBSD Project.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -31,7 +31,47 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-extern void msattach __P((struct device *, struct wscons_mdev_spec *));
-extern void ms_event __P((char,	int, int));
+#include <sys/cdefs.h>
 
-cdev_decl(ms);
+#include <sys/param.h>
+#include <sys/systm.h>
+
+#include <dev/wscons/wsdisplayvar.h>
+#include <dev/wscons/wsksymvar.h>
+#include <dev/wscons/wsemulvar.h>		/* pulls in opt_wsemul.h */
+#include <dev/wscons/wscons_callbacks.h>
+
+static const struct wsemul_ops *wsemul_conf[] = {
+#ifdef WSEMUL_SUN
+	&wsemul_sun_ops,
+#endif
+#ifdef WSEMUL_VT100
+	&wsemul_vt100_ops,
+#endif
+#ifndef WSEMUL_NO_DUMB
+	&wsemul_dumb_ops,
+#endif
+	NULL
+};
+
+const struct wsemul_ops *
+wsemul_pick(name)
+	const char *name;
+{
+	const struct wsemul_ops **ops;
+
+	if (name == NULL) {
+		/* default */
+#ifdef WSEMUL_DEFAULT
+		name = WSEMUL_DEFAULT;
+#else
+		return (wsemul_conf[0]);
+#endif
+	}
+
+	for (ops = &wsemul_conf[0]; *ops != NULL; ops++)
+		if (strcmp(name, (*ops)->name) == 0)
+			break;
+
+	return (*ops);
+}

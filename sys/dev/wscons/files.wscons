@@ -1,20 +1,45 @@
-#	$OpenBSD: files.wscons,v 1.1 1997/11/10 04:01:24 mickey Exp $
-#
+# $OpenBSD: files.wscons,v 1.2 2000/05/16 23:49:10 mickey Exp $
+# $NetBSD: files.wscons,v 1.19 1999/12/12 08:17:28 scottr Exp $
 
 #
-# "Workstation Console" glue; attaches frame buffer to emulator & kbd.
+# "Workstation Console" glue; attaches frame buffer to emulator & keyboard,
+# plus deals with kernel mouse drivers.
 #
-device	wscons
-attach	wscons at wsconsdev
-file	dev/wscons/wscons.c		wscons		needs-flag
-file	dev/wscons/wscons_emul.c	wscons
+# These files are included with strange conditions because of the hairy
+# interactions between them.  In particular, chunks of the glue,
+# keyboard, and mouse code are called directly by other chunks.  Also,
+# each hardware driver can make calls into its (child) interface driver.
+# This could all be cleaned up, but it's not clear that it's worth the
+# trouble.
+#
 
-file	dev/wscons/event.c		wscons
-file	dev/wscons/kbd.c		wscons
-file	dev/wscons/ms.c			wscons
+# this loses, but there's no way to define attributes which have attributes
+device	wsdisplay #tty?
+attach	wsdisplay at wsemuldisplaydev with wsdisplay_emul
+attach	wsdisplay at wsdisplaydev with wsdisplay_noemul
+device	wskbd
+attach	wskbd at wskbddev
+device	wsmouse
+attach	wsmouse at wsmousedev
 
-#
-# raster console routines
-#
-file	dev/wscons/wscons_rinit.c	raster
-file	dev/wscons/wscons_rops.c	raster
+file	dev/wscons/wsdisplay.c			wsdisplay needs-flag
+file	dev/wscons/wsdisplay_compat_usl.c	wsdisplay & wsdisplay_compat_usl
+file	dev/wscons/wsemulconf.c			wsdisplay
+file	dev/wscons/wsemul_dumb.c		wsdisplay & !wsemul_no_dumb
+file	dev/wscons/wsemul_sun.c			wsdisplay & wsemul_sun
+file	dev/wscons/wsemul_vt100.c		wsdisplay & wsemul_vt100
+file	dev/wscons/wsemul_vt100_subr.c		wsdisplay & wsemul_vt100
+file	dev/wscons/wsemul_vt100_chars.c		wsdisplay & wsemul_vt100
+file	dev/wscons/wsemul_vt100_keys.c		wsdisplay & wsemul_vt100
+file	dev/wscons/wsevent.c	wskbd | wsmouse
+file	dev/wscons/wskbd.c	wskbd needs-flag
+file	dev/wscons/wskbdutil.c	wskbd needs-flag
+file	dev/wscons/wsmouse.c	wsmouse needs-flag
+
+file	dev/rcons/raster_op.c			wsrasteremulops
+file	dev/rcons/raster_text.c			wsrasteremulops
+file	dev/wscons/wscons_rinit.c		wsrasteremulops
+file	dev/wscons/wscons_rops.c		wsrasteremulops
+
+pseudo-device	wsmux
+file	dev/wscons/wsmux.c			wsmux | wsdisplay needs-flag

@@ -1,8 +1,8 @@
-/*	$OpenBSD: kbd.h,v 1.2 1997/01/24 19:58:26 niklas Exp $ */
+/* $OpenBSD: wscons_callbacks.h,v 1.1 2000/05/16 23:49:10 mickey Exp $ */
+/* $NetBSD: wscons_callbacks.h,v 1.11 1999/12/01 23:22:59 augustss Exp $ */
 
 /*
- * Copyright (c) 1996 Niklas Hallqvist
- * All rights reserved.
+ * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -14,10 +14,10 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Niklas Hallqvist.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ *      This product includes software developed by Christopher G. Demetriou
+ *	for the NetBSD Project.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -31,11 +31,32 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-extern void kbdattach __P((struct device *, struct wscons_idev_spec *));
-extern void kbd_input __P((int));
+/*
+ * Calls to the display interface from the glue code.
+ */
+struct device *wsdisplay_set_console_kbd __P((struct device *));
 
-cdev_decl(kbd);
+/*
+ * Calls to the display interface from the keyboard interface.
+ */
+void	wsdisplay_kbdinput __P((struct device *v, keysym_t));
+int	wsdisplay_switch __P((struct device *, int, int));
+enum wsdisplay_resetops {
+	WSDISPLAY_RESETEMUL,
+	WSDISPLAY_RESETCLOSE
+};
+void	wsdisplay_reset __P((struct device *, enum wsdisplay_resetops));
+void	wsdisplay_kbdholdscreen __P((struct device *v, int));
 
-extern int kbd_cngetc __P((dev_t));
-extern void kbd_cnpollc __P((dev_t, int));
-extern void wscons_kbd_bell __P((void));
+void	wsdisplay_set_cons_kbd __P((int (*get)(dev_t),
+				    void (*poll)(dev_t, int),
+				    void (*bell)(dev_t, u_int, u_int, u_int)));
+void	wsdisplay_unset_cons_kbd __P((void));
+
+/*
+ * Calls to the keyboard interface from the glue code.
+ */
+struct wsmux_softc;
+struct device *wskbd_set_console_display 
+		__P((struct device *, struct wsmux_softc *));
+int wskbd_pickfree __P((void));
