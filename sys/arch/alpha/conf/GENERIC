@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.81 2001/06/26 19:02:13 nate Exp $
+#	$OpenBSD: GENERIC,v 1.82 2001/06/26 20:23:18 art Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -36,6 +36,8 @@ option		EISAVERBOSE		# recognize "unknown" EISA devices
 option		PCIVERBOSE		# recognize "unknown" PCI devices
 option		TCVERBOSE		# recognize "unknown" TC devices
 option		USBVERBOSE
+
+option		USER_PCICONF		# user-space PCI configuration
 
 config		bsd	swap generic
 
