@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.c,v 1.82 2003/06/10 16:41:29 deraadt Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.83 2003/06/15 10:32:15 ho Exp $	*/
 /*	$EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	*/
 
 /*
@@ -1396,6 +1396,25 @@ exchange_finalize (struct message *msg)
   exchange_dump ("exchange_finalize", exchange);
 #endif
 
+  /* Copy the ID from phase 1 to exchange or phase 2 SA.  */
+  if (msg->isakmp_sa)
+    {
+      if (exchange->id_i && exchange->id_r)
+	{
+	  ipsec_clone_id (&msg->isakmp_sa->id_i, &msg->isakmp_sa->id_i_len,
+			  exchange->id_i, exchange->id_i_len);
+	  ipsec_clone_id (&msg->isakmp_sa->id_r, &msg->isakmp_sa->id_r_len,
+			  exchange->id_r, exchange->id_r_len);
+	}
+      else if (msg->isakmp_sa->id_i && msg->isakmp_sa->id_r)
+	{
+	  ipsec_clone_id (&exchange->id_i, &exchange->id_i_len,
+			  msg->isakmp_sa->id_i, msg->isakmp_sa->id_i_len);
+	  ipsec_clone_id (&exchange->id_r, &exchange->id_r_len,
+			  msg->isakmp_sa->id_r, msg->isakmp_sa->id_r_len);
+	}
+    }
+
   /*
    * Walk over all the SAs and noting them as ready.  If we set the
    * COMMIT bit, tell the peer each SA is connected.
@@ -1499,25 +1518,6 @@ exchange_finalize (struct message *msg)
 		? "<no transport>"
 		: msg->isakmp_sa->transport->vtbl->decode_ids (msg->isakmp_sa
 							       ->transport)));
-    }
-
-  /* Copy the ID from phase 1 to exchange or phase 2 SA.  */
-  if (msg->isakmp_sa)
-    {
-      if (exchange->id_i && exchange->id_r)
-	{
-	  ipsec_clone_id (&msg->isakmp_sa->id_i, &msg->isakmp_sa->id_i_len,
-			  exchange->id_i, exchange->id_i_len);
-	  ipsec_clone_id (&msg->isakmp_sa->id_r, &msg->isakmp_sa->id_r_len,
-			  exchange->id_r, exchange->id_r_len);
-	}
-      else if (msg->isakmp_sa->id_i && msg->isakmp_sa->id_r)
-	{
-	  ipsec_clone_id (&exchange->id_i, &exchange->id_i_len,
-			  msg->isakmp_sa->id_i, msg->isakmp_sa->id_i_len);
-	  ipsec_clone_id (&exchange->id_r, &exchange->id_r_len,
-			  msg->isakmp_sa->id_r, msg->isakmp_sa->id_r_len);
-	}
     }
 
   exchange->doi->finalize_exchange (msg);
