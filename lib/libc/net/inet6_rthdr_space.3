@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet6_rthdr_space.3,v 1.16 2005/01/06 11:08:47 jmc Exp $
+.\"	$OpenBSD: inet6_rthdr_space.3,v 1.17 2005/01/11 17:45:41 jaredy Exp $
 .\"	$KAME: inet6_rthdr_space.3,v 1.11 2005/01/05 03:00:44 itojun Exp $
 .\"
 .\" Copyright (C) 2004 WIDE Project.
@@ -103,7 +103,9 @@ is supported,
 .Dv IPV6_RTHDR_TYPE_0 ,
 and it can hold from 1 to 23 segments.
 The return value includes the
-size of the cmsghdr structure that precedes the routing header, and
+size of the
+.Vt cmsghdr
+structure that precedes the routing header and
 any required padding.
 .Pp
 A return value of 0 indicates an error.
@@ -168,7 +170,7 @@ function specifies the strict or loose flag for the final hop of a
 routing header.
 The
 .Fa flags
-must be either
+argument must be either
 .Dv IPV6_RTHDR_LOOSE
 or
 .Dv IPV6_RTHDR_STRICT .
@@ -212,7 +214,7 @@ function returns a pointer to the IPv6 address specified by the
 argument from the routing header pointed to by
 .Fa cmsg .
 The index must be between 1 and the number returned by
-.Fn inet6_rthdr_segments
+.Fn inet6_rthdr_segments ,
 described above.
 An application must call
 .Fn inet6_rthdr_segments
@@ -254,7 +256,8 @@ The
 function returns 0 when an error occurs.
 .Pp
 The
-.Fn inet6_rthdr_add ,
+.Fn inet6_rthdr_add
+and
 .Fn inet6_rthdr_lasthop
 functions return 0 on success, and \-1 on error.
 .Pp
@@ -274,6 +277,8 @@ and
 functions return \-1 on error.
 .\"
 .Sh SEE ALSO
+.Xr inet6 4 ,
+.Xr ip6 4
 .Rs
 .%A W. Stevens
 .%A M. Thomas
@@ -290,7 +295,7 @@ functions return \-1 on error.
 .Re
 .\"
 .Sh HISTORY
-The implementation first appeared in KAME advanced networking kit.
+This implementation first appeared in the KAME advanced networking kit.
 .\"
 .Sh BUGS
 The
