@@ -1,4 +1,4 @@
-/*	$OpenBSD */
+/*	$OpenBSD: dhcp.c,v 1.12 2004/05/24 06:22:45 henning Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
