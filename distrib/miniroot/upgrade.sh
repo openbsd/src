@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: upgrade.sh,v 1.14 2000/04/30 19:39:27 millert Exp $
+#	$OpenBSD: upgrade.sh,v 1.15 2000/05/12 06:02:13 deraadt Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -291,7 +291,7 @@ esac
 		echo "Moving /etc/sendmail.cf -> /etc/mail/sendmail.cf"
 		test -d /mnt/etc/mail || mkdir /mnt/etc/mail
 		mv /mnt/etc/sendmail.cf /mnt/etc/mail/sendmail.cf
-		ed - /home/millert/foo << \__rc_edit
+		ed - /mnt/etc/rc << \__rc_edit
 1,$s/etc\/sendmail.cf/etc\/mail\/sendmail.cf/g
 w
 q
