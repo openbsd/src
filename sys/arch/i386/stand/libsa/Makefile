@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 1997/06/23 23:45:17 kstailey Exp $
+#	$OpenBSD: Makefile,v 1.14 1997/07/17 23:20:24 mickey Exp $
 
 
 LIB=	sa
@@ -8,17 +8,14 @@ SADIR=${.CURDIR}/..
 DIR_SA=	$S/lib/libsa
 DIR_KERN=$S/lib/libkern
 
-CFLAGS+=$(SACFLAGS) -D__INTERNAL_LIBSA_CREAD
-CFLAGS+=-DSTART=$(START) -DHEAP_LIMIT=$(HEAP_LIMIT)
-CFLAGS+=${DEBUGFLAGS} -I${.CURDIR} -I${.CURDIR}/..
-CFLAGS+=-I$(S)/lib/libsa -I$(S)
-AS+=	-R
-#AS+=	-Wa,-a
+#AS=cat ; 
+#AS+=	-R
+#AS+=	-a
 
 # i386 stuff (so, it will possibly load in the same 64k)
 SRCS=	unixsys.S bioscom.S biosdisk.S bioskbd.S biostime.S biosmem.S gidt.S \
 	debug_i386.S dev_i386.c exec_i386.c biosdev.c gateA20.c memprobe.c \
-	time.c alloca.S
+	time.c alloca.S apm_init.S # kentry.c machdep.c
 
 # stand routines
 SRCS+=	alloc.c exit.c exec.c getfile.c gets.c globals.c strcmp.c strlen.c \
@@ -52,9 +49,12 @@ all: machine-links ${SALIB}
 
 machine-links:
 	@rm -f machine i386
-	@ln -s ${S}/arch/i386 i386
-	@ln -s ${S}/arch/i386/include machine
+	@ln -s ${.CURDIR}/../.. i386
+	@ln -s ${.CURDIR}/../../include machine
 
 install:
 
 .include <bsd.lib.mk>
+
+CPPFLAGS+=-DSTART=${START} -DHEAP_LIMIT=${HEAP_LIMIT} ${DEBUGFLAGS}
+CFLAGS+=${SACFLAGS} -D__INTERNAL_LIBSA_CREAD
