@@ -353,11 +353,11 @@ end2:
 	result = NULL;
 end:
 	if (cout)
-	    fclose(cout);
+		fclose(cout);
 	if (cin)
-	    fclose(cin);
+		fclose(cin);
 	if (s != -1)
-	    close(s);
+		close(s);
 	return result;
 }
 
