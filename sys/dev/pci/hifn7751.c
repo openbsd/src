@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.103 2001/09/06 03:31:34 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.104 2001/11/04 18:31:42 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -154,6 +154,9 @@ hifn_attach(parent, self, aux)
 	int rseg;
 	caddr_t kva;
 
+	sc->sc_pci_pc = pa->pa_pc;
+	sc->sc_pci_tag = pa->pa_tag;
+
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_HIFN &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_HIFN_7951)
 		sc->sc_flags = HIFN_HAS_RNG | HIFN_HAS_PUBLIC;
@@ -184,6 +187,10 @@ hifn_attach(parent, self, aux)
 		printf(": can't find mem space %d\n", 1);
 		goto fail_io0;
 	}
+
+	cmd = pci_conf_read(sc->sc_pci_pc, sc->sc_pci_tag, HIFN_RETRY_TIMEOUT);
+	cmd &= 0xffff0000;
+	pci_conf_write(sc->sc_pci_pc, sc->sc_pci_tag, HIFN_RETRY_TIMEOUT, cmd);
 
 	sc->sc_dmat = pa->pa_dmat;
 	if (bus_dmamap_create(sc->sc_dmat, sizeof(*sc->sc_dma), 1,
@@ -438,6 +445,8 @@ hifn_reset_board(sc, full)
 	struct hifn_softc *sc;
 	int full;
 {
+	u_int32_t reg;
+
 	/*
 	 * Set polling in the DMA configuration register to zero.  0x7 avoids
 	 * resetting the board and zeros out the other fields.
@@ -468,6 +477,10 @@ hifn_reset_board(sc, full)
 	    HIFN_DMACNFG_DMARESET | HIFN_DMACNFG_MODE);
 
 	hifn_puc_wait(sc);
+
+	reg = pci_conf_read(sc->sc_pci_pc, sc->sc_pci_tag, HIFN_RETRY_TIMEOUT);
+	reg &= 0xffff0000;
+	pci_conf_write(sc->sc_pci_pc, sc->sc_pci_tag, HIFN_RETRY_TIMEOUT, reg);
 }
 
 u_int32_t
@@ -956,7 +969,12 @@ hifn_init_dma(sc)
 	struct hifn_softc *sc;
 {
 	struct hifn_dma *dma = sc->sc_dma;
+	u_int32_t reg;
 	int i;
+
+	reg = pci_conf_read(sc->sc_pci_pc, sc->sc_pci_tag, HIFN_RETRY_TIMEOUT);
+	reg &= 0xffff0000;
+	pci_conf_write(sc->sc_pci_pc, sc->sc_pci_tag, HIFN_RETRY_TIMEOUT, reg);
 
 	/* initialize static pointer values */
 	for (i = 0; i < HIFN_D_CMD_RSIZE; i++)
@@ -1539,6 +1557,7 @@ hifn_intr(arg)
 	restart = dmacsr & (HIFN_DMACSR_C_ABORT | HIFN_DMACSR_S_ABORT |
 	    HIFN_DMACSR_D_ABORT | HIFN_DMACSR_R_ABORT);
 	if (restart) {
+		printf("%s: abort, resetting.\n");
 		hifnstats.hst_abort++;
 		hifn_abort(sc);
 		return (1);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751var.h,v 1.37 2001/08/28 21:40:54 jason Exp $	*/
+/*	$OpenBSD: hifn7751var.h,v 1.38 2001/11/04 18:31:42 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -153,6 +153,8 @@ struct hifn_softc {
 	int sc_rnghz;
 	int sc_c_busy, sc_s_busy, sc_d_busy, sc_r_busy, sc_active;
 	struct hifn_session sc_sessions[2048];
+	pci_chipset_tag_t sc_pci_pc;
+	pcitag_t sc_pci_tag;
 };
 
 #define	WRITE_REG_0(sc,reg,val) \
