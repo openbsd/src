@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.16 1998/03/16 09:38:33 pefo Exp $	*/
+/*	$OpenBSD: trap.c,v 1.17 1998/03/25 11:51:36 pefo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -210,7 +210,7 @@ struct {
 
 int cpu_int_mask;	/* External cpu interrupt mask */
 
-#ifdef DDB
+#if defined(DDB) || defined(DEBUG)
 #define TRAPSIZE	10
 struct trapdebug {		/* trap history buffer for debugging */
 	u_int	status;
@@ -223,18 +223,18 @@ struct trapdebug {		/* trap history buffer for debugging */
 } trapdebug[TRAPSIZE], *trp = trapdebug;
 
 void trapDump __P((char *));
-#endif	/* DDB */
 
-#ifdef DEBUG	/* stack trace code, also useful for DDB one day */
 void stacktrace __P((int *));
 void logstacktrace __P((int *));
 int  kdbpeek __P((int *));
+#if defined(DDB)
 int  kdb_trap __P((int, db_regs_t *));
+#endif
 
 /* extern functions printed by name in stack backtraces */
 extern void idle __P((void));
 extern void MipsTLBMiss __P((void));
-#endif	/* DEBUG */
+#endif	/* DDB || DEBUG */
 
 extern const struct callback *callv;
 extern u_long intrcnt[];
@@ -274,7 +274,7 @@ trap(statusReg, causeReg, vadr, pc, f)
 	int typ = 0;
 	union sigval sv;
 
-#ifdef DDB
+#if defined(DDB) || defined(DEBUG)
 	trp->status = statusReg;
 	trp->cause = causeReg;
 	trp->vadr = vadr;
@@ -606,7 +606,7 @@ trap(statusReg, causeReg, vadr, pc, f)
 #endif
 		rval[0] = 0;
 		rval[1] = locr0[V1];
-#ifdef DDB
+#if defined(DDB) || defined(DEBUG)
 		if (trp == trapdebug)
 			trapdebug[TRAPSIZE - 1].code = code;
 		else
@@ -619,7 +619,7 @@ trap(statusReg, causeReg, vadr, pc, f)
 		 */
 		p = curproc;
 		locr0 = p->p_md.md_regs;
-#ifdef DDB
+#if defined(DDB) || defined(DEBUG)
 		{ int s;
 		s = splhigh();
 		trp->status = statusReg;
@@ -737,7 +737,7 @@ trap(statusReg, causeReg, vadr, pc, f)
 		goto out;
 
 	case T_FPE:
-#ifdef DDB
+#if defined(DDB) || defined(DEBUG)
 		trapDump("fpintr");
 #else
 		printf("FPU Trap: PC %x CR %x SR %x\n",
@@ -836,7 +836,7 @@ interrupt(statusReg, causeReg, what, pc, args)
 	struct clockframe cf;
 
 	cnt.v_trap++;
-#ifdef DDB
+#if defined(DDB) || defined(DEBUG)
 	trp->status = statusReg;
 	trp->cause = causeReg;
 	trp->vadr = 0;
@@ -1011,7 +1011,7 @@ softintr(statusReg, pc)
 	curpriority = p->p_priority;
 }
 
-#ifdef DDB
+#if defined(DDB) || defined(DEBUG)
 void
 trapDump(msg)
 	char *msg;
@@ -1289,7 +1289,7 @@ cpu_singlestep(p)
 	return (0);
 }
 
-#ifdef DDB
+#if defined(DDB) || defined(DEBUG)
 #define MIPS_JR_RA	0x03e00008	/* instruction code for jr ra */
 
 /* forward */
