@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.42 2001/10/01 14:38:34 dhartmei Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.43 2001/10/01 17:58:16 markus Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -46,12 +46,6 @@
 #include <err.h>
 
 #include "pfctl_parser.h"
-
-#define PF_OPT_DISABLE		0x0001
-#define PF_OPT_ENABLE		0x0002
-#define PF_OPT_VERBOSE		0x0004
-#define PF_OPT_NOACTION		0x0008
-#define PF_OPT_QUIET		0x0010
 
 void	 usage(void);
 int	 pfctl_enable(int, int);
