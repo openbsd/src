@@ -1,4 +1,4 @@
-/*	$OpenBSD: creator.c,v 1.1 2002/05/21 04:31:03 jason Exp $	*/
+/*	$OpenBSD: creator.c,v 1.2 2002/05/21 14:53:47 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -307,10 +307,10 @@ creator_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	if (sc->sc_nscreens > 0)
 		return (ENOMEM);
 
-	*cookiep = &sc->sc_rcons;
-	*curyp = *sc->sc_rcons.rc_crowp;
-	*curxp = *sc->sc_rcons.rc_ccolp;
-	rcons_alloc_attr(&sc->sc_rcons, 0, 0, 0, attrp);
+	*cookiep = &sc->sc_rasops;
+	*curyp = 0;
+	*curxp = 0;
+	sc->sc_rasops.ri_ops.alloc_attr(&sc->sc_rasops, 0, 0, 0, attrp);
 	sc->sc_nscreens++;
 	return (0);
 }
