@@ -105,10 +105,10 @@ process again from scratch.
 	systems should be created on which partitions.  It will auto-
 	matically select the 'a' partition to be the root file system.
 	Next it will ask for which disk and partition you want a file
-	system created on.  This will be the same as the disk name (eg.
-	"sd0") with the letter identifying the partition (eg. "d")
-	appended (eg. "sd0d").  Then it will ask where this partition is
-	to be mounted, eg. /usr.  This process will be repeated until
+	system created on.  This will be the same as the disk name (e.g.
+	"sd0") with the letter identifying the partition (e.g. "d")
+	appended (e.g. "sd0d").  Then it will ask where this partition is
+	to be mounted, e.g. /usr.  This process will be repeated until
 	you just hit return.
 
 	At this point you will be asked to confirm that the file system
