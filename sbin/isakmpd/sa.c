@@ -1,5 +1,5 @@
-/*	$OpenBSD: sa.c,v 1.18 1999/05/01 22:58:02 niklas Exp $	*/
-/*	$EOM: sa.c,v 1.90 1999/05/01 22:36:31 niklas Exp $	*/
+/*	$OpenBSD: sa.c,v 1.19 1999/05/06 22:44:42 niklas Exp $	*/
+/*	$EOM: sa.c,v 1.91 1999/05/06 21:43:12 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -673,13 +673,20 @@ sa_setup_expirations (struct sa *sa)
    * renegotiations. Works better when the randomization is of the
    * order of processing plus network-roundtrip times, or larger.
    * I.e depends on configuration and negotiated lifetimes.
+   * This decrease is only done if we have a name, and thus can act as
+   * initiator at the expiry time, otherwise we may drop our SA before
+   * our peer, with no possibility to reestablish it.
    * XXX Better scheme to come?
    */
-  seconds = sa->seconds * (950 + sysdep_random () % 51) / 1000;
+  if (sa->name)
+    {
+      seconds = sa->seconds * (950 + sysdep_random () % 51) / 1000;
 
-  log_debug (LOG_TIMER, 95,
-	     "sa_setup_expirations: SA lifetime reset from %qd to %qd seconds",
-	     sa->seconds, seconds);
+      log_debug (LOG_TIMER, 95,
+		 "sa_setup_expirations: "
+		 "SA lifetime reset from %qd to %qd seconds",
+		 sa->seconds, seconds);
+    }
 
   if (!sa->soft_death)
     {
