@@ -1,4 +1,4 @@
-/*	$OpenBSD: reg.h,v 1.5 2000/01/25 02:45:56 mickey Exp $	*/
+/*	$OpenBSD: reg.h,v 1.6 2000/05/15 17:07:28 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -90,6 +90,51 @@
 #define	CR_TR5		29
 #define	CR_UPADDR	30	/* paddr of U-area of curproc */
 #define	CR_TR7		31
+
+/*
+ * Diagnostic registers and bit positions
+ */
+#define	DR_CPUCFG		0
+#define	DR0_PCXL_L2IHPMC	6	/* r/c L2 I-cache error flag */
+#define	DR0_PCXL_L2IHPMC_DIS	7	/* r/w L2 I-cache hpmc disable mask */
+#define	DR0_PCXL_L2DHPMC	8	/* r/c L2 D-cache error flag */
+#define	DR0_PCXL_L2DHPMC_DIS	9	/* r/w L2 D-cache hpmc disable mask */
+#define	DR0_PCXL_L1IHPMC	10	/* r/c L1 I-cache error flag */
+#define	DR0_PCXL_L1IHPMC_DIS	11	/* r/w L1 I-cache hpmc disable mask */
+#define	DR0_PCXL_L2PARERR	15	/* r/c L2 Cache parity error (4 bit) */
+#define	DR0_PCXL_STORE0		16	/* r/w scratch space */
+#define	DR0_PCXL_PFMASK		17	/* r/w power-fail trap mask */
+#define	DR0_PCXL_STORE1		18	/* r/w scratch */
+#define	DR0_PCXL_FASTMODE	19	/* r   0-fast, 1-slow */
+#define	DR0_PCXL_ISTRM_EN	20	/* r/w I-cache streaming enable */
+#define	DR0_PCXL_DUAL_DIS	22	/* r/w disable dual-issue (2 bit) */
+#define	DR0_PCXL_ENDIAN		23	/* r/w little endian traps */
+#define	DR0_PCXL_SOU_EN		24	/* r/w stall-on-use on dc misses */
+#define	DR0_PCXL_SHINT_EN	25	/* r/w no-fill on miss store hints */
+#define	DR0_PCXL_IPREF_EN	26	/* r/w L2 to L1 I-cache prefetch */
+#define	DR0_PCXL_L2DHASH_EN	27	/* r/w L2 D-cache hash enable */
+#define	DR0_PCXL_L2IHASH_EN	28	/* r/w L2 I-cache hash enable */
+#define	DR0_PCXL_L1ICACHE_EN	29	/* r/w L1 I-cache enable */
+#define	DR0_PCXL_HIT		30	/* r   Diag cache read hit indication */
+#define	DR0_PCXL_PARERR		31	/* r   Diag cache read parity error */
+
+#define	DR0_PCXL2_L1DHPMC	8	/* r/c L1 D-cache error flag */
+#define	DR0_PCXL2_L1DHPMC_DIS	9	/* r/w L1 D-cache hpmc disable */
+#define	DR0_PCXL2_L2DHPMC	10	/* r/c L1 I-cache error flag */
+#define	DR0_PCXL2_L2DHPMC_DIS	11	/* r/w L1 I-cache hpmc disable */
+#define	DR0_PCXL2_STORE0	16	/* r/w scratch space */
+#define	DR0_PCXL2_PFMASK	17	/* r/w power-fail trap mask */
+#define	DR0_PCXL2_STORE1	18	/* r/w scratch */
+#define	DR0_PCXL2_DCSAFE	19	/* r/w serialize all data cache hangs */
+#define	DR0_PCXL2_ISTRM_EN	20	/* r/w I-cache streaming enable */
+#define	DR0_PCXL2_DUAL_DIS	22	/* r/w disable dual-issue (2 bit) */
+#define	DR0_PCXL2_ENDIAN	23	/* r/w little endian traps */
+#define	DR0_PCXL2_SOU_EN	24	/* r/w stall-on-use on dc misses */
+#define	DR0_PCXL2_SHINT_EN	25	/* r/w no-fill on miss store hints */
+#define	DR0_PCXL2_IPREF_EN	26	/* r/w L2 to L1 I-cache prefetch */
+#define	DR0_PCXL2_LMIN_EN	27	/* r/w minor ill insn traps on LIH */
+#define	DR0_PCXL2_RMIN_EN	28	/* r/w major ill insn traps on RIH */
+#define	DR0_PCXL2_L1CACHE_EN	29	/* r/w L1 I-cache enable */
 
 #define CCR_MASK 0xff
 
