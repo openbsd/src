@@ -1,4 +1,4 @@
-/*	$OpenBSD: p9100.c,v 1.15 2003/06/02 18:40:59 jason Exp $	*/
+/*	$OpenBSD: p9100.c,v 1.16 2003/06/05 22:32:09 miod Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -185,7 +185,8 @@ struct p9100_ctl {
 		volatile u_int32_t	rc;		/* refresh count */
 		volatile u_int32_t	rasmax;		/* ras low maximum */
 		volatile u_int32_t	rascur;		/* ras low current */
-		volatile u_int32_t	unused1[26];
+		volatile u_int32_t	dacfifo;	/* free fifo */
+		volatile u_int32_t	unused1[25];
 	} ctl_vram;
 
 	/* IBM RGB528 RAMDAC registers: 0x0200 - 0x3ff */
@@ -218,6 +219,17 @@ struct p9100_ctl {
 #define	P9100_SELECT_VRAM(sc)	((sc)->sc_junk = (sc)->sc_ctl->ctl_vram.mc)
 #define	P9100_SELECT_DAC(sc)	((sc)->sc_junk = (sc)->sc_ctl->ctl_dac.pwraddr)
 #define	P9100_SELECT_VCI(sc)	((sc)->sc_junk = (sc)->sc_ctl->ctl_vci[0])
+
+/*
+ * For some reason, every write to a DAC register needs to be followed by a
+ * read from the ``free fifo number'' register, supposedly to have the write
+ * take effect faster...
+ */
+#define	P9100_FLUSH_DAC(sc) \
+	do { \
+		P9100_SELECT_VRAM(sc); \
+		(sc)->sc_junk = (sc)->sc_ctl->ctl_vram.dacfifo; \
+	} while (0)
 
 /*
  * Drawing engine
@@ -542,18 +554,14 @@ p9100_loadcmap(sc, start, ncolors)
 {
 	u_char *p;
 
-	P9100_SELECT_VRAM(sc);
-	P9100_SELECT_VRAM(sc);
 	P9100_SELECT_DAC(sc);
 	sc->sc_ctl->ctl_dac.pwraddr = start << 16;
+	P9100_FLUSH_DAC(sc);
 
 	for (p = sc->sc_cmap.cm_map[start], ncolors *= 3; ncolors-- > 0; p++) {
-		/* These generate a short delay between ramdac writes */
-		P9100_SELECT_VRAM(sc);
-		P9100_SELECT_VRAM(sc);
-
 		P9100_SELECT_DAC(sc);
 		sc->sc_ctl->ctl_dac.paldata = (*p) << 16;
+		P9100_FLUSH_DAC(sc);
 	}
 }
 
