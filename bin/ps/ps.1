@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ps.1,v 1.6 1997/05/30 09:12:53 deraadt Exp $
+.\"	$OpenBSD: ps.1,v 1.7 1997/08/01 19:39:46 deraadt Exp $
 .\"	$NetBSD: ps.1,v 1.16 1996/03/21 01:36:28 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993, 1994
@@ -59,9 +59,10 @@ processes that have controlling terminals.
 This information is sorted by process
 .Tn ID .
 .Pp
-The information displayed is selected based on a set of keywords (see the
-.Fl L
-.Fl O
+The information displayed is selected based on a set of keywords (and for
+even more control see the
+.Fl L ,
+.Fl O ,
 and
 .Fl o
 options).
@@ -99,17 +100,17 @@ List the set of available keywords.
 Display information associated with the following keywords:
 uid, pid, ppid, cpu, pri, nice, vsz, rss, wchan, state, tt, time
 and command.
-.It Fl M
+.It Fl M Ar core
 Extract values associated with the name list from the specified core
 instead of the default
 .Dq Pa /dev/kmem .
 .It Fl m
 Sort by memory usage, instead of by process
 .Tn ID .
-.It Fl N
+.It Fl N Ar system
 Extract the name list from the specified system instead of the default
 .Dq Pa /bsd .
-.It Fl O
+.It Fl O Ar fmt
 Add the information associated with the space or comma separated list
 of keywords specified, after the process
 .Tn ID ,
@@ -118,13 +119,13 @@ display.
 Keywords may be appended with an equals (``='') sign and a string.
 This causes the printed header to use the specified string instead of
 the standard header.
-.It Fl o
+.It Fl o Ar fmt
 Display information associated with the space or comma separated list
 of keywords specified.
 Keywords may be appended with an equals (``='') sign and a string.
 This causes the printed header to use the specified string instead of
 the standard header.
-.It Fl p
+.It Fl p Ar pid
 Display information associated with the specified process
 .Tn ID .
 .It Fl r
@@ -136,7 +137,7 @@ children to their parent process.
 .It Fl T
 Display information about processes attached to the device associated
 with the standard input.
-.It Fl t
+.It Fl t Ar tty
 Display information about processes attached to the specified terminal
 device.
 .It Fl u
@@ -156,7 +157,7 @@ The
 option implies the
 .Fl m
 option.
-.It Fl W
+.It Fl W Ar swap
 Extract swap information from the specified file instead of the
 default
 .Dq Pa /dev/swap .
