@@ -1,5 +1,5 @@
-/*	$OpenBSD: ip6_forward.c,v 1.6 2000/05/19 20:12:10 itojun Exp $	*/
-/*	$KAME: ip6_forward.c,v 1.36 2000/05/19 19:10:06 itojun Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.7 2000/06/03 13:42:33 itojun Exp $	*/
+/*	$KAME: ip6_forward.c,v 1.37 2000/05/28 12:17:19 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -440,12 +440,18 @@ ip6_forward(m, srcrt)
 		 * XXX: but is it possible that ip6_forward() sends a packet
 		 *      to a loopback interface? I don't think so, and thus
 		 *      I bark here. (jinmei@kame.net)
+		 * XXX: it is common to route invalid packets to loopback.
+		 *	(itojun)
 		 */
-		printf("ip6_forward: outgoing interface is loopback. "
-		       "src %s, dst %s, nxt %d, rcvif %s, outif %s\n",
-		       ip6_sprintf(&ip6->ip6_src), ip6_sprintf(&ip6->ip6_dst),
-		       ip6->ip6_nxt, if_name(m->m_pkthdr.rcvif),
-		       if_name(rt->rt_ifp));
+
+		if ((rt->rt_flags & (RTF_BLACKHOLE|RTF_REJECT)) == 0) {
+			printf("ip6_forward: outgoing interface is loopback. "
+			       "src %s, dst %s, nxt %d, rcvif %s, outif %s\n",
+			       ip6_sprintf(&ip6->ip6_src),
+			       ip6_sprintf(&ip6->ip6_dst),
+			       ip6->ip6_nxt, if_name(m->m_pkthdr.rcvif),
+			       if_name(rt->rt_ifp));
+		}
 		       
 		if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src))
 			origifp = ifindex2ifnet[ntohs(ip6->ip6_src.s6_addr16[1])];
