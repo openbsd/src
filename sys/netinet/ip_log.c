@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_log.c,v 1.10 2001/01/30 04:23:56 kjell Exp $	*/
+/*	$OpenBSD: ip_log.c,v 1.11 2001/03/25 12:03:11 gluk Exp $	*/
 
 /*
  * Copyright (C) 1997-2000 by Darren Reed.
@@ -446,22 +446,19 @@ struct uio *uio;
 		/*
 		 * Don't hold the mutex over the uiomove call.
 		 */
-		iplt[unit] = ipl->ipl_next;
-		iplused[unit] -= dlen;
 		MUTEX_EXIT(&ipl_mutex);
 		SPL_X(s);
 		error = UIOMOVE((caddr_t)ipl, dlen, UIO_READ, uio);
 		if (error) {
 			SPL_NET(s);
 			MUTEX_ENTER(&ipl_mutex);
-			ipl->ipl_next = iplt[unit];
-			iplt[unit] = ipl;
-			iplused[unit] += dlen;
 			break;
 		}
-		KFREES((caddr_t)ipl, dlen);
 		SPL_NET(s);
 		MUTEX_ENTER(&ipl_mutex);
+		iplused[unit] -= dlen;
+		iplt[unit] = ipl->ipl_next;
+		KFREES((caddr_t)ipl, dlen);
 	}
 	if (!iplt[unit]) {
 		iplused[unit] = 0;
