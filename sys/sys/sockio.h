@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockio.h,v 1.2 1996/03/03 12:12:21 niklas Exp $	*/
+/*	$OpenBSD: sockio.h,v 1.3 1998/03/25 07:37:26 deraadt Exp $	*/
 /*	$NetBSD: sockio.h,v 1.5 1995/08/23 00:40:47 thorpej Exp $	*/
 
 /*-
@@ -73,6 +73,7 @@
 #define	SIOCSIFMETRIC	 _IOW('i', 24, struct ifreq)	/* set IF metric */
 #define	SIOCDIFADDR	 _IOW('i', 25, struct ifreq)	/* delete IF addr */
 #define	SIOCAIFADDR	 _IOW('i', 26, struct ifaliasreq)/* add/chg IF alias */
+#define	SIOCGIFDATA	_IOWR('i', 27, struct ifreq)	/* get if_data */
 
 #define	SIOCADDMULTI	 _IOW('i', 49, struct ifreq)	/* add m'cast addr */
 #define	SIOCDELMULTI	 _IOW('i', 50, struct ifreq)	/* del m'cast addr */
