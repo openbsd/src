@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.126 2002/07/22 18:05:10 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.127 2002/07/23 17:50:33 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -109,7 +109,9 @@ void	hifn_rng(void *);
 void	hifn_tick(void *);
 void	hifn_abort(struct hifn_softc *);
 void	hifn_alloc_slot(struct hifn_softc *, int *, int *, int *, int *);
-void	hifn_write_waw_4(struct hifn_softc *, int, bus_size_t, u_int32_t);
+void	hifn_write_4(struct hifn_softc *, int, bus_size_t, u_int32_t);
+u_int32_t hifn_read_4(struct hifn_softc *, int, bus_size_t);
+
 
 struct hifn_stats hifnstats;
 
@@ -204,7 +206,7 @@ hifn_attach(parent, self, aux)
 
 	if (sc->sc_flags & HIFN_NO_BURSTWRITE) {
 		sc->sc_waw_lastgroup = -1;
-		sc->sc_waw_lastreg = 0xffffffff;
+		sc->sc_waw_lastreg = 1;
 	}
 
 	sc->sc_dmat = pa->pa_dmat;
@@ -2302,7 +2304,7 @@ hifn_callback(sc, cmd, macbuf)
 }
 
 void
-hifn_write_waw_4(sc, reggrp, reg, val)
+hifn_write_4(sc, reggrp, reg, val)
 	struct hifn_softc *sc;
 	int reggrp;
 	bus_size_t reg;
@@ -2313,16 +2315,32 @@ hifn_write_waw_4(sc, reggrp, reg, val)
 	 * and Group 1 registers; avoid conditions that could create
 	 * burst writes by doing a read in between the writes.
 	 */
-	if (sc->sc_waw_lastgroup != reggrp)
-		goto chipit;
-	if (sc->sc_waw_lastreg == reg - 4)
-		bus_space_read_4(sc->sc_st1, sc->sc_sh1, HIFN_1_REVID);
-
-chipit:
-	sc->sc_waw_lastgroup = reggrp;
-	sc->sc_waw_lastreg = reg;
+	if (sc->sc_flags & HIFN_NO_BURSTWRITE) {
+		if (sc->sc_waw_lastgroup == reggrp &&
+		    sc->sc_waw_lastreg == reg - 4) {
+			bus_space_read_4(sc->sc_st1, sc->sc_sh1, HIFN_1_REVID);
+			sc->sc_waw_lastgroup = reggrp;
+			sc->sc_waw_lastreg = reg;
+		}
+	}
 	if (reggrp == 0)
 		bus_space_write_4(sc->sc_st0, sc->sc_sh0, reg, val);
 	else
 		bus_space_write_4(sc->sc_st1, sc->sc_sh1, reg, val);
+
+}
+
+u_int32_t
+hifn_read_4(sc, reggrp, reg)
+	struct hifn_softc *sc;
+	int reggrp;
+	bus_size_t reg;
+{
+	if (sc->sc_flags & HIFN_NO_BURSTWRITE) {
+		sc->sc_waw_lastgroup = -1;
+		sc->sc_waw_lastreg = 1;
+	}
+	if (reggrp == 0)
+		return (bus_space_read_4(sc->sc_st0, sc->sc_sh0, reg));
+	return (bus_space_read_4(sc->sc_st1, sc->sc_sh1, reg));
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751var.h,v 1.44 2002/07/21 19:55:33 jason Exp $	*/
+/*	$OpenBSD: hifn7751var.h,v 1.45 2002/07/23 17:50:33 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -168,28 +168,10 @@ struct hifn_softc {
 	int sc_waw_lastgroup;
 };
 
-#define WRITE_REG_0(sc,reg,val)						\
-	do {								\
-		if (sc->sc_flags & HIFN_NO_BURSTWRITE)			\
-			hifn_write_waw_4((sc), 0, (reg), (val));	\
-		else							\
-			bus_space_write_4((sc)->sc_st0, (sc)->sc_sh0,	\
-			    (reg), (val));				\
-	} while (0)
-
-#define WRITE_REG_1(sc,reg,val)						\
-	do {								\
-		if (sc->sc_flags & HIFN_NO_BURSTWRITE)			\
-			hifn_write_waw_4((sc), 1, (reg), (val));	\
-		else							\
-			bus_space_write_4((sc)->sc_st1, (sc)->sc_sh1,	\
-			    (reg), (val));				\
-	} while (0)
-
-#define	READ_REG_0(sc,reg) \
-    bus_space_read_4((sc)->sc_st0, (sc)->sc_sh0, reg)
-#define	READ_REG_1(sc,reg) \
-    bus_space_read_4((sc)->sc_st1, (sc)->sc_sh1, reg)
+#define WRITE_REG_0(sc,reg,val)		hifn_write_4((sc), 0, (reg), (val))
+#define WRITE_REG_1(sc,reg,val)		hifn_write_4((sc), 1, (reg), (val))
+#define	READ_REG_0(sc,reg)		hifn_read_4((sc), 0, (reg))
+#define	READ_REG_1(sc,reg)		hifn_read_4((sc), 1, (reg))
 
 #define	SET_LED(sc,v)							\
 	if (sc->sc_flags & HIFN_HAS_LEDS)				\
