@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.26 2003/10/12 13:18:37 krw Exp $
+#       $OpenBSD: install.md,v 1.27 2003/10/15 04:31:30 deraadt Exp $
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
@@ -46,8 +46,8 @@ md_set_term() {
 
 md_installboot() {
 	echo "Installing boot block..."
-	cp /mnt/usr/mdec/bootsd /mnt/bootsd
-	/mnt/usr/mdec/installboot -v /mnt/bootsd /mnt/usr/mdec/bootxx /dev/r${1}a
+	cp /mnt/usr/mdec/bootsd /mnt/boot
+	/mnt/usr/mdec/installboot -v /mnt/boot /mnt/usr/mdec/bootxx /dev/r${1}a
 }
 
 # $1 is the disk to check
