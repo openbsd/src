@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.143 2004/05/27 21:10:24 tedu Exp $
+.\"	$OpenBSD: options.4,v 1.144 2004/07/09 21:56:01 miod Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -90,102 +90,6 @@ when
 .Li struct stat
 their arguments were changed to match
 .St -p1003.1-2003 .
-.It Cd option COMPAT_SVR4
-On those architectures that support it, this enables binary
-compatibility with
-.At V.4
-binaries built for the same architecture.
-This currently includes the sparc and i386.
-Possibly the most widely known operating system
-based on this binary architecture is Sun's Solaris 2.x.
-See
-.Xr compat_svr4 8 .
-.It Cd option COMPAT_BSDOS
-On those architectures that support it, this enables binary
-compatibility with
-.Em BSD/OS
-applications.
-This option is supported on the i386 architecture.
-See
-.Xr compat_bsdos 8 .
-It also requires the use of
-.Cm option COMPAT_43
-for proper operation.
-.It Cd option COMPAT_LINUX
-On those architectures that support it, this enables binary
-compatibility with
-.Em Linux
-ELF and a.out
-applications built for the same architecture.
-This option is supported on the i386 architecture.
-See
-.Xr compat_linux 8 .
-.It Cd option COMPAT_SUNOS
-On those architectures that support it, this enables binary
-compatibility with
-.Em SunOS 4.x
-applications built for the same architecture.
-This option is supported on sparc and all m68k architectures.
-See
-.Xr compat_sunos 8 .
-.It Cd option COMPAT_ULTRIX
-On those architectures that support it, this enables binary
-compatibility with
-.Tn Ultrix
-applications built for the same architecture.
-This option is available on the vax architecture.
-See
-.Xr compat_ultrix 8 .
-.It Cd option COMPAT_FREEBSD
-On those architectures that support it, this enables binary
-compatibility with
-.Em FreeBSD
-applications built for the same architecture.
-This option is available on the i386 architecture.
-See
-.Xr compat_freebsd 8 .
-.It Cd option COMPAT_HPUX
-On those architectures that support it, this enables binary
-compatibility with
-.Em HP-UX
-applications built for the same architecture.
-This option is available on some m68k architectures.
-See
-.Xr compat_hpux 8 .
-.It Cd option COMPAT_IBCS2
-On those architectures that support it, this enables binary
-compatibility with
-.Em iBCS2
-applications built for the same architecture.
-This option is available on the i386 architecture.
-See
-.Xr compat_ibcs2 8 .
-.It Cd option COMPAT_NETBSD
-On those architectures that support it, this enables binary
-compatibility with
-.Em NetBSD
-applications built for the same architecture.
-.\" See
-.\" .Xr compat_netbsd 8 .
-This option is available on the alpha architecture.
-.It Cd option COMPAT_OSF1
-On those architectures that support it, this enables binary
-compatibility with
-.Em Digital UNIX
-(formerly
-.Em OSF/1 )
-applications built for the same architecture.
-This option is available on the alpha architecture.
-See
-.Xr compat_osf1 8 .
-.It Cd option COMPAT_AOUT
-On those ELF architectures that require it, this enables
-full compatibility with old a.out binaries, by allowing the
-a.out dynamic linking system to reside under
-.Pa /emul/a.out .
-This option is available on the i386 architecture.
-See
-.Xr compat_aout 8 .
 .It Cd option COMPAT_43
 Use of this option is discouraged.
 It enables compatibility with
@@ -212,7 +116,105 @@ SIOC[GS]IF{ADDR,DSTADDR,BRDADDR,NETMASK} interface ioctls, including
 binary compatibility for code written before the introduction of the
 .Li sa_len
 field in sockaddrs.
-It also enables support for some older pre BSD 4.4 socket calls.
+It also enables support for some older pre
+.Bx 4.4
+socket calls.
+.It Cd option COMPAT_AOUT
+On those ELF architectures that require it, this enables
+full compatibility with old a.out binaries, by allowing the
+a.out dynamic linking system to reside under
+.Pa /emul/a.out .
+This option is available on the i386 architecture.
+See
+.Xr compat_aout 8 .
+.It Cd option COMPAT_BSDOS
+On those architectures that support it, this enables binary
+compatibility with
+.Em BSD/OS
+applications.
+This option is supported on the i386 architecture.
+See
+.Xr compat_bsdos 8 .
+It also requires the use of
+.Cm option COMPAT_43
+for proper operation.
+.It Cd option COMPAT_FREEBSD
+On those architectures that support it, this enables binary
+compatibility with
+.Em FreeBSD
+applications built for the same architecture.
+This option is available on the i386 architecture.
+See
+.Xr compat_freebsd 8 .
+.It Cd option COMPAT_HPUX
+On those architectures that support it, this enables binary
+compatibility with
+.Em HP-UX
+applications built for the same architecture.
+This option is available on some m68k architectures.
+See
+.Xr compat_hpux 8 .
+.It Cd option COMPAT_IBCS2
+On those architectures that support it, this enables binary
+compatibility with
+.Em iBCS2
+applications built for the same architecture.
+This option is available on the i386 architecture.
+See
+.Xr compat_ibcs2 8 .
+.It Cd option COMPAT_LINUX
+On those architectures that support it, this enables binary
+compatibility with
+.Em Linux
+ELF and a.out
+applications built for the same architecture.
+This option is supported on the i386 architecture.
+See
+.Xr compat_linux 8 .
+.It Cd option COMPAT_NETBSD
+On those architectures that support it, this enables binary
+compatibility with
+.Em NetBSD
+applications built for the same architecture.
+.\" See
+.\" .Xr compat_netbsd 8 .
+This option is available on the alpha architecture.
+.It Cd option COMPAT_OSF1
+On those architectures that support it, this enables binary
+compatibility with
+.Em Digital UNIX
+(formerly
+.Em OSF/1 )
+applications built for the same architecture.
+This option is available on the alpha architecture.
+See
+.Xr compat_osf1 8 .
+.It Cd option COMPAT_SUNOS
+On those architectures that support it, this enables binary
+compatibility with
+.Em SunOS 4.x
+applications built for the same architecture.
+This option is supported on sparc and all m68k architectures.
+See
+.Xr compat_sunos 8 .
+.It Cd option COMPAT_SVR4
+On those architectures that support it, this enables binary
+compatibility with
+.At V.4
+binaries built for the same architecture.
+This currently includes the sparc and i386.
+Possibly the most widely known operating system
+based on this binary architecture is Sun's Solaris 2.x.
+See
+.Xr compat_svr4 8 .
+.It Cd option COMPAT_ULTRIX
+On those architectures that support it, this enables binary
+compatibility with
+.Tn Ultrix
+applications built for the same architecture.
+This option is available on the vax architecture.
+See
+.Xr compat_ultrix 8 .
 .El
 .Ss Debugging Options
 .Bl -ohang
