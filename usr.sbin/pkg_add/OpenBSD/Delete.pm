@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.1 2004/10/31 10:26:17 espie Exp $
+# $OpenBSD: Delete.pm,v 1.2 2004/10/31 12:40:01 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -138,6 +138,8 @@ sub delete_package
 }
 
 package OpenBSD::PackingElement;
+use OpenBSD::Logger;
+
 sub delete
 {
 }

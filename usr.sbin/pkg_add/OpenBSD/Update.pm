@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.1 2004/10/23 11:09:23 espie Exp $
+# $OpenBSD: Update.pm,v 1.2 2004/10/31 12:40:01 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -17,6 +17,8 @@
 
 use strict;
 use warnings;
+
+use OpenBSD::Delete;
 
 package OpenBSD::PackingElement;
 sub can_update
@@ -72,7 +74,7 @@ use OpenBSD::PackageInfo;
 
 sub can_do
 {
-	my ($toreplace, $replacement) = @_;
+	my ($toreplace, $replacement, $state) = @_;
 
 	my $r = OpenBSD::RequiredBy->new($toreplace);
 	my $okay = 1;
@@ -91,6 +93,12 @@ sub can_do
 
 	my $plist = OpenBSD::PackingList->fromfile(installed_info($toreplace).CONTENTS);
 	$plist->visit('can_update', \$okay);
+	eval {
+		OpenBSD::Delete::validate_plist($plist, $state->{destdir});
+	};
+	if ($@) {
+		$okay = 0;
+	}
 	
 	return $okay;
 }

@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.86 2004/10/31 11:33:50 espie Exp $
+# $OpenBSD: pkg_add,v 1.87 2004/10/31 12:40:00 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -476,7 +476,7 @@ sub can_install($$)
 	require OpenBSD::Update;
 
 	my $toreplace = $l[0];
-	if (OpenBSD::Update::can_do($toreplace, $pkgname)) {
+	if (OpenBSD::Update::can_do($toreplace, $pkgname, $state)) {
 		print "Will be able to update $toreplace once we're done\n";
 	} else {
 		print "Can't update $toreplace into $pkgname\n";
@@ -723,9 +723,9 @@ sub collision_report($)
 	}
 }
 
-sub validate_plist($$$)
+sub validate_plist($$)
 {
-	my ($plist, $destdir, $replace) = @_;
+	my ($plist, $destdir) = @_;
 
 	my $problems = 0;
 	my $pkgname = $plist->pkgname();
@@ -746,7 +746,7 @@ sub validate_plist($$$)
 	for my $item (@{$plist->{items}}) {
 		next unless $item->IsFile();
 		my $fname = $destdir.$item->fullname();
-		if (OpenBSD::Vstat::vexists($fname) && !$replace) {
+		if (OpenBSD::Vstat::vexists($fname)) {
 			push(@$colliding, $fname);
 			$problems++;
 		}
@@ -818,7 +818,7 @@ sub really_add($$)
 	    }
 	    print "\n";
 	}
-	my $totsize = validate_plist($plist, $destdir, $state->{replace});
+	my $totsize = validate_plist($plist, $destdir);
 
 	if (!defined $handle) {
 		Fatal "Archive in $pkgname broken";
