@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.7 2002/01/25 03:36:25 jason Exp $	*/
+/*	$OpenBSD: zs.c,v 1.8 2002/01/25 03:58:39 jason Exp $	*/
 /*	$NetBSD: zs.c,v 1.29 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -68,7 +68,6 @@
 
 #include <dev/cons.h>
 #include <sparc64/dev/z8530reg.h>
-#include <dev/sun/kbd_ms_ttyvar.h>
 #include <ddb/db_output.h>
 
 #include <sparc64/dev/cons.h>
