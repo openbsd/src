@@ -77,9 +77,6 @@
 #include <netinet6/ip6_var.h>
 #endif
 
-#include "ppp.h"
-#include "bridge.h"
-
 void	strayintr __P((struct clockframe *));
 int	soft01intr __P((void *));
 
@@ -125,11 +122,6 @@ soft01intr(fp)
 	if (rom_console_input && cnrom())
 		cnrint();
 	if (sir.sir_any) {
-		/*
-		 * XXX	this is bogus: should just have a list of
-		 *	routines to call, a la timeouts.  Mods to
-		 *	netisr are not atomic and must be protected (gah).
-		 */
 		if (sir.sir_which[SIR_NET]) {
 			int n, s;
 
@@ -138,40 +130,13 @@ soft01intr(fp)
 			netisr = 0;
 			splx(s);
 			sir.sir_which[SIR_NET] = 0;
-#ifdef INET
-			if (n & (1 << NETISR_ARP))
-				arpintr();
-			if (n & (1 << NETISR_IP))
-				ipintr();
-#endif
-#ifdef INET6
-			if (n & (1 << NETISR_IPV6))
-				ip6intr();
-#endif
-#ifdef NETATALK
-			if (n & (1 << NETISR_ATALK))
-				atintr();
-#endif
-#ifdef NS
-			if (n & (1 << NETISR_NS))
-				nsintr();
-#endif
-#ifdef ISO
-			if (n & (1 << NETISR_ISO))
-				clnlintr();
-#endif
-#ifdef NATM
-			if (n & (1 << NETISR_NATM))
-				natmintr();
-#endif
-#if NPPP > 0
-			if (n & (1 << NETISR_PPP))
-				pppintr();
-#endif
-#if NBRIDGE > 0
-			if (n & (1 << NETISR_BRIDGE))
-				bridgeintr();
-#endif
+#define DONETISR(bit, fn) \
+	do { \
+		if (n & (1 << bit)) \
+			fn(); \
+	} while (0)
+#include <net/netisr_dispatch.h>
+#undef DONETISR
 		}
 		if (sir.sir_which[SIR_CLOCK]) {
 			sir.sir_which[SIR_CLOCK] = 0;
