@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypwhich.c,v 1.5 1997/04/22 01:49:16 deraadt Exp $
+/*	$OpenBSD: ypwhich.c,v 1.6 1997/04/22 02:55:42 gene Exp $
 /*	$NetBSD: ypwhich.c,v 1.6 1996/05/13 02:43:48 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: ypwhich.c,v 1.5 1997/04/22 01:49:16 deraadt Exp $";
+static char rcsid[] = "$Id: ypwhich.c,v 1.6 1997/04/22 02:55:42 gene Exp $";
 #endif
 
 #include <sys/param.h>
@@ -90,14 +90,15 @@ struct sockaddr_in *sin;
 	tv.tv_sec = 15;
 	tv.tv_usec = 0;
 	client = clntudp_create(sin, YPBINDPROG, YPBINDVERS, tv, &sock);
-	if (client==NULL) {
-		fprintf(stderr, "can't clntudp_create: %s\n",
-		    yperr_string(YPERR_YPBIND));
+
+	if (client == NULL) {
+		fprintf(stderr, "ypwhich: host is not bound to a ypmaster\n");
 		return YPERR_YPBIND;
 	}
 
 	tv.tv_sec = 5;
 	tv.tv_usec = 0;
+
 	r = clnt_call(client, YPBINDPROC_DOMAIN,
 	    xdr_domainname, &dom, xdr_ypbind_resp, &ypbr, tv);
 	if (r != RPC_SUCCESS) {
@@ -117,12 +118,13 @@ struct sockaddr_in *sin;
 
 	bcopy(&ypbr.ypbind_resp_u.ypbind_bindinfo.ypbind_binding_addr,
 	    &ss_addr, sizeof (ss_addr));
-	/*printf("%08x\n", ss_addr);*/
+
 	hent = gethostbyaddr((char *)&ss_addr, sizeof(ss_addr), AF_INET);
-	if (hent)
+	if (hent != NULL)
 		printf("%s\n", hent->h_name);
 	else
 		printf("%s\n", inet_ntoa(ss_addr));
+
 	return 0;
 }
 	
@@ -137,12 +139,12 @@ char **argv;
 	int notrans, mode, getmap;
 	int c, r, i;
 
-	yp_get_default_domain(&domain);
-
 	map = NULL;
 	getmap = notrans = mode = 0;
-	while ((c=getopt(argc, argv, "xd:mt")) != -1)
-		switch (c) {
+
+	yp_get_default_domain(&domain);
+	while ((c = getopt(argc, argv, "xd:mt")) != -1)
+		switch(c) {
 		case 'x':
 			for (i=0; i<sizeof ypaliases/sizeof ypaliases[0]; i++)
 				printf("Use \"%s\" for \"%s\"\n",
@@ -163,8 +165,8 @@ char **argv;
 	argc -= optind;
 	argv += optind;
 
-	if (mode==0) {
-		switch (argc) {
+	if (mode == 0) {
+		switch(argc) {
 		case 0:
 			bzero(&sin, sizeof sin);
 			sin.sin_family = AF_INET;
@@ -203,6 +205,7 @@ char **argv;
 		for (i=0; (!notrans) && i<sizeof ypaliases/sizeof ypaliases[0]; i++)
 			if (strcmp(map, ypaliases[i].alias) == 0)
 				map = ypaliases[i].name;
+
 		r = yp_master(domain, map, &master);
 		switch (r) {
 		case 0:
