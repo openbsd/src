@@ -1,4 +1,4 @@
-/*	$OpenBSD: rstatd.c,v 1.16 2003/12/12 05:25:06 deraadt Exp $	*/
+/*	$OpenBSD: rstatd.c,v 1.17 2004/01/07 21:12:24 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993, John Brezak
@@ -29,7 +29,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rstatd.c,v 1.16 2003/12/12 05:25:06 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rstatd.c,v 1.17 2004/01/07 21:12:24 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -64,15 +64,6 @@ getsig(int signo)
 	gotsig = 1;
 }
 
-
-static void
-cleanup(void)
-{
-	(void) pmap_unset(RSTATPROG, RSTATVERS_TIME);	/* XXX signal races */
-	(void) pmap_unset(RSTATPROG, RSTATVERS_SWTCH);
-	(void) pmap_unset(RSTATPROG, RSTATVERS_ORIG);
-	_exit(0);
-}
 
 int
 main(int argc, char *argv[])
@@ -164,8 +155,12 @@ my_svc_run(void)
 			updatestat();
 			wantupdatestat = 0;
 		}
-		if (gotsig)
-			cleanup();
+		if (gotsig) {
+			(void) pmap_unset(RSTATPROG, RSTATVERS_TIME);
+			(void) pmap_unset(RSTATPROG, RSTATVERS_SWTCH);
+			(void) pmap_unset(RSTATPROG, RSTATVERS_ORIG);
+			exit(0);
+		}
 
 		if (__svc_fdset) {
 			int bytes = howmany(__svc_fdsetsize, NFDBITS) *
