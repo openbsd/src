@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.52 2003/06/14 22:12:53 millert Exp $ */
+/* $OpenBSD: user.c,v 1.53 2003/12/24 20:15:58 otto Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -894,6 +894,20 @@ scantime(time_t *tp, char *s)
 	return 1;
 }
 
+/* compute the extra length '&' expansion consumes */
+static size_t
+expand_len(const char *p, const char *username)
+{
+	size_t alen;
+	size_t ulen;
+
+	ulen = strlen(username);
+	for (alen = 0; *p != '\0'; p++)
+		if (*p == '&')
+			alen += ulen - 1;
+	return alen;
+}
+
 /* add a user */
 static int
 adduser(char *login_name, user_t *up)
@@ -1043,9 +1057,8 @@ adduser(char *login_name, user_t *up)
 	    up->u_comment,
 	    home,
 	    up->u_shell);
-	if (strchr(up->u_comment, '&') != NULL)
-		cc += strlen(login_name);
-	if (cc >= sizeof(buf)) {
+	if (cc >= sizeof(buf) || cc < 0 ||
+	    cc + expand_len(up->u_comment, login_name) >= 1023) {
 		(void) close(ptmpfd);
 		pw_abort();
 		errx(EXIT_FAILURE, "can't add `%s', line too long", buf);
@@ -1223,11 +1236,12 @@ moduser(char *login_name, char *newlogin, user_t *up)
 	struct group	*grp;
 	const char	*homedir;
 	char		buf[LINE_MAX];
-	size_t		colonc, len, loginc;
+	size_t		colonc, loginc;
 	size_t		cc;
 	FILE		*master;
 	char		newdir[MaxFileNameLen];
 	char		*colon, *line;
+	int		len;
 	int		masterfd;
 	int		ptmpfd;
 	int		rval;
@@ -1376,13 +1390,14 @@ moduser(char *login_name, char *newlogin, user_t *up)
 				    pwp->pw_gecos,
 				    pwp->pw_dir,
 				    pwp->pw_shell)) >= sizeof(buf) || len < 0 ||
-				    (strchr(up->u_comment, '&') != NULL &&
-				    len + strlen(newlogin) >= sizeof(buf))) {
+				    len + expand_len(pwp->pw_gecos, newlogin)
+				    >= 1023) {
 					(void) close(ptmpfd);
 					pw_abort();
 					errx(EXIT_FAILURE, "can't add `%s',
 					    line too long (%d bytes)", buf,
-					    len + strlen(newlogin));
+					    len + expand_len(pwp->pw_gecos,
+					    newlogin));
 				}
 				if (write(ptmpfd, buf, len) != len) {
 					(void) close(ptmpfd);
