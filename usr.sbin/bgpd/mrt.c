@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.24 2004/01/27 16:49:53 henning Exp $ */
+/*	$OpenBSD: mrt.c,v 1.25 2004/02/02 21:29:50 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -51,7 +51,7 @@ static int		mrt_open(struct mrt *);
 		u_char		t = (b);				\
 		if (buf_add((x), &t, sizeof(t)) == -1) {		\
 			log_warnx("mrt_dump1: buf_add error");		\
-			buf_free(buf);					\
+			buf_free((x));					\
 			return (-1);					\
 		}							\
 	} while (0)
@@ -62,7 +62,7 @@ static int		mrt_open(struct mrt *);
 		t = htons((s));						\
 		if (buf_add((x), &t, sizeof(t)) == -1) {		\
 			log_warnx("mrt_dump2: buf_add error");		\
-			buf_free(buf);					\
+			buf_free((x));					\
 			return (-1);					\
 		}							\
 	} while (0)
@@ -73,7 +73,7 @@ static int		mrt_open(struct mrt *);
 		t = htonl((l));						\
 		if (buf_add((x), &t, sizeof(t)) == -1) {		\
 			log_warnx("mrt_dump3: buf_add error");		\
-			buf_free(buf);					\
+			buf_free((x));					\
 			return (-1);					\
 		}							\
 	} while (0)
@@ -83,7 +83,7 @@ static int		mrt_open(struct mrt *);
 		u_int32_t	t = (l);				\
 		if (buf_add((x), &t, sizeof(t)) == -1) {		\
 			log_warnx("mrt_dump4: buf_add error");		\
-			buf_free(buf);					\
+			buf_free((x));					\
 			return (-1);					\
 		}							\
 	} while (0)
