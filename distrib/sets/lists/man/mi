@@ -1064,6 +1064,7 @@
 ./usr/share/man/cat4/bge.0
 ./usr/share/man/cat4/bha.0
 ./usr/share/man/cat4/bio.0
+./usr/share/man/cat4/bktr.0
 ./usr/share/man/cat4/bmtphy.0
 ./usr/share/man/cat4/boca.0
 ./usr/share/man/cat4/bpf.0
@@ -1156,7 +1157,6 @@
 ./usr/share/man/cat4/i386/apm.0
 ./usr/share/man/cat4/i386/autoconf.0
 ./usr/share/man/cat4/i386/bios.0
-./usr/share/man/cat4/i386/bktr.0
 ./usr/share/man/cat4/i386/gus.0
 ./usr/share/man/cat4/i386/ie.0
 ./usr/share/man/cat4/i386/intro.0
@@ -1787,8 +1787,11 @@
 ./usr/share/man/cat8/hp300/hilinfo.0
 ./usr/share/man/cat8/hppa
 ./usr/share/man/cat8/hppa/MAKEDEV.0
+./usr/share/man/cat8/hppa/boot.0
+./usr/share/man/cat8/hppa/boot.conf.0
 ./usr/share/man/cat8/hppa/boot_hppa.0
 ./usr/share/man/cat8/hppa/kbd.0
+./usr/share/man/cat8/hppa/mkboot.0
 ./usr/share/man/cat8/hppa/wsconscfg.0
 ./usr/share/man/cat8/hppa/wsconsctl.0
 ./usr/share/man/cat8/hppa/wsfontload.0
