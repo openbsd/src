@@ -1,10 +1,5 @@
 This is a list of currently known ftp servers:
 
-Korea:
-
-ftp://ftp1.kr.openbsd.org/pub/OpenBSD ==
-	ftp://sunsite.kren.ne.kr/pub/OpenBSD
-
 Australia:
 
 ftp://ftp.aba.net.au/pub/OpenBSD ==
@@ -28,6 +23,10 @@ ftp://ftp.tut.ac.jp/OpenBSD == ftp://ftp.jp.openbsd.org/OpenBSD
 
 ftp://ftp.dti.ad.jp/pub/OpenBSD
 
+Korea:
+
+ftp://ftp.snu.ac.kr/pub/OpenBSD/
+
 Sweden:
 
 ftp://ftp.stacken.kth.se/pub/OpenBSD ==
@@ -39,15 +38,14 @@ Switzerland:
 ftp://web.eunet.ch/pub/OpenBSD ==
 	ftp://ftp.eu.openbsd.org/pub/OpenBSD
 
+Taiwan:
+
+ftp://openbsd.csie.nctu.edu.tw/pub/OpenBSD
+
 Thailand:
 
 ftp://ftp.ruibon.ac.th/pup/OpenBSD ==
 	ftp://ftp.th.openbsd.org/pub/OpenBSD
-
-Korea:
-
-ftp://sunsite.kren.ne.kr/pup/OpenBSD ==
-	ftp://ftp.kr.openbsd.org/pub/OpenBSD
 
 United Kingdom:
 
@@ -68,10 +66,6 @@ ftp://ftp.geek-girl.com/pub/OpenBSD ==
 
 ftp://ftp.op.net/pub/OpenBSD
 
-ftp://freon.republic.k12.mo.us/pub/OpenBSD
-
-frp://ftp.msoe.edu/pub/OpenBSD
-
 Canada:
 
 ftp://lager.ucs.ualberta.ca/pub/OpenBSD ==
@@ -81,8 +75,6 @@ ftp://lager.ucs.ualberta.ca/pub/OpenBSD ==
 
 ftp://obsd.compmore.net/pub/OpenBSD ==
 	ftp://ftp2.ca.openbsd.org/pub/OpenBSD
-
-ftp://ftp.styx.org/pub/OpenBSD
 
 As well, the file ftp://ftp.openbsd.org/pub/OpenBSD/OSREV/ftplist
 contains a list which is continually updated.  If you wish to become a
