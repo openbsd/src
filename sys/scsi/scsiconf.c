@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.46 1995/12/31 02:40:53 thorpej Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.47 1996/01/12 11:32:37 pk Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -344,6 +344,9 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "SONY    ", "SDT-5200        ", "3.",   SDEV_NOLUNS},
 	{T_SEQUENTIAL, T_REMOV,
 	 "TANDBERG", " TDC 3600       ", "",     SDEV_NOLUNS},
+	/* Following entry reported as a Tandberg 3600; ref. PR1933 */
+	{T_SEQUENTIAL, T_REMOV,
+	 "ARCHIVE ", "VIPER 150  21247", "",     SDEV_NOLUNS},
 	{T_SEQUENTIAL, T_REMOV,
 	 "WANGTEK ", "5099ES SCSI",      "",     SDEV_NOLUNS},
 	{T_SEQUENTIAL, T_REMOV,
