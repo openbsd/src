@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.166 2004/10/17 19:28:28 grange Exp $
+dnl	$OpenBSD: hardware,v 1.167 2004/10/27 09:20:46 henning Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -621,8 +621,9 @@ Supported hardware {:-include-:}:
 	FDDI Adapters
 		Digital DEFEA EISA and PCI FDDI adapters [G]
 	Wan Adapters
-		Lan Media Corporation SSI (T1)/HSSI/DS1/DS3 WAN
-		interfaces [G]
+		SBE (formerly Lan Media Corporation) SSI (T1)/HSSI/DS1/DS3
+		WAN interfaces [G]
+		Sangoma Sangoma Technologies AFT T1/E1 WAN interfaces [G]
 	Cryptography Accelerators
 		Broadcom Bluesteelnet uBsec 5501, 5601, 5801, 5802, 5805,
 		  5820, 5821, 5822, 5823 [G]
