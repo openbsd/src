@@ -1,4 +1,4 @@
-.\" $OpenBSD: pcibios.4,v 1.18 2003/11/09 16:06:07 jmc Exp $
+.\" $OpenBSD: pcibios.4,v 1.19 2004/09/26 20:22:37 mickey Exp $
 .\" $NetBSD: pcibios.4,v 1.7 2000/08/03 13:32:39 soda Exp $
 .\"
 .\" Copyright (c) 2000 Michael Shalayeff, All rights reserved.
@@ -143,6 +143,12 @@ Included in these diagnostics are: PCI device address fixup tables,
 interrupt fixup reports, and other diagnostic and non-fatal messages.
 .It 0x0020
 Make the PCI interrupt routing fixup procedure verbose.
+.It 0x0040
+Some buggy BIOS implementations provide inconsistent information between
+the PCI Interrupt Configuration Register and the PCI Interrupt Routing table.
+In such cases, the PCI Interrupt Configuration Register takes precedence
+by default.
+If this flag is specified the PCI Interrupt Routing table takes precedence.
 .El
 .\" .It Nm PCIBIOS_IRQS_HINT
 .\" hint for IRQ use.
@@ -191,33 +197,6 @@ Make the PCI interrupt routing fixup procedure verbose.
 .\" .Dl Ic set pcibios_irqs_hint=0xa00
 .\" .Dl Ic quit
 .\" .El
-.\"
-.\" .It Nm PCIBIOS_INTR_FIXUP_FORCE
-.\" .Pp
-.\" Some buggy BIOS implementations provide inconsistent
-.\" information between the PCI Interrupt Configuration Register
-.\" and the PCI Interrupt Routing table. In such case,
-.\" the PCI Interrupt Configuration Register takes precedence
-.\" by default. If this happens, a kernel with
-.\" .Em PCIBIOSVERBOSE
-.\" shows
-.\" .Qq Sy WARNING: preserving irq XX
-.\" in the PCI routing table.
-.\"
-.\" If
-.\" .Em PCIBIOS_INTR_FIXUP_FORCE
-.\" is specified in addition to the
-.\" .Em PCIBIOS_INTR_FIXUP ,
-.\" the PCI Interrupt Routing table takes precedence.
-.\" In this case, a kernel with
-.\" .Em PCIBIOSVERBOSE
-.\" shows
-.\" .Qq Sy WARNING: overriding irq XX
-.\" in the PCI routing table.
-.\"
-.\" The necessity of this option is doubtful, and we may
-.\" remove this option in the future. If you find that this
-.\" option is worth preserving, please report it with send-pr.
 .\"
 .Sh SEE ALSO
 .Xr bios 4 ,
