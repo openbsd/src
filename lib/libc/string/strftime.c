@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)strftime.c	5.11 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: strftime.c,v 1.1.1.1 1995/10/18 08:42:22 deraadt Exp $";
+static char *rcsid = "$Id: strftime.c,v 1.2 1995/12/30 08:16:41 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/localedef.h>
@@ -202,7 +202,7 @@ _fmt(format, t)
 					return(0);
 				continue;
 			case 'u':
-				if (!_conv(t->tm_wday ? t->tm_wday : 7, 2, '0'))
+				if (!_conv(t->tm_wday ? t->tm_wday : 7, 1, '0'))
 					return(0);
 				continue;
 			case 'V':
