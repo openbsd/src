@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.185 2005/03/08 23:33:18 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.186 2005/03/09 11:17:46 jsg Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -655,7 +655,6 @@ Supported hardware {:-include-:}:
 		    ASUS WL-107G
 		    Atlantis Land A02-PCM-W54
 		    Belkin F5D7010 v2
-		    Billionton MIWLGRL
 		    Canyon CN-WF513
 		    CC&C WL-2102
 		    CNet CWC-854
@@ -691,7 +690,8 @@ Supported hardware {:-include-:}:
 		    AOpen AOI-831
 		    ASUS WL-130g
 		    Atlantis Land A02-PCI-W54
-		    Belkin F5D7000
+		    Belkin F5D7000 v3
+		    Billionton MIWLGRL mini-PCI
 		    Canyon CN-WF511
 		    CNet CWP-854
 		    Compex WLP54G
@@ -720,6 +720,7 @@ Supported hardware {:-include-:}:
 		    SATech SN-54P
 		    Sitecom WL-115
 		    Surecom EP-9321-g
+		    Surecom EP-9321-g1
 		    Sweex LC700030
 		    TekComm NE-9321-g
 		    Unex CR054g-R02
