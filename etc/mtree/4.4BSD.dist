@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.16 1996/06/17 02:48:04 downsj Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.17 1996/06/18 10:31:26 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -957,6 +957,16 @@ mac68k
 # ./usr/share/man/cat4/mac68k
 ..
 
+# ./usr/share/man/cat4/mvme68k
+mvme68k
+# ./usr/share/man/cat4/mvme68k
+..
+
+# ./usr/share/man/cat4/mvme88k
+mvme88k
+# ./usr/share/man/cat4/mvme88k
+..
+
 # ./usr/share/man/cat4/pc532
 pc532
 # ./usr/share/man/cat4/pc532
@@ -980,6 +990,11 @@ tahoe
 # ./usr/share/man/cat4/vax
 vax
 # ./usr/share/man/cat4/vax
+..
+
+# ./usr/share/man/cat4/x68k
+x68k
+# ./usr/share/man/cat4/x68k
 ..
 
 # ./usr/share/man/cat4
@@ -1033,6 +1048,16 @@ mac68k
 # ./usr/share/man/cat8/mac68k
 ..
 
+# ./usr/share/man/cat8/mvme68k
+mvme68k
+# ./usr/share/man/cat8/mvme68k
+..
+
+# ./usr/share/man/cat8/mvme88k
+mvme88k
+# ./usr/share/man/cat8/mvme88k
+..
+
 # ./usr/share/man/cat8/pc532
 pc532
 # ./usr/share/man/cat8/pc532
@@ -1056,6 +1081,11 @@ tahoe
 # ./usr/share/man/cat8/vax
 vax
 # ./usr/share/man/cat8/vax
+..
+
+# ./usr/share/man/cat8/x68k
+x68k
+# ./usr/share/man/cat8/x68k
 ..
 
 # ./usr/share/man/cat8
@@ -1119,6 +1149,16 @@ mac68k
 # ./usr/share/man/man4/mac68k
 ..
 
+# ./usr/share/man/man4/mvme68k
+mvme68k
+# ./usr/share/man/man4/mvme68k
+..
+
+# ./usr/share/man/man4/mvme88k
+mvme88k
+# ./usr/share/man/man4/mvme88k
+..
+
 # ./usr/share/man/man4/pc532
 pc532
 # ./usr/share/man/man4/pc532
@@ -1142,6 +1182,11 @@ tahoe
 # ./usr/share/man/man4/vax
 vax
 # ./usr/share/man/man4/vax
+..
+
+# ./usr/share/man/man4/x68k
+x68k
+# ./usr/share/man/man4/x68k
 ..
 
 # ./usr/share/man/man4
@@ -1195,6 +1240,16 @@ mac68k
 # ./usr/share/man/man8/mac68k
 ..
 
+# ./usr/share/man/man8/mvme68k
+mvme68k
+# ./usr/share/man/man8/mvme68k
+..
+
+# ./usr/share/man/man8/mvme88k
+mvme88k
+# ./usr/share/man/man8/mvme88k
+..
+
 # ./usr/share/man/man8/pc532
 pc532
 # ./usr/share/man/man8/pc532
@@ -1218,6 +1273,11 @@ tahoe
 # ./usr/share/man/man8/vax
 vax
 # ./usr/share/man/man8/vax
+..
+
+# ./usr/share/man/man8/x68k
+x68k
+# ./usr/share/man/man8/x68k
 ..
 
 # ./usr/share/man/man8
