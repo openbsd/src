@@ -1,4 +1,4 @@
-#	$OpenBSD: pnpdevs,v 1.14 1998/06/02 18:45:33 deraadt Exp $
+#	$OpenBSD: pnpdevs,v 1.15 1998/07/05 07:15:32 downsj Exp $
 
 #
 # NOTE: All `com' devices also need pccom identifiers.
@@ -61,7 +61,7 @@ pccom	PNP0501	#16550A-compatible COM port
 #	PNP0510	#Generic IRDA-compatible device
 
 #--Disk Controllers--
-#	PNP0600	#Generic ESDI/IDE/ATA compatible hard disk controller
+wdc	PNP0600	#Generic ESDI/IDE/ATA compatible hard disk controller
 #	PNP0601	#Plus Hardcard II
 #	PNP0602	#Plus Hardcard IIXL/EZ
 #	PNP0603	#Generic IDE supporting Microsoft Device Bay Specification
