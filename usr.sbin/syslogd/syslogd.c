@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.72 2004/01/05 09:45:49 jmc Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.73 2004/01/13 04:08:27 djm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.72 2004/01/05 09:45:49 jmc Exp $";
+static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.73 2004/01/13 04:08:27 djm Exp $";
 #endif
 #endif /* not lint */
 
@@ -1212,7 +1212,8 @@ init(void)
 void
 cfline(char *line, struct filed *f, char *prog)
 {
-	int i, pri, addr_len, rb_len;
+	int i, pri, addr_len;
+	size_t rb_len;
 	char *bp, *p, *q;
 	char buf[MAXLINE], ebuf[100];
 	char addr[MAXHOSTNAMELEN];
