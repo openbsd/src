@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /*$FreeBSD: if_em.c,v 1.38 2004/03/17 17:50:31 njl Exp $*/
-/* $OpenBSD: if_em.c,v 1.26 2004/09/08 23:01:55 deraadt Exp $ */
+/* $OpenBSD: if_em.c,v 1.27 2004/09/16 09:37:14 mcbride Exp $ */
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -1440,7 +1440,7 @@ em_encap(struct em_softc *sc, struct mbuf *m_head)
 	 * Map the packet for DMA.
 	 */
 	if (bus_dmamap_create(sc->txtag, MAX_JUMBO_FRAME_SIZE, 32,
-	    0, 0, BUS_DMA_NOWAIT, &q.map)) {
+	    MAX_JUMBO_FRAME_SIZE, 0, BUS_DMA_NOWAIT, &q.map)) {
 		sc->no_tx_map_avail++;
 		return (ENOMEM);
 	}
