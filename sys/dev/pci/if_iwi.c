@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.25 2005/02/17 18:28:05 reyk Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.26 2005/02/19 13:38:01 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005
@@ -79,6 +79,7 @@
 
 const struct pci_matchid iwi_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_2200BG_3B },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_2225BG },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_2915ABG_3B },
 };
 
@@ -252,7 +253,7 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(", address %s\n", ether_sprintf(ic->ic_myaddr));
 
-	if (PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_INTEL_PRO_2200BG_3B) {
+	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_PRO_2915ABG_3B) {
 		/* set supported .11a rates */
 		ic->ic_sup_rates[IEEE80211_MODE_11A] = iwi_rateset_11a;
 

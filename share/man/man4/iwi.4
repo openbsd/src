@@ -1,4 +1,4 @@
-.\" $OpenBSD: iwi.4,v 1.10 2004/12/11 15:20:01 kevlo Exp $
+.\" $OpenBSD: iwi.4,v 1.11 2005/02/19 13:37:59 damien Exp $
 .\"
 .\" Copyright (c) 2004
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -32,7 +32,7 @@
 .Nm iwi
 .Nd
 .Tn Intel
-PRO/Wireless 2200BG/2915ABG IEEE 802.11A/B/G wireless network adapter
+PRO/Wireless 2200BG/2225BG/2915ABG IEEE 802.11A/B/G wireless network adapters
 .Sh SYNOPSIS
 .Cd "iwi* at pci?"
 .Sh DESCRIPTION
@@ -40,8 +40,7 @@ The
 .Nm
 driver provides support for
 .Tn Intel
-PRO/Wireless 2200BG and 2915ABG MiniPCI
-network adapters.
+PRO/Wireless 2200BG/2915ABG MiniPCI and 2225BG PCI network adapters.
 .Pp
 By default, the
 .Nm
