@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.71 2003/11/14 15:31:07 henning Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.72 2003/12/10 04:10:37 beck Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -92,12 +92,6 @@ main(int argc, char *argv[])
 	char		*cp;
 	uid_t		 uid;
 
-	if ((n = snprintf(rulesetname, sizeof(rulesetname), "%ld",
-	    (long)getpid())) < 0 || n >= sizeof(rulesetname)) {
-		syslog(LOG_ERR, "pid too large for ruleset name");
-		exit(1);
-	}
-
 	config = fopen(PATH_CONFFILE, "r");
 
 	if ((cp = getenv("SSH_TTY")) == NULL) {
@@ -125,7 +119,6 @@ main(int argc, char *argv[])
 		    "cannot determine IP from SSH_CLIENT %s", ipsrc);
 		exit(1);
 	}
-
 	/* open the pf device */
 	dev = open(PATH_DEVFILE, O_RDWR);
 	if (dev == -1) {
@@ -153,6 +146,18 @@ main(int argc, char *argv[])
 		syslog(LOG_ERR, "username too long: %s", pw->pw_name);
 		goto die;
 	}
+
+	if ((n = snprintf(rulesetname, sizeof(rulesetname), "%s(%ld)",
+	    luser, (long)getpid())) < 0 || n >= sizeof(rulesetname)) {
+		syslog(LOG_INFO, "%s(%ld) too large, ruleset name will be %ld",
+		    luser, (long)getpid(), (long)getpid());
+		if ((n = snprintf(rulesetname, sizeof(rulesetname), "%ld",
+		    (long)getpid())) < 0 || n >= sizeof(rulesetname)) {
+			syslog(LOG_ERR, "pid too large for ruleset name");
+			goto die;
+		}
+	}
+
 
 	/* Make our entry in /var/authpf as /var/authpf/ipaddr */
 	n = snprintf(pidfile, sizeof(pidfile), "%s/%s", PATH_PIDFILE, ipsrc);
@@ -236,15 +241,22 @@ main(int argc, char *argv[])
 	seteuid(getuid());
 	setuid(getuid());
 
-	if (!check_luser(PATH_BAN_DIR, luser) || !allowed_luser(luser))
-		do_death(0);
-
 	openlog("authpf", LOG_PID | LOG_NDELAY, LOG_DAEMON);
-	if (config == NULL || read_config(config))
-		do_death(0);
 
-	if (remove_stale_rulesets())
+	if (!check_luser(PATH_BAN_DIR, luser) || !allowed_luser(luser)) {
+		syslog(LOG_INFO, "user %s prohibited", luser);
 		do_death(0);
+	}
+
+	if (config == NULL || read_config(config)) {
+		syslog(LOG_INFO, "bad or nonexistent %s", PATH_CONFFILE);
+		do_death(0);
+	}
+
+	if (remove_stale_rulesets()) {
+		syslog(LOG_INFO, "error removing stale rulesets");
+		do_death(0);
+	}
 
 	/* We appear to be making headway, so actually mark our pid */
 	rewind(pidfp);
