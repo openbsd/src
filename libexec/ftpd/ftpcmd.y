@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpcmd.y,v 1.15 1998/02/03 22:21:21 downsj Exp $	*/
+/*	$OpenBSD: ftpcmd.y,v 1.16 1998/05/22 06:46:09 deraadt Exp $	*/
 /*	$NetBSD: ftpcmd.y,v 1.7 1996/04/08 19:03:11 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-static char rcsid[] = "$OpenBSD: ftpcmd.y,v 1.15 1998/02/03 22:21:21 downsj Exp $";
+static char rcsid[] = "$OpenBSD: ftpcmd.y,v 1.16 1998/05/22 06:46:09 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -64,6 +64,7 @@ static char rcsid[] = "$OpenBSD: ftpcmd.y,v 1.15 1998/02/03 22:21:21 downsj Exp 
 #include <pwd.h>
 #include <setjmp.h>
 #include <signal.h>
+#include <tzfile.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -546,7 +547,7 @@ cmd
 					t = gmtime(&stbuf.st_mtime);
 					reply(213,
 					    "%04d%02d%02d%02d%02d%02d",
-					    1900 + t->tm_year,
+					    TM_YEAR_BASE + t->tm_year,
 					    t->tm_mon+1, t->tm_mday,
 					    t->tm_hour, t->tm_min, t->tm_sec);
 				}
