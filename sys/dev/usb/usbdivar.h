@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdivar.h,v 1.3 1999/08/27 09:00:30 fgsch Exp $	*/
+/*	$OpenBSD: usbdivar.h,v 1.4 1999/08/31 07:42:51 fgsch Exp $	*/
 /*	$NetBSD: usbdivar.h,v 1.24 1999/08/17 20:59:04 augustss Exp $	*/
 
 /*
@@ -112,7 +112,7 @@ struct usbd_device {
 	usb_config_descriptor_t *cdesc;	/* full config descr */
 	struct usbd_quirks     *quirks;
 	struct usbd_hub	       *hub; /* only if this is a hub */
-	struct device	      **subdevs;	/* sub-devices, 0 terminated */
+	bdevice		      **subdevs;	/* sub-devices, 0 terminated */
 };
 
 struct usbd_interface {
@@ -151,7 +151,7 @@ struct usbd_request {
 	u_int32_t		timeout;
 	usbd_status		status;
 	usbd_callback		callback;
-	char			done;
+	__volatile char		done;
 
 	usb_device_request_t	request;
 	char			isreq;

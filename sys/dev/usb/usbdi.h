@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.h,v 1.3 1999/08/27 09:00:30 fgsch Exp $	*/
+/*	$OpenBSD: usbdi.h,v 1.4 1999/08/31 07:42:50 fgsch Exp $	*/
 /*	$NetBSD: usbdi.h,v 1.20 1999/06/30 06:44:23 augustss Exp $	*/
 
 /*
@@ -164,7 +164,7 @@ usb_endpoint_descriptor_t *usbd_find_edesc
 void usbd_dopoll __P((usbd_interface_handle));
 void usbd_set_polling __P((usbd_interface_handle iface, int on));
 
-char *usbd_errstr __P((usbd_status err));
+const char *usbd_errstr __P((usbd_status err));
 
 /* NetBSD attachment information */
 

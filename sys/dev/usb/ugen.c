@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.4 1999/08/29 10:35:35 fgsch Exp $	*/
+/*	$OpenBSD: ugen.c,v 1.5 1999/08/31 07:42:50 fgsch Exp $	*/
 /*	$NetBSD: ugen.c,v 1.19 1999/08/28 10:01:59 augustss Exp $	*/
 
 /*
@@ -587,7 +587,7 @@ ugenwrite(dev, uio, flag)
 
 int
 ugen_activate(self, act)
-	struct device *self;
+	bdevice *self;
 	enum devact act;
 {
 	struct ugen_softc *sc = (struct ugen_softc *)self;
@@ -606,7 +606,7 @@ ugen_activate(self, act)
 
 int
 ugen_detach(self, flags)
-	struct device  *self;
+	bdevice *self;
 	int flags;
 {
 	struct ugen_softc *sc = (struct ugen_softc *)self;

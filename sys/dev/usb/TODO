@@ -15,8 +15,6 @@ Use the pool allocator for TDs et al.
 
 Throw out more USBDI gunk.
 
-Port FreeBSD umass driver.
-
 Make hub driver note transition between self and bus powered state.
 Handle overcurrent conditions.
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.3 1999/08/19 08:18:39 fgsch Exp $	*/
+/*	$OpenBSD: usb.c,v 1.4 1999/08/31 07:42:50 fgsch Exp $	*/
 /*	$NetBSD: usb.c,v 1.17 1999/08/17 16:06:21 augustss Exp $	*/
 
 /*
@@ -457,7 +457,7 @@ usb_needs_explore(bus)
 
 int
 usb_activate(self, act)
-	struct device *self;
+	bdevice *self;
 	enum devact act;
 {
 	panic("usb_activate\n");
@@ -466,7 +466,7 @@ usb_activate(self, act)
 
 int
 usb_detach(self, flags)
-	struct device  *self;
+	bdevice *self;
 	int flags;
 {
 	panic("usb_detach\n");
