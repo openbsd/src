@@ -1,4 +1,4 @@
-.\"	$OpenBSD: shutdown.8,v 1.21 2000/11/09 17:53:07 aaron Exp $
+.\"	$OpenBSD: shutdown.8,v 1.22 2001/01/05 04:27:23 marc Exp $
 .\"	$NetBSD: shutdown.8,v 1.6 1995/03/18 15:01:07 cgd Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
@@ -79,6 +79,13 @@ when
 .Nm
 execs
 .Xr halt 8 .
+.Sy Note :
+If this option does not work on your i386 machine try setting
+.Li machdep.apmhalt
+to the value 1 using
+.Xr sysctl 8 .
+This can be set at boot time in
+.Pa sysctl.conf .
 .It Fl k
 Kick everybody off.
 The
@@ -177,9 +184,11 @@ before the system is shutdown
 .Sh SEE ALSO
 .Xr login 1 ,
 .Xr wall 1 ,
+.Xr sysctl.conf 5 ,
 .Xr halt 8 ,
 .Xr reboot 8 ,
-.Xr rc.shutdown 8
+.Xr rc.shutdown 8 ,
+.Xr sysctl 8
 .Sh COMPATIBILITY
 The hours and minutes in the second time format may be separated by
 a colon

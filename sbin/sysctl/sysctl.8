@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.59 2001/01/04 07:50:33 angelos Exp $
+.\"	$OpenBSD: sysctl.8,v 1.60 2001/01/05 04:27:23 marc Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -248,6 +248,7 @@ privilege can change the value.
 .It hw.pagesize	integer	no
 .It machdep.console_device	dev_t	no
 .It machdep.apmwarn	integer	yes (i386 only)
+.It machdep.apmhalt	integer	yes (i386 only)
 .It machdep.kbdreset	integer	yes (i386 only)
 .It machdep.allowaperture	integer	yes (i386 only, XFree86)
 .It machdep.led_blink	integer	yes (sparc only)

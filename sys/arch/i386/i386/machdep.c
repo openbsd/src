@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.140 2000/11/16 19:10:58 millert Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.141 2001/01/05 04:27:23 marc Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -194,6 +194,10 @@ char machine_arch[] = "i386";		/* machine == machine_arch */
 /*
  * Declare these as initialized data so we can patch them.
  */
+#if NAPM > 0
+int	cpu_apmhalt = 0;	/* sysctl'd to 1 for halt -p hack */
+#endif
+
 int	nswbuf = 0;
 #ifdef	NBUF
 int	nbuf = NBUF;
@@ -1530,8 +1534,19 @@ haltsys:
 			 * try to turn the system off.
 		 	 */
 			delay(500000);
-			apm_set_powstate(APM_DEV_DISK(0xff), APM_SYS_OFF);
-			delay(500000);
+			/*
+			 * It's been reported that the following bit of code
+			 * is required on most systems <mickey@openbsd.org>
+			 * but cause powerdown problem on other systems
+			 * <smcho@tsp.korea.ac.kr>.  Use sysctl to set
+			 * apmhalt to a non-zero value to skip the offending
+			 * code.
+			 */
+			if (!cpu_apmhalt) {
+				apm_set_powstate(APM_DEV_DISK(0xff),
+						 APM_SYS_OFF);
+				delay(500000);
+			}
 			rv = apm_set_powstate(APM_DEV_DISK(0xff), APM_SYS_OFF);
 			if (rv == 0 || rv == ENXIO) {
 				delay(500000);
@@ -2312,6 +2327,8 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 #if NAPM > 0
 	case CPU_APMWARN:
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &cpu_apmwarn));
+	case CPU_APMHALT:
+		return (sysctl_int(oldp, oldlenp, newp, newlen, &cpu_apmhalt));
 #endif
 	case CPU_KBDRESET:
 		if (securelevel > 0) 
