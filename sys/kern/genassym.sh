@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.sh,v 1.6 2001/09/16 14:26:35 miod Exp $
+#	$OpenBSD: genassym.sh,v 1.7 2001/11/14 20:00:06 ho Exp $
 #	$NetBSD: genassym.sh,v 1.9 1998/04/25 19:48:27 matthias Exp $
 
 #
@@ -36,7 +36,7 @@
 
 awk=${AWK:-awk}
 
-if [ $1 = '-c' ] ; then
+if [ "x$1" = "x-c" ] ; then
 	shift
 	ccode=1
 else
@@ -162,6 +162,8 @@ if [ $ccode = 1 ] ; then
 else
 	# Kill all of the "#" and "$" modifiers; locore.s already
 	# prepends the correct "constant" modifier.
-	"$@" -S /tmp/$$.c -o -| sed -e 's/#//g' -e 's/\$//g' | \
-	    sed -n 's/.*XYZZY/#define/gp'
+	gentmp=/tmp/$$.c
+	( "$@" -S ${gentmp} -o - || >${gentmp}.bad ) | \
+	    sed -e 's/#//g' -e 's/\$//g' | sed -n 's/.*XYZZY/#define/gp'
+	[ ! -f ${gentmp}.bad ] || ( rm -f ${gentmp}.bad; exit 1 )
 fi
