@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.14 1998/02/20 20:57:50 deraadt Exp $
+.\"	$OpenBSD: disklabel.8,v 1.15 1998/03/01 06:43:27 johns Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -238,12 +238,12 @@ will drop you into a simple initial label editor.  This mode is
 only intended for new disks as it will move partitions around as
 necessary to maintain a contiguous pool of free blocks.  Some command
 or prompts take an optional unit.  Available units are 'b' for
-bytes, 'c' for cylinders, 'k' for kilobytes, 'm' for megabytes,
-'g' for gigabytes.  Quantities will be rounded to the nearest
+bytes, 'c' for cylinders, 'k' for kilobytes, 'm' for megabytes, 'g'
+for gigabytes.  Quantities will be rounded to the nearest
 cylinder when units are specified for sizes (or offsets).  Commands
-may be aborted by entering ^D (Control-D).  Entering ^D at the main
-'<' prompt will exit the editor.  At prompts that request a size,
-'*' may be entered to indicate the rest of the available space.
+may be aborted by entering ^D (Control-D).  Entering ^D at the main '<'
+prompt will exit the editor.  At prompts that request a size, '*'
+may be entered to indicate the rest of the available space.
 The editor commands are as follows:
 .Bl -tag -width "p [unit] "
 .It ?
@@ -269,7 +269,7 @@ rpm, disk type, and a descriptive label string.
 Set OpenBSD disk boundaries.  This option tells
 .Nm disklabel
 which parts of the disk it is allow to modify.  This option is
-probably only useful ports with fdisk partition tables where the
+probably only useful for ports with fdisk partition tables where the
 ending sector in the MBR is incorrect.  The user may enter '*' at
 the ``Size'' prompt to indicate the entire size of the disk (minus
 the starting sector).  This is useful for large disks where the
@@ -302,7 +302,7 @@ option).  If no path is specified, the user will be prompted for
 one.
 .It w
 Write the label to disk.  This option will commit any changes to
-the label to the on-disk label.
+the on-disk label.
 .It q
 Quit the editor.  If any changes have been made the user will be
 asked whether or not to save the changes to the on-disk label.
