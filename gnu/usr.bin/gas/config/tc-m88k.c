@@ -1,4 +1,4 @@
-/*	$OpenBSD: tc-m88k.c,v 1.4 2001/12/27 00:23:27 miod Exp $	*/
+/*	$OpenBSD: tc-m88k.c,v 1.5 2001/12/27 00:49:47 miod Exp $	*/
 
 /* m88k.c -- Assembler for the Motorola 88000
    Contributed by Devon Bowen of Buffalo University
@@ -377,10 +377,23 @@ calcop (format, param, insn)
   insn->opcode = format->opcode;
   opcode = 0;
 
+  /*
+   * Instructions which have no arguments (such as rte) will get
+   * correctly reported only if param == "", although there could be
+   * whitespace following the instruction.
+   * Rather than eating whitespace here, let's assume everything is
+   * fine. If there were non-wanted arguments, this will be parsed as
+   * an incorrect opcode at the offending line, so that's not too bad.
+   * -- miod
+   */
+  if (*fmt == '\0')
+	  return 1;
+
   for (;;)
     {
       if (param == 0)
 	return 0;
+
       f = *fmt++;
       switch (f)
 	{
@@ -456,7 +469,7 @@ calcop (format, param, insn)
 	  break;
 
 	case '?':
-	  /* Having this here repeats the warning somtimes.
+	  /* Having this here repeats the warning sometimes.
 	   But can't we stand that?  */
 	  as_warn ("Use of obsolete instruction");
 	  break;
