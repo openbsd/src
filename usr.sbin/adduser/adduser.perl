@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-#	$OpenBSD: adduser.perl,v 1.30 2001/07/06 15:39:36 mpech Exp $
+#	$OpenBSD: adduser.perl,v 1.31 2001/09/03 16:19:32 millert Exp $
 #
 # Copyright (c) 1995-1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 # All rights reserved.
@@ -89,7 +89,7 @@ sub variables {
     $group = "/etc/group";
     $pwd_mkdb = "pwd_mkdb -p";	# program for building passwd database
     $encryptionmethod = "blowfish";
-    $rcsid = '$OpenBSD: adduser.perl,v 1.30 2001/07/06 15:39:36 mpech Exp $';
+    $rcsid = '$OpenBSD: adduser.perl,v 1.31 2001/09/03 16:19:32 millert Exp $';
 
     # List of directories where shells located
     @path = ('/bin', '/usr/bin', '/usr/local/bin');
@@ -294,7 +294,7 @@ sub passwd_read {
     local($p_username, $pw, $p_uid, $p_gid, $sh, %shlist);
 
     print "Check $etc_passwd\n" if $verbose;
-    open(P, "$etc_passwd") || die "$passwd: $!\n";
+    open(P, "$etc_passwd") || die "$etc_passwd: $!\n";
 
     # we only use this to lock the password file
     sysopen(PTMP, $etc_ptmp, O_RDWR|O_CREAT|O_EXCL, 0600) ||
