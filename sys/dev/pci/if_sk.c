@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.42 2004/08/04 19:37:26 mcbride Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.43 2004/08/05 19:57:17 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -982,7 +982,7 @@ sk_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		}
 		break;
 	case SIOCSIFMTU:
-		if (ifr->ifr_mtu > SK_JUMBO_MTU)
+		if (ifr->ifr_mtu > ETHERMTU_JUMBO)
 			error = EINVAL;
 		else
 			ifp->if_mtu = ifr->ifr_mtu;

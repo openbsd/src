@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lgereg.h,v 1.2 2004/05/19 11:37:00 brad Exp $	*/
+/*	$OpenBSD: if_lgereg.h,v 1.3 2004/08/05 19:57:17 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -486,11 +486,9 @@ struct lge_mii_frame {
 #define LGE_MII_WRITEOP		0x01
 #define LGE_MII_TURNAROUND	0x02
 
-#define LGE_JUMBO_FRAMELEN	9018
-#define LGE_JUMBO_MTU		(LGE_JUMBO_FRAMELEN-ETHER_HDR_LEN-ETHER_CRC_LEN)
 #define LGE_JSLOTS		384
 
-#define LGE_JRAWLEN (LGE_JUMBO_FRAMELEN + ETHER_ALIGN)
+#define LGE_JRAWLEN (ETHER_MAX_LEN_JUMBO + ETHER_ALIGN)
 #define LGE_JLEN (LGE_JRAWLEN + (sizeof(u_int64_t) - \
 	(LGE_JRAWLEN % sizeof(u_int64_t))))
 #define LGE_JPAGESZ PAGE_SIZE

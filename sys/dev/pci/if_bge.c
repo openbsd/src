@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.27 2004/05/29 23:07:48 naddy Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.28 2004/08/05 19:57:17 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -767,12 +767,12 @@ bge_newbuf_jumbo(sc, i, m)
 		}
 
 		/* Attach the buffer to the mbuf. */
-		m_new->m_len = m_new->m_pkthdr.len = BGE_JUMBO_FRAMELEN;
-		MEXTADD(m_new, buf, BGE_JUMBO_FRAMELEN, 0, bge_jfree, sc);
+		m_new->m_len = m_new->m_pkthdr.len = ETHER_MAX_LEN_JUMBO;
+		MEXTADD(m_new, buf, ETHER_MAX_LEN_JUMBO, 0, bge_jfree, sc);
 	} else {
 		m_new = m;
 		m_new->m_data = m_new->m_ext.ext_buf;
-		m_new->m_ext.ext_size = BGE_JUMBO_FRAMELEN;
+		m_new->m_ext.ext_size = ETHER_MAX_LEN_JUMBO;
 	}
 
 	if (!sc->bge_rx_alignment_bug)
@@ -2673,7 +2673,7 @@ bge_ioctl(ifp, command, data)
 	case SIOCSIFMTU:
 		/* Disallow jumbo frames on 5705. */
 		if ((sc->bge_asicrev == BGE_ASICREV_BCM5705 &&
-		    ifr->ifr_mtu > ETHERMTU) || ifr->ifr_mtu > BGE_JUMBO_MTU)
+		    ifr->ifr_mtu > ETHERMTU) || ifr->ifr_mtu > ETHERMTU_JUMBO)
 			error = EINVAL;
 		else
 			ifp->if_mtu = ifr->ifr_mtu;

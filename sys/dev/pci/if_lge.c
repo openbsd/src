@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lge.c,v 1.15 2004/06/05 20:24:30 mcbride Exp $	*/
+/*	$OpenBSD: if_lge.c,v 1.16 2004/08/05 19:57:17 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -759,7 +759,7 @@ int lge_newbuf(sc, c, m)
 		MCLINITREFERENCE(m_new);
 	} else {
 		m_new = m;
-		m_new->m_len = m_new->m_pkthdr.len = LGE_JUMBO_FRAMELEN;
+		m_new->m_len = m_new->m_pkthdr.len = ETHER_MAX_LEN_JUMBO;
 		m_new->m_data = m_new->m_ext.ext_buf;
 	}
 
@@ -1493,7 +1493,7 @@ int lge_ioctl(ifp, command, data)
                 }
 		break;
 	case SIOCSIFMTU:
-		if (ifr->ifr_mtu > LGE_JUMBO_MTU)
+		if (ifr->ifr_mtu > ETHERMTU_JUMBO)
 			error = EINVAL;
 		else
 			ifp->if_mtu = ifr->ifr_mtu;

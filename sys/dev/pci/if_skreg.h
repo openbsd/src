@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_skreg.h,v 1.12 2004/08/04 19:37:26 mcbride Exp $	*/
+/*	$OpenBSD: if_skreg.h,v 1.13 2004/08/05 19:57:17 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1314,11 +1314,9 @@ struct sk_tx_desc {
  * layers. To be safe, we allocate 1.5 times the number of
  * receive descriptors.
  */
-#define SK_JUMBO_FRAMELEN	9018
-#define SK_JUMBO_MTU		(SK_JUMBO_FRAMELEN-ETHER_HDR_LEN-ETHER_CRC_LEN)
 #define SK_JSLOTS		384
 
-#define SK_JRAWLEN	(SK_JUMBO_FRAMELEN + ETHER_ALIGN)
+#define SK_JRAWLEN	(ETHER_MAX_LEN_JUMBO + ETHER_ALIGN)
 #define SK_JLEN		SK_JRAWLEN
 #define SK_MCLBYTES	SK_JLEN
 #define SK_JPAGESZ	PAGE_SIZE

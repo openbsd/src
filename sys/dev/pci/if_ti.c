@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.51 2004/06/18 20:33:56 mcbride Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.52 2004/08/05 19:57:17 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -881,14 +881,14 @@ int ti_newbuf_jumbo(sc, i, m)
 		m_new->m_data = m_new->m_ext.ext_buf = (void *)buf;
 		m_new->m_flags |= M_EXT;
 		m_new->m_len = m_new->m_pkthdr.len =
-		    m_new->m_ext.ext_size = TI_JUMBO_FRAMELEN;
+		    m_new->m_ext.ext_size = ETHER_MAX_LEN_JUMBO;
 		m_new->m_ext.ext_free = ti_jfree;
 		m_new->m_ext.ext_arg = sc;
 		MCLINITREFERENCE(m_new);
 	} else {
 		m_new = m;
 		m_new->m_data = m_new->m_ext.ext_buf;
-		m_new->m_ext.ext_size = TI_JUMBO_FRAMELEN;
+		m_new->m_ext.ext_size = ETHER_MAX_LEN_JUMBO;
 	}
 
 	m_adj(m_new, ETHER_ALIGN);
@@ -1060,7 +1060,7 @@ int ti_init_tx_ring(sc)
 
 	SLIST_INIT(&sc->ti_tx_map_listhead);
 	for (i = 0; i < TI_TX_RING_CNT; i++) {
-		if (bus_dmamap_create(sc->sc_dmatag, TI_JUMBO_FRAMELEN,
+		if (bus_dmamap_create(sc->sc_dmatag, ETHER_MAX_LEN_JUMBO,
 		    TI_NTXSEG, MCLBYTES, 0, BUS_DMA_NOWAIT, &dmamap))
 			return(ENOBUFS);
 
@@ -1457,7 +1457,7 @@ int ti_gibinit(sc)
 	/* Set up the jumbo receive ring. */
 	rcb = &sc->ti_rdata->ti_info.ti_jumbo_rx_rcb;
 	TI_HOSTADDR(rcb->ti_hostaddr) = TI_RING_DMA_ADDR(sc, ti_rx_jumbo_ring);
-	rcb->ti_max_len = TI_JUMBO_FRAMELEN;
+	rcb->ti_max_len = ETHER_MAX_LEN_JUMBO;
 	rcb->ti_flags = 0;
 	rcb->ti_flags |= TI_RCB_FLAG_IP_CKSUM | TI_RCB_FLAG_NO_PHDR_CKSUM;
 #if NVLAN > 0
@@ -2583,7 +2583,7 @@ int ti_ioctl(ifp, command, data)
 		}
 		break;
 	case SIOCSIFMTU:
-		if (ifr->ifr_mtu > TI_JUMBO_FRAMELEN - ETHER_HDR_LEN) {
+		if (ifr->ifr_mtu > ETHERMTU_JUMBO) {
 			error = EINVAL;
 		} else {
 			ifp->if_mtu = ifr->ifr_mtu;
