@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wsmoused.8,v 1.11 2003/06/12 17:08:30 deraadt Exp $
+.\"	$OpenBSD: wsmoused.8,v 1.12 2003/11/08 08:49:51 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Baptiste Marchand
 .\" All rights reserved.
@@ -33,13 +33,13 @@
 .Sh SYNOPSIS
 .Nm wsmoused
 .Op Fl 2df
-.Op Fl t Ar type
 .Op Fl C Ar thresh
-.Op Fl I Ar pid_file
+.Op Fl I Ar file
 .Op Fl M Ar N=M
 .Op Fl p Ar device
+.Op Fl t Ar type
 .Nm wsmoused
-.Op Fl i
+.Fl i
 .Op Fl p Ar device
 .Sh DESCRIPTION
 .Nm
@@ -63,14 +63,20 @@ i.e.,
 maps the right mouse button to paste.
 .Pp
 The options are as follows:
-.Bl -tag -width Ds
+.Bl -tag -width "-p device"
 .It Fl 2
-Indicate that the mouse has two-buttons. In that case, the right button pastes.
+Indicate that the mouse has two-buttons.
+In that case, the right button pastes.
 .It Fl C Ar thresh
 Set double click speed as the maximum interval in msec between button clicks.
 If omitted, the default value of 500 msec will be assumed.
 This option will have effect only on the cut and paste operations
 in the text mode console.
+.It Fl d
+Enable debugging messages.
+.It Fl f
+Do not become a daemon and instead run as a foreground process.
+Useful for testing and debugging.
 .It Fl I Ar file
 Write the process ID of
 .Nm
@@ -78,6 +84,8 @@ to the specified
 .Ar file .
 If omitted, the process ID will be stored in
 .Pa /var/run/wsmoused.pid .
+.It Fl i
+Print the type and the protocol of the mouse and exit.
 .It Fl M Ar N=M
 Assign the physical button
 .Ar M
@@ -90,28 +98,21 @@ In this case the logical button will be down, if either of the assigned
 physical buttons is held down.
 Do not put space around
 .Ql = .
-.It Fl d
-Enable debugging messages.
-.It Fl f
-Do not become a daemon and instead run as a foreground process.
-Useful for testing and debugging.
-.It Fl i
-Print the type and the protocol of the mouse and exit.
 .It Fl p Ar device
 Use device
 .Ar device
-to communicate with the mouse. If this option is not present, the device opened
-is
+to communicate with the mouse.
+If this option is not present, the device opened is
 .Pa /dev/wsmouse
 (the multiplexer device that receives all mouse events from all wsmouse
-compatible mice on the system). For a serial mouse, you have to explicitly
-specify the serial port, i.e.
+compatible mice on the system).
+For a serial mouse, you have to explicitly specify the serial port, i.e.\&
 .Ar device
 must be one of
 .Pa /dev/cua0[0-3] .
 .It Fl t Ar type
-This option only applies to serial mice. It specifies the protocol used by the
-serial mice.
+This option only applies to serial mice.
+It specifies the protocol used by the serial mice.
 You may explicitly specify a type listed below or use
 .Em auto
 to let
