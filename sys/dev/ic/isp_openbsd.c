@@ -1,4 +1,4 @@
-/* 	$OpenBSD: isp_openbsd.c,v 1.19 2001/06/24 20:59:38 fgsch Exp $ */
+/* 	$OpenBSD: isp_openbsd.c,v 1.20 2001/09/01 07:16:40 mjacob Exp $ */
 /*
  * Platform (OpenBSD) dependent common attachment code for Qlogic adapters.
  *
@@ -232,7 +232,7 @@ ispcmd_slow(XS_T *xs)
 	 * Okay, we know about this device now,
 	 * so mark parameters to be updated for it.
 	 */
-	sdp->isp_devparam[tgt].dev_flags = f;
+	sdp->isp_devparam[tgt].goal_flags = f;
 	sdp->isp_devparam[tgt].dev_update = 1;
 	isp->isp_update |= (1 << chan);
 
@@ -413,7 +413,9 @@ isp_polled_cmd(struct ispsoftc *isp, XS_T *xs)
 		infinite = 1;
 
 	while (mswait || infinite) {
-		if (isp_intr((void *)isp)) {
+		u_int16_t isr, sema, mbox;
+		if (ISP_READ_ISR(isp, &isr, &sema, &mbox)) {
+			isp_intr(isp, isr, sema, mbox);
 			if (XS_CMD_DONE_P(xs)) {
 				break;
 			}
@@ -478,7 +480,7 @@ isp_wdog(void *arg)
 	ISP_LOCK(isp);
 	handle = isp_find_handle(isp, xs);
 	if (handle) {
-		u_int16_t r, r1, i;
+		u_int16_t isr, sema, mbox;
 
 		if (XS_CMD_DONE_P(xs)) {
 			isp_prt(isp, ISP_LOGDEBUG1,
@@ -498,16 +500,13 @@ isp_wdog(void *arg)
 
 		XS_CMD_S_WDOG(xs);
 
-		i = 0;
-		do {
-			r = ISP_READ(isp, BIU_ISR);
-			USEC_DELAY(1);
-			r1 = ISP_READ(isp, BIU_ISR);
-		} while (r != r1 && ++i < 1000);
+		if (ISP_READ_ISR(isp, &isr, &sema, &mbox)) {
+			isp_intr(isp, isr, sema, mbox);
+		}
 
-		if (INT_PENDING(isp, r) && isp_intr(isp) && XS_CMD_DONE_P(xs)) {
-			isp_prt(isp, ISP_LOGINFO, "watchdog cleanup (%x, %x)",
-			    handle, r);
+		if (XS_CMD_DONE_P(xs)) {
+			isp_prt(isp, ISP_LOGINFO,
+			    "watchdog cleanup for handle 0x%x", handle);
 			XS_CMD_C_WDOG(xs);
 			isp_done(xs);
 		} else if (XS_CMD_GRACE_P(xs)) {
@@ -523,7 +522,8 @@ isp_wdog(void *arg)
 			if (XS_XFRLEN(xs)) {
 				ISP_DMAFREE(isp, xs, handle);
 			}
-			printf("%s: watchdog timeout (%x, %x)\n", handle, r);
+			isp_prt(isp, ISP_LOGWARN,
+			    "watchdog timeout on handle %x", handle);
 			isp_destroy_handle(isp, handle);
 			XS_SETERR(xs, XS_TIMEOUT);
 			XS_CMD_S_CLEAR(xs);
@@ -532,8 +532,8 @@ isp_wdog(void *arg)
 			u_int16_t iptr, optr;
 			ispreq_t *mp;
 
-			isp_prt(isp, ISP_LOGINFO,
-			    "possible command timeout (%x, %x)", handle, r);
+			isp_prt(isp, ISP_LOGWARN,
+			    "possible command timeout on handle %x", handle);
 
 			XS_CMD_C_WDOG(xs);
 			timeout_add(&xs->stimeout, _XT(xs));
@@ -690,11 +690,11 @@ isp_async(struct ispsoftc *isp, ispasync_t cmd, void *arg)
 		bus = (tgt >> 16) & 0xffff;
 		tgt &= 0xffff;
 		sdp += bus;
-		flags = sdp->isp_devparam[tgt].cur_dflags;
-		period = sdp->isp_devparam[tgt].cur_period;
+		flags = sdp->isp_devparam[tgt].actv_flags;;
+		period = sdp->isp_devparam[tgt].actv_period;
 
 		if ((flags & DPARM_SYNC) && period &&
-		    (sdp->isp_devparam[tgt].cur_offset) != 0) {
+		    (sdp->isp_devparam[tgt].actv_offset) != 0) {
 			/*
 			 * There's some ambiguity about our negotiated speed
 			 * if we haven't detected LVD mode correctly (which
@@ -742,7 +742,7 @@ isp_async(struct ispsoftc *isp, ispasync_t cmd, void *arg)
 		if (mhz) {
 			isp_prt(isp, ISP_LOGINFO,
 			    "Bus %d Target %d at %dMHz Max Offset %d%s",
-			    bus, tgt, mhz, sdp->isp_devparam[tgt].cur_offset,
+			    bus, tgt, mhz, sdp->isp_devparam[tgt].actv_offset,
 			    wt);
 		} else {
 			isp_prt(isp, ISP_LOGINFO,

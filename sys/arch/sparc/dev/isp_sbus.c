@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_sbus.c,v 1.17 2001/05/16 12:49:48 ho Exp $	*/
+/*	$OpenBSD: isp_sbus.c,v 1.18 2001/09/01 07:16:39 mjacob Exp $	*/
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -47,6 +47,8 @@
 #include <dev/microcode/isp/asm_sbus.h>
 #endif
 
+static int
+isp_sbus_rd_isr(struct ispsoftc *, u_int16_t *, u_int16_t *, u_int16_t *);
 static u_int16_t isp_sbus_rd_reg(struct ispsoftc *, int);
 static void isp_sbus_wr_reg(struct ispsoftc *, int, u_int16_t);
 static int isp_sbus_mbxdma(struct ispsoftc *);
@@ -61,6 +63,7 @@ static int isp_sbus_intr(void *);
 #endif
 
 static struct ispmdvec mdvec = {
+	isp_sbus_rd_isr,
 	isp_sbus_rd_reg,
 	isp_sbus_wr_reg,
 	isp_sbus_mbxdma,
@@ -266,6 +269,35 @@ isp_sbus_attach(struct device *parent, struct device *self, void *aux)
 	ISP_UNLOCK(isp);
 }
 
+#define	IspVirt2Off(a, x)	\
+	(((struct isp_sbussoftc *)a)->sbus_poff[((x) & _BLK_REG_MASK) >> \
+	_BLK_REG_SHFT] + ((x) & 0xff))
+
+#define	BXR2(pcs, off)		\
+	(*((u_int16_t *) &sbc->sbus_reg[off]))
+
+static int
+isp_sbus_rd_isr(struct ispsoftc *isp, u_int16_t *isrp,
+    u_int16_t *semap, u_int16_t *mbp)
+{
+	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
+	u_int16_t isr, sema;
+
+	isr = BXR2(pcs, IspVirt2Off(isp, BIU_ISR));
+	sema = BXR2(pcs, IspVirt2Off(isp, BIU_SEMA));
+	isp_prt(isp, ISP_LOGDEBUG3, "ISR 0x%x SEMA 0x%x", isr, sema);
+	isr &= INT_PENDING_MASK(isp);
+	sema &= BIU_SEMA_LOCK;
+	if (isr == 0 && sema == 0) {
+		return (0);
+	}
+	*isrp = isr;
+	if ((*semap = sema) != 0) {
+		*mbp = BXR2(pcs, IspVirt2Off(isp, OUTMAILBOX0));
+	}
+	return (1);
+}
+
 static u_int16_t
 isp_sbus_rd_reg(struct ispsoftc *isp, int regoff)
 {
@@ -438,16 +470,22 @@ isp_sbus_dmateardown(struct ispsoftc *isp, XS_T *xs, u_int16_t handle)
 static int
 isp_sbus_intr(void *arg)
 {
-	int r;
+	u_int16_t isr, sema, mbox;
 	struct ispsoftc *isp = (struct ispsoftc *)arg;
+
+	isp->isp_intcnt++;
+	if (ISP_READ_ISR(isp, &isr, &sema, &mbox) == 0) {
+		isp->isp_intbogus++;
+		return (0);
+	} else {
 #if	0
-	struct iss_sbussoftc *s = (struct isp_sbussoftc *)isp;
-
-	bus_dmamap_sync(p->pci_dmat, p->pci_result_dmap, BUS_DMASYNC_POSTREAD);
+		struct iss_sbussoftc *s = (struct isp_sbussoftc *)isp;
+		bus_dmamap_sync(s->pci_dmat, s->pci_result_dmap,
+		    BUS_DMASYNC_POSTREAD);
 #endif
-
-	isp->isp_osinfo.onintstack = 1;
-	r = isp_intr(arg);
-	isp->isp_osinfo.onintstack = 0;
-	return (r);
+		isp->isp_osinfo.onintstack = 1;
+		isp_intr(isp, isr, sema, mbox);
+		isp->isp_osinfo.onintstack = 0;
+		return (1);
+	}
 }
