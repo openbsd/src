@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.23 2004/10/12 09:34:01 espie Exp $
+# $OpenBSD: pkg_create,v 1.24 2004/11/15 16:47:54 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -388,6 +388,19 @@ if (defined $opt_B) {
 } elsif (defined $ENV{'PKG_PREFIX'}) {
 	$base = $ENV{'PKG_PREFIX'};
 }
+
+my $fullpkgpath = $defines{'FULLPKGPATH'};
+my $cdrom = $defines{'PERMIT_PACKAGE_CDROM'};
+my $ftp = $defines{'PERMIT_PACKAGE_FTP'};
+if (!defined $plist->{extrainfo} && 
+    defined $fullpkgpath && defined $cdrom && defined $ftp) {
+	$cdrom = 'yes' if $cdrom =~ m/^yes$/i;
+	$ftp = 'yes' if $ftp =~ m/^yes$/i;
+
+	OpenBSD::PackingElement::ExtraInfo->add($plist, 
+	    $fullpkgpath, $cdrom, $ftp);
+}
+
 
 $plist->makesum($base);
 $plist->avert_duplicates();
