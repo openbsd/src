@@ -1,4 +1,4 @@
-/*	$OpenBSD: savecore.c,v 1.38 2003/12/28 04:09:13 espie Exp $	*/
+/*	$OpenBSD: savecore.c,v 1.39 2004/01/13 21:03:34 otto Exp $	*/
 /*	$NetBSD: savecore.c,v 1.26 1996/03/18 21:16:05 leo Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.3 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: savecore.c,v 1.38 2003/12/28 04:09:13 espie Exp $";
+static char rcsid[] = "$OpenBSD: savecore.c,v 1.39 2004/01/13 21:03:34 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -351,7 +351,7 @@ check_kmem(void)
 int
 dump_exists(void)
 {
-	int newdumpmag;
+	u_long newdumpmag;
 
 	(void)KREAD(kd_dump, dump_nl[X_DUMPMAG].n_value, &newdumpmag);
 
@@ -366,7 +366,8 @@ dump_exists(void)
 	 */
 	if (newdumpmag != dumpmag) {
 		if (verbose)
-			syslog(LOG_WARNING, "magic number mismatch (%x != %x)",
+			syslog(LOG_WARNING,
+			    "magic number mismatch (%lx != %lx)",
 			    newdumpmag, dumpmag);
 		syslog(LOG_WARNING, "no core dump");
 		return (0);
