@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.h,v 1.20 2000/12/07 22:36:45 mickey Exp $	*/
+/*	$OpenBSD: interface.h,v 1.21 2000/12/07 22:52:00 mickey Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/interface.h,v 1.20 2000/12/07 22:36:45 mickey Exp $ (LBL)
+ * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/interface.h,v 1.21 2000/12/07 22:52:00 mickey Exp $ (LBL)
  */
 
 #ifndef tcpdump_interface_h
@@ -226,6 +226,7 @@ extern void sunrpcrequest_print(const u_char *, u_int, const u_char *);
 extern void cnfp_print(const u_char *, u_int, const u_char *);
 extern void tcp_print(const u_char *, u_int, const u_char *);
 extern void tftp_print(const u_char *, u_int);
+extern void timed_print(const u_char *, u_int);
 extern void udp_print(const u_char *, u_int, const u_char *);
 extern void wb_print(const void *, u_int);
 extern void isakmp_print(const u_char *, u_int);

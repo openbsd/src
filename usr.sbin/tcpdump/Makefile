@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.25 2000/12/07 22:36:45 mickey Exp $
+#	$OpenBSD: Makefile,v 1.26 2000/12/07 22:52:00 mickey Exp $
 #
 #  Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
 # 	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,7 @@ DPADD+=	${LIBL} ${LIBPCAP}
 SRCS=	tcpdump.c addrtoname.c \
 	print-ether.c print-ip.c print-arp.c print-tcp.c print-udp.c \
 	print-atalk.c print-domain.c print-tftp.c print-bootp.c print-nfs.c \
-	print-icmp.c print-sl.c print-ppp.c print-rip.c \
+	print-icmp.c print-sl.c print-ppp.c print-rip.c print-timed.c \
 	print-snmp.c print-ntp.c print-null.c print-egp.c print-ospf.c \
 	print-fddi.c print-llc.c print-smb.c smbutil.c print-sunrpc.c \
 	print-vrrp.c print-wb.c print-decnet.c print-isoclns.c print-ipx.c \

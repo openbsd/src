@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-udp.c,v 1.16 2000/12/07 22:36:46 mickey Exp $	*/
+/*	$OpenBSD: print-udp.c,v 1.17 2000/12/07 22:52:00 mickey Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-udp.c,v 1.16 2000/12/07 22:36:46 mickey Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-udp.c,v 1.17 2000/12/07 22:52:00 mickey Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -349,6 +349,7 @@ static int udp_cksum(register const struct ip *ip,
 #define KERBEROS_SEC_PORT 750	/*XXX*/
 #define L2TP_PORT 1701		/*XXX*/
 #define ISAKMP_PORT   500	/*XXX*/
+#define TIMED_PORT 525		/*XXX*/
 #define NETBIOS_NS_PORT    137	/*XXX*/
 #define NETBIOS_DGRAM_PORT 138	/*XXX*/
 #define OLD_RADIUS_AUTH_PORT 1645
@@ -561,6 +562,8 @@ udp_print(register const u_char *bp, u_int length, register const u_char *bp2)
 #define ISPORT(p) (dport == (p) || sport == (p))
 		if (ISPORT(NAMESERVER_PORT))
 			ns_print((const u_char *)(up + 1), length);
+		else if (ISPORT(TIMED_PORT))
+			timed_print((const u_char *)(up + 1), length);
 		else if (ISPORT(TFTP_PORT))
 			tftp_print((const u_char *)(up + 1), length);
 		else if (ISPORT(IPPORT_BOOTPC) || ISPORT(IPPORT_BOOTPS))
