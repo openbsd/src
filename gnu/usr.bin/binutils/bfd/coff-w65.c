@@ -1,5 +1,5 @@
 /* BFD back-end for WDC 65816 COFF binaries.
-   Copyright 1995, 96, 1997 Free Software Foundation, Inc.
+   Copyright 1995, 1996, 1997, 1999, 2000 Free Software Foundation, Inc.
    Written by Steve Chamberlain, <sac@cygnus.com>.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -42,7 +42,6 @@ static reloc_howto_type howto_table[] =
 
 };
 
-
 /* Turn a howto into a reloc number */
 
 #define SELECT_RELOC(x,howto) \
@@ -52,14 +51,12 @@ static reloc_howto_type howto_table[] =
 #define W65 1			/* Customize coffcode.h */
 #define __A_MAGIC_SET__
 
-
 /* Code to swap in the reloc */
 #define SWAP_IN_RELOC_OFFSET   bfd_h_get_32
 #define SWAP_OUT_RELOC_OFFSET bfd_h_put_32
 #define SWAP_OUT_RELOC_EXTRA(abfd, src, dst) \
   dst->r_stuff[0] = 'S'; \
   dst->r_stuff[1] = 'C';
-
 
 static int
 select_reloc (howto)
@@ -81,13 +78,10 @@ rtype2howto (internal, dst)
 
 #define RTYPE2HOWTO(internal, relocentry) rtype2howto(internal,relocentry)
 
-
 /* Perform any necessary magic to the addend in a reloc entry */
-
 
 #define CALC_ADDEND(abfd, symbol, ext_reloc, cache_ptr) \
  cache_ptr->addend =  ext_reloc.r_offset;
-
 
 #define RELOC_PROCESSING(relent,reloc,symbols,abfd,section) \
  reloc_processing(relent, reloc, symbols, abfd, section)
@@ -112,14 +106,11 @@ reloc_processing (relent, reloc, symbols, abfd, section)
       relent->sym_ptr_ptr = (asymbol **)&(bfd_abs_symbol);
     }
 
-
-
   relent->addend = reloc->r_offset;
 
   relent->address -= section->vma;
   /*  relent->section = 0;*/
 }
-
 
 static int
 h8300_reloc16_estimate(abfd, input_section, reloc, shrink, link_info)
@@ -129,11 +120,11 @@ h8300_reloc16_estimate(abfd, input_section, reloc, shrink, link_info)
      unsigned int shrink;
      struct bfd_link_info *link_info;
 {
-  bfd_vma value;  
+  bfd_vma value;
   bfd_vma dot;
   bfd_vma gap;
 
-  /* The address of the thing to be relocated will have moved back by 
+  /* The address of the thing to be relocated will have moved back by
    the size of the shrink  - but we don't change reloc->address here,
    since we need it to know where the relocation lives in the source
    uncooked section */
@@ -141,10 +132,9 @@ h8300_reloc16_estimate(abfd, input_section, reloc, shrink, link_info)
   /*  reloc->address -= shrink;   conceptual */
 
   bfd_vma address = reloc->address - shrink;
-  
 
   switch (reloc->howto->type)
-    {     
+    {
     case R_MOV16B2:
     case R_JMP2:
       shrink+=2;
@@ -155,40 +145,40 @@ h8300_reloc16_estimate(abfd, input_section, reloc, shrink, link_info)
       value = bfd_coff_reloc16_get_value(reloc, link_info, input_section);
 
       if (value >= 0xff00)
-	{ 
+	{
 
 	  /* Change the reloc type from 16bit, possible 8 to 8bit
 	     possible 16 */
-	  reloc->howto = reloc->howto + 1;	  
+	  reloc->howto = reloc->howto + 1;
 	  /* The place to relc moves back by one */
 	  /* This will be two bytes smaller in the long run */
 	  shrink +=2 ;
 	  bfd_perform_slip(abfd, 2, input_section, address);
-	}      
+	}
 
       break;
-      /* This is the 24 bit branch which could become an 8 bitter, 
+      /* This is the 24 bit branch which could become an 8 bitter,
        the relocation points to the first byte of the insn, not the
        actual data */
 
     case R_JMPL1:
       value = bfd_coff_reloc16_get_value(reloc, link_info, input_section);
-	
+
       dot = input_section->output_section->vma +
 	input_section->output_offset + address;
-  
+
       /* See if the address we're looking at within 127 bytes of where
 	 we are, if so then we can use a small branch rather than the
 	 jump we were going to */
 
       gap = value - dot ;
-  
+
       if (-120 < (long)gap && (long)gap < 120 )
-	{ 
+	{
 
 	  /* Change the reloc type from 24bit, possible 8 to 8bit
 	     possible 32 */
-	  reloc->howto = reloc->howto + 1;	  
+	  reloc->howto = reloc->howto + 1;
 	  /* This will be two bytes smaller in the long run */
 	  shrink +=2 ;
 	  bfd_perform_slip(abfd, 2, input_section, address);
@@ -198,23 +188,22 @@ h8300_reloc16_estimate(abfd, input_section, reloc, shrink, link_info)
     case R_JMP1:
 
       value = bfd_coff_reloc16_get_value(reloc, link_info, input_section);
-	
+
       dot = input_section->output_section->vma +
 	input_section->output_offset + address;
-  
+
       /* See if the address we're looking at within 127 bytes of where
 	 we are, if so then we can use a small branch rather than the
 	 jump we were going to */
 
       gap = value - (dot - shrink);
-  
 
       if (-120 < (long)gap && (long)gap < 120 )
-	{ 
+	{
 
 	  /* Change the reloc type from 16bit, possible 8 to 8bit
 	     possible 16 */
-	  reloc->howto = reloc->howto + 1;	  
+	  reloc->howto = reloc->howto + 1;
 	  /* The place to relc moves back by one */
 
 	  /* This will be two bytes smaller in the long run */
@@ -224,10 +213,8 @@ h8300_reloc16_estimate(abfd, input_section, reloc, shrink, link_info)
       break;
     }
 
-  
   return shrink;
 }
-
 
 /* First phase of a relaxing link */
 
@@ -336,8 +323,8 @@ h8300_reloc16_extra_cases (abfd, link_info, link_order, reloc, data, src_ptr,
       {
 	int gap = bfd_coff_reloc16_get_value (reloc, link_info,
 					      input_section);
-	bfd_vma dot = link_order->offset 
-	  + dst_address 
+	bfd_vma dot = link_order->offset
+	  + dst_address
 	    + link_order->u.indirect.section->output_section->vma;
 
 	gap -= dot + 1;
@@ -346,7 +333,7 @@ h8300_reloc16_extra_cases (abfd, link_info, link_order, reloc, data, src_ptr,
 		 (link_info, bfd_asymbol_name (*reloc->sym_ptr_ptr),
 		  reloc->howto->name, reloc->addend, input_section->owner,
 		  input_section, reloc->address)))
-	    abort();
+	    abort ();
 	}
 	bfd_put_8 (abfd, gap, data + dst_address);
 	dst_address += 1;
@@ -358,10 +345,9 @@ h8300_reloc16_extra_cases (abfd, link_info, link_order, reloc, data, src_ptr,
       {
 	bfd_vma gap = bfd_coff_reloc16_get_value (reloc, link_info,
 						  input_section);
-	bfd_vma dot = link_order->offset 
-	  + dst_address 
+	bfd_vma dot = link_order->offset
+	  + dst_address
 	    + link_order->u.indirect.section->output_section->vma;
-
 
 	/* This wraps within the page, so ignore the relativeness, look at the
 	   high part */
@@ -370,7 +356,7 @@ h8300_reloc16_extra_cases (abfd, link_info, link_order, reloc, data, src_ptr,
 		 (link_info, bfd_asymbol_name (*reloc->sym_ptr_ptr),
 		  reloc->howto->name, reloc->addend, input_section->owner,
 		  input_section, reloc->address)))
-	    abort();
+	    abort ();
 	}
 
 	gap -= dot + 2;
@@ -380,7 +366,7 @@ h8300_reloc16_extra_cases (abfd, link_info, link_order, reloc, data, src_ptr,
       }
       break;
     default:
-      printf(_("ignoring reloc %s\n"), reloc->howto->name);
+      printf (_("ignoring reloc %s\n"), reloc->howto->name);
       break;
 
     }
@@ -393,7 +379,6 @@ h8300_reloc16_extra_cases (abfd, link_info, link_order, reloc, data, src_ptr,
 #define coff_reloc16_estimate h8300_reloc16_estimate
 
 #include "coffcode.h"
-
 
 #undef coff_bfd_get_relocated_section_contents
 #undef coff_bfd_relax_section

@@ -1,5 +1,5 @@
 /* BFD back-end for i386 a.out binaries under LynxOS.
-   Copyright (C) 1990, 91, 92, 93, 94, 95, 96, 1999
+   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996
    Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.

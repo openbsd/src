@@ -1,5 +1,5 @@
 /* Print instructions for the Motorola 88000, for GDB and GNU Binutils.
-   Copyright (c) 1986, 1987, 1988, 1989, 1990, 1991, 1993, 1998
+   Copyright 1986, 1987, 1988, 1989, 1990, 1991, 1993, 1998, 2000
    Free Software Foundation, Inc.
    Contributed by Data General Corporation, November 1989.
    Partially derived from an earlier printcmd.c.

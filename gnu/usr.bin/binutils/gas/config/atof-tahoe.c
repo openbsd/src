@@ -1,27 +1,25 @@
-
 /* atof_tahoe.c - turn a string into a Tahoe floating point number
-   Copyright (C) 1987, 1998 Free Software Foundation, Inc.
-   */
+   Copyright 1987, 1993, 2000 Free Software Foundation, Inc.
 
 /* This is really a simplified version of atof_vax.c. I glommed it wholesale
    and then shaved it down. I don't even know how it works. (Don't you find
-   my honesty refreshing?  bowen@cs.Buffalo.EDU (Devon E Bowen)
+   my honesty refreshing?  Devon E Bowen <bowen@cs.buffalo.edu>
 
-   I don't allow uppercase letters in the precision descrpitors. Ie 'f' and
-   'd' are allowed but 'F' and 'D' aren't */
+   I don't allow uppercase letters in the precision descrpitors.
+   i.e. 'f' and 'd' are allowed but 'F' and 'D' aren't.  */
 
 #include "as.h"
 
-/* Precision in LittleNums. */
+/* Precision in LittleNums.  */
 #define MAX_PRECISION (4)
 #define D_PRECISION (4)
 #define F_PRECISION (2)
 
-/* Precision in chars. */
+/* Precision in chars.  */
 #define D_PRECISION_CHARS (8)
 #define F_PRECISION_CHARS (4)
 
-/* Length in LittleNums of guard bits. */
+/* Length in LittleNums of guard bits.  */
 #define GUARD (2)
 
 static const long int mask[] =
@@ -61,22 +59,21 @@ static const long int mask[] =
   0xffffffff
 };
 
-
-/* Shared between flonum_gen2tahoe and next_bits */
+/* Shared between flonum_gen2tahoe and next_bits.  */
 static int bits_left_in_littlenum;
 static LITTLENUM_TYPE *littlenum_pointer;
 static LITTLENUM_TYPE *littlenum_end;
 
 #if __STDC__ == 1
 
-int flonum_gen2tahoe (int format_letter, FLONUM_TYPE * f, LITTLENUM_TYPE * words);
+int flonum_gen2tahoe (int format_letter, FLONUM_TYPE * f,
+		      LITTLENUM_TYPE * words);
 
-#else /* not __STDC__ */
+#else /* not __STDC__  */
 
 int flonum_gen2tahoe ();
 
-#endif /* not __STDC__ */
-
+#endif /* not __STDC__  */
 
 static int
 next_bits (number_of_bits)
@@ -103,23 +100,29 @@ next_bits (number_of_bits)
       return_value = mask[number_of_bits] &
 	((*littlenum_pointer) >> bits_left_in_littlenum);
     }
-  return (return_value);
+  return return_value;
 }
 
 static void
 make_invalid_floating_point_number (words)
      LITTLENUM_TYPE *words;
 {
-  *words = 0x8000;		/* Floating Reserved Operand Code */
+  /* Floating Reserved Operand Code.  */
+  *words = 0x8000;
 }
 
-static int			/* 0 means letter is OK. */
+static int			/* 0 means letter is OK.  */
 what_kind_of_float (letter, precisionP, exponent_bitsP)
-     char letter;		/* In: lowercase please. What kind of float? */
-     int *precisionP;		/* Number of 16-bit words in the float. */
-     long int *exponent_bitsP;	/* Number of exponent bits. */
+     /* In: lowercase please. What kind of float?  */
+     char letter;
+
+     /* Number of 16-bit words in the float.  */
+     int *precisionP;
+
+     /* Number of exponent bits.  */
+     long int *exponent_bitsP;
 {
-  int retval;			/* 0: OK. */
+  int retval;			/* 0: OK.  */
 
   retval = 0;
   switch (letter)
@@ -141,28 +144,23 @@ what_kind_of_float (letter, precisionP, exponent_bitsP)
   return (retval);
 }
 
-/***********************************************************************\
-*									*
-*	Warning: this returns 16-bit LITTLENUMs, because that is	*
-*	what the VAX thinks in. It is up to the caller to figure	*
-*	out any alignment problems and to conspire for the bytes/word	*
-*	to be emitted in the right order. Bigendians beware!		*
-*									*
-\***********************************************************************/
+/* Warning: This returns 16-bit LITTLENUMs, because that is what the
+   VAX thinks in.  It is up to the caller to figure out any alignment
+   problems and to conspire for the bytes/word to be emitted in the
+   right order. Bigendians beware!  */
 
-char *				/* Return pointer past text consumed. */
+char *				/* Return pointer past text consumed.  */
 atof_tahoe (str, what_kind, words)
-     char *str;			/* Text to convert to binary. */
+     char *str;			/* Text to convert to binary.  */
      char what_kind;		/* 'd', 'f', 'g', 'h' */
-     LITTLENUM_TYPE *words;	/* Build the binary here. */
+     LITTLENUM_TYPE *words;	/* Build the binary here.  */
 {
   FLONUM_TYPE f;
   LITTLENUM_TYPE bits[MAX_PRECISION + MAX_PRECISION + GUARD];
-  /* Extra bits for zeroed low-order bits. */
-  /* The 1st MAX_PRECISION are zeroed, */
-  /* the last contain flonum bits. */
+  /* Extra bits for zeroed low-order bits.  */
+  /* The 1st MAX_PRECISION are zeroed, the last contain flonum bits.  */
   char *return_value;
-  int precision;		/* Number of 16-bit words in the format. */
+  int precision;		/* Number of 16-bit words in the format.  */
   long int exponent_bits;
 
   return_value = str;
@@ -174,51 +172,50 @@ atof_tahoe (str, what_kind, words)
 
   if (what_kind_of_float (what_kind, &precision, &exponent_bits))
     {
-      return_value = NULL;	/* We lost. */
+      /* We lost.  */
+      return_value = NULL;
       make_invalid_floating_point_number (words);
     }
   if (return_value)
     {
       memset (bits, '\0', sizeof (LITTLENUM_TYPE) * MAX_PRECISION);
 
-      /* Use more LittleNums than seems */
-      /* necessary: the highest flonum may have */
-      /* 15 leading 0 bits, so could be useless. */
+      /* Use more LittleNums than seems necessary:
+	 the highest flonum may have 15 leading 0 bits, so could be
+	 useless.  */
       f.high = f.low + precision - 1 + GUARD;
 
       if (atof_generic (&return_value, ".", "eE", &f))
 	{
 	  make_invalid_floating_point_number (words);
-	  return_value = NULL;	/* we lost */
+	  /* We lost.  */
+	  return_value = NULL;
 	}
       else
 	{
 	  if (flonum_gen2tahoe (what_kind, &f, words))
-	    {
-	      return_value = NULL;
-	    }
+	    return_value = NULL;
 	}
     }
-  return (return_value);
+  return return_value;
 }
 
-/*
- * In: a flonum, a Tahoe floating point format.
- * Out: a Tahoe floating-point bit pattern.
- */
+/* In: a flonum, a Tahoe floating point format.
+   Out: a Tahoe floating-point bit pattern.  */
 
-int				/* 0: OK. */
+int				/* 0: OK.  */
 flonum_gen2tahoe (format_letter, f, words)
-     char format_letter;	/* One of 'd' 'f'. */
+     char format_letter;	/* One of 'd' 'f'.  */
      FLONUM_TYPE *f;
-     LITTLENUM_TYPE *words;	/* Deliver answer here. */
+     LITTLENUM_TYPE *words;	/* Deliver answer here.  */
 {
   LITTLENUM_TYPE *lp;
   int precision;
   long int exponent_bits;
-  int return_value;		/* 0 == OK. */
+  int return_value;		/* 0 == OK.  */
 
-  return_value = what_kind_of_float (format_letter, &precision, &exponent_bits);
+  return_value =
+    what_kind_of_float (format_letter, &precision, &exponent_bits);
   if (return_value != 0)
     {
       make_invalid_floating_point_number (words);
@@ -227,7 +224,7 @@ flonum_gen2tahoe (format_letter, f, words)
     {
       if (f->low > f->leader)
 	{
-	  /* 0.0e0 seen. */
+	  /* 0.0e0 seen.  */
 	  memset (words, '\0', sizeof (LITTLENUM_TYPE) * precision);
 	}
       else
@@ -239,95 +236,91 @@ flonum_gen2tahoe (format_letter, f, words)
 	  int exponent_skippage;
 	  LITTLENUM_TYPE word1;
 
-	  /* JF: Deal with new Nan, +Inf and -Inf codes */
+	  /* JF: Deal with new Nan, +Inf and -Inf codes.  */
 	  if (f->sign != '-' && f->sign != '+')
 	    {
 	      make_invalid_floating_point_number (words);
 	      return return_value;
 	    }
-	  /*
-	   * All tahoe floating_point formats have:
-	   * Bit 15 is sign bit.
-	   * Bits 14:n are excess-whatever exponent.
-	   * Bits n-1:0 (if any) are most significant bits of fraction.
-	   * Bits 15:0 of the next word are the next most significant bits.
-	   * And so on for each other word.
-	   *
-	   * So we need: number of bits of exponent, number of bits of
-	   * mantissa.
-	   */
+	  /* All tahoe floating_point formats have:
+	     Bit 15 is sign bit.
+	     Bits 14:n are excess-whatever exponent.
+	     Bits n-1:0 (if any) are most significant bits of fraction.
+	     Bits 15:0 of the next word are the next most significant bits.
+	     And so on for each other word.
+
+	     So we need: number of bits of exponent, number of bits of
+	     mantissa.  */
 
 	  bits_left_in_littlenum = LITTLENUM_NUMBER_OF_BITS;
 	  littlenum_pointer = f->leader;
 	  littlenum_end = f->low;
-	  /* Seek (and forget) 1st significant bit */
+
+	  /* Seek (and forget) 1st significant bit.  */
 	  for (exponent_skippage = 0;
 	       !next_bits (1);
 	       exponent_skippage++)
-	    {
-	    }
+	    ;
+
 	  exponent_1 = f->exponent + f->leader + 1 - f->low;
-	  /* Radix LITTLENUM_RADIX, point just higher than f -> leader. */
+
+	  /* Radix LITTLENUM_RADIX, point just higher than f -> leader.  */
 	  exponent_2 = exponent_1 * LITTLENUM_NUMBER_OF_BITS;
-	  /* Radix 2. */
+
+	  /* Radix 2.  */
 	  exponent_3 = exponent_2 - exponent_skippage;
-	  /* Forget leading zeros, forget 1st bit. */
+
+	  /* Forget leading zeros, forget 1st bit.  */
 	  exponent_4 = exponent_3 + (1 << (exponent_bits - 1));
-	  /* Offset exponent. */
+
+	  /* Offset exponent.  */
 
 	  if (exponent_4 & ~mask[exponent_bits])
 	    {
-	      /*
-	       * Exponent overflow. Lose immediately.
-	       */
+	      /* Exponent overflow. Lose immediately.  */
 
 	      make_invalid_floating_point_number (words);
 
-	      /*
-	       * We leave return_value alone: admit we read the
-	       * number, but return a floating exception
-	       * because we can't encode the number.
-	       */
+	      /* We leave return_value alone: admit we read the
+	        number, but return a floating exception because we
+	        can't encode the number.  */
 	    }
 	  else
 	    {
 	      lp = words;
 
-	      /* Word 1. Sign, exponent and perhaps high bits. */
-	      /* Assume 2's complement integers. */
-	      word1 = ((exponent_4 & mask[exponent_bits]) << (15 - exponent_bits))
+	      /* Word 1.  Sign, exponent and perhaps high bits.  */
+	      /* Assume 2's complement integers.  */
+	      word1 = ((exponent_4 & mask[exponent_bits])
+		       << (15 - exponent_bits))
 		| ((f->sign == '+') ? 0 : 0x8000)
 		| next_bits (15 - exponent_bits);
 	      *lp++ = word1;
 
-	      /* The rest of the words are just mantissa bits. */
+	      /* The rest of the words are just mantissa bits.  */
 	      for (; lp < words + precision; lp++)
-		{
-		  *lp = next_bits (LITTLENUM_NUMBER_OF_BITS);
-		}
+		*lp = next_bits (LITTLENUM_NUMBER_OF_BITS);
 
 	      if (next_bits (1))
 		{
-		  /*
-		   * Since the NEXT bit is a 1, round UP the mantissa.
-		   * The cunning design of these hidden-1 floats permits
-		   * us to let the mantissa overflow into the exponent, and
-		   * it 'does the right thing'. However, we lose if the
-		   * highest-order bit of the lowest-order word flips.
-		   * Is that clear?
-		   */
+		  /* Since the NEXT bit is a 1, round UP the mantissa.
+		     The cunning design of these hidden-1 floats permits
+		     us to let the mantissa overflow into the exponent, and
+		     it 'does the right thing'. However, we lose if the
+		     highest-order bit of the lowest-order word flips.
+		     Is that clear?  */
 
 		  unsigned long int carry;
 
-		  /*
-		    #if (sizeof(carry)) < ((sizeof(bits[0]) * BITS_PER_CHAR) + 2)
-		    Please allow at least 1 more bit in carry than is in a LITTLENUM.
-		    We need that extra bit to hold a carry during a LITTLENUM carry
-		    propagation. Another extra bit (kept 0) will assure us that we
-		    don't get a sticky sign bit after shifting right, and that
-		    permits us to propagate the carry without any masking of bits.
-		    #endif
-		    */
+		  /* #if (sizeof(carry)) < ((sizeof(bits[0]) *
+		     BITS_PER_CHAR) + 2) Please allow at least 1 more
+		     bit in carry than is in a LITTLENUM.  We need
+		     that extra bit to hold a carry during a LITTLENUM
+		     carry propagation. Another extra bit (kept 0)
+		     will assure us that we don't get a sticky sign
+		     bit after shifting right, and that permits us to
+		     propagate the carry without any masking of bits.
+		     #endif  */
 		  for (carry = 1, lp--;
 		       carry && (lp >= words);
 		       lp--)
@@ -337,26 +330,22 @@ flonum_gen2tahoe (format_letter, f, words)
 		      carry >>= LITTLENUM_NUMBER_OF_BITS;
 		    }
 
-		  if ((word1 ^ *words) & (1 << (LITTLENUM_NUMBER_OF_BITS - 1)))
+		  if ((word1 ^ *words)
+		      & (1 << (LITTLENUM_NUMBER_OF_BITS - 1)))
 		    {
 		      make_invalid_floating_point_number (words);
-		      /*
-		       * We leave return_value alone: admit we read the
-		       * number, but return a floating exception
-		       * because we can't encode the number.
-		       */
+		      /* We leave return_value alone: admit we read
+			 the number, but return a floating exception
+			 because we can't encode the number.  */
 		    }
-		}		/* if (we needed to round up) */
-	    }			/* if (exponent overflow) */
-	}			/* if (0.0e0) */
-    }				/* if (float_type was OK) */
-  return (return_value);
+		}		/* if (we needed to round up)  */
+	    }			/* if (exponent overflow)  */
+	}			/* if (0.0e0)  */
+    }				/* if (float_type was OK)  */
+  return return_value;
 }
 
-/*
- *		md_atof()
- *
- * In:	input_line_pointer -> the 1st character of a floating-point
+/* In:	input_line_pointer -> the 1st character of a floating-point
  *		number.
  *	1 letter denoting the type of statement that wants a
  *		binary floating point number returned.
@@ -367,8 +356,7 @@ flonum_gen2tahoe (format_letter, f, words)
  * Out:	Input_line_pointer -> of next char after floating number.
  *	Error message, or 0.
  *	Floating point literal.
- *	Number of chars we used for the literal.
- */
+ *	Number of chars we used for the literal.  */
 
 char *
 md_atof (what_statement_type, literalP, sizeP)
@@ -383,15 +371,15 @@ md_atof (what_statement_type, literalP, sizeP)
 
   switch (what_statement_type)
     {
-    case 'f':			/* .ffloat */
-    case 'd':			/* .dfloat */
+    case 'f':			/* .ffloat  */
+    case 'd':			/* .dfloat  */
       kind_of_float = what_statement_type;
       break;
 
     default:
       kind_of_float = 0;
       break;
-    };
+    }
 
   if (kind_of_float)
     {
@@ -400,12 +388,10 @@ md_atof (what_statement_type, literalP, sizeP)
       input_line_pointer = atof_tahoe (input_line_pointer,
 				       kind_of_float,
 				       words);
-      /*
-       * The atof_tahoe() builds up 16-bit numbers.
-       * Since the assembler may not be running on
-       * a different-endian machine, be very careful about
-       * converting words to chars.
-       */
+      /* The atof_tahoe() builds up 16-bit numbers.
+	 Since the assembler may not be running on
+	 a different-endian machine, be very careful about
+	 converting words to chars.  */
       number_of_chars = (kind_of_float == 'f' ? F_PRECISION_CHARS :
 			 (kind_of_float == 'd' ? D_PRECISION_CHARS : 0));
       know (number_of_chars <= MAX_PRECISION * sizeof (LITTLENUM_TYPE));
@@ -417,15 +403,13 @@ md_atof (what_statement_type, literalP, sizeP)
 	  md_number_to_chars (literalP, *littlenum_pointer,
 			      sizeof (LITTLENUM_TYPE));
 	  literalP += sizeof (LITTLENUM_TYPE);
-	};
+	}
     }
   else
     {
       number_of_chars = 0;
-    };
+    }
 
   *sizeP = number_of_chars;
   return kind_of_float ? 0 : _("Bad call to md_atof()");
 }
-
-/* atof_tahoe.c */

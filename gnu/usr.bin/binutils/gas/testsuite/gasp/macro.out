@@ -296,44 +296,44 @@
 !	.ENDM
 !	
 !	RES_STR	"ONE",R0	
-!	MOV.L	#str00018,R0
-	MOV.L	#str00018,R0
-!	BRA	end_str00018
-	BRA	end_str00018
+!	MOV.L	#str18,R0
+	MOV.L	#str18,R0
+!	BRA	end_str18
+	BRA	end_str18
 !	NOP
 	NOP
-!str00018	.SDATA "ONE"
-str00018:	.byte	79,78,69
+!str18	.SDATA "ONE"
+str18:	.byte	79,78,69
 !	.ALIGN	2
 	.align	2
-!end_str00018
-end_str00018:
+!end_str18
+end_str18:
 !	RES_STR	"TWO",R1
-!	MOV.L	#str00019,R1
-	MOV.L	#str00019,R1
-!	BRA	end_str00019
-	BRA	end_str00019
+!	MOV.L	#str19,R1
+	MOV.L	#str19,R1
+!	BRA	end_str19
+	BRA	end_str19
 !	NOP
 	NOP
-!str00019	.SDATA "TWO"
-str00019:	.byte	84,87,79
+!str19	.SDATA "TWO"
+str19:	.byte	84,87,79
 !	.ALIGN	2
 	.align	2
-!end_str00019
-end_str00019:
+!end_str19
+end_str19:
 !	RES_STR	"THREE",R2
-!	MOV.L	#str00020,R2
-	MOV.L	#str00020,R2
-!	BRA	end_str00020
-	BRA	end_str00020
+!	MOV.L	#str20,R2
+	MOV.L	#str20,R2
+!	BRA	end_str20
+	BRA	end_str20
 !	NOP
 	NOP
-!str00020	.SDATA "THREE"
-str00020:	.byte	84,72,82,69,69
+!str20	.SDATA "THREE"
+str20:	.byte	84,72,82,69,69
 !	.ALIGN	2
 	.align	2
-!end_str00020
-end_str00020:
+!end_str20
+end_str20:
 !
 
 !
@@ -341,42 +341,42 @@ end_str00020:
 !
 
 !	RES_STR STR=donkey Rn=R1
-!	MOV.L	#str00021,R1
-	MOV.L	#str00021,R1
-!	BRA	end_str00021
-	BRA	end_str00021
+!	MOV.L	#str21,R1
+	MOV.L	#str21,R1
+!	BRA	end_str21
+	BRA	end_str21
 !	NOP
 	NOP
-!str00021	.SDATA "donkey"
-str00021:	.byte	100,111,110,107,101,121
+!str21	.SDATA "donkey"
+str21:	.byte	100,111,110,107,101,121
 !	.ALIGN	2
 	.align	2
-!end_str00021
-end_str00021:
+!end_str21
+end_str21:
 !	RES_STR donkey,R1
-!	MOV.L	#str00022,R1
-	MOV.L	#str00022,R1
-!	BRA	end_str00022
-	BRA	end_str00022
+!	MOV.L	#str22,R1
+	MOV.L	#str22,R1
+!	BRA	end_str22
+	BRA	end_str22
 !	NOP
 	NOP
-!str00022	.SDATA "donkey"
-str00022:	.byte	100,111,110,107,101,121
+!str22	.SDATA "donkey"
+str22:	.byte	100,111,110,107,101,121
 !	.ALIGN	2
 	.align	2
-!end_str00022
-end_str00022:
+!end_str22
+end_str22:
 ! 	RES_STR donkey Rn=R1
-!	MOV.L	#str00023,R1
-	MOV.L	#str00023,R1
-!	BRA	end_str00023
-	BRA	end_str00023
+!	MOV.L	#str23,R1
+	MOV.L	#str23,R1
+!	BRA	end_str23
+	BRA	end_str23
 !	NOP
 	NOP
-!str00023	.SDATA "donkey"
-str00023:	.byte	100,111,110,107,101,121
+!str23	.SDATA "donkey"
+str23:	.byte	100,111,110,107,101,121
 !	.ALIGN	2
 	.align	2
-!end_str00023
-end_str00023:
+!end_str23
+end_str23:
 !	.END

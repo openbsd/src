@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1983, 1998 Regents of the University of California.
+ * Copyright (c) 1983, 1998, 2001 Regents of the University of California.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms are permitted
@@ -68,7 +68,8 @@ DEFUN (print_name_only, (self), Sym * self)
 		  filename = self->file->name;
 		}
 	    }
-	  sprintf (buf, " (%s:%d)", filename, self->line_num);
+	  sprintf (buf, " (%s:%d @ %lx)", filename, self->line_num,
+		   (unsigned long) self->addr);
 	  printf ("%s", buf);
 	  size += strlen (buf);
 	}

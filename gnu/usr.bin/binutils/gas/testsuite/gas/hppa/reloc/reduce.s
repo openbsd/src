@@ -4,7 +4,7 @@
 
 	.code
 	.align 4
-	.PARAM foo,RTNVAL=GR
+	.PARAM foo,ARGW0=FR
 foo:
 	.PROC
 	.CALLINFO FRAME=0,NO_CALLS

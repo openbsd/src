@@ -1,5 +1,6 @@
 /* BFD back-end for HPPA BSD core files.
-   Copyright 1993, 94, 95, 97, 1998 Free Software Foundation, Inc.
+   Copyright 1993, 1994, 1995, 1998, 1999, 2001
+   Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -18,14 +19,13 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
    Written by the Center for Software Science at the University of Utah
-   and by Cygnus Support. 
+   and by Cygnus Support.
 
    The core file structure for the Utah 4.3BSD and OSF1 ports on the
    PA is a mix between traditional cores and hpux cores -- just
    different enough that supporting this format would tend to add
    gross hacks to trad-core.c or hpux-core.c.  So instead we keep any
    gross hacks isolated to this file.  */
-   
 
 /* This file can only be compiled on systems which use HPPA-BSD style
    core files.
@@ -141,7 +141,6 @@ hppabsd_core_core_file_p (abfd)
       return NULL;
     }
 
-
   /* Sanity checks.  Make sure the size of the core file matches the
      the size computed from information within the core itself.  */
   {
@@ -180,9 +179,9 @@ hppabsd_core_core_file_p (abfd)
   core_stacksec (abfd) = make_bfd_asection (abfd, ".stack",
 					   SEC_ALLOC + SEC_HAS_CONTENTS,
 					   clicksz * u.u_ssize,
-					   NBPG * (USIZE + KSTAKSIZE) 
+					   NBPG * (USIZE + KSTAKSIZE)
 					     + clicksz * u.u_dsize, 2);
-  core_stacksec (abfd)->vma = USRSTACK; 
+  core_stacksec (abfd)->vma = USRSTACK;
 
   core_datasec (abfd) = make_bfd_asection (abfd, ".data",
 					  SEC_ALLOC + SEC_LOAD
@@ -225,7 +224,6 @@ hppabsd_core_core_file_matches_executable_p (core_bfd, exec_bfd)
   /* There's no way to know this...  */
   return true;
 }
-
 
 #define hppabsd_core_get_symtab_upper_bound \
   _bfd_nosymbols_get_symtab_upper_bound
@@ -245,7 +243,7 @@ static void
 swap_abort ()
 {
   /* This way doesn't require any declaration for ANSI to fuck up.  */
-  abort ();	
+  abort ();
 }
 
 #define	NO_GET	((bfd_vma (*) PARAMS ((   const bfd_byte *))) swap_abort )
@@ -287,7 +285,7 @@ const bfd_target hppabsd_core_vec =
      bfd_false, bfd_false,
      bfd_false, bfd_false
     },
-    
+
        BFD_JUMP_TABLE_GENERIC (_bfd_generic),
        BFD_JUMP_TABLE_COPY (_bfd_generic),
        BFD_JUMP_TABLE_CORE (hppabsd_core),
@@ -299,7 +297,7 @@ const bfd_target hppabsd_core_vec =
        BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
 
     NULL,
-    
+
     (PTR) 0			/* backend_data */
 };
 #endif

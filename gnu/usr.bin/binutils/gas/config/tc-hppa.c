@@ -1,5 +1,5 @@
 /* tc-hppa.c -- Assemble for the PA
-   Copyright (C) 1989, 93, 94, 95, 96, 97, 98, 1999
+   Copyright 1989, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -19,7 +19,6 @@
    Software Foundation, 59 Temple Place - Suite 330, Boston, MA
    02111-1307, USA.  */
 
-
 /* HP PA-RISC support was contributed by the Center for Software Science
    at the University of Utah.  */
 
@@ -30,7 +29,6 @@
 #include "subsegs.h"
 
 #include "bfd/libhppa.h"
-#include "bfd/libbfd.h"
 
 /* Be careful, this file includes data *declarations*.  */
 #include "opcode/hppa.h"
@@ -44,19 +42,19 @@ error only one of OBJ_ELF and OBJ_SOM can be defined
    then we want to use the assembler support for compact line numbers.  */
 #ifdef OBJ_ELF
 #include "dwarf2dbg.h"
-struct dwarf2_line_info debug_line;
-#endif
 
 /* A "convient" place to put object file dependencies which do
    not need to be seen outside of tc-hppa.c.  */
-#ifdef OBJ_ELF
+
 /* Object file formats specify relocation types.  */
-typedef elf_hppa_reloc_type reloc_type;
+typedef enum elf_hppa_reloc_type reloc_type;
 
 /* Object file formats specify BFD symbol types.  */
 typedef elf_symbol_type obj_symbol_type;
+#define symbol_arg_reloc_info(sym)\
+  (((obj_symbol_type *) symbol_get_bfdsym (sym))->tc_data.hppa_arg_reloc)
 
-#ifdef BFD64
+#if TARGET_ARCH_SIZE == 64
 /* How to generate a relocation.  */
 #define hppa_gen_reloc_type _bfd_elf64_hppa_gen_reloc_type
 #else
@@ -69,7 +67,7 @@ typedef elf_symbol_type obj_symbol_type;
 #define obj_copyright obj_elf_version
 
 #define UNWIND_SECTION_NAME ".PARISC.unwind"
-#endif
+#endif /* OBJ_ELF */
 
 #ifdef OBJ_SOM
 /* Names of various debugging spaces/subspaces.  */
@@ -90,11 +88,12 @@ typedef int reloc_type;
 
 /* Object file formats specify BFD symbol types.  */
 typedef som_symbol_type obj_symbol_type;
+#define symbol_arg_reloc_info(sym)\
+  (((obj_symbol_type *) symbol_get_bfdsym (sym))->tc_data.ap.hppa_arg_reloc)
 
 /* This apparently isn't in older versions of hpux reloc.h.  */
 #ifndef R_DLT_REL
 #define R_DLT_REL 0x78
-#endif
 #endif
 
 #ifndef R_N0SEL
@@ -103,6 +102,13 @@ typedef som_symbol_type obj_symbol_type;
 
 #ifndef R_N1SEL
 #define R_N1SEL 0xd9
+#endif
+#endif /* OBJ_SOM */
+
+#if TARGET_ARCH_SIZE == 64
+#define DEFAULT_LEVEL 25
+#else
+#define DEFAULT_LEVEL 10
 #endif
 
 /* Various structures and types used internally in tc-hppa.c.  */
@@ -132,6 +138,31 @@ struct unwind_desc
     unsigned int reserved:3;
     unsigned int frame_size:27;
   };
+
+/* We can't rely on compilers placing bitfields in any particular
+   place, so use these macros when dumping unwind descriptors to
+   object files.  */
+#define UNWIND_LOW32(U) \
+  (((U)->cannot_unwind << 31)		\
+   | ((U)->millicode << 30)		\
+   | ((U)->millicode_save_rest << 29)	\
+   | ((U)->region_desc << 27)		\
+   | ((U)->save_sr << 25)		\
+   | ((U)->entry_fr << 21)		\
+   | ((U)->entry_gr << 16)		\
+   | ((U)->args_stored << 15)		\
+   | ((U)->call_fr << 10)		\
+   | ((U)->call_gr << 5)		\
+   | ((U)->save_sp << 4)		\
+   | ((U)->save_rp << 3)		\
+   | ((U)->save_rp_in_frame << 2)	\
+   | ((U)->extn_ptr_defined << 1)	\
+   | ((U)->cleanup_defined << 0))
+
+#define UNWIND_HIGH32(U) \
+  (((U)->hpe_interrupt_marker << 31)	\
+   | ((U)->hpux_interrupt_marker << 30)	\
+   | ((U)->frame_size << 0))
 
 struct unwind_table
   {
@@ -219,7 +250,7 @@ struct pa_it
 
     /* Holds any argument relocation bits associated with this
        instruction.  (instruction should be some sort of call).  */
-    long arg_reloc;
+    unsigned int arg_reloc;
 
     /* The format specification for this instruction.  */
     int format;
@@ -229,7 +260,6 @@ struct pa_it
   };
 
 /* PA-89 floating point registers are arranged like this:
-
 
    +--------------+--------------+
    |   0 or 16L   |  16 or 16R   |
@@ -247,23 +277,7 @@ struct pa_it
    |  14 or 30L   |  30 or 30R   |
    +--------------+--------------+
    |  15 or 31L   |  31 or 31R   |
-   +--------------+--------------+
-
-
-   The following is a version of pa_parse_number that
-   handles the L/R notation and returns the correct
-   value to put into the instruction register field.
-   The correct value to put into the instruction is
-   encoded in the structure 'pa_11_fp_reg_struct'.  */
-
-struct pa_11_fp_reg_struct
-  {
-    /* The register number.  */
-    char number_part;
-
-    /* L/R selector.  */
-    char l_r_select;
-  };
+   +--------------+--------------+  */
 
 /* Additional information needed to build argument relocation stubs.  */
 struct call_desc
@@ -438,7 +452,7 @@ struct hppa_fix_struct
     int fx_r_format;
 
     /* Argument relocation bits.  */
-    long fx_arg_reloc;
+    unsigned int fx_arg_reloc;
 
     /* The segment this fixup appears in.  */
     segT segment;
@@ -474,15 +488,18 @@ struct selector_entry
 static void pa_check_current_space_and_subspace PARAMS ((void));
 #endif
 
+#if !(defined (OBJ_ELF) && defined (TE_LINUX))
+static void pa_text PARAMS ((int));
+static void pa_data PARAMS ((int));
+static void pa_comm PARAMS ((int));
+#endif
 static fp_operand_format pa_parse_fp_format PARAMS ((char **s));
 static void pa_cons PARAMS ((int));
-static void pa_data PARAMS ((int));
 static void pa_float_cons PARAMS ((int));
 static void pa_fill PARAMS ((int));
 static void pa_lcomm PARAMS ((int));
 static void pa_lsym PARAMS ((int));
 static void pa_stringer PARAMS ((int));
-static void pa_text PARAMS ((int));
 static void pa_version PARAMS ((int));
 static int pa_parse_fp_cmp_cond PARAMS ((char **));
 static int get_expression PARAMS ((char *));
@@ -504,8 +521,6 @@ static void pa_try PARAMS ((int));
 static void pa_call PARAMS ((int));
 static void pa_call_args PARAMS ((struct call_desc *));
 static void pa_callinfo PARAMS ((int));
-static void pa_code PARAMS ((int));
-static void pa_comm PARAMS ((int));
 static void pa_copyright PARAMS ((int));
 static void pa_end PARAMS ((int));
 static void pa_enter PARAMS ((int));
@@ -523,11 +538,11 @@ static void pa_proc PARAMS ((int));
 static void pa_procend PARAMS ((int));
 static void pa_param PARAMS ((int));
 static void pa_undefine_label PARAMS ((void));
-static int need_pa11_opcode PARAMS ((struct pa_it *,
-				     struct pa_11_fp_reg_struct *));
-static int pa_parse_number PARAMS ((char **, struct pa_11_fp_reg_struct *));
+static int need_pa11_opcode PARAMS ((void));
+static int pa_parse_number PARAMS ((char **, int));
 static label_symbol_struct *pa_get_label PARAMS ((void));
 #ifdef OBJ_SOM
+static int log2 PARAMS ((int));
 static void pa_compiler PARAMS ((int));
 static void pa_align PARAMS ((int));
 static void pa_space PARAMS ((int));
@@ -559,16 +574,15 @@ static void pa_spaces_begin PARAMS ((void));
 #endif
 static void pa_ip PARAMS ((char *));
 static void fix_new_hppa PARAMS ((fragS *, int, int, symbolS *,
-				  long, expressionS *, int,
+				  offsetT, expressionS *, int,
 				  bfd_reloc_code_real_type,
 				  enum hppa_reloc_field_selector_type_alt,
-				  int, long, int *));
+				  int, unsigned int, int));
 static int is_end_of_statement PARAMS ((void));
 static int reg_name_search PARAMS ((char *));
 static int pa_chk_field_selector PARAMS ((char **));
 static int is_same_frag PARAMS ((fragS *, fragS *));
 static void process_exit PARAMS ((void));
-static int log2 PARAMS ((int));
 static unsigned int pa_stringer_aux PARAMS ((char *));
 static fp_operand_format pa_parse_fp_cnv_format PARAMS ((char **s));
 static int pa_parse_ftest_gfx_completer PARAMS ((char **));
@@ -576,6 +590,8 @@ static int pa_parse_ftest_gfx_completer PARAMS ((char **));
 #ifdef OBJ_ELF
 static void hppa_elf_mark_end_of_function PARAMS ((void));
 static void pa_build_unwind_subspace PARAMS ((struct call_info *));
+static void pa_vtable_entry PARAMS ((int));
+static void pa_vtable_inherit  PARAMS ((int));
 #endif
 
 /* File and gloally scoped variable declarations.  */
@@ -604,10 +620,6 @@ static struct call_desc last_call_desc;
 /* handle of the OPCODE hash table */
 static struct hash_control *op_hash = NULL;
 
-/* This array holds the chars that always start a comment.  If the
-   pre-processor is disabled, these aren't very useful.  */
-const char comment_chars[] = ";";
-
 /* Table of pseudo ops for the PA.  FIXME -- how many of these
    are now redundant with the overall GAS and the object file
    dependent tables?  */
@@ -628,25 +640,33 @@ const pseudo_typeS md_pseudo_table[] =
   {"byte", pa_cons, 1},
   {"call", pa_call, 0},
   {"callinfo", pa_callinfo, 0},
-  {"code", pa_code, 0},
+#if defined (OBJ_ELF) && defined (TE_LINUX)
+  {"code", obj_elf_text, 0},
+#else
+  {"code", pa_text, 0},
   {"comm", pa_comm, 0},
+#endif
 #ifdef OBJ_SOM
   {"compiler", pa_compiler, 0},
 #endif
   {"copyright", pa_copyright, 0},
+#if !(defined (OBJ_ELF) && defined (TE_LINUX))
   {"data", pa_data, 0},
+#endif
   {"double", pa_float_cons, 'd'},
   {"dword", pa_cons, 8},
   {"end", pa_end, 0},
   {"end_brtab", pa_brtab, 0},
+#if !(defined (OBJ_ELF) && defined (TE_LINUX))
   {"end_try", pa_try, 0},
+#endif
   {"enter", pa_enter, 0},
   {"entry", pa_entry, 0},
   {"equ", pa_equ, 0},
   {"exit", pa_exit, 0},
   {"export", pa_export, 0},
 #ifdef OBJ_ELF
-  { "file", dwarf2_directive_file },
+  {"file", dwarf2_directive_file, 0 },
 #endif
   {"fill", pa_fill, 0},
   {"float", pa_float_cons, 'f'},
@@ -658,7 +678,7 @@ const pseudo_typeS md_pseudo_table[] =
   {"leave", pa_leave, 0},
   {"level", pa_level, 0},
 #ifdef OBJ_ELF
-  { "loc", dwarf2_directive_loc },
+  {"loc", dwarf2_directive_loc, 0 },
 #endif
   {"long", pa_cons, 4},
   {"lsym", pa_lsym, 0},
@@ -684,8 +704,14 @@ const pseudo_typeS md_pseudo_table[] =
 #ifdef OBJ_SOM
   {"subspa", pa_subspace, 0},
 #endif
+#if !(defined (OBJ_ELF) && defined (TE_LINUX))
   {"text", pa_text, 0},
+#endif
   {"version", pa_version, 0},
+#ifdef OBJ_ELF
+  {"vtable_entry", pa_vtable_entry, 0},
+  {"vtable_inherit", pa_vtable_inherit, 0},
+#endif
   {"word", pa_cons, 4},
   {NULL, 0, 0}
 };
@@ -698,8 +724,12 @@ const pseudo_typeS md_pseudo_table[] =
    first line of the input file.  This is because the compiler outputs
    #NO_APP at the beginning of its output.
 
-   Also note that C style comments will always work. */
+   Also note that C style comments will always work.  */
 const char line_comment_chars[] = "#";
+
+/* This array holds the chars that always start a comment.  If the
+   pre-processor is disabled, these aren't very useful.  */
+const char comment_chars[] = ";";
 
 /* This array holds the characters which act as line separators.  */
 const char line_separator_chars[] = "!";
@@ -731,7 +761,7 @@ static int within_entry_exit;
 /* Nonzero if the assembler is currently within a procedure definition.  */
 static int within_procedure;
 
-/* Handle on strucutre which keep track of the last symbol
+/* Handle on structure which keep track of the last symbol
    seen in each subspace.  */
 static label_symbol_struct *label_symbols_rootp = NULL;
 
@@ -743,6 +773,15 @@ static int hppa_field_selector;
    Each opcode in the table has a flag which indicates whether or not
    strict syntax checking should be enabled for that instruction.  */
 static int strict = 0;
+
+/* pa_parse_number returns values in `pa_number'.  Mostly
+   pa_parse_number is used to return a register number, with floating
+   point registers being numbered from FP_REG_BASE upwards.
+   The bit specified with FP_REG_RSEL is set if the floating point
+   register has a `r' suffix.  */
+#define FP_REG_BASE 64
+#define FP_REG_RSEL 128
+static int pa_number;
 
 #ifdef OBJ_SOM
 /* A dummy bfd symbol so that all relocations have symbols of some kind.  */
@@ -776,206 +815,206 @@ static int print_errors = 1;
    Almost every control register has a synonym; they are not listed
    here for brevity.
 
-   The table is sorted. Suitable for searching by a binary search. */
+   The table is sorted. Suitable for searching by a binary search.  */
 
 static const struct pd_reg pre_defined_registers[] =
 {
-  {"%arg0", 26},
-  {"%arg1", 25},
-  {"%arg2", 24},
-  {"%arg3", 23},
-  {"%cr0", 0},
-  {"%cr10", 10},
-  {"%cr11", 11},
-  {"%cr12", 12},
-  {"%cr13", 13},
-  {"%cr14", 14},
-  {"%cr15", 15},
-  {"%cr16", 16},
-  {"%cr17", 17},
-  {"%cr18", 18},
-  {"%cr19", 19},
-  {"%cr20", 20},
-  {"%cr21", 21},
-  {"%cr22", 22},
-  {"%cr23", 23},
-  {"%cr24", 24},
-  {"%cr25", 25},
-  {"%cr26", 26},
-  {"%cr27", 27},
-  {"%cr28", 28},
-  {"%cr29", 29},
-  {"%cr30", 30},
-  {"%cr31", 31},
-  {"%cr8", 8},
-  {"%cr9", 9},
-  {"%dp", 27},
-  {"%eiem", 15},
-  {"%eirr", 23},
-  {"%fr0", 0},
-  {"%fr0l", 0},
-  {"%fr0r", 0},
-  {"%fr1", 1},
-  {"%fr10", 10},
-  {"%fr10l", 10},
-  {"%fr10r", 10},
-  {"%fr11", 11},
-  {"%fr11l", 11},
-  {"%fr11r", 11},
-  {"%fr12", 12},
-  {"%fr12l", 12},
-  {"%fr12r", 12},
-  {"%fr13", 13},
-  {"%fr13l", 13},
-  {"%fr13r", 13},
-  {"%fr14", 14},
-  {"%fr14l", 14},
-  {"%fr14r", 14},
-  {"%fr15", 15},
-  {"%fr15l", 15},
-  {"%fr15r", 15},
-  {"%fr16", 16},
-  {"%fr16l", 16},
-  {"%fr16r", 16},
-  {"%fr17", 17},
-  {"%fr17l", 17},
-  {"%fr17r", 17},
-  {"%fr18", 18},
-  {"%fr18l", 18},
-  {"%fr18r", 18},
-  {"%fr19", 19},
-  {"%fr19l", 19},
-  {"%fr19r", 19},
-  {"%fr1l", 1},
-  {"%fr1r", 1},
-  {"%fr2", 2},
-  {"%fr20", 20},
-  {"%fr20l", 20},
-  {"%fr20r", 20},
-  {"%fr21", 21},
-  {"%fr21l", 21},
-  {"%fr21r", 21},
-  {"%fr22", 22},
-  {"%fr22l", 22},
-  {"%fr22r", 22},
-  {"%fr23", 23},
-  {"%fr23l", 23},
-  {"%fr23r", 23},
-  {"%fr24", 24},
-  {"%fr24l", 24},
-  {"%fr24r", 24},
-  {"%fr25", 25},
-  {"%fr25l", 25},
-  {"%fr25r", 25},
-  {"%fr26", 26},
-  {"%fr26l", 26},
-  {"%fr26r", 26},
-  {"%fr27", 27},
-  {"%fr27l", 27},
-  {"%fr27r", 27},
-  {"%fr28", 28},
-  {"%fr28l", 28},
-  {"%fr28r", 28},
-  {"%fr29", 29},
-  {"%fr29l", 29},
-  {"%fr29r", 29},
-  {"%fr2l", 2},
-  {"%fr2r", 2},
-  {"%fr3", 3},
-  {"%fr30", 30},
-  {"%fr30l", 30},
-  {"%fr30r", 30},
-  {"%fr31", 31},
-  {"%fr31l", 31},
-  {"%fr31r", 31},
-  {"%fr3l", 3},
-  {"%fr3r", 3},
-  {"%fr4", 4},
-  {"%fr4l", 4},
-  {"%fr4r", 4},
-  {"%fr5", 5},
-  {"%fr5l", 5},
-  {"%fr5r", 5},
-  {"%fr6", 6},
-  {"%fr6l", 6},
-  {"%fr6r", 6},
-  {"%fr7", 7},
-  {"%fr7l", 7},
-  {"%fr7r", 7},
-  {"%fr8", 8},
-  {"%fr8l", 8},
-  {"%fr8r", 8},
-  {"%fr9", 9},
-  {"%fr9l", 9},
-  {"%fr9r", 9},
-  {"%hta", 25},
-  {"%iir", 19},
-  {"%ior", 21},
-  {"%ipsw", 22},
-  {"%isr", 20},
-  {"%itmr", 16},
-  {"%iva", 14},
-  {"%pcoq", 18},
-  {"%pcsq", 17},
-  {"%pidr1", 8},
-  {"%pidr2", 9},
+  {"%arg0",  26},
+  {"%arg1",  25},
+  {"%arg2",  24},
+  {"%arg3",  23},
+  {"%cr0",    0},
+  {"%cr10",  10},
+  {"%cr11",  11},
+  {"%cr12",  12},
+  {"%cr13",  13},
+  {"%cr14",  14},
+  {"%cr15",  15},
+  {"%cr16",  16},
+  {"%cr17",  17},
+  {"%cr18",  18},
+  {"%cr19",  19},
+  {"%cr20",  20},
+  {"%cr21",  21},
+  {"%cr22",  22},
+  {"%cr23",  23},
+  {"%cr24",  24},
+  {"%cr25",  25},
+  {"%cr26",  26},
+  {"%cr27",  27},
+  {"%cr28",  28},
+  {"%cr29",  29},
+  {"%cr30",  30},
+  {"%cr31",  31},
+  {"%cr8",    8},
+  {"%cr9",    9},
+  {"%dp",    27},
+  {"%eiem",  15},
+  {"%eirr",  23},
+  {"%fr0",    0 + FP_REG_BASE},
+  {"%fr0l",   0 + FP_REG_BASE},
+  {"%fr0r",   0 + FP_REG_BASE + FP_REG_RSEL},
+  {"%fr1",    1 + FP_REG_BASE},
+  {"%fr10",  10 + FP_REG_BASE},
+  {"%fr10l", 10 + FP_REG_BASE},
+  {"%fr10r", 10 + FP_REG_BASE + FP_REG_RSEL},
+  {"%fr11",  11 + FP_REG_BASE},
+  {"%fr11l", 11 + FP_REG_BASE},
+  {"%fr11r", 11 + FP_REG_BASE + FP_REG_RSEL},
+  {"%fr12",  12 + FP_REG_BASE},
+  {"%fr12l", 12 + FP_REG_BASE},
+  {"%fr12r", 12 + FP_REG_BASE + FP_REG_RSEL},
+  {"%fr13",  13 + FP_REG_BASE},
+  {"%fr13l", 13 + FP_REG_BASE},
+  {"%fr13r", 13 + FP_REG_BASE + FP_REG_RSEL},
+  {"%fr14",  14 + FP_REG_BASE},
+  {"%fr14l", 14 + FP_REG_BASE},
+  {"%fr14r", 14 + FP_REG_BASE + FP_REG_RSEL},
+  {"%fr15",  15 + FP_REG_BASE},
+  {"%fr15l", 15 + FP_REG_BASE},
+  {"%fr15r", 15 + FP_REG_BASE + FP_REG_RSEL},
+  {"%fr16",  16 + FP_REG_BASE},
+  {"%fr16l", 16 + FP_REG_BASE},
+  {"%fr16r", 16 + FP_REG_BASE + FP_REG_RSEL},
+  {"%fr17",  17 + FP_REG_BASE},
+  {"%fr17l", 17 + FP_REG_BASE},
+  {"%fr17r", 17 + FP_REG_BASE + FP_REG_RSEL},
+  {"%fr18",  18 + FP_REG_BASE},
+  {"%fr18l", 18 + FP_REG_BASE},
+  {"%fr18r", 18 + FP_REG_BASE + FP_REG_RSEL},
+  {"%fr19",  19 + FP_REG_BASE},
+  {"%fr19l", 19 + FP_REG_BASE},
+  {"%fr19r", 19 + FP_REG_BASE + FP_REG_RSEL},
+  {"%fr1l",   1 + FP_REG_BASE},
+  {"%fr1r",   1 + FP_REG_BASE + FP_REG_RSEL},
+  {"%fr2",    2 + FP_REG_BASE},
+  {"%fr20",  20 + FP_REG_BASE},
+  {"%fr20l", 20 + FP_REG_BASE},
+  {"%fr20r", 20 + FP_REG_BASE + FP_REG_RSEL},
+  {"%fr21",  21 + FP_REG_BASE},
+  {"%fr21l", 21 + FP_REG_BASE},
+  {"%fr21r", 21 + FP_REG_BASE + FP_REG_RSEL},
+  {"%fr22",  22 + FP_REG_BASE},
+  {"%fr22l", 22 + FP_REG_BASE},
+  {"%fr22r", 22 + FP_REG_BASE + FP_REG_RSEL},
+  {"%fr23",  23 + FP_REG_BASE},
+  {"%fr23l", 23 + FP_REG_BASE},
+  {"%fr23r", 23 + FP_REG_BASE + FP_REG_RSEL},
+  {"%fr24",  24 + FP_REG_BASE},
+  {"%fr24l", 24 + FP_REG_BASE},
+  {"%fr24r", 24 + FP_REG_BASE + FP_REG_RSEL},
+  {"%fr25",  25 + FP_REG_BASE},
+  {"%fr25l", 25 + FP_REG_BASE},
+  {"%fr25r", 25 + FP_REG_BASE + FP_REG_RSEL},
+  {"%fr26",  26 + FP_REG_BASE},
+  {"%fr26l", 26 + FP_REG_BASE},
+  {"%fr26r", 26 + FP_REG_BASE + FP_REG_RSEL},
+  {"%fr27",  27 + FP_REG_BASE},
+  {"%fr27l", 27 + FP_REG_BASE},
+  {"%fr27r", 27 + FP_REG_BASE + FP_REG_RSEL},
+  {"%fr28",  28 + FP_REG_BASE},
+  {"%fr28l", 28 + FP_REG_BASE},
+  {"%fr28r", 28 + FP_REG_BASE + FP_REG_RSEL},
+  {"%fr29",  29 + FP_REG_BASE},
+  {"%fr29l", 29 + FP_REG_BASE},
+  {"%fr29r", 29 + FP_REG_BASE + FP_REG_RSEL},
+  {"%fr2l",   2 + FP_REG_BASE},
+  {"%fr2r",   2 + FP_REG_BASE + FP_REG_RSEL},
+  {"%fr3",    3 + FP_REG_BASE},
+  {"%fr30",  30 + FP_REG_BASE},
+  {"%fr30l", 30 + FP_REG_BASE},
+  {"%fr30r", 30 + FP_REG_BASE + FP_REG_RSEL},
+  {"%fr31",  31 + FP_REG_BASE},
+  {"%fr31l", 31 + FP_REG_BASE},
+  {"%fr31r", 31 + FP_REG_BASE + FP_REG_RSEL},
+  {"%fr3l",   3 + FP_REG_BASE},
+  {"%fr3r",   3 + FP_REG_BASE + FP_REG_RSEL},
+  {"%fr4",    4 + FP_REG_BASE},
+  {"%fr4l",   4 + FP_REG_BASE},
+  {"%fr4r",   4 + FP_REG_BASE + FP_REG_RSEL},
+  {"%fr5",    5 + FP_REG_BASE},
+  {"%fr5l",   5 + FP_REG_BASE},
+  {"%fr5r",   5 + FP_REG_BASE + FP_REG_RSEL},
+  {"%fr6",    6 + FP_REG_BASE},
+  {"%fr6l",   6 + FP_REG_BASE},
+  {"%fr6r",   6 + FP_REG_BASE + FP_REG_RSEL},
+  {"%fr7",    7 + FP_REG_BASE},
+  {"%fr7l",   7 + FP_REG_BASE},
+  {"%fr7r",   7 + FP_REG_BASE + FP_REG_RSEL},
+  {"%fr8",    8 + FP_REG_BASE},
+  {"%fr8l",   8 + FP_REG_BASE},
+  {"%fr8r",   8 + FP_REG_BASE + FP_REG_RSEL},
+  {"%fr9",    9 + FP_REG_BASE},
+  {"%fr9l",   9 + FP_REG_BASE},
+  {"%fr9r",   9 + FP_REG_BASE + FP_REG_RSEL},
+  {"%hta",   25},
+  {"%iir",   19},
+  {"%ior",   21},
+  {"%ipsw",  22},
+  {"%isr",   20},
+  {"%itmr",  16},
+  {"%iva",   14},
+  {"%pcoq",  18},
+  {"%pcsq",  17},
+  {"%pidr1",  8},
+  {"%pidr2",  9},
   {"%pidr3", 12},
   {"%pidr4", 13},
-  {"%ppda", 24},
-  {"%r0", 0},
-  {"%r1", 1},
-  {"%r10", 10},
-  {"%r11", 11},
-  {"%r12", 12},
-  {"%r13", 13},
-  {"%r14", 14},
-  {"%r15", 15},
-  {"%r16", 16},
-  {"%r17", 17},
-  {"%r18", 18},
-  {"%r19", 19},
-  {"%r2", 2},
-  {"%r20", 20},
-  {"%r21", 21},
-  {"%r22", 22},
-  {"%r23", 23},
-  {"%r24", 24},
-  {"%r25", 25},
-  {"%r26", 26},
-  {"%r27", 27},
-  {"%r28", 28},
-  {"%r29", 29},
-  {"%r3", 3},
-  {"%r30", 30},
-  {"%r31", 31},
-  {"%r4", 4},
-  {"%r5", 5},
-  {"%r6", 6},
-  {"%r7", 7},
-  {"%r8", 8},
-  {"%r9", 9},
-  {"%rctr", 0},
-  {"%ret0", 28},
-  {"%ret1", 29},
-  {"%rp", 2},
-  {"%sar", 11},
-  {"%sp", 30},
-  {"%sr0", 0},
-  {"%sr1", 1},
-  {"%sr2", 2},
-  {"%sr3", 3},
-  {"%sr4", 4},
-  {"%sr5", 5},
-  {"%sr6", 6},
-  {"%sr7", 7},
-  {"%tr0", 24},
-  {"%tr1", 25},
-  {"%tr2", 26},
-  {"%tr3", 27},
-  {"%tr4", 28},
-  {"%tr5", 29},
-  {"%tr6", 30},
-  {"%tr7", 31}
+  {"%ppda",  24},
+  {"%r0",     0},
+  {"%r1",     1},
+  {"%r10",   10},
+  {"%r11",   11},
+  {"%r12",   12},
+  {"%r13",   13},
+  {"%r14",   14},
+  {"%r15",   15},
+  {"%r16",   16},
+  {"%r17",   17},
+  {"%r18",   18},
+  {"%r19",   19},
+  {"%r2",     2},
+  {"%r20",   20},
+  {"%r21",   21},
+  {"%r22",   22},
+  {"%r23",   23},
+  {"%r24",   24},
+  {"%r25",   25},
+  {"%r26",   26},
+  {"%r27",   27},
+  {"%r28",   28},
+  {"%r29",   29},
+  {"%r3",     3},
+  {"%r30",   30},
+  {"%r31",   31},
+  {"%r4",     4},
+  {"%r5",     5},
+  {"%r6",     6},
+  {"%r7",     7},
+  {"%r8",     8},
+  {"%r9",     9},
+  {"%rctr",   0},
+  {"%ret0",  28},
+  {"%ret1",  29},
+  {"%rp",     2},
+  {"%sar",   11},
+  {"%sp",    30},
+  {"%sr0",    0},
+  {"%sr1",    1},
+  {"%sr2",    2},
+  {"%sr3",    3},
+  {"%sr4",    4},
+  {"%sr5",    5},
+  {"%sr6",    6},
+  {"%sr7",    7},
+  {"%tr0",   24},
+  {"%tr1",   25},
+  {"%tr2",   26},
+  {"%tr3",   27},
+  {"%tr4",   28},
+  {"%tr5",   29},
+  {"%tr6",   30},
+  {"%tr7",   31}
 };
 
 /* This table is sorted by order of the length of the string. This is
@@ -1114,6 +1153,20 @@ static struct default_space_dict pa_def_spaces[] =
       } \
   }
 
+/* Simple alignment checking for FIELD againt ALIGN (a power of two).
+   IGNORE is used to suppress the error message.  */
+
+#define CHECK_ALIGN(FIELD, ALIGN, IGNORE) \
+  { \
+    if ((FIELD) & ((ALIGN) - 1)) \
+      { \
+	if (! IGNORE) \
+          as_bad (_("Field not properly aligned [%d] (%d)."), (ALIGN), \
+		  (int) (FIELD));\
+        break; \
+      } \
+  }
+
 #define is_DP_relative(exp)			\
   ((exp).X_op == O_subtract			\
    && strcmp (S_GET_NAME ((exp).X_op_symbol), "$global$") == 0)
@@ -1235,7 +1288,6 @@ pa_undefine_label ()
     }
 }
 
-
 /* An HPPA-specific version of fix_new.  This is required because the HPPA
    code needs to keep track of some extra stuff.  Each call to fix_new_hppa
    results in the creation of an instance of an hppa_fix_struct.  An
@@ -1250,14 +1302,14 @@ fix_new_hppa (frag, where, size, add_symbol, offset, exp, pcrel,
      int where;
      int size;
      symbolS *add_symbol;
-     long offset;
+     offsetT offset;
      expressionS *exp;
      int pcrel;
      bfd_reloc_code_real_type r_type;
      enum hppa_reloc_field_selector_type_alt r_field;
      int r_format;
-     long arg_reloc;
-     int* unwind_bits;
+     unsigned int arg_reloc;
+     int unwind_bits ATTRIBUTE_UNUSED;
 {
   fixS *new_fix;
 
@@ -1276,14 +1328,15 @@ fix_new_hppa (frag, where, size, add_symbol, offset, exp, pcrel,
   hppa_fix->segment = now_seg;
 #ifdef OBJ_SOM
   if (r_type == R_ENTRY || r_type == R_EXIT)
-    new_fix->fx_offset = *unwind_bits;
+    new_fix->fx_offset = unwind_bits;
 #endif
 
   /* foo-$global$ is used to access non-automatic storage.  $global$
      is really just a marker and has served its purpose, so eliminate
-     it now so as not to confuse write.c.  */
+     it now so as not to confuse write.c.  Ditto for $PIC_pcrel$0.  */
   if (new_fix->fx_subsy
-      && !strcmp (S_GET_NAME (new_fix->fx_subsy), "$global$"))
+      && (strcmp (S_GET_NAME (new_fix->fx_subsy), "$global$") == 0
+	  || strcmp (S_GET_NAME (new_fix->fx_subsy), "$PIC_pcrel$0") == 0))
     new_fix->fx_subsy = NULL;
 }
 
@@ -1319,11 +1372,14 @@ cons_fix_new_hppa (frag, where, size, exp)
     rel_type = R_HPPA;
 
   if (hppa_field_selector != e_psel && hppa_field_selector != e_fsel)
-    as_warn (_("Invalid field selector.  Assuming F%%."));
+    {
+      as_warn (_("Invalid field selector.  Assuming F%%."));
+      hppa_field_selector = e_fsel;
+    }
 
   fix_new_hppa (frag, where, size,
 		(symbolS *) NULL, (offsetT) 0, exp, 0, rel_type,
-		hppa_field_selector, size * 8, 0, NULL);
+		hppa_field_selector, size * 8, 0, 0);
 
   /* Reset field selector to its default state.  */
   hppa_field_selector = 0;
@@ -1343,7 +1399,7 @@ md_begin ()
   call_info_root = NULL;
 
   /* Set the default machine type.  */
-  if (!bfd_set_arch_mach (stdoutput, bfd_arch_hppa, 10))
+  if (!bfd_set_arch_mach (stdoutput, bfd_arch_hppa, DEFAULT_LEVEL))
     as_warn (_("could not set architecture and machine"));
 
   /* Folding of text and data segments fails miserably on the PA.
@@ -1395,7 +1451,7 @@ md_begin ()
 #ifdef OBJ_SOM
   dummy_symbol = symbol_find_or_make ("L$dummy");
   S_SET_SEGMENT (dummy_symbol, text_section);
-  /* Force the symbol to be converted to a real symbol. */
+  /* Force the symbol to be converted to a real symbol.  */
   (void) symbol_get_bfdsym (dummy_symbol);
 #endif
 }
@@ -1433,12 +1489,14 @@ md_assemble (str)
 		 information when the label appears after the proc/procend.  */
 	      if (within_entry_exit)
 		{
-		  char *where = frag_more (0);
+		  char *where;
+		  unsigned int u;
 
+		  where = frag_more (0);
+		  u = UNWIND_LOW32 (&last_call_info->ci_unwind.descriptor);
 		  fix_new_hppa (frag_now, where - frag_now->fr_literal, 0,
 				NULL, (offsetT) 0, NULL,
-				0, R_HPPA_ENTRY, e_fsel, 0, 0,
-				(int *)&last_call_info->ci_unwind.descriptor);
+				0, R_HPPA_ENTRY, e_fsel, 0, 0, u);
 		}
 #endif
 	    }
@@ -1455,7 +1513,7 @@ md_assemble (str)
   /* Get somewhere to put the assembled instrution.  */
   to = frag_more (4);
 
-  /* Output the opcode. */
+  /* Output the opcode.  */
   md_number_to_chars (to, the_insn.opcode, 4);
 
   /* If necessary output more stuff.  */
@@ -1463,23 +1521,10 @@ md_assemble (str)
     fix_new_hppa (frag_now, (to - frag_now->fr_literal), 4, NULL,
 		  (offsetT) 0, &the_insn.exp, the_insn.pcrel,
 		  the_insn.reloc, the_insn.field_selector,
-		  the_insn.format, the_insn.arg_reloc, NULL);
+		  the_insn.format, the_insn.arg_reloc, 0);
 
 #ifdef OBJ_ELF
-  if (debug_type == DEBUG_DWARF2)
-    {
-      bfd_vma addr;
-
-      /* First update the notion of the current source line.  */
-      dwarf2_where (&debug_line);
-
-      /* We want the offset of the start of this instruction within the
-	 the current frag.  */
-      addr = frag_now->fr_address + frag_now_fix () - 4;
-
-      /* And record the information.  */
-      dwarf2_gen_line_info (addr, &debug_line);
-    }
+  dwarf2_emit_insn (4);
 #endif
 }
 
@@ -1614,10 +1659,9 @@ pa_ip (str)
 	    /* Handle a 5 bit register or control register field at 10.  */
 	    case 'b':
 	    case '^':
-	      /* This should be more strict.  Small steps.  */
-	      if (strict && *s != '%')
+	      if (!pa_parse_number (&s, 0))
 		break;
-	      num = pa_parse_number (&s, 0);
+	      num = pa_number;
 	      CHECK_FIELD (num, 31, 0, 0);
 	      INSERT_FIELD_AND_CONTINUE (opcode, num, 21);
 
@@ -1642,28 +1686,25 @@ pa_ip (str)
 
 	    /* Handle a 5 bit register field at 15.  */
 	    case 'x':
-	      /* This should be more strict.  Small steps.  */
-	      if (strict && *s != '%')
+	      if (!pa_parse_number (&s, 0))
 		break;
-	      num = pa_parse_number (&s, 0);
+	      num = pa_number;
 	      CHECK_FIELD (num, 31, 0, 0);
 	      INSERT_FIELD_AND_CONTINUE (opcode, num, 16);
 
 	    /* Handle a 5 bit register field at 31.  */
 	    case 't':
-	      /* This should be more strict.  Small steps.  */
-	      if (strict && *s != '%')
+	      if (!pa_parse_number (&s, 0))
 		break;
-	      num = pa_parse_number (&s, 0);
+	      num = pa_number;
 	      CHECK_FIELD (num, 31, 0, 0);
 	      INSERT_FIELD_AND_CONTINUE (opcode, num, 0);
 
 	    /* Handle a 5 bit register field at 10 and 15.  */
 	    case 'a':
-	      /* This should be more strict.  Small steps.  */
-	      if (strict && *s != '%')
+	      if (!pa_parse_number (&s, 0))
 		break;
-	      num = pa_parse_number (&s, 0);
+	      num = pa_number;
 	      CHECK_FIELD (num, 31, 0, 0);
 	      opcode |= num << 16;
 	      INSERT_FIELD_AND_CONTINUE (opcode, num, 21);
@@ -1686,7 +1727,7 @@ pa_ip (str)
 	      /* When in strict mode, we want to just reject this
 		 match instead of giving an out of range error.  */
 	      CHECK_FIELD (num, 15, -16, strict);
-	      low_sign_unext (num, 5, &num);
+	      num = low_sign_unext (num, 5);
 	      INSERT_FIELD_AND_CONTINUE (opcode, num, 16);
 
 	    /* Handle a 5 bit immediate at 31.  */
@@ -1697,8 +1738,8 @@ pa_ip (str)
 	      s = expr_end;
 	      /* When in strict mode, we want to just reject this
 		 match instead of giving an out of range error.  */
-	      CHECK_FIELD (num, 15, -16, strict)
-	      low_sign_unext (num, 5, &num);
+	      CHECK_FIELD (num, 15, -16, strict);
+	      num = low_sign_unext (num, 5);
 	      INSERT_FIELD_AND_CONTINUE (opcode, num, 0);
 
 	    /* Handle an unsigned 5 bit immediate at 31.  */
@@ -1707,8 +1748,8 @@ pa_ip (str)
 	      if (strict && the_insn.exp.X_op != O_constant)
 		break;
 	      s = expr_end;
-	      CHECK_FIELD (num, 31, 0, 0);
-	      INSERT_FIELD_AND_CONTINUE (opcode, num, strict);
+	      CHECK_FIELD (num, 31, 0, strict);
+	      INSERT_FIELD_AND_CONTINUE (opcode, num, 0);
 
 	    /* Handle an unsigned 5 bit immediate at 15.  */
 	    case 'R':
@@ -1730,22 +1771,20 @@ pa_ip (str)
 
 	    /* Handle a 2 bit space identifier at 17.  */
 	    case 's':
-	      /* This should be more strict.  Small steps.  */
-	      if (strict && *s != '%')
+	      if (!pa_parse_number (&s, 0))
 		break;
-	      num = pa_parse_number (&s, 0);
+	      num = pa_number;
 	      CHECK_FIELD (num, 3, 0, 1);
 	      INSERT_FIELD_AND_CONTINUE (opcode, num, 14);
 
 	    /* Handle a 3 bit space identifier at 18.  */
 	    case 'S':
-	      /* This should be more strict.  Small steps.  */
-	      if (strict && *s != '%')
+	      if (!pa_parse_number (&s, 0))
 		break;
-	      num = pa_parse_number (&s, 0);
+	      num = pa_number;
 	      CHECK_FIELD (num, 7, 0, 1);
-	      dis_assemble_3 (num, &num);
-	      INSERT_FIELD_AND_CONTINUE (opcode, num, 13);
+	      opcode |= re_assemble_3 (num);
+	      continue;
 
 	    /* Handle all completers.  */
 	    case 'c':
@@ -1849,10 +1888,10 @@ pa_ip (str)
 		      }
 		    else if (*args == 'e')
 		      {
-			/* Gross!  Hide these values in the immediate field
-			   of the instruction, then pull them out later.  */
-			opcode |= m << 8;
-			opcode |= a << 9;
+			/* Stash the ma/mb flag temporarily in the
+			   instruction.  We will use (and remove it)
+			   later when handling 'J', 'K', '<' & '>'.  */
+			opcode |= a;
 			continue;
 		      }
 		  }
@@ -1925,7 +1964,7 @@ pa_ip (str)
 		    }
 		  INSERT_FIELD_AND_CONTINUE (opcode, cmpltr, 10);
 
-		/* Handle load ordering completer. */
+		/* Handle load ordering completer.  */
 		case 'o':
 		  if (strncmp(s, ",o", 2) != 0)
 		    break;
@@ -2385,7 +2424,7 @@ pa_ip (str)
 		      }
 		    else
 		      {
-			/* Negated condition requires an opcode change. */
+			/* Negated condition requires an opcode change.  */
 			opcode |= (cmpltr & 8) << 24;
 		      }
 		    INSERT_FIELD_AND_CONTINUE (opcode, cmpltr & 7, 13);
@@ -2406,7 +2445,7 @@ pa_ip (str)
 			  }
 			else
 			  {
-			    /* Negated condition requires an opcode change. */
+			    /* Negated condition requires an opcode change.  */
 			    opcode |= 1 << 27;
 			  }
 		      }
@@ -2559,7 +2598,7 @@ pa_ip (str)
 			  }
 			else
 			  {
-			    /* Negated condition requires an opcode change. */
+			    /* Negated condition requires an opcode change.  */
 			    opcode |= 1 << 27;
 			  }
 		      }
@@ -2571,11 +2610,11 @@ pa_ip (str)
 		    cmpltr = pa_parse_cmpb_64_cmpltr (&s);
 		    if (cmpltr >= 0)
 		      {
-			/* Negated condition requires an opcode change. */
+			/* Negated condition requires an opcode change.  */
 			opcode |= (cmpltr & 8) << 26;
 		      }
 		    else
-		      /* Not a 64 bit cond.  Give 32 bit a chance. */
+		      /* Not a 64 bit cond.  Give 32 bit a chance.  */
 		      break;
 
 		    INSERT_FIELD_AND_CONTINUE (opcode, cmpltr & 7, 13);
@@ -2584,7 +2623,7 @@ pa_ip (str)
 		  case 'Q':
 		    cmpltr = pa_parse_cmpib_64_cmpltr (&s);
 		    if (cmpltr < 0)
-		      /* Not a 64 bit cond.  Give 32 bit a chance. */
+		      /* Not a 64 bit cond.  Give 32 bit a chance.  */
 		      break;
 
 		    INSERT_FIELD_AND_CONTINUE (opcode, cmpltr, 13);
@@ -2608,14 +2647,12 @@ pa_ip (str)
 			  }
 			else if (*s == '*')
 			  break;
-			name = s;
 
 			name = s;
 			while (*s != ',' && *s != ' ' && *s != '\t')
 			  s += 1;
 			c = *s;
 			*s = 0x00;
-
 
 			if (strcmp (name, "=") == 0)
 			  cmpltr = 1;
@@ -2677,7 +2714,6 @@ pa_ip (str)
 			  }
 			else if (*s == '*')
 			  break;
-			name = s;
 
 			name = s;
 			while (*s != ',' && *s != ' ' && *s != '\t')
@@ -2897,7 +2933,7 @@ pa_ip (str)
 		{
 		  num = evaluate_absolute (&the_insn);
 		  CHECK_FIELD (num, 1023, -1024, 0);
-		  low_sign_unext (num, 11, &num);
+		  num = low_sign_unext (num, 11);
 		  INSERT_FIELD_AND_CONTINUE (opcode, num, 0);
 		}
 	      else
@@ -2919,26 +2955,22 @@ pa_ip (str)
 	      s = expr_end;
 	      if (the_insn.exp.X_op == O_constant)
 		{
-		  int a, m;
+		  int mb;
 
-		  /* XXX the completer stored away tibits of information
+		  /* XXX the completer stored away tidbits of information
 		     for us to extract.  We need a cleaner way to do this.
 		     Now that we have lots of letters again, it would be
 		     good to rethink this.  */
-		  m = (opcode & (1 << 8)) != 0;
-		  a = (opcode & (1 << 9)) != 0;
-		  opcode &= ~ (3 << 8);
+		  mb = opcode & 1;
+		  opcode -= mb;
 		  num = evaluate_absolute (&the_insn);
-		  if ((a == 1 && num >= 0) || (a == 0 && num < 0))
+		  if (mb != (num < 0))
 		    break;
 		  CHECK_FIELD (num, 8191, -8192, 0);
-		  low_sign_unext (num, 14, &num);
+		  num = low_sign_unext (num, 14);
 		  INSERT_FIELD_AND_CONTINUE (opcode, num, 0);
 		}
-	      else
-		{
-		  break;
-		}
+	      break;
 
 	    /* Handle a 14 bit immediate at 31.  */
 	    case 'K':
@@ -2947,33 +2979,64 @@ pa_ip (str)
 	      s = expr_end;
 	      if (the_insn.exp.X_op == O_constant)
 		{
-		  int a, m;
+		  int mb;
 
-		  /* XXX the completer stored away tibits of information
-		     for us to extract.  We need a cleaner way to do this.
-		     Now that we have lots of letters again, it would be
-		     good to rethink this.  */
-		  m = (opcode & (1 << 8)) != 0;
-		  a = (opcode & (1 << 9)) != 0;
-		  opcode &= ~ (3 << 8);
+		  mb = opcode & 1;
+		  opcode -= mb;
 		  num = evaluate_absolute (&the_insn);
-		  if ((a == 1 && num < 0) || (a == 0 && num > 0))
+		  if (mb == (num < 0))
 		    break;
 		  if (num % 4)
 		    break;
 		  CHECK_FIELD (num, 8191, -8192, 0);
-		  if (num < 0)
-		    opcode |= 1;
-                  num &= 0x1fff;
-                  num >>= 2;
-                  INSERT_FIELD_AND_CONTINUE (opcode, num, 3);
+		  num = low_sign_unext (num, 14);
+		  INSERT_FIELD_AND_CONTINUE (opcode, num, 0);
 		}
-	      else
-		{
-		  break;
-		}
+	      break;
 
-	    /* Handle 14 bit immediated, shifted left three times.  */
+	    /* Handle a 16 bit immediate at 31.  */
+	    case '<':
+	      the_insn.field_selector = pa_chk_field_selector (&s);
+	      get_expression (s);
+	      s = expr_end;
+	      if (the_insn.exp.X_op == O_constant)
+		{
+		  int mb;
+
+		  mb = opcode & 1;
+		  opcode -= mb;
+		  num = evaluate_absolute (&the_insn);
+		  if (mb != (num < 0))
+		    break;
+		  CHECK_FIELD (num, 32767, -32768, 0);
+		  num = re_assemble_16 (num);
+		  INSERT_FIELD_AND_CONTINUE (opcode, num, 0);
+		}
+	      break;
+
+	    /* Handle a 16 bit immediate at 31.  */
+	    case '>':
+	      the_insn.field_selector = pa_chk_field_selector (&s);
+	      get_expression (s);
+	      s = expr_end;
+	      if (the_insn.exp.X_op == O_constant)
+		{
+		  int mb;
+
+		  mb = opcode & 1;
+		  opcode -= mb;
+		  num = evaluate_absolute (&the_insn);
+		  if (mb == (num < 0))
+		    break;
+		  if (num % 4)
+		    break;
+		  CHECK_FIELD (num, 32767, -32768, 0);
+		  num = re_assemble_16 (num);
+		  INSERT_FIELD_AND_CONTINUE (opcode, num, 0);
+		}
+	      break;
+
+	    /* Handle 14 bit immediate, shifted left three times.  */
 	    case '#':
 	      the_insn.field_selector = pa_chk_field_selector (&s);
 	      get_expression (s);
@@ -3041,7 +3104,7 @@ pa_ip (str)
 		{
 		  num = evaluate_absolute (&the_insn);
 		  CHECK_FIELD (num, 8191, -8192, 0);
-		  low_sign_unext (num, 14, &num);
+		  num = low_sign_unext (num, 14);
 		  INSERT_FIELD_AND_CONTINUE (opcode, num, 0);
 		}
 	      else
@@ -3065,8 +3128,8 @@ pa_ip (str)
 		{
 		  num = evaluate_absolute (&the_insn);
 		  CHECK_FIELD (num >> 11, 1048575, -1048576, 0);
-		  dis_assemble_21 (num, &num);
-		  INSERT_FIELD_AND_CONTINUE (opcode, num, 0);
+		  opcode |= re_assemble_21 (num);
+		  continue;
 		}
 	      else
 		{
@@ -3080,26 +3143,104 @@ pa_ip (str)
 		  continue;
 		}
 
+	    /* Handle a 16 bit immediate at 31 (PA 2.0 wide mode only).  */
+	    case 'l':
+	      the_insn.field_selector = pa_chk_field_selector (&s);
+	      get_expression (s);
+	      s = expr_end;
+	      if (the_insn.exp.X_op == O_constant)
+		{
+		  num = evaluate_absolute (&the_insn);
+		  CHECK_FIELD (num, 32767, -32768, 0);
+		  opcode |= re_assemble_16 (num);
+		  continue;
+		}
+	      else
+		{
+		  /* ??? Is this valid for wide mode?  */
+		  if (is_DP_relative (the_insn.exp))
+		    the_insn.reloc = R_HPPA_GOTOFF;
+		  else if (is_PC_relative (the_insn.exp))
+		    the_insn.reloc = R_HPPA_PCREL_CALL;
+		  else
+		    the_insn.reloc = R_HPPA;
+		  the_insn.format = 14;
+		  continue;
+		}
+
+	    /* Handle a word-aligned 16-bit imm. at 31 (PA2.0 wide).  */
+	    case 'y':
+	      the_insn.field_selector = pa_chk_field_selector (&s);
+	      get_expression (s);
+	      s = expr_end;
+	      if (the_insn.exp.X_op == O_constant)
+		{
+		  num = evaluate_absolute (&the_insn);
+		  CHECK_FIELD (num, 32767, -32768, 0);
+		  CHECK_ALIGN (num, 4, 0);
+		  opcode |= re_assemble_16 (num);
+		  continue;
+		}
+	      else
+		{
+		  /* ??? Is this valid for wide mode?  */
+		  if (is_DP_relative (the_insn.exp))
+		    the_insn.reloc = R_HPPA_GOTOFF;
+		  else if (is_PC_relative (the_insn.exp))
+		    the_insn.reloc = R_HPPA_PCREL_CALL;
+		  else
+		    the_insn.reloc = R_HPPA;
+		  the_insn.format = 14;
+		  continue;
+		}
+
+	    /* Handle a dword-aligned 16-bit imm. at 31 (PA2.0 wide).  */
+	    case '&':
+	      the_insn.field_selector = pa_chk_field_selector (&s);
+	      get_expression (s);
+	      s = expr_end;
+	      if (the_insn.exp.X_op == O_constant)
+		{
+		  num = evaluate_absolute (&the_insn);
+		  CHECK_FIELD (num, 32767, -32768, 0);
+		  CHECK_ALIGN (num, 8, 0);
+		  opcode |= re_assemble_16 (num);
+		  continue;
+		}
+	      else
+		{
+		  /* ??? Is this valid for wide mode?  */
+		  if (is_DP_relative (the_insn.exp))
+		    the_insn.reloc = R_HPPA_GOTOFF;
+		  else if (is_PC_relative (the_insn.exp))
+		    the_insn.reloc = R_HPPA_PCREL_CALL;
+		  else
+		    the_insn.reloc = R_HPPA;
+		  the_insn.format = 14;
+		  continue;
+		}
+
 	    /* Handle a 12 bit branch displacement.  */
 	    case 'w':
 	      the_insn.field_selector = pa_chk_field_selector (&s);
 	      get_expression (s);
 	      s = expr_end;
 	      the_insn.pcrel = 1;
-	      if (!strcmp (S_GET_NAME (the_insn.exp.X_add_symbol), "L$0\001"))
+	      if (!the_insn.exp.X_add_symbol
+		  || !strcmp (S_GET_NAME (the_insn.exp.X_add_symbol),
+			      "L$0\001"))
 		{
-		  unsigned int w1, w, result;
-
 		  num = evaluate_absolute (&the_insn);
 		  if (num % 4)
 		    {
 		      as_bad (_("Branch to unaligned address"));
 		      break;
 		    }
-		  CHECK_FIELD (num, 8199, -8184, 0);
-		  sign_unext ((num - 8) >> 2, 12, &result);
-		  dis_assemble_12 (result, &w1, &w);
-		  INSERT_FIELD_AND_CONTINUE (opcode, ((w1 << 2) | w), 0);
+		  if (the_insn.exp.X_add_symbol)
+		    num -= 8;
+		  CHECK_FIELD (num, 8191, -8192, 0);
+		  opcode |= re_assemble_12 (num >> 2);
+		  continue;
 		}
 	      else
 		{
@@ -3121,23 +3262,17 @@ pa_ip (str)
 		  || !strcmp (S_GET_NAME (the_insn.exp.X_add_symbol),
 			      "L$0\001"))
 		{
-		  unsigned int w2, w1, w, result;
-
 		  num = evaluate_absolute (&the_insn);
 		  if (num % 4)
 		    {
 		      as_bad (_("Branch to unaligned address"));
 		      break;
 		    }
-		  CHECK_FIELD (num, 262143, -262144, 0);
-
 		  if (the_insn.exp.X_add_symbol)
 		    num -= 8;
-
-		  sign_unext (num >> 2, 17, &result);
-		  dis_assemble_17 (result, &w1, &w2, &w);
-		  INSERT_FIELD_AND_CONTINUE (opcode,
-					   ((w2 << 2) | (w1 << 16) | w), 0);
+		  CHECK_FIELD (num, 262143, -262144, 0);
+		  opcode |= re_assemble_17 (num >> 2);
+		  continue;
 		}
 	      else
 		{
@@ -3158,25 +3293,16 @@ pa_ip (str)
 		  || !strcmp (S_GET_NAME (the_insn.exp.X_add_symbol),
 			      "L$0\001"))
 		{
-		  unsigned int w3, w2, w1, w, result;
-
 		  num = evaluate_absolute (&the_insn);
 		  if (num % 4)
 		    {
 		      as_bad (_("Branch to unaligned address"));
 		      break;
 		    }
-		  CHECK_FIELD (num, 8388607, -8388608, 0);
-
 		  if (the_insn.exp.X_add_symbol)
 		    num -= 8;
-
-		  sign_unext (num >> 2, 22, &result);
-		  dis_assemble_22 (result, &w3, &w1, &w2, &w);
-		  INSERT_FIELD_AND_CONTINUE (opcode,
-					     ((w3 << 21) | (w2 << 2)
-					      | (w1 << 16) | w),
-					     0);
+		  CHECK_FIELD (num, 8388607, -8388608, 0);
+		  opcode |= re_assemble_22 (num >> 2);
 		}
 	      else
 		{
@@ -3197,23 +3323,17 @@ pa_ip (str)
 		  || !strcmp (S_GET_NAME (the_insn.exp.X_add_symbol),
 			      "L$0\001"))
 		{
-		  unsigned int w2, w1, w, result;
-
 		  num = evaluate_absolute (&the_insn);
 		  if (num % 4)
 		    {
 		      as_bad (_("Branch to unaligned address"));
 		      break;
 		    }
-		  CHECK_FIELD (num, 262143, -262144, 0);
-
 		  if (the_insn.exp.X_add_symbol)
 		    num -= 8;
-
-		  sign_unext (num >> 2, 17, &result);
-		  dis_assemble_17 (result, &w1, &w2, &w);
-		  INSERT_FIELD_AND_CONTINUE (opcode,
-					   ((w2 << 2) | (w1 << 16) | w), 0);
+		  CHECK_FIELD (num, 262143, -262144, 0);
+		  opcode |= re_assemble_17 (num >> 2);
+		  continue;
 		}
 	      else
 		{
@@ -3350,8 +3470,6 @@ pa_ip (str)
 	      num = pa_get_absolute_expression (&the_insn, &s);
 	      if (strict && the_insn.exp.X_op != O_constant)
 		break;
-	      if (the_insn.exp.X_op != O_constant)
-		break;
 	      s = expr_end;
 	      CHECK_FIELD (num, 31, 0, strict);
 	      INSERT_FIELD_AND_CONTINUE (opcode, num, 21);
@@ -3380,7 +3498,7 @@ pa_ip (str)
 	      if (strict && the_insn.exp.X_op != O_constant)
 		break;
 	      s = expr_end;
-	      CHECK_FIELD (num, 671108864, 0, strict);
+	      CHECK_FIELD (num, 67108863, 0, strict);
 	      INSERT_FIELD_AND_CONTINUE (opcode, num, 0);
 
 	    /* Handle a 3 bit SFU identifier at 25.  */
@@ -3575,49 +3693,43 @@ pa_ip (str)
 	        {
 		/* Float target register.  */
 		case 't':
-		  /* This should be more strict.  Small steps.  */
-		  if (strict && *s != '%')
+		  if (!pa_parse_number (&s, 3))
 		    break;
-		  num = pa_parse_number (&s, 0);
+		  num = (pa_number & ~FP_REG_RSEL) - FP_REG_BASE;
 		  CHECK_FIELD (num, 31, 0, 0);
 		  INSERT_FIELD_AND_CONTINUE (opcode, num, 0);
 
 		/* Float target register with L/R selection.  */
 		case 'T':
 		  {
-		    struct pa_11_fp_reg_struct result;
-
-		    /* This should be more strict.  Small steps.  */
-		    if (strict && *s != '%')
+		    if (!pa_parse_number (&s, 1))
 		      break;
-		    pa_parse_number (&s, &result);
-		    CHECK_FIELD (result.number_part, 31, 0, 0);
-		    opcode |= result.number_part;
+		    num = (pa_number & ~FP_REG_RSEL) - FP_REG_BASE;
+		    CHECK_FIELD (num, 31, 0, 0);
+		    opcode |= num;
 
 		    /* 0x30 opcodes are FP arithmetic operation opcodes
 		       and need to be turned into 0x38 opcodes.  This
 		       is not necessary for loads/stores.  */
-		    if (need_pa11_opcode (&the_insn, &result)
+		    if (need_pa11_opcode ()
 			&& ((opcode & 0xfc000000) == 0x30000000))
 		      opcode |= 1 << 27;
 
-		    INSERT_FIELD_AND_CONTINUE (opcode, result.l_r_select & 1, 6);
+		    opcode |= (pa_number & FP_REG_RSEL ? 1 << 6 : 0);
+		    continue;
 		  }
 
 		/* Float operand 1.  */
 		case 'a':
 		  {
-		    struct pa_11_fp_reg_struct result;
-
-		    /* This should be more strict.  Small steps.  */
-		    if (strict && *s != '%')
+		    if (!pa_parse_number (&s, 1))
 		      break;
-		    pa_parse_number (&s, &result);
-		    CHECK_FIELD (result.number_part, 31, 0, 0);
-		    opcode |= result.number_part << 21;
-		    if (need_pa11_opcode (&the_insn, &result))
+		    num = (pa_number & ~FP_REG_RSEL) - FP_REG_BASE;
+		    CHECK_FIELD (num, 31, 0, 0);
+		    opcode |= num << 21;
+		    if (need_pa11_opcode ())
 		      {
-			opcode |= (result.l_r_select & 1) << 7;
+			opcode |= (pa_number & FP_REG_RSEL ? 1 << 7 : 0);
 			opcode |= 1 << 27;
 		      }
 		    continue;
@@ -3627,32 +3739,26 @@ pa_ip (str)
 		case 'X':
 		case 'A':
 		  {
-		    struct pa_11_fp_reg_struct result;
-
-		    /* This should be more strict.  Small steps.  */
-		    if (strict && *s != '%')
+		    if (!pa_parse_number (&s, 1))
 		      break;
-		    pa_parse_number (&s, &result);
-		    CHECK_FIELD (result.number_part, 31, 0, 0);
-		    opcode |= result.number_part << 21;
-		    opcode |= (result.l_r_select & 1) << 7;
+		    num = (pa_number & ~FP_REG_RSEL) - FP_REG_BASE;
+		    CHECK_FIELD (num, 31, 0, 0);
+		    opcode |= num << 21;
+		    opcode |= (pa_number & FP_REG_RSEL ? 1 << 7 : 0);
 		    continue;
 		  }
 
 		/* Float operand 2.  */
 		case 'b':
 		  {
-		    struct pa_11_fp_reg_struct result;
-
-		    /* This should be more strict.  Small steps.  */
-		    if (strict && *s != '%')
+		    if (!pa_parse_number (&s, 1))
 		      break;
-		    pa_parse_number (&s, &result);
-		    CHECK_FIELD (result.number_part, 31, 0, 0);
-		    opcode |= (result.number_part & 0x1f) << 16;
-		    if (need_pa11_opcode (&the_insn, &result))
+		    num = (pa_number & ~FP_REG_RSEL) - FP_REG_BASE;
+		    CHECK_FIELD (num, 31, 0, 0);
+		    opcode |= num << 16;
+		    if (need_pa11_opcode ())
 		      {
-			opcode |= (result.l_r_select & 1) << 12;
+			opcode |= (pa_number & FP_REG_RSEL ? 1 << 12 : 0);
 			opcode |= 1 << 27;
 		      }
 		    continue;
@@ -3661,166 +3767,152 @@ pa_ip (str)
 		/* Float operand 2 with L/R selection.  */
 		case 'B':
 		  {
-		    struct pa_11_fp_reg_struct result;
-
-		    /* This should be more strict.  Small steps.  */
-		    if (strict && *s != '%')
+		    if (!pa_parse_number (&s, 1))
 		      break;
-		    pa_parse_number (&s, &result);
-		    CHECK_FIELD (result.number_part, 31, 0, 0);
-		    opcode |= (result.number_part & 0x1f) << 16;
-		    opcode |= (result.l_r_select & 1) << 12;
+		    num = (pa_number & ~FP_REG_RSEL) - FP_REG_BASE;
+		    CHECK_FIELD (num, 31, 0, 0);
+		    opcode |= num << 16;
+		    opcode |= (pa_number & FP_REG_RSEL ? 1 << 12 : 0);
 		    continue;
 		  }
 
 		/* Float operand 3 for fmpyfadd, fmpynfadd.  */
 		case 'C':
 		  {
-		    struct pa_11_fp_reg_struct result;
-
-		    /* This should be more strict.  Small steps.  */
-		    if (strict && *s != '%')
+		    if (!pa_parse_number (&s, 1))
 		      break;
-		    pa_parse_number (&s, &result);
-		    CHECK_FIELD (result.number_part, 31, 0, 0);
-		    opcode |= (result.number_part & 0x1c) << 11;
-		    opcode |= (result.number_part & 0x3) << 9;
-		    opcode |= (result.l_r_select & 1) << 8;
+		    num = (pa_number & ~FP_REG_RSEL) - FP_REG_BASE;
+		    CHECK_FIELD (num, 31, 0, 0);
+		    opcode |= (num & 0x1c) << 11;
+		    opcode |= (num & 0x03) << 9;
+		    opcode |= (pa_number & FP_REG_RSEL ? 1 << 8 : 0);
 		    continue;
 		  }
 
 		/* Float mult operand 1 for fmpyadd, fmpysub */
 		case 'i':
 		  {
-		    struct pa_11_fp_reg_struct result;
-
-		    /* This should be more strict.  Small steps.  */
-		    if (strict && *s != '%')
+		    if (!pa_parse_number (&s, 1))
 		      break;
-		    pa_parse_number (&s, &result);
-		    CHECK_FIELD (result.number_part, 31, 0, 0);
+		    num = (pa_number & ~FP_REG_RSEL) - FP_REG_BASE;
+		    CHECK_FIELD (num, 31, 0, 0);
 		    if (the_insn.fpof1 == SGL)
 		      {
-			if (result.number_part < 16)
+			if (num < 16)
 			  {
 			    as_bad  (_("Invalid register for single precision fmpyadd or fmpysub"));
 			    break;
 			  }
-
-			result.number_part &= 0xF;
-			result.number_part |= (result.l_r_select & 1) << 4;
+			num &= 0xF;
+			num |= (pa_number & FP_REG_RSEL ? 1 << 4 : 0);
 		      }
-		    INSERT_FIELD_AND_CONTINUE (opcode, result.number_part, 21);
+		    INSERT_FIELD_AND_CONTINUE (opcode, num, 21);
 		  }
 
 		/* Float mult operand 2 for fmpyadd, fmpysub */
 		case 'j':
 		  {
-		    struct pa_11_fp_reg_struct result;
-
-		    /* This should be more strict.  Small steps.  */
-		    if (strict && *s != '%')
+		    if (!pa_parse_number (&s, 1))
 		      break;
-		    pa_parse_number (&s, &result);
-		    CHECK_FIELD (result.number_part, 31, 0, 0);
+		    num = (pa_number & ~FP_REG_RSEL) - FP_REG_BASE;
+		    CHECK_FIELD (num, 31, 0, 0);
 		    if (the_insn.fpof1 == SGL)
 		      {
-		        if (result.number_part < 16)
+		        if (num < 16)
 		          {
-		    	as_bad  (_("Invalid register for single precision fmpyadd or fmpysub"));
-		    	break;
+			    as_bad  (_("Invalid register for single precision fmpyadd or fmpysub"));
+			    break;
 		          }
-		        result.number_part &= 0xF;
-		        result.number_part |= (result.l_r_select & 1) << 4;
+		        num &= 0xF;
+		        num |= (pa_number & FP_REG_RSEL ? 1 << 4 : 0);
 		      }
-		    INSERT_FIELD_AND_CONTINUE (opcode, result.number_part, 16);
+		    INSERT_FIELD_AND_CONTINUE (opcode, num, 16);
 		  }
 
 		/* Float mult target for fmpyadd, fmpysub */
 		case 'k':
 		  {
-		    struct pa_11_fp_reg_struct result;
-
-		    /* This should be more strict.  Small steps.  */
-		    if (strict && *s != '%')
+		    if (!pa_parse_number (&s, 1))
 		      break;
-		    pa_parse_number (&s, &result);
-		    CHECK_FIELD (result.number_part, 31, 0, 0);
+		    num = (pa_number & ~FP_REG_RSEL) - FP_REG_BASE;
+		    CHECK_FIELD (num, 31, 0, 0);
 		    if (the_insn.fpof1 == SGL)
 		      {
-		        if (result.number_part < 16)
+		        if (num < 16)
 		          {
-		    	as_bad  (_("Invalid register for single precision fmpyadd or fmpysub"));
-		    	break;
+			    as_bad  (_("Invalid register for single precision fmpyadd or fmpysub"));
+			    break;
 		          }
-		        result.number_part &= 0xF;
-		        result.number_part |= (result.l_r_select & 1) << 4;
+		        num &= 0xF;
+		        num |= (pa_number & FP_REG_RSEL ? 1 << 4 : 0);
 		      }
-		    INSERT_FIELD_AND_CONTINUE (opcode, result.number_part, 0);
+		    INSERT_FIELD_AND_CONTINUE (opcode, num, 0);
 		  }
 
 		/* Float add operand 1 for fmpyadd, fmpysub */
 		case 'l':
 		  {
-		    struct pa_11_fp_reg_struct result;
-
-		    /* This should be more strict.  Small steps.  */
-		    if (strict && *s != '%')
+		    if (!pa_parse_number (&s, 1))
 		      break;
-		    pa_parse_number (&s, &result);
-		    CHECK_FIELD (result.number_part, 31, 0, 0);
+		    num = (pa_number & ~FP_REG_RSEL) - FP_REG_BASE;
+		    CHECK_FIELD (num, 31, 0, 0);
 		    if (the_insn.fpof1 == SGL)
 		      {
-		        if (result.number_part < 16)
+		        if (num < 16)
 		          {
-		    	as_bad  (_("Invalid register for single precision fmpyadd or fmpysub"));
-		    	break;
+			    as_bad  (_("Invalid register for single precision fmpyadd or fmpysub"));
+			    break;
 		          }
-		        result.number_part &= 0xF;
-		        result.number_part |= (result.l_r_select & 1) << 4;
+		        num &= 0xF;
+		        num |= (pa_number & FP_REG_RSEL ? 1 << 4 : 0);
 		      }
-		    INSERT_FIELD_AND_CONTINUE (opcode, result.number_part, 6);
+		    INSERT_FIELD_AND_CONTINUE (opcode, num, 6);
 		  }
 
 		/* Float add target for fmpyadd, fmpysub */
 		case 'm':
 		  {
-		    struct pa_11_fp_reg_struct result;
-
-		    /* This should be more strict.  Small steps.  */
-		    if (strict && *s != '%')
+		    if (!pa_parse_number (&s, 1))
 		      break;
-		    pa_parse_number (&s, &result);
-		    CHECK_FIELD (result.number_part, 31, 0, 0);
+		    num = (pa_number & ~FP_REG_RSEL) - FP_REG_BASE;
+		    CHECK_FIELD (num, 31, 0, 0);
 		    if (the_insn.fpof1 == SGL)
 		      {
-		        if (result.number_part < 16)
+		        if (num < 16)
 		          {
-		    	as_bad  (_("Invalid register for single precision fmpyadd or fmpysub"));
-		    	break;
+			    as_bad  (_("Invalid register for single precision fmpyadd or fmpysub"));
+			    break;
 		          }
-		        result.number_part &= 0xF;
-		        result.number_part |= (result.l_r_select & 1) << 4;
+		        num &= 0xF;
+		        num |= (pa_number & FP_REG_RSEL ? 1 << 4 : 0);
 		      }
-		    INSERT_FIELD_AND_CONTINUE (opcode, result.number_part, 11);
+		    INSERT_FIELD_AND_CONTINUE (opcode, num, 11);
 		  }
 
 		/* Handle L/R register halves like 'x'.  */
+		case 'E':
 		case 'e':
 		  {
-		    struct pa_11_fp_reg_struct result;
-
-		    if (strict && *s != '%')
+		    if (!pa_parse_number (&s, 1))
 		      break;
-		    pa_parse_number (&s, &result);
-		    CHECK_FIELD (result.number_part, 31, 0, 0);
-		    opcode |= (result.number_part & 0x1f) << 16;
-		    if (need_pa11_opcode (&the_insn, &result))
+		    num = (pa_number & ~FP_REG_RSEL) - FP_REG_BASE;
+		    CHECK_FIELD (num, 31, 0, 0);
+		    opcode |= num << 16;
+		    if (need_pa11_opcode ())
 		      {
-			opcode |= (result.l_r_select & 1) << 1;
+			opcode |= (pa_number & FP_REG_RSEL ? 1 << 1 : 0);
 		      }
 		    continue;
 		  }
+
+		/* Float target register (PA 2.0 wide).  */
+		case 'x':
+		  if (!pa_parse_number (&s, 3))
+		    break;
+		  num = (pa_number & ~FP_REG_RSEL) - FP_REG_BASE;
+		  CHECK_FIELD (num, 31, 0, 0);
+		  INSERT_FIELD_AND_CONTINUE (opcode, num, 16);
+
 		default:
 		  abort ();
 		}
@@ -3936,16 +4028,17 @@ tc_gen_reloc (section, fixp)
 {
   arelent *reloc;
   struct hppa_fix_struct *hppa_fixp;
-  bfd_reloc_code_real_type code;
   static arelent *no_relocs = NULL;
   arelent **relocs;
-  bfd_reloc_code_real_type **codes;
+  reloc_type **codes;
+  reloc_type code;
   int n_relocs;
   int i;
 
   hppa_fixp = (struct hppa_fix_struct *) fixp->tc_fix_data;
   if (fixp->fx_addsy == 0)
     return &no_relocs;
+
   assert (hppa_fixp != 0);
   assert (section != 0);
 
@@ -3953,7 +4046,7 @@ tc_gen_reloc (section, fixp)
 
   reloc->sym_ptr_ptr = (asymbol **) xmalloc (sizeof (asymbol *));
   *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
-  codes = (bfd_reloc_code_real_type **) hppa_gen_reloc_type (stdoutput,
+  codes = hppa_gen_reloc_type (stdoutput,
 			       fixp->fx_r_type,
 			       hppa_fixp->fx_r_format,
 			       hppa_fixp->fx_r_field,
@@ -3961,7 +4054,10 @@ tc_gen_reloc (section, fixp)
 			       symbol_get_bfdsym (fixp->fx_addsy));
 
   if (codes == NULL)
-    abort ();
+    {
+      as_bad (_("Cannot handle fixup at %s:%d"), fixp->fx_file, fixp->fx_line);
+      abort ();
+    }
 
   for (n_relocs = 0; codes[n_relocs]; n_relocs++)
     ;
@@ -3981,14 +4077,6 @@ tc_gen_reloc (section, fixp)
 
       code = *codes[0];
 
-      reloc->sym_ptr_ptr = (asymbol **) xmalloc (sizeof (asymbol *));
-      *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
-      reloc->howto = bfd_reloc_type_lookup (stdoutput, code);
-      reloc->address = fixp->fx_frag->fr_address + fixp->fx_where;
-      reloc->addend = 0;	/* default */
-
-      assert (reloc->howto && code == reloc->howto->type);
-
       /* Now, do any processing that is dependent on the relocation type.  */
       switch (code)
 	{
@@ -4000,9 +4088,8 @@ tc_gen_reloc (section, fixp)
 	case R_PARISC_PLABEL14R:
 	  /* For plabel relocations, the addend of the
 	     relocation should be either 0 (no static link) or 2
-	     (static link required).
-
-	     FIXME: We always assume no static link!
+	     (static link required).  This adjustment is done in
+	     bfd/elf32-hppa.c:elf32_hppa_relocate_section.
 
 	     We also slam a zero addend into the DLT relative relocs;
 	     it doesn't make a lot of sense to use any addend since
@@ -4010,19 +4097,37 @@ tc_gen_reloc (section, fixp)
 	  reloc->addend = 0;
 	  break;
 
-	case R_PARISC_PCREL21L:
+#ifdef ELF_ARG_RELOC
 	case R_PARISC_PCREL17R:
 	case R_PARISC_PCREL17F:
 	case R_PARISC_PCREL17C:
-	case R_PARISC_PCREL14R:
-	case R_PARISC_PCREL14F:
-	  /* The constant is stored in the instruction.  */
-	  reloc->addend = HPPA_R_ADDEND (hppa_fixp->fx_arg_reloc, 0);
+	case R_PARISC_DIR17R:
+	case R_PARISC_DIR17F:
+	case R_PARISC_PCREL21L:
+	case R_PARISC_DIR21L:
+	  reloc->addend = HPPA_R_ADDEND (hppa_fixp->fx_arg_reloc,
+					 fixp->fx_offset);
 	  break;
+#endif
+
+	case R_PARISC_DIR32:
+	  /* Facilitate hand-crafted unwind info.  */
+	  if (strcmp (section->name, UNWIND_SECTION_NAME) == 0)
+	    code = R_PARISC_SEGREL32;
+	  /* Fall thru */
+
 	default:
 	  reloc->addend = fixp->fx_offset;
 	  break;
 	}
+
+      reloc->sym_ptr_ptr = (asymbol **) xmalloc (sizeof (asymbol *));
+      *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
+      reloc->howto = bfd_reloc_type_lookup (stdoutput,
+					    (bfd_reloc_code_real_type) code);
+      reloc->address = fixp->fx_frag->fr_address + fixp->fx_where;
+
+      assert (reloc->howto && (unsigned int) code == reloc->howto->type);
       break;
     }
 #else /* OBJ_SOM */
@@ -4034,7 +4139,9 @@ tc_gen_reloc (section, fixp)
 
       relocs[i]->sym_ptr_ptr = (asymbol **) xmalloc (sizeof (asymbol *));
       *relocs[i]->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
-      relocs[i]->howto = bfd_reloc_type_lookup (stdoutput, code);
+      relocs[i]->howto =
+	bfd_reloc_type_lookup (stdoutput,
+			       (bfd_reloc_code_real_type) code);
       relocs[i]->address = fixp->fx_frag->fr_address + fixp->fx_where;
 
       switch (code)
@@ -4045,25 +4152,35 @@ tc_gen_reloc (section, fixp)
 	     relocs now and break out of the loop.  */
 	  assert (i == 1);
 	  relocs[0]->sym_ptr_ptr = (asymbol **) &(bfd_abs_symbol);
-	  relocs[0]->howto = bfd_reloc_type_lookup (stdoutput, *codes[0]);
+	  relocs[0]->howto =
+	    bfd_reloc_type_lookup (stdoutput,
+				   (bfd_reloc_code_real_type) *codes[0]);
 	  relocs[0]->address = fixp->fx_frag->fr_address + fixp->fx_where;
 	  relocs[0]->addend = 0;
 	  relocs[1]->sym_ptr_ptr = (asymbol **) xmalloc (sizeof (asymbol *));
 	  *relocs[1]->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
-	  relocs[1]->howto = bfd_reloc_type_lookup (stdoutput, *codes[1]);
+	  relocs[1]->howto =
+	    bfd_reloc_type_lookup (stdoutput,
+				   (bfd_reloc_code_real_type) *codes[1]);
 	  relocs[1]->address = fixp->fx_frag->fr_address + fixp->fx_where;
 	  relocs[1]->addend = 0;
 	  relocs[2]->sym_ptr_ptr = (asymbol **) xmalloc (sizeof (asymbol *));
 	  *relocs[2]->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_subsy);
-	  relocs[2]->howto = bfd_reloc_type_lookup (stdoutput, *codes[2]);
+	  relocs[2]->howto =
+	    bfd_reloc_type_lookup (stdoutput,
+				   (bfd_reloc_code_real_type) *codes[2]);
 	  relocs[2]->address = fixp->fx_frag->fr_address + fixp->fx_where;
 	  relocs[2]->addend = 0;
 	  relocs[3]->sym_ptr_ptr = (asymbol **) &(bfd_abs_symbol);
-	  relocs[3]->howto = bfd_reloc_type_lookup (stdoutput, *codes[3]);
+	  relocs[3]->howto =
+	    bfd_reloc_type_lookup (stdoutput,
+				   (bfd_reloc_code_real_type) *codes[3]);
 	  relocs[3]->address = fixp->fx_frag->fr_address + fixp->fx_where;
 	  relocs[3]->addend = 0;
 	  relocs[4]->sym_ptr_ptr = (asymbol **) &(bfd_abs_symbol);
-	  relocs[4]->howto = bfd_reloc_type_lookup (stdoutput, *codes[4]);
+	  relocs[4]->howto =
+	    bfd_reloc_type_lookup (stdoutput,
+				   (bfd_reloc_code_real_type) *codes[4]);
 	  relocs[4]->address = fixp->fx_frag->fr_address + fixp->fx_where;
 	  relocs[4]->addend = 0;
 	  goto done;
@@ -4129,8 +4246,8 @@ tc_gen_reloc (section, fixp)
 
 void
 md_convert_frag (abfd, sec, fragP)
-     register bfd *abfd;
-     register asection *sec;
+     register bfd *abfd ATTRIBUTE_UNUSED;
+     register asection *sec ATTRIBUTE_UNUSED;
      register fragS *fragP;
 {
   unsigned int address;
@@ -4158,7 +4275,7 @@ md_convert_frag (abfd, sec, fragP)
     }
 }
 
-/* Round up a section size to the appropriate boundary. */
+/* Round up a section size to the appropriate boundary.  */
 
 valueT
 md_section_align (segment, size)
@@ -4175,7 +4292,7 @@ md_section_align (segment, size)
 int
 md_estimate_size_before_relax (fragP, segment)
      register fragS *fragP;
-     asection *segment;
+     asection *segment ATTRIBUTE_UNUSED;
 {
   int size;
 
@@ -4187,34 +4304,84 @@ md_estimate_size_before_relax (fragP, segment)
   return size;
 }
 
-CONST char *md_shortopts = "";
+#ifdef OBJ_ELF
+# ifdef WARN_COMMENTS
+const char *md_shortopts = "Vc";
+# else
+const char *md_shortopts = "V";
+# endif
+#else
+# ifdef WARN_COMMENTS
+const char *md_shortopts = "c";
+# else
+const char *md_shortopts = "";
+# endif
+#endif
+
 struct option md_longopts[] = {
+#ifdef WARN_COMMENTS
+  {"warn-comment", no_argument, NULL, 'c'},
+#endif
   {NULL, no_argument, NULL, 0}
 };
-size_t md_longopts_size = sizeof(md_longopts);
+size_t md_longopts_size = sizeof (md_longopts);
 
 int
 md_parse_option (c, arg)
-     int c;
-     char *arg;
+     int c ATTRIBUTE_UNUSED;
+     char *arg ATTRIBUTE_UNUSED;
 {
-  return 0;
+  switch (c)
+    {
+    default:
+      return 0;
+
+#ifdef OBJ_ELF
+    case 'V':
+      print_version_id ();
+      break;
+#endif
+#ifdef WARN_COMMENTS
+    case 'c':
+      warn_comment = 1;
+      break;
+#endif
+    }
+
+  return 1;
 }
 
 void
 md_show_usage (stream)
-     FILE *stream;
+     FILE *stream ATTRIBUTE_UNUSED;
 {
+#ifdef OBJ_ELF
+  fprintf (stream, _("\
+  -Q                      ignored\n"));
+#endif
+#ifdef WARN_COMMENTS
+  fprintf (stream, _("\
+  -c                      print a warning if a comment is found\n"));
+#endif
 }
 
 /* We have no need to default values of symbols.  */
 
 symbolS *
 md_undefined_symbol (name)
-     char *name;
+     char *name ATTRIBUTE_UNUSED;
 {
   return 0;
 }
+
+#if defined (OBJ_SOM) || defined (ELF_ARG_RELOC)
+#define nonzero_dibits(x) \
+  ((x) | (((x) & 0x55555555) << 1) | (((x) & 0xAAAAAAAA) >> 1))
+#define arg_reloc_stub_needed(CALLER, CALLEE) \
+  (((CALLER) ^ (CALLEE)) & nonzero_dibits (CALLER) & nonzero_dibits (CALLEE))
+#else
+#define arg_reloc_stub_needed(CALLER, CALLEE) 0
+#endif
 
 /* Apply a fixup to an instruction.  */
 
@@ -4223,12 +4390,11 @@ md_apply_fix (fixP, valp)
      fixS *fixP;
      valueT *valp;
 {
-  char *buf = fixP->fx_where + fixP->fx_frag->fr_literal;
+  unsigned char *buf;
   struct hppa_fix_struct *hppa_fixP;
-  long new_val, result = 0;
-  unsigned int w1, w2, w, resulti;
+  offsetT new_val;
+  int insn, val, fmt;
 
-  hppa_fixP = (struct hppa_fix_struct *) fixP->tc_fix_data;
   /* SOM uses R_HPPA_ENTRY and R_HPPA_EXIT relocations which can
      never be "applied" (they are just markers).  Likewise for
      R_HPPA_BEGIN_BRTAB and R_HPPA_END_BRTAB.  */
@@ -4249,183 +4415,191 @@ md_apply_fix (fixP, valp)
       return 1;
     }
 #endif
+#ifdef OBJ_ELF
+  if (fixP->fx_r_type == (int) R_PARISC_GNU_VTENTRY
+      || fixP->fx_r_type == (int) R_PARISC_GNU_VTINHERIT)
+    return 1;
+#endif
 
   /* There should have been an HPPA specific fixup associated
      with the GAS fixup.  */
-  if (hppa_fixP)
+  hppa_fixP = (struct hppa_fix_struct *) fixP->tc_fix_data;
+  if (hppa_fixP == NULL)
     {
-      unsigned long buf_wd = bfd_get_32 (stdoutput, buf);
-      int fmt = bfd_hppa_insn2fmt (buf_wd);
-
-      /* If there is a symbol associated with this fixup, then it's something
-	 which will need a SOM relocation (except for some PC-relative relocs).
-	 In such cases we should treat the "val" or "addend" as zero since it
-	 will be added in as needed from fx_offset in tc_gen_reloc.  */
-      if ((fixP->fx_addsy != NULL
-	   || fixP->fx_r_type == R_HPPA_NONE)
-#ifdef OBJ_SOM
-	  && fmt != 32
-#endif
-	  )
-	new_val = ((fmt == 12 || fmt == 17 || fmt == 22) ? 8 : 0);
-#ifdef OBJ_SOM
-      /* These field selectors imply that we do not want an addend.  */
-      else if (hppa_fixP->fx_r_field == e_psel
-	       || hppa_fixP->fx_r_field == e_rpsel
-	       || hppa_fixP->fx_r_field == e_lpsel
-	       || hppa_fixP->fx_r_field == e_tsel
-	       || hppa_fixP->fx_r_field == e_rtsel
-	       || hppa_fixP->fx_r_field == e_ltsel)
-	new_val = ((fmt == 12 || fmt == 17 || fmt == 22) ? 8 : 0);
-      /* This is truely disgusting.  The machine independent code blindly
-	 adds in the value of the symbol being relocated against.  Damn!  */
-      else if (fmt == 32
-	       && fixP->fx_addsy != NULL
-	       && S_GET_SEGMENT (fixP->fx_addsy) != bfd_com_section_ptr)
-	new_val = hppa_field_adjust (*valp - S_GET_VALUE (fixP->fx_addsy),
-				     0, hppa_fixP->fx_r_field);
-#endif
-      else
-	new_val = hppa_field_adjust (*valp, 0, hppa_fixP->fx_r_field);
-
-      /* Handle pc-relative exceptions from above.  */
-#define arg_reloc_stub_needed(CALLER, CALLEE) \
-  ((CALLEE) && (CALLER) && ((CALLEE) != (CALLER)))
-      if ((fmt == 12 || fmt == 17 || fmt == 22)
-	  && fixP->fx_addsy
-	  && fixP->fx_pcrel
-#ifdef OBJ_SOM
-	  && !arg_reloc_stub_needed ((long) ((obj_symbol_type *)
-		symbol_get_bfdsym (fixP->fx_addsy))->tc_data.ap.hppa_arg_reloc,
-		hppa_fixP->fx_arg_reloc)
-#endif
-	  && (((int)(*valp) > -262144 && (int)(*valp) < 262143) && fmt != 22)
-	  && S_GET_SEGMENT (fixP->fx_addsy) == hppa_fixP->segment
-	  && !(fixP->fx_subsy
-	       && S_GET_SEGMENT (fixP->fx_subsy) != hppa_fixP->segment))
-
-	new_val = hppa_field_adjust (*valp, 0, hppa_fixP->fx_r_field);
-#undef arg_reloc_stub_needed
-
-      switch (fmt)
-	{
-	/* Handle all opcodes with the 'j' operand type.  */
-	case 14:
-	  CHECK_FIELD (new_val, 8191, -8192, 0);
-
-	  /* Mask off 14 bits to be changed.  */
-	  bfd_put_32 (stdoutput,
-		      bfd_get_32 (stdoutput, buf) & 0xffffc000,
-		      buf);
-	  low_sign_unext (new_val, 14, &resulti);
-	  result = resulti;
-	  break;
-
-	/* Handle all opcodes with the 'k' operand type.  */
-	case 21:
-	  CHECK_FIELD (new_val, 2097152, 0, 0);
-
-	  /* Mask off 21 bits to be changed.  */
-	  bfd_put_32 (stdoutput,
-		      bfd_get_32 (stdoutput, buf) & 0xffe00000,
-		      buf);
-	  dis_assemble_21 (new_val, &resulti);
-	  result = resulti;
-	  break;
-
-	/* Handle all the opcodes with the 'i' operand type.  */
-	case 11:
-	  CHECK_FIELD (new_val, 1023, -1023, 0);
-
-	  /* Mask off 11 bits to be changed.  */
-	  bfd_put_32 (stdoutput,
-		      bfd_get_32 (stdoutput, buf) & 0xffff800,
-		      buf);
-	  low_sign_unext (new_val, 11, &resulti);
-	  result = resulti;
-	  break;
-
-	/* Handle all the opcodes with the 'w' operand type.  */
-	case 12:
-	  CHECK_FIELD (new_val, 8199, -8184, 0);
-
-	  /* Mask off 11 bits to be changed.  */
-	  sign_unext ((new_val - 8) >> 2, 12, &resulti);
-	  bfd_put_32 (stdoutput,
-		      bfd_get_32 (stdoutput, buf) & 0xffffe002,
-		      buf);
-
-	  dis_assemble_12 (resulti, &w1, &w);
-	  result = ((w1 << 2) | w);
-	  break;
-
-	/* Handle some of the opcodes with the 'W' operand type.  */
-	case 17:
-	  {
-	    int distance = *valp;
-
-	    CHECK_FIELD (new_val, 262143, -262144, 0);
-
-	    /* If this is an absolute branch (ie no link) with an out of
-	       range target, then we want to complain.  */
-	    if (fixP->fx_r_type == R_HPPA_PCREL_CALL
-		&& (distance > 262143 || distance < -262144)
-		&& (bfd_get_32 (stdoutput, buf) & 0xffe00000) == 0xe8000000)
-	      CHECK_FIELD (distance, 262143, -262144, 0);
-
-	    /* Mask off 17 bits to be changed.  */
-	    bfd_put_32 (stdoutput,
-			bfd_get_32 (stdoutput, buf) & 0xffe0e002,
-			buf);
-	    sign_unext ((new_val - 8) >> 2, 17, &resulti);
-	    dis_assemble_17 (resulti, &w1, &w2, &w);
-	    result = ((w2 << 2) | (w1 << 16) | w);
-	    break;
-	  }
-
-	case 22:
-	  {
-	    int distance = *valp, w3;
-
-	    CHECK_FIELD (new_val, 8388607, -8388608, 0);
-
-	    /* If this is an absolute branch (ie no link) with an out of
-	       range target, then we want to complain.  */
-	    if (fixP->fx_r_type == R_HPPA_PCREL_CALL
-		&& (distance > 8388607 || distance < -8388608)
-		&& (bfd_get_32 (stdoutput, buf) & 0xffe00000) == 0xe8000000)
-	      CHECK_FIELD (distance, 8388607, -8388608, 0);
-
-	    /* Mask off 22 bits to be changed.  */
-	    bfd_put_32 (stdoutput,
-			bfd_get_32 (stdoutput, buf) & 0xfc00e002,
-			buf);
-	    sign_unext ((new_val - 8) >> 2, 22, &resulti);
-	    dis_assemble_22 (resulti, &w3, &w1, &w2, &w);
-	    result = ((w3 << 21) | (w2 << 2) | (w1 << 16) | w);
-	    break;
-	  }
-
-	case 32:
-	  result = 0;
-	  bfd_put_32 (stdoutput, new_val, buf);
-	  break;
-
-	default:
-	  as_bad (_("Unknown relocation encountered in md_apply_fix."));
-	  return 0;
-	}
-
-      /* Insert the relocation.  */
-      bfd_put_32 (stdoutput, bfd_get_32 (stdoutput, buf) | result, buf);
-      return 1;
-    }
-  else
-    {
-      printf (_("no hppa_fixup entry for this fixup (fixP = 0x%x, type = 0x%x)\n"),
-	      (unsigned int) fixP, fixP->fx_r_type);
+      printf (_("no hppa_fixup entry for fixup type 0x%x at %s:%d"),
+	      fixP->fx_r_type, fixP->fx_file, fixP->fx_line);
       return 0;
     }
+
+  buf = fixP->fx_frag->fr_literal + fixP->fx_where;
+  insn = bfd_get_32 (stdoutput, buf);
+  fmt = bfd_hppa_insn2fmt (stdoutput, insn);
+
+  /* If there is a symbol associated with this fixup, then it's something
+     which will need a SOM relocation (except for some PC-relative relocs).
+     In such cases we should treat the "val" or "addend" as zero since it
+     will be added in as needed from fx_offset in tc_gen_reloc.  */
+  if ((fixP->fx_addsy != NULL
+       || fixP->fx_r_type == (int) R_HPPA_NONE)
+#ifdef OBJ_SOM
+      && fmt != 32
+#endif
+      )
+    new_val = ((fmt == 12 || fmt == 17 || fmt == 22) ? 8 : 0);
+#ifdef OBJ_SOM
+  /* These field selectors imply that we do not want an addend.  */
+  else if (hppa_fixP->fx_r_field == e_psel
+	   || hppa_fixP->fx_r_field == e_rpsel
+	   || hppa_fixP->fx_r_field == e_lpsel
+	   || hppa_fixP->fx_r_field == e_tsel
+	   || hppa_fixP->fx_r_field == e_rtsel
+	   || hppa_fixP->fx_r_field == e_ltsel)
+    new_val = ((fmt == 12 || fmt == 17 || fmt == 22) ? 8 : 0);
+  /* This is truly disgusting.  The machine independent code blindly
+     adds in the value of the symbol being relocated against.  Damn!  */
+  else if (fmt == 32
+	   && fixP->fx_addsy != NULL
+	   && S_GET_SEGMENT (fixP->fx_addsy) != bfd_com_section_ptr)
+    new_val = hppa_field_adjust (*valp - S_GET_VALUE (fixP->fx_addsy),
+				 0, hppa_fixP->fx_r_field);
+#endif
+  else
+    new_val = hppa_field_adjust (*valp, 0, hppa_fixP->fx_r_field);
+
+  /* Handle pc-relative exceptions from above.  */
+  if ((fmt == 12 || fmt == 17 || fmt == 22)
+      && fixP->fx_addsy
+      && fixP->fx_pcrel
+      && !arg_reloc_stub_needed (symbol_arg_reloc_info (fixP->fx_addsy),
+				 hppa_fixP->fx_arg_reloc)
+#ifdef OBJ_ELF
+      && (*valp - 8 + 8192 < 16384
+	  || (fmt == 17 && *valp - 8 + 262144 < 524288)
+	  || (fmt == 22 && *valp - 8 + 8388608 < 16777216))
+#endif
+#ifdef OBJ_SOM
+      && (*valp - 8 + 262144 < 524288
+	  || (fmt == 22 && *valp - 8 + 8388608 < 16777216))
+#endif
+      && !S_IS_EXTERNAL (fixP->fx_addsy)
+      && !S_IS_WEAK (fixP->fx_addsy)
+      && S_GET_SEGMENT (fixP->fx_addsy) == hppa_fixP->segment
+      && !(fixP->fx_subsy
+	   && S_GET_SEGMENT (fixP->fx_subsy) != hppa_fixP->segment))
+    {
+      new_val = hppa_field_adjust (*valp, 0, hppa_fixP->fx_r_field);
+    }
+
+  switch (fmt)
+    {
+    case 10:
+      CHECK_FIELD (new_val, 8191, -8192, 0);
+      val = new_val;
+
+      insn = (insn & ~ 0x3ff1) | (((val & 0x1ff8) << 1)
+				  | ((val & 0x2000) >> 13));
+      break;
+    case -11:
+      CHECK_FIELD (new_val, 8191, -8192, 0);
+      val = new_val;
+
+      insn = (insn & ~ 0x3ff9) | (((val & 0x1ffc) << 1)
+				  | ((val & 0x2000) >> 13));
+      break;
+      /* Handle all opcodes with the 'j' operand type.  */
+    case 14:
+      CHECK_FIELD (new_val, 8191, -8192, 0);
+      val = new_val;
+
+      insn = ((insn & ~ 0x3fff) | low_sign_unext (val, 14));
+      break;
+
+      /* Handle all opcodes with the 'k' operand type.  */
+    case 21:
+      CHECK_FIELD (new_val, 1048575, -1048576, 0);
+      val = new_val;
+
+      insn = (insn & ~ 0x1fffff) | re_assemble_21 (val);
+      break;
+
+      /* Handle all the opcodes with the 'i' operand type.  */
+    case 11:
+      CHECK_FIELD (new_val, 1023, -1024, 0);
+      val = new_val;
+
+      insn = (insn & ~ 0x7ff) | low_sign_unext (val, 11);
+      break;
+
+      /* Handle all the opcodes with the 'w' operand type.  */
+    case 12:
+      CHECK_FIELD (new_val - 8, 8191, -8192, 0);
+      val = new_val - 8;
+
+      insn = (insn & ~ 0x1ffd) | re_assemble_12 (val >> 2);
+      break;
+
+      /* Handle some of the opcodes with the 'W' operand type.  */
+    case 17:
+      {
+	offsetT distance = *valp;
+
+	/* If this is an absolute branch (ie no link) with an out of
+	   range target, then we want to complain.  */
+	if (fixP->fx_r_type == (int) R_HPPA_PCREL_CALL
+	    && (insn & 0xffe00000) == 0xe8000000)
+	  CHECK_FIELD (distance - 8, 262143, -262144, 0);
+
+	CHECK_FIELD (new_val - 8, 262143, -262144, 0);
+	val = new_val - 8;
+
+	insn = (insn & ~ 0x1f1ffd) | re_assemble_17 (val >> 2);
+	break;
+      }
+
+    case 22:
+      {
+	offsetT distance = *valp;
+
+	/* If this is an absolute branch (ie no link) with an out of
+	   range target, then we want to complain.  */
+	if (fixP->fx_r_type == (int) R_HPPA_PCREL_CALL
+	    && (insn & 0xffe00000) == 0xe8000000)
+	  CHECK_FIELD (distance - 8, 8388607, -8388608, 0);
+
+	CHECK_FIELD (new_val - 8, 8388607, -8388608, 0);
+	val = new_val - 8;
+
+	insn = (insn & ~ 0x3ff1ffd) | re_assemble_22 (val >> 2);
+	break;
+      }
+
+    case -10:
+      val = new_val;
+      insn = (insn & ~ 0xfff1) | re_assemble_16 (val & -8);
+      break;
+
+    case -16:
+      val = new_val;
+      insn = (insn & ~ 0xfff9) | re_assemble_16 (val & -4);
+      break;
+
+    case 16:
+      val = new_val;
+      insn = (insn & ~ 0xffff) | re_assemble_16 (val);
+      break;
+
+    case 32:
+      insn = new_val;
+      break;
+
+    default:
+      as_bad (_("Unknown relocation encountered in md_apply_fix."));
+      return 0;
+    }
+
+  /* Insert the relocation.  */
+  bfd_put_32 (stdoutput, insn, buf);
+  return 1;
 }
 
 /* Exactly what point is a PC-relative offset relative TO?
@@ -4453,19 +4627,21 @@ is_end_of_statement ()
    the most common will be a hex or decimal constant, but it could be
    a pre-defined register (Yuk!), or an absolute symbol.
 
-   Return a number or -1 for failure.
+   Return 1 on success or 0 on failure.  If STRICT, then a missing
+   register prefix will cause a failure.  The number itself is
+   returned in `pa_number'.
 
-   When parsing PA-89 FP register numbers RESULT will be
-   the address of a structure to return information about
-   L/R half of FP registers, store results there as appropriate.
+   IS_FLOAT indicates that a PA-89 FP register number should be
+   parsed;  A `l' or `r' suffix is checked for if but 2 of IS_FLOAT is
+   not set.
 
    pa_parse_number can not handle negative constants and will fail
    horribly if it is passed such a constant.  */
 
 static int
-pa_parse_number (s, result)
+pa_parse_number (s, is_float)
      char **s;
-     struct pa_11_fp_reg_struct *result;
+     int is_float;
 {
   int num;
   char *name;
@@ -4473,23 +4649,18 @@ pa_parse_number (s, result)
   symbolS *sym;
   int status;
   char *p = *s;
+  boolean have_prefix;
 
   /* Skip whitespace before the number.  */
   while (*p == ' ' || *p == '\t')
     p = p + 1;
 
-  /* Store info in RESULT if requested by caller.  */
-  if (result)
-    {
-      result->number_part = -1;
-      result->l_r_select = -1;
-    }
-  num = -1;
-
-  if (isdigit (*p))
+  pa_number = -1;
+  have_prefix = 0;
+  num = 0;
+  if (!strict && isdigit (*p))
     {
       /* Looks like a number.  */
-      num = 0;
 
       if (*p == '0' && (*(p + 1) == 'x' || *(p + 1) == 'X'))
 	{
@@ -4517,35 +4688,36 @@ pa_parse_number (s, result)
 	    }
 	}
 
-      /* Store info in RESULT if requested by the caller.  */
-      if (result)
-	{
-	  result->number_part = num;
+      pa_number = num;
 
-	  if (IS_R_SELECT (p))
+      /* Check for a `l' or `r' suffix.  */
+      if (is_float)
+	{
+	  pa_number += FP_REG_BASE;
+	  if (! (is_float & 2))
 	    {
-	      result->l_r_select = 1;
-	      ++p;
+	      if (IS_R_SELECT (p))
+		{
+		  pa_number += FP_REG_RSEL;
+		  ++p;
+		}
+	      else if (IS_L_SELECT (p))
+		{
+		  ++p;
+		}
 	    }
-	  else if (IS_L_SELECT (p))
-	    {
-	      result->l_r_select = 0;
-	      ++p;
-	    }
-	  else
-	    result->l_r_select = 0;
 	}
     }
   else if (*p == '%')
     {
       /* The number might be a predefined register.  */
-      num = 0;
+      have_prefix = 1;
       name = p;
       p++;
       c = *p;
       /* Tege hack: Special case for general registers as the general
          code makes a binary search with case translation, and is VERY
-         slow. */
+         slow.  */
       if (c == 'r')
 	{
 	  p++;
@@ -4595,23 +4767,12 @@ pa_parse_number (s, result)
 	  *p = c;
 	}
 
-      /* Store info in RESULT if requested by caller.  */
-      if (result)
-	{
-	  result->number_part = num;
-	  if (IS_R_SELECT (p - 1))
-	    result->l_r_select = 1;
-	  else if (IS_L_SELECT (p - 1))
-	    result->l_r_select = 0;
-	  else
-	    result->l_r_select = 0;
-	}
+      pa_number = num;
     }
   else
     {
       /* And finally, it could be a symbol in the absolute section which
-         is effectively a constant.  */
-      num = 0;
+         is effectively a constant, or a register alias symbol.  */
       name = p;
       c = *p;
       while (is_part_of_name (c))
@@ -4622,16 +4783,23 @@ pa_parse_number (s, result)
       *p = 0;
       if ((sym = symbol_find (name)) != NULL)
 	{
-	  if (S_GET_SEGMENT (sym) == &bfd_abs_section)
+	  if (S_GET_SEGMENT (sym) == reg_section)
+	    {
+	      num = S_GET_VALUE (sym);
+	      /* Well, we don't really have one, but we do have a
+		 register, so...  */
+	      have_prefix = true;
+	    }
+	  else if (S_GET_SEGMENT (sym) == &bfd_abs_section)
 	    num = S_GET_VALUE (sym);
-	  else
+	  else if (!strict)
 	    {
 	      if (print_errors)
 		as_bad (_("Non-absolute symbol: '%s'."), name);
 	      num = -1;
 	    }
 	}
-      else
+      else if (!strict)
 	{
 	  /* There is where we'd come for an undefined symbol
 	     or for an empty string.  For an empty string we
@@ -4648,24 +4816,18 @@ pa_parse_number (s, result)
 	}
       *p = c;
 
-      /* Store info in RESULT if requested by caller.  */
-      if (result)
-	{
-	  result->number_part = num;
-	  if (IS_R_SELECT (p - 1))
-	    result->l_r_select = 1;
-	  else if (IS_L_SELECT (p - 1))
-	    result->l_r_select = 0;
-	  else
-	    result->l_r_select = 0;
-	}
+      pa_number = num;
     }
 
-  *s = p;
-  return num;
+  if (!strict || have_prefix)
+    {
+      *s = p;
+      return 1;
+    }
+  return 0;
 }
 
-#define REG_NAME_CNT	(sizeof(pre_defined_registers) / sizeof(struct pd_reg))
+#define REG_NAME_CNT	(sizeof (pre_defined_registers) / sizeof (struct pd_reg))
 
 /* Given NAME, find the register number associated with that name, return
    the integer value associated with the given name or -1 on failure.  */
@@ -4696,16 +4858,14 @@ reg_name_search (name)
   return -1;
 }
 
-
 /* Return nonzero if the given INSN and L/R information will require
    a new PA-1.1 opcode.  */
 
 static int
-need_pa11_opcode (insn, result)
-     struct pa_it *insn;
-     struct pa_11_fp_reg_struct *result;
+need_pa11_opcode ()
 {
-  if (result->l_r_select == 1 && !(insn->fpof1 == DBL && insn->fpof2 == DBL))
+  if ((pa_number & FP_REG_RSEL) != 0
+      && !(the_insn.fpof1 == DBL && the_insn.fpof2 == DBL))
     {
       /* If this instruction is specific to a particular architecture,
 	 then set a new architecture.  */
@@ -5001,7 +5161,7 @@ get_expression (str)
   return 0;
 }
 
-/* Mark (via expr_end) the end of an absolute expression.  FIXME. */
+/* Mark (via expr_end) the end of an absolute expression.  FIXME.  */
 static int
 pa_get_absolute_expression (insn, strp)
      struct pa_it *insn;
@@ -5017,7 +5177,7 @@ pa_get_absolute_expression (insn, strp)
 
      The PA assembly syntax is ambigious in a variety of ways.  Consider
      this string "4 %r5"  Is that the number 4 followed by the register
-     r5, or is that 4 MOD 5?
+     r5, or is that 4 MOD r5?
 
      If we get a modulo expresion When looking for an absolute, we try
      again cutting off the input string at the first whitespace character.  */
@@ -5066,70 +5226,14 @@ static int
 evaluate_absolute (insn)
      struct pa_it *insn;
 {
-  int value;
+  offsetT value;
   expressionS exp;
   int field_selector = insn->field_selector;
 
   exp = insn->exp;
   value = exp.X_add_number;
 
-  switch (field_selector)
-    {
-    /* No change.  */
-    case e_fsel:
-      break;
-
-    /* If bit 21 is on then add 0x800 and arithmetic shift right 11 bits.  */
-    case e_lssel:
-      if (value & 0x00000400)
-	value += 0x800;
-      value = (value & 0xfffff800) >> 11;
-      break;
-
-    /* Sign extend from bit 21.  */
-    case e_rssel:
-      if (value & 0x00000400)
-	value |= 0xfffff800;
-      else
-	value &= 0x7ff;
-      break;
-
-    /* Arithmetic shift right 11 bits.  */
-    case e_lsel:
-      value = (value & 0xfffff800) >> 11;
-      break;
-
-    /* Set bits 0-20 to zero.  */
-    case e_rsel:
-      value = value & 0x7ff;
-      break;
-
-    /* Add 0x800 and arithmetic shift right 11 bits.  */
-    case e_ldsel:
-      value += 0x800;
-      value = (value & 0xfffff800) >> 11;
-      break;
-
-    /* Set bitgs 0-21 to one.  */
-    case e_rdsel:
-      value |= 0xfffff800;
-      break;
-
-#define RSEL_ROUND(c)  (((c) + 0x1000) & ~0x1fff)
-    case e_rrsel:
-      value = (RSEL_ROUND (value) & 0x7ff) + (value - RSEL_ROUND (value));
-      break;
-
-    case e_lrsel:
-      value = (RSEL_ROUND (value) >> 11) & 0x1fffff;
-      break;
-#undef RSEL_ROUND
-
-    default:
-      BAD_CASE (field_selector);
-      break;
-    }
-  return value;
+  return hppa_field_adjust (0, value, field_selector);
 }
 
 /* Given an argument location specification return the associated
@@ -5239,7 +5343,6 @@ pa_parse_nonneg_cmpsub_cmpltr (s, isbranch)
       c = **s;
       **s = 0x00;
 
-
       if (strcmp (name, "=") == 0)
 	{
 	  cmpltr = 1;
@@ -5286,7 +5389,6 @@ pa_parse_nonneg_cmpsub_cmpltr (s, isbranch)
   if (nullify)
     *s = save_s;
 
-
   return cmpltr;
 }
 
@@ -5316,7 +5418,6 @@ pa_parse_neg_cmpsub_cmpltr (s, isbranch)
 	*s += 1;
       c = **s;
       **s = 0x00;
-
 
       if (strcasecmp (name, "tr") == 0)
 	{
@@ -5368,10 +5469,8 @@ pa_parse_neg_cmpsub_cmpltr (s, isbranch)
   if (nullify)
     *s = save_s;
 
-
   return cmpltr;
 }
-
 
 /* Parse a 64 bit compare and branch completer returning the number (for
    encoding in instrutions) of the given completer.
@@ -5386,7 +5485,6 @@ pa_parse_cmpb_64_cmpltr (s)
   int cmpltr;
   char *name = *s + 1;
   char c;
-  char *save_s = *s;
 
   cmpltr = -1;
   if (**s == ',')
@@ -5468,7 +5566,6 @@ pa_parse_cmpb_64_cmpltr (s)
       **s = c;
     }
 
-
   return cmpltr;
 }
 
@@ -5482,7 +5579,6 @@ pa_parse_cmpib_64_cmpltr (s)
   int cmpltr;
   char *name = *s + 1;
   char c;
-  char *save_s = *s;
 
   cmpltr = -1;
   if (**s == ',')
@@ -5531,7 +5627,6 @@ pa_parse_cmpib_64_cmpltr (s)
 	}
       **s = c;
     }
-
 
   return cmpltr;
 }
@@ -5793,6 +5888,7 @@ pa_parse_addb_64_cmpltr (s)
    alignment of the subspace if necessary.  */
 static void
 pa_align (bytes)
+     int bytes;
 {
   /* We must have a valid space and subspace.  */
   pa_check_current_space_and_subspace ();
@@ -5811,7 +5907,7 @@ pa_align (bytes)
 
 static void
 pa_block (z)
-     int z;
+     int z ATTRIBUTE_UNUSED;
 {
   char *p;
   long int temp_fill;
@@ -5849,7 +5945,7 @@ pa_block (z)
 
 static void
 pa_brtab (begin)
-     int begin;
+     int begin ATTRIBUTE_UNUSED;
 {
 
 #ifdef OBJ_SOM
@@ -5860,7 +5956,7 @@ pa_brtab (begin)
   fix_new_hppa (frag_now, where - frag_now->fr_literal, 0,
 		NULL, (offsetT) 0, NULL,
 		0, begin ? R_HPPA_BEGIN_BRTAB : R_HPPA_END_BRTAB,
-		e_fsel, 0, 0, NULL);
+		e_fsel, 0, 0, 0);
 #endif
 
   demand_empty_rest_of_line ();
@@ -5870,7 +5966,7 @@ pa_brtab (begin)
 
 static void
 pa_try (begin)
-     int begin;
+     int begin ATTRIBUTE_UNUSED;
 {
 #ifdef OBJ_SOM
   expressionS exp;
@@ -5885,7 +5981,7 @@ pa_try (begin)
   fix_new_hppa (frag_now, where - frag_now->fr_literal, 0,
 		NULL, (offsetT) 0, begin ? NULL : &exp,
 		0, begin ? R_HPPA_BEGIN_TRY : R_HPPA_END_TRY,
-		e_fsel, 0, 0, NULL);
+		e_fsel, 0, 0, 0);
 #endif
 
   demand_empty_rest_of_line ();
@@ -5897,7 +5993,7 @@ pa_try (begin)
 
 static void
 pa_call (unused)
-     int unused;
+     int unused ATTRIBUTE_UNUSED;
 {
 #ifdef OBJ_SOM
   /* We must have a valid space and subspace.  */
@@ -5986,21 +6082,18 @@ static void
 pa_build_unwind_subspace (call_info)
      struct call_info *call_info;
 {
-  char *unwind;
   asection *seg, *save_seg;
-  asymbol *sym;
-  subsegT subseg, save_subseg;
-  int i, reloc;
-  char c, *p;
+  subsegT save_subseg;
+  unsigned int unwind;
+  int reloc;
+  char *p;
 
-  if (now_seg != text_section)
+  if ((bfd_get_section_flags (stdoutput, now_seg)
+       & (SEC_ALLOC | SEC_LOAD | SEC_READONLY))
+      != (SEC_ALLOC | SEC_LOAD | SEC_READONLY))
     return;
 
-  if (bfd_get_arch_info (stdoutput)->bits_per_address == 32)
-    reloc = R_PARISC_DIR32;
-  else
-    reloc = R_PARISC_SEGREL32;
-
+  reloc = R_PARISC_SEGREL32;
   save_seg = now_seg;
   save_subseg = now_subseg;
   /* Get into the right seg/subseg.  This may involve creating
@@ -6018,20 +6111,16 @@ pa_build_unwind_subspace (call_info)
 
   subseg_set (seg, 0);
 
-
   /* Get some space to hold relocation information for the unwind
      descriptor.  */
-  p = frag_more (4);
-  md_number_to_chars (p, 0, 4);
+  p = frag_more (16);
 
   /* Relocation info. for start offset of the function.  */
+  md_number_to_chars (p, 0, 4);
   fix_new_hppa (frag_now, p - frag_now->fr_literal, 4,
 		call_info->start_symbol, (offsetT) 0,
 		(expressionS *) NULL, 0, reloc,
-		e_fsel, 32, 0, NULL);
-
-  p = frag_more (4);
-  md_number_to_chars (p, 0, 4);
+		e_fsel, 32, 0, 0);
 
   /* Relocation info. for end offset of the function.
 
@@ -6040,21 +6129,18 @@ pa_build_unwind_subspace (call_info)
      symbol into the symbol table.  It (should) end up giving the same
      value as call_info->start_symbol + function size once the linker is
      finished with its work.  */
-
-  fix_new_hppa (frag_now, p - frag_now->fr_literal, 4,
+  md_number_to_chars (p + 4, 0, 4);
+  fix_new_hppa (frag_now, p + 4 - frag_now->fr_literal, 4,
 		call_info->end_symbol, (offsetT) 0,
 		(expressionS *) NULL, 0, reloc,
-		e_fsel, 32, 0, NULL);
+		e_fsel, 32, 0, 0);
 
-  /* Dump it. */
-  unwind = (char *) &call_info->ci_unwind;
-  for (i = 8; i < sizeof (struct unwind_table); i++)
-    {
-      c = *(unwind + i);
-      {
-	FRAG_APPEND_1_CHAR (c);
-      }
-    }
+  /* Dump the descriptor.  */
+  unwind = UNWIND_LOW32 (&call_info->ci_unwind.descriptor);
+  md_number_to_chars (p + 8, unwind, 4);
+
+  unwind = UNWIND_HIGH32 (&call_info->ci_unwind.descriptor);
+  md_number_to_chars (p + 12, unwind, 4);
 
   /* Return back to the original segment/subsegment.  */
   subseg_set (save_seg, save_subseg);
@@ -6067,7 +6153,7 @@ pa_build_unwind_subspace (call_info)
 
 static void
 pa_callinfo (unused)
-     int unused;
+     int unused ATTRIBUTE_UNUSED;
 {
   char *name, c, *p;
   int temp;
@@ -6206,18 +6292,34 @@ pa_callinfo (unused)
   demand_empty_rest_of_line ();
 }
 
-/* Switch into the code subspace.  */
-
+#if !(defined (OBJ_ELF) && defined (TE_LINUX))
+/* Switch to the text space.  Like s_text, but delete our
+   label when finished.  */
 static void
-pa_code (unused)
-     int unused;
+pa_text (unused)
+     int unused ATTRIBUTE_UNUSED;
 {
 #ifdef OBJ_SOM
   current_space = is_defined_space ("$TEXT$");
   current_subspace
     = pa_subsegment_to_subspace (current_space->sd_seg, 0);
 #endif
+
   s_text (0);
+  pa_undefine_label ();
+}
+
+/* Switch to the data space.  As usual delete our label.  */
+static void
+pa_data (unused)
+     int unused ATTRIBUTE_UNUSED;
+{
+#ifdef OBJ_SOM
+  current_space = is_defined_space ("$PRIVATE$");
+  current_subspace
+    = pa_subsegment_to_subspace (current_space->sd_seg, 0);
+#endif
+  s_data (0);
   pa_undefine_label ();
 }
 
@@ -6243,7 +6345,7 @@ pa_code (unused)
 
 static void
 pa_comm (unused)
-     int unused;
+     int unused ATTRIBUTE_UNUSED;
 {
   unsigned int size;
   symbolS *symbol;
@@ -6270,12 +6372,13 @@ pa_comm (unused)
     }
   demand_empty_rest_of_line ();
 }
+#endif /* !(defined (OBJ_ELF) && defined (TE_LINUX)) */
 
 /* Process a .END pseudo-op.  */
 
 static void
 pa_end (unused)
-     int unused;
+     int unused ATTRIBUTE_UNUSED;
 {
   demand_empty_rest_of_line ();
 }
@@ -6283,7 +6386,7 @@ pa_end (unused)
 /* Process a .ENTER pseudo-op.  This is not supported.  */
 static void
 pa_enter (unused)
-     int unused;
+     int unused ATTRIBUTE_UNUSED;
 {
 #ifdef OBJ_SOM
   /* We must have a valid space and subspace.  */
@@ -6298,7 +6401,7 @@ pa_enter (unused)
    procesure.  */
 static void
 pa_entry (unused)
-     int unused;
+     int unused ATTRIBUTE_UNUSED;
 {
 #ifdef OBJ_SOM
   /* We must have a valid space and subspace.  */
@@ -6327,14 +6430,37 @@ pa_entry (unused)
      denote the entry and exit points.  */
   if (last_call_info->start_symbol != NULL)
     {
-      char *where = frag_more (0);
+      char *where;
+      unsigned int u;
 
+      where = frag_more (0);
+      u = UNWIND_LOW32 (&last_call_info->ci_unwind.descriptor);
       fix_new_hppa (frag_now, where - frag_now->fr_literal, 0,
 		    NULL, (offsetT) 0, NULL,
-		    0, R_HPPA_ENTRY, e_fsel, 0, 0,
-		    (int *) &last_call_info->ci_unwind.descriptor);
+		    0, R_HPPA_ENTRY, e_fsel, 0, 0, u);
     }
 #endif
+}
+
+/* Silly nonsense for pa_equ.  The only half-sensible use for this is
+   being able to subtract two register symbols that specify a range of
+   registers, to get the size of the range.  */
+static int fudge_reg_expressions;
+
+int
+hppa_force_reg_syms_absolute (resultP, op, rightP)
+     expressionS *resultP;
+     operatorT op ATTRIBUTE_UNUSED;
+     expressionS *rightP;
+{
+  if (fudge_reg_expressions
+      && rightP->X_op == O_register
+      && resultP->X_op == O_register)
+    {
+      rightP->X_op = O_constant;
+      resultP->X_op = O_constant;
+    }
+  return 0;  /* Continue normal expr handling.  */
 }
 
 /* Handle a .EQU pseudo-op.  */
@@ -6350,10 +6476,32 @@ pa_equ (reg)
     {
       symbol = label_symbol->lss_label;
       if (reg)
-	S_SET_VALUE (symbol, pa_parse_number (&input_line_pointer, 0));
+	{
+	  strict = 1;
+	  if (!pa_parse_number (&input_line_pointer, 0))
+	    as_bad (_(".REG expression must be a register"));
+	  S_SET_VALUE (symbol, pa_number);
+	  S_SET_SEGMENT (symbol, reg_section);
+	}
       else
-	S_SET_VALUE (symbol, (unsigned int) get_absolute_expression ());
-      S_SET_SEGMENT (symbol, bfd_abs_section_ptr);
+	{
+	  expressionS exp;
+	  segT seg;
+
+	  fudge_reg_expressions = 1;
+	  seg = expression (&exp);
+	  fudge_reg_expressions = 0;
+	  if (exp.X_op != O_constant
+	      && exp.X_op != O_register)
+	    {
+	      if (exp.X_op != O_absent)
+		as_bad (_("bad or irreducible absolute expression; zero assumed"));
+	      exp.X_add_number = 0;
+	      seg = absolute_section;
+	    }
+	  S_SET_VALUE (symbol, (unsigned int) exp.X_add_number);
+	  S_SET_SEGMENT (symbol, seg);
+	}
     }
   else
     {
@@ -6397,7 +6545,7 @@ process_exit ()
   fix_new_hppa (frag_now, where - frag_now->fr_literal, 0,
 		NULL, (offsetT) 0,
 		NULL, 0, R_HPPA_EXIT, e_fsel, 0, 0,
-		(int *) &last_call_info->ci_unwind.descriptor + 1);
+		UNWIND_HIGH32 (&last_call_info->ci_unwind.descriptor));
 #endif
 }
 
@@ -6405,7 +6553,7 @@ process_exit ()
 
 static void
 pa_exit (unused)
-     int unused;
+     int unused ATTRIBUTE_UNUSED;
 {
 #ifdef OBJ_SOM
   /* We must have a valid space and subspace.  */
@@ -6438,7 +6586,7 @@ pa_exit (unused)
 
 static void
 pa_export (unused)
-     int unused;
+     int unused ATTRIBUTE_UNUSED;
 {
   char *name, c, *p;
   symbolS *symbol;
@@ -6455,8 +6603,13 @@ pa_export (unused)
     }
   else
     {
-      /* OK.  Set the external bits and process argument relocations.  */
+      /* OK.  Set the external bits and process argument relocations.
+         For the HP, weak and global are not mutually exclusive.
+         S_SET_EXTERNAL will not set BSF_GLOBAL if WEAK is set.
+         Call S_SET_EXTERNAL to get the other processing.  Manually
+         set BSF_GLOBAL when we get back.  */
       S_SET_EXTERNAL (symbol);
+      symbol_get_bfdsym (symbol)->flags |= BSF_GLOBAL;
       p = input_line_pointer;
       *p = c;
       if (!is_end_of_statement ())
@@ -6479,13 +6632,13 @@ pa_type_args (symbolP, is_export)
   char *name, c, *p;
   unsigned int temp, arg_reloc;
   pa_symbol_type type = SYMBOL_TYPE_UNKNOWN;
-  obj_symbol_type *symbol = (obj_symbol_type *) symbol_get_bfdsym (symbolP);
+  asymbol *bfdsym = symbol_get_bfdsym (symbolP);
 
   if (strncasecmp (input_line_pointer, "absolute", 8) == 0)
 
     {
       input_line_pointer += 8;
-      symbol_get_bfdsym (symbolP)->flags &= ~BSF_FUNCTION;
+      bfdsym->flags &= ~BSF_FUNCTION;
       S_SET_SEGMENT (symbolP, bfd_abs_section_ptr);
       type = SYMBOL_TYPE_ABSOLUTE;
     }
@@ -6504,50 +6657,58 @@ pa_type_args (symbolP, is_export)
 	    as_tsktsk (_("Using ENTRY rather than CODE in export directive for %s"),
 		       S_GET_NAME (symbolP));
 
-	  symbol_get_bfdsym (symbolP)->flags |= BSF_FUNCTION;
+	  bfdsym->flags |= BSF_FUNCTION;
 	  type = SYMBOL_TYPE_ENTRY;
 	}
       else
 	{
-	  symbol_get_bfdsym (symbolP)->flags &= ~BSF_FUNCTION;
+	  bfdsym->flags &= ~BSF_FUNCTION;
 	  type = SYMBOL_TYPE_CODE;
 	}
     }
   else if (strncasecmp (input_line_pointer, "data", 4) == 0)
     {
       input_line_pointer += 4;
-      symbol_get_bfdsym (symbolP)->flags &= ~BSF_FUNCTION;
-      symbol_get_bfdsym (symbolP)->flags |= BSF_OBJECT;
+      bfdsym->flags &= ~BSF_FUNCTION;
+      bfdsym->flags |= BSF_OBJECT;
       type = SYMBOL_TYPE_DATA;
     }
   else if ((strncasecmp (input_line_pointer, "entry", 5) == 0))
     {
       input_line_pointer += 5;
-      symbol_get_bfdsym (symbolP)->flags |= BSF_FUNCTION;
+      bfdsym->flags |= BSF_FUNCTION;
       type = SYMBOL_TYPE_ENTRY;
     }
   else if (strncasecmp (input_line_pointer, "millicode", 9) == 0)
     {
       input_line_pointer += 9;
-      symbol_get_bfdsym (symbolP)->flags |= BSF_FUNCTION;
+      bfdsym->flags |= BSF_FUNCTION;
+#ifdef OBJ_ELF
+      {
+	elf_symbol_type *elfsym = (elf_symbol_type *) bfdsym;
+	elfsym->internal_elf_sym.st_info =
+	  ELF_ST_INFO (ELF_ST_BIND (elfsym->internal_elf_sym.st_info),
+		       STT_PARISC_MILLI);
+      }
+#endif
       type = SYMBOL_TYPE_MILLICODE;
     }
   else if (strncasecmp (input_line_pointer, "plabel", 6) == 0)
     {
       input_line_pointer += 6;
-      symbol_get_bfdsym (symbolP)->flags &= ~BSF_FUNCTION;
+      bfdsym->flags &= ~BSF_FUNCTION;
       type = SYMBOL_TYPE_PLABEL;
     }
   else if (strncasecmp (input_line_pointer, "pri_prog", 8) == 0)
     {
       input_line_pointer += 8;
-      symbol_get_bfdsym (symbolP)->flags |= BSF_FUNCTION;
+      bfdsym->flags |= BSF_FUNCTION;
       type = SYMBOL_TYPE_PRI_PROG;
     }
   else if (strncasecmp (input_line_pointer, "sec_prog", 8) == 0)
     {
       input_line_pointer += 8;
-      symbol_get_bfdsym (symbolP)->flags |= BSF_FUNCTION;
+      bfdsym->flags |= BSF_FUNCTION;
       type = SYMBOL_TYPE_SEC_PROG;
     }
 
@@ -6555,7 +6716,7 @@ pa_type_args (symbolP, is_export)
      than BFD understands.  This is how we get this information
      to the SOM BFD backend.  */
 #ifdef obj_set_symbol_type
-  obj_set_symbol_type (symbol_get_bfdsym (symbolP), (int) type);
+  obj_set_symbol_type (bfdsym, (int) type);
 #endif
 
   /* Now that the type of the exported symbol has been handled,
@@ -6576,8 +6737,8 @@ pa_type_args (symbolP, is_export)
 	  name = input_line_pointer;
 	  c = get_symbol_end ();
 	  arg_reloc = pa_align_arg_reloc (temp, pa_build_arg_reloc (name));
-#ifdef OBJ_SOM
-	  symbol->tc_data.ap.hppa_arg_reloc |= arg_reloc;
+#if defined (OBJ_SOM) || defined (ELF_ARG_RELOC)
+	  symbol_arg_reloc_info (symbolP) |= arg_reloc;
 #endif
 	  *input_line_pointer = c;
 	}
@@ -6590,8 +6751,8 @@ pa_type_args (symbolP, is_export)
 	  name = input_line_pointer;
 	  c = get_symbol_end ();
 	  arg_reloc = pa_build_arg_reloc (name);
-#ifdef OBJ_SOM
-	  symbol->tc_data.ap.hppa_arg_reloc |= arg_reloc;
+#if defined (OBJ_SOM) || defined (ELF_ARG_RELOC)
+	  symbol_arg_reloc_info (symbolP) |= arg_reloc;
 #endif
 	  *input_line_pointer = c;
 	}
@@ -6603,7 +6764,7 @@ pa_type_args (symbolP, is_export)
 	  input_line_pointer++;
 	  temp = atoi (input_line_pointer);
 #ifdef OBJ_SOM
-	  symbol->tc_data.ap.hppa_priv_level = temp;
+	  ((obj_symbol_type *) bfdsym)->tc_data.ap.hppa_priv_level = temp;
 #endif
 	  c = get_symbol_end ();
 	  *input_line_pointer = c;
@@ -6625,7 +6786,7 @@ pa_type_args (symbolP, is_export)
 
 static void
 pa_import (unused)
-     int unused;
+     int unused ATTRIBUTE_UNUSED;
 {
   char *name, c, *p;
   symbolS *symbol;
@@ -6677,7 +6838,7 @@ pa_import (unused)
 
 static void
 pa_label (unused)
-     int unused;
+     int unused ATTRIBUTE_UNUSED;
 {
   char *name, c, *p;
 
@@ -6707,7 +6868,7 @@ pa_label (unused)
 
 static void
 pa_leave (unused)
-     int unused;
+     int unused ATTRIBUTE_UNUSED;
 {
 #ifdef OBJ_SOM
   /* We must have a valid space and subspace.  */
@@ -6722,7 +6883,7 @@ pa_leave (unused)
 
 static void
 pa_level (unused)
-     int unused;
+     int unused ATTRIBUTE_UNUSED;
 {
   char *level;
 
@@ -6763,7 +6924,7 @@ pa_level (unused)
 
 static void
 pa_origin (unused)
-     int unused;
+     int unused ATTRIBUTE_UNUSED;
 {
 #ifdef OBJ_SOM
   /* We must have a valid space and subspace.  */
@@ -6779,7 +6940,7 @@ pa_origin (unused)
 
 static void
 pa_param (unused)
-     int unused;
+     int unused ATTRIBUTE_UNUSED;
 {
   char *name, c, *p;
   symbolS *symbol;
@@ -6810,11 +6971,11 @@ pa_param (unused)
 }
 
 /* Handle a .PROC pseudo-op.  It is used to mark the beginning
-   of a procedure from a syntatical point of view.  */
+   of a procedure from a syntactical point of view.  */
 
 static void
 pa_proc (unused)
-     int unused;
+     int unused ATTRIBUTE_UNUSED;
 {
   struct call_info *call_info;
 
@@ -6884,7 +7045,7 @@ pa_proc (unused)
 
 static void
 pa_procend (unused)
-     int unused;
+     int unused ATTRIBUTE_UNUSED;
 {
 
 #ifdef OBJ_SOM
@@ -6915,12 +7076,14 @@ pa_procend (unused)
 		 information when the label appears after the proc/procend.  */
 	      if (within_entry_exit)
 		{
-		  char *where = frag_more (0);
+		  char *where;
+		  unsigned int u;
 
+		  where = frag_more (0);
+		  u = UNWIND_LOW32 (&last_call_info->ci_unwind.descriptor);
 		  fix_new_hppa (frag_now, where - frag_now->fr_literal, 0,
 				NULL, (offsetT) 0, NULL,
-				0, R_HPPA_ENTRY, e_fsel, 0, 0,
-				(int *) &last_call_info->ci_unwind.descriptor);
+				0, R_HPPA_ENTRY, e_fsel, 0, 0, u);
 		}
 #endif
 	    }
@@ -6951,6 +7114,7 @@ pa_procend (unused)
   pa_undefine_label ();
 }
 
+#ifdef OBJ_SOM
 /* If VALUE is an exact power of two between zero and 2^31, then
    return log2 (VALUE).  Else return -1.  */
 
@@ -6969,8 +7133,6 @@ log2 (value)
     return shift;
 }
 
-
-#ifdef OBJ_SOM
 /* Check to make sure we have a valid space and subspace.  */
 
 static void
@@ -6994,7 +7156,7 @@ pa_parse_space_stmt (space_name, create_flag)
 {
   char *name, *ptemp, c;
   char loadable, defined, private, sort;
-  int spnum, temp;
+  int spnum;
   asection *seg = NULL;
   sd_chain_struct *space;
 
@@ -7028,10 +7190,11 @@ pa_parse_space_stmt (space_name, create_flag)
       /* First see if the space was specified as a number rather than
          as a name.  According to the PA assembly manual the rest of
          the line should be ignored.  */
-      temp = pa_parse_number (&ptemp, 0);
-      if (temp >= 0)
+      strict = 0;
+      pa_parse_number (&ptemp, 0);
+      if (pa_number >= 0)
 	{
-	  spnum = temp;
+	  spnum = pa_number;
 	  input_line_pointer = ptemp;
 	}
       else
@@ -7110,10 +7273,9 @@ pa_parse_space_stmt (space_name, create_flag)
 
 static void
 pa_space (unused)
-     int unused;
+     int unused ATTRIBUTE_UNUSED;
 {
   char *name, c, *space_name, *save_s;
-  int temp;
   sd_chain_struct *sd_chain;
 
   if (within_procedure)
@@ -7191,9 +7353,11 @@ pa_space (unused)
       /* It could be a space specified by number.  */
       print_errors = 0;
       save_s = input_line_pointer;
-      if ((temp = pa_parse_number (&input_line_pointer, 0)) >= 0)
+      strict = 0;
+      pa_parse_number (&input_line_pointer, 0);
+      if (pa_number >= 0)
 	{
-	  if ((sd_chain = pa_find_space_by_number (temp)))
+	  if ((sd_chain = pa_find_space_by_number (pa_number)))
 	    {
 	      current_space = sd_chain;
 
@@ -7229,7 +7393,7 @@ pa_space (unused)
 
 static void
 pa_spnum (unused)
-     int unused;
+     int unused ATTRIBUTE_UNUSED;
 {
   char *name;
   char c;
@@ -7478,7 +7642,6 @@ pa_subspace (create_new)
   SUBSPACE_DEFINED (current_subspace) = 1;
 }
 
-
 /* Create default space and subspace dictionaries.  */
 
 static void
@@ -7521,7 +7684,6 @@ pa_spaces_begin ()
       /* Create the new section.  */
       segment = subseg_new (name, subsegment);
 
-
       /* For SOM we want to replace the standard .text, .data, and .bss
          sections with our own.   We also want to set BFD flags for
 	 all the built-in subspaces.  */
@@ -7543,7 +7705,6 @@ pa_spaces_begin ()
 				 applicable & (SEC_ALLOC | SEC_LOAD
 					       | SEC_RELOC
 					       | SEC_HAS_CONTENTS));
-
 
 	}
       else if (!strcmp (pa_def_subspaces[i].name, "$BSS$"))
@@ -7605,8 +7766,6 @@ pa_spaces_begin ()
       i++;
     }
 }
-
-
 
 /* Create a new space NAME, with the appropriate flags as defined
    by the given parameters.  */
@@ -7972,11 +8131,6 @@ pa_stringer_aux (s)
 {
   unsigned int c = *s & CHAR_MASK;
 
-#ifdef OBJ_SOM
-  /* We must have a valid space and subspace.  */
-  pa_check_current_space_and_subspace ();
-#endif
-
   switch (c)
     {
     case '\"':
@@ -7999,8 +8153,13 @@ pa_stringer (append_zero)
   int i;
 
   /* Preprocess the string to handle PA-specific escape sequences.
-     For example, \xDD where DD is a hexidecimal number should be
+     For example, \xDD where DD is a hexadecimal number should be
      changed to \OOO where OOO is an octal number.  */
+
+#ifdef OBJ_SOM
+  /* We must have a valid space and subspace.  */
+  pa_check_current_space_and_subspace ();
+#endif
 
   /* Skip the opening quote.  */
   s = input_line_pointer + 1;
@@ -8020,7 +8179,7 @@ pa_stringer (append_zero)
 		char dg;
 		char *s_start = s;
 
-		/* Get pas the 'x'.  */
+		/* Get past the 'x'.  */
 		s++;
 		for (num_digit = 0, number = 0, dg = *s;
 		     num_digit < 2
@@ -8069,7 +8228,7 @@ pa_stringer (append_zero)
 
 static void
 pa_version (unused)
-     int unused;
+     int unused ATTRIBUTE_UNUSED;
 {
   obj_version (0);
   pa_undefine_label ();
@@ -8081,7 +8240,7 @@ pa_version (unused)
 
 static void
 pa_compiler (unused)
-     int unused;
+     int unused ATTRIBUTE_UNUSED;
 {
   obj_som_compiler (0);
   pa_undefine_label ();
@@ -8093,7 +8252,7 @@ pa_compiler (unused)
 
 static void
 pa_copyright (unused)
-     int unused;
+     int unused ATTRIBUTE_UNUSED;
 {
   obj_copyright (0);
   pa_undefine_label ();
@@ -8107,21 +8266,6 @@ pa_cons (nbytes)
      int nbytes;
 {
   cons (nbytes);
-  pa_undefine_label ();
-}
-
-/* Switch to the data space.  As usual delete our label.  */
-
-static void
-pa_data (unused)
-     int unused;
-{
-#ifdef OBJ_SOM
-  current_space = is_defined_space ("$PRIVATE$");
-  current_subspace
-    = pa_subsegment_to_subspace (current_space->sd_seg, 0);
-#endif
-  s_data (0);
   pa_undefine_label ();
 }
 
@@ -8139,7 +8283,7 @@ pa_float_cons (float_type)
 
 static void
 pa_fill (unused)
-     int unused;
+     int unused ATTRIBUTE_UNUSED;
 {
 #ifdef OBJ_SOM
   /* We must have a valid space and subspace.  */
@@ -8169,7 +8313,7 @@ pa_lcomm (needs_align)
 
 static void
 pa_lsym (unused)
-     int unused;
+     int unused ATTRIBUTE_UNUSED;
 {
 #ifdef OBJ_SOM
   /* We must have a valid space and subspace.  */
@@ -8177,22 +8321,6 @@ pa_lsym (unused)
 #endif
 
   s_lsym (0);
-  pa_undefine_label ();
-}
-
-/* Switch to the text space.  Like s_text, but delete our
-   label when finished.  */
-static void
-pa_text (unused)
-     int unused;
-{
-#ifdef OBJ_SOM
-  current_space = is_defined_space ("$TEXT$");
-  current_subspace
-    = pa_subsegment_to_subspace (current_space->sd_seg, 0);
-#endif
-
-  s_text (0);
   pa_undefine_label ();
 }
 
@@ -8233,6 +8361,17 @@ hppa_fix_adjustable (fixp)
   /* Reject reductions of symbols in 32bit relocs.  */
   if (fixp->fx_r_type == R_HPPA && hppa_fix->fx_r_format == 32)
     return 0;
+#endif
+
+#ifdef OBJ_ELF
+  if (fixp->fx_r_type == (int) R_PARISC_GNU_VTINHERIT
+      || fixp->fx_r_type ==  (int) R_PARISC_GNU_VTENTRY)
+    return 0;
+#endif
+
+  if (fixp->fx_addsy && (S_IS_EXTERNAL (fixp->fx_addsy)
+			 || S_IS_WEAK (fixp->fx_addsy)))
+    return 0;
 
   /* Reject reductions of symbols in sym1-sym2 expressions when
      the fixup will occur in a CODE subspace.
@@ -8250,12 +8389,39 @@ hppa_fix_adjustable (fixp)
     }
 
   /* We can't adjust any relocs that use LR% and RR% field selectors.
-     That confuses the HP linker.  */
+
+     If a symbol is reduced to a section symbol, the assembler will
+     adjust the addend unless the symbol happens to reside right at
+     the start of the section.  Additionally, the linker has no choice
+     but to manipulate the addends when coalescing input sections for
+     "ld -r".  Since an LR% field selector is defined to round the
+     addend, we can't change the addend without risking that a LR% and
+     it's corresponding (possible multiple) RR% field will no longer
+     sum to the right value.
+
+     eg. Suppose we have
+     .		ldil	LR%foo+0,%r21
+     .		ldw	RR%foo+0(%r21),%r26
+     .		ldw	RR%foo+4(%r21),%r25
+
+     If foo is at address 4092 (decimal) in section `sect', then after
+     reducing to the section symbol we get
+     .			LR%sect+4092 == (L%sect)+0
+     .			RR%sect+4092 == (R%sect)+4092
+     .			RR%sect+4096 == (R%sect)-4096
+     and the last address loses because rounding the addend to 8k
+     mutiples takes us up to 8192 with an offset of -4096.
+
+     In cases where the LR% expression is identical to the RR% one we
+     will never have a problem, but is so happens that gcc rounds
+     addends involved in LR% field selectors to work around a HP
+     linker bug.  ie. We often have addresses like the last case
+     above where the LR% expression is offset from the RR% one.  */
+
   if (hppa_fix->fx_r_field == e_lrsel
       || hppa_fix->fx_r_field == e_rrsel
       || hppa_fix->fx_r_field == e_nlrsel)
     return 0;
-#endif
 
   /* Reject reductions of symbols in DLT relative relocs,
      relocations with plabels.  */
@@ -8267,18 +8433,15 @@ hppa_fix_adjustable (fixp)
       || hppa_fix->fx_r_field == e_lpsel)
     return 0;
 
-  if (fixp->fx_addsy && S_IS_EXTERNAL (fixp->fx_addsy))
-    return 0;
-
   /* Reject absolute calls (jumps).  */
   if (hppa_fix->fx_r_type == R_HPPA_ABS_CALL)
     return 0;
 
   /* Reject reductions of function symbols.  */
-  if (fixp->fx_addsy == 0 || ! S_IS_FUNCTION (fixp->fx_addsy))
-    return 1;
+  if (fixp->fx_addsy != 0 && S_IS_FUNCTION (fixp->fx_addsy))
+    return 0;
 
-  return 0;
+  return 1;
 }
 
 /* Return nonzero if the fixup in FIXP will require a relocation,
@@ -8287,46 +8450,61 @@ hppa_fix_adjustable (fixp)
 
 int
 hppa_force_relocation (fixp)
-     fixS *fixp;
+     struct fix *fixp;
 {
   struct hppa_fix_struct *hppa_fixp;
-  int distance;
 
   hppa_fixp = (struct hppa_fix_struct *) fixp->tc_fix_data;
 #ifdef OBJ_SOM
-  if (fixp->fx_r_type == R_HPPA_ENTRY || fixp->fx_r_type == R_HPPA_EXIT
-      || fixp->fx_r_type == R_HPPA_BEGIN_BRTAB
-      || fixp->fx_r_type == R_HPPA_END_BRTAB
-      || fixp->fx_r_type == R_HPPA_BEGIN_TRY
-      || fixp->fx_r_type == R_HPPA_END_TRY
+  if (fixp->fx_r_type == (int) R_HPPA_ENTRY
+      || fixp->fx_r_type == (int) R_HPPA_EXIT
+      || fixp->fx_r_type == (int) R_HPPA_BEGIN_BRTAB
+      || fixp->fx_r_type == (int) R_HPPA_END_BRTAB
+      || fixp->fx_r_type == (int) R_HPPA_BEGIN_TRY
+      || fixp->fx_r_type == (int) R_HPPA_END_TRY
       || (fixp->fx_addsy != NULL && fixp->fx_subsy != NULL
 	  && (hppa_fixp->segment->flags & SEC_CODE) != 0))
     return 1;
 #endif
-
-#define arg_reloc_stub_needed(CALLER, CALLEE) \
-  ((CALLEE) && (CALLER) && ((CALLEE) != (CALLER)))
-
-#ifdef OBJ_SOM
-  /* It is necessary to force PC-relative calls/jumps to have a relocation
-     entry if they're going to need either a argument relocation or long
-     call stub.  FIXME.  Can't we need the same for absolute calls?  */
-  if (fixp->fx_pcrel && fixp->fx_addsy
-      && (arg_reloc_stub_needed ((long) ((obj_symbol_type *)
-	symbol_get_bfdsym (fixp->fx_addsy))->tc_data.ap.hppa_arg_reloc,
-	hppa_fixp->fx_arg_reloc)))
+#ifdef OBJ_ELF
+  if (fixp->fx_r_type == (int) R_PARISC_GNU_VTINHERIT
+      || fixp->fx_r_type == (int) R_PARISC_GNU_VTENTRY)
     return 1;
 #endif
-  distance = (fixp->fx_offset + S_GET_VALUE (fixp->fx_addsy)
-	      - md_pcrel_from (fixp));
-  /* Now check and see if we're going to need a long-branch stub.  */
-  if (fixp->fx_r_type == R_HPPA_PCREL_CALL
-      && (distance > 262143 || distance < -262144))
+
+  assert (fixp->fx_addsy != NULL);
+
+  /* Ensure we emit a relocation for global symbols so that dynamic
+     linking works.  */
+  if (S_IS_EXTERNAL (fixp->fx_addsy) || S_IS_WEAK (fixp->fx_addsy))
     return 1;
 
-  if (fixp->fx_r_type == R_HPPA_ABS_CALL)
+  /* It is necessary to force PC-relative calls/jumps to have a relocation
+     entry if they're going to need either a argument relocation or long
+     call stub.  */
+  if (fixp->fx_pcrel
+      && arg_reloc_stub_needed (symbol_arg_reloc_info (fixp->fx_addsy),
+				hppa_fixp->fx_arg_reloc))
     return 1;
-#undef arg_reloc_stub_needed
+
+  /* Now check to see if we're going to need a long-branch stub.  */
+  if (fixp->fx_r_type == (int) R_HPPA_PCREL_CALL)
+    {
+      valueT distance;
+
+      distance = (fixp->fx_offset + S_GET_VALUE (fixp->fx_addsy)
+		  - md_pcrel_from (fixp) - 8);
+      if (distance + 8388608 >= 16777216
+	  || (hppa_fixp->fx_r_format == 17 && distance + 262144 >= 524288)
+#ifdef OBJ_ELF
+	  || (hppa_fixp->fx_r_format == 12 && distance + 8192 >= 16384)
+#endif
+	  )
+	return 1;
+    }
+
+  if (fixp->fx_r_type == (int) R_HPPA_ABS_CALL)
+    return 1;
 
   /* No need (yet) to force another relocations to be emitted.  */
   return 0;
@@ -8342,10 +8520,18 @@ hppa_elf_mark_end_of_function ()
 {
   /* ELF does not have EXIT relocations.  All we do is create a
      temporary symbol marking the end of the function.  */
-  char *name = (char *)
-    xmalloc (strlen ("L$\001end_") +
-	     strlen (S_GET_NAME (last_call_info->start_symbol)) + 1);
+  char *name;
 
+  if (last_call_info == NULL || last_call_info->start_symbol == NULL)
+    {
+      /* We have already warned about a missing label,
+	 or other problems.  */
+      return;
+    }
+
+  name = (char *) xmalloc (strlen ("L$\001end_")
+			   + strlen (S_GET_NAME (last_call_info->start_symbol))
+			   + 1);
   if (name)
     {
       symbolS *symbolP;
@@ -8410,12 +8596,48 @@ elf_hppa_final_processing ()
 	- S_GET_VALUE (call_info_pointer->start_symbol) + 4;
     }
 }
-#endif
 
-#ifdef OBJ_ELF
-pa_end_of_source ()
+static void
+pa_vtable_entry (ignore)
+     int ignore ATTRIBUTE_UNUSED;
 {
-  if (debug_type == DEBUG_DWARF2)
-    dwarf2_finish ();
+  struct fix *new_fix;
+
+  new_fix = obj_elf_vtable_entry (0);
+
+  if (new_fix)
+    {
+      struct hppa_fix_struct *hppa_fix = (struct hppa_fix_struct *)
+	obstack_alloc (&notes, sizeof (struct hppa_fix_struct));
+      hppa_fix->fx_r_type = R_HPPA;
+      hppa_fix->fx_r_field = e_fsel;
+      hppa_fix->fx_r_format = 32;
+      hppa_fix->fx_arg_reloc = 0;
+      hppa_fix->segment = now_seg;
+      new_fix->tc_fix_data = (void *) hppa_fix;
+      new_fix->fx_r_type = (int) R_PARISC_GNU_VTENTRY;
+    }
+}
+
+static void
+pa_vtable_inherit (ignore)
+     int ignore ATTRIBUTE_UNUSED;
+{
+  struct fix *new_fix;
+
+  new_fix = obj_elf_vtable_inherit (0);
+
+  if (new_fix)
+    {
+      struct hppa_fix_struct *hppa_fix = (struct hppa_fix_struct *)
+	obstack_alloc (&notes, sizeof (struct hppa_fix_struct));
+      hppa_fix->fx_r_type = R_HPPA;
+      hppa_fix->fx_r_field = e_fsel;
+      hppa_fix->fx_r_format = 32;
+      hppa_fix->fx_arg_reloc = 0;
+      hppa_fix->segment = now_seg;
+      new_fix->tc_fix_data = (void *) hppa_fix;
+      new_fix->fx_r_type = (int) R_PARISC_GNU_VTINHERIT;
+    }
 }
 #endif

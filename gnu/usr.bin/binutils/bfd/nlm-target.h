@@ -1,5 +1,5 @@
 /* Target definitions for 32/64-bit NLM (NetWare Loadable Module)
-   Copyright (C) 1993, 94, 95, 1997 Free Software Foundation, Inc.
+   Copyright 1993, 1994, 1998, 1999, 2000, 2001 Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
 
@@ -78,10 +78,10 @@ const bfd_target TARGET_BIG_SYM =
   /* object_flags: mask of all file flags */
   (HAS_RELOC | EXEC_P | HAS_LINENO | HAS_DEBUG | HAS_SYMS | HAS_LOCALS
    | WP_TEXT),
-  
+
   /* section_flags: mask of all section flags */
   (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC | SEC_READONLY |
-   SEC_CODE | SEC_DATA), 
+   SEC_CODE | SEC_DATA),
 
    /* leading_symbol_char: is the first char of a user symbol
       predictable, and if so what is it */
@@ -147,7 +147,7 @@ const bfd_target TARGET_BIG_SYM =
 #else
   NULL,
 #endif
-  
+
   /* backend_data: */
   (PTR) TARGET_BACKEND_DATA
 };
@@ -171,10 +171,10 @@ const bfd_target TARGET_LITTLE_SYM =
   /* object_flags: mask of all file flags */
   (HAS_RELOC | EXEC_P | HAS_LINENO | HAS_DEBUG | HAS_SYMS | HAS_LOCALS
    | WP_TEXT),
-  
+
   /* section_flags: mask of all section flags */
   (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC | SEC_READONLY |
-   SEC_DATA), 
+   SEC_DATA),
 
    /* leading_symbol_char: is the first char of a user symbol
       predictable, and if so what is it */
@@ -240,7 +240,7 @@ const bfd_target TARGET_LITTLE_SYM =
 #else
   NULL,
 #endif
-  
+
   /* backend_data: */
   (PTR) TARGET_BACKEND_DATA
 };

@@ -107,8 +107,5 @@ data_label:
 	la	$4,big_local_common+0x1a5a5($5)
 	la	$4,small_local_common+0x1a5a5($5)
 
-	.ifndef	KPIC
-# Round to a 16 byte boundary, for ease in testing multiple targets.
-	nop
-	nop
-	.endif
+# Force at least 8 (non-delay-slot) zero bytes, to make 'objdump' print ...
+	.space  8

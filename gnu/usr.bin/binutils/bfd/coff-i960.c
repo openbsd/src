@@ -1,5 +1,5 @@
 /* BFD back-end for Intel 960 COFF files.
-   Copyright (C) 1990, 91, 92, 93, 94, 95, 97, 98, 1999
+   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1997, 1999, 2000
    Free Software Foundation, Inc.
    Written by Cygnus Support.
 
@@ -99,7 +99,7 @@ coff_i960_is_local_label_name (abfd, name)
 #define BAL	 0x0b000000	/* Template for 'bal' instruction	*/
 #define BAL_MASK 0x00ffffff
 
-static bfd_reloc_status_type 
+static bfd_reloc_status_type
 optcall_callback (abfd, reloc_entry, symbol_in, data,
 		  input_section, ignore_bfd, error_message)
      bfd *abfd;
@@ -117,13 +117,13 @@ optcall_callback (abfd, reloc_entry, symbol_in, data,
   coff_symbol_type *cs = coffsymbol(symbol_in);
 
   /* Don't do anything with symbols which aren't tied up yet,
-     except move the reloc. */
+     except move the reloc.  */
   if (bfd_is_und_section (cs->symbol.section)) {
     reloc_entry->address += input_section->output_offset;
     return bfd_reloc_ok;
   }
-    
-  /* So the target symbol has to be of coff type, and the symbol 
+
+  /* So the target symbol has to be of coff type, and the symbol
      has to have the correct native information within it */
   if ((bfd_asymbol_flavour(&cs->symbol) != bfd_target_coff_flavour)
       || (cs->native == (combined_entry_type *)NULL))
@@ -138,7 +138,7 @@ optcall_callback (abfd, reloc_entry, symbol_in, data,
     }
   else
     {
-    switch (cs->native->u.syment.n_sclass) 
+    switch (cs->native->u.syment.n_sclass)
       {
       case C_LEAFSTAT:
       case C_LEAFEXT:
@@ -146,7 +146,7 @@ optcall_callback (abfd, reloc_entry, symbol_in, data,
 	   to the correct location.  */
 	{
 	  union internal_auxent *aux = &((cs->native+2)->u.auxent);
-	  int word = bfd_get_32(abfd, (bfd_byte *)data + reloc_entry->address);
+	  int word = bfd_get_32 (abfd, (bfd_byte *)data + reloc_entry->address);
 	  int olf = (aux->x_bal.x_balntry - cs->native->u.syment.n_value);
 	  BFD_ASSERT(cs->native->u.syment.n_numaux==2);
 
@@ -156,7 +156,7 @@ optcall_callback (abfd, reloc_entry, symbol_in, data,
 	     sym and auxents untouched, so the delta between the two
 	     is the offset of the bal entry point.  */
 	  word = ((word +  olf)  & BAL_MASK) | BAL;
-  	  bfd_put_32(abfd, word, (bfd_byte *) data + reloc_entry->address);
+  	  bfd_put_32 (abfd, word, (bfd_byte *) data + reloc_entry->address);
   	}
 	result = bfd_reloc_ok;
 	break;
@@ -188,7 +188,7 @@ optcall_callback (abfd, reloc_entry, symbol_in, data,
    useful.  It was used before this target was converted to use the
    COFF specific backend linker.  */
 
-static bfd_reloc_status_type 
+static bfd_reloc_status_type
 coff_i960_relocate (abfd, reloc_entry, symbol, data, input_section,
 		    output_bfd, error_message)
      bfd *abfd;
@@ -402,7 +402,7 @@ coff_i960_relocate_section (output_bfd, info, input_bfd, input_section,
 	  sym = NULL;
 	}
       else
-	{    
+	{
 	  h = obj_coff_sym_hashes (input_bfd)[symndx];
 	  sym = syms + symndx;
 	}
@@ -578,7 +578,6 @@ coff_i960_relocate_section (output_bfd, info, input_bfd, input_section,
    instead be a reloc against the internal symbol we created specially
    for the section.  */
 
-/*ARGSUSED*/
 static boolean
 coff_i960_adjust_symndx (obfd, info, ibfd, sec, irel, adjustedp)
      bfd *obfd ATTRIBUTE_UNUSED;
@@ -661,6 +660,6 @@ bfd_getb64, bfd_getb_signed_64, bfd_putb64,
      BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
 
   & icoff_little_vec,
-  
+
   COFF_SWAP_TABLE
 };

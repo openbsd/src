@@ -1,6 +1,21 @@
 # Test linking directly to S-records.
 # By Ian Lance Taylor, Cygnus Support.
-# Public domain.
+#   Copyright 2001
+#   Free Software Foundation, Inc.
+#
+# This file is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 # Get the offset from an S-record line to the start of the data.
 
@@ -228,18 +243,19 @@ proc run_srec_test { test objs } {
 	set flags "$flags --defsym V_SPILL=0 --defsym V_FILL=0"
     }
 
-    # ARM targets call __gccmain
-    if [istarget arm*-*-*] {
-	set flags "$flags --defsym ___gccmain=0"
-    }
+    if {[istarget arm*-*-*]       || \
+        [istarget strongarm*-*-*] || \
+        [istarget xscale*-*-*]    || \
+        [istarget thumb-*-*] } {
     
-    if [istarget strongarm*-*-*] {
-	set flags "$flags --defsym __gccmain=0"
-    }
-    
-    # Thumb targets call __gccmain
-    if [istarget thumb-*-*] {
-	set flags "$flags --defsym ___gccmain=0"
+        # ARM targets call __gccmain
+        set flags "$flags --defsym __gccmain=0"
+
+        # ARM targets cannot convert format in the linker 
+        # using the --oformat command line switch
+	setup_xfail "*arm*-*-*"
+	setup_xfail "xscale-*-*"
+	setup_xfail "thumb-*-*"
     }
 
     # PowerPC EABI code calls __eabi.
@@ -252,13 +268,20 @@ proc run_srec_test { test objs } {
 	set flags "$flags --defsym __truncsipsi2_d0_d2=0"
     }
 
+    # m6811/m6812 code has references to soft registers.
+    if {[istarget m6811-*-*] || [istarget m6812-*-*]} {
+	set flags "$flags --defsym _.frame=0 --defsym _.d1=0 --defsym _.d2=0"
+	set flags "$flags --defsym _.d3=0 --defsym _.d4=0"
+	set flags "$flags --defsym _.tmp=0 --defsym _.xy=0"
+    }
+
     # V850 targets need libgcc.a
     if [istarget v850*-*-elf] {
 	set objs "$objs -L ../gcc -lgcc"
     }
     
     if { ![ld_simple_link $ld tmpdir/sr1 "$flags $objs"] \
-	 || ![ld_simple_link $ld tmpdir/sr2.sr "$flags -oformat srec $objs"] } {
+	 || ![ld_simple_link $ld tmpdir/sr2.sr "$flags --oformat srec $objs"] } {
 	setup_xfail "hppa*-*-*elf*"
 	fail $test
 	return
@@ -318,7 +341,7 @@ setup_xfail "i*86-*-aout*"
 # These tests fail on the native MIPS ELF targets because the GP value
 # in the .reginfo section is not updated when the S-record version is
 # written out.  The mips-elf target itself does not use a .reginfo section.
-setup_xfail "mips*-*-irix5*" "mips*-*-irix6*"
+setup_xfail "mips*-*-irix5*" "mips*-*-irix6*" "mips*-*-linux*"
 
 # The S-record linker doesn't do the magic TOC handling that XCOFF
 # linkers do.
@@ -326,7 +349,8 @@ setup_xfail "*-*-aix*" "*-*-xcoff*"
 
 # The S-record linker doesn't build ARM/Thumb stubs.
 setup_xfail "arm-*-coff"
-setup_xfail "strongarm*-*-*"
+setup_xfail "strongarm*-*-coff"
+setup_xfail "xscale*-*-coff"
 setup_xfail "arm-*-pe*"
 # setup_xfail "arm-*elf*"
 setup_xfail "thumb-*-coff*"
@@ -343,6 +367,9 @@ setup_xfail "v850*-*-elf"
 # The S-record linker doesn't handle Alpha Elf relaxation.
 setup_xfail "alpha*-*-elf*" "alpha*-*-linux-gnu*" "alpha*-*-gnu*"
 setup_xfail "alpha*-*-netbsd*"
+
+# The S-record linker hasn't any hope of coping with HPPA relocs.
+setup_xfail "hppa*-*-*"
 
 # The S-record linker doesn't support the special PE headers - the PE
 # emulation tries to write pe-specific information to the PE headers
@@ -367,7 +394,7 @@ if ![ld_compile "$CXX $CXXFLAGS -fgnu-linker" $srcdir/$subdir/sr3.cc tmpdir/sr3.
 
 # See above.
 setup_xfail "i*86-*-aout*"
-setup_xfail "mips*-*-irix5*" "mips*-*-irix6*"
+setup_xfail "mips*-*-irix5*" "mips*-*-irix6*" "mips*-*-linux*"
 setup_xfail "*-*-aix*" "*-*-xcoff*"
 setup_xfail "arm*-*-*"
 setup_xfail "strongarm*-*-*"
@@ -376,6 +403,7 @@ setup_xfail "powerpc*-*-eabi*"
 setup_xfail "v850*-*-elf"
 setup_xfail "alpha*-*-elf*" "alpha*-*-linux-gnu*" "alpha*-*-gnu*"
 setup_xfail "alpha*-*-netbsd*"
+setup_xfail "hppa*-*-*"
 setup_xfail "*-*-cygwin*" "*-*-mingw*" "*-*-pe*" "*-*-winnt*"
 
 run_srec_test $test2 "tmpdir/sr3.o"

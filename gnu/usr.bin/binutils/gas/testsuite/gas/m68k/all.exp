@@ -1,6 +1,18 @@
 #
 # Some generic m68k tests
 #
+if [istarget "m68hc11-*-*"] then {
+   return
+}
+if [istarget "m68hc12-*-*"] then {
+   return
+}
+if [istarget "m6811-*-*"] then {
+   return
+}
+if [istarget "m6812-*-*"] then {
+   return
+}
 if [istarget m68*-*-*] then {
     gas_test "t2.s" "" "" "cross-section branch"
     if [istarget m68*-motorola-sysv] then {
@@ -36,4 +48,4 @@ if [istarget m68*-*-*] then {
 }
 if [info exists errorInfo] then {
     unset errorInfo
-    }
+}

@@ -1,5 +1,6 @@
 /* vms.c -- Write out a VAX/VMS object file
-   Copyright (C) 1987, 88, 92, 94, 95, 97, 1998 Free Software Foundation, Inc.
+   Copyright 1987, 1988, 1992, 1993, 1994, 1995, 1997, 1998, 2000, 2001
+   Free Software Foundation, Inc.
 
 This file is part of GAS, the GNU Assembler.
 
@@ -30,10 +31,10 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "subsegs.h"
 #include "obstack.h"
 
-/* What we do if there is a goof. */
+/* What we do if there is a goof.  */
 #define error as_fatal
 
-#ifdef VMS			/* These are of no use if we are cross assembling. */
+#ifdef VMS			/* These are of no use if we are cross assembling.  */
 #include <fab.h>		/* Define File Access Block	  */
 #include <nam.h>		/* Define NAM Block		  */
 #include <xab.h>		/* Define XAB - all different types*/
@@ -102,7 +103,6 @@ struct input_file
 
 static struct input_file *file_root = (struct input_file *) NULL;
 
-
 /*
  * Styles of PSECTS (program sections) that we generate; just shorthand
  * to avoid lists of section attributes.  Used by VMS_Psect_Spec().
@@ -154,7 +154,7 @@ struct VMS_DBG_Symbol
 };
 
 #define SYMTYPLST_SIZE (1<<4)	/* 16; must be power of two */
-#define SYMTYP_HASH(x) ((unsigned)(x) & (SYMTYPLST_SIZE-1))
+#define SYMTYP_HASH(x) ((unsigned) (x) & (SYMTYPLST_SIZE-1))
 struct VMS_DBG_Symbol *VMS_Symbol_type_list[SYMTYPLST_SIZE];
 
 /*
@@ -253,9 +253,8 @@ static int total_len;		/* used to calculate the total length of variable
 				descriptor plus array descriptor - used for len byte*/
 
 /* Flag if we have told user about finding global constants in the text
-   section. */
+   section.  */
 static int gave_compiler_message = 0;
-
 
 /*
  *	Global data (Object records limited to 512 bytes by VAX-11 "C" runtime)
@@ -269,8 +268,8 @@ static int Current_Object_Record_Type;	/* Type of record in above	   */
  *	Macros for moving data around.  Must work on big-endian systems.
  */
 #ifdef VMS  /* These are more efficient for VMS->VMS systems */
-#define COPY_LONG(dest,val)	( *(long *)(dest) = (val) )
-#define COPY_SHORT(dest,val)	( *(short *)(dest) = (val) )
+#define COPY_LONG(dest,val)	( *(long *) (dest) = (val) )
+#define COPY_SHORT(dest,val)	( *(short *) (dest) = (val) )
 #else
 #define COPY_LONG(dest,val)	md_number_to_chars ((dest), (val), 4)
 #define COPY_SHORT(dest,val)	md_number_to_chars ((dest), (val), 2)
@@ -447,7 +446,6 @@ const pseudo_typeS obj_pseudo_table[] =
   {0, 0, 0},
 };				/* obj_pseudo_table */
 
-
 /* Routine to perform RESOLVE_SYMBOL_REDEFINITION().  */
 
 int
@@ -484,7 +482,6 @@ vms_resolve_symbol_redef (sym)
   return 0;
 }
 
-
 /* `tc_frob_label' handler for colon(symbols.c), used to examine the
    dummy label(s) gcc inserts at the beginning of each file it generates.
    gcc 1.x put "gcc_compiled."; gcc 2.x (as of 2.7) puts "gcc2_compiled."
@@ -518,13 +515,11 @@ symbolS *symbolP;
   return;
 }
 
-
 void
 obj_read_begin_hook ()
 {
   return;
 }
-
 
 void
 obj_crawl_symbol_chain (headers)
@@ -534,7 +529,7 @@ obj_crawl_symbol_chain (headers)
   symbolS **symbolPP;
   int symbol_number = 0;
 
-  symbolPP = &symbol_rootP;	/* -> last symbol chain link. */
+  symbolPP = &symbol_rootP;	/* -> last symbol chain link.  */
   while ((symbolP = *symbolPP) != NULL)
     {
       resolve_symbol_value (symbolP, 1);
@@ -557,14 +552,14 @@ obj_crawl_symbol_chain (headers)
 	{
 	  symbolP->sy_number = symbol_number++;
 	  symbolP->sy_name_offset = 0;
-	  symbolPP = &(symbol_next (symbolP));
+	  symbolPP = &symbolP->sy_next;
 	}
       else
 	{
 	  if (S_IS_EXTERNAL (symbolP) || !S_IS_DEFINED (symbolP))
 	    {
 	      as_bad (_("Local symbol %s never defined"), S_GET_NAME (symbolP));
-	    }			/* oops. */
+	    }			/* oops.  */
 
 	  /* Unhook it from the chain.  */
 	  *symbolPP = symbol_next (symbolP);
@@ -578,7 +573,6 @@ obj_crawl_symbol_chain (headers)
 
 
  /****** VMS OBJECT FILE HACKING ROUTINES *******/
-
 
 /* Create the VMS object file.  */
 
@@ -600,7 +594,6 @@ Create_VMS_Object_File ()
   Current_Object_Record_Type = -1;
 }
 
-
 /* Flush the object record buffer to the object file.  */
 
 static void
@@ -610,7 +603,7 @@ Flush_VMS_Object_Record_Buffer ()
   if (Object_Record_Offset == 0)
     return;
 
-#ifndef VMS			/* For cross-assembly purposes. */
+#ifndef VMS			/* For cross-assembly purposes.  */
   {
     char RecLen[2];
 
@@ -640,7 +633,6 @@ Flush_VMS_Object_Record_Buffer ()
   Object_Record_Offset = 0;
 }
 
-
 /* Declare a particular type of object file record.  */
 
 static void
@@ -656,7 +648,6 @@ Set_VMS_Object_File_Record (Type)
   Current_Object_Record_Type = Type;
 }
 
-
 /* Close the VMS Object file.  */
 
 static void
@@ -665,7 +656,7 @@ Close_VMS_Object_File ()
   /* Flush (should never be necessary) and reset saved record-type context.  */
   Set_VMS_Object_File_Record (-1);
 
-#ifndef VMS			/* For cross-assembly purposes. */
+#ifndef VMS			/* For cross-assembly purposes.  */
   {
     char RecLen[2];
     int minus_one = -1;
@@ -689,7 +680,6 @@ Close_VMS_Object_File ()
 
  /****** Text Information and Relocation routines ******/
 
-
 /* Stack Psect base followed by signed, varying-sized offset.
    Common to several object records.  */
 
@@ -709,15 +699,15 @@ vms_tir_stack_psect (Psect_Index, Offset, Force)
   switch (Sta_P(psect_width,offset_width))
     {
       case Sta_P(1,1):	PUT_CHAR (TIR_S_C_STA_PB);
-			PUT_CHAR ((char)(unsigned char) Psect_Index);
+			PUT_CHAR ((char) (unsigned char) Psect_Index);
 			PUT_CHAR ((char) Offset);
 			break;
       case Sta_P(1,2):	PUT_CHAR (TIR_S_C_STA_PW);
-			PUT_CHAR ((char)(unsigned char) Psect_Index);
+			PUT_CHAR ((char) (unsigned char) Psect_Index);
 			PUT_SHORT (Offset);
 			break;
       case Sta_P(1,4):	PUT_CHAR (TIR_S_C_STA_PL);
-			PUT_CHAR ((char)(unsigned char) Psect_Index);
+			PUT_CHAR ((char) (unsigned char) Psect_Index);
 			PUT_LONG (Offset);
 			break;
       case Sta_P(2,1):	PUT_CHAR (TIR_S_C_STA_WPB);
@@ -735,7 +725,6 @@ vms_tir_stack_psect (Psect_Index, Offset, Force)
     }
 #undef Sta_P
 }
-
 
 /* Store immediate data in current Psect.  */
 
@@ -773,7 +762,6 @@ VMS_Store_Immediate_Data (Pointer, Size, Record_Type)
     Flush_VMS_Object_Record_Buffer ();
 }
 
-
 /* Make a data reference.  */
 
 static void
@@ -796,7 +784,6 @@ VMS_Set_Data (Psect_Index, Offset, Record_Type, Force)
     Flush_VMS_Object_Record_Buffer ();
 }
 
-
 /* Make a debugger reference to a struct, union or enum.  */
 
 static void
@@ -816,7 +803,6 @@ VMS_Store_Struct (Struct_Index)
   if (Object_Record_Offset > (sizeof (Object_Record_Buffer) * 3 / 4))
     Flush_VMS_Object_Record_Buffer ();
 }
-
 
 /* Make a debugger reference to partially define a struct, union or enum.  */
 
@@ -854,7 +840,6 @@ VMS_Set_Struct (Struct_Index)
 
  /****** Traceback Information routines ******/
 
-
 /* Write the Traceback Module Begin record.  */
 
 static void
@@ -888,7 +873,6 @@ VMS_TBT_Module_Begin ()
   VMS_Store_Immediate_Data (Local, Size, OBJ_S_C_TBT);
 }
 
-
 /* Write the Traceback Module End record.  */
 
 static void
@@ -902,7 +886,6 @@ VMS_TBT_Module_End ()
   /* Put it into the object record.  */
   VMS_Store_Immediate_Data (Local, 2, OBJ_S_C_TBT);
 }
-
 
 /* Write a Traceback Routine Begin record.  */
 
@@ -948,7 +931,6 @@ VMS_TBT_Routine_Begin (symbolP, Psect)
     *cp++ = *cp1++;
   VMS_Store_Immediate_Data (Local, Size, OBJ_S_C_TBT);
 }
-
 
 /* Write a Traceback Routine End record.
 
@@ -1006,7 +988,6 @@ VMS_TBT_Routine_End (Max_Size, sp)
   VMS_Store_Immediate_Data (Local, 7, OBJ_S_C_TBT);
 }
 
-
 /* Write a Traceback Block Begin record.  */
 
 static void
@@ -1049,7 +1030,6 @@ VMS_TBT_Block_Begin (symbolP, Psect, Name)
     *cp++ = *cp1++;
   VMS_Store_Immediate_Data (Local, Size, OBJ_S_C_DBG);
 }
-
 
 /* Write a Traceback Block End record.  */
 
@@ -1281,12 +1261,11 @@ VMS_TBT_Source_File (Filename, ID_Number)
   /* Library module name (none).  */
   *cp++ = 0;
   /* Now that size is known, fill it in and write out the record.  */
-  Local[4] = cp - &Local[5];		/* source file declaration size */ 
+  Local[4] = cp - &Local[5];		/* source file declaration size */
   Local[0] = cp - &Local[1];		/* TBT record size */
   VMS_Store_Immediate_Data (Local, cp - Local, OBJ_S_C_TBT);
   return 1;
 }
-
 
 /* Traceback information is described in terms of lines from compiler
    listing files, not lines from source files.  We need to set up the
@@ -1302,7 +1281,7 @@ VMS_TBT_Source_Lines (ID_Number, Starting_Line_Number, Number_Of_Lines)
 {
   char *cp;
   int chunk_limit;
-  char Local[128];	/* room enough to describe 1310700 lines... */
+  char Local[128];	/* room enough to describe 1310700 lines...  */
 
   cp = &Local[1];	/* Put size in Local[0] later.  */
   *cp++ = DST_S_C_SOURCE;		/* DST type is "source file".  */
@@ -1346,7 +1325,6 @@ VMS_TBT_Source_Lines (ID_Number, Starting_Line_Number, Number_Of_Lines)
 
 
  /****** Debugger Information support routines ******/
-
 
 /* This routine locates a file in the list of files.  If an entry does
    not exist, one is created.  For include files, a new entry is always
@@ -1394,7 +1372,6 @@ find_file (sp)
   return fpnt;
 }
 
-
 /* This routine converts a number string into an integer, and stops when
    it sees an invalid character.  The return value is the address of the
    character just past the last character read.  No error is generated.  */
@@ -1425,7 +1402,6 @@ cvt_integer (str, rtn)
  * we can be fairly lax about changing things, since the GSD and the TIR
  * sections have already been output.
  */
-
 
 /* This routine fixes the names that are generated by C++, ".this" is a good
    example.  The period does not work for the debugger, since it looks like
@@ -1468,7 +1444,6 @@ fix_name (pnt)
   return pnt;
 }
 
-
 /* When defining a structure, this routine is called to find the name of
    the actual structure.  It is assumed that str points to the equal sign
    in the definition, and it moves backward until it finds the start of the
@@ -1497,7 +1472,6 @@ get_struct_name (str)
   return pnt;
 }
 
-
 /* Search symbol list for type number dbx_type.
    Return a pointer to struct.  */
 
@@ -1518,7 +1492,6 @@ find_symbol (dbx_type)
     return spnt;
   return find_symbol (spnt->type2);
 }
-
 
 #if 0		/* obsolete */
 /* this routine puts info into either Local or Asuffix, depending on the sign
@@ -1555,7 +1528,6 @@ push (value, size1)
     }
 }
 #endif
-
 
 static void
 fpush (value, size)
@@ -1594,7 +1566,6 @@ rpush (value, size)
       md_number_to_chars (&Local[Lpnt + 1], value, size);
     }
 }
-
 
 /* This routine generates the array descriptor for a given array.  */
 
@@ -1652,7 +1623,6 @@ array_suffix (spnt2)
     }
 }
 
-
 /* This routine generates the start of a variable descriptor based upon
    a struct/union/enum that has yet to be defined.  We define this spot as
    a new location, and save four bytes for the address.  When the struct is
@@ -1674,7 +1644,6 @@ new_forward_ref (dbx_type)
   rpush (total_len, 2);
   struct_number = -fpnt->struc_numb;
 }
-
 
 /* This routine generates the variable descriptor used to describe non-basic
    variables.  It calls itself recursively until it gets to the bottom of it
@@ -1780,7 +1749,6 @@ gen1 (spnt, array_suffix_len)
   return 0;
 }
 
-
 /* This generates a suffix for a variable.  If it is not a defined type yet,
    then dbx_type contains the type we are expecting so we can generate a
    forward reference.  This calls gen1 to build most of the descriptor, and
@@ -1860,7 +1828,6 @@ generate_suffix (spnt, dbx_type)
   Lpnt = 0;
 }
 
-
 	/* "novel length" type doesn't work for simple atomic types */
 #define USE_BITSTRING_DESCRIPTOR(t) ((t)->advanced == BASIC)
 #undef SETUP_BASIC_TYPES
@@ -1886,7 +1853,6 @@ bitfield_suffix (spnt, width)
   /* assert( spnt->struc_numb > 0 ); */
   VMS_Store_Struct (spnt->struc_numb);	/* output 4 more bytes */
 }
-
 
 /* Formally define a builtin type, so that it can serve as the target of
    an indirect reference.  It makes bitfield_suffix() easier by avoiding
@@ -1942,7 +1908,6 @@ setup_basic_type (spnt)
   return;
 }
 
-
 /* This routine generates a symbol definition for a C symbol for the debugger.
    It takes a psect and offset for global symbols; if psect < 0, then this is
    a local variable and the offset is relative to FP.  In this case it can
@@ -1987,7 +1952,6 @@ VMS_DBG_record (spnt, Psect, Offset, Name)
   if (spnt->VMS_type == DBG_S_C_ADVANCED_TYPE)
     generate_suffix (spnt, 0);
 }
-
 
 /* This routine parses the stabs entries in order to make the definition
    for the debugger of local symbols and function parameters.  */
@@ -2046,7 +2010,7 @@ VMS_local_stab_Parse (sp)
 		str1++;
 	      }
 	    if (*str1 == ':' && *pnt2 == ':')
-	      return;	/* they are the same!  lets skip this one */
+	      return;	/* They are the same!  Let's skip this one.  */
 	  }			/* for */
 	pnt++;			/* skip p in case no register */
       }			/* if */
@@ -2061,7 +2025,6 @@ VMS_local_stab_Parse (sp)
   *pnt1 = ':';			/* and restore the string */
   return;
 }
-
 
 /* This routine parses a stabs entry to find the information required
    to define a variable.  It is used for global and static variables.
@@ -2170,7 +2133,6 @@ VMS_stab_parse (sp, expected_type, type1, type2, Text_Psect)
   return;
 }
 
-
 /* Simpler interfaces into VMS_stab_parse().  */
 
 static void
@@ -2196,7 +2158,6 @@ VMS_STSYM_Parse (sp, Text_Psect)
 {				/* Static symbols - initialized */
   VMS_stab_parse (sp, 'S', N_DATA, -1, Text_Psect);
 }
-
 
 /* For register symbols, we must figure out what range of addresses
    within the psect are valid.  We will use the brackets in the stab
@@ -2319,7 +2280,6 @@ VMS_RSYM_Parse (sp, Current_Routine, Text_Psect)
     generate_suffix (spnt, 0);
 }
 
-
 /* This function examines a structure definition, checking all of the elements
    to make sure that all of them are fully defined.  The only thing that we
    kick out are arrays of undefined structs, since we do not know how big
@@ -2353,7 +2313,6 @@ forward_reference (pnt)
   return 0;			/* no forward refences found */
 }
 
-
 /* Used to check a single element of a structure on the final pass.  */
 
 static int
@@ -2371,7 +2330,6 @@ final_forward_reference (spnt)
     }
   return 0;	/* no forward refences found */
 }
-
 
 /* This routine parses the stabs directives to find any definitions of dbx
    type numbers.  It makes a note of all of them, creating a structure
@@ -2802,7 +2760,6 @@ VMS_typedef_parse (str)
   return 0;
 }
 
-
 /* This is the root routine that parses the stabs entries for definitions.
    it calls VMS_typedef_parse, which can in turn call itself.  We need to
    be careful, since sometimes there are forward references to other symbol
@@ -2947,7 +2904,6 @@ VMS_LSYM_Parse ()
     }
 }
 
-
 static void
 Define_Local_Symbols (s0P, s2P, Current_Routine, Text_Psect)
      symbolS *s0P, *s2P;
@@ -2986,7 +2942,6 @@ Define_Local_Symbols (s0P, s2P, Current_Routine, Text_Psect)
 	}			/*switch*/
     }				/* for */
 }
-
 
 /* This function crawls the symbol chain searching for local symbols that
    need to be described to the debugger.  When we enter a new scope with
@@ -3071,7 +3026,6 @@ get_VMS_time_on_unix (Now)
   sprintf (Now, "%2s-%3s-%s %s", pnt + 8, pnt + 4, pnt + 20, pnt + 11);
 }
 #endif /* not VMS */
-
 
 /* Write the MHD (Module Header) records.  */
 
@@ -3179,7 +3133,6 @@ Write_VMS_MHD_Records ()
   Flush_VMS_Object_Record_Buffer ();
 }
 
-
 /* Write the EOM (End Of Module) record.  */
 
 static void
@@ -3195,7 +3148,7 @@ Write_VMS_EOM_Record (Psect, Offset)
    */
   Set_VMS_Object_File_Record (OBJ_S_C_EOM);
   PUT_CHAR (OBJ_S_C_EOM);	/* Record type.  */
-  PUT_CHAR (0);			/* Error severity level (we ignore it). */
+  PUT_CHAR (0);			/* Error severity level (we ignore it).  */
   /*
    *	Store the entry point, if it exists
    */
@@ -3417,7 +3370,6 @@ VMS_Case_Hack_Symbol (In, Out)
 #define GLOBALSYMBOL_BIT	0x10000
 #define GLOBALVALUE_BIT		0x20000
 
-
 static void
 VMS_Modify_Psect_Attributes (Name, Attribute_Pointer)
      const char *Name;
@@ -3525,7 +3477,7 @@ VMS_Modify_Psect_Attributes (Name, Attribute_Pointer)
 #define GBLSYM_REF 0
 #define GBLSYM_DEF 1
 #define GBLSYM_VAL 2
-#define GBLSYM_LCL 4	/* not GBL after all... */
+#define GBLSYM_LCL 4	/* not GBL after all...  */
 #define GBLSYM_WEAK 8
 
 /*
@@ -3663,30 +3615,30 @@ VMS_Psect_Spec (Name, Size, Type, vsp)
   switch (Type)
     {
     case ps_TEXT:
-      /* Text psects are PIC,noOVR,REL,noGBL,SHR,EXE,RD,noWRT. */
+      /* Text psects are PIC,noOVR,REL,noGBL,SHR,EXE,RD,noWRT.  */
       Psect_Attributes = (GPS_S_M_PIC|GPS_S_M_REL|GPS_S_M_SHR|GPS_S_M_EXE
 			  |GPS_S_M_RD);
       break;
     case ps_DATA:
-      /* Data psects are PIC,noOVR,REL,noGBL,noSHR,noEXE,RD,WRT. */
+      /* Data psects are PIC,noOVR,REL,noGBL,noSHR,noEXE,RD,WRT.  */
       Psect_Attributes = (GPS_S_M_PIC|GPS_S_M_REL|GPS_S_M_RD|GPS_S_M_WRT);
       break;
     case ps_COMMON:
-      /* Common block psects are:  PIC,OVR,REL,GBL,noSHR,noEXE,RD,WRT. */
+      /* Common block psects are:  PIC,OVR,REL,GBL,noSHR,noEXE,RD,WRT.  */
       Psect_Attributes = (GPS_S_M_PIC|GPS_S_M_OVR|GPS_S_M_REL|GPS_S_M_GBL
 			  |GPS_S_M_RD|GPS_S_M_WRT);
       break;
     case ps_CONST:
-      /* Const data psects are:  PIC,OVR,REL,GBL,noSHR,noEXE,RD,noWRT. */
+      /* Const data psects are:  PIC,OVR,REL,GBL,noSHR,noEXE,RD,noWRT.  */
       Psect_Attributes = (GPS_S_M_PIC|GPS_S_M_OVR|GPS_S_M_REL|GPS_S_M_GBL
 			  |GPS_S_M_RD);
       break;
     case ps_CTORS:
-      /* Ctor psects are PIC,noOVR,REL,GBL,noSHR,noEXE,RD,noWRT. */
+      /* Ctor psects are PIC,noOVR,REL,GBL,noSHR,noEXE,RD,noWRT.  */
       Psect_Attributes = (GPS_S_M_PIC|GPS_S_M_REL|GPS_S_M_GBL|GPS_S_M_RD);
       break;
     case ps_DTORS:
-      /* Dtor psects are PIC,noOVR,REL,GBL,noSHR,noEXE,RD,noWRT. */
+      /* Dtor psects are PIC,noOVR,REL,GBL,noSHR,noEXE,RD,noWRT.  */
       Psect_Attributes = (GPS_S_M_PIC|GPS_S_M_REL|GPS_S_M_GBL|GPS_S_M_RD);
       break;
     default:
@@ -3805,7 +3757,6 @@ VMS_Initialized_Data_Size (s0P, End_Of_Data)
   return (offsetT) (nearest_val - s0P_val);
 }
 
-
 /* Check symbol names for the Psect hack with a globalvalue, and then
    generate globalvalues for those that have it.  */
 
@@ -3883,7 +3834,7 @@ VMS_Emit_Globalvalues (text_siz, data_siz, Data_Segment)
 	      Size = VMS_Initialized_Data_Size (sp, text_siz + data_siz);
 	      if (Size > 4)
 		error (_("Invalid data type for globalvalue"));
-	      globalvalue = md_chars_to_number (Data_Segment + 
+	      globalvalue = md_chars_to_number (Data_Segment +
 		     S_GET_VALUE (sp) - text_siz , Size);
 	      /* Three times for good luck.  The linker seems to get confused
 	         if there are fewer than three */
@@ -4533,7 +4484,6 @@ struct vms_obj_state {
 #define Local_Initd_Data_Size	vms_obj_state.local_initd_data_size
 #define Data_Segment		vms_obj_state.data_segment
 
-
 #define IS_GXX_VTABLE(symP) (strncmp (S_GET_NAME (symP), "__vt.", 5) == 0)
 #define IS_GXX_XTOR(symP) (strncmp (S_GET_NAME (symP), "__GLOBAL_.", 10) == 0)
 #define XTOR_SIZE 4
@@ -4670,7 +4620,6 @@ synthesize_data_segment (data_siz, text_siz, data_frag_root)
 
   return;
 }
-
 
 /* Perform data segment fixups.  */
 
@@ -5105,7 +5054,6 @@ local_symbols_DST (s0P, Current_Routine)
     }
 }
 
-
 /* Construct and output the debug symbol table.  */
 
 static void
@@ -5429,7 +5377,6 @@ vms_write_object_file (text_siz, data_siz, bss_siz, text_frag_root,
   if (data_siz > 0)
     synthesize_data_segment (data_siz, text_siz, data_frag_root);
 
-
   /*******  Global Symbol Directory  *******/
 
   /*
@@ -5472,7 +5419,6 @@ vms_write_object_file (text_siz, data_siz, bss_siz, text_frag_root,
 	if (vsp->Psect_Index < 0 && S_GET_RAW_TYPE (vsp->Symbol) == N_DATA)
 	  vsp->Psect_Index = Data_Psect;
     }
-
 
   if (Ctors_Symbols != 0)
     {
@@ -5524,11 +5470,9 @@ vms_write_object_file (text_siz, data_siz, bss_siz, text_frag_root,
       vms_fixup_xtors_section (Dtors_Symbols, Dtors_Psect);
     }
 
-
   /*******  Debugger Symbol Table Records  *******/
 
   vms_build_DST (text_siz);
-
 
   /*******  Wrap things up  *******/
 
@@ -5545,5 +5489,3 @@ vms_write_object_file (text_siz, data_siz, bss_siz, text_frag_root,
    */
   Close_VMS_Object_File ();
 }
-
-/* end of obj-vms.c */

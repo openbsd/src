@@ -1,5 +1,6 @@
 /* Disassemble i80960 instructions.
-   Copyright (C) 1990, 91, 93, 94, 95, 96, 1998 Free Software Foundation, Inc.
+   Copyright 1990, 1991, 1993, 1994, 1995, 1996, 1998, 1999, 2000
+   Free Software Foundation, Inc.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

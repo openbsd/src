@@ -1,5 +1,6 @@
 /* tc-h8300.c -- Assemble code for the Hitachi H8/300
-   Copyright (C) 1991, 92, 93, 94, 95, 96, 97, 1998 Free Software Foundation.
+   Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 2000
+   Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -18,11 +19,7 @@
    Software Foundation, 59 Temple Place - Suite 330, Boston, MA
    02111-1307, USA.  */
 
-
-/*
-  Written By Steve Chamberlain
-  sac@cygnus.com
-  */
+/* Written By Steve Chamberlain <sac@cygnus.com>.  */
 
 #include <stdio.h>
 #include "as.h"
@@ -33,11 +30,9 @@
 #include "opcode/h8300.h"
 #include <ctype.h>
 
-const char comment_chars[] =
-{';', 0};
-const char line_separator_chars[] =
-{0};
+const char comment_chars[] = ";";
 const char line_comment_chars[] = "#";
+const char line_separator_chars[] = "";
 
 /* This table describes all the machine specific pseudo-ops the assembler
    has to support.  The fields are:
@@ -55,7 +50,6 @@ int Smode;
 #define DSYMMODE (Hmode ? L_24 : L_16)
 int bsize = L_8;		/* default branch displacement */
 
-
 void
 h8300hmode ()
 {
@@ -69,6 +63,7 @@ h8300smode ()
   Smode = 1;
   Hmode = 1;
 }
+
 void
 sbranch (size)
      int size;
@@ -76,14 +71,14 @@ sbranch (size)
   bsize = size;
 }
 
-static void pint ()
+static void
+pint ()
 {
   cons (Hmode ? 4 : 2);
 }
 
 const pseudo_typeS md_pseudo_table[] =
 {
-
   {"h8300h", h8300hmode, 0},
   {"h8300s", h8300smode, 0},
   {"sbranch", sbranch, L_8},
@@ -112,12 +107,9 @@ const char FLT_CHARS[] = "rRsSfFdDxXpP";
 
 static struct hash_control *opcode_hash_control;	/* Opcode mnemonics */
 
-/*
-  This function is called once, at assembler startup time.  This should
-  set up all the tables, etc that the MD part of the assembler needs
-  */
-
-
+/* This function is called once, at assembler startup time.  This
+   should set up all the tables, etc. that the MD part of the assembler
+   needs.  */
 void
 md_begin ()
 {
@@ -131,8 +123,7 @@ md_begin ()
   for (opcode = h8_opcodes; opcode->name; opcode++)
     {
       /* Strip off any . part when inserting the opcode and only enter
-         unique codes into the hash table
-         */
+         unique codes into the hash table.  */
       char *src = opcode->name;
       unsigned int len = strlen (src);
       char *dst = malloc (len + 1);
@@ -158,12 +149,12 @@ md_begin ()
 	}
       opcode->idx = idx;
 
-
-      /* Find the number of operands */
+      /* Find the number of operands.  */
       opcode->noperands = 0;
       while (opcode->args.nib[opcode->noperands] != E)
 	opcode->noperands++;
-      /* Find the length of the opcode in bytes */
+
+      /* Find the length of the opcode in bytes.  */
       opcode->length = 0;
       while (opcode->data.nib[opcode->length * 2] != E)
 	opcode->length++;
@@ -172,16 +163,15 @@ md_begin ()
   linkrelax = 1;
 }
 
-
 struct h8_exp
 {
   char *e_beg;
   char *e_end;
   expressionS e_exp;
 };
+
 int dispreg;
 int opsize;			/* Set when a register size is seen */
-
 
 struct h8_op
 {
@@ -201,8 +191,9 @@ struct h8_op
   ccr
 */
 
-/* try and parse a reg name, returns number of chars consumed */
-int
+/* Try to parse a reg name.  Return the number of chars consumed.  */
+
+static int
 parse_reg (src, mode, reg, direction)
      char *src;
      op_type *mode;
@@ -213,10 +204,10 @@ parse_reg (src, mode, reg, direction)
   char *end;
   int len;
 
-  /* Cribbed from get_symbol_end().  */
+  /* Cribbed from get_symbol_end.  */
   if (!is_name_beginner (*src) || *src == '\001')
     return 0;
-  end = src+1;
+  end = src + 1;
   while (is_part_of_name (*end) || *end == '\001')
     end++;
   len = end - src;
@@ -291,10 +282,10 @@ parse_reg (src, mode, reg, direction)
   return 0;
 }
 
-char *
+static char *
 parse_exp (s, op)
      char *s;
-     expressionS * op;
+     expressionS *op;
 {
   char *save = input_line_pointer;
   char *new;
@@ -322,7 +313,7 @@ skip_colonthing (ptr, exp, mode)
 	{
 	  ptr++;
 	  /* ff fill any 8 bit quantity */
-	 /* exp->X_add_number -= 0x100;*/
+	  /* exp->X_add_number -= 0x100; */
 	  *mode |= L_8;
 	}
       else
@@ -353,12 +344,12 @@ skip_colonthing (ptr, exp, mode)
    @(exp[:16], Rn)	Register indirect with displacement
    @Rn+
    @-Rn
-   @aa:8			absolute 8 bit
-   @aa:16			absolute 16 bit
+   @aa:8		absolute 8 bit
+   @aa:16		absolute 16 bit
    @aa			absolute 16 bit
 
    #xx[:size]		immediate data
-   @(exp:[8], pc)		pc rel
+   @(exp:[8], pc)	pc rel
    @@aa[:8]		memory indirect
 
    */
@@ -374,7 +365,7 @@ colonmod24 (op, src)
 
   if (!mode)
     {
-      /* Choose a default mode */
+      /* Choose a default mode.  */
       if (op->exp.X_add_number < -32768
 	  || op->exp.X_add_number > 32767)
 	{
@@ -394,7 +385,6 @@ colonmod24 (op, src)
 
 }
 
-
 static void
 get_operand (ptr, op, dst, direction)
      char **ptr;
@@ -411,8 +401,8 @@ get_operand (ptr, op, dst, direction)
 
   /* Gross.  Gross.  ldm and stm have a format not easily handled
      by get_operand.  We deal with it explicitly here.  */
-  if (src[0] == 'e' && src[1] == 'r' && isdigit(src[2])
-      && src[3] == '-' && src[4] == 'e' && src[5] == 'r' && isdigit(src[6]))
+  if (src[0] == 'e' && src[1] == 'r' && isdigit (src[2])
+      && src[3] == '-' && src[4] == 'e' && src[5] == 'r' && isdigit (src[6]))
     {
       int low, high;
 
@@ -463,9 +453,7 @@ get_operand (ptr, op, dst, direction)
 
 	  op->mode = MEMIND;
 	  return;
-
 	}
-
 
       if (*src == '-')
 	{
@@ -473,18 +461,15 @@ get_operand (ptr, op, dst, direction)
 	  len = parse_reg (src, &mode, &num, direction);
 	  if (len == 0)
 	    {
-	      /* Oops, not a reg after all, must be ordinary exp */
+	      /* Oops, not a reg after all, must be ordinary exp.  */
 	      src--;
-	      /* must be a symbol */
+	      /* Must be a symbol.  */
 	      op->mode = ABS | PSIZE | direction;
 	      *ptr = skip_colonthing (parse_exp (src, &op->exp),
 				      &op->exp, &op->mode);
 
 	      return;
-
-
 	    }
-
 
 	  if ((mode & SIZE) != PSIZE)
 	    as_bad (_("Wrong size pointer register for architecture."));
@@ -495,11 +480,10 @@ get_operand (ptr, op, dst, direction)
 	}
       if (*src == '(')
 	{
-	  /* Disp */
+	  /* Disp.  */
 	  src++;
 
-	  /* Start off assuming a 16 bit offset */
-
+	  /* Start off assuming a 16 bit offset.  */
 
 	  src = parse_exp (src, &op->exp);
 
@@ -578,7 +562,6 @@ get_operand (ptr, op, dst, direction)
 	}
     }
 
-
   if (*src == '#')
     {
       src++;
@@ -625,9 +608,7 @@ get_operand (ptr, op, dst, direction)
     }
 }
 
-
-static
-char *
+static char *
 get_operands (noperands, op_end, operand)
      unsigned int noperands;
      char *op_end;
@@ -654,8 +635,8 @@ get_operands (noperands, op_end, operand)
 	{
 	  operand[1].mode = 0;
 	}
-
       break;
+
     case 2:
       ptr++;
       get_operand (&ptr, operand + 0, 0, SRC);
@@ -668,16 +649,13 @@ get_operands (noperands, op_end, operand)
       abort ();
     }
 
-
   return ptr;
 }
 
 /* Passed a pointer to a list of opcodes which use different
    addressing modes, return the opcode which matches the opcodes
-   provided
-   */
-static
-struct h8_opcode *
+   provided.  */
+static struct h8_opcode *
 get_specific (opcode, operands, size)
      struct h8_opcode *opcode;
      struct h8_op *operands;
@@ -733,7 +711,7 @@ get_specific (opcode, operands, size)
 
 		  opsize = op & SIZE;
 
-		  /* The size of the reg is v important */
+		  /* The size of the reg is v important.  */
 		  if ((op & SIZE) != (x & SIZE))
 		    found = 0;
 		}
@@ -741,7 +719,7 @@ get_specific (opcode, operands, size)
 		{
 		  operands[i].mode &= ~ABS;
 		  operands[i].mode |= ABSJMP;
-		  /* But it may not be 24 bits long */
+		  /* But it may not be 24 bits long.  */
 		  if (!Hmode)
 		    {
 		      operands[i].mode &= ~SIZE;
@@ -750,11 +728,11 @@ get_specific (opcode, operands, size)
 		}
 	      else if ((op & (KBIT | DBIT)) && (x & IMM))
 		{
-		  /* This is ok if the immediate value is sensible */
+		  /* This is ok if the immediate value is sensible.  */
 		}
 	      else if (op & PCREL)
 		{
-		  /* The size of the displacement is important */
+		  /* The size of the displacement is important.  */
 		  if ((op & SIZE) != (x & SIZE))
 		    found = 0;
 		}
@@ -768,10 +746,10 @@ get_specific (opcode, operands, size)
 		      x |= L_32;
 		    }
 		  /* Promote an L8 to L_16 if it makes us match.  */
-		  if (op & ABS && op & L_8 && op & DISP) 
+		  if (op & ABS && op & L_8 && op & DISP)
 		    {
 		      if (x & L_16)
-			found= 1;
+			found = 1;
 		    }
 		  else if ((x & SIZE) != 0
 			   && ((op & SIZE) != (x & SIZE)))
@@ -784,7 +762,7 @@ get_specific (opcode, operands, size)
 	      else if ((op & MODE) != (x & MODE))
 		{
 		  found = 0;
-		}	
+		}
 	    }
 	}
     }
@@ -803,29 +781,28 @@ check_operand (operand, width, string)
   if (operand->exp.X_add_symbol == 0
       && operand->exp.X_op_symbol == 0)
     {
+      /* No symbol involved, let's look at offset, it's dangerous if
+	 any of the high bits are not 0 or ff's, find out by oring or
+	 anding with the width and seeing if the answer is 0 or all
+	 fs.  */
 
-      /* No symbol involved, let's look at offset, it's dangerous if any of
-	 the high bits are not 0 or ff's, find out by oring or anding with
-	 the width and seeing if the answer is 0 or all fs*/
-      
       if ((operand->exp.X_add_number & ~width) != 0 &&
 	  (operand->exp.X_add_number | width) != (~0))
 	{
-	  if (width == 255 
+	  if (width == 255
 	      && (operand->exp.X_add_number & 0xff00) == 0xff00)
 	    {
 	      /* Just ignore this one - which happens when trying to
 		 fit a 16 bit address truncated into an 8 bit address
 		 of something like bset.  */
 	    }
-	  else 
+	  else
 	    {
 	      as_warn (_("operand %s0x%lx out of range."), string,
 		       (unsigned long) operand->exp.X_add_number);
 	    }
 	}
     }
-
 }
 
 /* RELAXMODE has one of 3 values:
@@ -847,7 +824,6 @@ do_a_fix_imm (offset, operand, relaxmode)
   int idx;
   int size;
   int where;
-
 
   char *t = operand->mode & IMM ? "#" : "@";
 
@@ -881,20 +857,23 @@ do_a_fix_imm (offset, operand, relaxmode)
 	  break;
 
 	case L_32:
-	  /* This should be done with bfd */
+	  /* This should be done with bfd.  */
 	  bytes[0] = operand->exp.X_add_number >> 24;
 	  bytes[1] = operand->exp.X_add_number >> 16;
 	  bytes[2] = operand->exp.X_add_number >> 8;
 	  bytes[3] = operand->exp.X_add_number >> 0;
+	  if (relaxmode != 0)
+	    {
+	      idx = (relaxmode == 2) ? R_MOV24B1 : R_MOVL1;
+	      fix_new_exp (frag_now, offset, 4, &operand->exp, 0, idx);
+	    }
 	  break;
 	}
-
     }
   else
     {
       switch (operand->mode & SIZE)
 	{
-
 	case L_24:
 	case L_32:
 	  size = 4;
@@ -907,7 +886,7 @@ do_a_fix_imm (offset, operand, relaxmode)
 	    idx = R_RELLONG;
 	  break;
 	default:
-	  as_bad(_("Can't work out size of operand.\n"));
+	  as_bad (_("Can't work out size of operand.\n"));
 	case L_16:
 	  size = 2;
 	  where = 0;
@@ -915,19 +894,15 @@ do_a_fix_imm (offset, operand, relaxmode)
 	    idx = R_MOV16B1;
 	  else
 	    idx = R_RELWORD;
-	  operand->exp.X_add_number = (short)operand->exp.X_add_number;
+	  operand->exp.X_add_number =
+	    ((operand->exp.X_add_number & 0xffff) ^ 0x8000) - 0x8000;
 	  break;
 	case L_8:
 	  size = 1;
 	  where = 0;
 	  idx = R_RELBYTE;
-	  /* This used to use a cast to char, but that fails if char is an
-	     unsigned type.  We can't use `signed char', as that isn't valid
-	     K&R C.  */
-	  if (operand->exp.X_add_number & 0x80)
-	    operand->exp.X_add_number |= ((offsetT) -1 << 8);
-	  else
-	    operand->exp.X_add_number &= 0xff;
+	  operand->exp.X_add_number =
+	    ((operand->exp.X_add_number & 0xff) ^ 0x80) - 0x80;
 	}
 
       fix_new_exp (frag_now,
@@ -937,11 +912,9 @@ do_a_fix_imm (offset, operand, relaxmode)
 		   0,
 		   idx);
     }
-
 }
 
-/* Now we know what sort of opcodes it is, lets build the bytes -
- */
+/* Now we know what sort of opcodes it is, let's build the bytes.  */
 static void
 build_bytes (this_try, operand)
      struct h8_opcode *this_try;
@@ -977,7 +950,6 @@ build_bytes (this_try, operand)
 	}
       else
 	{
-
 	  if (c & (REG | IND | INC | DEC))
 	    {
 	      nib = operand[d].reg;
@@ -986,7 +958,7 @@ build_bytes (this_try, operand)
 	    {
 	      nib = dispreg;
 	    }
-	  else if (c &  ABS )
+	  else if (c & ABS)
 	    {
 	      operand[d].mode = c;
 	      absat = nibble_count / 2;
@@ -1036,7 +1008,7 @@ build_bytes (this_try, operand)
 		  as_bad (_("Need #1 or #2 here"));
 		  break;
 		}
-	      /* stop it making a fix */
+	      /* Stop it making a fix.  */
 	      operand[0].mode = 0;
 	    }
 
@@ -1052,7 +1024,12 @@ build_bytes (this_try, operand)
 
 	  if (c & MACREG)
 	    {
-	      nib = 2 + operand[d].reg;
+	      if (operand[0].mode == MACREG)
+		/* stmac has mac[hl] as the first operand.  */
+		nib = 2 + operand[0].reg;
+	      else
+		/* ldmac has mac[hl] as the second operand.  */
+		nib = 2 + operand[1].reg;
 	    }
 	}
       nibble_count++;
@@ -1083,7 +1060,7 @@ build_bytes (this_try, operand)
   if (strcmp (this_try->name, "mov.b") == 0)
     movb = 1;
 
-  /* output any fixes */
+  /* Output any fixes.  */
   for (i = 0; i < 2; i++)
     {
       int x = operand[i].mode;
@@ -1114,13 +1091,8 @@ build_bytes (this_try, operand)
 	    }
 
 	  operand[i].exp.X_add_number -= 1;
-	  /* This used to use a cast to char, but that fails if char is an
-	     unsigned type.  We can't use `signed char', as that isn't valid
-	     K&R C.  */
-	  if (operand[i].exp.X_add_number & 0x80)
-	    operand[i].exp.X_add_number |= ((offsetT) -1 << 8);
-	  else
-	    operand[i].exp.X_add_number &= 0xff;
+	  operand[i].exp.X_add_number =
+	    ((operand[i].exp.X_add_number & 0xff) ^ 0x80) - 0x80;
 
 	  fix_new_exp (frag_now,
 		       output - frag_now->fr_literal + where,
@@ -1131,7 +1103,6 @@ build_bytes (this_try, operand)
 	}
       else if (x & MEMIND)
 	{
-
 	  check_operand (operand + i, 0xff, "@@");
 	  fix_new_exp (frag_now,
 		       output - frag_now->fr_literal + 1,
@@ -1142,7 +1113,7 @@ build_bytes (this_try, operand)
 	}
       else if (x & ABSJMP)
 	{
-	  /* This jmp may be a jump or a branch */
+	  /* This jmp may be a jump or a branch.  */
 
 	  check_operand (operand + i, Hmode ? 0xffffff : 0xffff, "@");
 	  if (operand[i].exp.X_add_number & 1)
@@ -1151,7 +1122,8 @@ build_bytes (this_try, operand)
 		       (unsigned long) operand->exp.X_add_number);
 	    }
 	  if (!Hmode)
-	    operand[i].exp.X_add_number = (short) operand[i].exp.X_add_number;
+	    operand[i].exp.X_add_number =
+	      ((operand[i].exp.X_add_number & 0xffff) ^ 0x8000) - 0x8000;
 	  fix_new_exp (frag_now,
 		       output - frag_now->fr_literal,
 		       4,
@@ -1160,27 +1132,23 @@ build_bytes (this_try, operand)
 		       R_JMPL1);
 	}
     }
-
 }
 
-/*
-  try and give an intelligent error message for common and simple to
-  detect errors
-  */
-
+/* Try to give an intelligent error message for common and simple to
+   detect errors.  */
 static void
 clever_message (opcode, operand)
      struct h8_opcode *opcode;
      struct h8_op *operand;
 {
-  /* Find out if there was more than one possible opccode */
+  /* Find out if there was more than one possible opcode.  */
 
   if ((opcode + 1)->idx != opcode->idx)
     {
       unsigned int argn;
 
-      /* Only one opcode of this flavour, try and guess which operand
-         didn't match */
+      /* Only one opcode of this flavour, try to guess which operand
+         didn't match.  */
       for (argn = 0; argn < opcode->noperands; argn++)
 	{
 	  switch (opcode->args.nib[argn])
@@ -1195,7 +1163,6 @@ clever_message (opcode, operand)
 	      break;
 
 	    case RS8:
-
 	      if (operand[argn].mode != RS8)
 		{
 		  as_bad (_("source operand must be 8 bit register"));
@@ -1218,7 +1185,6 @@ clever_message (opcode, operand)
 		}
 	      break;
 
-
 	    case ABS16SRC:
 	      if (operand[argn].mode != ABS16SRC)
 		{
@@ -1233,13 +1199,9 @@ clever_message (opcode, operand)
   as_bad (_("invalid operands"));
 }
 
-/* This is the guts of the machine-dependent assembler.  STR points to a
-   machine dependent instruction.  This funciton is supposed to emit
-   the frags/bytes it assembles to.
-   */
-
-
-
+/* This is the guts of the machine-dependent assembler.  STR points to
+   a machine dependent instruction.  This function is supposed to emit
+   the frags/bytes it assembles.  */
 void
 md_assemble (str)
      char *str;
@@ -1254,11 +1216,11 @@ md_assemble (str)
   char c;
   int size;
 
-  /* Drop leading whitespace */
+  /* Drop leading whitespace.  */
   while (*str == ' ')
     str++;
 
-  /* find the op code end */
+  /* Find the op code end.  */
   for (op_start = op_end = str;
        *op_end != 0 && *op_end != ' ';
        op_end++)
@@ -1271,8 +1233,6 @@ md_assemble (str)
 	  break;
 	}
     }
-
-  ;
 
   if (op_end == op_start)
     {
@@ -1291,7 +1251,7 @@ md_assemble (str)
       return;
     }
 
-  /* We use to set input_line_pointer to the result of get_operands,
+  /* We used to set input_line_pointer to the result of get_operands,
      but that is wrong.  Our caller assumes we don't change it.  */
 
   (void) get_operands (opcode->noperands, op_end, operand);
@@ -1320,7 +1280,7 @@ md_assemble (str)
 
   if (opcode == 0)
     {
-      /* Couldn't find an opcode which matched the operands */
+      /* Couldn't find an opcode which matched the operands.  */
       char *where = frag_more (2);
 
       where[0] = 0x0;
@@ -1338,12 +1298,11 @@ md_assemble (str)
     }
 
   build_bytes (opcode, operand);
-
 }
 
 void
 tc_crawl_symbol_chain (headers)
-     object_headers * headers ATTRIBUTE_UNUSED;
+     object_headers *headers ATTRIBUTE_UNUSED;
 {
   printf (_("call to tc_crawl_symbol_chain \n"));
 }
@@ -1357,7 +1316,7 @@ md_undefined_symbol (name)
 
 void
 tc_headers_hook (headers)
-     object_headers * headers ATTRIBUTE_UNUSED;
+     object_headers *headers ATTRIBUTE_UNUSED;
 {
   printf (_("call to tc_headers_hook \n"));
 }
@@ -1366,10 +1325,11 @@ tc_headers_hook (headers)
 /* Equal to MAX_PRECISION in atof-ieee.c */
 #define MAX_LITTLENUMS 6
 
-/* Turn a string in input_line_pointer into a floating point constant of type
-   type, and store the appropriate bytes in *litP.  The number of LITTLENUMS
-   emitted is stored in *sizeP .  An error message is returned, or NULL on OK.
-   */
+/* Turn a string in input_line_pointer into a floating point constant
+   of type TYPE, and store the appropriate bytes in *LITP.  The number
+   of LITTLENUMS emitted is stored in *SIZEP.  An error message is
+   returned, or NULL on OK.  */
+
 char *
 md_atof (type, litP, sizeP)
      char type;
@@ -1429,7 +1389,8 @@ CONST char *md_shortopts = "";
 struct option md_longopts[] = {
   {NULL, no_argument, NULL, 0}
 };
-size_t md_longopts_size = sizeof(md_longopts);
+
+size_t md_longopts_size = sizeof (md_longopts);
 
 int
 md_parse_option (c, arg)
@@ -1462,13 +1423,13 @@ md_convert_frag (headers, seg, fragP)
   abort ();
 }
 
-valueT 
+valueT
 md_section_align (seg, size)
      segT seg;
      valueT size;
 {
-  return ((size + (1 << section_alignment[(int) seg]) - 1) & (-1 << section_alignment[(int) seg]));
-
+  return ((size + (1 << section_alignment[(int) seg]) - 1)
+	  & (-1 << section_alignment[(int) seg]));
 }
 
 void
@@ -1507,8 +1468,7 @@ md_estimate_size_before_relax (fragP, segment_type)
   abort ();
 }
 
-/* Put number into target byte order */
-
+/* Put number into target byte order.  */
 void
 md_number_to_chars (ptr, use, nbytes)
      char *ptr;
@@ -1517,13 +1477,13 @@ md_number_to_chars (ptr, use, nbytes)
 {
   number_to_chars_bigendian (ptr, use, nbytes);
 }
+
 long
 md_pcrel_from (fixP)
      fixS *fixP ATTRIBUTE_UNUSED;
 {
   abort ();
 }
-
 
 void
 tc_reloc_mangle (fix_ptr, intr, base)
@@ -1537,7 +1497,7 @@ tc_reloc_mangle (fix_ptr, intr, base)
   symbol_ptr = fix_ptr->fx_addsy;
 
   /* If this relocation is attached to a symbol then it's ok
-     to output it */
+     to output it.  */
   if (fix_ptr->fx_r_type == TC_CONS_RELOC)
     {
       /* cons likes to create reloc32's whatever the size of the reloc..
@@ -1555,9 +1515,7 @@ tc_reloc_mangle (fix_ptr, intr, base)
 	  break;
 	default:
 	  abort ();
-
 	}
-
     }
   else
     {
@@ -1588,8 +1546,4 @@ tc_reloc_mangle (fix_ptr, intr, base)
     }
   else
     intr->r_symndx = -1;
-
-
 }
-
-/* end of tc-h8300.c */

@@ -1,21 +1,36 @@
-/*
- * Keeps track of source files.
- */
+/* source.c - Keep track of source files.
+
+   Copyright 2000, 2001 Free Software Foundation, Inc.
+
+   This file is part of GNU Binutils.
+
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+   02111-1307, USA.  */
+
 #include "gprof.h"
 #include "libiberty.h"
 #include "filenames.h"
 #include "search_list.h"
 #include "source.h"
 
-#define EXT_ANNO "-ann"		/* postfix of annotated files */
+#define EXT_ANNO "-ann"		/* Postfix of annotated files.  */
 
-/*
- * Default option values:
- */
+/* Default option values.  */
 bool create_annotation_files = FALSE;
 
-Search_List src_search_list =
-{0, 0};
+Search_List src_search_list = {0, 0};
 Source_File *first_src_file = 0;
 
 
@@ -27,20 +42,21 @@ DEFUN (source_file_lookup_path, (path), const char *path)
   for (sf = first_src_file; sf; sf = sf->next)
     {
       if (FILENAME_CMP (path, sf->name) == 0)
-	{
-	  break;
-	}
+	break;
     }
+
   if (!sf)
     {
-      /* create a new source file descriptor: */
-
+      /* Create a new source file descriptor.  */
       sf = (Source_File *) xmalloc (sizeof (*sf));
+
       memset (sf, 0, sizeof (*sf));
+
       sf->name = xstrdup (path);
       sf->next = first_src_file;
       first_src_file = sf;
     }
+
   return sf;
 }
 
@@ -50,28 +66,24 @@ DEFUN (source_file_lookup_name, (filename), const char *filename)
 {
   const char *fname;
   Source_File *sf;
-  /*
-   * The user cannot know exactly how a filename will be stored in
-   * the debugging info (e.g., ../include/foo.h
-   * vs. /usr/include/foo.h).  So we simply compare the filename
-   * component of a path only:
-   */
+
+  /* The user cannot know exactly how a filename will be stored in
+     the debugging info (e.g., ../include/foo.h
+     vs. /usr/include/foo.h).  So we simply compare the filename
+     component of a path only.  */
   for (sf = first_src_file; sf; sf = sf->next)
     {
       fname = strrchr (sf->name, '/');
+
       if (fname)
-	{
-	  ++fname;
-	}
+	++fname;
       else
-	{
-	  fname = sf->name;
-	}
+	fname = sf->name;
+
       if (FILENAME_CMP (filename, fname) == 0)
-	{
-	  break;
-	}
+	break;
     }
+
   return sf;
 }
 
@@ -91,32 +103,30 @@ DEFUN (annotate_source, (sf, max_width, annote, arg),
   FILE *ifp, *ofp;
   Search_List_Elem *sle = src_search_list.head;
 
-  /*
-   * Open input file.  If open fails, walk along search-list until
-   * open succeeds or reaching end of list:
-   */
+  /* Open input file.  If open fails, walk along search-list until
+     open succeeds or reaching end of list.  */
   strcpy (fname, sf->name);
+
   if (IS_ABSOLUTE_PATH (sf->name))
-    {
-      sle = 0;			/* don't use search list for absolute paths */
-    }
+    sle = 0;			/* Don't use search list for absolute paths.  */
+
   name_only = 0;
   while (TRUE)
     {
       DBG (SRCDEBUG, printf ("[annotate_source]: looking for %s, trying %s\n",
 			     sf->name, fname));
+
       ifp = fopen (fname, FOPEN_RB);
       if (ifp)
-	{
-	  break;
-	}
+	break;
+
       if (!sle && !name_only)
 	{
 	  name_only = strrchr (sf->name, '/');
 #ifdef HAVE_DOS_BASED_FILE_SYSTEM
 	  {
 	    char *bslash = strrchr (sf->name, '\\');
-	    if (bslash > name_only)
+	    if (name_only == NULL || (bslash != NULL && bslash > name_only))
 	      name_only = bslash;
 	    if (name_only == NULL && sf->name[0] != '\0' && sf->name[1] == ':')
 	      name_only = (char *)sf->name + 1;
@@ -124,11 +134,12 @@ DEFUN (annotate_source, (sf, max_width, annote, arg),
 #endif
 	  if (name_only)
 	    {
-	      /* try search-list again, but this time with name only: */
+	      /* Try search-list again, but this time with name only.  */
 	      ++name_only;
 	      sle = src_search_list.head;
 	    }
 	}
+
       if (sle)
 	{
 	  strcpy (fname, sle->path);
@@ -138,56 +149,48 @@ DEFUN (annotate_source, (sf, max_width, annote, arg),
 	    strcat (fname, ".");
 #endif
 	  strcat (fname, "/");
+
 	  if (name_only)
-	    {
-	      strcat (fname, name_only);
-	    }
+	    strcat (fname, name_only);
 	  else
-	    {
-	      strcat (fname, sf->name);
-	    }
+	    strcat (fname, sf->name);
+
 	  sle = sle->next;
 	}
       else
 	{
 	  if (errno == ENOENT)
-	    {
-	      fprintf (stderr, _("%s: could not locate `%s'\n"),
-		       whoami, sf->name);
-	    }
+	    fprintf (stderr, _("%s: could not locate `%s'\n"),
+		     whoami, sf->name);
 	  else
-	    {
-	      perror (sf->name);
-	    }
+	    perror (sf->name);
+
 	  return 0;
 	}
     }
 
   ofp = stdout;
+
   if (create_annotation_files)
     {
-      /* try to create annotated source file: */
+      /* Try to create annotated source file.  */
       const char *filename;
 
-      /* create annotation files in the current working directory: */
+      /* Create annotation files in the current working directory.  */
       filename = strrchr (sf->name, '/');
 #ifdef HAVE_DOS_BASED_FILE_SYSTEM
 	{
 	  char *bslash = strrchr (sf->name, '\\');
-	  if (bslash > filename)
+	  if (filename == NULL || (bslash != NULL && bslash > filename))
 	    filename = bslash;
 	  if (filename == NULL && sf->name[0] != '\0' && sf->name[1] == ':')
 	    filename = sf->name + 1;
 	}
 #endif
       if (filename)
-	{
-	  ++filename;
-	}
+	++filename;
       else
-	{
-	  filename = sf->name;
-	}
+	filename = sf->name;
 
       strcpy (fname, filename);
       strcat (fname, EXT_ANNO);
@@ -210,6 +213,7 @@ DEFUN (annotate_source, (sf, max_width, annote, arg),
       }
 #endif
       ofp = fopen (fname, "w");
+
       if (!ofp)
 	{
 	  perror (fname);
@@ -217,34 +221,27 @@ DEFUN (annotate_source, (sf, max_width, annote, arg),
 	}
     }
 
-  /*
-   * Print file names if output goes to stdout and there are
-   * more than one source file:
-   */
+  /* Print file names if output goes to stdout
+     and there are more than one source file.  */
   if (ofp == stdout)
     {
       if (first_file)
-	{
-	  first_file = FALSE;
-	}
+	first_file = FALSE;
       else
-	{
-	  fputc ('\n', ofp);
-	}
+	fputc ('\n', ofp);
+
       if (first_output)
-	{
-	  first_output = FALSE;
-	}
+	first_output = FALSE;
       else
-	{
-	  fprintf (ofp, "\f\n");
-	}
+	fprintf (ofp, "\f\n");
+
       fprintf (ofp, _("*** File %s:\n"), sf->name);
     }
 
   annotation = xmalloc (max_width + 1);
   line_num = 1;
   new_line = TRUE;
+
   while ((nread = fread (buf, 1, sizeof (buf), ifp)) > 0)
     {
       for (i = 0; i < nread; ++i)
@@ -256,10 +253,12 @@ DEFUN (annotate_source, (sf, max_width, annote, arg),
 	      ++line_num;
 	      new_line = FALSE;
 	    }
+
 	  new_line = (buf[i] == '\n');
 	  fputc (buf[i], ofp);
 	}
     }
+
   free (annotation);
   return ofp;
 }

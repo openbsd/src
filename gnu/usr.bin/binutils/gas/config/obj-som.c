@@ -1,5 +1,5 @@
 /* SOM object file format.
-   Copyright (C) 1993, 1998 Free Software Foundation, Inc.
+   Copyright 1993, 1994, 1998, 2000 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -30,7 +30,8 @@ static void obj_som_weak PARAMS ((int));
 
 const pseudo_typeS obj_pseudo_table[] =
 {
-  {"weak", obj_som_weak, 0}
+  {"weak", obj_som_weak, 0},
+  {NULL, NULL, 0}
 };
 
 static int version_seen = 0;
@@ -38,12 +39,16 @@ static int copyright_seen = 0;
 static int compiler_seen = 0;
 
 /* Unused by SOM.  */
-void obj_read_begin_hook () {}
+
+void
+obj_read_begin_hook ()
+{
+}
 
 /* Handle a .compiler directive.   This is intended to create the
    compilation unit auxiliary header for MPE such that the linkeditor
    can handle SOM extraction from archives. The format of the quoted
-   string is "sourcefile language version" and is delimited by blanks.*/
+   string is "sourcefile language version" and is delimited by blanks.  */
 
 void
 obj_som_compiler (unused)
@@ -93,8 +98,9 @@ obj_som_compiler (unused)
     }
   *p = '\000';
 
-  language_name	= ++p;
-  while (*p != ' ' && *p != '\000') p++;
+  language_name = ++p;
+  while (*p != ' ' && *p != '\000')
+    p++;
   if (*p == '\000')
     {
       as_bad (".compiler directive missing version");
@@ -102,8 +108,9 @@ obj_som_compiler (unused)
     }
   *p = '\000';
 
-  version_id	= ++p;
-  while (*p != '\000') p++;
+  version_id = ++p;
+  while (*p != '\000')
+    p++;
   /* Remove the trailing quote.  */
   *(--p) = '\000';
 
@@ -154,7 +161,8 @@ obj_som_version (unused)
   if (bfd_som_attach_aux_hdr (stdoutput, VERSION_AUX_ID, version) == false)
     {
       bfd_perror (stdoutput->filename);
-      as_perror (_("FATAL: Attaching version header %s"), stdoutput->filename);
+      as_perror (_("FATAL: Attaching version header %s"),
+		 stdoutput->filename);
       exit (EXIT_FAILURE);
     }
   *input_line_pointer = c;
@@ -199,7 +207,8 @@ obj_som_copyright (unused)
   if (bfd_som_attach_aux_hdr (stdoutput, COPYRIGHT_AUX_ID, copyright) == false)
     {
       bfd_perror (stdoutput->filename);
-      as_perror (_("FATAL: Attaching copyright header %s"), stdoutput->filename);
+      as_perror (_("FATAL: Attaching copyright header %s"),
+		 stdoutput->filename);
       exit (EXIT_FAILURE);
     }
   *input_line_pointer = c;
@@ -227,7 +236,7 @@ obj_som_init_stab_section (seg)
   space = bfd_make_section_old_way (stdoutput, "$GDB_DEBUG$");
 
   /* Set SOM specific attributes for the space.  In particular we set
-     the space "defined", "private", "sort_key", and "spnum" values. 
+     the space "defined", "private", "sort_key", and "spnum" values.
 
      Due to a bug in pxdb (called by hpux linker), the sort keys
      of the various stabs spaces/subspaces need to be "small".  We
@@ -244,7 +253,7 @@ obj_som_init_stab_section (seg)
 
   /* Make some space for the first special stab entry and zero the memory.
      It contains information about the length of this file's
-     stab string and the like.  Using it avoids the need to 
+     stab string and the like.  Using it avoids the need to
      relocate the stab strings.
 
      The $GDB_STRINGS$ space will be created as a side effect of
@@ -313,7 +322,7 @@ obj_som_weak (ignore)
   char *name;
   int c;
   symbolS *symbolP;
- 
+
   do
     {
       name = input_line_pointer;
@@ -326,14 +335,13 @@ obj_som_weak (ignore)
       symbol_get_obj (symbolP)->local = 1;
 #endif
       if (c == ',')
-        {
-          input_line_pointer++;
-          SKIP_WHITESPACE ();
-          if (*input_line_pointer == '\n')
-            c = '\n';
-        }
+	{
+	  input_line_pointer++;
+	  SKIP_WHITESPACE ();
+	  if (*input_line_pointer == '\n')
+	    c = '\n';
+	}
     }
   while (c == ',');
   demand_empty_rest_of_line ();
 }
-

@@ -1,5 +1,9 @@
-/* tc-i860.h -- Header file for the I860
-   Copyright (C) 1991, 92, 95, 1998 Free Software Foundation, Inc.
+/* tc-i860.h -- Header file for the i860.
+   Copyright 1991, 1992, 1995, 1998, 2000
+   Free Software Foundation, Inc.
+
+   Brought back from the dead and completely reworked
+   by Jason Eckhardt <jle@cygnus.com>.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -17,23 +21,64 @@
    with GAS; see the file COPYING.  If not, write to the Free Software
    Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
+#ifndef TC_I860
 #define TC_I860 1
 
-#define TARGET_BYTES_BIG_ENDIAN 1
+#ifndef BFD_ASSEMBLER
+#error i860 support requires BFD_ASSEMBLER
+#endif
+
+enum i860_fix_info
+{
+  OP_NONE	 = 0x00000,
+  OP_IMM_U5	 = 0x00001,
+  OP_IMM_S16	 = 0x00002,
+  OP_IMM_U16	 = 0x00004,
+  OP_IMM_SPLIT16 = 0x00008,
+  OP_IMM_BR26	 = 0x00010,
+  OP_IMM_BR16	 = 0x00020,
+  OP_ENCODE1	 = 0x00040,
+  OP_ENCODE2	 = 0x00080,
+  OP_ENCODE3	 = 0x00100,
+  OP_SEL_HA	 = 0x00200,
+  OP_SEL_H	 = 0x00400,
+  OP_SEL_L	 = 0x00800,
+  OP_SEL_GOT	 = 0x01000,
+  OP_SEL_GOTOFF	 = 0x02000,
+  OP_SEL_PLT	 = 0x04000,
+  OP_ALIGN2	 = 0x08000,
+  OP_ALIGN4	 = 0x10000,
+  OP_ALIGN8	 = 0x20000,
+  OP_ALIGN16	 = 0x40000
+};
+
+/* Set the endianness we are using.  Default to little endian.  */
+#ifndef TARGET_BYTES_BIG_ENDIAN
+#define TARGET_BYTES_BIG_ENDIAN 0
+#endif
+
+/* Whether or not the target is big endian.  */
+extern int target_big_endian;
+
+/* BFD target architecture.  */
+#define TARGET_ARCH     bfd_arch_i860
+
+/* The target BFD format.  */
+#ifdef OBJ_ELF
+#define TARGET_FORMAT (target_big_endian ? "elf32-i860" : "elf32-i860-little")
+#else
+#error i860 GAS currently supports only the ELF object format
+#endif
 
 #define WORKING_DOT_WORD
+#define MD_APPLY_FIX3
+#define TC_HANDLES_FX_DONE
+#define DIFF_EXPR_OK
 
-#define tc_headers_hook(a)		{;}	/* not used */
-#define tc_crawl_symbol_chain(a)	{;}	/* not used */
-#define tc_aout_pre_write_hook(x)	{;}	/* not used */
+/* Permit temporary numeric labels.  */
+#define LOCAL_LABELS_FB		1
+#define LISTING_HEADER		"GAS for i860"
 
-#define md_operand(x)
+#define md_convert_frag(b,s,f)  as_fatal (_("i860_convert_frag\n"));
 
-/*
- * Local Variables:
- * comment-column: 0
- * fill-column: 131
- * End:
- */
-
-/* end of tc-i860.h */
+#endif /* TC_I860 */

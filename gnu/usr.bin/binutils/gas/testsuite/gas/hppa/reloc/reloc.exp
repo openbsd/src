@@ -27,12 +27,14 @@ proc do_ble_relocation_test {} {
     if [gas_test_old "blebug.s" "" "Proper relocation for BLE (part 1)"] then {
 	objdump_start_no_subdir "a.out" "-r"
 
-        if ![istarget hppa*-*-*elf*] then {
+        if {[istarget hppa*64*-*-*]
+	    || [istarget hppa*-*-*elf*] || [istarget hppa*-*-linux*]} then {
 	    # At one time both versions of the assembler would incorrectly use 
 	    # a PC-relative relocation for a BLE instruction.
 	    while 1 {
 		expect {
-		    -re "^0+4\[^\n\]*ABS_CALL\[^\n\]*\n"	{ set x 1 }
+		    -re "^0+\[^\n\]*DIR21L\[^\n\]*\n"	{ set x 1 }
+		    -re "^0+4\[^\n\]*DIR17R\[^\n\]*\n"	{ set x 1 }
 		    -re "\[^\n\]*\n"				{ }
 		    timeout			{ perror "timeout\n"; break }
 		    eof				{ break }
@@ -43,8 +45,7 @@ proc do_ble_relocation_test {} {
 	    # a PC-relative relocation for a BLE instruction.
 	    while 1 {
 		expect {
-		    -re "^0+\[^\n\]*DIR21L\[^\n\]*\n"	{ set x 1 }
-		    -re "^0+4\[^\n\]*DIR17R\[^\n\]*\n"	{ set x 1 }
+		    -re "^0+4\[^\n\]*ABS_CALL\[^\n\]*\n"	{ set x 1 }
 		    -re "\[^\n\]*\n"				{ }
 		    timeout			{ perror "timeout\n"; break }
 		    eof				{ break }
@@ -65,7 +66,8 @@ proc do_relocation_reduction_tests {} {
     set testname "reduce.s: Test relocation reductions (part 2)"
     set x 0
 
-    if [istarget hppa*w-*-*] then {
+    if {[istarget hppa*64*-*-*]
+        || [istarget hppa*-*-*elf*] || [istarget hppa*-*-linux*]} then {
       return;
     }
 
@@ -242,7 +244,7 @@ proc do_selector_scope_test {} {
     set testname "selectorbug.s: Test scope of field selector" 
     set x 0
 
-    if [istarget hppa*w-*-*] then {
+    if [istarget hppa*64*-*-*] then {
       return;
     }
 
@@ -252,7 +254,7 @@ proc do_selector_scope_test {} {
 	# Check to make sure the relocation entry after the plabel is correct.
 	# If an old field selector was incorrectly "carried" over, then 
 	# this test will fail.
-        if [istarget hppa*-*-*elf*] then {
+        if {[istarget hppa*-*-*elf*] || [istarget hppa*-*-linux*]} then {
 	    while 1 {
 		expect {
 	            -re "^0+14\[^\n\]*DIR32\[^\n\]*\n"
@@ -324,7 +326,8 @@ proc do_exit_relocation_test {} {
     # Elf (osf) does not use ENTRY/EXIT relocations.
     # I guess we could look at the unwind subspaces it builds...
     # Until then, make sure it still assembles.
-    if [istarget hppa*-*-*elf*] then {
+    if {[istarget hppa*64*-*-*]
+	|| [istarget hppa*-*-*elf*] || [istarget hppa*-*-linux*]} then {
 	gas_test_old "exitbug.s" "" "Test for bogus R_EXIT relocation (part 1)"
 	return;
     }
@@ -356,12 +359,9 @@ proc do_cross_space_fixup_test_1 {} {
     set testname "fixupbug.s: Test cross space jump/call fixup bug (part 2)"
     set x 0
 
-    if [istarget hppa*w-*-*] then {
-      return;
-    }
-
-    # ELF (osf) doesn't really handle extra sections too well...
-    if [istarget hppa*-*-*elf*] then {
+    # ELF doesn't really handle extra sections too well...
+    if {[istarget hppa*64*-*-*]
+	|| [istarget hppa*-*-*elf*] || [istarget hppa*-*-linux*]} then {
 	return;
     }
 
@@ -393,12 +393,9 @@ proc do_cross_space_fixup_test_2 {} {
     set testname "fixupbug.s: Test cross space jump/call fixup bug (part 3)"
     set x 0
 
-    if [istarget hppa*w-*-*] then {
-      return;
-    }
-
-    # ELF (osf) doesn't really handle extra sections too well...
-    if [istarget hppa*-*-*elf*] then {
+    # ELF doesn't really handle extra sections too well...
+    if {[istarget hppa*64*-*-*]
+	|| [istarget hppa*-*-*elf*] || [istarget hppa*-*-linux*]} then {
 	return;
     }
 
@@ -431,7 +428,8 @@ proc do_round_mode_test {} {
 	# Make sure GAS generated correct relocations to switch rounding modes.
 	# Also make sure (for SOM) that redundant rounding mode relocations
 	# were eliminated.
-	if { [istarget hppa*-*-*elf*] || [istarget hppa*w-*-*] } then {
+	if {[istarget hppa*64*-*-*]
+	    || [istarget hppa*-*-*elf*] || [istarget hppa*-*-linux*]} then {
 	    while 1 {
 		expect {
 	            -re "^0+\[^\n\]*DIR21L\[^\n\]*\n"
@@ -484,7 +482,8 @@ proc do_round_mode_test {} {
 	objdump_finish
 
 	# Did we find what we were looking for?  If not, flunk it.
-	if {[istarget hppa*-*-*elf*] || [istarget hppa*w-*-*] } then {
+	if {[istarget hppa*64*-*-*]
+	    || [istarget hppa*-*-*elf*] || [istarget hppa*-*-linux*]} then {
 	    if [expr $x==8] then { pass $testname } else { fail $testname }
 	} else {
 	    if [expr $x==3] then { pass $testname } else { fail $testname }
@@ -579,12 +578,9 @@ proc do_pic_relocation_test {} {
     set testname "picreloc.s: Test for proper PIC relocation (part 2)"
     set x 0
 
-    if [istarget hppa*w-*-*] then {
-      return;
-    }
-
-    # ELF (osf) doesn't really handle extra sections too well...
-    if [istarget hppa*-*-*elf*] then {
+    # ELF doesn't really handle extra sections too well...
+    if {[istarget hppa*64*-*-*]
+	|| [istarget hppa*-*-*elf*] || [istarget hppa*-*-linux*]} then {
 	return;
     }
 
@@ -608,11 +604,12 @@ proc do_pic_relocation_test {} {
 }
 
 proc do_apply_test {} {
-    set testname "applybug.s: Test for proper fixup appliation (part 2)"
+    set testname "applybug.s: Test for proper fixup application (part 2)"
     set x 0
 
-    # ELF (osf) doesn't really handle extra sections too well...
-    if [istarget hppa*-*-*elf*] then {
+    # ELF doesn't really handle extra sections too well...
+    if {[istarget hppa*64*-*-*]
+	|| [istarget hppa*-*-*elf*] || [istarget hppa*-*-linux*]} then {
 	return;
     }
 
@@ -636,6 +633,7 @@ proc do_apply_test {} {
     # Did we find what we were looking for?  If not, flunk it.
     if [expr $x==3] then { pass $testname } else { fail $testname }
 }
+
 if [istarget hppa*-*-*] then {
     # Make sure we put the right relocation entry on a BLE instruction.
     do_ble_relocation_test

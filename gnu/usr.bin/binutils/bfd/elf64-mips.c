@@ -1,5 +1,6 @@
 /* MIPS-specific support for 64-bit ELF
-   Copyright 1996, 1997, 1998, 1999 Free Software Foundation, Inc.
+   Copyright 1996, 1997, 1998, 1999, 2000, 2001
+   Free Software Foundation, Inc.
    Ian Lance Taylor, Cygnus Support
    Linker support added by Mark Mitchell, CodeSourcery, LLC.
    <mark@codesourcery.com>
@@ -45,7 +46,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "coff/ecoff.h"
 /* The 64 bit versions of the mdebug data structures are in alpha.h.  */
 #include "coff/alpha.h"
-#define ECOFF_64
+#define ECOFF_SIGNED_64
 #include "ecoffswap.h"
 
 static void mips_elf64_swap_reloc_in
@@ -159,9 +160,9 @@ static reloc_howto_type mips_elf64_howto_table_rel[] =
 	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
-	 			/* This needs complex overflow
+				/* This needs complex overflow
 				   detection, because the upper four
-				   bits must match the PC.  */
+				   bits must match the PC + 4.  */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_MIPS_26",		/* name */
 	 true,			/* partial_inplace */
@@ -623,7 +624,7 @@ static reloc_howto_type mips_elf64_howto_table_rel[] =
 	 0,			/* dst_mask */
 	 false),		/* pcrel_offset */
 
-  /* Protected jump conversion.  This is an optimization hint.  No 
+  /* Protected jump conversion.  This is an optimization hint.  No
      relocation is required for correctness.  */
   HOWTO (R_MIPS_JALR,	        /* type */
 	 0,			/* rightshift */
@@ -712,9 +713,9 @@ static reloc_howto_type mips_elf64_howto_table_rela[] =
 	 false,			/* pc_relative */
 	 0,			/* bitpos */
 	 complain_overflow_dont, /* complain_on_overflow */
-	 			/* This needs complex overflow
+				/* This needs complex overflow
 				   detection, because the upper four
-				   bits must match the PC.  */
+				   bits must match the PC + 4.  */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_MIPS_26",		/* name */
 	 true,			/* partial_inplace */
@@ -1177,7 +1178,7 @@ static reloc_howto_type mips_elf64_howto_table_rela[] =
 	 0,			/* dst_mask */
 	 false),		/* pcrel_offset */
 
-  /* Protected jump conversion.  This is an optimization hint.  No 
+  /* Protected jump conversion.  This is an optimization hint.  No
      relocation is required for correctness.  */
   HOWTO (R_MIPS_JALR,	        /* type */
 	 0,			/* rightshift */
@@ -1270,7 +1271,7 @@ mips_elf64_be_swap_reloc_in (abfd, src, dst)
 {
   Elf64_Mips_Internal_Rel mirel;
 
-  mips_elf64_swap_reloc_in (abfd, 
+  mips_elf64_swap_reloc_in (abfd,
 			    (const Elf64_Mips_External_Rel *) src,
 			    &mirel);
 
@@ -1292,7 +1293,7 @@ mips_elf64_be_swap_reloca_in (abfd, src, dst)
 {
   Elf64_Mips_Internal_Rela mirela;
 
-  mips_elf64_swap_reloca_in (abfd, 
+  mips_elf64_swap_reloca_in (abfd,
 			     (const Elf64_Mips_External_Rela *) src,
 			     &mirela);
 
@@ -1324,7 +1325,7 @@ mips_elf64_be_swap_reloc_out (abfd, src, dst)
   mirel.r_ssym = STN_UNDEF;
   mirel.r_type3 = R_MIPS_NONE;
 
-  mips_elf64_swap_reloc_out (abfd, &mirel, 
+  mips_elf64_swap_reloc_out (abfd, &mirel,
 			     (Elf64_Mips_External_Rel *) dst);
 }
 
@@ -1346,7 +1347,7 @@ mips_elf64_be_swap_reloca_out (abfd, src, dst)
   mirela.r_ssym = STN_UNDEF;
   mirela.r_type3 = R_MIPS_NONE;
 
-  mips_elf64_swap_reloca_out (abfd, &mirela, 
+  mips_elf64_swap_reloca_out (abfd, &mirela,
 			      (Elf64_Mips_External_Rela *) dst);
 }
 
@@ -1389,7 +1390,7 @@ static CONST struct elf_reloc_map mips_reloc_map[] =
 
 static reloc_howto_type *
 mips_elf64_reloc_type_lookup (abfd, code)
-     bfd *abfd;
+     bfd *abfd ATTRIBUTE_UNUSED;
      bfd_reloc_code_real_type code;
 {
   unsigned int i;
@@ -1413,7 +1414,7 @@ mips_elf64_reloc_type_lookup (abfd, code)
 
 static long
 mips_elf64_get_reloc_upper_bound (abfd, sec)
-     bfd *abfd;
+     bfd *abfd ATTRIBUTE_UNUSED;
      asection *sec;
 {
   return (sec->reloc_count * 3 + 1) * sizeof (arelent *);
@@ -2150,7 +2151,7 @@ const struct elf_size_info mips_elf64_size_info =
 #define elf_backend_plt_header_size	0
 #define elf_backend_may_use_rel_p       1
 
-/* We don't set bfd_elf64_bfd_is_local_label_name because the 32-bit 
+/* We don't set bfd_elf64_bfd_is_local_label_name because the 32-bit
    MIPS-specific function only applies to IRIX5, which had no 64-bit
    ABI.  */
 #define bfd_elf64_find_nearest_line	_bfd_mips_elf_find_nearest_line
@@ -2187,4 +2188,21 @@ const struct elf_size_info mips_elf64_size_info =
 #define bfd_elf64_archive_update_armap_timestamp \
 				_bfd_archive_coff_update_armap_timestamp
 
+#include "elf64-target.h"
+
+/* Support for traditional mips targets */
+
+#define INCLUDED_TARGET_FILE            /* More a type of flag */
+
+#undef TARGET_LITTLE_SYM
+#undef TARGET_LITTLE_NAME
+#undef TARGET_BIG_SYM
+#undef TARGET_BIG_NAME
+
+#define TARGET_LITTLE_SYM               bfd_elf64_tradlittlemips_vec
+#define TARGET_LITTLE_NAME              "elf64-tradlittlemips"
+#define TARGET_BIG_SYM                  bfd_elf64_tradbigmips_vec
+#define TARGET_BIG_NAME                 "elf64-tradbigmips"
+
+/* Include the target file again for this target */
 #include "elf64-target.h"

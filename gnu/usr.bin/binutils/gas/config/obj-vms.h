@@ -1,5 +1,5 @@
 /* VMS object file format
-   Copyright (C) 1989, 90, 91, 92, 93, 94, 95, 96, 97, 1999
+   Copyright 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 2000
    Free Software Foundation, Inc.
 
 This file is part of GAS, the GNU Assembler.
@@ -17,7 +17,7 @@ the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with GAS; see the file COPYING.  If not, write to the Free
 Software Foundation, 59 Temple Place - Suite 330, Boston, MA
-02111-1307, USA. */
+02111-1307, USA.  */
 
 /* Tag to validate a.out object file format processing */
 #define OBJ_VMS 1
@@ -48,7 +48,7 @@ extern unsigned char const_flag;
 
 #define IN_DEFAULT_SECTION 0x80
 
-/* These are defined in obj-vms.c. */
+/* These are defined in obj-vms.c.  */
 extern const short seg_N_TYPE[];
 extern const segT N_TYPE_seg[];
 
@@ -59,7 +59,7 @@ enum reloc_type
   };
 
 #define N_BADMAG(x)	(0)
-#define N_TXTOFF(x)	( sizeof(struct exec) )
+#define N_TXTOFF(x)	( sizeof (struct exec) )
 #define N_DATOFF(x)	( N_TXTOFF(x) + (x).a_text )
 #define N_TROFF(x)	( N_DATOFF(x) + (x).a_data )
 #define N_DROFF(x)	( N_TROFF(x) + (x).a_trsize )
@@ -84,7 +84,7 @@ struct exec
 typedef struct
   {
     struct exec header;		/* a.out header */
-    long string_table_size;	/* names + '\0' + sizeof(int) */
+    long string_table_size;	/* names + '\0' + sizeof (int) */
   }
 object_headers;
 
@@ -145,7 +145,7 @@ typedef struct nlist obj_symbol_type;	/* Symbol table entry */
 #define S_IS_DEBUG(s)		((s)->sy_symbol.n_type & N_STAB)
 /* True if a symbol is local symbol name */
 /* A symbol name whose name begin with ^A is a gas internal pseudo symbol
-   nameless symbols come from .stab directives. */
+   nameless symbols come from .stab directives.  */
 #define S_IS_LOCAL(s)		(S_GET_NAME(s) && \
 				 !S_IS_DEBUG(s) && \
 				 (strchr(S_GET_NAME(s), '\001') != 0 || \
@@ -191,7 +191,6 @@ typedef struct nlist obj_symbol_type;	/* Symbol table entry */
 /* Set the n_type expression value */
 #define S_SET_TYPE(s,v)		((s)->sy_symbol.n_type = (v))
 
-
 /* File header macro and type definition */
 
 #define H_GET_TEXT_SIZE(h)		((h)->header.a_text)
@@ -204,9 +203,9 @@ typedef struct nlist obj_symbol_type;	/* Symbol table entry */
 
 #define H_SET_STRING_SIZE(h,v)		((h)->string_table_size = (v))
 #define H_SET_SYMBOL_TABLE_SIZE(h,v)	((h)->header.a_syms = (v) * \
-					 sizeof(struct nlist))
+					 sizeof (struct nlist))
 
-/* line numbering stuff. */
+/* line numbering stuff.  */
 #define OBJ_EMIT_LINENO(a, b, c)	{;}
 
 #define obj_symbol_new_hook(s)	{;}
@@ -223,7 +222,7 @@ extern void tc_aout_fix_to_chars PARAMS ((char *,struct fix *,relax_addressT));
 extern int vms_resolve_symbol_redef PARAMS ((symbolS *));
 #define RESOLVE_SYMBOL_REDEFINITION(X)	vms_resolve_symbol_redef(X)
 
-/* Compiler-generated label "__vax_g_doubles" is used to augment .stabs. */
+/* Compiler-generated label "__vax_g_doubles" is used to augment .stabs.  */
 extern void vms_check_for_special_label PARAMS ((symbolS *));
 #define obj_frob_label(X) vms_check_for_special_label(X)
 
@@ -547,5 +546,3 @@ extern void vms_write_object_file PARAMS ((unsigned,unsigned,unsigned,
 #define DBG_S_C_COMPLEX_ARRAY		DST_K_TS_ARRAY
 
 #endif	/* WANT_VMS_OBJ_DEFS */
-
-/* end of obj-vms.h */

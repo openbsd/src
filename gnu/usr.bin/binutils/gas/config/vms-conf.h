@@ -105,7 +105,7 @@
 #undef OBJ_MAYBE_VMS
 
 /* Used for some of the COFF configurations, when the COFF code needs
-   to select something based on the CPU type before it knows it... */
+   to select something based on the CPU type before it knows it...  */
 #undef I386COFF
 #undef M68KCOFF
 #undef M88KCOFF

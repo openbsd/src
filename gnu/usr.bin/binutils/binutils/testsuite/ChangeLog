@@ -1,13 +1,132 @@
+2001-06-11  Alan Modra  <amodra@bigpond.net.au>
+
+	Merge from mainline.
+	2001-06-07  H.J. Lu  <hjl@gnu.org>
+	* binutils-all/readelf.ss-mips: Support stabs.
+	* binutils-all/readelf.ss-tmips: Likewise.
+
+	2001-05-25  H.J. Lu  <hjl@gnu.org>
+	* binutils-all/readelf.exp (readelf_test): Set target_machine
+	to tmips for traditional mips.
+	* binutils-all/readelf.s: Support traditional mips.
+	* binutils-all/readelf.ss-tmips: New for traditional mips.
+
+	2001-05-25  Alan Modra  <amodra@one.net.au>
+	* binutils-all/readelf.exp: Replace linuxoldld with linux*oldld
+	and linuxaout with linux*aout.
+	* binutils-all/objcopy.exp: Remove xfail for linuxaout.
+
+	2001-03-30  H.J. Lu  <hjl@gnu.org>
+	* binutils-all/readelf.exp: Run on more ELF targets.
+
+	2001-02-11  H.J. Lu  <hjl@gnu.org>
+	* config/default.exp: Set up gcc_gas_flag.
+	* binutils-all/objcopy.exp (copy_setup): Process gcc_gas_flag
+	for Linux only.
+	* binutils-all/testprog.c: Include <string.h> and don't use
+	exit ().
+
+2001-06-07  Alan Modra  <amodra@bigpond.net.au>
+
+	* (binutils-all/ar.exp, binutils-all/nm.exp,
+	binutils-all/objcopy.exp, binutils-all/objdump.exp,
+	binutils-all/readelf.exp, binutils-all/size.exp,
+	binutils-all/hppa/objdump.exp, config/default.exp,
+	lib/utils-lib.exp): Update copyright notices.
+
+2001-01-16  Matthew Green  <mrg@redhat.com>
+
+	* binutils-all/readelf.s-64: Match readelf -S output.
+
+2000-12-09  Nick Clifton  <nickc@redhat.com>
+
+	* binutils-all/objdump.exp (cpus_expected): Add tic54x and
+	tms320c54x.
+
+2000-11-28  Hans-Peter Nilsson  <hp@axis.com>
+
+	* binutils-all/readelf.s: Adjust to readelf.c formatting changes.
+
+2000-11-02  Chris Demetriou  <cgd@sibyte.com>
+
+        * binutils-all/readelf.exp (regexp_diff): Add code
+        from gas testsuite to treat "#..." at beginning of line
+        as an indicator to skip extra non-matching lines at that
+        location.
+        (readelf_test): Add support for using a machine-specific
+        regexp comparison file.
+        (readelf -S test, readelf -s test): Remove v850*-*-* and
+        mips*-*-* from list of expected failures.
+        * binutils-all/readelf.s: Accomodate changes due to
+        additional sections (and therefore section numbering
+        differences) on v850*-*-* and mips*-*-* targets.
+        * binutils-all/readelf.ss: Likewise.
+        * binutils-all/readelf.ss-mips: New file, which matches
+        expected output of readelf -s test for mips*-*-*.
+
+2000-10-25  Hans-Peter Nilsson  <hp@axis.com>
+
+	* binutils-all/readelf.exp (-wi test): Add cris-*-* to xfails.
+
+2000-10-19  Chris Demetriou  <cgd@sibyte.com>
+
+        * binutils-all/readelf.exp (readelf_test): Work properly
+        when multiple targets expect failtures.
+        (readelf -S test, readelf -s test): Expect mips*-*-*
+        to fail.
+
+2000-07-10  Alan Modra  <alan@linuxcare.com.au>
+
+	* lib/utils-lib.exp (default_binutils_assemble): Don't do the hppa
+	sed fudges for hppa-linux.
+
+2000-07-01  Frank Ch. Eigler  <fche@redhat.com>
+
+	* binutils-all/objdump.exp (cpus_expected, cpus_regex): Reorganize
+	syntax to display more tcl nature.
+
+2000-06-18  Stephane Carrez  <stcarrez@worldnet.fr>
+
+	* binutils-all/objdump.exp (cpus_expected): Recognize m68hc11 and
+	m68hc12.
+
+2000-06-18  Nick Clifton  <nickc@redhat.com>
+
+	* binutils-all/readelf.wi: Do not assume the compilation tag to be
+	unit 1.
+
+	* binutils-all/objcopy.exp: Expect all arm variants to fail the
+	copying executable test.
+
+2000-06-14  Hans-Peter Nilsson  <hp@bitrange.com>
+
+	* binutils-all/readelf.exp (regexp_diff): Do not break when a
+	mismatching line is found.
+	(readelf_find_size): New.
+	(readelf_size): New global variable.
+	(readelf_test): Add newline to send_log of command.
+	If $srcdir/$subdir/$regexp_file-$readelf_size exists, use it
+	instead of $srcdir/$subdir/$regexp_file.
+	(*-*elf test): Fix typo in message.
+	* binutils-all/readelf.s-64: New.
+	* binutils-all/readelf.ss-64: New.
+
+2000-05-02  Alan Modra  <alan@linuxcare.com.au>
+
+	* binutils-all/objcopy.exp (simple copy): Clear xfail for hppa-linux.
+
+	* binutils-all/hppa/objdump.exp: Disable test for elf.
+
 2000-03-13  Nick Clifton  <nickc@cygnus.com>
 
-	* binutils-all/readelf.s: Adjust to match noew format of readelf
-	output. 
-	* binutils-all/readelf.ss: Adjust to match noew format of readelf 
-	output. 
+	* binutils-all/readelf.s: Adjust to match new format of readelf
+	output.
+	* binutils-all/readelf.ss: Adjust to match new format of readelf
+	output.
 
 1999-11-01  Nick Clifton  <nickc@cygnus.com>
 
-	* binutils-all/objcopy.exp: Expect simple objcopy test for fail
+	* binutils-all/objcopy.exp: Expect simple objcopy test to fail
 	for COFF based ARM and Thumb ports.
 
 Tue Sep 14 00:28:17 1999  Jeffrey A Law  (law@cygnus.com)
@@ -35,7 +154,7 @@ Sat Aug 28 00:24:27 1999  Jerry Quinn <jquinn@nortelnetworks.com>
 1999-06-29  Nick Clifton  <nickc@cygnus.com>
 
 	* binutils-all/objdump.exp: Add fr30 and MCore to expected cpus
-	list. 
+	list.
 
 	* binutils-all/readelf.r: Do not assume a fixed number of spaces
 	in the output.
@@ -56,13 +175,13 @@ Wed Jun  9 11:59:22 1999  Andreas Schwab  <schwab@issan.cs.uni-dortmund.de>
 
 1999-03-12  Nick Clifton  <nickc@cygnus.com>
 
-	* binutils-all/readelf.wi: Remove FR30 specific componnts.
+	* binutils-all/readelf.wi: Remove FR30 specific components.
 	* binutils-all/readelf.s: Remove RELA specific components.
 
 1999-02-16  Nick Clifton  <nickc@cygnus.com>
 
 	* binutils-all/readelf.s: Do not assume section alignment is 4.
-	* binutils-all/readelf.r: Do not assume rela's are being used. 
+	* binutils-all/readelf.r: Do not assume rela's are being used.
 	* binutils-all/readelf.exp: disable tests for non ELF based
 	targets.
 
@@ -127,30 +246,30 @@ Fri May 29 14:50:24 1998  Ian Lance Taylor  <ian@cygnus.com>
 Thu Nov  6 14:32:37 1997  Bob Manson  <manson@charmed.cygnus.com>
 
 	* lib/utils-lib.exp: Temporary definition of target_assemble and
- 	default_target_assemble so that testing can work with older
- 	dejagnu versions.
+	default_target_assemble so that testing can work with older
+	dejagnu versions.
 
 Wed Sep 24 12:09:15 1997  Bob Manson  <manson@charmed.cygnus.com>
 
 	* binutils-all/objcopy.exp(strip_executable): Make a new copy of
- 	the executable being tested.
+	the executable being tested.
 
 Mon Sep 15 21:25:20 1997  Bob Manson  <manson@charmed.cygnus.com>
 
 	* binutils-all/objcopy.exp: Compile the executables to be tested
- 	on the target with a status wrapper (as necessary).
+	on the target with a status wrapper (as necessary).
 
 	* binutils-all/ar.exp: If testing on a remote host, don't bother
- 	looking on the local host for the program being tested. Use the
- 	correct filenames on the remote host.
+	looking on the local host for the program being tested. Use the
+	correct filenames on the remote host.
 
 	* binutils-all/nm.exp: Ditto.
 
 	* binutils-all/size.exp: Ditto.
 
 	* binutils-all/objdump.exp: Ditto.
- 	(cpus_expected): Add the target CPU to the regexp of CPUs to be
- 	expected, if it's not already there.
+	(cpus_expected): Add the target CPU to the regexp of CPUs to be
+	expected, if it's not already there.
 
 Thu Aug 28 09:57:27 1997  Doug Evans  <dje@canuck.cygnus.com>
 
@@ -165,7 +284,7 @@ Tue Jun  3 17:12:54 1997  Bob Manson  <manson@charmed.cygnus.com>
 	* config/default.exp: Remove expect_before statement.
 
 	* binutils-all/objcopy.exp: Don't use global exec_output variable;
- 	the output is returned from remote_load instead.
+	the output is returned from remote_load instead.
 
 Mon May 12 22:14:20 1997  Bob Manson  <manson@charmed.cygnus.com>
 
@@ -179,14 +298,14 @@ Mon May 12 22:14:20 1997  Bob Manson  <manson@charmed.cygnus.com>
 Wed Apr 30 20:37:51 1997  Bob Manson  <manson@charmed.cygnus.com>
 
 	Changes to support multilib and remote hosted testing, along with
- 	general cleanups and simplifications.
+	general cleanups and simplifications.
 
 	* lib/utils-lib.exp(binutil_version): Use remote_exec.
 	(default_binutils_run): Ditto.
 	(default_binutils_assemble): Remove first argument; call
- 	target_compile to actually do the assembly.
+	target_compile to actually do the assembly.
 	(default_binutils_compile,default_binutils_remove,prune_warnings):
- 	Delete.
+	Delete.
 
 	* config/default.exp: Remove AS and ASFLAGS.
 	(binutils_compile,binutils_remove): Delete.
@@ -225,7 +344,7 @@ Wed Jan 29 00:16:43 1997  Bob Manson  <manson@charmed.cygnus.com>
 	* binutils-all/objdump.exp: Ditto.
 	* binutils-all/size.exp: Ditto.
 	* binutils-all/hppa/objdump.exp: Ditto.
-	
+
 
 Wed Oct 16 22:57:59 1996  Jeffrey A Law  (law@cygnus.com)
 
@@ -602,9 +721,9 @@ Fri Jul  2 12:41:20 1993  Ian Lance Taylor  (ian@cygnus.com)
 
 	* binutils.all/*.exp: Use -- for long arguments rather than +.
 
-Fri Jun  4 10:52:29 1993  david d `zoo' zuhn  (zoo at cirdan.cygnus.com)
+Fri Jun  4 10:52:29 1993  david d `zoo' zuhn  (zoo@cirdan.cygnus.com)
 
-	* configure.in: change srctrigger to Makefile.in 
+	* configure.in: change srctrigger to Makefile.in
 
 Wed May 26 17:27:46 1993  Ian Lance Taylor  (ian@cygnus.com)
 
@@ -625,9 +744,9 @@ Thu Mar 25 05:38:47 1993  Ken Raeburn  (raeburn@kr-pc.cygnus.com)
 
 Mon Feb 22 07:54:03 1993  Mike Werner  (mtw@poseidon.cygnus.com)
 
-        * binutils/testsuite: made modifications to testcases, etc., to allow
-        them to work properly  given the reorganization of deja-gnu and the
-        relocation of the testcases from deja-gnu to a "tool" subdirectory.
+	* binutils/testsuite: made modifications to testcases, etc., to allow
+	them to work properly  given the reorganization of deja-gnu and the
+	relocation of the testcases from deja-gnu to a "tool" subdirectory.
 
 Sun Feb 21 10:55:55 1993  Mike Werner  (mtw@poseidon.cygnus.com)
 

@@ -1,5 +1,6 @@
 /* tc-ns32k.h -- Opcode table for National Semi 32k processor
-   Copyright (C) 1987, 92, 93, 94, 95, 97, 1999 Free Software Foundation, Inc.
+   Copyright 1987, 1992, 1993, 1994, 1995, 1997, 2000
+   Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -72,7 +73,6 @@ extern void fix_new_ns32k_exp PARAMS((fragS *frag,
 				   fragS *opcode_frag,
 				   unsigned int opcode_offset));
 
-
 extern void fix_new_ns32k PARAMS ((fragS *frag,
 				   int where,
 				   int size,
@@ -112,7 +112,7 @@ struct {					\
        frag_opcode_offset (X) = 0;		\
        frag_bsr (X) = 0;				\
      }						\
-  while(0)
+  while (0)
 
 /* Accessor macros for things which may move around */
 #define frag_opcode_frag(X)   (X)->tc_frag_data.fr_opcode_fragP
@@ -142,14 +142,14 @@ struct						\
        fix_opcode_offset(X) = 0;		\
        fix_bsr(X) = 0;				\
      }						\
-  while(0)
+  while (0)
 
 #define TC_FIX_DATA_PRINT(FILE, FIXP)					\
   do									\
     {									\
-      fprintf((FILE), "opcode_frag=%ld, operand offset=%d, bsr=%d\n",	\
+      fprintf ((FILE), "opcode_frag=%ld, operand offset=%d, bsr=%d\n",	\
 	      (unsigned long) fix_opcode_frag (FIXP),			\
 	      fix_opcode_offset (FIXP),					\
 	      fix_bsr (FIXP));						\
     }									\
-  while(0)
+  while (0)

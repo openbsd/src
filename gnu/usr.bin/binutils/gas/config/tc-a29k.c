@@ -1,5 +1,5 @@
 /* tc-a29k.c -- Assemble for the AMD 29000.
-   Copyright (C) 1989, 90, 91, 92, 93, 94, 95, 1998
+   Copyright 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1998, 2000
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -98,7 +98,7 @@ const char comment_chars[] = ";";
    .line and .file directives will appear in the pre-processed output */
 /* Note that input_file.c hand checks for '#' at the beginning of the
    first line of the input file.  This is because the compiler outputs
-   #NO_APP at the beginning of its output. */
+   #NO_APP at the beginning of its output.  */
 /* Also note that comments like this one will always work */
 const char line_comment_chars[] = "#";
 
@@ -148,7 +148,7 @@ s_use (ignore)
       return;
     }
   /* Literals can't go in the text segment because you can't read from
-     instruction memory on some 29k's.  So, into initialized data. */
+     instruction memory on some 29k's.  So, into initialized data.  */
   if (strncmp (input_line_pointer, ".lit", 4) == 0)
     {
       input_line_pointer += 4;
@@ -283,7 +283,7 @@ md_begin ()
 	}
 
       /* Hack to avoid multiple opcode entries.  We pre-locate all the
-	 variations (b/i field and P/A field) and handle them. */
+	 variations (b/i field and P/A field) and handle them.  */
 
       if (!strcmp (name, machine_opcodes[i + 1].name))
 	{
@@ -427,7 +427,7 @@ machine_ip (str)
 
   /* Build the opcode, checking as we go to make sure that the
      operands match.
-   
+
      If an operand matches, we modify the_insn or opcode appropriately,
      and do a "continue".  If an operand fails to match, we "break".  */
 
@@ -445,7 +445,7 @@ machine_ip (str)
 	case '\0':		/* end of args */
 	  if (*s == '\0')
 	    {
-	      /* We are truly done. */
+	      /* We are truly done.  */
 	      the_insn.opcode = opcode;
 	      return;
 	    }
@@ -669,7 +669,6 @@ machine_ip (str)
 	    }
 	  break;
 
-
 	case 'f':		/* FS bits of CONVERT */
 	  if (operand->X_op == O_constant &&
 	      operand->X_add_number < 4)
@@ -710,8 +709,8 @@ machine_ip (str)
    but I'm not sure.
 
    Turn a string in input_line_pointer into a floating point constant
-   of type type, and store the appropriate bytes in *litP.  The number
-   of LITTLENUMS emitted is stored in *sizeP .  An error message is
+   of type TYPE, and store the appropriate bytes in *LITP.  The number
+   of LITTLENUMS emitted is stored in *SIZEP.  An error message is
    returned, or NULL on OK.  */
 
 /* Equal to MAX_PRECISION in atof-ieee.c */
@@ -791,7 +790,6 @@ md_apply_fix (fixP, val)
   char *buf = fixP->fx_where + fixP->fx_frag->fr_literal;
 
   fixP->fx_addnumber = val;	/* Remember value for emit_reloc */
-
 
   know (fixP->fx_size == 4);
   know (fixP->fx_r_type < NO_RELOC);
@@ -1004,7 +1002,7 @@ print_insn (insn)
    On sparc/29k: first 4 bytes are normal unsigned long address, next three
    bytes are index, most sig. byte first.  Byte 7 is broken up with
    bit 7 as external, bits 6 & 5 unused, and the lower
-   five bits as relocation type.  Next 4 bytes are long addend. */
+   five bits as relocation type.  Next 4 bytes are long addend.  */
 /* Thanx and a tip of the hat to Michael Bloom, mb@ttidca.tti.com */
 
 #ifdef OBJ_AOUT
@@ -1042,7 +1040,7 @@ CONST char *md_shortopts = "";
 struct option md_longopts[] = {
   {NULL, no_argument, NULL, 0}
 };
-size_t md_longopts_size = sizeof(md_longopts);
+size_t md_longopts_size = sizeof (md_longopts);
 
 int
 md_parse_option (c, arg)
@@ -1121,7 +1119,7 @@ md_undefined_symbol (name)
 	  long maxreg;
 
 	  /* Parse the number, make sure it has no extra zeroes or
-	     trailing chars. */
+	     trailing chars.  */
 	  regnum = atol (&name[2]);
 
 	  if (name[0] == 's' || name[0] == 'S')
@@ -1235,7 +1233,7 @@ md_operand (expressionP)
 	  type = 'x';
 	  fieldlimit = 4;
 	}
-      else 
+      else
 	{
 	  return;
 	}
@@ -1266,7 +1264,7 @@ md_operand (expressionP)
       SKIP_WHITESPACE ();
 
       input_line_pointer = s;
-      expressionP->X_op = O_constant; 
+      expressionP->X_op = O_constant;
       expressionP->X_unsigned = 1;
       expressionP->X_add_number = ((floatbuf[fieldnum * 2]
 				    << LITTLENUM_NUMBER_OF_BITS)
@@ -1292,5 +1290,3 @@ md_pcrel_from (fixP)
 {
   return fixP->fx_where + fixP->fx_frag->fr_address;
 }
-
-/* end of tc-a29k.c */

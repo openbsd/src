@@ -1,5 +1,5 @@
 /* tc-hppa.h -- Header file for the PA
-   Copyright (C) 1989, 93, 94, 95, 96, 97, 98, 99, 2000
+   Copyright 1989, 1993, 1994, 1995, 1997, 1998, 1999, 2000, 2001
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -19,7 +19,6 @@
    Software Foundation, 59 Temple Place - Suite 330, Boston, MA
    02111-1307, USA.  */
 
-
 /* HP PA-RISC support was contributed by the Center for Software Science
    at the University of Utah.  */
 
@@ -28,7 +27,7 @@
    (please PARAMize them!) not exporting structures and data items which
    are used solely within tc-hppa.c, etc.
 
-   Also refrain from adding any more object file dependent code, there is 
+   Also refrain from adding any more object file dependent code, there is
    already far too much object file format dependent code in this file.
    In theory this file should contain only exported functions, structures
    and data declarations common to all PA assemblers.  */
@@ -46,21 +45,36 @@
 
 #define WORKING_DOT_WORD
 
-/* FIXME.  The lack of a place to put things which are both target cpu
-   and target format dependent makes hacks like this necessary.  */
 #ifdef OBJ_ELF
-#ifdef BFD64
+#if TARGET_ARCH_SIZE == 64
 #include "bfd/elf64-hppa.h"
-#define TARGET_FORMAT "elf64-hppa"
+#ifdef TE_LINUX
+#define TARGET_FORMAT "elf64-hppa-linux"
 #else
+#define TARGET_FORMAT "elf64-hppa"
+#endif
+#else /* TARGET_ARCH_SIZE == 32 */
 #include "bfd/elf32-hppa.h"
+#ifdef TE_LINUX
+#define TARGET_FORMAT "elf32-hppa-linux"
+#else
 #define TARGET_FORMAT "elf32-hppa"
+#endif
 #endif
 #endif
 
 #ifdef OBJ_SOM
 #include "bfd/som.h"
 #define TARGET_FORMAT "som"
+#endif
+
+#ifdef TE_LINUX
+/* Define to compile in an extra assembler option, -c, which enables a
+   warning (once per file) when a comment is encountered.
+   The hppa comment char is a `;' which tends to occur in random C asm
+   statements.  A semicolon is a line separator for most assemblers.
+   It's hard to find these lurking semicolons.  Thus...  */
+#define WARN_COMMENTS 1
 #endif
 
 /* FIXME.  Why oh why aren't these defined somewhere globally?  */
@@ -71,18 +85,12 @@
 
 #define ASEC_NULL (asection *)0
 
-/* Labels are not required to have a colon for a suffix.  */
-#define LABELS_WITHOUT_COLONS 1
+/* pa_define_label gets used outside of tc-hppa.c via tc_frob_label.  */
+extern void pa_define_label PARAMS ((symbolS *));
 
-/* FIXME.  This should be static and declared in tc-hppa.c, but 
-   pa_define_label gets used outside of tc-hppa.c via tc_frob_label.
-   Should also be PARAMized, but symbolS isn't available here.  */
-extern void pa_define_label ();
-
-/* FIXME.  Types not available here, so they can't be PARAMized.  */
-extern void parse_cons_expression_hppa ();
-extern void cons_fix_new_hppa ();
-extern int hppa_force_relocation ();
+extern void parse_cons_expression_hppa PARAMS ((expressionS *));
+extern void cons_fix_new_hppa PARAMS ((fragS *, int, int, expressionS *));
+extern int hppa_force_relocation PARAMS ((struct fix *));
 
 /* This gets called before writing the object file to make sure
    things like entry/exit and proc/procend pairs match.  */
@@ -97,13 +105,6 @@ extern void pa_check_eof PARAMS ((void));
 
 #define RELOC_EXPANSION_POSSIBLE
 #define MAX_RELOC_EXPANSION 6
-
-/* FIXME.  More things which are both HPPA and ELF specific.  There is 
-   nowhere to put such things.  */
-#ifdef OBJ_ELF
-#define elf_tc_final_processing	elf_hppa_final_processing
-void elf_hppa_final_processing PARAMS ((void));
-#endif
 
 /* The PA needs to parse field selectors in .byte, etc.  */
 
@@ -122,6 +123,7 @@ void elf_hppa_final_processing PARAMS ((void));
    it will always follow a comma.  */
 #define TC_EOL_IN_INSN(PTR)	(*(PTR) == '!' && (PTR)[-1] == ',')
 
+int hppa_fix_adjustable PARAMS((struct fix *));
 #define tc_fix_adjustable hppa_fix_adjustable
 
 /* Because of the strange PA calling conventions, it is sometimes
@@ -141,7 +143,7 @@ void elf_hppa_final_processing PARAMS ((void));
 
 /* We need to be able to make relocations involving the difference of
    two symbols.  This includes the difference of two symbols when
-   one of them is undefined (this comes up in PIC code generation). 
+   one of them is undefined (this comes up in PIC code generation).
 
    We don't define DIFF_EXPR_OK because it does the wrong thing if
    the add symbol is undefined and the sub symbol is a symbol in
@@ -151,20 +153,45 @@ void elf_hppa_final_processing PARAMS ((void));
 #endif
 
 #ifdef OBJ_ELF
+/* It's OK to subtract two symbols in the same section without
+   emitting a relocation.  */
+#define TC_FORCE_RELOCATION_SECTION(FIXP, SEC) 0
+
+/* Handle .type psuedo.  Given a type string of `millicode', set the
+   internal elf symbol type to STT_PARISC_MILLI, and return
+   BSF_FUNCTION for the BFD symbol type.  */
+#define md_elf_symbol_type(name, sym, elf)				\
+  ((strcmp ((name), "millicode") == 0					\
+    || strcmp ((name), "STT_PARISC_MILLI") == 0)			\
+   ? (((elf)->internal_elf_sym.st_info = ELF_ST_INFO			\
+       (ELF_ST_BIND ((elf)->internal_elf_sym.st_info), STT_PARISC_MILLI)\
+       ), BSF_FUNCTION)							\
+   : -1)
+
 #define tc_frob_symbol(sym,punt) \
   { \
     if ((S_GET_SEGMENT (sym) == &bfd_und_section && ! symbol_used_p (sym)) \
 	|| (S_GET_SEGMENT (sym) == &bfd_abs_section \
 	    && ! S_IS_EXTERNAL (sym)) \
-	|| strcmp (S_GET_NAME (sym), "$global$") == 0) \
+	|| strcmp (S_GET_NAME (sym), "$global$") == 0 \
+	|| strcmp (S_GET_NAME (sym), "$PIC_pcrel$0") == 0) \
       punt = 1; \
   }
-#endif
+
+#define elf_tc_final_processing	elf_hppa_final_processing
+void elf_hppa_final_processing PARAMS ((void));
+
+#define DWARF2_LINE_MIN_INSN_LENGTH 4
+#endif /* OBJ_ELF */
 
 #define md_operand(x)
-#ifdef OBJ_ELF
-#define md_end() pa_end_of_source ()
-#endif
+
+/* Allow register expressions to be treated as absolute expressions.
+   A silly fudge required for backwards compatibility.  */
+#define md_optimize_expr hppa_force_reg_syms_absolute
+
+int hppa_force_reg_syms_absolute
+  PARAMS ((expressionS *, operatorT, expressionS *));
 
 #define TC_FIX_TYPE PTR
 #define TC_INIT_FIX_DATA(FIXP) ((FIXP)->tc_fix_data = NULL)

@@ -7,7 +7,7 @@
 ; immediate fields.  We should also check the assorted field
 ; selectors to make sure they're handled correctly.
 ; 
-copr_indexing_load 
+copr_indexing_load:
 
 	cldwx,4 %r5(%sr0,%r4),%r26
 	cldwx,4,s %r5(%sr0,%r4),%r26
@@ -18,7 +18,7 @@ copr_indexing_load
 	clddx,4,m %r5(%sr0,%r4),%r26
 	clddx,4,sm %r5(%sr0,%r4),%r26
 
-copr_indexing_store 
+copr_indexing_store:
 	cstwx,4 %r26,%r5(%sr0,%r4)
 	cstwx,4,s %r26,%r5(%sr0,%r4)
 	cstwx,4,m %r26,%r5(%sr0,%r4)
@@ -28,7 +28,7 @@ copr_indexing_store
 	cstdx,4,m %r26,%r5(%sr0,%r4)
 	cstdx,4,sm %r26,%r5(%sr0,%r4)
 
-copr_short_memory 
+copr_short_memory:
 	cldws,4 0(%sr0,%r4),%r26
 	cldws,4,mb 0(%sr0,%r4),%r26
 	cldws,4,ma 0(%sr0,%r4),%r26

@@ -187,3 +187,37 @@ bar:
 	blpl	hohum
 	b	_wibble
 	ble	testerfunc
+
+	mov r1, r2, lsl #2
+	mov r1, r2, lsl #0 
+	mov r1, r2, lsl #31
+	mov r1, r2, lsl r3
+	mov r1, r2, lsr #2
+	mov r1, r2, lsr #31
+	mov r1, r2, lsr #32
+	mov r1, r2, lsr r3
+	mov r1, r2, asr #2
+	mov r1, r2, asr #31
+	mov r1, r2, asr #32
+	mov r1, r2, asr r3
+	mov r1, r2, ror #2
+	mov r1, r2, ror #31
+	mov r1, r2, ror r3
+	mov r1, r2, rrx
+	mov r1, r2, LSL #2
+	mov r1, r2, LSL #0 
+	mov r1, r2, LSL #31
+	mov r1, r2, LSL r3
+	mov r1, r2, LSR #2
+	mov r1, r2, LSR #31
+	mov r1, r2, LSR #32
+	mov r1, r2, LSR r3
+	mov r1, r2, ASR #2
+	mov r1, r2, ASR #31
+	mov r1, r2, ASR #32
+	mov r1, r2, ASR r3
+	mov r1, r2, ROR #2
+	mov r1, r2, ROR #31
+	mov r1, r2, ROR r3
+	mov r1, r2, RRX
+	

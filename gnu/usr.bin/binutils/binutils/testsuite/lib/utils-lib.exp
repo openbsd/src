@@ -1,4 +1,5 @@
-#   Copyright (C) 1993, 1994, 1997 Free Software Foundation, Inc.
+#   Copyright 1993, 1994, 1995, 1996, 1997, 2000
+#   Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -90,10 +91,11 @@ proc default_binutils_assemble { source object } {
     # This is a hack in that it won't scale well if other targets need
     # similar transformations to assemble.  We'll generalize the hack
     # if/when other targets need similar handling.
-    if [istarget "hppa*-*-*" ] then {
-	send_log "sed -f $srcdir/config/hppa.sed < $source > asm.s\n"
-	verbose "sed -f $srcdir/config/hppa.sed < $source > asm.s"
-	catch "exec sed -f $srcdir/config/hppa.sed < $source > asm.s";
+    if { [istarget "hppa*-*-*"] && ![istarget "*-*-linux*" ] } then {
+        set sed_file $srcdir/config/hppa.sed
+	send_log "sed -f $sed_file < $source > asm.s\n"
+	verbose "sed -f $sed_file < $source > asm.s"
+	catch "exec sed -f $sed_file < $source > asm.s";
 	set source asm.s
     }
 

@@ -1,5 +1,5 @@
 /* tc-mn10200.h -- Header file for tc-mn10200.c.
-   Copyright (C) 1996, 1997 Free Software Foundation, Inc.
+   Copyright 1996, 1997, 2000 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -16,7 +16,7 @@
    You should have received a copy of the GNU General Public License
    along with GAS; see the file COPYING.  If not, write to the Free
    Software Foundation, 59 Temple Place - Suite 330, Boston, MA
-   02111-1307, USA. */
+   02111-1307, USA.  */
 
 #define TC_MN10200
 

@@ -1,5 +1,6 @@
 # Expect script for ld-shared tests
-#   Copyright (C) 1994, 1995, 1996, 1997, 1998 Free Software Foundation
+#   Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001
+#   Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,20 +28,15 @@ if ![isnative] then {return}
 
 # This test can only be run on a couple of ELF platforms.
 # Square bracket expressions seem to confuse istarget.
-if { ![istarget i386-*-sysv4*] \
-     && ![istarget i486-*-sysv4*] \
-     && ![istarget i586-*-sysv4*] \
-     && ![istarget i386-*-unixware] \
-     && ![istarget i486-*-unixware] \
-     && ![istarget i586-*-unixware] \
-     && ![istarget i386-*-elf*] \
-     && ![istarget i486-*-elf*] \
-     && ![istarget i586-*-elf*] \
-     && ![istarget i386-*-linux*] \
-     && ![istarget i486-*-linux*] \
-     && ![istarget i586-*-linux*] \
+if { ![istarget i?86-*-sysv4*] \
+     && ![istarget i?86-*-unixware] \
+     && ![istarget i?86-*-elf*] \
+     && ![istarget i?86-*-linux*] \
+     && ![istarget ia64-*-elf*] \
+     && ![istarget ia64-*-linux*] \
      && ![istarget m68k-*-linux*] \
      && ![istarget mips*-*-irix5*] \
+     && ![istarget mips*-*-linux*] \
      && ![istarget powerpc-*-elf*] \
      && ![istarget powerpc-*-linux*] \
      && ![istarget powerpc-*-sysv4*] \
@@ -48,6 +44,8 @@ if { ![istarget i386-*-sysv4*] \
      && ![istarget sparc*-*-solaris2*] \
      && ![istarget sparc*-*-sunos4*] \
      && ![istarget sparc*-*-linux*] \
+     && ![istarget arm*-*-linux*] \
+     && ![istarget alpha*-*-linux*] \
      && ![istarget rs6000*-*-aix*] \
      && ![istarget powerpc*-*-aix*] } {
     return
@@ -196,6 +194,7 @@ if ![ld_compile "$CC $CFLAGS $SHCFLAG" $srcdir/$subdir/main.c $tmpdir/mainnp.o] 
 	# SunOS non PIC shared libraries don't permit some cases of
 	# overriding.
 	setup_xfail "*-*-sunos4*"
+	setup_xfail "ia64-*-linux*"
 	shared_test shnp "shared (non PIC)" mainnp.o sh1np.o sh2np.o shared
 
 	# Test ELF shared library relocations with a non-zero load
@@ -204,6 +203,9 @@ if ![ld_compile "$CC $CFLAGS $SHCFLAG" $srcdir/$subdir/main.c $tmpdir/mainnp.o] 
 	# the load address is not zero (which is the default).
 	setup_xfail "*-*-sunos4*"
 	setup_xfail "*-*-linux*libc1"
+	setup_xfail "powerpc-*-linux*"
+	setup_xfail "ia64-*-linux*"
+	setup_xfail "mips*-*-linux*"
 	shared_test shnp "shared (non PIC, load offset)" \
 		mainnp.o sh1np.o sh2np.o shared \
 		"-T $srcdir/$subdir/elf-offset.ld"
@@ -222,6 +224,11 @@ if ![ld_compile "$CC $CFLAGS $SHCFLAG" $srcdir/$subdir/main.c $tmpdir/mainnp.o] 
 	    shared_test shp "shared" mainnp.o sh1p.o sh2p.o xcoff
 	} else {
 	    shared_test shp "shared" mainnp.o sh1p.o sh2p.o shared
+	    ld_compile "$CC $CFLAGS -DSYMBOLIC_TEST -DXCOFF_TEST $SHCFLAG" $srcdir/$subdir/main.c $tmpdir/mainnp.o
+	    ld_compile "$CC $CFLAGS -DSYMBOLIC_TEST -DXCOFF_TEST $SHCFLAG $picflag" $srcdir/$subdir/sh1.c $tmpdir/sh1p.o
+	    shared_test shp "shared -Bsymbolic" mainnp.o sh1p.o sh2p.o symbolic "-Bsymbolic" 
+	    ld_compile "$CC $CFLAGS $SHCFLAG" $srcdir/$subdir/main.c $tmpdir/mainnp.o
+	    ld_compile "$CC $CFLAGS $SHCFLAG $picflag" $srcdir/$subdir/sh1.c $tmpdir/sh1p.o
 	} }
     }
 }
@@ -238,6 +245,7 @@ if ![ld_compile "$CC $CFLAGS $SHCFLAG $picflag" $srcdir/$subdir/main.c $tmpdir/m
 	    # SunOS non PIC shared libraries don't permit some cases of
 	    # overriding.
 	    setup_xfail "*-*-sunos4*"
+	    setup_xfail "ia64-*-linux*"
 	    shared_test shmpnp "shared (PIC main, non PIC so)" mainp.o sh1np.o sh2np.o shared
 	}
     } else {

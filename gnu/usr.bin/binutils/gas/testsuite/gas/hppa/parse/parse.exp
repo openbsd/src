@@ -120,7 +120,6 @@ proc do_valid_align_tests {} {
 
 if [istarget hppa*-*-*] then {
     # GAS-2.0 does not always parse ! as a line separator when it should.
-    setup_xfail hppa*-*-*
     gas_test "linesepbug.s" "" "" "line separator bug"
 
     # Make sure GAS accepts syntax for accessing static data.
@@ -188,8 +187,7 @@ if [istarget hppa*-*-*] then {
 
     # Bad things happen in the PA ELF backend (others too?) if a non-default
     # section is created...
-    setup_xfail hppa*-*-*elf*
-    setup_xfail hppa*w-*-*
+    setup_xfail "hppa*-*-*elf*" "hppa*-*-linux*" "hppa*64*-*-*"
     gas_test "ssbug.s" "" "" "Check for acceptance of non-default subspaces"
 
     # To be compatable with certain "features" of the HP compiler
@@ -201,6 +199,7 @@ if [istarget hppa*-*-*] then {
     gas_test "stdreg.s" "" "" "Test standard predefined registers"
 
     # Make sure GAS will accept a label without a colon.
+    setup_xfail "hppa*-*-linux*"
     gas_test "labelbug.s" "" "" "Test label without colon"
 
     # Make sure we grok # line directives.

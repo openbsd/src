@@ -4,7 +4,8 @@
    in the Stratus FTX/Golf Object File Format (SED-1762) dated
    February 1994.
 
-   Copyright (C) 1990, 91, 92, 93, 94 Free Software Foundation, Inc.
+   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998, 1999, 2000
+   Free Software Foundation, Inc.
 
    Written by:
 
@@ -36,13 +37,18 @@
 #include "elf/hppa.h"
 
 boolean elf32_hppa_size_stubs
-  PARAMS ((bfd *, bfd *, struct bfd_link_info *));
+  PARAMS ((bfd *, bfd *, struct bfd_link_info *, boolean, bfd_signed_vma,
+	   asection * (*) PARAMS ((const char *, asection *)),
+	   void (*) PARAMS ((void))));
 
-boolean elf32_hppa_build_stubs
+boolean elf32_hppa_set_gp
   PARAMS ((bfd *, struct bfd_link_info *));
 
+boolean elf32_hppa_build_stubs
+  PARAMS ((struct bfd_link_info *));
+
 extern elf_hppa_reloc_type ** _bfd_elf32_hppa_gen_reloc_type
-  PARAMS ((bfd *, elf_hppa_reloc_type, int, int, int, asymbol *));
+  PARAMS ((bfd *, elf_hppa_reloc_type, int, unsigned int, int, asymbol *));
 
 /* Define groups of basic relocations.  FIXME:  These should
    be the only basic relocations created by GAS.  The rest

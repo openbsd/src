@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1983 Regents of the University of California.
+ * Copyright (c) 1983, 2001 Regents of the University of California.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms are permitted
@@ -102,7 +102,7 @@ DEFUN (arc_add, (parent, child, count),
 	  if (maxarcs == 0)
 	    maxarcs = 1;
 	  maxarcs *= 2;
-	
+
 	  /* Allocate the new array.  */
 	  newarcs = (Arc **)xmalloc(sizeof (Arc *) * maxarcs);
 

@@ -1,5 +1,7 @@
 # Source file used to test the jal macro with -KPIC code.
 	
+.weak weak_text_label
+
 text_label:	
 	.set	noreorder
 	.cpload	$25
@@ -8,13 +10,12 @@ text_label:
 	jal	$25
 	jal	$4,$25
 	jal	text_label
+	jal	weak_text_label
 	jal	external_text_label
-	
+
 # Test j as well	
 	j	text_label
 
 # Round to a 16 byte boundary, for ease in testing multiple targets.
-	nop
-	nop
 	nop
 	nop

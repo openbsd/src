@@ -1,6 +1,7 @@
 /* This program is used to test objcopy and strip.  */
 
 #include <stdio.h>
+#include <string.h>
 
 int common;
 int global = 1;
@@ -22,9 +23,9 @@ main ()
       || strcmp (string, "string") != 0)
     {
       printf ("failed\n");
-      exit (1);
+      return (1);
     }
 
   printf ("ok\n");
-  exit (0);
+  return (0);
 }

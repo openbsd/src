@@ -2,7 +2,7 @@
 	.align 4
 	.EXPORT g,CODE
 	.EXPORT g,ENTRY,PRIV_LEV=3,ARGW0=GR,ARGW1=GR,ARGW2=GR,RTNVAL=GR
-g
+g:
 	.PROC
 	.CALLINFO FRAME=128,CALLS,SAVE_RP,SAVE_SP,ENTRY_GR=3
 	.ENTRY
@@ -26,11 +26,11 @@ g
 	ldw -36(%r3),%r28
 	bl,n L$0001,%r0
 	bl,n L$0003,%r0
-L$0002
+L$0002:
 	ldw -40(%r3),%r28
 	bl,n L$0001,%r0
-L$0003
-L$0001
+L$0003:
+L$0001:
 	ldw -20(%r3),%r2
 	ldo 64(%r3),%r30
 	ldwm -64(%r30),%r3
@@ -38,7 +38,7 @@ L$0001
 	.EXIT
 	.PROCEND
 	.align 4
-f2___4
+f2___4:
 	.PROC
 	.CALLINFO FRAME=64,NO_CALLS,SAVE_SP,ENTRY_GR=3
 	.ENTRY
@@ -54,7 +54,7 @@ f2___4
 	ldi 1,%r19
 	copy %r19,%r28
 	bl,n L$0005,%r0
-L$0005
+L$0005:
 	ldo 64(%r3),%r30
 	ldwm -64(%r30),%r3
 	bv,n %r0(%r2)
@@ -64,7 +64,7 @@ L$0005
 	.data
 
 	.align 4
-L$TRAMP0000
+L$TRAMP0000:
 	ldw	36(%r22),%r21
 	bb,>=,n	%r21,30,.+16
 	depi	0,31,2,%r21
@@ -81,7 +81,7 @@ L$TRAMP0000
 	.align 4
 	.EXPORT f,CODE
 	.EXPORT f,ENTRY,PRIV_LEV=3,RTNVAL=GR
-f
+f:
 	.PROC
 	.CALLINFO FRAME=192,CALLS,SAVE_RP,SAVE_SP,ENTRY_GR=3
 	.ENTRY
@@ -133,8 +133,8 @@ f
 	.CALL ARGW0=NO,ARGW1=NO,ARGW2=NO,ARGW3=NO
 	bl abort,%r2
 	nop
-L$0006
-L$0004
+L$0006:
+L$0004:
 	ldw -20(%r3),%r2
 	ldo 64(%r3),%r30
 	ldwm -64(%r30),%r3
@@ -146,7 +146,7 @@ L$0004
 	.align 4
 	.EXPORT main,CODE
 	.EXPORT main,ENTRY,PRIV_LEV=3,RTNVAL=GR
-main
+main:
 	.PROC
 	.CALLINFO FRAME=128,CALLS,SAVE_RP,SAVE_SP,ENTRY_GR=3
 	.ENTRY
@@ -164,7 +164,7 @@ main
 	.CALL ARGW0=NO,ARGW1=NO,ARGW2=NO,ARGW3=NO
 	bl exit,%r2
 	nop
-L$0007
+L$0007:
 	ldw -20(%r3),%r2
 	ldo 64(%r3),%r30
 	ldwm -64(%r30),%r3

@@ -1,4 +1,5 @@
-#   Copyright (C) 1993, 1994, 1995, 1996 Free Software Foundation, Inc.
+#   Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000
+#   Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -33,14 +34,23 @@ send_user "Version [binutil_version $OBJDUMP]"
 
 set got [binutils_run $OBJDUMP "$OBJDUMPFLAGS -i"]
 
-set cpus_expected "(a29k|alliant|alpha|arc|arm|convex|d10v|d30v|fr30|h8|hppa|i386|i860|i960|m32r|m68k|m88k|MCore|mips|mn10200|mn10300|ns32k|pj|powerpc|pyramid|romp|rs6000|sh|sparc|tahoe|v850|vax|we32k|z8k|z8001|z8002)"
+set cpus_expected [list]
+lappend cpus_expected a29k alliant alpha arc arm convex 
+lappend cpus_expected d10v d30v fr30 h8 hppa i386 i860 i960
+lappend cpus_expected m32r m68hc11 m68hc12 m68k m88k MCore
+lappend cpus_expected mips mn10200 mn10300 ns32k pj powerpc pyramid
+lappend cpus_expected romp rs6000 sh sparc tahoe tic54x tms320c54x v850
+lappend cpus_expected vax we32k z8k z8001 z8002
 
 # Make sure the target CPU shows up in the list.
-if ![regexp $cpus_expected $target_cpu] {
-    regsub "^\[(\]" "$cpus_expected" "(${target_cpu}|" cpus_expected;
-}
+lappend cpus_expected ${target_cpu}
 
-set want "BFD header file version.*srec\[^\n\]*\n\[^\n\]*header \[^\n\]*endian\[^\n\]*, data \[^\n\]*endian.*$cpus_expected"
+# Create regexp
+set cpus_regex "([join $cpus_expected | ])"
+
+verbose -log "CPU regex: $cpus_regex"
+
+set want "BFD header file version.*srec\[^\n\]*\n\[^\n\]*header \[^\n\]*endian\[^\n\]*, data \[^\n\]*endian.*$cpus_regex"
 
 if [regexp $want $got] then {
     pass "objdump -i"
@@ -64,7 +74,7 @@ if [is_remote host] {
 
 set got [binutils_run $OBJDUMP "$OBJDUMPFLAGS -f $testfile"]
 
-set want "$testfile:\[ 	\]*file format.*architecture:\[ 	\]*${cpus_expected}.*HAS_RELOC.*HAS_SYMS"
+set want "$testfile:\[ 	\]*file format.*architecture:\[ 	\]*${cpus_regex}.*HAS_RELOC.*HAS_SYMS"
 
 if ![regexp $want $got] then {
     fail "objdump -f"
@@ -83,7 +93,14 @@ if ![regexp $want $got all text_name text_size data_name data_size] then {
 } else {
     verbose "text name is $text_name size is $text_size"
     verbose "data name is $data_name size is $data_size"
-    if {[expr "0x$text_size"] < 8 || [expr "0x$data_size"] < 4} then {
+    set ets 8
+    set eds 4
+    # c54x section sizes are in bytes, not octets; adjust accordingly
+    if [istarget *c54x*-*-*] then {
+	set ets 4
+	set eds 2
+    }
+    if {[expr "0x$text_size"] < $ets || [expr "0x$data_size"] < $eds} then {
 	send_log "sizes too small\n"
 	fail "objdump -h"
     } else {
@@ -126,7 +143,7 @@ if [regexp $want $got] then {
 
 set got [binutils_run $OBJDUMP "$OBJDUMPFLAGS -s $testfile"]
 
-set want "$testfile:\[ 	\]*file format.*Contents.*(text|TEXT|\\\$CODE\\\$)\[^0-9\]*\[ 	\]*\[0-9a-fA-F\]*\[ 	\]*(00000001|01000000).*Contents.*(data|DATA)\[^0-9\]*\[ 	\]*\[0-9a-fA-F\]*\[ 	\]*(00000002|02000000)"
+set want "$testfile:\[ 	\]*file format.*Contents.*(text|TEXT|\\\$CODE\\\$)\[^0-9\]*\[ 	\]*\[0-9a-fA-F\]*\[ 	\]*(00000001|01000000|00000100).*Contents.*(data|DATA)\[^0-9\]*\[ 	\]*\[0-9a-fA-F\]*\[ 	\]*(00000002|02000000|00000200)"
 
 if [regexp $want $got] then {
     pass "objdump -s"

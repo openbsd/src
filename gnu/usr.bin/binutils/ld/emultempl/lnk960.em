@@ -2,7 +2,8 @@
 # It does some substitutions.
 cat >e${EMULATION_NAME}.c <<EOF
 /* intel coff loader emulation specific stuff
-   Copyright (C) 1991, 93, 94, 95, 96, 1999 Free Software Foundation, Inc.
+   Copyright 1991, 1992, 1994, 1995, 1996, 1999, 2000
+   Free Software Foundation, Inc.
    Written by Steve Chamberlain steve@cygnus.com
 
 This file is part of GLD, the Gnu Linker.
@@ -28,12 +29,12 @@ the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307
 
 /*#include "archures.h"*/
 #include "ld.h"
-#include "ldemul.h"
+#include "ldmain.h"
 #include "ldmisc.h"
 #include "ldexp.h"
 #include "ldlang.h"
 #include "ldfile.h"
-#include "ldmain.h"
+#include "ldemul.h"
 
 typedef struct lib_list {
   char *name;

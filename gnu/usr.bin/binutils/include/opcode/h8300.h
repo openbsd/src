@@ -1,6 +1,7 @@
-/* Opcode table for the H8-300
-   Copyright (C) 1991, 92, 93, 95, 96, 97, 1998 Free Software Foundation.
-   Written by Steve Chamberlain, sac@cygnus.com.
+/* Opcode table for the H8/300
+   Copyright 1991, 1992, 1993, 1994, 1996, 1997, 1998, 2000
+   Free Software Foundation, Inc.
+   Written by Steve Chamberlain <sac@cygnus.com>.
    
    This file is part of GDB, the GNU Debugger and GAS, the GNU Assembler.
    
@@ -182,7 +183,7 @@ struct h8_opcode
 
 #define NEW_SOP(code, in,x,name) \
 {code, in, x,  name 
-#define EOP  ,0,0,0 }
+#define EOP  ,0,0,0,0 }
 
 #define TWOOP(code, name, op1, op2,op3) \
 { code,1, 2,name, {{IMM8, RD8, E}},	{{ op1, RD8, IMM8, IGNORE, E, 0, 0, 0, 0}}, 0, 0, 0, 0},\
@@ -596,9 +597,5 @@ struct h8_opcode h8_opcodes[] =
   { 0 }
 };
 #else
-extern struct h8_opcode h8_opcodes[] ;
+extern struct h8_opcode h8_opcodes[];
 #endif
-
-
-
-

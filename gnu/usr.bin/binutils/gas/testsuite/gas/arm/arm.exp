@@ -1,7 +1,7 @@
 #
 # Some ARM tests
 #
-if [istarget arm-*-*] then {
+if {[istarget *arm*-*-*] || [istarget "xscale-*-*"]} then {
     run_dump_test "inst"
 
     gas_test "arm3.s" "" $stdoptlist "Arm 3 instructions"
@@ -21,6 +21,14 @@ if [istarget arm-*-*] then {
     gas_test "immed.s" "" $stdoptlist "immediate expressions"
 
     gas_test "float.s" "" $stdoptlist "Core floating point instructions"
+
+    run_dump_test "xscale"
+
+    run_dump_test "adrl"
+
+    if {[istarget *-*-elf*] || [istarget *-*-linux*]} then {
+	run_dump_test "pic"
+    }
 }
 
 # Not all arm targets are bi-endian, so only run this test on ones

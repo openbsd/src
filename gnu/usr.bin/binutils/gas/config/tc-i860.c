@@ -1,5 +1,9 @@
-/* tc-i860.c -- Assemble for the I860
-   Copyright (C) 1989, 92, 93, 94, 95, 98, 1999 Free Software Foundation, Inc.
+/* tc-i860.c -- Assembler for the Intel i860 architecture.
+   Copyright 1989, 1992, 1993, 1994, 1995, 1998, 1999, 2000
+   Free Software Foundation, Inc.
+
+   Brought back from the dead and completely reworked
+   by Jason Eckhardt <jle@cygnus.com>.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -17,124 +21,117 @@
    with GAS; see the file COPYING.  If not, write to the Free Software
    Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
+#include <ctype.h>
+#include <stdio.h>
+#include <string.h>
 #include "as.h"
-
+#include "subsegs.h"
 #include "opcode/i860.h"
+#include "elf/i860.h"
 
-void md_begin ();
-void md_number_to_chars ();
-void md_assemble ();
-char *md_atof ();
-void md_convert_frag ();
-int md_estimate_size_before_relax ();
-void md_number_to_imm ();
-void md_number_to_disp ();
-void md_number_to_field ();
-void md_ri_to_chars ();
-static void i860_ip ();
-/* void emit_machine_reloc(); */
+/* Defined by default since this is primarily a SVR4/860 assembler.
+   However, I'm trying to leave the door open for Intel syntax. Of course,
+   if full support for anything other than SVR4 is done, then we should
+   select this based on a command-line flag.  */
+#define SYNTAX_SVR4
 
-const int md_reloc_size = sizeof (struct relocation_info);
-
-/* void (*md_emit_relocations)() = emit_machine_reloc; */
-
-/* handle of the OPCODE hash table */
+/* The opcode hash table.  */
 static struct hash_control *op_hash = NULL;
 
-static void s_dual (), s_enddual ();
-static void s_atmp ();
+/* These characters always start a comment.  */
+const char comment_chars[] = "#!/";
 
-const pseudo_typeS
-  md_pseudo_table[] =
-{
-  {"dual", s_dual, 4},
-  {"enddual", s_enddual, 4},
-  {"atmp", s_atmp, 4},
-  {NULL, 0, 0},
-};
-
-/* This array holds the chars that always start a comment.  If the
-   pre-processor is disabled, these aren't very useful */
-const char comment_chars[] = "!/";	/* JF removed '|' from comment_chars */
-
-/* This array holds the chars that only start a comment at the beginning of
-   a line.  If the line seems to have the form '# 123 filename'
-   .line and .file directives will appear in the pre-processed output */
-/* Note that input_file.c hand checks for '#' at the beginning of the
-   first line of the input file.  This is because the compiler outputs
-   #NO_APP at the beginning of its output. */
-/* Also note that comments like this one will always work. */
+/* These characters start a comment at the beginning of a line.  */
 const char line_comment_chars[] = "#/";
 
-const char line_separator_chars[] = "";
+const char line_separator_chars[] = ";";
 
-/* Chars that can be used to separate mant from exp in floating point nums */
+/* Characters that can be used to separate the mantissa from the exponent
+   in floating point numbers.  */
 const char EXP_CHARS[] = "eE";
 
-/* Chars that mean this number is a floating point constant */
-/* As in 0f12.456 */
-/* or    0d1.2345e12 */
+/* Characters that indicate this number is a floating point constant.
+   As in 0f12.456 or 0d1.2345e12.  */
 const char FLT_CHARS[] = "rRsSfFdDxXpP";
 
-/* Also be aware that MAXIMUM_NUMBER_OF_CHARS_FOR_FLOAT may have to be
-   changed in read.c .  Ideally it shouldn't have to know about it at all,
-   but nothing is ideal around here.
-   */
-int size_reloc_info = sizeof (struct relocation_info);
-
-static unsigned char octal[256];
-#define isoctal(c)  octal[c]
-static unsigned char toHex[256];
+/* Register prefix.  */
+#ifdef SYNTAX_SVR4
+static const char reg_prefix = '%';
+#else
+static const char reg_prefix = 0;
+#endif
 
 struct i860_it
-  {
-    char *error;
-    unsigned long opcode;
-    struct nlist *nlistp;
-    expressionS exp;
-    int pcrel;
-    enum expand_type expand;
-    enum highlow_type highlow;
-    enum reloc_type reloc;
-  } the_insn;
-
-#if __STDC__ == 1
-
-static void print_insn (struct i860_it *insn);
-static int getExpression (char *str);
-
-#else /* not __STDC__ */
-
-static void print_insn ();
-static int getExpression ();
-
-#endif /* not __STDC__ */
+{
+  char *error;
+  unsigned long opcode;
+  expressionS exp;
+  enum expand_type expand;
+  bfd_reloc_code_real_type reloc;
+  int pcrel;
+  valueT fup;
+} the_insn;
 
 static char *expr_end;
-static char last_expand;	/* error if expansion after branch */
 
+/* Indicates error if a pseudo operation was expanded after a branch.  */
+static char last_expand;
+
+/* If true, then warn if any pseudo operations were expanded.  */
+static int target_warn_expand = 0;
+
+/* Prototypes.  */
+static void i860_process_insn	PARAMS ((char *));
+static void s_dual		PARAMS ((int));
+static void s_enddual		PARAMS ((int));
+static void s_atmp		PARAMS ((int));
+static int i860_get_expression	PARAMS ((char *));
+static bfd_reloc_code_real_type obtain_reloc_for_imm16
+  PARAMS ((fixS *, long *));
+#ifdef DEBUG_I860
+static void print_insn		PARAMS ((struct i860_it *));
+#endif
+
+const pseudo_typeS md_pseudo_table[] =
+{
+#ifdef OBJ_ELF
+  {"align",   s_align_bytes, 0},
+#endif
+  {"dual",    s_dual,        0},
+  {"enddual", s_enddual,     0},
+  {"atmp",    s_atmp,        0},
+  {NULL,      0,             0},
+};
+
+/* Dual-instruction mode handling.  */
 enum dual
 {
   DUAL_OFF = 0, DUAL_ON, DUAL_DDOT, DUAL_ONDDOT,
 };
-static enum dual dual_mode = DUAL_OFF;	/* dual-instruction mode */
+static enum dual dual_mode = DUAL_OFF;
 
+/* Handle ".dual" directive.  */
 static void
-s_dual ()			/* floating point instructions have dual set */
+s_dual (ignore)
+     int ignore ATTRIBUTE_UNUSED;
 {
   dual_mode = DUAL_ON;
 }
 
+/* Handle ".enddual" directive.  */
 static void
-s_enddual ()			/* floating point instructions have dual set */
+s_enddual (ignore)
+     int ignore ATTRIBUTE_UNUSED;
 {
   dual_mode = DUAL_OFF;
 }
 
-static int atmp = 31;		/* temporary register for pseudo's */
+/* Temporary register used when expanding assembler pseudo operations.  */
+static int atmp = 31;
 
 static void
-s_atmp ()
+s_atmp (ignore)
+     int ignore ATTRIBUTE_UNUSED;
 {
   register int temp;
   if (strncmp (input_line_pointer, "sp", 2) == 0)
@@ -164,20 +161,21 @@ s_atmp ()
 }
 
 /* This function is called once, at assembler startup time.  It should
-   set up all the tables, etc. that the MD part of the assembler will need.  */
+   set up all the tables and data structures that the MD part of the
+   assembler will need.  */
 void
 md_begin ()
 {
-  register char *retval = NULL;
+  const char *retval = NULL;
   int lose = 0;
-  register unsigned int i = 0;
+  unsigned int i = 0;
 
   op_hash = hash_new ();
 
-  while (i < NUMOPCODES)
+  while (i860_opcodes[i].name != NULL)
     {
       const char *name = i860_opcodes[i].name;
-      retval = hash_insert (op_hash, name, &i860_opcodes[i]);
+      retval = hash_insert (op_hash, name, (PTR)&i860_opcodes[i]);
       if (retval != NULL)
 	{
 	  fprintf (stderr, _("internal error: can't hash `%s': %s\n"),
@@ -188,44 +186,43 @@ md_begin ()
 	{
 	  if (i860_opcodes[i].match & i860_opcodes[i].lose)
 	    {
-	      fprintf (stderr, _("internal error: losing opcode: `%s' \"%s\"\n"),
+	      fprintf (stderr,
+		       _("internal error: losing opcode: `%s' \"%s\"\n"),
 		       i860_opcodes[i].name, i860_opcodes[i].args);
 	      lose = 1;
 	    }
 	  ++i;
 	}
-      while (i < NUMOPCODES
-	     && !strcmp (i860_opcodes[i].name, name));
+      while (i860_opcodes[i].name != NULL
+	     && strcmp (i860_opcodes[i].name, name) == 0);
     }
 
   if (lose)
-    as_fatal (_("Broken assembler.  No assembly attempted."));
-
-  for (i = '0'; i < '8'; ++i)
-    octal[i] = 1;
-  for (i = '0'; i <= '9'; ++i)
-    toHex[i] = i - '0';
-  for (i = 'a'; i <= 'f'; ++i)
-    toHex[i] = i + 10 - 'a';
-  for (i = 'A'; i <= 'F'; ++i)
-    toHex[i] = i + 10 - 'A';
+    as_fatal (_("Defective assembler.  No assembly attempted."));
 }
 
+/* This is the core of the machine-dependent assembler.  STR points to a
+   machine dependent instruction.  This function emits the frags/bytes
+   it assembles to.  */
 void
 md_assemble (str)
      char *str;
 {
-  char *toP;
-  int rsd;
-  int no_opcodes = 1;
+  char *destp;
+  int num_opcodes = 1;
   int i;
   struct i860_it pseudo[3];
 
   assert (str);
-  i860_ip (str);
 
-  /* check for expandable flag to produce pseudo-instructions */
-  if (the_insn.expand != 0 && the_insn.highlow == NO_SPEC)
+  /* Assemble the instruction.  */
+  i860_process_insn (str);
+
+  /* Check for expandable flag to produce pseudo-instructions.  This
+     is an undesirable feature that should be avoided.  */
+  if (the_insn.expand != 0
+      && ! (the_insn.fup & (OP_SEL_HA | OP_SEL_H | OP_SEL_L | OP_SEL_GOT
+			    | OP_SEL_GOTOFF | OP_SEL_PLT)))
     {
       for (i = 0; i < 3; i++)
 	pseudo[i] = the_insn;
@@ -234,101 +231,109 @@ md_assemble (str)
 	{
 
 	case E_DELAY:
-	  no_opcodes = 1;
+	  num_opcodes = 1;
 	  break;
 
 	case E_MOV:
-	  if (the_insn.exp.X_add_symbol == NULL &&
-	      the_insn.exp.X_op_symbol == NULL &&
-	      (the_insn.exp.X_add_number < (1 << 15) &&
-	       the_insn.exp.X_add_number >= -(1 << 15)))
+	  if (the_insn.exp.X_add_symbol == NULL
+	      && the_insn.exp.X_op_symbol == NULL
+	      && (the_insn.exp.X_add_number < (1 << 15)
+		  && the_insn.exp.X_add_number >= -(1 << 15)))
 	    break;
-	  /* or l%const,r0,ireg_dest */
+
+	  /* Emit "or l%const,r0,ireg_dest".  */
 	  pseudo[0].opcode = (the_insn.opcode & 0x001f0000) | 0xe4000000;
-	  pseudo[0].highlow = PAIR;
-	  /* orh h%const,ireg_dest,ireg_dest */
-	  pseudo[1].opcode = (the_insn.opcode & 0x03ffffff) | 0xec000000 |
-	    ((the_insn.opcode & 0x001f0000) << 5);
-	  pseudo[1].highlow = HIGH;
-	  no_opcodes = 2;
+	  pseudo[0].fup = (OP_IMM_S16 | OP_SEL_L);
+
+	  /* Emit "orh h%const,ireg_dest,ireg_dest".  */
+	  pseudo[1].opcode = (the_insn.opcode & 0x03ffffff) | 0xec000000
+			      | ((the_insn.opcode & 0x001f0000) << 5);
+	  pseudo[1].fup = (OP_IMM_S16 | OP_SEL_H);
+
+	  num_opcodes = 2;
 	  break;
 
 	case E_ADDR:
-	  if (the_insn.exp.X_add_symbol == NULL &&
-	      the_insn.exp.X_op_symbol == NULL)
+	  if (the_insn.exp.X_add_symbol == NULL
+	      && the_insn.exp.X_op_symbol == NULL
+	      && (the_insn.exp.X_add_number < (1 << 15)
+		  && the_insn.exp.X_add_number >= -(1 << 15)))
 	    break;
-	  /* orh ha%addr_expr,r0,r31 */
+
+	  /* Emit "orh ha%addr_expr,r0,r31".  */
 	  pseudo[0].opcode = 0xec000000 | (atmp << 16);
-	  pseudo[0].highlow = HIGHADJ;
-	  pseudo[0].reloc = LOW0;	/* must overwrite */
-	  /* l%addr_expr(r31),ireg_dest */
-	  pseudo[1].opcode = (the_insn.opcode & ~0x003e0000) | (atmp << 21);
-	  pseudo[1].highlow = PAIR;
-	  no_opcodes = 2;
+	  pseudo[0].fup = (OP_IMM_S16 | OP_SEL_HA);
+
+	  /* Emit "l%addr_expr(r31),ireg_dest".  We pick up the fixup
+	     information from the original instruction.   */
+	  pseudo[1].opcode = (the_insn.opcode & ~0x03e00000) | (atmp << 21);
+	  pseudo[1].fup = the_insn.fup | OP_SEL_L;
+
+	  num_opcodes = 2;
 	  break;
 
-	case E_U32:		/* 2nd version emulates Intel as, not doc. */
-	  if (the_insn.exp.X_add_symbol == NULL &&
-	      the_insn.exp.X_op_symbol == NULL &&
-	      (the_insn.exp.X_add_number < (1 << 16) &&
-	       the_insn.exp.X_add_number >= 0))
+	case E_U32:
+	  if (the_insn.exp.X_add_symbol == NULL
+	      && the_insn.exp.X_op_symbol == NULL
+	      && (the_insn.exp.X_add_number < (1 << 16)
+		  && the_insn.exp.X_add_number >= 0))
 	    break;
-	  /* $(opcode)h h%const,ireg_src2,ireg_dest
-			   pseudo[0].opcode = (the_insn.opcode & 0xf3ffffff) | 0x0c000000; */
-	  /* $(opcode)h h%const,ireg_src2,r31 */
-	  pseudo[0].opcode = (the_insn.opcode & 0xf3e0ffff) | 0x0c000000 |
-	    (atmp << 16);
-	  pseudo[0].highlow = HIGH;
-	  /* $(opcode) l%const,ireg_dest,ireg_dest
-			   pseudo[1].opcode = (the_insn.opcode & 0xf01f0000) | 0x04000000 |
-			   ((the_insn.opcode & 0x001f0000) << 5); */
-	  /* $(opcode) l%const,r31,ireg_dest */
-	  pseudo[1].opcode = (the_insn.opcode & 0xf01f0000) | 0x04000000 |
-	    (atmp << 21);
-	  pseudo[1].highlow = PAIR;
-	  no_opcodes = 2;
+
+	  /* Emit "$(opcode)h h%const,ireg_src2,r31".  */
+	  pseudo[0].opcode = (the_insn.opcode & 0xf3e0ffff) | 0x0c000000
+			      | (atmp << 16);
+	  pseudo[0].fup = (OP_IMM_S16 | OP_SEL_H);
+
+	  /* Emit "$(opcode) l%const,r31,ireg_dest".  */
+	  pseudo[1].opcode = (the_insn.opcode & 0xf01f0000) | 0x04000000
+			      | (atmp << 21);
+	  pseudo[1].fup = (OP_IMM_S16 | OP_SEL_L);
+
+	  num_opcodes = 2;
 	  break;
 
-	case E_AND:		/* 2nd version emulates Intel as, not doc. */
-	  if (the_insn.exp.X_add_symbol == NULL &&
-	      the_insn.exp.X_op_symbol == NULL &&
-	      (the_insn.exp.X_add_number < (1 << 16) &&
-	       the_insn.exp.X_add_number >= 0))
+	case E_AND:
+	  if (the_insn.exp.X_add_symbol == NULL
+	      && the_insn.exp.X_op_symbol == NULL
+	      && (the_insn.exp.X_add_number < (1 << 16)
+		  && the_insn.exp.X_add_number >= 0))
 	    break;
-	  /* andnot h%const,ireg_src2,ireg_dest
-			   pseudo[0].opcode = (the_insn.opcode & 0x03ffffff) | 0xd4000000; */
-	  /* andnot h%const,ireg_src2,r31 */
-	  pseudo[0].opcode = (the_insn.opcode & 0x03e0ffff) | 0xd4000000 |
-	    (atmp << 16);
-	  pseudo[0].highlow = HIGH;
+
+	  /* Emit "andnot h%const,ireg_src2,r31".  */
+	  pseudo[0].opcode = (the_insn.opcode & 0x03e0ffff) | 0xd4000000
+			      | (atmp << 16);
+	  pseudo[0].fup = (OP_IMM_S16 | OP_SEL_H);
 	  pseudo[0].exp.X_add_number = -1 - the_insn.exp.X_add_number;
-	  /* andnot l%const,ireg_dest,ireg_dest
-			   pseudo[1].opcode = (the_insn.opcode & 0x001f0000) | 0xd4000000 |
-			   ((the_insn.opcode & 0x001f0000) << 5); */
-	  /* andnot l%const,r31,ireg_dest */
-	  pseudo[1].opcode = (the_insn.opcode & 0x001f0000) | 0xd4000000 |
-	    (atmp << 21);
-	  pseudo[1].highlow = PAIR;
+
+	  /* Emit "andnot l%const,r31,ireg_dest".  */
+	  pseudo[1].opcode = (the_insn.opcode & 0x001f0000) | 0xd4000000
+			      | (atmp << 21);
+	  pseudo[1].fup = (OP_IMM_S16 | OP_SEL_L);
 	  pseudo[1].exp.X_add_number = -1 - the_insn.exp.X_add_number;
-	  no_opcodes = 2;
+
+	  num_opcodes = 2;
 	  break;
 
 	case E_S32:
-	  if (the_insn.exp.X_add_symbol == NULL &&
-	      the_insn.exp.X_op_symbol == NULL &&
-	      (the_insn.exp.X_add_number < (1 << 15) &&
-	       the_insn.exp.X_add_number >= -(1 << 15)))
+	  if (the_insn.exp.X_add_symbol == NULL
+	      && the_insn.exp.X_op_symbol == NULL
+	      && (the_insn.exp.X_add_number < (1 << 15)
+		  && the_insn.exp.X_add_number >= -(1 << 15)))
 	    break;
-	  /* orh h%const,r0,r31 */
+
+	  /* Emit "orh h%const,r0,r31".  */
 	  pseudo[0].opcode = 0xec000000 | (atmp << 16);
-	  pseudo[0].highlow = HIGH;
-	  /* or l%const,r31,r31 */
+	  pseudo[0].fup = (OP_IMM_S16 | OP_SEL_H);
+
+	  /* Emit "or l%const,r31,r31".  */
 	  pseudo[1].opcode = 0xe4000000 | (atmp << 21) | (atmp << 16);
-	  pseudo[1].highlow = PAIR;
-	  /* r31,ireg_src2,ireg_dest */
+	  pseudo[1].fup = (OP_IMM_S16 | OP_SEL_L);
+
+	  /* Emit "r31,ireg_src2,ireg_dest".  */
 	  pseudo[2].opcode = (the_insn.opcode & ~0x0400ffff) | (atmp << 11);
-	  pseudo[2].reloc = NO_RELOC;
-	  no_opcodes = 3;
+	  pseudo[2].fup = OP_IMM_S16;
+
+	  num_opcodes = 3;
 	  break;
 
 	default:
@@ -336,61 +341,80 @@ md_assemble (str)
 	}
 
       the_insn = pseudo[0];
-      /* check for expanded opcode after branch or in dual */
-      if (no_opcodes > 1 && last_expand == 1)
+
+      /* Warn if an opcode is expanded after a delayed branch.  */
+      if (num_opcodes > 1 && last_expand == 1)
 	as_warn (_("Expanded opcode after delayed branch: `%s'"), str);
-      if (no_opcodes > 1 && dual_mode != DUAL_OFF)
+
+      /* Warn if an opcode is expanded in dual mode.  */
+      if (num_opcodes > 1 && dual_mode != DUAL_OFF)
 	as_warn (_("Expanded opcode in dual mode: `%s'"), str);
+
+      /* Notify if any expansions happen.  */
+      if (target_warn_expand && num_opcodes > 1)
+	as_warn (_("An instruction was expanded (%s)"), str);
     }
 
   i = 0;
   do
-    {				/* always produce at least one opcode */
-      toP = frag_more (4);
-      /* put out the opcode */
-      md_number_to_chars (toP, the_insn.opcode, 4);
+    {
+      /* Output the opcode.  Note that the i860 always reads instructions
+	 as little-endian data.  */
+      destp = frag_more (4);
+      number_to_chars_littleendian (destp, the_insn.opcode, 4);
 
-      /* check for expanded opcode after branch or in dual */
+      /* Check for expanded opcode after branch or in dual mode.  */
       last_expand = the_insn.pcrel;
 
-      /* put out the symbol-dependent stuff */
-      if (the_insn.reloc != NO_RELOC)
+      /* Output the symbol-dependent stuff.  */
+      if (the_insn.fup != OP_NONE)
 	{
-	  fix_new (frag_now,	/* which frag */
-		   (toP - frag_now->fr_literal),	/* where */
-		   4,		/* size */
-		   &the_insn.exp,
-		   the_insn.pcrel,
-	  /* merge bit fields into one argument */
-	  (int) (((the_insn.highlow & 0x3) << 4) | (the_insn.reloc & 0xf)));
+	  fixS *fix;
+	  fix = fix_new_exp (frag_now,
+			     destp - frag_now->fr_literal,
+			     4,
+			     &the_insn.exp,
+			     the_insn.pcrel,
+			     the_insn.reloc);
+
+	  /* Despite the odd name, this is a scratch field.  We use
+	     it to encode operand type information.  */
+	  fix->fx_addnumber = the_insn.fup;
 	}
       the_insn = pseudo[++i];
     }
-  while (--no_opcodes > 0);
+  while (--num_opcodes > 0);
 
 }
 
+/* Assemble the instruction pointed to by STR.  */
 static void
-i860_ip (str)
+i860_process_insn (str)
      char *str;
 {
   char *s;
   const char *args;
   char c;
-  unsigned long i;
   struct i860_opcode *insn;
-  char *argsStart;
+  char *args_start;
   unsigned long opcode;
   unsigned int mask;
   int match = 0;
   int comma = 0;
 
+#if 1 /* For compiler warnings.  */
+  args = 0;
+  insn = 0;
+  args_start = 0;
+  opcode = 0;
+#endif
 
-  for (s = str; islower (*s) || *s == '.' || *s == '3'; ++s)
+  for (s = str; islower (*s) || *s == '.' || *s == '3'
+       || *s == '2' || *s == '1'; ++s)
     ;
+
   switch (*s)
     {
-
     case '\0':
       break;
 
@@ -407,8 +431,9 @@ i860_ip (str)
       as_fatal (_("Unknown opcode: `%s'"), str);
     }
 
+  /* Check for dual mode ("d.") opcode prefix.  */
   if (strncmp (str, "d.", 2) == 0)
-    {				/* check for d. opcode prefix */
+    {
       if (dual_mode == DUAL_ON)
 	dual_mode = DUAL_ONDDOT;
       else
@@ -423,35 +448,34 @@ i860_ip (str)
       as_bad (_("Unknown opcode: `%s'"), str);
       return;
     }
+
   if (comma)
-    {
-      *--s = ',';
-    }
-  argsStart = s;
+    *--s = ',';
+
+  args_start = s;
   for (;;)
     {
       opcode = insn->match;
       memset (&the_insn, '\0', sizeof (the_insn));
-      the_insn.reloc = NO_RELOC;
+      the_insn.reloc = BFD_RELOC_NONE;
+      the_insn.pcrel = 0;
+      the_insn.fup = OP_NONE;
 
-      /*
-		 * Build the opcode, checking as we go to make
-		 * sure that the operands match
-		 */
-      for (args = insn->args;; ++args)
+      /* Build the opcode, checking as we go that the operands match.  */
+      for (args = insn->args; ; ++args)
 	{
 	  switch (*args)
 	    {
 
-	    case '\0':		/* end of args */
+	    /* End of args.  */
+	    case '\0':
 	      if (*s == '\0')
-		{
-		  match = 1;
-		}
+		match = 1;
 	      break;
 
+	    /* These must match exactly.  */
 	    case '+':
-	    case '(':		/* these must match exactly */
+	    case '(':
 	    case ')':
 	    case ',':
 	    case ' ':
@@ -459,24 +483,30 @@ i860_ip (str)
 		continue;
 	      break;
 
-	    case '#':		/* must be at least one digit */
+	    /* Must be at least one digit.  */
+	    case '#':
 	      if (isdigit (*s++))
 		{
 		  while (isdigit (*s))
-		    {
-		      ++s;
-		    }
+		    ++s;
 		  continue;
 		}
 	      break;
 
-	    case '1':		/* next operand must be a register */
+	    /* Next operand must be a register.  */
+	    case '1':
 	    case '2':
 	    case 'd':
+	      /* Check for register prefix if necessary.  */
+	      if (reg_prefix && *s != reg_prefix)
+		goto error;
+	      else
+		s++;
+
 	      switch (*s)
 		{
-
-		case 'f':	/* frame pointer */
+		/* Frame pointer.  */
+		case 'f':
 		  s++;
 		  if (*s++ == 'p')
 		    {
@@ -485,7 +515,8 @@ i860_ip (str)
 		    }
 		  goto error;
 
-		case 's':	/* stack pointer */
+		/* Stack pointer.  */
+		case 's':
 		  s++;
 		  if (*s++ == 'p')
 		    {
@@ -494,7 +525,8 @@ i860_ip (str)
 		    }
 		  goto error;
 
-		case 'r':	/* any register */
+		/* Any register r0..r31.  */
+		case 'r':
 		  s++;
 		  if (!isdigit (c = *s++))
 		    {
@@ -503,27 +535,21 @@ i860_ip (str)
 		  if (isdigit (*s))
 		    {
 		      if ((c = 10 * (c - '0') + (*s++ - '0')) >= 32)
-			{
-			  goto error;
-			}
+			goto error;
 		    }
 		  else
-		    {
-		      c -= '0';
-		    }
+		    c -= '0';
 		  mask = c;
 		  break;
 
-		default:	/* not this opcode */
+		/* Not this opcode.  */
+		default:
 		  goto error;
 		}
-	      /*
-				 * Got the register, now figure out where
-				 * it goes in the opcode.
-				 */
+
+	      /* Obtained the register, now place it in the opcode.  */
 	      switch (*args)
 		{
-
 		case '1':
 		  opcode |= mask << 11;
 		  continue;
@@ -539,9 +565,16 @@ i860_ip (str)
 		}
 	      break;
 
-	    case 'e':		/* next operand is a floating point register */
+	    /* Next operand is a floating point register.  */
+	    case 'e':
 	    case 'f':
 	    case 'g':
+	      /* Check for register prefix if necessary.  */
+	      if (reg_prefix && *s != reg_prefix)
+		goto error;
+	      else
+		s++;
+
 	      if (*s++ == 'f' && isdigit (*s))
 		{
 		  mask = *s++;
@@ -554,9 +587,8 @@ i860_ip (str)
 			}
 		    }
 		  else
-		    {
-		      mask -= '0';
-		    }
+		    mask -= '0';
+
 		  switch (*args)
 		    {
 
@@ -571,19 +603,27 @@ i860_ip (str)
 		    case 'g':
 		      opcode |= mask << 16;
 		      if (dual_mode != DUAL_OFF)
-			opcode |= (1 << 9);	/* dual mode instruction */
+			opcode |= (1 << 9);
 		      if (dual_mode == DUAL_DDOT)
 			dual_mode = DUAL_OFF;
 		      if (dual_mode == DUAL_ONDDOT)
 			dual_mode = DUAL_ON;
-		      if ((opcode & (1 << 10)) && (mask == ((opcode >> 11) & 0x1f)))
-			as_warn (_("Fsr1 equals fdest with Pipelining"));
+		      if ((opcode & (1 << 10)) && mask != 0
+			  && (mask == ((opcode >> 11) & 0x1f)))
+			as_warn (_("Pipelined instruction: fsrc1 = fdest"));
 		      continue;
 		    }
 		}
 	      break;
 
-	    case 'c':		/* next operand must be a control register */
+	    /* Next operand must be a control register.  */
+	    case 'c':
+	      /* Check for register prefix if necessary.  */
+	      if (reg_prefix && *s != reg_prefix)
+		goto error;
+	      else
+		s++;
+
 	      if (strncmp (s, "fir", 3) == 0)
 		{
 		  opcode |= 0x0 << 21;
@@ -622,86 +662,170 @@ i860_ip (str)
 		}
 	      break;
 
-	    case '5':		/* 5 bit immediate in src1 */
-	      memset (&the_insn, '\0', sizeof (the_insn));
-	      if (!getExpression (s))
+	    /* 5-bit immediate in src1.  */
+	    case '5':
+	      if (! i860_get_expression (s))
 		{
 		  s = expr_end;
-		  if (the_insn.exp.X_add_number & ~0x1f)
-		    as_bad (_("5-bit immediate too large"));
-		  opcode |= (the_insn.exp.X_add_number & 0x1f) << 11;
-		  memset (&the_insn, '\0', sizeof (the_insn));
-		  the_insn.reloc = NO_RELOC;
+		  the_insn.fup |= OP_IMM_U5;
 		  continue;
 		}
 	      break;
 
-	    case 'l':		/* 26 bit immediate, relative branch */
-	      the_insn.reloc = BRADDR;
+	    /* 26-bit immediate, relative branch (lbroff).  */
+	    case 'l':
 	      the_insn.pcrel = 1;
+	      the_insn.fup |= OP_IMM_BR26;
 	      goto immediate;
 
-	    case 's':		/* 16 bit immediate, split relative branch */
-	      /* upper 5 bits of offset in dest field */
+	    /* 16-bit split immediate, relative branch (sbroff).  */
+	    case 'r':
 	      the_insn.pcrel = 1;
-	      the_insn.reloc = SPLIT0;
+	      the_insn.fup |= OP_IMM_BR16;
 	      goto immediate;
 
-	    case 'S':		/* 16 bit immediate, split (st), aligned */
-	      if (opcode & (1 << 28))
-		if (opcode & 0x1)
-		  the_insn.reloc = SPLIT2;
-		else
-		  the_insn.reloc = SPLIT1;
+	    /* 16-bit split immediate.  */
+	    case 's':
+	      the_insn.fup |= OP_IMM_SPLIT16;
+	      goto immediate;
+
+	    /* 16-bit split immediate, byte aligned (st.b).  */
+	    case 'S':
+	      the_insn.fup |= OP_IMM_SPLIT16;
+	      goto immediate;
+
+	    /* 16-bit split immediate, half-word aligned (st.s).  */
+	    case 'T':
+	      the_insn.fup |= (OP_IMM_SPLIT16 | OP_ENCODE1 | OP_ALIGN2);
+	      goto immediate;
+
+	    /* 16-bit split immediate, word aligned (st.l).  */
+	    case 'U':
+	      the_insn.fup |= (OP_IMM_SPLIT16 | OP_ENCODE1 | OP_ALIGN4);
+	      goto immediate;
+
+	    /* 16-bit immediate.  */
+	    case 'i':
+	      the_insn.fup |= OP_IMM_S16;
+	      goto immediate;
+
+	    /* 16-bit immediate, byte aligned (ld.b).  */
+	    case 'I':
+	      the_insn.fup |= OP_IMM_S16;
+	      goto immediate;
+
+	    /* 16-bit immediate, half-word aligned (ld.s).  */
+	    case 'J':
+	      the_insn.fup |= (OP_IMM_S16 | OP_ENCODE1 | OP_ALIGN2);
+	      goto immediate;
+
+	    /* 16-bit immediate, word aligned (ld.l, {p}fld.l, fst.l).  */
+	    case 'K':
+	      if (insn->name[0] == 'l')
+		the_insn.fup |= (OP_IMM_S16 | OP_ENCODE1 | OP_ALIGN4);
 	      else
-		the_insn.reloc = SPLIT0;
+		the_insn.fup |= (OP_IMM_S16 | OP_ENCODE2 | OP_ALIGN4);
 	      goto immediate;
 
-	    case 'I':		/* 16 bit immediate, aligned */
-	      if (opcode & (1 << 28))
-		if (opcode & 0x1)
-		  the_insn.reloc = LOW2;
-		else
-		  the_insn.reloc = LOW1;
-	      else
-		the_insn.reloc = LOW0;
+	    /* 16-bit immediate, double-word aligned ({p}fld.d, fst.d).  */
+	    case 'L':
+	      the_insn.fup |= (OP_IMM_S16 | OP_ENCODE3 | OP_ALIGN8);
 	      goto immediate;
 
-	    case 'i':		/* 16 bit immediate */
-	      the_insn.reloc = LOW0;
+	    /* 16-bit immediate, quad-word aligned (fld.q, fst.q).  */
+	    case 'M':
+	      the_insn.fup |= (OP_IMM_S16 | OP_ENCODE3 | OP_ALIGN16);
 
 	      /*FALLTHROUGH*/
 
+	      /* Handle the immediate for either the Intel syntax or
+		 SVR4 syntax. The Intel syntax is "ha%immediate"
+		 whereas SVR4 syntax is "[immediate]@ha".  */
 	    immediate:
+#ifdef SYNTAX_SVR4
+	      if (*s == ' ')
+		s++;
+
+	      /* Note that if i860_get_expression() fails, we will still
+		 have created U entries in the symbol table for the
+		 'symbols' in the input string.  Try not to create U
+		 symbols for registers, etc.  */
+	      if (! i860_get_expression (s))
+		s = expr_end;
+	      else
+		goto error;
+
+	      if (strncmp (s, "@ha", 3) == 0)
+		{
+		  the_insn.fup |= OP_SEL_HA;
+		  s += 3;
+		}
+	      else if (strncmp (s, "@h", 2) == 0)
+		{
+		  the_insn.fup |= OP_SEL_H;
+		  s += 2;
+		}
+	      else if (strncmp (s, "@l", 2) == 0)
+		{
+		  the_insn.fup |= OP_SEL_L;
+		  s += 2;
+		}
+	      else if (strncmp (s, "@gotoff", 7) == 0
+		       || strncmp (s, "@GOTOFF", 7) == 0)
+		{
+		  as_bad (_("Assembler does not yet support PIC"));
+		  the_insn.fup |= OP_SEL_GOTOFF;
+		  s += 7;
+		}
+	      else if (strncmp (s, "@got", 4) == 0
+		       || strncmp (s, "@GOT", 4) == 0)
+		{
+		  as_bad (_("Assembler does not yet support PIC"));
+		  the_insn.fup |= OP_SEL_GOT;
+		  s += 4;
+		}
+	      else if (strncmp (s, "@plt", 4) == 0
+		       || strncmp (s, "@PLT", 4) == 0)
+		{
+		  as_bad (_("Assembler does not yet support PIC"));
+		  the_insn.fup |= OP_SEL_PLT;
+		  s += 4;
+		}
+
+	      the_insn.expand = insn->expand;
+
+	      continue;
+#else /* ! SYNTAX_SVR4 */
 	      if (*s == ' ')
 		s++;
 	      if (strncmp (s, "ha%", 3) == 0)
 		{
-		  the_insn.highlow = HIGHADJ;
+		  the_insn.fup |= OP_SEL_HA;
 		  s += 3;
 		}
 	      else if (strncmp (s, "h%", 2) == 0)
 		{
-		  the_insn.highlow = HIGH;
+		  the_insn.fup |= OP_SEL_H;
 		  s += 2;
 		}
 	      else if (strncmp (s, "l%", 2) == 0)
 		{
-		  the_insn.highlow = PAIR;
+		  the_insn.fup |= OP_SEL_L;
 		  s += 2;
 		}
 	      the_insn.expand = insn->expand;
 
-	      /* Note that if the getExpression() fails, we will still have
-				   created U entries in the symbol table for the 'symbols'
-				   in the input string.  Try not to create U symbols for
-				   registers, etc. */
+	      /* Note that if i860_get_expression() fails, we will still
+		 have created U entries in the symbol table for the
+		 'symbols' in the input string.  Try not to create U
+		 symbols for registers, etc.  */
+	      if (! i860_get_expression (s))
+		s = expr_end;
+	      else
+		goto error;
 
-	      if (!getExpression (s))
-		{
-		  s = expr_end;
-		  continue;
-		}
+	      continue;
+#endif /* SYNTAX_SVR4 */
 	      break;
 
 	    default:
@@ -713,16 +837,16 @@ i860_ip (str)
       if (match == 0)
 	{
 	  /* Args don't match.  */
-	  if (&insn[1] - i860_opcodes < NUMOPCODES
-	      && !strcmp (insn->name, insn[1].name))
+	  if (insn[1].name != NULL
+	      && ! strcmp (insn->name, insn[1].name))
 	    {
 	      ++insn;
-	      s = argsStart;
+	      s = args_start;
 	      continue;
 	    }
 	  else
 	    {
-	      as_bad (_("Illegal operands"));
+	      as_bad (_("Illegal operands for %s"), insn->name);
 	      return;
 	    }
 	}
@@ -733,7 +857,7 @@ i860_ip (str)
 }
 
 static int
-getExpression (str)
+i860_get_expression (str)
      char *str;
 {
   char *save_in;
@@ -756,17 +880,12 @@ getExpression (str)
   return 0;
 }
 
+/* Turn a string in input_line_pointer into a floating point constant of
+   type TYPE, and store the appropriate bytes in *LITP.  The number of
+   LITTLENUMS emitted is stored in *SIZEP.  An error message is returned,
+   or NULL on OK.  */
 
-/*
-  This is identical to the md_atof in m68k.c.  I think this is right,
-  but I'm not sure.
-
-  Turn a string in input_line_pointer into a floating point constant of type
-  type, and store the appropriate bytes in *litP.  The number of LITTLENUMS
-  emitted is stored in *sizeP .  An error message is returned, or NULL on OK.
-  */
-
-/* Equal to MAX_PRECISION in atof-ieee.c */
+/* Equal to MAX_PRECISION in atof-ieee.c.  */
 #define MAX_LITTLENUMS 6
 
 char *
@@ -783,7 +902,6 @@ md_atof (type, litP, sizeP)
 
   switch (type)
     {
-
     case 'f':
     case 'F':
     case 's':
@@ -824,226 +942,60 @@ md_atof (type, litP, sizeP)
   return 0;
 }
 
-/*
- * Write out big-endian.
- */
+/* Write out in current endian mode.  */
 void
 md_number_to_chars (buf, val, n)
      char *buf;
      valueT val;
      int n;
 {
-  number_to_chars_bigendian (buf, val, n);
+  if (target_big_endian)
+    number_to_chars_bigendian (buf, val, n);
+  else
+    number_to_chars_littleendian (buf, val, n);
 }
 
-void
-md_number_to_imm (buf, val, n, fixP)
-     char *buf;
-     long val;
-     int n;
-     fixS *fixP;
-{
-  enum reloc_type reloc = fixP->fx_r_type & 0xf;
-  enum highlow_type highlow = (fixP->fx_r_type >> 4) & 0x3;
-
-  assert (buf);
-  assert (n == 4);		/* always on i860 */
-
-  switch (highlow)
-    {
-
-    case HIGHADJ:		/* adjusts the high-order 16-bits */
-      if (val & (1 << 15))
-	val += (1 << 16);
-
-      /*FALLTHROUGH*/
-
-    case HIGH:			/* selects the high-order 16-bits */
-      val >>= 16;
-      break;
-
-    case PAIR:			/* selects the low-order 16-bits */
-      val = val & 0xffff;
-      break;
-
-    default:
-      break;
-    }
-
-  switch (reloc)
-    {
-
-    case BRADDR:		/* br,call,bc,bc.t,bnc,bnc.t w/26-bit immediate */
-      if (fixP->fx_pcrel != 1)
-	as_bad (_("26-bit branch w/o pc relative set: 0x%08x"), val);
-      val >>= 2;		/* align pcrel offset, see manual */
-
-      if (val >= (1 << 25) || val < -(1 << 25))	/* check for overflow */
-	as_bad (_("26-bit branch offset overflow: 0x%08x"), val);
-      buf[0] = (buf[0] & 0xfc) | ((val >> 24) & 0x3);
-      buf[1] = val >> 16;
-      buf[2] = val >> 8;
-      buf[3] = val;
-      break;
-
-    case SPLIT2:		/* 16 bit immediate, 4-byte aligned */
-      if (val & 0x3)
-	as_bad (_("16-bit immediate 4-byte alignment error: 0x%08x"), val);
-      val &= ~0x3;		/* 4-byte align value */
-      /*FALLTHROUGH*/
-    case SPLIT1:		/* 16 bit immediate, 2-byte aligned */
-      if (val & 0x1)
-	as_bad (_("16-bit immediate 2-byte alignment error: 0x%08x"), val);
-      val &= ~0x1;		/* 2-byte align value */
-      /*FALLTHROUGH*/
-    case SPLIT0:		/* st,bla,bte,btne w/16-bit immediate */
-      if (fixP->fx_pcrel == 1)
-	val >>= 2;		/* align pcrel offset, see manual */
-      /* check for bounds */
-      if (highlow != PAIR && (val >= (1 << 16) || val < -(1 << 15)))
-	as_bad (_("16-bit branch offset overflow: 0x%08x"), val);
-      buf[1] = (buf[1] & ~0x1f) | ((val >> 11) & 0x1f);
-      buf[2] = (buf[2] & ~0x7) | ((val >> 8) & 0x7);
-      buf[3] |= val;		/* perserve bottom opcode bits */
-      break;
-
-    case LOW4:			/* fld,pfld,pst,flush 16-byte aligned */
-      if (val & 0xf)
-	as_bad (_("16-bit immediate 16-byte alignment error: 0x%08x"), val);
-      val &= ~0xf;		/* 16-byte align value */
-      /*FALLTHROUGH*/
-    case LOW3:			/* fld,pfld,pst,flush 8-byte aligned */
-      if (val & 0x7)
-	as_bad (_("16-bit immediate 8-byte alignment error: 0x%08x"), val);
-      val &= ~0x7;		/* 8-byte align value */
-      /*FALLTHROUGH*/
-    case LOW2:			/* 16 bit immediate, 4-byte aligned */
-      if (val & 0x3)
-	as_bad (_("16-bit immediate 4-byte alignment error: 0x%08x"), val);
-      val &= ~0x3;		/* 4-byte align value */
-      /*FALLTHROUGH*/
-    case LOW1:			/* 16 bit immediate, 2-byte aligned */
-      if (val & 0x1)
-	as_bad (_("16-bit immediate 2-byte alignment error: 0x%08x"), val);
-      val &= ~0x1;		/* 2-byte align value */
-      /*FALLTHROUGH*/
-    case LOW0:			/* 16 bit immediate, byte aligned */
-      /* check for bounds */
-      if (highlow != PAIR && (val >= (1 << 16) || val < -(1 << 15)))
-	as_bad (_("16-bit immediate overflow: 0x%08x"), val);
-      buf[2] = val >> 8;
-      buf[3] |= val;		/* perserve bottom opcode bits */
-      break;
-
-    case NO_RELOC:
-    default:
-      as_bad (_("bad relocation type: 0x%02x"), reloc);
-      break;
-    }
-}
-
-/* should never be called for i860 */
+/* This should never be called for i860.  */
 void
 md_number_to_disp (buf, val, n)
-     char *buf;
-     long val;
+     char *buf ATTRIBUTE_UNUSED;
+     long val ATTRIBUTE_UNUSED;
+     int n ATTRIBUTE_UNUSED;
 {
   as_fatal (_("md_number_to_disp\n"));
 }
 
-/* should never be called for i860 */
+/* This should never be called for i860.  */
 void
 md_number_to_field (buf, val, fix)
-     char *buf;
-     long val;
-     void *fix;
+     char *buf ATTRIBUTE_UNUSED;
+     long val ATTRIBUTE_UNUSED;
+     void *fix ATTRIBUTE_UNUSED;
 {
   as_fatal (_("i860_number_to_field\n"));
 }
 
-/* the bit-field entries in the relocation_info struct plays hell
-   with the byte-order problems of cross-assembly.  So as a hack,
-   I added this mach. dependent ri twiddler.  Ugly, but it gets
-   you there. -KWK */
-/* on i860: first 4 bytes are normal unsigned long address, next three
-   bytes are index, most sig. byte first.  Byte 7 is broken up with
-   bit 7 as pcrel, bit 6 as extern, and the lower six bits as
-   relocation type (highlow 5-4).  Next 4 bytes are long addend. */
-/* Thanx and a tip of the hat to Michael Bloom, mb@ttidca.tti.com */
-void
-md_ri_to_chars (ri_p, ri)
-     struct relocation_info *ri_p, ri;
-{
-#if 0
-  unsigned char the_bytes[sizeof (*ri_p)];
-
-  /* this is easy */
-  md_number_to_chars (the_bytes, ri.r_address, sizeof (ri.r_address));
-  /* now the fun stuff */
-  the_bytes[4] = (ri.r_index >> 16) & 0x0ff;
-  the_bytes[5] = (ri.r_index >> 8) & 0x0ff;
-  the_bytes[6] = ri.r_index & 0x0ff;
-  the_bytes[7] = ((ri.r_extern << 7) & 0x80) | (0 & 0x60) | (ri.r_type & 0x1F);
-  /* Also easy */
-  md_number_to_chars (&the_bytes[8], ri.r_addend, sizeof (ri.r_addend));
-  /* now put it back where you found it, Junior... */
-  memcpy ((char *) ri_p, the_bytes, sizeof (*ri_p));
-#endif
-}
-
-/* should never be called for i860 */
-void
-md_convert_frag (headers, seg, fragP)
-     object_headers *headers;
-     segT seg;
-     register fragS *fragP;
-{
-  as_fatal (_("i860_convert_frag\n"));
-}
-
-/* should never be called for i860 */
+/* This should never be called for i860.  */
 int
 md_estimate_size_before_relax (fragP, segtype)
-     register fragS *fragP;
-     segT segtype;
+     register fragS *fragP ATTRIBUTE_UNUSED;
+     segT segtype ATTRIBUTE_UNUSED;
 {
   as_fatal (_("i860_estimate_size_before_relax\n"));
 }
 
-/* for debugging only, must match enum reloc_type */
-static char *Reloc[] =
-{
-  "NO_RELOC",
-  "BRADDR",
-  "LOW0",
-  "LOW1",
-  "LOW2",
-  "LOW3",
-  "LOW4",
-  "SPLIT0",
-  "SPLIT1",
-  "SPLIT2",
-  "RELOC_32",
-};
-static char *Highlow[] =
-{
-  "NO_SPEC",
-  "PAIR",
-  "HIGH",
-  "HIGHADJ",
-};
+#ifdef DEBUG_I860
 static void
 print_insn (insn)
      struct i860_it *insn;
 {
   if (insn->error)
-    {
-      fprintf (stderr, "ERROR: %s\n");
-    }
-  fprintf (stderr, "opcode=0x%08x\t", insn->opcode);
-  fprintf (stderr, "expand=0x%08x\t", insn->expand);
-  fprintf (stderr, "reloc = %s\t", Reloc[insn->reloc]);
-  fprintf (stderr, "highlow = %s\n", Highlow[insn->highlow]);
+    fprintf (stderr, "ERROR: %s\n", insn->error);
+
+  fprintf (stderr, "opcode = 0x%08lx\t", insn->opcode);
+  fprintf (stderr, "expand = 0x%x\t", insn->expand);
+  fprintf (stderr, "reloc = %s\t\n",
+	   bfd_get_reloc_code_name (insn->reloc));
   fprintf (stderr, "exp =  {\n");
   fprintf (stderr, "\t\tX_add_symbol = %s\n",
 	   insn->exp.X_add_symbol ?
@@ -1053,179 +1005,124 @@ print_insn (insn)
 	   insn->exp.X_op_symbol ?
 	   (S_GET_NAME (insn->exp.X_op_symbol) ?
 	    S_GET_NAME (insn->exp.X_op_symbol) : "???") : "0");
-  fprintf (stderr, "\t\tX_add_number = %d\n",
+  fprintf (stderr, "\t\tX_add_number = %lx\n",
 	   insn->exp.X_add_number);
   fprintf (stderr, "}\n");
 }
+#endif /* DEBUG_I860 */
+
 
+#ifdef OBJ_ELF
+CONST char *md_shortopts = "VQ:";
+#else
 CONST char *md_shortopts = "";
+#endif
+
+#define OPTION_EB		(OPTION_MD_BASE + 0)
+#define OPTION_EL		(OPTION_MD_BASE + 1)
+#define OPTION_WARN_EXPAND	(OPTION_MD_BASE + 2)
+
 struct option md_longopts[] = {
-  {NULL, no_argument, NULL, 0}
+  { "EB",	    no_argument, NULL, OPTION_EB },
+  { "EL",	    no_argument, NULL, OPTION_EL },
+  { "mwarn-expand", no_argument, NULL, OPTION_WARN_EXPAND },
+  { NULL,	    no_argument, NULL, 0 }
 };
-size_t md_longopts_size = sizeof(md_longopts);
+size_t md_longopts_size = sizeof (md_longopts);
 
 int
 md_parse_option (c, arg)
      int c;
-     char *arg;
+     char *arg ATTRIBUTE_UNUSED;
 {
-  return 0;
+  switch (c)
+    {
+    case OPTION_EB:
+      target_big_endian = 1;
+      break;
+
+    case OPTION_EL:
+      target_big_endian = 0;
+      break;
+
+    case OPTION_WARN_EXPAND:
+      target_warn_expand = 1;
+      break;
+
+#ifdef OBJ_ELF
+    /* SVR4 argument compatibility (-V): print version ID.  */
+    case 'V':
+      print_version_id ();
+      break;
+
+    /* SVR4 argument compatibility (-Qy, -Qn): controls whether
+       a .comment section should be emitted or not (ignored).  */
+    case 'Q':
+      break;
+#endif
+
+    default:
+      return 0;
+    }
+
+  return 1;
 }
 
 void
 md_show_usage (stream)
      FILE *stream;
 {
+  fprintf (stream, _("\
+  -EL			  generate code for little endian mode (default)\n\
+  -EB			  generate code for big endian mode\n\
+  -mwarn-expand		  warn if pseudo operations are expanded\n"));
+#ifdef OBJ_ELF
+  /* SVR4 compatibility flags.  */
+  fprintf (stream, _("\
+  -V			  print assembler version number\n\
+  -Qy, -Qn		  ignored\n"));
+#endif
 }
+
 
-#ifdef comment
-/*
- * I860 relocations are completely different, so it needs
- * this machine dependent routine to emit them.
- */
-void
-emit_machine_reloc (fixP, segment_address_in_file)
-     register fixS *fixP;
-     relax_addressT segment_address_in_file;
-{
-  struct reloc_info_i860 ri;
-  register symbolS *symbolP;
-  extern char *next_object_file_charP;
-  long add_number;
-
-  memset ((char *) &ri, '\0', sizeof (ri));
-  for (; fixP; fixP = fixP->fx_next)
-    {
-
-      if (fixP->fx_r_type & ~0x3f)
-	{
-	  as_fatal ("fixP->fx_r_type = %d\n", fixP->fx_r_type);
-	}
-      ri.r_pcrel = fixP->fx_pcrel;
-      ri.r_type = fixP->fx_r_type;
-
-      if ((symbolP = fixP->fx_addsy) != NULL)
-	{
-	  ri.r_address = fixP->fx_frag->fr_address +
-	    fixP->fx_where - segment_address_in_file;
-	  if (!S_IS_DEFINED (symbolP))
-	    {
-	      ri.r_extern = 1;
-	      ri.r_symbolnum = symbolP->sy_number;
-	    }
-	  else
-	    {
-	      ri.r_extern = 0;
-	      ri.r_symbolnum = S_GET_TYPE (symbolP);
-	    }
-	  if (symbolP && symbol_get_frag (symbolP))
-	    {
-	      ri.r_addend = symbol_get_frag (symbolP)->fr_address;
-	    }
-	  ri.r_type = fixP->fx_r_type;
-	  if (fixP->fx_pcrel)
-	    {
-	      /* preserve actual offset vs. pc + 4 */
-	      ri.r_addend -= (ri.r_address + 4);
-	    }
-	  else
-	    {
-	      ri.r_addend = fixP->fx_addnumber;
-	    }
-
-	  md_ri_to_chars ((char *) &ri, ri);
-	  append (&next_object_file_charP, (char *) &ri, sizeof (ri));
-	}
-    }
-}
-
-#endif /* comment */
-
-#ifdef OBJ_AOUT
-
-/* on i860: first 4 bytes are normal unsigned long address, next three
-   bytes are index, most sig. byte first.  Byte 7 is broken up with
-   bit 7 as pcrel, bit 6 as extern, and the lower six bits as
-   relocation type (highlow 5-4).  Next 4 bytes are long addend. */
-
-void
-tc_aout_fix_to_chars (where, fixP, segment_address_in_file)
-     char *where;
-     fixS *fixP;
-     relax_addressT segment_address_in_file;
-{
-  long r_index;
-  long r_extern;
-  long r_addend = 0;
-  long r_address;
-
-  know (fixP->fx_addsy);
-  know (!(fixP->fx_r_type & ~0x3f));
-
-  if (!S_IS_DEFINED (fixP->fx_addsy))
-    {
-      r_extern = 1;
-      r_index = fixP->fx_addsy->sy_number;
-    }
-  else
-    {
-      r_extern = 0;
-      r_index = S_GET_TYPE (fixP->fx_addsy);
-    }
-
-  md_number_to_chars (where,
-		      r_address = fixP->fx_frag->fr_address + fixP->fx_where - segment_address_in_file,
-		      4);
-
-  where[4] = (r_index >> 16) & 0x0ff;
-  where[5] = (r_index >> 8) & 0x0ff;
-  where[6] = r_index & 0x0ff;
-  where[7] = (((fixP->fx_pcrel << 7) & 0x80)
-	      | ((r_extern << 6) & 0x40)
-	      | (fixP->fx_r_type & 0x3F));
-
-  if (symbol_get_frag (fixP->fx_addsy))
-    {
-      r_addend = symbol_get_frag (fixP->fx_addsy)->fr_address;
-    }
-
-  if (fixP->fx_pcrel)
-    {
-      /* preserve actual offset vs. pc + 4 */
-      r_addend -= (r_address + 4);
-    }
-  else
-    {
-      r_addend = fixP->fx_addnumber;
-    }
-
-  md_number_to_chars (&where[8], r_addend, 4);
-}
-
-#endif /* OBJ_AOUT */
-
 /* We have no need to default values of symbols.  */
-
-/* ARGSUSED */
 symbolS *
 md_undefined_symbol (name)
-     char *name;
+     char *name ATTRIBUTE_UNUSED;
 {
   return 0;
+}
+
+/* The i860 denotes auto-increment with '++'.  */
+void
+md_operand (exp)
+     expressionS *exp;
+{
+  char *s;
+
+  for (s = input_line_pointer; *s; s++)
+    {
+      if (s[0] == '+' && s[1] == '+')
+	{
+	  input_line_pointer += 2;
+	  exp->X_op = O_register;
+	  break;
+	}
+    }
 }
 
 /* Round up a section size to the appropriate boundary.  */
 valueT
 md_section_align (segment, size)
-     segT segment;
-     valueT size;
+     segT segment ATTRIBUTE_UNUSED;
+     valueT size ATTRIBUTE_UNUSED;
 {
-  return size;			/* Byte alignment is fine */
+  /* Byte alignment is fine.  */
+  return size;
 }
 
-/* Exactly what point is a PC-relative offset relative TO?
-   On the i860, they're relative to the address of the offset, plus
-   its size. (??? Is this right?  FIXME-SOON!) */
+/* On the i860, a PC-relative offset is relative to the address of the
+   of the offset plus its size.  */
 long
 md_pcrel_from (fixP)
      fixS *fixP;
@@ -1233,31 +1130,268 @@ md_pcrel_from (fixP)
   return fixP->fx_size + fixP->fx_where + fixP->fx_frag->fr_address;
 }
 
-void
-md_apply_fix (fixP, val)
-     fixS *fixP;
-     long val;
+/* Determine the relocation needed for non PC-relative 16-bit immediates.
+   Also adjust the given immediate as necessary.  Finally, check that
+   all constraints (such as alignment) are satisfied.   */
+static bfd_reloc_code_real_type
+obtain_reloc_for_imm16 (fix, val)
+     fixS *fix;
+     long *val;
 {
-  char *place = fixP->fx_where + fixP->fx_frag->fr_literal;
+  valueT fup = fix->fx_addnumber;
+  bfd_reloc_code_real_type reloc;
 
-  /* looks to me like i860 never has bit fixes. Let's see. xoxorich. */
-  know (fixP->fx_bit_fixP == NULL);
-  if (!fixP->fx_bit_fixP)
+  if (fix->fx_pcrel)
+    abort ();
+
+  /* Check alignment restrictions.  */
+  if ((fup & OP_ALIGN2) && (*val & 0x1))
+    as_bad_where (fix->fx_file, fix->fx_line,
+		  _("This immediate requires 0 MOD 2 alignment"));
+  else if ((fup & OP_ALIGN4) && (*val & 0x3))
+    as_bad_where (fix->fx_file, fix->fx_line,
+		  _("This immediate requires 0 MOD 4 alignment"));
+  else if ((fup & OP_ALIGN8) && (*val & 0x7))
+    as_bad_where (fix->fx_file, fix->fx_line,
+		  _("This immediate requires 0 MOD 8 alignment"));
+  else if ((fup & OP_ALIGN16) && (*val & 0xf))
+    as_bad_where (fix->fx_file, fix->fx_line,
+		  _("This immediate requires 0 MOD 16 alignment"));
+
+  if (fup & OP_SEL_HA)
     {
-      fixP->fx_addnumber = val;
-      md_number_to_imm (place, val, fixP->fx_size, fixP);
+      *val = (*val >> 16) + (*val & 0x8000 ? 1 : 0);
+      reloc = BFD_RELOC_860_HIGHADJ;
+    }
+  else if (fup & OP_SEL_H)
+    {
+      *val >>= 16;
+      reloc = BFD_RELOC_860_HIGH;
+    }
+  else if (fup & OP_SEL_L)
+    {
+      int num_encode;
+      if (fup & OP_IMM_SPLIT16)
+	{
+	  if (fup & OP_ENCODE1)
+	    {
+	      num_encode = 1;
+	      reloc = BFD_RELOC_860_SPLIT1;
+	    }
+	  else if (fup & OP_ENCODE2)
+	    {
+	      num_encode = 2;
+	      reloc = BFD_RELOC_860_SPLIT2;
+	    }
+	  else
+	    {
+	      num_encode = 0;
+	      reloc = BFD_RELOC_860_SPLIT0;
+	    }
+	}
+      else
+	{
+	  if (fup & OP_ENCODE1)
+	    {
+	      num_encode = 1;
+	      reloc = BFD_RELOC_860_LOW1;
+	    }
+	  else if (fup & OP_ENCODE2)
+	    {
+	      num_encode = 2;
+	      reloc = BFD_RELOC_860_LOW2;
+	    }
+	  else if (fup & OP_ENCODE3)
+	    {
+	      num_encode = 3;
+	      reloc = BFD_RELOC_860_LOW3;
+	    }
+	  else
+	    {
+	      num_encode = 0;
+	      reloc = BFD_RELOC_860_LOW0;
+	    }
+	}
+
+      /* Preserve size encode bits.  */
+      *val &= ~((1 << num_encode) - 1);
     }
   else
     {
-      md_number_to_field (place, val, fixP->fx_bit_fixP);
+      /* No selector.  What reloc do we generate (???)?  */
+      reloc = BFD_RELOC_32;
     }
+
+  return reloc;
 }
 
-/*
- * Local Variables:
- * fill-column: 131
- * comment-column: 0
- * End:
- */
+/* Attempt to simplify or eliminate a fixup. To indicate that a fixup
+   has been eliminated, set fix->fx_done. If fix->fx_addsy is non-NULL,
+   we will have to generate a reloc entry.  */
+int
+md_apply_fix3 (fix, valuep, seg)
+     fixS *fix;
+     valueT *valuep;
+     segT seg ATTRIBUTE_UNUSED;
+{
 
-/* end of tc-i860.c */
+  char *buf;
+  long val = (long) (*valuep);
+  unsigned long insn;
+  valueT fup;
+
+  buf = fix->fx_frag->fr_literal + fix->fx_where;
+
+  /* Recall that earlier we stored the opcode little-endian.  */
+  insn = bfd_getl32 (buf);
+
+  /* We stored a fix-up in this oddly-named scratch field.  */
+  fup = fix->fx_addnumber;
+
+  /* Determine the necessary relocations as well as inserting an
+     immediate into the instruction.   */
+  if (fup == OP_IMM_U5)
+    {
+      if (val & ~0x1f)
+	as_bad_where (fix->fx_file, fix->fx_line,
+		      _("5-bit immediate too large"));
+      if (fix->fx_addsy)
+	as_bad_where (fix->fx_file, fix->fx_line,
+		      _("5-bit field must be absolute"));
+
+      insn |= (val & 0x1f) << 11;
+      bfd_putl32 (insn, buf);
+      fix->fx_r_type = BFD_RELOC_NONE;
+      fix->fx_done = 1;
+    }
+  else if (fup & OP_IMM_S16)
+    {
+      fix->fx_r_type = obtain_reloc_for_imm16 (fix, &val);
+
+      /* Insert the immediate.  */
+      if (fix->fx_addsy)
+	fix->fx_done = 0;
+      else
+	{
+	  insn |= val & 0xffff;
+	  bfd_putl32 (insn, buf);
+	  fix->fx_r_type = BFD_RELOC_NONE;
+	  fix->fx_done = 1;
+	}
+    }
+  else if (fup & OP_IMM_U16)
+    {
+      abort ();
+    }
+  else if (fup & OP_IMM_SPLIT16)
+    {
+      fix->fx_r_type = obtain_reloc_for_imm16 (fix, &val);
+
+      /* Insert the immediate.  */
+      if (fix->fx_addsy)
+	fix->fx_done = 0;
+      else
+	{
+	  insn |= val & 0x7ff;
+	  insn |= (val & 0xf800) << 5;
+	  bfd_putl32 (insn, buf);
+	  fix->fx_r_type = BFD_RELOC_NONE;
+	  fix->fx_done = 1;
+	}
+    }
+  else if (fup & OP_IMM_BR16)
+    {
+      if (val & 0x3)
+	as_bad_where (fix->fx_file, fix->fx_line,
+		      _("A branch offset requires 0 MOD 4 alignment"));
+
+      val = val >> 2;
+
+      /* Insert the immediate.  */
+      if (fix->fx_addsy)
+	{
+	  fix->fx_done = 0;
+	  fix->fx_r_type = BFD_RELOC_860_PC16;
+	}
+      else
+	{
+	  insn |= (val & 0x7ff);
+	  insn |= ((val & 0xf800) << 5);
+	  bfd_putl32 (insn, buf);
+	  fix->fx_r_type = BFD_RELOC_NONE;
+	  fix->fx_done = 1;
+	}
+    }
+  else if (fup & OP_IMM_BR26)
+    {
+      if (val & 0x3)
+	as_bad_where (fix->fx_file, fix->fx_line,
+		      _("A branch offset requires 0 MOD 4 alignment"));
+
+      val >>= 2;
+
+      /* Insert the immediate.  */
+      if (fix->fx_addsy)
+	{
+	  fix->fx_r_type = BFD_RELOC_860_PC26;
+	  fix->fx_done = 0;
+	}
+      else
+	{
+	  insn |= (val & 0x3ffffff);
+	  bfd_putl32 (insn, buf);
+	  fix->fx_r_type = BFD_RELOC_NONE;
+	  fix->fx_done = 1;
+	}
+    }
+  else if (fup != OP_NONE)
+    {
+      as_bad_where (fix->fx_file, fix->fx_line,
+		    _("Unrecognized fix-up (0x%08x)"), fup);
+      abort ();
+    }
+  else
+    {
+      /* I believe only fix-ups such as ".long .ep.main-main+0xc8000000"
+ 	 reach here (???).  */
+      if (fix->fx_addsy)
+	{
+	  fix->fx_r_type = BFD_RELOC_32;
+	  fix->fx_done = 0;
+	}
+      else
+	{
+	  insn |= (val & 0xffffffff);
+	  bfd_putl32 (insn, buf);
+	  fix->fx_r_type = BFD_RELOC_NONE;
+	  fix->fx_done = 1;
+	}
+    }
+
+  /* Return value ignored.  */
+  return 0;
+}
+
+/* Generate a machine dependent reloc from a fixup.  */
+arelent*
+tc_gen_reloc (section, fixp)
+     asection *section ATTRIBUTE_UNUSED;
+     fixS *fixp;
+{
+  arelent *reloc;
+
+  reloc = xmalloc (sizeof (*reloc));
+  reloc->sym_ptr_ptr = (asymbol **) xmalloc (sizeof (asymbol *));
+  *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
+  reloc->address = fixp->fx_frag->fr_address + fixp->fx_where;
+  reloc->addend = fixp->fx_offset;
+  reloc->howto = bfd_reloc_type_lookup (stdoutput, fixp->fx_r_type);
+
+  if (! reloc->howto)
+    {
+      as_bad_where (fixp->fx_file, fixp->fx_line,
+                    "Cannot represent %s relocation in object file",
+                    bfd_get_reloc_code_name (fixp->fx_r_type));
+    }
+  return reloc;
+}

@@ -1,5 +1,6 @@
 /* BFD back-end for HP/UX core files.
-   Copyright 1993, 94, 95, 96, 97, 1998 Free Software Foundation, Inc.
+   Copyright 1993, 1994, 1996, 1998, 1999, 2001
+   Free Software Foundation, Inc.
    Written by Stu Grossman, Cygnus Support.
    Converted to back-end form by Ian Lance Taylor, Cygnus SUpport
 
@@ -85,7 +86,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 /* .lwpid and .user_tid are only valid if PROC_INFO_HAS_THREAD_ID, else they
    are set to 0.  Also, until HP-UX implements MxN threads, .user_tid and
    .lwpid are synonymous. */
-struct hpux_core_struct 
+struct hpux_core_struct
 {
   int sig;
   int lwpid;               /* Kernel thread ID. */
@@ -141,7 +142,6 @@ hpux_core_make_empty_symbol (abfd)
     new->the_bfd = abfd;
   return new;
 }
-
 
 /* this function builds a bfd target if the file is a corefile.
    It returns null or 0 if it finds out thaat it is not a core file.
@@ -288,7 +288,7 @@ hpux_core_core_file_p (abfd)
              */
 	  unknown_sections++;
           break;
-       
+
          default: return 0; /*unrecognized core file type */
 	}
     }
@@ -389,7 +389,7 @@ const bfd_target hpux_core_vec =
      bfd_false, bfd_false,
      bfd_false, bfd_false
     },
-    
+
        BFD_JUMP_TABLE_GENERIC (_bfd_generic),
        BFD_JUMP_TABLE_COPY (_bfd_generic),
        BFD_JUMP_TABLE_CORE (hpux_core),
@@ -401,6 +401,6 @@ const bfd_target hpux_core_vec =
        BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
 
     NULL,
-    
+
     (PTR) 0			/* backend_data */
 };

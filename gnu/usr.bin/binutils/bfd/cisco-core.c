@@ -1,6 +1,6 @@
 /* BFD back-end for CISCO crash dumps.
 
-Copyright 1994 Free Software Foundation, Inc.
+Copyright 1994, 1997, 1999, 2000 Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
 
@@ -72,7 +72,7 @@ struct cisco_core_struct
 };
 
 /* Examine the file for a crash info struct at the offset given by
-   CRASH_INFO_LOC. */
+   CRASH_INFO_LOC.  */
 
 static const bfd_target *
 cisco_core_file_validate (abfd, crash_info_loc)
@@ -236,7 +236,7 @@ cisco_core_file_validate (abfd, crash_info_loc)
   abfd->section_count = 0;
 
   /* Create a ".reg" section to allow access to the saved
-     registers. */
+     registers.  */
 
   asect = (asection *) bfd_zmalloc (sizeof (asection));
   if (asect == NULL)
@@ -247,7 +247,7 @@ cisco_core_file_validate (abfd, crash_info_loc)
   asect->filepos = bfd_get_32 (abfd, crashinfo.registers) - rambase;
   /* Since we don't know the exact size of the saved register info,
      choose a register section size that is either the remaining part
-     of the file, or 1024, whichever is smaller. */
+     of the file, or 1024, whichever is smaller.  */
   nread = statbuf.st_size - asect->filepos;
   asect->_raw_size = (nread < 1024) ? nread : 1024;
   asect->next = abfd->sections;
@@ -255,7 +255,7 @@ cisco_core_file_validate (abfd, crash_info_loc)
   ++abfd->section_count;
 
   /* Create a ".crash" section to allow access to the saved
-     crash information. */
+     crash information.  */
 
   asect = (asection *) bfd_zmalloc (sizeof (asection));
   if (asect == NULL)
@@ -270,7 +270,7 @@ cisco_core_file_validate (abfd, crash_info_loc)
   ++abfd->section_count;
 
   /* Create a ".data" section that maps the entire file, which is
-     essentially a dump of the target system's RAM. */
+     essentially a dump of the target system's RAM.  */
 
   asect = (asection *) bfd_zmalloc (sizeof (asection));
   if (asect == NULL)
@@ -288,7 +288,7 @@ cisco_core_file_validate (abfd, crash_info_loc)
   return abfd->xvec;
 
   /* Get here if we have already started filling out the BFD
-     and there is an error of some kind. */
+     and there is an error of some kind.  */
 
  error_return:
   {
@@ -378,7 +378,7 @@ const bfd_target cisco_core_big_vec =
      bfd_false, bfd_false,
      bfd_false, bfd_false
     },
-    
+
        BFD_JUMP_TABLE_GENERIC (_bfd_generic),
        BFD_JUMP_TABLE_COPY (_bfd_generic),
        BFD_JUMP_TABLE_CORE (cisco),
@@ -390,7 +390,7 @@ const bfd_target cisco_core_big_vec =
        BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
 
     & cisco_core_little_vec,
-    
+
     (PTR) 0			/* backend_data */
 };
 
@@ -428,7 +428,7 @@ const bfd_target cisco_core_little_vec =
      bfd_false, bfd_false,
      bfd_false, bfd_false
     },
-    
+
        BFD_JUMP_TABLE_GENERIC (_bfd_generic),
        BFD_JUMP_TABLE_COPY (_bfd_generic),
        BFD_JUMP_TABLE_CORE (cisco),
@@ -440,6 +440,6 @@ const bfd_target cisco_core_little_vec =
        BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
 
     &cisco_core_big_vec,
-    
+
     (PTR) 0			/* backend_data */
 };

@@ -1,6 +1,6 @@
 	.code
 	.export		f
-f
+f:
 	.proc
 	.callinfo	frame=0,no_calls
 	.entry

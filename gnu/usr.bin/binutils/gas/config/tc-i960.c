@@ -1,5 +1,6 @@
 /* tc-i960.c - All the i80960-specific stuff
-   Copyright (C) 1989, 90, 91, 92, 93, 94, 95, 96, 97, 98, 1999
+   Copyright 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+   1999, 2000, 2001
    Free Software Foundation, Inc.
 
    This file is part of GAS.
@@ -19,7 +20,7 @@
    Software Foundation, 59 Temple Place - Suite 330, Boston, MA
    02111-1307, USA.  */
 
-/* See comment on md_parse_option for 80960-specific invocation options. */
+/* See comment on md_parse_option for 80960-specific invocation options.  */
 
 /* There are 4 different lengths of (potentially) symbol-based displacements
    in the 80960 instruction set, each of which could require address fix-ups
@@ -178,11 +179,11 @@ const char comment_chars[] = "#";
    #NO_APP at the beginning of its output.
  */
 
-/* Also note that comments started like this one will always work. */
+/* Also note that comments started like this one will always work.  */
 
-const char line_comment_chars[1];
+const char line_comment_chars[] = "";
 
-const char line_separator_chars[1];
+const char line_separator_chars[] = ";";
 
 /* Chars that can be used to separate mant from exp in floating point nums */
 const char EXP_CHARS[] = "eE";
@@ -191,7 +192,6 @@ const char EXP_CHARS[] = "eE";
    as in 0f12.456 or 0d1.2345e12
  */
 const char FLT_CHARS[] = "fFdDtT";
-
 
 /* Table used by base assembler to relax addresses based on varying length
    instructions.  The fields are:
@@ -242,12 +242,10 @@ const pseudo_typeS md_pseudo_table[] =
 #define adds(e)	e.X_add_symbol
 #define offs(e)	e.X_add_number
 
-
 /* Branch-prediction bits for CTRL/COBR format opcodes */
 #define BP_MASK		0x00000002	/* Mask for branch-prediction bit */
 #define BP_TAKEN	0x00000000	/* Value to OR in to predict branch */
 #define BP_NOT_TAKEN	0x00000002	/* Value to OR in to predict no branch */
-
 
 /* Some instruction opcodes that we need explicitly */
 #define BE	0x12000000
@@ -268,13 +266,11 @@ const pseudo_typeS md_pseudo_table[] =
 #define CALLS	0x66003800
 #define RET	0x0a000000
 
-
-/* These masks are used to build up a set of MEMB mode bits. */
+/* These masks are used to build up a set of MEMB mode bits.  */
 #define	A_BIT		0x0400
 #define	I_BIT		0x0800
 #define MEMB_BIT	0x1000
 #define	D_BIT		0x2000
-
 
 /* Mask for the only mode bit in a MEMA instruction (if set, abase reg is
    used).  */
@@ -294,7 +290,6 @@ typedef struct
 
 memS;
 
-
 /* The two pieces of info we need to generate a register operand */
 struct regop
   {
@@ -302,7 +297,6 @@ struct regop
     int special;		/* 0 =>not a sfr;  1=> is a sfr (not valid w/mode=0) */
     int n;			/* Register number or literal value */
   };
-
 
 /* Number and assembler mnemonic for all registers that can appear in
    operands.  */
@@ -449,12 +443,10 @@ aregs[] =
   { NULL, 0 },				/* END OF LIST */
 };
 
-
 /* Hash tables */
 static struct hash_control *op_hash;	/* Opcode mnemonics */
 static struct hash_control *reg_hash;	/* Register name hash table */
 static struct hash_control *areg_hash;	/* Abase register hash table */
-
 
 /* Architecture for which we are assembling */
 #define ARCH_ANY	0	/* Default: no architecture checking done */
@@ -469,7 +461,6 @@ int iclasses_seen;		/* OR of instruction classes (I_* constants)
 				 *    for which we've actually assembled
 				 *      instructions.
 				 */
-
 
 /* BRANCH-PREDICTION INSTRUMENTATION
 
@@ -592,7 +583,6 @@ md_assemble (textP)
 
   const char *bp_error_msg = _("branch prediction invalid on this opcode");
 
-
   /* Parse instruction into opcode and operands */
   memset (args, '\0', sizeof (args));
   n_ops = i_scan (textP, args);
@@ -610,8 +600,6 @@ md_assemble (textP)
 	  return;
 	}
     }
-
-
 
   /* Check for branch-prediction suffix on opcode mnemonic, strip it off */
   n = strlen (args[0]) - 1;
@@ -735,9 +723,8 @@ md_chars_to_number (val, n)
   return retval;
 }
 
-
 #define MAX_LITTLENUMS	6
-#define LNUM_SIZE	sizeof(LITTLENUM_TYPE)
+#define LNUM_SIZE	sizeof (LITTLENUM_TYPE)
 
 /*****************************************************************************
    md_atof:	convert ascii to floating point
@@ -808,7 +795,6 @@ md_atof (type, litP, sizeP)
   return 0;
 }
 
-
 /*****************************************************************************
    md_number_to_imm
 
@@ -821,7 +807,6 @@ md_number_to_imm (buf, val, n)
 {
   md_number_to_chars (buf, val, n);
 }
-
 
 /*****************************************************************************
    md_number_to_disp
@@ -917,7 +902,6 @@ md_number_to_field (instrP, val, bfixP)
   			.word	0	# post-counter
 
   		A table of all such "Labels" is also generated.
-
 
   	-AKA, -AKB, -AKC, -ASA, -ASB, -AMC, -ACA:
   		Select the 80960 architecture.  Instructions or features not
@@ -1264,7 +1248,6 @@ cobr_fmt (arg, opcode, oP)
       instr |= (regop.n << 14) | regop.special;
     }
 
-
   if (n < 3)
     {
       emit (instr);
@@ -1293,7 +1276,6 @@ cobr_fmt (arg, opcode, oP)
     }
 }				/* cobr_fmt() */
 
-
 /*****************************************************************************
    ctrl_fmt:	generate a CTRL-format instruction
 
@@ -1308,7 +1290,6 @@ ctrl_fmt (targP, opcode, num_ops)
   int instrument;		/* TRUE iff we should add instrumentation to track
 				   * how often the branch is taken
 				 */
-
 
   if (num_ops == 0)
     {
@@ -1339,7 +1320,6 @@ ctrl_fmt (targP, opcode, num_ops)
 
 }
 
-
 /*****************************************************************************
    emit:	output instruction binary
 
@@ -1358,7 +1338,6 @@ emit (instr)
   md_number_to_chars (toP, instr, 4);	/* Convert to target byte order */
   return toP;
 }
-
 
 /*****************************************************************************
    get_args:	break individual arguments out of comma-separated list
@@ -1438,7 +1417,6 @@ get_args (p, args)
   *to = '\0';
   return n;
 }
-
 
 /*****************************************************************************
    get_cdisp:	handle displacement for a COBR or CTRL instruction.
@@ -1529,7 +1507,6 @@ get_cdisp (dispP, ifmtP, instr, numbits, var_frag, callj)
     }
 }
 
-
 /*****************************************************************************
    get_ispec:	parse a memory operand for an index specification
 
@@ -1600,7 +1577,6 @@ get_regnum (regname)
   return (rP == NULL) ? -1 : *rP;
 }
 
-
 /*****************************************************************************
    i_scan:	perform lexical scan of ascii assembler instruction.
 
@@ -1621,7 +1597,7 @@ get_regnum (regname)
   *************************************************************************** */
 static int
 i_scan (iP, args)
-     /* Pointer to ascii instruction;  MUCKED BY US. */
+     /* Pointer to ascii instruction;  MUCKED BY US.  */
      register char *iP;
      /* Output arg: pointers to opcode and operands placed here.  MUST
 	ACCOMMODATE 4 ENTRIES.  */
@@ -1652,7 +1628,6 @@ i_scan (iP, args)
   return (get_args (iP, args));
 }				/* i_scan() */
 
-
 /*****************************************************************************
    mem_fmt:	generate a MEMA- or MEMB-format instruction
 
@@ -1680,7 +1655,7 @@ mem_fmt (args, oP, callx)
   memset (&instr, '\0', sizeof (memS));
   instr.opcode = oP->opcode;
 
-  /* Process operands. */
+  /* Process operands.  */
   for (i = 1; i <= oP->num_ops; i++)
     {
       opdesc = oP->operand[i - 1];
@@ -1771,7 +1746,6 @@ mem_fmt (args, oP, callx)
     }
 }				/* memfmt() */
 
-
 /*****************************************************************************
    mema_to_memb:	convert a MEMA-format opcode to a MEMB-format opcode.
 
@@ -1803,7 +1777,6 @@ mema_to_memb (opcodeP)
 
   md_number_to_chars (opcodeP, opcode, 4);
 }				/* mema_to_memb() */
-
 
 /*****************************************************************************
    parse_expr:		parse an expression
@@ -1858,7 +1831,6 @@ parse_expr (textP, expP)
     }
 }
 
-
 /*****************************************************************************
    parse_ldcont:
   	Parse and replace a 'ldconst' pseudo-instruction with an appropriate
@@ -1884,7 +1856,6 @@ parse_ldconst (arg)
   static char buf[5];		/* Literal for first operand */
   static char buf2[5];		/* Literal for second operand */
   expressionS e;		/* Parsed expression */
-
 
   arg[3] = NULL;		/* So we can tell at the end if it got used or not */
 
@@ -2019,7 +1990,6 @@ parse_memop (memP, argP, optype)
     -1,				/* MEM12 -- no valid default */
     16				/* MEM16 */
   };
-
 
   iprel_flag = mode = 0;
 
@@ -2208,7 +2178,7 @@ parse_po (po_num)
 
   extern char is_end_of_line[];
 
-  /* Advance input pointer to end of line. */
+  /* Advance input pointer to end of line.  */
   p = input_line_pointer;
   while (!is_end_of_line[(unsigned char) *input_line_pointer])
     {
@@ -2358,7 +2328,6 @@ reg_fmt (args, oP)
   struct regop regop;		/* Description of register operand */
   int n_ops;			/* Number of operands */
 
-
   instr = oP->opcode;
   n_ops = oP->num_ops;
 
@@ -2424,7 +2393,6 @@ reg_fmt (args, oP)
     }
   emit (instr);
 }
-
 
 /*****************************************************************************
    relax_cobr:
@@ -2512,7 +2480,6 @@ relax_cobr (fragP)
   frag_wane (fragP);
 }
 
-
 /*****************************************************************************
    reloc_callj:	Relocate a 'callj' instruction
 
@@ -2580,7 +2547,6 @@ reloc_callj (fixP)
   /* else Symbol is neither a sysproc nor a leafproc */
 }
 
-
 /*****************************************************************************
    s_leafproc:	process .leafproc pseudo-op
 
@@ -2610,7 +2576,7 @@ s_leafproc (n_ops, args)
       return;
     }				/* Check number of arguments */
 
-  /* Find or create symbol for 'call' entry point. */
+  /* Find or create symbol for 'call' entry point.  */
   callP = symbol_find_or_make (args[1]);
 
   if (TC_S_IS_CALLNAME (callP))
@@ -2644,7 +2610,6 @@ s_leafproc (n_ops, args)
     }				/* if only one arg, or the args are the same */
 }
 
-
 /*
    s_sysproc: process .sysproc pseudo-op
 
@@ -2670,7 +2635,7 @@ s_sysproc (n_ops, args)
       return;
     }				/* bad arg count */
 
-  /* Parse "entry_num" argument and check it for validity. */
+  /* Parse "entry_num" argument and check it for validity.  */
   parse_expr (args[2], &exp);
   if (exp.X_op != O_constant
       || (offs (exp) < 0)
@@ -2691,7 +2656,6 @@ s_sysproc (n_ops, args)
   TC_S_SET_SYSPROC (symP, offs (exp));	/* encode entry number */
   TC_S_FORCE_TO_SYSPROC (symP);
 }
-
 
 /*****************************************************************************
    shift_ok:
@@ -2729,7 +2693,6 @@ shift_ok (n)
   return shift;
 }
 
-
 /* syntax: issue syntax error */
 
 static void
@@ -2737,7 +2700,6 @@ syntax ()
 {
   as_bad (_("syntax error"));
 }				/* syntax() */
-
 
 /* targ_has_sfr:
 
@@ -2763,7 +2725,6 @@ targ_has_sfr (n)
       return ((0 <= n) && (n <= 2));
     }
 }
-
 
 /* targ_has_iclass:
 
@@ -2826,9 +2787,8 @@ s_endian (ignore)
   demand_empty_rest_of_line ();
 }
 
-/* We have no need to default values of symbols. */
+/* We have no need to default values of symbols.  */
 
-/* ARGSUSED */
 symbolS *
 md_undefined_symbol (name)
      char *name;
@@ -2838,7 +2798,7 @@ md_undefined_symbol (name)
 
 /* Exactly what point is a PC-relative offset relative TO?
    On the i960, they're relative to the address of the instruction,
-   which we have set up as the address of the fixup too. */
+   which we have set up as the address of the fixup too.  */
 long
 md_pcrel_from (fixP)
      fixS *fixP;
@@ -2940,7 +2900,7 @@ tc_bout_fix_to_chars (where, fixP, segment_address_in_file)
       ri.r_index = S_GET_TYPE (symbolP);
     }
 
-  /* Output the relocation information in machine-dependent form. */
+  /* Output the relocation information in machine-dependent form.  */
   md_ri_to_chars (where, &ri);
 }
 
@@ -3248,7 +3208,7 @@ i960_validate_fix (fixP, this_segment_type, add_symbolPP)
   if (fixP->fx_tcbit && TC_S_IS_CALLNAME (add_symbolP))
     {
       /* Relocation should be done via the associated 'bal'
-         entry point symbol. */
+         entry point symbol.  */
 
       if (!TC_S_IS_BALNAME (tc_get_bal_of_call (add_symbolP)))
 	{
@@ -3273,7 +3233,7 @@ i960_validate_fix (fixP, this_segment_type, add_symbolPP)
 	   displacement and are only to be used for local branches:
 	   flag as error, don't generate relocation.  */
 	as_bad (_("can't use COBR format with external label"));
-	fixP->fx_addsy = NULL;	/* No relocations please. */
+	fixP->fx_addsy = NULL;	/* No relocations please.  */
 	return 1;
       }
   }

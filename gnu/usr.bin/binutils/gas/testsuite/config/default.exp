@@ -43,4 +43,12 @@ if ![info exists OBJCOPYFLAGS] then {
     set OBJCOPYFLAGS {}
 }
 
+if ![info exists READELF] then {
+    set READELF [findfile $base_dir/../../binutils/readelf]
+}
+
+if ![info exists READELFFLAGS] then {
+    set READELFFLAGS {}
+}
+
 gas_init

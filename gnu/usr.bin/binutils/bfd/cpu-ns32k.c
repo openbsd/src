@@ -1,5 +1,6 @@
 /* BFD support for the ns32k architecture.
-   Copyright (C) 1990, 91, 94, 95, 96, 98, 1999 Free Software Foundation, Inc.
+   Copyright 1990, 1991, 1994, 1995, 1998, 2000
+   Free Software Foundation, Inc.
    Almost totally rewritten by Ian Dall from initial work
    by Andrew Cagney.
 
@@ -28,7 +29,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 {  32, 32, 8, bfd_arch_ns32k, machine, "ns32k",printable,3,d,bfd_default_compatible,bfd_default_scan, next, }
 
 static const bfd_arch_info_type arch_info_struct[] =
-{ 
+{
   N(32532,"ns32k:32532",true, 0), /* the word ns32k will match this too */
 };
 
@@ -174,8 +175,8 @@ do_ns32k_reloc (abfd, reloc_entry, symbol, data, input_section, output_bfd,
      asection *input_section;
      bfd *output_bfd;
      char **error_message ATTRIBUTE_UNUSED;
-     long (*get_data)();
-     int (*put_data)();
+     long (*get_data) ();
+     int (*put_data) ();
 {
   int overflow = 0;
   bfd_vma relocation;
@@ -200,7 +201,6 @@ do_ns32k_reloc (abfd, reloc_entry, symbol, data, input_section, output_bfd,
       && output_bfd == (bfd *) NULL)
     flag = bfd_reloc_undefined;
 
-
   /* Is the address of the relocation really within the section?  */
   if (reloc_entry->address > input_section->_cooked_size)
     return bfd_reloc_outofrange;
@@ -213,7 +213,6 @@ do_ns32k_reloc (abfd, reloc_entry, symbol, data, input_section, output_bfd,
     relocation = 0;
   else
     relocation = symbol->value;
-
 
   reloc_target_output_section = symbol->section->output_section;
 
@@ -290,8 +289,7 @@ do_ns32k_reloc (abfd, reloc_entry, symbol, data, input_section, output_bfd,
 	  reloc_entry->address += input_section->output_offset;
 
 	  /* WTF?? */
-	  if (abfd->xvec->flavour == bfd_target_coff_flavour
-	      && strcmp (abfd->xvec->name, "aixcoff-rs6000") != 0)
+	  if (abfd->xvec->flavour == bfd_target_coff_flavour)
 	    {
 #if 1
 	      /* For m68k-coff, the addend was being subtracted twice during
@@ -599,8 +597,8 @@ _bfd_do_ns32k_reloc_contents ( howto, input_bfd, relocation, location,
      bfd *input_bfd ATTRIBUTE_UNUSED;
      bfd_vma relocation;
      bfd_byte *location;
-     long (*get_data)();
-     int (*put_data)();
+     long (*get_data) ();
+     int (*put_data) ();
 {
   int size;
   bfd_vma x;

@@ -1,5 +1,6 @@
 /* tc-i960.h - Basic 80960 instruction formats.
-   Copyright (C) 1989, 90, 91, 92, 93, 94, 95, 96, 97, 98, 1999
+   Copyright 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1997, 1998, 1999,
+   2000
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -17,7 +18,7 @@
    You should have received a copy of the GNU General Public License
    along with GAS; see the file COPYING.  If not, write to the Free
    Software Foundation, 59 Temple Place - Suite 330, Boston, MA
-   02111-1307, USA. */
+   02111-1307, USA.  */
 
 #ifndef TC_I960
 #define TC_I960 1
@@ -101,7 +102,7 @@ extern int tc_coff_sizemachdep ();
 #define	N_CALLNAME	((char)-1)
 #define	N_BALNAME	((char)-2)
 
-/* i960 uses a custom relocation record. */
+/* i960 uses a custom relocation record.  */
 
 /* let obj-aout.h know */
 #define CUSTOM_RELOC_FORMAT 1
@@ -155,6 +156,9 @@ extern int i960_validate_fix PARAMS ((struct fix *, segT, symbolS **));
 
 #ifndef OBJ_ELF
 #define tc_fix_adjustable(FIXP)		((FIXP)->fx_bsr == 0)
+/* This arranges for gas/write.c to not apply a relocation if
+   tc_fix_adjustable() says it is not adjustable.  */
+#define TC_FIX_ADJUSTABLE(fixP) tc_fix_adjustable (fixP)
 #else
 #define tc_fix_adjustable(FIXP)						\
   ((FIXP)->fx_bsr == 0							\
@@ -188,5 +192,3 @@ extern const struct relax_type md_relax_table[];
 #define TC_INIT_FIX_DATA(F)	((F)->tc_fix_data.bsr = 0)
 
 #endif
-
-/* end of tc-i960.h */

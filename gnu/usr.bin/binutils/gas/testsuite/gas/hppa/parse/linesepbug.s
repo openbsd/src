@@ -8,5 +8,5 @@
 ; selectors to make sure they're handled correctly.
 
 foo:
-	.WORD 0 !.IMPORT $bar$,DATA
+	.WORD 0! .IMPORT $bar$,DATA
 

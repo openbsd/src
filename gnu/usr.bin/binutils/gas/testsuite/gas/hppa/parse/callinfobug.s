@@ -3,5 +3,5 @@
 	.export divu,millicode
 	.proc
 	.callinfo millicode
-divu
+divu:
 	.procend

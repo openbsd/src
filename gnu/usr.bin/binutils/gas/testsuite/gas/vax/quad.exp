@@ -8,7 +8,7 @@ proc do_quad {} {
 	expect {
 	    -re "^ +2\[ \t\]+0000+ 7D8F7856\[ \t\]+movq\[^\n\]*\n" { set x1 1 }
 	    -re "^ +2\[ \t\]+3412DDCC\[^\n\]*\n"		   { set x2 1 }
-	    -re "^ +2\[ \t\]+BBAA5001\[ \t\]*\r\n"		   { set x3 1 }
+	    -re "^ +2\[ \t\]+BBAA50\[ \t\]*\r\n"		   { set x3 1 }
 	    -re "\[^\n\]*\n"				{ }
 	    timeout				{ perror "timeout\n"; break }
 	    eof					{ break }

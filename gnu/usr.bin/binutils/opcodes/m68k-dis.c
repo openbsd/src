@@ -1,5 +1,6 @@
 /* Print Motorola 68k instructions.
-   Copyright 1986, 87, 89, 91, 92, 93, 94, 95, 96, 97, 98, 1999
+   Copyright 1986, 1987, 1989, 1991, 1992, 1993, 1994, 1995, 1996, 1997,
+   1998, 1999, 2000, 2001
    Free Software Foundation, Inc.
 
 This file is free software; you can redistribute it and/or modify
@@ -45,14 +46,18 @@ static int
 print_insn_arg PARAMS ((const char *, unsigned char *, unsigned char *,
 			bfd_vma, disassemble_info *));
 
-CONST char * CONST fpcr_names[] = {
-  "", "%fpiar", "%fpsr", "%fpiar/%fpsr", "%fpcr",
-  "%fpiar/%fpcr", "%fpsr/%fpcr", "%fpiar/%fpsr/%fpcr"};
+CONST char * CONST fpcr_names[] =
+  {
+    "", "%fpiar", "%fpsr", "%fpiar/%fpsr", "%fpcr",
+    "%fpiar/%fpcr", "%fpsr/%fpcr", "%fpiar/%fpsr/%fpcr"
+  };
 
-static char *const reg_names[] = {
-  "%d0", "%d1", "%d2", "%d3", "%d4", "%d5", "%d6", "%d7",
-  "%a0", "%a1", "%a2", "%a3", "%a4", "%a5", "%fp", "%sp",
-  "%ps", "%pc"};
+static char *const reg_names[] =
+  {
+    "%d0", "%d1", "%d2", "%d3", "%d4", "%d5", "%d6", "%d7",
+    "%a0", "%a1", "%a2", "%a3", "%a4", "%a5", "%fp", "%sp",
+    "%ps", "%pc"
+  };
 
 /* Sign-extend an (unsigned char). */
 #if __STDC__ == 1
@@ -151,16 +156,17 @@ fetch_data (info, addr)
 /* This function is used to print to the bit-bucket. */
 static int
 #ifdef __STDC__
-dummy_printer (FILE * file, const char * format, ...)
+dummy_printer (FILE * file ATTRIBUTE_UNUSED,
+	       const char * format ATTRIBUTE_UNUSED, ...)
 #else
-dummy_printer (file) FILE *file;
+dummy_printer (file) FILE *file ATTRIBUTE_UNUSED;
 #endif
  { return 0; }
 
 static void
 dummy_print_address (vma, info)
-     bfd_vma vma;
-     struct disassemble_info *info;
+     bfd_vma vma ATTRIBUTE_UNUSED;
+     struct disassemble_info *info ATTRIBUTE_UNUSED;
 {
 }
 
@@ -177,7 +183,7 @@ print_insn_m68k (memaddr, info)
   unsigned char *save_p;
   register const char *d;
   register unsigned long bestmask;
-  const struct m68k_opcode *best = 0;
+  const struct m68k_opcode *best;
   unsigned int arch_mask;
   struct private priv;
   bfd_byte *buffer = priv.the_buffer;
@@ -227,6 +233,7 @@ print_insn_m68k (memaddr, info)
     /* Error return.  */
     return -1;
 
+  best = NULL;
   switch (info->mach)
     {
     default:
@@ -253,6 +260,18 @@ print_insn_m68k (memaddr, info)
       break;
     case bfd_mach_m68060:
       arch_mask = m68060;
+      break;
+    case bfd_mach_mcf5200:
+      arch_mask = mcf5200;
+      break;
+    case bfd_mach_mcf5206e:
+      arch_mask = mcf5206e;
+      break;
+    case bfd_mach_mcf5307:
+      arch_mask = mcf5307;
+      break;
+    case bfd_mach_mcf5407:
+      arch_mask = mcf5407;
       break;
     }
 
@@ -318,7 +337,7 @@ print_insn_m68k (memaddr, info)
 	}
     }
 
-  if (best == 0)
+  if (best == NULL)
     goto invalid;
 
   /* Point at first word of argument data,

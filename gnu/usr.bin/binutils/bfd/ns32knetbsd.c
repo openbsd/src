@@ -1,5 +1,6 @@
 /* BFD back-end for NetBSD/ns32k a.out-ish binaries.
-   Copyright (C) 1990, 91, 92, 94, 95, 1998 Free Software Foundation, Inc.
+   Copyright 1990, 1991, 1992, 1994, 1995, 1998, 2000
+   Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
 
@@ -15,7 +16,7 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #define	BYTES_IN_WORD	4
 #undef TARGET_IS_BIG_ENDIAN_P
@@ -48,6 +49,5 @@ CONST struct reloc_howto_struct *
 MY_bfd_reloc_type_lookup
   PARAMS((bfd *abfd AND
 	  bfd_reloc_code_real_type code));
-
 
 #include "netbsd.h"

@@ -1,5 +1,6 @@
 /* tc-sh.c -- Assemble code for the Hitachi Super-H
-   Copyright (C) 1993, 94, 95, 96, 97, 98, 99, 2000 Free Software Foundation.
+   Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001
+   Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -18,10 +19,7 @@
    the Free Software Foundation, 59 Temple Place - Suite 330,
    Boston, MA 02111-1307, USA.  */
 
-/*
-   Written By Steve Chamberlain
-   sac@cygnus.com
- */
+/* Written By Steve Chamberlain <sac@cygnus.com>  */
 
 #include <stdio.h>
 #include "as.h"
@@ -30,10 +28,13 @@
 #define DEFINE_TABLE
 #include "opcodes/sh-opc.h"
 #include <ctype.h>
+#include "struc-symbol.h"
 
 #ifdef OBJ_ELF
 #include "elf/sh.h"
 #endif
+
+#include "dwarf2dbg.h"
 
 const char comment_chars[] = "!";
 const char line_separator_chars[] = ";";
@@ -48,13 +49,19 @@ void cons ();
 void s_align_bytes ();
 static void s_uacons PARAMS ((int));
 static sh_opcode_info *find_cooked_opcode PARAMS ((char **));
-static void assemble_ppi PARAMS ((char *, sh_opcode_info *));
+static unsigned int assemble_ppi PARAMS ((char *, sh_opcode_info *));
+
+#ifdef OBJ_ELF
+static void sh_elf_cons PARAMS ((int));
+
+symbolS *GOT_symbol;		/* Pre-defined "_GLOBAL_OFFSET_TABLE_" */
+#endif
 
 int shl = 0;
 
 static void
 little (ignore)
-     int ignore;
+     int ignore ATTRIBUTE_UNUSED;
 {
   shl = 1;
   target_big_endian = 0;
@@ -64,13 +71,19 @@ little (ignore)
    has to support.  The fields are:
    pseudo-op name without dot
    function to call to execute this pseudo-op
-   Integer arg to pass to the function
- */
+   Integer arg to pass to the function.  */
 
 const pseudo_typeS md_pseudo_table[] =
 {
+#ifdef OBJ_ELF
+  {"long", sh_elf_cons, 4},
+  {"int", sh_elf_cons, 4},
+  {"word", sh_elf_cons, 2},
+  {"short", sh_elf_cons, 2},
+#else
   {"int", cons, 4},
   {"word", cons, 2},
+#endif /* OBJ_ELF */
   {"form", listing_psize, 0},
   {"little", little, 0},
   {"heading", listing_title, 0},
@@ -80,6 +93,14 @@ const pseudo_typeS md_pseudo_table[] =
   {"uses", s_uses, 0},
   {"uaword", s_uacons, 2},
   {"ualong", s_uacons, 4},
+  {"uaquad", s_uacons, 8},
+  {"2byte", s_uacons, 2},
+  {"4byte", s_uacons, 4},
+  {"8byte", s_uacons, 8},
+#ifdef BFD_ASSEMBLER
+  {"file", dwarf2_directive_file, 0 },
+  {"loc", dwarf2_directive_loc, 0 },
+#endif
   {0, 0, 0}
 };
 
@@ -101,18 +122,17 @@ static int valid_arch;
 
 const char EXP_CHARS[] = "eE";
 
-/* Chars that mean this number is a floating point constant */
+/* Chars that mean this number is a floating point constant.  */
 /* As in 0f12.456 */
 /* or    0d1.2345e12 */
 const char FLT_CHARS[] = "rRsSfFdDxXpP";
 
 #define C(a,b) ENCODE_RELAX(a,b)
 
-#define JREG 14			/* Register used as a temp when relaxing */
 #define ENCODE_RELAX(what,length) (((what) << 4) + (length))
 #define GET_WHAT(x) ((x>>4))
 
-/* These are the three types of relaxable instrction */
+/* These are the three types of relaxable instrction.  */
 #define COND_JUMP 1
 #define COND_JUMP_DELAY 2
 #define UNCOND_JUMP  3
@@ -122,8 +142,6 @@ const char FLT_CHARS[] = "rRsSfFdDxXpP";
 #define COND8  1
 #define COND12 2
 #define COND32 3
-#define UNCOND12 1
-#define UNCOND32 2
 #define UNDEF_WORD_DISP 4
 
 #define UNCOND12 1
@@ -159,45 +177,239 @@ const char FLT_CHARS[] = "rRsSfFdDxXpP";
 #define UNCOND32_M -(1<<30)
 #define UNCOND32_LENGTH 14
 
-const relax_typeS md_relax_table[C (END, 0)] = {
-  { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 },
-  { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 },
+#define EMPTY { 0, 0, 0, 0 }
 
-  { 0 },
+const relax_typeS md_relax_table[C (END, 0)] = {
+  EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
+  EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
+
+  EMPTY,
   /* C (COND_JUMP, COND8) */
   { COND8_F, COND8_M, COND8_LENGTH, C (COND_JUMP, COND12) },
   /* C (COND_JUMP, COND12) */
   { COND12_F, COND12_M, COND12_LENGTH, C (COND_JUMP, COND32), },
   /* C (COND_JUMP, COND32) */
   { COND32_F, COND32_M, COND32_LENGTH, 0, },
-  { 0 }, { 0 }, { 0 }, { 0 },
-  { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 },
+  /* C (COND_JUMP, UNDEF_WORD_DISP) */
+  { 0, 0, COND32_LENGTH, 0, },
+  EMPTY, EMPTY, EMPTY,
+  EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
 
-  { 0 },
+  EMPTY,
   /* C (COND_JUMP_DELAY, COND8) */
   { COND8_F, COND8_M, COND8_LENGTH, C (COND_JUMP_DELAY, COND12) },
   /* C (COND_JUMP_DELAY, COND12) */
   { COND12_F, COND12_M, COND12_DELAY_LENGTH, C (COND_JUMP_DELAY, COND32), },
   /* C (COND_JUMP_DELAY, COND32) */
   { COND32_F, COND32_M, COND32_LENGTH, 0, },
-  { 0 }, { 0 }, { 0 }, { 0 },
-  { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 },
+  /* C (COND_JUMP_DELAY, UNDEF_WORD_DISP) */
+  { 0, 0, COND32_LENGTH, 0, },
+  EMPTY, EMPTY, EMPTY,
+  EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
 
-  { 0 },
+  EMPTY,
   /* C (UNCOND_JUMP, UNCOND12) */
   { UNCOND12_F, UNCOND12_M, UNCOND12_LENGTH, C (UNCOND_JUMP, UNCOND32), },
   /* C (UNCOND_JUMP, UNCOND32) */
   { UNCOND32_F, UNCOND32_M, UNCOND32_LENGTH, 0, },
-  { 0 }, { 0 }, { 0 }, { 0 }, { 0 },
-  { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 },
+  EMPTY,
+  /* C (UNCOND_JUMP, UNDEF_WORD_DISP) */
+  { 0, 0, UNCOND32_LENGTH, 0, },
+  EMPTY, EMPTY, EMPTY,
+  EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
 };
+
+#undef EMPTY
 
 static struct hash_control *opcode_hash_control;	/* Opcode mnemonics */
 
-/*
-   This function is called once, at assembler startup time.  This should
-   set up all the tables, etc that the MD part of the assembler needs
- */
+
+#ifdef OBJ_ELF
+/* Parse @got, etc. and return the desired relocation.
+   If we have additional arithmetic expression, then we fill in new_exp_p.  */
+static bfd_reloc_code_real_type
+sh_elf_suffix (str_p, exp_p, new_exp_p)
+     char **str_p;
+     expressionS *exp_p, *new_exp_p;
+{
+  struct map_bfd {
+    char *string;
+    int length;
+    bfd_reloc_code_real_type reloc;
+  };
+
+  char ident[20];
+  char *str = *str_p;
+  char *str2;
+  int ch;
+  int len;
+  struct map_bfd *ptr;
+
+#define MAP(str,reloc) { str, sizeof (str)-1, reloc }
+
+  static struct map_bfd mapping[] = {
+    MAP ("got",		BFD_RELOC_32_GOT_PCREL),
+    MAP ("plt",		BFD_RELOC_32_PLT_PCREL),
+    MAP ("gotoff",	BFD_RELOC_32_GOTOFF),
+    { (char *)0,	0,	BFD_RELOC_UNUSED }
+  };
+
+  if (*str++ != '@')
+    return BFD_RELOC_UNUSED;
+
+  for (ch = *str, str2 = ident;
+       (str2 < ident + sizeof (ident) - 1
+	&& (isalnum (ch) || ch == '@'));
+       ch = *++str)
+    {
+      *str2++ = (islower (ch)) ? ch : tolower (ch);
+    }
+
+  *str2 = '\0';
+  len = str2 - ident;
+
+  ch = ident[0];
+  for (ptr = &mapping[0]; ptr->length > 0; ptr++)
+    if (ch == ptr->string[0]
+	&& len == ptr->length
+	&& memcmp (ident, ptr->string, ptr->length) == 0)
+      {
+	/* Now check for identifier@suffix+constant */
+	if (*str == '-' || *str == '+')
+	  {
+	    char *orig_line = input_line_pointer;
+
+	    input_line_pointer = str;
+	    expression (new_exp_p);
+	    if (new_exp_p->X_op == O_constant)
+	      {
+		exp_p->X_add_number += new_exp_p->X_add_number;
+		str = input_line_pointer;
+	      }
+	    if (new_exp_p->X_op == O_subtract)
+	      str = input_line_pointer;
+
+	    if (&input_line_pointer != str_p)
+	      input_line_pointer = orig_line;
+	  }
+
+	*str_p = str;
+	return ptr->reloc;
+      }
+
+  return BFD_RELOC_UNUSED;
+}
+
+/* The regular cons() function, that reads constants, doesn't support
+   suffixes such as @GOT, @GOTOFF and @PLT, that generate
+   machine-specific relocation types.  So we must define it here.  */
+/* Clobbers input_line_pointer, checks end-of-line.  */
+static void
+sh_elf_cons (nbytes)
+     register int nbytes;	/* 1=.byte, 2=.word, 4=.long */
+{
+  expressionS exp, new_exp;
+  bfd_reloc_code_real_type reloc;
+  const char *name;
+
+  if (is_it_end_of_statement ())
+    {
+      demand_empty_rest_of_line ();
+      return;
+    }
+
+  do
+    {
+      expression (&exp);
+      new_exp.X_op = O_absent;
+      new_exp.X_add_symbol = new_exp.X_op_symbol = NULL;
+      /* If the _GLOBAL_OFFSET_TABLE_ symbol hasn't been found yet,
+	 use the name of the symbol to tell whether it's the
+	 _GLOBAL_OFFSET_TABLE_.  If it has, comparing the symbols is
+	 sufficient.  */
+      if (! GOT_symbol && exp.X_add_symbol)
+	name = S_GET_NAME (exp.X_add_symbol);
+      else
+	name = NULL;
+      /* Check whether this expression involves the
+	 _GLOBAL_OFFSET_TABLE_ symbol, by itself or added to a
+	 difference of two other symbols.  */
+      if (((GOT_symbol && GOT_symbol == exp.X_add_symbol)
+	   || (! GOT_symbol && name
+	       && strcmp (name, GLOBAL_OFFSET_TABLE_NAME) == 0))
+	  && (exp.X_op == O_symbol
+	      || (exp.X_op == O_add
+		  && ((symbol_get_value_expression (exp.X_op_symbol)->X_op)
+		      == O_subtract))))
+	{
+	  reloc_howto_type *reloc_howto = bfd_reloc_type_lookup (stdoutput,
+								 BFD_RELOC_32);
+	  int size = bfd_get_reloc_size (reloc_howto);
+
+	  if (GOT_symbol == NULL)
+	    GOT_symbol = symbol_find_or_make (GLOBAL_OFFSET_TABLE_NAME);
+
+	  if (size > nbytes)
+	    as_bad (_("%s relocations do not fit in %d bytes\n"),
+		    reloc_howto->name, nbytes);
+	  else
+	    {
+	      register char *p = frag_more ((int) nbytes);
+	      int offset = nbytes - size;
+
+	      fix_new_exp (frag_now, p - frag_now->fr_literal + offset,
+			   size, &exp, 0, TC_RELOC_GLOBAL_OFFSET_TABLE);
+	    }
+	}
+      /* Check if this symbol involves one of the magic suffixes, such
+	 as @GOT, @GOTOFF or @PLT, and determine which relocation type
+	 to use.  */
+      else if ((exp.X_op == O_symbol || (exp.X_op == O_add && exp.X_op_symbol))
+	  && *input_line_pointer == '@'
+	  && ((reloc = sh_elf_suffix (&input_line_pointer, &exp, &new_exp))
+	      != BFD_RELOC_UNUSED))
+	{
+	  reloc_howto_type *reloc_howto = bfd_reloc_type_lookup (stdoutput,
+								 reloc);
+	  int size = bfd_get_reloc_size (reloc_howto);
+
+	  /* Force a GOT to be generated.  */
+	  if (GOT_symbol == NULL)
+	    GOT_symbol = symbol_find_or_make (GLOBAL_OFFSET_TABLE_NAME);
+
+	  if (size > nbytes)
+	    as_bad (_("%s relocations do not fit in %d bytes\n"),
+		    reloc_howto->name, nbytes);
+	  else
+	    {
+	      register char *p = frag_more ((int) nbytes);
+	      int offset = nbytes - size;
+
+	      fix_new_exp (frag_now, p - frag_now->fr_literal + offset, size,
+			   &exp, 0, reloc);
+	      if (new_exp.X_op != O_absent)
+		fix_new_exp (frag_now, p - frag_now->fr_literal + offset, size,
+			     &new_exp, 0, BFD_RELOC_32);
+	    }
+	}
+      else
+	emit_expr (&exp, (unsigned int) nbytes);
+    }
+  while (*input_line_pointer++ == ',');
+
+  input_line_pointer--;		/* Put terminator back into stream.  */
+  if (*input_line_pointer == '#' || *input_line_pointer == '!')
+    {
+       while (! is_end_of_line[(unsigned char) *input_line_pointer++]);
+    }
+  else
+    demand_empty_rest_of_line ();
+}
+#endif /* OBJ_ELF */
+
+
+/* This function is called once, at assembler startup time.  This should
+   set up all the tables, etc that the MD part of the assembler needs.  */
 
 void
 md_begin ()
@@ -219,7 +431,7 @@ md_begin ()
 
   opcode_hash_control = hash_new ();
 
-  /* Insert unique names into hash table */
+  /* Insert unique names into hash table.  */
   for (opcode = sh_table; opcode->name; opcode++)
     {
       if (strcmp (prev_name, opcode->name))
@@ -232,7 +444,7 @@ md_begin ()
       else
 	{
 	  /* Make all the opcodes with the same name point to the same
-	     string */
+	     string.  */
 	  opcode->name = prev_name;
 	}
     }
@@ -244,32 +456,34 @@ static int reg_x, reg_y;
 static int reg_efg;
 static int reg_b;
 
-static expressionS immediate;	/* absolute expression */
-
 typedef struct
   {
     sh_arg_type type;
     int reg;
+    expressionS immediate;
   }
-
 sh_operand_info;
 
 #define IDENT_CHAR(c) (isalnum (c) || (c) == '_')
 
-/* try and parse a reg name, returns number of chars consumed */
+/* Try to parse a reg name.  Return the number of chars consumed.  */
+
 static int
 parse_reg (src, mode, reg)
      char *src;
      int *mode;
      int *reg;
 {
+  char l0 = tolower (src[0]);
+  char l1 = l0 ? tolower (src[1]) : 0;
+
   /* We use ! IDENT_CHAR for the next character after the register name, to
      make sure that we won't accidentally recognize a symbol name such as
      'sram' or sr_ram as being a reference to the register 'sr'.  */
 
-  if (src[0] == 'r')
+  if (l0 == 'r')
     {
-      if (src[1] == '1')
+      if (l1 == '1')
 	{
 	  if (src[2] >= '0' && src[2] <= '5'
 	      && ! IDENT_CHAR ((unsigned char) src[3]))
@@ -279,36 +493,36 @@ parse_reg (src, mode, reg)
 	      return 3;
 	    }
 	}
-      if (src[1] >= '0' && src[1] <= '9'
+      if (l1 >= '0' && l1 <= '9'
 	  && ! IDENT_CHAR ((unsigned char) src[2]))
 	{
 	  *mode = A_REG_N;
-	  *reg = (src[1] - '0');
+	  *reg = (l1 - '0');
 	  return 2;
 	}
-      if (src[1] >= '0' && src[1] <= '7' && strncmp (&src[2], "_bank", 5) == 0
+      if (l1 >= '0' && l1 <= '7' && strncasecmp (&src[2], "_bank", 5) == 0
 	  && ! IDENT_CHAR ((unsigned char) src[7]))
 	{
 	  *mode = A_REG_B;
-	  *reg  = (src[1] - '0');
+	  *reg  = (l1 - '0');
 	  return 7;
 	}
 
-      if (src[1] == 'e' && ! IDENT_CHAR ((unsigned char) src[2]))
+      if (l1 == 'e' && ! IDENT_CHAR ((unsigned char) src[2]))
 	{
 	  *mode = A_RE;
 	  return 2;
 	}
-      if (src[1] == 's' && ! IDENT_CHAR ((unsigned char) src[2]))
+      if (l1 == 's' && ! IDENT_CHAR ((unsigned char) src[2]))
 	{
 	  *mode = A_RS;
 	  return 2;
 	}
     }
 
-  if (src[0] == 'a')
+  if (l0 == 'a')
     {
-      if (src[1] == '0')
+      if (l1 == '0')
 	{
 	  if (! IDENT_CHAR ((unsigned char) src[2]))
 	    {
@@ -316,14 +530,14 @@ parse_reg (src, mode, reg)
 	      *reg = A_A0_NUM;
 	      return 2;
 	    }
-	  if (src[2] == 'g' && ! IDENT_CHAR ((unsigned char) src[3]))
+	  if (tolower (src[2]) == 'g' && ! IDENT_CHAR ((unsigned char) src[3]))
 	    {
 	      *mode = DSP_REG_N;
 	      *reg = A_A0G_NUM;
 	      return 3;
 	    }
 	}
-      if (src[1] == '1')
+      if (l1 == '1')
 	{
 	  if (! IDENT_CHAR ((unsigned char) src[2]))
 	    {
@@ -331,7 +545,7 @@ parse_reg (src, mode, reg)
 	      *reg = A_A1_NUM;
 	      return 2;
 	    }
-	  if (src[2] == 'g' && ! IDENT_CHAR ((unsigned char) src[3]))
+	  if (tolower (src[2]) == 'g' && ! IDENT_CHAR ((unsigned char) src[3]))
 	    {
 	      *mode = DSP_REG_N;
 	      *reg = A_A1G_NUM;
@@ -339,24 +553,24 @@ parse_reg (src, mode, reg)
 	    }
 	}
 
-      if (src[1] == 'x' && src[2] >= '0' && src[2] <= '1'
+      if (l1 == 'x' && src[2] >= '0' && src[2] <= '1'
 	  && ! IDENT_CHAR ((unsigned char) src[3]))
 	{
 	  *mode = A_REG_N;
-	  *reg = 4 + (src[1] - '0');
+	  *reg = 4 + (l1 - '0');
 	  return 3;
 	}
-      if (src[1] == 'y' && src[2] >= '0' && src[2] <= '1'
+      if (l1 == 'y' && src[2] >= '0' && src[2] <= '1'
 	  && ! IDENT_CHAR ((unsigned char) src[3]))
 	{
 	  *mode = A_REG_N;
-	  *reg = 6 + (src[1] - '0');
+	  *reg = 6 + (l1 - '0');
 	  return 3;
 	}
-      if (src[1] == 's' && src[2] >= '0' && src[2] <= '3'
+      if (l1 == 's' && src[2] >= '0' && src[2] <= '3'
 	  && ! IDENT_CHAR ((unsigned char) src[3]))
 	{
-	  int n = src[1] - '0';
+	  int n = l1 - '0';
 
 	  *mode = A_REG_N;
 	  *reg = n | ((~n & 2) << 1);
@@ -364,21 +578,21 @@ parse_reg (src, mode, reg)
 	}
     }
 
-  if (src[0] == 'i' && src[1] && ! IDENT_CHAR ((unsigned char) src[3]))
+  if (l0 == 'i' && l1 && ! IDENT_CHAR ((unsigned char) src[3]))
     {
-      if (src[1] == 's')
+      if (l1 == 's')
 	{
 	  *mode = A_REG_N;
 	  *reg = 8;
 	  return 2;
 	}
-      if (src[1] == 'x')
+      if (l1 == 'x')
 	{
 	  *mode = A_REG_N;
 	  *reg = 8;
 	  return 2;
 	}
-      if (src[1] == 'y')
+      if (l1 == 'y')
 	{
 	  *mode = A_REG_N;
 	  *reg = 9;
@@ -386,123 +600,125 @@ parse_reg (src, mode, reg)
 	}
     }
 
-  if (src[0] == 'x' && src[1] >= '0' && src[1] <= '1'
+  if (l0 == 'x' && l1 >= '0' && l1 <= '1'
       && ! IDENT_CHAR ((unsigned char) src[2]))
     {
       *mode = DSP_REG_N;
-      *reg = A_X0_NUM + src[1] - '0';
+      *reg = A_X0_NUM + l1 - '0';
       return 2;
     }
 
-  if (src[0] == 'y' && src[1] >= '0' && src[1] <= '1'
+  if (l0 == 'y' && l1 >= '0' && l1 <= '1'
       && ! IDENT_CHAR ((unsigned char) src[2]))
     {
       *mode = DSP_REG_N;
-      *reg = A_Y0_NUM + src[1] - '0';
+      *reg = A_Y0_NUM + l1 - '0';
       return 2;
     }
 
-  if (src[0] == 'm' && src[1] >= '0' && src[1] <= '1'
+  if (l0 == 'm' && l1 >= '0' && l1 <= '1'
       && ! IDENT_CHAR ((unsigned char) src[2]))
     {
       *mode = DSP_REG_N;
-      *reg = src[1] == '0' ? A_M0_NUM : A_M1_NUM;
+      *reg = l1 == '0' ? A_M0_NUM : A_M1_NUM;
       return 2;
     }
 
-  if (src[0] == 's'
-      && src[1] == 's'
-      && src[2] == 'r' && ! IDENT_CHAR ((unsigned char) src[3]))
+  if (l0 == 's'
+      && l1 == 's'
+      && tolower (src[2]) == 'r' && ! IDENT_CHAR ((unsigned char) src[3]))
     {
       *mode = A_SSR;
       return 3;
     }
 
-  if (src[0] == 's' && src[1] == 'p' && src[2] == 'c'
+  if (l0 == 's' && l1 == 'p' && tolower (src[2]) == 'c'
       && ! IDENT_CHAR ((unsigned char) src[3]))
     {
       *mode = A_SPC;
       return 3;
     }
 
-  if (src[0] == 's' && src[1] == 'g' && src[2] == 'r'
+  if (l0 == 's' && l1 == 'g' && tolower (src[2]) == 'r'
       && ! IDENT_CHAR ((unsigned char) src[3]))
     {
       *mode = A_SGR;
       return 3;
     }
 
-  if (src[0] == 'd' && src[1] == 's' && src[2] == 'r'
+  if (l0 == 'd' && l1 == 's' && tolower (src[2]) == 'r'
       && ! IDENT_CHAR ((unsigned char) src[3]))
     {
       *mode = A_DSR;
       return 3;
     }
 
-  if (src[0] == 'd' && src[1] == 'b' && src[2] == 'r'
+  if (l0 == 'd' && l1 == 'b' && tolower (src[2]) == 'r'
       && ! IDENT_CHAR ((unsigned char) src[3]))
     {
       *mode = A_DBR;
       return 3;
     }
 
-  if (src[0] == 's' && src[1] == 'r' && ! IDENT_CHAR ((unsigned char) src[2]))
+  if (l0 == 's' && l1 == 'r' && ! IDENT_CHAR ((unsigned char) src[2]))
     {
       *mode = A_SR;
       return 2;
     }
 
-  if (src[0] == 's' && src[1] == 'p' && ! IDENT_CHAR ((unsigned char) src[2]))
+  if (l0 == 's' && l1 == 'p' && ! IDENT_CHAR ((unsigned char) src[2]))
     {
       *mode = A_REG_N;
       *reg = 15;
       return 2;
     }
 
-  if (src[0] == 'p' && src[1] == 'r' && ! IDENT_CHAR ((unsigned char) src[2]))
+  if (l0 == 'p' && l1 == 'r' && ! IDENT_CHAR ((unsigned char) src[2]))
     {
       *mode = A_PR;
       return 2;
     }
-  if (src[0] == 'p' && src[1] == 'c' && ! IDENT_CHAR ((unsigned char) src[2]))
+  if (l0 == 'p' && l1 == 'c' && ! IDENT_CHAR ((unsigned char) src[2]))
     {
-      *mode = A_DISP_PC;
+      /* Don't use A_DISP_PC here - that would accept stuff like 'mova pc,r0'
+         and use an uninitialized immediate.  */
+      *mode = A_PC;
       return 2;
     }
-  if (src[0] == 'g' && src[1] == 'b' && src[2] == 'r'
+  if (l0 == 'g' && l1 == 'b' && tolower (src[2]) == 'r'
       && ! IDENT_CHAR ((unsigned char) src[3]))
     {
       *mode = A_GBR;
       return 3;
     }
-  if (src[0] == 'v' && src[1] == 'b' && src[2] == 'r'
+  if (l0 == 'v' && l1 == 'b' && tolower (src[2]) == 'r'
       && ! IDENT_CHAR ((unsigned char) src[3]))
     {
       *mode = A_VBR;
       return 3;
     }
 
-  if (src[0] == 'm' && src[1] == 'a' && src[2] == 'c'
+  if (l0 == 'm' && l1 == 'a' && tolower (src[2]) == 'c'
       && ! IDENT_CHAR ((unsigned char) src[4]))
     {
-      if (src[3] == 'l')
+      if (tolower (src[3]) == 'l')
 	{
 	  *mode = A_MACL;
 	  return 4;
 	}
-      if (src[3] == 'h')
+      if (tolower (src[3]) == 'h')
 	{
 	  *mode = A_MACH;
 	  return 4;
 	}
     }
-  if (src[0] == 'm' && src[1] == 'o' && src[2] == 'd'
+  if (l0 == 'm' && l1 == 'o' && tolower (src[2]) == 'd'
       && ! IDENT_CHAR ((unsigned char) src[4]))
     {
       *mode = A_MOD;
       return 3;
     }
-  if (src[0] == 'f' && src[1] == 'r')
+  if (l0 == 'f' && l1 == 'r')
     {
       if (src[2] == '1')
 	{
@@ -522,7 +738,7 @@ parse_reg (src, mode, reg)
 	  return 3;
 	}
     }
-  if (src[0] == 'd' && src[1] == 'r')
+  if (l0 == 'd' && l1 == 'r')
     {
       if (src[2] == '1')
 	{
@@ -542,7 +758,7 @@ parse_reg (src, mode, reg)
 	  return 3;
 	}
     }
-  if (src[0] == 'x' && src[1] == 'd')
+  if (l0 == 'x' && l1 == 'd')
     {
       if (src[2] == '1')
 	{
@@ -562,7 +778,7 @@ parse_reg (src, mode, reg)
 	  return 3;
 	}
     }
-  if (src[0] == 'f' && src[1] == 'v')
+  if (l0 == 'f' && l1 == 'v')
     {
       if (src[2] == '1'&& src[3] == '2' && ! IDENT_CHAR ((unsigned char) src[4]))
 	{
@@ -578,22 +794,25 @@ parse_reg (src, mode, reg)
 	  return 3;
 	}
     }
-  if (src[0] == 'f' && src[1] == 'p' && src[2] == 'u' && src[3] == 'l'
+  if (l0 == 'f' && l1 == 'p' && tolower (src[2]) == 'u'
+      && tolower (src[3]) == 'l'
       && ! IDENT_CHAR ((unsigned char) src[4]))
     {
       *mode = FPUL_N;
       return 4;
     }
 
-  if (src[0] == 'f' && src[1] == 'p' && src[2] == 's' && src[3] == 'c'
-      && src[4] == 'r' && ! IDENT_CHAR ((unsigned char) src[5]))
+  if (l0 == 'f' && l1 == 'p' && tolower (src[2]) == 's'
+      && tolower (src[3]) == 'c'
+      && tolower (src[4]) == 'r' && ! IDENT_CHAR ((unsigned char) src[5]))
     {
       *mode = FPSCR_N;
       return 5;
     }
 
-  if (src[0] == 'x' && src[1] == 'm' && src[2] == 't' && src[3] == 'r'
-      && src[4] == 'x' && ! IDENT_CHAR ((unsigned char) src[5]))
+  if (l0 == 'x' && l1 == 'm' && tolower (src[2]) == 't'
+      && tolower (src[3]) == 'r'
+      && tolower (src[4]) == 'x' && ! IDENT_CHAR ((unsigned char) src[5]))
     {
       *mode = XMTRX_M4;
       return 5;
@@ -602,7 +821,8 @@ parse_reg (src, mode, reg)
   return 0;
 }
 
-static symbolS *dot()
+static symbolS *
+dot ()
 {
   const char *fake;
 
@@ -613,28 +833,25 @@ static symbolS *dot()
 		      now_seg,
 		      (valueT) frag_now_fix (),
 		      frag_now);
-
 }
 
-
-static
-char *
-parse_exp (s)
+static char *
+parse_exp (s, op)
      char *s;
+     sh_operand_info *op;
 {
   char *save;
   char *new;
 
   save = input_line_pointer;
   input_line_pointer = s;
-  expression (&immediate);
-  if (immediate.X_op == O_absent)
+  expression (&op->immediate);
+  if (op->immediate.X_op == O_absent)
     as_bad (_("missing operand"));
   new = input_line_pointer;
   input_line_pointer = save;
   return new;
 }
-
 
 /* The many forms of operand:
 
@@ -653,11 +870,9 @@ parse_exp (s)
    disp:12
    #imm8
    pr, gbr, vbr, macl, mach
-
  */
 
-static
-char *
+static char *
 parse_at (src, op)
      char *src;
      sh_operand_info *op;
@@ -667,7 +882,7 @@ parse_at (src, op)
   src++;
   if (src[0] == '-')
     {
-      /* Must be predecrement */
+      /* Must be predecrement.  */
       src++;
 
       len = parse_reg (src, &mode, &(op->reg));
@@ -710,7 +925,7 @@ parse_at (src, op)
       else
 	{
 	  /* Must be an @(disp,.. thing) */
-	  src = parse_exp (src);
+	  src = parse_exp (src, op);
 	  if (src[0] == ',')
 	    src++;
 	  /* Now can be rn, gbr or pc */
@@ -725,13 +940,14 @@ parse_at (src, op)
 		{
 		  op->type = A_DISP_GBR;
 		}
-	      else if (mode == A_DISP_PC)
+	      else if (mode == A_PC)
 		{
-		  /* Turn a plain @(4,pc) into @(.+4,pc) */
-		  if (immediate.X_op == O_constant) { 
-		    immediate.X_add_symbol = dot();
-		    immediate.X_op = O_symbol;
-		  }
+		  /* Turn a plain @(4,pc) into @(.+4,pc).  */
+		  if (op->immediate.X_op == O_constant)
+		    {
+		      op->immediate.X_add_symbol = dot();
+		      op->immediate.X_op = O_symbol;
+		    }
 		  op->type = A_DISP_PC;
 		}
 	      else
@@ -795,7 +1011,7 @@ get_operand (ptr, op)
   if (src[0] == '#')
     {
       src++;
-      *ptr = parse_exp (src);
+      *ptr = parse_exp (src, op);
       op->type = A_IMM;
       return;
     }
@@ -814,20 +1030,18 @@ get_operand (ptr, op)
     }
   else
     {
-      /* Not a reg, the only thing left is a displacement */
-      *ptr = parse_exp (src);
+      /* Not a reg, the only thing left is a displacement.  */
+      *ptr = parse_exp (src, op);
       op->type = A_DISP_PC;
       return;
     }
 }
 
-static
-char *
+static char *
 get_operands (info, args, operand)
      sh_opcode_info *info;
      char *args;
      sh_operand_info *operand;
-
 {
   char *ptr = args;
   if (info->arg[0])
@@ -846,7 +1060,13 @@ get_operands (info, args, operand)
 	      ptr++;
 	    }
 	  get_operand (&ptr, operand + 1);
-	  if (info->arg[2])
+	  /* ??? Hack: psha/pshl have a varying operand number depending on
+	     the type of the first operand.  We handle this by having the
+	     three-operand version first and reducing the number of operands
+	     parsed to two if we see that the first operand is an immediate.
+             This works because no insn with three operands has an immediate
+	     as first operand.  */
+	  if (info->arg[2] && operand[0].type != A_IMM)
 	    {
 	      if (*ptr == ',')
 		{
@@ -876,11 +1096,9 @@ get_operands (info, args, operand)
 
 /* Passed a pointer to a list of opcodes which use different
    addressing modes, return the opcode which matches the opcodes
-   provided
- */
+   provided.  */
 
-static
-sh_opcode_info *
+static sh_opcode_info *
 get_specific (opcode, operands)
      sh_opcode_info *opcode;
      sh_operand_info *operands;
@@ -888,24 +1106,26 @@ get_specific (opcode, operands)
   sh_opcode_info *this_try = opcode;
   char *name = opcode->name;
   int n = 0;
+
   while (opcode->name)
     {
       this_try = opcode++;
       if (this_try->name != name)
 	{
 	  /* We've looked so far down the table that we've run out of
-	     opcodes with the same name */
+	     opcodes with the same name.  */
 	  return 0;
 	}
-      /* look at both operands needed by the opcodes and provided by
+
+      /* Look at both operands needed by the opcodes and provided by
          the user - since an arg test will often fail on the same arg
          again and again, we'll try and test the last failing arg the
-         first on each opcode try */
-
+         first on each opcode try.  */
       for (n = 0; this_try->arg[n]; n++)
 	{
 	  sh_operand_info *user = operands + n;
 	  sh_arg_type arg = this_try->arg[n];
+
 	  switch (arg)
 	    {
 	    case A_IMM:
@@ -973,7 +1193,7 @@ get_specific (opcode, operands)
 		goto fail;
 	      break;
 
-            case A_REG_B:
+	    case A_REG_B:
 	      if (user->type != arg)
 		goto fail;
 	      reg_b = user->reg;
@@ -1144,7 +1364,7 @@ get_specific (opcode, operands)
 		goto fail;
 	      reg_m = 4;
 	      break;
-	
+
 	    default:
 	      printf (_("unhandled %d\n"), arg);
 	      goto fail;
@@ -1154,7 +1374,8 @@ get_specific (opcode, operands)
 	goto fail;
       valid_arch &= this_try->arch;
       return this_try;
-    fail:;
+    fail:
+      ;
     }
 
   return 0;
@@ -1175,24 +1396,25 @@ check (operand, low, high)
   return operand->X_add_number;
 }
 
-
 static void
-insert (where, how, pcrel)
+insert (where, how, pcrel, op)
      char *where;
      int how;
      int pcrel;
+     sh_operand_info *op;
 {
   fix_new_exp (frag_now,
 	       where - frag_now->fr_literal,
 	       2,
-	       &immediate,
+	       &op->immediate,
 	       pcrel,
 	       how);
 }
 
 static void
-build_relax (opcode)
+build_relax (opcode, op)
      sh_opcode_info *opcode;
+     sh_operand_info *op;
 {
   int high_byte = target_big_endian ? 0 : 1;
   char *p;
@@ -1204,8 +1426,8 @@ build_relax (opcode)
 		    md_relax_table[C (what, COND32)].rlx_length,
 		    md_relax_table[C (what, COND8)].rlx_length,
 		    C (what, 0),
-		    immediate.X_add_symbol,
-		    immediate.X_add_number,
+		    op->immediate.X_add_symbol,
+		    op->immediate.X_add_number,
 		    0);
       p[high_byte] = (opcode->nibbles[0] << 4) | (opcode->nibbles[1]);
     }
@@ -1215,17 +1437,67 @@ build_relax (opcode)
 		    md_relax_table[C (UNCOND_JUMP, UNCOND32)].rlx_length,
 		    md_relax_table[C (UNCOND_JUMP, UNCOND12)].rlx_length,
 		    C (UNCOND_JUMP, 0),
-		    immediate.X_add_symbol,
-		    immediate.X_add_number,
+		    op->immediate.X_add_symbol,
+		    op->immediate.X_add_number,
 		    0);
       p[high_byte] = (opcode->nibbles[0] << 4);
     }
 
 }
 
-/* Now we know what sort of opcodes it is, lets build the bytes -
- */
-static void
+/* Insert ldrs & ldre with fancy relocations that relaxation can recognize.  */
+
+static char *
+insert_loop_bounds (output, operand)
+     char *output;
+     sh_operand_info *operand;
+{
+  char *name;
+  symbolS *end_sym;
+
+  /* Since the low byte of the opcode will be overwritten by the reloc, we
+     can just stash the high byte into both bytes and ignore endianness.  */
+  output[0] = 0x8c;
+  output[1] = 0x8c;
+  insert (output, BFD_RELOC_SH_LOOP_START, 1, operand);
+  insert (output, BFD_RELOC_SH_LOOP_END, 1, operand + 1);
+
+  if (sh_relax)
+    {
+      static int count = 0;
+
+      /* If the last loop insn is a two-byte-insn, it is in danger of being
+	 swapped with the insn after it.  To prevent this, create a new
+	 symbol - complete with SH_LABEL reloc - after the last loop insn.
+	 If the last loop insn is four bytes long, the symbol will be
+	 right in the middle, but four byte insns are not swapped anyways.  */
+      /* A REPEAT takes 6 bytes.  The SH has a 32 bit address space.
+	 Hence a 9 digit number should be enough to count all REPEATs.  */
+      name = alloca (11);
+      sprintf (name, "_R%x", count++ & 0x3fffffff);
+      end_sym = symbol_new (name, undefined_section, 0, &zero_address_frag);
+      /* Make this a local symbol.  */
+#ifdef OBJ_COFF
+      SF_SET_LOCAL (end_sym);
+#endif /* OBJ_COFF */
+      symbol_table_insert (end_sym);
+      end_sym->sy_value = operand[1].immediate;
+      end_sym->sy_value.X_add_number += 2;
+      fix_new (frag_now, frag_now_fix (), 2, end_sym, 0, 1, BFD_RELOC_SH_LABEL);
+    }
+
+  output = frag_more (2);
+  output[0] = 0x8e;
+  output[1] = 0x8e;
+  insert (output, BFD_RELOC_SH_LOOP_START, 1, operand);
+  insert (output, BFD_RELOC_SH_LOOP_END, 1, operand + 1);
+
+  return frag_more (2);
+}
+
+/* Now we know what sort of opcodes it is, let's build the bytes.  */
+
+static unsigned int
 build_Mytes (opcode, operand)
      sh_opcode_info *opcode;
      sh_operand_info *operand;
@@ -1234,6 +1506,7 @@ build_Mytes (opcode, operand)
   int index;
   char nbuf[4];
   char *output = frag_more (2);
+  unsigned int size = 2;
   int low_byte = target_big_endian ? 1 : 0;
   nbuf[0] = 0;
   nbuf[1] = 0;
@@ -1265,49 +1538,72 @@ build_Mytes (opcode, operand)
 	    case REG_NM:
 	      nbuf[index] = reg_n | (reg_m >> 2);
 	      break;
-            case REG_B:
+	    case REG_B:
 	      nbuf[index] = reg_b | 0x08;
 	      break;
-	    case DISP_4:
-	      insert (output + low_byte, BFD_RELOC_SH_IMM4, 0);
+	    case IMM0_4BY4:
+	      insert (output + low_byte, BFD_RELOC_SH_IMM4BY4, 0, operand);
 	      break;
-	    case IMM_4BY4:
-	      insert (output + low_byte, BFD_RELOC_SH_IMM4BY4, 0);
+	    case IMM0_4BY2:
+	      insert (output + low_byte, BFD_RELOC_SH_IMM4BY2, 0, operand);
 	      break;
-	    case IMM_4BY2:
-	      insert (output + low_byte, BFD_RELOC_SH_IMM4BY2, 0);
+	    case IMM0_4:
+	      insert (output + low_byte, BFD_RELOC_SH_IMM4, 0, operand);
 	      break;
-	    case IMM_4:
-	      insert (output + low_byte, BFD_RELOC_SH_IMM4, 0);
+	    case IMM1_4BY4:
+	      insert (output + low_byte, BFD_RELOC_SH_IMM4BY4, 0, operand + 1);
 	      break;
-	    case IMM_8BY4:
-	      insert (output + low_byte, BFD_RELOC_SH_IMM8BY4, 0);
+	    case IMM1_4BY2:
+	      insert (output + low_byte, BFD_RELOC_SH_IMM4BY2, 0, operand + 1);
 	      break;
-	    case IMM_8BY2:
-	      insert (output + low_byte, BFD_RELOC_SH_IMM8BY2, 0);
+	    case IMM1_4:
+	      insert (output + low_byte, BFD_RELOC_SH_IMM4, 0, operand + 1);
 	      break;
-	    case IMM_8:
-	      insert (output + low_byte, BFD_RELOC_SH_IMM8, 0);
+	    case IMM0_8BY4:
+	      insert (output + low_byte, BFD_RELOC_SH_IMM8BY4, 0, operand);
+	      break;
+	    case IMM0_8BY2:
+	      insert (output + low_byte, BFD_RELOC_SH_IMM8BY2, 0, operand);
+	      break;
+	    case IMM0_8:
+	      insert (output + low_byte, BFD_RELOC_SH_IMM8, 0, operand);
+	      break;
+	    case IMM1_8BY4:
+	      insert (output + low_byte, BFD_RELOC_SH_IMM8BY4, 0, operand + 1);
+	      break;
+	    case IMM1_8BY2:
+	      insert (output + low_byte, BFD_RELOC_SH_IMM8BY2, 0, operand + 1);
+	      break;
+	    case IMM1_8:
+	      insert (output + low_byte, BFD_RELOC_SH_IMM8, 0, operand + 1);
 	      break;
 	    case PCRELIMM_8BY4:
-	      insert (output, BFD_RELOC_SH_PCRELIMM8BY4, 1);
+	      insert (output, BFD_RELOC_SH_PCRELIMM8BY4, 1, operand);
 	      break;
 	    case PCRELIMM_8BY2:
-	      insert (output, BFD_RELOC_SH_PCRELIMM8BY2, 1);
+	      insert (output, BFD_RELOC_SH_PCRELIMM8BY2, 1, operand);
+	      break;
+	    case REPEAT:
+	      output = insert_loop_bounds (output, operand);
+	      nbuf[index] = opcode->nibbles[3];
+	      operand += 2;
 	      break;
 	    default:
 	      printf (_("failed for %d\n"), i);
 	    }
 	}
     }
-  if (! target_big_endian) {
-    output[1] = (nbuf[0] << 4) | (nbuf[1]);
-    output[0] = (nbuf[2] << 4) | (nbuf[3]);
-  }
-  else {
-    output[0] = (nbuf[0] << 4) | (nbuf[1]);
-    output[1] = (nbuf[2] << 4) | (nbuf[3]);
-  }
+  if (!target_big_endian)
+    {
+      output[1] = (nbuf[0] << 4) | (nbuf[1]);
+      output[0] = (nbuf[2] << 4) | (nbuf[3]);
+    }
+  else
+    {
+      output[0] = (nbuf[0] << 4) | (nbuf[1]);
+      output[1] = (nbuf[2] << 4) | (nbuf[3]);
+    }
+  return size;
 }
 
 /* Find an opcode at the start of *STR_P in the hash table, and set
@@ -1322,7 +1618,8 @@ find_cooked_opcode (str_p)
   unsigned char *op_end;
   char name[20];
   int nlen = 0;
-  /* Drop leading whitespace */
+
+  /* Drop leading whitespace.  */
   while (*str == ' ')
     str++;
 
@@ -1347,20 +1644,20 @@ find_cooked_opcode (str_p)
       name[nlen] = c;
       nlen++;
     }
+
   name[nlen] = 0;
   *str_p = op_end;
 
   if (nlen == 0)
-    {
-      as_bad (_("can't find opcode "));
-    }
+    as_bad (_("can't find opcode "));
 
   return (sh_opcode_info *) hash_find (opcode_hash_control, name);
 }
 
 /* Assemble a parallel processing insn.  */
 #define DDT_BASE 0xf000 /* Base value for double data transfer insns */
-static void
+
+static unsigned int
 assemble_ppi (op_end, opcode)
      char *op_end;
      sh_opcode_info *opcode;
@@ -1371,6 +1668,7 @@ assemble_ppi (op_end, opcode)
   int field_b = 0;
   char *output;
   int move_code;
+  unsigned int size;
 
   /* Some insn ignore one or more register fields, e.g. psts machl,a0.
      Make sure we encode a defined insn pattern.  */
@@ -1386,14 +1684,16 @@ assemble_ppi (op_end, opcode)
       opcode = get_specific (opcode, operand);
       if (opcode == 0)
 	{
-	  /* Couldn't find an opcode which matched the operands */
+	  /* Couldn't find an opcode which matched the operands.  */
 	  char *where = frag_more (2);
+	  size = 2;
 
 	  where[0] = 0x0;
 	  where[1] = 0x0;
 	  as_bad (_("invalid operands for opcode"));
-	  return;
+	  return size;
 	}
+
       if (opcode->nibbles[0] != PPI)
 	as_bad (_("insn can't be combined with parallel processing insn"));
 
@@ -1457,10 +1757,10 @@ assemble_ppi (op_end, opcode)
 	  break;
 
 	case PSH:
-	  if (immediate.X_op != O_constant)
+	  if (operand[0].immediate.X_op != O_constant)
 	    as_bad (_("dsp immediate shift value not constant"));
 	  field_b = ((opcode->nibbles[2] << 12)
-		     | (immediate.X_add_number & 127) << 4
+		     | (operand[0].immediate.X_add_number & 127) << 4
 		     | reg_n);
 	  break;
 	case PPI3:
@@ -1536,6 +1836,7 @@ assemble_ppi (op_end, opcode)
       unsigned long ppi_code = (movx | movy | 0xf800) << 16 | field_b;
 
       output = frag_more (4);
+      size = 4;
       if (! target_big_endian)
 	{
 	  output[3] = ppi_code >> 8;
@@ -1549,8 +1850,11 @@ assemble_ppi (op_end, opcode)
       move_code |= 0xf800;
     }
   else
-    /* Just a double data transfer.  */
-    output = frag_more (2);
+    {
+      /* Just a double data transfer.  */
+      output = frag_more (2);
+      size = 2;
+    }
   if (! target_big_endian)
     {
       output[1] = move_code >> 8;
@@ -1561,12 +1865,12 @@ assemble_ppi (op_end, opcode)
       output[0] = move_code >> 8;
       output[1] = move_code;
     }
+  return size;
 }
 
 /* This is the guts of the machine-dependent assembler.  STR points to a
    machine dependent instruction.  This function is supposed to emit
-   the frags/bytes it assembles to.
- */
+   the frags/bytes it assembles to.  */
 
 void
 md_assemble (str)
@@ -1575,6 +1879,7 @@ md_assemble (str)
   unsigned char *op_end;
   sh_operand_info operand[3];
   sh_opcode_info *opcode;
+  unsigned int size = 0;
 
   opcode = find_cooked_opcode (&str);
   op_end = str;
@@ -1597,48 +1902,54 @@ md_assemble (str)
 
   if (opcode->nibbles[0] == PPI)
     {
-      assemble_ppi (op_end, opcode);
-      return;
-    }
-
-  if (opcode->arg[0] == A_BDISP12
-      || opcode->arg[0] == A_BDISP8)
-    {
-      parse_exp (op_end + 1);
-      build_relax (opcode);
+      size = assemble_ppi (op_end, opcode);
     }
   else
     {
-      if (opcode->arg[0] == A_END)
+      if (opcode->arg[0] == A_BDISP12
+	  || opcode->arg[0] == A_BDISP8)
 	{
-	  /* Ignore trailing whitespace.  If there is any, it has already
-	     been compressed to a single space.  */
-	  if (*op_end == ' ')
-	    op_end++;
+	  parse_exp (op_end + 1, &operand[0]);
+	  build_relax (opcode, &operand[0]);
 	}
       else
 	{
-	  op_end = get_operands (opcode, op_end, operand);
+	  if (opcode->arg[0] == A_END)
+	    {
+	      /* Ignore trailing whitespace.  If there is any, it has already
+		 been compressed to a single space.  */
+	      if (*op_end == ' ')
+		op_end++;
+	    }
+	  else
+	    {
+	      op_end = get_operands (opcode, op_end, operand);
+	    }
+	  opcode = get_specific (opcode, operand);
+
+	  if (opcode == 0)
+	    {
+	      /* Couldn't find an opcode which matched the operands.  */
+	      char *where = frag_more (2);
+	      size = 2;
+
+	      where[0] = 0x0;
+	      where[1] = 0x0;
+	      as_bad (_("invalid operands for opcode"));
+	    }
+	  else
+	    {
+	      if (*op_end)
+		as_bad (_("excess operands: '%s'"), op_end);
+
+	      size = build_Mytes (opcode, operand);
+	    }
 	}
-      opcode = get_specific (opcode, operand);
-
-      if (opcode == 0)
-	{
-	  /* Couldn't find an opcode which matched the operands */
-	  char *where = frag_more (2);
-
-	  where[0] = 0x0;
-	  where[1] = 0x0;
-	  as_bad (_("invalid operands for opcode"));
-	  return;
-	}
-
-      if (*op_end)
-	as_bad (_("excess operands: '%s'"), op_end);
-
-      build_Mytes (opcode, operand);
     }
 
+#ifdef BFD_ASSEMBLER
+  dwarf2_emit_insn (size);
+#endif
 }
 
 /* This routine is called each time a label definition is seen.  It
@@ -1658,7 +1969,7 @@ sh_frob_label ()
       offset = frag_now_fix ();
       if (frag_now != last_label_frag
 	  || offset != last_label_offset)
-	{	
+	{
 	  fix_new (frag_now, offset, 2, &abs_symbol, 0, 0, BFD_RELOC_SH_LABEL);
 	  last_label_frag = frag_now;
 	  last_label_offset = offset;
@@ -1682,9 +1993,27 @@ sh_flush_pending_output ()
 }
 
 symbolS *
-DEFUN (md_undefined_symbol, (name),
-       char *name)
+md_undefined_symbol (name)
+     char *name;
 {
+#ifdef OBJ_ELF
+  /* Under ELF we need to default _GLOBAL_OFFSET_TABLE.  Otherwise we
+     have no need to default values of symbols.  */
+  if (strcmp (name, GLOBAL_OFFSET_TABLE_NAME) == 0)
+    {
+      if (!GOT_symbol)
+	{
+	  if (symbol_find (name))
+	    as_bad ("GOT already in the symbol table");
+
+	  GOT_symbol = symbol_new (name, undefined_section,
+				   (valueT)0, & zero_address_frag);
+	}
+
+      return GOT_symbol;
+    }
+#endif /* OBJ_ELF */
+
   return 0;
 }
 
@@ -1692,15 +2021,15 @@ DEFUN (md_undefined_symbol, (name),
 #ifndef BFD_ASSEMBLER
 
 void
-DEFUN (tc_crawl_symbol_chain, (headers),
-       object_headers * headers)
+tc_crawl_symbol_chain (headers)
+     object_headers *headers;
 {
   printf (_("call to tc_crawl_symbol_chain \n"));
 }
 
 void
-DEFUN (tc_headers_hook, (headers),
-       object_headers * headers)
+tc_headers_hook (headers)
+     object_headers *headers;
 {
   printf (_("call to tc_headers_hook \n"));
 }
@@ -1708,14 +2037,15 @@ DEFUN (tc_headers_hook, (headers),
 #endif
 #endif
 
-/* Various routines to kill one day */
-/* Equal to MAX_PRECISION in atof-ieee.c */
+/* Various routines to kill one day.  */
+/* Equal to MAX_PRECISION in atof-ieee.c.  */
 #define MAX_LITTLENUMS 6
 
-/* Turn a string in input_line_pointer into a floating point constant of type
-   type, and store the appropriate bytes in *litP.  The number of LITTLENUMS
-   emitted is stored in *sizeP .  An error message is returned, or NULL on OK.
- */
+/* Turn a string in input_line_pointer into a floating point constant
+   of type TYPE, and store the appropriate bytes in *LITP.  The number
+   of LITTLENUMS emitted is stored in *SIZEP .  An error message is
+   returned, or NULL on OK.  */
+
 char *
 md_atof (type, litP, sizeP)
      int type;
@@ -1764,7 +2094,7 @@ md_atof (type, litP, sizeP)
 	  litP += 2;
 	}
     }
-     
+
   return NULL;
 }
 
@@ -1775,7 +2105,7 @@ md_atof (type, litP, sizeP)
 
 static void
 s_uses (ignore)
-     int ignore;
+     int ignore ATTRIBUTE_UNUSED;
 {
   expressionS ex;
 
@@ -1797,8 +2127,8 @@ s_uses (ignore)
 }
 
 CONST char *md_shortopts = "";
-struct option md_longopts[] = {
-
+struct option md_longopts[] =
+{
 #define OPTION_RELAX  (OPTION_MD_BASE)
 #define OPTION_LITTLE (OPTION_MD_BASE + 1)
 #define OPTION_SMALL (OPTION_LITTLE + 1)
@@ -1810,12 +2140,12 @@ struct option md_longopts[] = {
   {"dsp", no_argument, NULL, OPTION_DSP},
   {NULL, no_argument, NULL, 0}
 };
-size_t md_longopts_size = sizeof(md_longopts);
+size_t md_longopts_size = sizeof (md_longopts);
 
 int
 md_parse_option (c, arg)
      int c;
-     char *arg;
+     char *arg ATTRIBUTE_UNUSED;
 {
   switch (c)
     {
@@ -1847,7 +2177,7 @@ void
 md_show_usage (stream)
      FILE *stream;
 {
-  fprintf(stream, _("\
+  fprintf (stream, _("\
 SH options:\n\
 -little			generate little endian code\n\
 -relax			alter jump instructions for long displacements\n\
@@ -1877,10 +2207,9 @@ struct sh_count_relocs
    symbol.  When using BFD_ASSEMBLER, this is called via
    bfd_map_over_sections.  */
 
-/*ARGSUSED*/
 static void
 sh_count_relocs (abfd, sec, data)
-     bfd *abfd;
+     bfd *abfd ATTRIBUTE_UNUSED;
      segT sec;
      PTR data;
 {
@@ -1907,12 +2236,11 @@ sh_count_relocs (abfd, sec, data)
 /* Handle the count relocs for a particular section.  When using
    BFD_ASSEMBLER, this is called via bfd_map_over_sections.  */
 
-/*ARGSUSED*/
 static void
 sh_frob_section (abfd, sec, ignore)
-     bfd *abfd;
+     bfd *abfd ATTRIBUTE_UNUSED;
      segT sec;
-     PTR ignore;
+     PTR ignore ATTRIBUTE_UNUSED;
 {
   segment_info_type *seginfo;
   fixS *fix;
@@ -1973,8 +2301,8 @@ sh_frob_section (abfd, sec, ignore)
 	  continue;
 	}
 
-      /* fscan should also be a fixup to a local symbol in the same
-	 section.  */
+      /* The variable fscan should also be a fixup to a local symbol
+	 in the same section.  */
       sym = fscan->fx_addsy;
       if (sym == NULL
 	  || fscan->fx_subsy != NULL
@@ -2052,7 +2380,7 @@ sh_frob_file ()
 void
 md_convert_frag (headers, seg, fragP)
 #ifdef BFD_ASSEMBLER
-     bfd *headers;
+     bfd *headers ATTRIBUTE_UNUSED;
 #else
      object_headers *headers;
 #endif
@@ -2083,68 +2411,30 @@ md_convert_frag (headers, seg, fragP)
     case C (UNCOND_JUMP, UNCOND32):
     case C (UNCOND_JUMP, UNDEF_WORD_DISP):
       if (fragP->fr_symbol == NULL)
-	as_bad (_("at 0x%lx, displacement overflows 12-bit field"),
-		(unsigned long) fragP->fr_address);
+	as_bad_where (fragP->fr_file, fragP->fr_line,
+		      _("displacement overflows 12-bit field"));
       else if (S_IS_DEFINED (fragP->fr_symbol))
-	as_bad (_("at 0x%lx, displacement to defined symbol %s overflows 12-bit field"),
-		(unsigned long) fragP->fr_address,		
-		S_GET_NAME (fragP->fr_symbol));
+	as_bad_where (fragP->fr_file, fragP->fr_line,
+		      _("displacement to defined symbol %s overflows 12-bit field"),
+		      S_GET_NAME (fragP->fr_symbol));
       else
-	as_bad (_("at 0x%lx, displacement to undefined symbol %s overflows 12-bit field"),
-		(unsigned long) fragP->fr_address,		
-		S_GET_NAME (fragP->fr_symbol));
-
-#if 0				/* This code works, but generates poor code and the compiler
-				   should never produce a sequence that requires it to be used.  */
-
-      /* A jump wont fit in 12 bits, make code which looks like
-	 bra foo
-	 mov.w @(0, PC), r14
-	 .long disp
-	 foo: bra @r14
-	 */
-      int t = buffer[0] & 0x10;
-
-      buffer[highbyte] = 0xa0;	/* branch over move and disp */
-      buffer[lowbyte] = 3;
-      buffer[highbyte+2] = 0xd0 | JREG;	/* Build mov insn */
-      buffer[lowbyte+2] = 0x00;
-
-      buffer[highbyte+4] = 0;	/* space for 32 bit jump disp */
-      buffer[lowbyte+4] = 0;
-      buffer[highbyte+6] = 0;
-      buffer[lowbyte+6] = 0;
-
-      buffer[highbyte+8] = 0x40 | JREG;	/* Build jmp @JREG */
-      buffer[lowbyte+8] = t ? 0xb : 0x2b;
-
-      buffer[highbyte+10] = 0x20; /* build nop */
-      buffer[lowbyte+10] = 0x0b;
-
-      /* Make reloc for the long disp */
-      fix_new (fragP,
-	       fragP->fr_fix + 4,
-	       4,
-	       fragP->fr_symbol,
-	       fragP->fr_offset,
-	       0,
-	       BFD_RELOC_32);
-      fragP->fr_fix += UNCOND32_LENGTH;
+	as_bad_where (fragP->fr_file, fragP->fr_line,
+		      _("displacement to undefined symbol %s overflows 12-bit field"),
+		      S_GET_NAME (fragP->fr_symbol));
+      /* Stabilize this frag, so we don't trip an assert.  */
+      fragP->fr_fix += fragP->fr_var;
       fragP->fr_var = 0;
-      donerelax = 1;
-#endif
-
       break;
 
     case C (COND_JUMP, COND12):
     case C (COND_JUMP_DELAY, COND12):
-      /* A bcond won't fit, so turn it into a b!cond; bra disp; nop */
+      /* A bcond won't fit, so turn it into a b!cond; bra disp; nop.  */
       /* I found that a relax failure for gcc.c-torture/execute/930628-1.c
 	 was due to gas incorrectly relaxing an out-of-range conditional
 	 branch with delay slot.  It turned:
                      bf.s    L6              (slot mov.l   r12,@(44,r0))
          into:
-   
+
 2c:  8f 01 a0 8b     bf.s    32 <_main+32>   (slot bra       L6)
 30:  00 09           nop
 32:  10 cb           mov.l   r12,@(44,r0)
@@ -2206,58 +2496,19 @@ md_convert_frag (headers, seg, fragP)
     case C (COND_JUMP, UNDEF_WORD_DISP):
     case C (COND_JUMP_DELAY, UNDEF_WORD_DISP):
       if (fragP->fr_symbol == NULL)
-	as_bad (_("at 0x%lx, displacement overflows 8-bit field"), 
-		(unsigned long) fragP->fr_address);
+	as_bad_where (fragP->fr_file, fragP->fr_line,
+		      _("displacement overflows 8-bit field"));
       else if (S_IS_DEFINED (fragP->fr_symbol))
-	as_bad (_("at 0x%lx, displacement to defined symbol %s overflows 8-bit field "),
-		(unsigned long) fragP->fr_address,		
-		S_GET_NAME (fragP->fr_symbol));
+	as_bad_where (fragP->fr_file, fragP->fr_line,
+		      _("displacement to defined symbol %s overflows 8-bit field"),
+		      S_GET_NAME (fragP->fr_symbol));
       else
-	as_bad (_("at 0x%lx, displacement to undefined symbol %s overflows 8-bit field "),
-		(unsigned long) fragP->fr_address,		
-		S_GET_NAME (fragP->fr_symbol));
-
-#if 0				/* This code works, but generates poor code, and the compiler
-				   should never produce a sequence that requires it to be used.  */
-
-      /* A bcond won't fit and it won't go into a 12 bit
-	 displacement either, the code sequence looks like:
-	 b!cond foop
-	 mov.w @(n, PC), r14
-	 jmp  @r14
-	 nop
-	 .long where
-	 foop:
-	 */
-
-      buffer[0] ^= 0x2;		/* Toggle T/F bit */
-#define JREG 14
-      buffer[1] = 5;		/* branch over mov, jump, nop and ptr */
-      buffer[2] = 0xd0 | JREG;	/* Build mov insn */
-      buffer[3] = 0x2;
-      buffer[4] = 0x40 | JREG;	/* Build jmp @JREG */
-      buffer[5] = 0x0b;
-      buffer[6] = 0x20;		/* build nop */
-      buffer[7] = 0x0b;
-      buffer[8] = 0;		/* space for 32 bit jump disp */
-      buffer[9] = 0;
-      buffer[10] = 0;
-      buffer[11] = 0;
-      buffer[12] = 0;
-      buffer[13] = 0;
-      /* Make reloc for the long disp */
-      fix_new (fragP,
-	       fragP->fr_fix + 8,
-	       4,
-	       fragP->fr_symbol,
-	       fragP->fr_offset,
-	       0,
-	       BFD_RELOC_32);
-      fragP->fr_fix += COND32_LENGTH;
+	as_bad_where (fragP->fr_file, fragP->fr_line,
+		      _("displacement to undefined symbol %s overflows 8-bit field "),
+		      S_GET_NAME (fragP->fr_symbol));
+      /* Stabilize this frag, so we don't trip an assert.  */
+      fragP->fr_fix += fragP->fr_var;
       fragP->fr_var = 0;
-      donerelax = 1;
-#endif
-
       break;
 
     default:
@@ -2273,9 +2524,9 @@ md_convert_frag (headers, seg, fragP)
 }
 
 valueT
-DEFUN (md_section_align, (seg, size),
-       segT seg AND
-       valueT size)
+md_section_align (seg, size)
+     segT seg ATTRIBUTE_UNUSED;
+     valueT size;
 {
 #ifdef BFD_ASSEMBLER
 #ifdef OBJ_ELF
@@ -2345,7 +2596,7 @@ sh_cons_align (nbytes)
       return;
     }
 
-  p = frag_var (rs_align_code, 1, 1, (relax_substateT) 0,
+  p = frag_var (rs_align_test, 1, 1, (relax_substateT) 0,
 		(symbolS *) NULL, (offsetT) nalign, (char *) NULL);
 
   record_alignment (now_seg, nalign);
@@ -2359,17 +2610,47 @@ void
 sh_handle_align (frag)
      fragS *frag;
 {
+  int bytes = frag->fr_next->fr_address - frag->fr_address - frag->fr_fix;
+
+  if (frag->fr_type == rs_align_code)
+    {
+      static const unsigned char big_nop_pattern[] = { 0x00, 0x09 };
+      static const unsigned char little_nop_pattern[] = { 0x09, 0x00 };
+
+      char *p = frag->fr_literal + frag->fr_fix;
+
+      if (bytes & 1)
+	{
+	  *p++ = 0;
+	  bytes--;
+	  frag->fr_fix += 1;
+	}
+
+      if (target_big_endian)
+	{
+	  memcpy (p, big_nop_pattern, sizeof big_nop_pattern);
+	  frag->fr_var = sizeof big_nop_pattern;
+	}
+      else
+	{
+	  memcpy (p, little_nop_pattern, sizeof little_nop_pattern);
+	  frag->fr_var = sizeof little_nop_pattern;
+	}
+    }
+  else if (frag->fr_type == rs_align_test)
+    {
+      if (bytes != 0)
+	as_warn_where (frag->fr_file, frag->fr_line, _("misaligned data"));
+    }
+
   if (sh_relax
-      && frag->fr_type == rs_align
+      && (frag->fr_type == rs_align
+	  || frag->fr_type == rs_align_code)
       && frag->fr_address + frag->fr_fix > 0
       && frag->fr_offset > 1
       && now_seg != bss_section)
     fix_new (frag, frag->fr_fix, 2, &abs_symbol, frag->fr_offset, 0,
 	     BFD_RELOC_SH_ALIGN);
-
-  if (frag->fr_type == rs_align_code
-      && frag->fr_next->fr_address - frag->fr_address - frag->fr_fix != 0)
-    as_warn_where (frag->fr_file, frag->fr_line, _("misaligned data"));
 }
 
 /* This macro decides whether a particular reloc is an entry in a
@@ -2407,7 +2688,9 @@ sh_force_relocation (fix)
 {
 
   if (fix->fx_r_type == BFD_RELOC_VTABLE_INHERIT
-      || fix->fx_r_type == BFD_RELOC_VTABLE_ENTRY)
+      || fix->fx_r_type == BFD_RELOC_VTABLE_ENTRY
+      || fix->fx_r_type == BFD_RELOC_SH_LOOP_START
+      || fix->fx_r_type == BFD_RELOC_SH_LOOP_END)
     return 1;
 
   if (! sh_relax)
@@ -2430,7 +2713,21 @@ sh_fix_adjustable (fixP)
 
   if (fixP->fx_addsy == NULL)
     return 1;
-  
+
+  if (fixP->fx_r_type == BFD_RELOC_SH_PCDISP8BY2
+      || fixP->fx_r_type == BFD_RELOC_SH_PCDISP12BY2
+      || fixP->fx_r_type == BFD_RELOC_SH_PCRELIMM8BY2
+      || fixP->fx_r_type == BFD_RELOC_SH_PCRELIMM8BY4
+      || fixP->fx_r_type == BFD_RELOC_8_PCREL
+      || fixP->fx_r_type == BFD_RELOC_SH_SWITCH16
+      || fixP->fx_r_type == BFD_RELOC_SH_SWITCH32)
+    return 1;
+
+  if (! TC_RELOC_RTSYM_LOC_FIXUP (fixP)
+      || fixP->fx_r_type == BFD_RELOC_32_GOTOFF
+      || fixP->fx_r_type == BFD_RELOC_RVA)
+    return 0;
+
   /* We need the symbol name for the VTABLE entries */
   if (fixP->fx_r_type == BFD_RELOC_VTABLE_INHERIT
       || fixP->fx_r_type == BFD_RELOC_VTABLE_ENTRY)
@@ -2439,7 +2736,8 @@ sh_fix_adjustable (fixP)
   return 1;
 }
 
-void sh_elf_final_processing()
+void
+sh_elf_final_processing ()
 {
   int val;
 
@@ -2491,11 +2789,49 @@ md_apply_fix (fixP, val)
   int shift;
 
 #ifdef BFD_ASSEMBLER
-  /* adjust_reloc_syms won't convert a reloc against a weak symbol
-     into a reloc against a section, but bfd_install_relocation will
-     screw up if the symbol is defined, so we have to adjust val here
-     to avoid the screw up later.  */
-  if (fixP->fx_addsy != NULL
+  /* A difference between two symbols, the second of which is in the
+     current section, is transformed in a PC-relative relocation to
+     the other symbol.  We have to adjust the relocation type here.  */
+  if (fixP->fx_pcrel)
+    {
+      switch (fixP->fx_r_type)
+	{
+	default:
+	  break;
+
+	case BFD_RELOC_32:
+	  fixP->fx_r_type = BFD_RELOC_32_PCREL;
+	  break;
+
+	  /* Currently, we only support 32-bit PCREL relocations.
+	     We'd need a new reloc type to handle 16_PCREL, and
+	     8_PCREL is already taken for R_SH_SWITCH8, which
+	     apparently does something completely different than what
+	     we need.  FIXME.  */
+	case BFD_RELOC_16:
+	  bfd_set_error (bfd_error_bad_value);
+	  return false;
+
+	case BFD_RELOC_8:
+	  bfd_set_error (bfd_error_bad_value);
+	  return false;
+	}
+    }
+
+  /* The function adjust_reloc_syms won't convert a reloc against a weak
+     symbol into a reloc against a section, but bfd_install_relocation
+     will screw up if the symbol is defined, so we have to adjust val here
+     to avoid the screw up later.
+
+     For ordinary relocs, this does not happen for ELF, since for ELF,
+     bfd_install_relocation uses the "special function" field of the
+     howto, and does not execute the code that needs to be undone, as long
+     as the special function does not return bfd_reloc_continue.
+     It can happen for GOT- and PLT-type relocs the way they are
+     described in elf32-sh.c as they use bfd_elf_generic_reloc, but it
+     doesn't matter here since those relocs don't use VAL; see below.  */
+  if (OUTPUT_FLAVOR != bfd_target_elf_flavour
+      && fixP->fx_addsy != NULL
       && S_IS_WEAK (fixP->fx_addsy))
     val -= S_GET_VALUE  (fixP->fx_addsy);
 #endif
@@ -2554,7 +2890,7 @@ md_apply_fix (fixP, val)
          Note that adding further restrictions may invalidate
          reasonable looking assembly code, such as ``and -0x1,r0''.  */
       max = 0xff;
-      min = - 0xff;
+      min = -0xff;
       *buf++ = val;
       break;
 
@@ -2594,40 +2930,19 @@ md_apply_fix (fixP, val)
 
     case BFD_RELOC_SH_PCDISP12BY2:
       val /= 2;
-      if (val < -0x800 || val >= 0x7ff)
+      if (val < -0x800 || val > 0x7ff)
 	as_bad_where (fixP->fx_file, fixP->fx_line, _("pcrel too far"));
       buf[lowbyte] = val & 0xff;
       buf[highbyte] |= (val >> 8) & 0xf;
       break;
 
     case BFD_RELOC_32:
-      if (! target_big_endian) 
-	{
-	  *buf++ = val >> 0;
-	  *buf++ = val >> 8;
-	  *buf++ = val >> 16;
-	  *buf++ = val >> 24;
-	}
-      else 
-	{
-	  *buf++ = val >> 24;
-	  *buf++ = val >> 16;
-	  *buf++ = val >> 8;
-	  *buf++ = val >> 0;
-	}
+    case BFD_RELOC_32_PCREL:
+      md_number_to_chars (buf, val, 4);
       break;
 
     case BFD_RELOC_16:
-      if (! target_big_endian)
-	{
-	  *buf++ = val >> 0;
-	  *buf++ = val >> 8;
-	} 
-      else 
-	{
-	  *buf++ = val >> 8;
-	  *buf++ = val >> 0;
-	}
+      md_number_to_chars (buf, val, 2);
       break;
 
     case BFD_RELOC_SH_USES:
@@ -2643,6 +2958,9 @@ md_apply_fix (fixP, val)
       /* Nothing to do here.  */
       break;
 
+    case BFD_RELOC_SH_LOOP_START:
+    case BFD_RELOC_SH_LOOP_END:
+
     case BFD_RELOC_VTABLE_INHERIT:
     case BFD_RELOC_VTABLE_ENTRY:
       fixP->fx_done = 0;
@@ -2650,6 +2968,43 @@ md_apply_fix (fixP, val)
       return 0;
 #else
       return;
+#endif
+
+#ifdef OBJ_ELF
+    case BFD_RELOC_32_PLT_PCREL:
+      /* Make the jump instruction point to the address of the operand.  At
+	 runtime we merely add the offset to the actual PLT entry.  */
+      *valp = 0xfffffffc;
+      break;
+
+    case BFD_RELOC_SH_GOTPC:
+      /* This is tough to explain.  We end up with this one if we have
+         operands that look like "_GLOBAL_OFFSET_TABLE_+[.-.L284]".
+         The goal here is to obtain the absolute address of the GOT,
+         and it is strongly preferable from a performance point of
+         view to avoid using a runtime relocation for this.  There are
+         cases where you have something like:
+
+         .long	_GLOBAL_OFFSET_TABLE_+[.-.L66]
+
+         and here no correction would be required.  Internally in the
+         assembler we treat operands of this form as not being pcrel
+         since the '.' is explicitly mentioned, and I wonder whether
+         it would simplify matters to do it this way.  Who knows.  In
+         earlier versions of the PIC patches, the pcrel_adjust field
+         was used to store the correction, but since the expression is
+         not pcrel, I felt it would be confusing to do it this way.  */
+      *valp -= 1;
+      md_number_to_chars (buf, val, 4);
+      break;
+
+    case BFD_RELOC_32_GOT_PCREL:
+      *valp = 0; /* Fully resolved at runtime.  No addend.  */
+      md_number_to_chars (buf, 0, 4);
+      break;
+
+    case BFD_RELOC_32_GOTOFF:
+      break;
 #endif
 
     default:
@@ -2682,64 +3037,73 @@ md_estimate_size_before_relax (fragP, segment_type)
      register fragS *fragP;
      register segT segment_type;
 {
+  int what;
+
   switch (fragP->fr_subtype)
     {
+    default:
+      abort ();
+
     case C (UNCOND_JUMP, UNDEF_DISP):
-      /* used to be a branch to somewhere which was unknown */
+      /* Used to be a branch to somewhere which was unknown.  */
       if (!fragP->fr_symbol)
 	{
 	  fragP->fr_subtype = C (UNCOND_JUMP, UNCOND12);
-	  fragP->fr_var = md_relax_table[C (UNCOND_JUMP, UNCOND12)].rlx_length;
 	}
       else if (S_GET_SEGMENT (fragP->fr_symbol) == segment_type)
 	{
 	  fragP->fr_subtype = C (UNCOND_JUMP, UNCOND12);
-	  fragP->fr_var = md_relax_table[C (UNCOND_JUMP, UNCOND12)].rlx_length;
 	}
       else
 	{
 	  fragP->fr_subtype = C (UNCOND_JUMP, UNDEF_WORD_DISP);
-	  fragP->fr_var = md_relax_table[C (UNCOND_JUMP, UNCOND32)].rlx_length;
-	  return md_relax_table[C (UNCOND_JUMP, UNCOND32)].rlx_length;
 	}
       break;
 
-    default:
-      abort ();
     case C (COND_JUMP, UNDEF_DISP):
     case C (COND_JUMP_DELAY, UNDEF_DISP):
-      /* used to be a branch to somewhere which was unknown */
+      what = GET_WHAT (fragP->fr_subtype);
+      /* Used to be a branch to somewhere which was unknown.  */
       if (fragP->fr_symbol
 	  && S_GET_SEGMENT (fragP->fr_symbol) == segment_type)
 	{
-	  int what = GET_WHAT (fragP->fr_subtype);
 	  /* Got a symbol and it's defined in this segment, become byte
-	     sized - maybe it will fix up */
+	     sized - maybe it will fix up.  */
 	  fragP->fr_subtype = C (what, COND8);
-	  fragP->fr_var = md_relax_table[C (what, COND8)].rlx_length;
 	}
       else if (fragP->fr_symbol)
 	{
-	  int what = GET_WHAT (fragP->fr_subtype);
-	  /* Its got a segment, but its not ours, so it will always be long */
+	  /* Its got a segment, but its not ours, so it will always be long.  */
 	  fragP->fr_subtype = C (what, UNDEF_WORD_DISP);
-	  fragP->fr_var = md_relax_table[C (what, COND32)].rlx_length;
-	  return md_relax_table[C (what, COND32)].rlx_length;
 	}
       else
 	{
-	  int what = GET_WHAT (fragP->fr_subtype);
-	  /* We know the abs value */
+	  /* We know the abs value.  */
 	  fragP->fr_subtype = C (what, COND8);
-	  fragP->fr_var = md_relax_table[C (what, COND8)].rlx_length;
 	}
+      break;
 
+    case C (UNCOND_JUMP, UNCOND12):
+    case C (UNCOND_JUMP, UNCOND32):
+    case C (UNCOND_JUMP, UNDEF_WORD_DISP):
+    case C (COND_JUMP, COND8):
+    case C (COND_JUMP, COND12):
+    case C (COND_JUMP, COND32):
+    case C (COND_JUMP, UNDEF_WORD_DISP):
+    case C (COND_JUMP_DELAY, COND8):
+    case C (COND_JUMP_DELAY, COND12):
+    case C (COND_JUMP_DELAY, COND32):
+    case C (COND_JUMP_DELAY, UNDEF_WORD_DISP):
+      /* When relaxing a section for the second time, we don't need to
+	 do anything besides return the current size.  */
       break;
     }
+
+  fragP->fr_var = md_relax_table[fragP->fr_subtype].rlx_length;
   return fragP->fr_var;
 }
 
-/* Put number into target byte order */
+/* Put number into target byte order.  */
 
 void
 md_number_to_chars (ptr, use, nbytes)
@@ -2770,36 +3134,6 @@ tc_coff_sizemachdep (frag)
 }
 
 #endif /* OBJ_COFF */
-
-/* When we align the .text section, insert the correct NOP pattern.  */
-
-int
-sh_do_align (n, fill, len, max)
-     int n;
-     const char *fill;
-     int len;
-     int max;
-{
-  if (fill == NULL
-      && subseg_text_p (now_seg)
-      && n > 1)
-    {
-      static const unsigned char big_nop_pattern[] = { 0x00, 0x09 };
-      static const unsigned char little_nop_pattern[] = { 0x09, 0x00 };
-
-      /* First align to a 2 byte boundary, in case there is an odd
-         .byte.  */
-      frag_align (1, 0, 0);
-      if (target_big_endian)
-	frag_align_pattern (n, big_nop_pattern, sizeof big_nop_pattern, max);
-      else
-	frag_align_pattern (n, little_nop_pattern, sizeof little_nop_pattern,
-			    max);
-      return 1;
-    }
-
-  return 0;
-}
 
 #ifndef BFD_ASSEMBLER
 #ifdef OBJ_COFF
@@ -2959,7 +3293,7 @@ sh_coff_reloc_mangle (seg, fix, intr, paddr)
 
 arelent *
 tc_gen_reloc (section, fixp)
-     asection *section;
+     asection *section ATTRIBUTE_UNUSED;
      fixS *fixp;
 {
   arelent *rel;
@@ -2993,7 +3327,17 @@ tc_gen_reloc (section, fixp)
   else if (r_type == BFD_RELOC_VTABLE_INHERIT
            || r_type == BFD_RELOC_VTABLE_ENTRY)
     rel->addend = fixp->fx_offset;
+  else if (r_type == BFD_RELOC_SH_LOOP_START
+           || r_type == BFD_RELOC_SH_LOOP_END)
+    rel->addend = fixp->fx_offset;
+  else if (r_type == BFD_RELOC_SH_LABEL && fixp->fx_pcrel)
+    {
+      rel->addend = 0;
+      rel->address = rel->addend = fixp->fx_offset;
+    }
   else if (fixp->fx_pcrel)
+    rel->addend = fixp->fx_addnumber;
+  else if (r_type == BFD_RELOC_32 || r_type == BFD_RELOC_32_GOTOFF)
     rel->addend = fixp->fx_addnumber;
   else
     rel->addend = 0;

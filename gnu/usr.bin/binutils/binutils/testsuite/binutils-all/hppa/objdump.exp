@@ -1,4 +1,5 @@
-#   Copyright (C) 1993, 1994, 1996, 1997 Free Software Foundation, Inc.
+#   Copyright 1993, 1994, 1995, 1997, 1999, 2000
+#   Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,6 +27,11 @@ if ![istarget hppa*-*-*] then {
 
 # These tests are not suitable for wide mode.
 if [istarget hppa*w-*-*] then {
+  return
+}
+
+# elf hppa assembler doesn't support .subspa
+if {[istarget *-*-*elf*] || [istarget *-*-linux*]} then {
   return
 }
 

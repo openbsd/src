@@ -1,5 +1,5 @@
 /* m68k-parse.h -- header file for m68k assembler
-   Copyright (C) 1987, 91, 92, 93, 94, 95, 96, 1999
+   Copyright 1987, 1991, 1992, 1993, 1994, 1995, 1996, 1999, 2000
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -88,7 +88,7 @@ enum m68k_register
   MACSR,			/* MAC Status Reg */
   MASK,				/* Modulus Reg */
 
-  /* These have to be grouped together for the movec instruction to work. */
+  /* These have to be grouped together for the movec instruction to work.  */
   USP,				/*  User Stack Pointer */
   ISP,				/*  Interrupt stack pointer */
   SFC,
@@ -171,7 +171,7 @@ enum m68k_register
   ZADDR7,
 
   /* Upper and lower half of data and address registers.  Order *must*
-     be DATAxL, ADDRxL, DATAxU, ADDRxU. */
+     be DATAxL, ADDRxL, DATAxU, ADDRxU.  */
   DATA0L,			/* lower half of data registers */
   DATA1L,
   DATA2L,

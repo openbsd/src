@@ -1,5 +1,5 @@
 /* This file is tc-h8500.h
-   Copyright (C) 1993, 95, 97, 1998 Free Software Foundation, Inc.
+   Copyright 1993, 1995, 1997, 1998, 2000 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -17,7 +17,6 @@
    along with GAS; see the file COPYING.  If not, write to the Free
    Software Foundation, 59 Temple Place - Suite 330, Boston, MA
    02111-1307, USA.  */
-
 
 #define TC_H8500
 
@@ -53,5 +52,3 @@ extern void tc_reloc_mangle
 
 extern struct relax_type md_relax_table[];
 #define TC_GENERIC_RELAX_TABLE md_relax_table
-
-/* end of tc-h8500.h */

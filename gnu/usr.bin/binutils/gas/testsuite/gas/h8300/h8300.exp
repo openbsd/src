@@ -2036,12 +2036,12 @@ proc do_h8300s_mac {} {
     # assembled correctly.
     while 1 {
 	expect {
-	    -re " +\[0-9\]+ 0000 01A0\[^\n\]*\n"   { set x [expr $x+1] }
-	    -re " +\[0-9\]+ 0002 0320\[^\n\]*\n"   { set x [expr $x+1] }
-	    -re " +\[0-9\]+ 0004 0331\[^\n\]*\n"   { set x [expr $x+1] }
-	    -re " +\[0-9\]+ 0006 01606D01\[^\n\]*\n"   { set x [expr $x+1] }
-	    -re " +\[0-9\]+ 000a 0220\[^\n\]*\n"   { set x [expr $x+1] }
-	    -re " +\[0-9\]+ 000c 0231\[^\n\]*\n"   { set x [expr $x+1] }
+ 	    -re " +\[0-9\]+ 0000 01A0\[^\n\]*\n"   { set x [expr $x+1] }
+	    -re " +\[0-9\]+ 0002 0324\[^\n\]*\n"   { set x [expr $x+1] }
+	    -re " +\[0-9\]+ 0004 0335\[^\n\]*\n"   { set x [expr $x+1] }
+	    -re " +\[0-9\]+ 0006 01606D45\[^\n\]*\n"   { set x [expr $x+1] }
+	    -re " +\[0-9\]+ 000a 0224\[^\n\]*\n"   { set x [expr $x+1] }
+	    -re " +\[0-9\]+ 000c 0235\[^\n\]*\n"   { set x [expr $x+1] }
 	    eof					{ break }
 	}
     }

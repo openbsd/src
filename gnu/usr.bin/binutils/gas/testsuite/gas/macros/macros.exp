@@ -1,22 +1,35 @@
 # Run some tests of gas macros.
 
-if ![istarget hppa*-*-*] {
+if { ![istarget hppa*-*-*] || [istarget *-*-linux*] } {
     run_dump_test test1
 }
 
-run_dump_test test2
+if ![istarget *c54x*-*-*] {
+    run_dump_test test2
+}
 
 run_dump_test test3
 
-run_dump_test irp
+if ![istarget *c54x*-*-*] {
+    run_dump_test irp
+    run_dump_test rept
+}
 
-run_dump_test rept
 
 gas_test_error "err.s" "" "macro infinite recursion"
 
 case $target_triplet in {
-    { hppa*-*-* } { }
+    { hppa*-*-* } { if [istarget *-*-linux*] { run_dump_test semi } }
+    { *c54x*-*-* } { }
     default {
 	run_dump_test semi
     }
+}
+
+if { ![istarget hppa*-*-*] || [istarget *-*-linux*] } {
+    # FIXME: Due to macro mishandling of ONLY_STANDARD_ESCAPES.
+    setup_xfail cris-*-*
+    setup_xfail avr-*-*
+    setup_xfail sh*-*-*
+    run_dump_test strings
 }

@@ -1,4 +1,5 @@
-#   Copyright (C) 1994, 95, 96, 97, 1998 Free Software Foundation, Inc.
+#   Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001
+#   Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -72,7 +73,7 @@ if ![string match "" $got] then {
     setup_xfail "sh-*-coff" "sh-*-hms" 
     setup_xfail "m68*-*-hpux*" "m68*-*-sunos*" "m68*-*-coff" "m68*-*-vxworks*"
     setup_xfail "m68*-ericsson-ose" "m68k*-motorola-sysv*"
-    setup_xfail "i*86-*-linuxaout*" "i*86-*-aout*"
+    setup_xfail "i*86-*-aout*"
     setup_xfail "i*86-*-sysv3" "i*86-*-isc*" "i*86-*-sco*" "i*86-*-coff"
     setup_xfail "i*86-*-aix*" "i*86-*-go32*" "i*86-*-msdos*"
     setup_xfail "a29k-*-udi" "a29k-*-coff" "a29k-*-vxworks*"
@@ -80,7 +81,7 @@ if ![string match "" $got] then {
     setup_xfail "h8300-*-hms" "h8300-*-coff"
     setup_xfail "h8500-*-hms" "h8500-*-coff"
     setup_xfail "hppa*-*-*"
-    clear_xfail "hppa*-*-*elf*"
+    clear_xfail "hppa*-*-*elf*" "hppa*-*-linux*"
     setup_xfail "m88*-*-coff" "m88*-motorola-sysv*"
     setup_xfail "z8*-*-coff"
 
@@ -398,6 +399,7 @@ strip_test_with_saving_a_symbol
 proc copy_setup { } {
     global srcdir
     global subdir
+    global gcc_gas_flag
     
     set res [build_wrapper testglue.o];
     set flags { debug };
@@ -409,6 +411,11 @@ proc copy_setup { } {
 	set add_libs "";
     }
 
+    if { [istarget *-*-linux*] } {
+	foreach i $gcc_gas_flag {
+	    set flags "additional_flags=$i $flags"
+	}
+    }
     if { [target_compile "$srcdir/$subdir/testprog.c $add_libs" tmpdir/testprog executable $flags]  != "" } {
 	return 2
     }
@@ -473,7 +480,7 @@ proc copy_executable { prog flags test1 test2 } {
 	# mips_elf_sym_is_global.
 	setup_xfail "mips*-*-elf"
 
-	setup_xfail "arm*-*-coff"
+	setup_xfail "*arm*-*-coff"
 	setup_xfail "arm*-*-pe"
 	setup_xfail "thumb*-*-coff"
 	setup_xfail "thumb*-*-pe"

@@ -1,5 +1,5 @@
 /* NLM (NetWare Loadable Module) executable support for BFD.
-   Copyright (C) 1993, 94, 95, 98, 1999 Free Software Foundation, Inc.
+   Copyright 1993, 1994, 1995, 1998, 2000 Free Software Foundation, Inc.
 
    Written by Fred Fish @ Cygnus Support, using ELF support as the
    template.
@@ -52,9 +52,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define nlm_write_object_contents	nlmNAME(write_object_contents)
 
 #define nlm_swap_fixed_header_in(abfd,src,dst) \
-  (nlm_swap_fixed_header_in_func(abfd))(abfd,src,dst)
+  (nlm_swap_fixed_header_in_func(abfd)) (abfd,src,dst)
 #define nlm_swap_fixed_header_out(abfd,src,dst) \
-  (nlm_swap_fixed_header_out_func(abfd))(abfd,src,dst)
+  (nlm_swap_fixed_header_out_func(abfd)) (abfd,src,dst)
 
 /* Forward declarations of static functions */
 
@@ -142,7 +142,7 @@ nlm_object_p (abfd)
   x_fxdhdr = NULL;
 
   /* Check to see if we have an NLM file for this backend by matching
-     the NLM signature. */
+     the NLM signature.  */
 
   signature = nlm_signature (abfd);
   if (signature != NULL
@@ -223,7 +223,7 @@ got_no_match:
   return (NULL);
 }
 
-/* Add a section to the bfd. */
+/* Add a section to the bfd.  */
 
 static boolean
 add_bfd_section (abfd, name, offset, size, flags)
@@ -240,7 +240,7 @@ add_bfd_section (abfd, name, offset, size, flags)
     {
       return (false);
     }
-  newsect->vma = 0;		/* NLM's are relocatable. */
+  newsect->vma = 0;		/* NLM's are relocatable.  */
   newsect->_raw_size = size;
   newsect->filepos = offset;
   newsect->flags = flags;
@@ -249,7 +249,7 @@ add_bfd_section (abfd, name, offset, size, flags)
 }
 
 /* Read and swap in the variable length header.  All the fields must
-   exist in the NLM, and must exist in the order they are read here. */
+   exist in the NLM, and must exist in the order they are read here.  */
 
 static boolean
 nlm_swap_variable_header_in (abfd)
@@ -257,7 +257,7 @@ nlm_swap_variable_header_in (abfd)
 {
   unsigned char temp[NLM_TARGET_LONG_SIZE];
 
-  /* Read the description length and text members. */
+  /* Read the description length and text members.  */
 
   if (bfd_read ((PTR) & nlm_variable_header (abfd)->descriptionLength,
 		sizeof (nlm_variable_header (abfd)->descriptionLength),
@@ -270,19 +270,19 @@ nlm_swap_variable_header_in (abfd)
       (bfd_size_type) nlm_variable_header (abfd)->descriptionLength + 1)
     return (false);
 
-  /* Read and convert the stackSize field. */
+  /* Read and convert the stackSize field.  */
 
   if (bfd_read ((PTR) temp, sizeof (temp), 1, abfd) != sizeof (temp))
     return (false);
   nlm_variable_header (abfd)->stackSize = get_word (abfd, (bfd_byte *) temp);
 
-  /* Read and convert the reserved field. */
+  /* Read and convert the reserved field.  */
 
   if (bfd_read ((PTR) temp, sizeof (temp), 1, abfd) != sizeof (temp))
     return (false);
   nlm_variable_header (abfd)->reserved = get_word (abfd, (bfd_byte *) temp);
 
-  /* Read the oldThreadName field.  This field is a fixed length string. */
+  /* Read the oldThreadName field.  This field is a fixed length string.  */
 
   if (bfd_read ((PTR) nlm_variable_header (abfd)->oldThreadName,
 		sizeof (nlm_variable_header (abfd)->oldThreadName),
@@ -290,7 +290,7 @@ nlm_swap_variable_header_in (abfd)
       sizeof (nlm_variable_header (abfd)->oldThreadName))
     return (false);
 
-  /* Read the screen name length and text members. */
+  /* Read the screen name length and text members.  */
 
   if (bfd_read ((PTR) & nlm_variable_header (abfd)->screenNameLength,
 		sizeof (nlm_variable_header (abfd)->screenNameLength),
@@ -303,7 +303,7 @@ nlm_swap_variable_header_in (abfd)
       (bfd_size_type) nlm_variable_header (abfd)->screenNameLength + 1)
     return (false);
 
-  /* Read the thread name length and text members. */
+  /* Read the thread name length and text members.  */
 
   if (bfd_read ((PTR) & nlm_variable_header (abfd)->threadNameLength,
 		sizeof (nlm_variable_header (abfd)->threadNameLength),
@@ -327,7 +327,7 @@ nlm_swap_variable_header_out (abfd)
 {
   unsigned char temp[NLM_TARGET_LONG_SIZE];
 
-  /* Write the description length and text members. */
+  /* Write the description length and text members.  */
 
   if (bfd_write ((PTR) & nlm_variable_header (abfd)->descriptionLength,
 		 sizeof (nlm_variable_header (abfd)->descriptionLength),
@@ -340,21 +340,21 @@ nlm_swap_variable_header_out (abfd)
       (bfd_size_type) nlm_variable_header (abfd)->descriptionLength + 1)
     return (false);
 
-  /* Convert and write the stackSize field. */
+  /* Convert and write the stackSize field.  */
 
   put_word (abfd, (bfd_vma) nlm_variable_header (abfd)->stackSize,
 	    (bfd_byte *) temp);
   if (bfd_write ((PTR) temp, sizeof (temp), 1, abfd) != sizeof (temp))
     return (false);
 
-  /* Convert and write the reserved field. */
+  /* Convert and write the reserved field.  */
 
   put_word (abfd, (bfd_vma) nlm_variable_header (abfd)->reserved,
 	    (bfd_byte *) temp);
   if (bfd_write ((PTR) temp, sizeof (temp), 1, abfd) != sizeof (temp))
     return (false);
 
-  /* Write the oldThreadName field.  This field is a fixed length string. */
+  /* Write the oldThreadName field.  This field is a fixed length string.  */
 
   if (bfd_write ((PTR) nlm_variable_header (abfd)->oldThreadName,
 		 sizeof (nlm_variable_header (abfd)->oldThreadName),
@@ -362,7 +362,7 @@ nlm_swap_variable_header_out (abfd)
       sizeof (nlm_variable_header (abfd)->oldThreadName))
     return (false);
 
-  /* Write the screen name length and text members. */
+  /* Write the screen name length and text members.  */
 
   if (bfd_write ((PTR) & nlm_variable_header (abfd)->screenNameLength,
 		 sizeof (nlm_variable_header (abfd)->screenNameLength),
@@ -375,7 +375,7 @@ nlm_swap_variable_header_out (abfd)
       (bfd_size_type) nlm_variable_header (abfd)->screenNameLength + 1)
     return (false);
 
-  /* Write the thread name length and text members. */
+  /* Write the thread name length and text members.  */
 
   if (bfd_write ((PTR) & nlm_variable_header (abfd)->threadNameLength,
 		 sizeof (nlm_variable_header (abfd)->threadNameLength),
@@ -397,7 +397,7 @@ nlm_swap_variable_header_out (abfd)
    of the auxiliary headers are, except by finding something that doesn't
    look like a known auxiliary header.  This means that the first new type
    of auxiliary header added will break all existing tools that don't
-   recognize it. */
+   recognize it.  */
 
 static boolean
 nlm_swap_auxiliary_headers_in (abfd)
@@ -511,7 +511,7 @@ nlm_swap_auxiliary_headers_in (abfd)
 				 ->copyrightMessageLength),
 			1, 1, abfd) != 1)
 	    return (false);
-	  /* The copyright message is a variable length string. */
+	  /* The copyright message is a variable length string.  */
 	  if (bfd_read ((PTR) nlm_copyright_header (abfd)->copyrightMessage,
 		    nlm_copyright_header (abfd)->copyrightMessageLength + 1,
 			1, abfd) !=
@@ -820,7 +820,6 @@ nlm_swap_auxiliary_headers_out (abfd)
 	return false;
     }
 
-
   /* Write out the copyright header if there is one.  */
   if (find_nonzero ((PTR) nlm_copyright_header (abfd),
 		    sizeof (Nlm_Internal_Copyright_Header)))
@@ -835,7 +834,7 @@ nlm_swap_auxiliary_headers_out (abfd)
 	nlm_copyright_header (abfd)->copyrightMessageLength;
       if (bfd_write ((PTR) thdr.copyrightMessageLength, 1, 1, abfd) != 1)
 	return false;
-      /* The copyright message is a variable length string. */
+      /* The copyright message is a variable length string.  */
       if (bfd_write ((PTR) nlm_copyright_header (abfd)->copyrightMessage,
 		     nlm_copyright_header (abfd)->copyrightMessageLength + 1,
 		     1, abfd) !=
@@ -911,7 +910,7 @@ nlm_swap_auxiliary_headers_out (abfd)
 
    Return the number of bytes required to hold the symtab vector, based on
    the count plus 1, since we will NULL terminate the vector allocated based
-   on this size. */
+   on this size.  */
 
 long
 nlm_get_symtab_upper_bound (abfd)
@@ -930,7 +929,7 @@ nlm_get_symtab_upper_bound (abfd)
 }
 
 /* Note that bfd_get_symcount is guaranteed to be zero if slurping the
-   symbol table fails. */
+   symbol table fails.  */
 
 long
 nlm_get_symtab (abfd, alocation)
@@ -1048,7 +1047,7 @@ nlm_slurp_symbol_table (abfd)
      Note that we allocate the initial bfd canonical symbol buffer based on a
      one-to-one mapping of the NLM symbols to canonical symbols.  We actually
      use all the NLM symbols, so there will be no space left over at the end.
-     When we have all the symbols, we build the caller's pointer vector. */
+     When we have all the symbols, we build the caller's pointer vector.  */
 
   abfd->symcount = 0;
   i_fxdhdrp = nlm_fixed_header (abfd);
@@ -1071,7 +1070,7 @@ nlm_slurp_symbol_table (abfd)
 
   /* We use the bfd's symcount directly as the control count, so that early
      termination of the loop leaves the symcount correct for the symbols that
-     were read. */
+     were read.  */
 
   set_public_section_func = nlm_set_public_section_func (abfd);
   symcount = i_fxdhdrp->numberOfPublics;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1983, 1998 Regents of the University of California.
+ * Copyright (c) 1983, 1998, 2001 Regents of the University of California.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms are permitted
@@ -29,6 +29,7 @@
 #include "hist.h"
 #include "source.h"
 #include "sym_ids.h"
+#include "demangle.h"
 
 const char *whoami;
 const char *function_mapping_file;
@@ -104,7 +105,7 @@ static struct option long_options[] =
     /* various options to affect output: */
 
   {"all-lines", no_argument, 0, 'x'},
-  {"demangle", no_argument, 0, OPTION_DEMANGLE},
+  {"demangle", optional_argument, 0, OPTION_DEMANGLE},
   {"no-demangle", no_argument, 0, OPTION_NO_DEMANGLE},
   {"directory-path", required_argument, 0, 'I'},
   {"display-unused-functions", no_argument, 0, 'z'},
@@ -153,7 +154,7 @@ Usage: %s [-[abcDhilLsTvwxyz]] [-[ACeEfFJnNOpPqQZ][name]] [-I dirs]\n\
 	[--no-static] [--print-path] [--separate-files]\n\
 	[--static-call-graph] [--sum] [--table-length=len] [--traditional]\n\
 	[--version] [--width=n] [--ignore-non-functions]\n\
-	[--demangle] [--no-demangle]\n\
+	[--demangle[=STYLE]] [--no-demangle]\n\
 	[image-file] [profile-file...]\n"),
 	   whoami);
   if (status == 0)
@@ -179,7 +180,7 @@ DEFUN (main, (argc, argv), int argc AND char **argv)
   xmalloc_set_program_name (whoami);
 
   while ((ch = getopt_long (argc, argv,
-	"aA::bBcCdD::e:E:f:F:hiI:J::k:lLm:n::N::O:p::P::q::Q::st:Tvw:xyzZ::",
+	"aA::bBcCd::De:E:f:F:hiI:J::k:lLm:n::N::O:p::P::q::Q::st:Tvw:xyzZ::",
 			    long_options, 0))
 	 != EOF)
     {
@@ -425,6 +426,21 @@ This program is free software.  This program has absolutely no warranty.\n"));
 	  break;
 	case OPTION_DEMANGLE:
 	  demangle = TRUE;
+	  if (optarg != NULL)
+	    {
+	      enum demangling_styles style;
+
+	      style = cplus_demangle_name_to_style (optarg);
+	      if (style == unknown_demangling)
+		{
+		  fprintf (stderr,
+			   _("%s: unknown demangling style `%s'\n"),
+			   whoami, optarg);
+		  xexit (1);
+		}
+
+	      cplus_demangle_set_style (style);
+	   }
 	  break;
 	case OPTION_NO_DEMANGLE:
 	  demangle = FALSE;

@@ -1,5 +1,5 @@
 /* m68k.y -- bison grammar for m68k operand parsing
-   Copyright (C) 1995, 96, 1997, 1998 Free Software Foundation, Inc.
+   Copyright 1995, 1996, 1997, 1998 Free Software Foundation, Inc.
    Written by Ken Raeburn and Ian Lance Taylor, Cygnus Support
 
    This file is part of GAS, the GNU Assembler.

@@ -1,3 +1,24 @@
+/* sym_ids.c
+
+   Copyright 2000, 2001 Free Software Foundation, Inc.
+
+   This file is part of GNU Binutils.
+
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+   02111-1307, USA.  */
+
 #include <ctype.h>
 
 #include "libiberty.h"
@@ -7,14 +28,15 @@
 struct sym_id
   {
     struct sym_id *next;
-    char *spec;			/* parsing modifies this */
+    char *spec;			/* Parsing modifies this.  */
     Table_Id which_table;
     bool has_right;
+
     struct match
       {
-	int prev_index;		/* index of prev match */
-	Sym *prev_match;	/* previous match */
-	Sym *first_match;	/* chain of all matches */
+	int prev_index;		/* Index of prev match.  */
+	Sym *prev_match;	/* Previous match.  */
+	Sym *first_match;	/* Chain of all matches.  */
 	Sym sym;
       }
     left, right;
@@ -35,13 +57,11 @@ const char *table_name[] =
 };
 #endif /* DEBUG */
 
-/*
- * This is the table in which we keep all the syms that match
- * the right half of an arc id.  It is NOT sorted according
- * to the addresses, because it is accessed only through
- * the left half's CHILDREN pointers (so it's crucial not
- * to reorder this table once pointers into it exist).
- */
+/* This is the table in which we keep all the syms that match
+   the right half of an arc id.  It is NOT sorted according
+   to the addresses, because it is accessed only through
+   the left half's CHILDREN pointers (so it's crucial not
+   to reorder this table once pointers into it exist).  */
 static Sym_Table right_ids;
 
 static Source_File non_existent_file =
@@ -69,17 +89,16 @@ DEFUN (sym_id_add, (spec, which_table),
 }
 
 
-/*
- * A spec has the syntax FILENAME:(FUNCNAME|LINENUM).  As a convenience
- * to the user, a spec without a colon is interpreted as:
- *
- *      (i)   a FILENAME if it contains a dot
- *      (ii)  a FUNCNAME if it starts with a non-digit character
- *      (iii) a LINENUM if it starts with a digit
- *
- * A FUNCNAME containing a dot can be specified by :FUNCNAME, a
- * FILENAME not containing a dot can be specified by FILENAME:.
- */
+/* A spec has the syntax FILENAME:(FUNCNAME|LINENUM).  As a convenience
+   to the user, a spec without a colon is interpreted as:
+
+	(i)   a FILENAME if it contains a dot
+	(ii)  a FUNCNAME if it starts with a non-digit character
+	(iii) a LINENUM if it starts with a digit
+
+   A FUNCNAME containing a dot can be specified by :FUNCNAME, a
+   FILENAME not containing a dot can be specified by FILENAME.  */
+
 static void
 DEFUN (parse_spec, (spec, sym), char *spec AND Sym * sym)
 {
@@ -87,40 +106,38 @@ DEFUN (parse_spec, (spec, sym), char *spec AND Sym * sym)
 
   sym_init (sym);
   colon = strrchr (spec, ':');
+
   if (colon)
     {
       *colon = '\0';
+
       if (colon > spec)
 	{
 	  sym->file = source_file_lookup_name (spec);
+
 	  if (!sym->file)
-	    {
-	      sym->file = &non_existent_file;
-	    }
+	    sym->file = &non_existent_file;
 	}
+
       spec = colon + 1;
+
       if (strlen (spec))
 	{
 	  if (isdigit ((unsigned char) spec[0]))
-	    {
-	      sym->line_num = atoi (spec);
-	    }
+	    sym->line_num = atoi (spec);
 	  else
-	    {
-	      sym->name = spec;
-	    }
+	    sym->name = spec;
 	}
     }
   else if (strlen (spec))
     {
-      /* no colon: spec is a filename if it contains a dot: */
+      /* No colon: spec is a filename if it contains a dot.  */
       if (strchr (spec, '.'))
 	{
 	  sym->file = source_file_lookup_name (spec);
+
 	  if (!sym->file)
-	    {
-	      sym->file = &non_existent_file;
-	    }
+	    sym->file = &non_existent_file;
 	}
       else if (isdigit ((unsigned char) *spec))
 	{
@@ -134,10 +151,9 @@ DEFUN (parse_spec, (spec, sym), char *spec AND Sym * sym)
 }
 
 
-/*
- * A symbol id has the syntax SPEC[/SPEC], where SPEC is is defined
- * by parse_spec().
- */
+/* A symbol id has the syntax SPEC[/SPEC], where SPEC is is defined
+   by parse_spec().  */
+
 static void
 DEFUN (parse_id, (id), struct sym_id *id)
 {
@@ -158,44 +174,35 @@ DEFUN (parse_id, (id), struct sym_id *id)
   if (debug_level & IDDEBUG)
     {
       printf ("%s:", id->left.sym.file ? id->left.sym.file->name : "*");
+
       if (id->left.sym.name)
-	{
-	  printf ("%s", id->left.sym.name);
-	}
+	printf ("%s", id->left.sym.name);
       else if (id->left.sym.line_num)
-	{
-	  printf ("%d", id->left.sym.line_num);
-	}
+	printf ("%d", id->left.sym.line_num);
       else
-	{
-	  printf ("*");
-	}
+	printf ("*");
+
       if (id->has_right)
 	{
 	  printf ("/%s:",
 		  id->right.sym.file ? id->right.sym.file->name : "*");
+
 	  if (id->right.sym.name)
-	    {
-	      printf ("%s", id->right.sym.name);
-	    }
+	    printf ("%s", id->right.sym.name);
 	  else if (id->right.sym.line_num)
-	    {
-	      printf ("%d", id->right.sym.line_num);
-	    }
+	    printf ("%d", id->right.sym.line_num);
 	  else
-	    {
-	      printf ("*");
-	    }
+	    printf ("*");
 	}
+
       printf ("\n");
     }
 #endif
 }
 
 
-/*
- * Return TRUE iff PATTERN matches SYM.
- */
+/* Return TRUE iff PATTERN matches SYM.  */
+
 static bool
 DEFUN (match, (pattern, sym), Sym * pattern AND Sym * sym)
 {
@@ -214,37 +221,36 @@ DEFUN (extend_match, (m, sym, tab, second_pass),
 {
   if (m->prev_match != sym - 1)
     {
-      /* discontinuity: add new match to table: */
+      /* Discontinuity: add new match to table.  */
       if (second_pass)
 	{
 	  tab->base[tab->len] = *sym;
 	  m->prev_index = tab->len;
 
-	  /* link match into match's chain: */
+	  /* Link match into match's chain.  */
 	  tab->base[tab->len].next = m->first_match;
 	  m->first_match = &tab->base[tab->len];
 	}
+
       ++tab->len;
     }
 
-  /* extend match to include this symbol: */
+  /* Extend match to include this symbol.  */
   if (second_pass)
-    {
-      tab->base[m->prev_index].end_addr = sym->end_addr;
-    }
+    tab->base[m->prev_index].end_addr = sym->end_addr;
+
   m->prev_match = sym;
 }
 
 
-/*
- * Go through sym_id list produced by option processing and fill
- * in the various symbol tables indicating what symbols should
- * be displayed or suppressed for the various kinds of outputs.
- *
- * This can potentially produce huge tables and in particulars
- * tons of arcs, but this happens only if the user makes silly
- * requests---you get what you ask for!
- */
+/* Go through sym_id list produced by option processing and fill
+   in the various symbol tables indicating what symbols should
+   be displayed or suppressed for the various kinds of outputs.
+
+   This can potentially produce huge tables and in particulars
+   tons of arcs, but this happens only if the user makes silly
+   requests---you get what you ask for!  */
+
 void
 DEFUN_VOID (sym_id_parse)
 {
@@ -252,33 +258,24 @@ DEFUN_VOID (sym_id_parse)
   struct sym_id *id;
   Sym_Table *tab;
 
-  /*
-   * Convert symbol ids into Syms, so we can deal with them more easily:
-   */
+  /* Convert symbol ids into Syms, so we can deal with them more easily.  */
   for (id = id_list; id; id = id->next)
-    {
-      parse_id (id);
-    }
+    parse_id (id);
 
-  /* first determine size of each table: */
-
+  /* First determine size of each table.  */
   for (sym = symtab.base; sym < symtab.limit; ++sym)
     {
       for (id = id_list; id; id = id->next)
 	{
 	  if (match (&id->left.sym, sym))
-	    {
-	      extend_match (&id->left, sym, &syms[id->which_table], FALSE);
-	    }
+	    extend_match (&id->left, sym, &syms[id->which_table], FALSE);
+
 	  if (id->has_right && match (&id->right.sym, sym))
-	    {
-	      extend_match (&id->right, sym, &right_ids, FALSE);
-	    }
+	    extend_match (&id->right, sym, &right_ids, FALSE);
 	}
     }
 
-  /* create tables of appropriate size and reset lengths: */
-
+  /* Create tables of appropriate size and reset lengths.  */
   for (tab = syms; tab < &syms[NUM_TABLES]; ++tab)
     {
       if (tab->len)
@@ -288,6 +285,7 @@ DEFUN_VOID (sym_id_parse)
 	  tab->len = 0;
 	}
     }
+
   if (right_ids.len)
     {
       right_ids.base = (Sym *) xmalloc (right_ids.len * sizeof (Sym));
@@ -295,25 +293,20 @@ DEFUN_VOID (sym_id_parse)
       right_ids.len = 0;
     }
 
-  /* make a second pass through symtab, creating syms as necessary: */
-
+  /* Make a second pass through symtab, creating syms as necessary.  */
   for (sym = symtab.base; sym < symtab.limit; ++sym)
     {
       for (id = id_list; id; id = id->next)
 	{
 	  if (match (&id->left.sym, sym))
-	    {
-	      extend_match (&id->left, sym, &syms[id->which_table], TRUE);
-	    }
+	    extend_match (&id->left, sym, &syms[id->which_table], TRUE);
+
 	  if (id->has_right && match (&id->right.sym, sym))
-	    {
-	      extend_match (&id->right, sym, &right_ids, TRUE);
-	    }
+	    extend_match (&id->right, sym, &right_ids, TRUE);
 	}
     }
 
-  /* go through ids creating arcs as needed: */
-
+  /* Go through ids creating arcs as needed.  */
   for (id = id_list; id; id = id->next)
     {
       if (id->has_right)
@@ -334,14 +327,14 @@ DEFUN_VOID (sym_id_parse)
 				(unsigned long) right->addr,
 				(unsigned long) right->end_addr,
 				table_name[id->which_table]));
+
 		  arc_add (left, right, (unsigned long) 0);
 		}
 	    }
 	}
     }
 
-  /* finally, we can sort the tables and we're done: */
-
+  /* Finally, we can sort the tables and we're done.  */
   for (tab = &syms[0]; tab < &syms[NUM_TABLES]; ++tab)
     {
       DBG (IDDEBUG, printf ("[sym_id_parse] syms[%s]:\n",
@@ -351,14 +344,12 @@ DEFUN_VOID (sym_id_parse)
 }
 
 
-/*
- * Symbol tables storing the FROM symbols of arcs do not necessarily
- * have distinct address ranges.  For example, somebody might request
- * -k /_mcount to suppress any arcs into _mcount, while at the same
- * time requesting -k a/b.  Fortunately, those symbol tables don't get
- * very big (the user has to type them!), so a linear search is probably
- * tolerable.
- */
+/* Symbol tables storing the FROM symbols of arcs do not necessarily
+   have distinct address ranges.  For example, somebody might request
+   -k /_mcount to suppress any arcs into _mcount, while at the same
+   time requesting -k a/b.  Fortunately, those symbol tables don't get
+   very big (the user has to type them!), so a linear search is probably
+   tolerable.  */
 bool
 DEFUN (sym_id_arc_is_present, (symtab, from, to),
        Sym_Table * symtab AND Sym * from AND Sym * to)
@@ -369,9 +360,8 @@ DEFUN (sym_id_arc_is_present, (symtab, from, to),
     {
       if (from->addr >= sym->addr && from->addr <= sym->end_addr
 	  && arc_lookup (sym, to))
-	{
-	  return TRUE;
-	}
+	return TRUE;
     }
+
   return FALSE;
 }

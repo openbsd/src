@@ -1,5 +1,6 @@
 /* BFD back-end for Hitachi H8/500 COFF binaries.
-   Copyright 1993, 94, 95, 1997 Free Software Foundation, Inc.
+   Copyright 1993, 1994, 1995, 1997, 1999, 2000
+   Free Software Foundation, Inc.
    Contributed by Cygnus Support.
    Written by Steve Chamberlain, <sac@cygnus.com>.
 
@@ -45,7 +46,6 @@ static reloc_howto_type r_imm32 =
 HOWTO (R_H8500_IMM32, 0, 1, 32, false, 0,
        complain_overflow_bitfield, 0, "r_imm32", true, 0xffffffff, 0xffffffff, false);
 
-
 static reloc_howto_type r_high8 =
 HOWTO (R_H8500_HIGH8, 0, 1, 8, false, 0,
        complain_overflow_dont, 0, "r_high8", true, 0x000000ff, 0x000000ff, false);
@@ -57,7 +57,6 @@ HOWTO (R_H8500_LOW16, 0, 1, 16, false, 0,
 static reloc_howto_type r_pcrel8 =
 HOWTO (R_H8500_PCREL8, 0, 1, 8, true, 0, complain_overflow_signed, 0, "r_pcrel8", true, 0, 0, true);
 
-
 static reloc_howto_type r_pcrel16 =
 HOWTO (R_H8500_PCREL16, 0, 1, 16, true, 0, complain_overflow_signed, 0, "r_pcrel16", true, 0, 0, true);
 
@@ -65,10 +64,9 @@ static reloc_howto_type r_high16 =
 HOWTO (R_H8500_HIGH16, 0, 1, 8, false, 0,
        complain_overflow_dont, 0, "r_high16", true, 0x000ffff, 0x0000ffff, false);
 
-
 /* Turn a howto into a reloc number */
 
-static int 
+static int
 coff_h8500_select_reloc (howto)
      reloc_howto_type *howto;
 {
@@ -76,7 +74,6 @@ coff_h8500_select_reloc (howto)
 }
 
 #define SELECT_RELOC(x,howto) x.r_type = coff_h8500_select_reloc(howto)
-
 
 #define BADMAG(x) H8500BADMAG(x)
 #define H8500 1			/* Customize coffcode.h */
@@ -135,13 +132,10 @@ rtype2howto(internal, dst)
 
 #define RTYPE2HOWTO(internal, relocentry) rtype2howto(internal,relocentry)
 
-
 /* Perform any necessary magic to the addend in a reloc entry */
-
 
 #define CALC_ADDEND(abfd, symbol, ext_reloc, cache_ptr) \
  cache_ptr->addend =  ext_reloc.r_offset;
-
 
 #define RELOC_PROCESSING(relent,reloc,symbols,abfd,section) \
  reloc_processing(relent, reloc, symbols, abfd, section)
@@ -164,7 +158,6 @@ static void reloc_processing (relent, reloc, symbols, abfd, section)
     {
       relent->sym_ptr_ptr = bfd_abs_section_ptr->symbol_ptr_ptr;
     }
-
 
   relent->addend = reloc->r_offset;
   relent->address -= section->vma;
@@ -217,7 +210,7 @@ extra_case (in_abfd, link_info, link_order, reloc, data, src_ptr, dst_ptr)
       (*dst_ptr) += 2;
       (*src_ptr) += 2;
       break;
-      
+
     case R_H8500_HIGH16:
       bfd_put_16 (in_abfd,
 		  (bfd_coff_reloc16_get_value (reloc, link_info, input_section)
@@ -231,7 +224,7 @@ extra_case (in_abfd, link_info, link_order, reloc, data, src_ptr, dst_ptr)
     case R_H8500_IMM24:
       {
 	int v = bfd_coff_reloc16_get_value(reloc, link_info, input_section);
-	int o = bfd_get_32(in_abfd, data+ *dst_ptr -1);
+	int o = bfd_get_32 (in_abfd, data+ *dst_ptr -1);
 	v = (v & 0x00ffffff) | (o & 0xff00000);
 	bfd_put_32 (in_abfd, v, data  + *dst_ptr -1);
 	(*dst_ptr) +=3;
@@ -246,7 +239,6 @@ extra_case (in_abfd, link_info, link_order, reloc, data, src_ptr, dst_ptr)
 	(*src_ptr)+=4;;
       }
       break;
-
 
     case R_H8500_PCREL8:
       {
@@ -303,7 +295,6 @@ extra_case (in_abfd, link_info, link_order, reloc, data, src_ptr, dst_ptr)
 #define coff_reloc16_extra_cases extra_case
 
 #include "coffcode.h"
-
 
 #undef  coff_bfd_get_relocated_section_contents
 #undef coff_bfd_relax_section

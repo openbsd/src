@@ -1,7 +1,7 @@
 /* m88k.h -- Assembler for the Motorola 88000
    Contributed by Devon Bowen of Buffalo University
    and Torbjorn Granlund of the Swedish Institute of Computer Science.
-   Copyright (C) 1989, 90, 91, 92, 93, 94, 95, 96, 97, 2000
+   Copyright 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 2000
    Free Software Foundation, Inc.
 
 This file is part of GAS, the GNU Assembler.
@@ -100,9 +100,10 @@ struct reloc_info_m88k
 #endif
 #define SUB_SEGMENT_ALIGN(SEG)	max (section_alignment[(int) (SEG)], 4)
 
-/* We use a special alignment function to insert the correct nop
-   pattern in .init.  */
-extern int m88k_do_align PARAMS ((int, const char *, int, int));
-#define md_do_align(n,fill,len,max,l) if (m88k_do_align(n,fill,max,len)) goto l
+/* Fill in rs_align_code fragments.  */
+extern void m88k_handle_align PARAMS ((fragS *));
+#define HANDLE_ALIGN(frag)  m88k_handle_align (frag)
+
+#define MAX_MEM_FOR_RS_ALIGN_CODE  (3 + 4)
 
 #endif /* M88KCOFF */

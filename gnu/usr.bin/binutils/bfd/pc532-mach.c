@@ -1,5 +1,6 @@
 /* BFD back-end for Mach3/532 a.out-ish binaries.
-   Copyright (C) 1990, 1991, 1992, 1994, 2000 Free Software Foundation, Inc.
+   Copyright 1990, 1991, 1992, 1994, 1995, 2000, 2001
+   Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
 
@@ -33,7 +34,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define N_HEADER_IN_TEXT(x) 1
 #define N_TXTSIZE(x) ((x).a_text)
 
-
 #define TEXT_START_ADDR 0x10000       /* from old ld */
 #define TARGET_PAGE_SIZE 0x1000       /* from old ld,  032 & 532 are really 512/4k */
 
@@ -49,7 +49,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define N_SHARED_LIB(x) 0
 #define SEGMENT_SIZE TARGET_PAGE_SIZE
 #define DEFAULT_ARCH bfd_arch_ns32k
-  
+
 #define MY(OP) CAT(pc532machaout_,OP)
 
 /* Must be the same as aout-ns32k.c */
@@ -67,14 +67,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #define MY_bfd_reloc_type_lookup ns32kaout_bfd_reloc_type_lookup
 
-/* libaout doesn't use NAME for these ... */
+/* libaout doesn't use NAME for these ...  */
 
 #define MY_get_section_contents aout_32_get_section_contents
 
 #define MY_text_includes_header 1
 
 #define MY_exec_header_not_counted 1
-     
+
 #define MYNSX(OP) CAT(ns32kaout_,OP)
 reloc_howto_type *
 MYNSX(bfd_reloc_type_lookup)
@@ -91,9 +91,9 @@ bfd *abfd;
 {
   struct external_exec exec_bytes;
   struct internal_exec *execp = exec_hdr (abfd);
-  
+
   obj_reloc_entry_size (abfd) = RELOC_STD_SIZE;
-  
+
   BFD_ASSERT (bfd_get_arch (abfd) == bfd_arch_ns32k);
   switch (bfd_get_mach (abfd))
     {
@@ -106,9 +106,9 @@ bfd *abfd;
       break;
     }
   N_SET_FLAGS (*execp, aout_backend_info (abfd)->exec_hdr_flags);
-  
+
   WRITE_HEADERS(abfd, execp);
-  
+
   return true;
 }
 

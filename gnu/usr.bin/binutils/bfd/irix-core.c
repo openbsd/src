@@ -1,5 +1,5 @@
 /* BFD back-end for Irix core files.
-   Copyright 1993, 94, 95, 96, 1997 Free Software Foundation, Inc.
+   Copyright 1993, 1994, 1996, 1999, 2001 Free Software Foundation, Inc.
    Written by Stu Grossman, Cygnus Support.
    Converted to back-end form by Ian Lance Taylor, Cygnus Support
 
@@ -165,8 +165,9 @@ irix_core_core_file_p (abfd)
 		     idg->i_len + idf->i_len + ids->i_len,
 		     0,
 		     idg->i_offset);
-
+ 
   /* OK, we believe you.  You're a core file (sure, sure).  */
+  bfd_default_set_arch_mach (abfd, bfd_arch_mips, 0);
 
   return abfd->xvec;
 }

@@ -24,7 +24,8 @@ proc do_subspace_align_test {} {
     set testname "ss_align.s: Test subspace alignment (part 2)"
     set x 0
 
-    if { [istarget hppa*-*-*elf*] || [istarget hppa*w-*-*] } then {
+    if {[istarget hppa*64*-*-*]
+	|| [istarget hppa*-*-*elf*] || [istarget hppa*-*-linux*]} then {
       return 
     }
 
@@ -107,7 +108,8 @@ proc do_align3_test {} {
     set testname "align3.s: Test for alignment bug when switching subspaces (part2)"
     set x 0
 
-    if { [istarget hppa*-*-*elf*] || [istarget hppa*w-*-*] } then {
+    if {[istarget hppa*64*-*-*]
+	|| [istarget hppa*-*-*elf*] || [istarget hppa*-*-linux*]} then {
       return 
     }
 
@@ -138,8 +140,9 @@ proc do_align4_test {} {
     set testname "align4.s: More subspace alignment tests (part2)"
     set x 0
 
-    if { [istarget hppa*-*-*elf*] || [istarget hppa*w-*-*] } then {
-	return
+    if {[istarget hppa*64*-*-*]
+	|| [istarget hppa*-*-*elf*] || [istarget hppa*-*-linux*]} then {
+      return 
     }
 
     if [gas_test_old "align4.s" "" "More subspace alignment tests (part1)"] {
@@ -192,6 +195,11 @@ proc do_import_test {} {
 }
 
 proc do_common_test {} {
+    # linux has a different .comm syntax
+    if [istarget hppa*-*-linux*] then {
+	return;
+    }
+
     set testname "common.s: Test for bug in .comm handling (part2)"
     set x 0
 
@@ -250,6 +258,4 @@ if [istarget hppa*-*-*] then {
 
     # Test for an off-by-2 bug in range check for conditional branches
     gas_test_error "brlenbug.s" "" "Check for error(s) in branch length"
-
 }
-

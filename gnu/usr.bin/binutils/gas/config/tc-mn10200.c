@@ -1,5 +1,6 @@
 /* tc-mn10200.c -- Assembler code for the Matsushita 10200
-   Copyright (C) 1996, 1997, 1998, 1999 Free Software Foundation.
+   Copyright 1996, 1997, 1998, 1999, 2000, 2001
+   Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -21,7 +22,7 @@
 #include <stdio.h>
 #include <ctype.h>
 #include "as.h"
-#include "subsegs.h"     
+#include "subsegs.h"
 #include "opcode/mn10200.h"
 
 /* Structure to hold information about predefined registers.  */
@@ -31,46 +32,47 @@ struct reg_name
   int value;
 };
 
-/* Generic assembler global variables which must be defined by all targets. */
+/* Generic assembler global variables which must be defined by all
+   targets.  */
 
-/* Characters which always start a comment. */
+/* Characters which always start a comment.  */
 const char comment_chars[] = "#";
 
 /* Characters which start a comment at the beginning of a line.  */
 const char line_comment_chars[] = ";#";
 
-/* Characters which may be used to separate multiple commands on a 
+/* Characters which may be used to separate multiple commands on a
    single line.  */
 const char line_separator_chars[] = ";";
 
-/* Characters which are used to indicate an exponent in a floating 
+/* Characters which are used to indicate an exponent in a floating
    point number.  */
 const char EXP_CHARS[] = "eE";
 
-/* Characters which mean that a number is a floating point constant, 
+/* Characters which mean that a number is a floating point constant,
    as in 0d1.0.  */
 const char FLT_CHARS[] = "dD";
 
-
 const relax_typeS md_relax_table[] = {
-  /* bCC relaxing */
+  /* bCC relaxing  */
   {0x81, -0x7e, 2, 1},
   {0x8004, -0x7ffb, 5, 2},
   {0x800006, -0x7ffff9, 7, 0},
-  /* bCCx relaxing */
+  /* bCCx relaxing  */
   {0x81, -0x7e, 3, 4},
   {0x8004, -0x7ffb, 6, 5},
   {0x800006, -0x7ffff9, 8, 0},
-  /* jsr relaxing */
+  /* jsr relaxing  */
   {0x8004, -0x7ffb, 3, 7},
   {0x800006, -0x7ffff9, 5, 0},
-  /* jmp relaxing */
+  /* jmp relaxing  */
   {0x81, -0x7e, 2, 9},
   {0x8004, -0x7ffb, 3, 10},
   {0x800006, -0x7ffff9, 5, 0},
 
 };
-/* local functions */
+
+/* Local functions.  */
 static void mn10200_insert_operand PARAMS ((unsigned long *, unsigned long *,
 					    const struct mn10200_operand *,
 					    offsetT, char *, unsigned,
@@ -83,8 +85,7 @@ static boolean data_register_name PARAMS ((expressionS *expressionP));
 static boolean address_register_name PARAMS ((expressionS *expressionP));
 static boolean other_register_name PARAMS ((expressionS *expressionP));
 
-
-/* fixups */
+/* Fixups.  */
 #define MAX_INSN_FIXUPS (5)
 struct mn10200_fixup
 {
@@ -99,7 +100,7 @@ const char *md_shortopts = "";
 struct option md_longopts[] = {
   {NULL, no_argument, NULL, 0}
 };
-size_t md_longopts_size = sizeof(md_longopts); 
+size_t md_longopts_size = sizeof (md_longopts);
 
 /* The target specific pseudo-ops which we support.  */
 const pseudo_typeS md_pseudo_table[] =
@@ -110,7 +111,7 @@ const pseudo_typeS md_pseudo_table[] =
 /* Opcode hash table.  */
 static struct hash_control *mn10200_hash;
 
-/* This table is sorted. Suitable for searching by a binary search. */
+/* This table is sorted. Suitable for searching by a binary search.  */
 static const struct reg_name data_registers[] =
 {
   { "d0", 0 },
@@ -118,7 +119,8 @@ static const struct reg_name data_registers[] =
   { "d2", 2 },
   { "d3", 3 },
 };
-#define DATA_REG_NAME_CNT	(sizeof(data_registers) / sizeof(struct reg_name))
+#define DATA_REG_NAME_CNT				\
+  (sizeof (data_registers) / sizeof (struct reg_name))
 
 static const struct reg_name address_registers[] =
 {
@@ -127,18 +129,20 @@ static const struct reg_name address_registers[] =
   { "a2", 2 },
   { "a3", 3 },
 };
-#define ADDRESS_REG_NAME_CNT	(sizeof(address_registers) / sizeof(struct reg_name))
+#define ADDRESS_REG_NAME_CNT					\
+  (sizeof (address_registers) / sizeof (struct reg_name))
 
 static const struct reg_name other_registers[] =
 {
   { "mdr", 0 },
   { "psw", 0 },
 };
-#define OTHER_REG_NAME_CNT	(sizeof(other_registers) / sizeof(struct reg_name))
+#define OTHER_REG_NAME_CNT				\
+  (sizeof (other_registers) / sizeof (struct reg_name))
 
 /* reg_name_search does a binary search of the given register table
    to see if "name" is a valid regiter name.  Returns the register
-   number from the array on success, or -1 on failure. */
+   number from the array on success, or -1 on failure.  */
 
 static int
 reg_name_search (regs, regcount, name)
@@ -160,13 +164,12 @@ reg_name_search (regs, regcount, name)
 	high = middle - 1;
       else if (cmp > 0)
 	low = middle + 1;
-      else 
-	  return regs[middle].value;
+      else
+	return regs[middle].value;
     }
   while (low <= high);
   return -1;
 }
-
 
 /* Summary of register_name().
  *
@@ -178,6 +181,7 @@ reg_name_search (regs, regcount, name)
  *	Input_line_pointer->(next non-blank) char after operand, or is in
  *	its original state.
  */
+
 static boolean
 data_register_name (expressionP)
      expressionS *expressionP;
@@ -187,29 +191,34 @@ data_register_name (expressionP)
   char *start;
   char c;
 
-  /* Find the spelling of the operand */
+  /* Find the spelling of the operand.  */
   start = name = input_line_pointer;
 
   c = get_symbol_end ();
   reg_number = reg_name_search (data_registers, DATA_REG_NAME_CNT, name);
 
-  /* look to see if it's in the register table */
-  if (reg_number >= 0) 
+  /* Look to see if it's in the register table.  */
+  if (reg_number >= 0)
     {
       expressionP->X_op = O_register;
       expressionP->X_add_number = reg_number;
 
-      /* make the rest nice */
+      /* Make the rest nice.  */
       expressionP->X_add_symbol = NULL;
       expressionP->X_op_symbol = NULL;
-      *input_line_pointer = c;	/* put back the delimiting char */
+
+      /* Put back the delimiting char.  */
+      *input_line_pointer = c;
       return true;
     }
   else
     {
-      /* reset the line as if we had not done anything */
-      *input_line_pointer = c;   /* put back the delimiting char */
-      input_line_pointer = start; /* reset input_line pointer */
+      /* Reset the line as if we had not done anything.  */
+      /* Put back the delimiting char.  */
+      *input_line_pointer = c;
+
+      /* Reset input_line pointer.  */
+      input_line_pointer = start;
       return false;
     }
 }
@@ -224,6 +233,7 @@ data_register_name (expressionP)
  *	Input_line_pointer->(next non-blank) char after operand, or is in
  *	its original state.
  */
+
 static boolean
 address_register_name (expressionP)
      expressionS *expressionP;
@@ -233,29 +243,34 @@ address_register_name (expressionP)
   char *start;
   char c;
 
-  /* Find the spelling of the operand */
+  /* Find the spelling of the operand.  */
   start = name = input_line_pointer;
 
   c = get_symbol_end ();
   reg_number = reg_name_search (address_registers, ADDRESS_REG_NAME_CNT, name);
 
-  /* look to see if it's in the register table */
-  if (reg_number >= 0) 
+  /* Look to see if it's in the register table.  */
+  if (reg_number >= 0)
     {
       expressionP->X_op = O_register;
       expressionP->X_add_number = reg_number;
 
-      /* make the rest nice */
+      /* Make the rest nice.  */
       expressionP->X_add_symbol = NULL;
       expressionP->X_op_symbol = NULL;
-      *input_line_pointer = c;	/* put back the delimiting char */
+
+      /* Put back the delimiting char.  */
+      *input_line_pointer = c;
       return true;
     }
   else
     {
-      /* reset the line as if we had not done anything */
-      *input_line_pointer = c;   /* put back the delimiting char */
-      input_line_pointer = start; /* reset input_line pointer */
+      /* Reset the line as if we had not done anything.  */
+      /* Put back the delimiting char.  */
+      *input_line_pointer = c;
+
+      /* Reset input_line pointer.  */
+      input_line_pointer = start;
       return false;
     }
 }
@@ -270,6 +285,7 @@ address_register_name (expressionP)
  *	Input_line_pointer->(next non-blank) char after operand, or is in
  *	its original state.
  */
+
 static boolean
 other_register_name (expressionP)
      expressionS *expressionP;
@@ -279,40 +295,45 @@ other_register_name (expressionP)
   char *start;
   char c;
 
-  /* Find the spelling of the operand */
+  /* Find the spelling of the operand.  */
   start = name = input_line_pointer;
 
   c = get_symbol_end ();
   reg_number = reg_name_search (other_registers, OTHER_REG_NAME_CNT, name);
 
-  /* look to see if it's in the register table */
-  if (reg_number >= 0) 
+  /* Look to see if it's in the register table.  */
+  if (reg_number >= 0)
     {
       expressionP->X_op = O_register;
       expressionP->X_add_number = reg_number;
 
-      /* make the rest nice */
+      /* Make the rest nice.  */
       expressionP->X_add_symbol = NULL;
       expressionP->X_op_symbol = NULL;
-      *input_line_pointer = c;	/* put back the delimiting char */
+
+      /* Put back the delimiting char.  */
+      *input_line_pointer = c;
       return true;
     }
   else
     {
-      /* reset the line as if we had not done anything */
-      *input_line_pointer = c;   /* put back the delimiting char */
-      input_line_pointer = start; /* reset input_line pointer */
+      /* Reset the line as if we had not done anything.  */
+      /* Put back the delimiting char.  */
+      *input_line_pointer = c;
+
+      /* Reset input_line pointer.  */
+      input_line_pointer = start;
       return false;
     }
 }
 
 void
 md_show_usage (stream)
-  FILE *stream;
+     FILE *stream;
 {
-  fprintf(stream, _("MN10200 options:\n\
+  fprintf (stream, _("MN10200 options:\n\
 none yet\n"));
-} 
+}
 
 int
 md_parse_option (c, arg)
@@ -324,16 +345,16 @@ md_parse_option (c, arg)
 
 symbolS *
 md_undefined_symbol (name)
-  char *name;
+     char *name;
 {
   return 0;
 }
 
 char *
 md_atof (type, litp, sizep)
-  int type;
-  char *litp;
-  int *sizep;
+     int type;
+     char *litp;
+     int *sizep;
 {
   int prec;
   LITTLENUM_TYPE words[4];
@@ -354,7 +375,7 @@ md_atof (type, litp, sizep)
       *sizep = 0;
       return _("bad call to md_atof");
     }
-  
+
   t = atof_ieee (input_line_pointer, type, words);
   if (t)
     input_line_pointer = t;
@@ -370,12 +391,11 @@ md_atof (type, litp, sizep)
   return NULL;
 }
 
-
 void
 md_convert_frag (abfd, sec, fragP)
-  bfd *abfd;
-  asection *sec;
-  fragS *fragP;
+     bfd *abfd;
+     asection *sec;
+     fragS *fragP;
 {
   static unsigned long label_count = 0;
   char buf[40];
@@ -737,7 +757,7 @@ md_begin ()
   char *prev_name = "";
   register const struct mn10200_opcode *op;
 
-  mn10200_hash = hash_new();
+  mn10200_hash = hash_new ();
 
   /* Insert unique names into hash table.  The MN10200 instruction set
      has many identical opcode names that have different opcodes based
@@ -747,7 +767,7 @@ md_begin ()
   op = mn10200_opcodes;
   while (op->name)
     {
-      if (strcmp (prev_name, op->name)) 
+      if (strcmp (prev_name, op->name))
 	{
 	  prev_name = (char *) op->name;
 	  hash_insert (mn10200_hash, op->name, (char *) op);
@@ -762,7 +782,7 @@ md_begin ()
 }
 
 void
-md_assemble (str) 
+md_assemble (str)
      char *str;
 {
   char *s;
@@ -776,13 +796,13 @@ md_assemble (str)
   int match;
 
   /* Get the opcode.  */
-  for (s = str; *s != '\0' && ! isspace (*s); s++)
+  for (s = str; *s != '\0' && !isspace (*s); s++)
     ;
   if (*s != '\0')
     *s++ = '\0';
 
-  /* find the first opcode with the proper name */
-  opcode = (struct mn10200_opcode *)hash_find (mn10200_hash, str);
+  /* Find the first opcode with the proper name.  */
+  opcode = (struct mn10200_opcode *) hash_find (mn10200_hash, str);
   if (opcode == NULL)
     {
       as_bad (_("Unrecognized opcode: `%s'"), str);
@@ -795,7 +815,7 @@ md_assemble (str)
 
   input_line_pointer = str;
 
-  for(;;)
+  for (;;)
     {
       const char *errmsg = NULL;
       int op_idx;
@@ -833,7 +853,7 @@ md_assemble (str)
 	  if (operand->flags & MN10200_OPERAND_RELAX)
 	    relaxable = 1;
 
-	  /* Gather the operand. */
+	  /* Gather the operand.  */
 	  hold = input_line_pointer;
 	  input_line_pointer = str;
 
@@ -926,7 +946,7 @@ md_assemble (str)
 	      expression (&ex);
 	    }
 
-	  switch (ex.X_op) 
+	  switch (ex.X_op)
 	    {
 	    case O_illegal:
 	      errmsg = _("illegal operand");
@@ -936,13 +956,13 @@ md_assemble (str)
 	      goto error;
 	    case O_register:
 	      if ((operand->flags
-                   & (MN10200_OPERAND_DREG | MN10200_OPERAND_AREG)) == 0)
+		   & (MN10200_OPERAND_DREG | MN10200_OPERAND_AREG)) == 0)
 		{
 		  input_line_pointer = hold;
 		  str = hold;
 		  goto error;
 		}
-		
+
 	      if (opcode->format == FMT_2 || opcode->format == FMT_5)
 		extra_shift = 8;
 	      else if (opcode->format == FMT_3 || opcode->format == FMT_6
@@ -950,7 +970,7 @@ md_assemble (str)
 		extra_shift = 16;
 	      else
 		extra_shift = 0;
-	      
+
 	      mn10200_insert_operand (&insn, &extension, operand,
 				      ex.X_add_number, (char *) NULL,
 				      0, extra_shift);
@@ -963,7 +983,7 @@ md_assemble (str)
 		 then promote it (ie this opcode does not match).  */
 	      if (operand->flags
 		  & (MN10200_OPERAND_PROMOTE | MN10200_OPERAND_RELAX)
-		  && ! check_operand (insn, operand, ex.X_add_number))
+		  && !check_operand (insn, operand, ex.X_add_number))
 		{
 		  input_line_pointer = hold;
 		  str = hold;
@@ -1010,20 +1030,20 @@ keep_going:
 
     error:
       if (match == 0)
-        {
+	{
 	  next_opcode = opcode + 1;
-	  if (!strcmp(next_opcode->name, opcode->name))
+	  if (!strcmp (next_opcode->name, opcode->name))
 	    {
 	      opcode = next_opcode;
 	      continue;
 	    }
-	  
+
 	  as_bad ("%s", errmsg);
 	  return;
-        }
+	}
       break;
     }
-      
+
   while (isspace (*str))
     ++str;
 
@@ -1044,14 +1064,14 @@ keep_going:
     size = 5;
   else
     abort ();
-         
+
   /* Write out the instruction.  */
 
   if (relaxable && fc > 0)
     {
       int type;
 
-      /* bCC */
+      /* bCC  */
       if (size == 2 && opcode->opcode != 0xfc0000)
 	{
 	  /* Handle bra specially.  Basically treat it like jmp so
@@ -1061,18 +1081,18 @@ keep_going:
 	     It is also important to not treat it like other bCC
 	     instructions since the long forms of bra is different
 	     from other bCC instructions.  */
-          if (opcode->opcode == 0xea00)
-            type = 8;
+	  if (opcode->opcode == 0xea00)
+	    type = 8;
 	  else
 	    type = 0;
 	}
-      /* jsr */
+      /* jsr  */
       else if (size == 3 && opcode->opcode == 0xfd0000)
 	type = 6;
-      /* jmp */
+      /* jmp  */
       else if (size == 3 && opcode->opcode == 0xfc0000)
 	type = 8;
-      /* bCCx */
+      /* bCCx  */
       else
 	type = 3;
 
@@ -1130,25 +1150,27 @@ keep_going:
 	      int offset;
 	      fixS *fixP;
 
-	      reloc_howto = bfd_reloc_type_lookup (stdoutput, fixups[i].reloc);
+	      reloc_howto = bfd_reloc_type_lookup (stdoutput,
+						   fixups[i].reloc);
 
 	      if (!reloc_howto)
-		abort();
-	  
+		abort ();
+
 	      size = bfd_get_reloc_size (reloc_howto);
 
 	      if (size < 1 || size > 4)
-		abort();
+		abort ();
 
 	      offset = 4 - size;
 	      fixP = fix_new_exp (frag_now, f - frag_now->fr_literal + offset,
 				  size,
-				  &fixups[i].exp, 
+				  &fixups[i].exp,
 				  reloc_howto->pc_relative,
 				  fixups[i].reloc);
 
-	      /* PC-relative offsets are from the first byte of the next
-		 instruction, not from the start of the current instruction.  */
+	      /* PC-relative offsets are from the first byte of the
+		 next instruction, not from the start of the current
+		 instruction.  */
 	      if (reloc_howto->pc_relative)
 		fixP->fx_offset += size;
 	    }
@@ -1166,7 +1188,6 @@ keep_going:
 
 	      /* Is the reloc pc-relative?  */
 	      pcrel = (operand->flags & MN10200_OPERAND_PCREL) != 0;
-
 
 	      /* Choose a proper BFD relocation type.  */
 	      if (pcrel)
@@ -1192,7 +1213,8 @@ keep_going:
 		    abort ();
 		}
 
-	      /* Convert the size of the reloc into what fix_new_exp wants.  */
+	      /* Convert the size of the reloc into what fix_new_exp
+                 wants.  */
 	      reloc_size = reloc_size / 8;
 	      if (reloc_size == 8)
 		reloc_size = 0;
@@ -1205,8 +1227,9 @@ keep_going:
 				  reloc_size, &fixups[i].exp, pcrel,
 				  ((bfd_reloc_code_real_type) reloc));
 
-	      /* PC-relative offsets are from the first byte of the next
-		 instruction, not from the start of the current instruction.  */
+	      /* PC-relative offsets are from the first byte of the
+		 next instruction, not from the start of the current
+		 instruction.  */
 	      if (pcrel)
 		fixP->fx_offset += size;
 	    }
@@ -1214,10 +1237,9 @@ keep_going:
     }
 }
 
+/* If while processing a fixup, a reloc really needs to be created
+   Then it is done here.  */
 
-/* if while processing a fixup, a reloc really needs to be created */
-/* then it is done here */
-                 
 arelent *
 tc_gen_reloc (seg, fixp)
      asection *seg;
@@ -1230,8 +1252,8 @@ tc_gen_reloc (seg, fixp)
   if (reloc->howto == (reloc_howto_type *) NULL)
     {
       as_bad_where (fixp->fx_file, fixp->fx_line,
-                    _("reloc %d not supported by object file format"),
-		    (int)fixp->fx_r_type);
+		    _("reloc %d not supported by object file format"),
+		    (int) fixp->fx_r_type);
       return NULL;
     }
   reloc->address = fixp->fx_frag->fr_address + fixp->fx_where;
@@ -1249,7 +1271,7 @@ tc_gen_reloc (seg, fixp)
       reloc->addend = (S_GET_VALUE (fixp->fx_addsy)
 		       - S_GET_VALUE (fixp->fx_subsy) + fixp->fx_offset);
     }
-  else 
+  else
     {
       reloc->sym_ptr_ptr = (asymbol **) xmalloc (sizeof (asymbol *));
       *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
@@ -1263,30 +1285,20 @@ md_estimate_size_before_relax (fragp, seg)
      fragS *fragp;
      asection *seg;
 {
-  if (fragp->fr_subtype == 0)
-    return 2;
-  if (fragp->fr_subtype == 3)
-    return 3;
-  if (fragp->fr_subtype == 6)
-    {
-      if (!S_IS_DEFINED (fragp->fr_symbol)
-	  || seg != S_GET_SEGMENT (fragp->fr_symbol))
-	{
-	  fragp->fr_subtype = 7;
-	  return 5;
-	}
-      return 3;
-    }
-  if (fragp->fr_subtype == 8)
-    {
-      if (!S_IS_DEFINED (fragp->fr_symbol))
-	{
-	  fragp->fr_subtype = 10;
-	  return 5;
-	}
-      return 2;
-    }
-} 
+  if (fragp->fr_subtype == 6
+      && (!S_IS_DEFINED (fragp->fr_symbol)
+	  || seg != S_GET_SEGMENT (fragp->fr_symbol)))
+    fragp->fr_subtype = 7;
+  else if (fragp->fr_subtype == 8
+	   && (!S_IS_DEFINED (fragp->fr_symbol)
+	       || seg != S_GET_SEGMENT (fragp->fr_symbol)))
+    fragp->fr_subtype = 10;
+
+  if (fragp->fr_subtype >= sizeof (md_relax_table) / sizeof (md_relax_table[0]))
+    abort ();
+
+  return md_relax_table[fragp->fr_subtype].rlx_length;
+}
 
 long
 md_pcrel_from (fixp)
@@ -1294,7 +1306,7 @@ md_pcrel_from (fixp)
 {
   return fixp->fx_frag->fr_address;
 #if 0
-  if (fixp->fx_addsy != (symbolS *) NULL && ! S_IS_DEFINED (fixp->fx_addsy))
+  if (fixp->fx_addsy != (symbolS *) NULL && !S_IS_DEFINED (fixp->fx_addsy))
     {
       /* The symbol is undefined.  Let the linker figure it out.  */
       return 0;
@@ -1340,13 +1352,12 @@ mn10200_insert_operand (insnp, extensionp, operand, val, file, line, shift)
 	  min = - (1 << (operand->bits - 1));
 	}
       else
-        {
-          max = (1 << operand->bits) - 1;
-          min = 0;
-        }
+	{
+	  max = (1 << operand->bits) - 1;
+	  min = 0;
+	}
 
       test = val;
-
 
       if (test < (offsetT) min || test > (offsetT) max)
         {
@@ -1397,13 +1408,12 @@ check_operand (insn, operand, val)
 	  min = - (1 << (operand->bits - 1));
 	}
       else
-        {
-          max = (1 << operand->bits) - 1;
-          min = 0;
-        }
+	{
+	  max = (1 << operand->bits) - 1;
+	  min = 0;
+	}
 
       test = val;
-
 
       if (test < (offsetT) min || test > (offsetT) max)
 	return 0;

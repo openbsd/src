@@ -1,5 +1,6 @@
 /* BFD back-end for Hitachi Super-H COFF binaries.
-   Copyright 1993, 94, 95, 96, 97, 98, 1999, 2000 Free Software Foundation, Inc.
+   Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000
+   Free Software Foundation, Inc.
    Contributed by Cygnus Support.
    Written by Steve Chamberlain, <sac@cygnus.com>.
    Relaxing code written by Ian Lance Taylor, <ian@cygnus.com>.
@@ -31,7 +32,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "coff/pe.h"
 
 #ifndef COFF_IMAGE_WITH_PE
-static boolean sh_align_load_span 
+static boolean sh_align_load_span
   PARAMS ((bfd *, asection *, bfd_byte *,
 	   boolean (*) (bfd *, asection *, PTR, bfd_byte *, bfd_vma),
 	   PTR, bfd_vma **, bfd_vma *, bfd_vma, bfd_vma, boolean *));
@@ -88,7 +89,7 @@ static boolean in_reloc_p (abfd, howto)
      reloc_howto_type * howto;
 {
   return ! howto->pc_relative && howto->type != R_SH_IMAGEBASE;
-}     
+}
 #endif
 
 /* The supported relocations.  There are a lot of relocations defined
@@ -171,18 +172,18 @@ static reloc_howto_type sh_coff_howtos[] =
 
   EMPTY_HOWTO (15),
 #ifdef COFF_WITH_PE
-  HOWTO (R_SH_IMAGEBASE,        /* type */                                 
-	 0,	                /* rightshift */                           
-	 2,	                /* size (0 = byte, 1 = short, 2 = long) */ 
-	 32,	                /* bitsize */                   
-	 false,	                /* pc_relative */                          
-	 0,	                /* bitpos */                               
+  HOWTO (R_SH_IMAGEBASE,        /* type */
+	 0,	                /* rightshift */
+	 2,	                /* size (0 = byte, 1 = short, 2 = long) */
+	 32,	                /* bitsize */
+	 false,	                /* pc_relative */
+	 0,	                /* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
-	 sh_reloc,       	/* special_function */                     
-	 "rva32",	        /* name */                                 
-	 true,	                /* partial_inplace */                      
-	 0xffffffff,            /* src_mask */                             
-	 0xffffffff,            /* dst_mask */                             
+	 sh_reloc,       	/* special_function */
+	 "rva32",	        /* name */
+	 true,	                /* partial_inplace */
+	 0xffffffff,            /* src_mask */
+	 0xffffffff,            /* dst_mask */
 	 false),                /* pcrel_offset */
 #else
   EMPTY_HOWTO (16), /* R_SH_IMM8 */
@@ -391,14 +392,14 @@ static reloc_howto_type sh_coff_howtos[] =
 /* Get the value of a symbol, when performing a relocation.  */
 
 static long
-get_symbol_value (symbol)       
+get_symbol_value (symbol)
      asymbol *symbol;
-{                                             
+{
   bfd_vma relocation;
 
   if (bfd_is_com_section (symbol->section))
-    relocation = 0;                           
-  else 
+    relocation = 0;
+  else
     relocation = (symbol->value +
 		  symbol->section->output_section->vma +
 		  symbol->section->output_offset);
@@ -676,7 +677,7 @@ sh_reloc (abfd, reloc_entry, symbol_in, data, input_section, output_bfd,
    align load and store instructions on four byte boundaries if we
    can, by swapping them with one of the adjacent instructions.  */
 
-static boolean 
+static boolean
 sh_relax_section (abfd, sec, link_info, again)
      bfd *abfd;
      asection *sec;
@@ -2144,7 +2145,7 @@ sh_insn_info (insn)
 	  return op;
     }
 
-  return NULL;  
+  return NULL;
 }
 
 /* See whether an instruction uses or sets a general purpose register */
@@ -2251,7 +2252,7 @@ sh_insn_uses_freg (insn, op, freg)
      of a double precision value.
      So what this all boils down to is that we have to ignore the lowest
      bit of the register number.  */
-     
+
   if ((f & USESF1) != 0
       && (USESF1_REG (insn) & 0xe) == (freg & 0xe))
     return true;
@@ -2285,7 +2286,7 @@ sh_insn_sets_freg (insn, op, freg)
      of a double precision value.
      So what this all boils down to is that we have to ignore the lowest
      bit of the register number.  */
-     
+
   if ((f & SETSF1) != 0
       && (SETSF1_REG (insn) & 0xe) == (freg & 0xe))
     return true;
@@ -2485,7 +2486,7 @@ _bfd_sh_align_load_span (abfd, sec, contents, swap, relocs,
 	  if (dsp && i - 2 > start)
 	    {
 	      unsigned pprev_insn = bfd_get_16 (abfd, contents + i - 4);
-	
+
 	      if ((pprev_insn & 0xfc00) == 0xf800)
 		prev_op = NULL;
 	      else
@@ -2875,7 +2876,7 @@ sh_relocate_section (output_bfd, info, input_bfd, input_section, contents,
 	  sym = NULL;
 	}
       else
-	{    
+	{
 	  if (symndx < 0
 	      || (unsigned long) symndx >= obj_raw_syment_count (input_bfd))
 	    {
@@ -2912,7 +2913,7 @@ sh_relocate_section (output_bfd, info, input_bfd, input_section, contents,
       if (rel->r_type == R_SH_IMAGEBASE)
 	addend -= pe_data (input_section->output_section->owner)->pe_opthdr.ImageBase;
 #endif
-      
+
       val = 0;
 
       if (h == NULL)
@@ -3118,7 +3119,7 @@ CREATE_BIG_COFF_TARGET_VEC (shcoff_vec, "coff-sh", BFD_IS_RELAXABLE, 0, '_', NUL
 #else
 #define TARGET_SYM shlcoff_vec
 #endif
-     
+
 #ifndef TARGET_SHL_NAME
 #define TARGET_SHL_NAME "coff-shl"
 #endif
@@ -3198,6 +3199,16 @@ static const bfd_coff_backend_data bfd_coff_small_swap_table =
   false,
 #endif
   2,
+#ifdef COFF_FORCE_SYMBOLS_IN_STRINGS
+  true,
+#else
+  false,
+#endif
+#ifdef COFF_DEBUG_STRING_WIDE_PREFIX
+  4,
+#else
+  2,
+#endif
   coff_swap_filehdr_in, coff_swap_aouthdr_in, coff_swap_scnhdr_in,
   coff_swap_reloc_in, coff_bad_format_hook, coff_set_arch_mach_hook,
   coff_mkobject_hook, styp_to_sec_flags, coff_set_alignment_hook,
@@ -3260,7 +3271,7 @@ const bfd_target shcoff_small_vec =
   BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
 
   & shlcoff_small_vec,
-  
+
   (PTR) &bfd_coff_small_swap_table
 };
 
@@ -3287,7 +3298,7 @@ const bfd_target shlcoff_small_vec =
   bfd_getl16, bfd_getl_signed_16, bfd_putl16, /* hdrs */
 
   {_bfd_dummy_target, coff_small_object_p, /* bfd_check_format */
-     bfd_generic_archive_p, _bfd_dummy_target},   
+     bfd_generic_archive_p, _bfd_dummy_target},
   {bfd_false, coff_mkobject, _bfd_generic_mkarchive, /* bfd_set_format */
      bfd_false},
   {bfd_false, coff_write_object_contents, /* bfd_write_contents */
@@ -3304,7 +3315,7 @@ const bfd_target shlcoff_small_vec =
   BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
 
   & shcoff_small_vec,
-  
+
   (PTR) &bfd_coff_small_swap_table
 };
 #endif

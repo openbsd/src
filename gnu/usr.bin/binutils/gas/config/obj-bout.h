@@ -1,5 +1,5 @@
 /* b.out object file format
-   Copyright (C) 1989, 90, 91, 92, 93, 94, 95, 1996
+   Copyright 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998, 2000
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -17,7 +17,7 @@
    You should have received a copy of the GNU General Public
    License along with GAS; see the file COPYING.  If not, write
    to the Free Software Foundation, 59 Temple Place - Suite 330, Cambridge, MA
-   02139, USA. */
+   02139, USA.  */
 
 /*
  * This file is a modified version of 'a.out.h'.  It is to be used in all GNU
@@ -55,7 +55,6 @@
  *	  off to the NINDY monitor in the target systems.  Symbols and
  *	  relocation info are never sent to the target.
  */
-
 
 #define OBJ_BOUT 1
 
@@ -108,7 +107,7 @@ struct exec
   };
 
 #define N_BADMAG(x)	(((x).a_magic)!=BMAGIC)
-#define N_TXTOFF(x)	( sizeof(struct exec) )
+#define N_TXTOFF(x)	( sizeof (struct exec) )
 #define N_DATOFF(x)	( N_TXTOFF(x) + (x).a_text )
 #define N_TROFF(x)	( N_DATOFF(x) + (x).a_data )
 #define N_DROFF(x)	( N_TROFF(x) + (x).a_trsize )
@@ -240,14 +239,14 @@ struct relocation_info
 
 /* File header macro and type definition */
 
-#define H_GET_FILE_SIZE(h)	(sizeof(struct exec) + \
+#define H_GET_FILE_SIZE(h)	(sizeof (struct exec) + \
 				 H_GET_TEXT_SIZE(h) + H_GET_DATA_SIZE(h) + \
 				 H_GET_SYMBOL_TABLE_SIZE(h) + \
 				 H_GET_TEXT_RELOCATION_SIZE(h) + \
 				 H_GET_DATA_RELOCATION_SIZE(h) + \
 				 (h)->string_table_size)
 
-#define H_GET_HEADER_SIZE(h)		(sizeof(struct exec))
+#define H_GET_HEADER_SIZE(h)		(sizeof (struct exec))
 #define H_GET_TEXT_SIZE(h)		((h)->header.a_text)
 #define H_GET_DATA_SIZE(h)		((h)->header.a_data)
 #define H_GET_BSS_SIZE(h)		((h)->header.a_bss)
@@ -276,7 +275,7 @@ struct relocation_info
 #define H_SET_TEXT_RELOCATION_SIZE(h,v)	((h)->header.a_trsize = (v))
 #define H_SET_DATA_RELOCATION_SIZE(h,v)	((h)->header.a_drsize = (v))
 #define H_SET_SYMBOL_TABLE_SIZE(h,v)	((h)->header.a_syms = (v) * \
-					 sizeof(struct nlist))
+					 sizeof (struct nlist))
 
 #define H_SET_MAGIC_NUMBER(h,v)		((h)->header.a_magic = (v))
 
@@ -292,12 +291,12 @@ struct relocation_info
 typedef struct
   {
     struct exec header;		/* a.out header */
-    long string_table_size;	/* names + '\0' + sizeof(int) */
+    long string_table_size;	/* names + '\0' + sizeof (int) */
   }
 
 object_headers;
 
-/* unused hooks. */
+/* unused hooks.  */
 #define OBJ_EMIT_LINENO(a, b, c)	{;}
 #define obj_pre_write_hook(a)		{;}
 
@@ -312,5 +311,3 @@ extern void tc_bout_fix_to_chars PARAMS ((char *where,
 					  relax_addressT segment_address));
 
 #define AOUT_STABS
-
-/* end of obj-bout.h */

@@ -1,5 +1,6 @@
 /* tc-mips.h -- header file for tc-mips.c.
-   Copyright (C) 1993, 94, 95, 96, 97, 1999, 2000 Free Software Foundation, Inc.
+   Copyright 1993, 1994, 1995, 1996, 1997, 2000, 2001
+   Free Software Foundation, Inc.
    Contributed by the OSF and Ralph Campbell.
    Written by Keith Knowles and Ralph Campbell, working independently.
    Modified for ECOFF support by Ian Lance Taylor of Cygnus Support.
@@ -37,7 +38,6 @@ struct expressionS;
 
 #define TARGET_ARCH bfd_arch_mips
 
-#define ONLY_STANDARD_ESCAPES
 #define WORKING_DOT_WORD	1
 #define OLD_FLOAT_READS
 #define REPEAT_CONS_EXPRESSIONS
@@ -49,20 +49,22 @@ struct expressionS;
    relocation: */
 #define MAX_GPREL_OFFSET (0x7FF4)
 
-#define md_relax_frag(fragp, stretch) mips_relax_frag(fragp, stretch)
+#define md_relax_frag(segment, fragp, stretch) mips_relax_frag(fragp, stretch)
 extern int mips_relax_frag PARAMS ((struct frag *, long));
 
 #define md_undefined_symbol(name)	(0)
 #define md_operand(x)
 
-extern int mips_do_align PARAMS ((int, const char *, int, int));
-#define md_do_align(n,fill,len,max,l) if (mips_do_align (n,fill,len,max)) goto l
+extern void mips_handle_align PARAMS ((struct frag *));
+#define HANDLE_ALIGN(fragp)  mips_handle_align (fragp)
+
+#define MAX_MEM_FOR_RS_ALIGN_CODE  (1 + 2)
 
 /* We permit PC relative difference expressions when generating
    embedded PIC code.  */
 #define DIFF_EXPR_OK
 
-/* Tell assembler that we have an itbl_mips.h header file to include. */
+/* Tell assembler that we have an itbl_mips.h header file to include.  */
 #define HAVE_ITBL_CPU
 
 /* The endianness of the target format may change based on command

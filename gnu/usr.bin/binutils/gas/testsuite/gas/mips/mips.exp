@@ -1,18 +1,20 @@
 #
 # Some generic MIPS tests
 #
-if [istarget mips*-*-*] then {
+if { [istarget mips*-*-*] } then {
     set no_mips16 0
-    set svr4pic [expr [istarget *-*-elf*] || [istarget *-*-irix5*] || [istarget *-*-irix6* ] ]
+    set svr4pic [expr [istarget *-*-elf*] || [istarget *-*-irix5*] || [istarget *-*-irix6* ] || [istarget *-*-linux*] ]
     set empic [expr [istarget *-*-ecoff*] || [istarget *-*-ultrix*] || [istarget *-*-irix\[1-4\]*] ]
-    set aout [expr [istarget *-*-bsd*] || [istarget *-*-netbsd*] || [istarget *-*-openbsd*]]
+    set aout [expr [istarget *-*-bsd*] || [istarget *-*-netbsd*] || [istarget *-*-openbsd*] ]
     set ilocks [istarget mipstx39*-*-*]
     set gpr_ilocks [expr [istarget mipstx39*-*-*]]
     set addr32 [expr [istarget mipstx39*-*-*]]
 
-
-
-
+    if { [istarget mips*el-*-*] || [istarget "mips*-*-*linux*"] } then {
+	set tmips "t"
+    } else {
+	set tmips ""
+    }
 
     run_dump_test "abs"
     run_dump_test "add"
@@ -86,32 +88,69 @@ if [istarget mips*-*-*] then {
     run_dump_test "mips4010"
     run_dump_test "mips4650"
     run_dump_test "mips4100"
+    # Linux uses ELF stabs, which doesn't support line number.
+    setup_xfail "mips*-*-*linux*"
     run_dump_test "lineno"
     run_dump_test "sync"
+    run_dump_test "mips32"
+    run_dump_test "mips64"
 
-    # Make sure that -mcpu=FOO and -mFOO are equivalent.  Assemble a file
-    # containing 4650-specific instructions with -m4650 and -mcpu=4650,
-    # and verify that they're the same.  Specifically, we're checking
-    # that the EF_MIPS_MACH field is set, and that the 4650 'mul'
-    # instruction does get used.  In previous versions of GAS, 
-    # only -mcpu=4650 would set the EF_MIPS_MACH field; -m4650 wouldn't.
-    run_dump_test "elf_e_flags1"
-    run_dump_test "elf_e_flags2"
-    run_dump_test "elf_e_flags3"
-    run_dump_test "elf_e_flags4"
-    
     if $svr4pic {
-	run_dump_test "elf-rel"
-	if [istarget mips64*-*-*] { 
-	    run_dump_test "elf-rel2" 
+	# Make sure that -mcpu=FOO and -mFOO are equivalent.  Assemble a file
+	# containing 4650-specific instructions with -m4650 and -mcpu=4650,
+	# and verify that they're the same.  Specifically, we're checking
+	# that the EF_MIPS_MACH field is set, and that the 4650 'mul'
+	# instruction does get used.  In previous versions of GAS, 
+	# only -mcpu=4650 would set the EF_MIPS_MACH field; -m4650 wouldn't.
+	run_dump_test "elf_e_flags1"
+	run_dump_test "elf_e_flags2"
+	run_dump_test "elf_e_flags3"
+	run_dump_test "elf_e_flags4"
+    
+	if [istarget mips*el-*-*] { 
+	    run_dump_test "elfel-rel"
 	} {
-	    run_dump_test "e32-rel2" 
-	} 
-	run_dump_test "empic"
+	    run_dump_test "elf-rel"
+	}
+
+	if [istarget mips64*-*-*] { 
+	    if [istarget mips*el-*-*] { 
+		run_dump_test "elfel-rel2" 
+	    } {
+		run_dump_test "elf-rel2" 
+	    }
+	} {
+	    if [istarget mips*el-*-*] { 
+		run_dump_test "e32el-rel2" 
+	    } {
+		run_dump_test "e32-rel2" 
+	    }
+	}
+
+	if [istarget mips*el-*-*] { 
+	    run_dump_test "elfel-rel3"
+	} {
+	    run_dump_test "elf-rel3"
+	}
+
+	if [istarget mips*el-*-*] { 
+	    run_dump_test "${tmips}elempic"
+	} {
+	    run_dump_test "${tmips}empic"
+	}
+
 	if { !$no_mips16 } { 
-	    run_dump_test "mips16-e" 
+	    if [istarget mips*el-*-*] { 
+		run_dump_test "${tmips}mipsel16-e" 
+	    } {
+		run_dump_test "${tmips}mips16-e" 
+	    }
 	    setup_xfail "mips*-*-*"
-	    run_dump_test "mips16-f" 
+	    if [istarget mips*el-*-*] { 
+		run_dump_test "mipsel16-f" 
+	    } {
+		run_dump_test "mips16-f" 
+	    }
 	}
     }
 }

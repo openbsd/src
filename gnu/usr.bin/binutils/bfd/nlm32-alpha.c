@@ -1,5 +1,5 @@
 /* Support for 32-bit Alpha NLM (NetWare Loadable Module)
-   Copyright (C) 1993 Free Software Foundation, Inc.
+   Copyright 1993, 1994, 2000, 2001 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -603,11 +603,11 @@ nlm_alpha_read_reloc (abfd, sym, secp, rel)
 
 static boolean
 nlm_alpha_mangle_relocs (abfd, sec, data, offset, count)
-     bfd *abfd;
-     asection *sec;
-     PTR data;
-     bfd_vma offset;
-     bfd_size_type count;
+     bfd *abfd ATTRIBUTE_UNUSED;
+     asection *sec ATTRIBUTE_UNUSED;
+     PTR data ATTRIBUTE_UNUSED;
+     bfd_vma offset ATTRIBUTE_UNUSED;
+     bfd_size_type count ATTRIBUTE_UNUSED;
 {
   return true;
 }
@@ -651,7 +651,7 @@ nlm_alpha_read_import (abfd, sym)
   while (sym -> rcnt < rcount)
     {
       asection *section;
-      
+
       if (nlm_alpha_read_reloc (abfd, sym, &section,
 				&nlm_relocs -> reloc)
 	  == false)
@@ -807,7 +807,7 @@ nlm_alpha_set_public_section (abfd, sym)
 
 static bfd_vma
 nlm_alpha_get_public_offset (abfd, sym)
-     bfd *abfd;
+     bfd *abfd ATTRIBUTE_UNUSED;
      asymbol *sym;
 {
   return bfd_asymbol_value (sym);
@@ -828,7 +828,7 @@ nlm_alpha_write_external (abfd, count, sym, relocs)
   arelent r;
 
   len = strlen (sym->name);
-  if ((bfd_write (&len, sizeof (bfd_byte), 1, abfd) != sizeof(bfd_byte))
+  if ((bfd_write (&len, sizeof (bfd_byte), 1, abfd) != sizeof (bfd_byte))
       || bfd_write (sym->name, len, 1, abfd) != len)
     return false;
 

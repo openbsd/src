@@ -1,5 +1,5 @@
 /* b.out object file format
-   Copyright (C) 1989, 90, 91, 92, 93, 94, 95, 1996
+   Copyright 1989, 1990, 1991, 1992, 1993, 1994, 1996, 2000, 2001
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -17,42 +17,43 @@
    You should have received a copy of the GNU General Public License
    along with GAS; see the file COPYING.  If not, write to the Free
    Software Foundation, 59 Temple Place - Suite 330, Boston, MA
-   02111-1307, USA. */
+   02111-1307, USA.  */
 
 #include "as.h"
 #include "obstack.h"
-const short			/* in: segT   out: N_TYPE bits */
-  seg_N_TYPE[] =
+
+/* In: segT   Out: N_TYPE bits  */
+const short seg_N_TYPE[] =
 {
   N_ABS,
   N_TEXT,
   N_DATA,
   N_BSS,
-  N_UNDF,			/* unknown */
-  N_UNDF,			/* error */
-  N_UNDF,			/* expression */
-  N_UNDF,			/* debug */
-  N_UNDF,			/* ntv */
-  N_UNDF,			/* ptv */
-  N_REGISTER,			/* register */
+  N_UNDF,			/* unknown  */
+  N_UNDF,			/* error  */
+  N_UNDF,			/* expression  */
+  N_UNDF,			/* debug  */
+  N_UNDF,			/* ntv  */
+  N_UNDF,			/* ptv  */
+  N_REGISTER,			/* register  */
 };
 
 const segT N_TYPE_seg[N_TYPE + 2] =
-{				/* N_TYPE == 0x1E = 32-2 */
-  SEG_UNKNOWN,			/* N_UNDF == 0 */
+{				/* N_TYPE == 0x1E = 32-2  */
+  SEG_UNKNOWN,			/* N_UNDF == 0  */
   SEG_GOOF,
-  SEG_ABSOLUTE,			/* N_ABS == 2 */
+  SEG_ABSOLUTE,			/* N_ABS == 2  */
   SEG_GOOF,
-  SEG_TEXT,			/* N_TEXT == 4 */
+  SEG_TEXT,			/* N_TEXT == 4  */
   SEG_GOOF,
-  SEG_DATA,			/* N_DATA == 6 */
+  SEG_DATA,			/* N_DATA == 6  */
   SEG_GOOF,
-  SEG_BSS,			/* N_BSS == 8 */
+  SEG_BSS,			/* N_BSS == 8  */
   SEG_GOOF,
   SEG_GOOF, SEG_GOOF, SEG_GOOF, SEG_GOOF, SEG_GOOF, SEG_GOOF, SEG_GOOF, SEG_GOOF,
   SEG_GOOF, SEG_GOOF, SEG_GOOF, SEG_GOOF, SEG_GOOF, SEG_GOOF, SEG_GOOF, SEG_GOOF,
   SEG_GOOF, SEG_GOOF, SEG_GOOF, SEG_GOOF,
-  SEG_REGISTER,			/* dummy N_REGISTER for regs = 30 */
+  SEG_REGISTER,			/* dummy N_REGISTER for regs = 30  */
   SEG_GOOF,
 };
 
@@ -60,9 +61,9 @@ static void obj_bout_line PARAMS ((int));
 
 const pseudo_typeS obj_pseudo_table[] =
 {
-  {"line", obj_bout_line, 0},	/* source code line number */
+  {"line", obj_bout_line, 0},	/* Source code line number.  */
 
-/* coff debugging directives.  Currently ignored silently */
+/* coff debugging directives.  Currently ignored silently.  */
   {"def", s_ignore, 0},
   {"dim", s_ignore, 0},
   {"endef", s_ignore, 0},
@@ -77,20 +78,17 @@ const pseudo_typeS obj_pseudo_table[] =
   {"ABORT", s_ignore, 0},
   {"ident", s_ignore, 0},
 
-  {NULL}			/* end sentinel */
-};				/* obj_pseudo_table */
+  {NULL}			/* End sentinel.  */
+};
 
-/* Relocation. */
+/* Relocation.  */
 
-/*
- *		emit_relocations()
- *
- * Crawl along a fixS chain. Emit the segment's relocations.
- */
+/* Crawl along a fixS chain. Emit the segment's relocations.  */
+
 void
 obj_emit_relocations (where, fixP, segment_address_in_file)
      char **where;
-     fixS *fixP;		/* Fixup chain for this segment. */
+     fixS *fixP;		/* Fixup chain for this segment.  */
      relax_addressT segment_address_in_file;
 {
   for (; fixP; fixP = fixP->fx_next)
@@ -108,33 +106,35 @@ obj_emit_relocations (where, fixP, segment_address_in_file)
 
 	  tc_bout_fix_to_chars (*where, fixP, segment_address_in_file);
 	  *where += sizeof (struct relocation_info);
-	}			/* if there's a symbol */
-    }				/* for each fixup */
+	}			/* if there's a symbol  */
+    }				/* for each fixup  */
+}
 
-}				/* emit_relocations() */
+/* Aout file generation & utilities .  */
 
-/* Aout file generation & utilities */
+/* Convert a lvalue to machine dependent data.  */
 
-/* Convert a lvalue to machine dependent data */
 void
 obj_header_append (where, headers)
      char **where;
      object_headers *headers;
 {
-  /* Always leave in host byte order */
+  /* Always leave in host byte order.  */
 
   headers->header.a_talign = section_alignment[SEG_TEXT];
 
+  /* Force to at least 2.  */
   if (headers->header.a_talign < 2)
     {
       headers->header.a_talign = 2;
-    }				/* force to at least 2 */
+    }
 
   headers->header.a_dalign = section_alignment[SEG_DATA];
   headers->header.a_balign = section_alignment[SEG_BSS];
 
   headers->header.a_tload = 0;
-  headers->header.a_dload = md_section_align (SEG_DATA, H_GET_TEXT_SIZE (headers));
+  headers->header.a_dload =
+    md_section_align (SEG_DATA, H_GET_TEXT_SIZE (headers));
 
   headers->header.a_relaxable = linkrelax;
 
@@ -170,19 +170,27 @@ obj_header_append (where, headers)
 #else /* ! CROSS_COMPILE */
   append (where, (char *) &headers->header, sizeof (headers->header));
 #endif /* ! CROSS_COMPILE */
-}				/* a_header_append() */
+}
 
 void
 obj_symbol_to_chars (where, symbolP)
      char **where;
      symbolS *symbolP;
 {
-  md_number_to_chars ((char *) &(S_GET_OFFSET (symbolP)), S_GET_OFFSET (symbolP), sizeof (S_GET_OFFSET (symbolP)));
-  md_number_to_chars ((char *) &(S_GET_DESC (symbolP)), S_GET_DESC (symbolP), sizeof (S_GET_DESC (symbolP)));
-  md_number_to_chars ((char *) &symbolP->sy_symbol.n_value, S_GET_VALUE (symbolP), sizeof (symbolP->sy_symbol.n_value));
+  md_number_to_chars ((char *) &(S_GET_OFFSET (symbolP)),
+		      S_GET_OFFSET (symbolP),
+		      sizeof (S_GET_OFFSET (symbolP)));
+
+  md_number_to_chars ((char *) &(S_GET_DESC (symbolP)),
+		      S_GET_DESC (symbolP),
+		      sizeof (S_GET_DESC (symbolP)));
+
+  md_number_to_chars ((char *) &symbolP->sy_symbol.n_value,
+		      S_GET_VALUE (symbolP),
+		      sizeof (symbolP->sy_symbol.n_value));
 
   append (where, (char *) &symbolP->sy_symbol, sizeof (obj_symbol_type));
-}				/* obj_symbol_to_chars() */
+}
 
 void
 obj_emit_symbols (where, symbol_rootP)
@@ -191,26 +199,24 @@ obj_emit_symbols (where, symbol_rootP)
 {
   symbolS *symbolP;
 
-  /*
-	 * Emit all symbols left in the symbol chain.
-	 */
+  /* Emit all symbols left in the symbol chain.  */
   for (symbolP = symbol_rootP; symbolP; symbolP = symbol_next (symbolP))
     {
-      /* Used to save the offset of the name. It is used to point
-		   to the string in memory but must be a file offset. */
+      /* Used to save the offset of the name.  It is used to point to
+	 the string in memory but must be a file offset.  */
       char *temp;
 
       temp = S_GET_NAME (symbolP);
       S_SET_OFFSET (symbolP, symbolP->sy_name_offset);
 
-      /* Any symbol still undefined and is not a dbg symbol is made N_EXT. */
+      /* Any symbol still undefined and is not a dbg symbol is made N_EXT.  */
       if (!S_IS_DEBUG (symbolP) && !S_IS_DEFINED (symbolP))
 	S_SET_EXTERNAL (symbolP);
 
       obj_symbol_to_chars (where, symbolP);
       S_SET_NAME (symbolP, temp);
     }
-}				/* emit_symbols() */
+}
 
 void
 obj_symbol_new_hook (symbolP)
@@ -224,12 +230,12 @@ static void
 obj_bout_line (ignore)
      int ignore;
 {
-  /* Assume delimiter is part of expression. */
-  /* BSD4.2 as fails with delightful bug, so we */
-  /* are not being incompatible here. */
+  /* Assume delimiter is part of expression.  */
+  /* BSD4.2 as fails with delightful bug, so we are not being
+     incompatible here.  */
   new_logical_line ((char *) NULL, (int) (get_absolute_expression ()));
   demand_empty_rest_of_line ();
-}				/* obj_bout_line() */
+}
 
 void
 obj_read_begin_hook ()
@@ -246,13 +252,13 @@ obj_crawl_symbol_chain (headers)
 
   tc_crawl_symbol_chain (headers);
 
-  symbolPP = &symbol_rootP;	/*->last symbol chain link. */
+  symbolPP = &symbol_rootP;	/* -> last symbol chain link.  */
   while ((symbolP = *symbolPP) != NULL)
     {
       if (flag_readonly_data_in_text && (S_GET_SEGMENT (symbolP) == SEG_DATA))
 	{
 	  S_SET_SEGMENT (symbolP, SEG_TEXT);
-	}			/* if pusing data into text */
+	}			/* if pusing data into text  */
 
       resolve_symbol_value (symbolP, 1);
 
@@ -267,63 +273,62 @@ obj_crawl_symbol_chain (headers)
 
       /* OK, here is how we decide which symbols go out into the
 	 brave new symtab.  Symbols that do are:
-		
+
 	 * symbols with no name (stabd's?)
 	 * symbols with debug info in their N_TYPE
-		
+
 	 Symbols that don't are:
 	 * symbols that are registers
 	 * symbols with \1 as their 3rd character (numeric labels)
 	 * "local labels" as defined by S_LOCAL_NAME(name)
 	 if the -L switch was passed to gas.
-		
-	 All other symbols are output.  We complain if a deleted
-	 symbol was marked external. */
 
+	 All other symbols are output.  We complain if a deleted
+	 symbol was marked external.  */
 
       if (1
 	  && !S_IS_REGISTER (symbolP)
 	  && (!S_GET_NAME (symbolP)
 	      || S_IS_DEBUG (symbolP)
 #ifdef TC_I960
-      /* FIXME-SOON this ifdef seems highly dubious to me.  xoxorich. */
+      /* FIXME-SOON this ifdef seems highly dubious to me.  xoxorich.  */
 	      || !S_IS_DEFINED (symbolP)
 	      || S_IS_EXTERNAL (symbolP)
 #endif /* TC_I960 */
-	      || (S_GET_NAME (symbolP)[0] != '\001' && (flag_keep_locals || !S_LOCAL_NAME (symbolP)))))
+	      || (S_GET_NAME (symbolP)[0] != '\001'
+		  && (flag_keep_locals || !S_LOCAL_NAME (symbolP)))))
 	{
 	  symbolP->sy_number = symbol_number++;
 
-	  /* The + 1 after strlen account for the \0 at the
-			   end of each string */
+	  /* The + 1 after strlen account for the \0 at the end of
+	     each string.  */
 	  if (!S_IS_STABD (symbolP))
 	    {
-	      /* Ordinary case. */
+	      /* Ordinary case.  */
 	      symbolP->sy_name_offset = string_byte_count;
 	      string_byte_count += strlen (S_GET_NAME (symbolP)) + 1;
 	    }
-	  else			/* .Stabd case. */
+	  else			/* .Stabd case.  */
 	    symbolP->sy_name_offset = 0;
-	  symbolPP = &(symbol_next (symbolP));
+	  symbolPP = &(symbolP->sy_next);
 	}
       else
 	{
 	  if (S_IS_EXTERNAL (symbolP) || !S_IS_DEFINED (symbolP))
 	    {
-	      as_bad (_("Local symbol %s never defined"), S_GET_NAME (symbolP));
-	    }			/* oops. */
+	      as_bad (_("Local symbol %s never defined"),
+		      S_GET_NAME (symbolP));
+	    }			/* Oops.  */
 
-	  /* Unhook it from the chain */
+	  /* Unhook it from the chain.  */
 	  *symbolPP = symbol_next (symbolP);
-	}			/* if this symbol should be in the output */
-    }				/* for each symbol */
+	}			/* if this symbol should be in the output  */
+    }				/* for each symbol  */
 
   H_SET_SYMBOL_TABLE_SIZE (headers, symbol_number);
 }
 
-/*
- * Find strings by crawling along symbol table chain.
- */
+/* Find strings by crawling along symbol table chain.  */
 
 void
 obj_emit_strings (where)
@@ -336,14 +341,14 @@ obj_emit_strings (where)
   md_number_to_chars (*where, string_byte_count, sizeof (string_byte_count));
   *where += sizeof (string_byte_count);
 #else /* CROSS_COMPILE */
-  append (where, (char *) &string_byte_count, (unsigned long) sizeof (string_byte_count));
+  append (where, (char *) &string_byte_count,
+	  (unsigned long) sizeof (string_byte_count));
 #endif /* CROSS_COMPILE */
 
   for (symbolP = symbol_rootP; symbolP; symbolP = symbol_next (symbolP))
     {
       if (S_GET_NAME (symbolP))
-	append (where, S_GET_NAME (symbolP), (unsigned long) (strlen (S_GET_NAME (symbolP)) + 1));
-    }				/* walk symbol chain */
+	append (where, S_GET_NAME (symbolP),
+		(unsigned long) (strlen (S_GET_NAME (symbolP)) + 1));
+    }				/* Walk symbol chain.  */
 }
-
-/* end of obj-bout.c */

@@ -1,5 +1,5 @@
 # Expect script for ld-sh tests
-#   Copyright (C) 1995, 1996, 1997 Free Software Foundation
+#   Copyright 1995, 1996, 1997, 2001 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -56,7 +56,7 @@ if ![ld_assemble $as "-relax $srcdir/$subdir/sh1.s" tmpdir/sh1.o] {
 
 set testsrec "SH relaxing to S-records"
 
-if ![ld_simple_link $ld tmpdir/sh1.s1 "-relax -oformat srec tmpdir/sh1.o"] {
+if ![ld_simple_link $ld tmpdir/sh1.s1 "-relax --oformat srec tmpdir/sh1.o"] {
     fail $testsrec
 } else {
     # The file name is embedded in the S-records, so create both

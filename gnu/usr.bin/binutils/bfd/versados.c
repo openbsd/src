@@ -1,5 +1,5 @@
 /* BFD back-end for VERSAdos-E objects.
-   Copyright 1995, 96, 97, 98, 99, 2000 Free Software Foundation, Inc.
+   Copyright 1995, 1996, 1998, 1999, 2000 Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support <sac@cygnus.com>.
 
    Versados is a Motorola trademark.
@@ -36,7 +36,6 @@
    o Object Text Recrod
    o End Record
 
-
  */
 
 #include "bfd.h"
@@ -44,17 +43,14 @@
 #include "libbfd.h"
 #include "libiberty.h"
 
-
 static boolean versados_mkobject PARAMS ((bfd *));
 static boolean versados_scan PARAMS ((bfd *));
 static const bfd_target *versados_object_p PARAMS ((bfd *));
-
 
 #define VHEADER '1'
 #define VESTDEF '2'
 #define VOTR '3'
 #define VEND '4'
-
 
 #define ES_BASE 17		/* first symbol has esdid 17 */
 
@@ -145,11 +141,7 @@ union ext_any
     struct ext_otr otr;
   };
 
-/* Initialize by filling in the hex conversion array. */
-
-
-
-
+/* Initialize by filling in the hex conversion array.  */
 
 /* Set up the tdata information.  */
 
@@ -171,12 +163,9 @@ versados_mkobject (abfd)
   return true;
 }
 
-
 /* Report a problem in an S record file.  FIXME: This probably should
    not call fprintf, but we really do need some mechanism for printing
    error messages.  */
-
-
 
 static asymbol *
 versados_new_symbol (abfd, snum, name, val, sec)
@@ -194,7 +183,6 @@ versados_new_symbol (abfd, snum, name, val, sec)
   n->flags = 0;
   return n;
 }
-
 
 static int
 get_record (abfd, ptr)
@@ -243,7 +231,6 @@ new_symbol_string (abfd, name)
   VDATA (abfd)->strings += strlen (VDATA (abfd)->strings) + 1;
   return n;
 }
-
 
 static void
 process_esd (abfd, esd, pass)
@@ -295,7 +282,6 @@ process_esd (abfd, esd, pass)
 	      }
 	  }
 	  break;
-
 
 	case ESD_ABS:
 	  size = get_4 (&ptr);
@@ -356,7 +342,6 @@ reloc_howto_type versados_howto_table[] =
 	 "-v32", true, 0xffffffff, 0xffffffff, false),
 };
 
-
 static int
 get_offset (len, ptr)
      int len;
@@ -405,7 +390,6 @@ process_otr (abfd, otr, pass)
 	  int offsetlen = flag & 0x7;
 	  int j;
 
-
 	  if (esdids == 0)
 	    {
 	      /* A zero esdid means the new pc is the offset given */
@@ -433,7 +417,7 @@ process_otr (abfd, otr, pass)
 		      int rn = EDATA (abfd, otr->esdid - 1).relocs++;
 		      if (pass == 1)
 			{
-			  /* this is the first pass over the data, 
+			  /* this is the first pass over the data,
 			     just remember that we need a reloc */
 			}
 		      else
@@ -470,7 +454,6 @@ process_otr (abfd, otr, pass)
 
   if (!contents && need_contents)
     esdid->contents = (unsigned char *) bfd_alloc (abfd, esdid->section->_raw_size);
-
 
 }
 
@@ -586,8 +569,6 @@ versados_scan (abfd)
   return 1;
 }
 
-
-
 /* Check whether an existing file is a versados  file.  */
 
 static const bfd_target *
@@ -633,7 +614,6 @@ versados_object_p (abfd)
   return abfd->xvec;
 }
 
-
 static boolean
 versados_pass_2 (abfd)
      bfd *abfd;
@@ -647,7 +627,6 @@ versados_pass_2 (abfd)
     return 0;
 
   VDATA (abfd)->es_done = ES_BASE;
-
 
   /* read records till we get to where we want to be */
 
@@ -701,8 +680,6 @@ versados_set_section_contents (abfd, section, location, offset, bytes_to_do)
   return false;
 }
 
-
-/*ARGSUSED */
 static int
 versados_sizeof_headers (abfd, exec)
      bfd *abfd ATTRIBUTE_UNUSED;
@@ -755,7 +732,6 @@ versados_get_symtab (abfd, alocation)
   return symcount;
 }
 
-/*ARGSUSED */
 void
 versados_get_symbol_info (ignore_abfd, symbol, ret)
      bfd *ignore_abfd ATTRIBUTE_UNUSED;
@@ -765,7 +741,6 @@ versados_get_symbol_info (ignore_abfd, symbol, ret)
   bfd_symbol_info (symbol, ret);
 }
 
-/*ARGSUSED */
 void
 versados_print_symbol (ignore_abfd, afile, symbol, how)
      bfd *ignore_abfd ATTRIBUTE_UNUSED;
@@ -795,7 +770,6 @@ versados_get_reloc_upper_bound (abfd, asect)
 {
   return (asect->reloc_count + 1) * sizeof (arelent *);
 }
-
 
 long
 versados_canonicalize_reloc (abfd, section, relptr, symbols)
@@ -922,6 +896,6 @@ const bfd_target versados_vec =
   BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
 
   NULL,
-  
+
   (PTR) 0
 };

@@ -1,5 +1,5 @@
 /* Disassemble h8500 instructions.
-   Copyright (C) 1993, 94, 95, 1998 Free Software Foundation, Inc.
+   Copyright 1993, 1998, 2000 Free Software Foundation, Inc.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -69,8 +69,7 @@ fetch_data (info, addr)
   return 1;
 }
 
-static char *crname[] =
-{"sr", "ccr", "*", "br", "ep", "dp", "*", "tp"};
+static char *crname[] = { "sr", "ccr", "*", "br", "ep", "dp", "*", "tp" };
 
 int
 print_insn_h8500 (addr, info)
@@ -91,21 +90,22 @@ print_insn_h8500 (addr, info)
     /* Error return.  */
     return -1;
 
-if (0)  {
-    static    int one;
-    if (!one ) 
-      {
-	one = 1;
-	for (opcode = h8500_table; opcode->name; opcode++)
-	  {
-	    if ((opcode->bytes[0].contents & 0x8) == 0)
-	      printf("%s\n", opcode->name);
-	  }
-      }
-  }
+  if (0)
+    {
+      static int one;
 
+      if (!one)
+	{
+	  one = 1;
+	  for (opcode = h8500_table; opcode->name; opcode++)
+	    {
+	      if ((opcode->bytes[0].contents & 0x8) == 0)
+		printf ("%s\n", opcode->name);
+	    }
+	}
+    }
 
-  /* Run down the table to find the one which matches */
+  /* Run down the table to find the one which matches.  */
   for (opcode = h8500_table; opcode->name; opcode++)
     {
       int byte;
@@ -119,6 +119,7 @@ if (0)  {
       int qim = 0;
       int i;
       int cr = 0;
+
       for (byte = 0; byte < opcode->length; byte++)
 	{
 	  FETCH_DATA (info, buffer + byte + 1);
@@ -129,7 +130,7 @@ if (0)  {
 	    }
 	  else
 	    {
-	      /* extract any info parts */
+	      /* Extract any info parts.  */
 	      switch (opcode->bytes[byte].insert)
 		{
 		case 0:
@@ -221,8 +222,8 @@ if (0)  {
 		}
 	    }
 	}
-      /* We get here when all the masks have passed so we can output the
-	 operands*/
+      /* We get here when all the masks have passed so we can output
+	 the operands.  */
       FETCH_DATA (info, buffer + opcode->length);
       for (i = 0; i < opcode->length; i++)
 	{
@@ -322,7 +323,8 @@ if (0)  {
 	      func (stream, "#0x%0x:8", imm & 0xff);
 	      break;
 	    case PCREL16:
-	      func (stream, "0x%0x:16", (pcrel + addr + opcode->length) & 0xffff);
+	      func (stream, "0x%0x:16",
+		    (pcrel + addr + opcode->length) & 0xffff);
 	      break;
 	    case PCREL8:
 	      func (stream, "#0x%0x:8",
@@ -337,12 +339,12 @@ if (0)  {
 	    }
 	}
       return opcode->length;
-    next:;
+    next:
+      ;
     }
 
-  /* Couldn't understand anything */
+  /* Couldn't understand anything.  */
   /* xgettext:c-format */
   func (stream, _("%02x\t\t*unknown*"), buffer[0]);
   return 1;
-
 }

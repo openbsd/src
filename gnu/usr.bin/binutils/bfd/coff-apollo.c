@@ -1,5 +1,6 @@
 /* BFD back-end for Apollo 68000 COFF binaries.
-   Copyright 1990, 91, 92, 93, 94, 95, 1997 Free Software Foundation, Inc.
+   Copyright 1990, 1991, 1992, 1993, 1994, 1999, 2000
+   Free Software Foundation, Inc.
    By Troy Rollo (troy@cbme.unsw.edu.au)
    Based on m68k standard COFF version Written by Cygnus Support.
 
@@ -31,7 +32,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #ifdef ONLY_DECLARE_RELOCS
 extern reloc_howto_type apollocoff_howto_table[];
 #else
-reloc_howto_type apollocoff_howto_table[] = 
+reloc_howto_type apollocoff_howto_table[] =
 {
   HOWTO(R_RELBYTE,	       0,  0,  	8,  false, 0, complain_overflow_bitfield, 0, "8",	true, 0x000000ff,0x000000ff, false),
   HOWTO(R_RELWORD,	       0,  1, 	16, false, 0, complain_overflow_bitfield, 0, "16",	true, 0x0000ffff,0x0000ffff, false),
@@ -59,7 +60,7 @@ apollo_rtype2howto(internal, relocentry)
      arelent *internal;
      int relocentry;
 {
-  switch (relocentry) 
+  switch (relocentry)
   {
    case R_RELBYTE:	internal->howto = apollocoff_howto_table + 0; break;
    case R_RELWORD:	internal->howto = apollocoff_howto_table + 1; break;
@@ -71,13 +72,13 @@ apollo_rtype2howto(internal, relocentry)
   }
 }
 
-int 
+int
 apollo_howto2rtype (internal)
      reloc_howto_type *internal;
 {
-  if (internal->pc_relative) 
+  if (internal->pc_relative)
   {
-    switch (internal->bitsize) 
+    switch (internal->bitsize)
     {
      case 32: return R_PCRLONG;
      case 16: return R_PCRWORD;
@@ -93,7 +94,7 @@ apollo_howto2rtype (internal)
       case 8: return R_RELBYTE;
      }
   }
-  return R_RELLONG;    
+  return R_RELLONG;
 }
 #endif /* not ONLY_DECLARE_RELOCS */
 

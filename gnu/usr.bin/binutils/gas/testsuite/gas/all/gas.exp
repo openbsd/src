@@ -11,14 +11,22 @@ gas_test "p2425.s" ""   "" "pcrel values in assignment"
 # Therefore this test (as it is currently written) is completely bogus
 # for any PA target.  Do not bother trying to run it and just claim
 # it fails.
-if [istarget hppa*-*-*] then {
+#
+# The C54x uses ".space" to allocate bits, and requires absolute expressions;
+# The ".space" directive is taken care of in the C54x-specific tests, so fail
+#  here 
+#
+if { [istarget hppa*-*-*] || [istarget *c54x*-*-*] } then {
     setup_xfail *-*-*
     fail "simplifiable double subtraction"
 } else {
     gas_test "p1480.s" "" "-a>" "simplifiable double subtraction"
 }
 
-gas_test "float.s" ""   "" "simple FP constants"
+# No floating point support in assembly code for CRIS.
+if ![istarget cris-*-*] then {
+    gas_test "float.s" ""   "" "simple FP constants"
+}
 
 # This test is meaningless for the PA; the difference of two undefined
 # symbols is something that is (and must be) supported on the PA.
@@ -79,7 +87,9 @@ proc do_930509a {} {
 
 # This test is meaningless for the PA; the difference of two symbols
 # must not be resolved by the assembler.
-if ![istarget hppa*-*-*] then {
+# C54x assembler (for compatibility) does not allow differences between
+# forward references
+if { ![istarget hppa*-*-*] && ![istarget *c54x*-*-*] } then {
     # the vax fails because VMS can apparently actually handle this
     # case in relocs, so gas doesn't handle it itself.
     setup_xfail "vax*-*-vms*"
@@ -88,8 +98,11 @@ if ![istarget hppa*-*-*] then {
     do_930509a
 }
 
+# ".struct" and ".align" have different meanings on c54x
+# These directives are done in the c54x-specific tests instead
 case $target_triplet in {
     { hppa*-*-* } { }
+    { *c54x*-*-* } { }
     default {
 	run_dump_test struct
 	run_dump_test align
@@ -100,7 +113,8 @@ case $target_triplet in {
 # We omit m88k COFF because it uses weird pseudo-op names.
 # We omit the ARM toolchains because they define locals to
 #  start with '.', which eliminates .eos, .text etc from the output.
-if {   ([istarget *-*-coff*] && ![istarget m88*-*-*] && ![istarget *arm*-*-coff] && ![istarget thumb*-*-coff]) \
+# Omit c54x, since .tag and .def mean something different on that target
+if {   ([istarget *-*-coff*] && ![istarget m88*-*-*] && ![istarget *arm*-*-coff] && ![istarget thumb*-*-coff] && ![istarget *c54x*-*-coff]) \
      ||([istarget *-*-pe*] && ![istarget arm*-*-pe*] && ![istarget thumb*-*-pe*]) \
      || [istarget a29k-*-udi*] \
      || [istarget a29k-*-ebmon*] \
@@ -137,7 +151,10 @@ proc test_cond {} {
     }
 }
 
-test_cond
+# again, p2align doesn't work on c54x target
+if ![istarget *c54x*-*-*] then {
+    test_cond
+}
 
 # FIXME: this is here cause of a bug in DejaGnu 1.1.1. When it is no longer
 #        in use, then this can be removed.

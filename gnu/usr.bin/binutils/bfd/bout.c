@@ -1,5 +1,6 @@
 /* BFD back-end for Intel 960 b.out binaries.
-   Copyright 1990, 91, 92, 93, 94, 95, 96, 97, 98, 1999
+   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
+   2000
    Free Software Foundation, Inc.
    Written by Cygnus Support.
 
@@ -19,7 +20,6 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
-
 #include "bfd.h"
 #include "sysdep.h"
 #include "libbfd.h"
@@ -29,7 +29,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #include "aout/stab_gnu.h"
 #include "libaout.h"		/* BFD a.out internal data structures */
-
 
 static int aligncode PARAMS ((bfd *abfd, asection *input_section,
 			      arelent *r, unsigned int shrink));
@@ -97,7 +96,7 @@ bout_swap_exec_header_out (abfd, execp, raw_bytes)
 {
   struct external_exec *bytes = (struct external_exec *)raw_bytes;
 
-  /* Now fill in fields in the raw data, from the fields in the exec struct. */
+  /* Now fill in fields in the raw data, from the fields in the exec struct.  */
   bfd_h_put_32 (abfd, execp->a_info  , bytes->e_info);
   PUT_WORD (abfd, execp->a_text  , bytes->e_text);
   PUT_WORD (abfd, execp->a_data  , bytes->e_data);
@@ -113,7 +112,6 @@ bout_swap_exec_header_out (abfd, execp, raw_bytes)
   bytes->e_balign[0] = execp->a_balign;
   bytes->e_relaxable[0] = execp->a_relaxable;
 }
-
 
 static const bfd_target *
 b_out_object_p (abfd)
@@ -139,7 +137,6 @@ b_out_object_p (abfd)
   bout_swap_exec_header_in (abfd, &exec_bytes, &anexec);
   return aout_32_some_aout_object_p (abfd, &anexec, b_out_callback);
 }
-
 
 /* Finish up the opening of a b.out file for reading.  Fill in all the
    fields that are not handled by common code.  */
@@ -189,8 +186,8 @@ b_out_callback (abfd)
   obj_textsec (abfd)->rel_filepos = N_TROFF(*execp);
   obj_datasec (abfd)->rel_filepos =  N_DROFF(*execp);
 
-  adata(abfd).page_size = 1;	/* Not applicable. */
-  adata(abfd).segment_size = 1; /* Not applicable. */
+  adata(abfd).page_size = 1;	/* Not applicable.  */
+  adata(abfd).segment_size = 1; /* Not applicable.  */
   adata(abfd).exec_bytes_size = EXEC_BYTES_SIZE;
 
   if (execp->a_relaxable)
@@ -310,22 +307,22 @@ b_out_write_object_contents (abfd)
 	}
 
       if (q > outsyms)
-	qsort (outsyms, q - outsyms, sizeof(asymbol*), b_out_symbol_cmp);
+	qsort (outsyms, q - outsyms, sizeof (asymbol*), b_out_symbol_cmp);
 
       /* Back to your regularly scheduled program.  */
 
-      if (bfd_seek (abfd, (file_ptr)(N_SYMOFF(*exec_hdr(abfd))), SEEK_SET)
+      if (bfd_seek (abfd, (file_ptr) (N_SYMOFF(*exec_hdr(abfd))), SEEK_SET)
 	  != 0)
 	return false;
 
       if (! aout_32_write_syms (abfd))
 	return false;
 
-      if (bfd_seek (abfd, (file_ptr)(N_TROFF(*exec_hdr(abfd))), SEEK_SET) != 0)
+      if (bfd_seek (abfd, (file_ptr) (N_TROFF(*exec_hdr(abfd))), SEEK_SET) != 0)
 	return false;
 
       if (!b_out_squirt_out_relocs (abfd, obj_textsec (abfd))) return false;
-      if (bfd_seek (abfd, (file_ptr)(N_DROFF(*exec_hdr(abfd))), SEEK_SET)
+      if (bfd_seek (abfd, (file_ptr) (N_DROFF(*exec_hdr(abfd))), SEEK_SET)
 	  != 0)
 	return false;
 
@@ -343,7 +340,6 @@ b_out_write_object_contents (abfd)
 #define BALX_MASK 0x0007ffff
 #define CALL      0x09000000
 #define PCREL13_MASK 0x1fff
-
 
 #define output_addr(sec) ((sec)->output_offset+(sec)->output_section->vma)
 
@@ -380,10 +376,9 @@ calljx_callback (abfd, link_info, reloc_entry, src, dst, input_section)
 
   word += value + reloc_entry->addend;
 
-  bfd_put_32(abfd, word, dst);
+  bfd_put_32 (abfd, word, dst);
   return bfd_reloc_ok;
 }
-
 
 /* Magic to turn call into callj */
 static bfd_reloc_status_type
@@ -417,7 +412,7 @@ callj_callback (abfd, link_info, reloc_entry,  data, srcidx, dstidx,
 
       /* The next symbol should be an N_BALNAME.  */
       BFD_ASSERT(IS_BALNAME(balsym->other));
-      
+
       /* We are calling a leaf, so replace the call instruction with a
 	 bal.  */
       word = BAL | ((word
@@ -445,7 +440,7 @@ callj_callback (abfd, link_info, reloc_entry,  data, srcidx, dstidx,
 		      - output_addr (input_section))
 		     & BAL_MASK);
     }
-  bfd_put_32(abfd, word, (bfd_byte *) data + dstidx);
+  bfd_put_32 (abfd, word, (bfd_byte *) data + dstidx);
   return bfd_reloc_ok;
 }
 
@@ -471,7 +466,6 @@ HOWTO(PCREL24, 0, 2, 24, true, 0, complain_overflow_signed,0,"pcrel24", true, 0x
 
 static reloc_howto_type howto_reloc_pcrel13 =
 HOWTO(PCREL13, 0, 2, 13, true, 0, complain_overflow_signed,0,"pcrel13", true, 0x00001fff,0x00001fff,false);
-
 
 static reloc_howto_type howto_reloc_abs32codeshrunk =
 HOWTO(ABS32CODE_SHRUNK, 0, 2, 24, true, 0, complain_overflow_signed, 0,"callx->callj", true, 0x00ffffff, 0x00ffffff,false);
@@ -556,7 +550,7 @@ b_out_slurp_reloc_table (abfd, asect, symbols)
   return false;
 
  doit:
-  if (bfd_seek (abfd, (file_ptr)(asect->rel_filepos),  SEEK_SET) != 0)
+  if (bfd_seek (abfd, (file_ptr) (asect->rel_filepos),  SEEK_SET) != 0)
     return false;
   count = reloc_size / sizeof (struct relocation_info);
 
@@ -576,8 +570,6 @@ b_out_slurp_reloc_table (abfd, asect, symbols)
       free (relocs);
     return false;
   }
-
-
 
   if (bfd_header_big_endian (abfd)) {
     /* big-endian bit field allocation order */
@@ -728,16 +720,13 @@ b_out_slurp_reloc_table (abfd, asect, symbols)
     }
   }
 
-
   if (relocs != NULL)
     free (relocs);
   asect->relocation = reloc_cache;
   asect->reloc_count = count;
 
-
   return true;
 }
-
 
 static boolean
 b_out_squirt_out_relocs (abfd, section)
@@ -956,7 +945,7 @@ b_out_set_section_contents (abfd, section, location, offset, count)
     if (! aout_32_make_sections (abfd))
       return false;
 
-    obj_textsec (abfd)->filepos = sizeof(struct internal_exec);
+    obj_textsec (abfd)->filepos = sizeof (struct internal_exec);
     obj_datasec(abfd)->filepos = obj_textsec(abfd)->filepos
                                  +  obj_textsec (abfd)->_raw_size;
 
@@ -1005,10 +994,8 @@ b_out_sizeof_headers (ignore_abfd, ignore)
      bfd *ignore_abfd ATTRIBUTE_UNUSED;
      boolean ignore ATTRIBUTE_UNUSED;
 {
-  return sizeof(struct internal_exec);
+  return sizeof (struct internal_exec);
 }
-
-
 
 /************************************************************************/
 static bfd_vma
@@ -1124,7 +1111,6 @@ abs32code (abfd, input_section, r, shrink, link_info)
      jump we were going to */
 
   gap = value - (dot - shrink);
-
 
   if (-1<<23 < (long)gap && (long)gap < 1<<23 )
   {
@@ -1425,7 +1411,7 @@ b_out_bfd_get_relocated_section_contents (output_bfd, link_info, link_order,
 		  break;
 
 		default:
-		  abort();
+		  abort ();
 		}
 	    }
 	}
@@ -1494,10 +1480,9 @@ const bfd_target b_out_vec_big_host =
      BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
 
   & b_out_vec_little_host,
-  
+
   (PTR) 0,
 };
-
 
 const bfd_target b_out_vec_little_host =
 {
@@ -1537,6 +1522,6 @@ const bfd_target b_out_vec_little_host =
      BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
 
   & b_out_vec_big_host,
-  
+
   (PTR) 0
 };

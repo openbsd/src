@@ -1,5 +1,5 @@
 /* BFD support for the HP Precision Architecture architecture.
-   Copyright 1992 Free Software Foundation, Inc.
+   Copyright 1992, 1995, 1998, 1999, 2000 Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
 
@@ -32,7 +32,7 @@ static const bfd_arch_info_type bfd_hppa10_arch =
   "hppa1.0",
   3,
   true,				/* Unless we use 1.1 specific features */
-  bfd_default_compatible, 
+  bfd_default_compatible,
   bfd_default_scan ,
   0,
 };
@@ -49,7 +49,7 @@ static const bfd_arch_info_type bfd_hppa20_arch =
   "hppa2.0",
   3,
   false,			/* Unless we use 1.1 specific features */
-  bfd_default_compatible, 
+  bfd_default_compatible,
   bfd_default_scan ,
   &bfd_hppa10_arch,
 };
@@ -66,7 +66,7 @@ static const bfd_arch_info_type bfd_hppa20w_arch =
   "hppa2.0w",
   3,
   false,			/* Unless we use 1.1 specific features */
-  bfd_default_compatible, 
+  bfd_default_compatible,
   bfd_default_scan ,
   &bfd_hppa20_arch,
 };
@@ -82,7 +82,7 @@ const bfd_arch_info_type bfd_hppa_arch =
   "hppa1.1",
   3,
   false,			/* 1.1 specific features used */
-  bfd_default_compatible, 
+  bfd_default_compatible,
   bfd_default_scan ,
   &bfd_hppa20w_arch,
 };

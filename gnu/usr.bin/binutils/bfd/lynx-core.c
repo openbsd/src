@@ -1,5 +1,5 @@
 /* BFD back end for Lynx core files
-   Copyright 1993 Free Software Foundation, Inc.
+   Copyright 1993, 1994, 1995, 2001 Free Software Foundation, Inc.
    Written by Stu Grossman of Cygnus Support.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -26,7 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #include <sys/conf.h>
 #include <sys/kernel.h>
-/* sys/kernel.h should define this, but doesn't always, sigh. */
+/* sys/kernel.h should define this, but doesn't always, sigh.  */
 #ifndef __LYNXOS
 #define __LYNXOS
 #endif
@@ -40,7 +40,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 /* These are stored in the bfd's tdata */
 
-struct lynx_core_struct 
+struct lynx_core_struct
 {
   int sig;
   char cmd[PNMLEN + 1];
@@ -83,7 +83,6 @@ make_bfd_asection (abfd, name, flags, _raw_size, vma, filepos)
   return asect;
 }
 
-/* ARGSUSED */
 const bfd_target *
 lynx_core_file_p (abfd)
      bfd *abfd;
@@ -146,7 +145,7 @@ lynx_core_file_p (abfd)
 	bfd_set_error (bfd_error_wrong_format);
       return NULL;
     }
-  
+
   core_signal (abfd) = threadp->currsig;
 
   newsect = make_bfd_asection (abfd, ".stack",
@@ -214,7 +213,6 @@ lynx_core_file_failing_command (abfd)
   return core_command (abfd);
 }
 
-/* ARGSUSED */
 int
 lynx_core_file_failing_signal (abfd)
      bfd *abfd;
@@ -222,7 +220,6 @@ lynx_core_file_failing_signal (abfd)
   return core_signal (abfd);
 }
 
-/* ARGSUSED */
 boolean
 lynx_core_file_matches_executable_p  (core_bfd, exec_bfd)
      bfd *core_bfd, *exec_bfd;

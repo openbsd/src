@@ -1,7 +1,8 @@
 /* m88k.c -- Assembler for the Motorola 88000
    Contributed by Devon Bowen of Buffalo University
    and Torbjorn Granlund of the Swedish Institute of Computer Science.
-   Copyright (C) 1989, 90, 91, 92, 93, 94, 95, 96, 97, 98, 1999
+   Copyright 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1999,
+   2000
    Free Software Foundation, Inc.
 
 This file is part of GAS, the GNU Assembler.
@@ -138,7 +139,6 @@ static char *get_pcr PARAMS ((char *param, struct m88k_insn *insn,
 static int calcop PARAMS ((struct m88k_opcode *format,
 			   char *param, struct m88k_insn *insn));
 
-
 extern char *myname;
 static struct hash_control *op_hash = NULL;
 
@@ -149,7 +149,7 @@ int md_seg_align = 7;
    another comment */
 const char comment_chars[] = ";";
 
-/* These chars only start a comment at the beginning of a line. */
+/* These chars only start a comment at the beginning of a line.  */
 const char line_comment_chars[] = "#";
 
 const char line_separator_chars[] = "";
@@ -217,7 +217,7 @@ CONST char *md_shortopts = "";
 struct option md_longopts[] = {
   {NULL, no_argument, NULL, 0}
 };
-size_t md_longopts_size = sizeof(md_longopts);
+size_t md_longopts_size = sizeof (md_longopts);
 
 int
 md_parse_option (c, arg)
@@ -1177,7 +1177,6 @@ md_estimate_size_before_relax (fragP, segment_type)
    doing here?
    Ian Taylor, Cygnus Support 13 Jul 1993 */
 
-
 /*
  * Risc relocations are completely different, so it needs
  * this machine dependent routine to emit them.
@@ -1239,7 +1238,6 @@ emit_relocations (fixP, segment_address_in_file)
 
 /* This routine can be subsumed by s_lcomm in read.c.
    Ian Taylor, Cygnus Support 13 Jul 1993 */
-
 
 static void
 s_bss ()
@@ -1311,7 +1309,7 @@ s_bss ()
       as_warn (_("Ignoring attempt to re-define symbol %s."), name);
     }
 
-  while (!is_end_of_line[*input_line_pointer])
+  while (!is_end_of_line[(unsigned char) *input_line_pointer])
     {
       input_line_pointer++;
     }
@@ -1430,23 +1428,34 @@ md_pcrel_from (fixp)
   /*NOTREACHED*/
 }
 
-/* When we align the .init section, insert the correct NOP pattern.  */
+/* Fill in rs_align_code fragments.  */
 
-int
-m88k_do_align (n, fill, max, len)
-     int n;
-     const char *fill;
-     int len;
-     int max;
+void
+m88k_handle_align (fragp)
+     fragS *fragp;
 {
-  if (fill == NULL
-      && strcmp (obj_segment_name (now_seg), ".init") == 0)
+  static const unsigned char nop_pattern[] = { 0xf4, 0x00, 0x58, 0x00 };
+
+  int bytes;
+  char *p;
+
+  if (fragp->fr_type != rs_align_code)
+    return;
+
+  bytes = fragp->fr_next->fr_address - fragp->fr_address - fragp->fr_fix;
+  p = fragp->fr_literal + fragp->fr_fix;
+
+  if (bytes & 3)
     {
-      static const unsigned char nop_pattern[] = { 0xf4, 0x00, 0x58, 0x00 };
-      frag_align_pattern (n, nop_pattern, sizeof (nop_pattern), max);
-      return 1;
+      int fix = bytes & 3;
+      memset (p, 0, fix);
+      p += fix;
+      bytes -= fix;
+      fragp->fr_fix += fix;
     }
-  return 0;
+
+  memcpy (p, nop_pattern, 4);
+  fragp->fr_var = 4;
 }
 
 #endif /* M88KCOFF */

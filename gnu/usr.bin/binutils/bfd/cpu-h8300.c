@@ -1,5 +1,6 @@
 /* BFD library support routines for the Hitachi H8/300 architecture.
-   Copyright (C) 1990, 91, 92, 93, 94, 1995 Free Software Foundation, Inc.
+   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 2000
+   Free Software Foundation, Inc.
    Hacked by Steve Chamberlain of Cygnus Support.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -65,15 +66,14 @@ h8300_scan (info, string)
     }
 }
 
-
-/* This routine is provided two arch_infos and works out the 
-   machine which would be compatible with both and returns a pointer
-   to its info structure */
+/* This routine is provided two arch_infos and works out the machine
+   which would be compatible with both and returns a pointer to its
+   info structure.  */
 
 static const bfd_arch_info_type *
 compatible (in, out)
-     const bfd_arch_info_type * in;
-     const bfd_arch_info_type * out;
+     const bfd_arch_info_type *in;
+     const bfd_arch_info_type *out;
 {
   /* It's really not a good idea to mix and match modes.  */
   if (in->mach != out->mach)
@@ -95,7 +95,9 @@ static const bfd_arch_info_type h8300_info_struct =
   true,				/* the default machine */
   compatible,
   h8300_scan,
-/*    local_bfd_reloc_type_lookup, */
+#if 0
+  local_bfd_reloc_type_lookup,
+#endif
   0,
 };
 
@@ -112,7 +114,9 @@ static const bfd_arch_info_type h8300h_info_struct =
   false,			/* the default machine */
   compatible,
   h8300_scan,
-/*    local_bfd_reloc_type_lookup, */
+#if 0
+  local_bfd_reloc_type_lookup,
+#endif
   &h8300_info_struct,
 };
 
@@ -129,6 +133,8 @@ const bfd_arch_info_type bfd_h8300_arch =
   false,			/* the default machine */
   compatible,
   h8300_scan,
-/*    local_bfd_reloc_type_lookup, */
+#if 0
+  local_bfd_reloc_type_lookup,
+#endif
   &h8300h_info_struct,
 };

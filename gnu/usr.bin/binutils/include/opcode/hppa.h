@@ -1,5 +1,7 @@
 /* Table of opcodes for the PA-RISC.
-   Copyright (C) 1990, 1991, 1993, 1995, 1999 Free Software Foundation, Inc.
+   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998, 1999, 2000,
+   2001
+   Free Software Foundation, Inc.
 
    Contributed by the Center for Software Science at the
    University of Utah (pa-gdb-bugs@cs.utah.edu).
@@ -70,15 +72,15 @@ struct pa_opcode
 
    In the args field, the following characters are unused:
 
-	'  "   &     -  /   34 6789:;< > @'
-	'  C         M             [\]  '
-	'    e g    l            y   } '
+	'  "         -  /   34 6789:;    '
+	'@  C         M             [\]  '
+	'`    e g                     }  '
 
    Here are all the characters:
 
-	' !"#$%&'()*+-,./0123456789:;<=>?@'
-	'ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_'
-	'abcdefghijklmnopqrstuvwxyz{|}~'
+	' !"#$%&'()*+-,./0123456789:;<=>?'
+	'@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_'
+	'`abcdefghijklmnopqrstuvwxyz{|}~ '
 
 Kinds of operands:
    x    integer register field at 15.
@@ -92,6 +94,7 @@ Kinds of operands:
    i    11 bit immediate value at 31
    j    14 bit immediate value at 31
    k    21 bit immediate value at 31
+   l    16 bit immediate value at 31 (wide mode only, unusual encoding).
    n	nullification for branch instructions
    N	nullification for spop and copr instructions
    w    12 bit branch displacement
@@ -145,7 +148,7 @@ Also these:
 	the bb instruction. It's the same as r above, except the
         value is in a different location)
    B	5 bit immediate value at 10 (a bit position specified in
-	the bb instruction. Similar to Q, but 64bit handling is
+	the bb instruction. Similar to Q, but 64 bit handling is
 	different.
    Z    %r1 -- implicit target of addil instruction.
    L    ,%r2 completer for new syntax branch
@@ -153,10 +156,14 @@ Also these:
    _    Destination format completer for fcnv
    h    cbit for fcmp
    =    gfx tests for ftest
-   d    14bit offset for single precision FP long load/store.
-   #    14bit offset for double precision FP load long/store.
-   J    Yet another 14bit offset with an unusual encoding.
-   K    Yet another 14bit offset with an unusual encoding.
+   d    14 bit offset for single precision FP long load/store.
+   #    14 bit offset for double precision FP load long/store.
+   J    Yet another 14 bit offset for load/store with ma,mb completers.
+   K    Yet another 14 bit offset for load/store with ma,mb completers.
+   y    16 bit offset for word aligned load/store (PA2.0 wide).
+   &    16 bit offset for dword aligned load/store (PA2.0 wide).
+   <    16 bit offset for load/store with ma,mb completers (PA2.0 wide).
+   >    16 bit offset for load/store with ma,mb completers (PA2.0 wide).
    Y    %sr0,%r31 -- implicit target of be,l instruction.
    @	implicit immediate value of 0
 
@@ -197,6 +204,7 @@ Completer operands all have 'c' as the prefix:
    ch	left/right half completer
    cH	signed/unsigned saturation completer
    cS	signed/unsigned completer at 21
+   cz	zero/sign extension completer.
    c*	permutation completer
 
 Condition operands all have '?' as the prefix:
@@ -243,6 +251,8 @@ Floating point registers all have 'f' as a prefix:
    fB   operand 2 register with L/R halves at 15
    fC   operand 3 register with L/R halves at 16:18,21:23
    fe   Like fT, but encoding is different.
+   fE   Same as fe, except prints a space before register during disasm.
+   fx	target register at 15 (only for PA 2.0 long format FLDD/FSTD). 
 
 Float registers for fmpyadd and fmpysub:
 
@@ -257,7 +267,7 @@ Float registers for fmpyadd and fmpysub:
 
 /* List of characters not to put a space after.  Note that
    "," is included, as the "spopN" operations use literal
-   commas in their completer sections. */
+   commas in their completer sections.  */
 static const char *const completer_chars = ",CcY<>?!@+&U~FfGHINnOoZMadu|/=0123%e$m}";
 
 /* The order of the opcodes in this table is significant:
@@ -270,8 +280,9 @@ static const char *const completer_chars = ",CcY<>?!@+&U~FfGHINnOoZMadu|/=0123%e
 static const struct pa_opcode pa_opcodes[] =
 {
 
-/* pseudo-instructions */
+/* Pseudo-instructions.  */
 
+{ "ldi",	0x34000000, 0xffe00000, "l,x", pa20w, 0},/* ldo val(r0),r */
 { "ldi",	0x34000000, 0xffe0c000, "j,x", pa10, 0},/* ldo val(r0),r */
 
 { "call",	0xe800f000, 0xfc1ffffd, "n(b)", pa20, FLAG_STRICT},
@@ -312,7 +323,7 @@ static const struct pa_opcode pa_opcodes[] =
 { "ldd",        0x0c0000c0, 0xfc0013c0, "cxccx(b),t", pa20, FLAG_STRICT},
 { "ldd",	0x0c0010c0, 0xfc0013c0, "cmcc5(s,b),t", pa20, FLAG_STRICT},
 { "ldd",	0x0c0010c0, 0xfc0013c0, "cmcc5(b),t", pa20, FLAG_STRICT},
-{ "ldd",        0x50000000, 0xfc000002, "cq#(s,b),x", pa20, FLAG_STRICT},
+{ "ldd",        0x50000000, 0xfc000002, "cq&(b),x", pa20w, FLAG_STRICT},
 { "ldd",        0x50000000, 0xfc000002, "cq#(b),x", pa20, FLAG_STRICT},
 { "ldw",        0x0c000080, 0xfc0013c0, "cxccx(s,b),t", pa10, FLAG_STRICT},
 { "ldw",        0x0c000080, 0xfc0013c0, "cxccx(b),t", pa10, FLAG_STRICT},
@@ -320,11 +331,13 @@ static const struct pa_opcode pa_opcodes[] =
 { "ldw",	0x0c0010a0, 0xfc1f33e0, "cocc@(b),t", pa20, FLAG_STRICT},
 { "ldw",	0x0c001080, 0xfc0013c0, "cmcc5(s,b),t", pa10, FLAG_STRICT},
 { "ldw",	0x0c001080, 0xfc0013c0, "cmcc5(b),t", pa10, FLAG_STRICT},
+{ "ldw",        0x4c000000, 0xfc000000, "ce<(b),x", pa20w, FLAG_STRICT},
 { "ldw",        0x4c000000, 0xfc000000, "ceJ(s,b),x", pa10, FLAG_STRICT},
 { "ldw",        0x4c000000, 0xfc000000, "ceJ(b),x", pa10, FLAG_STRICT},
+{ "ldw",        0x5c000004, 0xfc000006, "ce>(b),x", pa20w, FLAG_STRICT},
 { "ldw",        0x5c000004, 0xfc000006, "ceK(s,b),x", pa20, FLAG_STRICT},
 { "ldw",        0x5c000004, 0xfc000006, "ceK(b),x", pa20, FLAG_STRICT},
-{ "ldw",        0x48000000, 0xfc000000, "j(s,b),x", pa10, 0},
+{ "ldw",        0x48000000, 0xfc000000, "l(b),x", pa20w, FLAG_STRICT},
 { "ldw",        0x48000000, 0xfc000000, "j(s,b),x", pa10, 0},
 { "ldw",        0x48000000, 0xfc000000, "j(b),x", pa10, 0},
 { "ldh",        0x0c000040, 0xfc0013c0, "cxccx(s,b),t", pa10, FLAG_STRICT},
@@ -333,6 +346,7 @@ static const struct pa_opcode pa_opcodes[] =
 { "ldh",	0x0c001060, 0xfc1f33e0, "cocc@(b),t", pa20, FLAG_STRICT},
 { "ldh",	0x0c001040, 0xfc0013c0, "cmcc5(s,b),t", pa10, FLAG_STRICT},
 { "ldh",	0x0c001040, 0xfc0013c0, "cmcc5(b),t", pa10, FLAG_STRICT},
+{ "ldh",        0x44000000, 0xfc000000, "l(b),x", pa20w, FLAG_STRICT},
 { "ldh",        0x44000000, 0xfc000000, "j(s,b),x", pa10, 0},
 { "ldh",        0x44000000, 0xfc000000, "j(b),x", pa10, 0},
 { "ldb",        0x0c000000, 0xfc0013c0, "cxccx(s,b),t", pa10, FLAG_STRICT},
@@ -341,34 +355,40 @@ static const struct pa_opcode pa_opcodes[] =
 { "ldb",	0x0c001020, 0xfc1f33e0, "cocc@(b),t", pa20, FLAG_STRICT},
 { "ldb",	0x0c001000, 0xfc0013c0, "cmcc5(s,b),t", pa10, FLAG_STRICT},
 { "ldb",	0x0c001000, 0xfc0013c0, "cmcc5(b),t", pa10, FLAG_STRICT},
+{ "ldb",        0x40000000, 0xfc000000, "l(b),x", pa20w, FLAG_STRICT},
 { "ldb",        0x40000000, 0xfc000000, "j(s,b),x", pa10, 0},
 { "ldb",        0x40000000, 0xfc000000, "j(b),x", pa10, 0},
 { "std",	0x0c0012e0, 0xfc0033ff, "cocCx,@(s,b)", pa20, FLAG_STRICT},
 { "std",	0x0c0012e0, 0xfc0033ff, "cocCx,@(b)", pa20, FLAG_STRICT},
 { "std",	0x0c0012c0, 0xfc0013c0, "cmcCx,V(s,b)", pa20, FLAG_STRICT},
 { "std",	0x0c0012c0, 0xfc0013c0, "cmcCx,V(b)", pa20, FLAG_STRICT},
-{ "std",        0x70000000, 0xfc000002, "cqx,#(s,b)", pa20, FLAG_STRICT},
+{ "std",        0x70000000, 0xfc000002, "cqx,&(b)", pa20w, FLAG_STRICT},
 { "std",        0x70000000, 0xfc000002, "cqx,#(b)", pa20, FLAG_STRICT},
 { "stw",	0x0c0012a0, 0xfc0013ff, "cocCx,@(s,b)", pa20, FLAG_STRICT},
 { "stw",	0x0c0012a0, 0xfc0013ff, "cocCx,@(b)", pa20, FLAG_STRICT},
 { "stw",	0x0c001280, 0xfc0013c0, "cmcCx,V(s,b)", pa10, FLAG_STRICT},
 { "stw",	0x0c001280, 0xfc0013c0, "cmcCx,V(b)", pa10, FLAG_STRICT},
+{ "stw",        0x6c000000, 0xfc000000, "cex,<(b)", pa20w, FLAG_STRICT},
 { "stw",        0x6c000000, 0xfc000000, "cex,J(s,b)", pa10, FLAG_STRICT},
 { "stw",        0x6c000000, 0xfc000000, "cex,J(b)", pa10, FLAG_STRICT},
+{ "stw",        0x7c000004, 0xfc000006, "cex,>(b)", pa20w, FLAG_STRICT},
 { "stw",        0x7c000004, 0xfc000006, "cex,K(s,b)", pa20, FLAG_STRICT},
 { "stw",        0x7c000004, 0xfc000006, "cex,K(b)", pa20, FLAG_STRICT},
+{ "stw",        0x68000000, 0xfc000000, "x,l(b)", pa20w, FLAG_STRICT},
 { "stw",        0x68000000, 0xfc000000, "x,j(s,b)", pa10, 0},
 { "stw",        0x68000000, 0xfc000000, "x,j(b)", pa10, 0},
 { "sth",	0x0c001260, 0xfc0033ff, "cocCx,@(s,b)", pa20, FLAG_STRICT},
 { "sth",	0x0c001260, 0xfc0033ff, "cocCx,@(b)", pa20, FLAG_STRICT},
 { "sth",	0x0c001240, 0xfc0013c0, "cmcCx,V(s,b)", pa10, FLAG_STRICT},
 { "sth",	0x0c001240, 0xfc0013c0, "cmcCx,V(b)", pa10, FLAG_STRICT},
+{ "sth",        0x64000000, 0xfc000000, "x,l(b)", pa20w, FLAG_STRICT},
 { "sth",        0x64000000, 0xfc000000, "x,j(s,b)", pa10, 0},
 { "sth",        0x64000000, 0xfc000000, "x,j(b)", pa10, 0},
 { "stb",	0x0c001220, 0xfc0033ff, "cocCx,@(s,b)", pa20, FLAG_STRICT},
 { "stb",	0x0c001220, 0xfc0033ff, "cocCx,@(b)", pa20, FLAG_STRICT},
 { "stb",	0x0c001200, 0xfc0013c0, "cmcCx,V(s,b)", pa10, FLAG_STRICT},
 { "stb",	0x0c001200, 0xfc0013c0, "cmcCx,V(b)", pa10, FLAG_STRICT},
+{ "stb",        0x60000000, 0xfc000000, "x,l(b)", pa20w, FLAG_STRICT},
 { "stb",        0x60000000, 0xfc000000, "x,j(s,b)", pa10, 0},
 { "stb",        0x60000000, 0xfc000000, "x,j(b)", pa10, 0},
 { "ldwm",       0x4c000000, 0xfc000000, "j(s,b),x", pa10, 0},
@@ -426,12 +446,13 @@ static const struct pa_opcode pa_opcodes[] =
 { "stbys",	0x0c001300, 0xfc001fc0, "csx,V(b)", pa10, 0},
 
 /* Immediate instructions.  */
+{ "ldo",	0x34000000, 0xfc000000, "l(b),x", pa20w, 0},
 { "ldo",	0x34000000, 0xfc00c000, "j(b),x", pa10, 0},
 { "ldil",	0x20000000, 0xfc000000, "k,b", pa10, 0},
 { "addil",	0x28000000, 0xfc000000, "k,b,Z", pa10, 0},
 { "addil",	0x28000000, 0xfc000000, "k,b", pa10, 0},
 
-/* Branching instructions. */
+/* Branching instructions.  */
 { "b",		0xe8008000, 0xfc00e000, "cpnXL", pa20, FLAG_STRICT},
 { "b",		0xe800a000, 0xfc00e000, "clnXL", pa20, FLAG_STRICT},
 { "b",		0xe8000000, 0xfc00e000, "clnW,b", pa10, FLAG_STRICT},
@@ -471,7 +492,7 @@ static const struct pa_opcode pa_opcodes[] =
 { "pushnom",	0xe8004001, 0xffffffff, "", pa20, FLAG_STRICT},
 { "pushbts",	0xe8004001, 0xffe0ffff, "x", pa20, FLAG_STRICT},
 
-/* Computation Instructions */
+/* Computation Instructions.  */
 
 { "cmpclr",     0x080008a0, 0xfc000fe0, "?Sx,b,t", pa20, FLAG_STRICT},
 { "cmpclr",     0x08000880, 0xfc000fe0, "?sx,b,t", pa10, FLAG_STRICT},
@@ -540,7 +561,7 @@ static const struct pa_opcode pa_opcodes[] =
 { "sh3addl",    0x08000ac0, 0xfc000fe0, "?ax,b,t", pa10, 0},
 { "sh3addo",    0x08000ec0, 0xfc000fe0, "?ax,b,t", pa10, 0},
 
-/* Subword Operation Instructions */
+/* Subword Operation Instructions.  */
 
 { "hadd",       0x08000300, 0xfc00ff20, "cHx,b,t", pa20, FLAG_STRICT},
 { "havg",       0x080002c0, 0xfc00ffe0, "x,b,t", pa20, FLAG_STRICT},
@@ -554,7 +575,7 @@ static const struct pa_opcode pa_opcodes[] =
 { "permh",      0xf8000000, 0xfc009020, "c*a,t", pa20, FLAG_STRICT},
 
 
-/* Extract and Deposit Instructions */
+/* Extract and Deposit Instructions.  */
 
 { "shrpd",      0xd0000200, 0xfc001fe0, "?Xx,b,!,t", pa20, FLAG_STRICT},
 { "shrpd",      0xd0000400, 0xfc001400, "?Xx,b,~,t", pa20, FLAG_STRICT},
@@ -587,7 +608,7 @@ static const struct pa_opcode pa_opcodes[] =
 { "zdepi",      0xd4001800, 0xfc001c00, "?x5,p,T,b", pa10, 0},
 { "depi",       0xd4001c00, 0xfc001c00, "?x5,p,T,b", pa10, 0},
 
-/* System Control Instructions */
+/* System Control Instructions.  */
 
 { "break",      0x00000000, 0xfc001fe0, "r,A", pa10, 0},
 { "rfi",        0x00000c00, 0xffffff1f, "cr", pa10, FLAG_STRICT},
@@ -678,7 +699,7 @@ static const struct pa_opcode pa_opcodes[] =
 { "gfr",	0x04001a80, 0xfc003fdf, "cZx(s,b)", pa11, 0},
 { "gfr",	0x04001a80, 0xfc003fdf, "cZx(b)", pa11, 0},
 
-/* Floating Point Coprocessor Instructions */
+/* Floating Point Coprocessor Instructions.  */
  
 { "fldw",       0x24001020, 0xfc1f33a0, "cocc@(s,b),fT", pa20, FLAG_STRICT},
 { "fldw",       0x24001020, 0xfc1f33a0, "cocc@(b),fT", pa20, FLAG_STRICT},
@@ -686,36 +707,36 @@ static const struct pa_opcode pa_opcodes[] =
 { "fldw",       0x24000000, 0xfc001380, "cxccx(b),fT", pa10, FLAG_STRICT},
 { "fldw",       0x24001000, 0xfc001380, "cmcc5(s,b),fT", pa10, FLAG_STRICT},
 { "fldw",       0x24001000, 0xfc001380, "cmcc5(b),fT", pa10, FLAG_STRICT},
-{ "fldw",       0x5c000000, 0xfc000004, "d(s,b),fe", pa20, FLAG_STRICT},
+{ "fldw",       0x5c000000, 0xfc000004, "y(b),fe", pa20w, FLAG_STRICT},
+{ "fldw",       0x58000000, 0xfc000000, "cJy(b),fe", pa20w, FLAG_STRICT},
 { "fldw",       0x5c000000, 0xfc000004, "d(b),fe", pa20, FLAG_STRICT},
-{ "fldw",       0x58000000, 0xfc000004, "cJd(s,b),fe", pa20, FLAG_STRICT},
-{ "fldw",       0x58000000, 0xfc000004, "cJd(b),fe", pa20, FLAG_STRICT},
+{ "fldw",       0x58000000, 0xfc000000, "cJd(b),fe", pa20, FLAG_STRICT},
 { "fldd",       0x2c001020, 0xfc1f33e0, "cocc@(s,b),ft", pa20, FLAG_STRICT},
 { "fldd",       0x2c001020, 0xfc1f33e0, "cocc@(b),ft", pa20, FLAG_STRICT},
 { "fldd",       0x2c000000, 0xfc0013c0, "cxccx(s,b),ft", pa10, FLAG_STRICT},
 { "fldd",       0x2c000000, 0xfc0013c0, "cxccx(b),ft", pa10, FLAG_STRICT},
 { "fldd",       0x2c001000, 0xfc0013c0, "cmcc5(s,b),ft", pa10, FLAG_STRICT},
 { "fldd",       0x2c001000, 0xfc0013c0, "cmcc5(b),ft", pa10, FLAG_STRICT},
-{ "fldd",       0x50000002, 0xfc000002, "cq#(s,b),x", pa20, FLAG_STRICT},
-{ "fldd",       0x50000002, 0xfc000002, "cq#(b),x", pa20, FLAG_STRICT},
+{ "fldd",       0x50000002, 0xfc000002, "cq&(b),fx", pa20w, FLAG_STRICT},
+{ "fldd",       0x50000002, 0xfc000002, "cq#(b),fx", pa20, FLAG_STRICT},
 { "fstw",       0x24001220, 0xfc1f33a0, "cocCfT,@(s,b)", pa10, FLAG_STRICT},
 { "fstw",       0x24001220, 0xfc1f33a0, "cocCfT,@(b)", pa10, FLAG_STRICT},
 { "fstw",       0x24000200, 0xfc001380, "cxcCfT,x(s,b)", pa10, FLAG_STRICT},
 { "fstw",       0x24000200, 0xfc001380, "cxcCfT,x(b)", pa10, FLAG_STRICT},
 { "fstw",       0x24001200, 0xfc001380, "cmcCfT,5(s,b)", pa10, FLAG_STRICT},
 { "fstw",       0x24001200, 0xfc001380, "cmcCfT,5(b)", pa10, FLAG_STRICT},
-{ "fstw",       0x7c000000, 0xfc000004, "fe,d(s,b)", pa20, FLAG_STRICT},
+{ "fstw",       0x7c000000, 0xfc000004, "fE,y(b)", pa20w, FLAG_STRICT},
+{ "fstw",       0x78000000, 0xfc000000, "cJfe,y(b)", pa20w, FLAG_STRICT},
 { "fstw",       0x7c000000, 0xfc000004, "fe,d(b)", pa20, FLAG_STRICT},
-{ "fstw",       0x78000000, 0xfc000004, "cJfe,d(s,b)", pa20, FLAG_STRICT},
-{ "fstw",       0x78000000, 0xfc000004, "cJfe,d(b)", pa20, FLAG_STRICT},
+{ "fstw",       0x78000000, 0xfc000000, "cJfe,d(b)", pa20, FLAG_STRICT},
 { "fstd",       0x2c001220, 0xfc1f33e0, "cocCft,@(s,b)", pa10, FLAG_STRICT},
 { "fstd",       0x2c001220, 0xfc1f33e0, "cocCft,@(b)", pa10, FLAG_STRICT},
 { "fstd",       0x2c000200, 0xfc0013c0, "cxcCft,x(s,b)", pa10, FLAG_STRICT},
 { "fstd",       0x2c000200, 0xfc0013c0, "cxcCft,x(b)", pa10, FLAG_STRICT},
 { "fstd",       0x2c001200, 0xfc0013c0, "cmcCft,5(s,b)", pa10, FLAG_STRICT},
 { "fstd",       0x2c001200, 0xfc0013c0, "cmcCft,5(b)", pa10, FLAG_STRICT},
-{ "fstd",       0x70000002, 0xfc000002, "cqx,#(s,b)", pa20, FLAG_STRICT},
-{ "fstd",       0x70000002, 0xfc000002, "cqx,#(b)", pa20, FLAG_STRICT},
+{ "fstd",       0x70000002, 0xfc000002, "cqfx,&(b)", pa20w, FLAG_STRICT},
+{ "fstd",       0x70000002, 0xfc000002, "cqfx,#(b)", pa20, FLAG_STRICT},
 { "fldwx",      0x24000000, 0xfc001f80, "cxx(s,b),fT", pa10, 0},
 { "fldwx",      0x24000000, 0xfc001f80, "cxx(b),fT", pa10, 0},
 { "flddx",      0x2c000000, 0xfc001fc0, "cxx(s,b),ft", pa10, 0},
@@ -782,12 +803,12 @@ static const struct pa_opcode pa_opcodes[] =
 { "ftest",      0x30002420, 0xffffffff, "", pa10, 0},
 { "fid",        0x30000000, 0xffffffff, "", pa11, 0},
 
-/* Performance Monitor Instructions */
+/* Performance Monitor Instructions.  */
 
 { "pmdis",	0x30000280, 0xffffffdf, "N", pa20, FLAG_STRICT},
 { "pmenb",	0x30000680, 0xffffffff, "", pa20, FLAG_STRICT},
 
-/* Assist Instructions */
+/* Assist Instructions.  */
 
 { "spop0",      0x10000000, 0xfc000600, "v,ON", pa10, 0},
 { "spop1",      0x10000200, 0xfc000600, "v,oNt", pa10, 0},
@@ -830,7 +851,7 @@ static const struct pa_opcode pa_opcodes[] =
 
 #define NUMOPCODES ((sizeof pa_opcodes)/(sizeof pa_opcodes[0]))
 
-/* SKV 12/18/92. Added some denotations for various operands. */
+/* SKV 12/18/92. Added some denotations for various operands.  */
 
 #define PA_IMM11_AT_31 'i'
 #define PA_IMM14_AT_31 'j'

@@ -1,5 +1,6 @@
 /* POWER/PowerPC XCOFF linker support.
-   Copyright 1995, 1996, 1997, 1998, 1999 Free Software Foundation, Inc.
+   Copyright 1995, 1996, 1997, 1998, 1999, 2000
+   Free Software Foundation, Inc.
    Written by Ian Lance Taylor <ian@cygnus.com>, Cygnus Support.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -28,14 +29,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 /* This file holds the XCOFF linker code.  */
 
 #define STRING_SIZE_SIZE (4)
-
-/* In order to support linking different object file formats into an
-   XCOFF format, we need to be able to determine whether a particular
-   bfd_target is an XCOFF vector.  FIXME: We need to rethink this
-   whole approach.  */
-#define XCOFF_XVECP(xv) \
-  (strcmp ((xv)->name, "aixcoff-rs6000") == 0 \
-   || strcmp ((xv)->name, "xcoff-powermac") == 0)
 
 /* Get the XCOFF hash table entries for a BFD.  */
 #define obj_xcoff_sym_hashes(bfd) \
@@ -75,8 +68,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 /* The remaining words of global linkage code.  */
 
-static unsigned long xcoff_glink_code[] =
-{
+static unsigned long xcoff_glink_code[] = {
   0x90410014,	/* stw r2,20(r1) */
   0x800c0000,	/* lwz r0,0(r12) */
   0x804c0004,	/* lwz r2,4(r12) */
@@ -98,8 +90,7 @@ static unsigned long xcoff_glink_code[] =
 /* The ldhdr structure.  This appears at the start of the .loader
    section.  */
 
-struct internal_ldhdr
-{
+struct internal_ldhdr {
   /* The version number: currently always 1.  */
   unsigned long l_version;
   /* The number of symbol table entries.  */
@@ -120,8 +111,7 @@ struct internal_ldhdr
   bfd_size_type l_stoff;
 };
 
-struct external_ldhdr
-{
+struct external_ldhdr {
   bfd_byte l_version[4];
   bfd_byte l_nsyms[4];
   bfd_byte l_nreloc[4];
@@ -137,21 +127,18 @@ struct external_ldhdr
 /* The ldsym structure.  This is used to represent a symbol in the
    .loader section.  */
 
-struct internal_ldsym
-{
-  union
-    {
-      /* The symbol name if <= SYMNMLEN characters.  */
-      char _l_name[SYMNMLEN];
-      struct
-	{
-	  /* Zero if the symbol name is more than SYMNMLEN characters.  */
-	  long _l_zeroes;
-	  /* The offset in the string table if the symbol name is more
-             than SYMNMLEN characters.  */
-	  long _l_offset;
-	} _l_l;
-    } _l;
+struct internal_ldsym {
+  union {
+    /* The symbol name if <= SYMNMLEN characters.  */
+    char _l_name[SYMNMLEN];
+    struct {
+      /* Zero if the symbol name is more than SYMNMLEN characters.  */
+      long _l_zeroes;
+      /* The offset in the string table if the symbol name is more
+	 than SYMNMLEN characters.  */
+      long _l_offset;
+    } _l_l;
+  } _l;
   /* The symbol value.  */
   bfd_vma l_value;
   /* The symbol section number.  */
@@ -166,17 +153,14 @@ struct internal_ldsym
   bfd_size_type l_parm;
 };
 
-struct external_ldsym
-{
-  union
-    {
-      bfd_byte _l_name[SYMNMLEN];
-      struct
-	{
-	  bfd_byte _l_zeroes[4];
-	  bfd_byte _l_offset[4];
-	} _l_l;
-    } _l;
+struct external_ldsym {
+  union {
+    bfd_byte _l_name[SYMNMLEN];
+    struct {
+      bfd_byte _l_zeroes[4];
+      bfd_byte _l_offset[4];
+    } _l_l;
+  } _l;
   bfd_byte l_value[4];
   bfd_byte l_scnum[2];
   bfd_byte l_smtype[1];
@@ -200,8 +184,7 @@ struct external_ldsym
 /* The ldrel structure.  This is used to represent a reloc in the
    .loader section.  */
 
-struct internal_ldrel
-{
+struct internal_ldrel {
   /* The reloc address.  */
   bfd_vma l_vaddr;
   /* The symbol table index in the .loader section symbol table.  */
@@ -212,8 +195,7 @@ struct internal_ldrel
   short l_rsecnm;
 };
 
-struct external_ldrel
-{
+struct external_ldrel {
   bfd_byte l_vaddr[4];
   bfd_byte l_symndx[4];
   bfd_byte l_rtype[2];
@@ -224,8 +206,7 @@ struct external_ldrel
 
 /* The list of import files.  */
 
-struct xcoff_import_file
-{
+struct xcoff_import_file {
   /* The next entry in the list.  */
   struct xcoff_import_file *next;
   /* The path.  */
@@ -238,8 +219,7 @@ struct xcoff_import_file
 
 /* An entry in the XCOFF linker hash table.  */
 
-struct xcoff_link_hash_entry
-{
+struct xcoff_link_hash_entry {
   struct bfd_link_hash_entry root;
 
   /* Symbol index in output file.  Set to -1 initially.  Set to -2 if
@@ -250,15 +230,14 @@ struct xcoff_link_hash_entry
      section which holds it.  */
   asection *toc_section;
 
-  union
-    {
-      /* If we have created a TOC entry (the XCOFF_SET_TOC flag is
-	 set), this is the offset in toc_section.  */
-      bfd_vma toc_offset;
-      /* If the TOC entry comes from an input file, this is set to the
-         symbol index of the C_HIDEXT XMC_TC or XMC_TD symbol.  */
-      long toc_indx;
-    } u;
+  union {
+    /* If we have created a TOC entry (the XCOFF_SET_TOC flag is set),
+       this is the offset in toc_section.  */
+    bfd_vma toc_offset;
+    /* If the TOC entry comes from an input file, this is set to the
+       symbol index of the C_HIDEXT XMC_TC or XMC_TD symbol.  */
+    long toc_indx;
+  } u;
 
   /* If this symbol is a function entry point which is called, this
      field holds a pointer to the function descriptor.  If this symbol
@@ -311,8 +290,7 @@ struct xcoff_link_hash_entry
 
 /* The XCOFF linker hash table.  */
 
-struct xcoff_link_hash_table
-{
+struct xcoff_link_hash_table {
   struct bfd_link_hash_table root;
 
   /* The .debug string hash table.  We need to compute this while
@@ -357,12 +335,11 @@ struct xcoff_link_hash_table
   boolean gc;
 
   /* A linked list of symbols for which we have size information.  */
-  struct xcoff_link_size_list
-    {
-      struct xcoff_link_size_list *next;
-      struct xcoff_link_hash_entry *h;
-      bfd_size_type size;
-    } *size_list;
+  struct xcoff_link_size_list {
+    struct xcoff_link_size_list *next;
+    struct xcoff_link_hash_entry *h;
+    bfd_size_type size;
+  } *size_list;
 
   /* Magic sections: _text, _etext, _data, _edata, _end, end.  */
   asection *special_sections[6];
@@ -371,8 +348,7 @@ struct xcoff_link_hash_table
 /* Information we keep for each section in the output file during the
    final link phase.  */
 
-struct xcoff_link_section_info
-{
+struct xcoff_link_section_info {
   /* The relocs to be output.  */
   struct internal_reloc *relocs;
   /* For each reloc against a global symbol whose index was not known
@@ -382,18 +358,16 @@ struct xcoff_link_section_info
      index of the TOC symbol is not known when the reloc was handled,
      an entry is added to this linked list.  This is not an array,
      like rel_hashes, because this case is quite uncommon.  */
-  struct xcoff_toc_rel_hash
-    {
-      struct xcoff_toc_rel_hash *next;
-      struct xcoff_link_hash_entry *h;
-      struct internal_reloc *rel;
-    } *toc_rel_hashes;
+  struct xcoff_toc_rel_hash {
+    struct xcoff_toc_rel_hash *next;
+    struct xcoff_link_hash_entry *h;
+    struct internal_reloc *rel;
+  } *toc_rel_hashes;
 };
 
 /* Information that we pass around while doing the final link step.  */
 
-struct xcoff_final_link_info
-{
+struct xcoff_final_link_info {
   /* General link information.  */
   struct bfd_link_info *info;
   /* Output BFD.  */
@@ -792,18 +766,18 @@ _bfd_xcoff_get_dynamic_reloc_upper_bound (abfd)
 /* The typical dynamic reloc.  */
 
 static reloc_howto_type xcoff_dynamic_reloc =
-  HOWTO (0,	                /* type */                                 
-	 0,	                /* rightshift */                           
-	 2,	                /* size (0 = byte, 1 = short, 2 = long) */ 
-	 32,	                /* bitsize */                   
-	 false,	                /* pc_relative */                          
-	 0,	                /* bitpos */                               
+  HOWTO (0,	                /* type */
+	 0,	                /* rightshift */
+	 2,	                /* size (0 = byte, 1 = short, 2 = long) */
+	 32,	                /* bitsize */
+	 false,	                /* pc_relative */
+	 0,	                /* bitpos */
 	 complain_overflow_bitfield, /* complain_on_overflow */
-	 0,		        /* special_function */                     
-	 "R_POS",               /* name */                                 
-	 true,	                /* partial_inplace */                      
-	 0xffffffff,            /* src_mask */                             
-	 0xffffffff,            /* dst_mask */                             
+	 0,		        /* special_function */
+	 "R_POS",               /* name */
+	 true,	                /* partial_inplace */
+	 0xffffffff,            /* src_mask */
+	 0xffffffff,            /* dst_mask */
 	 false);                /* pcrel_offset */
 
 /* Get the dynamic relocs.  */
@@ -1894,12 +1868,11 @@ xcoff_link_add_symbols (abfd, info)
 	     the csect storage mapping class, so that the linker can
 	     accumulate similar csects together.  */
 	  {
-	    static const char *csect_name_by_class[] =
-	      {
-		".pr", ".ro", ".db", ".tc", ".ua", ".rw", ".gl", ".xo",
-		".sv", ".bs", ".ds", ".uc", ".ti", ".tb", NULL, ".tc0",
-		".td"
-	      };
+	    static const char *csect_name_by_class[] = {
+	      ".pr", ".ro", ".db", ".tc", ".ua", ".rw", ".gl", ".xo",
+	      ".sv", ".bs", ".ds", ".uc", ".ti", ".tb", NULL, ".tc0",
+	      ".td"
+	    };
 	    const char *csect_name;
 	    asection *enclosing;
 
@@ -2289,7 +2262,7 @@ xcoff_link_add_symbols (abfd, info)
 	      else
 		{
 		  (*sym_hash)->root.u.c.p->alignment_power
-		     = csect->alignment_power;
+		    = csect->alignment_power;
 		}
 	    }
 
@@ -2404,7 +2377,7 @@ xcoff_link_add_symbols (abfd, info)
 
 	  /* Reset SEC_RELOC and the reloc_count, since the reloc
 	     information is now attached to the csects.  */
-	  o->flags &=~ SEC_RELOC;
+	  o->flags &= ~SEC_RELOC;
 	  o->reloc_count = 0;
 
 	  /* If we are not keeping memory, free the reloc information.  */
@@ -2915,7 +2888,7 @@ bfd_xcoff_link_record_set (output_bfd, info, harg, size)
   struct xcoff_link_hash_entry *h = (struct xcoff_link_hash_entry *) harg;
   struct xcoff_link_size_list *n;
 
-  if (! XCOFF_XVECP (output_bfd->xvec))
+  if (bfd_get_flavour (output_bfd) != bfd_target_xcoff_flavour)
     return true;
 
   /* This will hardly ever be called.  I don't want to burn four bytes
@@ -2951,7 +2924,7 @@ bfd_xcoff_import_symbol (output_bfd, info, harg, val, imppath, impfile,
 {
   struct xcoff_link_hash_entry *h = (struct xcoff_link_hash_entry *) harg;
 
-  if (! XCOFF_XVECP (output_bfd->xvec))
+  if (bfd_get_flavour (output_bfd) != bfd_target_xcoff_flavour)
     return true;
 
   /* A symbol name which starts with a period is the code for a
@@ -3065,7 +3038,7 @@ bfd_xcoff_export_symbol (output_bfd, info, harg, syscall)
 {
   struct xcoff_link_hash_entry *h = (struct xcoff_link_hash_entry *) harg;
 
-  if (! XCOFF_XVECP (output_bfd->xvec))
+  if (bfd_get_flavour (output_bfd) != bfd_target_xcoff_flavour)
     return true;
 
   h->flags |= XCOFF_EXPORT;
@@ -3130,7 +3103,7 @@ bfd_xcoff_link_count_reloc (output_bfd, info, name)
 {
   struct xcoff_link_hash_entry *h;
 
-  if (! XCOFF_XVECP (output_bfd->xvec))
+  if (bfd_get_flavour (output_bfd) != bfd_target_xcoff_flavour)
     return true;
 
   h = ((struct xcoff_link_hash_entry *)
@@ -3145,7 +3118,7 @@ bfd_xcoff_link_count_reloc (output_bfd, info, name)
 
   h->flags |= XCOFF_REF_REGULAR | XCOFF_LDREL;
   ++xcoff_hash_table (info)->ldrel_count;
-  
+
   /* Mark the symbol to avoid garbage collection.  */
   if (! xcoff_mark_symbol (info, h))
     return false;
@@ -3164,7 +3137,7 @@ bfd_xcoff_record_link_assignment (output_bfd, info, name)
 {
   struct xcoff_link_hash_entry *h;
 
-  if (! XCOFF_XVECP (output_bfd->xvec))
+  if (bfd_get_flavour (output_bfd) != bfd_target_xcoff_flavour)
     return true;
 
   h = xcoff_link_hash_lookup (xcoff_hash_table (info), name, true, true,
@@ -3180,8 +3153,7 @@ bfd_xcoff_record_link_assignment (output_bfd, info, name)
 /* This structure is used to pass information through
    xcoff_link_hash_traverse.  */
 
-struct xcoff_loader_info
-{
+struct xcoff_loader_info {
   /* Set if a problem occurred.  */
   boolean failed;
   /* Output BFD.  */
@@ -3249,7 +3221,7 @@ bfd_xcoff_size_dynamic_sections (output_bfd, info, libpath, entry,
   struct bfd_strtab_hash *debug_strtab;
   bfd_byte *debug_contents = NULL;
 
-  if (! XCOFF_XVECP (output_bfd->xvec))
+  if (bfd_get_flavour (output_bfd) != bfd_target_xcoff_flavour)
     {
       for (i = 0; i < 6; i++)
 	special_sections[i] = NULL;
@@ -4101,7 +4073,7 @@ _bfd_xcoff_bfd_final_link (abfd, info)
 	  finfo.section_info[o->target_index].rel_hashes =
 	    ((struct xcoff_link_hash_entry **)
 	     bfd_malloc (o->reloc_count
-		     * sizeof (struct xcoff_link_hash_entry *)));
+			 * sizeof (struct xcoff_link_hash_entry *)));
 	  if (finfo.section_info[o->target_index].relocs == NULL
 	      || finfo.section_info[o->target_index].rel_hashes == NULL)
 	    goto error_return;
@@ -4687,21 +4659,39 @@ xcoff_link_input_bfd (finfo, input_bfd)
 	  else
 	    {
 	      bfd_vma tocval, tocend;
+	      bfd *inp;
 
 	      tocval = ((*csectpp)->output_section->vma
 			+ (*csectpp)->output_offset
 			+ isym.n_value
 			- (*csectpp)->vma);
+
 	      /* We want to find out if tocval is a good value to use
                  as the TOC anchor--that is, whether we can access all
                  of the TOC using a 16 bit offset from tocval.  This
                  test assumes that the TOC comes at the end of the
                  output section, as it does in the default linker
-                 script.  FIXME: This doesn't handle .tocbss sections
-                 created from XMC_TD common symbols correctly.  */
-
+                 script.  */
 	      tocend = ((*csectpp)->output_section->vma
 			+ (*csectpp)->output_section->_raw_size);
+	      for (inp = finfo->info->input_bfds;
+		   inp != NULL;
+		   inp = inp->link_next)
+		{
+		  asection *o;
+
+		  for (o = inp->sections; o != NULL; o = o->next)
+		    if (strcmp (o->name, ".tocbss") == 0)
+		      {
+			bfd_vma new_toc_end;
+			new_toc_end = (o->output_section->vma
+				       + o->output_offset
+				       + o->_cooked_size);
+			if (new_toc_end > tocend)
+			  tocend = new_toc_end;
+		      }
+
+		}
 
 	      if (tocval + 0x10000 < tocend)
 		{
@@ -6334,7 +6324,7 @@ _bfd_ppc_xcoff_relocate_section (output_bfd, info, input_bfd,
 	  addend = 0;
 	}
       else
-	{    
+	{
 	  h = obj_xcoff_sym_hashes (input_bfd)[symndx];
 	  sym = syms + symndx;
 	  addend = - sym->n_value;
@@ -6585,13 +6575,14 @@ _bfd_ppc_xcoff_relocate_section (output_bfd, info, input_bfd,
 	      || strcmp (h->root.root.string, "._ptrgl") == 0)
 	    {
 	      if (next == 0x4def7b82		/* cror 15,15,15 */
-		  || next == 0x4ffffb82)	/* cror 31,31,31 */
+		  || next == 0x4ffffb82		/* cror 31,31,31 */
+		  || next == 0x60000000)	/* ori r0,r0,0 */
 		bfd_put_32 (input_bfd, 0x80410014, pnext); /* lwz r1,20(r1) */
 	    }
 	  else
 	    {
 	      if (next == 0x80410014)		/* lwz r1,20(r1) */
-		bfd_put_32 (input_bfd, 0x4ffffb82, pnext); /* cror 31,31,31 */
+		bfd_put_32 (input_bfd, 0x60000000, pnext); /* ori r0,r0,0 */
 	    }
 	}
 

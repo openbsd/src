@@ -1,5 +1,5 @@
 /* Support for 32-bit SPARC NLM (NetWare Loadable Module)
-   Copyright (C) 1993, 1994, 1995, 1999 Free Software Foundation, Inc.
+   Copyright 1993, 1994, 2000 Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
 
@@ -44,8 +44,8 @@ static boolean nlm_sparc_write_external
 enum reloc_type
   {
     R_SPARC_NONE = 0,
-    R_SPARC_8,		R_SPARC_16,		R_SPARC_32, 
-    R_SPARC_DISP8,	R_SPARC_DISP16,		R_SPARC_DISP32, 
+    R_SPARC_8,		R_SPARC_16,		R_SPARC_32,
+    R_SPARC_DISP8,	R_SPARC_DISP16,		R_SPARC_DISP32,
     R_SPARC_WDISP30,	R_SPARC_WDISP22,
     R_SPARC_HI22,	R_SPARC_22,
     R_SPARC_13,		R_SPARC_LO10,
@@ -78,7 +78,7 @@ static CONST char *CONST reloc_type_names[] =
 };
 #endif
 
-static reloc_howto_type nlm32_sparc_howto_table[] = 
+static reloc_howto_type nlm32_sparc_howto_table[] =
 {
   HOWTO(R_SPARC_NONE,    0,0, 0,false,0,complain_overflow_dont,    0,"R_SPARC_NONE",    false,0,0x00000000,true),
   HOWTO(R_SPARC_8,       0,0, 8,false,0,complain_overflow_bitfield,0,"R_SPARC_8",       false,0,0x000000ff,true),
@@ -145,7 +145,7 @@ nlm_sparc_read_reloc (abfd, sym, secp, rel)
   rel->howto = NULL;
 
   for (index = 0;
-       index < sizeof(nlm32_sparc_howto_table) / sizeof(reloc_howto_type);
+       index < sizeof (nlm32_sparc_howto_table) / sizeof (reloc_howto_type);
        index++)
     if (nlm32_sparc_howto_table[index].type == type) {
       rel->howto = &nlm32_sparc_howto_table[index];
@@ -174,9 +174,8 @@ nlm_sparc_write_reloc (abfd, sec, rel)
   int type = -1;
   reloc_howto_type *tmp;
 
-  
   for (index = 0;
-       index < sizeof (nlm32_sparc_howto_table) / sizeof(reloc_howto_type);
+       index < sizeof (nlm32_sparc_howto_table) / sizeof (reloc_howto_type);
        index++) {
     tmp = &nlm32_sparc_howto_table[index];
 
@@ -192,7 +191,7 @@ nlm_sparc_write_reloc (abfd, sec, rel)
     }
   }
   if (type == -1)
-    abort();
+    abort ();
 
   /*
    * Netware wants a list of relocs for each address.
@@ -219,7 +218,7 @@ nlm_sparc_write_reloc (abfd, sec, rel)
 #endif
   bfd_put_32 (abfd, val, tmp_reloc.offset);
   bfd_put_32 (abfd, rel->addend, tmp_reloc.addend);
-  bfd_put_8 (abfd, (short)(rel->howto->type), tmp_reloc.type);
+  bfd_put_8 (abfd, (short) (rel->howto->type), tmp_reloc.type);
 
   if (bfd_write (&tmp_reloc, 12, 1, abfd) != 12)
     return false;
@@ -252,20 +251,20 @@ nlm_sparc_read_import (abfd, sym)
   bfd_byte temp[NLM_TARGET_LONG_SIZE];	/* temporary 32-bit value */
   unsigned char symlength;		/* length of symbol name */
   char *name;
-  
+
   /*
    * First, read in the number of relocation
    * entries for this symbol
    */
   if (bfd_read ((PTR) temp, 4, 1, abfd) != 4)
     return false;
-  
+
   rcount = bfd_get_32 (abfd, temp);
-  
+
   /*
    * Next, read in the length of the symbol
    */
-  
+
   if (bfd_read ((PTR) &symlength, sizeof (symlength), 1, abfd)
       != sizeof (symlength))
     return false;
@@ -273,11 +272,11 @@ nlm_sparc_read_import (abfd, sym)
   name = bfd_alloc (abfd, symlength + 1);
   if (name == NULL)
     return false;
-  
+
   /*
    * Then read in the symbol
    */
-  
+
   if (bfd_read (name, symlength, 1, abfd) != symlength)
     return false;
   name[symlength] = '\0';
@@ -285,11 +284,11 @@ nlm_sparc_read_import (abfd, sym)
   sym -> symbol.flags = 0;
   sym -> symbol.value = 0;
   sym -> symbol.section = bfd_und_section_ptr;
-  
+
   /*
    * Next, start reading in the relocs.
    */
-  
+
   nlm_relocs = ((struct nlm_relent *)
 		bfd_alloc (abfd, rcount * sizeof (struct nlm_relent)));
   if (!nlm_relocs)
@@ -299,7 +298,7 @@ nlm_sparc_read_import (abfd, sym)
   while (sym -> rcnt < rcount)
     {
       asection *section;
-      
+
       if (nlm_sparc_read_reloc (abfd, sym, &section,
 			      &nlm_relocs -> reloc)
 	  == false)
@@ -364,11 +363,11 @@ nlm_sparc_write_external (abfd, count, sym, relocs)
   unsigned char temp[NLM_TARGET_LONG_SIZE];
 
   bfd_put_32 (abfd, count, temp);
-  if (bfd_write (temp, sizeof(temp), 1, abfd) != sizeof (temp))
+  if (bfd_write (temp, sizeof (temp), 1, abfd) != sizeof (temp))
     return false;
 
   len = strlen (sym->name);
-  if ((bfd_write (&len, sizeof (bfd_byte), 1, abfd) != sizeof(bfd_byte))
+  if ((bfd_write (&len, sizeof (bfd_byte), 1, abfd) != sizeof (bfd_byte))
       || bfd_write (sym->name, len, 1, abfd) != len)
     return false;
 

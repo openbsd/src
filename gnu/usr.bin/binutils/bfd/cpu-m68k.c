@@ -1,5 +1,5 @@
 /* BFD library support routines for architectures.
-   Copyright (C) 1990, 91, 92, 93, 94, 95, 97, 1998
+   Copyright 1990, 1991, 1992, 1993, 1994, 1997, 1998, 2000, 2001
    Free Software Foundation, Inc.
    Hacked by Steve Chamberlain of Cygnus Support.
 
@@ -27,16 +27,20 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 {  32, 32, 8, bfd_arch_m68k, name, "m68k",print,2,d,bfd_default_compatible,bfd_default_scan, next, }
 
 static const bfd_arch_info_type arch_info_struct[] =
-{ 
-  N(bfd_mach_m68000, "m68k:68000", false, &arch_info_struct[1]),
-  N(bfd_mach_m68008, "m68k:68008", false, &arch_info_struct[2]),
-  N(bfd_mach_m68010, "m68k:68010", false, &arch_info_struct[3]),
-  N(bfd_mach_m68020, "m68k:68020", false, &arch_info_struct[4]),
-  N(bfd_mach_m68030, "m68k:68030", false, &arch_info_struct[5]),
-  N(bfd_mach_m68040, "m68k:68040", false, &arch_info_struct[6]),
-  N(bfd_mach_cpu32,  "m68k:cpu32", false, &arch_info_struct[7]),
-  N(bfd_mach_m68060, "m68k:68060", false, 0),
-};
+  {
+    N(bfd_mach_m68000, "m68k:68000", false, &arch_info_struct[1]),
+    N(bfd_mach_m68008, "m68k:68008", false, &arch_info_struct[2]),
+    N(bfd_mach_m68010, "m68k:68010", false, &arch_info_struct[3]),
+    N(bfd_mach_m68020, "m68k:68020", false, &arch_info_struct[4]),
+    N(bfd_mach_m68030, "m68k:68030", false, &arch_info_struct[5]),
+    N(bfd_mach_m68040, "m68k:68040", false, &arch_info_struct[6]),
+    N(bfd_mach_cpu32,  "m68k:cpu32", false, &arch_info_struct[7]),
+    N(bfd_mach_mcf5200,"m68k:5200",  false, &arch_info_struct[8]),
+    N(bfd_mach_mcf5206e,"m68k:5206e",false, &arch_info_struct[9]),
+    N(bfd_mach_mcf5307, "m68k:5307", false, &arch_info_struct[10]),
+    N(bfd_mach_mcf5407, "m68k:5407", false, &arch_info_struct[11]),
+    N(bfd_mach_m68060, "m68k:68060", false, 0),
+  };
 
 const bfd_arch_info_type bfd_m68k_arch =
   N(0, "m68k", true, &arch_info_struct[0]);

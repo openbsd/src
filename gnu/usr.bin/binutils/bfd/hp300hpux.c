@@ -1,5 +1,6 @@
 /* BFD backend for hp-ux 9000/300
-   Copyright (C) 1990, 91, 94, 95, 97, 99, 2000 Free Software Foundation, Inc.
+   Copyright 1990, 1991, 1993, 1994, 1995, 1997, 2000, 2001
+   Free Software Foundation, Inc.
    Written by Glenn Engel.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -23,7 +24,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
     hpux native  ------------> |               |
                                | hp300hpux bfd | ----------> hpux w/gnu ext
     hpux w/gnu extension ----> |               |
-
 
     Support for the 9000/[34]00 has several limitations.
       1. Shared libraries are not supported.
@@ -238,7 +238,6 @@ MY (callback) (abfd)
   bfd_default_set_arch_mach (abfd, DEFAULT_ARCH, 0);
 #endif
 
-
   if (obj_aout_subformat (abfd) == gnu_encap_format)
     {
       /* The file offsets of the relocation info */
@@ -419,7 +418,6 @@ convert_sym_type (sym_pointer, cache_ptr, abfd)
 
 }
 
-
 /*
 DESCRIPTION
         Swaps the information in an executable header taken from a raw
@@ -485,7 +483,6 @@ NAME (aout,swap_exec_header_in) (abfd, raw_bytes, execp)
   while (0);
 }
 
-
 /* The hp symbol table is a bit different than other a.out targets.  Instead
    of having an array of nlist items and an array of strings, hp's format
    has them mixed together in one structure.  In addition, the strings are
@@ -537,7 +534,6 @@ MY (slurp_symbol_table) (abfd)
       bfd_release (abfd, syms);
       return false;
     }
-
 
   sym_end = (struct external_nlist *) (((char *) syms) + symbol_bytes);
 
@@ -614,8 +610,6 @@ MY (slurp_symbol_table) (abfd)
 
   return true;
 }
-
-
 
 void
 MY (swap_std_reloc_in) (abfd, bytes, cache_ptr, symbols, symcount)
@@ -739,7 +733,6 @@ doit:
 
   count = reloc_size / each_size;
 
-
   reloc_cache = (arelent *) bfd_zalloc (abfd, (size_t) (count * sizeof
 							(arelent)));
   if (!reloc_cache && count != 0)
@@ -769,13 +762,11 @@ doit:
 			      bfd_get_symcount (abfd));
     }
 
-
   bfd_release (abfd, relocs);
   asect->relocation = reloc_cache;
   asect->reloc_count = count;
   return true;
 }
-
 
 /************************************************************************/
 /* The following functions are identical to functions in aoutx.h except */
@@ -822,9 +813,6 @@ MY (get_symtab_upper_bound) (abfd)
   return (bfd_get_symcount (abfd) + 1) * (sizeof (aout_symbol_type *));
 }
 
-
-
-
 long
 MY (canonicalize_reloc) (abfd, section, relptr, symbols)
      bfd *abfd;
@@ -862,6 +850,5 @@ MY (canonicalize_reloc) (abfd, section, relptr, symbols)
 
   return section->reloc_count;
 }
-
 
 #include "aout-target.h"

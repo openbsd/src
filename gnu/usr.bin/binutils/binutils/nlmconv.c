@@ -1,5 +1,5 @@
 /* nlmconv.c -- NLM conversion program
-   Copyright (C) 1993, 94, 95, 96, 97, 98, 99, 2000
+   Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000
    Free Software Foundation, Inc.
 
 This file is part of GNU Binutils.
@@ -2086,9 +2086,6 @@ powerpc_mangle_relocs (outbfd, insec, relocs_ptr, reloc_count_ptr, contents,
 #define LD_NAME "ld"
 #endif
 
-/* Temporary file name base.  */
-static char *temp_filename;
-
 /* The user has specified several input files.  Invoke the linker to
    link them all together, and convert and delete the resulting output
    file.  */
@@ -2137,10 +2134,7 @@ link_inputs (inputs, ld)
   if (ld == NULL)
     ld = (char *) LD_NAME;
 
-  temp_filename = choose_temp_base ();
-
-  unlink_on_exit = xmalloc (strlen (temp_filename) + 3);
-  sprintf (unlink_on_exit, "%s.O", temp_filename);
+  unlink_on_exit = make_temp_file (".O");
 
   argv[0] = ld;
   argv[1] = (char *) "-Ur";

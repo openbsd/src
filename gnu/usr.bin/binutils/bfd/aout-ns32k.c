@@ -1,5 +1,6 @@
 /* BFD back-end for ns32k a.out-ish binaries.
-   Copyright (C) 1990, 91, 92, 94, 95, 96, 1998 Free Software Foundation, Inc.
+   Copyright 1990, 1991, 1992, 1994, 1995, 1996, 1998, 2000
+   Free Software Foundation, Inc.
    Contributed by Ian Dall (idall@eleceng.adelaide.edu.au).
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -89,7 +90,7 @@ MY_swap_std_reloc_out PARAMS ((bfd *abfd, arelent *g,
  *
  */
 
-reloc_howto_type MY(howto_table)[] = 
+reloc_howto_type MY(howto_table)[] =
 {
   /* ns32k immediate operands */
   HOWTO (BFD_RELOC_NS32K_IMM_8, 0, 0, 8, false, 0, true,
@@ -146,7 +147,6 @@ reloc_howto_type MY(howto_table)[] =
 	 "PCREL_32", true, 0xffffffff,0xffffffff, false),
 };
 
-
 #define CTOR_TABLE_RELOC_HOWTO(BFD) (MY(howto_table) + 14)
 
 #define RELOC_STD_BITS_NS32K_TYPE_BIG 0x06
@@ -155,7 +155,7 @@ reloc_howto_type MY(howto_table)[] =
 #define RELOC_STD_BITS_NS32K_TYPE_SH_LITTLE 5
 
 reloc_howto_type *
-MY(reloc_howto)(abfd, rel, r_index, r_extern, r_pcrel)
+MY(reloc_howto) (abfd, rel, r_index, r_extern, r_pcrel)
      bfd *abfd ATTRIBUTE_UNUSED;
      struct reloc_std_external *rel;
      int *r_index;
@@ -177,10 +177,10 @@ MY(reloc_howto)(abfd, rel, r_index, r_extern, r_pcrel)
   return (MY(howto_table) + r_length + 3 * (*r_pcrel) + 6 * r_ns32k_type);
 }
 
-#define MY_reloc_howto(BFD,REL,IN,EX,PC) MY(reloc_howto)(BFD, REL, &IN, &EX, &PC)
+#define MY_reloc_howto(BFD,REL,IN,EX,PC) MY(reloc_howto) (BFD, REL, &IN, &EX, &PC)
 
 void
-MY(put_reloc)(abfd, r_extern, r_index, value, howto, reloc)
+MY(put_reloc) (abfd, r_extern, r_index, value, howto, reloc)
      bfd *abfd;
      int r_extern;
      int r_index;
@@ -207,7 +207,7 @@ MY(put_reloc)(abfd, r_extern, r_index, value, howto, reloc)
 }
 
 #define MY_put_reloc(BFD, EXT, IDX, VAL, HOWTO, RELOC) \
-  MY(put_reloc)(BFD, EXT, IDX, VAL, HOWTO, RELOC)
+  MY(put_reloc) (BFD, EXT, IDX, VAL, HOWTO, RELOC)
 
 #define STAT_FOR_EXEC
 
@@ -217,7 +217,7 @@ MY(put_reloc)(abfd, r_extern, r_index, value, howto, reloc)
 #include <aoutx.h>
 
 reloc_howto_type *
-MY(bfd_reloc_type_lookup)(abfd,code)
+MY(bfd_reloc_type_lookup) (abfd,code)
      bfd *abfd;
      bfd_reloc_code_real_type code;
 {
@@ -259,7 +259,6 @@ MY(bfd_reloc_type_lookup)(abfd,code)
 #undef ENTRY
 }
 
-
 static void
 MY_swap_std_reloc_in (abfd, bytes, cache_ptr, symbols, symcount)
      bfd *abfd;
@@ -295,10 +294,10 @@ MY_swap_std_reloc_out (abfd, g, natptr)
   asection *output_section = sym->section->output_section;
 
   r_addend = g->addend + (*(g->sym_ptr_ptr))->section->output_section->vma;
-    
+
   /* name was clobbered by aout_write_syms to be symbol index */
 
-  /* If this relocation is relative to a symbol then set the 
+  /* If this relocation is relative to a symbol then set the
      r_index to the symbols index, and the r_extern bit.
 
      Absolute symbols can come in in two ways, either as an offset
@@ -307,7 +306,7 @@ MY_swap_std_reloc_out (abfd, g, natptr)
 
   if (bfd_is_com_section (output_section)
       || output_section == &bfd_abs_section
-      || output_section == &bfd_und_section) 
+      || output_section == &bfd_und_section)
     {
       if (bfd_abs_section.symbol == sym)
 	{
@@ -316,21 +315,21 @@ MY_swap_std_reloc_out (abfd, g, natptr)
 	  r_index = 0;
 	  r_extern = 0;
 	}
-      else 
+      else
 	{
 	  /* Fill in symbol */
 	  r_extern = 1;
 #undef KEEPIT
 #define KEEPIT udata.i
 	  r_index =  (*(g->sym_ptr_ptr))->KEEPIT;
-#undef KEEPIT     
+#undef KEEPIT
 	}
     }
-  else 
+  else
     {
       /* Just an ordinary section */
       r_extern = 0;
-      r_index  = output_section->target_index;      
+      r_index  = output_section->target_index;
     }
 
   MY_put_reloc (abfd, r_extern, r_index, g->address, g->howto, natptr);

@@ -1,4 +1,5 @@
-#   Copyright (C) 1993, 1994, 1996, 1997 Free Software Foundation, Inc.
+#   Copyright 1993, 1994, 1995, 1997, 1999, 2001
+#   Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -69,6 +70,20 @@ if ![info exists READELFFLAGS] then {
 }
 
 if ![file isdirectory tmpdir] {catch "exec mkdir tmpdir" status}
+
+# Make a symlink from tmpdir/gas/as and tmpdir/gas/ld to the assembler
+# and linker in the build tree, so that we can use a -B option to gcc
+# to force it to use the newly built assembler/linker.
+if {![file isdirectory tmpdir/gas]} then {
+    catch "exec mkdir tmpdir/gas" status
+    if {[file isfile ../gas/as-new]} then {
+	catch "exec ln -s ../../../gas/as-new tmpdir/gas/as" status
+    }
+    if {[file isfile ../ld/ld-new]} then {
+	catch "exec ln -s ../../../ld/ld-new tmpdir/gas/ld" status
+    }
+}
+set gcc_gas_flag "-B[pwd]/tmpdir/gas/"
 
 #
 # binutils_run

@@ -1,5 +1,5 @@
 /* BFD back-end for linux flavored m68k a.out binaries.
-   Copyright (C) 1992, 93, 94, 95, 96, 97, 98, 1999
+   Copyright 1992, 1993, 1994, 1995, 1996, 1997, 1999, 2000
    Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -479,8 +479,8 @@ linux_tally_symbols (h, data)
 				   (h->root.root.root.string
 				    + sizeof PLT_REF_PREFIX - 1),
 				   false, false, true);
-      /* h2 does not follow indirect symbols. */
-      h2 = linux_link_hash_lookup (linux_hash_table (info), 
+      /* h2 does not follow indirect symbols.  */
+      h2 = linux_link_hash_lookup (linux_hash_table (info),
 				   (h->root.root.root.string
 				    + sizeof PLT_REF_PREFIX - 1),
 				   false, false, false);
@@ -536,7 +536,7 @@ linux_tally_symbols (h, data)
 	}
 
       /* Quick and dirty way of stripping these symbols from the
-	 symtab. */
+	 symtab.  */
       if (bfd_is_abs_section (h->root.root.u.def.section))
 	h->root.written = true;
     }
@@ -561,7 +561,7 @@ bfd_m68klinux_size_dynamic_sections (output_bfd, info)
   if (output_bfd->xvec != &MY(vec))
     return true;
 
-  /* First find the fixups... */
+  /* First find the fixups...  */
   linux_link_hash_traverse (linux_hash_table (info),
 			    linux_tally_symbols,
 			    (PTR) info);
@@ -631,7 +631,7 @@ linux_finish_dynamic_link (output_bfd, info)
   fixups_written = 0;
 
 #ifdef LINUX_LINK_DEBUG
-  printf ("Fixup table file offset: %x  VMA: %x\n", 
+  printf ("Fixup table file offset: %x  VMA: %x\n",
 	  os->filepos + s->output_offset,
 	  os->vma + s->output_offset);
 #endif
@@ -733,7 +733,7 @@ linux_finish_dynamic_link (output_bfd, info)
 	}
     }
 
-  h = linux_link_hash_lookup (linux_hash_table (info), 
+  h = linux_link_hash_lookup (linux_hash_table (info),
 			      "__BUILTIN_FIXUPS__",
 			      false, false, false);
 

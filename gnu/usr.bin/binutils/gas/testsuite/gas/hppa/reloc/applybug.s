@@ -4,7 +4,7 @@
 	.data
 
 	.align 4
-tab___2
+tab___2:
 	.word L$0002
 	.word L$0003
 	.word L$0004
@@ -13,7 +13,7 @@ tab___2
 	.align 4
 	.EXPORT execute,CODE
 	.EXPORT execute,ENTRY,PRIV_LEV=3,ARGW0=GR,RTNVAL=GR
-execute
+execute:
 	.PROC
 	.CALLINFO FRAME=0,NO_CALLS
 	.ENTRY
@@ -27,7 +27,7 @@ execute
 	ldo R'tab___2-$global$(%r1),%r23
 	addil L'optab-$global$,%r27
 	ldo R'optab-$global$(%r1),%r20
-L$0009
+L$0009:
 	sh2add %r21,%r23,%r19
 	ldh 2(%r19),%r19
 	ldo 1(%r21),%r21
@@ -35,19 +35,19 @@ L$0009
 	comib,>= 2,%r21,L$0009
 	sths,ma %r19,2(%r20)
 	bv,n %r0(%r2)
-L$0002
+L$0002:
 	ldi 120,%r19
 	stbs,ma %r19,1(%r20)
 	ldhs,ma 2(%r26),%r19
 	add %r22,%r19,%r19
 	bv,n %r0(%r19)
-L$0003
+L$0003:
 	ldi 121,%r19
 	stbs,ma %r19,1(%r20)
 	ldhs,ma 2(%r26),%r19
 	add %r22,%r19,%r19
 	bv,n %r0(%r19)
-L$0004
+L$0004:
 	ldi 122,%r19
 	stb %r19,0(%r20)
 	bv %r0(%r2)
@@ -58,7 +58,7 @@ L$0004
 	.IMPORT strcmp,CODE
 
 	.align 4
-L$C0000
+L$C0000:
 	.STRING "xyxyz\x00"
 	.IMPORT abort,CODE
 	.IMPORT exit,CODE
@@ -67,7 +67,7 @@ L$C0000
 	.align 4
 	.EXPORT main,CODE
 	.EXPORT main,ENTRY,PRIV_LEV=3,RTNVAL=GR
-main
+main:
 	.PROC
 	.CALLINFO FRAME=128,CALLS,SAVE_RP
 	.ENTRY
@@ -104,7 +104,7 @@ main
 	.CALL 
 	bl abort,%r2
 	nop
-L$0011
+L$0011:
 	.CALL ARGW0=GR
 	bl exit,%r2
 	copy %r0,%r26
@@ -113,6 +113,6 @@ L$0011
 	.PROCEND
 	.data
 
-optab	.comm 10
-buf	.comm 10
-p	.comm 10
+optab:	.comm 10
+buf:	.comm 10
+p:	.comm 10

@@ -42,7 +42,7 @@
 
 #line 1 "nlmheader.y"
 /* nlmheader.y - parse NLM header specification keywords.
-     Copyright (C) 1993, 94, 95, 97, 1998 Free Software Foundation, Inc.
+     Copyright 1993, 1994, 1995, 1997, 1998 Free Software Foundation, Inc.
 
 This file is part of GNU Binutils.
 
@@ -335,7 +335,7 @@ static const short yycheck[] = {     3,
     -1,    48,    -1,    -1,    68
 };
 /* -*-C-*-  Note some compilers choke on comments on `#line' lines.  */
-#line 3 "/usr/share/misc/bison.simple"
+#line 3 "/usr/share/bison/bison.simple"
 /* This file comes from bison-1.28.  */
 
 /* Skeleton output parser for bison,
@@ -549,7 +549,7 @@ __yy_memcpy (char *to, char *from, unsigned int count)
 #endif
 #endif
 
-#line 217 "/usr/share/misc/bison.simple"
+#line 217 "/usr/share/bison/bison.simple"
 
 /* The user can define YYPARSE_PARAM as the name of an argument to be passed
    into yyparse.  The argument should have type void *.
@@ -1281,7 +1281,7 @@ case 51:
     break;}
 }
    /* the action file gets copied in in place of this dollarsign */
-#line 543 "/usr/share/misc/bison.simple"
+#line 543 "/usr/share/bison/bison.simple"
 
   yyvsp -= yylen;
   yyssp -= yylen;

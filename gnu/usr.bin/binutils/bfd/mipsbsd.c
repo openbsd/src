@@ -1,5 +1,6 @@
 /* BFD backend for MIPS BSD (a.out) binaries.
-   Copyright (C) 1993, 94, 95, 97, 98, 1999 Free Software Foundation, Inc.
+   Copyright 1993, 1994, 1995, 1997, 1998, 1999, 2000
+   Free Software Foundation, Inc.
    Written by Ralph Campbell.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -43,8 +44,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "libaout.h"
 
 #define SET_ARCH_MACH(ABFD, EXEC) \
-  MY(set_arch_mach)(ABFD, N_MACHTYPE (EXEC)); \
-  MY(choose_reloc_size)(ABFD);
+  MY(set_arch_mach) (ABFD, N_MACHTYPE (EXEC)); \
+  MY(choose_reloc_size) (ABFD);
 static void MY(set_arch_mach) PARAMS ((bfd *abfd, int machtype));
 static void MY(choose_reloc_size) PARAMS ((bfd *abfd));
 
@@ -74,7 +75,7 @@ MY(set_arch_mach) (abfd, machtype)
   enum bfd_architecture arch;
   long machine;
 
-  /* Determine the architecture and machine type of the object file. */
+  /* Determine the architecture and machine type of the object file.  */
   switch (machtype) {
 
   case M_MIPS1:
@@ -92,7 +93,7 @@ MY(set_arch_mach) (abfd, machtype)
     machine = 0;
     break;
   }
-  bfd_set_arch_mach(abfd, arch, machine);  
+  bfd_set_arch_mach(abfd, arch, machine);
 }
 
 /* Determine the size of a relocation entry, based on the architecture */
@@ -160,7 +161,7 @@ MY(write_object_contents) (abfd)
     N_SET_MACHTYPE(*execp, M_UNKNOWN);
   }
 
-  MY(choose_reloc_size)(abfd);
+  MY(choose_reloc_size) (abfd);
 
   WRITE_HEADERS(abfd, execp);
 
@@ -195,8 +196,8 @@ mips_fix_jmp_addr (abfd,reloc_entry,symbol,data,input_section,output_bfd)
      bfd *output_bfd;
 {
   bfd_vma relocation, pc;
- 
-  /* If this is a partial relocation, just continue. */
+
+  /* If this is a partial relocation, just continue.  */
   if (output_bfd != (bfd *)NULL)
     return bfd_reloc_continue;
 
@@ -205,7 +206,7 @@ mips_fix_jmp_addr (abfd,reloc_entry,symbol,data,input_section,output_bfd)
       && (symbol->flags & BSF_WEAK) == 0)
     return bfd_reloc_undefined;
 
-  /* 
+  /*
    * Work out which section the relocation is targetted at and the
    * initial relocation command value.
    */
@@ -249,8 +250,8 @@ mips_fix_hi16_s (abfd, reloc_entry, symbol, data, input_section,
      char **error_message ATTRIBUTE_UNUSED;
 {
   bfd_vma relocation;
- 
-  /* If this is a partial relocation, just continue. */
+
+  /* If this is a partial relocation, just continue.  */
   if (output_bfd != (bfd *)NULL)
     return bfd_reloc_continue;
 
@@ -259,7 +260,7 @@ mips_fix_hi16_s (abfd, reloc_entry, symbol, data, input_section,
       && (symbol->flags & BSF_WEAK) == 0)
     return bfd_reloc_undefined;
 
-  /* 
+  /*
    * Work out which section the relocation is targetted at and the
    * initial relocation command value.
    */
@@ -329,7 +330,7 @@ MY(reloc_howto_type_lookup) (abfd, code)
  * own mapping of external reloc type values to howto entries.
  */
 long
-MY(canonicalize_reloc)(abfd, section, relptr, symbols)
+MY(canonicalize_reloc) (abfd, section, relptr, symbols)
       bfd *abfd;
       sec_ptr section;
       arelent **relptr;
@@ -339,7 +340,7 @@ MY(canonicalize_reloc)(abfd, section, relptr, symbols)
   unsigned int count, c;
   extern reloc_howto_type NAME(aout,ext_howto_table)[];
 
-  /* If we have already read in the relocation table, return the values. */
+  /* If we have already read in the relocation table, return the values.  */
   if (section->flags & SEC_CONSTRUCTOR) {
     arelent_chain *chain = section->constructor_chain;
 
@@ -351,18 +352,18 @@ MY(canonicalize_reloc)(abfd, section, relptr, symbols)
     return section->reloc_count;
   }
   if (tblptr && section->reloc_count) {
-    for (count = 0; count++ < section->reloc_count;) 
+    for (count = 0; count++ < section->reloc_count;)
       *relptr++ = tblptr++;
     *relptr = 0;
     return section->reloc_count;
   }
 
-  if (!NAME(aout,slurp_reloc_table)(abfd, section, symbols))
+  if (!NAME(aout,slurp_reloc_table) (abfd, section, symbols))
     return -1;
   tblptr = section->relocation;
 
   /* fix up howto entries */
-  for (count = 0; count++ < section->reloc_count;) 
+  for (count = 0; count++ < section->reloc_count;)
     {
       c = tblptr->howto - NAME(aout,ext_howto_table);
       tblptr->howto = &mips_howto_table_ext[c];
@@ -428,7 +429,7 @@ const bfd_target aout_mips_little_vec =
      BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
 
   & aout_mips_big_vec,
-  
+
   (PTR) MY_backend_data
 };
 
@@ -469,6 +470,6 @@ const bfd_target aout_mips_big_vec =
      BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
 
   & aout_mips_little_vec,
-  
+
   (PTR) MY_backend_data
 };

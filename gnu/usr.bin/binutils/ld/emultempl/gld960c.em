@@ -1,7 +1,8 @@
 # This shell script emits a C file. -*- C -*-
 # It does some substitutions.
 cat >e${EMULATION_NAME}.c <<EOF
-/* Copyright (C) 1991, 93, 94, 95, 96, 1999 Free Software Foundation, Inc.
+/* Copyright 1991, 1993, 1994, 1996, 1999, 2000
+   Free Software Foundation, Inc.
 
 This file is part of GLD, the Gnu Linker.
 
@@ -32,10 +33,13 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "bfdlink.h"
 
 #include "ld.h"
-#include "ldemul.h"
-#include "ldfile.h"
 #include "ldmisc.h"
 #include "ldmain.h"
+
+#include "ldexp.h"
+#include "ldlang.h"
+#include "ldfile.h"
+#include "ldemul.h"
 
 #ifdef GNU960
 

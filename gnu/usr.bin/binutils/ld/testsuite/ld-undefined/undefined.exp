@@ -1,7 +1,8 @@
 # Test that the linker reports undefined symbol errors correctly.
 # By Ian Lance Taylor, Cygnus Support
 #
-#   Copyright (C) 1995, 1996, 1997 Free Software Foundation
+#   Copyright 1995, 1996, 1997, 1998, 1999, 2000, 2001
+#   Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -39,12 +40,14 @@ if ![ld_compile "$CC -g" $srcdir/$subdir/undefined.c tmpdir/undefined.o] {
 
 catch "exec rm -f tmpdir/undefined" exec_output
 
+set flags [big_or_little_endian]
+
 # Using -e start prevents the SunOS linker from trying to build a
 # shared library.
-send_log "$ld -e start -o tmpdir/undefined tmpdir/undefined.o\n"
-verbose "$ld -e start -o tmpdir/undefined tmpdir/undefined.o"
+send_log "$ld -e start $flags -o tmpdir/undefined tmpdir/undefined.o\n"
+verbose "$ld -e start $flags -o tmpdir/undefined tmpdir/undefined.o"
 
-catch "exec $ld -e start -o tmpdir/undefined tmpdir/undefined.o" exec_output
+catch "exec $ld -e start $flags -o tmpdir/undefined tmpdir/undefined.o" exec_output
 send_log "$exec_output\n"
 verbose "$exec_output"
 
@@ -68,6 +71,12 @@ checkund $mu $testund
 
 # Just doesn't work for PA ELF.  No clue why.
 setup_xfail "hppa*-*-*elf*"
+
+# With dwarf-2, we can't get the function in which the reference
+# occurs; see below.
+setup_xfail "hppa*64*-*-*"
+setup_xfail "mn10300-*-elf"
+setup_xfail "sh-*-*"
 
 set mf "tmpdir/undefined.o: In function `function':"
 checkund $mf $testfn
@@ -120,6 +129,7 @@ set ml "undefined.c:9: undefined reference to `this_function_is_not_defined'"
 # hence the xfails below.
 
 #setup_xfail arm-*-elf
+setup_xfail i?86-*-freebsd*
 #setup_xfail strongarm-*-elf
 #setup_xfail thumb-*-elf
 setup_xfail mcore-*-elf

@@ -55,6 +55,7 @@ main ()
   printf ("shlib_maincall () == %d\n", shlib_maincall ());
 #endif
   printf ("main_called () == %d\n", main_called ());
+#ifndef SYMBOLIC_TEST
   printf ("shlib_checkfunptr1 (shlib_shlibvar1) == %d\n",
 	  shlib_checkfunptr1 (shlib_shlibvar1));
 #ifndef XCOFF_TEST
@@ -76,6 +77,7 @@ main ()
   else
     printf ("!=");
   printf (" main_called\n");
+#endif
 #endif
   printf ("shlib_check () == %d\n", shlib_check ());
   return 0;

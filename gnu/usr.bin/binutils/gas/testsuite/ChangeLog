@@ -1,6 +1,773 @@
+2001-06-18  Philip Blundell  <philb@gnu.org>
+
+	* gas/arm/arm.exp (msr_bad): Deleted.
+	* gas/arm/msr-bad.s: Likewise.
+
+2001-06-11  Alan Modra  <amodra@bigpond.net.au>
+
+	Merge from mainline.
+	2001-06-10  H.J. Lu  <hjl@gnu.org>
+	* gas/elf/section2.l: Match various white spaces.
+	* gas/elf/section2.e: Support 64bit ELF.
+	* gas/elf/section2.e-mips: Likewise.
+
+	2001-06-08  Alan Modra  <amodra@bigpond.net.au>
+	* gas/elf/elf.exp (run_list_test): Undo $readelf change in 2001-06-07.
+
+	2001-06-07  H.J. Lu  <hjl@gnu.org>
+	* gas/elf/section2.e-mips: New file.
+	* gas/elf/elf.exp (run_list_test): Add suffix.
+	Pass -mips as suffix to run_list_test for mips.
+	* gas/elf/section2.l: Match ".*GAS.*" instead of
+	"GAS LISTING .*".
+	* gas/mips/mips.exp: Set xfail for "lineno" on Linux/mips.
+	* gas/mips/empic.d: Support stabs.
+	* gas/mips/mips16-e.d: Likewise.
+	* gas/mips/mips16-f.d: Likewise.
+	* gas/mips/mipsel16-f.d: Likewise.
+	* gas/mips/telempic.d: Likewise.
+	* gas/mips/tempic.d: Likewise.
+	* gas/mips/tmips16-e.d: Likewise.
+	* gas/mips/tmipsel16-e.d: Likewise.
+
+	2001-06-06  H.J. Lu  <hjl@gnu.org>
+	* gas/mips/elf-rel3.s: New file.
+	* gas/mips/elf-rel3.d: Likewise.
+	* gas/mips/elfel-rel3.s: Likewise.
+	* gas/mips/elfel-rel3.d: Likewise.
+	* gas/mips/mips.exp: Run elf-rel3/elfel-rel3.
+	* gas/elf/elf.exp (run_list_test): New.
+	Run section2 with run_list_test.
+	* gas/elf/section2.e: New file.
+	* gas/elf/section2.l: Likewise.
+	* gas/elf/section2.s: Likewise.
+
+	2001-06-04  H.J. Lu  <hjl@gnu.org>
+	* gas/mips/mips4010.s: Add the missing ".end".
+	* gas/mips/mips4100.s: Likewise.
+	* gas/mips/mips4650.s: Likewise.
+	* gas/mips/sync.s: Likewise.
+
+	2001-06-02  H.J. Lu  <hjl@gnu.org>
+	* gas/sparc/unalign.d: Support Sparc V9.
+
+	2001-05-25  H.J. Lu  <hjl@gnu.org>
+	* gas/mips/e32el-rel2.d: New for little endian mips.
+	* gas/mips/elfel-rel2.d: Likewise.
+	* gas/mips/elfel-rel.d: Likewise.
+	* gas/mips/mipsel16-f.d: Likewise.
+	* gas/mips/telempic.d: Likewise.
+	* gas/mips/tmipsel16-e.d: Likewise.
+	* gas/mips/tempic.d: New for traditional mips.
+	* gas/mips/tmips16-e.d: Likewise.
+	* gas/mips/elf-rel.d: Handle alignment padding.
+	* gas/mips/elf-rel2.d: Likewise.
+	* gas/mips/mips.exp: Support little endian and traditional
+	mips.
+
+	2001-05-24  H.J. Lu  <hjl@gnu.org>
+	* gas/m68k/pcrel.d: Support 64bit BFD.
+	* gas/arm/adrl.d: Support 64bit BFD.
+	* gas/arm/arm7t.d: Likewise.
+	* gas/arm/inst.d: Likewise.
+	* gas/arm/pic.d: Likewise.
+	* gas/arm/xscale.d: Likewise.
+
+	2001-05-15  Thiemo Seufer <seufer@csv.ica.uni-stuttgart.de>
+	* gas/mips/abs.d: Remove $ before register names, per latest
+	disassembler.
+	* gas/mips/add.d: Ditto.
+	* gas/mips/and.d: Ditto.
+	* gas/mips/beq.d: Ditto.
+	* gas/mips/bge.d: Ditto.
+	* gas/mips/bgeu.d: Ditto.
+	* gas/mips/blt.d: Ditto.
+	* gas/mips/bltu.d: Ditto.
+	* gas/mips/delay.d: Ditto.
+	* gas/mips/div-ilocks.d: Ditto.
+	* gas/mips/div.d: Ditto.
+	* gas/mips/dli.d: Ditto.
+	* gas/mips/elf_e_flags1.d: Ditto.
+	* gas/mips/elf_e_flags2.d: Ditto.
+	* gas/mips/elf_e_flags3.d: Ditto.
+	* gas/mips/elf_e_flags4.d: Ditto.
+	* gas/mips/jal-empic.d: Ditto.
+	* gas/mips/jal-svr4pic.d: Ditto.
+	* gas/mips/jal-xgot.d: Ditto.
+	* gas/mips/jal.d: Ditto.
+	* gas/mips/la-empic.d: Ditto.
+	* gas/mips/la-svr4pic.d: Ditto.
+	* gas/mips/la-xgot.d: Ditto.
+	* gas/mips/la.d: Ditto.
+	* gas/mips/lb-empic.d: Ditto.
+	* gas/mips/lb-svr4pic.d: Ditto.
+	* gas/mips/lb-xgot-ilocks.d: Ditto.
+	* gas/mips/lb-xgot.d: Ditto.
+	* gas/mips/lb.d: Ditto.
+	* gas/mips/ld-empic.d: Ditto.
+	* gas/mips/ld-ilocks-addr32.d: Ditto.
+	* gas/mips/ld-ilocks.d: Ditto.
+	* gas/mips/ld-svr4pic.d: Ditto.
+	* gas/mips/ld-xgot.d: Ditto.
+	* gas/mips/ld.d: Ditto.
+	* gas/mips/li.d: Ditto.
+	* gas/mips/lif-empic.d: Ditto.
+	* gas/mips/lif-svr4pic.d: Ditto.
+	* gas/mips/lif-xgot.d: Ditto.
+	* gas/mips/lifloat.d: Ditto.
+	* gas/mips/mips16.d: Ditto.
+	* gas/mips/mips32.d: Ditto.
+	* gas/mips/mips4.d: Ditto.
+	* gas/mips/mips4010.d: Ditto.
+	* gas/mips/mips4100.d: Ditto.
+	* gas/mips/mips4650.d: Ditto.
+	* gas/mips/mips64.d: Ditto.
+	* gas/mips/mul-ilocks.d: Ditto.
+	* gas/mips/mul.d: Ditto.
+	* gas/mips/nodelay.d: Ditto.
+	* gas/mips/rol.d: Ditto.
+	* gas/mips/sb.d: Ditto.
+	* gas/mips/trap20.d: Ditto.
+	* gas/mips/trunc.d: Ditto.
+	* gas/mips/uld.d: Ditto.
+	* gas/mips/ulh-empic.d: Ditto.
+	* gas/mips/ulh-svr4pic.d: Ditto.
+	* gas/mips/ulh-xgot.d: Ditto.
+	* gas/mips/ulh.d: Ditto.
+	* gas/mips/ulw.d: Ditto.
+	* gas/mips/usd.d: Ditto.
+	* gas/mips/ush.d: Ditto.
+	* gas/mips/usw.d: Ditto.
+
+	2001-04-05  Hans-Peter Nilsson  <hp@axis.com>
+	* lib/gas-defs.exp (run_dump_test): Support using readelf.
+	* config/default.exp: Default READELF and READELFFLAGS.
+
+	2001-03-30  H.J. Lu  <hjl@gnu.org>
+	* gas/i386/relax.d: Dump with -s instead of -drw.
+
+	2001-03-29  H.J. Lu  <hjl@gnu.org>
+	* gas/i386/relax.s: New test for relaxation between sections.
+	* gas/i386/relax.d: New.
+	* gas/i386/i386.exp: Add tests for ELF.
+
+	2001-03-27  Chris Demetriou  <cgd@broadcom.com>
+	* gas/mips/lineno.d: Allow for the possibility that
+	the local labels won't be in the objdump output.  Match
+	zeros in addresses using '+' for better compatibility with
+	different targets.
+
+	2001-03-26  Chris Demetriou  <cgd@broadcom.com>
+	* gas/mips/sync.s: Declare 'foo' as a function so that this
+	test will work on properly on ECOFF targets.
+
+	2001-03-18  H.J. Lu  <hjl@gnu.org>
+	* gas/i386/intel.s: Move PIC code to ...
+	* gas/i386/intelpic.s: New. Here.
+	* gas/i386/intel.d: Updated.
+	* gas/i386/intelpic.d: New.
+	* gas/i386/i386.exp: Check PIC code in Intel syntax for ELF
+	targets only.
+
+	2001-02-17  Chris Demetriou  <cgd@broadcom.com>
+	* gas/mips/mips32.d: Remove ELF dependencies.  This test
+	wasn't meant to be ELF specific, and doesn't have to be.
+	* gas/mips/mips64.d: Likewise.
+	* gas/mips/mips.exp: Don't attempt the elf_e_flags family of
+	tests if not ELF; they test ELF-specific features.
+
+2001-05-28  Jeff Sturm  <jsturm@one-point.com>
+
+	* gas/sparc/unalign.s: New test.  Check unaligned relocs.
+	* gas/sparc/unalign.d: New expected test results.
+	* gas/sparc/sparc.exp: Run new test.
+
+2001-05-23  Alan Modra  <amodra@one.net.au>
+
+	* gas/elf/ehopt0.d: Tweak for bigendian targets.
+
+2001-05-14  Richard Henderson  <rth@redhat.com>
+
+	* gas/elf/ehopt0.s: New.
+	* gas/elf/ehopt0.d: New.
+	* gas/elf/elf.exp: Run it.
+
+2001-05-12  Alan Modra  <amodra@one.net.au>
+
+	* gas/i386/sse2.s: Correct cvtps2dq, movdq2q, and movq2dq
+	* gas/i386/sse2.d: Likewise.  Fix pmuludq and punpckhqdq too.
+
+	* gas/i386/ssemmx2.d: Correct movq.
+
+2001-05-04  Alan Modra  <amodra@one.net.au>
+
+	* gas/i386/katmai.d: Correct pmovmskb and pextrw opcodes.
+	* gas/i386/ssemmx2.d: Likewise.  Correct register for pextrw,
+	pinsrw, and pmovmskb.
+	* gas/i386/sse2.d: Correct register for movmskpd.
+
+2001-03-31  Alan Modra  <alan@linuxcare.com.au>
+
+	* gas/all/cond.s: Add .if .elseif tree.
+	* gas/all/cond.d: Match above.
+
+2001-03-24  Alan Modra  <alan@linuxcare.com.au>
+
+	* gas/i386/ssemmx2.s: Change movntq to movntdq.
+	* gas/i386/ssemmx2.d: Matching change.
+
+2001-03-19  John David Anglin  <dave@hiauly1.hia.nrc.ca>
+
+	* gas/vax/quad.exp: Correct expected result.
+
+2001-03-19  Andreas Schwab  <schwab@suse.de>
+
+	* gas/m68k/pcrel.s: Force alignment to 8 byte boundary to get
+	consistent output across targets.
+	* gas/m68k/pcrel.d: Adjusted.
+
+2001-03-18  Stephane Carrez  <Stephane.Carrez@worldnet.fr>
+
+	* gas/mri/mri.exp: Fix test of m6811/m6812 targets.
+
+2001-03-17  Philip Blundell  <philb@gnu.org>
+
+	* gas/vtable/vtable.exp: Don't run tests on AVR.
+	* gas/macros/macros.exp: Mark strings test xfail for AVR.
+
+2001-02-23  H.J. Lu  <hjl@gnu.org>
+
+	* gas/ia64/opc-a-err.l: Fix "cmp4.lt.or".
+
+	* gas/ia64/opc-a.pl: Add tests for pseudo-ops for "cmp" and
+	"cmp4".
+	* gas/ia64/opc-a.s: Rebuilt.
+	* gas/ia64/opc-a.d: Likewise.
+
+2001-02-08  Stephane Carrez  <Stephane.Carrez@worldnet.fr>
+
+	* gas/mri/mri.exp: Don't execute the M68K specific tests 
+	on m6811-elf and m6812-elf targets, still run the generic MRI tests.
+
+2001-02-04  Stephane Carrez  <Stephane.Carrez@worldnet.fr>
+
+	* gas/m68hc11/malis.s: New test to verify compliance with Motorola
+	Assembly Language Input Standard.
+	* gas/m68hc11/malis.d: New file.
+	* gas/m68hc11/malis-include.s: New file.
+	* gas/m68hc11/all.exp: Add the new test.
+
+2001-01-12  Alan Modra  <alan@linuxcare.com.au>
+
+	* gas/i386/i386.exp (gas_64_check): Correct target string.
+	Use gas_64_check rather than target string to decided whether
+	x86_64 checks should run.
+
+	* gas/i386/sse2.s: Add a label to cure objdump "no symbols" error.
+	* gas/i386/ssemmx2.s: Likewise.
+	* gas/i386/sse2.d: Update to suit.
+	* gas/i386/ssemmx2.s: Likewise.
+
+2001-01-11  Peter Targett <peter.targett@arccores.com>
+
+	* gas/arc/alias.*: Removed.
+	* gas/arc/branch.*: Likewise.
+	* gas/arc/insn3.*: Likewise.
+	* gas/arc/math.*: Likewise.
+	* gas/arc/sshift.*: Likewise.
+	* gas/arc/arc.exp: Simplified test process for base case
+	instruction set by adding run_dump_test cases for all base
+	instructions.
+ 	* gas/arc/adc.s, gas/arc/adc.d: New test cases and dump.
+ 	* gas/arc/add.s, gas/arc/add.d: Likewise.
+ 	* gas/arc/and.s, gas/arc/and.d: Likewise.
+ 	* gas/arc/asl.s, gas/arc/asl.d: Likewise.
+ 	* gas/arc/asr.s, gas/arc/asr.d: Likewise.
+ 	* gas/arc/b.s, gas/arc/b.d: Likewise.
+ 	* gas/arc/bic.s, gas/arc/bic.d: Likewise.
+ 	* gas/arc/bl.s, gas/arc/bl.d: Likewise.
+ 	* gas/arc/brk.s, gas/arc/brk.d: Likewise.
+ 	* gas/arc/extb.s, gas/arc/extb.d: Likewise.
+ 	* gas/arc/extw.s, gas/arc/extw.d: Likewise.
+ 	* gas/arc/flag.s, gas/arc/flag.d: Likewise.
+ 	* gas/arc/j.s, gas/arc/j.d: Likewise.
+ 	* gas/arc/jl.s, gas/arc/jl.d: Likewise.
+ 	* gas/arc/ld.s, gas/arc/ld.d: Likewise.
+ 	* gas/arc/ld2.s, gas/arc/ld2.d: Likewise.
+ 	* gas/arc/lp.s, gas/arc/lp.d: Likewise.
+ 	* gas/arc/lsr.s, gas/arc/lsr.d: Likewise.
+ 	* gas/arc/mov.s, gas/arc/mov.d: Likewise.
+ 	* gas/arc/nop.s, gas/arc/nop.d: Likewise.
+ 	* gas/arc/or.s, gas/arc/or.d: Likewise.
+ 	* gas/arc/rlc.s, gas/arc/rlc.d: Likewise.
+ 	* gas/arc/ror.s, gas/arc/ror.d: Likewise.
+ 	* gas/arc/rrc.s, gas/arc/rrc.d: Likewise.
+ 	* gas/arc/sbc.s, gas/arc/sbc.d: Likewise.
+ 	* gas/arc/sexb.s, gas/arc/sexb.d: Likewise.
+ 	* gas/arc/sexw.s, gas/arc/sexw.d: Likewise.
+ 	* gas/arc/sleep.s, gas/arc/sleep.d: Likewise.
+ 	* gas/arc/add.s, gas/arc/add.d: Likewise.
+ 	* gas/arc/st.s, gas/arc/st.d: Likewise.
+ 	* gas/arc/sub.s, gas/arc/sub.d: Likewise.
+ 	* gas/arc/swi.s, gas/arc/swi.d: Likewise.
+ 	* gas/arc/xor.s, gas/arc/xor.d: Likewise.
+	* gas/arc/warn.s: Removed warning test case for setting of flags
+	followed by conditional branch, an arc5 only feature.
+
+	* gas/ieee-fp/x930509a.exp: Skip test if target also arc*-*-*.
+
+	* gas/vtable/vtable.exp: Skip tests if target also arc*-*-*.
+
+2001-01-11  Stephane Carrez  <Stephane.Carrez@worldnet.fr>
+
+	* gas/m68hc11/opers12.s: Add more tests for index post byte.
+	* gas/m68hc11/opers12.d: Likewise.
+
+2001-01-11  Stephane Carrez  <Stephane.Carrez@worldnet.fr>
+
+	* gas/m68hc11/all.exp: Add new tests for dwarf2.
+	* gas/m68hc11/lbranch-dwarf2.d: New file, test for dwarf2.
+	* gas/m68hc11/opers12-dwarf2.d: Likewise.
+	* gas/m68hc11/insns-dwarf2.d: Likewise.
+
+2001-01-11  Nick Clifton  <nickc@redhat.com>
+
+	* gas/arm/adrl.s: Add global label 'foo'.
+	* gas/arm/adrl.d: Expect to see references to 'foo' in the
+	disassembly.  COFF and ELF disassemblys should now be the same.
+
+Wed Jan 10 15:14:54 MET 2001  Jan Hubicka  <jh@suse.cz>
+
+	* i386.exp: Add ssemmx2 and sse2 tests.
+	(sse2.d, sse2.s, ssemmx2.d, ssemmx2.s): New tests.
+
+2001-01-09  Nick Clifton  <nickc@redhat.com>
+
+	* gas/arm/pic.d: Fix patterns to match new behaviour of
+	disassembler.
+	inst.d: Fix patterns to match new behaviour of disassembler.
+
+2001-01-03  Philip Blundell  <pb@futuretv.com>
+
+	* gas/vtable/vtable.exp: Don't run tests on Alpha.
+
+Sat Jan  6 13:34:07 MET 2001  Jan Hubicka  <jh@suse.cz>
+
+	* i386.exp: Add tests for presence of 32bit versus 64bit output
+	format; run both 64bit and 32bit tests when format is available;
+	add x86_64 test.
+	* x86_64.s: New file.
+	* x86_64.d: New file.
+
+2001-01-02  Nick Clifton  <nickc@redhat.com>
+
+	* gas/arm/arm.exp: Pass -marmv3 to msr-bad test, since the
+	instruction is legal in v5.  Also fix expected error message.
+
+2001-01-01  Philip Blundell  <philb@gnu.org>
+
+	* gas/arm/adrl.s, gas/arm/pic.s, gas/arm/msr-bad.s: New tests.
+	* gas/arm/arm.exp: Run them.
+	* gas/arm/adrl.d, gas/arm/pic.d: Expected results for above.
+	* gas/arm/arm6.s: Also test uppercase `CPSR' and `SPSR'.
+
+2000-12-22  H.J. Lu  <hjl@gnu.org>
+
+	* gas/i386/intel.s: Replace "nop" with ".p2align 4,0".
+	* gas/i386/intel.d: Updated.
+
+2000-12-12  Jim Wilson  <wilson@redhat.com>
+
+	* gas/ia64/dv-imply.d, gas/ia64/dv-mutex.d, gas/ia64/dv-safe.d,
+	gas/ia64/dv-srlz.d, gas/ia64/opc-m.d: Update.
+
+2000-12-12  Nick Clifton  <nickc@redhat.com>
+
+	* gas/vtable/vtable.exp: Fix formatting.
+
+	* gas/arm/elsegundo.s: New Test (currently disabled).
+	* gas/arm/elsegundo.d: Expected test results.
+
+2000-12-11  H.J. Lu  <hjl@gnu.org>
+
+	* gas/i386/intel.d: Adjusted for the a.out assembler.
+	* gas/i386/intel.s: Likewise.
+
+2000-12-09  Nick Clifton  <nickc@redhat.com>
+
+	* gas/m68k/pcrel.d: Update to match latest assembler output.
+
+2000-12-02  Chris Demetriou  <cgd@sibyte.com>
+
+        * gas/mips/elf_e_flags.s: Add padding to the end of the
+        file so that objdump output will be consistent.
+        * gas/mips/elf_e_flags1.d, gas/mips/elf_e_flags2.d,
+        gas/mips/elf_e_flags3.d, gas/mips/elf_e_flags4.d: Expect
+        "..." at end of objdump output because of zero bytes at end
+        of section.
+        * gas/mips/elf_e_flags.c: Add note to comment about
+        what's changing in elf_e_flags.s.
+
+        * gas/mips/la.s: Add padding to the end of the file so that
+        objdump output will be consistent.
+        * gas/mips/la-svr4pic.d, gas/mips/la-xgot.d: Expect "..." at
+        end of objdump output because of zero bytes at end of
+        section.
+
+        * gas/mips/sync.s: Add padding to the end of the file so that
+        objdump output will be consistent.
+        * gas/mips/sync.d: Expect "..." at end of objdump output
+        because of zero bytes at end of section.
+
+        * gas/mips/empic.d: Pad sections out to 16 bytes, to avoid
+        alignment issues so tests are useful on multiple targets.
+        * gas/mips/empic.s: Likewise.
+        * gas/mips/mips16-e.d: Likewise.
+        * gas/mips/mips16-e.s: Likewise.
+        * gas/mips/mips16-f.d: Likewise.
+        * gas/mips/mips16-f.s: Likewise.
+
+        * gas/mips/mips32.d: Expect disassembly of madd and maddu
+        to use their correct names.  Add tests for break and sdbbp.
+        * gas/mips/mips32.s: Likewise.
+
+        * gas/mips/mips64.s: Add test for assembly of MIPS64
+        extensions.
+        * gas/mips/mips64.d: Likewise.
+        * gas/mips/mips.exp: Test using the new "mips64" test.
+
+2000-12-01  Chris Demetriou  <cgd@sibyte.com>
+
+        * gas/mips/mips16.d: Expect mips16 nops to be used for padding
+        when mips16 code generation is enabled.
+
+	* gas/mips/empic.d: Adjust for the fact that the difference
+	between two symbols in the same section are not expected to
+	generate a reloc.
+	* gas/mips/empic.s: Likewise.  Also, correct typo in comment
+	about expected relocs.
+	
+        * gas/mips/mips32.s, gas/mips/mips32.d: New files for MIPS32
+        instruction assembly test.
+        * gas/mips/mips.exp: Add the test mentioned above.
+
+2000-11-30  Diego Novillo  <dnovillo@redhat.com>
+
+	* intel.s, intel.d: New test for @GOT references.
+
+2000-11-28  Hans-Peter Nilsson  <hp@bitrange.com>
+
+	* gas/sh/err.exp: New, framework for error-testing.
+	* gas/sh/err-1.s: New test.
+
+2000-11-26  Stephane Carrez  <Stephane.Carrez@worldnet.fr>
+
+	* gas/m68hc11/opers12.s: New test for movw operands.
+	* gas/m68hc11/opers12.d: Likewise.
+
+2000-11-24  Nick Clifton  <nickc@redhat.com>
+
+	* arm.exp: Run tests for xscale as well as arm.
+	Run xscale tests.
+
+	* xscale.s: New file: XScale instruction tests.
+	* xscale.d: New file: Expected XScale instruction results.
+
+2000-11-20  H.J. Lu  <hjl@gnu.org>
+
+	* gas/i386/intel.d: Add 3 "nop"s for the a.out assembler.
+	* gas/i386/intel.s: Likewise.
+
+2000-11-16  H.J. Lu  <hjl@gnu.org>
+
+	* gas/symver/symver0.d: Add 64bit support.
+	* gas/symver/symver1.d: Likewise.
+
+2000-11-16  H.J. Lu  <hjl@gnu.org>
+
+	* gas/symver/symver.exp: Don't run symver4 nor symver5.
+
+2000-11-13  H.J. Lu  <hjl@gnu.org>
+
+	* gas/symver/symver.exp: New for symver test.
+	* gas/symver/symver0.d: Likewise.
+	* gas/symver/symver0.s: Likewise.
+	* gas/symver/symver1.d: Likewise.
+	* gas/symver/symver1.s: Likewise.
+	* gas/symver/symver2.l: Likewise.
+	* gas/symver/symver2.s: Likewise.
+	* gas/symver/symver3.l: Likewise.
+	* gas/symver/symver3.s: Likewise.
+	* gas/symver/symver4.l: Likewise.
+	* gas/symver/symver4.s: Likewise.
+	* gas/symver/symver5.l: Likewise.
+	* gas/symver/symver5.s: Likewise.
+	* gas/symver/symver6.l: Likewise.
+	* gas/symver/symver6.s: Likewise.
+
+2000-11-11  Hans-Peter Nilsson  <hp@bitrange.com>
+
+	* gas/macros/macros.exp: Mark strings test xfail for sh.
+
+2000-10-24  Diego Novillo  <dnovillo@cygnus.com>
+
+	* intel.s, intel.d: Add new tests for intel syntax.
+
+2000-10-19  Alan Modra  <alan@linuxcare.com.au>
+
+	* gas/elf/section0.s: Ensure section sizes are multiples of 16.
+	* gas/elf/section1.s: Likewise.
+	* gas/elf/section[01].d: Change to suit.
+
+2000-10-18  H.J. Lu <hjl@gnu.org>
+
+	* gas/i386/intel.d: Fix the support for 64bit BFD in the last
+	change.
+
+2000-10-15  Diego Novillo  <dnovillo@cygnus.com>
+
+	* intel.s, intel.d: Add new tests for naked registers using intel
+	syntax.
+
+2000-09-29  Hans-Peter Nilsson  <hp@axis.com>
+
+	* gas/cris/regprefix-err-1.s, gas/cris/rd-regprefix-1.s,
+	gas/cris/rd-regprefix-1.d, gas/cris/rd-regprefix-1b.d,
+	gas/cris/us-err-1.s, gas/cris/us-err-2.s, gas/cris/us-err-3.s: New.
+	* gas/cris/cris.exp: Loop run_dump_test over files matching rd-*.d.
+
+2000-09-28  Alan Modra  <alan@linuxcare.com.au>
+
+	* gas/hppa/parse/parse.exp: Replace "hppa*w-*-*" with "hppa*64*-*-*"
+	* gas/hppa/reloc/reloc.exp: Likewise.
+	* gas/hppa/unsorted/unsorted.exp: Likewise.
+
+	* gas/hppa/reloc/reduce.s: Modify .PARAM so we need an arg reloc.
+
+2000-09-22  Jim Wilson  <wilson@cygnus.com>
+
+	* gas/ia64/opc-f.pl: Add missing fcmp and fpcmp tests.
+	* gas/ia64/opc-f.s, gas/ia64/opc-f.d: Regenerate.
+
+	* gas/ia64/dv-raw-err.s: Add new testcases for PR%, 16 - 62.
+	* gas/ia64/dv-waw-err.s: Likewise.
+	* gas/ia64/dv-imply.d: Regenerate.
+	* gas/ia64/dv-mutex.d, gas/ia64/dv-raw-err.l, gas/ia64/dv-safe.d,
+	gas/ia64/dv-srlz.d, gas/ia64/dv-war-err.l, gas/ia64/dv-waw-err.l,
+	gas/ia64/opc-f.d, gas/ia64/opc-i.d, gas/ia64/opc-m.d: Likewise.
+
+2000-09-14  Timothy Wall  <twall@cygnus.com>
+
+	* gas/ia64/dv-waw-err.[sl]: Additional tests for parallel
+	comparisons which should and should not produce DVs.
+
+2000-09-05  Alan Modra  <alan@linuxcare.com.au>
+
+	* gas/vtable/vtable.exp: Re-enable for hppa-elf.
+
+2000-08-29  Timothy Wall  <twall@cygnus.com>
+
+        * gas/ia64/dv-mutex.s: Add stop to avoid DV error on cmp.eq.
+        * gas/ia64/dv-mutex.d: Update regexp pattern.
+        * gas/ia64/dv-entry-err.s: Add stop to avoid DV error on cmp.eq.
+        * gas/ia64/dv-imply.s: Add stops to avoid DV errors on cmp.REL.
+        Test still fails due to insn opcode pattern changes.
+	
+2000-08-21  H.J. Lu <hjl@gnu.org>
+
+	* gas/all/cofftag.d: Support the strict COFF.
+
+2000-08-16  Jim Wilson  <wilson@cygnus.com>
+
+	* gas/ia64/dv-raw-err.s: Add new tests for addl and postinc.
+	* gas/ia64/dv-raw-err.l: Likewise.
+	* gas/ia64/dv-waw-err.l: Update sed pattern.
+	* gas/ia64/opc-f.pl: Delete fpsub, and fpadd comment.
+	* gas/ia64/opc-f.s, gas/ia64/opc-f.d: Regenerate.
+
+2000-08-16  Nick Clifton  <nickc@redhat.com>
+
+	* gas/arm/inst.s: Add tests for edge cases of shift based
+        addressing modes.
+
+	* gas/arm/inst.d: Add expected results for new tests.
+
+2000-07-20  Hans-Peter Nilsson  <hp@axis.com>
+
+	* gas/all/gas.exp: Don't run floating-point tests on CRIS.
+	* gas/ieee-fp/x930509a.exp: Ditto.
+	* gas/macros/macros.exp: Mark strings test xfail for CRIS.
+	* gas/cris/*: New tests for CRIS.
+
+2000-07-19  Alan Modra  <alan@linuxcare.com.au>
+
+	* gas/macros/macros.exp (test1): Run it for hppa*-*-linux*.
+	(semi): Likewise.
+	(strings): Don't run for hppa, except for hppa*-*-linux*.
+
+	* gas/hppa/parse/linesepbug.s: Ensure we have whitespace before
+	pseudos.
+
+2000-07-18  Scott Bambrough  <scottb@netwinder.org>
+
+        * gas/arm/inst.d: Fix expected results to match current assembler
+        output.  Patch from Justin Seger <justin.m.seger@intel.com>.
+
+2000-07-10  Alan Modra  <alan@linuxcare.com.au>
+
+	* gas/vtable/vtable.exp: Disable test for hppa.
+
+	* gas/hppa/reloc/reloc.exp (do_relocation_reduction_tests): Don't
+	run test for any elf target.
+	(applybug): Don't run test for linux.
+	* gas/hppa/unsorted/unsorted.exp (do_common_text): Likewise.
+	* gas/hppa/parse/parse.exp (linesepbug): Remove xfail
+	(labelbug): xfail for hppa-linux.
+
+	* gas/hppa/basic/{coprmem.s, fmemLRbug.s}: Add colons to labels.
+	* gas/hppa/parse/{callinfobug.s, regpopbug.s}: Likewise.
+	* gas/hppa/reloc/{applybug.s, funcrelocbug.s, longcall.s,
+	r_no_reloc.s, reduce3.s}: Likewise.
+	* gas/hppa/unsorted/common.s: Likewise.
+
+2000-07-05  Nick Clifton  <nickc@cygnus.com>
+
+	* gas/d30v/inst.d: Fix expected results to match current assembler
+	output.
+	* gas/d30v/bittest.l: Fix expected warning messages to match
+	current assembler output.
+
+2000-06-29  Kazu Hirata  <kazu@hxi.com>
+
+	* gas/h8300/h8300.exp (do_h8300s_mac): Change the registers used
+	in ldmac and stmac.
+	* gas/h8300/macs.s: Likewise.
+
+2000-06-27  Nick Clifton  <nickc@cygnus.com>
+
+	* gas/d30v/bittest.l: Edit to match new warning messages produced
+	by assembler.
+
+2000-06-19  Timothy Wall  <twall@cygnus.com>
+
+	* gas/macros/macros.exp: Avoid tests which are not useful on tic54x.
+	* gas/all/gas.exp: Make adjustments for tic54x target.
+	* gas/ieee-fp/x930509a.exp: Ditto.
+	* gas/tic54x/*: New tests for tic54x.  NOTE: load page has been
+	moved into the LMA and is not printed separately by objdump any
+	longer.  This still needs to be tested.
+	
+2000-06-18  Stephane Carrez  <stcarrez@worldnet.fr>
+
+	* gas/m68k/all.exp: Don't execute tests if the target is m68hc11&12.
+	* gas/m68hc11/all.exp: Specific tests for m68hc11.
+	* gas/m68hc11/all_insns.[ds]: Check m68hc11 instructions.
+	* gas/m68hc11/insns[ds]: Another test.
+	* gas/m68hc11/lbranch.[ds]: Check branch optimization (gas relax).
+	* gas/m68hc11/opers12.[ds]: New files, check m68hc12 operands.
+
+2000-06-17  Alan Modra  <alan@linuxcare.com.au>
+
+	* gas/macros/strings.s: Don't start directives in first column
+	(for LABELS_WITHOUT_COLONS targets).
+
+2000-06-14  H.J. Lu <hjl@gnu.org>
+
+	* gas/macros/strings.d: Support a.out and coff.
+
+2000-06-14  Nick Clifton  <nickc@cygnus.com>
+
+	* gas/arm/arm6.s: Remove 'mrs r9, cpsr_all' since the cpsr_all
+	flag is no longer legal syntax.
+
+2000-06-09  Nick Clifton  <nickc@cygnus.com>
+
+	* gas/macros/macros.exp: Run new test: strings.
+	* gas/macros/strings.s: New test: String expansion inside
+	macros.
+	* gas/macros/strings.d: New test results.
+	
+2000-06-04  Alan Modra  <alan@linuxcare.com.au>
+
+	* gas/i386/prefix.s: Modify so we have at least one x86 test that
+	checks the line separator.
+
+Sun May 21 10:08:08 2000  Hans-Peter Nilsson  <hp@axis.com>
+
+	* gas/elf/elf.exp: Exclude *-*-linux*coff* as non-elf.
+
+2000-05-15  Nick Clifton  <nickc@cygnus.com>
+
+	* gas/arm/arch4t.s: Add tests of new fields to msr instruction.
+
+2000-05-11  Ulf Carlsson  <ulfc@engr.sgi.com>
+
+	* gas/mips/mips.exp: Include *-*-linux* in svr4pic.
+
+	* gas/mips/jal-svr4pic.{s,d} gas/mips/jal-xgot.d: Add a jal to a
+	weak symbol.
+
 2000-05-08  Alan Modra  <alan@linuxcare.com.au>
 
 	* gas/mri/float.d: Fix for srec length change.
+
+2000-05-02  Alan Modra  <alan@linuxcare.com.au>
+
+	* gas/hppa/unsorted/unsorted.exp: Duplicate hppa*-*-*elf*
+	behaviour for hppa*-*-linux* throughout file.
+	* gas/hppa/reloc/reloc.exp: Ditto.
+	(reduce2.s): Disable test for elf targets.
+
+	* gas/hppa/parse/parse.exp (ssbug.s): setup_xfail hppa*-*-linux*.
+
+	* gas/elf/section0.s: Don't start pseudos on first column so
+	targets that define LABELS_WITHOUT_COLONS work.
+	* gas/elf/section1.s: Ditto.
+	* gas/vtable/inherit0.s: Ditto.
+	* gas/vtable/inherit1.s: Ditto.
+	* gas/vtable/entry0.s: Ditto.
+	* gas/vtable/entry1.s: Ditto.
+
+2000-05-01  Nick Clifton  <nickc@cygnus.com>
+
+	* gasp/macro.out: Fix label numbers to remove leading zeroes. 
+	* gasp/mdouble.out: Fix label numbers to remove leading zeroes. 
+
+2000-04-25  Alan Modra  <alan@linuxcare.com.au>
+
+	* gas/i386/general.l: Allow for DISP32 pe relocs.
+	* gas/i386/jump.d: Similarly.
+
+Mon Apr 24 16:35:08 2000  Jim Wilson  <wilson@cygnus.com>
+
+	* gas/ia64/opc-i.d: Change pmin2.u to pmin2.  Change pmax2.u to pmax2.
+	Change MLI to MLX.  Switch operands for output matching tbit.z.orcm,
+	tbit.z.andcm, tbit.nz.orcm, tbit.nz.andcm, tnat.z.orcm, tnat.z.andcm,
+	tnat.nz.orcm, tnat.nz.andcm inputs.
+	* gas/ia64/opc-i.pl: Insert padding nops before last dep.
+	* gas/ia64/opc-i.s: Regenerate.
+	
+	* gas/ia64/opc-i.s: Regenerate.
+	* gas/ia64/opc-f.pl: Add explicit stop at end.
+	
+2000-04-22  Timothy Wall  <twall@cygnus.com>
+
+	* gas/ia64/opc-f.d: Disassemble zeroes to verify break.f.
+	* gas/ia64/opc-f.s: Add an explicit stop to make IAS output match.
+
+Fri Apr 21 13:20:53 2000  Richard Henderson  <rth@cygnus.com>
+			  David Mosberger  <davidm@hpl.hp.com>
+			  Timothy Wall <twall@cygnus.com>
+			  Jim Wilson  <wilson@cygnus.com>
+
+	* gas/vtable/vtable.exp: Disable for ia64.
+	* gas/ia64: New testsuite directory.
+	
+2000-04-03  Alan Modra  <alan@linuxcare.com.au>
+
+	* gas/i386/general.s: Check 16-bit immediates, and move call/jump
+	checks to start.
+	* gas/i386/general.l: Likewise.
 
 2000-04-01  Alexandre Oliva  <aoliva@cygnus.com>
 
@@ -228,7 +995,7 @@ Sat Aug 28 00:16:12 1999  Jerry Quinn <jquinn@nortelnetworks.com>
 	extract3.s, deposit2.s, deposit3.s:  New.
 
 	* gas/hppa/basic/add.s,addi.s,dcor.s,shladd.s,sub.s,subi.s,unit.s:
-	Add new syntax versions of instructions to tests. 
+	Add new syntax versions of instructions to tests.
 	* gas/hppa/basic/add2.s,dcor2.s,perf.s,purge2.s,shladd2.s,sub2.s,
 	system2.s, unit2.s:  New tests.
 	* hppa/basic/basic.exp: Add new tests.
@@ -2686,4 +3453,3 @@ Tue Mar 30 11:45:27 1993  Ken Raeburn  (raeburn@cambridge.cygnus.com)
 Mon Mar 29 00:00:00 1993  Ken Raeburn  (raeburn@kr-pc.cygnus.com)
 
 	* Test suite created.
-

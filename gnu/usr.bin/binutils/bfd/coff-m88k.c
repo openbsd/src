@@ -1,5 +1,5 @@
 /* BFD back-end for Motorola 88000 COFF "Binary Compatability Standard" files.
-   Copyright 1990, 91, 92, 93, 94, 95, 97, 98, 1999
+   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1997, 1998, 1999, 2000
    Free Software Foundation, Inc.
    Written by Cygnus Support.
 
@@ -51,7 +51,7 @@ m88k_is_local_label_name (abfd, name)
   return name[0] == '@';
 }
 
-static bfd_reloc_status_type 
+static bfd_reloc_status_type
 m88k_special_reloc (abfd, reloc_entry, symbol, data,
 		    input_section, output_bfd, error_message)
      bfd *abfd;
@@ -144,7 +144,7 @@ m88k_special_reloc (abfd, reloc_entry, symbol, data,
   return bfd_reloc_ok;
 }
 
-static reloc_howto_type howto_table[] = 
+static reloc_howto_type howto_table[] =
 {
   HOWTO (R_PCR16L,			/* type */
 	 02,				/* rightshift */
@@ -250,11 +250,9 @@ rtype2howto (cache_ptr, dst)
 
 #define RTYPE2HOWTO(cache_ptr, dst) rtype2howto (cache_ptr, dst)
 
-
 /* Code to swap in the reloc offset */
 #define SWAP_IN_RELOC_OFFSET  bfd_h_get_16
 #define SWAP_OUT_RELOC_OFFSET bfd_h_put_16
-
 
 #define RELOC_PROCESSING(relent,reloc,symbols,abfd,section)	\
   reloc_processing(relent, reloc, symbols, abfd, section)

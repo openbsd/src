@@ -1,5 +1,5 @@
 /* BFD support for Sparc binaries under LynxOS.
-   Copyright (C) 1990, 91, 92, 93, 94, 95, 97, 1998
+   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1997, 1998, 2000
    Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -46,7 +46,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 /* This is needed to reject a NewsOS file, e.g. in
    gdb/testsuite/gdb.t10/crossload.exp. <kingdon@cygnus.com>
    I needed to add M_UNKNOWN to recognize a 68000 object, so this will
-   probably no longer reject a NewsOS object.  <ian@cygnus.com>. */
+   probably no longer reject a NewsOS object.  <ian@cygnus.com>.  */
 #define MACHTYPE_OK(mtype) ((mtype) == M_UNKNOWN \
 			    || (mtype) == M_68010 \
 			    || (mtype) == M_68020 \
@@ -90,7 +90,7 @@ NAME(lynx,set_arch_mach) (abfd, machtype)
 
     case M_UNKNOWN:
       /* Some Sun3s make magic numbers without cpu types in them, so
-	 we'll default to the 68000. */
+	 we'll default to the 68000.  */
       arch = bfd_arch_m68k;
       machine = bfd_mach_m68000;
       break;
@@ -137,7 +137,7 @@ NAME(lynx,set_arch_mach) (abfd, machtype)
 }
 
 #define SET_ARCH_MACH(ABFD, EXEC) \
-  NAME(lynx,set_arch_mach)(ABFD, N_MACHTYPE (EXEC)); \
+  NAME(lynx,set_arch_mach) (ABFD, N_MACHTYPE (EXEC)); \
   choose_reloc_size(ABFD);
 
 /* Determine the size of a relocation entry, based on the architecture */

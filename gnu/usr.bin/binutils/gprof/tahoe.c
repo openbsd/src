@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1983 Regents of the University of California.
+ * Copyright (c) 1983, 2001 Regents of the University of California.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms are permitted
@@ -304,7 +304,7 @@ tahoe_find_call (parent, p_lowpc, p_highpc)
 	    case longrel:
 	      /*
 	       *    regular pc relative addressing
-	       *      check that this is the address of 
+	       *      check that this is the address of
 	       *      a function.
 	       */
 	      destpc = tahoe_reladdr (instructp + length)

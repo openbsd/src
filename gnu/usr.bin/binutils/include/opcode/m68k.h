@@ -1,5 +1,6 @@
 /* Opcode table header for m680[01234]0/m6888[12]/m68851.
-   Copyright 1989, 91, 92, 93, 94, 95, 96, 97, 1999 Free Software Foundation.
+   Copyright 1989, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1999, 2001
+   Free Software Foundation, Inc.
 
 This file is part of GDB, GAS, and the GNU binutils.
 
@@ -38,6 +39,7 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #define mcf5200 0x200
 #define mcf5206e 0x400
 #define mcf5307 0x800
+#define mcf5407 0x1000
 
  /* handy aliases */
 #define	m68040up  (m68040 | m68060)
@@ -45,7 +47,8 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #define	m68020up  (m68020 | m68030up)
 #define	m68010up  (m68010 | cpu32 | m68020up)
 #define	m68000up  (m68000 | m68010up)
-#define mcf       (mcf5200 | mcf5206e | mcf5307)
+#define mcf       (mcf5200 | mcf5206e | mcf5307 | mcf5407)
+#define mcf5307up (mcf5307 | mcf5407)
 
 #define	mfloat  (m68881 | m68882 | m68040 | m68060)
 #define	mmmu    (m68851 | m68030 | m68040 | m68060)

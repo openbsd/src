@@ -1,15 +1,254 @@
+2001-06-11  Alan Modra  <amodra@bigpond.net.au>
+
+	Merge from mainline.
+	2001-06-06  H.J. Lu  <hjl@gnu.org>
+	* ld-bootstrap/bootstrap.exp: Rebuild tmpdir/ld2 with tmpdir/ld3
+	on Linux/mips.
+	* ld-elfvers/vers.exp: Also run on Linux/mips.
+	* ld-elfvsb/elfvsb.exp: Likewise.
+	* ld-shared/shared.exp: Likewise.
+	* ld-selective/selective.exp: Mark selective2, selective3,
+	selective4 and selective5 xfail on Linux/mips.
+	* ld-shared/main.c: Skip invalid -Bsymbolic tests on Linux/mips.
+	* symbolic.dat: Remove invalid -Bsymbolic tests on Linux/mips.
+	* ld-srec/srec.exp: Add Linux/mips to xfail.
+
+	2001-05-24  H.J. Lu  <hjl@gnu.org>
+	* ld-scripts/phdrs.exp: Add sparc64 to 64 bit platform.
+
+	2001-05-25  Alan Modra  <amodra@one.net.au>
+	* ld-elfvers/vers.exp: Replace linuxoldld with linux*oldld and
+	linuxaout with linux*aout.
+
+	2001-05-01  Andreas Jaeger  <aj@suse.de>, Andreas Schwab <schwab@suse.de>
+	* ld-scripts/phdrs.exp: Fix regexp, s390x is 64 bit platform.
+	* ld-scripts/phdrs.t: Use startaddress that's greater than any
+	MAXPAGESIZE used.
+
+	2001-04-29  H.J. Lu  <hjl@gnu.org>
+	* ld-shared/symbolic.dat: New.
+	* ld-shared/shared.exp: Also check -Bsymbolic.
+
+	2001-03-06  DJ Delorie  <dj@redhat.com>
+	* ld-scripts/cross2.t: Support any type of text/data sections, not
+	just the canonical ones.
+
+	2001-02-28  Matt Hiller  <hiller@redhat.com>
+	* ld-scripts/crossref.exp: Initialize flags to [big_or_little_endian].
+	* ld-undefined/undefined.exp: Ditto, and include $flags in ld
+	invocations.
+	* lib/ld-lib.exp (big_or_little_endian): Recognize -EB, -eb, -EL
+	and -el.
+	(is_endian_output_format): New function.
+	(default_ld_link): Set flags to [big_or_little_endian] only if ld
+	is being invoked such that the output format being used is of
+	known endianness.
+	(default_ld_simple_link): Ditto.
+
+	2001-02-14  H.J. Lu  <hjl@gnu.org>
+	* ld-bootstrap/bootstrap.exp: Rebuild tmpdir/ld2 with tmpdir/ld3
+	for -static on ia64.
+	* ld-checks/checks.exp: Don't run on ia64-*-elf* nor
+	ia64-*-linux*.
+	* ld-elfvers/vers.exp: Also run ia64-*-elf* and ia64-*-linux*.
+	* ld-elfvsb/elfvsb.exp: Use i?86-*-*. Also run on ia64-*-linux*.
+	Set up expected failures for ia64-*-linux*.
+	* ld-shared/shared.exp: Likewise.
+
+2001-06-07  Alan Modra  <amodra@bigpond.net.au>
+
+	* Many files: Update copyright notices.
+
+2001-04-01  David O'Brien  <obrien@FreeBSD.org>
+
+	* ld-bootstrap/bootstrap.exp: FreeBSD 4.3+ will fail on the --static test
+	as the static ELF binary needs to have its EI_OSABI set to a supported
+	value.  There is no longer a fallback interpretation due to a security
+	issue.
+	* ld-undefined/undefined.exp: XFAIL on FreeBSD/i386 for the usual (even
+	though it doesn't use DWARF2 yet (but its output is identical).
+
+2001-04-01  David O'Brien  <obrien@FreeBSD.org>
+
+	* ld-selective/selective.exp: Use -O with gcc rather than -O2.
+	This optimization level is buggy on some platforms, and this test
+	is not intended to test compiler optimizations.
+
+2001-03-18  Stephane Carrez  <Stephane.Carrez@worldnet.fr>
+
+	* ld-selective/selective.exp: Don't run test for 68hc11 and 68hc12
+	because selective linking is not yet implemented.
+
+2001-02-08  Stephane Carrez  <Stephane.Carrez@worldnet.fr>
+
+	* ld-srec/srec.exp (run_srec_test): m6811 code has references
+	to soft registers, define them with --defsym.
+	* ld-selective/selective.exp: Likewise.
+
+2001-01-14  Hans-Peter Nilsson  <hp@bitrange.com>
+
+	* ld-sh/sh.exp: Use --oformat srec, not -oformat srec.
+
+2001-01-03  Philip Blundell  <pb@futuretv.com>
+
+	* ld-elfvsb/elfvsb.exp: Run test on Linux/Alpha.
+	* ld-shared/shared.exp: Likewise.
+
+2001-01-01  Philip Blundell  <philb@gnu.org>
+
+	* ld-undefined/weak-undef.exp: New test.
+	* ld-undefined/weak-undef.s, ld-undefined/weak-undef.t: Supporting
+	files for above.
+
+	* ld-elfvers/vers.exp: Run test on Linux/ARM.
+	* ld-elfvsb/elfvsb.exp: Likewise.
+	* ld-shared/shared.exp: Likewise.
+
+2000-12-31  Nick Clifton  <nickc@redhat.com>
+
+	* ld-srec/srec.exp: Use --oformat instead of -oformat.
+
+2000-12-09  Nick Clifton  <nickc@redhat.com>
+
+	* ld-selective/selective.exp: Link in libgcc when target is v850.
+
+	* ld-srec/srec.exp: Expect the srec_test to fail for ARM targets
+	because the -oformat linker command switch cannot be used.
+
 2000-11-06  Alan Modra  <alan@linuxcare.com.au>
 
 	* ld-elfvsb/main.c (PROTECTED_CHECK): Include stdio.h.
 	(main): Prune unused args.
 
-2000-10-17  Philip Blundell  <pb@futuretv.com>
+2000-10-29  Hans-Peter Nilsson  <hp@bitrange.com>
 
-	* lib/ld-lib.exp, ld-elfvsb: Update from trunk version.
+	* ld-selective/selective.exp <no CXX>: Fix typo for argument to
+	"untested".
+
+2000-10-19  H.J. Lu  (hjl@gnu.org)
+
+	* ld-elfvsb/elfvsb.exp (visibility_run): Set expected failures
+	for Linux/PPC.
+	* ld-shared/shared.exp: Likewise.
+
+2000-10-09  Hans-Peter Nilsson  <hp@bitrange.com>
+
+	* ld-selective/selective.exp: Rearrange to be table-driven.
+
+2000-10-07  Alan Modra  <alan@linuxcare.com.au>
+
+	* ld-scripts/phdrs.exp: hppa*64*-*-* is 64-bit ELF too.
+
+2000-10-02  Alan Modra  <alan@linuxcare.com.au>
+
+	* ld-scripts/weak.exp: Don't set $global$ for hppa-elf any more.
+	* ld-scripts/crossref.exp: Ditto.
+
+2000-09-29  Hans-Peter Nilsson  <hp@bitrange.com>
+
+	* ld-selective/5.cc: New test.
+	* ld-selective/selective.exp: Run it as xfailed.
+
+	* ld-selective/4.cc: Correct spelling of "lose".
+
+2000-09-05  Alan Modra  <alan@linuxcare.com.au>
+
+	* ld-selective/selective.exp: Remove the xfails for hppa.
+
+2000-08-30  Alexandre Oliva  <aoliva@redhat.com>
+
+	* ld-undefined/undefined.exp (hppa*64*-*-*, mn10300-*-elf,
+	sh-*-*): With dwarf-2, `undefined function' can't pass.
+
+2000-08-03  H.J. Lu  (hjl@gnu.org)
+
+	* ld-bootstrap/bootstrap.exp: Add strip.
+
+2000-07-24  H.J. Lu  (hjl@gnu.org)
+
+	* ld-elfvsb/elfvsb.exp: Add -g to $CC to get the location of
+	the undefined reference.
+
+2000-07-16  H.J. Lu  (hjl@gnu.org)
+
+	* ld-elfvsb/elfvsb.exp (support_protected): New variable. Check
+	and set to "yes" if the protected visibility is expected to
+	pass.
+	(visibility_run): Set expected to fail for the "protected"
+	and "protected_undef_def" tests only if $support_protected is
+	"no".
+
+	* ld-elfvsb/main.c (PROTECTED_CHECK): Check for the protected
+	visibility support if defined.
+
+2000-07-15  H.J. Lu  (hjl@gnu.org)
+
+	* ld-elfvsb/elfvsb.exp (visibility_run): Set expected failure
+	for "protected_undef_def".
+
+	* ld-elfvsb/main.c: Don't define HIDDEN_UNDEF_TEST when
+	PROTECTED_WEAK_TEST is defined.
+	Don't define PROTECTED_UNDEF_TEST when PROTECTED_WEAK_TEST is
+	defined.
+	Define PROTECTED_TEST when PROTECTED_UNDEF_TEST is defined.
+
+	* ld-elfvsb/sh1.c (visibility): Mark protected only if
+	PROTECTED_TEST, PROTECTED_UNDEF_TEST or PROTECTED_WEAK_TEST
+	is defined.
+	(visibility_var): Likewise.
+
+2000-07-10  Alan Modra  <alan@linuxcare.com.au>
+
+	* ld-srec/srec.exp: xfail hppa.
+
+	* ld-scripts/weak.exp: Define $global$ for hppa.
+
+	* ld-scripts/crossref.exp: Fix string quoting.
+
+2000-06-05  H.J. Lu  (hjl@gnu.org)
+
+	* lib/ld-lib.exp (default_ld_link): Redirect the linker output
+	to link_output and make it global.
+
+	* ld-elfvsb/elfvsb.exp (visibility_test): Add "hidden_undef",
+	"hidden_undef_def", "hidden_weak", "protected_undef",
+	"protected_undef_def" and "protected_weak".
+	(visibility_run): Likewise.
+	* ld-elfvsb/main.c: Likewise.
+	* ld-elfvsb/sh1.c: Likewise.
+	* ld-elfvsb/sh2.c: Likewise.
+
+	* ld-elfvsb/elfvsb.dat: Updated.
+
+2000-05-21  H.J. Lu  (hjl@gnu.org)
+
+	* ld-elfvsb/main.c (main_visibility_check): Fix the protected
+	visibility test.
+
+2000-05-13  H.J. Lu  (hjl@gnu.org)
+
+	* lib/ld-lib.exp (default_ld_link): Redirect the linker output
+	to link_output and make it global.
+
+	* ld-elfvsb/elf-offset.ld: New. ELF visibility fearture
+	tests.
+	* ld-elfvsb/elfvsb.dat: Likewise.
+	* ld-elfvsb/elfvsb.exp: Likewise.
+	* ld-elfvsb/main.c: Likewise.
+	* ld-elfvsb/sh1.c: Likewise.
+	* ld-elfvsb/sh2.c: Likewise.
+
+Fri Apr 21 15:16:07 2000  Richard Henderson  <rth@cygnus.com>
+
+	* testsuite/ld-scripts/phdrs.exp: IA-64 is 64-bit ELF too.
 
 2000-04-12  Alan Modra  <alan@linuxcare.com.au>
 
-	* ld-selective/selective.exp (test4): Delete incorrect foo__1B test.
+	* ld-selective/3.cc (_start): Add cheat for gcc-2.95.2 failure.
+
+	* ld-selective/selective.exp (test4): Test for presence of
+	foo__1B, not absence.  Also check for foo__1A and _start.
+	White space changes throughout file.
 
 2000-03-13  Nick Clifton  <nickc@cygnus.com>
 
