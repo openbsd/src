@@ -1,4 +1,4 @@
-/*	$OpenBSD: yppush.c,v 1.12 2000/10/12 09:47:27 deraadt Exp $ */
+/*	$OpenBSD: yppush.c,v 1.13 2001/01/11 23:38:07 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: yppush.c,v 1.12 2000/10/12 09:47:27 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: yppush.c,v 1.13 2001/01/11 23:38:07 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -80,15 +80,27 @@ usage()
 void
 _svc_run()
 {
-	fd_set readfds;
+	fd_set *readfdsp = NULL;
+	extern fd_set *__svc_fdset;
+	extern int __svc_fdsetsize;
 	struct timeval timeout;
 
 	timeout.tv_sec = 60;
 	timeout.tv_usec = 0;
 
 	for (;;) {
-		readfds = svc_fdset;
-		switch (select(_rpc_dtablesize(), &readfds, NULL,
+		if (readfdsp)
+			free(readfdsp);
+		readfdsp = (fd_set *)calloc(howmany(__svc_fdsetsize, NFDBITS),
+		    sizeof(fd_mask));
+		if (readfdsp == NULL) {
+			perror("calloc");
+			return;
+		}
+		bcopy(__svc_fdset, readfdsp, howmany(__svc_fdsetsize, NFDBITS) *
+		    sizeof(fd_mask));
+
+		switch (select(svc_maxfd, readfdsp, NULL,
 		    NULL, &timeout)) {
 		case -1:
 			if (errno == EINTR)
@@ -99,7 +111,7 @@ _svc_run()
 			fprintf(stderr, "yppush: Callback timed out.\n");
 			exit(0);
 		default:
-			svc_getreqset(&readfds);
+			svc_getreqset(readfdsp);
 			break;
 		}
 	}
