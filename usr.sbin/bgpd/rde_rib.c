@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.4 2003/12/21 16:11:34 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.5 2003/12/22 06:42:19 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Claudio Jeker <claudio@openbsd.org>
@@ -30,9 +30,9 @@
 /*
  * BGP RIB -- Routing Information Base
  *
- * The RIB is build with one aspect in mind. Speed -- acctually update speed.
- * Therefor one thing needs to be absolutly avoided, long table walks.
- * This is achieved by heavly linking the different parts toghether.
+ * The RIB is build with one aspect in mind. Speed -- actually update speed.
+ * Therefor one thing needs to be absolutely avoided, long table walks.
+ * This is achieved by heavily linking the different parts toghether.
  */
 
 struct rib_stats {
