@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.9 2001/02/17 22:38:06 pjanzen Exp $	*/
+/*	$OpenBSD: main.c,v 1.10 2001/02/17 23:01:04 pjanzen Exp $	*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -45,7 +45,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.9 2001/02/17 22:38:06 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.10 2001/02/17 23:01:04 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -253,8 +253,8 @@ again:
 				input[WHITE] = PROGRAM;
 				break;
 			}
-			plyr[BLACK] = input[BLACK] == USER ? "you" : prog;
-			plyr[WHITE] = input[WHITE] == USER ? "you" : prog;
+			plyr[BLACK] = input[BLACK] == USER ? you : prog;
+			plyr[WHITE] = input[WHITE] == USER ? you : prog;
 			bdwho(1);
 			goto top;
 
