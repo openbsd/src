@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace-translate.c,v 1.15 2003/04/06 23:57:51 deraadt Exp $	*/
+/*	$OpenBSD: systrace-translate.c,v 1.16 2003/04/14 02:13:30 deraadt Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -50,7 +50,7 @@
 #include "systrace.h"
 
 #define FL(w,c)	do { \
-	if (flags & (w) && p < str + sizeof str) \
+	if (flags & (w) && p < str + sizeof str - 1) \
 		*p++ = (c); \
 } while (0)
 
