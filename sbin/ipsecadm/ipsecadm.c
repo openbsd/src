@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.44 2000/09/29 19:06:53 angelos Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.45 2000/10/09 22:21:41 angelos Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -91,6 +91,7 @@ typedef struct {
 transform xf[] = {
     {"des", SADB_EALG_DESCBC,   XF_ENC |ESP_OLD|ESP_NEW},
     {"3des", SADB_EALG_3DESCBC, XF_ENC |ESP_OLD|ESP_NEW},
+    {"aes", SADB_X_EALG_AES, XF_ENC |ESP_NEW},
     {"blf", SADB_X_EALG_BLF,   XF_ENC |        ESP_NEW},
     {"cast", SADB_X_EALG_CAST, XF_ENC |        ESP_NEW},
     {"skipjack", SADB_X_EALG_SKIPJACK, XF_ENC |        ESP_NEW},

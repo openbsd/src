@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.46 2000/10/09 02:51:46 angelos Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.47 2000/10/09 22:18:29 angelos Exp $ */
 /*
 %%% copyright-nrl-97
 This software is Copyright 1997-1998 by Randall Atkinson, Ronald Lee,
@@ -53,6 +53,7 @@ static struct sadb_alg ealgs[] =
     { SADB_X_EALG_BLF, 64, 40, BLF_MAXKEYLEN * 8},
     { SADB_X_EALG_CAST, 64, 40, 128},
     { SADB_X_EALG_SKIPJACK, 64, 80, 80},
+    { SADB_X_EALG_AES, 128, 64, 256},
 };
 
 static struct sadb_alg aalgs[] =
@@ -248,6 +249,10 @@ export_sa(void **p, struct tdb *tdb)
 
 	    case CRYPTO_3DES_CBC:
 		sadb_sa->sadb_sa_encrypt = SADB_EALG_3DESCBC;
+		break;
+
+	    case CRYPTO_AES_CBC:
+		sadb_sa->sadb_sa_encrypt = SADB_X_EALG_AES;
 		break;
 
 	    case CRYPTO_CAST_CBC:
@@ -2035,43 +2040,50 @@ pfkeyv2_acquire(struct ipsec_policy *ipo, union sockaddr_union *gw,
 	/* Set the encryption algorithm */
 	if (ipo->ipo_sproto == IPPROTO_ESP)
 	{
-	    if (!strncasecmp(ipsec_def_enc, "3des", sizeof("3des")))
+	    if (!strncasecmp(ipsec_def_enc, "aes", sizeof("aes")))
 	    {
-		sadb_comb->sadb_comb_encrypt = SADB_EALG_3DESCBC;
-		sadb_comb->sadb_comb_encrypt_minbits = 192;
-		sadb_comb->sadb_comb_encrypt_maxbits = 192;
+		sadb_comb->sadb_comb_encrypt = SADB_X_EALG_AES;
+		sadb_comb->sadb_comb_encrypt_minbits = 64;
+		sadb_comb->sadb_comb_encrypt_maxbits = 256;
 	    }
 	    else
-	      if (!strncasecmp(ipsec_def_enc, "des", sizeof("des")))
+	      if (!strncasecmp(ipsec_def_enc, "3des", sizeof("3des")))
 	      {
-		  sadb_comb->sadb_comb_encrypt = SADB_EALG_DESCBC;
-		  sadb_comb->sadb_comb_encrypt_minbits = 64;
-		  sadb_comb->sadb_comb_encrypt_maxbits = 64;
+		  sadb_comb->sadb_comb_encrypt = SADB_EALG_3DESCBC;
+		  sadb_comb->sadb_comb_encrypt_minbits = 192;
+		  sadb_comb->sadb_comb_encrypt_maxbits = 192;
 	      }
 	      else
-		if (!strncasecmp(ipsec_def_enc, "blowfish",
-				 sizeof("blowfish")))
+		if (!strncasecmp(ipsec_def_enc, "des", sizeof("des")))
 		{
-		    sadb_comb->sadb_comb_encrypt = SADB_X_EALG_BLF;
-		    sadb_comb->sadb_comb_encrypt_minbits = 40;
-		    sadb_comb->sadb_comb_encrypt_maxbits = BLF_MAXKEYLEN * 8;
+		    sadb_comb->sadb_comb_encrypt = SADB_EALG_DESCBC;
+		    sadb_comb->sadb_comb_encrypt_minbits = 64;
+		    sadb_comb->sadb_comb_encrypt_maxbits = 64;
 		}
 		else
-		  if (!strncasecmp(ipsec_def_enc, "skipjack",
-				   sizeof("skipjack")))
+		  if (!strncasecmp(ipsec_def_enc, "blowfish",
+				   sizeof("blowfish")))
 		  {
-		      sadb_comb->sadb_comb_encrypt = SADB_X_EALG_SKIPJACK;
-		      sadb_comb->sadb_comb_encrypt_minbits = 80;
-		      sadb_comb->sadb_comb_encrypt_maxbits = 80;
+		      sadb_comb->sadb_comb_encrypt = SADB_X_EALG_BLF;
+		      sadb_comb->sadb_comb_encrypt_minbits = 40;
+		      sadb_comb->sadb_comb_encrypt_maxbits = BLF_MAXKEYLEN * 8;
 		  }
 		  else
-		    if (!strncasecmp(ipsec_def_enc, "cast128",
-				     sizeof("cast128")))
+		    if (!strncasecmp(ipsec_def_enc, "skipjack",
+				     sizeof("skipjack")))
 		    {
-			sadb_comb->sadb_comb_encrypt = SADB_X_EALG_CAST;
-			sadb_comb->sadb_comb_encrypt_minbits = 40;
-			sadb_comb->sadb_comb_encrypt_maxbits = 128;
+			sadb_comb->sadb_comb_encrypt = SADB_X_EALG_SKIPJACK;
+			sadb_comb->sadb_comb_encrypt_minbits = 80;
+			sadb_comb->sadb_comb_encrypt_maxbits = 80;
 		    }
+		    else
+		      if (!strncasecmp(ipsec_def_enc, "cast128",
+				       sizeof("cast128")))
+		      {
+			  sadb_comb->sadb_comb_encrypt = SADB_X_EALG_CAST;
+			  sadb_comb->sadb_comb_encrypt_minbits = 40;
+			  sadb_comb->sadb_comb_encrypt_maxbits = 128;
+		      }
 	}
 
 	/* Set the authentication algorithm */

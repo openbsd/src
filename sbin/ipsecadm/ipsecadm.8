@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.8,v 1.31 2000/09/29 19:10:08 angelos Exp $
+.\" $OpenBSD: ipsecadm.8,v 1.32 2000/10/09 22:21:41 angelos Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -331,14 +331,17 @@ This is available for both old and new esp.
 Notice that hardware crackers for DES can be (and have been) built for
 US$250,000 (in 1998).
 Use DES for encryption of critical information at your own risk.
-We suggest using 3DES instead.
+We suggest using 3DES or AES instead.
 DES support is kept for interoperability
 (with old implementations) purposes only.
 See
 .Xr des_cipher 3 .
 .It Nm 3des
 This is available for both old and new esp.
-It is considered more secure than straight DES, since it uses larger keys.
+It is considered more secure than straight DES, since it uses larger
+keys.
+.It Nm aes
+Rijndael encryption is available only in new esp.
 .It Nm blf
 Blowfish encryption is available only in new esp.
 See
@@ -370,10 +373,11 @@ and
 .Nm 3des
 is fixed to 8 and 24 respectively.
 For other ciphers like
-.Nm cast
+.Nm cast ,
+.Nm aes ,
 or
 .Nm blf
-the key length can be variable.
+the key length can vary (depending on the algorithm).
 The
 .Nm key
 should be given in hexadecimal digits.
