@@ -1,4 +1,4 @@
-/*	$OpenBSD: diofb.c,v 1.2 2005/01/16 16:14:09 miod Exp $	*/
+/*	$OpenBSD: diofb.c,v 1.3 2005/01/18 10:48:19 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -463,7 +463,7 @@ diofb_mmap(void * v, off_t offset, int prot)
 	if (offset & PGOFSET)
 		return (-1);
 
-	if (offset < 0 || offset > fb->fbsize)
+	if (offset < 0 || offset >= fb->fbsize)
 		return (-1);
 
 	return (((paddr_t)fb->fbaddr + offset) >> PGSHIFT);
