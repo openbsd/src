@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.67 2002/03/12 00:59:48 ho Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.68 2002/03/15 19:11:01 art Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -47,8 +47,6 @@ static char sccsid[] = "@(#)vmstat.c	8.1 (Berkeley) 6/6/93";
 static char rcsid[] = "$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $";
 #endif
 #endif /* not lint */
-
-#define __POOL_EXPOSE
 
 #include <sys/param.h>
 #include <sys/time.h>
