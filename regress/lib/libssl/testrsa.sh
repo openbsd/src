@@ -11,6 +11,7 @@ echo This will *not* work with what\'s in the tree, rsa is not in that.
 echo
 sleep 3
  
+cd $1
 
 # Generate RSA private key
 ssleay genrsa -out rsakey.pem
@@ -20,7 +21,7 @@ fi
 
 
 # Denerate an RSA certificate
-ssleay req -config ssleay.cnf -key rsakey.pem -new -x509 -days 365 -out rsacert.pem
+ssleay req -config $2/ssleay.cnf -key rsakey.pem -new -x509 -days 365 -out rsacert.pem
 if [ $? != 0 ]; then
         exit 1;
 fi

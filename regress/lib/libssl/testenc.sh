@@ -1,8 +1,10 @@
 #!/bin/sh
 
-testsrc=./ssleay.cnf
-test=./p
+testsrc=$2/ssleay.cnf
+test=$1/p
 cmd=/usr/sbin/ssleay
+
+cd $1
 
 cat $testsrc >$test;
 
