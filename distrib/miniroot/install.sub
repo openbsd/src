@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.267 2002/10/28 00:36:04 krw Exp $
+#	$OpenBSD: install.sub,v 1.268 2002/10/31 00:30:31 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1010,13 +1010,26 @@ encode_for_url() {
 	echo "$1" | sed -e 's/:/%3a/g' -e 's/@/%40/g' -e 's/\//%2f/g'
 }
 
+# Check for the presence of an error message in the output of the ftp commands
+# used to get the list of files in a directory. 
+#
+# $1 = error message to look for
+# $2 = ftp command output
+ftp_error () {
+	if [[ -n $(echo "$2" | grep "$1") ]]; then
+		echo $1
+		return 0
+	fi
+	return 1
+}
+
 # Get several parameters from the user, and xfer
 # files from the server.
 # $1 = url type (ftp or http)
 # Note:	_ftp_server_ip, _ftp_server_dir, _ftp_server_login,
 #	_ftp_server_password, and _ftp_active must be global.
 install_url() {
-	local _f _file_list _url_type=$1 _url_base _url_login _url_pass _oifs
+	local _file_list _url_type=$1 _url_base _url_login _url_pass _oifs
 
 	donetconfig
 
@@ -1148,6 +1161,8 @@ install_url() {
 	# XXX - check for nil $_file_list and deal
 	if [ "$_url_type" = "ftp" -a -z "$ftp_proxy" ] ; then
 		_file_list=`ftp_list_files "$_ftp_server_ip" "$_ftp_server_login" "$_ftp_server_password" "$_ftp_server_dir"`
+		ftp_error "Login failed." "$_file_list" && return
+		ftp_error "No such file or directory." "$_file_list" && return
 	else
 		# Assumes index file is "index.txt" for http (or proxy)
 		# We can't use index.html since the format is server-dependent
@@ -1578,13 +1593,9 @@ __EOT
 __EOT
 	fi
 
-	resp=
-	[[ -n $_insane ]] && ask "\nDo you want to (re)install the problem sets?" y
+	[[ -n $_insane ]] && return 1
 
-	case $resp in
-	Y*|y*)	return 1 ;;
-	*)	return 0 ;;
-	esac
+	return 0
 }
 
 # Ask the user for locations of sets, and then install whatever sets the
