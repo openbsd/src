@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.65 2004/04/02 23:48:35 dhartmei Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.66 2004/04/03 01:37:18 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -741,12 +741,22 @@ nextstate(struct con *cp)
 		cp->ol = strlen(cp->op);
 		cp->w = t + cp->stutter;
 		break;
-	case 60: {
+	case 60:
+		/* sent 354 blah */
+		cp->ip = cp->ibuf;
+		cp->il = sizeof(cp->ibuf) - 1;
+		cp->laststate = cp->state;
+		cp->state = 70;
+		cp->r = t;
+		break;
+	case 70: {
 		char *p, *q;
 
 		for (p = q = cp->ibuf; q <= cp->ip; ++q)
-			if (*q == '\r' || *q == '\n' || q == cp->ip) {
-				*q++ = 0;
+			if (*q == '\n' || q == cp->ip) {
+				*q = 0;
+				if (q > p && q[-1] == '\r')
+					q[-1] = 0;
 				if (!strcmp(p, ".") ||
 				    (cp->data_body && ++cp->data_lines >= 10)) {
 					cp->laststate = cp->state;
@@ -762,7 +772,7 @@ nextstate(struct con *cp)
 				    match(p, "TO:") || match(p, "SUBJECT:")))
 					syslog_r(LOG_INFO, &sdata, "%s: %s",
 					    cp->addr, p);
-				p = q;
+				p = ++q;
 			}
 		cp->ip = cp->ibuf;
 		cp->il = sizeof(cp->ibuf) - 1;
@@ -816,9 +826,6 @@ handler(struct con *cp)
 			cp->ip--;
 		*cp->ip = '\0';
 		cp->r = 0;
-		if (verbose)
-			syslog_r(LOG_DEBUG, &sdata, "%s: says '%s'", cp->addr,
-			    cp->ibuf);
 		nextstate(cp);
 	}
 }
