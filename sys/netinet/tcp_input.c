@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.56 1999/12/21 17:49:28 provos Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.57 2000/02/21 21:42:13 provos Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -1672,6 +1672,8 @@ trimthenstep6:
 				tp->t_dupacks = 0;
 			}
 		}
+		if (tp->t_dupacks < tcprexmtthresh)
+			tp->t_dupacks = 0;
 #else /* else no TCP_SACK */
 		if (tp->t_dupacks >= tcprexmtthresh &&
 		    tp->snd_cwnd > tp->snd_ssthresh)

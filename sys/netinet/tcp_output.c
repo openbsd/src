@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.29 2000/01/07 00:57:54 itojun Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.30 2000/02/21 21:42:13 provos Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -152,19 +152,30 @@ void
 tcp_sack_adjust(tp)
 	struct tcpcb *tp;
 {
-	int i;
-
-	for (i = 0; i < tp->rcv_numsacks; i++) {
-		if (SEQ_LT(tp->snd_nxt, tp->sackblks[i].start))
-			break;
-		if (SEQ_LEQ(tp->sackblks[i].end, tp->snd_nxt))
-			continue;
-		if (tp->sackblks[i].start == 0 && tp->sackblks[i].end == 0)
-			continue;
-		/* snd_nxt must be in middle of block of SACKed data */
-		tp->snd_nxt = tp->sackblks[i].end;
-		break;
+	struct sackhole *cur = tp->snd_holes;
+	if (cur == 0)
+		return; /* No holes */
+	if (SEQ_GEQ(tp->snd_nxt, tp->rcv_lastsack))
+		return; /* We're already beyond any SACKed blocks */
+	/* 
+	 * Two cases for which we want to advance snd_nxt:  
+	 * i) snd_nxt lies between end of one hole and beginning of another
+	 * ii) snd_nxt lies between end of last hole and rcv_lastsack
+	 */
+	while (cur->next) {
+		if (SEQ_LT(tp->snd_nxt, cur->end))
+			return;
+		if (SEQ_GEQ(tp->snd_nxt, cur->next->start)) 
+			cur = cur->next;
+		else {
+			tp->snd_nxt = cur->next->start;
+			return;
+		}
 	}
+	if (SEQ_LT(tp->snd_nxt, cur->end))
+		return;
+	tp->snd_nxt = tp->rcv_lastsack;
+	return;
 }
 #endif /* TCP_SACK */
 
@@ -182,7 +193,7 @@ tcp_output(tp)
 	register struct tcphdr *th;
 	u_char opt[MAX_TCPOPTLEN];
 	unsigned int optlen, hdrlen;
-	int idle, sendalot;
+	int idle, sendalot = 0;
 #ifdef TCP_SACK
 	int i, sack_rxmit = 0;
 	struct sackhole *p;
@@ -214,7 +225,6 @@ tcp_output(tp)
 		 */
 		tp->snd_cwnd = tp->t_maxseg;
 again:
-	sendalot = 0;
 #ifdef TCP_SACK
 	/*
 	 * If we've recently taken a timeout, snd_max will be greater than
@@ -228,12 +238,6 @@ again:
 	win = ulmin(tp->snd_wnd, tp->snd_cwnd);
 
 	flags = tcp_outflags[tp->t_state];
-	/*
-	 * If in persist timeout with window of 0, send 1 byte.
-	 * Otherwise, if window is small but nonzero
-	 * and timer expired, we will send what we can
-	 * and go to transmit state.
-	 */
 
 #ifdef TCP_SACK
 	/* 
@@ -260,6 +264,13 @@ again:
 	}
 #endif /* TCP_SACK */
 
+	sendalot = 0;
+	/*
+	 * If in persist timeout with window of 0, send 1 byte.
+	 * Otherwise, if window is small but nonzero
+	 * and timer expired, we will send what we can
+	 * and go to transmit state.
+	 */
 	if (tp->t_force) {
 		if (win == 0) {
 			/*
