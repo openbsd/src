@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_new.c,v 1.55 1999/12/09 20:22:03 angelos Exp $	*/
+/*	$OpenBSD: ip_esp_new.c,v 1.56 1999/12/26 20:46:13 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -339,6 +339,20 @@ esp_new_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	tdb->tdb_flags &= ~TDBF_SOFT_BYTES;       /* Turn off checking */
     }
 
+    /* 
+     * Skip forward to the beginning of the ESP header. If we run out
+     * of mbufs in the process, the check inside the following while()
+     * loop will catch it.
+     */
+    for (mo = m, i = 0; mo && i + mo->m_len <= skip; mo = mo->m_next)
+      i += mo->m_len;
+
+    off = skip - i;
+
+    /* Preserve these for later processing */
+    roff = off;
+    m1 = mo;
+
     /* Verify the authenticator */
     if (esph)
     {
@@ -346,20 +360,6 @@ esp_new_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 
 	/* Copy the authentication data */
 	m_copydata(m, m->m_pkthdr.len - alen, alen, iv);
-
-	/* 
-	 * Skip forward to the beginning of the ESP header. If we run out
-	 * of mbufs in the process, the check inside the following while()
-	 * loop will catch it.
-	 */
-	for (mo = m, i = 0; mo && i + mo->m_len <= skip; mo = mo->m_next)
-	  i += mo->m_len;
-
-	off = skip - i;
-
-	/* Preserve these for later processing */
-	roff = off;
-	m1 = mo;
 
 	while (oplen > 0)
 	{
