@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.7 1999/12/30 16:36:38 deraadt Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.8 2000/07/05 14:26:34 hugh Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.22 1996/05/03 19:42:00 christos Exp $	*/
 
 /* 
@@ -138,71 +138,6 @@ kdb_trap(type, code, regs)
 	}
 
 	return (1);
-}
-
-/*
- * Read bytes from kernel address space for debugger.
- */
-void
-db_read_bytes(addr, size, data)
-	vm_offset_t	addr;
-	register size_t	size;
-	register char	*data;
-{
-	register char	*src;
-
-	src = (char *)addr;
-	while (size-- > 0)
-		*data++ = *src++;
-}
-
-pt_entry_t *pmap_pte __P((pmap_t, vm_offset_t));
-
-/*
- * Write bytes to kernel address space for debugger.
- */
-void
-db_write_bytes(addr, size, data)
-	vm_offset_t	addr;
-	register size_t	size;
-	register char	*data;
-{
-	register char	*dst;
-
-	register pt_entry_t *ptep0 = 0;
-	pt_entry_t	oldmap0 = { 0 };
-	vm_offset_t	addr1;
-	register pt_entry_t *ptep1 = 0;
-	pt_entry_t	oldmap1 = { 0 };
-	extern char	etext;
-
-	if (addr >= VM_MIN_KERNEL_ADDRESS &&
-	    addr < (vm_offset_t)&etext) {
-		ptep0 = pmap_pte(pmap_kernel(), addr);
-		oldmap0 = *ptep0;
-		*(int *)ptep0 |= /* INTEL_PTE_WRITE */ PG_RW;
-
-		addr1 = i386_trunc_page(addr + size - 1);
-		if (i386_trunc_page(addr) != addr1) {
-			/* data crosses a page boundary */
-			ptep1 = pmap_pte(pmap_kernel(), addr1);
-			oldmap1 = *ptep1;
-			*(int *)ptep1 |= /* INTEL_PTE_WRITE */ PG_RW;
-		}
-		pmap_update();
-	}
-
-	dst = (char *)addr;
-
-	while (size-- > 0)
-		*dst++ = *data++;
-
-	if (ptep0) {
-		*ptep0 = oldmap0;
-		if (ptep1)
-			*ptep1 = oldmap1;
-		pmap_update();
-	}
 }
 
 void
