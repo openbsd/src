@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.87 2002/05/24 21:53:08 deraadt Exp $
+.\"	$OpenBSD: sysctl.3,v 1.88 2002/05/28 03:18:57 itojun Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1024,6 +1024,7 @@ The currently defined protocols and names are:
 .It ip6	kame_version	string	no
 .It ip6	use_deprecated	integer	yes
 .It ip6	rr_prune	integer	yes
+.It ip6	maxfrags	integer	yes
 .It icmp6	rediraccept	integer	yes
 .It icmp6	redirtimeout	integer	yes
 .It icmp6	nd6_prune	integer	yes
@@ -1114,6 +1115,11 @@ RFC2462 5.5.4.
 .It Li ip6.rr_prune
 The variable specifies interval between IPv6 router renumbering prefix
 babysitting in seconds.
+.It Li ip6.maxfrags
+The maximum number of fragments the node will accept.
+0 means that the node will not accept any fragments.
+-1 means that the node will accept as many fragments as it receives.
+The flag is provided basically for avoiding possible DoS attacks.
 .It Li icmp6.rediraccept
 If set to non-zero, the host will accept ICMPv6 redirect packets.
 Note that IPv6 routers will never accept ICMPv6 redirect packets,
