@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_openbsd.c,v 1.12 2004/06/22 18:57:18 marco Exp $	*/
+/*	$OpenBSD: mpt_openbsd.c,v 1.13 2004/06/30 00:45:04 krw Exp $	*/
 /*	$NetBSD: mpt_netbsd.c,v 1.7 2003/07/14 15:47:11 lukem Exp $	*/
 
 /*
@@ -101,8 +101,8 @@
 
 #include <dev/ic/mpt.h>			/* pulls in all headers */
 
-void	mpt_run_ppr(mpt_softc_t *);
-int	mpt_ppr(mpt_softc_t *, struct scsi_link *, int speed);
+void	mpt_run_ppr(mpt_softc_t *, int);
+int	mpt_ppr(mpt_softc_t *, struct scsi_link *, int, int);
 int	mpt_poll(mpt_softc_t *, struct scsi_xfer *, int);
 void	mpt_timeout(void *);
 void	mpt_done(mpt_softc_t *, uint32_t);
@@ -135,11 +135,10 @@ enum mpt_scsi_speed { U320, U160, U80 };
  * return 1 if passed
  */
 int
-mpt_ppr(mpt_softc_t *mpt, struct scsi_link *sc_link, int speed)
+mpt_ppr(mpt_softc_t *mpt, struct scsi_link *sc_link, int speed, int flags)
 {
 	fCONFIG_PAGE_SCSI_DEVICE_0 page0;
 	fCONFIG_PAGE_SCSI_DEVICE_1 page1;
-        struct scsi_inquiry scsi_cmd;
 	uint8_t tp;
 	int error;
 	struct scsi_inquiry_data inqbuf;
@@ -252,17 +251,7 @@ mpt_ppr(mpt_softc_t *mpt, struct scsi_link *sc_link, int speed)
 	 * 1) actually transfer data at requested speed
 	 * 2) no need to test for TUR QUIRK
 	 */
-	bzero(&scsi_cmd, sizeof scsi_cmd);
-	scsi_cmd.opcode = INQUIRY;
-	bzero(&inqbuf, sizeof inqbuf);
-	/*
-	 * Ask only for a minimal amount of data, since we only want to
-	 * test data xfer not read all the INQUIRY data.
-	 */
-	scsi_cmd.length = SID_INQUIRY_HDR + SID_SCSI2_ALEN;
-	error = scsi_scsi_cmd(sc_link, (struct scsi_generic *)&scsi_cmd,
-		sizeof(scsi_cmd), (u_char *)&inqbuf, scsi_cmd.length, 0, 10000, NULL,
-		SCSI_DATA_IN);
+	error = scsi_inquire(sc_link, &inqbuf, flags);
 	if (error) {
 		mpt_prt(mpt, "Invalid INQUIRY on target: %d", sc_link->target);
 		return 0;
@@ -356,7 +345,7 @@ mpt_ppr(mpt_softc_t *mpt, struct scsi_link *sc_link, int speed)
  * Run PPR on all attached devices
  */
 void
-mpt_run_ppr(mpt_softc_t *mpt)
+mpt_run_ppr(mpt_softc_t *mpt, int flags)
 {
 	struct scsi_link *sc_link;
 	struct device *dev;
@@ -375,23 +364,23 @@ mpt_run_ppr(mpt_softc_t *mpt)
 			for (target = 0; target < buswidth; target++) {
 				sc_link = ((struct scsibus_softc *)dev)->sc_link[target][0];
 				if ((sc_link != NULL)) {
-				/* got a device! run PPR */
-					/* FIXME: skip CPU devices since they can
-					 * crash at U320 speeds */
+					/* got a device! run PPR */
+					/* FIXME: skip CPU devices since they
+					 * can crash at U320 speeds */
 					/*if (device == cpu) {
 						continue;
 					}*/
-					if (mpt_ppr(mpt, sc_link, U320)) {
+					if (mpt_ppr(mpt, sc_link, U320, flags)) {
 						mpt->mpt_negotiated_speed[target] = U320;
 						continue;
 					}
 
-					if (mpt_ppr(mpt, sc_link, U160)) {
+					if (mpt_ppr(mpt, sc_link, U160, flags)) {
 						mpt->mpt_negotiated_speed[target] = U160;
 						continue;
 					}
 
-					if (mpt_ppr(mpt, sc_link, U80)) {
+					if (mpt_ppr(mpt, sc_link, U80, flags)) {
 						mpt->mpt_negotiated_speed[target] = U80;
 						continue;
 					}
@@ -440,7 +429,7 @@ mpt_attach(mpt_softc_t *mpt)
 	/* done attaching now walk targets and PPR them */
 	/* FC does not do PPR */
 	if (!mpt->is_fc) {
-		mpt_run_ppr(mpt);
+		mpt_run_ppr(mpt, SCSI_POLL);
 	}
 }
 
