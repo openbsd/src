@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_exec.h,v 1.4 1999/06/06 15:38:50 deraadt Exp $	 */
+/*	$OpenBSD: svr4_exec.h,v 1.5 2000/06/15 05:44:10 brad Exp $	 */
 /*	$NetBSD: svr4_exec.h,v 1.7 1995/07/02 06:16:06 christos Exp $	 */
 
 /*
@@ -41,7 +41,7 @@
  * The following is horrible; there must be a better way. I need to
  * play with brk(2) a bit more.
  */
-#ifdef i386
+#ifdef __i386__
 /*
  * I cannot load the interpreter after the data segment because brk(2)
  * breaks. I have to load it somewhere before. Programs start at
