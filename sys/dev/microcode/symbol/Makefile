@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2004/11/22 22:15:23 deraadt Exp $
+# $OpenBSD: Makefile,v 1.4 2004/12/19 16:19:42 deraadt Exp $
 
 NOPROG=
 NOMAN=
@@ -6,7 +6,8 @@ NOMAN=
 # pcmcia capable systems only
 .if (${MACHINE} == "i386") || (${MACHINE} == "macppc") || \
     (${MACHINE} == "sparc") || (${MACHINE} == "sparc64") || \
-    (${MACHINE} == "hppa")
+    (${MACHINE} == "hppa") || (${MACHINE} == "hppa64") || \
+    (${MACHINE} == "sgi")
 
 afterinstall:
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 644 \

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2004/12/19 15:20:13 deraadt Exp $
+# $OpenBSD: Makefile,v 1.2 2004/12/19 16:19:43 deraadt Exp $
 
 NOPROG=
 NOMAN=
@@ -7,7 +7,8 @@ NOMAN=
 .if (${MACHINE} == "i386") || (${MACHINE} == "amd64") || \
     (${MACHINE} == "alpha") || (${MACHINE} == "sparc64") || \
     (${MACHINE_ARCH} == "powerpc") || (${MACHINE} == "cats") || \
-    (${MACHINE} == "hppa") || (${MACHINE} == "sgi")
+    (${MACHINE} == "hppa") || (${MACHINE} == "hppa64") || \
+    (${MACHINE} == "sgi")
 
 FIRM= 	uyap
 
