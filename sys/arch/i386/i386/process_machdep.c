@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.19 1995/10/11 04:19:47 mycroft Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.20 1996/01/13 06:14:44 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -76,6 +76,10 @@
 #include <machine/reg.h>
 #include <machine/segments.h>
 
+#ifdef VM86
+#include <machine/vm86.h>
+#endif
+
 static inline struct trapframe *
 process_frame(p)
 	struct proc *p;
@@ -106,6 +110,9 @@ process_read_regs(p, regs)
 		regs->r_fs = tf->tf_vm86_fs;
 		regs->r_es = tf->tf_vm86_es;
 		regs->r_ds = tf->tf_vm86_ds;
+		regs->r_eflags = tf->tf_eflags;
+		SETFLAGS(regs->r_eflags, VM86_EFLAGS(p),
+			 VM86_FLAGMASK(p)|PSL_VIF);
 	} else
 #endif
 	{
@@ -113,19 +120,19 @@ process_read_regs(p, regs)
 		regs->r_fs = pcb->pcb_fs;
 		regs->r_es = tf->tf_es;
 		regs->r_ds = tf->tf_ds;
+		regs->r_eflags = tf->tf_eflags;
 	}
-	regs->r_edi    = tf->tf_edi;
-	regs->r_esi    = tf->tf_esi;
-	regs->r_ebp    = tf->tf_ebp;
-	regs->r_ebx    = tf->tf_ebx;
-	regs->r_edx    = tf->tf_edx;
-	regs->r_ecx    = tf->tf_ecx;
-	regs->r_eax    = tf->tf_eax;
-	regs->r_eip    = tf->tf_eip;
-	regs->r_cs     = tf->tf_cs;
-	regs->r_eflags = tf->tf_eflags;
-	regs->r_esp    = tf->tf_esp;
-	regs->r_ss     = tf->tf_ss;
+	regs->r_edi = tf->tf_edi;
+	regs->r_esi = tf->tf_esi;
+	regs->r_ebp = tf->tf_ebp;
+	regs->r_ebx = tf->tf_ebx;
+	regs->r_edx = tf->tf_edx;
+	regs->r_ecx = tf->tf_ecx;
+	regs->r_eax = tf->tf_eax;
+	regs->r_eip = tf->tf_eip;
+	regs->r_cs = tf->tf_cs;
+	regs->r_esp = tf->tf_esp;
+	regs->r_ss = tf->tf_ss;
 
 	return (0);
 }
@@ -172,6 +179,9 @@ process_write_regs(p, regs)
 		tf->tf_vm86_fs = regs->r_fs;
 		tf->tf_vm86_es = regs->r_es;
 		tf->tf_vm86_ds = regs->r_ds;
+		tf->tf_eflags = regs->r_eflags;
+		SETFLAGS(VM86_EFLAGS(p), regs->r_eflags,
+			 VM86_FLAGMASK(p)|PSL_VIF);
 	} else
 #endif
 	{
@@ -199,21 +209,21 @@ process_write_regs(p, regs)
 
 		pcb->pcb_gs = regs->r_gs;
 		pcb->pcb_fs = regs->r_fs;
-		tf->tf_es   = regs->r_es;
-		tf->tf_ds   = regs->r_ds;
+		tf->tf_es = regs->r_es;
+		tf->tf_ds = regs->r_ds;
+		tf->tf_eflags = regs->r_eflags;
 	}
-	tf->tf_edi    = regs->r_edi;
-	tf->tf_esi    = regs->r_esi;
-	tf->tf_ebp    = regs->r_ebp;
-	tf->tf_ebx    = regs->r_ebx;
-	tf->tf_edx    = regs->r_edx;
-	tf->tf_ecx    = regs->r_ecx;
-	tf->tf_eax    = regs->r_eax;
-	tf->tf_eip    = regs->r_eip;
-	tf->tf_cs     = regs->r_cs;
-	tf->tf_eflags = regs->r_eflags;
-	tf->tf_esp    = regs->r_esp;
-	tf->tf_ss     = regs->r_ss;
+	tf->tf_edi = regs->r_edi;
+	tf->tf_esi = regs->r_esi;
+	tf->tf_ebp = regs->r_ebp;
+	tf->tf_ebx = regs->r_ebx;
+	tf->tf_edx = regs->r_edx;
+	tf->tf_ecx = regs->r_ecx;
+	tf->tf_eax = regs->r_eax;
+	tf->tf_eip = regs->r_eip;
+	tf->tf_cs = regs->r_cs;
+	tf->tf_esp = regs->r_esp;
+	tf->tf_ss = regs->r_ss;
 
 	return (0);
 }
