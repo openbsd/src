@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.133 2003/06/10 16:41:29 deraadt Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.134 2003/07/24 09:59:03 itojun Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -961,6 +961,10 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming,
         case IPSEC_AUTH_HMAC_RIPEMD:
 #ifdef SADB_X_AALG_RIPEMD160HMAC96
 	  ssa.sadb_sa_auth = SADB_X_AALG_RIPEMD160HMAC96;
+#elif defined(SADB_X_AALG_RIPEMD160HMAC)
+	  ssa.sadb_sa_auth = SADB_X_AALG_RIPEMD160HMAC;
+#elif defined(SADB_X_AALG_RIPEMD160)
+	  ssa.sadb_sa_auth = SADB_X_AALG_RIPEMD160;
 #else
 	  ssa.sadb_sa_auth = SADB_AALG_RIPEMD160HMAC;
 #endif
@@ -1008,6 +1012,10 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming,
 	case IPSEC_AH_RIPEMD:
 #ifdef SADB_X_AALG_RIPEMD160HMAC96
 	  ssa.sadb_sa_auth = SADB_X_AALG_RIPEMD160HMAC96;
+#elif defined(SADB_X_AALG_RIPEMD160HMAC)
+	  ssa.sadb_sa_auth = SADB_X_AALG_RIPEMD160HMAC;
+#elif defined(SADB_X_AALG_RIPEMD160)
+	  ssa.sadb_sa_auth = SADB_X_AALG_RIPEMD160;
 #else
 	  ssa.sadb_sa_auth = SADB_AALG_RIPEMD160HMAC;
 #endif

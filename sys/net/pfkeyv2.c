@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.88 2003/07/24 08:03:19 itojun Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.89 2003/07/24 09:59:02 itojun Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -105,10 +105,10 @@ static const struct sadb_alg ealgs[] = {
 static const struct sadb_alg aalgs[] = {
 	{ SADB_AALG_SHA1HMAC, 0, 160, 160 },
 	{ SADB_AALG_MD5HMAC, 0, 128, 128 },
-	{ SADB_AALG_RIPEMD160HMAC, 0, 160, 160 },
-	{ SADB_AALG_SHA2_256, 0, 256, 256 },
-	{ SADB_AALG_SHA2_384, 0, 384, 384 },
-	{ SADB_AALG_SHA2_512, 0, 512, 512 }
+	{ SADB_X_AALG_RIPEMD160HMAC, 0, 160, 160 },
+	{ SADB_X_AALG_SHA2_256, 0, 256, 256 },
+	{ SADB_X_AALG_SHA2_384, 0, 384, 384 },
+	{ SADB_X_AALG_SHA2_512, 0, 512, 512 }
 };
 
 static const struct sadb_alg calgs[] = {
@@ -1945,7 +1945,7 @@ pfkeyv2_acquire(struct ipsec_policy *ipo, union sockaddr_union *gw,
 			sadb_comb->sadb_comb_auth_maxbits = 160;
 		} else if (!strncasecmp(ipsec_def_auth, "hmac-ripemd160",
 		    sizeof("hmac_ripemd160"))) {
-			sadb_comb->sadb_comb_auth = SADB_AALG_RIPEMD160HMAC;
+			sadb_comb->sadb_comb_auth = SADB_X_AALG_RIPEMD160HMAC;
 			sadb_comb->sadb_comb_auth_minbits = 160;
 			sadb_comb->sadb_comb_auth_maxbits = 160;
 		} else if (!strncasecmp(ipsec_def_auth, "hmac-md5",
@@ -1955,17 +1955,17 @@ pfkeyv2_acquire(struct ipsec_policy *ipo, union sockaddr_union *gw,
 			sadb_comb->sadb_comb_auth_maxbits = 128;
 		} else if (!strncasecmp(ipsec_def_auth, "hmac-sha2-256",
 		    sizeof("hmac-sha2-256"))) {
-			sadb_comb->sadb_comb_auth = SADB_AALG_SHA2_256;
+			sadb_comb->sadb_comb_auth = SADB_X_AALG_SHA2_256;
 			sadb_comb->sadb_comb_auth_minbits = 256;
 			sadb_comb->sadb_comb_auth_maxbits = 256;
 		} else if (!strncasecmp(ipsec_def_auth, "hmac-sha2-384",
 		    sizeof("hmac-sha2-384"))) {
-			sadb_comb->sadb_comb_auth = SADB_AALG_SHA2_384;
+			sadb_comb->sadb_comb_auth = SADB_X_AALG_SHA2_384;
 			sadb_comb->sadb_comb_auth_minbits = 384;
 			sadb_comb->sadb_comb_auth_maxbits = 384;
 		} else if (!strncasecmp(ipsec_def_auth, "hmac-sha2-512",
 		    sizeof("hmac-sha2-512"))) {
-			sadb_comb->sadb_comb_auth = SADB_AALG_SHA2_512;
+			sadb_comb->sadb_comb_auth = SADB_X_AALG_SHA2_512;
 			sadb_comb->sadb_comb_auth_minbits = 512;
 			sadb_comb->sadb_comb_auth_maxbits = 512;
 		}

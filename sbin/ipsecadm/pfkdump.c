@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkdump.c,v 1.6 2003/07/24 08:03:19 itojun Exp $	*/
+/*	$OpenBSD: pfkdump.c,v 1.7 2003/07/24 09:59:03 itojun Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -142,13 +142,13 @@ struct idname sa_types[] = {
 
 struct idname auth_types[] = {
 	{ SADB_AALG_NONE,		"none",			NULL },
-	{ SADB_AALG_DES,		"des",			NULL },
+	{ SADB_X_AALG_DES,		"des",			NULL },
 	{ SADB_AALG_MD5HMAC,		"hmac-md5",		NULL },
-	{ SADB_AALG_RIPEMD160HMAC,	"hmac-ripemd160",	NULL },
+	{ SADB_X_AALG_RIPEMD160HMAC,	"hmac-ripemd160",	NULL },
 	{ SADB_AALG_SHA1HMAC,		"hmac-sha1",		NULL },
-	{ SADB_AALG_SHA2_256,		"hmac-sha2-256",	NULL },
-	{ SADB_AALG_SHA2_384,		"hmac-sha2-384",	NULL },
-	{ SADB_AALG_SHA2_512,		"hmac-sha2-512",	NULL },
+	{ SADB_X_AALG_SHA2_256,		"hmac-sha2-256",	NULL },
+	{ SADB_X_AALG_SHA2_384,		"hmac-sha2-384",	NULL },
+	{ SADB_X_AALG_SHA2_512,		"hmac-sha2-512",	NULL },
 	{ SADB_X_AALG_MD5,		"md5",			NULL },
 	{ SADB_X_AALG_SHA1,		"sha1",			NULL },
 	{ 0,				NULL,			NULL }
@@ -165,7 +165,7 @@ struct idname enc_types[] = {
 	{ SADB_X_EALG_DES_IV32,		"des-iv32",		NULL },
 	{ SADB_X_EALG_DES_IV64,		"des-iv64",		NULL },
 	{ SADB_X_EALG_IDEA,		"idea",			NULL },
-	{ SADB_X_EALG_NULL,		"null",			NULL },
+	{ SADB_EALG_NULL,		"null",			NULL },
 	{ SADB_X_EALG_RC4,		"rc4",			NULL },
 	{ SADB_X_EALG_RC5,		"rc5",			NULL },
 	{ SADB_X_EALG_SKIPJACK,		"skipjack",		NULL },

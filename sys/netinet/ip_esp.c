@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.85 2003/07/24 08:03:20 itojun Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.86 2003/07/24 09:59:02 itojun Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -156,19 +156,19 @@ esp_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
 			thash = &auth_hash_hmac_sha1_96;
 			break;
 
-		case SADB_AALG_RIPEMD160HMAC:
+		case SADB_X_AALG_RIPEMD160HMAC:
 			thash = &auth_hash_hmac_ripemd_160_96;
 			break;
 
-		case SADB_AALG_SHA2_256:
+		case SADB_X_AALG_SHA2_256:
 			thash = &auth_hash_hmac_sha2_256_96;
 			break;
 
-		case SADB_AALG_SHA2_384:
+		case SADB_X_AALG_SHA2_384:
 			thash = &auth_hash_hmac_sha2_384_96;
 			break;
 
-		case SADB_AALG_SHA2_512:
+		case SADB_X_AALG_SHA2_512:
 			thash = &auth_hash_hmac_sha2_512_96;
 			break;
 

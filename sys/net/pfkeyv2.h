@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.h,v 1.47 2003/02/24 21:34:39 jason Exp $ */
+/* $OpenBSD: pfkeyv2.h,v 1.48 2003/07/24 09:59:02 itojun Exp $ */
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) January 1998
  * 
@@ -267,11 +267,11 @@ struct sadb_x_cred {
 #define SADB_AALG_NONE               0
 #define SADB_AALG_MD5HMAC            2
 #define SADB_AALG_SHA1HMAC           3
-#define SADB_AALG_DES                4
-#define SADB_AALG_SHA2_256           5
-#define SADB_AALG_SHA2_384           6
-#define SADB_AALG_SHA2_512           7
-#define SADB_AALG_RIPEMD160HMAC      8
+#define SADB_X_AALG_DES              4
+#define SADB_X_AALG_SHA2_256         5
+#define SADB_X_AALG_SHA2_384         6
+#define SADB_X_AALG_SHA2_512         7
+#define SADB_X_AALG_RIPEMD160HMAC    8
 #define SADB_X_AALG_MD5              249
 #define SADB_X_AALG_SHA1             250
 #define SADB_AALG_MAX                250
@@ -287,7 +287,7 @@ struct sadb_x_cred {
 #define SADB_X_EALG_3IDEA     8
 #define SADB_X_EALG_DES_IV32  9
 #define SADB_X_EALG_RC4       10
-#define SADB_X_EALG_NULL      11
+#define SADB_EALG_NULL        11
 #define SADB_X_EALG_AES       12
 #define SADB_X_EALG_SKIPJACK  249
 #define SADB_EALG_MAX         249
