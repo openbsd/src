@@ -157,10 +157,10 @@
 .	ds cH \\$2
 .\" .	if "\\$3"" \{\
 .		if \\$2>=1 .if \\$2<=9 \{\
-.			ds vT NetBSD Reference Manual
-.			if \\$2>1 .if \\$2<6 .ds vT NetBSD Programmer's Manual
-.			if "\\$2"8" .ds vT NetBSD System Manager's Manual
-.			if "\\$2"9" .ds vT NetBSD Kernel Manual
+.			ds vT OpenBSD Reference Manual
+.			if \\$2>1 .if \\$2<6 .ds vT OpenBSD Programmer's Manual
+.			if "\\$2"8" .ds vT OpenBSD System Manager's Manual
+.			if "\\$2"9" .ds vT OpenBSD Kernel Manual
 .			nr sN \\$2
 .		\}
 .		if "\\$2"unass"  .ds vT DRAFT
@@ -169,18 +169,18 @@
 .\" .	\}
 .\}
 .if !"\\$3"" \{\
-.	if "\\$3"USD"   .ds vT NetBSD User's Supplementary Documents
-.	if "\\$3"PS1"   .ds vT NetBSD Programmers's Supplementary Documents
-.	if "\\$3"AMD"   .ds vT NetBSD Ancestral Manual Documents
-.	if "\\$3"SMM"   .ds vT NetBSD System Manager's Manual
-.	if "\\$3"URM"   .ds vT NetBSD Reference Manual
-.	if "\\$3"PRM"   .ds vT NetBSD Programmers's Manual
-.	if "\\$3"KM"    .ds vT NetBSD Kernel Manual
-.	if "\\$3"IND"   .ds vT NetBSD Manual Master Index
-.\" .	if "\\$3"CON"   .ds vT NetBSD Contributed Software Manual
-.\" .	if "\\$3"IMP"	.ds vT NetBSD Implementation Notes
-.\" .	if "\\$3"HOW"	.ds vT NetBSD How Pocket Manual
-.	if "\\$3"LOCAL" .ds vT NetBSD Local Manual
+.	if "\\$3"USD"   .ds vT OpenBSD User's Supplementary Documents
+.	if "\\$3"PS1"   .ds vT OpenBSD Programmers's Supplementary Documents
+.	if "\\$3"AMD"   .ds vT OpenBSD Ancestral Manual Documents
+.	if "\\$3"SMM"   .ds vT OpenBSD System Manager's Manual
+.	if "\\$3"URM"   .ds vT OpenBSD Reference Manual
+.	if "\\$3"PRM"   .ds vT OpenBSD Programmers's Manual
+.	if "\\$3"KM"    .ds vT OpenBSD Kernel Manual
+.	if "\\$3"IND"   .ds vT OpenBSD Manual Master Index
+.\" .	if "\\$3"CON"   .ds vT OpenBSD Contributed Software Manual
+.\" .	if "\\$3"IMP"	.ds vT OpenBSD Implementation Notes
+.\" .	if "\\$3"HOW"	.ds vT OpenBSD How Pocket Manual
+.	if "\\$3"LOCAL" .ds vT OpenBSD Local Manual
 .	if "\\$3"amiga" .as vT \ (AMIGA Architecture)
 .	if "\\$3"da30"  .as vT \ (DA30 Architecture)
 .	if "\\$3"hp300" .as vT \ (HP300 Architecture)
@@ -240,6 +240,10 @@
 .	if "\\$2"0.9a" .as oS \00.9a
 .	if "\\$2"1.0"  .as oS \01.0
 .	if "\\$2"1.1"  .as oS \01.1 Experimental
+.\}
+.if "\\$1"OpenBSD" \{\
+.	ds oS OpenBSD
+.	if "\\$2"1.2"  .as oS \01.2
 .\}
 .if "\\*(oS"Null" .ds oS \0\\$1
 .if "\\*(aa"Non-Null" .as oS \0\\$2
