@@ -1,3 +1,4 @@
+/*	$OpenBSD: lca_pci.c,v 1.3 1996/07/29 23:00:28 niklas Exp $	*/
 /*	$NetBSD: lca_pci.c,v 1.3 1996/04/23 14:01:00 cgd Exp $	*/
 
 /*

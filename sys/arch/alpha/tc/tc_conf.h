@@ -1,3 +1,4 @@
+/*	$OpenBSD: tc_conf.h,v 1.2 1996/07/29 23:02:29 niklas Exp $	*/
 /*	$NetBSD: tc_conf.h,v 1.1 1995/12/20 00:43:32 cgd Exp $	*/
 
 /*

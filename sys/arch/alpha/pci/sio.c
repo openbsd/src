@@ -1,3 +1,4 @@
+/*	$OpenBSD: sio.c,v 1.4 1996/07/29 23:00:53 niklas Exp $	*/
 /*	$NetBSD: sio.c,v 1.8 1996/04/13 00:23:34 cgd Exp $	*/
 
 /*

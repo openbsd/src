@@ -1,3 +1,4 @@
+/*	$OpenBSD: lcareg.h,v 1.3 1996/07/29 23:00:30 niklas Exp $	*/
 /*	$NetBSD: lcareg.h,v 1.2 1996/04/23 14:03:46 cgd Exp $	*/
 
 /*

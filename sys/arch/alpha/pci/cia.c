@@ -1,3 +1,4 @@
+/*	$OpenBSD: cia.c,v 1.3 1996/07/29 23:00:15 niklas Exp $	*/
 /*	$NetBSD: cia.c,v 1.5.4.1 1996/06/10 00:02:39 cgd Exp $	*/
 
 /*

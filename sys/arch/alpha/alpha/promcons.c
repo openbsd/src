@@ -1,3 +1,4 @@
+/*	$OpenBSD: promcons.c,v 1.3 1996/07/29 22:58:00 niklas Exp $	*/
 /*	$NetBSD: promcons.c,v 1.2.6.1 1996/06/03 18:54:31 cgd Exp $	*/
 
 /*

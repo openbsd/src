@@ -1,3 +1,4 @@
+/*	$OpenBSD: OSFpal.c,v 1.3 1996/07/29 23:01:16 niklas Exp $	*/
 /*	$NetBSD: OSFpal.c,v 1.2 1996/04/12 06:09:30 cgd Exp $	*/
 
 /*

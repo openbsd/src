@@ -1,3 +1,4 @@
+/*	$OpenBSD: sio_pic.c,v 1.5 1996/07/29 23:00:55 niklas Exp $	*/
 /*	$NetBSD: sio_pic.c,v 1.7.4.3 1996/06/05 22:50:23 cgd Exp $	*/
 
 /*
@@ -272,12 +273,13 @@ sio_intr_string(v, irq)
 }
 
 void *
-sio_intr_establish(v, irq, type, level, ih_fun, ih_arg)
+sio_intr_establish(v, irq, type, level, ih_fun, ih_arg, name)
 	void *v, *ih_arg;
         int irq;
         int type;
         int level;
         int (*ih_fun)(void *);
+	char *name;
 {
 	struct intrhand **p, *c, *ih;
 	extern int cold;

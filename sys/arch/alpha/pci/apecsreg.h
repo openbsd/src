@@ -1,3 +1,4 @@
+/*	$OpenBSD: apecsreg.h,v 1.3 1996/07/29 23:00:10 niklas Exp $	*/
 /*	$NetBSD: apecsreg.h,v 1.3 1995/11/23 02:37:19 cgd Exp $	*/
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: in_cksum.c,v 1.2 1996/07/29 22:57:37 niklas Exp $	*/
 /*	$NetBSD: in_cksum.c,v 1.2.4.1 1996/05/30 23:12:50 cgd Exp $	*/
 
 /*

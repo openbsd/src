@@ -1,3 +1,4 @@
+/*	$OpenBSD: pcivgavar.h,v 1.4 1996/07/29 23:00:48 niklas Exp $	*/
 /*	$NetBSD: pcivgavar.h,v 1.5 1996/04/12 06:08:58 cgd Exp $	*/
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: prom_swpal.S,v 1.2 1996/07/29 23:01:44 niklas Exp $	*/
 /*	$NetBSD: prom_swpal.S,v 1.2 1995/02/16 02:32:58 cgd Exp $	*/
 
 /*

@@ -1,5 +1,6 @@
 #!/bin/sh -
 #
+#	$OpenBSD: build_all,v 1.3 1996/07/29 22:58:17 niklas Exp $
 #	$NetBSD: build_all,v 1.4.4.1 1996/06/15 03:46:17 cgd Exp $
 
 cflist=`cd ../conf ; find . -type f ! -name "*[a-z.]*" ! -name ".*" | \

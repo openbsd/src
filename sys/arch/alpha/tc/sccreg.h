@@ -1,3 +1,4 @@
+/*	$OpenBSD: sccreg.h,v 1.2 1996/07/29 23:02:13 niklas Exp $	*/
 /*	$NetBSD: sccreg.h,v 1.2 1995/04/11 03:41:10 mycroft Exp $	*/
 
 /* 

@@ -1,3 +1,4 @@
+/*	$OpenBSD: pckbd.c,v 1.5 1996/07/29 22:59:49 niklas Exp $	*/
 /*	$NetBSD: pckbd.c,v 1.7 1996/05/05 01:41:53 thorpej Exp $	*/
 
 /*-
@@ -394,7 +395,7 @@ pckbdattach(parent, self, aux)
 	pckbd_delay_ioh = ia->ia_delayioh;
 
 	sc->sc_ih = isa_intr_establish(pckbd_ic, ia->ia_irq, IST_EDGE,
-	    IPL_TTY, pckbdintr, sc);
+	    IPL_TTY, pckbdintr, sc, sc->sc_dev.dv_xname);
 
 	sc->sc_bellactive = sc->sc_bellpitch = 0;
 

@@ -1,3 +1,4 @@
+/*	$OpenBSD: tcds_dma.c,v 1.3 1996/07/29 23:02:36 niklas Exp $	*/
 /*	$NetBSD: tcds_dma.c,v 1.6 1995/12/20 00:40:32 cgd Exp $	*/
 
 /*

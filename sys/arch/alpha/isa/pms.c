@@ -1,3 +1,4 @@
+/*	$OpenBSD: pms.c,v 1.2 1996/07/29 22:59:53 niklas Exp $	*/
 /*	$NetBSD: pms.c,v 1.1 1996/04/12 01:53:06 cgd Exp $	*/
 
 /*-
@@ -225,7 +226,7 @@ pmsattach(parent, self, aux)
 	sc->sc_state = 0;
 
 	sc->sc_ih = isa_intr_establish(pms_ic, ia->ia_irq, IST_EDGE, IPL_TTY,
-	    pmsintr, sc);
+	    pmsintr, sc, sc->sc_dev.dv_xname);
 }
 
 int

@@ -1,3 +1,4 @@
+/*	$OpenBSD: tc_machdep.h,v 1.2 1996/07/29 23:02:31 niklas Exp $	*/
 /*	$NetBSD: tc_machdep.h,v 1.1 1995/12/20 00:09:29 cgd Exp $	*/
 
 /*

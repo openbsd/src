@@ -1,3 +1,4 @@
+/*	$OpenBSD: cia_bus_io.c,v 1.2 1996/07/29 23:00:17 niklas Exp $	*/
 /*	$NetBSD: cia_bus_io.c,v 1.2.4.2 1996/06/13 18:14:59 cgd Exp $	*/
 
 /*

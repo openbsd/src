@@ -1,3 +1,4 @@
+#	$OpenBSD: Makefile,v 1.4 1996/07/29 23:01:31 niklas Exp $
 #	$NetBSD: Makefile,v 1.6 1996/04/12 01:35:15 cgd Exp $
 
 .PATH: ${.CURDIR}/.. ${.CURDIR}/../../../../lib/libsa

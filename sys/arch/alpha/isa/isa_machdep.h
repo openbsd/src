@@ -1,3 +1,4 @@
+/*	$OpenBSD: isa_machdep.h,v 1.2 1996/07/29 22:59:44 niklas Exp $	*/
 /*	$NetBSD: isa_machdep.h,v 1.2 1996/04/12 05:39:02 cgd Exp $	*/
 
 /*
@@ -38,7 +39,7 @@ struct alpha_isa_chipset {
 	void	(*ic_attach_hook) __P((struct device *, struct device *,
 		    struct isabus_attach_args *));
 	void	*(*ic_intr_establish) __P((void *, int, int, int,
-		    int (*)(void *), void *));
+		    int (*)(void *), void *, char *));
 	void	(*ic_intr_disestablish) __P((void *, void *));
 };
 
@@ -47,7 +48,7 @@ struct alpha_isa_chipset {
  */
 #define	isa_attach_hook(p, s, a)					\
     (*(a)->iba_ic->ic_attach_hook)((p), (s), (a))
-#define	isa_intr_establish(c, i, t, l, f, a)				\
-    (*(c)->ic_intr_establish)((c)->ic_v, (i), (t), (l), (f), (a))
+#define	isa_intr_establish(c, i, t, l, f, a, nm)			\
+    (*(c)->ic_intr_establish)((c)->ic_v, (i), (t), (l), (f), (a), (nm))
 #define	isa_intr_disestablish(c, h)					\
     (*(c)->ic_intr_disestablish)((c)->ic_v, (h))

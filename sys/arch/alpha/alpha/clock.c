@@ -1,3 +1,4 @@
+/*	$OpenBSD: clock.c,v 1.5 1996/07/29 22:57:13 niklas Exp $	*/
 /*	$NetBSD: clock.c,v 1.10 1996/04/23 15:26:06 cgd Exp $	*/
 
 /*

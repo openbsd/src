@@ -1,3 +1,4 @@
+/*	$OpenBSD: spkrreg.h,v 1.2 1996/07/29 22:59:55 niklas Exp $	*/
 /*	$NetBSD: spkrreg.h,v 1.1 1996/04/12 01:54:46 cgd Exp $	*/
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: lca.c,v 1.3 1996/07/29 23:00:26 niklas Exp $	*/
 /*	$NetBSD: lca.c,v 1.5 1996/04/23 14:00:53 cgd Exp $	*/
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: tga.c,v 1.4 1996/07/29 23:01:00 niklas Exp $	*/
 /*	$NetBSD: tga.c,v 1.6 1996/04/12 06:09:08 cgd Exp $	*/
 
 /*
@@ -249,7 +250,8 @@ tgaattach(parent, self, aux)
 		}
 		intrstr = pci_intr_string(pa->pa_pc, intrh);
 		sc->sc_intr = pci_intr_establish(pa->pa_pc, intrh, IPL_TTY,
-		    sc->sc_dc->dc_tgaconf->tgac_ramdac->tgar_intr, sc->sc_dc);
+		    sc->sc_dc->dc_tgaconf->tgac_ramdac->tgar_intr, sc->sc_dc,
+		    sc->sc_dev.dv_xname);
 		if (sc->sc_intr == NULL) {
 			printf(": couldn't establish interrupt");
 			if (intrstr != NULL)

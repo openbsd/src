@@ -1,3 +1,4 @@
+/*	$OpenBSD: dec_kn20aa.h,v 1.3 1996/07/29 22:57:33 niklas Exp $	*/
 /*	$NetBSD: dec_kn20aa.h,v 1.1.4.2 1996/06/13 18:35:19 cgd Exp $	*/
 
 /*

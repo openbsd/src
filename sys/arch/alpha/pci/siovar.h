@@ -1,3 +1,4 @@
+/*	$OpenBSD: siovar.h,v 1.3 1996/07/29 23:00:58 niklas Exp $	*/
 /*	$NetBSD: siovar.h,v 1.3 1996/04/12 06:09:06 cgd Exp $	*/
 
 /*
@@ -32,7 +33,7 @@ void	sio_iointr __P((void *framep, int vec));
 
 const char *sio_intr_string __P((void *, int));
 void	*sio_intr_establish __P((void *, int, int, int, int (*)(void *),
-	    void *));
+	    void *, char *));
 void	sio_intr_disestablish __P((void *, void *));
 
 #ifdef EVCNT_COUNTERS

@@ -1,3 +1,4 @@
+/*	$OpenBSD: eisa_machdep.h,v 1.2 1996/07/29 22:58:21 niklas Exp $	*/
 /*	$NetBSD: eisa_machdep.h,v 1.1 1996/04/12 05:39:51 cgd Exp $	*/
 
 /*
@@ -43,7 +44,7 @@ struct alpha_eisa_chipset {
 		    eisa_intr_handle_t *));
 	const char *(*ec_intr_string) __P((void *, eisa_intr_handle_t));
 	void	*(*ec_intr_establish) __P((void *, eisa_intr_handle_t,
-		    int, int, int (*)(void *), void *));
+		    int, int, int (*)(void *), void *, char *));
 	void	(*ec_intr_disestablish) __P((void *, void *));
 };
 
@@ -58,7 +59,7 @@ struct alpha_eisa_chipset {
     (*(c)->ec_intr_map)((c)->ec_v, (i), (hp))
 #define	eisa_intr_string(c, h)						\
     (*(c)->ec_intr_string)((c)->ec_v, (h))
-#define	eisa_intr_establish(c, h, t, l, f, a)				\
-    (*(c)->ec_intr_establish)((c)->ec_v, (h), (t), (l), (f), (a))
+#define	eisa_intr_establish(c, h, t, l, f, a, nm)			\
+    (*(c)->ec_intr_establish)((c)->ec_v, (h), (t), (l), (f), (a), (nm))
 #define	eisa_intr_disestablish(c, h)					\
     (*(c)->ec_intr_disestablish)((c)->ec_v, (h))

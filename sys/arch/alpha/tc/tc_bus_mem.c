@@ -1,3 +1,4 @@
+/*	$OpenBSD: tc_bus_mem.c,v 1.2 1996/07/29 23:02:27 niklas Exp $	*/
 /*	$NetBSD: tc_bus_mem.c,v 1.2.4.2 1996/06/13 17:42:51 cgd Exp $	*/
 
 /*

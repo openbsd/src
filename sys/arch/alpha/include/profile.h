@@ -1,3 +1,4 @@
+/*	$OpenBSD: profile.h,v 1.3 1996/07/29 22:59:05 niklas Exp $	*/
 /*	$NetBSD: profile.h,v 1.3 1995/11/23 02:36:28 cgd Exp $	*/
 
 /*

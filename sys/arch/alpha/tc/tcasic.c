@@ -1,3 +1,4 @@
+/*	$OpenBSD: tcasic.c,v 1.3 1996/07/29 23:02:32 niklas Exp $	*/
 /*	$NetBSD: tcasic.c,v 1.5 1996/05/17 23:58:43 cgd Exp $	*/
 
 /*

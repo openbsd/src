@@ -1,3 +1,4 @@
+/*	$OpenBSD: pci_machdep.c,v 1.4 1996/07/29 23:00:43 niklas Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.5 1996/04/12 06:08:49 cgd Exp $	*/
 
 /*

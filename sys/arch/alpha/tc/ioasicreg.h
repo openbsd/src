@@ -1,3 +1,4 @@
+/*	$OpenBSD: ioasicreg.h,v 1.2 1996/07/29 23:02:07 niklas Exp $	*/
 /*	$NetBSD: ioasicreg.h,v 1.1 1995/12/20 00:43:22 cgd Exp $	*/
 
 /* 

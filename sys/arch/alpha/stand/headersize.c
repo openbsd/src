@@ -1,3 +1,4 @@
+/*	$OpenBSD: headersize.c,v 1.3 1996/07/29 23:01:20 niklas Exp $	*/
 /*	$NetBSD: headersize.c,v 1.3.4.1 1996/06/13 18:35:33 cgd Exp $	*/
 
 /*

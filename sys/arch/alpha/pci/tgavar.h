@@ -1,3 +1,4 @@
+/*	$OpenBSD: tgavar.h,v 1.4 1996/07/29 23:01:07 niklas Exp $	*/
 /*	$NetBSD: tgavar.h,v 1.5 1996/04/12 06:09:21 cgd Exp $	*/
 
 /*

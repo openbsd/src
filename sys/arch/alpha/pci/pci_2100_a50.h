@@ -1,3 +1,4 @@
+/*	$OpenBSD: pci_2100_a50.h,v 1.3 1996/07/29 23:00:35 niklas Exp $	*/
 /*	$NetBSD: pci_2100_a50.h,v 1.3 1996/04/12 06:08:42 cgd Exp $	*/
 
 /*
