@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_via.c,v 1.1 2002/07/12 20:17:03 mickey Exp $	*/
+/*	$OpenBSD: agp_via.c,v 1.2 2002/07/25 23:31:04 fgsch Exp $	*/
 /*	$NetBSD: agp_via.c,v 1.2 2001/09/15 00:25:00 thorpej Exp $	*/
 
 /*-
@@ -74,7 +74,8 @@ struct agp_via_softc {
 
 
 int
-agp_via_attach(struct vga_pci_softc *sc, struct pci_attach_args *pa, struct pci_attach_args *pchb_pa)
+agp_via_attach(struct vga_pci_softc *sc, struct pci_attach_args *pa,
+	       struct pci_attach_args *pchb_pa)
 {
 	struct agp_via_softc *asc;
 	struct agp_gatt *gatt;
@@ -82,7 +83,7 @@ agp_via_attach(struct vga_pci_softc *sc, struct pci_attach_args *pa, struct pci_
 	asc = malloc(sizeof *asc, M_DEVBUF, M_NOWAIT);
 	if (asc == NULL) {
 		printf(": can't allocate chipset-specific softc\n");
-		return ENOMEM;
+		return (ENOMEM);
 	}
 	memset(asc, 0, sizeof *asc);
 	sc->sc_chipc = asc;
@@ -91,7 +92,7 @@ agp_via_attach(struct vga_pci_softc *sc, struct pci_attach_args *pa, struct pci_
 	if (agp_map_aperture(sc) != 0) {
 		printf(": can't map aperture\n");
 		free(asc, M_DEVBUF);
-		return ENXIO;
+		return (ENXIO);
 	}
 
 	asc->initial_aperture = AGP_GET_APERTURE(sc);
@@ -108,19 +109,19 @@ agp_via_attach(struct vga_pci_softc *sc, struct pci_attach_args *pa, struct pci_
 		if (AGP_SET_APERTURE(sc, AGP_GET_APERTURE(sc) / 2)) {
 			agp_generic_detach(sc);
 			printf(": can't set aperture size\n");
-			return ENOMEM;
+			return (ENOMEM);
 		}
 	}
 	asc->gatt = gatt;
 
 	/* Install the gatt. */
 	pci_conf_write(sc->sc_pc, sc->sc_pcitag, AGP_VIA_ATTBASE,
-			 gatt->ag_physical | 3);
+	    gatt->ag_physical | 3);
 	
 	/* Enable the aperture. */
 	pci_conf_write(sc->sc_pc, sc->sc_pcitag, AGP_VIA_GARTCTRL, 0x0000000f);
 
-	return 0;
+	return (0);
 }
 
 #if 0
@@ -132,14 +133,14 @@ agp_via_detach(struct vga_pci_softc *sc)
 
 	error = agp_generic_detach(sc);
 	if (error)
-		return error;
+		return (error);
 
 	pci_conf_write(sc->sc_pc, sc->sc_pcitag, AGP_VIA_GARTCTRL, 0);
 	pci_conf_write(sc->sc_pc, sc->sc_pcitag, AGP_VIA_ATTBASE, 0);
 	AGP_SET_APERTURE(sc, asc->initial_aperture);
 	agp_free_gatt(sc, asc->gatt);
 
-	return 0;
+	return (0);
 }
 #endif
 
@@ -148,7 +149,8 @@ agp_via_get_aperture(struct vga_pci_softc *sc)
 {
 	u_int32_t apsize;
 
-	apsize = pci_conf_read(sc->sc_pc, sc->sc_pcitag, AGP_VIA_APSIZE) & 0x1f;
+	apsize = pci_conf_read(sc->sc_pc, sc->sc_pcitag,
+	    AGP_VIA_APSIZE) & 0x1f;
 
 	/*
 	 * The size is determined by the number of low bits of
@@ -157,7 +159,7 @@ agp_via_get_aperture(struct vga_pci_softc *sc)
 	 * field just read forces the corresponding bit in the 27:20
 	 * to be zero. We calculate the aperture size accordingly.
 	 */
-	return (((apsize ^ 0xff) << 20) | ((1 << 20) - 1)) + 1;
+	return ((((apsize ^ 0xff) << 20) | ((1 << 20) - 1)) + 1);
 }
 
 static int
@@ -175,14 +177,14 @@ agp_via_set_aperture(struct vga_pci_softc *sc, u_int32_t aperture)
 	 * Double check for sanity.
 	 */
 	if ((((apsize ^ 0xff) << 20) | ((1 << 20) - 1)) + 1 != aperture)
-		return EINVAL;
+		return (EINVAL);
 
 	reg = pci_conf_read(sc->sc_pc, sc->sc_pcitag, AGP_VIA_APSIZE);
 	reg &= ~0xff;
 	reg |= apsize;
 	pci_conf_write(sc->sc_pc, sc->sc_pcitag, AGP_VIA_APSIZE, reg);
 
-	return 0;
+	return (0);
 }
 
 static int
@@ -191,10 +193,10 @@ agp_via_bind_page(struct vga_pci_softc *sc, off_t offset, bus_addr_t physical)
 	struct agp_via_softc *asc = sc->sc_chipc;
 
 	if (offset < 0 || offset >= (asc->gatt->ag_entries << AGP_PAGE_SHIFT))
-		return EINVAL;
+		return (EINVAL);
 
 	asc->gatt->ag_virtual[offset >> AGP_PAGE_SHIFT] = physical;
-	return 0;
+	return (0);
 }
 
 static int
@@ -203,10 +205,10 @@ agp_via_unbind_page(struct vga_pci_softc *sc, off_t offset)
 	struct agp_via_softc *asc = sc->sc_chipc;
 
 	if (offset < 0 || offset >= (asc->gatt->ag_entries << AGP_PAGE_SHIFT))
-		return EINVAL;
+		return (EINVAL);
 
 	asc->gatt->ag_virtual[offset >> AGP_PAGE_SHIFT] = 0;
-	return 0;
+	return (0);
 }
 
 static void
@@ -215,5 +217,3 @@ agp_via_flush_tlb(struct vga_pci_softc *sc)
 	pci_conf_write(sc->sc_pc, sc->sc_pcitag, AGP_VIA_GARTCTRL, 0x8f);
 	pci_conf_write(sc->sc_pc, sc->sc_pcitag, AGP_VIA_GARTCTRL, 0x0f);
 }
-
-

@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.2 2002/07/15 13:23:48 mickey Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.3 2002/07/25 23:31:04 fgsch Exp $	*/
 /*	$NetBSD: agp_i810.c,v 1.8 2001/09/20 20:00:16 fvdl Exp $	*/
 
 /*-
@@ -63,15 +63,17 @@ struct agp_i810_softc {
 };
 
 u_int32_t agp_i810_get_aperture(struct vga_pci_softc *);
-int agp_i810_set_aperture(struct vga_pci_softc *, u_int32_t);
-int agp_i810_bind_page(struct vga_pci_softc *, off_t, bus_addr_t);
-int agp_i810_unbind_page(struct vga_pci_softc *, off_t);
-void agp_i810_flush_tlb(struct vga_pci_softc *);
-int agp_i810_enable(struct vga_pci_softc *, u_int32_t mode);
-struct agp_memory *agp_i810_alloc_memory(struct vga_pci_softc *, int, vsize_t);
-int agp_i810_free_memory(struct vga_pci_softc *, struct agp_memory *);
-int agp_i810_bind_memory(struct vga_pci_softc *, struct agp_memory *, off_t);
-int agp_i810_unbind_memory(struct vga_pci_softc *, struct agp_memory *);
+int	agp_i810_set_aperture(struct vga_pci_softc *, u_int32_t);
+int	agp_i810_bind_page(struct vga_pci_softc *, off_t, bus_addr_t);
+int	agp_i810_unbind_page(struct vga_pci_softc *, off_t);
+void	agp_i810_flush_tlb(struct vga_pci_softc *);
+int	agp_i810_enable(struct vga_pci_softc *, u_int32_t mode);
+struct agp_memory *
+	agp_i810_alloc_memory(struct vga_pci_softc *, int, vsize_t);
+int	agp_i810_free_memory(struct vga_pci_softc *, struct agp_memory *);
+int	agp_i810_bind_memory(struct vga_pci_softc *, struct agp_memory *,
+	    off_t);
+int	agp_i810_unbind_memory(struct vga_pci_softc *, struct agp_memory *);
 
 struct agp_methods agp_i810_methods = {
 	agp_i810_get_aperture,
@@ -88,7 +90,8 @@ struct agp_methods agp_i810_methods = {
 
 
 int
-agp_i810_attach(struct vga_pci_softc* sc, struct pci_attach_args *pa, struct pci_attach_args *pchb_pa)
+agp_i810_attach(struct vga_pci_softc* sc, struct pci_attach_args *pa,
+		struct pci_attach_args *pchb_pa)
 {
 	struct agp_i810_softc *isc;
 	struct agp_gatt *gatt;
@@ -97,7 +100,7 @@ agp_i810_attach(struct vga_pci_softc* sc, struct pci_attach_args *pa, struct pci
 	isc = malloc(sizeof *isc, M_DEVBUF, M_NOWAIT);
 	if (isc == NULL) {
 		printf(": can't allocate chipset-specific softc\n");
-		return ENOMEM;
+		return (ENOMEM);
 	}
 	memset(isc, 0, sizeof *isc);
 	sc->sc_chipc = isc;
@@ -107,14 +110,14 @@ agp_i810_attach(struct vga_pci_softc* sc, struct pci_attach_args *pa, struct pci
 	if ((error = agp_map_aperture(sc))) {
 		printf(": can't map aperture\n");
 		free(isc, M_DEVBUF);
-		return error;
+		return (error);
 	}
 
 	error = pci_mapreg_map(pa, AGP_I810_MMADR,
 	    PCI_MAPREG_TYPE_MEM, 0, &isc->bst, &isc->bsh, NULL, NULL, 0);
 	if (error != 0) {
 		printf(": can't map mmadr registers\n");
-		return error;
+		return (error);
 	}
 
 	isc->initial_aperture = AGP_GET_APERTURE(sc);
@@ -135,7 +138,7 @@ agp_i810_attach(struct vga_pci_softc* sc, struct pci_attach_args *pa, struct pci
 		 */
 		if (AGP_SET_APERTURE(sc, AGP_GET_APERTURE(sc) / 2)) {
 			agp_generic_detach(sc);
-			return ENOMEM;
+			return (ENOMEM);
 		}
 	}
 	isc->gatt = gatt;
@@ -148,7 +151,7 @@ agp_i810_attach(struct vga_pci_softc* sc, struct pci_attach_args *pa, struct pci
 	 */
 	agp_flush_cache();
 
-	return 0;
+	return (0);
 }
 
 u_int32_t
@@ -158,9 +161,9 @@ agp_i810_get_aperture(struct vga_pci_softc *sc)
 
 	miscc = pci_conf_read(sc->sc_pc, sc->sc_pcitag, AGP_I810_SMRAM) >> 16;
 	if ((miscc & AGP_I810_MISCC_WINSIZE) == AGP_I810_MISCC_WINSIZE_32)
-		return 32 * 1024 * 1024;
+		return (32 * 1024 * 1024);
 	else
-		return 64 * 1024 * 1024;
+		return (64 * 1024 * 1024);
 }
 
 int
@@ -173,7 +176,7 @@ agp_i810_set_aperture(struct vga_pci_softc *sc, u_int32_t aperture)
 	 */
 	if (aperture != 32 * 1024 * 1024 && aperture != 64 * 1024 * 1024) {
 		printf("AGP: bad aperture size %d\n", aperture);
-		return EINVAL;
+		return (EINVAL);
 	}
 
 	reg = pci_conf_read(sc->sc_pc, sc->sc_pcitag, AGP_I810_SMRAM);
@@ -188,7 +191,7 @@ agp_i810_set_aperture(struct vga_pci_softc *sc, u_int32_t aperture)
 	reg |= (miscc << 16);
 	pci_conf_write(sc->sc_pc, sc->sc_pcitag, AGP_I810_SMRAM, miscc);
 
-	return 0;
+	return (0);
 }
 
 int
@@ -197,12 +200,12 @@ agp_i810_bind_page(struct vga_pci_softc *sc, off_t offset, bus_addr_t pa)
 	struct agp_i810_softc *isc = sc->sc_chipc;
 
 	if (offset < 0 || offset >= (isc->gatt->ag_entries << AGP_PAGE_SHIFT))
-		return EINVAL;
+		return (EINVAL);
 
 	WRITE4(AGP_I810_GTT + (u_int32_t)(offset >> AGP_PAGE_SHIFT) * 4,
 	    pa | 1);
 
-	return 0;
+	return (0);
 }
 
 int
@@ -211,10 +214,10 @@ agp_i810_unbind_page(struct vga_pci_softc *sc, off_t offset)
 	struct agp_i810_softc *isc = sc->sc_chipc;
 
 	if (offset < 0 || offset >= (isc->gatt->ag_entries << AGP_PAGE_SHIFT))
-		return EINVAL;
+		return (EINVAL);
 
 	WRITE4(AGP_I810_GTT + (u_int32_t)(offset >> AGP_PAGE_SHIFT) * 4, 0);
-	return 0;
+	return (0);
 }
 
 /*
@@ -228,8 +231,7 @@ agp_i810_flush_tlb(struct vga_pci_softc *sc)
 int
 agp_i810_enable(struct vga_pci_softc *sc, u_int32_t mode)
 {
-
-	return 0;
+	return (0);
 }
 
 struct agp_memory *
@@ -244,57 +246,54 @@ agp_i810_alloc_memory(struct vga_pci_softc *sc, int type, vsize_t size)
 		 * Mapping local DRAM into GATT.
 		 */
 		if (size != isc->dcache_size)
-			return NULL;
+			return (NULL);
 	} else if (type == 2) {
 		/*
 		 * Bogus mapping of a single page for the hardware cursor.
 		 */
 		if (size != AGP_PAGE_SIZE)
-			return NULL;
+			return (NULL);
 	}
 
-	if ((mem = malloc(sizeof *mem, M_DEVBUF, M_WAITOK)) == NULL)
-		return NULL;
+	mem = malloc(sizeof *mem, M_DEVBUF, M_WAITOK);
 	bzero(mem, sizeof *mem);
 	mem->am_id = sc->sc_nextid++;
 	mem->am_size = size;
 	mem->am_type = type;
 	
 	if (type == 2) {
-		mem->am_dmaseg = malloc(sizeof *mem->am_dmaseg, M_DEVBUF, M_WAITOK);
-		if (mem->am_dmaseg == NULL) {
-			free(mem, M_DEVBUF);
-printf("agp: no memory for the segments\n");
-			return NULL;
-		}
+		mem->am_dmaseg = malloc(sizeof *mem->am_dmaseg, M_DEVBUF,
+		    M_WAITOK);
+
 		if ((error = agp_alloc_dmamem(sc->sc_dmat, size, 0,
 		    &mem->am_dmamap, &mem->am_virtual, &mem->am_physical,
 		    mem->am_dmaseg, 1, &mem->am_nseg)) != 0) {
 			free(mem, M_DEVBUF);
 			free(mem->am_dmaseg, M_DEVBUF);
-printf("agp: agp_alloc_dmamem(%d)\n", error);
-			return NULL;
+			printf("agp: agp_alloc_dmamem(%d)\n", error);
+			return (NULL);
 		}
 	} else if (type != 1) {
-		if ((error = bus_dmamap_create(sc->sc_dmat, size, size / PAGE_SIZE + 1,
-		    size, 0, BUS_DMA_NOWAIT, &mem->am_dmamap)) != 0) {
+		if ((error = bus_dmamap_create(sc->sc_dmat, size,
+		    size / PAGE_SIZE + 1, size, 0, BUS_DMA_NOWAIT,
+		    &mem->am_dmamap)) != 0) {
 			free(mem, M_DEVBUF);
-printf("agp: bus_dmamap_create(%d)\n", error);
-			return NULL;
+			printf("agp: bus_dmamap_create(%d)\n", error);
+			return (NULL);
 		}
 	}
 
 	TAILQ_INSERT_TAIL(&sc->sc_memory, mem, am_link);
 	sc->sc_allocated += size;
 
-	return mem;
+	return (mem);
 }
 
 int
 agp_i810_free_memory(struct vga_pci_softc *sc, struct agp_memory *mem)
 {
 	if (mem->am_is_bound)
-		return EBUSY;
+		return (EBUSY);
 	
 	if (mem->am_type == 2) {
 		agp_free_dmamem(sc->sc_dmat, mem->am_size, mem->am_dmamap,
@@ -305,7 +304,7 @@ agp_i810_free_memory(struct vga_pci_softc *sc, struct agp_memory *mem)
 	sc->sc_allocated -= mem->am_size;
 	TAILQ_REMOVE(&sc->sc_memory, mem, am_link);
 	free(mem, M_DEVBUF);
-	return 0;
+	return (0);
 }
 
 int
@@ -323,18 +322,20 @@ agp_i810_bind_memory(struct vga_pci_softc *sc, struct agp_memory *mem,
 	 */
 	regval = bus_space_read_4(isc->bst, isc->bsh, AGP_I810_PGTBL_CTL);
 	if (regval != (isc->gatt->ag_physical | 1)) {
+#if 0
 		printf("agp_i810_bind_memory: PGTBL_CTL is 0x%x - fixing\n",
-		       regval);
+		    regval);
+#endif
 		bus_space_write_4(isc->bst, isc->bsh, AGP_I810_PGTBL_CTL,
-				  isc->gatt->ag_physical | 1);
+		    isc->gatt->ag_physical | 1);
 	}
 
 	if (mem->am_type == 2) {
 		WRITE4(AGP_I810_GTT + (u_int32_t)(offset >> AGP_PAGE_SHIFT) * 4,
-		       mem->am_physical | 1);
+		    mem->am_physical | 1);
 		mem->am_offset = offset;
 		mem->am_is_bound = 1;
-		return 0;
+		return (0);
 	}
 
 	if (mem->am_type != 1)
@@ -344,7 +345,7 @@ agp_i810_bind_memory(struct vga_pci_softc *sc, struct agp_memory *mem,
 		WRITE4(AGP_I810_GTT +
 		    (u_int32_t)(offset >> AGP_PAGE_SHIFT) * 4, i | 3);
 
-	return 0;
+	return (0);
 }
 
 int
@@ -358,14 +359,14 @@ agp_i810_unbind_memory(struct vga_pci_softc *sc, struct agp_memory *mem)
 		    (u_int32_t)(mem->am_offset >> AGP_PAGE_SHIFT) * 4, 0);
 		mem->am_offset = 0;
 		mem->am_is_bound = 0;
-		return 0;
+		return (0);
 	}
 
 	if (mem->am_type != 1)
-		return agp_generic_unbind_memory(sc, mem);
+		return (agp_generic_unbind_memory(sc, mem));
 
 	for (i = 0; i < mem->am_size; i += AGP_PAGE_SIZE)
 		WRITE4(AGP_I810_GTT + (i >> AGP_PAGE_SHIFT) * 4, 0);
 
-	return 0;
+	return (0);
 }

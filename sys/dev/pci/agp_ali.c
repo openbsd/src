@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_ali.c,v 1.1 2002/07/12 20:17:03 mickey Exp $	*/
+/*	$OpenBSD: agp_ali.c,v 1.2 2002/07/25 23:31:04 fgsch Exp $	*/
 /*	$NetBSD: agp_ali.c,v 1.2 2001/09/15 00:25:00 thorpej Exp $	*/
 
 
@@ -56,10 +56,10 @@ struct agp_ali_softc {
 };
 
 u_int32_t agp_ali_get_aperture(struct vga_pci_softc *);
-int agp_ali_set_aperture(struct vga_pci_softc *sc, u_int32_t);
-int agp_ali_bind_page(struct vga_pci_softc *, off_t, bus_addr_t);
-int agp_ali_unbind_page(struct vga_pci_softc *, off_t);
-void agp_ali_flush_tlb(struct vga_pci_softc *);
+int	agp_ali_set_aperture(struct vga_pci_softc *sc, u_int32_t);
+int	agp_ali_bind_page(struct vga_pci_softc *, off_t, bus_addr_t);
+int	agp_ali_unbind_page(struct vga_pci_softc *, off_t);
+void	agp_ali_flush_tlb(struct vga_pci_softc *);
 
 struct agp_methods agp_ali_methods = {
 	agp_ali_get_aperture,
@@ -75,7 +75,8 @@ struct agp_methods agp_ali_methods = {
 };
 
 int 
-agp_ali_attach(struct vga_pci_softc *sc, struct pci_attach_args *pa, struct pci_attach_args *pchb_pa)
+agp_ali_attach(struct vga_pci_softc *sc, struct pci_attach_args *pa,
+	       struct pci_attach_args *pchb_pa)
 {
 	struct agp_ali_softc *asc;
 	struct agp_gatt *gatt;
@@ -84,7 +85,7 @@ agp_ali_attach(struct vga_pci_softc *sc, struct pci_attach_args *pa, struct pci_
 	asc = malloc(sizeof *asc, M_DEVBUF, M_NOWAIT);
 	if (asc == NULL) {
 		printf(": failed to allocate softc\n");
-		return ENOMEM;
+		return (ENOMEM);
 	}
 	sc->sc_chipc = asc;
 	sc->sc_methods = &agp_ali_methods;
@@ -92,7 +93,7 @@ agp_ali_attach(struct vga_pci_softc *sc, struct pci_attach_args *pa, struct pci_
 	if (agp_map_aperture(sc) != 0) {
 		printf(": failed to map aperture\n");
 		free(asc, M_DEVBUF);
-		return ENXIO;
+		return (ENXIO);
 	}
 
 	asc->initial_aperture = agp_ali_get_aperture(sc);
@@ -109,7 +110,7 @@ agp_ali_attach(struct vga_pci_softc *sc, struct pci_attach_args *pa, struct pci_
 		if (AGP_SET_APERTURE(sc, AGP_GET_APERTURE(sc) / 2)) {
 			agp_generic_detach(sc);
 			printf(": failed to set aperture\n");
-			return ENOMEM;
+			return (ENOMEM);
 		}
 	}
 	asc->gatt = gatt;
@@ -124,7 +125,7 @@ agp_ali_attach(struct vga_pci_softc *sc, struct pci_attach_args *pa, struct pci_
 	reg = (reg & ~0xff) | 0x10;
 	pci_conf_write(sc->sc_pc, sc->sc_pcitag, AGP_ALI_TLBCTRL, reg);
 
-	return 0;
+	return (0);
 }
 
 #if 0
@@ -137,7 +138,7 @@ agp_ali_detach(struct vga_pci_softc *sc)
 
 	error = agp_generic_detach(sc);
 	if (error)
-		return error;
+		return (error);
 
 	/* Disable the TLB.. */
 	reg = pci_conf_read(sc->sc_pc, sc->sc_pcitag, AGP_ALI_TLBCTRL);
@@ -152,7 +153,7 @@ agp_ali_detach(struct vga_pci_softc *sc)
 	pci_conf_write(sc->sc_pc, sc->sc_pcitag, AGP_ALI_ATTBASE, reg);
 
 	agp_free_gatt(sc, asc->gatt);
-	return 0;
+	return (0);
 }
 #endif
 
@@ -182,10 +183,11 @@ agp_ali_get_aperture(struct vga_pci_softc *sc)
 	 * The aperture size is derived from the low bits of attbase.
 	 * I'm not sure this is correct..
 	 */
-	i = (int)pci_conf_read(sc->sc_pc, sc->sc_pcitag, AGP_ALI_ATTBASE) & 0xff;
+	i = (int)pci_conf_read(sc->sc_pc, sc->sc_pcitag,
+	    AGP_ALI_ATTBASE) & 0xff;
 	if (i >= agp_ali_table_size)
-		return 0;
-	return agp_ali_table[i];
+		return (0);
+	return (agp_ali_table[i]);
 }
 
 int
@@ -204,7 +206,7 @@ agp_ali_set_aperture(struct vga_pci_softc *sc, u_int32_t aperture)
 	reg &= ~0xff;
 	reg |= i;
 	pci_conf_write(sc->sc_pc, sc->sc_pcitag, AGP_ALI_ATTBASE, reg);
-	return 0;
+	return (0);
 }
 
 int
@@ -213,10 +215,10 @@ agp_ali_bind_page(struct vga_pci_softc *sc, off_t offset, bus_addr_t physical)
 	struct agp_ali_softc *asc = sc->sc_chipc;
 
 	if (offset < 0 || offset >= (asc->gatt->ag_entries << AGP_PAGE_SHIFT))
-		return EINVAL;
+		return (EINVAL);
 
 	asc->gatt->ag_virtual[offset >> AGP_PAGE_SHIFT] = physical;
-	return 0;
+	return (0);
 }
 
 int
@@ -225,10 +227,10 @@ agp_ali_unbind_page(struct vga_pci_softc *sc, off_t offset)
 	struct agp_ali_softc *asc = sc->sc_chipc;
 
 	if (offset < 0 || offset >= (asc->gatt->ag_entries << AGP_PAGE_SHIFT))
-		return EINVAL;
+		return (EINVAL);
 
 	asc->gatt->ag_virtual[offset >> AGP_PAGE_SHIFT] = 0;
-	return 0;
+	return (0);
 }
 
 void

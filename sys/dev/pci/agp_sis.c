@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_sis.c,v 1.1 2002/07/12 20:17:03 mickey Exp $	*/
+/*	$OpenBSD: agp_sis.c,v 1.2 2002/07/25 23:31:04 fgsch Exp $	*/
 /*	$NetBSD: agp_sis.c,v 1.2 2001/09/15 00:25:00 thorpej Exp $	*/
 
 /*-
@@ -74,7 +74,8 @@ struct agp_methods agp_sis_methods = {
 
 
 int
-agp_sis_attach(struct vga_pci_softc *sc, struct pci_attach_args *pa, struct pci_attach_args *pchb_pa)
+agp_sis_attach(struct vga_pci_softc *sc, struct pci_attach_args *pa,
+	       struct pci_attach_args *pchb_pa)
 {
 	struct agp_sis_softc *ssc;
 	struct agp_gatt *gatt;
@@ -83,7 +84,7 @@ agp_sis_attach(struct vga_pci_softc *sc, struct pci_attach_args *pa, struct pci_
 	ssc = malloc(sizeof *ssc, M_DEVBUF, M_NOWAIT);
 	if (ssc == NULL) {
 		printf(": can't allocate chipset-specific softc\n");
-		return ENOMEM;
+		return (ENOMEM);
 	}
 	sc->sc_methods = &agp_sis_methods;
 	sc->sc_chipc = ssc;
@@ -91,7 +92,7 @@ agp_sis_attach(struct vga_pci_softc *sc, struct pci_attach_args *pa, struct pci_
 	if (agp_map_aperture(sc) != 0) {
 		printf(": can't map aperture\n");
 		free(ssc, M_DEVBUF);
-		return ENXIO;
+		return (ENXIO);
 	}
 
 	ssc->initial_aperture = AGP_GET_APERTURE(sc);
@@ -108,7 +109,7 @@ agp_sis_attach(struct vga_pci_softc *sc, struct pci_attach_args *pa, struct pci_
 		if (AGP_SET_APERTURE(sc, AGP_GET_APERTURE(sc) / 2)) {
 			agp_generic_detach(sc);
 			printf(": failed to set aperture\n");
-			return ENOMEM;
+			return (ENOMEM);
 		}
 	}
 	ssc->gatt = gatt;
@@ -122,7 +123,7 @@ agp_sis_attach(struct vga_pci_softc *sc, struct pci_attach_args *pa, struct pci_
 	reg |= (0x05 << 24) | 3;
 	pci_conf_write(sc->sc_pc, sc->sc_pcitag, AGP_SIS_WINCTRL, reg);
 
-	return 0;
+	return (0);
 }
 
 #if 0
@@ -135,7 +136,7 @@ agp_sis_detach(struct vga_pci_softc *sc)
 
 	error = agp_generic_detach(sc);
 	if (error)
-		return error;
+		return (error);
 
 	reg = pci_conf_read(sc->sc_pc, sc->sc_pcitag, AGP_SIS_WINCTRL);
 	reg &= ~3;
@@ -146,7 +147,7 @@ agp_sis_detach(struct vga_pci_softc *sc)
 	AGP_SET_APERTURE(sc, ssc->initial_aperture);
 
 	agp_free_gatt(sc, ssc->gatt);
-	return 0;
+	return (0);
 }
 #endif
 
@@ -158,8 +159,9 @@ agp_sis_get_aperture(struct vga_pci_softc *sc)
 	/*
 	 * The aperture size is equal to 4M<<gws.
 	 */
-	gws = (pci_conf_read(sc->sc_pc, sc->sc_pcitag, AGP_SIS_WINCTRL)&0x70) >> 4;
-	return (4*1024*1024) << gws;
+	gws = (pci_conf_read(sc->sc_pc, sc->sc_pcitag,
+	    AGP_SIS_WINCTRL)&0x70) >> 4;
+	return ((4 * 1024 * 1024) << gws);
 }
 
 static int
@@ -175,7 +177,7 @@ agp_sis_set_aperture(struct vga_pci_softc *sc, u_int32_t aperture)
 	if (aperture & (aperture - 1)
 	    || aperture < 4*1024*1024
 	    || aperture > 256*1024*1024)
-		return EINVAL;
+		return (EINVAL);
 
 	gws = ffs(aperture / 4*1024*1024) - 1;
 
@@ -184,7 +186,7 @@ agp_sis_set_aperture(struct vga_pci_softc *sc, u_int32_t aperture)
 	reg |= gws << 4;
 	pci_conf_write(sc->sc_pc, sc->sc_pcitag, AGP_SIS_WINCTRL, reg);
 
-	return 0;
+	return (0);
 }
 
 static int
@@ -193,10 +195,10 @@ agp_sis_bind_page(struct vga_pci_softc *sc, off_t offset, bus_addr_t physical)
 	struct agp_sis_softc *ssc = sc->sc_chipc;
 
 	if (offset < 0 || offset >= (ssc->gatt->ag_entries << AGP_PAGE_SHIFT))
-		return EINVAL;
+		return (EINVAL);
 
 	ssc->gatt->ag_virtual[offset >> AGP_PAGE_SHIFT] = physical;
-	return 0;
+	return (0);
 }
 
 static int
@@ -205,10 +207,10 @@ agp_sis_unbind_page(struct vga_pci_softc *sc, off_t offset)
 	struct agp_sis_softc *ssc = sc->sc_chipc;
 
 	if (offset < 0 || offset >= (ssc->gatt->ag_entries << AGP_PAGE_SHIFT))
-		return EINVAL;
+		return (EINVAL);
 
 	ssc->gatt->ag_virtual[offset >> AGP_PAGE_SHIFT] = 0;
-	return 0;
+	return (0);
 }
 
 static void
@@ -221,4 +223,3 @@ agp_sis_flush_tlb(struct vga_pci_softc *sc)
 	reg |= 0x02;
 	pci_conf_write(sc->sc_pc, sc->sc_pcitag, AGP_SIS_TLBFLUSH, reg);
 }
-
