@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: ns_ntoa.c,v 1.10 2002/07/25 21:12:47 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ns_ntoa.c,v 1.11 2003/04/05 00:44:42 tdeval Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -50,29 +50,35 @@ ns_ntoa(struct ns_addr addr)
 	char *cp, *cp2;
 	u_char *up = addr.x_host.c_host;
 	u_char *uplim = up + 6;
+	size_t rem;
 
 	net.net_e = addr.x_net;
 	snprintf(obuf, sizeof obuf, "%x", ntohl(net.long_e));
 	cp = spectHex(obuf);
+	rem = sizeof(obuf) - (cp - obuf);
 	cp2 = cp + 1;
 	while (*up==0 && up < uplim)
 		up++;
 	if (up == uplim) {
 		if (port) {
-			sprintf(cp, ".0");
+			snprintf(cp, rem, ".0");
 			cp += 2;
+			rem -= 2;
 		}
 	} else {
-		sprintf(cp, ".%x", *up++);
+		snprintf(cp, rem, ".%x", *up++);
 		while (up < uplim) {
-			while (*cp)
+			while (*cp) {
 				cp++;
-			sprintf(cp, "%02x", *up++);
+				rem--;
+			}
+			snprintf(cp, rem, "%02x", *up++);
 		}
 		cp = spectHex(cp2);
+		rem = sizeof(obuf) - (cp - obuf);
 	}
 	if (port) {
-		sprintf(cp, ".%x", port);
+		snprintf(cp, rem, ".%x", port);
 		spectHex(cp + 1);
 	}
 	return (obuf);
