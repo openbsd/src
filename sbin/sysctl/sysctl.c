@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.91 2003/05/06 19:30:14 henning Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.92 2003/05/14 01:50:33 jfb Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.91 2003/05/06 19:30:14 henning Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.92 2003/05/14 01:50:33 jfb Exp $";
 #endif
 #endif /* not lint */
 
@@ -165,7 +165,7 @@ struct list secondlevel[] = {
 	{ 0, 0 },			/* CTL_VFS */
 };
 
-int	Aflag, aflag, nflag, wflag;
+int	Aflag, aflag, nflag, qflag, wflag;
 
 /*
  * Variables requiring special processing.
@@ -220,7 +220,7 @@ main(int argc, char *argv[])
 {
 	int ch, lvl1;
 
-	while ((ch = getopt(argc, argv, "Aanw")) != -1) {
+	while ((ch = getopt(argc, argv, "Aanqw")) != -1) {
 		switch (ch) {
 
 		case 'A':
@@ -233,6 +233,10 @@ main(int argc, char *argv[])
 
 		case 'n':
 			nflag = 1;
+			break;
+
+		case 'q':
+			qflag = 1;
 			break;
 
 		case 'w':
@@ -787,10 +791,12 @@ parse(char *string, int flags)
 				(void)printf("%s = ", string);
 			(void)printf("%u\n", *(u_int *)buf);
 		} else {
-			if (!nflag)
-				(void)printf("%s: %u -> ", string,
-				    *(u_int *)buf);
-			(void)printf("%u\n", *(u_int *)newval);
+			if (!qflag) {
+				if (!nflag)
+					(void)printf("%s: %u -> ", string,
+					    *(u_int *)buf);
+				(void)printf("%u\n", *(u_int *)newval);
+			}
 		}
 		return;
 	}
@@ -834,19 +840,10 @@ parse(char *string, int flags)
 		in_port_t port, lastport;
 		u_int32_t *baddynamic = (u_int32_t *)buf;
 
-		if (!nflag)
-			(void)printf("%s%s", string, newsize ? ": " : " = ");
-		lastport = 0;
-		for (port = IPPORT_RESERVED/2; port < IPPORT_RESERVED; port++)
-			if (DP_ISSET(baddynamic, port)) {
-				(void)printf("%s%hd", lastport ? "," : "",
-				    port);
-				lastport = port;
-			}
-		if (newsize != 0) {
+		if (!qflag) {
 			if (!nflag)
-				fputs(" -> ", stdout);
-			baddynamic = (u_int32_t *)newval;
+				(void)printf("%s%s", string,
+				    newsize ? ": " : " = ");
 			lastport = 0;
 			for (port = IPPORT_RESERVED/2; port < IPPORT_RESERVED;
 			    port++)
@@ -855,8 +852,21 @@ parse(char *string, int flags)
 					    lastport ? "," : "", port);
 					lastport = port;
 				}
+			if (newsize != 0) {
+				if (!nflag)
+					fputs(" -> ", stdout);
+				baddynamic = (u_int32_t *)newval;
+				lastport = 0;
+				for (port = IPPORT_RESERVED/2;
+				    port < IPPORT_RESERVED; port++)
+					if (DP_ISSET(baddynamic, port)) {
+						(void)printf("%s%hd",
+						    lastport ? "," : "", port);
+						lastport = port;
+					}
+			}
+			(void)putchar('\n');
 		}
-		(void)putchar('\n');
 		return;
 	}
 	if (special & LONGARRAY) {
@@ -904,10 +914,12 @@ parse(char *string, int flags)
 				(void)printf("%s = ", string);
 			(void)printf("%d\n", *(int *)buf);
 		} else {
-			if (!nflag)
-				(void)printf("%s: %d -> ", string,
-				    *(int *)buf);
-			(void)printf("%d\n", *(int *)newval);
+			if (!qflag) {
+				if (!nflag)
+					(void)printf("%s: %d -> ", string,
+					    *(int *)buf);
+				(void)printf("%d\n", *(int *)newval);
+			}
 		}
 		return;
 
@@ -917,9 +929,11 @@ parse(char *string, int flags)
 				(void)printf("%s = ", string);
 			(void)puts(buf);
 		} else {
-			if (!nflag)
-				(void)printf("%s: %s -> ", string, buf);
-			(void)puts((char *)newval);
+			if (!qflag) {
+				if (!nflag)
+					(void)printf("%s: %s -> ", string, buf);
+				(void)puts((char *)newval);
+			}
 		}
 		return;
 
@@ -933,10 +947,13 @@ parse(char *string, int flags)
 		} else {
 			long long tmp = *(quad_t *)buf;
 
-			if (!nflag)
-				(void)printf("%s: %lld -> ", string, tmp);
-			tmp = *(quad_t *)newval;
-			(void)printf("%qd\n", tmp);
+			if (!qflag) {
+				if (!nflag)
+					(void)printf("%s: %lld -> ",
+					    string, tmp);
+				tmp = *(quad_t *)newval;
+				(void)printf("%qd\n", tmp);
+			}
 		}
 		return;
 
@@ -1974,7 +1991,7 @@ usage(void)
 {
 
 	(void)fprintf(stderr, "usage:\t%s\n\t%s\n\t%s\n\t%s\n",
-	    "sysctl [-n] variable ...", "sysctl [-n] -w variable=value ...",
+	    "sysctl [-n] variable ...", "sysctl [-nq] -w variable=value ...",
 	    "sysctl [-n] -a", "sysctl [-n] -A");
 	exit(1);
 }

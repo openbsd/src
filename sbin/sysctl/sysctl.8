@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.98 2003/04/25 20:32:18 grange Exp $
+.\"	$OpenBSD: sysctl.8,v 1.99 2003/05/14 01:50:33 jfb Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -45,7 +45,7 @@
 .Op Fl n
 .Ar name ...
 .Nm sysctl
-.Op Fl n
+.Op Fl nq
 .Fl w
 .Ar name=value ...
 .Nm sysctl
@@ -77,6 +77,10 @@ Example:
       Set the psize shell variable to the pagesize of the hardware
     # set psize=`sysctl -n hw.pagesize`
 .Ed
+.It Fl q
+Suppress all output when setting a variable.
+This option overrides the behaviour of
+.Fl n .
 .It Fl w
 Required to set a variable.
 The MIB name should be followed by an equal sign and the new value.
