@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.20 2003/06/04 16:36:15 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.21 2003/08/21 12:42:49 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1995 Dale Rahn.
@@ -31,7 +31,6 @@
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/device.h>
-#undef DKTYPENAMES
 #include <sys/disklabel.h>
 #include <sys/disk.h>
 
@@ -145,7 +144,7 @@ readdisklabel(dev, strat, lp, clp, spoofonly)
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = 0x1fffffff;
 	lp->d_npartitions = RAW_PART + 1;
-	for (i = 0; i < RAW_PART ; i++) {
+	for (i = 0; i < RAW_PART; i++) {
 		lp->d_partitions[i].p_size = 0;
 		lp->d_partitions[i].p_offset = 0;
 	}
@@ -197,68 +196,18 @@ readdisklabel(dev, strat, lp, clp, spoofonly)
 	return (NULL);
 }
 
-#if 0
-char *
-readdisklabel(dev, strat, lp, clp)
-	dev_t dev;
-	void (*strat)();
-	struct disklabel *lp;
-	struct cpu_disklabel *clp;
-{
-	struct buf *bp;
-	char *msg = NULL;
-
-	/* obtain buffer to probe drive with */
-	bp = geteblk((int)lp->d_secsize);
-
-	/* request no partition relocation by driver on I/O operations */
-	bp->b_dev = dev;
-	bp->b_blkno = 0; /* contained in block 0 */
-	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_BUSY | B_READ;
-	bp->b_cylin = 0; /* contained in block 0 */
-	(*strat)(bp);
-
-	if (biowait(bp)) {
-		msg = "cpu_disklabel read error\n";
-	}else {
-		bcopy(bp->b_data, clp, sizeof (struct cpu_disklabel));
-	}
-
-	bp->b_flags = B_INVAL | B_AGE | B_READ;
-	brelse(bp);
-
-	if (msg || clp->magic1 != DISKMAGIC || clp->magic2 != DISKMAGIC) {
-#if defined(CD9660)
-		if (iso_disklabelspoof(dev, strat, lp) == 0)
-			msg = NULL;
-#endif
-		return (msg); 
-	}
-
-	cputobsdlabel(lp, clp);
-#ifdef DEBUG
-	if(disksubr_debug > 0) {
-		printlp(lp, "readdisklabel:bsd label");
-		printclp(clp, "readdisklabel:cpu label");
-	}
-#endif
-	return (msg);
-}
-
-#endif /* 0 */
 /*
  * Check new disk label for sensibility
  * before setting it.
  */
 int
 setdisklabel(olp, nlp, openmask, clp)
-	register struct disklabel *olp, *nlp;
+	struct disklabel *olp, *nlp;
 	u_long openmask;
 	struct cpu_disklabel *clp;
 {
-	register int i;
-	register struct partition *opp, *npp;
+	int i;
+	struct partition *opp, *npp;
 
 #ifdef DEBUG
 	if(disksubr_debug > 0) {
@@ -346,7 +295,7 @@ writedisklabel(dev, strat, lp, clp)
 	bp->b_cylin = 0; /* contained in block 0 */
 	(*strat)(bp);
 
-	if ((error = biowait(bp)) != 0 ) {
+	if ((error = biowait(bp)) != 0) {
 		/* nothing */
 	} else {
 		bcopy(bp->b_data, clp, sizeof(struct cpu_disklabel));
@@ -453,6 +402,9 @@ bsdtocpulabel(lp, clp)
 	struct disklabel *lp;
 	struct cpu_disklabel *clp;
 {
+	char *tmot = "MOTOROLA";
+	char *id = "M88K";
+	char *mot;
 	int i;
 
 	clp->magic1 = lp->d_magic;
@@ -505,6 +457,17 @@ bsdtocpulabel(lp, clp)
 	bcopy(&lp->d_partitions[0], clp->vid_4, sizeof(struct partition) * 4);
 	bcopy(&lp->d_partitions[4], clp->cfg_4, sizeof(struct partition) * 12);
 	clp->version = 1;
+
+	/* Put "MOTOROLA" in the VID.  This makes it a valid boot disk. */
+	mot = clp->vid_mot;
+	for (i = 0; i < 8; i++) {
+		*mot++ = *tmot++;
+	}
+	/* put volume id in the VID */
+	mot = clp->vid_id;
+	for (i = 0; i < 4; i++) {
+		*mot++ = *id++;
+	}
 }
 
 struct cpu_disklabel_old {
