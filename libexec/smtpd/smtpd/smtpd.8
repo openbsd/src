@@ -1,4 +1,4 @@
-.\"	$Id: smtpd.8,v 1.2 1997/12/12 20:50:33 deraadt Exp $
+.\"	$Id: smtpd.8,v 1.3 1997/12/12 21:50:10 beck Exp $
 .Dd Dec 10, 1997
 .Dt SMTPD 8
 .Os OpenBSD
@@ -39,12 +39,9 @@ Specify a different spool
 .Ar directory
 within the crooted subtree. The default is ".", making smtpd spool
 files to the directory it chroots itself to.
-.It Fl u
-Specify a 
-.Ar user 
-to run as. This user must not be root but
-should be a user that is able to run sendmail and use the
--f option to specify the sender of a mail message.
+.It Fl D
+Tells smtpd to run as a daemon, listening on port 25. The
+default is not to run as a daemon
 .It Fl g 
 Specify a 
 .Ar group 
@@ -53,16 +50,17 @@ to run as. Same as user above.
 Disable host checking against the DNS. By default smtpd checks
 and will complain in the syslogs if the DNS information on a host
 seems to indicate a possible spoof or misconfiguration.
+.It Fl L
+Suppress children in daemon mode (above) from doing an
+openlog() call. This means your syslogs won't have pid
+information, but is useful if you don't want to have to set up
+your chroot jail for smtpd in a manner that an openlog() call will
+work in it.
 .It Fl m
 Specify
 .Ar myname ,
 the hostname the daemon should announce itself
 as. the default is whatever gethostname() returns.
-.It Fl s
-Specify 
-.Ar maxsize
-the maximum size (in bytes) of mail message the
-daemon should accept. The default is not to have a maximum size.
 .It Fl P
 Enable paranoid mode of operation, in this mode connections are
 dropped from any client feeding smtpd a suspicious hostname,
@@ -70,19 +68,21 @@ FROM:, or RCPT: line containing characters indicative of an
 attempt to do something evil, or any message headers that aren't
 8bit clean. The default is to log such occuurances and substitute
 for the offending characters, but not drop the connection.
-.It Fl D
-Tells smtpd to run as a daemon, listening on port 25. The
-default is not to run as a daemon
-.It Fl L
-Suppress children in daemon mode (above) from doing an
-openlog() call. This means your syslogs won't have pid
-information, but is useful if you don't want to have to set up
-your chroot jail for smtpd in a manner that an openlog() call will
-work in it.
+.It Fl s
+Specify 
+.Ar maxsize
+the maximum size (in bytes) of mail message the
+daemon should accept. The default is not to have a maximum size.
+.It Fl u
+Specify a 
+.Ar user 
+to run as. This user must not be root but
+should be a user that is able to run sendmail and use the
+-f option to specify the sender of a mail message.
 .Sh FILES
 The address checking file is normally 
 .Pa etc/smtpd_check_rules ,
-within the chroot directory unless otherwise configured at compile time.
+within the chroot directory.
 .Pp
 The address check file, when enabled is read for each RCPT line in the
 SMTP dialogue. Each rule is checked with the current  source (SMTP
