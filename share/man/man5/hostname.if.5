@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hostname.if.5,v 1.5 1999/09/02 18:11:22 aaron Exp $
+.\"	$OpenBSD: hostname.if.5,v 1.6 1999/10/04 18:30:25 jason Exp $
 .\"	$NetBSD: hosts.5,v 1.4 1994/11/30 19:31:20 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -56,7 +56,7 @@ or
 .Pa bridgename.bridge0 .
 However, a configuration file is not needed for lo0.
 .Pp
-The following two formats are valid for
+The following three formats are valid for
 .Nm hostname.*
 files.
 .Pp
@@ -144,6 +144,24 @@ Optional miscellaneous options to set on the interface, i.e.,
 .Dq media 100baseTX mediaopt full-duplex .
 .El
 .Pp
+An addressless network interface setup (useful for
+.Xr bridge 4
+member interfaces) consists of
+.Pp
+.Bd -literal -offset xxxx
+.Li up Va options
+.Ed
+.Pp
+The above format has the following field values:
+.Bl -tag -width indent -offset xxxx
+.It Li up
+The literal string
+.Dq up
+if the interface is to be simply brought up.
+.It Va options
+Optional miscellaneous options to set on the interface, i.e.,
+.Dq media 100baseTX mediaopt full-duplex .
+.El
 .Pp
 The final file format only applies to
 .Nm bridgename.bridge*
