@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.7 1996/10/27 22:30:35 tholo Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.8 1996/11/12 15:39:04 mickey Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -353,7 +353,7 @@ ufs_setattr(v)
 	if (ip->i_flags & (IMMUTABLE | APPEND))
 		return (EPERM);
 	/*
-	 * Go through the fields and update iff not VNOVAL.
+	 * Go through the fields and update if not VNOVAL.
 	 */
 	if (vap->va_uid != (uid_t)VNOVAL || vap->va_gid != (gid_t)VNOVAL) {
 		error = ufs_chown(vp, vap->va_uid, vap->va_gid, cred, p);
