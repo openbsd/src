@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 1999/12/12 22:24:59 millert Exp $
+#	$OpenBSD: Makefile,v 1.12 2000/01/09 06:02:42 millert Exp $
 #
 # Take termcap/terminfo master file and generate termcap/terminfo .db files
 # master: http://www.tuxedo.org/~esr/terminfo/termtypes.master.gz
@@ -9,7 +9,7 @@ CLEANFILES+= terminfo.src termcap.src terminfo.db termcap.db
 all: terminfo.db termcap.db
 
 terminfo.src: termtypes.master
-	tic -I ${.ALLSRC} | sed \
+	tic -I -x ${.ALLSRC} | sed \
 	    -e 's,/usr/share/lib/tabset,/usr/share/tabset,g' \
 	    -e 's,/usr/lib/tabset,/usr/share/tabset,g' \
 	    > ${.TARGET}
@@ -21,14 +21,10 @@ terminfo.src: termtypes.master
 terminfo.db: terminfo.src
 	cap_mkdb -i -f terminfo terminfo.src
 
-# Note the hack to remove lines betweem the 'xterm' extry and what it includes.
-# This exists to prune out some unneeded entries so it is <= 1023 bytes.
 termcap.src: termtypes.master
-	tic -C ${.ALLSRC} | perl -e \
-	    'undef $$/; $$_ = <STDIN>; \
-	    s,/usr/share/lib/tabset,/usr/share/tabset,g; \
-	    s,/usr/lib/tabset,/usr/share/tabset,g; \
-	    s/(\nxterm\|[^\n]+\n)[^#]+(\s+:tc=)/$$1$$2/s; print' \
+	tic -C -x ${.ALLSRC} | sed \
+	    -e 's,/usr/share/lib/tabset,/usr/share/tabset,g' \
+	    -e 's,/usr/lib/tabset,/usr/share/tabset,g' \
 	    > ${.TARGET}
 	@if [ ! -s ${.TARGET} ]; then \
 	    echo ${.TARGET} is zero length!  You need to update /usr/bin/tic ;\
