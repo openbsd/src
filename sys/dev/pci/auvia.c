@@ -1,4 +1,4 @@
-/*	$OpenBSD: auvia.c,v 1.19 2002/06/02 05:03:18 mickey Exp $ */
+/*	$OpenBSD: auvia.c,v 1.20 2002/06/03 16:19:22 mickey Exp $ */
 /*	$NetBSD: auvia.c,v 1.7 2000/11/15 21:06:33 jdolecek Exp $	*/
 
 /*-
@@ -897,7 +897,7 @@ auvia_trigger_output(void *addr, void *start, void *end, int blksize,
 	    ch->sc_dma_ops_dma->map->dm_segs[0].ds_addr);
 
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh,
-	    AUVIA_PLAY_BASE + AUVIA_RP_CONTROL, ch->sc_reg);
+	    AUVIA_PLAY_BASE + AUVIA_RP_MODE, ch->sc_reg);
 
 	if (sc->sc_flags & AUVIA_FLAGS_VT8233) {
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
