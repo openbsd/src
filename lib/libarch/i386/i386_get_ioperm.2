@@ -1,4 +1,4 @@
-.\"	$OpenBSD: i386_get_ioperm.2,v 1.9 2000/10/18 05:12:06 aaron Exp $
+.\"	$OpenBSD: i386_get_ioperm.2,v 1.10 2001/02/11 20:18:09 aaron Exp $
 .\"	$NetBSD: i386_get_ioperm.2,v 1.3 1996/02/27 22:57:17 jtc Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -52,16 +52,14 @@
 .Sh DESCRIPTION
 .Fn i386_get_ioperm
 copies the current I/O permission bitmap into the memory referenced by
-.Ar iomap .
+.Fa iomap .
 .Pp
 .Fn i386_set_ioperm
 sets the I/O permission bitmap from the data pointed to by
-.Ar iomap .
+.Fa iomap .
 This call is restricted to the superuser.
 .Pp
-The permission bitmap contains
-1024
-bits in 32 longwords.
+The permission bitmap contains 1024 bits in 32 longwords.
 If bit
 .Va n
 is clear in the bitmap, then access is granted to I/O port
@@ -70,16 +68,16 @@ If bit
 .Va n
 is set in the bitmap, then an attempt to access I/O port
 .Va n
-results in delivery of a SIGBUS signal unless the process's I/O
-permission level would grant I/O access.
+results in delivery of a
+.Dv SIGBUS
+signal unless the process's I/O permission level would grant I/O access.
 .Sh RETURN VALUES
 Upon successful completion,
 .Fn i386_get_ioperm
 and
 .Fn i386_set_ioperm
 return 0.
-Otherwise, a value of \-1 is returned and the global
-variable
+Otherwise, a value of \-1 is returned and the global variable
 .Va errno
 is set to indicate the error.
 .Sh ERRORS
@@ -89,20 +87,22 @@ and
 will fail if:
 .Bl -tag -width [EINVAL]
 .It Bq Er EFAULT
-.Ar Iomap
+.Fa iomap
 points outside the process's allocated address space.
 .It Bq Er EPERM
 The caller was not the superuser.
 .El
+.Sh SEE ALSO
+.Xr i386_iopl 2
+.Rs
+.%A Intel
+.%T i386 Microprocessor Programmer's Reference Manual
+.Re
+.Sh WARNING
+You can really hose your machine if you enable user-level I/O and
+write to hardware ports without care.
 .Sh BUGS
 The bitmap should really cover 65536 bits, but that's just too big for
 allocation in a kernel structure.
 If you need access to ports beyond 1024, use
 .Xr i386_iopl 2 .
-.Sh SEE ALSO
-.Xr i386_iopl 2
-.Sh REFERENCES
-i386 Microprocessor Programmer's Reference Manual, Intel
-.Sh WARNING
-You can really hose your machine if you enable user-level I/O and
-write to hardware ports without care.
