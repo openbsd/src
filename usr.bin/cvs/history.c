@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.6 2005/01/31 21:46:43 jfb Exp $	*/
+/*	$OpenBSD: history.c,v 1.7 2005/01/31 22:04:58 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -166,25 +166,29 @@ cvs_history(int argc, char **argv)
 		}
 		cvs_hist_close(hp);
 	} else {
-		if (flags & CVS_HF_C)
-			cvs_sendarg(root, "-c", 0);
+		if ((flags & CVS_HF_C) && (cvs_sendarg(root, "-c", 0) < 0))
+			return (EX_PROTOCOL);
 
-		if (flags & CVS_HF_O)
-			cvs_sendarg(root, "-o", 0);
+		if ((flags & CVS_HF_O) && (cvs_sendarg(root, "-o", 0) < 0))
+			return (EX_PROTOCOL);
 
 		if (tag != NULL) {
-			cvs_sendarg(root, "-t", 0);
-			cvs_sendarg(root, tag, 0);
+			if ((cvs_sendarg(root, "-t", 0) < 0) ||
+			    (cvs_sendarg(root, tag, 0) < 0))
+				return (EX_PROTOCOL);
 		}
 		if (user != NULL) {
-			cvs_sendarg(root, "-u", 0);
-			cvs_sendarg(root, user, 0);
+			if ((cvs_sendarg(root, "-u", 0) < 0) ||
+			    (cvs_sendarg(root, user, 0) < 0))
+				return (EX_PROTOCOL);
 		}
 
-		cvs_sendarg(root, "-z", 0);
-		cvs_sendarg(root, zone, 0);
+		if ((cvs_sendarg(root, "-z", 0) < 0) ||
+		    (cvs_sendarg(root, zone, 0) < 0))
+			return (EX_PROTOCOL);
 
-		cvs_sendreq(root, CVS_REQ_HISTORY, NULL);
+		if (cvs_sendreq(root, CVS_REQ_HISTORY, NULL) < 0)
+			return (EX_PROTOCOL);
 	}
 
 	return (0);
