@@ -1,4 +1,4 @@
-.\" $OpenBSD: wscons.4,v 1.9 2002/08/29 07:34:31 wcobb Exp $
+.\" $OpenBSD: wscons.4,v 1.10 2002/09/13 11:04:40 miod Exp $
 .\" $NetBSD: wscons.4,v 1.11 2000/04/13 11:14:42 is Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,6 @@
 .Sh SYNOPSIS
 .Cd option WSEMUL_SUN
 .Cd option WSEMUL_NO_VT100
-.Cd option WSEMUL_NO_DUMB
 .Cd option \&"WSEMUL_DEFAULT=\e"xxx\e""
 .Cd option WS_KERNEL_FG=WSCOL_XXX
 .Cd option WS_KERNEL_BG=WSCOL_XXX
@@ -92,9 +91,7 @@ Different terminal emulations can be active at the same time on one display.
 The following choices are available:
 .Bl -tag -width xxxxxx
 .It dumb
-This minimal terminal support is available unless the kernel option
-.Cd option WSEMUL_NO_DUMB
-was specified at build time.
+This minimal terminal support is always available.
 No control sequences are supported besides the ASCII control characters.
 The cursor is not addressable.
 Only ASCII keyboard codes will be delivered, cursor and functions keys
@@ -102,13 +99,17 @@ do not work.
 .It sun
 The
 .Dq sun
-console emulation is available if
+console emulation is available by default on sparc and sparc64 architectures,
+or if
 .Cd option WSEMUL_SUN
 was specified at kernel build time.
 It supports the control sequences of
 .Tn SUN
 machine consoles and delivers its keyboard codes for function and
 keypad keys (as far as present on the actually used keyboard).
+.Pp
+ANSI colors are also supported on this emulation.
+.Pp
 This emulation is sufficient for full-screen applications.
 .It vt100
 is available by default, but can be disabled with
@@ -153,7 +154,7 @@ Depending on the keyboard used, not all function keys might be available.
 .Pp
 In addition to the plain
 .Tn VT100
-functions are supported:
+functions, the following features are supported:
 .Bl -bullet
 .It
 ANSI colors
@@ -192,7 +193,7 @@ console drivers to run on
 .Nx
 systems.
 The options are in particular:
-.Bl -tag -width xxxxxxxx
+.Bl -tag -width WSDISPLAY_COMPAT_xxxxxxxx
 .It Cd WSDISPLAY_COMPAT_USL
 Support the protocol for switches between multiple virtual screens on
 one display as used by most PC-UNIX variants.
