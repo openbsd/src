@@ -1,5 +1,5 @@
-/*	$OpenBSD: ping6.c,v 1.26 2001/01/12 19:11:38 itojun Exp $	*/
-/*	$KAME: ping6.c,v 1.112 2001/01/12 19:11:49 itojun Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.27 2001/01/26 12:16:49 itojun Exp $	*/
+/*	$KAME: ping6.c,v 1.115 2001/01/26 09:01:23 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -243,9 +243,9 @@ struct iovec smsgiov;
 char *scmsg = 0;
 
 volatile int signo;
-volatile int seenalrm;
-volatile int seenint;
-volatile int seeninfo;
+volatile sig_atomic_t seenalrm;
+volatile sig_atomic_t seenint;
+volatile sig_atomic_t seeninfo;
 
 int	 main __P((int, char *[]));
 void	 fill __P((char *, char *));
@@ -985,6 +985,23 @@ main(argc, argv)
 		u_char buf[1024];
 		struct iovec iov[2];
 
+		/* signal handling */
+		if (seenalrm) {
+			retransmit();
+			seenalrm = 0;
+			continue;
+		}
+		if (seenint) {
+			onint(SIGINT);
+			seenint = 0;
+			continue;
+		}
+		if (seeninfo) {
+			oninfo(SIGINFO);
+			seeninfo = 0;
+			continue;
+		}
+
 		if (options & F_FLOOD) {
 			pinger();
 			timeout.tv_sec = 0;
@@ -995,26 +1012,15 @@ main(argc, argv)
 		memset(fdmaskp, 0, fdmasks);
 		FD_SET(s, fdmaskp);
 		cc = select(s + 1, fdmaskp, NULL, NULL, tv);
-		if ((cc < 0 && errno == EINTR) || ((options & F_FLOOD) && signo)) {
-			if (seenalrm) {
-				retransmit();
-				seenalrm = 0;
+		if (cc < 0) {
+			if (errno != EINTR) {
+				warn("recvmsg");
+				sleep(1);
 			}
-			if (seenint) {
-				onint(SIGINT);
-				seenint = 0;
-			}
-			if (seeninfo) {
-				oninfo(SIGINFO);
-				seeninfo = 0;
-			}
-			signo = 0;
 			continue;
-		} else if (cc == 0)
-			continue;
+		}
 
 		fromlen = sizeof(from);
-
 		m.msg_name = (caddr_t)&from;
 		m.msg_namelen = sizeof(from);
 		memset(&iov, 0, sizeof(iov));
@@ -1030,21 +1036,7 @@ main(argc, argv)
 		if (cc < 0) {
 			if (errno != EINTR) {
 				warn("recvmsg");
-				continue;
-			}
-			if (!signo)
-				continue;
-			if (seenalrm) {
-				retransmit();
-				seenalrm = 0;
-			}
-			if (seenint) {
-				onint(SIGINT);
-				seenint = 0;
-			}
-			if (seeninfo) {
-				oninfo(SIGINFO);
-				seeninfo = 0;
+				sleep(1);
 			}
 			continue;
 		} else {
@@ -1323,7 +1315,7 @@ pr_pack(buf, cc, mhdr)
 	struct icmp6_nodeinfo *ni;
 	int i;
 	int hoplim;
-	struct sockaddr_in6 *from = (struct sockaddr_in6 *)mhdr->msg_name;
+	struct sockaddr_in6 *from;
 	u_char *cp = NULL, *dp, *end = buf + cc;
 	struct in6_pktinfo *pktinfo = NULL;
 	struct timeval tv, *tp;
@@ -1336,6 +1328,13 @@ pr_pack(buf, cc, mhdr)
 
 	(void)gettimeofday(&tv, NULL);
 
+	if (!mhdr || !mhdr->msg_name || mhdr->msg_namelen != sizeof(*from) ||
+	    ((struct sockaddr *)mhdr->msg_name)->sa_family != AF_INET6) {
+		if (options & F_VERBOSE)
+			warnx("invalid peername\n");
+		return;
+	}
+	from = (struct sockaddr_in6 *)mhdr->msg_name;
 	if (cc < sizeof(struct icmp6_hdr)) {
 		if (options & F_VERBOSE)
 			warnx("packet too short (%d bytes) from %s\n", cc,
