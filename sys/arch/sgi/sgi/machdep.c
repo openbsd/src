@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.20 2004/12/13 15:34:46 grange Exp $ */
+/*	$OpenBSD: machdep.c,v 1.21 2004/12/14 09:07:49 grange Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -191,7 +191,7 @@ mips_init(int argc, void *argv)
 	bzero(edata, end-edata);
 
 	/*
-	 *  Reserve symol table space. If invalid pointers no table.
+	 *  Reserve symbol table space. If invalid pointers no table.
 	 */
 	ssym = (char *)*(u_int64_t *)end;
 	esym = (char *)*((u_int64_t *)end + 1);
@@ -502,7 +502,7 @@ bios_printf("SR=%08x\n", getsr()); /* leave this in for now. need to see sr */
 	 * copy down trampolines instead of doing a panic.
 	 */
 	if (e_tlb_miss - tlb_miss > 0x80) {
-		printf("NOTE: TLB code to large, using trampolines\n");
+		printf("NOTE: TLB code too large, using trampolines\n");
 		bcopy(tlb_miss_tramp, (char *)TLB_MISS_EXC_VEC,
 		    e_tlb_miss_tramp - tlb_miss_tramp);
 		bcopy(xtlb_miss_tramp, (char *)XTLB_MISS_EXC_VEC,
