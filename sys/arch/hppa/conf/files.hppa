@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.35 2002/03/16 01:14:27 mickey Exp $
+#	$OpenBSD: files.hppa,v 1.36 2002/12/18 23:52:41 mickey Exp $
 #
 # hppa-specific configuration info
 
@@ -82,10 +82,17 @@ device	fpu
 attach	fpu at mainbus
 file	arch/hppa/dev/fpu.c		fpu
 
+# Phantom PseudoBC GSC+ Port
+define	phantomas {[offset = -1], [irq = -1]}
+device	phantomas
+attach	phantomas at mainbus
+file	arch/hppa/dev/phantomas.c	phantomas
+
 # 1FT1-0002, 1FU2-0002
 # as goes w/ 7100LC, 7300LC, 7200, 8000, 8200, 8500
 device	lasi: gscbus
-attach	lasi at mainbus
+attach	lasi at mainbus with lasi_mainbus
+attach	lasi at phantomas with lasi_phantomas
 file	arch/hppa/dev/lasi.c		lasi
 
 # all the older systems

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd_hppa.c,v 1.5 2002/04/29 00:13:25 miod Exp $	*/
+/*	$OpenBSD: cmd_hppa.c,v 1.6 2002/12/18 23:52:45 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002 Miodrag Vallat
@@ -85,12 +85,16 @@ struct consoledev graphics[MAX_GRAPHICS];
 /* Relaxed device comparison */
 #define	MATCH(dev1, dev2) \
 	(dev1).dp_mod == (dev2).dp_mod && \
+	(dev1).dp_bc[0] == (dev2).dp_bc[0] && \
+	(dev1).dp_bc[1] == (dev2).dp_bc[1] && \
+	(dev1).dp_bc[2] == (dev2).dp_bc[2] && \
+	(dev1).dp_bc[3] == (dev2).dp_bc[3] && \
 	(dev1).dp_bc[4] == (dev2).dp_bc[4] && \
 	(dev1).dp_bc[5] == (dev2).dp_bc[5]
 
 int walked;
 
-void bus_walk(int);
+void bus_walk(struct device_path *);
 void register_device(struct consoledev *, int,
 			  struct device_path *, struct iodc_data *, int, int);
 
@@ -440,7 +444,7 @@ Xconsole()
 
 	/* walk the device list if not already done */
 	if (walked == 0) {
-		bus_walk(-1);
+		bus_walk(NULL);
 		walked++;
 	}
 
@@ -569,7 +573,7 @@ Xkeyboard()
 
 	/* walk the device list if not already done */
 	if (walked == 0) {
-		bus_walk(-1);
+		bus_walk(NULL);
 		walked++;
 	}
 
@@ -620,44 +624,43 @@ Xkeyboard()
  * serial ports, keyboard and graphics devices as they are found.
  */
 void
-bus_walk(bus)
-	int bus;
+bus_walk(struct device_path *idp)
 {
 	struct device_path dp;
 	struct pdc_memmap memmap;
 	struct iodc_data mptr;
-	struct iomod *io;
-	iodcio_t iodc;
-	int err;
-	int i;
-	int kluge_ps2 = 0;	/* kluge, see below */
+	int err, i, kluge_ps2 = 0;	/* kluge, see below */
 
-	iodc = (iodcio_t)(PAGE0->mem_free + IODC_MAXSIZE);
-		
 	for (i = 0; i < MAXMODBUS; i++) {
-		dp.dp_bc[0] = dp.dp_bc[1] =
-		dp.dp_bc[2] = dp.dp_bc[3] = -1;
-		dp.dp_bc[4] = bus;
-		dp.dp_bc[5] = bus < 0 ? -1 : 0;
-		dp.dp_mod = i;
-		if ((pdc)(PDC_MEMMAP, PDC_MEMMAP_HPA, &memmap,
-			  &dp) < 0)
-			continue;
 
-		io = (struct iomod *) memmap.hpa;
-
-		if ((err = (pdc)(PDC_IODC, PDC_IODC_READ, &pdcbuf, io,
-			   IODC_DATA, &mptr, sizeof(mptr))) < 0) {
-			continue;
+		if (idp) {
+			dp.dp_bc[0] = idp->dp_bc[1];
+			dp.dp_bc[1] = idp->dp_bc[2];
+			dp.dp_bc[2] = idp->dp_bc[3];
+			dp.dp_bc[3] = idp->dp_bc[4];
+			dp.dp_bc[4] = idp->dp_bc[5];
+			dp.dp_bc[5] = idp->dp_mod;
+		} else {
+			dp.dp_bc[0] = dp.dp_bc[1] = dp.dp_bc[2] =
+			dp.dp_bc[3] = dp.dp_bc[4] = dp.dp_bc[5] = -1;
 		}
 
+		dp.dp_mod = i;
+		if ((pdc)(PDC_MEMMAP, PDC_MEMMAP_HPA, &memmap, &dp) < 0 &&
+		    (pdc)(PDC_SYSMAP, PDC_SYSMAP_HPA, &memmap, &dp) < 0)
+			continue;
+
+		if ((err = (pdc)(PDC_IODC, PDC_IODC_READ, &pdcbuf, memmap.hpa,
+		    IODC_DATA, &mptr, sizeof(mptr))) < 0)
+			continue;
+
 #ifdef DEBUG
-		printf("device %d/%d flags %d mod %x type %x model %x\n",
-		    dp.dp_bc[4], dp.dp_bc[5],
-		    dp.dp_flags, dp.dp_mod,
+		printf("device %d/%d/%d/%d/%d/%d "
+		    "flags %d mod %x type %x model %x\n",
+		    dp.dp_bc[0], dp.dp_bc[1], dp.dp_bc[2], dp.dp_bc[3],
+		    dp.dp_bc[4], dp.dp_bc[5], dp.dp_flags, dp.dp_mod,
 		    mptr.iodc_type, mptr.iodc_sv_model);
 #endif
-
 		/*
 		 * If the device can be considered as a valid rs232,
 		 * graphics console or keyboard, register it.
@@ -673,6 +676,23 @@ bus_walk(bus)
 		 * ports are not seen as attached to the same busses...
 		 */
 		switch (mptr.iodc_type) {
+		case HPPA_TYPE_BCPORT:
+			bus_walk(&dp);
+			break;
+		case HPPA_TYPE_BHA:
+		case HPPA_TYPE_BRIDGE:
+			/* if there was no phantomas here */
+			if (dp.dp_bc[5] == -1) {
+				dp.dp_bc[0] = dp.dp_bc[1];
+				dp.dp_bc[1] = dp.dp_bc[2];
+				dp.dp_bc[2] = dp.dp_bc[3];
+				dp.dp_bc[3] = dp.dp_bc[4];
+				dp.dp_bc[4] = dp.dp_bc[5];
+				dp.dp_bc[5] = dp.dp_mod;
+				dp.dp_mod = 0;
+			}
+			bus_walk(&dp);
+			break;
 		case HPPA_TYPE_ADIRECT:
 			switch (mptr.iodc_sv_model) {
 			case HPPA_ADIRECT_RS232:
@@ -750,34 +770,6 @@ bus_walk(bus)
 				    &dp, &mptr, GRAPHICS, 1);
 				break;
 			}
-			break;
-		}
-	}
-
-	/*
-	 * Do a second pass to scan all child busses
-	 */
-	for (i = 0; i < MAXMODBUS; i++) {
-		dp.dp_bc[0] = dp.dp_bc[1] =
-		dp.dp_bc[2] = dp.dp_bc[3] = -1;
-		dp.dp_bc[4] = bus;
-		dp.dp_bc[5] = bus < 0 ? -1 : 0;
-		dp.dp_mod = i;
-		if ((pdc)(PDC_MEMMAP, PDC_MEMMAP_HPA, &memmap,
-			  &dp) < 0)
-			continue;
-
-		io = (struct iomod *) memmap.hpa;
-
-		if ((err = (pdc)(PDC_IODC, PDC_IODC_READ, &pdcbuf, io,
-			   IODC_DATA, &mptr, sizeof(mptr))) < 0) {
-			continue;
-		}
-
-		switch (mptr.iodc_type) {
-		case HPPA_TYPE_BHA:
-		case HPPA_TYPE_BRIDGE:
-			bus_walk(dp.dp_mod);
 			break;
 		}
 	}

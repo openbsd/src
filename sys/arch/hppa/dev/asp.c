@@ -1,4 +1,4 @@
-/*	$OpenBSD: asp.c,v 1.8 2002/12/17 21:54:20 mickey Exp $	*/
+/*	$OpenBSD: asp.c,v 1.9 2002/12/18 23:52:45 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -201,6 +201,13 @@ aspattach(parent, self, aux)
 	sc->sc_ic.gsc_base = sc->sc_trs;
 
 	ga.ga_ca = *ca;	/* clone from us */
+	ga.ga_dp.dp_bc[0] = ga.ga_dp.dp_bc[1];
+	ga.ga_dp.dp_bc[1] = ga.ga_dp.dp_bc[2];
+	ga.ga_dp.dp_bc[2] = ga.ga_dp.dp_bc[3];
+	ga.ga_dp.dp_bc[3] = ga.ga_dp.dp_bc[4];
+	ga.ga_dp.dp_bc[4] = ga.ga_dp.dp_bc[5];
+	ga.ga_dp.dp_bc[5] = ga.ga_dp.dp_mod;
+	ga.ga_dp.dp_mod = 0;
 	ga.ga_hpamask = ASP_IOMASK;
 	ga.ga_name = "gsc";
 	ga.ga_ic = &sc->sc_ic;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.24 2002/12/18 20:56:59 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.25 2002/12/18 23:52:45 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -588,47 +588,64 @@ getstr(cp, size)
 }
 
 void
-pdc_scanbus(self, ca, bus, maxmod)
+pdc_scanbus(self, ca, maxmod)
 	struct device *self;
 	struct confargs *ca;
-	int bus, maxmod;
+	int maxmod;
 {
-	struct pdc_memmap pdc_memmap;
-	struct device_path dp;
 	int i;
 
 	for (i = maxmod; i--; ) {
-		struct confargs nca;
 		struct pdc_iodc_read pdc_iodc_read;
+		struct pdc_memmap pdc_memmap;
+		struct confargs nca;
+		hppa_hpa_t hpa;
+		int error;
 
-		dp.dp_bc[0] = dp.dp_bc[1] = dp.dp_bc[2] = dp.dp_bc[3] = -1;
-		dp.dp_bc[4] = bus;
-		dp.dp_bc[5] = bus < 0? -1 : 0;
-		dp.dp_mod = i;
-
-		if (pdc_call((iodcio_t)pdc, 0, PDC_MEMMAP,
-			     PDC_MEMMAP_HPA, &pdc_memmap, &dp) < 0)
-			continue;
-
+		hpa = 0;
 		nca = *ca;
-		if (pdc_call((iodcio_t)pdc, 0, PDC_IODC, PDC_IODC_READ,
-			     &pdc_iodc_read, pdc_memmap.hpa, IODC_DATA,
-			     &nca.ca_type, sizeof(nca.ca_type)) < 0)
+		nca.ca_dp.dp_bc[0] = ca->ca_dp.dp_bc[1];
+		nca.ca_dp.dp_bc[1] = ca->ca_dp.dp_bc[2];
+		nca.ca_dp.dp_bc[2] = ca->ca_dp.dp_bc[3];
+		nca.ca_dp.dp_bc[3] = ca->ca_dp.dp_bc[4];
+		nca.ca_dp.dp_bc[4] = ca->ca_dp.dp_bc[5];
+		nca.ca_dp.dp_bc[5] = ca->ca_dp.dp_mod;
+		nca.ca_dp.dp_mod = i;
+
+		if ((error = pdc_call((iodcio_t)pdc, 0, PDC_MEMMAP,
+		    PDC_MEMMAP_HPA, &pdc_memmap, &nca.ca_dp)) == 0)
+			hpa = pdc_memmap.hpa;
+		else if ((error = pdc_call((iodcio_t)pdc, 0, PDC_SYSMAP,
+		    PDC_SYSMAP_HPA, &pdc_memmap, &nca.ca_dp)) == 0)
+			hpa = pdc_memmap.hpa;
+
+		if (!hpa)
 			continue;
 
-		nca.ca_mod = i;
-		nca.ca_hpa = pdc_memmap.hpa;
+		if (autoconf_verbose)
+			printf(">> HPA 0x%x\n", hpa);
+
+		if ((error = pdc_call((iodcio_t)pdc, 0, PDC_IODC,
+		    PDC_IODC_READ, &pdc_iodc_read, hpa, IODC_DATA,
+		    &nca.ca_type, sizeof(nca.ca_type))) < 0) {
+			if (autoconf_verbose)
+				printf(">> iodc_data error %d\n", error);
+			continue;
+		}
+
+		nca.ca_hpa = hpa;
 		nca.ca_pdc_iodc_read = &pdc_iodc_read;
 		nca.ca_name = hppa_mod_info(nca.ca_type.iodc_type,
 					    nca.ca_type.iodc_sv_model);
 
 		if (autoconf_verbose) {
 			printf(">> probing: flags %b bc %d/%d/%d/%d/%d/%d ",
-			    dp.dp_flags, PZF_BITS,
-			    dp.dp_bc[0], dp.dp_bc[1], dp.dp_bc[2],
-			    dp.dp_bc[3], dp.dp_bc[4], dp.dp_bc[5]);
+			    nca.ca_dp.dp_flags, PZF_BITS,
+			    nca.ca_dp.dp_bc[0], nca.ca_dp.dp_bc[1],
+			    nca.ca_dp.dp_bc[2], nca.ca_dp.dp_bc[3],
+			    nca.ca_dp.dp_bc[4], nca.ca_dp.dp_bc[5]);
 			printf("mod %x hpa %x type %x sv %x\n",
-			    dp.dp_mod, pdc_memmap.hpa,
+			    nca.ca_dp.dp_mod, hpa,
 			    nca.ca_type.iodc_type, nca.ca_type.iodc_sv_model);
 		}
 

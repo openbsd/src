@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.37 2002/10/21 15:58:21 mickey Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.38 2002/12/18 23:52:45 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -851,7 +851,10 @@ mbattach(parent, self, aux)
 	nca.ca_hpamask = HPPA_IOSPACE;
 	nca.ca_iot = &hppa_bustag;
 	nca.ca_dmatag = &hppa_dmatag;
-	pdc_scanbus(self, &nca, -1, MAXMODBUS);
+	nca.ca_dp.dp_bc[0] = nca.ca_dp.dp_bc[1] = nca.ca_dp.dp_bc[2] =
+	nca.ca_dp.dp_bc[3] = nca.ca_dp.dp_bc[4] = nca.ca_dp.dp_bc[5] = -1;
+	nca.ca_dp.dp_mod = -1;
+	pdc_scanbus(self, &nca, MAXMODBUS);
 }
 
 /*

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.12 2002/12/18 01:20:03 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.13 2002/12/18 23:52:41 mickey Exp $
 #
 # Diskless kernel config
 #
@@ -12,6 +12,7 @@ mainbus0 at root		# root "bus"
 mem*	at mainbus0		# /dev/*mem and memory controller
 pdc0	at mainbus0		# PDC/IODC wrapper for boot console
 cpu*	at mainbus0 irq 31	# HP PA-RISC cpu
+phantomas* at mainbus0		# Phantom PseudoBC GSC+ Port
 #fpu*	at mainbus0		# HP PA-RISC fpu (iv N/A)
 #pmu*	at mainbus0		# HP PA-RISC perfomance monitor unit (iv 29)
 #power*	at mainbus0		# power/fail manager (iv 2)
@@ -43,6 +44,7 @@ option		USELEDS		# blink 'em
 
 lasi0	at mainbus0 offset 0x100000 irq 28	# LASI host adapter (LSI PN???)
 lasi0	at mainbus0 offset 0xfd00000 irq 28	# LASI on J210
+lasi0	at phantomas0 offset 0xfd00000 irq 28	# LASI on [ABC]*
 lasi1	at mainbus0 offset 0x500000 irq 27	# GIO card
 asp*	at mainbus0 irq 28	# this one comes w/ Viper and leds
 #wax*	at mainbus0 irq 24	# Wax may host EISA as well

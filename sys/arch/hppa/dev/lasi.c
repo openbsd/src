@@ -1,4 +1,4 @@
-/*	$OpenBSD: lasi.c,v 1.10 2002/12/17 21:54:20 mickey Exp $	*/
+/*	$OpenBSD: lasi.c,v 1.11 2002/12/18 23:52:45 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -69,6 +69,7 @@ struct lasi_trs {
 struct lasi_softc {
 	struct device sc_dev;
 	struct gscbus_ic sc_ic;
+	int sc_phantomassed;
 
 	struct lasi_hwr volatile *sc_hw;
 	struct lasi_trs volatile *sc_trs;
@@ -77,10 +78,16 @@ struct lasi_softc {
 
 int	lasimatch(struct device *, void *, void *);
 void	lasiattach(struct device *, struct device *, void *);
+void	lasi_mainbus_attach(struct device *, struct device *, void *);
+void	lasi_phantomas_attach(struct device *, struct device *, void *);
 void	lasi_gsc_attach(struct device *);
 
-struct cfattach lasi_ca = {
-	sizeof(struct lasi_softc), lasimatch, lasiattach
+struct cfattach lasi_mainbus_ca = {
+	sizeof(struct lasi_softc), lasimatch, lasi_mainbus_attach
+};
+
+struct cfattach lasi_phantomas_ca = {
+	sizeof(struct lasi_softc), lasimatch, lasi_phantomas_attach
 };
 
 struct cfdriver lasi_cd = {
@@ -106,13 +113,34 @@ lasimatch(parent, cfdata, aux)
 }
 
 void
+lasi_mainbus_attach(parent, self, aux)
+	struct device *parent;
+	struct device *self;
+	void *aux;
+{
+	lasiattach(parent, self, aux);
+}
+
+void
+lasi_phantomas_attach(parent, self, aux)
+	struct device *parent;
+	struct device *self;
+	void *aux;
+{
+	struct lasi_softc *sc = (struct lasi_softc *)self;
+
+	sc->sc_phantomassed = 1;
+	lasiattach(parent, self, aux);
+}
+
+void
 lasiattach(parent, self, aux)
 	struct device *parent;
 	struct device *self;
 	void *aux;
 {
-	register struct confargs *ca = aux;
-	register struct lasi_softc *sc = (struct lasi_softc *)self;
+	struct lasi_softc *sc = (struct lasi_softc *)self;
+	struct confargs *ca = aux;
 	bus_space_handle_t ioh;
 	int s, in;
 
@@ -146,6 +174,15 @@ lasiattach(parent, self, aux)
 	sc->sc_ic.gsc_base = sc->sc_trs;
 
 	sc->ga.ga_ca = *ca;	/* clone from us */
+	if (!sc->sc_phantomassed) {
+		sc->ga.ga_dp.dp_bc[0] = sc->ga.ga_dp.dp_bc[1];
+		sc->ga.ga_dp.dp_bc[1] = sc->ga.ga_dp.dp_bc[2];
+		sc->ga.ga_dp.dp_bc[2] = sc->ga.ga_dp.dp_bc[3];
+		sc->ga.ga_dp.dp_bc[3] = sc->ga.ga_dp.dp_bc[4];
+		sc->ga.ga_dp.dp_bc[4] = sc->ga.ga_dp.dp_bc[5];
+		sc->ga.ga_dp.dp_bc[5] = sc->ga.ga_dp.dp_mod;
+		sc->ga.ga_dp.dp_mod = 0;
+	}
 	if (sc->sc_dev.dv_unit)
 		config_defer(self, lasi_gsc_attach);
 	else {

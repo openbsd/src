@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.16 2002/12/17 21:54:25 mickey Exp $	*/
+/*	$OpenBSD: autoconf.h,v 1.17 2002/12/18 23:52:45 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -36,7 +36,7 @@
 struct confargs {
 	const char	*ca_name;	/* device name/description */
 	bus_space_tag_t	ca_iot;		/* io tag */
-	int		ca_mod;		/* module number on the bus */
+	struct device_path ca_dp;	/* device_path as found by pdc_scan */
 	struct iodc_data ca_type;	/* iodc-specific type descrition */
 	hppa_hpa_t	ca_hpa;		/* module HPA */
 	hppa_hpa_t	ca_hpamask;	/* mask for modules on the bus */
@@ -66,7 +66,7 @@ extern void (*cold_hook)(int);
 struct device;
 
 const char *hppa_mod_info(int, int);
-void	pdc_scanbus(struct device *, struct confargs *, int bus, int);
+void	pdc_scanbus(struct device *, struct confargs *, int);
 int	mbprint(void *, const char *);
 int	mbsubmatch(struct device *, void *, void *);
 void	*cpu_intr_map(void *v, int pri, int irq, int (*handler)(void *),
