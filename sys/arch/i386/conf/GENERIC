@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.259 2001/05/13 15:39:26 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.260 2001/05/14 03:00:52 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -49,7 +49,6 @@ pci*	at mainbus0 bus ?
 
 option		PCIVERBOSE
 option		EISAVERBOSE
-#option		PCMCIAVERBOSE
 option		USBVERBOSE
 
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
@@ -59,12 +58,14 @@ pci*	at pchb? bus ?
 pcib*	at pci? dev ? function ?	# PCI-ISA bridges (do nothing)
 
 # ISA PCMCIA controllers
+#option PCMCIAVERBOSE
 pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x10000
 pcic1	at isa? port 0x3e2 iomem 0xe0000 iosiz 0x4000
 pcic2	at isa? port 0x3e4 iomem 0xe0000 iosiz 0x4000
 tcic0	at isa? disable port 0x240 iomem 0xd0000 iosiz 0x10000
 
 # ISA Plug-and-Play PCMCIA controllers
+#option DEBUG_ISAPNP
 pcic*	at isapnp?
 
 # PCI PCMCIA controllers
@@ -439,7 +440,4 @@ pseudo-device	sequencer	1
 
 # mouse & keyboard multiplexor pseudo-devices
 pseudo-device	wsmux		2
-
-#option DEBUG_ISAPNP
-
-pseudo-device  crypto          1
+pseudo-device	crypto		1
