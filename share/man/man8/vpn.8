@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.75 2004/06/02 14:24:02 pedro Exp $
+.\" $OpenBSD: vpn.8,v 1.76 2004/11/12 10:51:09 jmc Exp $
 .\"
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -508,15 +508,15 @@ port 500.
 For machineA, add:
 .Bd -literal
 # Permit ISAKMPD control traffic between A and B
-pass in proto udp from 192.168.2.1/32 to 193.127.1.254/32 port = 500
-pass out proto udp from 192.168.1.254/32 to 193.127.2.1/32 port = 500
+pass in proto udp from 192.168.2.1/32 to 192.168.1.254/32 port = 500
+pass out proto udp from 192.168.1.254/32 to 192.168.2.1/32 port = 500
 .Ed
 .Pp
 For machineB, add:
 .Bd -literal
 # Permit ISAKMPD control traffic between A and B
-pass in proto udp from 192.168.1.254/32 to 193.127.2.1/32 port = 500
-pass out proto udp from 192.168.2.1/32 to 193.127.1.254/32 port = 500
+pass in proto udp from 192.168.1.254/32 to 192.168.2.1/32 port = 500
+pass out proto udp from 192.168.2.1/32 to 192.168.1.254/32 port = 500
 .Ed
 .It
 Start
