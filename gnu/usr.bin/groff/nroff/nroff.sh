@@ -29,7 +29,7 @@ do
 		opts="$opts $1";
 		;;
 
-	-Tascii|-Tlatin1)
+	-Tascii|-Tlatin1|-Tps)
 		T=$1
 		;;
 	-T*)
