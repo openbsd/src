@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.332 2005/03/29 17:24:52 pedro Exp $
+#	$OpenBSD: files,v 1.333 2005/03/29 17:27:30 deraadt Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -564,6 +564,9 @@ file isofs/cd9660/cd9660_rrip.c		cd9660
 file isofs/cd9660/cd9660_util.c		cd9660
 file isofs/cd9660/cd9660_vfsops.c	cd9660
 file isofs/cd9660/cd9660_vnops.c	cd9660
+file isofs/udf/osta.c			udf
+file isofs/udf/udf_vfsops.c		udf
+file isofs/udf/udf_vnops.c		udf
 file kern/exec_aout.c
 file kern/exec_conf.c
 file kern/exec_ecoff.c
@@ -692,9 +695,6 @@ file ntfs/ntfs_ihash.c			ntfs
 file ntfs/ntfs_subr.c			ntfs
 file ntfs/ntfs_vfsops.c			ntfs
 file ntfs/ntfs_vnops.c			ntfs
-file isofs/udf/osta.c			udf
-file isofs/udf/udf_vfsops.c		udf
-file isofs/udf/udf_vnops.c		udf
 file net/bpf.c				bpfilter		needs-count
 file net/bpf_filter.c			bpfilter | ppp
 file net/if.c
