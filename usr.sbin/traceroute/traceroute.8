@@ -1,4 +1,4 @@
-.\"	$OpenBSD: traceroute.8,v 1.29 2002/08/12 20:43:13 stevesk Exp $
+.\"	$OpenBSD: traceroute.8,v 1.30 2002/08/30 02:17:34 stevesk Exp $
 .\"	$NetBSD: traceroute.8,v 1.6 1995/10/12 03:05:50 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -416,6 +416,18 @@ C. Philip Wood, Tim Seaver and Ken Adelman.
 .Xr netstat 1 ,
 .Xr ping 8
 .Sh HISTORY
+The very first
+.Nm
+(never released) used ICMP ECHO_REQUEST
+datagrams as probe packets.  During the first night of testing it was
+discovered that more than half the router vendors of the time would
+not return an ICMP TIME_EXCEEDED for an ECHO_REQUEST.
+.Nm
+was then changed to use UDP probe packets.
+Most modern TCP/IP implementations will now generate an ICMP error
+message to ICMP query messages, and the option to use ECHO_REQUEST probes
+was re-implemented.
+.Pp
 The
 .Nm
 command first appeared in
