@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.48 2001/11/06 19:53:20 miod Exp $	*/
+/*	$OpenBSD: tty.c,v 1.49 2001/12/27 22:34:36 nordin Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -982,6 +982,7 @@ ttioctl(tp, cmd, data, flag, p)
 		    ((p->p_session->s_ttyvp || tp->t_session) &&
 		     (tp->t_session != p->p_session)))
 			return (EPERM);
+		SESSHOLD(p->p_session);
 		tp->t_session = p->p_session;
 		tp->t_pgrp = p->p_pgrp;
 		p->p_session->s_ttyp = tp;
