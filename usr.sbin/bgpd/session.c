@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.150 2004/04/25 23:36:15 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.151 2004/04/26 01:43:13 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -969,9 +969,16 @@ session_open(struct peer *p)
 	u_int16_t		 len;
 	int			 errs = 0, n;
 	u_int8_t		 op_type, op_len = 0, optparamlen = 0;
+	u_int8_t		 capa_code, capa_len;
+	struct capa_mp		 capa_mp_v4;
 
 	if (p->capa.announce) {
 		/* multiprotocol extensions, RFC 2858 */
+		bzero(&capa_mp_v4, sizeof(capa_mp_v4));
+		capa_mp_v4.afi = AFI_IPv4;
+		capa_mp_v4.safi = SAFI_UNICAST;
+		op_len += 6;	/* 1 code + 1 len + 4 data */
+
 		/* route refresh, RFC 2918 */
 
 		if (op_len > 0)
@@ -1010,7 +1017,14 @@ session_open(struct peer *p)
 		errs += buf_add(buf, &op_type, sizeof(op_type));
 		errs += buf_add(buf, &op_len, sizeof(op_len));
 
-		/* multiprotocol extensions, RFC 2858 */	
+		/* multiprotocol extensions, RFC 2858 */
+		capa_code = CAPA_MP;
+		capa_len = 4;
+		errs += buf_add(buf, &capa_code, sizeof(capa_code));
+		errs += buf_add(buf, &capa_len, sizeof(capa_len));
+		errs += buf_add(buf, &capa_mp_v4.afi, sizeof(capa_mp_v4.afi));
+		errs += buf_add(buf, &capa_mp_v4.pad, sizeof(capa_mp_v4.pad));
+		errs += buf_add(buf, &capa_mp_v4.safi, sizeof(capa_mp_v4.safi));
 		/* route refresh, RFC 2918 */
 	}
 

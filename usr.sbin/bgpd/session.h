@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.43 2004/04/25 17:34:39 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.44 2004/04/26 01:43:13 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -113,6 +113,12 @@ struct msg_open {
 	u_int16_t		 holdtime;
 	u_int32_t		 bgpid;
 	u_int8_t		 optparamlen;
+};
+
+struct capa_mp {
+	u_int16_t		afi;
+	u_int8_t		pad;
+	u_int8_t		safi;
 };
 
 struct ctl_conn {
