@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.20 1997/11/06 19:42:34 millert Exp $	*/
+/*	$OpenBSD: locore.s,v 1.21 1998/09/06 20:09:59 millert Exp $	*/
 /*	$NetBSD: locore.s,v 1.79 1997/09/12 08:41:55 mycroft Exp $	*/
 
 /*
@@ -77,6 +77,7 @@
 #include <machine/asm.h>
 #include <machine/trap.h>
 
+#include "ksyms.h"
 #include "opt_useleds.h"
 #ifdef USELEDS
 #include <hp300/hp300/leds.h>
@@ -378,7 +379,7 @@ Lstart2:
 	movl	d1,a0@			| and physmem
 
 /* configure kernel and proc0 VA space so we can get going */
-#ifdef DDB
+#if defined(DDB) || NSYMS > 0
 	RELOC(esym,a0)			| end of static kernel test/data/syms
 	movl	a0@,d5
 	jne	Lstart3
