@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.46 2000/07/17 14:54:26 art Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.47 2000/09/27 09:37:16 art Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -660,8 +660,10 @@ vget(vp, flags, p)
 	 * return failure. Cleaning is determined by checking that
 	 * the VXLOCK flag is set.
 	 */
-	if ((flags & LK_INTERLOCK) == 0)
+	if ((flags & LK_INTERLOCK) == 0) {
 		simple_lock(&vp->v_interlock);
+		flags |= LK_INTERLOCK;
+	}
 	if (vp->v_flag & VXLOCK) {
  		vp->v_flag |= VXWANT;
 		simple_unlock(&vp->v_interlock);
@@ -679,7 +681,7 @@ vget(vp, flags, p)
 	}
  	vp->v_usecount++;
 	if (flags & LK_TYPE_MASK) {
-		if ((error = vn_lock(vp, flags | LK_INTERLOCK, p)) != 0) {
+		if ((error = vn_lock(vp, flags, p)) != 0) {
 			vp->v_usecount--;
 			if (vp->v_usecount == 0)
 				vputonfreelist(vp);
