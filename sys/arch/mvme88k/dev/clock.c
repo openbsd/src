@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.39 2004/08/25 08:00:06 miod Exp $ */
+/*	$OpenBSD: clock.c,v 1.40 2004/08/25 08:01:40 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -109,7 +109,6 @@ void	sbc_initclock(void);
 void	sbc_initstatclock(void);
 void	m188_initclock(void);
 void	m188_initstatclock(void);
-void	m188_timer_init(unsigned);
 void	m188_cio_init(unsigned);
 u_int	read_cio(int);
 void	write_cio(int, u_int);
@@ -372,6 +371,9 @@ m188_clockintr(void *eframe)
 void
 m188_initclock(void)
 {
+	volatile int imr;
+	int counter;
+
 #ifdef CLOCK_DEBUG
 	printf("VME188 clock init\n");
 #endif
@@ -380,25 +382,15 @@ m188_initclock(void)
 		hz = 100;
 	}
 	tick = 1000000 / hz;
-	m188_timer_init(tick);
-}
 
-void
-m188_timer_init(unsigned period)
-{
-	volatile int imr;
-	int counter;
+	/*
+	 * The DUART runs at 3.6864 MHz in PCLK/16 mode, hence for a
+	 * 100 Hz timer, it needs (3686400 / 16) / 100 ticks per cycle.
+	 */
+	counter = (3686400 / 16) / hz;
 
-	/* make sure the counter range is proper. */
-	if (period < 9)
-		counter = 2;
-	else if (period > 284421)
-		counter = 65535;
-	else
-		counter	= period / 4.34;
 #ifdef CLOCK_DEBUG
-	printf("tick == %d, period == %d\n", tick, period);
-	printf("timer will interrupt every %d usec\n", (int) (counter * 4.34));
+	printf("tick == %d, counter == %d\n", tick, counter);
 #endif
 	/* clear the counter/timer output OP3 while we program the DART */
 	*((int *volatile)DART_OPCR) = 0x00;
@@ -409,8 +401,8 @@ m188_timer_init(unsigned period)
 	/* set counter/timer to counter mode, clock/16 */
 	*((int *volatile)DART_ACR) = 0x30;
 
-	*((int *volatile)DART_CTUR) = counter / 256;	/* set counter MSB */
-	*((int *volatile)DART_CTLR) = counter % 256;	/* set counter LSB */
+	*((int *volatile)DART_CTUR) = (counter >> 8);
+	*((int *volatile)DART_CTLR) = (counter & 0xff);
 	/* set interrupt vec */
 	*((int *volatile)DART_IVR) = SYSCON_VECT + SYSCV_TIMER1;
 
