@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.34 2001/01/21 18:27:37 art Exp $
+#	$OpenBSD: RAMDISK,v 1.35 2001/01/22 13:57:36 art Exp $
 #	$NetBSD: RAMDISK,v 1.9 1996/12/03 17:25:33 cgd Exp $
 
 machine	alpha			# architecture, used by config; REQUIRED
@@ -131,6 +131,7 @@ st*	at	scsibus? target ? lun ?		# SCSI tape drives
 wsdisplay*	at	vga?
 #wsdisplay*	at	sfb?
 wsdisplay*	at	tga?
+wskbd*          at      pckbd?
 
 pseudo-device	bpfilter	1
 pseudo-device	loop
