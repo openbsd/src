@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.27 2004/12/19 01:44:07 millert Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.28 2005/01/28 15:43:24 millert Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -81,12 +81,12 @@ struct	pt_softc {
 	char	pty_sn[11];
 };
 
-#define	DEFAULT_NPTYS		8	/* default number of initial ptys */
-#define DEFAULT_MAXPTYS		992	/* default maximum number of ptys */
+#define	NPTY_MIN		8	/* number of initial ptys */
+#define NPTY_MAX		992	/* maximum number of ptys supported */
 
 static struct pt_softc **pt_softc = NULL;	/* pty array */
 static int npty = 0;				/* size of pty array */
-static int maxptys = DEFAULT_MAXPTYS;		/* maximum number of ptys */
+static int maxptys = NPTY_MAX;			/* maximum number of ptys */
 struct rwlock pt_softc_lock = RWLOCK_INITIALIZER;  /* for pty array */
 
 #define	PF_PKT		0x08		/* packet mode */
@@ -221,7 +221,7 @@ ptyattach(int n)
 {
 	/* maybe should allow 0 => none? */
 	if (n <= 1)
-		n = DEFAULT_NPTYS;
+		n = NPTY_MIN;
 	pt_softc = ptyarralloc(n);
 	npty = n;
 
@@ -962,8 +962,7 @@ int
 sysctl_pty(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen)
 {
-	int err;
-	int newmax;
+	int error, oldmax;
 
 	if (namelen != 1)
 		return (ENOTDIR);
@@ -972,20 +971,19 @@ sysctl_pty(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case KERN_TTY_MAXPTYS:
 		if (!newp)
 			return (sysctl_rdint(oldp, oldlenp, newp, maxptys));
-		err = sysctl_int(oldp, oldlenp, newp, newlen, &newmax);
-		if (err)
-			return (err);
 		rw_enter_write(&pt_softc_lock);
+		oldmax = maxptys;
+		error = sysctl_int(oldp, oldlenp, newp, newlen, &maxptys);
 		/*
-		 * We can't set the max lower than the current
-		 * active value or to a value bigger than a dev_t minor
+		 * We can't set the max lower than the current active
+		 * value or to a value bigger than NPTY_MAX.
 		 */
-		if (newmax <= USHRT_MAX && newmax > npty)
-			maxptys = newmax;
-		else
-			err = EINVAL;
+		if (error == 0 && (maxptys > NPTY_MAX || maxptys < npty)) {
+			maxptys = oldmax;
+			error = ERANGE;
+		}
 		rw_exit_write(&pt_softc_lock);
-		return(err);
+		return (error);
 	case KERN_TTY_NPTYS:
 		return (sysctl_rdint(oldp, oldlenp, newp, npty));
 #ifdef notyet
