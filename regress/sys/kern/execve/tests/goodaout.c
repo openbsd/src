@@ -1,4 +1,4 @@
-/*	$OpenBSD: goodaout.c,v 1.3 2003/07/31 21:48:08 deraadt Exp $	*/
+/*	$OpenBSD: goodaout.c,v 1.4 2003/09/02 23:52:17 david Exp $	*/
 /*	$NetBSD: goodaout.c,v 1.3 1995/04/20 22:44:20 cgd Exp $	*/
 
 /*
@@ -32,6 +32,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 int

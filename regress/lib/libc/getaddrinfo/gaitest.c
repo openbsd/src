@@ -1,4 +1,4 @@
-/*	$OpenBSD: gaitest.c,v 1.2 2002/08/09 20:26:44 jsyn Exp $	*/
+/*	$OpenBSD: gaitest.c,v 1.3 2003/09/02 23:52:16 david Exp $	*/
 /*	$NetBSD: gaitest.c,v 1.3 2002/07/05 15:47:43 itojun Exp $	*/
 
 /*
@@ -37,6 +37,7 @@
 #include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 struct addrinfo ai;

@@ -1,4 +1,4 @@
-/*	$Id: mmaptest.c,v 1.2 2003/06/04 04:11:36 deraadt Exp $	*/
+/*	$Id: mmaptest.c,v 1.3 2003/09/02 23:52:17 david Exp $	*/
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist.  All rights reserverd.
@@ -31,6 +31,7 @@
 #include <err.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 #define TEMPL "test-fileXXXXXXXXXX"

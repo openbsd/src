@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwritev.c,v 1.2 2003/07/31 21:48:09 deraadt Exp $	*/
+/*	$OpenBSD: pwritev.c,v 1.3 2003/09/02 23:52:17 david Exp $	*/
 /*
  *	Written by Artur Grabowski <art@openbsd.org> 2002 Public Domain.
  */
@@ -6,6 +6,7 @@
 #include <sys/uio.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <err.h>
 #include <fcntl.h>

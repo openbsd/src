@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcvtimeo.c,v 1.3 2003/07/31 21:48:09 deraadt Exp $	*/
+/*	$OpenBSD: rcvtimeo.c,v 1.4 2003/09/02 23:52:17 david Exp $	*/
 
 /*	Written by Michael Shalayeff, 2002, Public Domain */
 
@@ -10,6 +10,7 @@
 #include <signal.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <errno.h>
 #include <err.h>
 

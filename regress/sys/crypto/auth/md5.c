@@ -1,4 +1,4 @@
-/*      $OpenBSD: md5.c,v 1.4 2003/07/31 21:48:07 deraadt Exp $  */
+/*      $OpenBSD: md5.c,v 1.5 2003/09/02 23:52:17 david Exp $  */
 
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserverd.
@@ -32,6 +32,7 @@
 #include <err.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 

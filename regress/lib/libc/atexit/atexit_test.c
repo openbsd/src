@@ -1,4 +1,4 @@
-/*	$OpenBSD: atexit_test.c,v 1.4 2003/07/31 21:48:02 deraadt Exp $ */
+/*	$OpenBSD: atexit_test.c,v 1.5 2003/09/02 23:52:16 david Exp $ */
 
 /*
  * Copyright (c) 2002 Daniel Hartmeier
@@ -36,6 +36,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <signal.h>
 #include "stdlib/atexit.h"
 

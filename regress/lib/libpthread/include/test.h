@@ -1,9 +1,10 @@
-/*	$OpenBSD: test.h,v 1.4 2002/02/17 19:42:27 millert Exp $	*/
+/*	$OpenBSD: test.h,v 1.5 2003/09/02 23:52:17 david Exp $	*/
 
 #ifndef _h_test_
 #define _h_test_
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <signal.h>
 #include <errno.h>
 #include <string.h>
