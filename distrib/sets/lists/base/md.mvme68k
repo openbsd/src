@@ -1229,8 +1229,10 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/kcore.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/limits.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/param.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/pmap_motorola.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/profile.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/psl.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/pte_motorola.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/ptrace.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/reg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/setjmp.ph

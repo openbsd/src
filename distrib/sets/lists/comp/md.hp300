@@ -61,8 +61,10 @@
 ./usr/include/m68k/kcore.h
 ./usr/include/m68k/limits.h
 ./usr/include/m68k/param.h
+./usr/include/m68k/pmap_motorola.h
 ./usr/include/m68k/profile.h
 ./usr/include/m68k/psl.h
+./usr/include/m68k/pte_motorola.h
 ./usr/include/m68k/ptrace.h
 ./usr/include/m68k/reg.h
 ./usr/include/m68k/setjmp.h
