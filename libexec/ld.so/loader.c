@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.57 2003/05/30 01:33:05 drahn Exp $ */
+/*	$OpenBSD: loader.c,v 1.58 2003/05/30 03:14:12 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -456,10 +456,11 @@ _dl_boot_bind(const long sp, long *dl_data)
 	dynp = (Elf_Dyn *)((long)_DYNAMIC + loff);
 #endif
 	while (dynp != NULL && dynp->d_tag != DT_NULL) {
-		if (dynp->d_tag < DT_LOPROC)
+		if (dynp->d_tag < DT_NUM)
 			dynld.Dyn.info[dynp->d_tag] = dynp->d_un.d_val;
-		else if (dynp->d_tag >= DT_LOPROC && dynp->d_tag < DT_LOPROC + DT_NUM)
-			dynld.Dyn.info[dynp->d_tag + DT_NUM - DT_LOPROC] =
+		else if (dynp->d_tag >= DT_LOPROC &&
+		    dynp->d_tag < DT_LOPROC + DT_PROCNUM)
+			dynld.Dyn.info[dynp->d_tag - DT_LOPROC + DT_NUM] =
 			    dynp->d_un.d_val;
 		if (dynp->d_tag == DT_TEXTREL)
 			dynld.dyn.textrel = 1;
