@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.13 2005/01/24 17:42:26 jfb Exp $	*/
+/*	$OpenBSD: add.c,v 1.14 2005/01/24 18:30:25 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -71,7 +71,6 @@ cvs_add(int argc, char **argv)
 				rcs_kflag_usage();
 				return (EX_USAGE);
 			}
-			printf("kopt = `%s'\n", koptstr);
 			break;
 		case 'm':
 			if ((cvs_msg = strdup(optarg)) == NULL) {
