@@ -39,18 +39,50 @@
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @10 scrub in inet from 10.0.0.1 to 10.0.0.3 fragment reassemble 
-  [ Skip steps: i=end d=end f=end p=end sa=12 sp=end dp=end ]
+  [ Skip steps: i=16 d=end f=15 p=end sa=12 sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @11 scrub in inet from 10.0.0.1 to 10.0.0.4 fragment reassemble 
-  [ Skip steps: i=end d=end f=end p=end sp=end dp=end ]
+  [ Skip steps: i=16 d=end f=15 p=end sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @12 scrub in inet from 10.0.0.2 to 10.0.0.3 fragment reassemble 
-  [ Skip steps: i=end d=end f=end p=end sa=end sp=end dp=end ]
+  [ Skip steps: i=16 d=end f=15 p=end sa=14 sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @13 scrub in inet from 10.0.0.2 to 10.0.0.4 fragment reassemble 
+  [ Skip steps: i=16 d=end f=15 p=end sp=end dp=end ]
+  [ queue: qname= qid=0 pqname= pqid=0 ]
+  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+@14 scrub in inet from 127.0.0.1 to any fragment reassemble 
+  [ Skip steps: i=16 d=end p=end sp=end da=end dp=end ]
+  [ queue: qname= qid=0 pqname= pqid=0 ]
+  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+@15 scrub in inet6 from ::1 to any fragment reassemble 
+  [ Skip steps: d=end f=17 p=end sp=end da=end dp=end ]
+  [ queue: qname= qid=0 pqname= pqid=0 ]
+  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+@16 scrub in on lo0 inet6 from fe80::1 to any fragment reassemble 
+  [ Skip steps: d=end p=end sp=end da=end dp=end ]
+  [ queue: qname= qid=0 pqname= pqid=0 ]
+  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+@17 scrub in inet from 10.1.1.1 to any fragment reassemble 
+  [ Skip steps: i=21 d=end f=20 p=end sp=end da=end dp=end ]
+  [ queue: qname= qid=0 pqname= pqid=0 ]
+  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+@18 scrub in inet from 10.0.0.1 to any fragment reassemble 
+  [ Skip steps: i=21 d=end f=20 p=end sp=end da=end dp=end ]
+  [ queue: qname= qid=0 pqname= pqid=0 ]
+  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+@19 scrub in inet from 127.0.0.1 to any fragment reassemble 
+  [ Skip steps: i=21 d=end p=end sp=end da=end dp=end ]
+  [ queue: qname= qid=0 pqname= pqid=0 ]
+  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+@20 scrub in inet6 from ::1 to any fragment reassemble 
+  [ Skip steps: d=end f=end p=end sp=end da=end dp=end ]
+  [ queue: qname= qid=0 pqname= pqid=0 ]
+  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+@21 scrub in on lo0 inet6 from fe80::1 to any fragment reassemble 
   [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]

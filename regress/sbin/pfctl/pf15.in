@@ -7,3 +7,5 @@ scrub in log on {lo0 lo1} from any to any
 scrub in on lo0 inet from (lo0) to any
 scrub in log on lo0 inet6 from { (lo1), (lo0) } to 2000::1
 scrub in inet from { 10.0.0.1, 10.0.0.2 } to { 10.0.0.3, 10.0.0.4 }
+scrub in from { lo0 10.1.1.1 } to any
+scrub in from { 10.0.0.1 lo0 } to any
