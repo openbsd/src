@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgestp.c,v 1.4 2001/01/30 04:22:23 kjell Exp $	*/
+/*	$OpenBSD: bridgestp.c,v 1.5 2001/03/22 03:48:29 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -154,7 +154,6 @@ void bstp_record_config_information __P((struct bridge_softc *, struct bridge_if
 void bstp_record_config_timeout_values __P((struct bridge_softc *, struct bstp_config_unit *));
 void bstp_config_bpdu_generation __P((struct bridge_softc *));
 void bstp_send_config_bpdu __P((struct bridge_iflist *, struct bstp_config_unit *));
-void bstp_send_tcn_bpdu __P((struct bridge_softc *, struct bridge_iflist *, struct bstp_tcn_unit *));
 void bstp_configuration_update __P((struct bridge_softc *));
 void bstp_root_selection __P((struct bridge_softc *));
 void bstp_designated_port_selection __P((struct bridge_softc *));
@@ -386,65 +385,47 @@ void
 bstp_transmit_tcn(sc)
 	struct bridge_softc *sc;
 {
-	struct bridge_iflist *bif;
-
-	bif = sc->sc_root_port;
-	bif->bif_tcn_bpdu.tu_message_type = BSTP_MSGTYPE_TCN;
-	bstp_send_tcn_bpdu(sc, bif, &bif->bif_tcn_bpdu);
-}
-
-void
-bstp_send_tcn_bpdu(sc, bif, tu)
-	struct bridge_softc *sc;
-	struct bridge_iflist *bif;
-	struct bstp_tcn_unit *tu;
-{
-	struct arpcom *arp;
-	struct ifnet *ifp;
-	struct mbuf *m;
-	struct ether_header eh;
 	struct bstp_tbpdu bpdu;
+	struct bridge_iflist *bif = sc->sc_root_port;
+	struct ifnet *ifp = bif->ifp;
+	struct arpcom *arp = (struct arpcom *)ifp;
+	struct ether_header *eh;
+	struct mbuf *m;
 	int s;
 
-	s = splimp();
-	ifp = bif->ifp;
-	arp = (struct arpcom *)ifp;
-
-	if ((ifp->if_flags & IFF_RUNNING) == 0) {
-		splx(s);
-		return;
-	}
-	if (IF_QFULL(&ifp->if_snd)) {
-		splx(s);
-		return;
-	}
-
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == NULL) {
-		splx(s);
+	if (m == NULL)
 		return;
-	}
 	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = sizeof(eh) + sizeof(bpdu);
 	m->m_len = m->m_pkthdr.len;
+
+	eh = mtod(m, struct ether_header *);
+	bcopy(arp->ac_enaddr, eh->ether_shost, ETHER_ADDR_LEN);
+	bcopy(bstp_etheraddr, eh->ether_dhost, ETHER_ADDR_LEN);
+	eh->ether_type = htons(sizeof(bpdu));
 
 	bpdu.tbu_ssap = bpdu.tbu_dsap = LLC_8021D_LSAP;
 	bpdu.tbu_ctl = LLC_UI;
 	bpdu.tbu_protoid = 0;
 	bpdu.tbu_protover = 0;
-	bpdu.tbu_bpdutype = tu->tu_message_type;
-
-	bcopy(arp->ac_enaddr, eh.ether_shost, ETHER_ADDR_LEN);
-	bcopy(bstp_etheraddr, eh.ether_dhost, ETHER_ADDR_LEN);
-	eh.ether_type = htons(sizeof(bpdu));
-
-	bcopy(&eh, m->m_data, sizeof(eh));
+	bpdu.tbu_bpdutype = BSTP_MSGTYPE_TCN;
 	bcopy(&bpdu, m->m_data + sizeof(eh), sizeof(bpdu));
 
+	s = splimp();
+	if ((ifp->if_flags & IFF_RUNNING) == 0)
+		goto out;
+	if (IF_QFULL(&ifp->if_snd))
+		goto out;
 	IF_ENQUEUE(&ifp->if_snd, m);
 	if ((ifp->if_flags & IFF_OACTIVE) == 0)
 		(*ifp->if_start)(ifp);
+	m = NULL;
+
+out:
 	splx(s);
+	if (m != NULL)
+		m_freem(m);
 }
 
 void
