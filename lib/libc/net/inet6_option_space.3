@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet6_option_space.3,v 1.16 2005/01/06 10:50:40 jmc Exp $
+.\"	$OpenBSD: inet6_option_space.3,v 1.17 2005/01/07 10:00:20 jmc Exp $
 .\"	$KAME: inet6_option_space.3,v 1.11 2005/01/05 03:00:44 itojun Exp $
 .\"
 .\" Copyright (C) 2004 WIDE Project.
@@ -236,12 +236,14 @@ The
 function appends a Hop-by-Hop option or a Destination option into an
 ancillary data object that has previously been initialized by a call to
 .Fn inet6_option_init .
-The
+A successful call to the
 .Fn inet6_option_alloc
-function returns a pointer to the 8-bit option type field that at the
-beginning of the allocated the option on success, or
+function returns a pointer to the 8-bit option type field,
+which is at the beginning of the allocated region.
+.Fn inet6_option_alloc
+returns
 .Dv NULL
-on an error.
+when an error has occurred.
 .Pp
 The difference between the
 .Fn inet6_option_alloc
