@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcibiosvar.h,v 1.4 2001/01/25 00:07:40 mickey Exp $	*/
+/*	$OpenBSD: pcibiosvar.h,v 1.5 2001/01/25 01:00:59 mickey Exp $	*/
 /*	$NetBSD: pcibios.h,v 1.2 2000/04/28 17:15:16 uch Exp $	*/
 
 /*
@@ -148,6 +148,10 @@ extern int pcibiosverbose;
 #define	PCIBIOS_PRINTV(arg)
 #define	PCIBIOS_PRINTVN(n, arg)
 #endif
+
+#define	PCIADDR_SEARCH_IO	0
+#define	PCIADDR_SEARCH_MEM	1
+struct extent *pciaddr_search __P((int, bus_addr_t *, bus_size_t));
 
 int  pci_intr_fixup __P((pci_chipset_tag_t, bus_space_tag_t, u_int16_t *));
 int  pci_bus_fixup __P((pci_chipset_tag_t, int));

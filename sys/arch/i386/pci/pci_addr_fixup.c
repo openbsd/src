@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_addr_fixup.c,v 1.6 2001/01/24 23:40:28 mickey Exp $	*/
+/*	$OpenBSD: pci_addr_fixup.c,v 1.7 2001/01/25 01:00:58 mickey Exp $	*/
 /*	$NetBSD: pci_addr_fixup.c,v 1.7 2000/08/03 20:10:45 nathanw Exp $	*/
 
 /*-
@@ -372,4 +372,39 @@ pciaddr_print_devid(pc, tag)
 	pci_decompose_tag(pc, tag, &bus, &device, &function);
 	printf("%03d:%02d:%d 0x%04x 0x%04x ", bus, device, function, 
 	       PCI_VENDOR(id), PCI_PRODUCT(id));
+}
+
+struct extent *
+pciaddr_search(mem_port, startp, size)
+	int mem_port;
+	bus_addr_t *startp;
+	bus_size_t size;
+{
+	if (!(pcibios_flags & PCIBIOS_ADDR_FIXUP)) {
+		struct extent_region *rp;
+		struct extent *ex = mem_port?
+		    pciaddr.extent_mem : pciaddr.extent_port;
+
+		/* Search the PCI I/O memory space extent for free
+		 * space that will accomodate size.  Remember that the
+		 * extent stores allocated space and we're searching
+		 * for the gaps.
+		 *
+		 * If we're at the end or the gap between this region
+		 * and the next region big enough, then we're done
+		 */
+		for (rp = LIST_FIRST(&ex->ex_regions);
+		    rp && *startp + size > rp->er_start;
+		    rp = LIST_NEXT(rp, er_link)) {
+			bus_addr_t new_start;
+
+			new_start = (rp->er_end - 1 + size) & ~(size - 1);
+			if (new_start > *startp)
+				*startp = new_start;
+		}
+
+		return (ex);
+	}
+
+	return (NULL);
 }
