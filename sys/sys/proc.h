@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.26 2000/01/28 19:45:03 art Exp $	*/
+/*	$OpenBSD: proc.h,v 1.27 2000/01/31 01:09:09 deraadt Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -283,18 +283,6 @@ struct	pcred {
 #endif
 #define	PRELE(p)	(--(p)->p_holdcnt)
 
-/*
- * Flags to fork1().
- */
-#define FORK_FORK	0x00000001
-#define FORK_VFORK	0x00000002
-#define FORK_RFORK	0x00000004
-#define FORK_PPWAIT	0x00000008
-#define FORK_SHAREFILES	0x00000010
-#define FORK_CLEANFILES	0x00000020
-#define FORK_NOZOMBIE	0x00000040
-#define FORK_SHAREVM	0x00000080
-
 #define	PIDHASH(pid)	(&pidhashtbl[(pid) & pidhash])
 extern LIST_HEAD(pidhashhead, proc) *pidhashtbl;
 extern u_long pidhash;
@@ -345,7 +333,10 @@ int	tsleep __P((void *chan, int pri, char *wmesg, int timo));
 void	unsleep __P((struct proc *));
 void	wakeup __P((void *chan));
 void	exit1 __P((struct proc *, int));
-int	fork1 __P((struct proc *, int, void *, size_t, register_t *));
+int	fork1 __P((struct proc *, int, int, void *, size_t, register_t *));
+#define	ISFORK	0
+#define	ISVFORK	1
+#define	ISRFORK	2
 void	kmeminit __P((void));
 void	rqinit __P((void));
 int	groupmember __P((gid_t, struct ucred *));
