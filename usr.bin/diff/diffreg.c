@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.34 2003/07/16 21:39:06 millert Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.35 2003/07/17 21:54:28 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -65,7 +65,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.34 2003/07/16 21:39:06 millert Exp $";
+static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.35 2003/07/17 21:54:28 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1066,10 +1066,7 @@ fetch(long *f, int a, int b, FILE *lb, char *s, int oldfile)
 	}
 }
 
-#define POW2			/* define only if HALFLONG is 2**n */
-#define HALFLONG 16
-#define low(x)	(x&((1L<<HALFLONG)-1))
-#define high(x)	(x>>HALFLONG)
+#define HASHMASK (16 - 1)	/* for masking out 16 bytes */
 
 /*
  * hashing has the effect of
@@ -1093,12 +1090,7 @@ readhash(FILE *f)
 						return (0);
 					break;
 				}
-				sum += (long)chrtran[t] << (shift
-#ifdef POW2
-				    &= HALFLONG - 1);
-#else
-				    %= HALFLONG);
-#endif
+				sum += (long)chrtran[t] << (shift &= HASHMASK);
 			}
 		else
 			for (shift = 0; (t = getc(f)) != '\n'; shift += 7) {
@@ -1107,12 +1099,7 @@ readhash(FILE *f)
 						return (0);
 					break;
 				}
-				sum += (long)t << (shift
-#ifdef POW2
-				    &= HALFLONG - 1);
-#else
-				    %= HALFLONG);
-#endif
+				sum += (long)t << (shift &= HASHMASK);
 			}
 	} else {
 		for (shift = 0;;) {
@@ -1126,12 +1113,7 @@ readhash(FILE *f)
 					shift += 7;
 					space = 0;
 				}
-				sum += (long)chrtran[t] << (shift
-#ifdef POW2
-				    &= HALFLONG - 1);
-#else
-				    %= HALFLONG);
-#endif
+				sum += (long)chrtran[t] << (shift &= HASHMASK);
 				shift += 7;
 				continue;
 			case EOF:
@@ -1144,8 +1126,7 @@ readhash(FILE *f)
 			break;
 		}
 	}
-	sum = low(sum) + high(sum);
-	return ((short) low(sum) + (short) high(sum));
+	return (sum);
 }
 
 int
