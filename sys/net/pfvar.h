@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.160 2003/06/30 19:09:25 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.161 2003/07/03 11:48:39 itojun Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -785,8 +785,6 @@ struct pf_tagname {
 	u_int16_t		tag;
 	int			ref;
 };
-
-TAILQ_HEAD(pf_tagnames, pf_tagname);
 
 #define PFFRAG_FRENT_HIWAT	5000	/* Number of fragment entries */
 #define PFFRAG_FRAG_HIWAT	1000	/* Number of fragmented packets */
