@@ -1610,3 +1610,6 @@
 ./usr/share/man/cat4/faith.0
 ./usr/share/man/cat4/gif.0
 ./usr/share/man/cat4/inet6.0
+./usr/share/man/cat8/ifmcstat.0
+./usr/share/man/cat8/rtsold.0
+./usr/share/man/cat8/rtsol.0
