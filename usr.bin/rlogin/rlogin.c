@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlogin.c,v 1.24 2001/09/04 23:35:59 millert Exp $	*/
+/*	$OpenBSD: rlogin.c,v 1.25 2001/10/02 01:14:55 art Exp $	*/
 /*	$NetBSD: rlogin.c,v 1.8 1995/10/05 09:07:22 mycroft Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rlogin.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: rlogin.c,v 1.24 2001/09/04 23:35:59 millert Exp $";
+static char rcsid[] = "$OpenBSD: rlogin.c,v 1.25 2001/10/02 01:14:55 art Exp $";
 #endif
 #endif /* not lint */
 
@@ -712,7 +712,7 @@ oob(signo)
 			return;
 		}
 	}
-	if (mark & TIOCPKT_WINDOW) {
+	if (mark & TIOCPKT_WINDOW && ppid > 1) {
 		/* Let server know about window size changes */
 		(void)kill(ppid, SIGUSR1);
 	}
