@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootxx.c,v 1.5 2002/06/11 09:36:24 hugh Exp $ */
+/*	$OpenBSD: bootxx.c,v 1.6 2002/06/11 13:10:03 hugh Exp $ */
 /* $NetBSD: bootxx.c,v 1.16 2002/03/29 05:45:08 matt Exp $ */
 
 /*-
@@ -305,19 +305,7 @@ devopen(f, fname, file)
 		 */
 		unit_init(initfn, rpb, bootregs[12]);
 	}
-#ifdef LIBSA_TOO_OLD_FOO
-        /* currently only one dev in devsw; this must change if we add more */
-        dp = devsw;
-        i = 0;
-        if(dp != NULL && dp->dv_open != NULL) {
-                i = (*dp->dv_open)(f, B_ADAPTOR(bootdev), B_CONTROLLER(bootdev), 
-                                B_UNIT(bootdev), B_PARTITION(bootdev));
-        }
-
-        return i;
-#else
 	return 0;
-#endif
 }
 
 extern struct disklabel romlabel;
