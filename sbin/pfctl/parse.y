@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.311 2003/02/09 13:50:44 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.312 2003/02/09 15:04:04 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -378,7 +378,7 @@ typedef struct {
 %type	<v.icmp>		icmp_list icmp_item
 %type	<v.icmp>		icmp6_list icmp6_item
 %type	<v.fromto>		fromto
-%type	<v.peer>		ipportspec
+%type	<v.peer>		ipportspec from to
 %type	<v.host>		ipspec xhost host address host_list
 %type	<v.host>		redir_host_list redirspec
 %type	<v.host>		route_host route_host_list routespec
@@ -1477,21 +1477,33 @@ proto_item	: STRING			{
 		}
 		;
 
-fromto		: /* empty */			{
+fromto		: ALL				{
 			$$.src.host = NULL;
 			$$.src.port = NULL;
 			$$.dst.host = NULL;
 			$$.dst.port = NULL;
 		}
-		| ALL				{
-			$$.src.host = NULL;
-			$$.src.port = NULL;
-			$$.dst.host = NULL;
-			$$.dst.port = NULL;
+		| from to			{
+			$$.src = $1;
+			$$.dst = $2;
 		}
-		| FROM ipportspec TO ipportspec	{
-			$$.src = $2;
-			$$.dst = $4;
+		;
+
+from		: /* empty */			{
+			$$.host = NULL;
+			$$.port = NULL;
+		}
+		| FROM ipportspec		{
+			$$ = $2;
+		}
+		;
+
+to		: /* empty */			{
+			$$.host = NULL;
+			$$.port = NULL;
+		}
+		| TO ipportspec		{
+			$$ = $2;
 		}
 		;
 
@@ -1499,6 +1511,10 @@ ipportspec	: ipspec			{ $$.host = $1; $$.port = NULL; }
 		| ipspec PORT portspec		{
 			$$.host = $1;
 			$$.port = $3;
+		}
+		| PORT portspec			{
+			$$.host = NULL;
+			$$.port = $2;
 		}
 		;
 
