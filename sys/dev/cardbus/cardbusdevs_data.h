@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardbusdevs_data.h,v 1.11 2001/07/09 23:10:04 niklas Exp $	*/
+/*	$OpenBSD: cardbusdevs_data.h,v 1.12 2001/08/22 16:34:31 aaron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -73,6 +73,14 @@ struct cardbus_known_product cardbus_known_product[] = {
 	    "56k Global Modem",
 	},
 	{
+	    CARDBUS_VENDOR_ABOCOM, CARDBUS_PRODUCT_ABOCOM_FE2500,
+	    "FE2500",
+	},
+	{
+	    CARDBUS_VENDOR_ABOCOM, CARDBUS_PRODUCT_ABOCOM_PCM200,
+	    "PCM200",
+	},
+	{
 	    CARDBUS_VENDOR_ADMTEK, CARDBUS_PRODUCT_ADMTEK_AN985,
 	    "AN985",
 	},
@@ -139,6 +147,10 @@ struct cardbus_known_vendor cardbus_known_vendors[] = {
 	{
 	    CARDBUS_VENDOR_ADMTEK, 0,
 	    "ADMtek",
+	},
+	{
+	    CARDBUS_VENDOR_ABOCOM, 0,
+	    "Abocom",
 	},
 	{
 	    CARDBUS_VENDOR_INTEL, 0,
