@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.150 2000/04/08 05:06:25 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.151 2000/04/27 16:11:05 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -1123,8 +1123,8 @@ while test -n "${_get_files}" ; do
 	echo
 	for _f in $_get_files ; do
 		echo "Getting ${_f} ..."
-		if [ "X${_f}" = "Xssl${VERSION}.tar.gz" -o \
-		    "X${_f}" = "XsslUSA${VERSION}.tar.gz" ]; then
+		if [ "X${_f}" = "Xssl${VERSION}.tgz" -o \
+		    "X${_f}" = "XsslUSA${VERSION}.tgz" ]; then
 			( cd /mnt ; ftp ${_ftp_active} -o - -V -m ${_url_base}/${_f} | /mnt/usr/sbin/chroot /mnt /usr/sbin/pkg_add -I -)
 		elif [ "X${_f}" = "X${_kernel}" ]; then
 			( cd /mnt ; ftp ${_ftp_active} -V -m ${_url_base}/${_f} )
@@ -1135,8 +1135,8 @@ while test -n "${_get_files}" ; do
 			# Mark xfer as having failed,.
 			_setsdone=`rmel $_f $_setsdone`
 			_failed_files="${_failed_files} ${_f}"
-		elif [ "X${_f}" = "Xssl${VERSION}.tar.gz" -o \
-		    "X${_f}" = "XsslUSA${VERSION}.tar.gz" ]; then
+		elif [ "X${_f}" = "Xssl${VERSION}.tgz" -o \
+		    "X${_f}" = "XsslUSA${VERSION}.tz" ]; then
 			ssl=1
 		fi
 	done
@@ -1282,8 +1282,8 @@ while test -n "${_get_files}" ; do
 	echo
 	for _f in $_get_files ; do
 		echo "$1/${_f}:"
-		if [ "X${_f}" = "Xssl${VERSION}.tar.gz" -o \
-		    "X${_f}" = "XsslUSA${VERSION}.tar.gz" ]; then
+		if [ "X${_f}" = "Xssl${VERSION}.tgz" -o \
+		    "X${_f}" = "XsslUSA${VERSION}.tgz" ]; then
 			( cd /mnt ; ftp -o - -V -m file:$1/${_f} | /mnt/usr/sbin/chroot /mnt /usr/sbin/pkg_add -I -)
 		elif [ "X${_f}" = "X${_kernel}" ]; then
 			ftp -V -m -o /mnt/$_f file:$1/$_f
@@ -1294,8 +1294,8 @@ while test -n "${_get_files}" ; do
 			# Mark xfer as having failed,.
 			_setsdone=`rmel $_f $_setsdone`
 			_failed_files="${_failed_files} ${_f}"
-		elif [ "X${_f}" = "Xssl${VERSION}.tar.gz" -o \
-		    "X${_f}" = "XsslUSA${VERSION}.tar.gz" ]; then
+		elif [ "X${_f}" = "Xssl${VERSION}.tgz" -o \
+		    "X${_f}" = "XsslUSA${VERSION}.tgz" ]; then
 			ssl=1
 		fi
 	done
