@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.10 2000/05/19 13:55:17 itojun Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.11 2001/01/18 04:57:05 itojun Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.36 2000/05/17 12:35:59 jinmei Exp $	*/
 
 /*
@@ -99,8 +99,10 @@ nd6_ns_input(m, off, icmp6len)
 	struct sockaddr_dl *proxydl = NULL;
 
 	if (ip6->ip6_hlim != 255) {
+#ifdef ND6_DEBUG
 		log(LOG_ERR,
 		    "nd6_ns_input: invalid hlim %d\n", ip6->ip6_hlim);
+#endif
 		goto freeit;
 	}
 
@@ -529,8 +531,10 @@ nd6_na_input(m, off, icmp6len)
 	union nd_opts ndopts;
 
 	if (ip6->ip6_hlim != 255) {
+#ifdef ND6_DEBUG
 		log(LOG_ERR,
 		    "nd6_na_input: invalid hlim %d\n", ip6->ip6_hlim);
+#endif
 		goto freeit;
 	}
 
