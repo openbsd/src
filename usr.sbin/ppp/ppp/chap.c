@@ -25,13 +25,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: chap.c,v 1.29 2001/07/31 21:37:15 brian Exp $
+ * $OpenBSD: chap.c,v 1.30 2001/08/19 23:22:17 brian Exp $
  */
 
 #include <sys/param.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
+#include <sys/socket.h>
 #include <sys/un.h>
 
 #include <errno.h>
@@ -66,6 +67,8 @@
 #include "chap.h"
 #include "iplist.h"
 #include "slcompress.h"
+#include "ncpaddr.h"
+#include "ip.h"
 #include "ipcp.h"
 #include "filter.h"
 #include "ccp.h"
@@ -75,6 +78,8 @@
 #ifndef NORADIUS
 #include "radius.h"
 #endif
+#include "ipv6cp.h"
+#include "ncp.h"
 #include "bundle.h"
 #include "chat.h"
 #include "cbcp.h"
@@ -745,7 +750,7 @@ chap_Input(struct bundle *bundle, struct link *l, struct mbuf *bp)
         *ans = chap->auth.id;
         bp = mbuf_Read(bp, ans + 1, alen);
         if (p->link.lcp.want_authtype == 0x81 && ans[alen] != '\0') {
-          log_Printf(LogWARN, "%s: Compensating for corrupt (Win98?) "
+          log_Printf(LogWARN, "%s: Compensating for corrupt (Win98/WinME?) "
                      "CHAP81 RESPONSE\n", l->name);
           ans[alen] = '\0';
         }
@@ -902,8 +907,8 @@ chap_Input(struct bundle *bundle, struct link *l, struct mbuf *bp)
             if (p->link.lcp.his_authtype == 0x81) {
               if (strncmp(ans, chap->authresponse, 42)) {
                 datalink_AuthNotOk(p->dl);
-	        log_Printf(LogDEBUG, "CHAP81: AuthenticatorResponse: (%s)"
-                           " != ans: (%s)\n", chap->authresponse, ans);
+	        log_Printf(LogWARN, "CHAP81: AuthenticatorResponse: (%.42s)"
+                           " != ans: (%.42s)\n", chap->authresponse, ans);
                 
               } else {
                 /* Successful login */

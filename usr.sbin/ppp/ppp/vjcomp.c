@@ -25,13 +25,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: vjcomp.c,v 1.13 2001/06/13 21:33:42 brian Exp $
+ * $OpenBSD: vjcomp.c,v 1.14 2001/08/19 23:22:18 brian Exp $
  */
 
 #include <sys/param.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
+#include <sys/socket.h>
 #include <sys/un.h>
 
 #include <stdio.h>
@@ -50,6 +51,8 @@
 #include "defs.h"
 #include "iplist.h"
 #include "throughput.h"
+#include "ncpaddr.h"
+#include "ip.h"
 #include "ipcp.h"
 #include "lcp.h"
 #include "ccp.h"
@@ -60,6 +63,8 @@
 #ifndef NORADIUS
 #include "radius.h"
 #endif
+#include "ipv6cp.h"
+#include "ncp.h"
 #include "bundle.h"
 #include "vjcomp.h"
 

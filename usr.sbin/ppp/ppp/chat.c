@@ -23,13 +23,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: chat.c,v 1.15 2000/08/18 00:02:10 brian Exp $
+ *	$OpenBSD: chat.c,v 1.16 2001/08/19 23:22:17 brian Exp $
  */
 
 #include <sys/param.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
+#include <sys/socket.h>
 #include <sys/un.h>
 
 #include <errno.h>
@@ -63,6 +64,8 @@
 #include "chap.h"
 #include "slcompress.h"
 #include "iplist.h"
+#include "ncpaddr.h"
+#include "ip.h"
 #include "ipcp.h"
 #include "filter.h"
 #include "cbcp.h"
@@ -71,6 +74,8 @@
 #ifndef NORADIUS
 #include "radius.h"
 #endif
+#include "ipv6cp.h"
+#include "ncp.h"
 #include "bundle.h"
 #include "id.h"
 

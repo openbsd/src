@@ -25,13 +25,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: auth.c,v 1.15 2001/06/13 21:33:40 brian Exp $
+ * $OpenBSD: auth.c,v 1.16 2001/08/19 23:22:17 brian Exp $
  */
 
 #include <sys/param.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
+#include <sys/socket.h>
 #include <sys/un.h>
 
 #include <pwd.h>
@@ -51,6 +52,8 @@
 #include "slcompress.h"
 #include "lqr.h"
 #include "hdlc.h"
+#include "ncpaddr.h"
+#include "ip.h"
 #include "ipcp.h"
 #include "auth.h"
 #include "systems.h"
@@ -70,6 +73,8 @@
 #include "async.h"
 #include "physical.h"
 #include "datalink.h"
+#include "ipv6cp.h"
+#include "ncp.h"
 #include "bundle.h"
 
 const char *

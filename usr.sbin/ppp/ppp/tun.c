@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: tun.c,v 1.12 2001/06/19 10:25:01 brian Exp $
+ *	$OpenBSD: tun.c,v 1.13 2001/08/19 23:22:18 brian Exp $
  */
 
 #include <sys/param.h>
@@ -63,6 +63,8 @@
 #include "throughput.h"
 #include "iplist.h"
 #include "slcompress.h"
+#include "ncpaddr.h"
+#include "ip.h"
 #include "ipcp.h"
 #include "filter.h"
 #include "descriptor.h"
@@ -74,6 +76,8 @@
 #ifndef NORADIUS
 #include "radius.h"
 #endif
+#include "ipv6cp.h"
+#include "ncp.h"
 #include "bundle.h"
 #include "tun.h"
 
@@ -107,7 +111,7 @@ tun_configure(struct bundle *bundle)
   
   info.baudrate = bundle->bandwidth;
 #ifdef __OpenBSD__
-  info.flags = IFF_UP|IFF_POINTOPOINT;                             
+  info.flags = IFF_UP|IFF_POINTOPOINT|IFF_MULTICAST;
 #endif
   if (ID0ioctl(bundle->dev.fd, TUNSIFINFO, &info) < 0)
     log_Printf(LogERROR, "tun_configure: ioctl(TUNSIFINFO): %s\n",

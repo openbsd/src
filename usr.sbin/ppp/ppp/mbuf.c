@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: mbuf.c,v 1.14 2001/06/13 21:33:41 brian Exp $
+ * $OpenBSD: mbuf.c,v 1.15 2001/08/19 23:22:18 brian Exp $
  */
 
 #include <sys/types.h>
@@ -87,13 +87,13 @@ static const char *
 mbuftype(int type)
 {
   static const char * const mbufdesc[MB_MAX] = { 
-    "ip in", "ip out", "nat in", "nat out", "mp in", "mp out",
-    "vj in", "vj out", "icompd in", "icompd out", "compd in", "compd out",
-    "lqr in", "lqr out", "echo in", "echo out", "proto in", "proto out",
-    "acf in", "acf out", "sync in", "sync out", "hdlc in", "hdlc out",
-    "async in", "async out", "cbcp in", "cbcp out", "chap in", "chap out",
-    "pap in", "pap out", "ccp in", "ccp out", "ipcp in", "ipcp out",
-    "lcp in", "lcp out"
+    "ip in", "ip out", "ipv6 in", "ipv6 out", "nat in", "nat out",
+    "mp in", "mp out", "vj in", "vj out", "icompd in", "icompd out",
+    "compd in", "compd out", "lqr in", "lqr out", "echo in", "echo out",
+    "proto in", "proto out", "acf in", "acf out", "sync in", "sync out",
+    "hdlc in", "hdlc out", "async in", "async out", "cbcp in", "cbcp out",
+    "chap in", "chap out", "pap in", "pap out", "ccp in", "ccp out",
+    "ipcp in", "ipcp out", "ipv6cp in", "ipv6cp out", "lcp in", "lcp out"
   };
 
   return type < 0 || type >= MB_MAX ? "unknown" : mbufdesc[type];

@@ -25,7 +25,7 @@ changecom(,)dnl
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ppp.8.m4,v 1.1 2001/08/09 02:27:13 jsyn Exp $
+.\" $OpenBSD: ppp.8.m4,v 1.2 2001/08/19 23:22:18 brian Exp $
 .\"
 .Dd September 20, 1995
 .Dt PPP 8
@@ -182,7 +182,8 @@ interactive prompt.
 .El
 .Pp
 One or more configuration entries or systems
-.Pq as specified in Pa /etc/ppp/ppp.conf
+(as specified in
+.Pa /etc/ppp/ppp.conf )
 may also be specified on the command line.
 .Nm
 will read the
@@ -395,6 +396,9 @@ For now,
 can only get encryption keys from CHAP 81 authentication.
 .Nm
 must be compiled with DES for MPPE to operate.
+.It Supports IPV6CP (rfc 2023).
+An IPv6 connection can be made in addition to or instead of the normal
+IPv4 connection.
 .El
 .Sh PERMISSIONS
 .Nm
@@ -510,7 +514,8 @@ Although not strictly relevant to
 .Nm Ns No 's
 operation, you should configure your resolver so that it works correctly.
 This can be done by configuring a local DNS
-.Pq using Xr named 8
+(using
+.Xr named 8 )
 or by adding the correct
 .Sq nameserver
 lines to the file
@@ -588,7 +593,8 @@ is) use much more reliable checking mechanisms.
 Parity has a relatively
 huge overhead (a 12.5% increase in traffic) and as a result, it is always
 disabled
-.Pq set to Dq none
+(set to
+.Dq none )
 when
 .Dv PPP
 is opened.
@@ -716,6 +722,8 @@ PPP ON awfulhak> show lcp
 * LCP (line control) related information is shown here *
 PPP ON awfulhak> show ipcp
 * IPCP (IP) related information is shown here *
+PPP ON awfulhak> show ipv6cp
+* IPV6CP (IPv6) related information is shown here *
 PPP ON awfulhak> show link
 * Link (high level) related information is shown here *
 PPP ON awfulhak> show bundle
@@ -900,16 +908,15 @@ it was necessary to re-add routes such as the default route in the
 .Pa ppp.linkup
 file.
 .Nm
-now supports
+supports
 .Sq sticky routes ,
 where all routes that contain the
-.Dv HISADDR
+.Dv HISADDR ,
+.Dv MYADDR ,
+.Dv HISADDR6
 or
-.Dv MYADDR
-literals will automatically be updated when the values of
-.Dv HISADDR
-and/or
-.Dv MYADDR
+.Dv MYADDR6
+literals will automatically be updated when the values of these variables
 change.
 .Sh BACKGROUND DIALING
 If you want to establish a connection using
@@ -967,7 +974,8 @@ configuration by using the
 .Dq set server
 command in
 .Pa /etc/ppp/ppp.conf ,
-.Pq for example, Dq set server +3000 mypasswd
+(for example,
+.Dq Li "set server +3000 mypasswd" )
 and connecting to the diagnostic port as follows:
 .Bd -literal -offset indent
 # pppctl 3000	(assuming tun0)
@@ -1293,7 +1301,7 @@ Add either
 .Dq enable chap
 or
 .Dq enable pap
-.Pq or both
+(or both)
 to
 .Pa /etc/ppp/ppp.conf
 under the
@@ -1369,7 +1377,7 @@ authentication fails.
 .Pp
 If authentication is successful,
 .Ar hisaddr
-.Pq if specified
+(if specified)
 is used when negotiating IP numbers.
 See the
 .Dq set ifaddr
@@ -1498,7 +1506,7 @@ ui-gate:
  set device ui-gate:ppp-in/tcp
  set dial
  set timeout 30
- set log Phase Chat Connect hdlc LCP IPCP CCP tun
+ set log Phase Chat Connect hdlc LCP IPCP IPV6CP CCP tun
  set ifaddr 10.0.4.2 10.0.4.1
 .Ed
 .Pp
@@ -1555,7 +1563,8 @@ data does not have to be rearranged into packets.
 Care should be taken when adding a default route through a tunneled
 setup like this.
 It is quite common for the default route
-.Pq added in Pa /etc/ppp/ppp.linkup
+(added in
+.Pa /etc/ppp/ppp.linkup )
 to end up routing the link's TCP connection through the tunnel,
 effectively garrotting the connection.
 To avoid this, make sure you add a static route for the benefit of
@@ -1733,9 +1742,11 @@ Either
 or
 .Ar dst_addr
 may be given the values
-.Dv MYADDR
+.Dv MYADDR ,
+.Dv HISADDR ,
+.Dv MYADDR6
 or
-.Dv HISADDR
+.Dv HISADDR6
 (refer to the description of the
 .Dq bg
 command for a description of these values).
@@ -1746,14 +1757,8 @@ This is similar to the behaviour of the
 command below.
 .It
 .Ar Proto
-must be one of
-.Sq icmp ,
-.Sq igmp ,
-.Sq ipip ,
-.Sq ospf ,
-.Sq udp
-or
-.Sq tcp .
+may be any protocol from
+.Xr protocols 5 .
 .It
 .Ar Cmp
 is one of
@@ -1824,7 +1829,7 @@ ppp ON awfulhak> set timeout 600
 .Pp
 The timeout period is measured in seconds, the default value for which
 is 180 seconds
-.Pq or 3 min .
+(or 3 min).
 To disable the idle timer function, use the command
 .Bd -literal -offset indent
 ppp ON awfulhak> set timeout 0
@@ -1851,7 +1856,7 @@ By default,
 .Nm
 will attempt to use (or be willing to accept) both compression protocols
 when the peer agrees
-.Pq or requests them .
+(or requests them).
 The deflate protocol is preferred by
 .Nm ppp .
 Refer to the
@@ -1865,7 +1870,7 @@ by using only one of
 .Dq disable deflate
 and
 .Dq deny deflate
-.Pq assuming that the peer supports both algorithms .
+(assuming that the peer supports both algorithms).
 .Pp
 By default, when negotiating DEFLATE,
 .Nm
@@ -1884,19 +1889,20 @@ to successfully negotiate DEFLATE with
 .Nm pppd
 version 2.3.*.
 .Sh CONTROLLING IP ADDRESS
+For IPv4,
 .Nm
 uses IPCP to negotiate IP addresses.
 Each side of the connection
 specifies the IP address that it's willing to use, and if the requested
 IP address is acceptable then
 .Nm
-returns ACK to the requester.
+returns an ACK to the requester.
 Otherwise,
 .Nm
 returns NAK to suggest that the peer use a different IP address.
 When
 both sides of the connection agree to accept the received request (and
-send ACK), IPCP is set to the open state and a network level connection
+send an ACK), IPCP is set to the open state and a network level connection
 is established.
 To control this IPCP behaviour, this implementation has the
 .Dq set ifaddr
@@ -1994,8 +2000,11 @@ When using zero, no routing table entries will be made until a connection
 is established.
 .It
 192.244.177.2/0 means that I'll accept/permit any IP address but I'll
-try to insist that 192.244.177.2 be used first.
+suggest that 192.244.177.2 be used first.
 .El
+.Pp
+When negotiating IPv6 addresses, no control is given to the user.
+IPV6CP negotiation is fully automatic.
 .Sh CONNECTING WITH YOUR INTERNET SERVICE PROVIDER
 The following steps should be taken when connecting to your ISP:
 .Bl -enum
@@ -2205,26 +2214,22 @@ add default HISADDR
 .Ed
 .Pp
 to
-.Pa /etc/ppp/ppp.conf .
+.Pa /etc/ppp/ppp.conf
+(or to
+.Pa /etc/ppp/ppp.linkup
+for setups that don't use
+.Fl auto
+mode).
 .Pp
 This tells
 .Nm
 to add a default route to whatever the peer address is
-.Pq 10.0.0.2 in this example .
+(10.0.0.2 in this example).
 This route is
 .Sq sticky ,
 meaning that should the value of
 .Dv HISADDR
 change, the route will be updated accordingly.
-.Pp
-Previous versions of
-.Nm
-required a similar entry in the
-.Pa /etc/ppp/ppp.linkup
-file.
-Since the advent of
-.Sq sticky routes ,
-this is no longer required.
 .It
 If your provider requests that you use PAP/CHAP authentication methods, add
 the next lines to your
@@ -2440,7 +2445,8 @@ and
 commands.
 The
 .Sq authname
-.Pq and Sq authkey
+(and
+.Sq authkey )
 must be agreed in advance with the peer.
 .Pp
 Multi-link capabilities are enabled using the
@@ -2453,7 +2459,8 @@ will attempt to negotiate a multi-link connection with the peer.
 By default, only one
 .Sq link
 is available
-.Pq called Sq deflink .
+(called
+.Sq deflink ) .
 To create more links, the
 .Dq clone
 command is used.
@@ -2889,7 +2896,7 @@ Default: Enabled and Accepted.
 This option determines if
 .Nm
 will request and accept requests for short
-.Pq 12 bit
+(12 bit)
 sequence numbers when negotiating multi-link mode.
 This is only applicable if our MRRU is set (thus enabling multi-link).
 .It vjcomp
@@ -2941,6 +2948,43 @@ If
 is disabled,
 .Nm
 will ignore the identifier field.
+.It iface-alias
+Default: Enabled if
+.Fl nat
+is specified.
+This option simply tells
+.Nm
+to add new interface addresses to the interface rather than replacing them.
+The option can only be enabled if network address translation is enabled
+.Pq Dq nat enable yes .
+.Pp
+With this option enabled,
+.Nm
+will pass traffic for old interface addresses through the NAT
+ifdef({LOCALNAT},{engine,},{engine
+(see
+.Xr libalias 3 ) ,})
+resulting in the ability (in
+.Fl auto
+mode) to properly connect the process that caused the PPP link to
+come up in the first place.
+.Pp
+Disabling NAT with
+.Dq nat enable no
+will also disable
+.Sq iface-alias .
+.It ipcp
+Default: Enabled.
+This option allows
+.Nm
+to attempt to negotiate IP control protocol capabilities and if
+successful to exchange IP datagrams with the peer.
+.It ipv6cp
+Default: Enabled.
+This option allows
+.Nm
+to attempt to negotiate IPv6 control protocol capabilities and if
+successful to exchange IPv6 datagrams with the peer.
 .It keep-session
 Default: Disabled.
 When
@@ -3051,17 +3095,15 @@ Default: Enabled.
 When the
 .Dq add
 command is used with the
-.Dv HISADDR
+.Dv HISADDR ,
+.Dv MYADDR ,
+.Dv HISADDR6
 or
-.Dv MYADDR
+.Dv MYADDR6
 values, entries are stored in the
-.Sq stick route
+.Sq sticky route
 list.
-Each time
-.Dv HISADDR
-or
-.Dv MYADDR
-change, this list is re-applied to the routing table.
+Each time these variables change, this list is re-applied to the routing table.
 .Pp
 Disabling this option will prevent the re-application of sticky routes,
 although the
@@ -3104,31 +3146,6 @@ Disabling this option will tell
 not to make any utmp or wtmp entries.
 This is usually only necessary if
 you require the user to both login and authenticate themselves.
-.It iface-alias
-Default: Enabled if
-.Fl nat
-is specified.
-This option simply tells
-.Nm
-to add new interface addresses to the interface rather than replacing them.
-The option can only be enabled if network address translation is enabled
-.Pq Dq nat enable yes .
-.Pp
-With this option enabled,
-.Nm
-will pass traffic for old interface addresses through the NAT 
-ifdef({LOCALNAT},{engine,},{engine
-(see
-.Xr libalias 3 ) ,})
-resulting in the ability (in
-.Fl auto
-mode) to properly connect the process that caused the PPP link to
-come up in the first place.
-.Pp
-Disabling NAT with
-.Dq nat enable no
-will also disable
-.Sq iface-alias .
 .El
 .Pp
 .It add Ns Xo
@@ -3160,22 +3177,31 @@ Refer to the
 command for further details.
 .Pp
 It is possible to use the symbolic names
-.Sq MYADDR
+.Sq MYADDR ,
+.Sq HISADDR ,
+.Sq MYADDR6
 or
-.Sq HISADDR
+.Sq HISADDR6
 as the destination, and
 .Sq HISADDR
+or
+.Sq HISADDR6
 as the
 .Ar gateway .
 .Sq MYADDR
-is replaced with the interface address and
+is replaced with the interface IP address,
 .Sq HISADDR
-is replaced with the interface destination (peer) address.
+is replaced with the interface IP destination (peer) address,
+.Sq MYADDR6
+is replaced with the interface IPv6 address, and
+.Sq HISADDR6
+is replaced with the interface IPv6 destination address,
 .Pp
 If the
 .Ar add!\&
 command is used
-.Pq note the trailing Dq !\& ,
+(note the trailing
+.Dq !\& ) ,
 then if the route already exists, it will be updated as with the
 .Sq route change
 command (see
@@ -3185,19 +3211,16 @@ for further details).
 Routes that contain the
 .Dq HISADDR ,
 .Dq MYADDR ,
+.Dq HISADDR6 ,
+.Dq MYADDR6 ,
 .Dq DNS0 ,
 or
 .Dq DNS1
 constants are considered
 .Sq sticky .
 They are stored in a list (use
-.Dq show ipcp
-to see the list), and each time the value of
-.Dv HISADDR ,
-.Dv MYADDR ,
-.Dv DNS0 ,
-or
-.Dv DNS1
+.Dq show ncp
+to see the list), and each time the value of one of these variables
 changes, the appropriate routing table entries are updated.
 This facility may be disabled using
 .Dq disable sroutes .
@@ -3316,7 +3339,7 @@ for a description of what an
 is.
 })dnl
 .Pp
-It should be noted under what circumstances an aliasing link is 
+It should be noted under what circumstances an aliasing link is
 ifdef({LOCALNAT},{created.},{created by
 .Xr libalias 3 .})
 It may be necessary to further protect your network from outside
@@ -3368,7 +3391,7 @@ is specified, only data coming from that IP number is redirected.
 .Ar remotePort
 must either be
 .Dq 0
-.Pq indicating any source port
+(indicating any source port)
 or a range of ports the same size as the other ranges.
 .Pp
 This option is useful if you wish to run things like Internet phone on
@@ -3381,7 +3404,8 @@ This command tells
 .Nm
 to redirect packets of protocol type
 .Ar proto
-.Pq see Xr protocols 5
+(see
+.Xr protocols 5 )
 to the internall address
 .Ar localIP .
 .Pp
@@ -3408,6 +3432,25 @@ in
 .Xr libalias 3
 for details of the available commands.
 })dnl
+.It nat punch_fw Op Ar base count
+This command tells
+.Nm
+to punch holes in the firewall for FTP or IRC DCC connections.
+This is done dynamically by installing termporary firewall rules which
+allow a particular connection (and only that connection) to go through
+the firewall.
+The rules are removed once the corresponding connection terminates.
+.Pp
+A maximum of
+.Ar count
+rules starting from rule number
+.Ar base
+will be used for punching firewall holes.
+The range will be cleared when the
+.Dq nat punch_fw
+command is run.
+.Pp
+If no arguments are given, firewall punching is disabled.
 .It nat same_ports yes|no
 When enabled, this command will tell the network address translation engine to
 attempt to avoid changing the port number on outgoing packets.
@@ -3426,7 +3469,7 @@ network.
 .Pp
 The target address may be set to
 .Dq MYADDR ,
-in which case 
+in which case
 ifdef({LOCALNAT},{all packets will be redirected},
 {libalias will redirect all packets})
 to the interface address.
@@ -3472,6 +3515,8 @@ See the
 command below.
 .It Li HISADDR
 This is replaced with the peers IP number.
+.It Li HISADDR6
+This is replaced with the peers IPv6 number.
 .It Li INTERFACE
 This is replaced with the name of the interface that's in use.
 .It Li LABEL
@@ -3487,6 +3532,8 @@ commands and in the
 file.
 .It Li MYADDR
 This is replaced with the IP number assigned to the local interface.
+.It Li MYADDR6
+This is replaced with the IPv6 number assigned to the local interface.
 .It Li PEER_ENDDISC
 This is replaced with the value of the peers endpoint discriminator.
 .It Li PROCESSID
@@ -3510,11 +3557,12 @@ If you wish to pause
 while the command executes, use the
 .Dq shell
 command instead.
-.It clear physical|ipcp Op current|overall|peak...
+.It clear physical|ipcp|ipv6 Op current|overall|peak...
 Clear the specified throughput values at either the
-.Dq physical
-or
+.Dq physical ,
 .Dq ipcp
+or
+.Dq ipv6cp
 level.
 If
 .Dq physical
@@ -3549,7 +3597,7 @@ is specified, the LCP layer is brought down, but
 will not bring the link offline.
 It is subsequently possible to use
 .Dq term
-.Pq see below
+(see below)
 to talk to the peer machine if, for example, something like
 .Dq slirp
 is being used.
@@ -3592,7 +3640,8 @@ the default route is deleted.
 If the
 .Ar delete!\&
 command is used
-.Pq note the trailing Dq !\& ,
+(note the trailing
+.Dq !\& ) ,
 .Nm
 will not complain if the route does not already exist.
 .It dial|call Op Ar label Ns Xo
@@ -3663,7 +3712,8 @@ Instead of specifying
 .Ar mask ,
 .Ar /bits
 can be used
-.Pq with no space between \&it and Ar addr .
+(with no space between it and
+.Ar addr ) .
 If the given address already exists, the command fails unless the
 .Dq !\&
 is used - in which case the previous interface address entry is overwritten
@@ -3682,18 +3732,21 @@ defaults to
 This address (the broadcast address) is the only duplicate peer address that
 .Nm
 allows.
-.It iface clear
+.It iface clear Op INET | INET6
 If this command is used while
 .Nm
 is in the OPENED state or while in
 .Fl auto
-mode, all addresses except for the IPCP negotiated address are deleted
+mode, all addresses except for the NCP negotiated address are deleted
 from the interface.
 If
 .Nm
 is not in the OPENED state and is not in
 .Fl auto
 mode, all interface addresses are deleted.
+.Pp
+If the INET or INET6 arguments are used, only addresses for that address
+family are cleared.
 .Pp
 .It iface delete Ns Xo
 .Op !\& Ns
@@ -4000,7 +4053,8 @@ values.
 If the
 .Dq !\&
 is doubled up
-.Pq to Dq !! ,
+(to
+.Dq !! ) ,
 it is treated as a single literal
 .Dq !\& ,
 otherwise, ignoring the
@@ -4058,7 +4112,8 @@ These settings apply only in multi-link mode and default to zero, zero and
 five respectively.
 When more than one
 .Ar demand-dial
-.Pq also known as Fl auto
+(also known as
+.Fl auto )
 mode link is available, only the first link is made active when
 .Nm
 first reads data from the tun device.
@@ -4418,7 +4473,8 @@ will attempt to load it using
 .Xr kldload 2 .
 If this fails, an external program must be used such as the
 .Xr pppoe 8
-program available under OpenBSD.
+program available under
+.Ox .
 The given
 .Ar provider
 is passed as the service name in the PPPoE Discovery Initiation (PADI)
@@ -4665,7 +4721,8 @@ as they travel across the link.
 .Oo Op host
 .Ar src_addr Ns Op / Ns Ar width
 .Op Ar dst_addr Ns Op / Ns Ar width
-.Oc [ tcp|udp|ospf|ipip|igmp|icmp Op src lt|eq|gt Ar port
+.Oc [ Ns Ar proto
+.Op src lt|eq|gt Ar port
 .Op dst lt|eq|gt Ar port
 .Op estab
 .Op syn
@@ -4819,7 +4876,8 @@ Note that the
 argument may be overridden by the third field in the
 .Pa ppp.secret
 file once the client has authenticated itself
-.Pq if PAP or CHAP are Dq enabled .
+(if PAP or CHAP are
+.Dq enabled ) .
 Refer to the
 .Sx AUTHENTICATING INCOMING CONNECTIONS
 section for details.
@@ -5525,7 +5583,8 @@ Show the current HDLC statistics.
 Give a summary of available show commands.
 .It show iface
 Show the current interface information
-.Pq the same \&as Dq iface show .
+(the same as
+.Dq iface show ) .
 .It show ipcp
 Show the current IPCP statistics.
 .It show layers
@@ -5542,6 +5601,8 @@ Show a list of available logical links.
 Show the current log values.
 .It show mem
 Show current memory statistics.
+.It show ncp
+Show the current NCP statistics.
 .It show physical
 Show low level link information.
 .It show mp
@@ -5675,6 +5736,7 @@ ifdef({LOCALRAD},{},{.Xr libradius 3 ,
 .Xr syslog 3 ,
 .Xr uucplock 3 ,
 .Xr netgraph 4 ,
+.Xr ng_pppoe 4 ,
 .Xr crontab 5 ,
 .Xr group 5 ,
 .Xr passwd 5 ,
@@ -5689,7 +5751,6 @@ ifdef({LOCALRAD},{},{.Xr libradius 3 ,
 .Xr init 8 ,
 .Xr isdn 8 ,
 .Xr named 8 ,
-.Xr ng_pppoe 4 ,
 .Xr ping 8 ,
 .Xr pppctl 8 ,
 .Xr pppd 8 ,

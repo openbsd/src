@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: main.c,v 1.29 2001/07/04 09:32:08 brian Exp $
+ * $OpenBSD: main.c,v 1.30 2001/08/19 23:22:18 brian Exp $
  */
 
 #include <sys/param.h>
@@ -71,6 +71,8 @@
 #include "iplist.h"
 #include "throughput.h"
 #include "slcompress.h"
+#include "ncpaddr.h"
+#include "ip.h"
 #include "ipcp.h"
 #include "filter.h"
 #include "descriptor.h"
@@ -79,6 +81,8 @@
 #ifndef NORADIUS
 #include "radius.h"
 #endif
+#include "ipv6cp.h"
+#include "ncp.h"
 #include "bundle.h"
 #include "auth.h"
 #include "systems.h"
@@ -300,6 +304,8 @@ main(int argc, char **argv)
   struct prompt *prompt;
   struct switches sw;
 
+  probe_Init();
+
   /*
    * We open 3 descriptors to ensure that STDIN_FILENO, STDOUT_FILENO and
    * STDERR_FILENO are always open.  These are closed before DoLoop(),
@@ -413,7 +419,7 @@ main(int argc, char **argv)
     bundle_SetLabel(bundle, lastlabel);
 
   if (sw.mode == PHYS_AUTO &&
-      bundle->ncp.ipcp.cfg.peer_range.ipaddr.s_addr == INADDR_ANY) {
+      ncprange_family(&bundle->ncp.ipcp.cfg.peer_range) == AF_UNSPEC) {
     prompt_Printf(prompt, "You must ``set ifaddr'' with a peer address "
                   "in auto mode.\n");
     AbortProgram(EX_START);
@@ -527,9 +533,6 @@ DoLoop(struct bundle *bundle)
 {
   fd_set *rfds, *wfds, *efds;
   int i, nfds, nothing_done;
-  struct probe probe;
-
-  probe_Init(&probe);
 
   if ((rfds = mkfdset()) == NULL) {
     log_Printf(LogERROR, "DoLoop: Cannot create fd_set\n");

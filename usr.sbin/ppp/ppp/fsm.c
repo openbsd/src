@@ -25,13 +25,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: fsm.c,v 1.18 2001/06/19 10:24:52 brian Exp $
+ * $OpenBSD: fsm.c,v 1.19 2001/08/19 23:22:17 brian Exp $
  */
 
 #include <sys/param.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
+#include <sys/socket.h>
 #include <sys/un.h>
 
 #include <string.h>
@@ -49,6 +50,8 @@
 #include "hdlc.h"
 #include "throughput.h"
 #include "slcompress.h"
+#include "ncpaddr.h"
+#include "ip.h"
 #include "ipcp.h"
 #include "filter.h"
 #include "descriptor.h"
@@ -59,6 +62,8 @@
 #ifndef NORADIUS
 #include "radius.h"
 #endif
+#include "ipv6cp.h"
+#include "ncp.h"
 #include "bundle.h"
 #include "async.h"
 #include "physical.h"
@@ -508,7 +513,6 @@ FsmRecvConfigReq(struct fsm *fp, struct fsmheader *lhp, struct mbuf *bp)
     return;
   case ST_OPENED:
     (*fp->fn->LayerDown)(fp);
-    (*fp->parent->LayerDown)(fp->parent->object, fp);
     break;
   }
 
@@ -559,6 +563,7 @@ FsmRecvConfigReq(struct fsm *fp, struct fsmheader *lhp, struct mbuf *bp)
       NewState(fp, ST_ACKSENT);
     else
       NewState(fp, ST_REQSENT);
+    (*fp->parent->LayerDown)(fp->parent->object, fp);
     break;
   case ST_REQSENT:
     if (ackaction)
@@ -889,6 +894,15 @@ FsmRecvProtoRej(struct fsm *fp, struct fsmheader *lhp, struct mbuf *bp)
       fsm_Close(&fp->bundle->ncp.ipcp.fsm);
     }
     break;
+#ifndef NOINET6
+  case PROTO_IPV6CP:
+    if (fp->proto == PROTO_LCP) {
+      log_Printf(LogPHASE, "%s: IPV6CP protocol reject closes IPV6CP !\n",
+                fp->link->name);
+      fsm_Close(&fp->bundle->ncp.ipv6cp.fsm);
+    }
+    break;
+#endif
   case PROTO_MP:
     if (fp->proto == PROTO_LCP) {
       struct lcp *lcp = fsm2lcp(fp);

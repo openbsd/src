@@ -1,15 +1,15 @@
-#	$OpenBSD: Makefile,v 1.21 2001/08/09 02:26:26 jsyn Exp $
+#	$OpenBSD: Makefile,v 1.22 2001/08/19 23:22:17 brian Exp $
 
 PROG=	ppp
 SRCS=	alias.c alias_cuseeme.c alias_db.c alias_ftp.c alias_irc.c \
 	alias_nbt.c alias_pptp.c alias_proxy.c alias_smedia.c alias_util.c \
 	acf.c arp.c async.c auth.c bundle.c cbcp.c ccp.c chap.c chap_ms.c \
 	chat.c command.c datalink.c deflate.c defs.c exec.c filter.c fsm.c \
-	hdlc.c iface.c ip.c ipcp.c iplist.c lcp.c link.c log.c lqr.c \
-	main.c mbuf.c mp.c mppe.c nat_cmd.c pap.c physical.c pred.c probe.c \
-	prompt.c proto.c radius.c radlib.c route.c server.c sig.c \
-	slcompress.c systems.c sync.c tcp.c tcpmss.c throughput.c timer.c \
-	tty.c tun.c udp.c vjcomp.c
+	hdlc.c iface.c ip.c ipcp.c ipv6cp.c iplist.c lcp.c link.c log.c lqr.c \
+	main.c mbuf.c mp.c mppe.c ncp.c ncpaddr.c nat_cmd.c pap.c physical.c \
+	pred.c probe.c prompt.c proto.c radius.c radlib.c route.c server.c \
+	sig.c slcompress.c systems.c sync.c tcp.c tcpmss.c throughput.c \
+	timer.c tty.c tun.c udp.c vjcomp.c
 CFLAGS+=-Wall -DHAVE_DES -DNO_FW_PUNCH -DNOI4B -DNONETGRAPH
 CFLAGS+=-DLOCALNAT -DLOCALRAD
 M4FLAGS=-DLOCALNAT -DLOCALRAD

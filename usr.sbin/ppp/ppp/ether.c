@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: ether.c,v 1.12 2001/08/02 20:52:56 brian Exp $
+ *	$OpenBSD: ether.c,v 1.13 2001/08/19 23:22:17 brian Exp $
  */
 
 #include <sys/param.h>
@@ -83,11 +83,15 @@
 #include "datalink.h"
 #include "slcompress.h"
 #include "iplist.h"
+#include "ncpaddr.h"
+#include "ip.h"
 #include "ipcp.h"
 #include "filter.h"
 #ifndef NORADIUS
 #include "radius.h"
 #endif
+#include "ipv6cp.h"
+#include "ncp.h"
 #include "bundle.h"
 #include "id.h"
 #include "iface.h"

@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: command.c,v 1.67 2001/08/18 19:41:09 brian Exp $
+ * $OpenBSD: command.c,v 1.68 2001/08/19 23:22:17 brian Exp $
  */
 
 #include <sys/param.h>
@@ -70,6 +70,8 @@
 #include "lqr.h"
 #include "hdlc.h"
 #include "lcp.h"
+#include "ncpaddr.h"
+#include "ip.h"
 #include "ipcp.h"
 #ifndef NONAT
 #include "nat_cmd.h"
@@ -88,6 +90,8 @@
 #ifndef NORADIUS
 #include "radius.h"
 #endif
+#include "ipv6cp.h"
+#include "ncp.h"
 #include "bundle.h"
 #include "server.h"
 #include "prompt.h"
@@ -97,6 +101,7 @@
 #include "datalink.h"
 #include "iface.h"
 #include "id.h"
+#include "probe.h"
 
 /* ``set'' values */
 #define	VAR_AUTHKEY	0
@@ -159,7 +164,7 @@
 #define NEG_MPPE	54
 #define NEG_CHAP81	55
 
-const char Version[] = "2.3.2";
+const char Version[] = "3.0.0";
 
 static int ShowCommand(struct cmdargs const *);
 static int TerminalCommand(struct cmdargs const *);
@@ -457,9 +462,17 @@ command_Expand(char **nargv, int argc, char const *const *oargv,
     nargv[arg] = strdup(oargv[arg]);
     nargv[arg] = subst(nargv[arg], "HISADDR",
                        inet_ntoa(bundle->ncp.ipcp.peer_ip));
+#ifndef NOINET6
+    nargv[arg] = subst(nargv[arg], "HISADDR6",
+                       ncpaddr_ntoa(&bundle->ncp.ipv6cp.hisaddr));
+#endif
     nargv[arg] = subst(nargv[arg], "AUTHNAME", bundle->cfg.auth.name);
     nargv[arg] = subst(nargv[arg], "INTERFACE", bundle->iface->name);
     nargv[arg] = subst(nargv[arg], "MYADDR", inet_ntoa(bundle->ncp.ipcp.my_ip));
+#ifndef NOINET6
+    nargv[arg] = subst(nargv[arg], "MYADDR6",
+                       ncpaddr_ntoa(&bundle->ncp.ipv6cp.myaddr));
+#endif
     nargv[arg] = subst(nargv[arg], "USER", bundle->ncp.mp.peer.authname);
     nargv[arg] = subst(nargv[arg], "PEER_ENDDISC",
                        mp_Enddisc(bundle->ncp.mp.peer.enddisc.class,
@@ -639,6 +652,10 @@ static struct cmdtab const NatCommands[] =
    "nat proto proto localIP [publicIP [remoteIP]]"},
   {"proxy", NULL, nat_ProxyRule, LOCAL_AUTH,
    "proxy control", "nat proxy server host[:port] ..."},
+#ifndef NO_FW_PUNCH
+  {"punch_fw", NULL, nat_PunchFW, LOCAL_AUTH,
+   "firewall control", "nat punch_fw [base count]"},
+#endif
   {"same_ports", NULL, NatOption, LOCAL_AUTH,
    "try to leave port numbers unchanged", "nat same_ports yes|no",
    (const void *) PKT_ALIAS_SAME_PORTS},
@@ -675,7 +692,7 @@ static struct cmdtab const IfaceCommands[] =
    "Add or change an iface address", "iface add! addr[/bits| mask] peer",
    (void *)1},
   {"clear", NULL, IfaceClearCommand, LOCAL_AUTH,
-   "Clear iface address(es)", "iface clear"},
+   "Clear iface address(es)", "iface clear [INET | INET6]"},
   {"delete", "rm", IfaceDeleteCommand, LOCAL_AUTH,
    "Delete iface address", "iface delete addr", NULL},
   {NULL, "rm!", IfaceDeleteCommand, LOCAL_AUTH,
@@ -702,7 +719,7 @@ static struct cmdtab const Commands[] = {
   "Run a background command", "[!]bg command"},
   {"clear", NULL, ClearCommand, LOCAL_AUTH | LOCAL_CX_OPT,
   "Clear throughput statistics",
-  "clear ipcp|physical [current|overall|peak]..."},
+  "clear ipcp|ipv6cp|physical [current|overall|peak]..."},
   {"clone", NULL, CloneCommand, LOCAL_AUTH | LOCAL_CX,
   "Clone a link", "clone newname..."},
   {"close", NULL, CloseCommand, LOCAL_AUTH | LOCAL_CX_OPT,
@@ -844,6 +861,10 @@ static struct cmdtab const ShowCommands[] = {
   "Interface status", "show iface"},
   {"ipcp", NULL, ipcp_Show, LOCAL_AUTH,
   "IPCP status", "show ipcp"},
+#ifndef NOINET6
+  {"ipv6cp", NULL, ipv6cp_Show, LOCAL_AUTH,
+  "IPV6CP status", "show ipv6cp"},
+#endif
   {"layers", NULL, link_ShowLayers, LOCAL_AUTH | LOCAL_CX_OPT,
   "Protocol layers", "show layers"},
   {"lcp", NULL, lcp_ReportStatus, LOCAL_AUTH | LOCAL_CX,
@@ -856,6 +877,8 @@ static struct cmdtab const ShowCommands[] = {
   "log levels", "show log"},
   {"mem", NULL, mbuf_Show, LOCAL_AUTH,
   "mbuf allocations", "show mem"},
+  {"ncp", NULL, ncp_Show, LOCAL_AUTH,
+  "NCP status", "show ncp"},
   {"physical", NULL, physical_ShowStatus, LOCAL_AUTH | LOCAL_CX,
   "(low-level) link info", "show physical"},
   {"mp", "multilink", mp_ShowStatus, LOCAL_AUTH,
@@ -1403,43 +1426,42 @@ SetEscape(struct cmdargs const *arg)
 static int
 SetInterfaceAddr(struct cmdargs const *arg)
 {
-  struct ipcp *ipcp = &arg->bundle->ncp.ipcp;
+  struct ncp *ncp = &arg->bundle->ncp;
+  struct ncpaddr ncpaddr;
   const char *hisaddr;
 
   if (arg->argc > arg->argn + 4)
     return -1;
 
   hisaddr = NULL;
-  memset(&ipcp->cfg.my_range, '\0', sizeof ipcp->cfg.my_range);
-  memset(&ipcp->cfg.peer_range, '\0', sizeof ipcp->cfg.peer_range);
-  ipcp->cfg.HaveTriggerAddress = 0;
-  ipcp->cfg.netmask.s_addr = INADDR_ANY;
-  iplist_reset(&ipcp->cfg.peer_list);
+  memset(&ncp->ipcp.cfg.my_range, '\0', sizeof ncp->ipcp.cfg.my_range);
+  memset(&ncp->ipcp.cfg.peer_range, '\0', sizeof ncp->ipcp.cfg.peer_range);
+  ncp->ipcp.cfg.HaveTriggerAddress = 0;
+  ncp->ipcp.cfg.netmask.s_addr = INADDR_ANY;
+  iplist_reset(&ncp->ipcp.cfg.peer_list);
 
   if (arg->argc > arg->argn) {
-    if (!ParseAddr(ipcp, arg->argv[arg->argn],
-                   &ipcp->cfg.my_range.ipaddr, &ipcp->cfg.my_range.mask,
-                   &ipcp->cfg.my_range.width))
+    if (!ncprange_aton(&ncp->ipcp.cfg.my_range, ncp, arg->argv[arg->argn]))
       return 1;
     if (arg->argc > arg->argn+1) {
       hisaddr = arg->argv[arg->argn+1];
       if (arg->argc > arg->argn+2) {
-        ipcp->ifmask = ipcp->cfg.netmask = GetIpAddr(arg->argv[arg->argn+2]);
+        ncp->ipcp.ifmask = ncp->ipcp.cfg.netmask =
+          GetIpAddr(arg->argv[arg->argn+2]);
 	if (arg->argc > arg->argn+3) {
-	  ipcp->cfg.TriggerAddress = GetIpAddr(arg->argv[arg->argn+3]);
-	  ipcp->cfg.HaveTriggerAddress = 1;
+	  ncp->ipcp.cfg.TriggerAddress = GetIpAddr(arg->argv[arg->argn+3]);
+	  ncp->ipcp.cfg.HaveTriggerAddress = 1;
 	}
       }
     }
   }
 
   /* 0.0.0.0 means any address (0 bits) */
-  if (ipcp->cfg.my_range.ipaddr.s_addr == INADDR_ANY) {
-    ipcp->cfg.my_range.mask.s_addr = INADDR_ANY;
-    ipcp->cfg.my_range.width = 0;
-  }
-  ipcp->my_ip.s_addr = ipcp->cfg.my_range.ipaddr.s_addr;
-  bundle_AdjustFilters(arg->bundle, &ipcp->my_ip, NULL);
+  ncpaddr_getip4(&ncpaddr, &ncp->ipcp.my_ip);
+  ncprange_getaddr(&ncp->ipcp.cfg.my_range, &ncpaddr);
+  if (ncp->ipcp.my_ip.s_addr == INADDR_ANY)
+    ncprange_setwidth(&ncp->ipcp.cfg.my_range, 0);
+  bundle_AdjustFilters(arg->bundle, &ncpaddr, NULL);
 
   if (hisaddr && !ipcp_UseHisaddr(arg->bundle, hisaddr,
                                   arg->bundle->phys_type.all & PHYS_AUTO))
@@ -1493,18 +1515,20 @@ static int
 SetVariable(struct cmdargs const *arg)
 {
   long long_val, param = (long)arg->cmd->args;
-  int mode, dummyint, f, first;
+  int mode, dummyint, f, first, res;
   u_short *change;
   const char *argp;
   struct datalink *cx = arg->cx;	/* LOCAL_CX uses this */
-  const char *err = NULL;
   struct link *l = command_ChooseLink(arg);	/* LOCAL_CX_OPT uses this */
-  struct in_addr dummyaddr, *addr;
+  struct in_addr *ipaddr;
+  struct ncpaddr ncpaddr[2];
 
   if (arg->argc > arg->argn)
     argp = arg->argv[arg->argn];
   else
     argp = "";
+
+  res = 0;
 
   if ((arg->cmd->lauth & LOCAL_CX) && !cx) {
     log_Printf(LogWARN, "set %s: No context (use the `link' command)\n",
@@ -1547,14 +1571,16 @@ SetVariable(struct cmdargs const *arg)
       if (v1 < 0 || *end) {
         log_Printf(LogWARN, "autoload: %s: Invalid min percentage\n",
                    arg->argv[arg->argn]);
-        return 1;
+        res = 1;
+        break;
       }
 
       v2 = strtol(arg->argv[arg->argn + 1], &end, 0);
       if (v2 < 0 || *end) {
         log_Printf(LogWARN, "autoload: %s: Invalid max percentage\n",
                    arg->argv[arg->argn + 1]);
-        return 1;
+        res = 1;
+        break;
       }
       if (v2 < v1) {
         v3 = v1;
@@ -1566,7 +1592,8 @@ SetVariable(struct cmdargs const *arg)
       if (v3 <= 0 || *end) {
         log_Printf(LogWARN, "autoload: %s: Invalid throughput period\n",
                    arg->argv[arg->argn + 2]);
-        return 1;
+        res = 1;
+        break;
       }
 
       arg->bundle->ncp.mp.cfg.autoload.min = v1;
@@ -1574,8 +1601,8 @@ SetVariable(struct cmdargs const *arg)
       arg->bundle->ncp.mp.cfg.autoload.period = v3;
       mp_RestartAutoloadTimer(&arg->bundle->ncp.mp);
     } else {
-      err = "Set autoload requires three arguments\n";
-      log_Printf(LogWARN, err);
+      log_Printf(LogWARN, "Set autoload requires three arguments\n");
+      res = 1;
     }
     break;
 
@@ -1609,15 +1636,17 @@ SetVariable(struct cmdargs const *arg)
       } else
         l->ccp.cfg.deflate.in.winsize = 0;
     } else {
-      err = "No window size specified\n";
-      log_Printf(LogWARN, err);
+      log_Printf(LogWARN, "No window size specified\n");
+      res = 1;
     }
     break;
 
 #ifdef HAVE_DES
   case VAR_MPPE:
-    if (arg->argc > arg->argn + 2)
-      return -1;
+    if (arg->argc > arg->argn + 2) {
+      res = -1;
+      break;
+    }
 
     if (arg->argc == arg->argn) {
       l->ccp.cfg.mppe.keybits = 0;
@@ -1632,7 +1661,8 @@ SetVariable(struct cmdargs const *arg)
       long_val = atol(argp);
       if (long_val != 40 && long_val != 56 && long_val != 128) {
         log_Printf(LogWARN, "%s: Invalid bits value\n", argp);
-        return -1;
+        res = -1;
+        break;
       }
     }
 
@@ -1646,7 +1676,8 @@ SetVariable(struct cmdargs const *arg)
       else {
         log_Printf(LogWARN, "%s: Invalid state value\n",
                    arg->argv[arg->argn + 1]);
-        return -1;
+        res = -1;
+        break;
       }
     } else
       l->ccp.cfg.mppe.state = MPPE_ANYSTATE;
@@ -1666,8 +1697,8 @@ SetVariable(struct cmdargs const *arg)
       sscanf(argp, "%lx", &ulong_val);
       cx->physical->link.lcp.cfg.accmap = (u_int32_t)ulong_val;
     } else {
-      err = "No accmap specified\n";
-      log_Printf(LogWARN, err);
+      log_Printf(LogWARN, "No accmap specified\n");
+      res = 1;
     }
     break;
 
@@ -1675,7 +1706,8 @@ SetVariable(struct cmdargs const *arg)
     mode = Nam2mode(argp);
     if (mode == PHYS_NONE || mode == PHYS_ALL) {
       log_Printf(LogWARN, "%s: Invalid mode\n", argp);
-      return -1;
+      res = -1;
+      break;
     }
     bundle_SetMode(arg->bundle, cx, mode);
     break;
@@ -1688,20 +1720,26 @@ SetVariable(struct cmdargs const *arg)
         /* Make sure none of our links are DATALINK_LCP or greater */
         if (bundle_HighestState(arg->bundle) >= DATALINK_LCP) {
           log_Printf(LogWARN, "mrru: Only changable before LCP negotiations\n");
-          return 1;
+          res = 1;
+          break;
         }
         break;
       default:
         log_Printf(LogWARN, "mrru: Only changable at phase DEAD/ESTABLISH\n");
-        return 1;
+        res = 1;
+        break;
     }
+    if (res != 0)
+      break;
     long_val = atol(argp);
     if (long_val && long_val < MIN_MRU) {
       log_Printf(LogWARN, "MRRU %ld: too small - min %d\n", long_val, MIN_MRU);
-      return 1;
+      res = 1;
+      break;
     } else if (long_val > MAX_MRU) {
       log_Printf(LogWARN, "MRRU %ld: too big - max %d\n", long_val, MAX_MRU);
-      return 1;
+      res = 1;
+      break;
     } else
       arg->bundle->ncp.mp.cfg.mrru = long_val;
     break;
@@ -1711,40 +1749,52 @@ SetVariable(struct cmdargs const *arg)
     change = NULL;	/* silence gcc */
     switch(arg->argc - arg->argn) {
     case 1:
-      if (argp[strspn(argp, "0123456789")] != '\0')
-        return -1;
+      if (argp[strspn(argp, "0123456789")] != '\0') {
+        res = -1;
+        break;
+      }
+      /*FALLTHRU*/
     case 0:
       long_val = atol(argp);
       change = &l->lcp.cfg.mru;
       if (long_val > l->lcp.cfg.max_mru) {
         log_Printf(LogWARN, "MRU %ld: too large - max set to %d\n", long_val,
                    l->lcp.cfg.max_mru);
-        return 1;
+        res = 1;
+        break;
       }
       break;
     case 2:
-      if (strcasecmp(argp, "max") && strcasecmp(argp, "maximum"))
-        return -1;
+      if (strcasecmp(argp, "max") && strcasecmp(argp, "maximum")) {
+        res = -1;
+        break;
+      }
       long_val = atol(arg->argv[arg->argn + 1]);
       change = &l->lcp.cfg.max_mru;
       if (long_val > MAX_MRU) {
         log_Printf(LogWARN, "MRU %ld: too large - maximum is %d\n", long_val,
                    MAX_MRU);
-        return 1;
+        res = 1;
+        break;
       }
       break;
     default:
-      return -1;
+      res = -1;
+      break;
     }
+    if (res != 0)
+      break;
 
     if (long_val == 0)
       *change = 0;
     else if (long_val < MIN_MRU) {
       log_Printf(LogWARN, "MRU %ld: too small - min %d\n", long_val, MIN_MRU);
-      return 1;
+      res = 1;
+      break;
     } else if (long_val > MAX_MRU) {
       log_Printf(LogWARN, "MRU %ld: too big - max %d\n", long_val, MAX_MRU);
-      return 1;
+      res = 1;
+      break;
     } else
       *change = long_val;
     if (l->lcp.cfg.mru > *change)
@@ -1756,38 +1806,51 @@ SetVariable(struct cmdargs const *arg)
     change = NULL;	/* silence gcc */
     switch(arg->argc - arg->argn) {
     case 1:
-      if (argp[strspn(argp, "0123456789")] != '\0')
-        return -1;
+      if (argp[strspn(argp, "0123456789")] != '\0') {
+        res = -1;
+        break;
+      }
+      /*FALLTHRU*/
     case 0:
       long_val = atol(argp);
       change = &l->lcp.cfg.mtu;
       if (long_val > l->lcp.cfg.max_mtu) {
         log_Printf(LogWARN, "MTU %ld: too large - max set to %d\n", long_val,
                    l->lcp.cfg.max_mtu);
-        return 1;
+        res = 1;
+        break;
       }
       break;
     case 2:
-      if (strcasecmp(argp, "max") && strcasecmp(argp, "maximum"))
-        return -1;
+      if (strcasecmp(argp, "max") && strcasecmp(argp, "maximum")) {
+        res = -1;
+        break;
+      }
       long_val = atol(arg->argv[arg->argn + 1]);
       change = &l->lcp.cfg.max_mtu;
       if (long_val > MAX_MTU) {
         log_Printf(LogWARN, "MTU %ld: too large - maximum is %d\n", long_val,
                    MAX_MTU);
-        return 1;
+        res = 1;
+        break;
       }
       break;
     default:
-      return -1;
+      res = -1;
+      break;
     }
+
+    if (res != 0)
+      break;
 
     if (long_val && long_val < MIN_MTU) {
       log_Printf(LogWARN, "MTU %ld: too small - min %d\n", long_val, MIN_MTU);
-      return 1;
+      res = 1;
+      break;
     } else if (long_val > MAX_MTU) {
       log_Printf(LogWARN, "MTU %ld: too big - max %d\n", long_val, MAX_MTU);
-      return 1;
+      res = 1;
+      break;
     } else
       *change = long_val;
     if (l->lcp.cfg.mtu > *change)
@@ -1801,8 +1864,8 @@ SetVariable(struct cmdargs const *arg)
     else if (strcasecmp(argp, "passive") == 0)
       cx->physical->link.lcp.cfg.openmode = OPEN_PASSIVE;
     else {
-      err = "%s: Invalid openmode\n";
-      log_Printf(LogWARN, err, argp);
+      log_Printf(LogWARN, "%s: Invalid openmode\n", argp);
+      res = 1;
     }
     break;
 
@@ -1828,19 +1891,19 @@ SetVariable(struct cmdargs const *arg)
     break;
 
   case VAR_IDLETIMEOUT:
-    if (arg->argc > arg->argn+2)
-      err = "Too many idle timeout values\n";
-    else if (arg->argc == arg->argn)
-      err = "Too few idle timeout values\n";
-    else {
+    if (arg->argc > arg->argn+2) {
+      log_Printf(LogWARN, "Too many idle timeout values\n");
+      res = 1;
+    } else if (arg->argc == arg->argn) {
+      log_Printf(LogWARN, "Too few idle timeout values\n");
+      res = 1;
+    } else {
       int timeout, min;
 
       timeout = atoi(argp);
       min = arg->argc == arg->argn + 2 ? atoi(arg->argv[arg->argn + 1]) : -1;
       bundle_SetIdleTimer(arg->bundle, timeout, min);
     }
-    if (err)
-      log_Printf(LogWARN, err);
     break;
 
   case VAR_LQRPERIOD:
@@ -1848,67 +1911,70 @@ SetVariable(struct cmdargs const *arg)
     if (long_val < MIN_LQRPERIOD) {
       log_Printf(LogWARN, "%ld: Invalid lqr period - min %d\n",
                  long_val, MIN_LQRPERIOD);
-      return 1;
+      res = 1;
     } else
       l->lcp.cfg.lqrperiod = long_val;
     break;
 
   case VAR_LCPRETRY:
-    return SetRetry(arg->argc - arg->argn, arg->argv + arg->argn,
-                    &cx->physical->link.lcp.cfg.fsm.timeout,
-                    &cx->physical->link.lcp.cfg.fsm.maxreq,
-                    &cx->physical->link.lcp.cfg.fsm.maxtrm, DEF_FSMTRIES);
+    res = SetRetry(arg->argc - arg->argn, arg->argv + arg->argn,
+                   &cx->physical->link.lcp.cfg.fsm.timeout,
+                   &cx->physical->link.lcp.cfg.fsm.maxreq,
+                   &cx->physical->link.lcp.cfg.fsm.maxtrm, DEF_FSMTRIES);
     break;
 
   case VAR_CHAPRETRY:
-    return SetRetry(arg->argc - arg->argn, arg->argv + arg->argn,
-                    &cx->chap.auth.cfg.fsm.timeout,
-                    &cx->chap.auth.cfg.fsm.maxreq, NULL, DEF_FSMAUTHTRIES);
+    res = SetRetry(arg->argc - arg->argn, arg->argv + arg->argn,
+                   &cx->chap.auth.cfg.fsm.timeout,
+                   &cx->chap.auth.cfg.fsm.maxreq, NULL, DEF_FSMAUTHTRIES);
     break;
 
   case VAR_PAPRETRY:
-    return SetRetry(arg->argc - arg->argn, arg->argv + arg->argn,
-                    &cx->pap.cfg.fsm.timeout, &cx->pap.cfg.fsm.maxreq,
-                    NULL, DEF_FSMAUTHTRIES);
+    res = SetRetry(arg->argc - arg->argn, arg->argv + arg->argn,
+                   &cx->pap.cfg.fsm.timeout, &cx->pap.cfg.fsm.maxreq,
+                   NULL, DEF_FSMAUTHTRIES);
     break;
 
   case VAR_CCPRETRY:
-    return SetRetry(arg->argc - arg->argn, arg->argv + arg->argn,
-                    &l->ccp.cfg.fsm.timeout, &l->ccp.cfg.fsm.maxreq,
-                    &l->ccp.cfg.fsm.maxtrm, DEF_FSMTRIES);
+    res = SetRetry(arg->argc - arg->argn, arg->argv + arg->argn,
+                   &l->ccp.cfg.fsm.timeout, &l->ccp.cfg.fsm.maxreq,
+                   &l->ccp.cfg.fsm.maxtrm, DEF_FSMTRIES);
     break;
 
   case VAR_IPCPRETRY:
-    return SetRetry(arg->argc - arg->argn, arg->argv + arg->argn,
-                    &arg->bundle->ncp.ipcp.cfg.fsm.timeout,
-                    &arg->bundle->ncp.ipcp.cfg.fsm.maxreq,
-                    &arg->bundle->ncp.ipcp.cfg.fsm.maxtrm, DEF_FSMTRIES);
+    res = SetRetry(arg->argc - arg->argn, arg->argv + arg->argn,
+                   &arg->bundle->ncp.ipcp.cfg.fsm.timeout,
+                   &arg->bundle->ncp.ipcp.cfg.fsm.maxreq,
+                   &arg->bundle->ncp.ipcp.cfg.fsm.maxtrm, DEF_FSMTRIES);
     break;
 
   case VAR_NBNS:
   case VAR_DNS:
     if (param == VAR_DNS) {
-      addr = arg->bundle->ncp.ipcp.cfg.ns.dns;
-      addr[0].s_addr = addr[1].s_addr = INADDR_NONE;
+      ipaddr = arg->bundle->ncp.ipcp.cfg.ns.dns;
+      ipaddr[0].s_addr = ipaddr[1].s_addr = INADDR_NONE;
     } else {
-      addr = arg->bundle->ncp.ipcp.cfg.ns.nbns;
-      addr[0].s_addr = addr[1].s_addr = INADDR_ANY;
+      ipaddr = arg->bundle->ncp.ipcp.cfg.ns.nbns;
+      ipaddr[0].s_addr = ipaddr[1].s_addr = INADDR_ANY;
     }
 
     if (arg->argc > arg->argn) {
-      ParseAddr(&arg->bundle->ncp.ipcp, arg->argv[arg->argn],
-                addr, &dummyaddr, &dummyint);
-      if (arg->argc > arg->argn+1)
-        ParseAddr(&arg->bundle->ncp.ipcp, arg->argv[arg->argn + 1],
-                  addr + 1, &dummyaddr, &dummyint);
-
-      if (addr[0].s_addr == INADDR_ANY) {
-        addr[0].s_addr = addr[1].s_addr;
-        addr[1].s_addr = INADDR_ANY;
+      ncpaddr_aton(ncpaddr, &arg->bundle->ncp, arg->argv[arg->argn]);
+      if (!ncpaddr_getip4(ncpaddr, ipaddr))
+        return -1;
+      if (arg->argc > arg->argn+1) {
+        ncpaddr_aton(ncpaddr + 1, &arg->bundle->ncp, arg->argv[arg->argn + 1]);
+        if (!ncpaddr_getip4(ncpaddr + 1, ipaddr + 1))
+          return -1;
       }
-      if (addr[0].s_addr == INADDR_NONE) {
-        addr[0].s_addr = addr[1].s_addr;
-        addr[1].s_addr = INADDR_NONE;
+
+      if (ipaddr[0].s_addr == INADDR_ANY) {
+        ipaddr[0] = ipaddr[1];
+        ipaddr[1].s_addr = INADDR_ANY;
+      }
+      if (ipaddr[0].s_addr == INADDR_NONE) {
+        ipaddr[0] = ipaddr[1];
+        ipaddr[1].s_addr = INADDR_NONE;
       }
     }
     break;
@@ -1931,8 +1997,10 @@ SetVariable(struct cmdargs const *arg)
         }
       } else if (!strcasecmp(arg->argv[dummyint], "none"))
         cx->cfg.callback.opmask |= CALLBACK_BIT(CALLBACK_NONE);
-      else
-        return -1;
+      else {
+        res = -1;
+        break;
+      }
     }
     if (cx->cfg.callback.opmask == CALLBACK_BIT(CALLBACK_NONE))
       cx->cfg.callback.opmask = 0;
@@ -1968,12 +2036,12 @@ SetVariable(struct cmdargs const *arg)
 
   case VAR_SENDPIPE:
     long_val = atol(argp);
-    arg->bundle->ncp.ipcp.cfg.sendpipe = long_val;
+    arg->bundle->ncp.cfg.sendpipe = long_val;
     break;
 
   case VAR_RECVPIPE:
     long_val = atol(argp);
-    arg->bundle->ncp.ipcp.cfg.recvpipe = long_val;
+    arg->bundle->ncp.cfg.recvpipe = long_val;
     break;
 
 #ifndef NORADIUS
@@ -1982,7 +2050,8 @@ SetVariable(struct cmdargs const *arg)
       *arg->bundle->radius.cfg.file = '\0';
     else if (access(argp, R_OK)) {
       log_Printf(LogWARN, "%s: %s\n", argp, strerror(errno));
-      return 1;
+      res = 1;
+      break;
     } else {
       strncpy(arg->bundle->radius.cfg.file, argp,
               sizeof arg->bundle->radius.cfg.file - 1);
@@ -2011,10 +2080,10 @@ SetVariable(struct cmdargs const *arg)
 
   case VAR_PARITY:
     if (arg->argc == arg->argn + 1)
-      return physical_SetParity(arg->cx->physical, argp);
+      res = physical_SetParity(arg->cx->physical, argp);
     else {
-      err = "Parity value must be odd, even or none\n";
-      log_Printf(LogWARN, err);
+      log_Printf(LogWARN, "Parity value must be odd, even or none\n");
+      res = 1;
     }
     break;
 
@@ -2024,58 +2093,56 @@ SetVariable(struct cmdargs const *arg)
     else if (strcasecmp(argp, "off") == 0)
       physical_SetRtsCts(arg->cx->physical, 0);
     else {
-      err = "RTS/CTS value must be on or off\n";
-      log_Printf(LogWARN, err);
+      log_Printf(LogWARN, "RTS/CTS value must be on or off\n");
+      res = 1;
     }
     break;
 
   case VAR_URGENTPORTS:
     if (arg->argn == arg->argc) {
-      ipcp_SetUrgentTOS(&arg->bundle->ncp.ipcp);
-      ipcp_ClearUrgentTcpPorts(&arg->bundle->ncp.ipcp);
-      ipcp_ClearUrgentUdpPorts(&arg->bundle->ncp.ipcp);
+      ncp_SetUrgentTOS(&arg->bundle->ncp);
+      ncp_ClearUrgentTcpPorts(&arg->bundle->ncp);
+      ncp_ClearUrgentUdpPorts(&arg->bundle->ncp);
     } else if (!strcasecmp(arg->argv[arg->argn], "udp")) {
-      ipcp_SetUrgentTOS(&arg->bundle->ncp.ipcp);
+      ncp_SetUrgentTOS(&arg->bundle->ncp);
       if (arg->argn == arg->argc - 1)
-        ipcp_ClearUrgentUdpPorts(&arg->bundle->ncp.ipcp);
+        ncp_ClearUrgentUdpPorts(&arg->bundle->ncp);
       else for (f = arg->argn + 1; f < arg->argc; f++)
         if (*arg->argv[f] == '+')
-          ipcp_AddUrgentUdpPort(&arg->bundle->ncp.ipcp, atoi(arg->argv[f] + 1));
+          ncp_AddUrgentUdpPort(&arg->bundle->ncp, atoi(arg->argv[f] + 1));
         else if (*arg->argv[f] == '-')
-          ipcp_RemoveUrgentUdpPort(&arg->bundle->ncp.ipcp,
-                                   atoi(arg->argv[f] + 1));
+          ncp_RemoveUrgentUdpPort(&arg->bundle->ncp, atoi(arg->argv[f] + 1));
         else {
           if (f == arg->argn)
-            ipcp_ClearUrgentUdpPorts(&arg->bundle->ncp.ipcp);
-          ipcp_AddUrgentUdpPort(&arg->bundle->ncp.ipcp, atoi(arg->argv[f]));
+            ncp_ClearUrgentUdpPorts(&arg->bundle->ncp);
+          ncp_AddUrgentUdpPort(&arg->bundle->ncp, atoi(arg->argv[f]));
         }
     } else if (arg->argn == arg->argc - 1 &&
                !strcasecmp(arg->argv[arg->argn], "none")) {
-      ipcp_ClearUrgentTcpPorts(&arg->bundle->ncp.ipcp);
-      ipcp_ClearUrgentUdpPorts(&arg->bundle->ncp.ipcp);
-      ipcp_ClearUrgentTOS(&arg->bundle->ncp.ipcp);
+      ncp_ClearUrgentTcpPorts(&arg->bundle->ncp);
+      ncp_ClearUrgentUdpPorts(&arg->bundle->ncp);
+      ncp_ClearUrgentTOS(&arg->bundle->ncp);
     } else {
-      ipcp_SetUrgentTOS(&arg->bundle->ncp.ipcp);
+      ncp_SetUrgentTOS(&arg->bundle->ncp);
       first = arg->argn;
       if (!strcasecmp(arg->argv[first], "tcp") && ++first == arg->argc)
-        ipcp_ClearUrgentTcpPorts(&arg->bundle->ncp.ipcp);
+        ncp_ClearUrgentTcpPorts(&arg->bundle->ncp);
 
       for (f = first; f < arg->argc; f++)
         if (*arg->argv[f] == '+')
-          ipcp_AddUrgentTcpPort(&arg->bundle->ncp.ipcp, atoi(arg->argv[f] + 1));
+          ncp_AddUrgentTcpPort(&arg->bundle->ncp, atoi(arg->argv[f] + 1));
         else if (*arg->argv[f] == '-')
-          ipcp_RemoveUrgentTcpPort(&arg->bundle->ncp.ipcp,
-                                   atoi(arg->argv[f] + 1));
+          ncp_RemoveUrgentTcpPort(&arg->bundle->ncp, atoi(arg->argv[f] + 1));
         else {
           if (f == first)
-            ipcp_ClearUrgentTcpPorts(&arg->bundle->ncp.ipcp);
-          ipcp_AddUrgentTcpPort(&arg->bundle->ncp.ipcp, atoi(arg->argv[f]));
+            ncp_ClearUrgentTcpPorts(&arg->bundle->ncp);
+          ncp_AddUrgentTcpPort(&arg->bundle->ncp, atoi(arg->argv[f]));
         }
     }
     break;
   }
 
-  return err ? 1 : 0;
+  return res;
 }
 
 static struct cmdtab const SetCommands[] = {
@@ -2129,7 +2196,7 @@ static struct cmdtab const SetCommands[] = {
   "escape characters", "set escape hex-digit ..."},
   {"filter", NULL, filter_Set, LOCAL_AUTH,
   "packet filters", "set filter alive|dial|in|out rule-no permit|deny "
-  "[src_addr[/width]] [dst_addr[/width]] [tcp|udp|icmp|ospf|igmp "
+  "[src_addr[/width]] [dst_addr[/width]] [proto "
   "[src [lt|eq|gt port]] [dst [lt|eq|gt port]] [estab] [syn] [finrst]]"},
   {"hangup", NULL, SetVariable, LOCAL_AUTH | LOCAL_CX,
   "hangup script", "set hangup chat-script", (const void *) VAR_HANGUP},
@@ -2217,73 +2284,84 @@ SetCommand(struct cmdargs const *arg)
 static int
 AddCommand(struct cmdargs const *arg)
 {
-  struct in_addr dest, gateway, netmask;
-  int gw, addrs;
+  struct ncpaddr gw;
+  struct ncprange dest;
+  struct in_addr host;
+  int dest_default, gw_arg, addrs;
 
   if (arg->argc != arg->argn+3 && arg->argc != arg->argn+2)
     return -1;
 
   addrs = 0;
-  if (arg->argc == arg->argn+2) {
+  dest_default = 0;
+  if (arg->argc == arg->argn + 2) {
     if (!strcasecmp(arg->argv[arg->argn], "default"))
-      dest.s_addr = netmask.s_addr = INADDR_ANY;
+      dest_default = 1;
     else {
-      int width;
-
-      if (!ParseAddr(&arg->bundle->ncp.ipcp, arg->argv[arg->argn],
-	             &dest, &netmask, &width))
+      if (!ncprange_aton(&dest, &arg->bundle->ncp, arg->argv[arg->argn]))
         return -1;
       if (!strncasecmp(arg->argv[arg->argn], "MYADDR", 6))
         addrs = ROUTE_DSTMYADDR;
+      else if (!strncasecmp(arg->argv[arg->argn], "MYADDR6", 7))
+        addrs = ROUTE_DSTMYADDR6;
       else if (!strncasecmp(arg->argv[arg->argn], "HISADDR", 7))
         addrs = ROUTE_DSTHISADDR;
+      else if (!strncasecmp(arg->argv[arg->argn], "HISADDR6", 8))
+        addrs = ROUTE_DSTHISADDR6;
       else if (!strncasecmp(arg->argv[arg->argn], "DNS0", 4))
         addrs = ROUTE_DSTDNS0;
       else if (!strncasecmp(arg->argv[arg->argn], "DNS1", 4))
         addrs = ROUTE_DSTDNS1;
     }
-    gw = 1;
+    gw_arg = 1;
   } else {
     if (strcasecmp(arg->argv[arg->argn], "MYADDR") == 0) {
       addrs = ROUTE_DSTMYADDR;
-      dest = arg->bundle->ncp.ipcp.my_ip;
+      host = arg->bundle->ncp.ipcp.my_ip;
     } else if (strcasecmp(arg->argv[arg->argn], "HISADDR") == 0) {
       addrs = ROUTE_DSTHISADDR;
-      dest = arg->bundle->ncp.ipcp.peer_ip;
+      host = arg->bundle->ncp.ipcp.peer_ip;
     } else if (strcasecmp(arg->argv[arg->argn], "DNS0") == 0) {
       addrs = ROUTE_DSTDNS0;
-      dest = arg->bundle->ncp.ipcp.ns.dns[0];
+      host = arg->bundle->ncp.ipcp.ns.dns[0];
     } else if (strcasecmp(arg->argv[arg->argn], "DNS1") == 0) {
       addrs = ROUTE_DSTDNS1;
-      dest = arg->bundle->ncp.ipcp.ns.dns[1];
+      host = arg->bundle->ncp.ipcp.ns.dns[1];
     } else {
-      dest = GetIpAddr(arg->argv[arg->argn]);
-      if (dest.s_addr == INADDR_NONE) {
+      host = GetIpAddr(arg->argv[arg->argn]);
+      if (host.s_addr == INADDR_NONE) {
         log_Printf(LogWARN, "%s: Invalid destination address\n",
                    arg->argv[arg->argn]);
         return -1;
       }
     }
-    netmask = GetIpAddr(arg->argv[arg->argn+1]);
-    gw = 2;
+    ncprange_setip4(&dest, host, GetIpAddr(arg->argv[arg->argn + 1]));
+    gw_arg = 2;
   }
 
-  if (strcasecmp(arg->argv[arg->argn+gw], "HISADDR") == 0) {
-    gateway = arg->bundle->ncp.ipcp.peer_ip;
+  if (strcasecmp(arg->argv[arg->argn + gw_arg], "HISADDR") == 0) {
+    ncpaddr_setip4(&gw, arg->bundle->ncp.ipcp.peer_ip);
     addrs |= ROUTE_GWHISADDR;
+#ifndef NOINET6
+  } else if (strcasecmp(arg->argv[arg->argn + gw_arg], "HISADDR6") == 0) {
+    ncpaddr_copy(&gw, &arg->bundle->ncp.ipv6cp.hisaddr);
+    addrs |= ROUTE_GWHISADDR6;
+#endif
   } else {
-    gateway = GetIpAddr(arg->argv[arg->argn+gw]);
-    if (gateway.s_addr == INADDR_NONE) {
+    if (!ncpaddr_aton(&gw, &arg->bundle->ncp, arg->argv[arg->argn + gw_arg])) {
       log_Printf(LogWARN, "%s: Invalid gateway address\n",
-                 arg->argv[arg->argn + gw]);
+                 arg->argv[arg->argn + gw_arg]);
       return -1;
     }
   }
 
-  if (rt_Set(arg->bundle, RTM_ADD, dest, gateway, netmask,
-                  arg->cmd->args ? 1 : 0, (addrs & ROUTE_GWHISADDR) ? 1 : 0)
+  if (dest_default)
+    ncprange_setdefault(&dest, ncpaddr_family(&gw));
+
+  if (rt_Set(arg->bundle, RTM_ADD, &dest, &gw, arg->cmd->args ? 1 : 0,
+             ((addrs & ROUTE_GWHISADDR) || (addrs & ROUTE_GWHISADDR6)) ? 1 : 0)
       && addrs != ROUTE_STATIC)
-    route_Add(&arg->bundle->ncp.ipcp.route, addrs, dest, netmask, gateway);
+    route_Add(&arg->bundle->ncp.route, addrs, &dest, &gw);
 
   return 0;
 }
@@ -2291,39 +2369,43 @@ AddCommand(struct cmdargs const *arg)
 static int
 DeleteCommand(struct cmdargs const *arg)
 {
-  struct in_addr dest, none;
+  struct ncprange dest;
   int addrs;
 
   if (arg->argc == arg->argn+1) {
     if(strcasecmp(arg->argv[arg->argn], "all") == 0) {
       route_IfDelete(arg->bundle, 0);
-      route_DeleteAll(&arg->bundle->ncp.ipcp.route);
+      route_DeleteAll(&arg->bundle->ncp.route);
     } else {
       addrs = 0;
       if (strcasecmp(arg->argv[arg->argn], "MYADDR") == 0) {
-        dest = arg->bundle->ncp.ipcp.my_ip;
+        ncprange_setip4host(&dest, arg->bundle->ncp.ipcp.my_ip);
         addrs = ROUTE_DSTMYADDR;
+#ifndef NOINET6
+      } else if (strcasecmp(arg->argv[arg->argn], "MYADDR6") == 0) {
+        ncprange_sethost(&dest, &arg->bundle->ncp.ipv6cp.myaddr);
+        addrs = ROUTE_DSTMYADDR6;
+#endif
       } else if (strcasecmp(arg->argv[arg->argn], "HISADDR") == 0) {
-        dest = arg->bundle->ncp.ipcp.peer_ip;
+        ncprange_setip4host(&dest, arg->bundle->ncp.ipcp.peer_ip);
         addrs = ROUTE_DSTHISADDR;
+#ifndef NOINET6
+      } else if (strcasecmp(arg->argv[arg->argn], "HISADDR6") == 0) {
+        ncprange_sethost(&dest, &arg->bundle->ncp.ipv6cp.hisaddr);
+        addrs = ROUTE_DSTHISADDR6;
+#endif
       } else if (strcasecmp(arg->argv[arg->argn], "DNS0") == 0) {
-        dest = arg->bundle->ncp.ipcp.ns.dns[0];
+        ncprange_setip4host(&dest, arg->bundle->ncp.ipcp.ns.dns[0]);
         addrs = ROUTE_DSTDNS0;
       } else if (strcasecmp(arg->argv[arg->argn], "DNS1") == 0) {
-        dest = arg->bundle->ncp.ipcp.ns.dns[1];
+        ncprange_setip4host(&dest, arg->bundle->ncp.ipcp.ns.dns[1]);
         addrs = ROUTE_DSTDNS1;
       } else {
-        dest = GetIpAddr(arg->argv[arg->argn]);
-        if (dest.s_addr == INADDR_NONE) {
-          log_Printf(LogWARN, "%s: Invalid IP address\n", arg->argv[arg->argn]);
-          return -1;
-        }
+        ncprange_aton(&dest, &arg->bundle->ncp, arg->argv[arg->argn]);
         addrs = ROUTE_STATIC;
       }
-      none.s_addr = INADDR_ANY;
-      rt_Set(arg->bundle, RTM_DELETE, dest, none, none,
-                      arg->cmd->args ? 1 : 0, 0);
-      route_Delete(&arg->bundle->ncp.ipcp.route, addrs, dest);
+      rt_Set(arg->bundle, RTM_DELETE, &dest, NULL, arg->cmd->args ? 1 : 0, 0);
+      route_Delete(&arg->bundle->ncp.route, addrs, &dest);
     }
   } else
     return -1;
@@ -2491,17 +2573,24 @@ static int
 OptSet(struct cmdargs const *arg)
 {
   int bit = (int)(long)arg->cmd->args;
-  const char *cmd;
   unsigned keep;			/* Keep these bits */
   unsigned add;				/* Add these bits */
 
-  if ((cmd = ident_cmd(arg->argv[arg->argn-2], &keep, &add)) == NULL)
+  if (ident_cmd(arg->argv[arg->argn - 2], &keep, &add) == NULL)
     return 1;
+
+#ifndef NOINET6
+  if (add == NEG_ENABLED && bit == OPT_IPV6CP && !probe.ipv6_available) {
+    log_Printf(LogWARN, "IPv6 is not available on this machine\n");
+    return 1;
+  }
+#endif
 
   if (add)
     arg->bundle->cfg.opt |= bit;
   else
     arg->bundle->cfg.opt &= ~bit;
+
   return 0;
 }
 
@@ -2641,6 +2730,12 @@ static struct cmdtab const NegotiateCommands[] = {
   {"iface-alias", NULL, IfaceAliasOptSet, LOCAL_AUTH,
   "retain interface addresses", "disable|enable",
   (const void *)OPT_IFACEALIAS},
+#ifndef NOINET6
+  {"ipcp", NULL, OptSet, LOCAL_AUTH, "IP Network Control Protocol",
+  "disable|enable", (const void *)OPT_IPCP},
+  {"ipv6cp", NULL, OptSet, LOCAL_AUTH, "IPv6 Network Control Protocol",
+  "disable|enable", (const void *)OPT_IPV6CP},
+#endif
   {"keep-session", NULL, OptSet, LOCAL_AUTH, "Retain device session leader",
   "disable|enable", (const void *)OPT_KEEPSESSION},
   {"loopback", NULL, OptSet, LOCAL_AUTH, "Loop packets for local iface",
@@ -2660,7 +2755,11 @@ static struct cmdtab const NegotiateCommands[] = {
   {"utmp", NULL, OptSet, LOCAL_AUTH, "Log connections in utmp",
   "disable|enable", (const void *)OPT_UTMP},
 
-#define OPT_MAX 11	/* accept/deny allowed below and not above */
+#ifndef NOINET6
+#define OPT_MAX 13	/* accept/deny allowed below and not above */
+#else
+#define OPT_MAX 11
+#endif
 
   {"acfcomp", NULL, NegotiateSet, LOCAL_AUTH | LOCAL_CX,
   "Address & Control field compression", "accept|deny|disable|enable",
@@ -2775,6 +2874,10 @@ ClearCommand(struct cmdargs const *arg)
     t = &cx->physical->link.stats.total;
   } else if (strcasecmp(arg->argv[arg->argn], "ipcp") == 0)
     t = &arg->bundle->ncp.ipcp.throughput;
+#ifndef NOINET6
+  else if (strcasecmp(arg->argv[arg->argn], "ipv6cp") == 0)
+    t = &arg->bundle->ncp.ipv6cp.throughput;
+#endif
   else
     return -1;
 
@@ -2826,65 +2929,84 @@ RunListCommand(struct cmdargs const *arg)
 static int
 IfaceAddCommand(struct cmdargs const *arg)
 {
-  int bits, n, how;
-  struct in_addr ifa, mask, brd;
+  struct ncpaddr peer, addr;
+  struct ncprange ifa;
+  struct in_addr mask;
+  int n, how;
 
   if (arg->argc == arg->argn + 1) {
-    if (!ParseAddr(NULL, arg->argv[arg->argn], &ifa, NULL, NULL))
+    if (!ncprange_aton(&ifa, NULL, arg->argv[arg->argn]))
       return -1;
-    mask.s_addr = brd.s_addr = INADDR_BROADCAST;
+    ncpaddr_init(&peer);
   } else {
     if (arg->argc == arg->argn + 2) {
-      if (!ParseAddr(NULL, arg->argv[arg->argn], &ifa, &mask, &bits))
+      if (!ncprange_aton(&ifa, NULL, arg->argv[arg->argn]))
         return -1;
       n = 1;
     } else if (arg->argc == arg->argn + 3) {
-      if (!ParseAddr(NULL, arg->argv[arg->argn], &ifa, NULL, NULL))
+      if (!ncpaddr_aton(&addr, NULL, arg->argv[arg->argn]))
         return -1;
-      if (!ParseAddr(NULL, arg->argv[arg->argn + 1], &mask, NULL, NULL))
+      if (ncpaddr_family(&addr) != AF_INET)
+        return -1;
+      ncprange_sethost(&ifa, &addr);
+      if (!ncpaddr_aton(&addr, NULL, arg->argv[arg->argn + 1]))
+        return -1;
+      if (!ncpaddr_getip4(&addr, &mask))
+        return -1;
+      if (!ncprange_setip4mask(&ifa, mask))
         return -1;
       n = 2;
     } else
       return -1;
 
-    if (!ParseAddr(NULL, arg->argv[arg->argn + n], &brd, NULL, NULL))
+    if (!ncpaddr_aton(&peer, NULL, arg->argv[arg->argn + n]))
       return -1;
+
+    if (ncprange_family(&ifa) != ncpaddr_family(&peer)) {
+      log_Printf(LogWARN, "IfaceAddCommand: src and dst address families"
+                 " differ\n");
+      return -1;
+    }
   }
 
   how = IFACE_ADD_LAST;
   if (arg->cmd->args)
     how |= IFACE_FORCE_ADD;
 
-  return !iface_inAdd(arg->bundle->iface, ifa, mask, brd, how);
+  return !iface_Add(arg->bundle->iface, &arg->bundle->ncp, &ifa, &peer, how);
 }
 
 static int
 IfaceDeleteCommand(struct cmdargs const *arg)
 {
-  struct in_addr ifa;
+  struct ncpaddr ifa;
+  struct in_addr ifa4;
   int ok;
 
   if (arg->argc != arg->argn + 1)
     return -1;
 
-  if (!ParseAddr(NULL, arg->argv[arg->argn], &ifa, NULL, NULL))
+  if (!ncpaddr_aton(&ifa, NULL, arg->argv[arg->argn]))
     return -1;
 
   if (arg->bundle->ncp.ipcp.fsm.state == ST_OPENED &&
-      arg->bundle->ncp.ipcp.my_ip.s_addr == ifa.s_addr) {
+      ncpaddr_getip4(&ifa, &ifa4) &&
+      arg->bundle->ncp.ipcp.my_ip.s_addr == ifa4.s_addr) {
     log_Printf(LogWARN, "%s: Cannot remove active interface address\n",
-               inet_ntoa(ifa));
+               ncpaddr_ntoa(&ifa));
     return 1;
   }
 
-  ok = iface_inDelete(arg->bundle->iface, ifa);
+  ok = iface_Delete(arg->bundle->iface, &arg->bundle->ncp, &ifa);
   if (!ok) {
     if (arg->cmd->args)
       ok = 1;
     else if (arg->prompt)
-      prompt_Printf(arg->prompt, "%s: No such address\n", inet_ntoa(ifa));
+      prompt_Printf(arg->prompt, "%s: No such interface address\n",
+                    ncpaddr_ntoa(&ifa));
     else
-      log_Printf(LogWARN, "%s: No such address\n", inet_ntoa(ifa));
+      log_Printf(LogWARN, "%s: No such interface address\n",
+                 ncpaddr_ntoa(&ifa));
   }
 
   return !ok;
@@ -2893,15 +3015,25 @@ IfaceDeleteCommand(struct cmdargs const *arg)
 static int
 IfaceClearCommand(struct cmdargs const *arg)
 {
-  int how;
+  int family, how;
 
-  if (arg->argc != arg->argn)
+  family = 0;
+  if (arg->argc == arg->argn + 1) {
+    if (strcasecmp(arg->argv[arg->argn], "inet") == 0)
+      family = AF_INET;
+#ifndef NOINET6
+    else if (strcasecmp(arg->argv[arg->argn], "inet6") == 0)
+      family = AF_INET6;
+#endif
+    else
+      return -1;
+  } else if (arg->argc != arg->argn)
     return -1;
 
   how = arg->bundle->ncp.ipcp.fsm.state == ST_OPENED ||
         arg->bundle->phys_type.all & PHYS_AUTO ?
         IFACE_CLEAR_ALIASES : IFACE_CLEAR_ALL;
-  iface_Clear(arg->bundle->iface, how);
+  iface_Clear(arg->bundle->iface, &arg->bundle->ncp, family, how);
 
   return 0;
 }

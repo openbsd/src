@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: arp.c,v 1.9 2001/07/31 15:20:19 brian Exp $
+ * $OpenBSD: arp.c,v 1.10 2001/08/19 23:22:17 brian Exp $
  *
  */
 
@@ -57,13 +57,16 @@
 #include "slcompress.h"
 #include "lqr.h"
 #include "hdlc.h"
+#include "ncpaddr.h"
 #include "ipcp.h"
-#include "filter.h"
+#include "ipv6cp.h"
 #include "descriptor.h"
 #include "lcp.h"
 #include "ccp.h"
 #include "link.h"
 #include "mp.h"
+#include "ncp.h"
+#include "filter.h"
 #ifndef NORADIUS
 #include "radius.h"
 #endif
