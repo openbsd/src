@@ -1,4 +1,4 @@
-/*	$OpenBSD: gentcfskey.c,v 1.3 2000/06/19 23:06:24 aaron Exp $	*/
+/*	$OpenBSD: gentcfskey.c,v 1.4 2000/06/20 07:58:56 fgsch Exp $	*/
 
 /*
  *	Transparent Cryptographic File System (TCFS) for NetBSD 
@@ -12,14 +12,14 @@
  *	Base utility set v0.1
  */
 
-#include <stdio.h>
 #include <sys/time.h>
+#include <err.h>
+#include <fcntl.h>
+#include <md5.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <termios.h>
 #include <unistd.h>
-#include <stdlib.h>
-#include <fcntl.h>
-#include <err.h>
-#include <md5.h>
 
 #include <miscfs/tcfs/tcfs.h>
 #include "tcfsdefines.h"

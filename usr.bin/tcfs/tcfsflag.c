@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfsflag.c,v 1.7 2000/06/20 01:29:14 provos Exp $	*/
+/*	$OpenBSD: tcfsflag.c,v 1.8 2000/06/20 07:58:57 fgsch Exp $	*/
 
 /*
  *	Transparent Cryptographic File System (TCFS) for NetBSD 
@@ -12,16 +12,16 @@
  *	Base utility set v0.1
  */
 
-#include <stdio.h>
+#include <sys/types.h>
+#include <sys/mount.h>
+#include <sys/param.h>
+#include <sys/wait.h>
+#include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <sys/types.h>
-#include <ctype.h>
 #include <pwd.h>
+#include <stdio.h>
 #include <unistd.h>
-#include <sys/param.h>
-#include <sys/mount.h>
-#include <sys/wait.h>
 
 #include <miscfs/tcfs/tcfs.h>
 #include <miscfs/tcfs/tcfs_fileinfo.h>
@@ -95,4 +95,3 @@ flags_main(int argc, char *argv[])
 
 	exit(0);
 }
-	

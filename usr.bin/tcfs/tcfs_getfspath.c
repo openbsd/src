@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfs_getfspath.c,v 1.5 2000/06/20 07:09:45 fgsch Exp $	*/
+/*	$OpenBSD: tcfs_getfspath.c,v 1.6 2000/06/20 07:58:57 fgsch Exp $	*/
 
 /*
  *	Transparent Cryptographic File System (TCFS) for NetBSD 
@@ -12,10 +12,10 @@
  *	Base utility set v0.1
  */
 
-#include <stdio.h>
-#include <strings.h>
-#include <stdlib.h>
 #include <fstab.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <strings.h>
 
 #include <miscfs/tcfs/tcfs.h>
 #include "tcfslib.h"
@@ -30,7 +30,7 @@ tcfs_label_getcipher(char *label)
 	if (tcfs_get_label(label, NULL, &ciphernum))
 		return (ciphernum);
 
-        return (-1);
+	return (-1);
 }
 
 int
@@ -79,7 +79,7 @@ tcfs_get_label(char *label2search, char *path, int *ciphernumber)
 				break;
 
 			if (path) {
-				strcpy(path, mountpoint);
+				strlcpy(path, mountpoint, sizeof(*path));
 				found = 1;
 			}
 			

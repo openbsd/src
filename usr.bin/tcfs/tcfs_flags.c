@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfs_flags.c,v 1.5 2000/06/20 01:29:14 provos Exp $	*/
+/*	$OpenBSD: tcfs_flags.c,v 1.6 2000/06/20 07:58:57 fgsch Exp $	*/
 
 /*
  *	Transparent Cryptographic File System (TCFS) for NetBSD 
@@ -12,17 +12,17 @@
  *	Base utility set v0.1
  */
 
-#include <stdio.h>
+#include <sys/types.h>
+#include <sys/mount.h>
+#include <sys/param.h>
+#include <sys/stat.h> 
+#include <sys/wait.h>
+#include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <sys/types.h>
-#include <ctype.h>
 #include <pwd.h>
+#include <stdio.h>
 #include <unistd.h>
-#include <sys/param.h>
-#include <sys/mount.h>
-#include <sys/wait.h>
-#include <sys/stat.h> 
 
 #include <miscfs/tcfs/tcfs.h>
 #include <miscfs/tcfs/tcfs_fileinfo.h>
@@ -34,9 +34,9 @@ tcfs_getflags(int fd)
 	tcfs_flags r;
 	struct stat s;
 
-	if (fstat(fd, &s) < 0) {
+	if (fstat(fd, &s) < 0)
 		 r.flag = -1;
-	} else
+	else
 		 r.flag = s.st_flags;
 
 	return (r);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfs_dbmaint.c,v 1.10 2000/06/20 07:33:51 fgsch Exp $	*/
+/*	$OpenBSD: tcfs_dbmaint.c,v 1.11 2000/06/20 07:58:57 fgsch Exp $	*/
 
 /*
  *	Transparent Cryptographic File System (TCFS) for NetBSD 
@@ -12,16 +12,16 @@
  *	Base utility set v0.1
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <stdarg.h>
-#include <string.h>
-#include <db.h>
-#include <syslog.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <db.h>
 #include <fcntl.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <syslog.h>
+#include <unistd.h>
 
 #include <miscfs/tcfs/tcfs.h>
 #include "tcfslib.h"

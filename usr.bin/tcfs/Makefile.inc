@@ -1,3 +1,5 @@
+# $OpenBSD: Makefile.inc,v 1.2 2000/06/20 07:58:55 fgsch Exp $
+
 CFLAGS+=	-I${.CURDIR}/..
 
 .include <bsd.obj.mk>
