@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.16 2000/04/19 10:13:22 art Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.17 2000/04/19 10:56:41 art Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -57,7 +57,7 @@ void ktrinitheader __P((struct ktr_header *, struct proc *, int));
 int ktrops __P((struct proc *, struct proc *, int, int, struct vnode *));
 int ktrsetchildren __P((struct proc *, struct proc *, int, int,
 			struct vnode *));
-void ktrwrite __P((struct vnode *, struct ktr_header *));
+int ktrwrite __P((struct vnode *, struct ktr_header *));
 int ktrcanset __P((struct proc *, struct proc *));
 
 void
@@ -188,11 +188,10 @@ ktrgenio(vp, fd, rw, iov, len, error)
 	ktp->ktr_rw = rw;
 
 	kth.ktr_buf = (caddr_t)ktp;
-	kth.ktr_len = buflen;
 
 	cp = (caddr_t)((char *)ktp + sizeof (struct ktr_genio));
-
 	buflen -= sizeof(struct ktr_genio);
+
 	while (resid > 0) {
 		/*
 		 * Don't allow this process to hog the cpu when doing
@@ -200,14 +199,27 @@ ktrgenio(vp, fd, rw, iov, len, error)
 		 */
 		if (p->p_schedflags & PSCHED_SHOULDYIELD)
 			preempt(NULL);
+
 		cnt = min(iov->iov_len, buflen);
+		if (cnt > resid)
+			cnt = resid;
 		if (copyin(iov->iov_base, cp, cnt))
-			goto done;
-		ktrwrite(vp, &kth);
-		if ((iov->iov_len -= cnt) <= 0)
+			break;
+
+		kth.ktr_len = cnt + sizeof(struct ktr_genio);
+
+		if (ktrwrite(vp, &kth) != 0)
+			break;
+
+		iov->iov_len -= cnt;
+		iov->iov_base += cnt;
+
+		if (iov->iov_len == 0)
 			iov++;
+
+		resid -= cnt;
 	}
-done:
+
 	FREE(ktp, M_TEMP);
 	p->p_traceflag &= ~KTRFAC_ACTIVE;
 	
@@ -445,7 +457,7 @@ ktrsetchildren(curp, top, ops, facs, vp)
 	/*NOTREACHED*/
 }
 
-void
+int
 ktrwrite(vp, kth)
 	struct vnode *vp;
 	struct ktr_header *kth;
@@ -456,7 +468,7 @@ ktrwrite(vp, kth)
 	int error;
 
 	if (vp == NULL)
-		return;
+		return 0;
 	auio.uio_iov = &aiov[0];
 	auio.uio_offset = 0;
 	auio.uio_segflg = UIO_SYSSPACE;
@@ -476,7 +488,7 @@ ktrwrite(vp, kth)
 	error = VOP_WRITE(vp, &auio, IO_UNIT|IO_APPEND, p->p_ucred);
 	VOP_UNLOCK(vp, 0, p);
 	if (!error)
-		return;
+		return 0;
 	/*
 	 * If error encountered, give up tracing on this vnode.
 	 */
@@ -489,6 +501,8 @@ ktrwrite(vp, kth)
 			vrele(vp);
 		}
 	}
+
+	return error;
 }
 
 /*
