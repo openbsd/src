@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.4 2004/02/15 00:56:01 mcbride Exp $	*/
+/*	$OpenBSD: parse.y,v 1.5 2004/03/06 21:47:21 henning Exp $	*/
 
 /*
  * Copyright (c) 2004 Ryan McBride <mcbride@openbsd.org>
@@ -582,10 +582,9 @@ top:
 		} while ((c = lgetc(fin)) != EOF && (allowed_in_string(c)));
 		lungetc(c);
 		*p = '\0';
-		token = lookup(buf);
-		yylval.v.string = strdup(buf);
-		if (yylval.v.string == NULL)
-			errx(1, "yylex: strdup");
+		if ((token = lookup(buf)) == STRING)
+			if ((yylval.v.string = strdup(buf)) == NULL)
+				err(1, "yylex: strdup");
 		return (token);
 	}
 	if (c == '\n') {
