@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.13 2000/01/05 16:00:19 espie Exp $	*/
+/*	$OpenBSD: print.c,v 1.14 2000/01/05 16:02:11 espie Exp $	*/
 /*	$NetBSD: print.c,v 1.15 1996/12/11 03:25:39 thorpej Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.5 (Berkeley) 7/28/94";
 #else
-static char rcsid[] = "$OpenBSD: print.c,v 1.13 2000/01/05 16:00:19 espie Exp $";
+static char rcsid[] = "$OpenBSD: print.c,v 1.14 2000/01/05 16:02:11 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -204,7 +204,7 @@ printcol(dp)
 	if (dp->list->fts_level != FTS_ROOTLEVEL && (f_longform || f_size))
 		(void)printf("total %lu\n", howmany(dp->btotal, blocksize));
 	for (row = 0; row < numrows; ++row) {
-		for (base = row, chcnt = col = 0; col < numcols; ++col) {
+		for (base = row, col = 0; col < numcols; ++col) {
 			chcnt = printaname(array[base], dp->s_inode, dp->s_block);
 			if ((base += numrows) >= num)
 				break;
@@ -280,7 +280,7 @@ printacol(dp)
 	if (dp->list->fts_level != FTS_ROOTLEVEL && (f_longform || f_size))
 		(void)printf("total %llu\n",
 		    (long long)(howmany(dp->btotal, blocksize)));
-	chcnt = col = 0;
+	col = 0;
 	for (p = dp->list; p; p = p->fts_link) {
 		if (IS_NOPRINT(p))
 			continue;
