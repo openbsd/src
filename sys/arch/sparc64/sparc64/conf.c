@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.4 2001/08/23 15:18:54 art Exp $	*/
+/*	$OpenBSD: conf.c,v 1.5 2001/09/04 18:53:36 todd Exp $	*/
 /*	$NetBSD: conf.c,v 1.17 2001/03/26 12:33:26 lukem Exp $ */
 
 /*
@@ -116,6 +116,11 @@
 #include "ses.h"
 cdev_decl(ses);
 
+#include "pf.h"
+cdev_decl(pf);
+
+#include <altq/altqconf.h>
+
 struct bdevsw	bdevsw[] =
 {
 	bdev_notdef(),			/* 0 */
@@ -226,8 +231,8 @@ struct cdevsw	cdevsw[] =
 #endif
 	cdev_notdef(),			/* 71 */
 	cdev_notdef(),			/* 72 */
-	cdev_notdef(),			/* 73 */
-	cdev_notdef(),			/* 74 */
+	cdev_pf_init(NPF,pf),		/* 73: packet filter */
+	cdev_altq_init(NALTQ,altq),	/* 74: ALTQ control interface */
 	cdev_notdef(),			/* 75 */
 	cdev_notdef(),			/* 76 */
 	cdev_notdef(),			/* 77 */
