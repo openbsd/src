@@ -1,0 +1,11 @@
+LKM:
+    * Shut down cleanly before rebooting, like Dragos' module did.
+
+    * Accept boot arguments from the userland.
+
+Userland:
+    * Load kernel files from Linux file systems, too.  (That can now
+      be achieved with `cp bsd /dev/zboot'.)
+
+    * Create crt0.S which defines _start(), so that ld doesn't depend
+      on the order of object files.
