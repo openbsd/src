@@ -52,7 +52,8 @@ you are using a OpenBSD system as the boot-server, have a look at the
 diskless(8) manual page for guidelines on how to proceed with this.
 If the server runs another operating system, you'll have to consult
 documentation that came with it (on SunOS systems, add_client(8) and
-the Sun System/Networks administrators guide constitute a good start).
+the Sun System/Networks administrators guide constitute a good start;
+on Solaris systems, share(1M) is a good starting point as well).
 
 You should then setup your workstation using the NIOT command at the BUG
 prompt. The Load Address should be 0x3F0000, and the Execution Address
@@ -72,7 +73,8 @@ you are using a OpenBSD system as the boot-server, have a look at the
 diskless(8) manual page for guidelines on how to proceed with this.
 If the server runs another operating system, you'll have to consult
 documentation that came with it (on SunOS systems, add_client(8) and
-the Sun System/Networks administrators guide constitute a good start).
+the Sun System/Networks administrators guide constitute a good start;
+on Solaris systems, share(1M) is a good starting point as well).
 
 Second, make sure you use a terminal emulator able to read files from the
 local machine and send their contents over the serial link. OpenBSD ships

@@ -28,11 +28,11 @@ dnl the target system's disk.
 
 OpenBSDXferFloppyFromDOS
 
-OpenBSDXferFloppyFromUnix
+OpenBSDXferFloppyFromUNIX
 
 dnl XXX make sure to adapt text, especially examples, once miniroot
 dnl is available as well.
-Creating a bootable hard disk using SunOS or other Un*x-like system:
+Creating a bootable hard disk using SunOS, Solaris or other Un*x-like system:
 
 dnl	If you don't have a floppy drive you can copy the floppy
 dnl 	installation image "floppy{:--:}OSrev.fs" or the mini-root "miniroot{:--:}OSrev.fs"
@@ -56,11 +56,14 @@ dnl 	single user mode), and then booting from that partition.
 	which have a compatible view of SunOS disk labels and partitions.
 
 	Use the dd(1) utility to copy the file to the hard drive.
-	Under SunOS, the command would be:
-
+	The command would likely be, under SunOS:
 		dd if=floppy{:--:}OSrev.fs of=/dev/rsd0b bs=36b
 dnl 				- or -
 dnl 		dd if=miniroot{:--:}OSrev.fs of=/dev/rsd0b bs=36b
+	and under Solaris:
+		dd if=floppy{:--:}OSrev.fs of=/dev/c0t0d0s1 bs=36b
+dnl 				- or -
+dnl 		dd if=miniroot{:--:}OSrev.fs of=/dev/c0t0d0s1 bs=36b
 
 	The blocksize is arbitrary as long as it's a multiple of 512-bytes
 	and within the maximum supported by the driver, i.e. bs=126b may
@@ -83,10 +86,22 @@ dnl 		dd if=miniroot{:--:}OSrev.fs of=/dev/rsd0b bs=36b
 	create a "fictitious label" that will let you access the whole
 	disk.
 
+	The floppy image is used only for booting, and can be placed in
+	a partition that will be overwritten during the install process,
+	since it actually runs off a ram-disk image in the kernel.
+dnl XXX uncomment end of paragraph once miniroot available
+dnl	since it actually runs off a ram-disk image in the kernel.  In
+dnl	contrast the miniroot is a normal unix root filesystem and you
+dnl	must place in a partition that will not be overwritten until you've
+dnl	completed the installation process.
+
 	To copy the floppy image to the hard disk, preserving SunOS,
 	Solaris, NetBSD or OpenBSD labels:
-
+	Under SunOS:
 		dd if=floppy{:--:}OSrev.fs of=/dev/rsdXc bs=1b skip=1 seek=1
+	and Solaris:
+		dd if=floppy{:--:}OSrev.fs of=/dev/rdsk/c0tXd0s2 \
+		    bs=1b skip=1 seek=1
 
 	You need to be sure that your version of dd(1) supports the
 	skip and seek operands, otherwise you can try a technique like:
@@ -116,15 +131,8 @@ Creating a network bootable setup using SunOS or other Un*x-like system:
 
 OpenBSDXferPrelude
 
-The floppy installation allows installing OpenBSD directly from FTP
-mirror sites over the internet, however you must consider the speed and
-reliability of your internet connection for this option.  It may save
-much time and frustration to use ftp get/reget to transfer the
-distribution sets to a local server or disk and perform the installation
-from there, rather than directly from the internet.
 
-
-OpenBSDXferBareTape
+OpenBSDXferBareTape(xbase xfont xserv xshare)
 
 OpenBSDXferNFS
 

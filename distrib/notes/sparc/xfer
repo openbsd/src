@@ -12,11 +12,11 @@ work only with the floppy or the miniroot installation.
 
 If you have the OpenBSD CD-ROM distribution (and a CD-ROM drive), you
 may be able boot from it.  Not all sparc systems support booting from
-CD-ROM and the current boot images is only known to work on sun4c and
+CD-ROM and the current boot image is only known to work on sun4c and
 some sun4m architecture workstations.  If you can boot from the CD-ROM,
 you are home free and can proceed to the installation steps.  If not,
 you will need to do some setup work to prepare a bootable image, either
-a floppy, hard drive, or compatible net boot server.
+a floppy, hard drive, tape, or compatible net boot server.
 
 In addition to the bootable image, you also need to consider how to
 access the binary distribution sets to actually install the system.  If
@@ -34,7 +34,7 @@ OpenBSDXferFloppyFromDOS
 
 OpenBSDXferFloppyFromUNIX
 
-Creating a bootable hard disk using SunOS or other Un*x-like system:
+Creating a bootable hard disk using SunOS, Solaris or other Un*x-like system:
 
 	If you don't have a floppy drive you can copy the floppy
 	installation image "floppy{:--:}OSrev.fs" or the mini-root "miniroot{:--:}OSrev.fs"
@@ -52,11 +52,14 @@ Creating a bootable hard disk using SunOS or other Un*x-like system:
 	which have a compatible view of SunOS disk labels and partitions.
 
 	Use the dd(1) utility to copy the file to the hard drive.
-	Under SunOS, the command would be:
-
+	The command would likely be, under SunOS:
 		dd if=floppy{:--:}OSrev.fs of=/dev/rsd0b bs=36b
 				- or -
 		dd if=miniroot{:--:}OSrev.fs of=/dev/rsd0b bs=36b
+	and under Solaris:
+		dd if=floppy{:--:}OSrev.fs of=/dev/rdsk/c0t0d0s1 bs=36b
+				- or -
+		dd if=miniroot{:--:}OSrev.fs of=/dev/rdsk/c0t0d0s1 bs=36b
 
 	The blocksize is arbitrary as long as it's a multiple of 512-bytes
 	and within the maximum supported by the driver, i.e. bs=126b may
@@ -80,8 +83,10 @@ Creating a bootable hard disk using SunOS or other Un*x-like system:
 	completed the installation process.
 
 	To copy the floppy image to the whole disk, overwriting labels:
-
+	Under SunOS:
 		dd if=floppy{:--:}OSrev.fs of=/dev/rsdXc bs=36b
+	and under Solaris:
+		dd if=floppy{:--:}OSrev.fs of=/dev/rdsk/c0tXd0s2 bs=36b
 
 	Two notes - X should be replaced by the unit number of the target
 	disk, which is most likely *not* the disk/partition that's your
@@ -91,16 +96,19 @@ Creating a bootable hard disk using SunOS or other Un*x-like system:
 	block, and you'll probably want to change that later on.
 
 	If you're starting with a virgin disk and trying to do this under
-	SunOS, use format(8) and newfs(8) to set up the partitions and
-	mark the intended partition as an normal partition type.  If you're
-	using OpenBSD, perhaps on another architecture, OpenBSD will
-	create a "fictitious label" that will let you access the whole
-	disk.
+	SunOS or Solaris, use format(8/1M) and newfs(8/1M) to set up the
+	partitions and mark the intended partition as an normal partition
+	type.  If you're using OpenBSD, perhaps on another architecture,
+	OpenBSD will create a "fictitious label" that will let you access
+	the whole disk.
 
 	To copy the floppy image to the hard disk, preserving SunOS,
 	Solaris, NetBSD or OpenBSD labels:
-
+	Under SunOS:
 		dd if=floppy{:--:}OSrev.fs of=/dev/rsdXc bs=1b skip=1 seek=1
+	and Solaris:
+		dd if=floppy{:--:}OSrev.fs of=/dev/rdsk/c0tXd0s2 \
+		    bs=1b skip=1 seek=1
 
 	You need to be sure that your version of dd(1) supports the
 	skip and seek operands, otherwise you can try a technique like:

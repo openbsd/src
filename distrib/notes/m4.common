@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.25 2001/10/10 23:58:27 miod Exp $
+dnl	$OpenBSD: m4.common,v 1.26 2001/10/14 18:27:57 miod Exp $
 dnl
 dnl simulate an include path with a macro 'includeit'.
 define(`includeit',`sinclude('INCLUDE/`$1)sinclude('INCLUDE/../`$1)')dnl
@@ -87,8 +87,8 @@ define({:-OpenBSDcomp-:},
 		 relating to C, C++, and fortran are supported. This set
 		 includes the system {:-include-:} files (/usr/{:-include-:}), the
 		 linker, the compiler tool chain, and the various system
-		libraries{:--:}ifelse(X$3,Xshared,{:- (except the shared
-		 libraries, which are included as part of the base set).-:},.)
+		 libraries{:--:}ifelse(X$3,Xshared,{:- (except the shared libraries, which are
+		 included as part of the base set).-:},.)
 		 This set also includes the manual pages for all
 		 of the utilities it contains, as well as the system
 		 call and library manual pages.showsize($1,$2)-:})dnl
@@ -181,8 +181,8 @@ dnl Use as: OpenBSDfloppydesc(single, The) or OpenBSDfloppydesc(three, Each, s)
 define({:-OpenBSDfloppydesc-:},
 {:-Bootable installation/upgrade floppy image$3:
 
-	The $1 floppy image$3 can be copied to a floppy using rawrite.exe
-	or `dd', as described later in this document.
+	The $1 floppy image$3 can be copied to a floppy using rawrite.exe,
+	ntrw.exe or `dd', as described later in this document.
 	$2 floppy image is a bootable install floppy which can be used
 	both to install and to upgrade OpenBSD to the current version.
 	It is also useful for maintenance and disaster recovery.-:})dnl
@@ -602,7 +602,7 @@ define({:-OpenBSDXferFloppyFromDOS-:},
 	(i.e  read-only).-:})dnl
 dnl
 define({:-OpenBSDXferFloppyFromUNIX-:},
-{:-Creating a bootable floppy disk using SunOS or other Un*x-like system:
+{:-Creating a bootable floppy disk using SunOS, Solaris or other Un*x-like system:
 
 	First, you will need obtain a local copy of the bootable filesystem
 	image as described above.  If possible use the cksum(1) or md5(1) 
@@ -610,11 +610,14 @@ define({:-OpenBSDXferFloppyFromUNIX-:},
 	the CKSUM or MD5 files on the mirror site.
 
 	Next, use the dd(1) utility to copy the file to the floppy drive.
-	Under SunOS, the command would be:
-
+	The command would likely be, under SunOS:
 		dd if=floppy{:--:}OSrev.fs of=/dev/rfd0c bs=36b
+	and, under Solaris:
+		dd if=floppy{:--:}OSrev.fs of=/dev/rdiskette0 bs=36b
+	but you may need to turn off the volume management daemon, vold(1M),
+	before attempting the copy.
 
-	If you are using something other than SunOS, you may have to adapt
+	If you are using another operating system, you may have to adapt
 	this to conform to local naming conventions for the floppy and
 	options suitable for copying to a "raw" floppy image.  The key
 	issue is that the device name used for the floppy *must* be one
@@ -653,14 +656,14 @@ define({:-OpenBSDXferBareTape-:},
 	"/tmp/maketape". 
         
 	#! /bin/sh
-	tape=/dev/nrst0
-	mt -f ${tape} rewind
+	TAPE=${TAPE:-/dev/nrst0}
+	mt -f ${TAPE} rewind
 	for file in base etc comp game man misc $1
 	do
-		dd if=${file}OSrev.tgz of=${tape} obs=8k conv=sync
+		dd if=${file}OSrev.tgz of=${TAPE} obs=8k conv=sync
 	done    
-	tar cf ${tape} bsd
-	mt -f ${tape} offline
+	tar cf ${TAPE} bsd
+	mt -f ${TAPE} offline
 	# end of script
 
 	And then:
@@ -669,7 +672,11 @@ define({:-OpenBSDXferBareTape-:},
 	sh -x /tmp/maketape
 
 	If you're using a system other than OpenBSD or SunOS, the tape
-	name and other requirements may change.
+	name and other requirements may change.  You can override the
+	default device name (/dev/nrst0) with the TAPE environment
+	variable.  For example, under Solaris, you would probably run:
+
+	TAPE=/dev/rmt/0n sh -x /tmp/maketape
 
 	Note that, when installing, the tape can be write-protected
 	(i.e. read-only).-:})dnl
@@ -693,22 +700,22 @@ define({:-OpenBSDXferBootTape-:},
 	"/tmp/maketape". 
         
 	#! /bin/sh
-	tape=/dev/nrst0
-	mt -f ${tape} rewind
+	TAPE=${TAPE:-/dev/nrst0}
+	mt -f ${TAPE} rewind
 	if test {:-$-:}# -lt 1
 	then
-		dd of=${tape} if=$2
-ifelse(X$3,X,,{:-		dd of=${tape} if=$3
+		dd of=${TAPE} if=$2
+ifelse(X$3,X,,{:-		dd of=${TAPE} if=$3
 -:})dnl
-ifelse(X$4,X,,{:-		dd of=${tape} if=$4
+ifelse(X$4,X,,{:-		dd of=${TAPE} if=$4
 -:})dnl
 	fi
 	for file in base etc comp game man misc $1
 	do
-		dd if=${file}OSrev.tgz of=${tape} obs=8k conv=sync
+		dd if=${file}OSrev.tgz of=${TAPE} obs=8k conv=sync
 	done    
-	tar cf ${tape} bsd
-	mt -f ${tape} offline
+	tar cf ${TAPE} bsd
+	mt -f ${TAPE} offline
 	# end of script
 
 	And then:
@@ -725,7 +732,11 @@ ifelse(X$4,X,,{:-		dd of=${tape} if=$4
         sh -x /tmp/maketape noboot
 
 	If you're using a system other than OpenBSD or SunOS, the tape
-	name and other requirements may change.
+	name and other requirements may change.  You can override the
+	default device name (/dev/nrst0) with the TAPE environment
+	variable.  For example, under Solaris, you would probably run:
+
+	TAPE=/dev/rmt/0n sh -x /tmp/maketape
 
 	Note that, when installing, the tape can be write-protected
 	(i.e. read-only).-:})dnl

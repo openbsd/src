@@ -12,8 +12,9 @@ This is difficult to get set up correctly the first time, but easy to
 use afterwards.  (see ``Installing using a diskless setup'' below).
 
 It is also possible to install OpenBSD "manually" from a running SunOS
-system, using SunOS tools and gnu tar and gunzip (see ``Installing from
-SunOS'' below).
+or Solaris system, using the system tools, as well as gunzip (and gnu tar
+on SunOS); see ``Installing from SunOS'' or ``Installing from Solaris''
+below.
 
 
 Booting from the Installation Media:
@@ -143,7 +144,8 @@ you are using a OpenBSD system as the boot-server, have a look at the
 diskless(8) manual page for guidelines on how to proceed with this.
 If the server runs another operating system, you'll have to consult
 documentation that came with it (on SunOS systems, add_client(8) and
-the Sun System/Networks administrators guide constitute a good start).
+the Sun System/Networks administrators guide constitute a good start;
+on Solaris systems, share(1M) is a good starting point as well).
 
 
 Boot your workstation from the server by entering the appropriate `boot'
@@ -318,18 +320,19 @@ and add "local" to the end of the tty configuration line, and run
 'ttyflags -a' to put your changes into effect.
 
 
+
 Installing from SunOS:
 
 You need a SunOS machine to install OpenBSD.  You also need at
 least the following pieces:
 
-    the *.tgz files you want to install (as a minimum, base{:--:}OSrev.tgz and
-       etc{:--:}OSrev.tgz)
-    gunzip (GNU gzip) SunOS binary
-    gtar (GNU tar) SunOS binary
-    a "/boot" file from a SunOS machine that matches your machine type
-	(e.g. sun or sun4c)
-    a kernel, most likely "/bsd"
+  - the *.tgz files you want to install (as a minimum, base{:--:}OSrev.tgzand
+    etc{:--:}OSrev.tgz)
+  - gunzip (GNU gzip) SunOS binary
+  - gtar (GNU tar) SunOS binary
+  - a "/boot" file from a SunOS machine that matches your machine type
+    (e.g. sun4m or sun4c)
+  - an OpenBSD kernel, most likely "/bsd"
 
 All these pieces, except "/boot" and the GNU utilities are supplied in
 the OpenBSD/MACHINE distribution.
@@ -348,7 +351,7 @@ partition sizes.  Here is an example layout:
     sd0h       400000   536000    /var/tmp
 
 Use SunOS to newfs the partitions which will have filesystems on them.
-(OpenBSD's filesystem format is identical to SunOS).
+(OpenBSD's filesystem format is almost identical to SunOS).
 
     sunos# newfs /dev/rsd0a
     [... lots of output]
@@ -385,7 +388,7 @@ The installboot man page says to do something like this:
 You can now extract the provided "*.tgz files onto your disk.
 
     sunos# ls -FC
-    base{:--:}OSrev.tgz   comp{:--:}OSrev.tgz   man{:--:}OSrev.tgz       xfont{:--:}OSrev.tgz
+    base{:--:}OSrev.tgz      comp{:--:}OSrev.tgz   man{:--:}OSrev.tgz       xfont{:--:}OSrev.tgz
     bsd             etc{:--:}OSrev.tgz    misc{:--:}OSrev.tgz      xserv{:--:}OSrev.tgz
     bsd.scsi3       game{:--:}OSrev.tgz   xbase{:--:}OSrev.tgz
     sunos{:-#-:} gunzip < base{:--:}OSrev.tgz | (cd /mnt; gtar xvpf -)
@@ -401,6 +404,96 @@ obtain them from a GNU archive and install before proceeding.  The
 OpenBSD tar files are in the "new format" that includes directory
 information, and the standard SunOS tar will not extract from them
 successfully.
+
+After the files have been extracted, setup /mnt/etc/fstab to match
+your actual disk layout.  (Minus the "/mnt" component of each path, of
+course :-)
+
+Now proceed to reboot the machine and the customize your installation.
+
+
+Installing from Solaris:
+
+You need a machine running under Solaris to install OpenBSD.  You will
+also need at least the following pieces:
+
+- the *.tgz files you want to install (as a minimum, base{:--:}OSrev.tgz and
+  etc{:--:}OSrev.tgz)
+- gunzip (GNU gzip) Solaris binary
+- a boot block file from a Solaris machine that matches your machine type,
+  for ufs filesystem, such as /usr/platform/`uname -i`/lib/fs/ufs/bootblk
+- an OpenBSD kernel, most likely "/bsd"
+
+All these pieces, except the boot block and the GNU utilities are supplied
+in the OpenBSD/MACHINE distribution.
+
+You need to format and partition the disk using Solaris (since
+OpenBSD/MACHINE uses Sun compatible disk labels.)  Give yourself adequate
+partition sizes.  Here is an example layout:
+
+    solaris# prtvtoc -s /dev/rdsk/c0t1d0s2
+    *                          First     Sector    Last
+    * Partition  Tag  Flags    Sector     Count    Sector  Mount Directory
+           0      2    00          0     80000     79999   /
+           1      3    01      80000    256000    335999
+           2      5    00          0   4165271   4165270
+           3      7    00     336000    100000    435999   /tmp
+           4      7    00     436000    100000    535999   /var
+           5      7    00     536000    400000    935999   /var/tmp
+           6      4    00     936000   3229271   4165270   /usr
+
+Use Solaris to newfs the partitions which will have filesystems on them.
+(OpenBSD's filesystem format is almost identical to Solaris).
+
+    solaris# newfs /dev/rdsk/c0t1d0s0
+    [... lots of output]
+ 
+Repeat for any other partition (in this example, /dev/rdsk/c0t1d0s3,
+/dev/rdsk/c0t1d0s4, /dev/rdsk/c0t1d0s5 and /dev/rdsk/c0t1d0s6).
+
+dnl XXX I had no time to check the -O restriction is still necessary.
+NOTE: If you are able to, there is a performance benefit from
+newfs'ing using OpenBSD.  If you newfs using the OpenBSD newfs command,
+be sure to use the -O flag for your / partition, so that newfs will
+use the 4.3BSD filesystem format, rather than the new 4.4BSD filesystem
+format.  If you forget, you will not be able to boot -- the Solaris boot
+blocks do not understand the extended 4.4BSD filesystem format.
+
+Mount those partitions in a tree formation, under /mnt; ie:
+
+    solaris# df -k
+    Filesystem            kbytes    used   avail capacity  Mounted on
+    [...]
+    /dev/dsk/c0t1d0s0      38427       0   38427     0%    /mnt
+    /dev/dsk/c0t1d0s3      48249       0   48249     0%    /mnt/tmp
+    /dev/dsk/c0t1d0s4      48249       0   48249     0%    /mnt/var
+    /dev/dsk/c0t1d0s5     193536       0  193536     0%    /mnt/var/tmp
+    /dev/dsk/c0t1d0s6    1564024       0 1564024     0%    /mnt/usr
+
+Place the boot block in /mnt (your new root partition), and use the Solaris
+command "installboot" to make it work.
+The installboot man page says to do something like this:
+
+    solaris# cp /usr/platform/`uname -i`/lib/fs/ufs/bootblk /mnt/bootblk
+    solaris# sync; sync
+    solaris# /usr/sbin/installboot /mnt/bootblk /dev/rdsk/c0t1d0s0
+
+You can now extract the provided "*.tgz files onto your disk.
+
+    solaris# ls -FC
+    base{:--:}OSrev.tgz      comp{:--:}OSrev.tgz   man{:--:}OSrev.tgz       xfont{:--:}OSrev.tgz
+    bsd             etc{:--:}OSrev.tgz    misc{:--:}OSrev.tgz      xserv{:--:}OSrev.tgz
+    bsd.scsi3       game{:--:}OSrev.tgz   xbase{:--:}OSrev.tgz
+    solaris{:-#-:} gunzip < base{:--:}OSrev.tgz | (cd /mnt; tar xvpf -)
+    [...] for each set
+
+And finally copy an OpenBSD kernel (either bsd or bsd.scsi3) onto your disk.
+
+    solaris# cp bsd.scsi3 /mnt/bsd
+
+The GNU gunzip program is not distributed as part of Solaris, but may be
+present in your /usr/local/bin.  If not, you will need to obtain it from a
+GNU archive and install before proceeding.
 
 After the files have been extracted, setup /mnt/etc/fstab to match
 your actual disk layout.  (Minus the "/mnt" component of each path, of
