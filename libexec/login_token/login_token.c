@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_token.c,v 1.6 2002/06/02 01:27:16 deraadt Exp $	*/
+/*	$OpenBSD: login_token.c,v 1.7 2002/09/06 18:19:14 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Berkeley Software Design, Inc. All rights reserved.
@@ -53,9 +53,7 @@
 #include "token.h"
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	FILE *back = NULL;
 	char *class = 0;
