@@ -1,4 +1,4 @@
-/*	$OpenBSD: openfirm.c,v 1.4 2001/09/05 22:32:39 deraadt Exp $	*/
+/*	$OpenBSD: openfirm.c,v 1.5 2001/12/05 01:59:55 jason Exp $	*/
 /*	$NetBSD: openfirm.c,v 1.13 2001/06/21 00:08:02 eeh Exp $	*/
 
 /*
@@ -726,26 +726,41 @@ OF_set_symbol_lookup(s2v, v2s)
 }
 
 int
-OF_interpret(char *s, int nreturns, ...)
+#ifdef	__STDC__
+OF_interpret(char *cmd, int nreturns, ...)
+#else
+OF_interpret(cmd, nreturns, va_alist)
+	char *cmd;
+	int nreturns;
+	va_dcl
+#endif
 {
+	va_list ap;
 	struct {
 		cell_t name;
 		cell_t nargs;
 		cell_t nreturns;
-		cell_t verbs;
-		cell_t status;
+		cell_t slot[16];
 	} args;
+	cell_t status;
+	int i = 0;
 
-	if (nreturns != 1)
-		panic("XXX - OF_interpret: can't handle multiple returns");
-	
 	args.name = ADR2CELL(&"interpret");
 	args.nargs = 1;
-	args.nreturns = 1;
-	args.verbs = ADR2CELL(s);
-	openfirmware(&args);
-
-	return args.status;
+	args.nreturns = ++nreturns;
+	args.slot[i++] = ADR2CELL(cmd);
+	va_start(ap, nreturns);
+	while (i < 1)
+		args.slot[i++] = va_arg(ap, cell_t);
+	if (openfirmware(&args) == -1) {
+		va_end(ap);
+		return (-1);
+	}
+	status = args.slot[i++];
+	while (i < 1 + nreturns)
+		*va_arg(ap, cell_t *) = args.slot[i++];
+	va_end(ap);
+	return (status);
 }
 
 int
