@@ -1,6 +1,5 @@
-# $OpenBSD: Makefile,v 1.1 2001/11/09 00:13:32 marc Exp $
+# $OpenBSD: Makefile,v 1.2 2002/01/03 00:43:48 art Exp $
 
 PROG=	system
-SRCS=	system.c
 
-.include <bsd.prog.mk>
+.include <bsd.regress.mk>

@@ -1,6 +1,5 @@
-# $OpenBSD: Makefile,v 1.1.1.1 2001/08/15 14:37:16 fgsch Exp $
+# $OpenBSD: Makefile,v 1.2 2002/01/03 00:43:48 art Exp $
 
 PROG=	stdio
-SRCS=	stdio.c
 
-.include <bsd.prog.mk>
+.include <bsd.regress.mk>

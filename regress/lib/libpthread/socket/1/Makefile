@@ -1,7 +1,6 @@
-# $OpenBSD: Makefile,v 1.1.1.1 2001/08/15 14:37:10 fgsch Exp $
+# $OpenBSD: Makefile,v 1.2 2002/01/03 00:43:48 art Exp $
 
 PROG=	socket1
-SRCS=	socket1.c
 CFLAGS+= -I${.CURDIR}/../../include
 
-.include <bsd.prog.mk>
+.include <bsd.regress.mk>

@@ -1,8 +1,7 @@
-# $OpenBSD: Makefile,v 1.2 2001/08/30 08:21:42 fgsch Exp $
+# $OpenBSD: Makefile,v 1.3 2002/01/03 00:43:47 art Exp $
 
 PROG=	preemption_float
-SRCS=	preemption_float.c
 DPADD=	${LIBM}
 LDADD=	-lm
 
-.include <bsd.prog.mk>
+.include <bsd.regress.mk>
