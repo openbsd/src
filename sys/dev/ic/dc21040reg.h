@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc21040reg.h,v 1.7 1998/03/25 12:18:42 pefo Exp $	*/
+/*	$OpenBSD: dc21040reg.h,v 1.8 1998/07/30 14:09:57 pefo Exp $	*/
 /*	$NetBSD: dc21040reg.h,v 1.11 1997/06/08 18:44:02 thorpej Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
 #if !defined(_DC21040_H)
 #define _DC21040_H
 
-/* XXX The following only works with 2114x chips which have
+/* XXX The following only works with 21x4x chips which have
  * the descriptor swap bit. 21040 chips need to have the
  * descriptor in LE order regardles.............
  */
