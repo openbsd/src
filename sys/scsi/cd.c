@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.71 2003/05/18 16:06:35 mickey Exp $	*/
+/*	$OpenBSD: cd.c,v 1.72 2003/07/30 16:57:54 tedu Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -347,8 +347,9 @@ cdopen(dev, flag, fmt, p)
 		 * If any partition is open, but the disk has been invalidated,
 		 * disallow further opens.
 		 */
-		if ((sc_link->flags & SDEV_MEDIA_LOADED) == 0 &&
-		    (part != RAW_PART || fmt != S_IFCHR)) {
+		if ((sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
+			if (part == RAW_PART && fmt == S_IFCHR)
+				goto out;
 			error = EIO;
 			goto bad3;
 		}
@@ -361,10 +362,10 @@ cdopen(dev, flag, fmt, p)
 		error = scsi_test_unit_ready(sc_link, TEST_READY_RETRIES_CD,
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE);
 		if (error) {
-			if (part != RAW_PART || fmt != S_IFCHR)
-				goto bad3;
-			else
+			if (part == RAW_PART && fmt == S_IFCHR)
 				goto out;
+			else
+				goto bad3;
 		}
 			
 		/* Start the pack spinning if necessary. */
@@ -373,10 +374,10 @@ cdopen(dev, flag, fmt, p)
 		    SCSI_IGNORE_MEDIA_CHANGE | SCSI_SILENT);
 
 		if (error) {
-			if (part != RAW_PART || fmt != S_IFCHR)
-				goto bad3;
-			else
+			if (part == RAW_PART && fmt == S_IFCHR)
 				goto out;
+			else
+				goto bad3;
 		}
 
 		sc_link->flags |= SDEV_OPEN;
