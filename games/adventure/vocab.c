@@ -1,4 +1,4 @@
-/*	$OpenBSD: vocab.c,v 1.5 1998/08/31 02:29:46 pjanzen Exp $	*/
+/*	$OpenBSD: vocab.c,v 1.6 1998/09/12 01:54:42 pjanzen Exp $	*/
 /*	$NetBSD: vocab.c,v 1.2 1995/03/21 12:05:13 cgd Exp $	*/
 
 /*-
@@ -43,12 +43,13 @@
 #if 0
 static char sccsid[] = "@(#)vocab.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: vocab.c,v 1.5 1998/08/31 02:29:46 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: vocab.c,v 1.6 1998/09/12 01:54:42 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
 /*	Re-coding of advent in C: data structure routines		*/
 
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "hdr.h"
@@ -165,7 +166,8 @@ vocab(word, type, value)	/* look up or store a word	*/
 			if (h->val)	/* already got an entry?	*/
 				goto exitloop2;
 			h->val = value;
-			h->atab = malloc(length(word));
+			if ((h->atab = malloc(length(word))) == NULL)
+				errx(1, "Out of memory!");
 			for (s = word, t = h->atab; *s;)
 				*t++ = *s++ ^ '=';
 			*t = 0 ^ '=';

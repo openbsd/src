@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.5 1998/08/31 02:29:41 pjanzen Exp $	*/
+/*	$OpenBSD: io.c,v 1.6 1998/09/12 01:54:42 pjanzen Exp $	*/
 /*	$NetBSD: io.c,v 1.3 1995/04/24 12:21:37 cgd Exp $	*/
 
 /*-
@@ -43,12 +43,13 @@
 #if 0
 static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: io.c,v 1.5 1998/08/31 02:29:41 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: io.c,v 1.6 1998/09/12 01:54:42 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
 /*	Re-coding of advent in C: file i/o and user i/o			*/
 
+#include <err.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -392,6 +393,8 @@ rtrav()				/* read travel table		*/
 			return;
 		if (locc != oldloc) {	/* getting a new entry		*/
 			t = travel[locc] = (struct travlist *) malloc(sizeof (struct travlist));
+			if (t == NULL)
+				errx(1, "Out of memory!");
 		/*	printf("New travel list for %d\n", locc);	*/
 			entries = 0;
 			oldloc = locc;
@@ -411,8 +414,11 @@ rtrav()				/* read travel table		*/
 			m = atoi(buf);
 		}
 		while (breakch != LF) {	/* only do one line at a time	*/
-			if (entries++)
+			if (entries++) {
 				t = t->next = (struct travlist *) malloc(sizeof (struct travlist));
+				if (t == NULL)
+					errx(1, "Out of memory!");
+			}
 			t->tverb = rnum();/* get verb from the file	*/
 			t->tloc = n;	/* table entry mod 1000		*/
 			t->conditions = m;/* table entry / 1000		*/
@@ -587,7 +593,7 @@ pspeak(m, skip) /* read, decrypt an print a ptext message	      */
 
 	msg = &ptext[m];
 	if ((tbuf = (char *) malloc(msg->txtlen + 1)) == 0)
-		bug(108);
+		errx(1, "Out of memory!");
 	memcpy(tbuf, msg->seekadr, msg->txtlen + 1);	/* Room to null */
 	s = tbuf;
 
