@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_table.c,v 1.4 2002/12/30 15:39:18 cedric Exp $ */
+/*      $OpenBSD: pf_table.c,v 1.5 2003/01/01 13:23:17 cedric Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -903,38 +903,42 @@ int
 pfr_add_tables(struct pfr_table *tbl, int size, int *nadd, int flags)
 {
 	struct pfr_ktableworkq	 workq;
-	struct pfr_ktable	*p, key;
-	int			 i, s, xadd = 0;
+	struct pfr_ktable	*p, *q, key;
+	int			 i, rv, s, xadd = 0;
 	long			 tzero = time.tv_sec;
 
 	ACCEPT_FLAGS(PFR_FLAG_ATOMIC+PFR_FLAG_DUMMY);
 	SLIST_INIT(&workq);
 	for(i = 0; i < size; i++) {
-		if (copyin(tbl+i, &key.pfrkt_t, sizeof(key.pfrkt_t))) {
-			pfr_destroy_ktables(&workq);
-			return (EFAULT);
-		}
+		if (copyin(tbl+i, &key.pfrkt_t, sizeof(key.pfrkt_t)))
+			senderr(EFAULT);
 		if (key.pfrkt_name[PF_TABLE_NAME_SIZE-1])
-			return (EINVAL);
+			senderr(EINVAL);
 		p = RB_FIND(pfr_ktablehead, &pfr_ktables, &key);
 		if (p == NULL) {
-			if (!(flags & PFR_FLAG_DUMMY)) {
-				p = pfr_create_ktable(&key.pfrkt_t, tzero);
-				if (p == NULL) {
-					pfr_destroy_ktables(&workq);
-					return (ENOMEM);
+			p = pfr_create_ktable(&key.pfrkt_t, tzero);
+			if (p == NULL)
+				senderr(ENOMEM);
+			SLIST_FOREACH(q, &workq, pfrkt_workq) {
+				if (!strcmp(p->pfrkt_name, q->pfrkt_name))
+					goto _skip;
+				if (!memcmp(&p->pfrkt_hash, &q->pfrkt_hash,
+					sizeof(p->pfrkt_hash)))
+				{
+					printf("pfr_add_tables: "
+						"sha collision\n");
+					senderr(EEXIST);
 				}
-				SLIST_INSERT_HEAD(&workq, p, pfrkt_workq);
-				/* XXX move the following out of the if */
-				if (pfr_lookup_hash(&p->pfrkt_hash)) {
-					printf(
-					    "pfr_add_tables: sha collision\n");
-					pfr_destroy_ktables(&workq);
-					return (EEXIST);
-				}
+			}
+			SLIST_INSERT_HEAD(&workq, p, pfrkt_workq);
+			if (pfr_lookup_hash(&p->pfrkt_hash)) {
+				printf(
+				    "pfr_add_tables: sha collision\n");
+				senderr(EEXIST);
 			}
 			xadd++;
 		}
+_skip:
 	}
 	if (!(flags & PFR_FLAG_DUMMY)) {
 		if (flags & PFR_FLAG_ATOMIC)
@@ -942,17 +946,21 @@ pfr_add_tables(struct pfr_table *tbl, int size, int *nadd, int flags)
 		pfr_insert_ktables(&workq);
 		if (flags & PFR_FLAG_ATOMIC)
 			splx(s);
-	}
+	} else
+		 pfr_destroy_ktables(&workq);
 	if (nadd != NULL)
 		*nadd = xadd;
 	return (0);
+_bad:
+	pfr_destroy_ktables(&workq);
+	return (rv);
 }
 
 int
 pfr_del_tables(struct pfr_table *tbl, int size, int *ndel, int flags)
 {
 	struct pfr_ktableworkq	 workq;
-	struct pfr_ktable	*p, key;
+	struct pfr_ktable	*p, *q, key;
 	int			 i, s, xdel = 0;
 
 	ACCEPT_FLAGS(PFR_FLAG_ATOMIC+PFR_FLAG_DUMMY);
@@ -962,9 +970,13 @@ pfr_del_tables(struct pfr_table *tbl, int size, int *ndel, int flags)
 			return (EFAULT);
 		p = RB_FIND(pfr_ktablehead, &pfr_ktables, &key);
 		if (p != NULL) {
+			SLIST_FOREACH(q, &workq, pfrkt_workq)
+				if (!strcmp(p->pfrkt_name, q->pfrkt_name))
+					goto _skip;
 			SLIST_INSERT_HEAD(&workq, p, pfrkt_workq);
 			xdel++;
 		}
+_skip:
 	}
 
 	if (!(flags & PFR_FLAG_DUMMY)) {
