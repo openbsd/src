@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kern.9,v 1.1 2002/08/24 03:31:42 wcobb Exp $
+.\"	$OpenBSD: kern.9,v 1.2 2002/11/08 08:08:47 mpech Exp $
 .\"
 .\" Copyright (c) 2002 CubeSoft Communications, Inc. <http://www.csoft.org>
 .\"
@@ -35,7 +35,6 @@
 The
 .Nm
 library implements a set of useful functions and macros inside the kernel.
-.Pp
 .Sh MATH
 .nr nS 1
 .Ft int
@@ -196,7 +195,6 @@ Those functions have the same semantics as their libc counterparts,
 and
 .Xr strncasecmp 3 .
 .Sh RANDOM NUMBER GENERATION
-.Pp
 .nr nS 1
 .Ft u_long
 .Fn random "void"
@@ -233,7 +231,6 @@ The result is writte into
 which is assumed to be
 .Fa size
 bytes long.
-.Pp
 .Sh SEE ALSO
 .Xr arc4random 9 ,
 .Xr string 3 ,

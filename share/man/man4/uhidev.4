@@ -1,4 +1,4 @@
-.\" $OpenBSD: uhidev.4,v 1.2 2002/09/26 22:09:53 miod Exp $
+.\" $OpenBSD: uhidev.4,v 1.3 2002/11/08 08:08:47 mpech Exp $
 .\" $NetBSD: uhidev.4,v 1.2 2001/12/29 03:06:41 augustss Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -49,10 +49,11 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver handles all Human Interface Devices.  Each HID device
-can have several components, e.g., a keyboard and a mouse.
+driver handles all Human Interface Devices.
+Each HID device can have several components, e.g., a keyboard and a mouse.
 These components use different report identifiers (a byte) to
-distinguish which one data is coming from.  The
+distinguish which one data is coming from.
+The
 .Nm
 driver has other drivers attached that handle particular
 kinds of devices and

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.109 2002/09/26 07:55:40 miod Exp $
+.\"	$OpenBSD: options.4,v 1.110 2002/11/08 08:08:47 mpech Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -1022,8 +1022,9 @@ Size of kernel malloc area in PAGE_SIZE-sized logical pages.
 This area is covered by the kernel submap
 .Em kmem_map .
 The kernel attempts to auto-size this map based on the amount of
-physical memory in the system.  Platform-specific code may place
-bounds on this computed size, which may be viewed with the
+physical memory in the system.
+Platform-specific code may place bounds on this computed size,
+which may be viewed with the
 .Xr sysctl 8
 variable
 .Em vm.nkmempages .

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sbus.4,v 1.10 2002/09/26 07:55:40 miod Exp $
+.\"	$OpenBSD: sbus.4,v 1.11 2002/11/08 08:08:47 mpech Exp $
 .\"	$NetBSD: sbus.4,v 1.5 2002/01/21 17:54:10 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,14 +47,15 @@
 .Cd "sbus* at xbox?"
 .Pp
 These
-.Nm
+.Nm sbus
 attachments are specific to the sparc and sparc64 ports.
 .Sh DESCRIPTION
 .Nm
 is a I/O interconnect bus mostly found in
 .Tn SPARC
-workstations and small to medium server class systems. It supports both
-on-board peripherals and extension boards. The
+workstations and small to medium server class systems.
+It supports both on-board peripherals and extension boards.
+The
 .Nm
 specifications define the bus protocol as well as the electrical and
 mechanical properties of the extension slots.
@@ -160,5 +161,5 @@ The machine-independent
 .Nm sbus
 subsystem appeared in
 .Nx 1.3 .
-OpenBSD support first appeared in
+.Ox support first appeared in
 .Ox 2.0 .

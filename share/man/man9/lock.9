@@ -70,34 +70,39 @@ The
 .Nm
 functions provide synchronisation in the kernel by preventing multiple
 processes from simultaneously executing critical sections of code
-accessing shared data.  A number of different locks are available:
+accessing shared data.
+A number of different locks are available:
 .Pp
 .Bl -tag -width compact
 .It struct simplelock
-Provides a simple spinning mutex.  A processor will busy-wait while
-trying to acquire a simplelock.  The simplelock operations are
+Provides a simple spinning mutex.
+A processor will busy-wait while trying to acquire a simplelock.
+The simplelock operations are
 implemented with machine-dependent locking primitives.
 .Pp
 Simplelocks are usually used only by the high-level lock manager and
-to protect short, critical sections of code.  Simplelocks are the only
-locks that can be be used inside an interrupt handler.  For a
-simplelock to be used in an interrupt handler, care must be taken to
+to protect short, critical sections of code.
+Simplelocks are the only
+locks that can be be used inside an interrupt handler.
+For a simplelock to be used in an interrupt handler, care must be taken to
 disable the interrupt, acquire the lock, do any processing, release
-the simplelock and re-enable the interrupt.  This procedure is
-necessary to avoid deadlock between the interrupt handler and other
-processes executing on the same processor.
+the simplelock and re-enable the interrupt.
+This procedure is necessary to avoid deadlock between the interrupt handler
+and other processes executing on the same processor.
 .It struct lock
 Provides a high-level lock supporting sleeping/spinning until the lock
-can be acquired.  The lock manager supplies both exclusive-access and
+can be acquired.
+The lock manager supplies both exclusive-access and
 shared-access locks, with recursive exclusive-access locks within a
-single process.  It also allows upgrading a shared-access lock to an
+single process.
+It also allows upgrading a shared-access lock to an
 exclusive-access lock, as well as downgrading an exclusive-access lock
 to a shared-access lock.
 .El
 .Pp
 If the kernel option LOCKDEBUG is enabled, additional facilities
-are provided to record additional lock information.  These facilities are
-provided to assist in determining deadlock occurrences.
+are provided to record additional lock information.
+These facilities are provided to assist in determining deadlock occurrences.
 .Sh FUNCTIONS
 The functions which operate on simplelocks are:
 .Pp
@@ -105,33 +110,39 @@ The functions which operate on simplelocks are:
 .It Fn simple_lock_init "slock"
 The simplelock
 .Fa slock
-is initialised to the unlocked state.  A statically allocated simplelock
-also can be initialised with the macro SIMPLELOCK_INITIALIZER.  The
-effect is the same as the dynamic initialisation by a call to
-simple_lock_init.  For example,
+is initialised to the unlocked state.
+A statically allocated simplelock also can be initialised with the macro
+SIMPLELOCK_INITIALIZER.
+The effect is the same as the dynamic initialisation by a call to
+simple_lock_init.
+For example,
 .Pp
 struct simplelock slock = SIMPLELOCK_INITIALIZER;
 .It Fn simple_lock "slock"
 The simplelock
 .Fa slock
-is locked.  If the simplelock is held then execution will
-spin until the simplelock is acquired.  Care must be taken that the
-calling process does not already hold the simplelock.  In this case, the
-simplelock can never be acquired.  If kernel option LOCKDEBUG is enabled,
-a "locking against myself" panic will occur.
+is locked.
+If the simplelock is held then execution will
+spin until the simplelock is acquired.
+Care must be taken that the calling process does not already hold
+the simplelock.
+In this case, the simplelock can never be acquired.
+If kernel option LOCKDEBUG is enabled, a "locking against myself" panic
+will occur.
 .It Fn simple_lock_try "slock"
 Try to acquire the simplelock
 .Fa slock
-without spinning.  If the simplelock is held by another process
-then the return value is 0.  If the simplelock was acquired
-successfully then the return value is 1.
+without spinning.
+If the simplelock is held by another process then the return value is 0.
+If the simplelock was acquired successfully then the return value is 1.
 .It Fn simple_unlock "slock"
 The simplelock
 .Fa slock
-is unlocked.  The simplelock must be locked and the calling process must
-be the one that last acquired the simplelock.  If the calling
-process does not hold the simplelock, the simplelock will be released
-but the kernel behaviour is undefined.
+is unlocked.
+The simplelock must be locked and the calling process must
+be the one that last acquired the simplelock.
+If the calling process does not hold the simplelock, the simplelock
+will be released but the kernel behaviour is undefined.
 .El
 .Pp
 The functions which operate on locks are:
@@ -140,8 +151,8 @@ The functions which operate on locks are:
 .It Fn lockinit "lock" "prio" "wmesg" "timo" "flags"
 The lock
 .Fa lock
-is initialised according to the parameters provided.  Arguments are as
-follows:
+is initialised according to the parameters provided.
+Arguments are as follows:
 .Bl -tag -width compact
 .It Fa lock
 The lock.
@@ -151,11 +162,13 @@ The process priority when it is woken up after sleeping on the lock.
 A sleep message used when a process goes to sleep waiting for the lock, so
 that the exact reason it is sleeping can easily be identified.
 .It Fa timo
-The maximum sleep time.  Used by
+The maximum sleep time.
+Used by
 .Xr tsleep 9 .
 .It Fa flags
 Flags to specify the lock behaviour permanently over the lifetime of
-the lock.  Valid lock flags are:
+the lock.
+Valid lock flags are:
 .Bl -tag -width compact
 .It LK_NOWAIT
 Processes should not sleep when attempting to acquire the lock.
@@ -172,23 +185,25 @@ Arguments are as follows:
 .It Fa lock
 The lock.
 .It Fa slock
-Simplelock interlock.  If the flag LK_INTERLOCK is set in
+Simplelock interlock.
+If the flag LK_INTERLOCK is set in
 .Fa flags ,
 .Fa slock
-is a simplelock held by the caller.  When the lock
+is a simplelock held by the caller.
+When the lock
 .Fa lock
-is acquired, the simplelock is released.  If the flag LK_INTERLOCK is
-not set,
+is acquired, the simplelock is released.
+If the flag LK_INTERLOCK is not set,
 .Fa slock
 is ignored.
 .It Fa flags
-Flags to specify the lock request type.  In addition to the flags
-specified above, the following flags are valid:
+Flags to specify the lock request type.
+In addition to the flags specified above, the following flags are valid:
 .Bl -tag -width compact
 .It LK_SHARED
-Get one of many possible shared-access locks.  If a process holding an
-exclusive-access lock requests a shared-access lock, the
-exclusive-access lock is downgraded to a shared-access lock.
+Get one of many possible shared-access locks.
+If a process holding an exclusive-access lock requests a shared-access lock,
+the exclusive-access lock is downgraded to a shared-access lock.
 .It LK_EXCLUSIVE
 Stop further shared-access locks, when they are cleared, grant a
 pending upgrade if it exists, then grant an exclusive-access lock.
@@ -199,19 +214,23 @@ the lock request, or if the LK_CANRECURSE flag was set when the lock
 was initialised.
 .It LK_UPGRADE
 The process must hold a shared-access lock that it wants to have
-upgraded to an exclusive-access lock.  Other processes may get exclusive
+upgraded to an exclusive-access lock.
+Other processes may get exclusive
 access to the protected resource between the time that the upgrade is
 requested and the time that it is granted.
 .It LK_EXCLUPGRADE
 The process must hold a shared-access lock that it wants to have
-upgraded to an exclusive-access lock.  If the request succeeds, no
+upgraded to an exclusive-access lock.
+If the request succeeds, no
 other processes will have acquired exclusive access to the protected
 resource between the time that the upgrade is requested and the time
-that it is granted.  However, if another process has already requested
+that it is granted.
+However, if another process has already requested
 an upgrade, the request will fail.
 .It LK_DOWNGRADE
 The process must hold an exclusive-access lock that it wants to have
-downgraded to a shared-access lock.  If the process holds multiple
+downgraded to a shared-access lock.
+If the process holds multiple
 (recursive) exclusive-access locks, they will all be downgraded to
 shared-access locks.
 .It LK_RELEASE
@@ -221,7 +240,8 @@ Wait for all activity on the lock to end, then mark it decommissioned.
 This feature is used before freeing a lock that is part of a piece of
 memory that is about to be freed.
 .It LK_REENABLE
-Lock is to be re-enabled after drain.  The LK_REENABLE flag may be set
+Lock is to be re-enabled after drain.
+The LK_REENABLE flag may be set
 only at the release of a lock obtained by a drain.
 .It LK_SETRECURSE
 Other locks while we have it OK.
@@ -245,11 +265,11 @@ Print out information about state of lock
 .Fa lock .
 .El
 .Sh RETURN VALUES
-Successfully acquired locks return 0.  A failed lock attempt always
-returns a non-zero error value.  No lock is held after an error
-return (in particular, a failed LK_UPGRADE or LK_FORCEUPGRADE will
-have released its shared-access lock).  Locks will always succeed
-unless one of the following is true:
+Successfully acquired locks return 0.
+A failed lock attempt always returns a non-zero error value.
+No lock is held after an error return (in particular, a failed LK_UPGRADE or
+LK_FORCEUPGRADE will have released its shared-access lock).
+Locks will always succeed unless one of the following is true:
 .Bl -tag -width Er
 .It Bq Er EBUSY
 LK_FORCEUPGRADE is requested and some other process has already
@@ -270,7 +290,8 @@ Non-null lock timeout and timeout expires.
 This section describes places within the
 .Nx
 source tree where actual code implementing or utilising the locking
-framework can be found.  All pathnames are relative to
+framework can be found.
+All pathnames are relative to
 .Pa /usr/src .
 .Pp
 The locking framework itself is implemented within the file

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pciide.4,v 1.25 2002/10/14 20:35:31 gluk Exp $
+.\"	$OpenBSD: pciide.4,v 1.26 2002/11/08 08:08:47 mpech Exp $
 .\"	$NetBSD: pciide.4,v 1.8 1999/03/16 01:19:17 garbled Exp $
 .\"
 .\" Copyright (c) 1998 Manuel Bouyer.
@@ -112,8 +112,8 @@ This will be a problem only if the controller has been disabled in the BIOS
 and another controller has been installed which uses the ISA legacy I/O ports
 and interrupts.
 .Pp
-The CMD0646U is reportedly unable to operate properly in UDMA mode. UDMA
-will not be enabled on this controller unless
+The CMD0646U is reportedly unable to operate properly in UDMA mode.
+UDMA will not be enabled on this controller unless
 .Dv PCIIDE_CMD0646U_ENABLEUDMA
 is specified in the kernel config file.
 .Pp

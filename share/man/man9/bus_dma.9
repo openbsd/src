@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bus_dma.9,v 1.12 2002/06/12 07:10:36 aaron Exp $ 
+.\"	$OpenBSD: bus_dma.9,v 1.13 2002/11/08 08:08:47 mpech Exp $ 
 .\" $NetBSD: bus_dma.9,v 1.14 2000/06/14 06:49:19 cgd Exp $
 .\"
 .\" Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -319,8 +319,8 @@ bus-dependent functionality.
 By default, the
 .Nm
 API assumes that there is coherency between memory and the device
-performing the DMA transaction.  Some platforms, however, have
-special hardware, such as an
+performing the DMA transaction.
+Some platforms, however, have special hardware, such as an
 .Dq I/O cache ,
 which may improve performance
 of some types of DMA transactions, but which break the assumption

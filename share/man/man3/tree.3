@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tree.3,v 1.7 2002/06/12 01:09:20 provos Exp $
+.\"	$OpenBSD: tree.3,v 1.8 2002/11/08 08:08:46 mpech Exp $
 .\"/*
 .\" * Copyright 2002 Niels Provos <provos@citi.umich.edu>
 .\" * All rights reserved.
@@ -163,17 +163,18 @@ or
 .Li RB_GENERATE .
 See the examples below for further explanation of how these macros are used.
 .Sh SPLAY TREES
-A splay tree is a self-organizing data structure.  Every operation
-on the tree causes a splay to happen.  The splay moves the requested
-node to the root of the tree and partly rebalances it.
+A splay tree is a self-organizing data structure.
+Every operation on the tree causes a splay to happen.
+The splay moves the requested node to the root of the tree and partly
+rebalances it.
 .Pp
 This has the benefit that request locality causes faster lookups as
-the requested nodes move to the top of the tree.  On the other hand,
-every lookup causes memory writes.
+the requested nodes move to the top of the tree.
+On the other hand, every lookup causes memory writes.
 .Pp
 The Balance Theorem bounds the total access time for m operations
-and n inserts on an initially empty tree as O((m + n)lg n).  The
-amortized cost for a sequence of m accesses to a splay tree is O(lg n);
+and n inserts on an initially empty tree as O((m + n)lg n).
+The amortized cost for a sequence of m accesses to a splay tree is O(lg n);
 .Pp
 A splay tree is headed by a structure defined by the
 .Fn SPLAY_HEAD
@@ -213,7 +214,8 @@ argument is the name of the element defined by
 .Pp
 The function bodies are generated with the
 .Fn SPLAY_GENERATE
-macro. It takes the same arguments as the
+macro.
+It takes the same arguments as the
 .Fn SPLAY_PROTOTYPE
 macro, but should be used only once.
 .Pp
@@ -221,12 +223,14 @@ Finally,
 the
 .Fa CMP
 argument is the name of a function used to compare tree noded
-with each other.  The function takes two arguments of type
+with each other.
+The function takes two arguments of type
 .Fa "struct TYPE *" .
 If the first argument is smaller than the second, the function returns a
-value smaller than zero. If they are equal, the function returns zero.
-Otherwise, it should return a value greater than zero.  The compare
-function defines the order of the tree elements.
+value smaller than zero.
+If they are equal, the function returns zero.
+Otherwise, it should return a value greater than zero.
+The compare function defines the order of the tree elements.
 .Pp
 The
 .Fn SPLAY_INIT
@@ -283,10 +287,10 @@ SPLAY_FOREACH(np, NAME, head)
 The
 .Fn SPLAY_EMPTY
 macro should be used to check whether a splay tree is empty.
-.Pp
 .Sh RED-BLACK TREES
 A red-black tree is a binary search tree with the node color as an
-extra attribute.  It fulfills a set of conditions:
+extra attribute.
+It fulfills a set of conditions:
 .Bl -enum -compact -offset indent
 .It
 every search path from the root to a leaf consists of the same number of
@@ -338,7 +342,8 @@ argument is the name of the element defined by
 .Pp
 The function bodies are generated with the
 .Fn RB_GENERATE
-macro. It takes the same arguments as the
+macro.
+It takes the same arguments as the
 .Fn RB_PROTOTYPE
 macro, but should be used only once.
 .Pp
@@ -346,12 +351,14 @@ Finally,
 the
 .Fa CMP
 argument is the name of a function used to compare tree noded
-with each other.  The function takes two arguments of type
+with each other.
+The function takes two arguments of type
 .Fa "struct TYPE *" .
 If the first argument is smaller than the second, the function returns a
-value smaller than zero. If they are equal, the function returns zero.
-Otherwise, it should return a value greater than zero.  The compare
-function defines the order of the tree elements.
+value smaller than zero.
+If they are equal, the function returns zero.
+Otherwise, it should return a value greater than zero.
+The compare function defines the order of the tree elements.
 .Pp
 The
 .Fn RB_INIT
@@ -408,7 +415,6 @@ RB_FOREACH(np, NAME, head)
 The
 .Fn RB_EMPTY
 macro should be used to check whether a splay tree is empty.
-.Pp
 .Sh NOTES
 Trying to free a tree in the following way is a common error:
 .Bd -literal -offset indent

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: eisa.4,v 1.4 2002/09/26 07:55:39 miod Exp $
+.\"	$OpenBSD: eisa.4,v 1.5 2002/11/08 08:08:47 mpech Exp $
 .\"	$NetBSD: eisa.4,v 1.10 2001/09/11 22:52:52 wiz Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
@@ -38,14 +38,16 @@
 .Sh SYNOPSIS
 Machine-dependent; depends on the bus topology and
 .Tn EISA
-bus interface of your system.  Typical
+bus interface of your system.
+Typical
 .Tn EISA
 buses are either connected directly
 to the main system bus, or via an
 .Tn PCI
 to
 .Tn EISA
-bridge.  See the
+bridge.
+See the
 .Xr intro 4
 documentation for your system for details.
 .Sh INTRODUCTION
@@ -129,7 +131,8 @@ These are listed in
 .Xr isa 4 ,
 or
 .Xr isapnp 4 ,
-respectively.  The manual pages for each individual driver also lists the
+respectively.
+The manual pages for each individual driver also lists the
 supported bus variants.
 .Sh SEE ALSO
 .Xr ahb 4 ,

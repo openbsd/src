@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.76 2002/10/29 08:29:37 pvalchev Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.77 2002/11/08 08:08:47 mpech Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -340,7 +340,8 @@ Flags to pass to build each target in
 .Ev BULK_TARGETS .
 .It Ev BULK_TARGETS
 Targets to run after each bulk package build before cleaning up the 
-working directory. Defaults to
+working directory.
+Defaults to
 .Ar ftp-packages ,
 .Ar cdrom-packages .
 .It Ev BZIP2
@@ -1267,7 +1268,8 @@ See
 .It Ev NEED_VERSION
 Used to set a requirement on a specific revision of
 .Nm
-needed by a port.  No longer needed as
+needed by a port.
+No longer needed as
 .Nm
 should always be kept up-to-date.
 .It Ev NO_CONFIGURE

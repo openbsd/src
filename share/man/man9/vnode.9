@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vnode.9,v 1.9 2002/08/26 20:18:07 art Exp $
+.\"     $OpenBSD: vnode.9,v 1.10 2002/11/08 08:08:47 mpech Exp $
 .\"
 .\" Copyright (c) 2001 Constantine Sapuntzakis
 .\" All rights reserved.
@@ -36,7 +36,8 @@ directories, FIFOs, domain sockets, block devices, character devices.
 .Pp
 Each vnode has a set of methods which start with string 'VOP_'.
 These methods include VOP_OPEN, VOP_READ, VOP_WRITE, VOP_RENAME, VOP_CLOSE,
-VOP_MKDIR. Many of these methods correspond closely to the equivalent
+VOP_MKDIR.
+Many of these methods correspond closely to the equivalent
 file system call--open, read, write, rename, etc.
 Each file system (FFS, NFS, etc.) provides implementations for these methods.
 .Pp
@@ -45,7 +46,8 @@ File systems cannot allocate their own vnodes; they must use the functions
 provided by the VFS to create and manage vnodes.
 .Ss Vnode state
 Vnodes have a reference count which corresponds to the number of kernel
-objects that hold references to the vnode. A positive reference count keeps
+objects that hold references to the vnode.
+A positive reference count keeps
 the vnode off of the free list, which prevents the vnode from being recycled
 to refer to a different file.
 .Pp
@@ -107,7 +109,8 @@ They can be called on both active and inactive vnodes.
 .Pp
 While transitioning a vnode to the "reclaimed" state, the VFS will call
 .Xr vop_reclaim 9 
-method. File systems use this method to free any file-system specific data
+method.
+File systems use this method to free any file-system specific data
 they attached to the vnode.
 .Ss Vnode locks 
 The vnode actually has three different types of lock: the vnode lock,
@@ -137,7 +140,8 @@ Many file systems rely on it to prevent race conditions in updating file
 system specific data structures (as opposed to having their own locks). 
 .Pp
 The implementation of the vnode lock is the responsibility of the individual
-file systems. Not all file system implement it.
+file systems.
+Not all file system implement it.
 .Pp
 To prevent deadlocks, when acquiring locks on multiple vnodes, the lock
 of parent directory must be acquired before the lock on the child directory.

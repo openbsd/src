@@ -1,4 +1,4 @@
-.\" $OpenBSD: gre.4,v 1.13 2002/06/10 23:08:41 itojun Exp $
+.\" $OpenBSD: gre.4,v 1.14 2002/11/08 08:08:47 mpech Exp $
 .\" $NetBSD: gre.4,v 1.10 1999/12/22 14:55:49 kleink Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
@@ -182,7 +182,8 @@ option to
 .Xr sysctl 8 .
 .Pp
 The GRE interface will accept WCCPv1-style GRE encapsulated packets
-from a Cisco router.  Some magic with the packet filter configuration
+from a Cisco router.
+Some magic with the packet filter configuration
 and a caching proxy like squid are needed to do anything useful with
 these packets.
 .Sh SEE ALSO
@@ -200,7 +201,8 @@ A description of GRE encapsulation can be found in RFC 1701, RFC 1702.
 A description of MOBILE encapsulation can be found in RFC 2004.
 .Pp
 A description of WCCPv1 can be found in draft-ietf-wrec-web-pro-00.txt,
-and WCCPv2 in draft-wilson-wrec-wccp-v2-00.txt.  Both of these documents
+and WCCPv2 in draft-wilson-wrec-wccp-v2-00.txt.
+Both of these documents
 can be found at http://www.wrec.org/ (at the time of this writing).
 .Sh BUGS
 The compute_route() code in net/if_gre.c toggles the last bit of the

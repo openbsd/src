@@ -1,5 +1,5 @@
 .\"	$RuOBSD: radio.4,v 1.4 2001/10/26 05:38:43 form Exp $
-.\"	$OpenBSD: radio.4,v 1.14 2002/09/26 07:55:40 miod Exp $
+.\"	$OpenBSD: radio.4,v 1.15 2002/11/08 08:08:47 mpech Exp $
 .\"
 .\" Copyright (c) 2001 Vladimir Popov
 .\" All rights reserved.
@@ -31,7 +31,6 @@
 .Nm radio
 .Nd device-independent radio driver layer
 .Sh SYNOPSIS
-.Pp
 .Cd "radio* at az?"
 .Cd "radio* at bktr?"
 .Cd "radio* at fms?"
@@ -154,7 +153,6 @@ Informs whether the device receives a stereo or mono signal.
 .El
 .El
 .Sh CHIPSETS
-.Pp
 LM700x is a frequency synthesizer IC.
 The LM700x is programmed through a 24-bit write-only shift register.
 The first 14 bits are frequency data.
