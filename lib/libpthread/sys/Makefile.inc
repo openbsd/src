@@ -1,5 +1,5 @@
-#	$Id: Makefile.inc,v 1.7 2001/08/15 23:50:34 fgsch Exp $
-#	$OpenBSD: Makefile.inc,v 1.7 2001/08/15 23:50:34 fgsch Exp $
+#	$Id: Makefile.inc,v 1.8 2002/01/14 23:32:52 fgsch Exp $
+#	$OpenBSD: Makefile.inc,v 1.8 2002/01/14 23:32:52 fgsch Exp $
 
 .PATH:	 ${LIBC_RSRCDIR}/sys ${LIBC_RSRCDIR}/arch/${MACHINE_ARCH}
 
@@ -13,7 +13,7 @@ SRCS+=	uthread_machdep_asm.S
 SRCS+=	uthread_machdep.c
 .endif
 
-.if (${LIB} == "c_r")
+.if (${LIB} == "c_r") && (${ELF_TOOLCHAIN} == "no")
 
 #
 # All syscalls are renamed as _thread_sys_{syscall}.
@@ -36,15 +36,9 @@ CLEANFILES += _sys_aliases.c
 
 _sys_aliases.c: ${LIBC_RSRCDIR}/Makefile ${LIBCSRCDIR}/sys/Makefile.inc
 	echo '#include <sys/cdefs.h>' > ${.TARGET}
-.if ${MACHINE} == "alpha"
-	# This kludge will disappear when we shift to -lpthread
-	echo '#define __indr_reference(old,new)' \
-		'__asm__(".globl "#new";"#new": jmp $$31,"#old)' > ${.TARGET}
-
-.endif
 	for fn in ${ASM:R} ${PSEUDO:R} ""; do \
-	    case $$fn in ${HIDDEN_SYSCALLS:.o=|}"") : stays hidden ;; \
-	    		 *) echo "__indr_reference(_thread_sys_$$fn,$$fn);";; \
-	     esac; \
-	 done >> ${.TARGET}
+		case $$fn in ${HIDDEN_SYSCALLS:.o=|}"") : stays hidden ;; \
+			*) echo "__indr_reference(_thread_sys_$$fn,$$fn);";; \
+		esac; \
+	done >> ${.TARGET}
 .endif
