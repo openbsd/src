@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.5 2004/02/25 00:16:04 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.6 2004/02/27 23:45:23 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $	*/
 
 /*-
@@ -84,9 +84,6 @@ void diskconf(void);
 int findblkmajor(struct device *);
 char *findblkname(int);
 struct device * parsedisk(char *, int, int, dev_t *);
-
-extern struct disklist *x86_64_alldisks;
-extern int x86_64_ndisks;
 
 #if 0
 #include "bios32.h"
