@@ -1,4 +1,4 @@
-/*	$OpenBSD: socks.c,v 1.3 2001/10/28 19:46:12 jakob Exp $	*/
+/*	$OpenBSD: socks.c,v 1.4 2002/02/19 22:42:04 ericj Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -48,6 +48,8 @@
 #define SOCKS_CONNECT	1
 #define SOCKS_IPV4	1
 #define SOCKS_MAXCMDSZ	10
+
+int	remote_connect(char *, char *, struct addrinfo);
 
 static in_addr_t
 decode_addr (const char *s)

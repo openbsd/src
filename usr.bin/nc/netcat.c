@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.44 2002/02/17 19:42:31 millert Exp $ */
+/* $OpenBSD: netcat.c,v 1.45 2002/02/19 22:42:04 ericj Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -77,6 +77,8 @@ void	help(void);
 int	local_listen(char *, char *, struct addrinfo);
 void	readwrite(int);
 int	remote_connect(char *, char *, struct addrinfo);
+int	socks_connect(char *, char *, struct addrinfo, char *, char *,
+	struct addrinfo);
 int	udptest(int);
 int	unix_connect(char *);
 int	unix_listen(char *);
@@ -92,7 +94,7 @@ main(int argc, char *argv[])
 	socklen_t len;
 	struct sockaddr *cliaddr;
 	char *proxy;
-	char *proxyhost, *proxyport;
+	char *proxyhost = "", *proxyport = NULL;
 	struct addrinfo proxyhints;
 
 	ret = 1;
@@ -389,7 +391,7 @@ unix_listen(char *path)
 	sun.sun_family = AF_UNIX;
 	strlcpy(sun.sun_path, path, sizeof(sun.sun_path));
 
-	if (bind(s, (struct sockaddr *)&sun, SUN_LEN(&sun)) < 0) {
+	if (bind(s, (struct sockaddr *)&sun, sizeof(sun)) < 0) {
 		close(s);
 		return (-1);
 	}
