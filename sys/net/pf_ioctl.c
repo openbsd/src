@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.70 2003/06/23 02:33:39 cedric Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.71 2003/06/27 11:38:23 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -407,10 +407,10 @@ pf_rm_rule(struct pf_rulequeue *rulequeue, struct pf_rule *rule)
 		rule->entries.tqe_prev = NULL;
 		rule->nr = -1;
 	}
-	pf_tag_unref(rule->tag);
-	pf_tag_unref(rule->match_tag);
 	if (rule->states > 0 || rule->entries.tqe_prev != NULL)
 		return;
+	pf_tag_unref(rule->tag);
+	pf_tag_unref(rule->match_tag);
 	pf_dynaddr_remove(&rule->src.addr);
 	pf_dynaddr_remove(&rule->dst.addr);
 	if (rulequeue == NULL) {
