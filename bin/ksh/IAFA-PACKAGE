@@ -1,7 +1,7 @@
-$OpenBSD: IAFA-PACKAGE,v 1.1.1.1 1996/08/14 06:19:10 downsj Exp $
+$OpenBSD: IAFA-PACKAGE,v 1.2 1996/08/19 20:08:42 downsj Exp $
 
 Title:		pdksh
-Version:	5.2.7
+Version:	5.2.8
 Description:	A public domain implementation of the Korn shell (ksh88),
 		a UNIX command line interpreter / scripting language; the few
 		missing ksh features are being added and the shell is being

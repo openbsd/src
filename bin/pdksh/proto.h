@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.h,v 1.1.1.1 1996/08/14 06:19:11 downsj Exp $	*/
+/*	$OpenBSD: proto.h,v 1.2 1996/08/19 20:08:57 downsj Exp $	*/
 
 /*
  * prototypes for PD-KSH
@@ -73,8 +73,9 @@ int 	define		ARGS((const char *name, struct op *t));
 void 	builtin		ARGS((const char *name, int (*func)(char **)));
 struct tbl *	findcom	ARGS((const char *name, int flags));
 void 	flushcom	ARGS((int all));
-char *	search		ARGS((const char *name, const char *path, int mode));
-int	search_access	ARGS((const char *path, int mode));
+char *	search		ARGS((const char *name, const char *path, int mode,
+			      int *errnop));
+int	search_access	ARGS((const char *path, int mode, int *errnop));
 int	pr_menu		ARGS((char *const *ap));
 /* expr.c */
 int 	evaluate	ARGS((const char *expr, long *rval, int error_ok));
@@ -124,8 +125,8 @@ void	coproc_init	ARGS((void));
 void	coproc_read_close ARGS((int fd));
 void	coproc_readw_close ARGS((int fd));
 void	coproc_write_close ARGS((int fd));
-int	get_coproc_fd	ARGS((int mode, const char **emsgp));
-void	cleanup_coproc	ARGS((int reuse));
+int	coproc_getfd	ARGS((int mode, const char **emsgp));
+void	coproc_cleanup	ARGS((int reuse));
 #endif /* KSH */
 struct temp *maketemp	ARGS((Area *ap));
 /* jobs.c */
@@ -150,9 +151,11 @@ Source * pushs		ARGS((int type, Area *areap));
 void	set_prompt	ARGS((int to, Source *s));
 void 	pprompt		ARGS((const char *cp, int ntruncate));
 /* mail.c */
+#ifdef KSH
 void 	mcheck		ARGS((void));
 void 	mbset		ARGS((char *p));
 void 	mpset		ARGS((char *mptoparse));
+#endif /* KSH */
 /* main.c */
 int 	include		ARGS((const char *name, int argc, char **argv,
 			      int intr_ok));
@@ -215,7 +218,9 @@ struct tbl **	tsort	ARGS((struct table *tp));
 /* trace.c */
 /* trap.c */
 void	inittraps	ARGS((void));
+#ifdef KSH
 void	alarm_init	ARGS((void));
+#endif /* KSH */
 Trap *	gettrap		ARGS((const char *name));
 RETSIGTYPE trapsig	ARGS((int i));
 void	intrcheck	ARGS((void));
@@ -249,7 +254,7 @@ void 	setstr		ARGS((struct tbl *vq, const char *s));
 struct tbl *setint_v	ARGS((struct tbl *vq, struct tbl *vp));
 void 	setint		ARGS((struct tbl *vq, long n));
 int	getint		ARGS((struct tbl *vp, long *nump));
-struct tbl *	typeset	ARGS((const char *var, int set, int clr, int field, int base));
+struct tbl *	typeset	ARGS((const char *var, Tflag set, Tflag clr, int field, int base));
 void 	unset		ARGS((struct tbl *vp, int array_ref));
 char  * skip_varname	ARGS((const char *s, int aok));
 char	*skip_wdvarname ARGS((const char *s, int aok));

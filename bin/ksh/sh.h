@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh.h,v 1.1.1.1 1996/08/14 06:19:11 downsj Exp $	*/
+/*	$OpenBSD: sh.h,v 1.2 1996/08/19 20:08:58 downsj Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
@@ -331,6 +331,9 @@ typedef int bool_t;
 #define	sizeofN(type, n) (sizeof(type) * (n))
 #define	BIT(i)	(1<<(i))	/* define bit in flag */
 
+/* Table flag type - needs > 16 and < 32 bits */
+typedef INT32 Tflag;
+
 #define	NUFILE	10		/* Number of user-accessible files */
 #define	FDBASE	10		/* First file usable by Shell */
 
@@ -477,6 +480,7 @@ enum sh_flag {
 	FVIRAW,		/* always read in raw mode (ignored) */
 	FVISHOW8,	/* display chars with 8th bit set as is (versus M-) */
 	FVITABCOMPLETE,	/* enable tab as file name completion char */
+	FVIESCCOMPLETE,	/* enable ESC as file name completion in command mode */
 #endif
 	FXTRACE,	/* -x: execution trace */
 	FNFLAGS /* (place holder: how many flags are there) */
@@ -523,6 +527,7 @@ typedef struct trap {
 	int	volatile set;	/* trap pending */
 	int	flags;		/* TF_* */
 	handler_t cursig;	/* current handler (valid if TF_ORIG_* set) */
+	handler_t shtrap;	/* shell signal handler */
 } Trap;
 
 /* values for Trap.flags */
@@ -541,10 +546,11 @@ typedef struct trap {
 #define SS_RESTORE_MASK	0x3	/* how to restore a signal before an exec() */
 #define SS_RESTORE_CURR	0	/* leave current handler in place */
 #define SS_RESTORE_ORIG	1	/* restore original handler */
-#define SS_RESTORE_DFL	2	/* restore SIG_DFL */
-#define SS_RESTORE_IGN	3	/* restore SIG_IGN */
+#define SS_RESTORE_DFL	2	/* restore to SIG_DFL */
+#define SS_RESTORE_IGN	3	/* restore to SIG_IGN */
 #define SS_FORCE	BIT(3)	/* set signal even if original signal ignored */
 #define SS_USER		BIT(4)	/* user is doing the set (ie, trap command) */
+#define SS_SHTRAP	BIT(5)	/* trap for internal use (CHLD,ALRM,WINCH) */
 
 #define SIGEXIT_	0	/* for trap EXIT */
 #define SIGERR_		SIGNALS	/* for trap ERR */
@@ -558,6 +564,7 @@ extern	Trap	sigtraps[SIGNALS+1];
 #endif /* !FROM_TRAP_C */
 
 
+#ifdef KSH
 /*
  * TMOUT support
  */
@@ -569,6 +576,7 @@ enum tmout_enum {
 	};
 EXTERN unsigned int ksh_tmout;
 EXTERN enum tmout_enum ksh_tmout_state I__(TMOUT_EXECUTING);
+#endif /* KSH */
 
 
 /* For "You have stopped jobs" message */
@@ -578,16 +586,17 @@ EXTERN int really_exit;
 /*
  * fast character classes
  */
-#define	C_ALPHA	0x01		/* a-z_A-Z */
-#define	C_DIGIT	0x02		/* 0-9 */
-#define	C_LEX1	0x04		/* \0 \t\n|&;<>() */
-#define	C_VAR1	0x08		/* *@#!$-? */
-#define	C_IFSWS	0x10		/* \t \n (IFS white space) */
-#define	C_SUBOP1 0x20		/* "=-+?" */
-#define	C_SUBOP2 0x40		/* "#%" */
-#define	C_IFS	0x80		/* $IFS */
+#define	C_ALPHA	 BIT(0)		/* a-z_A-Z */
+#define	C_DIGIT	 BIT(1)		/* 0-9 */
+#define	C_LEX1	 BIT(2)		/* \0 \t\n|&;<>() */
+#define	C_VAR1	 BIT(3)		/* *@#!$-? */
+#define	C_IFSWS	 BIT(4)		/* \t \n (IFS white space) */
+#define	C_SUBOP1 BIT(5)		/* "=-+?" */
+#define	C_SUBOP2 BIT(6)		/* "#%" */
+#define	C_IFS	 BIT(7)		/* $IFS */
+#define	C_QUOTE	 BIT(8)		/*  \n\t"#$&'()*;<>?[\`| (needing quoting) */
 
-extern	char ctypes [];
+extern	short ctypes [];
 
 #define	ctype(c, t)	!!(ctypes[(unsigned char)(c)]&(t))
 #define	letter(c)	ctype(c, C_ALPHA)
@@ -623,20 +632,29 @@ EXTERN Getopt builtin_opt;	/* for shell builtin commands */
 
 #ifdef KSH
 /* This for co-processes */
+
+typedef INT32 Coproc_id; /* something that won't (realisticly) wrap */
 struct coproc {
 	int	read;		/* pipe from co-process's stdout */
 	int	readw;		/* other side of read (saved temporarily) */
 	int	write;		/* pipe to co-process's stdin */
-	void	*job;		/* 0 if no co-process, or co-process died */
+	Coproc_id id;		/* id of current output pipe */
+	int	njobs;		/* number of live jobs using output pipe */
+	void    *job;           /* 0 or job of co-process using input pipe */
 };
 EXTERN struct coproc coproc;
 #endif /* KSH */
+
+/* Used in jobs.c and by coprocess stuff in exec.c */
+#ifdef JOB_SIGS
+EXTERN sigset_t		sm_default, sm_sigchld;
+#endif /* JOB_SIGS */
 
 extern const char ksh_version[];
 
 /* name of called builtin function (used by error functions) */
 EXTERN char	*builtin_argv0;
-EXTERN int	builtin_flag;	/* flags of called builtin (SPEC_BI, etc.) */
+EXTERN Tflag	builtin_flag;	/* flags of called builtin (SPEC_BI, etc.) */
 
 /* current working directory, and size of memory allocated for same */
 EXTERN char	*current_wd;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.1.1.1 1996/08/14 06:19:12 downsj Exp $	*/
+/*	$OpenBSD: trap.c,v 1.2 1996/08/19 20:09:00 downsj Exp $	*/
 
 /*
  * signal handling
@@ -19,9 +19,7 @@ Trap sigtraps[SIGNALS+1] = {
 	{ SIGERR_,  "ERR",  "Error handler" },
     };
 
-static RETSIGTYPE alarm_catcher ARGS((int sig));
-
-static struct sigaction Sigact_ign, Sigact_trap, Sigact_alarm;
+static struct sigaction Sigact_ign, Sigact_trap;
 
 void
 inittraps()
@@ -43,8 +41,6 @@ inittraps()
 	Sigact_ign.sa_handler = SIG_IGN;
 	Sigact_trap = Sigact_ign;
 	Sigact_trap.sa_handler = trapsig;
-	Sigact_alarm = Sigact_ign;
-	Sigact_alarm.sa_handler = alarm_catcher;
 
 	sigtraps[SIGINT].flags |= TF_DFL_INTR | TF_TTY_INTR;
 	sigtraps[SIGQUIT].flags |= TF_DFL_INTR | TF_TTY_INTR;
@@ -59,20 +55,21 @@ inittraps()
 	setsig(&sigtraps[SIGHUP], trapsig, SS_RESTORE_ORIG);
 }
 
+#ifdef KSH
+static RETSIGTYPE alarm_catcher ARGS((int sig));
+
 void
 alarm_init()
 {
 	sigtraps[SIGALRM].flags |= TF_SHELL_USES;
 	setsig(&sigtraps[SIGALRM], alarm_catcher,
-		SS_RESTORE_ORIG|SS_FORCE);
+		SS_RESTORE_ORIG|SS_FORCE|SS_SHTRAP);
 }
 
 static RETSIGTYPE
 alarm_catcher(sig)
 	int sig;
 {
-	trapsig(sig);
-#ifdef KSH
 	if (ksh_tmout_state == TMOUT_READING) {
 		int left = alarm(0);
 
@@ -82,12 +79,9 @@ alarm_catcher(sig)
 		} else
 			alarm(left);
 	}
-#endif /* KSH */
-#ifdef V7_SIGNALS
-	sigaction(sig, &Sigact_alarm, (struct sigaction *) 0);
-#endif /* V7_SIGNALS */
 	return RETSIGVAL;
 }
+#endif /* KSH */
 
 Trap *
 gettrap(name)
@@ -125,6 +119,8 @@ trapsig(i)
 		fatal_trap = 1;
 		intrsig = 1;
 	}
+	if (p->shtrap)
+		(*p->shtrap)(i);
 #ifdef V7_SIGNALS
 	if (sigtraps[i].cursig == trapsig) /* this for SIGCHLD,SIGALRM */
 		sigaction(i, &Sigact_trap, (struct sigaction *) 0);
@@ -363,21 +359,36 @@ setsig(p, f, flags)
 	if (p->signal == SIGEXIT_ || p->signal == SIGERR_)
 		return 1;
 
+	/* First time setting this signal?  If so, get and note the current
+	 * setting.
+	 */
 	if (!(p->flags & (TF_ORIG_IGN|TF_ORIG_DFL))) {
 		sigaction(p->signal, &Sigact_ign, &sigact);
 		p->flags |= sigact.sa_handler == SIG_IGN ?
 					TF_ORIG_IGN : TF_ORIG_DFL;
 		p->cursig = SIG_IGN;
 	}
-	if ((p->flags & TF_ORIG_IGN) && (flags & SS_USER)
-	    && !(flags & SS_FORCE) && !Flag(FTALKING))
+
+	/* Generally, an ignored signal stays ignored, except if
+	 *	- the user of an interactive shell wants to change it
+	 *	- the shell wants for force a change
+	 */
+	if ((p->flags & TF_ORIG_IGN) && !(flags & SS_FORCE)
+	    && (!(flags & SS_USER) || !Flag(FTALKING)))
 		return 0;
-	if (!(flags & SS_USER)) {
-		if (!(flags & SS_FORCE) && (p->flags & TF_ORIG_IGN))
-			return 0;
-	}
 
 	setexecsig(p, flags & SS_RESTORE_MASK);
+
+	/* This is here 'cause there should be a way of clearing shtraps, but
+	 * don't know if this is a sane way of doing it.  At the moment,
+	 * all users of shtrap are lifetime users (SIGCHLD, SIGALRM, SIGWINCH).
+	 */
+	if (!(flags & SS_USER))
+		p->shtrap = (handler_t) 0;
+	if (flags & SS_SHTRAP) {
+		p->shtrap = f;
+		f = trapsig;
+	}
 
 	if (p->cursig != f) {
 		p->cursig = f;

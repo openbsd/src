@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_sh.c,v 1.1.1.1 1996/08/14 06:19:10 downsj Exp $	*/
+/*	$OpenBSD: c_sh.c,v 1.2 1996/08/19 20:08:46 downsj Exp $	*/
 
 /*
  * built-in Bourne commands
@@ -26,14 +26,19 @@ c_shift(wp)
 	register struct block *l = e->loc;
 	register int n;
 	long val;
+	char *arg;
 
-	if (wp[1]) {
-		evaluate(wp[1], &val, FALSE);
+	if (ksh_getopt(wp, &builtin_opt, null) == '?')
+		return 1;
+	arg = wp[builtin_opt.optind];
+
+	if (arg) {
+		evaluate(arg, &val, FALSE);
 		n = val;
 	} else
 		n = 1;
 	if (n < 0) {
-		bi_errorf("%s: bad number", wp[1]);
+		bi_errorf("%s: bad number", arg);
 		return (1);
 	}
 	if (l->argc < n) {
@@ -175,19 +180,22 @@ c_dot(wp)
 	int argc;
 	int i;
 
-	if ((cp = wp[1]) == NULL)
+	if (ksh_getopt(wp, &builtin_opt, null) == '?')
+		return 1;
+
+	if ((cp = wp[builtin_opt.optind]) == NULL)
 		return 0;
-	file = search(cp, path, R_OK);
+	file = search(cp, path, R_OK, (int *) 0);
 	if (file == NULL) {
 		bi_errorf("%s: not found", cp);
 		return 1;
 	}
 
 	/* Set positional parameters? */
-	if (wp[2]) {
-		argv = ++wp;
+	if (wp[builtin_opt.optind + 1]) {
+		argv = wp + builtin_opt.optind;
 		argv[0] = e->loc->argv[0]; /* preserve $0 */
-		for (argc = -1; *wp++; argc++)
+		for (argc = 0; argv[argc + 1]; argc++)
 			;
 	} else {
 		argc = 0;
@@ -245,7 +253,7 @@ c_read(wp)
 		switch (optc) {
 #ifdef KSH
 		  case 'p':
-			if ((fd = get_coproc_fd(R_OK, &emsg)) < 0) {
+			if ((fd = coproc_getfd(R_OK, &emsg)) < 0) {
 				bi_errorf("-p: %s", emsg);
 				return 1;
 			}
@@ -290,9 +298,15 @@ c_read(wp)
 
 #ifdef KSH
 	/* If we are reading from the co-process for the first time,
-	 * make sure the other side of the pipe is closed first.
+	 * make sure the other side of the pipe is closed first.  This allows
+	 * the detection of eof.
+	 *
+	 * This is not compatiable with at&t ksh... the fd is kept so another
+	 * coproc can be started with same ouput, however, this means eof
+	 * can't be detected...  This is why it is closed here.
+	 * If this call is removed, remove the eof check below, too.
+	* coproc_readw_close(fd);
 	 */
-	coproc_readw_close(fd);
 #endif /* KSH */
 
 	if (history)
@@ -387,7 +401,10 @@ c_read(wp)
 		Xfree(xs, xp);
 	}
 #ifdef KSH
-	/* if this is the co-process fd, close the file descriptor */
+	/* if this is the co-process fd, close the file descriptor
+	 * (can get eof if and only if all processes are have died, ie,
+	 * coproc.njobs is 0 and the pipe is closed).
+	 */
 	if (c == EOF && !ecode)
 		coproc_read_close(fd);
 #endif /* KSH */
@@ -401,8 +418,10 @@ c_eval(wp)
 {
 	register struct source *s;
 
+	if (ksh_getopt(wp, &builtin_opt, null) == '?')
+		return 1;
 	s = pushs(SWORDS, ATEMP);
-	s->u.strv = wp+1;
+	s->u.strv = wp + builtin_opt.optind;
 	return shell(s, FALSE);
 }
 
@@ -466,10 +485,15 @@ c_exitreturn(wp)
 	char **wp;
 {
 	int how = LEXIT;
+	char *arg;
 
-	if (wp[1] != NULL && !getn(wp[1], &exstat)) {
+	if (ksh_getopt(wp, &builtin_opt, null) == '?')
+		return 1;
+	arg = wp[builtin_opt.optind];
+
+	if (arg != NULL && !getn(arg, &exstat)) {
 		exstat = 1;
-		warningf(TRUE, "%s: bad number", wp[1]);
+		warningf(TRUE, "%s: bad number", arg);
 	}
 	if (wp[0][0] == 'r') { /* return */
 		struct env *ep;
@@ -501,15 +525,20 @@ c_brkcont(wp)
 {
 	int n, quit;
 	struct env *ep, *last_ep = (struct env *) 0;
+	char *arg;
 
-	if (!wp[1])
+	if (ksh_getopt(wp, &builtin_opt, null) == '?')
+		return 1;
+	arg = wp[builtin_opt.optind];
+
+	if (!arg)
 		n = 1;
-	else if (!bi_getn(wp[1], &n))
+	else if (!bi_getn(arg, &n))
 		return 1;
 	quit = n;
 	if (quit <= 0) {
 		/* at&t ksh does this for non-interactive shells only - weird */
-		bi_errorf("bad option `%s'", wp[1]);
+		bi_errorf("%s: bad value", arg);
 		return 1;
 	}
 
@@ -586,6 +615,7 @@ c_unset(wp)
 {
 	register char *id;
 	int optc, unset_var = 1;
+	int ret = 0;
 
 	while ((optc = ksh_getopt(wp, &builtin_opt, "fv")) != EOF)
 		switch (optc) {
@@ -603,14 +633,18 @@ c_unset(wp)
 		if (unset_var) {	/* unset variable */
 			struct tbl *vp = global(id);
 
+			if (!(vp->flag & ISSET))
+			    ret = 1;
 			if ((vp->flag&RDONLY)) {
 				bi_errorf("%s is read only", vp->name);
 				return 1;
 			}
 			unset(vp, strchr(id, '[') ? 1 : 0);
-		} else			/* unset function */
-			define(id, (struct op *)NULL);
-	return 0;
+		} else {		/* unset function */
+			if (define(id, (struct op *) NULL))
+				ret = 1;
+		}
+	return ret;
 }
 
 int

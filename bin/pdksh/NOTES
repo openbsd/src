@@ -1,4 +1,4 @@
-$OpenBSD: NOTES,v 1.1.1.1 1996/08/14 06:19:10 downsj Exp $
+$OpenBSD: NOTES,v 1.2 1996/08/19 20:08:43 downsj Exp $
 
 General features of at&t ksh that are not (yet) in pdksh:
     - exported aliases.
@@ -6,10 +6,12 @@ General features of at&t ksh that are not (yet) in pdksh:
     - set -t.
     - signals/traps not cleared during functions.
     - trap DEBUG, local ERR and EXIT traps in functions.
-    - ERRNO, LINENO, LINES parameters.
+    - ERRNO, LINENO parameters.
     - doesn't have posix file globbing (eg, [[:alpha:]], etc.).
     - use of an `agent' to execute unreadable/setuid/setgid shell scripts
       (don't ask).
+    - read/select aren't hooked in to the the command line editor
+    - the last command of a pipeline is not run in the parent shell
 
 Known bugs (see also BUG-REPORTS and PROJECTS files):
     Variable parsing, Expansion:
@@ -46,11 +48,6 @@ Known differences between pdksh & at&t ksh (that may change)
       prints a message and exits.  (Also, in at&t ksh, setting TMOUT has no
       effect after the sequence "TMOUT=60; unset TMOUT", which could be
       useful - pdksh may do this in the future).
-    - co-processes: in at&t ksh, accessing the co-process in a redirection
-      always closes the shells copies of the file descriptors; in pdksh
-      only redirections in an empty exec command has this effect.  This
-      may change if the at&t style proves more useful (doubt it, though)
-      or if many scripts depend on it.
     - in pdksh, if the last command of a pipeline is a shell builtin, it is
       not executed in the parent shell, so "echo a b | read foo bar" does not
       set foo and bar in the parent shell (at&t ksh will).
@@ -59,6 +56,9 @@ Known differences between pdksh & at&t ksh (that may change)
       it is the same as set -o.
     - in pdksh emacs mode, ^T does what gnu emacs does, not what at&t ksh
       does.
+    - in ksh93, `. name' calls a function (defined with function) with POSIX
+      semantics (instead of ksh semantics).  in pdksh, . does not call
+      functions.
 
 Known differences between pdksh & at&t ksh (that are not likely to change)
     - at&t ksh seems to catch or ignore SIGALRM - pdksh dies upon receipt
@@ -79,7 +79,7 @@ Known differences between pdksh & at&t ksh (that are not likely to change)
 	  uses isspace()), at&t ksh only skips blanks.
 	- at&t ksh allows attributes of read-only variables to be changed,
 	  pdksh allows only the export attribute to be set.
-    - at&t ksh allows set -A of readonly variables, pdksh does not.
+    - (some) at&t ksh allows set -A of readonly variables, pdksh does not.
     - at&t ksh allows command assignments of readonly variables (eg, YY=2 cat),
       pdksh does not.
     - at&t ksh does not exit scripts when an implicit assignment to an integer
@@ -165,6 +165,19 @@ Known differences between pdksh & at&t ksh (that are not likely to change)
     - pwd: in at&t ksh, it ignores arguments; in pdksh, it complains when given
       arguments.
     - the at&t ksh does not do command substition on PS1, pdksh does.
+    - ksh93 allows ". foo" to run the function foo if there is no file
+      called foo (go figure).
+    - field splitting (IFS): ksh88/ksh93 strip leading non-white space IFS
+      chars, pdksh (and POSIX, I think) leave them intact. e.g.
+	$ IFS="$IFS:"; read x; echo "<$x>"
+	::
+      prints "<>" in at&t ksh, "<::>" in pdksh.
+    - command completion: at&t ksh will do completion on a blank line (matching
+      all commands), pdksh does not (as this isn't very useful - use * if
+      you really want the list).
+    - co-processes: if ksh93, the write portion of the co-process output is
+      closed when the most recently started co-process exits. pdksh closes
+      it when all the co-processes using it have exited.
 
 Oddities in ksh (pd & at&t):
     - array references inside (())/$(()) are strange:

@@ -1,4 +1,4 @@
-$OpenBSD: PROJECTS,v 1.1.1.1 1996/08/14 06:19:10 downsj Exp $
+$OpenBSD: PROJECTS,v 1.2 1996/08/19 20:08:44 downsj Exp $
 
 Things to be done in pdksh (see also the NOTES file):
 
@@ -40,7 +40,7 @@ Things to be done in pdksh (see also the NOTES file):
     * trap code
 	* add the DEBUG trap.
 	* fix up signal handling code.  In particular, fatal vs tty signals,
-	  have single routine to call to check for pending/fatal traps, etc.
+	  have signal routine to call to check for pending/fatal traps, etc.
 
     * parsing
 	* the time keyword needs to be hacked to accept options (!) since
@@ -64,12 +64,8 @@ Things to be done in pdksh (see also the NOTES file):
 	  freed when a variable is unset.
 
     * functions
-      POSIX and at&t ksh functions are different in that POSIX functions
-      don't change disable/restore traps and option parsing (OPTIND/OPTARG
-      plus internal state) isn't saved/restored.  The suggestion made in
-      POSIX.2 rationale is to have x() { .. } do the POSIX thing, and have
-      function x { ..} do the at&t ksh thing.  So, should have two types of
-      functions.
+      finish the differences between function x and x(): trap EXIT, traps
+      in general, treatment of OPTIND/OPTARG, 
 
     * history
       There are two versions of the history code, COMPLEX_HISTORY and
@@ -102,22 +98,15 @@ Things to be done in pdksh (see also the NOTES file):
 	  otherwise) (see POSIX.2:3.8.1).  Some of this has been taken
 	  care of, but more needs doing.
 
-	* POSIX says if an exec fails, the exit code should be 127 (not found)
-	  or 126 (not executable)...
-
 	* remove static limits created by fixed sized arrays
 	  (eg, getsc_(line[]), ident[], heres[], PATH, states(lex.c),
 	  buffer size in emacs/vi code)
 
 	* merge the emacs and vi code (should reduce the size of the shell and
-	  make maintenance easier).
+	  make maintenance easier); handle SIGWINCH while editing a line.
 	  [John Rochester is working on the merge]
 
 	* add POSIX globbing (eg, [[:alnum:]]), see POSIX.2:2.8.3.2.
-
-	* catch SIGWINCH and update the COLUMNS and LINES parameters (also,
-	  need to let the command line editor know of change - ideally this
-	  would work even if the editor was currently reading commands).
 
 	* teach shf_vfprintf() about long long's (%lld); also make %p use
 	  long longs if appropriate.
@@ -125,8 +114,3 @@ Things to be done in pdksh (see also the NOTES file):
 	* add \[...\] parsing to prompt printing (don't count width of chars
 	  inside the \[..\] - used to keep escape sequences in prompts from
 	  messing up command-line-editor's idea of where the cursor is)
-
-	* file(command) completion list in vi/emacs: change so a number-prefix
-	  picks one of the possibilities (eg, if in vi: foo^[= lists fooa, foob
-	  and fooc as possible completions, ^[2= would choose the second
-	  possibility (foob)).

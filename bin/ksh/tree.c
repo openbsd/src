@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.1.1.1 1996/08/14 06:19:12 downsj Exp $	*/
+/*	$OpenBSD: tree.c,v 1.2 1996/08/19 20:09:01 downsj Exp $	*/
 
 /*
  * command tree climbing
@@ -478,7 +478,7 @@ tcopy(t, ap)
 	r = (struct op *) alloc(sizeof(struct op), ap);
 
 	r->type = t->type;
-	r->evalflags = t->evalflags;
+	r->u.evalflags = t->u.evalflags;
 
 	r->str = t->type == TCASE ? wdcopy(t->str, ap) : str_save(t->str, ap);
 

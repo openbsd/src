@@ -4,12 +4,18 @@
 # Simple script to find perl and run it
 #
 
+# Avoid common problems with ENV (though perl shouldn't let it through)
+unset ENV
+
+x=x
+[ -x /bin/sh ] 2> /dev/null || x=f
+
 IFS=:$IFS
 perl=
 for i in $PATH; do
     [ X"$i" = X ] && i=.
     for j in perl perl4 perl5 ; do
-	[ -x "$i/$j" ] && perl=$i/$j && break 2
+	[ -$x "$i/$j" ] && perl=$i/$j && break 2
     done
 done
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.1.1.1 1996/08/14 06:19:11 downsj Exp $	*/
+/*	$OpenBSD: table.c,v 1.2 1996/08/19 20:08:59 downsj Exp $	*/
 
 /*
  * dynamic hashed associative table for commands and variables
@@ -64,7 +64,7 @@ texpand(tp, nsize)
 						p += tp->size;
 				*p = tblp;
 				tp->nfree--;
-			} else {
+			} else if (!(tblp->flag & FINUSE)) {
 				afree((void*)tblp, tp->areap);
 			}
 	afree((void*)otblp, tp->areap);
@@ -125,7 +125,7 @@ tenter(tp, n, h)
 	p->flag = 0;
 	p->type = 0;
 	p->areap = tp->areap;
-	p->field = 0;
+	p->u2.field = 0;
 	p->u.array = (struct tbl *)0;
 	memcpy(p->name, n, len);
 

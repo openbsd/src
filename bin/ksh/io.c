@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.1.1.1 1996/08/14 06:19:11 downsj Exp $	*/
+/*	$OpenBSD: io.c,v 1.2 1996/08/19 20:08:51 downsj Exp $	*/
 
 /*
  * shell buffered IO and formatted output
@@ -324,7 +324,7 @@ check_fd(name, mode, emsgp)
 	}
 #ifdef KSH
 	else if (name[0] == 'p' && !name[1])
-		return get_coproc_fd(mode, emsgp);
+		return coproc_getfd(mode, emsgp);
 #endif /* KSH */
 	if (emsgp)
 		*emsgp = "illegal file descriptor name";
@@ -337,6 +337,8 @@ void
 coproc_init()
 {
 	coproc.read = coproc.readw = coproc.write = -1;
+	coproc.njobs = 0;
+	coproc.id = 0;
 }
 
 /* Called by c_read() when eof is read - close fd if it is the co-process fd */
@@ -345,12 +347,9 @@ coproc_read_close(fd)
 	int fd;
 {
 	if (coproc.read >= 0 && fd == coproc.read) {
+		coproc_readw_close(fd);
 		close(coproc.read);
 		coproc.read = -1;
-		if (coproc.readw >= 0) {
-			close(coproc.readw);
-			coproc.readw = -1;
-		}
 	}
 }
 
@@ -361,7 +360,7 @@ void
 coproc_readw_close(fd)
 	int fd;
 {
-	if (coproc.read >= 0 && fd == coproc.read && coproc.readw >= 0) {
+	if (coproc.readw >= 0 && coproc.read >= 0 && fd == coproc.read) {
 		close(coproc.readw);
 		coproc.readw = -1;
 	}
@@ -384,7 +383,7 @@ coproc_write_close(fd)
  * (Used by check_fd() and by c_read/c_print to deal with -p option).
  */
 int
-get_coproc_fd(mode, emsgp)
+coproc_getfd(mode, emsgp)
 	int mode;
 	const char **emsgp;
 {
@@ -397,12 +396,13 @@ get_coproc_fd(mode, emsgp)
 	return -1;
 }
 
-/* called to close file descriptors related to the coprocess (if any) */
+/* called to close file descriptors related to the coprocess (if any)
+ * Should be called with SIGCHLD blocked.
+ */
 void
-cleanup_coproc(reuse)
+coproc_cleanup(reuse)
 	int reuse;
 {
-	coproc.job = (void *) 0;
 	/* This to allow co-processes to share output pipe */
 	if (!reuse || coproc.readw < 0 || coproc.read < 0) {
 		if (coproc.read >= 0) {

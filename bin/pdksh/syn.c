@@ -1,4 +1,4 @@
-/*	$OpenBSD: syn.c,v 1.1.1.1 1996/08/14 06:19:11 downsj Exp $	*/
+/*	$OpenBSD: syn.c,v 1.2 1996/08/19 20:08:59 downsj Exp $	*/
 
 /*
  * shell parser (C version)
@@ -224,7 +224,7 @@ get_command(cf)
 		syniocf &= ~(KEYWORD|ALIAS);
 		t = newtp(TCOM);
 		while (1) {
-			cf = (t->evalflags ? ARRAYVAR : 0)
+			cf = (t->u.evalflags ? ARRAYVAR : 0)
 			     | (XPsize(args) == 0 ? ALIAS|VARASN : CMDWORD);
 			switch (tpeek(cf)) {
 			  case REDIR:
@@ -241,7 +241,7 @@ get_command(cf)
 				if (iopn == 0 && XPsize(vars) == 0
 				    && XPsize(args) == 0
 				    && assign_command(ident))
-					t->evalflags = DOVACHECK;
+					t->u.evalflags = DOVACHECK;
 				if ((XPsize(args) == 0 || Flag(FKEYWORD))
 				    && is_wdvarassign(yylval.cp))
 					XPput(vars, yylval.cp);
@@ -254,7 +254,7 @@ get_command(cf)
 				 * allows (not POSIX, but not disallowed)
 				 */
 				afree(t, ATEMP);
-				if (XPsize(args) == 0 && XPsize(vars) != 0) {
+				if (XPsize(args) == 0 && XPsize(vars) == 0) {
 					ACCEPT;
 					goto Subshell;
 				}
@@ -334,7 +334,7 @@ get_command(cf)
 	  case WHILE:
 	  case UNTIL:
 		multiline_push(&old_multiline, c);
-		t = newtp((c == WHILE) ? TWHILE: TUNTIL);
+		t = newtp((c == WHILE) ? TWHILE : TUNTIL);
 		t->left = c_list();
 		t->right = dogroup();
 		multiline_pop(&old_multiline);
@@ -552,6 +552,7 @@ function_body(name, ksh_func)
 	}
 	t = newtp(TFUNCT);
 	t->str = Xclose(xs, xp);
+	t->u.ksh_func = ksh_func;
 
 	/* Note that POSIX allows only compound statements after foo(), sh and
 	 * at&t ksh allow any command, go with the later since it shouldn't
@@ -763,7 +764,7 @@ newtp(type)
 
 	t = (struct op *) alloc(sizeof(*t), ATEMP);
 	t->type = type;
-	t->evalflags = 0;
+	t->u.evalflags = 0;
 	t->args = t->vars = NULL;
 	t->ioact = NULL;
 	t->left = t->right = NULL;

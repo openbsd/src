@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.1.1.1 1996/08/14 06:19:10 downsj Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.2 1996/08/19 20:08:48 downsj Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -94,6 +94,7 @@ static int	x_adj_ok;
  */
 static int	x_adj_done;
 
+static int	xx_cols;
 static int	x_col;
 static int	x_displen;
 static int	x_arg;		/* general purpose arg */
@@ -138,10 +139,8 @@ static void	x_adjust    ARGS((void));
 static void	x_e_ungetc  ARGS((int c));
 static int	x_e_getc    ARGS((void));
 static void	x_e_putc    ARGS((int c));
-#ifdef DEBUG
-static int	x_debug_info ARGS((void));
-#endif /* DEBUG */
 static void	x_e_puts    ARGS((const char *s));
+static int	x_comment   ARGS((int c));
 static int	x_fold_case ARGS((int c));
 static char	*x_lastcp ARGS((void));
 static void	do_complete ARGS((int flags, Comp_type type));
@@ -213,6 +212,7 @@ static const struct x_ftab x_ftab[] = {
         { x_fold_lower,		"downcase-word",		XF_ARG },
         { x_fold_upper,		"upcase-word",			XF_ARG },
         { x_set_arg,		"set-arg",			XF_NOBIND },
+        { x_comment,		"comment",			0 },
 #ifdef SILLY
 	{ x_game_of_life,	"play-game-of-life",		0 },
 #else
@@ -265,6 +265,7 @@ static	struct x_defbindings const x_defbindings[] = {
 	{ XFUNC_yank,			0, CTRL('Y') },
 	{ XFUNC_meta_yank,		1,      'y'  },
 	{ XFUNC_literal,		0, CTRL('^') },
+        { XFUNC_comment,		1,	'#'  },
 #if defined(BRL) && defined(TIOCSTI)
 	{ XFUNC_stuff,			0, CTRL('T') },
 #else
@@ -342,10 +343,11 @@ x_emacs(buf, len)
 	x_histp = histptr + 1;
 	x_last_command = XFUNC_error;
 
+	xx_cols = x_cols;
 	x_col = promptlen(prompt, &p);
 	prompt_skip = p - prompt;
 	x_adj_ok = 1;
-	x_displen = x_cols - 2 - x_col;
+	x_displen = xx_cols - 2 - x_col;
 	x_adj_done = 0;
 
 	pprompt(prompt, 0);
@@ -542,7 +544,7 @@ x_delete(nc, force_push)
 	 * there is no need to ' ','\b'.
 	 * But if we must, make sure we do the minimum.
 	 */
-	if ((i = x_cols - 2 - x_col) > 0)
+	if ((i = xx_cols - 2 - x_col) > 0)
 	{
 	  j = (j < i) ? j : i;
 	  i = j;
@@ -1031,6 +1033,10 @@ x_draw_line(c)
 
 }
 
+/* Redraw (part of) the line.  If limit is < 0, the everything is redrawn
+ * on a NEW line, otherwise limit is the screen column up to which needs
+ * redrawing.
+ */
 static void
 x_redraw(limit)
   int limit;
@@ -1049,12 +1055,12 @@ x_redraw(limit)
 	  pprompt(prompt + prompt_skip, 0);
 	  x_col = promptlen(prompt, (const char **) 0);
 	}
-	x_displen = x_cols - 2 - x_col;
+	x_displen = xx_cols - 2 - x_col;
 	xlp_valid = FALSE;
 	cp = x_lastcp();
 	x_zots(xbp);
 	if (xbp != xbuf || xep > xlp)
-	  limit = x_cols;
+	  limit = xx_cols;
 	if (limit >= 0)
 	{
 	  if (xep > xlp)
@@ -1062,7 +1068,7 @@ x_redraw(limit)
 	  else
 	    i = limit - (xlp - xbp);
 
-	  for (j = 0; j < i && x_col < (x_cols - 2); j++)
+	  for (j = 0; j < i && x_col < (xx_cols - 2); j++)
 	    x_e_putc(' ');
 	  i = ' ';
 	  if (xep > xlp)		/* more off screen */
@@ -1832,12 +1838,12 @@ x_adjust()
 {
   x_adj_done++;			/* flag the fact that we were called. */
   /*
-   * we had a problem if the prompt length > x_cols / 2
+   * we had a problem if the prompt length > xx_cols / 2
    */
   if ((xbp = xcp - (x_displen / 2)) < xbuf)
     xbp = xbuf;
   xlp_valid = FALSE;
-  x_redraw(x_cols);
+  x_redraw(xx_cols);
   x_flush();
 }
 
@@ -1876,7 +1882,7 @@ x_e_putc(c)
 {
   if (c == '\r' || c == '\n')
     x_col = 0;
-  if (x_col < x_cols)
+  if (x_col < xx_cols)
   {
     x_putc(c);
     switch(c)
@@ -1894,7 +1900,7 @@ x_e_putc(c)
       break;
     }
   }
-  if (x_adj_ok && (x_col < 0 || x_col >= (x_cols - 2)))
+  if (x_adj_ok && (x_col < 0 || x_col >= (xx_cols - 2)))
   {
     x_adjust();
   }
@@ -1902,19 +1908,20 @@ x_e_putc(c)
 
 #ifdef DEBUG
 static int
-x_debug_info()
+x_debug_info(c)
+	int c;
 {
-  x_flush();
-  printf("\nksh debug:\n");
-  printf("\tx_col == %d,\t\tx_cols == %d,\tx_displen == %d\n",
-	 x_col, x_cols, x_displen);
-  printf("\txcp == 0x%lx,\txep == 0x%lx\n", (long) xcp, (long) xep);
-  printf("\txbp == 0x%lx,\txbuf == 0x%lx\n", (long) xbp, (long) xbuf);
-  printf("\txlp == 0x%lx\n", (long) xlp);
-  printf("\txlp == 0x%lx\n", (long) x_lastcp());
-  printf(newline);
-  x_redraw(-1);
-  return 0;
+	x_flush();
+	shellf("\nksh debug:\n");
+	shellf("\tx_col == %d,\t\tx_cols == %d,\tx_displen == %d\n",
+		 x_col, xx_cols, x_displen);
+	shellf("\txcp == 0x%lx,\txep == 0x%lx\n", (long) xcp, (long) xep);
+	shellf("\txbp == 0x%lx,\txbuf == 0x%lx\n", (long) xbp, (long) xbuf);
+	shellf("\txlp == 0x%lx\n", (long) xlp);
+	shellf("\txlp == 0x%lx\n", (long) x_lastcp());
+	shellf(newline);
+	x_redraw(-1);
+	return 0;
 }
 #endif
 
@@ -1956,6 +1963,29 @@ x_set_arg(c)
 		x_e_ungetc(c);
 		x_arg = n;
 		x_arg_defaulted = 0;
+	}
+	return KSTD;
+}
+
+
+/* Comment or uncomment the current line. */
+static int
+x_comment(c)
+	int c;
+{
+	int oldsize = x_size_str(xbuf);
+	int len = xep - xbuf;
+	int ret = x_do_comment(xbuf, xend - xbuf, &len);
+
+	if (ret < 0)
+		x_e_putc(BEL);
+	else {
+		xep = xbuf + len;
+		*xep = '\0';
+		xcp = xbp = xbuf;
+		x_redraw(oldsize);
+		if (ret > 0)
+			return x_newline('\n');
 	}
 	return KSTD;
 }

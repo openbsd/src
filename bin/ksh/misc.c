@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.1.1.1 1996/08/14 06:19:11 downsj Exp $	*/
+/*	$OpenBSD: misc.c,v 1.2 1996/08/19 20:08:57 downsj Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -14,7 +14,7 @@
 # define UCHAR_MAX	0xFF
 #endif
 
-char ctypes [UCHAR_MAX+1];	/* type bits for unsigned char */
+short ctypes [UCHAR_MAX+1];	/* type bits for unsigned char */
 
 static int	do_gmatch ARGS((const unsigned char *s, const unsigned char *p,
 			const unsigned char *se, const unsigned char *pe,
@@ -31,7 +31,7 @@ setctypes(s, t)
 {
 	register int i;
 
-	if ((t&C_IFS)) {
+	if (t & C_IFS) {
 		for (i = 0; i < UCHAR_MAX+1; i++)
 			ctypes[i] &= ~C_IFS;
 		ctypes[0] |= C_IFS; /* include \0 in C_IFS */
@@ -56,6 +56,7 @@ initctypes()
 	setctypes(" \t\n", C_IFSWS);
 	setctypes("=-+?", C_SUBOP1);
 	setctypes("#%", C_SUBOP2);
+	setctypes(" \n\t\"#$&'()*;<>?[\\`|", C_QUOTE);
 }
 
 /* convert unsigned long to base N string */
@@ -168,6 +169,7 @@ const struct option options[] = {
 	{ "viraw",	  0,		OF_ANY }, /* no effect */
 	{ "vi-show8",	  0,		OF_ANY }, /* non-standard */
 	{ "vi-tabcomplete",  0, 	OF_ANY }, /* non-standard */
+	{ "vi-esccomplete",  0, 	OF_ANY }, /* non-standard */
 #endif
 	{ "xtrace",	'x',		OF_ANY },
 	{ NULL,		  0,		     0 }
@@ -982,7 +984,7 @@ ksh_getopt(argv, go, options)
 			go->buf[0] = c;
 			go->optarg = go->buf;
 		} else {
-			warningf(TRUE, "%s%s-%c: bad option",
+			warningf(TRUE, "%s%s-%c: unknown option",
 				(go->flags & GF_NONAME) ? "" : argv[0],
 				(go->flags & GF_NONAME) ? "" : ": ", c);
 			if (go->flags & GF_ERROR)
@@ -1055,7 +1057,7 @@ print_value_quoted(s)
 
 	/* Test if any quotes are needed */
 	for (p = s; *p; p++)
-		if (!letnum(*p) && *p != '/')
+		if (ctype(*p, C_QUOTE))
 			break;
 	if (!*p) {
 		shprintf("%s", s);

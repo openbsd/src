@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.1.1.1 1996/08/14 06:19:11 downsj Exp $	*/
+/*	$OpenBSD: exec.c,v 1.2 1996/08/19 20:08:50 downsj Exp $	*/
 
 /*
  * execute command tree
@@ -9,14 +9,21 @@
 #include <ctype.h>
 #include "ksh_stat.h"
 
+/* Does ps4 get parameter substitutions done? */
+#ifdef KSH
+# define PS4_SUBSTITUTE(s)	substitute((s), 0)
+#else
+# define PS4_SUBSTITUTE(s)	(s)
+#endif /* KSH */
+
 static int	comexec	 ARGS((struct op *t, struct tbl *volatile tp, char **ap,
 			      int volatile flags));
 static void	scriptexec ARGS((struct op *tp, char **ap));
 static int	call_builtin ARGS((struct tbl *tp, char **wp));
-static int	iosetup ARGS((struct ioword *iop));
+static int	iosetup ARGS((struct ioword *iop, struct tbl *tp));
 static int	herein ARGS((char *hname, int sub));
 #ifdef KSH
-static char 	*do_selectargs ARGS((char **ap));
+static char 	*do_selectargs ARGS((char **ap, bool_t print_menu));
 #endif /* KSH */
 #ifdef KSH
 static int	dbteste_isa ARGS((Test_env *te, Test_meta meta));
@@ -80,6 +87,14 @@ execute(t, flags)
 	if (t == NULL)
 		return 0;
 
+	/* Is this the end of a pipeline?  If so, we want to evaluate the
+	 * command arguments
+	bool_t eval_done = FALSE;
+	if ((flags&XFORK) && !(flags&XEXEC) && (flags&XPCLOSE)) {
+		eval_done = TRUE;
+		tp = eval_execute_args(t, &ap);
+	}
+	 */
 	if ((flags&XFORK) && !(flags&XEXEC) && t->type != TPIPE)
 		return exchild(t, flags, -1); /* run in sub-process */
 
@@ -96,10 +111,10 @@ execute(t, flags)
 		/* POSIX says expand command words first, then redirections,
 		 * and assignments last..
 		 */
-		ap = eval(t->args, t->evalflags | DOBLANK | DOGLOB | DOTILDE);
+		ap = eval(t->args, t->u.evalflags | DOBLANK | DOGLOB | DOTILDE);
 		if (Flag(FXTRACE) && ap[0]) {
 			shf_fprintf(shl_out, "%s",
-				substitute(str_val(global("PS4")), 0));
+				PS4_SUBSTITUTE(str_val(global("PS4"))));
 			for (i = 0; ap[i]; i++)
 				shf_fprintf(shl_out, "%s%s", ap[i],
 					ap[i + 1] ? space : newline);
@@ -118,7 +133,7 @@ execute(t, flags)
 	/* do redirection, to be restored in quitenv() */
 	if (t->ioact != NULL)
 		for (iowp = t->ioact; *iowp != NULL; iowp++) {
-			if (iosetup(*iowp) < 0) {
+			if (iosetup(*iowp, tp) < 0) {
 				exstat = rv = 1;
 				/* Redirection failures for special commands
 				 * cause (non-interactive) shell to exit.
@@ -179,10 +194,31 @@ execute(t, flags)
 #ifdef KSH
 	  case TCOPROC:
 	  {
+# ifdef JOB_SIGS
+		sigset_t	omask;
+# endif /* JOB_SIGS */
+
+# ifdef JOB_SIGS
+		/* Block sigchild as we are using things changed in the
+		 * signal handler
+		 */
+		sigprocmask(SIG_BLOCK, &sm_sigchld, &omask);
+		e->type = E_ERRH;
+		i = ksh_sigsetjmp(e->jbuf, 0);
+		if (i) {
+			sigprocmask(SIG_SETMASK, &omask, (sigset_t *) 0);
+			quitenv();
+			unwind(i);
+			/*NOTREACHED*/
+		}
+# endif /* JOB_SIGS */
+		/* Already have a (live) co-process? */
 		if (coproc.job && coproc.write >= 0)
 			errorf("coprocess already exists");
+
 		/* Can we re-use the existing co-process pipe? */
-		cleanup_coproc(TRUE);
+		coproc_cleanup(TRUE);
+
 		/* do this before opening pipes, in case these fail */
 		e->savefd[0] = savefd(0, 0);
 		e->savefd[1] = savefd(1, 0);
@@ -191,6 +227,7 @@ execute(t, flags)
 		ksh_dup2(pv[0], 0, FALSE);
 		close(pv[0]);
 		coproc.write = pv[1];
+		coproc.job = (void *) 0;
 
 		if (coproc.readw >= 0)
 			ksh_dup2(coproc.readw, 1, FALSE);
@@ -199,9 +236,19 @@ execute(t, flags)
 			coproc.read = pv[0];
 			ksh_dup2(pv[1], 1, FALSE);
 			coproc.readw = pv[1];	 /* closed before first read */
+			coproc.njobs = 0;
+			/* create new coprocess id */
+			++coproc.id;
 		}
+# ifdef JOB_SIGS
+		sigprocmask(SIG_SETMASK, &omask, (sigset_t *) 0);
+		e->type = E_EXEC; /* no more need for error handler */
+# endif /* JOB_SIGS */
 
-		/* exchild() closes coproc.* in child after fork */
+		/* exchild() closes coproc.* in child after fork,
+		 * will also increment coproc.njobs when the
+		 * job is actually created.
+		 */
 		flags &= ~XEXEC;
 		exchild(t->left, flags|XBGND|XFORK|XCOPROC|XCCLOSE,
 			coproc.readw);
@@ -221,7 +268,7 @@ execute(t, flags)
 	  case TAND:
 		rv = execute(t->left, XERROK);
 		if (t->right != NULL && (rv == 0) == (t->type == TAND))
-			rv = execute(t->right, 0);
+			rv = execute(t->right, flags & XERROK);
 		else
 			flags |= XERROK;
 		break;
@@ -250,6 +297,8 @@ execute(t, flags)
 	  case TFOR:
 #ifdef KSH
 	  case TSELECT:
+	    {
+		volatile bool_t is_first = TRUE;
 #endif /* KSH */
 		ap = (t->vars != NULL) ?
 			  eval(t->vars, DOBLANK|DOGLOB|DOTILDE)
@@ -286,10 +335,11 @@ execute(t, flags)
 			struct tbl *vq;
 
 			for (;;) {
-				if ((cp = do_selectargs(ap)) == (char *) 0) {
+				if (!(cp = do_selectargs(ap, is_first))) {
 					rv = 1;
 					break;
 				}
+				is_first = FALSE;
 				vq = global(t->str);
 				if (vq->flag & RDONLY)
 					errorf("%s is read only", t->str);
@@ -297,6 +347,7 @@ execute(t, flags)
 				rv = execute(t->left, flags & XERROK);
 			}
 		}
+	    }
 #endif /* KSH */
 		break;
 
@@ -348,7 +399,7 @@ execute(t, flags)
 		break;
 
 	  case TFUNCT:
-		rv = define(t->str, t->left);
+		rv = define(t->str, t);
 		break;
 
 	  case TTIME:
@@ -483,15 +534,17 @@ comexec(t, tp, ap, flags)
 			break;
 		tp = findcom(ap[0], fcflags & (FC_BI|FC_FUNC));
 	}
-	/* todo: POSIX says assignments preceding a function are kept, at&t
-	 * ksh does not do this
-	 */
-	if (keepasn_ok && (!ap[0] || (tp && tp->flag & KEEPASN)))
+	if (keepasn_ok && (!ap[0] || (tp && (tp->flag & KEEPASN))))
 		type_flags = 0;
 	else {
 		/* create new variable/function block */
 		newblock();
-		type_flags = LOCAL|LOCAL_COPY|EXPORT;
+		/* ksh functions don't keep assignments, POSIX functions do. */
+		if (keepasn_ok && tp && tp->type == CFUNC
+		    && !(tp->flag & FKSH))
+			type_flags = 0;
+		else
+			type_flags = LOCAL|LOCAL_COPY|EXPORT;
 	}
 	if (Flag(FEXPORT))
 		type_flags |= EXPORT;
@@ -500,7 +553,7 @@ comexec(t, tp, ap, flags)
 		if (Flag(FXTRACE)) {
 			if (i == 0)
 				shf_fprintf(shl_out, "%s",
-					substitute(str_val(global("PS4")), 0));
+					PS4_SUBSTITUTE(str_val(global("PS4"))));
 			shf_fprintf(shl_out, "%s%s", cp,
 				t->vars[i + 1] ? space : newline);
 			if (!t->vars[i + 1])
@@ -529,24 +582,30 @@ comexec(t, tp, ap, flags)
 	  case CFUNC:			/* function call */
 	  {
 		volatile int old_xflag;
-		volatile int old_inuse;
+		volatile Tflag old_inuse;
 		const char *volatile old_kshname;
 
 		if (!(tp->flag & ISSET)) {
 			struct tbl *ftp;
 
 			if (!tp->u.fpath) {
-				/* XXX: exit code 126 vs 127 */
-				warningf(TRUE,
+				if (tp->u2.errno_) {
+					warningf(TRUE,
+				"%s: can't find function definition file - %s",
+						cp, strerror(tp->u2.errno_));
+					rv = 126;
+				} else {
+					warningf(TRUE,
 				"%s: can't find function definition file", cp);
-				rv = 127;
+					rv = 127;
+				}
 				break;
 			}
 			if (include(tp->u.fpath, 0, (char **) 0, 0) < 0) {
 				warningf(TRUE,
 			    "%s: can't open function definition file %s - %s",
 					cp, tp->u.fpath, strerror(errno));
-				rv = 126;
+				rv = 127;
 				break;
 			}
 			if (!(ftp = findfunc(cp, hash(cp), FALSE))
@@ -561,9 +620,11 @@ comexec(t, tp, ap, flags)
 			tp = ftp;
 		}
 
-		/* posix says $0 remains unchanged, at&t ksh changes it */
+		/* ksh functions set $0 to function name, POSIX functions leave
+		 * $0 unchanged.
+		 */
 		old_kshname = kshname;
-		if (!Flag(FPOSIX))
+		if (tp->flag & FKSH)
 			kshname = ap[0];
 		e->loc->argv = ap;
 		for (i = 0; *ap++ != NULL; i++)
@@ -588,7 +649,8 @@ comexec(t, tp, ap, flags)
 		Flag(FXTRACE) = old_xflag;
 		tp->flag = (tp->flag & ~FINUSE) | old_inuse;
 		/* Were we deleted while executing?  If so, free the execution
-		 * tree.  Unfortunately, the table entry is never re-used.
+		 * tree.  todo: Unfortunately, the table entry is never re-used
+		 * until the lookup table is expanded.
 		 */
 		if ((tp->flag & (FDELETE|FINUSE)) == FDELETE) {
 			if (tp->flag & ALLOC) {
@@ -619,38 +681,26 @@ comexec(t, tp, ap, flags)
 	  case CEXEC:		/* executable command */
 	  case CTALIAS:		/* tracked alias */
 		if (!(tp->flag&ISSET)) {
-			/*
-			 * mlj addition:
-			 *
-			 * If you specify a full path to a file
-			 * (or type the name of a file in .) which
-			 * doesn't have execute priv's, it used to
-			 * just say "not found".  Kind of annoying,
-			 * particularly if you just wrote a script
-			 * but forgot to say chmod 755 script.
-			 *
-			 * This should probably be done in eaccess(),
-			 * but it works here (at least I haven't noticed
-			 * changing errno here breaking something
-			 * else).
-			 *
-			 * So, we assume that if the file exists, it
-			 * doesn't have execute privs; else, it really
-			 * is not found.
+			/* errno_ will be set if the named command was found
+			 * but could not be executed (permissions, no execute
+			 * bit, directory, etc).  Print out a (hopefully)
+			 * useful error message and set the exit status to 126.
 			 */
-			if (access(cp, F_OK) < 0)
+			if (tp->u2.errno_) {
+				warningf(TRUE, "%s: cannot execute - %s", cp,
+					strerror(tp->u2.errno_));
+				rv = 126;	/* POSIX */
+			} else {
 				warningf(TRUE, "%s: not found", cp);
-			else
-				warningf(TRUE, "%s: cannot execute", cp);
-			/* XXX posix says 126 if in path and cannot execute */
-			rv = 127;
+				rv = 127;
+			}
 			break;
 		}
 
 		/* set $_ to program's full path */
 		setstr(typeset("_", LOCAL|EXPORT, 0, 0, 0), tp->val.s);
 
-		if ((flags&XEXEC)) {
+		if (flags&XEXEC) {
 			j_exit();
 			if (!(flags&XBGND) || Flag(FMONITOR)) {
 				setexecsig(&sigtraps[SIGINT], SS_RESTORE_ORIG);
@@ -683,7 +733,7 @@ scriptexec(tp, ap)
 
 	shell = str_val(global(EXECSHELL_STR));
 	if (shell && *shell)
-		shell = search(shell, path, X_OK);
+		shell = search(shell, path, X_OK, (int *) 0);
 	if (!shell || !*shell)
 		shell = EXECSHELL;
 
@@ -746,7 +796,7 @@ scriptexec(tp, ap)
 					if (a1)
 						*tp->args-- = a1;
 # ifdef OS2
-					if (a0 != a2 && search_access(a0, X_OK))
+					if (a0 != a2 && search_access(a0, X_OK, (int *) 0))
 						a0 = a2;
 # endif /* OS2 */
 					shell = a0;
@@ -762,7 +812,7 @@ scriptexec(tp, ap)
 
 			 shell = str_val(global("EXECSHELL"));
 			 if (shell && *shell)
-				 shell = search(shell, path, X_OK);
+				 shell = search(shell, path, X_OK, (int *) 0);
 			 if (!shell || !*shell) {
 				 shell = p;
 				 *tp->args-- = "/c";
@@ -809,7 +859,7 @@ findfunc(name, h, create)
 
 	for (l = e->loc; l; l = l->next) {
 		tp = tsearch(&l->funs, name, h);
-		if (tp && (tp->flag & DEFINED))
+		if (tp)
 			break;
 		if (!l->next && create) {
 			tp = tenter(&l->funs, name, h);
@@ -823,25 +873,31 @@ findfunc(name, h, create)
 }
 
 /*
- * define function
+ * define function.  Returns 1 if function is being undefined (t == 0) and
+ * function did not exist, returns 0 otherwise.
  */
 int
 define(name, t)
 	const char *name;
 	struct op *t;
 {
-	register struct tbl *tp;
+	struct tbl *tp;
+	int was_set = 0;
 
-	tp = findfunc(name, hash(name), TRUE);
+	while (1) {
+		tp = findfunc(name, hash(name), TRUE);
 
-	/* If this function is currently being executed, we zap this
-	 * table entry so findfunc() won't see it
-	 */
-	if (tp->flag & FINUSE) {
-		tp->name[0] = '\0';
-		tp->flag &= ~DEFINED; /* ensure it won't be found */
-		tp->flag |= FDELETE;
-		return define(name, t);
+		if (tp->flag & ISSET)
+			was_set = 1;
+		/* If this function is currently being executed, we zap this
+		 * table entry so findfunc() won't see it
+		 */
+		if (tp->flag & FINUSE) {
+			tp->name[0] = '\0';
+			tp->flag &= ~DEFINED; /* ensure it won't be found */
+			tp->flag |= FDELETE;
+		} else
+			break;
 	}
 
 	if (tp->flag & ALLOC) {
@@ -851,11 +907,13 @@ define(name, t)
 
 	if (t == NULL) {		/* undefine */
 		tdelete(tp);
-		return 0;
+		return was_set ? 0 : 1;
 	}
 
-	tp->val.t = tcopy(t, tp->areap);
+	tp->val.t = tcopy(t->left, tp->areap);
 	tp->flag |= (ISSET|ALLOC);
+	if (t->u.ksh_func)
+	    tp->flag |= FKSH;
 
 	return 0;
 }
@@ -869,7 +927,7 @@ builtin(name, func)
 	int (*func) ARGS((char **));
 {
 	register struct tbl *tp;
-	int flag;
+	Tflag flag;
 
 	/* see if any flags should be set for this builtin */
 	for (flag = 0; ; name++) {
@@ -920,10 +978,12 @@ findcom(name, flags)
 	if (!tp && (flags & FC_FUNC)) {
 		tp = findfunc(name, h, FALSE);
 		if (tp && !(tp->flag & ISSET)) {
-			if ((fpath = str_val(global("FPATH"))) == null)
+			if ((fpath = str_val(global("FPATH"))) == null) {
 				tp->u.fpath = (char *) 0;
-			else
-				tp->u.fpath = search(name, fpath, R_OK);
+				tp->u2.errno_ = 0;
+			} else
+				tp->u.fpath = search(name, fpath, R_OK,
+					&tp->u2.errno_);
 		}
 	}
 	if (!tp && (flags & FC_REGBI) && tbi && (tbi->flag & REG_BI))
@@ -964,13 +1024,14 @@ findcom(name, flags)
 			tp->flag = DEFINED;	/* make ~ISSET */
 		}
 		npath = search(name, flags & FC_DEFPATH ? def_path : path,
-				X_OK);
+				X_OK, &tp->u2.errno_);
 		if (npath) {
 			tp->val.s = tp == &temp ? npath : str_save(npath, APERM);
 			tp->flag |= ISSET|ALLOC;
 		} else if ((flags & FC_FUNC)
 			   && (fpath = str_val(global("FPATH"))) != null
-			   && (npath = search(name, fpath, R_OK)) != (char *) 0)
+			   && (npath = search(name, fpath, R_OK,
+					      &tp->u2.errno_)) != (char *) 0)
 		{
 			/* An undocumented feature of at&t ksh is that it
 			 * searches FPATH if a command is not found, even
@@ -1008,20 +1069,29 @@ flushcom(all)
 
 /* Check if path is something we want to find.  Returns -1 for failure. */
 int
-search_access(path, mode)
+search_access(path, mode, errnop)
 	const char *path;
 	int mode;
+	int *errnop;		/* set if candidate found, but not suitable */
 {
 #ifndef OS2
-	int ret = eaccess(path, mode);
+	int ret, err = 0;
 	struct stat statb;
 
-	/* if executable pipes come along, this will have to change */
-	if (ret == 0 && (mode == X_OK)
-	    && (stat(path, &statb) < 0 || !S_ISREG(statb.st_mode)
-	       /* This 'cause access() says root can execute everything */
-	       || !(statb.st_mode & (S_IXUSR|S_IXGRP|S_IXOTH))))
+	if (stat(path, &statb) < 0)
+		return -1;
+	ret = eaccess(path, mode);
+	if (ret < 0)
+		err = errno; /* File exists, but we can't access it */
+	else if (mode == X_OK && (!S_ISREG(statb.st_mode)
+		   /* This 'cause access() says root can execute everything */
+		   || !(statb.st_mode & (S_IXUSR|S_IXGRP|S_IXOTH))))
+	{
 		ret = -1;
+		err = S_ISDIR(statb.st_mode) ? EISDIR : EACCES;
+	}
+	if (err && errnop)
+		*errnop = err;
 	return ret;
 #else /* !OS2 */
 	/*
@@ -1050,7 +1120,7 @@ search_access(path, mode)
 	if ((p = strrchr((p = ksh_strrchr_dirsep(mpath)) ? p : mpath, '.'))) {
 		if (mode == X_OK) 
 			mode = R_OK;
-		return search_access1(mpath, mode);
+		return search_access1(mpath, mode, errnop);
 	}
 	/* Try appending the various suffixes.  Different suffixes for
 	 * read and execute 'cause we don't want to read an executable...
@@ -1058,7 +1128,7 @@ search_access(path, mode)
 	sfx = mode == R_OK ? rsuffixes : xsuffixes;
 	for (i = 0; sfx[i]; i++) {
 		strcpy(tp, p = sfx[i]);
-		if (search_access1(mpath, R_OK) == 0)
+		if (search_access1(mpath, R_OK, errnop) == 0)
 			return 0;
 		*tp = '\0';
 	}
@@ -1068,17 +1138,25 @@ search_access(path, mode)
 
 #ifdef OS2
 static int
-search_access1(path, mode)
+search_access1(path, mode, errnop)
 	const char *path;
 	int mode;
+	int *errnop;		/* set if candidate found, but not suitable */
 {
-	int ret = eaccess(path, mode);
+	int ret, err = 0;
 	struct stat statb;
 
-	/* if executable pipes come along, this will have to change */
-	if (ret == 0 && (mode == X_OK || mode == R_OK)
-	    && (stat(path, &statb) < 0 || !S_ISREG(statb.st_mode)))
+	if (stat(path, &statb) < 0)
+		return -1;
+	ret = eaccess(path, mode);
+	if (ret < 0)
+		err = errno; /* File exists, but we can't access it */
+	else if (!S_ISREG(statb.st_mode)) {
 		ret = -1;
+		err = S_ISDIR(statb.st_mode) ? EISDIR : EACCES;
+	}
+	if (err && errnop)
+		*errnop = err;
 	return ret;
 }
 #endif /* OS2 */
@@ -1087,16 +1165,19 @@ search_access1(path, mode)
  * search for command with PATH
  */
 char *
-search(name, path, mode)
+search(name, path, mode, errnop)
 	const char *name;
 	const char *path;
 	int mode;		/* R_OK or X_OK */
+	int *errnop;		/* set if candidate found, but not suitable */
 {
 	const char *sp, *p;
 	char *xp;
 	XString xs;
 	int namelen;
 
+	if (errnop)
+		*errnop = 0;
 #ifdef OS2
 	/* Xinit() allocates 8 additional bytes, so appended suffixes won't
 	 * overflow the memory.
@@ -1106,18 +1187,18 @@ search(name, path, mode)
 	memcpy(Xstring(xs, xp), name, namelen);
 
  	if (ksh_strchr_dirsep(name)) {
-		if (search_access(Xstring(xs, xp), mode) >= 0)
+		if (search_access(Xstring(xs, xp), mode, errnop) >= 0)
 			return Xstring(xs, xp); /* not Xclose() - see above */
 		Xfree(xs, xp);
 		return NULL;
 	}
 
 	/* Look in current context always. (os2 style) */
-	if (search_access(Xstring(xs, xp), mode) == 0) 
+	if (search_access(Xstring(xs, xp), mode, errnop) == 0) 
 		return Xstring(xs, xp); /* not Xclose() - xp may be wrong */
 #else /* OS2 */
 	if (ksh_strchr_dirsep(name)) {
-		if (search_access(name, mode) == 0)
+		if (search_access(name, mode, errnop) == 0)
 			return (char *) name;
 		return NULL;
 	}
@@ -1140,7 +1221,7 @@ search(name, path, mode)
 		sp = p;
 		XcheckN(xs, xp, namelen);
 		memcpy(xp, name, namelen);
- 		if (search_access(Xstring(xs, xp), mode) == 0)
+ 		if (search_access(Xstring(xs, xp), mode, errnop) == 0)
 #ifdef OS2
  			return Xstring(xs, xp); /* Not Xclose() - see above */
 #else /* OS2 */
@@ -1177,8 +1258,9 @@ call_builtin(tp, wp)
  * set up redirection, saving old fd's in e->savefd
  */
 static int
-iosetup(iop)
+iosetup(iop, tp)
 	register struct ioword *iop;
+	struct tbl *tp;
 {
 	register int u = -1;
 	char *cp = iop->name;
@@ -1197,7 +1279,7 @@ iosetup(iop)
 
 	if (Flag(FXTRACE))
 		shellf("%s%s\n",
-			substitute(str_val(global("PS4")), 0),
+			PS4_SUBSTITUTE(str_val(global("PS4"))),
 			snptreef((char *) 0, 32, "%R", &iotmp));
 
 	switch (iotype) {
@@ -1287,23 +1369,19 @@ iosetup(iop)
 				close(u);
 			return -1;
 		}
-		if (iotype == IODUP) {
-#ifdef KSH
-			if (iop->flag & IORDUP)	/* possible <&p */
-				/* Ensure other side of read pipe is
-				 * closed so EOF can be read properly
-				 */
-				coproc_readw_close(u);
-			else			/* possible >&p */
-				/* If co-process input is duped,
-				 * close shell's copy
-				 */
-				coproc_write_close(u);
-#else /* KSH */
-			;
-#endif /* KSH */
-		} else
+		if (iotype != IODUP)
 			close(u);
+#ifdef KSH
+		/* Touching any co-process fd in an empty exec
+		 * causes the shell to close its copies
+		 */
+		else if (tp && tp->type == CSHELL && tp->val.f == c_exec) {
+			if (iop->flag & IORDUP)	/* possible exec <&p */
+				coproc_read_close(u);
+			else			/* possible exec >&p */
+				coproc_write_close(u);
+		}
+#endif /* KSH */
 	}
 	if (u == 2) /* Clear any write errors */
 		shf_reopen(2, SHF_WR, shl_out);
@@ -1387,27 +1465,35 @@ herein(hname, sub)
  *	print the args in column form - assuming that we can
  */
 static char *
-do_selectargs(ap)
+do_selectargs(ap, print_menu)
 	register char **ap;
+	bool_t print_menu;
 {
 	static const char *const read_args[] = {
 					"read", "-r", "REPLY", (char *) 0
 				    };
 	char *s;
-	int i, UNINITIALIZED(argct);
+	int i, argct;
 
+	for (argct = 0; ap[argct]; argct++)
+		;
 	while (1) {
-		argct = pr_menu(ap);
+		/* Menu is printed if
+		 *	- this is the first time around the select loop
+		 *	- the user enters a blank line
+		 *	- the REPLY parameter is empty
+		 */
+		if (print_menu || !*str_val(global("REPLY")))
+			pr_menu(ap);
 		shellf("%s", str_val(global("PS3")));
 		if (call_builtin(findcom("read", FC_BI), (char **) read_args))
 			return (char *) 0;
 		s = str_val(global("REPLY"));
-		while (*s && isspace(*s))
-			s++;
 		if (*s) {
 			i = atoi(s);
 			return (i >= 1 && i <= argct) ? ap[i - 1] : null;
 		}
+		print_menu = 1;
 	}
 }
 

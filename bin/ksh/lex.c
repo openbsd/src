@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.1.1.1 1996/08/14 06:19:11 downsj Exp $	*/
+/*	$OpenBSD: lex.c,v 1.2 1996/08/19 20:08:55 downsj Exp $	*/
 
 /*
  * lexical analysis and source input
@@ -968,6 +968,7 @@ set_prompt(to, s)
 
 	switch (to) {
 	case PS1: /* command */
+#ifdef KSH
 		/* Substitute ! and !! here, before substitutions are done
 		 * so ! in expanded variables are not expanded.
 		 * NOTE: this is not what at&t ksh does (it does it after
@@ -993,12 +994,20 @@ set_prompt(to, s)
 			newenv(E_ERRH);
 			if (ksh_sigsetjmp(e->jbuf, 0)) {
 				prompt = safe_prompt;
-				warningf(TRUE, "error during expansion of PS1");
+				/* Don't print an error - assume it has already
+				 * been printed.  Reason is we may have forked
+				 * to run a command and the child may be
+				 * unwinding its stack through this code as it
+				 * exits.
+				 */
 			} else
 				prompt = str_save(substitute(ps1, 0),
 						 saved_atemp);
 			quitenv();
 		}
+#else /* KSH */
+		prompt = str_val(global("PS1"));
+#endif /* KSH */
 		break;
 
 	case PS2: /* command continuation */

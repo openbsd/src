@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.h,v 1.1.1.1 1996/08/14 06:19:10 downsj Exp $	*/
+/*	$OpenBSD: edit.h,v 1.2 1996/08/19 20:08:48 downsj Exp $	*/
 
 /* NAME:
  *      edit.h - globals for edit modes
@@ -50,13 +50,10 @@ void 	x_putc		ARGS((int c));
 void 	x_puts		ARGS((const char *s));
 bool_t 	x_mode		ARGS((bool_t onoff));
 int 	promptlen	ARGS((const char *cp, const char **spp));
-int	x_complete_word ARGS((const char *str, int slen, int is_command, int *multiple, char **ret));
+int	x_do_comment	ARGS((char *buf, int bsize, int *lenp));
 void	x_print_expansions ARGS((int nwords, char *const *words, int is_command));
-int	x_locate_word ARGS((const char *buf, int buflen, int pos, int *startp, int *is_command));
 int	x_cf_glob ARGS((int flags, const char *buf, int buflen, int pos, int *startp,
 			  int *endp, char ***wordsp, int *is_commandp));
-int	x_file_glob ARGS((int flags, const char *str, int slen, char ***wordsp));
-int	x_command_glob ARGS((int flags, const char *str, int slen, char ***wordsp));
 int	x_longest_prefix ARGS((int nwords, char *const *words));
 int	x_basename ARGS((const char *s, const char *se));
 void	x_free_words ARGS((int nwords, char **words));

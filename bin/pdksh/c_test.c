@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_test.c,v 1.1.1.1 1996/08/14 06:19:10 downsj Exp $	*/
+/*	$OpenBSD: c_test.c,v 1.2 1996/08/19 20:08:47 downsj Exp $	*/
 
 /*
  * test(1); version 7-like  --  author Erik Baalbergen
@@ -27,7 +27,7 @@
 			   "-u"|"-g"|"-k"|"-s"|"-t"|"-z"|"-n"|"-o"|"-O"|"-G"|
 			   "-L"|"-h"|"-S"|"-H";
 
-	binary-operator ::= "="|"!="|"-eq"|"-ne"|"-ge"|"-gt"|"-le"|"-lt"|
+	binary-operator ::= "="|"=="|"!="|"-eq"|"-ne"|"-ge"|"-gt"|"-le"|"-lt"|
 			    "-nt"|"-ot"|"-ef"|
 			    "<"|">"	# rules used for [[ .. ]] expressions
 			    ;
@@ -69,6 +69,9 @@ static const struct t_op u_ops [] = {
     };
 static const struct t_op b_ops [] = {
 	{"=",	TO_STEQL },
+#ifdef KSH
+	{"==",	TO_STEQL },
+#endif /* KSH */
 	{"!=",	TO_STNEQ },
 	{"<",	TO_STLT },
 	{">",	TO_STGT },

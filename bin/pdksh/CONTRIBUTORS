@@ -1,4 +1,4 @@
-$OpenBSD: CONTRIBUTORS,v 1.1.1.1 1996/08/14 06:19:10 downsj Exp $
+$OpenBSD: CONTRIBUTORS,v 1.2 1996/08/19 20:08:40 downsj Exp $
 
 This is a partial history of this shell gleened from old change logs and
 readmes (most of which are still in the misc directory) and the source
@@ -87,7 +87,11 @@ Other contributors:
     * Paul Borman (<prb@bsdi.com>): j_exit: send HUP, then CONT; HUP fg process.
     * DaviD W. Sanderson (<dws@ssec.wisc.edu>): patches to allow { .. } instead
       of in .. esac in case statements.
+    * ? (<ra@rhi.hi.is>): partial patches to handle SIGWINCH for command line
+      editing.
     * Jason Tyler (<jason@nc.bhpese.oz.au>): fixes for bugs in fc.
     * Stefan Dalibor (<Stefan.Dalibor@informatik.uni-erlangen.de>): fix for
       COLUMNS never being set in x_init().
     * Arnon Kanfi (<arnon@gilly.datatools.com>): fix for prompt.
+    * Marc Olzheim (<marcolz@stack.urc.tue.nl>): patches to ifdef KSH the
+      mail check code and aliases.

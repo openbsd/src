@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.1.1.1 1996/08/14 06:19:11 downsj Exp $	*/
+/*	$OpenBSD: main.c,v 1.2 1996/08/19 20:08:56 downsj Exp $	*/
 
 /*
  * startup, main loop, enviroments and error handling
@@ -41,9 +41,9 @@ static	const char *const initcoms [] = {
 	"typeset", "-x", "SHELL", "PATH", "HOME", NULL,
 	"typeset", "-r", version_param, NULL,
 	"typeset", "-ri", "PPID", NULL,
-	"typeset", "-i", "OPTIND=1", "MAILCHECK=600",
+	"typeset", "-i", "OPTIND=1",
 #ifdef KSH
-	    "SECONDS=0", "RANDOM", "TMOUT=0",
+	    "MAILCHECK=600", "RANDOM", "SECONDS=0", "TMOUT=0",
 #endif /* KSH */
 	    NULL,
 	"alias",
@@ -278,7 +278,7 @@ main(argc, argv)
 		 * This changes the behavior of 'ksh arg' to search
 		 * the users search path but it can't be helped.
 		 */
-		s->file = search(argv[argi++], path, R_OK);
+		s->file = search(argv[argi++], path, R_OK, (int *) 0);
 		if (!s->file || !*s->file)
 		        s->file = argv[argi - 1];
 #else
@@ -406,7 +406,9 @@ main(argc, argv)
 
 	if (Flag(FTALKING)) {
 		hist_init(s);
+#ifdef KSH
 		alarm_init();
+#endif /* KSH */
 	} else
 		Flag(FTRACKALL) = 1;	/* set after ENV */
 
@@ -568,7 +570,9 @@ shell(s, toplevel)
 
 		if (interactive) {
 			j_notify();
+#ifdef KSH
 			mcheck();
+#endif /* KSH */
 			set_prompt(PS1, s);
 		}
 

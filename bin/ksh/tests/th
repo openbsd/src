@@ -169,7 +169,13 @@ foreach $env (('USER', 'LOGNAME', 'HOME', 'PATH', 'SHELL')) {
     $new_env{$env} = $ENV{$env} if defined $ENV{$env};
 }
 %old_env = %ENV;
-%ENV = %new_env;
+
+# The following doesn't work with perl5...  Need to do it explicitly - yuck.
+#%ENV = %new_env;
+foreach $k (keys(%ENV)) {
+    delete $ENV{$k};
+}
+$ENV{$k} = $v while ($k,$v) = each %new_env;
 
 die "$prog: couldn't make directory $tempdir - $!\n" if !mkdir($tempdir, 0777);
 

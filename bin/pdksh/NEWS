@@ -1,4 +1,39 @@
-$OpenBSD: NEWS,v 1.1.1.1 1996/08/14 06:19:10 downsj Exp $
+$OpenBSD: NEWS,v 1.2 1996/08/19 20:08:42 downsj Exp $
+
+Version 5.2.8
+
+* bug fixes
+    * configuration: handle FreeBSD's strange S_ISSOCK.
+    * test: added == operator.
+    * configuration: fixed opendir/dirent usage.
+    * redirections before subshells handled correctly.
+    * COLUMNS/LINES are no longer exported when they are automatically set.
+    * mail checks and PS1/PS4 expansions removed if compiled as sh.
+    * subcommands in PS1 no longer genereate bogus warning messages.
+    * environment variables not longer messed up on 16-bit machines.
+    * unset: now returns non-zero if variable/function isn't set.
+    * select: only prints menu first time, if REPLY is null or on blank line.
+    * check for `cannot execute' imporved, error message says why.
+    * typeset: now reports variables with attributes but now value.
+    * vi/emacs file completion: does directory listing on zero length names.
+    * arithmetic: non-numeric parameters expanded recursively.
+    * arithmetic: identifiers in unevaluated part of ?:,&&,|| parsed correctly.
+    * functions: unsetting a function within itself is now safe.
+    * arrays: unsetting element 0 of an array no longer kills the whole array.
+    * co-processes now behave like ksh93 co-processes (and less like ksh88).
+
+* functions declared with "function foo" are treated differently (from those
+  declared with "foo()"): $0 is (not) set to the function name, assignments
+  before function calls aren't (are) kept in the parent shell.
+
+* vi: added vi-esccomplete option for people who want ESC-ESC completion.
+
+* vi/emacs: now notice window size changes (but not while editing a line).
+
+* emacs: <esc># now does the comment/uncomment thing.
+
+* arithmetic: ++, -- and , added.
+
 
 Version 5.2.7
 

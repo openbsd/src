@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ksh.c,v 1.1.1.1 1996/08/14 06:19:10 downsj Exp $	*/
+/*	$OpenBSD: c_ksh.c,v 1.2 1996/08/19 20:08:45 downsj Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -280,7 +280,7 @@ c_print(wp)
 				break;
 #ifdef KSH
 			  case 'p':
-				if ((fd = get_coproc_fd(W_OK, &emsg)) < 0) {
+				if ((fd = coproc_getfd(W_OK, &emsg)) < 0) {
 					bi_errorf("-p: %s", emsg);
 					return 1;
 				}
@@ -378,9 +378,9 @@ c_print(wp)
 		Xfree(xs, xp);
 	} else {
 		int n, len = Xlength(xs, xp);
+#ifdef KSH
 		int UNINITIALIZED(opipe);
 
-#ifdef KSH
 		/* Ensure we aren't killed by a SIGPIPE while writing to
 		 * a coprocess.  at&t ksh doesn't seem to do this (seems
 		 * to just check that the co-process is alive, which is
@@ -404,16 +404,22 @@ c_print(wp)
 					continue;
 				}
 #ifdef KSH
-				if (errno == EPIPE)
-					coproc_write_close(fd);
+				/* This doesn't really make sense - could
+				 * break scripts (print -p generates
+				 * error message).
+				*if (errno == EPIPE)
+				*	coproc_write_close(fd);
+				 */
 #endif /* KSH */
 				return 1;
 			}
 			s += n;
 			len -= n;
 		}
+#ifdef KSH
 		if (flags & PO_COPROC)
 			restore_pipe(opipe);
+#endif /* KSH */
 	}
 
 	return 0;
@@ -559,12 +565,13 @@ c_typeset(wp)
 {
 	struct block *l = e->loc;
 	struct tbl *vp, **p;
-	int fset = 0, fclr = 0;
+	Tflag fset = 0, fclr = 0;
 	int thing = 0, func = 0, local = 0;
 	const char *options = "L#R#UZ#fi#lrtux";	/* see comment below */
 	char *fieldstr, *basestr;
 	int field, base;
-	int optc, flag;
+	int optc;
+	Tflag flag;
 	int pflag = 0;
 
 	switch (**wp) {
@@ -757,8 +764,6 @@ c_typeset(wp)
 	    for (l = e->loc; l; l = l->next) {
 		for (p = tsort(&l->vars); (vp = *p++); )
 		    for (; vp; vp = vp->u.array) {
-			if (!(vp->flag&ISSET))
-			    continue;
 			if (flag && (vp->flag & flag) == 0)
 			    continue;
 			/* no arguments */
@@ -777,9 +782,9 @@ c_typeset(wp)
 			    if ((vp->flag&TRACE)) 
 				shprintf("-t ");
 			    if ((vp->flag&LJUST)) 
-				shprintf("-L%d ", vp->field);
+				shprintf("-L%d ", vp->u2.field);
 			    if ((vp->flag&RJUST)) 
-				shprintf("-R%d ", vp->field);
+				shprintf("-R%d ", vp->u2.field);
 			    if ((vp->flag&ZEROFIL)) 
 				shprintf("-Z ");
 			    if ((vp->flag&LCASEV)) 
@@ -800,7 +805,7 @@ c_typeset(wp)
 				shprintf("%s[%d]", vp->name, vp->index);
 			    else
 				shprintf("%s", vp->name);
-			    if (thing == '-') {
+			    if (thing == '-' && (vp->flag&ISSET)) {
 				char *s = str_val(vp);
 
 				shprintf("=");
@@ -824,7 +829,8 @@ c_alias(wp)
 	char **wp;
 {
 	struct table *t = &aliases;
-	int rv = 0, rflag = 0, tflag, Uflag = 0, xflag = 0;
+	int rv = 0, rflag = 0, tflag, Uflag = 0;
+	Tflag xflag = 0;
 	int optc;
 
 	while ((optc = ksh_getopt(wp, &builtin_opt, "drtUx")) != EOF)
@@ -910,7 +916,8 @@ c_alias(wp)
 				afree((void*)ap->val.s, APERM);
 			}
 			/* ignore values for -t (at&t ksh does this) */
-			newval = tflag ? search(alias, path, X_OK) : val;
+			newval = tflag ? search(alias, path, X_OK, (int *) 0)
+					: val;
 			if (newval) {
 				ap->val.s = str_save(newval, APERM);
 				ap->flag |= ALLOC|ISSET;
@@ -1281,26 +1288,32 @@ c_getopts(wp)
 		buf[0] = optc < 0 ? '?' : optc;
 		buf[1] = '\0';
 	}
-	vq = global(var);
-	if (vq->flag & RDONLY)
-		bi_errorf("%s is readonly", var);
-	if (Flag(FEXPORT))
-		typeset(var, EXPORT, 0, 0, 0);
-	setstr(vq, buf);
 
-	getopts_noset = 1;
-	setint(global("OPTIND"), (long) user_opt.optind);
-	getopts_noset = 0;
+	/* at&t ksh does not change OPTIND if it was an unknown option.
+	 * Scripts counting on this are prone to break... (ie, don't count
+	 * on this staying).
+	 */
+	if (optc != '?') {
+		getopts_noset = 1;
+		setint(global("OPTIND"), (long) user_opt.optind);
+		getopts_noset = 0;
+	}
 
 	if (user_opt.optarg == (char *) 0)
 		unset(global("OPTARG"), 0);
 	else
 		setstr(global("OPTARG"), user_opt.optarg);
 
-	if (optc < 0)
+	vq = global(var);
+	if (vq->flag & RDONLY) {
+		bi_errorf("%s is readonly", var);
 		return 1;
+	}
+	if (Flag(FEXPORT))
+		typeset(var, EXPORT, 0, 0, 0);
+	setstr(vq, buf);
 
-	return 0;
+	return optc < 0 ? 1 : 0;
 }
 
 #ifdef EMACS

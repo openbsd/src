@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.h,v 1.1.1.1 1996/08/14 06:19:12 downsj Exp $	*/
+/*	$OpenBSD: table.h,v 1.2 1996/08/19 20:09:00 downsj Exp $	*/
 
 /* $From: table.h,v 1.3 1994/05/31 13:34:34 michael Exp $ */
 
@@ -13,7 +13,7 @@ struct table {
 };
 
 struct tbl {			/* table item */
-	INT32	flag;		/* flags */
+	Tflag	flag;		/* flags */
 	int	type;		/* command type (see below), base (if INTEGER),
 				 * or offset from val.s of value (if EXPORT) */
 	Area	*areap;		/* area to allocate from */
@@ -24,7 +24,10 @@ struct tbl {			/* table item */
 		struct op *t;	/* "function" tree */
 	} val;			/* value */
 	int	index;		/* index for an array */
-	int	field;		/* field with for -L/-R/-Z */
+	union {
+	    int	field;		/* field with for -L/-R/-Z */
+	    int errno_;		/* CEXEC/CTALIAS */
+	} u2;
 	union {
 		struct tbl *array;	/* array values */
 		char *fpath;		/* temporary path to undef function */
@@ -54,12 +57,15 @@ struct tbl {			/* table item */
 #define INT_L		BIT(20)	/* long integer (no-op) */
 #define IMPORT		BIT(21)	/* flag to typeset(): no arrays, must have = */
 #define LOCAL_COPY	BIT(22)	/* with LOCAL - copy attrs from existing var */
+#define EXPRINEVAL	BIT(23)	/* contents currently being evaluated */
+#define EXPRLVALUE	BIT(24)	/* useable as lvalue (temp flag) */
 /* flag bits used for taliases/builtins/aliases/keywords/functions */
 #define KEEPASN		BIT(8)	/* keep command assignments (eg, var=x cmd) */
 #define FINUSE		BIT(9)	/* function being executed */
 #define FDELETE		BIT(10)	/* function deleted while it was executing */
-#define SPEC_BI		BIT(11)	/* a POSIX special builtin */
-#define REG_BI		BIT(12)	/* a POSIX regular builtin */
+#define FKSH		BIT(11)	/* function defined with function x (vs x()) */
+#define SPEC_BI		BIT(12)	/* a POSIX special builtin */
+#define REG_BI		BIT(13)	/* a POSIX regular builtin */
 
 /* command types */
 #define	CNONE	0		/* undefined */

@@ -1,21 +1,10 @@
-/*	$OpenBSD: expr.c,v 1.1.1.1 1996/08/14 06:19:11 downsj Exp $	*/
+/*	$OpenBSD: expr.c,v 1.2 1996/08/19 20:08:50 downsj Exp $	*/
 
 /*
  * Korn expression evaluation
  */
 /*
  * todo: better error handling: if in builtin, should be builtin error, etc.
- * todo: add ++ --
- * todo: recursive variable expansion (y=1;x=y; let x)
-    how to deal with allowing:
-	i=0
-	set -A x 'x[1]' 'x[2]' 'x[3]' 99
-	let z=x[i+=1]
-	echo $z
-	99
-    and disallowing:
-	x='y[x]'
-	let z=x
  */
 
 #include "sh.h"
@@ -24,8 +13,10 @@
 
 /* The order of these enums is constrained by the order of opinfo[] */
 enum token {
+	/* some (long) unary operators */
+	O_PLUSPLUS = 0, O_MINUSMINUS,
 	/* binary operators */
-	O_EQ = 0, O_NE,
+	O_EQ, O_NE,
 	/* assignments are assumed to be in range O_ASN .. O_BORASN */
 	O_ASN, O_TIMESASN, O_DIVASN, O_MODASN, O_PLUSASN, O_MINUSASN,
 	       O_LSHIFTASN, O_RSHIFTASN, O_BANDASN, O_BXORASN, O_BORASN,
@@ -39,6 +30,7 @@ enum token {
 	O_BXOR,
 	O_BOR,
 	O_TERN,
+	O_COMMA,
 	/* things after this aren't used as binary operators */
 	/* unary that are not also binaries */
 	O_BNOT, O_LNOT,
@@ -47,7 +39,7 @@ enum token {
 	/* things that don't appear in the opinfo[] table */
 	VAR, LIT, END, BAD
     };
-#define LAST_BINOP O_TERN
+#define IS_BINOP(op) (((int)op) >= O_EQ && ((int)op) <= O_COMMA)
 #define IS_ASSIGNOP(op)	((int)(op) >= (int)O_ASN && (int)(op) <= (int)O_BORASN)
 
 enum prec {
@@ -63,9 +55,10 @@ enum prec {
 	P_LAND,			/* && */
 	P_LOR,			/* || */
 	P_TERN,			/* ?: */
-	P_ASSIGN		/* = *= /= %= += -= <<= >>= &= ^= |= */
+	P_ASSIGN,		/* = *= /= %= += -= <<= >>= &= ^= |= */
+	P_COMMA			/* , */
     };
-#define MAX_PREC	P_ASSIGN
+#define MAX_PREC	P_COMMA
 
 struct opinfo {
 	char		name[4];
@@ -78,6 +71,8 @@ struct opinfo {
  * of enum token too.
  */
 static const struct opinfo opinfo[] = {
+		{ "++",	 2, P_PRIMARY },	/* before + */
+		{ "--",	 2, P_PRIMARY },	/* before - */
 		{ "==",	 2, P_EQUALITY },	/* before = */
 		{ "!=",	 2, P_EQUALITY },	/* before ! */
 		{ "=",	 1, P_ASSIGN },		/* keep assigns in a block */
@@ -108,6 +103,7 @@ static const struct opinfo opinfo[] = {
 		{ "^",	 1, P_BXOR },
 		{ "|",	 1, P_BOR },
 		{ "?",	 1, P_TERN },
+		{ ",",	 1, P_COMMA },
 		{ "~",	 1, P_PRIMARY },
 		{ "!",	 1, P_PRIMARY },
 		{ "(",	 1, P_PRIMARY },
@@ -122,12 +118,16 @@ struct expr_state {
 	const char *expression;		/* expression being evaluated */
 	const char *tokp;		/* lexical position */
 	enum token  tok;		/* token from token() */
-	int	    noassign;		/* don't do assignments (for ?:) */
+	int	    noassign;		/* don't do assigns (for ?:,&&,||) */
 	struct tbl *val;		/* value from token() */
+	struct tbl *evaling;		/* variable that is being recursively
+					 * expanded (EXPRINEVAL flag set)
+					 */
 	Expr_state *volatile prev;	/* previous state */
 };
 
-enum error_type { ET_UNEXPECTED, ET_BADLIT, ET_BADVAR, ET_STR };
+enum error_type { ET_UNEXPECTED, ET_BADLIT, ET_RECURSIVE,
+		  ET_LVALUE, ET_RDONLY, ET_STR };
 
 static Expr_state *es;
 
@@ -135,6 +135,9 @@ static void        evalerr  ARGS((enum error_type type, const char *str))
 						GCC_FUNC_ATTR(noreturn);
 static struct tbl *evalexpr ARGS((enum prec prec));
 static void        token    ARGS((void));
+static struct tbl *do_ppmm  ARGS((enum token op, struct tbl *vasn,
+				  bool_t is_prefix));
+static void	   assign_check ARGS((enum token op, struct tbl *vasn));
 static struct tbl *tempvar  ARGS((void));
 static struct tbl *intvar   ARGS((struct tbl *vp));
 
@@ -174,11 +177,15 @@ v_evaluate(vp, expr, error_ok)
 	curstate.expression = curstate.tokp = expr;
 	curstate.noassign = 0;
 	curstate.prev = es;
+	curstate.evaling = (struct tbl *) 0;
 	es = &curstate;
 
 	newenv(E_ERRH);
 	i = ksh_sigsetjmp(e->jbuf, 0);
 	if (i) {
+		/* Clear EXPRINEVAL in of any variables we were playing with */
+		if (curstate.evaling)
+			curstate.evaling->flag &= ~EXPRINEVAL;
 		quitenv();
 		es = curstate.prev;
 		if (i == LAEXPR) {
@@ -248,8 +255,18 @@ evalerr(type, str)
 		warningf(TRUE, "%s: bad number `%s'", es->expression, str);
 		break;
 
-	case ET_BADVAR:
-		warningf(TRUE, "%s: value of variable `%s' not a number",
+	case ET_RECURSIVE:
+		warningf(TRUE, "%s: expression recurses on parameter `%s'",
+			es->expression, str);
+		break;
+
+	case ET_LVALUE:
+		warningf(TRUE, "%s: %s requires lvalue",
+			es->expression, str);
+		break;
+
+	case ET_RDONLY:
+		warningf(TRUE, "%s: %s applied to read only variable",
 			es->expression, str);
 		break;
 
@@ -289,6 +306,10 @@ evalexpr(prec)
 			if (es->tok != CLOSE_PAREN)
 				evalerr(ET_STR, "missing )");
 			token();
+		} else if (op == O_PLUSPLUS || op == O_MINUSMINUS) {
+			token();
+			vl = do_ppmm(op, es->val, TRUE);
+			token();
 		} else if (op == VAR || op == LIT) {
 			vl = es->val;
 			token();
@@ -296,20 +317,22 @@ evalexpr(prec)
 			evalerr(ET_UNEXPECTED, (char *) 0);
 			/*NOTREACHED*/
 		}
+		if (es->tok == O_PLUSPLUS || es->tok == O_MINUSMINUS) {
+			vl = do_ppmm(es->tok, vl, FALSE);
+			token();
+		}
 		return vl;
 	}
 	vl = evalexpr(((int) prec) - 1);
-	while ((int) (op = es->tok) <= (int) LAST_BINOP && opinfo[(int) op].prec == prec) {
+	for (op = es->tok; IS_BINOP(op) && opinfo[(int) op].prec == prec;
+		op = es->tok)
+	{
 		token();
 		vasn = vl;
 		if (op != O_ASN) /* vl may not have a value yet */
 			vl = intvar(vl);
 		if (IS_ASSIGNOP(op)) {
-			if (vasn->name[0] == '\0')
-				evalerr(ET_STR, "assignment to non-lvalue");
-			else if (vasn->flag & RDONLY)
-				evalerr(ET_STR,
-					"assignment to read only variable");
+			assign_check(op, vasn);
 			vr = intvar(evalexpr(P_ASSIGN));
 		} else if (op != O_TERN && op != O_LAND && op != O_LOR)
 			vr = intvar(evalexpr(((int) prec) - 1));
@@ -409,13 +432,16 @@ evalexpr(prec)
 				token();
 				if (e)
 					es->noassign++;
-				vr = evalexpr(MAX_PREC);
+				vr = evalexpr(P_TERN);
 				if (e)
 					es->noassign--;
 				vl = e ? vl : vr;
 			}
 			break;
 		case O_ASN:
+			res = vr->val.i;
+			break;
+		case O_COMMA:
 			res = vr->val.i;
 			break;
 		}
@@ -447,20 +473,21 @@ token()
 	if (c == '\0')
 		es->tok = END;
 	else if (letter(c)) {
-		for (; letnum(c); c = *cp++)
-			;
+		for (; letnum(c); c = *cp)
+			cp++;
 		if (c == '[') {
 			int len;
 
-			len = array_ref_len(cp - 1);
+			len = array_ref_len(cp);
 			if (len == 0)
 				evalerr(ET_STR, "missing ]");
 			cp += len;
 		}
-		if (es->noassign)
+		if (es->noassign) {
 			es->val = tempvar();
-		else {
-			tvar = str_nsave(es->tokp, --cp - es->tokp, ATEMP);
+			es->val->flag |= EXPRLVALUE;
+		} else {
+			tvar = str_nsave(es->tokp, cp - es->tokp, ATEMP);
 			es->val = global(tvar);
 			afree(tvar, ATEMP);
 		}
@@ -494,6 +521,41 @@ token()
 	es->tokp = cp;
 }
 
+/* Do a ++ or -- operation */
+static struct tbl *
+do_ppmm(op, vasn, is_prefix)
+	enum token op;
+	struct tbl *vasn;
+	bool_t is_prefix;
+{
+	struct tbl *vl;
+	int oval;
+
+	assign_check(op, vasn);
+
+	vl = intvar(vasn);
+	oval = op == O_PLUSPLUS ? vl->val.i++ : vl->val.i--;
+	if (vasn->flag & INTEGER)
+		setint_v(vasn, vl);
+	else
+		setint(vasn, vl->val.i);
+	if (!is_prefix)		/* undo the inc/dec */
+		vl->val.i = oval;
+
+	return vl;
+}
+
+static void
+assign_check(op, vasn)
+	enum token op;
+	struct tbl *vasn;
+{
+	if (vasn->name[0] == '\0' && !(vasn->flag & EXPRLVALUE))
+		evalerr(ET_LVALUE, opinfo[op].name);
+	else if (vasn->flag & RDONLY)
+		evalerr(ET_RDONLY, opinfo[op].name);
+}
+
 static struct tbl *
 tempvar()
 {
@@ -517,22 +579,18 @@ intvar(vp)
 
 	/* try to avoid replacing a temp var with another temp var */
 	if (vp->name[0] == '\0'
-	    && (vp->flag & (ISSET|INTEGER)) == (ISSET|INTEGER))
+	    && (vp->flag & (ISSET|INTEGER|EXPRLVALUE)) == (ISSET|INTEGER))
 		return vp;
 
 	vq = tempvar();
-	vq->type = 0;
 	if (setint_v(vq, vp) == NULL) {
-		evalerr(ET_BADVAR, vp->name);
-		/*
-		if ((vp->flag&ISSET) && vp->val.s && *(vp->val.s)) {
-			evalerr("bad number");
-		} else {
-			vq->flag |= (ISSET|INTEGER);
-			vq->type = 10;
-			vq->val.i = 0;
-		}
-		*/
+		if (vp->flag & EXPRINEVAL)
+			evalerr(ET_RECURSIVE, vp->name);
+		es->evaling = vp;
+		vp->flag |= EXPRINEVAL;
+		v_evaluate(vq, str_val(vp), FALSE);
+		vp->flag &= ~EXPRINEVAL;
+		es->evaling = (struct tbl *) 0;
 	}
 	return vq;
 }

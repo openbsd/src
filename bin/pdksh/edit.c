@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.1.1.1 1996/08/14 06:19:10 downsj Exp $	*/
+/*	$OpenBSD: edit.c,v 1.2 1996/08/19 20:08:47 downsj Exp $	*/
 
 /*
  * Command line editing - common code
@@ -20,7 +20,21 @@
 #include <ctype.h>
 #include "ksh_stat.h"
 
-static char	vdisable_c;
+
+#if defined(TIOCGWINSZ)
+static RETSIGTYPE x_sigwinch ARGS((int sig));
+static int got_sigwinch;
+static void check_sigwinch ARGS((void));
+#endif /* TIOCGWINSZ */
+
+static int	x_file_glob ARGS((int flags, const char *str, int slen,
+				  char ***wordsp));
+static int	x_command_glob ARGS((int flags, const char *str, int slen,
+				     char ***wordsp));
+static int	x_locate_word ARGS((const char *buf, int buflen, int pos,
+				    int *startp, int *is_command));
+
+static char vdisable_c;
 
 
 /* Called from main */
@@ -32,26 +46,15 @@ x_init()
 		= edchars.eof = -1;
 	/* default value for deficient systems */
 	edchars.werase = 027;	/* ^W */
+
 #ifdef TIOCGWINSZ
-	{
-		struct winsize ws;
-
-		if (ioctl(tty_fd, TIOCGWINSZ, &ws) >= 0) {
-			struct tbl *vp;
-
-			if (ws.ws_col) {
-				x_cols = ws.ws_col < MIN_COLS ? MIN_COLS
-						: ws.ws_col;
-				
-				if ((vp = typeset("COLUMNS", EXPORT, 0, 0, 0)))
-					setint(vp, (long) ws.ws_col);
-			}
-			if (ws.ws_row
-			    && (vp = typeset("LINES", EXPORT, 0, 0, 0)))
-				setint(vp, (long) ws.ws_row);
-		}
-	}
+# ifdef SIGWINCH
+	if (setsig(&sigtraps[SIGWINCH], x_sigwinch, SS_RESTORE_ORIG|SS_SHTRAP))
+		sigtraps[SIGWINCH].flags |= TF_SHELL_USES;
+# endif /* SIGWINCH */
+	check_sigwinch();
 #endif /* TIOCGWINSZ */
+
 #ifdef EMACS
 	x_init_emacs();
 #endif /* EMACS */
@@ -74,6 +77,46 @@ x_init()
 #endif /* _POSIX_VDISABLE */
 }
 
+#if defined(TIOCGWINSZ)
+static RETSIGTYPE
+x_sigwinch(sig)
+    	int sig;
+{
+	got_sigwinch = 1;
+	return RETSIGVAL;
+}
+
+static void
+check_sigwinch ARGS((void))
+{
+	if (got_sigwinch) {
+		struct winsize ws;
+
+		got_sigwinch = 0;
+		if (procpid == kshpid && ioctl(tty_fd, TIOCGWINSZ, &ws) >= 0) {
+			struct tbl *vp;
+
+			/* Do NOT export COLUMNS/LINES.  Many applications
+			 * check COLUMNS/LINES before checking ws.ws_col/row,
+			 * so if the app is started with C/L in the environ
+			 * and the window is then resized, the app won't
+			 * see the change cause the environ doesn't change.
+			 */
+			if (ws.ws_col) {
+				x_cols = ws.ws_col < MIN_COLS ? MIN_COLS
+						: ws.ws_col;
+				
+				if ((vp = typeset("COLUMNS", 0, 0, 0, 0)))
+					setint(vp, (long) ws.ws_col);
+			}
+			if (ws.ws_row
+			    && (vp = typeset("LINES", 0, 0, 0, 0)))
+				setint(vp, (long) ws.ws_row);
+		}
+	}
+}
+#endif /* TIOCGWINSZ */
+
 /*
  * read an edited command line
  */
@@ -83,6 +126,11 @@ x_read(buf, len)
 	size_t len;
 {
 	int	i;
+
+#if defined(TIOCGWINSZ)
+	if (got_sigwinch)
+		check_sigwinch();
+#endif /* TIOCGWINSZ */
 
 	x_mode(TRUE);
 #ifdef EMACS
@@ -330,6 +378,61 @@ set_editmode(ed)
 }
 
 /* ------------------------------------------------------------------------- */
+/*           Misc common code for vi/emacs				     */
+
+/* Handle the commenting/uncommenting of a line.
+ * Returns:
+ *	1 if a carriage return is indicated (comment added)
+ *	0 if no return (comment removed)
+ *	-1 if there is an error (not enough room for comment chars)
+ * If successful, *lenp contains the new length.  Note: cursor should be
+ * moved to the start of the line after (un)commenting.
+ */
+int
+x_do_comment(buf, bsize, lenp)
+	char *buf;
+	int bsize;
+	int *lenp;
+{
+	int i, j;
+	int len = *lenp;
+
+	if (len == 0)
+		return 1; /* somewhat arbitrary - it's what at&t ksh does */
+
+	/* Already commented? */
+	if (buf[0] == '#') {
+		int saw_nl = 0;
+
+		for (j = 0, i = 1; i < len; i++) {
+			if (!saw_nl || buf[i] != '#')
+				buf[j++] = buf[i];
+			saw_nl = buf[i] == '\n';
+		}
+		*lenp = j;
+		return 0;
+	} else {
+		int n = 1;
+
+		/* See if there's room for the #'s - 1 per \n */
+		for (i = 0; i < len; i++)
+			if (buf[i] == '\n')
+				n++;
+		if (len + n >= bsize)
+			return -1;
+		/* Now add them... */
+		for (i = len, j = len + n; --i >= 0; ) {
+			if (buf[i] == '\n')
+				buf[--j] = '#';
+			buf[--j] = buf[i];
+		}
+		buf[0] = '#';
+		*lenp += n;
+		return 1;
+	}
+}
+
+/* ------------------------------------------------------------------------- */
 /*           Common file/command completion code for vi/emacs	             */
 
 
@@ -338,7 +441,9 @@ static void	glob_table ARGS((const char *pat, XPtrV *wp, struct table *tp));
 static void	glob_path ARGS((int flags, const char *pat, XPtrV *wp,
 				const char *path));
 
-/* XXX not used... */
+#if 0 /* not used... */
+int	x_complete_word ARGS((const char *str, int slen, int is_command,
+			      int *multiple, char **ret));
 int
 x_complete_word(str, slen, is_command, nwordsp, ret)
 	const char *str;
@@ -364,6 +469,7 @@ x_complete_word(str, slen, is_command, nwordsp, ret)
 	x_free_words(nwords, words);
 	return prefix_len;
 }
+#endif /* 0 */
 
 void
 x_print_expansions(nwords, words, is_command)
@@ -422,8 +528,7 @@ x_print_expansions(nwords, words, is_command)
  *	- sets *wordsp to array of matching strings
  *	- returns number of matching strings
  */
-/* XXX static? */
-int
+static int
 x_file_glob(flags, str, slen, wordsp)
 	int flags;
 	const char *str;
@@ -436,7 +541,7 @@ x_file_glob(flags, str, slen, wordsp)
 	XPtrV w;
 	struct source *s, *sold;
 
-	if (slen <= 0)
+	if (slen < 0)
 		return 0;
 
 	toglob = add_glob(str, slen);
@@ -507,8 +612,7 @@ path_order_cmp(aa, bb)
 	return t ? t : a->path_order - b->path_order;
 }
 
-/* XXX static? */
-int
+static int
 x_command_glob(flags, str, slen, wordsp)
 	int flags;
 	const char *str;
@@ -522,7 +626,7 @@ x_command_glob(flags, str, slen, wordsp)
 	XPtrV w;
 	struct block *l;
 
-	if (slen <= 0)
+	if (slen < 0)
 		return 0;
 
 	toglob = add_glob(str, slen);
@@ -605,8 +709,7 @@ x_command_glob(flags, str, slen, wordsp)
 
 #define IS_WORDC(c)	!isspace(c)
 
-/* XXX static? */
-int
+static int
 x_locate_word(buf, buflen, pos, startp, is_commandp)
 	const char *buf;
 	int buflen;
@@ -617,25 +720,28 @@ x_locate_word(buf, buflen, pos, startp, is_commandp)
 	int p;
 	int start, end;
 
-	if (pos == buflen)
-		pos--;
-	if (pos < 0 || pos >= buflen) {
+	/* Bad call?  Probably should report error */
+	if (pos < 0 || pos > buflen) {
 		*startp = pos;
 		*is_commandp = 0;
 		return 0;
 	}
 
-	/* Go backwards 'til we are in a word */
-	for (start = pos; start >= 0 && !IS_WORDC(buf[start]); start--)
-		;
-	/* No word found? */
-	if (start < 0)
-		return 0;
-	/* Keep going backwards to start of word */
-	for (; start >= 0 && IS_WORDC(buf[start]); start--)
-		;
-	start++;
+	if (pos == buflen) {
+		if (pos == 0) { /* empty buffer? */
+			*startp = pos;
+			*is_commandp = 1;
+			return 0;
+		}
+		pos--;
+	}
 
+	start = pos;
+	/* Keep going backwards to start of word (has effect of allowing
+	 * one blank after the end of a word)
+	 */
+	for (; start > 0 && IS_WORDC(buf[start - 1]); start--)
+		;
 	/* Go forwards to end of word */
 	for (end = start; end < buflen && IS_WORDC(buf[end]); end++)
 		;
@@ -682,11 +788,15 @@ x_cf_glob(flags, buf, buflen, pos, startp, endp, wordsp, is_commandp)
 	int is_command;
 
 	len = x_locate_word(buf, buflen, pos, startp, &is_command);
-	if (len == 0)
-		return 0;
-
 	if (!(flags & XCF_COMMAND))
 		is_command = 0;
+	/* Don't do command globing on zero length strings - it takes too
+	 * long and isn't very useful.  File globs are more likely to be
+	 * useful, so allow these.
+	 */
+	if (len == 0 && is_command)
+		return 0;
+
 	nwords = (is_command ? x_command_glob : x_file_glob)(flags,
 				    buf + *startp, len, &words);
 	if (nwords == 0) {
@@ -713,7 +823,7 @@ add_glob(str, slen)
 	char *toglob;
 	char *s;
 
-	if (slen <= 0)
+	if (slen < 0)
 		return (char *) 0;
 
 	toglob = str_nsave(str, slen + 1, ATEMP); /* + 1 for "*" */
@@ -880,7 +990,7 @@ glob_path(flags, pat, wp, path)
 		/* Check that each match is executable... */
 		words = (char **) XPptrv(*wp);
 		for (i = j = oldsize; i < newsize; i++) {
-			if (search_access(words[i], X_OK) >= 0) {
+			if (search_access(words[i], X_OK, (int *) 0) >= 0) {
 				words[j] = words[i];
 				if (!(flags & XCF_FULLPATH))
 					memmove(words[j], words[j] + pathlen,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ksh_stat.h,v 1.1.1.1 1996/08/14 06:19:11 downsj Exp $	*/
+/*	$OpenBSD: ksh_stat.h,v 1.2 1996/08/19 20:08:54 downsj Exp $	*/
 
 /* Wrapper around the ugly sys/stat includes/ifdefs */
 
@@ -15,6 +15,7 @@
 # undef S_ISCHR
 # undef S_ISBLK
 # undef S_ISFIFO
+# undef S_ISSOCK
 # undef S_ISLNK
 #endif /* STAT_MACROS_BROKEN */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.h,v 1.1.1.1 1996/08/14 06:19:12 downsj Exp $	*/
+/*	$OpenBSD: tree.h,v 1.2 1996/08/19 20:09:02 downsj Exp $	*/
 
 /*
  * command trees for compile/execute
@@ -15,7 +15,10 @@
  */
 struct op {
 	short	type;			/* operation type, see below */
-	short	evalflags;		/* eval() flags for arg expansion */
+	union { /* WARNING: newtp(), tcopy() use evalflags = 0 to clear union */
+		short	evalflags;	/* TCOM: arg expansion eval() flags */
+		short	ksh_func;	/* TFUNC: function x (vs x()) */
+	} u;
 	char  **args;			/* arguments to a command */
 	char  **vars;			/* variable assignments */
 	struct ioword	**ioact;	/* IO actions (eg, < > >>) */
@@ -31,7 +34,7 @@ struct op {
 #define	TCOM		1	/* command */
 #define	TPAREN		2	/* (c-list) */
 #define	TPIPE		3	/* a | b */
-#define	TLIST		4	/* a [&;] b */
+#define	TLIST		4	/* a ; b */
 #define	TOR		5	/* || */
 #define	TAND		6	/* && */
 #define TBANG		7	/* ! */

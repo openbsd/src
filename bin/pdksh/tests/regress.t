@@ -639,3 +639,27 @@ expected-exit: e != 0
 expected-stderr-pattern:
 	/.*read *only.*/
 ---
+
+name: regression-43
+description:
+	Can subshells be prefixed by redirections (historical shells allow
+	this)
+stdin:
+	< /dev/null (cat -n)
+---
+
+name: regression-44
+description:
+	getopts sets OPTIND correctly for unparsed option
+stdin:
+	set -- -a -a -x
+	while getopts :a optc; do
+	    echo "OPTARG=$OPTARG, OPTIND=$OPTIND, optc=$optc."
+	done
+	echo done
+expected-stdout:
+	OPTARG=, OPTIND=2, optc=a.
+	OPTARG=, OPTIND=3, optc=a.
+	OPTARG=x, OPTIND=3, optc=?.
+	done
+---
