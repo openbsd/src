@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd.c,v 1.7 1997/09/17 06:47:10 downsj Exp $	*/
+/*	$OpenBSD: kbd.c,v 1.8 1998/04/25 00:31:23 deraadt Exp $	*/
 /*	$NetBSD: kbd.c,v 1.28 1997/09/13 19:12:18 pk Exp $ */
 
 /*
@@ -300,6 +300,8 @@ kbdattach(kbd)
 			printf("kbd: reset failed\n");
 			kbd_reset(&kbd_softc.k_state);
 		}
+		printf("kbd: type = %d, layout = %d\n",
+		    kbd_softc.k_state.kbd_id, kbd_softc.k_state.kbd_layout);
 	}
 }
 
