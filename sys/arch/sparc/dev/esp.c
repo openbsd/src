@@ -82,7 +82,6 @@ int esp_debug = ESP_SHOWPHASE|ESP_SHOWMISC|ESP_SHOWTRAC|ESP_SHOWCMDS; /**/
 
 void	espattach	__P((struct device *, struct device *, void *));
 int	espmatch	__P((struct device *, void *, void *));
-u_int	esp_minphys	__P((struct buf *));
 int	espprint	__P((void *, char *));
 void	espreadregs	__P((struct esp_softc *));
 int	espgetbyte	__P((struct esp_softc *, int));
@@ -105,7 +104,7 @@ struct cfdriver espcd = {
 };
 
 struct scsi_adapter esp_switch = {
-	esp_scsi_cmd, esp_minphys, NULL, NULL
+	esp_scsi_cmd, minphys, NULL, NULL
 };
 
 struct scsi_device esp_dev = {
@@ -300,17 +299,18 @@ espattach(parent, self, aux)
 	 * is almost always wrong, but match in that case anyways.
 	 */
 	bp = ca->ca_ra.ra_bp;
-	bootcomp = NULL;
 	switch (ca->ca_bustype) {
 	case BUS_SBUS:
 		if (bp != NULL && strcmp(bp->name, "esp") == 0 &&
 		    ((bp->val[0]==ca->ca_slot &&
 		     (bp->val[1]==ca->ca_offset || bp->val[1]==0)) ||
 		    (bp->val[0]==-1 && bp->val[1]==sc->sc_dev.dv_unit)))
-			bootcomp = sc->sc_bp = bp + 1;
+			bootpath_store(1, bp + 1);
 		break;
 	default:
-		bootcomp = sc->sc_bp = bp;
+		if (bp != NULL && strcmp(bp->name, "esp") == 0 &&
+		    bp->val[0] == -1 && bp->val[1] == sc->sc_dev.dv_unit)
+			bootpath_store(1, bp + 1);
 		break;
 	}
 
@@ -318,6 +318,8 @@ espattach(parent, self, aux)
 	 * Now try to attach all the sub-devices
 	 */
 	config_found(self, &sc->sc_link, espprint);
+
+	bootpath_store(1, NULL);
 }
 
 
@@ -610,19 +612,6 @@ esp_scsi_cmd(xs)
 	if (xs->flags & SCSI_POLL)
 		return esp_poll(sc, ecb);
 	return SUCCESSFULLY_QUEUED;
-}
-
-/*
- * Adjust transfer size in buffer structure
- *
- * We have no max transfer size, since the DMA driver will break it
- * down into watever is needed.
- */
-u_int 
-esp_minphys(bp)
-	struct buf *bp;
-{
-	return (minphys(bp));
 }
 
 /*
