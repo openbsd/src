@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.S,v 1.8 1997/08/09 21:03:47 weingart Exp $	*/
+/*	$OpenBSD: mbr.S,v 1.9 1997/08/13 00:21:45 niklas Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff and Tobias Weingartner
@@ -265,7 +265,7 @@ found:
 	data32
 	call	message
 
-	# jump to the new code (%ds:%si is at he right point)
+	# jump to the new code (%ds:%si is at the right point)
 	data32
 	ljmp	$0, $BOOTBIOS << 4
 	/* not reached */
