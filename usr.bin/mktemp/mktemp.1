@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mktemp.1,v 1.16 2000/03/28 23:40:05 aaron Exp $
+.\"	$OpenBSD: mktemp.1,v 1.17 2000/06/26 02:43:31 pjanzen Exp $
 .\"
 .\" Copyright (c) 1996, 2000 Todd C. Miller <Todd.Miller@courtesan.com>
 .\" All rights reserved.
@@ -121,15 +121,17 @@ fragment illustrates a simple use of
 where the script should quit if it cannot get a safe
 temporary file.
 .Bd -literal -offset indent
-TMPFILE=`mktemp /tmp/$0.XXXXXXXXXX` || exit 1
+CMD=`basename $0`
+TMPFILE=`mktemp /tmp/$CMD.XXXXXXXXXX` || exit 1
 echo "program output" >> $TMPFILE
 .Ed
 .Pp
 In this case, we want the script to catch the error ourselves.
 .Bd -literal -offset indent
-TMPFILE=`mktemp -q /tmp/$0.XXXXXXXXXX`
+CMD=`basename $0`
+TMPFILE=`mktemp -q /tmp/$CMD.XXXXXXXXXX`
 if [ $? -ne 0 ]; then
-	echo "$0: Can't create temp file, exiting..."
+	echo "$CMD: Can't create temp file, exiting..."
 	exit 1
 fi
 .Ed
@@ -139,7 +141,8 @@ Or perhaps you don't want to exit if
 is unable to create the file.
 In this case you can protect the part of the script thusly.
 .Bd -literal -offset indent
-TMPFILE=`mktemp /tmp/$0.XXXXXXXXXX` && {
+CMD=`basename $0`
+TMPFILE=`mktemp /tmp/$CMD.XXXXXXXXXX` && {
 	# Safe to use $TMPFILE in this block
 	echo data > $TMPFILE
 	...
