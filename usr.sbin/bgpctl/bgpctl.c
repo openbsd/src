@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.31 2004/01/20 13:03:39 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.32 2004/01/20 13:11:39 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -33,6 +33,7 @@
 #include "log.h"
 
 enum actions {
+	NONE,
 	SHOW,
 	SHOW_SUMMARY,
 	SHOW_NEIGHBOR,
@@ -129,7 +130,7 @@ main(int argc, char *argv[])
 	int			 fd, n, done;
 	int			 i, flags;
 	struct imsg		 imsg;
-	enum actions		 action = SHOW_SUMMARY;
+	enum actions		 action = NONE;
 	struct bgpd_addr	 addr;
 
 	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
@@ -154,6 +155,9 @@ main(int argc, char *argv[])
 
 again:
 	switch (action) {
+	case NONE:
+		usage();
+		/* not reached */
 	case SHOW:
 		if (argc >= 3) {
 			action = match_keyword(argv[2], keywords_show,
@@ -302,6 +306,7 @@ again:
 			case SHOW_NEIGHBOR_TIMERS:
 				done = show_neighbor_msg(&imsg, NV_TIMERS);
 				break;
+			case NONE:
 			case RELOAD:
 			case FIB:
 			case FIB_COUPLE:
