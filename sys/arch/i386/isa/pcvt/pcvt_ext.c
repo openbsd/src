@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_ext.c,v 1.8 1996/11/07 11:19:48 niklas Exp $	*/
+/*	$OpenBSD: pcvt_ext.c,v 1.9 1997/04/15 15:22:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -431,7 +431,7 @@ vga_chipset(void)
 					}
 					break;
 
-				case 0xA0:
+				case 0xa0:
 					outb(addr_6845, 0x38);
 					outb(addr_6845+1, old1byte);
 					return VGA_S3_80x;
@@ -442,6 +442,16 @@ vga_chipset(void)
 					outb(addr_6845+1, old1byte);
 					can_do_132col = 1;
 					return VGA_S3_928;
+
+				case 0xc0:
+					outb(addr_6845, 0x38);
+					outb(addr_6845+1, old1byte);
+					return VGA_S3_864;
+
+				case 0xd0:
+					outb(addr_6845, 0x38);
+					outb(addr_6845+1, old1byte);
+					return VGA_S3_964;
 
 				case 0xe0:
 					outb(addr_6845, 0x2e);
@@ -458,13 +468,8 @@ vga_chipset(void)
 
 						outb(addr_6845, 0x38);
 						outb(addr_6845+1, old1byte);
-						/*
-						 * XXX this may be wrong
-						 * from vgadoc4b.zip, the
-						 * value may be 8, but mine
-						 * reads 3, so ... 
-						 */
-						if ((byte & 0x0f) == 0x03)
+
+						if ((byte & 0x40) == 0x40)
 							return VGA_S3_765;
 						else
 							return VGA_S3_764;
@@ -476,7 +481,7 @@ vga_chipset(void)
 						outb(addr_6845, 0x38);
 						outb(addr_6845+1, old1byte);
 						return VGA_S3_868;
-					case 0xB0:
+					case 0xf0:
 						outb(addr_6845, 0x38);
 						outb(addr_6845+1, old1byte);
 						return VGA_S3_968;
