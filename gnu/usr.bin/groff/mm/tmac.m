@@ -3,8 +3,8 @@
 .ds RE \\$2
 ..
 .\"
-.\" $Id: tmac.m,v 1.2 1997/04/22 14:07:33 kstailey Exp $
-.@revision $Revision: 1.2 $
+.\" $Id: tmac.m,v 1.3 1997/11/17 04:41:54 deraadt Exp $
+.@revision $Revision: 1.3 $
 .ig
 
 Copyright (C) 1991, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
@@ -2620,8 +2620,8 @@ in=\\n[.i] fi=\\n[.u] .d=\\n[.d] nl=\\n[nl] pg=\\n[%]
 .de AE
 ..
 .\" I am planning to use mgm some time :-)
-.ie \\n[yr]<50 .ds cov*new-date \\*[MO\\n[mo]] \\n[dy], 20\\n[yr]
-.el .ds cov*new-date \\*[MO\\n[mo]] \\n[dy], 19\\n[yr]
+.nr *year \\n[yr]+1900
+.ds cov*new-date \\*[MO\\n[mo]] \\n[dy], \\n[*year]
 .als DT cov*new-date
 .de ND
 .ds cov*new-date \\$1
