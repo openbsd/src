@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fingerd.c	5.6 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: fingerd.c,v 1.1.1.1 1995/10/18 08:43:15 deraadt Exp $";
+static char rcsid[] = "$Id: fingerd.c,v 1.2 1996/05/30 08:44:11 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -53,6 +53,7 @@ main()
 	int p[2];
 #define	ENTRIES	50
 	char **ap, *av[ENTRIES + 1], line[1024], *strtok();
+	int i;
 
 #ifdef LOGGING					/* unused for now */
 #include <netinet/in.h>
@@ -78,6 +79,15 @@ main()
 		if (++ap == av + ENTRIES)
 			break;
 		lp = NULL;
+	}
+
+	for (i = 1; av[i]; i++) {
+		int l = strlen(av[i]);
+
+		while (av[i][l-1] == '@')
+			av[i][--l] = '\0';
+		if (av[i][0] == '\0')
+			av[i] = NULL;
 	}
 
 	if (pipe(p) < 0)
