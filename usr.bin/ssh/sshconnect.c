@@ -10,7 +10,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect.c,v 1.64 2000/04/12 07:45:44 markus Exp $");
+RCSID("$OpenBSD: sshconnect.c,v 1.65 2000/04/12 07:56:16 markus Exp $");
 
 #include <ssl/bn.h>
 #include "xmalloc.h"
@@ -1064,7 +1064,7 @@ ssh_exchange_identification()
 	/* Send our own protocol version identification. */
 	snprintf(buf, sizeof buf, "SSH-%d.%d-%.100s\n",
 	    compat20 ? PROTOCOL_MAJOR_2 : PROTOCOL_MAJOR_1,
-	    compat20 ? PROTOCOL_MINOR_1 : PROTOCOL_MINOR_1,
+	    compat20 ? PROTOCOL_MINOR_2 : PROTOCOL_MINOR_1,
 	    SSH_VERSION);
 	if (atomicio(write, connection_out, buf, strlen(buf)) != strlen(buf))
 		fatal("write: %.100s", strerror(errno));
