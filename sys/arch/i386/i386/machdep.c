@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.269 2004/02/01 19:16:54 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.270 2004/02/01 19:20:30 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1152,7 +1152,7 @@ viac3_rnd(void *v)
 	 * sure that we turn on maximum whitening (%edx[0,1] == "11"), so
 	 * that we get the best random data possible.
 	 */
-	__asm __volatile ("rep;.byte 0x0F,0xA7,0xC0"
+	__asm __volatile("rep xstore-rng"
 	    : "=a" (rv) : "d" (3), "D" (buffer), "c" (len*sizeof(int))
 	    : "memory", "cc");
 
@@ -1445,27 +1445,27 @@ viac3_crypto(void *cw, void *src, void *dst, void *key, int rep,
 	/* Do the deed */
 	switch (type) {
 	case VIAC3_CRYPTOP_RNG:
-		__asm __volatile("rep;.byte 0x0F,0xA7,0xC0" :
+		__asm __volatile("rep xstore-rng" :
 		    : "a" (iv), "b" (key), "c" (rep), "d" (cw), "S" (src), "D" (dst)
 		    : "memory", "cc");
 		break;
 	case VIAC3_CRYPTOP_ECB:
-		__asm __volatile("rep;.byte 0x0F,0xA7,0xC8" :
+		__asm __volatile("rep xcrypt-ecb" :
 		    : "a" (iv), "b" (key), "c" (rep), "d" (cw), "S" (src), "D" (dst)
 		    : "memory", "cc");
 		break;
 	case VIAC3_CRYPTOP_CBC:
-		__asm __volatile("rep;.byte 0x0F,0xA7,0xD0" :
+		__asm __volatile("rep xcrypt-cbc" :
 		    : "a" (iv), "b" (key), "c" (rep), "d" (cw), "S" (src), "D" (dst)
 		    : "memory", "cc");
 		break;
 	case VIAC3_CRYPTOP_CFB:
-		__asm __volatile("rep;.byte 0x0F,0xA7,0xE0" :
+		__asm __volatile("rep xcrypt-cfb" :
 		    : "a" (iv), "b" (key), "c" (rep), "d" (cw), "S" (src), "D" (dst)
 		    : "memory", "cc");
 		break;
 	case VIAC3_CRYPTOP_OFB:
-		__asm __volatile("rep;.byte 0x0F,0xA7,0xE8" :
+		__asm __volatile("rep xcrypt-ofb" :
 		    : "a" (iv), "b" (key), "c" (rep), "d" (cw), "S" (src), "D" (dst)
 		    : "memory", "cc");
 		break;
