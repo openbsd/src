@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.39 2005/03/07 12:58:19 pascoe Exp $ */
+/*	$OpenBSD: ehci.c,v 1.40 2005/03/08 08:06:36 pascoe Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -444,9 +444,8 @@ ehci_init(ehci_softc_t *sc)
 			    EHCI_LINK_QH);
 		}
 		sqh->qh.qh_endp = htole32(EHCI_QH_SET_EPS(EHCI_QH_SPEED_HIGH));
-		sqh->qh.qh_link = EHCI_NULL;
+		sqh->qh.qh_endphub = htole32(EHCI_QH_SET_MULT(1));
 		sqh->qh.qh_curqtd = EHCI_NULL;
-		sqh->next = NULL;
 		sqh->qh.qh_qtd.qtd_next = EHCI_NULL;
 		sqh->qh.qh_qtd.qtd_altnext = EHCI_NULL;
 		sqh->qh.qh_qtd.qtd_status = htole32(EHCI_QTD_HALTED);
