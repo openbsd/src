@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.69 2002/06/10 00:06:47 drahn Exp $ */
+/*	$OpenBSD: pmap.c,v 1.70 2002/06/10 00:12:15 drahn Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Dale Rahn. All rights reserved.
@@ -1304,7 +1304,7 @@ pmap_bootstrap(u_int kernelstart, u_int kernelend)
 		bzero((void *)mp->start, mp->size);
 	}
 
-#ifdef  HTABENTS
+#ifndef  HTABENTS
 #define HTABENTS 1024
 #endif
 	pmap_ptab_cnt = HTABENTS;
