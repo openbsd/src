@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tutorial.ms,v 1.6 2003/06/03 02:56:12 millert Exp $
+.\"	$OpenBSD: tutorial.ms,v 1.7 2004/07/19 11:42:42 espie Exp $
 .\"	$NetBSD: tutorial.ms,v 1.3 1996/03/06 00:15:31 christos Exp $
 .\" Copyright (c) 1988, 1989 by Adam de Boor
 .\" Copyright (c) 1989 by Berkeley Softworks
@@ -34,8 +34,8 @@
 .\"
 .\"	@(#)tutorial.ms	8.1 (Berkeley) 8/18/93
 .\"
-.EH 'PSD:12-%''PMake \*- A Tutorial'
-.OH 'PMake \*- A Tutorial''PSD:12-%'
+.EH 'PSD:12-%''Make \*- A Tutorial'
+.OH 'Make \*- A Tutorial''PSD:12-%'
 .\" xH is a macro to provide numbered headers that are automatically stuffed
 .\" into a table-of-contents, properly indented, etc. If the first argument
 .\" is numeric, it is taken as the depth for numbering (as for .NH), else
@@ -113,7 +113,7 @@
 ..
 .po +.3i
 .TL
-PMake \*- A Tutorial
+Make \*- A Tutorial
 .AU
 Adam de Boor
 .AI
@@ -133,41 +133,41 @@ purpose.  It is provided "as is" without express or implied warranty.
 .PP
 .xH 1 Introduction
 .LP
-PMake is a program for creating other programs, or anything else you
-can think of for it to do.  The basic idea behind PMake is that, for
+.LP
+Make is a program for creating other programs, or anything else you
+can think of for it to do.  The basic idea behind Make is that, for
 any given system, be it a program or a document or whatever, there
 will be some files that depend on the state of other files (on when
-they were last modified). PMake takes these dependencies, which you
+they were last modified). Make takes these dependencies, which you
 must specify, and uses them to build whatever it is you want it to
 build.
 .LP
-PMake is almost fully-compatible with Make, with which you may already
-be familiar. PMake's most important feature is its ability to run
-several different jobs at once, making the creation of systems
-considerably faster. It also has a great deal more functionality than
-Make. Throughout the text, whenever something is mentioned that is an
-important difference between PMake and Make (i.e.  something that will
-cause a makefile to fail if you don't do something about it), or is
-simply important, it will be flagged with a little sign in the left
-margin, like this:
+OpenBSD's Make is based upon PMake, a parallel make originally developed
+for the distributed operating system called Sprite. PMake departs from
+usual Make practices in several ways. A large number of those quirks
+are not relevant in a modern POSIX world, and hence development of 
+OpenBSD's make has aimed at removing unwanted differences.
+Useful features of OpenBSD's Make which are not POSIX complaint will
+be flagged with a little sign in the left margin, like this:
 .No
+Also note that this tutorial was originally written for PMake, and hence
+may not be totally accurate.
 .LP
 This tutorial is divided into three main sections corresponding to basic,
-intermediate and advanced PMake usage. If you already know Make well,
-you will only need to skim chapter 2 (there are some aspects of
-PMake that I consider basic to its use that didn't exist in Make).
+intermediate and advanced Make usage. If you already know Make well,
+you will only need to skim chapter 2.
 Things in chapter 3 make life much easier, while those in chapter 4
 are strictly for those who know what they are doing. Chapter 5 has
 definitions for the jargon I use and chapter 6 contains possible
 solutions to the problems presented throughout the tutorial.
-.xH 1 The Basics of PMake
+.xH 1 The Basics of Make
 .LP
-PMake takes as input a file that tells a) which files depend on which
+Make takes as input a file that tells a) which files depend on which
 other files to be complete and b) what to do about files that are
 ``out-of-date.'' This file is known as a ``makefile'' and is usually
 .Ix 0 def makefile
 kept in the top-most directory of the system to be built. While you
-can call the makefile anything you want, PMake will look for
+can call the makefile anything you want, Make will look for
 .CW Makefile
 and
 .CW makefile
@@ -177,7 +177,7 @@ otherwise.
 To specify a different makefile, use the
 .B \-f
 flag (e.g.
-.CW "pmake -f program.mk" ''). ``
+.CW "make -f program.mk" ''). ``
 .Ix 0 ref flags -f
 .Ix 0 ref makefile other
 .LP
@@ -198,7 +198,7 @@ backslash.
 .Ix 0 def "continuation line"
 The backslash, following newline and any initial whitespace
 on the following line are compressed into a single space before the
-input line is examined by PMake.
+input line is examined by Make.
 .xH 2 Dependency Lines
 .LP
 As mentioned in the introduction, in any system, there are
@@ -355,7 +355,7 @@ and
 .CW src/fish.c .
 These braces may be nested and, unlike the other wildcard characters,
 the resulting words need not be actual files. All other wildcard
-characters are expanded using the files that exist when PMake is
+characters are expanded using the files that exist when Make is
 started.
 .IP \fB*\fP
 This matches zero or more characters of any sort. 
@@ -386,7 +386,7 @@ These commands are passed to the Bourne shell (better known as
 .Ix 0 ref shell
 .Ix 0 ref re-creation
 .Ix 0 ref update
-expected to do what's necessary to update the target file (PMake
+expected to do what's necessary to update the target file (Make
 doesn't actually check to see if the target was created. It just
 assumes it's there).
 .Ix 0 ref target
@@ -397,8 +397,8 @@ makefile
 .I must
 be preceded by at least one tab.
 .LP
-Each target has associated with it a shell script made up of
-one or more of these shell commands. The creation script for a target
+Each target has associated with it a set of one or more of these shell 
+commands. The creation script for a target
 should immediately follow the dependency line for that target. While
 any given target may appear on more than one dependency line, only one
 of these dependency lines may be followed by a creation script, unless
@@ -408,7 +408,8 @@ the `::' operator was used on the dependency line.
 .No
 .LP
 If the double-colon was used, each dependency line for the target
-may be followed by a shell script. That script will only be executed
+may be followed by a set of shell commands. This set of shell
+commands will only be executed
 if the target on the associated dependency line is out-of-date with
 respect to the sources on that line, according to the rules I gave
 earlier.
@@ -457,7 +458,7 @@ command and a regular shell command was the leading tab? I lied. There
 is another way in which makefile commands differ from regular ones.
 The first two characters after the initial whitespace are treated
 specially.
-If they are any combination of `@' and `\-', they cause PMake to do
+If they are any combination of `@' and `\-', they cause Make to do
 different things.
 .LP
 In most cases, shell commands are printed before they're
@@ -473,7 +474,7 @@ echo Linking index
 Linking index
 .DE
 .LP
-so PMake allows you to place an `@' before the command
+so Make allows you to place an `@' before the command
 .CW "@echo Linking index" '') (``
 to prevent the command from being printed.
 .LP
@@ -481,35 +482,34 @@ The other special character is the `\-'. In case you didn't know,
 shell commands finish with a certain ``exit status.'' This status is
 made available by the operating system to whatever program invoked the
 command. Normally this status will be 0 if everything went ok and
-non-zero if something went wrong. For this reason, PMake will consider
+non-zero if something went wrong. For this reason, Make will consider
 an error to have occurred if one of the shells it invokes returns a non-zero
-status. When it detects an error, PMake's usual action is to abort
+status. When it detects an error, Make's usual action is to abort
 whatever it's doing and exit with a non-zero status itself (any other
 targets that were being created will continue being made, but nothing
-new will be started. PMake will exit after the last job finishes).
+new will be started. Make will exit after the last job finishes).
 This behavior can be altered, however, by placing a `\-' at the front
 of a command
 .CW "\-mv index index.old" ''), (``
 certain command-line arguments,
 or doing other things, to be detailed later. In such
-a case, the non-zero status is simply ignored and PMake keeps chugging
+a case, the non-zero status is simply ignored and Make keeps chugging
 along.
 .No
 .LP
-Because all the commands are given to a single shell to execute, such
-things as setting shell variables, changing directories, etc., last
-beyond the command in which they are found. This also allows shell
-compound commands (like
-.CW for
-loops) to be entered in a natural manner.
-Since this could cause problems for some makefiles that depend on
-each command being executed by a single shell, PMake has a
+In Make
+.B \-j
+mode, a set of shell commands attached to a target is fed to a shell
+as a single script.  This is experimental behavior from PMake's period
+which hasn't been fixed yet.
+.LP
+Make has a
 .B \-B
 .Ix 0 ref compatibility
 .Ix 0 ref flags -B
 flag (it stands for backwards-compatible) that forces each command to
-be given to a separate shell. It also does several other things, all
-of which I discourage since they are now old-fashioned.\|.\|.\|.
+be given to a separate shell. Unfortunately, it also inhibits
+.B \-j .
 .No
 .LP
 A target's shell script is fed to the shell on its (the shell's) input stream.
@@ -523,15 +523,15 @@ ci $(SRCS) < /dev/tty
 .DE
 This would force the program's input to come from the terminal. If you
 can't do this for some reason, your only other alternative is to use
-PMake in its fullest compatibility mode. See 
+Make in its fullest compatibility mode. See 
 .B Compatibility
 in chapter 4.
 .Ix 0 ref compatibility
 .LP
 .xH 2 Variables
 .LP
-PMake, like Make before it, has the ability to save text in variables
-to be recalled later at your convenience. Variables in PMake are used
+Make has the ability to save text in variables
+to be recalled later at your convenience. Variables in Make are used
 much like variables in the shell and, by tradition, consist of
 all upper-case letters (you don't
 .I have
@@ -589,67 +589,47 @@ CWD             != pwd
 .DE
 .LP
 .B Note:
-this is intended to be used to execute commands that produce small amounts
-of output (e.g. ``pwd''). The implementation is less than intelligent and will
-likely freeze if you execute something that produces thousands of
-bytes of output (8 Kb is the limit on many UNIX systems).
+this command will be invoked each time the Makefile is parsed, regardless
+of whether or not the result will actually be used for making targets.
+If the end result is only needed for shell commands, it is much cheaper to
+use
+.DS
+VARIABLE = `shell-command`
+.DE
 .LP
 The value of a variable may be retrieved by enclosing the variable
-name in parentheses or curly braces and preceeding the whole thing
-with a dollar sign.
+name in parentheses or curly braces and prefixing the whole thing with
+a dollar sign.
 .LP
 For example, to set the variable CFLAGS to the string
-.CW "\-I/sprite/src/lib/libc \-O" ,'' ``
+.CW "\-I/usr/local/include \-O" ,'' ``
 you would place a line
 .DS
-CFLAGS = \-I/sprite/src/lib/libc \-O
+CFLAGS = \-I/usr/local/include \-O
 .DE
 in the makefile and use the word
 .CW "$(CFLAGS)"
 wherever you would like the string
-.CW "\-I/sprite/src/lib/libc \-O"
+.CW "\-I/usr/local/include \-O"
 to appear. This is called variable expansion.
 .Ix 0 def variable expansion
-.No
 .LP
-Unlike Make, PMake will not expand a variable unless it knows
-the variable exists. E.g. if you have a
-.CW "${i}"
-in a shell command and you have not assigned a value to the variable
-.CW i 
-(the empty string is considered a value, by the way), where Make would have
-substituted the empty string, PMake will leave the
-.CW "${i}"
-alone.
-To keep PMake from substituting for a variable it knows, precede the
+To keep Make from substituting for a variable it knows, precede the
 dollar sign with another dollar sign.
 (e.g. to pass
 .CW "${HOME}"
 to the shell, use
 .CW "$${HOME}" ).
-This causes PMake, in effect, to expand the
+This causes Make, in effect, to expand the
 .CW $
 macro, which expands to a single
 .CW $ .
-For compatibility, Make's style of variable expansion will be used
-if you invoke PMake with any of the compatibility flags (\c
-.B \-V ,
-.B \-B
-or
-.B \-M .
-The
-.B \-V
-flag alters just the variable expansion).
-.Ix 0 ref flags -V
-.Ix 0 ref flags -B
-.Ix 0 ref flags -M
-.Ix 0 ref compatibility
 .LP
 .Ix 0 ref variable expansion
 There are two different times at which variable expansion occurs:
 When parsing a dependency line, the expansion occurs immediately
 upon reading the line. If any variable used on a dependency line is
-undefined, PMake will print a message and exit.
+undefined, Make will print a message and exit.
 Variables in shell commands are expanded when the command is
 executed.
 Variables used inside another variable are expanded whenever the outer
@@ -685,26 +665,31 @@ when looking up a variable. The first one found wins.
 .LP
 .Ix 0 def variable local
 Each target can have as many as seven local variables. These are
-variables that are only ``visible'' within that target's shell script
+variables that are only ``visible'' within that target's shell commands
 and contain such things as the target's name, all of its sources (from
 all its dependency lines), those sources that were out-of-date, etc.
+.No
+POSIX defines short names for these variables, which should be used for
+portability.  OpenBSD's Make has longer synonyms, which will be used
+in the rest of this tutorial for clarity.
+.LP
 Four local variables are defined for all targets. They are:
 .RS
 .IP ".TARGET"
 .Ix 0 def variable local .TARGET
 .Ix 0 def .TARGET
-The name of the target.
+The name of the target (POSIX: @).
 .IP ".OODATE"
 .Ix 0 def variable local .OODATE
 .Ix 0 def .OODATE
 The list of the sources for the target that were considered out-of-date.
 The order in the list is not guaranteed to be the same as the order in
-which the dependencies were given.
+which the dependencies were given. (POSIX: ?)
 .IP ".ALLSRC"
 .Ix 0 def variable local .ALLSRC
 .Ix 0 def .ALLSRC
 The list of all sources for this target in the order in which they
-were given.
+were given. (shorter: >, not POSIX).
 .IP ".PREFIX"
 .Ix 0 def variable local .PREFIX
 .Ix 0 def .PREFIX
@@ -712,7 +697,8 @@ The target without its suffix and without any leading path. E.g. for
 the target
 .CW ../../lib/compat/fsRead.c ,
 this variable would contain
-.CW fsRead .
+.CW fsRead 
+(POSIX: *) .
 .RE
 .LP
 Three other local variables are set only for certain targets under
@@ -728,7 +714,7 @@ and ``.MEMBER''
 variables. When they are set and how they are used is described later.
 .LP
 Four of these variables may be used in sources as well as in shell
-scripts.
+commands.
 .Ix 0 def "dynamic source"
 .Ix 0 def source dynamic
 These are ``.TARGET'', ``.PREFIX'', ``.ARCHIVE'' and ``.MEMBER''. The
@@ -744,10 +730,10 @@ corresponding C source file.
 .xH 3 Command-line Variables
 .LP
 .Ix 0 def variable command-line
-Command-line variables are set when PMake is first invoked by giving a
+Command-line variables are set when Make is first invoked by giving a
 variable assignment as one of the arguments. For example,
 .DS
-pmake "CFLAGS = -I/sprite/src/lib/libc -O"
+make "CFLAGS = -I/usr/local/include -O"
 .DE
 would make 
 .CW CFLAGS
@@ -760,7 +746,7 @@ set using any of the four assignment operators, though only
 .CW =
 and
 .CW ?=
-behave as you would expect them to, mostly because assignments to
+behave in a sane way, mostly because assignments to
 command-line variables are performed before the makefile is read, thus
 the values set in the makefile are unavailable at the time.
 .CW +=
@@ -769,8 +755,7 @@ the values set in the makefile are unavailable at the time.
 is the same as
 .CW = ,
 because the old value of the variable is sought only in the scope in
-which the assignment is taking place (for reasons of efficiency that I
-won't get into here).
+which the assignment is taking place (you don't want to know).
 .CW :=
 and
 .CW ?=
@@ -787,30 +772,27 @@ substitution mechanisms (backquotes and all that).
 .LP
 .Ix 0 def variable global
 Global variables are those set or appended-to in the makefile.
-There are two classes of global variables: those you set and those PMake sets.
+There are two classes of global variables: those you set and those Make sets.
 As I said before, the ones you set can have any name you want them to have,
 except they may not contain a colon or an exclamation point.
-The variables PMake sets (almost) always begin with a
+The variables Make sets (almost) always begin with a
 period and always contain upper-case letters, only. The variables are
 as follows:
 .RS
-.IP .PMAKE
-.Ix 0 def variable global .PMAKE
-.Ix 0 def .PMAKE
+.IP MAKE
 .Ix 0 def variable global MAKE
 .Ix 0 def MAKE
-The name by which PMake was invoked is stored in this variable. For
-compatibility, the name is also stored in the MAKE variable.
+.Ix 0 def variable global MAKE
+.Ix 0 def MAKE
+The name by which Make was invoked is stored in this variable. 
 .IP .MAKEFLAGS
 .Ix 0 def variable global .MAKEFLAGS
 .Ix 0 def .MAKEFLAGS variable
 .Ix 0 def variable global MFLAGS
 .Ix 0 def MFLAGS
-All the relevant flags with which PMake was invoked. This does not
+All the relevant flags with which Make was invoked. This does not
 include such things as
-.B \-f
-or variable assignments. Again for compatibility, this value is stored
-in the MFLAGS variable as well.
+.B \-f .
 .RE
 .LP
 Two other variables, ``.INCLUDES'' and ``.LIBS,'' are covered in the
@@ -819,34 +801,21 @@ section on special targets in chapter 3.
 .Ix 0 ref variable global .LIBS
 .LP
 Global variables may be deleted using lines of the form:
-.Ix 0 def #undef
+.Ix 0 def .undef
 .Ix 0 def variable deletion
 .DS
-#undef \fIvariable\fP
+\&.undef \fIvariable\fP
 .DE
 The
-.CW # ' `
+.CW . ' `
 must be the first character on the line. Note that this may only be
 done on global variables.
 .xH 3 Environment Variables
 .LP
 .Ix 0 def variable environment
-Environment variables are passed by the shell that invoked PMake and
-are given by PMake to each shell it invokes. They are expanded like
+Environment variables are passed by the shell that invoked Make and
+are given by Make to each shell it invokes. They are expanded like
 any other variable, but they cannot be altered in any way.
-.LP
-One special environment variable,
-.CW PMAKE ,
-.Ix 0 def variable environment PMAKE
-is examined by PMake for command-line flags, variable assignments,
-etc., it should always use. This variable is examined before the
-actual arguments to PMake are. In addition, all flags given to PMake,
-either through the
-.CW PMAKE
-variable or on the command line, are placed in this environment
-variable and exported to each shell PMake executes. Thus recursive
-invocations of PMake automatically receive the same flags as the
-top-most one.
 .LP
 Using all these variables, you can compress the sample makefile even more:
 .DS
@@ -874,23 +843,16 @@ end of the line. They may appear
 anywhere you want them, except in a shell command (though the shell
 will treat it as a comment, too). If, for some reason, you need to use the `#'
 in a variable or on a dependency line, put a backslash in front of it.
-PMake will compress the two into a single `#' (Note: this isn't true
-if PMake is operating in full-compatibility mode).
-.Ix 0 ref flags -M
-.Ix 0 ref compatibility
+Make will compress the two into a single `#'.
 .xH 2 Parallelism
 .No
 .LP
 PMake was specifically designed to re-create several targets at once,
-when possible. You do not have to do anything special to cause this to
-happen (unless PMake was configured to not act in parallel, in which
-case you will have to make use of the
-.B \-L
-and
-.B \-J
-flags (see below)),
-.Ix 0 ref flags -L
-.Ix 0 ref flags -J
+when possible, when
+using the
+.B \-j
+flag (see below),
+.Ix 0 ref flags -j
 but you do have to be careful at times.
 .LP
 There are several problems you are likely to encounter. One is
@@ -915,27 +877,24 @@ expands to a single
 .CW $ ,
 thus giving you the shell variable
 .CW $$ ).
-Since only one shell is used for all the
-commands, you'll get the same file name for each command in the
-script.
 .LP
 The other problem comes from improperly-specified dependencies that
-worked in Make because of its sequential, depth-first way of examining
-them. While I don't want to go into depth on how PMake
+worked in sequential mode.
+While I don't want to go into depth on how Make
 works (look in chapter 4 if you're interested), I will warn you that
 files in two different ``levels'' of the dependency tree may be
-examined in a different order in PMake than they were in Make. For
+examined in a different order in parallel mode than in sequential mode. For
 example, given the makefile
 .DS
 a               : b c
 b               : d
 .DE
-PMake will examine the targets in the order
+Make may examine the targets in the order
 .CW c ,
 .CW d ,
 .CW b ,
 .CW a .
-If the makefile's author expected PMake to abort before making
+If the makefile's author expected Make to abort before making
 .CW c
 if an error occurred while making
 .CW b ,
@@ -951,7 +910,7 @@ would depend on
 .CW b .
 So watch out.
 .LP
-Another problem you may face is that, while PMake is set up to handle the
+Another problem you may face is that, while Make is set up to handle the
 output from multiple jobs in a graceful fashion, the same is not so for input.
 It has no way to regulate input to different jobs,
 so if you use the redirection from
@@ -962,7 +921,7 @@ I mentioned earlier, you must be careful not to run two of the jobs at once.
 Now you know most of what's in a makefile, what do you do next? There
 are two choices: (1) use one of the uncommonly-available makefile
 generators or (2) write your own makefile (I leave out the third choice of
-ignoring PMake and doing everything by hand as being beyond the bounds
+ignoring Make and doing everything by hand as being beyond the bounds
 of common sense).
 .LP
 When faced with the writing of a makefile, it is usually best to start
@@ -1101,33 +1060,22 @@ making sure the darn thing works. Your most helpful tool to make sure
 the makefile is at least syntactically correct is the
 .B \-n
 .Ix 0 ref flags -n
-flag, which allows you to see if PMake will choke on the makefile. The
+flag, which allows you to see if Make will choke on the makefile. The
 second thing the
 .B \-n
-flag lets you do is see what PMake would do without it actually doing
+flag lets you do is see what Make would do without it actually doing
 it, thus you can make sure the right commands would be executed were
-you to give PMake its head.
+you to give Make its head.
 .LP
 When you find your makefile isn't behaving as you hoped, the first
 question that comes to mind (after ``What time is it, anyway?'') is
-``Why not?'' In answering this, two flags will serve you well:
-.CW "-d m" '' ``
+``Why not?'' In answering this, one flag will serve you well:
+.CW "-d m" .'' ``
 .Ix 0 ref flags -d
-and
-.CW "-p 2" .'' ``
-.Ix 0 ref flags -p
-The first causes PMake to tell you as it examines each target in the
+This causes Make to tell you as it examines each target in the
 makefile and indicate why it is deciding whatever it is deciding. You
 can then use the information printed for other targets to see where
-you went wrong. The
-.CW "-p 2" '' ``
-flag makes PMake print out its internal state when it is done,
-allowing you to see that you forgot to make that one chapter depend on
-that file of macros you just got a new version of. The output from
-.CW "-p 2" '' ``
-is intended to resemble closely a real makefile, but with additional
-information provided and with variables expanded in those commands
-PMake actually printed or executed.
+you went wrong. 
 .LP
 Something to be especially careful about is circular dependencies.
 .Ix 0 def dependency circular
@@ -1137,9 +1085,9 @@ a		: b
 b		: c d
 d		: a
 .DE
-In this case, because of how PMake works,
+In this case, because of the way Make works,
 .CW c
-is the only thing PMake will examine, because
+is the only thing Make will examine, because
 .CW d
 and
 .CW a
@@ -1147,30 +1095,30 @@ will effectively fall off the edge of the universe, making it
 impossible to examine
 .CW b
 (or them, for that matter).
-PMake will tell you (if run in its normal mode) all the targets
+Make will tell you (if run in its normal mode) all the targets
 involved in any cycle it looked at (i.e. if you have two cycles in the
 graph (naughty, naughty), but only try to make a target in one of
-them, PMake will only tell you about that one. You'll have to try to
+them, Make will only tell you about that one. You'll have to try to
 make the other to find the second cycle). When run as Make, it will
 only print the first target in the cycle.
-.xH 2 Invoking PMake
+.xH 2 Invoking Make
 .LP
 .Ix 0 ref flags
 .Ix 0 ref arguments
 .Ix 0 ref usage
-PMake comes with a wide variety of flags to choose from.
+Make comes with a wide variety of flags to choose from.
 They may appear in any order, interspersed with command-line variable
 assignments and targets to create.
-The flags are as follows:
+Some of these flags are as follows:
 .IP "\fB\-d\fP \fIwhat\fP"
 .Ix 0 def flags -d
 .Ix 0 ref debugging
-This causes PMake to spew out debugging information that
+This causes Make to spew out debugging information that
 may prove useful to you. If you can't
-figure out why PMake is doing what it's doing, you might try using
+figure out why Make is doing what it's doing, you might try using
 this flag. The
 .I what
-parameter is a string of single characters that tell PMake what
+parameter is a string of single characters that tell Make what
 aspects you are interested in. Most of what I describe will make
 little sense to you, unless you've dealt with Make before. Just
 remember where this table is and come back to it as you read on.
@@ -1223,54 +1171,30 @@ or
 .Ix 0 ref makefile other
 If
 .I makefile
-is ``\-'', PMake uses the standard input. This is useful for making
+is ``\-'', Make uses the standard input. This is useful for making
 quick and dirty makefiles.\|.\|.
 .Ix 0 ref makefile "quick and dirty"
-.IP \fB\-h\fP
-.Ix 0 def flags -h
-Prints out a summary of the various flags PMake accepts. It can also
-be used to find out what level of concurrency was compiled into the
-version of PMake you are using (look at
-.B \-J
-and
-.B \-L )
-and various other information on how PMake was configured.
-.Ix 0 ref configuration
-.Ix 0 ref makefile system
 .IP \fB\-i\fP
 .Ix 0 def flags -i
-If you give this flag, PMake will ignore non-zero status returned
+If you give this flag, Make will ignore non-zero status returned
 by any of its shells. It's like placing a `\-' before all the commands
 in the makefile.
 .IP \fB\-k\fP
 .Ix 0 def flags -k
 This is similar to
 .B \-i
-in that it allows PMake to continue when it sees an error, but unlike
+in that it allows Make to continue when it sees an error, but unlike
 .B \-i ,
-where PMake continues blithely as if nothing went wrong,
+where Make continues blithely as if nothing went wrong,
 .B \-k
 causes it to recognize the error and only continue work on those
 things that don't depend on the target, either directly or indirectly (through
 depending on something that depends on it), whose creation returned the error.
 The `k' is for ``keep going''.\|.\|.
 .Ix 0 ref target
-.IP \fB\-l\fP
-.Ix 0 def flags -l
-PMake has the ability to lock a directory against other
-people executing it in the same directory (by means of a file called
-``LOCK.make'' that it creates and checks for in the directory). This
-is a Good Thing because two people doing the same thing in the same place
-can be disastrous for the final product (too many cooks and all that).
-Whether this locking is the default is up to your system
-administrator. If locking is on,
-.B \-l
-will turn it off, and vice versa. Note that this locking will not
-prevent \fIyou\fP from invoking PMake twice in the same place \*- if
-you own the lock file, PMake will warn you about it but continue to execute.
 .IP "\fB\-m\fP \fIdirectory\fP"
 .Ix 0 def flags -m
-Tells PMake another place to search for included makefiles via the <...>
+Tells Make another place to search for included makefiles via the <...>
 style.  Several
 .B \-m
 options can be given to form a search path.  If this construct is used the
@@ -1279,106 +1203,43 @@ To be explained in chapter 3, section 3.2.
 .Rm 2 3.2
 .IP \fB\-n\fP
 .Ix 0 def flags -n
-This flag tells PMake not to execute the commands needed to update the
-out-of-date targets in the makefile. Rather, PMake will simply print
+This flag tells Make not to execute the commands needed to update the
+out-of-date targets in the makefile. Rather, Make will simply print
 the commands it would have executed and exit. This is particularly
-useful for checking the correctness of a makefile. If PMake doesn't do
+useful for checking the correctness of a makefile. If Make doesn't do
 what you expect it to, it's a good chance the makefile is wrong.
-.IP "\fB\-p\fP \fInumber\fP"
-.Ix 0 def flags -p
-.Ix 0 ref debugging
-This causes PMake to print its input in a reasonable form, though
-not necessarily one that would make immediate sense to anyone but me. The
-.I number
-is a bitwise-or of 1 and 2 where 1 means it should print the input
-before doing any processing and 2 says it should print it after
-everything has been re-created. Thus
-.CW "\-p 3"
-would print it twice\*-once before processing and once after (you
-might find the difference between the two interesting). This is mostly
-useful to me, but you may find it informative in some bizarre circumstances.
 .IP \fB\-q\fP
 .Ix 0 def flags -q
-If you give PMake this flag, it will not try to re-create anything. It
+If you give Make this flag, it will not try to re-create anything. It
 will just see if anything is out-of-date and exit non-zero if so.
 .IP \fB\-r\fP
 .Ix 0 def flags -r
-When PMake starts up, it reads a default makefile that tells it what
+When Make starts up, it reads a default makefile that tells it what
 sort of system it's on and gives it some idea of what to do if you
 don't tell it anything. I'll tell you about it in chapter 3. If you
-give this flag, PMake won't read the default makefile.
+give this flag, Make won't read the default makefile.
 .IP \fB\-s\fP
 .Ix 0 def flags -s
-This causes PMake to not print commands before they're executed. It
+This causes Make to not print commands before they're executed. It
 is the equivalent of putting an `@' before every command in the
 makefile.
 .IP \fB\-t\fP
 .Ix 0 def flags -t
-Rather than try to re-create a target, PMake will simply ``touch'' it
+Rather than try to re-create a target, Make will simply ``touch'' it
 so as to make it appear up-to-date. If the target didn't exist before,
-it will when PMake finishes, but if the target did exist, it will
+it will when Make finishes, but if the target did exist, it will
 appear to have been updated.
-.IP \fB\-v\fP
-.Ix 0 def flags -v
-This is a mixed-compatibility flag intended to mimic the System V
-version of Make. It is the same as giving
-.B \-B ,
-and
-.B \-V
-as well as turning off directory locking. Targets can still be created
-in parallel, however. This is the mode PMake will enter if it is
-invoked either as
-.CW smake '' ``
-or
-.CW vmake ''. ``
-.IP \fB\-x\fP
-.Ix 0 def flags -x
-This tells PMake it's ok to export jobs to other machines, if they're
-available. It is used when running in Make mode, as exporting in this
-mode tends to make things run slower than if the commands were just
-executed locally.
 .IP \fB\-B\fP
 .Ix 0 ref compatibility
 .Ix 0 def flags -B
-Forces PMake to be as backwards-compatible with Make as possible while
-still being itself.
+Forces OpenBSD Make to be as POSIX-compatible as possible.
 This includes:
 .RS
 .IP \(bu 2
 Executing one shell per shell command
 .IP \(bu 2
-Expanding anything that looks even vaguely like a variable, with the
-empty string replacing any variable PMake doesn't know.
-.IP \(bu 2
-Refusing to allow you to escape a `#' with a backslash.
-.IP \(bu 2
-Permitting undefined variables on dependency lines and conditionals
-(see below). Normally this causes PMake to abort.
+Using sequential mode.
 .RE
-.IP \fB\-C\fP
-.Ix 0 def flags -C
-This nullifies any and all compatibility mode flags you may have given
-or implied up to the time the
-.B \-C
-is encountered. It is useful mostly in a makefile that you wrote for PMake
-to avoid bad things happening when someone runs PMake as
-.CW make '' ``
-or has things set in the environment that tell it to be compatible.
-.B \-C
-is
-.I not
-placed in the
-.CW PMAKE
-environment variable or the
-.CW .MAKEFLAGS
-or
-.CW MFLAGS
-global variables.
-.Ix 0 ref variable environment PMAKE
-.Ix 0 ref variable global .MAKEFLAGS
-.Ix 0 ref variable global MFLAGS
-.Ix 0 ref .MAKEFLAGS variable
-.Ix 0 ref MFLAGS
 .IP "\fB\-D\fP \fIvariable\fP"
 .Ix 0 def flags -D
 Allows you to define a variable to have 
@@ -1390,39 +1251,21 @@ in section 4.3
 .Rm 1 4.3
 .IP "\fB\-I\fP \fIdirectory\fP"
 .Ix 0 def flags -I
-Tells PMake another place to search for included makefiles. Yet
+Tells Make another place to search for included makefiles. Yet
 another thing to be explained in chapter 3 (section 3.2, to be
 precise).
 .Rm 2 3.2
-.IP "\fB\-J\fP \fInumber\fP"
-.Ix 0 def flags -J
-Gives the absolute maximum number of targets to create at once on both
-local and remote machines.
-.IP "\fB\-L\fP \fInumber\fP"
-.Ix 0 def flags -L
-This specifies the maximum number of targets to create on the local
-machine at once. This may be 0, though you should be wary of doing
-this, as PMake may hang until a remote machine becomes available, if
-one is not available when it is started.
-.IP \fB\-M\fP
-.Ix 0 ref compatibility
-.Ix 0 def flags -M
-This is the flag that provides absolute, complete, full compatibility
-with Make. It still allows you to use all but a few of the features of
-PMake, but it is non-parallel. This is the mode PMake enters if you
-call it
-.CW make .'' ``
 .IP \fB\-P\fP
 .Ix 0 def flags -P
 .Ix 0 ref "output control"
 When creating targets in parallel, several shells are executing at
 once, each wanting to write its own two cent's-worth to the screen.
-This output must be captured by PMake in some way in order to prevent
+This output must be captured by Make in some way in order to prevent
 the screen from being filled with garbage even more indecipherable
-than you usually see. PMake has two ways of doing this, one of which
+than you usually see. Make has two ways of doing this, one of which
 provides for much cleaner output and a clear separation between the
 output of different jobs, the other of which provides a more immediate
-response so one can tell what is really happpening. The former is done
+response so one can tell what is really happening. The former is done
 by notifying you when the creation of a target starts, capturing the
 output and transferring it to the screen all at once when the job
 finishes. The latter is done by catching the output of the shell (and
@@ -1431,32 +1274,14 @@ printing that line preceded by an indication of which job produced
 the output. Since I prefer this second method, it is the one used by
 default. The first method will be used if you give the
 .B \-P
-flag to PMake.
-.IP \fB\-V\fP
-.Ix 0 def flags -V
-As mentioned before, the
-.B \-V
-flag tells PMake to use Make's style of expanding variables,
-substituting the empty string for any variable it doesn't know.
-.IP \fB\-W\fP
-.Ix 0 def flags -W
-There are several times when PMake will print a message at you that is
-only a warning, i.e. it can continue to work in spite of your having
-done something silly (such as forgotten a leading tab for a shell
-command). Sometimes you are well aware of silly things you have done
-and would like PMake to stop bothering you. This flag tells it to shut
-up about anything non-fatal.
-.IP \fB\-X\fP
-.Ix 0 def flags -X
-This flag causes PMake to not attempt to export any jobs to another
-machine.
+flag to Make.
 .LP
-Several flags may follow a single `\-'. Those flags that require
-arguments take them from successive parameters. E.g.
+Flags without arguments may follow a single `\-'. 
+E.g.
 .DS
-pmake -fDnI server.mk DEBUG /chip2/X/server/include
+make -f server.mk -DDEBUG -I/chip2/X/server/include -n
 .DE
-will cause PMake to read
+will cause Make to read
 .CW server.mk
 as the input makefile, define the variable
 .CW DEBUG
@@ -1490,7 +1315,7 @@ whitespace) are a combination of
 .CW @ ' `
 or
 .CW - ', `
-PMake will cause the command to not be printed (if the character is
+Make will cause the command to not be printed (if the character is
 .CW @ ') `
 or errors from it to be ignored (if
 .CW - '). `
@@ -1528,7 +1353,7 @@ using the
 operator.  Variables may be expanded (their value inserted) by enclosing
 their name in parentheses or curly braces, prceeded by a dollar sign.
 A dollar sign may be escaped with another dollar sign. Variables are
-not expanded if PMake doesn't know about them. There are seven local
+not expanded if Make doesn't know about them. There are seven local
 variables:
 .CW .TARGET ,
 .CW .ALLSRC ,
@@ -1551,9 +1376,8 @@ Variables are good. Know them. Love them. Live them.
 .LP
 Debugging of makefiles is best accomplished using the
 .B \-n ,
-.B "\-d m" ,
 and
-.B "\-p 2"
+.B "\-d m"
 flags.
 .xH 2 Exercises
 .ce
@@ -1561,7 +1385,7 @@ flags.
 .xH 1 Short-cuts and Other Nice Things
 .LP
 Based on what I've told you so far, you may have gotten the impression
-that PMake is just a way of storing away commands and making sure you
+that Make is just a way of storing away commands and making sure you
 don't forget to compile something. Good. That's just what it is.
 However, the ways I've described have been inelegant, at best, and
 painful, at worst.
@@ -1569,7 +1393,7 @@ This chapter contains things that make the
 writing of makefiles easier and the makefiles themselves shorter and
 easier to modify (and, occasionally, simpler). In this chapter, I
 assume you are somewhat more
-familiar with Sprite (or UNIX, if that's what you're using) than I did
+familiar with Unix than I did
 in chapter 2, just so you're on your toes.
 So without further ado...
 .xH 2 Transformation Rules
@@ -1585,21 +1409,21 @@ become almost as incontrovertible as Law. E.g. a file ending in
 .CW .c
 is assumed to contain C source code; one with a
 .CW .o
-suffix is assumed to be a compiled, relocatable object file that may
+suffix is assumed to be a compiled object file that may
 be linked into any program; a file with a
 .CW .ms
 suffix is usually a text file to be processed by Troff with the \-ms
 macro package, and so on.
-One of the best aspects of both Make and PMake comes from their
+One of the best aspects of Make comes from its
 understanding of how the suffix of a file pertains to its contents and
-their ability to do things with a file based soley on its suffix. This
+Make's ability to do things with a file based solely on its suffix. This
 ability comes from something known as a transformation rule. A
 transformation rule specifies how to change a file with one suffix
 into a file with another suffix.
 .LP
 A transformation rule looks much like a dependency line, except the
 target is made of two known suffixes stuck together. Suffixes are made
-known to PMake by placing them as sources on a dependency line whose
+known to Make by placing them as sources on a dependency line whose
 target is the special target
 .CW .SUFFIXES .
 E.g.
@@ -1623,9 +1447,7 @@ with the
 flag.
 This rule is taken straight from the system makefile. Many
 transformation rules (and suffixes) are defined there, and I refer you
-to it for more examples (type
-.CW "pmake -h" '' ``
-to find out where it is).
+to it for more examples.
 .LP
 There are several things to note about the transformation rule given
 above:
@@ -1654,7 +1476,7 @@ you would set the
 variable to contain
 .CW -g
 .CW "CFLAGS = -g" '') (``
-and PMake would take care of the rest.
+and Make would take care of the rest.
 .RE
 .LP
 To give you a quick example, the makefile in 2.3.4 
@@ -1705,11 +1527,11 @@ total 4
 -rw-rw-r--  1 deboor         69 Sep  7 00:43 b.c
 .DE
 While just typing
-.CW pmake '' ``
+.CW make '' ``
 will do the right thing, it's much more informative to type
-.CW "pmake -d s" ''. ``
-This will show you what PMake is up to as it processes the files. In
-this case, PMake prints the following:
+.CW "make -d s" ''. ``
+This will show you what Make is up to as it processes the files. In
+this case, Make prints the following:
 .DS
 Suff_FindDeps (a.out)
 	using existing source a.o
@@ -1741,7 +1563,7 @@ cc a.o b.o
 .DE
 .LP
 .CW Suff_FindDeps
-is the name of a function in PMake that is called to check for implied
+is the name of a function in Make that is called to check for implied
 sources for a target using transformation rules.
 The transformations it tries are, naturally
 enough, limited to the ones that have been defined (a transformation
@@ -1770,7 +1592,7 @@ Since a transformation exists from
 .CW .o
 to
 .CW .out ,
-PMake uses that, as indicated by the
+Make uses that, as indicated by the
 .CW "using existing source a.o" '' ``
 message.
 .LP
@@ -1799,7 +1621,7 @@ have a makefile like this:
 and the single file
 .CW jive.l .
 If you were to type
-.CW "pmake -rd ms jive.out" ,'' ``
+.CW "make -rd ms jive.out" ,'' ``
 you would get the following output for
 .CW jive.out :
 .DS
@@ -1812,7 +1634,7 @@ Suff_FindDeps (jive.out)
 	applying .c -> .o to "jive.c"
 	applying .o -> .out to "jive.o"
 .DE
-and this is why: PMake starts with the target
+and this is why: Make starts with the target
 .CW jive.out ,
 figures out its suffix
 .CW .out ) (
@@ -1853,8 +1675,8 @@ At this point, it has defined a transformation path as follows:
 \(->
 .CW .out
 and applies the transformation rules accordingly. For completeness,
-and to give you a better idea of what PMake actually did with this
-three-step transformation, this is what PMake printed for the rest of
+and to give you a better idea of what Make actually did with this
+three-step transformation, this is what Make printed for the rest of
 the process:
 .DS
 Suff_FindDeps (jive.o)
@@ -1878,21 +1700,14 @@ Examining jive.out...non-existent...out-of-date
 cc -o jive.out jive.o
 .DE
 .LP
-One final question remains: what does PMake do with targets that have
-no known suffix? PMake simply pretends it actually has a known suffix
-and searches for transformations accordingly.
-The suffix it chooses is the source for the
-.CW .NULL
-.Ix 0 ref .NULL
-target mentioned later. In the system makefile, 
-.CW .out
-is chosen as the ``null suffix''
-.Ix 0 def suffix null
-.Ix 0 def "null suffix"
-because most people use PMake to create programs. You are, however,
-free and welcome to change it to a suffix of your own choosing.
-The null suffix is ignored, however, when PMake is in compatibility
-mode (see chapter 4).
+One final question remains: what does Make do with targets that have
+no known suffix? Make simply pretends it actually has an empty suffix
+and searches for transformations accordingly. Those special transformation
+rules involve just one source suffix, like this:
+.DS
+\&.o		:
+	cc -o $(.TARGET) $(.IMPSRC)
+.DE
 .xH 2 Including Other Makefiles
 .Ix 0 def makefile inclusion
 .Rd 2
@@ -1905,23 +1720,19 @@ somehow. Many compilers allow you say something like
 .DE
 to include the contents of
 .CW defs.h
-in the source file. PMake allows you to do the same thing for
+in the source file. Make allows you to do the same thing for
 makefiles, with the added ability to use variables in the filenames.
 An include directive in a makefile looks either like this:
 .DS
-#include <file>
+\&.include <file>
 .DE
 or this
 .DS
-#include "file"
+\&.include "file"
 .DE
-The difference between the two is where PMake searches for the file:
-the first way, PMake will look for
+The difference between the two is where Make searches for the file:
+the first way, Make will look for
 the file only in the system makefile directory (or directories)
-(to find out what that directory is, give PMake the
-.B \-h
-flag).
-.Ix 0 ref flags -h
 The system makefile directory search path can be overridden via the
 .B \-m
 option.
@@ -1931,7 +1742,7 @@ For files in double-quotes, the search is more complex:
 .IP 1)
 The directory of the makefile that's including the file.
 .IP 2)
-The current directory (the one in which you invoked PMake).
+The current directory (the one in which you invoked Make).
 .IP 3)
 The directories given by you using
 .B \-I
@@ -1946,7 +1757,7 @@ The system makefile directory.
 .LP
 in that order.
 .LP
-You are free to use PMake variables in the filename\*-PMake will
+You are free to use Make variables in the filename\*-Make will
 expand them before searching for the file. You must specify the
 searching method with either angle brackets or double-quotes
 .I outside
@@ -1958,6 +1769,7 @@ SYSTEM	= <command.mk>
 .DE
 won't work.
 .xH 2 Saving Commands
+.No
 .LP
 .Ix 0 def ...
 There may come a time when you will want to save certain commands to
@@ -1972,7 +1784,7 @@ into which it stuffs information for the linker to use. Two of them
 running at once will overwrite each other's file and the result will
 be garbage for both parties). You might want a way to save the ranlib
 commands til the end so they can be run one after the other, thus
-keeping them from trashing each other's file. PMake allows you to do
+keeping them from trashing each other's file. Make allows you to do
 this by inserting an ellipsis (``.\|.\|.'') as a command between
 commands to be run at once and those to be run later.
 .LP
@@ -2004,12 +1816,12 @@ commands until the end, when they would run one after the other
 .CW .TARGET
 variable, of course).
 .LP
-Commands saved in this manner are only executed if PMake manages to
+Commands saved in this manner are only executed if Make manages to
 re-create everything without an error.
 .xH 2 Target Attributes
 .LP
-PMake allows you to give attributes to targets by means of special
-sources. Like everything else PMake uses, these sources begin with a
+Make allows you to give attributes to targets by means of special
+sources. Like everything else Make uses, these sources begin with a
 period and are made up of all upper-case letters. There are various
 reasons for using them, and I will try to give examples for most of
 them. Others you'll have to find uses for yourself. Think of it as ``an
@@ -2026,11 +1838,11 @@ to the target of the transformation rule when the rule is applied.
 .IP .DONTCARE \n(pw
 .Ix 0 def attributes .DONTCARE
 .Ix 0 def .DONTCARE
-If a target is marked with this attribute and PMake can't figure out
+If a target is marked with this attribute and Make can't figure out
 how to create it, it will ignore this fact and assume the file isn't
-really needed or actually exists and PMake just can't find it. This may prove
-wrong, but the error will be noted later on, not when PMake tries to create
-the target so marked. This attribute also prevents PMake from
+really needed or actually exists and Make just can't find it. This may prove
+wrong, but the error will be noted later on, not when Make tries to create
+the target so marked. This attribute also prevents Make from
 attempting to touch the target if it is given the
 .B \-t
 flag.
@@ -2078,7 +1890,7 @@ init            : .EXEC
 .IP "\&"
 .CW .EXEC
 sources, don't appear in the local variables of targets that depend on
-them (nor are they touched if PMake is given the
+them (nor are they touched if Make is given the
 .B \-t
 flag).
 .Ix 0 ref flags -t
@@ -2114,7 +1926,7 @@ export systems will support this attribute.
 .Ix 0 def .IGNORE attribute
 Giving a target the
 .CW .IGNORE
-attribute causes PMake to ignore errors from any of the target's commands, as
+attribute causes Make to ignore errors from any of the target's commands, as
 if they all had `\-' before them.
 .IP .INVISIBLE \n(pw
 .Ix 0 def attributes .INVISIBLE
@@ -2176,7 +1988,7 @@ libraries       : lib1.a lib2.a lib3.a lib4.a .JOIN
 .Ix 0 ref .TARGET
 .Ix 0 ref .ALLSRC
 .Ix 0 ref .OODATE
-In this case, PMake will re-create the
+In this case, Make will re-create the
 .CW $(OBJS)
 as necessary, along with
 .CW lib1.a ,
@@ -2207,15 +2019,15 @@ flag was given.
 .Ix 0 def .MAKE
 The
 .CW .MAKE
-attribute marks its target as being a recursive invocation of PMake.
-This forces PMake to execute the script associated with the target (if
+attribute marks its target as being a recursive invocation of Make.
+This forces Make to execute the script associated with the target (if
 it's out-of-date) even if you gave the
 .B \-n
 or
 .B \-t
 flag. By doing this, you can start at the top of a system and type
 .DS
-pmake -n
+make -n
 .DE
 and have it descend the directory tree (if your makefiles are set up
 correctly), printing what it would have executed if you hadn't
@@ -2225,39 +2037,39 @@ flag.
 .IP .NOEXPORT \n(pw
 .Ix 0 def attributes .NOEXPORT
 .Ix 0 def .NOEXPORT attribute
-If possible, PMake will attempt to export the creation of all targets to
-another machine (this depends on how PMake was configured). Sometimes,
+If possible, Make will attempt to export the creation of all targets to
+another machine (this depends on how Make was configured). Sometimes,
 the creation is so simple, it is pointless to send it to another
 machine. If you give the target the
 .CW .NOEXPORT
-attribute, it will be run locally, even if you've given PMake the
+attribute, it will be run locally, even if you've given Make the
 .B "\-L 0"
 flag.
 .IP .NOTMAIN \n(pw
 .Ix 0 def attributes .NOTMAIN
 .Ix 0 def .NOTMAIN
 Normally, if you do not specify a target to make in any other way,
-PMake will take the first target on the first dependency line of a
+Make will take the first target on the first dependency line of a
 makefile as the target to create. That target is known as the ``Main
 Target'' and is labeled as such if you print the dependencies out
 using the
 .B \-p
 flag.
 .Ix 0 ref flags -p
-Giving a target this attribute tells PMake that the target is
+Giving a target this attribute tells Make that the target is
 definitely
 .I not
 the Main Target.
 This allows you to place targets in an included makefile and
-have PMake create something else by default.
+have Make create something else by default.
 .IP .PRECIOUS \n(pw
 .Ix 0 def attributes .PRECIOUS
 .Ix 0 def .PRECIOUS attribute
-When PMake is interrupted (you type control-C at the keyboard), it
+When Make is interrupted (you type control-C at the keyboard), it
 will attempt to clean up after itself by removing any half-made
 targets. If a target has the
 .CW .PRECIOUS
-attribute, however, PMake will leave it alone. An additional side
+attribute, however, Make will leave it alone. An additional side
 effect of the `::' operator is to mark the targets as
 .CW .PRECIOUS .
 .Ix 0 ref operator double-colon
@@ -2270,7 +2082,7 @@ printed when they're executed, just as if they had an `@' in front of them.
 .IP .USE \n(pw
 .Ix 0 def attributes .USE
 .Ix 0 def .USE
-By giving a target this attribute, you turn it into PMake's equivalent
+By giving a target this attribute, you turn it into Make's equivalent
 of a macro. When the target is used as a source for another target,
 the other target acquires the commands, sources and attributes (except
 .CW .USE )
@@ -2320,7 +2132,7 @@ and so on and so forth.
 .xH 2 Special Targets
 .LP
 As there were in Make, so there are certain targets that have special
-meaning to PMake. When you use one on a dependency line, it is the
+meaning to Make. When you use one on a dependency line, it is the
 only target that may appear on the left-hand-side of the operator.
 .Ix 0 ref target
 .Ix 0 ref operator
@@ -2338,7 +2150,7 @@ is done. You can use it for any initialization that needs doing.
 .IP .DEFAULT \n(pw
 .Ix 0 def .DEFAULT
 This is sort of a .USE rule for any target (that was used only as a
-source) that PMake can't figure out any other way to create. It's only
+source) that Make can't figure out any other way to create. It's only
 ``sort of'' a .USE rule because only the shell script attached to the
 .CW .DEFAULT
 target is used. The
@@ -2354,13 +2166,13 @@ This serves a function similar to
 .CW .BEGIN ,
 in that commands attached to it are executed once everything has been
 re-created (so long as no errors occurred). It also serves the extra
-function of being a place on which PMake can hang commands you put off
+function of being a place on which Make can hang commands you put off
 to the end. Thus the script for this target will be executed before
 any of the commands you save with the ``.\|.\|.''.
 .Ix 0 ref ...
 .IP .EXPORT \n(pw
 The sources for this target are passed to the exportation system compiled
-into PMake. Some systems will use these sources to configure
+into Make. Some systems will use these sources to configure
 themselves. You should ask your system administrator about this.
 .IP .IGNORE \n(pw
 .Ix 0 def .IGNORE target
@@ -2371,7 +2183,7 @@ This target marks each of its sources with the
 attribute. If you don't give it any sources, then it is like
 giving the
 .B \-i
-flag when you invoke PMake \*- errors are ignored for all commands.
+flag when you invoke Make \*- errors are ignored for all commands.
 .Ix 0 ref flags -i
 .IP .INCLUDES \n(pw
 .Ix 0 def .INCLUDES target
@@ -2400,7 +2212,7 @@ E.g. if you have
 \&.PATH.bitmap    : /usr/local/X/lib/bitmaps
 \&.INCLUDES       : .bitmap
 .DE
-PMake will place
+Make will place
 .CW "-I/usr/local/X/lib/bitmaps" '' ``
 in the
 .CW .INCLUDES
@@ -2413,7 +2225,7 @@ cc $(.INCLUDES) -c xprogram.c
 variable is not actually filled in until the entire makefile has been read.)
 .IP .INTERRUPT \n(pw
 .Ix 0 def .INTERRUPT
-When PMake is interrupted,
+When Make is interrupted,
 it will execute the commands in the script for this target, if it
 exists.
 .IP .LIBS \n(pw
@@ -2427,7 +2239,7 @@ does for include files, except the flag used is
 as required by those linkers that allow you to tell them where to find
 libraries. The variable used is
 .CW .LIBS .
-Be forewarned that PMake may not have been compiled to do this if the
+Be forewarned that Make may not have been compiled to do this if the
 linker on your system doesn't accept the
 .B \-L
 flag, though the
@@ -2436,11 +2248,11 @@ variable will always be defined once the makefile has been read.
 .IP .MAIN \n(pw
 .Ix 0 def .MAIN
 If you didn't give a target (or targets) to create when you invoked
-PMake, it will take the sources of this target as the targets to
+Make, it will take the sources of this target as the targets to
 create.
 .IP .MAKEFLAGS \n(pw
 .Ix 0 def .MAKEFLAGS target
-This target provides a way for you to always specify flags for PMake
+This target provides a way for you to always specify flags for Make
 when the makefile is used. The flags are just as they would be typed
 to the shell (except you can't use shell variables unless they're in
 the environment),
@@ -2453,13 +2265,13 @@ flags have no effect.
 .Ix 0 def .NULL
 .Ix 0 ref suffix null
 .Ix 0 ref "null suffix"
-This allows you to specify what suffix PMake should pretend a file has
+This allows you to specify what suffix Make should pretend a file has
 if, in fact, it has no known suffix. Only one suffix may be so
 designated. The last source on the dependency line is the suffix that
 is used (you should, however, only give one suffix.\|.\|.).
 .IP .PATH \n(pw
 .Ix 0 def .PATH
-If you give sources for this target, PMake will take them as
+If you give sources for this target, Make will take them as
 directories in which to search for files it cannot find in the current
 directory. If you give no sources, it will clear out any directories
 added to the search path before. Since the effects of this all get
@@ -2496,7 +2308,7 @@ This target applies the
 attribute to all its sources. It does nothing if you don't give it any sources.
 .IP .SHELL \n(pw
 .Ix 0 def .SHELL
-PMake is not constrained to only using the Bourne shell to execute
+Make is not constrained to only using the Bourne shell to execute
 the commands you put in the makefile. You can tell it some other shell
 to use with this target. Check out
 .B "A Shell is a Shell is a Shell"
@@ -2512,15 +2324,15 @@ When you use
 as a target, it applies the
 .CW .SILENT
 attribute to each of its sources. If there are no sources on the
-dependency line, then it is as if you gave PMake the
+dependency line, then it is as if you gave Make the
 .B \-s
 flag and no commands will be echoed.
 .IP .SUFFIXES \n(pw
 .Ix 0 def .SUFFIXES
-This is used to give new file suffixes for PMake to handle. Each
-source is a suffix PMake should recognize. If you give a
+This is used to give new file suffixes for Make to handle. Each
+source is a suffix Make should recognize. If you give a
 .CW .SUFFIXES
-dependency line with no sources, PMake will forget about all the
+dependency line with no sources, Make will forget about all the
 suffixes it knew (this also nukes the null suffix).
 For those targets that need to have suffixes defined, this is how you do it.
 .LP
@@ -2537,7 +2349,7 @@ to all the targets listed as
 .Ix 0 def variable expansion modified
 .Ix 0 ref variable expansion
 .Ix 0 def variable modifiers
-Variables need not always be expanded verbatim. PMake defines several
+Variables need not always be expanded verbatim. Make defines several
 modifiers that may be applied to a variable's value before it is
 expanded. You apply a modifier by placing it after the variable name
 with a colon between the two, like so:
@@ -2716,16 +2528,16 @@ tacked onto their prefix)?
 Assume, for a moment or two, you want to perform a sort of
 ``indirection'' by placing the name of a variable into another one,
 then you want to get the value of the first by expanding the second
-somehow. Unfortunately, PMake doesn't allow constructs like
+somehow. Unfortunately, Make doesn't allow constructs like
 .DS I
 $($(FOO))
 .DE
 What do you do? Hint: no further variable expansion is performed after
 modifiers are applied, thus if you cause a $ to occur in the
 expansion, that's what will be in the result.
-.xH 1 PMake for Gods
+.xH 1 Make for Gods
 .LP
-This chapter is devoted to those facilities in PMake that allow you to
+This chapter is devoted to those facilities in Make that allow you to
 do a great deal in a makefile with very little work, as well as do
 some things you couldn't do in Make without a great deal of work (and
 perhaps the use of other programs). The problem with these features,
@@ -2737,7 +2549,7 @@ or Sprite than I did in the previous two chapters.
 .xH 2 Search Paths
 .Rd 6
 .LP
-PMake supports the dispersal of files into multiple directories by
+Make supports the dispersal of files into multiple directories by
 allowing you to specify places to look for sources with
 .CW .PATH
 targets in the makefile. The directories you give as sources for these
@@ -2747,7 +2559,7 @@ that anything listed as a target in the makefile can be created by the
 makefile and thus should be in the current directory.
 .LP
 There are two types of search paths
-in PMake: one is used for all types of files (including included
+in Make: one is used for all types of files (including included
 makefiles) and is specified with a plain
 .CW .PATH
 target (e.g.
@@ -2760,7 +2572,7 @@ with the suffix of the file. For instance
 .DS
 \&.PATH.h         : /sprite/lib/include /sprite/att/lib/include
 .DE
-would tell PMake to look in the directories
+would tell Make to look in the directories
 .CW /sprite/lib/include
 and
 .CW /sprite/att/lib/include
@@ -2781,7 +2593,7 @@ local variables that would have contained the target's name
 .CW .ALLSRC , (
 and
 .CW .IMPSRC )
-will instead contain the path to the file, as found by PMake.
+will instead contain the path to the file, as found by Make.
 Thus if you have a file
 .CW ../lib/mumble.c
 and a makefile
@@ -2804,20 +2616,20 @@ to
 Just thought I'd throw that in.)
 .LP
 If a file exists in two directories on the same search path, the file
-in the first directory on the path will be the one PMake uses. So if
+in the first directory on the path will be the one Make uses. So if
 you have a large system spread over many directories, it would behoove
 you to follow a naming convention that avoids such conflicts.
 .LP
 Something you should know about the way search paths are implemented
 is that each directory is read, and its contents cached, exactly once
 \&\*- when it is first encountered \*- so any changes to the
-directories while PMake is running will not be noted when searching
-for implicit sources, nor will they be found when PMake attempts to
+directories while Make is running will not be noted when searching
+for implicit sources, nor will they be found when Make attempts to
 discover when the file was last modified, unless the file was created in the
-current directory. While people have suggested that PMake should read
+current directory. While people have suggested that Make should read
 the directories each time, my experience suggests that the caching seldom
 causes problems. In addition, not caching the directories slows things
-down enormously because of PMake's attempts to apply transformation
+down enormously because of Make's attempts to apply transformation
 rules through non-existent files \*- the number of extra file-system
 searches is truly staggering, especially if many files without
 suffixes are used and the null suffix isn't changed from
@@ -2841,10 +2653,10 @@ rather than
 and the linker thinks they're out-of-date if you so much as look at
 them.
 .LP
-PMake solves the problem with archives by allowing you to tell it to
+Make solves the problem with archives by allowing you to tell it to
 examine the files in the archives (so you can remove the individual
 files without having to regenerate them later). To handle the problem
-with libraries, PMake adds an additional way of deciding if a library
+with libraries, Make adds an additional way of deciding if a library
 is out-of-date:
 .IP \(bu 2
 If the table of contents is older than the library, or is missing, the
@@ -2980,7 +2792,7 @@ MAKELIB		: .USE .PRECIOUS
 .xH 2 On the Condition...
 .Rd 1
 .LP
-Like the C compiler before it, PMake allows you to configure the makefile,
+Like the C compiler before it, Make allows you to configure the makefile,
 based on the current environment, using conditional statements. A
 conditional looks like this:
 .DS
@@ -3055,7 +2867,7 @@ The syntax is
 and is true if
 .I variable
 is defined. Certain variables are defined in the system makefile that
-identify the system on which PMake is being run.
+identify the system on which Make is being run.
 .IP exists \n(pw
 .Ix 0 def exists
 .Ix 0 def conditional exists
@@ -3153,7 +2965,7 @@ to create the debug version. The construct below will take care of
 this for you. I have also made it so defining the variable
 .CW DEBUG
 (say with
-.CW "pmake -D DEBUG" )
+.CW "make -D DEBUG" )
 will also cause the debug version to be made.
 .DS
 #if defined(DEBUG) || make(debug)
@@ -3178,7 +2990,7 @@ FORMATTER	= nroff -Pdot_matrix_printer
 #endif
 .DE
 would wreak havok if you tried
-.CW "pmake draft print" '' ``
+.CW "make draft print" '' ``
 since you would use the same formatter for each target. As I said,
 this all gets somewhat complicated.
 .xH 2 A Shell is a Shell is a Shell
@@ -3186,50 +2998,50 @@ this all gets somewhat complicated.
 .LP
 In normal operation, the Bourne Shell (better known as
 .CW sh '') ``
-is used to execute the commands to re-create targets. PMake also allows you
+is used to execute the commands to re-create targets. Make also allows you
 to specify a different shell for it to use when executing these
-commands. There are several things PMake must know about the shell you
+commands. There are several things Make must know about the shell you
 wish to use. These things are specified as the sources for the
 .CW .SHELL
 .Ix 0 ref .SHELL
 .Ix 0 ref target .SHELL
 target by keyword, as follows:
 .IP "\fBpath=\fP\fIpath\fP"
-PMake needs to know where the shell actually resides, so it can
-execute it. If you specify this and nothing else, PMake will use the
+Make needs to know where the shell actually resides, so it can
+execute it. If you specify this and nothing else, Make will use the
 last component of the path and look in its table of the shells it
 knows and use the specification it finds, if any. Use this if you just
-want to use a different version of the Bourne or C Shell (yes, PMake knows
+want to use a different version of the Bourne or C Shell (yes, Make knows
 how to use the C Shell too).
 .IP "\fBname=\fP\fIname\fP"
 This is the name by which the shell is to be known. It is a single
 word and, if no other keywords are specified (other than
 .B path ),
-it is the name by which PMake attempts to find a specification for
+it is the name by which Make attempts to find a specification for
 it (as mentioned above). You can use this if you would just rather use
 the C Shell than the Bourne Shell
 .CW ".SHELL: name=csh" '' (``
 will do it).
 .IP "\fBquiet=\fP\fIecho-off command\fP"
-As mentioned before, PMake actually controls whether commands are
+As mentioned before, Make actually controls whether commands are
 printed by introducing commands into the shell's input stream. This
 keyword, and the next two, control what those commands are. The
 .B quiet
 keyword is the command used to turn echoing off. Once it is turned
 off, echoing is expected to remain off until the echo-on command is given.
 .IP "\fBecho=\fP\fIecho-on command\fP"
-The command PMake should give to turn echoing back on again.
+The command Make should give to turn echoing back on again.
 .IP "\fBfilter=\fP\fIprinted echo-off command\fP"
 Many shells will echo the echo-off command when it is given. This
-keyword tells PMake in what format the shell actually prints the
-echo-off command. Wherever PMake sees this string in the shell's
+keyword tells Make in what format the shell actually prints the
+echo-off command. Wherever Make sees this string in the shell's
 output, it will delete it and any following whitespace, up to and
 including the next newline. See the example at the end of this section
 for more details.
 .IP "\fBechoFlag=\fP\fIflag to turn echoing on\fP"
 Unless a target has been marked
 .CW .SILENT ,
-PMake wants to start the shell running with echoing on. To do this, it
+Make wants to start the shell running with echoing on. To do this, it
 passes this flag to the shell as one of its arguments. If either this
 or the next flag begins with a `\-', the flags will be passed to the
 shell as separate arguments. Otherwise, the two will be concatenated
@@ -3237,7 +3049,7 @@ shell as separate arguments. Otherwise, the two will be concatenated
 .IP "\fBerrFlag=\fP\fIflag to turn error checking on\fP"
 Likewise, unless a target is marked
 .CW .IGNORE ,
-PMake wishes error-checking to be on from the very start. To this end,
+Make wishes error-checking to be on from the very start. To this end,
 it will pass this flag to the shell as an argument. The same rules for
 an initial `\-' apply as for the
 .B echoFlag .
@@ -3249,7 +3061,7 @@ shell doesn't have error-control as commands, but I'll get into that
 in a minute. Again, once error checking has been turned on, it is
 expected to remain on until it is turned off again.
 .IP "\fBignore=\fP\fIcommand to turn error checking off\fP"
-This is the command PMake uses to turn error checking off. It has
+This is the command Make uses to turn error checking off. It has
 another use if the shell doesn't do error-control, but I'll tell you
 about that.\|.\|.\|now.
 .IP "\fBhasErrCtl=\fP\fIyes or no\fP"
@@ -3261,12 +3073,12 @@ Now you might think that the existence of the
 .B check
 and
 .B ignore
-keywords would be enough to tell PMake if the shell can do
+keywords would be enough to tell Make if the shell can do
 error-control, but you'd be wrong. If
 .B hasErrCtl
 is
 .B yes ,
-PMake uses the check and ignore commands in a straight-forward manner.
+Make uses the check and ignore commands in a straight-forward manner.
 If this is
 .B no ,
 however, their use is rather different. In this case, the check
@@ -3290,7 +3102,7 @@ escapes a double-quote inside double-quotes). Now for an example.
 .LP
 This is actually the contents of the
 .CW <shx.mk>
-system makefile, and causes PMake to use the Bourne Shell in such a
+system makefile, and causes Make to use the Bourne Shell in such a
 way that each command is printed as it is executed. That is, if more
 than one command is given on a line, each will be printed separately.
 Similarly, each time the body of a loop is executed, the commands
@@ -3313,13 +3125,13 @@ this:
 	ignore="set +e"
 .DE
 .LP
-It tells PMake the following:
+It tells Make the following:
 .Bp
 The shell is located in the file
 .CW /bin/sh .
-It need not tell PMake that the name of the shell is
+It need not tell Make that the name of the shell is
 .CW sh 
-as PMake can figure that out for itself (it's the last component of
+as Make can figure that out for itself (it's the last component of
 the path).
 .Bp
 The command to stop echoing is
@@ -3334,7 +3146,7 @@ When the echo off command is executed, the shell will print
 .CW \-x
 flag (rather than the
 .CW \-v
-flag PMake usually uses)). PMake will remove all occurrences of this
+flag Make usually uses)). Make will remove all occurrences of this
 string from the output, so you don't notice extra commands you didn't
 put there.
 .Bp
@@ -3367,7 +3179,7 @@ effect, however, by changing the last three lines to be:
 	ignore="sh -c '%s || exit 0\en"
 .DE
 .LP
-This will cause PMake to execute the two commands
+This will cause Make to execute the two commands
 .DS
 echo "+ \fIcmd\fP"
 sh -c '\fIcmd\fP || true'
@@ -3387,7 +3199,7 @@ the last command it executed).
 .Ix 0 ref compatibility
 .LP
 There are three (well, 3 \(12) levels of backwards-compatibility built
-into PMake.  Most makefiles will need none at all. Some may need a
+into Make.  Most makefiles will need none at all. Some may need a
 little bit of work to operate correctly when run in parallel. Each
 level encompasses the previous levels (e.g.
 .B \-B
@@ -3397,7 +3209,7 @@ The three levels are described in the following three sections.
 .xH 3 DEFCON 3 \*- Variable Expansion
 .Ix 0 ref compatibility
 .LP
-As noted before, PMake will not expand a variable unless it knows of a
+As noted before, Make will not expand a variable unless it knows of a
 value for it. This can cause problems for makefiles that expect to
 leave variables undefined except in special circumstances (e.g. if
 more flags need to be passed to the C compiler or the output from a
@@ -3423,19 +3235,19 @@ changing to a different directory, to not affect other commands in a
 target's creation script. You can solve this is either by going
 back to executing one shell per command (which is what the
 .B \-B
-flag forces PMake to do), which slows the process down a good bit and
+flag forces Make to do), which slows the process down a good bit and
 requires you to use semicolons and escaped newlines for shell constructs, or
 by changing the makefile to execute the offending command(s) in a subshell
 (by placing the line inside parentheses), like so:
 .DS
 install :: .MAKE
-	(cd src; $(.PMAKE) install)
-	(cd lib; $(.PMAKE) install)
-	(cd man; $(.PMAKE) install)
+	(cd src; $(.MAKE) install)
+	(cd lib; $(.MAKE) install)
+	(cd man; $(.MAKE) install)
 .DE
 .Ix 0 ref operator double-colon
-.Ix 0 ref variable global .PMAKE
-.Ix 0 ref .PMAKE
+.Ix 0 ref variable global .MAKE
+.Ix 0 ref .MAKE
 .Ix 0 ref .MAKE
 .Ix 0 ref attribute .MAKE
 This will always execute the three makes (even if the
@@ -3452,14 +3264,12 @@ The final category of makefile is the one where every command requires
 input, the dependencies are incompletely specified, or you simply
 cannot create more than one target at a time, as mentioned earlier. In
 addition, you may not have the time or desire to upgrade the makefile
-to run smoothly with PMake. If you are the conservative sort, this is
-the compatibility mode for you. It is entered either by giving PMake
+to run smoothly with Make. If you are the conservative sort, this is
+the compatibility mode for you. It is entered by giving Make
 the
-.B \-M
-flag (for Make), or by executing PMake as
-.CW make .'' ``
-In either case, PMake performs things exactly like Make (while still
-supporting most of the nice new features PMake provides). This
+.B \-B
+flag.
+This
 includes:
 .IP \(bu 2
 No parallel execution.
@@ -3473,9 +3283,9 @@ shell's
 variable is useless, changing directories doesn't work across command
 lines, etc.
 .IP \(bu 2
-If no special characters exist in a command line, PMake will break the
+If no special characters exist in a command line, Make will break the
 command into words itself and execute the command directly, without
-executing a shell first. The characters that cause PMake to execute a
+executing a shell first. The characters that cause Make to execute a
 shell are:
 .CW # ,
 .CW = ,
@@ -3503,24 +3313,20 @@ special meaning by the shell (except
 .CW '
 and
 .CW " ,
-which PMake deals with all by its lonesome).
-.IP \(bu 2
-The use of the null suffix is turned off.
-.Ix 0 ref "null suffix"
-.Ix 0 ref suffix null
+which Make deals with all by its lonesome).
 .xH 2 The Way Things Work
 .LP
-When PMake reads the makefile, it parses sources and targets into
-nodes in a graph. The graph is directed only in the sense that PMake
+When Make reads the makefile, it parses sources and targets into
+nodes in a graph. The graph is directed only in the sense that Make
 knows which way is up. Each node contains not only links to all its
 parents and children (the nodes that depend on it and those on which
 it depends, respectively), but also a count of the number of its
 children that have already been processed.
 .LP
-The most important thing to know about how PMake uses this graph is
+The most important thing to know about how Make uses this graph is
 that the traversal is breadth-first and occurs in two passes.
 .LP
-After PMake has parsed the makefile, it begins with the nodes the user
+After Make has parsed the makefile, it begins with the nodes the user
 has told it to make (either on the command line, or via a 
 .CW .MAIN
 target, or by the target being the first in the file not labeled with
@@ -3549,35 +3355,35 @@ another queue to be examined in the second pass. This process
 continues until the first queue is empty.
 .LP
 At this point, all the leaves of the graph are in the examination
-queue. PMake removes the node at the head of the queue and sees if it
+queue. Make removes the node at the head of the queue and sees if it
 is out-of-date. If it is, it is passed to a function that will execute
 the commands for the node asynchronously. When the commands have
 completed, all the node's parents have their unmade children counter
 decremented and, if the counter is then 0, they are placed on the
 examination queue. Likewise, if the node is up-to-date. Only those
 parents that were marked on the downward pass are processed in this
-way. Thus PMake traverses the graph back up to the nodes the user
+way. Thus Make traverses the graph back up to the nodes the user
 instructed it to create. When the examination queue is empty and no
-shells are running to create a target, PMake is finished.
+shells are running to create a target, Make is finished.
 .LP
-Once all targets have been processed, PMake executes the commands
+Once all targets have been processed, Make executes the commands
 attached to the
 .CW .END
 target, either explicitly or through the use of an ellipsis in a shell
 script. If there were no errors during the entire process but there
-are still some targets unmade (PMake keeps a running count of how many
-targets are left to be made), there is a cycle in the graph. PMake does
+are still some targets unmade (Make keeps a running count of how many
+targets are left to be made), there is a cycle in the graph. Make does
 a depth-first traversal of the graph to find all the targets that
 weren't made and prints them out one by one.
 .xH 1 Answers to Exercises
 .IP (3.1)
 This is something of a trick question, for which I apologize. The
-trick comes from the UNIX definition of a suffix, which PMake doesn't
+trick comes from the UNIX definition of a suffix, which Make doesn't
 necessarily share. You will have noticed that all the suffixes used in
 this tutorial (and in UNIX in general) begin with a period
 .CW .ms , (
 .CW .c ,
-etc.). Now, PMake's idea of a suffix is more like English's: it's the
+etc.). Now, Make's idea of a suffix is more like English's: it's the
 characters at the end of a word. With this in mind, one possible
 .Ix 0 def suffix
 solution to this problem goes as follows:
@@ -3613,7 +3419,7 @@ at the end, thus transforming
 for example, into
 .CW $(VAR) ,'' ``
 which is just what we want. Unfortunately (as you know if you've tried
-it), since, as it says in the hint, PMake does no further substitution
+it), since, as it says in the hint, Make does no further substitution
 on the result of a modified expansion, that's \fIall\fP you get. The
 solution is to make use of ``:='' to place that string into yet
 another variable, then invoke the other variable directly:
@@ -3629,18 +3435,18 @@ to your heart's content.
 ..
 .xH 1 Glossary of Jargon
 .Gp "attribute"
-A property given to a target that causes PMake to treat it differently.
+A property given to a target that causes Make to treat it differently.
 .Gp "command script"
 The lines immediately following a dependency line that specify
 commands to execute to create each of the targets on the dependency
 line. Each line in the command script must begin with a tab.
 .Gp "command-line variable"
-A variable defined in an argument when PMake is first executed.
+A variable defined in an argument when Make is first executed.
 Overrides all assignments to the same variable name in the makefile.
 .Gp "conditional"
 A construct much like that used in C that allows a makefile to be
 configured on the fly based on the local environment, or on what is being
-made by that invocation of PMake.
+made by that invocation of Make.
 .Gp "creation script"
 Commands used to create a target. See ``command script.''
 .Gp "dependency"
@@ -3659,12 +3465,12 @@ target on the line.
 Any variable defined in a makefile. Takes precedence over variables
 defined in the environment, but not over command-line or local variables.
 .Gp "input graph"
-What PMake constructs from a makefile. Consists of nodes made of the
+What Make constructs from a makefile. Consists of nodes made of the
 targets in the makefile, and the links between them (the
 dependencies). The links are directed (from source to target) and
 there may not be any cycles (loops) in the graph.
 .Gp "local variable"
-A variable defined by PMake visible only in a target's shell script.
+A variable defined by Make visible only in a target's shell script.
 There are seven local variables, not all of which are defined for
 every target:
 .CW .TARGET ,
@@ -3695,7 +3501,7 @@ the relationship between the two. There are three:
 and
 .CW ! '. `
 .Gp "search path"
-A list of directories in which a file should be sought. PMake's view
+A list of directories in which a file should be sought. Make's view
 of the contents of directories in a search path does not change once
 the makefile has been read. A file is sought on a search path only if
 it is exclusively a source.
@@ -3705,7 +3511,7 @@ A program to which commands are passed in order to create targets.
 Anything to the right of an operator on a dependency line. Targets on
 the dependency line are usually created from the sources.
 .Gp "special target"
-A target that causes PMake to do special things when it's encountered.
+A target that causes Make to do special things when it's encountered.
 .Gp "suffix"
 The tail end of a file name. Usually begins with a period,
 .CW .c
@@ -3714,8 +3520,8 @@ or
 e.g.
 .Gp "target"
 A word to the left of the operator on a dependency line. More
-generally, any file that PMake might create. A file may be (and often
-is) both a target and a source (what it is depends on how PMake is
+generally, any file that Make might create. A file may be (and often
+is) both a target and a source (what it is depends on how Make is
 looking at it at the time \*- sort of like the wave/particle duality
 of light, you know).
 .Gp "transformation rule"
