@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: uthread_info_openbsd.c,v 1.2 2000/01/06 07:18:01 d Exp $
+ * $OpenBSD: uthread_info_openbsd.c,v 1.3 2000/02/26 13:32:01 d Exp $
  */
 #include <stdio.h>
 #include <fcntl.h>
@@ -122,7 +122,7 @@ _thread_dump_entry(pthread, fd, verbose)
 	/* Output a record for the current thread: */
 	s[0] = 0;
 	snprintf(s, sizeof(s), 
-	    " %8p%c%-11s %2d %c%c%c%c%c%c %04x %-8.8s %s\n",
+	    " %8p%c%-11s %2d %c%c%c%c%c%c%c%c%c%c %04x %-8.8s %s\n",
 	    (void *)pthread,
 	    (pthread == _thread_run)     ? '*' : ' ',
 	    state,
@@ -132,10 +132,14 @@ _thread_dump_entry(pthread, fd, verbose)
 	    (pthread->flags & PTHREAD_FLAGS_CANCELED)	  ? 'C' :
 	    (pthread->flags & PTHREAD_FLAGS_CANCELPT)	  ? 'c' : '-',
 	    (pthread->flags & PTHREAD_FLAGS_TRACE)	  ? 't' : '-',
+	    (pthread->flags & PTHREAD_FLAGS_IN_CONDQ)     ? 'C' : '-',
+	    (pthread->flags & PTHREAD_FLAGS_IN_WORKQ)     ? 'R' : '-',
+	    (pthread->flags & PTHREAD_FLAGS_IN_WAITQ)     ? 'W' : '-',
+	    (pthread->flags & PTHREAD_FLAGS_IN_PRIOQ)     ? 'P' : '-',
 	    (pthread->attr.flags & PTHREAD_DETACHED)      ? 'd' : '-',
 	    (pthread->attr.flags & PTHREAD_INHERIT_SCHED) ? 'i' : '-',
 	    (pthread->attr.flags & PTHREAD_NOFLOAT)       ? '-' : 'f',
-	    ((int)pthread->sigmask),
+	    ((unsigned int)pthread->sigmask & 0xffff),
 	    (pthread->name == NULL) ? "" : pthread->name,
 	    (verbose) ? location : ""
 	);
@@ -143,6 +147,31 @@ _thread_dump_entry(pthread, fd, verbose)
 
 	if (!verbose)
 		return;
+
+	/* Show the scheduler wake and time slice properties */
+	snprintf(s, sizeof(s), "%s sched wake ", info_lead);
+	_thread_sys_write(fd, s, strlen(s));
+	if (pthread->wakeup_time.tv_sec == -1)
+		writestring(fd, "- slice ");
+	else {
+		struct timeval now;
+		struct timespec nows, delta;
+
+		gettimeofday(&now, NULL);
+		TIMEVAL_TO_TIMESPEC(&now, &nows);
+		timespecsub(&pthread->wakeup_time, &nows, &delta);
+		snprintf(s, sizeof s, "%d.%09ld slice ",
+			delta.tv_sec, delta.tv_nsec);
+		_thread_sys_write(fd, s, strlen(s));
+	}
+	if (pthread->slice_usec == -1)
+		writestring(fd, "-\n");
+	else {
+		snprintf(s, sizeof s, "%ld.%06ld\n",
+			pthread->slice_usec / 1000000,
+			pthread->slice_usec % 1000000);
+		_thread_sys_write(fd, s, strlen(s));
+	}
 
 	/* Process according to thread state: */
 	switch (pthread->state) {
@@ -285,8 +314,8 @@ _thread_dump_info(void)
 	}
 
 	/* Display a list of active threads: */
-	snprintf(s, sizeof s, " %8s%c%-11s %2s %6s %4s %-8s %s\n", 
-	    "id", ' ',  "state", "pr", "flags", "sigm", "name", "location");
+	snprintf(s, sizeof s, " %8s%c%-11s %2s %-10s %4s %-8s %s\n", 
+	    "id", ' ',  "state", "pr", "flags", "mask", "name", "location");
 	_thread_sys_write(fd, s, strlen(s));
 
 	writestring(fd, "active:\n");
