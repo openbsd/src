@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.360 2003/04/13 20:41:37 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.361 2003/04/13 21:51:10 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -315,6 +315,7 @@ typedef struct {
 		struct queue_opts	 queue_opts;
 		struct scrub_opts	 scrub_opts;
 		struct table_opts	 table_opts;
+		struct node_hfsc_opts	 hfsc_opts;
 	} v;
 	int lineno;
 } YYSTYPE;
@@ -380,7 +381,7 @@ typedef struct {
 %type	<v.queue_options>	scheduler
 %type	<v.number>		cbqflags_list cbqflags_item
 %type	<v.number>		priqflags_list priqflags_item
-%type	<v.number>		hfscflags_list hfscflags_item
+%type	<v.hfsc_opts>		hfscopts_list hfscopts_item
 %type	<v.queue_bwspec>	bandwidth
 %type	<v.filter_opts>		filter_opts filter_opt filter_opts_l
 %type	<v.queue_opts>		queue_opts queue_opt queue_opts_l
@@ -985,9 +986,10 @@ scheduler	: CBQ				{
 			bzero(&$$.data.hfsc_opts,
 			    sizeof(struct node_hfsc_opts));
 		}
-		| HFSC '(' hfscflags_list ')'	{
+		| HFSC '(' hfscopts_list ')'	{
 			$$.qtype = ALTQT_HFSC;
-			$$.data.hfsc_opts.flags = $3;
+			memcpy(&$$.data.hfsc_opts, &$3,
+			    sizeof(struct node_hfsc_opts));
 		}
 		;
 
@@ -1033,19 +1035,22 @@ priqflags_item	: STRING	{
 		}
 		;
 
-hfscflags_list	: hfscflags_item			{ $$ |= $1; }
-		| hfscflags_list comma hfscflags_item	{ $$ |= $3; }
+hfscopts_list	: hfscopts_item				{
+			$$.flags |= $1.flags;
+		}
+		| hfscopts_list comma hfscopts_item	{
+			$$.flags |= $3.flags;
 		;
 
-hfscflags_item	: STRING	{
+hfscopts_item	: STRING	{
 			if (!strcmp($1, "default"))
-				$$ = HFCF_DEFAULTCLASS;
+				$$.flags = HFCF_DEFAULTCLASS;
 			else if (!strcmp($1, "red"))
-				$$ = HFCF_RED;
+				$$.flags = HFCF_RED;
 			else if (!strcmp($1, "ecn"))
-				$$ = HFCF_RED|HFCF_ECN;
+				$$.flags = HFCF_RED|HFCF_ECN;
 			else if (!strcmp($1, "rio"))
-				$$ = HFCF_RIO;
+				$$.flags = HFCF_RIO;
 			else {
 				yyerror("unknown hfsc flag \"%s\"", $1);
 				YYERROR;
