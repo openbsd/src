@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lock.c,v 1.12 2002/03/14 01:27:04 millert Exp $	*/
+/*	$OpenBSD: kern_lock.c,v 1.13 2002/03/17 18:26:51 art Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -205,6 +205,13 @@ lockmgr(lkp, flags, interlkp, p)
 		if ((flags & LK_REENABLE) == 0)
 			lkp->lk_flags |= LK_DRAINED;
 	}
+
+	/*
+	 * Check if the caller is asking us to be schizophrenic.
+	 */
+	if ((lkp->lk_flags & (LK_CANRECURSE|LK_RECURSEFAIL)) ==
+	    (LK_CANRECURSE|LK_RECURSEFAIL))
+		panic("lockmgr: make up your mind");
 #endif /* DIAGNOSTIC */
 
 	switch (flags & LK_TYPE_MASK) {
