@@ -1,4 +1,4 @@
-/*	$OpenBSD: help.c,v 1.12 2001/05/24 03:05:23 mickey Exp $	*/
+/*	$OpenBSD: help.c,v 1.13 2001/05/24 09:06:21 art Exp $	*/
 
 /*
  * Help functions for Mg 2
@@ -135,7 +135,7 @@ showall(BUFFER *bp, KEYMAP *map, char *prefix)
 		fun = doscan(map, c, &newmap);
 		if (fun == rescan || fun == selfinsert)
 			continue;
-		keyname(buf, c, sizeof(buf));
+		keyname(buf, sizeof(buf), c);
 		sprintf(key, "%s%s ", prefix, buf);
 		if (fun == NULL) {
 			if (showall(bp, newmap, key) == FALSE)
@@ -218,12 +218,12 @@ findbind(KEYMAP *map, PF fun, char *buf, size_t len)
 	for (c = 0; c < 256; c++) {
 		nfun = doscan(map, c, &newmap);
 		if (nfun == fun) {
-			keyname(buf, c, len);
+			keyname(buf, len, c);
 			return TRUE;
 		}
 		if (nfun == NULL) {
 			if (findbind(newmap, fun, buf2, sizeof(buf2)) == TRUE) {
-				keyname(key, c, sizeof(key));
+				keyname(key, sizeof(key), c);
 				snprintf(buf, len, "%s %s", key, buf2);
 				return TRUE;
 			}
