@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.3 1999/08/13 20:36:38 fgsch Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.4 1999/10/27 00:58:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -176,9 +176,9 @@ u_int32_t	widebug = WIDEBUG;
 #if !defined(lint)
 static const char rcsid[] =
 #ifdef __FreeBSD__
-	"$Id: if_wi.c,v 1.3 1999/08/13 20:36:38 fgsch Exp $";
+	"$Id: if_wi.c,v 1.4 1999/10/27 00:58:35 deraadt Exp $";
 #else	/* !__FreeBSD__ */
-	"$OpenBSD: if_wi.c,v 1.3 1999/08/13 20:36:38 fgsch Exp $";
+	"$OpenBSD: if_wi.c,v 1.4 1999/10/27 00:58:35 deraadt Exp $";
 #endif	/* __FreeBSD__ */
 #endif	/* lint */
 
@@ -596,8 +596,6 @@ wi_pcmcia_attach(parent, self, aux)
 
 	shutdownhook_establish(wi_shutdown, sc);
 
-	printf("\n");
-
 	/* Establish the interrupt. */
 	sc->sc_ih = pcmcia_intr_establish(pa->pf, IPL_NET, wi_intr, sc);
 	if (sc->sc_ih == NULL) {
@@ -605,6 +603,7 @@ wi_pcmcia_attach(parent, self, aux)
 		    sc->sc_dev.dv_xname);
 		goto bad;
 	}
+	printf("\n");
 
 	wi_init(sc);
 	wi_stop(sc);
@@ -836,15 +835,8 @@ STATIC void wi_rxeof(sc)
 
 #if NBPFILTER > 0
 	/* Handle BPF listeners. */
-	if (ifp->if_bpf) {
+	if (ifp->if_bpf)
 		BPF_MTAP(ifp, m);
-		if (ifp->if_flags & IFF_PROMISC &&
-		    (bcmp(eh->ether_dhost, sc->arpcom.ac_enaddr,
-		    ETHER_ADDR_LEN) && (eh->ether_dhost[0] & 1) == 0)) {
-			m_freem(m);
-			return;
-		}
-	}
 #endif
 
 	/* Receive packet. */
