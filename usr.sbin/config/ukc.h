@@ -1,7 +1,7 @@
-/*	$OpenBSD: ukc.h,v 1.3 2001/01/24 20:12:27 art Exp $ */
+/*	$OpenBSD: ukc.h,v 1.4 2001/02/04 20:42:12 maja Exp $ */
 
 /*
- * Copyright (c) 1999 Mats O Jansson.  All rights reserved.
+ * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -47,7 +47,10 @@
 #define	I_HISTLEN	12
 #define	CA_HISTORY	13
 #define TZ_TZ		14
-#define NLENTRIES	15
+#define P_PDEVNAMES	15
+#define I_PDEVSIZE	16
+#define S_PDEVINIT	17
+#define NLENTRIES	18
 
 #ifdef UKC_MAIN
 struct nlist nl[] = {
@@ -66,6 +69,9 @@ struct nlist nl[] = {
 	{ "_userconf_histlen" },
 	{ "_userconf_history" },
 	{ "_tz" },
+	{ "_pdevnames" },
+	{ "_pdevnames_size" },
+	{ "_pdevinit" },
 	{ NULL },
 };
 struct nlist knl[] = {
@@ -84,30 +90,39 @@ struct nlist knl[] = {
 	{ "_userconf_histlen" },
 	{ "_userconf_history" },
 	{ "_tz" },
+	{ "_pdevnames" },
+	{ "_pdevnames_size" },
+	{ "_pdevinit" },
 	{ NULL },
 };
 int	maxdev = 0;
 int	totdev = 0;
+int	maxpseudo = 0;
 int	maxlocnames = 0;
 int	base = 16;
 int	cnt = -1;
 int	lines = 18;
 int	oldkernel = 0;
+int	nopdev = 0;
 #else
 extern struct nlist nl[];
 extern int maxdev;
 extern int totdev;
+extern int maxpseudo;
 extern int maxlocnames;
 extern int base;
 extern int cnt;
 extern int lines;
 extern int oldkernel;
+extern int nopdev;
 #endif
 
-struct cfdata *get_cfdata __P((int));
-short	      *get_locnamp __P((int));
-caddr_t	      *get_locnames __P((int));
-int	      *get_extraloc __P((int));
+struct cfdata   *get_cfdata __P((int));
+short	        *get_locnamp __P((int));
+caddr_t	        *get_locnames __P((int));
+int	        *get_extraloc __P((int));
+caddr_t	        *get_pdevnames __P((int));
+struct pdevinit *get_pdevinit __P((int));
 
 int	more __P(());
 void	pnum __P((int));
@@ -138,4 +153,5 @@ void	process_history __P((int, char *));
 #define UC_SHOW 's'
 
 #endif _UTIL_H
+
 

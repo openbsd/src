@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkioconf.c,v 1.15 1999/10/02 07:38:20 deraadt Exp $	*/
+/*	$OpenBSD: mkioconf.c,v 1.16 2001/02/04 20:42:12 maja Exp $	*/
 /*	$NetBSD: mkioconf.c,v 1.41 1996/11/11 14:18:49 mycroft Exp $	*/
 
 /*
@@ -464,6 +464,7 @@ emitpseudo(fp)
 {
 	register struct devi *i;
 	register struct devbase *d;
+	int cnt = 0;
 
 	if (fputs("\n/* pseudo-devices */\n", fp) < 0)
 		return (1);
@@ -471,6 +472,18 @@ emitpseudo(fp)
 		if (fprintf(fp, "extern void %sattach __P((int));\n",
 		    i->i_base->d_name) < 0)
 			return (1);
+	if (fputs("\nchar *pdevnames[] = {\n", fp) < 0)
+		return (1);
+	for (i = allpseudo; i != NULL; i = i->i_next) {
+		d = i->i_base;
+		if (fprintf(fp, "\t\"%s\",\n", d->d_name) < 0)
+			return (1);
+		cnt++;
+	}
+	if (fputs("};\n", fp) < 0)
+		return (1);
+	if (fprintf(fp, "\nint pdevnames_size = %d;\n", cnt) < 0)
+		return (1);
 	if (fputs("\nstruct pdevinit pdevinit[] = {\n", fp) < 0)
 		return (1);
 	for (i = allpseudo; i != NULL; i = i->i_next) {

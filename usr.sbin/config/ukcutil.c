@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukcutil.c,v 1.5 2001/01/31 22:41:32 maja Exp $ */
+/*	$OpenBSD: ukcutil.c,v 1.6 2001/02/04 20:42:12 maja Exp $ */
 
 /*
  * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ukcutil.c,v 1.5 2001/01/31 22:41:32 maja Exp $";
+static char rcsid[] = "$OpenBSD: ukcutil.c,v 1.6 2001/02/04 20:42:12 maja Exp $";
 #endif
 
 #include <sys/types.h>
@@ -79,6 +79,26 @@ get_extraloc(idx)
 {
 	return((int *)(adjust((caddr_t)nl[IA_EXTRALOC].n_value) +
 		       idx*sizeof(int)));
+}
+
+caddr_t *
+get_pdevnames(idx)
+	int	idx;
+{
+	caddr_t *p;
+
+	p = (caddr_t *)adjust((caddr_t)nl[P_PDEVNAMES].n_value +
+			   idx*sizeof(caddr_t));
+	return(caddr_t *)adjust((caddr_t)*p);
+
+}
+
+struct pdevinit *
+get_pdevinit(idx)
+	int	idx;
+{
+	return((struct pdevinit *)(adjust((caddr_t)nl[S_PDEVINIT].n_value) +
+				 idx*sizeof(struct pdevinit)));
 }
 
 int
@@ -169,8 +189,23 @@ pdev(devno)
 	int	*i;
 	caddr_t	*p;
 	char	c;
+	struct pdevinit *pi;
 
-	if (devno >  maxdev) {
+	if (nopdev == 0) { 
+		if ((devno > maxdev) && (devno <= totdev)) {
+			printf("%3d free slot (for add)\n", devno);
+			return;
+		}
+		if ((devno > totdev) && (devno <= (totdev+maxpseudo))) {
+			pi = get_pdevinit(devno-totdev-1);
+			printf("%3d %s count %d (pseudo device)\n", devno, 
+				get_pdevnames(devno-totdev-1),
+				pi->pdev_count);
+			return;
+		}
+	}
+
+	if (devno > maxdev) {
 		printf("Unknown devno (max is %d)\n", maxdev);
 		return;
 	}
@@ -374,6 +409,7 @@ change(devno)
 {
 	struct cfdata *cd,*c;
 	caddr_t	*p;
+	struct pdevinit *pi;
 	int	 i,share = 0,*j,*k,*l;
 	short	*ln,*lk;
 
@@ -452,9 +488,31 @@ change(devno)
 			printf(" changed\n");
 			pdev(devno);
 		}
-	} else {
-		printf("Unknown devno (max is %d)\n", maxdev);
+		return;
 	}
+
+	if (nopdev == 0) {
+		if ((devno > maxdev) && (devno <= totdev)) {
+			printf("%3d can't change free slot\n", devno);
+			return;
+		}
+		if ((devno > totdev) && (devno <= (totdev+maxpseudo))) {
+			
+			pdev(devno);
+			
+			if (ask_yn("change")) {
+
+				pi = get_pdevinit(devno-totdev-1);
+
+				modify("count", &pi->pdev_count);
+				printf("%3d %s changed\n", devno, get_pdevnames(devno-totdev-1));
+				pdev(devno);
+			}
+			return;
+		}
+	}
+
+	printf("Unknown devno (max is %d)\n", totdev+maxpseudo);
 }
 
 void
@@ -464,6 +522,7 @@ change_history(devno,str)
 {
 	struct cfdata *cd,*c;
 	caddr_t	*p;
+	struct pdevinit *pi;
 	int	 i,share = 0,*j,*k,*l;
 	short	*ln,*lk;
 
@@ -549,9 +608,35 @@ change_history(devno,str)
 		printf(" changed\n");
 		pdev(devno);
 		
-	} else {
-		printf("Unknown devno (max is %d)\n", maxdev);
+		return;
 	}
+
+	if (nopdev == 0) {
+		if ((devno > maxdev) && (devno <= totdev)) {
+			printf("%3d can't change free slot\n", devno);
+			return;
+		}
+		if ((devno > totdev) && (devno <= (totdev+maxpseudo))) {
+			
+			pdev(devno);
+			
+			pi = get_pdevinit(devno-totdev-1);
+
+			if (*str) {
+				pi->pdev_count = atoi(str);
+				if (*str == '-') str++;
+				while ((*str >= '0') && (*str <= '9')) str++;
+				if (*str == ' ') str++;
+			}
+
+			printf("%3d %s changed\n", devno, get_pdevnames(devno-totdev-1));
+			pdev(devno);
+
+			return;
+		}
+	}
+
+	printf("Unknown devno (max is %d)\n", totdev+maxpseudo);
 }
 
 void
@@ -588,9 +673,24 @@ disable(devno)
 		if (done)
 			printf(" already");
 		printf(" disabled\n");
-	} else {
-		printf("Unknown devno (max is %d)\n", maxdev);
+
+		return;
 	}
+
+	if (nopdev == 0) {
+		if ((devno > maxdev) && (devno <= totdev)) {
+			printf("%3d can't disable free slot\n", devno);
+			return;
+		}
+		if ((devno > totdev) && (devno <= (totdev+maxpseudo))) {
+			printf("%3d %s can't disable pseudo device\n", devno, 
+				get_pdevnames(devno-totdev-1));
+			return;
+		}
+	}
+
+	printf("Unknown devno (max is %d)\n", totdev+maxpseudo);
+
 }
 
 void
@@ -627,9 +727,23 @@ enable(devno)
 		if (done)
 			printf(" already");
 		printf(" enabled\n");
-	} else {
-		printf("Unknown devno (max is %d)\n", maxdev);
+		
+		return;
 	}
+
+	if (nopdev == 0) {
+		if ((devno > maxdev) && (devno <= totdev)) {
+			printf("%3d can't enable free slot\n", devno);
+			return;
+		}
+		if ((devno > totdev) && (devno <= (totdev+maxpseudo))) {
+			printf("%3d %s can't enable pseudo device\n", devno, 
+				get_pdevnames(devno-totdev-1));
+			return;
+		}
+	}
+
+	printf("Unknown devno (max is %d)\n", totdev+maxpseudo);
 }
 
 void
@@ -827,6 +941,31 @@ common_dev(dev, len, unit, state, routine)
 		cd++;
 	}
 
+	if (nopdev == 0) {
+		for (i = 0; i < maxpseudo; i++) {
+			if ((strncasecmp(dev,(char *)get_pdevnames(i),
+			     len) == 0) && (state == FSTATE_FOUND)) {
+				switch(routine) {
+				case UC_CHANGE:
+					change(totdev+1+i);
+					break;
+				case UC_ENABLE:
+					enable(totdev+1+i);
+					break;
+				case UC_DISABLE:
+					disable(totdev+1+i);
+					break;
+				case UC_FIND:
+					pdev(totdev+1+i);
+					break;
+				default:
+					printf("Unknown pseudo routine /%c/\n",routine);
+					break;
+				}
+			}
+		}
+	}
+
 	switch (routine) {
 	case UC_CHANGE:
 		break;
@@ -943,7 +1082,7 @@ add(dev, len, unit, state)
 	}
 
 	if (state == FSTATE_FOUND) {
-		printf("Device not complete number or * is missing/n");
+		printf("Device not complete number or * is missing\n");
 		return;
 	}
 

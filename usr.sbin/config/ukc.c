@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukc.c,v 1.4 2001/01/31 22:41:32 maja Exp $ */
+/*	$OpenBSD: ukc.c,v 1.5 2001/02/04 20:42:12 maja Exp $ */
 
 /*
  * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ukc.c,v 1.4 2001/01/31 22:41:32 maja Exp $";
+static char rcsid[] = "$OpenBSD: ukc.c,v 1.5 2001/02/04 20:42:12 maja Exp $";
 #endif
 
 #include <sys/types.h>
@@ -124,8 +124,6 @@ ukc(file, outfile, uflag, force)
 	if (force == 0 && outfile == NULL)
 		printf("warning: no output file specified\n");
 
-	init();
-	
 	if ((nl[IA_EXTRALOC].n_type == 0) ||
 	    (nl[I_NEXTRALOC].n_type == 0) ||
 	    (nl[I_UEXTRALOC].n_type == 0) ||
@@ -136,6 +134,16 @@ WARNING this kernel doesn't contain all information needed!\n\
 WARNING the commands add and change might not work.\n");
 		oldkernel = 1;
 	}
+	
+	if ((nl[P_PDEVNAMES].n_type == 0) ||
+	    (nl[I_PDEVSIZE].n_type == 0) ||
+	    (nl[S_PDEVINIT].n_type == 0)) {
+		printf("\
+WARNING this kernel doesn't support pseudo devices.\n");
+		nopdev = 1;
+	}
+
+	init();
 	
 	if (uflag) {
 		if (ok) {
@@ -177,6 +185,7 @@ init()
 	int i = 0,fd;
 	struct cfdata *cd;
 	short	*ln;
+	int	*p;
 #ifdef NOTDEF
 	struct winsize w;
 #endif
@@ -204,6 +213,11 @@ init()
 	}
 
 	totdev = totdev - 1;
+
+	if (nopdev == 0) {
+		p = (int *)adjust((caddr_t)nl[I_PDEVSIZE].n_value);
+		maxpseudo = *p;
+	}
 
 	if ((fd = open("/dev/tty", O_RDWR)) < 0)
 		fd = 2;
