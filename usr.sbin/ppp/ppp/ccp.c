@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: ccp.c,v 1.21 2001/07/03 22:23:56 brian Exp $
+ * $OpenBSD: ccp.c,v 1.22 2001/07/07 03:08:49 brian Exp $
  */
 
 #include <sys/param.h>
@@ -197,7 +197,7 @@ ccp_ReportStatus(struct cmdargs const *arg)
     prompt_Printf(arg->prompt, "any bits, ");
   switch (ccp->cfg.mppe.state) {
   case MPPE_STATEFUL:
-    prompt_Printf(arg->prompt, "statefull");
+    prompt_Printf(arg->prompt, "stateful");
     break;
   case MPPE_STATELESS:
     prompt_Printf(arg->prompt, "stateless");
