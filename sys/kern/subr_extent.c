@@ -1,8 +1,8 @@
-/*	$OpenBSD: subr_extent.c,v 1.10 2000/09/20 17:30:56 niklas Exp $	*/
+/*	$OpenBSD: subr_extent.c,v 1.11 2001/01/15 22:18:24 jason Exp $	*/
 /*	$NetBSD: subr_extent.c,v 1.7 1996/11/21 18:46:34 cgd Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -18,8 +18,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -27,8 +27,8 @@
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
@@ -79,7 +79,7 @@ static	void extent_register __P((struct extent *));
 /*
  * Macro to align to an arbitrary power-of-two boundary.
  */
-#define EXTENT_ALIGN(_start, _align, _skew)	\
+#define EXTENT_ALIGN(_start, _align, _skew)		\
 	(((((_start) - (_skew)) + ((_align) - 1)) & (-(_align))) + (_skew))
 
 
@@ -447,7 +447,7 @@ extent_alloc_region(ex, start, size, flags)
 			 * We lie before this region and don't
 			 * conflict.
 			 */
-			 break;
+			break;
 		}
 
 		/*
@@ -514,7 +514,7 @@ extent_alloc_subregion1(ex, substart, subend, size, alignment, skew, boundary,
 {
 	struct extent_region *rp, *myrp, *last, *bestlast;
 	u_long newstart, newend, beststart, bestovh, ovh;
-	u_long dontcross, odontcross;
+	u_long dontcross;
 	int error;
 
 #ifdef DIAGNOSTIC
@@ -523,15 +523,15 @@ extent_alloc_subregion1(ex, substart, subend, size, alignment, skew, boundary,
 		panic("extent_alloc_subregion: NULL extent");
 	if (result == NULL)
 		panic("extent_alloc_subregion: NULL result pointer");
-	if ((substart < ex->ex_start) || (substart >= ex->ex_end) ||
-	    (subend > ex->ex_end) || (subend <= ex->ex_start)) {
+	if ((substart < ex->ex_start) || (substart > ex->ex_end) ||
+	    (subend > ex->ex_end) || (subend < ex->ex_start)) {
   printf("extent_alloc_subregion: extent `%s', ex_start 0x%lx, ex_end 0x%lx\n",
 		    ex->ex_name, ex->ex_start, ex->ex_end);
 		printf("extent_alloc_subregion: substart 0x%lx, subend 0x%lx\n",
 		    substart, subend);
 		panic("extent_alloc_subregion: bad subregion");
 	}
-	if (size < 1 || (size - 1) > (subend - substart)) {
+	if ((size < 1) || ((size - 1) > (subend - substart))) {
 		printf("extent_alloc_subregion: extent `%s', size 0x%lx\n",
 		    ex->ex_name, size);
 		panic("extent_alloc_subregion: bad size");
@@ -570,22 +570,6 @@ extent_alloc_subregion1(ex, substart, subend, size, alignment, skew, boundary,
 	last = NULL;
 
 	/*
-	 * Initialize the "don't cross" boundary, a.k.a a line
-	 * that a region should not cross.  If the boundary lies
-	 * before the region starts, we add the "boundary" argument
-	 * until we get a meaningful comparison.
-	 *
-	 * Start the boundary lines at 0 if the caller requests it.
-	 */
-	dontcross = 0;
-	if (boundary) {
-		dontcross =
-		    ((flags & EX_BOUNDZERO) ? 0 : ex->ex_start) + boundary;
-		while (dontcross < substart)
-			dontcross += boundary;
-	}
-
-	/*
 	 * Keep track of size and location of the smallest
 	 * chunk we fit in.
 	 *
@@ -604,7 +588,7 @@ extent_alloc_subregion1(ex, substart, subend, size, alignment, skew, boundary,
 	 * For N allocated regions, we must make (N + 1)
 	 * checks for unallocated space.  The first chunk we
 	 * check is the area from the beginning of the subregion
-	 * to the first allocated region.
+	 * to the first allocated region after that point.
 	 */
 	newstart = EXTENT_ALIGN(substart, alignment, skew);
 	if (newstart < ex->ex_start) {
@@ -619,34 +603,27 @@ extent_alloc_subregion1(ex, substart, subend, size, alignment, skew, boundary,
 #endif
 	}
 
-	/* 
+	/*
 	 * Find the first allocated region that begins on or after
 	 * the subregion start, advancing the "last" pointer along
 	 * the way.
 	 */
 	for (rp = ex->ex_regions.lh_first; rp != NULL;
-	    rp = rp->er_link.le_next) {
+	     rp = rp->er_link.le_next) {
 		if (rp->er_start >= newstart)
 			break;
 		last = rp;
 	}
 
 	/*
-	 * If there are no allocated regions beyond where we want to be,
-	 * relocate the start of our candidate region to the end of
-	 * the last allocated region (if there was one).
+	 * Relocate the start of our candidate region to the end of
+	 * the last allocated region (if there was one overlapping
+	 * our subrange).
 	 */
-	if (rp == NULL && last != NULL)
+	if (last != NULL && last->er_end >= newstart)
 		newstart = EXTENT_ALIGN((last->er_end + 1), alignment, skew);
 
 	for (; rp != NULL; rp = rp->er_link.le_next) {
-		/*
-		 * Check from the current starting point to the
-		 * end of the subregion.
-		 */
-		if (!LE_OV(newstart, size - 1, subend))
-			goto fail;
-
 		/*
 		 * Check the chunk before "rp".  Note that our
 		 * comparison is safe from overflow conditions.
@@ -661,32 +638,44 @@ extent_alloc_subregion1(ex, substart, subend, size, alignment, skew, boundary,
 				newend = newstart + (size - 1);
 
 				/*
-				 * Adjust boundary for a meaningful
-				 * comparison.
+				 * Calculate the next boundary after the start
+				 * of this region.
 				 */
-				while (dontcross <= newstart) {
-					odontcross = dontcross;
+				dontcross = EXTENT_ALIGN(newstart+1, boundary, 
+				    (flags & EX_BOUNDZERO) ? 0 : ex->ex_start)
+				    - 1;
+
+#if 0
+				printf("newstart=%lx newend=%lx ex_start=%lx ex_end=%lx boundary=%lx dontcross=%lx\n",
+				    newstart, newend, ex->ex_start, ex->ex_end,
+				    boundary, dontcross);
+#endif
+
+				/* Check for overflow */
+				if (dontcross < ex->ex_start)
+					dontcross = ex->ex_end;
+				else if (newend > dontcross) {
+					/*
+					 * Candidate region crosses boundary.
+					 * Throw away the leading part and see
+					 * if we still fit.
+					 */
+					newstart = dontcross + 1;
+					newend = newstart + (size - 1);
 					dontcross += boundary;
-
-					/*
-					 * If we run past the end of
-					 * the extent or the boundary
-					 * overflows, then the request
-					 * can't fit.
-					 */
-					if ((dontcross > ex->ex_end) ||
-					    (dontcross < odontcross))
-						goto fail;
+					if (!LE_OV(newstart, size, rp->er_start))
+						continue;
 				}
 
-				/* Do the boundary check. */
-				if (newend >= dontcross) {
-					/*
-					 * Candidate region crosses
-					 * boundary.  Try again.
-					 */
-					continue;
-				}
+				/*
+				 * If we run past the end of
+				 * the extent or the boundary
+				 * overflows, then the request
+				 * can't fit.
+				 */
+				if (newstart + size - 1 > ex->ex_end ||
+				    dontcross < newstart)
+					goto fail;
 			}
 
 			/*
@@ -734,6 +723,55 @@ extent_alloc_subregion1(ex, substart, subend, size, alignment, skew, boundary,
 	 * for alignment in either case.
 	 */
 	if (LE_OV(newstart, (size - 1), subend)) {
+		/*
+		 * Do a boundary check, if necessary.  Note
+		 * that a region may *begin* on the boundary,
+		 * but it must end before the boundary.
+		 */
+		if (boundary) {
+			newend = newstart + (size - 1);
+
+			/*
+			 * Calculate the next boundary after the start
+			 * of this region.
+			 */
+			dontcross = EXTENT_ALIGN(newstart+1, boundary, 
+			    (flags & EX_BOUNDZERO) ? 0 : ex->ex_start)
+			    - 1;
+
+#if 0
+			printf("newstart=%lx newend=%lx ex_start=%lx ex_end=%lx boundary=%lx dontcross=%lx\n",
+			    newstart, newend, ex->ex_start, ex->ex_end,
+			    boundary, dontcross);
+#endif
+
+			/* Check for overflow */
+			if (dontcross < ex->ex_start)
+				dontcross = ex->ex_end;
+			else if (newend > dontcross) {
+				/*
+				 * Candidate region crosses boundary.
+				 * Throw away the leading part and see
+				 * if we still fit.
+				 */
+				newstart = dontcross + 1;
+				newend = newstart + (size - 1);
+				dontcross += boundary;
+				if (!LE_OV(newstart, (size - 1), subend))
+					goto fail;
+			}
+
+			/*
+			 * If we run past the end of
+			 * the extent or the boundary
+			 * overflows, then the request
+			 * can't fit.
+			 */
+			if (newstart + size - 1 > ex->ex_end ||
+			    dontcross < newstart)
+				goto fail;
+		}
+
 		/*
 		 * We would fit into this space.  Calculate
 		 * the overhead (wasted space).  If we exactly
@@ -809,8 +847,9 @@ extent_free(ex, start, size, flags)
 	u_long start, size;
 	int flags;
 {
-	struct extent_region *rp;
+	struct extent_region *rp, *nrp = NULL;
 	u_long end = start + (size - 1);
+	int exflags;
 
 #ifdef DIAGNOSTIC
 	/* Check arguments. */
@@ -831,6 +870,22 @@ extent_free(ex, start, size, flags)
 		panic("extent_free: overflow");
 	}
 #endif
+
+	/*
+	 * If we're allowing coalescing, we must allocate a region
+	 * descriptor now, since it might block.
+	 *
+	 * XXX Make a static, create-time flags word, so we don't
+	 * XXX have to lock to read it!
+	 */
+	exflags = ex->ex_flags;
+
+	if ((exflags & EXF_NOCOALESCE) == 0) {
+		/* Allocate a region descriptor. */
+		nrp = extent_alloc_region_descriptor(ex, flags);
+		if (nrp == NULL)
+			return (ENOMEM);
+	}
 
 	/*
 	 * Find region and deallocate.  Several possibilities:
@@ -897,13 +952,6 @@ extent_free(ex, start, size, flags)
 
 		/* Case 4. */
 		if ((start > rp->er_start) && (end < rp->er_end)) {
-			struct extent_region *nrp;
-
-			/* Allocate a region descriptor. */
-			nrp = extent_alloc_region_descriptor(ex, flags);
-			if (nrp == NULL)
-				return (ENOMEM);
-
 			/* Fill in new descriptor. */
 			nrp->er_start = end + 1;
 			nrp->er_end = rp->er_end;
@@ -911,20 +959,23 @@ extent_free(ex, start, size, flags)
 			/* Adjust current descriptor. */
 			rp->er_end = start - 1;
 
-			/* Instert new descriptor after current. */
+			/* Insert new descriptor after current. */
 			LIST_INSERT_AFTER(rp, nrp, er_link);
+
+			/* We used the new descriptor, so don't free it below */
+			nrp = NULL;
 			goto done;
 		}
 	}
 
-#ifdef DIAGNOSTIC
 	/* Region not found, or request otherwise invalid. */
 	extent_print(ex);
 	printf("extent_free: start 0x%lx, end 0x%lx\n", start, end);
 	panic("extent_free: region not found");
-#endif
 
  done:
+	if (nrp != NULL)
+		extent_free_region_descriptor(ex, nrp);
 	if (ex->ex_flags & EXF_WANTED) {
 		ex->ex_flags &= ~EXF_WANTED;
 		wakeup(ex);
