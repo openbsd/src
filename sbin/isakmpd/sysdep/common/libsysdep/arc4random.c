@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc4random.c,v 1.4 2001/06/05 05:05:37 pvalchev Exp $	*/
+/*	$OpenBSD: arc4random.c,v 1.5 2004/08/10 09:47:59 ho Exp $	*/
 
 /*
  * Arc4 random number generator for OpenBSD.
@@ -88,6 +88,8 @@ arc4_stir(as)
 
 	gettimeofday(&rdat.tv, NULL);
 	fd = open("/dev/arandom", O_RDONLY);
+	if (fd < 0)
+		fd = open("/dev/random", O_RDONLY);
 	if (fd >= 0) {
 		read(fd, rdat.rnd, sizeof(rdat.rnd));
 		close(fd);
