@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.4 2000/06/12 16:49:24 mickey Exp $	*/
+/*	$OpenBSD: dc.c,v 1.5 2000/07/21 15:52:10 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -120,6 +120,7 @@
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/timeout.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -1909,7 +1910,7 @@ void dc_tick(xsc)
 		}
 	}
 
-	timeout(dc_tick, sc, hz);
+	timeout_add(&sc->dc_tick_tmo, hz);
 
 	splx(s);
 
@@ -2309,7 +2310,8 @@ void dc_init(xsc)
 
 	(void)splx(s);
 
-	timeout(dc_tick, sc, hz);
+	timeout_set(&sc->dc_tick_tmo, dc_tick, sc);
+	timeout_add(&sc->dc_tick_tmo, hz);
 
 	return;
 }
@@ -2482,7 +2484,7 @@ void dc_stop(sc)
 	ifp = &sc->arpcom.ac_if;
 	ifp->if_timer = 0;
 
-	untimeout(dc_tick, sc);
+	timeout_del(&sc->dc_tick_tmo);
 
 	DC_CLRBIT(sc, DC_NETCFG, (DC_NETCFG_RX_ON|DC_NETCFG_TX_ON));
 	CSR_WRITE_4(sc, DC_IMR, 0x00000000);

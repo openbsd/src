@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcreg.h,v 1.5 2000/06/12 16:46:53 mickey Exp $ */
+/*	$OpenBSD: dcreg.h,v 1.6 2000/07/21 15:52:10 mickey Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -660,6 +660,7 @@ struct dc_softc {
 	struct dc_chain_data	dc_cdata;
 	u_int32_t		dc_csid;
 	u_int			dc_revision;
+	struct timeout		dc_tick_tmo;
 };
 
 #define DC_TX_POLL		0x00000001
