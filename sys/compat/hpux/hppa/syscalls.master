@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.5 2004/07/13 02:32:11 mickey Exp $
+	$OpenBSD: syscalls.master,v 1.6 2004/07/14 15:54:56 mickey Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -160,11 +160,11 @@
 			    fd_set *ex, struct timeval *tv); }
 94	UNIMPL
 95	NOARGS		{ int sys_fsync(int fd); }
-96	UNIMPL		setpriority
+96	NOARGS		{ int sys_setpriority(int which, id_t who, int prio); }
 97	UNIMPL
 98	UNIMPL
 99	UNIMPL
-100	UNIMPL		getpriority
+100	NOARGS		{ int sys_getpriority(int which, id_t who); }
 101	UNIMPL
 102	UNIMPL
 103	UNIMPL		lf_send
