@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.89 2004/04/20 06:39:04 tedu Exp $
+.\"	$OpenBSD: afterboot.8,v 1.90 2004/05/25 22:27:43 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Marshall M. Midden
 .\" All rights reserved.
@@ -604,16 +604,12 @@ or run
 .Xr dhcpd 8
 manually.
 .Ss BOOTP server
-If this is a
-BOOTP
-server, edit
-.Pa /etc/bootptab
+If this is a BOOTP server, edit
+.Pa /etc/dhcpd.conf
 as needed.
-You will have to turn it on in
-.Pa /etc/inetd.conf
-or run
-.Xr bootpd 8
-in its stand-alone mode.
+.Xr dhcpd 8
+will have to be turned on in
+.Xr rc.conf.local 8 .
 .Ss NFS server
 If this is an NFS server
 make sure
@@ -836,8 +832,8 @@ boot time in the kernel image.
 .Xr xdm 1 ,
 .Xr ccd 4 ,
 .Xr aliases 5 ,
-.Xr bootptab 5 ,
 .Xr crontab 5 ,
+.Xr dhcpd.conf 5 ,
 .Xr exports 5 ,
 .Xr fbtab 5 ,
 .Xr fstab 5 ,
@@ -853,7 +849,6 @@ boot time in the kernel image.
 .Xr ports 7 ,
 .Xr adduser 8 ,
 .Xr amd 8 ,
-.Xr bootpd 8 ,
 .Xr ccdconfig 8 ,
 .Xr chown 8 ,
 .Xr config 8 ,
