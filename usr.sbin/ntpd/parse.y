@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.19 2004/08/10 12:45:27 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.20 2004/09/15 00:18:12 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -50,18 +50,6 @@ int	 lgetc(FILE *);
 int	 lungetc(int);
 int	 findeol(void);
 int	 yylex(void);
-
-TAILQ_HEAD(symhead, sym)	 symhead = TAILQ_HEAD_INITIALIZER(symhead);
-struct sym {
-	TAILQ_ENTRY(sym)	 entries;
-	int			 used;
-	int			 persist;
-	char			*nam;
-	char			*val;
-};
-
-int	 symset(const char *, const char *, int);
-char	*symget(const char *);
 int	 atoul(char *, u_long *);
 
 typedef struct {
@@ -79,48 +67,13 @@ typedef struct {
 %token	SERVER SERVERS
 %token	ERROR
 %token	<v.string>		STRING
-%type	<v.number>		number
-%type	<v.string>		string
 %type	<v.addr>		address
 %%
 
 grammar		: /* empty */
 		| grammar '\n'
 		| grammar conf_main '\n'
-		| grammar varset '\n'
 		| grammar error '\n'		{ errors++; }
-		;
-
-number		: STRING			{
-			u_long	ulval;
-
-			if (atoul($1, &ulval) == -1) {
-				yyerror("\"%s\" is not a number", $1);
-				free($1);
-				YYERROR;
-			} else
-				$$ = ulval;
-			free($1);
-		}
-		;
-
-string		: string STRING				{
-			if (asprintf(&$$, "%s %s", $1, $2) == -1)
-				fatal("string: asprintf");
-			free($1);
-			free($2);
-		}
-		| STRING
-		;
-
-varset		: STRING '=' string		{
-			if (conf->opts & NTPD_OPT_VERBOSE)
-				printf("%s = \"%s\"\n", $1, $3);
-			if (symset($1, $3, 0) == -1)
-				fatal("cannot store variable");
-			free($1);
-			free($3);
-		}
 		;
 
 conf_main	: LISTEN ON address	{
@@ -378,11 +331,10 @@ int
 yylex(void)
 {
 	char	 buf[8096];
-	char	*p, *val;
+	char	*p;
 	int	 endc, c;
 	int	 token;
 
-top:
 	p = buf;
 	while ((c = lgetc(fin)) == ' ')
 		; /* nothing */
@@ -391,32 +343,6 @@ top:
 	if (c == '#')
 		while ((c = lgetc(fin)) != '\n' && c != EOF)
 			; /* nothing */
-	if (c == '$' && parsebuf == NULL) {
-		while (1) {
-			if ((c = lgetc(fin)) == EOF)
-				return (0);
-
-			if (p + 1 >= buf + sizeof(buf) - 1) {
-				yyerror("string too long");
-				return (findeol());
-			}
-			if (isalnum(c) || c == '_') {
-				*p++ = (char)c;
-				continue;
-			}
-			*p = '\0';
-			lungetc(c);
-			break;
-		}
-		val = symget(buf);
-		if (val == NULL) {
-			yyerror("macro \"%s\" not defined", buf);
-			return (findeol());
-		}
-		parsebuf = val;
-		parseindex = 0;
-		goto top;
-	}
 
 	switch (c) {
 	case '\'':
@@ -478,8 +404,6 @@ top:
 int
 parse_config(char *filename, struct ntpd_conf *xconf)
 {
-	struct sym		*sym, *next;
-
 	conf = xconf;
 	lineno = 1;
 	errors = 0;
@@ -496,95 +420,7 @@ parse_config(char *filename, struct ntpd_conf *xconf)
 
 	fclose(fin);
 
-	/* Free macros and check which have not been used. */
-	for (sym = TAILQ_FIRST(&symhead); sym != NULL; sym = next) {
-		next = TAILQ_NEXT(sym, entries);
-		if ((conf->opts & NTPD_OPT_VERBOSE2) && !sym->used)
-			fprintf(stderr, "warning: macro \"%s\" not "
-			    "used\n", sym->nam);
-		if (!sym->persist) {
-			free(sym->nam);
-			free(sym->val);
-			TAILQ_REMOVE(&symhead, sym, entries);
-			free(sym);
-		}
-	}
-
 	return (errors ? -1 : 0);
-}
-
-int
-symset(const char *nam, const char *val, int persist)
-{
-	struct sym	*sym;
-
-	for (sym = TAILQ_FIRST(&symhead); sym && strcmp(nam, sym->nam);
-	    sym = TAILQ_NEXT(sym, entries))
-		;	/* nothing */
-
-	if (sym != NULL) {
-		if (sym->persist == 1)
-			return (0);
-		else {
-			free(sym->nam);
-			free(sym->val);
-			TAILQ_REMOVE(&symhead, sym, entries);
-			free(sym);
-		}
-	}
-	if ((sym = calloc(1, sizeof(*sym))) == NULL)
-		return (-1);
-
-	sym->nam = strdup(nam);
-	if (sym->nam == NULL) {
-		free(sym);
-		return (-1);
-	}
-	sym->val = strdup(val);
-	if (sym->val == NULL) {
-		free(sym->nam);
-		free(sym);
-		return (-1);
-	}
-	sym->used = 0;
-	sym->persist = persist;
-	TAILQ_INSERT_TAIL(&symhead, sym, entries);
-	return (0);
-}
-
-int
-cmdline_symset(char *s)
-{
-	char	*sym, *val;
-	int	ret;
-	size_t	len;
-
-	if ((val = strrchr(s, '=')) == NULL)
-		return (-1);
-
-	len = strlen(s) - strlen(val) + 1;
-	if ((sym = malloc(len)) == NULL)
-		fatal("cmdline_symset: malloc");
-
-	strlcpy(sym, s, len);
-
-	ret = symset(sym, val + 1, 1);
-	free(sym);
-
-	return (ret);
-}
-
-char *
-symget(const char *nam)
-{
-	struct sym	*sym;
-
-	TAILQ_FOREACH(sym, &symhead, entries)
-		if (strcmp(nam, sym->nam) == 0) {
-			sym->used = 1;
-			return (sym->val);
-		}
-	return (NULL);
 }
 
 int
