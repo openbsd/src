@@ -4,10 +4,10 @@
 # generated from:
 #
 #	OpenBSD: etc.mac68k/MAKEDEV.md,v 1.4 2002/02/14 13:29:20 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.38 2002/02/21 13:41:55 todd Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.36 2002/02/19 21:05:10 todd Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.7 2002/02/16 01:19:52 deraadt Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.51 2002/02/21 13:44:12 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.52 2002/02/21 18:34:11 deraadt Exp $
 #
 # Copyright (c) 2001,2002 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -337,7 +337,6 @@ st*)
 
 ramdisk)
 	R bpf0 std pty0 tty00 tty01 asc0 adb st0 st1 sd0 sd1 sd2 sd3
-	R cd0 cd1 ttye0
 	;;
 
 local)
@@ -353,8 +352,8 @@ fd)
 all)
 	R ccd0 ccd1 ccd2 ccd3 cd0 cd1 tun0 tun1 tun2 tun3 bpf0 bpf1
 	R bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1 pty2 xfs0
-	R ss0 ss1 ch0 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 grf0
-	R grf1 grf2 grf3 local adb asc0 uk1 uk0 random lkm ttye0 tty00
+	R ss0 ss1 ch0 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 local
+	R grf0 grf1 grf2 grf3 adb asc0 uk0 rndrandom lkm ttye0 tty00
 	R tty01 pf altq std st0 st1 fd
 	;;
 

@@ -3,11 +3,11 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sun3/MAKEDEV.md,v 1.3 2002/02/21 13:09:03 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.38 2002/02/21 13:41:55 todd Exp 
+#	OpenBSD: etc.sun3/MAKEDEV.md,v 1.2 2002/02/14 13:29:21 todd Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.36 2002/02/19 21:05:10 todd Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.7 2002/02/16 01:19:52 deraadt Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.55 2002/02/21 13:44:12 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.56 2002/02/21 18:34:11 deraadt Exp $
 #
 # Copyright (c) 2001,2002 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -184,9 +184,6 @@ U=`unt $i`
 [ "$U" ] || U=0
 
 case $i in
-ramdisk)
-	R std random bpf0 sd0 sd1 rd0
-	;;
 std)
 	M console	c 0 0 600
 	M tty		c 2 0
@@ -339,7 +336,7 @@ all)
 	R ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4
 	R cd0 cd1 rd0 xy0 xy1 xy2 xy3 tun0 tun1 tun2 tun3 bpf0 bpf1
 	R bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1 pty2 xfs0
-	R ss0 ss1 local cgfour0 cgtwo0 bwtwo0 uk1 uk0 random ttya ttyb
+	R ss0 ss1 local cgfour0 cgtwo0 bwtwo0 uk0 rndrandom ttya ttyb
 	R ttyc ttyd pf altq xd0 xd1 xd2 xd3 std st0 st1 fd
 	;;
 
