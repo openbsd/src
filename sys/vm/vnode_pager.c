@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode_pager.c,v 1.6 1997/11/06 05:59:39 csapuntz Exp $	*/
+/*	$OpenBSD: vnode_pager.c,v 1.7 1997/12/10 02:36:54 csapuntz Exp $	*/
 /*	$NetBSD: vnode_pager.c,v 1.19 1996/03/16 23:15:27 christos Exp $	*/
 
 /*
@@ -295,7 +295,7 @@ vnode_pager_haspage(pager, offset)
 	 * Lock the vnode first to make sure we have the most recent
 	 * version of the size.
 	 */
-	vn_lock(vnp->vnp_vp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(vnp->vnp_vp, LK_EXCLUSIVE | LK_RETRY | LK_CANRECURSE, p);
 	if (offset >= vnp->vnp_size) {
 		VOP_UNLOCK(vnp->vnp_vp, 0, p);
 #ifdef DEBUG
@@ -542,7 +542,7 @@ vnode_pager_io(vnp, mlist, npages, sync, rw)
 	 *	read beyond EOF (returns error)
 	 *	short read
 	 */
-	vn_lock(vnp->vnp_vp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(vnp->vnp_vp, LK_EXCLUSIVE | LK_RETRY | LK_CANRECURSE, p);
 	if (foff >= vnp->vnp_size) {
 		VOP_UNLOCK(vnp->vnp_vp, 0, p);
 		vm_pager_unmap_pages(kva, npages);
