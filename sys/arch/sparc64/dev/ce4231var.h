@@ -1,4 +1,4 @@
-/*	$OpenBSD: ce4231var.h,v 1.2 2001/10/02 00:26:24 jason Exp $	*/
+/*	$OpenBSD: ce4231var.h,v 1.3 2002/01/24 03:06:54 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -88,4 +88,5 @@ struct ce4231_softc {
 	u_int32_t	sc_lastaddr;
 	struct cs_dma	*sc_dmas;	/* dma list */
 	struct cs_dma	*sc_nowplaying;
+	void *sc_pih, *sc_cih;
 };
