@@ -377,7 +377,6 @@
 ./usr/share/man/cat1/nc.0
 ./usr/share/man/cat1/neqn.0
 ./usr/share/man/cat1/netstat.0
-./usr/share/man/cat1/newaliases.0
 ./usr/share/man/cat1/nfsstat.0
 ./usr/share/man/cat1/nice.0
 ./usr/share/man/cat1/nm.0
@@ -1486,6 +1485,7 @@
 ./usr/share/man/cat8/ndp.0
 ./usr/share/man/cat8/netgroup_mkdb.0
 ./usr/share/man/cat8/netstart.0
+./usr/share/man/cat8/newaliases.0
 ./usr/share/man/cat8/newfs.0
 ./usr/share/man/cat8/newfs_msdos.0
 ./usr/share/man/cat8/newsyslog.0
