@@ -1,4 +1,4 @@
-/*	$OpenBSD: xdr.h,v 1.7 2004/01/22 21:48:02 espie Exp $	*/
+/*	$OpenBSD: xdr.h,v 1.8 2005/01/08 19:17:39 krw Exp $	*/
 /*	$NetBSD: xdr.h,v 1.7 1995/04/29 05:28:06 cgd Exp $	*/
 
 /*
@@ -198,7 +198,7 @@ typedef	bool_t (*xdrproc_t)(/* XDR *, void *, unsigned int */);
  * no match, then a default routine may be called.
  * If there is no match and no default routine it is an error.
  */
-#define NULL_xdrproc_t ((xdrproc_t)0)
+#define NULL_xdrproc_t NULL
 struct xdr_discrim {
 	int	value;
 	xdrproc_t proc;

@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: pmap_rmt.c,v 1.22 2004/12/17 03:24:20 krw Exp $";
+static char *rcsid = "$OpenBSD: pmap_rmt.c,v 1.23 2005/01/08 19:17:39 krw Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -82,7 +82,7 @@ pmap_rmtcall(addr, prog, vers, proc, xdrargs, argsp, xdrres, resp, tout, port_pt
 
 	addr->sin_port = htons(PMAPPORT);
 	client = clntudp_create(addr, PMAPPROG, PMAPVERS, timeout, &sock);
-	if (client != (CLIENT *)NULL) {
+	if (client != NULL) {
 		a.prog = prog;
 		a.vers = vers;
 		a.proc = proc;

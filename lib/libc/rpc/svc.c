@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint) 
-static char *rcsid = "$OpenBSD: svc.c,v 1.16 2003/12/31 03:27:23 millert Exp $";
+static char *rcsid = "$OpenBSD: svc.c,v 1.17 2005/01/08 19:17:39 krw Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -51,7 +51,6 @@ static char *rcsid = "$OpenBSD: svc.c,v 1.16 2003/12/31 03:27:23 millert Exp $";
 static SVCXPRT **xports;
 static int xportssize;
 
-#define NULL_SVC ((struct svc_callout *)0)
 #define	RQCRED_SIZE	400		/* this size is excessive */
 
 #define max(a, b) (a > b ? a : b)
@@ -305,13 +304,13 @@ svc_register(xprt, prog, vers, dispatch, protocol)
 	struct svc_callout *prev;
 	struct svc_callout *s;
 
-	if ((s = svc_find(prog, vers, &prev)) != NULL_SVC) {
+	if ((s = svc_find(prog, vers, &prev)) != NULL) {
 		if (s->sc_dispatch == dispatch)
 			goto pmap_it;  /* he is registering another xptr */
 		return (FALSE);
 	}
 	s = (struct svc_callout *)mem_alloc(sizeof(struct svc_callout));
-	if (s == (struct svc_callout *)0) {
+	if (s == NULL) {
 		return (FALSE);
 	}
 	s->sc_prog = prog;
@@ -338,14 +337,14 @@ svc_unregister(prog, vers)
 	struct svc_callout *prev;
 	struct svc_callout *s;
 
-	if ((s = svc_find(prog, vers, &prev)) == NULL_SVC)
+	if ((s = svc_find(prog, vers, &prev)) == NULL)
 		return;
-	if (prev == NULL_SVC) {
+	if (prev == NULL) {
 		svc_head = s->sc_next;
 	} else {
 		prev->sc_next = s->sc_next;
 	}
-	s->sc_next = NULL_SVC;
+	s->sc_next = NULL;
 	mem_free((char *) s, (u_int) sizeof(struct svc_callout));
 	/* now unregister the information with the local binder service */
 	(void)pmap_unset(prog, vers);
@@ -363,8 +362,8 @@ svc_find(prog, vers, prev)
 {
 	struct svc_callout *s, *p;
 
-	p = NULL_SVC;
-	for (s = svc_head; s != NULL_SVC; s = s->sc_next) {
+	p = NULL;
+	for (s = svc_head; s != NULL; s = s->sc_next) {
 		if ((s->sc_prog == prog) && (s->sc_vers == vers))
 			goto done;
 		p = s;
@@ -620,7 +619,7 @@ svc_getreq_common(fd)
 			prog_found = FALSE;
 			low_vers = (u_long) -1;
 			high_vers = 0;
-			for (s = svc_head; s != NULL_SVC; s = s->sc_next) {
+			for (s = svc_head; s != NULL; s = s->sc_next) {
 				if (s->sc_prog == r.rq_prog) {
 					if (s->sc_vers == r.rq_vers) {
 						(*s->sc_dispatch)(&r, xprt);

@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: pmap_getmaps.c,v 1.7 2001/09/15 13:51:00 deraadt Exp $";
+static char *rcsid = "$OpenBSD: pmap_getmaps.c,v 1.8 2005/01/08 19:17:39 krw Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -60,7 +60,7 @@ struct pmaplist *
 pmap_getmaps(address)
 	 struct sockaddr_in *address;
 {
-	struct pmaplist *head = (struct pmaplist *)NULL;
+	struct pmaplist *head = NULL;
 	int sock = -1;
 	struct timeval minutetimeout;
 	CLIENT *client;
@@ -70,7 +70,7 @@ pmap_getmaps(address)
 	address->sin_port = htons(PMAPPORT);
 	client = clnttcp_create(address, PMAPPROG,
 	    PMAPVERS, &sock, 50, 500);
-	if (client != (CLIENT *)NULL) {
+	if (client != NULL) {
 		if (CLNT_CALL(client, PMAPPROC_DUMP, xdr_void, NULL, xdr_pmaplist,
 		    &head, minutetimeout) != RPC_SUCCESS) {
 			clnt_perror(client, "pmap_getmaps rpc problem");

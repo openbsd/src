@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: svc_udp.c,v 1.13 2003/09/20 00:40:36 deraadt Exp $";
+static char *rcsid = "$OpenBSD: svc_udp.c,v 1.14 2005/01/08 19:17:39 krw Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -108,7 +108,7 @@ svcudp_bufcreate(sock, sendsz, recvsz)
 	if (sock == RPC_ANYSOCK) {
 		if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
 			perror("svcudp_create: socket creation problem");
-			return ((SVCXPRT *)NULL);
+			return (NULL);
 		}
 		madesock = TRUE;
 	}
@@ -123,7 +123,7 @@ svcudp_bufcreate(sock, sendsz, recvsz)
 		perror("svcudp_create - cannot getsockname");
 		if (madesock)
 			(void)close(sock);
-		return ((SVCXPRT *)NULL);
+		return (NULL);
 	}
 	xprt = (SVCXPRT *)mem_alloc(sizeof(SVCXPRT));
 	if (xprt == NULL) {

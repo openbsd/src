@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: clnt_udp.c,v 1.20 2003/12/31 03:27:23 millert Exp $";
+static char *rcsid = "$OpenBSD: clnt_udp.c,v 1.21 2005/01/08 19:17:39 krw Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -136,7 +136,7 @@ clntudp_bufcreate(raddr, program, version, wait, sockp, sendsz, recvsz)
 	}
 	cu->cu_outbuf = &cu->cu_inbuf[recvsz];
 
-	(void)gettimeofday(&now, (struct timezone *)0);
+	(void)gettimeofday(&now, NULL);
 	if (raddr->sin_port == 0) {
 		u_short port;
 		if ((port =
@@ -175,7 +175,7 @@ clntudp_bufcreate(raddr, program, version, wait, sockp, sendsz, recvsz)
 			goto fooy;
 		}
 		/* attempt to bind to priv port */
-		(void)bindresvport(*sockp, (struct sockaddr_in *)0);
+		(void)bindresvport(*sockp, NULL);
 		/* the sockets rpc controls are non-blocking */
 		(void)ioctl(*sockp, FIONBIO, (char *) &dontblock);
 		cu->cu_closeit = TRUE;
@@ -190,7 +190,7 @@ fooy:
 		mem_free((caddr_t)cu, sizeof(*cu) + sendsz + recvsz);
 	if (cl)
 		mem_free((caddr_t)cl, sizeof(CLIENT));
-	return ((CLIENT *)NULL);
+	return (NULL);
 }
 
 CLIENT *

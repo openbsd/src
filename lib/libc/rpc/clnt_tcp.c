@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: clnt_tcp.c,v 1.19 2003/12/31 03:27:23 millert Exp $";
+static char *rcsid = "$OpenBSD: clnt_tcp.c,v 1.20 2005/01/08 19:17:39 krw Exp $";
 #endif /* LIBC_SCCS and not lint */
  
 /*
@@ -145,7 +145,7 @@ clnttcp_create(raddr, prog, vers, sockp, sendsz, recvsz)
 		if ((port = pmap_getport(raddr, prog, vers, IPPROTO_TCP)) == 0) {
 			mem_free((caddr_t)ct, sizeof(struct ct_data));
 			mem_free((caddr_t)h, sizeof(CLIENT));
-			return ((CLIENT *)NULL);
+			return (NULL);
 		}
 		raddr->sin_port = htons(port);
 	}
@@ -155,7 +155,7 @@ clnttcp_create(raddr, prog, vers, sockp, sendsz, recvsz)
 	 */
 	if (*sockp < 0) {
 		*sockp = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-		(void)bindresvport(*sockp, (struct sockaddr_in *)0);
+		(void)bindresvport(*sockp, NULL);
 		if ((*sockp < 0)
 		    || (connect(*sockp, (struct sockaddr *)raddr,
 		    sizeof(*raddr)) < 0)) {
@@ -181,7 +181,7 @@ clnttcp_create(raddr, prog, vers, sockp, sendsz, recvsz)
 	/*
 	 * Initialize call message
 	 */
-	(void)gettimeofday(&now, (struct timezone *)0);
+	(void)gettimeofday(&now, NULL);
 	call_msg.rm_xid = arc4random();
 	call_msg.rm_direction = CALL;
 	call_msg.rm_call.cb_rpcvers = RPC_MSG_VERSION;
@@ -221,7 +221,7 @@ fooy:
 		mem_free((caddr_t)ct, sizeof(struct ct_data));
 	if (h)
 		mem_free((caddr_t)h, sizeof(CLIENT));
-	return ((CLIENT *)NULL);
+	return (NULL);
 }
 
 static enum clnt_stat
@@ -247,7 +247,7 @@ clnttcp_call(h, proc, xdr_args, args_ptr, xdr_results, results_ptr, timeout)
 	}
 
 	shipnow =
-	    (xdr_results == (xdrproc_t)0 && timeout.tv_sec == 0
+	    (xdr_results == NULL && timeout.tv_sec == 0
 	    && timeout.tv_usec == 0) ? FALSE : TRUE;
 
 call_again:

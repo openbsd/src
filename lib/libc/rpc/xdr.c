@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: xdr.c,v 1.6 2001/09/15 13:51:01 deraadt Exp $";
+static char *rcsid = "$OpenBSD: xdr.c,v 1.7 2005/01/08 19:17:39 krw Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -617,7 +617,7 @@ xdr_union(xdrs, dscmp, unp, choices, dfault)
 	 * search choices for a value that matches the discriminator.
 	 * if we find one, execute the xdr routine for that value.
 	 */
-	for (; choices->proc != NULL_xdrproc_t; choices++) {
+	for (; choices->proc != NULL; choices++) {
 		if (choices->value == dscm)
 			return ((*(choices->proc))(xdrs, unp));
 	}
@@ -625,7 +625,7 @@ xdr_union(xdrs, dscmp, unp, choices, dfault)
 	/*
 	 * no match - execute the default xdr routine if there is one
 	 */
-	return ((dfault == NULL_xdrproc_t) ? FALSE :
+	return ((dfault == NULL) ? FALSE :
 	    (*dfault)(xdrs, unp));
 }
 

@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: svc_tcp.c,v 1.23 2003/12/31 03:27:23 millert Exp $";
+static char *rcsid = "$OpenBSD: svc_tcp.c,v 1.24 2005/01/08 19:17:39 krw Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -138,7 +138,7 @@ svctcp_create(sock, sendsize, recvsize)
 	if (sock == RPC_ANYSOCK) {
 		if ((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
 			perror("svctcp_.c - udp socket creation problem");
-			return ((SVCXPRT *)NULL);
+			return (NULL);
 		}
 		madesock = TRUE;
 	}
@@ -154,7 +154,7 @@ svctcp_create(sock, sendsize, recvsize)
 		perror("svctcp_.c - cannot getsockname or listen");
 		if (madesock)
 			(void)close(sock);
-		return ((SVCXPRT *)NULL);
+		return (NULL);
 	}
 	r = (struct tcp_rendezvous *)mem_alloc(sizeof(*r));
 	if (r == NULL) {
@@ -213,15 +213,15 @@ makefd_xprt(fd, sendsize, recvsize)
 	struct tcp_conn *cd;
  
 	xprt = (SVCXPRT *)mem_alloc(sizeof(SVCXPRT));
-	if (xprt == (SVCXPRT *)NULL) {
+	if (xprt == NULL) {
 		(void) fprintf(stderr, "svc_tcp: makefd_xprt: out of memory\n");
 		goto done;
 	}
 	cd = (struct tcp_conn *)mem_alloc(sizeof(struct tcp_conn));
-	if (cd == (struct tcp_conn *)NULL) {
+	if (cd == NULL) {
 		(void) fprintf(stderr, "svc_tcp: makefd_xprt: out of memory\n");
 		mem_free((char *) xprt, sizeof(SVCXPRT));
-		xprt = (SVCXPRT *)NULL;
+		xprt = NULL;
 		goto done;
 	}
 	cd->strm_stat = XPRT_IDLE;

@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: pmap_clnt.c,v 1.12 2002/08/29 22:47:15 deraadt Exp $";
+static char *rcsid = "$OpenBSD: pmap_clnt.c,v 1.13 2005/01/08 19:17:39 krw Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -69,7 +69,7 @@ pmap_set(program, version, protocol, port)
 	myaddress.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 	client = clntudp_bufcreate(&myaddress, PMAPPROG, PMAPVERS,
 	    timeout, &sock, RPCSMALLMSGSIZE, RPCSMALLMSGSIZE);
-	if (client == (CLIENT *)NULL)
+	if (client == NULL)
 		return (FALSE);
 	parms.pm_prog = program;
 	parms.pm_vers = version;
@@ -109,7 +109,7 @@ pmap_unset(program, version)
 	myaddress.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 	client = clntudp_bufcreate(&myaddress, PMAPPROG, PMAPVERS,
 	    timeout, &sock, RPCSMALLMSGSIZE, RPCSMALLMSGSIZE);
-	if (client == (CLIENT *)NULL)
+	if (client == NULL)
 		return (FALSE);
 	parms.pm_prog = program;
 	parms.pm_vers = version;

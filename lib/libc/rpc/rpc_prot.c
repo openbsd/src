@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: rpc_prot.c,v 1.7 2001/09/15 13:51:01 deraadt Exp $";
+static char *rcsid = "$OpenBSD: rpc_prot.c,v 1.8 2005/01/08 19:17:39 krw Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -135,7 +135,7 @@ xdr_rejected_reply(xdrs, rr)
 static struct xdr_discrim reply_dscrm[3] = {
 	{ (int)MSG_ACCEPTED, xdr_accepted_reply },
 	{ (int)MSG_DENIED, xdr_rejected_reply },
-	{ __dontcare__, NULL_xdrproc_t } };
+	{ __dontcare__, NULL } };
 
 /*
  * XDR a reply message
@@ -149,7 +149,7 @@ xdr_replymsg(xdrs, rmsg)
 	    xdr_enum(xdrs, (enum_t *)&(rmsg->rm_direction)) &&
 	    rmsg->rm_direction == REPLY)
 		return (xdr_union(xdrs, (enum_t *)&(rmsg->rm_reply.rp_stat),
-		   (caddr_t)&(rmsg->rm_reply.ru), reply_dscrm, NULL_xdrproc_t));
+		   (caddr_t)&(rmsg->rm_reply.ru), reply_dscrm, NULL));
 	return (FALSE);
 }
 
