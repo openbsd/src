@@ -1,5 +1,5 @@
-/*	$OpenBSD: siop.c,v 1.22 2002/09/16 00:53:12 krw Exp $ */
-/*	$NetBSD: siop.c,v 1.64 2002/07/26 01:00:43 wiz Exp $	*/
+/*	$OpenBSD: siop.c,v 1.23 2002/11/16 04:37:29 krw Exp $ */
+/*	$NetBSD: siop.c,v 1.65 2002/11/08 22:04:41 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -263,6 +263,7 @@ siop_reset(sc)
 	}
 	sc->script_free_lo = sizeof(siop_script) / sizeof(siop_script[0]);
 	sc->script_free_hi = sc->sc_c.ram_size / 4;
+	sc->sc_ntargets = 0;
 
 	/* free used and unused lun switches */
 	while((lunsw = TAILQ_FIRST(&sc->lunsw_list)) != NULL) {
@@ -1928,7 +1929,7 @@ siop_add_reselsw(sc, target)
 	struct siop_softc *sc;
 	int target;
 {
-	int i;
+	int i,j;
 	struct siop_target *siop_target;
 	struct siop_lun *siop_lun;
 
@@ -1965,6 +1966,8 @@ siop_add_reselsw(sc, target)
 			continue;
 		if (siop_lun->reseloff > 0) {
 			siop_lun->reseloff = 0;
+			for (j = 0; j < SIOP_NTAG; j++)
+				siop_lun->siop_tag[j].reseloff = 0;
 			siop_add_dev(sc, target, i);
 		}
 	}

@@ -1,5 +1,5 @@
-/*	$OpenBSD: siopvar_common.h,v 1.11 2002/09/16 00:53:12 krw Exp $ */
-/*	$NetBSD: siopvar_common.h,v 1.21 2002/05/04 18:43:22 bouyer Exp $ */
+/*	$OpenBSD: siopvar_common.h,v 1.12 2002/11/16 04:37:29 krw Exp $ */
+/*	$NetBSD: siopvar_common.h,v 1.22 2002/10/23 02:32:36 christos Exp $ */
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
