@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.31 2002/04/25 04:36:43 mickey Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.32 2002/05/30 06:26:10 deraadt Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -111,7 +111,7 @@
  * by splvm().    each of these submaps has their own private kernel 
  * object (e.g. kmem_object, mb_object).
  *
- * note that just because a kernel object spans the entire kernel virutal
+ * note that just because a kernel object spans the entire kernel virtual
  * address space doesn't mean that it has to be mapped into the entire space.
  * large chunks of a kernel object's space go unused either because 
  * that area of kernel VM is unmapped, or there is some other type of 
@@ -134,7 +134,7 @@
  * [vm_map_max(kmem_object) - vm_map_min(kernel_map)], so the offsets
  * in those objects will typically not start at zero.
  *
- * kernel object have one other special property: when the kernel virtual
+ * kernel objects have one other special property: when the kernel virtual
  * memory mapping them is unmapped, the backing memory in the object is
  * freed right away.   this is done with the uvm_km_pgremove() function.
  * this has to be done because there is no backing store for kernel pages
@@ -228,7 +228,7 @@ uvm_km_init(start, end)
 	uvmexp.mb_object = &mb_object_store;
 
 	/*
-	 * init the map and reserve allready allocated kernel space 
+	 * init the map and reserve already allocated kernel space 
 	 * before installing.
 	 */
 
