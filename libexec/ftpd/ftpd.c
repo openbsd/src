@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.140 2003/02/17 06:52:58 mpech Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.141 2003/04/10 00:04:58 millert Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -74,7 +74,7 @@ static const char copyright[] =
 static const char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
 static const char rcsid[] = 
-    "$OpenBSD: ftpd.c,v 1.140 2003/02/17 06:52:58 mpech Exp $";
+    "$OpenBSD: ftpd.c,v 1.141 2003/04/10 00:04:58 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -248,7 +248,7 @@ static int	 receive_data(FILE *, FILE *);
 static void	 replydirname(const char *, const char *);
 static int	 send_data(FILE *, FILE *, off_t, off_t, int);
 static struct passwd *
-		 sgetpwnam(char *);
+		 sgetpwnam(char *, struct passwd *);
 static void	 reapchild(int);
 #if defined(TCPWRAPPERS)
 static int	 check_host(struct sockaddr *);
@@ -652,23 +652,25 @@ sigquit(signo)
  * (e.g., globbing).
  */
 static struct passwd *
-sgetpwnam(name)
+sgetpwnam(name, pw)
 	char *name;
+	struct passwd *pw;
 {
 	static struct passwd *save;
-	struct passwd *pw;
+	struct passwd *old;
 
-	if ((pw = getpwnam(name)) == NULL)
+	if (pw == NULL && (pw = getpwnam(name)) == NULL)
 		return (NULL);
-	if (save) {
-		memset(save->pw_passwd, 0, strlen(save->pw_passwd));
-		free(save);
-	}
+	old = save;
 	save = pw_dup(pw);
 	if (save == NULL) {
 		perror_reply(421, "Local resource failure: malloc");
 		dologout(1);
 		/* NOTREACHED */
+	}
+	if (old) {
+		memset(old->pw_passwd, 0, strlen(old->pw_passwd));
+		free(old);
 	}
 	return (save);
 }
@@ -718,7 +720,7 @@ user(name)
 		if (checkuser(_PATH_FTPUSERS, "ftp") ||
 		    checkuser(_PATH_FTPUSERS, "anonymous"))
 			reply(530, "User %s access denied.", name);
-		else if ((pw = sgetpwnam("ftp")) != NULL) {
+		else if ((pw = sgetpwnam("ftp", NULL)) != NULL) {
 			guest = 1;
 			askpasswd = 1;
 			lc = login_getclass(pw->pw_class);
@@ -745,7 +747,7 @@ user(name)
 	}
 
 	shell = _PATH_BSHELL;
-	if ((pw = sgetpwnam(name))) {
+	if ((pw = sgetpwnam(name, NULL))) {
 		class = pw->pw_class;
 		if (pw->pw_shell != NULL && *pw->pw_shell != '\0')
 			shell = pw->pw_shell;
@@ -871,6 +873,7 @@ pass(passwd)
 	FILE *fp;
 	static char homedir[MAXPATHLEN];
 	char *motd, *dir, rootdir[MAXPATHLEN];
+	size_t sz_pw_dir;
 
 	if (logged_in || askpasswd == 0) {
 		reply(503, "Login with USER first.");
@@ -976,24 +979,18 @@ pass(passwd)
 			dologout(1);
 			/* NOTREACHED */
 		}
-		free(dir);
-		free(pw->pw_dir);
 		pw->pw_dir = newdir;
+		pw = sgetpwnam(NULL, pw);
+		free(dir);
+		free(newdir);
 	}
 
 	/* make sure pw->pw_dir is big enough to hold "/" */
-	if (strlen(pw->pw_dir) < 1) {
-		char *newdir;
-
-		newdir = malloc(2);
-		if (newdir == NULL) {
-			perror_reply(421, "Local resource failure: malloc");
-			dologout(1);
-			/* NOTREACHED */
-		}
-		strlcpy(newdir, pw->pw_dir, 2);
-		free(pw->pw_dir);
-		pw->pw_dir = newdir;
+	sz_pw_dir = strlen(pw->pw_dir) + 1;
+	if (sz_pw_dir < 2) {
+		pw->pw_dir = "/";
+		pw = sgetpwnam(NULL, pw);
+		sz_pw_dir = 2;
 	}
 
 	if (guest || dochroot) {
@@ -1020,7 +1017,7 @@ pass(passwd)
 			reply(550, "Can't set guest privileges.");
 			goto bad;
 		}
-		strcpy(pw->pw_dir, "/");
+		strlcpy(pw->pw_dir, "/", sz_pw_dir);
 		if (setenv("HOME", "/", 1) == -1) {
 			reply(550, "Can't setup environment.");
 			goto bad;
@@ -1030,7 +1027,7 @@ pass(passwd)
 			reply(550, "Can't change root.");
 			goto bad;
 		}
-		strcpy(pw->pw_dir, "/");
+		strlcpy(pw->pw_dir, "/", sz_pw_dir);
 		if (setenv("HOME", "/", 1) == -1) {
 			reply(550, "Can't setup environment.");
 			goto bad;
