@@ -1,4 +1,4 @@
-/*	$OpenBSD: openbsd-syscalls.c,v 1.21 2003/08/23 20:01:57 fgsch Exp $	*/
+/*	$OpenBSD: openbsd-syscalls.c,v 1.22 2003/10/08 16:32:44 sturm Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -133,7 +133,7 @@ static int obsd_answer(int, pid_t, u_int32_t, short, int, short,
 static int obsd_newpolicy(int);
 static int obsd_assignpolicy(int, pid_t, int);
 static int obsd_modifypolicy(int, int, int, short);
-static int obsd_replace(int, pid_t, struct intercept_replace *);
+static int obsd_replace(int, pid_t, u_int16_t, struct intercept_replace *);
 static int obsd_io(int, pid_t, int, void *, u_char *, size_t);
 static int obsd_setcwd(int, pid_t);
 static int obsd_restcwd(int);
@@ -429,7 +429,8 @@ obsd_modifypolicy(int fd, int num, int code, short policy)
 }
 
 static int
-obsd_replace(int fd, pid_t pid, struct intercept_replace *repl)
+obsd_replace(int fd, pid_t pid, u_int16_t seqnr,
+    struct intercept_replace *repl)
 {
 	struct systrace_replace replace;
 	size_t len, off;
@@ -440,6 +441,7 @@ obsd_replace(int fd, pid_t pid, struct intercept_replace *repl)
 	}
 
 	replace.strr_pid = pid;
+	replace.strr_seqnr = seqnr;
 	replace.strr_nrepl = repl->num;
 	replace.strr_base = malloc(len);
 	replace.strr_len = len;
@@ -457,6 +459,10 @@ obsd_replace(int fd, pid_t pid, struct intercept_replace *repl)
 		replace.strr_off[i] = off;
 		memcpy(replace.strr_base + off,
 		    repl->address[i], repl->len[i]);
+		if (repl->flags[i] & ICTRANS_NOLINKS) {
+			replace.strr_flags[i] = SYSTR_NOLINKS;
+		} else
+			replace.strr_flags[i] = 0;
 
 		off += repl->len[i];
 	}

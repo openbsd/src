@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept-translate.c,v 1.9 2002/08/01 20:16:45 provos Exp $	*/
+/*	$OpenBSD: intercept-translate.c,v 1.10 2003/10/08 16:32:44 sturm Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -144,6 +144,7 @@ ic_get_filename(struct intercept_translate *trans, int fd, pid_t pid,
 
 	trans->trans_size = len;
 	memcpy(trans->trans_data, name, len);
+	trans->trans_flags = ICTRANS_NOLINKS;
 
 	return (0);
 }
@@ -214,6 +215,7 @@ ic_get_unlinkname(struct intercept_translate *trans, int fd, pid_t pid,
 
 	trans->trans_size = len;
 	memcpy(trans->trans_data, name, len);
+	trans->trans_flags = ICTRANS_NOLINKS;
 
 	return (0);
 }
