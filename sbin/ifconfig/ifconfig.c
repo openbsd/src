@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.33 2000/04/14 02:38:21 itojun Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.34 2000/04/14 02:40:01 itojun Exp $	*/
 /*      $NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $      */
 
 /*
@@ -81,7 +81,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.33 2000/04/14 02:38:21 itojun Exp $";
+static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.34 2000/04/14 02:40:01 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -125,6 +125,9 @@ static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.33 2000/04/14 02:38:21 itojun Ex
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#ifdef HAVE_IFADDRS_H
+#include <ifaddrs.h>
+#endif
 
 struct	ifreq		ifr, ridreq;
 struct	ifaliasreq	addreq;
@@ -566,6 +569,79 @@ void
 printif(ifrm, ifaliases)
 	struct ifreq *ifrm;
 {
+#ifdef HAVE_IFADDRS_H
+	struct ifaddrs *ifap, *ifa;
+	const char *namep;
+	struct ifreq *ifrp;
+	int count = 0, noinet = 1;
+
+	if (getifaddrs(&ifap) != 0)
+		err(1, "getifaddrs");
+
+	namep = NULL;
+	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+		if (ifrm && strncmp(ifrm->ifr_name, ifa->ifa_name,
+		    sizeof(ifrm->ifr_name)))
+			continue;
+		strncpy(name, ifa->ifa_name, sizeof(name));
+		name[sizeof(name) - 1] = '\0';
+
+#ifdef INET6
+		/* quickhack: sizeof(ifr) < sizeof(ifr6) */
+		if (ifa->ifa_addr->sa_family == AF_INET6) {
+			ifrp = (struct ifreq *)&ifr6;
+			memset(&ifr6, 0, sizeof(ifr6));
+		} else {
+			ifrp = &ifr;
+			memset(&ifr, 0, sizeof(ifr));
+		}
+#else
+		ifrp = &ifr;
+		memset(&ifr, 0, sizeof(ifr));
+#endif
+
+		strncpy(ifrp->ifr_name, ifa->ifa_name, sizeof(ifrp->ifr_name));
+		/* XXX boundary check? */
+		memcpy(&ifrp->ifr_addr, ifa->ifa_addr, ifa->ifa_addr->sa_len);
+
+		if (ifa->ifa_addr->sa_family == AF_LINK) {
+			namep = ifa->ifa_name;
+			if (getinfo(ifrp) < 0)
+				continue;
+			status(1);
+			count++;
+			noinet = 1;
+			continue;
+		}
+
+		if (!strcmp(namep, ifa->ifa_name)) {
+			register const struct afswtch *p;
+
+			if (ifa->ifa_addr->sa_family == AF_INET &&
+			    ifaliases == 0 && noinet == 0)
+				continue;
+			if ((p = afp) != NULL) {
+				if (ifa->ifa_addr->sa_family == p->af_af)
+					(*p->af_status)(1);
+			} else {
+				for (p = afs; p->af_name; p++) {
+					if (ifa->ifa_addr->sa_family == p->af_af)
+						(*p->af_status)(0);
+				}
+			}
+			count++;
+			if (ifa->ifa_addr->sa_family == AF_INET)
+				noinet = 0;
+			continue;
+		}
+
+	}
+	freeifaddrs(ifap);
+	if (count == 0) {
+		fprintf(stderr, "%s: no such interface\n", name);
+		exit(1);
+	}
+#else
 	char *inbuf = NULL;
 	struct ifconf ifc;
 	struct ifreq ifreq, *ifrp;
@@ -649,6 +725,7 @@ printif(ifrm, ifaliases)
 		fprintf(stderr, "%s: no such interface\n", name);
 		exit(1);
 	}
+#endif
 }
 
 #define RIDADDR 0
