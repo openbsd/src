@@ -1,4 +1,4 @@
-/*	$OpenBSD: creator.c,v 1.2 2002/05/21 14:53:47 jason Exp $	*/
+/*	$OpenBSD: creator.c,v 1.3 2002/05/21 15:46:07 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -77,17 +77,6 @@
 #define	FFB_REG_SFB422		22
 #define	FFB_REG_SFB422D		23
 
-struct wsdisplay_emulops creator_emulops = {
-	rcons_cursor,
-	rcons_mapchar,
-	rcons_putchar,
-	rcons_copycols,
-	rcons_erasecols,
-	rcons_copyrows,
-	rcons_eraserows,
-	rcons_alloc_attr
-};
-
 struct wsscreen_descr creator_stdscreen = {
 	"std",
 	0, 0,	/* will be filled in -- XXX shouldn't, it's global. */
@@ -134,7 +123,6 @@ struct creator_softc {
 	bus_size_t sc_sizes[FFB_NREGS];
 	int sc_height, sc_width, sc_linebytes, sc_depth;
 	int sc_nscreens, sc_nregs;
-	struct rcons sc_rcons;
 	struct rasops_info sc_rasops;
 };
 
@@ -211,11 +199,11 @@ creator_attach(parent, self, aux)
 	sc->sc_height = getpropint(ma->ma_node, "height", 0);
 	sc->sc_width = getpropint(ma->ma_node, "width", 0);
 
-	sc->sc_rasops.ri_depth = 8;
-	sc->sc_rasops.ri_stride = 1024;
+	sc->sc_rasops.ri_depth = 32;
+	sc->sc_rasops.ri_stride = 8192;
 	sc->sc_rasops.ri_flg = RI_CENTER;
 	sc->sc_rasops.ri_bits = (void *)bus_space_vaddr(sc->sc_bt,
-	    sc->sc_regs[FFB_REG_DFB8R]);
+	    sc->sc_regs[FFB_REG_DFB32]);
 	sc->sc_rasops.ri_width = sc->sc_width;
 	sc->sc_rasops.ri_height = sc->sc_height;
 	sc->sc_rasops.ri_hw = sc;
@@ -229,11 +217,12 @@ creator_attach(parent, self, aux)
 	creator_stdscreen.textops = &sc->sc_rasops.ri_ops;
 	sc->sc_rasops.ri_ops.alloc_attr(&sc->sc_rasops, 0, 0, 0, &defattr);
 
-#if 0
-/*XXX*/	waa.console = console;
-#else
-/*XXX*/	waa.console = 0;
-#endif
+	if (console) {
+		wsdisplay_cnattach(&creator_stdscreen, &sc->sc_rasops,
+		    0, 0, defattr);
+	}
+
+	waa.console = console;
 	waa.scrdata = &creator_screenlist;
 	waa.accessops = &creator_accessops;
 	waa.accesscookie = sc;
