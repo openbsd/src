@@ -1,4 +1,4 @@
-.\"	$OpenBSD: select.2,v 1.15 1999/09/23 04:12:00 alex Exp $
+.\"	$OpenBSD: select.2,v 1.16 2000/01/22 02:17:55 aaron Exp $
 .\"	$NetBSD: select.2,v 1.5 1995/06/27 22:32:28 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -248,7 +248,7 @@ Internally to the kernel,
 .Fn select
 works poorly if multiple processes wait on the same file descriptor.
 Given that, it is rather surprising to see that many daemons are
-written that way (ie.
+written that way (i.e.,
 .Xr httpd 8 ).
 .Sh HISTORY
 The

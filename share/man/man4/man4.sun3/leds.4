@@ -1,4 +1,4 @@
-.\"	$OpenBSD: leds.4,v 1.2 1999/06/05 13:18:36 aaron Exp $
+.\"	$OpenBSD: leds.4,v 1.3 2000/01/22 02:17:55 aaron Exp $
 .\"
 .Dd March 2, 1996
 .Dt LEDS 4 sun3
@@ -27,7 +27,7 @@ dark.  The first
 gives the number of clock ticks that are skipped after each pattern is
 loaded before the next is loaded.  For example, if this value is 0, a
 new pattern is loaded each clock tick; if it is 3, a new pattern will
-be loaded every fourth clock tick (ie, three ticks will be skipped
+be loaded every fourth clock tick (i.e., three ticks will be skipped
 between loads).  The second
 .Li unsigned int
 gives the number of patterns in the list, that is, the number of bytes

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypbind.8,v 1.12 1999/05/16 19:58:17 alex Exp $
+.\"	$OpenBSD: ypbind.8,v 1.13 2000/01/22 02:17:51 aaron Exp $
 .\"	$NetBSD: ypbind.8,v 1.2 1996/02/28 01:21:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -64,7 +64,8 @@ When
 starts the primary domain (or gets the first request for a new domain),
 it checks if a file for the domain in question exists in the directory
 .Pa /etc/yp/
-(ie. /etc/yp/DOMAINNAME).
+(i.e.,
+.Pa /etc/yp/DOMAINNAME ) .
 If such a file exists, it will list the hosts which
 .Nm
 should restrict its server search to.

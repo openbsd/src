@@ -1,4 +1,4 @@
-.\"	$OpenBSD: random.4,v 1.7 1999/06/29 22:06:11 deraadt Exp $
+.\"	$OpenBSD: random.4,v 1.8 2000/01/22 02:17:54 aaron Exp $
 .\"
 .\" Copyright (c) 1996, 1997 Michael Shalayeff
 .\"
@@ -38,7 +38,7 @@
 .Nm urandom ,
 .Nm prandom ,
 .Nm arandom
-.Nd random data source devices.
+.Nd random data source devices
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
 .Fd #include <dev/rndvar.h>
@@ -57,7 +57,7 @@ This device is reserved for future support of hardware
 random generators.
 .It /dev/srandom
 Strong random data.  This device returns reliable random data.
-If sufficient entropy is not currently available (ie. the entropy
+If sufficient entropy is not currently available (i.e., the entropy
 pool quality starts to run low), the driver pauses while more of
 such data is collected.
 The entropy pool data is converted into output data using MD5.

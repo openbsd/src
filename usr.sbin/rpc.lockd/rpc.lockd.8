@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpc.lockd.8,v 1.5 1997/08/10 21:06:41 millert Exp $
+.\"	$OpenBSD: rpc.lockd.8,v 1.6 2000/01/22 02:17:52 aaron Exp $
 .\"
 .\" Copyright (c) 1995 A.R.Gordon, andrew.gordon@net-tel.co.uk
 .\" All rights reserved.
@@ -82,8 +82,12 @@ RPC protocol specification for the network lock manager protocol.
 .Xr rpc.statd 8
 .Sh BUGS
 The current implementation provides only the server side of the protocol
-(ie. clients running other OS types can establish locks on a OpenBSD fileserver,
-but there is currently no means for a OpenBSD client to establish locks).
+(i.e., clients running other OS types can establish locks on an
+.Ox
+fileserver,
+but there is currently no means for an
+.Ox
+client to establish locks).
 .Pp
 Versions 1, 2 and 3 of the protocol are supported.  However, only versions
 2 (Unix systems) and 3 (PC-NFS clients) seem to be in common use - the version
