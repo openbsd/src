@@ -117,6 +117,8 @@ aedattach(parent, self, aux)
 	struct adb_attach_args *aa_args = (struct adb_attach_args *)aux;
 	struct aed_softc *sc = (struct aed_softc *)self;
 
+	aed_sc = sc;
+
 	timeout_set(&sc->sc_repeat_ch, aed_kbdrpt, aed_sc);
 
 	sc->origaddr = aa_args->origaddr;
@@ -139,7 +141,6 @@ aedattach(parent, self, aux)
 
 	sc->sc_open = 0;
 
-	aed_sc = sc;
 
 	printf("ADB Event device\n");
 
