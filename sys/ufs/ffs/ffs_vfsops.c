@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.60 2003/10/04 18:47:08 mickey Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.61 2003/10/17 15:08:11 mpech Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -1232,7 +1232,7 @@ retry:
 	 * already have one. This should only happen on old filesystems.
 	 */
 	if (ip->i_ffs_gen == 0) {
-		ip->i_ffs_gen = arc4random();
+		ip->i_ffs_gen = arc4random() & INT_MAX;
 		if (ip->i_ffs_gen == 0 || ip->i_ffs_gen == -1)
 			ip->i_ffs_gen = 1;		/* shouldn't happen */
 		if ((vp->v_mount->mnt_flag & MNT_RDONLY) == 0)
