@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.236 2000/04/04 09:59:25 mickey Exp $
+	$OpenBSD: pcidevs,v 1.237 2000/04/10 12:20:31 millert Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -514,6 +514,7 @@ vendor HIFN		0x13a3	Hi/Fn
 vendor SUNDANCE		0x13f0	Sundance
 vendor CMI		0x13f6	C-Media Electronics Inc.
 vendor INVERTEX		0x14e1	Invertex
+vendor AIRONET		0x14b9	Aironet Wireless Communications
 vendor DELTA		0x1500	Delta
 vendor SYMPHONY2	0x1c1c	Symphony Labs(2)
 vendor TEKRAM2		0x1de1	Tekram Technology(2)
@@ -584,6 +585,10 @@ product 3DLABS DELTA		0x0003	GLINT Delta
 product 3DLABS PERMEDIA		0x0004	GLINT Permedia
 product 3DLABS 500MX		0x0006	GLINT 500MX
 product 3DLABS PERMEDIA2	0x0007	GLINT Permedia 2
+
+/* Aironet Products */
+product AIRONET PC4500		0x4500	Aironet PC4500 Wireless LAN Adapter
+product AIRONET PC4800		0x4800	Aironet PC4800 Wireless LAN Adapter
 
 /* ACC Products */
 product ACC 2188		0x0000	ACCM 2188 VL-PCI
