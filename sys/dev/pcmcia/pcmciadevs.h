@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.119 2004/09/27 03:50:30 millert Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.120 2004/09/30 14:24:27 millert Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.116 2004/09/27 03:49:14 millert Exp 
+ *		OpenBSD: pcmciadevs,v 1.117 2004/09/30 14:24:05 millert Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -89,6 +89,7 @@
 #define	PCMCIA_VENDOR_TELECOMDEVICE	0x021b	/* Telecom Device */
 #define	PCMCIA_VENDOR_NOKIA	0x023d	/* Nokia Communications */
 #define	PCMCIA_VENDOR_SAMSUNG	0x0250	/* Samsung */
+#define	PCMCIA_VENDOR_ARTEM	0x0268	/* ARtem */
 #define	PCMCIA_VENDOR_SYMBOL	0x026c	/* Symbol */
 #define	PCMCIA_VENDOR_BUFFALO	0x026f	/* BUFFALO (Melco Corporation) */
 #define	PCMCIA_VENDOR_LINKSYS2	0x0274	/* The Linksys Group */
@@ -175,6 +176,10 @@
 /* Archos */
 #define	PCMCIA_CIS_ARCHOS_ARC_ATAPI	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_ARCHOS_ARC_ATAPI	0x0043
+
+/* ARten */
+#define	PCMCIA_CIS_ARTEM_ONAIR	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_ARTEM_ONAIR	0x0001
 
 /* ASUS */
 #define	PCMCIA_CIS_ASUS_WL_100	{ NULL, NULL, NULL, NULL }
