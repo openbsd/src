@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.49 2001/10/05 19:40:59 deraadt Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.50 2001/10/08 03:56:25 nate Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -285,6 +285,7 @@ wx*	at pci? dev ? function ?		# Intel Pro/1000 ethernet
 txp*	at pci? dev ? function ?		# 3com 3CR990
 nge*	at pci? dev ? function ?		# NS DP83820/DP83821 GigE
 bge*	at pci? dev ? function ?		# Broadcom BCM570x (aka Tigon3)
+#lge*	at pci? dev ? function ?		# Level1 LXT1001 GigE
 
 # Wireless network cards
 wi*	at pcmcia? function ?			# WaveLAN IEEE 802.11DS
