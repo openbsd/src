@@ -1,4 +1,4 @@
-/*	$OpenBSD: otto.c,v 1.7 2003/06/11 08:45:25 pjanzen Exp $	*/
+/*	$OpenBSD: otto.c,v 1.8 2003/08/07 20:19:10 jolan Exp $	*/
 /*	$NetBSD: otto.c,v 1.2 1997/10/10 16:32:39 lukem Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -153,7 +153,7 @@ otto(y, x, face, buf, buflen)
 	case '<':	facing = WEST; break;
 	case 'v':	facing = SOUTH; break;
 	case '>':	facing = EAST; break;
-	default:	panic("unknwown face");
+	default:	panic("unknown face");
 	}
 	row = y; col = x;
 	been_there[row][col] |= 1 << facing;
