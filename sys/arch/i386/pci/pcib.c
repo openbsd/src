@@ -82,6 +82,12 @@ pcibmatch(parent, match, aux)
 			/* The above bridges mis-identify themselves */
 			return (1);
 		}
+	case PCI_VENDOR_SIS:
+		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_SIS_85C503:
+			/* mis-identifies itself as a miscellaneous prehistoric */
+			return (1);
+		}
 	}
 
 	return (0);
