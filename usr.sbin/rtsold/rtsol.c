@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsol.c,v 1.9 2002/06/10 19:57:35 espie Exp $	*/
+/*	$OpenBSD: rtsol.c,v 1.10 2003/10/05 15:29:28 deraadt Exp $	*/
 /*	$KAME: rtsol.c,v 1.15 2002/05/31 10:10:03 itojun Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ int rssock;
 static struct sockaddr_in6 sin6_allrouters = {sizeof(sin6_allrouters), AF_INET6};
 
 int
-sockopen()
+sockopen(void)
 {
 	static u_char *rcvcmsgbuf = NULL, *sndcmsgbuf = NULL;
 	int rcvcmsglen, sndcmsglen, on;
@@ -176,8 +176,8 @@ sendpacket(struct ifinfo *ifinfo)
 	struct in6_pktinfo *pi;
 	struct cmsghdr *cm;
 	int hoplimit = 255;
-	int i;
 	struct sockaddr_in6 dst;
+	ssize_t i;
 
 	dst = sin6_allrouters;
 	dst.sin6_scope_id = ifinfo->linkid;
@@ -226,11 +226,12 @@ void
 rtsol_input(int s)
 {
 	u_char ntopbuf[INET6_ADDRSTRLEN], ifnamebuf[IFNAMSIZ];
-	int ifindex = 0, i, *hlimp = NULL;
+	int ifindex = 0, *hlimp = NULL;
 	struct in6_pktinfo *pi = NULL;
 	struct ifinfo *ifi = NULL;
 	struct icmp6_hdr *icp;
 	struct cmsghdr *cm;
+	ssize_t i;
 
 	/* get message */
 	if ((i = recvmsg(s, &rcvmhdr, 0)) < 0) {

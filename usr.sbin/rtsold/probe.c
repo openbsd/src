@@ -1,4 +1,4 @@
-/*	$OpenBSD: probe.c,v 1.9 2002/10/26 20:23:20 itojun Exp $	*/
+/*	$OpenBSD: probe.c,v 1.10 2003/10/05 15:29:28 deraadt Exp $	*/
 /*	$KAME: probe.c,v 1.16 2002/06/10 20:00:36 itojun Exp $	*/
 
 /*
@@ -61,7 +61,7 @@ static int probesock;
 static void sendprobe(struct in6_addr *, struct ifinfo *);
 
 int
-probe_init()
+probe_init(void)
 {
 	int scmsglen = CMSG_SPACE(sizeof(struct in6_pktinfo)) +
 	    CMSG_SPACE(sizeof(int));
