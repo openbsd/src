@@ -48,7 +48,8 @@ static char rcsid[] = "$NetBSD: vocab.c,v 1.2 1995/03/21 12:05:13 cgd Exp $";
 
 /*      Re-coding of advent in C: data structure routines               */
 
-# include "hdr.h"
+#include <stdlib.h>
+#include "hdr.h"
 
 dstroy(object)
 int object;

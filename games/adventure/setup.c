@@ -97,6 +97,8 @@ char *argv[];
 
 	while ((c = getc(infile)) != EOF)
 	{
+		if (count++ % LINE == 0)
+			printf("\n\t");
 		if (linestart && c == ' ') /* Convert first spaces to tab */
 		{
 			printf("0x%02x,", ('\t' ^ random()) & 0xFF);
@@ -113,7 +115,7 @@ char *argv[];
 			linestart = YES; /* Ready to convert spaces again */
 			break;
 		}
-		if (count++ % LINE == 0)   /* Finished a line? */
+		if (count++ % LINE == 0)
 			printf("\n\t");
 		printf("0x%02x,", (c ^ random()) & 0xFF);
 	}
