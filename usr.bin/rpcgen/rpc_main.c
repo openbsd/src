@@ -1,4 +1,4 @@
-/* $OpenBSD: rpc_main.c,v 1.17 2003/04/14 19:45:59 deraadt Exp $	 */
+/* $OpenBSD: rpc_main.c,v 1.18 2003/04/14 19:59:36 deraadt Exp $	 */
 /* $NetBSD: rpc_main.c,v 1.9 1996/02/19 11:12:43 pk Exp $	 */
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 
 #ifndef lint
 static char     sccsid[] = "@(#)rpc_main.c 1.30 89/03/30 (C) 1987 SMI";
-static char     cvsid[] = "$OpenBSD: rpc_main.c,v 1.17 2003/04/14 19:45:59 deraadt Exp $";
+static char     cvsid[] = "$OpenBSD: rpc_main.c,v 1.18 2003/04/14 19:59:36 deraadt Exp $";
 #endif
 
 /*
@@ -224,13 +224,15 @@ extendfile(path, ext)
 	char *file;
 	char *res;
 	char *p;
+	size_t len;
 
 	if ((file = strrchr(path, '/')) == NULL)
 		file = path;
 	else
 		file++;
 
-	res = alloc(strlen(file) + strlen(ext) + 1);
+	len = strlen(file) + strlen(ext) + 1;
+	res = alloc(len);
 	if (res == NULL) {
 		fprintf(stderr, "could not allocate memory\n");
 		exit(1);
@@ -238,8 +240,8 @@ extendfile(path, ext)
 	p = strrchr(file, '.');
 	if (p == NULL)
 		p = file + strlen(file);
-	(void) strcpy(res, file);
-	(void) strcpy(res + (p - file), ext);
+	(void) strlcpy(res, file, len);
+	(void) strlcpy(res + (p - file), ext, len - (p - file));
 	return (res);
 }
 
