@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_ns32k.c,v 1.4 2001/05/18 09:08:38 art Exp $ */
+/*	$OpenBSD: kvm_ns32k.c,v 1.5 2001/05/19 09:34:26 art Exp $ */
 /*	$NetBSD: kvm_ns32k.c,v 1.4 1996/03/18 22:33:50 thorpej Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_ns32k.c,v 1.4 2001/05/18 09:08:38 art Exp $";
+static char *rcsid = "$OpenBSD: kvm_ns32k.c,v 1.5 2001/05/19 09:34:26 art Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -170,7 +170,7 @@ _kvm_kvatop(kd, va, pa)
 	    (ptei(va) * sizeof(pt_entry_t));
 	/* XXX READ PHYSICAL XXX */
 	{
-		if (_kvm_pread(kd, (kd->pmfd, &pte, sizeof pte), (off_t)pte_pa) != sizeof pte) {
+		if (_kvm_pread(kd, kd->pmfd, &pte, sizeof pte, (off_t)pte_pa) != sizeof pte) {
 			goto invalid;
 		}
 	}
