@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.19 2001/07/10 07:55:05 markus Exp $	*/
+/*	$OpenBSD: log.c,v 1.20 2001/07/10 10:46:29 ho Exp $	*/
 /*	$EOM: log.c,v 1.30 2000/09/29 08:19:23 niklas Exp $	*/
 
 /*
@@ -45,6 +45,7 @@
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
+#include <netinet/ip6.h>
 #include <netinet/udp.h>
 #include <arpa/inet.h>
 
@@ -83,11 +84,11 @@ static int log_level[LOG_ENDCLASS];
 
 struct packhdr {
   struct pcap_pkthdr pcap;		/* pcap file packet header */
-  struct {
-    u_int32_t null_family;		/* NULL encapsulation */
-  } null;
-  struct ip ip;				/* IP header (w/o options) */
-  struct udphdr udp;			/* UDP header */
+  u_int32_t sa_family;			/* address family */
+  union {
+    struct ip ip4;			/* IPv4 header (w/o options) */
+    struct ip6_hdr ip6;			/* IPv6 header */
+  } ip;
 };
 
 struct isakmp_hdr {
@@ -98,11 +99,10 @@ struct isakmp_hdr {
 
 static char *pcaplog_file = NULL;
 static FILE *packet_log;
-static u_int8_t pack[SNAPLEN + sizeof (struct packhdr)];
-static struct packhdr *hdr;
+static u_int8_t *packet_buf = NULL;
 
-static int udp_cksum (const struct ip *, const struct udphdr *, int);
-static u_int16_t in_cksum (const struct ip *, int);
+static int udp_cksum (struct packhdr *, const struct udphdr *, u_int16_t *);
+static u_int16_t in_cksum (const u_int16_t *, int);
 #endif /* USE_DEBUG */
 
 void
@@ -364,6 +364,16 @@ log_packet_init (char *newname)
   struct pcap_file_header sf_hdr;
   mode_t old_umask;
 
+  /* Allocate packet buffer first time through.  */
+  if (!packet_buf)
+    packet_buf = malloc (SNAPLEN);
+
+  if (!packet_buf)
+    {
+      log_error ("log_packet_init: malloc (%d) failed", SNAPLEN);
+      return;
+    }
+
   if (pcaplog_file && strcmp (pcaplog_file, PCAP_FILE_DEFAULT) != 0)
     free (pcaplog_file);
 
@@ -398,15 +408,6 @@ log_packet_init (char *newname)
 
   fwrite ((char *)&sf_hdr, sizeof sf_hdr, 1, packet_log);
   fflush (packet_log);
-  
-  /* prep dummy header prepended to each packet */
-  hdr = (struct packhdr *)pack;
-  hdr->null.null_family = htonl(AF_INET);
-  hdr->ip.ip_v = 0x4;
-  hdr->ip.ip_hl = 0x5;
-  hdr->ip.ip_p = IPPROTO_UDP;
-  hdr->udp.uh_sport = htons (500);
-  hdr->udp.uh_dport = htons (500);
 }
 
 void
@@ -463,111 +464,170 @@ log_packet_iov (struct sockaddr *src, struct sockaddr *dst, struct iovec *iov,
 		int iovcnt)
 {
   struct isakmp_hdr *isakmphdr;
-  int off, len, i;
+  struct packhdr hdr;
+  struct udphdr udp;
+  int off, datalen, hdrlen, i;
+
+  for (i = 0, datalen = 0; i < iovcnt; i++)
+    datalen += iov[i].iov_len;
   
-  len = 0;
-  for (i = 0; i < iovcnt; i++)
-    len += iov[i].iov_len;
-  
-  if (!packet_log || len > SNAPLEN)
+  if (!packet_log || datalen > SNAPLEN)
     return;
   
   /* copy packet into buffer */
-  off = sizeof *hdr;
-  for (i = 0; i < iovcnt; i++) 
+  for (i = 0, off = 0; i < iovcnt; i++) 
     {
-      memcpy (pack + off, iov[i].iov_base, iov[i].iov_len);
+      memcpy (packet_buf + off, iov[i].iov_base, iov[i].iov_len);
       off += iov[i].iov_len;
     }
+
+  memset (&hdr, 0, sizeof hdr);
+  memset (&udp, 0, sizeof udp);
   
   /* isakmp - turn off the encryption bit in the isakmp hdr */
-  isakmphdr = (struct isakmp_hdr *)(pack + sizeof *hdr);
+  isakmphdr = (struct isakmp_hdr *)packet_buf;
   isakmphdr->flags &= ~(ISAKMP_FLAGS_ENC);
   
   /* udp */
-  len += sizeof hdr->udp;
-  hdr->udp.uh_ulen = htons (len);
+  udp.uh_sport = udp.uh_dport = htons (500);
+  datalen += sizeof udp;
+  udp.uh_ulen = htons (datalen);
   
   /* ip */
-  len += sizeof hdr->ip;
-  hdr->ip.ip_len = htons (len);
-
+  hdr.sa_family = htonl (src->sa_family);
   switch (src->sa_family)
     {
-    case AF_INET:
-      hdr->ip.ip_src.s_addr = ((struct sockaddr_in *)src)->sin_addr.s_addr;
-      hdr->ip.ip_dst.s_addr = ((struct sockaddr_in *)dst)->sin_addr.s_addr;
-      break;
-    case AF_INET6:
-      /* XXX TBD */
     default:
-      hdr->ip.ip_src.s_addr = 0x02020202;
-      hdr->ip.ip_dst.s_addr = 0x01010101;
-    }
+      /* Assume IPv4. XXX Can 'default' ever happen here?  */
+      hdr.sa_family = htonl (AF_INET);
+      hdr.ip.ip4.ip_src.s_addr = 0x02020202;
+      hdr.ip.ip4.ip_dst.s_addr = 0x01010101; 
+      /* The rest of the setup is common to AF_INET.  */
+      goto setup_ip4;
 
-  /* Let's use the IP ID as a "packet counter".  */
-  i = ntohs (hdr->ip.ip_id) + 1;
-  hdr->ip.ip_id = htons (i);
+    case AF_INET:
+      hdr.ip.ip4.ip_src.s_addr = ((struct sockaddr_in *)src)->sin_addr.s_addr;
+      hdr.ip.ip4.ip_dst.s_addr = ((struct sockaddr_in *)dst)->sin_addr.s_addr;
+
+    setup_ip4:
+      hdrlen = sizeof hdr.ip.ip4;
+      hdr.ip.ip4.ip_v = 0x4;
+      hdr.ip.ip4.ip_hl = 0x5;
+      hdr.ip.ip4.ip_p = IPPROTO_UDP;
+      hdr.ip.ip4.ip_len = htons (datalen + hdrlen);
+      /* Let's use the IP ID as a "packet counter".  */
+      i = ntohs (hdr.ip.ip4.ip_id) + 1;
+      hdr.ip.ip4.ip_id = htons (i);
+      /* Calculate IP header checksum. */
+      hdr.ip.ip4.ip_sum = in_cksum ((u_int16_t *)&hdr.ip.ip4,
+				    hdr.ip.ip4.ip_hl << 2);
+      break;
+
+    case AF_INET6:
+      hdrlen = sizeof (hdr.ip.ip6);
+      hdr.ip.ip6.ip6_vfc = IPV6_VERSION;
+      hdr.ip.ip6.ip6_nxt = IPPROTO_UDP;
+      hdr.ip.ip6.ip6_plen = udp.uh_ulen;
+      memcpy (&hdr.ip.ip6.ip6_src, &((struct sockaddr_in6 *)src)->sin6_addr,
+	      sizeof hdr.ip.ip6.ip6_src);
+      memcpy (&hdr.ip.ip6.ip6_dst, &((struct sockaddr_in6 *)dst)->sin6_addr,
+	      sizeof hdr.ip.ip6.ip6_dst);
+      break;
+   }
 
   /* Calculate UDP checksum.  */
-  hdr->udp.uh_sum = 0; 
-  hdr->udp.uh_sum = udp_cksum (&hdr->ip, &hdr->udp, len);
+  udp.uh_sum = udp_cksum (&hdr, &udp, (u_int16_t *)packet_buf);
+  hdrlen += sizeof hdr.sa_family;
 
-  /* Calculate IP header checksum. */
-  hdr->ip.ip_sum = 0;
-  hdr->ip.ip_sum = in_cksum (&hdr->ip, hdr->ip.ip_hl << 2);
-
-  /* null header */
-  len += sizeof hdr->null;
-  
   /* pcap file packet header */
-  gettimeofday (&hdr->pcap.ts, 0);
-  hdr->pcap.caplen = len;
-  hdr->pcap.len = len;
-  len += sizeof hdr->pcap;
-  
-  fwrite (pack, len, 1, packet_log);
+  gettimeofday (&hdr.pcap.ts, 0);
+  hdr.pcap.caplen = datalen + hdrlen;
+  hdr.pcap.len = datalen + hdrlen;
+
+  hdrlen += sizeof (struct pcap_pkthdr);
+  datalen -= sizeof (struct udphdr);
+
+  /* Write to pcap file.  */
+  fwrite (&hdr, hdrlen, 1, packet_log);			/* pcap + IP */
+  fwrite (&udp, sizeof (struct udphdr), 1, packet_log);	/* UDP */
+  fwrite (packet_buf, datalen, 1, packet_log);		/* IKE-data */
   fflush (packet_log);
   return;
 }
 
-/* Copied from tcpdump/print-udp.c  */
+/* Copied from tcpdump/print-udp.c, mostly rewritten.  */
 static int
-udp_cksum (const struct ip *ip, const struct udphdr *up, int len)
+udp_cksum (struct packhdr *hdr, const struct udphdr *u, u_int16_t *d)
 {
-  int i, tlen;
+  int i, hdrlen, tlen = ntohs (u->uh_ulen) - sizeof (struct udphdr);
+  struct ip *ip4;
+  struct ip6_hdr *ip6;
+
   union phu {
-    struct phdr {
-      u_int32_t src;
-      u_int32_t dst;
-      u_char mbz;
-      u_char proto;
+    struct ip4pseudo {
+      struct in_addr src;
+      struct in_addr dst;
+      u_int8_t z;
+      u_int8_t proto;
       u_int16_t len;
-    } ph;
-    u_int16_t pa[6];
+    } ip4p;
+    struct ip6pseudo {
+      struct in6_addr src;
+      struct in6_addr dst;
+      u_int32_t plen;
+      u_int16_t z0;
+      u_int8_t z1;
+      u_int8_t nxt;
+    } ip6p;
+    u_int16_t pa[20];
   } phu;
   const u_int16_t *sp;
   u_int32_t sum;
-  tlen = ntohs (ip->ip_len) - ((const char *)up-(const char*)ip);
+
+  /* Setup pseudoheader.  */
+  memset (phu.pa, 0, sizeof phu);
+  switch (ntohl (hdr->sa_family))
+    {
+    case AF_INET:
+      ip4 = &hdr->ip.ip4;
+      memcpy (&phu.ip4p.src, &ip4->ip_src, sizeof (struct in_addr));
+      memcpy (&phu.ip4p.dst, &ip4->ip_dst, sizeof (struct in_addr));
+      phu.ip4p.proto = ip4->ip_p;
+      phu.ip4p.len = u->uh_ulen;
+      hdrlen = sizeof phu.ip4p;
+      break;
+
+    case AF_INET6:
+      ip6 = &hdr->ip.ip6;
+      memcpy (&phu.ip6p.src, &ip6->ip6_src, sizeof (phu.ip6p.src));
+      memcpy (&phu.ip6p.dst, &ip6->ip6_dst, sizeof (phu.ip6p.dst));
+      phu.ip6p.plen = u->uh_ulen;
+      phu.ip6p.nxt = ip6->ip6_nxt;
+      hdrlen = sizeof phu.ip6p;
+      break;
+
+    default:
+      return 0;
+    }
+
+  /* IPv6 wants a 0xFFFF checksum "on error", not 0x0.  */
+  if (tlen < 0)
+    return (ntohl (hdr->sa_family) == AF_INET ? 0 : 0xFFFF);
+
+  sum = 0;
+  for (i = 0; i < hdrlen; i += 2)
+    sum += phu.pa[i/2];
+
+  sp = (u_int16_t *)u;
+  for (i = 0; i < sizeof (struct udphdr); i += 2)
+    sum += *sp++;
   
-  /* pseudo-header.. */
-  phu.ph.len = htons (tlen);
-  phu.ph.mbz = 0;
-  phu.ph.proto = ip->ip_p;
-  memcpy (&phu.ph.src, &ip->ip_src.s_addr, sizeof (u_int32_t));
-  memcpy (&phu.ph.dst, &ip->ip_dst.s_addr, sizeof (u_int32_t));
-  
-  sp = &phu.pa[0];
-  sum = sp[0] + sp[1] + sp[2] + sp[3] + sp[4] + sp[5];
-  
-  sp = (const u_int16_t *)up;
-  
+  sp = d;
   for (i = 0; i < (tlen&~1); i += 2)
     sum += *sp++;
   
-  if (tlen & 1) {
+  if (tlen & 1)
     sum += htons ((*(const char *)sp) << 8);
-  }
   
   while (sum > 0xffff)
     sum = (sum & 0xffff) + (sum >> 16);
@@ -578,12 +638,10 @@ udp_cksum (const struct ip *ip, const struct udphdr *up, int len)
 
 /* Copied from tcpdump/print-ip.c, modified.  */
 static u_int16_t
-in_cksum (const struct ip *ip, int len)
+in_cksum (const u_int16_t *w, int len)
 {
-  int nleft = len;
-  const u_short *w = (const u_short *)ip;
-  u_short answer;
-  int sum = 0;
+  int nleft = len, sum = 0;
+  u_int16_t answer;
   
   while (nleft > 1)  {
     sum += *w++;
@@ -597,6 +655,5 @@ in_cksum (const struct ip *ip, int len)
   answer = ~sum;                          /* truncate to 16 bits */
   return answer;
 }
-
 
 #endif /* USE_DEBUG */
