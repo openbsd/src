@@ -1,4 +1,4 @@
-/*	$OpenBSD: qe.c,v 1.7 1999/02/24 06:57:45 jason Exp $	*/
+/*	$OpenBSD: qe.c,v 1.8 1999/12/08 22:46:10 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright.
@@ -858,8 +858,14 @@ qe_get(sc, idx, totlen)
 	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = totlen;
 	pad = ALIGN(sizeof(struct ether_header)) - sizeof(struct ether_header);
+	len = MHLEN;
+	if (totlen >= MINCLSIZE) {
+		MCLGET(m, M_DONTWAIT);
+		if (m->m_flags & M_EXT)
+			len = MCLBYTES;
+	}
 	m->m_data += pad;
-	len = MHLEN - pad;
+	len -= pad;
 	top = NULL;
 	mp = &top;
 
