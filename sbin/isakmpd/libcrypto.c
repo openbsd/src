@@ -1,4 +1,4 @@
-/*	$OpenBSD: libcrypto.c,v 1.12 2001/07/05 07:45:52 angelos Exp $	*/
+/*	$OpenBSD: libcrypto.c,v 1.13 2001/07/13 14:13:38 ho Exp $	*/
 /*	$EOM: libcrypto.c,v 1.14 2000/09/28 12:53:27 niklas Exp $	*/
 
 /*
@@ -103,6 +103,7 @@ X509_NAME *(*lc_X509_get_subject_name) (X509 *);
 X509 *(*lc_X509_new) (void);
 int (*lc_X509_verify) (X509 *, EVP_PKEY *);
 int (*lc_X509_verify_cert) (X509_STORE_CTX *);
+char *(*lc_X509_verify_cert_error_string) (int);
 RSA *(*lc_d2i_RSAPrivateKey) (RSA **, unsigned char **, long);
 RSA *(*lc_d2i_RSAPublicKey) (RSA **, unsigned char **, long);
 X509 *(*lc_d2i_X509) (X509 **, unsigned char **, long);
@@ -172,6 +173,7 @@ static struct dynload_script libcrypto_script[] = {
   SYMENTRY (X509_new),
   SYMENTRY (X509_verify),
   SYMENTRY (X509_verify_cert),
+  SYMENTRY (X509_verify_cert_error_string),
   SYMENTRY (X509_STORE_get_by_subject),
   SYMENTRY (X509_OBJECT_free_contents),
   SYMENTRY (X509_NAME_oneline),

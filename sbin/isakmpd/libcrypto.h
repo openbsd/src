@@ -1,4 +1,4 @@
-/*	$OpenBSD: libcrypto.h,v 1.10 2001/07/05 07:45:52 angelos Exp $	*/
+/*	$OpenBSD: libcrypto.h,v 1.11 2001/07/13 14:13:39 ho Exp $	*/
 /*	$EOM: libcrypto.h,v 1.16 2000/09/28 12:53:27 niklas Exp $	*/
 
 /*
@@ -128,6 +128,7 @@ extern X509 *(*lc_X509_new) (void);
 extern int (*lc_X509_verify) (X509 *, EVP_PKEY *);
 extern char *(*lc_X509_NAME_oneline) (X509_NAME *, char *, int);
 extern int (*lc_X509_verify_cert) (X509_STORE_CTX *);
+extern char *(*lc_X509_verify_cert_error_string) (int);
 extern RSA *(*lc_d2i_RSAPrivateKey) (RSA **, unsigned char **, long);
 extern RSA *(*lc_d2i_RSAPublicKey) (RSA **, unsigned char **, long);
 extern X509 *(*lc_d2i_X509) (X509 **, unsigned char **, long);
