@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.19 2002/10/09 03:52:10 itojun Exp $	*/
+/*	$OpenBSD: filter.c,v 1.20 2002/10/16 14:41:52 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -143,7 +143,7 @@ filter_predicate(struct intercept_pid *icpid, struct predicate *pdc)
 	if (pdc->p_flags & PREDIC_UID)
 		res = icpid->uid == pdc->p_uid;
 	else if (pdc->p_flags & PREDIC_GID)
-		res = icpid->uid == pdc->p_uid;
+		res = icpid->gid == pdc->p_gid;
 
 	return (negative ? !res : res);
 }
