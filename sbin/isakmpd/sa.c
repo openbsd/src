@@ -1,4 +1,4 @@
-/* $OpenBSD: sa.c,v 1.91 2005/04/04 19:31:11 deraadt Exp $	 */
+/* $OpenBSD: sa.c,v 1.92 2005/04/06 00:02:56 cloder Exp $	 */
 /* $EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	 */
 
 /*
@@ -640,7 +640,7 @@ sa_dump_all(FILE *fd, struct sa *sa)
 	fprintf(fd, " (Phase %d)\n", sa->phase);
 
 	/* Source and destination IPs. */
-	fprintf(fd, sa->transport == NULL ? "<no transport>" :
+	fprintf(fd, "%s", sa->transport == NULL ? "<no transport>" :
 	    sa->transport->vtbl->decode_ids(sa->transport));
 	fprintf(fd, "\n");
 
