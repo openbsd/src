@@ -1,5 +1,5 @@
-.\" $OpenBSD: pppstats.8,v 1.4 1997/07/22 19:52:04 deraadt Exp $
-.Dd November 15, 1994
+.\" $OpenBSD: pppstats.8,v 1.5 1997/09/01 22:17:17 millert Exp $
+.Dd September 1, 1997
 .Dt PPPSTATS 8
 .Sh NAME
 .Nm pppstats
@@ -10,8 +10,9 @@
 .Op Fl r
 .Op Fl z
 .Op Fl a
+.Op Fl d
 .Op Fl c Ar count
-.Op Fl w Ar wait
+.Op Fl w Ar secs
 .Op Ar interface
 .Sh DESCRIPTION
 .Pp
@@ -54,12 +55,14 @@ If this option is not specified, the default repeat
 is 1 if the
 .Fl w
 option is not specified, otherwise infinity.
+.It Fl d
+Display values in terms of data rate (KB/s) rather than in bytes.
 .It Fl r
 Display additional statistics summarizing the compression ratio
 achieved by the packet compression algorithm in use.
 .It Fl v
-Display additional statistics demonstrating the efficacy of VJ header
-compression and providing more explicit information on the operation
+Display additional statistics demonstrating the efficiency of VJ header
+compression and provide more explicit information on the operation
 of the algorithm.
 .It Fl w Ar wait
 Pause
@@ -92,7 +95,7 @@ Not reported when the
 option is specified.
 .It Li VJTOSS
 The number of VJ header-compressed TCP packets dropped on reception by
-this interface.  Only reported when the
+this interface because of preceding errors.  Only reported when the
 .Fl v
 option is specified.
 .It Li NON-VJ
