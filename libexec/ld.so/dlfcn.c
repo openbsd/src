@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.45 2005/04/05 19:29:09 drahn Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.46 2005/04/06 00:16:53 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -40,10 +40,12 @@
 
 int _dl_errno;
 
-int _dl_real_close(void *handle);
-void _dl_unload_deps(elf_object_t *object);
-void (*_dl_thread_fnc)(int) = NULL;
-elf_object_t *obj_from_addr(const void *addr);
+static int _dl_real_close(void *handle);
+static void _dl_unload_deps(elf_object_t *object);
+static void _dl_thread_kern_stop(void);
+static void _dl_thread_kern_go(void);
+static void (*_dl_thread_fnc)(int) = NULL;
+static elf_object_t *obj_from_addr(const void *addr);
 
 void *
 dlopen(const char *libname, int flags)
@@ -110,9 +112,6 @@ dlopen(const char *libname, int flags)
 
 	_dl_rtld(object);
 	_dl_call_init(object);
-
-	_dl_link_dlopen(object);
-
 
 	if (_dl_debug_map->r_brk) {
 		_dl_debug_map->r_state = RT_ADD;
@@ -230,7 +229,7 @@ dlclose(void *handle)
 	return (retval);
 }
 
-int
+static int
 _dl_real_close(void *handle)
 {
 	elf_object_t	*object;
@@ -251,7 +250,6 @@ _dl_real_close(void *handle)
 			_dl_unload_deps(dynobj);
 	}
 
-	_dl_unlink_dlopen(object);
 	_dl_unload_shlib(object);
 	return (0);
 }
@@ -260,7 +258,7 @@ _dl_real_close(void *handle)
  * Scan through the shadow dep list and 'unload' every library
  * we depend upon. Shadow objects are removed when removing ourself.
  */
-void
+static void
 _dl_unload_deps(elf_object_t *object)
 {
 	elf_object_t *depobj;
@@ -381,14 +379,14 @@ _dl_show_objects(void)
 		    _dl_symcachestat_lookups));
 }
 
-void
+static void
 _dl_thread_kern_stop(void)
 {
 	if (_dl_thread_fnc != NULL)
 		(*_dl_thread_fnc)(0);
 }
 
-void
+static void
 _dl_thread_kern_go(void)
 {
 	if (_dl_thread_fnc != NULL)
