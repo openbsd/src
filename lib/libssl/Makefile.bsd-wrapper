@@ -1,5 +1,5 @@
 # Build wrapper for OpenSSL
-# $OpenBSD: Makefile.bsd-wrapper,v 1.35 2001/04/17 19:55:19 beck Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.36 2001/07/31 01:07:47 deraadt Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -360,9 +360,11 @@ MLINKS+=BN_CTX_new.3 BN_CTX_init.3 BN_CTX_new.3 BN_CTX_free.3 \
 	des_random_key.3 des_string_to_key.3 des_random_key.3 des_string_to_2keys.3 \
 	des_random_key.3 des_fcrypt.3 des_random_key.3 des_crypt.3 \
 	des_random_key.3 des_enc_read.3 des_random_key.3 des_enc_write.3 \
-	MD5.3 MD2.3 MD5.3 MD2_Init.3 MD5.3 MD2_Update.3 \
-	MD5.3 MD2_Final.3 MD5.3 MD5_Init.3 \
-	MD5.3 MD5_Update.3 MD5.3 MD5_Final.3 \
+	MD5.3 MD2.3 \
+	MD5.3 MD2_Init.3 MD5.3 MD2_Update.3 MD5.3 MD2_Final.3 \
+	MD5.3 MD4.3 \
+	MD5.3 MD4_Init.3 MD5.3 MD4_Update.3 MD5.3 MD4_Final.3 \
+	MD5.3 MD5_Init.3 MD5.3 MD5_Update.3 MD5.3 MD5_Final.3 \
 	bn_internal.3 bn_mul_words.3 \
 	bn_internal.3 bn_mul_add_words.3 \
 	bn_internal.3 bn_sqr_words.3 \
