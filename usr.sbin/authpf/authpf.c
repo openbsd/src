@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.58 2003/06/03 20:38:59 beck Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.59 2003/06/24 20:44:54 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -280,8 +280,8 @@ dogdeath:
 	printf("\r\n\r\nSorry, this service is currently unavailable due to ");
 	printf("technical difficulties\r\n\r\n");
 	print_message(PATH_PROBLEM);
-	printf("\r\nYour authentication process (pid %d) was unable to run\n",
-	    getpid());
+	printf("\r\nYour authentication process (pid %ld) was unable to run\n",
+	    (long)getpid());
 	sleep(180); /* them lusers read reaaaaal slow */
 die:
 	do_death(0);
