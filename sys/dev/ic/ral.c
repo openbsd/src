@@ -1,4 +1,4 @@
-/*	$OpenBSD: ral.c,v 1.33 2005/03/17 14:23:00 damien Exp $  */
+/*	$OpenBSD: ral.c,v 1.34 2005/03/17 19:45:53 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -1377,7 +1377,8 @@ ral_beacon_expire(struct ral_softc *sc)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ral_tx_data *data;
 
-	if (ic->ic_opmode != IEEE80211_M_IBSS)
+	if (ic->ic_opmode != IEEE80211_M_IBSS &&
+	    ic->ic_opmode != IEEE80211_M_HOSTAP)
 		return;
 
 	data = &sc->bcnq.data[sc->bcnq.next];
@@ -2589,8 +2590,9 @@ ral_init(struct ifnet *ifp)
 	/* kick Rx */
 	tmp = RAL_RXCSR0_DROP_PHY | RAL_RXCSR0_DROP_CRC;
 	if (ic->ic_opmode != IEEE80211_M_MONITOR) {
-		tmp |= RAL_RXCSR0_DROP_CTL | RAL_RXCSR0_DROP_TODS |
-		    RAL_RXCSR0_DROP_BAD_VERSION;
+		tmp |= RAL_RXCSR0_DROP_CTL | RAL_RXCSR0_DROP_BAD_VERSION;
+		if (ic->ic_opmode != IEEE80211_M_HOSTAP)
+			tmp |= RAL_RXCSR0_DROP_TODS;
 		if (!(ifp->if_flags & IFF_PROMISC))
 			tmp |= RAL_RXCSR0_DROP_NOT_TO_ME;
 	}
