@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvisor.c,v 1.12 2002/07/25 04:07:33 nate Exp $	*/
-/*	$NetBSD: uvisor.c,v 1.16 2002/07/11 21:14:36 augustss Exp $	*/
+/*	$OpenBSD: uvisor.c,v 1.13 2002/11/11 02:31:51 nate Exp $	*/
+/*	$NetBSD: uvisor.c,v 1.17 2002/08/13 11:38:15 augustss Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -160,6 +160,7 @@ static const struct uvisor_type uvisor_devs[] = {
 	{{ USB_VENDOR_HANDSPRING, USB_PRODUCT_HANDSPRING_VISOR }, 0 },
 	{{ USB_VENDOR_PALM, USB_PRODUCT_PALM_M500 }, PALM4 },
 	{{ USB_VENDOR_PALM, USB_PRODUCT_PALM_M505 }, PALM4 },
+	{{ USB_VENDOR_PALM, USB_PRODUCT_PALM_M515 }, PALM4 },
 	{{ USB_VENDOR_PALM, USB_PRODUCT_PALM_M125 }, PALM4 },
 	{{ USB_VENDOR_SONY, USB_PRODUCT_SONY_CLIE_40 }, PALM4 },
 	{{ USB_VENDOR_SONY, USB_PRODUCT_SONY_CLIE_41 }, 0 },
