@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.32 2004/07/28 05:28:23 miod Exp $
+dnl	$OpenBSD: contents,v 1.33 2004/09/10 19:14:52 miod Exp $
 TopPart
 
 OpenBSDminiroot
@@ -34,10 +34,10 @@ OpenBSDrd
 
 OpenBSDcd
 
-	installboot	The OpenBSD/MACHINE boot loader installation program
-	bootblk		The OpenBSD/MACHINE boot block
-	ofwboot		The OpenBSD/MACHINE secondary boot loader
-	ofwboot.net	The OpenBSD/MACHINE network boot loader
+	installboot	The OpenBSD/MACHINE boot loader installation program.
+	bootblk		The OpenBSD/MACHINE boot block.
+	ofwboot		The OpenBSD/MACHINE secondary boot loader.
+	ofwboot.net	The OpenBSD/MACHINE network boot loader.
 
 
 Please note that there are multiple bootable images and kernels, intended
