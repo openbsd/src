@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccom.c,v 1.8 1996/11/30 11:54:32 downsj Exp $	*/
+/*	$OpenBSD: pccom.c,v 1.9 1996/12/11 13:28:06 deraadt Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*-
@@ -918,6 +918,7 @@ comopen(dev, flag, mode, p)
 				   only waiter */
 				if (DEVCUA(dev))
 					sc->sc_cua = 0;
+				CLR(tp->t_state, TS_WOPEN);
 				splx(s);
 				return error;
 			}
