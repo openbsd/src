@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.regress.mk,v 1.7 2002/01/03 02:20:29 art Exp $
+#	$OpenBSD: bsd.regress.mk,v 1.8 2002/01/03 16:54:38 brad Exp $
 # No man pages for regression tests.
 NOMAN=
 
@@ -34,7 +34,7 @@ REGRESSSKIPTARGETS=run-regress-${PROG}
 
 REGRESSSKIPSLOW?=no
 
-.if (${REGRESSSKIPSLOW} == "yes") && defined(REGRESSSLOWTARGETS)
+.if (${REGRESSSKIPSLOW:L} == "yes") && defined(REGRESSSLOWTARGETS)
 REGRESSSKIPTARGETS+=${REGRESSSLOWTARGETS}
 .endif
 
