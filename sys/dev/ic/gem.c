@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.26 2002/07/10 18:08:13 deraadt Exp $	*/
+/*	$OpenBSD: gem.c,v 1.27 2002/08/28 11:05:02 art Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -448,7 +448,7 @@ gem_stop(struct ifnet *ifp, int disable)
 
 	/* XXX - Should we reset these instead? */
 	gem_disable_rx(sc);
-	gem_disable_rx(sc);
+	gem_disable_tx(sc);
 
 	/*
 	 * Release any queued transmit buffers.
@@ -1693,7 +1693,7 @@ gem_start(ifp)
 		 * or fail...
 		 */
 		if (gem_encap(sc, m, &bix)) {
-			ifp->if_flags |= IFF_OACTIVE;
+			ifp->if_timer = 2;
 			break;
 		}
 
