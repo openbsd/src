@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.8 1997/11/09 23:51:29 niklas Exp $	*/
+/*	$OpenBSD: endian.h,v 1.9 1997/11/10 10:22:22 niklas Exp $	*/
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -36,25 +36,26 @@
 
 #if defined(_KERNEL) && !defined(I386_CPU)
 #define	__swap32md(x) ({						\
-	u_int32_t __x = (x);						\
+	u_int32_t __swap32md_x = (x);					\
 									\
-	__asm ("bswap %1" : "=r" (__x) : "0" (__x));			\
-	__x;								\
+	__asm ("bswap %1" : "=r" (__swap32md_x) : "0" (__swap32md_x));	\
+	__swap32md_x;							\
 })
 #else
 #define	__swap32md(x) ({						\
-	u_int32_t __x = (x);						\
+	u_int32_t __swap32md_x = (x);					\
 									\
 	__asm ("rorw $8, %w1; rorl $16, %1; rorw $8, %w1" :		\
-	    "=r" (__x) : "0" (__x));					\
-	__x;								\
+	    "=r" (__swap32md_x) : "0" (__swap32md_x));			\
+	__swap32md_x;							\
 })
 #endif	/* _KERNEL && !I386_CPU */
 
 #define	__swap16md(x) ({						\
-	u_int16_t __x = (x);						\
+	u_int16_t __swap16md_x = (x);					\
 									\
-	__asm ("rorw $8, %w1" : "=r" (__x) : "0" (__x));		\
+	__asm ("rorw $8, %w1" : "=r" (__swap16md_x) :			\
+	    "0" (__swap16md_x));					\
 	__x;								\
 })
 
