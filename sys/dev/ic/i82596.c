@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82596.c,v 1.10 2002/07/29 23:41:24 fgsch Exp $	*/
+/*	$OpenBSD: i82596.c,v 1.11 2002/07/31 02:32:25 mickey Exp $	*/
 /*	$NetBSD: i82586.c,v 1.18 1998/08/15 04:42:42 mycroft Exp $	*/
 
 /*-
@@ -1043,7 +1043,7 @@ i82596_get(struct ie_softc *sc, int head, int totlen)
 			}
 			len = MCLBYTES;
 		}
-		if (mp == top) {
+		if (mp == &top) {
 			caddr_t newdata = (caddr_t)
 			    ALIGN(m->m_data + sizeof(struct ether_header)) -
 			    sizeof(struct ether_header);
