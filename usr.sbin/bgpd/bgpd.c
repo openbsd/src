@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.42 2003/12/27 00:53:51 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.43 2003/12/27 01:31:49 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -299,12 +299,21 @@ int
 reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_config *mrtc)
 {
 	struct peer		*p;
+	int			 fib_synced;
 
+	fib_synced = ! (conf->flags & BGPD_FLAG_NO_FIB_UPDATE);
 	if (parse_config(conffile, conf, mrtc)) {
 		logit(LOG_CRIT, "config file %s has errors, not reloading",
 		    conffile);
 		return (-1);
 	}
+	if (fib_synced != !(conf->flags & BGPD_FLAG_NO_FIB_UPDATE)) {
+		if (!(conf->flags & BGPD_FLAG_NO_FIB_UPDATE))
+			kroute_fib_couple(rfd);
+		else
+			kroute_fib_decouple(rfd);
+	}
+
 	if (imsg_compose(&ibuf_se, IMSG_RECONF_CONF, 0,
 	    conf, sizeof(struct bgpd_config)) == -1)
 		return (-1);
