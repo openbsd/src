@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkinit.c,v 1.3 1996/06/23 14:21:23 deraadt Exp $	*/
+/*	$OpenBSD: mkinit.c,v 1.4 1996/09/15 22:58:09 millert Exp $	*/
 /*	$NetBSD: mkinit.c,v 1.14 1996/02/18 12:29:21 mycroft Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mkinit.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: mkinit.c,v 1.3 1996/06/23 14:21:23 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mkinit.c,v 1.4 1996/09/15 22:58:09 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -275,7 +275,7 @@ doevent(ep, fp, fname)
 	int indent;
 	char *p;
 
-	sprintf(line, "\n      /* from %s: */\n", fname);
+	snprintf(line, sizeof(line), "\n      /* from %s: */\n", fname);
 	addstr(line, &ep->code);
 	addstr("      {\n", &ep->code);
 	for (;;) {

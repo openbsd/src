@@ -1,4 +1,4 @@
-/*	$OpenBSD: mksyntax.c,v 1.2 1996/06/23 14:21:24 deraadt Exp $	*/
+/*	$OpenBSD: mksyntax.c,v 1.3 1996/09/15 22:58:08 millert Exp $	*/
 /*	$NetBSD: mksyntax.c,v 1.11 1995/05/11 21:29:37 christos Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mksyntax.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: mksyntax.c,v 1.2 1996/06/23 14:21:24 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mksyntax.c,v 1.3 1996/09/15 22:58:08 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -176,7 +176,7 @@ main(argc, argv)
 	/* Generate the #define statements in the header file */
 	fputs("/* Syntax classes */\n", hfile);
 	for (i = 0 ; synclass[i].name ; i++) {
-		sprintf(buf, "#define %s %d", synclass[i].name, i);
+		snprintf(buf, sizeof(buf), "#define %s %d", synclass[i].name, i);
 		fputs(buf, hfile);
 		for (pos = strlen(buf) ; pos < 32 ; pos = (pos + 8) & ~07)
 			putc('\t', hfile);
@@ -185,7 +185,8 @@ main(argc, argv)
 	putc('\n', hfile);
 	fputs("/* Syntax classes for is_ functions */\n", hfile);
 	for (i = 0 ; is_entry[i].name ; i++) {
-		sprintf(buf, "#define %s %#o", is_entry[i].name, 1 << i);
+		snprintf(buf, sizeof(buf), "#define %s %#o",
+			 is_entry[i].name, 1 << i);
 		fputs(buf, hfile);
 		for (pos = strlen(buf) ; pos < 32 ; pos = (pos + 8) & ~07)
 			putc('\t', hfile);
