@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.13 1997/11/26 09:18:12 deraadt Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.14 1998/02/23 08:57:54 niklas Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*
@@ -402,10 +402,7 @@ linux_sys_uname(p, v, retval)
 	len = sizeof(luts.l_version);
 	for (cp = luts.l_version; len--; ++cp)
 		if (*cp == '\n' || *cp == '\t')
-			if (len > 1)
-				*cp = ' ';
-			else
-				*cp = '\0';
+			*cp = (len > 1) ? ' ' : '\0';
 
 	return copyout(&luts, SCARG(uap, up), sizeof(luts));
 }
@@ -434,10 +431,7 @@ linux_sys_olduname(p, v, retval)
 	len = sizeof(luts.l_version);
 	for (cp = luts.l_version; len--; ++cp)
 		if (*cp == '\n' || *cp == '\t')
-			if (len > 1)
-				*cp = ' ';
-			else
-				*cp = '\0';
+			*cp = (len > 1) ? ' ' : '\0';
 
 	return copyout(&luts, SCARG(uap, up), sizeof(luts));
 }
@@ -466,10 +460,7 @@ linux_sys_oldolduname(p, v, retval)
 	len = sizeof(luts.l_version);
 	for (cp = luts.l_version; len--; ++cp)
 		if (*cp == '\n' || *cp == '\t')
-			if (len > 1)
-				*cp = ' ';
-			else
-				*cp = '\0';
+			*cp = (len > 1) ? ' ' : '\0';
 
 	return copyout(&luts, SCARG(uap, up), sizeof(luts));
 }
