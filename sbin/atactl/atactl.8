@@ -1,4 +1,4 @@
-.\"	$OpenBSD: atactl.8,v 1.16 2002/07/06 14:46:57 gluk Exp $
+.\"	$OpenBSD: atactl.8,v 1.17 2002/08/04 14:11:41 gluk Exp $
 .\"	$NetBSD: atactl.8,v 1.5 1999/02/24 18:49:14 jwise Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -257,7 +257,7 @@ The purpose of the master password is to allow an administrator to establish
 a password that is kept secret from the user, and which may be used to unlock
 the device if the user password is lost.
 Setting the master password does not enable security system.
-Each master password change causes decrement of the master password revision
+Each master password change decrements the master password revision
 code value which is displayed in the
 .Cm identify
 command output if supported.
@@ -278,7 +278,7 @@ command erases all user data on the device.
 .Ar user | master
 .Pp
 Unlocks the specified device with user or master password.
-The device will always unlock if valid user password is received.
+The device will always unlock if a valid user password is received.
 If the security level was set to high during the last
 .Cm secsetpass
 command, the device will unlock if the master password is received.
@@ -291,10 +291,10 @@ command, the device won't unlock if the master password is received.
 .Op Ar enhanced
 .Pp
 Erases all user data and unlocks the specified device.
-Execution of this command with master password is the only way to unlock the
-device being locked at maximum security level with
+Execution of this command with master password is the only way to unlock a
+device locked at maximum security level with
 .Cm secsetpass
-command if user password lost or unknown.
+command if user password is lost or unknown.
 There are two erase modes: normal and enhanced.
 Default erase mode is normal.
 In the normal erase mode this command will write binary zeroes to
@@ -331,8 +331,9 @@ command.
 .Pp
 .Em WARNING
 .br
-Be very carefull while playing with theese commands.
-If you lose user and master passwords the device will be inaccessible at all.
+Be very careful while playing with these commands.
+If you lose the user and master passwords the device will not be accessible
+at all.
 Don't use it unless the implications are completely understood.
 .Pp
 .Cm smartenable

@@ -1,4 +1,4 @@
-/*	$OpenBSD: atactl.c,v 1.19 2002/07/06 14:46:57 gluk Exp $	*/
+/*	$OpenBSD: atactl.c,v 1.20 2002/08/04 14:11:41 gluk Exp $	*/
 /*	$NetBSD: atactl.c,v 1.4 1999/02/24 18:49:14 jwise Exp $	*/
 
 /*-
@@ -673,7 +673,7 @@ device_sec_setpass(int argc, char *argv[])
 	 * Issue IDENTIFY command to obtain master password
 	 * revision code and decrement its value.
 	 * The valid revision codes are 0x0001 through 0xfffe.
-	 * If device returnes 0x0000 or 0xffff as a revision
+	 * If the device returns 0x0000 or 0xffff as a revision
 	 * code then the master password revision code is not
 	 * supported so don't touch it.
 	 */
@@ -886,6 +886,8 @@ sec_getpass(int ident, int confirm)
 		char *pass2;
 
 		pass2 = strdup(pass);
+		if (pass2 == NULL)
+			err(1, "strdup()");
 		if ((pass = getpass(ident ? "Retype master password:" :
 		    "Retype user password:")) == NULL)
 			err(1, "getpass()");
