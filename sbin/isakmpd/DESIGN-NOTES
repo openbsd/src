@@ -1,4 +1,4 @@
-$OpenBSD: DESIGN-NOTES,v 1.17 2002/03/17 21:48:06 angelos Exp $
+$OpenBSD: DESIGN-NOTES,v 1.18 2002/04/23 12:51:11 ho Exp $
 $EOM: DESIGN-NOTES,v 1.48 1999/08/12 22:34:25 niklas Exp $
 
 General coding conventions
@@ -30,8 +30,7 @@ string "XXX", e.g.
 TOC
 ---
 app.c		Application support.
-asn.c		ASN.1 utilities.
-asn_useful.c	ASN.1 useful structure defintions.
+attribute.c	Attribute handling.
 cert.c		Dispatching certificate related functions to the according
 		module based on the encoding.
 conf.c		Interface to isakmpd configuration.
@@ -40,6 +39,7 @@ constants.c	Value to name map of constants.
 cookie.c	Cookie generation.
 crypto.c	Generic cryptography.
 dh.c		Diffie-Hellman exchange logic.
+dnssec.c	IKE authentication using signed DNS KEY RRs.
 doi.c		Generic handling of different DOIs.
 dyn.c		Support for dynamic loading of executable code.
 exchange.c	Exchange state machinery.
@@ -52,9 +52,9 @@ genfields.sh	Generate field description files from .fld source.
 gmp_util.c	Utilities to ease interfaceing to GMP.
 hash.c		Generic hash handling.
 if.c		Network interface details.
-ike_auth.c	IKE authentication method abstraction.
 ike_aggressive.c
 		IKE's aggressive mode exchange logic.
+ike_auth.c	IKE authentication method abstraction.
 ike_main_mode.c	IKE's main mode exchange logic.
 ike_phase_1.c	Common parts IKE's main & aggressive modes' exchange logic.
 ike_quick_mode.c
@@ -68,15 +68,14 @@ isakmp_doi.c	The ISAKMP pseudo-DOI.
 isakmp_fld.fld	Generic packet layout.
 isakmp_num.cst	ISAKMP constants.
 isakmpd.c	Main loop.
+key.c		Generic key handling.
 libcrypto.c	Deal with both statically and dynamically loaded libcrypto.
 log.c		Logging of exceptional or informational messages.
 math_2n.c	Polynomial math.
 math_ec2n.c	Elliptic curve math.
 math_group.c	Group math.
 message.c	Generic message handling.
-pf_encap.c	Interface with PF_ENCAP sockets (for use with IPsec).
 pf_key_v2.c	Interface with PF_KEY sockets (for use with IPsec).
-pkcs.c		PKCS#1: RSA Encryption Standard.
 policy.c	Keynote glue.
 prf.c		Pseudo random functions.
 sa.c		Handling of Security Associations (SAs).
@@ -210,12 +209,13 @@ User control
 
 In order to control the daemon you send commands through a FIFO called
 isakmpd.fifo.  The commands are one-letter codes followed by arguments.
-For now, only five such commands are implemented:
+For now, eleven such commands are implemented:
 
 c	connect		Establish a connection with a peer
-C	configure	Add or remove configuration entries.
+C	configure	Add or remove configuration entries
 d	delete		Delete an SA given cookies and message-IDs
 D	debug		Change logging level for a debug class
+p	packet capture	Enable/disable packet capture feature
 r	report		Report status information of the daemon
 t	teardown	Teardown a connection
 Q       quit            Quit the isakmpd process
@@ -247,7 +247,7 @@ C rms [Net-A]
 All these commands are atomic, i.e. they are not collected into larger
 transactions, which there should be a way to do, but currently isn't.
 
-I am thinking about adding a "q" command for quit.
+The FIFO UI is also described in the isakmpd(8) man page.
 
 In addition to giving commands over the FIFO, you may send signals to the
 daemon. Currently two such signals are implemented:
