@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2004/11/22 04:14:18 deraadt Exp $
+# $OpenBSD: Makefile,v 1.2 2004/12/19 15:25:27 deraadt Exp $
 
 NOPROG=
 NOMAN=
@@ -19,6 +19,8 @@ all:	build
 afterinstall:
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 644 \
 	    ${FIRM} ${DESTDIR}/etc/firmware
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 644 \
+	    ${.CURDIR}/tigon-license ${DESTDIR}/etc/firmware
 .endif
 
 .include <bsd.prog.mk>
