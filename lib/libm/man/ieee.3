@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ieee.3,v 1.6 2000/03/02 00:29:50 todd Exp $
+.\"	$OpenBSD: ieee.3,v 1.7 2003/02/28 19:58:41 jason Exp $
 .\" Copyright (c) 1985, 1991 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -84,6 +84,10 @@ returns
 .Fa x
 with its sign changed to
 .Fa y Ns 's.
+The
+.Fn copysignf
+function is a single precision version of
+.Fn copysign .
 .Pp
 .Fn finite
 returns the value 1 just when
@@ -97,6 +101,10 @@ zero is returned
 = \*(If or
 .Fa x
 is \*(Na
+The
+.Fn finitef
+function is a single precision version of
+.Fn finite .
 .Pp
 .Fn ilogb
 returns
@@ -110,12 +118,20 @@ and
 .Fn ilogb 0
 returns
 .Dv INT_MIN .
+The
+.Fn ilogbf
+function is a single precision version of
+.Fn ilogb .
 .Pp
 .Fn nextafter
 returns the next machine representable number from
 .Fa x
 in direction
 .Fa y .
+The
+.Fn nextafterf
+function is a single precision version of
+.Fn nextafter .
 .Pp
 .Fn remainder
 returns the remainder
@@ -154,11 +170,19 @@ But
 and
 .Fn remainder \*(If 0
 are invalid operations that produce a \*(Na.
+The
+.Fn remainderf
+function is a single precision version of
+.Fn remainder .
 .Pp
 .Fn scalbn
 returns
 .Fa x Ns \(**(2** Ns Fa n )
 computed by exponent manipulation.
+The
+.Fn scalbnf
+function is a single precision version of
+.Fn scalbn .
 .Sh SEE ALSO
 .Xr math 3
 .Sh HISTORY
