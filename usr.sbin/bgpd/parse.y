@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.77 2004/03/11 17:47:48 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.78 2004/03/11 19:01:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -116,7 +116,7 @@ typedef struct {
 %token	SET LOCALPREF MED NEXTHOP PREPEND
 %token	ERROR
 %token	<v.string>		STRING
-%type	<v.number>		number asnumber optnumber cnumber yesno inout
+%type	<v.number>		number asnumber optnumber yesno inout
 %type	<v.string>		string
 %type	<v.addr>		address
 %type	<v.prefix>		prefix
