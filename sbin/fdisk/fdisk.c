@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.6 1996/09/27 15:27:03 deraadt Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.7 1996/09/27 15:34:49 deraadt Exp $	*/
 /*	$NetBSD: fdisk.c,v 1.11 1995/10/04 23:11:19 ghudson Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fdisk.c,v 1.6 1996/09/27 15:27:03 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: fdisk.c,v 1.7 1996/09/27 15:34:49 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -242,6 +242,8 @@ void
 usage()
 {
 	fprintf(stderr, "usage: fdisk [-aium] [-0123] [-f mbrboot] device\n");
+	fprintf(stderr, "    -a: change active, -i: initialize, -u: update\n");
+	fprintf(stderr, "    -m: replace MBR bootblock, -0123: select partition\n");
 	exit(1);
 }
 
