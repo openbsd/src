@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.7 2001/01/30 01:18:38 mickey Exp $
+#	$OpenBSD: Makefile,v 1.8 2001/09/01 17:01:49 drahn Exp $
 
 .if ${MACHINE} == "i386" || ${MACHINE} == "alpha" || ${MACHINE} == "hppa" || \
-	${MACHINE} == "powerpc"
+	${MACHINE} == "macppc"
 
 PROG=	wsconscfg
 SRCS=	wsconscfg.c
@@ -13,6 +13,6 @@ NOPROG=yes
 .endif
 
 MAN=	wsconscfg.8
-MANSUBDIR=	alpha hppa i386 powerpc
+MANSUBDIR=	alpha hppa i386 macppc
 
 .include <bsd.prog.mk>
