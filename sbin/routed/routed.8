@@ -1,4 +1,4 @@
-.\"	$OpenBSD: routed.8,v 1.32 2001/01/05 05:17:45 angelos Exp $
+.\"	$OpenBSD: routed.8,v 1.33 2001/08/02 20:37:35 hugh Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -155,7 +155,7 @@ also periodically checks the routing table entries.
 If an entry has not been updated for 3 minutes, the entry's metric
 is set to infinity and marked for deletion.
 Deletions are delayed until the route has been advertised with
-an infinite metric to insure the invalidation
+an infinite metric to ensure the invalidation
 is propagated throughout the local internet.
 This is a form of
 .Em poison reverse .
