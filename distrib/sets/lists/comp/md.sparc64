@@ -1,4 +1,5 @@
 ./usr/bin/addr2line
+./usr/bin/objcopy
 ./usr/bin/readelf
 ./usr/include/g++/FlexLexer.h
 ./usr/include/g++/algorithm
