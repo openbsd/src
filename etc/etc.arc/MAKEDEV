@@ -1,10 +1,12 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.18 1997/05/18 13:42:37 pefo Exp $
+#	$OpenBSD: MAKEDEV,v 1.19 1997/05/21 18:30:50 pefo Exp $
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
 
 # Device "make" file.  Valid arguments:
+#	all	makes all known devices
+#	ramdisk	makes all devices for a ramdisk kernel
 #	std	standard devices
 #	local	configuration specific devices
 #
@@ -69,8 +71,10 @@ case $i in
 
 all)
 	sh MAKEDEV std fd fd0 wd0 wd1 wd2 wd3 sd0 sd1 sd2 st0 acd0 cd0 ss0
-	sh MAKEDEV vnd0 vnd1 vnd2 vnd3 tty00 tty01 pty0 pty1
-	sh MAKEDEV ttyC0 lpt0 pms0 random bpf0 local
+	sh MAKEDEV ccd0 ccd1 ccd2
+	sh MAKEDEV vnd0 vnd1 vnd2 vnd3 tty00 tty01 tty02 tty03 pty0 pty1
+	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 ipl tun0 tun1 tun2
+	sh MAKEDEV ttyC0 lpt0 pms0 random uk0 uk1 local
 	;;
 
 ramdisk)
@@ -107,14 +111,13 @@ ttyC*)
 
 pms*)
 	unit=`expr $i : '.ms\(.*\)'`
+	unit=`expr $unit \* 2 + 1`
 	case $i in
 	pms*) name=pms; chr=15;;
 	esac
 	rm -f $name$unit
 	mknod $name$unit c $chr $unit
 	chown root.wheel $name$unit
-	rm -f mouse
-	ln -s $name$unit mouse
 	;;
 
 fd)
@@ -165,6 +168,12 @@ bpf*|tun*)
 	chown root.wheel $name$unit
 	;;
 
+ipl)
+	rm -f ipl
+	mknod ipl c 31 0
+	chown root.wheel ipl
+	;;
+
 rd*)
 	umask 2 ; unit=`expr $i : '.*d\(.*\)'`
 	mknod rd${unit}a b 8 `expr $unit '*' 16 + 0`
@@ -183,9 +192,10 @@ rd*)
 #	chmod 640 lkm
 #	;;
 
-fd*|sd*|wd*)
-	umask 2 ; unit=`expr $i : '..\(.*\)'`
+ccd*|fd*|sd*|wd*)
+	umask 2 ; unit=`expr $i : '.*d\(.*\)'`
 	case $i in
+	ccd*) name=ccd; blk=6; chr=23;;
 	sd*) name=sd; blk=0; chr=9;;
 	fd*) name=fd; blk=7; chr=13;;
 	wd*) name=wd; blk=4; chr=18;;
@@ -296,6 +306,14 @@ cd*|acd*)
 	chown root.operator ${name}${unit}[a-p] r${name}${unit}[a-p]
 	chmod 640 ${name}${unit}[a-p] r${name}${unit}[a-p]
 	umask 77
+	;;
+
+uk*)
+	unit=`expr $i : 'uk\(.*\)'`
+	rm -f uk$unit
+	mknod uk$unit c 32 $unit
+	chown root.operator uk$unit
+	chmod 640 uk$unit
 	;;
 
 ss*)
