@@ -36,7 +36,8 @@ read_etc_environment (void)
 	    if (val == NULL)
 		continue;
 	    *val = '\0';
-	    setenv(buf, val + 1, 1);
+	    if(setenv(buf, val + 1, 1) != 0)
+		errx(1, "cannot set %s", buf);
 	}
 	fclose (f);
     }
@@ -110,12 +111,14 @@ void sysv_newenv(int argc, char **argv, struct passwd *pwd,
 
     for (pp = preserved; pp->name; pp++)
 	if (pp->value)
-	    setenv(pp->name, pp->value, 1);
+	    if(setenv(pp->name, pp->value, 1) != 0)
+		errx(1, "cannot set %s", pp->name);
 
     /* The TERM definition from e.g. rlogind can override an existing one. */
 
     if (term[0])
-	setenv("TERM", term, 1);
+	if(setenv("TERM", term, 1) != 0)
+	    errx(1, "cannot set TERM");
 
     /*
      * Environment definitions from the command line overrule existing ones,
@@ -130,7 +133,8 @@ void sysv_newenv(int argc, char **argv, struct passwd *pwd,
     while (argc && *argv) {
 	if (strchr(*argv, '=') == 0) {
 	    snprintf(buf, sizeof(buf), "L%d", count++);
-	    setenv(buf, *argv, 1);
+	    if(setenv(buf, *argv, 1) != 0)
+		errx(1, "cannot set %s", buf);
 	} else {
 	    for (cp = censored; cp->prefix; cp++)
 		if (STREQN(*argv, cp->prefix, cp->length))
@@ -143,20 +147,25 @@ void sysv_newenv(int argc, char **argv, struct passwd *pwd,
 
     /* PATH is always reset. */
 
-    setenv("PATH", pwd->pw_uid ? default_path : default_supath, 1);
+    if(setenv("PATH", pwd->pw_uid ? default_path : default_supath, 1) != 0)
+	errx(1, "cannot set PATH");
 
     /* Undocumented: HOME, MAIL and LOGNAME are always reset (SunOS 5.1). */
 
-    setenv("HOME", pwd->pw_dir, 1);
+    if(setenv("HOME", pwd->pw_dir, 1) != 0)
+	errx(1, "cannot set HOME");
     {
 	char *sep = "/";
 	if(KRB4_MAILDIR[strlen(KRB4_MAILDIR) - 1] == '/')
 	    sep = "";
 	roken_concat(buf, sizeof(buf), KRB4_MAILDIR, sep, pwd->pw_name, NULL);
     }
-    setenv("MAIL", buf, 1);
-    setenv("LOGNAME", pwd->pw_name, 1);
-    setenv("USER", pwd->pw_name, 1);
+    if(setenv("MAIL", buf, 1) != 0)
+	errx(1, "cannot set MAIL");
+    if(setenv("LOGNAME", pwd->pw_name, 1) != 0)
+	errx(1, "cannot set LOGNAME");
+    if(setenv("USER", pwd->pw_name, 1) != 0)
+	errx(1, "cannot set USER");
 
     /*
      * Variables that may be set according to specifications in the defaults
@@ -167,11 +176,14 @@ void sysv_newenv(int argc, char **argv, struct passwd *pwd,
      */
 
     if (strcasecmp(default_altsh, "YES") == 0)
-	setenv("SHELL", pwd->pw_shell, 1);
+	if(setenv("SHELL", pwd->pw_shell, 1) != 0)
+	    errx(1, "cannot set SHELL");
     if (default_hz)
-	setenv("HZ", default_hz, 0);
+	if(setenv("HZ", default_hz, 0) != 0)
+	    errx(1, "cannot set HZ");
     if (default_timezone)
-	setenv("TZ", default_timezone, 0);
+	if(setenv("TZ", default_timezone, 0) != 0)
+	    errx(1, "cannot set TZ");
 
     /* Non-environment stuff. */
 

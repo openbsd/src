@@ -1016,7 +1016,8 @@ suboption(void)
 	    return;
 	settimer(xdisplocsubopt);
 	subpointer[SB_LEN()] = '\0';
-	setenv("DISPLAY", (char *)subpointer, 1);
+	if(setenv("DISPLAY", (char *)subpointer, 1) != 0)
+	    errx(1, "cannot set DISPLAY");
 	break;
     }  /* end of case TELOPT_XDISPLOC */
 
@@ -1183,7 +1184,8 @@ suboption(void)
 	    case ENV_USERVAR:
 		*cp = '\0';
 		if (valp)
-		    setenv(varp, valp, 1);
+		    if(setenv(varp, valp, 1) != 0)
+			errx(1, "cannot set %s", varp);
 		else
 		    unsetenv(varp);
 		cp = varp = (char *)subpointer;
@@ -1202,7 +1204,8 @@ suboption(void)
 	}
 	*cp = '\0';
 	if (valp)
-	    setenv(varp, valp, 1);
+	    if(setenv(varp, valp, 1) != 0)
+		errx(1, "cannot set %s", varp);
 	else
 	    unsetenv(varp);
 	break;

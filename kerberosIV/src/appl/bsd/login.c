@@ -665,7 +665,8 @@ main(int argc, char **argv)
         sysv_newenv(argc, argv, pwd, term, pflag);
 #ifdef KERBEROS
 	if (krbtkfile_env)
-	    setenv("KRBTKFILE", krbtkfile_env, 1);
+	    if(setenv("KRBTKFILE", krbtkfile_env, 1) != 0)
+		errx(1, "cannot set KRBTKFILE");
 #endif
 
 	if (tty[sizeof("tty")-1] == 'd')

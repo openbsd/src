@@ -315,7 +315,8 @@ main(int argc, char **argv)
 	}while(f < 0);
 	close(f);
 	unlink(tf);
-	setenv("KRBTKFILE", tf, 1);
+	if(setenv("KRBTKFILE", tf, 1) != 0)
+	    errx(1, "cannot set KRBTKFILE");
 	krb_set_tkt_string (tf);
     }
     

@@ -250,18 +250,24 @@ main (int argc, char **argv)
 	    if (environ == NULL)
 		err (1, "malloc");
 	    environ[0] = NULL;
-	    setenv ("PATH", _PATH_DEFPATH, 1);
+	    if(setenv ("PATH", _PATH_DEFPATH, 1) != 0)
+		errx(1, "cannot set PATH");
 	    if (t)
-		setenv ("TERM", t, 1);
+		if(setenv ("TERM", t, 1) != 0)
+		    errx(1, "cannot set TERM");
 	    if (k)
-		setenv ("KRBTKFILE", k, 1);
+		if(setenv ("KRBTKFILE", k, 1) != 0)
+		    errx(1, "cannot set KRBTKFILE");
 	    if (chdir (pwd->pw_dir) < 0)
 		errx (1, "no directory");
 	}
 	if (asthem || pwd->pw_uid)
-	    setenv ("USER", pwd->pw_name, 1);
-	setenv ("HOME", pwd->pw_dir, 1);
-	setenv ("SHELL", shell, 1);
+	    if(setenv ("USER", pwd->pw_name, 1) != 0)
+		errx(1, "cannot set USER");
+	if(setenv ("HOME", pwd->pw_dir, 1) != 0)
+	    errx(1, "cannot set HOME");
+	if(setenv ("SHELL", shell, 1) != 0)
+	    errx(1, "cannot set SHELL");
     }
     if (iscsh == YES) {
 	if (fastlogin)
@@ -353,7 +359,8 @@ kerberos (char *username, char *user, int uid)
 	      "%s_%s_to_%s_%u", TKT_ROOT, username, user,
 	     (unsigned) getpid ());
 
-    setenv ("KRBTKFILE", krbtkfile, 1);
+    if(setenv ("KRBTKFILE", krbtkfile, 1) != 0)
+	errx(1, "cannot set KRBTKFILE");
     krb_set_tkt_string (krbtkfile);
     /*
      * Set real as well as effective ID to 0 for the moment,

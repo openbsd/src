@@ -776,7 +776,8 @@ Please contact your net administrator");
      */
     *user_name = 0;
     level = getterminaltype(user_name, sizeof(user_name));
-    setenv("TERM", terminaltype ? terminaltype : "network", 1);
+    if(setenv("TERM", terminaltype ? terminaltype : "network", 1) != 0)
+	errx(1, "cannot set TERM");
 
 #ifdef _SC_CRAY_SECURE_SYS
     if (secflag) {
