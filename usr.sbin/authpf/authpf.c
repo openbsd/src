@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.49 2003/01/29 10:13:10 deraadt Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.50 2003/02/02 23:31:24 henning Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -635,7 +635,7 @@ change_filter(int add, const char *luser, const char *ipsrc)
 
 		pf.dev = dev;
 		infile = fn;
-		if (parse_rules(f, &pf, 0) < 0) {
+		if (parse_rules(f, &pf) < 0) {
 			syslog(LOG_ERR, "syntax error in rule file: "
 			    "authpf rules not loaded");
 			goto error;
