@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.51 1998/05/19 16:55:26 millert Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.52 1998/05/23 19:22:32 millert Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -46,17 +46,6 @@ kerberosIV
 # ./etc/mtree
 mtree
 # ./etc/mtree
-..
-
-# ./etc/namedb
-namedb
-
-# ./etc/namedb/tmp
-tmp
-# ./etc/namedb/tmp
-..
-
-# ./etc/namedb
 ..
 
 # ./etc/ppp
@@ -1605,6 +1594,17 @@ mail
 # ./var/msgs
 msgs
 # ./var/msgs
+..
+
+# ./var/named
+named		uname=named gname=bin mode=0755
+
+# ./var/named/dev
+dev
+# ./var/named/dev
+..
+
+# ./var/named
 ..
 
 # ./var/obj				XXX
