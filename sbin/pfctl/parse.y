@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.257 2002/12/17 11:29:04 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.258 2002/12/17 12:01:22 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -383,38 +383,40 @@ typedef struct {
 %token	ALTQ CBQ BANDWIDTH TBRSIZE
 %token	QUEUE PRIORITY QLIMIT
 %token	DEFAULT CONTROL BORROW RED ECN RIO
-%token	<v.string> STRING
-%token	<v.i>	PORTUNARY PORTBINARY
-%type	<v.interface>	interface if_list if_item_not if_item
-%type	<v.number>	number port icmptype icmp6type uid gid
-%type	<v.number>	tos
-%type	<v.i>	no dir log af fragcache
-%type	<v.i>	staticport
-%type	<v.b>	action flags flag blockspec
-%type	<v.range>	dport rport
-%type	<v.hashkey>     hashkey
-%type	<v.pooltype>	pooltype
-%type	<v.proto>	proto proto_list proto_item
-%type	<v.icmp>	icmpspec icmp_list icmp6_list icmp_item icmp6_item
-%type	<v.fromto>	fromto
-%type	<v.peer>	ipportspec
-%type	<v.host>	ipspec xhost host address host_list
-%type	<v.host>	redir_host_list redirspec
-%type	<v.host>	route_host route_host_list routespec
-%type	<v.port>	portspec port_list port_item
-%type	<v.uid>		uids uid_list uid_item
-%type	<v.gid>		gids gid_list gid_item
-%type	<v.route>	route
-%type	<v.redirection>	redirection redirpool
-%type	<v.string>	label string
-%type	<v.keep_state>	keep
-%type	<v.state_opt>	state_opt_spec state_opt_list state_opt_item
-%type	<v.logquick>	logquick
-%type	<v.interface>	antispoof_ifspc antispoof_iflst
-%type	<v.qassign>	qname
-%type	<v.queue>	qassign qassign_list qassign_item
+%token	<v.string>		STRING
+%token	<v.i>			PORTUNARY PORTBINARY
+%type	<v.interface>		interface if_list if_item_not if_item
+%type	<v.number>		number port icmptype icmp6type uid gid
+%type	<v.number>		tos
+%type	<v.i>			no dir log af fragcache
+%type	<v.i>			staticport
+%type	<v.b>			action flags flag blockspec
+%type	<v.range>		dport rport
+%type	<v.hashkey>		hashkey
+%type	<v.pooltype>		pooltype
+%type	<v.proto>		proto proto_list proto_item
+%type	<v.icmp>		icmpspec
+%type	<v.icmp>		icmp_list icmp_item
+%type	<v.icmp>		icmp6_list icmp6_item
+%type	<v.fromto>		fromto
+%type	<v.peer>		ipportspec
+%type	<v.host>		ipspec xhost host address host_list
+%type	<v.host>		redir_host_list redirspec
+%type	<v.host>		route_host route_host_list routespec
+%type	<v.port>		portspec port_list port_item
+%type	<v.uid>			uids uid_list uid_item
+%type	<v.gid>			gids gid_list gid_item
+%type	<v.route>		route
+%type	<v.redirection>		redirection redirpool
+%type	<v.string>		label string
+%type	<v.keep_state>		keep
+%type	<v.state_opt>		state_opt_spec state_opt_list state_opt_item
+%type	<v.logquick>		logquick
+%type	<v.interface>		antispoof_ifspc antispoof_iflst
+%type	<v.qassign>		qname
+%type	<v.queue>		qassign qassign_list qassign_item
 %type	<v.queue_options>	scheduler
-%type	<v.number>	cbqflags_list cbqflags_item
+%type	<v.number>		cbqflags_list cbqflags_item
 %type	<v.queue_bwspec>	bandwidth
 %type	<v.filter_opts>		filter_opts filter_opt filter_opts_l
 %type	<v.queue_opts>		queue_opts queue_opt queue_opts_l
