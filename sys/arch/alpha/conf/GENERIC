@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.141 2005/02/15 11:03:45 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.142 2005/02/25 12:57:49 jsg Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 
 machine	alpha
@@ -192,6 +192,7 @@ xl*	at pci?				# 3COM 3c9xx
 txp*	at pci?				# 3COM 3CR990
 fpa*	at pci?				# DEC DEFPA FDDI cards
 bge*	at pci?				# Broadcom BCM570x (aka Tigon3)
+re*	at pci?				# Realtek 8169/8169S/8110S
 stge*	at pci?				# Sundance TC9021 GigE
 rl*	at pci?				# RealTek 81[23]9 ethernet
 vr*	at pci?				# VIA Rhine ethernet
@@ -239,6 +240,7 @@ bmtphy*	at mii?				# Broadcom 10/100 PHYs
 brgphy*	at mii?				# Broadcom Gigabit PHYs
 xmphy*	at mii?				# XaQti XMAC-II PHYs
 urlphy*	at mii?				# Realtek RTL8150L internal PHY
+rgephy*	at mii?				# Realtek 8169S/8110S PHY
 ukphy*	at mii?				# "unknown" PHYs
 
 # ISA/EISA bus support
