@@ -1,9 +1,9 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.36 2003/01/24 11:37:24 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.37 2003/02/25 12:03:02 henning Exp $	*/
 
 /*
  * Copyright (C) 2002
  *	Sony Computer Science Laboratories Inc.  All rights reserved.
- * Copyright (C) 2002 Henning Brauer. All rights reserved.
+ * Copyright (C) 2002, 2003 Henning Brauer. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
