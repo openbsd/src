@@ -1,4 +1,4 @@
-/*	$OpenBSD: globals.c,v 1.6 2000/07/03 05:23:45 pjanzen Exp $	*/
+/*	$OpenBSD: globals.c,v 1.7 2000/09/17 21:28:33 pjanzen Exp $	*/
 /*	$NetBSD: globals.c,v 1.3 1995/03/21 15:07:32 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)globals.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: globals.c,v 1.6 2000/07/03 05:23:45 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: globals.c,v 1.7 2000/09/17 21:28:33 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -228,7 +228,7 @@ int     followfight = -1;
 struct room *location;
 
  /* current input line */
-char    words[NWORD][15];
+char    words[NWORD][WORDLEN];
 int     wordvalue[NWORD];
 int     wordtype[NWORD];
 int     wordcount, wordnumber;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.6 1999/09/25 20:30:46 pjanzen Exp $	*/
+/*	$OpenBSD: parse.c,v 1.7 2000/09/17 21:28:33 pjanzen Exp $	*/
 /*	$NetBSD: parse.c,v 1.3 1995/03/21 15:07:48 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: parse.c,v 1.6 1999/09/25 20:30:46 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.7 2000/09/17 21:28:33 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -98,6 +98,7 @@ parse()
 {
 	struct wlist *wp;
 	int     n;
+	int     flag;
 
 	wordnumber = 0;		/* for cypher */
 	for (n = 0; n <= wordcount; n++) {
@@ -108,5 +109,55 @@ parse()
 			wordvalue[n] = wp->value;
 			wordtype[n] = wp->article;
 		}
+	}
+	/* Trim "AND AND" which can happen naturally at the end of a
+	 * comma-delimited list
+	 */
+	for (n = 1; n < wordcount; n++)
+		if (wordvalue[n - 1] == AND && wordvalue[n] == AND) {
+			int i;
+			for (i = n + 1; i < wordcount; i++) {
+				wordtype[i - 1] = wordtype[i];
+				wordvalue[i - 1] = wordvalue[i];
+				strlcpy(words[i - 1], words[i], WORDLEN);
+			}
+			wordcount--;
+		}
+
+	/* If there is a sequence (NOUN | OBJECT) AND EVERYTHING
+	 * then move all the EVERYTHINGs to the beginning, since that's where
+	 * they're expected.  We can't get rid of the NOUNs and OBJECTs in
+	 * case they aren't in EVERYTHING (i.e. not here or nonexistant).
+	 */
+	flag = 1;
+	while (flag) {
+		flag = 0;
+		for (n = 1; n < wordcount; n++)
+			if ((wordtype[n - 1] == NOUNS || wordtype[n - 1] == OBJECT) &&
+			    wordvalue[n] == AND && wordvalue[n + 1] == EVERYTHING) {
+				char tmpword[WORDLEN];
+				wordvalue[n + 1] = wordvalue[n - 1];
+				wordvalue[n - 1] = EVERYTHING;
+				wordtype[n + 1] = wordtype[n - 1];
+				wordtype[n - 1] = OBJECT;
+				strlcpy(tmpword, words[n - 1], WORDLEN);
+				strlcpy(words[n - 1], words[n + 1], WORDLEN);
+				strlcpy(words[n + 1], tmpword, WORDLEN);
+				flag = 1;
+		}
+		/* And trim EVERYTHING AND EVERYTHING */
+		for (n = 1; n < wordcount; n++)
+			if (wordvalue[n - 1] == EVERYTHING &&
+			    wordvalue[n] == AND && wordvalue[n + 1] == EVERYTHING) {
+				int i;
+				for (i = n + 1; i < wordcount; i++) {
+					wordtype[i - 1] = wordtype[i + 1];
+					wordvalue[i - 1] = wordvalue[i + 1];
+					strlcpy(words[i - 1], words[i + 1], WORDLEN);
+				}
+				wordcount--;
+				wordcount--;
+				flag = 1;
+			}
 	}
 }

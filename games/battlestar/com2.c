@@ -1,4 +1,4 @@
-/*	$OpenBSD: com2.c,v 1.8 2000/07/03 05:23:44 pjanzen Exp $	*/
+/*	$OpenBSD: com2.c,v 1.9 2000/09/17 21:28:32 pjanzen Exp $	*/
 /*	$NetBSD: com2.c,v 1.3 1995/03/21 15:06:55 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com2.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: com2.c,v 1.8 2000/07/03 05:23:44 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: com2.c,v 1.9 2000/09/17 21:28:32 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,7 +52,8 @@ wearit()
 
 	firstnumber = wordnumber;
 	while (wordtype[++wordnumber] == ADJS);
-	while (wordnumber <= wordcount) {
+	while (wordnumber <= wordcount && (wordtype[wordnumber] == OBJECT ||
+	    wordtype[wordnumber] == NOUNS)) {
 		value = wordvalue[wordnumber];
 		for (n = 0; objsht[value][n]; n++);
 		switch (value) {
@@ -90,9 +91,9 @@ wearit()
 				carrying -= objwt[value];
 				encumber -= objcumber[value];
 				ourtime++;
-				printf("You are now wearing %s %s.\n",
-				    (objsht[value][n - 1] == 's' ? "the" : "a"),
-				    objsht[value]);
+				printf("You are now wearing %s%s.\n",
+				    (objsht[value][n - 1] == 's' ? "the " : 
+				    (AorAn(value))), objsht[value]);
 			} else
 				if (TestBit(wear, value))
 					printf("You are already wearing the %s.\n",
@@ -198,11 +199,12 @@ murder()
 				puts("Kill what?");
 				break;
 			default:
-				if (wordtype[n] != OBJECT)
+				if (wordtype[n] != OBJECT ||
+				    wordvalue[wordnumber] == EVERYTHING)
 					puts("You can't kill that!");
 				else
 					printf("You can't kill the %s!\n",
-				    	objsht[wordvalue[n]]);
+					    objsht[wordvalue[n]]);
 				break;
 			}
 		} else
@@ -263,7 +265,8 @@ murder()
 			break;
 
 		default:
-			if (wordtype[wordnumber] != OBJECT)
+			if (wordtype[wordnumber] != OBJECT ||
+			    wordvalue[wordnumber] == EVERYTHING)
 				puts("You can't kill that!");
 			else
 				printf("You can't kill the %s!\n",

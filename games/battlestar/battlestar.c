@@ -1,4 +1,4 @@
-/*	$OpenBSD: battlestar.c,v 1.8 2000/07/03 05:23:43 pjanzen Exp $	*/
+/*	$OpenBSD: battlestar.c,v 1.9 2000/09/17 21:28:30 pjanzen Exp $	*/
 /*	$NetBSD: battlestar.c,v 1.3 1995/03/21 15:06:47 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)battlestar.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: battlestar.c,v 1.8 2000/07/03 05:23:43 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: battlestar.c,v 1.9 2000/09/17 21:28:30 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -100,7 +100,7 @@ start:
 run:
 	next = getcom(mainbuf, sizeof mainbuf, ">-: ",
 	    "Please type in something.");
-	for (wordcount = 0; next && wordcount < 20; wordcount++)
+	for (wordcount = 0; next && wordcount < NWORD; wordcount++)
 		next = getword(next, words[wordcount], -1);
 	parse();
 	switch (cypher()) {

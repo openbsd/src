@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.7 2000/07/24 01:02:44 pjanzen Exp $	*/
+/*	$OpenBSD: extern.h,v 1.8 2000/09/17 21:28:32 pjanzen Exp $	*/
 /*	$NetBSD: extern.h,v 1.5 1995/04/24 12:22:18 cgd Exp $	*/
 
 /*
@@ -59,6 +59,8 @@
 #define TestBit(array, index)	(array[index/BITS] & (1 << (index % BITS)))
 #define SetBit(array, index)	(array[index/BITS] |= (1 << (index % BITS)))
 #define ClearBit(array, index)	(array[index/BITS] &= ~(1 << (index % BITS)))
+ /* "a " vs "an " before an object */
+#define AorAn(value)	(strchr("aeiou", objsht[value][0]) ? "an " : "a ")
 
  /* well known rooms */
 #define FINAL	275
@@ -259,8 +261,9 @@ extern const int     objwt[NUMOFOBJECTS];
 extern const int     objcumber[NUMOFOBJECTS];
 
  /* current input line */
+#define WORDLEN 15
 #define NWORD	20		/* words per line */
-extern char    words[NWORD][15];
+extern char    words[NWORD][WORDLEN];
 extern int     wordvalue[NWORD];
 extern int     wordtype[NWORD];
 extern int     wordcount, wordnumber;
@@ -336,8 +339,8 @@ void endfly __P((void));
 int fight __P((int, int));
 int follow __P((void));
 char *getcom __P((char *, int, const char *, const char *));
-char *getword __P((char *, char *, int));
 void getutmp __P((char *));
+char *getword __P((char *, char *, int));
 int give __P((void));
 int hash __P((const char *));
 void initialize __P((const char *));
@@ -350,8 +353,8 @@ void light __P((void));
 void live __P((void));
 struct wlist *lookup __P((const char *));
 void love __P((void));
-int moveplayer __P((int, int));
 void moveenemy __P((int));
+int moveplayer __P((int, int));
 void murder __P((void));
 void news __P((void));
 void newway __P((int));

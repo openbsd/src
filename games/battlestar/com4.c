@@ -1,4 +1,4 @@
-/*	$OpenBSD: com4.c,v 1.8 2000/07/03 05:23:44 pjanzen Exp $	*/
+/*	$OpenBSD: com4.c,v 1.9 2000/09/17 21:28:32 pjanzen Exp $	*/
 /*	$NetBSD: com4.c,v 1.3 1995/03/21 15:07:04 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com4.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: com4.c,v 1.8 2000/07/03 05:23:44 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: com4.c,v 1.9 2000/09/17 21:28:32 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -78,7 +78,9 @@ take(from)
 					win--;
 			} else
 				if (TestBit(inven, value))
-					printf("You're already holding%s%s.\n", (objsht[value][n-1] == 's' ? " " : " a "), objsht[value]);
+					printf("You're already holding %s%s.\n",
+					    (objsht[value][n-1] == 's' ? "" :
+					    (AorAn(value))), objsht[value]);
 				else if (!heavy)
 					printf("The %s %s too heavy.\n", objsht[value],(objsht[value][n-1] == 's' ? "are" : "is"));
 				else if (!bulky)
@@ -281,6 +283,19 @@ drop(name)
 		;
 	while (wordnumber <= wordcount && (wordtype[wordnumber] == OBJECT || wordtype[wordnumber] == NOUNS)) {
 		value = wordvalue[wordnumber];
+		if (value == BODY) {	/* special case */
+			wordtype[wordnumber] = OBJECT;
+			if (TestBit(inven, MAID) || TestBit(location[position].objects, MAID))
+				value = MAID;
+			if (TestBit(inven, DEADWOOD) || TestBit(location[position].objects, DEADWOOD))
+				value = DEADWOOD;
+			if (TestBit(inven, DEADGOD) || TestBit(location[position].objects, DEADGOD))
+				value = DEADGOD;
+			if (TestBit(inven, DEADTIME) || TestBit(location[position].objects, DEADTIME))
+				value = DEADTIME;
+			if (TestBit(inven, DEADNATIVE) || TestBit(location[position].objects, DEADNATIVE))
+				value = DEADNATIVE;
+		}
 		if (wordtype[wordnumber] == NOUNS) {
 			if (value == DOOR)
 				puts("You hurt your foot.");
@@ -314,8 +329,12 @@ drop(name)
 						else if (*name == 'G')
 							puts("Given anyway.");
 					}
-				} else
+				} else if (TestBit(location[position].objects, value))
 					puts("Kicked.");
+				else if (TestBit(wear, value))
+					puts("Not while it's being worn.");
+				else
+					puts("Not found.");
 			}
 		}
 		if (wordnumber < wordcount - 1 && wordvalue[++wordnumber] == AND)
@@ -357,10 +376,10 @@ eat()
 			return (firstnumber);
 
 		default:
-			printf("You can't eat%s%s!\n",
+			printf("You can't eat %s%s!\n",
 			    wordtype[wordnumber] == OBJECT &&
-			    objsht[value][strlen(objsht[value]) - 1] == 's' ? " " : " a ",
-			    words[wordnumber]);
+			    objsht[value][strlen(objsht[value]) - 1] == 's' ? "" :
+			    (AorAn(value)), objsht[value]);
 			return (firstnumber);
 
 		case PAPAYAS:
