@@ -1,4 +1,4 @@
-# $Id: disktab,v 1.11 1997/05/17 20:03:06 deraadt Exp $
+# $Id: disktab,v 1.12 1997/05/18 23:03:38 deraadt Exp $
 #
 #	@(#)disktab	5.5 (Berkeley) 2/27/91
 #
@@ -31,16 +31,17 @@ rdroot:\
 
 floppy|floppy3|3in|3.5in High Density Floppy:\
 	:ty=floppy:se#512:nt#2:rm#300:ns#18:nc#80:\
-	:pa#2880:oa#0:ba#4096:fa#512:ta=4.2BSD:ba#4096:fa#512: \
+	:pa#2880:oa#0:ba#4096:fa#512:ta=4.2BSD:\
 	:pb#2880:ob#0:\
 	:pc#2880:oc#0:
 
 # test if not having an 'a' works?
 fakecdrom|Fake image for Bootable CDROM:\
 	:ty=winchester:se#512:nt#2:rm#3600:ns#18:nc#80:\
-	:pa#2880:oa#0:ba#4096:fa#512:ta=4.2BSD:ba#4096:fa#512: \
-	:pb#2880:ob#0:\
-	:pc#2880:oc#0:
+	:pa#2880:oa#0:ba#8192:fa#1024:ta=4.2BSD:\
+	:pb#2880:ob#0:bb#8192:fb#1024:tb=4.2BSD:\
+	:pc#2880:oc#0:bc#8192:fc#1024:tc=4.2BSD:\
+	:pd#2880:od#0:bd#8192:fd#1024:td=4.2BSD:
 
 ASI-1.0GIBM:\
 	:ty#winchester:ns#80:nt#15:nc#1632:
