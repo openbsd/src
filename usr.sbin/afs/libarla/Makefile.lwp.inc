@@ -26,6 +26,7 @@ process.S:
 		hppa*)   PROCESS_S="process.hpux.S" ;; \
 		powerpc) PROCESS_S="process.ppc.S" ;; \
 		rs6000)  PROCESS_S="process.rios.S" ;; \
+                vax)     PROCESS_S="process.vax.S" ;; \
 		*)  echo "Unknown host_cpu, good luck" ;; \
 	esac; \
 	ln -s ${.CURDIR}/../src/lwp/$$PROCESS_S process.S
