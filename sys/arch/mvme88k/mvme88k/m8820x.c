@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.19 2003/09/26 22:27:26 miod Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.20 2003/10/05 19:29:15 miod Exp $	*/
 /*
  * Copyright (c) 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -947,8 +947,8 @@ m8820x_cmmu_init()
 		 * be cached, and we don't have those no-caching zones
 		 * set up yet....
 		 */
-		tmp = ((0x00000 << PG_BITS) | AREA_D_WT | AREA_D_G | AREA_D_CI)
-		    & ~AREA_D_TE;
+		tmp = ((0x00000 << PG_BITS) | AREA_D_WT | AREA_D_G)
+		    & ~(AREA_D_CI | AREA_D_TE);
 		m8820x_cmmu_set(CMMU_SAPR, tmp, MODE_VAL,
 			      cpu, INST_CMMU, 0, 0);
 
