@@ -1,9 +1,9 @@
-$Id: DESIGN-NOTES,v 1.1.1.1 1998/11/15 00:03:48 niklas Exp $
+$Id: DESIGN-NOTES,v 1.2 1998/11/15 00:40:00 niklas Exp $
 
 General coding conventions
 --------------------------
 GNU indentation, Max 80 characters per line, KNF comments, mem* instead of b*,
-BSD copyright (GPL alternative?), one header per module specifying the API.
+BSD copyright, one header per module specifying the API.
 Multiple inclusion protection like this:
 
 #ifndef _HEADERNAME_H_
@@ -15,7 +15,7 @@ Multiple inclusion protection like this:
 
 Start all files with RCS ID tags, i.e.
 
-/*	$Id: DESIGN-NOTES,v 1.1.1.1 1998/11/15 00:03:48 niklas Exp $	*/
+/*	$Id: DESIGN-NOTES,v 1.2 1998/11/15 00:40:00 niklas Exp $	*/
 
 GCC -Wall clean, ANSI prototypes.  System dependent facilities should be
 named sysdep_* and be placed in sysdep.c.  Primary target systems are OpenBSD
@@ -341,5 +341,4 @@ License to use
 
 Maybe we should skip clause 3?  Or redo it to mention the development was not
 "by" but rather "funded by"?  I think the comment about funding after the
-license might also mention the actual author(s).  Possibly the GPL should
-be added as a 2ary distribution license to use if wanted?
+license might also mention the actual author(s).
