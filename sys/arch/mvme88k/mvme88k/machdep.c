@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.35 2001/05/17 18:41:49 provos Exp $	*/
+/* $OpenBSD: machdep.c,v 1.36 2001/05/20 05:53:10 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -103,7 +103,7 @@
 #include <mvme88k/dev/sysconreg.h>
 #include <mvme88k/dev/pcctworeg.h>
 
-#include "assym.s"			/* EF_EPSR, etc. */
+#include "assym.h"			/* EF_EPSR, etc. */
 #include "ksyms.h"
 #if DDB
 #include <machine/db_machdep.h>

@@ -1,4 +1,4 @@
-/* $OpenBSD: locore_c_routines.c,v 1.10 2001/03/09 05:44:41 smurph Exp $	*/
+/* $OpenBSD: locore_c_routines.c,v 1.11 2001/05/20 05:53:10 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -30,6 +30,8 @@
  *****************************************************************RCS**/
 /* This file created by Omron Corporation, 1990. */
 
+#include "assym.h"
+
 #include <sys/types.h>
 #include <sys/systm.h>
 
@@ -37,7 +39,6 @@
 #include <machine/cpu_number.h>		/* cpu_number()		*/
 #include <machine/board.h>		/* m188 bit defines	*/
 #include <machine/m88100.h>		/* DMT_VALID		*/
-#include <assym.s>			/* EF_NREGS, etc.	*/
 #include <machine/asm.h>		/* END_OF_VECTOR_LIST, etc.	*/
 #include <machine/asm_macro.h>		/* enable/disable interrupts	*/
 #include <machine/locore.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.15 2001/04/29 19:00:02 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.16 2001/05/20 05:53:09 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -57,11 +57,7 @@
  * rights to redistribute these changes.
  */
 
-#ifndef ASSEMBLER
-#define	ASSEMBLER
-#endif /* ASSEMBLER */
-
-#include "assym.s"
+#include "assym.h"
 #include "ksyms.h"
 #include <machine/asm.h>
 #include <machine/trap.h>

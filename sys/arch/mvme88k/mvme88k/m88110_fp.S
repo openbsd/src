@@ -1,4 +1,4 @@
-/* $OpenBSD: m88110_fp.S,v 1.3 2001/03/09 05:44:42 smurph Exp $	*/
+/* $OpenBSD: m88110_fp.S,v 1.4 2001/05/20 05:53:10 miod Exp $	*/
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -48,11 +48,7 @@
  * 2) Floating Point Privilege Violation
  */
 
-#ifndef ASSEMBLER
-#define	ASSEMBLER
-#endif /* ASSEMBLER */
-
-#include "assym.s"
+#include "assym.h"
 #include <machine/trap.h>
 #include <machine/asm.h>
 
