@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash.c,v 1.17 2004/06/21 23:13:22 marc Exp $	*/
+/*	$OpenBSD: hash.c,v 1.18 2005/01/03 22:46:43 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)hash.c	8.9 (Berkeley) 6/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: hash.c,v 1.17 2004/06/21 23:13:22 marc Exp $";
+static const char rcsid[] = "$OpenBSD: hash.c,v 1.18 2005/01/03 22:46:43 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -349,8 +349,7 @@ init_htab(hashp, nelem)
 	HTAB *hashp;
 	int nelem;
 {
-	register int nbuckets, nsegs;
-	int l2;
+	int nbuckets, nsegs, l2;
 
 	/*
 	 * Divide number of elements by the fill factor and determine a
@@ -598,11 +597,11 @@ hash_access(hashp, action, key, val)
 	ACTION action;
 	DBT *key, *val;
 {
-	register BUFHEAD *rbufp;
+	BUFHEAD *rbufp;
 	BUFHEAD *bufp, *save_bufp;
-	register u_int16_t *bp;
-	register int n, ndx, off, size;
-	register char *kp;
+	u_int16_t *bp;
+	int n, ndx, off, size;
+	char *kp;
 	u_int16_t pageno;
 
 #ifdef HASH_STATISTICS
@@ -727,8 +726,8 @@ hash_seq(dbp, key, data, flag)
 	DBT *key, *data;
 	u_int32_t flag;
 {
-	register u_int32_t bucket;
-	register BUFHEAD *bufp;
+	u_int32_t bucket;
+	BUFHEAD *bufp;
 	HTAB *hashp;
 	u_int16_t *bp, ndx;
 
@@ -871,7 +870,7 @@ hash_realloc(p_ptr, oldsize, newsize)
 	SEGMENT **p_ptr;
 	int oldsize, newsize;
 {
-	register void *p;
+	void *p;
 
 	if ((p = malloc(newsize))) {
 		memmove(p, *p_ptr, oldsize);
@@ -907,8 +906,8 @@ alloc_segs(hashp, nsegs)
 	HTAB *hashp;
 	int nsegs;
 {
-	register int i;
-	register SEGMENT store;
+	int i;
+	SEGMENT store;
 
 	int save_errno;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash_buf.c,v 1.13 2004/10/01 14:01:18 otto Exp $	*/
+/*	$OpenBSD: hash_buf.c,v 1.14 2005/01/03 22:46:43 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)hash_buf.c	8.5 (Berkeley) 7/15/94";
 #else
-static const char rcsid[] = "$OpenBSD: hash_buf.c,v 1.13 2004/10/01 14:01:18 otto Exp $";
+static const char rcsid[] = "$OpenBSD: hash_buf.c,v 1.14 2005/01/03 22:46:43 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -111,9 +111,9 @@ __get_buf(hashp, addr, prev_bp, newpage)
 	BUFHEAD *prev_bp;
 	int newpage;	/* If prev_bp set, indicates a new overflow page. */
 {
-	register BUFHEAD *bp;
-	register u_int32_t is_disk_mask;
-	register int is_disk, segment_ndx;
+	BUFHEAD *bp;
+	u_int32_t is_disk_mask;
+	int is_disk, segment_ndx;
 	SEGMENT segp;
 
 	is_disk = 0;
@@ -165,9 +165,9 @@ newbuf(hashp, addr, prev_bp)
 	u_int32_t addr;
 	BUFHEAD *prev_bp;
 {
-	register BUFHEAD *bp;		/* The buffer we're going to use */
-	register BUFHEAD *xbp;		/* Temp pointer */
-	register BUFHEAD *next_xbp;
+	BUFHEAD *bp;		/* The buffer we're going to use */
+	BUFHEAD *xbp;		/* Temp pointer */
+	BUFHEAD *next_xbp;
 	SEGMENT segp;
 	int segment_ndx;
 	u_int16_t oaddr, *shortp;

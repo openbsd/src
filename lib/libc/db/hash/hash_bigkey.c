@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash_bigkey.c,v 1.13 2003/08/06 21:08:05 millert Exp $	*/
+/*	$OpenBSD: hash_bigkey.c,v 1.14 2005/01/03 22:46:43 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)hash_bigkey.c	8.3 (Berkeley) 5/31/94";
 #else
-static const char rcsid[] = "$OpenBSD: hash_bigkey.c,v 1.13 2003/08/06 21:08:05 millert Exp $";
+static const char rcsid[] = "$OpenBSD: hash_bigkey.c,v 1.14 2005/01/03 22:46:43 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -92,7 +92,7 @@ __big_insert(hashp, bufp, key, val)
 	BUFHEAD *bufp;
 	const DBT *key, *val;
 {
-	register u_int16_t *p;
+	u_int16_t *p;
 	int key_size, n, val_size;
 	u_int16_t space, move_bytes, off;
 	char *cp, *key_data, *val_data;
@@ -203,7 +203,7 @@ __big_delete(hashp, bufp)
 	HTAB *hashp;
 	BUFHEAD *bufp;
 {
-	register BUFHEAD *last_bfp, *rbufp;
+	BUFHEAD *last_bfp, *rbufp;
 	u_int16_t *bp, pageno;
 	int key_done, n;
 
@@ -285,8 +285,8 @@ __find_bigpair(hashp, bufp, ndx, key, size)
 	char *key;
 	int size;
 {
-	register u_int16_t *bp;
-	register char *p;
+	u_int16_t *bp;
+	char *p;
 	int ksize;
 	u_int16_t bytes;
 	char *kkey;
@@ -467,8 +467,8 @@ collect_data(hashp, bufp, len, set)
 	BUFHEAD *bufp;
 	int len, set;
 {
-	register u_int16_t *bp;
-	register char *p;
+	u_int16_t *bp;
+	char *p;
 	BUFHEAD *xbp;
 	u_int16_t save_addr;
 	int mylen, totlen;
@@ -591,12 +591,10 @@ __big_split(hashp, op, np, big_keyp, addr, obucket, ret)
 	u_int32_t   obucket;/* Old Bucket */
 	SPLIT_RETURN *ret;
 {
-	register BUFHEAD *tmpp;
-	register u_int16_t *tp;
-	BUFHEAD *bp;
+	BUFHEAD *bp, *tmpp;
 	DBT key, val;
 	u_int32_t change;
-	u_int16_t free_space, n, off;
+	u_int16_t free_space, n, off, *tp;
 
 	bp = big_keyp;
 
