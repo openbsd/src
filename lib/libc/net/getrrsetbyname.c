@@ -1,4 +1,4 @@
-/* $OpenBSD: getrrsetbyname.c,v 1.7 2003/03/07 07:34:14 itojun Exp $ */
+/* $OpenBSD: getrrsetbyname.c,v 1.8 2004/07/18 19:07:38 jakob Exp $ */
 
 /*
  * Copyright (c) 2001 Jakob Schlyter. All rights reserved.
@@ -100,7 +100,7 @@ getrrsetbyname(const char *hostname, unsigned int rdclass,
 	struct __res_state *_resp = _THREAD_PRIVATE(_res, _res, &_res);
 	int result;
 	struct rrsetinfo *rrset = NULL;
-	struct dns_response *response;
+	struct dns_response *response = NULL;
 	struct dns_rr *rr;
 	struct rdatainfo *rdata;
 	int length;
@@ -186,13 +186,11 @@ getrrsetbyname(const char *hostname, unsigned int rdclass,
 		rrset->rri_flags |= RRSET_VALIDATED;
 
 	/* copy name from answer section */
-	length = strlen(response->answer->name);
-	rrset->rri_name = malloc(length + 1);
+	rrset->rri_name = strdup(response->answer->name);
 	if (rrset->rri_name == NULL) {
 		result = ERRSET_NOMEMORY;
 		goto fail;
 	}
-	strlcpy(rrset->rri_name, response->answer->name, length + 1);
 
 	/* count answers */
 	rrset->rri_nrdatas = count_dns_rr(response->answer, rrset->rri_rdclass,
@@ -240,6 +238,7 @@ getrrsetbyname(const char *hostname, unsigned int rdclass,
 			memcpy(rdata->rdi_data, rr->rdata, rr->size);
 		}
 	}
+	free_dns_response(response);
 
 	*res = rrset;
 	return (ERRSET_SUCCESS);
@@ -247,6 +246,8 @@ getrrsetbyname(const char *hostname, unsigned int rdclass,
 fail:
 	if (rrset != NULL)
 		freerrset(rrset);
+	if (response != NULL)
+		free_dns_response(response);
 	return (result);
 }
 
