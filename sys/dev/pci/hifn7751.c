@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.81 2001/06/24 19:31:49 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.82 2001/06/25 19:49:14 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -358,9 +358,7 @@ hifn_init_pubrng(sc)
 
 	/* Enable public key engine, if available */
 	if (sc->sc_flags & HIFN_HAS_PUBLIC) {
-		WRITE_REG_1(sc, HIFN_1_PUB_STATUS,
-		    READ_REG_1(sc, HIFN_1_PUB_STATUS) | HIFN_PUBSTS_DONE);
-
+		WRITE_REG_1(sc, HIFN_1_PUB_IEN, HIFN_PUBIEN_DONE);
 		sc->sc_dmaier |= HIFN_DMAIER_PUBDONE;
 		WRITE_REG_1(sc, HIFN_1_DMA_IER, sc->sc_dmaier);
 	}
