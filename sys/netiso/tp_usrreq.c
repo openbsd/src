@@ -1,4 +1,4 @@
-/*	$OpenBSD: tp_usrreq.c,v 1.4 2001/05/16 12:54:07 ho Exp $	*/
+/*	$OpenBSD: tp_usrreq.c,v 1.5 2001/11/19 19:22:43 deraadt Exp $	*/
 /*	$NetBSD: tp_usrreq.c,v 1.9 1996/03/16 23:14:06 christos Exp $	*/
 
 /*-
@@ -270,7 +270,7 @@ restart:
  *  tp_usrreq(), PRU_SENDOOB
  * FUNCTION and ARGUMENTS:
  * 	Send what's in the mbuf chain (m) as an XPD TPDU.
- * 	The mbuf may not contain more then 16 bytes of data.
+ * 	The mbuf may not contain more than 16 bytes of data.
  * 	XPD TSDUs aren't segmented, so they translate into
  * 	exactly one XPD TPDU, with EOT bit set.
  * RETURN VALUE:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbus.c,v 1.9 2001/11/06 19:53:16 miod Exp $	*/
+/*	$OpenBSD: sbus.c,v 1.10 2001/11/19 19:22:43 deraadt Exp $	*/
 /*	$NetBSD: sbus.c,v 1.17 1997/06/01 22:10:39 pk Exp $ */
 
 /*
@@ -329,7 +329,7 @@ sbus_testdma(sc, ca)
         struct romaux *ra = &ca->ca_ra;
 
 	/*
-	 * XXX how to handle more then one sbus?
+	 * XXX how to handle more than one sbus?
 	 */
 
 	if (getpropint(0, "slave-only", 0) & (1 << ca->ca_slot)) {
