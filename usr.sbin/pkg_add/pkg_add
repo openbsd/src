@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.95 2004/11/07 12:19:20 espie Exp $
+# $OpenBSD: pkg_add,v 1.96 2004/11/09 09:32:17 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -155,9 +155,6 @@ sub pre_add($$)
 	if ($toreplace ne '1') {
 		$plist->{replacing} = $toreplace;
 		$avoid = $toreplace->pkgname();
-#		if (!OpenBSD::Update::verify_libs($plist, $state)) {
-#			return undef;
-#		}
 	}
 	# second handling of conflicts
 	my $l = OpenBSD::PkgCfl->make_conflict_list($plist);
