@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kill.1,v 1.23 2003/06/02 23:32:08 millert Exp $
+.\"	$OpenBSD: kill.1,v 1.24 2003/06/23 04:55:47 jmc Exp $
 .\"	$NetBSD: kill.1,v 1.8 1995/09/07 06:30:26 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -120,23 +120,19 @@ ALRM (alarm clock)
 TERM (software termination signal)
 .El
 .Pp
-A signal number of 0 (kill -0 pid) checks the validity of a
-certain pid, to see if it exists.
+A signal number of 0 (kill \-0 pid) checks the validity of a
+certain PID, to see if it exists.
 An exit code of 0 means that the specified process exists.
 .Pp
 The
 .Nm
-utility is built-in to
-.Xr csh 1 ;
-it allows job specifiers of the form
+utility exists as a built-in to most shells;
+they allow job specifiers of the form
 .Dq %...
-as arguments
+as arguments,
 so process IDs are not as often used as
 .Nm
 arguments.
-See
-.Xr csh 1
-for details.
 .Sh EXAMPLES
 .Li $ kill -9 1234
 .Pp
@@ -152,6 +148,7 @@ daemon the hangup signal, instructing it to re-read its configuration from
 .Sh SEE ALSO
 .Xr csh 1 ,
 .Xr ps 1 ,
+.Xr sh 1 ,
 .Xr kill 2 ,
 .Xr sigaction 2
 .Sh STANDARDS
