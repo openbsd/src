@@ -1,4 +1,4 @@
-#	$OpenBSD: DISKLESS,v 1.40 2002/04/15 06:23:07 deraadt Exp $
+#	$OpenBSD: DISKLESS,v 1.41 2002/05/09 21:37:51 marc Exp $
 #	$NetBSD: DISKLESS,v 1.26 1996/05/20 18:17:16 mrg Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
@@ -156,7 +156,6 @@ usb*	at ohci?
 
 uhub*	at usb?				# USB Hubs
 uhub*	at uhub? port ? configuration ?	# USB Hubs
-uhid*	at uhub? port ? configuration ?	# USB Generic HID devices
 umodem*	at uhub? port ? configuration ?	# USB Modems/Serial
 ucom*	at umodem?
 uvisor*	at uhub? port ? configuration ?	# Handspring Visor
@@ -165,12 +164,14 @@ uftdi*	at uhub? port ?
 ucom*	at uftdi? portno ?
 uaudio* at uhub? port ? configuration ?	# USB Audio
 ulpt*	at uhub? port ? configuration ? # USB Printers
-ukbd*	at uhub? port ? configuration ?	# USB Keyboards
-wskbd*	at ukbd? console ? mux 1
 umass*	at uhub? port ? configuration ? # USB Mass Storage devices
 scsibus* at umass?
-ums*	at uhub? port ? configuration ?	# USB Mice
+uhidev*	at uhub? port ? configuration ? interface ?
+ums*	at uhidev? reportid ?
 wsmouse* at ums? mux 0
+ukbd*	at uhidev? reportid ?
+wskbd*	at ukbd? console ? mux 1
+uhid*	at uhidev? reportid ?
 aue*	at uhub? port ?			# ADMtek AN986 Pegasus Ethernet
 cue*	at uhub? port ?			# CATC USB-EL1201A based Ethernet
 kue*	at uhub? port ?			# Kawasaki KL5KUSB101B based Ethernet
