@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.8 1997/02/16 10:55:08 deraadt Exp $	*/
+/*	$OpenBSD: inet.c,v 1.9 1997/02/21 02:46:49 deraadt Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: inet.c,v 1.8 1997/02/16 10:55:08 deraadt Exp $";
+static char *rcsid = "$OpenBSD: inet.c,v 1.9 1997/02/21 02:46:49 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -331,8 +331,8 @@ static	char *icmpnames[] = {
 	"#6",
 	"#7",
 	"echo",
-	"#9",
-	"#10",
+	"router advertisement",
+	"router solicitation",
 	"time exceeded",
 	"parameter problem",
 	"time stamp",
@@ -512,7 +512,7 @@ inetprint(in, port, proto, local)
 		sp = getservbyport((int)port, proto);
 	if (sp || port == 0)
 		sprintf(cp, "%.8s", sp ? sp->s_name : "*");
-	else if (local && (nam = getrpcportnam(ntohs((u_short)port))))
+	else if (local && !nflag && (nam = getrpcportnam(ntohs((u_short)port))))
 		sprintf(cp, "%d[%.8s]", ntohs((u_short)port), nam);
 	else
 		sprintf(cp, "%d", ntohs((u_short)port));
