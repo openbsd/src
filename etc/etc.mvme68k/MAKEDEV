@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.12 1996/11/11 20:34:59 kstailey Exp $
+#	$OpenBSD: MAKEDEV,v 1.13 1996/12/11 21:47:46 deraadt Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -33,7 +33,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	$Id: MAKEDEV,v 1.12 1996/11/11 20:34:59 kstailey Exp $
+#	$Id: MAKEDEV,v 1.13 1996/12/11 21:47:46 deraadt Exp $
 #
 # Device "make" file.  Valid arguments:
 #	all	makes all known devices, including local devices,
@@ -55,6 +55,7 @@
 # Terminal ports:
 #	ttya,b,c,d	standard serial port.
 #	tty0?		cl-cd serial ports
+#	ttyw?		willowglen vme cl-cd serial ports
 #
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
@@ -87,6 +88,7 @@ case $i in
 all)
 	sh MAKEDEV std fd st0 ttya ttyb ttyc ttyd
 	sh MAKEDEV tty00 tty01 tty02 tty03
+	sh MAKEDEV ttyw0
 	sh MAKEDEV sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9
 	sh MAKEDEV vnd0 vnd1 vnd2 vnd3 vnd4 pty0 
 	sh MAKEDEV vnd5 vnd6 cd0 bpf0 bpf1 bpf2 bpf3 ipl
@@ -236,7 +238,7 @@ cd*)
 	umask 77
 	;;
 
-tty0*|ttya|ttyb|ttyc|ttyd)
+ttyw*|tty0*|ttya|ttyb|ttyc|ttyd)
 	type=`expr $i : 'tty\(.\)'`
 	case $type in
 	0)
@@ -250,6 +252,20 @@ tty0*|ttya|ttyb|ttyc|ttyd)
 			;;
 		*)
 			echo bad unit for tty0 in: $i
+			;;
+		esac
+		;;
+	w)
+		unit=`expr $i : 'tty.\(.\)'`
+		case $unit in
+		0|1|2|3)
+			rm -f ttyw${unit} cuaw${unit}
+			mknod ttyw${unit} c 30 ${unit}
+			mknod cuaw${unit} c 30 `expr 128 + ${unit}`
+			chown uucp.wheel ttyw${unit} cuaw${unit}
+			;;
+		*)
+			echo bad unit for ttyw in: $i
 			;;
 		esac
 		;;
