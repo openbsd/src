@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newfs.8,v 1.30 2003/03/10 19:39:36 tedu Exp $
+.\"	$OpenBSD: newfs.8,v 1.31 2003/03/10 19:52:05 tedu Exp $
 .\"	$NetBSD: newfs.8,v 1.12 1995/03/18 14:58:41 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
@@ -42,7 +42,6 @@
 .Nd construct a new file system
 .Sh SYNOPSIS
 .Nm newfs
-.Bk -words
 .Op Fl NO
 .Op Fl S Ar sector-size
 .Op Fl a Ar maxcontig
@@ -52,7 +51,7 @@
 .Op Fl e Ar maxbpg
 .Op Fl f Ar frag-size
 .Op Fl g Ar avgfilesize
-.Op Fl h Ar avgfpdir
+.Op Fl h Ar files
 .Op Fl i Ar bytes
 .Op Fl k Ar skew
 .Op Fl l Ar interleave
@@ -68,10 +67,8 @@
 .Op Fl x Ar sectors
 .Op Fl z Ar tracks
 .Ar special
-.Ek
 .Pp
 .Nm mount_mfs
-.Bk -words
 .Op Fl a Ar maxcontig
 .Op Fl b Ar block-size
 .Op Fl c Ar cylinders
@@ -83,7 +80,6 @@
 .Op Fl o Ar options
 .Op Fl s Ar size
 .Ar special node
-.Ek
 .Sh DESCRIPTION
 Before running
 .Nm
@@ -139,7 +135,7 @@ now have the functionality of
 built-in so it is not necessary to run
 .Xr fsirand 8
 manually unless you wish to re-randomize the
-filesystem (or list the inode generation numbers).
+file system (or list the inode generation numbers).
 .Pp
 The following options define the general layout policies:
 .Bl -tag -width Fl
@@ -149,8 +145,8 @@ without really creating the file system.
 .It Fl O
 Creates a
 .Bx 4.3
-format filesystem.
-This options is primarily used to build root filesystems
+format file system.
+This option is primarily used to build root file systems
 that can be understood by older boot ROMs.
 .It Fl q
 Operate in quiet mode.
@@ -264,7 +260,7 @@ The speed of the disk in revolutions per minute.
 The number of tracks/cylinder available for data allocation by the file
 system.
 .It Fl t Ar fstype
-Set the filesystem type of which filesystem you wish to create.
+Set the file system type of which file system you wish to create.
 .Nm
 will be smart enough to run the alternate newfs_XXX program instead.
 .It Fl u Ar sectors/track
