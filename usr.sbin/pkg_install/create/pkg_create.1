@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.25 2003/03/07 06:30:38 david Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.26 2003/06/26 18:00:40 jmc Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -32,6 +32,7 @@
 .Nd a utility for creating software package distributions
 .Sh SYNOPSIS
 .Nm pkg_create
+.Bk -words
 .Op Fl Ohv
 .Op Fl P Ar dpkgs
 .Op Fl C Ar cpkgs
@@ -48,6 +49,7 @@
 .Fl d Ar description
 .Fl f Ar packlist
 .Ar pkg-name
+.Ek
 .Sh DESCRIPTION
 The
 .Nm
@@ -272,15 +274,15 @@ is set to
 and the last extracted file was
 .Pa bin/emacs .
 .Bl -tag -width indent
-.It Cm "%F"
+.It Cm "\&%F"
 Expands to the last filename extracted (as specified); in the example case,
 .Pa bin/emacs .
-.It Cm "%D"
+.It Cm "\&%D"
 Expands to the current directory prefix, as set with
 .Cm @cwd ;
 in the example case
 .Pa /usr/local .
-.It Cm "%B"
+.It Cm "\&%B"
 Expands to the
 .Dq basename
 of the fully qualified filename, that
@@ -288,12 +290,12 @@ is the current directory prefix, plus the last filespec, minus
 the trailing filename.
 In the example case, that would be
 .Pa /usr/local/bin .
-.It Cm "%f"
+.It Cm "\&%f"
 Expands to the
 .Dq filename
 part of the fully qualified name, or
 the converse of
-.Cm %B ;
+.Cm \&%B ;
 in the example case,
 .Pa emacs .
 .El
@@ -302,7 +304,7 @@ Execute
 .Ar command
 as part of the deinstallation process.
 Expansion of special
-.Cm %
+.Cm \&%
 sequences is the same as for
 .Cm @exec .
 This command is not executed during the package add, as
