@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.221 2003/03/04 23:37:15 jakob Exp $
+#	$OpenBSD: rc,v 1.222 2003/03/10 01:05:28 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -500,7 +500,7 @@ fi
 
 if [ "X${spamd_flags}" != X"NO" ]; then
 	echo -n ' spamd';		/usr/libexec/spamd ${spamd_flags}
-	/usr/libexec/spamd-setup ${spamd_setup}
+	/usr/libexec/spamd-setup
 fi
 
 if [ "X${httpd_flags}" != X"NO"  ]; then
