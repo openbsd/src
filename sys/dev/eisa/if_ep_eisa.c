@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_eisa.c,v 1.11 1998/09/19 10:08:04 maja Exp $	*/
+/*	$OpenBSD: if_ep_eisa.c,v 1.12 2000/03/13 20:39:49 maja Exp $	*/
 /*	$NetBSD: if_ep_eisa.c,v 1.13 1997/04/18 00:50:33 cgd Exp $	*/
 
 /*
@@ -95,9 +95,12 @@ ep_eisa_match(parent, match, aux)
 	struct eisa_attach_args *ea = aux;
 
 	/* must match one of our known ID strings */
-	if (strcmp(ea->ea_idstring, "TCM5091") &&
+	if (strcmp(ea->ea_idstring, "TCM5090") &&
+	    strcmp(ea->ea_idstring, "TCM5091") &&
 	    strcmp(ea->ea_idstring, "TCM5092") &&
 	    strcmp(ea->ea_idstring, "TCM5093") &&
+	    strcmp(ea->ea_idstring, "TCM5094") &&
+	    strcmp(ea->ea_idstring, "TCM5095") &&
 	    strcmp(ea->ea_idstring, "TCM5920") &&
 	    strcmp(ea->ea_idstring, "TCM5970") &&
 	    strcmp(ea->ea_idstring, "TCM5971") &&
@@ -147,12 +150,18 @@ ep_eisa_attach(parent, self, aux)
 	irq = bus_space_read_2(iot, ioh, EP_W0_RESOURCE_CFG) >> 12;
 
 	chipset = EP_CHIPSET_3C509;	/* assume dumb chipset */
-	if (strcmp(ea->ea_idstring, "TCM5091") == 0)
+	if (strcmp(ea->ea_idstring, "TCM5090") == 0)
+		model = EISA_PRODUCT_TCM5090;
+	else if (strcmp(ea->ea_idstring, "TCM5091") == 0)
 		model = EISA_PRODUCT_TCM5091;
 	else if (strcmp(ea->ea_idstring, "TCM5092") == 0)
 		model = EISA_PRODUCT_TCM5092;
 	else if (strcmp(ea->ea_idstring, "TCM5093") == 0)
 		model = EISA_PRODUCT_TCM5093;
+	else if (strcmp(ea->ea_idstring, "TCM5094") == 0)
+		model = EISA_PRODUCT_TCM5094;
+	else if (strcmp(ea->ea_idstring, "TCM5095") == 0)
+		model = EISA_PRODUCT_TCM5095;
 	else if (strcmp(ea->ea_idstring, "TCM5920") == 0) {
 		model = EISA_PRODUCT_TCM5920;
 		chipset = EP_CHIPSET_VORTEX;
