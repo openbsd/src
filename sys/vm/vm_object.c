@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_object.c,v 1.11 1996/08/19 10:38:01 niklas Exp $	*/
+/*	$OpenBSD: vm_object.c,v 1.12 1996/11/06 23:24:40 niklas Exp $	*/
 /*	$NetBSD: vm_object.c,v 1.34 1996/02/28 22:35:35 gwr Exp $	*/
 
 /* 
@@ -1299,7 +1299,12 @@ vm_object_collapse_aux(object)
 				/*
 				 *	Second, start paging it in.  If this
 				 *	fails, what can we do but punt?
+				 *	Even though the shadowing object
+				 *	isn't exactly paging we say so in
+				 *	order to not get simultaneous
+				 *	cascaded collapses.
 				 */
+				object->paging_in_progress++;
 				backing_object->paging_in_progress++;
 				if (vm_pager_get_pages(backing_object->pager,
 				    &backing_page, 1, TRUE) != VM_PAGER_OK) {
@@ -1310,8 +1315,30 @@ vm_object_collapse_aux(object)
 					return KERN_FAILURE;
 				}
 				cnt.v_pgpgin++;
-				if (--backing_object->paging_in_progress == 0)
-					thread_wakeup(backing_object);
+
+				/*
+				 *	A fault might have issued other
+				 *	pagein operations.  We must wait for
+				 *	them to complete, then we get to
+				 *	wakeup potential other waiters as
+				 *	well.
+				 */
+				while (backing_object->paging_in_progress != 1
+				    || object->paging_in_progress != 1) {
+					if (object->paging_in_progress != 1) {
+						vm_object_sleep(object, object,
+						    FALSE);
+						vm_object_lock(object);
+						continue;
+					}
+					vm_object_sleep(backing_object,
+					    backing_object, FALSE);
+					vm_object_lock(backing_object);
+				}
+				backing_object->paging_in_progress--;
+				object->paging_in_progress--;
+				thread_wakeup(backing_object);
+				thread_wakeup(object);
 
 				/*
 				 *	Third, relookup in case pager changed
