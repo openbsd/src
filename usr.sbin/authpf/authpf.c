@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.26 2002/11/19 02:18:50 deraadt Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.27 2002/11/22 18:06:48 beck Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -113,6 +113,11 @@ main(int argc, char *argv[])
 	config = fopen(PATH_CONFFILE, "r");
 	if (config == NULL)
 		exit(1);
+
+	if ((cp = getenv("SSH_TTY")) == NULL) {
+		syslog(LOG_ERR, "Non-interactive session connection for authpf");
+		exit(1);
+	}
 
 	if ((cp = getenv("SSH_CLIENT")) == NULL) {
 		syslog(LOG_ERR, "Can't determine connection source");
