@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: ipcp.c,v 1.2 1998/08/31 08:16:39 brian Exp $
+ * $Id: ipcp.c,v 1.3 1998/09/04 18:27:46 brian Exp $
  *
  *	TODO:
  *		o More RFC1772 backward compatibility
@@ -568,16 +568,18 @@ IpcpSendConfigReq(struct fsm *fp)
   o = (struct lcp_opt *)buff;
 
   if ((p && !physical_IsSync(p)) || !REJECTED(ipcp, TY_IPADDR)) {
-    *(u_int32_t *)o->data = ipcp->my_ip.s_addr;
+    memcpy(o->data, &ipcp->my_ip.s_addr, 4);
     INC_LCP_OPT(TY_IPADDR, 6, o);
   }
 
   if (ipcp->my_compproto && !REJECTED(ipcp, TY_COMPPROTO)) {
     if (ipcp->heis1172) {
-      *(u_int32_t *)o->data = htons(PROTO_VJCOMP);
+      u_int16_t proto = PROTO_VJCOMP;
+
+      ua_htons(&proto, o->data);
       INC_LCP_OPT(TY_COMPPROTO, 4, o);
     } else {
-      *(u_int32_t *)o->data = htonl(ipcp->my_compproto);
+      ua_htonl(&ipcp->my_compproto, o->data);
       INC_LCP_OPT(TY_COMPPROTO, 6, o);
     }
   }
@@ -587,9 +589,9 @@ IpcpSendConfigReq(struct fsm *fp)
       !REJECTED(ipcp, TY_SECONDARY_DNS - TY_ADJUST_NS)) {
     struct in_addr dns[2];
     getdns(ipcp, dns);
-    *(u_int32_t *)o->data = dns[0].s_addr;
+    memcpy(o->data, &dns[0].s_addr, 4);
     INC_LCP_OPT(TY_PRIMARY_DNS, 6, o);
-    *(u_int32_t *)o->data = dns[1].s_addr;
+    memcpy(o->data, &dns[1].s_addr, 4);
     INC_LCP_OPT(TY_SECONDARY_DNS, 6, o);
   }
 
@@ -795,7 +797,7 @@ IpcpDecodeConfig(struct fsm *fp, u_char * cp, int plen, int mode_type,
 
     switch (type) {
     case TY_IPADDR:		/* RFC1332 */
-      ipaddr.s_addr = *(u_int32_t *)(cp + 2);
+      memcpy(&ipaddr.s_addr, cp + 2, 4);
       log_Printf(LogIPCP, "%s %s\n", tbuff, inet_ntoa(ipaddr));
 
       switch (mode_type) {
@@ -868,7 +870,7 @@ IpcpDecodeConfig(struct fsm *fp, u_char * cp, int plen, int mode_type,
       }
       break;
     case TY_COMPPROTO:
-      compproto = htonl(*(u_int32_t *)(cp + 2));
+      memcpy(&compproto, cp + 2, 4);
       log_Printf(LogIPCP, "%s %s\n", tbuff, vj2asc(compproto));
 
       switch (mode_type) {
@@ -928,8 +930,8 @@ IpcpDecodeConfig(struct fsm *fp, u_char * cp, int plen, int mode_type,
       }
       break;
     case TY_IPADDRS:		/* RFC1172 */
-      ipaddr.s_addr = *(u_int32_t *)(cp + 2);
-      dstipaddr.s_addr = *(u_int32_t *)(cp + 6);
+      memcpy(&ipaddr.s_addr, cp + 2, 4);
+      memcpy(&dstipaddr.s_addr, cp + 6, 4);
       snprintf(tbuff2, sizeof tbuff2, "%s %s,", tbuff, inet_ntoa(ipaddr));
       log_Printf(LogIPCP, "%s %s\n", tbuff2, inet_ntoa(dstipaddr));
 
@@ -955,7 +957,7 @@ IpcpDecodeConfig(struct fsm *fp, u_char * cp, int plen, int mode_type,
 
     case TY_PRIMARY_DNS:	/* DNS negotiation (rfc1877) */
     case TY_SECONDARY_DNS:
-      ipaddr.s_addr = *(u_int32_t *)(cp + 2);
+      memcpy(&ipaddr.s_addr, cp + 2, 4);
       log_Printf(LogIPCP, "%s %s\n", tbuff, inet_ntoa(ipaddr));
 
       switch (mode_type) {
@@ -995,8 +997,7 @@ IpcpDecodeConfig(struct fsm *fp, u_char * cp, int plen, int mode_type,
       case MODE_NAK:		/* what does this mean?? */
         if (IsEnabled(ipcp->cfg.ns.dns_neg)) {
           gotdnsnak = 1;
-          dnsnak[type == TY_PRIMARY_DNS ? 0 : 1].s_addr =
-            *(u_int32_t *)(cp + 2);
+          memcpy(&dnsnak[type == TY_PRIMARY_DNS ? 0 : 1].s_addr, cp + 2, 4);
 	}
 	break;
       case MODE_REJ:		/* Can't do much, stop asking */
@@ -1007,7 +1008,7 @@ IpcpDecodeConfig(struct fsm *fp, u_char * cp, int plen, int mode_type,
 
     case TY_PRIMARY_NBNS:	/* M$ NetBIOS nameserver hack (rfc1877) */
     case TY_SECONDARY_NBNS:
-      ipaddr.s_addr = *(u_int32_t *)(cp + 2);
+      memcpy(&ipaddr.s_addr, cp + 2, 4);
       log_Printf(LogIPCP, "%s %s\n", tbuff, inet_ntoa(ipaddr));
 
       switch (mode_type) {
