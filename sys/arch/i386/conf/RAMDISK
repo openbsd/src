@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.34 1998/09/11 11:26:24 fgsch Exp $
+#	$OpenBSD: RAMDISK,v 1.35 1998/09/15 21:55:14 deraadt Exp $
 #	from: OpenBSD: INST,v 1.19 1996/11/05 03:49:13 tholo Exp 
 #
 #	Install kernels no longer support X.
@@ -189,7 +189,8 @@ xl*	at pci? dev ? function ?		# 3C900/3C905 ethernet cards
 #qsphy*	at mii? phy ?				# Quality Semi QS6612 PHYs
 
 pseudo-device	loop	1		# network loopback
-pseudo-device	sl	1		# CSLIP
-pseudo-device	ppp	1		# PPP
+#pseudo-device	sl	1		# CSLIP
+#pseudo-device	ppp	1		# PPP
 #pseudo-device	pty	16		# pseudo-terminals
+pseudo-device	bpfilter 1		# packet filter
 pseudo-device	rd	1		# ramdisk
