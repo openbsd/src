@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syslog.3,v 1.14 2001/11/05 09:48:30 jjbg Exp $
+.\"	$OpenBSD: syslog.3,v 1.15 2001/11/08 11:12:09 mpech Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -70,7 +70,6 @@
 .Ft int
 .Fn setlogmask_r "int maskpri" "struct syslog_data *data"
 .Bd -literal
-
 struct syslog_data {
         int     log_file;
         int     connected;
@@ -82,6 +81,7 @@ struct syslog_data {
 };
 
 #define SYSLOG_DATA_INIT {-1, 0, 0, 0, NULL, LOG_USER, 0xff}
+.Ed
 .Sh DESCRIPTION
 The
 .Fn syslog
@@ -107,12 +107,15 @@ The
 .Fn syslog_r 
 function is a reentrant version of the
 .Xr syslog 3
-function. It takes a pointer to a 
+function.
+It takes a pointer to a 
 .Fa syslog_data
 structure which is used to store
-information. This parameter must be initialized before
+information.
+This parameter must be initialized before
 .Fn syslog_r
-is called. The SYSLOG_DATA_INIT constant is used for this purpose. 
+is called.
+The SYSLOG_DATA_INIT constant is used for this purpose. 
 The 
 .Fa syslog_data
 structure is composed of the following elements:
@@ -182,7 +185,8 @@ is used the same way than
 .Fn vsyslog
 except than it takes an additional pointer on a
 .Fa syslog_data
-structure. It is a reentrant version of the 
+structure.
+It is a reentrant version of the 
 .Fn vsyslog 
 function described above.
 .Pp 
@@ -206,12 +210,12 @@ one or more of the following values:
 If
 .Fn syslog
 cannot pass the message to
-.Xr syslogd
+.Xr syslogd 8
 it will attempt to write the message to the console
 .Pq Pa /dev/console .
 .It Dv LOG_NDELAY
 Open the connection to
-.Xr syslogd
+.Xr syslogd 8
 immediately.
 Normally the open is delayed until the first message is logged.
 Useful for programs that need to manage the order in which file
@@ -284,9 +288,11 @@ The
 .Fn openlog_r
 function is the reentrant version of the 
 .Fn openlog 
-function. It takes an additional pointer on a 
+function.
+It takes an additional pointer on a 
 .Fa syslog_data
-structure. This function must be used in conjunction with the other
+structure.
+This function must be used in conjunction with the other
 reentrant functions. 
 .Pp
 The
@@ -396,6 +402,6 @@ reentrancy is required (for instance in a signal handler).
 .Fn syslog
 being not reentrant, only 
 .Fn syslog_r 
-should be used here. For more information about reentrancy and signal
-handlers, see 
+should be used here.
+For more information about reentrancy and signal handlers, see 
 .Xr signal 3 .
