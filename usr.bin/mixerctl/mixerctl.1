@@ -1,5 +1,6 @@
-.\" $OpenBSD: mixerctl.1,v 1.4 1998/04/30 13:40:00 provos Exp $
+.\" $OpenBSD: mixerctl.1,v 1.5 1998/05/02 22:28:06 millert Exp $
 .\" $NetBSD: mixerctl.1,v 1.6 1998/04/27 16:55:23 augustss Exp $
+.\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -72,6 +73,13 @@ If the
 flag is specified
 .Nm
 attempts to set the specified variables to the given values.
+.Pp
+Values may be specified in either absolute or relative forms.
+The relative form is indicated by a prefix of
+.Dq +
+or
+.Dq -
+to denote an increase or decrease respectively.
 .Pp
 The
 .Fl f

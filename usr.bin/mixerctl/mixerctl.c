@@ -1,4 +1,4 @@
-/*	$OpenBSD: mixerctl.c,v 1.3 1998/04/30 13:40:01 provos Exp $	*/
+/*	$OpenBSD: mixerctl.c,v 1.4 1998/05/02 22:28:07 millert Exp $	*/
 /*	$NetBSD: mixerctl.c,v 1.11 1998/04/27 16:55:23 augustss Exp $	*/
 
 /*
@@ -169,7 +169,7 @@ rdfield(p, q)
 			s = strchr(q, ',');
 			if (s)
 				*s++ = 0;
-			for(i = 0; i < p->infp->un.s.num_mem; i++)
+			for (i = 0; i < p->infp->un.s.num_mem; i++)
 				if (strcmp(p->infp->un.s.member[i].label.name, q) == 0)
 					break;
 			if (i < p->infp->un.s.num_mem) {
@@ -184,17 +184,52 @@ rdfield(p, q)
 	case AUDIO_MIXER_VALUE:
 		if (m->un.value.num_channels == 1) {
 			if (sscanf(q, "%d", &v) == 1) {
-				m->un.value.level[0] = v;
+				switch (*q) {
+				case '+':
+				case '-':
+					m->un.value.level[0] += v;
+					break;
+				default:
+					m->un.value.level[0] = v;
+					break;
+				}
 			} else {
 				warnx("Bad number %s", q);
 				return 0;
 			}
 		} else {
 			if (sscanf(q, "%d,%d", &v0, &v1) == 2) {
-				m->un.value.level[0] = v0;
-				m->un.value.level[1] = v1;
+				switch (*q) {
+				case '+':
+				case '-':
+					m->un.value.level[0] += v0;
+					break;
+				default:
+					m->un.value.level[0] = v0;
+					break;
+				}
+				s = strchr(q, ',') + 1;
+				switch (*s) {
+				case '+':
+				case '-':
+					m->un.value.level[1] += v1;
+					break;
+				default:
+					m->un.value.level[1] = v1;
+					break;
+				}
 			} else if (sscanf(q, "%d", &v) == 1) {
-				m->un.value.level[0] = m->un.value.level[1] = v;
+				switch (*q) {
+				case '+':
+				case '-':
+					m->un.value.level[0] += v;
+					m->un.value.level[1] += v;
+					break;
+				default:
+					m->un.value.level[0] =
+					    m->un.value.level[1] = v;
+					break;
+				}
 			} else {
 				warnx("Bad numbers %s", q);
 				return 0;
