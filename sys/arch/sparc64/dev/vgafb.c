@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.4 2002/02/05 18:34:39 jason Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.5 2002/02/08 16:46:26 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -348,7 +348,7 @@ vgafb_putcmap(sc, cm)
 	b = &sc->sc_cmap_blue[index];
 
 	for (i = 0; i < count; i++) {
-		vgafb_setcolor(sc, index, *r, *g, *b);
+		OF_call_method("color!", sc->sc_ofhandle, 4, 0, *r, *g, *b, index);
 		r++, g++, b++, index++;
 	}
 	return (0);
@@ -360,6 +360,9 @@ vgafb_setcolor(sc, index, r, g, b)
 	unsigned int index;
 	u_int8_t r, g, b;
 {
+	sc->sc_cmap_red[index] = r;
+	sc->sc_cmap_green[index] = g;
+	sc->sc_cmap_blue[index] = b;
 	OF_call_method("color!", sc->sc_ofhandle, 4, 0, r, g, b, index);
 }
 
