@@ -1,4 +1,4 @@
-/*	$OpenBSD: dp8390.c,v 1.6 2000/04/19 21:35:10 fgsch Exp $	*/
+/*	$OpenBSD: dp8390.c,v 1.7 2000/04/19 21:40:45 fgsch Exp $	*/
 /*	$NetBSD: dp8390.c,v 1.13 1998/07/05 06:49:11 jonathan Exp $	*/
 
 /*
@@ -29,20 +29,13 @@
 #include <net/if_dl.h>
 #include <net/if_types.h>
 #include <net/if_media.h>
-#ifdef __NetBSD__
-#include <net/if_ether.h>
-#endif
 
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#ifdef __NetBSD__
-#include <netinet/if_inarp.h>
-#else
 #include <netinet/if_ether.h>
-#endif
 #endif
 
 #ifdef NS
@@ -95,11 +88,7 @@ dp8390_config(sc, media, nmedia, defmedia)
 	struct dp8390_softc *sc;
 	int *media, nmedia, defmedia;
 {
-#ifdef __NetBSD__
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
-#else
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-#endif
 	int i, rv;
 
 	rv = 1;
@@ -153,27 +142,15 @@ dp8390_config(sc, media, nmedia, defmedia)
 
 	/* Attach the interface. */
 	if_attach(ifp);
-#ifdef __NetBSD__
-	ether_ifattach(ifp, sc->sc_enaddr);
-#else
 	ether_ifattach(ifp);
-#endif
 #if NBPFILTER > 0
-#ifdef __NetBSD__
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#else
 	bpfattach(&sc->sc_arpcom.ac_if.if_bpf, ifp, DLT_EN10MB,
 		sizeof(struct ether_header));
-#endif
 #endif
 
 	/* Print additional info when attached. */
 	printf("%s: address %s\n", sc->sc_dev.dv_xname,
-#ifdef __NetBSD__
-	    ether_sprintf(sc->sc_enaddr));
-#else
 	    ether_sprintf(sc->sc_arpcom.ac_enaddr));
-#endif
 
 	rv = 0;
 out:
@@ -266,11 +243,7 @@ dp8390_watchdog(ifp)
 	struct dp8390_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
-#ifdef __NetBSD__
-	++sc->sc_ec.ec_if.if_oerrors;
-#else
 	++sc->sc_arpcom.ac_if.if_oerrors;
-#endif
 
 	dp8390_reset(sc);
 }
@@ -284,11 +257,7 @@ dp8390_init(sc)
 {
 	bus_space_tag_t regt = sc->sc_regt;
 	bus_space_handle_t regh = sc->sc_regh;
-#ifdef __NetBSD__
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
-#else
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-#endif
 	u_int8_t mcaf[8];
 	int i;
 
@@ -360,20 +329,11 @@ dp8390_init(sc)
 
 	/* Copy out our station address. */
 	for (i = 0; i < ETHER_ADDR_LEN; ++i)
-#ifdef __NetBSD__
-		NIC_PUT(regt, regh, ED_P1_PAR0 + i,
-		    LLADDR(ifp->if_sadl)[i]);
-#else
 		NIC_PUT(regt, regh, ED_P1_PAR0 + i,
 		    sc->sc_arpcom.ac_enaddr[i]);
-#endif
 
 	/* Set multicast filter on chip. */
-#ifdef __NetBSD__
-	dp8390_getmcaf(&sc->sc_ec, mcaf);
-#else
 	dp8390_getmcaf(&sc->sc_arpcom, mcaf);
-#endif
 	for (i = 0; i < 8; i++)
 		NIC_PUT(regt, regh, ED_P1_MAR0 + i, mcaf[i]);
 
@@ -427,11 +387,7 @@ dp8390_xmit(sc)
 {
 	bus_space_tag_t regt = sc->sc_regt;
 	bus_space_handle_t regh = sc->sc_regh;
-#ifdef __NetBSD__
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
-#else
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-#endif
 	u_short len;
 
 #ifdef DIAGNOSTIC
@@ -626,21 +582,13 @@ loop:
 			dp8390_read(sc,
 			    packet_ptr + sizeof(struct dp8390_ring),
 			    len - sizeof(struct dp8390_ring));
-#ifdef __NetBSD__
-			++sc->sc_ec.ec_if.if_ipackets;
-#else
 			++sc->sc_arpcom.ac_if.if_ipackets;
-#endif
 		} else {
 			/* Really BAD.  The ring pointers are corrupted. */
 			log(LOG_ERR, "%s: NIC memory corrupt - "
 			    "invalid packet length %d\n",
 			    sc->sc_dev.dv_xname, len);
-#ifdef __NetBSD__
-			++sc->sc_ec.ec_if.if_ierrors;
-#else
 			++sc->sc_arpcom.ac_if.if_ierrors;
-#endif
 			dp8390_reset(sc);
 			return;
 		}
@@ -669,11 +617,7 @@ dp8390_intr(arg)
 	struct dp8390_softc *sc = (struct dp8390_softc *)arg;
 	bus_space_tag_t regt = sc->sc_regt;
 	bus_space_handle_t regh = sc->sc_regh;
-#ifdef __NetBSD__
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
-#else
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-#endif
 	u_char isr;
 
 	if (sc->sc_enabled == 0)
@@ -878,11 +822,7 @@ dp8390_ioctl(ifp, cmd, data)
 #ifdef INET
 		case AF_INET:
 			dp8390_init(sc);
-#ifdef __NetBSD__
-			arp_ifinit(ifp, ifa);
-#else
 			arp_ifinit(&sc->sc_arpcom, ifa);
-#endif
 			break;
 #endif
 #ifdef NS
@@ -946,13 +886,8 @@ dp8390_ioctl(ifp, cmd, data)
 
 		/* Update our multicast list. */
 		error = (cmd == SIOCADDMULTI) ?
-#ifdef __NetBSD__
-		    ether_addmulti(ifr, &sc->sc_ec) :
-		    ether_delmulti(ifr, &sc->sc_ec);
-#else
 		    ether_addmulti(ifr, &sc->sc_arpcom) :
 		    ether_delmulti(ifr, &sc->sc_arpcom);
-#endif
 
 		if (error == ENETRESET) {
 			/*
@@ -989,11 +924,7 @@ dp8390_read(sc, buf, len)
 	int buf;
 	u_short len;
 {
-#ifdef __NetBSD__
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
-#else
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-#endif
 	struct mbuf *m;
 	struct ether_header *eh;
 
@@ -1034,18 +965,10 @@ dp8390_read(sc, buf, len)
  */
 void
 dp8390_getmcaf(ec, af)
-#ifdef __NetBSD__
-	struct ethercom *ec;
-#else
 	struct arpcom *ec;
-#endif
 	u_int8_t *af;
 {
-#ifdef __NetBSD__
-	struct ifnet *ifp = &ec->ec_if;
-#else
 	struct ifnet *ifp = &ec->ac_if;
-#endif
 	struct ether_multi *enm;
 	u_int8_t *cp, c;
 	u_int32_t crc;
@@ -1123,11 +1046,7 @@ dp8390_get(sc, src, total_len)
 	int src;
 	u_short total_len;
 {
-#ifdef __NetBSD__
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
-#else
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-#endif
 	struct mbuf *top, **mp, *m;
 	u_short len;
 
