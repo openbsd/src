@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.80 2004/12/15 14:13:06 pat Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.81 2004/12/15 18:40:09 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -711,7 +711,7 @@ carp_clone_create(ifc, unit)
 	ifp->if_softc = sc;
 	snprintf(ifp->if_xname, sizeof ifp->if_xname, "%s%d", ifc->ifc_name,
 	    unit);
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST | IFF_NOARP;
 	ifp->if_ioctl = carp_ioctl;
 	ifp->if_output = ether_output;
 	ifp->if_start = carp_start;
