@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xlreg.h,v 1.13 1999/09/13 20:11:14 jason Exp $	*/
+/*	$OpenBSD: if_xlreg.h,v 1.14 1999/09/16 16:27:32 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -630,6 +630,7 @@ struct xl_stats {
 #define TC_DEVICEID_CYCLONE_10_100FX		0x905A
 #define TC_DEVICEID_TORNADO_10_100BT		0x9200
 #define TC_DEVICEID_HURRICANE_10_100BT_SERV	0x9800
+#define TC_DEVICEID_TORNADO_10_100BT_SERV	0x9805
 #define TC_DEVICEID_HURRICANE_SOHO100TX		0x7646
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl.c,v 1.28 1999/09/13 20:11:13 jason Exp $	*/
+/*	$OpenBSD: if_xl.c,v 1.29 1999/09/16 16:27:31 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -52,10 +52,12 @@
  * 3Com 3c905B-COMBO	10/100Mbps/RJ-45,AUI,BNC
  * 3Com 3c905B-TX	10/100Mbps/RJ-45
  * 3Com 3c900-FL/FX	10/100Mbps/Fiber-optic
- * 3Com 3c905C-TX	10/100Mbs/RJ45
- * 3Com 3c980-TX	10/100Mbps server adapter
- * 3Com 3cSOHO100-TX	10/100Mbps/RJ-45
+ * 3Com 3c905C-TX	10/100Mbs/RJ45 (Tornado ASIC)
+ * 3Com 3c980-TX	10/100Mbps server adapter (Hurricane ASIC)
+ * 3Com 3c980C-TX	10/100Mbps server adapter (Tornado ASIC)
+ * 3Com 3cSOHO100-TX	10/100Mbps/RJ-45 (Hurricane ASIC)
  * Dell Optiplex GX1 on-board 3c918 10/100Mbps/RJ-45
+ * Dell on-board 3c920	10/100Mbps/RJ-45
  * Dell Precision on-board 3c905B 10/100Mbps/RJ-45
  * Dell Latitude laptop docking station embedded 3c905-TX
  *
@@ -1197,6 +1199,7 @@ xl_probe(parent, match, aux)
 	case PCI_PRODUCT_3COM_3C905BCOMBO:
 	case PCI_PRODUCT_3COM_3C905BFX:
 	case PCI_PRODUCT_3COM_3C980TX:
+	case PCI_PRODUCT_3COM_3C980CTX:
 	case PCI_PRODUCT_3COM_3C905CTX:
 		return (1);
 	}
@@ -1296,6 +1299,7 @@ void xl_mediacheck(sc)
 		break;
 	case TC_DEVICEID_HURRICANE_10_100BT:	/* 3c905B-TX */
 	case TC_DEVICEID_HURRICANE_10_100BT_SERV:/* 3c980-TX */
+	case TC_DEVICEID_TORNADO_10_100BT_SERV:	/* 3c980C-TX */
 	case TC_DEVICEID_HURRICANE_SOHO100TX:	/* 3cSOHO100-TX */
 	case TC_DEVICEID_TORNADO_10_100BT:	/* 3c905C-TX */
 		sc->xl_media = XL_MEDIAOPT_BTX;
