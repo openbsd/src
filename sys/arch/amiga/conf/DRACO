@@ -1,4 +1,4 @@
-#	$OpenBSD: DRACO,v 1.9 1997/03/25 16:53:58 niklas Exp $
+#	$OpenBSD: DRACO,v 1.10 1997/09/18 13:39:38 niklas Exp $
 #	$NetBSD: DRACO,v 1.7 1996/12/20 19:18:16 veego Exp $
 
 #
@@ -135,11 +135,14 @@ mfcs1		at mfc0 unit 1		# MFC serial
 #mfcs3		at mfc1 unit 1
 #mfcp1		at mfc1 unit 0
 
-le0		at zbus0		# Lance ethernet.
+drbbc0		at mainbus0		# DraCo battery backed clock
+drsupio0	at mainbus0		# DraCo superio chip
+com*		at drsupio? port ?	# DraCo serial
+
+le*		at zbus0		# Lance ethernet.
 ed0		at zbus0		# dp8390 ethernet
 es0		at zbus0		# SMC 91C90 ethernet
 qn0		at zbus0		# quicknet ethernet
-ae0		at zbus0		# Ariadne ethernet
 bah*		at zbus0		# C= arcnet
 
 
@@ -160,5 +163,6 @@ pseudo-device	pty 16			# pseudo terminals
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter 2		# berkeley packet filters
 pseudo-device	tun 2
+pseudo-device	ppp 2
 
 config	bsd swap on generic

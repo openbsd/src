@@ -1,5 +1,5 @@
-/*	$OpenBSD: grf_etreg.h,v 1.3 1997/01/16 09:24:17 niklas Exp $	*/
-/*	$NetBSD: grf_etreg.h,v 1.2 1996/06/09 13:21:11 veego Exp $	*/
+/*	$OpenBSD: grf_etreg.h,v 1.4 1997/09/18 13:39:51 niklas Exp $	*/
+/*	$NetBSD: grf_etreg.h,v 1.4 1997/07/29 17:42:06 veego Exp $	*/
 
 /*
  * Copyright (c) 1996 Tobias Abt
@@ -78,6 +78,7 @@ struct grfettext_mode {
 #define SIERRA15025	1	/* Sierra 15025 TrueColor DAC */
 #define MUSICDAC	2	/* MUSIC TrueColor DAC */
 #define MERLINDAC	3	/* Merlin's BrookTree TrueColor DAC */
+#define ATT20C491	4	/* AT&T 20c491 TrueColor DAC */
 
 /* read VGA register */
 #define vgar(ba, reg) (*(((volatile unsigned char *)ba)+reg))
@@ -112,6 +113,7 @@ struct grfettext_mode {
 #define	GREG_COLORSELECT	0x03D9
 #define	GREG_ATNTMODECONTROL	0x03DE
 #define	GREG_SEGMENTSELECT	0x03CD
+#define	GREG_SEGMENTSELECT2	0x03CB
 
 /* ETW32 special */
 #define W32mappedRegs 0xfff00
@@ -216,7 +218,7 @@ struct grfettext_mode {
 #define	CRT_ID_SEGMENT_COMP	0x30
 #define	CRT_ID_GENERAL_PURPOSE	0x31
 #define	CRT_ID_RASCAS_CONFIG	0x32
-#define	CTR_ID_EXT_START	0x33
+#define	CRT_ID_EXT_START	0x33
 #define	CRT_ID_6845_COMPAT	0x34
 #define	CRT_ID_OVERFLOW_HIGH	0x35
 #define	CRT_ID_VIDEO_CONFIG1	0x36

@@ -1,5 +1,5 @@
-/*	$OpenBSD: cc.h,v 1.4 1996/06/04 12:48:15 niklas Exp $	*/
-/*	$NetBSD: cc.h,v 1.7 1996/04/21 21:06:52 veego Exp $	*/
+/*	$OpenBSD: cc.h,v 1.5 1997/09/18 13:39:33 niklas Exp $	*/
+/*	$NetBSD: cc.h,v 1.9 1997/06/23 23:46:24 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -43,6 +43,30 @@
 #if ! defined (LOADDR)
 #define LOADDR(x) (u_short)(((unsigned long)(x))&0xffff)
 #endif
+
+/* 
+ * Audio stuff 
+ */
+typedef void (*handler_func_t) __P((int));
+
+struct audio_channel {
+	u_short 	play_count;
+	short		isaudio;
+	handler_func_t	handler;
+};
+
+#ifdef LEV6_DEFER
+#define AUCC_MAXINT 3 
+#define AUCC_ALLINTF (INTF_AUD0|INTF_AUD1|INTF_AUD2)
+#else 
+#define AUCC_MAXINT 4 
+#define AUCC_ALLINTF (INTF_AUD0|INTF_AUD1|INTF_AUD2|INTF_AUD3)
+#endif
+/*
+ * Define this one unconditionally; we may use AUD3 as slave channel
+ * with LEV6_DEFER
+ */
+#define AUCC_ALLDMAF (DMAF_AUD0|DMAF_AUD1|DMAF_AUD2|DMAF_AUD3)
 
 /*
  * Vertical blank iterrupt sever chains.
@@ -147,8 +171,6 @@ vm_offset_t chipmem_end;
 #define CHIPMEMBASE	(0x00000000)
 #define CHIPMEMTOP	(0x00200000)
 #define NCHIPMEMPG	btoc(CHIPMEMTOP - CHIPMEMBASE)
-
-typedef void (*handler_func_t) __P((int));
 
 /*
  * Prototypes.

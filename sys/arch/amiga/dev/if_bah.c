@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_bah.c,v 1.7 1997/01/16 09:24:38 niklas Exp $ */
-/*	$NetBSD: if_bah.c,v 1.25 1996/12/23 09:10:15 veego Exp $ */
+/*	$OpenBSD: if_bah.c,v 1.8 1997/09/18 13:39:55 niklas Exp $ */
+/*	$NetBSD: if_bah.c,v 1.30 1997/04/04 06:27:32 is Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -1033,7 +1033,11 @@ bahintr(arg)
 #endif
 
 	if (maskedisr & ARC_POR) {
-		sc->sc_arccom.ac_anaddr = sc->sc_base->dipswitches;
+	  	/* 
+		 * XXX We should never see this. Don't bother to store
+		 * the address.
+		 * sc->sc_arccom.ac_anaddr = sc->sc_base->dipswitches;
+		 */
 		sc->sc_base->command = ARC_CLR(CLR_POR);
 		log(LOG_WARNING, "%s: intr: got spurious power on reset int\n",
 		    sc->sc_dev.dv_xname);
@@ -1048,8 +1052,8 @@ bahintr(arg)
 		sc->sc_arccom.ac_if.if_collisions++;
 
 		/*
-! 		 * If less than 2 seconds per reconfig:
-! 		 *	If ARC_EXCESSIVE_RECONFIGS
+		 * If less than 2 seconds per reconfig:
+		 *	If ARC_EXCESSIVE_RECONFIGS
 		 *	since last burst, complain and set treshold for
 		 *	warnings to ARC_EXCESSIVE_RECONS_REWARN.
 		 *

@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_levar.h,v 1.3 1996/05/09 22:40:01 niklas Exp $	*/
-/*	$NetBSD: if_levar.h,v 1.3 1996/05/07 00:46:45 thorpej Exp $	*/
+/*	$OpenBSD: if_levar.h,v 1.4 1997/09/18 13:39:56 niklas Exp $	*/
+/*	$NetBSD: if_levar.h,v 1.5 1997/03/27 21:15:14 veego Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -35,11 +35,16 @@
  */
 
 /*
- * LANCE registers.
+ * LANCE and PCnet-ISA registers.
  */
 struct lereg1 {
-	u_short	ler1_rdp;	/* data port */
-	u_short	ler1_rap;	/* register select port */
+	u_int16_t ler1_rdp;	/* data port */
+	u_int16_t ler1_rap;	/* register select port */
+	/*
+	 * The next two registers are only available on PCnet-ISA cards.
+	 */
+	u_int16_t ler1_reset;	/* reading this resets the PCnet-ISA */
+	u_int16_t ler1_idp;	/* isa configuration port */
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qn.c,v 1.9 1997/01/16 09:24:47 niklas Exp $	*/
+/*	$OpenBSD: if_qn.c,v 1.10 1997/09/18 13:39:57 niklas Exp $	*/
 /*	$NetBSD: if_qn.c,v 1.10 1996/12/23 09:10:19 veego Exp $	*/
 
 /*
@@ -490,10 +490,6 @@ word_copy_to_card(a, card, len)
 
 /*
  * Copy packet from mbuf to the board memory
- *
- * Uses an extra buffer/extra memory copy,
- * unless the whole packet fits in one mbuf.
- *
  */
 u_short
 qn_put(addr, m)
@@ -510,7 +506,6 @@ qn_put(addr, m)
 	for (; m != NULL; m = m->m_next) {
 		data = mtod(m, u_short *);
 		len = m->m_len;
-		totlen += len;
 		if (len > 0) {
 			totlen += len;
 

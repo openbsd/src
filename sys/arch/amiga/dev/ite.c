@@ -1,4 +1,4 @@
-/*	$OpenBSD: ite.c,v 1.9 1997/01/16 09:24:50 niklas Exp $  */
+/*	$OpenBSD: ite.c,v 1.10 1997/09/18 13:39:58 niklas Exp $  */
 /*	$NetBSD: ite.c,v 1.47 1996/12/23 09:10:20 veego Exp $	*/
 
 /*
@@ -59,7 +59,6 @@
 #include <sys/proc.h>
 #include <dev/cons.h>
 #include <amiga/amiga/cc.h>
-#include <amiga/amiga/kdassert.h>
 #include <amiga/amiga/color.h>	/* DEBUG */
 #include <amiga/amiga/custom.h>	/* DEBUG */
 #include <amiga/amiga/device.h>

@@ -1,7 +1,8 @@
-/*	$OpenBSD: grf_cl.c,v 1.9 1997/01/16 09:24:10 niklas Exp $	*/
-/*      $NetBSD: grf_cl.c,v 1.18 1996/12/23 09:10:04 veego Exp $        */
+/*	$OpenBSD: grf_cl.c,v 1.10 1997/09/18 13:39:47 niklas Exp $	*/
+/*	$NetBSD: grf_cl.c,v 1.20 1997/07/29 17:46:24 veego Exp $	*/
 
 /*
+ * Copyright (c) 1997 Klaus Burkert
  * Copyright (c) 1995 Ezra Story
  * Copyright (c) 1995 Kari Mettinen
  * Copyright (c) 1994 Markus Wild
@@ -51,6 +52,10 @@
  * Extensively hacked and rewritten by Ezra Story (Ezy) 01/95
  * Picasso/040 patches (wee!) by crest 01/96
  *
+ * PicassoIV support bz Klaus "crest" Burkert.
+ * Fixed interlace and doublescan, added clockdoubling and
+ * HiColor&TrueColor suuport by crest 01/97
+ *
  * Thanks to Village Tronic Marketing Gmbh for providing me with
  * a Picasso-II board.
  * Thanks for Integrated Electronics Oy Ab for providing me with
@@ -78,44 +83,45 @@
 #include <amiga/dev/grf_clreg.h>
 #include <amiga/dev/zbusvar.h>
 
-int cl_mondefok __P((struct grfvideo_mode *));
-void cl_boardinit __P((struct grf_softc *));
-static void cl_CompFQ __P((u_int, u_char *, u_char *));
-int cl_getvmode __P((struct grf_softc *, struct grfvideo_mode *));
-int cl_setvmode __P((struct grf_softc *, unsigned int));
-int cl_toggle __P((struct grf_softc *, unsigned short));
-int cl_getcmap __P((struct grf_softc *, struct grf_colormap *));
-int cl_putcmap __P((struct grf_softc *, struct grf_colormap *));
+int	cl_mondefok __P((struct grfvideo_mode *));
+void	cl_boardinit __P((struct grf_softc *));
+void	cl_CompFQ __P((u_int, u_char *, u_char *, u_char *));
+int	cl_getvmode __P((struct grf_softc *, struct grfvideo_mode *));
+int	cl_setvmode __P((struct grf_softc *, unsigned int));
+int	cl_toggle __P((struct grf_softc *, unsigned short));
+int	cl_getcmap __P((struct grf_softc *, struct grf_colormap *));
+int	cl_putcmap __P((struct grf_softc *, struct grf_colormap *));
 #ifndef CL5426CONSOLE
-void cl_off __P((struct grf_softc *));
+void	cl_off __P((struct grf_softc *));
 #endif
-void cl_inittextmode __P((struct grf_softc *));
-int cl_ioctl __P((register struct grf_softc *, u_long, void *));
-int cl_getmousepos __P((struct grf_softc *, struct grf_position *));
-int cl_setmousepos __P((struct grf_softc *, struct grf_position *));
-static int cl_setspriteinfo __P((struct grf_softc *, struct grf_spriteinfo *));
-int cl_getspriteinfo __P((struct grf_softc *, struct grf_spriteinfo *));
-static int cl_getspritemax __P((struct grf_softc *, struct grf_position *));
-int cl_blank __P((struct grf_softc *, int *));
-int cl_setmonitor __P((struct grf_softc *, struct grfvideo_mode *));
-void cl_writesprpos __P((volatile char *, short, short));
-void writeshifted __P((volatile char *, char, char));
+void	cl_inittextmode __P((struct grf_softc *));
+int	cl_ioctl __P((register struct grf_softc *, u_long, void *));
+int	cl_getmousepos __P((struct grf_softc *, struct grf_position *));
+int	cl_setmousepos __P((struct grf_softc *, struct grf_position *));
+int	cl_setspriteinfo __P((struct grf_softc *, struct grf_spriteinfo *));
+int	cl_getspriteinfo __P((struct grf_softc *, struct grf_spriteinfo *));
+int	cl_getspritemax __P((struct grf_softc *, struct grf_position *));
+int	cl_blank __P((struct grf_softc *, int *));
+int	cl_setmonitor __P((struct grf_softc *, struct grfvideo_mode *));
+void	cl_writesprpos __P((volatile char *, short, short));
+void	writeshifted __P((volatile char *, char, char));
 
-static void RegWakeup __P((volatile caddr_t));
-static void RegOnpass __P((volatile caddr_t));
-static void RegOffpass __P((volatile caddr_t));
+void	RegWakeup __P((volatile caddr_t));
+void	RegOnpass __P((volatile caddr_t));
+void	RegOffpass __P((volatile caddr_t));
 
-void grfclattach __P((struct device *, struct device *, void *));
-int grfclprint __P((void *, const char *));
-int grfclmatch __P((struct device *, void *, void *));
-void cl_memset __P((unsigned char *, unsigned char, int));
+void	grfclattach __P((struct device *, struct device *, void *));
+int	grfclprint __P((void *, const char *));
+int	grfclmatch __P((struct device *, void *, void *));
+void	cl_memset __P((unsigned char *, unsigned char, int));
 
 /* Graphics display definitions.
  * These are filled by 'grfconfig' using GRFIOCSETMON.
  */
-#define monitor_def_max 8
-static struct grfvideo_mode monitor_def[8] = {
-	{0}, {0}, {0}, {0}, {0}, {0}, {0}, {0}
+#define monitor_def_max 24
+static struct grfvideo_mode monitor_def[24] = {
+	{0}, {0}, {0}, {0}, {0}, {0}, {0}, {0},
+	{0}, {0}, {0}, {0}, {0}, {0}, {0}, {0},
 };
 static struct grfvideo_mode *monitor_current = &monitor_def[0];
 
@@ -138,8 +144,8 @@ unsigned long cl_maxpixelclock = 86000000;
 extern unsigned char CIRRUSFONT[];
 
 struct grfcltext_mode clconsole_mode = {
-	{255, "", 25200000, 640, 480, 4, 80, 100, 94, 99, 100, 481, 522, 490,
-	498, 522},
+	{255, "", 25200000, 640, 480, 4, 640/8, 752/8, 792/8, 800/8,
+	 481, 490, 498, 522, 0},
 	8, CIRRUSFONTY, 80, 480 / CIRRUSFONTY, CIRRUSFONT, 32, 255
 };
 /* Console colors */
@@ -148,10 +154,11 @@ unsigned char clconscolors[3][3] = {	/* background, foreground, hilite */
 };
 
 int	cltype = 0;		/* Picasso, Spectrum or Piccolo */
-int	cl_sd64 = 0;
+int	cl_64bit = 0;
 unsigned char pass_toggle;	/* passthru status tracker */
 
-/* because all 5426-boards have 2 configdev entries, one for
+/*
+ * because all 542x-boards have 2 configdev entries, one for
  * framebuffer mem and the other for regs, we have to hold onto
  * the pointers globally until we match on both.  This and 'cltype'
  * are the primary obsticles to multiple board support, but if you
@@ -160,8 +167,10 @@ unsigned char pass_toggle;	/* passthru status tracker */
 static void *cl_fbaddr = 0;	/* framebuffer */
 static void *cl_regaddr = 0;	/* registers */
 static int cl_fbsize;		/* framebuffer size */
+static int cl_fbautosize;	/* framebuffer autoconfig size */
 
-/* current sprite info, if you add support for multiple boards
+/*
+ * current sprite info, if you add support for multiple boards
  * make this an array or something
  */
 struct grf_spriteinfo cl_cursprite;
@@ -191,9 +200,10 @@ grfclmatch(pdp, match, auxp)
 	struct cfdata *cfp = match;
 #endif
 	struct zbus_args *zap;
-	static int regprod, fbprod;
+	static int regprod, fbprod, fbprod2;
 	int error;
 
+	fbprod2 = 0;
 	zap = auxp;
 
 #ifndef CL5426CONSOLE
@@ -207,11 +217,38 @@ grfclmatch(pdp, match, auxp)
 	if (cltype == 0) {
 		switch (zap->manid) {
 		    case PICASSO:
-			if (zap->prodid != 12 && zap->prodid != 11)
-				return (0);
-			regprod = 12;
-			fbprod = 11;
-			break;
+			switch (zap->prodid) {
+			    case 11:
+			    case 12:
+				regprod = 12;
+				fbprod = 11;
+				error = 0;
+				break;
+			    case 22:
+				fbprod2 = 22;
+				error = 0;
+				break;
+			    case 21:
+			    case 23:
+				regprod = 23;
+				fbprod = 21;
+				cl_64bit = 1;
+				error = 0;
+				break;
+			    case 24:
+				regprod = 24;
+				fbprod = 24;
+				cl_64bit = 1;
+				error = 0;
+				break;
+		    	    default:
+				error = 1;
+				break;
+			}
+			if (error == 1)
+			    return (0);
+			else
+			    break;
 		    case SPECTRUM:
 			if (zap->prodid != 2 && zap->prodid != 1)
 				return (0);
@@ -230,7 +267,7 @@ grfclmatch(pdp, match, auxp)
 			    case 11:
 				regprod = 11;
 				fbprod = 10;
-				cl_sd64 = 1;
+				cl_64bit = 1;
 				error = 0;
 				break;
 		    	    default:
@@ -252,14 +289,39 @@ grfclmatch(pdp, match, auxp)
 	}
 
 	/* Configure either registers or framebuffer in any order */
-	if (zap->prodid == regprod)
-		cl_regaddr = zap->va;
-	else
-		if (zap->prodid == fbprod) {
+	if ((cltype == PICASSO) && (cl_64bit == 1)) {
+		switch (zap->prodid) {
+		    case 21:
 			cl_fbaddr = zap->va;
-			cl_fbsize = zap->size;
-		} else
+			cl_fbautosize = zap->size;
+			break;
+		    case 22: 
+			cl_fbautosize += zap->size;
+			break;
+		    case 23:
+			cl_regaddr = (void *)((unsigned long)(zap->va) +
+			    0x10000);
+			break;
+		    case 24:
+			cl_regaddr = (void *)((unsigned long)(zap->va) +
+			    0x600000);
+			cl_fbaddr = (void *)((unsigned long)(zap->va) +
+			    0x01000000);
+			cl_fbautosize = 0x400000;
+			break;
+		    default:
 			return (0);
+		}
+	} else {
+		if (zap->prodid == regprod)
+			cl_regaddr = zap->va;
+		else
+			if (zap->prodid == fbprod) {
+				cl_fbaddr = zap->va;
+				cl_fbautosize = zap->size;
+			} else
+				return (0);
+	}
 
 #ifdef CL5426CONSOLE
 	if (amiga_realconfig == 0) {
@@ -326,15 +388,41 @@ grfclattach(pdp, dp, auxp)
 		printf("grfcl: %dMB ", cl_fbsize / 0x100000);
 		switch (cltype) {
 		    case PICASSO:
-			printf("Picasso II");
-                        cl_maxpixelclock = 86000000;
+			if (cl_64bit == 1) {
+				printf("Picasso IV");
+				/* 135MHz will be supported if we
+				 * have a palette doubling mode.
+				 */
+				cl_maxpixelclock = 86000000;
+			} else {
+				printf("Picasso II");
+
+				/* check for PicassoII+ (crest) */
+				if (zap->serno == 0x00100000)
+					printf("+");
+
+				/* determine used Gfx/chipset (crest) */
+				vgaw(gp->g_regkva, CRT_ADDRESS, 0x27);
+				switch(vgar(gp->g_regkva, CRT_ADDRESS_R)>>2) {
+				    case 0x24:
+					printf(" (with CL-GD5426)");
+					break;
+				    case 0x26:
+					printf(" (with CL-GD5428)");
+					break;
+				    case 0x27:
+					printf(" (with CL-GD5429)");
+					break;
+				}
+	                        cl_maxpixelclock = 86000000;
+			}
 			break;
 		    case SPECTRUM:
 			printf("Spectrum");
                         cl_maxpixelclock = 90000000;
 			break;
 		    case PICCOLO:
-			if (cl_sd64 == 1) {
+			if (cl_64bit == 1) {
 				printf("Piccolo SD64");
 				/* 110MHz will be supported if we
 				 * have a palette doubling mode.
@@ -373,98 +461,112 @@ cl_boardinit(gp)
 	unsigned char *ba = gp->g_regkva;
 	int     x;
 
-	/* wakeup board and flip passthru OFF */
-
-	RegWakeup(ba);
-	RegOnpass(ba);
-
-	vgaw(ba, 0x46e8, 0x16);
-	vgaw(ba, 0x102, 1);
-	vgaw(ba, 0x46e8, 0x0e);
-	if (cl_sd64 != 1)
-		vgaw(ba, 0x3c3, 1);
-
-	/* setup initial unchanging parameters */
-
-	WSeq(ba, SEQ_ID_CLOCKING_MODE, 0x21);	/* 8 dot - display off */
-	vgaw(ba, GREG_MISC_OUTPUT_W, 0xed);	/* mem disable */
-
-	WGfx(ba, GCT_ID_OFFSET_1, 0xec);	/* magic cookie */
-	WSeq(ba, SEQ_ID_UNLOCK_EXT, 0x12);	/* yum! cookies! */
-
-	if (cl_sd64 == 1) {
-		WSeq(ba, SEQ_ID_CONF_RBACK, 0x00);
-		WSeq(ba, SEQ_ID_DRAM_CNTL, (cl_fbsize / 0x100000 == 2) ? 0x38 : 0xb8);
+	if ((cltype == PICASSO) && (cl_64bit == 1)) { /* PicassoIV */
+		/* disable capture (FlickerFixer) */
+		WCrt(ba, 0x51, 0x00);
+		/* wait some time (two frames as of now) */
+		delay(200000);
+		/* get Blitter into 542x  */
+		WGfx(ba, 0x2f, 0x00);
+		/* compatibility mode     */
+		WGfx(ba, GCT_ID_RESERVED, 0x00);
+		/* or at least, try so... */
+		WGfx(ba, GCT_ID_BLT_STAT_START, 0x00);
+		cl_fbsize = cl_fbautosize;
 	} else {
-		WSeq(ba, SEQ_ID_DRAM_CNTL, 0xb0);
+
+		/* wakeup board and flip passthru OFF */
+		RegWakeup(ba);
+		RegOnpass(ba);
+
+		vgaw(ba, 0x46e8, 0x16);
+		vgaw(ba, 0x102, 1);
+		vgaw(ba, 0x46e8, 0x0e);
+		if (cl_64bit != 1)
+			vgaw(ba, 0x3c3, 1);
+
+		cl_fbsize = cl_fbautosize;
+
+		/* setup initial unchanging parameters */
+
+		/* 8 dot - display off */
+		WSeq(ba, SEQ_ID_CLOCKING_MODE, 0x21);
+		vgaw(ba, GREG_MISC_OUTPUT_W, 0xed);	/* mem disable */
+
+		WGfx(ba, GCT_ID_OFFSET_1, 0xec);	/* magic cookie */
+		WSeq(ba, SEQ_ID_UNLOCK_EXT, 0x12);	/* yum! cookies! */
+
+		if (cl_64bit == 1) {
+			WSeq(ba, SEQ_ID_CONF_RBACK, 0x00);
+			WSeq(ba, SEQ_ID_DRAM_CNTL,
+			    (cl_fbsize / 0x100000 == 2) ? 0x38 : 0xb8);
+		} else {
+			WSeq(ba, SEQ_ID_DRAM_CNTL, 0xb0);
+		}
+		WSeq(ba, SEQ_ID_RESET, 0x03);
+		WSeq(ba, SEQ_ID_MAP_MASK, 0xff);
+		WSeq(ba, SEQ_ID_CHAR_MAP_SELECT, 0x00);
+		WSeq(ba, SEQ_ID_MEMORY_MODE, 0x0e);	/* a or 6? */
+		WSeq(ba, SEQ_ID_EXT_SEQ_MODE,
+		    (cltype == PICASSO) ? 0x21 : 0x81);
+		WSeq(ba, SEQ_ID_EEPROM_CNTL, 0x00);
+		if (cl_64bit == 1)
+			WSeq(ba, SEQ_ID_PERF_TUNE, 0x5a);
+		else
+			/* mouse 0a fa */
+			WSeq(ba, SEQ_ID_PERF_TUNE, 0x0a);
+		WSeq(ba, SEQ_ID_SIG_CNTL, 0x02);
+		WSeq(ba, SEQ_ID_CURSOR_ATTR, 0x04);
+		if (cl_64bit == 1)
+			WSeq(ba, SEQ_ID_MCLK_SELECT, 0x1c);
+		else
+			WSeq(ba, SEQ_ID_MCLK_SELECT, 0x22);
+
+		WCrt(ba, CRT_ID_PRESET_ROW_SCAN, 0x00);
+		WCrt(ba, CRT_ID_CURSOR_START, 0x00);
+		WCrt(ba, CRT_ID_CURSOR_END, 0x08);
+		WCrt(ba, CRT_ID_START_ADDR_HIGH, 0x00);
+		WCrt(ba, CRT_ID_START_ADDR_LOW, 0x00);
+		WCrt(ba, CRT_ID_CURSOR_LOC_HIGH, 0x00);
+		WCrt(ba, CRT_ID_CURSOR_LOC_LOW, 0x00);
+
+		WCrt(ba, CRT_ID_UNDERLINE_LOC, 0x07);
+		WCrt(ba, CRT_ID_MODE_CONTROL, 0xe3);
+		WCrt(ba, CRT_ID_LINE_COMPARE, 0xff);	/* ff */
+		WCrt(ba, CRT_ID_EXT_DISP_CNTL, 0x22);
+		if (cl_64bit == 1) {
+			WCrt(ba, CRT_ID_SYNC_ADJ_GENLOCK, 0x00);
+			WCrt(ba, CRT_ID_OVERLAY_EXT_CTRL_REG, 0x40);
+		}
+		WSeq(ba, SEQ_ID_CURSOR_STORE, 0x3c);	/* mouse 0x00 */
+
+		WGfx(ba, GCT_ID_SET_RESET, 0x00);
+		WGfx(ba, GCT_ID_ENABLE_SET_RESET, 0x00);
+		WGfx(ba, GCT_ID_DATA_ROTATE, 0x00);
+		WGfx(ba, GCT_ID_READ_MAP_SELECT, 0x00);
+		WGfx(ba, GCT_ID_GRAPHICS_MODE, 0x00);
+		WGfx(ba, GCT_ID_MISC, 0x01);
+		WGfx(ba, GCT_ID_COLOR_XCARE, 0x0f);
+		WGfx(ba, GCT_ID_BITMASK, 0xff);
+		WGfx(ba, GCT_ID_MODE_EXT, 0x28);
+
+		for (x = 0; x < 0x10; x++)
+			WAttr(ba, x, x);
+		WAttr(ba, ACT_ID_ATTR_MODE_CNTL, 0x01);
+		WAttr(ba, ACT_ID_OVERSCAN_COLOR, 0x00);
+		WAttr(ba, ACT_ID_COLOR_PLANE_ENA, 0x0f);
+		WAttr(ba, ACT_ID_HOR_PEL_PANNING, 0x00);
+		WAttr(ba, ACT_ID_COLOR_SELECT, 0x00);
+		WAttr(ba, 0x34, 0x00);
+
+		vgaw(ba, VDAC_MASK, 0xff);
+		vgaw(ba, GREG_MISC_OUTPUT_W, 0xef);
+
+		WGfx(ba, GCT_ID_BLT_STAT_START, 0x04);
+		WGfx(ba, GCT_ID_BLT_STAT_START, 0x00);
 	}
-	WSeq(ba, SEQ_ID_RESET, 0x03);
-	WSeq(ba, SEQ_ID_MAP_MASK, 0xff);
-	WSeq(ba, SEQ_ID_CHAR_MAP_SELECT, 0x00);
-	WSeq(ba, SEQ_ID_MEMORY_MODE, 0x0e);	/* a or 6? */
-	WSeq(ba, SEQ_ID_EXT_SEQ_MODE, (cltype == PICASSO) ? 0x20 : 0x80);
-	WSeq(ba, SEQ_ID_EEPROM_CNTL, 0x00);
-	if (cl_sd64 == 1)
-		WSeq(ba, SEQ_ID_PERF_TUNE, 0x5a);
-	else
-		WSeq(ba, SEQ_ID_PERF_TUNE, 0x0a);	/* mouse 0a fa */
-	WSeq(ba, SEQ_ID_SIG_CNTL, 0x02);
-	WSeq(ba, SEQ_ID_CURSOR_ATTR, 0x04);
-
-	if (cl_sd64 == 1)
-		WSeq(ba, SEQ_ID_MCLK_SELECT, 0x1c);
-	else
-		WSeq(ba, SEQ_ID_MCLK_SELECT, 0x22);
-
-	WCrt(ba, CRT_ID_PRESET_ROW_SCAN, 0x00);
-	WCrt(ba, CRT_ID_CURSOR_START, 0x00);
-	WCrt(ba, CRT_ID_CURSOR_END, 0x08);
-	WCrt(ba, CRT_ID_START_ADDR_HIGH, 0x00);
-	WCrt(ba, CRT_ID_START_ADDR_LOW, 0x00);
-	WCrt(ba, CRT_ID_CURSOR_LOC_HIGH, 0x00);
-	WCrt(ba, CRT_ID_CURSOR_LOC_LOW, 0x00);
-
-	WCrt(ba, CRT_ID_UNDERLINE_LOC, 0x07);
-	WCrt(ba, CRT_ID_MODE_CONTROL, 0xa3);	/* c3 */
-	WCrt(ba, CRT_ID_LINE_COMPARE, 0xff);	/* ff */
-	WCrt(ba, CRT_ID_EXT_DISP_CNTL, 0x22);
-	if (cl_sd64 == 1) {
-		WCrt(ba, CRT_ID_SYNC_ADJ_GENLOCK, 0x00);
-		WCrt(ba, CRT_ID_OVERLAY_EXT_CTRL_REG, 0x40);
-	}
-	WSeq(ba, SEQ_ID_CURSOR_STORE, 0x3c);	/* mouse 0x00 */
-
-	WGfx(ba, GCT_ID_SET_RESET, 0x00);
-	WGfx(ba, GCT_ID_ENABLE_SET_RESET, 0x00);
-	WGfx(ba, GCT_ID_DATA_ROTATE, 0x00);
-	WGfx(ba, GCT_ID_READ_MAP_SELECT, 0x00);
-	WGfx(ba, GCT_ID_GRAPHICS_MODE, 0x00);
-	WGfx(ba, GCT_ID_MISC, 0x01);
-	WGfx(ba, GCT_ID_COLOR_XCARE, 0x0f);
-	WGfx(ba, GCT_ID_BITMASK, 0xff);
-	WGfx(ba, GCT_ID_MODE_EXT, 0x28);
-
-	for (x = 0; x < 0x10; x++)
-		WAttr(ba, x, x);
-	WAttr(ba, ACT_ID_ATTR_MODE_CNTL, 0x01);
-	WAttr(ba, ACT_ID_OVERSCAN_COLOR, 0x00);
-	WAttr(ba, ACT_ID_COLOR_PLANE_ENA, 0x0f);
-	WAttr(ba, ACT_ID_HOR_PEL_PANNING, 0x00);
-	WAttr(ba, ACT_ID_COLOR_SELECT, 0x00);
-
-	delay(200000);
-	WAttr(ba, 0x34, 0x00);
-	delay(200000);
-
-	vgaw(ba, VDAC_MASK, 0xff);
-	delay(200000);
-	vgaw(ba, GREG_MISC_OUTPUT_W, 0xef);
-
-	WGfx(ba, GCT_ID_BLT_STAT_START, 0x04);
-	WGfx(ba, GCT_ID_BLT_STAT_START, 0x00);
 
 	/* colors initially set to greyscale */
-
 	vgaw(ba, VDAC_ADDRESS_W, 0);
 	for (x = 255; x >= 0; x--) {
 		vgaw(ba, VDAC_DATA, x);
@@ -477,6 +579,23 @@ cl_boardinit(gp)
 	cl_cursprite.cmap.red = cl_sprred;
 	cl_cursprite.cmap.green = cl_sprgreen;
 	cl_cursprite.cmap.blue = cl_sprblue;
+
+	if (cl_64bit == 0) {
+		/* check for 1MB or 2MB board (crest) */
+		volatile unsigned long *cl_fbtestaddr;
+		cl_fbtestaddr = (volatile unsigned long *)gp->g_fbkva;
+
+		WGfx(ba, GCT_ID_OFFSET_0, 0x40);
+		*cl_fbtestaddr = 0x12345678;
+
+		if (*cl_fbtestaddr != 0x12345678) {
+			WSeq(ba, SEQ_ID_DRAM_CNTL, 0x30);
+			cl_fbsize = 0x100000;
+		} else {
+			cl_fbsize = 0x200000;
+		}
+	}
+	WGfx(ba, GCT_ID_OFFSET_0, 0x00);
 }
 
 
@@ -510,7 +629,6 @@ cl_getvmode(gp, vm)
         /* adjust internal values to pixel values */
 
         vm->hblank_start *= 8;
-        vm->hblank_stop *= 8;
         vm->hsync_start *= 8;
         vm->hsync_stop *= 8;
         vm->htotal *= 8;
@@ -540,11 +658,14 @@ cl_off(gp)
 {
 	char   *ba = gp->g_regkva;
 
-	/* we'll put the pass-through on for cc ite and set Full Bandwidth bit
+	/*
+	 * we'll put the pass-through on for cc ite and set Full Bandwidth bit
 	 * on just in case it didn't work...but then it doesn't matter does
-	 * it? =) */
+	 * it? =)
+	 */
 	RegOnpass(ba);
-	WSeq(ba, SEQ_ID_CLOCKING_MODE, 0x21);
+	vgaw(ba, SEQ_ADDRESS, SEQ_ID_CLOCKING_MODE);
+	vgaw(ba, SEQ_ADDRESS_W, vgar(ba, SEQ_ADDRESS_W) | 0x20);
 }
 #endif
 
@@ -679,13 +800,14 @@ cl_writesprpos(ba, x, y)
 	cwp = ba + 0x3c4;
         wp = (unsigned short *)cwp;
 
-	/* don't ask me why, but apparently you can't do a 16-bit write with
-	 * x-position like with y-position below (dagge) */
+	/*
+	 * don't ask me why, but apparently you can't do a 16-bit write with
+	 * x-position like with y-position below (dagge)
+	 */
         cwp[0] = 0x10 | ((x << 5) & 0xff);
         cwp[1] = (x >> 3) & 0xff;
 
         *wp = 0x1100 | ((y & 7) << 13) | ((y >> 3) & 0xff);
-
 }
 
 void
@@ -704,7 +826,8 @@ writeshifted(to, shiftx, shifty)
         shiftx = shiftx < 0 ? 0 : shiftx;
         shifty = shifty < 0 ? 0 : shifty;
 
-        /* start reading shifty lines down, and
+        /*
+	 * start reading shifty lines down, and
          * shift each line in by shiftx
          */
         for (y = shifty; y < 64; y++) {
@@ -747,7 +870,8 @@ cl_setmousepos(gp, data)
 	prx = cl_cursprite.pos.x - cl_cursprite.hot.x;
 	pry = cl_cursprite.pos.y - cl_cursprite.hot.y;
 
-        /* if we are/were on an edge, create (un)shifted bitmap --
+        /*
+	 * if we are/were on an edge, create (un)shifted bitmap --
          * ripped out optimization (not extremely worthwhile,
          * and kind of buggy anyhow).
          */
@@ -776,7 +900,7 @@ cl_getspriteinfo(gp, data)
 	return (0);
 }
 
-static int
+int
 cl_setspriteinfo(gp, data)
 	struct grf_softc *gp;
 	struct grf_spriteinfo *data;
@@ -912,7 +1036,7 @@ cl_setspriteinfo(gp, data)
 	return (0);
 }
 
-static int
+int
 cl_getspritemax(gp, data)
 	struct grf_softc *gp;
 	struct grf_position *data;
@@ -938,11 +1062,10 @@ cl_setmonitor(gp, gv)
 	/* handle interactive setting of console mode */
 	if (gv->mode_num == 255) {
 		bcopy(gv, &clconsole_mode.gv, sizeof(struct grfvideo_mode));
-                clconsole_mode.gv.hblank_start /= 8;
-                clconsole_mode.gv.hblank_stop /= 8;
-                clconsole_mode.gv.hsync_start /= 8;
-                clconsole_mode.gv.hsync_stop /= 8;
-                clconsole_mode.gv.htotal /= 8;
+		clconsole_mode.gv.hblank_start /= 8;
+		clconsole_mode.gv.hsync_start /= 8;
+		clconsole_mode.gv.hsync_stop /= 8;
+		clconsole_mode.gv.htotal /= 8;
 		clconsole_mode.rows = gv->disp_height / clconsole_mode.fy;
 		clconsole_mode.cols = gv->disp_width / clconsole_mode.fx;
 		if (!(gp->g_flags & GF_GRFON))
@@ -955,13 +1078,12 @@ cl_setmonitor(gp, gv)
 	md = monitor_def + (gv->mode_num - 1);
 	bcopy(gv, md, sizeof(struct grfvideo_mode));
 
-        /* adjust pixel oriented values to internal rep. */
+	/* adjust pixel oriented values to internal rep. */
 
-        md->hblank_start /= 8;
-        md->hblank_stop /= 8;
-        md->hsync_start /= 8;
-        md->hsync_stop /= 8;
-        md->htotal /= 8;
+	md->hblank_start /= 8;
+	md->hsync_start /= 8;
+	md->hsync_stop /= 8;
+	md->htotal /= 8;
 
 	return (0);
 }
@@ -987,10 +1109,20 @@ cl_getcmap(gfp, cmap)
 	vgaw(ba, VDAC_ADDRESS_R, cmap->index);
 	x = cmap->count - 1;
 
-/* Some sort 'o Magic. Spectrum has some changes on the board to speed
+/*
+ * Some sort 'o Magic. Spectrum has some changes on the board to speed
  * up 15 and 16Bit modes. They can access these modes with easy-to-programm
  * rgbrgbrgb instead of rrrgggbbb. Side effect: when in 8Bit mode, rgb
  * is swapped to bgr. I wonder if we need to check for 8Bit though, ill
+ */
+
+/*
+ * The source for the above comment is somewhat unknow to me.
+ * The Spectrum, Piccolo and PiccoloSD64 have the analog Red and Blue
+ * lines swapped. In 24BPP this provides RGB instead of BGR as it would
+ * be native to the chipset. This requires special programming for the
+ * CLUT in 8BPP to compensate and avoid false colors.
+ * I didn't find any special stuff for 15 and 16BPP though, crest.
  */
 
 	switch (cltype) {
@@ -1088,19 +1220,17 @@ cl_toggle(gp, wopp)
 	if (pass_toggle) {
 		RegOffpass(ba);
 	} else {
-		/* This was in the original.. is it needed? */
-		if (cltype == PICASSO || cltype == PICCOLO)
-			RegWakeup(ba);
 		RegOnpass(ba);
 	}
 	return (0);
 }
 
-static void
-cl_CompFQ(fq, num, denom)
+void
+cl_CompFQ(fq, num, denom, clkdoub)
 	u_int   fq;
 	u_char *num;
 	u_char *denom;
+	u_char *clkdoub;
 {
 #define OSC     14318180
 /* OK, here's what we're doing here:
@@ -1136,19 +1266,34 @@ denom = 0x00 - 0x1f (1) 0x20 - 0x3e (even)
 	mind = 0;
 	p = 0;
 
-	for (d = 1; d < 0x20; d++) {
-		for (n = 1; n < 0x80; n++) {
-			err = abs(count(n, d, p) - fq);
-			if (err < minerr) {
-				minerr = err;
-				minn = n;
-				mind = d;
-				minp = p;
+	if ((cl_64bit == 1) && (fq >= 86000000)) {
+		for (d = 1; d < 0x20; d++) {
+			for (n = 1; n < 0x80; n++) {
+				err = abs(count(n, d, 0) - fq);
+				if (err < minerr) {
+					minerr = err;
+					minn = n;
+					mind = d;
+					minp = 1;
+				}
 			}
 		}
-		if (d == 0x1f && p == 0) {
-			p = 1;
-			d = 0x0f;
+		*clkdoub = 1;
+	} else {
+		for (d = 1; d < 0x20; d++) {
+			for (n = 1; n < 0x80; n++) {
+				err = abs(count(n, d, p) - fq);
+				if (err < minerr) {
+					minerr = err;
+					minn = n;
+					mind = d;
+					minp = p;
+				}
+			}
+			if (d == 0x1f && p == 0) {
+				p = 1;
+				d = 0x0f;
+			}
 		}
 	}
 
@@ -1170,25 +1315,56 @@ cl_mondefok(gv)
                         return(0);
 
 	switch (gv->depth) {
-	    case 4:
+	case 4:
                 if (gv->mode_num != 255)
                         return(0);
-	    case 1:
-	    case 8:
-                maxpix = cl_maxpixelclock;
+	case 1:
+	case 8:
+		maxpix = cl_maxpixelclock;
+		if (cl_64bit == 1)
+		{
+			if (cltype == PICASSO) /* Picasso IV */
+				maxpix = 135000000;
+			else                   /* Piccolo SD64 */
+				maxpix = 110000000;
+		}
                 break;
-	    case 15:
-	    case 16:
-                maxpix = cl_maxpixelclock - (cl_maxpixelclock / 3);
+	case 15:
+	case 16:
+		if (cl_64bit == 1)
+	                maxpix = 85000000;
+		else
+	                maxpix = cl_maxpixelclock - (cl_maxpixelclock / 3);
                 break;
-	    case 24:
-                maxpix = cl_maxpixelclock / 3;
+	case 24:
+		if ((cltype == PICASSO) && (cl_64bit == 1))
+	                maxpix = 85000000;
+		else
+	                maxpix = cl_maxpixelclock / 3;
+                break;
+	case 32:
+		if ((cltype == PICCOLO) && (cl_64bit == 1))
+	                maxpix = 50000000;
+		else
+	                maxpix = 0;
                 break;
 	default:
+		printf("grfcl: Illegal depth in mode %d\n",
+			(int) gv->mode_num);
 		return (0);
 	}
-        if (gv->pixel_clock > maxpix)
+
+	if (gv->pixel_clock > maxpix) {
+		printf("grfcl: Pixelclock too high in mode %d\n",
+			(int) gv->mode_num);
                 return (0);
+	}
+
+	if (gv->disp_flags & GRF_FLAGS_SYNC_ON_GREEN) {
+		printf("grfcl: sync-on-green is not supported\n");
+		return (0);
+	}
+
         return (1);
 }
 
@@ -1200,31 +1376,36 @@ cl_load_mon(gp, md)
 	struct grfvideo_mode *gv;
 	struct grfinfo *gi;
 	volatile caddr_t ba, fb;
-	unsigned char num0, denom0;
+	unsigned char num0, denom0, clkdoub;
 	unsigned short HT, HDE, HBS, HBE, HSS, HSE, VDE, VBS, VBE, VSS,
 	        VSE, VT;
-	char    LACE, DBLSCAN, TEXT;
-	unsigned short clkdiv;
-	int     uplim, lowlim;
+	int	clkmul, offsmul, clkmode;
+	int	vmul;
 	int	sr15;
+	unsigned char hvsync_pulse;
+	char    TEXT;
 
 	/* identity */
 	gv = &md->gv;
 	TEXT = (gv->depth == 4);
 
 	if (!cl_mondefok(gv)) {
-		printf("mondef not ok\n");
+		printf("grfcl: Monitor definition not ok\n");
 		return (0);
 	}
+
 	ba = gp->g_regkva;
 	fb = gp->g_fbkva;
 
-	/* provide all needed information in grf device-independant locations */
-	gp->g_data = (caddr_t) gv;
+	/* 
+	 * provide all needed information in grf device-independant
+	 * locations
+	 */
+	gp->g_data = (caddr_t)gv;
 	gi = &gp->g_display;
-	gi->gd_regaddr = (caddr_t) ztwopa(ba);
+	gi->gd_regaddr = (caddr_t)kvtop(ba);
 	gi->gd_regsize = 64 * 1024;
-	gi->gd_fbaddr = (caddr_t) kvtop(fb);
+	gi->gd_fbaddr = (caddr_t)kvtop(fb);
 	gi->gd_fbsize = cl_fbsize;
 	gi->gd_colors = 1 << gv->depth;
 	gi->gd_planes = gv->depth;
@@ -1245,14 +1426,14 @@ cl_load_mon(gp, md)
 	/* get display mode parameters */
 
 	HBS = gv->hblank_start;
-	HBE = gv->hblank_stop;
 	HSS = gv->hsync_start;
 	HSE = gv->hsync_stop;
+	HBE = gv->htotal - 1;
 	HT = gv->htotal;
 	VBS = gv->vblank_start;
 	VSS = gv->vsync_start;
 	VSE = gv->vsync_stop;
-	VBE = gv->vblank_stop;
+	VBE = gv->vtotal - 1;
 	VT = gv->vtotal;
 
 	if (TEXT)
@@ -1261,27 +1442,68 @@ cl_load_mon(gp, md)
 		HDE = (gv->disp_width + 3) / 8 - 1;	/* HBS; */
 	VDE = gv->disp_height - 1;
 
-	/* figure out whether lace or dblscan is needed */
-
-	uplim = gv->disp_height + (gv->disp_height / 4);
-	lowlim = gv->disp_height - (gv->disp_height / 4);
-	LACE = (((VT * 2) > lowlim) && ((VT * 2) < uplim)) ? 1 : 0;
-	DBLSCAN = (((VT / 2) > lowlim) && ((VT / 2) < uplim)) ? 1 : 0;
-
 	/* adjustments */
+	switch (gv->depth) {
+	case 8:
+		clkmul = 1;
+		offsmul = 1;
+		clkmode = 0x0;
+		break;
+	case 15:
+	case 16:
+		clkmul = 1;
+		offsmul = 2;
+		clkmode = 0x6;
+		break;
+	case 24:
+		/* Picasso IV? */
+		if ((cltype == PICASSO) && (cl_64bit == 1))
+			clkmul = 1;
+		else
+			clkmul = 3;
+		offsmul = 3;
+		clkmode = 0x4;
+		break;
+	case 32:
+		clkmul = 1;
+		offsmul = 2;
+		clkmode = 0x8;
+		break;
+	default:
+		clkmul = 1;
+		offsmul = 1;
+		clkmode = 0x0;
+		break;
+	}
 
-	if (LACE)
-		VDE /= 2;
+	if ((VT > 1023) && (!(gv->disp_flags & GRF_FLAGS_LACE))) {
+		WCrt(ba, CRT_ID_MODE_CONTROL, 0xe7);
+	} else
+		WCrt(ba, CRT_ID_MODE_CONTROL, 0xe3);
+
+	vmul = 2;
+	if ((VT > 1023) || (gv->disp_flags & GRF_FLAGS_LACE))
+		vmul = 1;
+	if (gv->disp_flags & GRF_FLAGS_DBLSCAN)
+		vmul = 4;
+
+	VDE = VDE * vmul / 2;
+	VBS = VBS * vmul / 2;
+	VSS = VSS * vmul / 2;
+	VSE = VSE * vmul / 2;
+	VBE = VBE * vmul / 2;
+	VT  = VT * vmul / 2;
 
 	WSeq(ba, SEQ_ID_MEMORY_MODE, (TEXT || (gv->depth == 1)) ? 0x06 : 0x0e);
-	if (cl_sd64 == 1) {
+	if (cl_64bit == 1) {
 	    if (TEXT || (gv->depth == 1))
-		sr15 = 0x90;
+		sr15 = 0xd0;
 	    else
 		sr15 = ((cl_fbsize / 0x100000 == 2) ? 0x38 : 0xb8);
 	    WSeq(ba, SEQ_ID_CONF_RBACK, 0x00);
 	} else {
 		sr15 = (TEXT || (gv->depth == 1)) ? 0xd0 : 0xb0;
+		sr15 &= ((cl_fbsize / 0x100000) == 2) ? 0xff : 0x7f;
 	}
 	WSeq(ba, SEQ_ID_DRAM_CNTL, sr15);
 	WGfx(ba, GCT_ID_READ_MAP_SELECT, 0x00);
@@ -1290,8 +1512,30 @@ cl_load_mon(gp, md)
 
 	/* Set clock */
 
-	cl_CompFQ((gv->depth == 24) ? gv->pixel_clock * 3 : gv->pixel_clock,
-	    &num0, &denom0);
+	cl_CompFQ(gv->pixel_clock * clkmul, &num0, &denom0, &clkdoub);
+
+	/* Horizontal/Vertical Sync Pulse */
+	hvsync_pulse = vgar(ba, GREG_MISC_OUTPUT_R);
+	if (gv->disp_flags & GRF_FLAGS_PHSYNC)
+		hvsync_pulse &= ~0x40;
+	else
+		hvsync_pulse |= 0x40;
+	if (gv->disp_flags & GRF_FLAGS_PVSYNC)
+		hvsync_pulse &= ~0x80;
+	else
+		hvsync_pulse |= 0x80;
+	vgaw(ba, GREG_MISC_OUTPUT_W, hvsync_pulse);
+
+	if (clkdoub) {
+		HDE /= 2;
+		HBS /= 2;
+		HSS /= 2;
+		HSE /= 2;
+		HBE /= 2;
+		HT  /= 2;
+		clkmode = 0x6;
+	}
+
 	WSeq(ba, SEQ_ID_VCLK_3_NUM, num0);
 	WSeq(ba, SEQ_ID_VCLK_3_DENOM, denom0);
 
@@ -1316,13 +1560,11 @@ cl_load_mon(gp, md)
 	    ((VDE & 0x200) ? 0x40 : 0x00) |
 	    ((VSS & 0x200) ? 0x80 : 0x00));
 
-
 	WCrt(ba, CRT_ID_CHAR_HEIGHT,
 	    0x40 |		/* TEXT ? 0x00 ??? */
-	    (DBLSCAN ? 0x80 : 0x00) |
+	    ((gv->disp_flags & GRF_FLAGS_DBLSCAN) ? 0x80 : 0x00) |
 	    ((VBS & 0x200) ? 0x20 : 0x00) |
 	    (TEXT ? ((md->fy - 1) & 0x1f) : 0x00));
-	WCrt(ba, CRT_ID_MODE_CONTROL, 0xe3);
 
 	/* text cursor */
 
@@ -1351,32 +1593,11 @@ cl_load_mon(gp, md)
 	WCrt(ba, CRT_ID_LINE_COMPARE, 0xff);
 	WCrt(ba, CRT_ID_LACE_END, HT / 2);	/* MW/16 */
 	WCrt(ba, CRT_ID_LACE_CNTL,
-	    (LACE ? 0x01 : 0x00) |
+	    ((gv->disp_flags & GRF_FLAGS_LACE) ? 0x01 : 0x00) |
 	    ((HBE & 0x40) ? 0x10 : 0x00) |
 	    ((HBE & 0x80) ? 0x20 : 0x00) |
 	    ((VBE & 0x100) ? 0x40 : 0x00) |
 	    ((VBE & 0x200) ? 0x80 : 0x00));
-
-	/* depth dependent stuff */
-
-	switch (gv->depth) {
-	    case 1:
-	    case 4:
-	    case 8:
-		clkdiv = 0;
-		break;
-	    case 15:
-	    case 16:
-		clkdiv = 3;
-		break;
-	    case 24:
-		clkdiv = 2;
-		break;
-	    default:
-		clkdiv = 0;
-		panic("grfcl: Unsuported depth: %i", gv->depth);
-		break;
-	}
 
 	WGfx(ba, GCT_ID_GRAPHICS_MODE,
 	    ((TEXT || (gv->depth == 1)) ? 0x00 : 0x40));
@@ -1384,15 +1605,11 @@ cl_load_mon(gp, md)
 
 	WSeq(ba, SEQ_ID_EXT_SEQ_MODE,
 	    ((TEXT || (gv->depth == 1)) ? 0x00 : 0x01) |
-	    ((cltype == PICASSO) ? 0x20 : 0x80) |
-	    (clkdiv << 1));
-
-	delay(200000);
+	    ((cltype == PICASSO) ? 0x20 : 0x80) | clkmode);
 
 	/* write 0x00 to VDAC_MASK before accessing HDR this helps
 	   sometimes, out of "secret" application note (crest) */
 	vgaw(ba, VDAC_MASK, 0);
-	delay(200000);
 	/* reset HDR "magic" access counter (crest) */
 	vgar(ba, VDAC_ADDRESS);
 
@@ -1406,53 +1623,54 @@ cl_load_mon(gp, md)
 	vgar(ba, VDAC_MASK);
 	delay(200000);
 	switch (gv->depth) {
-	    case 1:
-	    case 4:		/* text */
+	case 1:
+	case 4:		/* text */
 		vgaw(ba, VDAC_MASK, 0);
 		HDE = gv->disp_width / 16;
 		break;
-	    case 8:
-		vgaw(ba, VDAC_MASK, 0);
+	case 8:
+		if (clkdoub) 
+			vgaw(ba, VDAC_MASK, 0x4a); /* Clockdouble Magic */
+		else
+			vgaw(ba, VDAC_MASK, 0);
 		HDE = gv->disp_width / 8;
 		break;
-	    case 15:
+	case 15:
 		vgaw(ba, VDAC_MASK, 0xd0);
 		HDE = gv->disp_width / 4;
 		break;
-	    case 16:
+	case 16:
 		vgaw(ba, VDAC_MASK, 0xc1);
 		HDE = gv->disp_width / 4;
 		break;
-	    case 24:
+	case 24:
 		vgaw(ba, VDAC_MASK, 0xc5);
 		HDE = (gv->disp_width / 8) * 3;
 		break;
+	case 32:
+		vgaw(ba, VDAC_MASK, 0xc5);
+		HDE = (gv->disp_width / 4);
+		break;
 	}
-	delay(20000);
 
 	/* reset HDR "magic" access counter (crest) */
 	vgar(ba, VDAC_ADDRESS);
-	delay(200000);
 	/* then enable all bit in VDAC_MASK afterwards (crest) */
 	vgaw(ba, VDAC_MASK, 0xff);
-	delay(20000);
 
 	WCrt(ba, CRT_ID_OFFSET, HDE);
-	if (cl_sd64 == 1) {
+	if (cl_64bit == 1) {
 		WCrt(ba, CRT_ID_SYNC_ADJ_GENLOCK, 0x00);
 		WCrt(ba, CRT_ID_OVERLAY_EXT_CTRL_REG, 0x40);
 	}
 	WCrt(ba, CRT_ID_EXT_DISP_CNTL,
 	    ((TEXT && gv->pixel_clock > 29000000) ? 0x40 : 0x00) |
 	    0x22 |
-	    ((HDE > 0xff) ? 0x10 : 0x00));	/* text? */
+	    ((HDE > 0xff) ? 0x10 : 0x00));
 
-	delay(200000);
 	WAttr(ba, ACT_ID_ATTR_MODE_CNTL, (TEXT ? 0x0a : 0x01));
-	delay(200000);
 	WAttr(ba, 0x20 | ACT_ID_COLOR_PLANE_ENA,
 	    (gv->depth == 1) ? 0x01 : 0x0f);
-	delay(200000);
 
 	/* text initialization */
 
@@ -1506,7 +1724,6 @@ cl_inittextmode(gp)
 
 	/* set colors (B&W) */
 
-
 	vgaw(ba, VDAC_ADDRESS_W, 0);
 	for (z = 0; z < 256; z++) {
 		unsigned char r, g, b;
@@ -1538,13 +1755,14 @@ cl_memset(d, c, l)
 		*d++ = c;
 }
 
-/* Special wakeup/passthrough registers on graphics boards
+/*
+ * Special wakeup/passthrough registers on graphics boards
  *
  * The methods have diverged a bit for each board, so
  * WPass(P) has been converted into a set of specific
  * inline functions.
  */
-static void
+void
 RegWakeup(ba)
 	volatile caddr_t ba;
 {
@@ -1554,19 +1772,20 @@ RegWakeup(ba)
 		vgaw(ba, PASS_ADDRESS_W, 0x1f);
 		break;
 	    case PICASSO:
-		vgaw(ba, PASS_ADDRESS_W, 0xff);
+		/* Picasso needs no wakeup */
 		break;
 	    case PICCOLO:
-		if (cl_sd64 == 1)
+		if (cl_64bit == 1)
 			vgaw(ba, PASS_ADDRESS_W, 0x1f);
 		else
-			vgaw(ba, PASS_ADDRESS_W, vgar(ba, PASS_ADDRESS) | 0x10);
+			vgaw(ba, PASS_ADDRESS_W,
+			    vgar(ba, PASS_ADDRESS) | 0x10);
 		break;
 	}
 	delay(200000);
 }
 
-static void
+void
 RegOnpass(ba)
 	volatile caddr_t ba;
 {
@@ -1579,7 +1798,7 @@ RegOnpass(ba)
 		vgaw(ba, PASS_ADDRESS_WP, 0x01);
 		break;
 	    case PICCOLO:
-		if (cl_sd64 == 1)
+		if (cl_64bit == 1)
 			vgaw(ba, PASS_ADDRESS_W, 0x4f);
 		else
 			vgaw(ba, PASS_ADDRESS_W, vgar(ba, PASS_ADDRESS) & 0xdf);
@@ -1589,7 +1808,7 @@ RegOnpass(ba)
 	delay(200000);
 }
 
-static void
+void
 RegOffpass(ba)
 	volatile caddr_t ba;
 {
@@ -1599,15 +1818,15 @@ RegOffpass(ba)
 		vgaw(ba, PASS_ADDRESS_W, 0x6f);
 		break;
 	    case PICASSO:
-		vgaw(ba, PASS_ADDRESS_W, 0xff);
-		delay(200000);
-		vgaw(ba, PASS_ADDRESS_W, 0xff);
+		if (cl_64bit == 0)
+			vgaw(ba, PASS_ADDRESS_W, 0xff);
 		break;
 	    case PICCOLO:
-		if (cl_sd64 == 1)
+		if (cl_64bit == 1)
 			vgaw(ba, PASS_ADDRESS_W, 0x6f);
 		else
-			vgaw(ba, PASS_ADDRESS_W, vgar(ba, PASS_ADDRESS) | 0x20);
+			vgaw(ba, PASS_ADDRESS_W,
+			    vgar(ba, PASS_ADDRESS) | 0x20);
 		break;
 	}
 	pass_toggle = 0;

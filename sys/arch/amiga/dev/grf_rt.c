@@ -1,5 +1,5 @@
-/*	$OpenBSD: grf_rt.c,v 1.10 1997/01/16 09:24:20 niklas Exp $	*/
-/*	$NetBSD: grf_rt.c,v 1.34 1996/12/23 09:10:09 veego Exp $	*/
+/*	$OpenBSD: grf_rt.c,v 1.11 1997/09/18 13:39:53 niklas Exp $	*/
+/*	$NetBSD: grf_rt.c,v 1.35 1997/07/29 17:52:09 veego Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -259,7 +259,7 @@ static struct MonDef *default_monitor = &DEFAULT_MONDEF;
 #endif
 
 int retina_alive __P((struct MonDef *));
-static int rt_load_mon __P((struct grf_softc *, struct MonDef *));
+int rt_load_mon __P((struct grf_softc *, struct MonDef *));
 
 
 /*
@@ -284,7 +284,7 @@ retina_alive(mdp)
 	return(0);
 }
 
-static int
+int
 rt_load_mon(gp, md)
 	struct grf_softc *gp;
 	struct MonDef *md;
@@ -769,8 +769,8 @@ int grfrtprint __P((void *, const char *));
 int grfrtmatch __P((struct device *, void *, void *));
  
 int rt_mode __P((struct grf_softc *, u_long, void *, u_long, int));
-static int rt_getvmode __P((struct grf_softc *, struct grfvideo_mode *));
-static int rt_setvmode __P((struct grf_softc *, unsigned, int));
+int rt_getvmode __P((struct grf_softc *, struct grfvideo_mode *));
+int rt_setvmode __P((struct grf_softc *, unsigned, int));
 int rt_getspritepos __P((struct grf_softc *, struct grf_position *));
 int rt_setspritepos __P((struct grf_softc *, struct grf_position *));
 int rt_getspriteinfo __P((struct grf_softc *, struct grf_spriteinfo *));
@@ -900,12 +900,13 @@ grfrtprint(auxp, pnp)
 	return(UNCONF);
 }
 
-static int 
+int 
 rt_getvmode (gp, vm)
 	struct grf_softc *gp;
 	struct grfvideo_mode *vm;
 {
 	struct MonDef *md;
+	int vmul;
 
 	if (vm->mode_num && vm->mode_num > retina_mon_max)
 		return (EINVAL);
@@ -925,41 +926,51 @@ rt_getvmode (gp, vm)
 	 * From observation of the monitor definition table above, I guess that
 	 * the horizontal timings are in units of longwords. Hence, I get the
 	 * pixels by multiplication with 32 and division by the depth.
-	 * The text modes, apparently marked by depth == 4, are even more wierd.
-	 * According to a comment above, they are computed from a depth==8 mode
-	 * (thats for us: * 32 / 8) by applying another factor of 4 / font width.
-	 * Reverse applying the latter formula most of the constants cancel
-	 * themselves and we are left with a nice (* font width).
-	 * That is, internal timings are in units of longwords for graphics  
-	 * modes, or in units of characters widths for text modes.
+	 * The text modes, apparently marked by depth == 4, are even more
+	 * wierd.  According to a comment above, they are computed from a
+	 * depth==8 mode (thats for us: * 32 / 8) by applying another factor of
+	 * 4 / font width.  Reverse applying the latter formula most of the
+	 * constants cancel themselves and we are left with a nice (* font
+	 * width).  That is, internal timings are in units of longwords for
+	 * graphics modes, or in units of characters widths for text modes.
 	 * We better don't WRITE modes until this has been real live checked.
 	 * 			- Ignatios Souvatzis
 	 */
 
-	if (md->DEP == 4) {
+	if (md->DEP != 4) {
 		vm->hblank_start = md->HBS * 32 / md->DEP;
-		vm->hblank_stop  = md->HBE * 32 / md->DEP;
 		vm->hsync_start  = md->HSS * 32 / md->DEP;
 		vm->hsync_stop   = md->HSE * 32 / md->DEP;
 		vm->htotal       = md->HT * 32 / md->DEP;
 	} else {
 		vm->hblank_start = md->HBS * md->FX;
-		vm->hblank_stop  = md->HBE * md->FX;
 		vm->hsync_start  = md->HSS * md->FX;
 		vm->hsync_stop   = md->HSE * md->FX;
 		vm->htotal       = md->HT * md->FX;
 	}
-	vm->vblank_start = md->VBS;
-	vm->vblank_stop  = md->VBE;
-	vm->vsync_start  = md->VSS;
-	vm->vsync_stop   = md->VSE;
-	vm->vtotal       = md->VT;
+
+	/* XXX move vm->disp_flags and vmul to rt_load_mon
+	* if rt_setvmode can add new modes with grfconfig */
+	vm->disp_flags = 0;
+	vmul = 2;
+	if (md->FLG & MDF_DBL) {
+		vm->disp_flags |= GRF_FLAGS_DBLSCAN;
+		vmul = 4;
+	}
+	if (md->FLG & MDF_LACE) {
+		vm->disp_flags |= GRF_FLAGS_LACE;
+		vmul = 1;
+	}
+	vm->vblank_start = md->VBS * vmul / 2;
+	vm->vsync_start  = md->VSS * vmul / 2;
+	vm->vsync_stop   = md->VSE * vmul / 2;
+	vm->vtotal       = md->VT * vmul / 2;
 
 	return (0);
 }
 
 
-static int 
+int 
 rt_setvmode (gp, mode, txtonly)
 	struct grf_softc *gp;
 	unsigned mode;

@@ -1,5 +1,5 @@
-/*	$OpenBSD: locore.s,v 1.22 1997/07/20 07:35:37 niklas Exp $	*/
-/*	$NetBSD: locore.s,v 1.72 1996/12/17 11:09:10 is Exp $	*/
+/*	$OpenBSD: locore.s,v 1.23 1997/09/18 13:39:35 niklas Exp $	*/
+/*	$NetBSD: locore.s,v 1.89 1997/07/17 16:22:54 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,6 +51,7 @@
 #include "assym.h"
 
 #include <machine/asm.h>
+#include <machine/trap.h>
 
 	.globl	_kernel_text
 _kernel_text:
@@ -953,9 +954,30 @@ Lsetcpu040:
 	movl	#CPU_68040,a1@
 	.word	0xf4f8			| cpusha bc - push and inval. caches
 	movl	#CACHE40_OFF,d0		| 68040 cache disable
-	btst	#7,sp@(3)		| XXX
+#ifndef BB060STUPIDROM
+	btst	#7,sp@(3)
 	jeq	Lstartnot040
+	movl	#CPU_68060,a1@		| set cputype
 	orl	#IC60_CABC,d0		| XXX and clear all 060 branch cache
+#else
+	movc	d0,cacr
+	bset	#30,d0			| not allocate data cache bit
+	movc	d0,cacr			| does it stick?
+	movc	cacr,d0
+	tstl	d0
+	jeq	Lstartnot040
+	bset	#7,sp@(3)		| note it is '60 family in machineid
+	movl	#CPU_68060,a1@		| and in the cputype
+	orl	#IC60_CABC,d0		| XXX and clear all 060 branch cache 
+	.word	0x4e7a,0x1808		| movc	pcr,d1
+	swap	d1
+	cmpw	#0x430,d1		
+	jne	Lstartnot040		| but no FPU
+	bset	#6,sp@(3)		| yes, we have FPU, note that
+	swap	d1
+	bclr	#1,d1			| ... and switch it on.
+	.word	0x4e7b,0x1808		| movc	d1,pcr
+#endif
 Lstartnot040:
 	movc	d0,cacr			| clear and disable on-chip cache(s)
 	movl	#_vectab,a0
@@ -988,9 +1010,9 @@ Lunshadow:
 #ifdef FPCOPROC
 	clrl	a1@(PCB_FPCTX)		| ensure null FP context
 |WRONG!	movl	a1,sp@-
-	pea	a1@(PCB_FPCTX)
-	jbsr	_m68881_restore		| restore it (does not kill a1)
-	addql	#4,sp
+|	pea	a1@(PCB_FPCTX)
+|	jbsr	_m68881_restore		| restore it (does not kill a1)
+|	addql	#4,sp
 #endif
 
 /* flush TLB and turn on caches */
@@ -1082,38 +1104,15 @@ _proc_trampoline:
 	addql	#8,sp			| pop sp and stack adjust
 	jra	rei			| all done
 
-
 /*
- * Signal "trampoline" code (18 bytes).  Invoked from RTE setup by sendsig().
- *
- * Stack looks like:
- *
- *	sp+0 ->	signal number
- *	sp+4	pointer to siginfo (sip)
- *	sp+8	pointer to signal context frame (scp)
- *	sp+16	address of handler
- *	sp+30	saved hardware state
- *			.
- *			.
- *	scp+0->	beginning of signal context frame
+ * Use common m68k sigcode.
  */
-	.globl	_sigcode, _esigcode
-	.data
-_sigcode:
-	movl	sp@(12),a0		| signal handler addr	(4 bytes)
-	jsr	a0@			| call signal handler	(2 bytes)
-	addql	#4,sp			| pop signo		(2 bytes)
-	trap	#1			| special syscall entry	(2 bytes)
-	movl	d0,sp@(4)		| save errno		(4 bytes)
-	moveq	#1,d0			| syscall == exit	(2 bytes)
-	trap	#0			| exit(errno)		(2 bytes)
-	.align	2
-_esigcode:
+#include <m68k/m68k/sigcode.s>
 
 /*
  * Primitives
  */
-#include <m68k/asm.h>
+#include <m68k/m68k/support.s>
 
 /*
  * update profiling information for the user
@@ -1153,92 +1152,32 @@ Lauexit:
 	movl	sp@+,a2			| restore scratch reg
 	rts
 
-#include <m68k/m68k/support.s>
 
+#ifdef notdef
 /*
- * The following primitives manipulate the run queues.
- * _whichqs tells which of the 32 queues _qs have processes
- * in them.  Setrunqueue puts processes into queues, remrunqueue
- * removes them from queues.  The running process is on no queue,
- * other processes are on a queue related to p->p_priority, divided by 4
- * actually to shrink the 0-127 range of priorities into the 32 available
- * queues.
+ * non-local gotos
  */
-
+ENTRY(qsetjmp)
+	movl	sp@(4),a0	| savearea pointer
+	lea	a0@(40),a0	| skip regs we do not save
+	movl	a6,a0@+		| save FP
+	movl	sp,a0@+		| save SP
+	movl	sp@,a0@		| and return address
+	moveq	#0,d0		| return 0
+	rts
+#endif
+	
 	.globl	_whichqs,_qs,_cnt,_panic
 	.globl	_curproc
 	.comm	_want_resched,4
 
 /*
- * Setrunqueue(p)
- *
- * Call should be made at spl6(), and p->p_stat should be SRUN
+ * Use common m68k process manipulation routines.
  */
-ENTRY(setrunqueue)
-	movl	sp@(4),a0
-	tstl	a0@(P_BACK)
-	jeq	Lset1
-	movl	#Lset2,sp@-
-	jbsr	_panic
-Lset1:
-	clrl	d0
-	movb	a0@(P_PRIORITY),d0
-	lsrb	#2,d0
-	movl	_whichqs,d1
-	bset	d0,d1
-	movl	d1,_whichqs
-	lslb	#3,d0
-	addl	#_qs,d0
-	movl	d0,a0@(P_FORW)
-	movl	d0,a1
-	movl	a1@(P_BACK),a0@(P_BACK)
-	movl	a0,a1@(P_BACK)
-	movl	a0@(P_BACK),a1
-	movl	a0,a1@(P_FORW)
-	rts
+#include <m68k/m68k/proc_subr.s>
 
-Lset2:
-	.asciz	"setrunqueue"
-	.even
-
-/*
- * remrunqueue(p)
- *
- * Call should be made at spl6().
- */
-ENTRY(remrunqueue)
-	movl	sp@(4),a0
-	clrl	d0
-	movb	a0@(P_PRIORITY),d0
-	lsrb	#2,d0
-	movl	_whichqs,d1
-	bclr	d0,d1
-	jne	Lrem1
-	movl	#Lrem3,sp@-
-	jbsr	_panic
-Lrem1:
-	movl	d1,_whichqs
-	movl	a0@(P_FORW),a1
-	movl	a0@(P_BACK),a1@(P_BACK)
-	movl	a0@(P_BACK),a1
-	movl	a0@(P_FORW),a1@(P_FORW)
-	movl	#_qs,a1
-	movl	d0,d1
-	lslb	#3,d1
-	addl	d1,a1
-	cmpl	a1@(P_FORW),a1
-	jeq	Lrem2
-	movl	_whichqs,d1
-	bset	d0,d1
-	movl	d1,_whichqs
-Lrem2:
-	clrl	a0@(P_BACK)
-	rts
-
-Lrem3:
-	.asciz	"remrunqueue"
 Lsw0:
-	.asciz	"cpu_switch"
+ 	.asciz	"cpu_switch"
 	.even
 
 	.globl	_curpcb
@@ -1373,6 +1312,10 @@ Lsw2:
 	movl	a2,a1@(PCB_USP)		| and save it
 	movl	_CMAP2,a1@(PCB_CMAP2)	| save temporary map PTE
 #ifdef FPCOPROC
+#ifdef FPU_EMULATE
+	tstl	_fputype		| do we have any FPU?
+	jeq	Lswnofpsave		| no, dont save
+#endif
 	lea	a1@(PCB_FPCTX),a2	| pointer to FP save area
 	fsave	a2@			| save FP state
 #if defined(M68020) || defined(M68030) || defined(M68040)
@@ -1417,7 +1360,7 @@ Lswnofpsave:
 	tstl	a0			| map == VM_MAP_NULL?
 	jeq	Lbadsw			| panic
 #endif
-	lea	a0@(VM_PMAP),a0		| pmap = &vmspace.vm_pmap
+	movl	a0@(VM_PMAP),a0		| pmap = vmspace->vm_map.pmap
 	tstl	a0@(PM_STCHG)		| pmap->st_changed?
 	jeq	Lswnochg		| no, skip
 	pea	a1@			| push pcb (at p_addr)
@@ -1462,6 +1405,14 @@ Lres5:
 	movl	a1@(PCB_USP),a0
 	movl	a0,usp			| and USP
 #ifdef FPCOPROC
+#ifdef FPU_EMULATE
+	tstl	_fputype		| do we _have_ any fpu?
+	jne	Lresnonofpatall
+	movw	a1@(PCB_PS),sr		| no, restore PS
+	moveq	#1,d0			| return 1 (for alternate returns)
+	rts
+Lresnonofpatall:
+#endif
 	lea	a1@(PCB_FPCTX),a0	| pointer to FP save area
 #if defined(M68020) || defined(M68030) || defined(M68040)
 #ifdef M68060
@@ -1507,6 +1458,10 @@ ENTRY(savectx)
 	moveml	#0xFCFC,a1@(PCB_REGS)	| save non-scratch registers
 	movl	_CMAP2,a1@(PCB_CMAP2)	| save temporary map PTE
 #ifdef FPCOPROC
+#ifdef FPU_EMULATE
+	tstl	_fputype
+	jeq	Lsavedone
+#endif
 	lea	a1@(PCB_FPCTX),a0	| pointer to FP save area
 	fsave	a0@			| save FP state
 #if defined(M68020) || defined(M68030) || defined(M68040)
@@ -2271,11 +2226,13 @@ _fpeaemu60:
 tmpstk:
 	.globl	_mmutype,_cputype,_fputype,_protorp
 _mmutype:
-	.long	0
+	.long	MMU_68851
 _cputype:
-	.long	0
+	.long	CPU_68020
+_ectype:
+	.long	EC_NONE
 _fputype:
-	.long	0
+	.long	FPU_NONE
 _protorp:
 	.long	0x80000002,0	| prototype root pointer
 	.globl	_cold
@@ -2329,6 +2286,9 @@ _intrnames:
 	.asciz	"60fpeaemu"
 	.asciz	"60bpe"
 #endif
+#ifdef FPU_EMULATE
+	.asciz	"fpe"
+#endif
 _eintrnames:
 	.align	2
 _intrcnt:
@@ -2343,5 +2303,8 @@ L60fpiem:	.long	0
 L60fpdem:	.long	0
 L60fpeaem:	.long	0
 L60bpe:		.long	0
+#endif
+#ifdef FPU_EMULATE
+Lfpecnt:	.long	0
 #endif
 _eintrcnt:

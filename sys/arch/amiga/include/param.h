@@ -1,5 +1,5 @@
-/*	$OpenBSD: param.h,v 1.9 1997/09/17 17:44:05 downsj Exp $	*/
-/*	$NetBSD: param.h,v 1.30 1996/09/28 15:54:04 mhitch Exp $	*/
+/*	$OpenBSD: param.h,v 1.10 1997/09/18 13:40:02 niklas Exp $	*/
+/*	$NetBSD: param.h,v 1.35 1997/07/10 08:22:36 veego Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,108 +42,38 @@
  *
  *	@(#)param.h	7.8 (Berkeley) 6/28/91
  */
-#ifndef _MACHINE_PARAM_H_
-#define _MACHINE_PARAM_H_
+
+#ifndef	_MACHINE_PARAM_H_
+#define	_MACHINE_PARAM_H_
 
 /*
  * Machine dependent constants for amiga
  */
 #define	_MACHINE	amiga
 #define	MACHINE		"amiga"
-#define	_MACHINE_ARCH	m68k
-#define	MACHINE_ARCH	"m68k"
-#define	MID_MACHINE	MID_M68K
 
-/*
- * Round p (pointer or byte index) up to a correctly-aligned value
- * for all data types (int, long, ...).   The result is u_int and
- * must be cast to any desired pointer type.
- */
-#define ALIGNBYTES	(sizeof(int) - 1)
-#define	ALIGN(p)	(((u_int)(p) + (sizeof(int) - 1)) &~ (sizeof(int) - 1))
-
-#define	NBPG		8192		/* bytes/page */
-#define	PGOFSET		(NBPG-1)	/* byte offset into page */
 #define	PGSHIFT		13		/* LOG2(NBPG) */
-#define	NPTEPG		(NBPG/(sizeof(u_int)))
+#define	KERNBASE	0x00000000	/* start of kernel virtual */
 
-#define NBSEG		((mmutype == MMU_68040) ? 32*NBPG : 2048*NBPG)	/* bytes/segment */
-#define	SEGOFSET	(NBSEG-1)	/* byte offset into segment */
 #define	SEGSHIFT	24		/* LOG2(NBSEG) [68030 value] */
-
-#define	KERNBASE	0x0		/* start of kernel virtual */
-#define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
-
-#define	DEV_BSIZE	512
-#define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
-#define BLKDEV_IOSIZE	2048
-#define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
-
-#define	CLSIZE		1
-#define	CLSIZELOG2	0
-
-/* NOTE: SSIZE, SINCR and UPAGES must be multiples of CLSIZE */
-#define	SSIZE		1		/* initial stack size/NBPG */
-#define	SINCR		1		/* increment of stack/NBPG */
+/* bytes/segment */
+/* (256 * (1 << PGSHIFT)) == (1 << SEGSHIFT) */
+#define NBSEG		((mmutype == MMU_68040) \
+			    ? (32 * (1 << PGSHIFT)) : (256 * (1 << PGSHIFT)))
+#define	SEGOFSET	(NBSEG-1)	/* byte offset into segment */
 
 #define	UPAGES		2		/* pages of u-area */
-#define USPACE		(UPAGES * NBPG)
 
-/*
- * Constants related to network buffer management.
- * MCLBYTES must be no larger than CLBYTES (the software page size), and,
- * on machines that exchange pages of input or output buffers with mbuf
- * clusters (MAPPED_MBUFS), MCLBYTES must also be an integral multiple
- * of the hardware page size.
- */
-#define	MSIZE		128		/* size of an mbuf */
-#define	MCLSHIFT	11
-#define	MCLBYTES	(1 << MCLSHIFT)
-#define	MCLOFSET	(MCLBYTES - 1)
-#ifndef NMBCLUSTERS
-#ifdef GATEWAY
-#define	NMBCLUSTERS	1024		/* map size, max cluster allocation */
-#else
-#define	NMBCLUSTERS	512		/* map size, max cluster allocation */
-#endif
-#endif
+#include <m68k/param.h>
+
+#define	NPTEPG		(NBPG/(sizeof (pt_entry_t)))
 
 /*
  * Size of kernel malloc arena in CLBYTES-sized logical pages
- */ 
+ */
 #ifndef NKMEMCLUSTERS
-#define	NKMEMCLUSTERS	(3072*1024/CLBYTES)
+#define	NKMEMCLUSTERS	(3072 * 1024 / CLBYTES)
 #endif
-
-/* pages ("clicks") to disk blocks */
-#define	ctod(x)		((x) << (PGSHIFT - DEV_BSHIFT))
-#define	dtoc(x)		((x) >> (PGSHIFT - DEV_BSHIFT))
-
-/* pages to bytes */
-#define	ctob(x)		((x) << PGSHIFT)
-#define	btoc(x)		(((x) + PGOFSET) >> PGSHIFT)
-
-/* bytes to disk blocks */
-#define	btodb(x)	((x) >> DEV_BSHIFT)
-#define	dbtob(x)	((x) << DEV_BSHIFT)
-
-/*
- * Map a ``block device block'' to a file system block.
- * This should be device dependent, and should use the bsize
- * field from the disk label.
- * For now though just use DEV_BSIZE.
- */
-#define	bdbtofsb(bn)	((bn) / (BLKDEV_IOSIZE/DEV_BSIZE))
-
-/*
- * Mach derived conversion macros
- */
-#define amiga_round_seg(x)	((((unsigned)(x)) + NBSEG - 1) & ~(NBSEG-1))
-#define amiga_trunc_seg(x)	((unsigned)(x) & ~(NBSEG-1))
-#define amiga_round_page(x)	((((unsigned)(x)) + NBPG - 1) & ~(NBPG-1))
-#define amiga_trunc_page(x)	((unsigned)(x) & ~(NBPG-1))
-#define amiga_btop(x)		((unsigned)(x) >> PGSHIFT)
-#define amiga_ptob(x)		((unsigned)(x) << PGSHIFT)
 
 /*
  * spl functions; all are normally done in-line
@@ -151,10 +81,10 @@
 #include <machine/psl.h>
 
 #ifdef _KERNEL
-#ifndef _LOCORE
-void delay __P((u_int));
-void DELAY __P((u_int));
-#endif
-#endif
+#ifndef	_LOCORE
+void delay __P((int));
+void DELAY __P((int));
+#endif	/* !_LOCORE */
+#endif	/* _KERNEL */
 
 #endif /* !_MACHINE_PARAM_H_ */

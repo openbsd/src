@@ -1,5 +1,5 @@
-/*	$OpenBSD: grf_rh.c,v 1.12 1997/01/16 09:24:18 niklas Exp $	*/
-/*	$NetBSD: grf_rh.c,v 1.26 1996/12/31 17:54:28 is Exp $	*/
+/*	$OpenBSD: grf_rh.c,v 1.13 1997/09/18 13:39:52 niklas Exp $	*/
+/*	$NetBSD: grf_rh.c,v 1.27 1997/07/29 17:52:05 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -1637,6 +1637,7 @@ rh_getvmode(gp, vm)
 	struct grfvideo_mode *vm;
 {
 	struct MonDef *md;
+	int vmul;
 
 	if (vm->mode_num && vm->mode_num > rh_mon_max)
 		return(EINVAL);
@@ -1668,25 +1669,34 @@ rh_getvmode(gp, vm)
 	 *                    - Ignatios Souvatzis
 	 */
           
-	if (md->DEP == 4) {
+	if (md->DEP != 4) {
 		vm->hblank_start = md->HBS * 32 / md->DEP;
-		vm->hblank_stop  = md->HBE * 32 / md->DEP;
 		vm->hsync_start  = md->HSS * 32 / md->DEP;    
 		vm->hsync_stop   = md->HSE * 32 / md->DEP;
 		vm->htotal       = md->HT * 32 / md->DEP;
 	} else {
 		vm->hblank_start = md->HBS * md->FX;
-		vm->hblank_stop  = md->HBE * md->FX;
 		vm->hsync_start  = md->HSS * md->FX;
 		vm->hsync_stop   = md->HSE * md->FX;
 		vm->htotal       = md->HT * md->FX;    
 	}
 
-	vm->vblank_start = md->VBS;
-	vm->vblank_stop  = md->VBE;
-	vm->vsync_start  = md->VSS;
-	vm->vsync_stop   = md->VSE;
-	vm->vtotal       = md->VT;
+	/* XXX move vm->disp_flags and vmul to rh_load_mon
+	 * if rh_setvmode can add new modes with grfconfig */
+	vm->disp_flags = 0;
+	vmul = 2;
+	if (md->FLG & MDF_DBL) {
+		vm->disp_flags |= GRF_FLAGS_DBLSCAN;
+		vmul = 4;
+	}
+	if (md->FLG & MDF_LACE) {
+		vm->disp_flags |= GRF_FLAGS_LACE;
+		vmul = 1;
+	}
+	vm->vblank_start = md->VBS * vmul / 2;
+	vm->vsync_start  = md->VSS * vmul / 2;
+	vm->vsync_stop   = md->VSE * vmul / 2;
+	vm->vtotal       = md->VT * vmul / 2;
 
 	return(0);
 }

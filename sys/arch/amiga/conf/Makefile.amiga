@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile.amiga,v 1.21 1997/09/15 02:40:25 deraadt Exp $
-#	$NetBSD: Makefile.amiga,v 1.52 1996/12/01 12:10:07 veego Exp $
+#	$OpenBSD: Makefile.amiga,v 1.22 1997/09/18 13:39:39 niklas Exp $
+#	$NetBSD: Makefile.amiga,v 1.60 1997/07/23 10:19:42 is Exp $
 
 # Makefile for OpenBSD
 #
@@ -35,8 +35,8 @@ S!=	cd ../../../..; pwd
 .endif
 AMIGA=	$S/arch/amiga
 
-INCLUDES=	-nostdinc -I. -I$S/arch -I$S
-CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Dmc68020 -Damiga
+INCLUDES=	-I. -I$S/arch -I$S -nostdinc
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dmc68020 -Damiga
 
 CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wno-uninitialized -Wno-format
@@ -83,13 +83,7 @@ LIBCOMPAT=	${COMPATLIB_PROF}
 # HOSTED}, and SUFFIX is the file suffix, capitalized (e.g. C for a .c file).
 
 NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
-NORMAL_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
-
-DRIVER_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
-DRIVER_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
-
 NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
-NORMAL_S_C=	${CC} ${AFLAGS} ${CPPFLAGS} ${PARAM} -c $<
 
 .SUFFIXES: .o .g
 
@@ -128,17 +122,17 @@ LINKFLAGS+=	-S
 
 %LOAD
 
-assym.h: $S/kern/genassym.sh ${AMIGA}/amiga/genassym.cf
-	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} \
-	    ${PARAM} < ${AMIGA}/amiga/genassym.cf > assym.h.tmp && \
-	    mv -f assym.h.tmp assym.h
+assym.h: ${AMIGA}/amiga/genassym.cf $S/kern/genassym.sh
+	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
+	    < ${AMIGA}/amiga/genassym.cf > assym.h.tmp && \
+	mv -f assym.h.tmp assym.h
 
 param.c: $S/conf/param.c
 	rm -f param.c
 	cp $S/conf/param.c .
 
 param.o: param.c Makefile
-	${NORMAL_C_C}
+	${NORMAL_C}
 
 ioconf.o: ioconf.c
 	${NORMAL_C}
@@ -148,9 +142,10 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 
 
-clean::
+clean:: cleankernel
+cleankernel:
 	rm -f eddep *bsd bsd.gdb tags *.[io] [a-z]*.s \
-	    [Ee]rrs linterrs makelinks genassym genassym.o assym.h
+	    [Ee]rrs linterrs makelinks assym.h
 
 lint:
 	@lint -hbxncez -DGENERIC -Dvolatile= ${CPPFLAGS} -UKGDB \
@@ -162,11 +157,10 @@ tags:
 
 links:
 	egrep '#if' ${CFILES} | sed -f $S/conf/defines | \
-	    sed -e 's/:.*//' -e 's/\.c/.o/' | sort -u > dontlink
+	  sed -e 's/:.*//' -e 's/\.c/.o/' | sort -u > dontlink
 	echo ${CFILES} | tr -s ' ' '\12' | sed 's/\.c/.o/' | \
-	    sort -u | comm -23 - dontlink | \
-	    sed 's,../.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' \
-	    > makelinks
+	  sort -u | comm -23 - dontlink | \
+	  sed 's,../.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
 	sh makelinks && rm -f dontlink
 
 SRCS=	${AMIGA}/amiga/locore.s \
@@ -177,6 +171,10 @@ depend:: .depend
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${AMIGA}/amiga/locore.s
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
+	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
+	  ${CPPFLAGS} < ${AMIGA}/amiga/genassym.cf
+	@sed -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >> .depend
+	@rm -f assym.dep
 
 # depend on root or device configuration
 autoconf.o conf.o: Makefile
@@ -185,7 +183,7 @@ autoconf.o conf.o: Makefile
 uipc_proto.o vfs_conf.o: Makefile 
 
 # depend on maxusers
-assym.h machdep.o: Makefile
+machdep.o: Makefile
 
 # depend on CPU configuration 
 amiga_init.o locore.o pmap.o sys_machdep.o bzsc.o flsc.o sbic.o sfas.o: Makefile

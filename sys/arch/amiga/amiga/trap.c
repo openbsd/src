@@ -1,5 +1,5 @@
-/*	$OpenBSD: trap.c,v 1.13 1997/04/10 08:51:04 niklas Exp $	*/
-/*	$NetBSD: trap.c,v 1.53 1997/01/16 15:30:57 gwr Exp $	*/
+/*	$OpenBSD: trap.c,v 1.14 1997/09/18 13:39:37 niklas Exp $	*/
+/*	$NetBSD: trap.c,v 1.56 1997/07/16 00:01:47 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -66,6 +66,8 @@
 #include <machine/reg.h>
 #include <machine/mtpr.h>
 #include <machine/pte.h>
+
+#include <m68k/fpe/fpu_emulate.h>
 
 #ifdef COMPAT_SUNOS
 #include <compat/sunos/sunos_syscall.h>
@@ -241,7 +243,7 @@ panictrap(type, code, v, fp)
 	static int panicing = 0;
 	if (panicing++ == 0) {
 		printf("trap type %d, code = %x, v = %x\n", type, code, v);
-		regdump(fp, 128);
+		regdump((struct trapframe *)fp, 128);
 	}
 	type &= ~T_USER;
 #ifdef DEBUG
@@ -617,6 +619,22 @@ trap(type, code, v, frame)
 		v = frame.f_pc;
 		break;
 
+  
+	case T_FPEMULI|T_USER:
+	case T_FPEMULD|T_USER:
+#ifdef FPU_EMULATE
+		i = fpu_emulate(&frame, &p->p_addr->u_pcb.pcb_fpregs);
+		/* XXX - Deal with tracing? (frame.f_sr & PSL_T) */
+		if (i == 0)
+			break;		
+#else
+		printf("pid %d killed: no floating point support\n", p->p_pid);
+		i = SIGILL;
+#endif
+		typ = ILL_ILLTRP;
+		v = frame.f_pc;
+		break;
+
 	case T_TRAPVINST|T_USER:
 		ucode = frame.f_format;
 		typ = ILL_ILLTRP;
@@ -708,14 +726,12 @@ trap(type, code, v, frame)
 	case T_TRAP15|T_USER:
 #ifdef COMPAT_SUNOS
 		/*
-		 * SunOS uses Trap #2 for a "CPU cache flush"
+		 * SunOS uses Trap #2 for a "CPU cache flush".
 		 * Just flush the on-chip caches and return.
-		 * XXX - Too bad m68k BSD uses trap 2...
 		 */
 		if (p->p_emul == &emul_sunos) {
 			ICIA();
 			DCIU();
-			/* get out fast */
 			return;
 		}
 #endif
@@ -765,7 +781,8 @@ trap(type, code, v, frame)
 		printf("trapsignal(%d, %d, %d, %x, %x)\n", p->p_pid, i,
 		    ucode, v, frame.f_pc);
 #endif
-	trapsignal(p, i, ucode, typ, (caddr_t)ucode);
+	if (i)
+		trapsignal(p, i, ucode, typ, (caddr_t)ucode);
 	if ((type & T_USER) == 0)
 		return;
 	userret(p, frame.f_pc, sticks); 
@@ -921,7 +938,7 @@ syscall(code, frame)
 #ifdef COMPAT_SUNOS
 	/* need new p-value for this */
 	if (error == ERESTART && (p->p_md.md_flags & MDP_STACKADJ))
-		frame.f_regs[SP] -= sizeof(int);
+		frame.f_regs[SP] -= sizeof (int);
 #endif
 	userret(p, frame.f_pc, sticks);
 #ifdef KTRACE

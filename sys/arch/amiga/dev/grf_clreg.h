@@ -1,5 +1,5 @@
-/*	$OpenBSD: grf_clreg.h,v 1.6 1997/01/16 09:24:11 niklas Exp $	*/
-/*	$NetBSD: grf_clreg.h,v 1.5 1996/10/08 23:18:51 thorpej Exp $	*/
+/*	$OpenBSD: grf_clreg.h,v 1.7 1997/09/18 13:39:49 niklas Exp $	*/
+/*	$NetBSD: grf_clreg.h,v 1.6 1997/03/21 09:40:58 veego Exp $	*/
 
 /*
  * Copyright (c) 1995 Ezra Story
@@ -264,9 +264,11 @@ struct grfcltext_mode {
 /* Video DAC */
 #define VDAC_ADDRESS	0x03c8
 #define VDAC_ADDRESS_W	0x03c8
-#define VDAC_ADDRESS_R	((cltype==PICASSO)?0x03c7+0xfff:0x3c7)
+#define VDAC_ADDRESS_R	\
+    (((cltype == PICASSO) && (cl_64bit == 0)) ? 0x03c7 + 0xfff : 0x3c7)
 #define VDAC_STATE	0x03c7
-#define VDAC_DATA	((cltype==PICASSO)?0x03c9+0xfff:0x3c9)
+#define VDAC_DATA	\
+    (((cltype == PICASSO) && (cl_64bit == 0)) ? 0x03c9 + 0xfff : 0x3c9)
 #define VDAC_MASK       0x03c6
 #define HDR	        0x03c6	/* Hidden DAC register, 4 reads to access */
 

@@ -1,5 +1,5 @@
-#	$OpenBSD: GENERIC,v 1.20 1997/03/25 16:53:56 niklas Exp $
-#	$NetBSD: GENERIC,v 1.69 1997/01/17 14:29:42 is Exp $
+#	$OpenBSD: GENERIC,v 1.21 1997/09/18 13:39:39 niklas Exp $
+#	$NetBSD: GENERIC,v 1.85 1997/08/27 19:32:49 is Exp $
 
 #
 # GENERIC AMIGA
@@ -16,17 +16,24 @@ maxusers	8
 # mainboards to support (in addition to Amiga)
 #
 option		DRACO
+option	 	BB060STUPIDROM	# You need this, if you have a non-DraCo
+				# 68060 with an OS ROM up to (at least) 
+				# V40 (OS3.1) and want to boot with the
+				# bootblock.
+				# You don't need this if you have a DraCo,
+				# have no 68060 or NEVER use the bootblock
 
 #
 # processors this kernel should support
 #
-option		"M68060"	# support for 060
-option		"M060SP"	# ...and MC68060 support package
-option		"M68040"	# support for 040
+option		M68060		# support for 060
+option		M060SP		# ...and MC68060 support package
+option		M68040		# support for 040
 option		FPSP		# MC68040 floating point support
-option		"M68030"	# support for 030
-option		"M68020"	# support for 020/851
+option		M68030		# support for 030
+option		M68020		# support for 020/851
 option		FPCOPROC	# Support for MC6888[12] (Required)
+option		FPU_EMULATE	# FPU emulation
 
 #
 # File systems
@@ -135,13 +142,23 @@ mfcs1		at mfc0 unit 1		# MFC serial
 #mfcs3		at mfc1 unit 1
 #mfcp1		at mfc1 unit 0
 
-le0		at zbus0		# Lance ethernet.
+drbbc0		at mainbus0		# DraCo battery backed clock
+drsupio0	at mainbus0		# DraCo superio chip
+com*		at drsupio? port ?	# DraCo serial
+
+a2kbbc0 	at mainbus0		# A2000 battery backed clock
+a34kbbc0	at mainbus0		# A3000/A4000 battery backed clock
+#aucc*		at mainbus0		# Amiga CC audio
+#audio*		at aucc?
+
+# Ethernet cards
+le*		at zbus0		# Lance ethernet.
 ed0		at zbus0		# dp8390 ethernet
 es0		at zbus0		# SMC 91C90 ethernet
 qn0		at zbus0		# quicknet ethernet
-ae0		at zbus0		# Ariadne ethernet
-bah0		at zbus0		# C= arcnet
 
+# Arcnet
+bah*		at zbus0		# C= arcnet
 
 # scsi stuff, all possible
 gvpbus*		at zbus0
@@ -155,13 +172,13 @@ otgsc0		at zbus0		# 12 gauge scsi
 zssc0		at zbus0		# Zeus scsi
 mgnsc0		at zbus0		# Magnum scsi
 wesc0		at zbus0		# Warp Engine scsi
-idesc0		at mainbus0		# A4000 & A1200 IDE
 afsc0		at zbus0		# A4091 scsi
 aftsc0		at mainbus0		# A4000T scsi
 flsc0		at zbus0		# FastlaneZ3 scsi
 bzsc0		at zbus0		# Blizzard 1230 I,II scsi
 bztzsc0		at zbus0		# Blizzard 2060 scsi
 empsc0		at zbus0		# Emplant scsi
+idesc0		at mainbus0		# A4000 & A1200 IDE
 drsc0		at mainbus0		# DraCo scsi
 
 scsibus*	at gtsc0
@@ -174,13 +191,13 @@ scsibus*	at otgsc0
 scsibus*	at zssc0
 scsibus*	at mgnsc0
 scsibus*	at wesc0
-scsibus*	at idesc0
 scsibus*	at afsc0
 scsibus*	at aftsc0
 scsibus*	at flsc0
 scsibus*	at bzsc0
 scsibus*	at bztzsc0
 scsibus*	at empsc0
+scsibus*	at idesc0
 scsibus*	at drsc0
 
 # each hard drive from low target to high

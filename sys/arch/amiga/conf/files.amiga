@@ -1,8 +1,9 @@
-#	$OpenBSD: files.amiga,v 1.21 1997/05/13 16:07:23 niklas Exp $
-#	$NetBSD: files.amiga,v 1.51 1996/12/16 16:17:31 is Exp $
+#	$OpenBSD: files.amiga,v 1.22 1997/09/18 13:39:40 niklas Exp $
+#	$NetBSD: files.amiga,v 1.62 1997/08/27 19:32:47 is Exp $
+
 
 # maxpartitions must be first item in files.${ARCH}
-maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
+maxpartitions 16
 
 maxusers 2 8 64
 
@@ -23,6 +24,17 @@ file	arch/amiga/dev/event.c		event
 device	clock
 attach	clock at mainbus
 file	arch/amiga/dev/clock.c
+file	dev/clock_subr.c
+
+# A2000 internal hwc
+device	a2kbbc
+attach	a2kbbc at mainbus
+file	arch/amiga/dev/a2kbbc.c		a2kbbc
+
+# A3000/4000 internal hwc
+device	a34kbbc
+attach	a34kbbc at mainbus
+file	arch/amiga/dev/a34kbbc.c	a34kbbc
 
 # keyboard
 device	kbd: event
@@ -39,11 +51,17 @@ device	par
 attach	par at mainbus
 file	arch/amiga/dev/par.c		par needs-count
 
+# audio
+device aucc: audio
+attach aucc at mainbus
+file   arch/amiga/dev/aucc.c		aucc needs-flag 
+
 # mouse
 device	ms: event
 attach	ms at mainbus
 file	arch/amiga/dev/ms.c		ms needs-flag
 
+# floppy
 device	fdc { unit = -1 }
 attach	fdc at mainbus
 
@@ -66,7 +84,7 @@ file	arch/amiga/dev/kf_8x8.c		ite
 file	arch/amiga/dev/kf_8x11.c	kfont_8x11
 file	arch/amiga/dev/kf_custom.c	kfont_custom
 
-# custom chips grf
+# custom chips grf (ite0 grf0)
 device	grfcc: grfbus
 attach	grfcc at mainbus
 file	arch/amiga/dev/grf_cc.c		grfcc needs-flag
@@ -83,52 +101,49 @@ file	arch/amiga/dev/grfabs.c		grfcc | view
 file	arch/amiga/dev/grfabs_cc.c	grfcc | view
 file	arch/amiga/dev/grfabs_ccglb.c	grfcc | view
 
-# retina grf
+# retina ZII grf (ite1 grf1)
 device	grfrt: grfbus
 attach	grfrt at zbus
 file	arch/amiga/dev/grf_rt.c		grfrt needs-flag
 file	arch/amiga/dev/ite_rt.c		grfrt & ite
 
-# cirrus grf
+# retina ZIII grf (it2 grf2)
+device	grfrh: grfbus
+attach	grfrh at zbus
+file	arch/amiga/dev/grf_rh.c		grfrh needs-flag
+file	arch/amiga/dev/ite_rh.c		grfrh & ite
+
+# cirrus grf (ite3 grf3)
 device	grfcl: grfbus
 attach	grfcl at zbus
 file	arch/amiga/dev/grf_cl.c		grfcl needs-flag
 file	arch/amiga/dev/ite_cl.c		grfcl & ite
 
-# CyberVison 64 grf
-device	grfcv: grfbus
-attach	grfcv at zbus
-file	arch/amiga/dev/grf_cv.c		grfcv needs-flag
-file	arch/amiga/dev/ite_cv.c		grfcv & ite
-
-# A2410 grf
+# A2410 grf (ite4 grf4)
 device	grful: grfbus
 attach	grful at zbus
 file	arch/amiga/dev/grf_ul.c		grful needs-flag
 file	arch/amiga/dev/ite_ul.c		grful & ite
 file	arch/amiga/dev/grf_ultms.g	grful
 
-# retina ZIII grf
-device	grfrh: grfbus
-attach	grfrh at zbus
-file	arch/amiga/dev/grf_rh.c		grfrh needs-flag
-file	arch/amiga/dev/ite_rh.c		grfrh & ite
+# CyberVison 64 grf (ite5 grf5)
+device	grfcv: grfbus
+attach	grfcv at zbus
+file	arch/amiga/dev/grf_cv.c		grfcv needs-flag
+file	arch/amiga/dev/ite_cv.c		grfcv & ite
 
-# Tseng grf
+# Tseng grf (ite6 grf6)
 device	grfet: grfbus
 attach	grfet at zbus
 file	arch/amiga/dev/grf_et.c		grfet needs-flag
 file	arch/amiga/dev/ite_et.c		grfet & ite
 
-# handle gvp's odd autoconf info..
-device	gvpbus {}
-attach	gvpbus at zbus
-file	arch/amiga/dev/gvpbus.c		gvpbus
-
 # device defined in sys/conf/files
+# A2065, Ameristar, Ariadne ethernet cards
 attach	le at zbus with le_zbus
 file	arch/amiga/dev/if_le.c		le_zbus needs-flag
 
+# Hydra ethernet card
 device	ed:	ifnet, ether
 attach	ed at zbus with ed_zbus
 file	arch/amiga/dev/if_ed.c		ed_zbus needs-flag
@@ -138,17 +153,15 @@ device	bah: ifnet, arc
 attach	bah at zbus with bah_zbus
 file	arch/amiga/dev/if_bah.c		bah_zbus needs-flag
 
+# CEI A4066 EthernetPLUS
 device	es:	ifnet, ether
 attach	es at zbus
 file	arch/amiga/dev/if_es.c		es needs-flag
 
+# Quicknet ethernet card
 device	qn:	ifnet, ether
 attach	qn at zbus
 file	arch/amiga/dev/if_qn.c		qn needs-flag
-
-device	ae:	ifnet, ether
-attach	ae at zbus
-file	arch/amiga/dev/if_ae.c		ae needs-count
 
 # A2232 msc serial ports
 device	msc:	tty
@@ -165,21 +178,23 @@ device	mfcp
 attach	mfcp at mfc
 file	arch/amiga/dev/mfc.c		mfcs | mfcp needs-count
 
-# DraCo internal com port
-device	drcom: tty
-attach	drcom at mainbus
-file	arch/amiga/dev/drcom.c		drcom needs-count
-  
+# DraCo superio chip
+define	supio {port = -1}
+
+device	drsupio: supio
+attach	drsupio at mainbus
+file	arch/amiga/dev/drsupio.c	drsupio
+
 include "../../../scsi/files.scsi"
+
+# handle gvp's odd autoconf info..
+device	gvpbus {}
+attach	gvpbus at zbus
+file	arch/amiga/dev/gvpbus.c		gvpbus
 
 # wd 33c93 controllers
 define	sbic 
 file	arch/amiga/dev/sbic.c		sbic
-
-# C= A2091
-device atzsc: scsi, sbic
-attach atzsc at zbus
-file	arch/amiga/dev/atzsc.c		atzsc needs-flag
 
 # GVP series II
 device	gtsc: scsi, sbic
@@ -191,37 +206,10 @@ device	ahsc: scsi, sbic
 attach	ahsc at mainbus
 file	arch/amiga/dev/ahsc.c		ahsc needs-flag
 
-# ncr 57c710 controllers
-define	siop
-file	arch/amiga/dev/siop.c		siop
-
-# PPI Zeus
-device	zssc: scsi, siop
-attach	zssc at zbus
-file	arch/amiga/dev/zssc.c		zssc needs-flag
-
-# CSA Magnum
-device	mgnsc: scsi, siop
-attach	mgnsc at zbus
-file	arch/amiga/dev/mgnsc.c		mgnsc needs-flag
-
-# MacroSystems Warp Engine
-device	wesc: scsi, siop
-attach	wesc at zbus
-file	arch/amiga/dev/wesc.c		wesc needs-flag
-
-
-# MacroSystem DraCo internal
-device	drsc: scsi, siop
-attach	drsc at mainbus
-file  arch/amiga/dev/drsc.c           drsc needs-flag
-
-# C= A4091
-device	afsc: scsi, siop
-attach	afsc at zbus
-device	aftsc: scsi, siop
-attach	aftsc at mainbus
-file	arch/amiga/dev/afsc.c		afsc | aftsc needs-flag
+# C= A2091
+device atzsc: scsi, sbic
+attach atzsc at zbus
+file	arch/amiga/dev/atzsc.c		atzsc needs-flag
 
 # ncr 5380 controllers
 define	sci
@@ -237,20 +225,41 @@ device	ivsc: scsi, sci
 attach	ivsc at zbus
 file	arch/amiga/dev/ivsc.c		ivsc needs-flag
 
-# CSA twelve gauge.
-device	otgsc: scsi, sci
-attach	otgsc at zbus
-file	arch/amiga/dev/otgsc.c		otgsc needs-flag
-
 # MLH
 device	mlhsc: scsi, sci
 attach	mlhsc at zbus
 file	arch/amiga/dev/mlhsc.c		mlhsc needs-flag
 
-# EMPLANT
-device	empsc: scsi, sci
-attach	empsc at zbus
-file	arch/amiga/dev/empsc.c		empsc needs-flag
+# CSA twelve gauge.
+device	otgsc: scsi, sci
+attach	otgsc at zbus
+file	arch/amiga/dev/otgsc.c		otgsc needs-flag
+
+# ncr 57c710 controllers
+define	siop
+file	arch/amiga/dev/siop.c		siop
+
+# PPI Zeus
+device	zssc: scsi, siop
+attach	zssc at zbus
+file	arch/amiga/dev/zssc.c		zssc needs-flag
+
+# CSA Magnum
+device	mgnsc: scsi, siop
+attach	mgnsc at zbus
+file	arch/amiga/dev/mgnsc.c		mgnsc needs-flag
+
+# MacroSystems USA Warp Engine
+device	wesc: scsi, siop
+attach	wesc at zbus
+file	arch/amiga/dev/wesc.c		wesc needs-flag
+
+# C= A4091
+device	afsc: scsi, siop
+attach	afsc at zbus
+device	aftsc: scsi, siop
+attach	aftsc at mainbus
+file	arch/amiga/dev/afsc.c		afsc | aftsc needs-flag
 
 # Emulex ESP216 & FAS216 controllers
 define	sfas
@@ -271,10 +280,25 @@ device	bztzsc: scsi, sfas
 attach	bztzsc at zbus
 file	arch/amiga/dev/bztzsc.c		bztzsc needs-flag
 
+# EMPLANT
+device	empsc: scsi, sci
+attach	empsc at zbus
+file	arch/amiga/dev/empsc.c		empsc needs-flag
+
 # Amiga 4000/1200 IDE masquerading as SCSI
 device	idesc: scsi
 attach	idesc at mainbus
 file	arch/amiga/dev/idesc.c		idesc needs-flag
+
+# MacroSystem DraCo internal
+device	drsc: scsi, siop
+attach	drsc at mainbus
+file  arch/amiga/dev/drsc.c           drsc needs-flag
+
+# MacroSystem DraCo internal DS2404 hwc
+device	drbbc
+attach	drbbc at mainbus
+file	arch/amiga/dev/drbbc.c		drbbc
 
 #
 # Machine-independent ATAPI drivers
@@ -310,7 +334,13 @@ device	isaed: ifnet, ether
 attach	isaed at isa with isaed_isa
 file	arch/amiga/isa/if_isaed.c	isaed & isaed_isa needs-flag
 
+# DraCo serial port
+attach	com at supio with com_supio
+file	arch/amiga/dev/com_supio.c	com_supio
+  
 # list of standard files...
+include	"arch/m68k/fpe/files.fpe"
+
 file	dev/cons.c			ite | ser
 file	dev/cninit.c			ite | ser
 file	arch/amiga/amiga/amiga_init.c

@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_ed.c,v 1.10 1997/02/21 11:08:48 niklas Exp $	*/
-/*	$NetBSD: if_ed.c,v 1.24 1996/12/23 09:10:16 veego Exp $	*/
+/*	$OpenBSD: if_ed.c,v 1.11 1997/09/18 13:39:56 niklas Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.26 1997/03/17 17:51:42 is Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet

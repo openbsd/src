@@ -1,5 +1,5 @@
-/*	$OpenBSD: grf_ul.c,v 1.12 1997/01/16 09:24:21 niklas Exp $	*/
-/*	$NetBSD: grf_ul.c,v 1.23 1996/12/23 09:10:10 veego Exp $	*/
+/*	$OpenBSD: grf_ul.c,v 1.13 1997/09/18 13:39:54 niklas Exp $	*/
+/*	$NetBSD: grf_ul.c,v 1.24 1997/07/29 17:50:01 veego Exp $	*/
 
 #define UL_DEBUG
 
@@ -91,48 +91,45 @@ u_int8_t ul_ovl_palette[] = {
 struct grfvideo_mode ul_monitor_defs[] = {
 
  	/*
-	 * Horizontal values are given in TMS units, that is, for the 
-	 * A2410 board, units of 16 pixels. The ioctl multiplies (when 
-	 * exporting) or divides (when importing) them by 16 to conform to.
+	 * We give all these values in MI units, that is:
+	 * horizontal timings in units of pixels
+	 * vertical timings in units of lines
+	 * point of reference is blanking end.
 	 *
-	 * XXX This used to be in units of 8 pixel times. We 
-	 * must also change amiga/stand/grfconfig/grfconfig.c, 
-	 * grf_{rt,rh,cl,cv}.c and egsgrfconfig (the latter to generate the 
-	 * horizontal timings in units of pixels instead of 8 pixels.
-	 * You will also have to write warnings in BIG BOLD RED BLINKING 
-	 * LETTERS all over the docs, and still people will fry their monitors.
+	 * The ul_load_mon transforms these values right before loading
+	 * them into the chip.
 	 *
-	 * btw, the _totals are always sync_start+1, to compute the frequencies
-	 * correctly. (see TMS34010 manual)
+	 * This leaves us with a single point where things are transformed,
+	 * which should make life easier if we ever change things again.
 	 */
 
 	/* 1024x768, 60Hz */
-	{1, "1024x768",   66667000, 1024, 768, 8, 
-		82, 18, 86, 12, 87, 794, 26, 797, 2, 798},
+	{ 1, "1024x768", 66667000, 1024, 768, 8, 
+	  1024, 1008, 1296, 1392, 768, 771, 774, 798, 0 },
 
 	/* 864x648, 70Hz */
-	{2, "864x648",    50000000,  864, 648, 8,
-		61,  7, 65,  3, 66, 667, 19, 677, 4, 678},
+	{ 2, "864x648", 50000000, 864, 648, 8,
+	  864, 928, 992, 1056, 648, 658, 663, 678, 0 },
 
 	/* 800x600, 60Hz */
-	{3, "800x600",    36000000,  800, 600, 8,
-		57,  7, 61,  3, 62, 619, 19, 629, 4, 630},
+	{ 3, "800x600", 36000000, 800, 600, 8,
+	  800, 864, 928, 992, 600, 610, 615, 630, 0 },
 
-	/* 640x400, 60 Hz, interlaced */
-	{4, "640x400I",   14318000,  640, 400, 8,
-		48,  8, 56,  3, 57, 239, 39, 262, 2, 240},
+ 	/* 640x400, 60 Hz, interlaced */
+	{ 4, "640x400i", 14318000, 640, 400, 8,
+	  640, 768, 832, 912, 200, 223, 203, 240, 1 },
 
-	/* 1024x768, 65Hz interlaced, s.th. is strange */
-	{5, "1024x768?I", 44980000, 1024, 768, 8,
-		76, 12, 79,  3, 80, 512, 24, 533, 2, 534},
+ 	/* 1024x768, 65Hz interlaced, s.th. is strange */
+	{ 5, "1024x768?i", 44980000, 1024, 768, 8,
+	  1024, 1072, 1136, 1280, 488, 509, 512, 534, 1 },
 
-	/* 1024x1024, 60Hz */
-	{6, "1024x1024", 80000000, 1024,1024, 8,
-		77, 13, 78,  5, 78,1051, 27,1054, 2,1055},
+ 	/* 1024x1024, 60Hz */
+	{ 6, "1024x1024", 80000000, 1024, 1024, 8,
+	  1024, 1040, 1120, 1248, 1024, 1027, 1030, 1055, 0 },
 
-	/* 736x480, 60 Hz */
-	{7, "736x480", 28636300, 736, 480, 8,
-		54,  8, 57,  3, 58, 503, 23, 514, 3, 515},
+ 	/* 736x480, 60 Hz */
+	{ 7, "736x480", 28636300, 736, 480, 8,
+	  736, 784, 848, 928, 480, 491, 495, 515, 0 },
 };
 
 int ulowell_mon_max = sizeof (ul_monitor_defs)/sizeof (ul_monitor_defs[0]);
@@ -391,14 +388,16 @@ ul_load_mon(gp, md)
 
 	ba->hstadrh = 0xC000;
 	ba->hstadrl = 0x0000;
-	ba->data = md->hsync_stop;
-	ba->data = md->hblank_stop;
-	ba->data = md->hblank_start;
-	ba->data = md->hsync_start;
-	ba->data = md->vsync_stop;
-	ba->data = md->vblank_stop;
-	ba->data = md->vblank_start;
-	ba->data = md->vsync_start;
+
+	ba->data = (md->hsync_stop - md->hsync_start)/16;
+	ba->data = (md->htotal - md->hsync_start)/16 - 1;
+	ba->data = (md->hblank_start + md->htotal - md->hsync_start)/16 - 1;
+	ba->data = md->htotal/16 - 1;
+
+	ba->data = md->vsync_stop - md->vsync_start;
+	ba->data = md->vtotal - md->vsync_start - 1;
+	ba->data = md->vblank_start + md->vtotal - md->vsync_start - 1;
+	ba->data = md->vtotal - 1;
 
 	ba->ctrl &= ~INCW;
 	ba->hstadrh = 0xFE90;
@@ -418,8 +417,7 @@ ul_load_mon(gp, md)
 	ba->ctrl |= LBL | INCW;
 	ba->hstadrh = 0xC000;
 	ba->hstadrl = 0x0080;
-	ba->data = (md->vblank_start - md->vblank_stop == md->disp_height ?
-	    0xf020 : 0xb020);
+	ba->data = md->disp_flags & GRF_FLAGS_LACE ? 0xb020 : 0xf020;
 
 	/* I guess this should be in the yet unimplemented mode select ioctl */
 	/* Hm.. maybe not. We always put the console on overlay plane no 0. */
@@ -604,18 +602,17 @@ ul_getvmode (gp, vm)
 	vm->disp_height  = md->disp_height;
 	vm->depth        = md->depth;
 
-	vm->hblank_start = (md->hblank_start - md->hblank_stop) * 16;
-	vm->hblank_stop  = (md->htotal - 1) * 16;
-	vm->hsync_start  = (md->hsync_start  - md->hblank_stop) * 16;
-	vm->hsync_stop   = (md->hsync_stop + md->htotal - md->hblank_stop) * 16;
-	vm->htotal       = md->htotal * 16;
+	vm->hblank_start = md->hblank_start;
+	vm->hsync_start  = md->hsync_start;
+	vm->hsync_stop   = md->hsync_stop;
+	vm->htotal       = md->htotal;
 
-	vm->vblank_start = md->vblank_start - md->vblank_stop;
-	vm->vblank_stop  = md->vtotal - 1;
-	vm->vsync_start  = md->vsync_start - md->vblank_stop;
-	vm->vsync_stop   = md->vsync_stop + md->vtotal - md->vblank_stop;
+	vm->vblank_start = md->vblank_start;
+	vm->vsync_start  = md->vsync_start;
+	vm->vsync_stop   = md->vsync_stop;
 	vm->vtotal       = md->vtotal;
 
+	vm->disp_flags	 = md->disp_flags;
 	return 0;
 }
 

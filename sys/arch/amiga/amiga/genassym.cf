@@ -1,7 +1,8 @@
-#	$OpenBSD: genassym.cf,v 1.2 1997/03/27 16:18:02 niklas Exp $
+#	$NetBSD: genassym.cf,v 1.3 1997/07/16 00:01:49 is Exp $
+#	$OpenBSD: genassym.cf,v 1.3 1997/09/18 13:39:34 niklas Exp $
 #
-# Copyright (c) 1982, 1990 The Regents of the University of California.
-# All rights reserved.
+# Copyright (c) 1982, 1990, 1993
+#	The Regents of the University of California.  All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -31,7 +32,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	@(#)genassym.c	7.8 (Berkeley) 5/7/91
+#	@(#)genassym.c	8.3 (Berkeley) 1/4/94
 #
 
 include <sys/param.h>
@@ -55,24 +56,45 @@ include <amiga/amiga/cia.h>
 include <amiga/amiga/isr.h>
 
 # values for mmutype
-define  MMU_68060	MMU_68060
-define  MMU_68040	MMU_68040
-define  MMU_68030	MMU_68030
-define  MMU_68851	MMU_68851
+define	MMU_68851	MMU_68851
+define	MMU_68030	MMU_68030
+define	MMU_68040	MMU_68040
+define	MMU_68060	MMU_68060
 
 # values for cputype
-define  CPU_68020	CPU_68020
-define  CPU_68030	CPU_68030
-define  CPU_68040	CPU_68040
-define  CPU_68060	CPU_68060
+define	CPU_68020	CPU_68020
+define	CPU_68030	CPU_68030
+define	CPU_68040	CPU_68040
+define	CPU_68060	CPU_68060
+
+# values for ectype
+define	EC_NONE		EC_NONE
+
+# values for fputype
+define	FPU_NONE	FPU_NONE
+define	FPU_68881	FPU_68881
+define	FPU_68882	FPU_68882
+define	FPU_68040	FPU_68040
+define	FPU_68060	FPU_68060
+define	FPU_UNKNOWN	FPU_UNKNOWN
+
+ifdef FPU_EMULATE
+define	FPU_EMULATE	FPU_EMULATE
+endif
 
 # values for machineid
 define	AMIGA_68020	AMIGA_68020
 define	AMIGA_68030	AMIGA_68030
 define	AMIGA_68040	AMIGA_68040
 define	AMIGA_68060	AMIGA_68060
+ifdef DRACO
+define	DRACO		DRACO
+endif
+ifdef BB060STUPIDROM
+define BB060STUPIDROM BB060STUPIDROM
+endif
 
-# proc fields and values
+# proc structure fields and values
 define	P_FORW		offsetof(struct proc, p_forw)
 define	P_BACK		offsetof(struct proc, p_back)
 define	P_VMSPACE	offsetof(struct proc, p_vmspace)
@@ -80,17 +102,23 @@ define	P_ADDR		offsetof(struct proc, p_addr)
 define	P_PRIORITY	offsetof(struct proc, p_priority)
 define	P_STAT		offsetof(struct proc, p_stat)
 define	P_WCHAN		offsetof(struct proc, p_wchan)
-define	P_PID		offsetof(struct proc, p_pid)
 define  P_MD_REGS	offsetof(struct proc, p_md.md_regs)
 
 define	SRUN		SRUN
 
 # VM structure fields
-define	VM_PMAP		offsetof(struct vmspace, vm_pmap)
 define	PM_STCHG	offsetof(struct pmap, pm_stchanged)
+define	VM_PMAP		offsetof(struct vmspace, vm_map.pmap)
 
 # interrupt/fault metering
 define	V_INTR		offsetof(struct vmmeter, v_intr)
+
+# general constants
+define	UPAGES		UPAGES
+define	USPACE		USPACE
+define	NBPG		NBPG
+define	PGSHIFT		PGSHIFT
+define	USRSTACK	USRSTACK
 
 # PSL values (should just include psl.h?)
 define	PSL_S		PSL_S
@@ -146,20 +174,15 @@ define	FR_SP		offsetof(struct frame, f_regs[15])
 define	FR_HW		offsetof(struct frame, f_sr)
 define	FR_ADJ		offsetof(struct frame, f_stackadj)
 
+# isr fields
+define	ISR_FORW	offsetof(struct isr, isr_forw)
+define	ISR_INTR	offsetof(struct isr, isr_intr)
+define	ISR_ARG		offsetof(struct isr, isr_arg)
+
 # system calls
 define	SYS_exit	SYS_exit
 define	SYS_execve	SYS_execve
 define	SYS_sigreturn	SYS_sigreturn
-
-# Various constants
-define	UPAGES		UPAGES
-define	USPACE		USPACE
-define	NBPG		NBPG
-define	PGSHIFT		PGSHIFT
-define	USRSTACK	USRSTACK
-ifdef DRACO
-define	DRACO		DRACO
-endif
 
 # user fields
 define	U_PROF		offsetof(struct user, u_stats.p_prof)
@@ -181,10 +204,5 @@ define	T_FPERR		T_FPERR
 define	T_ASTFLT	T_ASTFLT
 define	T_TRAP15	T_TRAP15
 
-# Custom chip registers
+# miscellaneous custom chip register offsets
 define	CIAICR		offsetof(struct CIA, icr)
-
-# Interrupt service routine entry fields
-define	ISR_FORW	offsetof(struct isr, isr_forw)
-define	ISR_INTR	offsetof(struct isr, isr_intr)
-define	ISR_ARG		offsetof(struct isr, isr_arg)

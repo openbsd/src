@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.17 1997/05/13 13:24:46 niklas Exp $	*/
+/*	$OpenBSD: conf.c,v 1.18 1997/09/18 13:39:34 niklas Exp $	*/
 /*	$NetBSD: conf.c,v 1.42 1997/01/07 11:35:03 mrg Exp $	*/
 
 /*-
@@ -95,13 +95,14 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #include "ms.h"
 #include "view.h"
 #include "mfcs.h"
-#include "drcom.h"
 dev_decl(filedesc,open);
 #include "bpfilter.h"
 #include "tun.h"
 #include "com.h"
 #include "lpt.h"
 #include "uk.h"
+#include "audio.h"
+cdev_decl(audio);
 
 struct cdevsw	cdevsw[] =
 {
@@ -144,7 +145,7 @@ struct cdevsw	cdevsw[] =
 	cdev_uk_init(NUK,uk),		/* 36: unknown SCSI */
 	cdev_disk_init(NWD,wd),		/* 37: ST506/ESDI/IDE disk */
 	cdev_disk_init(NACD,acd),	/* 38: ATAPI CD-ROM */
-	cdev_tty_init(NDRCOM,drcom),	/* 39: DraCo com ports */
+	cdev_audio_init(NAUDIO,audio),	/* 39: cc audio interface */
 	cdev_ch_init(NCH,ch),		/* 40: SCSI autochanger */
 	cdev_disk_init(NRD,rd),		/* 41: RAM disk */
 };

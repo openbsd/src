@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.9 1997/01/16 09:25:46 niklas Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.10 1997/09/18 13:40:01 niklas Exp $	*/
 /*	$NetBSD: cpu.h,v 1.36 1996/09/11 00:11:42 thorpej Exp $	*/
 
 /*
@@ -227,8 +227,6 @@ int	badaddr __P((caddr_t));
 int	badbaddr __P((caddr_t));
 void	bootsync __P((void));
 void	dumpconf __P((void));
-struct frame;
-void	regdump __P((struct frame *, int));
 
 /*
  * Prototypes from sys_machdep.c:

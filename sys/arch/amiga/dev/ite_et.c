@@ -1,5 +1,5 @@
-/*	$OpenBSD: ite_et.c,v 1.3 1997/01/16 09:24:51 niklas Exp $	*/
-/*	$NetBSD: ite_et.c,v 1.2 1996/10/08 23:18:54 thorpej Exp $	*/
+/*	$OpenBSD: ite_et.c,v 1.4 1997/09/18 13:39:58 niklas Exp $	*/
+/*	$NetBSD: ite_et.c,v 1.3 1997/03/05 22:50:41 veego Exp $	*/
 
 /*
  * Copyright (c) 1995 Ezra Story
@@ -130,7 +130,7 @@ et_cursor(ip, flag)
 		flag = ip->curx + ip->cury * ip->cols;
 		WCrt(ba, CRT_ID_CURSOR_LOC_LOW, flag & 0xff);
 		WCrt(ba, CRT_ID_CURSOR_LOC_HIGH, (flag >> 8) & 0xff);
-		WCrt(ba, CTR_ID_EXT_START, (flag >> (16-2)) & 0x0c);
+		WCrt(ba, CRT_ID_EXT_START, (flag >> (16-2)) & 0x0c);
 
 		ip->cursorx = ip->curx;
 		ip->cursory = ip->cury;

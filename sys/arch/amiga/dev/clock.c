@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.9 1997/01/16 09:23:52 niklas Exp $	*/
+/*	$OpenBSD: clock.c,v 1.10 1997/09/18 13:39:43 niklas Exp $	*/
 /*	$NetBSD: clock.c,v 1.25 1997/01/02 20:59:42 is Exp $	*/
 
 /*
@@ -100,8 +100,8 @@ struct clockframe hardclock_frame;
 
 int clockmatch __P((struct device *, void *, void *));
 void clockattach __P((struct device *, struct device *, void *));
-void calibrate_delay __P((struct device *));
 void cpu_initclocks __P((void));
+void calibrate_delay __P((struct device *));
 int clockintr __P((void *));
 
 struct cfattach clock_ca = {
@@ -286,6 +286,20 @@ cpu_initclocks()
 {
 #if defined(IPL_REMAP_1) || defined(IPL_REMAP_2)
 	static struct isr isr;
+#endif
+
+#ifdef DRACO
+	unsigned char dracorev;
+
+	dracorev = is_draco();
+	if (dracorev >= 4) {
+		draco_ioct->io_timerlo = CLK_INTERVAL & 0xFF;
+		draco_ioct->io_timerhi = CLK_INTERVAL >> 8;
+		draco_ioct->io_timerrst = 0;	/* any value resets */
+		draco_ioct->io_status2 |= DRSTAT2_TMRINTENA;
+
+		return;
+	}
 #endif
 
 	/*
@@ -670,18 +684,6 @@ profclock(pc, ps)
 #endif
 #endif
 
-/* this is a hook set by a clock driver for the configured realtime clock,
-   returning plain current unix-time */
-long (*gettod) __P((void));
-int (*settod) __P((long));
-void *clockaddr;
-
-long a3gettod __P((void));
-long a2gettod __P((void));
-int a3settod __P((long));
-int a2settod __P((long));
-int rtcinit __P((void));
-
 /*
  * Initialize the time of day register, based on the time base which is, e.g.
  * from a filesystem.
@@ -690,9 +692,9 @@ void
 inittodr(base)
 	time_t base;
 {
-	u_long timbuf = base;	/* assume no battery clock exists */
+	time_t timbuf = base;	/* assume no battery clock exists */
   
-	if (gettod == NULL && rtcinit() == 0)
+	if (gettod == NULL)
 		printf("WARNING: no battery clock\n");
 	else
 		timbuf = gettod();
@@ -711,320 +713,4 @@ resettodr()
 {
 	if (settod && settod(time.tv_sec) == 0)
 		printf("Cannot set battery backed clock\n");
-}
-
-int
-rtcinit()
-{
-	clockaddr = (void *)ztwomap(0xdc0000);
-#ifdef DRACO
-	if (is_draco()) {
-		/* XXX to be done */
-		gettod = (void *)0;
-		settod = (void *)0;
-		return 0;
-	} else
-#endif
-	if (is_a3000() || is_a4000()) {
-		if (a3gettod() == 0)
-			return(0);
-		gettod = a3gettod;
-		settod = a3settod;
-	} else {
-		if (a2gettod() == 0)
-			return(0);
-		gettod = a2gettod;
-		settod = a2settod;
-	}
-	return(1);
-}
-
-static int month_days[12] = {
-	31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
-};
-
-long
-a3gettod()
-{
-	struct rtclock3000 *rt;
-	int i, year, month, day, wday, hour, min, sec;
-	u_long tmp;
-
-	rt = clockaddr;
-
-	/* hold clock */
-	rt->control1 = A3CONTROL1_HOLD_CLOCK;
-
-	/* read it */
-	sec   = rt->second1 * 10 + rt->second2;
-	min   = rt->minute1 * 10 + rt->minute2;
-	hour  = rt->hour1   * 10 + rt->hour2;
-	wday  = rt->weekday;
-	day   = rt->day1    * 10 + rt->day2;
-	month = rt->month1  * 10 + rt->month2;
-	year  = rt->year1   * 10 + rt->year2   + 1900;
-
-	/* let it run again.. */
-	rt->control1 = A3CONTROL1_FREE_CLOCK;
-
-	if (range_test(hour, 0, 23))
-		return(0);
-	if (range_test(wday, 0, 6))
-		return(0);
-	if (range_test(day, 1, 31))
-		return(0);
-	if (range_test(month, 1, 12))
-		return(0);
-	if (range_test(year, STARTOFTIME, 2000))
-		return(0);
-
-	tmp = 0;
-
-	for (i = STARTOFTIME; i < year; i++)
-		tmp += days_in_year(i);
-	if (leapyear(year) && month > FEBRUARY)
-		tmp++;
-
-	for (i = 1; i < month; i++)
-		tmp += days_in_month(i);
-
-	tmp += (day - 1);
-	tmp = ((tmp * 24 + hour) * 60 + min) * 60 + sec;
-
-	return(tmp);
-}
-
-int
-a3settod(tim)
-	long tim;
-{
-	register int i;
-	register long hms, day;
-	u_char sec1, sec2;
-	u_char min1, min2;
-	u_char hour1, hour2;
-/*	u_char wday; */
-	u_char day1, day2;
-	u_char mon1, mon2;
-	u_char year1, year2;
-	struct rtclock3000 *rt;
-
-	rt = clockaddr;
-	/*
-	 * there seem to be problems with the bitfield addressing
-	 * currently used..
-	 */
-
-	if (! rt)
-		return 0;
-
-	/* prepare values to be written to clock */
-	day = tim / SECDAY;
-	hms = tim % SECDAY;
-
-	hour2 = hms / 3600;
-	hour1 = hour2 / 10;
-	hour2 %= 10;
-
-	min2 = (hms % 3600) / 60;
-	min1 = min2 / 10;
-	min2 %= 10;
-
-
-	sec2 = (hms % 3600) % 60;
-	sec1 = sec2 / 10;
-	sec2 %= 10;
-
-	/* Number of years in days */
-	for (i = STARTOFTIME - 1900; day >= days_in_year(i); i++)
-		day -= days_in_year(i);
-	year1 = i / 10;
-	year2 = i % 10;
-
-	/* Number of months in days left */
-	if (leapyear(i))
-		days_in_month(FEBRUARY) = 29;
-	for (i = 1; day >= days_in_month(i); i++)
-		day -= days_in_month(i);
-	days_in_month(FEBRUARY) = 28;
-
-	mon1 = i / 10;
-	mon2 = i % 10;
-
-	/* Days are what is left over (+1) from all that. */
-	day ++;
-	day1 = day / 10;
-	day2 = day % 10;
-
-	rt->control1 = A3CONTROL1_HOLD_CLOCK;
-	rt->second1 = sec1;
-	rt->second2 = sec2;
-	rt->minute1 = min1;
-	rt->minute2 = min2;
-	rt->hour1   = hour1;
-	rt->hour2   = hour2;
-/*	rt->weekday = wday; */
-	rt->day1    = day1;
-	rt->day2    = day2;
-	rt->month1  = mon1;
-	rt->month2  = mon2;
-	rt->year1   = year1;
-	rt->year2   = year2;
-	rt->control1 = A3CONTROL1_FREE_CLOCK;
-
-	return 1;
-}
-
-long
-a2gettod()
-{
-	struct rtclock2000 *rt;
-	int i, year, month, day, hour, min, sec;
-	u_long tmp;
-
-	rt = clockaddr;
-
-	/*
-	 * hold clock
-	 */
-	rt->control1 |= A2CONTROL1_HOLD;
-	i = 0x1000;
-	while (rt->control1 & A2CONTROL1_BUSY && i--)
-		;
-	if (rt->control1 & A2CONTROL1_BUSY)
-		return (0);	/* Give up and say it's not there */
-
-	/*
-	 * read it
-	 */
-	sec = rt->second1 * 10 + rt->second2;
-	min = rt->minute1 * 10 + rt->minute2;
-	hour = (rt->hour1 & 3)  * 10 + rt->hour2;
-	day = rt->day1 * 10 + rt->day2;
-	month = rt->month1 * 10 + rt->month2;
-	year = rt->year1 * 10 + rt->year2   + 1900;
-
-	if ((rt->control3 & A2CONTROL3_24HMODE) == 0) {
-		if ((rt->hour1 & A2HOUR1_PM) == 0 && hour == 12)
-			hour = 0;
-		else if ((rt->hour1 & A2HOUR1_PM) && hour != 12)
-			hour += 12;
-	}
-
-	/* 
-	 * release the clock 
-	 */
-	rt->control1 &= ~A2CONTROL1_HOLD;
-
-	if (range_test(hour, 0, 23))
-		return(0);
-	if (range_test(day, 1, 31))
-		return(0);
-	if (range_test(month, 1, 12))
-		return(0);
-	if (range_test(year, STARTOFTIME, 2000))
-		return(0);
-  
-	tmp = 0;
-  
-	for (i = STARTOFTIME; i < year; i++)
-		tmp += days_in_year(i);
-	if (leapyear(year) && month > FEBRUARY)
-		tmp++;
-  
-	for (i = 1; i < month; i++)
-		tmp += days_in_month(i);
-  
-	tmp += (day - 1);
-	tmp = ((tmp * 24 + hour) * 60 + min) * 60 + sec;
-  
-	return(tmp);
-}
-
-/*
- * there is some question as to whether this works
- * I guess
- */
-int
-a2settod(tim)
-	long tim;
-{
-
-	int i;
-	long hms, day;
-	u_char sec1, sec2;
-	u_char min1, min2;
-	u_char hour1, hour2;
-	u_char day1, day2;
-	u_char mon1, mon2;
-	u_char year1, year2;
-	struct rtclock2000 *rt;
-
-	rt = clockaddr;
-	/* 
-	 * there seem to be problems with the bitfield addressing
-	 * currently used..
-	 *
-	 * XXX Check out the above where we (hour1 & 3)
-	 */
-	if (! rt)
-		return 0;
-
-	/* prepare values to be written to clock */
-	day = tim / SECDAY;
-	hms = tim % SECDAY;
-
-	hour2 = hms / 3600;
-	hour1 = hour2 / 10;
-	hour2 %= 10;
-
-	min2 = (hms % 3600) / 60;
-	min1 = min2 / 10;
-	min2 %= 10;
-
-
-	sec2 = (hms % 3600) % 60;
-	sec1 = sec2 / 10;
-	sec2 %= 10;
-
-	/* Number of years in days */
-	for (i = STARTOFTIME - 1900; day >= days_in_year(i); i++)
-		day -= days_in_year(i);
-	year1 = i / 10;
-	year2 = i % 10;
-
-	/* Number of months in days left */
-	if (leapyear(i))
-		days_in_month(FEBRUARY) = 29;
-	for (i = 1; day >= days_in_month(i); i++)
-		day -= days_in_month(i);
-	days_in_month(FEBRUARY) = 28;
-
-	mon1 = i / 10;
-	mon2 = i % 10;
-  
-	/* Days are what is left over (+1) from all that. */
-	day ++;
-	day1 = day / 10;
-	day2 = day % 10;
-
-	/* 
-	 * XXXX spin wait as with reading???
-	 */
-	rt->control1 |= A2CONTROL1_HOLD;
-	rt->second1 = sec1;
-	rt->second2 = sec2;
-	rt->minute1 = min1;
-	rt->minute2 = min2;
-	rt->hour1   = hour1;
-	rt->hour2   = hour2;
-	rt->day1    = day1;
-	rt->day2    = day2;
-	rt->month1  = mon1;
-	rt->month2  = mon2;
-	rt->year1   = year1;
-	rt->year2   = year2;
-	rt->control2 &= ~A2CONTROL1_HOLD;
-
-	return 1;
 }

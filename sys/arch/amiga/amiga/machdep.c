@@ -1,5 +1,5 @@
-/*	$OpenBSD: machdep.c,v 1.24 1997/07/23 06:58:17 denny Exp $	*/
-/*	$NetBSD: machdep.c,v 1.82 1996/12/17 07:32:54 is Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.25 1997/09/18 13:39:36 niklas Exp $	*/
+/*	$NetBSD: machdep.c,v 1.95 1997/08/27 18:31:17 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -126,6 +126,9 @@
 #include <netiso/iso.h>
 #include <netiso/clnp.h>
 #endif
+#ifdef NETATALK
+#include <netatalk/at_extern.h>
+#endif
 #if NPPP > 0
 #include <net/ppp_defs.h>
 #include <net/if_ppp.h>
@@ -142,11 +145,10 @@ vm_offset_t reserve_dumppages __P((vm_offset_t));
 void dumpsys __P((void));
 void initcpu __P((void));
 void straytrap __P((int, u_short));
-static void netintr __P((void));
-static void call_sicallbacks __P((void));
+void netintr __P((void));
+void call_sicallbacks __P((void));
+void _softintr_callit __P((void *, void *));
 void intrhand __P((int));
-static void dumpmem __P((int *, int, int));
-static char *hexstr __P((int, int));
 #if NSER > 0
 void ser_outintr __P((void));
 #endif
@@ -189,6 +191,7 @@ unsigned char ssir;
 int	safepri = PSL_LOWIPL;
 extern  int   freebufspace;
 extern	u_int lowram;
+extern	short exframesize[];
 
 #ifdef COMPAT_SUNOS
 extern struct emul emul_sunos;
@@ -197,7 +200,7 @@ extern struct emul emul_sunos;
 /* used in init_main.c */
 char *cpu_type = "m68k";
 /* the following is used externally (sysctl_hw) */
-char machine[] = "amiga";
+char machine[] = MACHINE;	/* from <machine/param.h> */
  
 struct isr *isr_ports;
 #ifdef DRACO
@@ -582,7 +585,12 @@ setregs(p, pack, stack, retval)
 #ifdef FPCOPROC
 	/* restore a null state frame */
 	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;
-	m68881_restore(&p->p_addr->u_pcb.pcb_fpregs);
+#ifdef FPU_EMULATE
+	if (!fputype)
+		bzero(&p->p_addr->u_pcb.pcb_fpregs, sizeof(struct fpframe));
+	else
+#endif
+		m68881_restore(&p->p_addr->u_pcb.pcb_fpregs);
 #endif
 #ifdef COMPAT_SUNOS
 	/*
@@ -644,8 +652,16 @@ identifycpu()
 		    pcr & 0x10000 ? "LC/EC" : "", (pcr>>8)&0xff);
 		cpu_type = cpubuf;
 		mmu = "/MMU";
-		fpu = "/FPU";
-		fputype = FPU_68040; /* XXX */
+		if (pcr & 2) {
+			fpu = "/FPU disabled";
+			fputype = FPU_NONE;
+		} else if (m68060_pcr_init & 2){
+			fpu = "/FPU will be disabled";
+			fputype = FPU_NONE;
+		} else  if (machineid & AMIGA_FPU40) {
+			fpu = "/FPU";
+			fputype = FPU_68040; /* XXX */
+		}
 	} else 
 #endif
 	if (machineid & AMIGA_68040) {
@@ -709,6 +725,334 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	/* NOTREACHED */
 }
 
+#define SS_RTEFRAME	1
+#define SS_FPSTATE	2
+#define SS_USERREGS	4
+
+struct sigstate {
+	int	ss_flags;		/* which of the following are valid */
+	struct	frame ss_frame;		/* original exception frame */
+	struct	fpframe ss_fpstate;	/* 68881/68882 state info */
+};
+
+/*
+ * WARNING: code in locore.s assumes the layout shown for sf_signum
+ * thru sf_handler so... don't screw with them!
+ */
+struct sigframe {
+	int	sf_signum;		/* signo for handler */
+	siginfo_t *sf_sip;		/* additional info for handler */
+	struct	sigcontext *sf_scp;	/* context ptr for handler */
+	sig_t	sf_handler;		/* handler addr for u_sigc */
+	struct	sigstate sf_state;	/* state of the hardware */
+	struct	sigcontext sf_sc;	/* actual context */
+	siginfo_t sf_si;
+};
+
+#ifdef DEBUG
+int sigdebug = 0x0;
+int sigpid = 0;
+#define SDB_FOLLOW	0x01
+#define SDB_KSTACK	0x02
+#define SDB_FPSTATE	0x04
+#endif
+
+/*
+ * Send an interrupt to process.
+ */
+void
+sendsig(catcher, sig, mask, code, type, val)
+	sig_t catcher;
+	int sig, mask;
+	u_long code;
+	int type;
+	union sigval val;
+{
+	register struct proc *p = curproc;
+	register struct sigframe *fp, *kfp;
+	register struct frame *frame;
+	register struct sigacts *psp = p->p_sigacts;
+	register short ft;
+	int oonstack, fsize;
+	extern char sigcode[], esigcode[];
+
+	frame = (struct frame *)p->p_md.md_regs;
+	ft = frame->f_format;
+	oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
+
+	/*
+	 * Allocate and validate space for the signal handler
+	 * context. Note that if the stack is in P0 space, the
+	 * call to grow() is a nop, and the useracc() check
+	 * will fail if the process has not already allocated
+	 * the space with a `brk'.
+	 */
+	fsize = sizeof(struct sigframe);
+	if ((psp->ps_flags & SAS_ALTSTACK) && !oonstack &&
+	    (psp->ps_sigonstack & sigmask(sig))) {
+		fp = (struct sigframe *)(psp->ps_sigstk.ss_sp +
+		    psp->ps_sigstk.ss_size - fsize);
+		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
+	} else
+		fp = (struct sigframe *)(frame->f_regs[SP] - fsize);
+	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
+		(void)grow(p, (unsigned)fp);
+#ifdef DEBUG
+	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
+		printf("sendsig(%d): sig %d ssp %p usp %p scp %p ft %d\n",
+		    p->p_pid, sig, &oonstack, fp, &fp->sf_sc, ft);
+#endif
+	if (useracc((caddr_t)fp, fsize, B_WRITE) == 0) {
+#ifdef DEBUG
+		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
+			printf("sendsig(%d): useracc failed on sig %d\n",
+			    p->p_pid, sig);
+#endif
+		/*
+		 * Process has trashed its stack; give it an illegal
+		 * instruction to halt it in its tracks.
+		 */
+		SIGACTION(p, SIGILL) = SIG_DFL;
+		sig = sigmask(SIGILL);
+		p->p_sigignore &= ~sig;
+		p->p_sigcatch &= ~sig;
+		p->p_sigmask &= ~sig;
+		psignal(p, SIGILL);
+		return;
+	}
+	kfp = (struct sigframe *)malloc((u_long)fsize, M_TEMP, M_WAITOK);
+	/* 
+	 * Build the argument list for the signal handler.
+	 */
+	kfp->sf_signum = sig;
+	kfp->sf_sip = NULL;
+	kfp->sf_scp = &fp->sf_sc;
+	kfp->sf_handler = catcher;
+
+	/*
+	 * Save necessary hardware state.  Currently this includes:
+	 *	- general registers
+	 *	- original exception frame (if not a "normal" frame)
+	 *	- FP coprocessor state
+	 */
+	kfp->sf_state.ss_flags = SS_USERREGS;
+	bcopy((caddr_t)frame->f_regs,
+	    (caddr_t)kfp->sf_state.ss_frame.f_regs, sizeof frame->f_regs);
+	if (ft >= FMT7) {
+#ifdef DEBUG
+		if (ft > 15 || exframesize[ft] < 0)
+			panic("sendsig: bogus frame type");
+#endif
+		kfp->sf_state.ss_flags |= SS_RTEFRAME;
+		kfp->sf_state.ss_frame.f_format = frame->f_format;
+		kfp->sf_state.ss_frame.f_vector = frame->f_vector;
+		bcopy((caddr_t)&frame->F_u,
+		    (caddr_t)&kfp->sf_state.ss_frame.F_u, exframesize[ft]);
+		/*
+		 * Leave an indicator that we need to clean up the kernel
+		 * stack.  We do this by setting the "pad word" above the
+		 * hardware stack frame to the amount the stack must be
+		 * adjusted by.
+		 *
+		 * N.B. we increment rather than just set f_stackadj in
+		 * case we are called from syscall when processing a
+		 * sigreturn.  In that case, f_stackadj may be non-zero.
+		 */
+		frame->f_stackadj += exframesize[ft];
+		frame->f_format = frame->f_vector = 0;
+#ifdef DEBUG
+		if (sigdebug & SDB_FOLLOW)
+			printf("sendsig(%d): copy out %d of frame %d\n",
+			    p->p_pid, exframesize[ft], ft);
+#endif
+	}
+
+#ifdef FPCOPROC
+	kfp->sf_state.ss_flags |= SS_FPSTATE;
+	if (fputype)
+		m68881_save(&kfp->sf_state.ss_fpstate);
+#ifdef DEBUG
+	if ((sigdebug & SDB_FPSTATE) && *(char *)&kfp->sf_state.ss_fpstate)
+		printf("sendsig(%d): copy out FP state (%x) to %p\n",
+		    p->p_pid, *(u_int *)&kfp->sf_state.ss_fpstate,
+		    &kfp->sf_state.ss_fpstate);
+#endif /* DEBUG */
+#endif /* FPCOPROC */
+	/*
+	 * Build the signal context to be used by sigreturn.
+	 */
+	kfp->sf_sc.sc_onstack = oonstack;
+	kfp->sf_sc.sc_mask = mask;
+	kfp->sf_sc.sc_sp = frame->f_regs[SP];
+	kfp->sf_sc.sc_fp = frame->f_regs[A6];
+	kfp->sf_sc.sc_ap = (int)&fp->sf_state;
+	kfp->sf_sc.sc_pc = frame->f_pc;
+	kfp->sf_sc.sc_ps = frame->f_sr;
+
+	if (psp->ps_siginfo & sigmask(sig)) {
+		kfp->sf_sip = &fp->sf_si;
+		initsiginfo(&kfp->sf_si, sig, code, type, val);
+	}
+
+	/* XXX do not copy out siginfo if not needed */
+	(void)copyout((caddr_t)kfp, (caddr_t)fp, fsize);
+	frame->f_regs[SP] = (int)fp;
+#ifdef DEBUG
+	if (sigdebug & SDB_FOLLOW)
+		printf("sendsig(%d): sig %d scp %p fp %p sc_sp %x sc_ap %x\n",
+		    p->p_pid, sig, kfp->sf_scp, fp, kfp->sf_sc.sc_sp,
+		    kfp->sf_sc.sc_ap);
+#endif /* DEBUG */
+	/*
+	 * Signal trampoline code is at base of user stack.
+	 */
+	frame->f_pc = (int)PS_STRINGS - (esigcode - sigcode);
+#ifdef DEBUG
+	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
+		printf("sendsig(%d): sig %d returns\n", p->p_pid, sig);
+#endif
+	free((caddr_t)kfp, M_TEMP);
+}
+
+/*
+ * System call to cleanup state after a signal
+ * has been taken.  Reset signal mask and
+ * stack state from context left by sendsig (above).
+ * Return to previous pc and psl as specified by
+ * context left by sendsig. Check carefully to
+ * make sure that the user has not modified the
+ * psl to gain improper priviledges or to cause
+ * a machine fault.
+ */
+/* ARGSUSED */
+int
+sys_sigreturn(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct sys_sigreturn_args /* {
+		syscallarg(struct sigcontext *) sigcntxp;
+	} */ *uap = v;
+	struct sigcontext *scp, context;
+	struct frame *frame;
+	int rf, flags;
+	struct sigstate tstate;
+	extern short exframesize[];
+
+	scp = SCARG(uap, sigcntxp);
+#ifdef DEBUG
+	if (sigdebug & SDB_FOLLOW)
+		printf("sigreturn: pid %d, scp %p\n", p->p_pid, scp);
+#endif
+	if ((int)scp & 1)
+		return(EINVAL);
+	/*
+	 * Test and fetch the context structure.
+	 * We grab it all at once for speed.
+	 */
+	if (useracc((caddr_t)scp, sizeof(*scp), B_WRITE) == 0 ||
+	    copyin(scp, &context, sizeof(context)))
+		return(EINVAL);
+	scp = &context;
+	if ((scp->sc_ps & (PSL_MBZ|PSL_IPL|PSL_S)) != 0)
+		return(EINVAL);
+	/*
+	 * Restore the user supplied information
+	 */
+	if (scp->sc_onstack & 1)
+		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
+	else 
+		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+	p->p_sigmask = scp->sc_mask &~ sigcantmask;
+	frame = (struct frame *) p->p_md.md_regs;
+	frame->f_regs[SP] = scp->sc_sp;
+	frame->f_regs[A6] = scp->sc_fp;
+	frame->f_pc = scp->sc_pc;
+	frame->f_sr = scp->sc_ps;
+	/*
+	 * Grab pointer to hardware state information.
+	 * If zero, the user is probably doing a longjmp.
+	 */
+	if ((rf = scp->sc_ap) == 0)
+		return (EJUSTRETURN);
+	/*
+	 * See if there is anything to do before we go to the
+	 * expense of copying in close to 1/2K of data
+	 */
+	flags = fuword((caddr_t)rf);
+#ifdef DEBUG
+	if (sigdebug & SDB_FOLLOW)
+		printf("sigreturn(%d): sc_ap %x flags %x\n",
+		    p->p_pid, rf, flags);
+#endif
+	/*
+	 * fuword failed (bogus sc_ap value).
+	 */
+	if (flags == -1)
+		return (EINVAL);
+	if (flags == 0 || copyin((caddr_t)rf, (caddr_t)&tstate, sizeof tstate))
+		return (EJUSTRETURN);
+#ifdef DEBUG
+	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
+		printf("sigreturn(%d): ssp %p usp %x scp %p ft %d\n",
+		    p->p_pid, &flags, scp->sc_sp, SCARG(uap, sigcntxp),
+		    (flags&SS_RTEFRAME) ? tstate.ss_frame.f_format : -1);
+#endif
+	/*
+	 * Restore most of the users registers except for A6 and SP
+	 * which were handled above.
+	 */
+	if (flags & SS_USERREGS)
+		bcopy((caddr_t)tstate.ss_frame.f_regs,
+		      (caddr_t)frame->f_regs, sizeof(frame->f_regs)-2*NBPW);
+	/*
+	 * Restore long stack frames.  Note that we do not copy
+	 * back the saved SR or PC, they were picked up above from
+	 * the sigcontext structure.
+	 */
+	if (flags & SS_RTEFRAME) {
+		register int sz;
+		
+		/* grab frame type and validate */
+		sz = tstate.ss_frame.f_format;
+		if (sz > 15 || (sz = exframesize[sz]) < 0)
+			return (EINVAL);
+		frame->f_stackadj -= sz;
+		frame->f_format = tstate.ss_frame.f_format;
+		frame->f_vector = tstate.ss_frame.f_vector;
+		bcopy((caddr_t)&tstate.ss_frame.F_u, (caddr_t)&frame->F_u, sz);
+#ifdef DEBUG
+		if (sigdebug & SDB_FOLLOW)
+			printf("sigreturn(%d): copy in %d of frame type %d\n",
+			    p->p_pid, sz, tstate.ss_frame.f_format);
+#endif
+	}
+#ifdef FPCOPROC
+	/*
+	 * Finally we restore the original FP context
+	 */
+#ifdef FPU_EMULATE
+	if ((flags & SS_FPSTATE) && fputype)
+#else
+	if (fputype)
+#endif
+		m68881_restore(&tstate.ss_fpstate);
+#ifdef DEBUG
+	if ((sigdebug & SDB_FPSTATE) && *(char *)&tstate.ss_fpstate)
+		printf("sigreturn(%d): copied in FP state (%x) at %p\n",
+		    p->p_pid, *(u_int *)&tstate.ss_fpstate,
+		       &tstate.ss_fpstate);
+#endif
+#endif
+#ifdef DEBUG
+	if ((sigdebug & SDB_FOLLOW) ||
+	    ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid))
+		printf("sigreturn(%d): returns\n", p->p_pid);
+#endif
+	return (EJUSTRETURN);
+}
+
 static int waittime = -1;
 
 void
@@ -760,7 +1104,6 @@ boot(howto)
 	doboot();
 	/*NOTREACHED*/
 }
-
 
 unsigned	dumpmag = 0x8fca0101;	/* magic number for savecore */
 int	dumpsize = 0;		/* also for savecore */
@@ -967,57 +1310,106 @@ microtime(tvp)
 void
 initcpu()
 {
+	typedef void trapfun __P((void));
+
 	/* XXX should init '40 vecs here, too */
-#if defined(M68060) || defined(DRACO)
-	extern caddr_t vectab[256];
+#if defined(M68060) || defined(M68040) || defined(DRACO) || defined(FPU_EMULATE)
+	extern trapfun *vectab[256];
+#endif
+
+#if defined(M68060) || defined(M68040)
+	extern trapfun addrerr4060;
 #endif
 
 #ifdef M68060
+	extern trapfun buserr60;
 #if defined(M060SP)
 	/*extern u_int8_t I_CALL_TOP[];*/
-	extern u_int8_t intemu60, fpiemu60, fpdemu60, fpeaemu60;
+	extern trapfun intemu60, fpiemu60, fpdemu60, fpeaemu60;
 	extern u_int8_t FP_CALL_TOP[];
 #else
-	extern u_int8_t illinst;
+	extern trapfun illinst;
 #endif
-	extern u_int8_t fpfault;
+	extern trapfun fpfault;
+#endif
+
+#ifdef M68040
+	extern trapfun buserr40;
 #endif
 
 #ifdef DRACO
-	extern u_int8_t DraCoIntr, DraCoLev1intr, DraCoLev2intr;
+	extern trapfun DraCoIntr, DraCoLev1intr, DraCoLev2intr;
 	u_char dracorev;
+#endif
+
+#ifdef FPU_EMULATE
+	extern trapfun fpemuli;
 #endif
 
 #ifdef M68060
 	if (machineid & AMIGA_68060) {
+		if (machineid & AMIGA_FPU40 && m68060_pcr_init & 2) {
+			/* 
+			 * in this case, we're about to switch the FPU off;
+			 * do a FNOP to avoid stray FP traps later
+			 */
+			__asm("fnop");
+			/* ... and mark FPU as absent for identifyfpu() */
+			machineid &= ~(AMIGA_FPU40|AMIGA_68882|AMIGA_68881);
+		}
 		asm volatile ("movl %0,d0; .word 0x4e7b,0x0808" : : 
 			"d"(m68060_pcr_init):"d0" );
+
+		/* bus/addrerr vectors */
+		vectab[2] = buserr60;
+		vectab[3] = addrerr4060;
 #if defined(M060SP)
 
 		/* integer support */
-		vectab[61] = &intemu60/*&I_CALL_TOP[128 + 0x00]*/;
+		vectab[61] = intemu60/*(trapfun *)&I_CALL_TOP[128 + 0x00]*/;
 
 		/* floating point support */
 		/*
 		 * XXX maybe we really should run-time check for the
 		 * stack frame format here:
 		 */
-		vectab[11] = &fpiemu60/*&FP_CALL_TOP[128 + 0x30]*/;
+		vectab[11] = fpiemu60/*(trapfun *)&FP_CALL_TOP[128 + 0x30]*/;
 
-		vectab[55] = &fpdemu60/*&FP_CALL_TOP[128 + 0x38]*/;
-		vectab[60] = &fpeaemu60/*&FP_CALL_TOP[128 + 0x40]*/;
+		vectab[55] = fpdemu60/*(trapfun *)&FP_CALL_TOP[128 + 0x38]*/;
+		vectab[60] = fpeaemu60/*(trapfun *)&FP_CALL_TOP[128 + 0x40]*/;
 
-		vectab[54] = &FP_CALL_TOP[128 + 0x00];
-		vectab[52] = &FP_CALL_TOP[128 + 0x08];
-		vectab[53] = &FP_CALL_TOP[128 + 0x10];
-		vectab[51] = &FP_CALL_TOP[128 + 0x18];
-		vectab[50] = &FP_CALL_TOP[128 + 0x20];
-		vectab[49] = &FP_CALL_TOP[128 + 0x28];
+		vectab[54] = (trapfun *)&FP_CALL_TOP[128 + 0x00];
+		vectab[52] = (trapfun *)&FP_CALL_TOP[128 + 0x08];
+		vectab[53] = (trapfun *)&FP_CALL_TOP[128 + 0x10];
+		vectab[51] = (trapfun *)&FP_CALL_TOP[128 + 0x18];
+		vectab[50] = (trapfun *)&FP_CALL_TOP[128 + 0x20];
+		vectab[49] = (trapfun *)&FP_CALL_TOP[128 + 0x28];
 
 #else
-		vectab[61] = &illinst;
+		vectab[61] = illinst;
 #endif
-		vectab[48] = &fpfault;
+		vectab[48] = fpfault;
+	}
+#endif
+
+/*
+ * Vector initialization for special motherboards 
+ */
+#ifdef M68040
+#ifdef M68060
+	else
+#endif
+	if (machineid & AMIGA_68040) {
+		/* addrerr vector */
+		vectab[2] = buserr40;
+		vectab[3] = addrerr4060;
+	}
+#endif
+
+#ifdef FPU_EMULATE
+	if (!(machineid & (AMIGA_68881|AMIGA_68882|AMIGA_FPU40))) {
+		vectab[11] = fpemuli;
+		printf("FPU software emulation initialized.\n");
 	}
 #endif
 
@@ -1029,16 +1421,16 @@ initcpu()
 	dracorev = is_draco();
 	if (dracorev) {
 		if (dracorev >= 4) {
-			vectab[24+1] = &DraCoLev1intr;
-			vectab[24+2] = &DraCoIntr;
+			vectab[24+1] = DraCoLev1intr;
+			vectab[24+2] = DraCoIntr;
 		} else {
-			vectab[24+1] = &DraCoIntr;
-			vectab[24+2] = &DraCoLev2intr;
+			vectab[24+1] = DraCoIntr;
+			vectab[24+2] = DraCoLev2intr;
 		}
-		vectab[24+3] = &DraCoIntr;
-		vectab[24+4] = &DraCoIntr;
-		vectab[24+5] = &DraCoIntr;
-		vectab[24+6] = &DraCoIntr;
+		vectab[24+3] = DraCoIntr;
+		vectab[24+4] = DraCoIntr;
+		vectab[24+5] = DraCoIntr;
+		vectab[24+6] = DraCoIntr;
 	}
 #endif
 	DCIS();
@@ -1096,7 +1488,7 @@ badbaddr(addr)
 	return(0);
 }
 
-static void
+void
 netintr()
 {
 #ifdef INET
@@ -1160,6 +1552,44 @@ static int ncb;		/* number of callback blocks allocated */
 static int ncbd;	/* number of callback blocks dynamically allocated */
 #endif
 
+/*
+ * these are __GENERIC_SOFT_INTERRUPT wrappers; will be replaced
+ * once by the real thing once all drivers are converted.
+ *
+ * to help performance for converted drivers, the YYY_sicallback() function
+ * family can be implemented in terms of softintr_XXX() as an intermediate
+ * measure.
+ */
+
+void
+_softintr_callit(rock1, rock2)
+	void *rock1, *rock2;
+{
+	(*(void (*)(void *))rock1)(rock2);
+}
+
+void *
+softintr_establish(ipl, func, arg)
+	int ipl;
+	void func __P((void *));
+	void *arg;
+{
+	struct si_callback *si;
+
+	(void)ipl;
+
+	si = (struct si_callback *)malloc(sizeof(*si), M_TEMP, M_NOWAIT);
+	if (si == NULL)
+		return (si);
+
+	si->function = (void *)0;
+	si->rock1 = (void *)func;
+	si->rock2 = arg;
+
+	alloc_sicallback();
+	return ((void *)si);
+}
+
 void
 alloc_sicallback()
 {
@@ -1176,6 +1606,16 @@ alloc_sicallback()
 #ifdef DIAGNOSTIC
 	++ncb;
 #endif
+}
+
+void
+softintr_schedule(vsi)
+	void *vsi;
+{
+	struct si_callback *si;
+	si = vsi;
+
+	add_sicallback(_softintr_callit, si->rock1, si->rock2);
 }
 
 void
@@ -1258,7 +1698,7 @@ rem_sicallback(function)
 }
 
 /* purge the list */
-static void
+void
 call_sicallbacks()
 {
 	struct si_callback *si;
@@ -1631,98 +2071,6 @@ nmihand(frame)
 	printf("unexpected level 7 interrupt ignored\n");
 }
 #endif
-
-void
-regdump(fp, sbytes)
-	struct frame *fp; /* must not be register */
-	int sbytes;
-{
-	static int doingdump = 0;
-	register int i;
-	int s;
-
-	if (doingdump)
-		return;
-	s = spl7();
-	doingdump = 1;
-	printf("pid = %d, pc = %s, ", curproc ? curproc->p_pid : 0,
-	    hexstr(fp->f_pc, 8));
-	printf("ps = %s, ", hexstr(fp->f_sr, 4));
-	printf("sfc = %s, ", hexstr(getsfc(), 4));
-	printf("dfc = %s\n", hexstr(getdfc(), 4));
-	printf("Registers:\n     ");
-	for (i = 0; i < 8; i++)
-		printf("        %d", i);
-	printf("\ndreg:");
-	for (i = 0; i < 8; i++)
-		printf(" %s", hexstr(fp->f_regs[i], 8));
-	printf("\nareg:");
-	for (i = 0; i < 8; i++)
-		printf(" %s", hexstr(fp->f_regs[i+8], 8));
-	if (sbytes > 0) {
-		if (fp->f_sr & PSL_S) {
-			printf("\n\nKernel stack (%s):",
-			       hexstr((int)(((int *)&fp)-1), 8));
-			dumpmem(((int *)&fp)-1, sbytes, 0);
-		} else {
-			printf("\n\nUser stack (%s):", hexstr(fp->f_regs[SP], 8));
-			dumpmem((int *)fp->f_regs[SP], sbytes, 1);
-		}
-	}
-	doingdump = 0;
-	splx(s);
-}
-
-extern u_int proc0paddr;
-#define KSADDR	((int *)((curproc ? (u_int)curproc->p_addr : proc0paddr) + USPACE - NBPG))
-
-static void
-dumpmem(ptr, sz, ustack)
-	register int *ptr;
-	int sz, ustack;
-{
-	register int i, val;
-
-	for (i = 0; i < sz; i++) {
-		if ((i & 7) == 0)
-			printf("\n%s: ", hexstr((int)ptr, 6));
-		else
-			printf(" ");
-		if (ustack == 1) {
-			if ((val = fuword(ptr++)) == -1)
-				break;
-		} else {
-			if (ustack == 0 &&
-			    (ptr < KSADDR || ptr > KSADDR+(NBPG/4-1)))
-				break;
-			val = *ptr++;
-		}
-		printf("%s", hexstr(val, 8));
-	}
-	printf("\n");
-}
-
-static char *
-hexstr(val, len)
-	register int val;
-	int len;
-{
-	static char nbuf[9];
-	register int x, i;
-
-	if (len > 8)
-		return("");
-	nbuf[len] = '\0';
-	for (i = len-1; i >= 0; --i) {
-		x = val & 0xF;
-		if (x > 9)
-			nbuf[i] = x - 10 + 'A';
-		else
-			nbuf[i] = x + '0';
-		val >>= 4;
-	}
-	return(nbuf);
-}
 
 /*
  * should only get here, if no standard executable. This can currently

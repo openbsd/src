@@ -1,4 +1,4 @@
-/*	$OpenBSD: ser.c,v 1.6 1997/01/16 09:25:22 niklas Exp $	*/
+/*	$OpenBSD: ser.c,v 1.7 1997/09/18 13:39:59 niklas Exp $	*/
 /*	$NetBSD: ser.c,v 1.39 1996/12/23 09:10:29 veego Exp $	*/
 
 /*
@@ -364,6 +364,7 @@ serclose(dev, flag, mode, p)
 	if (tp->t_cflag & HUPCL || tp->t_state & TS_WOPEN ||
 	    (tp->t_state & TS_ISOPEN) == 0)
 #endif
+		(void) sermctl(dev, 0, DMSET);
 	ttyclose(tp);
 #if not_yet
 	if (tp != &ser_cons) {

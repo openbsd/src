@@ -1,8 +1,8 @@
-/*	$OpenBSD: proc.h,v 1.4 1997/09/18 13:40:03 niklas Exp $	*/
-/*	$NetBSD: proc.h,v 1.12 1997/06/08 10:35:39 veego Exp $	*/
+/*	$OpenBSD: auccvar.h,v 1.1 1997/09/18 13:39:43 niklas Exp $	*/
+/*	$NetBSD: auccvar.h,v 1.3 1997/07/04 21:00:18 is Exp $	*/
 
 /*
- * Copyright (c) 1991 Regents of the University of California.
+ * Copyright (c) 1991-1993 Regents of the University of California.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -15,11 +15,11 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ *	This product includes software developed by the Computer Systems
+ *	Engineering Group at Lawrence Berkeley Laboratory.
+ * 4. Neither the name of the University nor of the Laboratory may be used
+ *    to endorse or promote products derived from this software without
+ *    specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -32,24 +32,34 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	@(#)proc.h	7.1 (Berkeley) 5/15/91
  */
-#ifndef _MACHINE_PROC_H_
-#define _MACHINE_PROC_H_
 
-/*
- * Machine-dependent part of the proc structure for amiga.
- */
-struct mdproc {
-	int	*md_regs;		/* registers on current frame */
-	long	md_flags;		/* machine-dependent flags */
-};
 
-/* md_flags */
-#define MDP_STACKADJ	0x0001	/* frame SP adjusted, might have to
-				   undo when system call returns
-				   ERESTART. */
-#define MDP_UNCACHE_WX	0x0002	/* The process might modify code, so
-				   don't cache writeable executable pages.  */
-#endif /* !_MACHINE_PROC_H_ */
+#ifndef _AUCCVAR_H_
+#define _AUCCVAR_H_
+
+#define AUDIO_BUF_SIZE 8192
+
+/* per channel data */
+typedef struct aucc_data {
+	u_int	nd_freq;	/* frequency */
+	u_int	nd_per;		/* period = clock/freq */
+	u_int	nd_volume;	/* 0..63 */
+	u_int	nd_busy;	/* 1, if channel is busy */
+	u_short	*nd_dma;	/* pointer to dma buffer */ 
+	u_int	nd_dmalength;  	/* length of dma data */
+	int	nd_mask;	/* mask of active channels, 
+				   together with this one */
+	void    (*nd_intr) __P((void *)); /* interrupt routine */
+	void   *nd_intrdata;	/* interrupt data */
+	int	nd_doublebuf;	/* double buffering */
+} aucc_data_t;
+
+/* mixer sets */
+#define AUCC_CHANNELS 0
+
+/* mixer values */
+#define AUCC_VOLUME 1
+#define AUCC_OUTPUT_CLASS 2
+
+#endif /* _AUCCVAR_H_ */
