@@ -1,5 +1,5 @@
-/*	$OpenBSD: conf.h,v 1.4 1996/03/29 12:05:56 mickey Exp $	*/
-/*	$NetBSD: conf.h,v 1.30 1996/02/13 21:08:50 christos Exp $	*/
+/*	$OpenBSD: conf.h,v 1.5 1996/03/31 13:16:40 mickey Exp $	*/
+/*	$NetBSD: conf.h,v 1.31 1996/03/14 18:59:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,6 +41,8 @@
  *	@(#)conf.h	8.3 (Berkeley) 1/21/94
  */
 
+#ifndef _SYS_CONF_H_
+#define _SYS_CONF_H_
 /*
  * Definitions of device driver entry switches
  */
@@ -358,3 +360,5 @@ int	chrtoblk __P((dev_t));
 int	iskmemdev __P((dev_t));
 int	iszerodev __P((dev_t));
 #endif
+
+#endif /* _SYS_CONF_ */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: mount.h,v 1.5 1996/02/29 13:57:27 niklas Exp $	*/
-/*	$NetBSD: mount.h,v 1.47 1996/02/09 18:25:16 christos Exp $	*/
+/*	$OpenBSD: mount.h,v 1.6 1996/03/31 13:16:47 mickey Exp $	*/
+/*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -302,26 +302,21 @@ struct iso_args {
 #define	ISOFSMNT_EXTATT	0x00000004	/* enable extended attributes */
 
 /*
- * File Handle (32 bytes for version 2), variable up to 1024 for version 3
- */
-union nfsv2fh {
-	fhandle_t	fh_generic;
-	u_char		fh_bytes[32];
-};
-typedef union nfsv2fh nfsv2fh_t;
-
-/*
  * Arguments to mount NFS
  */
+#define NFS_ARGSVERSION	3		/* change when nfs_args changes */
 struct nfs_args {
+	int		version;	/* args structure version number */
 	struct sockaddr	*addr;		/* file server address */
 	int		addrlen;	/* length of address */
 	int		sotype;		/* Socket type */
 	int		proto;		/* and Protocol */
-	nfsv2fh_t	*fh;		/* File handle to be mounted */
+	u_char		*fh;		/* File handle to be mounted */
+	int		fhsize;		/* Size, in bytes, of fh */
 	int		flags;		/* flags */
 	int		wsize;		/* write size in bytes */
 	int		rsize;		/* read size in bytes */
+	int		readdirsize;	/* readdir size in bytes */
 	int		timeo;		/* initial timeout in .1 secs */
 	int		retrans;	/* times to retry send */
 	int		maxgrouplist;	/* Max. size of group list */
@@ -343,16 +338,19 @@ struct nfs_args {
 #define	NFSMNT_INT		0x00000040  /* allow interrupts on hard mount */
 #define	NFSMNT_NOCONN		0x00000080  /* Don't Connect the socket */
 #define	NFSMNT_NQNFS		0x00000100  /* Use Nqnfs protocol */
-#define	NFSMNT_MYWRITE		0x00000200  /* Assume writes were mine */
+#define	NFSMNT_NFSV3		0x00000200  /* Use NFS Version 3 protocol */
 #define	NFSMNT_KERB		0x00000400  /* Use Kerberos authentication */
 #define	NFSMNT_DUMBTIMR		0x00000800  /* Don't estimate rtt dynamically */
-#define	NFSMNT_RDIRALOOK	0x00001000  /* Do lookup with readdir (nqnfs) */
-#define	NFSMNT_LEASETERM	0x00002000  /* set lease term (nqnfs) */
-#define	NFSMNT_READAHEAD	0x00004000  /* set read ahead */
-#define	NFSMNT_DEADTHRESH	0x00008000  /* set dead server retry thresh */
-#define	NFSMNT_NQLOOKLEASE	0x00010000  /* Get lease for lookup */
-#define	NFSMNT_RESVPORT		0x00020000  /* Allocate a reserved port */
-#define	NFSMNT_INTERNAL		0xffe00000  /* Bits set internally */
+#define	NFSMNT_LEASETERM	0x00001000  /* set lease term (nqnfs) */
+#define	NFSMNT_READAHEAD	0x00002000  /* set read ahead */
+#define	NFSMNT_DEADTHRESH	0x00004000  /* set dead server retry thresh */
+#define	NFSMNT_RESVPORT		0x00008000  /* Allocate a reserved port */
+#define	NFSMNT_RDIRPLUS		0x00010000  /* Use Readdirplus for V3 */
+#define	NFSMNT_READDIRSIZE	0x00020000  /* Set readdir size */
+#define	NFSMNT_INTERNAL		0xfffc0000  /* Bits set internally */
+#define NFSMNT_HASWRITEVERF	0x00040000  /* Has write verifier for V3 */
+#define NFSMNT_GOTPATHCONF	0x00080000  /* Got the V3 pathconf info */
+#define NFSMNT_GOTFSINFO	0x00100000  /* Got the V3 fsinfo */
 #define	NFSMNT_MNTD		0x00200000  /* Mnt server for mnt point */
 #define	NFSMNT_DISMINPROG	0x00400000  /* Dismount in progress */
 #define	NFSMNT_DISMNT		0x00800000  /* Dismounted */

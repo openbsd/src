@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsrvcache.h,v 1.9 1995/12/19 23:08:11 cgd Exp $	*/
+/*	$NetBSD: nfsrvcache.h,v 1.10 1996/02/18 11:54:08 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,27 +35,31 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)nfsrvcache.h	8.2 (Berkeley) 8/18/94
+ *	@(#)nfsrvcache.h	8.3 (Berkeley) 3/30/95
  */
+
+
+#ifndef _NFS_NFSRVCACHE_H_
+#define _NFS_NFSRVCACHE_H_
 
 /*
  * Definitions for the server recent request cache
  */
 
-#define	NFSRVCACHESIZ	256
+#define	NFSRVCACHESIZ	64
 
 struct nfsrvcache {
 	TAILQ_ENTRY(nfsrvcache) rc_lru;		/* LRU chain */
 	LIST_ENTRY(nfsrvcache) rc_hash;		/* Hash chain */
-	u_int32_t rc_xid;			/* rpc id number */
+	u_int32_t	rc_xid;				/* rpc id number */
 	union {
 		struct mbuf *ru_repmb;		/* Reply mbuf list OR */
 		int ru_repstat;			/* Reply status */
 	} rc_un;
 	union nethostaddr rc_haddr;		/* Host address */
 	u_int16_t rc_proc;			/* rpc proc number */
-	u_char	  rc_state;			/* Current state of request */
-	u_char	  rc_flag;			/* Flag bits */
+	u_char    rc_state;		/* Current state of request */
+	u_char    rc_flag;		/* Flag bits */
 };
 
 #define	rc_reply	rc_un.ru_repmb
@@ -82,3 +86,5 @@ struct nfsrvcache {
 #define	RC_NQNFS	0x10
 #define	RC_INETADDR	0x20
 #define	RC_NAM		0x40
+
+#endif

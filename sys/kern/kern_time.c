@@ -1,5 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.2 1996/03/03 17:19:57 niklas Exp $	*/
-/*	$NetBSD: kern_time.c,v 1.19 1996/02/13 21:10:43 christos Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -48,6 +47,8 @@
 #include <sys/syscallargs.h>
 
 #if defined(NFSCLIENT) || defined(NFSSERVER)
+#include <nfs/rpcv2.h>
+#include <nfs/nfsproto.h>
 #include <nfs/nfs_var.h>
 #endif
 
@@ -123,7 +124,7 @@ sys_settimeofday(p, v, retval)
 		timeradd(&boottime, &delta, &boottime);
 		timeradd(&runtime, &delta, &runtime);
 # 		if defined(NFSCLIENT) || defined(NFSSERVER)
-			lease_updatetime(delta.tv_sec);
+			nqnfs_lease_updatetime(delta.tv_sec);
 #		endif
 		splx(s);
 		resettodr();

@@ -1,5 +1,5 @@
-/*	$OpenBSD: nfs_node.c,v 1.3 1996/02/29 09:24:50 niklas Exp $	*/
-/*	$NetBSD: nfs_node.c,v 1.15 1996/02/09 21:48:24 christos Exp $	*/
+/*	$OpenBSD: nfs_node.c,v 1.4 1996/03/31 13:15:36 mickey Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.16 1996/02/18 11:53:42 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,8 +36,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)nfs_node.c	8.2 (Berkeley) 12/30/93
+ *	@(#)nfs_node.c	8.6 (Berkeley) 5/22/95
  */
+
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,15 +50,13 @@
 #include <sys/malloc.h>
 
 #include <nfs/rpcv2.h>
-#include <nfs/nfsv2.h>
+#include <nfs/nfsproto.h>
 #include <nfs/nfs.h>
 #include <nfs/nfsnode.h>
 #include <nfs/nfsmount.h>
 #include <nfs/nqnfs.h>
 #include <nfs/nfs_var.h>
 
-#define	NFSNOHASH(fhsum) \
-	(&nfsnodehashtbl[(fhsum) & nfsnodehash])
 LIST_HEAD(nfsnodehashhead, nfsnode) *nfsnodehashtbl;
 u_long nfsnodehash;
 
@@ -78,19 +77,20 @@ nfs_nhinit()
 /*
  * Compute an entry in the NFS hash table structure
  */
-struct nfsnodehashhead *
-nfs_hash(fhp)
-	register nfsv2fh_t *fhp;
+u_long
+nfs_hash(fhp, fhsize)
+	register nfsfh_t *fhp;
+	int fhsize;
 {
 	register u_char *fhpp;
 	register u_long fhsum;
-	int i;
+	register int i;
 
 	fhpp = &fhp->fh_bytes[0];
 	fhsum = 0;
-	for (i = 0; i < NFSX_FH; i++)
+	for (i = 0; i < fhsize; i++)
 		fhsum += *fhpp++;
-	return (NFSNOHASH(fhsum));
+	return (fhsum);
 }
 
 /*
@@ -100,25 +100,34 @@ nfs_hash(fhp)
  * nfsnode structure is returned.
  */
 int
-nfs_nget(mntp, fhp, npp)
+nfs_nget(mntp, fhp, fhsize, npp)
 	struct mount *mntp;
-	register nfsv2fh_t *fhp;
+	register nfsfh_t *fhp;
+	int fhsize;
 	struct nfsnode **npp;
 {
+#ifdef Lite2_integrated
+	struct proc *p = curproc;	/* XXX */
+#endif
 	register struct nfsnode *np;
 	struct nfsnodehashhead *nhpp;
 	register struct vnode *vp;
+	extern int (**nfsv2_vnodeop_p)__P((void *));
 	struct vnode *nvp;
 	int error;
 
-	nhpp = nfs_hash(fhp);
+	nhpp = NFSNOHASH(nfs_hash(fhp, fhsize));
 loop:
 	for (np = nhpp->lh_first; np != 0; np = np->n_hash.le_next) {
-		if (mntp != NFSTOV(np)->v_mount ||
-		    bcmp((caddr_t)fhp, (caddr_t)&np->n_fh, NFSX_FH))
+		if (mntp != NFSTOV(np)->v_mount || np->n_fhsize != fhsize ||
+		    bcmp((caddr_t)fhp, (caddr_t)np->n_fhp, fhsize))
 			continue;
 		vp = NFSTOV(np);
+#ifdef Lite2_integrated
+		if (vget(vp, LK_EXCLUSIVE, p))
+#else
 		if (vget(vp, 1))
+#endif
 			goto loop;
 		*npp = np;
 		return(0);
@@ -130,26 +139,19 @@ loop:
 	}
 	vp = nvp;
 	MALLOC(np, struct nfsnode *, sizeof *np, M_NFSNODE, M_WAITOK);
+	bzero((caddr_t)np, sizeof *np);
 	vp->v_data = np;
 	np->n_vnode = vp;
 	/*
 	 * Insert the nfsnode in the hash queue for its new file handle
 	 */
-	np->n_flag = 0;
 	LIST_INSERT_HEAD(nhpp, np, n_hash);
-	bcopy((caddr_t)fhp, (caddr_t)&np->n_fh, NFSX_FH);
-	np->n_attrstamp = 0;
-	np->n_direofoffset = 0;
-	np->n_sillyrename = (struct sillyrename *)0;
-	np->n_size = 0;
-	np->n_mtime = 0;
-	np->n_lockf = 0;
-	if (VFSTONFS(mntp)->nm_flag & NFSMNT_NQNFS) {
-		np->n_brev = 0;
-		np->n_lrev = 0;
-		np->n_expiry = (time_t)0;
-		np->n_timer.cqe_next = (struct nfsnode *)0;
-	}
+	if (fhsize > NFS_SMALLFH) {
+		MALLOC(np->n_fhp, nfsfh_t *, fhsize, M_NFSBIGFH, M_WAITOK);
+	} else
+		np->n_fhp = &np->n_fh;
+	bcopy((caddr_t)fhp, (caddr_t)np->n_fhp, fhsize);
+	np->n_fhsize = fhsize;
 	*npp = np;
 	return (0);
 }
@@ -160,6 +162,9 @@ nfs_inactive(v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
+#ifdef Lite2_integrated
+		struct proc *a_p;
+#endif
 	} */ *ap = v;
 	register struct nfsnode *np;
 	register struct sillyrename *sp;
@@ -169,7 +174,10 @@ nfs_inactive(v)
 	np = VTONFS(ap->a_vp);
 	if (prtactive && ap->a_vp->v_usecount != 0)
 		vprint("nfs_inactive: pushing active", ap->a_vp);
-	sp = np->n_sillyrename;
+	if (ap->a_vp->v_type != VDIR)
+		sp = np->n_sillyrename;
+	else
+		sp = (struct sillyrename *)0;
 	np->n_sillyrename = (struct sillyrename *)0;
 	if (sp) {
 		/*
@@ -179,12 +187,13 @@ nfs_inactive(v)
 		nfs_removeit(sp);
 		crfree(sp->s_cred);
 		vrele(sp->s_dvp);
-#ifdef SILLYSEPARATE
-		free((caddr_t)sp, M_NFSREQ);
-#endif
+		FREE((caddr_t)sp, M_NFSREQ);
 	}
 	np->n_flag &= (NMODIFIED | NFLUSHINPROG | NFLUSHWANT | NQNFSEVICTED |
 		NQNFSNONCACHE | NQNFSWRITE);
+#ifdef Lite2_integrated
+	VOP_UNLOCK(ap->a_vp, 0, ap->a_p);
+#endif
 	return (0);
 }
 
@@ -201,10 +210,12 @@ nfs_reclaim(v)
 	register struct vnode *vp = ap->a_vp;
 	register struct nfsnode *np = VTONFS(vp);
 	register struct nfsmount *nmp = VFSTONFS(vp->v_mount);
+	register struct nfsdmap *dp, *dp2;
 	extern int prtactive;
 
 	if (prtactive && vp->v_usecount != 0)
 		vprint("nfs_reclaim: pushing active", vp);
+
 	LIST_REMOVE(np, n_hash);
 
 	/*
@@ -213,12 +224,31 @@ nfs_reclaim(v)
 	if ((nmp->nm_flag & NFSMNT_NQNFS) && np->n_timer.cqe_next != 0) {
 		CIRCLEQ_REMOVE(&nmp->nm_timerhead, np, n_timer);
 	}
+
+	/*
+	 * Free up any directory cookie structures and
+	 * large file handle structures that might be associated with
+	 * this nfs node.
+	 */
+	if (vp->v_type == VDIR) {
+		dp = np->n_cookies.lh_first;
+		while (dp) {
+			dp2 = dp;
+			dp = dp->ndm_list.le_next;
+			FREE((caddr_t)dp2, M_NFSDIROFF);
+		}
+	}
+	if (np->n_fhsize > NFS_SMALLFH) {
+		FREE((caddr_t)np->n_fhp, M_NFSBIGFH);
+	}
+
 	cache_purge(vp);
 	FREE(vp->v_data, M_NFSNODE);
 	vp->v_data = (void *)0;
 	return (0);
 }
 
+#ifndef Lite2_integrated
 /*
  * Lock an nfsnode
  */
@@ -238,7 +268,7 @@ nfs_lock(v)
 	 */
 	while (vp->v_flag & VXLOCK) {
 		vp->v_flag |= VXWANT;
-		sleep((caddr_t)vp, PINOD);
+		(void) tsleep((caddr_t)vp, PINOD, "nfslck", 0);
 	}
 	if (vp->v_tag == VT_NON)
 		return (ENOENT);
@@ -272,9 +302,9 @@ nfs_islocked(v)
 		struct vnode *a_vp;
 	} */ *ap = v;
 #endif
-
 	return (0);
 }
+#endif /* Lite2_integrated */
 
 /*
  * Nfs abort op, called after namei() when a CREATE/DELETE isn't actually

@@ -1,5 +1,5 @@
-/*	$OpenBSD: buf.h,v 1.2 1996/02/29 13:57:26 niklas Exp $	*/
-/*	$NetBSD: buf.h,v 1.23 1996/02/09 18:24:59 christos Exp $	*/
+/*	$OpenBSD: buf.h,v 1.3 1996/03/31 13:16:37 mickey Exp $	*/
+/*	$NetBSD: buf.h,v 1.24 1996/02/18 11:55:45 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -96,7 +96,7 @@ struct buf {
  * These flags are kept in b_flags.
  */
 #define	B_AGE		0x00000001	/* Move to age queue when I/O done. */
-#define	B_APPENDWRITE	0x00000002	/* Append-write in progress. */
+#define	B_NEEDCOMMIT	0x00000002	/* Needs committing to stable storage */
 #define	B_ASYNC		0x00000004	/* Start I/O, do not wait. */
 #define	B_BAD		0x00000008	/* Bad block revectoring in progress. */
 #define	B_BUSY		0x00000010	/* I/O in progress. */

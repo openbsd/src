@@ -1,5 +1,5 @@
-/*	$OpenBSD: malloc.h,v 1.3 1996/03/03 12:11:58 niklas Exp $	*/
-/*	$NetBSD: malloc.h,v 1.21 1995/11/21 01:00:25 cgd Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.4 1996/03/31 13:16:43 mickey Exp $	*/
+/*	$NetBSD: malloc.h,v 1.22 1996/02/22 12:47:33 jtk Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -120,6 +120,7 @@
 #define	M_ADOSFSNODE	67	/* adosfs vnode private part */
 #define	M_ANODE		68	/* adosfs anode structures and tables. */
 #define	M_IPQ		69	/* IP packet queue entry */
+#define	M_AFS		70	/* Andrew File System */
 #define	M_TEMP		84	/* misc temporary data buffers */
 #define	M_LAST		85	/* Must be last type + 1 */
 
@@ -194,9 +195,10 @@
 	"adosfs node",	/* 67 M_ADOSFSNODE */ \
 	"adosfs anode",	/* 68 M_ANODE */ \
 	"IP queue ent", /* 69 M_IPQ */ \
+	"afs",		/* 70 M_AFS */ \
 	NULL, NULL, NULL, NULL, NULL, \
 	NULL, NULL, NULL, NULL, NULL, \
-	NULL, NULL, NULL, NULL, \
+	NULL, NULL, NULL, \
 	"temp",		/* 84 M_TEMP */ \
 }
 
