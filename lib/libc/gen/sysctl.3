@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.22 1999/07/02 16:57:48 aaron Exp $
+.\"	$OpenBSD: sysctl.3,v 1.23 1999/07/02 18:01:46 aaron Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -287,8 +287,10 @@ The maximum bytes of argument to
 .Xr exec 2 .
 .It Dv KERN_ARND
 Returns a random iteger from the kernel arc4random function.
-This can be useful if /dev/arandom is not available, see
-.Xr rnd 4 .
+This can be useful if
+.Pa /dev/arandom
+is not available (see
+.Xr rnd 4 ) .
 .It Dv KERN_BOOTTIME
 A
 .Li struct timeval
@@ -483,14 +485,16 @@ The variables are as follows:
 .Bl -tag -width "123456"
 .It Li encap.encdebug
 Returns 1 when error message reporting is enabled for the host.
-If the kernel has been compiled with the ENCDEBUG option,
+If the kernel has been compiled with the
+.Dv ENCDEBUG
+option,
 then debugging information will also be reported when this variable is set.
 .El
 .It Dv PF_ROUTE
 Return the entire routing table or a subset of it.
 The data is returned as a sequence of routing messages (see
 .Xr route 4
-for the header file, format and meaning).
+for the header file, format, and meaning).
 The length of each message is contained in the message header.
 .Pp
 The third level name is a protocol number, which is currently always 0.
@@ -529,7 +533,7 @@ The variables are as follows:
 Returns 1 when
 .Tn IP
 forwarding is enabled for the host,
-meaning that the host is acting as a router.
+indicating the host is acting as a router.
 .It Li ip.redirect
 Returns 1 when
 .Tn ICMP
@@ -560,12 +564,13 @@ is returned specifying the bitmask of
 .Tn TCP
 ports between 512
 and 1023 inclusive that should not be allocated dynamically
-by the kernel (ie: they must be bound specifically by port number).
+by the kernel (i.e., they must be bound specifically by port number).
 .It Li tcp.ident
 A structure
 .Li struct tcp_ident_mapping
-specifying a local and foreign endpoint of a tcp socket 
-is filled in with the euid and ruid of the process that owns the socket.
+specifying a local and foreign endpoint of a
+.Tn TCP
+socket is filled in with the euid and ruid of the process that owns the socket.
 If no such socket exists then the euid and ruid values are both
 set to \-1.
 .It Li tcp.sack
@@ -681,7 +686,7 @@ The version of POSIX 1003.2 with which the system attempts to comply.
 The maximum number of repeated occurrences of a regular expression
 permitted when using interval notation.
 .It Dv USER_STREAM_MAX
-The minimum maximum number of streams that a process may have open
+The maximum number of streams that a process may have open
 at any one time.
 .It Dv USER_TZNAME_MAX
 The minimum maximum number of types supported for the name of a
