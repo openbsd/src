@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.11 2003/06/03 21:09:02 deraadt Exp $	*/
+/*	$OpenBSD: endian.h,v 1.12 2004/10/16 14:26:03 miod Exp $	*/
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -28,6 +28,8 @@
 #define _VAX_ENDIAN_H_
 
 #ifdef	__GNUC__
+
+#define	__swap64md	__swap64gen
 
 #define	__swap32md(x) ({						\
 	u_int32_t __swap32md_y, __swap32md_x = (x);			\
