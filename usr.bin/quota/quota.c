@@ -1,4 +1,4 @@
-/*	$OpenBSD: quota.c,v 1.23 2003/06/10 22:20:49 deraadt Exp $	*/
+/*	$OpenBSD: quota.c,v 1.24 2004/10/10 03:31:20 mickey Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -41,7 +41,7 @@ static const char copyright[] =
 #ifndef lint
 /*static char sccsid[] = "from: @(#)quota.c	8.1 (Berkeley) 6/6/93";*/
 static const char rcsid[] =
-"$OpenBSD: quota.c,v 1.23 2003/06/10 22:20:49 deraadt Exp $";
+"$OpenBSD: quota.c,v 1.24 2004/10/10 03:31:20 mickey Exp $";
 #endif /* not lint */
 
 /*
@@ -565,7 +565,7 @@ getufsquota(struct statfs *fst, struct fstab *fs, struct quotause *qup,
 		case sizeof(struct dqblk):	/* OK */
 			break;
 		default:		/* ERROR */
-			warn("read error `%s'", qfpathname);
+			warn("%s", qfpathname);
 			close(fd);
 			return (0);
 		}
