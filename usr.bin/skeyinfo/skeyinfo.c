@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinfo.c,v 1.7 2001/06/17 22:44:51 millert Exp $	*/
+/*	$OpenBSD: skeyinfo.c,v 1.8 2001/06/17 22:54:44 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 2001 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -82,7 +82,8 @@ main(argc, argv)
 
 	as = auth_userchallenge(name, "skey", NULL, &challenge);
 	if (as == NULL || challenge == NULL) {
-		auth_close(as);
+		if (as)
+			auth_close(as);
 		errx(1, "unable to retrieve S/Key challenge for %s", name);
 	}
 
