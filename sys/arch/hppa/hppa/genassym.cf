@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.7 1999/05/21 17:34:50 mickey Exp $
+#	$OpenBSD: genassym.cf,v 1.8 1999/06/05 03:36:17 mickey Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -180,6 +180,7 @@ member	p_addr
 member	p_priority
 member	p_stat
 member	p_wchan
+member	p_md
 define	P_MD_FLAGS		offsetof(struct proc, p_md.md_flags)
 define	P_MD_REGS		offsetof(struct proc, p_md.md_regs)
 define	SSLEEP			SSLEEP
