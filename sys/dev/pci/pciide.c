@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.67 2001/09/11 20:05:25 miod Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.68 2001/09/27 16:35:03 gluk Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -360,7 +360,7 @@ const struct pciide_product_desc pciide_via_products[] =  {
 	{ PCI_PRODUCT_VIATECH_VT82C416, /* VIA VT82C416 IDE */
 	  0,
 	  apollo_chip_map
-	 },
+	},
 	{ PCI_PRODUCT_VIATECH_VT82C571, /* VIA VT82C571 IDE */
 	  0,
 	  apollo_chip_map
@@ -397,35 +397,35 @@ const struct pciide_product_desc pciide_triones_products[] =  {
 
 const struct pciide_product_desc pciide_promise_products[] =  {
 	{ PCI_PRODUCT_PROMISE_PDC20246,
-	IDE_PCI_CLASS_OVERRIDE,
-	pdc202xx_chip_map,
+	  IDE_PCI_CLASS_OVERRIDE,
+	  pdc202xx_chip_map,
 	},
 	{ PCI_PRODUCT_PROMISE_PDC20262,
-	IDE_PCI_CLASS_OVERRIDE,
-	pdc202xx_chip_map,
+	  IDE_PCI_CLASS_OVERRIDE,
+	  pdc202xx_chip_map,
 	},
 	{ PCI_PRODUCT_PROMISE_PDC20265,
-	IDE_PCI_CLASS_OVERRIDE,
-	pdc202xx_chip_map,
+	  IDE_PCI_CLASS_OVERRIDE,
+	  pdc202xx_chip_map,
 	},
 	{ PCI_PRODUCT_PROMISE_PDC20267,
-	IDE_PCI_CLASS_OVERRIDE,
-	pdc202xx_chip_map,
+	  IDE_PCI_CLASS_OVERRIDE,
+	  pdc202xx_chip_map,
 	}
 };
 
 const struct pciide_product_desc pciide_acard_products[] =  {
 	{ PCI_PRODUCT_ACARD_ATP850U,	/* Acard ATP850U Ultra33 Controller */
-	 IDE_PCI_CLASS_OVERRIDE,
-	 acard_chip_map,
-	 },
+	  IDE_PCI_CLASS_OVERRIDE,
+	  acard_chip_map,
+	},
 	{ PCI_PRODUCT_ACARD_ATP860,	/* Acard ATP860 Ultra66 Controller */
-	 IDE_PCI_CLASS_OVERRIDE,
-	 acard_chip_map,
+	  IDE_PCI_CLASS_OVERRIDE,
+	  acard_chip_map,
 	},
 	{ PCI_PRODUCT_ACARD_ATP860A,	/* Acard ATP860-A Ultra66 Controller */
-	 IDE_PCI_CLASS_OVERRIDE,
-	 acard_chip_map,
+	  IDE_PCI_CLASS_OVERRIDE,
+	  acard_chip_map,
 	}
 };
 
@@ -622,9 +622,9 @@ pciide_chipen(sc, pa)
 		csr = pci_conf_read(sc->sc_pc, sc->sc_tag,
 		    PCI_COMMAND_STATUS_REG);
 		printf("%s: device disabled (at %s)\n",
-	 	   sc->sc_wdcdev.sc_dev.dv_xname,
-	  	  (csr & PCI_COMMAND_IO_ENABLE) == 0 ?
-		  "device" : "bridge");
+		    sc->sc_wdcdev.sc_dev.dv_xname,
+		    (csr & PCI_COMMAND_IO_ENABLE) == 0 ?
+		    "device" : "bridge");
 		return 0;
 	}
 	return 1;
@@ -1202,8 +1202,8 @@ pciide_chansetup(sc, channel, interface)
 	    malloc(sizeof(struct channel_queue), M_DEVBUF, M_NOWAIT);
 	if (cp->wdc_channel.ch_queue == NULL) {
 		printf("%s: %s "
-			"cannot allocate memory for command queue",
-		sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
+		    "cannot allocate memory for command queue",
+		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
 		return 0;
 	}
 	cp->hw_ok = 1;
@@ -1310,7 +1310,7 @@ pciide_print_channels(nchannels, interface)
 		    "configured" : "wired",
 		    (interface & PCIIDE_INTERFACE_PCI(i)) ? "native-PCI" :
 		    "compatibility");
-		    }
+	}
 
 	printf("\n");
 }
@@ -1348,8 +1348,8 @@ default_chip_map(sc, pa)
 			sc->sc_dma_ok = 0;
 		} else {
 			pciide_mapreg_dma(sc, pa);
-		if (sc->sc_dma_ok != 0)
-			printf(", (partial support)");
+			if (sc->sc_dma_ok != 0)
+				printf(", (partial support)");
 		}
 	} else {
 		printf(": no DMA");
@@ -1370,7 +1370,7 @@ default_chip_map(sc, pa)
 	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
 		cp = &sc->pciide_channels[channel];
 		if (pciide_chansetup(sc, channel, interface) == 0)
-		    continue;
+			continue;
 		if (interface & PCIIDE_INTERFACE_PCI(channel)) {
 			cp->hw_ok = pciide_mapregs_native(pa, cp, &cmdsize,
 			    &ctlsize, pciide_pci_intr);
@@ -1584,7 +1584,7 @@ next:
 		if (sc->sc_wdcdev.cap & WDC_CAPABILITY_UDMA) {
 			WDCDEBUG_PRINT((", udamreg 0x%x",
 			    pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_UDMAREG)),
-			        DEBUG_PROBE);
+			    DEBUG_PROBE);
 		}
 		if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AA_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AB_IDE ||
@@ -1592,7 +1592,7 @@ next:
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801BA_IDE ) {
 			WDCDEBUG_PRINT((", IDE_CONTROL 0x%x",
 			    pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_CONFIG)),
-			DEBUG_PROBE);
+			    DEBUG_PROBE);
 		}
 	}
 	WDCDEBUG_PRINT(("\n"), DEBUG_PROBE);
@@ -1751,7 +1751,7 @@ piix3_4_setup_channel(chp)
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801BAM_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801BA_IDE ) {
-		    ideconf |= PIIX_CONFIG_PINGPONG;
+			ideconf |= PIIX_CONFIG_PINGPONG;
 		}
 		if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801BAM_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801BA_IDE) {
@@ -2198,7 +2198,7 @@ apollo_chip_map(sc, pa)
 		if (pciide_chan_candisable(cp)) {
 			ideconf &= ~APO_IDECONF_EN(channel);
 			pci_conf_write(sc->sc_pc, sc->sc_tag, APO_IDECONF,
-				    ideconf);
+			    ideconf);
 		}
 
 		if (cp->hw_ok == 0)
@@ -3297,7 +3297,7 @@ hpt_chip_map(sc, pa)
 		sc->sc_wdcdev.nchannels = 2;
 		sc->sc_wdcdev.UDMA_cap = 5;
 	}
-	 for (i = 0; i < sc->sc_wdcdev.nchannels; i++) {
+	for (i = 0; i < sc->sc_wdcdev.nchannels; i++) {
 		cp = &sc->pciide_channels[i];
 		if (sc->sc_wdcdev.nchannels > 1) {
 			compatchan = i;
@@ -3362,7 +3362,7 @@ hpt_setup_channel(chp)
 		if ((drvp->drive_flags & DRIVE) == 0)
 			continue;
 		before = pci_conf_read(sc->sc_pc, sc->sc_tag,
-					HPT_IDETIM(chp->channel, drive));
+				       HPT_IDETIM(chp->channel, drive));
 
 		/* add timing values, setup DMA if needed */
 		if (drvp->drive_flags & DRIVE_UDMA) {
@@ -3759,8 +3759,8 @@ pdc20265_pci_intr(arg)
 		 */
 		dmastat = bus_space_read_1(sc->sc_dma_iot,
 		    sc->sc_dma_ioh, IDEDMA_CTL + IDEDMA_SCH_OFFSET * i);
-		if((dmastat & IDEDMA_CTL_INTR) == 0)
-		    continue;
+		if ((dmastat & IDEDMA_CTL_INTR) == 0)
+			continue;
 
 		crv = wdcintr(wdc_cp);
 		if (crv == 0)
