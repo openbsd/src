@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.11 1996/08/07 03:17:58 downsj Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.12 1996/08/07 03:27:54 downsj Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -119,10 +119,8 @@ int	maxtimeout = 7200;/* don't allow idle time to be set beyond 2 hours */
 int	logging;
 int	high_data_ports = 0;
 int	guest;
-#ifdef STATS
 int	stats;
 int	statfd = -1;
-#endif
 int	dochroot;
 int	type;
 int	form;
@@ -151,9 +149,7 @@ int	notickets = 1;
 char	*krbtkfile_env = NULL;
 #endif
 
-#ifdef STATS
 char	*ident = NULL;
-#endif
 
 
 /*
@@ -207,9 +203,7 @@ static struct passwd *
 static char	*sgetsave __P((char *));
 static void	 reapchild __P((int));
 
-#ifdef STATS
 void	 logxfer __P((char *, off_t, time_t));
-#endif
 
 static char *
 curdir()
@@ -233,11 +227,7 @@ main(argc, argv, envp)
 	int addrlen, ch, on = 1, tos;
 	char *cp, line[LINE_MAX];
 	FILE *fd;
-#ifdef STATS
 	char *argstr = "dDhlSt:T:u:Uv";
-#else
-	char *argstr = "dDhlt:T:u:Uv";
-#endif
 
 	tzset();	/* in case no timezone database in ~ftp */
 
@@ -262,11 +252,9 @@ main(argc, argv, envp)
 			logging++;	/* > 1 == extra logging */
 			break;
 
-#ifdef STATS
 		case 'S':
 			stats = 1;
 			break;
-#endif
 
 		case 't':
 			timeout = atoi(optarg);
@@ -727,12 +715,10 @@ skip:
 		login(&utmp);
 	}
 
-#ifdef STATS
 	/* open stats file before chroot */
 	if (guest && (stats == 1) && (statfd < 0))
 		if ((statfd = open(_PATH_FTPDSTATFILE, O_WRONLY|O_APPEND)) < 0)
 			stats = 0;
-#endif
 
 	logged_in = 1;
 
@@ -787,13 +773,11 @@ skip:
 		(void) fclose(fd);
 	}
 	if (guest) {
-#ifdef STATS
 		if (ident != NULL)
 			free(ident);
 		ident = strdup(passwd);
 		if (ident == (char *)NULL)
 			fatal("Ran out of memory.");
-#endif
 		reply(230, "Guest login ok, access restrictions apply.");
 #ifdef HASSETPROCTITLE
 		snprintf(proctitle, sizeof(proctitle),
@@ -830,9 +814,7 @@ retrieve(cmd, name)
 	FILE *fin, *dout;
 	struct stat st;
 	int (*closefunc) __P((FILE *));
-#ifdef STATS
 	time_t start;
-#endif
 
 	if (cmd == 0) {
 		fin = fopen(name, "r"), closefunc = fclose;
@@ -883,15 +865,11 @@ retrieve(cmd, name)
 	dout = dataconn(name, st.st_size, "w");
 	if (dout == NULL)
 		goto done;
-#ifdef STATS
 	time(&start);
-#endif
 	send_data(fin, dout, st.st_blksize, st.st_size,
 		  (restart_point == 0 && cmd == 0 && S_ISREG(st.st_mode)));
-#ifdef STATS
 	if ((cmd == 0) && guest && stats)
 		logxfer(name, st.st_size, start);
-#endif
 	(void) fclose(dout);
 	data = -1;
 	pdata = -1;
@@ -1927,7 +1905,6 @@ reapchild(signo)
 	while (wait3(NULL, WNOHANG, NULL) > 0);
 }
 
-#ifdef STATS
 void
 logxfer(name, size, start)
 	char *name;
@@ -1946,4 +1923,3 @@ logxfer(name, size, start)
 		write(statfd, buf, strlen(buf));
 	}
 }
-#endif
