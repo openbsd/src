@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.3 2001/09/20 20:50:03 jason Exp $	*/
+/*	$OpenBSD: conf.h,v 1.4 2001/10/28 03:14:59 jason Exp $	*/
 /*	$NetBSD: conf.h,v 1.9 2001/03/26 12:33:26 lukem Exp $	*/
 
 /*-
@@ -98,6 +98,8 @@ cdev_decl(scsibus);
 
 bdev_decl(wd);
 cdev_decl(wd);
+
+cdev_decl(sabtty);
 
 cdev_decl(pcons);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.10 2001/09/28 02:53:14 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.11 2001/10/28 03:14:59 jason Exp $	*/
 /*	$NetBSD: conf.c,v 1.17 2001/03/26 12:33:26 lukem Exp $ */
 
 /*
@@ -87,6 +87,7 @@
 #define NSUNMS 0
 #endif
 #include "zstty.h"
+#include "sab.h"
 #include "pcons.h"
 #include "com.h"
 #ifdef notyet
@@ -241,7 +242,7 @@ struct cdevsw	cdevsw[] =
 	cdev_altq_init(NALTQ,altq),	/* 74: ALTQ control interface */
 	cdev_notdef(),			/* 75 */
 	cdev_ksyms_init(NKSYMS,ksyms),	/* 76 *: Kernel symbols device */
-	cdev_notdef(),			/* 77 */
+	cdev_tty_init(NSABTTY,sabtty),	/* 77: sab82532 serial ports */
 	cdev_notdef(),			/* 78 */
 	cdev_notdef(),			/* 79 */
 	cdev_notdef(),			/* 80 */
