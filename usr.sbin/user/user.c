@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.39 2002/11/07 22:05:43 millert Exp $ */
+/* $OpenBSD: user.c,v 1.40 2002/12/10 20:49:28 millert Exp $ */
 /* $NetBSD: user.c,v 1.45 2001/08/17 08:29:00 joda Exp $ */
 
 /*
@@ -828,7 +828,7 @@ adduser(char *login, user_t *up)
 		if (write(ptmpfd, buf, (size_t)(cc)) != cc) {
 			(void) close(masterfd);
 			(void) close(ptmpfd);
-			(void) pw_abort();
+			pw_abort();
 			err(EXIT_FAILURE, "short write to /etc/ptmp (not %d chars)", cc);
 		}
 	}
@@ -841,7 +841,7 @@ adduser(char *login, user_t *up)
 		 * Look for a free UID in the command line ranges (if any).
 		 * These start after the ranges specified in the config file.
 		 */
-		for (i = up->u_defrc; got_id == 0 && i < up->u_rc ; i++){ 
+		for (i = up->u_defrc; got_id == 0 && i < up->u_rc ; i++) { 
 			got_id = getnextuid(sync_uid_gid, &up->u_uid,
 			    up->u_rv[i].r_from, up->u_rv[i].r_to);
 	 	}
@@ -858,21 +858,21 @@ adduser(char *login, user_t *up)
 		}
 		if (got_id == 0) {
 			(void) close(ptmpfd);
-			(void) pw_abort();
+			pw_abort();
 			errx(EXIT_FAILURE, "can't get next uid for %u", up->u_uid);
 		}
 	}
 	/* check uid isn't already allocated */
 	if (!(up->u_flags & F_DUPUID) && getpwuid((uid_t)(up->u_uid)) != NULL) {
 		(void) close(ptmpfd);
-		(void) pw_abort();
+		pw_abort();
 		errx(EXIT_FAILURE, "uid %u is already in use", up->u_uid);
 	}
 	/* if -g=uid was specified, check gid is unused */
 	if (sync_uid_gid) {
 		if (getgrgid((gid_t)(up->u_uid)) != NULL) {
 			(void) close(ptmpfd);
-			(void) pw_abort();
+			pw_abort();
 			errx(EXIT_FAILURE, "gid %u is already in use", up->u_uid);
 		}
 		gid = up->u_uid;
@@ -883,13 +883,13 @@ adduser(char *login, user_t *up)
 		gid = grp->gr_gid;
 	} else {
 		(void) close(ptmpfd);
-		(void) pw_abort();
+		pw_abort();
 		errx(EXIT_FAILURE, "group %s not found", up->u_primgrp);
 	}
 	/* check name isn't already in use */
 	if (!(up->u_flags & F_DUPUID) && getpwnam(login) != NULL) {
 		(void) close(ptmpfd);
-		(void) pw_abort();
+		pw_abort();
 		errx(EXIT_FAILURE, "already a `%s' user", login);
 	}
 	if (up->u_flags & F_HOMEDIR) {
@@ -940,24 +940,24 @@ adduser(char *login, user_t *up)
 	    (strchr(up->u_comment, '&') != NULL &&
 	    cc + strlen(login) >= sizeof(buf))) {
 		(void) close(ptmpfd);
-		(void) pw_abort();
+		pw_abort();
 		errx(EXIT_FAILURE, "can't add `%s', line too long", buf);
 	}
 	if (write(ptmpfd, buf, (size_t) cc) != cc) {
 		(void) close(ptmpfd);
-		(void) pw_abort();
+		pw_abort();
 		err(EXIT_FAILURE, "can't add `%s'", buf);
 	}
 	if (up->u_flags & F_MKDIR) {
 		if (lstat(home, &st) == 0) {
 			(void) close(ptmpfd);
-			(void) pw_abort();
+			pw_abort();
 			errx(EXIT_FAILURE, "home directory `%s' already exists",
 			    home);
 		} else {
 			if (asystem("%s -p %s", MKDIR, home) != 0) {
 				(void) close(ptmpfd);
-				(void) pw_abort();
+				pw_abort();
 				err(EXIT_FAILURE, "can't mkdir `%s'", home);
 			}
 			(void) copydotfiles(up->u_skeldir, up->u_uid, gid, home);
@@ -966,17 +966,18 @@ adduser(char *login, user_t *up)
 	if (strcmp(up->u_primgrp, "=uid") == 0 && getgrnam(login) == NULL &&
 	    !creategid(login, gid, login)) {
 		(void) close(ptmpfd);
-		(void) pw_abort();
+		pw_abort();
 		errx(EXIT_FAILURE, "can't create gid %d for login name %s",
 		    gid, login);
 	}
 	if (up->u_groupc > 0 && !append_group(login, up->u_groupc, up->u_groupv)) {
 		(void) close(ptmpfd);
-		(void) pw_abort();
+		pw_abort();
 		errx(EXIT_FAILURE, "can't append `%s' to new groups", login);
 	}
 	(void) close(ptmpfd);
 	if (pw_mkdb(login, 0) < 0) {
+		pw_abort();
 		err(EXIT_FAILURE, "pw_mkdb failed");
 	}
 	return 1;
@@ -1023,7 +1024,7 @@ moduser(char *login, char *newlogin, user_t *up)
 	if ((master = fdopen(masterfd, "r")) == NULL) {
 		(void) close(masterfd);
 		(void) close(ptmpfd);
-		(void) pw_abort();
+		pw_abort();
 		err(EXIT_FAILURE, "can't fdopen fd for %s", _PATH_MASTERPASSWD);
 	}
 	if (up != NULL) {
@@ -1031,7 +1032,7 @@ moduser(char *login, char *newlogin, user_t *up)
 			/* if changing name, check new name isn't already in use */
 			if (strcmp(login, newlogin) != 0 && getpwnam(newlogin) != NULL) {
 				(void) close(ptmpfd);
-				(void) pw_abort();
+				pw_abort();
 				errx(EXIT_FAILURE, "already a `%s' user", newlogin);
 			}
 			pwp->pw_name = newlogin;
@@ -1054,7 +1055,7 @@ moduser(char *login, char *newlogin, user_t *up)
 			/* check uid isn't already allocated */
 			if (!(up->u_flags & F_DUPUID) && getpwuid((uid_t)(up->u_uid)) != NULL) {
 				(void) close(ptmpfd);
-				(void) pw_abort();
+				pw_abort();
 				errx(EXIT_FAILURE, "uid %u is already in use", up->u_uid);
 			}
 			pwp->pw_uid = up->u_uid;
@@ -1064,7 +1065,7 @@ moduser(char *login, char *newlogin, user_t *up)
 			if (strcmp(up->u_primgrp, "=uid") == 0) {
 				if (getgrgid((gid_t)(up->u_uid)) != NULL) {
 					(void) close(ptmpfd);
-					(void) pw_abort();
+					pw_abort();
 					errx(EXIT_FAILURE, "gid %u is already in use", up->u_uid);
 				}
 				pwp->pw_gid = up->u_uid;
@@ -1075,7 +1076,7 @@ moduser(char *login, char *newlogin, user_t *up)
 				pwp->pw_gid = grp->gr_gid;
 			} else {
 				(void) close(ptmpfd);
-				(void) pw_abort();
+				pw_abort();
 				errx(EXIT_FAILURE, "group %s not found", up->u_primgrp);
 			}
 		}
@@ -1127,21 +1128,21 @@ moduser(char *login, char *newlogin, user_t *up)
 				    (strchr(up->u_comment, '&') != NULL &&
 				    len + strlen(newlogin) >= sizeof(buf))) {
 					(void) close(ptmpfd);
-					(void) pw_abort();
+					pw_abort();
 					errx(EXIT_FAILURE, "can't add `%s',
 					    line too long (%d bytes)", buf,
 					    len + strlen(newlogin));
 				}
 				if (write(ptmpfd, buf, len) != len) {
 					(void) close(ptmpfd);
-					(void) pw_abort();
+					pw_abort();
 					err(EXIT_FAILURE, "can't add `%s'", buf);
 				}
 			}
 		} else if ((cc = write(ptmpfd, line, len)) != len) {
 			(void) close(masterfd);
 			(void) close(ptmpfd);
-			(void) pw_abort();
+			pw_abort();
 			err(EXIT_FAILURE, "short write to /etc/ptmp (%lld not %lld chars)",
 			    (long long)cc, (long long)len);
 		}
@@ -1150,15 +1151,15 @@ moduser(char *login, char *newlogin, user_t *up)
 		if ((up->u_flags & F_MKDIR) &&
 		    asystem("%s %s %s", MV, homedir, pwp->pw_dir) != 0) {
 			(void) close(ptmpfd);
-			(void) pw_abort();
+			pw_abort();
 			err(EXIT_FAILURE, "can't move `%s' to `%s'",
 			    homedir, pwp->pw_dir);
 		}
 		if (up->u_groupc > 0 &&
 		    !append_group(newlogin, up->u_groupc, up->u_groupv)) {
 			(void) close(ptmpfd);
-			 (void) pw_abort();
-			 errx(EXIT_FAILURE, "can't append `%s' to new groups",
+			pw_abort();
+			errx(EXIT_FAILURE, "can't append `%s' to new groups",
 			    newlogin);
 		}
 	}
@@ -1167,8 +1168,10 @@ moduser(char *login, char *newlogin, user_t *up)
 		rval = pw_mkdb(login, 0);
 	else
 		rval = pw_mkdb(NULL, 0);
-	if (rval == -1)
+	if (rval == -1) {
+		pw_abort();
 		err(EXIT_FAILURE, "pw_mkdb failed");
+	}
 
 	return 1;
 }
