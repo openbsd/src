@@ -1,4 +1,4 @@
-/*	$OpenBSD: docmd.c,v 1.6 1997/07/22 06:59:38 millert Exp $	*/
+/*	$OpenBSD: docmd.c,v 1.7 1998/06/26 21:21:09 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -34,8 +34,13 @@
  */
 
 #ifndef lint
+#if 0
 static char RCSid[] = 
-"$OpenBSD: docmd.c,v 1.6 1997/07/22 06:59:38 millert Exp $";
+"$From: docmd.c,v 6.86 1996/01/30 02:29:43 mcooper Exp $";
+#else
+static char RCSid[] = 
+"$OpenBSD: docmd.c,v 1.7 1998/06/26 21:21:09 millert Exp $";
+#endif
 
 static char sccsid[] = "@(#)docmd.c	5.1 (Berkeley) 6/6/85";
 
@@ -435,6 +440,11 @@ static void doarrow(cmd, filev)
 	char *rhost;
 	int didupdate = 0;
 
+#ifdef __GNUC__
+	(void)&didupdate;
+	(void)&opts;
+#endif
+
         if (setjmp_ok) {
 		error("reentrant call to doarrow");
 		abort();
@@ -597,6 +607,7 @@ done:
 	setjmp_ok = FALSE;
 }
 
+int
 okname(name)
 	register char *name;
 {
@@ -637,7 +648,7 @@ static void rcmptime(st, sbcmds, env)
 	}
 	optarget = ptarget;
 	len = ptarget - target;
-	while (dp = readdir(d)) {
+	while ((dp = readdir(d))) {
 		if (!strcmp(dp->d_name, ".") || !strcmp(dp->d_name, ".."))
 			continue;
 		if (len + 1 + (int)strlen(dp->d_name) >= BUFSIZ - 1) {
@@ -647,7 +658,7 @@ static void rcmptime(st, sbcmds, env)
 		ptarget = optarget;
 		*ptarget++ = '/';
 		cp = dp->d_name;
-		while (*ptarget++ = *cp++)
+		while ((*ptarget++ = *cp++))
 			;
 		ptarget--;
 		cmptime(target, sbcmds, env);
@@ -791,7 +802,7 @@ static void dodcolon(cmd, filev)
 
 	for (sc = sbcmds; sc != NULL; sc = sc->sc_next) {
 		if (sc->sc_type == NOTIFY)
-			notify((char *)NULL, sc->sc_args, (time_t)lastmod);
+			notify(NULL, sc->sc_args, (time_t)lastmod);
 		else if (sc->sc_type == CMDSPECIAL && env) {
 			char *p;
 			int len = strlen(env);
@@ -889,9 +900,9 @@ static void docmdhost(cmd, filev)
 
 	if (!nflag) {
 		currenthost = (cmd->c_name) ? cmd->c_name : "<unknown>";
-#if	defined(SETARGS)
+#if	defined(SETARGS) || defined(HAVE_SETPROCTITLE)
 		setproctitle("update %s", currenthost);
-#endif 	/* SETARGS */
+#endif 	/* SETARGS || HAVE_SETPROCTITLE */
 	}
 
 	switch (cmd->c_type) {
@@ -921,7 +932,7 @@ static void docmd(cmd, argc, argv)
 		for (i = 0; i < argc; i++) {
 			if (cmd->c_label != NULL &&
 			    strcmp(cmd->c_label, argv[i]) == 0) {
-				docmdhost(cmd, (char **) NULL);
+				docmdhost(cmd, NULL);
 				return;
 			}
 			for (f = cmd->c_files; f != NULL; f = f->n_next)
@@ -931,7 +942,7 @@ static void docmd(cmd, argc, argv)
 				}
 		}
 	} else
-		docmdhost(cmd, (char **) NULL);
+		docmdhost(cmd, NULL);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdist.c,v 1.4 1997/07/22 06:59:39 millert Exp $	*/
+/*	$OpenBSD: rdist.c,v 1.5 1998/06/26 21:21:20 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -34,8 +34,13 @@
  */
 
 #ifndef lint
+#if 0
 static char RCSid[] = 
-"$OpenBSD: rdist.c,v 1.4 1997/07/22 06:59:39 millert Exp $";
+"$From: rdist.c,v 6.65 1995/12/12 00:20:39 mcooper Exp $";
+#else
+static char RCSid[] = 
+"$OpenBSD: rdist.c,v 1.5 1998/06/26 21:21:20 millert Exp $";
+#endif
 
 static char sccsid[] = "@(#)main.c	5.1 (Berkeley) 6/6/85";
 
@@ -92,6 +97,7 @@ static void addhostlist(name, hostlist)
 		*hostlist = new;
 }
 
+int
 main(argc, argv, envp)
 	int argc;
 	char *argv[];
@@ -109,7 +115,7 @@ main(argc, argv, envp)
 	 */
 	setprogname(argv);
 
-	if (cp = msgparseopts(localmsglist, TRUE)) {
+	if ((cp = msgparseopts(localmsglist, TRUE))) {
 		error("Bad builtin log option (%s): %s.", 
 		      localmsglist, cp);
 		usage();
@@ -129,7 +135,7 @@ main(argc, argv, envp)
 			"Old rdist (-Server) requested; running %s", 
 			_PATH_OLDRDIST);
 		(void) execl(_PATH_OLDRDIST, xbasename(_PATH_OLDRDIST), 
-			     "-Server", (char *)NULL);
+			     "-Server", NULL);
 		fatalerr("Exec old rdist failed: %s: %s.", 
 			 _PATH_OLDRDIST, SYSERR);
 #else	/* !_PATH_OLDRDIST */
@@ -153,7 +159,7 @@ main(argc, argv, envp)
 	while ((c = getopt(argc, argv, optchars)) != -1)
 		switch (c) {
 		case 'l':
-			if (cp = msgparseopts(optarg, TRUE)) {
+			if ((cp = msgparseopts(optarg, TRUE))) {
 				error("Bad log option \"%s\": %s.", optarg,cp);
 				usage();
 			}
@@ -201,7 +207,7 @@ main(argc, argv, envp)
 
 		case 'D':
 			debug = DM_ALL;
-			if (cp = msgparseopts("stdout=all,debug", TRUE)) {
+			if ((cp = msgparseopts("stdout=all,debug", TRUE))) {
 				error("Enable debug messages failed: %s.", cp);
 				usage();
 			}
@@ -240,7 +246,7 @@ main(argc, argv, envp)
 				error("No path specified to \"-P\".");
 				usage();
 			}
-			if (cp = searchpath(optarg))
+			if ((cp = searchpath(optarg)))
 				path_remsh = strdup(cp);
 			else {
 				error("No component of path \"%s\" exists.",
@@ -346,6 +352,7 @@ FILE *opendist(distfile)
 /*
  * Print usage message and exit.
  */
+void
 usage()
 {
 	char *sopts = "cDFnv";
@@ -377,6 +384,7 @@ usage()
 /*
  * rcp like interface for distributing files.
  */
+void
 docmdargs(nargs, args)
 	int nargs;
 	char *args[];
@@ -423,8 +431,8 @@ docmdargs(nargs, args)
 	debugmsg(DM_MISC, "docmdargs()\nfiles = %s", getnlstr(files));
 	debugmsg(DM_MISC, "host = %s", getnlstr(hosts));
 
-	insert((char *)NULL, files, hosts, cmds);
-	docmds(0, (char **)NULL, 0, (char **)NULL);
+	insert(NULL, files, hosts, cmds);
+	docmds(0, NULL, 0, (char **)NULL);
 }
 
 /*

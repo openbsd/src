@@ -1,4 +1,4 @@
-/*	$OpenBSD: child.c,v 1.6 1997/12/16 22:15:36 deraadt Exp $	*/
+/*	$OpenBSD: child.c,v 1.7 1998/06/26 21:20:58 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -34,8 +34,13 @@
  */
 
 #ifndef lint
+#if 0
 static char RCSid[] = 
-"$OpenBSD: child.c,v 1.6 1997/12/16 22:15:36 deraadt Exp $";
+"$From: child.c,v 6.28 1996/02/22 19:30:09 mcooper Exp $";
+#else
+static char RCSid[] = 
+"$OpenBSD: child.c,v 1.7 1998/06/26 21:20:58 millert Exp $";
+#endif
 
 static char sccsid[] = "@(#)docmd.c	5.1 (Berkeley) 6/6/85";
 
@@ -109,7 +114,7 @@ static void removechild(child)
 
 		sigemptyset(&set);
 		sigaddset(&set, SIGCHLD);
-		sigprocmask(SIG_BLOCK, &set, (sigset_t *)NULL);
+		sigprocmask(SIG_BLOCK, &set, NULL);
 #else	/* !POSIX_SIGNALS */
 		int oldmask;
 
@@ -122,7 +127,7 @@ static void removechild(child)
 			childlist = pc->c_next;
 
 #if	defined(POSIX_SIGNALS)
-		sigprocmask(SIG_UNBLOCK, &set, (sigset_t *)NULL);
+		sigprocmask(SIG_UNBLOCK, &set, NULL);
 #else
 		sigsetmask(oldmask);
 #endif	/* POSIX_SIGNALS */
@@ -366,7 +371,7 @@ extern void waitup()
 	register CHILD *pc;
 	fd_set *rchildfdsp = NULL;
 	int rchildfdsn = 0;
-	int bytes;
+	size_t bytes;
 
 	debugmsg(DM_CALL, "waitup() start\n");
 
@@ -401,9 +406,8 @@ extern void waitup()
 	debugmsg(DM_MISC, "waitup() Call select(), activechildren=%d\n", 
 		 activechildren);
 
-	count = select(rchildfdsn+1, (SELECT_FD_TYPE *) rchildfdsp,
-		       (SELECT_FD_TYPE *) NULL, (SELECT_FD_TYPE *) NULL,
-		       (struct timeval *) NULL);
+	count = select(FD_SETSIZE, (SELECT_FD_TYPE *) rchildfdsp, 
+		       NULL, NULL, NULL);
 
 	debugmsg(DM_MISC, "waitup() select returned %d activechildren = %d\n", 
 		 count, activechildren);
@@ -453,6 +457,7 @@ extern void waitup()
 		readchild(pc);
 		--count;
 	}
+	free(rchildfdsp);
 
 #else	/* !defined(HAVE_SELECT) */
 
@@ -461,12 +466,11 @@ extern void waitup()
 	 */
 	debugmsg(DM_CALL, "waitup() start\n");
 
-	if (waitproc((int *) NULL, TRUE) > 0)
+	if (waitproc(NULL, TRUE) > 0)
 		--activechildren;
 
 #endif	/* defined(HAVE_SELECT) */
 	debugmsg(DM_CALL, "waitup() end\n");
-	free(rchildfdsp);
 }
 
 /*

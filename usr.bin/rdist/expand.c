@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.c,v 1.4 1996/06/26 05:38:12 deraadt Exp $	*/
+/*	$OpenBSD: expand.c,v 1.5 1998/06/26 21:21:10 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -34,8 +34,13 @@
  */
 
 #ifndef lint
+#if 0
 static char RCSid[] = 
-"$OpenBSD: expand.c,v 1.4 1996/06/26 05:38:12 deraadt Exp $";
+"$From: expand.c,v 6.18 1998/03/24 00:37:10 michaelc Exp $";
+#else
+static char RCSid[] = 
+"$OpenBSD: expand.c,v 1.5 1998/06/26 21:21:10 millert Exp $";
+#endif
 
 static char sccsid[] = "@(#)expand.c	5.2 (Berkeley) 3/28/86";
 
@@ -85,18 +90,18 @@ static void Cat(s1, s2)				/* quote in s1 and s2 */
 		return;
 	}
 
-	eargv[++eargc] = (char *) NULL;
+	eargv[++eargc] = NULL;
 	eargv[eargc - 1] = cp = xmalloc(len);
 
 	do { 
 		if (*s1 == QUOTECHAR) 
 			s1++; 
-	} while (*cp++ = *s1++);
+	} while ((*cp++ = *s1++));
 	cp--;
 	do { 
 		if (*s2 == QUOTECHAR) 
 			s2++; 
-	} while (*cp++ = *s2++);
+	} while ((*cp++ = *s2++));
 }
 
 static void addpath(c)
@@ -143,7 +148,7 @@ expand(list, wh)				/* quote in list->n_name */
 	tilde = "";
 	eargc = 0;
 	eargv = sortbase = argvbuf;
-	*eargv = (char *) NULL;
+	*eargv = NULL;
 
 	/*
 	 * Walk the name list and expand names into eargv[];
@@ -155,7 +160,7 @@ expand(list, wh)				/* quote in list->n_name */
 	 */
 	list = prev = NULL;
 	for (n = 0; n < eargc; n++) {
-		nl = makenl((char *)NULL);
+		nl = makenl(NULL);
 		nl->n_name = eargv[n];
 		if (prev == NULL)
 			list = prev = nl;
@@ -182,7 +187,7 @@ u_char *xstrchr(str, ch)
 		if (ch == *cp)
 			return(cp);
 
-	return((u_char *)NULL);
+	return(NULL);
 }
 
 void expstr(s)
@@ -251,7 +256,7 @@ void expstr(s)
 			savec = *tail;
 			*tail = CNULL;
 		}
-		tp = lookup((char *)cp, LOOKUP, (struct namelist *)NULL);
+		tp = lookup((char *)cp, LOOKUP, NULL);
 		if (savec != CNULL)
 			*tail = savec;
 		if (tp != NULL) {
@@ -296,7 +301,7 @@ void expstr(s)
 			cp1 = (u_char *)pw->pw_dir;
 			s = cp;
 		}
-		for (cp = (u_char *)path; *cp++ = *cp1++; )
+		for (cp = (u_char *)path; (*cp++ = *cp1++); )
 			;
 		tpathp = pathp = (char *)cp - 1;
 	} else {
@@ -320,7 +325,7 @@ void expstr(s)
 	sort();
 }
 
-static
+static int
 argcmp(a1, a2)
 	char **a1, **a2;
 {
@@ -361,7 +366,7 @@ void expsh(s)				/* quote in s */
 		cp++, pathp++;
 	*pathp = CNULL;
 	if (*oldcp == '{') {
-		(void) execbrc(cp, (u_char *)NULL);
+		(void) execbrc(cp, NULL);
 		return;
 	}
 	matchdir((char *)cp);
@@ -410,6 +415,7 @@ patherr2:
 	yyerror(path);
 }
 
+int
 execbrc(p, s)				/* quote in p */
 	u_char *p, *s;
 {
@@ -500,6 +506,7 @@ doit:
 	return (0);
 }
 
+int
 match(s, p)					/* quote in p */
 	char *s, *p;
 {
@@ -517,6 +524,7 @@ match(s, p)					/* quote in p */
 	return (c);
 }
 
+int
 amatch(s, p)					/* quote in p */
 	register char *s;
 	register u_char *p;
@@ -538,7 +546,7 @@ amatch(s, p)					/* quote in p */
 		case '[':
 			ok = 0;
 			lc = 077777;
-			while (cc = *p++) {
+			while ((cc = *p++)) {
 				if (cc == ']') {
 					if (ok)
 						break;
@@ -600,8 +608,9 @@ slash:
 					else
 						Cat((u_char *)tilde, 
 						    (u_char *)tpathp);
-				} else
+				} else {
 					expsh(p);
+				}
 			pathp = spathp;
 			*pathp = CNULL;
 			return (0);

@@ -1,4 +1,5 @@
-/*	$OpenBSD: defs.h,v 1.7 1997/10/15 16:58:17 millert Exp $	*/
+/*	$OpenBSD: defs.h,v 1.8 1998/06/26 21:21:06 millert Exp $	*/
+
 #ifndef __DEFS_H__
 #define __DEFS_H__
 /*
@@ -35,14 +36,14 @@
  */
 
 /*
- * $Id: defs.h,v 1.7 1997/10/15 16:58:17 millert Exp $
+ * $From: defs.h,v 6.82 1998/03/23 23:28:25 michaelc Exp $
  * @(#)defs.h      5.2 (Berkeley) 3/20/86
  */
 
 /*
  * POSIX settings
  */
-#if	defined(_POSIX_SOURCE)
+#if	defined(_POSIX_SOURCE) || defined(__OpenBSD__)
 #include <unistd.h>
 #include <stdlib.h>
 #endif	/* _POSIX_SOURCE */
@@ -65,10 +66,6 @@
 #include "config-data.h"
 #include "pathnames.h"
 #include "types.h"
-
-#if	!defined(yacc)
-/* #include "y.tab.h" */
-#endif	/* yacc */
 
 #include <signal.h>
 
@@ -95,9 +92,6 @@
 #if	defined(NEED_UNISTD_H)
 #include <unistd.h>
 #endif	/* NEED_UNISTD_H */
-#if	defined(NEED_STDLIB_H)
-#include <stdlib.h>
-#endif	/* NEED_STDLIB_H */
 #if	defined(NEED_STRING_H)
 #include <string.h>
 #endif	/* NEED_STRING_H */
@@ -332,6 +326,7 @@ extern int		rem_r;		/* Remote file descriptor, reading */
 extern int 		rem_w;		/* Remote file descriptor, writing */
 extern int 		rtimeout;	/* Response time out in seconds */
 extern int		setjmp_ok;	/* setjmp/longjmp flag */
+extern void		mysetlinebuf();	/* set line buffering */
 extern UID_T 		userid;		/* User ID of rdist user */
 extern jmp_buf 		finish_jmpbuf;	/* Setjmp buffer for finish() */
 extern struct group    *gr;	/* pointer to static area used by getgrent */
@@ -342,7 +337,6 @@ extern int 		dostatdb;
 extern int 		juststatdb;
 #endif /* USE_STATDB */
 
-#if 0
 /*
  * System function declarations
  */
@@ -351,7 +345,6 @@ char			       *strchr();
 char		 	       *strdup();
 char		 	       *strrchr();
 char 			       *strtok();
-#endif
 
 /*
  * Our own declarations.
@@ -407,7 +400,7 @@ extern void			debugmsg(int, char *, ...);
 extern void			error(char *, ...);
 extern void			fatalerr(char *, ...);
 extern void			message(int, char *, ...);
-#if 0
+#ifndef HAVE_SETPROCTITLE
 extern void			setproctitle(char *fmt, ...);
 #endif
 #else
@@ -415,7 +408,9 @@ extern void			debugmsg();
 extern void			error();
 extern void			fatalerr();
 extern void			message();
+#ifndef HAVE_SETPROCTITLE
 extern void			setproctitle();
+#endif
 #endif
 
 #endif	/* __DEFS_H__ */

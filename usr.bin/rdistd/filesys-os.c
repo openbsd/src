@@ -1,4 +1,4 @@
-/*	$OpenBSD: filesys-os.c,v 1.4 1997/06/17 20:37:53 kstailey Exp $	*/
+/*	$OpenBSD: filesys-os.c,v 1.5 1998/06/26 21:20:47 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -34,8 +34,13 @@
  */
 
 #ifndef lint
+#if 0
 static char RCSid[] = 
-"$OpenBSD: filesys-os.c,v 1.4 1997/06/17 20:37:53 kstailey Exp $";
+"$From: filesys-os.c,v 6.17 1996/01/17 21:02:45 mcooper Exp mcooper $";
+#else
+static char RCSid[] = 
+"$OpenBSD: filesys-os.c,v 1.5 1998/06/26 21:20:47 millert Exp $";
+#endif
 
 static char sccsid[] = "@(#)filesys-os.c";
 
@@ -54,10 +59,10 @@ static char copyright[] =
 #if 	FSI_TYPE == FSI_GETFSSTAT
 static struct statfs   *mnt = NULL;
 #if	FSTYPENAME
-#define f_type_eq(a, b) (! strcmp (((struct statfs *) (a))->f_fstypename, (b)))
+#define	f_type_eq(a, b) (! strcmp (((struct statfs *) (a))->f_fstypename, (b)))
 #else	/* !FSTYPENAME */
 #define	f_type_eq(a, b) (((struct statfs *) a)->f_type == (b))
-#endif /* !FSTYPENAME */
+#endif	/* !FSTYPENAME */
 #endif	/* FSI_GETFSSTAT */
 
 #if	FSI_TYPE == FSI_MNTCTL
@@ -78,7 +83,7 @@ FILE *setmountent(file, mode)
 	char *file;
 	char *mode;
 {
-	u_int size;
+	ulong size;
 
 	if (mntbuf)
 		(void) free(mntbuf);
@@ -104,7 +109,7 @@ FILE *setmountent(file, mode)
 	char *file;
 	char *mode;
 {
-	int size;
+	long size;
 
 	if (mntbuf)
 		(void) free(mntbuf);
@@ -147,7 +152,7 @@ mntent_t *getmountent(fptr)
 		mntstruct.me_flags |= MEFLAG_READONLY;
 
 	mntstruct.me_path = vmt2dataptr(mnt, VMT_STUB);
-	switch ((struct vmount*)mnt->vmt_gfstype) {
+	switch ((ulong)(struct vmount*)mnt->vmt_gfstype) {
 	      case MNT_NFS:
 		mntstruct.me_type = METYPE_NFS;
 		break;
@@ -187,12 +192,11 @@ mntent_t *getmountent(fptr)
 	if (mnt->f_flags & M_RDONLY)
 		mntstruct.me_flags |= MEFLAG_READONLY;
 #endif
-	if (f_type_eq (mnt, MOUNT_NFS)) {
+	if (f_type_eq(mnt, MOUNT_NFS)) {
 		(void) sprintf(remote_dev, "%s", mnt->f_mntfromname);
 		mntstruct.me_path = remote_dev;
 		mntstruct.me_type = METYPE_NFS;
-	}
-	else {
+	} else {
 		mntstruct.me_path = mnt->f_mntonname;
 		mntstruct.me_type = METYPE_OTHER;
 	}
@@ -348,6 +352,7 @@ FILE *setmountent(file, mode)
 	char *mode;
 {
 	startmounts = 0;
+	return(stdin);		/* XXX - need to return something! */
 }
 
 void endmountent(fptr)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.6 1996/07/29 17:50:09 millert Exp $	*/
+/*	$OpenBSD: message.c,v 1.7 1998/06/26 21:21:15 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -34,8 +34,13 @@
  */
 
 #ifndef lint
+#if 0
 static char RCSid[] = 
-"$OpenBSD: message.c,v 1.6 1996/07/29 17:50:09 millert Exp $";
+"$From: message.c,v 6.24 1996/07/19 17:00:35 michaelc Exp $";
+#else
+static char RCSid[] = 
+"$OpenBSD: message.c,v 1.7 1998/06/26 21:21:15 millert Exp $";
+#endif
 
 static char sccsid[] = "@(#)common.c";
 
@@ -145,7 +150,7 @@ static MSGFACILITY *getmsgfac(name)
 		if (strcasecmp(name, msgfacility[i].mf_name) == 0)
 			return(&msgfacility[i]);
 
-	return((MSGFACILITY *) NULL);
+	return(NULL);
 }
 
 /*
@@ -160,7 +165,7 @@ static MSGTYPE *getmsgtype(name)
 		if (strcasecmp(name, msgtypes[i].mt_name) == 0)
 			return(&msgtypes[i]);
 
-	return((MSGTYPE *) NULL);
+	return(NULL);
 }
 
 /*
@@ -183,7 +188,7 @@ static char *setmsgtypes(msgfac, str)
 			 msgfac->mf_msgfac != MF_FILE)) {
 		(void) snprintf(ebuf, sizeof(ebuf),
 		"The \"%s\" message facility cannot be used by the server.",
-			       msgfac->mf_name);
+				msgfac->mf_name);
 		return(ebuf);
 	}
 
@@ -234,11 +239,11 @@ static char *setmsgtypes(msgfac, str)
 	msgfac->mf_msgtypes = 0;	/* Start from scratch */
 	while (strptr) {
 		word = strptr;
-		if (cp = strchr(strptr, ','))
+		if ((cp = strchr(strptr, ',')))
 			*cp++ = CNULL;
 		strptr = cp;
 
-		if (mtp = getmsgtype(word)) {
+		if ((mtp = getmsgtype(word))) {
 			msgfac->mf_msgtypes |= mtp->mt_type;
 			/*
 			 * XXX This is really a kludge until we add real
@@ -255,7 +260,7 @@ static char *setmsgtypes(msgfac, str)
 		}
 	}
 
-	return((char *) NULL);
+	return(NULL);
 }
 
 /*
@@ -280,7 +285,7 @@ extern char *msgparseopts(msgstr, doset)
 	 * Each <facility>=<types> list is seperated by ":".
 	 */
 	for (optstr = strtok(msgbuf, ":"); optstr;
-	     optstr = strtok((char *)NULL, ":")) {
+	     optstr = strtok(NULL, ":")) {
 
 		if ((cp = strchr(optstr, '=')) == NULL)
 			return("No '=' found");
@@ -302,7 +307,7 @@ extern char *msgparseopts(msgstr, doset)
 		if (doset) {
 			char *mcp;
 
-			if (mcp = setmsgtypes(msgfac, cp))
+			if ((mcp = setmsgtypes(msgfac, cp)))
 				return(mcp);
 		}
 	}
@@ -312,7 +317,7 @@ extern char *msgparseopts(msgstr, doset)
 		msgprconfig();
 	}
 
-	return((char *) NULL);
+	return(NULL);
 }
 
 /*
@@ -457,13 +462,13 @@ static void msgsendnotify(msgfac, mtype, flags, msgbuf)
 
 	if (!msgfac->mf_fptr) {
 		register char *cp;
-		char *getenv();
 		int fd;
+		char *getenv();
 
 		/*
 		 * Create and open a new temporary file
 		 */
-		if ((cp = getenv("TMPDIR")) == (char *) NULL)
+		if ((cp = getenv("TMPDIR")) == NULL)
 			cp = _PATH_TMP;
 		tempfile = (char *) xmalloc(strlen(cp) + 1 + 
 					    strlen(_RDIST_TMP) + 2);
@@ -521,7 +526,7 @@ static void _message(flags, msgbuf)
 		/*
 		 * Ensure no stray newlines are present
 		 */
-		if (cp = strchr(msgbuf, '\n'))
+		if ((cp = strchr(msgbuf, '\n')))
 			*cp = CNULL;
 
 		checkhostname();
@@ -537,7 +542,7 @@ static void _message(flags, msgbuf)
 	 * logged to the system log facility
 	 */
 	if (IS_ON(flags, MT_SYSLOG)) {
-		msgsendsyslog((MSGFACILITY *)NULL, MT_SYSLOG, flags, mbuf);
+		msgsendsyslog(NULL, MT_SYSLOG, flags, mbuf);
 		return;
 	}
 
@@ -545,14 +550,14 @@ static void _message(flags, msgbuf)
 	 * Special cases
 	 */
 	if (isserver && IS_ON(flags, MT_NOTICE)) {
-		msgsendstdout((MSGFACILITY *)NULL, MT_NOTICE, flags, mbuf);
+		msgsendstdout(NULL, MT_NOTICE, flags, mbuf);
 		return;
 	} else if (isserver && IS_ON(flags, MT_REMOTE))
-		msgsendstdout((MSGFACILITY *)NULL, MT_REMOTE, flags, mbuf);
+		msgsendstdout(NULL, MT_REMOTE, flags, mbuf);
 	else if (isserver && IS_ON(flags, MT_NERROR))
-		msgsendstdout((MSGFACILITY *)NULL, MT_NERROR, flags, mbuf);
+		msgsendstdout(NULL, MT_NERROR, flags, mbuf);
 	else if (isserver && IS_ON(flags, MT_FERROR))
-		msgsendstdout((MSGFACILITY *)NULL, MT_FERROR, flags, mbuf);
+		msgsendstdout(NULL, MT_FERROR, flags, mbuf);
 
 	/*
 	 * For each Message Facility, check each Message Type to see
@@ -871,5 +876,5 @@ extern char *getnotifyfile()
 			return(msgfacility[i].mf_filename);
 		}
 
-	return((char *) NULL);
+	return(NULL);
 }

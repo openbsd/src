@@ -1,4 +1,5 @@
-/* * $OpenBSD: config-def.h,v 1.3 1996/06/26 05:38:10 deraadt Exp $*/
+/*	$OpenBSD: config-def.h,v 1.4 1998/06/26 21:21:03 millert Exp $	*/
+
 /*
  * Copyright (c) 1993 Michael A. Cooper
  * Copyright (c) 1993 Regents of the University of California.
@@ -34,6 +35,7 @@
  */
 
 /*
+ * $From: config-def.h,v 6.12 1994/03/31 04:30:42 mcooper Exp $
  * @(#)configdef.h
  */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.6 1998/05/18 19:12:53 deraadt Exp $	*/
+/*	$OpenBSD: server.c,v 1.7 1998/06/26 21:20:53 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -33,8 +33,13 @@
  * SUCH DAMAGE.
  */
 #ifndef lint
+#if 0
 static char RCSid[] = 
-"$OpenBSD: server.c,v 1.6 1998/05/18 19:12:53 deraadt Exp $";
+"$From: server.c,v 6.85 1996/03/12 22:55:38 mcooper Exp $";
+#else
+static char RCSid[] = 
+"$OpenBSD: server.c,v 1.7 1998/06/26 21:20:53 millert Exp $";
+#endif
 
 static char sccsid[] = "@(#)server.c	5.3 (Berkeley) 6/7/86";
 
@@ -246,7 +251,7 @@ static int fchog(fd, file, owner, group, mode)
 	        /*
 		 * Invalid cached values so we need to do a new lookup.
 		 */
-		if (gr = mygetgroup(group)) {
+		if ((gr = mygetgroup(group))) {
 			last_gid = gid = gr->gr_gid;
 			strcpy(last_group, gr->gr_name);
 		} else {
@@ -356,7 +361,7 @@ static int removefile(statb)
 
 	optarget = ptarget;
 	len = ptarget - target;
-	while (dp = readdir(d)) {
+	while ((dp = readdir(d))) {
 		if ((D_NAMLEN(dp) == 1 && dp->d_name[0] == '.') ||
 		    (D_NAMLEN(dp) == 2 && dp->d_name[0] == '.' &&
 		     dp->d_name[1] == '.'))
@@ -370,7 +375,7 @@ static int removefile(statb)
 		ptarget = optarget;
 		*ptarget++ = '/';
 		cp = dp->d_name;;
-		while (*ptarget++ = *cp++)
+		while ((*ptarget++ = *cp++))
 			;
 		ptarget--;
 		if (lstat(target, &stb) < 0) {
@@ -430,7 +435,7 @@ static void doclean(cp)
 
 	optarget = ptarget;
 	len = ptarget - target;
-	while (dp = readdir(d)) {
+	while ((dp = readdir(d))) {
 		if ((D_NAMLEN(dp) == 1 && dp->d_name[0] == '.') ||
 		    (D_NAMLEN(dp) == 2 && dp->d_name[0] == '.' &&
 		     dp->d_name[1] == '.'))
@@ -444,7 +449,7 @@ static void doclean(cp)
 		ptarget = optarget;
 		*ptarget++ = '/';
 		cp = dp->d_name;;
-		while (*ptarget++ = *cp++)
+		while ((*ptarget++ = *cp++))
 			;
 		ptarget--;
 		if (lstat(target, &stb) < 0) {
@@ -702,20 +707,20 @@ static char *savetarget(file)
 
 	if (strlen(file) + sizeof(SAVE_SUFFIX) + 1 > MAXPATHLEN) {
 		error("%s: Cannot save: Save name too long", file);
-		return((char *) NULL);
+		return(NULL);
 	}
 
 	(void) sprintf(savefile, "%s%s", file, SAVE_SUFFIX);
 
 	if (unlink(savefile) != 0 && errno != ENOENT) {
 		message(MT_NOTICE, "%s: remove failed: %s", savefile, SYSERR);
-		return((char *) NULL);
+		return(NULL);
 	}
 
 	if (rename(file, savefile) != 0 && errno != ENOENT) {
 		error("%s -> %s: rename failed: %s", 
 		      file, savefile, SYSERR);
-		return((char *) NULL);
+		return(NULL);
 	}
 
 	return(savefile);
@@ -1038,7 +1043,7 @@ static void recvdir(opts, mode, owner, group)
 
 				o = (owner[0] == ':') ? opts & DO_NUMCHKOWNER :
 					opts;
-				if (cp = getusername(stb.st_uid, target, o))
+				if ((cp = getusername(stb.st_uid, target, o)))
 					if (strcmp(owner, cp))
 						(void) strcpy(lowner, cp);
 			}
@@ -1047,7 +1052,7 @@ static void recvdir(opts, mode, owner, group)
 
 				o = (group[0] == ':') ? opts & DO_NUMCHKGROUP :
 					opts;
-				if (cp = getgroupname(stb.st_gid, target, o))
+				if ((cp = getgroupname(stb.st_gid, target, o)))
 					if (strcmp(group, cp))
 						(void) strcpy(lgroup, cp);
 			}
@@ -1101,8 +1106,8 @@ static void recvdir(opts, mode, owner, group)
 	if (s < 0) {
 		if (errno == ENOENT) {
 			if (mkdir(target, mode) == 0 ||
-			    chkparent(target, opts) == 0 && 
-			    mkdir(target, mode) == 0) {
+			    (chkparent(target, opts) == 0 && 
+			    mkdir(target, mode) == 0)) {
 				message(MT_NOTICE, "%s: mkdir", target);
 				(void) fchog(-1, target, owner, group, mode);
 				ack();
@@ -1162,8 +1167,9 @@ static void recvlink(new, opts, mode, size)
 	if (IS_ON(opts, DO_COMPARE)) {
 		char tbuf[MAXPATHLEN];
 		
-		if ((i = readlink(target, tbuf, sizeof(tbuf)-1)) >= 0 &&
-		    i == size && strncmp(buf, tbuf, (int) size) == 0) {
+		if ((i = readlink(target, tbuf, sizeof(tbuf)-1)) != -1)
+			tbuf[i] = '\0';
+		if (i != -1 && i == size && strncmp(buf, tbuf, (size_t) size) == 0) {
 			(void) unlink(new);
 			ack();
 			return;
@@ -1245,7 +1251,7 @@ static void hardlink(cmd)
 		return;
 	}
 
-	newname = strtok((char *)NULL, " ");
+	newname = strtok(NULL, " ");
 	if (newname == NULL) {
 		error("hardlink: new name not specified");
 		return;
@@ -1309,9 +1315,9 @@ static void setconfig(cmd)
 		if (!fromhost) {
 			fromhost = strdup(cp);
 			message(MT_SYSLOG, "startup for %s",  fromhost);
-#if defined(SETARGS)
+#if defined(SETARGS) || defined(HAVE_SETPROCTITLE)
 			setproctitle("serving %s", cp);
-#endif /* SETARGS */
+#endif /* SETARGS || HAVE_SETPROCTITLE */
 		}
 		break;
 
@@ -1332,7 +1338,7 @@ static void setconfig(cmd)
 		break;
 
 	case SC_LOGGING:	/* Logging options */
-		if (estr = msgparseopts(cp, TRUE)) {
+		if ((estr = msgparseopts(cp, TRUE))) {
 			fatalerr("Bad message option string (%s): %s", 
 				 cp, estr);
 			return;
@@ -1418,7 +1424,7 @@ static void recvit(cmd, type)
 	/*
 	 * Get file group name
 	 */
-	group = strtok((char *)NULL, " ");
+	group = strtok(NULL, " ");
 	if (group == NULL) {
 		error("recvit: group name not delimited");
 		return;
@@ -1449,7 +1455,7 @@ static void recvit(cmd, type)
 		sptarget[catname] = ptarget;
 		if (catname++) {
 			*ptarget++ = '/';
-			while (*ptarget++ = *file++)
+			while ((*ptarget++ = *file++))
 			    ;
 			ptarget--;
 		}

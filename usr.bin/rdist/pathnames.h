@@ -1,4 +1,5 @@
-/* * $OpenBSD: pathnames.h,v 1.4 1996/06/26 05:38:15 deraadt Exp $*/
+/*	$OpenBSD: pathnames.h,v 1.5 1998/06/26 21:21:17 millert Exp $	*/
+
 /*
  * Copyright (c) 1989 The Regents of the University of California.
  * All rights reserved.
@@ -33,13 +34,14 @@
  */
 
 /*
+ * $From: pathnames.h,v 6.8 1993/01/05 21:27:59 mcooper Exp mcooper $
  * @(#)pathnames.h	5.4 (Berkeley) 8/27/90
  */
 
 #include "config.h"
 
 #if	!defined(_RDIST_TMP)
-#	define _RDIST_TMP	"rdistXXXXXX"		/* Temporary file */
+#	define _RDIST_TMP	"rdistXXXXXXXX"		/* Temporary file */
 #endif	/* _RDIST_TMP */
 
 #if	!defined(_PATH_RDISTD)

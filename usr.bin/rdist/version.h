@@ -1,4 +1,5 @@
-/* * $OpenBSD: version.h,v 1.4 1996/07/25 05:31:02 millert Exp $*/
+/*	$OpenBSD: version.h,v 1.5 1998/06/26 21:21:24 millert Exp $	*/
+
 /*
  * Copyright (c) 1983 Regents of the University of California.
  * All rights reserved.
@@ -33,6 +34,7 @@
  */
 
 /*
+ * $From: version.h,v 6.31 1998/03/15 22:25:55 mcooper Exp $
  */
 
 /*
@@ -50,7 +52,7 @@
 /*
  * Patch level
  */
-#define PATCHLEVEL 		3
+#define PATCHLEVEL 		4
 
 /*
  * Distribution status

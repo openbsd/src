@@ -1,4 +1,6 @@
 %{
+/*	$OpenBSD: gram.y,v 1.4 1998/06/26 21:21:11 millert Exp $	*/
+
 /*
  * Copyright (c) 1993 Michael A. Cooper
  * Copyright (c) 1993 Regents of the University of California.
@@ -34,8 +36,13 @@
  */
 
 #ifndef lint
+#if 0
 static char RCSid[] = 
-"$Id: gram.y,v 1.3 1996/03/05 03:16:05 dm Exp $";
+"$From: gram.y,v 6.29 1994/04/11 23:59:15 mcooper Exp mcooper $";
+#else
+static char RCSid[] = 
+"$OpenBSD: gram.y,v 1.4 1998/06/26 21:21:11 millert Exp $";
+#endif
 
 static	char *sccsid = "@(#)gram.y	5.2 (Berkeley) 85/06/21";
 
@@ -413,6 +420,7 @@ extern int any(c, str)
 /*
  * Insert or append ARROW command to list of hosts to be updated.
  */
+void
 insert(label, files, hosts, subcmds)
 	char *label;
 	struct namelist *files, *hosts;
@@ -467,6 +475,7 @@ insert(label, files, hosts, subcmds)
  * Append DCOLON command to the end of the command list since these are always
  * executed in the order they appear in the distfile.
  */
+void
 append(label, files, stamp, subcmds)
 	char *label;
 	struct namelist *files;
@@ -493,6 +502,7 @@ append(label, files, stamp, subcmds)
 /*
  * Error printing routine in parser.
  */
+void
 yyerror(s)
 	char *s;
 {

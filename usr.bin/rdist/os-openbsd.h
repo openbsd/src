@@ -1,4 +1,3 @@
-/* * $OpenBSD: os-openbsd.h,v 1.9 1997/07/22 06:59:39 millert Exp $*/
 /*
  * Copyright (c) 1993 Michael A. Cooper
  * Copyright (c) 1993 Regents of the University of California.
@@ -34,6 +33,7 @@
  */
 
 /*
+ * $OpenBSD: os-openbsd.h,v 1.10 1998/06/26 21:21:16 millert Exp $
  */
 
 /*
@@ -41,15 +41,7 @@
  */
 
 /*
- * Define the following name for use in #ifdef's.
- * The value should be all upper-case with no periods (.).
- */
-#if	!defined(FREEBSD)
-#define FREEBSD
-#endif
-
-/*
- * NOTE: FreeBSD uses 64-bit file size semantics, and so you
+ * NOTE: OpenBSD uses 64-bit file size semantics, and so you
  * must be careful when using varargs-type functions
  * like the *printf family when printing elements which
  * might be 64-bits (such as stat->st_size from stat.h).
@@ -58,10 +50,9 @@
 /*
  * Set process args to messages that show up when running ps(1)
  *
- * Under some OS's, the SETARGS code will cause ": is not an identifier"
- * errors for "special" commands.
+ * OpenBSD has setproctitle() in libc so we don't want to use rdist's.
  */
-#define SETARGS
+#define HAVE_SETPROCTITLE
 
 /*
  * Define the type of directory routines your system has.
@@ -73,7 +64,7 @@
  */
 #define FSI_TYPE	FSI_GETFSSTAT
 #ifndef FSTYPENAME
-#define FSTYPENAME	1		/* For OpenBSD 1.x */
+#define FSTYPENAME	1		/* use f_fstypename */
 #endif
 
 /*
@@ -145,15 +136,15 @@ typedef void POINTER;
 #define HAVE_SELECT			/* Have select() */
 #define HAVE_SAVED_IDS			/* Have POSIX style saved [ug]id's */
 #define POSIX_SIGNALS			/* Have POSIX signals */
+#define HAVE_PATHS_H			/* Have <paths.h> */
 
 /*
  * Things we need
  */
 #define NEED_UNISTD_H			/* Need <unistd.h> */
-#define NEED_STDLIB_H			/* Need <stdlib.h> */
 #define NEED_STRING_H			/* Need <string.h> */
 
 /*
- * We have <paths.h>
+ * Use the system <paths.h>
  */
-#define PATHS_H	<paths.h>
+#define PATHS_H		<paths.h>

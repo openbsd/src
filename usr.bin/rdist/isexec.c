@@ -1,4 +1,4 @@
-/*	$OpenBSD: isexec.c,v 1.3 1996/06/26 05:38:13 deraadt Exp $	*/
+/*	$OpenBSD: isexec.c,v 1.4 1998/06/26 21:21:12 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -33,8 +33,13 @@
  * SUCH DAMAGE.
  */
 #ifndef lint
+#if 0
 static char RCSid[] = 
-"$OpenBSD: isexec.c,v 1.3 1996/06/26 05:38:13 deraadt Exp $";
+"$From: isexec.c,v 6.21 1994/04/01 23:44:10 mcooper Exp $";
+#else
+static char RCSid[] = 
+"$OpenBSD: isexec.c,v 1.4 1998/06/26 21:21:12 millert Exp $";
+#endif
 
 static char sccsid[] = "@(#)client.c";
 

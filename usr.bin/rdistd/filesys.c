@@ -1,4 +1,4 @@
-/*	$OpenBSD: filesys.c,v 1.4 1996/07/29 20:46:40 millert Exp $	*/
+/*	$OpenBSD: filesys.c,v 1.5 1998/06/26 21:20:48 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -34,8 +34,13 @@
  */
 
 #ifndef lint
+#if 0
 static char RCSid[] = 
-"$OpenBSD: filesys.c,v 1.4 1996/07/29 20:46:40 millert Exp $";
+"$From: filesys.c,v 6.24 1996/01/30 01:57:07 mcooper Exp $";
+#else
+static char RCSid[] = 
+"$OpenBSD: filesys.c,v 1.5 1998/06/26 21:20:48 millert Exp $";
+#endif
 
 static char sccsid[] = "@(#)filesys.c";
 
@@ -89,7 +94,7 @@ char *find_file(pathname, statbuf, isvalid)
 
 	if ((int)strlen(pathname) > sizeof(file)+3) {
 		error("%s: Name to large for buffer.", pathname);
-	        return((char *) NULL);
+	        return(NULL);
 	}
 
 	/*
@@ -132,12 +137,12 @@ char *find_file(pathname, statbuf, isvalid)
 				 */
 				debugmsg(DM_MISC, "Cannot find dir of `%s'",
 					 pathname);
-				return((char *) NULL);
+				return(NULL);
 			}
 			continue;
 		} else {
 			error("%s: lstat failed: %s", pathname, SYSERR);
-			return((char *) NULL);
+			return(NULL);
 		}
 	}
 
@@ -169,7 +174,7 @@ char *find_file(pathname, statbuf, isvalid)
 	if (strcmp(pathname, file) == 0)
 		*isvalid = 1;
 
-	return((file && *file) ? file : (char *)NULL);
+	return((file && *file) ? file : NULL);
 }
 
 #if defined(NFS_CHECK) || defined(RO_CHECK)
@@ -190,7 +195,7 @@ mntent_t *findmnt(filest, mntinfo)
 			return(mi->mi_mnt);
 	}
 
-	return((mntent_t *) NULL);
+	return(NULL);
 }
 
 /*
@@ -234,18 +239,18 @@ struct mntinfo *makemntinfo(mi)
 	if (!(mfp = setmountent(MOUNTED_FILE, "r"))) {
 		message(MT_NERROR, "%s: setmntent failed: %s", 
 			MOUNTED_FILE, SYSERR);
-		return((struct mntinfo *) NULL);
+		return(NULL);
 	}
 
 	(void) signal(SIGALRM, wakeup);
 	(void) alarm(timeo);
 	if (setjmp(env)) {
 		message(MT_NERROR, "Timeout getting mount info");
-		return((struct mntinfo *) NULL);
+		return(NULL);
 	}
 
 	mntinfo = mi;
-	while (mnt = getmountent(mfp)) {
+	while ((mnt = getmountent(mfp))) {
 		debugmsg(DM_MISC, "mountent = '%s' (%s)", 
 			 mnt->me_path, mnt->me_type);
 
@@ -317,32 +322,32 @@ mntent_t *getmntpt(pathname, statbuf, isvalid)
 		pstat = &filestat;
 
 	if (!find_file(pathname, pstat, isvalid))
-	        return((mntent_t *) NULL);
+	        return(NULL);
 
 	/*
 	 * Make mntinfo if it doesn't exist.
 	 */
 	if (!mntinfo)
-		mntinfo = makemntinfo((struct mntinfo *) NULL);
+		mntinfo = makemntinfo(NULL);
 
 	/*
 	 * Find the mnt that pathname is on.
 	 */
-	if (mnt = findmnt(pstat, mntinfo))
+	if ((mnt = findmnt(pstat, mntinfo)))
 		return(mnt);
 
 	/*
 	 * We failed to find correct mnt, so maybe it's a newly
 	 * mounted filesystem.  We rebuild mntinfo and try again.
 	 */
-	if (tmpmi = makemntinfo(mntinfo)) {
+	if ((tmpmi = makemntinfo(mntinfo))) {
 		mntinfo = tmpmi;
-		if (mnt = findmnt(pstat, mntinfo))
+		if ((mnt = findmnt(pstat, mntinfo)))
 			return(mnt);
 	}
 
 	error("%s: Could not find mount point", pathname);
-	return((mntent_t *) NULL);
+	return(NULL);
 }
 
 #endif /* NFS_CHECK || RO_CHECK */

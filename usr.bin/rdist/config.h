@@ -1,4 +1,5 @@
-/* * $OpenBSD: config.h,v 1.5 1996/07/25 05:31:01 millert Exp $*/
+/*	$OpenBSD: config.h,v 1.6 1998/06/26 21:21:05 millert Exp $	*/
+
 /*
  * Copyright (c) 1993 Michael A. Cooper
  * Copyright (c) 1993 Regents of the University of California.
@@ -34,6 +35,7 @@
  */
 
 /*
+ * $From: config.h,v 6.43 1998/03/24 01:05:27 michaelc Exp $
  * @(#)config.h
  */
 
@@ -53,7 +55,7 @@
 #if	defined(PATHS_H)
 #	include PATHS_H
 #else
-#	include "paths.h"
+#	include "rdistpaths.h"
 #endif
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.5 1997/10/07 23:39:34 millert Exp $	*/
+/*	$OpenBSD: common.c,v 1.6 1998/06/26 21:21:01 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -34,8 +34,13 @@
  */
 
 #ifndef lint
+#if 0
 static char RCSid[] = 
-"$OpenBSD: common.c,v 1.5 1997/10/07 23:39:34 millert Exp $";
+"$From: common.c,v 6.82 1998/03/23 23:27:33 michaelc Exp $";
+#else
+static char RCSid[] = 
+"$OpenBSD: common.c,v 1.6 1998/06/26 21:21:01 millert Exp $";
+#endif
 
 static char sccsid[] = "@(#)common.c";
 
@@ -52,6 +57,8 @@ static char copyright[] =
 #if	defined(NEED_UTIME_H)
 #include <utime.h>
 #endif	/* defined(NEED_UTIME_H) */
+#include <sys/socket.h>
+#include <sys/wait.h>
 
 /*
  * Variables common to both client and server
@@ -111,7 +118,7 @@ extern void setprogname(argv)
 
 	if (!progname) {
 		progname = strdup(argv[0]);
-		if (cp = strrchr(progname, '/'))
+		if ((cp = strrchr(progname, '/')))
 			progname = cp + 1;
 	}
 }
@@ -141,7 +148,7 @@ extern int init(argc, argv, envp)
 	for (i = 0; i < argc; i++)
 		realargv[i] = strdup(argv[i]);
 
-#if	defined(SETARGS) && !defined(__OpenBSD__)
+#if	defined(SETARGS)
 	setargs_settup(argc, argv, envp);
 #endif	/* SETARGS */
 
@@ -488,6 +495,7 @@ extern int remline(buffer, space, doclean)
 /*
  * Non-line-oriented remote read.
  */
+int
 readrem(p, space)
 	char *p;
 	register int space;
@@ -542,7 +550,7 @@ extern char *getusername(uid, file, opts)
 	/*
 	 * Try to avoid getpwuid() call.
 	 */
-	if (lastuid == uid && buf[0] && buf[0] != ':')
+	if (lastuid == uid && buf[0] != '\0' && buf[0] != ':')
 		return(buf);
 
 	lastuid = uid;
@@ -581,7 +589,7 @@ extern char *getgroupname(gid, file, opts)
 	/*
 	 * Try to avoid getgrgid() call.
 	 */
-	if (lastgid == gid && buf[0] && buf[0] != ':')
+	if (lastgid == gid && buf[0] != '\0' && buf[0] != ':')
 		return(buf);
 
 	lastgid = gid;
@@ -688,12 +696,12 @@ extern char *exptilde(ebuf, file)
 			*s3 = '/';
 		s2 = pw->pw_dir;
 	}
-	for (s1 = ebuf; *s1++ = *s2++; )
+	for (s1 = ebuf; (*s1++ = *s2++); )
 		;
 	s2 = --s1;
 	if (s3 != NULL) {
 		s2++;
-		while (*s1++ = *s3++)
+		while ((*s1++ = *s3++))
 			;
 	}
 	return(s2);
@@ -761,7 +769,7 @@ extern int setfiletime(file, atime, mtime)
 		tv[0].tv_usec = tv[1].tv_usec = (time_t) 0;
 		return(utimes(file, tv));
 	} else	/* Set to current time */
-		return(utimes(file, (struct timeval *) NULL));
+		return(utimes(file, NULL));
 
 #endif	/* SETFTIME_UTIMES */
 
@@ -773,7 +781,7 @@ extern int setfiletime(file, atime, mtime)
 		utbuf.modtime = mtime;
 		return(utime(file, &utbuf));
 	} else	/* Set to current time */
-		return(utime(file, (struct utimbuf *)NULL));
+		return(utime(file, NULL));
 #endif	/* SETFTIME_UTIME */
 
 #if	!defined(SETFTIME_TYPE)
@@ -932,7 +940,7 @@ extern char *xbasename(path)
 {
 	register char *cp;
  
-	if (cp = strrchr(path, '/'))
+	if ((cp = strrchr(path, '/')))
 		return(cp+1);
 	else
 		return(path);
@@ -952,7 +960,7 @@ extern char *searchpath(path)
 
 	for (; ;) {
 		if (!path)
-			return((char *) NULL);
+			return(NULL);
 		file = path;
 		cp = strchr(path, ':');
 		if (cp) {
@@ -971,15 +979,15 @@ extern char *searchpath(path)
 /*
  * Set line buffering.
  */
-extern int
+extern void
 mysetlinebuf(fp)
 	FILE *fp;
 {
 #if	SETBUF_TYPE == SETBUF_SETLINEBUF
-	return(setlinebuf(fp));
+	setlinebuf(fp);
 #endif	/* SETBUF_SETLINEBUF */
 #if	SETBUF_TYPE == SETBUF_SETVBUF
-	return(setvbuf(stdout, NULL, _IOLBF, BUFSIZ));
+	setvbuf(stdout, NULL, _IOLBF, BUFSIZ);
 #endif	/* SETBUF_SETVBUF */
 #if	!defined(SETBUF_TYPE)
 	No SETBUF_TYPE is defined!

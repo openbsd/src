@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.6 1998/05/18 19:12:29 deraadt Exp $	*/
+/*	$OpenBSD: client.c,v 1.7 1998/06/26 21:21:00 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -34,8 +34,13 @@
  */
 
 #ifndef lint
+#if 0
 static char RCSid[] = 
-"$OpenBSD: client.c,v 1.6 1998/05/18 19:12:29 deraadt Exp $";
+"$From: client.c,v 6.80 1996/02/28 20:34:27 mcooper Exp $";
+#else
+static char RCSid[] = 
+"$OpenBSD: client.c,v 1.7 1998/06/26 21:21:00 millert Exp $";
+#endif
 
 static char sccsid[] = "@(#)client.c";
 
@@ -246,8 +251,6 @@ extern void runcmdspecial(cmd, filev, opts)
 {
 	register struct subcmd *sc;
 	register struct namelist *f;
-	register char **cpp;
-	char *file;
 	int first = TRUE;
 
 	for (sc = cmd->c_cmds; sc != NULL; sc = sc->sc_next) {
@@ -331,7 +334,7 @@ static struct linkbuf *linkinfo(statp)
 	else
 		*lp->target = CNULL;
 
-	return((struct linkbuf *) NULL);
+	return(NULL);
 }
 
 /*
@@ -598,7 +601,7 @@ static int senddir(rname, opts, stb, user, group, destdir)
 	
 	optarget = ptarget;
 	len = ptarget - target;
-	while (dp = readdir(d)) {
+	while ((dp = readdir(d))) {
 		if (!strcmp(dp->d_name, ".") ||
 		    !strcmp(dp->d_name, ".."))
 			continue;
@@ -611,7 +614,7 @@ static int senddir(rname, opts, stb, user, group, destdir)
 		if (ptarget[-1] != '/')
 			*ptarget++ = '/';
 		cp = dp->d_name;
-		while (*ptarget++ = *cp++)
+		while ((*ptarget++ = *cp++))
 			;
 		ptarget--;
 		if (sendit(dp->d_name, opts, destdir) > 0)
@@ -639,7 +642,7 @@ static int sendlink(rname, opts, stb, user, group, destdir)
 	char *group;
 	int destdir;
 {
-	int sizerr, f, n;
+	int f, n;
 	static char tbuf[BUFSIZ];
 	char lbuf[MAXPATHLEN];
 	u_char *s;
@@ -667,11 +670,16 @@ static int sendlink(rname, opts, stb, user, group, destdir)
 	/*
 	 * Gather and send additional link info
 	 */
-	sizerr = (readlink(target, lbuf, sizeof(lbuf)-1) != stb->st_size);
+	if ((n = readlink(target, lbuf, sizeof(lbuf)-1)) != -1)
+		lbuf[n] = '\0';
+	else {
+		error("%s: readlink failed", target);
+		err();
+	}
 	(void) sprintf(tbuf, "%.*s", (int) stb->st_size, lbuf);
 	(void) sendcmd(C_NONE, "%s\n", tbuf);
 
-	if (sizerr) {
+	if (n != stb->st_size) {
 		error("%s: file changed size", target);
 		err();
 	} else
@@ -838,7 +846,7 @@ static int update(rname, opts, statp)
 	/*
 	 * Parse size
 	 */
-	size = strtol(cp, (char **) &cp, 10);
+	size = strtol(cp, (char **)&cp, 10);
 	if (*cp++ != ' ') {
 		error("update: size not delimited");
 		return(US_NOTHING);
@@ -847,7 +855,7 @@ static int update(rname, opts, statp)
 	/*
 	 * Parse mtime
 	 */
-	mtime = strtol(cp, (char **) &cp, 10);
+	mtime = strtol(cp, (char **)&cp, 10);
 	if (*cp++ != ' ') {
 		error("update: mtime not delimited");
 		return(US_NOTHING);
@@ -856,7 +864,7 @@ static int update(rname, opts, statp)
 	/*
 	 * Parse remote file mode
 	 */
-	rmode = strtol(cp, (char **) &cp, 8);
+	rmode = strtol(cp, (char **)&cp, 8);
 	if (cp && *cp)
 		++cp;
 
@@ -876,7 +884,7 @@ static int update(rname, opts, statp)
 		/*
 		 * Parse remote file group
 		 */
-		group = strtok((char *) NULL, " ");
+		group = strtok(NULL, " ");
 		if (group == NULL) {
 			error("update: group not delimited");
 			return(US_NOTHING);
@@ -1137,7 +1145,7 @@ extern void cleanup()
 	(void) unlink(statfile);
 #endif
 
-	if (file = getnotifyfile())
+	if ((file = getnotifyfile()))
 		(void) unlink(file);
 }
 
