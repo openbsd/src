@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mkdir.1,v 1.6 1998/12/15 01:20:24 aaron Exp $
+.\"	$OpenBSD: mkdir.1,v 1.7 1999/07/21 01:27:27 deraadt Exp $
 .\"	$NetBSD: mkdir.1,v 1.9 1995/07/25 19:37:13 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -58,9 +58,10 @@ as modified by the current
 .Pp
 The options are as follows:
 .Bl -tag -width indent
-.It Fl m
+.It Fl m Ar mode
 Set the file permission bits of the final created directory to
-the specified mode.
+the specified
+.Ar mode .
 The mode argument can be in any of the formats specified to the
 .Xr chmod 1
 utility.
