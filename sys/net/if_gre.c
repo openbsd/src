@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.20 2002/06/09 17:32:35 itojun Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.21 2002/06/09 18:00:08 itojun Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -135,7 +135,7 @@ greattach(n)
 			 "gre%d", i++);
 		sc->sc_if.if_softc = sc;
 		sc->sc_if.if_type = IFT_OTHER;
-		sc->sc_if.if_addrlen = 4;
+		sc->sc_if.if_addrlen = 0;
 		sc->sc_if.if_hdrlen = 24; /* IP + GRE */
 		sc->sc_if.if_mtu = GREMTU;
 		sc->sc_if.if_flags = IFF_POINTOPOINT|IFF_MULTICAST;
