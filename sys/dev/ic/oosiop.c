@@ -1,4 +1,4 @@
-/*	$OpenBSD: oosiop.c,v 1.2 2004/03/12 00:25:57 miod Exp $	*/
+/*	$OpenBSD: oosiop.c,v 1.3 2004/03/14 12:23:49 miod Exp $	*/
 /*	$NetBSD: oosiop.c,v 1.4 2003/10/29 17:45:55 tsutsui Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  * NCR53C700 SCSI I/O processor (OOSIOP) driver
  *
  * TODO:
- *   - More better error handling.
+ *   - Better error handling.
  *   - Implement tagged queuing.
  */
 
@@ -86,6 +86,9 @@ void	oosiop_reset(struct oosiop_softc *);
 void	oosiop_reset_bus(struct oosiop_softc *);
 void	oosiop_scriptintr(struct oosiop_softc *);
 void	oosiop_msgin(struct oosiop_softc *, struct oosiop_cb *);
+void	oosiop_setup(struct oosiop_softc *, struct oosiop_cb *);
+void	oosiop_poll(struct oosiop_softc *, struct oosiop_cb *);
+void	oosiop_processintr(struct oosiop_softc *, u_int8_t);
 
 /* Trap interrupt code for unexpected data I/O */
 #define	DATAIN_TRAP	0xdead0001
@@ -169,8 +172,8 @@ oosiop_attach(struct oosiop_softc *sc)
 		printf(": failed to create script map, err=%d\n", err);
 		return;
 	}
-	err = bus_dmamap_load(sc->sc_dmat, sc->sc_scrdma, sc->sc_scr, scrsize,
-	    NULL, BUS_DMA_NOWAIT | BUS_DMA_WRITE);
+	err = bus_dmamap_load_raw(sc->sc_dmat, sc->sc_scrdma,
+	    &seg, nseg, scrsize, BUS_DMA_NOWAIT | BUS_DMA_WRITE);
 	if (err) {
 		printf(": failed to load script map, err=%d\n", err);
 		return;
@@ -539,7 +542,7 @@ oosiop_setup_dma(struct oosiop_softc *sc)
 	    offsetof(struct oosiop_xfer, msgout[0]));
 	oosiop_fixup_move(sc, Ent_p_status_move, 1, xferbase +
 	    offsetof(struct oosiop_xfer, status));
-	oosiop_fixup_move(sc, Ent_p_cmdout_move, cb->xs->cmdlen,
+	oosiop_fixup_move(sc, Ent_p_cmdout_move, cb->cmdlen,
 	    cb->cmddma->dm_segs[0].ds_addr);
 
 	OOSIOP_SCRIPT_SYNC(sc, BUS_DMASYNC_PREWRITE);
@@ -723,24 +726,24 @@ oosiop_scsicmd(struct scsi_xfer *xs)
 
 	cb->xs = xs;
 	cb->xsflags = xs->flags;
-	cb->datalen = xs->datalen;
+	cb->cmdlen = xs->cmdlen;
+	cb->datalen = 0;
 	cb->flags = 0;
 	cb->id = xs->sc_link->target;
 	cb->lun = xs->sc_link->lun;
-	cb->curdp = 0;
-	cb->savedp = 0;
 	xfer = cb->xfer;
 
 	/* Setup SCSI command buffer DMA */
 	err = bus_dmamap_load(sc->sc_dmat, cb->cmddma, xs->cmd,
 	    xs->cmdlen, NULL, ((xs->flags & SCSI_NOSLEEP) ?
-	    BUS_DMA_NOWAIT : BUS_DMA_WAITOK) | BUS_DMA_WRITE);
+	    BUS_DMA_NOWAIT : BUS_DMA_WAITOK) |
+	    BUS_DMA_STREAMING | BUS_DMA_WRITE);
 	if (err) {
 		printf("%s: unable to load cmd DMA map: %d",
 		    sc->sc_dev.dv_xname, err);
 		xs->error = XS_DRIVER_STUFFUP;
-		TAILQ_INSERT_TAIL(&sc->sc_free_cb, cb, chain);
 		scsi_done(xs);
+		TAILQ_INSERT_TAIL(&sc->sc_free_cb, cb, chain);
 		return (COMPLETE);
 	}
 	bus_dmamap_sync(sc->sc_dmat, cb->cmddma, 0, xs->cmdlen,
@@ -748,6 +751,7 @@ oosiop_scsicmd(struct scsi_xfer *xs)
 
 	/* Setup data buffer DMA */
 	if (xs->flags & (SCSI_DATA_IN | SCSI_DATA_OUT)) {
+		cb->datalen = xs->datalen;
 		err = bus_dmamap_load(sc->sc_dmat, cb->datadma,
 		    xs->data, xs->datalen, NULL,
 		    ((xs->flags & SCSI_NOSLEEP) ?
@@ -760,8 +764,8 @@ oosiop_scsicmd(struct scsi_xfer *xs)
 			    sc->sc_dev.dv_xname, err);
 			xs->error = XS_DRIVER_STUFFUP;
 			bus_dmamap_unload(sc->sc_dmat, cb->cmddma);
-			TAILQ_INSERT_TAIL(&sc->sc_free_cb, cb, chain);
 			scsi_done(xs);
+			TAILQ_INSERT_TAIL(&sc->sc_free_cb, cb, chain);
 			return (COMPLETE);
 		}
 		bus_dmamap_sync(sc->sc_dmat, cb->datadma,
@@ -769,31 +773,9 @@ oosiop_scsicmd(struct scsi_xfer *xs)
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	}
 
-	oosiop_setup_sgdma(sc, cb);
-
-	/* Setup msgout buffer */
-	OOSIOP_XFERMSG_SYNC(sc, cb,
-	   BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
-	xfer->msgout[0] = MSG_IDENTIFY(cb->lun,
-	    (cb->xfer->scsi_cmd.opcode != REQUEST_SENSE));
-	cb->msgoutlen = 1;
-
-	if (sc->sc_tgt[cb->id].flags & TGTF_SYNCNEG) {
-		/* Send SDTR */
-		xfer->msgout[1] = MSG_EXTENDED;
-		xfer->msgout[2] = MSG_EXT_SDTR_LEN;
-		xfer->msgout[3] = MSG_EXT_SDTR;
-		xfer->msgout[4] = sc->sc_minperiod;
-		xfer->msgout[5] = OOSIOP_MAX_OFFSET;
-		cb->msgoutlen = 6;
-		sc->sc_tgt[cb->id].flags &= ~TGTF_SYNCNEG;
-		sc->sc_tgt[cb->id].flags |= TGTF_WAITSDTR;
-	}
-
 	xfer->status = SCSI_OOSIOP_NOSTATUS;
 
-	OOSIOP_XFERMSG_SYNC(sc, cb,
-	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	oosiop_setup(sc, cb);
 
 	s = splbio();
 
@@ -809,13 +791,9 @@ oosiop_scsicmd(struct scsi_xfer *xs)
 		/* Abort script to start selection */
 		oosiop_write_1(sc, OOSIOP_ISTAT, OOSIOP_ISTAT_ABRT);
 	}
-	if (xs->flags & SCSI_POLL) {
-		/* Poll for command completion */
-		while ((xs->flags & ITSDONE) == 0) {
-			delay(1000);
-			oosiop_intr(sc);
-		}
-	} else {
+	if (xs->flags & SCSI_POLL)
+		oosiop_poll(sc, cb);
+	else {
 		/* start expire timer */
 		timeout_add(&xs->stimeout, (xs->timeout / 1000) * hz);
 	}
@@ -826,6 +804,73 @@ oosiop_scsicmd(struct scsi_xfer *xs)
 		return (SUCCESSFULLY_QUEUED);
 	else
 		return (COMPLETE);
+}
+
+void
+oosiop_poll(struct oosiop_softc *sc, struct oosiop_cb *cb)
+{
+	struct scsi_xfer *xs = cb->xs;
+	int i, s, to;
+	u_int8_t istat;
+
+	s = splbio();
+	to = xs->timeout / 1000;
+	for (;;) {
+		i = 1000;
+		while (((istat = oosiop_read_1(sc, OOSIOP_ISTAT)) &
+		    (OOSIOP_ISTAT_SIP | OOSIOP_ISTAT_DIP)) == 0) {
+			if (i <= 0) {
+				i = 1000;
+				to--;
+				if (to <= 0) {
+					oosiop_reset(sc);
+					splx(s);
+					return;
+				}
+			}
+			delay(1000);
+			i--;
+		}
+		oosiop_processintr(sc, istat);
+
+		if (xs->flags & ITSDONE)
+			break;
+	}
+
+	splx(s);
+}
+
+void
+oosiop_setup(struct oosiop_softc *sc, struct oosiop_cb *cb)
+{
+	struct oosiop_xfer *xfer = cb->xfer;
+
+	cb->curdp = 0;
+	cb->savedp = 0;
+
+	oosiop_setup_sgdma(sc, cb);
+
+	/* Setup msgout buffer */
+	OOSIOP_XFERMSG_SYNC(sc, cb,
+	   BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+	xfer->msgout[0] = MSG_IDENTIFY(cb->lun,
+	    (cb->xs->cmd->opcode != REQUEST_SENSE));
+	cb->msgoutlen = 1;
+
+	if (sc->sc_tgt[cb->id].flags & TGTF_SYNCNEG) {
+		/* Send SDTR */
+		xfer->msgout[1] = MSG_EXTENDED;
+		xfer->msgout[2] = MSG_EXT_SDTR_LEN;
+		xfer->msgout[3] = MSG_EXT_SDTR;
+		xfer->msgout[4] = sc->sc_minperiod;
+		xfer->msgout[5] = OOSIOP_MAX_OFFSET;
+		cb->msgoutlen = 6;
+		sc->sc_tgt[cb->id].flags &= ~TGTF_SYNCNEG;
+		sc->sc_tgt[cb->id].flags |= TGTF_WAITSDTR;
+	}
+
+	OOSIOP_XFERMSG_SYNC(sc, cb,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 }
 
 void
@@ -846,15 +891,14 @@ oosiop_done(struct oosiop_softc *sc, struct oosiop_cb *cb)
 	autosense = cb->flags & CBF_AUTOSENSE;
 	cb->flags &= ~CBF_AUTOSENSE;
 
-	if (cb == sc->sc_curcb)
-		sc->sc_curcb = NULL;
-	if (cb == sc->sc_lastcb)
-		sc->sc_lastcb = NULL;
-	sc->sc_tgt[cb->id].nexus = NULL;
+	bus_dmamap_sync(sc->sc_dmat, cb->cmddma, 0, cb->cmdlen,
+	    BUS_DMASYNC_POSTWRITE);
+	bus_dmamap_unload(sc->sc_dmat, cb->cmddma);
 
-	if (cb->datalen > 0) {
-		bus_dmamap_sync(sc->sc_dmat, cb->datadma, 0, xs->datalen,
-		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+	if (cb->xsflags & (SCSI_DATA_IN | SCSI_DATA_OUT)) {
+		bus_dmamap_sync(sc->sc_dmat, cb->datadma, 0, cb->datalen,
+		    (cb->xsflags & SCSI_DATA_IN) ?
+		    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, cb->datadma);
 	}
 
@@ -878,9 +922,11 @@ oosiop_done(struct oosiop_softc *sc, struct oosiop_cb *cb)
 		xs->error = XS_BUSY;
 		break;
 	case SCSI_CHECK:
+#ifdef notyet
 		if (autosense == 0)
 			cb->flags |= CBF_AUTOSENSE;
 		else
+#endif
 			xs->error = XS_DRIVER_STUFFUP;
 		break;
 	case SCSI_OOSIOP_NOSTATUS:
@@ -896,26 +942,44 @@ oosiop_done(struct oosiop_softc *sc, struct oosiop_cb *cb)
 	if ((cb->flags & CBF_AUTOSENSE) == 0) {
 		/* Put it on the free list. */
 FREE:
-		TAILQ_INSERT_TAIL(&sc->sc_free_cb, cb, chain);
 		xs->resid = 0;
 		xs->flags |= ITSDONE;
 		scsi_done(xs);
+		TAILQ_INSERT_TAIL(&sc->sc_free_cb, cb, chain);
+
+		if (cb == sc->sc_curcb)
+			sc->sc_curcb = NULL;
+		if (cb == sc->sc_lastcb)
+			sc->sc_lastcb = NULL;
+		sc->sc_tgt[cb->id].nexus = NULL;
 	} else {
 		/* Set up REQUEST_SENSE command */
-		struct scsi_sense *cmd =
-		    (struct scsi_sense *)&cb->xfer->scsi_cmd;
+		struct scsi_sense *cmd = (struct scsi_sense *)xs->cmd;
 		int err;
 
 		bzero(cmd, sizeof(*cmd));
 		cmd->opcode = REQUEST_SENSE;
 		cmd->byte2 = xs->sc_link->lun << 5;
-		cmd->length = sizeof(xs->sense);
+		cb->cmdlen = cmd->length = sizeof(xs->sense);
 
-		/* Sotup DMA map for data buffer */
 		cb->xsflags &= SCSI_POLL | SCSI_NOSLEEP;
 		cb->xsflags |= SCSI_DATA_IN;
 		cb->datalen = sizeof xs->sense;
 
+		/* Setup SCSI command buffer DMA */
+		err = bus_dmamap_load(sc->sc_dmat, cb->cmddma, cmd,
+		    cb->cmdlen, NULL,
+		    BUS_DMA_NOWAIT | BUS_DMA_STREAMING | BUS_DMA_WRITE);
+		if (err) {
+			printf("%s: unable to load REQUEST_SENSE cmd DMA map: %d",
+			    sc->sc_dev.dv_xname, err);
+			xs->error = XS_DRIVER_STUFFUP;
+			goto FREE;
+		}
+		bus_dmamap_sync(sc->sc_dmat, cb->cmddma, 0, cb->cmdlen,
+		    BUS_DMASYNC_PREWRITE);
+
+		/* Setup data buffer DMA */
 		err = bus_dmamap_load(sc->sc_dmat, cb->datadma,
 		    &xs->sense, sizeof(xs->sense), NULL,
 		    BUS_DMA_NOWAIT | BUS_DMA_STREAMING | BUS_DMA_READ);
@@ -923,10 +987,13 @@ FREE:
 			printf("%s: unable to load REQUEST_SENSE data DMA map: %d",
 			    sc->sc_dev.dv_xname, err);
 			xs->error = XS_DRIVER_STUFFUP;
+			bus_dmamap_unload(sc->sc_dmat, cb->cmddma);
 			goto FREE;
 		}
 		bus_dmamap_sync(sc->sc_dmat, cb->datadma,
 		    0, sizeof(xs->sense), BUS_DMASYNC_PREREAD);
+
+		oosiop_setup(sc, cb);
 
 		TAILQ_INSERT_HEAD(&sc->sc_cbq, cb, chain);
 		if ((cb->xs->flags & SCSI_POLL) == 0) {
@@ -1042,14 +1109,23 @@ oosiop_reset_bus(struct oosiop_softc *sc)
 int
 oosiop_intr(struct oosiop_softc *sc)
 {
-	struct oosiop_cb *cb;
-	u_int32_t dcmd;
-	u_int8_t istat, dstat, sstat0;
+	u_int8_t istat;
 
 	istat = oosiop_read_1(sc, OOSIOP_ISTAT);
 
 	if ((istat & (OOSIOP_ISTAT_SIP | OOSIOP_ISTAT_DIP)) == 0)
 		return (0);
+
+	oosiop_processintr(sc, istat);
+	return (1);
+}
+
+void
+oosiop_processintr(struct oosiop_softc *sc, u_int8_t istat)
+{
+	struct oosiop_cb *cb;
+	u_int32_t dcmd;
+	u_int8_t dstat, sstat0;
 
 	sc->sc_nextdsp = Ent_wait_reselect;
 
@@ -1174,8 +1250,6 @@ oosiop_intr(struct oosiop_softc *sc)
 
 	/* Restart script */
 	oosiop_write_4(sc, OOSIOP_DSP, sc->sc_nextdsp + sc->sc_scrbase);
-
-	return (1);
 }
 
 void

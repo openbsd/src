@@ -1,4 +1,4 @@
-/* $OpenBSD: oosiopvar.h,v 1.1 2004/03/12 00:04:57 miod Exp $ */
+/* $OpenBSD: oosiopvar.h,v 1.2 2004/03/14 12:23:49 miod Exp $ */
 /* $NetBSD: oosiopvar.h,v 1.2 2003/05/03 18:11:23 wiz Exp $ */
 
 /*
@@ -41,9 +41,6 @@ struct oosiop_xfer {
 	u_int8_t msgout[8];
 	u_int8_t status;
 	u_int8_t pad[7];
-
-	struct scsi_generic scsi_cmd;	/* DMA'able copy of xs->cmd */
-	u_int32_t pad2[1+4];		/* pad to 256 bytes */
 } __packed;
 
 #define	SCSI_OOSIOP_NOSTATUS	0xff	/* device didn't report status */
@@ -53,7 +50,6 @@ struct oosiop_xfer {
 #define	OOSIOP_DOUTSCROFF	OOSIOP_XFEROFF(dataout_scr[0])
 #define	OOSIOP_MSGINOFF		OOSIOP_XFEROFF(msgin[0])
 #define	OOSIOP_MSGOUTOFF	OOSIOP_XFEROFF(msgout[0])
-#define	OOSIOP_CMDOFF		OOSIOP_XFEROFF(scsi_cmd)
 
 #define	OOSIOP_XFERSCR_SYNC(sc, cb, ops)				\
 	bus_dmamap_sync((sc)->sc_dmat, (cb)->xferdma, OOSIOP_DINSCROFF,	\
@@ -90,6 +86,7 @@ struct oosiop_cb {
 
 	int xsflags;			/* copy of xs->flags */
 	int datalen;			/* copy of xs->datalen */
+	int cmdlen;			/* copy of xs->cmdlen */
 
 	struct oosiop_xfer *xfer;	/* DMA xfer block */
 };
