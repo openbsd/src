@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.124 2005/02/07 20:10:30 matthieu Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.125 2005/03/06 23:30:24 jsg Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.121 2005/02/07 20:09:42 matthieu Exp 
+ *		OpenBSD: pcmciadevs,v 1.122 2005/03/06 23:29:25 jsg Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -319,6 +319,8 @@
 #define	PCMCIA_PRODUCT_IODATA2_WNB11PCM	0x0002
 #define	PCMCIA_CIS_IODATA2_WCF12	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_IODATA2_WCF12	0x0673
+#define	PCMCIA_CIS_ELSA_WNB11CFZ	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_ELSA_WNB11CFZ	0x0010
 
 /* Intel */
 #define	PCMCIA_CIS_INTEL_PRO_WLAN_2011	{ NULL, NULL, NULL, NULL }
