@@ -832,7 +832,7 @@ merging will be the same as each other, and avoid spurious conflicts.
 Then you might get the following results from a merge:
 
      $ cat file1
-     key $Revision: 1.2 $
+     key $Revision: 1.3 $
      . . .
      $ cvs update -j br1
      U file1
@@ -843,9 +843,9 @@ Then you might get the following results from a merge:
      rcsmerge: warning: conflicts during merge
      $ cat file1
      <<<<<<< file1
-     key $Revision: 1.2 $
+     key $Revision: 1.3 $
      =======
-     key $Revision: 1.2 $
+     key $Revision: 1.3 $
      >>>>>>> 1.1.2.1
      . . .
 
@@ -858,7 +858,7 @@ the fact that your working directory had contained `Revision: 1.2'.
    Here is what happens if you had used `-kk':
 
      $ cat file1
-     key $Revision: 1.2 $
+     key $Revision: 1.3 $
      . . .
      $ cvs update -kk -j br1
      U file1
@@ -867,7 +867,7 @@ the fact that your working directory had contained `Revision: 1.2'.
      retrieving revision 1.1.2.1
      Merging differences between 1.1 and 1.1.2.1 into file1
      $ cat file1
-     key $Revision: 1.2 $
+     key $Revision: 1.3 $
      . . .
 
    What is going on here is that revision 1.1 and 1.1.2.1 both expand
