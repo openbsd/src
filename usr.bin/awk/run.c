@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.19 2003/04/04 00:42:34 deraadt Exp $	*/
+/*	$OpenBSD: run.c,v 1.20 2003/04/06 06:12:01 pvalchev Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -458,9 +458,9 @@ Cell *array(Node **a, int n)	/* a[0] is symtab, a[1] is list of subscripts */
 		s = getsval(y);
 		if (!adjbuf(&buf, &bufsz, strlen(buf)+strlen(s)+nsub+1, recsize, 0, 0))
 			FATAL("out of memory for %s[%s...]", x->nval, buf);
-		strcat(buf, s);
+		strlcat(buf, s, bufsz);
 		if (np->nnext)
-			strcat(buf, *SUBSEP);
+			strlcat(buf, *SUBSEP, bufsz);
 		tempfree(y);
 	}
 	if (!isarr(x)) {
@@ -505,9 +505,9 @@ Cell *awkdelete(Node **a, int n)	/* a[0] is symtab, a[1] is list of subscripts *
 			s = getsval(y);
 			if (!adjbuf(&buf, &bufsz, strlen(buf)+strlen(s)+nsub+1, recsize, 0, 0))
 				FATAL("out of memory deleting %s[%s...]", x->nval, buf);
-			strcat(buf, s);	
+			strlcat(buf, s, bufsz);	
 			if (np->nnext)
-				strcat(buf, *SUBSEP);
+				strlcat(buf, *SUBSEP, bufsz);
 			tempfree(y);
 		}
 		freeelem(x, buf);
@@ -544,10 +544,10 @@ Cell *intest(Node **a, int n)	/* a[0] is index (list), a[1] is symtab */
 		s = getsval(x);
 		if (!adjbuf(&buf, &bufsz, strlen(buf)+strlen(s)+nsub+1, recsize, 0, 0))
 			FATAL("out of memory deleting %s[%s...]", x->nval, buf);
-		strcat(buf, s);
+		strlcat(buf, s, bufsz);
 		tempfree(x);
 		if (p->nnext)
-			strcat(buf, *SUBSEP);
+			strlcat(buf, *SUBSEP, bufsz);
 	}
 	k = lookup(buf, (Array *) ap->sval);
 	tempfree(ap);
