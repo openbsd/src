@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_bus_fixup.c,v 1.7 2001/01/24 23:16:14 mickey Exp $	*/
+/*	$OpenBSD: pci_bus_fixup.c,v 1.8 2001/01/27 04:59:40 mickey Exp $	*/
 /*	$NetBSD: pci_bus_fixup.c,v 1.1 1999/11/17 07:32:58 thorpej Exp $  */
 
 /*
@@ -49,11 +49,8 @@ pci_bus_fixup(pc, bus)
 	pci_chipset_tag_t pc;
 	int bus;
 {
-#ifdef PCIBIOSVERBOSE
 	static int bridge_cnt;
-	int bridge;
-#endif
-	int device, maxdevs, function, nfuncs, bus_max, bus_sub;
+	int bridge, device, maxdevs, function, nfuncs, bus_max, bus_sub;
 	const struct pci_quirkdata *qd;
 	pcireg_t reg;
 	pcitag_t tag;
@@ -119,14 +116,14 @@ pci_bus_fixup(pc, bus)
 				reg |= bus | (bus_max << 8) | (bus_sub << 16);
 				pci_conf_write(pc, tag, PPB_REG_BUSINFO, reg);
 
-#ifdef PCIBIOSVERBOSE
-				/* Assign the bridge #. */
-				bridge = bridge_cnt++;
+				if (pcibios_flags & PCIBIOS_VERBOSE) {
+					/* Assign the bridge #. */
+					bridge = bridge_cnt++;
 
-				printf("PCI bridge %d: primary %d, "
-				    "secondary %d, subordinate %d\n",
-				    bridge, bus, bus_max, bus_sub);
-#endif
+					printf("PCI bridge %d: primary %d, "
+					    "secondary %d, subordinate %d\n",
+					    bridge, bus, bus_max, bus_sub);
+				}
 
 				/* Next bridge's secondary bus #. */
 				bus_max = (bus_sub > bus_max) ?

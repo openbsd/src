@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcib.c,v 1.7 2000/03/27 08:35:22 brad Exp $	*/
+/*	$OpenBSD: pcib.c,v 1.8 2001/01/27 04:59:40 mickey Exp $	*/
 /*	$NetBSD: pcib.c,v 1.6 1997/06/06 23:29:16 thorpej Exp $	*/
 
 /*-
@@ -51,6 +51,10 @@
 #include <dev/pci/pcidevs.h>
 
 #include "isa.h"
+#include "pcibios.h"
+#if NPCIBIOS > 0
+#include <i386/pci/pcibiosvar.h>
+#endif
 
 int	pcibmatch __P((struct device *, void *, void *));
 void	pcibattach __P((struct device *, struct device *, void *));
@@ -114,6 +118,10 @@ pcib_callback(self)
 	struct device *self;
 {
 	struct isabus_attach_args iba;
+
+#if NPCIBIOS > 0
+	pci_intr_post_fixup();
+#endif
 
 	/*
 	 * Attach the ISA bus behind this bridge.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.17 2000/10/25 19:13:12 mickey Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.18 2001/01/27 04:59:40 mickey Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.28 1997/06/06 23:29:17 thorpej Exp $	*/
 
 /*-
@@ -104,6 +104,11 @@ extern bios_pciinfo_t *bios_pciinfo;
 #include <dev/isa/isavar.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
+
+#include "pcibios.h"
+#if NPCIBIOS > 0
+#include <i386/pci/pcibiosvar.h>
+#endif
 
 int pci_mode = -1;
 
@@ -406,7 +411,6 @@ pci_intr_map(pc, intrtag, pin, line, ihp)
 	int pin, line;
 	pci_intr_handle_t *ihp;
 {
-
 	if (pin == 0) {
 		/* No IRQ used. */
 		goto bad;
@@ -416,6 +420,13 @@ pci_intr_map(pc, intrtag, pin, line, ihp)
 		printf("pci_intr_map: bad interrupt pin %d\n", pin);
 		goto bad;
 	}
+
+	ihp->line = line;
+	ihp->pin = pin;
+#if NPCIBIOS > 0
+	pci_intr_header_fixup(pc, intrtag, ihp);
+	line = ihp->line;
+#endif
 
 	/*
 	 * Section 6.2.4, `Miscellaneous Functions', says that 255 means
@@ -445,11 +456,10 @@ pci_intr_map(pc, intrtag, pin, line, ihp)
 		}
 	}
 
-	*ihp = line;
 	return 0;
 
 bad:
-	*ihp = -1;
+	ihp->line = -1;
 	return 1;
 }
 
@@ -460,10 +470,10 @@ pci_intr_string(pc, ih)
 {
 	static char irqstr[8];		/* 4 + 2 + NULL + sanity */
 
-	if (ih == 0 || ih >= ICU_LEN || ih == 2)
-		panic("pci_intr_string: bogus handle 0x%x", ih);
+	if (ih.line == 0 || ih.line >= ICU_LEN || ih.line == 2)
+		panic("pci_intr_string: bogus handle 0x%x", ih.line);
 
-	sprintf(irqstr, "irq %d", ih);
+	sprintf(irqstr, "irq %d", ih.line);
 	return (irqstr);
 	
 }
@@ -476,11 +486,18 @@ pci_intr_establish(pc, ih, level, func, arg, what)
 	void *arg;
 	char *what;
 {
+	void *ret;
 
-	if (ih == 0 || ih >= ICU_LEN || ih == 2)
-		panic("pci_intr_establish: bogus handle 0x%x", ih);
+	if (ih.line == 0 || ih.line >= ICU_LEN || ih.line == 2)
+		panic("pci_intr_establish: bogus handle 0x%x", ih.line);
 
-	return isa_intr_establish(NULL, ih, IST_LEVEL, level, func, arg, what);
+	ret = isa_intr_establish(NULL, ih.line,
+	    IST_LEVEL, level, func, arg, what);
+#if NPCIBIOS > 0
+	if (ret)
+		pci_intr_route_link(pc, &ih);
+#endif
+	return ret;
 }
 
 void
@@ -488,6 +505,6 @@ pci_intr_disestablish(pc, cookie)
 	pci_chipset_tag_t pc;
 	void *cookie;
 {
-
+	/* XXX oh, unroute the pci int link? */
 	return isa_intr_disestablish(NULL, cookie);
 }

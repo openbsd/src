@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_addr_fixup.c,v 1.7 2001/01/25 01:00:58 mickey Exp $	*/
+/*	$OpenBSD: pci_addr_fixup.c,v 1.8 2001/01/27 04:59:39 mickey Exp $	*/
 /*	$NetBSD: pci_addr_fixup.c,v 1.7 2000/08/03 20:10:45 nathanw Exp $	*/
 
 /*-
@@ -42,21 +42,21 @@
 
 #include <i386/pci/pcibiosvar.h>
 
-struct pciaddr pciaddr;
-
 typedef int (*pciaddr_resource_manage_func_t) 
-	(pci_chipset_tag_t, pcitag_t, int, struct extent *, int,
-	 bus_addr_t *, bus_size_t);
-void	pciaddr_resource_manage __P((pci_chipset_tag_t, pcitag_t,
-				     pciaddr_resource_manage_func_t));
-void	pciaddr_resource_reserve __P((pci_chipset_tag_t, pcitag_t));
-int	pciaddr_do_resource_reserve __P((pci_chipset_tag_t, pcitag_t, int,
-					 struct extent *, int, bus_addr_t *,
-					 bus_size_t));
-void	pciaddr_resource_allocate __P((pci_chipset_tag_t, pcitag_t));
-int	pciaddr_do_resource_allocate __P((pci_chipset_tag_t, pcitag_t, int,
-					  struct extent *, int,	bus_addr_t *,
-					  bus_size_t));
+	__P((struct pcibios_softc *, pci_chipset_tag_t, pcitag_t, int,
+	struct extent *, int, bus_addr_t *, bus_size_t));
+void	pciaddr_resource_manage __P((struct pcibios_softc *,
+    pci_chipset_tag_t, pcitag_t, pciaddr_resource_manage_func_t));
+void	pciaddr_resource_reserve __P((struct pcibios_softc *,
+    pci_chipset_tag_t, pcitag_t));
+int	pciaddr_do_resource_reserve __P((struct pcibios_softc *,
+    pci_chipset_tag_t, pcitag_t, int, struct extent *, int,
+    bus_addr_t *, bus_size_t));
+void	pciaddr_resource_allocate __P((struct pcibios_softc *,
+    pci_chipset_tag_t, pcitag_t));
+int	pciaddr_do_resource_allocate __P((struct pcibios_softc *,
+    pci_chipset_tag_t, pcitag_t, int, struct extent *, int, bus_addr_t *,
+    bus_size_t));
 bus_addr_t pciaddr_ioaddr __P((u_int32_t));
 void	pciaddr_print_devid __P((pci_chipset_tag_t, pcitag_t));
 
@@ -70,12 +70,12 @@ void	pciaddr_print_devid __P((pci_chipset_tag_t, pcitag_t));
 #define PCIADDR_ISAMEM_RESERVE	(16 * 1024 * 1024)
 
 void
-pci_addr_fixup(pc, maxbus)
+pci_addr_fixup(sc, pc, maxbus)
+	struct pcibios_softc *sc;
 	pci_chipset_tag_t pc;
 	int maxbus;
 {
 	extern paddr_t avail_end;
-#ifdef PCIBIOSVERBOSE
 	const char *verbose_header = 
 		"[%s]-----------------------\n"
 		"  device vendor product\n"
@@ -83,7 +83,7 @@ pci_addr_fixup(pc, maxbus)
 		"--------------------------------------------\n";
 	const char *verbose_footer = 
 		"--------------------------[%3d devices bogus]\n";
-#endif
+
 	const struct {
 		bus_addr_t start;
 		bus_size_t size;
@@ -97,35 +97,29 @@ pci_addr_fixup(pc, maxbus)
 	paddr_t start;
 	int error;
 
-	pciaddr.extent_mem = extent_create("PCI I/O memory space",
-					   PCIADDR_MEM_START, 
-					   PCIADDR_MEM_END,
-					   M_DEVBUF, 0, 0, EX_NOWAIT);
-	KASSERT(pciaddr.extent_mem);
-	pciaddr.extent_port = extent_create("PCI I/O port space",
-					    PCIADDR_PORT_START,
-					    PCIADDR_PORT_END,
-					    M_DEVBUF, 0, 0, EX_NOWAIT);
-	KASSERT(pciaddr.extent_port);
+	sc->extent_mem = extent_create("PCI I/O memory space",
+	    PCIADDR_MEM_START, PCIADDR_MEM_END, M_DEVBUF, 0, 0, EX_NOWAIT);
+	KASSERT(sc->extent_mem);
+	sc->extent_port = extent_create("PCI I/O port space",
+	    PCIADDR_PORT_START, PCIADDR_PORT_END, M_DEVBUF, 0, 0, EX_NOWAIT);
+	KASSERT(sc->extent_port);
 
 	/* 
 	 * 1. check & reserve system BIOS setting.
 	 */
 	PCIBIOS_PRINTV((verbose_header, "System BIOS Setting"));
-	pci_device_foreach(pc, maxbus, pciaddr_resource_reserve);
-	PCIBIOS_PRINTV((verbose_footer, pciaddr.nbogus));
+	pci_device_foreach(sc, pc, maxbus, pciaddr_resource_reserve);
+	PCIBIOS_PRINTV((verbose_footer, sc->nbogus));
 
 	/* 
 	 * 2. reserve non-PCI area.
 	 */
 	for (srp = system_reserve; srp->size; srp++) {
-		error = extent_alloc_region(pciaddr.extent_mem, srp->start,
-					    srp->size, 
-					    EX_NOWAIT| EX_MALLOCOK);	
-		if (error != 0) {
+		error = extent_alloc_region(sc->extent_mem, srp->start,
+		    srp->size, EX_NOWAIT| EX_MALLOCOK);	
+		if (error != 0)
 			printf("WARNING: can't reserve area for %s.\n",
 			       srp->name);
-		}
 	}
 
 	/* 
@@ -134,52 +128,49 @@ pci_addr_fixup(pc, maxbus)
 	start = i386_round_page(avail_end + 1);
 	if (start < PCIADDR_ISAMEM_RESERVE)
 		start = PCIADDR_ISAMEM_RESERVE;
-	pciaddr.mem_alloc_start = (start + 0x100000 + 1) & ~(0x100000 - 1);
-	pciaddr.port_alloc_start = PCIADDR_ISAPORT_RESERVE;
+	sc->mem_alloc_start = (start + 0x100000 + 1) & ~(0x100000 - 1);
+	sc->port_alloc_start = PCIADDR_ISAPORT_RESERVE;
 	PCIBIOS_PRINTV((" Physical memory end: 0x%08x\n PCI memory mapped I/O "
-			"space start: 0x%08x\n", (unsigned)avail_end, 
-			(unsigned)pciaddr.mem_alloc_start));
+	    "space start: 0x%08x\n", avail_end, sc->mem_alloc_start));
 
-	if (pciaddr.nbogus == 0)
+	if (sc->nbogus == 0)
 		return; /* no need to fixup */
 
 	/* 
 	 * 4. do fixup 
 	 */
 	PCIBIOS_PRINTV((verbose_header, "PCIBIOS fixup stage"));
-	pciaddr.nbogus = 0;
-	/* XXX bus #0 only */
-	pci_device_foreach(pc, 0, pciaddr_resource_allocate);
-	PCIBIOS_PRINTV((verbose_footer, pciaddr.nbogus));
+	sc->nbogus = 0;
+	pci_device_foreach(sc, pc, maxbus, pciaddr_resource_allocate);
+	PCIBIOS_PRINTV((verbose_footer, sc->nbogus));
 
 }
 
 void
-pciaddr_resource_reserve(pc, tag)
+pciaddr_resource_reserve(sc, pc, tag)
+	struct pcibios_softc *sc;
 	pci_chipset_tag_t pc;
 	pcitag_t tag;
 {
-#ifdef PCIBIOSVERBOSE
-	if (pcibiosverbose)
+	if (pcibios_flags & PCIBIOS_VERBOSE)
 		pciaddr_print_devid(pc, tag);
-#endif
-	pciaddr_resource_manage(pc, tag, pciaddr_do_resource_reserve);	
+	pciaddr_resource_manage(sc, pc, tag, pciaddr_do_resource_reserve);	
 }
 
 void
-pciaddr_resource_allocate(pc, tag)
+pciaddr_resource_allocate(sc, pc, tag)
+	struct pcibios_softc *sc;
 	pci_chipset_tag_t pc;
 	pcitag_t tag;
 {
-#ifdef PCIBIOSVERBOSE
-	if (pcibiosverbose)
+	if (pcibios_flags & PCIBIOS_VERBOSE)
 		pciaddr_print_devid(pc, tag);
-#endif
-	pciaddr_resource_manage(pc, tag, pciaddr_do_resource_allocate);
+	pciaddr_resource_manage(sc, pc, tag, pciaddr_do_resource_allocate);
 }
 
 void
-pciaddr_resource_manage(pc, tag, func)
+pciaddr_resource_manage(sc, pc, tag, func)
+	struct pcibios_softc *sc;
 	pci_chipset_tag_t pc;
 	pcitag_t tag;
 	pciaddr_resource_manage_func_t func;
@@ -188,13 +179,13 @@ pciaddr_resource_manage(pc, tag, func)
 	pcireg_t val, mask;
 	bus_addr_t addr;
 	bus_size_t size;
-	int error, useport, usemem, mapreg, type, reg_start, reg_end, width;
+	int error, mapreg, type, reg_start, reg_end, width;
 
 	val = pci_conf_read(pc, tag, PCI_BHLC_REG);
 	switch (PCI_HDRTYPE_TYPE(val)) {
 	default:
 		printf("WARNING: unknown PCI device header.");
-		pciaddr.nbogus++;
+		sc->nbogus++;
 		return;
 	case 0: 
 		reg_start = PCI_MAPREG_START;
@@ -209,7 +200,7 @@ pciaddr_resource_manage(pc, tag, func)
 		reg_end   = PCI_MAPREG_PCB_END;
 		break;
 	}
-	error = useport = usemem = 0;
+	error = 0;
     
 	for (mapreg = reg_start; mapreg < reg_end; mapreg += width) {
 		/* inquire PCI device bus space requirement */
@@ -235,24 +226,21 @@ pciaddr_resource_manage(pc, tag, func)
 				 */
 			    width = 8;
 			}
+			addr = PCI_MAPREG_MEM_ADDR(val);
 			size = PCI_MAPREG_MEM_SIZE(mask);
-			ex = pciaddr.extent_mem;
+			ex = sc->extent_mem;
 		} else {
+			/* XXX some devices give 32bit value */
+			addr = PCI_MAPREG_IO_ADDR(val) & PCIADDR_PORT_END;
 			size = PCI_MAPREG_IO_SIZE(mask);
-			ex = pciaddr.extent_port;
+			ex = sc->extent_port;
 		}
-		addr = pciaddr_ioaddr(val);
 	
 		if (!size) /* unused register */
 			continue;
 
-		if (type == PCI_MAPREG_TYPE_MEM)
-			++usemem;
-		else
-			++useport;
-
 		/* reservation/allocation phase */
-		error += (*func) (pc, tag, mapreg, ex, type, &addr, size);
+		error += (*func) (sc, pc, tag, mapreg, ex, type, &addr, size);
 
 		PCIBIOS_PRINTV(("\t%02xh %s 0x%08x 0x%08x\n", 
 				mapreg, type ? "port" : "mem ", 
@@ -270,13 +258,14 @@ pciaddr_resource_manage(pc, tag, func)
 	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, val);
     
 	if (error)
-		pciaddr.nbogus++;
+		sc->nbogus++;
 
 	PCIBIOS_PRINTV(("\t\t[%s]\n", error ? "NG" : "OK"));
 }
 
 int
-pciaddr_do_resource_allocate(pc, tag, mapreg, ex, type, addr, size)
+pciaddr_do_resource_allocate(sc, pc, tag, mapreg, ex, type, addr, size)
+	struct pcibios_softc *sc;
 	pci_chipset_tag_t pc;
 	pcitag_t tag;
 	struct extent *ex;
@@ -290,8 +279,8 @@ pciaddr_do_resource_allocate(pc, tag, mapreg, ex, type, addr, size)
 	if (*addr) /* no need to allocate */
 		return (0);
 	
-	start = type == PCI_MAPREG_TYPE_MEM ? pciaddr.mem_alloc_start
-		: pciaddr.port_alloc_start;
+	start = (type == PCI_MAPREG_TYPE_MEM ? sc->mem_alloc_start
+		: sc->port_alloc_start);
 	if (start < ex->ex_start || start + size - 1 >= ex->ex_end) {
 		PCIBIOS_PRINTV(("No available resources. fixup failed\n"));
 		return (1);
@@ -306,9 +295,7 @@ pciaddr_do_resource_allocate(pc, tag, mapreg, ex, type, addr, size)
 	/* write new address to PCI device configuration header */
 	pci_conf_write(pc, tag, mapreg, *addr);
 	/* check */
-#ifdef PCIBIOSVERBOSE
-	if (!pcibiosverbose)
-#endif 
+	if (!pcibios_flags & PCIBIOS_VERBOSE)
 	{
 		printf("pci_addr_fixup: ");
 		pciaddr_print_devid(pc, tag);
@@ -316,19 +303,18 @@ pciaddr_do_resource_allocate(pc, tag, mapreg, ex, type, addr, size)
 
 	if (pciaddr_ioaddr(pci_conf_read(pc, tag, mapreg)) != *addr) {
 		pci_conf_write(pc, tag, mapreg, 0); /* clear */
-		printf("fixup failed. (new address=%#x)\n", (unsigned)*addr);
+		printf("fixup failed. (new address=%#x)\n", *addr);
 		return (1);
 	}
-#ifdef PCIBIOSVERBOSE
-	if (!pcibiosverbose)
-#endif 
+	if (!pcibios_flags & PCIBIOS_VERBOSE)
 		printf("new address 0x%08x\n", *addr);
 
 	return (0);
 }
 
 int
-pciaddr_do_resource_reserve(pc, tag, mapreg, ex, type, addr, size)
+pciaddr_do_resource_reserve(sc, pc, tag, mapreg, ex, type, addr, size)
+	struct pcibios_softc *sc;
 	pci_chipset_tag_t pc;
 	pcitag_t tag;
 	struct extent *ex;
@@ -357,7 +343,7 @@ pciaddr_ioaddr(val)
 {
 	return ((PCI_MAPREG_TYPE(val) == PCI_MAPREG_TYPE_MEM)
 		? PCI_MAPREG_MEM_ADDR(val)
-		: PCI_MAPREG_IO_ADDR(val));
+		: (PCI_MAPREG_IO_ADDR(val) & PCIADDR_PORT_END));
 }
 
 void
@@ -370,7 +356,7 @@ pciaddr_print_devid(pc, tag)
 	
 	id = pci_conf_read(pc, tag, PCI_ID_REG);
 	pci_decompose_tag(pc, tag, &bus, &device, &function);
-	printf("%03d:%02d:%d 0x%04x 0x%04x ", bus, device, function, 
+	printf("%03d:%02d:%d %04x:%04x\n", bus, device, function, 
 	       PCI_VENDOR(id), PCI_PRODUCT(id));
 }
 
@@ -380,10 +366,14 @@ pciaddr_search(mem_port, startp, size)
 	bus_addr_t *startp;
 	bus_size_t size;
 {
+	extern struct cfdriver pcibios_cd;
+	struct pcibios_softc *sc;
+
+	sc = pcibios_cd.cd_devs[0];
+
 	if (!(pcibios_flags & PCIBIOS_ADDR_FIXUP)) {
 		struct extent_region *rp;
-		struct extent *ex = mem_port?
-		    pciaddr.extent_mem : pciaddr.extent_port;
+		struct extent *ex = mem_port? sc->extent_mem : sc->extent_port;
 
 		/* Search the PCI I/O memory space extent for free
 		 * space that will accomodate size.  Remember that the

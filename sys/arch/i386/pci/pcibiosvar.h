@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcibiosvar.h,v 1.5 2001/01/25 01:00:59 mickey Exp $	*/
+/*	$OpenBSD: pcibiosvar.h,v 1.6 2001/01/27 04:59:40 mickey Exp $	*/
 /*	$NetBSD: pcibios.h,v 1.2 2000/04/28 17:15:16 uch Exp $	*/
 
 /*
@@ -12,18 +12,18 @@
  *    notice, this list of conditions and the following disclaimer.
  * 2. The name of the developer may NOT be used to endorse or promote products
  *    derived from this software without specific prior written permission.
- * 
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND 
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE 
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL 
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS 
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY 
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
- * SUCH DAMAGE. 
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  */
 
 /*
@@ -34,6 +34,8 @@
 #define	PCIBIOS_BUS_FIXUP	0x002
 #define	PCIBIOS_INTR_FIXUP	0x004
 #define	PCIBIOS_INTR_GUESS	0x008
+#define	PCIBIOS_VERBOSE		0x010
+#define	PCIBIOS_INTRDEBUG	0x020
 
 /*
  * PCI BIOS return codes.
@@ -46,6 +48,19 @@
 #define	PCIBIOS_BAD_REGISTER_NUMBER	0x87
 #define	PCIBIOS_SET_FAILED		0x88
 #define	PCIBIOS_BUFFER_TOO_SMALL	0x89
+
+struct pcibios_softc {
+	struct device sc_dev;
+
+	int max_bus;
+
+	/* address fixup guts */
+	struct extent *extent_mem;
+	struct extent *extent_port;
+	bus_addr_t mem_alloc_start;
+	bus_addr_t port_alloc_start;
+	int nbogus;
+};
 
 /*
  * PCI IRQ Routing Table definitions.
@@ -93,17 +108,8 @@ void	pcibios_init __P((void));
 extern struct pcibios_pir_header pcibios_pir_header;
 extern struct pcibios_intr_routing *pcibios_pir_table;
 extern int pcibios_pir_table_nentries;
-extern int pcibios_max_bus;
 
-struct pciaddr {
-	struct extent *extent_mem;
-	struct extent *extent_port;
-	bus_addr_t mem_alloc_start;
-	bus_addr_t port_alloc_start;
-	int nbogus;
-};
-
-extern struct pciaddr pciaddr;
+int pcibios_flags;
 
 typedef void *pciintr_icu_handle_t;
 
@@ -128,36 +134,24 @@ typedef const struct pciintr_icu *pciintr_icu_tag_t;
 #define	pciintr_icu_set_trigger(t, h, irq, trigger)			\
 	(*(t)->pi_set_trigger)((h), (irq), (trigger))
 
-
-int pcibios_flags;
-
-#ifdef PCIBIOSVERBOSE
-extern int pcibiosverbose;
-
 #define	PCIBIOS_PRINTV(arg) \
 	do { \
-		if (pcibiosverbose) \
+		if (pcibios_flags & PCIBIOS_VERBOSE) \
 			printf arg; \
 	} while (0)
-#define	PCIBIOS_PRINTVN(n, arg) \
-	do { \
-		 if (pcibiosverbose > (n)) \
-			printf arg; \
-	} while (0)
-#else
-#define	PCIBIOS_PRINTV(arg)
-#define	PCIBIOS_PRINTVN(n, arg)
-#endif
 
 #define	PCIADDR_SEARCH_IO	0
 #define	PCIADDR_SEARCH_MEM	1
 struct extent *pciaddr_search __P((int, bus_addr_t *, bus_size_t));
 
-int  pci_intr_fixup __P((pci_chipset_tag_t, bus_space_tag_t, u_int16_t *));
+int  pci_intr_fixup __P((pci_chipset_tag_t, bus_space_tag_t));
 int  pci_bus_fixup __P((pci_chipset_tag_t, int));
-void pci_addr_fixup __P((pci_chipset_tag_t, int));
-void pci_device_foreach __P((pci_chipset_tag_t, int,
-    void (*) __P((pci_chipset_tag_t, pcitag_t))));
+void pci_addr_fixup __P((struct pcibios_softc *, pci_chipset_tag_t, int));
+void pci_device_foreach __P((struct pcibios_softc *, pci_chipset_tag_t, int,
+    void (*) __P((struct pcibios_softc *, pci_chipset_tag_t, pcitag_t))));
+int  pci_intr_header_fixup __P((pci_chipset_tag_t, pcitag_t, pci_intr_handle_t *));
+int  pci_intr_route_link __P((pci_chipset_tag_t, pci_intr_handle_t *));
+int  pci_intr_post_fixup __P((void));
 
 /*
  * Init functions for our known PCI ICUs.
@@ -174,4 +168,3 @@ int	sis85c503_init __P((pci_chipset_tag_t, bus_space_tag_t, pcitag_t,
 	    pciintr_icu_tag_t *, pciintr_icu_handle_t *));
 int	amd756_init __P((pci_chipset_tag_t, bus_space_tag_t, pcitag_t,
 	    pciintr_icu_tag_t *, pciintr_icu_handle_t *));
-

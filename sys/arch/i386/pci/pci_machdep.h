@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.6 2000/08/08 19:12:48 mickey Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.7 2001/01/27 04:59:40 mickey Exp $	*/
 /*	$NetBSD: pci_machdep.h,v 1.7 1997/06/06 23:29:18 thorpej Exp $	*/
 
 /*
@@ -62,7 +62,13 @@ extern struct i386_bus_dma_tag pci_bus_dma_tag;
  */
 typedef void *pci_chipset_tag_t;
 typedef union i386_pci_tag_u pcitag_t;
-typedef int pci_intr_handle_t;
+
+typedef
+struct {
+	pcitag_t tag;
+	int line, pin;
+	void *link;
+} pci_intr_handle_t;
 
 /*
  * i386-specific PCI variables and functions.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcibios.c,v 1.20 2001/01/25 00:07:40 mickey Exp $	*/
+/*	$OpenBSD: pcibios.c,v 1.21 2001/01/27 04:59:40 mickey Exp $	*/
 /*	$NetBSD: pcibios.c,v 1.5 2000/08/01 05:23:59 uch Exp $	*/
 
 /*
@@ -67,7 +67,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
  * All rights reserved.
@@ -113,23 +112,14 @@
 
 #include <machine/biosvar.h>
 
-#ifdef PCIBIOSVERBOSE
-int	pcibiosverbose = 1;
-#endif
-
 int pcibios_present;
 
 struct pcibios_pir_header pcibios_pir_header;
 struct pcibios_intr_routing *pcibios_pir_table;
 int pcibios_pir_table_nentries;
-int pcibios_max_bus;
 
 struct bios32_entry pcibios_entry;
 struct bios32_entry_info pcibios_entry_info;
-
-struct pcibios_softc {
-	struct  device sc_dev;
-};
 
 struct pcibios_intr_routing *pcibios_pir_init __P((struct pcibios_softc *));
 
@@ -142,9 +132,7 @@ int	pcibios_get_intr_routing __P((struct pcibios_softc *,
 int	pcibios_return_code __P((struct pcibios_softc *, u_int16_t, const char *));
 
 void	pcibios_print_exclirq __P((struct pcibios_softc *));
-#ifdef PCIINTR_DEBUG
 void	pcibios_print_pir_table __P((void));
-#endif
 
 #define	PCI_IRQ_TABLE_START	0xf0000
 #define	PCI_IRQ_TABLE_END	0xfffff
@@ -175,13 +163,9 @@ pcibiosprobe(parent, match, aux)
 	rv = bios32_service(PCIBIOS_SIGNATURE, &pcibios_entry,
 		&pcibios_entry_info);
 
-#ifdef PCIBIOSVERBOSE
-	printf("pcibiosprobe: 0x%lx:0x%lx at 0x%lx[0x%lx]\n",
-	    pcibios_entry.segment,
-	    pcibios_entry.offset,
-	    pcibios_entry_info.bei_base,
-	    pcibios_entry_info.bei_size);
-#endif
+	PCIBIOS_PRINTV(("pcibiosprobe: 0x%lx:0x%lx at 0x%lx[0x%lx]\n",
+	    pcibios_entry.segment, pcibios_entry.offset,
+	    pcibios_entry_info.bei_base, pcibios_entry_info.bei_size));
 
 	return rv &&
 	    pcibios_get_status(NULL, &rev_maj, &rev_min, &mech1, &mech2,
@@ -202,20 +186,16 @@ pcibiosattach(parent, self, aux)
 
 	pcibios_get_status((struct pcibios_softc *)self, &rev_maj,
 	    &rev_min, &mech1, &mech2,
-	    &scmech1, &scmech2, &pcibios_max_bus);
+	    &scmech1, &scmech2, &sc->max_bus);
 
 	printf(": rev. %d.%d found at 0x%lx[0x%lx]\n",
 	    rev_maj, rev_min >> 4, pcibios_entry_info.bei_base,
 	    pcibios_entry_info.bei_size);
-#ifdef PCIBIOSVERBOSE
-	printf("%s: config mechanism %s%s, special cycles %s%s, last bus %d\n",
-	    sc->sc_dev.dv_xname,
-	    mech1 ? "[1]" : "[x]",
-	    mech2 ? "[2]" : "[x]",
-	    scmech1 ? "[1]" : "[x]",
-	    scmech2 ? "[2]" : "[x]",
-	    pcibios_max_bus);
-#endif
+
+	PCIBIOS_PRINTV(("%s: config mechanism %s%s, special cycles %s%s, "
+	    "last bus %d\n", sc->sc_dev.dv_xname,
+	    mech1 ? "[1]" : "[x]", mech2 ? "[2]" : "[x]",
+	    scmech1 ? "[1]" : "[x]", scmech2 ? "[2]" : "[x]", sc->max_bus));
 
 	/*
 	 * The PCI BIOS tells us the config mechanism; fill it in now
@@ -232,12 +212,11 @@ pcibiosattach(parent, self, aux)
 	if (!(pcibios_flags & PCIBIOS_INTR_FIXUP) &&
 	    pcibios_pir_init((struct pcibios_softc *)self) != NULL) {
 		int rv;
-		u_int16_t pciirq;
 
 		/*
 		 * Fixup interrupt routing.
 		 */
-		rv = pci_intr_fixup(NULL, I386_BUS_SPACE_IO, &pciirq);
+		rv = pci_intr_fixup(NULL, I386_BUS_SPACE_IO);
 		switch (rv) {
 		case -1:
 			/* Non-fatal error. */
@@ -258,13 +237,13 @@ pcibiosattach(parent, self, aux)
 	}
 
 	if (!(pcibios_flags & PCIBIOS_BUS_FIXUP)) {
-		pcibios_max_bus = pci_bus_fixup(NULL, 0);
+		sc->max_bus = pci_bus_fixup(NULL, 0);
 		printf("%s: PCI bus #%d is the last bus\n",
-		    sc->sc_dev.dv_xname, pcibios_max_bus);
+		    sc->sc_dev.dv_xname, sc->max_bus);
 	}
 
 	if (!(pcibios_flags & PCIBIOS_ADDR_FIXUP))
-		pci_addr_fixup(NULL, pcibios_max_bus);
+		pci_addr_fixup(sc, NULL, sc->max_bus);
 }
 
 struct pcibios_intr_routing *
@@ -365,9 +344,8 @@ pcibios_pir_init(sc)
 	}
 
 	pcibios_print_exclirq(sc);
-#ifdef PCIINTR_DEBUG
-	pcibios_print_pir_table();
-#endif
+	if (pcibios_flags & PCIBIOS_INTRDEBUG)
+		pcibios_print_pir_table();
 	return pcibios_pir_table;
 }
 
@@ -455,7 +433,7 @@ pcibios_get_intr_routing(sc, table, nentries, exclirq)
 		return (rv);
 
 	*nentries = args.size / sizeof(*table);
-	*exclirq = bx;
+	*exclirq |= bx;
 
 	return (PCIBIOS_SUCCESS);
 }
@@ -533,7 +511,6 @@ pcibios_print_exclirq(sc)
 	}
 }
 
-#ifdef PCIINTR_DEBUG
 void
 pcibios_print_pir_table()
 {
@@ -552,13 +529,13 @@ pcibios_print_pir_table()
 		}
 	}
 }
-#endif
 
 void
-pci_device_foreach(pc, maxbus, func)
+pci_device_foreach(sc, pc, maxbus, func)
+	struct pcibios_softc *sc;
 	pci_chipset_tag_t pc;
 	int maxbus;
-	void (*func) __P((pci_chipset_tag_t, pcitag_t));
+	void (*func) __P((struct pcibios_softc *, pci_chipset_tag_t, pcitag_t));
 {
 	const struct pci_quirkdata *qd;
 	int bus, device, function, maxdevs, nfuncs;
@@ -602,7 +579,7 @@ pci_device_foreach(pc, maxbus, func)
 				 */
 				if (PCI_VENDOR(id) == 0)
 					continue;
-				(*func)(pc, tag);
+				(*func)(sc, pc, tag);
 			}
 		}
 	}
