@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_prot.c,v 1.6 1996/10/26 07:29:40 tholo Exp $	*/
+/*	$OpenBSD: kern_prot.c,v 1.7 1996/10/27 04:51:37 tholo Exp $	*/
 /*	$NetBSD: kern_prot.c,v 1.33 1996/02/09 18:59:42 christos Exp $	*/
 
 /*
@@ -290,6 +290,7 @@ sys_setuid(p, v, retval)
 	uid = SCARG(uap, uid);
 #endif
 	if (uid != pc->p_ruid &&
+	    uid != pc->p_svuid &&
 	    uid != pc->pc_ucred->cr_uid &&
 	    (error = suser(pc->pc_ucred, &p->p_acflag)))
 		return (error);
@@ -369,6 +370,7 @@ sys_setgid(p, v, retval)
 	gid = SCARG(uap, gid);
 #endif
 	if (gid != pc->p_rgid &&
+	    gid != pc->p_svgid &&
 	    gid != pc->pc_ucred->cr_gid &&
 	    (error = suser(pc->pc_ucred, &p->p_acflag)))
 		return (error);
