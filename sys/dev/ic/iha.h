@@ -1,4 +1,4 @@
-/*	$OpenBSD: iha.h,v 1.3 2001/07/09 15:20:27 krw Exp $ */
+/*	$OpenBSD: iha.h,v 1.4 2001/07/10 23:30:39 krw Exp $ */
 /*
  * Initio INI-9xxxU/UW SCSI Device Driver
  *
@@ -47,8 +47,6 @@
 #define IHA_MAX_TARGETS		16
 #define IHA_MAX_SCB		32
 #define IHA_MAX_EXTENDED_MSG	 4 /* SDTR(3) and WDTR(4) only */
-
-#define OFFSETOF(type, member)	((size_t)(&((type *)0)->member))
 
 #define SCSI_CONDITION_MET    0x04 /* SCSI Status codes not defined */
 #define SCSI_INTERM_COND_MET  0x14 /*     in scsi_all.h             */

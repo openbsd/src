@@ -1,4 +1,4 @@
-/*	$OpenBSD: iha.c,v 1.5 2001/07/09 18:01:38 krw Exp $ */
+/*	$OpenBSD: iha.c,v 1.6 2001/07/10 23:30:39 krw Exp $ */
 /*
  * Initio INI-9xxxU/UW SCSI Device Driver
  *
@@ -468,12 +468,12 @@ iha_init_tulip(sc)
 		pScb->SCB_TagId = i;
 		pScb->SCB_SGPAddr = sc->sc_dmamap->dm_segs[0].ds_addr
 		    + i*sizeof(struct iha_scsi_req_q)
-		    + OFFSETOF(struct iha_scsi_req_q, SCB_SGList);
+		    + offsetof(struct iha_scsi_req_q, SCB_SGList);
 
 		pScb->SCB_SenseLen   = sizeof(struct scsi_sense_data);
 		pScb->SCB_SensePAddr = sc->sc_dmamap->dm_segs[0].ds_addr
 		    + i*sizeof(struct iha_scsi_req_q)
-		    + OFFSETOF(struct iha_scsi_req_q, SCB_ScsiSenseData);
+		    + offsetof(struct iha_scsi_req_q, SCB_ScsiSenseData);
 
 		error = bus_dmamap_create(sc->sc_dmat,
 		    (IHA_MAX_SG_ENTRIES-1) * PAGE_SIZE, IHA_MAX_SG_ENTRIES,
