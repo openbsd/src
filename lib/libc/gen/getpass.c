@@ -1,4 +1,4 @@
-/*	$NetBSD: getpass.c,v 1.7 1995/06/16 07:20:35 jtc Exp $	*/
+/*	$NetBSD: getpass.c,v 1.9 1996/05/20 06:13:07 jtc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)getpass.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: getpass.c,v 1.7 1995/06/16 07:20:35 jtc Exp $";
+static char rcsid[] = "$NetBSD: getpass.c,v 1.9 1996/05/20 06:13:07 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,9 +57,9 @@ getpass(prompt)
 	register int ch;
 	register char *p;
 	FILE *fp, *outfp;
-	long omask;
 	int echo;
 	static char buf[_PASSWORD_LEN + 1];
+	sigset_t oset, nset;
 
 	/*
 	 * read and write to /dev/tty if possible; else read from
@@ -69,11 +69,16 @@ getpass(prompt)
 		outfp = stderr;
 		fp = stdin;
 	}
+
 	/*
 	 * note - blocking signals isn't necessarily the
 	 * right thing, but we leave it for now.
 	 */
-	omask = sigblock(sigmask(SIGINT)|sigmask(SIGTSTP));
+	sigemptyset(&nset);
+	sigaddset(&nset, SIGINT);
+	sigaddset(&nset, SIGTSTP);
+	(void)sigprocmask(SIG_BLOCK, &nset, &oset);
+
 	(void)tcgetattr(fileno(fp), &term);
 	if (echo = (term.c_lflag & ECHO)) {
 		term.c_lflag &= ~ECHO;
@@ -90,7 +95,7 @@ getpass(prompt)
 		term.c_lflag |= ECHO;
 		(void)tcsetattr(fileno(fp), TCSAFLUSH|TCSASOFT, &term);
 	}
-	(void)sigsetmask(omask);
+	(void)sigprocmask(SIG_SETMASK, &oset, NULL);
 	if (fp != stdin)
 		(void)fclose(fp);
 	return(buf);

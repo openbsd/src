@@ -104,12 +104,7 @@ sleep(seconds)
 	ringring = 0;
  	(void) sigsuspend(&set);
 
-	if (ringring) {
-		/* Our alarm went off; timer is not currently running */
-		sigaction(SIGALRM, &oact, NULL);
-		sigprocmask(SIG_SETMASK, &oset, NULL);
-		(void) setitimer(ITIMER_REAL, &oitv, &itv);
-	} else {
+	if (!ringring) {
 		struct itimerval nulltv;
 		/*
 		 * Interrupted by other signal; allow for pending 
@@ -119,10 +114,10 @@ sleep(seconds)
 		timerclear(&nulltv.it_interval);
 		timerclear(&nulltv.it_value);
 		(void) setitimer(ITIMER_REAL, &nulltv, &itv);
-		sigprocmask(SIG_SETMASK, &oset, NULL);
-		sigaction(SIGALRM, &oact, NULL);
-		(void) setitimer(ITIMER_REAL, &oitv, NULL);
 	}
+	sigprocmask(SIG_SETMASK, &oset, NULL);
+	sigaction(SIGALRM, &oact, NULL);
+	(void) setitimer(ITIMER_REAL, &oitv, &itv);
 
 	if (timerisset(&diff))
 		timeradd(&itv.it_value, &diff, &itv.it_value);
