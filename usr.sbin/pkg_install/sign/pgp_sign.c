@@ -1,4 +1,4 @@
-/* $OpenBSD: pgp_sign.c,v 1.2 2001/04/08 16:45:48 espie Exp $ */
+/* $OpenBSD: pgp_sign.c,v 1.3 2003/04/14 22:24:00 pvalchev Exp $ */
 /*-
  * Copyright (c) 1999 Marc Espie.
  *
@@ -255,10 +255,10 @@ handle_pgp_passphrase()
 		}
 	default:
 		{
-			char buf[10];
+			char buf[12];
 
 			(void)close(fd[1]);
-			(void)sprintf(buf, "%d", fd[0]);
+			(void)snprintf(buf, sizeof(buf), "%d", fd[0]);
 			(void)setenv("PGPPASSFD", buf, 1);
 		}
 	}
