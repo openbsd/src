@@ -1,6 +1,7 @@
+
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.15 2001/09/06 20:58:55 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.16 2001/09/07 16:49:03 todd Exp $
 #
 # Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -29,20 +30,20 @@
 #	all		makes all known devices, including local devices.
 #			Tries to make the ``standard'' number of each type.
 #	floppy	devices to be put on install floppies
-#	std		standard devices
+#	std	standard devices
 #	local	configuration specific devices
 #
 # Tapes:
-#	st*		SCSI tapes
+#	st*	SCSI tapes
 #	ch*		SCSI media changer
 #
 # Disks:
 #	wd*		"winchester" disk drives (ST506,IDE,ESDI,RLL,...)
 #	fd*		Floppy disk drives (3 1/2", 5 1/4")
-#	sd*		SCSI disks
-#	cd*		SCSI cdrom drives
+#	sd*	SCSI disks
+#	cd*	SCSI cdrom drives
 #	vnd*	"file" pseudo-disks
-#	rd*		"ramdisk" pseudo-disks
+#	rd*	"ramdisk" pseudo-disks
 #	ccd*	concatenated disk devices
 #	raid*	RAIDframe disk devices
 #
@@ -61,12 +62,12 @@
 #
 # Special purpose devices:
 #	ses*	SES/SAF-TE SCSI devices
-#	fd		makes fd/* for the fdescfs
+#	fd	makes fd/* for the fdescfs
 #	bwtwo*	
 #	xfs*	XFS filesystem devices
 #	cgthree*	
-#	ss*		SCSI scanners
-#	uk*		SCSI Unknown device
+#	ss*	SCSI scanners
+#	uk*	SCSI Unknown device
 #	audio*	audio device
 #	cgsix*	
 #	pf*	Packet Filter
@@ -247,8 +248,7 @@ mouse*)name=${i##mouse-}
 	fi
 	RMlist="$RMlist mouse"
 	MKlist="$MKlist;ln -s $name mouse";;
-pty*)
-    case $U in
+pty*)case $U in
 	0) off=0 name=p;;
 	1) off=16 name=q;;
 	2) off=32 name=r;;
@@ -272,28 +272,26 @@ pty*)
 	while [ $n -lt 16 ]
 	do
 		nam=$name$(hex $n)
-		M tty$nam c 20 $(($off+$n)) $mod $grp
-		M pty$nam c 21 $(($off+$n)) $mod $grp
+		M tty$nam c 20 $(($off+$n))
+		M pty$nam c 21 $(($off+$n))
 		n=$(($n+1))
 	done;;
 bwtwo*)M bwtwo$U c 27 $U 666;;
 cgthree*)M cgthree$U c 55 $U 666;;
 cgsix*)M cgsix$U c 67 $U 666;;
-cgfourteen*)M cgfourteen$U c 99 $U 666;;
-tcx*)M tcx$U c 109 $U 666;;
+cgfourteen*)M cgfourteen$U c 99 $U;;
+tcx*)M tcx$U c 109 $U;;
 fd)RMlist="mkdir -p fd;$RMlist" n=0
 	while [ $n -lt 64 ];do M fd/$n c 24 $n;n=$(($n+1));done
 	MKlist="$MKlist;chmod 555 fd";;
-st*)
-    n=$(($U*16))
+st*)n=$(($U*16))
 	for pre in " " n e en
 	do
 		M ${pre}st$U	b 11 $n 660 operator
 		M ${pre}rst$U	c 18 $n 660 operator
 		n=$(($n+1))
 	done;;
-fd*)
-    typnam=$U${i#fd[01]*}
+fd*)typnam=$U${i#fd[01]*}
 	case $typnam in
 	0|1)	typnum=0;; # no type specified, assume A
 	*A)		typnam=0; typnum=0;;
@@ -318,33 +316,23 @@ fd*)
 	M r${nam}a	c $chr $n 640 operator
 	M r${nam}b	c $chr $(($n+1)) 640 operator
 	M r${nam}c	c $chr $(($n+2)) 640 operator;;
-sd*|ccd*|raid*|wd*)
-    case $i in
+sd*|ccd*|raid*|wd*)case $i in
 	sd*) n=sd b=7 c=17;;
 	ccd*) n=ccd b=9 c=23;;
 	raid*) n=raid b=25 c=121;;
 	wd*) n=wd b=12 c=26;;
 	esac
 	dodisk $n $U $b $c $U 0;;
-cd*)
-    dodisk2 cd $U 18 58 $U 0;;
-rd*)
-    
-	n=$(($U*16))
-	M rd${unit}a b 5 $(($n+0)) $mod $grp 640 operator
-	M rd${unit}c b 5 $(($n+2)) $mod $grp 640 operator
-	M rrd${unit}a c 61 $(($n+0)) $mod $grp 640 operator
-	M rrd${unit}c c 61 $(($n+2)) $mod $grp 640 operator;;
+cd*)dodisk2 cd $U 18 58 $U 0;;
+rd*)dodisk2 rd $U 5 61 $U 0;;
 
-vnd*)
-    dodisk vnd $U 8 110 $U 0
+vnd*)dodisk vnd $U 8 110 $U 0
 	dodisk svnd $U 8 110 $U 128;;
 uk*)M uk$U c 60 $U 640 operator;;
 ss*)M ss$U c 59 $U 440 operator
 	RMlist="$RMlist scan$U"
 	MKlist="$MKlist;umask 77;ln -s ss$U scan$U";;
-st*)
-    n=$(($U*16))
+st*)n=$(($U*16))
 	for pre in " " n e en
 	do
 		M ${pre}st$U	b 11 $n 660 operator
@@ -376,7 +364,7 @@ altq)RMlist="mkdir -p altq;$RMlist"
 		U=$(($U+1))
 	done;;
 bpf*)M bpf$U c 105 $U 600;;
-tun*)M tun$U c 105 $U 600;;
+tun*)M tun$U c 111 $U 600;;
 local)test -s $T.local && sh $T.local;;
 
 *)
