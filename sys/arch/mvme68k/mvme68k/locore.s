@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.44 2004/09/29 07:34:42 miod Exp $ */
+/*	$OpenBSD: locore.s,v 1.45 2004/12/01 21:13:59 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -1507,7 +1507,7 @@ Lmc68851b:
 	pflushs	#0,#0,a0@		| flush address from both sides
 	rts
 Ltbis040:
-	moveq	#5,d0		        | select supervisor
+	moveq	#FC_SUPERD,d0		| select supervisor
 	movc	d0,dfc
 	.word	0xf508			| pflush a0@
 	moveq	#FC_USERD,d0		| select user
