@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.80 2000/07/06 22:01:29 fgsch Exp $
+#	$OpenBSD: MAKEDEV,v 1.81 2000/08/04 22:52:49 fgsch Exp $
 #	$NetBSD: MAKEDEV,v 1.40 1996/03/31 00:50:47 perry Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -276,7 +276,7 @@ ugen*)
 	;;
 
 utty*)
-	rm -f utty$unix
+	rm -f utty$unit
 	mknod utty$unit c 66 $unit
 	chown root.wheel utty$unit
 	chmod 660 utty$unit
