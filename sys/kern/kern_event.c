@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.14 2002/02/01 15:32:43 art Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.15 2002/02/05 16:02:27 art Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -331,7 +331,7 @@ sys_kevent(struct proc *p, void *v, register_t *retval)
 	} */ *uap = v;
 	struct kevent *kevp;
 	struct kqueue *kq;
-	struct file *fp = NULL;
+	struct file *fp;
 	struct timespec ts;
 	int i, n, nerrors, error;
 
@@ -339,7 +339,7 @@ sys_kevent(struct proc *p, void *v, register_t *retval)
 	    (fp->f_type != DTYPE_KQUEUE))
 		return (EBADF);
 
-	fp->f_count++;
+	FILE_USE(fp);
 
 	if (SCARG(uap, timeout) != NULL) {
 		error = copyin(SCARG(uap, timeout), &ts, sizeof(ts));
@@ -390,8 +390,7 @@ sys_kevent(struct proc *p, void *v, register_t *retval)
 			    SCARG(uap, timeout), p, &n);
 	*retval = n;
  done:
-	if (fp != NULL)
-		closef(fp, p);
+	FILE_UNUSE(fp);
 	return (error);
 }
 
@@ -423,6 +422,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 		/* validate descriptor */
 		if ((fp = fd_getfile(fdp, kev->ident)) == NULL)
 			return (EBADF);
+		FILE_USE(fp);
 		fp->f_count++;
 
 		if (kev->ident < fdp->fd_knlistsize) {
@@ -469,6 +469,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 			 * apply reference count to knote structure, and
 			 * do not release it at the end of this routine.
 			 */
+			FILE_UNUSE(fp);
 			fp = NULL;
 
 			kn->kn_sfflags = kev->fflags;
@@ -727,6 +728,7 @@ kqueue_close(struct file *fp, struct proc *p)
 		while (kn != NULL) {
 			kn0 = SLIST_NEXT(kn, kn_link);
 			if (kq == kn->kn_kq) {
+				FILE_USE(kn->kn_fp);
 				kn->kn_fop->f_detach(kn);
 				closef(kn->kn_fp, p);
 				knote_free(kn);
@@ -868,8 +870,10 @@ knote_drop(struct knote *kn, struct proc *p)
 	SLIST_REMOVE(list, kn, knote, kn_link);
 	if (kn->kn_status & KN_QUEUED)
 		knote_dequeue(kn);
-	if (kn->kn_fop->f_isfd)
+	if (kn->kn_fop->f_isfd) {
+		FILE_USE(kn->kn_fp);
 		closef(kn->kn_fp, p);
+	}
 	knote_free(kn);
 }
 

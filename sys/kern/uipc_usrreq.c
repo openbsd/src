@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.16 2002/02/02 16:05:58 art Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.17 2002/02/05 16:02:27 art Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -887,6 +887,7 @@ unp_gc()
 		if (fp->f_count == fp->f_msgcount && !(fp->f_flag & FMARK)) {
 			*fpp++ = fp;
 			nunref++;
+			FILE_USE(fp);
 			fp->f_count++;
 		}
 	}
@@ -894,7 +895,7 @@ unp_gc()
 	        if ((*fpp)->f_type == DTYPE_SOCKET && (*fpp)->f_data != NULL)
 		        sorflush((struct socket *)(*fpp)->f_data);
 	for (i = nunref, fpp = extra_ref; --i >= 0; ++fpp)
-		(void) closef(*fpp, (struct proc *)0);
+		(void) closef(*fpp, NULL);
 	free((caddr_t)extra_ref, M_FILE);
 	unp_gcing = 0;
 }
@@ -956,7 +957,8 @@ unp_discard(fp)
 	struct file *fp;
 {
 
+	FILE_USE(fp);
 	fp->f_msgcount--;
 	unp_rights--;
-	(void) closef(fp, (struct proc *)0);
+	(void) closef(fp, NULL);
 }

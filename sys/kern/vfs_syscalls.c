@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.87 2002/02/04 11:43:16 art Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.88 2002/02/05 16:02:27 art Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -874,6 +874,8 @@ sys_open(p, v, retval)
 	if ((error = falloc(p, &fp, &indx)) != 0)
 		return (error);
 
+	FILE_USE(fp);
+
 	flags = FFLAGS(SCARG(uap, flags));
 	cmode = ((SCARG(uap, mode) &~ fdp->fd_cmask) & ALLPERMS) &~ S_ISTXT;
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
@@ -918,6 +920,7 @@ sys_open(p, v, retval)
 		error = VOP_ADVLOCK(vp, (caddr_t)fp, F_SETLK, &lf, type);
 		if (error) {
 			(void) vn_close(vp, fp->f_flag, fp->f_cred, p);
+			FILE_UNUSE(fp);
 			ffree(fp);
 			fdremove(fdp, indx);
 			return (error);
@@ -941,6 +944,7 @@ sys_open(p, v, retval)
 		if (error) {
 			VOP_UNLOCK(vp, 0, p);
 			(void) vn_close(vp, fp->f_flag, fp->f_cred, p);
+			FILE_UNUSE(fp);
 			ffree(fp);
 			fdremove(fdp, indx);
 			return (error);
@@ -949,6 +953,7 @@ sys_open(p, v, retval)
 	VOP_UNLOCK(vp, 0, p);
 	*retval = indx;
 	FILE_SET_MATURE(fp);
+	FILE_UNUSE(fp);
 	return (0);
 }
 
@@ -2639,17 +2644,19 @@ sys_pread(p, v, retval)
 	struct file *fp;
 	struct vnode *vp;
 	off_t offset;
-	int error, fd = SCARG(uap, fd);
+	int fd = SCARG(uap, fd);
 
 	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return (EBADF);
 	if ((fp->f_flag & FREAD) == 0)
 		return (EBADF);
 
+	FILE_USE(fp);
+
 	vp = (struct vnode *)fp->f_data;
 	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
-		error = ESPIPE;
-		goto out;
+		FILE_UNUSE(fp);
+		return (ESPIPE);
 	}
 
 	offset = SCARG(uap, offset);
@@ -2657,12 +2664,6 @@ sys_pread(p, v, retval)
 	/* dofileread() will unuse the descriptor for us */
 	return (dofileread(p, fd, fp, SCARG(uap, buf), SCARG(uap, nbyte),
 	    &offset, retval));
-
- out:
-#if notyet
-	FILE_UNUSE(fp, p);
-#endif
-	return (error);
 }
 
 /*

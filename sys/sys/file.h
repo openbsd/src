@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.14 2001/10/31 01:36:18 art Exp $	*/
+/*	$OpenBSD: file.h,v 1.15 2002/02/05 16:02:27 art Exp $	*/
 /*	$NetBSD: file.h,v 1.11 1995/03/26 20:24:13 jtc Exp $	*/
 
 /*
@@ -83,6 +83,7 @@ struct file {
 	off_t	f_offset;
 	caddr_t	f_data;		/* private data */
 	int	f_iflags;	/* internal flags */
+	int	f_usecount;	/* number of users (temporary references). */
 };
 
 #define FIF_WANTCLOSE		0x01	/* a close is waiting for usecount */
@@ -93,6 +94,13 @@ struct file {
 
 #define FILE_SET_MATURE(fp) do {	\
 	(fp)->f_iflags &= ~FIF_LARVAL;	\
+} while (0)
+
+#define FILE_USE(fp) do { (fp)->f_usecount++; } while (0)
+#define FILE_UNUSE(fp) do {				\
+	--(fp)->f_usecount;				\
+	if (((fp)->f_iflags & FIF_WANTCLOSE) != 0)	\
+		wakeup(&(fp)->f_usecount);		\
 } while (0)
 
 LIST_HEAD(filelist, file);

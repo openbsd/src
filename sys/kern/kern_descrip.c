@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.46 2002/02/04 11:48:22 art Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.47 2002/02/05 16:02:27 art Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -496,6 +496,8 @@ finishdup(p, old, new, retval)
 	 * closef can deal with that.
 	 */
 	oldfp = fdp->fd_ofiles[new];
+	if (oldfp != NULL)
+		FILE_USE(oldfp);
 
 	fp = fdp->fd_ofiles[old];
 	if (fp->f_count == LONG_MAX-2)
@@ -541,6 +543,7 @@ fdrelease(p, fd)
 	fp = *fpp;
 	if (fp == NULL)
 		return (EBADF);
+	FILE_USE(fp);
 	*fpp = NULL;
 	fdp->fd_ofileflags[fd] = 0;
 	fd_unused(fdp, fd);
@@ -831,6 +834,8 @@ ffree(fp)
 	crfree(fp->f_cred);
 #ifdef DIAGNOSTIC
 	fp->f_count = 0;
+	if (fp->f_usecount != 0)
+		panic("ffree: usecount != 0");
 #endif
 	nfiles--;
 	pool_put(&file_pool, fp);
@@ -989,6 +994,7 @@ fdfree(p)
 	for (i = fdp->fd_lastfile; i >= 0; i--, fpp++) {
 		fp = *fpp;
 		if (fp != NULL) {
+			FILE_USE(fp);
 			*fpp = NULL;
 			(void) closef(fp, p);
 		}
@@ -1016,11 +1022,11 @@ fdfree(p)
  * Decrement reference count on file structure.
  * Note: p may be NULL when closing a file
  * that was being passed in a message.
+ *
+ * The fp must have its usecount bumped and will be FILE_UNUSEd here.
  */
 int
-closef(fp, p)
-	register struct file *fp;
-	register struct proc *p;
+closef(struct file *fp, struct proc *p)
 {
 	struct vnode *vp;
 	struct flock lf;
@@ -1028,6 +1034,7 @@ closef(fp, p)
 
 	if (fp == NULL)
 		return (0);
+
 	/*
 	 * POSIX record locking dictates that any close releases ALL
 	 * locks owned by this process.  This is handled by setting
@@ -1044,10 +1051,33 @@ closef(fp, p)
 		vp = (struct vnode *)fp->f_data;
 		(void) VOP_ADVLOCK(vp, (caddr_t)p, F_UNLCK, &lf, F_POSIX);
 	}
-	if (--fp->f_count > 0)
+
+	/*
+	 * Some files passed to this function could be accessed
+	 * without a FILE_IS_USABLE check (and in some cases it's perfectly
+	 * legal), we must beware of files where someone already won the
+	 * race to FIF_WANTCLOSE.
+	 */
+	if ((fp->f_iflags & FIF_WANTCLOSE) != 0) {
+		FILE_UNUSE(fp);
 		return (0);
+	}
+
+	if (--fp->f_count > 0) {
+		FILE_UNUSE(fp);
+		return (0);
+	}
+
+#ifdef DIAGNOSTIC
 	if (fp->f_count < 0)
 		panic("closef: count < 0");
+#endif
+
+	/* Wait for the last usecount to drain. */
+	fp->f_iflags |= FIF_WANTCLOSE;
+	while (fp->f_usecount > 1)
+		tsleep(&fp->f_usecount, PRIBIO, "closef", 0);
+
 	if ((fp->f_flag & FHASLOCK) && fp->f_type == DTYPE_VNODE) {
 		lf.l_whence = SEEK_SET;
 		lf.l_start = 0;
@@ -1060,6 +1090,7 @@ closef(fp, p)
 		error = (*fp->f_ops->fo_close)(fp, p);
 	else
 		error = 0;
+	fp->f_usecount--;
 	ffree(fp);
 	return (error);
 }
