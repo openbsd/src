@@ -1,9 +1,9 @@
-From deraadt@do-not-reply.openbsd.org Wed Apr  8 04:50:00 MDT 1998
+From deraadt@do-not-reply.openbsd.org Tue June  1 04:50:00 MDT 1999
 Return-Path: root
-Date: Wed Apr  8 04:50:00 MDT 1998
+Date: Tue June  1 04:50:00 MDT 1999
 From: deraadt@do-not-reply.openbsd.org (Theo de Raadt)
 To: root
-Subject: Welcome to OpenBSD 2.4
+Subject: Welcome to OpenBSD 2.5
 
 This message attempts to describe the most basic first questions that a
 system administrator of an OpenBSD box might have.  You are urged to save
@@ -21,14 +21,14 @@ further information regarding configuration in the file /usr/X11R6/README.
 
 Several popular binary packages (pre-compiled applications) are available
 for most architetures.  If you installed from a CD-ROM the packages
-are on the same CD-ROM you installed from in the directory 2.4/packages.
+are on the same CD-ROM you installed from in the directory 2.5/packages.
 Those packages (and others) are also available via ftp at
-ftp://ftp.openbsd.org/pub/OpenBSD/2.4/packages/
+ftp://ftp.openbsd.org/pub/OpenBSD/2.5/packages/
 
 Select your architecture and download the tarballs of your choice.  For example
 to install the emacs package for i386, execute
-   # mount /dev/cd0a /cdrom; pkg_add /cdrom/2.4/packages/i386/emacs-20.3.tgz
-or # pkg_add ftp://ftp.openbsd.org/pub/OpenBSD/2.4/packages/i386/emacs-20.3.tgz
+   # mount /dev/cd0a /cdrom; pkg_add /cdrom/2.5/packages/i386/emacs-20.3.tgz
+or # pkg_add ftp://ftp.openbsd.org/pub/OpenBSD/2.5/packages/i386/emacs-20.3.tgz
 
 Other important packages which are not permitted on the CD (due to patents) are
 available on our FTP servers (as described above).  In particular, we provide
@@ -67,7 +67,8 @@ a favor (after you have your mail system setup!) and type
 so that we can see what kinds of configurations people are running.  We will
 use this information to improve device driver support in future releases.
 (We would be much happier if this information was for the supplied GENERIC
-kernel; not for a custom compiled kernel).
+kernel; not for a custom compiled kernel).  The device driver information
+we get from this helps us fix existing drivers.
 
 (If you used 'mail' to read this message and it scrolled by too quickly,
 type "more .")
