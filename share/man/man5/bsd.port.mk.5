@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.1 2000/06/09 16:39:45 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.2 2000/06/10 13:28:10 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -45,11 +45,53 @@ This is an incomplete draft, most variables and targets are not yet
 documented.
 .Sh TARGETS
 .Bl -tag -width do-configure
+.It Ar build , Ar all
+Default target. Build the port. Essentially invoke
+.Bd -litteral -offset indent
+    env -i ${MAKE_ENV} ${MAKE_PROGRAM} ${MAKE_FLAGS} -f ${MAKE_FILE} ${ALL_TARGET}
+.Ed
+.It Ar configure
+Configure the port. Might be a no operation. Unless overridden,
+configure creates the ${WRKBUILD} directory (see SEPARATE_BUILD), runs
+${SCRIPTDIR}/configure if it exists, and runs whatever configuration
+methods are recorded in 
+.Ev CONFIGURE_STYLE .
+.It Ar distpatch
+Apply distribution patches only.
+.It Ar do-patch
+Override for the default behavior of 
+.Ar patch .
+It is usually better to override
+.Ar post-patch ,
+as 
+.Ar patch
+needs to invoke
+.Ar distpatch 
+directly for historical reasons.
+.It Ar extract
+Extract the distfiles (but see 
+.Ev EXTRACT_ONLY ).
+.It Ar fake
+Do a fake port installation, that is, simulate the port installation under
+${WRKINST}.  Described in a separate section below.
+.It Ar fetch
+Fetch the distfiles and patchfiles.
+.It Ar patch
+Apply distribution and 
+.Ox
+specific patches.
+.It Ar show
+Invoked with VARNAME=name, show the contents of VARNAME.  Mostly used from
+recursive makes, or to know the contents of another port's variables
+without guessing wrong.
 .El
 .Sh VARIABLES
 .Bl -tag -width MASTER_SITES
 .It Ev ARCH
 Current machine architecture (read-only).
+.It Ev AUTOCONF_DIR
+Where to invoke autoconf if ${CONFIGURE_STYLE} includes autoconf.
+Defaults to ${WRKSRC}.
 .It BUILD_DEPENDS
 List of other ports the current port needs to build correctly.
 Each item has the form 
@@ -77,6 +119,39 @@ If set to
 .Sq make clean
 will also clean dependencies. Note that distclean  never recurses down to
 dependencies.
+.It Ev CONFIGURE_SCRIPT
+Set to name of script invoked by 
+.Ar configure 
+target, if appropriate. Should be relative to ${WRKSRC}.
+.It Ev CONFIGURE_STYLE
+Set to style of configuration that needs to happen. 
+If
+.Sq perl ,
+assume 
+.Xr perl 1
+.Xr ExtUtils::MakeMaker 3p
+style.
+If
+.Sq gnu ,
+assume
+gnu configure style.
+Add 
+.Sq dest
+if port does not handle DESTDIR correctly, and needs to be configured to
+add DESTDIR to prefixes.
+Add
+.Sq old
+if port is an older autoconf port, that does not recognize --sysconfdir.
+Add
+.Sq autoconf
+if autoconf needs to be rerun first.
+If
+.Sq imake ,
+assume port configures using X11 ports Imakefile framework.
+If
+.Sq simple ,
+there is a configure script, but it does not fit the normal gnu configure
+conventions.
 .It Ev DIST_SUBDIR
 Optionally subdirectory of ${DISTDIR} where the current port's distfiles
 and patchfiles will be located. See target fetch.
@@ -89,12 +164,24 @@ magic, will properly fake installation into ${WRKINST}, to be packaged
 and properly installed from the package.  Set to 
 .Sq No
 in very rare cases, and during port creation.
+.It Ev FAKE_FLAGS
+Flags passed to ${MAKE_PROGRAM} on fake invocation. By default,
+DESTDIR=${WRKINST}. If CONFIGURE_STYLE involves gnu, adds 
+AM_MAKEFLAGS='DESTDIR=${WRKINST}' to take automatic care of recent automaker
+recursive issues.
 .It Ev FETCH_DEPENDS
 See BUILD_DEPENDS for specification.  Fetch dependencies are checked at
 the beginning of the extract stage. No current port uses FETCH_DEPENDS.
 .It Ev FILESDIR
 Location of other files related to the current ports. Holds at least the
 checksum file, and sometimes other files (default: files.${ARCH} or files).
+.It Ev FLAVOR
+The port current options. Set by the user, and tested by the port to 
+activate wanted functionalities.
+.It Ev FLAVORS
+List of all flavors keywords a port may match. Used to sort FLAVOR into
+a canonical order to build the package name, or to select the packing-list, 
+and as a quick validity check.
 .It Ev FTP_PACKAGES
 Base location where packages suitable for ftp (see
 PERMIT_PACKAGE_FTP) will be placed 
@@ -122,6 +209,12 @@ where other ports have already been installed (default: /usr/local)
 .It Ev MAKE_PROGRAM
 The make program that is used for building the port. Set to ${MAKE} or
 ${GMAKE} depending on USE_GMAKE. Read-only.
+.It Ev MTREE_FILE
+.Xr mtree 1
+specification to check when creating a PLIST with the
+.Ar plist
+target.  By default,
+.Pa ${PORTSDIR}/infrastructure/db/fake.mtree.
 .It Ev NEED_VERSION
 Specific revision of 
 .Nm 
@@ -147,6 +240,8 @@ patches).
 .It Ev PATCH_LIST
 Wildcard pattern of patches to select under ${PATCHDIR} (default: patch-*).
 Note that filenames ending in .orig, or ~ are never applied.
+.It Ev PORTPATH
+Path used by most shell invocations. Don't override unless really needed.
 .It Ev PORTSDIR
 Root of the ports tree (default: /usr/ports).
 .It Ev PKGDIR
@@ -166,34 +261,109 @@ will take care of installing them.
 .It Ev SCRIPTDIR
 Location for scripts related to the current port (default: scripts.${ARCH}
 or scripts).
+.It Ev SEPARATE_BUILD
+Many gnu configure ports can be built in a directory distinct from the
+place they were unpacked. 
+Set to 
+.Sq simple 
+if this is the case. 
+The ports infrastructure will generate a separate ${WRKBUILD} directory 
+in which the port will be configured and built. 
+Wipe ${WRKBUILD} to start anew, but skipping the extract/patch stage.
+Set to
+.Sq concurrent
+if the build process does not modify anything under ${WRKSRC}.
+The build process can then be run concurrently on different architectures.
+Set to
+.Sq flavored
+if distinct flavors of the port may share a common source tree.
+.It Ev SUBPACKAGE
+Set to the sub package suffix when building a package in a multi-package
+port. Read-only. Used to test for dependencies or adjusting the package
+name.
 .It Ev SYSCONFDIR
 Location for ports system configuration files. Defaults to /etc, should
 never be set to /usr/local/etc.
 .It Ev TEMPLATES
 Base location for the templates used in the readme target.
+.It Ev WRKDIR
+Location where all port activity occurs.  Apart from the actual port, may
+hold all kinds of cookies that checkpoint the port's build.  Read-only.
+Ports that need to know the WRKDIR of another port must use
+cd that_port_dir && make show VARNAME=WRKDIR  for this.
+Note that WRKDIR may be a symbolic link. 
+.It Ev WRKDIST
+Subdirectory of ${WRKDIR} where the source normally unpacked. Base for all
+patches (default: ${WRKDIR}/${DISTNAME}).
+Note that WRKDIST may be a symbolic link, if set to ${WRKDIR}.
+.It Ev WRKSRC
+Subdirectory of ${WRKDIR} where the actual source is. Base for
+configuration (default: ${WRKDIST})
+Note that WRKSRC may be a symbolic link, if set to ${WRKDIR}.
+.It Ev WRKBUILD
+Subdirectory of ${WRKDIR} where the actual build occurs. Defaults to
+${WRKSRC}, unless SEPARATE_BUILD is involved, in which case it is set
+to an appropriate value.
 .It Ev WRKINST
 Subdirectory of ${WRKDIR} where port normally installs (see 
 .Ar fake 
 target).
+.It Ev WRKOBJDIR
+If defined, used as a base for the actual port working directory. The real
+working directory is created there, and the port ${WRKDIR} is just a link.
 .It Ev X11BASE
 Where X11 has been installed (default: /usr/X11R6).
 .It Ev USE_GMAKE
 Set to
 .Sq Yes
 if gnu make is needed for correct behavior of this port.
+.It Ev USE_LIBTOOL
+Set to
+.Sq Yes
+if libtool is required for correct behavior of this port.
+.It Ev USE_MOTIF
+Set to
+.Sq Yes
+if lesstif is needed for correct behavior of this port.
 .El
 .Sh OBSOLETE TARGETS
 .Bl -tag -width do-configure
+.It Ar {pre,do}-extract
+Don't override. Set 
+.Ev EXTRACT_ONLY
+to nothing and override 
+.Ar post-extract instead.
+.It Ar fetch-list
+Use the more powerful mirror-maker and fetch-makefile targets instead.
 .El
 .Sh OBSOLETE VARIABLES
 .Bl -tag -width MASTER_SITES
+.It Ev GNU_CONFIGURE
+Use 
+.Ev CONFIGURE_STYLE
+instead.
+.It Ev HAS_CONFIGURE
+Use
+.Ev CONFIGURE_STYLE 
+instead.
 .It Ev NO_CONFIGURE
-If ${FILESDIR}/configure does
+If ${FILESDIR}/configure does not exist, no automatic configuration will
+be done anyway.
 .It Ev NO_EXTRACT
 Set EXTRACT_ONLY=  instead.
+.It Ev NO_MTREE
+Starting with
+.Ox 2.7 ,
+the operating system installation script runs the /usr/local specification
+globally, instead of embedding it in each package. 
+So packages no longer record an
+.Xr mtree 1 
+specification.  Use an explicit
+.Sq @exec
+command if needed.
 .It Ev NO_PATCH
-The absence of a patches directory does the same. Use PATCH_DIR and
-PATCH_LIST if patches must be changed dynamically.
+The absence of a patches directory does the same. Use PATCHDIR and
+PATCH_LIST if patches need to be changed dynamically.
 .It Ev NO_WRKDIR
 All ports should have a working directory, as this is necessary to store
 cookies and keep state.
@@ -227,6 +397,14 @@ becomes
 	PATCH_FILES=foo.diff.gz:0
 	MASTER_SITES0=ftp://ftp.zoinx.org/pub/
 .Ed
+.It Ev USE_AUTOCONF
+Use
+.Ev CONFIGURE_STYLE
+instead.
+.It Ev USE_IMAKE
+Use
+.Ev CONFIGURE_STYLE
+instead.
 .El
 .Sh FILES
 .Bl -tag -width files/md5
@@ -250,6 +428,12 @@ Short, one line description of the port, that is displayed by
 and appears in 
 .Pa ${PORTSDIR}/INDEX .
 Name will be adjusted for flavored and multi-packages ports.
+.It Pa ${PORTSDIR}/infrastructure/db/fake.mtree
+Specification used for populating ${WRKINST} at the start of 
+.Ar fake .
+Use 
+.Ar pre-fake
+if this is incomplete.
 .El
 .Sh OBSOLETE FILES
 .Bl -tag -width files/md5
@@ -282,6 +466,60 @@ to marshall system configuration files. All
 system configuration files are located in /etc, or in a subdirectory of
 /etc.
 .El
+.Sh THE FAKE FRAMEWORK
+The
+.Ar fake
+target is used to install the port in a private directory first, package
+that false installation, so that the real installation will use the
+package.
+
+Essentially, 
+.Ar fake
+invokes a real
+.Ar install
+process after tweaking a few variables.
+.Pp
+.Ar fake 
+first creates a skeleton tree under ${WRKINST}, using the 
+.Xr mtree 1
+specification
+.Pa ${PORTSDIR}/infrastructure/db/fake.mtree .
+.Pp
+A
+.Ar pre-fake
+target may be used to complete that skeleton tree. For instance, a few
+ports may  need supplementary stuff to be present (as it would be installed
+if the ports' dependencies were present).
+.Pp
+If {pre,do,post}-install overrides are present, they are used with some 
+important changes: PREFIX is set to ${WRKINST}${PREFIX}, DESTDIR is set to
+${WRKINST}, and TRUEPREFIX is set to ${PREFIX}.
+Essentially, old install targets work transparently, except for a need to
+change PREFIX to TRUEPREFIX for symbolic links and similar path lookups.
+Specific traditional post install work can be simply removed, as it will
+be taken care of by the package itself (for instance, ldconfig, or
+texinfo's install-info).
+.Pp
+If no do-install override is present, the port is installed using
+.Bd -litteral -indent offset
+    env -i ${MAKE_ENV} 
+    PREFIX=${WRKINST}${PREFIX} DESTDIR=${WRKINST} TRUEPREFIX=${PREFIX} 
+    ${MAKE_PROGRAM} ${FAKE_FLAGS} -f ${MAKE_FILE} ${FAKE_TARGET}
+.Ed
+Note that this does set both PREFIX and DESTDIR. If a port's Makefile both
+heeds DESTDIR, and references PREFIX explicitly, FAKE_FLAGS may rectify
+the problem by setting PREFIX=${PREFIX}
+(which will do the right thing, since ${PREFIX} is a
+.Xr make 1
+construct which will not be seen by the shell).
+.Pp
+${FAKE_FLAGS} is used to set variables on 
+.Xr make 1
+command line, which will override the port Makefile contents. Thus, a
+port that mentions DESTDIR=    does not need any patch to work with fake.
+.Pp
+Recursive makes are a problem, and will often need FAKE_FLAGS to be changed
+to ensure that the right values are passed down to submakes.
 .Sh BUGS AND LIMITATIONS
 .Ev LOCALBASE ,
 .Ev X11BASE
