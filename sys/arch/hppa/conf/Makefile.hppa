@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.hppa,v 1.6 1999/06/22 17:32:56 mickey Exp $
+#	$OpenBSD: Makefile.hppa,v 1.7 1999/12/20 14:19:25 mickey Exp $
 
 # Makefile for OpenBSD
 #
@@ -26,8 +26,8 @@ CROSSDIR?=     /usr/cross/hppa
 
 .BEGIN:
 	CBIN=${CROSSDIR}/usr/bin; export CBIN; \
-	MACHINE="hp700" MACHINE_ARCH="hppa" AR=$$CBIN/ar AS=$$CBIN/as \
-	CC=$$CBIN/cc HOSTCC=cc LD=$$CBIN/ld NM=$$CBIN/nm \
+	MACHINE="hppa" MACHINE_ARCH="hppa" AR=$$CBIN/ar AS=$$CBIN/as \
+	CC=$$CBIN/cc HOSTCC=cc LD=$$CBIN/ld NM=$$CBIN/nm LORDER=$$CBIN/lorder \
 	RANLIB=$$CBIN/ranlib STRIP=$$CBIN/strip SIZE=$$CBIN/size ${MAKE} ${.TARGET}
 
 all:
