@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.534 2002/07/29 19:09:54 mickey Exp $
+	$OpenBSD: pcidevs,v 1.535 2002/07/29 19:23:54 millert Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -2230,7 +2230,7 @@ product ULSI US201		0x0201	US201
 
 /* US Rebotics */
 product USR 3CP5610		0x1008	3CP5610
-product USR2 USR11000P		0x3685	USR11000P
+product USR2 WL11000P		0x3685	WL11000P
 
 /* V3 Semiconductor products */
 product V3 V292PBC		0x0292	V292PBC AMD290x0 Host-PCI
