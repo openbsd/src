@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.32 1999/02/18 00:01:38 deraadt Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.33 1999/02/26 05:10:40 art Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -70,6 +70,10 @@
 
 #include <vm/vm.h>
 #include <sys/user.h>		/* for coredump */
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 void stop __P((struct proc *p));
 void killproc __P((struct proc *, char *));
@@ -1259,7 +1263,11 @@ coredump(p)
 		 * vm_coredump() spits out all appropriate segments.
 		 * All that's left to do is to write the core header.
 		 */
+#if defined(UVM)
+		error = uvm_coredump(p, vp, cred, &core);
+#else
 		error = vm_coredump(p, vp, cred, &core);
+#endif
 		if (error)
 			goto out;
 		error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&core,

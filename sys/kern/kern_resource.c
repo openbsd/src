@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.7 1996/11/24 23:33:43 millert Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.8 1999/02/26 05:10:40 art Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -53,6 +53,10 @@
 #include <sys/syscallargs.h>
 
 #include <vm/vm.h>
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 void limfree __P((struct plimit *));
 /*
@@ -286,8 +290,13 @@ dosetrlimit(p, which, limp)
 			}
 			addr = trunc_page(addr);
 			size = round_page(size);
+#if defined(UVM)
+			(void) uvm_map_protect(&p->p_vmspace->vm_map,
+					      addr, addr+size, prot, FALSE);
+#else
 			(void) vm_map_protect(&p->p_vmspace->vm_map,
 					      addr, addr+size, prot, FALSE);
+#endif
 		}
 		break;
 
