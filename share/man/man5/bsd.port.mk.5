@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.94 2003/07/05 21:50:35 pvalchev Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.95 2003/07/09 06:05:08 pvalchev Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -1216,7 +1216,7 @@ for the ports ${DISTFILES} and ${PATCHFILES}.
 cache of distribution files for a given port.
 .It Pa ${PKGDIR}/DESCR
 Description for the port.
-Variables such as ${HOMEPAGE} will be expanded
+Variables such as ${HOMEPAGE} and ${MAINTAINER} will be expanded
 (see SUBST_VARS).
 Multi-package ports will use DESCR${SUBPACKAGE}.
 .It Pa ${PKGDIR}/COMMENT
