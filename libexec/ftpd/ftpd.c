@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.68 2000/01/18 18:26:38 millert Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.69 2000/03/03 15:51:45 bitblt Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -1617,11 +1617,13 @@ statfilecmd(filename)
 {
 	FILE *fin;
 	int c;
+	int atstart;
 	char line[LINE_MAX];
 
 	(void)snprintf(line, sizeof(line), "/bin/ls -lgA %s", filename);
 	fin = ftpd_popen(line, "r");
 	lreply(211, "status of %s:", filename);
+	atstart = 1;
 	while ((c = getc(fin)) != EOF) {
 		if (c == '\n') {
 			if (ferror(stdout)){
@@ -1637,7 +1639,10 @@ statfilecmd(filename)
 			}
 			(void) putc('\r', stdout);
 		}
+		if (atstart && isdigit(c))
+			(void) putc(' ', stdout);
 		(void) putc(c, stdout);
+		atstart = (c == '\n');
 	}
 	(void) ftpd_pclose(fin);
 	reply(211, "End of Status");
