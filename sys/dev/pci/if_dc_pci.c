@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_pci.c,v 1.34 2002/10/20 16:46:28 henning Exp $	*/
+/*	$OpenBSD: if_dc_pci.c,v 1.35 2003/04/19 11:54:02 henning Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -86,6 +86,7 @@
 struct dc_type dc_devs[] = {
 	{ PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21140 },
 	{ PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21142 },
+	{ PCI_VENDOR_DAVICOM, PCI_PRODUCT_DAVICOM_DM9009 },
 	{ PCI_VENDOR_DAVICOM, PCI_PRODUCT_DAVICOM_DM9100 },
 	{ PCI_VENDOR_DAVICOM, PCI_PRODUCT_DAVICOM_DM9102 },
 	{ PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_AL981 },
@@ -311,7 +312,8 @@ void dc_pci_attach(parent, self, aux)
 		}
 	case PCI_VENDOR_DAVICOM:
 		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_DAVICOM_DM9100 ||
-		    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_DAVICOM_DM9102) {
+		    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_DAVICOM_DM9102 ||
+		    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_DAVICOM_DM9009) {
 			found = 1;
 			sc->dc_type = DC_TYPE_DM9102;
 			sc->dc_flags |= DC_TX_COALESCE|DC_TX_INTR_ALWAYS;
