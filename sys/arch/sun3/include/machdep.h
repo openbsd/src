@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.h,v 1.10 2000/07/14 14:26:18 miod Exp $	*/
+/*	$OpenBSD: machdep.h,v 1.11 2001/01/03 01:48:07 miod Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -116,8 +116,6 @@ void	isr_config __P((void));
 
 void	m68881_save __P((struct fpframe *));
 void	m68881_restore __P((struct fpframe *));
-
-void	netintr __P((void));
 
 void	proc_do_uret __P((void));
 void	proc_trampoline __P((void));

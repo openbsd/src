@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.8 2000/07/14 14:24:54 miod Exp $	*/
+/*	$OpenBSD: psl.h,v 1.9 2001/01/03 01:48:07 miod Exp $	*/
 /*	$NetBSD: psl.h,v 1.14 1998/11/24 17:07:54 kleink Exp $	*/
 
 /*-
@@ -124,7 +124,7 @@ _splraise(int new)
 #define spl7()  _spl(PSL_S|PSL_IPL7)
 #define splx(x)	_spl(x)
 
-/* IPL used by soft interrupts: netintr(), softclock() */
+/* IPL used by soft interrupts: netisr, softclock() */
 #define spllowersoftclock()  spl1()
 #define splsoftclock()  spl1()
 #define splsoftnet()    spl1()
