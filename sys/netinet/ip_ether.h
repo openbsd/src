@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.h,v 1.8 2001/02/03 19:45:04 jason Exp $ */
+/*	$OpenBSD: ip_ether.h,v 1.9 2001/02/03 21:38:39 jason Exp $ */
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@adk.gr) 
@@ -40,12 +40,13 @@ struct etheripstat {
 };
 
 struct etherip_header {
-	u_int8_t	eip_ver;
+	u_int8_t	eip_ver;		/* version/reserved */
+	u_int8_t	eip_pad;		/* required padding byte */
 };
 #define ETHERIP_VER_VERS_MASK	0x0f
 #define ETHERIP_VER_RSVD_MASK	0xf0
 
-#define ETHERIP_VERSION		0x02
+#define ETHERIP_VERSION		0x03
 
 /*
  * Names for Ether-IP sysctl objects

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.22 2001/02/03 19:45:03 jason Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.23 2001/02/03 21:38:38 jason Exp $  */
 
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
@@ -97,8 +97,7 @@ etherip_input(m, va_alist)
 {
 	union sockaddr_union ssrc, sdst;
 	struct ether_header eh;
-	struct mbuf *mrest, *m0;
-	int iphlen, clen;
+	int iphlen;
 	struct etherip_header eip;
 	u_int8_t v;
 	va_list ap;
@@ -149,6 +148,14 @@ etherip_input(m, va_alist)
 	 */
 	if (eip.eip_ver & ETHERIP_VER_RSVD_MASK) {
 		DPRINTF(("etherip_input(): received EtherIP invalid EtherIP header (reserved field non-zero\n"));
+		etheripstat.etherip_adrops++;
+		m_freem(m);
+		return;
+	}
+
+	/* Finally, the pad value must be zero. */
+	if (eip.eip_pad) {
+		DPRINTF(("etherip_input(): received EtherIP invalid pad value\n"));
 		etheripstat.etherip_adrops++;
 		m_freem(m);
 		return;
@@ -220,32 +227,6 @@ etherip_input(m, va_alist)
 
 	/* Trim the beginning of the mbuf, to remove the ethernet header */
 	m_adj(m, sizeof(struct ether_header));
-
-	/* Copy out the first MHLEN bytes of data to ensure correct alignment */
-	MGETHDR(m0, M_DONTWAIT, MT_DATA);
-	if (m0 == NULL) {
-		m_freem(m);
-		etheripstat.etherip_adrops++;
-		return;
-	}
-	M_COPY_PKTHDR(m0, m);
-	clen = min(MHLEN, m->m_pkthdr.len);
-	if (m->m_pkthdr.len == clen)
-		mrest = NULL;
-	else {
-		mrest = m_split(m, clen, M_DONTWAIT);
-		if (mrest == NULL) {
-			m_freem(m);
-			m_freem(m0);
-			etheripstat.etherip_adrops++;
-			return;
-		}
-	}
-	m0->m_next = mrest;
-	m0->m_len = clen;
-	m_copydata(m, 0, clen, mtod(m0, caddr_t));
-	m_freem(m);
-	m = m0;
 
 #if NGIF > 0
 	/* Find appropriate gif(4) interface */
@@ -414,6 +395,7 @@ etherip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 
 	/* Set the version number */
 	eip.eip_ver = ETHERIP_VERSION & ETHERIP_VER_VERS_MASK;
+	eip.eip_pad = 0;
 	m_copyback(m, hlen - sizeof(struct etherip_header),
 	    sizeof(struct etherip_header), (caddr_t)&eip);
 
