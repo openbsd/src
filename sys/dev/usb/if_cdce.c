@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdce.c,v 1.3 2004/07/21 15:49:43 dhartmei Exp $ */
+/*	$OpenBSD: if_cdce.c,v 1.4 2004/07/21 15:54:54 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -49,7 +49,7 @@
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
-#include <sys/device.h> 
+#include <sys/device.h>
 #include <sys/proc.h>
 
 #include <net/if.h>
@@ -112,7 +112,7 @@ USB_MATCH(cdce)
 	id = usbd_get_interface_descriptor(uaa->iface);
 	if (id == NULL)
 		return (UMATCH_NONE);
-    
+
 	if (cdce_lookup(uaa->vendor, uaa->product) != NULL)
 		return (UMATCH_VENDOR_PRODUCT);
 
@@ -178,7 +178,7 @@ USB_ATTACH(cdce)
 		printf("%s: no data interface\n", USBDEVNAME(sc->cdce_dev));
 		USB_ATTACH_ERROR_RETURN;
 	}
-    
+
 	/* Find endpoints. */
 	id = usbd_get_interface_descriptor(sc->cdce_data_iface);
 	sc->cdce_bulkin_no = sc->cdce_bulkout_no = -1;
@@ -516,7 +516,7 @@ cdce_init(void *xsc)
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
-    
+
 	splx(s);
 }
 
@@ -528,13 +528,13 @@ cdce_newbuf(struct cdce_softc *sc, struct cdce_chain *c, struct mbuf *m)
 	if (m == NULL) {
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 		if (m_new == NULL) {
-	    		printf("%s: no memory for rx list "
+			printf("%s: no memory for rx list "
 			    "-- packet dropped!\n", USBDEVNAME(sc->cdce_dev));
 			return (ENOBUFS);
 		}
 		MCLGET(m_new, M_DONTWAIT);
 		if (!(m_new->m_flags & M_EXT)) {
-	    		printf("%s: no memory for rx list "
+			printf("%s: no memory for rx list "
 			    "-- packet dropped!\n", USBDEVNAME(sc->cdce_dev));
 			m_freem(m_new);
 			return (ENOBUFS);
