@@ -1,5 +1,5 @@
-/*	$OpenBSD: ipsec.h,v 1.8 1999/04/27 21:11:54 niklas Exp $	*/
-/*	$EOM: ipsec.h,v 1.35 1999/04/25 22:12:37 niklas Exp $	*/
+/*	$OpenBSD: ipsec.h,v 1.9 1999/05/02 19:20:33 niklas Exp $	*/
+/*	$EOM: ipsec.h,v 1.36 1999/05/02 12:48:55 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -125,6 +125,7 @@ struct ipsec_proto {
   u_int8_t *keymat[2];
 };
 
+extern u_int8_t *ipsec_add_hash_payload (struct message *msg, size_t);
 extern int ipsec_ah_keylength (struct proto *);
 extern u_int8_t *ipsec_build_id (char *, size_t *);
 extern int ipsec_decode_attribute (u_int16_t, u_int8_t *, u_int16_t, void *);
@@ -132,6 +133,7 @@ extern void ipsec_decode_transform (struct message *, struct sa *,
 				    struct proto *, u_int8_t *);
 extern int ipsec_esp_authkeylength (struct proto *);
 extern int ipsec_esp_enckeylength (struct proto *);
+extern int ipsec_fill_in_hash (struct message *msg);
 extern int ipsec_gen_g_x (struct message *);
 extern int ipsec_get_id (char *, int *, struct in_addr *, struct in_addr *);
 extern void ipsec_init (void);

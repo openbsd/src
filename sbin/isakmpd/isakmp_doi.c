@@ -1,5 +1,5 @@
-/*	$OpenBSD: isakmp_doi.c,v 1.7 1999/04/30 11:47:41 niklas Exp $	*/
-/*	$EOM: isakmp_doi.c,v 1.38 1999/04/29 12:08:49 niklas Exp $	*/
+/*	$OpenBSD: isakmp_doi.c,v 1.8 1999/05/02 19:20:33 niklas Exp $	*/
+/*	$EOM: isakmp_doi.c,v 1.39 1999/05/02 12:49:01 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -83,6 +83,8 @@ static struct doi isakmp_doi = {
   isakmp_get_keystate,
   0,				/* get_spi not needed.  */
   0,				/* handle_leftover_payload not needed.  */
+  0,				/* informational_post_hook not needed.  */
+  0,				/* informational_pre_hook not needed.  */
   0,				/* XXX need maybe be filled-in.  */
   0,				/* proto_init not needed.  */
   isakmp_setup_situation,

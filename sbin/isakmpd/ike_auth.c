@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_auth.c,v 1.12 1999/04/19 21:08:44 niklas Exp $	*/
-/*	$EOM: ike_auth.c,v 1.29 1999/04/18 15:17:51 niklas Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.13 1999/05/02 19:20:31 niklas Exp $	*/
+/*	$EOM: ike_auth.c,v 1.30 1999/05/02 12:48:56 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -275,7 +275,10 @@ pre_shared_decode_hash (struct message *msg)
 
   payload = TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_HASH]);
   if (!payload)
-    return -1;
+    {
+      log_print ("pre_shared_decode_hash: no HASH payload found");
+      return -1;
+    }
 
   /* Check that the hash is of the correct size.  */
   if (GET_ISAKMP_GEN_LENGTH (payload->p) - ISAKMP_GEN_SZ != hashsize)
@@ -447,31 +450,16 @@ pre_shared_encode_hash (struct message *msg)
   int initiator = exchange->initiator;
   u_int8_t *buf;
 
-  /* XXX - hashsize is not necessarily prf->blocksize.  */
-  buf = malloc (ISAKMP_HASH_SZ + hashsize);
+  buf = ipsec_add_hash_payload (msg, hashsize);
   if (!buf)
-    {
-      log_error ("pre_shared_encode_hash: malloc (%d) failed",
-		 ISAKMP_HASH_SZ + hashsize);
-      return -1;
-    }
-  
+    return -1;
+    
   if (ike_auth_hash (exchange, buf + ISAKMP_HASH_DATA_OFF) == -1)
-    {
-      /* XXX Log? */
-      free (buf);
-      return -1;
-    }
+    return -1;
     
   snprintf (header, 80, "pre_shared_encode_hash: HASH_%c",
 	    initiator ? 'I' : 'R');
   log_debug_buf (LOG_MISC, 80, header, buf + ISAKMP_HASH_DATA_OFF, hashsize);
-  if (message_add_payload (msg, ISAKMP_PAYLOAD_HASH, buf,
-			   ISAKMP_HASH_SZ + hashsize, 1))
-    {
-      free (buf);
-      return -1;
-    }
 
   return 0;
 }
@@ -522,7 +510,7 @@ rsa_sig_encode_hash (struct message *msg)
       return -1;
     }
 
-  /* XXX - do we want to store our files in ASN.1 ? */
+  /* XXX Do we want to store our files in ASN.1?  */
   keyfile = conf_get_str ("RSA_sig", "privkey");
   if (!asn_get_from_file (keyfile, &asn, &asnlen))
     {
@@ -538,18 +526,17 @@ rsa_sig_encode_hash (struct message *msg)
     }
   free (asn);
 
-  /* XXX - hashsize is not necessarily prf->blocksize */
+  /* XXX hashsize is not necessarily prf->blocksize */
   buf = malloc (hashsize);
   if (!buf)
     {
-      /* XXX Log?  */
+      log_error ("rsa_sig_encode_hash: malloc (%d) failed", hashsize);
       pkcs_free_private_key (&key);
       return -1;
     }
   
   if (ike_auth_hash (exchange, buf) == -1)
     {
-      /* XXX Log? */
       free (buf);
       pkcs_free_private_key (&key);
       return -1;
@@ -607,7 +594,7 @@ ike_auth_hash (struct exchange *exchange, u_int8_t *buf)
   /* Allocate the prf and start calculating our HASH.  */
   prf = prf_alloc (ie->prf_type, hash->type, ie->skeyid, ie->skeyid_len);
   if (!prf)
-      return -1;
+    return -1;
 
   prf->Init (prf->prfctx);
   prf->Update (prf->prfctx, initiator ? ie->g_xi : ie->g_xr, ie->g_x_len);

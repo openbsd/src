@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.15 1999/04/30 11:46:24 niklas Exp $	*/
-/*	$EOM: ike_quick_mode.c,v 1.84 1999/04/29 10:51:34 niklas Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.16 1999/05/02 19:20:32 niklas Exp $	*/
+/*	$EOM: ike_quick_mode.c,v 1.85 1999/05/02 12:48:58 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -85,22 +85,14 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
   struct exchange *exchange = msg->exchange;
   struct doi *doi = exchange->doi;
   struct ipsec_exch *ie = exchange->data;
-  struct sa *isakmp_sa = msg->isakmp_sa;
-  struct ipsec_sa *isa = isakmp_sa->data;
   u_int8_t ***transform = 0, ***new_transform;
   u_int8_t **proposal = 0, **new_proposal;
-  u_int8_t *sa_buf = 0, *attr, *saved_nextp_sa, *saved_nextp_prop;
-  u_int8_t *buf, *id;
-  u_int8_t *spi;
+  u_int8_t *sa_buf = 0, *attr, *saved_nextp_sa, *saved_nextp_prop, *id, *spi;
   size_t spi_sz, sz;
-  struct prf *prf;
-  struct hash *hash = hash_get (isa->hash);
-  size_t hashsize = hash->hashsize;
   size_t proposal_len = 0, proposals_len = 0, sa_len;
   size_t **transform_len = 0, **new_transform_len;
   size_t *transforms_len = 0, *new_transforms_len;
   int *transform_cnt = 0, *new_transform_cnt;
-  char header[80];
   int i, suite_no, prop_no, prot_no, xf_no, value, update_nextp, protocol_num;
   int prop_cnt = 0;
   struct proto *proto;
@@ -110,22 +102,11 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
   char *protocol_id, *transform_id;
   char *local_id, *remote_id;
   int group_desc = -1, new_group_desc;
+  struct ipsec_sa *isa = msg->isakmp_sa->data;
+  struct hash *hash = hash_get (isa->hash);
 
-  /* We want a HASH payload to start with.  XXX Share with ike_main_mode.c?  */
-  buf = malloc (ISAKMP_HASH_SZ + hashsize);
-  if (!buf)
-    {
-      log_error ("initiator_send_HASH_SA_NONCE: malloc (%d) failed",
-		 ISAKMP_HASH_SZ + hashsize);
-      return -1;
-    }
-
-  if (message_add_payload (msg, ISAKMP_PAYLOAD_HASH, buf,
-			   ISAKMP_HASH_SZ + hashsize, 1))
-    {
-      free (buf);
-      return -1;
-    }
+  if (!ipsec_add_hash_payload (msg, hash->hashsize))
+    return -1;
     
   /* Get the list of protocol suites.  */
   suite_conf = conf_get_list (exchange->policy, "Suites");
@@ -541,35 +522,8 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
 	       "Remote-ID given without Local-ID for \"%s\"",
 	       exchange->name);
 
-  /* Allocate the prf and start calculating our HASH(1).  XXX Share?  */
-  log_debug_buf (LOG_MISC, 90, "initiator_send_HASH_SA_NONCE: SKEYID_a",
-		 isa->skeyid_a, isa->skeyid_len);
-  prf = prf_alloc (isa->prf_type, hash->type, isa->skeyid_a, isa->skeyid_len);
-  if (!prf)
-    {
-      /* XXX Log?  */
-      return -1;
-    }
-  prf->Init (prf->prfctx);
-  log_debug_buf (LOG_MISC, 90, "initiator_send_HASH_SA_NONCE: message_id",
-		 exchange->message_id, ISAKMP_HDR_MESSAGE_ID_LEN);
-  prf->Update (prf->prfctx, exchange->message_id, ISAKMP_HDR_MESSAGE_ID_LEN);
-
-  /* Loop over all payloads after HASH(1).  */
-  for (i = 2; i < msg->iovlen; i++)
-    {
-      /* XXX Misleading payload type printouts.  */
-      snprintf (header, 80,
-		"initiator_send_HASH_SA_NONCE: payload %d after HASH(1)",
-		i - 1);
-      log_debug_buf (LOG_MISC, 90, header, msg->iov[i].iov_base,
-		     msg->iov[i].iov_len);
-      prf->Update (prf->prfctx, msg->iov[i].iov_base, msg->iov[i].iov_len);
-    }
-  prf->Final (buf + ISAKMP_HASH_DATA_OFF, prf->prfctx);
-  prf_free (prf);
-  log_debug_buf (LOG_MISC, 80, "initiator_send_HASH_SA_NONCE: HASH(1)",
-		 buf + ISAKMP_HASH_DATA_OFF, hashsize);
+  if (ipsec_fill_in_hash (msg))
+    goto bail_out;
 
   conf_free_list (suite_conf);
   for (i = 0; i < prop_no; i++)
@@ -690,10 +644,8 @@ initiator_recv_HASH_SA_NONCE (struct message *msg)
 		 isa->skeyid_a, isa->skeyid_len);
   prf = prf_alloc (isa->prf_type, hash->type, isa->skeyid_a, isa->skeyid_len);
   if (!prf)
-    {
-      /* XXX Log?  */
-      return -1;
-    }
+    return -1;
+
   prf->Init (prf->prfctx);
   log_debug_buf (LOG_MISC, 90, "initiator_recv_HASH_SA_NONCE: message_id",
 		 exchange->message_id, ISAKMP_HDR_MESSAGE_ID_LEN);
@@ -985,15 +937,15 @@ responder_recv_HASH_SA_NONCE (struct message *msg)
       goto cleanup;
     }
 
-  /* Check the payload's integrity.  */
+  /*
+   * Check the payload's integrity.
+   * XXX Share with ipsec_fill_in_hash?
+   */
   log_debug_buf (LOG_MISC, 90, "responder_recv_HASH_SA_NONCE: SKEYID_a",
 		 isa->skeyid_a, isa->skeyid_len);
   prf = prf_alloc (isa->prf_type, isa->hash, isa->skeyid_a, isa->skeyid_len);
   if (!prf)
-    {
-      /* XXX Log?  */
-      goto cleanup;
-    }
+    goto cleanup;
   prf->Init (prf->prfctx);
   log_debug_buf (LOG_MISC, 90, "responder_recv_HASH_SA_NONCE: message_id",
 		 exchange->message_id, ISAKMP_HDR_MESSAGE_ID_LEN);
@@ -1320,10 +1272,7 @@ responder_recv_HASH (struct message *msg)
 		 isa->skeyid_len);
   prf = prf_alloc (isa->prf_type, isa->hash, isa->skeyid_a, isa->skeyid_len);
   if (!prf)
-    {
-      /* XXX Log?  */
-      goto cleanup;
-    }
+    goto cleanup;
   prf->Init (prf->prfctx);
   prf->Update (prf->prfctx, "\0", 1);
   log_debug_buf (LOG_MISC, 90, "responder_recv_HASH: message_id",

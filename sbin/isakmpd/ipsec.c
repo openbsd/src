@@ -1,5 +1,5 @@
-/*	$OpenBSD: ipsec.c,v 1.16 1999/04/30 23:32:08 niklas Exp $	*/
-/*	$EOM: ipsec.c,v 1.106 1999/04/30 23:25:28 niklas Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.17 1999/05/02 19:20:33 niklas Exp $	*/
+/*	$EOM: ipsec.c,v 1.107 1999/05/02 12:48:57 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -96,7 +96,8 @@ static void ipsec_free_sa_data (void *);
 static struct keystate *ipsec_get_keystate (struct message *);
 static u_int8_t *ipsec_get_spi (size_t *, u_int8_t, struct message *);
 static int ipsec_handle_leftover_payload (struct message *, u_int8_t,
-					   struct payload *);
+					  struct payload *);
+static int ipsec_informational_pre_hook (struct message *);
 static int ipsec_initiator (struct message *);
 static void ipsec_proto_init (struct proto *, char *);
 static int ipsec_responder (struct message *);
@@ -128,6 +129,8 @@ static struct doi ipsec_doi = {
   ipsec_get_keystate,
   ipsec_get_spi,
   ipsec_handle_leftover_payload,
+  ipsec_fill_in_hash,
+  ipsec_informational_pre_hook,
   ipsec_is_attribute_incompatible,
   ipsec_proto_init,
   ipsec_setup_situation,
@@ -1656,4 +1659,94 @@ ipsec_contacted (struct message *msg)
     ? (bsearch (&contact, contacts, contact_cnt, sizeof *contacts, addr_cmp)
        != 0)
     : 0;
+}
+
+/* Add a HASH for to MSG.  */
+u_int8_t *
+ipsec_add_hash_payload (struct message *msg, size_t hashsize)
+{
+  u_int8_t *buf;
+
+  buf = malloc (ISAKMP_HASH_SZ + hashsize);
+  if (!buf)
+    {
+      log_error ("ipsec_add_hash_payload: malloc (%d) failed",
+		 ISAKMP_HASH_SZ + hashsize);
+      return 0;
+    }
+
+  if (message_add_payload (msg, ISAKMP_PAYLOAD_HASH, buf,
+			   ISAKMP_HASH_SZ + hashsize, 1))
+    {
+      free (buf);
+      return 0;
+    }
+
+  return buf;
+}
+
+/* Fill in the HASH payload of MSG.  */
+int
+ipsec_fill_in_hash (struct message *msg)
+{
+  struct exchange *exchange = msg->exchange;
+  struct sa *isakmp_sa = msg->isakmp_sa;
+  struct ipsec_sa *isa = isakmp_sa->data;
+  struct hash *hash = hash_get (isa->hash);
+  size_t hashsize = hash->hashsize;
+  struct prf *prf;
+  struct payload *payload;
+  u_int8_t *buf;
+  int i;
+  char header[80];
+
+  /* If no SKEYID_a, we need not do anything.  */
+  if (!isa->skeyid_a)
+    return 0;
+
+  payload = TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_HASH]);
+  if (!payload)
+    {
+      log_print ("ipsec_fill_in_hash: no HASH payload found");
+      return -1;
+    }
+  buf = payload->p;
+
+  /* Allocate the prf and start calculating our HASH(1).  */
+  log_debug_buf (LOG_MISC, 90, "ipsec_fill_in_hash: SKEYID_a", isa->skeyid_a,
+		 isa->skeyid_len);
+  prf = prf_alloc (isa->prf_type, hash->type, isa->skeyid_a, isa->skeyid_len);
+  if (!prf)
+    return -1;
+
+  prf->Init (prf->prfctx);
+  log_debug_buf (LOG_MISC, 90, "ipsec_fill_in_hash: message_id",
+		 exchange->message_id, ISAKMP_HDR_MESSAGE_ID_LEN);
+  prf->Update (prf->prfctx, exchange->message_id, ISAKMP_HDR_MESSAGE_ID_LEN);
+
+  /* Loop over all payloads after HASH(1).  */
+  for (i = 2; i < msg->iovlen; i++)
+    {
+      /* XXX Misleading payload type printouts.  */
+      snprintf (header, 80, "ipsec_fill_in_hash: payload %d after HASH(1)",
+		i - 1);
+      log_debug_buf (LOG_MISC, 90, header, msg->iov[i].iov_base,
+		     msg->iov[i].iov_len);
+      prf->Update (prf->prfctx, msg->iov[i].iov_base, msg->iov[i].iov_len);
+    }
+  prf->Final (buf + ISAKMP_HASH_DATA_OFF, prf->prfctx);
+  prf_free (prf);
+  log_debug_buf (LOG_MISC, 80, "ipsec_fill_in_hash: HASH(1)",
+		 buf + ISAKMP_HASH_DATA_OFF, hashsize);
+
+  return 0;
+}
+
+static int
+ipsec_informational_pre_hook (struct message *msg)
+{
+  struct ipsec_sa *isa = msg->isakmp_sa->data;
+  struct hash *hash = hash_get (isa->hash);
+
+  return ipsec_add_hash_payload (msg, hash->hashsize) == 0;
 }
