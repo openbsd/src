@@ -1,15 +1,9 @@
-#	$OpenBSD: files.mvme88k,v 1.24 2004/01/02 23:35:00 miod Exp $
+#	$OpenBSD: files.mvme88k,v 1.25 2004/01/13 21:29:21 miod Exp $
 #
 maxpartitions 16
 
 device 	mainbus { [addr = -1 ] }
 attach 	mainbus at root
-
-# this should be removed after bringup
-
-device bugtty: tty
-attach bugtty at mainbus
-file	arch/mvme88k/dev/bugtty.c			bugtty needs-count
 
 device bussw { [offset = -1], [ ipl = 0 ] }
 attach bussw at mainbus
@@ -47,6 +41,11 @@ file	arch/mvme88k/dev/cl.c				cl needs-count
 device dart: tty
 attach dart at syscon
 file	arch/mvme88k/dev/dart.c				dart needs-count
+
+# fallback console, only if no cl or dart is available
+device bugtty: tty
+attach bugtty at mainbus
+file	arch/mvme88k/dev/bugtty.c			bugtty needs-count
 
 include "../../../scsi/files.scsi"
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bugtty.c,v 1.18 2003/12/22 11:54:48 miod Exp $ */
+/*	$OpenBSD: bugtty.c,v 1.19 2004/01/13 21:29:23 miod Exp $ */
 
 /* Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1995 Dale Rahn.
@@ -45,6 +45,8 @@
 #include <mvme88k/dev/bugttyfunc.h>
 
 #include "bugtty.h"
+#include "cl.h"
+#include "dart.h"
 
 int bugttymatch(struct device *parent, void *self, void *aux);
 void bugttyattach(struct device *parent, struct device *self, void *aux);
@@ -75,8 +77,8 @@ char bugtty_ibuffer[BUGBUF+1];
 volatile char *pinchar = bugtty_ibuffer;
 char bug_obuffer[BUGBUF+1];
 
-struct tty *bugtty_tty[NBUGTTY];
-int needprom = 1;
+#define	BUGTTYS	4
+struct tty *bugtty_tty[BUGTTYS];
 
 int
 bugttymatch(parent, self, aux)
@@ -88,15 +90,25 @@ bugttymatch(parent, self, aux)
 
 	/*
 	 * Do not attach if a suitable console driver has been attached.
-	 * XXX but bugtty is probed first!
 	 */
-	if (needprom == 0)
-		return (0);
+#if NCL > 0
+	{
+		extern struct cfdriver cl_cd;
 
-	ca->ca_paddr = (void *)0xfff45000;
-	ca->ca_vaddr = (void *)0xfff45000;
+		if (cl_cd.cd_ndevs != 0)
+			return (0);
+	}
+#endif
+#if NDART > 0
+	{
+		extern struct cfdriver dart_cd;
+
+		if (dart_cd.cd_ndevs != 0)
+			return (0);
+	}
+#endif
+
 	ca->ca_ipl = IPL_TTY;
-	ca->ca_name = "bugtty";
 	return (1);
 }
 
@@ -121,7 +133,7 @@ bugttytty(dev)
 {
 	int unit;
 	unit = BUGTTYUNIT(dev);
-	if (unit >= 4) {
+	if (unit >= BUGTTYS) {
 		return (NULL);
 	}
 	return bugtty_tty[unit];
@@ -171,10 +183,6 @@ bugttyopen(dev, flag, mode, p)
 {
 	int s, unit = BUGTTYUNIT(dev);
 	struct tty *tp;
-	extern int needprom;
-
-	if (needprom == 0)
-		return (ENODEV);
 
 	s = spltty();
 	if (bugtty_tty[unit]) {
@@ -453,12 +461,6 @@ bugttycnprobe(cp)
 	struct consdev *cp;
 {
 	int maj;
-	int needprom = 1;
-
-	if (needprom == 0) {
-		cp->cn_pri = CN_DEAD;
-		return (0);
-	}
 
 	/* locate the major number */
 	for (maj = 0; maj < nchrdev; maj++)
