@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_hdr.h,v 1.11 1996/05/25 22:17:55 deraadt Exp $	*/
+/*	$OpenBSD: pcvt_hdr.h,v 1.12 1996/06/16 13:54:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -278,6 +278,7 @@ in the config file"
 #define KEYB_R_MF2ID1	0xab	/* MF II Keyboard id-byte #1 */
 #define KEYB_R_MF2ID2	0x41	/* MF II Keyboard id-byte #2 */
 #define KEYB_R_MF2ID2HP	0x83	/* MF II Keyboard id-byte #2 from HP keybd's */
+#define KEYB_R_MF2ID2TP 0x54	/* MF II Keyboard id-byte #2 from IBM ThinkPad */
 
 /* internal Keyboard Type */
 
