@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.46 2001/08/20 05:57:55 mpech Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.47 2001/08/24 14:43:28 todd Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -699,6 +699,18 @@ Base location for packages built (default: ${PORTSDIR}/packages/${ARCH}).
 Command to use to apply all patches.
 Defaults to
 .Pa /usr/bin/patch .
+.It Ev PATCHORIG
+Suffix used by using the '-b' option of 
+.Xr patch 1
+(to determine original file suffix names) created
+from ${PATCHDIR}/patch-* and
+.Ar update-patches
+which generates the above patches looking for files with this suffix.
+Defaults to
+.Pa .orig .
+Set this if you have a port that already contains .orig files in the
+${DISTFILES} to something else, such as
+.Pa .pat.orig .
 .It Ev PATCH_CASES
 In the normal distpatch stage (when
 .Ev PATCHFILES
