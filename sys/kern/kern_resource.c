@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.18 2002/01/25 14:54:00 art Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.19 2002/07/21 21:29:33 art Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -289,7 +289,7 @@ dosetrlimit(p, which, limp)
 			vm_prot_t prot;
 
 			if (limp->rlim_cur > alimp->rlim_cur) {
-				prot = VM_PROT_ALL;
+				prot = VM_PROT_READ|VM_PROT_WRITE;
 				size = limp->rlim_cur - alimp->rlim_cur;
 #ifdef MACHINE_STACK_GROWS_UP
 				addr = USRSTACK + alimp->rlim_cur;
