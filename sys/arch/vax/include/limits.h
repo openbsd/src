@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.5 1995/05/28 18:38:30 ragge Exp $	*/
+/*	$NetBSD: limits.h,v 1.6 1995/12/31 15:05:19 ragge Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -36,17 +36,16 @@
  */
 
 #define CHAR_BIT        8               /* number of bits in a char */
-/* #define CLK_TCK         60              /* ticks per second */
 #define MB_LEN_MAX      1               /* no multibyte characters */
 
-#define SCHAR_MIN       (-0x7f-1)       /* min value for a signed char */
 #define SCHAR_MAX       0x7f            /* max value for a signed char */
+#define SCHAR_MIN       (-0x7f-1)       /* min value for a signed char */
 
-#define UCHAR_MAX       0xff            /* max value for an unsigned char */
+#define UCHAR_MAX       0xffU           /* max value for an unsigned char */
 #define CHAR_MAX        0x7f            /* max value for a char */
 #define CHAR_MIN        (-0x7f-1)       /* min value for a char */
 
-#define USHRT_MAX       0xffff          /* max value for an unsigned short */
+#define USHRT_MAX       0xffffU         /* max value for an unsigned short */
 #define SHRT_MAX        0x7fff          /* max value for a short */
 #define SHRT_MIN        (-0x7fff-1)     /* min value for a short */
 
