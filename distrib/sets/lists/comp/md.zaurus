@@ -209,6 +209,7 @@
 ./usr/include/unwind.h
 ./usr/include/zaurus
 ./usr/include/zaurus/ansi.h
+./usr/include/zaurus/apmvar.h
 ./usr/include/zaurus/asm.h
 ./usr/include/zaurus/atomic.h
 ./usr/include/zaurus/bootconfig.h

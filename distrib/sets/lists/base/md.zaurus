@@ -2200,6 +2200,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/xfs/xfs_vopdefs.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/ansi.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/apmvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/asm.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/atomic.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/bootconfig.ph
@@ -2253,6 +2254,9 @@
 ./usr/local/libdata/perl5/site_perl/arm-openbsd
 ./usr/mdec/zboot
 ./usr/mdec/zbsdmod.o
+./usr/sbin/apm
+./usr/sbin/apmd
 ./usr/sbin/hotplugd
 ./usr/sbin/wsconscfg
 ./usr/sbin/wsfontload
+./usr/sbin/zzz
