@@ -1,4 +1,4 @@
-/*    $OpenBSD: vm_page.c,v 1.8 1997/09/25 07:06:27 niklas Exp $    */
+/*    $OpenBSD: vm_page.c,v 1.9 1997/11/04 20:12:19 weingart Exp $    */
 /*	$NetBSD: vm_page.c,v 1.31 1997/06/06 23:10:23 thorpej Exp $	*/
 
 #define	VM_PAGE_ALLOC_MEMORY_STATS
@@ -458,7 +458,7 @@ pmap_steal_memory(size)
 	 * If this is the first call to pmap_steal_memory,
 	 * we have to initialize ourself.
 	 */
-		if (virtual_space_start == virtual_space_end) {
+	if (virtual_space_start == virtual_space_end) {
 		pmap_virtual_space(&virtual_space_start, &virtual_space_end);
 		
 		/*
