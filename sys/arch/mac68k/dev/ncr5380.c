@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr5380.c,v 1.12 1997/01/24 01:35:34 briggs Exp $	*/
+/*	$OpenBSD: ncr5380.c,v 1.13 1997/01/26 18:57:04 briggs Exp $	*/
 /*	$NetBSD: ncr5380.c,v 1.38 1996/12/19 21:48:18 scottr Exp $	*/
 
 /*
@@ -239,7 +239,6 @@ void		*auxp;
 	sc->sc_link.adapter         = &ncr5380_switch;
 	sc->sc_link.device          = &ncr5380_dev;
 	sc->sc_link.openings        = NREQ - 1;
-	sc->sc_link.max_target      = 7;
 
 	/*
 	 * bitmasks
