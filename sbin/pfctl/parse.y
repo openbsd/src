@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.337 2003/03/08 14:52:17 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.338 2003/03/08 15:17:34 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -3191,7 +3191,7 @@ expand_queue(struct pf_altq *a, struct node_queue *nqueues,
 				if (strlcpy(n->ifname, tqueue->ifname,
 				    sizeof(n->ifname)) >= sizeof(n->ifname))
 					errx(1, "expand_queue: strlcpy");
-				n->scheduler = a->scheduler;
+				n->scheduler = tqueue->scheduler;
 				n->next = NULL;
 				n->tail = n;
 				if (queues == NULL)
