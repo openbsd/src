@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.39 2004/05/13 22:36:39 mickey Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.40 2004/06/22 01:58:59 millert Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.3 (Berkeley) 2/3/94";
 #else
-static char rcsid[] = "$OpenBSD: mkfs.c,v 1.39 2004/05/13 22:36:39 mickey Exp $";
+static char rcsid[] = "$OpenBSD: mkfs.c,v 1.40 2004/06/22 01:58:59 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -750,9 +750,8 @@ initcg(int cylno, time_t utime)
 		acg.cg_nextfreeoff = acg.cg_clusteroff + howmany
 		    (sblock.fs_cpg * sblock.fs_spc / NSPB(&sblock), NBBY);
 	}
-	if (acg.cg_nextfreeoff - (long)(&acg.cg_firstfield) > sblock.fs_cgsize) {
+	if (acg.cg_nextfreeoff > sblock.fs_cgsize)
 		errx(37, "panic: cylinder group too big");
-	}
 	acg.cg_cs.cs_nifree += sblock.fs_ipg;
 	if (cylno == 0)
 		for (i = 0; i < ROOTINO; i++) {
