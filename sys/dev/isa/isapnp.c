@@ -1,4 +1,4 @@
-/*	$OpenBSD: isapnp.c,v 1.20 1998/07/28 15:25:40 csapuntz Exp $	*/
+/*	$OpenBSD: isapnp.c,v 1.21 1998/11/30 10:44:55 deraadt Exp $	*/
 /*	$NetBSD: isapnp.c,v 1.9.4.3 1997/10/29 00:40:43 thorpej Exp $	*/
 
 /*
@@ -804,6 +804,7 @@ isapnp_isa_attach_hook(isa_sc)
 {
 	struct isapnp_softc sc;
 	
+	bzero(&sc, sizeof sc);
 	sc.sc_iot = isa_sc->sc_iot;
 	sc.sc_ncards = 0;
 
