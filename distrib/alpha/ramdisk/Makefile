@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 1997/05/11 04:33:10 millert Exp $
+#	$OpenBSD: Makefile,v 1.8 1997/05/11 18:20:32 millert Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -15,7 +15,7 @@ VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
 VND_CRDEV=	/dev/r${VND}c
 PID!=		echo $$$$
-REALIMAGE!=	echo image.${PID}
+REALIMAGE!=	echo /var/tmp/image.${PID}
 
 STRIP?=		strip
 GZIP?=		gzip
