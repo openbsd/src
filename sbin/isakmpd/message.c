@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.66 2004/03/09 21:42:02 hshoexer Exp $	*/
+/*	$OpenBSD: message.c,v 1.67 2004/03/10 11:17:38 hshoexer Exp $	*/
 /*	$EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	*/
 
 /*
@@ -503,8 +503,8 @@ message_validate_delete (struct message *msg, struct payload *p)
 	sa = ipsec_sa_lookup (dst, ((u_int32_t *)spis)[i], proto);
       if (!sa)
         {
-          log_print ("message_validate_delete: invalid spi "
-		     "(no valid SA found)");
+          LOG_DBG ((LOG_MESSAGE, 50, "message_validate_delete: invalid spi "
+                    "(no valid SA found)"));
           message_free (msg);
           return -1;
         }
