@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.10 1997/12/10 19:15:09 deraadt Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.11 1997/12/10 19:31:17 deraadt Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -76,6 +76,8 @@ vn_open(ndp, fmode, cmode)
 
 	if ((fmode & (FREAD|FWRITE)) == 0)
 		return (EINVAL);
+	if (fmode & (O_TRUNC | FWRITE) == O_TRUNC)
+		return (EINVAL);
 	if (fmode & O_CREAT) {
 		ndp->ni_cnd.cn_nameiop = CREATE;
 		ndp->ni_cnd.cn_flags = LOCKPARENT | LOCKLEAF;
@@ -124,7 +126,7 @@ vn_open(ndp, fmode, cmode)
 			if ((error = VOP_ACCESS(vp, VREAD, cred, p)) != 0)
 				goto bad;
 		}
-		if ((fmode & (FWRITE | O_TRUNC)) == (FWRITE | O_TRUNC)) {
+		if (fmode & (FWRITE | O_TRUNC)) {
 			if (vp->v_type == VDIR) {
 				error = EISDIR;
 				goto bad;
@@ -137,7 +139,7 @@ vn_open(ndp, fmode, cmode)
 	if (fmode & O_TRUNC) {
 		VOP_UNLOCK(vp, 0, p);				/* XXX */
 		VOP_LEASE(vp, p, cred, LEASE_WRITE);
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);				/* XXX */
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);	/* XXX */
 		VATTR_NULL(&va);
 		va.va_size = 0;
 		if ((error = VOP_SETATTR(vp, &va, cred, p)) != 0)
