@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.11 2003/10/08 18:02:10 deraadt Exp $
+#	$OpenBSD: airport,v 1.12 2003/10/17 10:25:50 jmc Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 # 
 # Some of this information from the Airport Search Engine at
@@ -121,6 +121,7 @@ AUS:Austin-Bergstrom International, Texas, USA
 AVL:Asheville Regional, North Carolina, USA
 AVN:Caumont, Avignon, France
 AVP:Wilkes-Barre/Scranton International Airport, Pennsylvania, USA
+AVV:Avalon Airport, Victoria, Australia
 AXA:Anguilla
 AXD:Alexandroupolis, Alexandroupolis, Greece
 AYQ:Connellan, Ayers Rock, Northern Territory, Australia
@@ -129,6 +130,7 @@ AZO:Kalamazoo/Battle Creek Intl, Kalamazoo, MI, USA
 BAH:Bahrain International Bahrain, Bahrain, Bahrain
 BAK:Baku, Baku, Azerbaijan
 BAL:Nearest Air Service Through Diyarbakir, Batman, Turkey
+BAR:Baker Island, Baker & Howland Islands
 BAQ:E Cortissoz, Barranquilla, Colombia
 BAX:Barnaul, Russia
 BBI:Bhubaneswar, Bhubaneswar, India
@@ -239,6 +241,7 @@ BRT:Bathurst Island, Northern Territory, Australia
 BRU:National, Brussels, Belgium
 BRW:Barrow, AK, USA
 BSB:International, Brasilia, Distrito Federal, Brazil
+BSD:Baoshan, China
 BSK:Biskra, Algeria
 BSL:Basel/Mulhouse Euroairport, Switzerland
 BTM:Butte, MT, USA
@@ -258,6 +261,7 @@ BVI:Birdsville, Birdsville, Queensland, Australia
 BWA:Bhairawa, Bhairawa, Nepal
 BWI:Baltimore-Washington International, Maryland, USA
 BWN:Brunei International, Bandar Seri Begawan, Brunei Darussalam
+BWU:Bankstown, New South Wales, Australia
 BXN:Imsik, Bodrum, Turkey
 BXU:Butuan, Butuan, Philippines
 BYU:Bindlacher Berg, Bayreuth, Germany
@@ -296,6 +300,7 @@ CFR:Carpiquet, Caen, France
 CFU:Kerkyra, Greece
 CGA:Craig, AK, USA
 CGB:Cuiaba, Mato Grosso, Brazil
+CGD:Changde, China
 CGH:Congonhas, Sao Paulo, Sao Paulo, Brazil
 CGI:Cape Girardeau, MO, USA
 CGK:Soekarno Hatta International, Jakarta, Indonesia
@@ -419,6 +424,7 @@ DLC:Dalian, China
 DLH:Duluth, MN, USA
 DLM:Dalaman, Mugla, Turkey
 DME:Domodedovo, Moscow, Russia
+DMR:Dhamar, Yemen
 DND:Dundee, Scotland, United Kingdom
 DNK:Dnepropetrovsk, Ukraine
 DNM:Denham, Western Australia, Australia
@@ -527,6 +533,7 @@ FNL:Fort Collins/Loveland, CO, USA
 FNT:Bishop International, Flint, MI, USA
 FOD:Fort Dodge, IA, USA
 FOE:Topeka Forbes Field, Kansas, USA
+FOO:Numfoor, Indonesia
 FOR:Fortaleza, Ceara, Brazil
 FPO:Freeport, Bahamas
 FRA:Frankfurt, Germany
@@ -562,6 +569,7 @@ GEN:Garderm O E N, Oslo, Norway
 GEO:Timehri, Georgetown, Guyana
 GET:Geraldton, Western Australia, Australia
 GEV:Gallivare, Sweden
+GEX:Geelong, Victoria, Australia
 GFK:Grand Forks, ND, USA
 GGG:Gregg County, Longview/Gladewater/Kilgore, TX, USA
 GGT:Exuma International, George Town, Bahamas
@@ -810,6 +818,7 @@ KEH:Kenmore Air Harbor, WA, USA
 KEJ:Kemerovo, Russia
 KEL:Holtenau, Kiel, Germany
 KEM:Kemi/Tornio, Finland
+KEN:Kenema, Sierra Leone
 KEP:Nepalganj, Nepal
 KER:Kerman, Iran
 KGC:Kingscote, South Australia, Australia
@@ -840,6 +849,7 @@ KOJ:Kagoshima, Japan
 KOK:Kruunupyy, Kokkola/Pietarsaari, Finland
 KPN:Kipnuk, AK, USA
 KPO:Na, Pohang, South Korea
+KRE:Kirundo, Burundi
 KRF:Kramfors, Sweden
 KRK:Balice, Krakow, Poland
 KRN:Kiruna, Sweden
@@ -995,6 +1005,7 @@ MBA:Moi International, Mombasa, Kenya
 MBJ:Sangster, Montego Bay, Jamaica
 MBL:Manistee Blacker, MI, USA
 MBS:Saginaw Tri-City, Michigan, USA
+MBW:Moorabbin, Victoria, Australia
 MCG:Mc Grath, Mc Grath, AK, USA
 MCI:Kansas City International, Missouri, USA
 MCK:Municipal, Mc Cook, NE, USA
@@ -1012,6 +1023,7 @@ MDQ:Mar Del Plata, Buenos Aires, Argentina
 MDT:Harrisburg International, Pennsylvania, USA
 MDW:Chicago Midway, Illinois, USA
 MDZ:El Plumerillo, Mendoza, Argentina
+MEB:Essendon, Melbourne, Victoria, Australia
 MEI:Key Field, Meridian, MS, USA
 MEL:Tullamarine, Melbourne, Victoria, Australia
 MEM:Memphis International, Tennessee, USA
@@ -1952,6 +1964,7 @@ ZAL:Pichoy, Valdivia, Chile
 ZAM:Zamboanga, Philippines
 ZAZ:Zaragoza, Spain
 ZBF:Bathurst, New Brunswick, Canada
+ZBT:Bus Service, Aarhus, Denmark
 ZBV:Vail/Eagle, CO, USA
 ZCL:Zacatecas, Mexico
 ZCO:Manquehue, Temuco, Chile
