@@ -1,11 +1,11 @@
-/*	$OpenBSD: ns_main.c,v 1.14 1998/05/23 19:24:51 millert Exp $	*/
+/*	$OpenBSD: ns_main.c,v 1.15 1998/08/14 15:07:36 millert Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)ns_main.c	4.55 (Berkeley) 7/1/91";
 static char rcsid[] = "$From: ns_main.c,v 8.26 1998/05/11 04:19:45 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ns_main.c,v 1.14 1998/05/23 19:24:51 millert Exp $";
+static char rcsid[] = "$OpenBSD: ns_main.c,v 1.15 1998/08/14 15:07:36 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -405,17 +405,17 @@ main(argc, argv, envp)
 		p = dirname(bootfile);
 		if ((stat(bootfile, &sb) != 0 || !S_ISDIR(sb.st_mode)) &&
 		    (p = strrchr(bootfile, '/')))
-			bootfile = p + 1;
+			bootfile = p;
 
 		p = dirname(PidFile);
 		if ((stat(PidFile, &sb) != 0 || !S_ISDIR(sb.st_mode)) &&
 		    (p = strrchr(PidFile, '/')))
-			PidFile = p + 1;
+			PidFile = p;
 
 		p = dirname(NamedXfer);
 		if ((stat(NamedXfer, &sb) != 0 || !S_ISDIR(sb.st_mode)) &&
 		    (p = strrchr(NamedXfer, '/')))
-			NamedXfer = p + 1;
+			NamedXfer = p;
 	}
 
 	n = 0;
