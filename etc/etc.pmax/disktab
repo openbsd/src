@@ -87,7 +87,18 @@ rz24l|RZ24L|DEC RZ24L Winchester:\
 	:pf#105170:of#374180:bf#8192:ff#1024:\
 	:pg#315510:og#163840:bg#8192:fg#1024:
 
-rz25|RZ25|DEC RZ25 Winchester:\
+# A DEC RZ25, configured so that all of the free partition IDs are at
+# the end, etc.  A good setup to make a disk image from...
+rz25|RZ25|DEC RZ25 SCSI:\
+	dt=SCSI::ty=winchester:ns#62:nt#9:nc#1476:\
+	:pa#32768:oa#0:ba#8192:fa#1024:ta=4.2BSD:\
+	:pb#131072:ob#32768:bb#8192:fb#1024:tb=swap:\
+	:pc#823608:oc#0:\
+	:pd#600408:od#223200:bd#8192:fd#1024:td=4.2BSD:
+
+# a DEC RZ25, as configured for 4.4BSD/pmax.
+# larger than at least some real RZ25s, may be an RZ25l.
+rz25x|RZ25x|4.4BSD DEC RZ25 Winchester:\
 	:dt=SCSI:ty=winchester:ns#62:nt#9:nc#1476:\
 	:pa#32768:oa#0:ba#8192:fa#1024:\
 	:pb#131072:ob#32768:bb#8192:fb#1024:tb=swap:\
@@ -97,6 +108,8 @@ rz25|RZ25|DEC RZ25 Winchester:\
 	:pf#222895:of#609632:bf#8192:ff#1024:\
 	:pg#668687:og#163840:bg#8192:fg#1024:
 
+# a DEC RZ26,as configured for 4.4BSD/pmax.
+# may be larger than your RZ26; add :su#: as appropriate.
 rz26|RZ26|DEC RZ26 Winchester:\
 	:dt=SCSI:ty=winchester:ns#57:nt#14:nc#2570:\
 	:pa#32768:oa#0:ba#8192:fa#1024:\
@@ -158,14 +171,17 @@ rz57|RZ57|DEC RZ57 Winchester:\
 #   of sectors per track) is calculated by "ns = total sectors/(nt*nc)"
 #   and is a rounded value.  Therefore, the value "ns" is an approximation,
 #   not a true representation, of what is stored on disk. 
-#    
+#
 #   The 'c' partition listed below gives the true size of the RZ58
 #   (this information can be obtained by use of the DEVGETGEOM ioctl). 
-# 
+#
+#   The NetBSD :su#: entry is derived from the 'c' partition size.
+#    
 
 rz58|RZ58|DEC RZ58 Winchester:\
 	:ty=winchester:ns#85:nt#15:nc#2112:\
 	:pa#32768:oa#0:ba#8192:fa#1024:\
+	:su#2698061:\
 	:pb#131072:ob#32768:bb#4096:fb#1024:tb=swap:\
 	:pc#2698061:oc#0:bc#8192:fc#1024:\
 	:pd#844800:od#163840:bd#8192:fd#1024:\
@@ -190,3 +206,30 @@ ep976|EP976|EPSON HMD-976 Winchester:\
 	:pb#69664:ob#32768:bb#8192:fb#1024:tb=swap:\
 	:pc#136680:oc#0:bc#8192:fc#1024:\
 	:pg#34248:og#102432:bg#8192:fg#1024:
+
+# entry for a Fujitsu fu2263sa half-height drive using ZBR. (UNTESTED)
+#
+# Note again (ns * nt * nc) > (actual drive size), so we need
+# an "su#" entry with the actual size.
+#
+#
+fu2263sa|FU2263SA|Fujitsu 2263SA:\
+	:dt=SCSI:ty=winchester:ns#53:nt#15:nc#1648:\
+	:su#1312344:\
+	:pa#32768:oa#0:ba#8192:fa#1024:\
+	:pb#131072:ob#32768:bb#8192:fb#1024:tb=swap:\
+	:pc#1312344:oc#0:bc#8192:fc#1024:\
+	:pd#1148504:od#163840:bb#8192:fb#1024:ta=4.2bsd:\
+
+# A Fujitsu fu2524fa full-height drive using ZBR.
+fu2624fa|FU2624FA|Fujitsu 2624FA:\
+        :dt=SCSI:ty=winchester:ns#63:nt#11:nc#1429:\
+        :su#1015812:\
+        :pa#32768:oa#0:ba#4096:fa#512:ta=4.2bsd:\
+        :pb#131072:ob#32768:bb#8192:fb#1024:tb=swap:\
+        :pc#1015812:oc#0::bc#8192:fc#1024:\
+        :pd#10240:od#163840:bd#4096:fd#512:\
+        :pe#409600:oe#174080:be#8192:fe#1024:\
+        :pf#432132:of#583680:bf#8192:ff#1024:\
+        :pg#851972:og#163840:bg#8192:fg#1024:\
+        :ph#0:oh#0:bh#8192:fh#1024:
