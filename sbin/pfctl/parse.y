@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.417 2003/10/21 21:09:12 itojun Exp $	*/
+/*	$OpenBSD: parse.y,v 1.418 2003/11/06 14:02:19 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -221,13 +221,14 @@ int	nat_consistent(struct pf_rule *);
 int	rdr_consistent(struct pf_rule *);
 int	process_tabledef(char *, struct table_opts *);
 int	yyparse(void);
-void	expand_label_str(char *, const char *, const char *);
-void	expand_label_if(const char *, char *, const char *);
-void	expand_label_addr(const char *, char *, u_int8_t, struct node_host *);
-void	expand_label_port(const char *, char *, struct node_port *);
-void	expand_label_proto(const char *, char *, u_int8_t);
-void	expand_label_nr(const char *, char *);
-void	expand_label(char *, const char *, u_int8_t, struct node_host *,
+void	expand_label_str(char *, size_t, const char *, const char *);
+void	expand_label_if(const char *, char *, size_t, const char *);
+void	expand_label_addr(const char *, char *, size_t, u_int8_t,
+	    struct node_host *);
+void	expand_label_port(const char *, char *, size_t, struct node_port *);
+void	expand_label_proto(const char *, char *, size_t, u_int8_t);
+void	expand_label_nr(const char *, char *, size_t);
+void	expand_label(char *, size_t, const char *, u_int8_t, struct node_host *,
 	    struct node_port *, struct node_host *, struct node_port *,
 	    u_int8_t);
 void	expand_rule(struct pf_rule *, struct node_if *, struct node_host *,
@@ -3306,38 +3307,41 @@ struct keywords {
 	} while (0)
 
 void
-expand_label_str(char *label, const char *srch, const char *repl)
+expand_label_str(char *label, size_t len, const char *srch, const char *repl)
 {
-	char tmp[PF_RULE_LABEL_SIZE] = "";
+	char *tmp;
 	char *p, *q;
 
+	if ((tmp = malloc(len)) == NULL)
+		err(1, "expand_label_str");
 	p = q = label;
 	while ((q = strstr(p, srch)) != NULL) {
 		*q = '\0';
-		if ((strlcat(tmp, p, sizeof(tmp)) >= sizeof(tmp)) ||
-		    (strlcat(tmp, repl, sizeof(tmp)) >= sizeof(tmp)))
+		if ((strlcat(tmp, p, len) >= len) ||
+		    (strlcat(tmp, repl, len) >= len))
 			err(1, "expand_label: label too long");
 		q += strlen(srch);
 		p = q;
 	}
-	if (strlcat(tmp, p, sizeof(tmp)) >= sizeof(tmp))
+	if (strlcat(tmp, p, len) >= len)
 		err(1, "expand_label: label too long");
-	strlcpy(label, tmp, PF_RULE_LABEL_SIZE);	/* always fits */
+	strlcpy(label, tmp, len);	/* always fits */
+	free(tmp);
 }
 
 void
-expand_label_if(const char *name, char *label, const char *ifname)
+expand_label_if(const char *name, char *label, size_t len, const char *ifname)
 {
 	if (strstr(label, name) != NULL) {
 		if (!*ifname)
-			expand_label_str(label, name, "any");
+			expand_label_str(label, len, name, "any");
 		else
-			expand_label_str(label, name, ifname);
+			expand_label_str(label, len, name, ifname);
 	}
 }
 
 void
-expand_label_addr(const char *name, char *label, sa_family_t af,
+expand_label_addr(const char *name, char *label, size_t len, sa_family_t af,
     struct node_host *h)
 {
 	char tmp[64], tmp_not[66];
@@ -3383,14 +3387,15 @@ expand_label_addr(const char *name, char *label, sa_family_t af,
 
 		if (h->not) {
 			snprintf(tmp_not, sizeof(tmp_not), "! %s", tmp);
-			expand_label_str(label, name, tmp_not);
+			expand_label_str(label, len, name, tmp_not);
 		} else
-			expand_label_str(label, name, tmp);
+			expand_label_str(label, len, name, tmp);
 	}
 }
 
 void
-expand_label_port(const char *name, char *label, struct node_port *port)
+expand_label_port(const char *name, char *label, size_t len,
+    struct node_port *port)
 {
 	char	 a1[6], a2[6], op[13] = "";
 
@@ -3415,12 +3420,12 @@ expand_label_port(const char *name, char *label, struct node_port *port)
 			snprintf(op, sizeof(op), ">%s", a1);
 		else if (port->op == PF_OP_GE)
 			snprintf(op, sizeof(op), ">=%s", a1);
-		expand_label_str(label, name, op);
+		expand_label_str(label, len, name, op);
 	}
 }
 
 void
-expand_label_proto(const char *name, char *label, u_int8_t proto)
+expand_label_proto(const char *name, char *label, size_t len, u_int8_t proto)
 {
 	struct protoent *pe;
 	char n[4];
@@ -3428,38 +3433,38 @@ expand_label_proto(const char *name, char *label, u_int8_t proto)
 	if (strstr(label, name) != NULL) {
 		pe = getprotobynumber(proto);
 		if (pe != NULL)
-			expand_label_str(label, name, pe->p_name);
+			expand_label_str(label, len, name, pe->p_name);
 		else {
 			snprintf(n, sizeof(n), "%u", proto);
-			expand_label_str(label, name, n);
+			expand_label_str(label, len, name, n);
 		}
 	}
 }
 
 void
-expand_label_nr(const char *name, char *label)
+expand_label_nr(const char *name, char *label, size_t len)
 {
 	char n[11];
 
 	if (strstr(label, name) != NULL) {
 		snprintf(n, sizeof(n), "%u", pf->rule_nr);
-		expand_label_str(label, name, n);
+		expand_label_str(label, len, name, n);
 	}
 }
 
 void
-expand_label(char *label, const char *ifname, sa_family_t af,
+expand_label(char *label, size_t len, const char *ifname, sa_family_t af,
     struct node_host *src_host, struct node_port *src_port,
     struct node_host *dst_host, struct node_port *dst_port,
     u_int8_t proto)
 {
-	expand_label_if("$if", label, ifname);
-	expand_label_addr("$srcaddr", label, af, src_host);
-	expand_label_addr("$dstaddr", label, af, dst_host);
-	expand_label_port("$srcport", label, src_port);
-	expand_label_port("$dstport", label, dst_port);
-	expand_label_proto("$proto", label, proto);
-	expand_label_nr("$nr", label);
+	expand_label_if("$if", label, len, ifname);
+	expand_label_addr("$srcaddr", label, len, af, src_host);
+	expand_label_addr("$dstaddr", label, len, af, dst_host);
+	expand_label_port("$srcport", label, len, src_port);
+	expand_label_port("$dstport", label, len, dst_port);
+	expand_label_proto("$proto", label, len, proto);
+	expand_label_nr("$nr", label, len);
 }
 
 int
@@ -3773,8 +3778,13 @@ expand_rule(struct pf_rule *r,
 		if (strlcpy(r->label, label, sizeof(r->label)) >=
 		    sizeof(r->label))
 			errx(1, "expand_rule: strlcpy");
-		expand_label(r->label, r->ifname, r->af, src_host, src_port,
-		    dst_host, dst_port, proto->proto);
+		expand_label(r->label, PF_RULE_LABEL_SIZE, r->ifname, r->af,
+		    src_host, src_port, dst_host, dst_port, proto->proto);
+		expand_label(r->tagname, PF_TAG_NAME_SIZE, r->ifname, r->af,
+		    src_host, src_port, dst_host, dst_port, proto->proto);
+		expand_label(r->match_tagname, PF_TAG_NAME_SIZE, r->ifname,
+		    r->af, src_host, src_port, dst_host, dst_port,
+		    proto->proto);
 
 		error += check_netmask(src_host, r->af);
 		error += check_netmask(dst_host, r->af);
