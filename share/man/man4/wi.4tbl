@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4tbl,v 1.12 2002/04/23 23:32:13 millert Exp $
+.\"	$OpenBSD: wi.4tbl,v 1.13 2002/04/25 23:05:19 millert Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -157,7 +157,7 @@ Ericsson Wireless LAN CARD C11:Spectrum24:PCMCIA
 Gemtek WL-311:Prism-2.5:PCMCIA
 Hawking Technology WE110P:Prism-2.5:PCMCIA
 I-O DATA WN-B11/PCM:Prism-II:PCMCIA
-Intel PRO/Wireless 2011:Prism-II:PCMCIA
+Intel PRO/Wireless 2011:Spectrum24:PCMCIA
 Intersil Prism II:Prism-II:PCMCIA
 Intersil Mini-PCI:Prism-2.5:PCI
 Linksys Instant Wireless WPC11:Prism-II:PCMCIA
