@@ -1,4 +1,4 @@
-.\"	$OpenBSD: config.8,v 1.21 2000/05/31 02:24:44 aaron Exp $
+.\"	$OpenBSD: config.8,v 1.22 2000/07/07 21:53:29 deraadt Exp $
 .\"	$NetBSD: config.8,v 1.10 1996/08/31 20:58:16 mycroft Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -343,6 +343,11 @@ Show all devices for which attribute
 .Ar attr
 has the value
 .Ar val .
+.It Ic timezone Op Ar minuteswest Op Ar dst
+Change the
+.Va tz
+timezone structure.
+Without arguments, displays its current value.
 .El
 .Sh EXAMPLES (First synopsis)
 A custom kernel is built in the following way.
