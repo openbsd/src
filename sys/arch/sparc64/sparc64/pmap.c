@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.18 2002/09/18 10:36:50 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.19 2002/10/06 22:06:15 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -1489,7 +1489,6 @@ pmap_init()
 		panic("pmap_init: CLSIZE!=1");
 
 	size = sizeof(struct pv_entry) * physmem;
-	TAILQ_INIT(&mlist);
 	if (uvm_pglistalloc((psize_t)size, (paddr_t)0, (paddr_t)-1,
 		(paddr_t)NBPG, (paddr_t)0, &mlist, 1, 0) != 0)
 		panic("cpu_start: no memory");

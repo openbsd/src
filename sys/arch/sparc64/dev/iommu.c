@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.20 2002/10/04 01:55:44 jason Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.21 2002/10/06 22:06:15 art Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -138,7 +138,6 @@ iommu_init(name, is, tsbsize, iovabase)
 	 */
 
 	size = NBPG<<(is->is_tsbsize);
-	TAILQ_INIT(&mlist);
 	if (uvm_pglistalloc((psize_t)size, (paddr_t)0, (paddr_t)-1,
 		(paddr_t)NBPG, (paddr_t)0, &mlist, 1, 0) != 0)
 		panic("iommu_init: no memory");
