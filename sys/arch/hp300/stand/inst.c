@@ -1,4 +1,4 @@
-/*	$OpenBSD: inst.c,v 1.2 1997/02/05 11:16:37 downsj Exp $	*/
+/*	$OpenBSD: inst.c,v 1.3 1997/02/06 01:06:18 downsj Exp $	*/
 /*	$NetBSD: inst.c,v 1.6 1996/12/21 21:23:43 thorpej Exp $	*/
 
 /*
@@ -108,9 +108,9 @@ main()
 	 */
 	netio_ask = 1;
 
-	printf("\n>> OpenBSD MINIROOT INSTALLATION HP9000/%s CPU\n",
-	       getmachineid());
-	printf(">> $OpenBSD: inst.c,v 1.2 1997/02/05 11:16:37 downsj Exp $\n");
+	printf("\n>> OpenBSD [%dKB] MINIROOT INSTALLATION HP9000/%s CPU\n",
+	       (__LDPGSZ / 1024), getmachineid());
+	printf(">> $OpenBSD: inst.c,v 1.3 1997/02/06 01:06:18 downsj Exp $\n");
 	gethelp();
 
 	for (;;) {

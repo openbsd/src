@@ -1,4 +1,4 @@
-/*	$OpenBSD: uboot.c,v 1.3 1997/02/05 11:16:38 downsj Exp $	*/
+/*	$OpenBSD: uboot.c,v 1.4 1997/02/06 01:06:19 downsj Exp $	*/
 /*	$NetBSD: uboot.c,v 1.2 1996/10/14 07:33:45 thorpej Exp $	*/
 
 /*-
@@ -70,9 +70,9 @@ main()
 {
 	int currname = 0;
 
-	printf("\n>> OpenBSD UNIFIED BOOT HP9000/%s CPU\n",
-	       getmachineid());
-	printf(">> $OpenBSD: uboot.c,v 1.3 1997/02/05 11:16:38 downsj Exp $\n");
+	printf("\n>> OpenBSD [%dKB] UNIFIED BOOT HP9000/%s CPU\n",
+	       (__LDPGSZ / 1024), getmachineid());
+	printf(">> $OpenBSD: uboot.c,v 1.4 1997/02/06 01:06:19 downsj Exp $\n");
 	printf(">> Enter \"reset\" to reset system.\n");
 
 	bdev   = B_TYPE(bootdev);
