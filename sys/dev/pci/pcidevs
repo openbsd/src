@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.671 2003/09/25 07:11:15 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.672 2003/09/25 15:39:02 jason Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1047,6 +1047,7 @@ product HIFN 78XX		0x0014	7814/7851/7854
 product HIFN 8065		0x0016	8065
 product HIFN 8165		0x0017	8165
 product HIFN 8154		0x0018	8154
+product HIFN 7956		0x001d	7956
 product HIFN 7955		0x0020	7955
 
 /* Hint */
