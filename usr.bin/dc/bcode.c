@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcode.c,v 1.9 2003/10/18 19:45:42 otto Exp $	*/
+/*	$OpenBSD: bcode.c,v 1.10 2003/10/18 20:33:48 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bcode.c,v 1.9 2003/10/18 19:45:42 otto Exp $";
+static const char rcsid[] = "$OpenBSD: bcode.c,v 1.10 2003/10/18 20:33:48 otto Exp $";
 #endif /* not lint */
 
 #include <ssl/ssl.h>
@@ -253,7 +253,7 @@ src_free(void)
 	src->vtable->free(src);
 }
 
-#if 1
+#ifdef DEBUGGING
 void
 pn(const char * str, const struct number *n)
 {
