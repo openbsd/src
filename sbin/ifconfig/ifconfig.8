@@ -1,5 +1,6 @@
-.\"	$OpenBSD: ifconfig.8,v 1.8 1997/12/31 11:16:21 deraadt Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.9 1998/03/17 08:10:19 deraadt Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
+.\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -100,6 +101,13 @@ family, addresses are specified as a long hexadecimal string,
 as in the Xerox family.  However, two consecutive dots imply a zero
 byte, and the dots are optional, if the user wishes to (carefully)
 count out long strings of digits in network byte order.
+.Tn AppleTalk 
+(LLAP) addresses are specified as nn.na (Network Number.Node Address).
+Node addresses are divided into 2 classes: User Node IDs and Server
+Node IDs. 1-127($01-$7F) are for User Node IDs while 128-254($80-$FE)
+are used for Server Node IDs. Node 0($00) is not allowed (unknown)
+while Node 255($FF) is reserved for the Appletalk broadcast Hardware
+address (broadcast ID).
 .It Ar address_family
 Specifies the
 .Ar address family
@@ -109,7 +117,9 @@ with different naming schemes, specifying the address family is recommended.
 The address or protocol families currently
 supported are
 .Dq inet ,
+.Dq atalk ,
 .Dq iso ,
+.Dq ipx ,
 and
 .Dq ns .
 .It Ar Interface
@@ -225,6 +235,14 @@ There is some evidence that a number different from 1 may be useful
 for
 .Tn AFI
 37 type addresses.
+.It Cm range
+Under AppleTalk, set the interface to respond to a
+.Em netrange.
+of the form startnet-endnet. Appletalk uses this scheme instead of
+netmasks though OpenBSD implements it internally as a set of netmasks.
+.It Cm phase
+The argument following this specifies the version (phase) of the
+Appletalk network attached to the interface. Values of 1 or 2 are permitted.
 .It Cm trailers
 Request the use of a ``trailer'' link level encapsulation when
 sending (default).
@@ -279,6 +297,20 @@ causes full interface alias information for each interface to be
 displayed.
 .Pp
 Only the super-user may modify the configuration of a network interface.
+.Pp
+.Sh EXAMPLES
+.Bl -tag -width ifconfig
+.It Cm ifconfig fxp0 inet 192.168.1.10 netmask 255.255.255.0
+Assign the inet(4) address of 192.168.1.10 with a network mask of
+255.255.255.0 to interface fxp0.
+.Pp
+.It Cm ifconfig fxp0 ipx 12625920
+Assign the ipx(3) address of 12625920 sepcified in decimal to interface fxp0.
+.Pp
+.It Cm ifconfig fxp0 atalk 39108.128 range 39107-39109 phase 2
+Assign the Appletalk network 39108 and server node 128 with a network 
+range of 39107-39109 to interface fxp0 on a phase 2 AppleTalk network. 
+.El
 .Sh DIAGNOSTICS
 Messages indicating the specified interface does not exit, the
 requested address is unknown, or the user is not privileged and
