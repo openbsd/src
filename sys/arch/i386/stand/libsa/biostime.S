@@ -1,4 +1,4 @@
-/*	$OpenBSD: biostime.S,v 1.8 1997/05/29 05:24:01 mickey Exp $	*/
+/*	$OpenBSD: biostime.S,v 1.9 1997/07/08 03:41:00 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -43,21 +43,29 @@
  * int usleep(u_long us);
  *	sleep for that number of microseconds
  *	returns nonzero if failed
+ * This BIOSes do not have this call:
+ * <mho> SystemSOFT BIOS for VLSI Eagle  II Version 1.01 (2618-00)
+ * <mho> BIOS Version: 1.00.04, Date: 08/08/96
+ * <mho> (WHatever that means...)
  */
 ENTRY(usleep)
 	pushl	%ebx
+	pushl	%ecx
 
+	xorl	%edx, %edx
 	movl	8(%esp), %ecx
 	movw	%cx, %dx
 	shrl	$16, %ecx
 
 	movb	$0x86, %ah
 	BIOSINT(0x15)
+#ifdef notdef
 	xorb	%al, %al
 	jnc	1f
 	movl	%ah, %al
 1:	movzbl	%al, %eax
-
+#endif
+	popl	%ecx
 	popl	%ebx
 	ret
 
@@ -72,24 +80,22 @@ ENTRY(biostime)
 	pushl	%ecx
 	pushl	%ebx
 
-	/* Get address of buffer */
-	movl	8(%ebp), %ebx
-
 	movb	$0x02, %ah
 	BIOSINT(0x1a)
-	jc		1f
+	movb	$1, %al
+	jc	1f
 
-	movl	$0x0, %eax
+	/* Get address of buffer */
+	movl	8(%ebp), %ebx
 	movb	%ch, 0(%ebx)
 	movb	%cl, 1(%ebx)
 	movb	%dh, 2(%ebx)
 	movb	%dl, 3(%ebx)
+	xorl	%eax, %eax
 
-	jmp		2f
+1:	movzbl	%al, %eax
 
-1:	movl	$0x01, %eax
-
-2:	popl	%ebx
+	popl	%ebx
 	popl	%ecx
 	popl	%ebp
 	ret
@@ -105,24 +111,22 @@ ENTRY(biosdate)
 	pushl	%ecx
 	pushl	%ebx
 
-	/* Get address of buffer */
-	movl	8(%ebp), %ebx
-
 	movb	$0x04, %ah
 	BIOSINT(0x1a)
-	jc		1f
+	movb	$1, %al
+	jc	1f
 
-	movl	$0x0, %eax
+	/* Get address of buffer */
+	movl	8(%ebp), %ebx
 	movb	%ch, 0(%ebx)
 	movb	%cl, 1(%ebx)
 	movb	%dh, 2(%ebx)
 	movb	%dl, 3(%ebx)
+	xorl	%eax, %eax
 
-	jmp		2f
+1:	movzbl	%al, %eax
 
-1:	movl	$0x01, %eax
-
-2:	popl	%ebx
+	popl	%ebx
 	popl	%ecx
 	popl	%ebp
 	ret

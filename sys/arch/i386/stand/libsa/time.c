@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.c,v 1.3 1997/05/31 15:36:41 mickey Exp $	*/
+/*	$OpenBSD: time.c,v 1.4 1997/07/08 03:41:00 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -38,24 +38,17 @@
 
 #define isleap(y) ((((y) % 4) == 0 && ((y) % 100) != 0) || ((y) % 400) == 0)
 
-
 /*
  * Convert from bcd (packed) to int
  */
-static int bcdtoint(char c){
-	int tens;
-	int ones;
+static int
+bcdtoint(register char c){
 
-	tens = (c & 0xf0) >> 4;
-	tens *= 10;
-	ones = c & 0x0f;
-
-	return (tens + ones);
+	return ((c & 0xf0) >> 4) * 10 + (c & 0x0f);
 }
 
-
 /* Number of days per month */
-static int monthcount[] = {
+static char monthcount[] = {
 	31, 28, 31, 30, 31, 30, 31,
 	31, 30, 31, 30, 31, 30, 31
 };
@@ -64,73 +57,52 @@ static int monthcount[] = {
  * Quick compute of time in seconds since the Epoch
  */
 static time_t
-compute(int year, int month, int day, int hour, int min, int sec){
-	int yearsec, daysec, timesec;
-	int i;
+compute(int year, int month, int day, int hour, int min, int sec) {
+	register time_t tt;
+	register int i;
 
 	/* Compute years of seconds */
-	yearsec = year - 1970;
-	yearsec *= (365 * 24 * 60 * 60);
+	tt = (year - 1970) * (365 * 24 * 60 * 60);
 
 	/* Compute days of seconds */
-	daysec = 0;
-	for(i = 1; i < month; i++){
-		daysec += monthcount[i];
-	}
-	daysec += day;
+	for(i = 1; i < month; i++)
+		day += monthcount[i];
 
 	/* Compute for leap year */
-	for(i = 1970; i < year; i++){
+	for(i = 1970; i < year; i++)
 		if(isleap(i))
-			daysec += 1;
-	}
-	daysec *= (24 * 60 * 60);
+			day++;
+	tt += day * (24 * 60 * 60);
 
 	/* Plus the time */
-	timesec = sec;
-	timesec += (min * 60);
-	timesec += (hour * 60 * 60);
+	tt += sec + 60 * (min + 60 * hour);
 
-	/* Return sum */
-	return (yearsec + daysec + timesec);
+	return tt;
 }
 
 
 /*
  * Return time since epoch
  */
-time_t getsecs(void){
+time_t
+getsecs(void) {
+
 	char timebuf[4], datebuf[4];
-	int st1, st2;
-	time_t tt = 0;
 
 	/* Query BIOS for time & date */
-	st1 = biostime(timebuf);
-	st2 = biosdate(datebuf);
-
-	/* Convert to seconds since Epoch */
-	if(!st1 && !st2){
-		int year, month, day;
-		int hour, min, sec;
+	if(!biostime(timebuf) && !biosdate(datebuf)) {
+#ifdef notdef
 		int dst;
 
 		dst = bcdtoint(timebuf[3]);
-		sec = bcdtoint(timebuf[2]);
-		min = bcdtoint(timebuf[1]);
-		hour = bcdtoint(timebuf[0]);
-
-		year = bcdtoint(datebuf[0]);
-		year *= 100;
-		year += bcdtoint(datebuf[1]);
-		month = bcdtoint(datebuf[2]);
-		day = bcdtoint(datebuf[3]);
-#ifdef notdef
-		printf("%d/%d/%d - %d:%d:%d\n",
-		       day, month, year, hour, min, sec);
 #endif
-		tt = compute(year, month, day, hour, min, sec);
-		return(tt);
-	}
+		/* Convert to seconds since Epoch */
+		return compute(bcdtoint(datebuf[0])*100 + bcdtoint(datebuf[1]),
+			       bcdtoint(datebuf[2]), bcdtoint(datebuf[3]),
+			       bcdtoint(timebuf[0]), bcdtoint(timebuf[1]),
+			       bcdtoint(timebuf[2]));
+	} else
+		errno = EIO;
 
 	return(1);
 }
@@ -139,33 +111,23 @@ time_t getsecs(void){
 /*
  * Return time since epoch
  */
-void time_print(void){
+void
+time_print(void) {
 	char timebuf[4], datebuf[4];
-	int st1, st2;
 
 	/* Query BIOS for time & date */
-	st1 = biostime(timebuf);
-	st2 = biosdate(datebuf);
-
-	/* Convert to sane values */
-	if (!st1 && !st2) {
-		int year, month, day;
-		int hour, min, sec;
+	if(!biostime(timebuf) && !biosdate(datebuf)) {
+#ifdef notdef
 		int dst;
 
 		dst = bcdtoint(timebuf[3]);
-		sec = bcdtoint(timebuf[2]);
-		min = bcdtoint(timebuf[1]);
-		hour = bcdtoint(timebuf[0]);
-
-		year = bcdtoint(datebuf[0]);
-		year *= 100;
-		year += bcdtoint(datebuf[1]);
-		month = bcdtoint(datebuf[2]);
-		day = bcdtoint(datebuf[3]);
-
-		printf("%d/%d/%d - %d:%d:%d\n", day, month, year, hour, min, sec);
-
+#endif
+		/* Convert to sane values */
+		printf("%d/%d/%d - %d:%d:%d\n",
+		       bcdtoint(datebuf[3]), bcdtoint(datebuf[2]),
+		       bcdtoint(datebuf[0]) * 100 + bcdtoint(datebuf[1]),
+		       bcdtoint(timebuf[0]), bcdtoint(timebuf[1]),
+		       bcdtoint(timebuf[2]));
 	} else
 		printf("Error in biostime() or biosdate().\n");
 
@@ -180,7 +142,7 @@ sleep(i)
 
 	/* loop for that number of seconds, polling BIOS,
 	   so that it may handle interrupts */
-	for (t = getsecs(); (getsecs() - t) < i; ischar());
+	for (t = getsecs() + i; getsecs() < t; ischar());
 
 	return 0;
 }
