@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hostname.1,v 1.9 1999/10/05 19:58:31 ericj Exp $
+.\"	$OpenBSD: hostname.1,v 1.10 2000/03/17 18:15:13 aaron Exp $
 .\"	$NetBSD: hostname.1,v 1.11 1995/09/07 06:28:39 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1988, 1990, 1993
@@ -47,10 +47,11 @@
 .Sh DESCRIPTION
 The
 .Nm
-utility prints the name of the current host.  The super-user can
-set the host name by supplying a 
+utility prints the name of the current host.
+The superuser can set the host name by supplying a 
 .Pa /etc/myname 
-file. This is used at system boot time by
+file.
+This is used at system boot time by
 .Xr /etc/rc 8 
 to initialize the hostname.
 .Pp

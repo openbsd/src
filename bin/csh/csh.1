@@ -1,4 +1,4 @@
-.\"	$OpenBSD: csh.1,v 1.32 2000/01/18 21:03:43 aaron Exp $
+.\"	$OpenBSD: csh.1,v 1.33 2000/03/17 18:15:12 aaron Exp $
 .\"	$NetBSD: csh.1,v 1.10 1995/03/21 09:02:35 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -56,7 +56,8 @@ job control facilities (see
 interactive file name
 and user name completion (see
 .Sx File name completion ) ,
-and a C-like syntax. It is used both as an interactive
+and a C-like syntax.
+It is used both as an interactive
 login shell and a shell script command processor.
 .Ss Argument list processing
 If the first argument (argument 0) to the shell is a dash
@@ -102,12 +103,13 @@ is the only flag specified).
 .It Fl m
 Read
 .Pa \&.cshrc ,
-regardless of its owner and group. This option is dangerous and should only
-be used by
+regardless of its owner and group.
+This option is dangerous and should only be used by
 .Xr su 1 .
 .It Fl n
 Commands are parsed, but not executed.
-This aids in syntactic checking of shell scripts. When used interactively, the
+This aids in syntactic checking of shell scripts.
+When used interactively, the
 shell can be terminated by pressing control-D (end-of-file character), since
 .Ic exit
 will not work.
@@ -293,11 +295,11 @@ respectively. (See
 .Ss Jobs
 The shell associates a
 .Em job
-with each pipeline.  It keeps
-a table of current jobs, printed by the
+with each pipeline.
+It keeps a table of current jobs, printed by the
 .Ic jobs
-command, and assigns them small integer numbers.  When
-a job is started asynchronously with
+command, and assigns them small integer numbers.
+When a job is started asynchronously with
 .Ql & ,
 the shell prints a line that looks
 like:
@@ -316,8 +318,8 @@ If you are running a job and wish to do something else you may hit
 signal to the current job.
 The shell will then normally show that the job has been
 .Dq Stopped ,
-and print another prompt.  You can then manipulate the state of this job,
-putting it in the
+and print another prompt.
+You can then manipulate the state of this job, putting it in the
 .Em background
 with the
 .Ic bg
@@ -331,7 +333,8 @@ A
 .Ic ^Z
 takes effect immediately and
 is like an interrupt in that pending output and unread input are discarded
-when it is typed.  There is another special key
+when it is typed.
+There is another special key
 .Ic ^Y
 that does not generate a
 .Dv SIGSTOP
@@ -342,17 +345,19 @@ This request can usefully be typed ahead when you have prepared some commands
 for a job that you wish to stop after it has read them.
 .Pp
 A job being run in the background will stop if it tries to read
-from the terminal.  Background jobs are normally allowed to produce output,
+from the terminal.
+Background jobs are normally allowed to produce output,
 but this can be disabled by giving the command
 .Ic stty tostop .
 If you set this
 tty option, then background jobs will stop when they try to produce
 output like they do when they try to read input.
 .Pp
-There are several ways to refer to jobs in the shell.  The character
+There are several ways to refer to jobs in the shell.
+The character
 .Ql %
-introduces a job name.  If you wish to refer to job number 1, you can
-name it as
+introduces a job name.
+If you wish to refer to job number 1, you can name it as
 .Ql %1 .
 Just naming a job brings it to the foreground; thus
 .Ic %1
@@ -385,8 +390,8 @@ The abbreviation
 .Ql %+
 refers to the current job and
 .Ql %\-
-refers to the previous job.  For close
-analogy with the syntax of the
+refers to the previous job.
+For close analogy with the syntax of the
 .Ic history
 mechanism (described below),
 .Ql %%
@@ -396,12 +401,14 @@ The job control mechanism requires that the
 .Xr stty 1
 option
 .Ic new
-be set. It is an artifact from a
+be set.
+It is an artifact from a
 .Em new
 implementation
 of the
 tty driver that allows generation of interrupt characters from
-the keyboard to tell jobs to stop.  See
+the keyboard to tell jobs to stop.
+See
 .Xr stty 1
 for details
 on setting options in the new tty driver.
@@ -409,7 +416,8 @@ on setting options in the new tty driver.
 This shell learns immediately whenever a process changes state.
 It normally informs you whenever a job becomes blocked so that
 no further progress is possible, but only just before it prints
-a prompt.  This is done so that it does not otherwise disturb your work.
+a prompt.
+This is done so that it does not otherwise disturb your work.
 If, however, you set the shell variable
 .Va notify ,
 the shell will notify you immediately of changes of status in background
@@ -417,7 +425,8 @@ jobs.
 There is also a shell command
 .Ic notify
 that marks a single process so that its status changes will be immediately
-reported.  By default
+reported.
+By default
 .Ic notify
 marks the current process;
 simply say
@@ -429,7 +438,8 @@ be warned that
 .Dq You have stopped jobs .
 You may use the
 .Ic jobs
-command to see what they are.  If you do this or immediately try to
+command to see what they are.
+If you do this or immediately try to
 exit again, the shell will not warn you a second time, and the suspended
 jobs will be terminated.
 .Ss File name completion
@@ -480,8 +490,8 @@ incomplete, since there are two file names matching the prefix
 If a partial file name is followed by the end-of-file character
 (usually control-D), then, instead of completing the name,
 .Nm
-will list all file names matching the prefix.  For example,
-the input
+will list all file names matching the prefix.
+For example, the input
 .Pp
 .Dl % vi D<control-D>
 .Pp
@@ -510,11 +520,13 @@ can be inhibited by setting the variable
 .Va nobeep .
 .Pp
 Normally, all files in the particular directory are candidates
-for name completion.  Files with certain suffixes can be excluded
+for name completion.
+Files with certain suffixes can be excluded
 from consideration by setting the variable
 .Va fignore
 to the
-list of suffixes to be ignored.  Thus, if
+list of suffixes to be ignored.
+Thus, if
 .Va fignore
 is set by
 the command
@@ -534,10 +546,11 @@ ignoring the files
 and
 .Qq xmpl.out .
 However, if the only completion possible requires not ignoring these
-suffixes, then they are not ignored.  In addition,
+suffixes, then they are not ignored.
+In addition,
 .Va fignore
-does not affect the listing of file names by control-D.  All files
-are listed regardless of their suffixes.
+does not affect the listing of file names by control-D.
+All files are listed regardless of their suffixes.
 .Ss Substitutions
 We now describe the various transformations the shell performs on the
 input in the order in which they occur.
@@ -704,7 +717,8 @@ Apply the change once on each word, prefixing the above; e.g.,
 .Ql g& .
 .It a
 Apply the change as many times as possible on a single word, prefixing
-the above. It can be used together with
+the above.
+It can be used together with
 .Ql g
 to apply a substitution globally.
 .It p
@@ -720,8 +734,8 @@ but break into words at blanks, tabs and newlines.
 Unless preceded by a
 .Ql g
 the change is applied only to the first
-modifiable word.  With substitutions, it is an error for no word to be
-applicable.
+modifiable word.
+With substitutions, it is an error for no word to be applicable.
 .Pp
 The left-hand side of substitutions are not regular expressions in the sense
 of the editors, but instead strings.
@@ -964,7 +978,8 @@ Braces insulate
 .Ar name
 from following characters that would otherwise be part of it.
 Shell variables have names consisting of up to 20 letters and digits
-starting with a letter.  The underscore character is considered a letter.
+starting with a letter.
+The underscore character is considered a letter.
 If
 .Ar name
 is not a shell variable, but is set in the environment, then
@@ -1149,7 +1164,7 @@ When followed by a name consisting of letters, digits and
 .Ql \-
 characters,
 the shell searches for a user with that name and substitutes their
-home directory;  thus
+home directory; thus
 .Dq ~ken
 might expand to
 .Dq /usr/ken
@@ -1297,7 +1312,8 @@ Note that the default standard input for a command run detached is
 modified to be the empty file
 .Pa /dev/null ;
 instead the standard input
-remains as the original standard input of the shell.  If this is a terminal
+remains as the original standard input of the shell.
+If this is a terminal
 and if the process attempts to read from the terminal, then the process
 will block and the user will be notified (see
 .Sx Jobs
@@ -1371,8 +1387,8 @@ hand side is a
 .Ar pattern
 (containing, e.g., *'s, ?'s, and instances of
 .Dq [...] )
-against which the left-hand operand is matched.  This reduces the
-need for use of the
+against which the left-hand operand is matched.
+This reduces the need for use of the
 .Ar switch
 statement in shell scripts when all that is really needed is pattern matching.
 .Pp
@@ -1486,7 +1502,8 @@ or
 Shows the amount of dynamic memory acquired, broken down into used and
 free memory.
 With an argument shows the number of free and used blocks in each size
-category.  The categories start at size 8 and double at each step.
+category.
+The categories start at size 8 and double at each step.
 This command's output may vary across system types, since
 systems other than the
 .Tn VAX
@@ -1590,7 +1607,8 @@ The arguments are read as input to the shell and the resulting
 command(s) executed in the context of the current shell.
 This is usually used to execute commands
 generated as the result of command or variable substitution, since
-parsing occurs before these substitutions.  See
+parsing occurs before these substitutions.
+See
 .Xr tset 1
 for an example of using
 .Ic eval .
@@ -1804,11 +1822,12 @@ is given, then
 the current limit is printed; if no
 .Ar resource
 is given, then
-all limitations are given.  If the
+all limitations are given.
+If the
 .Fl h
-flag is given, the hard limits are used instead of the current
-limits.  The hard limits impose a ceiling on the values of
-the current limits.  Only the super-user may raise the hard limits,
+flag is given, the hard limits are used instead of the current limits.
+The hard limits impose a ceiling on the values of the current limits.
+Only the super-user may raise the hard limits,
 but a user may lower or raise the current limits within the legal range.
 .Pp
 Resources controllable currently include
@@ -1830,7 +1849,8 @@ size of the automatically extended stack region), and
 The
 .Ar maximum-use
 may be given as a (floating point or integer)
-number followed by a scale factor.  For all limits other than
+number followed by a scale factor.
+For all limits other than
 .Ar cputime
 the default scale is
 .Ql k
@@ -1913,7 +1933,8 @@ are effectively
 .It Ic notify % Ns Ar job ...
 Causes the shell to notify the user asynchronously when the status of the
 current or specified jobs change; normally notification is presented
-before a prompt.  This is automatic if the shell variable
+before a prompt.
+This is automatic if the shell variable
 .Va notify
 is set.
 .Pp
@@ -1986,17 +2007,19 @@ With a numeric argument,
 rotates the
 .Ar n Ns \'th
 argument of the directory
-stack around to be the top element and changes to it.  The members
+stack around to be the top element and changes to it.
+The members
 of the directory stack are numbered from the top starting at 0.
 .Pp
 .It Ic rehash
 Causes the internal hash table of the contents of the directories in
 the
 .Va path
-variable to be recomputed.  This is needed if new commands are added
-to directories in the
+variable to be recomputed.
+This is needed if new commands are added to directories in the
 .Ic path
-while you are logged in.  This should only be necessary if you add
+while you are logged in.
+This should only be necessary if you add
 commands to one of your own directories, or if a systems programmer
 changes the contents of a system directory.
 .Pp
@@ -2059,7 +2082,8 @@ The last form sets the value of environment variable
 .Ar name
 to be
 .Ar value ,
-a single string.  The second form sets
+a single string.
+The second form sets
 .Ar name
 to an empty string.
 The most commonly used environment variables
@@ -2161,13 +2185,16 @@ If arguments are given
 the specified simple command is timed and a time summary
 as described under the
 .Ic time
-variable is printed.  If necessary, an extra shell is created to print the time
+variable is printed.
+If necessary, an extra shell is created to print the time
 statistic when the command completes.
 .Pp
 .It Ic umask
 .It Ic umask Ar value
 The file creation mask is displayed (first form) or set to the specified
-value (second form).  The mask is given in octal.  Common values for
+value (second form).
+The mask is given in octal.
+Common values for
 the mask are 002 giving all access to the group and read and execute
 access to others or 022 giving all access except write access for
 users in the group or others.
@@ -2184,7 +2211,7 @@ Use of the internal hash table to speed location of executed programs
 is disabled.
 .Pp
 .It Ic unlimit
-.It Ic unlimit Ar  resource
+.It Ic unlimit Ar resource
 .It Ic unlimit Fl h
 .It Ic unlimit Fl h Ar resource
 Removes the limitation on
@@ -2193,10 +2220,11 @@ If no
 .Ar resource
 is specified, then all
 .Ar resource
-limitations are removed.  If
+limitations are removed.
+If
 .Fl h
-is given, the corresponding hard limits are removed.  Only the
-super-user may do this.
+is given, the corresponding hard limits are removed.
+Only the superuser may do this.
 .Pp
 .It Ic unset Ar pattern
 All variables whose names match the specified pattern are removed.
@@ -2209,7 +2237,8 @@ It is not an error for nothing to be
 .Pp
 .It Ic unsetenv Ar pattern
 Removes all variables whose name match the specified pattern from the
-environment.  See also the
+environment.
+See also the
 .Ic setenv
 command above and
 .Xr printenv 1 .
@@ -2370,7 +2399,8 @@ since these substitutions are then done selectively.
 Enable file name completion.
 .It Ic histchars
 Can be given a string value to change the characters used in history
-substitution.  The first character of its value is used as the
+substitution.
+The first character of its value is used as the
 history substitution character, replacing the default character
 .Ql ! .
 The second character of its value replaces the character
@@ -2471,7 +2501,8 @@ variable after reading
 .Ar \&.cshrc ,
 and each time the
 .Ar path
-variable is reset.  If new commands are added to these directories
+variable is reset.
+If new commands are added to these directories
 while the shell is active, it may be necessary to do a
 .Ic rehash
 or the commands may not be found.
@@ -2701,7 +2732,8 @@ Shell built-in functions are not stoppable/restartable.
 Command sequences of the form
 .Dq a \&; b \&; c
 are also not handled gracefully
-when stopping is attempted.  If you suspend
+when stopping is attempted.
+If you suspend
 .Ql b ,
 the shell will immediately execute
 .Ql c .
@@ -2713,7 +2745,8 @@ a sub-shell; i.e.,
 .Pp
 Control over tty output after processes are started is primitive;
 perhaps this will inspire someone to work on a good virtual
-terminal interface.  In a virtual terminal interface much more
+terminal interface.
+In a virtual terminal interface much more
 interesting things could be done with output control.
 .Pp
 Alias substitution is most often used to clumsily simulate shell procedures;
@@ -2725,7 +2758,8 @@ are not placed on the
 .Ic history
 list.
 Control structure should be parsed instead of being recognized as built-in
-commands.  This would allow control commands to be placed anywhere,
+commands.
+This would allow control commands to be placed anywhere,
 to be combined with
 .Ql | ,
 and to be used with

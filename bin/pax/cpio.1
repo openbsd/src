@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: cpio.1,v 1.9 2000/03/05 00:28:52 aaron Exp $
+.\"	$OpenBSD: cpio.1,v 1.10 2000/03/17 18:15:15 aaron Exp $
 .\"
 .Dd February 16, 1997
 .Dt CPIO 1
@@ -70,7 +70,8 @@ archive.
 The options are as follows:
 .Bl -tag -width Fl
 .It Fl o
-Create an archive.  Reads the list of files to store in the
+Create an archive.
+Reads the list of files to store in the
 archive from standard input, and writes the archive on standard
 output.
 .Bl -tag -width Fl
@@ -92,8 +93,8 @@ Set the block size of output to
 .It Fl O Ar archive
 Use the specified file name as the archive to write to.
 .It Fl H Ar format
-Write the archive in the specified format.  Recognized
-formats are:
+Write the archive in the specified format.
+Recognized formats are:
 .Bl -tag -width Ds
 .It Ar bcpio
 Old binary cpio format.
@@ -109,8 +110,8 @@ POSIX ustar format.
 .It Fl L
 Follow symbolic links.
 .It Fl v
-Be verbose about operations.  List filenames as they are
-written to the archive.
+Be verbose about operations.
+List filenames as they are written to the archive.
 .It Fl z
 Compress archive using
 .Xr gzip 1
@@ -121,7 +122,8 @@ Compress archive using
 format.
 .El
 .It Fl i
-Restore files from an archive.  Reads the archive file from
+Restore files from an archive.
+Reads the archive file from
 standard input and extracts files matching the
 .Ar patterns
 that were specified on the command line.
@@ -151,8 +153,8 @@ given on the command line.
 .It Fl I Ar archive
 Use the specified file as the input for the archive.
 .It Fl H Ar format
-Read an archive of the specified format.  Recognized
-formats are:
+Read an archive of the specified format.
+Recognized formats are:
 .Bl -tag -width Ds
 .It Ar bcpio
 Old binary cpio format.
@@ -180,8 +182,8 @@ directories will be created.
 Overwrite files even when the file in the archive is
 older than the one that will be overwritten.
 .It Fl v
-Be verbose about operations.  List filenames as they are
-copied in from the archive.
+Be verbose about operations.
+List filenames as they are copied in from the archive.
 .It Fl z
 Uncompress archive using
 .Xr gzip 1
@@ -216,8 +218,8 @@ Restore modification times on files.
 Overwrite files even when the original file being copied is
 older than the one that will be overwritten.
 .It Fl v
-Be verbose about operations.  List filenames as they are
-copied.
+Be verbose about operations.
+List filenames as they are copied.
 .El
 .El
 .Sh ERRORS
@@ -238,7 +240,8 @@ ID, group ID, file mode or access and modification times when the
 .Fl p
 option is specified, a diagnostic message is written to standard
 error and a non-zero exit value will be returned, but processing
-will continue.  In the case where
+will continue.
+In the case where
 .Nm
 cannot create a link to a file,
 .Nm

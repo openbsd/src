@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: tar.1,v 1.23 1999/08/16 18:40:03 aaron Exp $
+.\"	$OpenBSD: tar.1,v 1.24 2000/03/17 18:15:15 aaron Exp $
 .\"
 .Dd June 11, 1996
 .Dt TAR 1
@@ -52,7 +52,8 @@
 The
 .Nm
 command creates, adds files to, or extracts files from an
-archive file in \*Qtar\*U format.  A tar archive is often
+archive file in \*Qtar\*U format.
+A tar archive is often
 stored on a magnetic tape, but can be a floppy or a regular
 disk file.
 .Pp
@@ -62,22 +63,27 @@ One of the following flags must be present:
 Create new archive, or overwrite an existing archive,
 adding the specified files to it.
 .It Fl r
-Append the named new files to existing archive.  Note that
-this will only work on media on which an end-of-file mark
+Append the named new files to existing archive.
+Note that this will only work on media on which an end-of-file mark
 can be overwritten.
 .It Fl t
-List contents of archive.  If any files are named on the
+List contents of archive.
+If any files are named on the
 command line, only those files will be listed.
 .It Fl u
 Alias for
 .Fl r .
 .It Fl x
-Extract files from archive.  If any files are named on the
+Extract files from archive.
+If any files are named on the
 command line, only those files will be extracted from the
-archive.  If more than one copy of a file exists in the
+archive.
+If more than one copy of a file exists in the
 archive, later copies will overwrite earlier copies during
-extraction.  The file mode and modification time are preserved
-if possible.  The file mode is subject to modification by the
+extraction.
+The file mode and modification time are preserved
+if possible.
+The file mode is subject to modification by the
 .Xr umask 2 .
 .El
 .Pp
@@ -87,14 +93,16 @@ flags may be used:
 .It Fl b Ar "blocking factor"
 Set blocking factor to use for the archive.
 .Nm
-uses 512 byte blocks.  The default is 20, the maximum is 126.
+uses 512 byte blocks.
+The default is 20, the maximum is 126.
 Archives with a blocking factor larger 63 violate the
 .Tn POSIX
 standard and will not be portable to all systems.
 .It Fl e
 Stop after first error.
 .It Fl f Ar archive
-Filename where the archive is stored.  Defaults to
+Filename where the archive is stored.
+Defaults to
 .Pa /dev/rst0 .
 .It Fl h
 Follow symbolic links as if they were normal files
@@ -115,7 +123,8 @@ Preserve user and group ID as well as file mode regardless of
 the current
 .Xr umask 2 .
 The setuid and setgid bits are only preserved if the user is
-the superuser.  Only meaningful in conjunction with the
+the superuser.
+Only meaningful in conjunction with the
 .Fl x
 flag.
 .It Fl q
@@ -160,7 +169,8 @@ The optional trailing
 .Cm g
 continues to apply the substitution expression to the pathname substring
 which starts with the first character following the end of the last successful
-substitution. The first unsuccessful substitution stops the operation of the
+substitution.
+The first unsuccessful substitution stops the operation of the
 .Cm g
 option.
 The optional trailing
@@ -174,7 +184,8 @@ are not selected and will be skipped.
 .It Fl v
 Verbose operation mode.
 .It Fl w
-Interactively rename files.  This option causes
+Interactively rename files.
+This option causes
 .Nm
 to prompt the user for the filename to use when storing or
 extracting files in an archive.
@@ -182,7 +193,8 @@ extracting files in an archive.
 Compress archive using gzip.
 .It Fl C Ar directory
 This is a positional argument which sets the working directory for the
-following files.  When extracting, files will be extracted into
+following files.
+When extracting, files will be extracted into
 the specified directory; when creating, the specified files will be matched
 from the directory.
 .It Fl H
@@ -235,7 +247,8 @@ ID, group ID, file mode or access and modification times when the
 .Fl p
 option is specified, a diagnostic message is written to standard
 error and a non-zero exit value will be returned, but processing
-will continue.  In the case where
+will continue.
+In the case where
 .Nm
 cannot create a link to a file,
 .Nm

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chmod.1,v 1.15 1999/09/23 09:56:53 aaron Exp $
+.\"	$OpenBSD: chmod.1,v 1.16 2000/03/17 18:15:12 aaron Exp $
 .\"	$NetBSD: chmod.1,v 1.8 1995/03/21 09:02:07 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
@@ -57,7 +57,8 @@ The
 utility modifies the file mode bits of the listed files
 as specified by the
 .Ar mode
-operand. The mode of a file dictates its permissions, among other attributes.
+operand.
+The mode of a file dictates its permissions, among other attributes.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -164,9 +165,10 @@ and
 .Pp
 The execute bit for a directory is often referred to as the
 .Dq search
-bit. In order to access a file, a user must have execute permission in each
-directory leading up to it in the filesystem hierarchy. For example, to access
-the file
+bit.
+In order to access a file, a user must have execute permission in each
+directory leading up to it in the filesystem hierarchy.
+For example, to access the file
 .Pa /bin/ls ,
 execute permission is needed on
 .Pa / ,
@@ -332,32 +334,32 @@ Make a file readable by anyone and writable by the owner only.
 .Pp
 Deny write permission to group and others.
 .Pp
-.Dl Ic  chmod go-w file
+.Dl Ic chmod go-w file
 .Pp
 Set the read and write permissions to the usual defaults, but
 retain any execute permissions that are currently set.
 .Pp
-.Dl Ic  chmod =rw,+X file
+.Dl Ic chmod =rw,+X file
 .Pp
 Make a directory or file searchable/executable by everyone if it is
 already searchable/executable by anyone.
 .Pp
-.Dl Ic  chmod +X file
+.Dl Ic chmod +X file
 .Pp
 Any of the following will make a file readable/executable by everyone and
 writable by the owner only.
 .Pp
-.Dl Ic  chmod 755 file
-.Dl Ic  chmod u=rwx,go=rx file
-.Dl Ic  chmod u=rwx,go=u-w file
+.Dl Ic chmod 755 file
+.Dl Ic chmod u=rwx,go=rx file
+.Dl Ic chmod u=rwx,go=u-w file
 .Pp
 Clear all mode bits for group and others.
 .Pp
-.Dl Ic  chmod go= file
+.Dl Ic chmod go= file
 .Pp
 Set the group bits equal to the user bits, but clear the group write bit.
 .Pp
-.Dl Ic  chmod g=u-w file
+.Dl Ic chmod g=u-w file
 .Sh SEE ALSO
 .Xr chgrp 1 ,
 .Xr find 1 ,

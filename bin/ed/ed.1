@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ed.1,v 1.20 1999/07/04 18:59:37 aaron Exp $
+.\"	$OpenBSD: ed.1,v 1.21 2000/03/17 18:15:13 aaron Exp $
 .\"
 .Dd May 2, 1993
 .Dt ED 1
@@ -59,12 +59,12 @@ When an input command, such as
 .Em c
 (change), is given,
 .Nm
-enters input mode.  This is the primary means
-of adding text to a file.
+enters input mode.
+This is the primary means of adding text to a file.
 In this mode, no commands are available;
 instead, the standard input is written
-directly to the editor buffer.  Lines consist of text up to and
-including a
+directly to the editor buffer.
+Lines consist of text up to and including a
 .Em newline
 character.
 Input mode is terminated by
@@ -81,7 +81,8 @@ command deletes lines; the
 .Em m
 command moves lines, and so on.
 It is possible to modify only a portion of a line by means of replacement,
-as in the example above.  However, even here, the
+as in the example above.
+However, even here, the
 .Em s
 command is applied to whole lines at a time.
 .Pp
@@ -95,13 +96,15 @@ commands have the structure:
 .Ed
 .Pp
 The address(es) indicate the line or range of lines to be affected by the
-command.  If fewer addresses are given than the command accepts, then
+command.
+If fewer addresses are given than the command accepts, then
 default addresses are supplied.
 .Pp
 .Ss OPTIONS
 .Bl -tag -width Ds
 .It Fl s
-Suppresses diagnostics. This should be used if
+Suppresses diagnostics.
+This should be used if
 .Nm
 standard input is from a script.
 .It Fl x
@@ -110,18 +113,19 @@ Prompts for an encryption key to be used in subsequent reads and writes
 .Em x
 command).
 .It Fl p Ar string
-Specifies a command prompt.  This may be toggled on and off with the
+Specifies a command prompt.
+This may be toggled on and off with the
 .Em P
 command.
 .It Ar file
-Specifies the name of a file to read.  If
+Specifies the name of a file to read.
+If
 .Ar file
 is prefixed with a
 bang
 .Pq Ql \&! ,
-then it is interpreted as a shell command.  In this case,
-what is read is
-the standard output of
+then it is interpreted as a shell command.
+In this case, what is read is the standard output of
 .Ar file
 executed via
 .Xr sh 1 .
@@ -141,13 +145,14 @@ maintains a
 which is
 typically supplied to commands as the default address when none is specified.
 When a file is first read, the current address is set to the last line
-of the file.  In general, the current address is set to the last line
+of the file.
+In general, the current address is set to the last line
 affected by a command.
 .Pp
 A line address is
 constructed from one of the bases in the list below, optionally followed
-by a numeric offset.  The offset may include any combination
-of digits, operators (i.e.,
+by a numeric offset.
+The offset may include any combination of digits, operators (i.e.,
 .Em +
 ,
 .Em -
@@ -166,9 +171,12 @@ This means "before the first line,"
 and is legal wherever it makes sense.
 .Pp
 An address range is two addresses separated either by a comma or
-semi-colon. The value of the first address in a range cannot exceed the
-value of the second.  If only one address is given in a range, then
-the second address is set to the given address.  If an
+semi-colon.
+The value of the first address in a range cannot exceed the
+value of the second.
+If only one address is given in a range, then
+the second address is set to the given address.
+If an
 .Em n Ns No -tuple
 of addresses is given where
 .Em n > 2,
@@ -178,7 +186,8 @@ the
 If only one address is expected, then the last address is used.
 .Pp
 Each address in a comma-delimited range is interpreted relative to the
-current address.  In a semi-colon-delimited range, the first address is
+current address.
+In a semi-colon-delimited range, the first address is
 used to set the current address, and the second address is interpreted
 relative to the first.
 .Pp
@@ -221,13 +230,13 @@ next line, where
 .Em n
 is a non-negative number.
 .It Em \&, No or Em %
-The first through last lines in the buffer.  This is equivalent to
-the address range
+The first through last lines in the buffer.
+This is equivalent to the address range
 .Em 1,$.
 .It Em \&;
 The
-current through last lines in the buffer.  This is equivalent to
-the address range
+current through last lines in the buffer.
+This is equivalent to the address range
 .Em .,$.
 .It Em / Ns No re Ns Em /
 The
@@ -272,7 +281,8 @@ command for selecting old text to be replaced with new.
 .Pp
 In addition to a specifying string literals, regular expressions can
 represent
-classes of strings.  Strings thus represented are said to be matched
+classes of strings.
+Strings thus represented are said to be matched
 by the corresponding regular expression.
 If it is possible for a regular expression
 to match several strings in a line, then the left-most longest match is
@@ -395,11 +405,13 @@ Subexpressions are ordered relative to
 their left delimiter.
 .It Em *
 Matches the single character regular expression or subexpression
-immediately preceding it zero or more times.  If
+immediately preceding it zero or more times.
+If
 .Em *
 is the first
 character of a regular expression or subexpression, then it matches
-itself.  The
+itself.
+The
 .Em *
 operator sometimes yields unexpected results.
 For example, the regular expression
@@ -453,7 +465,8 @@ An interrupt (typically ^C) has the effect of aborting the current command
 and returning the editor to command mode.
 .Pp
 .Nm
-recognizes the following commands.  The commands are shown together with
+recognizes the following commands.
+The commands are shown together with
 the default address or address range supplied if none is
 specified (in parenthesis), and other possible arguments on the right.
 .Bl -tag -width Dxxs
@@ -462,14 +475,16 @@ Appends text to the buffer after the addressed line.
 Text is entered in input mode.
 The current address is set to last line entered.
 .It (.,.) Ns Em c
-Changes lines in the buffer.  The addressed lines are deleted
+Changes lines in the buffer.
+The addressed lines are deleted
 from the buffer, and text is appended in their place.
 Text is entered in input mode.
 The current address is set to last line entered.
 .It (.,.) Ns Em d
 Deletes the addressed lines from the buffer.
 If there is a line after the deleted range, then the current address is set
-to this line. Otherwise the current address is set to the line
+to this line.
+Otherwise the current address is set to the line
 before the deleted range.
 .It Em e No file
 Edits
@@ -555,7 +570,8 @@ The format of
 .Em command-list
 is the same as that of the
 .Em g
-command.  A newline alone acts as a null command list.
+command.
+A newline alone acts as a null command list.
 A single
 .Em &
 repeats the last non-null command list.
@@ -573,7 +589,8 @@ Inserts text in the buffer before the current line.
 Text is entered in input mode.
 The current address is set to the last line entered.
 .It (.,.+1) Ns Em j
-Joins the addressed lines.  The addressed lines are
+Joins the addressed lines.
+The addressed lines are
 deleted from the buffer and replaced by a single
 line containing their joined text.
 The current address is set to the resultant line.
@@ -598,7 +615,8 @@ before displaying the next screen.
 The current address is set to the last line
 printed.
 .It (.,.) Ns Em m Ns No (.)
-Moves lines in the buffer.  The addressed lines are moved to after the
+Moves lines in the buffer.
+The addressed lines are moved to after the
 right-hand destination address, which may be the address
 .Em 0
 (zero).
@@ -606,11 +624,11 @@ The current address is set to the
 last line moved.
 .It (.,.) Ns Em n
 Prints the addressed lines along with
-their line numbers.  The current address is set to the last line
-printed.
+their line numbers.
+The current address is set to the last line printed.
 .It (.,.) Ns Em p
-Prints the addressed lines. The current address is set to the last line
-printed.
+Prints the addressed lines.
+The current address is set to the last line printed.
 .It Em P
 Toggles the command prompt on and off.
 Unless a prompt was specified by with command-line option
@@ -630,10 +648,12 @@ except that unwritten changes are discarded without warning.
 .It ($) Ns Em r No file
 Reads
 .Em file
-to after the addressed line.  If
+to after the addressed line.
+If
 .Em file
 is not specified, then the default
-filename is used.  If there was no default filename prior to the command,
+filename is used.
+If there was no default filename prior to the command,
 then the default filename is set to
 .Em file Ns No .
 Otherwise, the default filename is unchanged.
@@ -776,7 +796,8 @@ Any previous contents of
 is lost without warning.
 If there is no default filename, then the default filename is set to
 .Em file Ns No ,
-otherwise it is unchanged.  If no filename is specified, then the default
+otherwise it is unchanged.
+If no filename is specified, then the default
 filename is used.
 The current address is unchanged.
 .It (1,$) Ns Em wq No file
@@ -801,15 +822,18 @@ command, expect that the previous contents of file is not clobbered.
 The current address is unchanged.
 .It Em x
 Prompts for an encryption key which is used in subsequent reads and
-writes.  If a newline alone is entered as the key, then encryption is
-turned off.  Otherwise, echoing is disabled while a key is read.
+writes.
+If a newline alone is entered as the key, then encryption is
+turned off.
+Otherwise, echoing is disabled while a key is read.
 Encryption/decryption is done using the
 .Xr bdes 1
 algorithm.
 .It (.+1) Ns Em z Ns No n
 Scrolls
 .Em n
-lines at a time starting at addressed line.  If
+lines at a time starting at addressed line.
+If
 .Em n
 is not specified, then the current window size is used.
 The current address is set to the last line printed.
@@ -877,7 +901,8 @@ interpreted literally.
 If a text (non-binary) file is not terminated by a newline character,
 then
 .Nm
-appends one on reading/writing it.  In the case of a binary file,
+appends one on reading/writing it.
+In the case of a binary file,
 .Nm
 does not append a newline on reading/writing.
 .Sh DIAGNOSTICS

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: df.1,v 1.21 2000/03/05 00:28:51 aaron Exp $
+.\"	$OpenBSD: df.1,v 1.22 2000/03/17 18:15:12 aaron Exp $
 .\"	$NetBSD: df.1,v 1.12 1995/12/05 02:42:45 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -71,7 +71,8 @@ options below).
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl h
-"Human-readable" output.  Use unit suffixes: Byte, Kilobyte, Megabyte,
+"Human-readable" output.
+Use unit suffixes: Byte, Kilobyte, Megabyte,
 Gigabyte, Terabyte, Petabyte, Exabyte in order to reduce the number of
 digits to four or less.
 .It Fl i
@@ -84,7 +85,8 @@ option causes the numbers to be reported in kilobyte counts.
 .It Fl l
 Display statistics only about mounted file systems with the
 .Dv MNT_LOCAL
-flag set. If a non-local file system is given as an argument, a
+flag set.
+If a non-local file system is given as an argument, a
 warning is issued and no information is given on that file system.
 .It Fl n
 Print out the previously obtained statistics from the file systems.
@@ -107,7 +109,8 @@ The list of filesystem types can be prefixed with
 .Dq no
 to specify the filesystem types for which action should
 .Em not
-be taken. If a file system is given on the command line that is not of
+be taken.
+If a file system is given on the command line that is not of
 the specified type, a warning is issued and no information is given on
 that file system.
 .El

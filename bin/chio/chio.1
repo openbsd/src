@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chio.1,v 1.13 1999/08/17 14:03:59 aaron Exp $
+.\"	$OpenBSD: chio.1,v 1.14 2000/03/17 18:15:12 aaron Exp $
 .\"	$NetBSD: chio.1,v 1.1.1.1 1996/04/03 00:34:38 thorpej Exp $
 .\"
 .\" Copyright (c) 1996 Jason R. Thorpe <thorpej@and.com>
@@ -76,11 +76,13 @@ There are four element types:
 .Pa portal
 (import/export), and
 .Pa drive
-(data transfer).  In this command description, the shorthand
+(data transfer).
+In this command description, the shorthand
 .Sq ET
 will be used to represent an element type, and
 .Sq EU
-will be used to represent an element unit.  For example, to represent
+will be used to represent an element unit.
+For example, to represent
 the first robotic arm in the changer, the ET would be
 .Dq picker
 and the EU would be
@@ -113,7 +115,8 @@ is specified, the media unit will be inverted before insertion.
 .Op Ar inv1
 .Op Ar inv2
 .Pp
-Performs a media unit exchange operation.  The media unit in
+Performs a media unit exchange operation.
+The media unit in
 .Aq Ar src ET/EU
 is moved to
 .Aq Ar dst1 ET/EU
@@ -172,7 +175,8 @@ Configure the changer to use picker
 .Cm chio status
 .Op Aq Ar type
 .Pp
-Report the status of all elements in the changer.  If
+Report the status of all elements in the changer.
+If
 .Aq Ar type
 is specified, report the status of all elements of type
 .Aq Ar type .

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: stty.1,v 1.20 2000/03/06 21:46:56 aaron Exp $
+.\"	$OpenBSD: stty.1,v 1.21 2000/03/17 18:15:15 aaron Exp $
 .\"	$NetBSD: stty.1,v 1.10 1995/09/07 06:57:14 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -78,8 +78,8 @@ formats.
 .It Fl f Ar file
 Open and use the terminal named by
 .Ar file
-rather than using standard input.  The file is opened
-using the
+rather than using standard input.
+The file is opened using the
 .Dv O_NONBLOCK
 flag of
 .Xr open 2 ,
@@ -98,7 +98,8 @@ The following arguments are available to set the terminal
 characteristics:
 .Ss Control modes
 Control mode flags affect hardware characteristics associated with the
-terminal.  This corresponds to the
+terminal.
+This corresponds to the
 .Li c_cflag
 in the termios structure.
 .Bl -tag -width Fl
@@ -226,12 +227,13 @@ to restart output.
 .It Cm imaxbel Pq Fl imaxbel
 The system imposes a limit of
 .Dv MAX_INPUT
-(currently 255) characters in the input queue.  If
+(currently 255) characters in the input queue.
+If
 .Cm imaxbel
 is set and the input queue limit has been reached,
 subsequent input causes the system to send an ASCII BEL
-character to the output queue (the terminal beeps at you).  Otherwise,
-if
+character to the output queue (the terminal beeps at you).
+Otherwise, if
 .Cm imaxbel
 is unset and the input queue is full, the next input character causes
 the entire input and output queues to be discarded.
@@ -352,7 +354,8 @@ Disable (enable) flush after
 .It Cm tostop Pq Fl tostop
 Send (do not send)
 .Dv SIGTTOU
-for background output.  This causes background jobs to stop if they attempt
+for background output.
+This causes background jobs to stop if they attempt
 terminal output.
 .It Cm altwerase Pq Fl altwerase
 Use (do not use) an alternate word erase algorithm when processing
@@ -366,7 +369,8 @@ erased with simply an
 .Dv ERASE
 character).
 .It Cm mdmbuf Pq Fl mdmbuf
-If set, flow control output based on condition of Carrier Detect.  Otherwise
+If set, flow control output based on condition of Carrier Detect.
+Otherwise
 writes return an error if Carrier Detect is low (and Carrier is not being
 ignored with the
 .Dv CLOCAL
@@ -454,7 +458,7 @@ Enable
 .Cm cs7 ,
 and
 .Cm parodd .
-.It Fl parity , evenp ,  oddp
+.It Fl parity , evenp , oddp
 Disable
 .Cm parenb
 and set
@@ -521,8 +525,8 @@ to a pty.
 .It Cm raw Pq Fl raw
 If set, change the modes of the terminal so that no input or output processing
 is performed. If unset, change the modes of the terminal to some reasonable
-state that performs input and output processing.  Note that since the
-terminal driver no longer has a single
+state that performs input and output processing.
+Note that since the terminal driver no longer has a single
 .Dv RAW
 bit, it is not possible to intuit what flags were set prior to setting
 .Cm raw .
@@ -651,7 +655,8 @@ The
 .Nm
 utility is expected to be
 .St -p1003.2
-compatible.  The flags
+compatible.
+The flags
 .Fl e
 and
 .Fl f

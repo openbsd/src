@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ls.1,v 1.21 2000/01/05 18:48:31 aaron Exp $
+.\"	$OpenBSD: ls.1,v 1.22 2000/03/17 18:15:14 aaron Exp $
 .\"	$NetBSD: ls.1,v 1.14 1995/12/05 02:44:01 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993, 1994
@@ -108,8 +108,8 @@ Recursively list subdirectories encountered.
 Sort by size, largest file first.
 .It Fl T
 Display complete time information for the file, including
-month, day, hour, minute, second, and year. This option has no effect unless
-one of the long format
+month, day, hour, minute, second, and year.
+This option has no effect unless one of the long format
 .Pq Fl l , Fl n
 options is also specified.
 .It Fl W
@@ -137,8 +137,8 @@ For each file, print its inode number.
 .It Fl k
 Modifies the
 .Fl s
-option, causing the sizes to be reported in kilobytes. Overrides any
-value specified by the
+option, causing the sizes to be reported in kilobytes.
+Overrides any value specified by the
 .Ev BLOCKSIZE
 environment variable.
 .It Fl l
@@ -171,8 +171,8 @@ Reverse the order of the sort to get reverse
 lexicographical order or the smallest or oldest entries first.
 .It Fl s
 Display the number of file system blocks actually used by each file,
-where partial units are rounded up to the next integer value. Blocks
-are 512 bytes unless overridden by the
+where partial units are rounded up to the next integer value.
+Blocks are 512 bytes unless overridden by the
 .Fl k
 flag or
 .Ev BLOCKSIZE
@@ -212,7 +212,8 @@ The
 and
 .Fl u
 options override each other; the last one specified determines
-the file time used. The
+the file time used.
+The
 .Fl f
 option overrides any occurrence of either.
 .Pp
@@ -250,7 +251,8 @@ time of last modification
 and the pathname.
 In addition, for each directory whose contents are displayed, the first
 line displayed is the total number of blocks used by the files in the
-directory. Blocks are 512 bytes unless overridden by the
+directory.
+Blocks are 512 bytes unless overridden by the
 .Fl k
 option or
 .Ev BLOCKSIZE
@@ -280,8 +282,8 @@ The file mode printed under the
 or
 .Fl n
 options consists of the entry type, owner permissions, and group
-permissions.  The entry type character describes the type of file, as
-follows:
+permissions.
+The entry type character describes the type of file, as follows:
 .Pp
 .Bl -tag -width 4n -offset indent -compact
 .It Sy b
