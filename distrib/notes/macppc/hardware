@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.7 2002/04/07 22:51:25 miod Exp $
+dnl	$OpenBSD: hardware,v 1.8 2002/04/07 23:40:57 miod Exp $
 OpenBSD/MACHINE OSREV runs on iMac, G4 Power Macintosh, G4 Cube as well
 as PowerBook and iBook machines.
 
@@ -7,9 +7,9 @@ not supported.  PowerMac G3 Beige status is unknown.
 
 OpenBSD/MACHINE has been tested on iMac Revs A-C as well as on iMac DV(+)
 machines, Power Macintosh G4 systems (single and dual processor), as well as
-the G4 Cube. B&W G3 support has been added in 3.1.
+the G4 Cube. B&W G3 and LCD iMac support has been added in 3.1.
 
-For portables, PowerBook G3, PowerBook G4 and iBook have been
+For portables, PowerBook G3, PowerBook G4, iBook and iBook2 have been
 tested.  Note that power saving features on portables are very limited,
 no power management features are available, suspend/sleep is not supported.
 However battery level and status charging/AC connected/AC disconnected
@@ -30,7 +30,8 @@ Supported devices {:-include-:}:
 		    etc)
 
 	AGP/SVGA/VGA Display Adapters
-		Primary Openfirmware display only:
+		Primary Openfirmware display only
+		The following cards will run an accelerated X server:
 		- ATI Mach64 GP
 		- ATI Mach64 GV
 		- ATI Mach64 128 PK
@@ -87,6 +88,7 @@ Supported devices {:-include-:}:
 		Hifn 7751/7811/7951 (hifn)
 		Bluesteelnet 5501/5601, Broadcom 5805/5820/5821 (ubsec)
 
-The built-in firewire (IEEE1394) ports available in some machines are
-not supported.
-The built-in Cardbus slot in some machines is not supported.
+The following devices are not supported currently:
+	- built-in Texas Instrument TSB12LV23 firewire (IEEE1394) ports
+	- built-in modems
+	- built-in Cardbus slots
