@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.7 2003/12/25 23:22:13 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.8 2003/12/26 21:30:20 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Claudio Jeker <claudio@openbsd.org> and
@@ -145,7 +145,17 @@ enum nexthop_state {
 	NEXTHOP_REACH
 };
 
-struct nexthop;
+struct nexthop {
+	LIST_ENTRY(nexthop)	nexthop_l;
+	enum nexthop_state	state;
+#if 0
+	u_int32_t		costs;
+#endif
+	struct aspath_head	path_h;
+	struct in_addr		exit_nexthop;
+	struct in_addr		true_nexthop;
+	u_int8_t		connected;
+};
 
 LIST_HEAD(prefix_head, prefix);
 
