@@ -1,4 +1,4 @@
-/*	$OpenBSD: crtbegin.c,v 1.8 2004/01/26 20:00:37 espie Exp $	*/
+/*	$OpenBSD: crtbegin.c,v 1.9 2004/01/26 20:04:11 espie Exp $	*/
 /*	$NetBSD: crtbegin.c,v 1.1 1996/09/12 16:59:03 cgd Exp $	*/
 
 /*
@@ -111,9 +111,14 @@ __do_init()
 void
 __do_fini()
 {
-	/*
-	 * Call global destructors.
-	 */
-	(__dtors)();
+	static int finalized = 0;
+
+	if (!finalized) {
+		finalized = 1;
+		/*
+		 * Call global destructors.
+		 */
+		(__dtors)();
+	}
 }
 
