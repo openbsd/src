@@ -1471,7 +1471,7 @@ cpu_exec_ecoff_hook(p, epp, eap)
 	struct ecoff_aouthdr *eap;
 {
 	struct ecoff_filehdr *efp = epp->ep_hdr;
-	extern struct emul emul_netbsd;
+	extern struct emul emul_native;
 #ifdef COMPAT_OSF1
 	extern struct emul emul_osf1;
 #endif
@@ -1483,8 +1483,8 @@ cpu_exec_ecoff_hook(p, epp, eap)
 		break;
 #endif
 
-	case ECOFF_MAGIC_NETBSD_ALPHA:
-		epp->ep_emul = &emul_netbsd;
+	case ECOFF_MAGIC_NATIVE_ALPHA:
+		epp->ep_emul = &emul_native;
 		break;
 
 	default:

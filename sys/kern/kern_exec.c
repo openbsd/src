@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.3 1996/03/03 17:19:43 niklas Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.4 1996/05/27 07:59:03 deraadt Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -229,7 +229,7 @@ sys_execve(p, v, retval)
 	struct vmspace *vm = p->p_vmspace;
 	char **tmpfap;
 	int szsigcode;
-	extern struct emul emul_netbsd;
+	extern struct emul emul_native;
 
 	/*
 	 * figure out the maximum size of an exec header, if necessary.
@@ -258,7 +258,7 @@ sys_execve(p, v, retval)
 	pack.ep_vmcmds.evs_cnt = 0;
 	pack.ep_vmcmds.evs_used = 0;
 	pack.ep_vap = &attr;
-	pack.ep_emul = &emul_netbsd;
+	pack.ep_emul = &emul_native;
 	pack.ep_flags = 0;
 
 	/* see if we can run it. */

@@ -42,10 +42,10 @@
         u_long ea_gp_value
 
 #define ECOFF_MAGIC_ALPHA		0603
-#define ECOFF_MAGIC_NETBSD_ALPHA	0605
+#define ECOFF_MAGIC_NATIVE_ALPHA	0605
 #define ECOFF_BADMAG(ex)					\
 	(ex->ef_magic != ECOFF_MAGIC_ALPHA &&			\
-	    ex->ef_magic != ECOFF_MAGIC_NETBSD_ALPHA)
+	    ex->ef_magic != ECOFF_MAGIC_NATIVE_ALPHA)
 
 #define ECOFF_SEGMENT_ALIGNMENT(eap) (eap->ea_vstamp < 23 ? 8 : 16)
 

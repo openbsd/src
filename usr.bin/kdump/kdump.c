@@ -100,7 +100,7 @@ struct emulation {
 };
 
 static struct emulation emulations[] = {
-	{ "netbsd",	     syscallnames,        SYS_MAXSYSCALL },
+	{ "native",	     syscallnames,        SYS_MAXSYSCALL },
 	{ "hpux",	hpux_syscallnames,   HPUX_SYS_MAXSYSCALL },
 	{ "ibcs2",     ibcs2_syscallnames,  IBCS2_SYS_MAXSYSCALL },
 	{ "linux",     linux_syscallnames,  LINUX_SYS_MAXSYSCALL },
@@ -129,7 +129,7 @@ main(argc, argv)
 	register void *m;
 	int trpoints = ALL_POINTS;
 
-	current = &emulations[0];	/* NetBSD */
+	current = &emulations[0];	/* native */
 
 	while ((ch = getopt(argc, argv, "e:f:dlm:nRTt:")) != -1)
 		switch (ch) {

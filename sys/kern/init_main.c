@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.8 1996/05/07 15:23:35 niklas Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.9 1996/05/27 07:59:02 deraadt Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84 1996/04/22 01:38:12 christos Exp $	*/
 
 /*
@@ -124,8 +124,8 @@ extern char sigcode[], esigcode[];
 extern char *syscallnames[];
 #endif
 
-struct emul emul_netbsd = {
-	"netbsd",
+struct emul emul_native = {
+	"native",
 	NULL,
 	sendsig,
 	SYS_syscall,
@@ -206,7 +206,7 @@ main(framep)
 	p->p_flag = P_INMEM | P_SYSTEM;
 	p->p_stat = SRUN;
 	p->p_nice = NZERO;
-	p->p_emul = &emul_netbsd;
+	p->p_emul = &emul_native;
 	bcopy("swapper", p->p_comm, sizeof ("swapper"));
 
 	/* Create credentials. */
