@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.589 2003/01/20 02:07:52 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.590 2003/01/26 20:00:12 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -933,6 +933,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTH6,
 	    "UniNorth Host-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_ARC, PCI_PRODUCT_ARC_USB,
+	    "USB",
 	},
 	{
 	    PCI_VENDOR_ARC, PCI_PRODUCT_ARC_1000PV,
@@ -2175,6 +2179,18 @@ static const struct pci_known_product pci_known_products[] = {
 	    "A4977A Visualize EG",
 	},
 	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_VISUALIZE_FX4,
+	    "Visualize FX4",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_TACH_TL,
+	    "Tach TL FibreChannel",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_TACH_XL2,
+	    "Tach XL2 FibreChannel",
+	},
+	{
 	    PCI_VENDOR_HP, PCI_PRODUCT_HP_J2585A,
 	    "J2585A",
 	},
@@ -2183,12 +2199,20 @@ static const struct pci_known_product pci_known_products[] = {
 	    "J2585B",
 	},
 	{
-	    PCI_VENDOR_HP, PCI_PRODUCT_HP_82557B,
-	    "82557B 10/100 NIC",
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_DIVA,
+	    "Diva Serial Multiport",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_VISUALIZE_FXE,
+	    "Visualize FXe",
 	},
 	{
 	    PCI_VENDOR_HP, PCI_PRODUCT_HP_NETRAID_4M,
 	    "NetRaid-4M",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_82557B,
+	    "82557B 10/100 NIC",
 	},
 	{
 	    PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_7751,
@@ -2293,6 +2317,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_FIREGL2,
 	    "FireGL2",
+	},
+	{
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_PCIX,
+	    "PCI-X to PCI-X",
 	},
 	{
 	    PCI_VENDOR_IDT, PCI_PRODUCT_IDT_77201,
@@ -3091,6 +3119,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Powerstorm 4D50T",
 	},
 	{
+	    PCI_VENDOR_INTERPHASE, PCI_PRODUCT_INTERPHASE_5526,
+	    "5526 FibreChannel",
+	},
+	{
 	    PCI_VENDOR_INTERSIL, PCI_PRODUCT_INTERSIL_MINI_PCI_WLAN,
 	    "PRISM2.5 Mini-PCI WLAN",
 	},
@@ -3553,6 +3585,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_NS, PCI_PRODUCT_NS_PC87415,
 	    "PC87415 IDE",
+	},
+	{
+	    PCI_VENDOR_NS, PCI_PRODUCT_NS_PC87560,
+	    "87560 Legacy I/O",
+	},
+	{
+	    PCI_VENDOR_NS, PCI_PRODUCT_NS_USB,
+	    "USB",
 	},
 	{
 	    PCI_VENDOR_NS, PCI_PRODUCT_NS_DP83815,
