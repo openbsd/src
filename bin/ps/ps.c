@@ -432,7 +432,7 @@ kludge_oldps_options(s)
 	char *newopts, *ns, *cp;
 
 	len = strlen(s);
-	if ((newopts = ns = malloc(len + 2)) == NULL)
+	if ((newopts = ns = malloc(len + 3)) == NULL)
 		err(1, NULL);
 	/*
 	 * options begin with '-'
