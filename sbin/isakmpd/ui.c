@@ -1,5 +1,5 @@
-/*	$OpenBSD: ui.c,v 1.15 2000/04/07 22:10:30 niklas Exp $	*/
-/*	$EOM: ui.c,v 1.40 2000/04/07 22:05:57 niklas Exp $	*/
+/*	$OpenBSD: ui.c,v 1.16 2000/05/02 14:37:00 niklas Exp $	*/
+/*	$EOM: ui.c,v 1.41 2000/05/01 20:57:33 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -147,7 +147,7 @@ ui_config (char *cmd)
       if (sscanf (cmd, "C %*s [%80[^]]]:%80[^=]=%80s %d", section, tag, value,
 		  &override) != 4)
 	goto fail;
-      conf_set (trans, section, tag, value, override);
+      conf_set (trans, section, tag, value, override, 0);
     }
   else if (strcasecmp (subcmd, "rm") == 0)
     {
@@ -235,6 +235,7 @@ ui_report (char *cmd)
   transport_report ();
   connection_report ();
   timer_report ();
+  conf_report ();
 }
 
 /*
