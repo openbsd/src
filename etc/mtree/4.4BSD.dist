@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.100 2000/11/10 00:22:29 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.101 2000/12/12 17:40:48 millert Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -292,6 +292,11 @@ site_perl
 
 # ./usr/libexec
 libexec
+
+# ./usr/libexec/auth
+auth		type=dir uname=root gname=auth mode=0750
+# ./usr/libexec/auth
+..
 
 # ./usr/libexec/lpr
 lpr
