@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: iface.h,v 1.5 2000/02/27 01:38:26 brian Exp $
+ *	$OpenBSD: iface.h,v 1.6 2001/03/28 09:52:56 brian Exp $
  */
 
 struct ifa_msghdr;
@@ -59,7 +59,7 @@ extern int iface_inAdd(struct iface *, struct in_addr, struct in_addr,
                      struct in_addr, int);
 extern int iface_inDelete(struct iface *, struct in_addr);
 extern int iface_Show(struct cmdargs const *);
-extern int iface_SetFlags(struct iface *, int);
-extern int iface_ClearFlags(struct iface *, int);
+extern int iface_SetFlags(const char *, int);
+extern int iface_ClearFlags(const char *, int);
 extern void iface_Destroy(struct iface *);
 extern void iface_ParseHdr(struct ifa_msghdr *, struct sockaddr *[RTAX_MAX]);
