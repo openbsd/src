@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.92 2002/06/07 20:59:44 fgsch Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.93 2002/06/20 17:10:39 millert Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.91 2002/06/07 20:59:19 fgsch Exp 
+ *		OpenBSD: pcmciadevs,v 1.92 2002/06/20 17:10:21 millert Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -216,6 +216,8 @@
 #define	PCMCIA_PRODUCT_ELSA_XI300_IEEE	0x0002
 #define	PCMCIA_CIS_ELSA_XI800_IEEE	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_ELSA_XI800_IEEE	0x0004
+#define	PCMCIA_CIS_ELSA_XI325_IEEE	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_ELSA_XI325_IEEE	0x0005
 
 /* EMTAC */
 #define	PCMCIA_CIS_EMTAC_WLAN	{ NULL, NULL, NULL, NULL }
