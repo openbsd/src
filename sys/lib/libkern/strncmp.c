@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)strncmp.c	5.6 (Berkeley) 1/26/91";*/
-static char *rcsid = "$Id: strncmp.c,v 1.2 1996/05/01 15:18:52 deraadt Exp $";
+static char *rcsid = "$Id: strncmp.c,v 1.3 1996/12/08 14:25:49 niklas Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #ifndef _KERNEL
@@ -52,7 +52,7 @@ strncmp(s1, s2, n)
 		return (0);
 	do {
 		if (*s1 != *s2++)
-			return (*(unsigned char *)s1 - *(unsigned char *)--s2);
+			return (*(const u_char *)s1 - *(const u_char *)--s2);
 		if (*s1++ == 0)
 			break;
 	} while (--n != 0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss_scanjet.c,v 1.13 1996/11/23 06:05:02 kstailey Exp $	*/
+/*	$OpenBSD: ss_scanjet.c,v 1.14 1996/12/08 14:25:50 niklas Exp $	*/
 /*	$NetBSD: ss_scanjet.c,v 1.6 1996/05/18 22:58:01 christos Exp $	*/
 
 /*
@@ -67,7 +67,7 @@ int scanjet_set_window __P((struct ss_softc *, int));
 int scanjet_compute_sizes __P((struct ss_softc *, int));
 /* Maybe move to libkern? */
 __inline static int atoi __P((const char *));
-__inline static char *strchr __P((const char *, char));
+__inline static char *strchr __P((/* const */ char *, char));
 
 
 /*
@@ -437,7 +437,11 @@ atoi(cp)
 
 __inline static char *
 strchr(cp, ch)
-	const char *cp;
+	/*
+	 * The const was removed to make -Wcast-qual happy.  I
+	 * don't particularily like this solution but what to do?
+	 */
+	/* const */ char *cp;
 	char ch;
 {
 	while (*cp && *cp != ch) cp++;

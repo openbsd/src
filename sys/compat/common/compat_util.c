@@ -1,4 +1,4 @@
-/* 	$OpenBSD: compat_util.c,v 1.4 1996/04/18 21:21:32 niklas Exp $	*/
+/* 	$OpenBSD: compat_util.c,v 1.5 1996/12/08 14:25:46 niklas Exp $	*/
 /* 	$NetBSD: compat_util.c,v 1.4 1996/03/14 19:31:45 christos Exp $	*/
 
 /*
@@ -129,8 +129,7 @@ emul_find(p, sgp, prefix, path, pbuf, cflag)
 		 * to the emulation root directory. This is expensive :-(
 		 */
 		/* XXX: prototype should have const here for NDINIT */
-		NDINIT(&ndroot, LOOKUP, FOLLOW, UIO_SYSSPACE, 
-		       (char *) prefix, p);
+		NDINIT(&ndroot, LOOKUP, FOLLOW, UIO_SYSSPACE, prefix, p);
 
 		if ((error = namei(&ndroot)) != 0)
 			goto bad2;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: namei.h,v 1.2 1996/03/03 12:12:05 niklas Exp $	*/
+/*	$OpenBSD: namei.h,v 1.3 1996/12/08 14:25:51 niklas Exp $	*/
 /*	$NetBSD: namei.h,v 1.11 1996/02/09 18:25:20 christos Exp $	*/
 
 /*
@@ -48,7 +48,7 @@ struct nameidata {
 	/*
 	 * Arguments to namei/lookup.
 	 */
-	caddr_t	ni_dirp;		/* pathname pointer */
+	const char *ni_dirp;		/* pathname pointer */
 	enum	uio_seg ni_segflg;	/* location of pathname */
      /* u_long	ni_nameiop;		   namei operation */
      /* u_long	ni_flags;		   flags to namei */

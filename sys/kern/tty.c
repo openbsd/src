@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.19 1996/11/11 04:28:16 tholo Exp $	*/
+/*	$OpenBSD: tty.c,v 1.20 1996/12/08 14:25:48 niklas Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -106,7 +106,7 @@ char ttyout[]	= "ttyout";
 #define	TB	TAB
 #define	VT	VTAB
 
-char const char_type[] = {
+u_char const char_type[] = {
 	E|CC, O|CC, O|CC, E|CC, O|CC, E|CC, E|CC, O|CC,	/* nul - bel */
 	O|BS, E|TB, E|NL, O|CC, E|VT, O|CR, O|CC, E|CC, /* bs - si */
 	O|CC, E|CC, E|CC, O|CC, E|CC, O|CC, O|CC, E|CC, /* dle - etb */
@@ -1557,8 +1557,8 @@ loop:
 			if (!ISSET(tp->t_oflag, OPOST))
 				ce = cc;
 			else {
-				ce = cc - scanc((u_int)cc, cp,
-				   (u_char *)char_type, CCLASSMASK);
+				ce = cc - scanc((u_int)cc, cp, char_type,
+				    CCLASSMASK);
 				/*
 				 * If ce is zero, then we're processing
 				 * a special character through ttyoutput.
