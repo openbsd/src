@@ -1,4 +1,4 @@
-.\"	$OpenBSD: brconfig.8,v 1.28 2001/12/05 09:57:20 deraadt Exp $
+.\"	$OpenBSD: brconfig.8,v 1.29 2001/12/05 19:55:34 jason Exp $
 .\"
 .\" Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -63,8 +63,12 @@ segment and to provide a transparent filter for
 .Xr ip 4
 datagrams.
 .Pp
-In the first synopsis, the command
-will list the status of all bridges in the system.
+In the first synopsis, the
+.Fl a
+flag will cause
+.Nm
+to 
+list the status of all bridges in the system.
 In the second, its command line consists
 of the name of a bridge and a set of operations to be
 performed on that bridge.
