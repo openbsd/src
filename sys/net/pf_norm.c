@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.53 2003/02/08 20:13:20 dhartmei Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.54 2003/02/12 20:43:36 dhartmei Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -830,11 +830,18 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
 	if (hlen > h->ip_len)
 		goto drop;
 
+	/* Clear IP_DF if the rule uses the no-df option */
+	if (r->rule_flag & PFRULE_NODF)
+		h->ip_off &= ~IP_DF;
+
 	/* We will need other tests here */
 	if (!fragoff && !mff)
 		goto no_fragment;
 
-	/* This can not happen */
+	/* We're dealing with a fragment now. Don't allow fragments
+	 * with IP_DF to enter the cache. If the flag was cleared by
+	 * no-df above, fine. Otherwise drop it.
+	 */
 	if (h->ip_off & IP_DF) {
 		DPFPRINTF(("IP_DF\n"));
 		goto bad;
@@ -940,10 +947,7 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
 		return (PF_PASS);
 
 	/* At this point, only IP_DF is allowed in ip_off */
-	if (r->rule_flag & PFRULE_NODF)
-		h->ip_off = 0;
-	else
-		h->ip_off &= IP_DF;
+	h->ip_off &= IP_DF;
 
 	/* Enforce a minimum ttl, may cause endless packet loops */
 	if (r->min_ttl && h->ip_ttl < r->min_ttl)
