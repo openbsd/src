@@ -1,5 +1,5 @@
-/*	$OpenBSD: x509.c,v 1.18 2000/01/27 08:49:24 niklas Exp $	*/
-/*	$EOM: x509.c,v 1.28 2000/01/27 08:53:22 niklas Exp $	*/
+/*	$OpenBSD: x509.c,v 1.19 2000/01/31 08:18:41 niklas Exp $	*/
+/*	$EOM: x509.c,v 1.30 2000/01/31 05:50:59 angelos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niels Provos.  All rights reserved.
@@ -77,8 +77,8 @@ extern int keynote_sessid;
  * only differing in subjectAltName.
  */
 #if defined (USE_LIBCRYPTO) || defined (HAVE_DLOPEN)
-static X509_STORE *x509_certs;
-static X509_STORE *x509_cas;
+static X509_STORE *x509_certs = NULL;
+static X509_STORE *x509_cas = NULL;
 #endif
 
 /* Initial number of bits used as hash.  */
@@ -90,7 +90,7 @@ struct x509_hash {
   X509 *cert;
 };
 
-static LIST_HEAD (x509_list, x509_hash) *x509_tab;
+static LIST_HEAD (x509_list, x509_hash) *x509_tab = NULL;
 
 /* Works both as a maximum index and a mask.  */
 static int bucket_mask;
@@ -99,29 +99,26 @@ static int bucket_mask;
 /*
  * Given an X509 certificate, create a KeyNote assertion where
  * Issuer/Subject -> Authorizer/Licensees,
+ * XXX RSA-specific
  */
 int
 x509_generate_kn (X509 *cert)
 {
-  char *fmt = "Authorizer: \"%s\"\nLicensees: \"%s\"\n";
+  char *fmt = "Authorizer: \"rsa-hex:%s\"\nLicensees: \"rsa-hex:%s\"\n";
   X509_NAME *issuer, *subject;
   struct keynote_deckey dc;
   char *ikey, *skey, *buf;
   X509_STORE_CTX csc;
+  X509_OBJECT obj;
   X509 *icert;
-#if SSLEAY_VERSION_NUMBER >= 0x00904100L
-  STACK_OF (X509) *sk;
-#else
-  STACK *sk;
-#endif
   RSA *key;
 
   issuer = LC (X509_get_issuer_name, (cert));
   subject = LC (X509_get_subject_name, (cert));
 
   /* Missing or self-signed, ignore cert but don't report failure */
-  if (!issuer || !subject || LC (X509_name_cmp, (issuer, subject)))
-    return 1;
+  if (!issuer || !subject || !LC (X509_name_cmp, (issuer, subject)))
+      return 1;
 
   if (!x509_cert_get_key (cert, &key))
     {
@@ -143,19 +140,22 @@ x509_generate_kn (X509 *cert)
   LC (RSA_free, (key));
 
   /* Now find issuer's certificate so we can get the public key */
-  LC (X509_STORE_CTX_init, (&csc, x509_cas, NULL, NULL));
-#if SSLEAY_VERSION_NUMBER >= 0x00904100L
-  sk = LC (sk_X509_new_null, ());
-#else
-  sk = LC (sk_new_null, ());
-#endif
-  icert = LC (X509_find_by_subject, (sk, issuer));
-#if SSLEAY_VERSION_NUMBER >= 0x00904100L
-  LC (sk_X509_free, (sk));
-#else
-  LC (sk_free, (sk));
-#endif
+  LC (X509_STORE_CTX_init, (&csc, x509_cas, cert, NULL));
+  if (LC (X509_STORE_get_by_subject, (&csc, X509_LU_X509, issuer, &obj)) !=
+      X509_LU_X509)
+    {
+      LC (X509_STORE_CTX_cleanup, (&csc));
+      LC (X509_STORE_CTX_init, (&csc, x509_certs, cert, NULL));
+      if (LC (X509_STORE_get_by_subject, (&csc, X509_LU_X509, issuer, &obj)) !=
+          X509_LU_X509)
+	{
+  	  LC (X509_STORE_CTX_cleanup, (&csc));
+	  return 0;
+	}
+    }
+
   LC (X509_STORE_CTX_cleanup, (&csc));
+  icert = obj.data.x509;
 
   if (icert == NULL)
     {
@@ -171,6 +171,8 @@ x509_generate_kn (X509 *cert)
       log_print ("x509_generate_kn: failed to get public key from cert");
       return 0;
     }
+
+  LC (X509_OBJECT_free_contents, (&obj));
 
   dc.dec_algorithm = KEYNOTE_ALGORITHM_RSA;
   dc.dec_key = (void *) key;
@@ -191,13 +193,14 @@ x509_generate_kn (X509 *cert)
     log_fatal ("x509_generate_kn: "
 	       "failed to allocate memory for KeyNote credential");
 
-  sprintf (buf, fmt, ikey, skey);
+  sprintf (buf, fmt, skey, ikey);
   free (ikey);
   free (skey);
 
   if (LK (kn_add_assertion, (keynote_sessid, buf, strlen (buf),
 			     ASSERT_FLAG_LOCAL)) == -1)
     {
+      printf("%d\n", keynote_errno);
       log_error ("x509_generate_kn: failed to add new KeyNote credential");
       free (buf);
       return 0;
@@ -207,7 +210,9 @@ x509_generate_kn (X509 *cert)
    * XXX
    * Should add a remove-assertion event set to the expiration of the
    * X509 cert (and remove such events when we reinit and close the keynote
-   * session).
+   * session)  -- that's relevant only for really long-lived daemons.
+   * Alternatively (and preferably), we can encode the X509 expiration
+   * in the KeyNote Conditions.
    * XXX
    */
 
@@ -240,9 +245,26 @@ x509_hash (u_int8_t *id, size_t len)
 void
 x509_hash_init ()
 {
+  struct x509_hash *certh;
   int i;
 
   bucket_mask = (1 << INITIAL_BUCKET_BITS) - 1;
+
+  /* If reinitializing, free existing entries */
+  if (x509_tab)
+    {
+      for (i = 0; i <= bucket_mask; i++)
+        for (certh = LIST_FIRST (&x509_tab[i]); certh;
+             certh = LIST_NEXT (certh, link))
+	    {
+	      LIST_REMOVE (certh, link);
+              LC (X509_free, (certh->cert));
+              free (certh);
+	    }
+
+      free(x509_tab);
+    }
+
   x509_tab = malloc ((bucket_mask + 1) * sizeof (struct x509_list));
   if (!x509_tab)
     log_fatal ("x509_hash_init: malloc (%d) failed",
@@ -402,6 +424,21 @@ x509_read_from_dir (X509_STORE *ctx, char *name, int hash)
 		     file->d_name);
 	}
 
+      if (hash)
+	{
+#if defined (USE_KEYNOTE) || defined (HAVE_DLOPEN)
+#ifdef USE_KEYNOTE
+  if (x509_generate_kn (cert) == 0)
+#else
+  if (libkeynote && x509_generate_kn (cert) == 0)
+#endif
+    {
+      log_print ("x509_read_from_dir: x509_generate_kn failed");
+      continue;
+    }
+#endif /* USE_KEYNOTE || HAVE_DLOPEN */
+	}
+
       if (hash && !x509_hash_enter (cert))
 	log_print ("x509_read_from_dir: x509_hash_enter (%s) failed",
 		   file->d_name);
@@ -424,27 +461,6 @@ x509_cert_init (void)
 
   x509_hash_init ();
 
-  /* Process client certificates we will accept.  */
-  dirname = conf_get_str ("X509-certificates", "Cert-directory");
-  if (!dirname)
-    {
-      log_print ("x509_cert_init: no Cert-directory");
-      return 0;
-    }
-
-  x509_certs = LC (X509_STORE_new, ());
-  if (!x509_certs)
-    {
-      log_print ("x509_cert_init: creating new X509_STORE failed");
-      return 0;
-    }
-
-  if (!x509_read_from_dir (x509_certs, dirname, 1))
-    {
-      log_print ("x509_cert_init: x509_read_from_dir failed");
-      return 0;
-    }
-
   /* Process CA certificates we will trust.  */
   dirname = conf_get_str ("X509-certificates", "CA-directory");
   if (!dirname)
@@ -452,6 +468,10 @@ x509_cert_init (void)
       log_print ("x509_cert_init: no CA-directory");
       return 0;
     }
+
+  /* Free if already initialized */
+  if (x509_cas)
+    LC (X509_STORE_free, (x509_cas));
 
   x509_cas = LC (X509_STORE_new, ());
   if (!x509_cas)
@@ -461,6 +481,31 @@ x509_cert_init (void)
     }
 
   if (!x509_read_from_dir (x509_cas, dirname, 0))
+    {
+      log_print ("x509_cert_init: x509_read_from_dir failed");
+      return 0;
+    }
+
+  /* Process client certificates we will accept.  */
+  dirname = conf_get_str ("X509-certificates", "Cert-directory");
+  if (!dirname)
+    {
+      log_print ("x509_cert_init: no Cert-directory");
+      return 0;
+    }
+
+  /* Free if already initialized */
+  if (x509_certs)
+    LC (X509_STORE_free, (x509_certs));
+
+  x509_certs = LC (X509_STORE_new, ());
+  if (!x509_certs)
+    {
+      log_print ("x509_cert_init: creating new X509_STORE failed");
+      return 0;
+    }
+
+  if (!x509_read_from_dir (x509_certs, dirname, 1))
     {
       log_print ("x509_cert_init: x509_read_from_dir failed");
       return 0;
