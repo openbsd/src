@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bs.6,v 1.6 1999/07/09 13:35:55 aaron Exp $
+.\"	$OpenBSD: bs.6,v 1.7 2001/06/06 20:52:17 pjanzen Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -77,9 +77,6 @@ Permits ships to be placed adjacently.  Normally, ships must be separated by
 at least one square of open water.  This disables that check and allows them
 to close-pack.
 .El
-.Sh NOTES
-The algorithm the computer uses once it has found a ship to sink is provably
-optimal.  The dispersion criterion for the random-fire algorithm may not be.
 .Sh AUTHORS
 Originally written by one Bruce Holloway in 1986.
 Salvo mode added by Chuck A.  DeGaul (cbosgd!cad).
@@ -87,3 +84,6 @@ Visual user interface,
 .Sq closepack
 option, code rewrite
 and manual page by Eric S. Raymond <esr@snark.thyrsus.com> August 1989.
+.Sh NOTES
+The algorithm the computer uses once it has found a ship to sink is provably
+optimal.  The dispersion criterion for the random-fire algorithm may not be.

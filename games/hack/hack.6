@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hack.6,v 1.5 2001/01/28 23:41:43 niklas Exp $	-*- nroff -*-
+.\"	$OpenBSD: hack.6,v 1.6 2001/06/06 20:52:19 pjanzen Exp $	-*- nroff -*-
 .\"	$NetBSD: hack.6,v 1.5 1995/07/03 19:44:30 jtc Exp $	-*- nroff -*-
 .Dd March 31, 1985
 .Dt HACK 6
@@ -87,33 +87,6 @@ where X is one of the letters C, F, K, S, T, W to print the scores of
 Cavemen, Fighters, Knights, Speleologists, Tourists or Wizards.
 It may also be followed by one or more player names to print the scores of the
 players mentioned.
-.Sh AUTHORS
-Jay Fenlason (+ Kenny Woodland, Mike Thome and Jon Payne) wrote the
-original hack, very much like rogue (but full of bugs).
-.br
-Andries Brouwer continuously deformed their sources into the current
-version - in fact an entirely different game.
-.Sh FILES
-.Bl -tag -width 24n -compact
-.It Pa hack
-The hack program.
-.It Pa data, rumors
-Data files used by hack.
-.It Pa help, hh
-Help data files.
-.It Pa record
-The list of topscorers.
-.It Pa save
-A subdirectory containing the saved games.
-.It Pa bones_dd
-Descriptions of the ghost and belongings of a deceased adventurer.
-.It Pa xlock.dd
-Description of a dungeon level.
-.It Pa safelock
-Lock file for xlock.
-.It Pa record_lock
-Lock file for record.
-.El
 .Sh ENVIRONMENT
 .Bl -tag -width 24n -compact
 .It Ev USER No or Ev LOGNAME
@@ -143,6 +116,33 @@ like
 .Ev MAGIC
 and
 .Ev SHOPTYPE .
+.Sh FILES
+.Bl -tag -width 24n -compact
+.It Pa hack
+The hack program.
+.It Pa data, rumors
+Data files used by hack.
+.It Pa help, hh
+Help data files.
+.It Pa record
+The list of topscorers.
+.It Pa save
+A subdirectory containing the saved games.
+.It Pa bones_dd
+Descriptions of the ghost and belongings of a deceased adventurer.
+.It Pa xlock.dd
+Description of a dungeon level.
+.It Pa safelock
+Lock file for xlock.
+.It Pa record_lock
+Lock file for record.
+.El
+.Sh AUTHORS
+Jay Fenlason (+ Kenny Woodland, Mike Thome and Jon Payne) wrote the
+original hack, very much like rogue (but full of bugs).
+.br
+Andries Brouwer continuously deformed their sources into the current
+version - in fact an entirely different game.
 .Sh BUGS
 Probably infinite.
 Mail complaints to mcvax!aeb .

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gomoku.6,v 1.7 1999/07/09 13:35:56 aaron Exp $
+.\"	$OpenBSD: gomoku.6,v 1.8 2001/06/06 20:52:19 pjanzen Exp $
 .\"
 .\" Copyright (c) 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -56,7 +56,11 @@ With no arguments,
 .Nm
 will display a playing board and prompt for moves from the user.
 The interface is visual and straightforward; you move to a spot
-using the rogue(6) / hack(6) motion keys
+using the
+.Xr rogue 6
+/
+.Xr hack 6
+motion keys
 .Em hjklyubn
 and select it with either
 .Sq space
@@ -99,11 +103,11 @@ instead of to the standard output.
 .It Fl u
 User versus user. This is mostly used for testing.
 .El
+.Sh AUTHOR
+Ralph Campbell
 .Sh BUGS
 The program is far too slow and uses far too much memory for the quality of
 game it provides.
-.Sh AUTHOR
-Ralph Campbell
 .Sh ACKNOWLEDGEMENTS
 The board display routines were based on the
 .Nm goref
