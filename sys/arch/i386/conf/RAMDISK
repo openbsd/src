@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.120 2003/06/01 13:04:03 miod Exp $
+#	$OpenBSD: RAMDISK,v 1.121 2003/08/08 03:29:08 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -95,7 +95,7 @@ pccom2	at isa? port 0x3e8 irq 5
 #pccom*	at boca? slave ?
 #rtfps0	at isa? port 0x1230 irq 10	# RT 4-port serial cards
 #pccom*	at rtfps? slave ?
-pccom*	at pcmcia? function ?		# PCMCIA modem cards
+#pccom*	at pcmcia? function ?		# PCMCIA modem cards
 pccom*	at isapnp?
 
 # option for using CD1400 handshaking for incoming data
