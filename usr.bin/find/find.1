@@ -1,4 +1,4 @@
-.\"	$OpenBSD: find.1,v 1.6 1996/08/31 22:40:19 tholo Exp $
+.\"	$OpenBSD: find.1,v 1.7 1996/09/01 04:30:16 tholo Exp $
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -192,7 +192,10 @@ If the file is a symbolic link, the pathname of the linked\-to file will be
 displayed preceded by ``\->''.
 The format is identical to that produced by ``ls \-dgils''.
 .It Ic -maxdepth Ar n
-True if the current search depth is less than what is specified in
+True if the current search depth is less than or equal to what is specified in
+.Ar n .
+.It Ic -mindepth Ar n
+True if the current search depth is at least what is specified in
 .Ar n .
 .It Ic -mtime Ar n 
 True if the difference between the file last modification time and the time

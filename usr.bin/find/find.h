@@ -1,4 +1,4 @@
-/* *	$OpenBSD: find.h,v 1.3 1996/08/31 22:40:20 tholo Exp $*/
+/* *	$OpenBSD: find.h,v 1.4 1996/09/01 04:30:16 tholo Exp $*/
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,9 +41,10 @@
 enum ntype {
 	N_AND = 1, 				/* must start > 0 */
 	N_ATIME, N_CLOSEPAREN, N_CTIME, N_DEPTH, N_EXEC, N_EXPR, N_FOLLOW,
-	N_FSTYPE, N_GROUP, N_INUM, N_LINKS, N_LS, N_MDEPTH, N_MTIME, N_NAME,
-	 N_NEWER, N_NOGROUP, N_NOT, N_NOUSER, N_OK, N_OPENPAREN, N_OR, N_PATH,
-	N_PERM, N_PRINT, N_PRINT0, N_PRUNE, N_SIZE, N_TYPE, N_USER, N_XDEV,
+	N_FSTYPE, N_GROUP, N_INUM, N_LINKS, N_LS, N_MAXDEPTH, N_MINDEPTH,
+	N_MTIME, N_NAME, N_NEWER, N_NOGROUP, N_NOT, N_NOUSER, N_OK,
+	N_OPENPAREN, N_OR, N_PATH, N_PERM, N_PRINT, N_PRINT0, N_PRUNE,
+	N_SIZE, N_TYPE, N_USER, N_XDEV,
 };
 
 /* node definition */
@@ -77,24 +78,26 @@ typedef struct _plandata {
 		} ex;
 		char *_a_data[2];		/* array of char pointers */
 		char *_c_data;			/* char pointer */
-		int _d_data;			/* tree depth */
+		int _max_data;			/* tree depth */
+		int _min_data;			/* tree depth */
 	} p_un;
 } PLAN;
-#define	a_data	p_un._a_data
-#define	c_data	p_un._c_data
-#define	d_data	p_un._d_data
-#define	i_data	p_un._i_data
-#define	g_data	p_un._g_data
-#define	l_data	p_un._l_data
-#define	m_data	p_un._m_data
-#define	mt_data	p_un._mt_data
-#define	o_data	p_un._o_data
-#define	p_data	p_un._p_data
-#define	t_data	p_un._t_data
-#define	u_data	p_un._u_data
-#define	e_argv	p_un.ex._e_argv
-#define	e_orig	p_un.ex._e_orig
-#define	e_len	p_un.ex._e_len
+#define	a_data		p_un._a_data
+#define	c_data		p_un._c_data
+#define	i_data		p_un._i_data
+#define	g_data		p_un._g_data
+#define	l_data		p_un._l_data
+#define	m_data		p_un._m_data
+#define	max_data	p_un._max_data
+#define	min_data	p_un._min_data
+#define	mt_data		p_un._mt_data
+#define	o_data		p_un._o_data
+#define	p_data		p_un._p_data
+#define	t_data		p_un._t_data
+#define	u_data		p_un._u_data
+#define	e_argv		p_un.ex._e_argv
+#define	e_orig		p_un.ex._e_orig
+#define	e_len		p_un.ex._e_len
 
 typedef struct _option {
 	char *name;			/* option name */

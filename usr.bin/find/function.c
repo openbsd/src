@@ -1,4 +1,4 @@
-/*	$OpenBSD: function.c,v 1.5 1996/08/31 22:40:21 tholo Exp $	*/
+/*	$OpenBSD: function.c,v 1.6 1996/09/01 04:30:17 tholo Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)function.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: function.c,v 1.5 1996/08/31 22:40:21 tholo Exp $";
+static char rcsid[] = "$OpenBSD: function.c,v 1.6 1996/09/01 04:30:17 tholo Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -550,25 +550,52 @@ c_ls()
  *	maximum depth specified
  */
 int
-f_mdepth(plan, entry)
+f_maxdepth(plan, entry)
 	PLAN *plan;
 	FTSENT *entry;
 {
 	extern FTS *tree;
 
-	if (entry->fts_level >= plan->d_data)
+	if (entry->fts_level >= plan->max_data)
 		fts_set(tree, entry, FTS_SKIP);
-	return (entry->fts_level <= plan->d_data);
+	return (entry->fts_level <= plan->max_data);
 }
 
 PLAN *
-c_mdepth(arg)
+c_maxdepth(arg)
 	char *arg;
 {
 	PLAN *new;
 
-	new = palloc(N_MDEPTH, f_mdepth);
-	new->d_data = atoi(arg);
+	new = palloc(N_MAXDEPTH, f_maxdepth);
+	new->max_data = atoi(arg);
+	return (new);
+}
+
+/*
+ * - mindepth n functions --
+ *
+ *	True if the current search depth is greater than or equal to the
+ *	minimum depth specified
+ */
+int
+f_mindepth(plan, entry)
+	PLAN *plan;
+	FTSENT *entry;
+{
+	extern FTS *tree;
+
+	return (entry->fts_level >= plan->min_data);
+}
+
+PLAN *
+c_mindepth(arg)
+	char *arg;
+{
+	PLAN *new;
+
+	new = palloc(N_MINDEPTH, f_mindepth);
+	new->min_data = atoi(arg);
 	return (new);
 }
 
