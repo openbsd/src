@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_debug.h,v 1.7 1997/09/05 05:56:49 millert Exp $	*/
+/*	$OpenBSD: scsi_debug.h,v 1.8 2004/01/25 00:09:20 krw Exp $	*/
 /*	$NetBSD: scsi_debug.h,v 1.7 1996/10/12 23:23:16 christos Exp $	*/
 
 /*
@@ -18,6 +18,9 @@
 #define	SDEV_DB4		0x0080	/* level 4 debugging for this dev */
 
 /* targets and LUNs we want to debug */
+#ifndef SCSIDEBUG_BUSES
+#define SCSIDEBUG_BUSES		0
+#endif
 #ifndef SCSIDEBUG_TARGETS
 #define	SCSIDEBUG_TARGETS	0
 #endif
@@ -28,7 +31,8 @@
 #define	SCSIDEBUG_LEVEL		(SDEV_DB1|SDEV_DB2)
 #endif
 
-extern int scsidebug_targets, scsidebug_luns, scsidebug_level;
+
+extern int scsidebug_buses, scsidebug_targets, scsidebug_luns, scsidebug_level;
 
 /*
  * This is the usual debug macro for use with the above bits

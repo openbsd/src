@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.80 2004/01/24 22:01:46 deraadt Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.81 2004/01/25 00:09:20 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -104,6 +104,7 @@ struct cfdriver scsibus_cd = {
 	NULL, "scsibus", DV_DULL
 };
 
+int scsidebug_buses = SCSIDEBUG_BUSES;
 int scsidebug_targets = SCSIDEBUG_TARGETS;
 int scsidebug_luns = SCSIDEBUG_LUNS;
 int scsidebug_level = SCSIDEBUG_LEVEL;
@@ -650,7 +651,8 @@ scsi_probedev(scsi, inqbuflun0, target, lun)
 	 * Ask the device what it is
 	 */
 #ifdef SCSIDEBUG
-	if (((1 << target) & scsidebug_targets) &&
+	if (((1 << sc_link->scsibus) & scsidebug_buses) &&
+	    ((1 << target) & scsidebug_targets) &&
 	    ((1 << lun) & scsidebug_luns))
 		sc_link->flags |= scsidebug_level;
 #endif /* SCSIDEBUG */
