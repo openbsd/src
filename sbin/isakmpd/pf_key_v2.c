@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.50 2001/04/24 07:27:37 niklas Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.51 2001/05/05 00:55:13 angelos Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -126,6 +126,9 @@ static void pf_key_v2_notify (struct pf_key_v2_msg *);
 static struct pf_key_v2_msg *pf_key_v2_read (u_int32_t);
 static u_int32_t pf_key_v2_seq (void);
 static u_int32_t pf_key_v2_write (struct pf_key_v2_msg *);
+static int pf_key_v2_remove_conf (char *);
+static int pf_key_v2_conf_refhandle (int, char *);
+static int pf_key_v2_conf_refinc (int, char *);
 
 /* The socket to use for PF_KEY interactions.  */
 static int pf_key_v2_socket;
@@ -738,7 +741,8 @@ pf_key_v2_get_spi (size_t *sz, u_int8_t proto, struct sockaddr *src,
  * parameters for the incoming SA, and cleared otherwise.
  */
 int
-pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming)
+pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming,
+		   struct sa *isakmp_sa)
 {
   struct sadb_msg msg;
   struct sadb_sa ssa;
@@ -746,6 +750,7 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming)
   struct sadb_address *addr = 0;
   struct sadb_key *key = 0;
   struct sockaddr *src, *dst;
+  struct sadb_ident *sid = 0;
   int dstlen, srclen, keylen, hashlen, err;
   struct pf_key_v2_msg *update = 0, *ret = 0;
   struct ipsec_proto *iproto = proto->data;
@@ -1090,7 +1095,120 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming)
       key = 0;
     }
 
-  /* XXX Here can identity and sensitivity extensions be setup.  */
+  /* Setup identity extensions */
+  if (isakmp_sa->id_i)
+    {
+      len = isakmp_sa->id_i_len - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ + 1;
+
+      sid = calloc (PF_KEY_V2_ROUND (len) + sizeof *sid, sizeof (u_int8_t));
+      if (!sid)
+	goto cleanup;
+
+      sid->sadb_ident_len = ((sizeof *sid) / PF_KEY_V2_CHUNK)
+			    + PF_KEY_V2_ROUND (len) / PF_KEY_V2_CHUNK;
+      if (isakmp_sa->initiator)
+	sid->sadb_ident_exttype = SADB_EXT_IDENTITY_SRC;
+      else
+	sid->sadb_ident_exttype = SADB_EXT_IDENTITY_DST;
+
+      switch (isakmp_sa->id_i[0])
+        {
+	case IPSEC_ID_FQDN:
+	  memcpy (sid + 1,
+		  isakmp_sa->id_i + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ,
+		  len - 1);
+	  sid->sadb_ident_type = SADB_IDENTTYPE_FQDN;
+	  break;
+
+	case IPSEC_ID_USER_FQDN:
+	  memcpy (sid + 1,
+		  isakmp_sa->id_i + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ,
+		  len - 1);
+	  sid->sadb_ident_type = SADB_IDENTTYPE_MBOX;
+	  break;
+
+	case IPSEC_ID_KEY_ID:
+	case IPSEC_ID_IPV4_ADDR:
+	case IPSEC_ID_IPV4_RANGE:
+	case IPSEC_ID_IPV4_ADDR_SUBNET:
+	case IPSEC_ID_IPV6_ADDR:
+	case IPSEC_ID_IPV6_RANGE:
+	case IPSEC_ID_IPV6_ADDR_SUBNET:
+	    /* XXX PREFIX */
+	case IPSEC_ID_DER_ASN1_DN:
+	    /* XXX FQDN ? */
+	default:
+	  goto nosid;
+	}
+
+      if (pf_key_v2_msg_add (update, (struct sadb_ext *)sid,
+			      PF_KEY_V2_NODE_MALLOCED) == -1)
+	goto cleanup;
+      sid = 0;
+
+ nosid:
+      if (sid)
+	free (sid);
+    }
+
+  if (isakmp_sa->id_r)
+    {
+      len = isakmp_sa->id_r_len - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ + 1;
+
+      sid = calloc (PF_KEY_V2_ROUND (len) + sizeof *sid, sizeof (u_int8_t));
+      if (!sid)
+	goto cleanup;
+
+      sid->sadb_ident_len = ((sizeof *sid) / PF_KEY_V2_CHUNK)
+			    + PF_KEY_V2_ROUND (len) / PF_KEY_V2_CHUNK;
+      if (isakmp_sa->initiator)
+	sid->sadb_ident_exttype = SADB_EXT_IDENTITY_DST;
+      else
+	sid->sadb_ident_exttype = SADB_EXT_IDENTITY_SRC;
+
+      switch (isakmp_sa->id_r[0])
+        {
+	case IPSEC_ID_FQDN:
+	  memcpy (sid + 1,
+		  isakmp_sa->id_r + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ,
+		  len - 1);
+	  sid->sadb_ident_type = SADB_IDENTTYPE_FQDN;
+	  break;
+
+	case IPSEC_ID_USER_FQDN:
+	  memcpy (sid + 1,
+		  isakmp_sa->id_r + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ,
+		  len - 1);
+	  sid->sadb_ident_type = SADB_IDENTTYPE_MBOX;
+	  break;
+
+	case IPSEC_ID_KEY_ID:
+	case IPSEC_ID_IPV4_ADDR:
+	case IPSEC_ID_IPV4_RANGE:
+	case IPSEC_ID_IPV4_ADDR_SUBNET:
+	case IPSEC_ID_IPV6_ADDR:
+	case IPSEC_ID_IPV6_RANGE:
+	case IPSEC_ID_IPV6_ADDR_SUBNET:
+	    /* XXX PREFIX */
+	case IPSEC_ID_DER_ASN1_DN:
+	    /* XXX FQDN ? */
+	default:
+	  goto nodid;
+	}
+
+      if (pf_key_v2_msg_add (update, (struct sadb_ext *)sid,
+			      PF_KEY_V2_NODE_MALLOCED) == -1)
+	goto cleanup;
+      sid = 0;
+
+ nodid:
+      if (sid)
+	free (sid);
+    }
+
+  /* XXX Setup credentials */
+
+  /* XXX Here can sensitivity extensions be setup.  */
 
   /* XXX IPv4 specific.  */
   LOG_DBG ((LOG_SYSDEP, 10, "pf_key_v2_set_spi: satype %d dst %s SPI 0x%x",
@@ -1134,6 +1252,8 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming)
   return 0;
 
  cleanup:
+  if (sid)
+    free (sid);
   if (addr)
     free (addr);
   if (life)
@@ -1719,6 +1839,129 @@ pf_key_v2_enable_sa (struct sa *sa, struct sa *isakmp_sa)
   return error;
 }
 
+/* Increase reference count of refcounted sections. */
+static int
+pf_key_v2_conf_refinc (int af, char *section)
+{
+    unsigned char conn[22];
+    int num;
+
+    if (section == NULL)
+      return 0;
+
+    num = conf_get_num (section, "Refcount", 0);
+    if (num == 0)
+      return 0;
+
+    sprintf (conn, "%d", num + 1);
+    conf_set (af, section, "Refcount", conn, 1, 0);
+    return 0;
+}
+
+/*
+ * Return 0 if the section didn't exist or was removed, non-zero otherwise.
+ * Don't touch non-refcounted (statically defined) sections.
+ */
+static int
+pf_key_v2_conf_refhandle (int af, char *section)
+{
+    unsigned char conn[22];
+    int num;
+
+    if (section == NULL)
+      return 0;
+
+    num = conf_get_num (section, "Refcount", 0);
+    if (num == 1)
+      {
+	conf_remove_section (af, section);
+	num--;
+      }
+    else
+      if (num != 0)
+        {
+	  sprintf (conn, "%d", num - 1);
+	  conf_set (af, section, "Refcount", conn, 1, 0);
+	}
+
+    return num;
+}
+
+/* Remove all dynamically-established configuration entries */
+static int
+pf_key_v2_remove_conf(char *section)
+{
+    char *ikepeer, *localid, *remoteid, *configname;
+    struct conf_list_node *attr;
+    struct conf_list *attrs;
+    int af;
+
+    if (section == NULL)
+      return 0;
+
+    if (!conf_get_str (section, "Phase"))
+      return 0;
+
+    /* Only remove dynamically-established entries */
+    attrs = conf_get_list (section, "Flags");
+    if (attrs)
+      {
+	for (attr = TAILQ_FIRST (&attrs->fields); attr;
+	     attr = TAILQ_NEXT (attr, link))
+	  if (!strcasecmp (attr->field, "__ondemand"))
+	    goto passed;
+
+	conf_free_list (attrs);
+      }
+
+    return 0;
+
+ passed:
+    conf_free_list (attrs);
+
+    af = conf_begin ();
+
+    configname = conf_get_str (section, "Configuration");
+
+    if (pf_key_v2_conf_refhandle (af, section))
+      {
+	conf_end (af, 1);
+	return 0;
+      }
+
+    conf_remove_section (af, configname);
+
+    localid = conf_get_str (section, "Local-ID");
+    remoteid = conf_get_str (section, "Remote-ID");
+    ikepeer = conf_get_str (section, "ISAKMP-peer");
+
+    /* These are the Phase 2 Local/Remote IDs */
+    pf_key_v2_conf_refhandle (af, localid);
+    pf_key_v2_conf_refhandle (af, remoteid);
+
+    if (ikepeer)
+      {
+	remoteid = conf_get_str (ikepeer, "Remote-ID");
+	localid = conf_get_str (ikepeer, "ID");
+	configname = conf_get_str (ikepeer, "Configuration");
+
+	if (pf_key_v2_conf_refhandle (af, ikepeer))
+	  {
+	    conf_end (af, 1);
+	    return 0;
+	  }
+
+	pf_key_v2_conf_refhandle (af, configname);
+
+	/* Phase 1 IDs */
+	pf_key_v2_conf_refhandle (af, localid);
+	pf_key_v2_conf_refhandle (af, remoteid);
+      }
+
+    conf_end (af, 1);
+    return 0;
+}
+
 /* Disable a flow given a SA.  */
 static int
 pf_key_v2_disable_sa (struct sa *sa, int incoming)
@@ -1796,6 +2039,14 @@ pf_key_v2_delete_spi (struct sa *sa, struct proto *proto, int incoming)
   if (!(sa->flags & SA_FLAG_REPLACED)
       && !(sa->flags & SA_FLAG_ONDEMAND))
     pf_key_v2_disable_sa (sa, incoming);
+
+  if (sa->name && !(sa->flags & SA_FLAG_REPLACED))
+    {
+      LOG_DBG ((LOG_SYSDEP, 50,
+		"pf_key_v2_delete_spi: removing configuration %s",
+		sa->name));
+      pf_key_v2_remove_conf (sa->name);
+    }
 
   msg.sadb_msg_type = SADB_DELETE;
   switch (proto->proto)
@@ -1923,6 +2174,16 @@ pf_key_v2_stayalive (struct exchange *exchange, void *vconn, int fail)
   sa = sa_lookup_by_name (conn, 2);
   if (sa)
     sa->flags |= SA_FLAG_STAYALIVE;
+
+  /*
+   * Remove failed configuration entry -- call twice because it is
+   * created with a Refcount of 2.
+   */
+  if (fail && exchange->name)
+    {
+      pf_key_v2_remove_conf (exchange->name);
+      pf_key_v2_remove_conf (exchange->name);
+    }
 }
 
 /* Check if a connection CONN exists, otherwise establish it.  */
@@ -2355,21 +2616,22 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 	  pwd = NULL;
 
 	  /* Set the section if it doesn't already exist */
+	  af = conf_begin ();
 	  if (!conf_get_str (srcid, "ID-type"))
 	    {
-	      af = conf_begin ();
-	      if (conf_set (af, srcid, "ID-type", prefstring, 0, 0)
+	      if (conf_set (af, srcid, "ID-type", prefstring, 1, 0)
+		  || conf_set (af, srcid, "Refcount", "1", 1, 0)
 		  || conf_set (af, srcid, "Name",
 			       srcid + strlen ("ID:/") + strlen (prefstring),
-			       0, 0))
+			       1, 0))
 		{
 		  conf_end (af, 0);
 		  goto fail;
 		}
-
-	      conf_end (af, 1);
 	    }
-
+	  else
+	    pf_key_v2_conf_refinc (af, srcid);
+	  conf_end (af, 1);
 	  break;
 
 	default:
@@ -2460,21 +2722,22 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 	  pwd = NULL;
 
 	  /* Set the section if it doesn't already exist */
+	  af = conf_begin ();
 	  if (!conf_get_str (dstid, "ID-type"))
 	    {
-	      af = conf_begin ();
-	      if (conf_set (af, dstid, "ID-type", prefstring, 0, 0)
+	      if (conf_set (af, dstid, "ID-type", prefstring, 1, 0)
+		  || conf_set (af, dstid, "Refcount", "1", 1, 0)
 		  || conf_set (af, dstid, "Name",
 			       dstid + strlen ("ID:/") + strlen (prefstring),
-			       0, 0))
+			       1, 0))
 		{
 		  conf_end (af, 0);
 		  goto fail;
 		}
-
-	      conf_end (af, 1);
 	    }
-
+	  else
+	    pf_key_v2_conf_refinc (af, dstid);
+	  conf_end (af, 1);
 	  break;
 
 	default:
@@ -2494,8 +2757,8 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
   /* Get a new connection sequence number */
   for (;; connection_seq++)
     {
-      sprintf (conn, "Connection-%d", connection_seq);
-      sprintf (configname, "Config-Phase2-%d", connection_seq);
+      sprintf (conn, "Connection-%u", connection_seq);
+      sprintf (configname, "Config-Phase2-%u", connection_seq);
 
       /* Does it exist ? */
       if (!conf_get_str (conn, "Phase")
@@ -2509,6 +2772,7 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
    * - ISAKMP-peer
    * - Local-ID/Remote-ID (if provided)
    * - Acquire-ID (sequence number of kernel message, e.g., PF_KEYv2)
+   * - Configuration
    *
    * Also set the following section:
    *    [Peer-dstaddr(/srcaddr)(-srcid)(/dstid)]
@@ -2543,10 +2807,14 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 	   srcaddr ? srcbuf : "", srcid ? "-" : "", srcid ? srcid : "",
 	   dstid ? (srcid ? "/" : "-/") : "", dstid ? dstid : "");
 
-  /* Set the IPsec connection section */
+  /*
+   * Set the IPsec connection section. Refcount is set to 2, because
+   * it will be linked both to the incoming and the outgoing SA.
+   */
   af = conf_begin ();
   if (conf_set (af, conn, "Phase", "2", 0, 0)
-      || conf_set (af, conn, "Flags", "__ondemand", 0 ,0)
+      || conf_set (af, conn, "Flags", "__ondemand", 0 , 0)
+      || conf_set (af, conn, "Refcount", "2", 0 , 0)
       || conf_set (af, conn, "ISAKMP-peer", peer, 0, 0))
     {
       conf_end (af, 0);
@@ -2562,7 +2830,7 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
     }
 
   /* Set Phase 2 IDs -- this is the Local-ID section */
-  sprintf (lname, "Phase2-ID:%s/%s/%d/%d", ssflow, ssmask, tproto, sport);
+  sprintf (lname, "Phase2-ID:%s/%s/%u/%u", ssflow, ssmask, tproto, sport);
   if (conf_set (af, conn, "Local-ID", lname, 0, 0))
     {
       conf_end (af, 0);
@@ -2571,6 +2839,12 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 
   if (!conf_get_str (lname, "ID-type"))
     {
+      if (conf_set (af, lname, "Refcount", "1", 0, 0))
+	{
+	  conf_end (af, 0);
+	  goto fail;
+	}
+
       if (shostflag)
         {
 	  if (conf_set (af, lname, "ID-type", "IPV4_ADDR", 0, 0)
@@ -2592,7 +2866,7 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 	}
       if (tproto)
         {
-	  sprintf (tmbuf, "%d", tproto);
+	  sprintf (tmbuf, "%u", tproto);
 	  if (conf_set (af, lname, "Protocol", tmbuf, 0, 0))
 	    {
 	      conf_end (af, 0);
@@ -2601,7 +2875,7 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 
 	  if (sport)
 	    {
-	      sprintf (tmbuf, "%d", ntohs (sport));
+	      sprintf (tmbuf, "%u", ntohs (sport));
 	      if (conf_set (af, lname, "Port", tmbuf, 0, 0))
 	        {
 		  conf_end (af, 0);
@@ -2610,9 +2884,11 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 	    }
 	}
     }
+  else
+    pf_key_v2_conf_refinc (af, lname);
 
   /* Set Remote-ID section */
-  sprintf (dname, "Phase2-ID:%s/%s/%d/%d", sdflow, sdmask, tproto, dport);
+  sprintf (dname, "Phase2-ID:%s/%s/%u/%u", sdflow, sdmask, tproto, dport);
   if (conf_set (af, conn, "Remote-ID", dname, 0, 0))
     {
       conf_end (af, 0);
@@ -2621,6 +2897,12 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 
   if (!conf_get_str (dname, "ID-type"))
     {
+      if (conf_set (af, dname, "Refcount", "1", 0, 0))
+	{
+	  conf_end (af, 0);
+	  goto fail;
+	}
+
       if (dhostflag)
         {
 	  if (conf_set (af, dname, "ID-type", "IPV4_ADDR", 0, 0)
@@ -2643,7 +2925,7 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 
       if (tproto)
         {
-	  sprintf (tmbuf, "%d", tproto);
+	  sprintf (tmbuf, "%u", tproto);
 	  if (conf_set (af, dname, "Protocol", tmbuf, 0, 0))
 	    {
 	      conf_end (af, 0);
@@ -2652,7 +2934,7 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 
 	  if (dport)
 	    {
-	      sprintf (tmbuf, "%d", ntohs (dport));
+	      sprintf (tmbuf, "%u", ntohs (dport));
 	      if (conf_set (af, dname, "Port", tmbuf, 0, 0))
 	        {
 		  conf_end (af, 0);
@@ -2661,6 +2943,8 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 	    }
 	}
     }
+  else
+    pf_key_v2_conf_refinc (af, dname);
 
   /*
    * XXX
@@ -2676,18 +2960,36 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
     }
 
   if (conf_set (af, configname, "Exchange_type", "Quick_mode", 0, 0)
-      || conf_set (af, configname, "DOI", "IPSEC", 0, 0)
-      || conf_set (af, configname, "Suites",
-		   "QM-ESP-3DES-SHA-PFS-SUITE", 0, 0))
+      || conf_set (af, configname, "DOI", "IPSEC", 0, 0))
     {
       conf_end (af, 0);
       goto fail;
+    }
+
+  if (conf_get_str ("General", "Default-Phase-2-Suites"))
+    {
+      if (conf_set (af, configname, "Suites",
+		    conf_get_str ("General", "Default-Phase-2-Suites"), 0, 0))
+        {
+	  conf_end (af, 0);
+	  goto fail;
+	}
+    }
+  else
+    {
+      if (conf_set (af, configname, "Suites",
+		    "QM-ESP-3DES-SHA-PFS-SUITE", 0, 0))
+        {
+	  conf_end (af, 0);
+	  goto fail;
+	}
     }
 
   /* Set the ISAKMP-peer section */
   if (!conf_get_str (peer, "Phase"))
     {
       if (conf_set (af, peer, "Phase", "1", 0, 0)
+	  || conf_set (af, peer, "Refcount", "1", 0, 0)
 	  || conf_set (af, peer, "Address", dstbuf, 0, 0))
         {
 	  conf_end (af, 0);
@@ -2713,6 +3015,7 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
         {
 	  if (conf_set (af, confname, "Exchange_Type", "ID_PROT", 0, 0)
 	      || conf_set (af, confname, "DOI", "IPSEC", 0, 0)
+	      || conf_set (af, confname, "Refcount", "1", 0, 0)
 	      || conf_set (af, confname, "Transforms", "3DES-SHA-RSA_SIG", 0,
 			   0))
 	    {
@@ -2720,6 +3023,8 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 	      goto fail;
 	    }
 	}
+      else
+	pf_key_v2_conf_refinc (af, confname);
 
       /* The ID we should use in Phase 1 */
       if (srcid && conf_set (af, peer, "ID", srcid, 0, 0))
@@ -2736,21 +3041,13 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 	}
     }
   else
-    {
-      /* Phase 1 tag exists, there's nothing more we need to do */
-    }
+    pf_key_v2_conf_refinc (af, peer);
 
   /* All done */
   conf_end (af, 1);
 
   /* Let's rock */
   pf_key_v2_connection_check (conn);
-
-  /*
-   * XXX Need to implement cleanup of sections after SAs expire. In
-   * particular, we need to expire the IPsec connection section; we
-   * could keep the ISAKMP-peer, Local-ID/Remote-ID sections.
-   */
 
   /* Fall-through to cleanup */
  fail:
