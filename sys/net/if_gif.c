@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.23 2002/06/09 06:05:04 itojun Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.24 2002/06/10 17:33:28 itojun Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -151,6 +151,13 @@ gif_output(ifp, m, dst, rt)
 	int error = 0;
 	struct m_tag *mtag;
 
+	if (!(ifp->if_flags & IFF_UP) ||
+	    sc->gif_psrc == NULL || sc->gif_pdst == NULL) {
+		m_freem(m);
+		error = ENETDOWN;
+		goto end;
+	}
+
 	/*
 	 * gif may cause infinite recursion calls when misconfigured.
 	 * We'll prevent this by detecting loops.
@@ -178,12 +185,6 @@ gif_output(ifp, m, dst, rt)
 	m_tag_prepend(m, mtag);
 
 	m->m_flags &= ~(M_BCAST|M_MCAST);
-	if (!(ifp->if_flags & IFF_UP) ||
-	    sc->gif_psrc == NULL || sc->gif_pdst == NULL) {
-		m_freem(m);
-		error = ENETDOWN;
-		goto end;
-	}
 
 #if NBPFILTER > 0
 	if (ifp->if_bpf) {
@@ -221,10 +222,12 @@ gif_output(ifp, m, dst, rt)
 	default:
 		m_freem(m);		
 		error = ENETDOWN;
+		break;
 	}
 
   end:
-	if (error) ifp->if_oerrors++;
+	if (error)
+		ifp->if_oerrors++;
 	return error;
 }
 
