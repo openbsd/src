@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.9 2004/07/06 18:45:29 jason Exp $ */
+/*	$OpenBSD: client.c,v 1.10 2004/07/06 19:06:43 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -114,7 +114,8 @@ client_dispatch(struct ntp_peer *p)
 
 	if (msg.orgtime.int_part != p->query->msg.xmttime.int_part ||
 	    msg.orgtime.fraction != p->query->msg.xmttime.fraction) {
-		log_warn("received packet without correct cookie, discarding");
+		log_warnx("received packet from %s without correct cookie, "
+		    "discarding", log_sockaddr((struct sockaddr *)&fsa));
 		return (0);
 	}
 
