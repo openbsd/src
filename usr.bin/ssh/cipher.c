@@ -12,7 +12,7 @@ Created: Wed Apr 19 17:41:39 1995 ylo
 */
 
 #include "includes.h"
-RCSID("$Id: cipher.c,v 1.8 1999/09/30 17:08:52 deraadt Exp $");
+RCSID("$Id: cipher.c,v 1.9 1999/09/30 18:37:45 provos Exp $");
 
 #include "ssh.h"
 #include "cipher.h"
@@ -123,12 +123,12 @@ detect_cbc_attack(const unsigned char *src,
    int cipher.h. */
 static char *cipher_names[] =
 {
-  "no none",
-  "no idea",
-  "no des",
+  NULL,		/* no none */
+  NULL, 	/* no idea */
+  NULL, 	/* no des */
   "3des",
-  "no tss",
-  "no rc4",
+  NULL, 	/* no tss */
+  NULL,		/* no rc4 */
   "blowfish"
 };
 
@@ -162,7 +162,7 @@ cipher_number(const char *name)
 {
   int i;
   for (i = 0; i < sizeof(cipher_names) / sizeof(cipher_names[0]); i++)
-    if (strcmp(cipher_names[i], name) == 0)
+    if (cipher_names[i] != NULL && strcmp(cipher_names[i], name) == 0)
       return i;
   return -1;
 }
