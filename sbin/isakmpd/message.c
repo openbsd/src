@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.64 2003/12/04 22:44:31 hshoexer Exp $	*/
+/*	$OpenBSD: message.c,v 1.65 2003/12/05 13:17:37 ho Exp $	*/
 /*	$EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	*/
 
 /*
@@ -498,16 +498,13 @@ message_validate_delete (struct message *msg, struct payload *p)
       /* Get SA to be deleted. */
       msg->transport->vtbl->get_dst (msg->transport, &dst);
       if (proto == ISAKMP_PROTO_ISAKMP)
-        {
-          sa = sa_lookup_isakmp_sa (dst, spis + i * ISAKMP_HDR_COOKIES_LEN);
-        }
+	sa = sa_lookup_isakmp_sa (dst, spis + i * ISAKMP_HDR_COOKIES_LEN);
       else
-        {
-          sa = ipsec_sa_lookup (dst, ((u_int32_t *)spis)[i], proto);
-        }
+	sa = ipsec_sa_lookup (dst, ((u_int32_t *)spis)[i], proto);
       if (!sa)
         {
-          log_print ("message_validate_delete: invalid spi (no valid SA found)");
+          log_print ("message_validate_delete: invalid spi "
+		     "(no valid SA found)");
           message_free (msg);
           return -1;
         }
