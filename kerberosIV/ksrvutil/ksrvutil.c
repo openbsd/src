@@ -1,4 +1,4 @@
-/*	$Id: ksrvutil.c,v 1.3 1996/09/16 18:49:03 millert Exp $	*/
+/*	$Id: ksrvutil.c,v 1.4 1997/04/08 22:40:52 rees Exp $	*/
 
 /*-
  * Copyright (C) 1989 by the Massachusetts Institute of Technology
@@ -257,9 +257,10 @@ get_svc_new_key(unsigned char *new_key, char *sname, char *sinst, char *srealm, 
 }
 
 static void
-get_key_from_password(des_cblock (*key))
+get_key_from_password(des_cblock (*key), int afskey, char *srealm)
 {
     char password[MAX_KPW_LEN];	/* storage for the password */
+    char cell[REALM_SZ], *p;
 
     if (read_long_pw_string(password, sizeof(password)-1, "Password: ", 1))
 	leave("Error reading password.", 1);
@@ -268,7 +269,14 @@ get_key_from_password(des_cblock (*key))
     (void) bzero((char *) key, sizeof(des_cblock));
     key[0] = (unsigned char) 1;
 #else /* NOENCRYPTION */
-    (void) des_string_to_key(password, key);
+    if (afskey) {
+	strcpy(cell, srealm);
+	for (p = cell; *p; p++)
+	    if (isupper(*p))
+		*p = tolower(*p);
+	afs_string_to_key(password, cell, key);
+    } else
+	(void) des_string_to_key(password, key);
 #endif /* NOENCRYPTION */
     (void) bzero((char *)password, sizeof(password));
 }    
@@ -276,12 +284,13 @@ get_key_from_password(des_cblock (*key))
 static void
 usage(void)
 {
-    (void) fprintf(stderr, "Usage: ksrvutil [-f keyfile] [-i] [-k] ");
+    (void) fprintf(stderr, "Usage: ksrvutil [-f keyfile] [-i] [-k] [-a] ");
     (void) fprintf(stderr, "{list | change | add | get}\n");
     (void) fprintf(stderr, "   -i causes the program to ask for ");
     (void) fprintf(stderr, "confirmation before changing keys.\n");
     (void) fprintf(stderr, "   -k causes the key to printed for list or ");
     (void) fprintf(stderr, "change.\n");
+    (void) fprintf(stderr, "   -a uses the AFS string-to-key.\n");
     exit(1);
 }
 
@@ -310,6 +319,7 @@ main(int argc, char **argv)
     int add = FALSE;
     int get = FALSE;
     int key = FALSE;		/* do we show keys? */
+    int afskey = FALSE;		/* do we use AFS string-to-key? */
     int arg_entered = FALSE;
     int change_this_key = FALSE;
     char databuf[BUFSIZ];
@@ -378,6 +388,8 @@ main(int argc, char **argv)
 	    else
 		(void) strcpy(keyfile, argv[i]);
 	}
+	else if (strcmp(argv[i], "-a") == 0) 
+	    afskey++;
 	else
 	    usage();
     }
@@ -550,7 +562,7 @@ main(int argc, char **argv)
 		print_name(sname, sinst, srealm);
 		(void) printf("; version %d\n", key_vno);
 	    } while (!yn("Is this correct?"));
-	    get_key_from_password(&new_key);
+	    get_key_from_password(&new_key, afskey, srealm);
 	    if (key) {
 		(void) printf("Key: ");
 		print_key(new_key);
