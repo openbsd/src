@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.2 1996/03/03 17:20:21 niklas Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.3 1996/05/18 01:46:56 deraadt Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -323,8 +323,6 @@ sys_socketpair(p, v, retval)
 	}
 	error = copyout((caddr_t)sv, (caddr_t)SCARG(uap, rsv),
 	    2 * sizeof (int));
-	retval[0] = sv[0];		/* XXX ??? */
-	retval[1] = sv[1];		/* XXX ??? */
 	return (error);
 free4:
 	ffree(fp2);
