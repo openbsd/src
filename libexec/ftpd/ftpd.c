@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.34 1997/04/25 11:06:28 deraadt Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.35 1997/05/01 14:45:37 deraadt Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -598,7 +598,7 @@ user(name)
 			    "ANONYMOUS FTP LOGIN REFUSED FROM %s", remotehost);
 		return;
 	}
-	if (anon_only != 0) {
+	if (anon_only && !checkuser(_PATH_FTPCHROOT, name)) {
 		reply(530, "Sorry, only anonymous ftp allowed.");
 		return;
 	}
