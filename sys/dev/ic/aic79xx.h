@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.h,v 1.6 2004/08/23 20:16:01 marco Exp $	*/
+/*	$OpenBSD: aic79xx.h,v 1.7 2004/10/24 04:28:33 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -148,7 +148,7 @@ struct scb_platform_data;
 	((lun) | ((target) << 8))
 
 #define SCB_GET_TAG(scb) \
-	ahd_le16toh(scb->hscb->tag)
+	aic_le16toh(scb->hscb->tag)
 
 #ifndef	AHD_TARGET_MODE
 #undef	AHD_TMODE_ENABLE

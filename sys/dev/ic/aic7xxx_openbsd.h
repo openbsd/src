@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_openbsd.h,v 1.12 2004/08/01 01:36:23 krw Exp $	*/
+/*	$OpenBSD: aic7xxx_openbsd.h,v 1.13 2004/10/24 04:28:33 krw Exp $	*/
 /*	$NetBSD: aic7xxx_osm.h,v 1.7 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -141,21 +141,6 @@ struct scb_platform_data {
 #define ISABUS_DMA_32BIT	BUS_DMA_BUS1
 #endif 
 
-/********************************* Byte Order *********************************/
-#define ahc_htobe16(x) htobe16(x)
-#define ahc_htobe32(x) htobe32(x)
-#define ahc_htobe64(x) htobe64(x)
-#define ahc_htole16(x) htole16(x)
-#define ahc_htole32(x) htole32(x)
-#define ahc_htole64(x) htole64(x)
-                       
-#define ahc_be16toh(x) betoh16(x)
-#define ahc_be32toh(x) betoh32(x)
-#define ahc_be64toh(x) betoh64(x)
-#define ahc_le16toh(x) letoh16(x)
-#define ahc_le32toh(x) letoh32(x)
-#define ahc_le64toh(x) letoh64(x)
-
 /************************** Timer DataStructures ******************************/
 typedef struct timeout ahc_timer_t;
 
@@ -274,7 +259,6 @@ ahc_list_unlock(int *flags)
 {
 }
 /****************************** OS Primitives *********************************/
-#define ahc_delay DELAY
 
 /************************** Transaction Operations ****************************/
 static __inline void ahc_set_transaction_status(struct scb *, uint32_t);

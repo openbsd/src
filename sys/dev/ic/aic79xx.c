@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.c,v 1.10 2004/10/24 01:36:49 krw Exp $	*/
+/*	$OpenBSD: aic79xx.c,v 1.11 2004/10/24 04:28:33 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -475,7 +475,7 @@ rescan_fifos:
 			 * also delay a bit so that status has a chance
 			 * to change before we look at this FIFO again.
 			 */
-			ahd_delay(200);
+			aic_delay(200);
 			goto rescan_fifos;
 		}
 		ahd_set_modes(ahd, AHD_MODE_SCSI, AHD_MODE_SCSI);
@@ -532,7 +532,7 @@ rescan_fifos:
 				break;
 		} else if ((ccscbctl & CCSCBDONE) != 0)
 			break;
-		ahd_delay(200);
+		aic_delay(200);
 	}
 	/*
 	 * We leave the sequencer to cleanup in the case of DMA's to
@@ -904,7 +904,7 @@ ahd_run_qoutfifo(struct ahd_softc *ahd)
 		if (completion->valid_tag != ahd->qoutfifonext_valid_tag)
 			break;
 
-		scb_index = ahd_le16toh(completion->tag);
+		scb_index = aic_le16toh(completion->tag);
 		scb = ahd_lookup_scb(ahd, scb_index);
 		if (scb == NULL) {
 			printf("%s: WARNING no command for scb %d "
@@ -2648,7 +2648,7 @@ ahd_clear_critical_section(struct ahd_softc *ahd)
 		ahd_set_modes(ahd, ahd->saved_src_mode, ahd->saved_dst_mode);
 		ahd_outb(ahd, HCNTRL, ahd->unpause);
 		while (!ahd_is_paused(ahd))
-			ahd_delay(200);
+			aic_delay(200);
 		ahd_update_modes(ahd);
 	}
 	if (stepping) {
@@ -2724,10 +2724,10 @@ ahd_print_scb(struct scb *scb)
 	for (i = 0; i < sizeof(hscb->shared_data.idata.cdb); i++)
 		printf("%#02x", hscb->shared_data.idata.cdb[i]);
 	printf("        dataptr:%#x%x datacnt:%#x sgptr:%#x tag:%#x\n",
-	       (uint32_t)((ahd_le64toh(hscb->dataptr) >> 32) & 0xFFFFFFFF),
-	       (uint32_t)(ahd_le64toh(hscb->dataptr) & 0xFFFFFFFF),
-	       ahd_le32toh(hscb->datacnt),
-	       ahd_le32toh(hscb->sgptr),
+	       (uint32_t)((aic_le64toh(hscb->dataptr) >> 32) & 0xFFFFFFFF),
+	       (uint32_t)(aic_le64toh(hscb->dataptr) & 0xFFFFFFFF),
+	       aic_le32toh(hscb->datacnt),
+	       aic_le32toh(hscb->sgptr),
 	       SCB_GET_TAG(scb));
 	ahd_dump_sglist(scb);
 }
@@ -2746,8 +2746,8 @@ ahd_dump_sglist(struct scb *scb)
 				uint64_t addr;
 				uint32_t len;
 
-				addr = ahd_le64toh(sg_list[i].addr);
-				len = ahd_le32toh(sg_list[i].len);
+				addr = aic_le64toh(sg_list[i].addr);
+				len = aic_le32toh(sg_list[i].len);
 				printf("sg[%d] - Addr 0x%x%x : Length %d%s\n",
 				       i,
 				       (uint32_t)((addr >> 32) & 0xFFFFFFFF),
@@ -2763,11 +2763,11 @@ ahd_dump_sglist(struct scb *scb)
 			for (i = 0; i < scb->sg_count; i++) {
 				uint32_t len;
 
-				len = ahd_le32toh(sg_list[i].len);
+				len = aic_le32toh(sg_list[i].len);
 				printf("sg[%d] - Addr 0x%x%x : Length %d%s\n",
 				       i,
 				       (len & AHD_SG_HIGH_ADDR_MASK) >> 24,
-				       ahd_le32toh(sg_list[i].addr),
+				       aic_le32toh(sg_list[i].addr),
 				       len & AHD_SG_LEN_MASK,
 				       len & AHD_DMA_LAST_SEG ? " Last" : "");
 			}
@@ -4920,18 +4920,18 @@ ahd_handle_ign_wide_residue(struct ahd_softc *ahd, struct ahd_devinfo *devinfo)
 				 * to load so we must go back one.
 				 */
 				sg--;
-				sglen = ahd_le32toh(sg->len) & AHD_SG_LEN_MASK;
+				sglen = aic_le32toh(sg->len) & AHD_SG_LEN_MASK;
 				if (sg != (struct ahd_dma64_seg *)scb->sg_list
 				 && sglen < (data_cnt & AHD_SG_LEN_MASK)) {
 
 					sg--;
-					sglen = ahd_le32toh(sg->len);
+					sglen = aic_le32toh(sg->len);
 					/*
 					 * Preserve High Address and SG_LIST
 					 * bits while setting the count to 1.
 					 */
 					data_cnt = 1|(sglen&(~AHD_SG_LEN_MASK));
-					data_addr = ahd_le64toh(sg->addr)
+					data_addr = aic_le64toh(sg->addr)
 						  + (sglen & AHD_SG_LEN_MASK)
 						  - 1;
 
@@ -4953,18 +4953,18 @@ ahd_handle_ign_wide_residue(struct ahd_softc *ahd, struct ahd_devinfo *devinfo)
 				 * to load so we must go back one.
 				 */
 				sg--;
-				sglen = ahd_le32toh(sg->len) & AHD_SG_LEN_MASK;
+				sglen = aic_le32toh(sg->len) & AHD_SG_LEN_MASK;
 				if (sg != scb->sg_list
 				 && sglen < (data_cnt & AHD_SG_LEN_MASK)) {
 
 					sg--;
-					sglen = ahd_le32toh(sg->len);
+					sglen = aic_le32toh(sg->len);
 					/*
 					 * Preserve High Address and SG_LIST
 					 * bits while setting the count to 1.
 					 */
 					data_cnt = 1|(sglen&(~AHD_SG_LEN_MASK));
-					data_addr = ahd_le32toh(sg->addr)
+					data_addr = aic_le32toh(sg->addr)
 						  + (sglen & AHD_SG_LEN_MASK)
 						  - 1;
 
@@ -5026,7 +5026,7 @@ ahd_reinitialize_dataptrs(struct ahd_softc *ahd)
 	ahd_outb(ahd, DFFSXFRCTL, CLRCHN);
 	wait = 1000;
 	while (--wait && !(ahd_inb(ahd, MDFFSTAT) & FIFOFREE))
-		ahd_delay(100);
+		aic_delay(100);
 	if (wait == 0) {
 		ahd_print_path(ahd, scb);
 		printf("ahd_reinitialize_dataptrs: Forcing FIFO free.\n");
@@ -5057,8 +5057,8 @@ ahd_reinitialize_dataptrs(struct ahd_softc *ahd)
 		/* The residual sg_ptr always points to the next sg */
 		sg--;
 
-		dataptr = ahd_le64toh(sg->addr)
-			+ (ahd_le32toh(sg->len) & AHD_SG_LEN_MASK)
+		dataptr = aic_le64toh(sg->addr)
+			+ (aic_le32toh(sg->len) & AHD_SG_LEN_MASK)
 			- resid;
 		ahd_outl(ahd, HADDR + 4, dataptr >> 32);
 	} else {
@@ -5069,11 +5069,11 @@ ahd_reinitialize_dataptrs(struct ahd_softc *ahd)
 		/* The residual sg_ptr always points to the next sg */
 		sg--;
 
-		dataptr = ahd_le32toh(sg->addr)
-			+ (ahd_le32toh(sg->len) & AHD_SG_LEN_MASK)
+		dataptr = aic_le32toh(sg->addr)
+			+ (aic_le32toh(sg->len) & AHD_SG_LEN_MASK)
 			- resid;
 		ahd_outb(ahd, HADDR + 4,
-			 (ahd_le32toh(sg->len) & ~AHD_SG_LEN_MASK) >> 24);
+			 (aic_le32toh(sg->len) & ~AHD_SG_LEN_MASK) >> 24);
 	}
 	ahd_outl(ahd, HADDR, dataptr);
 	ahd_outb(ahd, HCNT + 2, resid >> 16);
@@ -5455,7 +5455,7 @@ ahd_reset(struct ahd_softc *ahd, int reinit)
 	 */
 	wait = 1000;
 	do {
-		ahd_delay(1000);
+		aic_delay(1000);
 	} while (--wait && !(ahd_inb(ahd, HCNTRL) & CHIPRSTACK));
 
 	if (wait == 0) {
@@ -6069,7 +6069,7 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 		next_scb->hscb = hscb;
 		KASSERT((vaddr_t)hscb >= (vaddr_t)hscb_map->vaddr &&
 			(vaddr_t)hscb < (vaddr_t)hscb_map->vaddr + PAGE_SIZE);
-		hscb->hscb_busaddr = ahd_htole32(hscb_busaddr);
+		hscb->hscb_busaddr = aic_htole32(hscb_busaddr);
 
 		/*
 		 * The sequencer always starts with the second entry.
@@ -6094,7 +6094,7 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 			free(pdata, M_DEVBUF);
 			break;
 		}
-		next_scb->hscb->tag = ahd_htole16(scb_data->numscbs);
+		next_scb->hscb->tag = aic_htole16(scb_data->numscbs);
 		col_tag = scb_data->numscbs ^ 0x100;
 		next_scb->col_scb = ahd_find_scb_by_tag(ahd, col_tag);
 		if (next_scb->col_scb != NULL)
@@ -6236,7 +6236,7 @@ ahd_init(struct ahd_softc *ahd)
 	 */
 	ahd->next_queued_hscb = (struct hardware_scb *)next_vaddr;
 	ahd->next_queued_hscb_map = &ahd->shared_data_map;
-	ahd->next_queued_hscb->hscb_busaddr = ahd_htole32(next_baddr);
+	ahd->next_queued_hscb->hscb_busaddr = aic_htole32(next_baddr);
 
 	/* Allocate SCB data now that buffer_dmat is initialized */
 	if (ahd_init_scbdata(ahd) != 0)
@@ -6391,7 +6391,7 @@ ahd_chip_init(struct ahd_softc *ahd)
 	for (wait = 10000;
 	     (ahd_inb(ahd, SBLKCTL) & (ENAB40|ENAB20)) == 0 && wait;
 	     wait--)
-		ahd_delay(100);
+		aic_delay(100);
 
 	/* Clear any false bus resets due to the transceivers settling */
 	ahd_outb(ahd, CLRSINT1, CLRSCSIRSTI);
@@ -6643,7 +6643,7 @@ ahd_chip_init(struct ahd_softc *ahd)
 	/*
 	 * Tell the sequencer which SCB will be the next one it receives.
 	 */
-	busaddr = ahd_le32toh(ahd->next_queued_hscb->hscb_busaddr);
+	busaddr = aic_le32toh(ahd->next_queued_hscb->hscb_busaddr);
 	ahd_outl(ahd, NEXT_QUEUED_SCB_ADDR, busaddr);
 
 	/*
@@ -6967,7 +6967,7 @@ ahd_pause_and_flushwork(struct ahd_softc *ahd)
 		 * Give the sequencer some time to service
 		 * any active selections.
 		 */
-		ahd_delay(500);
+		aic_delay(500);
 
 		ahd_intr(ahd);
 		ahd_pause(ahd);
@@ -7159,7 +7159,7 @@ ahd_qinfifo_requeue(struct ahd_softc *ahd, struct scb *prev_scb,
 	if (prev_scb == NULL) {
 		uint32_t busaddr;
 
-		busaddr = ahd_le32toh(scb->hscb->hscb_busaddr);
+		busaddr = aic_le32toh(scb->hscb->hscb_busaddr);
 		ahd_outl(ahd, NEXT_QUEUED_SCB_ADDR, busaddr);
 	} else {
 		prev_scb->hscb->next_hscb_busaddr = scb->hscb->hscb_busaddr;
@@ -7266,7 +7266,7 @@ ahd_search_qinfifo(struct ahd_softc *ahd, int target, char channel,
 	 * for removal will be re-added to the queue as we go.
 	 */
 	ahd->qinfifonext = qinstart;
-	busaddr = ahd_le32toh(ahd->next_queued_hscb->hscb_busaddr);
+	busaddr = aic_le32toh(ahd->next_queued_hscb->hscb_busaddr);
 	ahd_outl(ahd, NEXT_QUEUED_SCB_ADDR, busaddr);
 
 	while (qinpos != qintail) {
@@ -7657,11 +7657,11 @@ ahd_reset_current_bus(struct ahd_softc *ahd)
 	scsiseq = ahd_inb(ahd, SCSISEQ0) & ~(ENSELO|ENARBO|SCSIRSTO);
 	ahd_outb(ahd, SCSISEQ0, scsiseq | SCSIRSTO);
 	ahd_flush_device_writes(ahd);
-	ahd_delay(AHD_BUSRESET_DELAY);
+	aic_delay(AHD_BUSRESET_DELAY);
 	/* Turn off the bus reset */
 	ahd_outb(ahd, SCSISEQ0, scsiseq);
 	ahd_flush_device_writes(ahd);
-	ahd_delay(AHD_BUSRESET_DELAY);
+	aic_delay(AHD_BUSRESET_DELAY);
 	if ((ahd->bugs & AHD_SCSIRST_BUG) != 0) {
 		/*
 		 * 2A Razor #474
@@ -7729,7 +7729,7 @@ ahd_reset_channel(struct ahd_softc *ahd, char channel, int initiate_reset)
 		ahd_outb(ahd, DFCNTRL,
 			 ahd_inb(ahd, DFCNTRL) & ~(SCSIEN|HDMAEN));
 		while ((ahd_inb(ahd, DFCNTRL) & HDMAENACK) != 0)
-			ahd_delay(10);
+			aic_delay(10);
 		/*
 		 * Set CURRFIFO to the now inactive channel.
 		 */
@@ -8175,7 +8175,7 @@ ahd_calc_residual(struct ahd_softc *ahd, struct scb *scb)
 	 */
 
 	hscb = scb->hscb;
-	sgptr = ahd_le32toh(hscb->sgptr);
+	sgptr = aic_le32toh(hscb->sgptr);
 	if ((sgptr & SG_STATUS_VALID) == 0)
 		/* Case 1 */
 		return;
@@ -8192,7 +8192,7 @@ ahd_calc_residual(struct ahd_softc *ahd, struct scb *scb)
 	 * regardless of the role for this SCB.
 	 */
 	spkt = &hscb->shared_data.istatus;
-	resid_sgptr = ahd_le32toh(spkt->residual_sgptr);
+	resid_sgptr = aic_le32toh(spkt->residual_sgptr);
 	if ((sgptr & SG_FULL_RESID) != 0) {
 		/* Case 3 */
 		resid = ahd_get_transfer_length(scb);
@@ -8217,7 +8217,7 @@ ahd_calc_residual(struct ahd_softc *ahd, struct scb *scb)
 		 * Remainder of the SG where the transfer
 		 * stopped.  
 		 */
-		resid = ahd_le32toh(spkt->residual_datacnt) & AHD_SG_LEN_MASK;
+		resid = aic_le32toh(spkt->residual_datacnt) & AHD_SG_LEN_MASK;
 		sg = ahd_sg_bus_to_virt(ahd, scb, resid_sgptr & SG_PTR_MASK);
 
 		/* The residual sg_ptr always points to the next sg */
@@ -8228,9 +8228,9 @@ ahd_calc_residual(struct ahd_softc *ahd, struct scb *scb)
 		 * SG segments that are after the SG where
 		 * the transfer stopped.
 		 */
-		while ((ahd_le32toh(sg->len) & AHD_DMA_LAST_SEG) == 0) {
+		while ((aic_le32toh(sg->len) & AHD_DMA_LAST_SEG) == 0) {
 			sg++;
-			resid += ahd_le32toh(sg->len) & AHD_SG_LEN_MASK;
+			resid += aic_le32toh(sg->len) & AHD_SG_LEN_MASK;
 		}
 	}
 	if ((scb->flags & SCB_SENSE) == 0)
@@ -8597,7 +8597,7 @@ ahd_download_instr(struct ahd_softc *ahd, u_int instrptr, uint8_t *dconsts)
 	/*
 	 * The firmware is always compiled into a little endian format.
 	 */
-	instr.integer = ahd_le32toh(*(uint32_t*)&seqprog[instrptr * 4]);
+	instr.integer = aic_le32toh(*(uint32_t*)&seqprog[instrptr * 4]);
 
 	fmt1_ins = &instr.format1;
 	fmt3_ins = NULL;
@@ -8645,7 +8645,7 @@ ahd_download_instr(struct ahd_softc *ahd, u_int instrptr, uint8_t *dconsts)
 			instr.format1.parity = 1;
 
 		/* The sequencer is a little endian cpu */
-		instr.integer = ahd_htole32(instr.integer);
+		instr.integer = aic_htole32(instr.integer);
 		ahd_outsb(ahd, SEQRAM, instr.bytes, 4);
 		break;
 	}
@@ -9440,7 +9440,7 @@ ahd_wait_seeprom(struct ahd_softc *ahd)
 
 	cnt = 5000;
 	while ((ahd_inb(ahd, SEESTAT) & (SEEARBACK|SEEBUSY)) != 0 && --cnt)
-		ahd_delay(5);
+		aic_delay(5);
 
 	if (cnt == 0)
 		return (ETIMEDOUT);
@@ -9582,7 +9582,7 @@ ahd_wait_flexport(struct ahd_softc *ahd)
 	AHD_ASSERT_MODES(ahd, AHD_MODE_SCSI_MSK, AHD_MODE_SCSI_MSK);
 	cnt = 1000000 * 2 / 5;
 	while ((ahd_inb(ahd, BRDCTL) & FLXARBACK) == 0 && --cnt)
-		ahd_delay(5);
+		aic_delay(5);
 
 	if (cnt == 0)
 		return (ETIMEDOUT);
@@ -10387,15 +10387,15 @@ ahd_sg_setup(struct ahd_softc *ahd, struct scb *scb,
 		struct ahd_dma64_seg *sg;
 
 		sg = (struct ahd_dma64_seg *)sgptr;
-		sg->addr = ahd_htole64(addr);
-		sg->len = ahd_htole32(len | (last ? AHD_DMA_LAST_SEG : 0));
+		sg->addr = aic_htole64(addr);
+		sg->len = aic_htole32(len | (last ? AHD_DMA_LAST_SEG : 0));
 		return (sg + 1);
 	} else {
 		struct ahd_dma_seg *sg;
 
 		sg = (struct ahd_dma_seg *)sgptr;
-		sg->addr = ahd_htole32(addr & 0xFFFFFFFF);
-		sg->len = ahd_htole32(len | ((addr >> 8) & 0x7F000000)
+		sg->addr = aic_htole32(addr & 0xFFFFFFFF);
+		sg->len = aic_htole32(len | ((addr >> 8) & 0x7F000000)
 				    | (last ? AHD_DMA_LAST_SEG : 0));
 		return (sg + 1);
 	}
@@ -10419,7 +10419,7 @@ ahd_setup_scb_common(struct ahd_softc *ahd, struct scb *scb)
 	if (scb->hscb->cdb_len <= MAX_CDB_LEN_WITH_SENSE_ADDR
 	 || (scb->hscb->cdb_len & SCB_CDB_LEN_PTR) != 0)
 		scb->hscb->shared_data.idata.cdb_plus_saddr.sense_addr =
-		    ahd_htole32(scb->sense_busaddr);
+		    aic_htole32(scb->sense_busaddr);
 }
 
 void
@@ -10445,8 +10445,8 @@ ahd_setup_data_scb(struct ahd_softc *ahd, struct scb *scb)
 		if ((ahd->flags & AHD_39BIT_ADDRESSING) != 0) {
 			uint64_t high_addr;
 
-			high_addr = ahd_le32toh(sg->len) & 0x7F000000;
-			scb->hscb->dataptr |= ahd_htole64(high_addr << 8);
+			high_addr = aic_le32toh(sg->len) & 0x7F000000;
+			scb->hscb->dataptr |= aic_htole64(high_addr << 8);
 		}
 		scb->hscb->datacnt = sg->len;
 	}
@@ -10456,13 +10456,13 @@ ahd_setup_data_scb(struct ahd_softc *ahd, struct scb *scb)
 	 * sequencer will clear as soon as a data transfer
 	 * occurs.
 	 */
-	scb->hscb->sgptr = ahd_htole32(scb->sg_list_busaddr|SG_FULL_RESID);
+	scb->hscb->sgptr = aic_htole32(scb->sg_list_busaddr|SG_FULL_RESID);
 }
 
 void
 ahd_setup_noxfer_scb(struct ahd_softc *ahd, struct scb *scb)
 {
-	scb->hscb->sgptr = ahd_htole32(SG_LIST_NULL);
+	scb->hscb->sgptr = aic_htole32(SG_LIST_NULL);
 	scb->hscb->dataptr = 0;
 	scb->hscb->datacnt = 0;
 }
@@ -10538,7 +10538,7 @@ ahd_complete_scb(struct ahd_softc *ahd, struct scb *scb)
 {
 	uint32_t sgptr;
 
-	sgptr = ahd_le32toh(scb->hscb->sgptr);
+	sgptr = aic_le32toh(scb->hscb->sgptr);
 	if ((sgptr & SG_STATUS_VALID) != 0)
 		ahd_handle_scb_status(ahd, scb);
 	else
@@ -10554,7 +10554,7 @@ ahd_update_residual(struct ahd_softc *ahd, struct scb *scb)
 {
 	uint32_t sgptr;
 
-	sgptr = ahd_le32toh(scb->hscb->sgptr);
+	sgptr = aic_le32toh(scb->hscb->sgptr);
 	if ((sgptr & SG_STATUS_VALID) != 0)
 		ahd_calc_residual(ahd, scb);
 }
@@ -10869,13 +10869,13 @@ ahd_queue_scb(struct ahd_softc *ahd, struct scb *scb)
 	if ((ahd_debug & AHD_SHOW_QUEUE) != 0) {
 		uint64_t host_dataptr;
 
-		host_dataptr = ahd_le64toh(scb->hscb->dataptr);
+		host_dataptr = aic_le64toh(scb->hscb->dataptr);
 		printf("%s: Queueing SCB 0x%x bus addr 0x%x - 0x%x%x/0x%x\n",
 		       ahd_name(ahd),
-		       SCB_GET_TAG(scb), ahd_le32toh(scb->hscb->hscb_busaddr),
+		       SCB_GET_TAG(scb), aic_le32toh(scb->hscb->hscb_busaddr),
 		       (u_int)((host_dataptr >> 32) & 0xFFFFFFFF),
 		       (u_int)(host_dataptr & 0xFFFFFFFF),
-		       ahd_le32toh(scb->hscb->datacnt));
+		       aic_le32toh(scb->hscb->datacnt));
 	}
 #endif
 	/* Tell the adapter about the newly queued SCB */

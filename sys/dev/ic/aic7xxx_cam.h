@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_cam.h,v 1.3 2004/10/24 01:36:49 krw Exp $	*/
+/*	$OpenBSD: aic7xxx_cam.h,v 1.4 2004/10/24 04:28:33 krw Exp $	*/
 /*	$NetBSD: aic7xxx_cam.h,v 1.3 2003/04/20 11:17:20 fvdl Exp $	*/
 
 /*
@@ -96,6 +96,22 @@
 		timeout_set((timer), (func), (arg));	\
 	timeout_add((timer), (timeout));		\
 } while (0)
+
+#define aic_delay	DELAY
+
+#define aic_htobe16(x) htobe16(x)
+#define aic_htobe32(x) htobe32(x)
+#define aic_htobe64(x) htobe64(x)
+#define aic_htole16(x) htole16(x)
+#define aic_htole32(x) htole32(x)
+#define aic_htole64(x) htole64(x)
+
+#define aic_be16toh(x) be16toh(x)
+#define aic_be32toh(x) be32toh(x)
+#define aic_be64toh(x) be64toh(x)
+#define aic_le16toh(x) letoh16(x)
+#define aic_le32toh(x) letoh32(x)
+#define aic_le64toh(x) letoh64(x)
 
 #define xs_control	flags
 #define xs_callout	stimeout

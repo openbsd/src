@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_seeprom.c,v 1.2 2004/10/12 22:09:37 krw Exp $	*/
+/*	$OpenBSD: aic7xxx_seeprom.c,v 1.3 2004/10/24 04:28:33 krw Exp $	*/
 /*	$NetBSD: aic7xxx_seeprom.c,v 1.8 2003/05/02 19:12:19 dyoung Exp $	*/
 
 /*       
@@ -47,7 +47,7 @@
  * from the FreeBSD source file aic7xxx_pci.c by Frank van der Linden
  * <fvdl@netbsd.org>
  * 
- * $Id: aic7xxx_seeprom.c,v 1.2 2004/10/12 22:09:37 krw Exp $
+ * $Id: aic7xxx_seeprom.c,v 1.3 2004/10/24 04:28:33 krw Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx_pci.c,v 1.22 2003/01/20 20:44:55 gibbs Exp $
  */
@@ -683,7 +683,7 @@ ahc_acquire_seeprom(struct ahc_softc *ahc, struct seeprom_descriptor *sd)
 	SEEPROM_OUTB(sd, sd->sd_MS);
 	wait = 1000;  /* 1 second timeout in msec */
 	while (--wait && ((SEEPROM_STATUS_INB(sd) & sd->sd_RDY) == 0)) {
-		ahc_delay(1000);  /* delay 1 msec */
+		aic_delay(1000);  /* delay 1 msec */
 	}
 	if ((SEEPROM_STATUS_INB(sd) & sd->sd_RDY) == 0) {
 		SEEPROM_OUTB(sd, 0); 

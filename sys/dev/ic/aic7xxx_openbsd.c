@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_openbsd.c,v 1.24 2004/09/24 14:56:56 henning Exp $	*/
+/*	$OpenBSD: aic7xxx_openbsd.c,v 1.25 2004/10/24 04:28:33 krw Exp $	*/
 /*	$NetBSD: aic7xxx_osm.c,v 1.14 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -302,7 +302,7 @@ ahc_done(struct ahc_softc *ahc, struct scb *scb)
 		 */
 		memset(&xs->sense, 0, sizeof(struct scsi_sense_data));
 		memcpy(&xs->sense, ahc_get_sense_buf(ahc, scb),
-		    ahc_le32toh(scb->sg_list->len) & AHC_SG_LEN_MASK);
+		    aic_le32toh(scb->sg_list->len) & AHC_SG_LEN_MASK);
 		xs->error = XS_SENSE;
 	}
 
@@ -414,10 +414,10 @@ ahc_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 		while (dm_segs < end_seg) {
 			uint32_t len;
 
-			sg->addr = ahc_htole32(dm_segs->ds_addr);
+			sg->addr = aic_htole32(dm_segs->ds_addr);
 			len = dm_segs->ds_len
 			    | ((dm_segs->ds_addr >> 8) & 0x7F000000);
-			sg->len = ahc_htole32(len);
+			sg->len = aic_htole32(len);
 			sg++;
 			dm_segs++;
 		}
@@ -428,7 +428,7 @@ ahc_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 		 * sequencer will clear as soon as a data transfer
 		 * occurs.
 		 */
-		scb->hscb->sgptr = ahc_htole32(scb->sg_list_phys|SG_FULL_RESID);
+		scb->hscb->sgptr = aic_htole32(scb->sg_list_phys|SG_FULL_RESID);
 
 		if ((xs->flags & SCSI_DATA_IN) != 0)
 			op = BUS_DMASYNC_PREREAD;
@@ -439,7 +439,7 @@ ahc_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 				scb->dmamap->dm_mapsize, op);
 
 		sg--;
-		sg->len |= ahc_htole32(AHC_DMA_LAST_SEG);
+		sg->len |= aic_htole32(AHC_DMA_LAST_SEG);
 
 		bus_dmamap_sync(ahc->parent_dmat, scb->sg_map->sg_dmamap,
 		    0, scb->sg_map->sg_dmamap->dm_mapsize,
@@ -449,7 +449,7 @@ ahc_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 		scb->hscb->dataptr = scb->sg_list->addr;
 		scb->hscb->datacnt = scb->sg_list->len;
 	} else {
-		scb->hscb->sgptr = ahc_htole32(SG_LIST_NULL);
+		scb->hscb->sgptr = aic_htole32(SG_LIST_NULL);
 		scb->hscb->dataptr = 0;
 		scb->hscb->datacnt = 0;
 	}

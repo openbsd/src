@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_inline.h,v 1.8 2004/08/01 01:36:23 krw Exp $	*/
+/*	$OpenBSD: aic7xxx_inline.h,v 1.9 2004/10/24 04:28:33 krw Exp $	*/
 /*	$NetBSD: aic7xxx_inline.h,v 1.4 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -278,7 +278,7 @@ ahc_update_residual(struct ahc_softc *ahc, struct scb *scb)
 {
 	uint32_t sgptr;
 
-	sgptr = ahc_le32toh(scb->hscb->sgptr);
+	sgptr = aic_le32toh(scb->hscb->sgptr);
 	if ((sgptr & SG_RESID_VALID) != 0)
 		ahc_calc_residual(ahc, scb);
 }
@@ -433,7 +433,7 @@ ahc_swap_with_next_hscb(struct ahc_softc *ahc, struct scb *scb)
 	memcpy(q_hscb, scb->hscb, sizeof(*scb->hscb));
 	if ((scb->flags & SCB_CDB32_PTR) != 0) {
 		q_hscb->shared_data.cdb_ptr =
-		    ahc_htole32(ahc_hscb_busaddr(ahc, q_hscb->tag)
+		    aic_htole32(ahc_hscb_busaddr(ahc, q_hscb->tag)
 			      + offsetof(struct hardware_scb, cdb32));
 	}
 	q_hscb->tag = saved_tag;
