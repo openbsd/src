@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.6 1996/11/23 23:19:52 kstailey Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.7 1996/12/05 16:25:08 kstailey Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -707,13 +707,19 @@ int
 spec_advlock(v)
 	void *v;
 {
-#ifdef UFS
+#ifdef FFS
 	extern int ufs_advlock __P((void *v));
 
 	return (ufs_advlock(v));
 #else
+#ifdef NFSCLIENT
+	extern int nfs_advlock __P((void *v));
+
+	return (nfs_advlock(v));
+#else
 	return (EOPNOTSUPP);
-#endif
+#endif /* NFSCLIENT */
+#endif /* FFS */
 }
 
 /*
