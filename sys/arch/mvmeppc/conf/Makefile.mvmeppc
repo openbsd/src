@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.mvmeppc,v 1.16 2003/11/24 17:35:13 espie Exp $
+#	$OpenBSD: Makefile.mvmeppc,v 1.17 2004/01/23 10:40:25 miod Exp $
 #
 # Makefile for OpenBSD PowerPC
 #
@@ -33,11 +33,11 @@ SIZE?=	size
 .ifndef	S
 S!=	cd ../../../..; pwd
 .endif
-PPC=	$S/arch/mvmeppc
+MVMEPPC=	$S/arch/mvmeppc
 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc -L${DESTDIR}/usr/include
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL \
-		-Dpowerpc -D__mvmeppc__
+		-D__mvmeppc__
 CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wno-uninitialized -Wno-format -Wno-main
 CMACHFLAGS=	-msoft-float -Wa,-m7400 -fno-builtin-printf -fno-builtin-log
@@ -47,7 +47,7 @@ CMACHFLAGS+=	-fno-stack-protector
 COPTS?=		-O2
 CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
 AFLAGS=		-D_LOCORE
-LINKFLAGS=	-N -Ttext 100074 -e start
+LINKFLAGS=	-N -Ttext 100074 -e start --warn-common
 STRIPFLAGS=	-g -X -x
 
 HOSTCC?=	${CC}
@@ -118,9 +118,9 @@ LINKFLAGS+=	-S
 
 %LOAD
 
-assym.h: $S/kern/genassym.sh ${PPC}/mvmeppc/genassym.cf Makefile
+assym.h: $S/kern/genassym.sh ${MVMEPPC}/mvmeppc/genassym.cf Makefile
 	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} \
-	    < ${PPC}/mvmeppc/genassym.cf > assym.h.tmp && \
+	    < ${MVMEPPC}/mvmeppc/genassym.cf > assym.h.tmp && \
 	    mv -f assym.h.tmp assym.h
 
 param.c: $S/conf/param.c
@@ -142,8 +142,7 @@ clean::
 		[Ee]rrs linterrs makelinks genassym genassym.o assym.h
 
 lint:
-	@lint -hbxncez -DGENERIC -Dvolatile= ${CPPFLAGS} -UKGDB \
-		${PPC}/mvmeppc/Locore.c \
+	@lint -hbxncez -DGENERIC -Dvolatile= ${CPPFLAGS} -UKGDB ${CFILES} \
 		ioconf.c param.c | \
 		grep -v 'static function .* unused'
 
@@ -158,17 +157,17 @@ links:
 	  sed 's,../.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
 	sh makelinks && rm -f dontlink
 
-SRCS=	${PPC}/mvmeppc/locore.S \
+SRCS=	${MVMEPPC}/mvmeppc/locore.S \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend:: .depend
 .depend: ${SRCS} assym.h param.c
-	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${PPC}/mvmeppc/locore.S
+	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${MVMEPPC}/mvmeppc/locore.S
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 .if ${SFILES} != ""
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
 .endif
 	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
-	    ${CPPFLAGS} < ${PPC}/mvmeppc/genassym.cf
+	    ${CPPFLAGS} < ${MVMEPPC}/mvmeppc/genassym.cf
 	@sed -e 's/.*\.o:.* /assym.h: /' < assym.dep >> .depend
 	@rm -f assym.dep
 
@@ -185,7 +184,7 @@ genassym.o machdep.o: Makefile
 locore.o machdep.o: Makefile
 
 
-locore.o: ${PPC}/mvmeppc/locore.S assym.h
+locore.o: ${MVMEPPC}/mvmeppc/locore.S assym.h
 	${NORMAL_S}
 
 # The install target can be redefined by putting a
