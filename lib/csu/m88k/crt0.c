@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.5 2003/12/26 00:04:23 miod Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.6 2003/12/26 00:29:11 miod Exp $	*/
 
 /*   
  *   Mach Operating System
@@ -28,80 +28,41 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: crt0.c,v 1.5 2003/12/26 00:04:23 miod Exp $";
+static char rcsid[] = "$OpenBSD: crt0.c,v 1.6 2003/12/26 00:29:11 miod Exp $";
 #endif /* LIBC_SCCS and not lint */
 
-/* 
- *   Author :   Jeffrey Friedl
- *   Created:   July 1992
- *   Standalone crt0.
- */
-
 /*
- * GCCisms used:
- * 	A "volatile void fcn()" is one that never returns.
- *	register var asm("r1"): variable VAR is raw access to named register.
- */
-
-/*
- * When a program begins, r31 points to info passed from the kernel.
+ * When a program begins, r31 points to a structure passed by the kernel.
  *
- * The following shows the memory to which r31 points (think "int *r31;"),
- * and how we derive argc, argv, and envp from that:
- *
- *    +-------------------+ <-------------------------------------- r31
- *    | ARGC		  | <- argc = r31[0];
- *    +-------------------+ <- argv = &r31[1];
- *    | &(argument #1)    |
- *    +-------------------+
- *    | &(argument #2)    |
- *     -  - - - - - - -  - 
- *    | &(argument #ARGC) |
- *    +-------------------+
- *    | 0x00000000	  | <- end-of-ARGV-list marker (redundant information).
- *    +-------------------+ <- environ = envp =  &argv[argc+1];
- *    | &(env. var. #1)   |
- *    +-------------------+
- *    | &(env. var. #2)   |
- *     -  - - - - - - -  - 
- *    | &(env. var. #N)   |
- *    +-------------------+
- *    | 0x00000000	  | <- end-of-ENVP-list marker (not redundant!).
- *    +-------------------+
- *
- * We use 'start:' to grab r31 and call real_start(argc, argv, envp).
- * We must do this since the function prologue makes finding the initial
- * r31 difficult in C.
+ * This structure contains argc, the argv[] NULL-terminated array, and
+ * the envp[] NULL-terminated array.
  */
 
 #include <stdlib.h>
 
 #include "common.h"
 
-asm("	    text		");
-asm("	    align  4		");
-asm("start: global start	");
-asm("       ld     r2, r31,   0 "); /* First arg to real_start: argc */
-asm("       addu   r3, r31,   4 "); /* Second arg to real_start: argv */
-asm("       lda    r4,  r3  [r2]"); /* Third arg to real_start: envp, but.... */
-asm("       addu   r4,  r4,   4 "); /*   ... don't forget to skip past marker */
-asm("       br.n   ___crt0_real_start");
-asm("       subu   r31, r31, 32 ");
+struct kframe {
+	int argc;
+	char *argv[0];
+};
 
-#ifdef DYNAMIC
-extern struct _dynamic	_DYNAMIC;
-struct _dynamic	*___pdynamic = &_DYNAMIC;
-#endif
+__asm__ ("
+	.text
+	.align 8
+	.globl start
+start:
+	br.n	_start
+	 or	r2, r31, r0
+");
 
-/* static */ void volatile
-__crt0_real_start(int argc, char *argv[], char *envp[])
+static void
+start(struct kframe *kfp)
 {
-	register char *ap;
-	volatile int a = 0;
-	extern int end;
-	char *s;
+	char **argv, *ap, *s;
 
-	environ = envp; /* environ is for the user that can't get at 'envp' */
+	argv = &kfp->argv[0];
+	environ = argv + kfp->argc + 1;
 
 	if (ap = argv[0]) {
 		if ((__progname = _strrchr(ap, '/')) == NULL)
@@ -114,10 +75,9 @@ __crt0_real_start(int argc, char *argv[], char *envp[])
 		*s = '\0';
 		__progname = __progname_storage;
 	}
-asm ("__callmain:");		/* Defined for the benefit of debuggers */
-	exit(main(argc, argv, environ));
 
-    /*NOTREACHED*/
+asm ("__callmain:");		/* Defined for the benefit of debuggers */
+	exit(main(kfp->argc, argv, environ));
 }
 
 #include "common.c"
