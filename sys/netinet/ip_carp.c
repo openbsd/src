@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.70 2004/11/17 06:07:39 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.71 2004/11/28 03:14:03 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -147,7 +147,7 @@ struct carp_if {
 
 #define	CARP_LOG(sc, s)							\
 	if (carp_opts[CARPCTL_LOG]) {					\
-		if (sc == NULL) 					\
+		if (sc) 						\
 			log(LOG_INFO, "%s: ", (sc)->sc_ac.ac_if.if_xname);\
 		else							\
 			log(LOG_INFO, "carp: ");			\
