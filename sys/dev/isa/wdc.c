@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.36 1999/01/11 01:57:52 millert Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.37 1999/06/28 22:35:24 ho Exp $	*/
 /*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $ */
 
 /*
@@ -1874,7 +1874,7 @@ wdc_exec_xfer(d_link, xfer)
 	s = splbio();
 
 	/* insert at the end of command list */
-	TAILQ_INSERT_TAIL(&wdc->sc_xfer,xfer , c_xferchain)
+	TAILQ_INSERT_TAIL(&wdc->sc_xfer,xfer , c_xferchain);
 	WDDEBUG_PRINT(("wdcstart from wdc_exec_xfer, flags %d\n",
 	    wdc->sc_flags));
 	wdcstart(wdc);
