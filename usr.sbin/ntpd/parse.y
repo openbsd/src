@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.15 2004/07/28 16:38:43 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.16 2004/07/28 16:56:21 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -126,6 +126,13 @@ varset		: STRING '=' string		{
 conf_main	: LISTEN ON address	{
 			struct listen_addr	*la;
 			struct ntp_addr		*h, *next;
+
+			if ($3->a == NULL) {
+				yyerror("cannot resolve \"%s\"", $3->name);
+				free($3->name);
+				free($3);
+				YYERROR;
+			}
 
 			for (h = $3->a; h != NULL; h = next) {
 				next = h->next;
