@@ -2,6 +2,7 @@ LIB=	panel
 SRCS=	panel.c
 HDRS=	panel.h
 MAN=	panel.3
+CFLAGS+= -I${.CURDIR}/../libcurses -DHAVE_CONFIG_H
 
 includes:
 	@cd ${.CURDIR}; for i in ${HDRS}; do \

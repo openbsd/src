@@ -1,6 +1,6 @@
 .TH panel 3X ""
 .ds n 5
-.ds d @TERMINFO@
+.ds d /usr/share/terminfo
 .SH NAME
 panel - panel stack extension for curses
 .SH SYNOPSIS
@@ -20,21 +20,21 @@ panel - panel stack extension for curses
 .br
 \fBint hide_panel(PANEL *pan)\fR
 .br
-\fBWINDOW *panel_window(PANEL *pan)\fR
+\fBWINDOW *panel_window(const PANEL *pan)\fR
 .br
 \fBint replace_panel(PANEL *pan, WINDOW *window)\fR
 .br
 \fBint move_panel(PANEL *pan, int starty, int startx)\fR
 .br
-\fBint panel_hidden(PANEL *pan)\fR
+\fBint panel_hidden(const PANEL *pan)\fR
 .br
-\fBPANEL *panel_above(PANEL *pan)\fR
+\fBPANEL *panel_above(const PANEL *pan)\fR
 .br
-\fBPANEL *panel_below(PANEL *pan)\fR
+\fBPANEL *panel_below(const PANEL *pan)\fR
 .br
-\fBint set_panel_userptr(PANEL *pan, char *ptr)\fR
+\fBint set_panel_userptr(PANEL *pan, const void *ptr)\fR
 .br
-\fBchar *panel_userptr(PANEL *pan)\fR
+\fBconst void *panel_userptr(const PANEL *pan)\fR
 .br
 \fBint del_panel(PANEL *pan)\fR
 .br
@@ -56,7 +56,7 @@ high-level curses calls, and work anywhere terminfo curses does.
 .SH FUNCTIONS
 .TP
 \fBnew_panel(win)\fR
-allocates  a  \fBPANEL\fR structure, assovciates it with
+allocates  a  \fBPANEL\fR structure, associates it with
 \fBwin\fR, places the panel on the top of the stack  (causes  it
 to  be  displayed above any other panel) and returns a
 pointer to the new panel.
@@ -136,7 +136,7 @@ move to the top of the stack. You are cautioned to use the correct
 function to ensure compatibility with native panel libraries.
 .SH NOTE
 In your library list, libpanel.a should be before libcurses.a; that is,
-you want to say `-lpanel -lcurses -ltermlib', not the other way around (which would
+you want to say `-lpanel -lcurses', not the other way around (which would
 give you a link error using GNU \fBld\fR(1) and some other linkers).
 .SH FILES
 .P
