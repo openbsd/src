@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.109 2000/04/26 22:15:59 markus Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.110 2000/04/26 22:36:06 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -417,7 +417,7 @@ main(int ac, char **av)
 	int opt, sock_in = 0, sock_out = 0, newsock, i, fdsetsz, on = 1;
 	pid_t pid;
 	socklen_t fromlen;
-	int silentrsa = 0;
+	int silent = 0;
 	fd_set *fdset;
 	struct sockaddr_storage from;
 	const char *remote_ip;
@@ -458,7 +458,7 @@ main(int ac, char **av)
 			inetd_flag = 1;
 			break;
 		case 'Q':
-			silentrsa = 1;
+			silent = 1;
 			break;
 		case 'q':
 			options.log_level = SYSLOG_LEVEL_QUIET;
@@ -514,7 +514,7 @@ main(int ac, char **av)
 	log_init(av0,
 	    options.log_level == -1 ? SYSLOG_LEVEL_INFO : options.log_level,
 	    options.log_facility == -1 ? SYSLOG_FACILITY_AUTH : options.log_facility,
-	    !inetd_flag);
+	    !silent && !inetd_flag);
 
 	/* Read server configuration options from the configuration file. */
 	read_server_config(&options, config_file_name);
@@ -536,8 +536,6 @@ main(int ac, char **av)
 	/* check if RSA support exists */
 	if ((options.protocol & SSH_PROTO_1) &&
 	    rsa_alive() == 0) {
-		if (silentrsa == 0)
-			fprintf(stderr, "sshd: no RSA support in libssl and libcrypto.  See ssl(8)\n");
 		log("no RSA support in libssl and libcrypto.  See ssl(8)");
 		log("Disabling protocol version 1");
 		options.protocol &= ~SSH_PROTO_1;
@@ -566,7 +564,8 @@ main(int ac, char **av)
 		}
 	}
 	if (! options.protocol & (SSH_PROTO_1|SSH_PROTO_2)) {
-		fprintf(stderr, "sshd: no hostkeys available -- exiting.\n");
+		if (silent == 0)
+			fprintf(stderr, "sshd: no hostkeys available -- exiting.\n");
 		log("sshd: no hostkeys available -- exiting.\n");
 		exit(1);
 	}
