@@ -26,7 +26,7 @@ Boston, MA 02111-1307, USA.  */
 #include "i386/sysv4.h"
 
 #ifndef VERSION_INFO2
-#define VERSION_INFO2   "$Revision: 1.1.1.1 $"
+#define VERSION_INFO2   "$Revision: 1.1.1.2 $"
 #endif
 
 #ifndef VERSION_STRING
