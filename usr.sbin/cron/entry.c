@@ -1,4 +1,5 @@
-/*	$OpenBSD: entry.c,v 1.15 2002/08/10 20:28:51 millert Exp $	*/
+/*	$OpenBSD: entry.c,v 1.16 2003/02/20 20:38:08 millert Exp $	*/
+
 /*
  * Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +23,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: entry.c,v 1.15 2002/08/10 20:28:51 millert Exp $";
+static char const rcsid[] = "$OpenBSD: entry.c,v 1.16 2003/02/20 20:38:08 millert Exp $";
 #endif
 
 /* vix 26jan87 [RCS'd; rest of log is in RCS file]
@@ -248,7 +249,8 @@ load_entry(FILE *file, void (*error_func)(), struct passwd *pw, char **envp) {
 			goto eof;
 		}
 
-		if ((pw = getpwnam(username)) == NULL) {
+		pw = getpwnam(username);
+		if (pw == NULL) {
 			ecode = e_username;
 			goto eof;
 		}
@@ -294,7 +296,8 @@ load_entry(FILE *file, void (*error_func)(), struct passwd *pw, char **envp) {
 		} else
 			log_it("CRON", getpid(), "error", "can't set HOME");
 	}
-#ifdef LOGIN_CAP
+#ifndef LOGIN_CAP
+	/* If login.conf is in use we will get the default PATH later. */
 	if (!env_get("PATH", e->envp)) {
 		if (glue_strings(envstr, sizeof envstr, "PATH",
 				 _PATH_DEFPATH, '=')) {
@@ -316,7 +319,7 @@ load_entry(FILE *file, void (*error_func)(), struct passwd *pw, char **envp) {
 		e->envp = tenvp;
 	} else
 		log_it("CRON", getpid(), "error", "can't set LOGNAME");
-#if defined(BSD)
+#if defined(BSD) || defined(__linux)
 	if (glue_strings(envstr, sizeof envstr, "USER",
 			 pw->pw_name, '=')) {
 		if ((tenvp = env_set(e->envp, envstr)) == NULL) {
@@ -519,13 +522,13 @@ get_number(int *numptr, int low, const char *names[], char ch, FILE *file) {
 	pc = temp;
 	len = 0;
 	all_digits = TRUE;
-	while (isalnum(ch)) {
+	while (isalnum((unsigned char)ch)) {
 		if (++len >= MAX_TEMPSTR)
 			return (EOF);
 
 		*pc++ = ch;
 
-		if (!isdigit(ch))
+		if (!isdigit((unsigned char)ch))
 			all_digits = FALSE;
 
 		ch = get_char(file);

@@ -1,4 +1,5 @@
-/*	$OpenBSD: do_command.c,v 1.22 2002/08/08 18:17:50 millert Exp $	*/
+/*	$OpenBSD: do_command.c,v 1.23 2003/02/20 20:38:08 millert Exp $	*/
+
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +22,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: do_command.c,v 1.22 2002/08/08 18:17:50 millert Exp $";
+static char const rcsid[] = "$OpenBSD: do_command.c,v 1.23 2003/02/20 20:38:08 millert Exp $";
 #endif
 
 #include "cron.h"
@@ -63,8 +64,7 @@ do_command(entry *e, user *u) {
 static void
 child_process(entry *e, user *u) {
 	int stdin_pipe[2], stdout_pipe[2];
-	char *usernm;
-	char *input_data, *mailto;
+	char *input_data, *usernm, *mailto;
 	int children = 0;
 
 	Debug(DPROC, ("[%ld] child_process('%s')\n", (long)getpid(), e->cmd))
@@ -208,7 +208,9 @@ child_process(entry *e, user *u) {
 				_exit(ERROR_EXIT);
 			}
 			if (setusercontext(lc, e->pwd, e->pwd->pw_uid, LOGIN_SETALL) < 0) {
-				fprintf(stderr, "setusercontext failed for %s\n", e->pwd->pw_name);
+				fprintf(stderr,
+				    "setusercontext failed for %s\n",
+				    e->pwd->pw_name);
 				_exit(ERROR_EXIT);
 			}
 #ifdef BSD_AUTH
@@ -242,7 +244,9 @@ child_process(entry *e, user *u) {
 #else
 		setgid(e->pwd->pw_gid);
 		initgroups(usernm, e->pwd->pw_gid);
+#if (defined(BSD)) && (BSD >= 199103)
 		setlogin(usernm);
+#endif /* BSD */
 		setuid(e->pwd->pw_uid);	/* we aren't root after this... */
 
 #endif /* LOGIN_CAP */
@@ -380,7 +384,7 @@ child_process(entry *e, user *u) {
 			/* get name of recipient.  this is MAILTO if set to a
 			 * valid local username; USER otherwise.
 			 */
-			if (mailto && safe_p(usernm, mailto)) {
+			if (mailto) {
 				/* MAILTO was present in the environment
 				 */
 				if (!*mailto) {
@@ -399,7 +403,7 @@ child_process(entry *e, user *u) {
 			 * up the mail command and subjects and stuff...
 			 */
 
-			if (mailto) {
+			if (mailto && safe_p(usernm, mailto)) {
 				char	**env;
 				char	mailcmd[MAX_COMMAND];
 				char	hostname[MAXHOSTNAMELEN];
@@ -490,10 +494,9 @@ child_process(entry *e, user *u) {
 
 		Debug(DPROC, ("[%ld] waiting for grandchild #%d to finish\n",
 			      (long)getpid(), children))
-		pid = wait(&waiter);
+		while ((pid = wait(&waiter)) < OK && errno == EINTR)
+			;
 		if (pid < OK) {
-			if (errno == EINTR)
-				continue;
 			Debug(DPROC,
 			      ("[%ld] no more grandchildren--mail written?\n",
 			       (long)getpid()))

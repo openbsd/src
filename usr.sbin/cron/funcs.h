@@ -1,4 +1,4 @@
-/*	$OpenBSD: funcs.h,v 1.9 2003/02/20 19:12:16 millert Exp $	*/
+/*	$OpenBSD: funcs.h,v 1.10 2003/02/20 20:38:08 millert Exp $	*/
 
 /*
  * Copyright (c) 1997,2000 by Internet Software Consortium, Inc.
@@ -39,6 +39,7 @@ void		set_cron_uid(void),
 		skip_comments(FILE *),
 		log_it(const char *, int, const char *, const char *),
 		log_close(void),
+		poke_daemon(const char *, unsigned char),
 		atrun(at_db *, double, time_t);
 
 int		job_runqueue(void),

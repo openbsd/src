@@ -1,5 +1,4 @@
-/*	$OpenBSD: parsetime.c,v 1.12 2002/06/14 21:35:00 todd Exp $	*/
-/*	$NetBSD: parsetime.c,v 1.3 1995/03/25 18:13:36 glass Exp $	*/
+/*	$OpenBSD: parsetime.c,v 1.13 2003/02/20 20:38:08 millert Exp $	*/
 
 /* 
  * parsetime.c - parse time for at(1)
@@ -37,7 +36,6 @@
  */
 
 #include <sys/types.h>
-#include <err.h>
 #include <errno.h>
 #include <ctype.h>
 #include <stdio.h>
@@ -47,9 +45,8 @@
 #include <tzfile.h>
 #include <unistd.h>
 
+#include "globals.h"
 #include "at.h"
-#include "panic.h"
-
 
 /* Structures and unions */
 
@@ -144,7 +141,7 @@ static int sc_tokid;	/* scanner - token id */
 static int sc_tokplur;	/* scanner - is token plural? */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: parsetime.c,v 1.12 2002/06/14 21:35:00 todd Exp $";
+static const char rcsid[] = "$OpenBSD: parsetime.c,v 1.13 2003/02/20 20:38:08 millert Exp $";
 #endif
 
 /*
@@ -170,7 +167,7 @@ parse_token(char *arg)
 /*
  * init_scanner() sets up the scanner to eat arguments
  */
-static void
+static int
 init_scanner(int argc, char **argv)
 {
 	scp = argv;
@@ -180,8 +177,12 @@ init_scanner(int argc, char **argv)
 	while (argc-- > 0)
 		sc_len += strlen(*argv++);
 
-	if ((sc_token = (char *) malloc(sc_len)) == NULL)
-		panic("Insufficient virtual memory");
+	if ((sc_token = (char *) malloc(sc_len)) == NULL) {
+		fprintf(stderr, "%s: Insufficient virtual memory\n",
+		    ProgramName);
+		return (-1);
+	}
+	return (0);
 }
 
 /*
@@ -193,7 +194,7 @@ token(void)
 	int idx;
 
 	for (;;) {
-		(void)memset(sc_token, 0, sc_len);
+		bzero(sc_token, sc_len);
 		sc_tokid = EOF;
 		sc_tokplur = 0;
 		idx = 0;
@@ -260,18 +261,22 @@ token(void)
 static void
 plonk(int tok)
 {
-	panic((tok == EOF) ? "incomplete time" : "garbled time");
+	fprintf(stderr, "%s: %s time\n", ProgramName,
+	    (tok == EOF) ? "incomplete" : "garbled");
 }
 
 
 /* 
- * expect() gets a token and dies most horribly if it's not the token we want
+ * expect() gets a token and returns -1 if it's not the token we want
  */
-static void
+static int
 expect(int desired)
 {
-	if (token() != desired)
-		plonk(sc_tokid);	/* and we die here... */
+	if (token() != desired) {
+		plonk(sc_tokid);
+		return (-1);
+	}
+	return (0);
 }
 
 
@@ -321,13 +326,14 @@ dateadd(int minutes, struct tm *tm)
  *  at [NOW] PLUS NUMBER [MINUTES|HOURS|DAYS|WEEKS]
  *
  */
-static void
+static int
 plus(struct tm *tm)
 {
 	int delay;
 	int expectplur;
 
-	expect(NUMBER);
+	if (expect(NUMBER) != 0)
+		return (-1);
 
 	delay = atoi(sc_token);
 	expectplur = (delay != 1) ? 1 : 0;
@@ -341,12 +347,14 @@ plus(struct tm *tm)
 		delay *= 60;
 	case MINUTES:
 		if (expectplur != sc_tokplur)
-			warnx("pluralization is wrong");
+			fprintf(stderr, "%s: pluralization is wrong\n",
+			    ProgramName);
 		dateadd(delay, tm);
-		return;
+		return (0);
 	}
 
 	plonk(sc_tokid);
+	return (-1);
 }
 
 
@@ -354,7 +362,7 @@ plus(struct tm *tm)
  * tod() computes the time of day
  *     [NUMBER [DOT NUMBER] [AM|PM]]
  */
-static void
+static int
 tod(struct tm *tm)
 {
 	int hour, minute = 0;
@@ -368,15 +376,16 @@ tod(struct tm *tm)
 	 * a HHMM time, otherwise it's HH DOT MM time
 	 */
 	if (token() == DOT) {
-		expect(NUMBER);
+		if (expect(NUMBER) != 0)
+			return (-1);
 		minute = atoi(sc_token);
 		if (minute > 59)
-			panic("garbled time");
+			goto bad;
 		token();
 	} else if (tlen == 4) {
 		minute = hour % 100;
 		if (minute > 59)
-			panic("garbled time");
+			goto bad;
 		hour = hour / 100;
 	}
 
@@ -385,7 +394,7 @@ tod(struct tm *tm)
 	 */
 	if (sc_tokid == AM || sc_tokid == PM) {
 		if (hour > 12)
-			panic("garbled time");
+			goto bad;
 
 		if (sc_tokid == PM) {
 			if (hour != 12)	/* 12:xx PM is 12:xx, not 24:xx */
@@ -396,7 +405,7 @@ tod(struct tm *tm)
 		}
 		token();
 	} else if (hour > 23)
-		panic("garbled time");
+		goto bad;
 
 	/*
 	 * if we specify an absolute time, we don't want to bump the day even
@@ -414,6 +423,10 @@ tod(struct tm *tm)
 		tm->tm_hour = 0;
 		tm->tm_mday++;
 	}
+	return (0);
+bad:
+	fprintf(stderr, "%s: garbled time\n", ProgramName);
+	return (-1);
 }
 
 
@@ -463,7 +476,7 @@ assign_date(struct tm *tm, int mday, int mon, int year)
  *  |NUMBER [SLASH NUMBER [SLASH NUMBER]]|
  *  \PLUS NUMBER MINUTES|HOURS|DAYS|WEEKS/
  */
-static void
+static int
 month(struct tm *tm)
 {
 	int year = (-1);
@@ -472,7 +485,8 @@ month(struct tm *tm)
 
 	switch (sc_tokid) {
 	case PLUS:
-		plus(tm);
+		if (plus(tm) != 0)
+			return (-1);
 		break;
 
 	case TOMORROW:
@@ -490,7 +504,8 @@ month(struct tm *tm)
 		 * do month mday [year]
 		 */
 		mon = sc_tokid - JAN;
-		expect(NUMBER);
+		if (expect(NUMBER) != 0)
+			return (-1);
 		mday = atoi(sc_token);
 		if (token() == NUMBER) {
 			year = atoi(sc_token);
@@ -530,10 +545,12 @@ month(struct tm *tm)
 			int sep;
 
 			sep = sc_tokid;
-			expect(NUMBER);
+			if (expect(NUMBER) != 0)
+				return (-1);
 			mday = atoi(sc_token);
 			if (token() == sep) {
-				expect(NUMBER);
+				if (expect(NUMBER) != 0)
+					return (-1);
 				year = atoi(sc_token);
 				token();
 			}
@@ -557,15 +574,19 @@ month(struct tm *tm)
 			mday = mon % 100;
 			mon /= 100;
 		} else
-			panic("garbled time");
+			goto bad;
 
 		mon--;
 		if (mon < 0 || mon > 11 || mday < 1 || mday > 31)
-			panic("garbled time");
+			goto bad;
 
 		assign_date(tm, mday, mon, year);
 		break;
-	} /* case */
+	}
+	return (0);
+bad:
+	fprintf(stderr, "%s: garbled time\n", ProgramName);
+	return (-1);
 }
 
 
@@ -581,6 +602,9 @@ parsetime(int argc, char **argv)
 	int hr = 0;
 	/* this MUST be initialized to zero for midnight/noon/teatime */
 
+	if (argc == 0)
+		return (-1);
+
 	nowtimer = time(NULL);
 	nowtime = *localtime(&nowtimer);
 
@@ -588,10 +612,8 @@ parsetime(int argc, char **argv)
 	runtime.tm_sec = 0;
 	runtime.tm_isdst = 0;
 
-	if (argc == 0)
-		usage();
-
-	init_scanner(argc, argv);
+	if (init_scanner(argc, argv) == -1)
+		return (-1);
 
 	switch (token()) {
 	case NOW:	/* now is optional prefix for PLUS tree */
@@ -603,12 +625,13 @@ parsetime(int argc, char **argv)
 		else if (sc_tokid != PLUS)
 			plonk(sc_tokid);
 	case PLUS:
-		plus(&runtime);
+		if (plus(&runtime) != 0)
+			return (-1);
 		break;
 
 	case NUMBER:
-		tod(&runtime);
-		month(&runtime);
+		if (tod(&runtime) != 0 || month(&runtime) != 0)
+			return (-1);
 		break;
 
 		/*
@@ -633,10 +656,12 @@ parsetime(int argc, char **argv)
 		token();
 		/* fall through to month setting */
 	default:
-		month(&runtime);
+		if (month(&runtime) != 0)
+			return (-1);
 		break;
 	} /* ugly case statement */
-	expect(EOF);
+	if (expect(EOF) != 0)
+		return (-1);
 
 	/*
 	 * adjust for daylight savings time
@@ -648,11 +673,16 @@ parsetime(int argc, char **argv)
 		runtimer = mktime(&runtime);
 	}
 
-	if (runtimer < 0)
-		panic("garbled time");
+	if (runtimer < 0) {
+		fprintf(stderr, "%s: garbled time\n", ProgramName);
+		return (-1);
+	}
 
-	if (nowtimer > runtimer)
-		panic("Trying to travel back in time");
+	if (nowtimer > runtimer) {
+		fprintf(stderr, "%s: Trying to travel back in time\n",
+		    ProgramName);
+		return (-1);
+	}
 
 	return (runtimer);
 }

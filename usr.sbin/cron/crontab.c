@@ -1,4 +1,5 @@
-/*	$OpenBSD: crontab.c,v 1.39 2003/02/20 19:12:16 millert Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.40 2003/02/20 20:38:08 millert Exp $	*/
+
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +22,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: crontab.c,v 1.39 2003/02/20 19:12:16 millert Exp $";
+static char const rcsid[] = "$OpenBSD: crontab.c,v 1.40 2003/02/20 20:38:08 millert Exp $";
 #endif
 
 /* crontab - install and manage per-user crontab files
@@ -32,8 +33,6 @@ static char const rcsid[] = "$OpenBSD: crontab.c,v 1.39 2003/02/20 19:12:16 mill
 #define	MAIN_PROGRAM
 
 #include "cron.h"
-#include <sys/socket.h>
-#include <sys/un.h>
 
 #define NHEADER_LINES 3
 
@@ -56,7 +55,6 @@ static	struct passwd	*pw;
 static	void		list_cmd(void),
 			delete_cmd(void),
 			edit_cmd(void),
-			poke_daemon(void),
 			check_error(const char *),
 			parse_args(int c, char *v[]),
 			die(int);
@@ -88,7 +86,7 @@ main(int argc, char *argv[]) {
 #endif
 	parse_args(argc, argv);		/* sets many globals, opens a file */
 	set_cron_cwd();
-	if (!allowed(RealUser, ALLOW_FILE, DENY_FILE)) {
+	if (!allowed(RealUser, CRON_ALLOW, CRON_DENY)) {
 		fprintf(stderr,
 			"You (%s) are not allowed to use this program (%s)\n",
 			User, ProgramName);
@@ -273,7 +271,7 @@ delete_cmd(void) {
 			perror(n);
 		exit(ERROR_EXIT);
 	}
-	poke_daemon();
+	poke_daemon(SPOOL_DIR, RELOAD_CRON);
 }
 
 static void
@@ -624,7 +622,7 @@ replace_cmd(void) {
 	TempFilename[0] = '\0';
 	log_it(RealUser, Pid, "REPLACE", User);
 
-	poke_daemon();
+	poke_daemon(SPOOL_DIR, RELOAD_CRON);
 
 done:
 	(void) signal(SIGHUP, SIG_DFL);
@@ -635,36 +633,6 @@ done:
 		TempFilename[0] = '\0';
 	}
 	return (error);
-}
-
-static void
-poke_daemon() {
-	int sock, flags;
-	unsigned char poke;
-	struct sockaddr_un sun;
-
-	if (utime(SPOOL_DIR, NULL) < OK) {
-		fprintf(stderr, "crontab: can't update mtime on spooldir\n");
-		perror(SPOOL_DIR);
-		return;
-	}
-
-	/* Failure to poke the daemon socket is not a fatal error. */
-	(void) signal(SIGPIPE, SIG_IGN);
-	if (glue_strings(sun.sun_path, sizeof sun.sun_path, SPOOL_DIR,
-	    CRONSOCK, '/')) {
-		sun.sun_family = AF_UNIX;
-		sun.sun_len = SUN_LEN(&sun);
-		if ((sock = socket(AF_UNIX, SOCK_STREAM, 0)) >= 0 &&
-		    connect(sock, (struct sockaddr *)&sun, sizeof(sun)) == 0) {
-			poke = RELOAD_CRON;
-			write(sock, &poke, 1);
-			close(sock);
-		} else
-			fprintf(stderr, "Warning, cron does not appear to be running.\n");
-
-	}
-	(void) signal(SIGPIPE, SIG_DFL);
 }
 
 static void

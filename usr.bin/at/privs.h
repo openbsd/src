@@ -1,5 +1,4 @@
-/*	$OpenBSD: privs.h,v 1.6 2002/06/04 00:13:54 deraadt Exp $	*/
-/*	$NetBSD: privs.h,v 1.3 1995/03/25 18:13:41 glass Exp $	*/
+/*	$OpenBSD: privs.h,v 1.7 2003/02/20 20:38:08 millert Exp $	*/
 
 /* 
  *  privs.h - header for privileged operations 
@@ -33,7 +32,8 @@
 
 /* Relinquish privileges temporarily for a setuid or setgid program
  * with the option of getting them back later.  This is done by
- * utilizing POSIX saved user and groups ids.  Call RELINQUISH_PRIVS once
+ * utilizing POSIX saved user and groups ids (or setreuid amd setregid if
+ * POSIX saved ids are not available).  Call RELINQUISH_PRIVS once
  * at the beginning of the main program.  This will cause all operatons
  * to be executed with the real userid.  When you need the privileges
  * of the setuid/setgid invocation, call PRIV_START; when you no longer
@@ -56,15 +56,17 @@
  * to the real userid before calling any of them.
  */
 
-#ifndef MAIN
+#ifndef MAIN_PROGRAM
 extern
 #endif
 uid_t real_uid, effective_uid;
 
-#ifndef MAIN 
+#ifndef MAIN_PROGRAM 
 extern
 #endif
 gid_t real_gid, effective_gid;
+
+#ifdef HAVE_SAVED_UIDS
 
 #define RELINQUISH_PRIVS do {			\
       real_uid = getuid();			\
@@ -93,5 +95,37 @@ gid_t real_gid, effective_gid;
 	setegid(real_gid);			\
 	seteuid(real_uid);			\
 } while (0)
+
+#else /* HAVE_SAVED_UIDS */
+
+#define RELINQUISH_PRIVS do {			\
+      real_uid = getuid();			\
+      effective_uid = geteuid();		\
+      real_gid = getgid();			\
+      effective_gid = getegid();		\
+      setregid(effective_gid, real_gid);	\
+      setreuid(effective_uid, real_uid);	\
+} while (0)
+
+#define RELINQUISH_PRIVS_ROOT(a, b) do {	\
+	real_uid = (a);				\
+	effective_uid = geteuid();		\
+	real_gid = (b);				\
+	effective_gid = getegid();		\
+	setregid(effective_gid, real_gid);	\
+	setreuid(effective_uid, real_uid);	\
+} while (0)
+
+#define PRIV_START do {				\
+	setreuid(real_uid, effective_uid);	\
+	setregid(real_gid, effective_gid);	\
+} while (0)
+
+#define PRIV_END do {				\
+	setregid(effective_gid, real_gid);	\
+	setreuid(effective_uid, real_uid);	\
+} while (0)
+
+#endif /* HAVE_SAVED_UIDS */
 
 #endif /* _PRIVS_H */

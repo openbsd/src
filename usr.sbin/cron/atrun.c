@@ -1,41 +1,38 @@
-/*	$OpenBSD: atrun.c,v 1.5 2002/08/10 20:28:51 millert Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.6 2003/02/20 20:38:08 millert Exp $	*/
 
 /*
- * Copyright (c) 2002 Todd C. Miller <Todd.Miller@courtesan.com>
- * All rights reserved.
+ * Copyright (c) 2002-2003 Todd C. Miller <Todd.Miller@courtesan.com>
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
- * THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
- * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND TODD C. MILLER DISCLAIMS ALL
+ * WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL TODD C. MILLER BE LIABLE
+ * FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
+ * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
+ * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #if !defined(lint) && !defined(LINT)
-static const char rcsid[] = "$OpenBSD: atrun.c,v 1.5 2002/08/10 20:28:51 millert Exp $";
+static const char rcsid[] = "$OpenBSD: atrun.c,v 1.6 2003/02/20 20:38:08 millert Exp $";
 #endif
 
 #include "cron.h"
+#include <limits.h>
 #include <sys/resource.h>
 
 static void unlink_job(at_db *, atjob *);
 static void run_job(atjob *, char *);
+
+#ifndef	UID_MAX
+#define	UID_MAX	INT_MAX
+#endif
+#ifndef	GID_MAX
+#define	GID_MAX	INT_MAX
+#endif
 
 /*
  * Scan the at jobs dir and build up a list of jobs found.
@@ -55,8 +52,8 @@ scan_atjobs(at_db *old_db, struct timeval *tv)
 
 	Debug(DLOAD, ("[%ld] scan_atjobs()\n", (long)getpid()))
 
-	if (stat(_PATH_ATJOBS, &statbuf) != 0) {
-		log_it("CRON", getpid(), "CAN'T STAT", _PATH_ATJOBS);
+	if (stat(AT_DIR, &statbuf) != 0) {
+		log_it("CRON", getpid(), "CAN'T STAT", AT_DIR);
 		return (0);
 	}
 
@@ -72,13 +69,11 @@ scan_atjobs(at_db *old_db, struct timeval *tv)
 		return (0);
 	}
 
-	if (chdir(_PATH_ATJOBS) != 0 || (atdir = opendir(".")) == NULL) {
+	if (chdir(AT_DIR) != 0 || (atdir = opendir(".")) == NULL) {
 		if (atdir == NULL)
-			log_it("CRON", getpid(), "OPENDIR FAILED",
-			    _PATH_ATJOBS);
+			log_it("CRON", getpid(), "OPENDIR FAILED", AT_DIR);
 		else
-			log_it("CRON", getpid(), "CHDIR FAILED",
-			    _PATH_ATJOBS);
+			log_it("CRON", getpid(), "CHDIR FAILED", AT_DIR);
 		fchdir(cwd);
 		close(cwd);
 		return (0);
@@ -99,10 +94,11 @@ scan_atjobs(at_db *old_db, struct timeval *tv)
 		 * QUEUE is a letter that designates the job's queue
 		 */
 		l = strtol(file->d_name, &ep, 10);
-		if (*ep != '.' || !isalpha(*(ep + 1)) || l < 0 || l >= INT_MAX)
+		if (ep[0] != '.' || !isalpha((unsigned char)ep[1]) || l < 0 ||
+		    l >= INT_MAX)
 			continue;
 		run_time = (TIME_T)l;
-		queue = *(ep + 1);
+		queue = ep[1];
 		if (!isalpha(queue))
 			continue;
 
@@ -157,7 +153,7 @@ scan_atjobs(at_db *old_db, struct timeval *tv)
 void
 atrun(at_db *db, double batch_maxload, TIME_T now)
 {
-	char atfile[PATH_MAX];
+	char atfile[MAX_FNAME];
 	struct stat statbuf;
 	double la;
 	atjob *job, *batch;
@@ -169,7 +165,7 @@ atrun(at_db *db, double batch_maxload, TIME_T now)
 		if (job->run_time > now)
 			continue;
 
-		snprintf(atfile, sizeof(atfile), "%s/%ld.%c", _PATH_ATJOBS,
+		snprintf(atfile, sizeof(atfile), "%s/%ld.%c", AT_DIR,
 		    (long)job->run_time, job->queue);
 
 		if (stat(atfile, &statbuf) != 0)
@@ -197,9 +193,13 @@ atrun(at_db *db, double batch_maxload, TIME_T now)
 	}
 
 	/* Run a single batch job if there is one pending. */
-	if (batch != NULL && (batch_maxload == 0.0 ||
-	    ((getloadavg(&la, 1) == 1) && la <= batch_maxload))) {
-		snprintf(atfile, sizeof(atfile), "%s/%ld.%c", _PATH_ATJOBS,
+	if (batch != NULL
+#ifdef HAVE_GETLOADAVG
+	    && (batch_maxload == 0.0 ||
+	    ((getloadavg(&la, 1) == 1) && la <= batch_maxload))
+#endif
+	    ) {
+		snprintf(atfile, sizeof(atfile), "%s/%ld.%c", AT_DIR,
 		    (long)batch->run_time, batch->queue);
 		run_job(batch, atfile);
 		unlink_job(db, batch);
@@ -280,12 +280,13 @@ run_job(atjob *job, char *atfile)
 		log_it("CRON", getpid(), "ORPHANED JOB", atfile);
 		_exit(ERROR_EXIT);
 	}
-	/* XXX - is this needed now that we do auth_approval? */
+#if (defined(BSD)) && (BSD >= 199103)
 	if (pw->pw_expire && time(NULL) >= pw->pw_expire) {
 		log_it(pw->pw_name, getpid(), "ACCOUNT EXPIRED, JOB ABORTED",
 		    atfile);
 		_exit(ERROR_EXIT);
 	}
+#endif
 
 	/* Sanity checks */
 	if (fstat(fd, &statbuf) < OK) {
@@ -349,16 +350,16 @@ run_job(atjob *job, char *atfile)
 	    strncmp(buf, "# mail ", 7) != 0)
 		goto bad_file;
 	cp = buf + 7;
-	while (isspace(*cp))
+	while (isspace((unsigned char)*cp))
 		cp++;
 	ep = cp;
-	while (!isspace(*ep) && *ep != '\0')
+	while (!isspace((unsigned char)*ep) && *ep != '\0')
 		ep++;
 	if (*ep == '\0' || *ep != ' ' || ep - cp >= sizeof(mailto))
 		goto bad_file;
 	memcpy(mailto, cp, ep - cp);
 	mailto[ep - cp] = '\0';
-	always_mail = *(ep + 1) == '1';
+	always_mail = ep[1] == '1';
 
 	(void)fclose(fp);
 	if (!safe_p(pw->pw_name, mailto))
@@ -461,7 +462,9 @@ run_job(atjob *job, char *atfile)
 #else
 		setgid(pw->pw_gid);
 		initgroups(pw->pw_name, pw->pw_gid);
+#if (defined(BSD)) && (BSD >= 199103)
 		setlogin(pw->pw_name);
+#endif
 		setuid(pw->pw_uid);
 
 #endif /* LOGIN_CAP */
@@ -539,8 +542,8 @@ run_job(atjob *job, char *atfile)
 #ifdef MAIL_DATE
 		fprintf(mail, "Date: %s\n", arpadate(&StartTime));
 #endif /*MAIL_DATE*/
-		fprintf(mail, "\nYour \"at\" job on %s\n\"%s\"\n",
-		    hostname, atfile);
+		fprintf(mail, "\nYour \"at\" job on %s\n\"%s/%s\"\n",
+		    hostname, CRONDIR, atfile);
 		fprintf(mail, "\nproduced the following output:\n\n");
 
 		/* Pipe the job's output to sendmail. */

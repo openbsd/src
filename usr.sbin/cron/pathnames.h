@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.9 2003/02/19 22:11:42 millert Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.10 2003/02/20 20:38:08 millert Exp $	*/
 
 /* Copyright 1993,1994 by Paul Vixie
  * All rights reserved
@@ -27,10 +27,10 @@
 #if (defined(BSD)) && (BSD >= 199103) || defined(__linux) || defined(AIX)
 # include <paths.h>
 #endif /*BSD*/
- 
+
 #ifndef CRONDIR
 			/* CRONDIR is where cron(8) and crontab(1) both chdir
-			 * to; SPOOL_DIR, ALLOW_FILE, DENY_FILE, and LOG_FILE
+			 * to; SPOOL_DIR, CRON_ALLOW, CRON_DENY, and LOG_FILE
 			 * are all relative to this directory.
 			 */
 #define CRONDIR		"/var/cron"
@@ -46,22 +46,39 @@
 			 */
 #define SPOOL_DIR	"tabs"
 
-			/* CRONSOCK is the name of the socket used by crontab
-			 * to poke cron while it is sleeping to re-read the
-			 * cron spool files.  It lives in the spool directory.
+			/* ATDIR is where the at jobs live (relative to CRONDIR)
+			 * This directory will have its modtime updated
+			 * whenever at(1) changes a crontab; this is
+			 * the signal for cron(8) to look for changes in the
+			 * jobs directory (new, changed or jobs).
 			 */
-#define CRONSOCK	".sock"
+#define AT_DIR		"atjobs"
 
-			/* undefining these turns off their features.  note
-			 * that ALLOW_FILE and DENY_FILE must both be defined
-			 * in order to enable the allow/deny code.  If neither
-			 * LOG_FILE or SYSLOG is defined, we don't log.  If
-			 * both are defined, we log both ways.  Note that if
+			/* CRONSOCK is the name of the socket used by at and
+			 * crontab to poke cron to re-read the at and cron
+			 * spool files while cron is asleep.
+			 * It lives in the spool directory.
+			 */
+#define	CRONSOCK	".sock"
+
+			/* cron allow/deny file.  At least cron.deny must
+			 * exist for ordinary users to run crontab.
+			 */
+#define	CRON_ALLOW	"cron.allow"
+#define	CRON_DENY	"cron.deny"
+
+			/* at allow/deny file.  At least at.deny must
+			 * exist for ordinary users to run at.
+			 */
+#define	AT_ALLOW	"at.allow"
+#define	AT_DENY		"at.deny"
+
+			/* undefining this turns off logging to a file.  If
+			 * neither LOG_FILE or SYSLOG is defined, we don't log.
+			 * If both are defined, we log both ways.  Note that if
 			 * LOG_CRON is defined by <syslog.h>, LOG_FILE will not
 			 * be used.
 			 */
-#define	ALLOW_FILE	"cron.allow"
-#define DENY_FILE	"cron.deny"
 #define LOG_FILE	"log"
 
 			/* where should the daemon stick its PID?
@@ -87,6 +104,10 @@
 # define EDITOR "/usr/ucb/vi"
 #endif
 
+#ifndef _PATH_SENDMAIL
+# define _PATH_SENDMAIL "/usr/lib/sendmail"
+#endif
+
 #ifndef _PATH_BSHELL
 # define _PATH_BSHELL "/bin/sh"
 #endif
@@ -102,14 +123,5 @@
 #ifndef _PATH_DEVNULL
 # define _PATH_DEVNULL "/dev/null"
 #endif
-
-#if !defined(_PATH_SENDMAIL)
-# define _PATH_SENDMAIL "/usr/lib/sendmail"
-#endif /*SENDMAIL*/
-
-/* XXX */
-#define _PATH_ATJOBS	"/var/cron/atjobs"
-#define _PATH_AT_ALLOW	"/var/cron/at.allow"
-#define _PATH_AT_DENY	"/var/cron/at.deny"
 
 #endif /* _PATHNAMES_H_ */

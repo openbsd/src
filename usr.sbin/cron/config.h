@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.14 2003/02/20 19:12:16 millert Exp $	*/
+/*	$OpenBSD: config.h,v 1.15 2003/02/20 20:38:08 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -21,7 +21,7 @@
  * SOFTWARE.
  */
 
-/* config.h - configurables for ISC cron
+/* config.h - configurables for ISC Cron
  */
 
 /*
@@ -80,8 +80,14 @@
 			 */
 #define SYSLOG	 			/*-*/
 
+			/* if you want cron to capitalize its name in ps
+			 * when running a job.  Does not work on SYSV.
+			 */
 #define CAPITALIZE_FOR_PS	 	/*-*/
 
+			/* if you have a tm_gmtoff member in struct tm.
+			 * If not, we will have to compute the value ourselves.
+			 */
 #define HAVE_TM_GMTOFF		 	/*-*/
 
 			/* if your OS supports a BSD-style login.conf file */
@@ -90,5 +96,16 @@
 			/* if your OS supports BSD authentication */
 #define BSD_AUTH			/*-*/
 
+			/* if your OS has a getloadavg() function */
+#define HAVE_GETLOADAVG			/*-*/
+
 			/* maximum load at which batch jobs will still run */
-#define BATCH_MAXLOAD	1.5
+#define BATCH_MAXLOAD	1.5		/*-*/
+
+			/* Define this to run crontab setgid instead of
+			 * setuid root.  Group access will be used to read
+			 * the tabs/atjobs dirs and the allow/deny files.
+			 * If this is not defined then crontab and at
+			 * must be setuid root.
+			 */
+#define CRON_GROUP	"crontab"	/*-*/

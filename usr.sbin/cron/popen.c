@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.17 2002/07/15 19:13:29 millert Exp $	*/
+/*	$OpenBSD: popen.c,v 1.18 2003/02/20 20:38:08 millert Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -42,7 +42,7 @@
 #if 0
 static const sccsid[] = "@(#)popen.c	8.3 (Berkeley) 4/6/94";
 #else
-static const char rcsid[] = "$OpenBSD: popen.c,v 1.17 2002/07/15 19:13:29 millert Exp $";
+static const char rcsid[] = "$OpenBSD: popen.c,v 1.18 2003/02/20 20:38:08 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -94,7 +94,7 @@ cron_popen(char *program, char *type, struct passwd *pw) {
 		/* NOTREACHED */
 	case 0:				/* child */
 		if (pw) {
-#if defined(LOGIN_CAP)
+#ifdef LOGIN_CAP
 			if (setusercontext(0, pw, pw->pw_uid, LOGIN_SETALL) < 0) {
 				fprintf(stderr,
 				    "setusercontext failed for %s\n",
@@ -102,14 +102,22 @@ cron_popen(char *program, char *type, struct passwd *pw) {
 				_exit(ERROR_EXIT);
 			}
 #else
-			if (setgid(pw->pw_gid) ||
-				setgroups(0, NULL) ||
-				initgroups(pw->pw_name, pw->pw_gid))
-				    _exit(1);
-			setlogin(pw->pw_name);
-			if (setuid(pw->pw_uid))
+			if (setgid(pw->pw_gid) < 0 ||
+			    initgroups(pw->pw_name, pw->pw_gid) < 0) {
+				fprintf(stderr,
+				    "unable to set groups for %s\n",
+				    pw->pw_name);
 				_exit(1);
-			chdir(pw->pw_dir);
+			}
+#if (defined(BSD)) && (BSD >= 199103)
+			setlogin(pw->pw_name);
+#endif /* BSD */
+			if (setuid(pw->pw_uid)) {
+				fprintf(stderr,
+				    "unable to set uid for %s\n",
+				    pw->pw_name);
+				_exit(1);
+			}
 #endif /* LOGIN_CAP */
 		}
 		if (*type == 'r') {

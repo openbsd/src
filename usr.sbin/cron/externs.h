@@ -1,4 +1,4 @@
-/*	$OpenBSD: externs.h,v 1.8 2002/07/17 22:10:56 millert Exp $	*/
+/*	$OpenBSD: externs.h,v 1.9 2003/02/20 20:38:08 millert Exp $	*/
 
 /* Copyright 1993,1994 by Paul Vixie
  * All rights reserved
@@ -25,13 +25,13 @@
 
 #include <sys/param.h>
 #include <sys/types.h>
-#if !defined(AIX) && !defined(UNICOS)
 #include <sys/time.h>
-#endif
 #include <sys/wait.h>
 #include <sys/fcntl.h>
 #include <sys/file.h>
 #include <sys/stat.h>
+#include <sys/socket.h>
+#include <sys/un.h>
 
 #include <bitstring.h>
 #include <ctype.h>
@@ -42,7 +42,6 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <grp.h>
-#include <limits.h>
 #include <locale.h>
 #include <pwd.h>
 #include <signal.h>
@@ -59,11 +58,11 @@
 #endif
 
 #if defined(LOGIN_CAP)
-#include <login_cap.h>
+# include <login_cap.h>
 #endif /*LOGIN_CAP*/
 
 #if defined(BSD_AUTH)
-#include <bsd_auth.h>
+# include <bsd_auth.h>
 #endif /*BSD_AUTH*/
 
 #define DIR_T	struct dirent
@@ -77,13 +76,13 @@ extern char *tzname[2];
 #endif
 #define TZONE(tm) tzname[(tm).tm_isdst]
 
-#if (BSD >= 198606)
+#if (defined(BSD)) && (BSD >= 198606) || defined(__linux)
 # define HAVE_FCHOWN
 # define HAVE_FCHMOD
 #endif
 
-#if (BSD >= 199103)
-# define HAVE_SAVED_GIDS
+#if (defined(BSD)) && (BSD >= 199103) || defined(__linux)
+# define HAVE_SAVED_UIDS
 #endif
 
 #define MY_UID(pw) getuid()

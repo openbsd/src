@@ -1,5 +1,4 @@
-/*	$OpenBSD: at.h,v 1.7 2002/05/14 18:05:39 millert Exp $	*/
-/*	$NetBSD: at.h,v 1.2 1995/03/25 18:13:32 glass Exp $	*/
+/*	$OpenBSD: at.h,v 1.8 2003/02/20 20:38:08 millert Exp $	*/
 
 /*
  *  at.h -  header for at(1)
@@ -27,7 +26,6 @@
  */
 
 extern int fcreated;
-extern char *__progname;
 extern int program;
 extern char atfile[];
 extern char vflag;
@@ -41,8 +39,6 @@ struct atjob {
 	time_t ctime;
 	char queue;
 };
-
-#define AT_MAXJOBS	255	/* max jobs outstanding per user */
 
 #define DEFAULT_BATCH_QUEUE	'E'
 #define DEFAULT_AT_QUEUE	'c'

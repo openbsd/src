@@ -1,5 +1,4 @@
-/*	$OpenBSD: at.c,v 1.34 2003/02/18 02:25:39 millert Exp $	*/
-/*	$NetBSD: at.c,v 1.4 1995/03/25 18:13:31 glass Exp $	*/
+/*	$OpenBSD: at.c,v 1.35 2003/02/20 20:38:08 millert Exp $	*/
 
 /*
  *  at.c : Put file into atrun queue
@@ -9,7 +8,7 @@
  *  Copyright (C) 1993  David Parsons
  *
  *  Traditional BSD behavior and other significant modifications
- *  Copyright (C) 2002  Todd C. Miller
+ *  Copyright (C) 2002-2003  Todd C. Miller
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,49 +31,18 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
-#include <sys/socket.h>
-#include <sys/stat.h>
-#include <sys/time.h>
-#include <sys/un.h>
+#define	MAIN_PROGRAM
 
-#include <ctype.h>
-#include <dirent.h>
-#include <err.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <limits.h>
-#include <locale.h>
-#include <pwd.h>
-#include <signal.h>
-#include <stddef.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-#include <unistd.h>
-#include <utime.h>
-#include <utmp.h>
-
-#if (MAXLOGNAME-1) > UT_NAMESIZE
-#define LOGNAMESIZE UT_NAMESIZE
-#else
-#define LOGNAMESIZE (MAXLOGNAME-1)
-#endif
-
+#include "cron.h"
 #include "at.h"
-#include "panic.h"
-#include "parsetime.h"
-#include "perm.h"
-#include "pathnames.h"
-#define MAIN
 #include "privs.h"
+#include <limits.h>
 
 #define ALARMC 10		/* Number of seconds to wait for timeout */
 #define TIMESIZE 50		/* Size of buffer passed to strftime() */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: at.c,v 1.34 2003/02/18 02:25:39 millert Exp $";
+static const char rcsid[] = "$OpenBSD: at.c,v 1.35 2003/02/20 20:38:08 millert Exp $";
 #endif
 
 /* Variables to remove from the job's environment. */
@@ -85,7 +53,7 @@ char *no_export[] =
 };
 
 int program = AT;		/* default program mode */
-char atfile[PATH_MAX];		/* path to the at spool file */
+char atfile[MAX_FNAME];		/* path to the at spool file */
 int fcreated;			/* whether or not we created the file yet */
 char *atinput = NULL;		/* where to get input from */
 char atqueue = 0;		/* which queue to examine for jobs (atq) */
@@ -96,10 +64,75 @@ static int send_mail = 0;	/* whether we are sending mail */
 
 static void sigc(int);
 static void alarmc(int);
-static void writefile(time_t, char);
+static void writefile(const char *, time_t, char);
 static void list_jobs(int, char **, int, int);
-static void poke_daemon(void);
 static time_t ttime(const char *);
+static int check_permission(void);
+static void panic(const char *);
+static void perr(const char *);
+static void perr2(const char *, const char *);
+static void usage(void);
+time_t parsetime(int, char **);
+
+/*
+ * Something fatal has happened, print error message and exit.
+ */
+static __dead void
+panic(const char *a)
+{
+	(void)fprintf(stderr, "%s: %s\n", ProgramName, a);
+	if (fcreated) {
+		PRIV_START;
+		unlink(atfile);
+		PRIV_END;
+	}
+
+	exit(ERROR_EXIT);
+}
+
+/*
+ * Two-parameter version of panic().
+ */
+static __dead void 
+panic2(const char *a, const char *b)
+{
+	(void)fprintf(stderr, "%s: %s%s\n", ProgramName, a, b);
+	if (fcreated) {
+		PRIV_START;
+		unlink(atfile);
+		PRIV_END;
+	}
+
+	exit(ERROR_EXIT);
+}
+
+/*
+ * Some operating system error; print error message and exit.
+ */
+static __dead void
+perr(const char *a)
+{
+	if (!force)
+		perror(a);
+	if (fcreated) {
+		PRIV_START;
+		unlink(atfile);
+		PRIV_END;
+	}
+
+	exit(ERROR_EXIT);
+}
+
+/*
+ * Two-parameter version of perr().
+ */
+static __dead void 
+perr2(const char *a, const char *b)
+{
+	if (!force)
+		(void)fputs(a, stderr);
+	perr(b);
+}
 
 static void 
 sigc(int signo)
@@ -111,24 +144,13 @@ sigc(int signo)
 		PRIV_END;
 	}
 
-	_exit(EXIT_FAILURE);
+	_exit(ERROR_EXIT);
 }
 
 static void 
 alarmc(int signo)
 {
-	char buf[1024];
-
-	/* Time out after some seconds. */
-	strlcpy(buf, __progname, sizeof(buf));
-	strlcat(buf, ": File locking timed out\n", sizeof(buf));
-	write(STDERR_FILENO, buf, strlen(buf));
-	if (fcreated) {
-		PRIV_START;
-		unlink(atfile);
-		PRIV_END;
-	}
-	_exit(EXIT_FAILURE);
+	/* just return */
 }
 
 static int
@@ -142,8 +164,8 @@ newjob(time_t runtimer, int queue)
 	 * queues instead...
 	 */
 	for (i = 0; i < 120; i++) {
-		snprintf(atfile, sizeof(atfile), "%s/%ld.%c",
-		    _PATH_ATJOBS, (long)runtimer, queue);
+		snprintf(atfile, sizeof(atfile), "%s/%ld.%c", AT_DIR,
+		    (long)runtimer, queue);
 		fd = open(atfile, O_WRONLY | O_CREAT | O_EXCL, S_IRUSR);
 		if (fd >= 0)
 			return (fd);
@@ -157,11 +179,11 @@ newjob(time_t runtimer, int queue)
  * writing a job.
  */
 static void
-writefile(time_t runtimer, char queue)
+writefile(const char *cwd, time_t runtimer, char queue)
 {
-	char *ap, *mailname, *shell;
+	const char *ap;
+	char *mailname, *shell;
 	char timestr[TIMESIZE];
-	char path[PATH_MAX];
 	struct passwd *pass_entry;
 	struct tm runtime;
 	int fdes, lockdes, fd2;
@@ -178,7 +200,7 @@ writefile(time_t runtimer, char queue)
 	 * Install the signal handler for SIGINT; terminate after removing the
 	 * spool file if necessary
 	 */
-	memset(&act, 0, sizeof act);
+	bzero(&act, sizeof act);
 	act.sa_handler = sigc;
 	sigemptyset(&act.sa_mask);
 	act.sa_flags = 0;
@@ -186,23 +208,27 @@ writefile(time_t runtimer, char queue)
 
 	PRIV_START;
 
+	if ((lockdes = open(AT_DIR, O_RDONLY, 0)) < 0)
+		perr("Cannot open jobs dir");
+
 	/*
 	 * Lock the jobs dir so we don't have to worry about someone
 	 * else grabbing a file name out from under us.
 	 * Set an alarm so we don't sleep forever waiting on the lock.
 	 * If we don't succeed with ALARMC seconds, something is wrong...
 	 */
-	memset(&act, 0, sizeof act);
+	bzero(&act, sizeof act);
 	act.sa_handler = alarmc;
 	sigemptyset(&act.sa_mask);
-	act.sa_flags = 0;
+#ifdef SA_INTERRUPT
+	act.sa_flags = SA_INTERRUPT;
+#endif
 	sigaction(SIGALRM, &act, NULL);
 	alarm(ALARMC);
-	lockdes = open(_PATH_ATJOBS, O_RDONLY|O_EXLOCK, 0);
+	ch = flock(lockdes, LOCK_EX);
 	alarm(0);
-
-	if (lockdes < 0)
-		perr("Cannot lock jobs dir");
+	if (ch != 0)
+		panic("Unable to lock jobs dir");
 
 	/*
 	 * Create the file. The x bit is only going to be set after it has
@@ -243,7 +269,7 @@ writefile(time_t runtimer, char queue)
 		mailname = getenv("USER");
 
 	if ((mailname == NULL) || (mailname[0] == '\0') ||
-	    (strlen(mailname) > LOGNAMESIZE) || (getpwnam(mailname) == NULL)) {
+	    (strlen(mailname) > MAX_UNAME) || (getpwnam(mailname) == NULL)) {
 		pass_entry = getpwuid(real_uid);
 		if (pass_entry != NULL)
 			mailname = pass_entry->pw_name;
@@ -268,7 +294,7 @@ writefile(time_t runtimer, char queue)
 			perr("Cannot open input file");
 	}
 	(void)fprintf(fp, "#!/bin/sh\n# atrun uid=%ld gid=%ld\n# mail %*s %d\n",
-	    (long)real_uid, (long)real_gid, LOGNAMESIZE, mailname, send_mail);
+	    (long)real_uid, (long)real_gid, MAX_UNAME, mailname, send_mail);
 
 	/* Write out the umask at the time of invocation */
 	(void)fprintf(fp, "umask %o\n", cmask);
@@ -329,10 +355,8 @@ writefile(time_t runtimer, char queue)
 	 * Cd to the directory at the time and write out all the
 	 * commands the user supplies from stdin.
 	 */
-	if ((ap = getcwd(path, sizeof(path))) == NULL)
-		perr("Cannot get current working directory");
 	(void)fputs("cd ", fp);
-	for (; *ap != '\0'; ap++) {
+	for (ap = cwd; *ap != '\0'; ap++) {
 		if (*ap == '\n')
 			fprintf(fp, "\"\n\"");
 		else {
@@ -377,12 +401,14 @@ writefile(time_t runtimer, char queue)
 	(void)close(fd2);
 
 	/* Poke cron so it knows to reload the at spool. */
-	poke_daemon();
+	PRIV_START;
+	poke_daemon(AT_DIR, RELOAD_AT);
+	PRIV_END;
 
 	runtime = *localtime(&runtimer);
 	strftime(timestr, TIMESIZE, "%a %b %e %T %Y", &runtime);
 	(void)fprintf(stderr, "commands will be executed using %s\n", shell);
-	(void)fprintf(stderr, "job %s at %s\n", &atfile[sizeof(_PATH_ATJOBS)],
+	(void)fprintf(stderr, "job %s at %s\n", &atfile[sizeof(AT_DIR)],
 	    timestr);
 }
 
@@ -440,7 +466,7 @@ print_job(struct atjob *job, int n, struct stat *st, int shortformat)
 
 /*
  * List all of a user's jobs in the queue, by looping through
- * _PATH_ATJOBS, or all jobs if we are root.  If argc is > 0, argv
+ * AT_DIR, or all jobs if we are root.  If argc is > 0, argv
  * contains the list of users whose jobs shall be displayed. By
  * default, the list is sorted by execution date and queue.  If
  * csort is non-zero jobs will be sorted by creation/submission date.
@@ -461,34 +487,32 @@ list_jobs(int argc, char **argv, int count_only, int csort)
 
 	if (argc) {
 		if ((uids = malloc(sizeof(uid_t) * argc)) == NULL)
-			err(EXIT_FAILURE, "malloc");
+			panic("Insufficient virtual memory");
 
 		for (i = 0; i < argc; i++) {
 			if ((pw = getpwnam(argv[i])) == NULL)
-				errx(EXIT_FAILURE,
-				    "%s: invalid user name", argv[i]);
+				panic2(argv[i], ": invalid user name");
 			if (pw->pw_uid != real_uid && real_uid != 0)
-				errx(EXIT_FAILURE, "Only the superuser may "
-				    "display other users' jobs");
+				panic("Only the superuser may display other users' jobs");
 			uids[i] = pw->pw_uid;
 		}
 	} else
 		uids = NULL;
 
-	shortformat = strcmp(__progname, "at") == 0;
+	shortformat = strcmp(ProgramName, "at") == 0;
 
 	PRIV_START;
 
-	if (chdir(_PATH_ATJOBS) != 0)
-		perr2("Cannot change to ", _PATH_ATJOBS);
+	if (chdir(AT_DIR) != 0)
+		perr2("Cannot change to ", AT_DIR);
 
 	if ((spool = opendir(".")) == NULL)
-		perr2("Cannot open ", _PATH_ATJOBS);
+		perr2("Cannot open ", AT_DIR);
 
 	PRIV_END;
 
-	if (fstat(dirfd(spool), &stbuf) != 0)
-		perr2("Cannot stat ", _PATH_ATJOBS);
+	if (fstat(spool->dd_fd, &stbuf) != 0)
+		perr2("Cannot stat ", AT_DIR);
 
 	/*
 	 * The directory's link count should give us a good idea
@@ -499,14 +523,14 @@ list_jobs(int argc, char **argv, int count_only, int csort)
 	maxjobs = stbuf.st_nlink + 4;
 	atjobs = (struct atjob **)malloc(maxjobs * sizeof(struct atjob *));
 	if (atjobs == NULL)
-		err(EXIT_FAILURE, "malloc");
+		panic("Insufficient virtual memory");
 
 	/* Loop over every file in the directory. */
 	while ((dirent = readdir(spool)) != NULL) {
 		PRIV_START;
 
 		if (stat(dirent->d_name, &stbuf) != 0)
-			perr2("Cannot stat in ", _PATH_ATJOBS);
+			perr2("Cannot stat in ", AT_DIR);
 
 		PRIV_END;
 
@@ -546,15 +570,15 @@ list_jobs(int argc, char **argv, int count_only, int csort)
 
 		job = (struct atjob *)malloc(sizeof(struct atjob));
 		if (job == NULL)
-			err(EXIT_FAILURE, "malloc");
+			panic("Insufficient virtual memory");
 		job->runtimer = runtimer;
 		job->ctime = stbuf.st_ctime;
 		job->queue = queue;
 		if (numjobs == maxjobs) {
-		    maxjobs *= 2;
-		    atjobs = realloc(atjobs, maxjobs * sizeof(struct atjob *));
-		    if (atjobs == NULL)
-			err(EXIT_FAILURE, "realloc");
+			maxjobs *= 2;
+			atjobs = realloc(atjobs, maxjobs * sizeof(job));
+			if (atjobs == NULL)
+				panic("Insufficient virtual memory");
 		}
 		atjobs[numjobs++] = job;
 	}
@@ -597,7 +621,7 @@ rmok(int job)
 }
 
 /*
- * Loop through all jobs in _PATH_ATJOBS and display or delete ones
+ * Loop through all jobs in AT_DIR and display or delete ones
  * that match argv (may be job or username), or all if argc == 0.
  * Only the superuser may display/delete other people's jobs.
  */
@@ -618,11 +642,11 @@ process_jobs(int argc, char **argv, int what)
 
 	PRIV_START;
 
-	if (chdir(_PATH_ATJOBS) != 0)
-		perr2("Cannot change to ", _PATH_ATJOBS);
+	if (chdir(AT_DIR) != 0)
+		perr2("Cannot change to ", AT_DIR);
 
 	if ((spool = opendir(".")) == NULL)
-		perr2("Cannot open ", _PATH_ATJOBS);
+		perr2("Cannot open ", AT_DIR);
 
 	PRIV_END;
 
@@ -633,7 +657,7 @@ process_jobs(int argc, char **argv, int what)
 	if (argc > 0) {
 		if ((jobs = malloc(sizeof(char *) * argc)) == NULL ||
 		    (uids = malloc(sizeof(uid_t) * argc)) == NULL)
-			err(EXIT_FAILURE, "malloc");
+			panic("Insufficient virtual memory");
 
 		for (i = 0; i < argc; i++) {
 			l = strtol(argv[i], &ep, 10);
@@ -641,15 +665,16 @@ process_jobs(int argc, char **argv, int what)
 			    *(ep + 2) == '\0' && l > 0 && l < INT_MAX)
 				jobs[jobs_len++] = argv[i];
 			else if ((pw = getpwnam(argv[i])) != NULL) {
-				if (real_uid != pw->pw_uid && real_uid != 0)
-					errx(EXIT_FAILURE,
-					    "Only the superuser may %s"
-					    " other users' jobs", what == ATRM
-					    ? "remove" : "print");
+				if (real_uid != pw->pw_uid && real_uid != 0) {
+					fprintf(stderr, "%s: Only the superuser"
+					    " may %s other users' jobs",
+					    ProgramName, what == ATRM
+					    ? "remove" : "view");
+					exit(ERROR_EXIT);
+				}
 				uids[uids_len++] = pw->pw_uid;
 			} else
-				errx(EXIT_FAILURE,
-				    "%s: invalid user name", argv[i]);
+				panic2(argv[i], ": invalid user name");
 		}
 	}
 
@@ -659,7 +684,7 @@ process_jobs(int argc, char **argv, int what)
 
 		PRIV_START;
 		if (stat(dirent->d_name, &stbuf) != 0)
-			perr2("Cannot stat in ", _PATH_ATJOBS);
+			perr2("Cannot stat in ", AT_DIR);
 		PRIV_END;
 
 		if (stbuf.st_uid != real_uid && real_uid != 0)
@@ -676,8 +701,7 @@ process_jobs(int argc, char **argv, int what)
 		job_matches = (argc == 0) ? 1 : 0;
 		if (!job_matches) {
 			for (i = 0; i < jobs_len; i++) {
-				if (jobs[i] != NULL &&
-				    strcmp(dirent->d_name, jobs[i]) == 0) {
+				if (strcmp(dirent->d_name, jobs[i]) == 0) {
 					jobs[i] = NULL;
 					job_matches = 1;
 					break;
@@ -730,9 +754,7 @@ process_jobs(int argc, char **argv, int what)
 				break;
 
 			default:
-				errx(EXIT_FAILURE,
-				    "Internal error, process_jobs = %d",
-				    what);
+				panic("Internal error");
 				break;
 			}
 		}
@@ -740,7 +762,8 @@ process_jobs(int argc, char **argv, int what)
 	for (error = 0, i = 0; i < jobs_len; i++) {
 		if (jobs[i] != NULL) {
 			if (!force)
-				warnx("%s: no such job", jobs[i]);
+				fprintf(stderr, "%s: %s: no such job",
+				    ProgramName, jobs[i]);
 			error++;
 		}
 	}
@@ -748,8 +771,14 @@ process_jobs(int argc, char **argv, int what)
 	free(uids);
 
 	/* If we modied the spool, poke cron so it knows to reload. */
-	if (changed)
-		poke_daemon();
+	if (changed) {
+		PRIV_START;
+		if (chdir(CRONDIR) != 0)
+			perror(CRONDIR);
+		else
+			poke_daemon(AT_DIR, RELOAD_AT);
+		PRIV_END;
+	}
 
 	return (error);
 }
@@ -823,39 +852,55 @@ ttime(const char *arg)
 		    "[[CC]YY]MMDDhhmm[.SS]");
 }
 
-#define RELOAD_AT	0x4	/* XXX - from cron's macros.h */
+static int
+check_permission(void)
+{
+	int ok;
+	uid_t uid = geteuid();
+	struct passwd *pw;
 
-/* XXX - share with crontab */
-static void
-poke_daemon() {
-	int sock, flags;
-	unsigned char poke;
-	struct sockaddr_un sun;
+	if ((pw = getpwuid(uid)) == NULL) {
+		perror("Cannot access password database");
+		exit(ERROR_EXIT);
+	}
 
 	PRIV_START;
 
-	if (utime(_PATH_ATJOBS, NULL) < 0) {
-		warn("can't update mtime on %s", _PATH_ATJOBS);
-		PRIV_END;
-		return;
-	}
-
-	/* Failure to poke the daemon socket is not a fatal error. */
-	(void) signal(SIGPIPE, SIG_IGN);
-	strlcpy(sun.sun_path, CRONDIR "/" SPOOL_DIR "/" CRONSOCK,
-	    sizeof(sun.sun_path));
-	sun.sun_family = AF_UNIX;
-	sun.sun_len = SUN_LEN(&sun);
-	if ((sock = socket(AF_UNIX, SOCK_STREAM, 0)) >= 0 &&
-	    connect(sock, (struct sockaddr *)&sun, sizeof(sun)) == 0) {
-		poke = RELOAD_AT;
-		write(sock, &poke, 1);
-		close(sock);
-	} else
-		fprintf(stderr, "Warning, cron does not appear to be running.\n");
-	(void) signal(SIGPIPE, SIG_DFL);
+	ok = allowed(pw->pw_name, AT_ALLOW, AT_DENY);
 
 	PRIV_END;
+
+	return (ok);
+}
+
+static void
+usage(void)
+{
+	/* Print usage and exit.  */
+	switch (program) {
+	case AT:
+	case CAT:
+		(void)fprintf(stderr,
+		    "usage: at [-bm] [-f file] [-q queue] -t time_arg\n"
+		    "       at [-bm] [-f file] [-q queue] timespec\n"
+		    "       at -c job [job ...]\n"
+		    "       at -l [-q queue] [job ...]\n"
+		    "       at -r job [job ...]\n");
+		break;
+	case ATQ:
+		(void)fprintf(stderr,
+		    "usage: atq [-cnv] [-q queue] [name...]\n");
+		break;
+	case ATRM:
+		(void)fprintf(stderr,
+		    "usage: atrm [-afi] [[job] [name] ...]\n");
+		break;
+	case BATCH:
+		(void)fprintf(stderr,
+		    "usage: batch [-m] [-f file] [-q queue] [timespec]\n");
+		break;
+	}
+	exit(ERROR_EXIT);
 }
 
 int
@@ -865,21 +910,27 @@ main(int argc, char **argv)
 	char queue = DEFAULT_AT_QUEUE;
 	char queue_set = 0;
 	char *options = "q:f:t:bcdlmrv";	/* default options for at */
+	char cwd[MAX_FNAME];
 	int ch;
 	int aflag = 0;
 	int cflag = 0;
 	int nflag = 0;
 
+	if ((ProgramName = strrchr(argv[0], '/')) != NULL)
+		ProgramName++;
+	else
+		ProgramName = argv[0];
+
 	RELINQUISH_PRIVS;
 
 	/* find out what this program is supposed to do */
-	if (strcmp(__progname, "atq") == 0) {
+	if (strcmp(ProgramName, "atq") == 0) {
 		program = ATQ;
 		options = "cnvq:";
-	} else if (strcmp(__progname, "atrm") == 0) {
+	} else if (strcmp(ProgramName, "atrm") == 0) {
 		program = ATRM;
 		options = "afi";
-	} else if (strcmp(__progname, "batch") == 0) {
+	} else if (strcmp(ProgramName, "batch") == 0) {
 		program = BATCH;
 		options = "f:q:mv";
 	}
@@ -969,9 +1020,13 @@ main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
+	if (getcwd(cwd, sizeof(cwd)) == NULL)
+		perr("Cannot get current working directory");
+
+	set_cron_cwd();
+
 	if (!check_permission())
-		errx(EXIT_FAILURE, "You do not have permission to use %s.",
-		     __progname);
+		panic("You do not have permission to use at.");
 
 	/* select our program */
 	switch (program) {
@@ -988,9 +1043,13 @@ main(int argc, char **argv)
 
 	case AT:
 		/* Time may have been specified via the -t flag. */
-		if (timer == -1)
-			timer = parsetime(argc, argv);
-		writefile(timer, queue);
+		if (timer == -1) {
+			if (argc == 0)
+				usage();
+			else if ((timer = parsetime(argc, argv)) == -1)
+				exit(ERROR_EXIT);
+		}
+		writefile(cwd, timer, queue);
 		break;
 
 	case BATCH:
@@ -999,17 +1058,17 @@ main(int argc, char **argv)
 		else
 			queue = DEFAULT_BATCH_QUEUE;
 
-		if (argc > 0)
-			timer = parsetime(argc, argv);
-		else
+		if (argc == 0)
 			timer = time(NULL);
+		else if ((timer = parsetime(argc, argv)) == -1)
+			exit(ERROR_EXIT);
 
-		writefile(timer, queue);
+		writefile(cwd, timer, queue);
 		break;
 
 	default:
 		panic("Internal error");
 		break;
 	}
-	exit(EXIT_SUCCESS);
+	exit(OK_EXIT);
 }
