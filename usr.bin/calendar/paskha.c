@@ -1,4 +1,4 @@
-/*	$OpenBSD: paskha.c,v 1.3 2003/06/25 22:41:24 deraadt Exp $	*/
+/*	$OpenBSD: paskha.c,v 1.4 2004/12/10 15:31:01 mickey Exp $	*/
 
 /*
  * Copyright (C) 1993-1996 by Andrey A. Chernov, Moscow, Russia.
@@ -27,13 +27,10 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: paskha.c,v 1.3 2003/06/25 22:41:24 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: paskha.c,v 1.4 2004/12/10 15:31:01 mickey Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
 #include <tzfile.h>
 
 #include "calendar.h"

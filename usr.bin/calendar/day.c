@@ -1,4 +1,4 @@
-/*	$OpenBSD: day.c,v 1.16 2004/12/10 15:00:27 mickey Exp $	*/
+/*	$OpenBSD: day.c,v 1.17 2004/12/10 15:31:01 mickey Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)calendar.c  8.3 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$OpenBSD: day.c,v 1.16 2004/12/10 15:00:27 mickey Exp $";
+static const char rcsid[] = "$OpenBSD: day.c,v 1.17 2004/12/10 15:31:01 mickey Exp $";
 #endif
 #endif /* not lint */
 
