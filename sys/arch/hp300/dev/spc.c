@@ -1,4 +1,4 @@
-/* $OpenBSD: spc.c,v 1.5 2004/08/21 18:01:55 miod Exp $ */
+/* $OpenBSD: spc.c,v 1.6 2004/08/25 20:57:38 miod Exp $ */
 /* $NetBSD: spc.c,v 1.2 2003/11/17 14:37:59 tsutsui Exp $ */
 
 /*
@@ -211,6 +211,21 @@ spc_dio_dmago(void *arg)
 
 	cmd = SCMD_XFR;
 	len = sc->sc_dleft;
+
+	if ((len & (DEV_BSIZE -1)) != 0) {
+		cmd |= SCMD_PAD;
+#if 0
+		/*
+		 * XXX - If we don't do this, the last 2 or 4 bytes
+		 * (depending on word/lword DMA) of a read get trashed.
+		 * It looks like it is necessary for the DMA to complete
+		 * before the SPC goes into "pad mode"???  Note: if we
+		 * also do this on a write, the request never completes.
+		 */
+		if ((dsc->sc_dflags & SCSI_DATAIN) != 0)
+			len += 2;
+#endif
+	}
 
 	spc_write(TCH, len >> 16);
 	spc_write(TCM, len >>  8);
