@@ -1,4 +1,5 @@
-/*	$OpenBSD: kprop.h,v 1.2 1998/02/18 11:53:36 art Exp $	*/
+/*	$OpenBSD: kprop.h,v 1.3 1998/02/18 12:54:49 art Exp $	*/
+/* $KTH: kprop.h,v 1.5 1997/02/07 21:39:52 assar Exp $ */
 
 /*
  * This software may now be redistributed outside the US.
@@ -26,7 +27,7 @@
  */
 
 #define KPROP_SERVICE_NAME "rcmd"
-#define KPROP_SRVTAB "/etc/srvtab"
+#define KPROP_SRVTAB "/etc/kerberosIV/srvtab"
 #define TGT_SERVICE_NAME "krbtgt"
 #define KPROP_PROT_VERSION_LEN 8
 #define KPROP_PROT_VERSION "kprop01"
@@ -34,3 +35,4 @@
 #define KPROP_TRANSFER_SAFE 2
 #define KPROP_TRANSFER_CLEAR 3
 #define KPROP_BUFSIZ 32768
+#define KPROP_PORT 754
