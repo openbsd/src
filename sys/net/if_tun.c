@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.36 2001/06/27 06:07:46 kjc Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.37 2001/08/02 22:30:41 itojun Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -534,6 +534,11 @@ tunread(dev, uio, ioflag)
 	splx(s);
 
 	while (m0 && uio->uio_resid > 0 && error == 0) {
+		if (m0->m_len == 0) {
+			MFREE(m0, m);
+			m0 = m;
+			continue;
+		}
 		len = min(uio->uio_resid, m0->m_len);
 		if (len == 0)
 			break;
