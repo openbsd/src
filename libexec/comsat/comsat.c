@@ -1,4 +1,4 @@
-/*	$OpenBSD: comsat.c,v 1.18 2001/11/17 19:54:56 deraadt Exp $	*/
+/*	$OpenBSD: comsat.c,v 1.19 2001/11/18 21:25:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$OpenBSD: comsat.c,v 1.18 2001/11/17 19:54:56 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: comsat.c,v 1.19 2001/11/18 21:25:55 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -92,6 +92,7 @@ main(argc, argv)
 	char *argv[];
 {
 	struct sockaddr_storage from;
+	struct sigaction sa;
 	register int cc;
 	int fromlen;
 	char msgbuf[100];
@@ -118,9 +119,19 @@ main(argc, argv)
 	(void)time(&lastmsgtime);
 	(void)gethostname(hostname, sizeof(hostname));
 	doreadutmp();
-	(void)signal(SIGALRM, readutmp);
+
 	(void)signal(SIGTTOU, SIG_IGN);
-	(void)signal(SIGCHLD, reapchildren);
+
+	bzero(&sa, sizeof sa);
+	sigemptyset(&sa.sa_mask);
+	sa.sa_handler = readutmp;
+	sa.sa_flags = 0;			/* no SA_RESTART */
+	(void)sigaction(SIGALRM, &sa, NULL);
+
+	sa.sa_handler = reapchildren;
+	sa.sa_flags = SA_RESTART;
+	(void)sigaction(SIGCHLD, &sa, NULL);
+
 	for (;;) {
 		if (wantreadutmp) {
 			doreadutmp();
@@ -170,11 +181,9 @@ doreadutmp(void)
 	static u_int utmpsize;		/* last malloced size for utmp */
 	static u_int utmpmtime;		/* last modification time for utmp */
 	struct stat statbf;
-	int save_errno = errno;
 
 	if (time(NULL) - lastmsgtime >= MAXIDLE)
 		exit(0);
-	(void)alarm((u_int)15);
 	(void)fstat(uf, &statbf);
 	if (statbf.st_mtime > utmpmtime) {
 		utmpmtime = statbf.st_mtime;
@@ -188,7 +197,7 @@ doreadutmp(void)
 		(void)lseek(uf, (off_t)0, SEEK_SET);
 		nutmp = read(uf, utmp, (int)statbf.st_size)/sizeof(struct utmp);
 	}
-	errno = save_errno;
+	(void)alarm((u_int)15);
 }
 
 void
@@ -218,7 +227,7 @@ notify(utp, offset)
 	FILE *tp;
 	struct stat stb;
 	struct termios ttybuf;
-	char tty[20], name[sizeof(utmp[0].ut_name) + 1];
+	char tty[MAXPATHLEN], name[sizeof(utmp[0].ut_name) + 1];
 
 	(void)snprintf(tty, sizeof(tty), "%s%.*s",
 	    _PATH_DEV, (int)sizeof(utp->ut_line), utp->ut_line);
