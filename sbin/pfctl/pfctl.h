@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.h,v 1.27 2003/10/08 14:47:57 henning Exp $ */
+/*	$OpenBSD: pfctl.h,v 1.28 2003/11/06 15:01:30 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -113,7 +113,7 @@ int	 unmask(struct pf_addr *, sa_family_t);
 
 int	 pfctl_cmdline_symset(char *);
 int	 pfctl_add_trans(struct pfr_buffer *, int, const char *, const char *);
-u_int32_t 
+u_int32_t
 	 pfctl_get_ticket(struct pfr_buffer *, int, const char *, const char *);
 int	 pfctl_trans(int, struct pfr_buffer *, u_long, int);
 

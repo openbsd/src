@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.190 2003/10/02 17:01:16 mcbride Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.191 2003/11/06 15:01:30 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -870,7 +870,7 @@ pfctl_add_rule(struct pfctl *pf, struct pf_rule *r)
 		if (pfctl_add_pool(pf, &r->rpool, r->af))
 			return (1);
 		pr.ticket = pfctl_get_ticket(pf->trans, rs_num, pf->anchor,
-		    pf->ruleset);    
+		    pf->ruleset);
 		pr.pool_ticket = pf->paddr.ticket;
 		memcpy(&pr.rule, r, sizeof(pr.rule));
 		if (ioctl(pf->dev, DIOCADDRULE, &pr))
@@ -927,7 +927,7 @@ pfctl_rules(int dev, char *filename, int opts, char *anchorname,
 	    t = trans;
 	    osize = t->pfrb_size;
 	}
-    
+
 	memset(&pa, 0, sizeof(pa));
 	memset(&pf, 0, sizeof(pf));
 	memset(&trs, 0, sizeof(trs));
