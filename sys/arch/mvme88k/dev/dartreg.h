@@ -1,41 +1,11 @@
-/*	$OpenBSD: dartreg.h,v 1.4 2003/10/05 20:24:10 miod Exp $	*/
+/*	$OpenBSD: dartreg.h,v 1.5 2004/04/15 12:34:42 miod Exp $	*/
 
-/*
- * Something to put append a 'U' to a long constant if it's C so that
- * it'll be unsigned in both ANSI and traditional.
- */
-#if defined(ASSEMBLER)
-#	define U(num)	num
-#else
-#  if defined(__STDC__)
-#	define U(num)	num ## U
-#  else
-#	define U(num)	num/**/U
-#  endif
-#endif
-
-/*********************** CONFIGURATION *******************************/
 #define MAXPORTS	2		/* max count of PORTS/DUART */
 
-/*
- * The following define is for the utputc/utgetc Console routines
- * which have to work without any configuration.
- */
-#define MVME188_DUART	U(0xFFF82000)	/* M68692 DUART chip */
+#define MVME188_DUART	0xfff82000	/* M68692 DUART chip */
 
-/*********************** DEFINITIONS *********************************/
-#define  MISSING  0  /* flag, missing a configured DUART */
-#define  ON	      1  /* flag for modem() */
-#define  OFF      0  /* flag for modem() */
 #define  A_PORT   0  /* flag for port a */
 #define  B_PORT   1  /* flag for port b */
-
-/*********************** MACROS ***********************************/
-/*
- * spl priority level should always be the same.
- */
-#define SPLCLOCK   spl6		/* set clock priority level */
-#define SPLM681    splhi	/* set ut driver priority level */
 
 /* the access to the same command register must be delayed,
    because the chip has some hardware problems in this case */
@@ -275,39 +245,3 @@ struct dart_sv_reg
 	volatile unsigned char	sv_imr;		/* interrupt mask register */
 	volatile unsigned char	sv_ivr;		/* interrupt vector register */
 };
-
-/* defines for receiver and DCD scanner */
-#define M681CSCAN 2	/* clock ticks for character scan */
-#define M681_CHAR 01	/* character arrived flag (ut_work) */
-#define M681_ACT  02	/* character in buffer flag (ut_work) */
-#define M681_DCD  04	/* DCD wait flag (ut_work) */
-
-
-/********************* SPECIAL IOCTL COMMAND DEFINITIONS ******************/
-/* HWHAND ioctls same as in MVME331 driver */
-#define MSETHWHAND	(('m'<<8)+20)	/* set hardware handshake */
-#define MCLEARHWHAND	(('m'<<8)+21)	/* clear hardware handshake */
-#define MGETHWHAND	(('m'<<8)+22)	/* get hardware handshake mode */
-
-#define M681STATUS	(('m'<<8)+40 )  /* get status of duarts */
-#define M681GETSTAT	(('m'<<8)+42 )  /* get statistics */
-
-#ifdef STATISTICS
-struct dart_stat {
-	int open_cnt;  /* count of open calls */
-	int intr_cnt;  /* count of interrupts */
-	int tx_cnt;    /* count of transmitted characters */
-	int rx_cnt;    /* count of received characters */
-	int brk_cnt;   /* count of break events */
-	int rovrn_cnt; /* count of overruns */
-	int frerr_cnt; /* count of frame errors */
-	int perr_cnt;  /* count of parity errors */
-	int rxoff_cnt; /* count of received XOFF chars */
-	int rxon_cnt;  /* count of received XON  chars */
-	int txoff_cnt; /* count of transmitted XOFF chars */
-	int txon_cnt;  /* count of transmitted XON  chars */
-};
-#endif
-
-
-
