@@ -304,6 +304,16 @@ main(argc, argv)
 	int ch, i, lsrr, on, probe, seq, tos, ttl;
 	struct ip *ip;
 
+	if ((pe = getprotobyname("icmp")) == NULL) {
+		Fprintf(stderr, "icmp: unknown protocol\n");
+		exit(10);
+	}
+	if ((s = socket(AF_INET, SOCK_RAW, pe->p_proto)) < 0)
+		err(5, "icmp socket");
+	if ((sndsock = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) < 0)
+		err(5, "raw socket");
+	setuid(getuid());
+
 	lsrr = 0;
 	on = 1;
 	seq = tos = 0;
@@ -390,7 +400,7 @@ main(argc, argv)
 			errx(1, "unknown host %s", *argv);
 		to.sin_family = hp->h_addrtype;
 		memcpy(&to.sin_addr, hp->h_addr, hp->h_length);
-		hostname = hp->h_name;
+		hostname = strdup(hp->h_name);
 	}
 	if (*++argv)
 		datalen = atoi(*argv);
@@ -426,22 +436,12 @@ main(argc, argv)
 
 	ident = (getpid() & 0xffff) | 0x8000;
 
-	if ((pe = getprotobyname("icmp")) == NULL) {
-		Fprintf(stderr, "icmp: unknown protocol\n");
-		exit(10);
-	}
-	if ((s = socket(AF_INET, SOCK_RAW, pe->p_proto)) < 0)
-		err(5, "icmp socket");
 	if (options & SO_DEBUG)
 		(void) setsockopt(s, SOL_SOCKET, SO_DEBUG,
 				  (char *)&on, sizeof(on));
 	if (options & SO_DONTROUTE)
 		(void) setsockopt(s, SOL_SOCKET, SO_DONTROUTE,
 				  (char *)&on, sizeof(on));
-
-	if ((sndsock = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) < 0)
-		err(5, "raw socket");
-
 #ifdef SO_SNDBUF
 	if (setsockopt(sndsock, SOL_SOCKET, SO_SNDBUF, (char *)&datalen,
 		       sizeof(datalen)) < 0)
