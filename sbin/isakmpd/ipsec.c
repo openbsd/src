@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec.c,v 1.52 2001/07/01 20:43:39 niklas Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.53 2001/07/04 22:23:24 angelos Exp $	*/
 /*	$EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	*/
 
 /*
@@ -2256,6 +2256,8 @@ ipsec_id_size (char *section, u_int8_t *id)
     case IPSEC_ID_FQDN:
     case IPSEC_ID_USER_FQDN:
     case IPSEC_ID_KEY_ID:
+    case IPSEC_ID_DER_ASN1_DN:
+    case IPSEC_ID_DER_ASN1_GN:
       data = conf_get_str (section, "Name");
       if (!data)
 	{
@@ -2263,15 +2265,8 @@ ipsec_id_size (char *section, u_int8_t *id)
 	  return -1;
 	}
       return strlen (data);
-    case IPSEC_ID_DER_ASN1_DN:
-      data = conf_get_str (section, "Name");
-      if (!data)
-	{
-	  log_print ("ipsec_id_size: section %s has no \"Name\" tag", section);
-	  return -1;
-	}
-      break;
     }
-  log_print ("ipsec_id_size: unrecognized ID-type %d (%s)", *id, type);
+  log_print ("ipsec_id_size: unrecognized/unsupported ID-type %d (%s)",
+	     *id, type);
   return -1;
 }
