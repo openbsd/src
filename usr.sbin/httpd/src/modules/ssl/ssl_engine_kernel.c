@@ -672,7 +672,7 @@ int ssl_hook_Access(request_rec *r)
     X509_STORE_CTX certstorectx;
     int depth;
     STACK_OF(SSL_CIPHER) *skCipherOld;
-    STACK_OF(SSL_CIPHER) *skCipher;
+    STACK_OF(SSL_CIPHER) *skCipher = NULL;
     SSL_CIPHER *pCipher;
     ap_ctx *apctx;
     int nVerifyOld;
@@ -1066,6 +1066,20 @@ int ssl_hook_Access(request_rec *r)
             }
             if (cert != NULL)
                 X509_free(cert);
+        }
+
+        /*
+         * Also check that SSLCipherSuite has been enforced as expected
+         */
+        if (skCipher != NULL) {
+            pCipher = SSL_get_current_cipher(ssl);
+            if (sk_SSL_CIPHER_find(skCipher, pCipher) < 0) {
+                ssl_log(r->server, SSL_LOG_ERROR,
+                        "SSL cipher suite not renegotiated: "
+                        "access to %s denied using cipher %s",
+                        r->filename, SSL_CIPHER_get_name(pCipher));
+                return FORBIDDEN;
+            }
         }
     }
 
