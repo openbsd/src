@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.13 1997/11/06 05:58:28 csapuntz Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.14 1997/11/06 22:46:19 csapuntz Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1063,7 +1063,6 @@ vop_nolock(v)
 		struct proc *a_p;
 	} */ *ap = v;
 
-#ifdef notyet
 	/*
 	 * This code cannot be used until all the non-locking filesystems
 	 * (notably NFS) are converted to properly lock and release nodes.
@@ -1107,15 +1106,6 @@ vop_nolock(v)
 	if (flags & LK_INTERLOCK)
 		vnflags |= LK_INTERLOCK;
 	return(lockmgr(vp->v_vnlock, vnflags, &vp->v_interlock, ap->a_p));
-#else /* for now */
-	/*
-	 * Since we are not using the lock manager, we must clear
-	 * the interlock here.
-	 */
-	if (ap->a_flags & LK_INTERLOCK)
-		simple_unlock(&ap->a_vp->v_interlock);
- 	return (0);
-#endif
 }
  
 /*
@@ -1805,10 +1795,10 @@ printlockedvnodes()
 
 	printf("Locked vnodes\n");
 	simple_lock(&mountlist_slock);
-	for (mp = mountlist.cqh_first; mp != (void *)&mountlist;
+	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
 	     mp = nmp) {
 		if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock, p)) { 
-			nmp = mp->mnt_list.cque_next;
+			nmp = CIRCLEQ_NEXT(mp, mnt_list);
 			continue;
 		}
 		for (vp = mp->mnt_vnodelist.lh_first;
@@ -1816,8 +1806,9 @@ printlockedvnodes()
 		     vp = vp->v_mntvnodes.le_next) {
 			if (VOP_ISLOCKED(vp))
 				vprint((char *)0, vp);
+		}
 		simple_lock(&mountlist_slock);
-		nmp = mp->mnt_list.cqe_next;
+		nmp = CIRCLEQ_NEXT(mp, mnt_list);
 		vfs_unbusy(mp, p);
  	}
 	simple_unlock(&mountlist_slock);
