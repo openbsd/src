@@ -1,4 +1,4 @@
-/*	$OpenBSD: cut.c,v 1.5 2001/09/19 02:43:19 pvalchev Exp $	*/
+/*	$OpenBSD: cut.c,v 1.6 2002/01/31 11:10:39 hugh Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -138,25 +138,24 @@ copyloop:
 	}
 
 
-#define	ENTIRE_LINE	-1
 	/* In line mode, it's pretty easy, just cut the lines. */
 	if (LF_ISSET(CUT_LINEMODE)) {
 		cbp->flags |= CB_LMODE;
 		for (lno = fm->lno; lno <= tm->lno; ++lno)
-			if (cut_line(sp, lno, 0, ENTIRE_LINE, cbp))
+			if (cut_line(sp, lno, 0, CUT_LINE_TO_EOL, cbp))
 				goto cut_line_err;
 	} else {
 		/*
-		 * Get the first line.  A length of ENTIRE_LINE causes cut_line
-		 * to cut from the MARK to the end of the line.
+		 * Get the first line.  A length of CUT_LINE_TO_EOL causes
+		 * cut_line() to cut from the MARK to the end of the line.
 		 */
 		if (cut_line(sp, fm->lno, fm->cno, fm->lno != tm->lno ?
-		    ENTIRE_LINE : (tm->cno - fm->cno) + 1, cbp))
+		    CUT_LINE_TO_EOL : (tm->cno - fm->cno) + 1, cbp))
 			goto cut_line_err;
 
 		/* Get the intermediate lines. */
 		for (lno = fm->lno; ++lno < tm->lno;)
-			if (cut_line(sp, lno, 0, ENTIRE_LINE, cbp))
+			if (cut_line(sp, lno, 0, CUT_LINE_TO_EOL, cbp))
 				goto cut_line_err;
 
 		/* Get the last line. */
@@ -266,7 +265,7 @@ cut_line(sp, lno, fcno, clen, cbp)
 	 * copy the portion we want, and reset the TEXT length.
 	 */
 	if (len != 0) {
-		if (clen == ENTIRE_LINE)
+		if (clen == CUT_LINE_TO_EOL)
 			clen = len - fcno;
 		memcpy(tp->lb, p + fcno, clen);
 		tp->len = clen;

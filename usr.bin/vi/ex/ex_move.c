@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_move.c,v 1.4 2001/01/29 01:58:43 niklas Exp $	*/
+/*	$OpenBSD: ex_move.c,v 1.5 2002/01/31 11:10:39 hugh Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -56,7 +56,7 @@ ex_copy(sp, cmdp)
 	memset(&cb, 0, sizeof(cb));
 	CIRCLEQ_INIT(&cb.textq);
 	for (cnt = fm1.lno; cnt <= fm2.lno; ++cnt)
-		if (cut_line(sp, cnt, 0, 0, &cb)) {
+		if (cut_line(sp, cnt, 0, CUT_LINE_TO_EOL, &cb)) {
 			rval = 1;
 			goto err;
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cut.h,v 1.3 2001/01/29 01:58:29 niklas Exp $	*/
+/*	$OpenBSD: cut.h,v 1.4 2002/01/31 11:10:39 hugh Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -77,3 +77,6 @@ struct _text {				/* Text: a linked list of lines. */
 #define	CUT_LINEMODE	0x01		/* Cut in line mode. */
 #define	CUT_NUMOPT	0x02		/* Numeric buffer: optional. */
 #define	CUT_NUMREQ	0x04		/* Numeric buffer: required. */
+
+/* Special length to cut_line(). */
+#define CUT_LINE_TO_EOL	((size_t) -1)	/* Cut to the end of line. */
