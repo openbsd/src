@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.9 2003/03/11 21:26:26 ian Exp $	*/
+/*	$OpenBSD: print.c,v 1.10 2003/06/13 18:31:14 deraadt Exp $	*/
 
 /*
  * print.c - debugging printout routines
@@ -16,11 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    This product includes software developed by Ian F. Darwin and others.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *  
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -46,7 +41,7 @@
 #include "file.h"
 
 #ifndef lint
-static char *moduleid = "$OpenBSD: print.c,v 1.9 2003/03/11 21:26:26 ian Exp $";
+static char *moduleid = "$OpenBSD: print.c,v 1.10 2003/06/13 18:31:14 deraadt Exp $";
 #endif  /* lint */
 
 #define SZOF(a)	(sizeof(a) / sizeof(a[0]))
