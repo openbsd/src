@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.285 2000/07/19 21:14:12 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.286 2000/07/19 22:04:17 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -506,7 +506,7 @@ vendor RISCOM		0x12aa	RISCom
 vendor ALTEON		0x12ae	Alteon
 vendor PICTUREEL	0x12c5	Picture Elements
 vendor STB2		0x12d2	NVidia/SGS-Thomson
-vendor DIAMOND2		0x12eb	Diamond Multimedia(2)
+vendor AUREAL		0x12eb	Aureal
 vendor ADMTEK		0x1317	ADMtek
 vendor FORTEMEDIA	0x1319	Forte Media
 vendor SIIG		0x131f	SIIG
@@ -757,6 +757,10 @@ product AMCIRCUITS LANAI	0x8043	Myrinet LANai Interface
 /* Atronics products */
 product ATRONICS IDE_2015PL	0x2015	IDE-2015PL
 
+/* Aureal products */
+product AUREAL AU8820		0x0001	AU8820 Vortex1
+product AUREAL AU8830		0x0002	AU8830 Vortex2
+
 /* Avance Logic products */
 product AVANCE AVL2301		0x2301	AVL2301
 product AVANCE AVG2302		0x2302	AVG2302
@@ -927,8 +931,6 @@ product DELTA RHINEII		0x1320	RhineII
 
 /* Diamond products */
 product DIAMOND VIPER		0x9001	Viper/PCI
-product DIAMOND2 MONSTER	0x0001	Monster
-product DIAMOND2 MX300		0x0002	Monster Sound MX300
 
 /* Distributed Processing Technology products */
 product DPT SC_RAID		0xa400	SmartCache/Raid
