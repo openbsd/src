@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.139 2004/12/13 18:29:51 espie Exp $
+# $OpenBSD: pkg_add,v 1.140 2004/12/13 21:14:16 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -469,7 +469,7 @@ sub find_old_lib
 
 sub lookup_library
 {
-	my ($state, $lib, $plist, $dependencies, $harder) = @_;
+	my ($state, $lib, $plist, $dependencies, $harder, $done) = @_;
 
 	print "checking libspec $lib..." if $state->{very_verbose};
 	if (check_lib_spec($state->{very_verbose},
@@ -495,7 +495,6 @@ sub lookup_library
     	}
 	if ($harder) {
 		# lookup through the full tree...
-		my $done = {};
 		my @todo = keys %$dependencies;
 		while (my $dep = pop @todo) {
 			require OpenBSD::RequiredBy;
@@ -520,6 +519,9 @@ sub lookup_library
 
 sub clue
 {
+	my $h = shift;
+	Warn "Even by looking in the dependency tree:\n";
+	Warn "\t", join(", ", keys %$h), "\n";
 	Warn "Maybe it's in a dependent package, but not tagged with \@lib ?\n";
 	Warn "(check with pkg_info -K -L)\n";
 	Warn "If you are still running 3.6 packages, update them.\n";
@@ -587,16 +589,17 @@ sub install_package
 		    if (!lookup_library($state, $spec, $plist,
 			$handle->{solved_dependencies}, 0)) {
 			    Warn "Can't install $pkg: lib not found $spec\n";
-			    clue();
+			    clue($handle->{solved_dependencies});
 			    return () unless $forced{libdepends};
 		    }
 		}
 	}
 	for my $lib (@{$plist->{wantlib}}) {
+		my $extra = {};
 		if (!lookup_library($state, $lib->{name}, $plist,
-		    $handle->{solved_dependencies}, 1)) {
+		    $handle->{solved_dependencies}, 1, $extra)) {
 		    	Warn "Can't install $pkg: lib not found ", $lib->{name}, "\n";
-			clue();
+			clue($extra);
 			return () unless $forced{libdepends};
 		}
 	}
