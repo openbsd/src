@@ -1,4 +1,4 @@
-#	$OpenBSD: INSTALL,v 1.5 1996/09/20 06:44:55 deraadt Exp $
+#	$OpenBSD: INSTALL,v 1.6 1996/10/04 15:05:40 niklas Exp $
 #	$NetBSD: INSTALL,v 1.2.2.1 1996/05/30 21:25:49 is Exp $
 
 #
@@ -231,4 +231,4 @@ pseudo-device	loop			# network loopback
 #pseudo-device	bpfilter 2		# berkeley packet filters
 #pseudo-device	tun 2
 
-config	netbsd swap on generic
+config	bsd swap on generic
