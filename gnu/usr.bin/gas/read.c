@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.3 1996/12/21 21:50:55 tholo Exp $	*/
+/*	$OpenBSD: read.c,v 1.4 1997/11/05 09:42:15 deraadt Exp $	*/
 
 /* read.c - read a source file -
 
@@ -21,7 +21,7 @@
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: read.c,v 1.3 1996/12/21 21:50:55 tholo Exp $";
+static char rcsid[] = "$OpenBSD: read.c,v 1.4 1997/11/05 09:42:15 deraadt Exp $";
 #endif
 
 #define MASK_CHAR (0xFF)	/* If your chars aren't 8 bits, you will
@@ -2086,8 +2086,11 @@ unsigned int next_char_of_string() {
 		case '8':
 		case '9': {
 			long number;
-			
-			for (number = 0; isdigit(c); c = *input_line_pointer++) {
+			int nchar;
+
+			for (nchar = 0, number = 0;
+				nchar < 3 && isdigit(c);
+				c = *input_line_pointer++, nchar++) {
 				number = number * 8 + c - '0';
 			}
 			c = number & 0xff;
