@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.16 2002/02/16 02:40:12 mickey Exp $	*/
+/*	$OpenBSD: bus.h,v 1.17 2002/02/16 03:13:32 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -409,9 +409,9 @@ struct hppa_bus_dmamap {
 	/*
 	 * PUBLIC MEMBERS: these are used by machine-independent code.
 	 */
+	bus_size_t	dm_mapsize;	/* size of the mapping */
 	int		dm_nsegs;	/* # valid segments in mapping */
 	bus_dma_segment_t dm_segs[1];	/* segments; variable length */
-	bus_size_t	dm_mapsize;	/* size of the mapping */
 };
 
 #endif /* _MACHINE_BUS_H_ */
