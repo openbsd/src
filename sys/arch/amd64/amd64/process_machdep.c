@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.2 2004/01/29 12:43:35 mickey Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.3 2004/01/29 13:21:10 mickey Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.1 2003/04/26 18:39:31 fvdl Exp $	*/
 
 /*-
@@ -165,8 +165,7 @@ process_write_regs(struct proc *p, struct reg *regs)
 	/*
 	 * Check for security violations.
 	 */
-	if (((regs->r_rflags ^ tf->tf_rflags) & PSL_USERSTATIC) != 0 ||
-	    !USERMODE(regs->r_cs, regs->r_rflags))
+	if (check_context(regs, tf))
 		return (EINVAL);
 
         tf->tf_rdi = regs->r_rdi;

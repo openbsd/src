@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.1 2004/01/28 01:39:39 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.2 2004/01/29 13:21:10 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -124,6 +124,7 @@
 #include <machine/fpu.h>
 #include <machine/mtrr.h>
 #include <machine/mpbiosvar.h>
+#include <machine/reg.h>
 
 #include <dev/isa/isareg.h>
 #include <machine/isa_machdep.h>
@@ -1872,3 +1873,40 @@ splassert_check(int wantipl, const char *func)
 }
 #endif
 
+int
+check_context(const struct reg *regs, struct trapframe *tf)
+{
+	uint16_t sel;
+
+	if (((regs->r_rflags ^ tf->tf_rflags) & PSL_USERSTATIC) != 0)
+		return EINVAL;
+
+	sel = regs->r_es & 0xffff;
+	if (sel != 0 && !VALID_USER_DSEL(sel))
+		return EINVAL;
+
+	sel = regs->r_fs & 0xffff;
+	if (sel != 0 && !VALID_USER_DSEL(sel))
+		return EINVAL;
+
+	sel = regs->r_gs & 0xffff;
+	if (sel != 0 && !VALID_USER_DSEL(sel))
+		return EINVAL;
+
+	sel = regs->r_ds & 0xffff;
+	if (!VALID_USER_DSEL(sel))
+		return EINVAL;
+
+	sel = regs->r_ss & 0xffff;
+	if (!VALID_USER_DSEL(sel)) 
+		return EINVAL;
+
+	sel = regs->r_cs & 0xffff;
+	if (!VALID_USER_CSEL(sel))
+		return EINVAL;
+
+	if (regs->r_rip >= VM_MAXUSER_ADDRESS)
+		return EINVAL;
+
+	return 0;
+}

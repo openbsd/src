@@ -1,4 +1,4 @@
-/*	$OpenBSD: reg.h,v 1.2 2004/01/29 12:43:35 mickey Exp $	*/
+/*	$OpenBSD: reg.h,v 1.3 2004/01/29 13:21:10 mickey Exp $	*/
 /*	$NetBSD: reg.h,v 1.1 2003/04/26 18:39:47 fvdl Exp $	*/
 
 /*-
@@ -124,5 +124,9 @@ struct fpreg {
 #define fp_mxcsr_mask	fxstate.fx_mxcsr_mask
 #define fp_st		fxstate.fx_st
 #define fp_xmm		fxstate.fx_xmm
+
+#ifdef _KERNEL
+int check_context(const struct reg *, struct trapframe *);
+#endif
 
 #endif /* !_AMD64_REG_H_ */
