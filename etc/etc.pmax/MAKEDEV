@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.8 1996/11/11 23:20:46 kstailey Exp $
+#	$OpenBSD: MAKEDEV,v 1.9 1996/12/14 18:24:01 millert Exp $
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
 
@@ -56,7 +56,7 @@ std)
 	(cd fd && eval `echo "" | awk ' BEGIN { \
 		for (i = 0; i < 64; i++) \
 			printf("mknod %d c 7 %d;", i, i)}'`)
-	chown -R bin.bin fd
+	chown -R root.wheel fd
 	chmod 555 fd
 	chmod 666 fd/*
 	;;

@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.9 1996/10/19 11:51:29 mickey Exp $
+#	$OpenBSD: MAKEDEV,v 1.10 1996/12/14 18:23:56 millert Exp $
 #	$NetBSD: MAKEDEV,v 1.12 1995/11/05 23:50:22 thorpej Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -101,7 +101,7 @@ fd)
 	(cd fd && eval `echo "" | awk ' BEGIN { \
 		for (i = 0; i < 64; i++) \
 			printf("mknod %d c 21 %d;", i, i)}'`)
-	chown -R bin.bin fd
+	chown -R root.wheel fd
 	chmod 555 fd
 	chmod 666 fd/*
 	;;

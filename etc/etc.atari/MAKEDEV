@@ -128,7 +128,7 @@ fd)
 		mknod $i c 18 $i
 		i=$(($i+1))
 		done)
-	chown -R bin.bin fd
+	chown -R root.wheel fd
 	chmod 555 fd
 	chmod 666 fd/*
 	;;

@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.13 1996/12/11 21:47:46 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.14 1996/12/14 18:23:59 millert Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -33,7 +33,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	$Id: MAKEDEV,v 1.13 1996/12/11 21:47:46 deraadt Exp $
+#	$Id: MAKEDEV,v 1.14 1996/12/14 18:23:59 millert Exp $
 #
 # Device "make" file.  Valid arguments:
 #	all	makes all known devices, including local devices,
@@ -123,7 +123,7 @@ fd)
 	(cd fd && eval `echo "" | awk ' BEGIN { \
 		for (i = 0; i < 64; i++) \
 	 		printf("mknod %d c 21 %d;", i, i)}'`)
-	chown -R bin.bin fd
+	chown -R root.wheel fd
 	chmod 555 fd
 	chmod 666 fd/*
 	;;

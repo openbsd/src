@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.17 1996/11/26 05:22:31 kstailey Exp $
+#	$OpenBSD: MAKEDEV,v 1.18 1996/12/14 18:23:50 millert Exp $
 #	$NetBSD: MAKEDEV,v 1.21 1996/05/19 21:03:49 veego Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -143,7 +143,7 @@ fd)
 		mknod $i c 21 $i
 		i=$(($i+1))
 		done)
-	chown -R bin.bin fd
+	chown -R root.wheel fd
 	chmod 555 fd
 	chmod 666 fd/*
 	;;
