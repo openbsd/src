@@ -1,4 +1,4 @@
-/*	$OpenBSD: openfirm.c,v 1.7 2004/01/11 16:22:30 drahn Exp $	*/
+/*	$OpenBSD: openfirm.c,v 1.8 2004/02/16 04:57:50 drahn Exp $	*/
 /*	$NetBSD: openfirm.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -271,8 +271,8 @@ OF_getnodebyname(int start, const char *name)
 	int node = 0;
 	int next;
 
-	if (node == 0)
-		node = OF_peer(0);
+	if (start == 0)
+		start = OF_peer(0);
 
 	for (node = start; node; node = next) {
 		len = OF_getprop(node, "name", nname, sizeof(nname));
