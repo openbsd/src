@@ -98,8 +98,8 @@ if [ -d /var/yp/binding ]; then
 
 	if [ -d /var/yp/`domainname` ]; then
 		# yp server capabilities needed...
-		echo -n 'ypserv';		ypserv -d
-		#echo -n 'ypxfrd';		ypxfrd
+		echo -n ' ypserv';		ypserv -d
+		echo -n ' ypxfrd';		ypxfrd
 
 		# if we are the master server, run rpc.yppasswdd
 		_host1=`ypwhich -m passwd 2> /dev/null`
@@ -114,7 +114,7 @@ if [ -d /var/yp/binding ]; then
 			    sed -e 's/^Name:    //'`
 		fi
 		if [ "$host2" = "$host1" ]; then
-			echo -n 'rpc.yppasswdd'; rpc.yppasswdd
+			echo -n ' rpc.yppasswdd'; rpc.yppasswdd
 		fi
 	fi
 fi
