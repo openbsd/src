@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.50 2005/03/17 13:05:04 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.51 2005/03/18 03:20:59 krw Exp $
 OpenBSD/MACHINE OSREV runs on iMac, G4 Power Macintosh, and G4 Cube, as well
 as PowerBook and iBook machines.
 
@@ -26,7 +26,7 @@ Supported devices {:-include-:}:
 	SCSI host adapters
 		Adaptec AIC-7770, AIC-7850, AIC-7860, AIC-7870, AIC-7880,
 		AIC-7890, AIC-7891, AIC-7892, AIC-7895, AIC-7896, AIC-7897
-		and AIC-7899 based host adapters (ahc) [*] including the
+		and AIC-7899 based host adapters (ahc), including the
 		Adaptec cards
 			AHA-274X[W,T]
 			AHA-284X
@@ -152,6 +152,13 @@ Supported devices {:-include-:}:
 			Surecom EP-1427X-2
 			System TALKS SGC-X2UL
 			TRENDnet TU2-ET100
+		Broadcom BCM570x (Tigon3) based PCI adapters (bge), including:
+			3Com 3c996-T
+			3Com 3c996-SX
+			3Com 3c996B-T
+			Netgear GA302T
+			SysKonnect SK-9D21
+			SysKonnect SK-9D41
 		CATC USB-EL1210A-based USB adapters (cue), including:
 			Belkin F5U111
 			CATC Netmate
