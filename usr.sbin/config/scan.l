@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scan.l,v 1.10 1998/05/18 12:25:12 art Exp $	*/
+/*	$OpenBSD: scan.l,v 1.11 1998/06/12 12:17:08 d Exp $	*/
 /*	$NetBSD: scan.l,v 1.13 1997/02/02 21:12:37 thorpej Exp $	*/
 
 /*
@@ -208,14 +208,17 @@ include(fname, ateof)
 	char *s;
 	static int havedirs;
 
+	/* XXX Kludge until files.* files are fixed. */
+	if (strncmp(fname, "../../../", 9) == 0) {
+		error("leading ../../../ should be removed from include \"%s\"", fname);
+		errors--;
+		fname += 9;
+	}
+
 	if (havedirs == 0) {
 		havedirs = 1;
 		setupdirs();
 	}
-
-	/* Kludge until files.* files are fixed. */
-	if (strncmp(fname, "../../../", 9) == 0)
-		fname += 9;
 
 	s = (*fname == '/') ? strdup(fname) : sourcepath(fname);
 	if ((fp = fopen(s, "r")) == NULL) {
