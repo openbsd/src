@@ -1,4 +1,4 @@
-/*      $OpenBSD: ac97.c,v 1.11 2001/03/03 21:28:27 deraadt Exp $ */
+/*      $OpenBSD: ac97.c,v 1.12 2001/04/15 18:25:48 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 Constantine Sapuntzakis
@@ -279,33 +279,34 @@ static struct ac97_codecid {
 	u_int32_t id;
 	char *name;
 } ac97codecid[] = {
-	{ 0x41445340, "Analog Devices AD1881"	},
-	{ 0x414B4D00, "Asahi Kasei AK4540" 	},
-	{ 0x414B4D02, "Asahi Kasei AK4543" 	},
-	{ 0x43525900, "Cirrus Logic CS4297" 	},
-	{ 0x43525903, "Cirrus Logic CS4297" 	},
-	{ 0x43525913, "Cirrus Logic CS4297A" 	},
-	{ 0x43525923, "Cirrus Logic CS4298" 	},
-	{ 0x4352592b, "Cirrus Logic CS4294" 	},
-	{ 0x43525931, "Cirrus Logic CS4299" 	},
-	{ 0x43525933, "Cirrus Logic CS4298A?" 	},
+	{ 0x41445340, "Analog Devices AD1881"		},
+	{ 0x414b4d00, "Asahi Kasei AK4540" 		},
+	{ 0x414b4d02, "Asahi Kasei AK4543" 		},
+	{ 0x414c4710, "Avance ALC200"			},
+	{ 0x43525900, "Cirrus Logic CS4297" 		},
+	{ 0x43525903, "Cirrus Logic CS4297" 		},
+	{ 0x43525913, "Cirrus Logic CS4297A" 		},
+	{ 0x43525923, "Cirrus Logic CS4298" 		},
+	{ 0x4352592b, "Cirrus Logic CS4294" 		},
+	{ 0x43525931, "Cirrus Logic CS4299" 		},
+	{ 0x43525933, "Cirrus Logic CS4298A?" 		},
 	{ 0x4e534331, "National Semiconductor LM4549"	},
 	{ 0x53494c22, "Silicon Laboratory Si3036"	},
 	{ 0x53494c23, "Silicon Laboratory Si3038"	},
-	{ 0x54524102, "TriTech TR28022"		},
-	{ 0x54524103, "TriTech TR28023"		},
-	{ 0x54524108, "TriTech TR28028"		},
-	{ 0x54524123, "TriTech unknown"		},
-	{ 0x574d4c00, "Wolfson WM9704"		},
-	{ 0x574d4c03, "Wolfson WM9707"		},
-	{ 0x83847600, "SigmaTel STAC9700" 	},
-	{ 0x83847604, "SigmaTel STAC9701/3/4/5" },
-	{ 0x83847605, "SigmaTel STAC9704" 	},
-	{ 0x83847608, "SigmaTel STAC9708" 	},
-	{ 0x83847609, "SigmaTel STAC9721/23" 	},
-	{ 0x83847644, "SigmaTel STAC9744/45"	},
-	{ 0x83847684, "SigmaTel STAC9783/84?"	},
-	{ 0, 	      NULL			}
+	{ 0x54524102, "TriTech TR28022"			},
+	{ 0x54524103, "TriTech TR28023"			},
+	{ 0x54524108, "TriTech TR28028"			},
+	{ 0x54524123, "TriTech unknown"			},
+	{ 0x574d4c00, "Wolfson WM9704"			},
+	{ 0x574d4c03, "Wolfson WM9707"			},
+	{ 0x83847600, "SigmaTel STAC9700" 		},
+	{ 0x83847604, "SigmaTel STAC9701/3/4/5" 	},
+	{ 0x83847605, "SigmaTel STAC9704" 		},
+	{ 0x83847608, "SigmaTel STAC9708" 		},
+	{ 0x83847609, "SigmaTel STAC9721/23" 		},
+	{ 0x83847644, "SigmaTel STAC9744/45"		},
+	{ 0x83847684, "SigmaTel STAC9783/84?"		},
+	{ 0, 	      NULL				}
 };
 
 static char *ac97enhancement[] = {
