@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.c,v 1.18 2004/09/15 00:46:46 deraadt Exp $	*/
+/*	$OpenBSD: grey.c,v 1.19 2004/12/04 00:24:42 moritz Exp $	*/
 
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
@@ -78,6 +78,11 @@ configure_pf(char **addrs, int count)
 	int i, pdes[2];
 	pid_t pid;
 	char *fdpath;
+	struct sigaction sa;
+
+	sigfillset(&sa.sa_mask);
+	sa.sa_flags = SA_RESTART;
+	sa.sa_handler = sig_term_chld;
 
 	if (debug)
 		fprintf(stderr, "configure_pf - device on fd %d\n", pfdev);
@@ -100,7 +105,7 @@ configure_pf(char **addrs, int count)
 		fdpath = NULL;
 		close(pdes[0]);
 		close(pdes[1]);
-		signal(SIGCHLD, sig_term_chld);
+		sigaction(SIGCHLD, &sa, NULL);
 		return(-1);
 	case 0:
 		/* child */
@@ -122,7 +127,7 @@ configure_pf(char **addrs, int count)
 	if (pf == NULL) {
 		syslog_r(LOG_INFO, &sdata, "fdopen failed (%m)");
 		close(pdes[1]);
-		signal(SIGCHLD, sig_term_chld);
+		sigaction(SIGCHLD, &sa, NULL);
 		return(-1);
 	}
 	for (i = 0; i < count; i++)
@@ -130,7 +135,7 @@ configure_pf(char **addrs, int count)
 			fprintf(pf, "%s/32\n", addrs[i]);
 	fclose(pf);
 	waitpid(pid, NULL, 0);
-	signal(SIGCHLD, sig_term_chld);
+	sigaction(SIGCHLD, &sa, NULL);
 	return(0);
 }
 
@@ -455,6 +460,7 @@ int
 greywatcher(void)
 {
 	int i;
+	struct sigaction sa;
 
 	pfdev = open("/dev/pf", O_RDWR);
 	if (pfdev == -1) {
@@ -513,10 +519,13 @@ greywatcher(void)
 	 * pf whitelist table accordingly.
 	 */
 	fclose(grey);
-	signal(SIGTERM, sig_term_chld);
-	signal(SIGHUP,  sig_term_chld);
-	signal(SIGCHLD, sig_term_chld);
-	signal(SIGINT, sig_term_chld);
+	sigfillset(&sa.sa_mask);
+	sa.sa_flags = SA_RESTART;
+	sa.sa_handler = sig_term_chld;
+	sigaction(SIGTERM, &sa, NULL);
+	sigaction(SIGHUP,  &sa, NULL);
+	sigaction(SIGCHLD, &sa, NULL);
+	sigaction(SIGINT, &sa, NULL);
 
 	setproctitle("(pf <spamd-white> update)");
 	greyscanner();
