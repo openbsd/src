@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.13 2001/07/18 08:48:15 markus Exp $	*/
+/*	$OpenBSD: parse.y,v 1.14 2001/07/18 09:53:14 markus Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -85,7 +85,7 @@ u_int32_t		 ipmask(u_int8_t);
 }
 %token	PASS BLOCK SCRUB RETURN IN OUT LOG LOGALL QUICK ON FROM TO FLAGS
 %token	RETURNRST RETURNICMP PROTO ALL ANY ICMPTYPE CODE KEEP STATE PORT
-%token	RDR NAT ARROW NODF MINTTL
+%token	RDR NAT ARROW NODF MINTTL ERROR
 %token	<string> STRING
 %token	<number> NUMBER
 %token	<i>	PORTUNARY PORTBINARY
@@ -686,9 +686,10 @@ yylex(void)
 		yylval.number = 0;
 		do {
 			u_int64_t n = (u_int64_t)yylval.number * 10 + c - '0';
-			if (n > 0xffffffff)
-				errx(1, "line %d: number is too large",
-				    lineno);
+			if (n > 0xffffffff) {
+				warnx("line %d: number is too large", lineno);
+				return (ERROR);
+			}
 			yylval.number = (u_int32_t)n;
 		} while ((c = getc(fin)) != EOF && isdigit(c));
 		ungetc(c, fin);
@@ -713,8 +714,10 @@ yylex(void)
 		p = buf;
 		do {
 			*p++ = c;
-			if (p-buf >= sizeof buf)
-				errx(1, "line %d: string too long", lineno);
+			if (p-buf >= sizeof buf) {
+				warnx("line %d: string too long", lineno);
+				return (ERROR);
+			}
 		} while ((c = getc(fin)) != EOF && (allowed_in_string(c)));
 		ungetc(c, fin);
 		*p = '\0';
