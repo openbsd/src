@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_acct.c,v 1.5 1997/11/06 05:58:15 csapuntz Exp $	*/
+/*	$OpenBSD: kern_acct.c,v 1.6 1998/05/17 10:47:35 deraadt Exp $	*/
 /*	$NetBSD: kern_acct.c,v 1.42 1996/02/04 02:15:12 christos Exp $	*/
 
 /*-
@@ -118,7 +118,7 @@ sys_acct(p, v, retval)
 	if (SCARG(uap, path) != NULL) {
 		NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path),
 		    p);
-		if ((error = vn_open(&nd, FWRITE, 0)) != 0)
+		if ((error = vn_open(&nd, FWRITE|O_APPEND, 0)) != 0)
 			return (error);
 		VOP_UNLOCK(nd.ni_vp, 0, p);
 		if (nd.ni_vp->v_type != VREG) {
