@@ -64,7 +64,6 @@ static char rcsid[] = "$NetBSD: input.c,v 1.4 1995/04/27 21:22:24 mycroft Exp $"
 #define CRTOKEN		'\r'
 #endif
 #define REDRAWTOKEN	'\014'	/* CTRL(L) */
-#define	SHELLTOKEN	'!'
 #define HELPTOKEN	'?'
 #define ALPHATOKEN	256
 #define NUMTOKEN	257
@@ -309,56 +308,8 @@ noise()
 
 gettoken()
 {
-	while ((tval = getAChar()) == REDRAWTOKEN || tval == SHELLTOKEN)
+	while ((tval = getAChar()) == REDRAWTOKEN)
 	{
-		if (tval == SHELLTOKEN)
-		{
-#ifdef BSD
-			struct itimerval	itv;
-			itv.it_value.tv_sec = 0;
-			itv.it_value.tv_usec = 0;
-			setitimer(ITIMER_REAL, &itv, NULL);
-#endif
-#ifdef SYSV
-			int aval;
-			aval = alarm(0);
-#endif
-			if (fork() == 0)	/* child */
-			{
-				char *shell, *base, *getenv(), *strrchr();
-
-				setuid(getuid()); /* turn off setuid bit */
-				done_screen();
-
-						 /* run user's favorite shell */
-				if ((shell = getenv("SHELL")) != NULL)
-				{
-					base = strrchr(shell, '/');
-					if (base == NULL)
-						base = shell;
-					else
-						base++;
-					execl(shell, base, 0);
-				}
-				else
-					execl(_PATH_BSHELL, "sh", 0);
-
-				exit(0);	/* oops */
-			}
-
-			wait(0);
-			tcsetattr(fileno(stdin), TCSADRAIN, &tty_new);
-#ifdef BSD
-			itv.it_value.tv_sec = 0;
-			itv.it_value.tv_usec = 1;
-			itv.it_interval.tv_sec = sp->update_secs;
-			itv.it_interval.tv_usec = 0;
-			setitimer(ITIMER_REAL, &itv, NULL);
-#endif
-#ifdef SYSV
-			alarm(aval);
-#endif
-		}
 		redraw();
 	}
 
