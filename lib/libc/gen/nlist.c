@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: nlist.c,v 1.35 2001/01/25 05:33:04 art Exp $";
+static char rcsid[] = "$OpenBSD: nlist.c,v 1.36 2001/02/03 02:37:27 art Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -318,6 +318,7 @@ __elf_fdnlist(fd, list)
 	Elf_Shdr *shdr = NULL;
 	Elf_Word shdr_size;
 	struct stat st;
+	int usemalloc = 0;
 
 	/* Make sure obj is OK */
 	if (lseek(fd, (off_t)0, SEEK_SET) == -1 ||
@@ -338,8 +339,15 @@ __elf_fdnlist(fd, list)
 	/* mmap section header table */
 	shdr = (Elf_Shdr *)mmap(NULL, (size_t)shdr_size, PROT_READ,
 	    MAP_COPY|MAP_FILE, fd, (off_t) ehdr.e_shoff);
-	if (shdr == MAP_FAILED)
-		return (-1);
+	if (shdr == MAP_FAILED) {
+		usemalloc = 1;
+		if ((shdr = malloc(shdr_size)) == NULL)
+			return (-1);
+		if (pread(fd, shdr, shdr_size, ehdr.e_shoff) != shdr_size) {
+			free(shdr);
+			return (-1);
+		}
+	}
 
 	/*
 	 * Find the symbol table entry and it's corresponding
@@ -358,7 +366,10 @@ __elf_fdnlist(fd, list)
 	}
 
 	/* Flush the section header table */
-	munmap((caddr_t)shdr, shdr_size);
+	if (usemalloc)
+		free(shdr);
+	else
+		munmap((caddr_t)shdr, shdr_size);
 
 	/* Check for files too large to mmap. */
 	/* XXX is this really possible? */
@@ -372,10 +383,19 @@ __elf_fdnlist(fd, list)
 	 * making the memory allocation permanent as with malloc/free
 	 * (i.e., munmap will return it to the system).
 	 */
-	strtab = mmap(NULL, (size_t)symstrsize, PROT_READ, MAP_COPY|MAP_FILE,
-	    fd, (off_t) symstroff);
-	if (strtab == MAP_FAILED)
-		return (-1);
+	if (usemalloc) {
+		if ((strtab = malloc(symstrsize)) == NULL)
+			return (-1);
+		if (pread(fd, strtab, symstrsize, symstroff) != symstrsize) {
+			free(strtab);
+			return (-1);
+		}
+	} else {
+		strtab = mmap(NULL, (size_t)symstrsize, PROT_READ,
+		    MAP_COPY|MAP_FILE, fd, (off_t) symstroff);
+		if (strtab == MAP_FAILED)
+			return (-1);
+	}
 	/*
 	 * clean out any left-over information for all valid entries.
 	 * Type and value defined to be 0 if not found; historical
@@ -465,7 +485,10 @@ __elf_fdnlist(fd, list)
 		}
 	}
 elf_done:
-	munmap(strtab, symstrsize);
+	if (usemalloc)
+		free(strtab);
+	else
+		munmap(strtab, symstrsize);
 	return (nent);
 }
 #endif /* _NLIST_DO_ELF */
