@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.87 2002/07/12 14:02:22 art Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.88 2002/08/11 22:32:31 art Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1469,6 +1469,7 @@ again:
 			if (bp + sizeof(struct e_vnode) > ewhere) {
 				simple_unlock(&mntvnode_slock);
 				*sizep = bp - where;
+				vfs_unbusy(mp, p);
 				return (ENOMEM);
 			}
 			if ((error = copyout((caddr_t)&vp,
@@ -1476,8 +1477,10 @@ again:
 			    sizeof(struct vnode *))) ||
 			   (error = copyout((caddr_t)vp,
 			    &((struct e_vnode *)bp)->vnode,
-			    sizeof(struct vnode))))
+			    sizeof(struct vnode)))) {
+				vfs_unbusy(mp, p);
 				return (error);
+			}
 			bp += sizeof(struct e_vnode);
 			simple_lock(&mntvnode_slock);
 		}
