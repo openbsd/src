@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.53 2002/06/08 08:05:14 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.54 2002/06/08 08:12:31 dhartmei Exp $
 .\"
 .\" Copyright (c) 2001, Daniel Hartmeier
 .\" All rights reserved.
@@ -79,7 +79,7 @@ hosts          = "all" |
                      [ port ] .
 
 host           = [ "!" ] address [ "/" mask-bits ] .
-address        = ( interface-name | '(' interface-name ')' | host-name |
+address        = ( interface-name | "(" interface-name ")" | host-name |
                    ipv4-dotted-quad | ipv6-coloned-hex ) .
 host-list      = host [ "," host-list ] .
 
