@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.84 2001/06/24 19:48:58 kjell Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.85 2001/06/24 23:42:40 mickey Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -36,6 +36,8 @@
  *	@(#)ip_input.c	8.2 (Berkeley) 1/4/94
  */
 
+#include "pf.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
@@ -48,7 +50,10 @@
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/route.h>
+
+#if NPF > 0
 #include <net/pfvar.h>
+#endif
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -380,13 +385,14 @@ ipv4_input(m)
 	/*
 	 * Packet filter
 	 */
+#if NPF > 0
 	{
 		struct mbuf *m1 = m;
 		if (pf_test(PF_IN, m->m_pkthdr.rcvif, &m1) != PF_PASS)
 			goto bad;
 		ip = mtod(m = m1, struct ip *);
 	}
-
+#endif
 	/*
 	 * Process options and, if not destined for us,
 	 * ship it on.  ip_dooptions returns 1 when an

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.118 2001/06/24 23:38:48 angelos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.119 2001/06/24 23:42:40 mickey Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -36,6 +36,8 @@
  *	@(#)ip_output.c	8.3 (Berkeley) 1/21/94
  */
 
+#include "pf.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
@@ -47,7 +49,10 @@
 
 #include <net/if.h>
 #include <net/route.h>
+
+#if NPF > 0
 #include <net/pfvar.h>
+#endif
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -634,13 +639,14 @@ sendit:
 	/*
 	 * Packet filter
 	 */
+#if NPF > 0
 	{
 		struct mbuf *m1 = m;
 		if (pf_test(PF_OUT, ifp, &m1) != PF_PASS)
 			goto done;
 		ip = mtod(m = m1, struct ip *);
 	}
-
+#endif
 	/* Catch routing changes wrt. hardware checksumming for TCP or UDP. */
 	if (m->m_pkthdr.csum & M_TCPV4_CSUM_OUT &&
 	    !(ifp->if_capabilities & IFCAP_CSUM_TCPv4)) {
