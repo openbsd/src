@@ -1,5 +1,5 @@
-/*	$OpenBSD: autoconf.c,v 1.13 1997/02/16 17:54:40 downsj Exp $	*/
-/*	$NetBSD: autoconf.c,v 1.31 1997/01/31 01:49:41 thorpej Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.14 1997/02/20 18:13:37 downsj Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.33 1997/02/05 20:56:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -1019,7 +1019,6 @@ setbootdev()
 	/*
 	 * Get parent's info.
 	 */
-	cdd = dev_data_lookup(root_device->dv_parent);
 	switch (type) {
 	case 2:
 		/*
