@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sun3,v 1.17 2001/05/11 07:13:16 deraadt Exp $
+#	$OpenBSD: files.sun3,v 1.18 2001/05/30 20:37:51 miod Exp $
 #	$NetBSD: files.sun3,v 1.26 1996/10/29 19:58:14 gwr Exp $
 
 #
@@ -27,7 +27,7 @@ file arch/sun3/sun3/leds.c
 file arch/sun3/sun3/machdep.c	
 file arch/sun3/sun3/mem.c		
 file arch/sun3/sun3/pmap.c		
-file arch/sun3/sun3/stub.c		
+file arch/sun3/sun3/stub.c			!ddb
 file arch/sun3/sun3/sun3_startup.c	
 file arch/sun3/sun3/sys_machdep.c
 file arch/sun3/sun3/trap.c		

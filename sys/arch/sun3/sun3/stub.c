@@ -1,4 +1,4 @@
-/*	$OpenBSD: stub.c,v 1.7 2001/01/03 01:49:09 miod Exp $	*/
+/*	$OpenBSD: stub.c,v 1.8 2001/05/30 20:37:54 miod Exp $	*/
 /*	$NetBSD: stub.c,v 1.13 1996/11/20 18:57:37 gwr Exp $	*/
 
 /*-
@@ -48,18 +48,11 @@
 
 #ifndef DDB
 void  Debugger __P((void));
-#endif
-
-/* Called by autoconf.c */
-#ifdef	RAMDISK_HOOKS
-void swapgeneric() {}
-#endif
 
 /*
  * When DDB is included, Debugger() comes from db_interface.c
  * otherwise we get the one compiled here.
  */
-#ifndef DDB
 void
 Debugger()
 {
