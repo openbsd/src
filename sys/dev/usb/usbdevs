@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.135 2005/03/03 07:15:49 itojun Exp $
+$OpenBSD: usbdevs,v 1.136 2005/03/05 14:12:46 itojun Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1333,6 +1333,7 @@ product ONSPEC2 8IN2		0xb012	8In2
 
 /* OQO */
 product OQO WIFI01		0x0002	model 01 WiFi interface
+product OQO BT01		0x0003	model 01 Bluetooth interface
 product OQO ETHER01		0x8150	model 01 Ethernet interface
 
 /* Ours Technology Inc. */
