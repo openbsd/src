@@ -1,4 +1,4 @@
-/*	$OpenBSD: df.c,v 1.9 1997/04/12 16:32:10 kstailey Exp $	*/
+/*	$OpenBSD: df.c,v 1.10 1997/04/14 17:23:38 kstailey Exp $	*/
 /*	$NetBSD: df.c,v 1.21.2.1 1995/11/01 00:06:11 jtc Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: df.c,v 1.9 1997/04/12 16:32:10 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: df.c,v 1.10 1997/04/14 17:23:38 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -294,12 +294,62 @@ regetmntinfo(mntbufp, mntsize)
 	return (j);
 }
 
+/*
+ * "human-readable" output: use 3 digits max.--put unit suffixes at
+ * the end.  Makes output compact and easy-to-read esp. on huge disks.
+ */
+
+typedef enum { NONE = 0, KILO, MEGA, GIGA, TERA, PETA /* , EXA */ } unit_t;
+
+unit_t
+unit_adjust(val)
+	double *val;
+{
+	unit_t unit;
+
+	if (*val < 1024)
+		unit = NONE;
+	else if (*val < 1024000ULL) {
+		unit = KILO;
+		*val /= 1024;
+	} else if (*val < 1024000000ULL) {
+		unit = MEGA;
+		*val /= 1024000;
+	} else if (*val < 1024000000000ULL) {
+		unit = GIGA;
+		*val /= 1024000000ULL;
+	} else if (*val < 1024000000000000ULL) {
+		unit = TERA;
+		*val /= 1024000000000ULL;
+	} else if (*val < 1024000000000000000ULL) {
+		unit = PETA;
+		*val /= 1024000000000000ULL;
+	}
+	return (unit);
+}
+
+void
+prthumanval(bytes)
+	double bytes;
+{
+	unit_t unit;
+
+	unit = unit_adjust(&bytes);
+
+	if (bytes > 10)
+		(void)printf(" %5.0f%c  ", bytes, " KMGTPE"[unit]);
+	else
+		(void)printf(" %5.1f%c  ", bytes, " KMGTPE"[unit]);
+}
+
 void
 prthuman(sfsp, used, availblks)
 	struct statfs *sfsp;
 	long used, availblks;
 {
-	
+	prthumanval((double)(sfsp->f_blocks) * (double)(sfsp->f_bsize));
+	prthumanval((double)(used) * (double)(sfsp->f_bsize));
+	prthumanval((double)(availblks) * (double)(sfsp->f_bsize));
 }
 
 /*
@@ -327,8 +377,7 @@ prtstat(sfsp, maxwidth)
 		maxwidth = 11;
 	if (++timesthrough == 1) {
 		if (hflag) {
-			blocksize = 1024; /* temp */
-			header = "Size";
+			header = "  Size";
 			headerlen = strlen(header);
 		} else if (kflag) {
 			blocksize = 1024;
