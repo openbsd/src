@@ -41,7 +41,7 @@
 
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)ipt.c	1.19 6/3/96 (C) 1993-1996 Darren Reed";
-static	char	rcsid[] = "$Id: ipt.c,v 1.8 1997/02/11 22:23:58 kstailey Exp $";
+static	char	rcsid[] = "$Id: ipt.c,v 1.9 1997/04/19 19:10:22 kstailey Exp $";
 #endif
 
 extern	int	fr_check();
@@ -62,7 +62,7 @@ char *argv[];
 	struct	frentry	*f;
 	struct	ip	*ip;
 	u_long	buf[64];
-	char	c;
+	int	c;
 	char	*rules = NULL, *datain = NULL, *iface = NULL;
 	int	fd, i, dir = 0;
 
