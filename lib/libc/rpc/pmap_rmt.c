@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_rmt.c,v 1.3 1996/07/20 06:12:35 deraadt Exp $	*/
+/*	$OpenBSD: pmap_rmt.c,v 1.4 1996/08/10 04:31:23 deraadt Exp $	*/
 /*	$NetBSD: pmap_rmt.c,v 1.6 1995/06/03 22:37:25 mycroft Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)pmap_rmt.c 1.21 87/08/27 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)pmap_rmt.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$OpenBSD: pmap_rmt.c,v 1.3 1996/07/20 06:12:35 deraadt Exp $";
+static char *rcsid = "$OpenBSD: pmap_rmt.c,v 1.4 1996/08/10 04:31:23 deraadt Exp $";
 #endif
 
 /*
@@ -274,7 +274,6 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 	baddr.sin_family = AF_INET;
 	baddr.sin_port = htons(PMAPPORT);
 	baddr.sin_addr.s_addr = htonl(INADDR_ANY);
-/*	baddr.sin_addr.S_un.S_addr = htonl(INADDR_ANY); */
 	(void)gettimeofday(&t, (struct timezone *)0);
 	msg.rm_xid = xid = getpid() ^ t.tv_sec ^ t.tv_usec;
 	t.tv_usec = 0;
@@ -308,8 +307,8 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 		for (i = 0; i < nets; i++) {
 			baddr.sin_addr = addrs[i];
 			if (sendto(sock, outbuf, outlen, 0,
-				(struct sockaddr *)&baddr,
-				sizeof (struct sockaddr)) != outlen) {
+			    (struct sockaddr *)&baddr,
+			    sizeof (struct sockaddr)) != outlen) {
 				perror("Cannot send broadcast packet");
 				stat = RPC_CANTSEND;
 				goto done_broad;
@@ -358,19 +357,12 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 		xdrmem_create(xdrs, inbuf, (u_int)inlen, XDR_DECODE);
 		if (xdr_replymsg(xdrs, &msg)) {
 			if ((msg.rm_xid == xid) &&
-				(msg.rm_reply.rp_stat == MSG_ACCEPTED) &&
-				(msg.acpted_rply.ar_stat == SUCCESS)) {
+			    (msg.rm_reply.rp_stat == MSG_ACCEPTED) &&
+			    (msg.acpted_rply.ar_stat == SUCCESS)) {
 				raddr.sin_port = htons((u_short)port);
 				done = (*eachresult)(resultsp, &raddr);
 			}
 			/* otherwise, we just ignore the errors ... */
-		} else {
-#ifdef notdef
-			/* some kind of deserialization problem ... */
-			if (msg.rm_xid == xid)
-				fprintf(stderr, "Broadcast deserialization problem");
-			/* otherwise, just random garbage */
-#endif
 		}
 		xdrs->x_op = XDR_FREE;
 		msg.acpted_rply.ar_results.proc = xdr_void;
