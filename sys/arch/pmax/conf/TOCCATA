@@ -1,0 +1,66 @@
+#
+# GENERIC DECstation (3100 or 5000/xxx)
+#
+#	from: @(#)GENERIC.pmax	8.1 (Berkeley) 6/29/93
+# 	$Id: TOCCATA,v 1.1.1.1 1995/10/18 08:51:25 deraadt Exp $
+#
+machine		pmax
+
+cpu		"DS5000"
+ident		TOCCATA
+
+# Need to set locally
+timezone	8 dst
+maxusers	48
+
+# Standard system options
+options		SWAPPAGER		# swap pager (anonymous and swap space)
+options		VNODEPAGER		# vnode pager (mapped files)
+options		DEVPAGER		# device pager (mapped devices)
+#options	DIAGNOSTIC		# extra kernel debugging checks
+options		"COMPAT_43"		# compatibility with 4.3BSD binaries
+options		"COMPAT_09"		# compatibility with 4.4BSD binaries
+options		"COMPAT_10"		# compatibility with NetBSD 1.0 binaries
+options		KTRACE			# system call tracing support
+options		"NKMEMCLUSTERS=1024"	# 4K pages in kernel malloc pool
+#options		SYSCALL_DEBUG		# Print syscalls...
+#options		DDB
+
+# Filesystem options
+options		FIFO		# POSIX fifo support (in all filesystems)
+options		FFS		# fast filesystem with user and group quotas
+options		MFS		# memory-based filesystem
+options         NFSCLIENT       # Sun NFS-compatible filesystem (client)
+options         NFSSERVER       # Sun NFS-compatible filesystem (server)
+
+# Networking options
+options		INET		# Internet protocols
+options		"TCP_COMPAT_42"	# compatibility with 4.2BSD TCP/IP
+#options		GATEWAY		# IP packet forwarding
+
+# pmax specific
+options		COMPAT_ULTRIX	# ultrix compatibility
+
+#config		netbsd swap generic
+config		netbsd root on rz4a swap on rz4b dumps on rz4b
+
+controller	dtop0	at nexus0 csr ?
+controller	sfb0	at nexus0 csr ?
+controller	sfb1	at nexus0 csr ?
+controller	xcfb0	at nexus0 csr ?
+#controller	cfb0	at nexus0 csr ?
+controller	scc0	at nexus0 csr ?
+controller	le0	at nexus0 csr ?
+master		asc0	at nexus0 csr ?
+disk		rz0	at asc0 drive 0 slave 0
+disk		rz1	at asc0 drive 1 slave 0
+disk		rz2	at asc0 drive 2 slave 0
+disk		rz3	at asc0 drive 3 slave 0
+disk		rz4	at asc0 drive 4 slave 0
+disk		rz5	at asc0 drive 5 slave 0
+
+pseudo-device	pty		64	# pseudo ptys
+pseudo-device	loop
+pseudo-device	ether
+pseudo-device	sl		1	# Serial Line IP...
+pseudo-device	rcons

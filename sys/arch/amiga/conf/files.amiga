@@ -1,0 +1,249 @@
+#	$NetBSD: files.amiga,v 1.31 1995/10/09 02:08:38 chopps Exp $
+
+# maxpartitions must be first item in files.${ARCH}.newconf
+maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
+
+maxusers 2 8 64
+
+device	mainbus at root {}
+
+device	cpu at mainbus
+
+# zorro II expansion bus.
+device	zbus at mainbus {}
+file	arch/amiga/dev/zbus.c		zbus
+
+define	event {}
+file	arch/amiga/dev/event.c		event
+
+device	clock at mainbus
+file	arch/amiga/dev/clock.c
+
+# keyboard
+device	kbd at mainbus: event
+file	arch/amiga/dev/kbd.c		kbd needs-flag
+
+# serial port
+device	ser at mainbus:	tty
+file	arch/amiga/dev/ser.c		ser needs-count
+
+# parellel port
+device	par at mainbus
+file	arch/amiga/dev/par.c		par needs-count
+
+# mouse
+pseudo-device	mouse
+file	arch/amiga/dev/ms.c		mouse needs-count
+
+device	fdc at mainbus { unit = -1 }
+
+device	fd at fdc
+file	arch/amiga/dev/fd.c		fd needs-flag
+major	{fd = 2}
+
+# graphic devices
+define	grfbus {}
+
+device	grf at grfbus {}
+file	arch/amiga/dev/grf.c		grf needs-count
+
+device	ite at grf
+file	arch/amiga/dev/ite.c		ite needs-flag
+file	arch/amiga/dev/kbdmap.c		ite
+file	arch/amiga/dev/kf_8x8.c		ite
+file	arch/amiga/dev/kf_8x11.c	kfont_8x11
+file	arch/amiga/dev/kf_custom.c	kfont_custom
+
+# custom chips grf
+device	grfcc at mainbus: grfbus
+file	arch/amiga/dev/grf_cc.c		grfcc needs-flag
+file	arch/amiga/dev/ite_cc.c		grfcc ite
+
+pseudo-device	view
+file	arch/amiga/dev/view.c		view grfcc needs-count
+file	arch/amiga/dev/grfabs.c		grfcc view
+file	arch/amiga/dev/grfabs_cc.c	grfcc view
+file	arch/amiga/dev/grfabs_ccglb.c	grfcc view
+
+# retina grf
+device	grfrt at zbus: grfbus
+file	arch/amiga/dev/grf_rt.c		grfrt needs-flag
+file	arch/amiga/dev/ite_rt.c		grfrt ite
+
+# cirrus grf
+device	grfcl at zbus: grfbus
+file	arch/amiga/dev/grf_cl.c		grfcl needs-flag
+file    arch/amiga/dev/ite_cl.c         grfcl ite
+
+# CyberVison 64 grf
+device	grfcv at zbus: grfbus
+file	arch/amiga/dev/grf_cv.c		grfcv needs-flag
+
+# A2410 grf
+device	grful at zbus: grfbus
+file	arch/amiga/dev/grf_ul.c		grful needs-flag
+file    arch/amiga/dev/ite_ul.c         grful ite
+
+# retina ZIII grf
+device	grfrh at zbus: grfbus
+file	arch/amiga/dev/grf_rh.c		grfrh needs-flag
+file	arch/amiga/dev/ite_rh.c		grfrh ite
+  
+# handle gvp's odd autoconf info..
+device	gvpbus at zbus {}
+file	arch/amiga/dev/gvpbus.c		gvpbus
+
+device	le at zbus:	ifnet, ether
+file	arch/amiga/dev/if_le.c		le needs-count
+
+device	ed at zbus:	ifnet, ether
+file	arch/amiga/dev/if_ed.c		ed needs-flag
+
+# C=/Ameristar A2060 / 560
+device	bah at zbus: ifnet, arc
+file	arch/amiga/dev/if_bah.c		bah needs-flag
+
+device	es at zbus:	ifnet, ether
+file	arch/amiga/dev/if_es.c		es needs-count
+
+device	qn at zbus:	ifnet, ether
+file	arch/amiga/dev/if_qn.c		qn needs-flag
+
+device	ae at zbus:	ifnet, ether
+file	arch/amiga/dev/if_ae.c		ae needs-count
+
+# A2232 msc serial ports
+device	msc at zbus:	tty
+file	arch/amiga/dev/msc.c		msc needs-count
+
+# Alf Data MultiFaceCard 3
+#device	mfch at zbus: tty
+#file	arch/amiga/dev/mfch.c		mfch needs-count
+# bsc/Alf Data MultiFaceCard
+device	mfc at zbus { unit = -1 }
+
+device	mfcs at mfc
+device	mfcp at mfc
+file	arch/amiga/dev/mfc.c		mfcs mfcp needs-count
+
+define	scsi {}
+
+# wd 33c93 contrllers
+define	sbic 
+file	arch/amiga/dev/sbic.c		sbic
+
+# C= A2091
+device atzsc at zbus: scsi, sbic
+file	arch/amiga/dev/atzsc.c		atzsc needs-flag
+
+# GVP series II
+device	gtsc at gvpbus: scsi, sbic
+file	arch/amiga/dev/gtsc.c		gtsc needs-flag
+
+# Amiga 3000 internal
+device	ahsc at mainbus: scsi, sbic
+file	arch/amiga/dev/ahsc.c		ahsc needs-flag
+
+# ncr 57c710 controllers
+define	siop
+file	arch/amiga/dev/siop.c		siop
+
+# PPI Zeus
+device	zssc at zbus: scsi, siop
+file	arch/amiga/dev/zssc.c		zssc needs-flag
+
+# CSA Magnum
+device	mgnsc at zbus: scsi, siop
+file	arch/amiga/dev/mgnsc.c		mgnsc needs-flag
+
+# MacroSystems Warp Engine
+device	wesc at zbus: scsi, siop
+file	arch/amiga/dev/wesc.c		wesc needs-flag
+
+# C= A4091
+device	afsc at zbus: scsi, siop
+device	aftsc at mainbus: scsi, siop
+file	arch/amiga/dev/afsc.c		afsc needs-flag
+
+# ncr 5380 controllers
+define	sci
+file	arch/amiga/dev/sci.c		sci
+
+# Supra Wordsync II
+device	wstsc at zbus: scsi, sci
+file	arch/amiga/dev/wstsc.c		wstsc needs-flag
+
+# IVS 
+device	ivsc at zbus: scsi, sci
+file	arch/amiga/dev/ivsc.c		ivsc needs-flag
+
+# CSA twelve gauge.
+device	otgsc at zbus: scsi, sci
+file	arch/amiga/dev/otgsc.c		otgsc needs-flag
+
+# MLH
+device	mlhsc at zbus: scsi, sci
+file	arch/amiga/dev/mlhsc.c		mlhsc needs-flag
+
+# Emulex ESP216 & FAS216 controllers
+define	sfas
+file	arch/amiga/dev/sfas.c		sfas
+
+# FastlaneZ3
+device	flsc at zbus: scsi, sfas
+file	arch/amiga/dev/flsc.c		flsc needs-flag
+
+# Blizzard1230
+device	bzsc at zbus: scsi, sfas
+file	arch/amiga/dev/bzsc.c		bzsc needs-flag
+
+# Amiga 4000/1200 IDE masquerading as SCSI
+device	idesc at mainbus: scsi
+file	arch/amiga/dev/idesc.c		idesc needs-flag
+
+device	scsibus at scsi	{target = -1, lun = -1}
+
+device	cd at scsibus: disk
+file	scsi/cd.c			cd needs-flag
+major	{cd = 6}
+device	sd at scsibus: disk
+file	scsi/sd.c			sd needs-flag
+major	{sd = 4}
+device	st at scsibus: tape
+file	scsi/st.c			st needs-flag
+major	{st = 5}
+device	ch at scsibus: disk
+file	scsi/ch.c			ch needs-flag
+device	uk at scsibus: disk
+file	scsi/uk.c			uk needs-flag
+device	su at scsibus: disk
+file	scsi/su.c			su needs-flag
+
+
+# list of standard files...
+file	dev/cons.c			ite ser
+file	dev/cninit.c			ite ser
+file	scsi/scsi_base.c		scsi
+file	scsi/scsi_ioctl.c		scsi
+file	scsi/scsiconf.c			scsi
+file	arch/amiga/amiga/amiga_init.c
+file	arch/amiga/amiga/autoconf.c
+file	arch/amiga/amiga/cia.c
+file	arch/amiga/amiga/conf.c
+file	arch/amiga/amiga/disksubr.c
+file	arch/amiga/amiga/dkbad.c
+file	arch/amiga/amiga/machdep.c
+file	arch/amiga/amiga/mem.c
+file	arch/amiga/amiga/pmap.c
+file	arch/amiga/amiga/sys_machdep.c
+file	arch/amiga/amiga/trap.c
+file	arch/amiga/amiga/vm_machdep.c
+file	arch/amiga/amiga/cc.c
+file	arch/amiga/amiga/db_memrw.c	ddb
+file	arch/m68k/m68k/copy.s
+
+# Compatibility modules
+
+# SunOS Binary Compatibility (COMPAT_SUNOS)
+include "../../../compat/sunos/files.sunos"
+file	arch/m68k/m68k/sunos_machdep.c	compat_sunos

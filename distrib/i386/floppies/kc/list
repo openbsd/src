@@ -1,0 +1,4 @@
+#	$Id: list,v 1.1.1.1 1995/10/18 08:37:35 deraadt Exp $
+
+# copy the kernel
+COPY	${CURDIR}/../../../../sys/arch/i386/compile/INSTALL/netbsd	netbsd

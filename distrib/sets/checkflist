@@ -1,0 +1,13 @@
+#!/bin/csh -f
+
+if (! $?DESTDIR) then
+	echo DESTDIR must be set
+	exit 1
+endif
+
+set fsdir=$DESTDIR
+
+./makeflist >! /tmp/_CHECK.$$
+( cd $fsdir ; find . \( -type d -o -type f -o -type l \) ) | sort | \
+    diff /tmp/_CHECK.$$ -
+/bin/rm -f /tmp/_CHECK.$$

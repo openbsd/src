@@ -1,0 +1,89 @@
+#	$NetBSD: LAGER,v 1.8 1995/03/28 23:57:20 hpeyerl Exp $
+#
+# LAGER (hpeyerl's hp380)
+#
+machine		"hp300"
+cpu		"HP320"
+cpu		"HP330"
+cpu		"HP340"
+cpu		"HP350"
+cpu		"HP360"
+cpu		"HP370"
+cpu		"HP380"
+ident		LAGER
+
+timezone	5 dst
+maxusers	16
+
+# Standard options
+options		SWAPPAGER,VNODEPAGER,DEVPAGER
+options		INET
+options		FFS,FIFO
+options		MFS,KERNFS,FDESC
+options		NFSSERVER,NFSCLIENT
+options		NULLFS,PROCFS
+options		"COMPAT_NOMID"
+options		"COMPAT_43"
+options		"TCP_COMPAT_42"
+options		GATEWAY
+
+# Options for all HP machines
+options		SYSVSHM
+options		FPSP
+#options		HPUXCOMPAT
+
+options "COMPAT_09"
+
+# Options specific to this host.
+options		DDB
+options		DEBUG,DIAGNOSTIC
+options		PANICBUTTON,PANICWAIT
+options		KTRACE
+options		"NKMEMCLUSTERS=256"
+options		"HILVID=1"
+options		PROFTIMER,"PRF_INTERVAL=500"
+#options 	KGDB,"KGDBDEV=15*256+2","KGDBRATE=19200"
+
+config		netbsd root on sd0 swap on sd0b and sd1b
+#config		vgnetbsd root on sd0 swap on sd0b and sd1b and sd2b
+#config		rdnetbsd root on rd0 swap on rd0b and rd1b
+#config		gennetbsd swap generic
+
+master		hpib0	at scode7
+master		hpib1	at scode?
+disk		rd0	at hpib? slave ?
+disk		rd1	at hpib? slave ?
+disk		rd2	at hpib? slave ?
+disk		rd3	at hpib? slave ?
+tape		ct0	at hpib0 slave ?
+tape		ct1	at hpib0 slave ?
+
+master		scsi0	at scode?
+master		scsi1	at scode?
+disk		sd0	at scsi? slave ?
+disk		sd1	at scsi? slave ?
+disk		sd2	at scsi? slave ?
+disk		sd3	at scsi? slave ?
+tape		st0	at scsi? slave ?
+tape		st1	at scsi? slave ?
+
+device		le0	at scode?
+device		le1	at scode?
+device		dca0	at scode9
+device		dcm0	at scode? flags 0xe
+device		dcm1	at scode? flags 0xe
+device		dcm2	at scode? flags 0xe
+device		dcm3	at scode? flags 0xe
+
+device		grf0	at scode?
+device		grf1	at scode?
+
+pseudo-device	sl	1
+pseudo-device	bpfilter 16
+pseudo-device	ite
+pseudo-device	pty	32
+pseudo-device	loop
+pseudo-device	ether
+pseudo-device	ppp	4
+#pseudo-device   ccd0 on sd1c and sd2c and sd3c
+#pseudo-device  ccd1 on rd1h and rd2h and rd3h interleave 6048

@@ -1,0 +1,31 @@
+#	$Id: list,v 1.1.1.1 1995/10/18 08:37:35 deraadt Exp $
+
+# copy the crunched binary, link to it, and kill it
+COPY	${OBJDIR}/kcbin	kcbin
+LINK	kcbin		bin/cp
+LINK	kcbin		bin/dd
+LINK	kcbin		bin/sh
+LINK	kcbin		bin/test
+LINK	kcbin		bin/[
+LINK	kcbin		sbin/disklabel
+LINK	kcbin		sbin/fsck
+LINK	kcbin		sbin/halt
+LINK	kcbin		sbin/init
+LINK	kcbin		sbin/mount
+LINK	kcbin		sbin/mount_ffs
+LINK	kcbin		sbin/reboot
+LINK	kcbin		sbin/umount
+SPECIAL	/bin/rm kcbin
+
+# copy the MAKEDEV script and make some devices
+COPY	${CURDIR}/../../../../etc/etc.i386/MAKEDEV	dev/MAKEDEV
+SPECIAL	cd dev; sh MAKEDEV floppy
+SPECIAL	/bin/rm dev/MAKEDEV
+
+# we need the contents of /usr/mdec
+COPYDIR	${DESTDIR}/usr/mdec	usr/mdec
+
+# copy the common kc-floppy tools
+COPY	${TOPDIR}/kc-common/dot.profile		.profile
+COPY	${TOPDIR}/kc-common/copy_kernel.sh	copy_kernel
+SPECIAL	chmod 755 copy_kernel

@@ -1,0 +1,42 @@
+#
+#	$NetBSD: disktab,v 1.2 1995/10/08 23:26:03 gwr Exp $
+#
+# Disk geometry and partition layout tables. 
+# Key:
+#	dt	controller type
+#	ty	type of disk (fixed, removeable, simulated)
+#	d[0-4]	drive-type-dependent parameters
+#	ns	#sectors/track
+#	nt	#tracks/cylinder
+#	nc	#cylinders/disk
+#	sc	#sectors/cylinder, ns*nt default
+#	su	#sectors/unit, sc*nc default
+#	se	sector size, DEV_BSIZE default
+#	rm	rpm, 3600 default
+#	sf	supports bad144-style bad sector forwarding
+#	sk	sector skew per track, default 0
+#	cs	sector skew per cylinder, default 0
+#	hs	headswitch time, default 0
+#	ts	one-cylinder seek time, default 0
+#	il	sector interleave (n:1), 1 default
+#	bs	boot block size, default BBSIZE
+#	sb	superblock size, default SBSIZE
+#	o[a-h]	partition offsets in sectors
+#	p[a-h]	partition sizes in sectors
+#	b[a-h]	partition block sizes in bytes
+#	f[a-h]	partition fragment sizes in bytes
+#	t[a-h]	partition types (filesystem, swap, etc)
+#
+# All partition sizes reserve space for bad sector tables.
+# (5 cylinders needed for maintenance + replacement sectors)
+#
+# XXX - Would like :ba#4096:fa#512: but that panics...
+# Leave nc=16; adjust size using: ns
+rdroot|ramdiskroot|RAM-disk root FS image:\
+	:ty=simulated:se#512:nc#16:nt#2:ns#16:\
+	:ta=4.4BSD:oa#0:pa#512:\
+	:ob#0:pb#0:oc#0:pc#512:
+miniroot|Installation root-on-swap FS image:\
+	:ty=simulated:se#512:ns#32:nt#8:nc#48:\
+	:ta=4.4BSD:oa#0:pa#12288:\
+	:ob#0:pb#0:oc#0:pc#12288:

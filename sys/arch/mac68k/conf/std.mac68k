@@ -1,0 +1,20 @@
+#	$NetBSD: std.mac68k,v 1.6.2.1 1995/10/14 22:26:46 briggs Exp $
+#
+# standard Macintosh information.
+# roughly copied from std.sparc 14 Oct 1993.
+
+machine	mac68k m68k
+
+mainbus0 at root
+
+nubus0	at mainbus0
+ite0	at mainbus0
+adb0	at mainbus0
+
+fpu0	at mainbus0
+
+asc0	at mainbus0
+
+ser0	at mainbus0
+grf0	at nubus0	slot -1 id ? claimed 0
+grf1	at nubus0	slot -1 id ? claimed 0

@@ -1,0 +1,14 @@
+#	$NetBSD: files.hpux,v 1.1 1995/05/10 16:45:27 christos Exp $
+#
+# Config.new file description for machine-independent HPUX compat code.
+# Included by ports that need it.
+
+# ports should define any machine-specific files they need in their
+# own file lists.
+
+file	compat/hpux/hpux_compat.c	compat_hpux
+file	compat/hpux/hpux_net.c		compat_hpux
+file	compat/hpux/hpux_sig.c		compat_hpux
+file	compat/hpux/hpux_syscalls.c	compat_hpux
+file	compat/hpux/hpux_sysent.c	compat_hpux
+file	compat/hpux/hpux_tty.c		compat_hpux

@@ -1,0 +1,29 @@
+.\"
+.\" $Id: skeyaudit.1,v 1.1.1.1 1995/10/18 08:46:08 deraadt Exp $
+.\"
+.Dd 9 June 1994
+.Dt SKEYAUDIT 1
+.Os NetBSD 4
+.Sh NAME
+.Nm skeyaudit
+.Nd warn users if their S/Key will soon expire
+.Sh SYNOPSIS
+.Nm skeyaudit
+.Op Ar limit
+.Sh DESCRIPTION
+.Nm skeyaudit
+searches through the file
+.Dq Pa /etc/skeykeys
+for users whose S/Key sequence number is less than
+.Ar limit ,
+and sends them a reminder to run
+.Xr skeyinit 1
+soon. If no limit is specified a default of 12 is used.
+.Sh FILES
+.Bl -tag -width /etc/skeykeys -compact
+.It Pa /etc/skeykeys
+The S/Key key information database
+.El
+.Sh SEE ALSO
+.Xr skeyinit 1 ,
+.Xr skey 1

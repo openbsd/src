@@ -1,0 +1,298 @@
+Thu Nov  3 14:09:31 1994  Phil Nelson  (phil@cs.wwu.edu)
+
+	* Makefile.in: added targets uninstall, installdirs and modified
+	  other targets to get makes in a directory other than srcdir to
+	  work.
+
+	* configure.in: added shell commands to get configure to work
+	  correctly in directories other than srcdir.
+
+Wed Nov  2 10:18:19 1994  Phil Nelson  (phil@cs.wwu.edu)
+
+	* bc.1 bc.y bcdefs.h const.h execute.c global.c global.h load.c
+	  main.c number.c number.h proto.h sbc.y scan.l storage.c util.c:
+	  updated copyright to 1994.
+
+	* version.h: updated version number and copyright date.
+
+	* Makefile.in, configure.in, Install: updated for use with 
+	  autoconf-2.0 and install-sh.  Changed target install a bit.
+
+	* install-sh: Included this file from the autoconf-2.0
+	  distribution to have configure run without errors.
+
+	* README: updated to version 1.03.
+
+Mon Oct 31 10:26:28 1994  Phil Nelson  (phil@cs.wwu.edu)
+	
+	* Added Ken Pizzini's dc implementation that uses bc numeric
+	  routines.  The following files have been added:
+	  dc-Concerns   dc-array.c   dc-eval.c   dc-misc.c    dc-number.c 
+	  dc-proto.h    dc-regdef.h  dc-stack.c  dc-string.c  dc-version.h
+	  dc.1          dc.h         dc.texinfo
+
+	* dc-array.c: Added a conditional include of stdlib.h to get
+	  size_t defined on my SunOS 4.1.3 system.
+
+	* configure.in: Added support for dc.
+
+	* Makefile.in: Added support for dc.  Added rule to make
+	  config.h.in.
+
+Sun Aug  7 15:09:19 1994  Phil Nelson  (phil@cs.wwu.edu)
+
+	* configure.in, Makefile.in, acconfig.h: Add support for autoconf.
+	  Removed old Makefile.
+
+Wed Jul 20 22:46:32 1994  Phil Nelson  (phil@cs.wwu.edu)
+
+	* bc.y: change definition of next_label in function definition.
+	  Previous value of 0 caused break to not work.  It is now 1.
+
+Fri Apr  8 14:16:37 1994  Phil Nelson  (phil@cs.wwu.edu)
+
+	* Makefile: Change the distribution to include libmath.h.dist
+	  which is a copy of libmath.h that has the compiled libmath.b.
+
+Sun Feb 13 01:08:14 1994  Phil Nelson  (phil@cs.wwu.edu)
+
+	* execute.c: Change the string quote characters to be more like
+	  C.  \a => alert (bell) \b => backspace and added \q => ".
+
+	* bc.1: Updated information on above changes.
+
+Wed Oct 27 23:34:40 1993  Phil Nelson  (phil@cs.wwu.edu)
+
+	* Makefile: Changed compress to gzip.  Changed the
+	  comment and definition of the DOT_IS_LAST compile option.
+
+	* scan.l: Changed DOT_IS_LAST to NO_DOT_LAST and changed
+	  the test so "." is the last variable is standard.
+
+Wed May 19 15:15:12 1993  Phil Nelson  (phil at cs.wwu.edu)
+
+	* number.c: Fixed output of negative numbers in bases other than
+	  base 10.
+
+Wed Apr 21 11:56:31 1993  Phil Nelson  (phil at cs.wwu.edu)
+
+	* bc.1: Changed Steve Sommars e-mail address.
+
+Wed Apr 14 12:13:39 1993  Phil Nelson  (phil at cs.wwu.edu)
+
+	* sbc.y: removed leading , on first line.
+
+Wed Mar 31 16:12:39 1993  Phil Nelson  (phil at cs.wwu.edu)
+
+	* bc.1: Updated segment number for function bodies.
+
+Thu Mar 11 15:34:34 1993  Phil Nelson  (phil at cs.wwu.edu)
+
+	* Makefile: added version.h to bc.o's dependency list.
+
+Mon Mar  1 14:00:46 1993  Phil Nelson  (phil at cs.wwu.edu)
+
+	* util.c: (nextarg) changed parameter "val" to be an int.
+
+Tue Feb 16 10:06:45 1993  Phil Nelson  (phil at cs.wwu.edu)
+
+	* util.c: (call_str, arg_str) added a function call_str that
+	  correctly produces the string of argmuent types for a function
+	  call.  arg_str produced them in the reverse order.  This
+	  eliminated the need for the "comma" argument to arg_str, which
+	  was removed.
+
+	* bc.y: changed the calls to arg_str to have only one parameter
+	  in the function definition rule and replaced the call to arg_str
+	  with call_str in the function call rule.
+
+Tue Nov 24 17:38:40 1992  Phil Nelson  (phil at cs.wwu.edu)
+
+	* Makefile: Added LEXLIB definitions for use with lex.
+
+Thu Oct 22 13:43:16 1992  Phil Nelson  (phil at cs.wwu.edu)
+
+	* number.c (bc_raise): Rearranged and added code to speed up
+	  the computation by not doing unneeded multiplications.
+
+Wed Sep 30 10:43:52 1992  Phil Nelson  (phil at cs.wwu.edu)
+
+	* global.h: Fixed documentation.
+
+Tue Sep 29 15:27:50 1992  Phil Nelson  (phil at cs.wwu.edu)
+
+	* storage.c (process_params): Changed processing of more arguments
+	  than in a function definition to just a return.  
+
+	* Makefile: Made changes to make it more in conformance with the
+	  GNU coding standards.
+
+Tue Jul  7 21:09:07 1992  Phil Nelson  (phil at cs.wwu.edu)
+
+	* (const.h, bc.y, util.c) Added code so that when the math
+	  library is loaded, redefinition of any math library function
+	  will not cause the other functions to quit working correctly.
+	  Before this change, redefining a(x) would cause s(x) and c(x)
+	  to quit working and redefining s(x) would cause c(x) to quit
+	  working.
+
+Wed Jul  1 14:35:29 1992  Phil Nelson  (phil at cs.wwu.edu)
+
+	* (libmath.b) Changed the calculation of scale for computing
+	  e(x) and l(x).  This provides a little more accuracy in the
+	  last digit at the expense of a little speed.
+
+	* (Test/checklib.b) Changed tests to be parameterized and test
+	  more values.
+
+Thu Jun 25 09:22:59 1992  Phil Nelson  (phil at cs.wwu.edu)
+
+	* (configure) changed the script from looking in the
+	  include directory for a .h file to asking cc (gcc) to
+	  find the .h file.  This will allow better detection
+	  of include files available to the C compiler.
+
+Wed Jun 24 22:11:37 1992  Phil Nelson  (phil at cs.wwu.edu)
+
+	* (bc.y) Added a warning for the "last" variable.
+
+	* (scan.l) Added code to allow for a single dot (.) to be the
+	  same as the variable "last".  This is not a "standard" feature,
+	  but is provided for those who want it.
+
+	* (Install) Documented the new define for dot (.).
+
+	* (bc.1) Documented the use of dot (.) for "last".
+
+	* (Makefile) Added an easy method for adding extra defines for
+	  use during the compile.  Set DOT_IS_LAST as a standard
+	  extra define.
+
+	* (number.c) Changed the code for sqrt for better speed.
+
+Mon Jun 22 21:47:05 1992  Phil Nelson  (phil at cs.wwu.edu)
+
+	* Changed the name of math.h to libmath.h to avoid conflict
+	  with /usr/include/math.h.  Changed all references to math.h
+	  to libmath.h in all files.
+
+	* (configure) Changed the test for long strings accepted by
+	  cc to not include libmath.h and thus not need to distribute
+	  a file that is generated by the system.
+
+	* (Makefile) Changed PREFIX, BINDIR, LIBDIR, and MANDIR to
+	  lower case.
+
+Tue Mar  3 10:16:07 1992  Phil Nelson  (phil at cs.wwu.edu)
+
+	* (main.c) Added missing } at line 140.
+
+	* (version.h) Changed date of version 1.02 to March 3, 1992.
+
+Mon Feb  3 16:07:57 1992  Phil Nelson  (phil at cs.wwu.edu)
+
+	* (version.h) Updated version number and date.
+
+	* (bc.1) Added a new "VERSION" section.
+
+Wed Jan 29 14:13:55 1992  Phil Nelson  (phil at cs.wwu.edu)
+
+	* (execute.c) Removed the setjmp and longjmp calls that may have
+	  caused some problems with interrupted programs.
+
+Thu Jan 16 17:08:16 1992  Phil Nelson  (phil at cs.wwu.edu)
+
+	* (Makefile) Changed install to install the manual.
+
+Wed Jan  8 13:23:42 1992  Phil Nelson  (phil at cs.wwu.edu)
+
+	* Change all copyright notices to include 1992.
+	
+	* (load.c) Added termination to "load_code" to ignore code
+	  after an error has been found.
+
+	* (scan.l) Changed the check for NUL characters in STRING tokens
+	  (before the close quote) to work correctly.  Also added code to
+	  report illegal characters in a more readable output format.
+
+	* (bc.1) Added the exclusion of NUL characters from strings in
+	  the "differences" section and updated date of last change.
+
+	* (const.h) Changed BC_MAX_SEGS to 16.
+
+Mon Jan  6 14:20:02 1992  Phil Nelson  (phil at cs.wwu.edu)
+
+	* (number.c) Changed the out_num routine to use a correct field
+	  size for bases greater than 16.  e.g.  For base 1000, each
+	  "digit" is a three digit number.
+
+	* (Makefile) Added the "8" flag to get an 8 bit scanner.
+
+	* (scan.l) Changed "char *" to "unsigned char *" to match the
+	  declaration of yytext for the 8 bit scanner.  Also added code
+	  to detect the null character in strings and generate an error.
+
+Sat Jan  4 20:32:20 1992  Phil Nelson  (phil at cs.wwu.edu)
+
+	* (const.h) Changed BC_BASE_MAX to INT_MAX to allow more bases!
+
+Mon Dec 30 21:47:28 1991  Phil Nelson  (phil at cs.wwu.edu)
+
+	* (main.c) Fixed the bug that loaded the math library before
+	  every file.
+
+	* (bc.y) Removed some type declarations that duplicated token
+	  definitions so it could be run through bison.
+
+	* (load.c) Added a check for maximum code size.
+
+	* (Makefile) Added a prefix for LIBDIR and BINDIR so it can be
+	  changed easily.
+
+Mon Nov 25 13:11:17 1991  Phil Nelson  (phil at cs.wwu.edu)
+
+	* Changed version number in version.h to 1.01 with current date.
+
+	* Changed LIBFILE definition in Makefile.
+
+	* Added a recursive function example to bc.1.
+
+Sun Nov 24 21:24:01 1991  Phil Nelson  (phil at cs.wwu.edu)
+
+	* Changed the Makefile to make sure configure is run first.
+	  Added the $(CC) the configure call.  Moved some defines
+	  toward the front of the Makefile to make sure they are
+	  read by installers.  Also added SUBDIRS variable and updated
+	  the GNU distribution to include the subdirectories.  Included
+	  math.h in the distribution for use by configure.  Included
+	  ChangeLog in the distribution.
+
+	* Split the README into README and Install.  Changed Install
+	  to have current information.  Documented the STRINGS_H define.
+	  Updated the version number in README.
+
+	* Added a check for <strings.h> in configure.
+
+Fri Nov 22 15:06:32 1991  Phil Nelson  (phil at cs.wwu.edu)
+
+	* Changed configure to check for varargs.h first.  Also, added
+	  checks to see if long strings (math.h) are accepted by the
+	  C compiler.  Also added parameters to configure.
+
+	* Deleted #include <sys/types.h> from proto.h.  Also made only
+	  ANSI C compilers include <stdlib.h>.
+
+	* Changed the Makefile to have the install bin directory be
+	  /usr/local/bin and the install lib directory be /usr/local/lib.
+
+	* Changed some files in the Test directory to eliminate the
+	  <op>= form that some older bcs don't like.
+
+	* Made some small corrections in bc.1.
+
+Tue Oct 29 10:06:32 1991  Phil Nelson  (phil at cs.wwu.edu)
+
+	* Called current version 1.00.
+
+	* Submitted GNU bc-1.00 to comp.sources.reviewed
+

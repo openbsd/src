@@ -1,0 +1,65 @@
+.\"
+.\" Copyright (c) 1994 James A. Jegers
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission
+.\" 
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd November 29, 1994
+.Dt AHA 4 i386
+.Os NetBSD 
+.Sh NAME
+.Nm aha
+.Nd Adaptec 154x SCSI adapter driver
+.Sh SYNOPSIS
+.Cd "aha0 at isa? port 0x330 irq ? drq ?"
+.Cd "scsibus* at aha?"
+.Sh DESCRIPTION
+The
+.Nm aha 
+driver provides support for the following SCSI adapters:
+.Pp
+.Bl -tag -width -offset indent -compact
+.It Adaptec AHA-154xA
+.It Adaptec AHA-154xB
+.It Adaptec AHA-154xC
+.It Adaptec AHA-154xCF
+.It Buslogic BT-54x
+.El
+.Sh BUGS
+The
+.Nm
+driver can not be used on systems with more than 16 megabytes of
+memory.
+.Pp
+Due to the 24 bit addressing limitation of the ISA bus, The SCSI
+adapter's onboard DMA controller is unable to access memory with
+addresses greater than 16 megabytes.  
+.Pp
+This restriction can be fixed with "bounce buffers", buffers in low
+memory which are used whenever data to be transfered to or from the
+SCSI adapter is above the 16 megabyte threshold.  The data is copied
+to the bounce buffer, then copied from the bounce buffer to its
+destination.
+.Sh SEE ALSO
+.Xr intro 4 ,
+.Xr sd 4 ,
+.Xr st 4 ,
+.Xr cd 4 ,
+.Xr ch 4

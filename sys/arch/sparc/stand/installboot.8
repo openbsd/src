@@ -1,0 +1,140 @@
+.\"	$NetBSD: installboot.8,v 1.1 1995/09/30 21:32:14 pk Exp $
+.\"
+.\" Copyright (c) 1995 Paul Kranenburg
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"      This product includes software developed by Paul Kranenburg.
+.\" 3. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd September 29, 1995
+.Dt INSTALLBOOT 8
+.Os 
+.Sh NAME
+.Nm installboot
+.Nd install a bootstrap on an FFS filesystem partition
+.Sh SYNOPSIS
+.Nm installboot
+.Op Fl nvh
+.Ar boot
+.Ar bootxx
+.Ar device
+.Sh DESCRIPTION
+.Nm installboot
+prepares a FFS filesystem partition for boot-strapping from the PROM.
+The sparc bootblocks are split into two parts: a small first-stage program that
+is written into the superblock area in a partition
+.Po
+and hence is limited in size to SBSIZE - DEV_BSIZE bytes
+.Pc ,
+and a second-stage program that resides in the filesystem proper.
+The first-stage program is loaded into memory by the PROM. After it receiving
+control, it loads the second stage program from a set of filesystem block
+numbers that have been hard-coded into it by the
+.Nm installboot
+program. The second-stage boot program uses the device driver interface to
+the PROM and the stand-alone filesystem code in
+.Dq libsa.a
+to locate and load the kernel.
+The second-stage boot program and the prototype code for the
+first-stage bootprogram can be found in
+.Pa /usr/mdec/boot
+and
+.Pa /usr/mdec/bootxx
+respectively. The second-stage program commonly resides in the root directory
+as
+.Pa /boot .
+The utility
+.Pa /usr/mdec/binstall
+can be used to properly copy the a second-stage bootprogram to its
+destination. This script takes care of post-processing that is required
+on non-
+.Tn Openboot
+machines.
+.Pp
+The options are as follows:
+.Bl -tag -width flag
+.It Fl n
+Do not actually write anything on the disk.
+.It Fl v
+Verbose mode.
+.It Fl h
+Leave the
+.Xr a.out 5
+header on the installed
+.Ar bootxx
+program.
+Sun 4c models with
+.Tn Openboot
+PROMs need the header to be present, while Sun 4 systems with the
+.Dq old monitor
+interface require the header to be stripped off. This is normally taken
+care of by
+.Nm
+automatically.
+.El
+.Pp
+The arguments are:
+.Bl -tag -width bootxx
+.It Ar boot
+the name of the second-stage boot program in the file system
+where the first-stage boot program is to be installed.
+.It Ar bootxx
+the name of the prototype file for the first stage boot program.
+.It Ar device
+the name of the raw device in which the first-stage boot program
+is to be installed.  This should correspond to the block device
+on which the file system containing
+.Ar boot
+is mounted.
+.El
+.Sh EXAMPLES
+The following command will install the first-stage bootblocks in the
+root filesystem
+.Pq assumed to be mounted on Dq sd0a
+using the file
+.Pa /boot
+as the second-level boot program:
+.Bd -literal -offset indent
+installboot /boot /usr/mdec/bootxx /dev/rsd0a
+.Ed
+.Sh BUGS
+.Nm
+requires simultaneous access to the mounted file system and
+the raw device, but that is not allowed with the kernel
+.Dv securelevel
+variable set to a value greater than zero
+.Pq the default ,
+so
+.Nm installboot
+only works in single-user mode
+.Pq or insecure mode - see Xr init 8 .
+.Sh "SEE ALSO"
+.Xr disklabel 8 ,
+.Xr init 8
+.Sh HISTORY
+The
+.Nm
+first appeared in
+.Nx 1.1

@@ -1,0 +1,58 @@
+NetBSD/amiga 1.1 runs on any amiga that has a 68020 or better CPU
+with some form of FPU and MMU.  The minimal configuration requires
+4M of RAM and about 65M of disk space.  To install the entire system
+>>>                 ^^^
+requires much more disk space, and to run X or compile the system,
+more RAM is recommended.  (4M of RAM will actually allow you to
+compile, however it won't be speedy.  X really isn't usable on a
+4M system)
+
+Here is a table of recommended HD partition sizes for a full install:
+	partition:	advise,	with X,	needed,	with X
+	root (/)	15M	15M	10M	10M
+	user (/usr)	65M	100M	45M 	80M
+	swap		----- 2M for every M ram -----
+	local (/local)	up to you
+>>> adjust sizes?
+
+As you may note the recommended size of /usr is 20M greater than
+needed. This is to leave room for a kernel source and compile tree
+as you will probably want to compile your own kernel. (GENERIC is
+large and bulky to accommodate all people).
+
+Supported devices include:
+	A4000/A1200 IDE controller.
+	SCSI host adapters:
+		33c93 based boards: A2091, A3000 and GVP series II.
+		53c80 based boards: 12 Gauge, IVS and Wordsync/Bytesync.
+		53c710 based boards: A4091, Magnum, Warp Engine and Zeus.
+		FAS216 based boards: FastLane Z3, Blizzard.
+	Video controllers:
+		ECS, AGA and A2024 built in on various amigas.
+		Retina Z2 and Retina Z3.
+		Picasso II.
+		GVP Spectrum.
+		Piccalo.
+		A2410.
+	Ethernet controllers:
+		A2065 Ethernet
+		Hydra Ethernet
+		ASDG Ethernet
+		A4066 Ethernet
+		Ariadne Ethernet
+	Arcnet controllers:
+		A2060 Arcnet
+	Tape drives:
+		Most SCSI tape drives, including
+			Archive Viper, Cipher SCSI-2 ST150.
+	CD-ROM drives:
+		Most SCSI CD-ROM drives
+	Serial cards:
+		MultiFaceCard II and III
+		A2232
+	Amiga floppy drives.
+	Amiga parallel port.
+	Amiga serial port.
+	Amiga mouse.
+
+If its not on this list, there is no support for it in this release.

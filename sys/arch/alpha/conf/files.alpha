@@ -1,0 +1,190 @@
+#	$NetBSD: files.alpha,v 1.7 1995/09/20 00:20:18 thorpej Exp $
+#
+# alpha-specific configuration info
+
+# maxpartitions must be first item in files.${ARCH}.newconf
+maxpartitions 8
+
+maxusers 2 8 64
+
+
+#
+# Bus-independent devices
+#
+
+device mainbus at root { }              # no locators (yet?)
+
+device	cpu at mainbus { }		# not really optional; can be a 'bus'
+file	arch/alpha/alpha/cpu.c		cpu
+
+#
+# Machine-independent SCSI drivers
+#
+
+include "../../../scsi/files.scsi"
+major { st = 2 }
+major { cd = 3 }
+major { sd = 8 }
+
+#
+# ansi/sun console emulator
+#
+define	ansicons
+file	dev/pseudo/ansicons.c		ansicons
+
+#
+# raster console routines
+#
+define	rcons
+file	dev/pseudo/raster_op.c		rcons
+file	dev/pseudo/raster_text.c	rcons
+file	dev/pseudo/rcons_init.c		rcons
+file	dev/pseudo/rcons_subr.c		rcons
+
+#
+# "Workstation Console" glue; attaches frame buffer to emulator & kbd.
+# XXX should be pseudo-device, with an ansicons attribute.
+#
+define	wsc				# XXX should be pseudo-dev
+file	arch/alpha/pci/wscons.c		wsc		needs-flag
+
+#
+# TurboChannel Devices
+#
+
+# the turbochannel bus itself
+device tc at mainbus { slot = -1, offset = -1 }
+file	arch/alpha/tc/tc.c		tc		needs-flag
+file	arch/alpha/tc/tc_3000_300.c	dec_3000_300
+file	arch/alpha/tc/tc_3000_500.c	dec_3000_500
+
+# the TurboChannel IOCTL ASIC
+device asic at tc { offset = -1 }	# not really optional
+file	arch/alpha/tc/asic.c		asic
+
+# the TurboChannel clock (XXX)
+# device clock at asic 			# not really optional
+#file	arch/alpha/alpha/clock.c	clock
+
+# Smart Frame buffer (XXX NOT YET SUPPORTED)
+device sfb at tc
+file	arch/alpha/tc/sfb.c		sfb
+
+# 8530 UARTs
+device scc at asic
+file	arch/alpha/tc/scc.c		scc		needs-count
+
+# the TCDS ASIC
+device tcds at tc { slot = -1 }
+file	arch/alpha/tc/tcds.c		tcds		needs-count
+
+# 53C[F]90 SCSI
+device esp at tcds: scsi
+file	arch/alpha/tc/esp.c		esp		needs-count
+file	arch/alpha/tc/tcds_dma.c	esp
+
+# Baseboard Lance ethernet.  (XXX option slot lance)
+device le at asic: ifnet, ether
+file	arch/alpha/tc/if_le.c		le		needs-count
+
+#
+# PCI-bearing chipsets and "necessary" files.
+#
+
+device	apecs at mainbus { }
+file	arch/alpha/pci/apecs.c		apecs
+file	arch/alpha/pci/apecs_isa.c	apecs
+file	arch/alpha/pci/apecs_pci.c	apecs
+
+device	lca at cpu { }
+file	arch/alpha/pci/lca.c		lca
+file	arch/alpha/pci/lca_pio.c	lca
+
+file	arch/alpha/pci/pci_2100_a50.c	dec_2100_a50
+
+#
+# PCI devices
+#
+
+device	pci at apecs, lca {[bus = -1], [dev = -1]}
+
+include "../../../dev/pci/files.pci"
+file	arch/alpha/pci/pci_machdep.c	pci
+
+device	sio at pci { }
+file	arch/alpha/pci/sio.c		sio
+file	arch/alpha/pci/sio_pic.c	sio
+
+device	tga at pci: rcons, wsc, ansicons
+file	arch/alpha/pci/tga.c		tga		needs-flag
+
+device	pcivga at pci: wsc, ansicons
+file	arch/alpha/pci/pcivga.c		pcivga		needs-flag
+
+#
+# ISA Devices
+#
+
+device	isa at sio {[port = -1], [size = 0],	# XXX
+			[iomem = -1], [iosiz = 0],
+			[irq = -1], [drq = -1]}
+device clock at isa, asic				# not really optional
+
+include "../../../dev/isa/files.isa"
+file	arch/alpha/isa/isa_machdep.c	isa		needs-flag # XXX
+
+#file	arch/alpha/isa/isafcns_jensen.c	dec_2000_300
+
+device  pckbd at isa
+file    arch/alpha/isa/pckbd.c           pckbd needs-flag
+device  pms at isa
+file    arch/alpha/isa/pms.c             pms needs-flag
+
+
+#
+# EISA Devices
+#
+
+#include "../../../dev/eisa/files.eisa"
+
+#
+# Standard files
+#
+
+file	arch/alpha/alpha/autoconf.c
+file	arch/alpha/alpha/conf.c
+file	arch/alpha/alpha/interrupt.c
+file	arch/alpha/alpha/machdep.c
+file	arch/alpha/alpha/mainbus.c
+file	arch/alpha/alpha/mem.c
+file	arch/alpha/alpha/pmap.c
+file	arch/alpha/alpha/process_machdep.c
+file	arch/alpha/alpha/prom.c
+file	arch/alpha/alpha/support.c
+file	arch/alpha/alpha/sys_machdep.c
+file	arch/alpha/alpha/trap.c
+file	arch/alpha/alpha/vm_machdep.c
+file	arch/alpha/alpha/disksubr.c
+file	dev/cons.c
+file	netinet/in_cksum.c
+
+#
+# Optional files
+#
+
+file	netns/ns_cksum.c		ns
+
+file	arch/alpha/alpha/clock.c	clock
+file	arch/alpha/alpha/clock_mc.c	dec_3000_500 dec_2000_300 dec_3000_300
+					dec_2100_a50
+
+# XXX
+file	arch/alpha/alpha/promcons.c
+
+# XXX
+file	arch/alpha/alpha/dec_3000_500.c	dec_3000_500
+file	arch/alpha/alpha/dec_3000_300.c	dec_3000_300
+file	arch/alpha/alpha/dec_2100_a50.c	dec_2100_a50
+
+# OSF/1 Binary Compatibility (COMPAT_OSF1)
+include "../../../compat/osf1/files.osf1"

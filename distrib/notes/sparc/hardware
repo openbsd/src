@@ -1,0 +1,25 @@
+NetBSD/sparc 1.0 runs on Sun4c class machines only, which includes
+the SS1, SS1+, SS2, IPC, ELC, IPX, and the SLC.  It does not run
+on Sun4, Sun4m, or Sun4d machines.
+
+The minimal configuration requires 4M of RAM and ~60M of disk space.
+To install the entire system requires much more disk space, and to run
+X or compile the system, more RAM is recommended.  (NetBSD with 4M of
+RAM feels like Solaris with 4M of RAM.) Note that until you have
+around 16M of RAM, getting more RAM is more important than getting a
+faster CPU.)
+
+Supported devices include:
+	Video: cgthree, cgsix, and bwtwo frame buffers
+	Serial ports: ttya and ttyb
+	On-board AMD Lance ethernet
+	Some SCSI CD-ROM drives
+	Sun keyboard and mouse
+
+Hardware the we do NOT currently support, but get many questions
+about:
+	The floppy drive.
+
+The next release will likely run on many more machines.  In
+particular, some Sun4 support will be there, and perhaps even
+Sun4m.

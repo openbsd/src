@@ -1,0 +1,49 @@
+Before you start you might need to consider your disk configuration
+to sort out a quirk in SCSI-ID to SD-UNIT mapping that exists on
+Sun Sparcstations.
+
+Upon leaving the factory, SunOS and the OpenBOOT ROM map according to
+this table:
+
+    SCSI-ID ->	SunOS SD-UNIT
+    0		sd3
+    1		sd1
+    2		sd2
+    3		sd0
+    4		sd4
+    5		sd5
+    6		sd6
+
+Unlike SunOS and the OpenBOOT ROM, a generic NetBSD kernel numbers
+scsi drives sequentially as it finds them.  The drive with the
+lowest scsi-id will be called sd0, the next one sd1, etc.
+
+To ease the installation process, the default NetBSD kernel in the
+distribution is setup to match the Sun mapping above by hard-wiring
+scsi-id#3 to sd0 and scsi-id#0 to sd3. The remaining drives will be
+dynamically mapped to other sd* numbers.
+
+A truely generic NetBSD kernel is also provided as `/netbsd.GENERIC',
+which will do the standard NetBSD probe ordering. If your configuration
+differs from the default Sun setup, you can try to use this kernel to
+complete the installation.
+
+NOTE: this is also a concern when you start building your own customised
+kernels.
+
+
+Your OpenBOOT ROM may need some setup.  make sure you boot from `new
+command mode'.  If your machine comes up and gives you a `>' prompt
+instead of `ok', type:
+
+    >n
+    ok setenv sunmon-compat? false
+    ok
+
+This is needed because netbsd cannot handle the old-mode yet, and will
+firework on you.
+
+Also, you cannot use the security modes of the sparc OpenBOOT ROM.
+
+    ok setenv security-mode none
+

@@ -1,0 +1,62 @@
+$NetBSD: README,v 1.2 1995/03/06 11:38:07 mycroft Exp $
+@(#) Header: README,v 1.7 94/06/20 18:56:55 leres Exp (LBL)
+
+LIBPCAP 0.0
+Lawrence Berkeley Laboratory
+Network Research Group
+libpcap@ee.lbl.gov
+ftp://ftp.ee.lbl.gov/libpcap-*.tar.Z
+
+This directory contains source code for libpcap, a system-independent
+interface for user-level packet capture.  libpcap provides a portable
+framework for low-level network monitoring.  Applications include
+network statistics collection, security monitoring, network debugging,
+etc.  Since almost every system vendor provides a different interface
+for packet capture, and since we've developed several tools that require
+these interfaces, we've created this system-independent API to ease in
+porting and to alleviate the need for several system-dependent packet
+capture modules in each application.
+
+THIS IS AN ALPHA-QUALITY RELEASE.  The interface is brand new and is
+likely to change.  If you code to this interface, and want to track
+future versions, be prepared to update your code.  We admit that this
+release is premature, but we're releasing it anyway because the tcpdump-3.0
+distribution requires it.
+
+libpcap has been built and tested under SGI Irix 4.x & 5.2, SunOS 4.x,
+Solaris 2.3, BSD/386 v1.1, DEC/OSF v1.3 v2.0, and Ultrix 4.x.  SunOS 3.5
+4.3BSD Reno/Tahoe and 4.4BSD are supported as well, but we currently
+do not have the resources to carry out testing in these environments
+(we suspect you'll run into problems under these systems -- please
+send us the patches if you fix any porting problems).
+
+The libpcap interface supports a filtering mechanism based on the
+architecture in the BSD packet filter.  BPF is described in the
+1993 Winter Usenix paper ``The BSD Packet Filter: A New Architecture
+for User-level Packet Capture''.  A compressed postscript version is in
+
+	ftp://ftp.ee.lbl.gov/papers/bpf-usenix93.ps.Z.
+
+Although most packet capture interfaces support in-kernel filtering,
+libpcap utilizes in-kernel filtering only for the BPF interface.
+On systems that don't have BPF, all packets are read into user-space
+and the BPF filters are evaluated in the libpcap library, incurring
+added overhead (especially, for selective filters).  We haven't tried
+taking advantage of other packet filter models first because they
+aren't general enough (i.e., only simple filters can be evaluated),
+and second because we don't have the time to modify the code generator
+(or write a filter translator) and BPF is more efficient anyway.
+
+BPF is standard in 4.4BSD, BSD/386, NetBSD, and FreeBSD.  DEC OSF/1
+uses the packetfilter interface but has been extended to accept
+BPF filters (which libpcap utilizes).  Also, you can add BPF filter
+support to Ultrix using the kernel source and/or object patches
+available in
+
+	 ftp://gatekeeper.dec.com/pub/DEC/net/bpfext42.tar.Z.
+
+Please send bugs and comments to libpcap@ee.lbl.gov.
+
+ - Steve McCanne (mccanne@ee.lbl.gov)
+   Craig Leres (leres@ee.lbl.gov)
+   Van Jacobson (van@ee.lbl.gov)

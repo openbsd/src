@@ -1,0 +1,21 @@
+#!/bin/sh -
+#
+#	@(#)monthly	5.5 (Berkeley) 6/17/91
+#
+
+host=`hostname -s`
+echo "Subject: $host monthly run output"
+
+# echo ""
+# echo "Doing login accounting:"
+# ac -p | sort -nr +1
+
+# Rotation of these logs now handled automatically by cron and 'newsyslog':
+#	kerberos.log
+#	lpd-errs
+#	wtmp
+#	aculog
+#	cron
+
+echo "Nothing to do!"
+#echo "."

@@ -1,0 +1,9 @@
+For the i386, NetBSD 1.0 brings greatly improved performance, stability,
+and device support.  To complement the added device drivers, NetBSD
+1.0's i386 port has greatly improved device autoconfiguration,
+allowing it to correctly find more devices on more machines.  The
+final, and perhaps most important point about NetBSD 1.0's i386
+support is that it is fully backward compatible with old NetBSD
+binaries, so you don't need to recompile all your local programs.
+(Note, however, that because of the shared library support, you still
+have a lot to gain by doing so.)

@@ -1,0 +1,113 @@
+.\"	@(#) $Header: /home/cvs/src/usr.sbin/slstats/Attic/slstats.8,v 1.1.1.1 1995/10/18 08:48:21 deraadt Exp $ (LBL)
+.Dd July 5, 1993
+.Dt SLSTATS 8
+.Sh NAME
+.Nm slstats
+.Nd report slip statistics
+.Sh SYNOPSIS
+.Nm slstats
+.Op Fl v
+.Op Fl i Ar interval
+.Op Ar unit-number
+.Oo
+.Ar system
+.Op Ar core
+.Oc
+.Sh DESCRIPTION
+.Pp
+The 
+.Nm slstats
+utility reports slip-related statistics for the
+.Nm sl Ns
+.So
+.Ar unit-number
+.Sc
+interface.  If the
+.Nm unit-number
+is unspecified, it defaults to 0.  These statistics are displayed at
+regular intervals.
+.Pp
+The display is split horizontally into input and output sections
+containing columns of statistics describing the properties and volume
+of packets received and transmitted by the specified interface.
+.Pp
+The first report will consist of a snapshot of the interface's present
+statistics.  All further output will describe activity between report
+intervals.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl v
+Display additional statistics demonstrating the efficacy of VJ header
+compression and providing more explicit information on failure
+distribution.
+.It Fl i
+Specifies the interval between reports. The default interval is 5 seconds.
+.It Ar system
+Extract the name list from the specified system instead of the default
+.Pa /netbsd .
+.It Ar core
+Extract values associated with the name list from the specified
+.Ar core
+instead of the default
+.Pa /dev/kmem .
+.El
+.Pp
+The following fields are printed on the input side:
+.Bl -tag -width search
+.It Li IN
+The total number of bytes received by this interface.
+.It Li PACK
+The total number of packets received by this interface.
+.It Li COMP
+The number of compressed TCP packets received by this interface.
+.It Li UNCOMP
+The number of uncompressed TCP packets received by this interface.
+.It Li ERR
+The number of packets received by this interface of unknown type.
+.It Li TOSS
+The number of packets dropped on reception by this interface.  Only
+reported when the
+.Fl v
+option is specified.
+.It Li IP
+The total number of non-TCP packets received by this interface. Only
+reported when the
+.Fl v
+option is specified.
+.El
+.Pp
+The following fields are printed on the output side:
+.Bl -tag -width search
+.It Li OUT
+The total number of bytes transmitted from this interface.
+.It Li PACK
+The total number of packets transmitted from this interface.
+.It Li COMP
+The number of TCP packets compressed and then transmitted from this interface.
+.It Li UNCOMP
+The number of uncompressed TCP packets transmitted from this interface.
+.It Li IP
+The total number of non-TCP packets transmitted from this interface.
+.It Li SEARCH
+The number of searches for the cached header entry for a compressed
+packet.  Only reported when the
+.Fl v
+option is specified.
+.It Li MISS
+The number of failed searches for the cached header entry for a
+compressed packet.  Only reported when the
+.Fl v
+option is specified.
+.El
+.Sh BUGS
+Should use
+.Fl M Ar core
+and
+.Fl N Ar system
+like most other programs using the kvm library.
+.Pp
+Should take an interface name and not a unit number.
+.Pp
+.Sh SEE ALSO
+.Xr sliplogin 1

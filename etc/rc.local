@@ -1,0 +1,31 @@
+#
+# site-specific startup actions, daemons
+#
+#	From: @(#)rc.local	5.4 (Berkeley) 12/14/90
+#	$Id: rc.local,v 1.1.1.1 1995/10/18 08:37:57 deraadt Exp $
+#
+
+if [ ! -f /etc/motd ]; then
+	install -c -o root -g wheel -m 664 /dev/null /etc/motd
+fi
+T=/tmp/_motd
+rm -f $T
+sysctl -n kern.version | sed 1q > $T
+echo "" >> $T
+sed '1,/^$/d' < /etc/motd >> $T
+cmp -s $T /etc/motd || cp $T /etc/motd
+rm -f $T
+
+if [ -f /sbin/ldconfig ]; then
+	echo 'creating runtime link editor directory cache.'
+	ldconfig
+fi 
+
+echo -n 'starting local daemons:'
+
+# Kerberos runs ONLY on the Kerberos server machine
+if [ X${kerberos_server} = X"YES" ]; then
+	echo -n ' kerberos';	kerberos >> /var/log/kerberos.log &
+fi
+
+echo '.'

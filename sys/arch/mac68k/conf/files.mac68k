@@ -1,0 +1,77 @@
+#	$NetBSD: files.mac68k,v 1.35 1995/09/03 03:37:32 briggs Exp $
+
+# mac68k-specific configuration info
+
+# maxpartitions must be first item in files.${ARCH}.newconf
+maxpartitions 8
+
+maxusers 2 8 64
+
+device mainbus at root { }		# no locators (yet?)
+
+device	nubus at mainbus { slot = -1, id = -1, claimed = 0 }
+file	arch/mac68k/dev/nubus.c		nubus
+
+device	ser at mainbus: tty
+file	arch/mac68k/dev/ser.c		ser needs-flag
+
+device	adb at mainbus
+file	arch/mac68k/dev/adb.c		adb
+file	arch/mac68k/dev/adbsys.c
+file	arch/mac68k/dev/adbsysasm.s
+
+device	asc at mainbus
+file	arch/mac68k/dev/asc.c		asc
+
+device	fpu at mainbus
+file	arch/mac68k/mac68k/fpu.c	fpu
+
+device	grf at nubus
+file	arch/mac68k/dev/grf.c		grf needs-count
+file	arch/mac68k/dev/grf_mv.c	grf
+file	arch/mac68k/dev/grf_iv.c	grf
+device	ite at mainbus
+file	arch/mac68k/dev/ite.c		ite needs-flag
+
+device	ae at nubus: ifnet, ether
+file	arch/mac68k/dev/if_ae.c		ae needs-flag
+
+include "../../../scsi/files.scsi"
+major	{sd = 4}
+major	{st = 5}
+major	{cd = 6}
+
+device	ncrscsi at mainbus: scsi
+file	arch/mac68k/dev/mac68k5380.c	ncrscsi needs-flag
+
+device	ncr96scsi at mainbus: scsi
+file	arch/mac68k/dev/scsi96.c	ncr96scsi needs-flag
+
+file	arch/m68k/m68k/copy.s
+file	arch/m68k/fpe/fpu_emulate.c		fpu_emulate
+file	arch/mac68k/mac68k/autoconf.c
+file	arch/mac68k/mac68k/clock.c
+file	arch/mac68k/mac68k/disksubr.c		disk
+file	arch/mac68k/mac68k/machdep.c
+file	arch/mac68k/mac68k/macrom.c
+file	arch/mac68k/mac68k/macromasm.s
+file	arch/mac68k/mac68k/mem.c
+file	arch/mac68k/mac68k/pmap.c
+file	arch/mac68k/mac68k/pmap_bootstrap.c
+file	arch/mac68k/mac68k/pram.c
+file	arch/mac68k/mac68k/pramasm.s
+file	arch/mac68k/mac68k/sys_machdep.c
+file	arch/mac68k/mac68k/trap.c
+file	arch/mac68k/mac68k/via.c
+file	arch/mac68k/mac68k/vm_machdep.c
+
+file	dev/cons.c
+file	dev/cninit.c
+
+major	{vnd = 8}
+
+# Compatibility modules
+
+# SunOS Binary Compatibility (COMPAT_SUNOS)
+include "../../../compat/sunos/files.sunos"
+file	arch/m68k/m68k/sunos_machdep.c	compat_sunos

@@ -1,0 +1,62 @@
+.\" $Id: rpc.bootparamd.8,v 1.1.1.1 1995/10/18 08:48:06 deraadt Exp $
+.\" @(#)bootparamd.8
+.Dd Jan 8, 1994
+.Dt BOOTPARAMD 8
+.Os NetBSD
+.Sh NAME
+.Nm bootparamd ,
+.Nm rpc.bootparamd
+.Nd boot parameter server
+.Sh SYNOPSIS
+.Nm /usr/sbin/rpc.bootparamd
+.Op Fl d
+.Op Fl s
+.Op Fl r router
+.Op Fl f file
+.Sh DESCRIPTION
+.Nm \&Bootparamd
+is a server process that provides information to diskless clients
+necessary for booting. It consults the file
+.Dq Pa /etc/bootparams .
+It should normally be started from
+.Dq Pa /etc/rc .
+.Pp
+This version will allow the use of aliases on the hostname in the
+.Dq Pa /etc/bootparams
+file. The hostname returned in response to the booting client's whoami request
+will be the name that appears in the config file, not the canonical name.
+In this way you can keep the answer short enough
+so that machines that cannot handle long hostnames won't fail during boot.
+.Pp
+While parsing, if a line containing just ``+'' is found, and
+the YP subsystem is active, the YP map
+.Pa bootparams
+will be searched immediately.
+.Sh OPTIONS
+.Bl -tag -width indent
+.It Fl d
+Display the debugging information. The daemon does not fork in this
+case.
+.It Fl s
+Log the debugging information with syslog. 
+.It Fl r
+Set the default router (a hostname or IP-address).
+This defaults to the machine running the server.
+.It Fl f
+Specify the file to use as boot parameter file instead of
+.Dq Pa /etc/bootparams .
+.El
+.Pp
+.Sh FILES
+.Bl -tag -width /etc/bootparams -compact
+.It Pa /etc/bootparams
+default configuration file
+.El
+.Sh "SEE ALSO"
+.Xr bootparams 5
+.Sh BUGS
+You may find the syslog loggings too verbose.
+.Pp
+It's not clear if the non-cannonical hack mentioned above is a good idea.
+.Sh AUTHOR
+Originally written by Klas Heggemann <klas@nada.kth.se>

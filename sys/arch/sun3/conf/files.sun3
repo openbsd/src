@@ -1,0 +1,155 @@
+#	$NetBSD: files.sun3,v 1.13 1995/10/10 21:25:29 gwr Exp $
+
+#
+# sun3-specific configuration info
+#
+
+# maxpartitions must be first item in files.${ARCH}.newconf
+maxpartitions 8
+
+maxusers 2 8 64
+
+# Standard stuff
+file arch/sun3/sun3/autoconf.c
+file arch/sun3/sun3/cache.c			havecache
+file arch/sun3/sun3/conf.c		
+file arch/sun3/sun3/control.c	
+file arch/sun3/sun3/ctrlsp.S
+file arch/sun3/sun3/dvma.c
+file arch/sun3/sun3/db_machdep.c		ddb
+file arch/sun3/sun3/disksubr.c	
+file arch/sun3/sun3/isr.c
+file arch/sun3/sun3/machdep.c	
+file arch/sun3/sun3/mem.c		
+file arch/sun3/sun3/pmap.c		
+#file arch/sun3/sun3/stub.c		
+file arch/sun3/sun3/sun3_startup.c	
+file arch/sun3/sun3/sys_machdep.c
+file arch/sun3/sun3/trap.c		
+file arch/sun3/sun3/vector.c		
+file arch/sun3/sun3/vm_machdep.c	
+
+file arch/m68k/fpe/fpu_emulate.c		fpu_emulate
+file arch/m68k/m68k/copy.s
+file dev/cons.c
+file dev/cninit.c
+
+# Declare our "catch-all" root node.
+device mainbus at root {}
+# Misc. mainbus things (catch-all)
+# Control space hack
+device obctl at mainbus {addr = -1, [level = -1]}
+# Floating Point Unit
+device fpu at mainbus {}
+file arch/sun3/sun3/fpu.c		fpu
+
+# Bus types
+#
+# The implementation of the bus_* functions in autoconfig.c
+# requires these all to agree with <autoconf.h> struct bus_loc
+
+# On-board MEMory space
+device obmem at mainbus {addr = -1, [level = -1]}
+# On-board I/O space
+device obio  at mainbus {addr = -1, [level = -1]}
+# VME Short space (D16)
+device vmes  at mainbus {addr = -1, [level = -1], [vect = -1]}
+# VME Long space (D32)
+device vmel  at mainbus {addr = -1, [level = -1], [vect = -1]}
+
+file arch/sun3/dev/obctl.c		obctl
+file arch/sun3/dev/obio.c		obio
+file arch/sun3/dev/obmem.c		obmem
+file arch/sun3/dev/vme.c		vmes vmel
+
+#
+# Sun-compatible Frame Buffers (?)
+#
+define sunfb {}
+
+#
+# Machine-independent SCSI drivers
+#
+include "../../../scsi/files.scsi"
+
+#
+# On-Board I/O (OBIO)
+#
+device zs at obio: tty
+file arch/sun3/dev/zs.c			zs needs-count
+
+device eeprom at obio
+file arch/sun3/dev/eeprom.c		eeprom
+
+device clock at obio
+file arch/sun3/sun3/clock.c		clock
+
+device ie at obio, vmes: ifnet, ether
+file arch/sun3/dev/if_ie.c		ie
+file arch/sun3/dev/if_ie_subr.c		ie
+
+device le at obio: ifnet, ether
+file arch/sun3/dev/if_le.c		le
+file arch/sun3/dev/if_le_subr.c		le
+
+device si at obio, vmes: scsi
+file	arch/sun3/dev/si.c		si
+
+#
+# On-Board MEMory (OBMEM)
+#
+device bwtwo at obmem: sunfb
+file arch/sun3/dev/bw2.c		bwtwo needs-flag
+
+device cgtwo at vmes: sunfb
+file arch/sun3/dev/cg2.c		cgtwo needs-flag
+
+device cgfour at obmem: sunfb
+file arch/sun3/dev/cg4.c		cgfour needs-flag
+
+file	arch/sun3/dev/bt_subr.c 	cgfour
+
+#
+# VME
+#
+device	xdc at vmel {drive = -1}
+device	xd at xdc: disk
+file	arch/sun3/dev/xd.c		xd needs-flag
+
+device	xyc at vmel {drive = -1}
+device	xy at xyc: disk
+file	arch/sun3/dev/xy.c		xy needs-flag
+
+
+#
+# On-Board Control (OBCTL)
+#
+device idprom at obctl
+file arch/sun3/dev/idprom.c		idprom needs-count
+
+#
+# Console (zs) related stuff
+#
+file arch/sun3/dev/kbd.c		zs
+file arch/sun3/dev/event.c		zs
+file arch/sun3/dev/kd.c			zs
+file arch/sun3/dev/ms.c			zs
+file arch/sun3/dev/fb.c
+
+# RAM Disk for boot tape
+device	rd at mainbus
+file dev/ramdisk.c			rd needs-count
+file arch/sun3/dev/rd_root.c		ramdisk_hooks
+
+# Major numbers for root/swap device configuration
+major	{xy=3}	# Xylogics 450 and 451
+major	{vnd=5}	# vnode pseudo-device
+major	{sd=7}	# SCSI disk
+major	{xd=10}	# Xylogics 7053
+major	{rd=13}	# RAM disk (for mini-kernel)
+
+# Compatibility modules
+
+# SunOS Binary Compatibility (COMPAT_SUNOS)
+include "../../../compat/sunos/files.sunos"
+file	arch/m68k/m68k/sunos_machdep.c	compat_sunos

@@ -1,0 +1,220 @@
+(IF you already have NetBSD/pc532 installed and you only want to update
+your system, see the next section.)
+
+To install NetBSD/pc532, there are several things you need to know.
+First, NetBSD "autoconfigs" the scsi devices. inst-11.fs has only
+support for disks configured into the kernel. Starting the search at
+SCSI address 0, lun 0 and increasing, the first disk found will be sd0
+regardless of the address, the second will be sd1. KLONDIKE for example
+has the following devices installed:
+
+	sd0 -> ID 0 LUN 0: Quantum LP52S hard disk drive
+	sd1 -> ID 1 LUN 0: Micropolis 4110 hard disk drive
+	sd2 -> ID 2 LUN 0: Teac FC-1, 3.5" floppy disk drive
+	sd3 -> ID 2 LUN 1: Teac FC-1, 5.25" floppy disk drive
+	cd0 -> ID 3 LUN 0: Toshiba XM-4101TA CD-ROM drive
+	st0 -> ID 4 LUN 0: Tandberg TDC3600 QIC tape drive
+
+Only sd0-sd3 are supported by the inst-11.fs kernel.
+
+Next you need to know what the install script wants to do.  This install
+is script on the ram disk root that can do most of the work of configuring
+your disk.
+
+  a) The script assumes your are using the first n sectors of your
+	disk, where you can specify n.  It will allow you to create
+	up to 5 file system partitions, one swap partition and one
+	boot partition.
+
+  b) You should know how many total sectors are on your disk.  The
+	configure will report a head, track, and cylinder count, but
+	I have found that on my disks, it reports something that makes
+	a smaller disk than I really had.
+
+  c) It is possible to have the install script make a partition
+	over your save area AND not make a new file system, thus
+	preserving what is there. Then, later you can make a new
+	file system after you no longer need the stuff there. You
+	will need to do only one boot to get things working from
+	the disk.
+
+The Install Procedure:
+
+  a) Adjust your console device settings.
+	The inst-11.fs kernel will come up with 9600 baud, 7 bits,
+	even parity and one stop bit. Adjust your terminal to match
+	these settings. The monitor's baud rate can be changed with
+	"baud d'9600".
+
+  b) Get inst-11.fs.
+	If you have a 1.44 meg SCSI floppy drive, you can put this
+	onto a 3.5" floppy disk. Insert the disk into your floppy
+	drive and use the monitor's boot command to boot the default
+	image from the floppy. The image booted will ask you for a
+	kernel to load. Answer
+		sdXa:/netbsd
+	Replace X with your drive number. For KLONDIKE X would be "2".
+
+	If you don't have a floppy drive, you will have to
+		- load the inst-11.fs at 0x288000
+		- run at 0x3EB820
+	The boot program will ask you now for a kernel to load. Answer
+		rd0a:/netbsd
+
+  c) Choose a disk geometry.  For me, the reported geometry left
+	some sectors "unallocated".  That is, the autoconfig message
+	said the disk had 2428 cylinders, 9 heads, and 93 sectors/track.
+	This gives a total of 2032236 sectors, but I knew that I had
+	2053880 sectors.
+
+	To help in this process, there is a program "factor" that is
+	on the inst-11.fs.  The usage is "factor number" and it lists
+	the prime factors of number.
+	For example, with the 2053880 sector disk I got:
+
+	---->~/sd1
+
+	steelhead[3]$ factor 2053880
+	2053880: 2 2 2 5 51347
+
+	Not many to choose from, so I tried ...
+
+	---->~/sd1
+	steelhead[4]$ factor 2053820
+	2053820: 2 2 5 103 997
+
+	Now I'd like to get about a meg per track:
+	steelhead[5]$ echo "2 * 997"|bc
+	1994
+
+	Now I the number of tracks:
+	steelhead[5]$ echo "2 * 5 * 103"|bc
+	1030
+
+	So I ended up choosing 1030 cylinders, 1 head, 1994 sectors/track.
+	I "lost" only 60 sectors, but got a "resonable geometry".
+
+  d) run "install"  -- it will ask you for the disk geometry and other
+	questions.  It will ask you for the geometry and then ask you
+	how many of those sectors you want to use for NetBSD. It also
+	wants to know the size of your boot partition (to be used with
+	the auto-boot monitor), your root partition, your swap partition,
+	and then any other partitions you may want.  For the "other"
+	partitions, it will ask for a mount point.  The mount point will
+	be "relative to /" and should not include the leading "/".  Also,
+	IF you do not want the partition to have newfs run on it (that is
+	it might be the last one and have a copy of ram.root and your
+	kernels) enter "NO" to the mount point and it will not run newfs
+	on the partition.  It will enter the partition into the disklabel.
+
+  e) look around, if you want ... and then halt NetBSD.
+
+  f) reboot the machine.  Using the autoboot monitor, all you should have
+	to do is give the ROM monitor command "boot".  The secondary
+	UFS boot program eventually times out and auto-loads /netbsd.
+	You can get it to do it faster by hitting "return".
+	If you are NOT using the autoboot monitor, it's time to warm
+	up your eprom burner :-)
+
+  g) Now it is time to load all the other files of the distribution:
+	You can do this via --
+
+	a) a TCP/IP link (slip, ppp or plip)
+		you have ifconfig, slattach, route, netstat,
+		hostname and ftp on the mini-root. You can even
+		use nfs...
+		Plip is only an option if you have installed a
+		centronics port in your pc532.
+
+	b) floppy disk
+
+	c) tape
+
+	d) cdrom (If you have a CD with NetBSD/532 ...)
+
+	e) using kermit. (See the notes at the end of this file.)
+
+	f) some other method? (Let me know about it.)
+
+  h) Load the tar.gz files.  Choose a place to put them.  I would make
+	a directory /gz.files and put them there.  If you are "short
+	on space," you might want to load them and extract them one
+	at a time.  A minimum installation is "base" and "etc".  It
+	takes about 32 Megs installed + 15 Megs for the base.tar.gz.
+
+  i) Extract the tar files in /.  For example, if your *.tar.gz were
+	in a directory /gz.files, to extract base.tar.gz you would:
+
+	- cd / 
+	- tar -xpzf /gz.files/base.tar.gz --unlink
+
+	Add v to the flags if you want a verbose extract.
+	The --unlink is to make sure that the "ram.root" versions
+	of sh, init, ... are replaced by their full featured versons
+	in base.tar.gz.  I think it is wise to include the --unlink
+	for other things.
+
+  j) Extract at least "base" and "etc" for a new installation.  For
+	"update" extracts, don't extract "etc" directly unless you 
+	have saved your current /etc tree.  For "full" installations,
+	extract all files.
+
+  k) Edit the information in /etc
+
+	- hosts   -  host name and address information
+	- myname  -  your host name
+	- mygate  -  hostname of gateway (assuming you have one)
+	- resolv.conf - which nameserver to use
+	- hostname.{sl0,ppp0,plip0} - interface hostname
+	- netstart - configures the network and says if sendmail should
+			be started
+	- ttys    -  make sure the console entry has the correct speed
+	- gettytab - I find "ap" instead of "ep" in the default entry
+			works better for me.
+	- fstab	  -  make sure it includes all partitions you want mounted
+	- localtime - this is usually a link into /usr/share/zoneinfo
+
+	Now you can adjust the kernel's default baud rate to match your
+	monitor's default baud rate. Do the following:
+		gdb -w /netbsd
+		set scndefaultrate = YOUR_BAUD_RATE
+		quit
+	If you set scndefaultrate to something bogus, you'll probably
+	not be able to reboot... So be carefull!
+
+  l) Reboot the machine and it should come up in multi-user mode *IF*
+	you got it configured correctly.
+
+  m) Enjoy!  And help fix bugs and improve NetBSD/pc532!
+
+
+For those who choose to use kermit to help in getting NetBSD/pc532
+installed:
+
+	The following is the Kermit copyright:
+
+	Copyright (C) 1985, 1994, Trustees of Columbia University in the
+	City of New York.  The C-Kermit software may not be, in whole or
+	in part, licensed or sold for profit as a software product
+	itself, nor may it be included in or distributed with commercial
+	products or otherwise distributed by commercial concerns to their
+	clients or customers without written permission of the Office of
+	Kermit Development and Distribution, Columbia University.  This
+	copyright notice must not be removed, altered, or obscured.
+
+	Due to this copyright, we can not include kermit with the standard
+	NetBSD/pc532 distribution.  
+
+	The Office of Kermit Development and Distribution of Columbia
+	University in the City of New York has given permission for
+	us to distribute a NetBSD/pc532 binary.  It is available primarily
+	for bootstrapping purposes and therefore is not a complete package,
+	lacking source code, various supporting text files, and the user
+	manual. Users who wish to use C-Kermit after the bootstrapping
+	process should obtain the full package, including the manual
+	"Using C-Kermit", from Columbia University.
+
+	The NetBSD/pc532 binary is available via ftp from 
+	iceberg.cs.wwu.edu in the directory pub/NetBSD/pc532 as the file
+	kermitbin.tar.gz.
+

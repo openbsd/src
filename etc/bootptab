@@ -1,0 +1,69 @@
+# /etc/bootptab: database for bootp server (/etc/bootpd)
+# Last update Mon 11/7/88 18:03
+# Blank lines and lines beginning with '#' are ignored.
+#
+# Legend:
+#
+#	first field -- hostname
+#			(may be full domain name and probably should be)
+#
+#	hd -- home directory
+#	bf -- bootfile
+#	cs -- cookie servers
+#	df -- dumpfile
+#	dn -- domain name
+#	ds -- domain name servers
+#	gw -- gateways
+#	ha -- hardware address
+#	ht -- hardware type
+#	im -- impress servers
+#	ip -- host IP address
+#	lg -- log servers
+#	lp -- LPR servers
+#	ns -- IEN-116 name servers
+#	rl -- resource location protocol servers
+#	rp -- root path
+#	sm -- subnet mask
+#	sw -- swap server
+#	tc -- template host (points to similar host entry)
+#	to -- time offset (seconds)
+#	ts -- time servers
+
+#
+# Be careful about including backslashes where they're needed.  Weird (bad)
+# things can happen when a backslash is omitted where one is intended.
+#
+
+
+# First, we define a global entry which specifies the stuff every host uses.
+
+global.dummy:\
+        :sm=255.255.255.0:\
+        :hd=/home/nfsclient:bf=null:\
+        :ds=128.32.149.141:\
+        :ns=0x80020b4d 0x80020ffd:\
+        :ts=0x80020b4d 0x80020ffd:\
+        :to=18000:
+
+# Next, we can define different master entries for each subnet. . .
+
+#subnet13.dummy:\
+#	:tc=global.dummy:gw=128.2.13.1:
+#
+#
+# We should be able to use as many levels of indirection as desired.  Use
+# your imagination. . .
+#
+
+
+# Individual entries (could also have different servers for some/all of these
+# hosts, but we don't really use this feature at CMU):
+
+#carnegie:tc=subnet13.dummy:ht=ieee802:ha=7FF8100000AF:ip=128.2.11.1:
+#baldwin:tc=subnet19.dummy:ht=ethernet:ha=0800200159C3:ip=128.2.11.10:
+
+
+#example nfs diskless client
+
+#timesink:hd=/home/nfsclient/timesink:\
+#	tc=subnet149.dummy:ht=ethernet:ha=0800200168A7:ip=128.32.149.20:

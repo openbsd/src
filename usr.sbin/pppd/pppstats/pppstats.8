@@ -1,0 +1,179 @@
+.\"	@(#) $Header: /home/cvs/src/usr.sbin/pppd/pppstats/pppstats.8,v 1.1.1.1 1995/10/18 08:48:01 deraadt Exp $ (LBL)
+.Dd November 15, 1994
+.Dt PPPSTATS 8
+.Sh NAME
+.Nm pppstats
+.Nd report statistics for the specified PPP interface
+.Sh SYNOPSIS
+.Nm pppstats
+.Op Fl v
+.Op Fl r
+.Op Fl z
+.Op Fl c Ar count
+.Op Fl w Ar wait
+.Op Ar interface
+.Sh DESCRIPTION
+.Pp
+The 
+.Nm pppstats
+utility reports PPP-related statistics at regular intervals for the
+specified PPP
+.Ar interface .
+If the
+.Ar interface
+is unspecified, it will default to ppp0.
+The display is split horizontally
+into input and output sections containing columns of statistics
+describing the properties and volume of packets received and
+transmitted by the interface.
+.Pp
+The first report will consist of a snapshot of the interface's
+statistics.  Further output, if any, will describe activity between
+report intervals.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl c Ar count
+Repeat the display
+.Ar count
+times. The first display is for the time since a reboot and each
+subsequent report is for the time period since the last display.
+If this option is not specified, the default repeat
+.Ar count
+is 1 if the
+.Fl w
+option is not specified, otherwise infinity.
+.It Fl r
+Display additional statistics summarizing the compression ratio
+achieved by the packet compression algorithm in use.
+.It Fl v
+Display additional statistics demonstrating the efficacy of VJ header
+compression and providing more explicit information on the operation
+of the algorithm.
+.It Fl w Ar wait
+Pause
+.Ar wait
+seconds between each display. If no
+.Ar wait
+interval is specified, the default is 5 seconds.
+.It Fl z
+Instead of the standard display, show statistics indicating the
+performance of the packet compression algorithm in use.
+.El
+.Pp
+The following fields are printed on the input side when the
+.Fl z
+option is not used:
+.Bl -tag -width search
+.It Li IN
+The total number of bytes received by this interface.
+.It Li PACK
+The total number of packets received by this interface.
+.It Li VJCOMP
+The number of compressed TCP packets received by this interface.
+.It Li VJUNC
+The number of uncompressed TCP packets received by this interface.
+.It Li VJERR
+The number of corrupted or bogus packets received by this interface.
+.It Li VJTOSS
+The number of VJ header-compressed TCP packets dropped on reception by
+this interface.  Only reported when the
+.Fl v
+option is specified.
+.It Li NON-VJ
+The total number of non-TCP packets received by this interface. Only
+reported when the
+.Fl v
+option is specified.
+.It Li RATIO
+The overall compression ratio achieved for received packets by the
+packet compression scheme in use, as a number between 0.0 and 1.0,
+representing the average proportionate reduction in the size of the
+packets achieved by the use of packet compression (thus 0.0 indicates
+that the data is incompressible).  Only reported when the
+.Fl r
+option is specified.
+.It Li UBYTE
+The total number of bytes received, after decompression of compressed
+packets.  Only reported when the
+.Fl r
+option is specified.
+.El
+.Pp
+The following fields are printed on the output side:
+.Bl -tag -width search
+.It Li OUT
+The total number of bytes transmitted from this interface.
+.It Li PACK
+The total number of packets transmitted from this interface.
+.It Li VJCOMP
+The number of TCP packets transmitted from this interface with
+VJ-compressed TCP headers.
+.It Li VJUNC
+The number of TCP packets transmitted from this interface with
+VJ-uncompressed TCP headers.
+.It Li NON-VJ
+The total number of non-TCP packets transmitted from this interface.
+.It Li VJSRCH
+The number of searches for the cached header entry for a VJ header
+compressed TCP packet.  Only reported when the
+.Fl v
+option is specified.
+.It Li VJMISS
+The number of failed searches for the cached header entry for a
+VJ header compressed TCP packet.  Only reported when the
+.Fl v
+option is specified.
+.It Li RATIO
+The overall compression ratio achieved for transmitted packets by the
+packet compression scheme in use, as a number between 0.0 and 1.0.
+Only reported when the
+.Fl r
+option is specified.
+.It Li UBYTE
+The total number of bytes to be transmitted, before packet compression
+is applied.  Only reported when the
+.Fl v
+option is specified.
+.El
+.Pp
+When the
+.Fl z
+option is specified,
+.Nm pppstats
+instead displays the following fields, relating to the packet
+compression algorithm currently in use.  If packet compression is not
+in use, these fields will all display zeroes.  The fields displayed on
+the input side are:
+.Bl -tag -width search
+.It Li COMPRESSED BYTE
+The number of bytes of compressed packets received.
+.It Li COMPRESSED PACK
+The number of compressed packets received.
+.It Li INCOMPRESSIBLE BYTE
+The number of bytes of incompressible packets (that is, those which
+were transmitted in uncompressed form) received.
+.It Li INCOMPRESSIBLE PACK
+The number of incompressible packets received.
+.It Li COMP RATIO
+The recent compression ratio for incoming packets, as a number between
+0.0 and 1.0.
+.El
+.Pp
+The fields displayed on the output side are:
+.Bl -tag -width search
+.It Li COMPRESSED BYTE
+The number of bytes of compressed packets transmitted.
+.It Li COMPRESSED PACK
+The number of compressed packets transmitted.
+.It Li INCOMPRESSIBLE BYTE
+The number of bytes of incompressible packets transmitted (that is,
+those which were transmitted in uncompressed form).
+.It Li INCOMPRESSIBLE PACK
+The number of incompressible packets transmitted.
+.It Li COMP RATIO
+The recent compression ratio for outgoing packets, as a number between
+0.0 and 1.0.
+.El
+.Sh SEE ALSO
+.Xr pppd 8

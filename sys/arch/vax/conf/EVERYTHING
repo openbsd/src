@@ -1,0 +1,92 @@
+#	$NetBSD: EVERYTHING,v 1.1 1995/03/29 22:54:02 ragge Exp $
+#
+# This file contains everything that is known to be compiled
+# without errors. Some things may not be tested, like NETISO.
+#
+
+include "std.vax"
+
+# Here are all different supported CPU types listed.
+options         "VAX750"
+options         "VAX630"
+
+# Kernel identification
+options         EVERYTHING
+
+# Max users on system; this is just a hint
+maxusers	16
+
+# Paging system, we always have them all.
+options		SWAPPAGER, DEVPAGER, VNODEPAGER
+
+# Kernel compiled-in symbolic debugger
+#options		DDB
+
+# System V shared memory
+options		SYSVMSG		# Message passing
+options		SYSVSEM		# Semaphores
+options		SYSVSHM		# Shared memory
+options		SHMMAXPGS=1024
+
+# Network support
+options         INET		# Internet protocol, (almost) mandatory
+options         ETHER		# Ethernet, probably needed
+options		NS		# Xerox Network system, untested
+options		ISO,TPIP	# ISO network, untested
+options		EON
+options		CCITT,LLC,HDLC
+
+# All supported filesystem types
+options		FFS,QUOTA	# Normal fast filesystem, mandatory
+options		LFS		# Log-structured file system
+options		MFS		# Memory filesystem
+options		NFSCLIENT	# Network filesystem client
+options		NFSSERVER	# Network filesystem server
+options		CD9660		# CDRom filesystem
+options		FDESC		# Filedescriptors, /dev/fd
+options		FIFO
+options		KERNFS		# Kernel info filesystems
+options		NULLFS
+options		PORTAL
+options		PROCFS		# Process filesystem
+options		UMAPFS
+options		UNION
+
+# Old compat stuff; needed to run 4.3BSD Reno programs
+options		COMPAT_43
+options		COMPAT_09
+options		COMPAT_10
+options		COMPAT_RENO
+options		TCP_COMPAT_42	# Bug compat with 4.2BSD systems (like NDIX)
+
+# loadable kernel modules.
+options		LKM
+
+
+# Kernel(s) to compile
+config          vmunix          root on hp0 swap on hp0
+
+# All supported CPU:s
+cpu0		at backplane0
+
+# Main buses at backplane
+sbi*		at backplane0
+
+# Devices connected at sbi
+mem*		at sbi? tr?	# Memory subsystems
+uba0		at sbi? tr?	# Unibus adapters
+
+# Disk controllers at Unibus
+uda0		at uba?	csr 0172150	# UDA50/KDA50/RQDX3
+ra0		at uda0 drive 0		# RA??/RD??
+
+# Ethernet cards
+de0		at uba? csr 0174510	# DEUNA/DELUA
+qe0		at uba? csr 0174440	# DEQNA/DELQA
+
+# Tape drivers
+tmscp0		at uba? csr 0174500
+tms0		at tmscp0 drive ?	# TK50/TU81
+
+pseudo-device   loop
+pseudo-device   pty	48

@@ -1,0 +1,77 @@
+$NetBSD: README.dynamic,v 1.1 1995/02/13 21:39:01 cgd Exp $
+
+Currently, the NetBSD OSF/1 emulation code only supports statically
+linked OSF/1 binaries.  This document is meant to be a quick
+description of what would need to happen to support dynamically linked
+OSF/1 binaries, and to provide an indication of the amount of work
+that would be required to add such support.
+
+To support dynamically linked OSF/1 binaries, three steps would have
+to be taken:
+	(1) The osf1_exec_with_loader() syscall emulation code would
+		have to be written.
+	(2) Execve() would have to be changed to support invocation of
+		a loader for dynamically linked binaries.
+	(3) The pmap code would have to be extended to allow process
+		virtual spaces that are much larger than are currently
+		allowed.
+
+1. Implementing osf1_exec_with_loader().
+
+The description of osf1_exec_with_loader is as follows:
+
+	int exec_with_loader(int flags, const char *loader,
+		const char *file, char * const argv[],
+		char * const envp[]);
+
+It invokes the program named by file, with the given argv and envp,
+by starting the specified loader (or /sbin/loader) and somehow passing
+the flags, file name, argv, and envp in such a way that the
+appropriate things will happen with them.  This interface is
+completely undocumented (in the documentation that we have available),
+and so the only way to figure it out is to disassemble the OSF/1
+kernel and/or /sbin/loader.
+
+2. Changing execve() to support OSF/1 dynamically linked executables.
+
+Normally, dynamically linked executables are invoked using execve(),
+in the normal fashion.  The kernel transforms that request into one
+that uses the loader, and causes the loader to be invoked with the
+appropriate information to run the target executable.
+
+The mechanism by which this is done is unknown; it may be possible to
+completely replace the OSF/1 loader with one designed for NetBSD, but
+that is rather prohibitive.  (Additionally, it wouldn't solve the
+problem of needing to implement the osf1_exec_with_loader()
+functionality.)
+
+In any case, this would not be insignificant; it and/or the
+implementation of osf1_exec_with_loader() would probably require a
+complete rewrite or duplication of the current execve() code.
+
+3. Extending the pmap code to handle larger virtual spaces.
+
+OSF/1's /sbin/loader wants to be loaded at 0x3ff80000000.  Currently,
+because of a simplifying assumption (specifically, to only use the
+first level-one pte for user-space mappings, effectively turning the
+pmap into one that looks much like one for a mc68030), only 8Gb
+(0x200000000 bytes) of user virtual space are supported.
+
+It is unclear that the extra virtual space is necessary for any
+applications that NetBSD/Alpha would be used for, and support for it
+would add a significant amount of complexity to the pmap module.
+Adding that support would probably require a from-scratch rewrite of
+the pmap module.
+
+
+Because of the difficulties in emulating the system call interface
+used to run dynamic executables, and the difficulties in allowing
+support for the address space the OSF/1 loader needs, I do not think
+that it is feasible to support dynamically linked OSF/1 executables
+with the OSF/1 loading mechanism.  It may be possible to do so with a
+new loading mechanism which could be written for NetBSD, but it is
+unclear that the necessary interfaces to do even that could be
+discovered, and the effort required to implement a new loading
+mechanism would be prohibitive.
+
+-- cgd

@@ -1,0 +1,163 @@
+#!/bin/sh
+#	$NetBSD: asm2gas,v 1.3 1994/10/26 07:48:49 cgd Exp $
+
+#
+# Copyright (c) 1994 Charles Hannum.  All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. All advertising materials mentioning features or use of this software
+#    must display the following acknowledgement:
+#	This product includes software developed by Charles Hannum.
+# 4. The name of the author may not be used to endorse or promote products
+#    derived from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+# NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+# THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+
+# This ugly script converts assembler code from Motorola's format to a
+# form that gas (MIT syntax) can digest.
+
+cat $1 | sed -e '
+  # format canonicalization
+
+  /[ 	]IDNT[ 	]/{s/^/|/;p;d;}
+  /^\*/{s//|/;p;d;}
+  s/;/|/
+  /[ 	]equ[ 	]/{
+    s/\([A-Za-z_][A-Za-z0-9_]*\)[ 	]*equ[ 	]*/\1,/
+    s/[ 	][ 	]*\(.*\)$/		|\1/
+    s/		||/		|/
+    s/^/	.set	/
+    p;d
+  }
+  s/^\([A-Za-z_][A-Za-z0-9_]*\)[ 	][ 	]*/\1:	/
+  s/^\([A-Za-z_][A-Za-z0-9_]*\)$/\1:/
+  /^[A-Za-z_][A-Za-z0-9_]*:/{
+    h
+    s/:.*$/:/
+    p
+    g
+    s/^.*:[ 	]*/	/
+    /^	$/d
+  }
+  /^[ 	][ 	]*\([.a-zA-Z][.a-zA-Z0-9]*\)/{
+    h
+    s///
+    s/^[ 	][ 	]*//
+    s/[ 	][ 	]*\(.*\)$/		|\1/
+    s/		||/		|/
+    x
+    s/^[ 	][ 	]*//
+    s/[ 	][ 	]*.*$/	/
+    y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/
+    s/^/	/
+    G
+    s/\n//
+  }
+' | sed -e '
+  # operator conversion
+
+  s/^	section	7/	.text/
+  s/^	section	8/	.text/
+  s/^	section	15/	.data/
+  /^	include/{s/include[ 	]/.include "/;s/\.h[ 	]*$/.defs"/;p;d;}
+  s/^	xref/|	xref/
+  s/^	end/|	end/
+  s/^	xdef/	.global/
+
+  s/^	dc\.l/	.long/
+  s/^	dc\.w/	.short/
+  s/^	dc\.b/	.byte/
+
+  /^	[aceg-z]/{
+    /^	add[aiqx]*\.[bwl]	/{s/\.//;p;d;}
+    /^	andi*\.[bwl]	/{s/\.//;p;d;}
+    /^	as[lr]\.[bwl]	/{s/\.//;p;d;}
+    /^	clr\.[bwl]	/{s/\.//;p;d;}
+    /^	cmp[i2]*\.[bwl]	/{s/\.//;p;d;}
+    /^	eori*\.[bwl]	/{s/\.//;p;d;}
+    /^	lea\.l	/{s/\..//;p;d;}
+    /^	ls[lr]\.[bwl]	/{s/\.//;p;d;}
+    /^	move[acmqs]*\.[bwl]	/{s/\.//;p;d;}
+    /^	mul[su]\.[wl]	/{s/\.//;p;d;}
+    /^	neg\.[bwl]	/{s/\.//;p;d;}
+    /^	ori*\.[bwl]	/{s/\.//;p;d;}
+    /^	ro[lrx]*\.[bwl]	/{s/\.//;p;d;}
+    /^	sub[aiqx]*\.[bwl]	/{s/\.//;p;d;}
+    /^	swap\.w	/{s/\..//;p;d;}
+    /^	s\([a-tv-z][a-z]*\)\.b	/{s/\..//;p;d;}
+    /^	tst\.[bwl]	/{s/\.//;p;d;}
+    p;d
+  }
+
+  /^	bchg\.[bl]	/{s/\..//;p;d;}
+  /^	bclr\.[bl]	/{s/\..//;p;d;}
+  /^	bset\.[bl]	/{s/\..//;p;d;}
+  /^	btst\.[bl]	/{s/\..//;p;d;}
+  /^	div[sul]*\.[wl]	/{s/\.//;p;d;}
+  /^	fabs\.[sdx]	/{s/\.//;p;d;}
+  /^	fadd\.[sdxbwl]	/{s/\.//;p;d;}
+  /^	fcmp\.[sdxbwl]	/{s/\.//;p;d;}
+  /^	fdiv\.[sdx]	/{s/\.//;p;d;}
+  /^	fmove[mx]*\.[sdxbwl]	/{s/\.//;p;d;}
+  /^	fmul\.[sdx]	/{s/\.//;p;d;}
+  /^	fneg\.[sdx]	/{s/\.//;p;d;}
+  /^	fsqrt\.[sdx]	/{s/\.//;p;d;}
+  /^	fsub\.[sdxbwl]	/{s/\.//;p;d;}
+  /^	ftst\.[sdx]	/{s/\.//;p;d;}
+
+  /^	b[a-eg-z][a-z]*\.b	/{s/\.b/s/;p;d;}
+  /^	b[a-eg-z][a-z]*\.w	/{s/\.w//;p;d;}
+  /^	b[a-eg-z][a-z]*\.l	/{s/\.l/l/;p;d;}
+  /^	db[a-z][a-z]*\.w	/{s/\.w//;p;d;}
+  /^	fb[a-eg-z][a-z]*\.w	/{s/\.w//;p;d;}
+  /^	fb[a-eg-z][a-z]*\.l	/{s/\.l/l/;p;d;}
+' | sed -e '
+  # operand conversion
+
+  s/\([^_a-zA-Z0-9]\)FPIAR\([^_a-zA-Z0-9]\)/\1FPI\2/g
+  s/\([^_a-zA-Z0-9]\)FPIAR\([^_a-zA-Z0-9]\)/\1FPI\2/g
+  s/\([^_a-zA-Z0-9]\)FPIAR$/\1FPI/g
+  s/\([^_a-zA-Z0-9]\)fpiar\([^_a-zA-Z0-9]\)/\1fpi\2/g
+  s/\([^_a-zA-Z0-9]\)fpiar\([^_a-zA-Z0-9]\)/\1fpi\2/g
+  s/\([^_a-zA-Z0-9]\)fpiar$/\1fpi/g
+
+  s/\$/0x/g
+  s/#:/#:0x/g
+
+  s/-(\([sSpPaA][pPcC0-7]\))/\1@-/g
+  s/(\([sSpPaA][pPcC0-7]\))+/\1@+/g
+  s/\([-+A-Za-z0-9_]*\)(\([sSpPaA][pPcC0-7]\)\([),]\)/\2@(\1\3/g
+
+  s/\.\([bBwWlL])\)/:\1/g
+  s/\.\([bBwWlL]\)\*\([0-9][0-9]*)\)/:\1:\2/g
+  s/\*\([0-9][0-9]*\))/:l:\1)/g
+  s/{\([0-9][0-9]*\):\([0-9][0-9]*\)}/{#\1:#\2}/g
+  s/{\([dD][0-7]\):\([0-9][0-9]*\)}/{\1:#\2}/g
+
+  s/@(0*)/@/g
+  s/(,/(/g;s/:)/)/g
+
+  # make up for a gas bug
+  /^	fmovemx	/{
+	s/	\([fF][pP][0-7]\),/	\1-\1,/
+	s/,\([fF][pP][0-7]\)	/,\1-\1	/
+	s/,\([fF][pP][0-7]\)$/,\1-\1/
+  }
+'

@@ -1,0 +1,11 @@
+#!/bin/csh -f
+#	$NetBSD: Do_troff,v 1.2 1995/03/23 08:28:52 cgd Exp $
+#
+#	@(#)Do_troff	8.1 (Berkeley) 5/31/93
+#
+
+set file=$1
+shift
+( echo ".ds Se $file" ; cat Troff.mac ; sed -f Troff.sed $file ) | \
+	$* -me >& $file.tr
+echo troff output in $file.tr

@@ -1,0 +1,148 @@
+#---------------------------------------------------------------------------
+#
+#	@(#)ttys	5.1 (Berkeley) 4/17/89
+#
+#	example /etc/ttys for pcvt 3.31
+#	-------------------------------
+#
+#	FreeBSD 2.0.5-Release with entries for pcvt
+#
+#	last edit-date: [Tue Sep  5 18:49:47 1995]
+#
+#---------------------------------------------------------------------------
+#
+# name	getty				type	status		comments
+#
+# This entry needed for asking password when init goes to single-user mode
+# If you want to be asked for password, change "secure" to "insecure" here
+console	none				unknown	off secure
+#
+ttyv0	"/usr/libexec/getty Pc"		pcvt25h	on  secure
+ttyv1	"/usr/libexec/getty Pc"		pcvt25h	on  secure
+ttyv2	"/usr/libexec/getty Pc"		pcvt25h	on  secure
+ttyv3	"/usr/libexec/getty Pc"		pcvt25h	on  secure
+ttyv4	"/usr/libexec/getty Pc"		pcvt25h	on  secure
+ttyv5	"/usr/libexec/getty Pc"		pcvt25h	on  secure
+ttyv6	"/usr/libexec/getty Pc"		pcvt25h	off secure	# syslog
+ttyv7	"/usr/libexec/getty Pc"		pcvt25h	off secure	# X11
+# Serial terminals
+ttyd1	"/usr/libexec/getty std.19200"	unknown	on		# Modem
+# Pseudo terminals
+ttyp0	none			network
+ttyp1	none			network
+ttyp2	none			network
+ttyp3	none			network
+ttyp4	none			network
+ttyp5	none			network
+ttyp6	none			network
+ttyp7	none			network
+ttyp8	none			network
+ttyp9	none			network
+ttypa	none			network
+ttypb	none			network
+ttypc	none			network
+ttypd	none			network
+ttype	none			network
+ttypf	none			network
+ttypg	none			network
+ttyph	none			network
+ttypi	none			network
+ttypj	none			network
+ttypk	none			network
+ttypl	none			network
+ttypm	none			network
+ttypn	none			network
+ttypo	none			network
+ttypp	none			network
+ttypq	none			network
+ttypr	none			network
+ttyps	none			network
+ttypt	none			network
+ttypu	none			network
+ttypv	none			network
+
+
+
+
+#
+# name	getty				type	status		comments
+#-----	-----------------------------   ------- ----------      --------------
+#
+# This entry needed for asking password when init goes to single-user mode
+# If you want to be asked for password, change "secure" to "insecure" here
+#
+console	none				unknown	off secure
+#
+# syscons
+#
+#ttyv0	"/usr/libexec/getty Pc"		cons25	on  secure
+## Virtual terminals
+#ttyv1	"/usr/libexec/getty Pc"		cons25	on  secure
+#ttyv2	"/usr/libexec/getty Pc"		cons25	on  secure
+#ttyv3	"/usr/libexec/getty Pc"		cons25	off secure
+#
+# pcvt
+#
+ttyv0	"/usr/libexec/getty Pc"		pcvt25h	on  secure
+ttyv1	"/usr/libexec/getty Pc"		pcvt25h	on  secure
+ttyv2	"/usr/libexec/getty Pc"		pcvt25h	on  secure
+ttyv3	"/usr/libexec/getty Pc"		pcvt25h	on  secure
+ttyv4	"/usr/libexec/getty Pc"		pcvt25h	on  secure
+ttyv5	"/usr/libexec/getty Pc"		pcvt25h	on  secure
+ttyv6	"/usr/libexec/getty Pc"		pcvt25h	off secure	# syslog msgs
+ttyv7	"/usr/libexec/getty Pc"		pcvt25h	off secure	# used for X11
+#
+# Modem dialin/dialout port
+#
+ttyd1	"/usr/libexec/getty D19200"	unknown	on  		# T2500
+#
+# Hardwired ports
+#
+#tty00	"/usr/libexec/getty std.9600"	unknown	off secure	# -N/C-
+#tty02	"/usr/libexec/getty std.9600"	unknown	off secure	# DCF77
+#tty03	"/usr/libexec/getty std.9600"	unknown	off secure	# Mouse
+#
+# Orig Hardwired terminals
+#
+#tty00	"/usr/libexec/getty std.9600"	unknown	off secure
+#tty01	"/usr/libexec/getty std.9600"	unknown	off secure
+#
+# Orig Dialin terminals
+#
+#ttyd2	"/usr/libexec/getty std.9600"	unknown	off secure
+#ttyd3	"/usr/libexec/getty std.9600"	unknown	off secure
+#
+# Pseudo terminals
+#
+ttyp0	none			network
+ttyp1	none			network
+ttyp2	none			network
+ttyp3	none			network
+ttyp4	none			network
+ttyp5	none			network
+ttyp6	none			network
+ttyp7	none			network
+ttyp8	none			network
+ttyp9	none			network
+ttypa	none			network
+ttypb	none			network
+ttypc	none			network
+ttypd	none			network
+ttype	none			network
+ttypf	none			network
+ttyq0	none			network
+ttyq1	none			network
+ttyq2	none			network
+ttyq3	none			network
+ttyq4	none			network
+ttyq5	none			network
+ttyq6	none			network
+ttyq7	none			network
+ttyq8	none			network
+ttyq9	none			network
+ttyqa	none			network
+ttyqb	none			network
+ttyqc	none			network
+ttyqd	none			network
+ttyqe	none			network
+ttyqf	none			network

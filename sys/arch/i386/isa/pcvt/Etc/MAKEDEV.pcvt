@@ -1,0 +1,16 @@
+#!/bin/sh -
+#
+
+PATH=/sbin:/bin/:/usr/bin:/usr/sbin:
+umask 77
+for i
+do
+case $i in
+
+ttyv*)
+	unit=`expr $i : 'ttyv\(.*\)'`
+	rm -f /dev/ttyv$unit
+	mknod /dev/ttyv$unit c 12 $unit
+	;;
+esac
+done

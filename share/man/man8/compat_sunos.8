@@ -1,0 +1,99 @@
+.\"	$NetBSD: compat_sunos.8,v 1.6 1995/06/11 23:05:17 pk Exp $
+.\"
+.\" Copyright (c) 1984 Theo de Raadt
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by Theo de Raadt.
+.\" 4. Neither the name of the author nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd June 15, 1994
+.Dt COMPAT_SUNOS 8
+.Os BSD 4
+.Sh NAME
+.Nm COMPAT_SUNOS
+.Nd setup procedure for m68k and sparc architectures
+.Sh DESCRIPTION
+NetBSD/sparc and some of the NetBSD/m68k architectures can run
+SunOS executables.  Most executables will work.
+.Pp
+The exceptions include programs that use the SunOS kvm library,
+and various system calls, ioctl()'s, or kernel semantics
+that are difficult to emulate.
+The number of reasons why a program might fail to work is (thankfully)
+longer than the number of programs that fail to run.
+.Pp
+Static executables will normally run without any extra setup.
+This procedure details the directories and files that must be
+setup to allow dynamically linked executables to work.
+.Pp
+The files you need are on your SunOS machine.
+You need to worry about the legal issues of ensuring that you
+have a right to use the required files on your machine.
+On your NetBSD machine, do the following:
+.Pp
+.Bl -enum -inset -offset 123 -compact
+.It
+.Li mkdir -p /emul/sunos/usr/lib /emul/sunos/usr/5lib
+.fi
+.Pp
+.It
+.Li cp SunOS:/usr/lib/lib*.so.*.* NetBSD:/emul/sunos/usr/lib
+.Pp
+.It
+.Li cp SunOS:/usr/5lib/lib*.so.*.* NetBSD:/emul/sunos/usr/5lib
+.Pp
+.It
+.Li cp SunOS:/usr/lib/ld.so NetBSD:/emul/sunos/usr/lib/ld.so
+.Pp
+.It
+If you ever expect to use YP, you will want to create a link:
+.nf
+.Li ln -s /var/run/ypbind.lock /etc/ypbind.lock
+.fi
+.El
+.Pp
+Alternatively, you can use an NFS mount to accomplish the same
+effect.
+On your NetBSD machine, do the following:
+.Pp
+.Bl -enum -inset -offset 123 -compact
+.Pp
+.It
+.Li mkdir -p /emul/sunos/usr
+.Pp
+.It
+.Li mount SunOS:/usr /emul/sunos/usr
+.fi
+.El
+.Pp
+This will place the SunOS libraries on your NetBSD machine
+in a location where the SunOS compatibility code will look for
+first, where they do not conflict with the standard libraries.
+.Pp
+.Sh BUGS
+A list of things which fail to work in compatibility mode should
+be here.

@@ -1,0 +1,14 @@
+#	$NetBSD: files.osf1,v 1.2 1995/10/07 06:27:17 mycroft Exp $
+#
+# Config file description for machine-independent OSF/1 compat code.
+# Included by ports that need it.
+
+# ports should define any machine-specific files they need in their
+# own file lists.
+
+file	compat/osf1/osf1_ioctl.c	compat_osf1
+file	compat/osf1/osf1_misc.c		compat_osf1
+file	compat/osf1/osf1_mount.c	compat_osf1
+file	compat/osf1/osf1_signal.c	compat_osf1
+file	compat/osf1/osf1_syscalls.c	compat_osf1
+file	compat/osf1/osf1_sysent.c	compat_osf1

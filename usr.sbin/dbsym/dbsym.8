@@ -1,0 +1,46 @@
+.\"	$Id: dbsym.8,v 1.1.1.1 1995/10/18 08:47:31 deraadt Exp $
+.\"
+.Dd 12 May 1994
+.Dt DBSYM 8 sun3
+.Os 
+.Sh NAME
+.Nm dbsym
+.Nd copy kernel symbol table into db_symtab space
+.Sh SYNOPSIS
+.Nm dbsym
+.Ar kernel
+.Sh DESCRIPTION
+.Nm dbsym
+is used to copy the symbol table in a newly linked kernel into the
+.Nm db_symtab
+array (in the data section) so that the
+.Nm ddb
+kernel debugger can find the symbols.  This is program is only used
+on systems for which the boot program does not load the symbol table
+into memory with the kernel.  The space for these symbols is
+reserved in the data segment using a config option like:
+.Pp
+.Li options		SYMTAB_SPACE=72000
+.Pp
+The size of the db_symtab array (the value of SYMTAB_SPACE) must be
+at least as large as the kernel symbol table.  If insufficient space
+is reserved, dbsym will refuse to copy the symbol table.
+.Pp
+Note that debugging symbols are not useful to the
+.Nm ddb
+kernel debugger, so to minimize the size of the kernel, one should
+either compile the kernel without debugging symbols (no
+.Nm -g
+flag) or use the
+.Nm strip
+command to strip debugging symbols from the kernel before
+.Nm dbsym
+is used to copy the symbol table.  The command
+.Pp
+.Li strip -d netbsd
+.Pp
+will strip out debugging symbols.
+.Sh "SEE ALSO"
+.Xr strip 1
+.Xr ddb 8
+.\" XXX - Reminder, need: /src/share/man/man8/ddb.8

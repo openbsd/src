@@ -1,0 +1,7 @@
+
+#------------------------------------------------------------------------------
+# convex:  file(1) magic for Convex boxes
+#
+# Convexes are big-endian.
+#
+0	long		0513		Convex executable

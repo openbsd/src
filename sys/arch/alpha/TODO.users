@@ -1,0 +1,53 @@
+$NetBSD: TODO.users,v 1.1 1995/04/25 18:16:15 cgd Exp $
+
+The NetBSD/Alpha "User" To-Do List
+
+
+The following are things that I'd like to see "users" of NetBSD/Alpha do.
+It's unlikely that I'll get around to them in any reasonable time
+frame, and I think they _should_ get done.
+
+If you think of something that should be added to this list (and don't
+want to do it yourself, right then 8-), send me mail and I'll add it.
+
+If you're planning to work on something on this list, send me mail and
+tell me about it, so that I can keep people from duplicating work.
+Once you've done something on this list, send me context diffs.
+
+
+Chris Demetriou
+cgd@netbsd.org
+--
+
+Make GDB work.
+	(1) for debugging live processes; shouldn't require kernel work.
+	(2) for debugging core dumps; may require kernel work.
+
+Test programs; find and fix bugs.  In particular:
+	(1) make sure accounting works
+	(2) figure out why strip doesn't seem to work
+	(3) last i checked, 'file' core dumped
+	(4) /usr/games
+
+Compile some of the more useful X clients.  (e.g. xterm and resize.)
+
+Make TurboChannel option slots work reasonably.  This will require
+    different sets of code to be written on the 3000/[4-9]00 and on the
+    3000/300 families.  It shouldn't be too hard, but you will need some
+    devices that live in option slots.
+
+Once TC option slots work, somebody with a TC ethernet board should
+    make it work, for completeness.
+
+Get the GNU tools to generate a.out binaries for the alpha.  Once that
+    is done:
+	(1) make gprof work, then profile the kernel and tell me how
+	    bad my assumptions lost.
+	(2) make the rest of the NetBSD a.out-manipulation tools (e.g.
+	    nm) work.
+
+Make DDB work.  (For completeness, may require a.out kernel binaries
+    and/or some ecoff symbol handling code to be written; the former
+    is strongly preferred.)
+
+Make CVS work.  I've no reason to think that it shouldn't, but...

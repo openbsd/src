@@ -1,0 +1,116 @@
+$NetBSD: STATUS,v 1.1 1995/04/25 18:59:14 cgd Exp $
+
+NetBSD/Alpha's Status
+
+
+Supported hardware:
+
+	DEC 3000/[456789]00 (I've only tested it on the 400 and
+	600, but the rest should "just work) using the following
+	peripherals:
+
+		Serial ports
+		LANCE ethernet -- only the on-board interface.  (see below.)
+		SCSI system -- it recognizes and can use both on-board SCSI
+		    controller chips.  However, it has trouble working with
+		    both at the same time.
+
+		Things are aren't supported:
+			No frame buffers of any type.
+			Devices in TurboChannel option slots (see the
+			    TODO.users file.)
+			The ISDN/Audio chip.
+
+	DEC 3000/300 family, with same hardware above.
+
+NetBSD/Alpha has actually been run on the following types of machines:
+	DEC 3000/400
+	DEC 3000/600
+	[ XXX THERE ARE MORE; if you're running it on a machine not
+	    listed, mail me about it.]
+
+
+At this time none of the following systems are supported:
+	DECpc AXP systems -- the Alpha systems with EISA busses
+	AlphaStations -- the Alpha systems with PCI busses (i.e.
+	    PCI/ISA or PCI/EISA)
+	The Futurebus-based Alpha server systems
+	The multiprocessor Alpha systems
+
+I am in the process of porting NetBSD/Alpha to the PCI-based systems,
+in particular, to the AlphaStation 400 4/233.  I was hoping to get a
+DECpc AXP port working "for free" based on the PCI work, but the
+DECpc AXP is a very different (and, in my opinion, very alien) piece
+of hardware.  If somebody wants to make NetBSD/Alpha run on the
+DECpc AXP system, get in touch and I'll do what I can to help you
+get started.  (Right now, it can detect devices on the EISA bus, etc.,
+but the I/O layout is distinctly _not_ what I'd expected and/or hoped
+for.  It's significantly more difficult to deal with than I'd expected.)
+
+It's unclear how much support for other PCI-based systems (i.e. the
+AlphaStation 200 and AlphaStation 250 machines) will be won by getting
+the AlphaStation 400 supported.  It should at least make porting to
+those machines easier.
+
+
+Because no frame buffers are supported, NetBSD/Alpha _must_ be used with
+a serial console.  To do that on:
+
+	DEC 3000/[4-9]00's:
+		Flip the appropriate switch on the back of the machine.
+
+	DEC 3000/300 family machines:
+		Boot the machine with the keyboard/mouse connector
+		unplugged.
+
+	DECpc AXP's and AlphaStations:
+		Boot the machine with the keyboard unplugged.  (Note:
+		I've never actually booted one of these machines with
+		a serial console, so I can't verify that this is
+		correct.  Also, people who've booted test kernels for
+		me have reported trouble using these boxes with a
+		serial console, but I'm not sure why; the kernel for
+		these systems is not advanced enough to have its own
+		serial driver yet, and so is using the PROM routines.)
+
+There actually is hope of getting somebody to come up with working
+graphics board drivers and even an X server.  More on that as things
+develop.
+
+
+Getting people running with my latest sources still isn't as easy as
+it should be; not all of my sources are integrated into the NetBSD
+master source tree yet.  Most of the diffs are in, however, and I
+suggest the following tactic for people who are trying to get running
+with an "up to date" system:
+
+	Get the latest NetBSD sources from:
+	ftp://ftp.netbsd.org/pub/NetBSD/NetBSD-current/src/tar_files
+
+	Replace that 'sys' tree with the latest snapshot I've put up
+	for ftp under the directory:
+	ftp://ftp.netbsd.org/pub/NetBSD/arch/alpha
+
+	If you'd like to compile the compiler and tool chain, add to
+	that the GNU tools tree (src/devo) from my original source
+	distribution tar file, which can also be found under:
+	ftp://ftp.netbsd.org/pub/NetBSD/arch/alpha
+	(Unfortunately, there's not a way to get just that part of the
+	source distribution; I'll fix that in a day or two.)
+
+That won't be perfect, but it'll get you most of the way there.
+
+I'm planning to put up a new 'sys' snapshot, as well as new kernel
+image, in a couple of days.  Hopefully by that time, all of the
+user-land changes will have been merged into the master NetBSD source
+tree.
+
+
+Please see the file src/sys/arch/alpha/TODO.users for a list of things
+that users can do to help NetBSD/Alpha improve.  If you're interested
+in doing any of them, or porting to new hardware, get in touch and
+I'll do what I can to help.
+
+
+Chris Demetriou
+cgd@netbsd.org

@@ -1,0 +1,238 @@
+.\" @(#)identd.8 1.9 92/02/11 Lysator
+.\" Copyright (c) 1992 Peter Eriksson, Lysator, Linkoping University.
+.\" This software has been released into the public domain.
+.\"
+.\"	$Id: identd.8,v 1.1.1.1 1995/10/18 08:43:18 deraadt Exp $
+.\"
+.TH IDENTD 8 "27 May 1992"
+.SH NAME
+identd \- TCP/IP IDENT protocol server
+.SH SYNOPSIS
+.B identd
+.RB [ \-i | \-w | \-b ]
+.RB [ \-t<seconds> ]
+.RB [ \-u<uid> ]
+.RB [ \-g<gid> ]
+.RB [ \-p<port> ]
+.RB [ \-a<address> ]
+.RB [ \-c<charset> ]
+.RB [ \-n ]
+.RB [ \-o ]
+.RB [ \-e ]
+.RB [ \-l ]
+.RB [ \-V ]
+.RB [ \-v ]
+.RB [ \-m ]
+.RB [ \-N ]
+.RB [ \-d ]
+.RB [ kernelfile [ kmemfile ] ]
+.SH DESCRIPTION
+.IX "identd daemon" "" \fLidentd\fP daemon"
+.B identd
+is a server which implements the
+.SM TCP/IP
+proposed standard
+.SM IDENT
+user identification protocol as specified in the
+.SM RFC\s0 1413
+document.
+.PP
+.B identd
+operates by looking up specific
+.SM TCP/IP
+connections and returning the user name of the
+process owning the connection.
+.SH ARGUMENTS
+The
+.B -i
+flag, which is the default mode, should be used when starting the
+daemon from
+.B inetd
+with the "nowait" option in the
+.B /etc/inetd.conf
+file. Use of this mode will make
+.B inetd
+start one
+.B identd
+daemon for each connection request.
+.PP
+The
+.B -w
+flag should be used when starting the daemon from
+.B inetd
+with the "wait" option in the
+.B /etc/inetd.conf
+file . This is the prefered mode of
+operation since that will start a copy of
+.B identd
+at the first connection request and then
+.B identd
+will handle subsequent requests
+without having to do the nlist lookup in the kernel file for
+every request as in the
+.B -i
+mode above. The
+.B identd
+daemon will run either forever, until a bug
+makes it crash or a timeout, as specified by the
+.B -t
+flag, occurs.
+.PP
+The
+.B -b
+flag can be used to make the daemon run in standalone mode without
+the assistance from
+.B inetd.
+This mode is the least prefered mode since
+a bug or any other fatal condition in the server will make it terminate
+and it will then have to be restarted manually. Other than that is has the
+same advantage as the
+.B -w
+mode in that it parses the nlist only once.
+.PP
+The
+.B -t<seconds>
+option is used to specify the timeout limit. This is the number
+of seconds a server started with the
+.B -w
+flag will wait for new connections before terminating. The server is
+automatically restarted by
+.B inetd
+whenever a new connection is requested
+if it has terminated. A suitable value for this is 120 (2 minutes), if
+used. It defaults to no timeout (ie, will wait forever, or until a
+fatal condition occurs in the server).
+.PP
+The
+.B -u<uid>
+option is used to specify a user id number which the
+.B ident
+server should
+switch to after binding itself to the
+.SM TCP/IP
+port if using the
+.B -b
+mode of operation.
+.PP
+The
+.B -g<gid>
+option is used to specify a group id number which the
+.B ident
+server should
+switch to after binding itself to the
+.SM TCP/IP
+port if using the
+.B -b
+mode of operation.
+.PP
+The
+.B -p<port>
+option is used to specify an alternative port number to bind to if using
+the
+.B -b
+mode of operation. It can be specified by name or by number. Defaults to the
+.SM IDENT
+port (113).
+.PP
+The
+.B -a<address>
+option is used to specify the local address to bind the socket to if using
+the
+.B -b
+mode of operation. Can only be specified by IP address and not by domain
+name. Defaults to the 
+.SM INADDR_ANY
+address which normally means all local addresses.
+.PP
+The 
+.B -V
+flag makes
+.B identd
+display the version number and the exit.
+.PP
+The
+.B -l
+flag tells
+.B identd
+to use the System logging daemon
+.B syslogd
+for logging purposes.
+.PP
+The 
+.B -v
+flag causes
+.B identd
+to log every request made, if the use of
+.B syslogd
+is enabled.
+.PP
+The
+.B -o
+flag tells
+.B identd
+to not reveal the operating system type it is run on and to instead
+always return "OTHER".
+.PP
+The
+.B -e
+flag tells
+.B identd
+to always return "UNKNOWN-ERROR" instead of the "NO-USER" or
+"INVALID-PORT" errors.
+.PP
+The
+.B -c<charset>
+flags tells
+.B identd
+to add the optional (according to the IDENT protocol) character set
+designator to the reply generated. <charset> should be a valid character
+set as described in the MIME RFC in upper case characters.
+.PP
+The
+.B -n
+flags tells
+.B identd
+to always return user numbers instead of user names if you wish to
+keep the user names a secret.
+.PP
+The
+.B -N
+flag makes
+.B identd
+check for a file ".noident" in each homedirectory for a user which the
+daemon is about to return the user name for. It that file exists then the
+daemon will give the error
+.B HIDDEN-USER
+instead of the normal USERID response. 
+.PP
+.B -m
+flag makes
+.B identd
+use a mode of operation that will allow multiple requests to be
+processed per session. Each request is specified one per line and
+the responses will be returned one per line. The connection will not
+be closed until the connecting part closes it's end of the line.
+PLEASE NOTE THAT THIS MODE VIOLATES THE PROTOCOL SPECIFICATION AS
+IT CURRENTLY STANDS.
+.PP
+The
+.B -d
+flag enables some debugging code that normally should NOT
+be enabled since that breaks the protocol and may reveal information
+that should not be available to outsiders.
+.PP
+.B kernelfile
+defaults to the normally running kernel file.
+.PP
+.B kmemfile
+defaults to the memory space of the normally running kernel.
+.SH SEE ALSO
+.BR inetd.conf (5)
+.SH BUGS
+The handling of fatal errors could be better.
+.PP
+If the
+.B -N
+flag is specified and a user's ".noident" file is not accessible,
+then ident information regarding that user will be returned
+if requested.

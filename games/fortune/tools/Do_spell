@@ -1,0 +1,11 @@
+#!/bin/sh -
+#	$NetBSD: Do_spell,v 1.2 1995/03/23 08:28:50 cgd Exp $
+#
+#	@(#)Do_spell	8.1 (Berkeley) 5/31/93
+#
+
+F=_spell.$$
+echo $1
+spell < $1 > $F
+sort $F $1.sp.ok | uniq -u | column
+rm -f $F

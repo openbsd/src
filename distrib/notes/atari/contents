@@ -1,0 +1,124 @@
+The Atari-specific portion of the NetBSD 1.1 release is found in the
+"atari" subdirectory of the distribution.  That subdirectory is layed
+out as follows:
+
+.../NetBSD-1.1/atari/
+			binary/		atari binary distribution sets;
+					see below.
+
+			floppies/	atari boot and installation
+					floppies; see below.
+
+			security/	atari security distribution;
+					see below;
+
+			utils.netbsd/
+			utils.tos/	Miscellaneous atari
+					installation utilities; see
+					installation section, below.
+
+There are three atari floppy images to be found in the "atari/floppies"
+subdirectory of the NetBSD 1.1 distribution.  One of them is a
+bootable TOS kernel floppy and the other two are installation floppy's.
+They are described in more detail below.  There are gzipped versions
+of each available, for easier downloading.  (The gzipped version
+have the ".gz" extension added to their names.)
+
+Bootable Kernel floppy:
+
+	This TOS disk contains the loadbsd and chg_part programs
+	and the GENERIC kernel.  It is setup so that you can insert it
+	int your floppy drive, and start the programs from GEM.
+
+	This floppy is named boot-11.fs
+
+Installation floppy:
+
+	This disk contains a BSD root file system setup to help
+	you install the rest of NetBSD.  This includes formatting
+	and mounting your root and /usr partitions and getting
+	ready to extract (and possibly first fetching) the distribution
+	sets.  There is enough on this file system to allow you to
+	make a slip connection, configure an ethernet, mount an NFS
+	file system or ftp.  You can also load distribution sets from
+	a SCSI tape or from one of your existing TOS partitions.
+
+	This floppy's are named "inst-11.fs.1" and "inst-11.fs.2".
+
+The NetBSD/atari binary distribution sets contain the binaries which
+comprise the NetBSD 1.1 release for the atari.  There are seven binary
+distribution sets, and the "security" distribution set.  The binary
+distribution sets can be found in subdirectories of the "atari/binary"
+subdirectory of the NetBSD 1.1 distribution tree, and are as follows:
+
+	base11	The NetBSD/atari 1.1 base binary distribution.  You
+		MUST install this distribution set.  It contains the
+		base NetBSD utilities that are necessary for the
+		system to run and be minimally functional.  It
+		includes shared library support, and excludes
+		everything described below.
+		[ 7M gzipped, 19M uncompressed ]
+
+	comp11	The NetBSD/atari Compiler tools.  All of the tools
+		relating to C, C++, and FORTRAN (yes, there are two!).
+		This set includes the system include files
+		(/usr/include), the linker, the compiler tool chain,
+		and the various system libraries (except the shared
+		libraries, which are included as part of the base
+		set).  This set also includes the manual pages for all
+		of the utilities it contains, as well as the system
+		call and library manual pages.
+		[ 4M gzipped, 12M uncompressed ]
+
+	etc11	This distribution set contains the system
+		configuration files that reside in /etc and in several
+		other places.  This set MUST be installed if you are
+		installing the system from scratch, but should NOT be
+		used if you are upgrading.  (If you are upgrading,
+		it's recommended that you get a copy of this set and
+		CAREFULLY upgrade your configuration files by hand.)
+		[ 50K gzipped, 280K uncompressed ]
+
+	games11	This set includes the games and their manual pages.
+		[ 1M gzipped, 3M uncompressed ]
+
+	man11	This set includes all of the manual pages for the
+		binaries and other software contained in the base set.
+		Note that it does not include any of the manual pages
+		that are included in the other sets.
+		[ 730K gzipped, 3M uncompressed ]
+
+	misc11	This set includes the system dictionaries (which are
+		rather large), the typesettable document set, and
+		man pages for other architectures which happen to be
+		installed from the source tree by default.
+		[ 2M gzipped, 6M uncompressed ]
+
+	text11	This set includes NetBSD's text processing tools,
+		including groff, all related programs, and their
+		manual pages.
+		[ 784K gzipped, 3M uncompressed ]
+
+The atari security distribution set is named "secr11" and can be found
+in the "atari/security" subdirectory of the NetBSD 1.1 distribution
+tree.  It contains crypt.c (the source file for the DES encryption
+algorithm) and the binaries which depend on it.  It can only be found
+on those sites which carry the complete NetBSD distribution and that
+can legally obtain it.  (Remember, because of United States law, this
+distribution set may not be exported to locations outside of the
+United States and Canada.)  [ 119K gzipped, 300K uncompressed ]
+
+The atari binary distribution sets are distributed in the same form as
+the source distribution sets; catted together, the members of a set
+form a gzipped tar file.  Each atari binary distribution set also has
+its own "CKSUMS" file, just as the source distribution sets do.
+
+The instructions given for extracting the source sets work equally
+well for the binary sets, but it is worth noting that if you use that
+method, the files are extracted "below" the current directory.  That
+is, if you want to extract the binaries "into" your system, i.e.
+replace the system binaries with them, you have to run the "tar xvfp"
+from /.  Also note that if you upgrade or install this way, those
+programs that you are using at the time will NOT be replaced.  If you
+follow the normal installation or upgrade procedures, this will be
+taken care of for you.

@@ -1,0 +1,66 @@
+NetBSD/hp300 1.0 will run on most HP 9000/300 series machines.
+The lowest amount of RAM that has been tested is 7.5M, though it
+may run with less.  Certainly, if you wish to run X, more RAM is
+recommended.  Until you reach 16M, more RAM is more important than
+a faster CPU.
+
+Here is a table of recommended HD partition sizes for a full install:
+	partition:	advise	needed
+	root (/)	15M	15M	(see note below)
+	user (/usr)	80M	45M
+	swap		----- 2M for every 1M of RAM -----
+	local (/local)	up to you
+
+NOTE:  Because of the nature of the hp300 bootstrap procedure, the root
+filesystem is a _fixed_size_!  You may want to consider placing /var and
+/tmp on their own partitions.  This, of course is up to you and your
+judgement.  Also, note that the recommended size of /usr is 15M greater
+than the needed size.  This is to allow room for kernel source and
+compile areas, as you may want to compile your own kernel.
+
+The following HP hardware is supported:
+
+	CPUs:
+		68020-based: 318, 319, 320, 330, and 350.
+		68030-based: 340, 345, 360, 370, 375, and 400.
+		68040-based: 380, 425, and 433.
+
+	Disks:
+		HP-IB/CS80: 7912, 7914, 7933, 7936, 7937, 7945, 7957,
+			    7958, 7959, 2200, and 2203.
+		SCSI-I, including magneto-optical and CD-ROM.  SCSI-II
+		drives should work if they can talk SCSI-I.
+
+	Tape drives:
+		Low-density CS80 cartridge: 7914, 7946, 9144.
+		High-density CS80 cartridge: 9145.
+		SCSI: HP DAT and Exabyte.
+
+	RS232 interfaces:
+		98644 built-in single port (dca).
+		98642 4-port (dcm).
+		98638 8-port (dcm).
+
+	Network interfaces:
+		98643 built-in and add-on LAN cards.
+
+	Displays:
+		98544, 98545, and 98547 color and monochrome Topcat.
+		98548, 98549, and 98550 color and monochrome Catseye.
+		98700 and 98710 Gatorbox.
+		98720 and 98721 Renaissance.
+		98730 and 98731 DaVinci.
+		A1096A monochrome Hyperion.
+
+	Input devices:
+		General interface supporting all HIL devices: keyboard,
+		2 and 3 button mice, and ID module.
+
+	Miscellaneous:
+		Battery-backed real-time clock.
+		98625A and 98625B built-in HP-IB interface.
+		98658A built-in SCSI interface.
+		Printers and plotters on RS232 and HP-IB.
+		SCSI autochanger.
+
+If it's not on this list, there is no support for it in this release.

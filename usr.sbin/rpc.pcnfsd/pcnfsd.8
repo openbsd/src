@@ -1,0 +1,217 @@
+.\"	$NetBSD: pcnfsd.8,v 1.4 1995/08/14 19:48:07 gwr Exp $
+.\" @(#) @(#)pcnfsd.8c	1.1 9/3/91;
+.TH PCNFSD 8C "25 April 1991"
+.SH NAME
+pcnfsd \- (PC)NFS authentication and print request server
+.SH SYNOPSIS
+.B /usr/sbin/rpc.pcnfsd 
+.SH DESCRIPTION
+.LP
+.B pcnfsd
+is an
+.SM RPC
+server that supports Sun ONC clients on PC (DOS, OS/2, Macintosh, and other)
+systems. This page describes version two of the
+.B pcnfsd
+server.
+.LP
+.B rpc.pcnfsd
+may be started from 
+.B /etc/rc.local
+or by the
+.BR inetd (8)
+superdaemon. It reads the configuration file
+.B /etc/pcnfsd.conf
+if present, and then services RPC requests directed to
+program number 150001. This release of the 
+.B pcnfsd
+daemon supports both version 1 and version 2 of the pcnfsd
+protocol. Consult the 
+.B rpcgen
+source file
+.B pcnfsd.x
+for details of the protocols.
+.LP
+The requests serviced by 
+.B pcnfsd
+fall into three categories: authentication, printing, and other. Only the
+authentication and printing services have administrative significance.
+.SH AUTHENTICATION
+When 
+.B pcnfsd
+receives a 
+.B PCNFSD_AUTH
+or
+.B PCNFSD2_AUTH
+request\**, it will "log in" the user by validating the username and
+password and returning the corresponding uid, gids, home directory,
+and umask. If 
+.B pcnfsd
+was built with the
+.B WTMP
+compile-time option, it will also append a record to the
+.BR wtmp (5)
+data base. If you do not wish to record PC "logins" in this way,
+you should add a line of the form
+.RS
+.sp
+\fBwtmp off\fP
+.sp
+.RE
+to the
+.B /etc/pcnfsd.conf
+file.
+.SH PRINTING
+.LP
+.B pcnfsd
+supports a printing model based on the use of NFS to transfer
+the actual print data from the client to the server. The client system
+issues a
+.B PCNFSD_PR_INIT
+or
+.B PCNFSD2_PR_INIT
+request, and the server returns the path to a spool directory which
+the client may use and which is exported by NFS.
+.B pcnfsd
+creates a subdirectory for each of its clients: the parent
+directory is normally
+.B /export/pcnfs
+and the subdirectory is the hostname of the client system.
+If you wish to use a different parent directory, you should add a
+line of the form
+.RS
+.sp
+\fBspooldir\fP \fIpath\fP
+.sp
+.RE
+to the
+.B /etc/pcnfsd.conf
+file.
+.LP
+Once a client has mounted the spool directory using NFS
+and has transferred print data to a file in this directory, it
+will issue a
+.B PCNFSD_PR_START
+or
+.B PCNFSD2_PR_START
+request. 
+.B pcnfsd
+handles this, and most other print-related requests, by
+constructing a command based on the printing services of
+the server operating system and executing the command using the
+identity of the PC user. Since this involves set-user-id privileges,
+.B pcnfsd
+must be run as root.
+.LP
+Every print request from the client includes the name of the printer
+which is to be used. In SunOS, this name corresponds to a printer
+definition in the
+.BR /etc/printcap (5)
+database. If you wish to define a non-standard way of processing
+print data, you should define a new printer and arrange for the
+client to print to this printer. There are two ways of setting up a new printer.
+The first involves the addition of an entry to
+.BR /etc/printcap (5)
+and the creation of filters to perform the required processing. This
+is outside the scope of this discussion. In addition,
+.B pcnfsd
+includes a mechanism by which  you can define virtual printers known
+only to 
+.B pcnfsd
+clients. Each printer is defined by a line in the
+.B /etc/pcnfsd.conf 
+file of the following form
+.RS
+.sp
+\fBprinter\fP \fIname alias-for command\fP
+.sp
+.RE
+\fIname\fP is the name of the printer you want to define. \fIalias-for\fP
+is the name of a "real" printer which corresponds to this printer. For 
+example, a request to
+display the queue for \fIname\fP will be translated into the
+corresponding request for the printer \fIalias-for\fP. If you have
+defined a printer in such a way that there is no "real" printer to
+which it corresponds, use a single "-" for this field. (See the
+definition of the printer
+.B test
+below for an example.) \fIcommand\fP is a
+command which will be executed whenever a file is printed on \fIname\fP.
+This command is executed by the Bourne shell,
+.B /bin/sh
+using the 
+.B -c
+option. For complex operations you should
+construct an executable shell program and invoke that in \fIcommand\fP.
+Within \fIcommand\fP the following tokens will be replaced:
+.LP
+.TP 10
+.B Token
+.B Substitution
+.TP
+.SB $FILE
+Replaced by the full path name of the print data file. When
+the command has been executed, the file will be unlinked.
+.TP
+.SB $USER
+Replaced by the username of the user logged in to the client system.
+.TP
+.SB $HOST
+Replaced by the host name of the client system.
+.LP
+Consider the following example
+.B /etc/pcnfsd.conf
+file:
+.RS
+.sp
+printer rotated lw /usr/local/bin/enscript -2r \s-2$FILE\s0
+.br
+printer test - /usr/bin/cp \s-2$FILE\s0 /usr/tmp/\s-2$HOST\s0-\s-2$USER\s0
+.sp
+.RE
+If a client system prints a job on the printer 
+.B rotated
+the utility
+.B enscript
+will be invoked to pre-process the file \s-2$FILE\s0. In this
+case, the
+.B -2r
+option causes the file to be printed in two-column rotated format
+on the default PostScript\(rg printer.
+If the client requests a list of the print queue for the printer
+.B rotated
+the
+.B pcnfsd
+daemon will translate this into a request for a listing for
+the printer
+.B lw.
+.LP
+The printer
+.B test
+is used only for testing. Any file sent to this printer
+will be copied into 
+.B /usr/tmp.
+Any request to list the queue, check the status, etc. of printer
+.B test
+will be rejected because the \fIalias-for\fP has been specified as "-".
+.SH FILES
+.PD 0
+.TP 20
+.B /etc/pcnfsd.conf
+configuration file
+.TP 20
+.B /export/pcnfs
+default print spool directory
+.PD
+.SH "SEE ALSO"
+.BR lpr (1),
+.BR lpc (8)
+.SH HISTORY
+The
+.B pcnfsd
+source code is distributed by Sun Microsystems, Inc. with their
+.SM PC/NFS
+product under terms described in common.h in that source code.
+Those terms require that you be informed that this version of
+.B pcnfsd
+was modified to run on NetBSD and is NOT supported by Sun.

@@ -1,0 +1,18 @@
+#	$NetBSD: std.amiga,v 1.5 1994/12/28 09:13:45 chopps Exp $
+
+# standard amiga information
+
+machine amiga m68k
+
+mainbus0	at root
+
+clock0	at mainbus0
+ser0	at mainbus0
+par0	at mainbus0
+kbd0	at mainbus0
+fdc0	at mainbus0
+fd0	at fdc0 unit 0
+zbus0	at mainbus0
+# zthreebus0	at mainbus0
+
+pseudo-device mouse 2

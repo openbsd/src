@@ -1,0 +1,123 @@
+.\"	$NetBSD: boot_sparc.8,v 1.4 1995/04/25 11:37:25 pk Exp $
+.\"
+.\" Copyright (c) 1992, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by the University of
+.\"	California, Berkeley and its contributors.
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     @(#)boot_sparc.8	8.2 (Berkeley) 4/19/94
+.\"
+.Dd April 19, 1994
+.Dt REBOOT 8 sparc
+.Os
+.Sh NAME
+.Nm reboot
+.Nd
+.Tn UNIX
+bootstrapping procedures
+.Sh SYNOPSIS
+.Nm reboot
+.Op Fl n
+.Op Fl q
+.Sh DESCRIPTION
+.Sy Power fail and crash recovery.
+Normally, the system will reboot itself at power-up or after crashes.
+An automatic consistency check of the file systems will be performed
+as described in
+.Xr fsck 8 .
+and unless this fails, the system will resume multi-user operations.
+.Pp
+.Sy Cold starts
+The SPARC system currently uses the SunOS bootstrap loaders.
+This will be changed in a future version of the system.
+The SunOS boot will attempt to load
+.Pa netbsd
+from partition A of the boot device,
+which must currently be an ``sd'' disk.
+.Pp
+The
+.Op Fl s
+flag to the SunOS boot loader will being the system up in single-user mode.
+The
+.Op Fl a
+flag instructs the system to prompt for the location of the root filesystem
+and the primary swap partition.
+.\"The
+.\".Op Fl d
+.\"flag to the SunOS boot loader will bring the system up in debug mode.
+.\"Here it waits for a kernel debugger connect; see
+.\".Xr kgdb 8 .
+Other flags are currently ignored.
+.Pp
+The Sparc boot rom comes in two flavours: an ``old-style'' rom is used in
+sun4 machines, while A ``new-style'' rom can be found on sun4c and sun4m models.
+The ``new-style'' Sparc boot rom is a full-featured Forth system with emacs
+key bindings. It can be put in ``old-style'' user-interface compatibility
+mode (in which case it shows a simple `>' prompt), but this is essentially
+useless. However, by default the rom runs in old-mode; to enter new-mode type `n'.
+The rom then shows a Forth-style `ok' prompt. It is recommended to have
+the rom always start in its native ``new-style'' mode. Utter the following
+incantation in new-mode to force the rom to always start in new-mode.
+.Pp
+.Pa \	ok
+setenv sunmon-compat? false
+.Pp
+The rom will normally load the kernel from "sd(0,0,0)vmunix". To change the
+default so that
+.Pa NetBSD
+will be loaded type the following
+.Pp
+.Pa \	ok
+setenv boot-from sd(0,0,0)netbsd
+.Pp
+At any time you can break back to the rom by pressing the `L1' and `a'
+keys at the same time (if the console is a serial port the same is
+achieved by sending a `break').
+If you do this accidentally you can continue whatever was in progress
+by typing `go'.
+.Pp
+.Sh FILES
+.Bl -tag -width /netbsdxx -compact
+.It Pa /netbsd
+system code
+.It Pa /boot
+system bootstrap
+.El
+.Sh SEE ALSO
+.Xr crash 8 ,
+.Xr disklabel 8 ,
+.Xr fsck 8 ,
+.Xr halt 8 ,
+.Xr init 8 ,
+.Xr rc 8 ,
+.Xr shutdown 8 ,
+.Xr syslogd 8
+.Sh BUGS
+The use of Sun disk labels, without the ability to write them,
+is problematic.

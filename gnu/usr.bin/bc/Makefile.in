@@ -1,0 +1,314 @@
+# Makefile for GNU bc and dc.	-*- Indented-Text -*-
+# Copyright (C) 1993, 1994 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2, or (at your option)
+# any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+# @configure_input@
+
+#### Start of system configuration section. ####
+
+srcdir = @srcdir@
+VPATH = @srcdir@
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+
+bindir = $(exec_prefix)/bin
+datadir = $(prefix)/lib
+libdir = $(prefix)/lib
+infodir = $(prefix)/info
+
+# Where to install the manual pages.
+mandir = $(prefix)/man/man1
+# Extension (not including `.') for the installed manual page filenames.
+manext = 1
+
+#
+# This is the name of the library file, if needed.  This definition should
+# not be deleted.
+#
+LIBFILE = $(libdir)/libmath.b
+
+#
+# Programs definitions for use by make.
+#
+
+SHELL = /bin/sh
+YACC = @YACC@
+LEX = @LEX@
+CC = @CC@
+
+INSTALL = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA = @INSTALL_DATA@
+
+UUENCODE = uue
+
+LIBS = @LIBS@ @LEXLIB@
+
+CPPFLAGS = @CPPFLAGS@
+LDFLAGS = @LDFLAGS@
+
+MAKEINFO = makeinfo
+TEXI2DVI = texi2dvi
+
+# stuff for cflags
+
+STDDEFS = -D_POSIX_SOURCE -DDOT_IS_LAST
+INCDIR = -I. -I$(srcdir)
+
+#
+#  The following are the standard definitions.  For MINIX PC, you need to
+#  comment these out and select one of the MINIX PC definition sets.
+#  Other configuration defines are generated automatically.  See the 
+#  README file for more details.
+#
+O=o
+CFLAGS = -O $(INCDIR) $(STDDEFS) @CFLAGS@
+LDFLAGS = 
+#
+# For the PC version of MINIX (K&R compiler), use the following lines.
+# 
+#O=s
+#CFLAGS = -O $(INCDIR) $(STDDEFS) @CFLAGS@
+#LDFLAGS = -i
+#
+# For the PC version of MINIX (ANSI compiler), use the following lines:
+# 
+#O=o
+#CFLAGS = -m $(INCDIR) $(STDDEFS) @CFLAGS@
+#LDFLAGS = -i
+#
+#
+DISTFILES = COPYING Makefile.in Install bc.y bcdefs.h const.h version.h \
+            execute.c global.c global.h load.c main.c number.c storage.c \
+	    number.h proto.h scan.l util.c vfprintf.c README bc.1 sbc.y \
+	    fix_libmath.h libmath.b configure configure.in config.h.in \
+	    acconfig.h ChangeLog \
+	    dc.1 dc.texinfo \
+ 	    dc-array.c dc-eval.c dc-misc.c dc-number.c dc-stack.c \
+	    dc-string.c dc.h dc-proto.h dc-regdef.h dc-version.h \
+	    install-sh
+#
+BCOFILES = scan.$O util.$O main.$O number.$O storage.$O load.$O execute.$O 
+DCOFILES = dc-misc.$O dc-eval.$O dc-stack.$O dc-array.$O dc-string.$O \
+	   dc-number.$O
+#
+SUBDIRS = Examples Test
+#
+EXTRAFILES = bc.c.dist scan.c.dist y.tab.h.dist libmath.h dc.info
+#
+
+all: bc dc dc.info
+
+### targets required by GNU Coding standards ###
+
+Makefile: Makefile.in config.status
+	./config.status
+
+#config.status: configure
+#	$(srcdir)/configure --srcdir=$(srcdir) --no-create
+#
+#configure: configure.in
+#	cd $(srcdir); autoconf
+
+bc: $& config.h bc.$O $(BCOFILES) global.$O
+	$(CC) $(LDFLAGS) -o bc bc.$O $(BCOFILES) global.$O $(LIBS)
+
+dc: $(DCOFILES) number.o
+	$(CC) $(LDFLAGS) -o dc $(DCOFILES) number.o $(LIBS)
+
+sbc: sbc.$O $(BCOFILES) global.$O
+	$(CC) -o sbc $(LDFLAGS) sbc.$O $(BCOFILES) global.$O $(LIBS)
+
+config.h.in:
+	autoheader
+
+config.h:	config.h.in configure
+	./configure
+
+libmath.h: libmath.b
+	$(MAKE) fbc
+	./fbc -c libmath.b </dev/null >libmath.h
+	./fix_libmath.h
+	rm -f ./fbc
+
+fbc: $(BCOFILES) bc.$O
+	echo \"\" > libmath.h
+	$(CC) -c $(CFLAGS) global.c
+	$(CC) -o fbc $(LDFLAGS) bc.$O $(BCOFILES) global.$O $(LEXLIB)
+
+install: installdirs bc libmath.b config.h
+	rm -f $(bindir)/bc $(bindir)/dc
+	$(INSTALL_PROGRAM) bc $(bindir)
+	$(INSTALL_PROGRAM) dc $(bindir)
+	chmod 555 $(bindir)/bc $(bindir)/dc
+	if grep -s "define BC_MATH_FILE" config.h; \
+	  then rm -f $(libdir)/libmath.b; \
+	  $(INSTALL_DATA) $(srcdir)/libmath.b $(libdir); \
+	  chmod 444 $(libdir)/libmath.b; \
+	  else true; \
+	fi
+	$(INSTALL_DATA) $(srcdir)/bc.1 $(mandir)
+	$(INSTALL_DATA) $(srcdir)/dc.1 $(mandir)
+	$(INSTALL_DATA) $(srcdir)/dc.info $(infodir)
+
+installdirs:
+	-mkdir $(prefix)
+	-mkdir $(bindir)
+	-if grep -s "define BC_MATH_FILE" config.h; \
+	  then mkdir $(libdir)
+	  else true; \
+	fi
+	-mkdir $(mandir)
+	-mkdir $(infodir)
+
+uninstall: 
+	rm -f $(bindir)/bc $(bindir)/dc
+	if grep -s "define BC_MATH_FILE" config.h; \
+	  then rm -f $(libdir)/libmath.b;
+	  else true; \
+	fi
+	rm -f $(mandir)/bc1 $(mandir)/dc.1
+	rm -f $(infodir)/dc.info
+
+dist: $(EXTRAFILES)
+	OF=`sed -n 's/.*\([0-9][0-9]*\.[0-9][0-9]*\).*/bc-\1/p' version.h` \
+	; rm -rf $$OF \
+	; mkdir $$OF \
+	; chmod 777 $$OF \
+	; for file in $(DISTFILES) ; do ln $(srcdir)/$$file $$OF/$$file; done \
+	; for file in $(EXTRAFILES) ; do ln $$file $$OF/$$file; done \
+	; for dir in $(SUBDIRS); do \
+	   mkdir $$OF/$$dir ; chmod 777 $$OF/$$dir ; \
+	   cp $(srcdir)/$$dir/* $$OF/$$dir; done \
+	; tar cf $$OF.tar $$OF \
+	; gzip $$OF.tar \
+	; rm -rf $$OF
+
+shars: dist
+	OF=`sed -n 's/.*\([0-9][0-9]*\.[0-9][0-9]*\).*/bc-\1/p' version.h` \
+	; $(UUENCODE) $$OF.tar.Z - > $$OF.uue \
+	; split -775 $$OF.uue $$OF-u. \
+	; for file in $$OF-u.a?; do shar $$file > $$file.sh; done
+
+minixdist: $(EXTRAFILES)
+	OF=`sed -n 's/.*\([0-9][0-9]*\.[0-9][0-9]*\).*/bc-\1/p' version.h` \
+	; rm -rf $$OF \
+	; mkdir $$OF \
+	; cd $$OF \
+	; for file in $(DISTFILES) $(EXTRAFILES); do ln ../$$file; done \
+	; cd .. \
+	; tar cf $$OF.tar $$OF \
+	; gzip $$OF.tar \
+	; rm -rf $$OF
+
+minixshars: minixdist
+	OF=`sed -n 's/.*\([0-9][0-9]*\.[0-9][0-9]*\).*/bc-\1/p' version.h` \
+	; $(UUENCODE) $$OF.tar.Z - > $$OF.uue \
+	; split -775 $$OF.uue $$OF-u. \
+	; for file in $$OF-u.a?; do shar $$file > $$file.sh; done
+
+csrshars: $(EXTRAFILES)
+	findsrc -dy $(DISTFILES) $(EXTRAFILES) $(SUBDIRS) | \
+	makekit -npart -oMANIFEST
+
+bc.c.dist: bc.c
+	cp bc.c bc.c.dist
+
+scan.c.dist: scan.c
+	cp scan.c scan.c.dist
+
+y.tab.h.dist: y.tab.h
+	cp y.tab.h y.tab.h.dist
+
+extra:  $(EXTRAFILES)
+
+# assumes that the extra files exist!
+derived: 
+	@if [ ! -f $(srcdir)/bc.c.dist ] ; then \
+	  echo "You do not have a complete distribution.  Get a new copy or"; \
+	  echo "see if you can make the derived files using lex and yacc."; \
+	  exit 1; \
+	fi
+	cp $(srcdir)/bc.c.dist bc.c
+	cp $(srcdir)/scan.c.dist scan.c
+	cp $(srcdir)/y.tab.h.dist y.tab.h
+
+clean:
+	rm -f *.$O core ERRS *~ *.bak *.Z 
+
+distclean: clean
+	rm -f scan.c y.tab.h bc.c sbc.c bc sbc bc-dist* config.h  bc-*.* \
+	dc part?? MANIFEST* config.h config.status config.log config.cache \
+	Makefile *.aux *.cp *.dvi *.fn *.ky *.log *.pg *.toc *.tp *.vr
+
+mostlyclean: distclean
+
+realclean: distclean
+	rm -rf *.dist configure libmath.h dc.info config.h.in
+
+scan.c: scan.l
+	$(LEX) scan.l
+	mv lex.yy.c scan.c
+
+y.tab.h bc.c: bc.y
+	@echo "expect 1 shift/reduce conflict"
+	$(YACC) -d bc.y
+	mv y.tab.c bc.c
+
+sbc.c: sbc.y
+	$(YACC) -d sbc.y
+	mv y.tab.c sbc.c
+
+# Information files
+info: dc.info
+dvi: dc.dvi
+
+#bc.info: bc.texinfo
+#	$(MAKEINFO) -I$(srcdir) --no-split bc.texinfo
+#
+#bc.dvi: bc.texinfo
+#	$(TEXI2DVI) $(srcdir)/bc.texinfo
+
+dc.info: dc.texinfo
+	$(MAKEINFO) -I$(srcdir) --no-split dc.texinfo
+
+dc.dvi: dc.texinfo
+	$(TEXI2DVI) $(srcdir)/dc.texinfo
+
+
+global.$O:  bcdefs.h global.h libmath.h global.c
+bc.$O:	    bcdefs.h global.h bc.y
+execute.$O: bcdefs.h global.h execute.c
+load.$O:    bcdefs.h global.h load.c
+main.$O:    bcdefs.h global.h version.h main.c
+number.$O:  bcdefs.h Makefile number.c
+sbc.$O:     bcdefs.h global.h sbc.y
+scan.$O:    bcdefs.h global.h y.tab.h scan.c
+storage.$O: bcdefs.h global.h storage.c
+util.$O:    bcdefs.h global.h version.h util.c
+
+bcdefs.h: number.h const.h config.h
+	touch bcdefs.h
+
+dc-array.$O : dc-array.c config.h dc.h dc-proto.h dc-regdef.h 
+dc-eval.$O : dc-eval.c config.h dc.h dc-proto.h 
+dc-misc.$O : dc-misc.c config.h dc.h dc-proto.h dc-version.h 
+dc-number.$O : dc-number.c config.h bcdefs.h const.h version.h number.h \
+  proto.h global.h dc.h dc-proto.h 
+dc-stack.$O : dc-stack.c config.h dc.h dc-proto.h dc-regdef.h 
+dc-string.$O : dc-string.c config.h dc.h dc-proto.h 
+number.$O : number.c bcdefs.h config.h const.h version.h number.h proto.h 

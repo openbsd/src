@@ -1,0 +1,15 @@
+#!/bin/sh
+# $Id: dostriptest,v 1.1.1.1 1995/10/18 08:39:10 deraadt Exp $
+
+x=striptest.xx.$$
+y=striptest.yy.$$
+
+cp $1 $x
+strip $x
+cp $2 $y
+strip $y
+
+doobjcmp $x $y
+exit
+
+#eof

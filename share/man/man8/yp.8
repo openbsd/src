@@ -1,0 +1,125 @@
+.\"	$NetBSD: yp.8,v 1.9 1995/08/11 01:16:52 thorpej Exp $
+.\"
+.\" Copyright (c) 1992/3 Theo de Raadt <deraadt@fsa.ca>
+.\" All rights reserved.
+.\" Portions Copyright (c) 1994 Jason R. Thorpe.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the author may not be used to endorse or promote
+.\"    products derived from this software without specific prior written
+.\"    permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+.\" OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+.\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+.\" DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd April 5, 1993
+.Dt YP 8
+.Os
+.Sh NAME
+.Nm yp
+.Nd description of the YP subsystem
+.Sh SYNOPSIS
+.Nm ypbind
+.Op Fl ypset
+.Nm ypbind
+.Op Fl ypsetme
+.Pp
+.Nm ypset
+.Op Fl h Ar host
+.Op Fl d Ar domain
+.Ar server
+.Pp
+.Nm yppoll
+.Op Fl h Ar host
+.Op Fl d Ar domain
+.Ar mapname
+.Pp
+.Nm ypcat
+.Op Fl kt
+.Op Fl d Ar domainname
+.Ar mapname
+.Nm ypcat
+.Fl x
+.Pp
+.Nm ypmatch
+.Op Fl kt
+.Op Fl d Ar domainname
+.Ar key ... mapname
+.Nm ypmatch
+.Fl x
+.Pp
+.Nm ypwhich
+.Op Fl d Ar domain
+.Oo
+.Op Fl t
+.Fl m Op Ar mname
+|
+.Ar host
+.Oc
+.Nm ypwhich
+.Fl x
+.Sh DESCRIPTION
+The
+.Nm YP
+subsystem allows network management of passwd and group file
+entries through the functions
+.Xr getpwent 3
+and
+.Xr getgrent 3 .
+.Nm YP
+also provides hooks for other client programs, such as
+.Xr amd 8
+and
+.Xr bootparamd 8 ,
+that can use
+.Nm YP
+maps.
+.Pp
+The
+.Nm YP 
+subsystem is started automatically in
+.Pa /etc/rc
+if the directory
+.Pa /var/yp
+exists.
+.Sh BUGS
+Only
+.Nm YP
+client functionality exists, there is no ypserv (yet).
+.Pp
+If
+.Xr ypbind
+cannot find a server, the system behaves the same way as Sun's code:
+it hangs.
+.Sh SEE ALSO
+.Xr domainname 1 ,
+.Xr group 5 ,
+.Xr passwd 5 ,
+.Xr ypbind 8 ,
+.Xr ypcat 1 ,
+.Xr ypmatch 1 ,
+.Xr yppoll 8 , 
+.Xr ypset 8 ,
+.Xr ypwhich 1 ,
+.Xr ypclnt 3
+.Sh HISTORY
+This free
+.Nm YP
+subsystem was written from scratch by Theo de Raadt to be compatible
+to Sun's implementation.

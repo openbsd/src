@@ -1,0 +1,43 @@
+#	$NetBSD: std.sun3,v 1.13 1995/10/08 23:38:46 gwr Exp $
+
+# Standard information for sun3's.
+machine	sun3 m68k
+
+# The root node:
+mainbus0 at root
+
+# control space hack...
+obctl0 at mainbus?
+fpu0 at mainbus?
+
+# main memory
+obmem0 at mainbus?
+# device space
+obio0  at mainbus?
+# VME D16 space
+vmes0 at mainbus?
+# VME D32 space
+vmel0 at mainbus?
+
+# Devices that should be present in any Sun3 kernel.
+
+# OBCTL
+idprom0 at obctl? addr ?
+
+# OBIO
+zs0 at obio? addr ?
+zs1 at obio? addr ?
+eeprom0 at obio? addr ?
+clock0 at obio? addr ?
+
+# Standard defines
+
+# XXX - Still needed?
+options 	NEWCONFIG
+options 	MACHINE_NONCONTIG
+
+# These are used ONLY when reading the hardware time/date clock.
+# All Sun machines keep the hardware time/date clock on GMT.
+options		TIMEZONE=0		# minutes west of GMT (for param.c)
+options 	DST=0			# daylight savings rules (for param.c)
+

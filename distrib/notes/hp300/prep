@@ -1,0 +1,125 @@
+NOTE:  These instructions are explicitly for installing NetBSD
+from an HP-UX system, version 7 or later.  It has not been
+tested with HP-UX versions earlier than 7, and has also not
+been tested with HP-UX 8, although it is presumed to work.
+For the creative, similar steps may be taken from a system such
+as Utah's 4.3BSD release for the hp300, although bootstrapping
+from such a system has not been tested.
+
+Bootstrapping the hp300 is a complicated process, but it's a lot
+easier than it used to be.  For this process you need the
+following items from the install/ directory:
+
+	boot		NetBSD/hp300 boot block for
+			HP-IB and SCSI disks
+
+	rootimage.gz	bootstrap root filesystem
+			image
+
+	label		prototype disk label
+
+	makedisk	a program for HP-UX that will
+			write a NetBSD disk label,
+			boot block, and root filesystem
+			image to the target disk
+			(NOTE:  This is an HP-UX 7.x binary.
+			while it will work under HP-UX 9.x,
+			you may want to compile this yourself.
+			The source may be found in makedisk.tar.gz)
+
+VERY IMPORTANT NOTE: This procedure will destroy all data on the
+target disk.  Because NetBSD uses a different filesystem format than
+HP-UX, your old data will be useless.  If you wish to save anything,
+use tar(1) instead of dump(1M), again because of filesystem differences.
+
+First of all, you must have a second disk on which to install NetBSD.
+If possible, this disk should first be prepared with mediainit(1M).
+Once this disk is spotless, you should generate a disk label for it.
+Using the prototype label provided, fill in all of the necessary
+information.  Remember, if you derive geometry information from an
+HP-UX disktab, your partition size will be off.  This is because HP-UX
+uses a 1024-byte sector size, while NetBSD uses a 512-byte sector size.
+To avoid the problem, you may simply double the number of cylinders.
+(That's what I do...works great.  -- JRT)
+
+IMPORTANT:  Partition 'a' must be offset one cylinder.  Since
+partition information is expressed in sectors, the offset of
+partition 'a' must be the value of `sectors/cylinder'.  This is
+to leave room for the boot block.
+
+When you create your disklabel, be sure to specify whether or not
+the disk is HP-IB or SCSI in the `type:' field.
+
+Below is an example of what a disk label should look like.  This
+is an example only!  Do not attempt this at home!
+
+
+
+# Sample disklabel for example only.  This is a comment.
+type: HP-IB
+disk: 
+label: INSTALL-1_0
+flags:
+bytes/sector: 512
+sectors/track: 36
+tracks/cylinder: 7
+sectors/cylinder: 252
+cylinders: 1013
+rpm: 3600
+interleave: 1
+trackskew: 0
+cylinderskew: 0
+headswitch: 0		# milliseconds
+track-to-track seek: 0	# milliseconds
+drivedata: 0 
+
+7 partitions:
+#        size   offset    fstype   [fsize bsize   cpg]
+  a:    30744      252    4.2BSD     1024  8192    16 	# (Cyl.    1 - 122)
+  b:    32760    30996      swap                    	# (Cyl.  123 - 252)
+  c:   255276        0      boot                    	# (Cyl.    0 - 1012)
+  e:    20412    63756    4.2BSD     1024  4096    16 	# (Cyl.  253 - 333)
+  f:    40824    84168    4.2BSD     1024  8192    16 	# (Cyl.  334 - 495)
+  g:   130284   124992    4.2BSD     1024  8192    16 	# (Cyl.  496 - 1012)
+
+NOTE:  Due to the nature of the bootstrapping procedure, your 'a'
+partition must be at least 30744 sectors long.  Increase the size of
+your 'a' partition just enough to make it end on a cylinder boundary.
+If you make it any larger, you will just be wasting space, as the
+filesystem ends after 30744 sectors.
+
+Remember to write down the names of the partitions and what you
+will be using them for (i.e. 'a - root, b - swap, e - /usr, etc.')
+as you will need this information later on in the installation
+process.
+
+Once you are satisfied with your disklabel, you can write the
+root filesystem image to the target disk.  Use the `makedisk'
+program for this.  So, under HP-UX, do:
+
+	./makedisk /dev/rdsk/c7d0s0 mylabel boot rootimage.gz
+
+where:
+	/dev/rdsk/c7d0s0	raw flavor of target disk device
+
+	mylabel			disk label you just wrote
+
+	boot			supplied boot block
+
+	rootimage.gz		gzipped root filesystem image
+				NOTE: This requires that gzip be
+				installed on your HP-UX system.
+				If it is not, a gzip binary is
+				provided in the install/ directory.
+				Source for gzip may be found in the
+				gsrc10 distribution set.  Again, this
+				gzip is an HP-UX 7.x binary.
+
+If you wish to label any additional disks, you will have to do this
+from NetBSD, although you will not have an editor at your disposal.
+To do this, simply generate the labels now, and then grab them at
+the same time and by the same method you use to grab the distrubtion
+sets.
+
+Once this is done, you should be ready to boot NetBSD from the target
+disk.

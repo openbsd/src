@@ -1,0 +1,40 @@
+NOTE: If you wish to install NetBSD on your whole disk, i.e. you do
+not want DOS or any other operating system to reside on your hard
+disk, you can skip this section and go on to the section that
+describes installation, below.  If you're upgrading your system from a
+previous release of NetBSD, you shouldn't have proceeded directly to
+the section about upgrading; you need none of the information
+presented here.
+
+First and foremost, before beginning the installation process, MAKE
+SURE YOU HAVE A RELIABLE BACKUP of any data on your hard disk that you
+wish to keep.  Repartitioning your hard disk is an excellent way to
+destroy important data.
+
+Second, if you are using a disk controller which supports disk
+geometry translation, be sure to use the same parameters for NetBSD as
+for DOS or the other operating systems installed on your disk.  If you
+do not, it will be much harder to make NetBSD properly coexist with
+them.
+
+Third, use the DOS "fdisk" program or another partition editor to
+repartition your hard disk.  Create a partition of at least 40M in
+size, and note its starting offset and its length (preferably in units
+of disk sectors or cylinders).  You will need that information when
+installing NetBSD (and if the offset and length are not in those
+units, you will have to convert them).  Once you have created the new
+NetBSD partition, mark it as having a partition type of 0xA5 (165, in
+decimal).  If you used "fdisk" to partition your disk, you will
+probably have to use a different partition editor to mark the
+partition with the correct type.
+
+Finally, do whatever is necessary to restore order to the partition
+you took space away from.  If it was a DOS partition, you probably
+will need to use "format" to create a new file system on it, and then
+restore your important files from your backups.  Other operating
+systems will have different needs; most will need to reformat the
+partition, and if it was their "main" partition, will probably need
+to be reinstalled.
+
+Your hard disk is now prepared to have NetBSD installed on it, and
+you should proceed with the installation instructions.

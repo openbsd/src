@@ -1,0 +1,162 @@
+#	$NetBSD: files.sparc,v 1.12 1995/10/05 00:21:35 pk Exp $
+
+# @(#)files.sparc	8.1 (Berkeley) 7/19/93
+# sparc-specific configuration info
+
+# maxpartitions must be first item in files.${ARCH}.newconf
+maxpartitions 8
+
+maxusers 2 8 64
+
+device mainbus at root {}
+
+device obio at mainbus { [addr = -1], [level = -1] }
+device vmel at mainbus { [addr = -1], [level = -1], [vect = -1] }
+device vmes at mainbus { [addr = -1], [level = -1], [vect = -1] }
+file	arch/sparc/dev/obio.c		obio vmel vmes
+
+device audio at mainbus
+file	arch/sparc/dev/amd7930.c		audio needs-flag
+
+device auxreg at mainbus
+file	arch/sparc/sparc/auxreg.c
+
+device clock at mainbus, obio
+device oclock at obio
+device timer at mainbus, obio
+device eeprom at obio
+file	arch/sparc/sparc/clock.c
+
+device cpu at mainbus
+file	arch/sparc/sparc/cpu.c
+
+device memreg at mainbus, obio
+file	arch/sparc/sparc/memreg.c
+
+device zs at mainbus, obio
+file	arch/sparc/dev/zs.c			zs needs-count
+
+device fdc at mainbus {}
+device fd at fdc: disk
+file	arch/sparc/dev/fd.c			fd needs-flag
+file	arch/sparc/sparc/bsd_fdintr.s		fd
+
+device sbus at mainbus { slot = -1, offset = -1 }
+file	arch/sparc/dev/sbus.c		sbus
+
+#
+# Machine-independent SCSI drivers
+#
+include "../../../scsi/files.scsi"
+
+major { sd = 7 }
+major { vnd = 8 }
+major { cd = 18 }
+
+device dma at sbus, obio
+device espdma at sbus	{ slot = -1, offset = -1 }
+device ledma at sbus	{ slot = -1, offset = -1 }
+file	arch/sparc/dev/dma.c		dma espdma ledma needs-flag
+
+device esp at sbus, espdma, obio: scsi
+file	arch/sparc/dev/esp.c		esp needs-flag
+
+device bwtwo at sbus, obio, vmes, vmel
+file	arch/sparc/dev/bwtwo.c		bwtwo needs-flag
+
+device cgtwo at sbus, obio, vmes
+file	arch/sparc/dev/cgtwo.c		cgtwo needs-flag
+
+device cgthree at sbus
+file	arch/sparc/dev/cgthree.c	cgthree needs-flag
+
+device cgsix at sbus
+file	arch/sparc/dev/cgsix.c		cgsix needs-flag
+
+file	arch/sparc/dev/bt_subr.c	cgsix cgthree
+
+device le at sbus, ledma, obio: ifnet, ether
+file	arch/sparc/dev/if_le.c		le
+
+device ie at obio, vmes, vmel: ifnet, ether
+file	arch/sparc/dev/if_ie.c		ie
+
+device	xdc at vmel {drive = -1}
+device	xd at xdc: disk
+file	arch/sparc/dev/xd.c		xd needs-flag
+major	{xd = 10}
+
+device	xyc at vmes {drive = -1}
+device	xy at xyc: disk
+file	arch/sparc/dev/xy.c		xy needs-flag
+major	{xy = 3}
+
+device	si at vmes: scsi
+device	sw at obio: scsi
+file	arch/sparc/dev/si.c		si sw needs-flag
+
+pseudo-device	kbd
+
+file	arch/sparc/dev/cons.c
+file	arch/sparc/dev/event.c
+file	arch/sparc/dev/fb.c
+file	arch/sparc/dev/ms.c
+file	arch/sparc/dev/kbd.c		kbd
+
+file	arch/sparc/fpu/fpu.c
+file	arch/sparc/fpu/fpu_add.c
+file	arch/sparc/fpu/fpu_compare.c
+file	arch/sparc/fpu/fpu_div.c
+file	arch/sparc/fpu/fpu_explode.c
+file	arch/sparc/fpu/fpu_implode.c
+file	arch/sparc/fpu/fpu_mul.c
+file	arch/sparc/fpu/fpu_sqrt.c
+file	arch/sparc/fpu/fpu_subr.c
+
+# N.B.: optimizer breaks pmap.c and/or cache.c somehow -- have not
+# identified the exact problem yet.  NOOPT_C suffices for now.
+file	arch/sparc/sparc/autoconf.c
+file	arch/sparc/sparc/amd7930intr.s	audio
+file	arch/sparc/sparc/cache.c
+file	arch/sparc/sparc/conf.c
+file	arch/sparc/sparc/in_cksum.c
+file	arch/sparc/sparc/intr.c
+file	arch/sparc/sparc/kgdb_stub.c
+# sparc/sparc/locore.s is handled specially in the makefile,
+# because it must come first in the "ld" command line.
+file	arch/sparc/sparc/locore2.c
+file	arch/sparc/sparc/machdep.c
+file	arch/sparc/sparc/process_machdep.c
+file	arch/sparc/sparc/mem.c
+file	arch/sparc/sparc/openprom.c
+file	arch/sparc/sparc/pmap.c
+# the following overrides the generic "sys_process.c"
+# commented out by deraadt
+#file	arch/sparc/sparc/sys_process.c
+file	arch/sparc/sparc/sys_machdep.c
+file	arch/sparc/sparc/trap.c
+file	arch/sparc/sparc/vm_machdep.c
+file	arch/sparc/sparc/disksubr.c
+
+file	kludge_for_in_proto.c		hy needs-flag
+
+file	arch/sparc/sparc/db_interface.c	ddb
+file	arch/sparc/sparc/db_trace.c	ddb
+file	arch/sparc/sparc/db_disasm.c	ddb
+
+#
+# Raster Console
+#
+include "../../../dev/rcons/files.rcons"
+
+#
+# Compatibility modules
+#
+
+# SVR4 Binary Compatibility (COMPAT_SVR4)
+include "../../../compat/svr4/files.svr4"
+file	arch/sparc/sparc/svr4_machdep.c	compat_svr4
+file	arch/sparc/sparc/sunos_machdep.c compat_sunos
+
+# SunOS Binary Compatibility (COMPAT_SUNOS)
+include "../../../compat/sunos/files.sunos"

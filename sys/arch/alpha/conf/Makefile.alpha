@@ -1,0 +1,158 @@
+#	$NetBSD: Makefile.alpha,v 1.7 1995/09/19 23:28:06 thorpej Exp $
+#
+# Makefile for NetBSD
+#
+# This makefile is constructed from a machine description:
+#	config machineid
+# Most changes should be made in the machine description
+#	/sys/conf/``machineid''
+# after which you should do
+#	 config machineid
+# Machine generic makefile changes should be made in
+#	/sys/conf/Makefile.``machinetype''
+# after which config should be rerun for all machines of that type.
+#
+# N.B.: NO DEPENDENCIES ON FOLLOWING FLAGS ARE VISIBLE TO MAKEFILE
+#	IF YOU CHANGE THE DEFINITION OF ANY OF THESE RECOMPILE EVERYTHING
+#
+# -DTRACE	compile in kernel tracing hooks
+# -DQUOTA	compile in file system quotas
+
+# DEBUG is set to -g if debugging.
+# PROF is set to -pg if profiling.
+
+AS?=	as
+AWK?=	awk
+CC?=	cc
+CPP?=	cpp
+LD?=	ld
+TOUCH?=	touch -f -c
+
+# source tree is located via $S relative to the compilation directory
+S=	../../../..
+ALPHA=	../..
+
+INCLUDES= -I. -I$S/arch -I$S -I$S/sys
+COPTS=	${INCLUDES} ${IDENT} -D_KERNEL
+CFLAGS=	-Werror -fno-builtin -mno-fp-regs ${DEBUG} ${COPTS} -Dalpha
+AFLAGS=	${COPTS}
+
+### find out what to use for libkern
+.include "$S/lib/libkern/Makefile.inc"
+.ifndef PROF
+LIBKERN=	${KERNLIB}
+.else
+LIBKERN=	${KERNLIB_PROF}
+.endif
+
+### find out what to use for libcompat
+.include "$S/compat/common/Makefile.inc"
+.ifndef PROF
+LIBCOMPAT=	${COMPATLIB}
+.else
+LIBCOMPAT=	${COMPATLIB_PROF}
+.endif
+
+# compile rules: rules are named ${TYPE}_${SUFFIX}${CONFIG_DEP}
+# where TYPE is NORMAL, DRIVER, or PROFILE}; SUFFIX is the file suffix,
+# capitalized (e.g. C for a .c file), and CONFIG_DEP is _C if the file
+# is marked as config-dependent.
+
+NORMAL_C=	${CC} -c ${CFLAGS} ${PROF} $<
+NORMAL_C_C=	${CC} -c ${CFLAGS} ${PROF} ${PARAM} $<
+NORMAL_S=	rm -f $*.c; ln -s $< $*.c; \
+		${CC} ${AFLAGS} -I${ALPHA}/alpha -E $*.c > $*.i; \
+		${AS} -o $@ $*.i; rm -f $*.c $*.i
+NORMAL_S_C=	rm -f $*.c; ln -s $< $*.c; \
+		${CC} ${AFLAGS} ${PARAM} -I${ALPHA}/alpha -E $*.c > $*.i; \
+		${AS} -o $@ $*.i; rm -f $*.c $*.i
+
+%OBJS
+
+%CFILES
+
+# load lines for config "xxx" will be emitted as:
+# xxx: ${SYSTEM_DEP} swapxxx.o
+#	${SYSTEM_LD_HEAD}
+#	${SYSTEM_LD} swapxxx.o
+#	${SYSTEM_LD_TAIL}
+DEBUG?=
+.if ${DEBUG} == "-g"
+LDX=-X
+.else
+LDX=-x
+.endif
+LDFLAGS= ${LDX} -G 4 -N -e __start -Ttext fffffc0000230000
+SYSTEM_OBJ=	locore.o vnode_if.o ${OBJS} param.o ioconf.o ${LIBKERN} \
+		${LIBCOMPAT}
+SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
+SYSTEM_LD_HEAD=	@echo loading $@; rm -f $@
+SYSTEM_LD=	-@echo ${LD} ${LDFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o ${XXX}; \
+		${LD} ${LDFLAGS} -o $@ ${SYSTEM_OBJ} vers.o ${XXX}
+SYSTEM_LD_TAIL=	@size $@; chmod 755 $@
+#.if ${DEBUG} == "-g"
+#SYSTEM_LD_TAIL+=; echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
+#		echo strip -d $@; strip -d $@
+#.endif
+
+%LOAD
+
+newvers:
+	sh $S/conf/newvers.sh
+	${CC} ${CFLAGS} -c vers.c
+
+clean::
+	rm -f eddep *netbsd netbsd.gdb tags tags1 vnode_if.[ch] *.[io] \
+		[a-z]*.s Errs errs linterrs makelinks genassym
+
+
+locore.o: ${ALPHA}/alpha/locore.s ${ALPHA}/alpha/pal.s \
+	  ${ALPHA}/alpha/prom_disp.s assym.s
+	${NORMAL_S_C}
+
+# depend on maxusers
+assym.s: Makefile
+
+./assym.s: assym.s
+assym.s: genassym
+	./genassym >assym.s
+
+genassym: genassym.o
+	${CC} -o $@ genassym.o
+
+genassym.o: ${ALPHA}/alpha/genassym.c
+	${CC} -c ${CFLAGS} ${PARAM} $<
+
+SRCS= ${CFILES} ${ALPHA}/alpha/genassym.c ioconf.c param.c vnode_if.c
+depend: .depend
+.depend: ${SRCS} assym.s
+	mkdep ${COPTS} ${SRCS}
+	mkdep -a -p ${COPTS} ${ALPHA}/alpha/genassym.c
+
+links:
+	egrep '#if' ${CFILES} | sed -f $S/conf/defines | \
+	  sed -e 's/:.*//' -e 's/\.c/.o/' | sort -u > dontlink
+	echo ${CFILES} | tr -s ' ' '\12' | sed 's/\.c/.o/' | \
+	  sort -u | comm -23 - dontlink | \
+	  sed 's,../.*/\(.*.o\),rm -f \1;ln -s ../GENERIC/\1 \1,' > makelinks
+	sh makelinks && rm -f dontlink
+
+tags: depend
+	sh $S/conf/systags.sh
+	rm -f tags1
+	sed -e 's,	../,	,' tags > tags1
+
+ioconf.o: ioconf.c
+	${CC} -c ${CFLAGS} ioconf.c
+
+param.c: $S/conf/param.c
+	rm -f param.c
+	cp $S/conf/param.c .
+
+param.o: param.c Makefile
+	${CC} -c ${CFLAGS} ${PARAM} param.c
+
+vnode_if.c vnode_if.h: $S/kern/vnode_if.sh $S/kern/vnode_if.src
+	AWK="${AWK}" sh $S/kern/vnode_if.sh $S/kern/vnode_if.src
+
+%RULES

@@ -1,0 +1,19 @@
+#	$NetBSD: files.ibcs2,v 1.3 1995/08/14 01:34:09 mycroft Exp $
+#
+# Config.new file description for machine-independent IBCS-2 compat code.
+# Included by ports that need it.
+
+# ports should define any machine-specific files they need in their
+# own file lists.
+
+file	compat/ibcs2/ibcs2_errno.c	compat_ibcs2
+file	compat/ibcs2/ibcs2_exec.c	compat_ibcs2
+file	compat/ibcs2/ibcs2_fcntl.c	compat_ibcs2
+file	compat/ibcs2/ibcs2_ioctl.c	compat_ibcs2
+file	compat/ibcs2/ibcs2_ipc.c	compat_ibcs2
+file	compat/ibcs2/ibcs2_misc.c	compat_ibcs2
+file	compat/ibcs2/ibcs2_signal.c	compat_ibcs2
+file	compat/ibcs2/ibcs2_socksys.c	compat_ibcs2
+file	compat/ibcs2/ibcs2_stat.c	compat_ibcs2
+file	compat/ibcs2/ibcs2_syscalls.c	compat_ibcs2
+file	compat/ibcs2/ibcs2_sysent.c	compat_ibcs2

@@ -1,0 +1,197 @@
+$NetBSD: CHANGES,v 1.2 1995/03/06 19:09:42 mycroft Exp $
+@(#) Header: CHANGES,v 1.6 94/06/20 19:34:38 leres Exp (LBL)
+
+v3.0 Mon Jun 20 19:23:27 PDT 1994
+
+- Reorganize protocol dumpers to take const pointers to packets so they
+  never change the contents (i.e., they used to do endian conversions
+  in place).  Previously, whenever more than one pass was taken over
+  the packet, the packet contents would be dumped incorrectly (i.e.,
+  the output form -x would be wrong on little endian machines because
+  the protocol dumpers would modify the data).  Thanks to Charles Hannum
+  (mycroft@gnu.ai.mit.edu) for reporting this problem.
+
+- Added support for decnet protocol dumping thanks to Jeff Mogul
+  (mogul@pa.dec.com).
+
+- Fix bug that caused length of packet to be incorrectly printed
+  (off by ether header size) for unknown ethernet types thanks
+  to Greg Miller (gmiller@kayak.mitre.org).
+
+- Added support for IPX protocol dumping thanks to Brad Parker
+  (brad@fcr.com).
+
+- Added check to verify IP header checksum under -v thanks to
+  Brad Parker (brad@fcr.com).
+
+- Move packet capture code to new libpcap library (which is
+  packaged separately).
+
+- Prototype everything and assume an ansi compiler.
+
+- print-arp.c: Print hardware ethernet addresses if they're not
+  what we expect.
+
+- print-bootp.c: Decode the cmu vendor field. Add RFC1497 tags.
+  Many helpful suggestions from Gordon Ross (gwr@jericho.mc.com).
+
+- print-fddi.c: Improvements. Thanks to Jeffrey Mogul
+  (mogul@pa.dec.com).
+
+- print-icmp.c: Byte swap netmask before printing. Thanks to
+  Richard Stevens (rstevens@noao.edu). Print icmp type when unknown.
+
+- print-ip.c: Print the inner ip datagram of ip-in-ip encapsulated packets.
+  By default, only the inner packet is dumped, appended with the token
+  "(encap)".  Under -v, both the inner and output packets are dumped
+  (on the same line).  Note that the filter applies to the original packet,
+  not the encapsulated packet.  So if you run tcpdump on a net with an
+  IP Multicast tunnel, you cannot filter out the datagrams using the
+  conventional syntax.  (You can filter away all the ip-in-ip traffic
+  with "not ip proto 4".)
+
+- print-nfs.c: Keep pending rpc's in circular table. Add generic
+  nfs header and remove os dependences. Thanks to Jeffrey Mogul.
+
+- print-ospf.c: Improvements. Thanks to Jeffrey Mogul.
+
+- tcpdump.c: Add -T flag allows interpretation of "vat", "wb", "rpc"
+  (sunrpc) and rtp packets. Added "inbound" and "outbound" keywords
+  Add && and || operators
+
+v2.2.1 Tue Jun 6 17:57:22 PDT 1992
+
+- Fix bug with -c flag.
+
+v2.2 Fri May 22 17:19:41 PDT 1992
+
+- savefile.c: Remove hack that shouldn't have been exported. Add
+  truncate checks.
+
+- Added the 'icmp' keyword.  For example, 'icmp[0] != 8 and icmp[0] != 0'
+  matches non-echo/reply ICMP packets.
+
+- Many improvements to filter code optimizer.
+
+- Added 'multicast' keyword and extended the 'broadcast' keyword can now be
+  so that protocol qualitfications are allowed. For example, "ip broadcast"
+  and "ether multicast" are valid filters.
+
+- Added support for monitoring the loopback interface (i.e. 'tcpdump -i lo').
+  Jeffrey Honig (jch@MITCHELL.CIT.CORNELL.EDU) contributed the kernel
+  patches to netinet/if_loop.c.
+
+- Added support for the Ungermann-Bass Ethernet on IBM/PC-RTs running AOS.
+  Contact Jeffrey Honig (jch@MITCHELL.CIT.CORNELL.EDU) for the diffs.
+
+- Added EGP and OSPF printers, thanks to Jeffrey Honig.
+
+v2.1 Tue Jan 28 11:00:14 PST 1992
+
+- Internal release (never publically exported).
+
+v2.0.1 Sun Jan 26 21:10:10 PDT
+
+- Various byte ordering fixes.
+
+- Add truncation checks.
+
+- inet.c: Support BSD style SIOCGIFCONF.
+
+- nametoaddr.c: Handle multi addresses for single host.
+
+- optimize.c: Rewritten.
+
+- pcap-bpf.c: don't choke when we get ptraced. only set promiscuous
+  for broadcast nets.
+
+- print-atal.c: Fix an alignment bug (thanks to
+  stanonik@nprdc.navy.mil) Add missing printf() argument.
+
+- print-bootp.c: First attempt at decoding the vendor buffer.
+
+- print-domain.c: Fix truncation checks.
+
+- print-icmp.c: Calculate length of packets from the ip header.
+
+- print-ip.c: Print frag id in decimal (so it's easier to match up
+  with non-frags). Add support for ospf, egp and igmp.
+
+- print-nfs.c: Lots of changes.
+
+- print-ntp.c: Make some verbose output depend on -v.
+
+- print-snmp.c: New version from John LoVerso.
+
+- print-tcp.c: Print rfc1072 tcp options.
+
+- tcpdump.c: Print "0x" prefix for %x formats. Always print 6 digits
+  (microseconds) worth of precision. Fix uid bugs.
+
+- A packet dumper has been added (thanks to Jeff Mogul of DECWRL).
+  With this option, you can create an architecture independent binary
+  trace file in real time, without the overhead of the packet printer.
+  At a later time, the packets can be filtered (again) and printed.
+
+- BSD is supported.  You must have BPF in your kernel.
+  Since the filtering is now done in the kernel, fewer packets are
+  dropped.  In fact, with BPF and the packet dumper option, a measly
+  Sun 3/50 can keep up with a busy network.
+
+- Compressed SLIP packets can now be dumped, provided you use our
+  SLIP software and BPF.  These packets are dumped as any other IP
+  packet; the compressed headers are dumped with the '-e' option.
+
+- Machines with little-endian byte ordering are supported (thanks to
+  Jeff Mogul).
+
+- Ultrix 4.0 is supported (also thanks to Jeff Mogul).
+
+- IBM RT and Stanford Enetfilter support has been added by
+  Rayan Zachariassen <rayan@canet.ca>.  Tcpdump has been tested under
+  both the vanilla Enetfilter interface, and the extended interface
+  (#ifdef'd by IBMRTPC) present in the MERIT version of the Enetfilter.
+
+- TFTP packets are now printed (requests only).
+
+- BOOTP packets are now printed.
+
+- SNMP packets are now printed. (thanks to John LoVerso of Xylogics).
+
+- Sparc architectures, including the Sparcstation-1, are now
+  supported thanks to Steve McCanne and Craig Leres.
+
+- SunOS 4 is now supported thanks to Micky Liu of Columbia
+  University (micky@cunixc.cc.columbia.edu).
+
+- IP options are now printed.
+
+- RIP packets are now printed.
+
+- There's a -v flag that prints out more information than the
+  default (e.g., it will enable printing of IP ttl, tos and id)
+  and -q flag that prints out less (e.g., it will disable
+  interpretation of AppleTalk-in-UDP).
+
+- The grammar has undergone substantial changes (if you have an
+  earlier version of tcpdump, you should re-read the manual
+  entry).
+
+  The most useful change is the addition of an expression
+  syntax that lets you filter on arbitrary fields or values in the
+  packet.  E.g., "ip[0] > 0x45" would print only packets with IP
+  options, "tcp[13] & 3 != 0" would print only TCP SYN and FIN
+  packets.
+
+  The most painful change is that concatenation no longer means
+  "and" -- e.g., you have to say "host foo and port bar" instead
+  of "host foo port bar".  The up side to this down is that
+  repeated qualifiers can be omitted, making most filter
+  expressions shorter.  E.g., you can now say "ip host foo and
+  (bar or baz)" to look at ip traffic between hosts foo and bar or
+  between hosts foo and baz.  [The old way of saying this was "ip
+  host foo and (ip host bar or ip host baz)".]
+
+v2.0 Sun Jan 13 12:20:40 PST 1991
+
+- Initial public release.

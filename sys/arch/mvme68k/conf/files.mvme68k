@@ -1,0 +1,49 @@
+#	$NetBSD: files.mvme68k,v 1.1.1.1 1995/07/25 23:12:05 chuck Exp $
+
+# config file for mvme68k
+
+# maxpartitions must be first item in files.${ARCH}.newconf
+maxpartitions 8
+
+device mainbus at root { }
+
+device iio at mainbus { offset = -1, [ ipl = 0 ] }
+file arch/mvme68k/dev/iio.c			iio
+
+device clock at iio
+file arch/mvme68k/mvme68k/clock.c		clock
+
+device zs at iio: tty
+file arch/mvme68k/dev/zs.c			zs needs-count
+
+device pcc at iio
+file arch/mvme68k/dev/pcc.c			pcc
+
+device le at iio: ifnet, ether
+file    arch/mvme68k/dev/if_le.c		le
+
+include "../../../scsi/files.scsi"
+
+major { sd = 7 }
+major { cd = 18 }
+major { vnd = 6 }
+
+file arch/mvme68k/mvme68k/autoconf.c
+file arch/mvme68k/mvme68k/conf.c
+file arch/mvme68k/mvme68k/disksubr.c
+file arch/mvme68k/mvme68k/dkbad.c
+file arch/mvme68k/mvme68k/machdep.c		config-dependent
+file arch/mvme68k/mvme68k/mem.c
+file arch/mvme68k/mvme68k/pmap.c
+file arch/mvme68k/mvme68k/pmap_bootstrap.c
+file arch/mvme68k/mvme68k/sys_machdep.c
+file arch/mvme68k/mvme68k/trap.c
+file arch/mvme68k/mvme68k/vm_machdep.c
+file arch/m68k/m68k/copy.s
+file dev/cons.c
+file dev/cninit.c
+
+# SunOS Binary Compatibility (COMPAT_SUNOS)
+include "../../../compat/sunos/files.sunos"
+file    arch/m68k/m68k/sunos_machdep.c  compat_sunos
+

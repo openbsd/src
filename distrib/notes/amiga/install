@@ -1,0 +1,314 @@
+Installing NetBSD is a relatively complex process, but, if you have
+this document in hand and are careful to read and remember the
+information which is presented to you by the install program, it
+shouldn't be too much trouble.
+
+Before you begin, you must have already prepared your hard disk as
+detailed in the section on preparing your system for install.
+
+The following is a walk-through of the steps necessary to get NetBSD
+installed on your hard disk.  If you wish to stop the installation,
+you may hit Control-C at any prompt, but if you do, you'll have to
+begin again from scratch.
+
+>>>	transfer installation file system to the swap partition.
+>>>	Does this go here, or in the hard disk prep section?
+
+>>>	Getting loadbsd, ixemul.library, and netbsd onto AmigaDOS
+>>>	partition.
+	Next you need to get yourself into NetBSD by loading the
+	kernel from AmigaDOS with loadbsd like so:
+
+		loadbsd -b netbsd
+
+	You should see the screen clear and some information about
+	your system as the kernel configures the hardware.  Note which
+	hard disk device(s) are configured (sd0, sd1, etc).  Then
+	you will be prompted for a root device.  At this time type
+	'sd0*'.
+>>>	Need to document what device number to actually use.
+
+	The system should continue to boot.  For now ignore WARNING:
+	messages about bad dates in clocks and swap space.  Eventually
+>>>	                                       ^^^^^^^^^^???
+	you will be asked to enter the pathname of the shell, just
+	hit return.  After a short while you should see a welcome
+	message and a prompt, asking if you wish to proceed with the
+	installation.
+
+	If you wish to proceed, enter "y" and then return.
+
+	If you have configured your hard drive[s] correctly it
+	should find the drive and partition that you selected to
+	use as your root.
+
+	YOU ARE NOW AT THE POINT OF NO RETURN.  If you confirm that
+	you want to install NetBSD, your hard drive will be modified,
+	and perhaps its contents scrambled at the whim of the install
+	program.
+
+	If you are sure you want to proceed, enter "yes" at the
+	prompt.
+
+	The install program will now make the root filesystem you
+	specified.  There should be only one error in this section
+	of the installation.  It will look like so:
+
+		newfs: ioctl (WDINFO): Invalid argument
+		newfs: /dev/rsd0a: can't rewrite disk label
+
+	If there are any others, restart from the the beginning of
+	the installation process.  This error is ok as the Amiga
+	does not write disklabels currently.  You should expect
+	this error whenever using newfs.
+
+	Next the install program will ask you which drive and
+	partition you wish to use as /usr.  First it will list the
+	available drives.  Choose one.  Next it will give you a
+	list of the partitions on that disk along with their sizes,
+	types, etc..  Choose the letter that corresponds to the
+	partition you wish to use for /usr.  If you are doing a
+	full install this should be at the very least 45M-50M large.
+	If everything is ok the install program will then format
+	and mount your /usr.  If not then it will ask again for a
+	drive and partition.
+
+	When this completes your root partition will be mounted on
+	/mnt and your /usr partition on /mnt/usr.  An fstab will
+	have been created and initialized to correctly mount these
+	two file systems.  This fstab will be in /mnt/etc.
+
+	What you do from this point on depends on which media you're
+	using to install NetBSD.  Follow the appropriate instructions,
+	given below.
+
+	To install from an AmigaDOS partition:
+
+		You first need to mount the AmigaDOS partition
+		using the mount_ados command.  If e.g. your AmigaDOS
+		partition is the first partition on sd0 you could
+		type:
+			
+			mkdir /mnt/ados
+			mount_ados /dev/sd0d /mnt/ados
+
+		You can use `disklabel sd0' to find out what types
+		of partitions are on the disk `sd0'.
+
+		Next goto the directory in which you stored the
+		distribution sets.  If e.g. you stored them in the
+		root directory of the partition:
+
+			cd /mnt/ados
+
+		When there, run "Set_tmp_dir" and choose the default
+		temporary directory, by hitting return at the
+		prompt.
+
+		Run the "Extract" command, giving it as its sole
+		argument the name of the distribution set you wish
+		to extract.  For example, to extract the base
+		distribution, use the command:
+
+			Extract base11
+
+		and to extract the games distribution:
+
+			Extract game11
+
+		If the distribution sets are in different directories,
+		you will need to cd to each directory in turn, runing
+		"Set_tmp_dir" and the appropriate "Extract" command(s).
+
+		Continue this process until you've finished installing
+		all of the sets which you desire to have on your
+		hard disk.  Once you have extracted all sets and
+		are at the "#" prompt again, proceed to the section
+		"Configuring Your System," below.
+
+	To install from tape:
+
+		The first thing you should do is pick a temporary
+		directory where the distribution files can be stored.
+		To do this, use the command "Set_tmp_dir" and enter
+		your choice.  The default is /mnt/usr/distrib.
+
+		After you have picked a temporary directory,
+		you should issue the load command:
+
+			Load_tape
+
+		Next, you will be told to insert the media into
+		the appropriate drive, and hit return.  Continue
+		to follow instructions until you are returned to
+		the "#" prompt.
+
+		Go to the directory which contains the first
+		distribution set you wish to install.  This is
+		either the directory you specified above, or possibly
+		a subdirectory of that directory.
+
+		When there, run "Set_tmp_dir" again, and choose
+		the default temporary directory, by hitting
+		return at the prompt.
+
+		Run the "Extract" command, giving it as its sole
+		argument the name of the distribution set you
+		wish to extract.  For example, to extract the base
+		distribution, use the command:
+
+			Extract base11
+
+		and to extract the games distribution:
+
+			Extract game11
+
+		After the extraction is complete, go to the location
+		of the next set you want to extract, "Set_tmp_dir"
+		again, and once again issue the appropriate
+		extract command.  Continue this process until
+		you've finished installing all of the sets which you
+		desire to have on your hard disk.
+
+		After each set is finished, if you know that you
+		are running low on space you can remove the
+		distribution files for that set by saying:
+
+			rm set_name.??
+
+		For example, if you wish to remove the distribution
+		files for the game09 set, after the "Extract game09"
+		command has completed, issue the command:
+
+			rm game11.??
+
+		Once you have extracted all sets and are at the "#" prompt
+		again, proceed to the section "Configuring Your System,"
+		below.
+
+	To install via FTP or NFS:
+
+		First, use Set_tmp_dir to pick a temporary directory
+		for the installation files.  /mnt/usr/distrib is
+		suggested.
+
+>>> Document using ppp or slip?
+		Configure the appropriate ethernet interface i.e. le0
+		if you have a 2065 or ed0 if you have a AMIGNET from
+		Hydra Systems.
+		
+			ifconfig <ifname> <ipaddr> [netmask <netmask>]
+
+		where <ifname> is the interface name (e.g. ed0, etc.),
+		and <ipaddr> is the numeric IP address of the interface.
+		If the interface has a special netmask, supply
+		the word "netmask" and that netmask at the end of the
+		command line.  For instance, without a special netmask:
+
+			ifconfig ed0 129.133.10.10
+
+		or with a special netmask
+
+			ifconfig ed0 128.32.240.167 netmask 0xffffff00
+
+		If the NFS server or FTP server is not on a directly-
+		connected network, you should set up a route to it
+		with the command:
+
+			route add default <gate_ipaddr>
+
+		where <gate_ipaddr> is your gateway's numeric IP address.
+
+		If you are NFS-mounting the distribution sets,
+		mount them on the temporary directory with the command:
+
+			mount -t nfs <serv_ipaddr>:<dist_dir> <tmp_dir>
+
+		where <serv_ipaddr> is the server's numeric IP address,
+		<dist_dir> is the path to the distribution files on
+		the server, and <tmp_dir> is the name of the local
+		temporary directory.
+
+		Once this is done, proceed as if you had loaded the
+		files from tape, "cd"ing to the appropriate directories
+		and running "Set_tmp_dir" and "Extract" as appropriate.
+
+		If you are retrieving the distribution sets using ftp,
+		cd into the temp directory, and execute the command:
+
+			ftp <serv_ipaddr>
+
+		where <serv_ipaddr> is once again the server's
+		numeric IP address.  Get the files with FTP,
+		taking care to use binary mode to transfer
+		all files.
+
+		Once you have all of the files for the distribution sets
+		you wish to install, you can proceed using the instructions
+		above as if you had installed the files from a tape.
+
+
+Configuring Your System:
+----------- ---- ------
+
+Once you have finished extracting all of the distribution sets that
+you want on your hard drive and are back at the "#" prompt,
+you are ready to configure your system.
+
+The configuration utility expects that you have installed the base
+system.  If you have not, you will not be able to run it successfully
+(nor will you have a functional system regardless of configuration).
+
+To configure the newly installed operating system, run the
+command "Configure".
+
+Configure will ask for the machine's hostname, domain name, and other
+network configuration information.
+
+Once you have supplied `Configure' all that it requests, your machine
+will be configured well enough that when you reboot it it will
+almost be a completely functional NetBSD system.  Note you should
+ignore the errors from `chown' they will be corrected shortly.
+
+Once you are done with `Configure', halt the system with the "halt"
+command (wait for "halted" to be displayed) and reboot.  Then again
+boot NetBSD this time with the command:
+
+
+	loadbsd netbsd
+
+You need to do your final tweeks now.  First mount your file systems
+like so:
+
+	mount -av
+
+Next you need to re-make your devices to get the ownership correct:
+
+	cd /dev
+	MAKEDEV all
+>>> Is this step still needed? - check on it!
+
+Your system is now complete but not completely configured; you
+should adjust the /etc/sendmail.cf file as necessary to suit your
+site and/or disable sendmail and other network related programs.
+These things can be found in /etc/netstart.  Use vi, if you installed
+the man pages you can type `man vi' or `man ed' for instructions
+on how to use these somewhat non-intuitive editors.
+
+Once you are done with the rest of configuration unmount your file
+systems and halt your system, then reboot:
+
+	cd /
+	umount -av
+	halt
+	<reboot>
+
+Finally you can now boot your system and it will be completely
+functional:
+
+	loadbsd -a netbsd
+
+When it boots off of the hard drive, you will have a complete
+NetBSD system!  CONGRATULATIONS! (You really deserve them!!!)
+
+>>> Missing the step to transfer the netbsd kernel to /

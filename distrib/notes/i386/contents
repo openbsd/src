@@ -1,0 +1,135 @@
+The i386-specific portion of the NetBSD 1.0 release is found in the
+"i386" subdirectory of the distribution.  That subdirectory is laid
+out as follows:
+
+.../NetBSD-1.0/i386/
+			INSTALL		Installation notes; this file.
+
+			binary/		i386 binary distribution sets;
+					see below.
+
+			floppies/	i386 boot and installation
+					floppies; see below.
+
+			security/	i386 security distribution;
+					see below;
+
+			utils/		Miscellaneous i386
+					installation utilities; see
+					installation section, below.
+
+There are four i386 floppy images to be found in the "i386/floppy"
+subdirectory of the NetBSD 1.0 distribution.  Two of them are bootable
+kernel-copy floppies, one is an installation floppy, and one is an
+upgrade floppy.  They are all described in more detail below.  There
+are gzipped versions of each available, for easier downloading.  (The
+gzipped versions have the ".gz" extension added to their names.)
+
+Bootable Kernel-copy floppies:
+
+	These disks contain file systems, are bootable, and have
+	enough utilities on board to copy a new kernel to your hard
+	disk once you have it partitioned for NetBSD.  They make
+	upgrading to a new kernel easy, because all you have to do is
+	get a new kernel-copy floppy with a new kernel, boot from it,
+	and confirm that you want to have the kernel copied to your
+	disk.
+
+	There are two different kernel copy floppy images,
+	"kcaha-10.fs", and "kcbt-10.fs".  They are identical except
+	that the first has the driver for the Adaptec 1542 SCSI host
+	adapter and does not contain the driver for the Buslogic 74x
+	SCSI host adapters, and vice-versa for the second.  (All other
+	drivers are present on both disks.)
+
+Installation floppy:
+
+	This disk contains the software necessary to prepare your hard
+	drive for NetBSD and install the NetBSD distribution. It is
+	not bootable, and must be used in conjunction with one of the
+	kernel-copy floppies.  This floppy is named "inst-10.fs".
+
+Upgrade floppy:
+
+	This disk contains the software to be used in upgrading the
+	system from a previous version of NetBSD.  It is not bootable,
+	and must be used in conjunction with one of the kernel-copy
+	floppies.  This floppy is named "upgr-10.fs"
+
+The NetBSD/i386 binary distribution sets contain the binaries which
+comprise the NetBSD 1.0 release for the i386.  There are seven binary
+distribution sets, and the "security" distribution set.  The binary
+distribution sets can be found in subdirectories of the "i386/binary"
+subdirectory of the NetBSD 1.0 distribution tree, and are as follows:
+
+	base10	The NetBSD/i386 1.0 base binary distribution.  You
+		MUST install this distribution set.  It contains the
+		base NetBSD utilities that are necessary for the
+		system to run and be minimally functional.  It
+		includes shared library support, and excludes
+		everything described below.
+		[ 6.2M gzipped, 16.7M uncompressed ]
+
+	comp10	The NetBSD/i386 Compiler tools.  All of the tools
+		relating to C, C++, and FORTRAN (yes, there are two!).
+		This set includes the system include files
+		(/usr/include), the linker, the compiler tool chain,
+		and the various system libraries (except the shared
+		libraries, which are included as part of the base
+		set).  This set also includes the manual pages for all
+		of the utilities it contains, as well as the system
+		call and library manual pages.
+		[ 4.2M gzipped, 12.9M uncompressed ]
+
+	etc10	This distribution set contains the system
+		configuration files that reside in /etc and in several
+		other places.  This set MUST be installed if you are
+		installing the system from scratch, but should NOT be
+		used if you are upgrading.  (If you are upgrading,
+		it's recommended that you get a copy of this set and
+		CAREFULLY upgrade your configuration files by hand.)
+		[ 50K gzipped, 263K uncompressed ]
+
+	games10	This set includes the games and their manual pages.
+		[ 1.0M gzipped, 2.7M uncompressed ]
+
+	man10	This set includes all of the manual pages for the
+		binaries and other software contained in the base set.
+		Note that it does not include any of the manual pages
+		that are included in the other sets.
+		[ 0.7M gzipped, 2.8M uncompressed ]
+
+	misc10	This set includes the system dictionaries (which are
+		rather large), the typesettable document set, and
+		man pages for other architectures which happen to be
+		installed from the source tree by default.
+		[ 1.6M gzipped, 5.6M uncompressed ]
+
+	text10	This set includes NetBSD's text processing tools,
+		including groff, all related programs, and their
+		manual pages.
+		[ 0.8M gzipped, 2.8M uncompressed ]
+
+The i386 security distribution set is named "secr10" and can be found
+in the "i386/security" subdirectory of the NetBSD 1.0 distribution
+tree.  It contains crypt.c (the source file for the DES encryption
+algorithm) and the binaries which depend on it.  It can only be found
+on those sites which carry the complete NetBSD distribution and that
+can legally obtain it.  (Remember, because of United States law, this
+distribution set may not be exported to locations outside of the
+United States and Canada.)  [ 114K gzipped, 253K uncompressed ]
+
+The i386 binary distribution sets are distributed in the same form as
+the source distribution sets; catted together, the members of a set
+form a gzipped tar file.  Each i386 binary distribution set also has
+its own "CKSUMS" file, just as the source distribution sets do.
+
+The instructions given for extracting the source sets work equally
+well for the binary sets, but it is worth noting that if you use that
+method, the files are extracted "below" the current directory.  That
+is, if you want to extract the binaries "into" your system, i.e.
+replace the system binaries with them, you have to run the "tar xfp"
+from /.  Also note that if you upgrade or install this way, those
+programs that you are using at the time will NOT be replaced.  If you
+follow the normal installation or upgrade procedures, this will be
+taken care of for you.

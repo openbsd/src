@@ -1,0 +1,338 @@
+INSTALLATION NOTES for NetBSD/MACHINE 1.0
+
+
+
+Be sure to read _ALL_ of this document before you try to install
+NetBSD/MACHINE.
+
+
+
+What is NetBSD?
+---- -- ------
+
+NetBSD is a Berkeley Networking Release 2 (Net/2) and 4.4BSD-Lite
+-derived system.  It is a fully functional UN*X-like system which runs
+on several architectures and is being ported to more.  NetBSD, as the
+name implies, is a creation of the members of the network community
+and without the net it's likely that this release wouldn't have come
+about.
+
+NetBSD 1.0 is a milestone release.  The hardest part of the 4.4BSD-Lite
+integration, the kernel, has been completed and has been running in
+"production use" for quite some time.  Also, NetBSD 1.0 is the first
+true multi-architecture release of NetBSD.  At the time of NetBSD 0.9,
+the i386 port was considered 'production quality' and the hp300 port was
+barely working.  The NetBSD 1.0 source supports nine architectures, and
+complete binary releases for most of them will be made available.
+
+NetBSD 1.0 supports many new and improved features, the most important
+relating to file systems.  New and improved versions of both the
+Berkeley Fast File System and the free implementation of the NFS
+protocol were provided, as part of the 4.4-Lite release.  The new
+versions include such improvements as support for 64-bit file sizes,
+for local files, and "lease" support for NFS, to improve performance.
+In addition to the file system improvements, many other parts of the
+system have been improved considerably.  For instance, the virtual
+memory code has substantially improved performance, and many of the
+kernel's interfaces have been cleaned up.
+
+Many new user programs have been added in NetBSD 1.0, as well,
+bringing it closer to our goal of supplying a complete UN*X-like
+environment.  Additionally, support for shared libraries has been
+added, for most architectures, allowing a significant savings in both
+RAM consumption and disk space.
+
+#include "whatis"
+
+
+The Future of NetBSD:
+--- ------ -- ------
+
+We hope to have regular releases of the full binary and source trees,
+but these are difficult to coordinate, especially with all of the
+architectures which we now support!  We hope to support even _more_
+hardware in the future, and have a rather large number of other ideas
+about what can be done to improve NetBSD.  We intend to continue our
+current practice of making the NetBSD-current development source
+available on a daily or nearly-daily basis.
+
+We intend to integrate free, positive changes from whatever sources
+will provide them, providing that they are well thought-out and increase
+the usability of the system.  This includes integrating the remainder of
+the 4.4BSD-Lite tape, as quickly as we can ensure that everything works
+properly.
+
+Above all, we hope to create a stable and accessible system, and to be
+responsive to the needs and desires of NetBSD users, because it is for
+and because of them that NetBSD exists.
+
+
+Sources of NetBSD:
+------- -- ------
+
+#include "mirrors"
+
+NetBSD 1.0 Release Contents:
+------ --- ------- --------
+
+The NetBSD 1.0 release is organized in the following way:
+
+.../NetBSD-1.0/
+		BUGS			Known bugs list (incomplete
+					and out of date).
+
+		CHANGES			Changes since NetBSD's last
+					release (and before).
+
+		LAST_MINUTE		Last minute changes.
+
+		MIRRORS			A list of sites that mirror
+					the NetBSD 1.0 distribution.
+
+		README.files		README describing the
+					distribution's contents.
+
+		TODO			NetBSD's todo list (incomplete
+					and out of date).
+
+		patches/		Post-release source code
+					patches.
+
+		source/			Source distribution sets; see
+					below.
+
+In addition to the files and directories listed above, there is one
+directory per architecture, for each of the architectures that NetBSD
+1.0 has a binary distribution for.  There are also
+'README.export-control' files sprinkled liberally throughout the
+distribution tree, which point out that there are some portions of the
+distribution (e.g. those containing crypt(3)) that should not be
+exported from the United States, and that if you do export them, it's
+your fault, not ours.
+
+The source distribution sets can be found in subdirectories of the
+"source" subdirectory of the distribution tree.  They contain the 
+complete sources to the system, excluding those portions which should
+not be exported from the U.S.  (Those are contained in each
+architecture's "security" binary distribution set.)  The source
+distribution sets are as follows:
+
+	gsrc10	This set contains the "gnu" sources, including
+		the source for the compiler, assembler, groff,
+		and the other GNU utilities in the binary distribution
+		sets.
+		[ 7.7M gzipped, 32.0M uncompressed ]
+
+	ksrc10	This set contains the sources to the NetBSD 1.0
+		kernel, config(8), config.new(8) and dbsym(8).
+		[ 4.5M gzipped, 20.8M uncompressed ]
+
+	ssrc10	This set contains the "share" sources, which include
+		the sources for the man pages not associated with
+		any particular program, the sources for the
+		typesettable document set, the dictionaries, and more.
+		[ 2.3M gzipped, 8.5M uncompressed ]
+
+	src10	This set contains all of the NetBSD 1.0 sources which
+		are not mentioned above.
+		[ 7.1M gzipped, 33.4M uncompressed ]
+
+It is worth noting that unless all of the source distribution sets
+are installed, you can't rebuild and install the system from scratch,
+straight out of the box.  However, all that is required to rebuild the
+system in that case is a trivial modification to one Makefile.
+
+The source distribution sets are distributed as groups of files named
+"set_name.xx" where "set_name" is the distribution set name, and "xx"
+is the sequence number of the file, starting with "aa" for the first
+file in the distribution set, then "ab" for the next, and so on.  All
+of these files except the last one of each set should be exactly
+240,640 bytes long.  (The last file is just long enough to contain the
+remainder of the data for that distribution set.)
+
+Catted together, the files belonging to a source distribution set 
+comprise a gzipped tar file.  If you want to look at list of the files
+contained in the set, you could use the command:
+
+	cat set_name.?? | gunzip | tar tvf -
+
+or to actually extract the files contained in the set:
+
+	cat set_name.?? | gunzip | tar xfp -
+
+In each of the source distribution set directories, there is a file
+named "CKSUMS" which contains the checksums of the files in that
+directory, as generated by the cksum(1) command.  You can use cksum to
+check the integrity of the archives, if you suspect that one of the
+files is corrupt and have access to a cksum binary.
+
+#include "contents"
+
+
+NetBSD System Requirements and Supported Devices:
+------ ------ ------------ --- --------- -------
+
+#include "hardware"
+
+
+Getting the NetBSD System on to Useful Media:
+------- --- ------ ------ -- -- ------ -----
+
+#include "xfer"
+
+
+Preparing your System for NetBSD Installation:
+--------- ---- ------ --- ------ ------------
+
+#include "prep"
+
+
+Installing the NetBSD System:
+---------- --- ------ ------
+
+#include "install"
+
+
+Upgrading a previously-installed NetBSD System:
+--------- - ---------- --------- ------ ------
+
+#include "upgrade"
+
+
+Administrivia:
+-------------
+
+Registration?  What's that?
+
+If you've got something to say, do so!  We'd like your input.
+There are various mailing lists available via the mailing list
+server at <majordomo@NetBSD.ORG>.  To get help on using the mailing
+list server, send mail to that address with an empty body, and it will
+reply with instructions.
+
+There are various mailing lists set up to deal with comments and
+questions about this release.  Please send comments to:
+
+	netbsd-comments@NetBSD.ORG
+
+To report bugs, use the 'send-pr' command shipped with NetBSD,
+and fill in as much information about the problem as you can.  Good
+bug reports include lots of details.  Additionally, bug reports can
+be sent by mail to:
+
+	netbsd-bugs@NetBSD.ORG
+
+Use of 'send-pr' is encouraged, however, because bugs reported with it
+are entered into the NetBSD bugs database, and thus can't slip through
+the cracks.
+
+There are also port-specific mailing lists, to discuss aspects of
+each port of NetBSD.  Use majordomo to find their addresses.  If
+you're interested in doing a serious amount of work on a specific
+port, you probably should contact the "owner" of that port (listed
+below).
+
+If you'd like to help with this effort, and have an idea as to how
+you could be useful, send mail and/or subscribe to:
+
+	netbsd-help@NetBSD.ORG
+
+As a favor, please avoid mailing huge documents or files to these
+mailing lists.  Instead, put the material you would have sent up
+for FTP somewhere, then mail the appropriate list about it, or, if
+you'd rather not do that, mail the list saying you'll send the data
+to those who want it.
+
+
+Thanks go to:
+------ -- --
+
+Members and former members of UCB's Computer Systems Research Group,
+including (but not limited to):
+	Keith Bostic
+	Ralph Campbell
+	Mike Karels
+	Marshall Kirk McKusick
+for their ongoing work on BSD systems, support, and encouragement.
+
+Also, our thanks go to:
+	Mike Hibler
+	Rick Macklem
+	Jan-Simon Pendry
+	Chris Torek
+for answering lots of questions, fixing bugs, and doing the various work
+they've done.
+
+UC Berkeley's Experimental Computing Facility has provided a home for
+sun-lamp, people to look after it, and a sense of humor.  Rob
+Robertson, too, has added his unique sense of humor to things, and for
+a long time provided the primary FTP site for NetBSD.
+
+Without CVS, this project would be impossible to manage, so our hats
+go off to Brian Berliner, Jeff Polk, and the various other people
+who've had a hand in making CVS a useful tool.
+
+The following people (in alphabetical order) have made donations or
+loans of hardware and/or money, to support NetBSD development, and
+deserve credit for it:
+#include "donations"
+(If you're not on that list and should be, tell us!  We probably were
+not able to get in touch with you, to verify that you wanted to be
+listed.)
+
+Dave Burgess <burgess@cynjut.infonet.net> has been maintaining the
+386BSD/NetBSD/FreeBSD FAQ for quite some time, and deserves to be
+recognized for it.
+
+Finally, we thank all of the people who've put sweat and tears into
+developing NetBSD since its inception in January, 1993.  (Obviously,
+there are a lot more people who deserve thanks here.  If you're one of
+them, and would like to mentioned, tell us!)
+
+
+We are:
+-- ---
+(in alphabetical order)
+
+The NetBSD core team:
+Chris G. Demetriou	<cgd@sun-lamp.cs.berkeley.edu>
+Theo de Raadt		<deraadt@sun-lamp.cs.berkeley.edu>
+Adam Glass		<glass@sun-lamp.cs.berkeley.edu>
+Charles Hannum		<mycroft@sun-lamp.cs.berkeley.edu>
+
+The port-masters (and their ports):
+Allen Briggs		<briggs@mail.vt.edu>			(mac68k)
+    (and the rest of the 'Alice' group)
+Theo de Raadt		<deraadt@sun-lamp.cs.berkeley.edu>	(sparc)
+Charles Hannum		<mycroft@sun-lamp.cs.berkeley.edu>	(i386, hp300)
+Chris Hopps		<chopps@sun-lamp.cs.berkeley.edu>	(amiga)
+Adam Glass		<glass@sun-lamp.cs.berkeley.edu>	(pmax)
+Paul Mackerras		<paulus@sun-lamp.cs.berkeley.edu>	(da30)
+Anders Magnusson	<ragge@sun-lamp.cs.berkeley.edu>	(vax)
+Phil Nelson		<phil@sun-lamp.cs.berkeley.edu>		(pc532)
+Gordon Ross		<gwr@sun-lamp.cs.berkeley.edu>		(sun3)
+
+Supporting cast:
+Steve Allen		<wormey@eskimo.com>
+John Brezak		<brezak@sun-lamp.cs.berkeley.edu>
+Dave Burgess		<burgess@cynjut.infonet.net>
+J.T. Conklin		<jtc@sun-lamp.cs.berkeley.edu>
+Hubert Feyrer		<hubert.feyrer@rz.uni-regensburg.de>
+Brad Grantham		<grantham@tenon.com>
+Lawrence Kesteloot	<kesteloo@cs.unc.edu>
+Paul Kranenburg		<pk@sun-lamp.cs.berkeley.edu>
+Herb Peyerl		<hpeyerl@beer.org>
+Matthias Pfaller	<leo@marco.de>
+Chris Provenzano	<proven@sun-lamp.cs.berkeley.edu>
+Wolfgang Solfrank	<ws@tools.de>
+
+
+Legal Mumbo-jumbo:
+----- ----- -----
+
+The following notices are required to satisfy the license terms of
+the software that we have mentioned in this document:
+
+#include "legal.common"
+
+#include "legal"

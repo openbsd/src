@@ -1,0 +1,43 @@
+#!/bin/csh -f
+
+if (! $?RELEASEDIR) then
+	echo RELEASEDIR must be set
+	exit 1
+endif
+
+if (! $?DESTDIR) then
+	echo DESTDIR must be set
+	exit 1
+endif
+
+set arch=`uname -m`
+set listsdir=`pwd`/lists
+set tardir=$RELEASEDIR
+set fsdir=$DESTDIR
+
+cd $fsdir
+
+set lists=(base comp etc games text)
+# SPECIAL: man misc
+# EXTRA SPECIAL (not done here): secr
+
+foreach setname ($lists)
+	echo -n "${setname}: "
+	cat $listsdir/$setname/mi $listsdir/$setname/md.${arch} | sort | \
+	    pax -w -d | gzip -9 > ${tardir}/$setname.tar.gz
+	echo    "done."
+end
+
+set setname=man
+echo -n "${setname}: "
+grep ${arch} $listsdir/man/md_share | \
+    cat $listsdir/$setname/mi $listsdir/$setname/md.${arch} - | sort | \
+    pax -w -d | gzip -9 > ${tardir}/$setname.tar.gz
+echo    "done."
+
+set setname=misc
+echo -n "${setname}: "
+grep -v ${arch} $listsdir/man/md_share | \
+    cat $listsdir/$setname/mi $listsdir/$setname/md.${arch} - | sort | \
+    pax -w -d | gzip -9 > ${tardir}/$setname.tar.gz
+echo    "done."

@@ -1,0 +1,67 @@
+#	$NetBSD: PUMA,v 1.5.2.1 1995/10/16 14:17:10 briggs Exp $
+#
+# PUMA
+
+include	"std.mac68k"
+
+maxusers	16
+
+# obsolete timezone spec
+options               TIMEZONE=0, DST=1, MAXFDESCS=2048
+
+# Standard system options
+options		SWAPPAGER, VNODEPAGER, DEVPAGER	# paging
+
+# Filesystem options
+options		FIFO		# POSIX fifo support (in all filesystems)
+options		DDB
+options		FFS
+options		MFS		# memory-based filesystem
+options		NFSSERVER	# Sun NFS-compatible filesystem
+options		NFSCLIENT	# Sun NFS-compatible filesystem
+options		NULLFS		# Null (formerly loop-back) filesystem
+options		UNION		# Union filesystem
+options		CD9660		# ISO-9660 w/ RockRidge
+options		KERNFS		# kernel data-structure filesystem
+options		FDESC		# user file descriptor filesystem
+options		PROCFS		# Process filesystem
+
+options		LKM		# Loadable Kernel Modules
+
+options		SCSI
+
+# Networking options
+options		INET
+options		TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
+options		GATEWAY		# IP packet forwarding
+options		COMPAT_42
+options		COMPAT_43
+options		NS
+options		MAPMEM
+options		SYSVSHM,SYSVSEM,SYSVMSG
+
+# Mac-specific options
+options		M68030		# Includes the 020+851
+options		COMPAT_NOMID
+options		COMPAT_SUNOS
+options		COMPAT_09
+options		COMPAT_10
+options		MACHINE_NONCONTIG
+
+config		netbsd	root on sd0 swap on sd0 and sd1 and vnd0a dumps on sd1b
+
+ae*	at nubus0	slot -1   id ?   claimed 0
+
+ncrscsi0	at mainbus?		# SCSI NCR 5380
+
+scsibus*	at scsi?
+sd*	at scsibus? target ? lun ?
+st*	at scsibus? target ? lun ?
+cd*	at scsibus? target ? lun ?
+
+pseudo-device	loop
+pseudo-device	pty		16
+pseudo-device	sl
+pseudo-device	bpfilter	4
+pseudo-device	ppp
+pseudo-device	vnd		4

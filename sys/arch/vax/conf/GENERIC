@@ -1,0 +1,103 @@
+#	$NetBSD: GENERIC,v 1.7.2.1 1995/10/15 13:52:58 ragge Exp $
+#
+# GENERIC VAX, currently only supports 11/750 anyway.
+#
+
+include "std.vax"
+
+# Here are all different supported CPU types listed.
+options         "VAX750"
+options         "VAX630"
+
+# Kernel identification
+options         GENERIC
+
+# Max users on system; this is just a hint
+maxusers	16
+
+# Paging system, we always have them all.
+options		SWAPPAGER, DEVPAGER, VNODEPAGER
+
+# Kernel compiled-in symbolic debugger & system call tracer
+#options		DDB
+options		KTRACE
+
+# Network support
+#options		GATEWAY
+options         INET
+options         ETHER
+
+# All supported filesystem types
+options		FFS,QUOTA
+options		LFS
+options		MFS
+options		NFSSERVER
+options		NFSCLIENT
+options		FDESC
+options		FIFO
+options		KERNFS
+options		NULLFS
+options		PROCFS
+options		UMAPFS
+options		UNION
+
+# System V shared memory & semaphores support.
+options		SYSVMSG
+options		SYSVSEM
+options		SYSVSHM
+
+# Old compat stuff; needed to run 4.3BSD Reno programs
+options		COMPAT_43
+options		COMPAT_09
+options		COMPAT_10
+options		COMPAT_RENO
+options		TCP_COMPAT_42
+
+options		LKM
+
+
+# Kernel(s) to compile
+config          netbsd	swap generic
+
+# All supported CPU:s
+cpu0		at backplane0
+
+# Main buses at backplane
+sbi*		at backplane0
+
+# Devices connected at sbi
+mem*		at sbi? tr?	# Memory subsystems
+uba0		at sbi? tr?	# Unibus adapters
+uba1		at sbi? tr?	# Unibus adapters
+uba2		at sbi? tr?	# Unibus adapters
+uba3		at sbi? tr?	# Unibus adapters
+
+# Disk controllers at Unibus
+uda0		at uba?	csr 0172150
+ra0		at uda0 drive 0
+ra1		at uda0 drive 1
+ra2		at uda0 drive 2
+ra3		at uda0 drive 3
+
+uda1		at uba?	csr 0160334
+ra4		at uda1 drive 0
+ra5		at uda1 drive 1
+ra6		at uda1 drive 2
+ra7		at uda1 drive 3
+
+# Ethernet cards
+de0		at uba? csr 0174510
+qe0		at uba? csr 0174440
+
+# Tape drivers
+tmscp0		at uba? csr 0174500
+tms0		at tmscp0 drive ?
+
+pseudo-device   loop	1
+pseudo-device   pty	48
+pseudo-device	bpfilter 8
+pseudo-device	sl	2
+pseudo-device	ppp	2
+pseudo-device	tun	2
+pseudo-device	tb	1
+pseudo-device	vnd	4

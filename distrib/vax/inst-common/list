@@ -1,0 +1,75 @@
+#	$Id: list,v 1.1.1.1 1995/10/18 08:37:54 deraadt Exp $
+
+# copy the crunched binary, link to it, and kill it
+COPY	${OBJDIR}/instbin	instbin
+LINK	instbin			bin/cat
+LINK	instbin			bin/chmod
+LINK	instbin			bin/cp
+LINK	instbin			bin/dd
+LINK	instbin			bin/df
+LINK	instbin			bin/ed
+LINK	instbin			bin/expr
+LINK	instbin			bin/ln
+LINK	instbin			bin/ls
+LINK	instbin			bin/mkdir
+LINK	instbin			bin/mv
+LINK	instbin			bin/mt
+LINK	instbin			bin/rm
+LINK	instbin			bin/sh
+LINK	instbin			bin/-sh
+LINK	instbin			bin/stty
+LINK	instbin			bin/sync
+LINK	instbin			bin/test
+LINK	instbin			bin/[
+LINK	instbin			sbin/disklabel
+LINK	instbin			sbin/fsck
+LINK	instbin			sbin/halt
+LINK	instbin			sbin/ifconfig
+LINK	instbin			sbin/init
+LINK	instbin			sbin/mknod
+LINK	instbin			sbin/mount
+LINK	instbin			sbin/mount_ffs
+LINK	instbin			sbin/mount_nfs
+LINK	instbin			sbin/newfs
+LINK	instbin			sbin/reboot
+LINK	instbin			sbin/route
+LINK	instbin			sbin/shutdown
+LINK	instbin			sbin/slattach
+LINK	instbin			sbin/umount
+LINK	instbin			usr/bin/awk
+LINK	instbin			usr/bin/chgrp
+LINK	instbin			usr/bin/ftp
+LINK	instbin			usr/bin/gunzip
+LINK	instbin			usr/bin/gzcat
+LINK	instbin			usr/bin/gzip
+LINK	instbin			usr/bin/more
+LINK	instbin			usr/bin/sed
+LINK	instbin			usr/bin/strings
+LINK	instbin			usr/bin/tar
+# LINK	instbin			usr/sbin/bad144
+LINK	instbin			usr/sbin/chown
+LINK	instbin			usr/sbin/chroot
+LINK	instbin			usr/sbin/update
+SPECIAL	/bin/rm instbin
+
+# copy the MAKEDEV script and make some devices
+COPY	${DESTDIR}/dev/MAKEDEV	dev/MAKEDEV
+SPECIAL	cd dev; sh MAKEDEV std tms0 ra0 ra1 ra2 ra3 ra4 ra5 ra6 ra7
+
+# we need the contents of /usr/mdec (XXX)
+# COPY	${DESTDIR}/usr/mdec/*	usr/mdec
+
+# various files that we need in /etc for the install
+COPY	${DESTDIR}/etc/group		etc
+COPY	${DESTDIR}/etc/master.passwd	etc
+COPY	${DESTDIR}/etc/passwd		etc
+COPY	${DESTDIR}/etc/protocols	etc
+COPY	${DESTDIR}/etc/pwd.db		etc
+COPY	${DESTDIR}/etc/services		etc
+COPY	${DESTDIR}/etc/spwd.db		etc
+
+# and the common installation tools
+COPY	${TOPDIR}/inst-common/termcap.vt	usr/share/misc/termcap
+
+COPY	/gennetbsd			.
+COPY	/boot				.

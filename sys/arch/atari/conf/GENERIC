@@ -1,0 +1,111 @@
+#
+#	$NetBSD: GENERIC,v 1.7.2.1 1995/10/12 08:20:14 leo Exp $
+#
+# Generic atari
+#
+# This configuration file is for a multiple disk/multiple tape ATARI-TT/Falcon
+# with network (through ppp or slip).
+
+include "std.atari"
+#
+# Add support for about 16 users. This variable is used to size
+# various kernel structures.
+#
+maxusers	16
+
+#
+# processors this kernel should support
+#
+options		"M68030"	# support for 030
+
+options		TIMEZONE=300	# Set the timezone that the kernel will use
+options		DST=1		# Set the timezone that the kernel will use
+options		HZ=64		# Set the clock-rate (48/64/96)
+
+
+#
+# Networking options
+#
+options		INET		# Basic networking support
+
+options		FFS		# Berkeley fast file system
+options		MFS		# Memory based filesystem
+options		PROCFS		# Process filesystem
+options		KERNFS		# Kernel parameter filesystem
+options		NULLFS		# Loopback filesystem
+options		MSDOSFS		# MSDOS filesystem
+options		CD9660		# ISO 9660 filesystem with Rock Ridge
+
+options		FIFO		# FIFO operations on vnodes
+
+options		SWAPPAGER	# Pager for swap device
+options		VNODEPAGER	# Pager for vnodes
+options		DEVPAGER	# Pager
+
+
+#
+# Misc. debuging options
+#
+options		PANICWAIT	# Require keystroke to dump/reboot
+options		DDB		# Kernel debugger
+
+#
+# File system related options
+#
+options		QUOTA		# Disk quotas for local disks
+options		NFSSERVER	# Network File System server side code
+options		NFSCLIENT	# Network File System client side code
+
+#
+# Compatability options for various existing systems
+#
+options		"COMPAT_43"	# 4.3 BSD compatible system calls (required)
+#options	"COMPAT_09"	# has no meaning on the atari
+#options	COMPAT_SUNOS	# Support to run Sun-3 executables
+#options	"TCP_COMPAT_42"	# Disable UDP checksums (not needed)
+
+#
+# Support for System V IPC facilities.
+#
+options	SYSVSHM			# System V shared memory
+options	SYSVMSG			# System V messages
+options	SYSVSEM			# System V semaphores
+
+#
+# Support for various kernel options
+#
+options		KTRACE			# Add kernel tracing system call
+options		DIAGNOSTIC		# Add additional error checking code
+options		"NKMEMCLUSTERS=256"	# Size of kernel malloc area
+options		GENERIC			# Mini-root boot support
+
+#
+# Atari specific options
+#
+#options	KFONT_8x8		# Use 8x8 font instead of 8x16
+#options	FPU_EMULATE		# Floating point emulation
+options		"ST_POOL_SIZE=22"	# smallest that allows TT-HIGH
+options		TT_SCSI			# SCSI-support for TT
+options		FALCON_SCSI		# SCSI-support for Falcon
+options		TT_VIDEO		# Graphics support for TT
+options		FALCON_VIDEO		# Graphics support for FALCON
+
+#
+# Build one kernel that can boot from any disk.
+#
+config		netbsd swap on generic
+
+pseudo-device	mouse	1	# mouse
+pseudo-device	view	2	# View (graphics mapping)
+pseudo-device	sl		# Slip
+pseudo-device	ppp		# ppp
+pseudo-device	pty	16	# Pseudo-tty support
+pseudo-device	loop		# Loopback network
+pseudo-device	vnd	3	# 3 pseudo disks (see vnconfig)
+pseudo-device	bpfilter 2	# berkeley packet filters
+pseudo-device	tun	2	# network tunnel
+
+#
+#The following sections describe various hardware options.
+#
+zs0	at mainbus0		# Serial support through 8530

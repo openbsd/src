@@ -1,0 +1,77 @@
+#	$NetBSD: JURA,v 1.3 1995/08/03 00:09:21 cgd Exp $
+#
+# Kernel for jura.pdl.cs.cmu.edu.
+
+include "std.alpha"
+
+makeoptions	DEBUG="-g"
+
+maxusers 8
+
+# CPU Support
+options         DEC_2000_300    # "Jensen":     2000/300 (DECpc AXP 150)
+
+options		BOOTKEY			# ask for keyhit before halt/reboot 
+
+# needs to be set per system
+options		TIMEZONE="5*60"		# Minutes west of GMT (for param.c)
+options		DST=1			# Daylight savings rules (for param.c)
+
+# Standard system options
+options		SWAPPAGER, VNODEPAGER, DEVPAGER # Paging (mandatory)
+options		DEBUG, DIAGNOSTIC	# Extra kernel debugging
+options		KTRACE			# System call tracing support
+
+# File system options
+options		FIFO		# POSIX fifo support (in all file systems)
+options		FFS		# Fast file system
+options		MFS		# Memory-based file system
+options		NFSCLIENT	# Sun NFS-compatible file system client
+
+# Networking options
+options		INET		# Internet protocol suite
+
+# 4.3BSD compatibility.  Should be optional, but necessary for now.
+options		COMPAT_43
+
+# Loadable Kernel Modules
+options		LKM
+
+config		netbsd	root on nfs swap on nfs
+
+# XXX Unfortunately, configuration isn't as simple as the following,
+# because DEC engineers really biffed the DECpc AXP (in my opinion)
+# See further below for information about how to really configure
+# these systems.
+
+#isa*	at	mainbus0
+#
+#com0	at	isa? port 0x3f8 irq 4
+#com1	at	isa? port 0x2f8 irq 3
+#
+#ahb0	at	isa?
+#
+#scsibus* at	scsi?
+#
+#sd*	at	scsibus? target ? lun ?
+#st*	at	scsibus? target ? lun ?
+#cd*	at	scsibus? target ? lun ?
+
+# They should really look like:
+
+# ibus0	at	mainbus0			"internal bus"
+# combo0 at	ibus0				the VLSI combo chip
+# clock0 at	combo0 ...			periphs on combo chip
+# com0	at	combo0 ...			.
+# com1	at	combo0 ...			.
+# lpt0	at	combo0 ...			.
+# etc.
+# eisa0	at	ibus0				EISA attached to ibus
+# ahb*	at	eisa0				EISA devices
+# etc.
+
+pseudo-device	bpfilter
+pseudo-device	loop
+pseudo-device	pty
+pseudo-device	sl
+pseudo-device	vnd

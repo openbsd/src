@@ -1,0 +1,185 @@
+Installation is supported from several media types, including:
+
+	DOS floppies
+	Tape
+	Remote NFS partition
+	FTP
+
+No matter which installation medium you choose, you'll need to have
+two floppy disks available (either 1.2M or 1.44 will work, though
+both should be the same type).  On the first, you'll put the
+kernel-copy image that's appropriate for your system.  On the second,
+you'll put the install or upgrade floppy image, depending on whether
+you're installing NetBSD for the first time, or upgrading a previous
+installation.
+
+If you are using an Adaptec AHA-154x or Buslogic BT-54x SCSI host
+adapter, you need the kcaha-10.fs kernel-copy image.  If you're using
+a Buslogic BT-445, BT-74x, or BT-9xx SCSI host adapter, you'll need
+the kcbt-10.fs image.  If you're using a disk controller other than
+those mentioned above, either kernel-copy disk image will work for
+you.
+
+If you are using a UN*X-like system to write the floppy images to
+disks, you should use the "dd" command to copy the file system images
+(.fs files) directly to the raw floppy disks.  It is suggested that
+you read the dd(1) manual page or ask your system administrator to
+determine the correct set of arguments to use; it will be slightly
+different from system to system, and a comprehensive list of the
+possibilities is beyond the scope of this document.
+
+If you are using DOS to write the floppy images to disks, you should
+use the "rawrite" utility, provided in the "i386/utilities" directory
+of the NetBSD distribution.  It will write the file system images (.fs
+files) to disks.
+
+Note that, when installing, the kernel-copy floppy can be write-protected
+(i.e. read-only), but the install floppy MUST not be write-protected.
+The install program needs to write some temporary files, and if the
+disk is write-protected, it can't.  If you're upgrading your system,
+both the kernel-copy and upgrade floppies may be write-protected.
+
+Obviously, the steps necessary to prepare the distribution sets for
+installation or upgrade depend on which installation medium you
+choose.  The steps for the various media are outlined below.
+
+To install or upgrade NetBSD using DOS floppies, you need to do the
+following:
+
+	Count the number of "set_name.xx" files that make up the
+	distribution sets you want to install or upgrade.  You will
+	need one fifth that number of 1.2M floppies, or one sixth that
+	number of 1.44M floppies.  You should only use one size of
+	floppy for the install or upgrade procedure; you can't use
+	some 1.2M floppies and some 1.44M floppies.
+
+	Format all of the floppies with DOS.  DO NOT make any of them
+	bootable DOS floppies, i.e. don't use "format/s" to format
+	them.  (If the floppies are bootable, then the DOS system
+	files that make them bootable will take up some space, and you
+	won't be able to fit as many distribution set parts per disk.)
+	If you're using floppies that are formatted for DOS by their
+	manufacturers, they probably aren't bootable, and you can use
+	them out of the box.
+
+	Place all of the "set_name.xx" files on the DOS disks, five
+	per disk if you're using 1.2M disks, six per disk if you're
+	using 1.44M disks.  How you do this is up to you; there are
+	many possibilities.  You could, for instance, use a DOS
+	terminal program to download them on to the floppies, or use
+	a UN*X-like system capable of reading and writing DOS file
+	systems (either with "mtools" or a real DOS file system)
+	to place them on the disk.
+
+	Once you have the files on DOS disks, you can proceed to the
+	next step in the installation or upgrade process.  If you're
+	installing NetBSD from scratch, go to the section on preparing
+	your hard disk, below.  If you're upgrading an existing
+	installation, go directly to the section on upgrading.
+
+To install or upgrade NetBSD using a tape, you need to do the
+following:
+
+	To install NetBSD from a tape, you need to make a tape that
+	contains the distribution set files, in "tar" format.  If
+	you're making the tape on a UN*X-like system, the easiest way
+	to do so is probably something like:
+
+		tar cf <tape_device> <dist_directories>
+
+	where "<tape_device>" is the name of the tape device that
+	describes the tape drive you're using (possibly /dev/rst0, or
+	something similar, but it will vary from system to system.
+	(If you can't figure it out, ask your system administrator.)
+	In the above example, "<dist_directories>" are the
+	distribution sets' directories, for the distribution sets you
+	wish to place on the tape.  For instance, to put the "base10"
+	and "etc10" distributions on tape (in order to do the absolute
+	minimum installation to a new disk), you would do the
+	following:
+
+		cd .../NetBSD-1.0		# the top of the tree
+		cd i386/binary
+		tar cf <tape_device> base10 etc10
+
+	(Note that you still need to fill in "<tape_device>" in the
+	example.)
+
+	Once you have the files on the tape, you can proceed to the
+	next step in the installation or upgrade process.  If you're
+	installing NetBSD from scratch, go to the section on preparing
+	your hard disk, below.  If you're upgrading an existing
+	installation, go directly to the section on upgrading.
+
+To install or upgrade NetBSD using a remote partition, mounted via
+NFS, you must do the following:
+
+	NOTE:	This method of installation is recommended only for
+		those already familiar with using BSD network
+		configuration and management commands.  If you aren't,
+		this documentation should help, but is not intended to
+		be all-encompassing.
+
+	Place the NetBSD distribution sets you wish to install into a
+	directory on an NFS server, and make that directory mountable
+	by the machine on which you are installing or upgrading NetBSD.
+	This will probably require modifying the /etc/exports file on
+	of the NFS server and resetting its mount daemon (mountd).
+	(Both of these actions will probably require superuser
+	privileges on the server.)
+
+	You need to know the the numeric IP address of the NFS server,
+	and, if the server is not on a network directly connected to
+	the machine on which you're installing or upgrading NetBSD,
+	you need to know the numeric IP address of the router closest
+	to the NetBSD machine.  Finally, you need to know the numeric
+	IP address of the NetBSD machine itself.
+
+	Once the NFS server is set up properly and you have the
+	information mentioned above, you can proceed to the next step
+	in the installation or upgrade process.  If you're installing
+	NetBSD from scratch, go to the section on preparing your hard
+	disk, below.  If you're upgrading an existing installation, go
+	directly to the section on upgrading.
+
+To install or upgrade NetBSD by using FTP to get the installation
+sets, you must do the following:
+
+	NOTE:	This method of installation is recommended only for
+		those already familiar with using BSD network
+		configuration and management commands.  If you aren't,
+		this documentation should help, but is not intended to
+		be all-encompassing.
+
+	The preparations for this installation/upgrade method are
+	easy; all you make sure that there's some FTP site from which
+	you can retrieve the NetBSD distribution when you're about to
+	install or upgrade.  You need to know the numeric IP address
+	of that site, and, if it's not on a network directly connected
+	to the machine on which you're installing or upgrading NetBSD,
+	you need to know the numeric IP address of the router closest
+	to the NetBSD machine.  Finally, you need to know the numeric
+	IP address of the NetBSD machine itself.
+
+	Once you have this information, you can proceed to the next
+	step in the installation or upgrade process.  If you're
+	installing NetBSD from scratch, go to the section on
+	preparing your hard disk, below.  If you're upgrading an
+	existing installation, go directly to the section on
+	upgrading.
+
+If you are upgrading NetBSD, you also have the option of installing
+NetBSD by putting the new distribution sets somewhere in your existing
+file system, and using them from there.  To do that, you must do the
+following:
+
+	Place the distribution sets you wish to upgrade somewhere in
+	your current file system tree.  At a bare minimum, you must
+	upgrade the "base" binary distribution, and so must put the
+	"base10" set somewhere in your file system.  If you wish,
+	you can do the other sets, as well, but you should NOT upgrade
+	the "etc" distribution; the "etc" distribution contains system
+	configuration files that you should review and update by hand.
+
+	Once you have done this, you can proceed to the next step in
+	the upgrade process, actually upgrading your system.

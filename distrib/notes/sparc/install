@@ -1,0 +1,182 @@
+Installing NetBSD is a relatively complex process, but if you have
+this document in hand it shouldn't be too much trouble.
+
+There are several ways to install NetBSD onto a disk. If your Sparcstation
+is hooked up in a network you can find find a server and arrange for a
+diskless setup which is a convenient way to install on a machine with
+a single disk attached. Alternatively, you could use SunOS (booted from
+a local disk) and install NetBSD onto a second disk. For the latter method,
+skip to the section "Installing from SunOS" below.
+
+Installing using a diskless setup.
+
+First, you must setup a diskless client configuration on a server. Consult
+your server installation documents on how to proceed with this.
+Put all the *.tar.gz files you want to install into the root directory
+for your client on the server.
+
+Next, unpack base.tar.gz on the server in the root directory for your machine.
+A few configuration files need to be edited:
+
+	<root>/etc/hosts
+	<root>/etc/myname
+	<root>/etc/fstab
+
+Boot your workstation from the server by entering the appropriate `boot'
+command at the monitor prompt. Depending on the PROM version in your machine,
+this command takes one of the following forms:
+
+	> b le()netbsd -s		# for sun4 monitors
+	ok boot le()netbsd -s		# for version 1 OpenBOOT ROMs
+	ok boot net netbsd -s		# for version 2 OpenBOOT ROMs
+
+This will boot the NetBSD kernel in single-user mode.
+
+[[
+NOTE: the latter two examples assume you operate the OpenBOOT ROM in
+"new command mode". If your machine comes up and gives you a `>' prompt
+instead of `ok', type:
+
+    >n					# enter native OpenBOOT mode
+    ok setenv sunmon-compat? false	# make it permanent
+    ok
+]]
+
+Start the installation procedure:
+
+netbsd# ./install.sh
+
+
+This script will do most of the work of transferring the system from the
+tar files onto your disk. You will frequently be asked for confirmation
+before the script proceeds with each phase of the installation process.
+Occasionally, you'll have to provide a piece of information such as the
+name of the disk you want to install on or IP addresses and domain names
+you want to assign.
+
+The installation script goes through the following phases:
+
+	- determination of the disk to install NetBSD on
+	- checking of the partition information on the disk
+	- creating and mounting the NetBSD filesystems
+	- setup of IP configuration
+	- extraction of the distribution tar files
+	- installation of boot programs
+
+
+Now try a reboot.  (If needed, swap your scsi id's first).  Initially
+I'd suggest you "boot sd()netbsd -bs", then try multiuser after that.
+if you boot single-user the NetBSD incantation to make the root
+filesystem writable is
+
+    netbsd# mount -u /dev/sd0a /
+
+The Sun monitor normally tries to load a file called "vmunix". On
+OpenBOOT ROM systems you can change it to load NetBSD instead using
+the following commands:
+
+On version 1 OpenBOOT ROMs:
+    >n
+    ok setenv boot-from sd(0,0,0)netbsd
+    ok
+
+On version 2 OpenBOOT ROMs:
+    ok setenv boot-file netbsd
+    ok setenv boot-device /sbus/esp/sd@0,0
+
+
+Congratulations, you have successfully installed NetBSD 1.0.  When you
+reboot into NetBSD, you should log in as "root" at the login prompt.
+There is no initial password, but if you're using the machine in a
+networked environment, you should create yourself an account and
+protect it and the "root" account with good passwords.
+
+Some of the files in the NetBSD 1.0 distribution might need to be
+tailored for your site.  In particular, the /etc/sendmail.cf file will
+almost definitely need to be adjusted, and other files in /etc will
+probably need to be modified.  If you are unfamiliar with UN*X-like
+system administration, it's recommended that you buy a book that
+discusses it.
+
+
+
+Installing from SunOS.
+
+You need a SunOS machine to install NetBSD.  You also need at
+least the following pieces:
+
+    the *.tar.gz files you want to install (as a minimum, base.tar.gz)
+    gzip (GNU gzip) SunOS binary
+    gtar (GNU tar) SunOS binary
+    the "install.sh" script
+    a "/boot" file from a SunOS sun4c machine
+    a kernel, most likely "/netbsd"
+
+All these pieces, except "/boot", are supplied in the NetBSD/sparc
+distribution.
+
+You need to format and partition the disk using SunOS (since
+NetBSD/sparc uses SunOS disk labels.)  Give yourself adequate
+partition sizes.  Here is an example layout:
+
+    partition    size   offset	  will be..
+    sd2a        28140        0	  /
+    sd2b        16170    28140	  swap
+    sd2c       204540        0	  `whole disk'
+    sd2g       160230    44310	  /usr
+
+BTW, These are not recommended sizes.  They simply match the first
+(tiny) disk that NetBSD/sparc ran on.
+
+Use SunOS to newfs the partitions which will have filesystems on them.
+(NetBSD's filesystem format is identical to SunOS).
+
+    sunos# newfs /dev/rsd2a
+    [... lots of output]
+    sunos# newfs /dev/rsd2g
+    [... lots of output]
+
+NOTE: If you are able to, there is a performance benefit from
+newfs'ing using NetBSD.  If you newfs using the NetBSD newfs command,
+be sure to use the -O flag for your / partition, so that newfs will
+use the 4.3BSD filesystem format, rather than the new 4.4BSD filesystem
+format.  If you forget, you will not be able to boot -- the SunOS boot
+blocks do not understand the extended 4.4BSD filesystem format.
+
+Mount those partitions in a tree formation, under /mnt; ie:
+
+    sunos# df
+    Filesystem            kbytes    used   avail capacity  Mounted on
+    [...]
+    /dev/sd2a              11501       0   11501     0%    /mnt
+    /dev/sd2g             179529       0  179529     0%    /mnt/usr
+
+Place a standard SunOS "/boot" program in /mnt (your new root
+partition), and use the SunOS command "installboot" to make it work.
+The installboot man page says to do something like this:
+
+    sunos# cp /boot /mnt/boot
+    sunos# /usr/mdec/installboot -vlt /mnt/boot /usr/mdec/bootsd /dev/rsd2a
+
+You can now extract the provided "*.tar.gz files onto your disk.  The
+provided script, "install.sh" will help you:
+
+    sunos# ls -FC
+    base.tar.gz      etc.tar.gz       man.tar.gz       secr.tar.gz
+    comp.tar.gz      games.tar.gz     misc.tar.gz      text.tar.gz
+    install.sh       netbsd.id3_scsi
+    sunos# ./install.sh
+    [...]
+
+This script NEEDS gzip and gtar (GNU gzip and GNU tar) on your
+execution path!  The tar files are in a "new format" that includes
+directory information, and SunOS tar will not read them.  Statically
+linked versions of these programs for SunOS are supplied in the
+distribution.
+
+After the files have been extracted, repair /mnt/etc/fstab to match
+your actual disk layout.  (Minus the "/mnt" component of each path, of
+course :-)
+
+Now proceed to reboot the machine as described above in "Installing
+using a diskless setup".

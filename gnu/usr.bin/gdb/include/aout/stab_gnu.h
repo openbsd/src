@@ -1,0 +1,37 @@
+/*	$Id: stab_gnu.h,v 1.1.1.1 1995/10/18 08:40:10 deraadt Exp $ */
+#ifndef __GNU_STAB__
+
+/* Indicate the GNU stab.h is in use.  */
+
+#define __GNU_STAB__
+
+#define __define_stab(NAME, CODE, STRING) NAME=CODE,
+
+enum __stab_debug_code
+{
+#include "aout/stab.def"
+LAST_UNUSED_STAB_CODE
+};
+
+#undef __define_stab
+
+/* Definitions of "desc" field for N_SO stabs in Solaris2.  */
+
+#define	N_SO_AS		1
+#define	N_SO_C		2
+#define	N_SO_ANSI_C	3
+#define	N_SO_CC		4	/* C++ */
+#define	N_SO_FORTRAN	5
+#define	N_SO_PASCAL	6
+
+/* Solaris2: Floating point type values in basic types.  */
+
+#define	NF_NONE		0
+#define	NF_SINGLE	1	/* IEEE 32-bit */
+#define	NF_DOUBLE	2	/* IEEE 64-bit */
+#define	NF_COMPLEX	3	/* Fortran complex */
+#define	NF_COMPLEX16	4	/* Fortran double complex */
+#define	NF_COMPLEX32	5	/* Fortran complex*16 */
+#define	NF_LDOUBLE	6	/* Long double (whatever that is) */
+
+#endif /* __GNU_STAB_ */

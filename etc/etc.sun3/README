@@ -1,0 +1,51 @@
+# $Id: README,v 1.1.1.1 1995/10/18 08:38:02 deraadt Exp $ -*- text -*-
+
+NetBSD/Sun3 Binary Snapshot
+
+This FTP directory contains a binary snapshot of NetBSD/Sun3.
+
+The NetBSD/sun3 port runs on most Sun3 machines, including:
+
+	Sun3/{50,60,110,160,260}
+
+Devices currently supported include:
+
+	Intel Ether (ie), on-board or VME
+	Lance Ether (le), on-board
+	SCSI (sd,st,...), on-board or VME
+	keyboard/display console
+	serial port (ttya/ttyb) console
+
+Other Features:
+
+	Generic kernel supports root on: sd[0123], ie0, le0
+	Kernel debugger included (ddb)
+	Runs SunOS binaries (see sparc sun shared lib notes)
+
+There's still a lot left to do  (see doc/sun3/TODO).
+
+Before using the files in this directory, you should start by
+unpacking doc.shar and reading all the files it contains.
+Suggested reading order is:
+	doc/sun3/README
+	doc/sun3/STATUS
+	doc/sun3/INSTALL
+	doc/sun3/SUP
+	doc/sun3/BUILDING
+	doc/sun3/TODO
+
+To use this, all you need to do it unpack everything onto the
+disk that will be used for root and usr, which can be either a
+real disk or some part of your NFS server.
+
+REMEMBER: run dev/MAKEDEV after you unpack things!
+(cd dev ; MAKEDEV std)
+
+If you have any questions or comments about this port please
+send mail to the list:  <port-sun3@netbsd.org>
+
+If you'd like to help, send me mail at <gwr@netbsd.org>
+so I can coordinate efforts.
+
+Enjoy!
+Gordon Ross

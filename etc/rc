@@ -1,0 +1,242 @@
+#	$NetBSD: rc,v 1.54 1995/10/08 18:11:43 thorpej Exp $
+#	from: @(#)rc	8.2 (Berkeley) 3/17/94
+
+# System startup script run by init on autoboot
+# or after single-user.
+# Output and error are redirected to console by init,
+# and the console is the controlling terminal.
+
+stty status '^T'
+
+# Set shell to ignore SIGINT (2), but not children;
+# shell catches SIGQUIT (3) and returns to single user after fsck.
+trap : 2
+trap : 3	# shouldn't be needed
+
+HOME=/; export HOME
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+export PATH
+
+# Configure ccd devices.
+if [ -f /etc/ccd.conf ]
+then
+	ccdconfig -C
+fi
+
+if [ -e /fastboot ]
+then
+	echo "Fast boot: skipping disk checks."
+elif [ $1x = autobootx ]
+then
+	echo "Automatic boot in progress: starting file system checks."
+	fsck -p
+	case $? in
+	0)
+		;;
+	2)
+		exit 1
+		;;
+	4)
+		echo "Rebooting..."
+		reboot
+		echo "Reboot failed; help!"
+		exit 1
+		;;
+	8)
+		echo "Automatic file system check failed; help!"
+		exit 1
+		;;
+	12)
+		echo "Boot interrupted."
+		exit 1
+		;;
+	130)
+		# interrupt before catcher installed
+		exit 1
+		;;
+	*)
+		echo "Unknown error; help!"
+		exit 1
+		;;
+	esac
+fi
+
+trap "echo 'Boot interrupted.'; exit 1" 3
+
+swapon -a
+
+umount -a >/dev/null 2>&1
+mount -a -t nonfs
+rm -f /fastboot		# XXX (root now writeable)
+
+# set flags on ttys.  (do early, in case they use tty for SLIP in netstart)
+echo 'setting tty flags'
+ttyflags -a
+
+# set hostname, turn on network
+echo 'starting network'
+. /etc/netstart
+
+mount /usr >/dev/null 2>&1
+mount /var >/dev/null 2>&1
+
+# clean up left-over files
+rm -f /etc/nologin
+rm -f /var/spool/lock/LCK.*
+rm -f /var/spool/uucp/STST/*
+(cd /var/run && { rm -rf -- *; install -c -m 664 -g utmp /dev/null utmp; })
+
+echo -n 'starting rpc daemons:'
+echo -n ' portmap';		portmap
+
+if [ -f /usr/sbin/ypbind -a -d /var/yp ]; then
+	echo -n ' ypbind';		ypbind
+fi
+
+# $nfs_server is imported from /etc/netstart;
+# if $nfs_server == YES, the machine is setup for being an nfs server
+if [ X${nfs_server} = X"YES" -a -r /etc/exports ]; then
+	rm -f /var/db/mountdtab	
+	echo -n > /var/db/mountdtab
+	echo -n ' mountd';		mountd
+	echo -n ' nfsd';		nfsd -tun 4
+fi
+
+# $nfs_client is imported from /etc/netstart;
+# if $nfs_client == YES, the machine is setup for being an nfs client
+if [ X${nfs_client} = X"YES" ]; then
+	echo -n ' nfsiod';		nfsiod -n 4
+fi
+
+if [ X${amd} = X"YES" -a -d ${amd_dir} -a -r ${amd_master} ]; then
+	echo -n ' amd'
+	amd -l syslog -x error,noinfo,nostats -p \
+	    -a ${amd_dir} `cat ${amd_master}` > /var/run/amd.pid
+fi
+
+echo '.'
+mount -a -t nfs
+
+echo -n 'starting system logger'
+rm -f /dev/log
+syslogd
+
+# $timed_flags is imported from /etc/netstart;
+# if $timed_flags == NO, timed isn't run.
+if [ "X${timed_flags}" != X"NO" ]; then
+	echo -n ', time daemon'; timed $timed_flags
+fi
+echo '.'
+
+# /var/crash should be a directory or a symbolic link
+# to the crash directory if core dumps are to be saved.
+if [ -d /var/crash ]; then
+	echo checking for core dump...
+	savecore /var/crash
+fi
+
+				echo -n 'checking quotas:'
+quotacheck -a
+				echo ' done.'
+quotaon -a
+
+# build ps databases
+echo 'building databases...'
+kvm_mkdb /netbsd
+dev_mkdb
+
+chmod 666 /dev/tty[pqrs]*
+
+# check the password temp/lock file
+if [ -f /etc/ptmp ]
+then
+	logger -s -p auth.err \
+	'password file may be incorrect -- /etc/ptmp exists'
+fi
+
+virecovery=/var/tmp/vi.recover/recover.*
+if [ "$virecovery" != "/var/tmp/vi.recover/recover.*" ]; then
+	echo preserving editor files
+	for i in $virecovery; do
+		sendmail -t < $i
+	done
+fi
+
+echo clearing /tmp
+
+# prune quickly with one rm, then use find to clean up /tmp/[lq]*
+# (not needed with mfs /tmp, but doesn't hurt there...)
+(cd /tmp && rm -rf [a-km-pr-zA-Z]* &&
+    find . ! -name . ! -name lost+found ! -name quota.user \
+	! -name quota.group -exec rm -rf -- {} \; -type d -prune)
+
+if [ -f /var/account/acct ]; then
+	echo 'turning on accounting';	accton /var/account/acct
+fi
+
+echo -n standard daemons:
+echo -n ' update';		update
+echo -n ' cron';		cron
+echo '.'
+
+echo -n starting network daemons:
+
+# $gated and $routed_flags are imported from /etc/netstart.
+# If $gated == YES, gated is used; otherwise routed.
+# If $routed_flags == NO, routed isn't run.
+if [ X${gated} = X"YES" -a -r /etc/gated.conf ]; then
+	echo -n ' gated';		gated $gated_flags
+elif [ "X${routed_flags}" != X"NO" ]; then
+	echo -n ' routed';		routed $routed_flags
+fi
+
+# $name_flags is imported from /etc/netstart;
+# if $named_flags != NO, named is run.
+if [ "X${named_flags}" != X"NO" ]; then
+	echo -n ' named';		named $named_flags
+fi
+
+# $rwhod is imported from /etc/netstart;
+# if $rwhod == YES, rwhod is run.
+if [ X${rwhod} = X"YES" ]; then
+	echo -n ' rwhod';		rwhod
+fi
+
+echo -n ' printer';		lpd
+
+# $sendmail_flags is imported from /etc/netstart;
+# If $sendmail_flags == NO or /etc/sendmail.cf doesn't exist, then
+# sendmail isn't run.
+if [ "X${sendmail_flags}" != X"NO" -a -r /etc/sendmail.cf ]; then
+	echo -n ' sendmail';		sendmail ${sendmail_flags}
+fi
+
+echo -n ' inetd';		inetd
+
+# $rarpd_flags is imported from /etc/netstart;
+# If $rarpd_flags == NO or /etc/ethers doesn't exist, then
+# rarpd isn't run.
+if [ "X${rarpd_flags}" != X"NO" -a -r /etc/ethers ]; then
+	echo -n ' rarpd';		rarpd ${rarpd_flags}
+fi
+
+# $bootparamd_flags is imported from /etc/netstart;
+# If $bootparamd_flags == NO or /etc/bootparams doesn't exist, then
+# bootparamd isn't run.
+if [ "X${bootparamd_flags}" != X"NO" -a -r /etc/bootparams ]; then
+	echo -n ' rpc.bootparamd';	rpc.bootparamd ${bootparamd_flags}
+fi
+
+# $rbootd_flags is imported from /etc/netstart;
+# If $rbootd_flags == NO or /etc/rbootd.conf doesn't exist, then
+# rbootd isn't run.
+if [ "X${rbootd_flags}" != X"NO" -a -r /etc/rbootd.conf ]; then
+	echo -n ' rbootd';		rbootd ${rbootd_flags}
+fi
+
+echo '.'
+
+. /etc/rc.local
+
+date
+exit 0

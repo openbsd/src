@@ -1,0 +1,29 @@
+#	$NetBSD: Makefile.clnt,v 1.3 1995/07/25 22:20:19 gwr Exp $
+
+#	This Makefile builds a client used for testing.
+
+CFLAGS += -DUSER_CACHE -DWTMP -DUSE_YP -I${.OBJDIR}
+
+PROG=	clnt.pcnfsd
+SRCS=	pcnfsd_test.c pcnfsd_clnt.c pcnfsd_xdr.c
+NOMAN=	noman
+
+DPADD=	${LIBRPCSVC}
+LDADD=	-lrpcsvc
+
+# Special rules for the generated C code...
+
+pcnfsd_clnt.c: pcnfsd.x
+	rpcgen -l ${.CURDIR}/pcnfsd.x -o $@
+
+pcnfsd_xdr.c: pcnfsd.x
+	rpcgen -c ${.CURDIR}/pcnfsd.x -o $@
+
+pcnfsd.h: pcnfsd.x
+	rpcgen -h ${.CURDIR}/pcnfsd.x -o $@
+
+CLEANFILES += pcnfsd_clnt.c pcnfsd_xdr.c pcnfsd.h
+
+.include <bsd.prog.mk>
+
+.depend ${OBJS}: pcnfsd.h

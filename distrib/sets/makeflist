@@ -1,0 +1,25 @@
+#!/bin/csh -f
+
+set arch=`uname -m`
+set listsdir=`pwd`/lists
+
+set TMPFILE=/tmp/_LIST.$$
+
+set lists=(base comp etc games text)
+# SPECIAL: man misc
+# EXTRA SPECIAL (not done here): secr
+
+foreach setname ($lists)
+	cat $listsdir/$setname/mi $listsdir/$setname/md.${arch} >>! $TMPFILE
+end
+
+set setname=man
+grep ${arch} $listsdir/man/md_share | \
+    cat $listsdir/$setname/mi $listsdir/$setname/md.${arch} - >>! $TMPFILE
+
+set setname=misc
+grep -v ${arch} $listsdir/man/md_share | \
+    cat $listsdir/$setname/mi $listsdir/$setname/md.${arch} - >>! $TMPFILE
+
+sort $TMPFILE
+/bin/rm $TMPFILE

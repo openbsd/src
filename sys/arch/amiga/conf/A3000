@@ -1,0 +1,109 @@
+#	$NetBSD: A3000,v 1.7 1994/10/26 02:02:23 cgd Exp $
+
+#
+# Minimal AMIGA 3000
+#
+# Author: Stephen Roznowski (sjr@zombie.ncsc.mil)
+#
+# This configuration file is for a multiple disk/multiple tape A3000.
+#
+
+include "std.amiga"
+#
+# Add support for about 16 users. This variable is used to size
+# various kernel structures.
+#
+maxusers	16
+
+#
+# processors this kernel should support
+#
+options		"M68030"	# support for 030
+
+options		TIMEZONE=300	# Set the timezone that the kernel will use
+options		DST=1		# Set the timezone that the kernel will use
+
+options		FPCOPROC	# Support for MC68881/MC68882
+options		FPSP
+
+#
+# Networking options
+#
+options		INET		# Basic networking support
+
+options		FFS		# Berkeley fast file system
+options		MFS		# Memory based filesystem
+options		PROCFS		# Process filesystem
+options		KERNFS		# Kernel parameter filesystem
+options		NULLFS		# Loopback filesystem
+
+options		FIFO		# FIFO operations on vnodes
+
+options		SWAPPAGER	# Pager for swap device
+options		VNODEPAGER	# Pager for vnodes
+options		DEVPAGER	# Pager
+
+#
+# Compatability options for various existing systems
+#
+options		"COMPAT_09"	# fs type binary compatability (name vs number)
+options		COMPAT_SUNOS	# Support to run Sun-3 executables
+options		"COMPAT_43"	# 4.3 BSD compatible system calls
+options		"TCP_COMPAT_42"	# Use 4.2 BSD style TCP
+options		"COMPAT_NOMID"	# ???
+
+#
+# Graphics options
+# 
+options		GRF_ECS			# Enhanced Chip Set
+options		GRF_NTSC		# NTSC
+options		GRF_PAL			# PAL
+options		"GRF_A2024"		# Support for the A2024
+
+#
+# Support for System V IPC facilities.
+#
+options		SYSVSHM		# System V shared memory
+options		SYSVMSG		# System V messages
+options		SYSVSEM		# System V semaphores
+
+#
+# Support for various kernel options
+#
+options		KTRACE		# Add kernel tracing system call
+options		DIAGNOSTIC	# Add additional error checking code
+options		"NKMEMCLUSTERS=256"	# Size of kernel malloc area
+options		GENERIC		# Mini-root boot support
+
+#
+# Build one kernel that can boot from any disk.
+#
+config		netbsd swap on generic
+
+pseudo-device	view	10	# View (graphics mapping)
+pseudo-device	pty	16	# Pseudo-tty support
+pseudo-device	loop		# Loopback network
+
+#
+#The following sections describe various hardware options.
+#
+
+#
+# Devices on an Amiga 3000
+#
+ahsc0		at mainbus0		# A3000 scsi
+scsibus0	at ahsc0
+
+# any drives on configured controllers.
+sd0	at scsibus? target 0 lun 0
+sd1	at scsibus? target 1 lun 0
+sd2	at scsibus? target 2 lun 0
+sd3	at scsibus? target 3 lun 0
+sd4	at scsibus? target 4 lun 0
+sd5	at scsibus? target 5 lun 0
+sd6	at scsibus? target 6 lun 0
+st0	at scsibus? target ? lun 0
+
+grfcc0		at mainbus0
+grf0		at grfcc0
+ite0		at grf0

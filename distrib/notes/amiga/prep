@@ -1,0 +1,80 @@
+You will need an AmigaDOS hard drive prep tool to prepare you hard
+drives for use with NetBSD/amiga.  HDToolBox is provided with the
+system software and on floppy installation disks since Release 2.0
+of AmigaDOS so we will provide instructions for its use.
+
+Preparing you hard disk with HDToolBox:
+
+	A full explanation of HDToolBox can be found with your
+	AmigaDOS manuals and is beyond the scope of this document.
+
+	Note you will be modifying your HD's if you mess something 
+	up here you could lose everything on all the drives that 
+	you configure.  It is therefore advised that you:
+
+		Write down your current configurations.  Do this
+		by examining each partition on the drive and the
+		drives parameters (from Change drive type.)
+
+		Back up the partitions you are keeping.
+
+	What you need to do is partition your drives; creating
+	at least root, swap and /usr partitions and possibly at least
+	one more for /local if you have the space.
+
+	This should be done as the HDToolBox manual describes.  One thing
+	to note is that if you are not using a Commodore controller you
+	will need to specify the device your SCSI controller uses e.g.
+	if you have a Warp Engine you would:
+
+		from cli,
+			hdtoolbox warpdrive.device
+
+		from wb set the tooltype,
+			SCSI_DEVICE_NAME=warpdrive.device
+
+	The important things you need to do above and beyond normal
+	partitioning includes (from Partition Drive section):
+
+		Marking all NetBSD partitions as non-bootable.
+
+		Changing the file system parameters of the partitions
+		to NetBSD ones.  This must be done from the
+		partitioning section and `Advanced options' must
+		be enabled.  To Make the needed changes:
+
+		- Click the `Adv. Options' button
+		- Click the `Change filesystem' button
+
+		- Choose `Custom File System'
+		- Turn off `Automount' if on.
+		- Set the dostype to one of these three choices:
+
+			root partition  : 0x4e425207
+			swap partition  : 0x4e425301
+			other partitions: 0x4e425507
+
+		Here `other' refers to other partitions you will
+		format for reading and writing under NetBSD (e.g.
+		/usr)
+
+		Make sure you hit the return key to enter this value
+		as some versions of HDToolBox will forget your entry
+		if you don't.
+
+		- Turn custom boot code off
+		- Set Reserved Blocks start and end to 0.
+		- Click Ok.
+
+		Mask and maxtransfer are not used with NetBSD.
+
+		Until you compile your own kernel your swap partition
+		must exist on the drive that also holds your root
+		partition.
+
+	
+	Once this is done NetBSD/amiga will be able to recognize your
+	disks and which partitions it should use.
+
+>>> Should the miniroot transfer to the swap partition instructions
+>>> go here?

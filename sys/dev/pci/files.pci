@@ -1,0 +1,28 @@
+#	$NetBSD: files.pci,v 1.8 1995/10/10 12:16:54 mycroft Exp $
+#
+# Config.new file and device description for machine-independent PCI code.
+# Included by ports that need it.  Requires that the SCSI files be
+# defined first.
+
+# ports should define their own "device pci" line (like the one below,
+# but with the correct bus attachment).
+
+#device	pci at mainbus {[bus = -1], [dev = -1]}
+file	dev/pci/pci_subr.c		pci needs-flag
+
+# Ethernet driver for DC21040-based boards
+device	de at pci: ether, ifnet
+file	dev/pci/if_de.c			de
+
+# Digital DEFPA PCI FDDI Controller
+device	fpa at pci: pdq, fddi, ifnet
+file	dev/pci/if_fpa.c		fpa
+
+# NCR 53c8xx SCSI chips
+device	ncr at pci: scsi
+file	dev/pci/ncr.c			ncr
+
+# Adaptec 7870 chips
+device	ahc at pci: scsi
+file	dev/pci/aic7870.c		ahc
+file	dev/ic/aic7xxx.c		ahc

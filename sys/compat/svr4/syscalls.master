@@ -1,0 +1,276 @@
+	$NetBSD: syscalls.master,v 1.13 1995/10/07 06:27:57 mycroft Exp $
+
+;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
+
+; NetBSD COMPAT_SVR4 system call name/number "master" file.
+; (See syscalls.conf to see what it is processed into.)
+;
+; Fields: number type [type-dependent ...]
+;	number	system call number, must be in order
+;	type	one of STD, OBSOL, UNIMPL, NODEF, NOARGS, or one of
+;		the compatibility options defined in syscalls.conf.
+;
+; types:
+;	STD	always included
+;	OBSOL	obsolete, not included in system
+;	UNIMPL	unimplemented, not included in system
+;	NODEF	included, but don't define the syscall number
+;	NOARGS	included, but don't define the syscall args structure
+;
+; The compat options are defined in the syscalls.conf file, and the
+; compat option name is prefixed to the syscall name.  Other than
+; that, they're like NODEF (for 'compat' options), or STD (for
+; 'libcompat' options).
+;
+; The type-dependent arguments are as follows:
+; For STD, NODEF, NOARGS, and compat syscalls:
+;	{ pseudo-proto } [alias]
+; For other syscalls:
+;	[comment]
+;
+; #ifdef's, etc. may be included, and are copied to the output files.
+; #include's are copied to the syscall switch definition file only.
+
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/signal.h>
+#include <sys/mount.h>
+#include <sys/syscallargs.h>
+#include <compat/svr4/svr4_types.h>
+#include <compat/svr4/svr4_signal.h>
+#include <compat/svr4/svr4_ucontext.h>
+#include <compat/svr4/svr4_syscallargs.h>
+#include <compat/svr4/svr4_statvfs.h>
+
+0	NOARGS		{ int sys_nosys(void); } syscall
+1	NOARGS		{ int sys_exit(int rval); }
+2	NOARGS		{ int sys_fork(void); }
+3	NOARGS		{ int sys_read(int fd, char *buf, u_int nbyte); }
+4	NOARGS		{ int sys_write(int fd, char *buf, u_int nbyte); }
+5	STD		{ int svr4_sys_open(char *path, int flags, int mode); }
+6	NOARGS		{ int sys_close(int fd); }
+7	STD		{ int svr4_sys_wait(int *status); }
+8	STD		{ int svr4_sys_creat(char *path, int mode); }
+9	NOARGS		{ int sys_link(char *path, char *link); }
+10	NOARGS		{ int sys_unlink(char *path); }
+11	STD		{ int svr4_sys_execv(char *path, char **argp); }
+12	NOARGS		{ int sys_chdir(char *path); }
+13	STD		{ int svr4_sys_time(svr4_time_t *t); }
+14	STD		{ int svr4_sys_mknod(char* path, int mode, int dev); }
+15	NOARGS		{ int sys_chmod(char *path, int mode); }
+16	NOARGS		{ int sys_chown(char *path, int uid, int gid); }
+17	STD		{ int svr4_sys_break(caddr_t nsize); }
+18	STD		{ int svr4_sys_stat(char* path, struct svr4_stat* ub); }
+19	NOARGS		{ long compat_43_sys_lseek(int fd, long offset, \
+			    int whence); }
+20	NOARGS		{ pid_t sys_getpid(void); }
+21	UNIMPL		old_mount
+22	UNIMPL		System V umount
+23	NOARGS		{ int sys_setuid(uid_t uid); }
+24	NOARGS		{ uid_t sys_getuid(void); }
+25	UNIMPL		stime
+26	UNIMPL		ptrace
+27	STD		{ int svr4_sys_alarm(unsigned sec); }
+28	STD		{ int svr4_sys_fstat(int fd, struct svr4_stat *sb); }
+29	UNIMPL		pause
+30	UNIMPL		utime
+31	UNIMPL		was stty
+32	UNIMPL		was gtty
+33	STD		{ int svr4_sys_access(char *path, int flags); }
+34	UNIMPL		nice
+35	UNIMPL		statfs
+36	NOARGS		{ int sys_sync(void); }
+37	STD		{ int svr4_sys_kill(int pid, int signum); }
+38	UNIMPL		fstatfs
+39	STD		{ int svr4_sys_pgrpsys(int cmd, int pid, int pgid); }
+40	UNIMPL		xenix
+41	NOARGS		{ int sys_dup(u_int fd); }
+42	NOARGS		{ int sys_pipe(void); }
+43	STD		{ int svr4_sys_times(struct tms *tp); }
+44	UNIMPL		profil
+45	UNIMPL		plock
+46	NOARGS		{ int sys_setgid(gid_t gid); }
+47	NOARGS		{ gid_t sys_getgid(void); }
+48	STD		{ int svr4_sys_signal(int signum, svr4_sig_t handler); }
+#ifdef SYSVMSG
+49	UNIMPL		{ int sys_msgsys(int which, int a2, int a3, int a4, \
+			    int a5, int a6); }
+#else
+49	UNIMPL		msgsys
+#endif
+50	STD		{ int svr4_sys_sysarch(int op, void *a1); }
+51	UNIMPL		acct
+#ifdef SYSVSHM
+52	UNIMPL		{ int sys_shmsys(int which, int a2, int a3, int a4); }
+#else
+52	UNIMPL		shmsys
+#endif
+#ifdef SYSVSEM
+53	UNIMPL		{ int sys_semsys(int which, int a2, int a3, int a4, \
+			    int a5); }
+#else
+53	UNIMPL		semsys
+#endif
+54	STD		{ int svr4_sys_ioctl(int fd, u_long com, \
+			    caddr_t data); }
+55	UNIMPL		uadmin
+56	UNIMPL		exch
+57	STD		{ int svr4_sys_utssys(void *a1, void *a2, int sel, \
+			    void *a3); }
+58	NOARGS		{ int sys_fsync(int fd); }
+59	STD		{ int svr4_sys_execve(char *path, char **argp, \
+			    char **envp); }
+60	NOARGS		{ int sys_umask(int newmask); }
+61	NOARGS		{ int sys_chroot(char *path); }
+62	STD		{ int svr4_sys_fcntl(int fd, int cmd, char *arg); }
+63	STD		{ long svr4_sys_ulimit(int cmd, long newlimit); }
+64	UNIMPL		reserved for unix/pc
+65	UNIMPL		reserved for unix/pc
+66	UNIMPL		reserved for unix/pc
+67	UNIMPL		reserved for unix/pc
+68	UNIMPL		reserved for unix/pc
+69	UNIMPL		reserved for unix/pc
+70	OBSOL		advfs
+71	OBSOL		unadvfs
+72	OBSOL		rmount
+73	OBSOL		rumount
+74	OBSOL		rfstart
+75	OBSOL		sigret
+76	OBSOL		rdebug
+77	OBSOL		rfstop
+78	UNIMPL		rfsys
+79	NOARGS		{ int sys_rmdir(char *path); }
+80	NOARGS		{ int sys_mkdir(char *path, int mode); }
+81	STD		{ int svr4_sys_getdents(int fd, char *buf, int nbytes); }
+82	OBSOL		libattach
+83	OBSOL		libdetach
+84	UNIMPL		sysfs
+85	STD		{ int svr4_sys_getmsg(int fd, struct svr4_strbuf *ctl, \
+			    struct svr4_strbuf *dat, int *flags); }
+86	STD		{ int svr4_sys_putmsg(int fd, struct svr4_strbuf *ctl, \
+			    struct svr4_strbuf *dat, int flags); }
+87	STD		{ int svr4_sys_poll(struct svr4_pollfd *fds, \
+			    long nfds, int timeout); }
+88	STD		{ int svr4_sys_lstat(char *path, \
+			    struct svr4_stat *ub); }
+89	NOARGS		{ int sys_symlink(char *path, char *link); }
+90	NOARGS		{ int sys_readlink(char *path, char *buf, int count); }
+91	NOARGS		{ int sys_getgroups(u_int gidsetsize, gid_t *gidset); }
+92	NOARGS		{ int sys_setgroups(u_int gidsetsize, gid_t *gidset); }
+93	NOARGS		{ int sys_fchmod(int fd, int mode); }
+94	NOARGS		{ int sys_fchown(int fd, int uid, int gid); }
+95	STD		{ int svr4_sys_sigprocmask(int how, \
+			    svr4_sigset_t *set, svr4_sigset_t *oset); }
+96	STD		{ int svr4_sys_sigsuspend(svr4_sigset_t *ss); }
+97	STD		{ int svr4_sys_sigaltstack(struct svr4_sigaltstack *nss, \
+			    struct svr4_sigaltstack *oss); }
+98	STD		{ int svr4_sys_sigaction(int signum, \
+			    struct svr4_sigaction *nsa, \
+			    struct svr4_sigaction *osa); }
+99	STD		{ int svr4_sys_sigpending(int what, \
+			    svr4_sigset_t *mask); }
+100	STD		{ int svr4_sys_context(int func, \
+			    struct svr4_ucontext *uc); }
+101	UNIMPL		evsys
+102	UNIMPL		evtrapret
+103	STD		{ int svr4_sys_statvfs(char *path, \
+			    struct svr4_statvfs *fs); }
+104	STD		{ int svr4_sys_fstatvfs(int fd, \
+			    struct svr4_statvfs *fs); }
+105	UNIMPL
+106	UNIMPL		nfssvc
+107	STD		{ int svr4_sys_waitsys(int grp, int id, \
+			    union svr4_siginfo *info, int options); }
+108	UNIMPL		sigsendsys
+109	STD		{ int svr4_sys_hrtsys(int cmd, int fun, int sub, \
+			    void *rv1, void *rv2); }
+110	UNIMPL		acancel
+111	UNIMPL		async
+112	UNIMPL		priocntlsys
+113	UNIMPL		pathconf
+114	UNIMPL		mincore
+115	STD		{ int svr4_sys_mmap(svr4_caddr_t addr, \
+			    svr4_size_t len, int prot, int flags, int fd, \
+			    svr4_off_t pos); }
+116	NOARGS		{ int sys_mprotect(caddr_t addr, int len, int prot); }
+117	NOARGS		{ int sys_munmap(caddr_t addr, int len); }
+118	NOARGS		{ int sys_fpathconf(int fd, int name); }
+119	NOARGS		{ int sys_vfork(void); }
+120	NOARGS		{ int sys_fchdir(int fd); }
+121	NOARGS		{ int sys_readv(int fd, struct iovec *iovp, u_int iovcnt); }
+122	NOARGS		{ int sys_writev(int fd, struct iovec *iovp, \
+			    u_int iovcnt); }
+123	STD		{ int svr4_sys_xstat(int two, char *path, \
+			    struct svr4_xstat *ub); }
+124	STD		{ int svr4_sys_lxstat(int two, char *path, \
+			    struct svr4_xstat *ub); }
+125	STD		{ int svr4_sys_fxstat(int two, int fd, \
+			    struct svr4_xstat *sb); }
+126	UNIMPL		xmknod
+127	UNIMPL		clocal
+128	STD		{ int svr4_sys_setrlimit(int which, \
+			    struct ogetrlimit *rlp); }
+129	STD		{ int svr4_sys_getrlimit(int which, \
+			    struct ogetrlimit *rlp); }
+130	UNIMPL		lchown
+131	UNIMPL		memcntl
+132	UNIMPL		getpmsg
+133	UNIMPL		putpmsg
+134	NOARGS		{ int sys_rename(char *from, char *to); }
+135	STD		{ int svr4_sys_uname(struct svr4_utsname* name, \
+			    int dummy); }
+136	NOARGS		{ int sys_setegid(gid_t egid); }
+137	STD		{ int svr4_sys_sysconfig(int name); }
+138	NOARGS		{ int sys_adjtime(struct timeval *delta, \
+			    struct timeval *olddelta); }
+139	STD		{ long svr4_sys_systeminfo(int what, char *buf, \
+			    long len); }
+140	UNIMPL
+141	NOARGS		{ int sys_seteuid(uid_t euid); }
+142	UNIMPL		vtrace
+143	UNIMPL		fork1
+144	UNIMPL		sigwait
+145	UNIMPL		lwp_info
+146	UNIMPL		yield
+147	UNIMPL		lwp_sema_p
+148	UNIMPL		lwp_sema_v
+149	UNIMPL
+150	UNIMPL
+151	UNIMPL
+152	UNIMPL		modctl
+153	STD		{ int svr4_sys_fchroot(int fd); }
+154	UNIMPL		utimes
+155	STD		{ int svr4_sys_vhangup(void); }
+156	STD		{ int svr4_sys_gettimeofday(struct timeval *tp); }
+157	NOARGS		{ int sys_getitimer(u_int which, \
+			    struct itimerval *itv); }
+158	NOARGS		{ int sys_setitimer(u_int which, \
+			    struct itimerval *itv, struct itimerval *oitv); }
+159	UNIMPL		lwp_create
+160	UNIMPL		lwp_exit
+161	UNIMPL		lwp_suspend
+162	UNIMPL		lwp_continue
+163	UNIMPL		lwp_kill
+164	UNIMPL		lwp_self
+165	UNIMPL		lwp_getprivate
+166	UNIMPL		lwp_setprivate
+167	UNIMPL		lwp_wait
+168	UNIMPL		lwp_mutex_unlock
+169	UNIMPL		lwp_mutex_lock
+170	UNIMPL		lwp_cond_wait
+171	UNIMPL		lwp_cond_signal
+172	UNIMPL		lwp_cond_broadcast
+173	UNIMPL		pread
+174	UNIMPL		pwrite
+175	UNIMPL		llseek
+176	UNIMPL		inst_sync
+177	UNIMPL
+178	UNIMPL
+179	UNIMPL
+180	UNIMPL
+181	UNIMPL
+182	UNIMPL
+183	UNIMPL
+184	UNIMPL
+185	UNIMPL
+186	UNIMPL		auditsys

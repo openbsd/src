@@ -1,0 +1,15 @@
+kern
+misc
+lib
+bin
+port-amiga
+port-atari
+port-hp300
+port-i386
+port-m68k
+port-mac
+port-pc532
+port-pmax
+port-sparc
+port-sun3
+standards

@@ -1,0 +1,78 @@
+#
+#	$NetBSD: list,v 1.4 1995/08/25 19:17:45 leo Exp $
+#
+
+# copy the crunched binary, link to it, and kill it
+COPY	${OBJDIR}/instbin	instbin
+LINK	instbin			bin/cat
+LINK	instbin			bin/chmod
+LINK	instbin			bin/cp
+LINK	instbin			bin/df
+LINK	instbin			bin/dd
+LINK	instbin			bin/ed
+LINK	instbin			bin/expr
+LINK	instbin			bin/ln
+LINK	instbin			bin/ls
+LINK	instbin			bin/mkdir
+LINK	instbin			bin/mv
+LINK	instbin			bin/pwd
+LINK	instbin			bin/rm
+LINK	instbin			bin/sh
+LINK	instbin			bin/-sh
+LINK	instbin			bin/stty
+LINK	instbin			bin/sync
+LINK	instbin			bin/test
+LINK	instbin			bin/[
+LINK	instbin			sbin/disklabel
+LINK	instbin			sbin/fsck
+LINK	instbin			sbin/halt
+LINK	instbin			sbin/ifconfig
+LINK	instbin			sbin/init
+LINK	instbin			sbin/mknod
+LINK	instbin			sbin/mount
+LINK	instbin			sbin/mount_cd9660
+LINK	instbin			sbin/mount_msdos
+LINK	instbin			sbin/mount_nfs
+LINK	instbin			sbin/mount_ffs
+LINK	instbin			sbin/newfs
+LINK	instbin			sbin/reboot
+LINK	instbin			sbin/route
+LINK	instbin			sbin/shutdown
+LINK	instbin			sbin/slattach
+LINK	instbin			sbin/umount
+LINK	instbin			usr/bin/chgrp
+LINK	instbin			usr/bin/ftp
+LINK	instbin			usr/bin/gunzip
+LINK	instbin			usr/bin/gzcat
+LINK	instbin			usr/bin/gzip
+LINK	instbin			usr/bin/more
+LINK	instbin			usr/bin/printf
+LINK	instbin			usr/bin/sed
+LINK	instbin			usr/bin/strings
+LINK	instbin			usr/bin/tar
+LINK	instbin			usr/bin/tip
+LINK	instbin			usr/sbin/chown
+LINK	instbin			usr/sbin/chroot
+LINK	instbin			usr/sbin/update
+SPECIAL	/bin/rm instbin
+
+# copy the MAKEDEV script and make some devices
+COPY	${DESTDIR}/dev/MAKEDEV	dev/MAKEDEV
+SPECIAL	cd dev; sh MAKEDEV floppy
+SPECIAL	/bin/rm dev/MAKEDEV
+
+# we need the contents of /usr/mdec (XXX)
+# COPY	${DESTDIR}/usr/mdec/*	usr/mdec
+
+# various files that we need in /etc for the install
+COPY	${DESTDIR}/etc/group		etc
+COPY	${DESTDIR}/etc/master.passwd	etc
+COPY	${DESTDIR}/etc/passwd		etc
+COPY	${DESTDIR}/etc/protocols	etc
+COPY	${DESTDIR}/etc/pwd.db		etc
+COPY	${DESTDIR}/etc/services		etc
+COPY	${DESTDIR}/etc/spwd.db		etc
+
+# and the common installation tools
+COPY	${TOPDIR}/inst-common/dot.commonutils	.commonutils
+COPY	${TOPDIR}/inst-common/termcap.vt	usr/share/misc/termcap

@@ -1,0 +1,213 @@
+#!/bin/sh -
+#
+# Copyright (c) 1990 The Regents of the University of California.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. All advertising materials mentioning features or use of this software
+#    must display the following acknowledgement:
+#	This product includes software developed by the University of
+#	California, Berkeley and its contributors.
+# 4. Neither the name of the University nor the names of its contributors
+#    may be used to endorse or promote products derived from this software
+#    without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+#
+#	@(#)MAKEDEV	5.5 (Berkeley) 5/28/91
+#	$Id: MAKEDEV,v 1.1.1.1 1995/10/18 08:38:02 deraadt Exp $
+#
+# Device "make" file.  Valid arguments:
+#	std	standard devices
+#	local	configuration specific devices
+# Tapes:
+#	st*	? tape
+# Disks:
+#	sd*	Sun SCSI disks
+#	fd*	Floppies
+#	vnd*	"file" pseudo-disks
+#	ccd*	concatenated disk driver
+# Pseudo terminals:
+#	pty*	set of 16 master and slave pseudo terminals
+# Printers:
+# Call units:
+# Special purpose devices:
+#	bwtwo*
+#	cgtwo*
+#	cgfour*
+#	bpf*	packet filter
+#	lkm	loadable kernel modules interface
+#	tun*	network tunnel driver
+#	rd*	RAM-disk
+
+# XXX - Keep /usr/etc so SunOS can find chown
+PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/etc
+umask 77
+
+# set this to echo for Echo-Only debugging
+eo=
+
+# mk name b/c major minor [mode] [group]
+mk() {
+	$eo mknod $1 $2 $3 $4
+	$eo chmod ${5-666} $1
+	test -n "$6" && $eo chgrp $6 $1
+	return 0
+}
+
+for arg
+do
+
+unit=`expr $arg : '[a-z][a-z]*\([0-9][0-9]*\)'`
+[ "$unit" ] || unit=0
+
+case $arg in
+
+all)
+	sh MAKEDEV std sd0 sd1 sd2 sd3 st0 st1 pty0
+	;;
+
+std)
+	mk console	c 0 0 622
+	mk kd		c 1 0 622
+	mk tty		c 2 0
+
+	mk mem		c 3 0 640 kmem
+	mk kmem		c 3 1 640 kmem
+	mk null		c 3 2
+	mk eeprom	c 3 11 640 kmem
+	mk zero		c 3 12
+	mk drum		c 7 0 640 kmem
+
+	mk ttya		c 12 0
+	mk ttyb		c 12 1
+	mk mouse	c 13 0
+	mk klog		c 16 0 600
+	mk fb		c 22 0
+	mk kbd		c 29 0
+	;;
+
+fd)
+	mkdir fd >/dev/null 2>&1
+	i=0 ; while [ $i != 64 ]
+	do
+		mk fd/$i c 23 $i
+		i=`expr $i + 1`
+	done
+	;;
+
+bpf*)
+	mk bpf$unit c 36 $unit 600
+	;;
+
+tun*)
+	mk tun$unit c 24 $unit 600
+	;;
+
+pty*)
+	case $unit in
+	0) offset=0 name=p;;
+	1) offset=16 name=q;;
+	2) offset=32 name=r;;
+	3) offset=48 name=s;;
+# Note that telnetd, rlogind, and xterm (at least) only look at p-s.
+	4) offset=64 name=t;;
+	*) echo bad unit for pty in: $arg;;
+	esac
+	for pair in 0.0 1.1 2.2 3.3 4.4 5.5 6.6 7.7 \
+		8.8 9.9 a.10 b.11 c.12 d.13 e.14 f.15
+	do
+	(
+		tmp="$IFS" ; IFS="$IFS."
+		set -- $pair
+		IFS="$tmp" ; unset tmp
+		minor=`expr $offset + $2`
+		mk tty$name$1 c 20 $minor
+		mk pty$name$1 c 21 $minor
+	)
+	done
+	;;
+
+cd*|sd*|xy*|vnd*|ccd*)
+	case $arg in
+	  cd*) name=cd; blk=18; chr=58;;
+	  sd*) name=sd; blk=7; chr=17;;
+	  xy*) name=xy; blk=3; chr=9 ;;
+	  vnd*) name=vnd; blk=5; chr=19;;
+	  ccd*) name=ccd; blk=9; chr=33;;
+	esac
+	case $unit in
+	  0|1|2|3|4) offset=`expr $unit \* 8`;;
+	  *) echo bad unit for $name in: $arg;;
+	esac
+	for part in a.0 b.1 c.2 d.3 e.4 f.5 g.6 h.7
+	do
+	(
+		tmp="$IFS" ; IFS="$IFS."
+		set -- $part
+		IFS="$tmp" ; unset tmp
+		minor=`expr $offset + $2`
+		mk  $name$unit$1 b $blk $minor 640 operator
+		mk r$name$unit$1 c $chr $minor 640 operator
+	)
+	done
+	;;
+
+st*)
+	name=st; blk=11; chr=18;
+	case $unit in
+	  0|1|2|3) offset=`expr $unit \* 16`;;
+	  *) echo bad unit for $name in: $arg;;
+	esac
+	mk   r$name$unit c $chr `expr $offset + 0`
+	mk  nr$name$unit c $chr `expr $offset + 1`
+	mk  er$name$unit c $chr `expr $offset + 2`
+	mk enr$name$unit c $chr `expr $offset + 3`
+	;;
+
+bwtwo*)
+	mk bwtwo$unit c 27 $unit
+	;;
+
+cgtwo*)
+	mk cgtwo$unit c 31 $unit
+	;;
+
+cgfour*)
+	mk cgfour$unit c 39 $unit
+	;;
+
+rd*)
+	mk  rd$unit b 13 $unit
+#	mk rrd$unit b 13 `expr $unit + 16`
+	mk rd${unit}c b 13 `expr $unit + 16`
+	;;
+
+local)
+	umask 0
+	sh MAKEDEV.local
+	;;
+*)
+	echo $arg: unknown device
+	;;
+
+esac
+done
+

@@ -1,0 +1,430 @@
+/*	$NetBSD: grf.c,v 1.29 1995/09/21 11:13:27 briggs Exp $	*/
+
+/*
+ * Copyright (c) 1988 University of Utah.
+ * Copyright (c) 1990 The Regents of the University of California.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * the Systems Programming Group of the University of Utah Computer
+ * Science Department.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ * from: Utah $Hdr: grf.c 1.31 91/01/21$
+ *
+ *	@(#)grf.c	7.8 (Berkeley) 5/7/91
+ */
+
+/*
+ * Graphics display driver for the Macintosh.
+ * This is the hardware-independent portion of the driver.
+ * Hardware access is through the grfdev routines below.
+ */
+
+#include <sys/param.h>
+
+#include <sys/device.h>
+#include <sys/ioctl.h>
+#include <sys/file.h>
+#include <sys/malloc.h>
+#include <sys/mman.h>
+#include <sys/proc.h>
+#include <sys/vnode.h>
+
+#include <machine/grfioctl.h>
+#include <machine/cpu.h>
+
+#include <miscfs/specfs/specdev.h>
+
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
+#include <vm/vm_page.h>
+#include <vm/vm_pager.h>
+
+#include "nubus.h"
+#include "grfvar.h"
+
+#include "grf.h"
+#include "ite.h"
+
+#if NITE == 0
+#define	iteon(u,f)
+#define	iteoff(u,f)
+#endif
+
+static int	grf_match __P((/*struct device *parent, struct device *dev,
+				    void *aux*/));
+static void	grf_attach __P((struct device *parent, struct device *dev,
+				void *aux));
+
+static void	fake_internal __P((void));
+
+extern int	grfmv_probe __P((struct grf_softc *gp, nubus_slot *nu));
+extern int	grfmv_init __P((struct grf_softc *gp));
+extern int	grfmv_mode __P((struct grf_softc *gp, int cmd, void *arg));
+extern caddr_t	grfmv_phys __P((struct grf_softc *gp, vm_offset_t addr));
+
+extern int	grfiv_probe __P((struct grf_softc *gp, nubus_slot *ignore));
+extern int	grfiv_init __P((struct grf_softc *gp));
+extern int	grfiv_mode __P((struct grf_softc *gp, int cmd, void *arg));
+extern caddr_t	grfiv_phys __P((struct grf_softc *gp, vm_offset_t addr));
+
+struct cfdriver grfcd = {
+	NULL, "grf", grf_match, grf_attach, DV_DULL,
+	sizeof(struct grf_softc)
+};
+
+struct grfdev grfdev[] = {
+/* DrSW             (*gd_probe)() (*gd_init)() (*gd_mode)()  gd_desc
+       (*gd_phys)()                                                   */
+{  NUBUS_DRSW_APPLE,  grfmv_probe,  grfmv_init,  grfmv_mode, "QD-compatible",
+         grfmv_phys },
+{              0xFF,  grfiv_probe,  grfiv_init,  grfiv_mode, "Internal video",
+         grfiv_phys },
+};
+
+static int ngrfdev=(sizeof(grfdev) / sizeof(grfdev[0]));
+
+#ifdef DEBUG
+static int grfdebug = 0xff;
+#define GDB_DEVNO	0x01
+#define GDB_MMAP	0x02
+#define GDB_IOMAP	0x04
+#define GDB_LOCK	0x08
+#endif
+
+static int
+grf_match(parent, match, aux)
+	struct	device *parent;
+	void	*match, *aux;
+{
+	struct	grf_softc *sc = match;
+	nubus_slot *nu = (nubus_slot *) aux;
+	int	i, r;
+
+	for (i = 0; i < ngrfdev; i++) {
+		if ((r = (*grfdev[i].gd_probe)(sc, nu)) > 0) {
+			sc->g_type = i;
+			bcopy(aux, &sc->sc_slot, sizeof(nubus_slot));
+			return r;
+		}
+	}
+	return 0;
+}
+
+static void
+grf_attach(parent, self, aux)
+	struct device *parent, *self;
+	void   *aux;
+{
+	struct grf_softc	*sc;
+
+	sc = (struct grf_softc *) self;
+
+	if ((*grfdev[sc->g_type].gd_init)(sc) == 0) {
+		printf("\n");
+		return;
+	}
+	sc->g_flags = GF_ALIVE;
+
+	printf(": %d x %d ", sc->curr_mode.width, sc->curr_mode.height);
+
+	if (sc->curr_mode.psize == 1)
+		printf("monochrome");
+	else
+		printf("%d color", 1 << sc->curr_mode.psize);
+
+	printf(" %s (%s) display\n",
+		grfdev[sc->g_type].gd_desc, sc->card_name);
+}
+
+/*ARGSUSED*/
+int
+grfopen(dev, flag, mode, p)
+	dev_t dev;
+	int flag;
+	int mode;
+	struct proc *p;
+{
+	register struct grf_softc *gp;
+	int unit;
+	int error;
+
+	unit = GRFUNIT(dev);
+	gp = grfcd.cd_devs[unit];
+
+	if (unit >= grfcd.cd_ndevs || (gp->g_flags & GF_ALIVE) == 0)
+		return (ENXIO);
+
+	if ((gp->g_flags & (GF_OPEN | GF_EXCLUDE)) == (GF_OPEN | GF_EXCLUDE))
+		return (EBUSY);
+
+	/*
+	 * First open.
+	 * XXX: always put in graphics mode.
+	 */
+	error = 0;
+	if ((gp->g_flags & GF_OPEN) == 0) {
+		gp->g_flags |= GF_OPEN;
+		error = grfon(dev);
+	}
+	return (error);
+}
+
+/*ARGSUSED*/
+grfclose(dev, flag, mode, p)
+	dev_t dev;
+	int flag;
+	int mode;
+	struct proc *p;
+{
+	register struct grf_softc *gp;
+
+	gp = grfcd.cd_devs[GRFUNIT(dev)];
+
+	(void) grfoff(dev);
+	gp->g_flags &= GF_ALIVE;
+
+	return (0);
+}
+
+/*ARGSUSED*/
+grfioctl(dev, cmd, data, flag, p)
+	dev_t dev;
+	int cmd;
+	caddr_t data;
+	int flag;
+	struct proc *p;
+{
+	register struct grf_softc *gp;
+	int     error;
+	int	unit = GRFUNIT(dev);
+
+	gp = grfcd.cd_devs[unit];
+	error = 0;
+
+	switch (cmd) {
+	case GRFIOCGINFO: /* XXX - This should go away as soon as X and	*/
+			  /*       dt are fixed to use GRFIOC*MODE*	*/
+		{ struct grfinfo *g;
+		  g = (struct grfinfo *) data;
+		  bzero(data, sizeof(struct grfinfo));
+		  g->gd_id = gp->curr_mode.mode_id;
+		  g->gd_fbaddr = gp->curr_mode.fbbase;
+		  g->gd_fbsize = gp->curr_mode.fbsize;
+		  g->gd_colors = 1 << (u_int32_t) gp->curr_mode.psize;
+		  g->gd_planes = gp->curr_mode.psize;
+		  g->gd_fbwidth = g->gd_dwidth = gp->curr_mode.width;
+		  g->gd_fbheight = g->gd_dheight = gp->curr_mode.height;
+		  g->gd_fbrowbytes = gp->curr_mode.rowbytes;
+		}
+		break;
+
+	case GRFIOCON:
+		error = grfon(dev);
+		break;
+	case GRFIOCOFF:
+		error = grfoff(dev);
+		break;
+	case GRFIOCMAP:
+		error = grfmap(dev, (caddr_t *) data, p);
+		break;
+	case GRFIOCUNMAP:
+		error = grfunmap(dev, *(caddr_t *) data, p);
+		break;
+
+	case GRFIOCGMODE:
+		bcopy(&gp->curr_mode, data, sizeof(struct grfmode));
+		break;
+	case GRFIOCGETMODE:
+		error = (*grfdev[gp->g_type].gd_mode)(gp, GM_CURRMODE, data);
+		break;
+	case GRFIOCSETMODE:
+		error = (*grfdev[gp->g_type].gd_mode)(gp, GM_NEWMODE, data);
+		break;
+	case GRFIOCLISTMODES:
+		error = (*grfdev[gp->g_type].gd_mode)(gp, GM_LISTMODES, data);
+		break;
+
+	default:
+		error = EINVAL;
+		break;
+	}
+	return (error);
+}
+
+/*ARGSUSED*/
+grfselect(dev, rw, p)
+	dev_t dev;
+	int rw;
+	struct proc *p;
+{
+	if (rw == FREAD)
+		return (0);
+	return (1);
+}
+
+/*ARGSUSED*/
+grfmmap(dev, off, prot)
+	dev_t dev;
+	int off;
+	int prot;
+{
+	int     unit = GRFUNIT(dev);
+	struct grf_softc *gp;
+
+	gp = grfcd.cd_devs[unit];
+	return (grfaddr(gp, off));
+}
+
+int
+grfon(dev)
+	dev_t   dev;
+{
+	int     unit = GRFUNIT(dev);
+	struct grf_softc *gp;
+
+	gp = grfcd.cd_devs[unit];
+
+	/*
+	 * XXX: iteoff call relies on devices being in same order
+	 * as ITEs and the fact that iteoff only uses the minor part
+	 * of the dev arg.
+	 */
+	iteoff(unit, 3);
+
+	return (*grfdev[gp->g_type].gd_mode) (gp, GM_GRFON, NULL);
+}
+
+int
+grfoff(dev)
+	dev_t   dev;
+{
+	int     unit = GRFUNIT(dev);
+	struct grf_softc *gp;
+	int     error;
+
+	gp = grfcd.cd_devs[unit];
+
+	(void) grfunmap(dev, (caddr_t) 0, curproc);
+
+	error = (*grfdev[gp->g_type].gd_mode) (gp, GM_GRFOFF, NULL);
+
+	/* XXX: see comment for iteoff above */
+	iteon(unit, 2);
+
+	return (error);
+}
+
+int
+grfaddr(gp, off)
+	struct grf_softc *gp;
+	register int off;
+{
+	register struct grfmode *gm = &gp->curr_mode;
+	u_long	addr;
+
+	if (off < mac68k_round_page(gm->fbsize + gm->fboff) ) {
+		addr = (u_long) (*grfdev[gp->g_type].gd_phys) (gp, gm->fbbase)
+				+ off;
+		return mac68k_btop(addr);
+	}
+	/* bogus */
+	return (-1);
+}
+
+int
+grfmap(dev, addrp, p)
+	dev_t dev;
+	caddr_t *addrp;
+	struct proc *p;
+{
+	struct grf_softc *gp;
+	struct specinfo si;
+	struct vnode vn;
+	int len, error;
+	int flags;
+
+	gp = grfcd.cd_devs[GRFUNIT(dev)];
+#ifdef DEBUG
+	if (grfdebug & GDB_MMAP)
+		printf("grfmap(%d): addr %x\n", p->p_pid, *addrp);
+#endif
+	len = mac68k_round_page(gp->curr_mode.fbsize + gp->curr_mode.fboff);
+	flags = MAP_SHARED | MAP_FIXED;
+
+	*addrp = (caddr_t) mac68k_trunc_page(
+			NUBUS_VIRT_TO_PHYS((u_int) gp->curr_mode.fbbase));
+
+	vn.v_type = VCHR;	/* XXX */
+	vn.v_specinfo = &si;	/* XXX */
+	vn.v_rdev = dev;	/* XXX */
+
+	error = vm_mmap(&p->p_vmspace->vm_map, (vm_offset_t *) addrp,
+	    (vm_size_t) len, VM_PROT_ALL, VM_PROT_ALL, flags, (caddr_t) & vn,
+	    0);
+
+	/* Offset into page: */
+	*addrp += (unsigned long) gp->curr_mode.fboff & 0xfff;
+
+#ifdef DEBUG
+	if (grfdebug & GDB_MMAP)
+		printf("grfmap(%d): returning addr %x\n", p->p_pid, *addrp);
+#endif
+
+	return (error);
+}
+
+int
+grfunmap(dev, addr, p)
+	dev_t   dev;
+	caddr_t addr;
+	struct proc *p;
+{
+	struct grf_softc *gp;
+	vm_size_t size;
+	int     rv;
+
+	gp = grfcd.cd_devs[GRFUNIT(dev)];
+
+#ifdef DEBUG
+	if (grfdebug & GDB_MMAP)
+		printf("grfunmap(%d): dev %x addr %x\n", p->p_pid, dev, addr);
+#endif
+
+	if (addr == 0)
+		return (EINVAL);/* XXX: how do we deal with this? */
+
+	size = round_page(gp->curr_mode.fbsize);
+
+	rv = vm_deallocate(&p->p_vmspace->vm_map, (vm_offset_t) addr, size);
+
+	return (rv == KERN_SUCCESS ? 0 : EINVAL);
+}

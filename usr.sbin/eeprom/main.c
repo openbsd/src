@@ -1,0 +1,303 @@
+/*	$NetBSD: main.c,v 1.1 1995/07/13 18:15:44 thorpej Exp $	*/
+
+/*
+ * Copyright (c) 1995 Jason R. Thorpe.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed for the NetBSD Project
+ *	by Jason R. Thorpe.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+ * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
+#include <sys/param.h>
+#include <err.h>
+#include <string.h>
+#include <stdio.h>
+#include <unistd.h>
+
+#ifdef __sparc__
+#include <fcntl.h>
+#include <kvm.h>
+#include <limits.h>
+#include <nlist.h>
+
+#include <machine/openpromio.h>
+
+struct	nlist nl[] = {
+	{ "_cputyp" },
+#define SYM_CPUTYP	0
+	{ NULL },
+};
+
+static	char *system = NULL;
+#endif /* __sparc__ */
+
+#include <machine/eeprom.h>
+
+#include "defs.h"
+
+struct	keytabent eekeytab[] = {
+	{ "hwupdate",		0x10,	ee_hwupdate },
+	{ "memsize",		0x14,	ee_num8 },
+	{ "memtest",		0x15,	ee_num8 },
+	{ "scrsize",		0x16,	ee_screensize },
+	{ "watchdog_reboot",	0x17,	ee_truefalse },
+	{ "default_boot",	0x18,	ee_truefalse },
+	{ "bootdev",		0x19,	ee_bootdev },
+	{ "kbdtype",		0x1e,	ee_kbdtype },
+	{ "console",		0x1f,	ee_constype },
+	{ "keyclick",		0x21,	ee_truefalse },
+	{ "diagdev",		0x22,	ee_bootdev },
+	{ "diagpath",		0x28,	ee_diagpath },
+	{ "columns",		0x50,	ee_num8 },
+	{ "rows",		0x51,	ee_num8 },
+	{ "ttya_use_baud",	0x58,	ee_truefalse },
+	{ "ttya_baud",		0x59,	ee_num16 },
+	{ "ttya_no_rtsdtr",	0x5b,	ee_truefalse },
+	{ "ttyb_use_baud",	0x60,	ee_truefalse },
+	{ "ttyb_baud",		0x61,	ee_num16 },
+	{ "ttyb_no_rtsdtr",	0x63,	ee_truefalse },
+	{ "banner",		0x68,	ee_banner },
+	{ "secure",		0,	ee_notsupp },
+	{ "bad_login",		0,	ee_notsupp },
+	{ "password",		0,	ee_notsupp },
+	{ NULL,			0,	ee_notsupp },
+};
+
+static	void action __P((char *));
+static	void dump_prom __P((void));
+static	void usage __P((void));
+#ifdef __sparc__
+static	int getcputype __P((void));
+#endif /* __sparc__ */
+
+char	*path_eeprom = "/dev/eeprom";
+char	*path_openprom = "/dev/openprom";
+int	fix_checksum = 0;
+int	ignore_checksum = 0;
+int	update_checksums = 0;
+int	cksumfail = 0;
+u_short	writecount;
+int	eval = 0;
+int	use_openprom = 0;
+int	verbose = 0;
+
+extern	char *__progname;
+
+int
+main(argc, argv)
+	int argc;
+	char **argv;
+{
+	int ch, do_stdin = 0;
+	char *cp, line[BUFSIZE];
+#ifdef __sparc__
+	char *optstring = "-cf:ivN:";
+#else
+	char *optstring = "-cf:i";
+#endif /* __sparc__ */
+
+	while ((ch = getopt(argc, argv, optstring)) != -1)
+		switch (ch) {
+		case '-':
+			do_stdin = 1;
+			break;
+
+		case 'c':
+			fix_checksum = 1;
+			break;
+
+		case 'f':
+			path_eeprom = path_openprom = optarg;
+			break;
+
+		case 'i':
+			ignore_checksum = 1;
+			break;
+#ifdef __sparc__
+		case 'v':
+			verbose = 1;
+			break;
+
+		case 'N':
+			system = optarg;
+			break;
+
+#endif /* __sparc__ */
+
+		case '?':
+		default:
+			usage();
+		}
+	argc -= optind;
+	argv += optind;
+
+#ifdef __sparc__
+	if (getcputype() != CPU_SUN4)
+		use_openprom = 1;
+#endif /* __sparc__ */
+
+	if (use_openprom == 0) {
+		ee_verifychecksums();
+		if (fix_checksum || cksumfail)
+			exit(cksumfail);
+	}
+
+	if (do_stdin) {
+		while (fgets(line, BUFSIZE, stdin) != NULL) {
+			if (line[0] == '\n')
+				continue;
+			if ((cp = strrchr(line, '\n')) != NULL)
+				*cp = '\0';
+			action(line);
+		}
+		if (ferror(stdin))
+			err(++eval, "stdin");
+	} else {
+		if (argc == 0) {
+			dump_prom();
+			exit(eval + cksumfail);
+		}
+
+		while (argc) {
+			action(argv[argc - 1]);
+			++argv;
+			--argc;
+		}
+	}
+
+	if (use_openprom == 0)
+		if (update_checksums) {
+			++writecount;
+			ee_updatechecksums();
+		}
+
+	exit(eval + cksumfail);
+}
+
+#ifdef __sparc__
+#define KVM_ABORT(kd, str) {						\
+	(void)kvm_close((kd));						\
+	errx(1, "%s: %s", (str), kvm_geterr((kd)));			\
+}
+
+static int
+getcputype()
+{
+	char errbuf[_POSIX2_LINE_MAX];
+	int cputype;
+	kvm_t *kd;
+
+	bzero(errbuf, sizeof(errbuf));
+
+	if ((kd = kvm_openfiles(system, NULL, NULL, O_RDONLY, errbuf)) == NULL)
+		errx(1, "can't open kvm: %s", errbuf);
+
+	if (kvm_nlist(kd, nl))
+		KVM_ABORT(kd, "can't read symbol table");
+
+	if (kvm_read(kd, nl[SYM_CPUTYP].n_value, (char *)&cputype,
+	    sizeof(cputype)) != sizeof(cputype))
+		KVM_ABORT(kd, "can't determine cpu type");
+
+	(void)kvm_close(kd);
+	return (cputype);
+}
+#endif /* __sparc__ */
+
+/*
+ * Separate the keyword from the argument (if any), find the keyword in
+ * the table, and call the corresponding handler function.
+ */
+static void
+action(line)
+	char *line;
+{
+	char *keyword, *arg, *cp;
+	struct keytabent *ktent;
+
+	keyword = strdup(line);
+	if ((arg = strrchr(keyword, '=')) != NULL)
+		*arg++ = '\0';
+
+#ifdef __sparc__
+	if (use_openprom) {
+		/*
+		 * The whole point of the Openprom is that one
+		 * isn't required to know the keywords.  With this
+		 * in mind, we just dump the whole thing off to
+		 * the generic op_handler.
+		 */
+		if ((cp = op_handler(keyword, arg)) != NULL)
+			warnx(cp);
+		return;
+	} else
+#endif /* __sparc__ */
+		for (ktent = eekeytab; ktent->kt_keyword != NULL; ++ktent) {
+			if (strcmp(ktent->kt_keyword, keyword) == 0) {
+				(*ktent->kt_handler)(ktent, arg);
+				return; 
+			}
+		}
+
+	warnx("unknown keyword %s", keyword);
+	++eval;
+}
+
+/*
+ * Dump the contents of the prom corresponding to all known keywords.
+ */
+static void
+dump_prom()
+{
+	struct keytabent *ktent;
+
+#ifdef __sparc__
+	if (use_openprom) {
+		/*
+		 * We have a special dump routine for this.
+		 */
+		op_dump();
+	} else
+#endif /* __sparc__ */
+		for (ktent = eekeytab; ktent->kt_keyword != NULL; ++ktent)
+			(*ktent->kt_handler)(ktent, NULL);
+}
+
+static void
+usage()
+{
+
+#ifdef __sparc__
+	fprintf(stderr, "usage: %s %s %s\n", __progname,
+	    "[-] [-c] [-f device] [-i] [-v]",
+	    "[-N system] [field[=value] ...]");
+#else
+	fprintf(stderr, "usage: %s %s\n", __progname,
+	    "[-] [-c] [-f device] [-i] [field[=value] ...]");
+#endif /* __sparc__ */
+	exit(1);
+}

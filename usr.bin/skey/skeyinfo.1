@@ -1,0 +1,19 @@
+.\"
+.\" $Id: skeyinfo.1,v 1.1.1.1 1995/10/18 08:46:08 deraadt Exp $
+.\"
+.Dd 9 June 1994
+.Dt SKEYINFO 1
+.Os NetBSD 4
+.Sh NAME
+.Nm skeyinfo
+.Nd obtain the next S/Key challenge for a user
+.Sh SYNOPSIS
+.Nm skeyinfo
+.Op Ar user
+.Sh DESCRIPTION
+.Nm skeyinfo
+prints out the next S/Key challenge for the specified user or for the
+current user if no user is specified.
+.Sh SEE ALSO
+.Xr skeyinit 1 ,
+.Xr skey 1

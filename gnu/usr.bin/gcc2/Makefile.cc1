@@ -1,0 +1,17 @@
+#	$Id: Makefile.cc1,v 1.1.1.1 1995/10/18 08:39:15 deraadt Exp $
+
+NOMAN=
+
+BINDIR=	/usr/libexec
+
+CFLAGS+=-I${.CURDIR} -I${.CURDIR}/../common \
+	-I${.CURDIR}/../arch -I${.CURDIR}/../arch/${MACHINE_ARCH}
+YFLAGS=
+
+LIBCC1!= cd $(.CURDIR)/../common; \
+	printf "xxx:\n\techo \$${.OBJDIR}/libcc1.a\n" | ${MAKE} -r -s -f - xxx
+
+LDADD+=${LIBCC1} -lgnumalloc
+DPADD+= /usr/lib/libgnumalloc.a
+
+.include <bsd.prog.mk>

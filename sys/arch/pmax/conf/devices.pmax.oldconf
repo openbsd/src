@@ -1,0 +1,3 @@
+#	$NetBSD: devices.pmax.oldconf,v 1.5 1995/01/03 22:42:03 hpeyerl Exp $
+rz	21
+md	1

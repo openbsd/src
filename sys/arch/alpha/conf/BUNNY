@@ -1,0 +1,86 @@
+#	$NetBSD: BUNNY,v 1.2 1995/08/03 00:09:18 cgd Exp $
+#
+# Kernel for bunnahabhain.pdl.cs.cmu.edu.
+#
+# This kernel contains support for NO frame buffer devices; bunny
+# is rack-mounted, and has no video boards.  THIS KERNEL CANNOT BE
+# USED ON MACHINES WITH FRAME BUFFERS.
+#
+# It also has no support for devices which aren't actually used
+# (sound, parallel port, keyboard, mouse, SCSI tape or CD-ROM, etc.).
+
+machine		alpha
+
+makeoptions	DEBUG="-g"
+
+maxusers 8
+
+# bump up the number of buffers, for quicker compiles
+options		BUFPAGES=2048	# 16M of buffer cache
+
+# CPU Support
+options		DEC_2100_A50	# Avanti etc:	AlphaStation 400, 200, etc.
+
+# needs to be set per system
+options		TIMEZONE="5*60"		# Minutes west of GMT (for param.c)
+options		DST=1			# Daylight savings rules (for param.c)
+
+# Standard system options
+options		SWAPPAGER, VNODEPAGER, DEVPAGER # Paging (mandatory)
+options		DEBUG, DIAGNOSTIC	# Extra kernel debugging
+options		KTRACE			# System call tracing support
+
+# File system options
+options		FIFO		# POSIX fifo support (in all file systems)
+options		FFS		# Fast file system
+options		MFS		# Memory-based file system
+options		NFSCLIENT	# Sun NFS-compatible file system client
+
+# Networking options
+options		INET		# Internet protocol suite
+
+# 4.3BSD compatibility.  Should be optional, but necessary for now.
+options		COMPAT_43
+
+# Loadable Kernel Modules
+options		LKM
+
+# Disable kernel security.
+#options	INSECURE
+
+# Misc. options
+options		PCIVERBOSE		# recognize "unknown" PCI devices
+
+config		netbsd		root on sd0 swap on sd0
+
+mainbus0 at	root
+cpu*	at	mainbus0
+
+# PCI host bus adapter support
+apecs*	at	mainbus?
+
+# PCI bus support
+pci*	at	apecs?
+
+# PCI devices
+de*	at	pci?
+sio*	at	pci?
+ncr*	at	pci?
+
+# ISA bus support
+isa0	at	sio?
+
+# ISA devices
+clock0	at	isa? port 0x70
+com0	at	isa? port 0x3f8 irq 4		# standard serial ports
+com1	at	isa? port 0x2f8 irq 3
+
+# SCSI bus support
+scsibus* at	ncr?
+
+# SCSI devices
+sd*	at	scsibus? target ? lun ?
+
+pseudo-device	bpfilter
+pseudo-device	loop
+pseudo-device	pty

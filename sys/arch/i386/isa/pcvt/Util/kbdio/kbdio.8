@@ -1,0 +1,330 @@
+.\" 
+.\" Copyright (c) 1995 Joerg Wunsch
+.\" 
+.\" All rights reserved.
+.\" 
+.\" This program is free software.
+.\" 
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\" 	This product includes software developed by Joerg Wunsch
+.\" 4. The name of the developer may not be used to endorse or promote
+.\"    products derived from this software without specific prior written
+.\"    permission.
+.\" 
+.\" THIS SOFTWARE IS PROVIDED BY THE DEVELOPERS ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE DEVELOPERS BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\" 
+.\" $Header: /home/cvs/src/sys/arch/i386/isa/pcvt/Util/kbdio/Attic/kbdio.8,v 1.1.1.1 1995/10/18 08:50:45 deraadt Exp $
+.\" 
+.Dd April 15, 1995
+.Dt KBDIO 8
+.Sh NAME
+.Nm kbdio
+.Nd perform input/output on a PC keyboard/keyboard controller
+.Sh SYNOPSIS
+.Nm kbdio
+.Op Fl d
+.Op Fl f Ar devname
+.Sh DESCRIPTION
+.Ss Purpose
+.Nm Kbdio
+is used to perform input/output on a PC keyboard or the
+.Pq motherboard
+keyboard controller.
+.Nm Kbdio
+cares for proper handshaking and necessary IO-ready conditions.  It
+allows the interpretion of some registers in symbolic form, as well as
+to specify symbolic operands for the keyboard command byte.  Simple
+arithmetic expressions can be formed to set or reset some bits, which
+is mostly applicable to the keyboard command byte, too.
+
+.Ss Options
+.Bl -tag -width 10n -offset indent -compact
+.It Fl d
+Turn on the grammar parser debugger.
+
+.It Fl f Ar devname
+Operate on device
+.Ar devname
+instead of the default
+.Pa /dev/console .
+.El
+
+.Ss Command language
+The command language of
+.Nm
+constitutes of some very simple tokens and rules. Commands are executed
+line by line as they are entered. Each line may contain any number of
+semicolon-separated statements.
+
+The list of acceptable statements includes:
+.Bl -tag -width "TYPEMATIC" -indent offset -compact
+
+.It Li \&?
+.It Li help
+Give help on the general syntax.
+
+.It Li help expr
+Help on expression syntax.
+
+.It Li status \&?
+Report keyboard controller status.
+
+.It Li what \&?
+Determine
+.Tn MCA
+type 1 or type 2 keyboard controller.
+
+.It Li data \&?
+Fetch keyboard controller data port.
+
+.It Li led \&= Ar number
+Set keyboard LEDs.
+.Ar Number
+is a logical combination of
+.Bl -hang -width "4" -compact
+.It 1
+scroll lock LED
+.It 2
+num lock LED
+.It 4
+caps lock LED.
+.El
+
+.It Li echo
+Send keyboard
+.Li ECHO
+command.
+
+.It Li scan \&= Ar number
+Turn keyboard to generate scan codes according to code set
+.Ar number .
+Only supported on
+.Tn PS/2
+style keyboards.
+
+.It Li scan \&?
+Report code set keyboard is currently operating in.
+
+.It Li \&id \&?
+Ask keyboard to report its identification bytes
+
+.It Xo
+.Li typematic \&= Ar number1 Li \&, Ar number2
+.Xc
+Set keyboard typematic delay and repeat rate to
+.Ar number1
+milliseconds and
+.Ar number2
+repeats per second, respectively.
+
+.It Li enable
+Enable keyboard.
+
+.It Li defaults
+Return customizable parameters to defaults.
+
+.It Li all typematic
+Set all keys to
+.Em typematic
+behaviour.  This command as well as the following ones are only
+supported on
+.Tn PS/2
+style keyboards and only while operating in scan code set 3.
+
+.It Li all make release
+Turn all keys in generating
+.Em make
+and
+.Em release
+events only.
+
+.It Li all make only
+Turn all keys in generating
+.Em make
+codes only.
+
+.It Li all typematic make release
+Set all keys to generate
+.Em make
+and
+.Em release
+events, as well as perform
+.Em typematic
+behaviour.  This is usually the default.
+
+.It Ar number Li typematic
+Set key
+.Ar number
+to
+.Em typematic
+behaviour.
+
+.It Ar number Li make release
+Turn a single key
+.Ar number
+to generate
+.Em make
+and
+.Em release
+events only.
+
+.It Ar number Li make only
+Set key
+.Ar number
+to return
+.Em make
+events only.
+
+.It Li resend
+Ask the keyboard to retransmit its last character.
+
+.It Li reset
+Perform a keyboard
+.Li RESET
+command.
+
+.It Li cmd \&?
+Get the keyboard command byte and interpret it symbolically.
+
+.It Li cmd \&= Ar expr
+Set the keyboard command byte to
+.Ar expr .
+See the next subsection for expression syntax.
+.El
+
+Returned data will be printed hexadecimal, but any queued keyboard
+control responses will be printed first.
+
+.Ss Expression syntax
+Expressions can either consist of a number, possibly followed
+by a
+.Sq +
+or
+.Sq \-
+sign and bit values in numeric or symbolic form.
+Symbolic bit values are
+.Pq with their meaning in the keyboard command byte :
+
+.Bl -tag -width "ovrinh" -offset indent -compact
+
+.It Li scconv
+value
+.Li 0x40 ,
+enable PC scan code conversion at
+.Em controller
+level, as opposed to the different keyboard scan code sets;
+
+.It Li ignpar
+value
+.Li 0x20 ,
+ignore keyboard parity;
+
+.It Li clklow
+value
+.Li 0x10 ,
+hold keyboard clock line low
+.Pq disables keyboard ;
+
+.It Li ovrinh
+value
+.Li 0x08 ,
+override keyboard inhibit function -- ignore the keyboard lockout switch,
+intented to allow the keyboard self-test;
+
+.It Li test
+value
+.Li 0x04 ,
+controller self-test okay;
+
+.It Li irq
+value
+.Li 0x01 ,
+enable generation of
+.Li IRQ1
+if output buffer is full.
+.El
+
+The operators
+.Sq +
+and
+.Sq \-
+perform simple bit-set or bit-clear functionality, respectively.  This
+is roughly comparable with the operators
+.Sq \&|
+and
+.Sq \&&~
+in
+.Em C .
+
+Expressions are evaluated left to right and cannot be bracketed.
+The special keyword
+.Li cmd
+is substituted by a read of the current keyboard command byte.
+
+.Ss Access control
+The caller must have uid 0 in order to gain the required access to
+the IO registers.
+
+.Sh EXAMPLES
+
+.Dl led=3
+
+Turn on num lock and scroll lock LEDs.
+
+.Dl "cmd = cmd - irq; id?; cmd = cmd + irq"
+
+Temporarily suspend keyboard interrupt generation, and ask the
+keyboard to return its identification bytes.
+
+.Sh FILES
+.Pa /dev/console
+is used as the default device to enable access to the IO registers.
+
+.Sh HISTORY
+This program is considered
+.Dq hackware .
+It has been developed in order to simplify the process of developing other
+software that needs to handle the PC keyboard, and to give a very basic
+aid in debugging keyboard-related problems.
+
+.Sh AUTHOR
+The program has been contributed by
+.if n Joerg Wunsch,
+.if t J\(:org Wunsch,
+Dresden
+.Aq joerg_wunsch@uriah.heep.sax.de .
+
+.Sh BUGS
+No useful diagnostics are printed in case of a syntax error.
+
+Remember, to use this program, your kernel has to be compiled with XSERVER
+being defined.
+
+Use of this program might cause grievous harm to your system's sanity,
+not only that it might hang your keyboard and/or keyboard controller
+indefinitely, it might also hard-reset your system when accidentally
+accessing the hardware reset facility of the keyboard controller
+.Po
+which does not actually belong there, but used to be
+.Pc .
+
+It is highly recommended to use this program only when logged into the
+machine across a network or on a serial line.

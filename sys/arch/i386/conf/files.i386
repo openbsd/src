@@ -1,0 +1,142 @@
+#	$NetBSD: files.i386,v 1.60 1995/10/11 04:19:29 mycroft Exp $
+#
+# new style config file for i386 architecture
+#
+
+# maxpartitions must be first item in files.${ARCH}.newconf
+maxpartitions 8
+
+maxusers 2 16 64
+
+file	arch/i386/i386/autoconf.c
+file	arch/i386/i386/conf.c
+file	arch/i386/i386/db_disasm.c	ddb
+file	arch/i386/i386/db_interface.c	ddb
+file	arch/i386/i386/db_trace.c	ddb
+file	arch/i386/i386/disksubr.c	disk
+file	arch/i386/i386/gdt.c
+file	arch/i386/i386/in_cksum.c	inet
+file	arch/i386/i386/machdep.c
+file	arch/i386/i386/math_emulate.c	math_emulate
+file	arch/i386/i386/mem.c
+file	arch/i386/i386/microtime.s
+file	arch/i386/i386/ns_cksum.c	ns
+file	arch/i386/i386/pmap.c
+file	arch/i386/i386/process_machdep.c
+file	arch/i386/i386/random.s
+file	arch/i386/i386/sys_machdep.c
+file	arch/i386/i386/trap.c
+file	arch/i386/i386/vm_machdep.c
+file	dev/cons.c
+file	dev/cninit.c
+major	{vnd = 14}
+
+#
+# Machine-independent SCSI drivers
+#
+
+include "../../../scsi/files.scsi"
+major	{sd = 4}
+major	{st = 5}
+major	{cd = 6}
+
+#
+# System bus types
+#
+
+device	isa at root {[port = -1], [size = 0],
+		     [iomem = -1], [iosiz = 0],
+		     [irq = -1], [drq = -1]}
+#device	eisa at root {...}
+device	pci at root {[bus = -1], [dev = -1]}
+#device	mca at root {...}
+
+#
+# ISA and mixed ISA+EISA or ISA+PCI drivers
+#
+
+include "../../../dev/isa/files.isa"
+major	{mcd = 7}
+#major	{scd = 15}
+major	{wd = 0}
+major	{wt = 3}
+
+file	arch/i386/isa/isa_machdep.c	isa
+
+# PC clock
+file	arch/i386/isa/clock.c		isa
+
+# Numeric Processing Extension; Math Co-processor
+device	npx at isa
+file	arch/i386/isa/npx.c		npx needs-flag
+
+# PC console support a la "pccons"
+device	pc at isa: tty
+file	arch/i386/isa/pccons.c		pc needs-flag
+
+# PC console support a la "pcvt"
+device	vt at isa: tty
+file	arch/i386/isa/pcvt/pcvt_drv.c	vt needs-flag
+file	arch/i386/isa/pcvt/pcvt_ext.c	vt needs-flag
+file	arch/i386/isa/pcvt/pcvt_kbd.c	vt needs-flag
+file	arch/i386/isa/pcvt/pcvt_out.c	vt needs-flag
+file	arch/i386/isa/pcvt/pcvt_sup.c	vt needs-flag
+file	arch/i386/isa/pcvt/pcvt_vtf.c	vt needs-flag
+
+# PC Mice; Logitech-style, Microsoft-style, and PS/2-style
+device	lms at isa
+file	arch/i386/isa/lms.c		lms needs-flag
+device	mms at isa
+file	arch/i386/isa/mms.c		mms needs-flag
+device	pms at isa
+file	arch/i386/isa/pms.c		pms needs-flag
+
+# Floppy disk controller
+device	fdc at isa {drive = -1}
+device	fd at fdc: disk, isadma
+file	arch/i386/isa/fd.c		fdc needs-flag
+major	{fd = 2}
+
+# PC speaker
+device	spkr at isa: tty
+file	arch/i386/isa/spkr.c		speaker needs-flag
+
+# AMD am7990 (Lance) -based boards
+# (BICC Isolan, NE2100, DEPCA)
+# XXX conflicts with other ports; can't be in files.isa
+device	le at isa, pci: ether, ifnet, isadma
+file	dev/isa/if_le.c			le
+
+#
+# EISA-only drivers
+#
+
+include "../../../dev/eisa/files.eisa"
+# XXX not yet:
+# file	arch/i386/eisa/eisa_machdep.c	eisa
+
+#
+# PCI-only drivers
+#
+
+include "../../../dev/pci/files.pci"
+file	arch/i386/pci/pci_machdep.c	pci
+
+#
+# Compatibility modules
+#
+
+# SVR4 binary compatibility (COMPAT_SVR4)
+include "../../../compat/svr4/files.svr4"
+file	arch/i386/i386/svr4_machdep.c		compat_svr4
+
+# iBCS-2 binary compatibility (COMPAT_IBCS2)
+include "../../../compat/ibcs2/files.ibcs2"
+
+# Linux binary compatibility (COMPAT_LINUX)
+include "../../../compat/linux/files.linux"
+file	arch/i386/i386/linux_machdep.c		compat_linux
+
+# FreeBSD binary compatibility (COMPAT_FREEBSD)
+include "../../../compat/freebsd/files.freebsd"
+file	arch/i386/i386/freebsd_machdep.c	compat_freebsd

@@ -1,0 +1,22 @@
+$NetBSD: CHANGES,v 1.2 1995/03/06 11:37:58 mycroft Exp $
+@(#) Header: CHANGES,v 1.4 94/06/20 19:22:33 leres Exp (LBL)
+
+v0.0 Mon Jun 20 19:20:16 PDT 1994
+
+- Initial release.
+
+- Fixed bug with greater/less keywords, reported by Mark Andrews
+  (mandrews@alias.com).
+
+- Fix bug where '|' was defined as BPF_AND instead of BPF_OR, reported
+  by Elan Amir (elan@leeb.cs.berkeley.edu).
+
+- Machines with little-endian byte ordering are supported thanks to
+  Jeff Mogul.
+
+- Add hack for version 2.3 savefiles which don't have caplen and len
+  swapped thanks to Vern Paxson.
+
+- Added "&&" and "||" aliases for "and" and "or" thanks to Vern Paxson.
+
+- Added length, inbound and outbound keywords.

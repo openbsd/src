@@ -1,0 +1,109 @@
+#	$Id: list,v 1.1.1.1 1995/10/18 08:37:42 deraadt Exp $
+
+# copy the MAKEDEV script and make some devices
+COPY	${DESTDIR}/dev/MAKEDEV	dev/MAKEDEV
+SPECIAL	cd dev; sh MAKEDEV floppy
+SPECIAL	/bin/rm dev/MAKEDEV
+
+# we need the contents of /usr/mdec (XXX)
+COPY	${DESTDIR}/usr/mdec/*	usr/mdec
+
+# various files that we need in /etc for the install
+COPY	${TOPDIR}/../../../etc/group		etc
+COPY	${TOPDIR}/../../../etc/master.passwd	etc
+COPY	${TOPDIR}/../../../etc/protocols	etc
+COPY	${TOPDIR}/../../../etc/services		etc
+SPECIAL >etc/ppp/options
+COPY	${OBJDIR}/pwd_mkdb	pwd_mkdb
+SPECIAL	/usr/sbin/chroot . ./pwd_mkdb -p /etc/master.passwd
+SPECIAL	/bin/rm pwd_mkdb
+
+# copy the crunched binary, link to it
+COPY	${OBJDIR}/netbsd.gz	netbsd.gz
+COPY	${OBJDIR}/instbin	instbin
+LINK	instbin			bin/cat
+LINK	instbin			bin/chmod
+LINK	instbin			bin/cp
+LINK	instbin			bin/date
+LINK	instbin			bin/dd
+LINK	instbin			bin/df
+LINK	instbin			bin/domainname
+LINK	instbin			bin/expr
+LINK	instbin			bin/hostname
+LINK	instbin			bin/kill
+LINK	instbin			bin/ln
+LINK	instbin			bin/ls
+LINK	instbin			bin/mkdir
+LINK	instbin			bin/mt
+LINK	instbin			bin/mv
+LINK	instbin			bin/pax
+LINK	instbin			bin/ps
+LINK	instbin			bin/pwd
+LINK	instbin			bin/rcp
+LINK	instbin			bin/rm
+LINK	instbin			bin/rmdir
+LINK	instbin			bin/sh
+LINK	instbin			bin/stty
+LINK	instbin			bin/sync
+LINK	instbin			bin/test
+LINK	instbin			bin/[
+LINK	instbin			sbin/bim
+LINK	instbin			sbin/disklabel
+LINK	instbin			sbin/dmesg
+LINK	instbin			sbin/dump
+LINK	instbin			sbin/fsck
+LINK	instbin			sbin/halt
+LINK	instbin			sbin/ifconfig
+LINK	instbin			sbin/init
+LINK	instbin			sbin/mknod
+LINK	instbin			sbin/mount
+LINK	instbin			sbin/mount_cd9660
+LINK	instbin			sbin/mount_ffs
+LINK	instbin			sbin/mount_msdos
+LINK	instbin			sbin/mount_nfs
+LINK	instbin			sbin/newfs
+LINK	instbin			sbin/ping
+LINK	instbin			sbin/rdump
+LINK	instbin			sbin/reboot
+LINK	instbin			sbin/restore
+LINK	instbin			sbin/route
+LINK	instbin			sbin/rrestore
+LINK	instbin			sbin/shutdown
+LINK	instbin			sbin/slattach
+LINK	instbin			sbin/swapon
+LINK	instbin			sbin/umount
+SYMLINK	/instbin		usr/bin/awk
+SYMLINK	/instbin		usr/bin/basename
+SYMLINK	/instbin		usr/bin/chgrp
+SYMLINK	/instbin		usr/bin/cpio
+SYMLINK	/instbin		usr/bin/dirname
+SYMLINK /instbin		usr/bin/hexdump
+SYMLINK /instbin		usr/bin/ex
+SYMLINK	/instbin		usr/bin/find
+SYMLINK	/instbin		usr/bin/ftp
+SYMLINK	/instbin		usr/bin/gunzip
+SYMLINK	/instbin		usr/bin/gzcat
+SYMLINK	/instbin		usr/bin/gzip
+SYMLINK	/instbin		usr/bin/more
+SYMLINK	/instbin		usr/bin/netstat
+SYMLINK	/instbin		usr/bin/sed
+SYMLINK	/instbin		usr/bin/strings
+SYMLINK	/instbin		usr/bin/tar
+SYMLINK	/instbin		usr/bin/tip
+SYMLINK /instbin		usr/bin/vi
+SYMLINK /instbin		usr/bin/view
+SYMLINK /instbin		usr/games/factor
+SYMLINK	/instbin		usr/sbin/chat
+SYMLINK	/instbin		usr/sbin/chown
+SYMLINK	/instbin		usr/sbin/chroot
+SYMLINK	/instbin		usr/sbin/kvm_mkdb
+SYMLINK	/instbin		usr/sbin/pppd
+SYMLINK	/instbin		usr/sbin/pppstats
+SYMLINK	/instbin		usr/sbin/traceroute
+SYMLINK	/instbin		usr/sbin/update
+
+#SPECIAL	/bin/rm instbin
+
+# and the common installation tools
+COPY	${TOPDIR}/inst-common/dot.commonutils	.commonutils
+COPY	${TOPDIR}/inst-common/termcap.vt100	usr/share/misc/termcap

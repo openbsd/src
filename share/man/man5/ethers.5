@@ -1,0 +1,40 @@
+.\"	$NetBSD: ethers.5,v 1.2 1994/11/30 19:31:16 jtc Exp $
+.\"
+.\"     Written by Roland McGrath <roland@frob.com>.  Public domain.
+.\"
+.Dd December 16, 1993
+.Dt ETHERS 5
+.Os NetBSD
+.Sh NAME
+.Nm ethers
+.Nd Ethernet host name data base
+.Sh DESCRIPTION
+The
+.Xr ethers
+file maps Ethernet addresses to host names.
+Lines consist of an address and a host name, separated by any number of blanks and/or tab characters.
+A ``#'' indicates the beginning of a comment; characters up to the end of
+the line are not interpreted by routines which search the file.
+.Pp
+Ethernet addresses are expressed as six hexadecimal numbers separated by colons.  The functions described in 
+.Xr ethers 3
+and
+.Xr ether_aton 3
+can read and produce this format.
+.Sh FILES
+.Bl -tag -width /etc/ethers -compact
+.It Pa /etc/ethers
+The
+.Nm ethers
+file resides in
+.Pa /etc .
+.El
+.Sh SEE ALSO
+.Xr ethers 3
+.Sh BUGS
+A name server should be used instead of a static file.
+.Sh HISTORY
+The
+.Nm ethers
+file format was adopted from SunOS and appeared in
+NetBSD 0.9b.

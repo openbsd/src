@@ -1,0 +1,29 @@
+.\"	$NetBSD: catclose.3,v 1.4 1995/05/11 23:04:18 jtc Exp $
+.\"
+.\" Written by J.T. Conklin <jtc@netbsd.org>.
+.\" Public domain.
+.\"
+.Dd May 29, 1994
+.Dt CATCLOSE 3
+.Os
+.Sh NAME
+.Nm catclose
+.Nd close message catalog
+.Sh SYNOPSIS
+.Fd #include <nl_types.h>
+.Ft int
+.Fn catclose "nl_catd catd"
+.Sh DESCRIPTION
+The
+.Fn catclose
+function closes the message catalog specified by the argument 
+.Fa catd .
+.Sh SEE ALSO
+.Xr catopen 3 ,
+.Xr catgets 3
+.Sh STANDARDS
+The
+.Fn catclose
+function conforms to
+.St -xpg3 .
+

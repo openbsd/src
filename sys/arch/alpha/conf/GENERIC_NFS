@@ -1,0 +1,109 @@
+#	$NetBSD: GENERIC_NFS,v 1.2 1995/08/03 00:09:20 cgd Exp $
+#
+# Generic Alpha kernel.  Enough to get booted, etc., but not much more.
+
+machine		alpha
+
+makeoptions	DEBUG="-g"
+
+maxusers 8
+
+# CPU Support
+options		DEC_3000_500	# Flamingo etc:	3000/[4-9]00*
+options		DEC_2000_300	# "Jensen":	2000/300 (DECpc AXP 150)
+options		DEC_3000_300	# Pelican etc:	3000/300*
+options		DEC_2100_A50	# Avanti etc:	AlphaStation 400, 200, etc.
+
+# needs to be set per system
+options		TIMEZONE="5*60"		# Minutes west of GMT (for param.c)
+options		DST=1			# Daylight savings rules (for param.c)
+
+# Standard system options
+options		SWAPPAGER, VNODEPAGER, DEVPAGER # Paging (mandatory)
+options		DEBUG, DIAGNOSTIC	# Extra kernel debugging
+options		KTRACE			# System call tracing support
+
+# File system options
+options		FIFO		# POSIX fifo support (in all file systems)
+options		FFS		# Fast file system
+options		MFS		# Memory-based file system
+options		NFSCLIENT	# Sun NFS-compatible file system client
+
+# Networking options
+options		INET		# Internet protocol suite
+
+# 4.3BSD compatibility.  Should be optional, but necessary for now.
+options		COMPAT_43
+
+# OSF/1 binary compatibility -- CURRENTLY DOES NOT WORK
+#options	COMPAT_OSF1
+
+# Loadable Kernel Modules
+options		LKM
+
+# Disable kernel security.
+#options	INSECURE
+
+# Misc. options
+options		PCIVERBOSE		# recognize "unknown" PCI devices
+
+config		netbsd_nfs	root on nfs swap on nfs
+
+mainbus0 at	root
+cpu*	at	mainbus0
+
+# TurboChannel bus support
+tc*	at	mainbus0
+
+# TurboChannel devices
+asic0	at	tc? slot ? offset ?
+clock0	at	asic? offset ?
+le0	at	asic? offset ?
+scc0	at	asic? offset ?
+scc1	at	asic? offset ?
+tcds0	at	tc? slot ? offset ?
+esp0	at	tcds? slot ?
+esp1	at	tcds? slot ?
+#sfb*	at	tc? slot ? offset ?
+
+# PCI host bus adapter support
+apecs*	at	mainbus?
+#lca*	at	cpu?
+
+# PCI bus support
+pci*	at	apecs?
+#pci*	at	lca?
+
+# PCI devices
+de*	at	pci?
+sio*	at	pci?
+ncr*	at	pci?
+tga*	at	pci?
+pcivga*	at	pci?
+
+# ISA bus support
+isa0	at	sio?
+
+# ISA devices
+clock0	at	isa? port 0x70
+pckbd0	at	isa? port 0x60 irq 1		# PC-ish ISA keyboard
+#pms0	at	isa? port 0x60 irq 12		# PS/2 auxiliary
+com0	at	isa? port 0x3f8 irq 4		# standard serial ports
+com1	at	isa? port 0x2f8 irq 3
+lpt0	at	isa? port 0x3bc irq 7		# standard parallel port
+wss0	at	isa? port 0x530 irq 9 drq 0	# Windows Sound System
+
+# SCSI bus support
+scsibus* at	esp?
+scsibus* at	ncr?
+
+# SCSI devices
+sd*	at	scsibus? target ? lun ?
+st*	at	scsibus? target ? lun ?
+cd*	at	scsibus? target ? lun ?
+
+pseudo-device	bpfilter
+pseudo-device	loop
+pseudo-device	pty
+pseudo-device	sl
+pseudo-device	vnd

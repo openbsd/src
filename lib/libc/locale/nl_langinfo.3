@@ -1,0 +1,33 @@
+.\"	$NetBSD: nl_langinfo.3,v 1.2 1995/04/28 23:19:36 jtc Exp $
+.\"
+.\" Written by J.T. Conklin <jtc@netbsd.org>.
+.\" Public domain.
+.\"
+.Dd July 14, 1994
+.Dt NL_LANGINFO 3
+.Os
+.Sh NAME
+.Nm nl_langinfo
+.Nd get locale information
+.Sh SYNOPSIS
+.Fd #include <nl_types.h>
+.Fd #include <langinfo.h>
+.Ft char *
+.Fn getconf "nl_item item"
+.Sh DESCRIPTION
+The
+.Fn nl_langinfo
+function returns a pointer to a string containing information 
+set by the program's locale.
+.Pp
+The names and values of
+.Fa item
+are defined in 
+.Aq langinfo.h .
+.Sh RETURN VALUE
+.Fn nl_langinfo
+returns a pointer to an empty string if
+.Fa item
+is invalid.
+.Sh SEE ALSO
+.Xr setlocale 3

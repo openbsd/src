@@ -1,0 +1,114 @@
+.\" Copyright (c) 1994
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" This code is derived from software contributed to Berkeley by
+.\" Andrew Hume of AT&T Bell Laboratories.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by the University of
+.\"	California, Berkeley and its contributors.
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"	from: @(#)bm.3	8.4 (Berkeley) 6/21/94
+.\"	$Id: bm.3,v 1.1.1.1 1995/10/18 08:42:20 deraadt Exp $
+.\"
+.TH BM 3
+.SH NAME
+bm_comp, bm_exec, bm_free \- Boyer-Moore string search
+.SH SYNOPSIS
+.ft B
+#include <sys/types.h>
+.br
+#include <bm.h>
+.sp
+bm_pat *
+.br
+bm_comp(u_char *pattern, size_t patlen, u_char freq[256]);
+.sp
+u_char *
+.br
+bm_exec(bm_pat *pdesc, u_char *text, size_t len);
+.sp
+void
+.br
+bm_free(bm_pat *pdesc);
+.SH DESCRIPTION
+These routines implement an efficient mechanism to find an
+occurrence of a byte string within another byte string.
+.PP
+.I Bm_comp
+evaluates the
+.I patlen
+bytes starting at
+.IR pattern ,
+and returns a pointer to a structure describing them.
+The bytes referenced by
+.I pattern
+may be of any value.
+.PP
+The search takes advantage of the frequency distribution of the
+bytes in the text to be searched.
+If specified,
+.I freq
+should be an array of 256 values,
+with higher values indicating that the corresponding character occurs
+more frequently.
+(A less than optimal frequency distribution can only result in less
+than optimal performance, not incorrect results.)
+If
+.I freq
+is NULL,
+a system default table is used.
+.PP
+.I Bm_exec
+returns a pointer to the leftmost occurrence of the string given to
+.I bm_comp
+within
+.IR text ,
+or NULL if none occurs.
+The number of bytes in
+.I text
+must be specified by
+.IR len .
+.PP
+Space allocated for the returned description is discarded
+by calling
+.I bm_free
+with the returned description as an argument.
+.PP
+The asymptotic speed of
+.I bm_exec
+is
+.RI O( len / patlen ).
+.PP
+.SH "SEE ALSO"
+.IR regexp (3),
+.IR strstr (3)
+.sp
+.IR "Fast String Searching" ,
+Hume and Sunday,
+Software Practice and Experience,
+Vol. 21, 11 (November 1991) pp. 1221-48.

@@ -1,0 +1,51 @@
+
+#------------------------------------------------------------------------------
+# elf:  file(1) magic for ELF executables
+#
+# We have to check the byte order flag to see what byte order all the
+# other stuff in the header is in.
+#
+# updated by Daniel Quinlan (quinlan@yggdrasil.com)
+0	string		\177ELF		ELF
+>4	byte		0		invalid class
+>4	byte		1		32-bit
+>4	byte		2		64-bit
+>5	byte		0		invalid byte order
+>5	byte		1		LSB
+>>16	leshort		0		no file type,
+>>16	leshort		1		relocatable,
+>>16	leshort		2		executable,
+>>16	leshort		3		shared object,
+>>16	leshort		4		core file,
+>>16	leshort		&0xff00		processor-specific,
+>>18	leshort		0		no machine,
+>>18	leshort		1		AT&T WE32100,
+>>18	leshort		2		SPARC - invalid byte order,
+>>18	leshort		3		Intel 80386,
+>>18	leshort		4		Motorola 68000 - invalid byte order,
+>>18	leshort		5		Motorola 88000 - invalid byte order,
+>>18	leshort		6		Intel 80486,
+>>18	leshort		7		Intel 80860,
+>>18	leshort		8		MIPS RS3000,
+>>20	lelong		0		invalid version
+>>20	lelong		1		version 1
+>>36	lelong		1		MathCoPro/FPU/MAU Required
+>5	byte		2		MSB
+>>16	beshort		0		no file type,
+>>16	beshort		1		relocatable,
+>>16	beshort		2		executable,
+>>16	beshort		3		shared object,
+>>16	beshort		4		core file,
+>>16	beshort		&0xff00		processor-specific,
+>>18	beshort		0		no machine,
+>>18	beshort		1		AT&T WE32100,
+>>18	beshort		2		SPARC,
+>>18	beshort		3		Intel 80386 - invalid byte order,
+>>18	beshort		4		Motorola 68000,
+>>18	beshort		5		Motorola 88000,
+>>18	beshort		6		Intel 80486 - invalid byte order,
+>>18	beshort		7		Intel 80860,
+>>18	beshort		8		MIPS RS3000,
+>>20	belong		0		invalid version
+>>20	belong		1		version 1
+>>36	belong		1		MathCoPro/FPU/MAU Required

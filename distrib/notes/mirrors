@@ -1,0 +1,58 @@
+Host name		Services Provided
+---- ----		-------- --------
+ftp.iastate.edu		Anonymous FTP, AFS
+
+	Anon-FTP path: pub/netbsd/NetBSD-1.0
+	AFS path: /afs/iastate.edu/public/ftp/pub/netbsd/NetBSD-1.0
+
+ftp.eecs.umich.edu	Anonymous FTP
+
+	Anon-FTP path: BSD/NetBSD/NetBSD-1.0
+
+gatekeeper.dec.com	Anonymous FTP
+
+	Anon-FTP path: pub/BSD/NetBSD/NetBSD-1.0
+
+wipux2.wifo.uni-mannheim.de	Anonymous FTP, SUP
+
+	Anon-FTP path: pub/NetBSD/NetBSD-1.0
+	SUP: get the file pub/misc/sup/supfile.example via
+		anonymous FTP and read it as an example.
+
+ftp.demon.co.uk		Anonymous FTP, possibly SUP
+
+	Anon-FTP path: pub/BSD/NetBSD/NetBSD-1.0
+	SUP: contact peter@demon.net for SUP server status/information
+
+ftp.uni-regensburg.de	Anonymous FTP
+
+	Anon-FTP path: pub/NetBSD/NetBSD-1.0
+
+ftp.unit.no		Anonymous FTP
+
+	Anon-FTP path: pub/NetBSD/NetBSD-1.0
+
+ftp.stacken.kth.se	Anonymous FTP
+
+	Anon-FTP path: pub/OS/NetBSD/NetBSD-1.0
+
+flick.lerc.nasa.gov	Anonymous FTP
+
+	Anon-FTP path: pub/NetBSD/NetBSD-1.0
+
+coombs.anu.edu.au	Anonymous FTP
+
+	Anon-FTP path: pub/NetBSD/NetBSD-1.0
+
+ftp.funet.fi		Anonymous FTP
+
+	Anon-FTP path: pub/unix/NetBSD/NetBSD-1.0
+
+ftp.netbsd.org		Anonymous FTP, SUP
+
+	Anon-FTP path: pub/NetBSD/NetBSD-1.0
+	SUP: get the file pub/sup/README.sup via anonymous FTP from
+		ftp.netbsd.org, and read it for instructions.
+
+If you wish to become a distribution site for NetBSD, contact Chris
+Demetriou <cgd@NetBSD.ORG>.

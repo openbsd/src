@@ -1,0 +1,1854 @@
+/*	$NetBSD: pss.c,v 1.9 1995/08/12 22:37:58 mycroft Exp $	*/
+
+/*
+ * Copyright (c) 1994 John Brezak
+ * Copyright (c) 1991-1993 Regents of the University of California.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the Computer Systems
+ *	Engineering Group at Lawrence Berkeley Laboratory.
+ * 4. Neither the name of the University nor of the Laboratory may be used
+ *    to endorse or promote products derived from this software without
+ *    specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ */
+
+/*
+ * Copyright (c) 1993 Analog Devices Inc. All rights reserved
+ *
+ * Portions provided by Marc.Hoffman@analog.com and
+ * Greg.Yukna@analog.com .
+ *
+ */
+
+/*
+ * Todo:
+ * 	- Provide PSS driver to access DSP
+ * 	- Provide MIDI driver to access MPU
+ * 	- Finish support for CD drive (Sony and SCSI)
+ */
+
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/errno.h>
+#include <sys/ioctl.h>
+#include <sys/syslog.h>
+#include <sys/device.h>
+#include <sys/proc.h>
+#include <sys/buf.h>
+
+#include <machine/cpu.h>
+#include <machine/pio.h>
+
+#include <sys/audioio.h>
+#include <dev/audio_if.h>
+
+#include <dev/isa/isavar.h>
+#include <dev/isa/isadmavar.h>
+
+#include <dev/isa/ad1848var.h>
+#include <dev/isa/wssreg.h>
+#include <dev/isa/pssreg.h>
+
+/*
+ * Mixer devices
+ */
+#define PSS_MIC_IN_LVL		0
+#define PSS_LINE_IN_LVL		1
+#define PSS_DAC_LVL		2
+#define PSS_REC_LVL		3
+#define PSS_MON_LVL		4
+#define PSS_MASTER_VOL		5
+#define PSS_MASTER_TREBLE	6
+#define PSS_MASTER_BASS		7
+#define PSS_MIC_IN_MUTE		8
+#define PSS_LINE_IN_MUTE	9
+#define PSS_DAC_MUTE		10
+
+#define PSS_OUTPUT_MODE		11
+#define 	PSS_SPKR_MONO	0
+#define 	PSS_SPKR_STEREO	1
+#define 	PSS_SPKR_PSEUDO	2
+#define 	PSS_SPKR_SPATIAL 3
+
+#define PSS_RECORD_SOURCE	12
+
+/* Classes */
+#define PSS_INPUT_CLASS		13
+#define PSS_RECORD_CLASS	14
+#define PSS_MONITOR_CLASS	15
+#define PSS_OUTPUT_CLASS	16
+
+
+struct pss_softc {
+	struct	device sc_dev;		/* base device */
+	struct	isadev sc_id;		/* ISA device */
+	void	*sc_ih;			/* interrupt vectoring */
+
+	u_short	sc_iobase;		/* I/O port base address */
+	u_short	sc_drq;			/* dma channel */
+
+	struct	ad1848_softc *ad1848_sc;
+	
+	int	out_port;
+	
+	struct	ad1848_volume master_volume;
+	int	master_mode;
+	
+	int	monitor_treble;
+	int	monitor_bass;
+
+	int	mic_mute, cd_mute, dac_mute;
+};
+
+struct mpu_softc {
+	struct	device sc_dev;		/* base device */
+	struct	isadev sc_id;		/* ISA device */
+	void	*sc_ih;			/* interrupt vectoring */
+    
+	u_short	sc_iobase;		/* MIDI I/O port base address */
+	u_short	sc_irq;			/* MIDI interrupt */
+};
+
+struct cd_softc {
+	struct	device sc_dev;		/* base device */
+	struct	isadev sc_id;		/* ISA device */
+	void	*sc_ih;			/* interrupt vectoring */
+
+	u_short	sc_iobase;		/* CD I/O port base address */
+	u_short	sc_irq;			/* CD interrupt */
+};
+
+#ifdef AUDIO_DEBUG
+extern void Dprintf __P((const char *, ...));
+#define DPRINTF(x)	if (pssdebug) Dprintf x
+int	pssdebug = 0;
+#else
+#define DPRINTF(x)
+#endif
+
+int	pssprobe();
+void	pssattach __P((struct device *, struct device *, void *));
+
+int	spprobe();
+void	spattach __P((struct device *, struct device *, void *));
+
+int	mpuprobe();
+void	mpuattach __P((struct device *, struct device *, void *));
+
+int	pcdprobe();
+void	pcdattach __P((struct device *, struct device *, void *));
+
+int	spopen __P((dev_t, int));
+
+int	pssintr __P((void *));
+int	mpuintr __P((void *));
+
+int	pss_speaker_ctl __P((void *, int));
+
+int	pss_getdev __P((void *, struct audio_device *));
+int	pss_setfd __P((void *, int));
+
+int	pss_set_out_port __P((void *, int));
+int	pss_get_out_port __P((void *));
+int	pss_set_in_port __P((void *, int));
+int	pss_get_in_port __P((void *));
+int	pss_mixer_set_port __P((void *, mixer_ctrl_t *));
+int	pss_mixer_get_port __P((void *, mixer_ctrl_t *));
+int	pss_query_devinfo __P((void *, mixer_devinfo_t *));
+
+/*
+ * Define our interface to the higher level audio driver.
+ */
+
+struct audio_hw_if pss_audio_if = {
+	spopen,
+	ad1848_close,
+	NULL,
+	ad1848_set_in_sr,
+	ad1848_get_in_sr,
+	ad1848_set_out_sr,
+	ad1848_get_out_sr,
+	ad1848_query_encoding,
+	ad1848_set_encoding,
+	ad1848_get_encoding,
+	ad1848_set_precision,
+	ad1848_get_precision,
+	ad1848_set_channels,
+	ad1848_get_channels,
+	ad1848_round_blocksize,
+	pss_set_out_port,
+	pss_get_out_port,
+	pss_set_in_port,
+	pss_get_in_port,
+	ad1848_commit_settings,
+	ad1848_get_silence,
+	NULL,
+	NULL,
+	ad1848_dma_output,
+	ad1848_dma_input,
+	ad1848_halt_out_dma,
+	ad1848_halt_in_dma,
+	ad1848_cont_out_dma,
+	ad1848_cont_in_dma,
+	pss_speaker_ctl,
+	pss_getdev,
+	pss_setfd,
+	pss_mixer_set_port,
+	pss_mixer_get_port,
+	pss_query_devinfo,
+	0,	/* not full-duplex */
+	0
+};
+
+
+/* Interrupt translation for WSS config */
+static u_char wss_interrupt_bits[12] = {
+    0xff, 0xff, 0xff, 0xff,
+    0xff, 0xff, 0xff, 0x08,
+    0xff, 0x10, 0x18, 0x20
+};
+/* ditto for WSS DMA channel */
+static u_char wss_dma_bits[4] = {1, 2, 0, 3};
+
+#ifndef NEWCONFIG
+#define at_dma(flags, ptr, cc, chan)	isa_dmastart(flags, ptr, cc, chan)
+#endif
+
+struct cfdriver psscd = {
+	NULL, "pss", pssprobe, pssattach, DV_DULL, sizeof(struct pss_softc), 1
+};
+
+struct cfdriver spcd = {
+	NULL, "sp", spprobe, spattach, DV_DULL, sizeof(struct ad1848_softc)
+};
+
+struct cfdriver mpucd = {
+	NULL, "mpu", mpuprobe, mpuattach, DV_DULL, sizeof(struct mpu_softc)
+};
+
+struct cfdriver pcdcd = {
+	NULL, "pcd", pcdprobe, pcdattach, DV_DULL, sizeof(struct cd_softc)
+};
+
+struct audio_device pss_device = {
+	"pss,ad1848",
+	"",
+	"PSS"
+};
+
+void
+pss_dspwrite(struct pss_softc *sc, int data)
+{
+    int i;
+    u_short pss_base = sc->sc_iobase;
+
+    /*
+     * Note! the i<5000000 is an emergency exit. The dsp_command() is sometimes
+     * called while interrupts are disabled. This means that the timer is
+     * disabled also. However the timeout situation is a abnormal condition.
+     * Normally the DSP should be ready to accept commands after just couple of
+     * loops.
+     */
+    for (i = 0; i < 5000000; i++) {
+	if (inw(pss_base+PSS_STATUS) & PSS_WRITE_EMPTY) {
+	    outw(pss_base+PSS_DATA, data);
+	    return;
+	}
+    }
+    printf ("pss: DSP Command (%04x) Timeout.\n", data);
+}
+
+void
+pss_setaddr(int addr, int configAddr)
+{
+    int val;
+    
+    val = inw(configAddr);
+    val &= ADDR_MASK;
+    val |= (addr << 4);
+    outw(configAddr,val);
+}
+
+/* pss_setint
+ * This function sets the correct bits in the 
+ * configuration register to 
+ * enable the chosen interrupt.
+ */
+int
+pss_setint(int intNum, int configAddress)
+{
+    int val;
+    switch(intNum) {
+    case 0:
+	val = inw(configAddress);
+	val &= INT_MASK;
+	outw(configAddress,val);
+	break;
+    case 3:
+	val = inw(configAddress);
+	val &= INT_MASK;
+	val |= INT_3_BITS;
+	outw(configAddress,val);
+	break;
+    case 5:
+	val = inw(configAddress);
+	val &= INT_MASK;
+	val |= INT_5_BITS;
+	outw(configAddress,val);
+	break;
+    case 7:
+	val = inw(configAddress);
+	val &= INT_MASK;
+	val |= INT_7_BITS;
+	outw(configAddress,val);
+	break;
+    case 9:
+	val = inw(configAddress);
+	val &= INT_MASK;
+	val |= INT_9_BITS;
+	outw(configAddress,val);
+	break;
+    case 10:
+	val = inw(configAddress);
+	val &= INT_MASK;
+	val |= INT_10_BITS;
+	outw(configAddress,val);
+	break;
+    case 11:
+	val = inw(configAddress);
+	val &= INT_MASK;
+	val |= INT_11_BITS;
+	outw(configAddress,val);
+	break;
+    case 12:
+	val = inw(configAddress);
+	val &= INT_MASK;
+	val |= INT_12_BITS;
+	outw(configAddress,val);
+	break;
+    default:
+	printf("pss_setint unkown int\n");
+	return 1;
+    }
+    return 0;
+}
+
+int
+pss_setdma(int dmaNum, int configAddress)
+{
+    int val;
+    
+    switch(dmaNum) {
+    case 0:
+	val = inw(configAddress);
+	val &= DMA_MASK;
+	val |= DMA_0_BITS;
+	outw(configAddress,val);
+	break;
+    case 1:
+	val = inw(configAddress);
+	val &= DMA_MASK;
+	val |= DMA_1_BITS;
+	outw(configAddress,val);
+	break;
+    case 3:
+	val = inw(configAddress);
+	val &= DMA_MASK;
+	val |= DMA_3_BITS;
+	outw(configAddress,val);
+	break;
+    case 5:
+	val = inw(configAddress);
+	val &= DMA_MASK;
+	val |= DMA_5_BITS;
+	outw(configAddress,val);
+	break;
+    case 6:
+	val = inw(configAddress);
+	val &= DMA_MASK;
+	val |= DMA_6_BITS;
+	outw(configAddress,val);
+	break;
+    case 7:
+	val = inw(configAddress);
+	val &= DMA_MASK;
+	val |= DMA_7_BITS;
+	outw(configAddress,val);
+	break;
+    default:
+	printf("PSS ERROR! pss_setdma: unknown_dma\n");
+	return 1;
+    }
+    return 0;
+}
+
+/*
+ * This function tests an interrupt number to see if
+ * it is availible. It takes the interrupt button
+ * as it's argument and returns TRUE if the interrupt
+ * is ok.
+*/
+static int
+pss_testirq(struct pss_softc *sc, int intNum)
+{
+    u_short iobase = sc->sc_iobase;
+    int val;
+    int ret;
+    int i;
+
+    /* Set the interrupt bits */
+    switch(intNum) {
+    case 3:
+	val = inw(iobase+PSS_CONFIG);
+	val &= INT_MASK;	/* Special: 0 */
+	outw(iobase+PSS_CONFIG, val);
+	break;
+    case 5:
+	val = inw(iobase+PSS_CONFIG);
+	val &= INT_MASK;
+	val |= INT_5_BITS;
+	outw(iobase+PSS_CONFIG,val);
+	break;
+    case 7:
+	val = inw(iobase+PSS_CONFIG);
+	val &= INT_MASK;
+	val |= INT_7_BITS;
+	outw(iobase+PSS_CONFIG,val);
+	break;
+    case 9:
+	val = inw(iobase+PSS_CONFIG);
+	val &= INT_MASK;
+	val |= INT_9_BITS;
+	outw(iobase+PSS_CONFIG,val);
+	break;
+    case 10:
+	val = inw(iobase+PSS_CONFIG);
+	val &= INT_MASK;
+	val |= INT_10_BITS;
+	outw(iobase+PSS_CONFIG,val);
+	break;
+    case 11:
+	val = inw(iobase+PSS_CONFIG);
+	val &= INT_MASK;
+	val |= INT_11_BITS;
+	outw(iobase+PSS_CONFIG,val);
+	break;
+    case 12:
+	val = inw(iobase+PSS_CONFIG);
+	val &= INT_MASK;
+	val |= INT_12_BITS;
+	outw(iobase+PSS_CONFIG,val);
+	break;
+    default:
+	DPRINTF(("pss: unknown IRQ (%d)\n", intNum));
+	return 0;
+    }
+
+    /* Set the interrupt test bit */
+    val = inw(iobase+PSS_CONFIG);
+    val |= INT_TEST_BIT;
+    outw(iobase+PSS_CONFIG,val);
+
+    /* Check if the interrupt is in use */
+    /* Do it a few times in case there is a delay */
+    ret = 0;
+    for (i = 0; i < 5; i++) {
+	val = inw(iobase+PSS_CONFIG);
+	if (val & INT_TEST_PASS) {
+	    ret = 1;
+	    break;
+	}
+    }
+
+    /* Clear the Test bit and the interrupt bits */
+    val = inw(iobase+PSS_CONFIG);
+    val &= INT_TEST_BIT_MASK;
+    val &= INT_MASK;
+    outw(iobase+PSS_CONFIG,val);
+    return(ret);
+}
+
+/*
+ * This function tests a dma channel to see if
+ * it is availible. It takes the DMA channel button
+ * as it's argument and returns TRUE if the channel
+ * is ok.
+ */
+int
+pss_testdma(struct pss_softc *sc, int dmaNum)
+{
+    u_short iobase = sc->sc_iobase;
+    int val;
+    int i,ret;
+
+    switch (dmaNum) {
+    case 0:
+	val = inw(iobase+PSS_CONFIG);
+	val &= DMA_MASK;
+	val |= DMA_0_BITS;
+	outw(iobase+PSS_CONFIG,val);
+	break;
+    case 1:
+	val = inw(iobase+PSS_CONFIG);
+	val &= DMA_MASK;
+	val |= DMA_1_BITS;
+	outw(iobase+PSS_CONFIG,val);
+	break;
+    case 3:
+	val = inw(iobase+PSS_CONFIG);
+	val &= DMA_MASK;
+	val |= DMA_3_BITS;
+	outw(iobase+PSS_CONFIG,val);
+	break;
+    case 5:
+	val = inw(iobase+PSS_CONFIG);
+	val &= DMA_MASK;
+	val |= DMA_5_BITS;
+	outw(iobase+PSS_CONFIG,val);
+	break;
+    case 6:
+	val = inw(iobase+PSS_CONFIG);
+	val &= DMA_MASK;
+	val |= DMA_6_BITS;
+	outw(iobase+PSS_CONFIG,val);
+	break;
+    case 7:
+	val = inw(iobase+PSS_CONFIG);
+	val &= DMA_MASK;
+	val |= DMA_7_BITS;
+	outw(iobase+PSS_CONFIG,val);
+	break;
+    default:
+	DPRINTF(("pss: unknown DMA channel (%d)\n", dmaNum));
+	return 0;
+    }
+
+    /* Set the DMA test bit */
+    val = inw(iobase+PSS_CONFIG);
+    val |= DMA_TEST_BIT;
+    outw(iobase+PSS_CONFIG,val);
+
+    /* Check if the DMA channel is in use */
+    /* Do it a few times in case there is a delay */
+    ret = 0;
+    for (i = 0; i < 3; i++) {
+	val = inw(iobase+PSS_CONFIG);
+	if (val & DMA_TEST_PASS) {
+	    ret = 1;
+	    break;
+	}
+    }
+
+    /* Clear the Test bit and the DMA bits */
+    val = inw(iobase+PSS_CONFIG);
+    val &= DMA_TEST_BIT_MASK;
+    val &= DMA_MASK;
+    outw(iobase+PSS_CONFIG,val);
+    return(ret);
+}
+
+int
+pss_reset_dsp(struct pss_softc *sc)
+{
+    u_long i;
+    u_short pss_base = sc->sc_iobase;
+
+    outw(pss_base+PSS_CONTROL, PSS_RESET);
+
+    for (i = 0; i < 32768; i++)
+	inw(pss_base+PSS_CONTROL);
+ 
+    outw(pss_base+PSS_CONTROL, 0);
+
+    return 1;
+}
+
+/*
+ * This function loads an image into the PSS 
+ * card.  The function loads the file by putting
+ * reseting the dsp and feeding it the boot bytes.
+ * First you feed the ASIC the first byte of 
+ * the boot sequence. The ASIC waits until it
+ * detects a BMS and RD and asserts BR
+ * and outputs the byte.  The host must poll for
+ * the BG signal. It then feeds the ASIC another
+ * byte which removes BR.
+ */
+int
+pss_download_dsp(struct pss_softc *sc, u_char *block, int size)
+{
+    int i, val, count;
+    u_short pss_base = sc->sc_iobase;
+    
+    DPRINTF(("pss: downloading boot code..."));
+
+    /* Warn DSP software that a boot is coming */
+    outw(pss_base+PSS_DATA, 0x00fe);
+
+    for (i = 0; i < 32768; i++)
+	if (inw(pss_base+PSS_DATA) == 0x5500)
+	    break;
+    outw(pss_base+PSS_DATA, *block++);
+
+    pss_reset_dsp(sc);
+
+    DPRINTF(("start "));
+
+    count = 1;
+    while(1) {
+	int j;
+	for (j=0; j<327670; j++) {
+	    /* Wait for BG to appear */
+	    if (inw(pss_base+PSS_STATUS) & PSS_FLAG3)
+		break;
+ 	}
+ 
+	if (j==327670) {
+	    /* It's ok we timed out when the file was empty */
+	    if (count >= size)
+		break;
+	    else {
+		printf("\npss: DownLoad timeout problems, byte %d=%d\n",
+		       count, size);
+		return 0;
+ 	    }
+ 	}
+	/* Send the next byte */
+	outw(pss_base+PSS_DATA, *block++);
+	count++;
+    }
+
+    outw(pss_base+PSS_DATA, 0);
+    for (i = 0; i < 32768; i++)
+	(void) inw(pss_base+PSS_STATUS);
+
+    DPRINTF(("downloaded\n"));
+
+    for (i = 0; i < 32768; i++) {
+	val = inw(pss_base+PSS_STATUS);
+	if (val & PSS_READ_FULL)
+	    break;
+    }
+
+    /* now read the version */
+    for (i = 0; i < 32000; i++) {
+	val = inw(pss_base+PSS_STATUS);
+	if (val & PSS_READ_FULL)
+	    break;
+    }
+    if (i == 32000)
+	return 0;
+
+    (void) inw(pss_base+PSS_DATA);
+
+    return 1;
+}
+
+void
+wss_dump_regs(struct ad1848_softc *sc)
+{
+    printf("WSS regs: config=%x version=%x\n",
+	   (u_char)inb(sc->sc_iobase+WSS_CONFIG),
+	   (u_char)inb(sc->sc_iobase+WSS_STATUS));
+}
+
+void
+pss_dump_regs(struct pss_softc *sc)
+{
+    printf("PSS regs: status=%x vers=%x ",
+	   (u_short)inw(sc->sc_iobase+PSS_STATUS),
+	   (u_short)inw(sc->sc_iobase+PSS_ID_VERS));
+	
+    printf("config=%x wss_config=%x\n",
+	   (u_short)inw(sc->sc_iobase+PSS_CONFIG),
+	   (u_short)inw(sc->sc_iobase+PSS_WSS_CONFIG));
+}
+
+/*
+ * Probe for the PSS hardware.
+ */
+int
+pssprobe(parent, self, aux)
+    struct device *parent, *self;
+    void *aux;
+{
+    struct pss_softc *sc = (void *)self;
+    struct isa_attach_args *ia = aux;
+    u_short iobase = ia->ia_iobase;
+    int i;
+    
+    if (!PSS_BASE_VALID(iobase)) {
+	printf("pss: configured iobase %x invalid\n", iobase);
+	return 0;
+    }
+
+    /* Need to probe for iobase when IOBASEUNK {0x220 0x240} */
+    if (iobase == (u_short)IOBASEUNK) {
+
+	iobase = 0x220;
+	if ((inw(iobase+PSS_ID_VERS) & 0xff00) == 0x4500)
+	    goto pss_found;
+
+	iobase = 0x240;
+	if ((inw(iobase+PSS_ID_VERS) & 0xff00) == 0x4500)
+	    goto pss_found;
+
+	DPRINTF(("pss: no PSS found (at 0x220 or 0x240)\n"));
+	return 0;
+    }
+    else if ((inw(iobase+PSS_ID_VERS) & 0xff00) != 0x4500) {
+	DPRINTF(("pss: not a PSS - %x\n", inw(iobase+PSS_ID_VERS)));
+	return 0;
+    }
+
+pss_found:
+    sc->sc_iobase = iobase;
+
+    /* Clear WSS config */
+    pss_setaddr(WSS_BASE_ADDRESS, sc->sc_iobase+PSS_WSS_CONFIG);
+    outb(WSS_BASE_ADDRESS+WSS_CONFIG, 0);
+
+    /* Clear config registers (POR reset state) */
+    outw(sc->sc_iobase+PSS_CONFIG, 0);
+    outw(sc->sc_iobase+PSS_WSS_CONFIG, 0);
+    outw(sc->sc_iobase+SB_CONFIG, 0);
+    outw(sc->sc_iobase+MIDI_CONFIG, 0);
+    outw(sc->sc_iobase+CD_CONFIG, 0);
+
+    if (ia->ia_irq == IRQUNK) {
+	int i;
+	for (i = 0; i < 16; i++) {
+	    if (pss_testirq(sc, i) != 0)
+		break;
+	}
+	if (i == 16) {
+	    printf("pss: unable to locate free IRQ channel\n");
+	    return 0;
+	}
+	else {
+	    ia->ia_irq = i;
+	    printf("pss: found IRQ %d free\n", i);
+	}
+    }
+    else {
+	if (pss_testirq(sc, ia->ia_irq) == 0) {
+	    printf("pss: configured IRQ unavailable (%d)\n", ia->ia_irq);
+	    return 0;
+	}
+    }
+
+    /* XXX Need to deal with DRQUNK */
+    if (pss_testdma(sc, ia->ia_drq) == 0) {
+	printf("pss: configured DMA channel unavailable (%d)\n", ia->ia_drq);
+	return 0;
+    }
+      
+    ia->ia_iosize = PSS_NPORT;
+
+    /* Initialize PSS irq and dma */
+    pss_setint(ia->ia_irq, sc->sc_iobase+PSS_CONFIG);
+    pss_setdma(sc->sc_drq, sc->sc_iobase+PSS_CONFIG);
+
+	
+    /* Setup the Game port */
+#ifdef PSS_GAMEPORT
+    DPRINTF(("Turning Game Port On.\n"));
+    outw(sc->sc_iobase+PSS_STATUS, inw(sc->sc_iobase+PSS_STATUS) | GAME_BIT);
+#else
+    outw(sc->sc_iobase+PSS_STATUS, inw(sc->sc_iobase+PSS_STATUS) & GAME_BIT_MASK);
+#endif
+
+    /* Reset DSP */
+    pss_reset_dsp(sc);
+
+    return 1;
+}
+
+/*
+ * Probe for the Soundport (ad1848)
+ */
+int
+spprobe(parent, match, aux)
+    struct device *parent;
+    void *match, *aux;
+{
+    struct ad1848_softc *sc = (void *)match;
+    struct pss_softc *pc = (void *)parent;
+    struct cfdata *cf = (void *)sc->sc_dev.dv_cfdata;
+    u_char bits;
+    int i;
+
+    sc->sc_iobase = cf->cf_iobase;
+    
+    /* Set WSS io address */
+    pss_setaddr(sc->sc_iobase, pc->sc_iobase+PSS_WSS_CONFIG);
+
+    /* Is there an ad1848 chip at the WSS iobase ? */
+    if (ad1848_probe(sc) == 0) {
+	DPRINTF(("sp: no ad1848 ? iobase=%x\n", sc->sc_iobase));
+	return 0;
+    }
+	
+    /* Setup WSS interrupt and DMA if auto */
+    if (cf->cf_irq == IRQUNK) {
+
+	/* Find unused IRQ for WSS */
+	for (i = 0; i < 12; i++) {
+	    if (wss_interrupt_bits[i] != 0xff) {
+		if (pss_testirq(pc, i))
+		    break;
+	    }
+	}
+	if (i == 12) {
+	    printf("sp: unable to locate free IRQ for WSS\n");
+	    return 0;
+	}
+	else {
+	    cf->cf_irq = i;
+	    sc->sc_irq = i;
+	    DPRINTF(("sp: found IRQ %d free\n", i));
+	}
+    }
+    else {
+	sc->sc_irq = cf->cf_irq;
+	if (pss_testirq(pc, sc->sc_irq) == 0) {
+	    printf("sp: configured IRQ unavailable (%d)\n", sc->sc_irq);
+	    return 0;
+	}
+    }
+
+    if (cf->cf_drq == DRQUNK) {
+	/* Find unused DMA channel for WSS */
+	for (i = 0; i < 4; i++) {
+	    if (wss_dma_bits[i]) {
+		if (pss_testdma(pc, i))
+		    break;
+	    }
+	}
+	if (i == 4) {
+	    printf("sp: unable to locate free DMA channel for WSS\n");
+	    return 0;
+	}
+	else {
+	    sc->sc_drq = cf->cf_drq = i;
+	    DPRINTF(("sp: found DMA %d free\n", i));
+	}
+    }
+    else {
+	if (pss_testdma(pc, sc->sc_drq) == 0) {
+	    printf("sp: configured DMA channel unavailable (%d)\n", sc->sc_drq);
+	    return 0;
+	}
+	sc->sc_drq = cf->cf_drq;
+    }
+    sc->sc_recdrq = sc->sc_drq;
+
+    /* Set WSS config registers */
+    if ((bits = wss_interrupt_bits[sc->sc_irq]) == 0xff) {
+	printf("sp: invalid interrupt configuration (irq=%d)\n", sc->sc_irq);
+	return 0;
+    }
+
+    outb(sc->sc_iobase+WSS_CONFIG, (bits | 0x40));
+    if ((inb(sc->sc_iobase+WSS_STATUS) & 0x40) == 0)	/* XXX What do these bits mean ? */
+	DPRINTF(("sp: IRQ %x\n", inb(sc->sc_iobase+WSS_STATUS)));
+    
+    outb(sc->sc_iobase+WSS_CONFIG, (bits | wss_dma_bits[sc->sc_drq]));
+
+    pc->ad1848_sc = sc;
+    sc->parent = pc;
+    
+    return 1;
+}
+
+int
+mpuprobe(parent, match, aux)
+    struct device *parent;
+    void *match, *aux;
+{
+    struct mpu_softc *sc = (void *)match;
+    struct pss_softc *pc = (void *)parent;
+    struct cfdata *cf = (void *)sc->sc_dev.dv_cfdata;
+
+    /* Check if midi is enabled; if it is check the interrupt */
+    sc->sc_iobase = cf->cf_iobase;
+
+    if (cf->cf_irq == IRQUNK) {
+	int i;
+	for (i = 0; i < 16; i++) {
+	    if (pss_testirq(pc, i) != 0)
+		break;
+	}
+	if (i == 16) {
+	    printf("mpu: unable to locate free IRQ channel for MIDI\n");
+	    return 0;
+	}
+	else {
+	    cf->cf_irq = i;
+	    sc->sc_irq = i;
+	    DPRINTF(("mpu: found IRQ %d free\n", i));
+	}
+    }
+    else {
+	sc->sc_irq = cf->cf_irq;
+    
+	if (pss_testirq(pc, sc->sc_irq) == 0) {
+	    printf("pss: configured MIDI IRQ unavailable (%d)\n", sc->sc_irq);
+	    return 0;
+	}
+    }
+
+    outw(pc->sc_iobase+MIDI_CONFIG,0);
+    DPRINTF(("pss: mpu port 0x%x irq %d\n", sc->sc_iobase, sc->sc_irq));
+    pss_setaddr(sc->sc_iobase, pc->sc_iobase+MIDI_CONFIG);
+    pss_setint(sc->sc_irq, pc->sc_iobase+MIDI_CONFIG);
+
+    return 1;
+}
+
+int
+pcdprobe(parent, match, aux)
+    struct device *parent;
+    void *match, *aux;
+{
+    struct cd_softc *sc = (void *)match;
+    struct pss_softc *pc = (void *)parent;
+    struct cfdata *cf = (void *)sc->sc_dev.dv_cfdata;
+    u_short val;
+    
+    sc->sc_iobase = cf->cf_iobase;
+
+    pss_setaddr(sc->sc_iobase, pc->sc_iobase+CD_CONFIG);
+
+    /* Set the correct irq polarity. */
+    val = inw(pc->sc_iobase+CD_CONFIG);
+    outw(pc->sc_iobase+CD_CONFIG, 0);
+    val &= CD_POL_MASK;
+    val | CD_POL_BIT;	/* XXX if (pol) */
+    outw(pc->sc_iobase+CD_CONFIG, val);
+    
+    if (cf->cf_irq == IRQUNK) {
+	int i;
+	for (i = 0; i < 16; i++) {
+	    if (pss_testirq(pc, i) != 0)
+		break;
+	}
+	if (i == 16) {
+	    printf("pcd: unable to locate free IRQ channel for CD\n");
+	    return 0;
+	}
+	else {
+	    cf->cf_irq = i;
+	    sc->sc_irq = i;
+	    DPRINTF(("pcd: found IRQ %d free\n", i));
+	}
+    }
+    else {
+	sc->sc_irq = cf->cf_irq;
+
+	if (pss_testirq(pc, sc->sc_irq) == 0) {
+	    printf("pcd: configured CD IRQ unavailable (%d)\n", sc->sc_irq);
+	    return 0;
+	}
+	return 1;
+    }
+    pss_setint(sc->sc_irq, pc->sc_iobase+CD_CONFIG);
+    
+    return 1;
+}
+
+/*
+ * Attach hardware to driver, attach hardware driver to audio
+ * pseudo-device driver .
+ */
+void
+pssattach(parent, self, aux)
+    struct device *parent, *self;
+    void *aux;
+{
+    struct pss_softc *sc = (struct pss_softc *)self;
+    struct isa_attach_args *ia = (struct isa_attach_args *)aux;
+    u_short iobase = ia->ia_iobase;
+    u_char vers;
+    struct ad1848_volume vol = {150, 150};
+    int err;
+    
+    sc->sc_iobase = iobase;
+    sc->sc_drq = ia->ia_drq;
+
+#ifdef NEWCONFIG
+    isa_establish(&sc->sc_id, &sc->sc_dev);
+#endif
+
+    /* Setup interrupt handler for PSS */
+    sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_AUDIO,
+				   pssintr, sc);
+
+    vers = (inw(sc->sc_iobase+PSS_ID_VERS)&0xff) - 1;
+    printf(": ESC614%c\n", (vers > 0)?'A'+vers:' ');
+    
+    (void)config_found(self, NULL, NULL);
+
+    sc->out_port = PSS_MASTER_VOL;
+
+    (void)pss_set_master_mode(sc, PSS_SPKR_STEREO);
+    (void)pss_set_master_gain(sc, &vol);
+    (void)pss_set_treble(sc, AUDIO_MAX_GAIN/2);
+    (void)pss_set_bass(sc, AUDIO_MAX_GAIN/2);
+
+    if ((err = audio_hardware_attach(&pss_audio_if, sc->ad1848_sc)) != 0)
+	printf("pss: could not attach to audio pseudo-device driver (%d)\n", err);
+}
+
+void
+spattach(parent, self, aux)
+    struct device *parent, *self;
+    void *aux;
+{
+    struct ad1848_softc *sc = (struct ad1848_softc *)self;
+    struct cfdata *cf = (void *)sc->sc_dev.dv_cfdata;
+    u_short iobase = cf->cf_iobase;
+
+    sc->sc_iobase = iobase;
+    sc->sc_drq = cf->cf_drq;
+
+#ifdef NEWCONFIG
+    isa_establish(&sc->sc_id, &sc->sc_dev);
+#endif
+
+    sc->sc_ih = isa_intr_establish(cf->cf_irq, ISA_IST_EDGE, ISA_IPL_AUDIO,
+	ad1848_intr, sc);
+
+    /* XXX might use pssprint func ?? */
+    printf(" port 0x%x-0x%x irq %d drq %d",
+	   sc->sc_iobase, sc->sc_iobase+AD1848_NPORT,
+	   cf->cf_irq, cf->cf_drq);
+
+    ad1848_attach(sc);
+
+    printf("\n");
+}
+
+void
+mpuattach(parent, self, aux)
+    struct device *parent, *self;
+    void *aux;
+{
+    struct mpu_softc *sc = (struct mpu_softc *)self;
+    struct cfdata *cf = (void *)sc->sc_dev.dv_cfdata;
+    u_short iobase = cf->cf_iobase;
+
+    sc->sc_iobase = iobase;
+
+#ifdef NEWCONFIG
+    isa_establish(&sc->sc_id, &sc->sc_dev);
+#endif
+
+    sc->sc_ih = isa_intr_establish(cf->cf_irq, ISA_IST_EDGE, ISA_IPL_AUDIO,
+	mpuintr, sc);
+
+    /* XXX might use pssprint func ?? */
+    printf(" port 0x%x-0x%x irq %d\n",
+	   sc->sc_iobase, sc->sc_iobase+MIDI_NPORT,
+	   cf->cf_irq);
+}
+
+void
+pcdattach(parent, self, aux)
+    struct device *parent, *self;
+    void *aux;
+{
+    struct cd_softc *sc = (struct cd_softc *)self;
+    struct cfdata *cf = (void *)sc->sc_dev.dv_cfdata;
+    u_short iobase = cf->cf_iobase;
+    
+    /*
+     * The pss driver simply enables the cd interface. The CD
+     * appropriate driver - scsi (aic6360) or Sony needs to be
+     * used after this to handle the device.
+     */
+    sc->sc_iobase = iobase;
+
+#ifdef NEWCONFIG
+    isa_establish(&sc->sc_id, &sc->sc_dev);
+#endif
+
+    /* XXX might use pssprint func ?? */
+    printf(" port 0x%x-0x%x irq %d\n",
+	   sc->sc_iobase, sc->sc_iobase+2,
+	   cf->cf_irq);
+}
+
+static int
+pss_to_vol(cp, vol)
+    mixer_ctrl_t *cp;
+    struct ad1848_volume *vol;
+{
+    if (cp->un.value.num_channels == 1) {
+	vol->left = vol->right = cp->un.value.level[AUDIO_MIXER_LEVEL_MONO];
+	return(1);
+    }
+    else if (cp->un.value.num_channels == 2) {
+	vol->left  = cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT];
+	vol->right = cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT];
+	return(1);
+    }
+    return(0);
+}
+
+static int
+pss_from_vol(cp, vol)
+    mixer_ctrl_t *cp;
+    struct ad1848_volume *vol;
+{
+    if (cp->un.value.num_channels == 1) {
+	cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] = vol->left;
+	return(1);
+    }
+    else if (cp->un.value.num_channels == 2) {
+	cp->un.value.level[AUDIO_MIXER_LEVEL_LEFT] = vol->left;
+	cp->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] = vol->right;
+	return(1);
+    }
+    return(0);
+}
+
+int
+spopen(dev, flags)
+    dev_t dev;
+    int flags;
+{
+    struct ad1848_softc *sc;
+    int unit = AUDIOUNIT(dev);
+    
+    if (unit >= spcd.cd_ndevs)
+	return ENODEV;
+    
+    sc = spcd.cd_devs[unit];
+    if (!sc)
+	return ENXIO;
+    
+    return ad1848_open(sc, dev, flags);
+}
+
+int
+pss_set_master_gain(sc, gp)
+    register struct pss_softc *sc;
+    struct ad1848_volume *gp;
+{
+    DPRINTF(("pss_set_master_gain: %d:%d\n", gp->left, gp->right));
+	
+#ifdef PSS_DSP
+    if (gp->left > PHILLIPS_VOL_MAX)
+	gp->left = PHILLIPS_VOL_MAX;
+    if (gp->left < PHILLIPS_VOL_MIN)
+	gp->left = PHILLIPS_VOL_MIN;
+    if (gp->right > PHILLIPS_VOL_MAX)
+	gp->right = PHILLIPS_VOL_MAX;
+    if (gp->right < PHILLIPS_VOL_MIN)
+	gp->right = PHILLIPS_VOL_MIN;
+
+    pss_dspwrite(sc, SET_MASTER_COMMAND);
+    pss_dspwrite(sc, MASTER_VOLUME_LEFT|(PHILLIPS_VOL_CONSTANT + gp->left / PHILLIPS_VOL_STEP));
+    pss_dspwrite(sc, SET_MASTER_COMMAND);
+    pss_dspwrite(sc, MASTER_VOLUME_RIGHT|(PHILLIPS_VOL_CONSTANT + gp->right / PHILLIPS_VOL_STEP));
+#endif
+
+    sc->master_volume = *gp;
+    return(0);
+}
+
+int
+pss_set_master_mode(sc, mode)
+    register struct pss_softc *sc;
+    int mode;
+{
+    short phillips_mode;
+
+    DPRINTF(("pss_set_master_mode: %d\n", mode));
+	
+    if (mode == PSS_SPKR_STEREO)
+	phillips_mode = PSS_STEREO;
+    else if (mode == PSS_SPKR_PSEUDO)
+	phillips_mode = PSS_PSEUDO;
+    else if (mode == PSS_SPKR_SPATIAL)
+	phillips_mode = PSS_SPATIAL;
+    else if (mode == PSS_SPKR_MONO)
+	phillips_mode = PSS_MONO;
+    else
+	return (EINVAL);
+    
+#ifdef PSS_DSP
+    pss_dspwrite(sc, SET_MASTER_COMMAND);
+    pss_dspwrite(sc, MASTER_SWITCH | mode);
+#endif
+
+    sc->master_mode = mode;
+
+    return(0);
+}
+
+int
+pss_set_treble(sc, treb)
+    register struct pss_softc *sc;
+    u_char treb;
+{
+    DPRINTF(("pss_set_treble: %d\n", treb));
+
+#ifdef PSS_DSP
+    if (treb > PHILLIPS_TREBLE_MAX)
+	treb = PHILLIPS_TREBLE_MAX;
+    if (treb < PHILLIPS_TREBLE_MIN)
+	treb = PHILLIPS_TREBLE_MIN;
+    pss_dspwrite(sc, SET_MASTER_COMMAND);
+    pss_dspwrite(sc, MASTER_TREBLE|(PHILLIPS_TREBLE_CONSTANT + treb / PHILLIPS_TREBLE_STEP));
+#endif
+
+    sc->monitor_treble = treb;
+
+    return(0);
+}
+
+int
+pss_set_bass(sc, bass)
+    register struct pss_softc *sc;
+    u_int bass;
+{
+    DPRINTF(("pss_set_bass: %d\n", bass));
+
+#ifdef PSS_DSP
+    if (bass > PHILLIPS_BASS_MAX)
+	bass = PHILLIPS_BASS_MAX;
+    if (bass < PHILLIPS_BASS_MIN)
+	bass = PHILLIPS_BASS_MIN;
+    pss_dspwrite(sc, SET_MASTER_COMMAND);
+    pss_dspwrite(sc, MASTER_BASS|(PHILLIPS_BASS_CONSTANT + bass / PHILLIPS_BASS_STEP));
+#endif
+
+    sc->monitor_bass = bass;
+
+    return(0);
+}
+	
+int
+pss_get_master_gain(sc, gp)
+    register struct pss_softc *sc;
+    struct ad1848_volume *gp;
+{
+    *gp = sc->master_volume;
+    return(0);
+}
+
+int
+pss_get_master_mode(sc, mode)
+    register struct pss_softc *sc;
+    u_int *mode;
+{
+    *mode = sc->master_mode;
+    return(0);
+}
+
+int
+pss_get_treble(sc, tp)
+    register struct pss_softc *sc;
+    u_char *tp;
+{
+    *tp = sc->monitor_treble;
+    return(0);
+}
+
+int
+pss_get_bass(sc, bp)
+    register struct pss_softc *sc;
+    u_char *bp;
+{
+    *bp = sc->monitor_bass;
+    return(0);
+}
+
+int
+pss_speaker_ctl(addr, newstate)
+    void *addr;
+    int newstate;
+{
+    return(0);
+}
+
+int
+pssintr(arg)
+	void *arg;
+{
+    register struct pss_softc *sc = arg;
+    u_short sr;
+    
+    sr = inw(sc->sc_iobase+PSS_STATUS);
+    
+    DPRINTF(("pssintr: sc=%x st=%x\n", sc, sr));
+
+    /* Acknowledge intr */
+    outw(sc->sc_iobase+PSS_IRQ_ACK, 0);
+    
+    /* Is it one of ours ? */
+    if (sr & (PSS_WRITE_EMPTY|PSS_READ_FULL|PSS_IRQ|PSS_DMQ_TC)) {
+	/* XXX do something */
+	return 1;
+    }
+    
+    return 0;
+}
+
+int
+mpuintr(arg)
+	void *arg;
+{
+    register struct mpu_softc *sc = arg;
+    u_char sr;
+    
+    sr = inb(sc->sc_iobase+MIDI_STATUS_REG);
+
+    printf("mpuintr: sc=%x sr=%x\n", sc, sr);
+
+    /* XXX Need to clear intr */
+    return 1;
+}
+
+int
+pss_getdev(addr, retp)
+    void *addr;
+    struct audio_device *retp;
+{
+    DPRINTF(("pss_getdev: retp=0x%x\n", retp));
+
+    *retp = pss_device;
+    return 0;
+}
+
+int
+pss_setfd(addr, flag)
+    void *addr;
+    int flag;
+{
+    /* Can't do full-duplex */
+    return(ENOTTY);
+}
+
+int
+pss_set_out_port(addr, port)
+    void *addr;
+    int port;
+{
+    register struct ad1848_softc *ac = addr;
+    register struct pss_softc *sc = ac->parent;
+	
+    DPRINTF(("pss_set_out_port: %d\n", port));
+
+    if (port != PSS_MASTER_VOL)
+	return(EINVAL);
+    
+    sc->out_port = port;
+
+    return(0);
+}
+
+int
+pss_get_out_port(addr)
+    void *addr;
+{
+    register struct ad1848_softc *ac = addr;
+    register struct pss_softc *sc = ac->parent;
+
+    DPRINTF(("pss_get_out_port: %d\n", sc->out_port));
+
+    return(sc->out_port);
+}
+
+int
+pss_set_in_port(addr, port)
+    void *addr;
+    int port;
+{
+    register struct ad1848_softc *ac = addr;
+    register struct pss_softc *sc = ac->parent;
+	
+    DPRINTF(("pss_set_in_port: %d\n", port));
+
+    switch(port) {
+    case PSS_MIC_IN_LVL:
+	port = MIC_IN_PORT;
+	break;
+    case PSS_LINE_IN_LVL:
+	port = LINE_IN_PORT;
+	break;
+    case PSS_DAC_LVL:
+	port = DAC_IN_PORT;
+	break;
+    default:
+	return(EINVAL);
+	/*NOTREACHED*/
+    }
+    
+    return(ad1848_set_rec_port(ac, port));
+}
+
+int
+pss_get_in_port(addr)
+    void *addr;
+{
+    register struct ad1848_softc *ac = addr;
+    register struct pss_softc *sc = ac->parent;
+    int port = PSS_MIC_IN_LVL;
+    
+    switch(ad1848_get_rec_port(ac)) {
+    case MIC_IN_PORT:
+	port = PSS_MIC_IN_LVL;
+	break;
+    case LINE_IN_PORT:
+	port = PSS_LINE_IN_LVL;
+	break;
+    case DAC_IN_PORT:
+	port = PSS_DAC_LVL;
+	break;
+    }
+
+    DPRINTF(("pss_get_in_port: %d\n", port));
+
+    return(port);
+}
+
+int
+pss_mixer_set_port(addr, cp)
+    void *addr;
+    mixer_ctrl_t *cp;
+{
+    register struct ad1848_softc *ac = addr;
+    register struct pss_softc *sc = ac->parent;
+    struct ad1848_volume vol;
+    u_char eq;
+    int error = EINVAL;
+    
+    DPRINTF(("pss_mixer_set_port: dev=%d type=%d\n", cp->dev, cp->type));
+
+    switch (cp->dev) {
+    case PSS_MIC_IN_LVL:	/* Microphone */
+	if (cp->type == AUDIO_MIXER_VALUE) {
+	    if (pss_to_vol(cp, &vol))
+		error = ad1848_set_aux2_gain(ac, &vol);
+	}
+	break;
+	
+    case PSS_MIC_IN_MUTE:	/* Microphone */
+	if (cp->type == AUDIO_MIXER_ENUM) {
+	    sc->mic_mute = cp->un.ord;
+	    DPRINTF(("mic mute %d\n", cp->un.ord));
+	    ad1848_mute_aux2(ac, cp->un.ord);
+	    error = 0;
+	}
+	break;
+
+    case PSS_LINE_IN_LVL:	/* linein/CD */
+	if (cp->type == AUDIO_MIXER_VALUE) {
+	    if (pss_to_vol(cp, &vol))
+		error = ad1848_set_aux1_gain(ac, &vol);
+	}
+	break;
+	
+    case PSS_LINE_IN_MUTE:	/* linein/CD */
+	if (cp->type == AUDIO_MIXER_ENUM) {
+	    sc->cd_mute = cp->un.ord;
+	    DPRINTF(("CD mute %d\n", cp->un.ord));
+	    ad1848_mute_aux1(ac, cp->un.ord);
+	    error = 0;
+	}
+	break;
+
+    case PSS_DAC_LVL:		/* dac out */
+	if (cp->type == AUDIO_MIXER_VALUE) {
+	    if (pss_to_vol(cp, &vol))
+		error = ad1848_set_out_gain(ac, &vol);
+	}
+	break;
+	
+    case PSS_DAC_MUTE:		/* dac out */
+	if (cp->type == AUDIO_MIXER_ENUM) {
+	    sc->dac_mute = cp->un.ord;
+	    DPRINTF(("DAC mute %d\n", cp->un.ord));
+	    error = 0;
+	}
+	break;
+
+    case PSS_REC_LVL:		/* record level */
+	if (cp->type == AUDIO_MIXER_VALUE) {
+	    if (pss_to_vol(cp, &vol))
+		error = ad1848_set_rec_gain(ac, &vol);
+	}
+	break;
+	
+    case PSS_RECORD_SOURCE:
+	if (cp->type == AUDIO_MIXER_ENUM) {
+	    error = ad1848_set_rec_port(ac, cp->un.ord);
+	}
+	break;
+
+    case PSS_MON_LVL:
+	if (cp->type == AUDIO_MIXER_VALUE && cp->un.value.num_channels == 1) {
+	    vol.left  = cp->un.value.level[AUDIO_MIXER_LEVEL_MONO];
+	    error = ad1848_set_mon_gain(ac, &vol);
+	}
+	break;
+
+    case PSS_MASTER_VOL:	/* master volume */
+	if (cp->type == AUDIO_MIXER_VALUE) {
+	    if (pss_to_vol(cp, &vol))
+		error = pss_set_master_gain(sc, &vol);
+	}
+	break;
+
+    case PSS_OUTPUT_MODE:
+	if (cp->type == AUDIO_MIXER_ENUM)
+	    error = pss_set_master_mode(sc, cp->un.ord);
+	break;
+
+    case PSS_MASTER_TREBLE:	/* master treble */
+	if (cp->type == AUDIO_MIXER_VALUE && cp->un.value.num_channels == 1)
+	    error = pss_set_treble(sc, (u_char)cp->un.value.level[AUDIO_MIXER_LEVEL_MONO]);
+	break;
+
+    case PSS_MASTER_BASS:	/* master bass */
+	if (cp->type == AUDIO_MIXER_VALUE && cp->un.value.num_channels == 1)
+	    error = pss_set_bass(sc, (u_char)cp->un.value.level[AUDIO_MIXER_LEVEL_MONO]);
+	break;
+
+    default:
+	    return ENXIO;
+	    /*NOTREACHED*/
+    }
+    
+    return 0;
+}
+
+int
+pss_mixer_get_port(addr, cp)
+    void *addr;
+    mixer_ctrl_t *cp;
+{
+    register struct ad1848_softc *ac = addr;
+    register struct pss_softc *sc = ac->parent;
+    struct ad1848_volume vol;
+    u_char eq;
+    int error = EINVAL;
+    
+    DPRINTF(("pss_mixer_get_port: port=%d\n", cp->dev));
+
+    switch (cp->dev) {
+    case PSS_MIC_IN_LVL:	/* Microphone */
+	if (cp->type == AUDIO_MIXER_VALUE) {
+	    error = ad1848_get_aux2_gain(ac, &vol);
+	    if (!error)
+		pss_from_vol(cp, &vol);
+	}
+	break;
+
+    case PSS_MIC_IN_MUTE:
+	if (cp->type == AUDIO_MIXER_ENUM) {
+	    cp->un.ord = sc->mic_mute;
+	    error = 0;
+	}
+	break;
+
+    case PSS_LINE_IN_LVL:	/* linein/CD */
+	if (cp->type == AUDIO_MIXER_VALUE) {
+	    error = ad1848_get_aux1_gain(ac, &vol);
+	    if (!error)
+		pss_from_vol(cp, &vol);
+	}
+	break;
+
+    case PSS_LINE_IN_MUTE:
+	if (cp->type == AUDIO_MIXER_ENUM) {
+	    cp->un.ord = sc->cd_mute;
+	    error = 0;
+	}
+	break;
+
+    case PSS_DAC_LVL:		/* dac out */
+	if (cp->type == AUDIO_MIXER_VALUE) {
+	    error = ad1848_get_out_gain(ac, &vol);
+	    if (!error)
+		pss_from_vol(cp, &vol);
+	}
+	break;
+
+    case PSS_DAC_MUTE:
+	if (cp->type == AUDIO_MIXER_ENUM) {
+	    cp->un.ord = sc->dac_mute;
+	    error = 0;
+	}
+	break;
+
+    case PSS_REC_LVL:		/* record level */
+	if (cp->type == AUDIO_MIXER_VALUE) {
+	    error = ad1848_get_rec_gain(ac, &vol);
+	    if (!error)
+		pss_from_vol(cp, &vol);
+	}
+	break;
+
+    case PSS_RECORD_SOURCE:
+	if (cp->type == AUDIO_MIXER_ENUM) {
+	    cp->un.ord = ad1848_get_rec_port(ac);
+	    error = 0;
+	}
+	break;
+
+    case PSS_MON_LVL:		/* monitor level */
+	if (cp->type == AUDIO_MIXER_VALUE && cp->un.value.num_channels == 1) {
+	    error = ad1848_get_mon_gain(ac, &vol);
+	    if (!error)
+		cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] = vol.left;
+	}
+	break;
+
+    case PSS_MASTER_VOL:	/* master volume */
+	if (cp->type == AUDIO_MIXER_VALUE) {
+	    error = pss_get_master_gain(sc, &vol);
+	    if (!error)
+		pss_from_vol(cp, &vol);
+	}
+	break;
+
+    case PSS_MASTER_TREBLE:	/* master treble */
+	if (cp->type == AUDIO_MIXER_VALUE && cp->un.value.num_channels == 1) {
+	    error = pss_get_treble(sc, &eq);
+	    if (!error)
+		cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] = eq;
+	}
+	break;
+
+    case PSS_MASTER_BASS:	/* master bass */
+	if (cp->type == AUDIO_MIXER_VALUE && cp->un.value.num_channels == 1) {
+	    error = pss_get_bass(sc, &eq);
+	    if (!error)
+		cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] = eq;
+	}
+	break;
+
+    case PSS_OUTPUT_MODE:
+	if (cp->type == AUDIO_MIXER_ENUM)
+	    error = pss_get_master_mode(sc, &cp->un.ord);
+	break;
+
+    default:
+	error = ENXIO;
+	break;
+    }
+
+    return(error);
+}
+
+int
+pss_query_devinfo(addr, dip)
+    void *addr;
+    register mixer_devinfo_t *dip;
+{
+    register struct ad1848_softc *ac = addr;
+    register struct pss_softc *sc = ac->parent;
+
+    DPRINTF(("pss_query_devinfo: index=%d\n", dip->index));
+
+    switch(dip->index) {
+    case PSS_MIC_IN_LVL:	/* Microphone */
+	dip->type = AUDIO_MIXER_VALUE;
+	dip->mixer_class = PSS_INPUT_CLASS;
+	dip->prev = AUDIO_MIXER_LAST;
+	dip->next = PSS_MIC_IN_MUTE;
+	strcpy(dip->label.name, AudioNmicrophone);
+	dip->un.v.num_channels = 2;
+	strcpy(dip->un.v.units.name, AudioNvolume);
+	break;
+
+    case PSS_LINE_IN_LVL:	/* line/CD */
+	dip->type = AUDIO_MIXER_VALUE;
+	dip->mixer_class = PSS_INPUT_CLASS;
+	dip->prev = AUDIO_MIXER_LAST;
+	dip->next = PSS_LINE_IN_MUTE;
+	strcpy(dip->label.name, AudioNcd);
+	dip->un.v.num_channels = 2;
+	strcpy(dip->un.v.units.name, AudioNvolume);
+	break;
+
+    case PSS_DAC_LVL:		/*  dacout */
+	dip->type = AUDIO_MIXER_VALUE;
+	dip->mixer_class = PSS_INPUT_CLASS;
+	dip->prev = AUDIO_MIXER_LAST;
+	dip->next = PSS_DAC_MUTE;
+	strcpy(dip->label.name, AudioNdac);
+	dip->un.v.num_channels = 2;
+	strcpy(dip->un.v.units.name, AudioNvolume);
+	break;
+
+    case PSS_REC_LVL:	/* record level */
+	dip->type = AUDIO_MIXER_VALUE;
+	dip->mixer_class = PSS_RECORD_CLASS;
+	dip->prev = AUDIO_MIXER_LAST;
+	dip->next = PSS_RECORD_SOURCE;
+	strcpy(dip->label.name, AudioNrecord);
+	dip->un.v.num_channels = 2;
+	strcpy(dip->un.v.units.name, AudioNvolume);
+	break;
+
+    case PSS_MON_LVL:	/* monitor level */
+	dip->type = AUDIO_MIXER_VALUE;
+	dip->mixer_class = PSS_MONITOR_CLASS;
+	dip->next = dip->prev = AUDIO_MIXER_LAST;
+	strcpy(dip->label.name, AudioNmonitor);
+	dip->un.v.num_channels = 1;
+	strcpy(dip->un.v.units.name, AudioNvolume);
+	break;
+
+    case PSS_MASTER_VOL:	/* master volume */
+	dip->type = AUDIO_MIXER_VALUE;
+	dip->mixer_class = PSS_OUTPUT_CLASS;
+	dip->prev = AUDIO_MIXER_LAST;
+	dip->next = PSS_OUTPUT_MODE;
+	strcpy(dip->label.name, AudioNvolume);
+	dip->un.v.num_channels = 2;
+	strcpy(dip->un.v.units.name, AudioNvolume);
+	break;
+
+    case PSS_MASTER_TREBLE:	/* master treble */
+	dip->type = AUDIO_MIXER_VALUE;
+	dip->mixer_class = PSS_OUTPUT_CLASS;
+	dip->next = dip->prev = AUDIO_MIXER_LAST;
+	strcpy(dip->label.name, AudioNtreble);
+	dip->un.v.num_channels = 1;
+	strcpy(dip->un.v.units.name, AudioNtreble);
+	break;
+
+    case PSS_MASTER_BASS:	/* master bass */
+	dip->type = AUDIO_MIXER_VALUE;
+	dip->mixer_class = PSS_OUTPUT_CLASS;
+	dip->next = dip->prev = AUDIO_MIXER_LAST;
+	strcpy(dip->label.name, AudioNbass);
+	dip->un.v.num_channels = 1;
+	strcpy(dip->un.v.units.name, AudioNbass);
+	break;
+
+    case PSS_OUTPUT_CLASS:			/* output class descriptor */
+	dip->type = AUDIO_MIXER_CLASS;
+	dip->mixer_class = PSS_OUTPUT_CLASS;
+	dip->next = dip->prev = AUDIO_MIXER_LAST;
+	strcpy(dip->label.name, AudioNspeaker);
+	break;
+
+    case PSS_INPUT_CLASS:			/* input class descriptor */
+	dip->type = AUDIO_MIXER_CLASS;
+	dip->mixer_class = PSS_INPUT_CLASS;
+	dip->next = dip->prev = AUDIO_MIXER_LAST;
+	strcpy(dip->label.name, AudioCInputs);
+	break;
+
+    case PSS_MONITOR_CLASS:			/* monitor class descriptor */
+	dip->type = AUDIO_MIXER_CLASS;
+	dip->mixer_class = PSS_MONITOR_CLASS;
+	dip->next = dip->prev = AUDIO_MIXER_LAST;
+	strcpy(dip->label.name, AudioNmonitor);
+	break;
+	    
+    case PSS_RECORD_CLASS:			/* record source class */
+	dip->type = AUDIO_MIXER_CLASS;
+	dip->mixer_class = PSS_RECORD_CLASS;
+	dip->next = dip->prev = AUDIO_MIXER_LAST;
+	strcpy(dip->label.name, AudioNrecord);
+	break;
+	
+    case PSS_MIC_IN_MUTE:
+	dip->mixer_class = PSS_INPUT_CLASS;
+	dip->type = AUDIO_MIXER_ENUM;
+	dip->prev = PSS_MIC_IN_LVL;
+	dip->next = AUDIO_MIXER_LAST;
+	goto mute;
+	
+    case PSS_LINE_IN_MUTE:
+	dip->mixer_class = PSS_INPUT_CLASS;
+	dip->type = AUDIO_MIXER_ENUM;
+	dip->prev = PSS_LINE_IN_LVL;
+	dip->next = AUDIO_MIXER_LAST;
+	goto mute;
+	
+    case PSS_DAC_MUTE:
+	dip->mixer_class = PSS_INPUT_CLASS;
+	dip->type = AUDIO_MIXER_ENUM;
+	dip->prev = PSS_DAC_LVL;
+	dip->next = AUDIO_MIXER_LAST;
+    mute:
+	strcpy(dip->label.name, AudioNmute);
+	dip->un.e.num_mem = 2;
+	strcpy(dip->un.e.member[0].label.name, AudioNoff);
+	dip->un.e.member[0].ord = 0;
+	strcpy(dip->un.e.member[1].label.name, AudioNon);
+	dip->un.e.member[1].ord = 1;
+	break;
+
+    case PSS_OUTPUT_MODE:
+	dip->mixer_class = PSS_OUTPUT_CLASS;
+	dip->type = AUDIO_MIXER_ENUM;
+	dip->prev = PSS_MASTER_VOL;
+	dip->next = AUDIO_MIXER_LAST;
+	strcpy(dip->label.name, AudioNmode);
+	dip->un.e.num_mem = 4;
+	strcpy(dip->un.e.member[0].label.name, AudioNmono);
+	dip->un.e.member[0].ord = PSS_SPKR_MONO;
+	strcpy(dip->un.e.member[1].label.name, AudioNstereo);
+	dip->un.e.member[1].ord = PSS_SPKR_STEREO;
+	strcpy(dip->un.e.member[2].label.name, AudioNpseudo);
+	dip->un.e.member[2].ord = PSS_SPKR_PSEUDO;
+	strcpy(dip->un.e.member[3].label.name, AudioNspatial);
+	dip->un.e.member[3].ord = PSS_SPKR_SPATIAL;
+	break;
+
+    case PSS_RECORD_SOURCE:
+	dip->mixer_class = PSS_RECORD_CLASS;
+	dip->type = AUDIO_MIXER_ENUM;
+	dip->prev = PSS_REC_LVL;
+	dip->next = AUDIO_MIXER_LAST;
+	strcpy(dip->label.name, AudioNsource);
+	dip->un.e.num_mem = 3;
+	strcpy(dip->un.e.member[0].label.name, AudioNmicrophone);
+	dip->un.e.member[0].ord = PSS_MIC_IN_LVL;
+	strcpy(dip->un.e.member[1].label.name, AudioNcd);
+	dip->un.e.member[1].ord = PSS_LINE_IN_LVL;
+	strcpy(dip->un.e.member[2].label.name, AudioNdac);
+	dip->un.e.member[2].ord = PSS_DAC_LVL;
+	break;
+
+    default:
+	return ENXIO;
+	/*NOTREACHED*/
+    }
+    DPRINTF(("AUDIO_MIXER_DEVINFO: name=%s\n", dip->label.name));
+
+    return 0;
+}

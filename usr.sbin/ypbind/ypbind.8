@@ -1,0 +1,104 @@
+.\"
+.\" Copyright (c) 1994 Jason R. Thorpe
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by Jason Thorpe.
+.\" 4. Neither the name of the author nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     $Id: ypbind.8,v 1.1.1.1 1995/10/18 08:48:31 deraadt Exp $
+.\"
+.Dd October 25, 1994
+.Dt YPBIND 8
+.Os
+.Sh NAME
+.Nm ypbind
+.Nd create and maintain a binding to a YP server
+.Sh SYNOPSIS
+.Nm ypbind
+.Op Fl ypset
+.Nm ypbind
+.Op Fl ypsetme
+.Sh DESCRIPTION
+.Nm Ypbind
+finds the server for a particular YP domain and stores information about it
+in a
+.Pa binding file.
+This binding information includes the IP address of the server associated with
+that particular domain and which port the server is using.  This information
+is stored in the directory
+.Pa /var/yp/binding
+in a file named with the convention
+.Pa domainname.version.
+(The YP system only supplies information on version 2.)
+.Pp
+When
+.Nm ypbind
+starts, it broadcasts looking for a process willing to serve maps for the
+client's domain.  Once a binding is established,
+.Nm ypbind
+maintains this binding by periodically communicating with the server to which
+it is bound.  If the binding is somehow lost, e.g by server reboot,
+.Nm ypbind
+marks the domain as unbound and attempts to re-establish the binding.
+When the binding is once again successful,
+.Nm ypbind
+marks the domain as bound and resumes its periodic check.
+.Pp
+The options are as follows:
+.Bl -tag -width indent
+.It Fl ypset
+.Xr ypset 8
+may be used to change the server to which a domain is bound.
+.It Fl ypsetme
+.Xr ypset 8
+may be used only from this machine to change the server
+to which a domain is bound.
+.El
+.Pp
+The
+.Fl ypset
+and
+.Fl ypsetme
+options are dangerous and should be avoided.
+.Pp
+If the directory
+.Pa /var/yp
+exists, YP is started automatically at boot time by
+.Pa /etc/rc .
+.Sh FILES
+.Pa /var/yp/bindings/domainname.version
+- binding file for domainname
+.Sh SEE ALSO
+.Xr domainname 1 ,
+.Xr ypcat 1 ,
+.Xr ypmatch 1 ,
+.Xr yppoll 8 ,
+.Xr ypset 8 ,
+.Xr ypwhich 1 ,
+.Xr yp 8
+.Sh AUTHOR
+Theo De Raadt

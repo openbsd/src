@@ -1,0 +1,11 @@
+#	$Id: list,v 1.1.1.1 1995/10/18 08:37:34 deraadt Exp $
+
+# the disktab explanation file
+COPY	disktab.preinstall		etc/disktab.preinstall
+
+# and the installation tools
+COPY	dot.profile			.profile
+COPY	dot.instutils			.instutils
+COPY	install.sh			install
+COPY	dot.hdprofile			tmp/.hdprofile
+SPECIAL	chmod 755 install

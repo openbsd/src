@@ -1,0 +1,87 @@
+#	$NetBSD: RAMDISK,v 1.1 1995/10/08 23:38:44 gwr Exp $
+
+#
+# RAMDISK: Root/swap on ramdisk
+# This kernel is used to:
+#	format the disk (not yet implemented)
+#	partition the disk (disklabel)
+#	install the miniroot in the swap partition
+#
+
+include "std.sun3"
+
+# Machines to be supported by this kernel
+options 	HAVECACHE		# Sun3/260 VAC
+
+# Enable the hooks used for initializing the ram-disk.
+options 	RAMDISK_HOOKS
+options 	MINIROOTSIZE=512	# 256K
+
+# Needs to be set per system.  i.e change these as you see fit
+maxusers	2
+
+# Standard system options
+options		SWAPPAGER, VNODEPAGER, DEVPAGER	# paging
+
+# Filesystem options
+# May need NFSCLIENT to get miniroot image
+options 	NFSCLIENT			# nfs client support
+# Need FFS for the ramdisk image
+options 	FFS				# ufs file system
+options		FIFO		# FIFOs; RECOMMENDED
+
+# Networking options
+options		INET				# IP prototol stack support
+# XXX - Work-around for slow SunOS/Sun3 servers (sigh...)
+options 	NFS_BOOT_RWSIZE=1024
+
+# Compatability options (XXX - Need these?)
+#options 	COMPAT_SUNOS	# can run SunOS 4.1.1 executables
+#options 	COMPAT_09	# NetBSD 0.9,
+options 	COMPAT_10	# NetBSD 1.0,
+options 	COMPAT_43	# and 4.3BSD
+options 	TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
+
+# Sun3-specific debugging options
+# options 	DDB
+options 	DIAGNOSTIC
+
+# The config program assumes all devices have partions...
+# Is it OK to put swap on a non-existent partition?
+config		netbsd root on rd0a swap on rd0b
+
+# Devices
+
+# RAM Disk (root for install tape)
+rd0 at mainbus?
+
+# No frame-buffer devices.
+
+ie0 at obio0 addr ? level ?
+ie1 at vmes0 addr 0xffe88000 level 3 vect 0x75
+
+le0 at obio0 addr ? level ?
+
+si0 at obio0 addr ? level ?
+si0 at vmes0 addr 0xff200000 level 2 vect 0x40
+
+scsibus* at scsi?
+
+# Sun compatible scsi device mappings
+sd0 at scsibus? target 0 lun 0
+sd1 at scsibus? target 0 lun 1
+sd2 at scsibus? target 1 lun 0
+sd3 at scsibus? target 1 lun 1
+sd* at scsibus? target ? lun ?
+
+st0 at scsibus? target 4 lun 0
+st1 at scsibus? target 5 lun 0
+st* at scsibus? target ? lun ?
+
+cd0 at scsibus? target 6 lun 0
+cd* at scsibus? target ? lun ?
+
+#ch* at scsibus? target ? lun ?
+
+pseudo-device	loop	1		# network loopback
+

@@ -1,0 +1,102 @@
+.\"
+.\" Written by roland@frob.com.  Public domain.
+.\"
+.Dd December 16, 1993
+.Dt ETHERS 3
+.Os NetBSD
+.Sh NAME
+.Nm ether_ntoa ,
+.Nm ether_addr ,
+.Nm ether_ntohost ,
+.Nm ether_hostton ,
+.Nm ether_line ,
+.Nd get ethers entry
+.Sh SYNOPSIS
+.Fd #include <netinet/if_ether.h>
+.Ft char *
+.Fn ether_ntoa "struct ether_addr *e"
+.Ft struct ether_addr *
+.Fn ether_aton "char *s"
+.Fn ether_ntohost "char *hostname" "struct ether_addr *e"
+.Fn ether_hostton "char *hostname" "struct ether_addr *e"
+.Fn ether_line "char *l" "struct ether_addr *e" "char *hostname"
+.Sh DESCRIPTION
+Ethernet addresses are represented by the 
+following structure:
+.Bd -literal -offset indent
+struct ether_addr {
+        u_char  ether_addr_octet[6];
+};
+.Ed
+.Pp
+The
+.Fn ether_ntoa
+function converts this structure into an ASCII string of the form
+``xx:xx:xx:xx:xx:xx'', consisting of 6 hexadecimal numbers separated
+by colons.  It returns a pointer to a static buffer that is reused for
+each call.
+The
+.Fn ether_aton
+converts an ASCII string of the same form and to a structure
+containing the 6 octets of the address.  It returns a pointer to a
+static structure that is reused for each call.
+.Pp
+The
+.Fn ether_ntohost
+and
+.Fn ether_hostton
+functions interrogate the data base mapping host names to Ethernet
+addresses,
+.Pa /etc/ethers .
+The
+.Fn ether_ntohost
+function looks up the given Ethernet address and writes the associated
+host name into the character buffer passed.
+The
+.Fn ether_hostton
+function looks up the given host name and writes the associated
+Ethernet address into the structure passed.  Both functions return
+zero if they find the requested host name or address, and -1 if not.
+Each call reads
+.Pa /etc/ethers 
+from the beginning; if a + appears alone on a line in the file, then
+.Fn ether_hostton
+will consult the
+.Pa ethers.byname
+YP map, and
+.Fn ether_ntohost
+will consult the
+.Pa ethers.byaddr
+YP map.
+.Pp
+The
+.Fn ether_line
+function parses a line from the
+.Pa /etc/ethers
+file and fills in the passed ``struct ether_addr'' and character
+buffer with the Ethernet address and host name on the line.  It
+returns zero if the line was successfully parsed and -1 if not.
+.Sh FILES
+.Bl -tag -width /etc/ethers -compact
+.It Pa /etc/ethers
+.El
+.Sh SEE ALSO
+.Xr ethers 5
+.Sh HISTORY
+The
+.Fn ether_ntoa ,
+.Fn ether_aton ,
+.Fn ether_ntohost ,
+.Fn ether_hostton ,
+and
+.Fn ether_line
+functions were adopted from SunOS and appeared in
+NetBSD 0.9b.
+.Sh BUGS
+The data space used by these functions is static; if future use
+requires the data, it should be copied before any subsequent calls to
+these functions overwrite it.  There is no way to restrict how many
+character will be written into the host name buffer passed.  A very
+long line in
+.Pa /etc/ethers
+could overflow your buffer.

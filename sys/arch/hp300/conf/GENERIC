@@ -1,0 +1,122 @@
+#	$NetBSD: GENERIC,v 1.6 1995/10/10 02:12:41 thorpej Exp $
+#
+# Generic kernel - one size fits all.
+#
+machine		"hp300"
+
+cpu             "HP320"
+cpu             "HP330"         # includes 318, 319
+cpu             "HP340"
+cpu             "HP350"
+cpu		"HP360"
+cpu		"HP370"
+cpu		"HP375"		# includes 345, 400t, 400s
+cpu		"HP380"		# includes 425t, 425s, 433s
+ident		GENERIC
+
+# Need to set locally
+timezone	8 dst
+maxusers	16
+
+# Standard system options
+options		SWAPPAGER		# swap pager (anonymous and swap space)
+options		VNODEPAGER		# vnode pager (mapped files)
+options		DEVPAGER		# device pager (mapped devices)
+options         "COMPAT_43"             # compatibility with 4.3BSD interfaces
+options         "COMPAT_44"             # compatibility with 4.4BSD binaries
+options         "COMPAT_09"             # compatibility with NetBSD 0.9
+options		"COMPAT_10"		# compatibility with NetBSD 1.0
+options         SYSVSHM                 # System V-style shared memory
+options         SYSVSEM                 # System V-style semaphores
+options         SYSVMSG                 # System V-style message queues
+options         KTRACE                  # system call tracing support
+options		"NKMEMCLUSTERS=1024"	# # 4K pages in kernel malloc pool
+
+# Filesystem options
+options		FIFO		# POSIX fifo support (in all filesystems)
+options		FFS,QUOTA	# fast filesystem with user and group quotas
+options         "CD9660"        # CD-ROM ISO-9660 filesystem
+options		NFSSERVER	# Network filesystem server
+options		NFSCLIENT	# Network filesystem client
+options		UNION		# Union filesystem (req. for FDESC)
+options		KERNFS		# kernel data-structure filesystem
+options		FDESC		# user file descriptor filesystem
+options		PROCFS		# /proc filesystem
+options		MFS		# Memory-based filesystem
+
+# Networking options
+options		INET		# Internet protocols
+options		GATEWAY		# IP forwarding + larger mb_map
+options		MROUTING	# Multicast routing
+options		"TCP_COMPAT_42"	# compatibility with 4.2BSD TCP/IP
+
+# Options for HP hardware
+options		FPSP		# floating point interface for 68040
+options		USELEDS		# make the lights twinkle
+options		COMPAT_NOLABEL	# defaults for unlabeled disks
+#options	PANICBUTTON	# two fast <reset>s on HIL dump kernel
+
+# XXX DOESN'T WORK YET!
+#options	COMPAT_HPUX	# HP-UX binary compatibility
+
+# Debugging options
+options		DDB		# Kernel Dynamic Debugger
+
+# If the kernel isn't named `GENERIC', uncomment the line below.
+#options	GENERIC		# Generic swap support
+config		netbsd swap generic
+
+master		hpib0	at scode7
+master		hpib1	at scode?
+master		hpib2	at scode?
+master		hpib3	at scode?
+disk		rd0	at hpib? slave ?
+disk		rd1	at hpib? slave ?
+disk		rd2	at hpib? slave ?
+disk		rd3	at hpib? slave ?
+disk		rd4	at hpib? slave ?
+disk		rd5	at hpib? slave ?
+disk		rd6	at hpib? slave ?
+tape		ct0	at hpib0 slave ?
+tape		ct1	at hpib0 slave ? flags 1
+tape		mt0	at hpib0 slave ?
+device		ppi0	at hpib0 slave 5
+
+master		scsi0	at scode?
+master		scsi1	at scode?
+master		scsi2	at scode?
+master		scsi3	at scode?
+disk		sd0	at scsi? slave ?
+disk		sd1	at scsi? slave ?
+disk		sd2	at scsi? slave ?
+disk		sd3	at scsi? slave ?
+disk		sd4	at scsi? slave ?
+disk		sd5	at scsi? slave ?
+disk		sd6	at scsi? slave ?
+disk		sd7	at scsi? slave ?
+disk		sd8	at scsi? slave ?
+disk		sd9	at scsi? slave ?
+tape		st0	at scsi? slave ?
+tape		st1	at scsi? slave ?
+
+device		dca0	at scode9 flags 1
+device		dca1	at scode?
+
+device		dcm0	at scode? flags 0xe
+device		dcm1	at scode? flags 0xe
+
+device		le0	at scode?
+device		le1	at scode?
+
+device		grf0	at scode?
+device		grf1	at scode?
+
+pseudo-device	pty		64	# pseudo ptys
+pseudo-device	sl		4	# SLIP network interfaces
+pseudo-device	ppp		4	# PPP network interfaces
+pseudo-device	bpfilter	16	# Berkeley packet filter
+pseudo-device	vnd		4	# vnode pseudo-disks
+pseudo-device	ccd		4	# concatenated disk devices
+pseudo-device	ite			# terminal emulation on grf
+pseudo-device	loop			# loopback network interface
+pseudo-device	ether			# basic ethernet support

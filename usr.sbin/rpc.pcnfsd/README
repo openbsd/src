@@ -1,0 +1,110 @@
+#	$NetBSD: README,v 1.2 1995/07/25 22:20:22 gwr Exp $
+
+
+July 1995 -  Ported to NetBSD by Gordon Ross <gwr@netbsd.org>
+
+Note: to build clnt.pcnfsd use the command:
+	make -f Makefile.clnt
+
+Text of original README file from Sun follows:
+----------------------------------------------------------------------
+
+This is version @(#)README	1.6 1/28/92 of the pcnfsd README file.
+----------------------------------------------------------------------
+This is the second cut at PCNFSD v2. All printing now uses the same
+SVR4 based printing model: lp, lpstat, cancel. This implies SunOS 4.1
+or later on a Sun. The printing hasn't been properly tested on SVR4,
+since my SVR4 system is a bit quirky, but authentication via shadow
+passwords works fine.
+
+The Makefile supplied will build either SunOS 4.1 or SVR4 versions;
+however you will need to tweak a couple of definitions. See the
+Makefile for details.
+
+For this round, I have frozen the rpcgen'd code and modified it by hand
+to get around a few rpcgen deficiencies. If in doubt, you can take the
+pcnfsd.x file included here off to a separate directory, rpcgen everything
+up and diff against the versions given here.
+
+You should also be sure to read the man page. I haven't tried [nt]roff'ing
+this anywhere outside SunOS, so let me know if there are any quirks.
+Note especially the /etc/pcnfsd.conf configuration model.
+
+Standard disclaimers. Read the source for more of the same.
+
+Geoff Arnold (Geoff.Arnold@Sun.COM)
+May 2, 1991
+
+----------------------------------------------------------------------
+This is the first major spin since the version I posted in May.
+Changes are described in the SCCS deltas, but anyone analysing
+or porting this should watch for the following:
+
+- Lots of SVR4 stuff. Look at the Makefile and common.h; you will
+  need to make sure that SVR4 is defined to build a version for SVR4.
+- Fixed a major bug whereby aliased printers (a.k.a. virtual printers)
+  didn't show up in the printer list.
+- Since some commands (especially lpq) can hang up forever if, say,
+  the host of a remote printer is down, the su_popen mechanism now
+  includes a watchdog timer. I HAVE NOT HAD A CHANCE TO TEST THIS
+  LOGIC ON SVR4 YET! The code was derived from the System V compatiility
+  section of the AnswerBook, so it _should_ be OK, but I can't wait to
+  test it before posting this.
+- I've mades lots of lint-suggested improvements. It doesn't lint
+  100% cleanly yet, but it's a lot better.
+- The client testbed has been tightened up a bit and the reporting
+  is somewhat clearer. Please run it.
+
+Feedback is solicited.
+
+Geoff Arnold (Geoff.Arnold@Sun.COM)
+July 24, 1991
+
+----------------------------------------------------------------------------
+
+This version includes support for TCP as well as UDP, both in the
+server and in the test client.  Some of the calls can have long
+responses, in which case TCP is the preferred transport.
+
+Jon Dreyer
+January 28, 1992
+
+----------------------------------------------------------------------------
+
+This release incorporates minor bug fixes occasioned by internal testing
+against preliminary versions of PC-NFS subsystems which actually use the
+V2 protocol features. It also addresses a security hole which was identified:
+see the comment in pcnfsd_print.c for details. This is the version
+of the daemon which we expect to send out for beta testing.
+
+Geoff Arnold
+November 16, 1991
+
+----------------------------------------------------------------------------
+
+Several people pointed out that if I was going to fix the security
+hole, I should *REALLY* fix it. So this revision checks every argument
+for every shell metacharacter. This means that if your print subsystem
+allows such characters in printer names, print job id's, user names,
+etc. you're going to have to relax the restrictions or tighten up
+elsewhere. The routine "suspicious()" in pcnfsd_print.c is the starting
+point for this.
+
+Geoff Arnold
+November 21, 1991
+
+----------------------------------------------------------------------------
+
+This version includes one more tweak on the previous security fix, plus
+a fix for the "user shell" security hole.
+
+Geoff Arnold
+December 17, 1991
+
+----------------------------------------------------------------------------
+
+Fix a stupid bug - the secondary groups array wasn't static, so it
+got overwritten, resulting in the corruption of some GIDs.
+
+Geoff Arnold
+December 18, 1991

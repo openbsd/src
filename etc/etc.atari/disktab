@@ -1,0 +1,51 @@
+#
+#	$NetBSD: disktab,v 1.1.1.1 1995/03/30 05:44:08 leo Exp $
+#
+# Disk geometry and partition layout tables. 
+# Key:
+#	dt	controller type
+#	ty	type of disk (fixed, removeable, simulated)
+#	d[0-4]	drive-type-dependent parameters
+#	ns	#sectors/track
+#	nt	#tracks/cylinder
+#	nc	#cylinders/disk
+#	sc	#sectors/cylinder, ns*nt default
+#	su	#sectors/unit, sc*nc default
+#	se	sector size, DEV_BSIZE default
+#	rm	rpm, 3600 default
+#	sf	supports bad144-style bad sector forwarding
+#	sk	sector skew per track, default 0
+#	cs	sector skew per cylinder, default 0
+#	hs	headswitch time, default 0
+#	ts	one-cylinder seek time, default 0
+#	il	sector interleave (n:1), 1 default
+#	bs	boot block size, default BBSIZE
+#	sb	superblock size, default SBSIZE
+#	o[a-h]	partition offsets in sectors
+#	p[a-h]	partition sizes in sectors
+#	b[a-h]	partition block sizes in bytes
+#	f[a-h]	partition fragment sizes in bytes
+#	t[a-h]	partition types (filesystem, swap, etc)
+#
+# All partition sizes reserve space for bad sector tables.
+# (5 cylinders needed for maintenance + replacement sectors)
+#
+floppy|floppy3|3in|Atari 3.5in Double Density Floppy:\
+	:ty=floppy:se#512:nt#2:rm#300:ns#9:nc#80:\
+	:ts#3500:\
+	:ta=4.2BSD:pa#1440:oa#0:ba#4096:fa#512:\
+	:pb#0:ob#0:\
+	:pc#1440:oc#0:
+
+floppyhd|floppy3hd|3inhd|Atari 3.5in High Density Floppy:\
+	:ty=floppy:se#512:nt#2:rm#300:ns#18:nc#80:\
+	:ts=3500:\
+	:pa#2880:oa#0:ba#4096:fa#512:\
+	:pb#0:ob#0:\
+	:pc#2880:oc#0:
+floppybt|Atari 3.5in Boot Floppy:\
+	:ty=floppy:se#512:nt#2:rm#300:ns#18:nc#60:\
+	:ts=3500:\
+	:ta=4.4BSD:pa#2160:oa#0:ba#4096:fa#512:\
+	:pb#0:ob#0:\
+	:pc#2160:oc#0:

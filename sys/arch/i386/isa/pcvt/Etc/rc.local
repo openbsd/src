@@ -1,0 +1,288 @@
+#---------------------------------------------------------------------------
+#
+#	sample rc.local used for pcvt driver boot time initialization
+#	-------------------------------------------------------------
+#
+#	last edit-date: [Sun Jul  2 10:33:53 1995]
+#
+#---------------------------------------------------------------------------
+#
+#	NOTE: 
+#	assumptions:	- 8 screens configured
+#			- /dev/ttyv0 ... /dev/ttyv7 exist
+#
+#---------------------------------------------------------------------------
+
+# path for pcvt utility programs: kcon, scon, loadfont, ispcvt and cursor
+# FreeBSD 2.0.5 and later
+#KCONP=/usr/sbin
+#SCONP=/usr/sbin
+#LDFNP=/usr/sbin
+#ISPCP=/usr/sbin
+#CURSP=/usr/sbin
+
+# path for pcvt utility programs: kcon, scon, loadfont, ispcvt and cursor
+# FreeBSD 2.0 and earlier and all NetBSD releases
+KCONP=/usr/local/bin
+SCONP=/usr/local/bin
+LDFNP=/usr/local/bin
+ISPCP=/usr/sbin
+CURSP=/usr/local/bin
+
+# path for pcvt's EGA/VGA download fonts
+FONTP=/usr/share/misc/pcvtfonts
+
+# path for xdm (X11R6)
+XDMP=/usr/X11R6/bin
+# path for xdm (X11R5)
+#XDMP=/usr/X386/bin
+
+# set to YES to start xdm on screen 8
+#xdm_start=YES
+xdm_start=NO
+
+# set to YES to set up for german keyboard layout
+#set_keybd=YES
+set_keybd=NO
+
+# set to YES to set up keyboard delay & rate
+set_keydr=YES
+#set_keydr=NO
+# if set to YES, this are the (very fast) settings
+set_keydr_rate=0
+set_keydr_delay=0
+
+# set to YES to construct a new /etc/motd file
+#construct_motd=YES
+construct_motd=NO
+
+# set to YES to set up cursor start and end scanline
+set_cursor=YES
+#set_cursor=NO
+# if YES set up a block cursor
+set_cur_start=0
+set_cur_end=15
+
+#-----------------------------------------------------
+# construct /etc/motd file
+#-----------------------------------------------------
+
+if [ X${construct_motd} = X"YES" ]
+then
+	if [ -f /netbsd ]
+	then
+		if [ ! -f /etc/motd ]; then
+			install -c -o root -g wheel -m 664 /dev/null /etc/motd
+		fi
+		T=/tmp/_motd
+		rm -f $T
+		sysctl -n kern.version | sed 1q > $T
+		echo "" >> $T
+		sed '1,/^$/d' < /etc/motd >> $T
+		cmp -s $T /etc/motd || cp $T /etc/motd
+		rm -f $T
+		echo 'runtime link editor directory cache'
+		ldconfig
+	else
+		T=/tmp/_motd
+		rm -f $T
+		uname -a > $T
+		echo "" >> $T
+		sed '1,/^$/d' < /etc/motd >> $T
+		cp $T /etc/motd
+		chmod 644 /etc/motd
+		rm -f $T
+
+	fi
+fi
+
+#-----------------------------------------------------
+# local daemons
+#-----------------------------------------------------
+
+echo -n 'starting local daemons:'
+
+# Kerberos runs ONLY on the Kerberos server machine
+if [ X${kerberos_server} = X"YES" ]; then
+	echo -n ' kerberos';	kerberos >> /var/log/kerberos.log &
+fi
+
+echo '.'
+
+#-----------------------------------------------------
+# check for correct driver and driver version matching
+#-----------------------------------------------------
+
+if [ -x $ISPCP/ispcvt ]
+then
+  if $ISPCP/ispcvt -d /dev/ttyv0
+  then
+
+#--------------------------------------------------
+# loading fonts into vga
+#--------------------------------------------------
+    echo 'console driver type: pcvt'
+    if [ -x $LDFNP/loadfont -a -x $SCONP/scon ]
+    then
+      adaptor=`$SCONP/scon -d /dev/ttyv0 -a`
+      if [ $adaptor = VGA ]
+      then
+        echo 'loading 25 lines base font into character set 0'
+        $LDFNP/loadfont -d /dev/ttyv0 -c0 -f $FONTP/vt220l.816
+        echo 'loading 25 lines extension font into character set 1'
+        $LDFNP/loadfont -d /dev/ttyv0 -c1 -f $FONTP/vt220h.816
+        echo 'loading 28 lines base font into character set 2'
+        $LDFNP/loadfont -d /dev/ttyv0 -c2 -f $FONTP/vt220l.814
+        echo 'loading 28 lines extension font into character set 3'
+        $LDFNP/loadfont -d /dev/ttyv0 -c3 -f $FONTP/vt220h.814
+        echo 'loading 40 lines base font into character set 4'
+        $LDFNP/loadfont -d /dev/ttyv0 -c4 -f $FONTP/vt220l.810
+        echo 'loading 40 lines extension font into character set 5'
+        $LDFNP/loadfont -d /dev/ttyv0 -c5 -f $FONTP/vt220h.810
+        echo 'loading 50 lines base font into character set 6'
+        $LDFNP/loadfont -d /dev/ttyv0 -c6 -f $FONTP/vt220l.808
+        echo 'loading 50 lines extension font into character set 7'
+        $LDFNP/loadfont -d /dev/ttyv0 -c7 -f $FONTP/vt220h.808
+      elif [ $adaptor = EGA ]
+      then
+        echo 'loading 25 lines base font into character set 0'
+        $LDFNP/loadfont -d /dev/ttyv0 -c0 -f $FONTP/vt220l.814
+        echo 'loading 25 lines extension font into character set 1'
+        $LDFNP/loadfont -d /dev/ttyv0 -c1 -f $FONTP/vt220h.814
+        echo 'loading 35 lines base font into character set 2'
+        $LDFNP/loadfont -d /dev/ttyv0 -c2 -f $FONTP/vt220l.810
+        echo 'loading 35 lines extension font into character set 3'
+        $LDFNP/loadfont -d /dev/ttyv0 -c3 -f $FONTP/vt220h.810
+
+#        echo 'loading 43 lines base font into character set 2'
+#        $LDFNP/loadfont -d /dev/ttyv0 -c2 -f $FONTP/vt220l.808
+#        echo 'loading 43 lines extension font into character set 3'
+#        $LDFNP/loadfont -d /dev/ttyv0 -c3 -f $FONTP/vt220h.808
+
+      fi
+    fi
+
+#--------------------------------------------------
+# setting screen sizes and emulation
+#--------------------------------------------------
+    if [ -x $SCONP/scon ]
+    then
+      if [ $adaptor = VGA ]
+      then
+        size=-s28
+        echo 'switching to 28 lines and VT/HP-emulation'
+      elif [ $adaptor = EGA ]
+      then
+        size=-s25
+        echo 'switching to 25 lines and VT/HP-emulation'
+      else
+        size=
+        echo 'switching to VT/HP-emulation'
+      fi
+
+# get monitor type (mono/color)
+
+      monitor=`$SCONP/scon -d /dev/ttyv0 -m`
+
+# for all screens do
+
+      for device in /dev/ttyv*
+      do
+
+# setup HP mode
+
+        $SCONP/scon -d$device $size -H
+
+# setup cursor size
+
+        if [ X${set_cursor} = X"YES" -a -x $CURSP/cursor ]
+        then
+          $CURSP/cursor -d$device -s$set_cur_start -e$set_cur_end
+        fi
+
+# if monochrome monitor, set color palette to use a higher intensity
+
+        if [ $monitor = MONO ]
+	then
+          if [ $adaptor = VGA ]
+          then
+            $SCONP/scon -d$device -p8,60,60,60
+          fi
+        fi
+      done
+
+# switch to screen 0
+
+      $SCONP/scon -d /dev/ttyv0
+
+# set screensaver timeout to one minute
+
+      $SCONP/scon -d /dev/ttyv0 -t360
+    fi
+
+#------------------------------------------------------
+# if desired, setup keyboard for german keyboard layout
+#------------------------------------------------------
+
+    if [ X${set_keybd} = X"YES" -a -x $KCONP/kcon ]
+    then
+      echo 'switching to german keyboard layout'
+      $KCONP/kcon -m de
+    fi
+
+#------------------------------------------------------
+# if desired, setup rate and delay keyboard values
+#------------------------------------------------------
+
+    if [ X${set_keydr} = X"YES" -a -x $KCONP/kcon ]
+    then
+      echo setting keyboard typematic rate = $set_keydr_rate and delay = $set_keydr_delay
+      $KCONP/kcon -r $set_keydr_rate -d $set_keydr_delay
+    fi
+
+#--------------------------------------------------
+# if desired, start xdm on screen 8
+#--------------------------------------------------
+
+    if [ X${xdm_start} = X"YES" -a -x $XDMP/xdm ]
+    then
+      $SCONP/scon -d /dev/ttyv7
+      $XDMP/xdm
+      sleep 5
+      $SCONP/scon -d /dev/ttyv0
+    fi
+
+#--------------------------------------------------
+# cp /etc/ttys corresponding to console driver
+#--------------------------------------------------
+
+    if [ -f /etc/ttys.pcvt ]
+    then
+      echo 'copying /etc/ttys.pcvt -> /etc/ttys'
+      cp /etc/ttys.pcvt /etc/ttys
+    fi
+
+  else
+    echo 'console driver type: not pcvt or pcvt utility/driver mismatch:'
+    echo '--------------------------------------------------------------'
+    $ISPCP/ispcvt -v -d /dev/ttyv0
+    echo '--------------------------------------------------------------'
+    if [ -f /etc/ttys.pccons ]
+    then
+      echo 'copying /etc/ttys.pccons -> /etc/ttys'
+      cp /etc/ttys.pccons /etc/ttys
+    fi
+  fi
+else
+  echo 'console driver type: not pcvt'
+  if [ -f /etc/ttys.pccons ]
+  then
+    echo 'copying /etc/ttys.pccons -> /etc/ttys'
+    cp /etc/ttys.pccons /etc/ttys
+  fi
+fi
+
+echo
+
+# EOF ----------------------------------------------------------------------
+

@@ -1,0 +1,5 @@
+./bin/ed
+./sbin/init
+./usr/bin/bdes
+./usr/lib/libcrypt.a
+./usr/lib/libcrypt_p.a
