@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-RCSID("$OpenBSD: sftp-server.c,v 1.4 2000/09/04 19:10:08 markus Exp $");
+RCSID("$OpenBSD: sftp-server.c,v 1.5 2000/09/05 19:20:49 markus Exp $");
 
 #include "ssh.h"
 #include "buffer.h"
@@ -194,22 +194,22 @@ decode_attrib(Buffer *b)
 {
 	static Attrib a;
 	attrib_clear(&a);
-	a.flags = get_int();
+	a.flags = buffer_get_int(b);
 	if (a.flags & SSH_FXA_HAVE_SIZE) {
-		a.size_high = get_int();
-		a.size_low = get_int();
+		a.size_high = buffer_get_int(b);
+		a.size_low = buffer_get_int(b);
 		a.size = (((u_int64_t) a.size_high) << 32) + a.size_low;
 	}
 	if (a.flags & SSH_FXA_HAVE_UGID) {
-		a.uid = get_int();
-		a.gid = get_int();
+		a.uid = buffer_get_int(b);
+		a.gid = buffer_get_int(b);
 	}
 	if (a.flags & SSH_FXA_HAVE_PERM) {
-		a.perm = get_int();
+		a.perm = buffer_get_int(b);
 	}
 	if (a.flags & SSH_FXA_HAVE_TIME) {
-		a.atime = get_int();
-		a.mtime = get_int();
+		a.atime = buffer_get_int(b);
+		a.mtime = buffer_get_int(b);
 	}
 	return &a;
 }
@@ -321,7 +321,7 @@ handle_to_string(int handle, char **stringp, int *hlenp)
 }
 
 int
-handle_from_string(char *handle, int hlen)
+handle_from_string(char *handle, u_int hlen)
 {
 /* XXX OVERFLOW ? */
 	char *ep;
@@ -380,7 +380,8 @@ int
 get_handle(void)
 {
 	char *handle;
-	int hlen, val;
+	int val;
+	u_int hlen;
 	handle = get_string(&hlen);
 	val = handle_from_string(handle, hlen);
 	xfree(handle);
@@ -580,7 +581,7 @@ process_write(void)
 {
 	u_int32_t id, off_high, off_low;
 	u_int64_t off;
-	int len;
+	u_int len;
 	int handle, fd, ret, status = SSH_FX_FAILURE;
 	char *data;
 
@@ -1011,7 +1012,7 @@ main(int ac, char **av)
 {
 	fd_set rset, wset;
 	int in, out, max;
-	size_t len, olen;
+	ssize_t len, olen;
 
 	handle_init();
 
