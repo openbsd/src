@@ -1,7 +1,7 @@
-/*	$OpenBSD: sudo_setenv.c,v 1.8 1999/02/19 04:32:51 millert Exp $	*/
+/*	$OpenBSD: sudo_setenv.c,v 1.9 1999/03/29 20:29:07 millert Exp $	*/
 
 /*
- *  CU sudo version 1.5.8
+ *  CU sudo version 1.5.9
  *  Copyright (c) 1996, 1998, 1999 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -25,7 +25,7 @@
  *  This module contains sudo_setenv().
  *  sudo_setenv(3) adds a string of the form "var=val" to the environment.
  *
- *  Todd C. Miller (millert@colorado.edu) Fri Jun  3 18:32:19 MDT 1994
+ *  Todd C. Miller <Todd.Miller@courtesan.com> Fri Jun  3 18:32:19 MDT 1994
  */
 
 #include "config.h"
@@ -56,7 +56,7 @@ extern int setenv	__P((char *, char *, int));
 #endif /* !STDC_HEADERS */
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: sudo_setenv.c,v 1.33 1999/02/03 04:32:17 millert Exp $";
+static const char rcsid[] = "$Sudo: sudo_setenv.c,v 1.35 1999/03/29 04:05:13 millert Exp $";
 #endif /* lint */
 
 

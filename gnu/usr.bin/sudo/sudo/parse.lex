@@ -1,8 +1,8 @@
-/*	$OpenBSD: parse.lex,v 1.9 1999/03/08 00:17:23 millert Exp $	*/
-
 %{
+/*	$OpenBSD: parse.lex,v 1.10 1999/03/29 20:29:05 millert Exp $	*/
+
 /*
- *  CU sudo version 1.5.8
+ *  CU sudo version 1.5.9
  *  Copyright (c) 1996, 1998, 1999 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -50,7 +50,7 @@
 #include "sudo.tab.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: parse.lex,v 1.86 1999/03/07 23:34:31 millert Exp $";
+static const char rcsid[] = "$Sudo: parse.lex,v 1.88 1999/03/29 04:05:10 millert Exp $";
 #endif /* lint */
 
 #undef yywrap		/* guard against a yywrap macro */
@@ -325,9 +325,11 @@ static void fill_args(s, len, addspace)
 	    while (new_len >= (arg_size += COMMANDARGINC))
 		;
 
-	    yylval.command.args = (char *) realloc(yylval.command.args, arg_size);
-	    if (yylval.command.args == NULL)
+	    if ((p = (char *) realloc(yylval.command.args, arg_size)) == NULL) {
+		(void) free(yylval.command.args);
 		yyerror("unable to allocate memory");
+	    } else
+		yylval.command.args = p;
 	}
     }
 

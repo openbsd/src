@@ -1,9 +1,9 @@
-#       $OpenBSD: Makefile,v 1.5 1998/09/15 02:42:43 millert Exp $
+#       $OpenBSD: Makefile,v 1.6 1999/03/29 20:29:00 millert Exp $
 
 PROG=	sudo
 MAN=	sudo.8 sudoers.5
 CFLAGS+=-I${.CURDIR} -I.
-SRCS=	check.c find_path.c getspwuid.c goodpath.c interfaces.c logging.c parse.c sudo.c sudo_setenv.c tgetpass.c sudo.tab.c lex.yy.c
+SRCS=	check.c find_path.c getspwuid.c goodpath.c interfaces.c logging.c parse.c sudo.c sudo_setenv.c tgetpass.c sudo.tab.c lex.yy.c alloc.c
 CLEANFILES+=sudo.tab.c sudo.tab.h lex.yy.c
 
 LDADD=  -lcompat

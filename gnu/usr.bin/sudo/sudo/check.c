@@ -1,7 +1,7 @@
-/*	$OpenBSD: check.c,v 1.14 1999/02/19 04:32:49 millert Exp $	*/
+/*	$OpenBSD: check.c,v 1.15 1999/03/29 20:29:02 millert Exp $	*/
 
 /*
- * CU sudo version 1.5.8 (based on Root Group sudo version 1.1)
+ * CU sudo version 1.5.9 (based on Root Group sudo version 1.1)
  * Copyright (c) 1994,1996,1998,1999 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * This software comes with no waranty whatsoever, use at your own risk.
@@ -70,7 +70,6 @@
 #endif /* HAVE_KERB5 */
 #ifdef HAVE_PAM
 #  include <security/pam_appl.h>
-#  include <security/pam_misc.h>
 #endif /* HAVE_PAM */
 #ifdef HAVE_AFS
 #  include <afs/stds.h>
@@ -103,7 +102,7 @@
 #include "version.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: check.c,v 1.170 1999/02/07 00:43:24 millert Exp $";
+static const char rcsid[] = "$Sudo: check.c,v 1.174 1999/03/29 04:05:05 millert Exp $";
 #endif /* lint */
 
 /*
@@ -124,6 +123,10 @@ static int   verify_krb_v5_tgt		__P((krb5_ccache));
 #endif /* HAVE_KERB5 */
 #ifdef HAVE_PAM
 static void pam_attempt_auth            __P((void));
+static int pam_auth            		__P((char *, char *));
+static int PAM_conv			__P((int,
+					     PAM_CONST struct pam_message **,
+					     struct pam_response **, void *));
 #endif /* HAVE_PAM */
 #ifdef HAVE_SKEY
 static char *sudo_skeyprompt		__P((struct skey *, char *));
@@ -817,11 +820,7 @@ static int sudo_krb5_validate_user(pw, pass)
 	return -1;
     krb5_get_init_creds_opt_init(&opts);
 
-    princ_name = malloc(strlen(pw->pw_name) + strlen(realm) + 2);
-    if (!princ_name) {
-	(void) fprintf(stderr, "%s: cannot allocate memory!\n", Argv[0]);
-	exit(1);
-    }
+    princ_name = emalloc(strlen(pw->pw_name) + strlen(realm) + 2);
 
     sprintf(princ_name, "%s@%s", pw->pw_name, realm);
     if (retval = krb5_parse_name(sudo_context, princ_name, &princ))
@@ -940,44 +939,110 @@ cleanup:
  *
  *  Try to authenticate the user using Pluggable Authentication
  *  Modules (PAM). Added 9/11/98 by Gary J. Calvin
+ *  Reworked for stock PAM by Amos Elberg and Todd Miller
  */
+static char *PAM_username;
+static char *PAM_password;
+
+static int PAM_conv(num_msg, msg, resp, appdata_ptr)
+    int num_msg;
+    PAM_CONST struct pam_message **msg;
+    struct pam_response **resp;
+    void *appdata_ptr;
+{
+    int replies = 0;
+    struct pam_response *reply = NULL;
+
+    if ((reply = malloc(sizeof(struct pam_response) * num_msg)) == NULL)
+	return(PAM_CONV_ERR);
+
+    for (replies = 0; replies < num_msg; replies++) {
+	switch (msg[replies]->msg_style) {
+	case PAM_PROMPT_ECHO_ON:
+	    reply[replies].resp_retcode = PAM_SUCCESS;
+	    reply[replies].resp = estrdup(PAM_username);
+	    /* PAM frees resp */
+	    break;
+	case PAM_PROMPT_ECHO_OFF:
+	    reply[replies].resp_retcode = PAM_SUCCESS;
+	    reply[replies].resp = estrdup(PAM_password);
+	    /* PAM frees resp */
+	    break;
+	case PAM_TEXT_INFO:
+	    /* fall through */
+	case PAM_ERROR_MSG:
+	    /* ignore it... */
+	    reply[replies].resp_retcode = PAM_SUCCESS;
+	    reply[replies].resp = NULL;
+	    break;
+	default:
+	    /* Must be an error of some sort... */
+	    free(reply);
+	    return(PAM_CONV_ERR);
+	}
+    }
+    if (reply)
+	*resp = reply;
+
+    return(PAM_SUCCESS);
+}
+
+static int pam_auth(user, password)
+    char *user;
+    char *password;
+{
+    struct pam_conv PAM_conversation;
+    pam_handle_t *pamh;
+
+    /* Initialize our variables for PAM */
+    PAM_conversation.conv = PAM_conv;
+    PAM_conversation.appdata_ptr = NULL;
+    PAM_password = password;
+    PAM_username = user;
+
+    /*
+     * Setting PAM_SILENT stops generation of error messages to syslog
+     * to enable debugging on Red Hat Linux set:
+     * /etc/pam.d/sudo:
+     *      auth required /lib/security/pam_pwdb.so shadow nullok audit
+     * _OR_ change PAM_SILENT to 0 to force detailed reporting (logging)
+     */
+    if (pam_start("sudo", user, &PAM_conversation, &pamh) != PAM_SUCCESS ||
+	pam_authenticate(pamh, PAM_SILENT) != PAM_SUCCESS) {
+	pam_end(pamh, 0);
+	return(0);
+    }
+
+    /* User authenticated successfully */
+    pam_end(pamh, PAM_SUCCESS);
+
+    return(1);
+}
+
 static void pam_attempt_auth()
 {
-    pam_handle_t *pamh=NULL;
-    int retval;
-    register int counter = TRIES_FOR_PASSWORD;
-    struct pam_conv conv = {
-	    misc_conv,
-	    NULL
-    };
+    int i = TRIES_FOR_PASSWORD;
 
     set_perms(PERM_ROOT, 0);
-    retval = pam_start("sudo", user_name, &conv, &pamh);
-    if (retval != PAM_SUCCESS) {
-        pam_end(pamh, retval);
-        exit(1);
-    }
-    while (counter > 0) {
-        retval = pam_authenticate(pamh, 0);
-        if (retval == PAM_SUCCESS) {
+    while (i > 0) {
+        char *pamPass = (char *) GETPASS(prompt, PASSWORD_TIMEOUT * 60);
+
+        if (pam_auth(user_name, pamPass)) {
             set_perms(PERM_USER, 0);
-            pam_end(pamh, retval);
             return;
         }
-
-        --counter;
+	--i;
         pass_warn(stderr);
     }
     set_perms(PERM_USER, 0);
 
-    if (counter > 0) {
+    if (i == 0) {
         log_error(PASSWORD_NOT_CORRECT);
         inform_user(PASSWORD_NOT_CORRECT);
     } else {
         log_error(PASSWORDS_NOT_CORRECT);
         inform_user(PASSWORDS_NOT_CORRECT);
     }
-    pam_end(pamh, retval);
     exit(1);
 }
 #endif /* HAVE_PAM */
@@ -1031,19 +1096,12 @@ static char *sudo_skeyprompt(user_skey, p)
     if (new_prompt == NULL) {
 	/* allocate space for new prompt */
 	np_size = op_len + strlen(challenge) + 7;
-	if (!(new_prompt = (char *) malloc(np_size))) {
-	    (void) fprintf(stderr, "%s: cannot allocate memory!\n", Argv[0]);
-	    exit(1);
-	}
+	new_prompt = (char *) emalloc(np_size);
     } else {
 	/* already have space allocated, is it enough? */
 	if (np_size < op_len + strlen(challenge) + 7) {
 	    np_size = op_len + strlen(challenge) + 7;
-	    if (!(new_prompt = (char *) realloc(new_prompt, np_size))) {
-		(void) fprintf(stderr, "%s: cannot allocate memory!\n",
-			       Argv[0]);
-		exit(1);
-	    }
+	    new_prompt = (char *) erealloc(new_prompt, np_size);
 	}
     }
 
@@ -1104,19 +1162,12 @@ static char *sudo_opieprompt(user_opie, p)
     if (new_prompt == NULL) {
 	/* allocate space for new prompt */
 	np_size = op_len + strlen(challenge) + 7;
-	if (!(new_prompt = (char *) malloc(np_size))) {
-	    (void) fprintf(stderr, "%s: cannot allocate memory!\n", Argv[0]);
-	    exit(1);
-	}
+	new_prompt = (char *) emalloc(np_size);
     } else {
 	/* already have space allocated, is it enough? */
 	if (np_size < op_len + strlen(challenge) + 7) {
 	    np_size = op_len + strlen(challenge) + 7;
-	    if (!(new_prompt = (char *) realloc(new_prompt, np_size))) {
-		(void) fprintf(stderr, "%s: cannot allocate memory!\n",
-			       Argv[0]);
-		exit(1);
-	    }
+	    new_prompt = (char *) erealloc(new_prompt, np_size);
 	}
     }
 
@@ -1217,10 +1268,7 @@ static char *expand_prompt(old_prompt, user, host)
     }
 
     if (subst) {
-	if ((new_prompt = (char *) malloc(len + 1)) == NULL) {
-	    (void) fprintf(stderr, "%s: cannot allocate memory!\n", Argv[0]);
-	    exit(1);
-	}
+	new_prompt = (char *) emalloc(len + 1);
 	for (p = prompt, np = new_prompt; *p; p++) {
 	    if (lastchar == '%' && (*p == 'h' || *p == 'u' || *p == '%')) {
 		/* substiture user/host name */

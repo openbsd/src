@@ -1,7 +1,7 @@
-/*	$OpenBSD: compat.h,v 1.8 1999/02/19 04:32:49 millert Exp $	*/
+/*	$OpenBSD: compat.h,v 1.9 1999/03/29 20:29:02 millert Exp $	*/
 
 /*
- *  CU sudo version 1.5.8
+ *  CU sudo version 1.5.9
  *  Copyright (c) 1996, 1998, 1999 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -20,7 +20,7 @@
  *
  *  Please send bugs, changes, problems to sudo-bugs@courtesan.com
  *
- *  $Sudo: compat.h,v 1.45 1999/02/03 04:32:13 millert Exp $
+ *  $Sudo: compat.h,v 1.46 1999/03/29 04:05:06 millert Exp $
  */
 
 #ifndef _SUDO_COMPAT_H

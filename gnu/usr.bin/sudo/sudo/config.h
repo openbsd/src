@@ -1,8 +1,8 @@
-/*	$OpenBSD: config.h,v 1.8 1999/03/08 00:17:23 millert Exp $	*/
+/*	$OpenBSD: config.h,v 1.9 1999/03/29 20:29:02 millert Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /*
- *  CU sudo version 1.5.8
+ *  CU sudo version 1.5.9
  *  Copyright (c) 1996, 1998, 1999 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -21,7 +21,7 @@
  *
  *  Please send bugs, changes, problems to sudo-bugs@courtesan.com
  *
- *  $Sudo: config.h.in,v 1.114 1999/02/03 04:32:13 millert Exp $
+ *  $Sudo: config.h.in,v 1.117 1999/03/29 04:05:06 millert Exp $
  */
 
 /*
@@ -85,6 +85,13 @@
 
 /* Define to be nil if C compiler doesn't support "const."  */
 /* #undef const */
+
+/* Solaris doesn't use const qualifiers in PAM. */
+#ifdef sun
+#define PAM_CONST
+#else
+#define PAM_CONST	const
+#endif
 
 /* Define as the return type of signal handlers (int or void).  */
 #define RETSIGTYPE void
@@ -284,10 +291,10 @@
 /* Define if you have the <string.h> header file.  */
 #define HAVE_STRING_H 1
 
-/* Define if you have the <strings.h> header file.  */
-#if !defined(__convex__) && !defined(convex)
+/* Define if you have the <strings.h> header file but no <string.h>.  */
+#ifndef HAVE_STRING_H
 #define HAVE_STRINGS_H 1
-#endif /* convex */
+#endif /* !HAVE_STRING_H */
 
 /* Define your flavor of dir entry header file.  */
 #define HAVE_DIRENT_H 1

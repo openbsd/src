@@ -1,7 +1,7 @@
-/*	$OpenBSD: parse.c,v 1.10 1999/02/19 04:32:50 millert Exp $	*/
+/*	$OpenBSD: parse.c,v 1.11 1999/03/29 20:29:05 millert Exp $	*/
 
 /*
- *  CU sudo version 1.5.8
+ *  CU sudo version 1.5.9
  *  Copyright (c) 1996, 1998, 1999 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -49,9 +49,6 @@
 #    include "emul/fnmatch.h"
 #  endif /* HAVE_FNMATCH */
 #endif /* HAVE_FNMATCH_H */
-#if defined(HAVE_MALLOC_H) && !defined(STDC_HEADERS)
-#  include <malloc.h>
-#endif /* HAVE_MALLOC_H && !STDC_HEADERS */
 #ifdef HAVE_NETGROUP_H
 #  include <netgroup.h>
 #endif /* HAVE_NETGROUP_H */
@@ -84,7 +81,7 @@
 #include "sudo.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: parse.c,v 1.100 1999/02/03 04:32:15 millert Exp $";
+static const char rcsid[] = "$Sudo: parse.c,v 1.102 1999/03/29 04:05:10 millert Exp $";
 #endif /* lint */
 
 /*
@@ -412,11 +409,7 @@ int netgr_matches(netgr, host, user)
 #ifdef HAVE_GETDOMAINNAME
     /* get the domain name (if any) */
     if (domain == (char *) -1) {
-	if ((domain = (char *) malloc(MAXHOSTNAMELEN)) == NULL) {
-	    (void) fprintf(stderr, "%s: cannot allocate memory!\n", Argv[0]);
-	    exit(1);
-	}
-
+	domain = (char *) emalloc(MAXHOSTNAMELEN);
 	if (getdomainname(domain, MAXHOSTNAMELEN) != 0 || *domain == '\0') {
 	    (void) free(domain);
 	    domain = NULL;

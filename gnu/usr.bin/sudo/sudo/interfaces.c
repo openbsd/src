@@ -1,7 +1,7 @@
-/*	$OpenBSD: interfaces.c,v 1.10 1999/03/08 00:17:23 millert Exp $	*/
+/*	$OpenBSD: interfaces.c,v 1.11 1999/03/29 20:29:04 millert Exp $	*/
 
 /*
- *  CU sudo version 1.5.8
+ *  CU sudo version 1.5.9
  *  Copyright (c) 1996, 1998, 1999 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -44,9 +44,6 @@
 #ifdef HAVE_STRINGS_H
 #include <strings.h>
 #endif /* HAVE_STRINGS_H */
-#if defined(HAVE_MALLOC_H) && !defined(STDC_HEADERS)
-#include <malloc.h>   
-#endif /* HAVE_MALLOC_H && !STDC_HEADERS */
 #include <netdb.h>
 #include <errno.h>
 #include <sys/types.h>
@@ -77,13 +74,8 @@
 #include "sudo.h"
 #include "version.h"
 
-#if !defined(STDC_HEADERS) && !defined(__GNUC__)
-extern char *malloc	__P((size_t));
-extern char *realloc	__P((VOID *, size_t));
-#endif /* !STDC_HEADERS && !__GNUC__ */
-
 #ifndef lint
-static const char rcsid[] = "$Sudo: interfaces.c,v 1.50 1999/02/26 06:19:49 millert Exp $";
+static const char rcsid[] = "$Sudo: interfaces.c,v 1.52 1999/03/29 04:05:09 millert Exp $";
 #endif /* lint */
 
 /*
@@ -126,11 +118,7 @@ void load_interfaces()
      * get interface configuration or return (leaving interfaces NULL)
      */
     for (;;) {
-	ifconf_buf = ifconf_buf ? realloc(ifconf_buf, len) : malloc(len);
-	if (ifconf_buf == NULL) {
-	    (void) fprintf(stderr, "%s: cannot allocate memory!\n", Argv[0]);
-	    exit(1);
-	}
+	ifconf_buf = erealloc(ifconf_buf, len);
 	ifconf = (struct ifconf *) ifconf_buf;
 	ifconf->ifc_len = len - sizeof(struct ifconf);
 	ifconf->ifc_buf = (caddr_t) (ifconf_buf + sizeof(struct ifconf));
@@ -159,13 +147,9 @@ void load_interfaces()
     n = ifconf->ifc_len / sizeof(struct ifreq);
 
     /*
-     * malloc() space for interfaces array
+     * allocate space for interfaces array
      */
-    interfaces = (struct interface *) malloc(sizeof(struct interface) * n);
-    if (interfaces == NULL) {
-	(void) fprintf(stderr, "%s: cannot allocate memory!\n", Argv[0]);
-	exit(1);
-    }
+    interfaces = (struct interface *) emalloc(sizeof(struct interface) * n);
 
     /*
      * for each interface, store the ip address and netmask
@@ -245,17 +229,11 @@ void load_interfaces()
     /* if there were bogus entries, realloc the array */
     if (n != num_interfaces) {
 	/* it is unlikely that num_interfaces will be 0 but who knows... */
-	if (num_interfaces != 0) {
-	    interfaces = (struct interface *) realloc(interfaces,
+	if (num_interfaces != 0)
+	    interfaces = (struct interface *) erealloc(interfaces,
 		sizeof(struct interface) * num_interfaces);
-	    if (interfaces == NULL) {
-		perror("realloc");
-		(void) fprintf(stderr, "%s: cannot allocate memory!\n", Argv[0]);
-		exit(1);
-	    }
-	} else {
+	else
 	    (void) free(interfaces);
-	}
     }
     (void) free(ifconf_buf);
     (void) close(sock);

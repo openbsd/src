@@ -1,7 +1,7 @@
-/*	$OpenBSD: sudo.h,v 1.8 1999/02/19 04:32:51 millert Exp $	*/
+/*	$OpenBSD: sudo.h,v 1.9 1999/03/29 20:29:06 millert Exp $	*/
 
 /*
- * CU sudo version 1.5.8 (based on Root Group sudo version 1.1)
+ * CU sudo version 1.5.9 (based on Root Group sudo version 1.1)
  * Copyright (c) 1994,1996,1998,1999 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * This software comes with no waranty whatsoever, use at your own risk.
@@ -28,7 +28,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- *  $Sudo: sudo.h,v 1.138 1999/02/07 00:43:24 millert Exp $
+ *  $Sudo: sudo.h,v 1.140 1999/03/29 04:05:12 millert Exp $
  */
 
 #ifndef _SUDO_SUDO_H
@@ -231,9 +231,6 @@ struct generic_alias {
  */
 #define YY_DECL int yylex __P((void))
 
-#ifndef HAVE_STRDUP
-char *strdup		__P((const char *));
-#endif
 #ifndef HAVE_GETCWD
 char *getcwd		__P((char *, size_t size));
 #endif
@@ -255,6 +252,9 @@ int check_secureware	__P((char *));
 void sia_attempt_auth	__P((void));
 int yyparse		__P((void));
 void pass_warn		__P((FILE *));
+VOID *emalloc		__P((size_t));
+VOID *erealloc		__P((VOID *, size_t));
+VOID *estrdup		__P((char *));
 YY_DECL;
 
 

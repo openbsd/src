@@ -1,7 +1,7 @@
-/*	$OpenBSD: version.h,v 1.10 1999/03/08 00:17:23 millert Exp $	*/
+/*	$OpenBSD: version.h,v 1.11 1999/03/29 20:29:07 millert Exp $	*/
 
 /*
- *  CU sudo version 1.5.8
+ *  CU sudo version 1.5.9
  *  Copyright (c) 1996, 1998, 1999 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -20,12 +20,12 @@
  *
  *  Please send bugs, changes, problems to sudo-bugs@courtesan.com
  *
- *  $Sudo: version.h,v 1.50 1999/02/03 04:32:18 millert Exp $
+ *  $Sudo: version.h,v 1.51 1999/03/29 04:05:14 millert Exp $
  */
 
 #ifndef _SUDO_VERSION_H
 #define _SUDO_VERSION_H
 
-static const char version[] = "1.5.8p2";
+static const char version[] = "1.5.9";
 
 #endif /* _SUDO_VERSION_H */

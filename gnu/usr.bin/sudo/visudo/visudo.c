@@ -1,7 +1,7 @@
-/*	$OpenBSD: visudo.c,v 1.10 1999/02/19 04:32:51 millert Exp $	*/
+/*	$OpenBSD: visudo.c,v 1.11 1999/03/29 20:29:08 millert Exp $	*/
 
 /*
- *  CU sudo version 1.5.8
+ *  CU sudo version 1.5.9
  *  Copyright (c) 1996, 1998, 1999 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -25,7 +25,7 @@
  *  visudo.c -- locks the sudoers file for safe editing and check
  *  for parse errors.
  *
- *  Todd C. Miller (millert@colorado.edu) Sat Mar 25 21:50:36 MST 1995
+ *  Todd C. Miller <Todd.Miller@courtesan.com> Sat Mar 25 21:50:36 MST 1995
  */
 
 #include "config.h"
@@ -73,7 +73,7 @@ extern int stat		__P((const char *, struct stat *));
 #endif /* POSIX_SIGNALS && !SA_RESETHAND */
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: visudo.c,v 1.98 1999/02/03 04:32:18 millert Exp $";
+static const char rcsid[] = "$Sudo: visudo.c,v 1.100 1999/03/29 04:05:14 millert Exp $";
 #endif /* lint */
 
 /*

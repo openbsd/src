@@ -1,7 +1,7 @@
-/*	$OpenBSD: sudo.c,v 1.12 1999/02/19 04:32:51 millert Exp $	*/
+/*	$OpenBSD: sudo.c,v 1.13 1999/03/29 20:29:06 millert Exp $	*/
 
 /*
- * CU sudo version 1.5.8 (based on Root Group sudo version 1.1)
+ * CU sudo version 1.5.9 (based on Root Group sudo version 1.1)
  * Copyright (c) 1994,1996,1998,1999 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * This software comes with no waranty whatsoever, use at your own risk.
@@ -70,9 +70,6 @@
 #ifdef HAVE_STRINGS_H
 #include <strings.h>
 #endif /* HAVE_STRINGS_H */
-#if defined(HAVE_MALLOC_H) && !defined(STDC_HEADERS)
-#include <malloc.h>   
-#endif /* HAVE_MALLOC_H && !STDC_HEADERS */
 #include <pwd.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -92,17 +89,11 @@
 #include "version.h"
 
 #ifndef STDC_HEADERS
-#ifndef __GNUC__		/* gcc has its own malloc */
-extern char *malloc	__P((size_t));
-#endif /* __GNUC__ */
-#ifdef HAVE_STRDUP
-extern char *strdup	__P((const char *));
-#endif /* HAVE_STRDUP */
 extern char *getenv	__P((char *));
 #endif /* STDC_HEADERS */
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: sudo.c,v 1.219 1999/02/11 06:41:31 millert Exp $";
+static const char rcsid[] = "$Sudo: sudo.c,v 1.222 1999/03/29 04:05:12 millert Exp $";
 #endif /* lint */
 
 
@@ -273,11 +264,7 @@ int main(argc, argv)
     if ((sudo_mode & MODE_SHELL)) {
 	char **dst, **src = NewArgv;
 
-	NewArgv = (char **) malloc (sizeof(char *) * (++NewArgc + 1));
-	if (NewArgv == NULL) {
-	    (void) fprintf(stderr, "%s: cannot allocate memory!\n", Argv[0]);
-	    exit(1);
-	}
+	NewArgv = (char **) emalloc (sizeof(char *) * (++NewArgc + 1));
 
 	/* add the shell as argv[0] */
 	if (user_shell && *user_shell) {
@@ -439,6 +426,13 @@ static void load_globals(sudo_mode)
     char *lrealm;
 #endif /* HAVE_KERB5 */
 
+#ifdef HOST_IN_LOG
+    /*
+     * Logging routines may use shost so set to a dummy value for now.
+     */
+    shost = strcpy(host, "localhost");
+#endif
+
     /*
      * Get a local copy of the user's struct passwd with the shadow password
      * if necesary.  It is assumed that euid is 0 at this point so we
@@ -483,11 +477,7 @@ static void load_globals(sudo_mode)
 	realm = lrealm;
 
     if (!arg_prompt) {
-	p = malloc(strlen(user_name) + strlen(realm) + 17);
-	if (p == NULL) {
-	    (void) fprintf(stderr, "%s: cannot allocate memory!\n", Argv[0]);
-	    exit(1);
-	}
+	p = emalloc(strlen(user_name) + strlen(realm) + 17);
 	sprintf(p, "Password for %s@%s: ", user_name, realm);
 	prompt = p;
     }
@@ -507,10 +497,7 @@ static void load_globals(sudo_mode)
     if ((p = (char *) ttyname(0)) || (p = (char *) ttyname(1))) {
 	if (strncmp(p, _PATH_DEV, sizeof(_PATH_DEV) - 1) == 0)
 	    p += sizeof(_PATH_DEV) - 1;
-	if ((tty = (char *) strdup(p)) == NULL) {
-	    (void) fprintf(stderr, "%s: cannot allocate memory!\n", Argv[0]);
-	    exit(1);
-	}
+	tty = estrdup(p);
     }
 
 #ifdef SUDO_UMASK
@@ -562,10 +549,7 @@ static void load_globals(sudo_mode)
      */
     if ((p = strchr(host, '.'))) {
 	*p = '\0';
-	if ((shost = (char *) strdup(host)) == NULL) {
-	    (void) fprintf(stderr, "%s: cannot allocate memory!\n", Argv[0]);
-	    exit(1);
-	}
+	shost = estrdup(host);
 	*p = '.';
     } else {
 	shost = &host[0];
@@ -763,10 +747,7 @@ static void add_env(contiguous)
 		size += strlen(*from) + 1;
 	}
 
-	if ((buf = (char *) malloc(size)) == NULL) {
-	    (void) fprintf(stderr, "%s: cannot allocate memory!\n", Argv[0]);
-	    exit(1);
-	}
+	buf = (char *) emalloc(size);
 
 	/*
 	 * Copy the command and it's arguments info buf

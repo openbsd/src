@@ -1,7 +1,7 @@
-/*	$OpenBSD: tgetpass.c,v 1.13 1999/02/19 04:32:51 millert Exp $	*/
+/*	$OpenBSD: tgetpass.c,v 1.14 1999/03/29 20:29:07 millert Exp $	*/
 
 /*
- *  CU sudo version 1.5.8
+ *  CU sudo version 1.5.9
  *  Copyright (c) 1996, 1998, 1999 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -85,7 +85,7 @@
 #endif /* TCSASOFT */
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: tgetpass.c,v 1.75 1999/02/03 04:32:18 millert Exp $";
+static const char rcsid[] = "$Sudo: tgetpass.c,v 1.76 1999/03/29 04:05:13 millert Exp $";
 #endif /* lint */
 
 

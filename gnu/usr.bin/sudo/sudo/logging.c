@@ -1,7 +1,7 @@
-/*	$OpenBSD: logging.c,v 1.9 1999/02/19 04:32:50 millert Exp $	*/
+/*	$OpenBSD: logging.c,v 1.10 1999/03/29 20:29:04 millert Exp $	*/
 
 /*
- * CU sudo version 1.5.8 (based on Root Group sudo version 1.1)
+ * CU sudo version 1.5.9 (based on Root Group sudo version 1.1)
  * Copyright (c) 1994,1996,1998,1999 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * This software comes with no waranty whatsoever, use at your own risk.
@@ -54,9 +54,6 @@
 #ifdef HAVE_STRINGS_H
 #include <strings.h>
 #endif /* HAVE_STRINGS_H */
-#if defined(HAVE_MALLOC_H) && !defined(STDC_HEADERS)
-#include <malloc.h>   
-#endif /* HAVE_MALLOC_H && !STDC_HEADERS */
 #include <pwd.h>
 #include <signal.h>
 #include <time.h>
@@ -70,7 +67,7 @@
 #include "sudo.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: logging.c,v 1.110 1999/02/03 04:32:15 millert Exp $";
+static const char rcsid[] = "$Sudo: logging.c,v 1.112 1999/03/29 04:05:10 millert Exp $";
 #endif /* lint */
 
 /*
@@ -160,12 +157,7 @@ void log_error(code)
 	    strlen(runas_user);
     if (cmnd_args)
 	count += strlen(cmnd_args);
-
-    logline = (char *) malloc(count);
-    if (logline == NULL) {
-	(void) fprintf(stderr, "%s: cannot allocate memory!\n", Argv[0]);
-	exit(1);
-    }
+    logline = (char *) emalloc(count);
 
     /*
      * we will skip this stuff when using syslog(3) but it is

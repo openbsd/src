@@ -1,7 +1,7 @@
-/*	$OpenBSD: find_path.c,v 1.9 1999/02/19 04:32:50 millert Exp $	*/
+/*	$OpenBSD: find_path.c,v 1.10 1999/03/29 20:29:02 millert Exp $	*/
 
 /*
- *  CU sudo version 1.5.8
+ *  CU sudo version 1.5.9
  *  Copyright (c) 1996, 1998, 1999 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -28,7 +28,7 @@
  *  ocommand contain the resolved and unresolved pathnames respectively.
  *  NOTE: if "." or "" exists in PATH it will be searched last.
  *
- *  Todd C. Miller (millert@colorado.edu) Sat Mar 25 21:50:36 MST 1995
+ *  Todd C. Miller <Todd.Miller@courtesan.com> Sat Mar 25 21:50:36 MST 1995
  */
 
 #include "config.h"
@@ -46,9 +46,6 @@
 #ifdef HAVE_STRINGS_H
 #include <strings.h>
 #endif /* HAVE_STRINGS_H */
-#if defined(HAVE_MALLOC_H) && !defined(STDC_HEADERS)
-#include <malloc.h>
-#endif /* HAVE_MALLOC_H && !STDC_HEADERS */
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/param.h>
@@ -57,18 +54,12 @@
 #include "sudo.h"
 
 #ifndef STDC_HEADERS
-#ifndef __GNUC__		/* gcc has its own malloc */
-extern char *malloc	__P((size_t));
-#endif /* __GNUC__ */
 extern char *getenv	__P((const char *));
 extern char *strcpy	__P((char *, const char *));
 extern int fprintf	__P((FILE *, const char *, ...));
 extern ssize_t readlink	__P((const char *, VOID *, size_t));
 extern int stat		__P((const char *, struct stat *));
 extern int lstat	__P((const char *, struct stat *));
-#ifdef HAVE_STRDUP
-extern char *strdup	__P((const char *));
-#endif /* HAVE_STRDUP */
 #endif /* !STDC_HEADERS */
 
 #ifndef _S_IFMT
@@ -79,7 +70,7 @@ extern char *strdup	__P((const char *));
 #endif /* _S_IFLNK */
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: find_path.c,v 1.83 1999/02/03 04:32:14 millert Exp $";
+static const char rcsid[] = "$Sudo: find_path.c,v 1.85 1999/03/29 04:05:08 millert Exp $";
 #endif /* lint */
 
 /*******************************************************************
@@ -131,10 +122,7 @@ int find_path(infile, outfile)
     if ((path = getenv("PATH")) == NULL)
 	return(NOT_FOUND);
 
-    if ((path = (char *) strdup(path)) == NULL) {
-	(void) fprintf(stderr, "%s: out of memory!\n", Argv[0]);
-	exit(1);
-    }
+    path = estrdup(path);
     origpath = path;
 
     /* XXX use strtok() */
