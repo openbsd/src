@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ksh.1,v 1.94 2005/02/16 12:35:10 jmc Exp $
+.\"	$OpenBSD: ksh.1,v 1.95 2005/02/16 22:54:02 jmc Exp $
 .\"
 .\"	Public Domain
 .\"
@@ -1345,6 +1345,20 @@ interactive shells.
 See the
 .Ev VISUAL
 parameter below for how this works.
+.Pp
+Note:
+traditionally,
+.Ev EDITOR
+was used to specify the name of an (old-style) line editor, such as
+.Xr ed 1 ,
+and
+.Ev VISUAL
+was used to specify a (new-style) screen editor, such as
+.Xr vi 1 .
+Hence if
+.Ev VISUAL
+is set, it overrides
+.Ev EDITOR .
 .It Ev ENV
 If this parameter is found to be set after any profile files are executed, the
 expanded value is used as a shell startup file.
@@ -1711,6 +1725,9 @@ the
 or
 .Xr gmacs
 (Gosling emacs) editing mode is enabled, respectively.
+See also the
+.Ev EDITOR
+parameter, above.
 .El
 .Ss Tilde expansion
 Tilde expansion, which is done in parallel with parameter substitution, is done
