@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.21 2003/01/02 21:40:46 miod Exp $	*/
+/*	$OpenBSD: asm.h,v 1.22 2003/01/07 22:04:51 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -101,14 +101,13 @@
 #define	DMT2	cr14
 #define	DMD2	cr15
 #define	DMA2	cr16
-#define	SRX	cr16 
 #define	SR0	cr17
 #define	SR1	cr18
 #define	SR2	cr19
 #define	SR3	cr20
 
 /* MVME197 only */
-#define	SRX	cr16 
+#define	SRX	cr16
 #define	EXIP	cr4
 #define	ENIP	cr5
 #define	ICMD	cr25
@@ -194,7 +193,7 @@
  * I like to see is having the trap frame on the kernel stack instead
  * of putting in the PCB. If done properly, we don't need SR1 for doing
  * anything special. nivas
- * 
+ *
  * SR1 contains flags about the current CPU status.
  *
  * The bit FLAG_IGNORE_DATA_EXCEPTION indicates that any data exceptions
@@ -243,15 +242,15 @@
 #define	RESTORE_TMP3	ld	r11, r31, GENREG_OFF(11)
 
 /*
- * Info about the PSR 
+ * Info about the PSR
  */
 #define	PSR_SHADOW_FREEZE_BIT		0
 #define	PSR_INTERRUPT_DISABLE_BIT	1
 #define	PSR_FPU_DISABLE_BIT		3
 #define	PSR_BIG_ENDIAN_MODE		30
 #define	PSR_SUPERVISOR_MODE_BIT		31
-/* 
- * mc88110 PSR bit definitions (MVME197) 
+/*
+ * mc88110 PSR bit definitions (MVME197)
  */
 #define PSR_GRAPHICS_DISABLE_BIT	4
 #define PSR_SERIAL_MODE_BIT		29
