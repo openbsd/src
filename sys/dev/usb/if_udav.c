@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udav.c,v 1.1 2004/10/05 02:01:18 jsg Exp $ */
+/*	$OpenBSD: if_udav.c,v 1.2 2004/10/05 14:12:56 deraadt Exp $ */
 /*	$NetBSD: if_udav.c,v 1.3 2004/04/23 17:25:25 itojun Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
@@ -217,12 +217,12 @@ USB_ATTACH(udav)
 
 	usbd_devinfo(dev, 0, devinfo, sizeof(devinfo));
 	USB_ATTACH_SETUP;
-	printf("%s: %s\n", devname, devinfo);
+	printf("%s: %s", devname, devinfo);
 
 	/* Move the device into the configured state. */
 	err = usbd_set_config_no(dev, UDAV_CONFIG_NO, 1);
 	if (err) {
-		printf("%s: setting config no failed\n", devname);
+		printf(", setting config no failed\n");
 		goto bad;
 	}
 
@@ -233,8 +233,7 @@ USB_ATTACH(udav)
 	/* get control interface */
 	err = usbd_device2interface_handle(dev, UDAV_IFACE_INDEX, &iface);
 	if (err) {
-		printf("%s: failed to get interface, err=%s\n", devname,
-		       usbd_errstr(err));
+		printf(", failed to get interface, err=%s\n", usbd_errstr(err));
 		goto bad;
 	}
 
@@ -250,7 +249,7 @@ USB_ATTACH(udav)
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(sc->sc_ctl_iface, i);
 		if (ed == NULL) {
-			printf("%s: couldn't get endpoint %d\n", devname, i);
+			printf(", couldn't get endpoint %d\n", i);
 			goto bad;
 		}
 		if ((ed->bmAttributes & UE_XFERTYPE) == UE_BULK &&
@@ -266,7 +265,7 @@ USB_ATTACH(udav)
 
 	if (sc->sc_bulkin_no == -1 || sc->sc_bulkout_no == -1 ||
 	    sc->sc_intrin_no == -1) {
-		printf("%s: missing endpoint\n", devname);
+		printf(", missing endpoint\n");
 		goto bad;
 	}
 
@@ -278,13 +277,13 @@ USB_ATTACH(udav)
 	/* Get Ethernet Address */
 	err = udav_csr_read(sc, UDAV_PAR, (void *)eaddr, ETHER_ADDR_LEN);
 	if (err) {
-		printf("%s: read MAC address failed\n", devname);
+		printf(", read MAC address failed\n");
 		splx(s);
 		goto bad;
 	}
 
 	/* Print Ethernet Address */
-	printf("%s: address %s\n", devname, ether_sprintf(eaddr));
+	printf(" address %s\n", ether_sprintf(eaddr));
 
 #if defined(__OpenBSD__)
         bcopy(eaddr, (char *)&sc->sc_ac.ac_enaddr, ETHER_ADDR_LEN);
