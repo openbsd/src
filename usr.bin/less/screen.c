@@ -773,7 +773,7 @@ get_term()
 	 * that switch to/from an alternate screen, and we're in quit_at_eof
 	 * (eg, more(1)).
 	 */
-	if (!more_mode) {
+	if (!quit_at_eof && !more_mode) {
 		sc_init = tgetstr("ti", &sp);
 		sc_deinit = tgetstr("te", &sp);
 	}
@@ -1001,9 +1001,7 @@ init()
 	if (no_init)
 		return;
 	tputs(sc_init, sc_height, putchr);
-#if 0
 	tputs(sc_s_keypad, sc_height, putchr);
-#endif
 	init_done = 1;
 }
 
@@ -1017,9 +1015,7 @@ deinit()
 		return;
 	if (!init_done)
 		return;
-#if 0
 	tputs(sc_e_keypad, sc_height, putchr);
-#endif
 	tputs(sc_deinit, sc_height, putchr);
 	init_done = 0;
 }
