@@ -1,4 +1,4 @@
-/*	$NetBSD: DEFS.h,v 1.1 1995/04/17 12:23:33 ragge Exp $ */
+/*	$NetBSD: DEFS.h,v 1.2 1995/12/09 13:28:38 ragge Exp $ */
 /*
  * Copyright (c) 1982, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -47,6 +47,7 @@
 #define	R10	0x400
 #define	R11	0x800
 
+#ifdef __STDC__
 #ifdef PROF
 #define	ENTRY(x, regs) \
 	.globl _ ## x ## ; .align 2; _ ## x ## : .word regs; \
@@ -60,3 +61,19 @@
 #define	ASENTRY(x, regs) \
 	.globl x; .align 2; x ## : .word regs
 #endif
+# else
+#ifdef PROF
+#define ENTRY(x, regs) \
+	.globl _/**/x; .align 2; _/**/x: .word regs; \
+	.data; 1:; .long 0; .text; moval 1b,r0; jsb mcount
+#define ASENTRY(x, regs) \
+	.globl x; .align 2; x: .word regs; \
+	.data; 1:; .long 0; .text; moval 1b,r0; jsb mcount
+#else
+#define ENTRY(x, regs) \
+	.globl _/**/x; .align 2; _/**/x: .word regs
+#define ASENTRY(x, regs) \
+	.globl x; .align 2; x: .word regs
+#endif
+#endif
+
