@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_openbsd.h,v 1.6 1999/12/16 05:23:52 mjacob Exp $ */
+/*	$OpenBSD: isp_openbsd.h,v 1.7 2000/02/20 21:22:41 mjacob Exp $ */
 /*
  * OpenBSD Specific definitions for the Qlogic ISP Host Adapter
  *
@@ -63,7 +63,7 @@
 #include <vm/pmap.h>
 
 #define	ISP_PLATFORM_VERSION_MAJOR	0
-#define	ISP_PLATFORM_VERSION_MINOR	6
+#define	ISP_PLATFORM_VERSION_MINOR	8
 
 #define	ISP_SCSI_XFER_T		struct scsi_xfer
 struct isposinfo {
@@ -80,7 +80,7 @@ struct isposinfo {
 	struct scsi_xfer	*wqf, *wqt;
 };
 
-#define	MAXISPREQUEST	64
+#define	MAXISPREQUEST		256
 #ifdef	ISP2100_FABRIC
 #define	ISP2100_SCRLEN		0x400
 #else
@@ -204,12 +204,14 @@ extern void isp_uninit __P((struct ispsoftc *));
         bcopy(src, dest, sizeof (isp_pdb_t))
 #define ISP_SWIZZLE_ICB(a, b)
 #ifdef	__sparc__
+#define	ISP_SWIZZLE_CONTINUATION(a, b)	ISP_SBUSIFY_ISPHDR(a, &(b)->req_header)
 #define ISP_SWIZZLE_REQUEST(a, b)			\
 	ISP_SBUSIFY_ISPHDR(a, &(b)->req_header);	\
         ISP_SBUSIFY_ISPREQ(a, b)
 #define ISP_UNSWIZZLE_RESPONSE(a, b)			\
 	ISP_SBUSIFY_ISPHDR(a, &(b)->req_header)
 #else
+#define	ISP_SWIZZLE_CONTINUATION(a, b)
 #define ISP_SWIZZLE_REQUEST(a, b)
 #define ISP_UNSWIZZLE_RESPONSE(a, b)
 #endif
