@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppoe.c,v 1.13 2004/05/06 20:29:04 deraadt Exp $	*/
+/*	$OpenBSD: pppoe.c,v 1.14 2004/05/14 17:53:51 canacar Exp $	*/
 
 /*
  * Copyright (c) 2000 Network Security Technologies, Inc. http://www.netsec.net
@@ -42,6 +42,7 @@
 #include <string.h>
 #include <err.h>
 #include <fcntl.h>
+#include <grp.h>
 #include <pwd.h>
 #include <unistd.h>
 #include <sysexits.h>
@@ -62,7 +63,7 @@ int setup_rfilter(struct bpf_insn *, struct ether_addr *, int);
 int setup_wfilter(struct bpf_insn *, int);
 void child_handler(int);
 int signal_init(void);
-void drop_privs(struct passwd *pw);
+void drop_privs(struct passwd *, int);
 
 int
 main(int argc, char **argv)
@@ -129,7 +130,7 @@ main(int argc, char **argv)
 	if (bpffd < 0)
 		return (EX_IOERR);
 
-	drop_privs(pw);
+	drop_privs(pw, smode);
 
 	signal_init();
 
@@ -500,16 +501,25 @@ signal_init(void)
 }
 
 void
-drop_privs(struct passwd *pw)
+drop_privs(struct passwd *pw, int server_mode)
 {
-	
-	if (chroot(pw->pw_dir) == -1)
-		err(EX_OSERR, "chroot: %s", pw->pw_dir);
+	int groups[2], ng = 1;
+	struct group *gr;
 
-	if (chdir("/") == -1)
-		err(EX_OSERR, "chdir");
+	groups[0] = pw->pw_gid;
 
-	if (setgroups(1, &pw->pw_gid))
+	if (server_mode) {
+		if ((gr = getgrnam("network")) == NULL)
+			err(EX_CONFIG, "getgrnam(\"network\")");
+		groups[ng++] = gr->gr_gid;
+	} else {
+		if (chroot(pw->pw_dir) == -1)
+			err(EX_OSERR, "chroot: %s", pw->pw_dir);
+		if (chdir("/") == -1)
+			err(EX_OSERR, "chdir");
+	}
+
+	if (setgroups(ng, groups))
 		err(EX_OSERR, "setgroups");
 
 	if (setegid(pw->pw_gid))
