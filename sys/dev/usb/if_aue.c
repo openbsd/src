@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_aue.c,v 1.2 2000/03/30 16:19:32 aaron Exp $ */
-/*	$NetBSD: if_aue.c,v 1.36 2000/03/30 00:18:17 augustss Exp $	*/
+/*	$OpenBSD: if_aue.c,v 1.3 2000/04/04 22:52:29 aaron Exp $ */
+/*	$NetBSD: if_aue.c,v 1.37 2000/04/02 21:25:41 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -1448,6 +1448,8 @@ aue_send(sc, m, idx)
 	/* Transmit */
 	err = usbd_transfer(c->aue_xfer);
 	if (err != USBD_IN_PROGRESS) {
+		printf("%s: aue_send error=%s\n", USBDEVNAME(sc->aue_dev),
+		       usbd_errstr(err));
 		aue_stop(sc);
 		return (EIO);
 	}
