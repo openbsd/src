@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.27 2000/02/21 17:38:07 jason Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.28 2000/02/28 23:41:28 jason Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1048,7 +1048,6 @@ bridge_input(ifp, eh, m)
 	int s;
 	struct bridge_iflist *ifl;
 	struct arpcom *ac;
-	struct ether_header *neh;
 	struct mbuf *mc;
 
 	/*
@@ -1073,11 +1072,10 @@ bridge_input(ifp, eh, m)
 		mc = m_copym2(m, 0, M_COPYALL, M_NOWAIT);
 		if (mc == NULL)
 			return (m);
-		M_PREPEND(mc, sizeof(*eh), M_DONTWAIT);
+		M_PREPEND(mc, sizeof(struct ether_header), M_DONTWAIT);
 		if (mc == NULL)
 			return (m);
-		neh = mtod(mc, struct ether_header *);
-		bcopy(eh, neh, sizeof(struct ether_header));
+		bcopy(eh, mtod(mc, caddr_t), sizeof(struct ether_header));
 		s = splimp();
 		if (IF_QFULL(&sc->sc_if.if_snd)) {
 			m_freem(mc);
@@ -1112,11 +1110,10 @@ bridge_input(ifp, eh, m)
 		}
 		ifl = LIST_NEXT(ifl, next);
 	}
-	M_PREPEND(m, sizeof(*eh), M_DONTWAIT);
+	M_PREPEND(m, sizeof(struct ether_header), M_DONTWAIT);
 	if (m == NULL)
 		return (NULL);
-	neh = mtod(m, struct ether_header *);
-	bcopy(eh, neh, sizeof(struct ether_header));
+	bcopy(eh, mtod(m, caddr_t), sizeof(struct ether_header));
 	s = splimp();
 	if (IF_QFULL(&sc->sc_if.if_snd)) {
 		m_freem(m);
