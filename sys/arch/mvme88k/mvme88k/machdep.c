@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.142 2004/05/06 18:32:08 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.143 2004/06/23 00:30:36 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -1810,10 +1810,12 @@ m197_ext_int(u_int v, struct trapframe *eframe)
 		flush_pipeline();
 	}
 
-	/* block interrupts at level or lower */
-	setipl(level);
+	if (v != T_NON_MASK || cold == 0) {
+		/* block interrupts at level or lower */
+		setipl(level);
 
-	enable_interrupt();
+		enable_interrupt();
+	}
 
 	if ((intr = intr_handlers[vec]) == NULL) {
 		/* increment intr counter */
@@ -1853,13 +1855,15 @@ m197_ext_int(u_int v, struct trapframe *eframe)
 		}
 	}
 
-	disable_interrupt();
+	if (v != T_NON_MASK || cold == 0) {
+		disable_interrupt();
 
-	/*
-	 * Restore the mask level to what it was when the interrupt
-	 * was taken.
-	 */
-	setipl(mask);
+		/*
+		 * Restore the mask level to what it was when the interrupt
+		 * was taken.
+		 */
+		setipl(mask);
+	}
 }
 #endif	/* MVME197 */
 
