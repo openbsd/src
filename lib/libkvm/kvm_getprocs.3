@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kvm_getprocs.3,v 1.11 2004/01/07 02:16:33 millert Exp $
+.\"	$OpenBSD: kvm_getprocs.3,v 1.12 2004/08/05 03:44:35 jaredy Exp $
 .\"	$NetBSD: kvm_getprocs.3,v 1.13 2003/08/07 16:44:37 agc Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -46,8 +46,9 @@
 .Nm kvm_getenvv2
 .Nd access user process state
 .Sh SYNOPSIS
-.Fd #include <kvm.h>
+.Fd #include <sys/param.h>
 .Fd #include <sys/sysctl.h>
+.Fd #include <kvm.h>
 .Ft struct kinfo_proc *
 .Fn kvm_getprocs "kvm_t *kd" "int op" "int arg" "int *cnt"
 .Ft char **
@@ -55,7 +56,7 @@
 .Ft char **
 .Fn kvm_getenvv "kvm_t *kd" "const struct kinfo_proc *p" "int nchr"
 .Ft struct kinfo_proc2 *
-.Fn kvm_getproc2 "kvm_t *kd" "int op" "int arg" "int elemsize" "int *cnt"
+.Fn kvm_getproc2 "kvm_t *kd" "int op" "int arg" "size_t elemsize" "int *cnt"
 .Ft char **
 .Fn kvm_getargv2 "kvm_t *kd" "const struct kinfo_proc2 *p" "int nchr"
 .Ft char **
@@ -88,7 +89,8 @@ processes with process group
 processes with session
 .Fa arg
 .It Dv KERN_PROC_TTY
-processes with tty
+processes with
+.Xr tty 4
 .Fa arg
 .It Dv KERN_PROC_UID
 processes with effective user ID
@@ -101,8 +103,9 @@ processes with real user ID
 The number of processes found is returned in the reference parameter
 .Fa cnt .
 The processes are returned as a contiguous array of
-.Li kinfo_proc
-structures.
+.Vt kinfo_proc
+structures, the definition for which is available in
+.Aq Pa sys/sysctl.h .
 This memory is locally allocated, and subsequent calls to
 .Fn kvm_getprocs
 and
@@ -120,7 +123,7 @@ This information is, however,
 deliberately under control of the process itself.
 Note that the original command name can be found, unaltered,
 in the
-.Fa p_comm
+.Va p_comm
 field of the process structure returned by
 .Fn kvm_getprocs .
 .Pp
@@ -141,8 +144,11 @@ If
 is zero, no limit is imposed and all argument strings are returned in
 their entirety.
 .Pp
-The memory allocated to the argv pointers and string storage
-is owned by the kvm library.
+The memory allocated to the
+.Li argv
+pointers and string storage is owned by the
+.Xr kvm 3
+library.
 Subsequent
 .Fn kvm_getprocs
 and
@@ -160,13 +166,13 @@ This data is also alterable by the process.
 is similar to
 .Fn kvm_getprocs
 but returns an array of
-.Li kinfo_proc2
+.Vt kinfo_proc2
 structures.
 Additionally, only the first
 .Fa elemsize
 bytes of each array entry are returned.
 If the size of the
-.Li kinfo_proc2
+.Vt kinfo_proc2
 structure increases in size in a future release of
 .Ox ,
 the kernel will only return the requested amount of data for
@@ -183,7 +189,7 @@ functions are equivalents to the
 and
 .Fn kvm_getenvv
 functions that use a
-.Li kinfo_proc2
+.Vt kinfo_proc2
 structure to specify the process.
 .Sh RETURN VALUES
 .Fn kvm_getprocs ,
@@ -206,4 +212,6 @@ on failure.
 .Xr kvm_read 3 ,
 .Xr kvm_write 3
 .Sh BUGS
-These routines do not belong in the kvm interface.
+These routines do not belong in the
+.Xr kvm 3
+interface.
