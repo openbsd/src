@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.78 2004/05/25 20:51:03 mickey Exp $ */
+/*	$OpenBSD: loader.c,v 1.79 2004/05/25 21:48:00 mickey Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -485,7 +485,8 @@ _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynamicp)
 
 #if defined(__alpha__)
 	dynp = (Elf_Dyn *)((long)_DYNAMIC);
-#elif defined(__sparc__) || defined(__sparc64__) || defined(__powerpc__)
+#elif defined(__sparc__) || defined(__sparc64__) || defined(__powerpc__) || \
+    defined(__hppa__)
 	dynp = dynamicp;
 #else
 	dynp = (Elf_Dyn *)((long)_DYNAMIC + loff);
