@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.342 2003/03/10 14:50:29 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.343 2003/03/19 15:51:40 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -375,7 +375,7 @@ typedef struct {
 %type	<v.icmp>		icmp6_list icmp6_item
 %type	<v.fromto>		fromto
 %type	<v.peer>		ipportspec from to
-%type	<v.host>		ipspec xhost host address host_list
+%type	<v.host>		ipspec xhost host dynaddr host_list
 %type	<v.host>		redir_host_list redirspec
 %type	<v.host>		route_host route_host_list routespec
 %type	<v.port>		portspec port_list port_item
@@ -1555,8 +1555,10 @@ xhost		: not host			{
 		}
 		;
 
-host		: address
-		| address '/' number		{
+host		: STRING			{ $$ = host($1, -1); }
+		| STRING '/' number		{ $$ = host($1, $3); }
+		| dynaddr
+		| dynaddr '/' number		{
 			struct node_host	*n;
 
 			$$ = $1;
@@ -1594,7 +1596,7 @@ number		: STRING			{
 		}
 		;
 
-address		: '(' STRING ')'		{
+dynaddr		: '(' STRING ')'		{
 			if (ifa_exists($2) == NULL) {
 				yyerror("interface %s does not exist", $2);
 				YYERROR;
@@ -1615,7 +1617,6 @@ address		: '(' STRING ')'		{
 			$$->next = NULL;
 			$$->tail = $$;
 		}
-		| STRING			{ $$ = host($1, -1); }
 		;
 
 portspec	: port_item			{ $$ = $1; }
