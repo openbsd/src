@@ -36,7 +36,7 @@
 ./usr/lib/gcc-lib/arm-unknown-openbsd3.5/3.3.2/f771
 ./usr/lib/gcc-lib/arm-unknown-openbsd3.5/3.3.2/specs
 ./usr/lib/libasn1.so.13.0
-./usr/lib/libc.so.30.3
+./usr/lib/libc.so.31.0
 ./usr/lib/libcom_err.so.13.0
 ./usr/lib/libcrypto.so.10.4
 ./usr/lib/libcurses++.so.2.0
@@ -60,7 +60,7 @@
 ./usr/lib/libpanel.so.2.0
 ./usr/lib/libpcap.so.2.1
 ./usr/lib/libperl.so.8.2
-./usr/lib/libpthread.so.2.4
+./usr/lib/libpthread.so.3.0
 ./usr/lib/libreadline.so.1.0
 ./usr/lib/libsectok.so.5.0
 ./usr/lib/libskey.so.4.0
