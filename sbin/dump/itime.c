@@ -1,4 +1,4 @@
-/*	$OpenBSD: itime.c,v 1.3 1997/07/05 05:35:56 millert Exp $	*/
+/*	$OpenBSD: itime.c,v 1.4 1998/02/08 19:24:08 deraadt Exp $	*/
 /*	$NetBSD: itime.c,v 1.4 1997/04/15 01:09:50 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)itime.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: itime.c,v 1.3 1997/07/05 05:35:56 millert Exp $";
+static char rcsid[] = "$OpenBSD: itime.c,v 1.4 1998/02/08 19:24:08 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -59,6 +59,7 @@ static char rcsid[] = "$OpenBSD: itime.c,v 1.3 1997/07/05 05:35:56 millert Exp $
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <time.h>
 #ifdef __STDC__
 #include <stdlib.h>
 #include <string.h>
@@ -269,10 +270,17 @@ makedumpdate(ddp, tbuf)
 	struct dumpdates *ddp;
 	char *tbuf;
 {
-	char un_buf[128];
+	char un_buf[BUFSIZ], *str;
+	struct tm then;
 
-	(void) sscanf(tbuf, DUMPINFMT, ddp->dd_name, &ddp->dd_level, un_buf);
-	ddp->dd_ddate = unctime(un_buf);
+	if (sscanf(tbuf, DUMPINFMT, ddp->dd_name, &ddp->dd_level, un_buf) != 3)
+		return(-1);
+	str = strptime(un_buf, "%a %b %e %H:%M:%S %Y", &then);
+	then.tm_isdst = -1;
+	if (str == NULL || (*str != '\n' && *str != '\0'))
+		ddp->dd_ddate = (time_t) -1;
+	else
+		ddp->dd_ddate = mktime(&then);
 	if (ddp->dd_ddate < 0)
 		return(-1);
 	return(0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.h,v 1.5 1997/07/05 05:35:54 millert Exp $	*/
+/*	$OpenBSD: dump.h,v 1.6 1998/02/08 19:24:07 deraadt Exp $	*/
 /*	$NetBSD: dump.h,v 1.11 1997/06/05 11:13:20 lukem Exp $	*/
 
 /*-
@@ -104,7 +104,6 @@ int	query __P((char *question));
 void	quit __P((const char *fmt, ...));
 void	statussig __P((int));
 void	timeest __P((void));
-time_t	unctime __P((char *str));
 
 /* mapping routines */
 struct	dinode;

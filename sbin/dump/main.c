@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.17 1997/07/05 05:35:56 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.18 1998/02/08 19:24:08 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.14 1997/06/05 11:13:24 lukem Exp $	*/
 
 /*-
@@ -110,11 +110,12 @@ main(argc, argv)
 	register struct	fstab *dt;
 	register char *map;
 	register int ch;
+	struct tm then;
 	int i, anydirskipped, bflag = 0, Tflag = 0, honorlevel = 1;
 	ino_t maxino;
 	time_t tnow;
 	int dirlist;
-	char *toplevel;
+	char *toplevel, *str;
 
 	spcl.c_date = 0;
 	(void)time((time_t *)&spcl.c_date);
@@ -181,7 +182,12 @@ main(argc, argv)
 			break;
 
 		case 'T':		/* time of last dump */
-			spcl.c_ddate = unctime(optarg);
+			str = strptime(optarg, "%a %b %e %H:%M:%S %Y", &then);
+			then.tm_isdst = -1;
+			if (str == NULL || (*str != '\n' && *str != '\0'))
+				spcl.c_ddate = (time_t) -1;
+			else
+				spcl.c_ddate = mktime(&then);
 			if (spcl.c_ddate < 0) {
 				(void)fprintf(stderr, "bad time \"%s\"\n",
 				    optarg);
