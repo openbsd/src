@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.238 2003/05/15 08:38:47 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.239 2003/05/16 09:08:58 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -39,7 +39,6 @@ The
 packet filter modifies, drops or passes packets according to rules or
 definitions specified in
 .Nm pf.conf .
-.Pp
 .Sh STATEMENT ORDER
 There are seven types of statements in
 .Nm pf.conf :
@@ -54,7 +53,7 @@ Tables provide a mechanism for increasing the performance and flexibility of
 rules with large numbers of source or destination addresses.
 .It Cm Options
 Options tune the behaviour of the packet filtering engine.
-.It Cm Traffic Normalization Li (e.g. Em scrub Ns )
+.It Cm Traffic Normalization Li (e.g. Em scrub )
 Traffic normalization protects internal machines against inconsistencies
 in Internet protocols and implementations.
 .It Cm Queueing
@@ -80,7 +79,6 @@ By default
 enforces this order (see
 .Ar set require-order
 below).
-.Pp
 .Sh MACROS
 Much like
 .Xr cpp 1
@@ -92,7 +90,7 @@ and underscores.
 Macro names may not be reserved words (for example
 .Ar pass ,
 .Ar in ,
-.Ar out Ns ).
+.Ar out ) .
 Macros are not expanded inside quotes.
 .Pp
 For example,
@@ -102,7 +100,6 @@ all_ifs = \&"{\&" $ext_if lo0 \&"}\&"
 pass out on $ext_if from any to any keep state
 pass in  on $ext_if proto tcp from any to any port 25 keep state
 .Ed
-.Pp
 .Sh TABLES
 Tables are named structures which can hold a collection of addresses and
 networks.
@@ -435,7 +432,6 @@ There may be non-trivial and non-obvious implications to an out of
 order ruleset.
 Consider carefully before disabling the order enforcement.
 .El
-.Pp
 .Sh TRAFFIC NORMALIZATION
 Traffic normalization is used to sanitize packet content in such
 a way that there are no ambiguities in packet interpretation on
@@ -776,7 +772,6 @@ supports an additional option:
 The queue can borrow bandwidth from the parent.
 .El
 .Pp
-.Pp
 The
 .Ar hfsc
 .Ar scheduler
@@ -794,7 +789,7 @@ The bandwidth share of a backlogged queue.
 .Ar service curve .
 .Pp
 The format for service curve specifications is
-.Ar ( m1 , d , m2 ) . 
+.Ar ( m1 , d , m2 ) .
 .Ar m2
 controls the bandwidth assigned to the queue.
 .Ar m1
@@ -837,7 +832,7 @@ Interactive
 sessions get priority over bulk transfers like
 .Xr scp 1
 and
-.Xr sftp 1 Ns .
+.Xr sftp 1 .
 The queues may then be referenced by filtering rules (see
 .Sx PACKET FILTERING
 below).
@@ -862,7 +857,6 @@ pass out on dc0 inet proto tcp from any to any port 22 \e
 pass out on dc0 inet proto tcp from any to any port 25 \e
       keep state queue mail
 .Ed
-.Pp
 .Sh TRANSLATION
 Translation rules modify either the source or destination address of the
 packets associated with a stateful connection.
@@ -972,7 +966,6 @@ any address.
 See
 .Sx TRANSLATION EXAMPLES
 below.
-.Pp
 .Sh PACKET FILTERING
 .Xr pf 4
 has the ability to
@@ -982,12 +975,12 @@ and
 packets based on attributes of their layer 3 (see
 .Xr ip 4
 and
-.Xr ip6 4 Ns )
+.Xr ip6 4 )
 and layer 4 (see
 .Xr icmp 4 ,
 .Xr icmp6 4 ,
 .Xr tcp 4 ,
-.Xr udp 4 Ns )
+.Xr udp 4 )
 headers.
 In addition, packets may also be
 assigned to queues for the purpose of bandwidth control.
@@ -1209,7 +1202,7 @@ pass in proto tcp from 10.0.0.0/8 port > 1024 \e
 This is equivalent to "from any to any".
 .It Ar group <group>
 Similar to
-.Ar user Ns ,
+.Ar user ,
 this rule only applies to packets of sockets owned by the specified group.
 .It Ar user <user>
 This rule only applies to packets of sockets owned by the specified user.
@@ -1404,10 +1397,9 @@ the incoming connection arrived through (symmetric routing enforcement).
 The
 .Ar dup-to
 option creates a duplicate of the packet and routes it like
-.Ar route-to.
+.Ar route-to .
 The original packet gets routed as it normally would.
 .El
-.Pp
 .Sh POOL OPTIONS
 For
 .Ar nat
@@ -1462,7 +1454,6 @@ option prevents
 .Xr pf 4
 from modifying the source port on tcp and udp packets.
 .El
-.Pp
 .Sh STATEFUL INSPECTION
 .Xr pf 4
 is a stateful packet filter, which means it can track the state of
@@ -1670,7 +1661,6 @@ Caveat: Rules created by the
 directive interfere with packets sent over loopback interfaces
 to local addresses.
 One should pass these explicitly.
-.Pp
 .Sh FRAGMENT HANDLING
 The size of IP datagrams (packets) can be significantly larger than the
 the maximum transmission unit (MTU) of the network.
