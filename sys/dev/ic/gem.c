@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.13 2001/12/13 03:51:10 drahn Exp $	*/
+/*	$OpenBSD: gem.c,v 1.14 2002/01/25 16:51:57 jason Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -1566,6 +1566,9 @@ gem_encap(sc, mhead, bixp)
 		return (ENOBUFS);
 	}
 
+	bus_dmamap_sync(sc->sc_dmatag, map, 0, map->dm_mapsize,
+	    BUS_DMASYNC_PREWRITE);
+
 	for (i = 0; i < map->dm_nsegs; i++) {
 		sc->sc_txdescs[frag].gd_addr =
 		    GEM_DMA_WRITE(sc, map->dm_segs[i].ds_addr);
@@ -1580,8 +1583,7 @@ gem_encap(sc, mhead, bixp)
 		if (++frag == GEM_NTXDESC)
 			frag = 0;
 	}
-	bus_dmamap_sync(sc->sc_dmatag, map, 0, map->dm_mapsize,
-	    BUS_DMASYNC_PREWRITE);
+
 	sc->sc_tx_cnt += map->dm_nsegs;
 	sc->sc_txd[cur].sd_map = map;
 	sc->sc_txd[cur].sd_mbuf = mhead;
