@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.c,v 1.7 1999/01/25 20:16:07 mickey Exp $	*/
+/*	$OpenBSD: pdc.c,v 1.8 1999/02/13 04:43:18 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -234,9 +234,13 @@ iodcstrategy(devdata, rw, blk, size, buf, rsize)
 				blk - offset, bbuf, BTIOSIZ, BTIOSIZ)) < 0) {
 #ifdef DEBUG
 			if (debug)
-				printf("IODC_IO: %d\n", ret);
+				printf("iodc_read(%d,%d): %d\n",
+					blk - offset, BTIOSIZ, ret);
 #endif
-			return (EIO);
+			if (xfer)
+				break;
+			else
+				return (EIO);
 		}
 		if ((ret = pdcbuf[0]) <= 0)
 			break;

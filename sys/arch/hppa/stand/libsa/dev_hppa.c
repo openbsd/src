@@ -1,5 +1,4 @@
-/*	$OpenBSD: dev_hppa.c,v 1.3 1998/10/30 19:41:14 mickey Exp $	*/
-/*	$NOWHERE: dev_hppa.c,v 2.1 1998/06/17 20:51:54 mickey Exp $	*/
+/*	$OpenBSD: dev_hppa.c,v 1.4 1999/02/13 04:43:18 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
