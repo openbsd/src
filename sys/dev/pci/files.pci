@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.139 2002/06/25 19:25:12 miod Exp $
+#	$OpenBSD: files.pci,v 1.140 2002/06/26 00:18:03 itojun Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -448,11 +448,9 @@ attach	amdpm at pci
 file	dev/pci/amdpm.c			amdpm
 
 # OHCI IEEE 1394 controller
-device	fwohci {}
 attach	fwohci at pci with fwohci_pci
 file	dev/pci/fwohci_pci.c		fwohci_pci
 
 # IEEE 1394 TI "Lynx" controller
-device	fwlynx {}
 attach	fwlynx at pci with fwlynx_pci
 file	dev/pci/fwlynx_pci.c		fwlynx_pci
