@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.239 2002/07/04 21:51:16 krw Exp $
+#	$OpenBSD: install.sub,v 1.240 2002/07/04 23:36:35 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -481,8 +481,31 @@ addifconfig() {
 	fi
 }
 
+# Show selection list and get user response to give question
+# in global _resp.
+#
+# $1 = full list to display
+# $2 = list of already selected elements
+# $3 = question to ask user
+do_selection_list() {
+	local _next _elem
+
+	for _elem in $1; do
+		if isin $_elem $2; then
+			echo -n "	[X] "
+		else
+			echo -n "	[ ] "
+			: ${_next:=$_elem}
+		fi
+		echo $_elem
+	done
+	: ${_next:=done}
+
+	ask "\n$3 (or 'done')" "$_next"
+}
+
 configure_all_interfaces() {
-	local _ifsdone _ifs _ouranswer
+	local _ifsdone _ifs
 
 	_IFS=`get_ifdevs`
 
@@ -493,18 +516,8 @@ You may configure the following network interfaces (the interfaces
 marked with [X] have been successfully configured):
 
 __EOT
-		_ouranswer=
-		for _ifs in $_IFS; do
-			if isin $_ifs $_ifsdone ; then
-				echo -n "	[X] "
-			else
-				echo -n "	[ ] "
-				: ${_ouranswer:=$_ifs}
-			fi
-			echo $_ifs
-		done
-		: ${_ouranswer:=done}
-		ask "\nConfigure which interface? (or 'done')" "$_ouranswer"
+		do_selection_list "$_IFS" "$_ifsdone" "Configure which interface?"
+
 		case $resp in
 		"done")	break	
 			;;
@@ -832,43 +845,10 @@ enable_network() {
 	return 0
 }
 
-# Print the selector and get a response
-# The list of sets is passed in as $1, sets $resp
-get_selection() {
-	local _next=done _f _sets=$1
-
-	cat << __EOT
-
-The following sets are available. Enter a filename, 'all' to select
-all the sets, or 'done'. You may de-select a set by prepending a '-'
-to its name.
-
-__EOT
-	for _f in $_sets ; do
-		if isin $_f $_get_files ; then
-			echo -n "	[X] "
-		else
-			echo -n "	[ ] "
-			if [ "$_next" = "done" ]; then
-				_next=$_f
-			fi
-		fi
-		echo $_f
-	done
-
-	# Get the name of the file.
-	ask "File name?" "$_next"
-
-	# Ignore a bare '-' or '+'
-	case $resp in
-	+|-)	resp=
-	esac
-}
-
 # Do globbing on the selection and parse +/-, sets the global
 # _get_files appropriately.
 glob_selection() {
-	local _selection=$1 _src=$2 _sets=$3
+	local _selection=$1 _src=$2
 	local _action _nomatch _f
 
 	# Change +/- into add/remove
@@ -959,10 +939,15 @@ __EOT
 	fi
 }
 
-# Set global _get_files to the list of sets requested by the user
-# from $1.
+# Set global _get_files to the list of sets requested by the user.
+# $1 = list of files available in source directory or url.
+# $2 = source directory or url
 get_get_files_list () {
-	local _src=$1
+	local _filelist=$1 _src=$2
+
+	get_sets_list "$_file_list" "$_src"
+
+	[ "$_sets" ] || return
 
 	_get_files=
 
@@ -987,14 +972,24 @@ __EOT
 
 	# Allow the user to select/de-select additional sets
 	while : ; do
+		cat << __EOT
 
-		get_selection "$_sets"
+The following sets are available. Enter a filename, 'all' to select
+all the sets, or 'done'. You may de-select a set by prepending a '-'
+to its name.
 
-		if [ "$resp" = "done" ]; then
-			break
-		fi
+__EOT
+		do_selection_list "$_sets" "$_get_files" "File Name?"
 
-		glob_selection "$resp" "$_src" "$_sets"
+		# Ignore a bare '-' or '+'
+		case $resp in
+		+|-)	continue
+			;;
+		done)	break
+			;;
+		esac
+
+		glob_selection "$resp" "$_src"
 	done
 }
 
@@ -1204,11 +1199,7 @@ __EOT
 		_file_list=`ftp -o - -V "${_url_base}/index.txt" | sed 's///'`
 	fi
 
-	get_sets_list  "$_file_list" "`eval echo \\$_${_url_type}_server_dir`"
-
-	[ "$_sets" ] || return
-
-	get_get_files_list "`eval echo \\$_${_url_type}_server_dir`"
+	get_get_files_list "$_file_list" "`eval echo \\$_${_url_type}_server_dir`"
 
 	# User may have selected no files
 	[ "$_get_files" ] || return
@@ -1219,30 +1210,24 @@ Fetching files via ${_url_type} may take a long time, especially over a slow
 network connection.
 __EOT
 
-	install_get_files_list "$_url_base" "`eval echo \$_${_url_type}_server_dir`"
+	install_get_files_list "$_url_base"
 }
 
 # $1 - mount point directory is relative to
 # $2 - default directory
 install_mounted_fs() {
-	local _f _file_list
+	local _f
 
 	get_localdir "$1" "$2"
 
 	[ -d "$local_sets_dir" ] || return
 
-	_file_list=`ls -l ${local_sets_dir}`
-
-	get_sets_list "$_file_list" "$local_sets_dir"
-
-	[ "$_sets" ] || return
-
-	get_get_files_list "$local_sets_dir"
+	get_get_files_list "`ls -l ${local_sets_dir}`" "$local_sets_dir"
 
 	# User may have selected no files
 	[ "$_get_files" ] || return
 
-	install_get_files_list "file:$local_sets_dir" "$local_sets_dir"
+	install_get_files_list "file:$local_sets_dir"
 }
 
 install_cdrom() {
