@@ -6,10 +6,10 @@
 
 static const struct hppa_board_info hppa_knownboards[] = {
 	{ HPPA_BOARD_HP710,	"HP710",	"710 (Bushmaster)" },
-	{ HPPA_BOARD_HP712_60,	"HP712_60",	"712/60 (Gekko)" },
-	{ HPPA_BOARD_HP712_80,	"HP712_80",	"712/80 (Gekko)" },
-	{ HPPA_BOARD_HP712_80i,	"HP712_80i",	"712/80i (Gekko)" },
-	{ HPPA_BOARD_HP712_100,	"HP712_100",	"712/100 (Gekko)" },
+	{ HPPA_BOARD_HP712_60,	"HP712_60",	"712/60 (Gecko)" },
+	{ HPPA_BOARD_HP712_80,	"HP712_80",	"712/80 (Gecko)" },
+	{ HPPA_BOARD_HP712_80i,	"HP712_80i",	"712/80i (Gecko)" },
+	{ HPPA_BOARD_HP712_100,	"HP712_100",	"712/100 (Gecko)" },
 	{ HPPA_BOARD_HP715_33,	"HP715_33",	"715/33 (Scorpio)" },
 	{ HPPA_BOARD_HP715_50,	"HP715_50",	"715/50 (Scorpio)" },
 	{ HPPA_BOARD_HP715T_50,	"HP715T_50",	"715T/50 (Scorpio (4XXt up))" },
