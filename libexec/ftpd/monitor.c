@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.c,v 1.2 2004/11/28 19:12:31 henning Exp $	*/
+/*	$OpenBSD: monitor.c,v 1.3 2004/11/28 20:09:47 henning Exp $	*/
 
 /*
  * Copyright (c) 2004 Moritz Jodeit <moritz@jodeit.org>
@@ -58,7 +58,7 @@ extern void	set_slave_signals(void);
 int	fd_monitor = -1;
 int	fd_slave = -1;
 int	nullfd;
-pid_t	slave_pid;
+pid_t	slave_pid = -1;
 enum monitor_state	state = PREAUTH;
 volatile sig_atomic_t	quit = 0;
 
@@ -380,7 +380,7 @@ sig_pass_to_slave(int signo)
 {
 	int olderrno = errno;
 
-	if (slave_pid != 0)
+	if (slave_pid > 0)
 		kill(slave_pid, signo);
 
 	errno = olderrno;
@@ -397,8 +397,10 @@ sig_chld(int signo)
 		pid = waitpid(-1, &stat, WNOHANG);
 	} while (pid == -1 && errno == EINTR);
 
-	if (pid == slave_pid && stat != PREAUTH_SLAVE_DIED)
+	if (pid == slave_pid && stat != PREAUTH_SLAVE_DIED) {
 		quit = 1;
+		slave_pid = -1;
+	}
 
 	errno = olderrno;
 }
@@ -406,7 +408,7 @@ sig_chld(int signo)
 void
 kill_slave(void)
 {
-	if (slave_pid != 0)
+	if (slave_pid > 0)
 		kill(slave_pid, SIGQUIT);
 }
 
