@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.51 2001/06/26 15:33:00 provos Exp $ */
+/*	$OpenBSD: pf.c,v 1.52 2001/06/26 15:35:41 provos Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -376,9 +376,10 @@ pflog_packet(struct mbuf *m, int af, u_short dir, u_short reason,
 	else
 		strcpy(hdr.ifname, "unkn");
 
+	hdr.rnr = htons(nr);
+	hdr.reason = htons(reason);
 	hdr.dir = htons(dir);
 	hdr.action = htons(rm->action);
-	hdr.rnr = htonl(nr);
 
         m1.m_next = m;
         m1.m_len = PFLOG_HDRLEN;
