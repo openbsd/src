@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.68 2001/05/11 17:20:11 aaron Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.69 2001/05/16 06:38:25 fgsch Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -361,7 +361,7 @@ ipv4_input(struct mbuf *m, ...)
 		}
 	}
 
-	if ((ip->ip_sum = in_cksum(m, hlen)) != 0) {
+	if (in_cksum(m, hlen) != 0) {
 		ipstat.ips_badsum++;
 		goto bad;
 	}
