@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlim-file.c,v 1.1 2002/02/05 16:19:49 art Exp $	*/
+/*	$OpenBSD: rlim-file.c,v 1.2 2002/02/08 17:09:24 art Exp $	*/
 /*
  *	Written by Artur Grabowski <art@openbsd.org> (2002) Public Domain.
  */
@@ -8,6 +8,8 @@
 #include <err.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <errno.h>
+#include <string.h>
 
 int
 main()
@@ -27,6 +29,12 @@ main()
 
 	if (pipe(fds) == 0)
 		errx(1, "pipe was allowed");
+
+	if (errno == ENFILE)
+		errx(1, "try to do the test on a less loaded system");
+
+	if (errno != EMFILE)
+		errx(1, "bad errno (%d): %s", errno, strerror(errno));
 
 	return 0;
 }
