@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.94 2002/10/07 13:18:40 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.95 2002/10/07 13:23:46 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -280,6 +280,7 @@ struct pf_rule {
 	u_int8_t		 tos;
 };
 
+#define	PFRULE_DROP		0x00
 #define	PFRULE_RETURNRST	0x01
 #define	PFRULE_NODF		0x02
 #define	PFRULE_FRAGMENT		0x04

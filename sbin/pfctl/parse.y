@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.161 2002/10/07 13:18:40 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.162 2002/10/07 13:23:46 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -58,8 +58,9 @@ static int lineno = 1;
 static int errors = 0;
 static int rulestate = 0;
 static u_int16_t returnicmpdefault =  (ICMP_UNREACH << 8) | ICMP_UNREACH_PORT;
-static u_int16_t returnicmp6default = (ICMP6_DST_UNREACH << 8)
-    | ICMP6_DST_UNREACH_NOPORT;
+static u_int16_t returnicmp6default = (ICMP6_DST_UNREACH << 8) |
+    ICMP6_DST_UNREACH_NOPORT;
+static int blockpolicy = PFRULE_DROP;
 
 enum {
 	PFCTL_STATE_NONE = 0,
@@ -256,9 +257,9 @@ typedef struct {
 %token	RETURNRST RETURNICMP RETURNICMP6 PROTO INET INET6 ALL ANY ICMPTYPE
 %token	ICMP6TYPE CODE KEEP MODULATE STATE PORT RDR NAT BINAT ARROW NODF
 %token	MINTTL ERROR ALLOWOPTS FASTROUTE ROUTETO DUPTO REPLYTO NO LABEL
-%token	NOROUTE FRAGMENT USER GROUP MAXMSS MAXIMUM TTL TOS
+%token	NOROUTE FRAGMENT USER GROUP MAXMSS MAXIMUM TTL TOS DROP
 %token	FRAGNORM FRAGDROP FRAGCROP
-%token	SET OPTIMIZATION TIMEOUT LIMIT LOGINTERFACE
+%token	SET OPTIMIZATION TIMEOUT LIMIT LOGINTERFACE BLOCKPOLICY
 %token	ANTISPOOF FOR
 %token	<v.string> STRING
 %token	<v.i>	PORTUNARY PORTBINARY
@@ -321,6 +322,20 @@ option		: SET OPTIMIZATION STRING		{
 				yyerror("error setting loginterface %s", $3);
 				YYERROR;
 			}
+		}
+		| SET BLOCKPOLICY DROP	{
+			if (pf->opts & PF_OPT_VERBOSE)
+				printf("set block-policy drop\n");
+			if (check_rulestate(PFCTL_STATE_OPTION))
+				YYERROR;
+			blockpolicy = PFRULE_DROP;
+		}
+		| SET BLOCKPOLICY RETURN {
+			if (pf->opts & PF_OPT_VERBOSE)
+				printf("set block-policy return\n");
+			if (check_rulestate(PFCTL_STATE_OPTION))
+				YYERROR;
+			blockpolicy = PFRULE_RETURN;
 		}
 		;
 
@@ -574,7 +589,16 @@ action		: PASS			{ $$.b1 = PF_PASS; $$.b2 = $$.w = 0; }
 		| BLOCK blockspec	{ $$ = $2; $$.b1 = PF_DROP; }
 		;
 
-blockspec	: /* empty */		{ $$.b2 = 0; $$.w = 0; $$.w2 = 0; }
+blockspec	: /* empty */		{
+			$$.b2 = blockpolicy;
+			$$.w = returnicmpdefault;
+			$$.w2 = returnicmp6default;
+		}
+		| DROP			{
+			$$.b2 = PFRULE_DROP;
+			$$.w = 0;
+			$$.w2 = 0;
+		}
 		| RETURNRST		{
 			$$.b2 = PFRULE_RETURNRST;
 			$$.w = 0; 
@@ -2316,8 +2340,10 @@ lookup(char *s)
 		{ "any",	ANY},
 		{ "binat",	BINAT},
 		{ "block",	BLOCK},
+		{ "block-policy", BLOCKPOLICY},
 		{ "code",	CODE},
 		{ "crop",	FRAGCROP},
+		{ "drop",	DROP},
 		{ "drop-ovl",	FRAGDROP},
 		{ "dup-to",	DUPTO},
 		{ "fastroute",	FASTROUTE},

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.98 2002/10/07 13:18:40 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.99 2002/10/07 13:23:46 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -632,7 +632,9 @@ print_rule(struct pf_rule *r)
 		printf("pass ");
 	else if (r->action == PF_DROP) {
 		printf("block ");
-		if (r->rule_flag & PFRULE_RETURNRST) {
+		if (r->rule_flag & PFRULE_RETURN)
+			printf("return ");
+		else if (r->rule_flag & PFRULE_RETURNRST) {
 			if (!r->return_ttl)
 				printf("return-rst ");
 			else
