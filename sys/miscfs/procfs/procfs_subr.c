@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_subr.c,v 1.13 2001/04/09 07:14:23 tholo Exp $	*/
+/*	$OpenBSD: procfs_subr.c,v 1.14 2001/11/15 07:00:31 art Exp $	*/
 /*	$NetBSD: procfs_subr.c,v 1.15 1996/02/12 15:01:42 christos Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
 #include <miscfs/procfs/procfs.h>
 
 static TAILQ_HEAD(, pfsnode)	pfshead;
-static int pfsvplock;
+struct lock pfs_vlock;
 
 /*ARGSUSED*/
 int
@@ -60,6 +60,7 @@ procfs_init(vfsp)
 	struct vfsconf *vfsp;
 
 {
+	lockinit(&pfs_vlock, PVFS, "procfsl", 0, 0);
 	TAILQ_INIT(&pfshead);
 	return (0);
 }
@@ -116,15 +117,9 @@ loop:
 	}
 
 	/*
-	 * otherwise lock the vp list while we call getnewvnode
-	 * since that can block.
+	 * Lock the vp list, getnewvnode can sleep.
 	 */
-	if (pfsvplock & PROCFS_LOCKED) {
-		pfsvplock |= PROCFS_WANT;
-		sleep((caddr_t) &pfsvplock, PINOD);
-		goto loop;
-	}
-	pfsvplock |= PROCFS_LOCKED;
+	lockmgr(&pfs_vlock, LK_EXCLUSIVE, NULL, p);
 
 	if ((error = getnewvnode(VT_PROCFS, mp, procfs_vnodeop_p, vpp)) != 0)
 		goto out;
@@ -188,12 +183,7 @@ loop:
 	TAILQ_INSERT_TAIL(&pfshead, pfs, list);
 
 out:
-	pfsvplock &= ~PROCFS_LOCKED;
-
-	if (pfsvplock & PROCFS_WANT) {
-		pfsvplock &= ~PROCFS_WANT;
-		wakeup((caddr_t) &pfsvplock);
-	}
+	lockmgr(&pfs_vlock, LK_RELEASE, NULL, p);
 
 	return (error);
 }
