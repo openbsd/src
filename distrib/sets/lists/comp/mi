@@ -1255,6 +1255,7 @@
 ./usr/share/man/cat2/write.0
 ./usr/share/man/cat2/writev.0
 ./usr/share/man/cat3/MD4Data.0
+./usr/share/man/cat3/mkdtemp.0
 ./usr/share/man/cat3/MD4End.0
 ./usr/share/man/cat3/MD4File.0
 ./usr/share/man/cat3/MD4Final.0

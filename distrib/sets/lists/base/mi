@@ -978,6 +978,7 @@
 ./usr/share/ipf/firewall.1
 ./usr/share/ipf/firewall.2
 ./usr/share/ipf/nat.1
+./usr/share/ipf/nat.2
 ./usr/share/lkm
 ./usr/share/lkm/misc
 ./usr/share/lkm/misc/module
