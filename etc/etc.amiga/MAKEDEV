@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.28 1997/10/07 22:10:55 niklas Exp $
+#	$OpenBSD: MAKEDEV,v 1.29 1997/10/16 07:29:56 niklas Exp $
 #	$NetBSD: MAKEDEV,v 1.21 1996/05/19 21:03:49 veego Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -583,7 +583,7 @@ audio*)
         audio=audio$unit                                                
         sound=sound$unit                             
         mixer=mixer$unit                                         
-        major=41                                
+        major=39                                
         audioctl=audioctl$unit                                       
         if [ "$unit" = "" ]; then unit=0; fi
         rm -f $audio $sound $mixer $audioctl                             
