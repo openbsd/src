@@ -415,3 +415,4 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/stdbool.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/g2c.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/memrange.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/net/if_token.ph

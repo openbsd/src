@@ -116,6 +116,7 @@
 ./sbin/nologin
 ./sbin/photurisd
 ./sbin/ping
+./sbin/ping6
 ./sbin/quotacheck
 ./sbin/raidctl
 ./sbin/rdump
@@ -125,6 +126,7 @@
 ./sbin/routed
 ./sbin/rrestore
 ./sbin/rtquery
+./sbin/rtsol
 ./sbin/savecore
 ./sbin/scan_ffs
 ./sbin/scsi
@@ -887,10 +889,13 @@
 ./usr/sbin/dnsquery
 ./usr/sbin/edquota
 ./usr/sbin/ext_srvtab
+./usr/sbin/faithd
 ./usr/sbin/fs
 ./usr/sbin/fsinfo
+./usr/sbin/gifconfig
 ./usr/sbin/host
 ./usr/sbin/httpd
+./usr/sbin/ifmcstat
 ./usr/sbin/inetd
 ./usr/sbin/iostat
 ./usr/sbin/ipftest
@@ -933,6 +938,7 @@
 ./usr/sbin/named.reload
 ./usr/sbin/named.restart
 ./usr/sbin/ndc
+./usr/sbin/ndp
 ./usr/sbin/netgroup_mkdb
 ./usr/sbin/nslookup
 ./usr/sbin/openssl
@@ -963,10 +969,13 @@
 ./usr/sbin/rmt
 ./usr/sbin/rmuser
 ./usr/sbin/rotatelogs
+./usr/sbin/route6d
 ./usr/sbin/rpc.bootparamd
 ./usr/sbin/rpc.lockd
 ./usr/sbin/rpc.pcnfsd
 ./usr/sbin/rpc.yppasswdd
+./usr/sbin/rtadvd
+./usr/sbin/rtsold
 ./usr/sbin/rwhod
 ./usr/sbin/sa
 ./usr/sbin/sendmail
@@ -2666,10 +2675,3 @@
 ./var/yp/Makefile.yp
 ./var/yp/Makefile.yp.dist
 ./var/yp/README
-./usr/sbin/ifmcstat
-./usr/sbin/rtsold
-./sbin/rtsol
-./usr/sbin/ndp
-./sbin/ping6
-./usr/sbin/rtadvd
-./usr/sbin/route6d

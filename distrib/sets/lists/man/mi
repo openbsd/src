@@ -277,6 +277,7 @@
 ./usr/share/man/cat1/indent.0
 ./usr/share/man/cat1/indxbib.0
 ./usr/share/man/cat1/infocmp.0
+./usr/share/man/cat1/infotocap.0
 ./usr/share/man/cat1/install.0
 ./usr/share/man/cat1/intro.0
 ./usr/share/man/cat1/ipcrm.0
@@ -580,6 +581,20 @@
 ./usr/share/man/cat1/zgrep.0
 ./usr/share/man/cat1/zmore.0
 ./usr/share/man/cat1/znew.0
+./usr/share/man/cat3/inet6_option_alloc.0
+./usr/share/man/cat3/inet6_option_append.0
+./usr/share/man/cat3/inet6_option_find.0
+./usr/share/man/cat3/inet6_option_init.0
+./usr/share/man/cat3/inet6_option_next.0
+./usr/share/man/cat3/inet6_option_space.0
+./usr/share/man/cat3/inet6_rthdr_add.0
+./usr/share/man/cat3/inet6_rthdr_getaddr.0
+./usr/share/man/cat3/inet6_rthdr_getflags.0
+./usr/share/man/cat3/inet6_rthdr_init.0
+./usr/share/man/cat3/inet6_rthdr_lasthop.0
+./usr/share/man/cat3/inet6_rthdr_reverse.0
+./usr/share/man/cat3/inet6_rthdr_segments.0
+./usr/share/man/cat3/inet6_rthdr_space.0
 ./usr/share/man/cat3/set_form_userptr.0
 ./usr/share/man/cat3/set_form_win.0
 ./usr/share/man/cat3/set_item_init.0
@@ -828,6 +843,7 @@
 ./usr/share/man/cat4/cltp.0
 ./usr/share/man/cat4/cnw.0
 ./usr/share/man/cat4/cua.0
+./usr/share/man/cat4/dc.0
 ./usr/share/man/cat4/ddb.0
 ./usr/share/man/cat4/de.0
 ./usr/share/man/cat4/drum.0
@@ -871,6 +887,7 @@
 ./usr/share/man/cat4/i386/aria.0
 ./usr/share/man/cat4/i386/ast.0
 ./usr/share/man/cat4/i386/autoconf.0
+./usr/share/man/cat4/i386/awi.0
 ./usr/share/man/cat4/i386/bktr.0
 ./usr/share/man/cat4/i386/boca.0
 ./usr/share/man/cat4/i386/bt.0
@@ -880,6 +897,7 @@
 ./usr/share/man/cat4/i386/el.0
 ./usr/share/man/cat4/i386/fdc.0
 ./usr/share/man/cat4/i386/gus.0
+./usr/share/man/cat4/i386/hsq.0
 ./usr/share/man/cat4/i386/ie.0
 ./usr/share/man/cat4/i386/intro.0
 ./usr/share/man/cat4/i386/iy.0
@@ -891,6 +909,7 @@
 ./usr/share/man/cat4/i386/mcd.0
 ./usr/share/man/cat4/i386/mem.0
 ./usr/share/man/cat4/i386/mms.0
+./usr/share/man/cat4/i386/mtrr.0
 ./usr/share/man/cat4/i386/npx.0
 ./usr/share/man/cat4/i386/pccom.0
 ./usr/share/man/cat4/i386/pctr.0
@@ -912,6 +931,7 @@
 ./usr/share/man/cat4/i386/xe.0
 ./usr/share/man/cat4/i386/xf86.0
 ./usr/share/man/cat4/icmp.0
+./usr/share/man/cat4/icmp6.0
 ./usr/share/man/cat4/icsphy.0
 ./usr/share/man/cat4/idp.0
 ./usr/share/man/cat4/ifmedia.0
@@ -919,6 +939,7 @@
 ./usr/share/man/cat4/inet.0
 ./usr/share/man/cat4/inphy.0
 ./usr/share/man/cat4/ip.0
+./usr/share/man/cat4/ip6.0
 ./usr/share/man/cat4/ipf.0
 ./usr/share/man/cat4/ipl.0
 ./usr/share/man/cat4/ipnat.0
@@ -990,6 +1011,7 @@
 ./usr/share/man/cat4/scsibus.0
 ./usr/share/man/cat4/sd.0
 ./usr/share/man/cat4/sf.0
+./usr/share/man/cat4/sis.0
 ./usr/share/man/cat4/sk.0
 ./usr/share/man/cat4/sl.0
 ./usr/share/man/cat4/sm.0
@@ -1059,6 +1081,7 @@
 ./usr/share/man/cat4/tty.0
 ./usr/share/man/cat4/tun.0
 ./usr/share/man/cat4/tx.0
+./usr/share/man/cat4/txphy.0
 ./usr/share/man/cat4/udp.0
 ./usr/share/man/cat4/ugen.0
 ./usr/share/man/cat4/uhid.0
@@ -1194,6 +1217,7 @@
 ./usr/share/man/cat5/resolv.conf.0
 ./usr/share/man/cat5/resolver.0
 ./usr/share/man/cat5/rpc.0
+./usr/share/man/cat5/rtadvd.conf.0
 ./usr/share/man/cat5/securenet.0
 ./usr/share/man/cat5/services.0
 ./usr/share/man/cat5/shells.0
@@ -1303,6 +1327,7 @@
 ./usr/share/man/cat8/dumpfs.0
 ./usr/share/man/cat8/edquota.0
 ./usr/share/man/cat8/ext_srvtab.0
+./usr/share/man/cat8/faithd.0
 ./usr/share/man/cat8/faq.0
 ./usr/share/man/cat8/fingerd.0
 ./usr/share/man/cat8/fsck.0
@@ -1315,6 +1340,7 @@
 ./usr/share/man/cat8/ftpd.0
 ./usr/share/man/cat8/getNAME.0
 ./usr/share/man/cat8/getty.0
+./usr/share/man/cat8/gifconfig.0
 ./usr/share/man/cat8/halt.0
 ./usr/share/man/cat8/hp300/MAKEDEV.0
 ./usr/share/man/cat8/hp300/crash.0
@@ -1400,6 +1426,7 @@
 ./usr/share/man/cat8/ncheck.0
 ./usr/share/man/cat8/ncheck_ffs.0
 ./usr/share/man/cat8/ndc.0
+./usr/share/man/cat8/ndp.0
 ./usr/share/man/cat8/netgroup_mkdb.0
 ./usr/share/man/cat8/netstart.0
 ./usr/share/man/cat8/newfs.0
@@ -1413,6 +1440,7 @@
 ./usr/share/man/cat8/pcnfsd.0
 ./usr/share/man/cat8/photurisd.0
 ./usr/share/man/cat8/ping.0
+./usr/share/man/cat8/ping6.0
 ./usr/share/man/cat8/portmap.0
 ./usr/share/man/cat8/ppp.0
 ./usr/share/man/cat8/pppctl.0
@@ -1448,6 +1476,7 @@
 ./usr/share/man/cat8/rmuser.0
 ./usr/share/man/cat8/rotatelogs.0
 ./usr/share/man/cat8/route.0
+./usr/share/man/cat8/route6d.0
 ./usr/share/man/cat8/routed.0
 ./usr/share/man/cat8/rpc.bootparamd.0
 ./usr/share/man/cat8/rpc.lockd.0
@@ -1463,7 +1492,10 @@
 ./usr/share/man/cat8/rrestore.0
 ./usr/share/man/cat8/rshd.0
 ./usr/share/man/cat8/rstatd.0
+./usr/share/man/cat8/rtadvd.0
 ./usr/share/man/cat8/rtquery.0
+./usr/share/man/cat8/rtsol.0
+./usr/share/man/cat8/rtsold.0
 ./usr/share/man/cat8/rusersd.0
 ./usr/share/man/cat8/rwalld.0
 ./usr/share/man/cat8/rwhod.0
@@ -1604,31 +1636,3 @@
 ./usr/share/man/man4/alpha
 ./usr/share/man/man4/pmax
 ./usr/share/man/man4/powerpc
-./usr/share/man/cat4/i386/mtrr.0
-./usr/share/man/cat4/i386/hsq.0
-./usr/share/man/cat4/sis.0
-./usr/share/man/cat8/rtsold.0
-./usr/share/man/cat8/rtsol.0
-./usr/share/man/cat8/ndp.0
-./usr/share/man/cat3/inet6_option_space.0
-./usr/share/man/cat3/inet6_option_init.0
-./usr/share/man/cat3/inet6_option_append.0
-./usr/share/man/cat3/inet6_option_alloc.0
-./usr/share/man/cat3/inet6_option_next.0
-./usr/share/man/cat3/inet6_option_find.0
-./usr/share/man/cat3/inet6_rthdr_space.0
-./usr/share/man/cat3/inet6_rthdr_init.0
-./usr/share/man/cat3/inet6_rthdr_add.0
-./usr/share/man/cat3/inet6_rthdr_lasthop.0
-./usr/share/man/cat3/inet6_rthdr_reverse.0
-./usr/share/man/cat3/inet6_rthdr_segments.0
-./usr/share/man/cat3/inet6_rthdr_getaddr.0
-./usr/share/man/cat3/inet6_rthdr_getflags.0
-./usr/share/man/cat8/ping6.0
-./usr/share/man/cat5/rtadvd.conf.0
-./usr/share/man/cat8/rtadvd.0
-./usr/share/man/cat8/route6d.0
-./usr/share/man/cat4/dc.0
-./usr/share/man/cat1/infotocap.0
-./usr/share/man/cat4/txphy.0
-./usr/share/man/cat4/i386/awi.0

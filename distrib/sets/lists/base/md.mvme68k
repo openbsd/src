@@ -683,3 +683,4 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/g2c.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/memrange.ph
 ./usr/lib/libperl.so.5.3
+./usr/libdata/perl5/site_perl/m68k-openbsd/net/if_token.ph
