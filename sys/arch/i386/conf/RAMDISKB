@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKB,v 1.9 1999/12/02 16:30:53 deraadt Exp $
+#	$OpenBSD: RAMDISKB,v 1.10 1999/12/02 18:18:43 deraadt Exp $
 #	from: OpenBSD: INST,v 1.19 1996/11/05 03:49:13 tholo Exp 
 #
 #	Install kernels no longer support X.
@@ -187,6 +187,7 @@ ne*	at isapnp?				# NE[12]000 PnP ethernet cards
 #el0	at isa? port 0x300 irq 9		# 3C501 ethernet cards
 ep0	at isa? port ? irq ?			# 3C509 ethernet cards
 ep*	at isa? port ? irq ?			# 3C509 ethernet cards
+ef*	at isapnp?				# 3C515 PnP ethernet
 ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN and 3C507
 ie1	at isa? port 0x300 irq 10		# EtherExpress
 le0	at isa? port 0x360 irq 15 drq 6		# IsoLan, NE2100, and DEPCA
