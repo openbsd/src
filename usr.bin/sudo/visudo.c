@@ -308,7 +308,7 @@ main(argc, argv)
 	 */
 	if (parse_error == TRUE) {
 	    switch (whatnow()) {
-		case 'q' :	parse_error = FALSE;	/* ignore parse error */
+		case 'Q' :	parse_error = FALSE;	/* ignore parse error */
 				break;
 		case 'x' :	Exit(0);
 				break;
