@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.2 2004/02/05 02:18:55 mcbride Exp $	*/
+/*	$OpenBSD: parse.y,v 1.3 2004/02/14 11:24:35 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2004 Ryan McBride <mcbride@openbsd.org>
@@ -96,7 +96,7 @@ typedef struct {
 %}
 
 %token	STATE INITSTATE
-%token	LINK UP DOWN UNKNOWN ADDED REMOVED 
+%token	LINK UP DOWN UNKNOWN ADDED REMOVED
 %token	IF RUN SETSTATE EVERY INIT LOGLEVEL
 %left	AND OR
 %left	UNARY
@@ -173,10 +173,10 @@ conf_main	: INITSTATE STRING		{
 
 interface	: STRING		{
 			if (($$ = if_nametoindex($1)) == 0) {
-                                yyerror("unknown interface %s", $1);
-                                YYERROR;
-                        }
-                }
+				yyerror("unknown interface %s", $1);
+				YYERROR;
+			}
+		}
 		;
 
 optnl		: '\n' optnl
@@ -186,10 +186,10 @@ optnl		: '\n' optnl
 nl		: '\n' optnl		/* one newline or more */
 		;
 
-action		: RUN STRING 		{
+action		: RUN STRING		{
 			struct ifsd_action *action;
 
-			if ((action = calloc(1, sizeof(*action))) == NULL) 
+			if ((action = calloc(1, sizeof(*action))) == NULL)
 				err(1, "action: calloc");
 			action->type = IFSD_ACTION_COMMAND;
 			action->act.command = strdup($2);
@@ -198,14 +198,14 @@ action		: RUN STRING 		{
 			TAILQ_INSERT_TAIL(&curaction->act.c.actions,
 			    action, entries);
 		}
-		| SETSTATE STRING 	{
+		| SETSTATE STRING	{
 			struct ifsd_action *action;
 
 			if (curstate == NULL) {
 				yyerror("setstate must be used inside 'if'");
 				YYERROR;
 			}
-			if ((action = calloc(1, sizeof(*action))) == NULL) 
+			if ((action = calloc(1, sizeof(*action))) == NULL)
 				err(1, "action: calloc");
 			action->type = IFSD_ACTION_CHANGESTATE;
 			if ((action->act.statename = strdup($2)) == NULL)
@@ -216,7 +216,7 @@ action		: RUN STRING 		{
 		| IF {
 			struct ifsd_action *action;
 
-			if ((action = calloc(1, sizeof(*action))) == NULL) 
+			if ((action = calloc(1, sizeof(*action))) == NULL)
 				err(1, "action: calloc");
 			action->type = IFSD_ACTION_CONDITION;
 			TAILQ_INIT(&action->act.c.actions);
@@ -239,14 +239,11 @@ init		: INIT {
 				curaction = curstate->init;
 			else
 				curaction = conf->always.init;
-			if (curaction == NULL) errx(1, "curaction == NULL");
-				
 		} optnl '{' optnl action_l '}' {
 			if (curstate != NULL)
 				curaction = curstate->always;
 			else
 				curaction = conf->always.always;
-			if (curaction == NULL) errx(1, "curaction == NULL");
 		}
 
 if_test		: interface LINK UP		{
@@ -268,7 +265,7 @@ ext_test	: STRING EVERY number {
 term		: if_test {
 			if (($$ = calloc(1, sizeof(*$$))) == NULL)
 				errx(1, "term: calloc");
-                        curaction->act.c.expression = $$;
+			curaction->act.c.expression = $$;
 			$$->type = IFSD_OPER_IFSTATE;
 			$$->u.ifstate = $1;
 			TAILQ_INSERT_TAIL(&$1->expressions, $$, entries);
@@ -276,7 +273,7 @@ term		: if_test {
 		| ext_test {
 			if (($$ = calloc(1, sizeof(*$$))) == NULL)
 				errx(1, "term: calloc");
-                        curaction->act.c.expression = $$;
+			curaction->act.c.expression = $$;
 			$$->type = IFSD_OPER_EXTERNAL;
 			$$->u.external = $1;
 			TAILQ_INSERT_TAIL(&$1->expressions, $$, entries);
@@ -289,7 +286,7 @@ term		: if_test {
 expr		: '!' expr %prec UNARY			{
 			if (($$ = calloc(1, sizeof(*$$))) == NULL)
 				errx(1, "expr: calloc");
-                        curaction->act.c.expression = $$;
+			curaction->act.c.expression = $$;
 			$$->type = IFSD_OPER_NOT;
 			$2->parent = $$;
 			$$->right = $2;
@@ -297,7 +294,7 @@ expr		: '!' expr %prec UNARY			{
 		| expr AND expr			{
 			if (($$ = calloc(1, sizeof(*$$))) == NULL)
 				errx(1, "expr: calloc");
-                        curaction->act.c.expression = $$;
+			curaction->act.c.expression = $$;
 			$$->type = IFSD_OPER_AND;
 			$1->parent = $$;
 			$3->parent = $$;
@@ -307,7 +304,7 @@ expr		: '!' expr %prec UNARY			{
 		| expr OR expr			{
 			if (($$ = calloc(1, sizeof(*$$))) == NULL)
 				errx(1, "expr: calloc");
-                        curaction->act.c.expression = $$;
+			curaction->act.c.expression = $$;
 			$$->type = IFSD_OPER_OR;
 			$1->parent = $$;
 			$3->parent = $$;
@@ -317,7 +314,7 @@ expr		: '!' expr %prec UNARY			{
 		| term
 		;
 
-state		: STATE string { 
+state		: STATE string {
 			struct ifsd_state *state = NULL;
 
 			TAILQ_FOREACH(state, &conf->states, entries)
@@ -357,7 +354,7 @@ struct keywords {
 int
 yyerror(const char *fmt, ...)
 {
-        va_list		 ap;
+	va_list	ap;
 
 	errors = 1;
 	va_start(ap, fmt);
@@ -610,7 +607,7 @@ parse_config(char *filename, struct ifsd_config *xconf)
 		errx(1, "parse_config calloc");
 
 	TAILQ_INIT(&conf->states);
- 
+
 	init_state(&conf->always);
 	curaction = conf->always.always;
 	conf->loglevel = IFSD_LOG_NORMAL;
@@ -662,7 +659,7 @@ parse_config(char *filename, struct ifsd_config *xconf)
 
 	bcopy(conf, xconf, sizeof(*conf));
 	free(conf);
-       
+
 	return (errors ? -1 : 0);
 }
 
@@ -823,7 +820,7 @@ new_ifstate(u_short ifindex, int s)
 		state = curstate;
 	else
 		state = &conf->always;
-	
+
 	TAILQ_FOREACH(ifstate, &state->interface_states, entries)
 		if (ifstate->ifindex == ifindex && ifstate->ifstate == s)
 			break;
@@ -850,7 +847,7 @@ new_external(char *command, u_int32_t frequency)
 		state = curstate;
 	else
 		state = &conf->always;
-	
+
 	TAILQ_FOREACH(external, &state->external_tests, entries)
 		if (strcmp(external->command, command) == 0 &&
 		    external->frequency == frequency)
@@ -863,7 +860,7 @@ new_external(char *command, u_int32_t frequency)
 		external->frequency = frequency;
 		TAILQ_INIT(&external->expressions);
 		TAILQ_INSERT_TAIL(&state->external_tests, external, entries);
-	} 
+	}
 	external->prevstatus = -1;
 	external->refcount++;
 	return (external);
