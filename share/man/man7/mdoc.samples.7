@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.samples.7,v 1.52 2004/02/20 10:34:41 jmc Exp $
+.\"	$OpenBSD: mdoc.samples.7,v 1.53 2004/06/06 22:45:32 jmc Exp $
 .\"	$NetBSD: mdoc.samples.7,v 1.5 1996/04/03 20:17:34 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -1572,13 +1572,20 @@ In the
 section, it causes a line break
 .Pq useful for old-style variable declarations .
 .Pp
-.Dl Usage: .Vt Ao type Ac ...
+.Dl Usage: .Vt Ao type Ac ... \*(Pu
 .Bl -tag -width ".Vt extern char *optarg;" -compact -offset 14n
 .It Li \&.Vt extern char *optarg;
 .Vt extern char *optarg;
 .It Li \&.Vt FILE *
 .Vt FILE *
 .El
+.Pp
+It is an error to call
+.Ql \&.Vt
+without any arguments.
+The
+.Ql \&.Vt
+macro is parsed and is callable.
 .Ss Variables
 Generic variable reference:
 .Pp
@@ -3369,9 +3376,6 @@ The list and display macros do not do any keeps
 and certainly should be able to.
 .Pp
 Section 3f has not been added to the header routines.
-.Pp
-.Sq .Vt
-does not respect punctuation.
 .\" Note what happens if the parameter list overlaps a newline
 .\" boundary.
 .\" to make sure a line boundary is crossed:
