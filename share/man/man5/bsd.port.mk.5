@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.110 2003/07/15 10:52:19 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.111 2003/07/18 18:23:18 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -1491,10 +1491,16 @@ using
 no longer creates a symlink between the current directory and
 a subdirectory of ${WRKOBJDIR}, so
 .Ar obj
-has become a no-operation.
+is no longer applicable.
 .El
 .Sh OBSOLETE VARIABLES
 .Bl -tag -width MASTER_SITES
+.It Ev CATn
+List of formatted manpages, per section.
+.It Ev CATPREFIX
+Location for storing formatted manpages.
+Derived directly from
+.Ev PREFIX .
 .It Ev COMMENT
 Used to be the name of the comment file for a package.
 It now holds the comment itself.
@@ -1535,6 +1541,12 @@ instead.
 .It Ev HAVE_MOTIF
 Old user settings.
 No longer needed since OpenMotif is now free.
+.It Ev MANn
+List of unformatted manpages, per section.
+.It Ev MANPREFIX
+Location for storing unformatted manpages.
+Derived directly from
+.Ev PREFIX .
 .It Ev MASTERDIR
 From
 .Fx .
@@ -1684,6 +1696,12 @@ Use SUBST_VARS instead.
 does not allow general substitutions of the form VAR=value, but uses
 only a list of variables instead.
 Most package files gets transformed, instead of only the packing list.
+.It Ev RESTRICTED
+Port has cryptographic issues.
+.Ox
+focuses on
+.Ev PERMIT_PACKAGE_{FTP,CDROM}
+instead.
 .It Ev USE_AUTOCONF
 Use
 .Ev CONFIGURE_STYLE
