@@ -1,37 +1,37 @@
 .\" Copyright (c) 2003 Kungliga Tekniska Högskolan
-.\" (Royal Institute of Technology, Stockholm, Sweden). 
-.\" All rights reserved. 
+.\" (Royal Institute of Technology, Stockholm, Sweden).
+.\" All rights reserved.
 .\"
-.\" Redistribution and use in source and binary forms, with or without 
-.\" modification, are permitted provided that the following conditions 
-.\" are met: 
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
 .\"
-.\" 1. Redistributions of source code must retain the above copyright 
-.\"    notice, this list of conditions and the following disclaimer. 
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
 .\"
-.\" 2. Redistributions in binary form must reproduce the above copyright 
-.\"    notice, this list of conditions and the following disclaimer in the 
-.\"    documentation and/or other materials provided with the distribution. 
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
 .\"
-.\" 3. Neither the name of the Institute nor the names of its contributors 
-.\"    may be used to endorse or promote products derived from this software 
-.\"    without specific prior written permission. 
+.\" 3. Neither the name of the Institute nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
 .\"
-.\" THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND 
-.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
-.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE 
-.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL 
-.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS 
-.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
-.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
-.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY 
-.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
-.\" SUCH DAMAGE. 
-.\" 
+.\" THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
 .\" $KTH: gss_acquire_cred.3,v 1.8.2.1 2003/04/28 13:41:42 lha Exp $
-.\" 
-.Dd April  2, 2003
+.\"
+.Dd April 2, 2003
 .Dt GSS_ACQUIRE_CRED 3
 .Os HEIMDAL
 .Sh NAME
@@ -169,7 +169,7 @@ GSS-API library (libgssapi, -lgssapi)
 .Fc
 .Ft OM_uint32
 .Fo gss_export_name
-.Fa "OM_uint32  * minor_status"
+.Fa "OM_uint32 * minor_status"
 .Fa "const gss_name_t input_name"
 .Fa "gss_buffer_t exported_name"
 .Fc
@@ -189,7 +189,7 @@ GSS-API library (libgssapi, -lgssapi)
 .Fc
 .Ft OM_uint32
 .Fo gss_import_name
-.Fa "OM_uint32 * minor_status,
+.Fa "OM_uint32 * minor_status"
 .Fa "const gss_buffer_t input_name_buffer"
 .Fa "const gss_OID input_name_type"
 .Fa "gss_name_t * output_name"
@@ -262,7 +262,7 @@ GSS-API library (libgssapi, -lgssapi)
 .Fa "OM_uint32 * minor_status"
 .Fa "gss_ctx_id_t context_handle"
 .Fa "int onoff"
-.Fc 
+.Fc
 .Ft OM_uint32
 .Fo gss_process_context_token
 .Fc
@@ -281,7 +281,7 @@ GSS-API library (libgssapi, -lgssapi)
 .Fa "OM_uint32 * minor_status"
 .Fa "gss_name_t * input_name"
 .Fc
-.Ft
+.Ft OM_uint32
 .Fo gss_release_oid_set
 .Fa "OM_uint32 * minor_status"
 .Fa "gss_OID_set * set"
@@ -345,7 +345,7 @@ GSS-API library (libgssapi, -lgssapi)
 .Fa "const gss_buffer_t token_buffer"
 .Fa "gss_qop_t * qop_state"
 .Fc
-.Ft
+.Ft OM_uint32
 .Fo gss_wrap
 .Fa "OM_uint32 * minor_status"
 .Fa "const gss_ctx_id_t context_handle"
@@ -366,12 +366,8 @@ GSS-API library (libgssapi, -lgssapi)
 .Fc
 .Sh DESCRIPTION
 Generic Security Service API (GSS-API) version 2, and its C binding,
-is described in
-.Li RFC2743
-and
-.Li RFC2744 .
-Version 1 (deprecated) of the C binding is described in
-.Li RFC1509 .
+are described in RFC 2743 and RFC 2744.
+Version 1 (deprecated) of the C binding is described in RFC 1509.
 .Pp
 Heimdals GSS-API implementation supports the following mechanisms
 .Bl -bullet
@@ -380,8 +376,9 @@ Heimdals GSS-API implementation supports the following mechanisms
 .El
 .Pp
 GSS-API have generic name types that all mechanism are supposed to
-implement (if possible)
-.Bl -bullet
+implement (if possible):
+.Pp
+.Bl -bullet -offset indent -compact
 .It
 .Li GSS_C_NT_USER_NAME
 .It
@@ -397,8 +394,9 @@ implement (if possible)
 .El
 .Pp
 GSS-API implementations that supports Kerberos 5 have some additional
-name types
-.Bl -bullet
+name types:
+.Pp
+.Bl -bullet -offset indent -compact
 .It
 .Li GSS_KRB5_NT_PRINCIPAL_NAME
 .It
@@ -412,7 +410,7 @@ name types
 .Fn gss_display_name
 takes the gss name in
 .Fa input_name
-and put a printable form in
+and puts a printable form in
 .Fa output_name_buffer .
 .Fa output_name_buffer
 should be freed when done using
@@ -422,7 +420,7 @@ can either be
 .Dv NULL
 or a pointer to a
 .Li gss_OID
-and will in the later case contain the OID type of the name.
+and will in the latter case contain the OID type of the name.
 The name should only be used for printing.
 Access control should be done with the result of
 .Fn gss_export_name .
@@ -432,21 +430,21 @@ Access control should be done with the result of
 .Fn gss_seal ,
 and
 .Fn gss_unseal
-are part of the GSS-API V1 interface and are obsolete. The functions
-should not be used for new applications.
+are part of the GSS-API V1 interface and are obsolete.
+The functions should not be used for new applications.
 They are provided so that version 1 applications can link against the
 library.
 .Pp
 .Fn gss_krb5_copy_ccache
 is an extension to the GSS-API API.
-The function will extract the krb5 credential that are transfered from
+The function will extract the krb5 credentials that are transferred from
 the initiator to the acceptor when using token delegation in the
 Kerberos mechanism.
 The acceptor receives the delegated token in the last argument to
 .Fn gss_accept_sec_context .
 .Pp
 .Nm gss_krb5_compat_des3_mic
-turns on or off the compatibly with older version of Heimdal using
+turns on or off the compatibility with older versions of Heimdal using
 des3 get and verify mic, this is way to programmatically set the
 [gssapi]broken_des3_mic and [gssapi]correct_des3_mic flags (see
 COMPATIBILITY section in
@@ -459,7 +457,7 @@ exists.
 .Nm gss_krb5_compat_des3_mic
 will be removed in a later version of the GSS-API library.
 .Sh SEE ALSO
+.Xr gssapi 3 ,
 .Xr krb5 3 ,
 .Xr krb5_ccache 3 ,
-.Xr gssapi 3 ,
 .Xr kerberos 8
