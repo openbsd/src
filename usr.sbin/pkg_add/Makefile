@@ -1,9 +1,10 @@
-# $OpenBSD: Makefile,v 1.9 2004/09/14 22:43:09 espie Exp $
+# $OpenBSD: Makefile,v 1.10 2004/09/15 18:51:43 espie Exp $
 
 MAN=pkg_add.1 pkg_info.1 pkg_create.1 pkg_delete.1 pkg.1
 
 PACKAGES= \
     OpenBSD/Error.pm \
+    OpenBSD/Getopt.pm \
     OpenBSD/IdCache.pm \
     OpenBSD/Logger.pm \
     OpenBSD/Mtree.pm \
