@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2002/02/16 04:36:33 smurph Exp $
+# $OpenBSD: Makefile,v 1.3 2002/03/19 02:49:20 millert Exp $
 # $FreeBSD: src/sys/dev/aic7xxx/Makefile,v 1.6 1999/08/28 00:41:22 peter Exp $
 
 PROG=	aicasm
@@ -27,11 +27,11 @@ NOMAN=	noman
 CFLAGS+= -DDEBUG -g
 YFLAGS+= -t
 LFLAGS+= -d
-SEQFLAGS= -l seq.lst
+MFLAGS= -l seq.lst
 .endif
 
 microcode aic7xxxreg.h aic7xxx_seq.h: aic7xxx.seq aic7xxx.reg
-	${OBJDIR}./aicasm -I/sys ${SEQFLAGS} -r tempreg.h -o tempseq.h ${.CURDIR}/aic7xxx.seq
+	./aicasm -I/sys ${MFLAGS} -r tempreg.h -o tempseq.h ${.CURDIR}/aic7xxx.seq
 	grep OpenBSD: ${.CURDIR}/aic7xxx.seq | cat - tempseq.h > aic7xxx_seq.h
 	grep OpenBSD: ${.CURDIR}/aic7xxx.reg | cat - tempreg.h > aic7xxxreg.h
 	mv aic7xxx_seq.h /sys/dev/microcode/aic7xxx/

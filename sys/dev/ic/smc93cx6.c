@@ -1,3 +1,5 @@
+/*	$OpenBSD: smc93cx6.c,v 1.9 2002/03/19 02:49:20 millert Exp $	*/
+/* $FreeBSD: sys/dev/aic7xxx/93cx6.c,v 1.5 2000/01/07 23:08:17 gibbs Exp $ */
 /*
  * Interface for the 93C66/56/46/26/06 serial eeprom parts.
  *
@@ -8,29 +10,15 @@
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions, and the following disclaimer,
- *    without modification.
- * 2. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- *
- * Alternatively, this software may be distributed under the terms of the
- * GNU Public License ("GPL").
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * $Id: aic7xxx_93cx6.c,v 1.1 2002/02/16 04:36:33 smurph Exp $
- *
- * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx_93cx6.c,v 1.15 2001/07/18 21:39:47 gibbs Exp $
+ *    notice immediately at the beginning of the file, without modification,
+ *    this list of conditions, and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Absolutely no warranty of function or purpose is made by the author
+ *    Daniel M. Eischen.
+ * 4. Modifications may be freely made to this file if the above conditions
+ *    are met.
  */
 
 /*
@@ -41,7 +29,7 @@
  *     -------------------------------------------------------------------
  *     READ        1    10   A5 - A0             Reads data stored in memory,
  *                                               starting at specified address
- *     EWEN        1    00   11XXXX              Write enable must precede
+ *     EWEN        1    00   11XXXX              Write enable must preceed
  *                                               all programming modes
  *     ERASE       1    11   A5 - A0             Erase register A5A4A3A2A1A0
  *     WRITE       1    01   A5 - A0   D15 - D0  Writes register
@@ -67,26 +55,26 @@
  *
  */
 
-/* $OpenBSD: aic7xxx_93cx6.c,v 1.1 2002/02/16 04:36:33 smurph Exp $ */
+#include <sys/param.h>
+#include <sys/systm.h>
+#if !(defined(__NetBSD__) || defined(__OpenBSD__))
+#include <machine/bus_memio.h>
+#include <machine/bus_pio.h>
+#endif
+#include <machine/bus.h>
+#if !(defined(__NetBSD__) || defined(__OpenBSD__))
+#include <dev/aic7xxx/93cx6.h>
+#else
+#include <dev/ic/smc93cx6var.h>
+#endif
 
-#ifdef __OpenBSD__
-#include <dev/ic/aic7xxx_openbsd.h>
-#include <dev/ic/aic7xxx_inline.h>
-#include <dev/ic/aic7xxx_93cx6.h>
-#endif 
-
-#ifdef __FreeBSD__
-#include <dev/aic7xxx/aic7xxx_freebsd.h>
-#include <dev/aic7xxx/aic7xxx_inline.h>
-#include <dev/aic7xxx/aic7xxx_93cx6.h>
-#endif 
 /*
  * Right now, we only have to read the SEEPROM.  But we make it easier to
  * add other 93Cx6 functions.
  */
 static struct seeprom_cmd {
-  	uint8_t len;
- 	uint8_t bits[3];
+  	unsigned char len;
+ 	unsigned char bits[3];
 } seeprom_read = {3, {1, 1, 0}};
 
 /*
@@ -105,14 +93,14 @@ static struct seeprom_cmd {
 int
 read_seeprom(sd, buf, start_addr, count)
 	struct seeprom_descriptor *sd;
-	uint16_t *buf;
-	u_int start_addr;
-	u_int count;
+	u_int16_t *buf;
+	bus_size_t start_addr;
+	bus_size_t count;
 {
 	int i = 0;
 	u_int k = 0;
-	uint16_t v;
-	uint8_t temp;
+	u_int16_t v;
+	u_int8_t temp;
 
 	/*
 	 * Read the requested registers of the seeprom.  The loop
@@ -189,26 +177,4 @@ read_seeprom(sd, buf, start_addr, count)
 	printf ("\n");
 #endif
 	return (1);
-}
-
-int
-verify_cksum(struct seeprom_config *sc)
-{
-	int i;
-	int maxaddr;
-	uint32_t checksum;
-	uint16_t *scarray;
-
-	maxaddr = (sizeof(*sc)/2) - 1;
-	checksum = 0;
-	scarray = (uint16_t *)sc;
-
-	for (i = 0; i < maxaddr; i++)
-		checksum = checksum + scarray[i];
-	if (checksum == 0
-	 || (checksum & 0xFFFF) != sc->checksum) {
-		return (0);
-	} else {
-		return(1);
-	}
 }

@@ -2,7 +2,7 @@
 /*
  * Lexical Analyzer for the Aic7xxx SCSI Host adapter sequencer assembler.
  *
- * Copyright (c) 1997, 1998 Justin T. Gibbs.
+ * Copyright (c) 1997-1998 Justin T. Gibbs.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -13,9 +13,6 @@
  *    without modification.
  * 2. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
- *
- * Alternatively, this software may be distributed under the terms of the
- * GNU Public License ("GPL").
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -29,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/dev/aic7xxx/aicasm_scan.l,v 1.15 1999/12/06 18:23:30 gibbs Exp $
+ * $FreeBSD: src/sys/dev/aic7xxx/aicasm_scan.l,v 1.8 1999/12/06 18:23:30 gibbs Exp $
  */
 
 #include <sys/types.h>
@@ -48,10 +45,7 @@
 char string_buf[MAX_STR_CONST];
 char *string_buf_ptr;
 int  parren_count;
-int  quote_count;
 %}
-
-%option nounput
 
 PATH		[-/A-Za-z0-9_.]*[./][-/A-Za-z0-9_.]*
 WORD		[A-Za-z_][-A-Za-z_0-9]*
@@ -60,7 +54,6 @@ SPACE		[ \t]+
 %x COMMENT
 %x CEXPR
 %x INCLUDE
-%x STRING
 
 %%
 \n			{ ++yylineno; }
@@ -92,41 +85,12 @@ if[ \t]*\(		{
 			}
 <CEXPR>\n		{ ++yylineno; }
 <CEXPR>[^()\n]+		{
-                                char *yptr;
+				char *yptr = yytext;
 
-                                yptr = yytext;
-                                while (*yptr != '\0') {
-                                        /* Remove duplicate spaces */
-                                        if (*yptr == '\t')
-                                                *yptr = ' ';
-                                        if (*yptr == ' '
-                                         && string_buf_ptr != string_buf
-                                         && string_buf_ptr[-1] == ' ')
-                                                yptr++;
-                                        else 
+				while (*yptr != '\0')
 					*string_buf_ptr++ = *yptr++;
-                                }
-                        }
-
-VERSION                 { return T_VERSION; }
-\"                      {
-                                string_buf_ptr = string_buf;
-                                BEGIN STRING;
 			}
-<STRING>[^"]+           {
-                                char *yptr;
 
-                                yptr = yytext;
-                                while (*yptr)
-                                        *string_buf_ptr++ = *yptr++;
-                        }
-<STRING>\"              {
-                                /* All done */
-                                BEGIN INITIAL;
-                                *string_buf_ptr = '\0';
-                                yylval.str = string_buf;
-                                return T_STRING;
-                        }
 {SPACE}			;
 
 	/* Register/SCB/SRAM definition keywords */
@@ -144,8 +108,6 @@ RW|RO|WO		{
 					yylval.value = WO;
 				 return T_MODE;
 			}
-BEGIN_CRITICAL          { return T_BEGIN_CS; }
-END_CRITICAL            { return T_END_CS; }
 bit			{ return T_BIT; }
 mask			{ return T_MASK; }
 alias			{ return T_ALIAS; }
@@ -183,7 +145,6 @@ dec			{ return T_DEC; }
 stc			{ return T_STC;	}
 clc			{ return T_CLC; }
 cmp			{ return T_CMP;	}
-not                     { return T_NOT; }
 xor			{ return T_XOR;	}
 test			{ return T_TEST;}
 and			{ return T_AND;	}
@@ -193,7 +154,7 @@ nop			{ return T_NOP; }
 else			{ return T_ELSE; }
 
 	/* Allowed Symbols */
-[-+,:()~|&."{};<>[\]!=] { return yytext[0]; }
+[-+,:()~|&."{};<>[\]!]	{ return yytext[0]; }
 
 	/* Number processing */
 0[0-7]*			{
@@ -212,36 +173,17 @@ else			{ return T_ELSE; }
 			}
 
 	/* Include Files */
-#include{SPACE}         {
-                                BEGIN INCLUDE;
-                                quote_count = 0;
-                                return T_INCLUDE;
-                        }
-<INCLUDE>[<]            { return yytext[0]; }
-<INCLUDE>[>]            { BEGIN INITIAL; return yytext[0]; }
-<INCLUDE>[\"]           {
-                                if (quote_count != 0)
-                                        BEGIN INITIAL;
-                                quote_count++;
-                                return yytext[0];
-                        }
+#include		{ return T_INCLUDE; BEGIN INCLUDE;}
+<INCLUDE>[<>\"]		{ return yytext[0]; }
+<INCLUDE>{PATH}		{ yylval.str = strdup(yytext); return T_PATH; }
+<INCLUDE>;		{ BEGIN INITIAL; return yytext[0]; }
 <INCLUDE>.		{ stop("Invalid include line", EX_DATAERR); }
 
 	/* For parsing C include files with #define foo */
 #define			{ yylval.value = TRUE; return T_CONST; }
 	/* Throw away macros */
 #define[^\n]*[()]+[^\n]* ;
-<INITIAL,INCLUDE>{PATH} {
-                                char *yptr;
-
-                                yptr = yytext;
-                                string_buf_ptr = string_buf;
-                                while (*yptr)
-                                        *string_buf_ptr++ = *yptr++;
-                                yylval.str = string_buf;
-                                *string_buf_ptr = '\0';
-                                return T_PATH;
-                        }
+{PATH}			{ yylval.str = strdup(yytext); return T_PATH; }
 
 {WORD}			{ yylval.sym = symtable_get(yytext);  return T_SYMBOL; }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_isa.c,v 1.7 2002/03/14 01:26:33 millert Exp $	*/
+/*	$OpenBSD: ahc_isa.c,v 1.8 2002/03/19 02:49:20 millert Exp $	*/
 /*	$NetBSD: ahc_isa.c,v 1.5 1996/10/21 22:27:39 thorpej Exp $	*/
 
 /*
@@ -83,9 +83,8 @@
 #include <dev/eisa/eisadevs.h>
 
 #include <dev/ic/aic7xxxreg.h>
-#include <dev/ic/aic7xxx_openbsd.h>
-#include <dev/ic/aic7xxx_inline.h>
-#include <dev/ic/aic7xxx_93cx6.h>
+#include <dev/ic/aic7xxxvar.h>
+#include <dev/ic/smc93cx6var.h>
 
 #ifdef DEBUG
 #define bootverbose	1
@@ -103,6 +102,7 @@
 /*
  * I/O port offsets
  */
+#define INTDEF			0x5cul	/* Interrupt Definition Register */
 #define	AHC_ISA_VID		(EISA_SLOTOFF_VID - AHC_ISA_SLOT_OFFSET)
 #define	AHC_ISA_PID		(EISA_SLOTOFF_PID - AHC_ISA_SLOT_OFFSET)
 #define	AHC_ISA_PRIMING		AHC_ISA_VID	/* enable vendor/product ID */
@@ -113,13 +113,13 @@
 #define	AHC_ISA_PRIMING_VID(index)	(AHC_ISA_VID + (index))
 #define	AHC_ISA_PRIMING_PID(index)	(AHC_ISA_PID + (index))
 
-int	ahc_isa_irq(bus_space_tag_t, bus_space_handle_t);
-int	ahc_isa_idstring(bus_space_tag_t, bus_space_handle_t, char *);
-int	ahc_isa_match(struct isa_attach_args *, bus_addr_t);
+int	ahc_isa_irq __P((bus_space_tag_t, bus_space_handle_t));
+int	ahc_isa_idstring __P((bus_space_tag_t, bus_space_handle_t, char *));
+int	ahc_isa_match __P((struct isa_attach_args *, bus_addr_t));
 
-int	ahc_isa_probe(struct device *, void *, void *);
-void	ahc_isa_attach(struct device *, struct device *, void *);
-void	aha2840_load_seeprom(struct ahc_softc *ahc);
+int	ahc_isa_probe __P((struct device *, void *, void *));
+void	ahc_isa_attach __P((struct device *, struct device *, void *));
+void	aha2840_load_seeprom __P((struct ahc_softc *ahc));
 
 struct cfattach ahc_isa_ca = {
 	sizeof(struct ahc_softc), ahc_isa_probe, ahc_isa_attach
@@ -159,7 +159,7 @@ ahc_isa_irq(iot, ioh)
 	bus_space_write_1(iot, ioh, HCNTRL, hcntrl | PAUSE);
 
 	intdef = bus_space_read_1(iot, ioh, INTDEF);
-	switch (irq = (intdef & VECTOR)) {
+	switch (irq = (intdef & 0xf)) {
 	case 9:
 	case 10:
 	case 11:
@@ -346,6 +346,7 @@ ahc_isa_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
+	ahc_chip chip;
 	struct ahc_softc *ahc = (void *)self;
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -353,24 +354,10 @@ ahc_isa_attach(parent, self, aux)
 	int irq;
 	char idstring[EISA_IDSTRINGLEN];
 	const char *model;
-	u_int intdef;
-	/* 
-	 * We really don't allocate our softc, but 
-	 * we need to do the initialization. And this 
-	 * also allocates the platform_data structure.
-	 */
-	ahc_alloc(ahc, ahc->sc_dev.dv_xname);
-	
-	ahc_set_name(ahc, ahc->sc_dev.dv_xname);
-	ahc_set_unit(ahc, ahc->sc_dev.dv_unit);
-	
-	/* set dma tags */
-	ahc->parent_dmat = ia->ia_dmat;
-	ahc->buffer_dmat = ia->ia_dmat;
-        ahc->shared_data_dmat = ia->ia_dmat;
-	
-	ahc->chip = AHC_VL; /* We are a VL Bus Controller */  
-	
+	u_char channel = 'A';
+
+	ahc->sc_dmat = ia->ia_dmat;
+	chip = AHC_VL; /* We are a VL Bus Controller */  
 	if (bus_space_map(iot, ia->ia_iobase, ia->ia_iosize, 0, &ioh))
 		panic("ahc_isa_attach: could not map slot I/O addresses");
 	if (!ahc_isa_idstring(iot, ioh, idstring))
@@ -380,23 +367,16 @@ ahc_isa_attach(parent, self, aux)
 
 	if (strcmp(idstring, "ADP7756") == 0) {
 		model = EISA_PRODUCT_ADP7756;
+		chip |= AHC_AIC7770;
 	} else if (strcmp(idstring, "ADP7757") == 0) {
 		model = EISA_PRODUCT_ADP7757;
+		chip |= AHC_AIC7770;
 	} else {
 		panic("ahc_isa_attach: Unknown device type %s", idstring);
 	}
 	printf(": %s\n", model);
-	
-	ahc->channel = 'A';
-	ahc->channel_b = 'B';
-	ahc->chip = AHC_AIC7770;
-	ahc->features = AHC_AIC7770_FE;
-	ahc->bugs |= AHC_TMODE_WIDEODD_BUG;
-	ahc->flags |= AHC_PAGESCBS;
-	
-	/* set tag and handle */
-	ahc->tag = iot;
-	ahc->bsh = ioh;
+
+	ahc_construct(ahc, iot, ioh, chip, AHC_FNONE, AHC_AIC7770_FE, channel);
 
 #ifdef DEBUG
 	/*
@@ -407,14 +387,10 @@ ahc_isa_attach(parent, self, aux)
 	    ahc->pause & IRQMS ?  "Level Sensitive" : "Edge Triggered");
 #endif
 
+	ahc->channel = 'A';
+	ahc->channel_b = 'B';
 	if (ahc_reset(ahc) != 0)
 		return;
-	
-	/* See if we are edge triggered */
-	intdef = ahc_inb(ahc, INTDEF);
-	if ((intdef & EDGE_TRIG) != 0)
-		ahc->flags |= AHC_EDGE_INTERRUPT;
-
 	/*
 	 * Now that we know we own the resources we need, do the 
 	 * card initialization.
@@ -434,10 +410,10 @@ ahc_isa_attach(parent, self, aux)
 		u_char sblkctl;
 		u_char sblkctl_orig;
 
-		sblkctl_orig = ahc_inb(ahc, SBLKCTL);
+		sblkctl_orig = AHC_INB(ahc, SBLKCTL);
 		sblkctl = sblkctl_orig ^ AUTOFLUSHDIS;
-		ahc_outb(ahc, SBLKCTL, sblkctl);
-		sblkctl = ahc_inb(ahc, SBLKCTL);
+		AHC_OUTB(ahc, SBLKCTL, sblkctl);
+		sblkctl = AHC_INB(ahc, SBLKCTL);
 		if(sblkctl != sblkctl_orig)
 		{
 			id_string = "aic7770 >= Rev E, ";
@@ -445,7 +421,7 @@ ahc_isa_attach(parent, self, aux)
 			 * Ensure autoflush is enabled
 			 */
 			sblkctl &= ~AUTOFLUSHDIS;
-			ahc_outb(ahc, SBLKCTL, sblkctl);
+			AHC_OUTB(ahc, SBLKCTL, sblkctl);
 
 			/* Allow paging on this adapter */
 			ahc->flags |= AHC_PAGESCBS;
@@ -458,9 +434,9 @@ ahc_isa_attach(parent, self, aux)
 
 	/* Setup the FIFO threshold and the bus off time */
 	{
-		u_char hostconf = ahc_inb(ahc, HOSTCONF);
-		ahc_outb(ahc, BUSSPD, hostconf & DFTHRSH);
-		ahc_outb(ahc, BUSTIME, (hostconf << 2) & BOFF);
+		u_char hostconf = AHC_INB(ahc, HOSTCONF);
+		AHC_OUTB(ahc, BUSSPD, hostconf & DFTHRSH);
+		AHC_OUTB(ahc, BUSTIME, (hostconf << 2) & BOFF);
 	}
 
 	/*
@@ -470,36 +446,26 @@ ahc_isa_attach(parent, self, aux)
 		ahc_free(ahc);
 		return;
 	}
-	
-	/* Special func to force negotiation */
-	ahc_force_neg(ahc);
-	
-	/*
-	 * Link this softc in with all other ahc instances.
-	 */
-	ahc_softc_insert(ahc);
 
 	/*
 	 * Enable the board's BUS drivers
 	 */
-	ahc_outb(ahc, BCTL, ENABLE);
+	AHC_OUTB(ahc, BCTL, ENABLE);
 
 	/*
 	 * The IRQMS bit enables level sensitive interrupts only allow
 	 * IRQ sharing if its set.
 	 */
-	ahc->platform_data->ih = isa_intr_establish(ia->ia_ic, irq,
-	    ahc->pause & IRQMS ? IST_LEVEL : IST_EDGE, IPL_BIO, ahc_platform_intr,
+	ahc->sc_ih = isa_intr_establish(ia->ia_ic, irq,
+	    ahc->pause & IRQMS ? IST_LEVEL : IST_EDGE, IPL_BIO, ahc_intr,
 	    ahc, ahc->sc_dev.dv_xname);
-	if (ahc->platform_data->ih == NULL) {
+	if (ahc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt\n",
 		       ahc->sc_dev.dv_xname);
 		ahc_free(ahc);
 		return;
 	}
 
-	ahc_intr_enable(ahc, TRUE);
-	
 	/* Attach sub-devices - always succeeds */
 	ahc_attach(ahc);
 }
@@ -516,6 +482,8 @@ aha2840_load_seeprom(struct ahc_softc *ahc)
 	u_int8_t  scsi_conf;
 	int	  have_seeprom;
 
+	sd.sd_tag = ahc->sc_iot;
+	sd.sd_bsh = ahc->sc_ioh;
 	sd.sd_control_offset = SEECTL_2840;
 	sd.sd_status_offset = STATUS_2840;
 	sd.sd_dataout_offset = STATUS_2840;		
@@ -529,8 +497,8 @@ aha2840_load_seeprom(struct ahc_softc *ahc)
 
 	if (bootverbose)
 		printf("%s: Reading SEEPROM...", ahc_name(ahc));
-	have_seeprom = read_seeprom(&sd, 
-				    (u_int16_t *)&sc, 
+	have_seeprom = read_seeprom(&sd,
+				    (u_int16_t *)&sc,
 				    /*start_addr*/0,
 				    sizeof(sc)/2);
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: aicasm_symbol.h,v 1.3 2002/03/14 01:26:57 millert Exp $ */
+/* $OpenBSD: aicasm_symbol.h,v 1.4 2002/03/19 02:49:20 millert Exp $ */
 /*
  * Aic7xxx SCSI host adapter firmware asssembler symbol table definitions
  *
@@ -14,9 +14,6 @@
  * 2. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
- * Alternatively, this software may be distributed under the terms of the
- * GNU Public License ("GPL").
- *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -29,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/dev/aic7xxx/aicasm/aicasm_symbol.h,v 1.12 2000/11/10 19:54:17 gibbs Exp $
+ * $FreeBSD: src/sys/dev/aic7xxx/aicasm_symbol.h,v 1.6 1999/12/06 18:23:31 gibbs Exp $
  */
 
 #include <sys/queue.h>
@@ -114,12 +111,6 @@ typedef struct symbol_node {
 	symbol_t *symbol;
 }symbol_node_t;
 
-typedef struct critical_section {
-        TAILQ_ENTRY(critical_section) links;
-        int begin_addr;
-        int end_addr;
-} critical_section_t;
-
 typedef enum {
 	SCOPE_ROOT,
 	SCOPE_IF,
@@ -144,30 +135,28 @@ typedef struct scope {
 	int func_num;
 } scope_t;
 
-TAILQ_HEAD(cs_tailq, critical_section);
 SLIST_HEAD(scope_list, scope);
 TAILQ_HEAD(scope_tailq, scope);
 
-void	symbol_delete(symbol_t *symbol);
+void	symbol_delete __P((symbol_t *symbol));
 
-void	symtable_open(void);
+void	symtable_open __P((void));
 
-void	symtable_close(void);
+void	symtable_close __P((void));
 
 symbol_t *
-	symtable_get(char *name);
+	symtable_get __P((char *name));
 
 symbol_node_t *
-	symlist_search(symlist_t *symlist, char *symname);
+	symlist_search __P((symlist_t *symlist, char *symname));
 
 void
-	symlist_add(symlist_t *symlist, symbol_t *symbol, int how);
+	symlist_add __P((symlist_t *symlist, symbol_t *symbol, int how));
 #define SYMLIST_INSERT_HEAD	0x00
 #define SYMLIST_SORT		0x01
 
-void	symlist_free(symlist_t *symlist);
+void	symlist_free __P((symlist_t *symlist));
 
-void	symlist_merge(symlist_t *symlist_dest, symlist_t *symlist_src1,
-			   symlist_t *symlist_src2);
-void	symtable_dump(FILE *ofile);
-
+void	symlist_merge __P((symlist_t *symlist_dest, symlist_t *symlist_src1,
+			   symlist_t *symlist_src2));
+void	symtable_dump __P((FILE *ofile));

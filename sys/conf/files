@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.243 2002/03/14 20:15:00 jason Exp $
+#	$OpenBSD: files,v 1.244 2002/03/19 02:49:20 millert Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -101,8 +101,7 @@ file	dev/ic/wdc.c wdc_base
 # Adaptec 2[789]4X, 394X, aic7770 and aic78[5678]0 SCSI controllers
 device	ahc: scsi
 file	dev/ic/aic7xxx.c	ahc
-file	dev/ic/aic7xxx_openbsd.c	ahc
-file	dev/ic/aic7xxx_93cx6.c	ahc
+file	dev/ic/smc93cx6.c	ahc
 
 # Adaptec AIC-6[23]60 SCSI controllers
 device	aic: scsi

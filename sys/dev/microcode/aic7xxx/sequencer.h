@@ -1,8 +1,9 @@
+/* $OpenBSD: sequencer.h,v 1.3 2002/03/19 02:49:20 millert Exp $ */
 /*
  * Instruction formats for the sequencer program downloaded to
  * Aic7xxx SCSI host adapters
  *
- * Copyright (c) 1997, 1998, 2000 Justin T. Gibbs.
+ * Copyright (c) 1997, 1998 Justin T. Gibbs.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -15,7 +16,7 @@
  *    derived from this software without specific prior written permission.
  *
  * Alternatively, this software may be distributed under the terms of the
- * GNU Public License ("GPL").
+ * the GNU Public License ("GPL").
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -29,75 +30,41 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: aicasm_insformat.h,v 1.1 2002/02/16 04:36:33 smurph Exp $
- *
- * $FreeBSD: src/sys/dev/aic7xxx/aicasm/aicasm_insformat.h,v 1.4 2000/11/10 19:54:17 gibbs Exp $
+ * $FreeBSD: src/sys/dev/aic7xxx/sequencer.h,v 1.6 1999/12/06 18:23:31 gibbs Exp $
  */
 
-#if linux
-#include <endian.h>
-#else
-#include <machine/endian.h>
-#endif
-
 struct ins_format1 {
-#if BYTE_ORDER == LITTLE_ENDIAN
-	uint32_t	immediate	: 8,
+	u_int32_t	immediate	: 8,
 			source		: 9,
 			destination	: 9,
 			ret		: 1,
 			opcode		: 4,
 			parity		: 1;
-#else
-	uint32_t	parity		: 1,
-			opcode		: 4,
-			ret		: 1,
-			destination	: 9,
-			source		: 9,
-			immediate	: 8;
-#endif
 };
 
 struct ins_format2 {
-#if BYTE_ORDER == LITTLE_ENDIAN
-	uint32_t	shift_control	: 8,
+	u_int32_t	shift_control	: 8,
 			source		: 9,
 			destination	: 9,
 			ret		: 1,
 			opcode		: 4,
 			parity		: 1;
-#else
-	uint32_t	parity		: 1,
-			opcode		: 4,
-			ret		: 1,
-			destination	: 9,
-			source		: 9,
-			shift_control	: 8;
-#endif
 };
 
 struct ins_format3 {
-#if BYTE_ORDER == LITTLE_ENDIAN
-	uint32_t	immediate	: 8,
+	u_int32_t	immediate	: 8,
 			source		: 9,
 			address		: 10,
 			opcode		: 4,
 			parity		: 1;
-#else
-	uint32_t	parity		: 1,
-			opcode		: 4,
-			address		: 10,
-			source		: 9,
-			immediate	: 8;
-#endif
 };
 
 union ins_formats {
 		struct ins_format1 format1;
 		struct ins_format2 format2;
 		struct ins_format3 format3;
-		uint8_t		   bytes[4];
-		uint32_t	   integer;
+		u_int8_t	   bytes[4];
+		u_int32_t	   integer;
 };
 struct instruction {
 	union	ins_formats format;

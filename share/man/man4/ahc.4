@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ahc.4,v 1.18 2002/02/16 06:11:09 smurph Exp $
+.\"	$OpenBSD: ahc.4,v 1.19 2002/03/19 02:49:20 millert Exp $
 .\"	$NetBSD: ahc.4,v 1.1.2.1 1996/08/25 17:22:14 thorpej Exp $
 .\"
 .\" Copyright (c) 1995, 1996
@@ -70,9 +70,9 @@ bus(es) connected to Adaptec
 .Tn AIC7880,
 .Tn AIC7890,
 .Tn AIC7891,
-.Tn AIC7892,
 .Tn AIC7895,
 .Tn AIC7896,
+.Tn AIC7892,
 .Tn AIC7897,
 or
 .Tn AIC7899
@@ -106,8 +106,8 @@ and
 .Tn 3985.
 .Pp
 Driver features include support for twin and wide busses,
-fast, ultra, ultra2, and ultra160 synchronous transfers 
-depending on controller type, tagged queuing, and SCB paging.
+fast, ultra and ultra2 synchronous transfers depending on controller type,
+tagged queuing, and SCB paging.
 .Pp
 Memory mapped I/O can be enabled for PCI devices with the
 .Dq Dv AHC_ALLOW_MEMIO
@@ -163,11 +163,9 @@ aic7870     10    PCI/32     10MHz     16Bit    16
 aic7880     10    PCI/32     20MHz     16Bit    16
 aic7890     20    PCI/32     40MHz     16Bit    16        3 4 5 6 7
 aic7891     20    PCI/64     40MHz     16Bit    16        3 4 5 6 7
-aic7892     20    PCI/64     80MHz     16Bit    16        3 4 5 6 7
 aic7895     15    PCI/32     20MHz     16Bit    16      2 3 4 5
 aic7896     20    PCI/32     40MHz     16Bit    16      2 3 4 5 6 7
 aic7897     20    PCI/64     40MHz     16Bit    16      2 3 4 5 6 7
-aic7899     20    PCI/64     80MHz     16Bit    16      2 3 4 5 6 7
 .El
 .Pp
 .Bl -enum -compact
@@ -233,14 +231,13 @@ and restoring SCB data.
 .Xr isa 4 ,
 .Xr pci 4
 .Sh AUTHORS
-The core 
+The
 .Nm
 driver, the
 .Tn AIC7xxx
 sequencer-code assembler, and the firmware running on the aic7xxx chips
 were written by
 .An Justin T. Gibbs .
-The OpenBSD platform code was written by Steve Murphree, Jr.
 .Sh BUGS
 Some Quantum drives (at least the Empire 2100 and 1080s) will not run on an
 .Tn AIC7870
