@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.46 2002/08/12 00:42:56 aaron Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.47 2002/09/12 19:58:38 millert Exp $	*/
 
 /*
  * Copyright (c) 1999 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -88,17 +88,17 @@ provided "as is" without express or implied warranty.
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.46 2002/08/12 00:42:56 aaron Exp $";
+static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.47 2002/09/12 19:58:38 millert Exp $";
 #endif /* not lint */
 
 #ifndef CONF
-#define CONF "/etc/athena/newsyslog.conf" /* Configuration file */
+#define CONF "/etc/newsyslog.conf" /* Configuration file */
 #endif
 #ifndef PIDFILE
 #define PIDFILE "/etc/syslog.pid"
 #endif
 #ifndef COMPRESS
-#define COMPRESS "/usr/ucb/compress" /* File compression program */
+#define COMPRESS "/usr/bin/compress" /* File compression program */
 #endif
 #ifndef COMPRESS_POSTFIX
 #define COMPRESS_POSTFIX ".Z"
@@ -123,6 +123,7 @@ static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.46 2002/08/12 00:42:56 aaron Ex
 #include <fcntl.h>
 #include <pwd.h>
 #include <grp.h>
+#include <limits.h>
 #include <errno.h>
 #include <unistd.h>
 #include <err.h>
