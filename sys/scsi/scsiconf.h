@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.29 2001/08/25 19:29:16 fgsch Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.30 2001/10/08 01:50:48 drahn Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -185,6 +185,7 @@ struct scsi_link {
 #define	ADEV_NOCAPACITY		0x0800
 #define	ADEV_NOTUR		0x1000
 #define	ADEV_NODOORLOCK		0x2000
+#define SDEV_NOCDB6		0x4000  /* does not support 6 byte CDB */
 	u_int8_t inquiry_flags;		/* copy of flags from probe INQUIRY */
 	u_int8_t inquiry_flags2;	/* copy of flags2 from probe INQUIRY */
 	struct	scsi_device *device;	/* device entry points etc. */
