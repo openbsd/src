@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcap-bpf.c,v 1.7 1996/09/16 02:33:08 tholo Exp $	*/
+/*	$OpenBSD: pcap-bpf.c,v 1.8 1997/08/13 20:29:41 dm Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -149,7 +149,9 @@ bpf_open(pcap_t *p, char *errbuf)
 	 */
 	do {
 		(void)sprintf(device, "/dev/bpf%d", n++);
-		fd = open(device, O_RDONLY);
+		fd = open(device, O_RDWR);
+		if (fd < 0 && errno == EACCES)
+			fd = open(device, O_RDONLY);
 	} while (fd < 0 && errno == EBUSY);
 
 	/*
