@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.28 2003/06/24 07:55:12 itojun Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.29 2003/09/26 21:43:32 miod Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -413,7 +413,7 @@ nd6_ra_input(m, off, icmp6len)
 }
 
 /*
- * default router list proccessing sub routines
+ * default router list processing sub routines
  */
 
 /* tell the change to user processes watching the routing socket. */

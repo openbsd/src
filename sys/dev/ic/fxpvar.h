@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxpvar.h,v 1.13 2002/10/17 15:12:12 drahn Exp $	*/
+/*	$OpenBSD: fxpvar.h,v 1.14 2003/09/26 21:43:31 miod Exp $	*/
 /*	$NetBSD: if_fxpvar.h,v 1.1 1997/06/05 02:01:58 thorpej Exp $	*/
 
 /*                  
@@ -34,7 +34,7 @@
  */
 
 /*
- * Misc. defintions for the Intel EtherExpress Pro/100B PCI Fast
+ * Misc. definitions for the Intel EtherExpress Pro/100B PCI Fast
  * Ethernet driver
  */
 

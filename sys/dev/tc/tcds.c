@@ -1,4 +1,4 @@
-/* $OpenBSD: tcds.c,v 1.2 2002/10/12 01:09:44 krw Exp $ */
+/* $OpenBSD: tcds.c,v 1.3 2003/09/26 21:43:31 miod Exp $ */
 /* $NetBSD: tcds.c,v 1.3 2001/11/13 06:26:10 lukem Exp $ */
 
 /*-
@@ -230,7 +230,7 @@ tcdsattach(parent, self, aux)
 	    TCDS_CIR_GPI_2) != 0;
 
 	/*
-	 * Set up the per-slot defintions for later use.
+	 * Set up the per-slot definitions for later use.
 	 */
 
 	/* fill in common information first */

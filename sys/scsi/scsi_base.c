@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.43 2003/06/26 02:00:56 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.44 2003/09/26 21:43:32 miod Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -457,7 +457,7 @@ retry:
 	 * After the wakeup, we must still check if it succeeded
 	 * 
 	 * If we have a SCSI_NOSLEEP (typically because we have a buf)
-	 * we just return.  All the error proccessing and the buffer
+	 * we just return.  All the error processing and the buffer
 	 * code both expect us to return straight to them, so as soon
 	 * as the command is queued, return.
 	 */

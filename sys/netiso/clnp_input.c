@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnp_input.c,v 1.5 2003/06/02 23:28:17 millert Exp $	*/
+/*	$OpenBSD: clnp_input.c,v 1.6 2003/09/26 21:43:32 miod Exp $	*/
 /*	$NetBSD: clnp_input.c,v 1.12 1996/04/13 01:34:26 cgd Exp $	*/
 
 /*-
@@ -314,7 +314,7 @@ clnp_input(struct mbuf *m, ...)
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_INPUT]) {
 		printf(
-		       "clnp_input: proccessing dg; First mbuf m_len %d, m_type x%x, %s\n",
+		       "clnp_input: processing dg; First mbuf m_len %d, m_type x%x, %s\n",
 		 m->m_len, m->m_type, IS_CLUSTER(m) ? "cluster" : "normal");
 	}
 #endif

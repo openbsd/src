@@ -1,4 +1,4 @@
-/* $OpenBSD: locore_c_routines.c,v 1.32 2003/09/01 22:51:05 miod Exp $	*/
+/* $OpenBSD: locore_c_routines.c,v 1.33 2003/09/26 21:43:30 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -446,7 +446,7 @@ unsigned
 getipl(void)
 {
 	unsigned curspl;
-	m88k_psr_type psr; /* proccessor status register */
+	m88k_psr_type psr; /* processor status register */
 
 	psr = disable_interrupts_return_psr();
 	switch (brdtyp) {
@@ -470,7 +470,7 @@ unsigned
 setipl(unsigned level)
 {
 	unsigned curspl;
-	m88k_psr_type psr; /* proccessor status register */
+	m88k_psr_type psr; /* processor status register */
 
 #ifdef DIAGNOSTIC
 	if (level > 7) {

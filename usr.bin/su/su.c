@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.54 2003/06/21 23:27:33 deraadt Exp $	*/
+/*	$OpenBSD: su.c,v 1.55 2003/09/26 21:43:32 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "from: @(#)su.c	5.26 (Berkeley) 7/6/91";
 #else
-static const char rcsid[] = "$OpenBSD: su.c,v 1.54 2003/06/21 23:27:33 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: su.c,v 1.55 2003/09/26 21:43:32 miod Exp $";
 #endif
 #endif /* not lint */
 
@@ -300,7 +300,7 @@ main(int argc, char **argv)
 	if (emlogin) {
 		flags = LOGIN_SETALL & ~LOGIN_SETPATH;
 		/*
-		 * Only call setlogin() if this proccess is a session leader.
+		 * Only call setlogin() if this process is a session leader.
 		 * In practice, this means the login name will be set only if
 		 * we are exec'd by a shell.  This is important because
 		 * otherwise the parent shell's login name would change too.

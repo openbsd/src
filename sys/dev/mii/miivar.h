@@ -1,4 +1,4 @@
-/*	$OpenBSD: miivar.h,v 1.15 2002/05/04 11:30:06 fgsch Exp $	*/
+/*	$OpenBSD: miivar.h,v 1.16 2003/09/26 21:43:31 miod Exp $	*/
 /*	$NetBSD: miivar.h,v 1.17 2000/03/06 20:56:57 thorpej Exp $	*/
 
 /*-
@@ -50,7 +50,7 @@
 #endif
 
 /*
- * Media Independent Interface autoconfiguration defintions.
+ * Media Independent Interface autoconfiguration definitions.
  *
  * This file exports an interface which attempts to be compatible
  * with the BSD/OS 3.0 interface.

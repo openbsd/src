@@ -1,4 +1,4 @@
-/*	$OpenBSD: pk.h,v 1.3 2003/06/02 23:28:13 millert Exp $	*/
+/*	$OpenBSD: pk.h,v 1.4 2003/09/26 21:43:32 miod Exp $	*/
 /*	$NetBSD: pk.h,v 1.6 1996/02/13 22:05:08 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  *
  */
 
-/* Packet type identifier field defintions. */
+/* Packet type identifier field definitions. */
 
 #define X25_CALL                         11
 #define X25_CALL_ACCEPTED                15   
