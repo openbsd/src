@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.88 2004/01/31 06:01:12 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.89 2004/04/03 11:10:39 naddy Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -10,6 +10,7 @@ option		SUN4U
 option		PCIVERBOSE
 option		USER_PCICONF	# user-space PCI configuration
 option		APERTURE
+option		USBVERBOSE
 
 maxusers	64
 
@@ -98,6 +99,8 @@ ums*	at uhidev? reportid ?
 wsmouse* at ums? mux 0
 uhid*	at uhidev? reportid ?
 ugen*	at uhub? port ? configuration ?	# USB generic device
+uftdi*	at uhub? port ?			# FTDI FT8U100AX serial adapter
+ucom*	at uftdi? portno ?
 uplcom* at uhub? port ?			# I/O DATA USB-RSAQ2 serial adapter
 ucom*	at uplcom? portno ?
 
