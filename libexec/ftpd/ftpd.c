@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.26 1996/12/07 09:00:22 bitblt Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.27 1996/12/14 22:47:38 deraadt Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -1816,7 +1816,7 @@ gunique(local)
 {
 	static char new[MAXPATHLEN];
 	struct stat st;
-	int count, len;
+	int count, len, fd;
 	char *cp;
 
 	cp = strrchr(local, '/');
@@ -1837,8 +1837,11 @@ gunique(local)
 	*cp++ = '.';
 	for (count = 1; count < 100; count++) {
 		(void)snprintf(cp, sizeof(new) - (cp - new), "%d", count);
-		if (stat(new, &st) < 0)
-			return (new);
+		fd = open(new, O_RDWR|O_CREAT|O_EXCL, 0666);
+		if (fd == -1)
+			continue;
+		close(fd);
+		return (new);
 	}
 	reply(452, "Unique file name cannot be created.");
 	return (NULL);
