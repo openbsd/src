@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec.c,v 1.84 2003/12/15 10:06:42 hshoexer Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.85 2004/01/03 16:38:13 ho Exp $	*/
 /*	$EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	*/
 
 /*
@@ -1011,43 +1011,6 @@ ipsec_delete_spi_list (struct sockaddr *addr, u_int8_t proto,
     }
 }
 
-/*
- * deal with a NOTIFY of INVALID_SPI
- */
-static void
-ipsec_invalid_spi (struct message *msg, struct payload *p)
-{
-  struct sockaddr *dst;
-  int invspisz, off;
-  u_int32_t spi;
-  u_int16_t totsiz;
-  u_int8_t spisz;
-
-  /*
-   * get the invalid spi out of the variable sized notification data
-   * field, which is after the variable sized SPI field [which specifies
-   * the receiving entity's phase-1 SPI, not the invalid spi]
-   */
-  totsiz = GET_ISAKMP_GEN_LENGTH (p->p);
-  spisz = GET_ISAKMP_NOTIFY_SPI_SZ (p->p);
-  off = ISAKMP_NOTIFY_SPI_OFF + spisz;
-  invspisz = totsiz - off;
-
-  if (invspisz != sizeof spi)
-    {
-      LOG_DBG ((LOG_SA, 40,
-	       "ipsec_invalid_spi: SPI size %d in INVALID_SPI "
-	       "payload unsupported", spisz));
-       return;
-    }
-  memcpy (&spi, p->p + off, sizeof spi);
-
-  msg->transport->vtbl->get_dst (msg->transport, &dst);
-
-  /* delete matching SPI's from this peer */
-  ipsec_delete_spi_list (dst, 0, (u_int8_t *)&spi, 1, "INVALID_SPI");
-}
-
 static int
 ipsec_responder (struct message *msg)
 {
@@ -1096,9 +1059,6 @@ ipsec_responder (struct message *msg)
 	  LOG_DBG ((LOG_EXCHANGE, 10,
 		    "ipsec_responder: got NOTIFY of type %s",
 		    constant_name (isakmp_notify_cst, type)));
-
-	  if (type == ISAKMP_NOTIFY_INVALID_SPI)
-	    ipsec_invalid_spi (msg, p);
 
 	  p->flags |= PL_MARK;
 	}
@@ -1656,6 +1616,31 @@ ipsec_handle_leftover_payload (struct message *msg, u_int8_t type,
       switch (GET_ISAKMP_NOTIFY_MSG_TYPE (payload->p))
 	{
 	case IPSEC_NOTIFY_INITIAL_CONTACT:
+	  /*
+	   * Permit INITIAL-CONTACT if
+	   *   - this is not an AGGRESSIVE mode exchange
+	   *   - it is protected by an ISAKMP SA
+	   *
+	   * XXX Instead of the first condition above, we could permit this
+	   * XXX only for phase 2. In the last packet of main-mode, this
+	   * XXX payload, while encrypted, is not part of the hash digest.
+	   * XXX As we currently send our own INITIAL-CONTACTs at this point,
+	   * XXX this too would need to be changed.
+	   */
+	  if (msg->exchange->type == ISAKMP_EXCH_AGGRESSIVE)
+	    {	
+	      log_print ("ipsec_handle_leftover_payload: got INITIAL-CONTACT "
+			 "in AGGRESSIVE mode");
+	      return -1;
+	    }
+
+	  if ((msg->exchange->flags & EXCHANGE_FLAG_ENCRYPT) == 0)
+	    {
+	      log_print ("ipsec_handle_leftover_payload: got INITIAL-CONTACT "
+			 "without ISAKMP SA");
+	      return -1;
+	    }
+
 	  /*
 	   * Find out who is sending this and then delete every SA that is
 	   * ready.  Exchanges will timeout themselves and then the
