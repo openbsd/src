@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: i386b-nat.c,v 1.1.1.1 1995/10/18 08:40:06 deraadt Exp $
+	$Id: i386b-nat.c,v 1.2 1995/11/20 09:21:12 deraadt Exp $
 */
 
 #include <sys/types.h>
@@ -43,7 +43,7 @@ fetch_inferior_registers (regno)
   ptrace (PT_GETREGS, inferior_pid,
 	  (PTRACE_ARG3_TYPE) &inferior_registers, 0);
 
-  memcpy (&registers[REGISTER_BYTE (0)], &inferior_registers, 4*14);
+  memcpy (&registers[REGISTER_BYTE (0)], &inferior_registers, NUM_REGS * 4);
 
   registers_fetched ();
 }
@@ -54,7 +54,7 @@ store_inferior_registers (regno)
 {
   struct reg inferior_registers;
 
-  memcpy (&inferior_registers, &registers[REGISTER_BYTE (0)], 4*14);
+  memcpy (&inferior_registers, &registers[REGISTER_BYTE (0)], NUM_REGS * 4);
 
   ptrace (PT_SETREGS, inferior_pid,
 	  (PTRACE_ARG3_TYPE) &inferior_registers, 0);
