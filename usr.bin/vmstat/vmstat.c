@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.23 1997/11/30 09:18:25 deraadt Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.24 1998/05/19 17:38:20 mickey Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -846,7 +846,7 @@ domem()
 	for (i = 0, ks = &kmemstats[0]; i < M_LAST; i++, ks++) {
 		if (ks->ks_calls == 0)
 			continue;
-		(void)printf("%13s%6ld%6ldK%7ldK%6ldK%9ld%5u%6u",
+		(void)printf("%14s%6ld%6ldK%7ldK%6ldK%9ld%5u%6u",
 		    kmemnames[i] ? kmemnames[i] : "undefined",
 		    ks->ks_inuse, (ks->ks_memuse + 1023) / 1024,
 		    (ks->ks_maxused + 1023) / 1024,
