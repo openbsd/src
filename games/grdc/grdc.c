@@ -1,4 +1,4 @@
-/*	$OpenBSD: grdc.c,v 1.8 2000/01/24 07:53:57 pjanzen Exp $	*/
+/*	$OpenBSD: grdc.c,v 1.9 2000/07/05 08:26:36 pjanzen Exp $	*/
 /*
  * Grand digital clock for curses compatible terminals
  * Usage: grdc [-s] [n]   -- run for n seconds (default infinity)
@@ -58,7 +58,6 @@ main(argc, argv)
 	int n = 0;
 	struct timeval nowtv;
 	struct timespec delay;
-	time_t then;
 	char *ep;
 
 	/* revoke privs */
@@ -135,7 +134,6 @@ main(argc, argv)
 	}
 	gettimeofday(&nowtv, NULL);
 	TIMEVAL_TO_TIMESPEC(&nowtv, &now);
-	then = now.tv_sec - 1;
 	do {
 		mask = 0;
 		tm = localtime(&now.tv_sec);
@@ -181,17 +179,9 @@ main(argc, argv)
 		refresh();
 		gettimeofday(&nowtv, NULL);
 		TIMEVAL_TO_TIMESPEC(&nowtv, &now);
-		/* On some systems nanosleep() can return early, before a full
-		 * second has passed according to gettimeofday().
-		 */
-		if (now.tv_sec == then) {
-			delay.tv_sec = 1;
-			now.tv_sec++;
-		} else
-			delay.tv_sec = 0;
+		delay.tv_sec = 0;
 		delay.tv_nsec = (1000000000 - now.tv_nsec);
 		nanosleep(&delay, NULL);
-		then = now.tv_sec;
 		now.tv_sec++;
 
 		if (sigtermed) {
