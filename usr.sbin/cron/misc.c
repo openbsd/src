@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.18 2002/05/28 01:20:19 deraadt Exp $	*/
+/*	$OpenBSD: misc.c,v 1.19 2002/05/28 02:03:01 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$OpenBSD: misc.c,v 1.18 2002/05/28 01:20:19 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.19 2002/05/28 02:03:01 millert Exp $";
 #endif
 
 /* vix 26jan87 [RCS has the rest of the log]
@@ -278,6 +278,7 @@ acquire_daemonlock(closeflag)
 	static int	fd = -1;
 	char		buf[3*MAX_FNAME];
 	char		pidfile[MAX_FNAME];
+	char		*ep;
 	long		otherpid;
 	ssize_t		num;
 
@@ -315,7 +316,8 @@ acquire_daemonlock(closeflag)
 			bzero(buf, sizeof(buf));
 			if ((fd = open(pidfile, O_RDONLY, 0)) >= 0 &&
 			    (num = read(fd, buf, sizeof(buf) - 1)) > 0 &&
-			    sscanf(buf, "%ld", &otherpid) == 1) {
+			    (otherpid = strtol(buf, &ep, 10)) > 0 &&
+			    ep != buf && *ep == '\n' && otherpid != LONG_MAX) {
 				snprintf(buf, sizeof buf,
 				    "can't lock %s, otherpid may be %ld: %s",
 				    pidfile, otherpid, strerror(save_errno));
