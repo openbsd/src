@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.56 1999/12/04 23:20:21 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.57 1999/12/05 22:09:18 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -292,9 +292,15 @@ check_ipsec_policy(struct inpcb *inp, u_int32_t daddr)
 		DPRINTF(("ipsec: send SA request (%d), remote IPv4 address: %s, SA type: %d\n", i + 1, inet_ntoa4(dst->sen_ip_dst), sa_require));
 		break;
 
+#ifdef INET6
 	    case SENT_IPSP6:
 		DPRINTF(("ipsec: send SA request (%d), remote IPv6 address: %s, SA type: %d\n", i + 1, inet6_ntoa4(dst->sen_ip6_dst), sa_require));
 		break;
+#endif /* INET6 */
+
+	    default:
+		DPRINTF(("ipsec: unsupported protocol family %d, cannot notify kkey management\n", dst->sen_type));
+		return EPFNOSUPPORT;
 	}
 
 	/* Send notify */
@@ -1456,7 +1462,7 @@ inet_ntoa4(struct in_addr ina)
     return (buf[i]);
 }
 
-#if INET6
+#ifdef INET6
 char *
 inet6_ntoa4(struct in6_addr ina)
 {
