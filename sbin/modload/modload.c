@@ -1,4 +1,4 @@
-/* 	$OpenBSD: modload.c,v 1.38 2003/03/13 09:09:26 deraadt Exp $	*/
+/* 	$OpenBSD: modload.c,v 1.39 2003/03/30 20:55:03 henning Exp $	*/
 /*	$NetBSD: modload.c,v 1.30 2001/11/08 15:33:15 christos Exp $	*/
 
 /*
@@ -237,7 +237,7 @@ int
 main(int argc, char *argv[])
 {
 	int strtablen, c, noready = 0, old = 0;
-	char *kname = _PATH_UNIX;
+	const char *kname = _PATH_UNIX;
 	char *entry = DFLT_ENTRY;
 	char *post = NULL;
 	char *modobj;
@@ -316,17 +316,12 @@ main(int argc, char *argv[])
 		 * Try <modobj>_init if entry is DFLT_ENTRY.
 		 */
 		if (strcmp(entry, DFLT_ENTRY) == 0) {
-			int len;
-
 			if ((p = strrchr(modout, '/')))
 				p++;
 			else
 				p = modout;
-			len = strlen(p) + strlen(DFLT_ENTRYEXT) + 1;
-			entry = malloc(len);
-			if (entry == NULL)
-				err(1, "malloc");
-			snprintf(entry, len, "%s%s", p, DFLT_ENTRYEXT);
+			if (asprintf(&entry, "%s%s", p, DFLT_ENTRYEXT) == -1)
+				err(1, "asprintf");
 			if (verify_entry(entry, modobj))
 				errx(1, "entry point _%s not found in %s",
 				    entry, modobj);
