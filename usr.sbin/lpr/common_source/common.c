@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.23 2002/06/13 06:48:40 millert Exp $	*/
+/*	$OpenBSD: common.c,v 1.24 2003/04/07 22:55:50 deraadt Exp $	*/
 /*	$NetBSD: common.c,v 1.21 2000/08/09 14:28:50 itojun Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static const char sccsid[] = "@(#)common.c	8.5 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: common.c,v 1.23 2002/06/13 06:48:40 millert Exp $";
+static const char rcsid[] = "$OpenBSD: common.c,v 1.24 2003/04/07 22:55:50 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -274,11 +274,12 @@ getq(struct queue ***namelist)
 			continue;	/* Doesn't exist */
 		}
 		PRIV_END;
-		q = (struct queue *)malloc(sizeof(time_t)+strlen(d->d_name)+1);
+		q = (struct queue *)malloc(sizeof(struct queue));
 		if (q == NULL)
 			goto errdone;
 		q->q_time = stbuf.st_mtime;
-		strcpy(q->q_name, d->d_name);	/* safe */
+		strlcpy(q->q_name, d->d_name, sizeof(q->q_name));
+
 		/*
 		 * Check to make sure the array has space left and
 		 * realloc the maximum size.
