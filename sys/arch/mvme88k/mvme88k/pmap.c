@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.72 2003/08/08 21:36:33 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.73 2003/08/20 19:29:12 miod Exp $	*/
 /*
  * Copyright (c) 2001, 2002, 2003 Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -228,6 +228,7 @@ extern vaddr_t obiova;
 /*
  * Internal routines
  */
+void flush_atc_entry(long, vaddr_t, boolean_t);
 pt_entry_t *pmap_expand_kmap(vaddr_t, vm_prot_t);
 void pmap_remove_range(pmap_t, vaddr_t, vaddr_t);
 void pmap_expand(pmap_t, vaddr_t);
@@ -293,8 +294,6 @@ m88k_protection(pmap_t pmap, vm_prot_t prot)
  *	va	virtual address that should be flushed
  *      kernel  TRUE if supervisor mode, FALSE if user mode
  */
-#if NCPUS > 1
-void flush_atc_entry(long, vaddr_t, boolean_t);
 void
 flush_atc_entry(long users, vaddr_t va, boolean_t kernel)
 {
@@ -315,10 +314,6 @@ flush_atc_entry(long users, vaddr_t va, boolean_t kernel)
 		tusers &= ~(1 << cpu);
 	}
 }
-#else
-#define	flush_atc_entry(users,va,kernel) \
-	cmmu_flush_remote_tlb(0, (kernel), (va), PAGE_SIZE)
-#endif
 
 /*
  * Routine:	PMAP_PTE
