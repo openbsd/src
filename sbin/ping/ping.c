@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.23 1997/06/23 22:45:53 deraadt Exp $	*/
+/*	$OpenBSD: ping.c,v 1.24 1997/06/29 19:23:07 millert Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: ping.c,v 1.23 1997/06/23 22:45:53 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ping.c,v 1.24 1997/06/29 19:23:07 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -1123,19 +1123,20 @@ pr_iph(ip)
  * a hostname.
  */
 char *
-pr_addr(l)
-	in_addr_t l;
+pr_addr(a)
+	in_addr_t a;
 {
 	struct hostent *hp;
+	struct in_addr in;
 	static char buf[16+3+MAXHOSTNAMELEN];
 
+	in.s_addr = a;
 	if ((options & F_NUMERIC) ||
-	    !(hp = gethostbyaddr((char *)&l, 4, AF_INET)))
-		(void)snprintf(buf, sizeof buf, "%s",
-		    inet_ntoa(*(struct in_addr *)&l));
+	    !(hp = gethostbyaddr((char *)&in.s_addr, sizeof(in.s_addr), AF_INET)))
+		(void)snprintf(buf, sizeof buf, "%s", inet_ntoa(in));
 	else
 		(void)snprintf(buf, sizeof buf, "%s (%s)", hp->h_name,
-		    inet_ntoa(*(struct in_addr *)&l));
+		    inet_ntoa(in));
 	return(buf);
 }
 
