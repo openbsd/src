@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.30 1998/09/19 20:02:23 millert Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.31 1998/09/19 20:47:16 millert Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$OpenBSD: ftp.c,v 1.30 1998/09/19 20:02:23 millert Exp $";
+static char rcsid[] = "$OpenBSD: ftp.c,v 1.31 1998/09/19 20:47:16 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -483,7 +483,8 @@ sendrequest(cmd, local, remote, printnames)
 	oldinti = signal(SIGINFO, psummary);
 	if (strcmp(local, "-") == 0) {
 		fin = stdin;
-		progress = 0;
+		if (progress == 1)
+			progress = 0;
 	} else if (*local == '|') {
 		oldintp = signal(SIGPIPE, SIG_IGN);
 		fin = popen(local + 1, "r");
@@ -495,7 +496,8 @@ sendrequest(cmd, local, remote, printnames)
 			code = -1;
 			return;
 		}
-		progress = 0;
+		if (progress == 1)
+			progress = 0;
 		closefunc = pclose;
 	} else {
 		fin = fopen(local, "r");
@@ -879,7 +881,8 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 			warn("%s", local+1);
 			goto abort;
 		}
-		progress = 0;
+		if (progress == 1)
+			progress = 0;
 		preserve = 0;
 		closefunc = pclose;
 	} else {
@@ -904,7 +907,8 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 		bufsize = st.st_blksize;
 	}
 	if ((st.st_mode & S_IFMT) != S_IFREG) {
-		progress = 0;
+		if (progress == 1)
+			progress = 0;
 		preserve = 0;
 	}
 	progressmeter(-1);

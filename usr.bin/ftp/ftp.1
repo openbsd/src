@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: ftp.1,v 1.20 1998/09/19 20:12:31 millert Exp $
+.\" 	$OpenBSD: ftp.1,v 1.21 1998/09/19 20:47:16 millert Exp $
 .\" 	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -107,7 +107,8 @@ multiple file transfers.
 .It Fl m
 Causes
 .Nm
-to display the progress meter even if in non-verbose mode.
+to always display the progress meter in cases where it would not do
+so by default.
 .It Fl n
 Restrains
 .Nm
