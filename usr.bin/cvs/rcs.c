@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.24 2005/02/16 19:45:59 jfb Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.25 2005/02/25 20:32:48 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1092,12 +1092,10 @@ rcs_parse_delta(RCSFILE *rfp)
 			}
 
 			if (tok == RCS_TOK_DATE) {
-				datenum = rcsnum_alloc();
-				if (datenum == NULL) {
+				if ((datenum = rcsnum_parse(tokstr)) == NULL) {
 					rcs_freedelta(rdp);
 					return (-1);
 				}
-				rcsnum_aton(tokstr, NULL, datenum);
 				if (datenum->rn_len != 6) {
 					cvs_log(LP_ERR,
 					    "RCS date specification has %s "

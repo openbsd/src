@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsnum.c,v 1.7 2005/02/25 20:05:42 jfb Exp $	*/
+/*	$OpenBSD: rcsnum.c,v 1.8 2005/02/25 20:32:48 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -72,7 +72,7 @@ rcsnum_parse(const char *str)
 	if ((num = rcsnum_alloc()) == NULL)
 		return (NULL);
 
-	if (rcsnum_aton(str, &ep, num) < 0) {
+	if ((rcsnum_aton(str, &ep, num) < 0) || (*ep != '\0')) {
 		rcsnum_free(num);
 		return (NULL);
 	}

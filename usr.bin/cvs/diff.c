@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.20 2005/02/01 18:03:32 jfb Exp $	*/
+/*	$OpenBSD: diff.c,v 1.21 2005/02/25 20:32:48 jfb Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -578,11 +578,10 @@ cvs_diff_file(struct cvs_file *cfp, void *arg)
 		if (dap->rev1 == NULL)
 			r1 = entp->ce_rev;
 		else {
-			if ((r1 = rcsnum_alloc()) == NULL) {
+			if ((r1 = rcsnum_parse(dap->rev1)) == NULL) {
 				cvs_ent_free(entp);
 				return (-1);
 			}
-			rcsnum_aton(dap->rev1, NULL, r1);
 		}
 
 		cvs_printf("retrieving revision %s\n",
@@ -594,11 +593,10 @@ cvs_diff_file(struct cvs_file *cfp, void *arg)
 
 		if (dap->rev2 != NULL) {
 			cvs_printf("retrieving revision %s\n", dap->rev2);
-			if ((r2 = rcsnum_alloc()) == NULL) {
+			if ((r2 = rcsnum_parse(dap->rev2)) == NULL) {
 				cvs_ent_free(entp);
 				return (-1);
 			}
-			rcsnum_aton(dap->rev2, NULL, r2);
 			b2 = rcs_getrev(rf, r2);
 			rcsnum_free(r2);
 		} else {
