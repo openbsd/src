@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.281 2002/12/03 00:58:35 krw Exp $
+#	$OpenBSD: install.sub,v 1.282 2002/12/04 03:39:07 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -469,22 +469,6 @@ addhostent() {
 	echo "$1 $2" >> /tmp/hosts
 }
 
-# Create a hostname.* file for the interface.
-# $1 - interface name
-# $2 - interface symbolic name
-# $3 - interface IP address
-# $4 - interface netmask
-# $5 - (optional) interface media directives
-addifconfig() {
-	if [ "$3" = "dhcp" ]; then
-		echo "dhcp NONE NONE NONE $5" > /tmp/hostname.$1
-		addhostent 127.0.0.1 $2
-	else
-		echo "inet $3 $4 NONE $5" > /tmp/hostname.$1
-		addhostent $3 $2
-	fi
-}
-
 # Show selection list and get user response to give question
 # in global _resp.
 #
@@ -590,80 +574,67 @@ __EOT
 }
 
 configure_ifs() {
-	local _up _if_name=$1 _if_ip _if_mask
-	local _if_symname _if_extra
-	local _dhcp_prompt _mediaopts
+	local _ifs=$1 _addr _mask _name _prompt _media _config
 
 	set -- $(inet_info $_ifs)
-	_up=$1
-	_if_ip=$2
-	_if_mask=$3
+	[[ $1 == UP ]] && ifconfig $_ifs delete down
+	[[ -n $2 && $2 != "0.0.0.0" ]] && { _addr=$2; _mask=$3; }
 
-	[ $_up = "UP" ] && ifconfig $_if_name delete down
+	# Get symbolic name - will be used in DHCP requests.
+	ask "Symbolic (host) name for $_ifs?" "$HOSTNAME"
+	_name=$resp
 
-	[ -x /sbin/dhclient ] && _dhcp_prompt=" (or 'dhcp')"
-
-	# Get IP address
-	resp=
-	while [ -z "$resp" ] ; do
-		ask "IP address for ${_if_name}?${_dhcp_prompt}" "$_if_ip"
-		if [ ! -x /sbin/dhclient -a "$resp" == "dhcp" ]; then
-			echo "DHCP is not supported."
-			resp=
-		fi
-	done
-	_if_ip=$resp
-
-	# Get symbolic name
-	ask_until "Symbolic (host) name?" "$HOSTNAME"
-	_if_symname=$resp
-
-	# Get netmask
-	if [ "$_if_ip" != "dhcp" ]; then
-		ask_until "Netmask?" "${_if_mask:=255.255.255.0}"
-		_if_mask=$resp
-	fi
-
-	_mediaopts=`ifconfig -m $_if_name | sed -n '/media:/D;/media/p'`
-	if [ "$_mediaopts" ]; then
-		cat << __EOT
-The default media for $_if_name is
-$(ifconfig -m $_if_name | sed -n '/supported/D;/media:/p')
+	# Get and apply media options.
+	_media=$(ifconfig -m $_ifs | grep "media ")
+	if [[ -n $_media ]]; then
+ 		cat << __EOT
+The default media for $_ifs is
+$(ifconfig -m $_ifs | sed -n '/supported/D;/media:/p')
 __EOT
-		ask "Do you want to change the default media?" "n"
-		case $resp in
-		y*|Y*)	cat << __EOT
-Supported media options for $_if_name are:
-$_mediaopts
+		ask "Do you want to change the default media?" n
+ 		case $resp in
+ 		y*|Y*)	cat << __EOT
+Supported media options for $_ifs are:
+$_media
 __EOT
-			ask "Media options for $_if_name?"
-			_if_extra=$resp
+			ask "Media options for $_ifs?"
+			_media=$resp
+			ifconfig $_ifs $_media down || return 1
 			;;
-		*)	;;
-		esac
-	fi
+		*)	_media=
+ 			;;
+ 		esac
+ 	fi
+ 
+	# Get address and mask.
+	_prompt="IP address for ${_ifs}?"
+	[[ -x /sbin/dhclient ]] && _prompt="$_prompt (or 'dhcp')"
 
-	# Apply any specified media options immediately.
-	ifconfig ${_if_name} down ${_if_extra} || return 1
+	ask_until "$_prompt" "$_addr"
+	case $resp in
+	dhcp)	if [[ ! -x /sbin/dhclient ]]; then
+			echo "DHCP not supported - no /sbin/dhclient found."
+			return 1
+ 		fi
+		dhcp_request $_ifs "$_name" || dhcp_request $_ifs || return 1
+		_config="dhcp NONE NONE"
+		# Fake address for the hosts file.
+		_addr=127.0.0.1
+		;;
+	*)	_addr=$resp
+		ask_until "Netmask?" "${_mask:=255.255.255.0}"
+		_mask=$resp
+		ifconfig $_ifs inet $_addr netmask $_mask $_media up || return 1
+		_config="inet $_addr $_mask"
+		;;
+	esac
 
-	# Configure the interface. If it succeeds, add it to the permanent
-	# network configuration info.
-	if [ "$_if_ip" = "dhcp" ]; then
-		dhcp_request $_if_name $_if_symname || dhcp_request $_if_name || return 1
-		addifconfig ${_if_name} ${_if_symname} ${_if_ip}
-		return 0
-	else
-		if ifconfig ${_if_name} inet \
-			${_if_ip} \
-			netmask ${_if_mask} ${_if_extra} up
-			then
-			addifconfig ${_if_name} ${_if_symname} ${_if_ip} ${_if_mask} "$_if_extra"
-			return 0
-		fi
-	fi
-	return 1
-}
-
+	# Save configuration information.
+	echo "$_config NONE $_media" > /tmp/hostname.$_ifs
+	addhostent $_addr $_name
+	return 0
+ }
+ 
 # Returns true if $1 contains only alphanumerics
 isalphanumeric() {
 	local _n
@@ -1644,17 +1615,6 @@ kill_dhclient () {
 		kill -HUP $(sed -ne "1p" /var/run/dhclient.pid) > /dev/null 2>&1
 		rm -f /var/run/dhclient.pid
 	fi
-}
-
-# Remount all filesystems in /etc/fstab with the options from
-# /etc/fstab, i.e. without any options such as async which
-# may have been used in the first mount.
-remount_fs() {
-	local _dev _mp _fstype _opt _rest
-
-	while read _dev _mp _fstype _opt _rest; do
-		mount -u -o $_opt $_dev $_mp ||	exit
-	done < /etc/fstab
 }
 
 # Preen all filesystems in /etc/fstab that have a /sbin/fsck_XXX,

@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.125 2002/12/03 00:58:35 krw Exp $
+#	$OpenBSD: install.sh,v 1.126 2002/12/04 03:39:07 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -354,11 +354,18 @@ IFS=$_oifs
 
 install_sets
 
+# Remount all filesystems in /etc/fstab with the options from
+# /etc/fstab, i.e. without any options such as async which
+# may have been used in the first mount.
+while read _dev _mp _fstype _opt _rest; do
+	mount -u -o $_opt $_dev $_mp ||	exit
+done < /etc/fstab
+
 # Set machdep.apertureallowed if required. install_sets must be
 # done first so that /etc/sysctl.conf is available.
 set_machdep_apertureallowed
 
-# Copy configuration files to /mnt/etc.
+# Move configuration files to /mnt/etc.
 cfgfiles="fstab hostname.* dhclient.conf resolv.conf resolv.conf.tail kbdtype sysctl.conf"
 
 echo -n "Saving configuration files..."
@@ -385,8 +392,6 @@ for file in $cfgfiles; do
 	fi
 done
 echo "...done."
-
-remount_fs
 
 _encr=`/mnt/usr/bin/encrypt -b 8 -- "$_password"`
 echo "1,s@^root::@root:${_encr}:@
