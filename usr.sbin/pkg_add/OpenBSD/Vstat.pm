@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Vstat.pm,v 1.9 2004/12/17 11:26:22 espie Exp $
+# $OpenBSD: Vstat.pm,v 1.10 2004/12/29 11:28:59 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -26,12 +26,10 @@ use warnings;
 
 package OpenBSD::Vstat;
 use File::Basename;
-use Symbol;
 
 my $devinfo = {};
 my $devinfo2 = {};
 my $virtual = {};
-my $virtual_dir = {};
 my $giveup;
 
 sub create_device($)
@@ -127,32 +125,11 @@ sub filestat($)
 sub vexists($)
 {
 	my $name = shift;
-	if (defined $virtual->{"$name"}) {
-		return $virtual->{"$name"};
+	if (defined $virtual->{$name}) {
+		return $virtual->{$name};
 	} else {
 		return -e $name;
 	}
-}
-
-sub vreaddir($)
-{
-	my $dirname = shift;
-	my %l;
-	my $d = gensym;
-	opendir($d, $dirname);
-	%l = map { $_ => 1 } readdir($d);
-	closedir($d);
-	if (defined $virtual_dir->{"$dirname"}) {
-		for my $e (@{$virtual_dir->{"$dirname"}}) {
-			my $n = basename($e);
-			if (vexists $e) {
-				$l{"$n"} = 1;
-			} else {
-				undef $l{"$n"};
-			}
-		}
-	}
-	return keys(%l);
 }
 
 sub account_for($$)
@@ -171,9 +148,6 @@ sub add($$;$)
 	} else {
 		$virtual->{$name} = 1;
 	}
-	my $d = dirname($name);
-	$virtual_dir->{$d} = [] unless defined $virtual_dir->{$d};
-	push(@{$virtual_dir->{$d}}, $name);
 	return defined($size) ? account_for($name, $size) : undef;
 }
 
@@ -181,9 +155,6 @@ sub remove($$)
 {
 	my ($name, $size) = @_;
 	$virtual->{$name} = 0;
-	my $d = dirname($name);
-	$virtual_dir->{$d} = [] unless defined $virtual_dir->{$d};
-	push(@{$virtual_dir->{$d}}, $name);
 	return defined($size) ? account_for($name, -$size) : undef;
 }
 
