@@ -1,4 +1,4 @@
-/*	$OpenBSD: m188_machdep.c,v 1.3 2004/11/09 12:01:19 miod Exp $	*/
+/*	$OpenBSD: m188_machdep.c,v 1.4 2004/11/09 21:50:01 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -294,7 +294,7 @@ m188_ext_int(u_int v, struct trapframe *eframe)
 	struct intrhand *intr;
 	intrhand_t *list;
 	int ret, intbit;
-	unsigned vec;
+	u_int vec;
 
 	cur_mask = ISR_GET_CURRENT_MASK(cpu);
 	old_spl = m188_curspl[cpu];
@@ -378,16 +378,11 @@ m188_ext_int(u_int v, struct trapframe *eframe)
 				    1 << intbit, IST_STRING);
 			}
 		} else if (VME_INTERRUPT_MASK & (1 << intbit)) {
-			if (guarded_access(ivec[level], 4, (u_char *)&vec) ==
-			    EFAULT) {
-				panic("unable to get vector for this vmebus "
-				    "interrupt (level %x)", level);
-			}
-			vec &= VME_VECTOR_MASK;
+			vec = *(u_int32_t *)ivec[level] & VME_VECTOR_MASK;
 			if (vec & VME_BERR_MASK) {
 				printf("VME vec timeout, vec = %x, mask = 0x%b\n",
 				    vec, 1 << intbit, IST_STRING);
-				break;
+				continue;
 			}
 			if (vec == 0) {
 				panic("unknown vme interrupt: mask = 0x%b",
@@ -447,5 +442,5 @@ out:
 	 * Restore the mask level to what it was when the interrupt
 	 * was taken.
 	 */
-	setipl(eframe->tf_mask);
+	m188_setipl(eframe->tf_mask);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.h,v 1.25 2004/10/01 19:00:51 miod Exp $	*/
+/*	$OpenBSD: locore.h,v 1.26 2004/11/09 21:50:01 miod Exp $	*/
 
 #ifndef _MACHINE_LOCORE_H_
 #define _MACHINE_LOCORE_H_
@@ -14,8 +14,6 @@ int badaddr(vaddr_t addr, int size);
 #define badwordaddr(x) badaddr(x, 4)
 void set_cpu_number(unsigned number);
 void doboot(void);
-
-int guarded_access(volatile u_int8_t *, unsigned, u_int8_t *);
 
 /* locore_c_routines.c */
 

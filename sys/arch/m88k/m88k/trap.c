@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.13 2004/11/08 16:39:31 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.14 2004/11/09 21:49:56 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -213,11 +213,6 @@ m88100_trap(unsigned type, struct trapframe *frame)
 	int sig = 0;
 
 	extern struct vm_map *kernel_map;
-#ifdef MVME188	/* XXX - only MVME188 needs guarded_access() */
-	extern caddr_t guarded_access_start;
-	extern caddr_t guarded_access_end;
-	extern caddr_t guarded_access_bad;
-#endif
 
 	uvmexp.traps++;
 	if ((p = curproc) == NULL)
@@ -319,35 +314,6 @@ m88100_trap(unsigned type, struct trapframe *frame)
 #endif
 
 		switch (pbus_type) {
-#ifdef MVME188	/* XXX - only MVME188 needs guarded_access() */
-		case CMMU_PFSR_BERROR:
-			/*
-		 	 * If it is a guarded access, bus error is OK.
-		 	 */
-			if ((frame->tf_sxip & XIP_ADDR) >=
-			      (unsigned)&guarded_access_start &&
-			    (frame->tf_sxip & XIP_ADDR) <=
-			      (unsigned)&guarded_access_end) {
-				frame->tf_snip =
-				  ((unsigned)&guarded_access_bad    ) | NIP_V;
-				frame->tf_sfip =
-				  ((unsigned)&guarded_access_bad + 4) | FIP_V;
-				frame->tf_sxip = 0;
-				/* We sort of resolved the fault ourselves
-				 * because we know where it came from
-				 * [guarded_access()]. But we must still think
-				 * about the other possible transactions in
-				 * dmt1 & dmt2.  Mark dmt0 so that
-				 * data_access_emulation skips it.  XXX smurph
-				 */
-				frame->tf_dmt0 |= DMT_SKIP;
-				data_access_emulation((unsigned *)frame);
-				frame->tf_dpfsr = 0;
-				frame->tf_dmt0 = 0;
-				return;
-			}
-			break;
-#endif
 		case CMMU_PFSR_SUCCESS:
 			/*
 			 * The fault was resolved. Call data_access_emulation

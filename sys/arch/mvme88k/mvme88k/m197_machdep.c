@@ -1,4 +1,4 @@
-/*	$OpenBSD: m197_machdep.c,v 1.3 2004/11/09 12:01:19 miod Exp $	*/
+/*	$OpenBSD: m197_machdep.c,v 1.4 2004/11/09 21:50:01 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -169,53 +169,29 @@ m197_setupiackvectors()
 void
 m197_ext_int(u_int v, struct trapframe *eframe)
 {
-	int mask, level, src;
+	int mask, level;
 	struct intrhand *intr;
 	intrhand_t *list;
 	int ret;
-	u_char vec;
+	u_int8_t vec;
 
-	/* get src and mask */
 	mask = *(u_int8_t *)M197_IMASK & 0x07;
-	src = *(u_int8_t *)M197_ISRC;
-
 	if (v == T_NON_MASK) {
 		/* This is the abort switch */
 		level = IPL_NMI;
 		vec = BS_ABORTVEC;
 	} else {
-		/* get level  */
 		level = *(u_int8_t *)M197_ILEVEL & 0x07;
+		/* generate IACK and get the vector */
+		vec = *ivec[level];
 	}
-
-#ifdef DIAGNOSTIC
-	/*
-	 * Interrupting level cannot be 0--0 doesn't produce an interrupt.
-	 * Weird! XXX nivas
-	 */
-
-	if (level == 0) {
-		panic("Bogons... level %x and mask %x", level, mask);
-	}
-#endif
 
 	uvmexp.intrs++;
 
-	if (v != T_NON_MASK) {
-		/* generate IACK and get the vector */
-		flush_pipeline();
-		if (guarded_access(ivec[level], 1, &vec) == EFAULT) {
-			panic("Unable to get vector for this interrupt (level %x)", level);
-		}
-		flush_pipeline();
-		flush_pipeline();
-		flush_pipeline();
-	}
-
 	if (v != T_NON_MASK || cold == 0) {
 		/* block interrupts at level or lower */
-		setipl(level);
-
+		m197_setipl(level);
+		flush_pipeline();
 		enable_interrupt();
 	}
 
@@ -226,7 +202,7 @@ m197_ext_int(u_int v, struct trapframe *eframe)
 		printf("Spurious interrupt (level %x and vec %x)\n",
 		       level, vec);
 	} else {
-#ifdef DIAGNOSTIC
+#ifdef DEBUG
 		intr = SLIST_FIRST(list);
 		if (intr->ih_ipl != level) {
 			panic("Handler ipl %x not the same as level %x. "
@@ -267,7 +243,7 @@ m197_ext_int(u_int v, struct trapframe *eframe)
 		 * Restore the mask level to what it was when the interrupt
 		 * was taken.
 		 */
-		setipl(mask);
+		m197_setipl(mask);
 	}
 }
 
