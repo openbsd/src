@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ray.c,v 1.7 2000/09/04 03:11:22 mickey Exp $	*/
+/*	$OpenBSD: if_ray.c,v 1.8 2000/09/10 17:55:08 mickey Exp $	*/
 /*	$NetBSD: if_ray.c,v 1.19 2000/04/22 22:36:14 thorpej Exp $	*/
 
 /*
@@ -678,14 +678,16 @@ ray_activate(dev, act)
 	struct ray_softc *sc = (struct ray_softc *)dev;
 	struct ifnet *ifp = &sc->sc_if;
 	int s;
-	int rv = 0;
 
 	RAY_DPRINTF(("%s: activate\n", sc->sc_xname));
 
 	s = splnet();
 	switch (act) {
 	case DVACT_ACTIVATE:
-		rv = EOPNOTSUPP;
+		pcmcia_function_enable(sc->sc_pf);
+		printf("%s:", sc->sc_dev.dv_xname);
+		ray_enable(sc);
+		printf("\n");
 		break;
 
 	case DVACT_DEACTIVATE:
@@ -699,7 +701,7 @@ ray_activate(dev, act)
 		break;
 	}
 	splx(s);
-	return (rv);
+	return (0);
 }
 
 int
