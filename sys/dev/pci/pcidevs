@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.284 2000/07/19 19:38:46 fgsch Exp $
+	$OpenBSD: pcidevs,v 1.285 2000/07/19 21:14:12 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -762,6 +762,7 @@ product AVANCE AVL2301		0x2301	AVL2301
 product AVANCE AVG2302		0x2302	AVG2302
 product AVANCE2 ALG2301		0x2301	ALG2301
 product AVANCE2 ALG2302		0x2302	ALG2302
+product AVANCE2 ALG4000		0x4000	ALG4000
 
 /* Bit3 products */
 product BIT3 PCIVME617		0x0001	PCI-VME Interface Mod. 617
