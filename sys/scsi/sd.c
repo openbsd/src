@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.14 1996/06/10 07:31:20 deraadt Exp $	*/
+/*	$OpenBSD: sd.c,v 1.15 1996/06/16 03:07:21 downsj Exp $	*/
 /*	$NetBSD: sd.c,v 1.100.4.1 1996/06/04 23:14:08 thorpej Exp $	*/
 
 /*
@@ -901,10 +901,38 @@ sd_get_parms(sd, flags)
 		sectors /= (dp->heads * dp->cyls);
 		dp->sectors = sectors;	/* XXX dubious on SCSI */
 		return 0;
-	}
-	else
-		printf("%s: could not mode sense (4)", sd->sc_dev.dv_xname);
+	} else {
+		/*
+		 * do a "mode sense page 5"
+		 */
+		scsi_cmd.opcode = MODE_SENSE;
+		scsi_cmd.page = 5;
+		scsi_cmd.length = 0x20;
+		if (scsi_scsi_cmd(sd->sc_link, (struct scsi_generic *)&scsi_cmd,
+		    sizeof(scsi_cmd), (u_char *)&scsi_sense, sizeof(scsi_sense),
+		    SDRETRIES, 6000, NULL,
+		    flags | SCSI_DATA_IN | SCSI_SILENT) == 0) {
+			dp->heads = scsi_sense.pages.flex_geometry.nheads;
+			dp->cyls =
+			    scsi_sense.pages.flex_geometry.ncyl_1 * 256 +
+			    scsi_sense.pages.flex_geometry.ncyl_0;
+			dp->blksize = _3btol(scsi_sense.blk_desc.blklen);
+			dp->sectors = scsi_sense.pages.flex_geometry.ph_sec_t;
+			dp->disksize = dp->heads * dp->cyls * dp->sectors;
+			if (dp->heads == 0 || dp->cyls == 0
+			    || dp->sectors == 0) {
+				printf("%s: mode sense (5) returned nonsense",
+				    sd->sc_dev.dv_xname);
+				goto fake_it;
+			}
 
+			if (dp->blksize == 0)
+				dp->blksize = 512;
+
+			return 0;
+		} else
+			printf("%s: could not mode sense (4/5)", sd->sc_dev.dv_xname);
+	}
 
 fake_it:
 	/*

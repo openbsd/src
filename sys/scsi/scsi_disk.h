@@ -174,6 +174,43 @@ union disk_pages {
 		u_int8_t reserved2;
 		u_int8_t reserved3;
     	} rigid_geometry;
+	struct page_flex_geometry {
+	   u_char pg_code;		/* page code (should be 5) */
+	   u_char pg_length;		/* page length (should be 0x1e) */
+	   u_char xfr_rate1;
+	   u_char xfr_rate0;
+	   u_char nheads;		/* number of heads */
+	   u_char ph_sec_t;		/* physical sectors per track */
+	   u_char bytes_s_1;		/* bytes per sector (MSB) */
+	   u_char bytes_s_0;		/* bytes per sector (LSB) */
+	   u_char ncyl_1;		/* number of cylinders (MSB) */
+	   u_char ncyl_0;		/* number of cylinders (LSB) */
+	   u_char st_cyl_wp_1;		/* starting cyl., write precomp (MSB) */
+	   u_char st_cyl_wp_0;		/* starting cyl., write precomp (LSB) */
+	   u_char st_cyl_rwc_1; 	/* starting cyl., red. write cur (MSB) */
+	   u_char st_cyl_rwc_0; 	/* starting cyl., red. write cur (LSB) */
+	   u_char driv_step_1;		/* drive step rate (MSB) */
+	   u_char driv_step_0;		/* drive step rate (LSB) */
+	   u_char driv_step_w;		/* drive step pulse width */
+	   u_char head_settle_1;	/* head settle delay (MSB) */
+	   u_char head_settle_0;	/* head settle delay (LSB) */
+	   u_char motor_on;		/* motor on delay */
+	   u_char motor_off;		/* motor off delay */
+	   u_char flags;		/* various flags */
+#define MO	0x20			/* motor on (pin 16)? */
+#define SSN	0x40			/* start at sector 1  */
+#define TRDY	0x20			/* RDY (pin 34) valid */
+	   u_char step_p_cyl;		/* step pulses per cylinder */
+	   u_char write_pre;		/* write precompensation */
+	   u_char head_load;		/* head load delay */
+	   u_char head_unload;		/* head unload delay */
+	   u_char pin_34_2;		/* pin 34 (6) and pin 2 (7/11) definition */
+	   u_char pin_4_1;		/* pin 4 (8/9) and pin 1 (13) definition */
+	   u_char reserved1;
+	   u_char reserved2;
+	   u_char reserved3;
+	   u_char reserved4;
+	} flex_geometry;
 };
 
 #endif /* _SCSI_SCSI_DISK_H */

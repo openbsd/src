@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.9 1996/05/06 11:33:35 deraadt Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.10 1996/06/16 03:07:19 downsj Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.36 1996/05/03 19:48:20 christos Exp $	*/
 
 /*
@@ -688,6 +688,8 @@ scsi_interpret_sense(xs)
 		case 0x5:	/* ILLEGAL REQUEST */
 			if ((xs->flags & SCSI_IGNORE_ILLEGAL_REQUEST) != 0)
 				return 0;
+			if ((xs->flags & SCSI_SILENT) != 0)
+				return EIO;
 			error = EINVAL;
 			break;
 		case 0x6:	/* UNIT ATTENTION */
