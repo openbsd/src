@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.72 2002/07/30 11:55:31 pb Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.73 2002/07/30 13:53:57 pb Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -957,8 +957,12 @@ rdr on kue0 inet proto udp from any to (kue0) port 8080 -> 10.1.2.151 \\
 rdr on fxp0 proto tcp from any to any port 21 -> 127.0.0.1 port 8081
 .Ed
 .Sh GRAMMAR
-Syntax for filter rules in BNF:
+Syntax for
+.Em pf.conf
+in BNF:
 .Bd -literal
+line           = ( option | pf_rule | nat_rule | binat_rule | rdr_rule )
+
 option         = set ( [ "timeout" ( timeout | "{" timeout-list "}" ) ] |
                        [ "optimization" [ "default" | "normal" | 
 				"high-latency" | "satellite" | 
@@ -966,12 +970,11 @@ option         = set ( [ "timeout" ( timeout | "{" timeout-list "}" ) ] |
                        [ "limit" ( limit | "{" limit-list "}" ) ] |
                        [ "loginterface" ( interface-name | "none" ) ] ) .
 
-rule           = action ( "in" | "out" )
+pf_rule        = action ( "in" | "out" )
                  [ "log" | "log-all" ] [ "quick" ]
                  [ "on" ( interface-name | "{" interface-list "}" ) ]
                  [ route ] [ af ]
-                 [ "proto" ( proto-name | proto-number |
-                             "{" proto-list "}" ) ]
+                 [ protospec ]
                  hosts
                  [ user ] [ group ] [ flags ]
                  [ icmp-type | ipv6-icmp-type ]
@@ -979,6 +982,15 @@ rule           = action ( "in" | "out" )
                  [ "fragment" ] [ "no-df" ] [ "min-ttl" number ]
                  [ "max-mss" number ] [ "allow-opts" ]
                  [ "label" string ] .
+
+nat_rule       = [ "no" ] "nat" "on" [ "!" ] ifname [ protospec ] hosts
+                 [ "->" address [ portspec ] ] .
+
+binat_rule     = [ "no" ] "binat" "on" ifname [ "proto" ( proto-name |
+                 proto-number ) ] "from" address "to" ipspec [ "->" address ] .
+
+rdr_rule       = [ "no" ] "rdr" "on" [ "!" ] ifname [ protospec ] "from" ipspec
+                 "to" ipspec [ portspec ] [ "->" address [ portspec ] ] .
 
 action         = "pass" | "block" [ return ] | "scrub" .
 return         = "return-rst" [ "(" "ttl" number ")" ] |
@@ -994,6 +1006,8 @@ route          = "fastroute" |
                  "dup-to" "(" interface-name address ")" |
                  "dup-to" interface-name
 af	       = "inet" | "inet6" .
+
+protospec      = "proto" ( proto-name | proto-number | "{" proto-list "}" ) .
 proto-list     = ( proto-name | proto-number ) [ "," proto-list ] .
 
 hosts          = "all" |
@@ -1002,12 +1016,14 @@ hosts          = "all" |
                  "to"   ( "any" | "no-route" | "self" | host |
                  "{" host-list "}" ) [ port ] .
 
+ipspec         = "any" | host | "{" host-list "}" .
 host           = [ "!" ] address [ "/" mask-bits ] .
 address        = ( interface-name | "(" interface-name ")" | host-name |
                    ipv4-dotted-quad | ipv6-coloned-hex ) .
 host-list      = host [ "," host-list ] .
 
 port           = "port" ( unary-op | binary-op | "{" op-list "}" ) .
+portspec       = "port" ( number | name ) [ ":" ( "*" | number | name ) ] .
 user           = "user" ( unary-op | binary-op | "{" op-list "}" ) .
 group          = "group" ( unary-op | binary-op | "{" op-list "}" ) .
 
@@ -1040,41 +1056,6 @@ seconds        = number .
 
 limit-list     = limit [ "," limit-list ] . 
 limit          = ( "states" | "frags" ) number .
-.Ed
-.Pp
-Syntax for translation rules in BNF:
-.Bd -literal
-rule      = [ "no" ] ( nat_rule | binat_rule | rdr_rule ) .
-
-nat_rule  = "nat" "on" [ "!" ] ifname [ protospec ] hosts
-            [ "->" address [ portspec ] ] .
-
-binat_rule = "binat" "on" ifname [ protospec ] "from" address
-             "to" ipspec [ "->" address ] .
-
-rdr_rule  = "rdr" "on" [ "!" ] ifname [ protospec ] "from" ipspec
-            "to" ipspec [ portspec ] [ "->" address [ portspec ] ] .
-
-protospec = "proto" ( number | "tcp" | "udp" | "icmp" ) .
-
-ipspec    = "any" | host | "{" host-list "}" .
-
-portspec  = "port" ( number | name ) [ ":" ( "*" | number | name ) ] .
-
-hosts     = "all" |
-            "from" ( "any" | host | "{" host-list "}" ) [ port ]
-            "to"   ( "any" | host | "{" host-list "}" ) [ port ] .
-
-host      = [ "!" ] address [ "/" mask-bits ] .
-address   = ( interface-name | "(" interface-name ")" | host-name |
-              ipv4-dotted-quad | ipv6-coloned-hex ) .
-host-list = host [ "," host-list ] .
-
-port      = "port" ( unary-op | binary-op | "{" op-list "}" ) .
-unary-op  = [ "=" | "!=" | "<" | "<=" | ">" | ">=" ]
-            ( name | number ) .
-binary-op = number ( "<>" | "><" ) number .
-op-list   = ( unary-op | binary-op ) [ "," op-list ] .
 .Ed
 .Sh FILES
 .Bl -tag -width "/etc/pf.conf" -compact
