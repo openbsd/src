@@ -1,8 +1,9 @@
-/*	$OpenBSD: print-ike.c,v 1.7 2001/04/18 09:14:14 niklas Exp $	*/
+/*	$OpenBSD: print-ike.c,v 1.8 2001/10/26 14:14:49 ho Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999
  *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2001 Håkan Olsson.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that: (1) source code distributions
@@ -24,14 +25,11 @@
  *	By Tero Kivinen <kivinen@ssh.fi>, Tero Mononen <tmo@ssh.fi>,
  *         Tatu Ylonen <ylo@ssh.fi> and Timo J. Rinne <tri@ssh.fi>
  *         in co-operation with SSH Communications Security, Espoo, Finland
- *
- * Rewritten and extended (quite a lot, too) by Hakan Olsson <ho@openbsd.org>
- *
  */
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ike.c,v 1.7 2001/04/18 09:14:14 niklas Exp $ (XXX)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ike.c,v 1.8 2001/10/26 14:14:49 ho Exp $ (XXX)";
 #endif
 
 #include <sys/param.h>
