@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: upgrade.sh,v 1.56 2004/03/23 02:39:39 krw Exp $
+#	$OpenBSD: upgrade.sh,v 1.57 2004/04/06 04:18:41 krw Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1997-2004 Todd Miller, Theo de Raadt, Ken Westerback
@@ -120,22 +120,6 @@ if ! umount /mnt; then
 	exit
 fi
 mount_fs
-
-# Prior to 3.4, ssl was a directory and openssl was a link to it, both in
-# /usr/include and /usr/libdata/perl5/site_perl/${ARCH}-openbsd. With 3.4,
-# openssl is the directory and ssl is the link. This change causes the upgrade
-# of base34 and comp34 to fail, so adjust a normal pre-3.4 setup to the new
-# setup.
-for _dir in /mnt/usr/include /mnt/usr/libdata/perl5/site_perl/*-openbsd; do
-	[[ -d $_dir ]] || continue
-	( cd $_dir
-	if [[ -d ssl && -L openssl ]]; then
-		rm openssl
-		mv ssl openssl
-		ln -s openssl ssl
-	fi
-	)
-done
 
 # Install sets.
 install_sets
