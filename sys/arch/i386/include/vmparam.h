@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.26 2003/04/17 03:42:14 drahn Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.27 2003/05/05 17:54:59 drahn Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.15 1994/10/27 04:16:34 cgd Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@
 #define	DFLDSIZ		(64*1024*1024)		/* initial data size limit */
 #endif
 #ifndef MAXDSIZ
-#define	MAXDSIZ		(512*1024*1024)		/* max data size */
+#define	MAXDSIZ		(1024*1024*1024)	/* max data size */
 #endif
 #ifndef	DFLSSIZ
 #define	DFLSSIZ		(4*1024*1024)		/* initial stack size limit */
@@ -75,6 +75,9 @@
 #ifndef	MAXSSIZ
 #define	MAXSSIZ		(32*1024*1024)		/* max stack size */
 #endif
+
+/* I386 has a line where all code is executable: 0 - I386_MAX_EXE_ADDR */
+#define I386_MAX_EXE_ADDR 0x20000000		/* exec line */
 
 /*
  * Size of shared memory map
