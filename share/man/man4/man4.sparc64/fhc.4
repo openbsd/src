@@ -1,4 +1,4 @@
-.\"     $OpenBSD: fhc.4,v 1.4 2004/09/28 02:51:52 jason Exp $
+.\"     $OpenBSD: fhc.4,v 1.5 2004/09/28 21:42:59 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -54,10 +54,11 @@ to a non-zero value.
 includes the following
 .Nm
 drivers, sorted by driver name:
+.Pp
 .Bl -tag -width zs/zstty/zskbd(4) -offset ind -compact
 .It Xr clkbrd 4
 Main system clock for E4500.
-.It Xr clock 4 
+.It Xr clock 4
 Realtime clock.
 .It Xr zs/zstty/zskbd 4
 Zilog 8530 serial controller (and serial keyboards).
