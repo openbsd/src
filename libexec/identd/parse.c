@@ -61,19 +61,38 @@ timed_read(fd, buf, siz, timeout)
 	size_t siz;
 	time_t timeout;
 {
-	int error;
+	int error, tot = 0, i, r;
+	char *p = buf;
 	fd_set readfds;
-	struct timeval tv;
-
-	FD_ZERO(&readfds);
-	FD_SET(fd, &readfds);
+	struct timeval tv, start, after, duration, tmp;
 
 	tv.tv_sec = timeout;
 	tv.tv_usec = 0;
 
-	if ((error = select(fd + 1, &readfds, 0, 0, &tv)) <= 0)
-		return error;
-	return(read(fd, buf, siz));
+	while (1) {
+		FD_ZERO(&readfds);
+		FD_SET(fd, &readfds);
+
+		gettimeofday(&start, NULL);
+		if ((error = select(fd + 1, &readfds, 0, 0, &tv)) <= 0)
+			return error;
+		r = read(fd, p, siz - tot);
+		if (r == -1)
+			return (r);
+		for (i = 0; i < r; i++)
+			if (p[i] == '\r' || p[i] == '\n') {
+				tot += r;
+				return (tot);
+			}
+		gettimeofday(&after, NULL);
+		timersub(&start, &after, &duration);
+		timersub(&tv, &duration, &tmp);
+		tv = tmp;
+		if (tv.tv_sec < 0 || !timerisset(&tv))
+			return (tot);
+		tot += r;
+		p += r;
+	}
 }
 
 /*
