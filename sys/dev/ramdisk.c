@@ -1,4 +1,4 @@
-/*	$OpenBSD: ramdisk.c,v 1.23 2004/01/14 20:50:49 miod Exp $	*/
+/*	$OpenBSD: ramdisk.c,v 1.24 2004/04/01 20:57:09 miod Exp $	*/
 /*	$NetBSD: ramdisk.c,v 1.8 1996/04/12 08:30:09 leo Exp $	*/
 
 /*
@@ -88,20 +88,18 @@ struct rd_softc {
 	struct device sc_dev;	/* REQUIRED first entry */
 	struct disk sc_dkdev;	/* hook for generic disk handling */
 	struct rd_conf sc_rd;
+#if RAMDISK_SERVER
 	struct buf *sc_buflist;
-	int sc_flags;
+#endif
 };
 /* shorthand for fields in sc_rd: */
 #define sc_addr sc_rd.rd_addr
 #define sc_size sc_rd.rd_size
 #define sc_type sc_rd.rd_type
-/* flags */
-#define RD_ISOPEN	0x01
-#define RD_SERVED	0x02
 
 void rdattach(int);
 void rd_attach(struct device *, struct device *, void *);
-struct disklabel *rdgetdisklabel(dev_t dev, struct rd_softc *sc);
+void rdgetdisklabel(struct rd_softc *sc);
 
 /*
  * Some ports (like i386) use a swapgeneric that wants to
@@ -225,7 +223,6 @@ rdsize(dev_t dev)
 {
 	int part, unit;
 	struct rd_softc *sc;
-	struct disklabel *lp;
 
 	/* Disallow control units. */
 	unit = DISKUNIT(dev);
@@ -238,13 +235,13 @@ rdsize(dev_t dev)
 	if (sc->sc_type == RD_UNCONFIGURED)
 		return 0;
 
-	lp = rdgetdisklabel(dev, sc);
+	rdgetdisklabel(sc);
 	part = DISKPART(dev);
-	if (part > lp->d_npartitions)
+	if (part >= sc->sc_dkdev.dk_label->d_npartitions)
 		return 0;
 	else
-		return lp->d_partitions[part].p_size *
-		    (lp->d_secsize / DEV_BSIZE);
+		return sc->sc_dkdev.dk_label->d_partitions[part].p_size *
+		    (sc->sc_dkdev.dk_label->d_secsize / DEV_BSIZE);
 }
 
 int
@@ -281,8 +278,6 @@ rdopen(dev, flag, fmt, proc)
 	 */
 	if (sc->sc_type == RD_UNCONFIGURED)
 		return ENXIO;
-	if (sc->sc_flags & RD_ISOPEN)
-		return EBUSY;
 
 	return 0;
 }
@@ -293,17 +288,6 @@ rdclose(dev, flag, fmt, proc)
 	int     flag, fmt;
 	struct proc *proc;
 {
-	int unit;
-	struct rd_softc *sc;
-
-	unit = DISKUNIT(dev);
-	sc = ramdisk_devs[unit];
-
-	if (RD_IS_CTRL(dev))
-		return 0;
-
-	/* Normal device. */
-	sc->sc_flags = 0;
 
 	return 0;
 }
@@ -334,14 +318,28 @@ void
 rdstrategy(bp)
 	struct buf *bp;
 {
-	int unit;
+	int unit, part;
 	struct rd_softc *sc;
 	caddr_t addr;
-	size_t  off, xfer;
+	size_t off, xfer;
 	int s;
 
 	unit = DISKUNIT(bp->b_dev);
 	sc = ramdisk_devs[unit];
+
+	/* Sort rogue requests out */
+	if (sc == NULL || bp->b_blkno < 0 ||
+	    (bp->b_bcount % sc->sc_dkdev.dk_label->d_secsize) != 0) {
+		bp->b_error = EINVAL;
+		goto bad;
+	}
+
+	/* Do not write on "no trespassing" areas... */
+	part = DISKPART(bp->b_dev);
+	if (part != RAW_PART &&
+	    bounds_check_with_label(bp, sc->sc_dkdev.dk_label,
+	      sc->sc_dkdev.dk_cpulabel, 1) <= 0)
+		goto bad;
 
 	switch (sc->sc_type) {
 #if RAMDISK_SERVER
@@ -363,12 +361,7 @@ rdstrategy(bp)
 		/* These are in kernel space.  Access directly. */
 		bp->b_resid = bp->b_bcount;
 		off = (bp->b_blkno << DEV_BSHIFT);
-		if (off >= sc->sc_size) {
-			if (bp->b_flags & B_READ)
-				break;	/* EOF */
-			goto set_eio;
-		}
-		xfer = bp->b_resid;
+		xfer = bp->b_bcount;
 		if (xfer > (sc->sc_size - off))
 			xfer = (sc->sc_size - off);
 		addr = sc->sc_addr + off;
@@ -380,12 +373,13 @@ rdstrategy(bp)
 		break;
 
 	default:
-		bp->b_resid = bp->b_bcount;
-	set_eio:
 		bp->b_error = EIO;
+bad:
 		bp->b_flags |= B_ERROR;
+		bp->b_resid = bp->b_bcount;
 		break;
 	}
+
 	s = splbio();
 	biodone(bp);
 	splx(s);
@@ -402,8 +396,6 @@ rdioctl(dev, cmd, data, flag, proc)
 	int unit;
 	struct rd_softc *sc;
 	struct rd_conf *urd;
-	struct cpu_disklabel clp;
-	struct disklabel lp, *lpp;
 	int error;
 
 	unit = DISKUNIT(dev);
@@ -415,9 +407,8 @@ rdioctl(dev, cmd, data, flag, proc)
 		if (sc->sc_type == RD_UNCONFIGURED) {
 			break;
 		}
-		lpp = rdgetdisklabel(dev, sc);
-		if (lpp)
-			*(struct disklabel *)data = *lpp;
+		rdgetdisklabel(sc);
+		bcopy(sc->sc_dkdev.dk_label, data, sizeof(struct disklabel));
 		return 0;
 
 	case DIOCWDINFO:
@@ -428,12 +419,14 @@ rdioctl(dev, cmd, data, flag, proc)
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 
-		error = setdisklabel(&lp, (struct disklabel *)data,
-		    /*sd->sc_dk.dk_openmask : */0, &clp);
+		error = setdisklabel(sc->sc_dkdev.dk_label,
+		    (struct disklabel *)data, /*sd->sc_dk.dk_openmask : */0,
+		    sc->sc_dkdev.dk_cpulabel);
 		if (error == 0) {
 			if (cmd == DIOCWDINFO)
 				error = writedisklabel(DISKLABELDEV(dev),
-				    rdstrategy, &lp, &clp);
+				    rdstrategy, sc->sc_dkdev.dk_label,
+				    sc->sc_dkdev.dk_cpulabel);
 		}
 
 		return error;
@@ -478,25 +471,21 @@ rdioctl(dev, cmd, data, flag, proc)
 	return EINVAL;
 }
 
-struct disklabel *
-rdgetdisklabel(dev, sc)
-	dev_t dev;
-	struct rd_softc *sc;
+void
+rdgetdisklabel(struct rd_softc *sc)
 {
-	static struct disklabel lp;
-	struct cpu_disklabel clp;
-	char *errstring;
+	struct disklabel *lp = sc->sc_dkdev.dk_label;
 
-	bzero(&lp, sizeof(struct disklabel));
-	bzero(&clp, sizeof(struct cpu_disklabel));
+	bzero(sc->sc_dkdev.dk_label, sizeof(struct disklabel));
+	bzero(sc->sc_dkdev.dk_cpulabel, sizeof(struct cpu_disklabel));
 
-	lp.d_secsize = 1 << DEV_BSHIFT;
-	lp.d_ntracks = 1;
-	lp.d_nsectors = sc->sc_size >> DEV_BSHIFT;
-	lp.d_ncylinders = 1;
-	lp.d_secpercyl = lp.d_nsectors;
-	if (lp.d_secpercyl == 0) {
-		lp.d_secpercyl = 100;
+	lp->d_secsize = 1 << DEV_BSHIFT;
+	lp->d_ntracks = 1;
+	lp->d_nsectors = sc->sc_size >> DEV_BSHIFT;
+	lp->d_ncylinders = 1;
+	lp->d_secpercyl = lp->d_nsectors;
+	if (lp->d_secpercyl == 0) {
+		lp->d_secpercyl = 100;
 		/* as long as it's not 0 - readdisklabel divides by it (?) */
 	}
 
@@ -506,7 +495,7 @@ rdgetdisklabel(dev, sc)
 	lp.d_secperunit = lp.d_nsectors;
 	lp.d_rpm = 3600;
 	lp.d_interleave = 1;
-	lp.d_flags = 0;
+	lp.d_flags = D_RAMDISK;
 
 	lp.d_partitions[RAW_PART].p_offset = 0;
 	lp.d_partitions[RAW_PART].p_size =
@@ -521,12 +510,8 @@ rdgetdisklabel(dev, sc)
 	/*
 	 * Call the generic disklabel extraction routine
 	 */
-	errstring = readdisklabel(DISKLABELDEV(dev), rdstrategy, &lp, &clp, 0);
-	if (errstring) {
-		/*printf("%s: %s\n", sc->sc_dev.dv_xname, errstring);*/
-		return NULL;
-	}
-	return &lp;
+	readdisklabel(DISKLABELDEV(sc->sc_dev.dv_unit), rdstrategy,
+	    sc->sc_dkdev.dk_label, sc->sc_dkdev.dk_cpulabel, 0);
 }
 
 /*
