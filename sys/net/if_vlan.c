@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.17 2001/05/27 11:58:25 angelos Exp $ */
+/*	$OpenBSD: if_vlan.c,v 1.18 2001/06/22 14:28:58 deraadt Exp $ */
 /*
  * Copyright 1998 Massachusetts Institute of Technology
  *
@@ -136,7 +136,7 @@ int vlan_setmulti(struct ifnet *ifp)
 	while (enm != NULL) {
 		mc = malloc(sizeof(struct vlan_mc_entry), M_DEVBUF, M_NOWAIT);
 		bcopy(enm->enm_addrlo,
-		      (void *) &mc->mc_addr, ETHER_ADDR_LEN);
+		    (void *) &mc->mc_addr, ETHER_ADDR_LEN);
 		SLIST_INSERT_HEAD(&sc->vlan_mc_listhead, mc, mc_entries);
 		error = ether_addmulti(ifr_p, &sc->ifv_ac);
 		if (error)
@@ -548,7 +548,7 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 			sa = (struct sockaddr *) &ifr->ifr_data;
 			bcopy(((struct arpcom *)ifp->if_softc)->ac_enaddr,
-			      (caddr_t) sa->sa_data, ETHER_ADDR_LEN);
+			    (caddr_t) sa->sa_data, ETHER_ADDR_LEN);
 		}
 		break;
 

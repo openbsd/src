@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.60 2001/06/15 03:38:33 itojun Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.61 2001/06/22 14:28:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -268,7 +268,7 @@ bridge_ioctl(ifp, cmd, data)
 		}
 #if NGIF > 0
 		else if (ifs->if_type == IFT_GIF) {
-		        /* Nothing needed */
+			/* Nothing needed */
 		}
 #endif /* NGIF */
 		else {
@@ -924,9 +924,9 @@ bridgeintr_frame(sc, m)
 	}
 
 	if ((ifl->bif_flags & IFBIF_STP) &&
-	    ((ifl->bif_state == BSTP_IFSTATE_BLOCKING) ||
-	     (ifl->bif_state == BSTP_IFSTATE_LISTENING) ||
-	     (ifl->bif_state == BSTP_IFSTATE_DISABLED))) {
+	    (ifl->bif_state == BSTP_IFSTATE_BLOCKING ||
+	    ifl->bif_state == BSTP_IFSTATE_LISTENING ||
+	    ifl->bif_state == BSTP_IFSTATE_DISABLED)) {
 		m_freem(m);
 		return;
 	}
@@ -945,12 +945,9 @@ bridgeintr_frame(sc, m)
 	 */
 	if ((ifl->bif_flags & IFBIF_LEARNING) &&
 	    (eh.ether_shost[0] & 1) == 0 &&
-	    !(eh.ether_shost[0] == 0 &&
-	      eh.ether_shost[1] == 0 &&
-	      eh.ether_shost[2] == 0 &&
-	      eh.ether_shost[3] == 0 &&
-	      eh.ether_shost[4] == 0 &&
-	      eh.ether_shost[5] == 0))
+	    !(eh.ether_shost[0] == 0 && eh.ether_shost[1] == 0 &&
+	    eh.ether_shost[2] == 0 && eh.ether_shost[3] == 0 &&
+	    eh.ether_shost[4] == 0 && eh.ether_shost[5] == 0))
 		bridge_rtupdate(sc, src, src_if, 0, IFBAF_DYNAMIC);
 
 	if ((ifl->bif_flags & IFBIF_STP) &&
@@ -1053,7 +1050,7 @@ bridgeintr_frame(sc, m)
 	}
 	if ((ifl->bif_flags & IFBIF_STP) &&
 	    (ifl->bif_state == BSTP_IFSTATE_DISABLED ||
-	     ifl->bif_state == BSTP_IFSTATE_BLOCKING)) {
+	    ifl->bif_state == BSTP_IFSTATE_BLOCKING)) {
 		m_freem(m);
 		return;
 	}
@@ -1132,8 +1129,8 @@ bridge_input(ifp, eh, m)
 		 */
 		if ((ifl->bif_flags & IFBIF_STP) &&
 		    ((ifl->bif_state == BSTP_IFSTATE_BLOCKING) ||
-		     (ifl->bif_state == BSTP_IFSTATE_LISTENING) ||
-		     (ifl->bif_state == BSTP_IFSTATE_DISABLED)))
+		    (ifl->bif_state == BSTP_IFSTATE_LISTENING) ||
+		    (ifl->bif_state == BSTP_IFSTATE_DISABLED)))
 			return (m);
 
 		/*
@@ -1178,8 +1175,8 @@ bridge_input(ifp, eh, m)
 	 */
 	if ((ifl->bif_flags & IFBIF_STP) &&
 	    ((ifl->bif_state == BSTP_IFSTATE_BLOCKING) ||
-	     (ifl->bif_state == BSTP_IFSTATE_LISTENING) ||
-	     (ifl->bif_state == BSTP_IFSTATE_DISABLED)))
+	    (ifl->bif_state == BSTP_IFSTATE_LISTENING) ||
+	    (ifl->bif_state == BSTP_IFSTATE_DISABLED)))
 		return (m);
 
 
@@ -1252,7 +1249,7 @@ bridge_broadcast(sc, ifp, eh, m)
 
 		if ((p->bif_flags & IFBIF_STP) &&
 		    (p->bif_state == BSTP_IFSTATE_BLOCKING ||
-		     p->bif_state == BSTP_IFSTATE_DISABLED))
+		    p->bif_state == BSTP_IFSTATE_DISABLED))
 			continue;
 
 		if ((p->bif_flags & IFBIF_DISCOVER) == 0 &&
@@ -1770,10 +1767,8 @@ bridge_blocknonip(eh, m)
 	    llc.llc_snap.org_code[0] == 0 &&
 	    llc.llc_snap.org_code[1] == 0 &&
 	    llc.llc_snap.org_code[2] == 0 &&
-	    (etype == ETHERTYPE_ARP ||
-	     etype == ETHERTYPE_REVARP ||
-	     etype == ETHERTYPE_IP ||
-	     etype == ETHERTYPE_IPV6)) {
+	    (etype == ETHERTYPE_ARP || etype == ETHERTYPE_REVARP ||
+	    etype == ETHERTYPE_IP || etype == ETHERTYPE_IPV6)) {
 		return (0);
 	}
 
