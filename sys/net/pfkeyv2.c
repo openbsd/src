@@ -222,8 +222,6 @@ export_sa(void **p, struct tdb *tdb)
 void
 import_lifetime(struct tdb *tdb, struct sadb_lifetime *sadb_lifetime, int type)
 {
-  struct expiration *exp;
-    
   if (!sadb_lifetime)
     return;
 
@@ -243,12 +241,6 @@ import_lifetime(struct tdb *tdb, struct sadb_lifetime *sadb_lifetime, int type)
       if ((tdb->tdb_exp_timeout = sadb_lifetime->sadb_lifetime_addtime) != 0) {
 	  tdb->tdb_flags |= TDBF_TIMER;
 	  tdb->tdb_exp_timeout += time.tv_sec;
-	  exp = get_expiration();
-	  bcopy(&tdb->tdb_dst, &exp->exp_dst, SA_LEN(&tdb->tdb_dst.sa));
-	  exp->exp_spi = tdb->tdb_spi;
-	  exp->exp_sproto = tdb->tdb_sproto;
-	  exp->exp_timeout = tdb->tdb_exp_timeout;
-	  put_expiration(exp);
       }
       else
 	tdb->tdb_flags &= ~TDBF_TIMER;
@@ -275,12 +267,6 @@ import_lifetime(struct tdb *tdb, struct sadb_lifetime *sadb_lifetime, int type)
 	   sadb_lifetime->sadb_lifetime_addtime) != 0) {
 	  tdb->tdb_flags |= TDBF_SOFT_TIMER;
 	  tdb->tdb_soft_timeout += time.tv_sec;
-	  exp = get_expiration();
-	  bcopy(&tdb->tdb_dst, &exp->exp_dst, SA_LEN(&tdb->tdb_dst.sa));
-	  exp->exp_spi = tdb->tdb_spi;
-	  exp->exp_sproto = tdb->tdb_sproto;
-	  exp->exp_timeout = tdb->tdb_soft_timeout;
-	  put_expiration(exp);
       }
       else
 	tdb->tdb_flags &= ~TDBF_SOFT_TIMER;
@@ -298,6 +284,9 @@ import_lifetime(struct tdb *tdb, struct sadb_lifetime *sadb_lifetime, int type)
 	tdb->tdb_established = sadb_lifetime->sadb_lifetime_addtime;
 	tdb->tdb_first_use = sadb_lifetime->sadb_lifetime_usetime;
   }
+
+  /* Setup/update our position in the expiration queue.  */
+  tdb_expiration(tdb, 0);
 }
 
 void

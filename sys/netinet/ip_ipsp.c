@@ -1,9 +1,10 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.40 1999/04/12 03:17:09 deraadt Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.41 1999/05/14 23:36:18 niklas Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
- * Angelos D. Keromytis (kermit@csd.uch.gr) and 
- * Niels Provos (provos@physnet.uni-hamburg.de).
+ * Angelos D. Keromytis (kermit@csd.uch.gr), 
+ * Niels Provos (provos@physnet.uni-hamburg.de) and
+ * Niklas Hallqvist (niklas@appli.se).
  *
  * This code was written by John Ioannidis for BSD/OS in Athens, Greece, 
  * in November 1995.
@@ -14,11 +15,12 @@
  * Additional transforms and features in 1997 and 1998 by Angelos D. Keromytis
  * and Niels Provos.
  *
- * Additional features in 1999 by Angelos D. Keromytis.
+ * Additional features in 1999 by Angelos D. Keromytis and Niklas Hallqvist.
  *
- * Copyright (C) 1995, 1996, 1997, 1998, 1999 by John Ioannidis,
+ * Copyright (c) 1995, 1996, 1997, 1998, 1999 by John Ioannidis,
  * Angelos D. Keromytis and Niels Provos.
- *	
+ * Copyright (c) 1999 Niklas Hallqvist.
+ *
  * Permission to use, copy, and modify this software without fee
  * is hereby granted, provided that this entire notice is included in
  * all copies of any software which is or includes a copy or
@@ -89,6 +91,10 @@ extern int	ipsec_esp_network_default_level;
 extern int encdebug;
 int ipsec_in_use = 0;
 u_int32_t kernfs_epoch = 0;
+
+struct expclusterlist_head expclusterlist =
+    TAILQ_HEAD_INITIALIZER(expclusterlist);
+struct explist_head explist = LIST_HEAD_INITIALIZER(explist);
 
 u_int8_t hmac_ipad_buffer[64] = {
     0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 
@@ -420,73 +426,15 @@ get_flow(void)
     return flow;
 }
 
-struct expiration *
-get_expiration(void)
-{
-    struct expiration *exp;
-    
-    MALLOC(exp, struct expiration *, sizeof(struct expiration), M_TDB,
-	   M_WAITOK);
-
-    bzero(exp, sizeof(struct expiration));
-    
-    return exp;
-}
-
 void
-cleanup_expirations(union sockaddr_union *dst, u_int32_t spi, u_int8_t sproto)
-{
-    struct expiration *exp, *nexp;
-
-    for (exp = explist; exp; exp = (exp ? exp->exp_next : explist))
-      if (!bcmp(&exp->exp_dst, dst, SA_LEN(&dst->sa)) &&
-	  (exp->exp_spi == spi) && (exp->exp_sproto == sproto))
-      {
-	  /* Link previous to next */
-	  if (exp->exp_prev == (struct expiration *) NULL)
-	    explist = exp->exp_next;
-	  else
-	    exp->exp_prev->exp_next = exp->exp_next;
-	  
-	  /* Link next (if it exists) to previous */
-	  if (exp->exp_next != (struct expiration *) NULL)
-	    exp->exp_next->exp_prev = exp->exp_prev;
-
-	  nexp = exp;
-	  exp = exp->exp_prev;
-	  FREE(nexp, M_TDB);
-      }
-}
-
-void 
 handle_expirations(void *arg)
 {
-    struct expiration *exp;
     struct tdb *tdb;
     
-    if (explist == (struct expiration *) NULL)
-      return;
-    
-    while (1)
+    for (tdb = LIST_FIRST(&explist);
+	 tdb && tdb->tdb_timeout <= time.tv_sec;
+	 tdb = LIST_FIRST(&explist))
     {
-	exp = explist;
-
-	if (exp == (struct expiration *) NULL)
-	  return;
-	else
-	  if (exp->exp_timeout > time.tv_sec)
-	    break;
-	
-	/* Advance pointer */
-	explist = explist->exp_next;
-	if (explist)
-	  explist->exp_prev = NULL;
-	
-	tdb = gettdb(exp->exp_spi, &exp->exp_dst, exp->exp_sproto);
-	free(exp, M_TDB);
-	if (tdb == (struct tdb *) NULL)
-	  continue;			/* TDB is gone, ignore this */
-	
 	/* Hard expirations first */
 	if ((tdb->tdb_flags & TDBF_TIMER) &&
 	    (tdb->tdb_exp_timeout <= time.tv_sec))
@@ -510,6 +458,7 @@ handle_expirations(void *arg)
 	{
 	    pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_SOFT);
 	    tdb->tdb_flags &= ~TDBF_SOFT_TIMER;
+	    tdb_expiration(tdb, 1);
 	}
 	else
 	  if ((tdb->tdb_flags & TDBF_SOFT_FIRSTUSE) &&
@@ -518,79 +467,101 @@ handle_expirations(void *arg)
 	  {
 	      pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_SOFT);
 	      tdb->tdb_flags &= ~TDBF_SOFT_FIRSTUSE;
+	      tdb_expiration(tdb, 1);
 	  }
     }
 
-    if (explist)
+    /* If any tdb is left on the expiration queue, set the timer.  */
+    if (tdb)
       timeout(handle_expirations, (void *) NULL, 
-	      hz * (explist->exp_timeout - time.tv_sec));
+	      hz * (tdb->tdb_timeout - time.tv_sec));
 }
 
+/*
+ * Ensure the tdb is in the right place in the expiration list.
+ */
 void
-put_expiration(struct expiration *exp)
+tdb_expiration(struct tdb *tdb, int early)
 {
-    struct expiration *expt;
-    int reschedflag = 0;
-    
-    if (exp == (struct expiration *) NULL)
+    u_int64_t next_timeout = 0;
+    struct tdb *t;
+
+    /* Find the earliest expiration.  */
+    if ((tdb->tdb_flags & TDBF_FIRSTUSE) && tdb->tdb_first_use != 0 &&
+	(next_timeout == 0 ||
+	 next_timeout > tdb->tdb_first_use + tdb->tdb_exp_first_use))
+	next_timeout = tdb->tdb_first_use + tdb->tdb_exp_first_use;
+    if ((tdb->tdb_flags & TDBF_SOFT_FIRSTUSE) && tdb->tdb_first_use != 0 &&
+	(next_timeout == 0 ||
+	 next_timeout > tdb->tdb_first_use + tdb->tdb_soft_first_use))
+	next_timeout = tdb->tdb_first_use + tdb->tdb_soft_first_use;
+    if ((tdb->tdb_flags & TDBF_TIMER) &&
+	(next_timeout == 0 || next_timeout > tdb->tdb_exp_timeout))
+	next_timeout = tdb->tdb_exp_timeout;
+    if ((tdb->tdb_flags & TDBF_SOFT_TIMER) &&
+	(next_timeout == 0 || next_timeout > tdb->tdb_soft_timeout))
+	next_timeout = tdb->tdb_soft_timeout;
+
+    /* No change?  */
+    if (next_timeout == tdb->tdb_timeout)
+      return;
+
+    /* Our old position, if any, is not relevant anymore.  */
+    if (tdb->tdb_timeout != 0)
     {
-	DPRINTF(("put_expiration(): NULL argument\n"));
-	return;
+        if (tdb->tdb_expnext.tqe_prev)
+	{
+	    if (LIST_NEXT(tdb, tdb_explink) &&
+		tdb->tdb_timeout == LIST_NEXT(tdb, tdb_explink)->tdb_timeout)
+	      TAILQ_INSERT_BEFORE(tdb, LIST_NEXT(tdb, tdb_explink),
+				  tdb_expnext);
+	    TAILQ_REMOVE(&expclusterlist, tdb, tdb_expnext);
+	    tdb->tdb_expnext.tqe_prev = NULL;
+	}
+	LIST_REMOVE(tdb, tdb_explink);
     }
-    
-    if (explist == (struct expiration *) NULL)
+
+    if (next_timeout == 0)
+      return;
+
+    /*
+     * Search fron-to-back if we believe we will end up early, otherwise
+     * back-to-front.
+     */
+    tdb->tdb_timeout = next_timeout;
+    for (t = (early ? TAILQ_FIRST(&expclusterlist) :
+	      TAILQ_LAST(&expclusterlist, expclusterlist_head));
+	 t && (early ? (t->tdb_timeout <= next_timeout) : 
+	       (t->tdb_timeout > next_timeout));
+	 t = (early ? TAILQ_NEXT(t, tdb_expnext) :
+	      TAILQ_PREV(t, expclusterlist_head, tdb_expnext)))
+      ;
+    if (early ? t == TAILQ_FIRST(&expclusterlist) : !t)
     {
-	explist = exp;
-	reschedflag = 1;
+	/*
+	 * We are to become the first expiration, remove old timer, if any.
+	 */
+	if (TAILQ_FIRST(&expclusterlist))
+	  untimeout(handle_expirations, (void *) NULL);
+	TAILQ_INSERT_HEAD(&expclusterlist, tdb, tdb_expnext);
+	LIST_INSERT_HEAD(&explist, tdb, tdb_explink);
     }
     else
-      if (explist->exp_timeout > exp->exp_timeout)
-      {
-	  exp->exp_next = explist;
-	  explist->exp_prev = exp;
-	  explist = exp;
-	  reschedflag = 2;
-      }
-      else
-      {
-	  for (expt = explist; expt->exp_next; expt = expt->exp_next)
-	    if (expt->exp_next->exp_timeout > exp->exp_timeout)
-	    {
-		expt->exp_next->exp_prev = exp;
-		exp->exp_next = expt->exp_next;
-		expt->exp_next = exp;
-		exp->exp_prev = expt;
-		break;
-	    }
-
-	  if (expt->exp_next == (struct expiration *) NULL)
-	  {
-	      expt->exp_next = exp;
-	      exp->exp_prev = expt;
-	  }
-      }
-
-    switch (reschedflag)
     {
-	case 1:
-	    timeout(handle_expirations, (void *) NULL, 
-		    hz * (explist->exp_timeout - time.tv_sec));
-	    break;
-	    
-	case 2:
-	    untimeout(handle_expirations, (void *) NULL);
-	    timeout(handle_expirations, (void *) NULL,
-		    hz * (explist->exp_timeout - time.tv_sec));
-	    break;
-	    
-	default:
-	    break;
+	if (early)
+	  t = (t ? TAILQ_PREV(t, expclusterlist_head, tdb_expnext) :
+	       TAILQ_LAST(&expclusterlist, expclusterlist_head));
+	if (t->tdb_timeout < next_timeout)
+	  TAILQ_INSERT_AFTER(&expclusterlist, t, tdb, tdb_expnext);
+	LIST_INSERT_AFTER(t, tdb, tdb_explink);
     }
+    timeout(handle_expirations, (void *) NULL,
+	    hz * (next_timeout - time.tv_sec));
 }
 
 struct flow *
 find_flow(union sockaddr_union *src, union sockaddr_union *srcmask,
-	  union sockaddr_union * dst, union sockaddr_union *dstmask,
+	  union sockaddr_union *dst, union sockaddr_union *dstmask,
 	  u_int8_t proto, struct tdb *tdb)
 {
     struct flow *flow;
@@ -745,9 +716,19 @@ tdb_delete(struct tdb *tdbp, int delchain)
     if (tdbp->tdb_bind_out)
       TAILQ_REMOVE(&tdbp->tdb_bind_out->tdb_bind_in, tdbp, tdb_bind_in_next);
 
-    /* removal of a larval SA should not remove the mature SA's expirations */
-    if ((tdbp->tdb_flags & TDBF_INVALID) == 0)
-      cleanup_expirations(&tdbp->tdb_dst, tdbp->tdb_spi, tdbp->tdb_sproto);
+    if (tdbp->tdb_timeout != 0)
+    {
+        if (tdbp->tdb_expnext.tqe_prev)
+	{
+	    if (LIST_NEXT(tdbp, tdb_explink) &&
+		tdbp->tdb_timeout == LIST_NEXT(tdbp, tdb_explink)->tdb_timeout)
+	      TAILQ_INSERT_BEFORE(tdbp, LIST_NEXT(tdbp, tdb_explink),
+				  tdb_expnext);
+	    TAILQ_REMOVE(&expclusterlist, tdbp, tdb_expnext);
+	    tdbp->tdb_expnext.tqe_prev = NULL;
+	}
+	LIST_REMOVE(tdbp, tdb_explink);
+    }
 
     if (tdbp->tdb_srcid)
       FREE(tdbp->tdb_srcid, M_XDATA);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.45 1999/04/11 19:41:39 niklas Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.46 1999/05/14 23:36:20 niklas Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -125,7 +125,6 @@ ip_output(m0, va_alist)
 	struct mbuf *mp;
 	struct udphdr *udp;
 	struct tcphdr *tcp;
-	struct expiration *exp;
 	struct inpcb *inp;
 #endif
 
@@ -389,33 +388,10 @@ ip_output(m0, va_alist)
 
 			/* Register first use, setup expiration timer */
 			if (tdb->tdb_first_use == 0) {
-			        tdb->tdb_first_use = time.tv_sec;
-			    
- 			        if (tdb->tdb_flags & TDBF_FIRSTUSE) {
-				    exp = get_expiration();
-				    bcopy(&tdb->tdb_dst, &exp->exp_dst,
-					  SA_LEN(&tdb->tdb_dst.sa));
-				    exp->exp_spi = tdb->tdb_spi;
-				    exp->exp_sproto = tdb->tdb_sproto;
-				    exp->exp_timeout = tdb->tdb_first_use +
-						   tdb->tdb_exp_first_use;
-				    put_expiration(exp);
-				}
-
-				if ((tdb->tdb_flags & TDBF_SOFT_FIRSTUSE) &&
-				    (tdb->tdb_soft_first_use <=
-				    tdb->tdb_exp_first_use)) {
-					exp = get_expiration();
-					bcopy(&tdb->tdb_dst, &exp->exp_dst,
-					      SA_LEN(&tdb->tdb_dst.sa));
-					exp->exp_spi = tdb->tdb_spi;
-					exp->exp_sproto = tdb->tdb_sproto;
-					exp->exp_timeout = tdb->tdb_first_use +
-					    tdb->tdb_soft_first_use;
-					put_expiration(exp);
-				}
+				tdb->tdb_first_use = time.tv_sec;
+				tdb_expiration(tdb, 0);
 			}
-
+    
 			/* Check for tunneling */
 			if (((tdb->tdb_dst.sin.sin_addr.s_addr !=
 			      INADDR_ANY &&

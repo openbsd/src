@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.21 1999/04/11 19:41:37 niklas Exp $	*/
+/*	$OpenBSD: ip_esp.c,v 1.22 1999/05/14 23:36:17 niklas Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -100,7 +100,6 @@ esp_input(m, va_alist)
     int iphlen;
     union sockaddr_union sunion;
     struct ifqueue *ifq = NULL;
-    struct expiration *exp;
     struct ip *ipo, ipn;
     struct tdb *tdbp;
     u_int32_t spi;
@@ -179,27 +178,7 @@ esp_input(m, va_alist)
     if (tdbp->tdb_first_use == 0)
     {
 	tdbp->tdb_first_use = time.tv_sec;
-
-	if (tdbp->tdb_flags & TDBF_FIRSTUSE)
-	{
-	    exp = get_expiration();
-	    bcopy(&tdbp->tdb_dst, &exp->exp_dst, SA_LEN(&tdbp->tdb_dst.sa));
-	    exp->exp_spi = tdbp->tdb_spi;
-	    exp->exp_sproto = tdbp->tdb_sproto;
-	    exp->exp_timeout = tdbp->tdb_first_use + tdbp->tdb_exp_first_use;
-	    put_expiration(exp);
-	}
-
-	if ((tdbp->tdb_flags & TDBF_SOFT_FIRSTUSE) &&
-	    (tdbp->tdb_soft_first_use <= tdbp->tdb_exp_first_use))
-	{
-	    exp = get_expiration();
-	    bcopy(&tdbp->tdb_dst, &exp->exp_dst, SA_LEN(&tdbp->tdb_dst.sa));
-	    exp->exp_spi = tdbp->tdb_spi;
-	    exp->exp_sproto = tdbp->tdb_sproto;
-	    exp->exp_timeout = tdbp->tdb_first_use + tdbp->tdb_soft_first_use;
-	    put_expiration(exp);
-	}
+	tdb_expiration(tdbp, 0);
     }
     
     ipn = *ipo;

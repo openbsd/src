@@ -1,9 +1,10 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.30 1999/05/11 22:57:17 niklas Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.31 1999/05/14 23:36:21 niklas Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
- * Angelos D. Keromytis (kermit@csd.uch.gr) and 
- * Niels Provos (provos@physnet.uni-hamburg.de).
+ * Angelos D. Keromytis (kermit@csd.uch.gr),
+ * Niels Provos (provos@physnet.uni-hamburg.de) and
+ * Niklas Hallqvist (niklas@appli.se).
  *
  * This code was written by John Ioannidis for BSD/OS in Athens, Greece, 
  * in November 1995.
@@ -14,11 +15,12 @@
  * Additional transforms and features in 1997 and 1998 by Angelos D. Keromytis
  * and Niels Provos.
  *
- * Additional features in 1999 by Angelos D. Keromytis.
+ * Additional features in 1999 by Angelos D. Keromytis and Niklas Hallqvist.
  *
- * Copyright (C) 1995, 1996, 1997, 1998, 1999 by John Ioannidis,
+ * Copyright (c) 1995, 1996, 1997, 1998, 1999 by John Ioannidis,
  * Angelos D. Keromytis and Niels Provos.
- *	
+ * Copyright (c) 1999 Niklas Hallqvist.
+ *
  * Permission to use, copy, and modify this software without fee
  * is hereby granted, provided that this entire notice is included in
  * all copies of any software which is or includes a copy or
@@ -180,16 +182,6 @@ struct route_enc {
     struct sockaddr_encap re_dst;
 };
 
-struct expiration
-{
-    u_int32_t             exp_timeout;
-    union sockaddr_union  exp_dst;
-    u_int32_t             exp_spi;
-    u_int8_t              exp_sproto;
-    struct expiration    *exp_next;
-    struct expiration    *exp_prev;
-};
-
 struct flow
 {
     struct flow           *flow_next;	/* Next in flow chain */
@@ -228,6 +220,9 @@ struct tdb				/* tunnel descriptor block */
 #define TDBF_TUNNELING        0x01000	/* Force IP-IP encapsulation */
     u_int32_t	      tdb_flags;  	/* Flags related to this TDB */
 
+    TAILQ_ENTRY(tdb)  tdb_expnext;	/* Expiration cluster list link */
+    LIST_ENTRY(tdb)   tdb_explink;	/* Expiration ordered list link */
+
     u_int32_t         tdb_exp_allocations;  /* Expire after so many flows */
     u_int32_t         tdb_soft_allocations; /* Expiration warning */ 
     u_int32_t         tdb_cur_allocations;  /* Total number of allocations */
@@ -239,11 +234,13 @@ struct tdb				/* tunnel descriptor block */
     u_int64_t         tdb_exp_timeout;	/* When does the SPI expire */
     u_int64_t         tdb_soft_timeout;	/* Send a soft-expire warning */
     u_int64_t         tdb_established;	/* When was the SPI established */
+    u_int64_t	      tdb_timeout;	/* Next absolute expiration time.  */
 
     u_int64_t	      tdb_first_use;	  /* When was it first used */
     u_int64_t         tdb_soft_first_use; /* Soft warning */
     u_int64_t         tdb_exp_first_use;  /* Expire if tdb_first_use +
 					   * tdb_exp_first_use <= curtime */
+
     u_int32_t	      tdb_spi;    	/* SPI */
     u_int16_t         tdb_amxkeylen;    /* AH-old only */
     u_int16_t         tdb_ivlen;        /* IV length */
@@ -385,7 +382,8 @@ extern u_int8_t hmac_ipad_buffer[64];
 extern u_int8_t hmac_opad_buffer[64];
 
 struct tdb *tdbh[TDB_HASHMOD];
-struct expiration *explist;
+extern TAILQ_HEAD(expclusterlist_head, tdb) expclusterlist;
+extern LIST_HEAD(explist_head, tdb) explist;
 extern struct xformsw xformsw[], *xformswNXFORMSW;
 
 /* Check if a given tdb has encryption, authentication and/or tunneling */
@@ -418,12 +416,8 @@ extern struct tdb *gettdb(u_int32_t, union sockaddr_union *, u_int8_t);
 extern void puttdb(struct tdb *);
 extern int tdb_delete(struct tdb *, int);
 extern int tdb_init (struct tdb *, u_int16_t, struct ipsecinit *);
-
-/* Expiration management routines */
-extern struct expiration *get_expiration(void);
-extern void put_expiration(struct expiration *);
+extern void tdb_expiration(struct tdb *, int);
 extern void handle_expirations(void *);
-extern void cleanup_expirations(union sockaddr_union *, u_int32_t, u_int8_t);
 
 /* Flow management routines */
 extern struct flow *get_flow(void);
