@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.38 2005/04/03 10:36:10 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.39 2005/04/04 23:40:02 miod Exp $	*/
 /*	$NetBSD: pmap.h,v 1.30 1997/08/04 20:00:47 pk Exp $ */
 
 /*
@@ -273,7 +273,6 @@ void		pmap_bootstrap(int nmmu, int nctx, int nregion);
 int		pmap_count_ptes(struct pmap *);
 void		pmap_prefer(vaddr_t, vaddr_t *);
 int		pmap_pa_exists(paddr_t);
-void		*pmap_bootstrap_alloc(int);
 void		pmap_unwire(pmap_t, vaddr_t);
 void		pmap_copy(pmap_t, pmap_t, vaddr_t, vsize_t, vaddr_t);
 pmap_t		pmap_create(void);
@@ -284,7 +283,6 @@ vaddr_t		pmap_map(vaddr_t, paddr_t, paddr_t, int);
 void		pmap_reference(pmap_t);
 void		pmap_release(pmap_t);
 void		pmap_remove(pmap_t, vaddr_t, vaddr_t);
-void		pmap_init(void);
 int		pmap_page_index(paddr_t);
 void		pmap_virtual_space(vaddr_t *, vaddr_t *);
 void		pmap_redzone(void);

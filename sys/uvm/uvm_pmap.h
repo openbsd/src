@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmap.h,v 1.17 2004/01/29 20:50:33 drahn Exp $	*/
+/*	$OpenBSD: uvm_pmap.h,v 1.18 2005/04/04 23:40:05 miod Exp $	*/
 /*	$NetBSD: uvm_pmap.h,v 1.1 2000/06/27 09:00:14 mrg Exp $	*/
 
 /* 
@@ -96,7 +96,6 @@ typedef struct pmap_statistics	*pmap_statistics_t;
 #ifndef PMAP_EXCLUDE_DECLS	/* Used in Sparc port to virtualize pmap mod */
 #ifdef _KERNEL
 __BEGIN_DECLS
-void		*pmap_bootstrap_alloc(int);
 #ifndef	pmap_activate
 void		 pmap_activate(struct proc *);
 #endif
