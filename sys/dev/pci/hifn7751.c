@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.47 2000/10/11 13:15:41 itojun Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.48 2000/10/13 04:34:13 deraadt Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -88,7 +88,7 @@ void	hifn_ramtype __P((struct hifn_softc *));
 void	hifn_sessions __P((struct hifn_softc *));
 int	hifn_intr __P((void *));
 u_int	hifn_write_command __P((struct hifn_command *, u_int8_t *));
-u_int32_t hifn_next_signature __P((u_int a, u_int cnt));
+u_int32_t hifn_next_signature __P((u_int32_t a, u_int cnt));
 int	hifn_newsession __P((u_int32_t *, struct cryptoini *));
 int	hifn_freesession __P((u_int64_t));
 int	hifn_process __P((struct cryptop *));
@@ -334,9 +334,11 @@ hifn_reset_board(sc)
 
 u_int32_t
 hifn_next_signature(a, cnt)
-	u_int a, cnt;
+	u_int32_t a;
+	u_int cnt;
 {
-	int i, v;
+	int i;
+	u_int32_t v;
 
 	for (i = 0; i < cnt; i++) {
 
@@ -444,8 +446,11 @@ hifn_enable_crypto(sc, pciid)
 
 	WRITE_REG_1(sc, HIFN_1_DMA_CNFG, HIFN_DMACNFG_UNLOCK |
 	    HIFN_DMACNFG_MSTRESET | HIFN_DMACNFG_DMARESET | HIFN_DMACNFG_MODE);
+	DELAY(1000);
 	addr = READ_REG_1(sc, HIFN_UNLOCK_SECRET1);
+	DELAY(1000);
 	WRITE_REG_1(sc, HIFN_UNLOCK_SECRET2, 0);
+	DELAY(1000);
 
 	for (i = 0; i <= 12; i++) {
 		addr = hifn_next_signature(addr, offtbl[i] + 0x101);
@@ -467,7 +472,7 @@ hifn_enable_crypto(sc, pciid)
 	WRITE_REG_0(sc, HIFN_0_PUCNFG, ramcfg);
 	WRITE_REG_1(sc, HIFN_1_DMA_CNFG, dmacfg);
 
-	switch(encl) {
+	switch (encl) {
 	case HIFN_PUSTAT_ENA_0:
 		printf(": no encr/auth");
 		break;
