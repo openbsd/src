@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.22 2000/11/10 18:15:33 art Exp $ */
+/* $OpenBSD: trap.c,v 1.23 2000/11/15 07:50:42 nate Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -680,7 +680,7 @@ syscall(code, framep)
 	}
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p, code, callp->sy_argsize, args + hidden);
+		ktrsyscall(p->p_tracep, code, callp->sy_argsize, args + hidden);
 #endif
 #ifdef SYSCALL_DEBUG
 	scdebug_call(p, code, args + hidden);
@@ -722,7 +722,7 @@ syscall(code, framep)
 	userret(p, framep->tf_regs[FRAME_PC], sticks);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p, code, error, rval[0]);
+		ktrsysret(p->p_tracep, code, error, rval[0]);
 #endif
 }
 
@@ -742,7 +742,7 @@ child_return(arg)
 	userret(p, p->p_md.md_tf->tf_regs[FRAME_PC], 0);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p, SYS_fork, 0, 0);
+		ktrsysret(p->p_tracep, SYS_fork, 0, 0);
 #endif
 }
 
