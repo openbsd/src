@@ -1,4 +1,4 @@
-/*      $OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $ */
+/*      $OpenBSD: ac97.c,v 1.9 2000/07/20 21:36:26 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 Constantine Sapuntzakis
@@ -292,7 +292,10 @@ static struct ac97_codecid {
 	{ 0x4e534331, "National Semiconductor LM4549"	},
 	{ 0x53494c22, "Silicon Laboratory Si3036"	},
 	{ 0x53494c23, "Silicon Laboratory Si3038"	},
+	{ 0x54524102, "TriTech TR28022"		},
+	{ 0x54524103, "TriTech TR28023"		},
 	{ 0x54524108, "TriTech TR28028"		},
+	{ 0x54524123, "TriTech unknown"		},
 	{ 0x574d4c00, "Wolfson WM9704"		},
 	{ 0x574d4c03, "Wolfson WM9707"		},
 	{ 0x83847600, "SigmaTel STAC9700" 	},
