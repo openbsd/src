@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.5 1996/09/19 06:01:44 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.6 1997/01/21 18:10:39 deraadt Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.22 1996/01/04 20:11:20 pk Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.5 1996/09/19 06:01:44 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.6 1997/01/21 18:10:39 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -362,7 +362,7 @@ printall()
 		ifc.ifc_len = len;
 		ifc.ifc_buf = inbuf = realloc(inbuf, len);
 		if (inbuf == NULL)
-			err(1, "malloc");		
+			err(1, "malloc");
 		if (ioctl(s, SIOCGIFCONF, &ifc) < 0)
 			err(1, "SIOCGIFCONF");
 		if (ifc.ifc_len + sizeof(ifreq) < len)
