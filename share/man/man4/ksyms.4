@@ -1,4 +1,4 @@
-.\" $OpenBSD: ksyms.4,v 1.1 1998/08/25 02:50:56 millert Exp $
+.\" $OpenBSD: ksyms.4,v 1.2 1999/02/23 03:06:11 millert Exp $
 .\"
 .\" Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
 .\" All rights reserved.
@@ -35,12 +35,12 @@
 .Sy pseudo-device Nm ksyms 1
 .Sh DESCRIPTION
 The
-.Nm ksyms
+.Nm /dev/ksyms
 device masquerades as an
 .Em a.out
 executable with the symbols from the running kernel as its
 symbol segment.  Use of
-.Nm
+.Nm /dev/ksyms
 requires that the boot loader preserve the kernel symbols and place
 them at the end of the kernel's address space.  Any port that is capable
 of using the
@@ -50,7 +50,7 @@ debugger does this, even if
 is not configured into the kernel.
 .Pp
 The
-.Nm
+.Nm /dev/ksyms
 device is used to look up the symbol table name list from the running
 kernel.  Because it represents the running kernel it is guaranteed
 to always be up to date even if the kernel file has been changed (or
@@ -63,14 +63,17 @@ routines (note that
 and
 .Xr kvm_openfiles 3
 will try
-.Nm
+.Nm /dev/ksyms
 automatically if the first parameter to them is the
 .Dv NULL
 pointer).
+.Sh FILES
+.Bl -tag -width Pa -compact
+.It Pa /dev/ksyms
+.El
 .Sh ERRORS
-device will 
 An open of
-.Nm
+.Nm /dev/ksyms
 will fail if:
 .Bl -tag -width Er
 .It Bq Er EPERM
@@ -85,13 +88,13 @@ they were removed with
 .Xr nlist 3
 .Sh HISTORY
 The
-.Nm
+.Nm /dev/ksyms
 device appeared in
 .Ox 2.4 .
 .Sh BUGS
 It is not possible to
 .Xr mmap 2
-.Nm
+.Nm /dev/ksyms
 because the boot loader does not load the symbol table onto a page
 boundary (so it is not page aligned).  If all the boot loaders were
 fixed,
