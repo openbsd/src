@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.40 2003/02/20 20:38:08 millert Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.41 2003/03/09 18:11:15 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: crontab.c,v 1.40 2003/02/20 20:38:08 millert Exp $";
+static char const rcsid[] = "$OpenBSD: crontab.c,v 1.41 2003/03/09 18:11:15 millert Exp $";
 #endif
 
 /* crontab - install and manage per-user crontab files
@@ -566,6 +566,11 @@ replace_cmd(void) {
 	while (!CheckErrorCount && !eof) {
 		switch (load_env(envstr, tmp)) {
 		case ERR:
+			/* check for data before the EOF */
+			if (envstr[0] != '\0') {
+				Set_LineNum(LineNumber + 1);
+				check_error("premature EOF");
+			}
 			eof = TRUE;
 			break;
 		case FALSE:
