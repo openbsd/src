@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.19 2003/12/26 18:07:32 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.20 2003/12/26 20:52:14 jakob Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Henning Brauer <henning@openbsd.org>
@@ -87,6 +87,7 @@ typedef struct {
 %token	REMOTEAS DESCR LOCALADDR MULTIHOP PASSIVE
 %token	ERROR
 %token	MRTDUMP
+%token	LOG UPDATES
 %token	<v.string>	STRING
 %type	<v.number>	number
 %type	<v.string>	string
@@ -157,6 +158,9 @@ conf_main	: AS number		{
 		}
 		| NO FIBUPDATE		{
 			conf->flags |= BGPD_FLAG_NO_FIB_UPDATE;
+		}
+		| LOG UPDATES		{
+			conf->log |= BGPD_LOG_UPDATES;
 		}
 		/*
 		 *  XXX this is bad.
@@ -313,6 +317,7 @@ lookup(char *s)
 		{ "holdtime",		HOLDTIME},
 		{ "listen",		LISTEN},
 		{ "local-addr",		LOCALADDR},
+		{ "log",		LOG},
 		{ "min",		YMIN},
 		{ "mrtdump",		MRTDUMP},
 		{ "multihop",		MULTIHOP},
@@ -322,6 +327,7 @@ lookup(char *s)
 		{ "passive",		PASSIVE},
 		{ "remote-as",		REMOTEAS},
 		{ "set",		SET},
+		{ "updates",		UPDATES},
 	};
 	const struct keywords	*p;
 

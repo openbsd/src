@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.39 2003/12/26 20:06:01 jakob Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.40 2003/12/26 20:52:14 jakob Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -42,6 +42,8 @@
 #define	BGPD_OPT_NOACTION		0x0004
 
 #define	BGPD_FLAG_NO_FIB_UPDATE		0x0001
+
+#define BGPD_LOG_UPDATES		0x0001
 
 enum {
 	PROC_MAIN,
@@ -104,6 +106,7 @@ struct bgpd_config {
 	u_int16_t		 holdtime;
 	u_int16_t		 min_holdtime;
 	int			 flags;
+	int			 log;
 	struct sockaddr_in	 listen_addr;
 	struct peer		*peers;
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.33 2003/12/26 18:33:11 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.34 2003/12/26 20:52:14 jakob Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -41,6 +41,9 @@ int		 rde_update_get_prefix(u_char *, u_int16_t, struct in_addr *,
 void		 init_attr_flags(struct attr_flags *);
 int		 rde_update_get_attr(u_char *, u_int16_t, struct attr_flags *);
 void		 rde_update_err(u_int32_t, enum suberr_update);
+void		 rde_update_log(const char *,
+		     const struct rde_peer *, const struct attr_flags *,
+		     const struct in_addr *, u_int8_t);
 
 void		 peer_init(struct bgpd_config *, u_long);
 struct rde_peer	*peer_add(u_int32_t, struct peer_config *);
@@ -312,6 +315,7 @@ rde_update_dispatch(struct imsg *imsg)
 		}
 		p += pos;
 		withdrawn_len -= pos;
+		rde_update_log("withdraw", peer, NULL, &prefix, prefixlen);
 		prefix_remove(peer, prefix, prefixlen);
 	}
 
@@ -346,6 +350,7 @@ rde_update_dispatch(struct imsg *imsg)
 		}
 		p += pos;
 		nlri_len -= pos;
+		rde_update_log("update", peer, &attrs, &prefix, prefixlen);
 		path_update(peer, &attrs, prefix, prefixlen);
 	}
 
@@ -501,6 +506,27 @@ rde_update_err(u_int32_t peerid, enum suberr_update errorcode)
 	if (imsg_compose(&ibuf_se, IMSG_UPDATE_ERR, peerid,
 	    &errcode, sizeof(errcode)) == -1)
 		fatal("imsg_compose error");
+}
+
+void
+rde_update_log(const char *message,
+    const struct rde_peer *peer, const struct attr_flags *attr,
+    const struct in_addr *prefix, u_int8_t prefixlen)
+{
+	char *neighbor;
+
+	if (! (conf->log & BGPD_LOG_UPDATES))
+		return;
+
+	neighbor = strdup(inet_ntoa(peer->conf.remote_addr.sin_addr));
+	if (neighbor == NULL)
+		return;
+
+	logit(LOG_DEBUG, "neighbor %s (AS%u) %s %s/%u",
+	    neighbor, peer->conf.remote_as, message,
+	    inet_ntoa(*prefix), prefixlen);
+
+	free(neighbor);
 }
 
 /*
