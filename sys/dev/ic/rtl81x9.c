@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.14 2002/03/14 01:26:55 millert Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.15 2002/06/07 18:32:51 art Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -906,7 +906,8 @@ void rl_start(ifp)
 			break;
 
 		/* Pack the data into the descriptor. */
-		rl_encap(sc, m_head);
+		if (rl_encap(sc, m_head))
+			break;
 		pkts++;
 
 #if NBPFILTER > 0
