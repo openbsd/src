@@ -1,4 +1,4 @@
-/* *	$OpenBSD: general.h,v 1.4 1996/06/26 05:41:25 deraadt Exp $*/
+/* *	$OpenBSD: general.h,v 1.5 1996/08/22 00:34:41 deraadt Exp $*/
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -50,7 +50,7 @@
 #endif	/* defined(unix) */
 
 /* Define BSD equivalent mem* functions */
-#if	defined(unix) && !defined(__NetBSD__)
+#if	defined(unix) && !(defined(__NetBSD__) || defined(__OpenBSD__))
 #define	memcpy(dest,src,n)	bcopy(src,dest,n)
 #define	memmove(dest,src,n)	bcopy(src,dest,n)
 #define	memset(s,c,n)		if (c == 0) { \

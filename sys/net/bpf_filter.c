@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf_filter.c,v 1.3 1996/03/03 21:07:02 niklas Exp $	*/
+/*	$OpenBSD: bpf_filter.c,v 1.4 1996/08/22 00:35:50 deraadt Exp $	*/
 /*	$NetBSD: bpf_filter.c,v 1.12 1996/02/13 22:00:00 christos Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
 #endif
 
 #if defined(sparc) || defined(mips) || defined(ibm032) || \
-    (defined(__NetBSD__) && !defined(UNALIGNED_ACCESS))
+    ((defined(__NetBSD__) || defined(__OpenBSD__)) && !defined(UNALIGNED_ACCESS))
 #define BPF_ALIGN
 #endif
 

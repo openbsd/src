@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.6 1996/06/23 14:21:09 deraadt Exp $	*/
+/*	$OpenBSD: cd.c,v 1.7 1996/08/22 00:35:24 deraadt Exp $	*/
 /*	$NetBSD: cd.c,v 1.15 1996/03/01 01:58:58 jtc Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)cd.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: cd.c,v 1.6 1996/06/23 14:21:09 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cd.c,v 1.7 1996/08/22 00:35:24 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -257,7 +257,7 @@ getpwd()
 	 * c implementation of getcwd, that does not open a pipe to
 	 * /bin/pwd.
 	 */
-#if defined(__NetBSD__) || defined(__svr4__)
+#if defined(__NetBSD__) || defined(__OpenBSD__) || defined(__svr4__)
 	if (getcwd(buf, sizeof(buf)) == NULL)
 		error("getcwd() failed");
 	curdir = savestr(buf);

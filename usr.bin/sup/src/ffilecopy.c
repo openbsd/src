@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffilecopy.c,v 1.2 1996/06/26 05:39:40 deraadt Exp $	*/
+/*	$OpenBSD: ffilecopy.c,v 1.3 1996/08/22 00:34:49 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -60,7 +60,7 @@ FILE *here, *there;
 	if (fflush (there) == EOF)		/* flush pending output */
 		return (EOF);
 
-#if	defined(__386BSD__) || defined(__NetBSD__)
+#if	defined(__386BSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
 	if ((here->_r) > 0) {			/* flush buffered input */
 		i = write (therefile, here->_p, here->_r);
 		if (i != here->_r)  return (EOF);
@@ -78,7 +78,7 @@ FILE *here, *there;
 	i = filecopy (herefile, therefile);	/* fast file copy */
 	if (i < 0)  return (EOF);
 
-#if	defined(__386BSD__) || defined(__NetBSD__)
+#if	defined(__386BSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
 	(here->_flags) |= __SEOF;		/* indicate EOF */
 #else
 	(here->_flag) |= _IOEOF;		/* indicate EOF */

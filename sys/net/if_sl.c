@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sl.c,v 1.6 1996/08/09 09:59:19 niklas Exp $	*/
+/*	$OpenBSD: if_sl.c,v 1.7 1996/08/22 00:35:52 deraadt Exp $	*/
 /*	$NetBSD: if_sl.c,v 1.39.4.1 1996/06/02 16:26:31 thorpej Exp $	*/
 
 /*
@@ -83,7 +83,7 @@
 #include <sys/tty.h>
 #include <sys/kernel.h>
 #include <sys/conf.h>
-#if __NetBSD__
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/systm.h>
 #endif
 
@@ -166,7 +166,7 @@ Huh? Slip without inet?
 Huh?  SLMTU way too small.
 #endif
 #define	SLIP_HIWAT	roundup(50,CBSIZE)
-#ifndef NetBSD						/* XXX - cgd */
+#if !(defined(__NetBSD__) || defined(__OpenBSD__))		/* XXX - cgd */
 #define	CLISTRESERVE	1024	/* Can't let clists get too low */
 #endif	/* !NetBSD */
 
@@ -275,7 +275,7 @@ slopen(dev, tp)
 			tp->t_state |= TS_ISOPEN | TS_XCLUDE;
 			splx(s);
 			ttyflush(tp, FREAD | FWRITE);
-#ifdef NetBSD
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 			/*
 			 * make sure tty output queue is large enough
 			 * to hold a full-sized packet (including frame
@@ -328,7 +328,7 @@ slclose(tp)
 		sc->sc_mp = 0;
 		sc->sc_buf = 0;
 	}
-#ifdef NetBSD
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 	/* if necessary, install a new outq buffer of the appropriate size */
 	if (sc->sc_oldbufsize != 0) {
 		clfree(&tp->t_outq);
@@ -455,7 +455,7 @@ slstart(tp)
 	u_char bpfbuf[SLMTU + SLIP_HDRLEN];
 	register int len = 0;
 #endif
-#ifndef NetBSD						/* XXX - cgd */
+#if !(defined(__NetBSD__) || defined(__OpenBSD__))	/* XXX - cgd */
 	extern int cfreecount;
 #endif
 
@@ -476,7 +476,7 @@ slstart(tp)
 		if (sc == NULL)
 			return;
 
-#ifdef NetBSD						/* XXX - cgd */
+#if defined(__NetBSD__) || defined(__OpenBSD__)		/* XXX - cgd */
 		/*
 		 * Do not remove the packet from the IP queue if it
 		 * doesn't look like the packet will fit into the
@@ -548,7 +548,7 @@ slstart(tp)
 #endif
 		sc->sc_if.if_lastchange = time;
 
-#ifndef __NetBSD__					/* XXX - cgd */
+#if !(defined(__NetBSD__) || defined(__OpenBSD__))		/* XXX - cgd */
 		/*
 		 * If system is getting low on clists, just flush our
 		 * output queue (if the stuff was important, it'll get
@@ -595,7 +595,7 @@ slstart(tp)
 					 * Put n characters at once
 					 * into the tty output queue.
 					 */
-#ifdef __NetBSD__					/* XXX - cgd */
+#if defined(__NetBSD__) || defined(__OpenBSD__)		/* XXX - cgd */
 					if (b_to_q((u_char *)bp, cp - bp,
 #else
 					if (b_to_q((char *)bp, cp - bp,

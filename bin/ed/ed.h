@@ -1,4 +1,4 @@
-/*	$OpenBSD: ed.h,v 1.2 1996/06/23 14:20:00 deraadt Exp $	*/
+/*	$OpenBSD: ed.h,v 1.3 1996/08/22 00:35:17 deraadt Exp $	*/
 /*	$NetBSD: ed.h,v 1.23 1995/03/21 09:04:40 cgd Exp $	*/
 
 /* ed.h: type and constant definitions for the ed editor. */
@@ -35,7 +35,7 @@
 # include <sys/param.h>		/* for MAXPATHLEN */
 #endif
 #include <errno.h>
-#if defined(sun) || defined(__NetBSD__)
+#if defined(sun) || defined(__NetBSD__) || defined(__OpenBSD__)
 # include <limits.h>
 #endif
 #include <regex.h>

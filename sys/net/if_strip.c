@@ -109,7 +109,7 @@
 #include <sys/tty.h>
 #include <sys/kernel.h>
 #include <sys/conf.h>
-#if __NetBSD__
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/systm.h>
 #endif
 #include <sys/syslog.h>
@@ -135,7 +135,7 @@
 #include <net/if_stripvar.h>
 #include <net/slip.h>
 
-#ifdef __NetBSD__	/* XXX -- jrs */
+#if defined(__NetBSD__) || defined(__OpenBSD__)	/* XXX -- jrs */
 typedef u_char ttychar_t;
 #else
 typedef char ttychar_t;
@@ -198,7 +198,7 @@ typedef char ttychar_t;
 #define STRIP_MTU_ONWIRE (SLMTU + 20 + STRIP_HDRLEN) /* (2*SLMTU+2 in sl.c */
 #define	SLIP_HIWAT	roundup(50,CBSIZE)
 
-#ifndef __NetBSD__					/* XXX - cgd */
+#if !(defined(__NetBSD__) || defined(__OpenBSD__))	/* XXX - cgd */
 #define	CLISTRESERVE	1024	/* Can't let clists get too low */
 #endif	/* !__NetBSD__ */
 
@@ -405,7 +405,7 @@ stripopen(dev, tp)
 	register struct st_softc *sc;
 	register int nstrip;
 	int error;
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 	int s;
 #endif
 
@@ -423,7 +423,7 @@ stripopen(dev, tp)
 			sc->sc_ttyp = tp;
 			sc->sc_if.if_baudrate = tp->t_ospeed;
 			ttyflush(tp, FREAD | FWRITE);
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 			/*
 			 * Make sure tty output queue is large enough
 			 * to hold a full-sized packet (including frame
@@ -486,7 +486,7 @@ stripclose(tp)
 		sc->sc_rxbuf = 0;
 		sc->sc_txbuf = 0;
 	}
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 	/* if necessary, install a new outq buffer of the appropriate size */
 	if (sc->sc_oldbufsize != 0) {
 		clfree(&tp->t_outq);
@@ -820,7 +820,7 @@ stripstart(tp)
 	u_char bpfbuf[SLMTU + SLIP_HDRLEN];
 	register int len = 0;
 #endif
-#ifndef __NetBSD__					/* XXX - cgd */
+#if !(defined(__NetBSD__) || defined(__OpenBSD__))		/* XXX - cgd */
 	extern int cfreecount;
 #endif
 	for (;;) {
@@ -850,7 +850,7 @@ stripstart(tp)
 			return;
 		}
 
-#if defined(__NetBSD__)					/* XXX - cgd */
+#if defined(__NetBSD__) || defined(__OpenBSD__)		/* XXX - cgd */
 		/*
 		 * Do not remove the packet from the IP queue if it
 		 * doesn't look like the packet will fit into the
@@ -925,7 +925,7 @@ stripstart(tp)
 #endif
 		sc->sc_if.if_lastchange = time;
 
-#ifndef __NetBSD__					/* XXX - cgd */
+#if !(defined(__NetBSD__) || defined(__OpenBSD__))		/* XXX - cgd */
 		/*
 		 * If system is getting low on clists, just flush our
 		 * output queue (if the stuff was important, it'll get

@@ -109,7 +109,7 @@ extern struct ifqueue pkintrq;
 #define	llc_snap	llc_un.type_snap
 #endif
 
-#if defined(__bsdi__) || defined(__NetBSD__)
+#if defined(__bsdi__) || defined(__NetBSD__) || defined(__OpenBSD__)
 #define	RTALLOC1(a, b)			rtalloc1(a, b)
 #define	ARPRESOLVE(a, b, c, d, e, f)	arpresolve(a, b, c, d, e)
 #define	TYPEHTONS(t)			(t)
@@ -589,7 +589,7 @@ fddi_ifattach(ifp)
 	ifp->if_hdrlen = 21;
 	ifp->if_mtu = FDDIMTU;
 	ifp->if_output = fddi_output;
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 	for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
 	    ifa = ifa->ifa_list.tqe_next)
 #else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: os-bsd44.h,v 1.4 1996/03/25 15:54:53 niklas Exp $	*/
+/*	$OpenBSD: os-bsd44.h,v 1.5 1996/08/22 00:34:28 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -70,7 +70,7 @@
 /*
  * 4.4 doesn't provide NIS, but NetBSD does.
  */
-#ifndef __NetBSD__
+#if !(defined(__NetBSD__) || defined(__OpenBSD__))
 #undef HAS_NIS_MAPS
 #endif
 
@@ -97,7 +97,7 @@
 #undef MTAB_TYPE_UFS
 #define	MTAB_TYPE_UFS	"ufs"
 #define	MTAB_TYPE_MFS	"mfs"
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 #undef MTYPE_TYPE
 #define MTYPE_TYPE char *
 #endif
@@ -178,7 +178,7 @@ struct mntent {
  * Type of a file handle
  */
 #undef NFS_FH_TYPE
-#if __NetBSD__
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 #define NFS_FH_TYPE void *
 #endif
 
