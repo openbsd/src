@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.37 2001/10/31 04:24:44 nate Exp $
+$OpenBSD: usbdevs,v 1.38 2001/10/31 04:46:12 nate Exp $
 /* $NetBSD: usbdevs,v 1.194 2001/10/26 03:47:31 mycroft Exp $ */
 
 /*
@@ -209,6 +209,7 @@ vendor ADVANCELOGIC	0x0680	Avance Logic
 vendor HAGIWARA		0x0693	Hagiwara Sys-Com
 vendor CTX		0x0698	Chuntex
 vendor ASKEY		0x069a	Askey Computer
+vendor SAITEK		0x06a3	Saitek
 vendor ALCATELT		0x06b9	Alcatel Telecom
 vendor AGFA		0x06bd	AGFA-Gevaert NV
 vendor ASIAMD		0x06be	Asia Microelectronic Development
@@ -914,6 +915,9 @@ product	ROLAND UM880G		0x0015	EDIROL UM-880 MIDI I/F (generic)
 
 /* Rockfire products */
 product ROCKFIRE GAMEPAD	0x2033	gamepad 203USB
+
+/* Saitek */
+product SAITEK CYBORG_3D_GOLD	0x0006	Cyborg 3D Gold Joystick
 
 /* SanDisk products */
 product SANDISK IMAGEMATE	0x0001	USB ImageMate
