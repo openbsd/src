@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.52 2003/05/25 21:43:06 miod Exp $
+dnl	$OpenBSD: hardware,v 1.53 2003/06/17 21:24:25 miod Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
     * sun4: the VME series
 	- 4/100: Original sparc with VME. Many hardware bugs.
@@ -38,7 +38,7 @@ OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	- Axil 320 (SS20 clone)
 	- Opus 5000 (SS1 clone)
 	- Opus 5250 (SS1 clone)
-	- SPARCbook 3GX, 3GS and 3XP by Tadpole (MicroSPARC-2)
+	- SPARCbook 3, 3GS, 3GX, 3TX and 3XP by Tadpole (MicroSPARC-2)
 	- CPU5V: VME card by Force Computer (sun4m)
 	- TWS,SuperCOMPstation-20S (SS20 clone)
 	- Tatung micro COMPstation 5 (SS5 clone)
@@ -111,8 +111,10 @@ Supported devices {:-include-:}:
 	  + Parallax XVideo and PowerVideo (tvtwo) - 24-bit color,
 	    accelerated (but the driver does not support hardware
 	    acceleration)
-	  + p9100 (pnozz) framebuffer found in Tapdole SPARCbook 3GS and
-	    3GX (8, 16 or 32-bit unaccelerated)
+	  + Power9000 (p9k) framebuffer found in Tadpole SPARCbook 3 (8 bit
+	    accelerated)
+	  + Power9100 (pnozz) framebuffer found in Tadpole SPARCbook 3GS, 3GX,
+	    3TX and 3XP (8, 16 or 32-bit accelerated)
 	  + Southland Media Systems MGX and MGXPlus (mgx) - 24-bit color,
 	    accelerated (currently only supported in 8-bit unaccelerated mode)
 	  + TCX - 8/24-bit color
