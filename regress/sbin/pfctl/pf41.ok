@@ -1,0 +1,9 @@
+anchor foo all 
+anchor bar all 
+anchor bar all 
+anchor foo inet all 
+anchor foo inet6 all 
+anchor foo inet all 
+anchor foo proto tcp all 
+anchor foo inet proto tcp from 10.1.2.3 port = smtp to 10.2.3.4 port = ssh 
+anchor foobar inet6 proto udp from ::1 port = 1 to ::1 port = 2 
