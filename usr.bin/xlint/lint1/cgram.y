@@ -1607,15 +1607,26 @@ toicon(tn)
 	} else {
 		i = (int)v->v_quad;
 		if (isutyp(t)) {
-			if ((u_quad_t)v->v_quad > INT_MAX) {
+			if ((u_quad_t)v->v_quad > UINT_MAX) {
 				/* integral constant too large */
 				warning(56);
 			}
 		} else {
+#ifdef XXX_BROKEN_GCC
+			if (v->v_quad > INT_MAX) {
+				/* integral constant too large */
+				warning(56);
+			}
+			if (v->v_quad < INT_MIN) {
+				/* integral constant too large */
+				warning(56);
+			}
+#else
 			if (v->v_quad > INT_MAX || v->v_quad < INT_MIN) {
 				/* integral constant too large */
 				warning(56);
 			}
+#endif
 		}
 	}
 	free(v);
