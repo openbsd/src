@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.9 2001/01/19 17:53:17 deraadt Exp $	*/
+/*	$OpenBSD: client.c,v 1.10 2001/02/04 21:25:34 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Network Security Technologies, Inc. http://www.netsec.net
@@ -122,7 +122,7 @@ client_mode(bfd, sysname, srvname, myea)
 				r = -1;
 				break;
 			}
-			max = oldmax;
+			oldmax = max;
 		}
 		bzero(fdsp, howmany(max, NFDBITS) * sizeof(fd_mask));
 
