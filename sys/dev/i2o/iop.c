@@ -1,4 +1,4 @@
-/*	$OpenBSD: iop.c,v 1.10 2001/06/26 12:06:31 mickey Exp $	*/
+/*	$OpenBSD: iop.c,v 1.11 2001/06/26 20:05:21 niklas Exp $	*/
 /*	$NetBSD: iop.c,v 1.12 2001/03/21 14:27:05 ad Exp $	*/
 
 /*-
@@ -222,15 +222,14 @@ void	iop_adjqparam(struct iop_softc *, int);
 void	iop_create_reconf_thread(void *);
 int	iop_handle_reply(struct iop_softc *, u_int32_t);
 int	iop_hrt_get(struct iop_softc *);
-int	iop_hrt_get0(struct iop_softc *, struct i2o_hrt *, int);
+int	iop_hrt_get0(struct iop_softc *, struct i2o_hrt *, size_t);
 void	iop_intr_event(struct device *, struct iop_msg *, void *);
-int	iop_lct_get0(struct iop_softc *, struct i2o_lct *, int,
-			     u_int32_t);
+int	iop_lct_get0(struct iop_softc *, struct i2o_lct *, size_t, u_int32_t);
 void	iop_msg_poll(struct iop_softc *, struct iop_msg *, int);
 void	iop_msg_wait(struct iop_softc *, struct iop_msg *, int);
 int	iop_ofifo_init(struct iop_softc *);
 int	iop_passthrough(struct iop_softc *, struct ioppt *);
-int	iop_post(struct iop_softc *, u_int32_t *, int size);
+int	iop_post(struct iop_softc *, u_int32_t *);
 void	iop_reconf_thread(void *);
 void	iop_release_mfa(struct iop_softc *, u_int32_t);
 int	iop_reset(struct iop_softc *);
@@ -922,7 +921,7 @@ iop_status_get(struct iop_softc *sc, int nosleep)
 	bzero(st, sizeof(*st));
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_scr_dmamap, BUS_DMASYNC_PREREAD);
 
-	if ((rv = iop_post(sc, (u_int32_t *)&mf, sizeof(mf))))
+	if ((rv = iop_post(sc, (u_int32_t *)&mf)))
 		return (rv);
 
 	/* XXX */
@@ -960,6 +959,7 @@ iop_ofifo_init(struct iop_softc *sc)
 	mb[sizeof(*mf) / sizeof(u_int32_t) + 0] = sizeof(*sw) |
 	    I2O_SGL_SIMPLE | I2O_SGL_END_BUFFER | I2O_SGL_END;
 	mb[sizeof(*mf) / sizeof(u_int32_t) + 1] = sc->sc_scr_seg->ds_addr;
+	mb[0] += 2 << 16;
 
 	*sw = 0;
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_scr_dmamap, BUS_DMASYNC_PREREAD);
@@ -970,7 +970,7 @@ iop_ofifo_init(struct iop_softc *sc)
 	 * that if you don't want to get the list of MFAs, an IGNORE SGL is
 	 * necessary; this isn't the case (and is in fact a bad thing).
 	 */
-	if ((rv = iop_post(sc, mb, sizeof(*mf) + 2 * sizeof(*mb))))
+	if ((rv = iop_post(sc, mb)))
 		return (rv);
 
 	/* XXX */
@@ -1034,7 +1034,7 @@ iop_ofifo_init(struct iop_softc *sc)
  * Read the specified number of bytes from the IOP's hardware resource table.
  */
 int
-iop_hrt_get0(struct iop_softc *sc, struct i2o_hrt *hrt, int size)
+iop_hrt_get0(struct iop_softc *sc, struct i2o_hrt *hrt, size_t size)
 {
 	struct iop_msg *im;
 	struct i2o_exec_hrt_get *mf;
@@ -1062,7 +1062,8 @@ int
 iop_hrt_get(struct iop_softc *sc)
 {
 	struct i2o_hrt hrthdr, *hrt;
-	int size, rv;
+	size_t size;
+	int rv;
 
 	PHOLD(curproc);
 	rv = iop_hrt_get0(sc, &hrthdr, sizeof(hrthdr));
@@ -1097,7 +1098,7 @@ iop_hrt_get(struct iop_softc *sc)
  * to wait indefinitely.
  */
 int
-iop_lct_get0(struct iop_softc *sc, struct i2o_lct *lct, int size,
+iop_lct_get0(struct iop_softc *sc, struct i2o_lct *lct, size_t size,
 	     u_int32_t chgind)
 {
 	struct iop_msg *im;
@@ -1136,7 +1137,8 @@ iop_lct_get0(struct iop_softc *sc, struct i2o_lct *lct, int size,
 int
 iop_lct_get(struct iop_softc *sc)
 {
-	int esize, size, rv;
+	size_t esize, size;
+	int rv;
 	struct i2o_lct *lct;
 
 	esize = letoh32(sc->sc_status.expectedlctsize);
@@ -1180,7 +1182,7 @@ iop_lct_get(struct iop_softc *sc)
  */
 int
 iop_param_op(struct iop_softc *sc, int tid, struct iop_initiator *ii,
-	     int write, int group, void *buf, int size)
+    int write, int group, void *buf, size_t size)
 {
 	struct iop_msg *im;
 	struct i2o_util_params_op *mf;
@@ -1372,7 +1374,7 @@ iop_reset(struct iop_softc *sc)
 	*sw = 0;
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_scr_dmamap, BUS_DMASYNC_PREREAD);
 
-	if ((rv = iop_post(sc, (u_int32_t *)&mf, sizeof(mf))))
+	if ((rv = iop_post(sc, (u_int32_t *)&mf)))
 		return (rv);
 
 	/* XXX */
@@ -1689,7 +1691,7 @@ iop_msg_free(struct iop_softc *sc, struct iop_msg *im)
  */
 int
 iop_msg_map(struct iop_softc *sc, struct iop_msg *im, u_int32_t *mb,
-	    void *xferaddr, int xfersize, int out)
+    void *xferaddr, size_t xfersize, int out)
 {
 	bus_dmamap_t dm;
 	bus_dma_segment_t *ds;
@@ -1731,7 +1733,7 @@ iop_msg_map(struct iop_softc *sc, struct iop_msg *im, u_int32_t *mb,
 	 */
 	off = mb[0] >> 16;
 	p = mb + off;
-	nsegs = ((IOP_MAX_MSG_SIZE / 4) - off) >> 1;
+	nsegs = ((IOP_MAX_MSG_SIZE / sizeof *mb) - off) >> 1;
 
 	if (dm->dm_nsegs > nsegs) {
 		bus_dmamap_unload(sc->sc_dmat, ix->ix_map);
@@ -1914,13 +1916,14 @@ iop_msg_unmap(struct iop_softc *sc, struct iop_msg *im)
  * Post a message frame to the IOP's inbound queue.
  */
 int
-iop_post(struct iop_softc *sc, u_int32_t *mb, int size)
+iop_post(struct iop_softc *sc, u_int32_t *mb)
 {
 	u_int32_t mfa;
 	int s;
+	size_t size = mb[0] >> 14 & ~3;
 
 	/* ZZZ */
-	if (size  > IOP_MAX_MSG_SIZE)
+	if (size > IOP_MAX_MSG_SIZE)
 		panic("iop_post: frame too large");
 
 #ifdef I2ODEBUG
@@ -1928,7 +1931,7 @@ iop_post(struct iop_softc *sc, u_int32_t *mb, int size)
 		int i;
 
 		printf("\niop_post\n");
-		for (i = 0; i < size / 4; i++)
+		for (i = 0; i < size / sizeof *mb; i++)
 			printf("%4d %08x\n", i, mb[i]);
 	}
 #endif
@@ -1954,8 +1957,9 @@ iop_post(struct iop_softc *sc, u_int32_t *mb, int size)
 		    BUS_DMASYNC_PREREAD);
 
 	/* Copy out the message frame. */
-	bus_space_write_region_4(sc->sc_iot, sc->sc_ioh, mfa, mb, size / 4);
-	bus_space_barrier(sc->sc_iot, sc->sc_ioh, mfa, size & ~3,
+	bus_space_write_region_4(sc->sc_iot, sc->sc_ioh, mfa, mb,
+	    size / sizeof *mb);
+	bus_space_barrier(sc->sc_iot, sc->sc_ioh, mfa, size,
 	    BUS_SPACE_BARRIER_WRITE);
 
 	/* Post the MFA back to the IOP. */
@@ -1972,13 +1976,14 @@ int
 iop_msg_post(struct iop_softc *sc, struct iop_msg *im, void *xmb, int timo)
 {
 	u_int32_t *mb = xmb;
-	int rv, s, size = mb[0] >> 16;
+	int rv, s;
+	size_t size = mb[0] >> 14 & 3;
 
 	/* Terminate the scatter/gather list chain. */
 	if ((im->im_flags & IM_SGLOFFADJ) != 0)
 		mb[size - 2] |= I2O_SGL_END;
 
-	if ((rv = iop_post(sc, mb, size)) != 0)
+	if ((rv = iop_post(sc, mb)) != 0)
 		return (rv);
 
 	if ((im->im_flags & IM_DISCARD) != 0)

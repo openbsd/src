@@ -1,4 +1,4 @@
-/*	$OpenBSD: iopvar.h,v 1.5 2001/06/26 12:06:31 mickey Exp $	*/
+/*	$OpenBSD: iopvar.h,v 1.6 2001/06/26 20:05:22 niklas Exp $	*/
 /*	$NetBSD: iopvar.h,v 1.5 2001/03/20 13:01:49 ad Exp $	*/
 
 /*-
@@ -168,7 +168,7 @@ void	iop_init(struct iop_softc *, const char *);
 int	iop_intr __P((void *));
 int	iop_lct_get(struct iop_softc *);
 int	iop_param_op(struct iop_softc *, int, struct iop_initiator *, int,
-		     int, void *, int);
+	    int, void *, size_t);
 int	iop_print_ident(struct iop_softc *, int);
 int	iop_simple_cmd(struct iop_softc *, int, int, int, int, int);
 void	iop_strvis(struct iop_softc *, const char *, int, char *, int);
@@ -176,17 +176,18 @@ void	iop_strvis(struct iop_softc *, const char *, int, char *, int);
 void	iop_initiator_register(struct iop_softc *, struct iop_initiator *);
 void	iop_initiator_unregister(struct iop_softc *, struct iop_initiator *);
 
-struct	iop_msg *iop_msg_alloc(struct iop_softc *, struct iop_initiator *, int);
+struct	iop_msg *iop_msg_alloc(struct iop_softc *, struct iop_initiator *,
+	    int);
 void	iop_msg_free(struct iop_softc *, struct iop_msg *);
 int	iop_msg_map(struct iop_softc *, struct iop_msg *, u_int32_t *, void *,
-		    int, int);
+	    size_t, int);
 int	iop_msg_map_bio(struct iop_softc *, struct iop_msg *, u_int32_t *,
-			void *, int, int);
+	    void *, int, int);
 int	iop_msg_post(struct iop_softc *, struct iop_msg *, void *, int);
 void	iop_msg_unmap(struct iop_softc *, struct iop_msg *);
 
 int	iop_util_abort(struct iop_softc *, struct iop_initiator *, int, int,
-		      int);
+	    int);
 int	iop_util_claim(struct iop_softc *, struct iop_initiator *, int, int);
 int	iop_util_eventreg(struct iop_softc *, struct iop_initiator *, int);
 
