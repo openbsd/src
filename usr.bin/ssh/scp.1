@@ -9,7 +9,7 @@
 .\"
 .\" Created: Sun May  7 00:14:37 1995 ylo
 .\"
-.\" $Id: scp.1,v 1.1 1999/09/26 20:53:37 deraadt Exp $
+.\" $Id: scp.1,v 1.2 1999/09/30 21:25:03 aaron Exp $
 .\"
 .TH SCP 1 "November 8, 1995" SSH SSH
 
@@ -20,7 +20,7 @@ scp \- secure copy (remote file copy program)
 .LP
 .B scp
 [\c
-.B \-prvC\c
+.B \-pqrvC\c
 ]
 [\c
 .BI \-P "\ port\c
@@ -94,6 +94,9 @@ debugging connection, authentication, and configuration problems.
 .TP
 .B \-B
 Selects batch mode (prevents asking for passwords or passphrases).
+.TP
+.B \-q
+Disables the progress meter.
 .TP
 .B \-C
 Compression enable.  Passes the -C flag to

@@ -42,11 +42,11 @@ and ssh has the necessary privileges.)
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: scp.c,v 1.5 1999/09/30 05:11:29 deraadt Exp $
+ *	$Id: scp.c,v 1.6 1999/09/30 21:25:03 aaron Exp $
  */
 
 #include "includes.h"
-RCSID("$Id: scp.c,v 1.5 1999/09/30 05:11:29 deraadt Exp $");
+RCSID("$Id: scp.c,v 1.6 1999/09/30 21:25:03 aaron Exp $");
 
 #include "ssh.h"
 #include "xmalloc.h"
@@ -67,6 +67,9 @@ int verbose = 0;
 
 /* This is set to non-zero if compression is desired. */
 int compress = 0;
+
+/* This is set to zero if the progressmeter is not desired. */
+int showprogress = 1;
 
 /* This is set to non-zero if running in batch mode (that is, password
    and passphrase queries are not allowed). */
@@ -226,7 +229,7 @@ main(argc, argv)
 	extern int optind;
 
 	fflag = tflag = 0;
-	while ((ch = getopt(argc, argv,  "dfprtvBCc:i:P:")) != EOF)
+	while ((ch = getopt(argc, argv,  "dfprtvBCc:i:P:q")) != EOF)
 		switch(ch) {			/* User-visible flags. */
 		case 'p':
 			pflag = 1;
@@ -263,6 +266,9 @@ main(argc, argv)
 		  	break;
 		case 'C':
 		  	compress = 1;
+		  	break;
+		case 'q':
+		  	showprogress = 0;
 		  	break;
 		case '?':
 		default:
@@ -511,7 +517,8 @@ next:			(void)close(fd);
 		totalbytes = stb.st_size;
 
 		/* kick-start the progress meter */
-		progressmeter(-1);
+		if(showprogress)
+			progressmeter(-1);
 
 		/* Keep writing after an error so that we stay sync'd up. */
 		for (haderr = i = 0; i < stb.st_size; i += bp->cnt) {
@@ -532,7 +539,8 @@ next:			(void)close(fd);
 				statbytes += result;
 			}
 		}
-		progressmeter(1);
+		if(showprogress)
+			progressmeter(1);
 
 		if (close(fd) < 0 && !haderr)
 			haderr = errno;
@@ -878,7 +886,7 @@ void
 usage()
 {
 	(void)fprintf(stderr,
-	    "usage: scp [-p] f1 f2; or: scp [-pr] f1 ... fn directory\n");
+	    "usage: scp [-pqrvC] [-P port] [-c cipher] [-i identity] f1 f2; or:\n       scp [options] f1 ... fn directory\n");
 	exit(1);
 }
 
@@ -941,7 +949,7 @@ run_err(const char *fmt, ...)
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: scp.c,v 1.5 1999/09/30 05:11:29 deraadt Exp $
+ *	$Id: scp.c,v 1.6 1999/09/30 21:25:03 aaron Exp $
  */
 
 char *
@@ -1101,7 +1109,7 @@ void progressmeter(int flag)
 	}
 
 	timersub(&now, &start, &td);
-	elapsed = td.tv_sec + (td.tv_sec / 1000000.0);
+	elapsed = td.tv_sec + (td.tv_usec / 1000000.0);
 
 	if (statbytes <= 0 || elapsed <= 0.0 || cursize > totalbytes) {
 		snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
