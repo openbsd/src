@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.18 2002/11/07 01:28:52 krw Exp $
+#       $OpenBSD: install.md,v 1.19 2003/08/07 20:57:06 miod Exp $
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
@@ -44,35 +44,11 @@ ARCH=ARCH
 md_set_term() {
 }
 
-md_get_ifdevs() {
-	# return available network devices
-	dmesg | egrep "(^ie[0-9] )|(^le[0-9] )" | cut -d" " -f1 | sort -u
-}
-
 md_installboot() {
-	local _rawdev
-
-	if [ "X${1}" = X"" ]; then
-		echo "No disk device specified, you must run installboot manually."
-		return
-	fi
-	_rawdev=/dev/r${1}a
-
-	# use extracted mdec if it exists (may be newer)
-	if [ -d /mnt/usr/mdec ]; then
-		cp /mnt/usr/mdec/bootsd /mnt/bootsd
-		/mnt/usr/mdec/installboot -v /mnt/bootsd /mnt/usr/mdec/bootxx _rawdev
-	elif [ -d /usr/mdec ]; then
-		cp /usr/mdec/bootsd /mnt/bootsd
-		/usr/mdec/installboot -v /mnt/bootsd /usr/mdec/bootxx _rawdev
-	else
-		echo "No boot block prototypes found, you must run installboot manually."
-	fi
+	echo Installing boot block...
+	cp /mnt/usr/mdec/bootsd /mnt/bootsd
+	/mnt/usr/mdec/installboot -v /mnt/bootsd /mnt/usr/mdec/bootxx /dev/r${1}a
 }
-md_labeldisk() {
-	echo "huh"
-}
-
 
 md_checkfordisklabel() {
 	# $1 is the disk to check
