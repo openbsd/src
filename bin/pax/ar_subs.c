@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_subs.c,v 1.4 1996/10/27 06:45:09 downsj Exp $	*/
+/*	$OpenBSD: ar_subs.c,v 1.5 1997/01/24 19:41:19 millert Exp $	*/
 /*	$NetBSD: ar_subs.c,v 1.5 1995/03/21 09:07:06 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: ar_subs.c,v 1.4 1996/10/27 06:45:09 downsj Exp $";
+static char rcsid[] = "$OpenBSD: ar_subs.c,v 1.5 1997/01/24 19:41:19 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -134,7 +134,7 @@ list()
 			if ((res = mod_name(arcn)) < 0)
 				break;
 			if (res == 0)
-				ls_list(arcn, now);
+				ls_list(arcn, now, stdout);
 		}
 
 		/*
@@ -175,6 +175,7 @@ extract()
 	ARCHD archd;
 	struct stat sb;
 	int fd;
+	time_t now;
 
 	arcn = &archd;
 	/*
@@ -192,6 +193,8 @@ extract()
 	 */
 	if (iflag && (name_start() < 0))
 		return;
+
+	now = time((time_t *)NULL);
 
 	/*
 	 * step through each entry on the archive until the format read routine
@@ -280,8 +283,12 @@ extract()
 		}
 
 		if (vflag) {
-			(void)fputs(arcn->name, stderr);
-			vfpart = 1;
+			if (vflag > 1)
+				ls_list(arcn, now, stderr);
+			else {
+				(void)fputs(arcn->name, stderr);
+				vfpart = 1;
+			}
 		}
 
 		/*
@@ -386,6 +393,7 @@ wr_archive(arcn, is_app)
 	off_t cnt;
 	int (*wrf)();
 	int fd = -1;
+	time_t now;
 
 	/*
 	 * if this format supports hard link storage, start up the database
@@ -412,6 +420,8 @@ wr_archive(arcn, is_app)
 	 * if this not append, and there are no files, we do no write a trailer
 	 */
 	wr_one = is_app;
+
+	now = time((time_t *)NULL);
 
 	/*
 	 * while there are files to archive, process them one at at time
@@ -482,8 +492,12 @@ wr_archive(arcn, is_app)
 		}
 
 		if (vflag) {
-			(void)fputs(arcn->name, stderr);
-			vfpart = 1;
+			if (vflag > 1)
+				ls_list(arcn, now, stderr);
+			else {
+				(void)fputs(arcn->name, stderr);
+				vfpart = 1;
+			}
 		}
 		++flcnt;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gen_subs.c,v 1.3 1996/06/23 14:20:35 deraadt Exp $	*/
+/*	$OpenBSD: gen_subs.c,v 1.4 1997/01/24 19:41:21 millert Exp $	*/
 /*	$NetBSD: gen_subs.c,v 1.5 1995/03/21 09:07:26 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)gen_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: gen_subs.c,v 1.3 1996/06/23 14:20:35 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: gen_subs.c,v 1.4 1997/01/24 19:41:21 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -83,12 +83,13 @@ static char rcsid[] = "$OpenBSD: gen_subs.c,v 1.3 1996/06/23 14:20:35 deraadt Ex
 
 #if __STDC__
 void
-ls_list(register ARCHD *arcn, time_t now)
+ls_list(register ARCHD *arcn, time_t now, FILE *fp)
 #else
 void
-ls_list(arcn, now)
+ls_list(arcn, now, fp)
 	register ARCHD *arcn;
 	time_t now;
+	FILE *fp;
 #endif
 {
 	register struct stat *sbp;
@@ -100,8 +101,8 @@ ls_list(arcn, now)
 	 * if not verbose, just print the file name
 	 */
 	if (!vflag) {
-		(void)printf("%s\n", arcn->name);
-		(void)fflush(stdout);
+		(void)fprintf(fp, "%s\n", arcn->name);
+		(void)fflush(fp);
 		return;
 	}
 
@@ -128,8 +129,8 @@ ls_list(arcn, now)
 	 */
 	if (strftime(f_date,DATELEN,timefrmt,localtime(&(sbp->st_mtime))) == 0)
 		f_date[0] = '\0';
-	(void)printf("%s%2u %-*s %-*s ", f_mode, sbp->st_nlink, UT_NAMESIZE,
-		name_uid(sbp->st_uid, 1), UT_GRPSIZE,
+	(void)fprintf(fp, "%s%2u %-*s %-*s ", f_mode, sbp->st_nlink,
+		UT_NAMESIZE, name_uid(sbp->st_uid, 1), UT_GRPSIZE,
 		name_gid(sbp->st_gid, 1));
 
 	/*
@@ -137,30 +138,30 @@ ls_list(arcn, now)
 	 */
 	if ((arcn->type == PAX_CHR) || (arcn->type == PAX_BLK))
 #		ifdef NET2_STAT
-		(void)printf("%4u,%4u ", MAJOR(sbp->st_rdev),
+		(void)fprintf(fp, "%4u,%4u ", MAJOR(sbp->st_rdev),
 #		else
-		(void)printf("%4lu,%4lu ", (unsigned long)MAJOR(sbp->st_rdev),
+		(void)fprintf(fp, "%4lu,%4lu ", (unsigned long)MAJOR(sbp->st_rdev),
 #		endif
 		    (unsigned long)MINOR(sbp->st_rdev));
 	else {
 #		ifdef NET2_STAT
-		(void)printf("%9lu ", sbp->st_size);
+		(void)fprintf(fp, "%9lu ", sbp->st_size);
 #		else
-		(void)printf("%9qu ", sbp->st_size);
+		(void)fprintf(fp, "%9qu ", sbp->st_size);
 #		endif
 	}
 
 	/*
 	 * print name and link info for hard and soft links
 	 */
-	(void)printf("%s %s", f_date, arcn->name);
+	(void)fprintf(fp, "%s %s", f_date, arcn->name);
 	if ((arcn->type == PAX_HLK) || (arcn->type == PAX_HRG))
-		(void)printf(" == %s\n", arcn->ln_name);
+		(void)fprintf(fp, " == %s\n", arcn->ln_name);
 	else if (arcn->type == PAX_SLK)
-		(void)printf(" => %s\n", arcn->ln_name);
+		(void)fprintf(fp, " => %s\n", arcn->ln_name);
 	else
-		(void)putchar('\n');
-	(void)fflush(stdout);
+		(void)putc('\n', fp);
+	(void)fflush(fp);
 	return;
 }
 
