@@ -46,7 +46,9 @@ Boston, MA 02111-1307, USA.  */
 
 /* Run-time target specifications.  */
 #undef CPP_PREDEFINES
-#define CPP_PREDEFINES "-D__unix__ -D__sparc__ -D__sparc64__ -D__sparcv9__ -D__sparc_v9__ -D__arch64__ -D__ELF__ -D__OpenBSD__ -Asystem(unix) -Asystem(OpenBSD) -Acpu(sparc) -Amachine(sparc)"
+#define CPP_PREDEFINES "-D__unix__ -D__sparc__ -D__sparc64__ -D__sparcv9__ \
+-D__sparc_v9__ -D__arch64__ -D__LP64__ -D_LP64 -D__ELF__ -D__OpenBSD__ \
+-Asystem(unix) -Asystem(OpenBSD) -Acpu(sparc) -Amachine(sparc)"
 
 #undef CPP_SUBTARGET_SPEC
 #define CPP_SUBTARGET_SPEC ""

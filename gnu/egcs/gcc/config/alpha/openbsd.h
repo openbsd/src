@@ -52,7 +52,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* run-time target specifications */
 #define CPP_PREDEFINES "-D__unix__ -D__ANSI_COMPAT -Asystem(unix) \
--D__OpenBSD__ -D__alpha__ -D__alpha -D__ELF__"
+-D__OpenBSD__ -D__alpha__ -D__alpha -D__LP64__ -D_LP64 -D__ELF__"
 
 /* Layout of source language data types.  */
 
