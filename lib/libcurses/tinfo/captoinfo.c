@@ -1,4 +1,4 @@
-/*	$OpenBSD: captoinfo.c,v 1.11 2003/03/18 16:55:54 millert Exp $	*/
+/*	$OpenBSD: captoinfo.c,v 1.12 2003/10/15 23:33:48 tedu Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -653,11 +653,11 @@ _nc_infotocap(const char *cap GCC_UNUSED, const char *str, int const parametrize
 
     /* we may have to move some trailing mandatory padding up front */
     padding = str + strlen(str) - 1;
-    if (*padding == '>' && *--padding == '/') {
+    if (padding > str && *padding == '>' && *--padding == '/') {
 	--padding;
 	while (isdigit(CharOf(*padding)) || *padding == '.' || *padding == '*')
 	    padding--;
-	if (*padding == '<' && *--padding == '$')
+	if (padding > str && *padding == '<' && *--padding == '$')
 	    trimmed = padding;
 	padding += 2;
 
