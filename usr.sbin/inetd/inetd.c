@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.20 1996/08/28 09:55:00 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.21 1996/08/31 17:31:05 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.20 1996/08/28 09:55:00 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.21 1996/08/31 17:31:05 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -126,8 +126,6 @@ static char rcsid[] = "$OpenBSD: inetd.c,v 1.20 1996/08/28 09:55:00 deraadt Exp 
 #define RLIMIT_NOFILE	RLIMIT_OFILE
 #endif
 
-#define RPC
-
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
@@ -141,10 +139,8 @@ static char rcsid[] = "$OpenBSD: inetd.c,v 1.20 1996/08/28 09:55:00 deraadt Exp 
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#ifdef RPC
 #include <rpc/rpc.h>
 #include <rpc/pmap_clnt.h>
-#endif
 #include "pathnames.h"
 
 #define	TOOMANY		40		/* don't start more than TOOMANY */
@@ -672,7 +668,7 @@ config()
 					rp = getrpcbyname(sep->se_service);
 					if (rp == 0) {
 						syslog(LOG_ERR,
-						    "%s: unknown service",
+						    "%s: unknown rpc service",
 						    sep->se_service);
 						continue;
 					}
@@ -862,7 +858,6 @@ void
 register_rpc(sep)
 	register struct servtab *sep;
 {
-#ifdef RPC
 	int n;
 	struct sockaddr_in sin;
 	struct protoent *pp;
@@ -890,14 +885,12 @@ register_rpc(sep)
 			    sep->se_rpcprog, n, pp->p_proto,
 			    ntohs(sin.sin_port));
 	}
-#endif /* RPC */
 }
 
 void
 unregister_rpc(sep)
 	register struct servtab *sep;
 {
-#ifdef RPC
 	int n;
 
 	for (n = sep->se_rpcversl; n <= sep->se_rpcversh; n++) {
@@ -908,7 +901,6 @@ unregister_rpc(sep)
 			syslog(LOG_ERR, "pmap_unset(%u, %u)\n",
 			    sep->se_rpcprog, n);
 	}
-#endif /* RPC */
 }
 
 
@@ -1029,7 +1021,6 @@ more:
 	} else {
 		sep->se_family = AF_INET;
 		if (strncmp(sep->se_proto, "rpc/", 4) == 0) {
-#ifdef RPC
 			char *cp, *ccp;
 			cp = strchr(sep->se_service, '/');
 			if (cp == 0) {
@@ -1052,11 +1043,6 @@ more:
 				if (ccp == cp)
 					goto badafterall;
 			}
-#else
-			syslog(LOG_ERR, "%s: rpc services not suported",
-			    sep->se_service);
-			goto more;
-#endif /* RPC */
 		}
 	}
 	arg = skip(&cp);
