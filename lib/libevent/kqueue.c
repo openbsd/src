@@ -1,4 +1,4 @@
-/*	$OpenBSD: kqueue.c,v 1.7 2003/03/10 04:02:50 david Exp $	*/
+/*	$OpenBSD: kqueue.c,v 1.8 2003/06/03 20:26:44 deraadt Exp $	*/
 
 /*
  * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
@@ -88,7 +88,7 @@ kq_init(void)
 	int kq;
 
 	/* Disable kqueue when this environment variable is set */
-	if (getenv("EVENT_NOKQUEUE"))
+	if (issetugid() == 0 && getenv("EVENT_NOKQUEUE"))
 		return (NULL);
 
 	memset(&kqop, 0, sizeof(kqop));
