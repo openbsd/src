@@ -1,5 +1,5 @@
-/*	$OpenBSD: x509.c,v 1.25 2000/02/25 17:23:42 niklas Exp $	*/
-/*	$EOM: x509.c,v 1.36 2000/02/20 19:58:43 niklas Exp $	*/
+/*	$OpenBSD: x509.c,v 1.26 2000/03/08 08:42:15 niklas Exp $	*/
+/*	$EOM: x509.c,v 1.37 2000/03/07 16:09:36 ho Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niels Provos.  All rights reserved.
@@ -35,6 +35,8 @@
 /*
  * This code was written under funding by Ericsson Radio Systems.
  */
+
+#ifdef USE_X509
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -993,3 +995,5 @@ x509_cert_get_key (void *scert, void *keyp)
 
   return *(RSA **)keyp == NULL ? 0 : 1;
 }
+
+#endif /* USE_X509 */
