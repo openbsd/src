@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_cout.c,v 1.14 2003/03/13 09:09:34 deraadt Exp $	*/
+/*	$OpenBSD: rpc_cout.c,v 1.15 2003/04/06 18:49:18 deraadt Exp $	*/
 /*	$NetBSD: rpc_cout.c,v 1.6 1996/10/01 04:13:53 cgd Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -507,15 +507,18 @@ emit_struct(def)
 							crash();
 						}
 					} else {
-						sizestr = (char *)realloc(sizestr,
-						    strlen(sizestr) + strlen(ptemp) + 1);
+						size_t len;
+
+						len = strlen(sizestr) +
+						    strlen(ptemp) + 1;
+						sizestr = (char *)realloc(sizestr, len);
 						if (sizestr == NULL) {
 							fprintf(stderr,
 							    "Fatal error : no memory\n");
 							crash();
 						}
 						/* build up length of array */
-						sizestr = strcat(sizestr, ptemp);
+						strlcat(sizestr, ptemp, len);
 					}
 				}
 
