@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2001/03/18 17:37:35 millert Exp $
+#	$OpenBSD: Makefile,v 1.2 2001/03/18 20:04:11 millert Exp $
 
 LIB=	readline
 SRCS=	readline.c funmap.c keymaps.c vi_mode.c parens.c rltty.c complete.c \
@@ -17,5 +17,8 @@ includes:
 	    echo $$j; \
 	    eval "$$j"; \
 	done
+
+cleandir:
+	@cd ${.CURDIR}/doc && ${MAKE} cleandir
 
 .include <bsd.lib.mk>
