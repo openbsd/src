@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.27 2000/04/12 04:22:40 jasoni Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.28 2000/06/26 16:21:27 art Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*
@@ -791,7 +791,8 @@ linux_sys_alarm(p, v, retval)
 	/*
 	 * Clear any pending timer alarms.
 	 */
-	untimeout(realitexpire, p);
+
+	timeout_del(&p->p_realit_to);
 	timerclear(&itp->it_interval);
 	if (timerisset(&itp->it_value) &&
 	    timercmp(&itp->it_value, &time, >))
@@ -825,7 +826,7 @@ linux_sys_alarm(p, v, retval)
 
 	if (timerisset(&it.it_value)) {
 		timeradd(&it.it_value, &time, &it.it_value);
-		timeout(realitexpire, p, hzto(&it.it_value));
+		timeout_add(&p->p_realit_to, hzto(&it.it_value));
 	}
 	p->p_realtimer = it;
 	splx(s);
