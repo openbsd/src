@@ -1,5 +1,5 @@
-/*	$OpenBSD: message.c,v 1.10 1999/03/02 15:12:00 niklas Exp $	*/
-/*	$EOM: message.c,v 1.107 1999/03/02 14:23:04 niklas Exp $	*/
+/*	$OpenBSD: message.c,v 1.11 1999/03/24 14:44:26 niklas Exp $	*/
+/*	$EOM: message.c,v 1.109 1999/03/24 11:03:01 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -1237,8 +1237,9 @@ message_drop (struct message *msg, int notify, struct proto *proto,
   t->vtbl->get_dst (t, &dst, &dst_len);
 
   /* XXX Assumes IPv4.  */
-  log_print ("dropped message from %s due to notification type %s",
+  log_print ("dropped message from %s port %d due to notification type %s",
 	     inet_ntoa (((struct sockaddr_in *)dst)->sin_addr),
+	     ((struct sockaddr_in *)dst)->sin_port,
 	     constant_name (isakmp_notify_cst, notify));
 
   /*
@@ -1519,7 +1520,7 @@ message_negotiate_sa (struct message *msg,
 			     "message_negotiate_sa: proposal %d succeeded",
 			     GET_ISAKMP_PROP_NO (propp->p));
 
-		  /* Record the other guy's SPI.  */
+		  /* Record the other guy's (i.e. our outgoing) SPI.  */
 		  spi_sz = GET_ISAKMP_PROP_SPI_SZ (propp->p);
 		  if (spi_sz)
 		    {
@@ -1530,7 +1531,7 @@ message_negotiate_sa (struct message *msg,
 		    }
 		  else
 		    spi = 0;
-		  TAILQ_FIRST (&sa->protos)->spi[1] = spi;
+		  TAILQ_FIRST (&sa->protos)->spi[0] = spi;
 		  log_debug_buf (LOG_MESSAGE, 40, "message_negotiate_sa: SPI",
 				 spi, spi_sz);
 
@@ -1643,7 +1644,7 @@ message_add_sa_payload (struct message *msg)
 	  if (!transforms[i])
 	    goto cleanup;
 
-	  /* Get SPI from application.  */
+	  /* Get incoming SPI from application.  */
 	  if (doi->get_spi)
 	    {
 	      spi = doi->get_spi (&spi_sz,
@@ -1652,8 +1653,8 @@ message_add_sa_payload (struct message *msg)
 				  msg);
 	      if (spi_sz && !spi)
 		goto cleanup;
-	      proto->spi[0] = spi;
-	      proto->spi_sz[0] = spi_sz;
+	      proto->spi[1] = spi;
+	      proto->spi_sz[1] = spi_sz;
 	    }
 	  else
 	    spi_sz = 0;
@@ -1670,8 +1671,6 @@ message_add_sa_payload (struct message *msg)
 	  SET_ISAKMP_PROP_SPI_SZ (proposals[i], spi_sz);
 	  if (spi_sz)
 	    memcpy (proposals[i] + ISAKMP_PROP_SPI_OFF, spi, spi_sz);
-	  free (spi);
-	  spi = 0;
 	  extra_sa_len += proposal_lens[i] + transform_lens[i];
 	}
 
@@ -1714,8 +1713,6 @@ message_add_sa_payload (struct message *msg)
   return 0;
 
  cleanup:
-  if (spi)
-    free (spi);
   if (sa_buf)
     free (sa_buf);
   for (i = 0; i < nprotos; i++)
