@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.7 2001/04/30 15:45:05 mickey Exp $	*/
+/*	$OpenBSD: ami.c,v 1.8 2001/05/05 03:08:25 mickey Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -49,7 +49,7 @@
  *	Theo de Raadt.
  */
 
-#define	AMI_DEBUG
+/* #define	AMI_DEBUG */
 
 #include <sys/param.h>
 #include <sys/systm.h>
