@@ -1,5 +1,5 @@
-$OpenBSD: TO-DO,v 1.7 1999/03/31 20:29:21 niklas Exp $
-$EOM: TO-DO,v 1.29 1999/03/31 20:24:49 niklas Exp $
+$OpenBSD: TO-DO,v 1.8 1999/04/19 19:55:56 niklas Exp $
+$EOM: TO-DO,v 1.33 1999/04/17 15:48:23 niklas Exp $
 
 This file is pretty lame as it should really contain a lot more given that
 the program is far from ready in any area.
@@ -14,7 +14,7 @@ the program is far from ready in any area.
 
 * Fix the cookies. <Niels> [done]
 
-* Garbage collect transports (ref-counting?).
+* Garbage collect transports (ref-counting?). [done]
 
 * Retransmission/dup packet handling. [done]
 
@@ -24,14 +24,14 @@ the program is far from ready in any area.
 
 * Cleanup of SAs when dropping messages. [done]
 
-* Look over message resource tracking.
+* Look over message resource tracking. [done]
 
 * Retransmission timing & count adaptivity and configurability.
   [configurability done]
 
 * Quick mode exchanges [done]
 
-* Aggressive mode exchange. <Niels>
+* Aggressive mode exchange. [done]
 
 * Finish main mode exchange [done]
 
@@ -94,3 +94,10 @@ the program is far from ready in any area.
 * INITIAL CONTACT notification sending when appropriate.
 
 * INITIAL CONTACT notification handling.
+
+* IPsec SAs could also do with timers protecting its lifetime, if say,
+  someone changed the lifetime of the IPsec SA in stack under us.
+
+* Handle notifications showing the peer did not want to continue this exchange.
+
+* Flexible identification.
