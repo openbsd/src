@@ -21,7 +21,7 @@
 # along with GNU GNATS; see the file COPYING.  If not, write to
 # the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 #
-#	$OpenBSD: sendbug.sh,v 1.3 1996/07/02 15:49:53 tholo Exp $
+#	$OpenBSD: sendbug.sh,v 1.4 1997/02/18 08:12:11 tholo Exp $
 
 # The version of this send-pr.
 VERSION=3.97
@@ -301,7 +301,8 @@ FIX_C='<how to correct or work around the problem, if known (multiple lines)>'
 # Catch some signals. ($xs kludge needed by Sun /bin/sh)
 xs=0
 trap 'rm -f $REF $TEMP; exit $xs' 0
-trap 'echo "$COMMAND: Aborting ..."; rm -f $REF $TEMP; xs=1; exit' 1 2 3 13 15
+trap 'echo "$COMMAND: Aborting ..."; rm -f $REF $TEMP; xs=1; exit' 1 3 13 15
+trap : 2
 
 # If they told us to use a specific file, then do so.
 if [ -n "$IN_FILE" ]; then
