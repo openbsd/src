@@ -264,9 +264,9 @@ void		pmap_redzone __P((void));
 void		kvm_uncache __P((caddr_t, int));
 struct user;
 void		switchexit __P((vm_map_t, struct user *, int));
-int		mmu_pagein __P((struct pmap *pm, int, int));
+int		mmu_pagein __P((struct pmap *pm, vm_offset_t, int));
 #ifdef DEBUG
-int		mmu_pagein4m __P((struct pmap *pm, int, int));
+int		mmu_pagein4m __P((struct pmap *pm, vm_offset_t, int));
 #endif
 
 
