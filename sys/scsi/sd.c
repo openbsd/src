@@ -1,5 +1,5 @@
-/*	$OpenBSD: sd.c,v 1.13 1996/06/10 00:44:00 downsj Exp $	*/
-/*	$NetBSD: sd.c,v 1.100 1996/05/14 10:38:47 leo Exp $	*/
+/*	$OpenBSD: sd.c,v 1.14 1996/06/10 07:31:20 deraadt Exp $	*/
+/*	$NetBSD: sd.c,v 1.100.4.1 1996/06/04 23:14:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -986,9 +986,16 @@ sddump(dev, blkno, va, size)
 	if (unit >= sd_cd.cd_ndevs || (sd = sd_cd.cd_devs[unit]) == NULL)
 		return ENXIO;
 
+	/*
+	 * XXX Can't do this check, since the media might have been
+	 * XXX marked `invalid' by successful unmounting of all
+	 * XXX filesystems.
+	 */
+#if 0
 	/* Make sure it was initialized. */
 	if ((sd->sc_link->flags & SDEV_MEDIA_LOADED) != SDEV_MEDIA_LOADED)
 		return ENXIO;
+#endif
 
 	/* Convert to disk sectors.  Request must be a multiple of size. */
 	lp = sd->sc_dk.dk_label;
