@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.101 2002/07/02 23:36:16 mickey Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.102 2002/08/07 18:44:39 jason Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -2286,7 +2286,7 @@ bridge_filter(sc, dir, ifp, eh, m)
 	etype = ntohs(eh->ether_type);
 
 	if (etype != ETHERTYPE_IP && etype != ETHERTYPE_IPV6) {
-		if (eh->ether_type > ETHERMTU ||
+		if (etype > ETHERMTU ||
 		    m->m_pkthdr.len < (LLC_SNAPFRAMELEN +
 		    sizeof(struct ether_header)))
 			return (m);
@@ -2474,14 +2474,16 @@ bridge_fragment(sc, ifp, eh, m)
 	int s, len, error = 0;
 	int hassnap = 0;
 #ifdef INET
+	u_int16_t etype;
 	struct ip *ip;
 #endif
 
 #ifndef INET
 	goto dropit;
 #else
-	if (eh->ether_type != htons(ETHERTYPE_IP)) {
-		if (eh->ether_type > ETHERMTU ||
+	etype = ntohs(eh->ether_type);
+	if (etype != ETHERTYPE_IP) {
+		if (etype > ETHERMTU ||
 		    m->m_pkthdr.len < (LLC_SNAPFRAMELEN +
 		    sizeof(struct ether_header)))
 			goto dropit;
