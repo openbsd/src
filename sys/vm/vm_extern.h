@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_extern.h,v 1.5 1996/05/02 13:21:11 deraadt Exp $	*/
+/*	$OpenBSD: vm_extern.h,v 1.6 1996/06/10 19:26:51 niklas Exp $	*/
 /*	$NetBSD: vm_extern.h,v 1.20 1996/04/23 12:25:23 christos Exp $	*/
 
 /*-
@@ -83,7 +83,11 @@ void		 loadav __P((struct loadavg *));
 void		 munmapfd __P((struct proc *, int));
 int		 pager_cache __P((vm_object_t, boolean_t));
 void		 sched __P((void));
+#ifdef __GNUC__
+void		 scheduler __P((void)) __attribute ((noreturn));
+#else
 void		 scheduler __P((void));
+#endif
 int		 svm_allocate __P((struct proc *, void *, int *));
 int		 svm_deallocate __P((struct proc *, void *, int *));
 int		 svm_inherit __P((struct proc *, void *, int *));
