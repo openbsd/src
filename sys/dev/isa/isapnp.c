@@ -1,4 +1,4 @@
-/*	$OpenBSD: isapnp.c,v 1.27 1999/08/11 17:18:47 deraadt Exp $	*/
+/*	$OpenBSD: isapnp.c,v 1.28 1999/08/22 06:13:10 deraadt Exp $	*/
 /*	$NetBSD: isapnp.c,v 1.9.4.3 1997/10/29 00:40:43 thorpej Exp $	*/
 
 /*
@@ -542,7 +542,6 @@ isapnp_print_pin(str, p, n)
 	}
 }
 
-
 /* isapnp_print():
  *	Print the configuration line for an ISA PnP card.
  */
@@ -553,10 +552,13 @@ isapnp_print(aux, str)
 {
 	struct isa_attach_args *ipa = aux;
 
-	if (str != NULL)
-		printf("%s:", str);
-	printf(" <%s, %s, %s, %s>", ipa->ipa_devident,
+	if (!str)
+		printf(" ");
+	printf("\"%s, %s, %s, %s\"", ipa->ipa_devident,
 	    ipa->ipa_devlogic, ipa->ipa_devcompat, ipa->ipa_devclass);
+
+	if (str)
+		printf(" at %s", str);
 
 	isapnp_print_region("port", ipa->ipa_io, ipa->ipa_nio);
 	isapnp_print_region("mem", ipa->ipa_mem, ipa->ipa_nmem);
@@ -930,7 +932,7 @@ isapnp_attach(parent, self, aux)
 			    lpa->ipa_devcompat, lpa->ipa_devclass));
 			if (lpa->ipa_pref == ISAPNP_DEP_CONFLICTING) {
 				isapnp_print(lpa, self->dv_xname);
-				printf(" resouce conflict\n");
+				printf(" resource conflict\n");
 				ISAPNP_FREE(lpa);
 				continue;
 			}
