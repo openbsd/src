@@ -1,4 +1,4 @@
-/*	$OpenBSD: mail.c,v 1.2 1996/08/19 20:08:55 downsj Exp $	*/
+/*	$OpenBSD: mail.c,v 1.3 1997/01/02 17:37:27 downsj Exp $	*/
 
 /*
  * Mailbox checking code by Robert J. Gibson, adapted for PD ksh by
@@ -180,7 +180,8 @@ mbox_t	*mbp;
 {
 	struct tbl	*vp;
 
-	setstr((vp = local("_", FALSE)), mbp->mb_path);
+	if (!Flag(FSH))
+		setstr((vp = local("_", FALSE)), mbp->mb_path);
 
 	shellf("%s\n", substitute(mbp->mb_msg ? mbp->mb_msg : MBMESSAGE, 0));
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.3 1997/01/02 09:34:00 downsj Exp $	*/
+/*	$OpenBSD: history.c,v 1.4 1997/01/02 17:37:26 downsj Exp $	*/
 
 /*
  * command history
@@ -242,7 +242,7 @@ c_fc(wp)
 		return 1;
 	}
 
-	if (!Flag(FSH) || Flag(FTALKING))
+	if (!Flag(FSH))
 		setstr(local("_", FALSE), tf->name);
 
 	/* XXX: source should not get trashed by this.. */
