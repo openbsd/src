@@ -1118,6 +1118,7 @@
 ./usr/share/man/cat4/pmsi.0
 ./usr/share/man/cat4/pnp.0
 ./usr/share/man/cat4/powerpc
+./usr/share/man/cat4/powerpc/autoconf.0
 ./usr/share/man/cat4/powerpc/com.0
 ./usr/share/man/cat4/powerpc/intro.0
 ./usr/share/man/cat4/prandom.0
@@ -1145,6 +1146,7 @@
 ./usr/share/man/cat4/sparc
 ./usr/share/man/cat4/sparc/audioamd.0
 ./usr/share/man/cat4/sparc/audiocs.0
+./usr/share/man/cat4/sparc/autoconf.0
 ./usr/share/man/cat4/sparc/be.0
 ./usr/share/man/cat4/sparc/bwtwo.0
 ./usr/share/man/cat4/sparc/cgeight.0
@@ -1560,6 +1562,7 @@
 ./usr/share/man/cat8/fsck_msdos.0
 ./usr/share/man/cat8/fsdb.0
 ./usr/share/man/cat8/fsirand.0
+./usr/share/man/cat8/ftp-proxy.0
 ./usr/share/man/cat8/ftpd.0
 ./usr/share/man/cat8/getNAME.0
 ./usr/share/man/cat8/getencstat.0

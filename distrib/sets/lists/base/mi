@@ -1151,6 +1151,7 @@
 ./usr/libexec/cvs/contrib/rcslock
 ./usr/libexec/cvs/contrib/sccs2rcs
 ./usr/libexec/fingerd
+./usr/libexec/ftp-proxy
 ./usr/libexec/ftpd
 ./usr/libexec/getNAME
 ./usr/libexec/getty
