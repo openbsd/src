@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigpending.S,v 1.5 2001/03/29 01:43:53 mickey Exp $	*/
+/*	$OpenBSD: sigpending.S,v 1.6 2001/06/04 23:14:05 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -35,11 +35,11 @@
 
 #ifdef SYSLIBC_SCCS
 	.text
-	.asciz "$OpenBSD: sigpending.S,v 1.5 2001/03/29 01:43:53 mickey Exp $"
+	.asciz "$OpenBSD: sigpending.S,v 1.6 2001/06/04 23:14:05 mickey Exp $"
 	.align	4
 #endif
 
-ENTRY(sigpending)
+ENTRY(sigpending,0)
 	SYSCALL(sigpending)
 	ldw	HPPA_FRAME_ARG(0)(sp), t1
 	stw	ret0, 0(t1)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.6 2001/03/29 01:43:51 mickey Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.7 2001/06/04 23:14:01 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-1999 Michael Shalayeff
@@ -37,7 +37,7 @@
 #define _LOCORE
 #include <machine/frame.h>
 
-#define	__ENTRY(p,x)	ENTRY(__CONCAT(p,x))
+#define	__ENTRY(p,x)	ENTRY(__CONCAT(p,x),0)
 #define	__EXIT(p,x)	EXIT(__CONCAT(p,x))
 
 

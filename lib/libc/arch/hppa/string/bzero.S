@@ -1,4 +1,4 @@
-/*	$OpenBSD: bzero.S,v 1.2 2001/03/29 01:43:52 mickey Exp $	*/
+/*	$OpenBSD: bzero.S,v 1.3 2001/06/04 23:14:02 mickey Exp $	*/
 
 /*
  *  (c) Copyright 1988 HEWLETT-PACKARD COMPANY
@@ -33,7 +33,7 @@
 
 #ifdef SYSLIBC_SCCS
 	.text
-	.asciz "$OpenBSD: bzero.S,v 1.2 2001/03/29 01:43:52 mickey Exp $"
+	.asciz "$OpenBSD: bzero.S,v 1.3 2001/06/04 23:14:02 mickey Exp $"
 	.align	4
 #endif
 
@@ -43,7 +43,7 @@
  *	vm_offset_t	dst;
  *	int		count;
  */
-ENTRY(bzero)
+LEAF_ENTRY(bzero)
         comb,>=,n r0,arg1,$bzero_exit
 
 	/*
@@ -110,3 +110,5 @@ $bzero_bytes
 
 $bzero_exit
 EXIT(bzero)
+
+	.end

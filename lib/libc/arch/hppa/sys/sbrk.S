@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbrk.S,v 1.6 2001/03/29 01:43:53 mickey Exp $	*/
+/*	$OpenBSD: sbrk.S,v 1.7 2001/06/04 23:14:04 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -35,7 +35,7 @@
 
 #ifdef SYSLIBC_SCCS
 	.text
-	.asciz "$OpenBSD: sbrk.S,v 1.6 2001/03/29 01:43:53 mickey Exp $"
+	.asciz "$OpenBSD: sbrk.S,v 1.7 2001/06/04 23:14:04 mickey Exp $"
 	.align	4
 #endif
 
@@ -46,7 +46,7 @@
 curbrk
 	.long	end
 
-ENTRY(sbrk)
+ENTRY(sbrk,0)
 	ldil	L%curbrk, t1
 	ldw	R%curbrk(t1), t2
 	add	arg0, t2, arg0

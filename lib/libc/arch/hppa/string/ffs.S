@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.S,v 1.2 2001/03/29 01:43:52 mickey Exp $	*/
+/*	$OpenBSD: ffs.S,v 1.3 2001/06/04 23:14:02 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1990, 1991, 1992, 1994, The University of Utah and
@@ -24,7 +24,7 @@
 
 #ifdef SYSLIBC_SCCS
 	.text
-	.asciz "$OpenBSD: ffs.S,v 1.2 2001/03/29 01:43:52 mickey Exp $"
+	.asciz "$OpenBSD: ffs.S,v 1.3 2001/06/04 23:14:02 mickey Exp $"
 	.align	4
 #endif
 
@@ -36,7 +36,7 @@
  * are numbered as "32, 31, ... 1", 0 is returned if no bits are set.
  */
 
-ENTRY(ffs)
+LEAF_ENTRY(ffs)
 	comb,=	arg0,r0,ffsdone		; If arg0 is 0
 	or	r0,r0,ret0		;   return 0
 	ldi	32,ret0			; Set return to high bit
@@ -56,3 +56,5 @@ ENTRY(ffs)
 	addi	-1,ret0,ret0		;   subtract 1 from bitpos
 ffsdone:
 EXIT(ffs)
+
+	.end
