@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_old.c,v 1.7 1997/09/30 03:29:50 deraadt Exp $	*/
+/*	$OpenBSD: ip_esp_old.c,v 1.8 1997/10/01 01:17:30 deraadt Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -444,7 +444,15 @@ esp_old_input(struct mbuf *m, struct tdb *tdb)
      * blk[7] contains the next protocol, and blk[6] contains the
      * amount of padding the original chain had. Chop off the
      * appropriate parts of the chain, and return.
+     * Verify correct decryption by checking the last padding bytes.
      */
+
+    if ((blk[6] != blk[5]) && (blk[6] != 0))
+    {
+	log(LOG_ALERT, "esp_old_input(): decryption failed for packet from %x to %x, SA %x/%08x\n", ipo.ip_src, ipo.ip_dst, tdb->tdb_dst, ntohl(tdb->tdb_spi));
+	m_freem(m);
+	return NULL;
+    }
 
     m_adj(m, -blk[6] - 2);
     m_adj(m, 4 + xd->edx_ivlen);
