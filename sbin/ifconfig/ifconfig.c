@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.64 2002/05/22 08:21:02 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.65 2002/06/10 22:18:48 markus Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.64 2002/05/22 08:21:02 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.65 2002/06/10 22:18:48 markus Exp $";
 #endif
 #endif /* not lint */
 
@@ -92,6 +92,7 @@ static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.64 2002/05/22 08:21:02 der
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
+#include <net/if_types.h>
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 #include <netinet6/nd6.h>
@@ -304,7 +305,7 @@ int	getinfo(struct ifreq *);
 void	getsock(int);
 void	printif(struct ifreq *, int);
 void	printb(char *, unsigned short, char *);
-void	status(int);
+void	status(int, struct sockaddr_dl *);
 void	usage();
 const char *get_string(const char *, const char *, u_int8_t *, int *);
 void	print_string(const u_int8_t *, int);
@@ -630,7 +631,7 @@ printif(ifrm, ifaliases)
 			namep = ifa->ifa_name;
 			if (getinfo(ifrp) < 0)
 				continue;
-			status(1);
+			status(1, (struct sockaddr_dl *)ifa->ifa_addr);
 			count++;
 			noinet = 1;
 			continue;
@@ -708,7 +709,7 @@ printif(ifrm, ifaliases)
 			ifreq = ifr = *ifrp;
 			if (getinfo(&ifreq) < 0)
 				continue;
-			status(1);
+			status(1, NULL);
 			count++;
 			noinet = 1;
 			continue;
@@ -1623,8 +1624,9 @@ const struct ifmedia_status_description ifm_status_descriptions[] =
  * specified, show it and it only; otherwise, show them all.
  */
 void
-status(link)
+status(link, sdl)
 	int link;
+	struct sockaddr_dl *sdl;
 {
 	const struct afswtch *p = afp;
 	struct ifmediareq ifmr;
@@ -1637,6 +1639,9 @@ status(link)
 	if (mtu)
 		printf(" mtu %d", mtu);
 	putchar('\n');
+	if (sdl != NULL && sdl->sdl_type == IFT_ETHER && sdl->sdl_alen)
+		(void)printf("\taddress: %s\n", ether_ntoa(
+		    (struct ether_addr *)LLADDR(sdl)));
 
 #ifndef	INET_ONLY
 	vlan_status();
