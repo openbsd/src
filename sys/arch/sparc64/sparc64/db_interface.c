@@ -273,10 +273,8 @@ kdb_trap(type, tf)
 	extern int savetstate(struct trapstate *ts);
 	extern void restoretstate(int tl, struct trapstate *ts);
 	extern int trap_trace_dis;
-	extern int doing_shutdown;
 
 	trap_trace_dis++;
-	doing_shutdown++;
 #if NFB > 0
 	fb_unblank();
 #endif
@@ -358,7 +356,6 @@ kdb_trap(type, tf)
 #endif
 	*tf = ddb_regs.ddb_tf;
 	trap_trace_dis--;
-	doing_shutdown--;
 
 	return (1);
 }
