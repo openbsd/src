@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.102 2004/01/28 22:12:33 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.103 2004/01/28 23:14:21 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -391,7 +391,8 @@ bgp_fsm(struct peer *peer, enum session_events event)
 
 			/* init pfkey */
 			if (pfkey_auth_establish(peer) == -1) {
-				log_warnx("pfkey_auth setup failed");
+				log_peer_warnx(&peer->conf,
+				    "pfkey_auth setup failed");
 				return;
 			}
 
