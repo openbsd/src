@@ -18,8 +18,9 @@ Ethernet devices:
 	- DEC SGEC 
 
 SCSI:
-	- on-board SCSI is supported on all tested systems but the
-	  VAXstation/MicroVAX 2000 and the VAX 4000/300
+	- NCR 5380 or NCR 53C9x on-board SCSI is generally supported
+	- Includes most 3100's and VAXstation 4000's, as well as the
+	  VAX 4000 10X series.
 	
 Serial ports:
 	- DZ*11 lines (also DZ*11 compatible lines on VAXstations)

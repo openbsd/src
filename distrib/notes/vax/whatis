@@ -1,8 +1,8 @@
-OpenBSD/vax OSREV is a port to the VAX series of machines manufactured
-by Digital (now Compaq).
+OpenBSD/vax OSREV is a port to the VAX series of machines, formerly
+manufactured by Digital Equipment Corporation.
 
 This port is still fairly recent, and for this reason it is still quite
-"rough", although stability has greatly improved since the previous
+"rough", although many areas are greatly improved since the previous
 release.
 
 Development is ongoing, and support for a greater variety of hardware

@@ -1,24 +1,34 @@
 OpenBSDInstallPrelude
 
-At the moment, the only way to install OpenBSD/vax OSREV is via diskless 
-booting over an Ethernet network.  You will need both the "boot.mop" 
-image and the "bsd.rd" kernel to boot.  You will also need a machine 
-configured as a rarp, MOP, bootparam, and NFS server.  
+For most systems, the easiest way to install OpenBSD/vax OSREV is via
+diskless booting over an Ethernet network.  You will need both the
+"boot.mop" image and the "bsd.rd" kernel to boot.  You will also need a
+machine configured as a rarp, MOP, bootparam, and NFS server.
 
-This document will give a few examples on how to set up each of these 
-services on an OpenBSD machine; if this is not enough information, 
-check out the OpenBSD manpages for rarpd(8), mopd(8), rpc.bootparamd(8), 
-bootparams(5), nfsd(8), mountd(8), and diskless(8).  Also, Brian Chase 
-<bdc@world.std.com> has written a guide for booting a VAX off of a 
-network; this was written for NetBSD/vax, but the procedure is virtually 
-identical for OpenBSD/vax, and the document covers the use of several 
-different platforms as servers.
+Should your VAX have supported SCSI, however, we provide a floppy image
+that can be written onto a disk in another system, and when booted on
+the VAX will present you with the standard install prompt. If this is
+the case, you can skip ahead to the "ready to install OpenBSD" section.
 
+This document will shortly provide examples on how to set up services
+for an OpenBSD netboot server. But if more information is required,
+the following resources may be helpful:
+
+The OpenBSD manpages for rarpd(8), mopd(8), nfsd(8), mountd(8),
+rpc.bootparamd(8), bootparams(5), and diskless(8). These pages are
+available online at: <http://www.openbsd.org/cgi-bin/man.cgi>
+
+Brian Chase <bdc@world.std.com> has written a guide for booting a VAX
+off of a network.  It was written for NetBSD/vax, but the procedure is
+virtually identical on OpenBSD, and the document covers the use of
+several different platforms as servers.
+ 
 The guide is available at:
-http://world.std.com/~bdc/projects/vaxen/VAX-netboot-HOWTO
+<http://world.std.com/~bdc/projects/vaxen/VAX-netboot-HOWTO>
+ 
+And finally, there is an OpenBSD/vax mailing list at <vax@openbsd.org>
+whose readers would generally be pleased to help.
 
-If this is your first time installing over a network it is STRONGLY
-suggested you read this guide.
 
 Configuring the Server:
 -----------------------
