@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.14 2000/01/10 01:04:20 angelos Exp $	*/
+/*	$OpenBSD: show.c,v 1.15 2000/01/10 01:35:06 angelos Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: show.c,v 1.14 2000/01/10 01:04:20 angelos Exp $";
+static char *rcsid = "$OpenBSD: show.c,v 1.15 2000/01/10 01:35:06 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -394,9 +394,9 @@ encap_print(rtm)
         register struct rt_msghdr *rtm;
 {
         struct sockaddr_encap *sen1 = (struct sockaddr_encap *)(rtm + 1);
+	struct protoent *prnt = NULL;
         struct sockaddr_encap *sen3;
 	struct sockaddr_encap *sen2;
-	struct protoent *prnt;
 
         u_char buffer[40];
 
@@ -417,11 +417,15 @@ encap_print(rtm)
 		inet_ntop(AF_INET, &sen2->sen_ip_dst, buffer, sizeof(buffer));
         	printf("%s:%u ", buffer, ntohs(sen1->sen_dport));
 
-		prnt = getprotobynumber(sen1->sen_proto);
-		if (prnt)
-			printf("(%s) ", prnt->p_name);
+		if (sen1->sen_proto) {
+			prnt = getprotobynumber(sen1->sen_proto);
+			if (prnt)
+				printf("(%s) ", prnt->p_name);
+			else
+				printf("(%u) ", sen1->sen_proto);
+		}
 		else
-			printf("(%u) ", sen1->sen_proto);
+			printf("(all) ");
 	}
 
 #ifdef INET6
@@ -431,11 +435,15 @@ encap_print(rtm)
 		inet_ntop(AF_INET6, &sen1->sen_ip6_dst, buffer, sizeof(buffer));
         	printf("%s:%d ", buffer, ntohs(sen1->sen_ip6_dport));
 
-		prnt = getprotobynumber(sen1->sen_ip6_proto);
-		if (prnt)
-			printf("(%s) ", prnt->p_name);
+		if (sen1->sen_ip6_proto) {
+			prnt = getprotobynumber(sen1->sen_ip6_proto);
+			if (prnt)
+				printf("(%s) ", prnt->p_name);
+			else
+				printf("(%u) ", sen1->sen_ip6_proto);
+		}
 		else
-			printf("(%u) ", sen1->sen_ip6_proto);
+			printf("(all) ");
 	}
 
 	if (sen3->sen_type == SENT_IPSP6)
