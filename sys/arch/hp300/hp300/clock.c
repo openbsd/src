@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.10 2004/09/29 07:35:54 miod Exp $	*/
+/*	$OpenBSD: clock.c,v 1.11 2004/10/02 21:28:54 miod Exp $	*/
 /*	$NetBSD: clock.c,v 1.20 1997/04/27 20:43:38 thorpej Exp $	*/
 
 /*
@@ -99,6 +99,8 @@ void	read_bbc(void);
 u_char	read_bbc_reg(int);
 u_char	write_bbc_reg(int, u_int);
 
+static int clock_ipl = IPL_CLOCK;
+static int stat_ipl = IPL_STATCLOCK;
 struct evcount clockcnt;
 struct evcount statcnt;
 
@@ -251,8 +253,8 @@ cpu_initclocks()
 	timer3min = statmin;
 	statprev = statint;
 
-	evcount_attach(&statcnt, "stat", NULL, &evcount_intr);
-	evcount_attach(&clockcnt, "clock", NULL, &evcount_intr);
+	evcount_attach(&statcnt, "stat", &stat_ipl, &evcount_intr);
+	evcount_attach(&clockcnt, "clock", &clock_ipl, &evcount_intr);
 
 	/* finally, load hardware */
 	clk->clk_cr2 = CLK_CR1;
