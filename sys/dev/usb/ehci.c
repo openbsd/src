@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.44 2005/03/13 02:32:57 pascoe Exp $ */
+/*	$OpenBSD: ehci.c,v 1.45 2005/03/13 02:54:04 pascoe Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -1336,12 +1336,21 @@ ehci_open(usbd_pipe_handle pipe)
 	usbd_status err;
 	int s;
 	int ival, speed, naks;
+	int hshubaddr, hshubport;
 
 	DPRINTFN(1, ("ehci_open: pipe=%p, addr=%d, endpt=%d (%d)\n",
 		     pipe, addr, ed->bEndpointAddress, sc->sc_addr));
 
 	if (sc->sc_dying)
 		return (USBD_IOERROR);
+
+	if (dev->myhsport) {
+		hshubaddr = dev->myhsport->parent->address;
+    		hshubport = dev->myhsport->portno;
+	} else {
+		hshubaddr = 0;
+		hshubport = 0;
+	}
 
 	epipe->nexttoggle = 0;
 
@@ -1366,6 +1375,15 @@ ehci_open(usbd_pipe_handle pipe)
 	case USB_SPEED_HIGH: speed = EHCI_QH_SPEED_HIGH; break;
 	default: panic("ehci_open: bad device speed %d", dev->speed);
 	}
+	if (speed != EHCI_QH_SPEED_HIGH && xfertype == UE_ISOCHRONOUS) {
+		printf("%s: *** WARNING: opening low/full speed isochronous "
+		    "device, this does not work yet.\n",
+		    USBDEVNAME(sc->sc_bus.bdev));
+		DPRINTFN(1,("ehci_open: hshubaddr=%d hshubport=%d\n",
+		    hshubaddr, hshubport));
+		return (USBD_INVAL);
+	}
+
 	naks = 8;		/* XXX */
 	sqh = ehci_alloc_sqh(sc);
 	if (sqh == NULL)
@@ -1383,7 +1401,9 @@ ehci_open(usbd_pipe_handle pipe)
 		);
 	sqh->qh.qh_endphub = htole32(
 		EHCI_QH_SET_MULT(1) |
-		/* XXX TT stuff */
+		EHCI_QH_SET_HUBA(hshubaddr) |
+		EHCI_QH_SET_PORT(hshubport) |
+		EHCI_QH_SET_CMASK(0x1c) | /* XXX */
 		EHCI_QH_SET_SMASK(xfertype == UE_INTERRUPT ? 0x01 : 0)
 		);
 	sqh->qh.qh_curqtd = EHCI_NULL;
