@@ -1,4 +1,4 @@
-# $OpenBSD: PackingList.pm,v 1.2 2003/10/19 18:42:55 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.3 2003/11/06 17:46:35 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -144,6 +144,12 @@ sub pkgname($)
 {
 	my $self = shift;
 	return $self->{name}->{name};
+}
+
+sub prefix($)
+{
+	my $self = shift;
+	return $self->{state}->{prefix};
 }
 
 # allows the autoloader to work correctly
