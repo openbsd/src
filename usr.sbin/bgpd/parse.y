@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.107 2004/05/08 19:17:20 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.108 2004/05/08 20:50:29 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1586,6 +1586,7 @@ str2key(char *s, char *dest, size_t max_len)
 int
 neighbor_consistent(struct peer *p)
 {
+	/* local-address and peer's address: same address family */
 	if (p->conf.local_addr.af &&
 	    p->conf.local_addr.af != p->conf.remote_addr.af) {
 		yyerror("local-address and neighbor address "
@@ -1593,6 +1594,7 @@ neighbor_consistent(struct peer *p)
 		return (-1);
 	}
 
+	/* with any form of ipsec local-address is required */
 	if ((p->conf.auth.method == AUTH_IPSEC_IKE_ESP ||
 	    p->conf.auth.method == AUTH_IPSEC_IKE_AH ||
 	    p->conf.auth.method == AUTH_IPSEC_MANUAL_ESP ||
@@ -1600,6 +1602,15 @@ neighbor_consistent(struct peer *p)
 	    !p->conf.local_addr.af) {
 		yyerror("neighbors with any form of IPsec configured "
 		    "need local-address to be specified");
+		return (-1);
+	}
+
+	/* with static keying we need both directions */
+	if ((p->conf.auth.method == AUTH_IPSEC_MANUAL_ESP ||
+	    p->conf.auth.method == AUTH_IPSEC_MANUAL_AH) &&
+	    (!p->conf.auth.spi_in || !p->conf.auth.spi_out)) {
+		yyerror("with manual keyed IPsec, SPIs and keys "
+		    "for both directions are required");
 		return (-1);
 	}
 
