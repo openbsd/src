@@ -1,4 +1,4 @@
-/*	$OpenBSD: tgetpass.c,v 1.6 1998/01/23 03:54:05 millert Exp $	*/
+/*	$OpenBSD: tgetpass.c,v 1.7 1998/02/06 19:02:55 millert Exp $	*/
 
 /*
  *  CU sudo version 1.5.4
@@ -139,9 +139,37 @@ char * tgetpass(prompt, timeout, user, host)
     if ((input = fopen(_PATH_TTY, "r+")) == NULL) {
 	input = stdin;
 	output = stderr;
-	(void) fflush(output);
     } else {
 	output = input;
+    }
+
+    /*
+     * print the prompt
+     */
+    if (prompt) {
+	p = (char *) prompt;
+	do {
+	    /* expand %u -> username, %h -> host */
+	    switch (*p) {
+		case '%':   if (user && *(p+1) == 'u') {
+				(void) fputs(user, output);
+				p++;
+				break;
+			    } else if (host && *(p+1) == 'h') {
+				(void) fputs(host, output);
+				p++;
+				break;
+			    }
+
+		default:    (void) fputc(*p, output);
+	    }
+	} while (*(++p));
+    }
+
+    /* rewind if necesary */
+    if (input == output) {
+	(void) fflush(output);
+	(void) rewind(output);
     }
 
     /*
@@ -168,33 +196,6 @@ char * tgetpass(prompt, timeout, user, host)
     }
 #endif /* HAVE_TERMIO_H */
 #endif /* HAVE_TERMIOS_H */
-
-    /* print the prompt */
-    if (prompt) {
-	p = (char *) prompt;
-	do {
-	    /* expand %u -> username, %h -> host */
-	    switch (*p) {
-		case '%':   if (user && *(p+1) == 'u') {
-				(void) fputs(user, output);
-				p++;
-				break;
-			    } else if (host && *(p+1) == 'h') {
-				(void) fputs(host, output);
-				p++;
-				break;
-			    }
-
-		default:    (void) fputc(*p, output);
-	    }
-	} while (*(++p));
-    }
-
-    /* rewind if necesary */
-    if (input == output) {
-	(void) fflush(output);
-	(void) rewind(output);
-    }
 
     /*
      * Timeout of <= 0 means no timeout

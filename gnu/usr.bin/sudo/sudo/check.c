@@ -1,4 +1,4 @@
-/*	$OpenBSD: check.c,v 1.6 1998/01/13 05:30:20 millert Exp $	*/
+/*	$OpenBSD: check.c,v 1.7 1998/02/06 19:02:52 millert Exp $	*/
 
 /*
  * CU sudo version 1.5.4 (based on Root Group sudo version 1.1)
@@ -880,7 +880,5 @@ static void reminder()
 	"        #1) Respect the privacy of others.",
 	"        #2) Think before you type."
     );
-    
-    (void) fflush(stderr);
 }
 #endif /* NO_MESSAGE */
