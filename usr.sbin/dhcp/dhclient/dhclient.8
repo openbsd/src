@@ -1,4 +1,4 @@
-.\" $OpenBSD: dhclient.8,v 1.13 2001/08/18 20:38:56 beck Exp $
+.\" $OpenBSD: dhclient.8,v 1.14 2003/04/08 01:34:30 david Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -125,8 +125,8 @@ In order to prevent the file from becoming arbitrarily large, from time to time
 creates a new
 .Pa dhclient.leases
 file from its in-core lease database.
-The old version of is retained under the name
-.Pa /var/db/dhcpd.leases~
+The old version of the file is retained under the name
+.Pa /var/db/dhclient.leases~
 until the next time
 .Nm
 rewrites the database.
