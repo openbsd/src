@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.21 2004/07/13 19:12:30 mickey Exp $	*/
+/*	$OpenBSD: intr.c,v 1.22 2004/07/13 19:34:22 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -290,6 +290,7 @@ cpu_intr(void *v)
 		if (iv->flags & HPPA_IV_CALL)
 			continue;
 
+		uvmexp.intrs++;
 		if (iv->flags & HPPA_IV_SOFT)
 			uvmexp.softs++;
 
