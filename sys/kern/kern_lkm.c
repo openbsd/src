@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lkm.c,v 1.11 1996/09/27 14:41:16 briggs Exp $	*/
+/*	$OpenBSD: kern_lkm.c,v 1.12 1996/10/02 20:22:13 deraadt Exp $	*/
 /*	$NetBSD: kern_lkm.c,v 1.31 1996/03/31 21:40:27 christos Exp $	*/
 
 /*
@@ -208,7 +208,7 @@ lkmlookup(i, name, error)
 		 * Copy name and lookup id from all loaded
 		 * modules.  May fail.
 		 */
-	 	*error = copyinstr(name, istr, MAXLKMNAME-1, NULL);
+	 	*error = copyinstr(name, istr, MAXLKMNAME, NULL);
 		if (*error)
 			return NULL;
 
