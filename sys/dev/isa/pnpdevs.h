@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	#	OpenBSD: pnpdevs,v 1.77 1999/07/14 19:27:20 deraadt Exp 
+ *	#	OpenBSD: pnpdevs,v 1.78 1999/07/19 19:47:40 deraadt Exp 
  */
 
 struct isapnp_knowndev isapnp_knowndevs[] = {
@@ -43,6 +43,7 @@ struct isapnp_knowndev isapnp_knowndevs[] = {
 	{ "PNPB001", "sb" },
 	{ "PNPB002", "sb" },
 	{ "PNPB003", "sb" },
+	{ "PNPB006", "mpu" },
 	{ "PNPB02F", "joy" },
 	{ "PNPC000", "com" },
 	{ "PNPC000", "pccom" },
@@ -102,9 +103,15 @@ struct isapnp_knowndev isapnp_knowndevs[] = {
 	{ "BRI1500", "pccom" },
 	{ "AEI0276", "com" },
 	{ "AEI0276", "pccom" },
+	{ "WCI0003", "com" },
+	{ "WCI0003", "pccom" },
 	{ "CSI2203", "le" },
 	{ "@@@1980", "ne" },
 	{ "SMC8416", "we" },
+	{ "@X@1001", "mpu" },
+	{ "AZT2001", "mpu" },
+	{ "CSC0003", "mpu" },
+	{ "OPT0002", "mpu" },
 	{ "GRV0000", "gus" },
 	{ "@P@1001", "joy" },
 	{ "AZT3001", "joy" },
