@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.53 2004/09/14 22:49:36 espie Exp $
+# $OpenBSD: pkg_add,v 1.54 2004/09/14 22:53:17 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -37,8 +37,6 @@ sub ensure_ldconfig
 {
 	my $verbose = shift;
 	return unless defined $OpenBSD::PackingElement::Lib::todo;
-	print "running ldconfig -m ", join(' ', keys %$OpenBSD::PackingElement::Lib::todo), "\n"
-	    if  $verbose;
 	VSystem($verbose, @OpenBSD::PackingElement::Lib::ldconfig, "-m", 
 	    keys %$OpenBSD::PackingElement::Lib::todo);
 	undef $OpenBSD::PackingElement::Lib::todo;
@@ -163,6 +161,7 @@ sub install
 
 package OpenBSD::PackingElement::InfoFile;
 use File::Basename;
+use OpenBSD::Error;
 
 sub install
 {
@@ -170,7 +169,8 @@ sub install
 	$self->SUPER::install($archive, $destdir, $verbose, $not);
 	return if $not;
 	my $fullname = $destdir.$self->fullname();
-	system("install-info", "--info-dir=".dirname($fullname), $fullname);
+	VSystem($verbose, 
+	    "install-info", "--info-dir=".dirname($fullname), $fullname);
 }
 
 package OpenBSD::PackingElement::Dir;
@@ -186,6 +186,7 @@ sub install
 }
 
 package OpenBSD::PackingElement::Exec;
+use OpenBSD::Error;
 
 sub install
 {
@@ -193,7 +194,7 @@ sub install
 
 	main::ensure_ldconfig($verbose) unless $not;
 	print "exec ", $self->{expanded}, "\n" if $verbose or $not;
-	system('/bin/sh', '-c', $self->{expanded}) unless $not;
+	System('/bin/sh', '-c', $self->{expanded}) unless $not;
 }
 
 package OpenBSD::PackingElement::Lib;
@@ -612,7 +613,7 @@ sub really_add($$)
 		print "Require script: $dir",REQUIRE," $pkgname INSTALL\n" if $opt_v or $opt_n;
 		unless ($opt_n) {
 			chmod 0755, $dir.REQUIRE;
-			system($dir.REQUIRE, $pkgname, "INSTALL") == 0 or
+			System($dir.REQUIRE, $pkgname, "INSTALL") == 0 or
 			    borked_script("require script");
 		}
 	}
@@ -623,7 +624,7 @@ sub really_add($$)
 			print "Install script: $dir",INSTALL," $pkgname PRE-INSTALL\n" if $opt_v or $opt_n;
 			unless ($opt_n) {
 				chmod 0755, $dir.INSTALL;
-				system($dir.INSTALL, $pkgname, "PRE-INSTALL") == 0 or
+				System($dir.INSTALL, $pkgname, "PRE-INSTALL") == 0 or
 				    borked_script("install script");
 			}
 		}
@@ -656,7 +657,7 @@ sub really_add($$)
 			ensure_ldconfig($opt_v) unless $opt_n;
 			print "Install script: $dir",INSTALL ," $pkgname POST-INSTALL\n" if $opt_v or $opt_n;
 			unless ($opt_n) {
-				if (system($dir.INSTALL, $pkgname, "POST-INSTALL") != 0) {
+				if (System($dir.INSTALL, $pkgname, "POST-INSTALL") != 0) {
 					print STDERR "install script for $pkgname borked\n";
 					$errors++ unless $forced{scripts};
 				}
@@ -681,7 +682,7 @@ sub really_add($$)
 	add_installed($pkgname);
 	if ($plist->has(DISPLAY)) {
 		my $pager = $ENV{'PAGER'} || "/usr/bin/more";
-		system("$pager $dir".DISPLAY);
+		System("$pager $dir".DISPLAY);
 	}
 }
 
