@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.c,v 1.89 2004/01/16 10:51:57 hshoexer Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.90 2004/02/05 11:01:54 hshoexer Exp $	*/
 /*	$EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	*/
 
 /*
@@ -1393,6 +1393,7 @@ exchange_finalize (struct message *msg)
   struct conf_list_node *attr;
   struct cert_handler *handler;
   int i;
+  char *id_doi, *id_trp;
 
 #ifdef USE_DEBUG
   exchange_dump ("exchange_finalize", exchange);
@@ -1509,22 +1510,24 @@ exchange_finalize (struct message *msg)
 	      = handler->cert_dup (exchange->sent_cert);
 	}
 
-      LOG_DBG ((LOG_EXCHANGE, 10,
-		"exchange_finalize: phase 1 done: %s, %s",
-		!exchange->doi ? "<no doi>" :
-		exchange->doi->decode_ids ("initiator id %s, responder id %s",
-					   exchange->id_i, exchange->id_i_len,
-					   exchange->id_r, exchange->id_r_len,
-					   0),
-		!msg->isakmp_sa || !msg->isakmp_sa->transport
-		? "<no transport>"
-		: msg->isakmp_sa->transport->vtbl->decode_ids (msg->isakmp_sa
-							       ->transport)));
-      log_verbose ("isakmpd: phase 1 done: %s",
-	           !msg->isakmp_sa || !msg->isakmp_sa->transport
-		   ? "<no transport>"
-		   : msg->isakmp_sa->transport->vtbl->decode_ids
-		   (msg->isakmp_sa ->transport));
+      if (exchange->doi)
+	id_doi = exchange->doi->decode_ids ("initiator id %s, responder id %s",
+					    exchange->id_i, exchange->id_i_len,
+					    exchange->id_r, exchange->id_r_len,
+					    0);
+      else
+	id_doi = "<no doi>";
+
+      if (msg->isakmp_sa)
+	id_trp = msg->isakmp_sa->transport->vtbl->decode_ids
+	  (msg->isakmp_sa->transport);
+      else
+        id_trp = "<no transport>";
+
+      LOG_DBG ((LOG_EXCHANGE, 10, "exchange_finalize: phase 1 done: %s, %s",
+	        id_doi, id_trp));
+
+      log_verbose ("isakmpd: phase 1 done: %s, %s", id_doi, id_trp);
     }
 
   exchange->doi->finalize_exchange (msg);
