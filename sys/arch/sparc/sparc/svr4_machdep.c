@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.12 1996/01/04 22:22:49 jtc Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.13 1996/01/07 19:47:27 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -63,6 +63,50 @@ extern int sigpid;
 #define SDB_FPSTATE	0x04
 #endif
 
+#ifdef DEBUG_SVR4
+static void svr4_printcontext __P((const char *, struct svr4_ucontext *));
+
+static void
+svr4_printcontext(fun, uc)
+	const char *fun;
+	struct svr4_ucontext *uc;
+{
+	svr4_greg_t *r = uc->uc_mcontext.greg;
+	struct svr4_sigaltstack *s = &uc->uc_stack;
+
+	printf("%s at %x\n", fun, uc);
+
+	printf("Regs: ");
+	printf("PSR = %x ", r[SVR4_SPARC_PSR]);
+	printf("PC = %x ",  r[SVR4_SPARC_PC]);
+	printf("nPC = %x ", r[SVR4_SPARC_nPC]);
+	printf("Y = %x ",   r[SVR4_SPARC_Y]);
+	printf("G1 = %x ",  r[SVR4_SPARC_G1]);
+	printf("G2 = %x ",  r[SVR4_SPARC_G2]);
+	printf("G3 = %x ",  r[SVR4_SPARC_G3]);
+	printf("G4 = %x ",  r[SVR4_SPARC_G4]);
+	printf("G5 = %x ",  r[SVR4_SPARC_G5]);
+	printf("G6 = %x ",  r[SVR4_SPARC_G6]);
+	printf("G7 = %x ",  r[SVR4_SPARC_G7]);
+	printf("O0 = %x ",  r[SVR4_SPARC_O0]);
+	printf("O1 = %x ",  r[SVR4_SPARC_O1]);
+	printf("O2 = %x ",  r[SVR4_SPARC_O2]);
+	printf("O3 = %x ",  r[SVR4_SPARC_O3]);
+	printf("O4 = %x ",  r[SVR4_SPARC_O4]);
+	printf("O5 = %x ",  r[SVR4_SPARC_O5]);
+	printf("O6 = %x ",  r[SVR4_SPARC_O6]);
+	printf("O7 = %x ",  r[SVR4_SPARC_O7]);
+	printf("\n");
+
+	printf("Signal Stack: sp %x, size %d, flags %x\n",
+	       s->ss_sp, s->ss_size, s->ss_flags);
+
+	printf("Signal mask: %x\n", uc->uc_sigmask);
+
+	printf("Flags: %x\n", uc->uc_flags);
+}
+#endif
+
 void
 svr4_getcontext(p, uc, mask, oonstack)
 	struct proc *p;
@@ -114,6 +158,10 @@ svr4_getcontext(p, uc, mask, oonstack)
 	 * Set the flags
 	 */
 	uc->uc_flags = SVR4_UC_ALL;
+
+#ifdef DEBUG_SVR4
+	svr4_printcontext("getcontext", uc);
+#endif
 }
 
 
@@ -141,6 +189,9 @@ svr4_setcontext(p, uc)
 	struct sigaltstack *sf = &psp->ps_sigstk;
 	int mask;
 
+#ifdef DEBUG_SVR4
+	svr4_printcontext("setcontext", uc);
+#endif
 	/*
 	 * XXX:
 	 * Should we check the value of flags to determine what to restore?
@@ -156,10 +207,44 @@ svr4_setcontext(p, uc)
 		    p->p_comm, p->p_pid, uc);
 #endif
 
-	if ((int)uc & 3 || useracc((caddr_t)uc, sizeof *uc, B_WRITE) == 0)
-		return EINVAL;
-
 	tf = (struct trapframe *)p->p_md.md_tf;
+
+	/*
+	 * Restore register context.
+	 */
+	/*
+	 * Only the icc bits in the psr are used, so it need not be
+	 * verified.  pc and npc must be multiples of 4.  This is all
+	 * that is required; if it holds, just do it.
+	 */
+	if (((r[SVR4_SPARC_PC] | r[SVR4_SPARC_nPC]) & 3) != 0) {
+		printf("pc or npc are not multiples of 4!\n");
+		return EINVAL;
+	}
+
+	/* take only psr ICC field */
+	tf->tf_psr = (tf->tf_psr & ~PSR_ICC) | (r[SVR4_SPARC_PSR] & PSR_ICC);
+	tf->tf_pc = r[SVR4_SPARC_PC];
+	tf->tf_npc = r[SVR4_SPARC_nPC];
+	tf->tf_y = r[SVR4_SPARC_Y];
+
+	/* Restore everything */
+	tf->tf_global[1] = r[SVR4_SPARC_G1];
+	tf->tf_global[2] = r[SVR4_SPARC_G2];
+	tf->tf_global[3] = r[SVR4_SPARC_G3];
+	tf->tf_global[4] = r[SVR4_SPARC_G4];
+	tf->tf_global[5] = r[SVR4_SPARC_G5];
+	tf->tf_global[6] = r[SVR4_SPARC_G6];
+	tf->tf_global[7] = r[SVR4_SPARC_G7];
+
+	tf->tf_out[0] = r[SVR4_SPARC_O0];
+	tf->tf_out[1] = r[SVR4_SPARC_O1];
+	tf->tf_out[2] = r[SVR4_SPARC_O2];
+	tf->tf_out[3] = r[SVR4_SPARC_O3];
+	tf->tf_out[4] = r[SVR4_SPARC_O4];
+	tf->tf_out[5] = r[SVR4_SPARC_O5];
+	tf->tf_out[6] = r[SVR4_SPARC_O6];
+	tf->tf_out[7] = r[SVR4_SPARC_O7];
 
 	/*
 	 * restore signal stack
@@ -171,42 +256,6 @@ svr4_setcontext(p, uc)
 	 */
 	svr4_to_bsd_sigset(&uc->uc_sigmask, &mask);
 	p->p_sigmask = mask & ~sigcantmask;
-
-	/*
-	 * Restore register context.
-	 */
-	/*
-	 * Only the icc bits in the psr are used, so it need not be
-	 * verified.  pc and npc must be multiples of 4.  This is all
-	 * that is required; if it holds, just do it.
-	 */
-	if (((r[SVR4_SPARC_PC] | r[SVR4_SPARC_nPC]) & 3) != 0)
-		return EINVAL;
-
-	/* take only psr ICC field */
-	tf->tf_psr = (tf->tf_psr & ~PSR_ICC) | (r[SVR4_SPARC_PSR] & PSR_ICC);
-	tf->tf_pc = r[SVR4_SPARC_PC];
-	tf->tf_npc = r[SVR4_SPARC_nPC];
-	tf->tf_y = r[SVR4_SPARC_Y];
-	tf->tf_out[0] = r[SVR4_SPARC_O0];
-	tf->tf_out[6] = r[SVR4_SPARC_O6];
-#if 0
-	/* I don't think that we need to restore those */
-	tf->tf_global[1] = r[SVR4_SPARC_G1];
-	tf->tf_global[2] = r[SVR4_SPARC_G2];
-	tf->tf_global[3] = r[SVR4_SPARC_G3];
-	tf->tf_global[4] = r[SVR4_SPARC_G4];
-	tf->tf_global[5] = r[SVR4_SPARC_G5];
-	tf->tf_global[6] = r[SVR4_SPARC_G6];
-	tf->tf_global[7] = r[SVR4_SPARC_G7];
-
-	tf->tf_out[1] = r[SVR4_SPARC_O1];
-	tf->tf_out[2] = r[SVR4_SPARC_O2];
-	tf->tf_out[3] = r[SVR4_SPARC_O3];
-	tf->tf_out[4] = r[SVR4_SPARC_O4];
-	tf->tf_out[5] = r[SVR4_SPARC_O5];
-	tf->tf_out[7] = r[SVR4_SPARC_O7];
-#endif
 
 	return EJUSTRETURN;
 }
@@ -364,11 +413,16 @@ svr4_sendsig(catcher, sig, mask, code)
 	if ((psp->ps_flags & SAS_ALTSTACK) && !oonstack &&
 	    (psp->ps_sigonstack & sigmask(sig))) {
 		fp = (struct svr4_sigframe *)(psp->ps_sigstk.ss_sp +
-		    psp->ps_sigstk.ss_size - sizeof(struct svr4_sigframe));
+					      psp->ps_sigstk.ss_size);
 		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 	} else {
 		fp = (struct svr4_sigframe *)oldsp;
 	}
+
+	/*
+	 * Subtract off one signal frame and align.
+	 */
+	fp = (struct svr4_sigframe *) ((int) (fp - 1) & ~7);
 
 	/* 
 	 * Build the argument list for the signal handler.
@@ -379,6 +433,10 @@ svr4_sendsig(catcher, sig, mask, code)
 	frame.sf_sip = &fp->sf_si;
 	frame.sf_ucp = &fp->sf_uc;
 	frame.sf_handler = catcher;
+
+	DPRINTF(("svr4_sendsig signum=%d si = %x uc = %x handler = %x\n",
+	         frame.sf_signum, frame.sf_sip,
+		 frame.sf_ucp, frame.sf_handler));
 	/*
 	 * Modify the signal context to be used by sigreturn.
 	 */
@@ -406,6 +464,7 @@ svr4_sendsig(catcher, sig, mask, code)
 	 */
 	addr = (int)PS_STRINGS - (svr4_esigcode - svr4_sigcode);
 	tf->tf_global[1] = (int)catcher;
+
 	tf->tf_pc = addr;
 	tf->tf_npc = addr + 4;
 	tf->tf_out[6] = newsp;
