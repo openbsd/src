@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipnat.c,v 1.6 1997/02/07 18:10:07 kstailey Exp $	*/
+/*	$OpenBSD: ipnat.c,v 1.7 1997/02/07 18:26:47 kstailey Exp $	*/
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
  *
@@ -193,7 +193,7 @@ int verbose;
 			else if (np->in_flags & IPN_UDP)
 				printf(" udp");
 			else if (np->in_flags & IPN_TCPUDP)
-				printf(" tcpudp");
+				printf(" tcp/udp");
 			printf(" %d:%d", ntohs(np->in_port[0]),
 			       ntohs(np->in_port[1]));
 		}
