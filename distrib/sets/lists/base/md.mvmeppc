@@ -1475,7 +1475,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/miscfs/union
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/miscfs/union/union.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/mpool.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/mvmeppc/internal_types.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/ncurses.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/ndbm.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/net
@@ -1765,6 +1764,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/frame.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/ieee.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/ieeefp.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/internal_types.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/internal_types.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/intr.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/ipkdb.ph
