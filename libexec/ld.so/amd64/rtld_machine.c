@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.2 2004/02/10 14:30:43 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.3 2004/02/10 14:47:07 drahn Exp $ */
 
 /*
  * Copyright (c) 2002,2004 Dale Rahn
@@ -405,13 +405,18 @@ _dl_bind(elf_object_t *object, int index)
 	return((Elf_Addr)ooff + this->st_value);
 }
 
+/*/
+#define LAZY_BINDING_WORKS
+ */
 void
 _dl_md_reloc_got(elf_object_t *object, int lazy)
 {
 	extern void _dl_bind_start(void);       /* XXX */
 	Elf_Addr *pltgot = (Elf_Addr *)object->Dyn.info[DT_PLTGOT];
+#ifdef LAZY_BINDING_WORKS
 	int i, num;
 	Elf_RelA *rel;
+#endif
 	Elf_Addr ooff;
 	const Elf_Sym *this;
 
@@ -446,8 +451,11 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 		object->got_size = ELF_ROUND(object->got_size, _dl_pagesz);
 	}
 
+#ifdef LAZY_BINDING_WORKS
 	if (!lazy) {
+#endif
 		_dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);
+#ifdef LAZY_BINDING_WORKS
 	} else {
 		rel = (Elf_RelA *)(object->Dyn.info[DT_JMPREL]);
 		num = (object->Dyn.info[DT_PLTRELSZ]);
@@ -458,6 +466,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 		}
 
 	}
+#endif
 	/* PLT is already RO on i386, no point in mprotecting it, just GOT */
 	if (object->got_size != 0)
 		_dl_mprotect((void*)object->got_start, object->got_size,
