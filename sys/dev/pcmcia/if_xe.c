@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xe.c,v 1.26 2003/10/22 09:58:46 jmc Exp $	*/
+/*	$OpenBSD: if_xe.c,v 1.27 2004/05/12 06:35:11 tedu Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist, Brandon Creighton, Job de Haas
@@ -81,7 +81,6 @@
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
-#include <net/bpfdesc.h>
 #endif
 
 /*

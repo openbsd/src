@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fea.c,v 1.16 2004/01/09 21:32:23 brad Exp $	*/
+/*	$OpenBSD: if_fea.c,v 1.17 2004/05/12 06:35:10 tedu Exp $	*/
 /*	$NetBSD: if_fea.c,v 1.9 1996/10/21 22:31:05 thorpej Exp $	*/
 
 /*-
@@ -52,7 +52,6 @@
 #include "bpfilter.h"
 #if NBPFILTER > 0
 #include <net/bpf.h>
-#include <net/bpfdesc.h>
 #endif
 
 #ifdef INET

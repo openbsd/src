@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fe.c,v 1.19 2002/03/14 01:26:56 millert Exp $	*/
+/*	$OpenBSD: if_fe.c,v 1.20 2004/05/12 06:35:11 tedu Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -72,7 +72,6 @@
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
-#include <net/bpfdesc.h>
 #endif
 
 #include <machine/cpu.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iy.c,v 1.18 2004/01/09 21:32:24 brad Exp $	*/
+/*	$OpenBSD: if_iy.c,v 1.19 2004/05/12 06:35:11 tedu Exp $	*/
 /*	$NetBSD: if_iy.c,v 1.4 1996/05/12 23:52:53 mycroft Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
@@ -56,7 +56,6 @@
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
-#include <net/bpfdesc.h>
 #endif
 
 #ifdef INET

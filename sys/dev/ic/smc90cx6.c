@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc90cx6.c,v 1.6 2003/10/21 18:58:49 jmc Exp $ */
+/*	$OpenBSD: smc90cx6.c,v 1.7 2004/05/12 06:35:10 tedu Exp $ */
 /*	$NetBSD: smc90cx6.c,v 1.17 1996/05/07 01:43:18 thorpej Exp $ */
 
 /*
@@ -77,7 +77,6 @@
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
-#include <net/bpfdesc.h>
 #endif
 
 #include <sys/kernel.h>

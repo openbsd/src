@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.50 2004/05/01 00:03:59 beck Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.51 2004/05/12 06:35:10 tedu Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -73,7 +73,6 @@
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
-#include <net/bpfdesc.h>
 #endif
 
 #include <sys/ioctl.h>

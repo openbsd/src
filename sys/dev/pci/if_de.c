@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.58 2003/08/06 21:08:06 millert Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.59 2004/05/12 06:35:11 tedu Exp $	*/
 /*	$NetBSD: if_de.c,v 1.45 1997/06/09 00:34:18 thorpej Exp $	*/
 
 /*-
@@ -75,7 +75,6 @@
 #include "bpfilter.h"
 #if NBPFILTER > 0
 #include <net/bpf.h>
-#include <net/bpfdesc.h>
 #endif
 
 #ifdef INET

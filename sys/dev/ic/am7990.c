@@ -1,4 +1,4 @@
-/*	$OpenBSD: am7990.c,v 1.33 2003/08/18 18:23:58 jason Exp $	*/
+/*	$OpenBSD: am7990.c,v 1.34 2004/05/12 06:35:10 tedu Exp $	*/
 /*	$NetBSD: am7990.c,v 1.22 1996/10/13 01:37:19 christos Exp $	*/
 
 /*-
@@ -61,7 +61,6 @@
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
-#include <net/bpfdesc.h>
 #endif
 
 #include <dev/ic/am7990reg.h>

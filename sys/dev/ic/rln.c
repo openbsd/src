@@ -1,4 +1,4 @@
-/*	$OpenBSD: rln.c,v 1.15 2002/03/14 03:16:05 millert Exp $	*/
+/*	$OpenBSD: rln.c,v 1.16 2004/05/12 06:35:10 tedu Exp $	*/
 /*
  * David Leonard <d@openbsd.org>, 1999. Public Domain.
  *
@@ -32,7 +32,6 @@
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
-#include <net/bpfdesc.h>
 #endif
 
 #include <machine/bus.h>

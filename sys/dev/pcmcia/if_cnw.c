@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnw.c,v 1.13 2003/11/07 20:34:27 jmc Exp $	*/
+/*	$OpenBSD: if_cnw.c,v 1.14 2004/05/12 06:35:11 tedu Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -85,7 +85,6 @@
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
-#include <net/bpfdesc.h>
 #endif
 
 

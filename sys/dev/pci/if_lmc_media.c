@@ -1,5 +1,5 @@
-/* $OpenBSD: if_lmc_media.c,v 1.13 2003/02/11 19:20:27 mickey Exp $ */
-/* $Id: if_lmc_media.c,v 1.13 2003/02/11 19:20:27 mickey Exp $ */
+/* $OpenBSD: if_lmc_media.c,v 1.14 2004/05/12 06:35:11 tedu Exp $ */
+/* $Id: if_lmc_media.c,v 1.14 2004/05/12 06:35:11 tedu Exp $ */
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -74,7 +74,6 @@
 #include "bpfilter.h"
 #if NBPFILTER > 0
 #include <net/bpf.h>
-#include <net/bpfdesc.h>
 #endif
 
 #include <uvm/uvm_extern.h>

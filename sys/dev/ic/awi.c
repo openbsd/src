@@ -1,4 +1,4 @@
-/*	$OpenBSD: awi.c,v 1.12 2003/04/27 11:22:52 ho Exp $	*/
+/*	$OpenBSD: awi.c,v 1.13 2004/05/12 06:35:10 tedu Exp $	*/
 /*	$NetBSD: awi.c,v 1.26 2000/07/21 04:48:55 onoe Exp $	*/
 
 /*-
@@ -141,7 +141,6 @@
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
-#include <net/bpfdesc.h>
 #endif
 
 #include <machine/cpu.h>

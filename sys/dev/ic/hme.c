@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.29 2003/06/18 15:35:47 jason Exp $	*/
+/*	$OpenBSD: hme.c,v 1.30 2004/05/12 06:35:10 tedu Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -71,7 +71,6 @@
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
-#include <net/bpfdesc.h>
 #endif
 
 #include <dev/mii/mii.h>
