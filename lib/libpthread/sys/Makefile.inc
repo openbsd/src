@@ -1,10 +1,13 @@
-#	$OpenBSD: Makefile.inc,v 1.12 2003/10/22 00:25:42 brad Exp $
+#	$OpenBSD: Makefile.inc,v 1.13 2004/02/06 01:52:01 brad Exp $
 
 .PATH:	 ${SRCDIR}/sys ${SRCDIR}/arch/${MACHINE_ARCH}
 
 SRCS+=	uthread_error.c
-SRCS+=	_atomic_lock.c slow_atomic_lock.c
+SRCS+=	slow_atomic_lock.c
 
+.if exists(${SRCDIR}/arch/${MACHINE_ARCH}/_atomic_lock.c)
+SRCS+=	_atomic_lock.c
+.endif
 .if exists(${SRCDIR}/arch/${MACHINE_ARCH}/uthread_machdep_asm.S)
 SRCS+=	uthread_machdep_asm.S
 .endif
