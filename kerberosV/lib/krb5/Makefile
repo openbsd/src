@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.13 2001/07/03 02:16:18 niklas Exp $
+# $OpenBSD: Makefile,v 1.14 2001/07/11 09:21:15 hin Exp $
 
 KRBDEPTH=../..
 .include <${.CURDIR}/../../Makefile.inc>
@@ -246,6 +246,9 @@ SRCS+=	base64.c		\
 	strsep_copy.c		\
 	warnerr.c
 
+# libkafs
+SRCS+=	afskrb5.c
+
 # There is a net_write.c and net_read.c both in lib/roken and lib/krb5.
 # This stinks.
 roken_net_write.c:	net_write.c
@@ -256,7 +259,7 @@ roken_net_read.c:	net_read.c
 
 CLEANFILES+=	krb5_err.[ch] heim_err.[ch]
 
-.PATH:	${KRB5SRC}/lib/krb5 ${KRB5SRC}/lib/roken
+.PATH:	${KRB5SRC}/lib/krb5 ${KRB5SRC}/lib/roken ${KRB5SRC}/lib/kafs
 CFLAGS+=-I${KRB5SRC}/lib/krb5 -I${KRB5SRC}/lib/ \
 	-I${KRB5SRC}/lib/asn1 -I../asn1 -I. \
 	-DSHA1_CTX=SHA_CTX
