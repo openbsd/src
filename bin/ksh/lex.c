@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.20 2004/11/06 20:33:00 deraadt Exp $	*/
+/*	$OpenBSD: lex.c,v 1.21 2004/11/06 20:36:44 deraadt Exp $	*/
 
 /*
  * lexical analysis and source input
@@ -1173,7 +1173,7 @@ dopprompt(sp, ntruncate, spp, doprint)
 	int doprint;
 {
 	char strbuf[1024], tmpbuf[1024], *p, *str, nbuf[32], delimiter = '\0';
-	int len, c, n, totlen = 0, indelimit = 0;
+	int len, c, n, totlen = 0, indelimit = 0, counting = 1, delimitthis;
 	const char *cp = sp, *ccp;
 	extern INT32 njobs;
 	struct tm *tm;
@@ -1185,15 +1185,19 @@ dopprompt(sp, ntruncate, spp, doprint)
 	}
 
 	while (*cp != 0) {
+		delimitthis = 0;
 		if (indelimit && *cp != delimiter)
 			;
 		else if (*cp == '\n' || *cp == '\r') {
 			totlen = 0;
 			sp = cp + 1;
-		} else if (*cp == '\t')
-			totlen = (totlen | 7) + 1;
-		else if (*cp == delimiter)
+		} else if (*cp == '\t') {
+			if (counting)
+				totlen = (totlen | 7) + 1;
+		} else if (*cp == delimiter) {
 			indelimit = !indelimit;
+			delimitthis = 1;
+		}
 
 		if (*cp == '\\') {
 			cp++;
@@ -1357,23 +1361,13 @@ dopprompt(sp, ntruncate, spp, doprint)
 				strbuf[0] = '\\';
 				strbuf[1] = '\0';
 				break;
-			case '[': /* '\' '[' text '\' ']' */
-				ccp = ++cp;
-				while (ccp[0] != '\\' && ccp[1] != ']') {
-					if (ccp[0] == '\0')
-						break;
-					ccp++;
-				}
-				if (ccp[0] == '\0') {
-					snprintf(strbuf, sizeof strbuf,
-					    "\\%c", *cp);
-					break;
-				}
-				n = ccp - cp;
-				strlcpy(strbuf, cp, sizeof strbuf);
-				if (n < sizeof strbuf)
-					strbuf[n] = '\0';
-				cp = ccp + 1;
+			case '[': /* '\' '[' .... stop counting */
+				strbuf[0] = '\0';
+				counting = 0;
+				break;
+			case ']': /* '\' ']' restart counting */
+				strbuf[0] = '\0';
+				counting = 1;
 				break;
 
 			default:
@@ -1395,7 +1389,8 @@ dopprompt(sp, ntruncate, spp, doprint)
 			}
 			if (doprint)
 				shf_write(str, len, shl_out);
-			totlen += len;
+			if (counting && !indelimit && !delimitthis)
+				totlen += len;
 			continue;
 		} else if (*cp != '!')
 			c = *cp++;
@@ -1418,7 +1413,8 @@ dopprompt(sp, ntruncate, spp, doprint)
 			}
 			if (doprint)
 				shf_write(p, len, shl_out);
-			totlen += len;
+			if (counting && !indelimit && !delimitthis)
+				totlen += len;
 			continue;
 		}
 		if (ntruncate)
@@ -1426,7 +1422,8 @@ dopprompt(sp, ntruncate, spp, doprint)
 		else if (doprint) {
 			shf_putc(c, shl_out);
 		}
-		totlen++;
+		if (counting && !indelimit && !delimitthis)
+			totlen++;
 	}
 	if (doprint)
 		shf_flush(shl_out);
