@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos_sysent.c,v 1.11 1999/06/07 07:18:36 deraadt Exp $	*/
+/*	$OpenBSD: sunos_sysent.c,v 1.12 2001/05/16 05:05:09 millert Exp $	*/
 
 /*
  * System call switch table.
@@ -15,24 +15,6 @@
 #include <sys/syscallargs.h>
 #include <compat/sunos/sunos.h>
 #include <compat/sunos/sunos_syscallargs.h>
-
-#ifdef COMPAT_43
-#define compat_43(func) __CONCAT(compat_43_,func)
-#else
-#define compat_43(func) sys_nosys
-#endif
-
-#ifdef COMPAT_09
-#define compat_09(func) __CONCAT(compat_09_,func)
-#else
-#define compat_09(func) sys_nosys
-#endif
-
-#ifdef COMPAT_10
-#define compat_10(func) __CONCAT(compat_10_,func)
-#else
-#define compat_10(func) sys_nosys
-#endif
 
 #define	s(type)	sizeof(type)
 

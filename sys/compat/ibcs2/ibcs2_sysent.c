@@ -1,4 +1,4 @@
-/*	$OpenBSD: ibcs2_sysent.c,v 1.6 1999/06/07 07:18:35 deraadt Exp $	*/
+/*	$OpenBSD: ibcs2_sysent.c,v 1.7 2001/05/16 05:05:10 millert Exp $	*/
 
 /*
  * System call switch table.
@@ -17,24 +17,6 @@
 #include <compat/ibcs2/ibcs2_signal.h>
 #include <compat/ibcs2/ibcs2_syscallargs.h>
 #include <compat/ibcs2/ibcs2_statfs.h>
-
-#ifdef COMPAT_43
-#define compat_43(func) __CONCAT(compat_43_,func)
-#else
-#define compat_43(func) sys_nosys
-#endif
-
-#ifdef COMPAT_09
-#define compat_09(func) __CONCAT(compat_09_,func)
-#else
-#define compat_09(func) sys_nosys
-#endif
-
-#ifdef COMPAT_10
-#define compat_10(func) __CONCAT(compat_10_,func)
-#else
-#define compat_10(func) sys_nosys
-#endif
 
 #define	s(type)	sizeof(type)
 

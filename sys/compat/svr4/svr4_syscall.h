@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_syscall.h,v 1.30 2000/08/23 19:32:54 fgsch Exp $	*/
+/*	$OpenBSD: svr4_syscall.h,v 1.31 2001/05/16 05:05:08 millert Exp $	*/
 
 /*
  * System call numbers.
