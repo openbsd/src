@@ -1,6 +1,3 @@
-/*	$OpenBSD: ashldi3.c,v 1.4 2004/08/07 00:38:32 deraadt Exp $	*/
-/*	$NetBSD: ashldi3.c,v 1.5 1995/10/07 09:26:17 mycroft Exp $	*/
-
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,11 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)ashldi3.c	8.1 (Berkeley) 6/4/93";
-#else
-static char rcsid[] = "$OpenBSD: ashldi3.c,v 1.4 2004/08/07 00:38:32 deraadt Exp $";
-#endif
+static char rcsid[] = "$OpenBSD: ashldi3.c,v 1.5 2004/11/28 07:23:41 mickey Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include "quad.h"
@@ -53,14 +46,15 @@ __ashldi3(quad_t a, qshift_t shift)
 {
 	union uu aa;
 
+	if (shift == 0)
+		return(a);
 	aa.q = a;
-	if (shift >= LONG_BITS) {
-		aa.ul[H] = shift >= QUAD_BITS ? 0 :
-		    aa.ul[L] << (shift - LONG_BITS);
+	if (shift >= INT_BITS) {
+		aa.ul[H] = aa.ul[L] << (shift - INT_BITS);
 		aa.ul[L] = 0;
-	} else if (shift > 0) {
+	} else {
 		aa.ul[H] = (aa.ul[H] << shift) |
-		    (aa.ul[L] >> (LONG_BITS - shift));
+		    (aa.ul[L] >> (INT_BITS - shift));
 		aa.ul[L] <<= shift;
 	}
 	return (aa.q);

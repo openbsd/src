@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.c,v 1.6 2004/08/07 00:38:32 deraadt Exp $	*/
+/*	$OpenBSD: ffs.c,v 1.7 2004/11/28 07:23:41 mickey Exp $	*/
 
 /*
  * Public domain.
@@ -6,7 +6,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: ffs.c,v 1.6 2004/08/07 00:38:32 deraadt Exp $";
+static char *rcsid = "$OpenBSD: ffs.c,v 1.7 2004/11/28 07:23:41 mickey Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: strcpy.c,v 1.8 2004/08/07 00:38:33 deraadt Exp $	*/
+/*	$OpenBSD: strcpy.c,v 1.9 2004/11/28 07:23:41 mickey Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -30,8 +30,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)strcpy.c	5.7 (Berkeley) 2/24/91";*/
-static char *rcsid = "$OpenBSD: strcpy.c,v 1.8 2004/08/07 00:38:33 deraadt Exp $";
+static char *rcsid = "$OpenBSD: strcpy.c,v 1.9 2004/11/28 07:23:41 mickey Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
@@ -40,7 +39,10 @@ static char *rcsid = "$OpenBSD: strcpy.c,v 1.8 2004/08/07 00:38:33 deraadt Exp $
 #include <lib/libkern/libkern.h>
 #endif
 
-__warn_references(strcpy, "warning: strcpy() is often misused, please use strlcpy()");
+#if defined(APIWARN)
+__warn_references(strcpy,
+    "warning: strcpy() is almost always misused, please use strlcpy()");
+#endif
 
 char *
 strcpy(char *to, const char *from)

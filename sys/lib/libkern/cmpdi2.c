@@ -1,6 +1,3 @@
-/*	$OpenBSD: cmpdi2.c,v 1.4 2004/08/07 00:38:32 deraadt Exp $	*/
-/*	$NetBSD: cmpdi2.c,v 1.5 1995/10/07 09:26:22 mycroft Exp $	*/
-
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,11 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)cmpdi2.c	8.1 (Berkeley) 6/4/93";
-#else
-static char rcsid[] = "$OpenBSD: cmpdi2.c,v 1.4 2004/08/07 00:38:32 deraadt Exp $";
-#endif
+static char rcsid[] = "$OpenBSD: cmpdi2.c,v 1.5 2004/11/28 07:23:41 mickey Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include "quad.h"

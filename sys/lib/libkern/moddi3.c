@@ -1,6 +1,3 @@
-/*	$OpenBSD: moddi3.c,v 1.4 2004/08/07 00:38:32 deraadt Exp $	*/
-/*	$NetBSD: moddi3.c,v 1.5 1995/10/07 09:26:31 mycroft Exp $	*/
-
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,11 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)moddi3.c	8.1 (Berkeley) 6/4/93";
-#else
-static char rcsid[] = "$OpenBSD: moddi3.c,v 1.4 2004/08/07 00:38:32 deraadt Exp $";
-#endif
+static char rcsid[] = "$OpenBSD: moddi3.c,v 1.5 2004/11/28 07:23:41 mickey Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include "quad.h"
@@ -47,23 +40,23 @@ static char rcsid[] = "$OpenBSD: moddi3.c,v 1.4 2004/08/07 00:38:32 deraadt Exp 
 /*
  * Return remainder after dividing two signed quads.
  *
- * XXX
- * If -1/2 should produce -1 on this machine, this code is wrong.
+ * XXX	we assume a % b < 0 iff a < 0, but this is actually machine-dependent.
  */
 quad_t
 __moddi3(quad_t a, quad_t b)
 {
 	u_quad_t ua, ub, ur;
-	int neg;
+	int neg = 0;
+
+	ua = a;
+	ub = b;
 
 	if (a < 0)
-		ua = -(u_quad_t)a, neg = 1;
-	else
-		ua = a, neg = 0;
+		ua = -ua, neg ^= 1;
 	if (b < 0)
-		ub = -(u_quad_t)b, neg ^= 1;
-	else
-		ub = b;
+		ub = -ub;
 	(void)__qdivrem(ua, ub, &ur);
-	return (neg ? -ur : ur);
+	if (neg)
+		ur = -ur;
+	return (ur);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bzero.c,v 1.6 2004/09/23 12:55:10 pefo Exp $	*/
+/*	$OpenBSD: bzero.c,v 1.7 2004/11/28 07:23:41 mickey Exp $	*/
 
 /*
  * Copyright (c) 1987 Regents of the University of California.
@@ -30,8 +30,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)bzero.c	5.7 (Berkeley) 2/24/91";*/
-static char *rcsid = "$OpenBSD: bzero.c,v 1.6 2004/09/23 12:55:10 pefo Exp $";
+static char *rcsid = "$OpenBSD: bzero.c,v 1.7 2004/11/28 07:23:41 mickey Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
