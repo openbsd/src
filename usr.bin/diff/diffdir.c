@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffdir.c,v 1.23 2003/07/21 22:57:17 millert Exp $	*/
+/*	$OpenBSD: diffdir.c,v 1.24 2003/07/21 23:28:00 millert Exp $	*/
 
 /*
  * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -21,7 +21,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diffdir.c,v 1.23 2003/07/21 22:57:17 millert Exp $";
+static const char rcsid[] = "$OpenBSD: diffdir.c,v 1.24 2003/07/21 23:28:00 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -117,9 +117,7 @@ diffdir(char *p1, char *p2)
 				diffit(dent1, path1, dirlen1, path2, dirlen2);
 			else if (lflag)
 				dent1->d_status |= D_ONLY;
-			else if (format == D_NORMAL || format == D_CONTEXT ||
-			    format == D_UNIFIED || format == D_BRIEF)
-				/* XXX GNU diff always prints this XXX */
+			else
 				printf("Only in %.*s: %s\n", (int)(dirlen1 - 1),
 				    path1, dent1->d_name);
 			dp1++;
@@ -129,9 +127,7 @@ diffdir(char *p1, char *p2)
 				diffit(dent2, path1, dirlen1, path2, dirlen2);
 			else if (lflag)
 				dent2->d_status |= D_ONLY;
-			else if (format == D_NORMAL || format == D_CONTEXT ||
-			    format == D_UNIFIED || format == D_BRIEF)
-				/* XXX GNU diff always prints this XXX */
+			else
 				printf("Only in %.*s: %s\n", (int)(dirlen2 - 1),
 				    path2, dent2->d_name);
 			dp2++;
@@ -284,8 +280,7 @@ diffit(struct dirent *dp, char *path1, size_t plen1, char *path2, size_t plen2)
 			diffdir(path1, path2);
 		else if (lflag)
 			dp->d_status |= D_COMMON;
-		else if (format != D_EDIT)
-			/* XXX GNU diff always prints this for dirs XXX */
+		else
 			printf("Common subdirectories: %s and %s\n",
 			    path1, path2);
 		return;
