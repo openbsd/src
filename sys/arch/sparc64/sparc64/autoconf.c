@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.22 2002/03/22 16:29:46 jason Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.23 2002/04/10 04:17:50 jason Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -747,6 +747,9 @@ gotswap:
 		 * `root DEV swap DEV': honour rootdev/swdevt.
 		 * rootdev/swdevt/mountroot already properly set.
 		 */
+		if (bootdv->dv_class == DV_DISK)
+			printf("root on %s%c\n", bootdv->dv_xname,
+			    part + 'a');
 		majdev = major(rootdev);
 		unit = DISKUNIT(rootdev);
 		part = DISKPART(rootdev);
