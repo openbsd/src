@@ -1,4 +1,4 @@
-/*      $OpenBSD: ac97.c,v 1.3 1999/10/05 18:58:22 csapuntz Exp $ */
+/*      $OpenBSD: ac97.c,v 1.4 2000/04/12 23:38:50 csapuntz Exp $ */
 
 /*
  * Copyright (c) 1999 Constantine Sapuntzakis
@@ -481,7 +481,8 @@ ac97_attach(hostIf)
 	int error, i, j;
 	u_int16_t id1, id2, caps;
 	u_int32_t id;
-	
+	mixer_ctrl_t ctl;
+
 	as = malloc(sizeof(struct ac97_softc), M_DEVBUF, M_WAITOK);
 
 	if (!as) return (ENOMEM);
@@ -528,6 +529,29 @@ ac97_attach(hostIf)
 	printf("%s%s\n", j? ", " : "", ac97enhancement[(caps >> 10) & 0x1f]);
 
 	ac97_setup_source_info(as);
+
+	/* Just enable the DAC and master volumes by default */
+	bzero(&ctl, sizeof(ctl));
+
+	ctl.type = AUDIO_MIXER_ENUM;
+	ctl.un.ord = 0;  /* off */
+	ctl.dev = ac97_get_portnum_by_name(&as->codecIf, AudioCoutputs,
+					   AudioNmaster, AudioNmute);
+	ac97_mixer_set_port(&as->codecIf, &ctl);
+	ctl.dev = ac97_get_portnum_by_name(&as->codecIf, AudioCinputs,
+					   AudioNdac, AudioNmute);
+	
+	ac97_mixer_set_port(&as->codecIf, &ctl);
+	ctl.dev = ac97_get_portnum_by_name(&as->codecIf, AudioCrecord,
+					   AudioNvolume, AudioNmute);
+	ac97_mixer_set_port(&as->codecIf, &ctl);
+		
+		
+	ctl.dev = ac97_get_portnum_by_name(&as->codecIf, AudioCrecord,
+					   AudioNsource, NULL);
+	ctl.type = AUDIO_MIXER_ENUM;
+	ctl.un.ord = 0;
+	ac97_mixer_set_port(&as->codecIf, &ctl);
 
 	return (0);
 }
