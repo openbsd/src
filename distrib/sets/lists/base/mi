@@ -1276,7 +1276,6 @@
 ./usr/sbin/mailwrapper
 ./usr/sbin/makedbm
 ./usr/sbin/makemap
-./usr/sbin/map-mbone
 ./usr/sbin/mk-amd-map
 ./usr/sbin/mkalias
 ./usr/sbin/mkhybrid
@@ -1287,9 +1286,6 @@
 ./usr/sbin/mopd
 ./usr/sbin/mopprobe
 ./usr/sbin/moptrace
-./usr/sbin/mrinfo
-./usr/sbin/mrouted
-./usr/sbin/mtrace
 ./usr/sbin/mtree
 ./usr/sbin/named
 ./usr/sbin/named.reload
@@ -1332,7 +1328,6 @@
 ./usr/sbin/route6d
 ./usr/sbin/rpc.bootparamd
 ./usr/sbin/rpc.lockd
-./usr/sbin/rpc.pcnfsd
 ./usr/sbin/rpc.yppasswdd
 ./usr/sbin/rtadvd
 ./usr/sbin/rtsold
