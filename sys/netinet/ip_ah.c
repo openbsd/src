@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.53 2001/05/17 18:41:46 provos Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.54 2001/05/27 03:48:32 angelos Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -1208,7 +1208,7 @@ ah_output_cb(void *op)
     FREE(ptr, M_XDATA);
     crypto_freereq(crp);
 
-    err =  ipsp_process_done(m, tdb, tdb2);
+    err =  ipsp_process_done(m, tdb, tdb2, NULL);
     splx(s);
     return err;
 

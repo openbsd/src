@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.59 2001/05/17 18:41:47 provos Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.60 2001/05/27 03:48:34 angelos Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -663,7 +663,7 @@ esp_input_cb(void *op)
     m_copyback(m, protoff, sizeof(u_int8_t), lastthree + 2);
 
     /* Back to generic IPsec input processing */
-    err = ipsec_common_input_cb(m, tdb, skip, protoff);
+    err = ipsec_common_input_cb(m, tdb, skip, protoff, NULL);
     splx(s);
     return err;
 
