@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.52 2004/01/13 03:43:40 mickey Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.53 2004/02/10 22:28:04 mickey Exp $
 
-NEW_BINUTILS=alpha hppa i386 mips powerpc sparc sparc64
+NEW_BINUTILS=alpha hppa i386 mips powerpc sparc sparc64 x86_64
 
 SUBDIRS=	opcodes bfd
 ALL_X11_MODULES=
@@ -16,7 +16,7 @@ MANDIR=${PREFIX}/share/man/cat
 
 MAN=		binutils/objdump.1 c++filt.1
 
-.if (${MACHINE_ARCH} != "unknown")
+.if (${MACHINE_ARCH} != "unknown") && (${MACHINE_ARCH} != "x86_64")
 SUBDIRS+=	gdb mmalloc
 MAN+=		gdb/gdb.1
 ALL_X11_MODULES+=all-gdb

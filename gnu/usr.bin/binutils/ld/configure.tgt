@@ -148,6 +148,10 @@ i[3456]86-*-unixware)	targ_emul=elf_i386 ;;
 i[3456]86-*-solaris*)	targ_emul=elf_i386 ;;
 i[3456]86-*-netbsd*)	targ_emul=i386nbsd ;;
 i[3456]86-*-openbsd*)	targ_emul=elf_i386 ;;
+x86_64-*-openbsd*)	targ_emul=elf_x86_64
+			targ_extra_emuls=elf_i386
+			tdir_elf_i386=`echo ${targ_alias} | sed -e 's/x86_64/i386/'`
+			;;
 i[3456]86-*-netware)	targ_emul=i386nw ;;
 i[3456]86-*-elf*)	targ_emul=elf_i386 ;;
 i[3456]86-*-freebsdaout* | i[3456]86-*-freebsd[12].* | i[3456]86-*-freebsd[12])
