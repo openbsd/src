@@ -59,23 +59,23 @@ The source distribution sets can be found in subdirectories of the
 complete sources to the system.  The source distribution sets 
 are as follows:
 
-	gsrc11	This set contains the "gnu" sources, including
+	gsrc20	This set contains the "gnu" sources, including
 		the source for the compiler, assembler, groff,
 		and the other GNU utilities in the binary distribution
 		sets.
 		[ 7.1M gzipped, 30.4M uncompressed ]
 
-	ksrc11	This set contains the sources to the OpenBSD 2.0
+	ksrc20	This set contains the sources to the OpenBSD 2.0
 		kernel, config(8), config.old(8) and dbsym(8).
 		[ 6.0M gzipped, 27.0M uncompressed ]
 
-	ssrc11	This set contains the "share" sources, which include
+	ssrc20	This set contains the "share" sources, which include
 		the sources for the man pages not associated with
 		any particular program, the sources for the
 		typesettable document set, the dictionaries, and more.
 		[ 2.4M gzipped, 8.9M uncompressed ]
 
-	src11	This set contains all of the OpenBSD 2.0 sources which
+	src20	This set contains all of the OpenBSD 2.0 sources which
 		are not mentioned above.
 		[ 9.3M gzipped, 41.6M uncompressed ]
 
