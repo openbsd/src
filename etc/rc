@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.150 2000/08/25 16:14:12 deraadt Exp $
+#	$OpenBSD: rc,v 1.151 2000/08/28 02:30:35 brad Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -372,7 +372,7 @@ echo -n starting network daemons:
 # If $gated == YES, gated is used; otherwise routed.
 # If $routed_flags == NO, routed isn't run.
 if [ X${gated} = X"YES" -a -e /etc/gated.conf ]; then
-	echo -n ' gated';		gated $gated_flags
+	echo -n ' gated';		/usr/local/sbin/gated $gated_flags
 elif [ "X${routed_flags}" != X"NO" ]; then
 	echo -n ' routed';		routed $routed_flags
 fi
