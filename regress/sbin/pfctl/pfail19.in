@@ -1,0 +1,3 @@
+# redirect to table not supported
+
+rdr on lo0 from any to any -> <sometable>

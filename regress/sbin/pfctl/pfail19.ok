@@ -1,0 +1,2 @@
+stdin:3: invalid use of table <sometable> as the redirection address of a translation rule
+pfctl: Syntax error in file: pf rules not loaded
