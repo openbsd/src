@@ -184,7 +184,7 @@ fddi_output(ifp, m0, dst, rt0)
 		if (!bcmp((caddr_t)edst, (caddr_t)&ipx_thishost, sizeof(edst)))
 			return (looutput(ifp, m, dst, rt));
 		/* If broadcasting on a simplex interface, loopback a copy */
-		if ((m->m_flags & (M_BCAST|IFF_SIMPLEX))==(M_BCAST|IFF_SIMPLEX))
+		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
 			mcopy = m_copy(m, 0, (int)M_COPYALL);
 		break;
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.5 1996/04/28 14:36:59 mickey Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.6 1996/04/29 01:13:01 mickey Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.18 1996/02/13 22:00:14 christos Exp $	*/
 
 /*
@@ -144,7 +144,7 @@ ether_output(ifp, m0, dst, rt0)
 		if (!arpresolve(ac, rt, m, dst, edst))
 			return (0);	/* if not yet resolved */
 		/* If broadcasting on a simplex interface, loopback a copy */
-		if (m->m_flags & (M_BCAST|IFF_SIMPLEX) == (M_BCAST|IFF_SIMPLEX))
+		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
 			mcopy = m_copy(m, 0, (int)M_COPYALL);
 		etype = htons(ETHERTYPE_IP);
 		break;
@@ -157,7 +157,7 @@ ether_output(ifp, m0, dst, rt0)
 		if (!bcmp((caddr_t)edst, (caddr_t)&ns_thishost, sizeof(edst)))
 			return (looutput(ifp, m, dst, rt));
 		/* If broadcasting on a simplex interface, loopback a copy */
-		if (m->m_flags & (M_BCAST|IFF_SIMPLEX) == (M_BCAST|IFF_SIMPLEX))
+		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
 			mcopy = m_copy(m, 0, (int)M_COPYALL);
 		break;
 #endif
@@ -169,7 +169,7 @@ ether_output(ifp, m0, dst, rt0)
 		if (!bcmp((caddr_t)edst, (caddr_t)&ipx_thishost, sizeof(edst)))
 			return (looutput(ifp, m, dst, rt));
 		/* If broadcasting on a simplex interface, loopback a copy */
-		if (m->m_flags & (M_BCAST|IFF_SIMPLEX) == (M_BCAST|IFF_SIMPLEX))
+		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
 			mcopy = m_copy(m, 0, (int)M_COPYALL);
 		break;
 #endif
@@ -191,7 +191,7 @@ ether_output(ifp, m0, dst, rt0)
 		/* If broadcasting on a simplex interface, loopback a copy */
 		if (*edst & 1)
 			m->m_flags |= (M_BCAST|M_MCAST);
-		if((m->m_flags & (M_BCAST|IFF_SIMPLEX)) == (M_BCAST|IFF_SIMPLEX)
+		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
 		    && (mcopy = m_copy(m, 0, (int)M_COPYALL))) {
 			M_PREPEND(mcopy, sizeof (*eh), M_DONTWAIT);
 			if (mcopy) {
