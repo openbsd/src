@@ -1,5 +1,5 @@
-/*	$OpenBSD: isakmpd.c,v 1.16 2000/01/26 15:21:08 niklas Exp $	*/
-/*	$EOM: isakmpd.c,v 1.39 1999/10/10 22:48:36 angelos Exp $	*/
+/*	$OpenBSD: isakmpd.c,v 1.17 2000/01/31 08:18:54 niklas Exp $	*/
+/*	$EOM: isakmpd.c,v 1.41 2000/01/31 05:50:59 angelos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -54,6 +54,7 @@
 #include "udp.h"
 #include "ui.h"
 #include "util.h"
+#include "cert.h"
 
 #if defined (USE_KEYNOTE) || defined (HAVE_DLOPEN)
 #include "policy.h"
@@ -185,7 +186,10 @@ reinit (void)
   policy_init ();
 #endif
 
-  /* Reinitalize our connection list. */
+  /* Reinitialize certificates */
+  cert_init();
+
+  /* Reinitialize our connection list. */
   connection_reinit ();
 
   /*
