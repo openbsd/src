@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.47 2004/05/05 22:21:03 deraadt Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.48 2004/05/05 23:07:47 deraadt Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1505,12 +1505,10 @@ make_request(struct interface_info *ip, struct client_lease * lease)
 void
 make_decline(struct interface_info *ip, struct client_lease *lease)
 {
-	unsigned char decline = DHCPDECLINE;
-	struct tree_cache *options[256];
-	struct tree_cache message_type_tree;
+	struct tree_cache *options[256], message_type_tree;
 	struct tree_cache requested_address_tree;
-	struct tree_cache server_id_tree;
-	struct tree_cache client_id_tree;
+	struct tree_cache server_id_tree, client_id_tree;
+	unsigned char decline = DHCPDECLINE;
 	int i;
 
 	memset(options, 0, sizeof(options));
@@ -1623,9 +1621,9 @@ void
 write_client_lease(struct interface_info *ip, struct client_lease *lease,
     int rewrite)
 {
-	int i;
-	struct tm *t;
 	static int leases_written;
+	struct tm *t;
+	int i;
 
 	if (!rewrite) {
 		if (leases_written++ > 20) {
@@ -1683,11 +1681,10 @@ write_client_lease(struct interface_info *ip, struct client_lease *lease,
 void
 script_init(char *reason, struct string_list *medium)
 {
+	size_t		 len, mediumlen = 0;
 	struct imsg_hdr	 hdr;
 	struct buf	*buf;
 	int		 errs;
-	size_t		 len;
-	size_t		 mediumlen = 0;
 
 	if (medium != NULL && medium->string != NULL)
 		mediumlen = strlen(medium->string);
@@ -1747,11 +1744,10 @@ priv_script_init(char *reason, char *medium)
 void
 priv_script_write_params(char *prefix, struct client_lease *lease)
 {
-	int i;
-	u_int8_t dbuf[1500];
-	int len = 0;
-	char tbuf[128];
 	struct interface_info *ip = ifi;
+	u_int8_t dbuf[1500];
+	int i, len = 0;
+	char tbuf[128];
 
 	script_set_env(ip->client, prefix, "ip_address",
 	    piaddr(lease->address));
@@ -1761,8 +1757,7 @@ priv_script_write_params(char *prefix, struct client_lease *lease)
 	    sizeof(lease->address.iabuf))) {
 		struct iaddr netmask, subnet, broadcast;
 
-		memcpy(netmask.iabuf,
-		    lease->options[DHO_SUBNET_MASK].data,
+		memcpy(netmask.iabuf, lease->options[DHO_SUBNET_MASK].data,
 		    lease->options[DHO_SUBNET_MASK].len);
 		netmask.len = lease->options[DHO_SUBNET_MASK].len;
 
@@ -1860,8 +1855,9 @@ supersede:
 		}
 		if (len) {
 			char name[256];
+
 			if (dhcp_option_ev_name(name, sizeof(name),
-						 &dhcp_options[i]))
+			    &dhcp_options[i]))
 				script_set_env(ip->client, prefix, name,
 				    pretty_print_option(i, dp, len, 0, 0));
 		}
@@ -1873,10 +1869,10 @@ supersede:
 void
 script_write_params(char *prefix, struct client_lease *lease)
 {
+	size_t		 fn_len = 0, sn_len = 0, pr_len = 0;
 	struct imsg_hdr	 hdr;
 	struct buf	*buf;
 	int		 errs, i;
-	size_t		 fn_len = 0, sn_len = 0, pr_len= 0;
 
 	if (lease->filename != NULL)
 		fn_len = strlen(lease->filename);
@@ -1887,8 +1883,7 @@ script_write_params(char *prefix, struct client_lease *lease)
 
 	hdr.code = IMSG_SCRIPT_WRITE_PARAMS;
 	hdr.len = sizeof(hdr) + sizeof(struct client_lease) +
-	    sizeof(size_t) + fn_len +
-	    sizeof(size_t) + sn_len +
+	    sizeof(size_t) + fn_len + sizeof(size_t) + sn_len +
 	    sizeof(size_t) + pr_len;
 
 	for (i = 0; i < 256; i++)
@@ -1954,14 +1949,10 @@ script_go(void)
 int
 priv_script_go(void)
 {
-	char *scriptName;
-	char *argv[2];
-	char **envp;
-	char *epp[3];
-	char reason[] = "REASON=NBI";
+	char *scriptName, *argv[2], **envp, *epp[3], reason[] = "REASON=NBI";
 	static char client_path[] = CLIENT_PATH;
-	int pid, wpid, wstatus;
 	struct interface_info *ip = ifi;
+	int pid, wpid, wstatus;
 
 	if (ip) {
 		scriptName = ip->client->config->script_name;
@@ -2022,6 +2013,7 @@ script_set_env(struct client_state *client, const char *prefix,
 		if (i >= client->scriptEnvsize - 1) {
 			char **newscriptEnv;
 			int newscriptEnvsize = client->scriptEnvsize + 50;
+
 			newscriptEnv = realloc(client->scriptEnv,
 			    newscriptEnvsize);
 			if (newscriptEnv == NULL) {
@@ -2260,20 +2252,14 @@ option_as_string(unsigned int code, unsigned char *data, int len)
 		error("option_as_string: bad code %d\n", code);
 
 	for (; dp < data + len; dp++) {
-		if (!isascii(*dp) ||
-		    !isprint(*dp)) {
-			if (dp + 1 != data + len ||
-			    *dp != 0) {
-				snprintf(op, opleft,
-				    "\\%03o", *dp);
+		if (!isascii(*dp) || !isprint(*dp)) {
+			if (dp + 1 != data + len || *dp != 0) {
+				snprintf(op, opleft, "\\%03o", *dp);
 				op += 4;
 				opleft -= 4;
 			}
-		} else if (*dp == '"' ||
-		    *dp == '\'' ||
-		    *dp == '$' ||
-		    *dp == '`' ||
-		    *dp == '\\') {
+		} else if (*dp == '"' || *dp == '\'' || *dp == '$' ||
+		    *dp == '`' || *dp == '\\') {
 			*op++ = '\\';
 			*op++ = *dp;
 			opleft -= 2;
@@ -2291,12 +2277,11 @@ toobig:
 	return "<error>";
 }
 
-
 int
 fork_privchld(int fd, int fd2)
 {
-	int			 nfds;
-	struct pollfd		 pfd[1];
+	struct pollfd pfd[1];
+	int nfds;
 
 	switch (fork()) {
 	case -1:
@@ -2328,4 +2313,3 @@ fork_privchld(int fd, int fd2)
 		dispatch_imsg(fd);
 	}
 }
-

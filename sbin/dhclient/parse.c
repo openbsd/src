@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.10 2004/05/04 22:23:01 mickey Exp $	*/
+/*	$OpenBSD: parse.c,v 1.11 2004/05/05 23:07:47 deraadt Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -60,8 +60,7 @@
 void
 skip_to_semi(FILE *cfile)
 {
-	int brace_count = 0;
-	int token;
+	int brace_count = 0, token;
 	char *val;
 
 	do {
@@ -113,9 +112,8 @@ parse_semi(FILE *cfile)
 char *
 parse_string(FILE *cfile)
 {
-	char *val;
+	char *val, *s;
 	int token;
-	char *s;
 
 	token = next_token(&val, cfile);
 	if (token != STRING) {
@@ -189,8 +187,8 @@ parse_hardware_param(FILE *cfile, struct hardware *hardware)
 		parse_warn("hardware address too long");
 	} else {
 		hardware->hlen = hlen;
-		memcpy((unsigned char *)&hardware->haddr[0],
-		    t, hardware->hlen);
+		memcpy((unsigned char *)&hardware->haddr[0], t,
+		    hardware->hlen);
 		if (hlen < sizeof(hardware->haddr))
 			memset(&hardware->haddr[hlen], 0,
 			    sizeof(hardware->haddr) - hlen);
@@ -427,12 +425,11 @@ convert_num(unsigned char *buf, char *str, int base, int size)
 time_t
 parse_date(FILE *cfile)
 {
-	struct tm tm;
-	int guess;
-	char *val;
-	int token;
 	static int months[11] = { 31, 59, 90, 120, 151, 181,
 	    212, 243, 273, 304, 334 };
+	int guess, token;
+	struct tm tm;
+	char *val;
 
 	/* Day of week... */
 	token = next_token(&val, cfile);
