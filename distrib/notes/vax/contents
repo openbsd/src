@@ -15,14 +15,14 @@ OpenBSDfloppydesc(single,The)
 
 DistributionDescription(six)
 
-OpenBSDbase(44.4M,84.5M)
+OpenBSDbase(50.0,109.9)
 
-OpenBSDcomp(12.3M,34.3M)
+OpenBSDcomp(13.1,36.9)
 
-OpenBSDetc(1.0M,3.1M)
+OpenBSDetc(1.1,3.3)
 
-OpenBSDgame(6.0M,12.1M)
+OpenBSDgame(6.1,12.3)
 
-OpenBSDman(5.4M,19.4M)
+OpenBSDman(5.6,20.2)
 
-OpenBSDmisc(1.7M,5.6M)
+OpenBSDmisc(1.7,5.6)

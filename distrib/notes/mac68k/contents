@@ -5,7 +5,6 @@ OpenBSDdistsets
 		bsd-generic.tgz The OpenBSD/MACHINE OSREV kernel binary.  
 				You MUST install this file.  It is the kernel
 				that you need to boot the system.
-				[ 1.4M uncompressed ]
 
 		bsd-genericsbc.tgz
 				Another OpenBSD/MACHINE OSREV kernel binary.
@@ -15,31 +14,30 @@ OpenBSDdistsets
 				some otherwise incompatible SCSI disks to
 				function with OpenBSD/MACHINE.  You must
 				install either this or bsd-generic.tgz.
-				[ 1.4M uncompressed ]
 
 		utils/		The MACHINE installation utilities for MacOS.
 
 DistributionDescription(ten)
 
-OpenBSDbase(16.0M,47.4M,shared)
+OpenBSDbase(21.8,66.1,shared)
 
-OpenBSDcomp(10.6M,33.6M,shared)
+OpenBSDcomp(15.2,45.2,shared)
 
-OpenBSDetc(160.1K,690.0K)
+OpenBSDetc(1.1,3.3)
 
-OpenBSDgame(2.6M,6.4M)
+OpenBSDgame(2.8,6.6)
 
-OpenBSDman(3.4M,13.0M)
+OpenBSDman(5.6,20.2)
 
-OpenBSDmisc(1.6M,5.4M)
+OpenBSDmisc(1.7,5.6)
 
-OpenBSDxbase(3.6M,9.9M)
+OpenBSDxbase(6.5,17.6)
 
-OpenBSDxshare(1.4M,8.1M)
+OpenBSDxfont(30.4,32.8)
 
-OpenBSDxfont(6.0M,7.3M)
+OpenBSDxserv(0.7,1.7)
 
-OpenBSDxserv(2.6M,6.3M)
+OpenBSDxshare(1.8,9.1)
 
 The directory '../OSREV/MACHINE/utils' contains a number of utilities for the
 MacOS to aid the installation and configuration of OpenBSD.  The files in

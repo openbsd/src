@@ -20,21 +20,20 @@ the OpenBSD System onto Useful Media" for instructions on either method.
 
 DistributionDescription(nine)
 
-OpenBSDbase(21.1M,63.6M,shared)
+OpenBSDbase(21.8,66.0,shared)
 
-OpenBSDcomp(14.2M,42.0M,shared)
+OpenBSDcomp(15.2,45.2,shared)
 
-OpenBSDetc(1.0M,3.2M)
+OpenBSDetc(1.1,3.3)
 
-OpenBSDgame(2.8M,6.6M)
+OpenBSDgame(2.8,6.6)
 
-OpenBSDman(5.4M,19.5M)
+OpenBSDman(5.6,20.2)
 
-OpenBSDmisc(1.7M,5.6M)
+OpenBSDmisc(1.7,5.6)
 
 OpenBSDxbase
 
-OpenBSDxshare
-
 OpenBSDxfont
 
+OpenBSDxshare
