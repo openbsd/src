@@ -1,4 +1,4 @@
-.\" $OpenBSD: audioctl.1,v 1.15 2003/06/10 09:12:09 jmc Exp $
+.\" $OpenBSD: audioctl.1,v 1.16 2003/10/22 20:41:36 jmc Exp $
 .\" $NetBSD: audioctl.1,v 1.7 1998/04/27 16:55:23 augustss Exp $
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -102,10 +102,11 @@ are reset when the device is opened.
 This can be circumvented like so:
 .Pp
 .Dl $ (cat file.au; audioctl -f /dev/stdout -a) > /dev/audio
-.Pp
 or
-.Pp
-.Dl $ (audioctl -f /dev/stdout -w blocksize=1024; cat file.au) > /dev/audio
+.Bd -literal -offset indent -compact
+$ (audioctl -f /dev/stdout -w blocksize=1024; cat file.au) \e
+	> /dev/audio
+.Ed
 .Sh SEE ALSO
 .Xr mixerctl 1 ,
 .Xr audio 4 ,
