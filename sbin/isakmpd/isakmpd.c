@@ -1,4 +1,4 @@
-/*	$OpenBSD: isakmpd.c,v 1.48 2002/12/03 20:05:10 ho Exp $	*/
+/*	$OpenBSD: isakmpd.c,v 1.49 2003/04/14 13:08:42 ho Exp $	*/
 /*	$EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	*/
 
 /*
@@ -318,6 +318,9 @@ daemon_shutdown (void)
 #ifdef USE_DEBUG
       log_packet_stop ();
 #endif
+      /* Remove FIFO and pid files.  */
+      unlink (ui_fifo);
+      unlink (pid_file);
       log_print ("isakmpd: exit");
       exit (0);
     }
