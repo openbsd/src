@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.112 2004/03/14 23:12:11 tedu Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.113 2004/04/01 00:27:51 tedu Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -135,8 +135,9 @@ void	start_init(void *);
 void	start_cleaner(void *);
 void	start_update(void *);
 void	start_reaper(void *);
-void    start_crypto(void *);
+void	start_crypto(void *);
 void	init_exec(void);
+void	kqueue_init(void);
 
 extern char sigcode[], esigcode[];
 #ifdef SYSCALL_DEBUG
@@ -241,6 +242,11 @@ main(framep)
 	 * Initialize pipes.
 	 */
 	pipe_init();
+
+	/*
+	 * Initialize kqueues.
+	 */
+	kqueue_init();
 
 	/*
 	 * Create process 0 (the swapper).
