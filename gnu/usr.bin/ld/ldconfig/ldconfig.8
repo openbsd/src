@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldconfig.8,v 1.3 1998/03/26 19:46:47 niklas Exp $
+.\"	$OpenBSD: ldconfig.8,v 1.4 2000/01/27 22:14:57 form Exp $
 .\"
 .\" Copyright (c) 1993,1995 Paul Kranenburg
 .\" All rights reserved.
@@ -37,7 +37,7 @@
 .Nd configure the shared library cache
 .Sh SYNOPSIS
 .Nm ldconfig
-.Op Fl mrsv
+.Op Fl Rmrsv
 .Op Ar directory Ar ...
 .Sh DESCRIPTION
 .Nm
@@ -82,6 +82,10 @@ is typically run as part of the boot sequence.
 The following options are recognized by
 .Nm ldconfig:
 .Bl -tag -width indent
+.It Fl R
+Rescan the previously configured directories.  This opens the hints file
+and fetches the directory list from the header.  Any additional pathnames
+on the command line are also processed.
 .It Fl m
 Merge the result of the scan of the directories given as arguments into
 the existing hints file. The default action is to build the hints file afresh.
