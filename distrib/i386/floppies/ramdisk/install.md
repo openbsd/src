@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.md,v 1.2 1997/04/17 20:21:42 deraadt Exp $
+#	$OpenBSD: install.md,v 1.3 1997/04/22 00:35:09 deraadt Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -40,6 +40,9 @@ FSTABDIR=/mnt/etc			# /mnt/etc
 VERSION=2.0
 FSTAB=${FSTABDIR}/fstab
 
+# XXX turn into a loop which understands ! for a subshell.  Also,
+# XXX is it possible to detect ^Z in a prompt and re-prompt when sh
+# XXX is unsuspended?
 getresp() {
 	read resp
 	if [ "X$resp" = "X" ]; then
@@ -75,9 +78,7 @@ y*|Y*)
 	echo	"Cool!  Let's get to it..."
 	;;
 *)
-	echo	"OK, then.  Enter 'halt' at the prompt to halt the"
-	echo	"machine.  Once the machine has halted, remove the"
-	echo	"floppy and press any key to reboot."
+	echo	"OK, reset the machine at any time."
 	exit
 	;;
 esac
@@ -171,30 +172,30 @@ esac
 echo	"You will now enter the disk geometry information"
 echo	""
 
-bytes_per_sect=`cat /kern/msgbuf \
-	         | sed -n -e /^${drivename}:/p -e /^${drivename}:/q \
-	         | sed 's/\([^ ]*[ ]*\)\{8\}\([^ ]*\).*$/\2/'`
+bytes_per_sect=`cat /kern/msgbuf |\
+    sed -n -e /^${drivename}:/p -e /^${drivename}:/q |\
+    sed 's/\([^ ]*[ ]*\)\{8\}\([^ ]*\).*$/\2/'`
 echo -n	"Number of bytes per disk sector? [$bytes_per_sect] "
 getresp $bytes_per_sect
 bytes_per_sect="$resp"
 
-cyls_per_disk=`cat /kern/msgbuf \
-	       | sed -n -e /^${drivename}:/p -e /^${drivename}:/q \
-	       | sed 's/\([^ ]*[ ]*\)\{2\}\([^ ]*\).*$/\2/'`
+cyls_per_disk=`cat /kern/msgbuf |\
+    sed -n -e /^${drivename}:/p -e /^${drivename}:/q |\
+    sed 's/\([^ ]*[ ]*\)\{2\}\([^ ]*\).*$/\2/'`
 echo -n "Number of disk cylinders? [$cyls_per_disk]"
 getresp $cyls_per_disk
 cyls_per_disk="$resp"
 
-tracks_per_cyl=`cat /kern/msgbuf \
-	        | sed -n -e /^${drivename}:/p -e /^${drivename}:/q \
-	        | sed 's/\([^ ]*[ ]*\)\{4\}\([^ ]*\).*$/\2/'`
+tracks_per_cyl=`cat /kern/msgbuf |\
+    sed -n -e /^${drivename}:/p -e /^${drivename}:/q |\
+    sed 's/\([^ ]*[ ]*\)\{4\}\([^ ]*\).*$/\2/'`
 echo -n	"Number of disk tracks (heads) per disk cylinder? [$tracks_per_cyl]"
 getresp $tracks_per_cyl
 tracks_per_cyl="$resp"
 
-sects_per_track=`cat /kern/msgbuf \
-	         | sed -n -e /^${drivename}:/p -e /^${drivename}:/q \
-	         | sed 's/\([^ ]*[ ]*\)\{6\}\([^ ]*\).*$/\2/'`
+sects_per_track=`cat /kern/msgbuf |\
+    sed -n -e /^${drivename}:/p -e /^${drivename}:/q |\
+    sed 's/\([^ ]*[ ]*\)\{6\}\([^ ]*\).*$/\2/'`
 echo -n	"Number of disk sectors per disk track? [$sects_per_track]"
 getresp $sects_per_track
 sects_per_track="$resp"
@@ -207,7 +208,6 @@ echo	""
 echo	"Your disk has a total of $disksize $bytes_per_sect byte sectors,"
 echo	"arranged as $cyls_per_disk cylinders which contain $cylindersize "
 echo	"sectors ($cylbytes bytes) each."
-echo	""
 echo	"You can specify partition sizes in cylinders ('c') or sectors ('s')."
 while [ "X${sizemult}" = "X" ]; do
 	echo -n	"What units would you like to use? [cylinders] "
@@ -242,8 +242,8 @@ partition=$resp
 partition_sects=`expr $resp \* $sizemult`
 part_offset=0
 if [ $partition_sects -lt $disksize ]; then
-	echo -n "Offset of OpenBSD portion of disk (in $sizeunit)? "
-	getresp
+	echo -n "Offset of OpenBSD portion of disk (in $sizeunit)? [0]"
+	getresp '0'
 	part_offset=$resp
 fi
 badspacesec=0
@@ -305,8 +305,6 @@ echo	""
 
 fragsize=1024
 blocksize=8192
-$DONTDOIT fsck -t ffs /dev/rfd0a
-$DONTDOIT mount -u /dev/fd0a /
 cat /etc/disktab.preinstall > $DT
 echo	"" >> $DT
 echo	"$labelname|OpenBSD installation generated:\\" >> $DT
@@ -355,7 +353,6 @@ while [ $part_used -lt $partition ]; do
 			;;
 		esac
 	done
-	# XXX we skip partition d to avoid user confusion
 	if [ "$ename" = "" ]; then
 		ename=$part_name
 		offset=`expr $part_offset + $root + $swap`
@@ -473,10 +470,13 @@ while [ "$answer" = "" ]; do
 	esac
 done
 
+umount -f /mnt > /dev/null 2>&1
+umount -f /mnt2 > /dev/null 2>&1
+
 echo	""
-echo -n	"Labeling disk $drivename..."
+echo "Labeling disk $drivename..."
+# XXX add fdisk support
 $DONTDOIT disklabel -w -B $drivename $labelname
-echo	" done."
 
 if [ "$sect_fwd" = "sf:" ]; then
 	echo -n "Initializing bad144 badblock table..."
@@ -622,17 +622,86 @@ echo	" done."
 
 echo	"OK!  The preliminary work of setting up your disk is now complete."
 echo 	""
-echo	"The remaining tasks are:"
-echo	""
-echo	"To copy a OpenBSD kernel to the hard drive's root filesystem."
-echo	"Once accomplished, you can boot off the hard drive."
-echo	""
-echo	"To load and install the OpenBSD distribution sets."
 echo	"Currently the hard drive's root filesystem is mounted on /mnt"
-echo	""
-echo	"Consult the installation notes which will describe how to"
-echo	"install the distribution sets and kernel.  Post-installation"
-echo	"configuration is also discussed therein."
-echo	""
-echo	"GOOD LUCK!"
-echo	""
+
+echo	"How would you like to install the distribution and kernels?"
+echo -n	"ftp, http, msdos, ext2fs, tape, nfs, cd9660, local? [ftp] "
+getresp "ftp"
+method=${resp}
+case "${method}" in
+ftp|http|nfs)
+	echo -n "What is your ethernet interface name? [ep0] "
+	getresp "ep0"
+	intf=${resp}
+	echo -n "Does your ethernet interface need special flags like -link0? [] "
+	getresp ""
+	intflags=${resp}
+	echo -n "What is your IP address? [199.185.137.99] "
+	getresp "199.185.137.99"
+	myip=${resp}
+	echo -n "What is your IP netmask? [255.255.255.0] "
+	getresp "255.255.255.0"
+	mymask=${resp}
+	$DONTDOIT ifconfig ${intf} inet ${myip} netmask ${mymask} ${intflags} up
+	echo -n "What is your default IP router? [199.185.137.128] "
+	getresp "199.185.137.128"
+	myrouter=${resp}
+	$DONTDOIT route add default ${myrouter}
+	ftp -V -a ftp://cvs.openbsd.org/pub/OpenBSD/ftplist | cat
+	echo -n "What is the remote machine to fetch from? [ftp3.usa.openbsd.org] "
+	getresp "ftp3.usa.openbsd.org"
+	tohost=${resp}
+	#ping -c 1 ${resp}
+	echo -n "What is the path to fetch from? [pub/OpenBSD/snapshots/i386] "
+	getresp "pub/OpenBSD/snapshots/i386"
+	# XXX add proxy support?
+	topath="${resp}"
+	;;
+
+msdos|ext2fs|cd9660)
+	echo -n "which disk? [$drivename] "
+	getresp "$drivename"
+	$DONTDOIT disklabel "${resp}"
+	drive=${resp}
+	echo -n "which partition? [c] "
+	getresp c
+	part=${drive}${resp}
+	$DONTDOIT mount -t $method /dev/$part /mnt2
+	echo "We pray this has not bailed, ok?"
+	echo -n "enter path on the device? [/] "
+	getresp "/"
+	fetch="cat /mnt2/${resp}"
+	;;
+local)
+	echo -n "enter path on the device? [/] "
+	getresp "/"
+	fetch="cat /${resp}"
+	;;
+esac
+
+case "$method" in
+nfs)
+	echo "XXX"
+	echo "XXX should do the NFS mount here"
+	echo "XXX"
+	fetch="echo"
+	;;
+ftp)
+	fetch="ftp -a ftp://${tohost}/${topath}"
+	;;
+http)
+	fetch="ftp -a http://${tohost}/${topath}"
+	;;
+
+esac
+
+cd /mnt
+for i in bsd; do
+	$DONTDOIT eval ${fetch}/${i} > $i
+done
+for i in bin.tar.gz dev.tar.gz etc.tar.gz sbin.tar.gz usr.bin.tar.gz \
+    usr.games.tar.gz usr.include.tar.gz usr.lib.tar.gz usr.libexec.tar.gz \
+    usr.misc.tar.gz usr.sbin.tar.gz usr.share.tar.gz var.tar.gz; do
+	$DONTDOIT eval ${fetch}/${i} | tar xvfzp -
+done
+cd /
