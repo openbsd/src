@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.27 2001/11/13 16:50:09 jason Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.28 2001/12/14 22:07:28 jason Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.24 2001/11/13 16:49:22 jason Exp 
+ *	OpenBSD: miidevs,v 1.25 2001/12/14 22:06:46 jason Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -132,6 +132,12 @@
 #define	MII_STR_DAVICOM_DM9102	"DM9102 10/100 media interface"
 #define	MII_MODEL_xxDAVICOM_DM9101	0x0000
 #define	MII_STR_xxDAVICOM_DM9101	"DM9101 10/100 media interface"
+
+/* Enable Semiconductor PHYs */
+#define	MII_MODEL_ENABLESEMI_88E1000	0x0005
+#define	MII_STR_ENABLESEMI_88E1000	"Enable 88E1000"
+#define	MII_MODEL_ENABLESEMI_88E1000S	0x0004
+#define	MII_STR_ENABLESEMI_88E1000S	"Enable 88E1000S"
 
 /* Marvell Semiconductor PHYs */
 #define	MII_MODEL_MARVELL_E1000	0x0000
