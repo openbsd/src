@@ -1,9 +1,9 @@
-# $OpenBSD: Makefile,v 1.1 2004/02/21 19:07:29 espie Exp $
+# $OpenBSD: Makefile,v 1.2 2004/03/02 06:55:26 david Exp $
 
 REGRESS_TARGETS=pkgnames
 
 pkgnames:
-	perl check-name
+	perl ${.CURDIR}/check-name
 
 .PHONY: pkgnames 
 
