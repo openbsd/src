@@ -1,8 +1,14 @@
+.\"      $OpenBSD: ipnat.4,v 1.7 1998/01/26 04:13:47 dgregor Exp $
 .TH IPNAT 4
 .SH NAME
 ipnat \- Network Address Translation kernel interface
 .SH SYNOPSIS
+.nf
+#include <sys/ip_fil_compat.h>
 #include <sys/ip_fil.h>
+#include <sys/ip_proxy.h>
+#include <sys/ip_nat.h>
+.fi
 .SH IOCTLS
 .PP
 To add and delete rules to the NAT list, two 'basic' ioctls are provided

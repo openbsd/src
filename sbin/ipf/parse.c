@@ -1,6 +1,6 @@
-/*	$OpenBSD: parse.c,v 1.17 1997/11/24 03:25:29 deraadt Exp $	*/
+/*     $OpenBSD: parse.c,v 1.18 1998/01/26 04:13:38 dgregor Exp $      */
 /*
- * (C)opyright 1993-1996 by Darren Reed.
+ * Copyright (C) 1993-1997 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
@@ -8,13 +8,14 @@
  */
 #include <stdio.h>
 #include <string.h>
+#include <sys/types.h>
 #if !defined(__SVR4) && !defined(__svr4__)
 #include <strings.h>
 #else
 #include <sys/byteorder.h>
 #endif
-#include <sys/types.h>
 #include <sys/param.h>
+#include <sys/time.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <stddef.h>
@@ -24,31 +25,41 @@
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
 #include <net/if.h>
-#include "ip_fil_compat.h"
-#include "ip_fil.h"
 #include <netdb.h>
 #include <arpa/nameser.h>
 #include <arpa/inet.h>
 #include <resolv.h>
-#include "ipf.h"
 #include <ctype.h>
+#include "ip_fil_compat.h"
+#include "ip_fil.h"
+#include "ipf.h"
 
-#if !defined(lint) && defined(LIBC_SCCS)
-static	char	sccsid[] ="@(#)parse.c	1.44 6/5/96 (C) 1993-1996 Darren Reed";
-static	char	rcsid[] = "$DRId: parse.c,v 2.0.1.4 1997/03/20 15:49:25 darrenr Exp $";
+#if !defined(lint)
+static const char sccsid[] ="@(#)parse.c	1.44 6/5/96 (C) 1993-1996 Darren Reed";
+static const char rcsid[] = "@(#)$Id: parse.c,v 1.18 1998/01/26 04:13:38 dgregor Exp $";
 #endif
 
 extern	struct	ipopt_names	ionames[], secclass[];
 extern	int	opts;
-extern	int	gethostname();
 
-u_long	hostnum(), optname();
-u_short	portnum();
-u_char	tcp_flags();
-struct	frentry	*parse();
-void	binprint(), printfr();
-int	addicmp(), extras(), hostmask(), ports(), icmpcode(), addkeep();
-int	to_interface();
+u_short	portnum __P((char *));
+u_char	tcp_flags __P((char *, u_char *));
+int	addicmp __P((char ***, struct frentry *));
+int	extras __P((char ***, struct frentry *));
+char    ***seg;
+u_long  *sa, *msk;
+u_short *pp, *tp;
+u_char  *cp;
+
+int	hostmask __P((char ***, u_32_t *, u_32_t *, u_short *, u_char *,
+		      u_short *));
+int	ports __P((char ***, u_short *, u_char *, u_short *));
+int	icmpcode __P((char *)), addkeep __P((char ***, struct frentry *));
+int	to_interface __P((frdest_t *, char *));
+void	print_toif __P((char *, frdest_t *));
+void	optprint __P((u_short, u_short, u_long, u_long));
+int	countbits __P((u_long));
+char	*portname __P((int, int));
 
 
 char	*proto = NULL;
@@ -102,32 +113,45 @@ char	*line;
 
 	cpp = cps;
 	if (**cpp == '@')
-		fil.fr_hits = atoi(*cpp++ + 1) + 1;
+		fil.fr_hits = (U_QUAD_T)atoi(*cpp++ + 1) + 1;
+
 
 	if (!strcasecmp("block", *cpp)) {
-		fil.fr_flags = FR_BLOCK;
+		fil.fr_flags |= FR_BLOCK;
 		if (!strncasecmp(*(cpp+1), "return-icmp", 11)) {
 			fil.fr_flags |= FR_RETICMP;
 			cpp++;
 			if (*(*cpp + 11) == '(') {
-				fil.fr_icode = icmpcode(*cpp + 12);
-				if (fil.fr_icode == -1) {
+				i = icmpcode(*cpp + 12);
+				if (i == -1) {
 					fprintf(stderr,
-						"unrecognized icmp code %s\n",
+						"uncrecognised icmp code %s\n",
 						*cpp + 12);
 					return NULL;
 				}
+				fil.fr_icode = i;
 			}
 		} else if (!strncasecmp(*(cpp+1), "return-rst", 10)) {
 			fil.fr_flags |= FR_RETRST;
 			cpp++;
 		}
 	} else if (!strcasecmp("count", *cpp)) {
-		fil.fr_flags = FR_ACCOUNT;
+		fil.fr_flags |= FR_ACCOUNT;
 	} else if (!strcasecmp("pass", *cpp)) {
-		fil.fr_flags = FR_PASS;
+		fil.fr_flags |= FR_PASS;
+	} else if (!strcasecmp("auth", *cpp)) {
+		 fil.fr_flags |= FR_AUTH;
+	} else if (!strcasecmp("preauth", *cpp)) {
+		 fil.fr_flags |= FR_PREAUTH;
+	} else if (!strcasecmp("skip", *cpp)) {
+		cpp++;
+		if (!isdigit(**cpp)) {
+			(void)fprintf(stderr, "integer must follow skip\n");
+			return NULL;
+		}
+		fil.fr_skip = atoi(*cpp);
 	} else if (!strcasecmp("log", *cpp)) {
-		fil.fr_flags = FR_LOG;
+		fil.fr_flags |= FR_LOG;
 		if (!strcasecmp(*(cpp+1), "body")) {
 			fil.fr_flags |= FR_LOGBODY;
 			cpp++;
@@ -316,8 +340,13 @@ char	*line;
 			return NULL;
 		}
 		ch = 0;
-		if (hostmask(&cpp, &fil.fr_src, &fil.fr_smsk,
-			     &fil.fr_sport, &ch, &fil.fr_stop)) {
+		if (**cpp == '!') {
+			fil.fr_flags |= FR_NOTSRCIP;
+			(*cpp)++;
+		}
+		if (hostmask(&cpp, (u_32_t *)&fil.fr_src,
+			     (u_32_t *)&fil.fr_smsk, &fil.fr_sport, &ch,
+			     &fil.fr_stop)) {
 			(void)fprintf(stderr, "bad host (%s)\n", *cpp);
 			return NULL;
 		}
@@ -340,8 +369,13 @@ char	*line;
 			return NULL;
 		}
 		ch = 0;
-		if (hostmask(&cpp, &fil.fr_dst, &fil.fr_dmsk,
-			     &fil.fr_dport, &ch, &fil.fr_dtop)) {
+		if (**cpp == '!') {
+			fil.fr_flags |= FR_NOTDSTIP;
+			(*cpp)++;
+		}
+		if (hostmask(&cpp, (u_32_t *)&fil.fr_dst,
+			     (u_32_t *)&fil.fr_dmsk, &fil.fr_dport, &ch,
+			     &fil.fr_dtop)) {
 			(void)fprintf(stderr, "bad host (%s)\n", *cpp);
 			return NULL;
 		}
@@ -405,6 +439,30 @@ char	*line;
 			return NULL;
 
 	/*
+	 * head of a new group ?
+	 */
+	if (*cpp && !strcasecmp(*cpp, "head")) {
+		if (!*++cpp) {
+			(void)fprintf(stderr, "head without group #\n");
+			return NULL;
+		}
+		fil.fr_grhead = atoi(*cpp);
+		cpp++;
+	}
+
+	/*
+	 * head of a new group ?
+	 */
+	if (*cpp && !strcasecmp(*cpp, "group")) {
+		if (!*++cpp) {
+			(void)fprintf(stderr, "group without group #\n");
+			return NULL;
+		}
+		fil.fr_group = atoi(*cpp);
+		cpp++;
+	}
+
+	/*
 	 * leftovers...yuck
 	 */
 	if (*cpp && **cpp) {
@@ -418,7 +476,8 @@ char	*line;
 	/*
 	 * lazy users...
 	 */
-	if (!fil.fr_proto && (fil.fr_dcmp || fil.fr_scmp || fil.fr_tcpf)) {
+	if (!fil.fr_proto && !(fil.fr_ip.fi_fl & FI_TCPUDP) &&
+	    (fil.fr_dcmp || fil.fr_scmp || fil.fr_tcpf)) {
 		(void)fprintf(stderr,
 			"no protocol given for TCP/UDP comparisons\n");
 		return NULL;
@@ -442,7 +501,7 @@ char *to;
 	int	r = 0;
 	char	*s;
 
-	s = strchr(to, ':');
+	s = index(to, ':');
 	fdp->fd_ifp = NULL;
 	if (s) {
 		*s++ = '\0';
@@ -474,7 +533,7 @@ frdest_t *fdp;
  */
 int	hostmask(seg, sa, msk, pp, cp, tp)
 char	***seg;
-u_long	*sa, *msk;
+u_32_t	*sa, *msk;
 u_short	*pp, *tp;
 u_char	*cp;
 {
@@ -484,13 +543,13 @@ u_char	*cp;
 	/*
 	 * is it possibly hostname/num ?
 	 */
-	if ((s = strchr(**seg, '/'))) {
+	if ((s = index(**seg, '/')) || (s = index(**seg, ':'))) {
 		*s++ = '\0';
 		if (!isdigit(*s))
 			return -1;
-		if (strchr(s, '.'))
+		if (index(s, '.'))
 			*msk = inet_addr(s);
-		if (!strchr(s, '.') && !strchr(s, 'x')) {
+		if (!index(s, '.') && !index(s, 'x')) {
 			/*
 			 * set x most significant bits
 			 */
@@ -542,7 +601,7 @@ u_char	*cp;
  * returns an ip address as a long var as a result of either a DNS lookup or
  * straight inet_addr() call
  */
-u_long	hostnum(host, resolved)
+u_32_t	hostnum(host, resolved)
 char	*host;
 int	*resolved;
 {
@@ -565,7 +624,7 @@ int	*resolved;
 		}
 		return np->n_net;
 	}
-	return *(u_int32_t *)hp->h_addr;
+	return *(u_32_t *)hp->h_addr;
 }
 
 /*
@@ -670,7 +729,7 @@ u_char *mask;
 			fp = &tcpfm;
 			continue;
 		}
-		if (!(t = strchr(flagset, *s))) {
+		if (!(t = index(flagset, *s))) {
 			(void)fprintf(stderr, "unknown flag (%c)\n", *s);
 			return 0;
 		}
@@ -703,8 +762,8 @@ struct	frentry	*fr;
 		return -1;
 
 	while (**cp && (!strncasecmp(**cp, "ipopt", 5) ||
-	       !strncasecmp(**cp, "not", 3) || !strncasecmp(**cp, "opt", 3) ||
-	       !strncasecmp(**cp, "frag", 4) || !strncasecmp(**cp, "no", 2) ||
+	       !strncasecmp(**cp, "not", 3) || !strncasecmp(**cp, "opt", 4) ||
+	       !strncasecmp(**cp, "frag", 3) || !strncasecmp(**cp, "no", 2) ||
 	       !strncasecmp(**cp, "short", 5))) {
 		if (***cp == 'n' || ***cp == 'N') {
 			notopt = 1;
@@ -775,7 +834,7 @@ nextopt:
 }
 
 
-u_long optname(cp, sp)
+u_32_t optname(cp, sp)
 char ***cp;
 u_short *sp;
 {
@@ -825,9 +884,13 @@ u_short *sp;
 }
 
 
+#ifdef __STDC__
+void optprint(u_short secmsk, u_short secbits, u_long optmsk, u_long optbits)
+#else
 void optprint(secmsk, secbits, optmsk, optbits)
 u_short secmsk, secbits;
 u_long optmsk, optbits;
+#endif
 {
 	struct ipopt_names *io, *so;
 	char *s;
@@ -896,8 +959,8 @@ u_long optmsk, optbits;
 
 char	*icmptypes[] = {
 	"echorep", (char *)NULL, (char *)NULL, "unreach", "squench",
-	"redir", (char *)NULL, (char *)NULL, "echo", (char *)NULL,
-	(char *)NULL, "timex", "paramprob", "timest", "timestrep",
+	"redir", (char *)NULL, (char *)NULL, "echo", "routerad",
+	"routersol", "timex", "paramprob", "timest", "timestrep",
 	"inforeq", "inforep", "maskreq", "maskrep", "END"
 };
 
@@ -1086,9 +1149,9 @@ struct	frentry	*fp;
 	char	*s;
 	u_char	*t;
 
-	if (fp->fr_flags & FR_PASS) {
+	if (fp->fr_flags & FR_PASS)
 		(void)printf("pass");
-	} else if (fp->fr_flags & FR_BLOCK) {
+	else if (fp->fr_flags & FR_BLOCK) {
 		(void)printf("block");
 		if (fp->fr_flags & FR_RETICMP) {
 			(void)printf(" return-icmp");
@@ -1109,6 +1172,12 @@ struct	frentry	*fp;
 			(void)printf(" first");
 	} else if (fp->fr_flags & FR_ACCOUNT)
 		(void)printf("count");
+	else if (fp->fr_flags & FR_AUTH)
+		(void)printf("auth");
+	else if (fp->fr_flags & FR_PREAUTH)
+		(void)printf("preauth");
+	else if (fp->fr_skip)
+		(void)printf("skip %d", fp->fr_skip);
 
 	if (fp->fr_flags & FR_OUTQUE)
 		(void)printf(" out ");
@@ -1153,10 +1222,11 @@ struct	frentry	*fp;
 			(void)printf("proto %d ", fp->fr_proto);
 	}
 
+	printf("from %s", fp->fr_flags & FR_NOTSRCIP ? "!" : "");
 	if (!fp->fr_src.s_addr & !fp->fr_smsk.s_addr)
-		(void)printf("from any ");
+		(void)printf("any ");
 	else {
-		(void)printf("from %s", inet_ntoa(fp->fr_src));
+		(void)printf("%s", inet_ntoa(fp->fr_src));
 		if ((ones = countbits(fp->fr_smsk.s_addr)) == -1)
 			(void)printf("/%s ", inet_ntoa(fp->fr_smsk));
 		else
@@ -1169,10 +1239,12 @@ struct	frentry	*fp;
 		else
 			(void)printf("port %s %s ", pcmp1[fp->fr_scmp],
 				     portname(pr, fp->fr_sport));
+
+	printf("to %s", fp->fr_flags & FR_NOTDSTIP ? "!" : "");
 	if (!fp->fr_dst.s_addr & !fp->fr_dmsk.s_addr)
-		(void)printf("to any");
+		(void)printf("any");
 	else {
-		(void)printf("to %s", inet_ntoa(fp->fr_dst));
+		(void)printf("%s", inet_ntoa(fp->fr_dst));
 		if ((ones = countbits(fp->fr_dmsk.s_addr)) == -1)
 			(void)printf("/%s", inet_ntoa(fp->fr_dmsk));
 		else
@@ -1244,6 +1316,10 @@ struct	frentry	*fp;
 		printf(" keep state");
 	if (fp->fr_flags & FR_KEEPFRAG)
 		printf(" keep frags");
+	if (fp->fr_grhead)
+		printf(" head %d", fp->fr_grhead);
+	if (fp->fr_group)
+		printf(" group %d", fp->fr_group);
 	(void)putchar('\n');
 }
 

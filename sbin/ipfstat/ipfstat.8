@@ -1,10 +1,11 @@
+.\"     $OpenBSD: ipfstat.8,v 1.8 1998/01/26 04:13:42 dgregor Exp $
 .TH ipfstat 8
 .SH NAME
 ipfstat \- reports on packet filter statistics and filter list
 .SH SYNOPSIS
 .B ipfstat
 [
-.B \-hIinov
+.B \-aAfhIinosv
 ] [
 .B \-d
 <device>
@@ -23,6 +24,9 @@ accumulated over time as the kernel has put packets through the filter.
 .TP
 .B \-a
 Display the accounting filter list and show bytes counted against each rule.
+.TP
+.B \-A
+Display packet authentication statistics.
 .TP
 .BR \-d \0<device>
 Use a device other than \fB/dev/ipl\fP for interfacing with the kernel.

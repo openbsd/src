@@ -1,6 +1,6 @@
-/*	$OpenBSD: ipft_sn.c,v 1.6 1997/06/23 16:44:49 kstailey Exp $	*/
+/*    $OpenBSD: ipft_sn.c,v 1.7 1998/01/26 04:16:36 dgregor Exp $     */
 /*
- * (C)opyright 1993,1994,1995 by Darren Reed.
+ * Copyright (C) 1993-1997 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
@@ -22,19 +22,23 @@
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/param.h>
+#include <sys/time.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
+#ifndef	linux
 #include <netinet/ip_var.h>
+#endif
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
-#include <netinet/tcpip.h>
 #include <net/if.h>
+#include "ip_fil_compat.h"
+#include <netinet/tcpip.h>
 #include "ipf.h"
 #include "ipt.h"
 #include "snoop.h"
 
-#if !defined(lint) && defined(LIBC_SCCS)
-static	char	rcsid[] = "$DRId: ipft_sn.c,v 2.0.1.1 1997/01/09 15:14:44 darrenr Exp $";
+#if !defined(lint)
+static const char rcsid[] = "@(#)$Id: ipft_sn.c,v 1.7 1998/01/26 04:16:36 dgregor Exp $";
 #endif
 
 struct	llc	{
@@ -60,9 +64,12 @@ static	struct	llc	llcs[SDL_MAX+1] = {
 	{ 0, 0, 0 },	/* SDL_OTHER */
 };
 
-static	int	snoop_open(), snoop_close(), snoop_readip();
+static	int	snoop_open __P((char *));
+static	int	snoop_close __P((void));
+static	int	snoop_readip __P((char *, int, char **, int *));
 
 static	int	sfd = -1, s_type = -1;
+static	int	snoop_read_rec __P((struct snooppkt *));
 
 struct	ipread	snoop = { snoop_open, snoop_close, snoop_readip };
 

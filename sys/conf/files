@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.72 1998/01/10 23:41:18 csapuntz Exp $
+#	$OpenBSD: files,v 1.73 1998/01/26 04:12:14 dgregor Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -205,12 +205,10 @@ file kern/vfs_bio.c
 file kern/vfs_cache.c
 file kern/vfs_cluster.c
 file kern/vfs_conf.c
-file kern/vfs_default.c
 file kern/vfs_init.c
 file kern/vfs_lockf.c
 file kern/vfs_lookup.c
 file kern/vfs_subr.c
-file kern/vfs_sync.c
 file kern/vfs_syscalls.c
 file kern/vfs_vnops.c
 file kern/vnode_if.c
@@ -313,6 +311,9 @@ file netinet/fil.c			ipfilter
 file netinet/ip_nat.c			ipfilter
 file netinet/ip_frag.c			ipfilter
 file netinet/ip_state.c			ipfilter
+file netinet/ip_proxy.c			ipfilter
+file netinet/ip_auth.c			ipfilter
+file netinet/ip_log.c			ipfilter
 file netinet/ip_ipsp.c			inet & ipsec
 file netinet/ip_ip4.c			inet & ipsec
 file netinet/ip_ah.c			inet & ipsec

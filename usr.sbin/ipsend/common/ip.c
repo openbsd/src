@@ -1,18 +1,19 @@
 /*
- * ip.c (C) 1995 Darren Reed
+ * ip.c (C) 1995-1997 Darren Reed
  *
- * The author provides this program as-is, with no gaurantee for its
- * suitability for any specific purpose.  The author takes no responsibility
- * for the misuse/abuse of this program and provides it for the sole purpose
- * of testing packet filter policies.  This file maybe distributed freely
- * providing it is not modified and that this notice remains in tact.
+ * Redistribution and use in source and binary forms are permitted
+ * provided that this notice is preserved and due credit is given
+ * to the original author and the contributors.
  */
-#ifndef	lint
-static	char	sccsid[] = "%W% %G% (C)1995";
+#if !defined(lint)
+static const char sccsid[] = "%W% %G% (C)1995";
+static const char rcsid[] = "@(#)$Id: ip.c,v 1.5 1998/01/26 04:16:50 dgregor Exp $";
 #endif
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
 #include <sys/types.h>
 #include <netinet/in_systm.h>
 #include <sys/socket.h>
@@ -22,15 +23,15 @@ static	char	sccsid[] = "%W% %G% (C)1995";
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
 #include <netinet/ip_icmp.h>
+#include <sys/param.h>
 #ifndef	linux
-#include <netinet/if_ether.h>
-#include <netinet/ip_var.h>
-#include <netinet/tcpip.h>
+# include <netinet/if_ether.h>
+# include <netinet/ip_var.h>
+# if __FreeBSD_version >= 300000
+#  include <net/if_var.h>
+# endif
 #endif
-#include "ip_compat.h"
-#ifdef	linux
-#include "tcpip.h"
-#endif
+#include "ipsend.h"
 
 
 static	char	*ipbuf = NULL, *ethbuf = NULL;
@@ -69,8 +70,8 @@ struct	in_addr	gwip;
 
 	bcopy((char *)buf, s + sizeof(*eh), len);
 	if (gwip.s_addr == last_gw.s_addr)
-		bcopy(last_arp, eh->ether_dhost, 6);
-	else if (arp((char *)&gwip, &eh->ether_dhost) == -1)
+		bcopy(last_arp, (char *)A_A eh->ether_dhost, 6);
+	else if (arp((char *)&gwip, (char *)A_A eh->ether_dhost) == -1)
 	    {
 		perror("arp");
 		return -2;
@@ -95,41 +96,44 @@ int	frag;
 	static	u_short	id = 0;
 	ether_header_t	*eh;
 	ip_t	ipsv;
-	int	err;
+	int	err, iplen;
 
 	if (!ipbuf)
 		ipbuf = (char *)malloc(65536);
 	eh = (ether_header_t *)ipbuf;
 
-	bzero(&eh->ether_shost, sizeof(eh->ether_shost));
+	bzero((char *)A_A eh->ether_shost, sizeof(eh->ether_shost));
 	if (last_gw.s_addr && (gwip.s_addr == last_gw.s_addr))
-		bcopy(last_arp, eh->ether_dhost, 6);
-	else if (arp((char *)&gwip, &eh->ether_dhost) == -1)
+		bcopy(last_arp, (char *)A_A eh->ether_dhost, 6);
+	else if (arp((char *)&gwip, (char *)A_A eh->ether_dhost) == -1)
 	    {
 		perror("arp");
 		return -2;
 	    }
-	bcopy(eh->ether_dhost, last_arp, sizeof(last_arp));
+	bcopy((char *)A_A eh->ether_dhost, last_arp, sizeof(last_arp));
 	eh->ether_type = htons(ETHERTYPE_IP);
 
 	bcopy((char *)ip, (char *)&ipsv, sizeof(*ip));
 	last_gw.s_addr = gwip.s_addr;
-	ip->ip_len = htons(ip->ip_len);
+	iplen = ip->ip_len;
+	ip->ip_len = htons(iplen);
 	ip->ip_off = htons(ip->ip_off);
-	if (!ip->ip_v)
-		ip->ip_v   = IPVERSION;
-	if (!ip->ip_id)
-		ip->ip_id  = htons(id++);
-	if (!ip->ip_ttl)
-		ip->ip_ttl = 60;
+	if (!(frag & 2)) {
+		if (!ip->ip_v)
+			ip->ip_v   = IPVERSION;
+		if (!ip->ip_id)
+			ip->ip_id  = htons(id++);
+		if (!ip->ip_ttl)
+			ip->ip_ttl = 60;
+	}
 
-	if (!frag || (sizeof(*eh) + ntohs(ip->ip_len) < mtu))
+	if (!frag || (sizeof(*eh) + iplen < mtu))
 	    {
 		ip->ip_sum = 0;
-		ip->ip_sum = chksum(ip, ip->ip_hl << 2);
+		ip->ip_sum = chksum((u_short *)ip, ip->ip_hl << 2);
 
-		bcopy((char *)ip, ipbuf + sizeof(*eh), ntohs(ip->ip_len));
-		err =  sendip(nfd, ipbuf, sizeof(*eh) + ntohs(ip->ip_len));
+		bcopy((char *)ip, ipbuf + sizeof(*eh), iplen);
+		err =  sendip(nfd, ipbuf, sizeof(*eh) + iplen);
 	    }
 	else
 	    {
@@ -141,7 +145,7 @@ int	frag;
 		ether_header_t	eth;
 		char	optcpy[48], ol;
 		char	*s;
-		int	i, iplen, sent = 0, ts, hlen, olen;
+		int	i, sent = 0, ts, hlen, olen;
 
 		hlen = ip->ip_hl << 2;
 		if (mtu < (hlen + 8)) {
@@ -176,7 +180,7 @@ int	frag;
 			 */
 			while ((i & 3) && (i & 3) != 3)
 				optcpy[i++] = IPOPT_NOP;
-			if (i & 3 == 3)
+			if ((i & 3) == 3)
 				optcpy[i++] = IPOPT_EOL;
 		    }
 
@@ -199,7 +203,7 @@ int	frag;
 			ts += hlen;
 			ip->ip_len = htons(ts);
 			ip->ip_sum = 0;
-			ip->ip_sum = chksum(ip, hlen);
+			ip->ip_sum = chksum((u_short *)ip, hlen);
 			bcopy((char *)ip, ipbuf + sizeof(*eh), hlen);
 			bcopy(s + sent, ipbuf + sizeof(*eh) + hlen, ts - hlen);
 			err =  sendip(nfd, ipbuf, sizeof(*eh) + ts);
@@ -232,43 +236,44 @@ struct	in_addr	gwip;
 {
 	static	tcp_seq	iss = 2;
 	struct	tcpiphdr *ti;
-	int	thlen, i;
-	u_long	lbuf[20];
+	tcphdr_t *t;
+	int	thlen, i, iplen, hlen;
+	u_32_t	lbuf[20];
 
+	iplen = ip->ip_len;
+	hlen = ip->ip_hl << 2;
+	t = (tcphdr_t *)((char *)ip + hlen);
 	ti = (struct tcpiphdr *)lbuf;
+	thlen = t->th_off << 2;
+	if (!thlen)
+		thlen = sizeof(tcphdr_t);
 	bzero((char *)ti, sizeof(*ti));
-	thlen = sizeof(tcphdr_t);
 	ip->ip_p = IPPROTO_TCP;
 	ti->ti_pr = ip->ip_p;
 	ti->ti_src = ip->ip_src;
 	ti->ti_dst = ip->ip_dst;
-	bcopy((char *)ip + (ip->ip_hl << 2),
-	      (char *)&ti->ti_sport, sizeof(tcphdr_t));
+	bcopy((char *)ip + hlen, (char *)&ti->ti_sport, thlen);
 
 	if (!ti->ti_win)
 		ti->ti_win = htons(4096);
-	if (!ti->ti_seq)
-		ti->ti_seq = htonl(iss);
-	iss += 64;
+	iss += 63;
 
-	if ((ti->ti_flags == TH_SYN) && !ip->ip_off)
-	    {
-		ip = (ip_t *)realloc((char *)ip, ntohs(ip->ip_len) + 4);
-		i = sizeof(struct tcpiphdr) / sizeof(long);
+	i = sizeof(struct tcpiphdr) / sizeof(long);
+
+	if ((ti->ti_flags == TH_SYN) && !ip->ip_off &&
+	    (lbuf[i] != htonl(0x020405b4))) {
 		lbuf[i] = htonl(0x020405b4);
-		bcopy((char *)(lbuf + i), (char*)ip + ntohs(ip->ip_len),
-		      sizeof(u_long));
+		bcopy((char *)ip + hlen + thlen, (char *)ip + hlen + thlen + 4,
+		      iplen - thlen - hlen);
 		thlen += 4;
 	    }
-	if (!ti->ti_off)
-		ti->ti_off = thlen >> 2;
+	ti->ti_off = thlen >> 2;
 	ti->ti_len = htons(thlen);
-	ip->ip_len = (ip->ip_hl << 2) + thlen;
+	ip->ip_len = hlen + thlen;
 	ti->ti_sum = 0;
-	ti->ti_sum = chksum(ti, thlen + sizeof(ip_t));
+	ti->ti_sum = chksum((u_short *)ti, thlen + sizeof(ip_t));
 
-	bcopy((char *)&ti->ti_sport,
-	      (char *)ip + (ip->ip_hl << 2), thlen);
+	bcopy((char *)&ti->ti_sport, (char *)ip + hlen, thlen);
 	return send_ip(nfd, mtu, ip, gwip, 1);
 }
 
@@ -282,7 +287,7 @@ ip_t	*ip;
 struct	in_addr	gwip;
 {
 	struct	tcpiphdr *ti;
-	int	thlen, i;
+	int	thlen;
 	u_long	lbuf[20];
 
 	ti = (struct tcpiphdr *)lbuf;
@@ -297,7 +302,7 @@ struct	in_addr	gwip;
 	ti->ti_len = htons(thlen);
 	ip->ip_len = (ip->ip_hl << 2) + thlen;
 	ti->ti_sum = 0;
-	ti->ti_sum = chksum(ti, thlen + sizeof(ip_t));
+	ti->ti_sum = chksum((u_short *)ti, thlen + sizeof(ip_t));
 
 	bcopy((char *)&ti->ti_sport,
 	      (char *)ip + (ip->ip_hl << 2), sizeof(udphdr_t));
@@ -318,7 +323,7 @@ struct	in_addr	gwip;
 	ic = (struct icmp *)((char *)ip + (ip->ip_hl << 2));
 
 	ic->icmp_cksum = 0;
-	ic->icmp_cksum = chksum((char *)ic, sizeof(struct icmp));
+	ic->icmp_cksum = chksum((u_short *)ic, sizeof(struct icmp));
 
 	return send_ip(nfd, mtu, ip, gwip, 1);
 }

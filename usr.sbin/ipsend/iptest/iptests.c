@@ -1,18 +1,23 @@
+/*      $OpenBSD: iptests.c,v 1.2 1998/01/26 04:17:11 dgregor Exp $       */
 /*
- * (C)opyright 1993, 1994, 1995 by Darren Reed.
+ * Copyright (C) 1993-1997 by Darren Reed.
  *
- * This code may be freely distributed as long as it retains this notice
- * and is not changed in any way.  The author accepts no responsibility
- * for the use of this software.  I hate legaleese, don't you ?
+ * Redistribution and use in source and binary forms are permitted
+ * provided that this notice is preserved and due credit is given
+ * to the original author and the contributors.
  */
-#ifndef	lint
-static	char	sccsid[] = "%W% %G% (C)1995 Darren Reed";
+#if !defined(lint)
+static const char sccsid[] = "%W% %G% (C)1995 Darren Reed";
+static const char rcsid[] = "@(#)$Id: iptests.c,v 1.2 1998/01/26 04:17:11 dgregor Exp $";
 #endif
 #include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/param.h>
-#if !defined(solaris)
+#if !defined(solaris) && !defined(linux) && !defined(__sgi)
 # define _KERNEL
 # define KERNEL
 # include <sys/file.h>
@@ -22,44 +27,58 @@ static	char	sccsid[] = "%W% %G% (C)1995 Darren Reed";
 # include <sys/user.h>
 # include <sys/proc.h>
 #endif
-#include <kvm.h>
-#include <sys/socket.h>
+#if !defined(ultrix) && !defined(hpux) && !defined(linux) && !defined(__sgi)
+# include <kvm.h>
+#endif
+#ifndef	ultrix
+# include <sys/socket.h>
+#endif
+#if defined(solaris)
+# include <sys/stream.h>
+#endif
 #include <sys/socketvar.h>
 #ifdef sun
 #include <sys/systm.h>
 #include <sys/session.h>
 #endif
 #if BSD >= 199103
-#include <sys/sysctl.h>
-#include <sys/filedesc.h>
-#include <paths.h>
+# include <sys/sysctl.h>
+# include <sys/filedesc.h>
+# include <paths.h>
 #endif
 #include <netinet/in_systm.h>
 #include <sys/socket.h>
 #include <net/if.h>
-#include <net/route.h>
+#if defined(linux) && (LINUX >= 0200)
+# include <asm/atomic.h>
+#endif
+#if !defined(linux)
+# include <net/route.h>
+#else
+# define __KERNEL__	/* because there's a macro not wrapped by this */
+# include <net/route.h>	/* in this file :-/ */
+#endif
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
 #include <netinet/ip_icmp.h>
-#include <netinet/if_ether.h>
-#include <netinet/ip_var.h>
-#include <netinet/in_pcb.h>
-#include <netinet/tcp_timer.h>
-#include <netinet/tcp_var.h>
-#include "ip_compat.h"
-#ifdef linux
-#include "tcpip.h"
-#else
-#include <netinet/tcpip.h>
-# if defined(__SVR4) || defined(__svr4__)
-#include <sys/sysmacros.h>
-# endif
+#ifndef linux
+# include <netinet/ip_var.h>
+# include <netinet/in_pcb.h>
+# include <netinet/tcp_timer.h>
+# include <netinet/tcp_var.h>
 #endif
+#if defined(__SVR4) || defined(__svr4__) || defined(__sgi)
+# include <sys/sysmacros.h>
+#endif
+#include "ipsend.h"
+
 
 #define	PAUSE()	tv.tv_sec = 0; tv.tv_usec = 10000; \
 		  (void) select(0, NULL, NULL, NULL, &tv)
+
 
 void	ip_test1(dev, mtu, ip, gwip, ptest)
 char	*dev;
@@ -70,7 +89,7 @@ int	ptest;
 {
 	struct	timeval	tv;
 	udphdr_t *u;
-	int	nfd, i, len, id = getpid();
+	int	nfd, i = 0, len, id = getpid();
 
 	ip->ip_hl = sizeof(*ip) >> 2;
 	ip->ip_v = IPVERSION;
@@ -166,11 +185,11 @@ int	ptest;
 		ip->ip_len = htons(ip->ip_len);
 		ip->ip_off = htons(ip->ip_off);
 		printf("1.5.0 ip_len < packet size (size++, long packets)\n");
-		for (; i < (ip->ip_len * 2); i++) {
+		for (; i < (ntohs(ip->ip_len) * 2); i++) {
 			ip->ip_id = htons(id++);
 			ip->ip_sum = 0;
-			ip->ip_sum = chksum(ip, ip->ip_hl << 2);
-			(void) send_ether(nfd, ip, i, gwip);
+			ip->ip_sum = chksum((u_short *)ip, ip->ip_hl << 2);
+			(void) send_ether(nfd, (char *)ip, i, gwip);
 			printf("%d\r", i);
 			fflush(stdout);
 			PAUSE();
@@ -181,8 +200,8 @@ int	ptest;
 			ip->ip_id = htons(id++);
 			ip->ip_len = htons(i);
 			ip->ip_sum = 0;
-			ip->ip_sum = chksum(ip, ip->ip_hl << 2);
-			(void) send_ether(nfd, ip, len, gwip);
+			ip->ip_sum = chksum((u_short *)ip, ip->ip_hl << 2);
+			(void) send_ether(nfd, (char *)ip, len, gwip);
 			printf("%d\r", i);
 			fflush(stdout);
 			PAUSE();
@@ -200,8 +219,8 @@ int	ptest;
 			ip->ip_id = htons(id++);
 			ip->ip_len = htons(i);
 			ip->ip_sum = 0;
-			ip->ip_sum = chksum(ip, ip->ip_hl << 2);
-			(void) send_ether(nfd, ip, len, gwip);
+			ip->ip_sum = chksum((u_short *)ip, ip->ip_hl << 2);
+			(void) send_ether(nfd, (char *)ip, len, gwip);
 			printf("%d\r", i);
 			fflush(stdout);
 			PAUSE();
@@ -212,8 +231,8 @@ int	ptest;
 		for (i = len; i > 0; i--) {
 			ip->ip_id = htons(id++);
 			ip->ip_sum = 0;
-			ip->ip_sum = chksum(ip, ip->ip_hl << 2);
-			(void) send_ether(nfd, ip, i, gwip);
+			ip->ip_sum = chksum((u_short *)ip, ip->ip_hl << 2);
+			(void) send_ether(nfd, (char *)ip, i, gwip);
 			printf("%d\r", i);
 			fflush(stdout);
 			PAUSE();
@@ -264,12 +283,47 @@ int	ptest;
 		gettimeofday(&tv, NULL);
 		srand(tv.tv_sec ^ getpid() ^ tv.tv_usec);
 		/*
-		 * Part8: 63k packet + 1k fragment at offset 0x1ffe
+		 * Part8.1: 63k packet + 1k fragment at offset 0x1ffe
+		 * Mark it as being ICMP (so it doesn't get junked), but
+		 * don't bother about the ICMP header, we're not worrying
+		 * about that here.
 		 */
+		ip->ip_p = IPPROTO_ICMP;
 		ip->ip_off = IP_MF;
 		u->uh_dport = htons(9);
 		ip->ip_id = htons(id++);
-		printf("1.8. 63k packet + 1k fragment at offset 0x1ffe\n");
+		printf("1.8.1 63k packet + 1k fragment at offset 0x1ffe\n");
+		ip->ip_len = 768 + 20 + 8;
+		(void) send_ip(nfd, mtu, ip, gwip, 1);
+		printf("%d\r", i);
+
+		ip->ip_len = MIN(768 + 20, mtu - 68);
+		i = 512;
+		for (; i < (63 * 1024 + 768); i += 768) {
+			ip->ip_off = IP_MF | (i >> 3);
+			(void) send_ip(nfd, mtu, ip, gwip, 1);
+			printf("%d\r", i);
+			fflush(stdout);
+			PAUSE();
+		}
+		ip->ip_len = 896 + 20;
+		ip->ip_off = (i >> 3);
+		(void) send_ip(nfd, mtu, ip, gwip, 1);
+		printf("%d\r", i);
+		putchar('\n');
+		fflush(stdout);
+
+		/*
+		 * Part8.2: 63k packet + 1k fragment at offset 0x1ffe
+		 * Mark it as being ICMP (so it doesn't get junked), but
+		 * don't bother about the ICMP header, we're not worrying
+		 * about that here.  (Lossage here)
+		 */
+		ip->ip_p = IPPROTO_ICMP;
+		ip->ip_off = IP_MF;
+		u->uh_dport = htons(9);
+		ip->ip_id = htons(id++);
+		printf("1.8.2 63k packet + 1k fragment at offset 0x1ffe\n");
 		ip->ip_len = 768 + 20 + 8;
 		if ((rand() & 0x1f) != 0) {
 			(void) send_ip(nfd, mtu, ip, gwip, 1);
@@ -290,12 +344,43 @@ int	ptest;
 			PAUSE();
 		}
 		ip->ip_len = 896 + 20;
-		ip->ip_off = IP_MF | (i >> 3);
+		ip->ip_off = (i >> 3);
 		if ((rand() & 0x1f) != 0) {
 			(void) send_ip(nfd, mtu, ip, gwip, 1);
 			printf("%d\r", i);
 		} else
 			printf("skip\n");
+		putchar('\n');
+		fflush(stdout);
+
+		/*
+		 * Part8.3: 33k packet - test for not dealing with -ve length
+		 * Mark it as being ICMP (so it doesn't get junked), but
+		 * don't bother about the ICMP header, we're not worrying
+		 * about that here.
+		 */
+		ip->ip_p = IPPROTO_ICMP;
+		ip->ip_off = IP_MF;
+		u->uh_dport = htons(9);
+		ip->ip_id = htons(id++);
+		printf("1.8.3 33k packet\n");
+		ip->ip_len = 768 + 20 + 8;
+		(void) send_ip(nfd, mtu, ip, gwip, 1);
+		printf("%d\r", i);
+
+		ip->ip_len = MIN(768 + 20, mtu - 68);
+		i = 512;
+		for (; i < (32 * 1024 + 768); i += 768) {
+			ip->ip_off = IP_MF | (i >> 3);
+			(void) send_ip(nfd, mtu, ip, gwip, 1);
+			printf("%d\r", i);
+			fflush(stdout);
+			PAUSE();
+		}
+		ip->ip_len = 896 + 20;
+		ip->ip_off = (i >> 3);
+		(void) send_ip(nfd, mtu, ip, gwip, 1);
+		printf("%d\r", i);
 		putchar('\n');
 		fflush(stdout);
 	}
@@ -352,8 +437,7 @@ struct	in_addr	gwip;
 int	ptest;
 {
 	struct	timeval	tv;
-	udphdr_t *u;
-	int	nfd, i, len, id = getpid();
+	int	nfd;
 	u_char	*s;
 
 	s = (u_char *)(ip + 1);
@@ -445,8 +529,7 @@ int	ptest;
 	static	int	ict2[8] = { 3, 9, 10, 13, 14, 17, 18, 0 };
 	struct	timeval	tv;
 	struct	icmp	*icp;
-	int	nfd, i, len, id = getpid();
-	u_char	*s;
+	int	nfd, i;
 
 	ip->ip_hl = sizeof(*ip) >> 2;
 	ip->ip_v = IPVERSION;
@@ -637,8 +720,8 @@ struct	in_addr	gwip;
 int	ptest;
 {
 	struct	timeval	tv;
-	struct	udphdr	*u;
-	int	nfd, i, len, id = getpid();
+	udphdr_t	*u;
+	int	nfd, i;
 
 
 	ip->ip_hl = sizeof(*ip) >> 2;
@@ -768,10 +851,10 @@ int	ptest;
 		PAUSE();
 	}
 
-	if (!ptest || (ptest == 4)) {
+	if (!ptest || (ptest == 5)) {
 		/*
-		 * Test 5: sizeof(struct ip) <= MTU <= sizeof(struct udphdr) +
-		 * sizeof(struct ip)
+		 * Test 5: sizeof(ip_t) <= MTU <= sizeof(udphdr_t) +
+		 * sizeof(ip_t)
 		 */
 		printf("4.5 UDP 20 <= MTU <= 32\n");
 		for (i = sizeof(*ip); i <= u->uh_ulen; i++) {
@@ -796,10 +879,12 @@ int	ptest;
 {
 	struct	timeval	tv;
 	tcphdr_t *t;
-	int	nfd, i, len, id = getpid();
+	int	nfd, i;
 
 	t = (tcphdr_t *)((char *)ip + (ip->ip_hl << 2));
+#ifndef	linux
 	t->th_x2 = 0;
+#endif
 	t->th_off = 0;
 	t->th_sport = 1;
 	t->th_dport = 1;
@@ -808,6 +893,7 @@ int	ptest;
 	t->th_sum = 0;
 	t->th_seq = 1;
 	t->th_ack = 0;
+	ip->ip_len = sizeof(ip_t) + sizeof(tcphdr_t);
 	nfd = initdevice(dev, t->th_sport, 1);
 
 	if (!ptest || (ptest == 1)) {
@@ -937,9 +1023,10 @@ int	ptest;
 		PAUSE();
 	}
 
-#if !defined(linux) && !defined(__SVR4) && !defined(__svr4__)
+#if !defined(linux) && !defined(__SVR4) && !defined(__svr4__) && \
+    !defined(__sgi)
 	{
-	struct tcpcb *t, tcb;
+	struct tcpcb *tcbp, tcb;
 	struct tcpiphdr ti;
 	struct sockaddr_in sin;
 	int fd, slen;
@@ -948,10 +1035,13 @@ int	ptest;
 
 	for (i = 1; i < 63; i++) {
 		fd = socket(AF_INET, SOCK_STREAM, 0);
+		bzero((char *)&sin, sizeof(sin));
 		sin.sin_addr.s_addr = ip->ip_dst.s_addr;
 		sin.sin_port = htons(i);
+		sin.sin_family = AF_INET;
 		if (!connect(fd, (struct sockaddr *)&sin, sizeof(sin)))
 			break;
+		close(fd);
 	}
 
 	if (i == 63) {
@@ -962,15 +1052,15 @@ int	ptest;
 	}
 
 	bcopy((char *)ip, (char *)&ti, sizeof(*ip));
-	ti.ti_dport = i;
+	t->th_dport = htons(i);
 	slen = sizeof(sin);
 	if (!getsockname(fd, (struct sockaddr *)&sin, &slen))
-		ti.ti_sport = sin.sin_port;
-	if (!(t = (struct tcpcb *)find_tcp(fd, &ti))) {
+		t->th_sport = sin.sin_port;
+	if (!(tcbp = find_tcp(fd, &ti))) {
 		printf("Can't find PCB\n");
 		goto skip_five_and_six;
 	}
-	kmemcpy((char*)&tcb, (void *)t, sizeof(tcb));
+	KMCPY(&tcb, tcbp, sizeof(tcb));
 	ti.ti_win = tcb.rcv_adv;
 	ti.ti_seq = tcb.snd_nxt - 1;
 	ti.ti_ack = tcb.rcv_nxt;
@@ -979,27 +1069,36 @@ int	ptest;
 		/*
 		 * Test 5: urp
 		 */
-		printf("5.1 TCP Urgent pointer\n");
-		ti.ti_urp = 1;
+		t->th_flags = TH_ACK|TH_URG;
+		printf("5.5.1 TCP Urgent pointer, sport %hu dport %hu\n",
+			ntohs(t->th_sport), ntohs(t->th_dport));
+		t->th_urp = htons(1);
 		(void) send_tcp(nfd, mtu, ip, gwip);
 		PAUSE();
-		ti.ti_urp = 0x7fff;
+
+		t->th_seq = tcb.snd_nxt;
+		ip->ip_len = sizeof(ip_t) + sizeof(tcphdr_t) + 1;
+		t->th_urp = htons(0x7fff);
 		(void) send_tcp(nfd, mtu, ip, gwip);
 		PAUSE();
-		ti.ti_urp = 0x8000;
+		t->th_urp = htons(0x8000);
 		(void) send_tcp(nfd, mtu, ip, gwip);
 		PAUSE();
-		ti.ti_urp = 0xffff;
+		t->th_urp = htons(0xffff);
 		(void) send_tcp(nfd, mtu, ip, gwip);
 		PAUSE();
+		t->th_urp = htons(0);
+		t->th_flags &= ~TH_URG;
+		ip->ip_len = sizeof(ip_t) + sizeof(tcphdr_t);
 	}
 
 	if (!ptest || (ptest == 6)) {
 		/*
 		 * Test 6: data offset, off = 0, off is inside, off is outside
 		 */
-		printf("6.1 TCP off = 0-15, len = 40\n");
-		for (i = 0; i < 16; i++) {
+		t->th_flags = TH_ACK;
+		printf("5.6.1 TCP off = 1-15, len = 40\n");
+		for (i = 1; i < 16; i++) {
 			ti.ti_off = ntohs(i);
 			(void) send_tcp(nfd, mtu, ip, gwip);
 			printf("%d\r", i);
@@ -1007,6 +1106,7 @@ int	ptest;
 			PAUSE();
 		}
 		putchar('\n');
+		ip->ip_len = sizeof(ip_t) + sizeof(tcphdr_t);
 	}
 
 	(void) close(fd);
@@ -1015,9 +1115,9 @@ skip_five_and_six:
 #endif
 	t->th_seq = 1;
 	t->th_ack = 1;
+	t->th_off = 0;
 
 	if (!ptest || (ptest == 7)) {
-		t->th_off = 0;
 		t->th_flags = TH_SYN;
 		/*
 		 * Test 7: sport = 0, sport = 1, sport = 32767
@@ -1056,6 +1156,7 @@ skip_five_and_six:
 
 	if (!ptest || (ptest == 8)) {
 		t->th_sport = 1;
+		t->th_flags = TH_SYN;
 		/*
 		 * Test 8: dport = 0, dport = 1, dport = 32767
 		 *         dport = 32768, dport = 65535
@@ -1090,6 +1191,22 @@ skip_five_and_six:
 		fflush(stdout);
 		PAUSE();
 	}
+
+	/* LAND attack - self connect, so make src & dst ip/port the same */
+	if (!ptest || (ptest == 9)) {
+		printf("5.9 TCP LAND attack. sport = 25, dport = 25\n");
+		/* chose SMTP port 25 */
+		t->th_sport = htons(25);
+		t->th_dport = htons(25);
+		t->th_flags = TH_SYN;
+		ip->ip_src = ip->ip_dst;
+		(void) send_tcp(nfd, mtu, ip, gwip);
+		fflush(stdout);
+		PAUSE();
+	}
+
+	/* TCP options header checking */
+	/* 0 length options, etc */
 }
 
 
@@ -1104,7 +1221,7 @@ int	ptest;
 {
 	struct	timeval	tv;
 	udphdr_t *u;
-	int	nfd, i, j, k, len, id = getpid();
+	int	nfd, i, j, k;
 
 	ip->ip_v = IPVERSION;
 	ip->ip_tos = 0;
@@ -1122,7 +1239,10 @@ int	ptest;
 	u->uh_dport = htons(u->uh_dport);
 	u->uh_ulen = 7168;
 
-	for (i = 0; i < 65536; i++) {
+	printf("6. Exhaustive mbuf test.\n");
+	printf("   Send 7k packet in 768 & 128 byte fragments, 128 times.\n");
+	printf("   Total of around 8,900 packets\n");
+	for (i = 0; i < 128; i++) {
 		/*
 		 * First send the entire packet in 768 byte chunks.
 		 */

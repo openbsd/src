@@ -1,30 +1,30 @@
+/*     $OpenBSD: iptest.c,v 1.4 1998/01/26 04:17:10 dgregor Exp $     */
 /*
- * ipsend.c (C) 1995 Darren Reed
+ * ipsend.c (C) 1995-1997 Darren Reed
  *
  * This was written to test what size TCP fragments would get through
  * various TCP/IP packet filters, as used in IP firewalls.  In certain
  * conditions, enough of the TCP header is missing for unpredictable
  * results unless the filter is aware that this can happen.
  *
- * The author provides this program as-is, with no gaurantee for its
- * suitability for any specific purpose.  The author takes no responsibility
- * for the misuse/abuse of this program and provides it for the sole purpose
- * of testing packet filter policies.  This file maybe distributed freely
- * providing it is not modified and that this notice remains in tact.
- *
- * This was written and tested (successfully) on SunOS 4.1.x.
+ * Redistribution and use in source and binary forms are permitted
+ * provided that this notice is preserved and due credit is given
+ * to the original author and the contributors.
  */
-#ifndef	lint
-static	char	sccsid[] = "%W% %G% (C)1995 Darren Reed";
+#if !defined(lint)
+static const char sccsid[] = "%W% %G% (C)1995 Darren Reed";
+static const char rcsid[] = "@(#)$Id: iptest.c,v 1.4 1998/01/26 04:17:10 dgregor Exp $";
 #endif
 #include <stdio.h>
-#include <stdlib.h>
 #include <netdb.h>
+#include <unistd.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
@@ -32,14 +32,11 @@ static	char	sccsid[] = "%W% %G% (C)1995 Darren Reed";
 #include <netinet/ip_icmp.h>
 #ifndef	linux
 #include <netinet/ip_var.h>
-#include <netinet/tcpip.h>
 #endif
-#include "ip_compat.h"
 #ifdef	linux
 #include <linux/sockios.h>
-#include "tcpip.h"
 #endif
-#include "ipt.h"
+#include "ipsend.h"
 
 
 extern	char	*optarg;
@@ -58,15 +55,22 @@ char	default_device[] = "ln0";
 #   ifdef	__bsdi__
 char	default_device[] = "ef0";
 #   else
+#    ifdef	__sgi
+char	default_device[] = "ec0";
+#    else
 char	default_device[] = "lan0";
+#    endif
 #   endif
 #  endif
 # endif
 #endif
 
+static	void	usage __P((char *));
+int	main __P((int, char **));
 
-void	usage(prog)
-char	*prog;
+
+static void usage(prog)
+char *prog;
 {
 	fprintf(stderr, "Usage: %s [options] dest\n\
 \toptions:\n\
@@ -87,15 +91,15 @@ char	*prog;
 }
 
 
-main(argc, argv)
-int	argc;
-char	**argv;
+int main(argc, argv)
+int argc;
+char **argv;
 {
 	struct	tcpiphdr *ti;
 	struct	in_addr	gwip;
 	ip_t	*ip;
 	char	*name =  argv[0], host[64], *gateway = NULL, *dev = NULL;
-	char	*src = NULL, *dst, *s;
+	char	*src = NULL, *dst;
 	int	mtu = 1500, tests = 0, pointtest = 0, c;
 
 	/*
@@ -106,7 +110,7 @@ char	**argv;
 	ip->ip_len = sizeof(*ip);
 	ip->ip_hl = sizeof(*ip) >> 2;
 
-	while ((c = getopt(argc, argv, "1234567IP:TUd:f:g:m:o:p:s:t:")) != -1)
+	while ((c = getopt(argc, argv, "1234567d:g:m:p:s:")) != -1)
 		switch (c)
 		{
 		case '1' :
@@ -143,7 +147,7 @@ char	**argv;
 			usage(name);
 		}
 
-	if (argc - optind < 2 && !tests)
+	if ((argc <= optind) || !argv[optind])
 		usage(name);
 	dst = argv[optind++];
 
@@ -185,20 +189,34 @@ char	**argv;
 	switch (tests)
 	{
 	case 1 :
-		return ip_test1(dev, mtu, ti, gwip, pointtest);
+		ip_test1(dev, mtu, (ip_t *)ti, gwip, pointtest);
+		break;
 	case 2 :
-		return ip_test2(dev, mtu, ti, gwip, pointtest);
+		ip_test2(dev, mtu, (ip_t *)ti, gwip, pointtest);
+		break;
 	case 3 :
-		return ip_test3(dev, mtu, ti, gwip, pointtest);
+		ip_test3(dev, mtu, (ip_t *)ti, gwip, pointtest);
+		break;
 	case 4 :
-		return ip_test4(dev, mtu, ti, gwip, pointtest);
+		ip_test4(dev, mtu, (ip_t *)ti, gwip, pointtest);
+		break;
 	case 5 :
-		return ip_test5(dev, mtu, ti, gwip, pointtest);
+		ip_test5(dev, mtu, (ip_t *)ti, gwip, pointtest);
+		break;
 	case 6 :
-		return ip_test6(dev, mtu, ti, gwip, pointtest);
+		ip_test6(dev, mtu, (ip_t *)ti, gwip, pointtest);
+		break;
 	case 7 :
-		return ip_test7(dev, mtu, ti, gwip, pointtest);
+		ip_test7(dev, mtu, (ip_t *)ti, gwip, pointtest);
+		break;
 	default :
+		ip_test1(dev, mtu, (ip_t *)ti, gwip, pointtest);
+		ip_test2(dev, mtu, (ip_t *)ti, gwip, pointtest);
+		ip_test3(dev, mtu, (ip_t *)ti, gwip, pointtest);
+		ip_test4(dev, mtu, (ip_t *)ti, gwip, pointtest);
+		ip_test5(dev, mtu, (ip_t *)ti, gwip, pointtest);
+		ip_test6(dev, mtu, (ip_t *)ti, gwip, pointtest);
+		ip_test7(dev, mtu, (ip_t *)ti, gwip, pointtest);
 		break;
 	}
 	return 0;

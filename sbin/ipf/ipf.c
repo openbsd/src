@@ -1,11 +1,14 @@
-/*	$OpenBSD: ipf.c,v 1.10 1997/02/26 04:35:39 kstailey Exp $	*/
+/*     $OpenBSD: ipf.c,v 1.11 1998/01/26 04:13:35 dgregor Exp $      */
 /*
- * (C)opyright 1993,1994,1995 by Darren Reed.
+ * Copyright (C) 1993-1997 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  */
+#ifdef	__FreeBSD__
+# include <osreldate.h>
+#endif
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
@@ -14,65 +17,75 @@
 #if !defined(__SVR4) && !defined(__GNUC__)
 #include <strings.h>
 #endif
-#if !defined(__SVR4) && defined(__GNUC__) && !defined(__OpenBSD__)
-extern	char	*index();
-#endif
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/file.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <stddef.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
+#include <sys/time.h>
 #include <net/if.h>
+#if __FreeBSD_version >= 300000
+# include <net/if_var.h>
+#endif
 #include <netinet/ip.h>
-#include "ip_fil_compat.h"
-#include "ip_fil.h"
 #include <netdb.h>
 #include <arpa/nameser.h>
 #include <resolv.h>
+#include "ip_fil_compat.h"
+#include "ip_fil.h"
 #include "ipf.h"
 
-#if !defined(lint) && defined(LIBC_SCCS)
-static	char	sccsid[] = "@(#)ipf.c	1.23 6/5/96 (C) 1993-1995 Darren Reed";
-static	char	rcsid[] = "$DRId: ipf.c,v 2.0.1.2 1997/02/04 14:37:46 darrenr Exp $";
+#if !defined(lint)
+static const char sccsid[] = "@(#)ipf.c	1.23 6/5/96 (C) 1993-1995 Darren Reed";
+static const char rcsid[] = "@(#)$Id: ipf.c,v 1.11 1998/01/26 04:13:35 dgregor Exp $";
 #endif
 
+static	void	frsync __P((void));
 #if	SOLARIS
-void	frsync(), blockunknown();
+static	void	blockunknown __P((void));
 #endif
-void	zerostats();
+#if !defined(__SVR4) && defined(__GNUC__)
+extern	char	*index __P((const char *, int));
+#endif
 
 extern	char	*optarg;
+
+void	zerostats __P((void));
+int	main __P((int, char *[]));
 
 int	opts = 0;
 
 static	int	fd = -1;
 
-static	void	procfile(), flushfilter(), set_state();
-static	void	packetlogon(), swapactive(), showstats();
-static	char   *getline();
+static	void	procfile __P((char *, char *)), flushfilter __P((char *));
+static	void	set_state __P((u_int)), showstats __P((friostat_t *));
+static	void	packetlogon __P((char *)), swapactive __P((void));
+static	int	opendevice __P((char *));
+static	void	closedevice __P((void));
+static	char	*getline __P((char *, size_t, FILE *));
+static	char	*ipfname = IPL_NAME;
 
 int main(argc,argv)
 int argc;
 char *argv[];
 {
-	char	c;
+	int c;
 
-	while ((c = getopt(argc, argv, "AdDEf:F:Il:noprsUvyzZ")) != -1) {
+	while ((c = getopt(argc, argv, "AdDEf:F:Il:noPrsUvyzZ")) != -1) {
 		switch (c)
 		{
-		case 'E' :
-			set_state(1);
-			break;
-		case 'D' :
-			set_state(0);
-			break;
 		case 'A' :
 			opts &= ~OPT_INACTIVE;
+			break;
+		case 'E' :
+			set_state((u_int)1);
+			break;
+		case 'D' :
+			set_state((u_int)0);
 			break;
 		case 'd' :
 			opts |= OPT_DEBUG;
@@ -95,8 +108,8 @@ char *argv[];
 		case 'o' :
 			opts |= OPT_OUTQUE;
 			break;
-		case 'p' :
-			opts |= OPT_PRINTFR;
+		case 'P' :
+			ipfname = IPL_AUTH;
 			break;
 		case 'r' :
 			opts |= OPT_REMOVE;
@@ -112,11 +125,9 @@ char *argv[];
 		case 'v' :
 			opts |= OPT_VERBOSE;
 			break;
-#if SOLARIS
 		case 'y' :
 			frsync();
 			break;
-#endif
 		case 'z' :
 			opts |= OPT_ZERORULEST;
 			break;
@@ -134,23 +145,34 @@ char *argv[];
 }
 
 
-static int opendevice()
+static int opendevice(ipfdev)
+char *ipfdev;
 {
 	if (opts & OPT_DONOTHING)
 		return -2;
 
+	if (!ipfdev)
+		ipfdev = ipfname;
+
 	if (!(opts & OPT_DONOTHING) && fd == -1)
-		if ((fd = open(IPL_NAME, O_RDWR)) == -1)
-			if ((fd = open(IPL_NAME, O_RDONLY)) == -1)
+		if ((fd = open(ipfdev, O_RDWR)) == -1)
+			if ((fd = open(ipfname, O_RDONLY)) == -1)
 				perror("open device");
 	return fd;
+}
+
+
+static void closedevice()
+{
+	close(fd);
+	fd = -1;
 }
 
 
 static	void	set_state(enable)
 u_int	enable;
 {
-	if (opendevice() != -2)
+	if (opendevice(ipfname) != -2)
 		if (ioctl(fd, SIOCFRENB, &enable) == -1)
 			perror("SIOCFRENB");
 	return;
@@ -164,7 +186,7 @@ char	*name, *file;
 	struct	frentry	*fr;
 	u_int	add = SIOCADAFR, del = SIOCRMAFR;
 
-	(void) opendevice();
+	(void) opendevice(ipfname);
 
 	if (opts & OPT_INACTIVE) {
 		add = SIOCADIFR;
@@ -187,14 +209,14 @@ char	*name, *file;
 		/*
 		 * treat both CR and LF as EOL
 		 */
-		if ((s = strchr(line, '\n')))
+		if ((s = index(line, '\n')))
 			*s = '\0';
-		if ((s = strchr(line, '\r')))
+		if ((s = index(line, '\r')))
 			*s = '\0';
 		/*
 		 * # is comment marker, everything after is a ignored
 		 */
-		if ((s = strchr(line, '#')))
+		if ((s = index(line, '#')))
 			*s = '\0';
 
 		if (!*line)
@@ -210,9 +232,11 @@ char	*name, *file;
 			if (opts & OPT_ZERORULEST)
 				add = SIOCZRLST;
 			else if (opts & OPT_INACTIVE)
-				add = fr->fr_hits ? SIOCINIFR : SIOCADIFR;
+				add = (u_int)fr->fr_hits ? SIOCINIFR :
+							   SIOCADIFR;
 			else
-				add = fr->fr_hits ? SIOCINAFR : SIOCADAFR;
+				add = (u_int)fr->fr_hits ? SIOCINAFR :
+							   SIOCADAFR;
 			if (fr->fr_hits)
 				fr->fr_hits--;
 			if (fr && (opts & OPT_VERBOSE))
@@ -228,7 +252,11 @@ char	*name, *file;
 				if (ioctl(fd, add, fr) == -1)
 					perror("ioctl(SIOCZRLST)");
 				else {
+#ifdef	USE_QUAD_T
+					printf("hits %qd bytes %qd ",
+#else
 					printf("hits %ld bytes %ld ",
+#endif
 						fr->fr_hits, fr->fr_bytes);
 					printfr(fr);
 				}
@@ -254,14 +282,17 @@ size_t	size;
 FILE	*file;
 {
 	register char *p;
+	register int len;
 
 	do {
-		for (p = str;; p+= strlen(p) - 1) {
+		for (p = str; ; p += strlen(p) - 1) {
 			if (!fgets(p, size, file))
 				return(NULL);
-			p[strlen(p) -1] = '\0';
-			if (p[strlen(p) - 1] != '\\')
+			len = strlen(p);
+			p[len - 1] = '\0';
+			if (p[len - 1] != '\\')
 				break;
+			size -= len;
 		}
 	} while (*str == '\0' || *str == '\n');
 	return(str);
@@ -282,23 +313,23 @@ char	*opt;
 
 	flag &= ~(FF_LOGPASS|FF_LOGNOMATCH|FF_LOGBLOCK);
 
-	if (strchr(opt, 'p')) {
+	if (index(opt, 'p')) {
 		flag |= FF_LOGPASS;
 		if (opts & OPT_VERBOSE)
 			printf("set log flag: pass\n");
 	}
-	if (strchr(opt, 'm') && (*opt == 'n' || *opt == 'N')) {
+	if (index(opt, 'm') && (*opt == 'n' || *opt == 'N')) {
 		flag |= FF_LOGNOMATCH;
 		if (opts & OPT_VERBOSE)
 			printf("set log flag: nomatch\n");
 	}
-	if (strchr(opt, 'b') || strchr(opt, 'd')) {
+	if (index(opt, 'b') || index(opt, 'd')) {
 		flag |= FF_LOGBLOCK;
 		if (opts & OPT_VERBOSE)
 			printf("set log flag: block\n");
 	}
 
-	if (opendevice() != -2 && (err = ioctl(fd, SIOCSETFF, &flag)))
+	if (opendevice(ipfname) != -2 && (err = ioctl(fd, SIOCSETFF, &flag)))
 		perror("ioctl(SIOCSETFF)");
 
 	if ((opts & (OPT_DONOTHING|OPT_VERBOSE)) == OPT_VERBOSE) {
@@ -317,6 +348,24 @@ char	*arg;
 
 	if (!arg || !*arg)
 		return;
+	if (!strcmp(arg, "s") || !strcmp(arg, "S")) {
+		if (*arg == 'S')
+			fl = 0;
+		else
+			fl = 1;
+		rem = fl;
+
+		closedevice();
+		if (opendevice(IPL_STATE) != -2 &&
+		    ioctl(fd, SIOCIPFFL, &fl) == -1)
+			perror("ioctl(SIOCIPFFL)");
+		if ((opts & (OPT_DONOTHING|OPT_VERBOSE)) == OPT_VERBOSE) {
+			printf("remove flags %s (%d)\n", arg, rem);
+			printf("removed %d filter rules\n", fl);
+		}
+		closedevice();
+		return;
+	}
 	if (strchr(arg, 'i') || strchr(arg, 'I'))
 		fl = FR_INQUE;
 	if (strchr(arg, 'o') || strchr(arg, 'O'))
@@ -326,7 +375,7 @@ char	*arg;
 	fl |= (opts & FR_INACTIVE);
 	rem = fl;
 
-	if (opendevice() != -2 && ioctl(fd, SIOCIPFFL, &fl) == -1)
+	if (opendevice(ipfname) != -2 && ioctl(fd, SIOCIPFFL, &fl) == -1)
 		perror("ioctl(SIOCIPFFL)");
 	if ((opts & (OPT_DONOTHING|OPT_VERBOSE)) == OPT_VERBOSE) {
 		printf("remove flags %s%s (%d)\n", (rem & FR_INQUE) ? "I" : "",
@@ -341,29 +390,27 @@ static void swapactive()
 {
 	int in = 2;
 
-	if (opendevice() != -2 && ioctl(fd, SIOCSWAPA, &in) == -1)
+	if (opendevice(ipfname) != -2 && ioctl(fd, SIOCSWAPA, &in) == -1)
 		perror("ioctl(SIOCSWAPA)");
 	else
 		printf("Set %d now inactive\n", in);
 }
 
 
-#if defined(sun) && (defined(__SVR4) || defined(__svr4__))
-void frsync()
+static void frsync()
 {
-	if (opendevice() != -2 && ioctl(fd, SIOCFRSYN, 0) == -1)
+	if (opendevice(ipfname) != -2 && ioctl(fd, SIOCFRSYN, 0) == -1)
 		perror("SIOCFRSYN");
 	else
 		printf("filter sync'd\n");
 }
-#endif
 
 
 void zerostats()
 {
 	friostat_t	fio;
 
-	if (opendevice() != -2) {
+	if (opendevice(ipfname) != -2) {
 		if (ioctl(fd, SIOCFRZST, &fio) == -1) {
 			perror("ioctl(SIOCFRZST)");
 			exit(-1);
@@ -407,11 +454,11 @@ friostat_t	*fp;
 
 
 #if SOLARIS
-void blockunknown()
+static void blockunknown()
 {
 	int	flag;
 
-	if (opendevice() == -1)
+	if (opendevice(ipfname) == -1)
 		return;
 
 	if ((opts & (OPT_DONOTHING|OPT_VERBOSE)) == OPT_VERBOSE) {
@@ -423,7 +470,7 @@ void blockunknown()
 
 	flag ^= FF_BLOCKNONIP;
 
-	if (opendevice() != -2 && ioctl(fd, SIOCSETFF, &flag))
+	if (opendevice(ipfname) != -2 && ioctl(fd, SIOCSETFF, &flag))
 		perror("ioctl(SIOCSETFF)");
 
 	if ((opts & (OPT_DONOTHING|OPT_VERBOSE)) == OPT_VERBOSE) {

@@ -1,6 +1,9 @@
 /*
  * Based upon 4.4BSD's /usr/sbin/arp
  */
+#include <unistd.h>
+#include <string.h>
+#include <stdlib.h>
 #include <sys/param.h>
 #include <sys/file.h>
 #include <sys/socket.h>
@@ -16,6 +19,14 @@
 #include <errno.h>
 #include <nlist.h>
 #include <stdio.h>
+#include <netinet/in.h>
+#include <netinet/ip_var.h>
+#include <netinet/tcp.h>
+#if __FreeBSD_version >= 300000
+# include <net/if_var.h>
+#endif
+#include "ipsend.h"
+
 
 /*
  * lookup host and return
@@ -49,7 +60,7 @@ char	*addr, *eaddr;
 {
 	int	mib[6];
 	size_t	needed;
-	char	*host, *malloc(), *lim, *buf, *next;
+	char	*lim, *buf, *next;
 	struct	rt_msghdr	*rtm;
 	struct	sockaddr_inarp	*sin;
 	struct	sockaddr_dl	*sdl;

@@ -1,5 +1,6 @@
+/*    $OpenBSD: misc.c,v 1.6 1998/01/26 04:16:42 dgregor Exp $     */
 /*
- * (C)opyright 1993,1994,1995 by Darren Reed.
+ * Copyright (C) 1993-1997 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
@@ -8,13 +9,14 @@
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
+#include <sys/types.h>
 #if !defined(__SVR4) && !defined(__svr4__)
 #include <strings.h>
 #else
 #include <sys/byteorder.h>
 #endif
-#include <sys/types.h>
 #include <sys/param.h>
+#include <sys/time.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <stddef.h>
@@ -23,33 +25,36 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netinet/in_systm.h>
+#ifndef	linux
 #include <netinet/ip_var.h>
+#endif
+#ifdef __OpenBSD__
+#include <machine/stdarg.h>
+#endif
 #include <netinet/ip.h>
 #include <netinet/udp.h>
 #include <netinet/tcp.h>
 #include <netinet/ip_icmp.h>
-#include <netinet/tcpip.h>
 #include <net/if.h>
-#include "ip_fil_compat.h"
-#include "ip_fil.h"
 #include <netdb.h>
 #include <arpa/nameser.h>
 #include <resolv.h>
+#include "ip_fil_compat.h"
+#include <netinet/tcpip.h>
+#include "ip_fil.h"
 #include "ipf.h"
 #include "ipt.h"
 
-#if !defined(lint) && defined(LIBC_SCCS)
-static	char	sccsid[] = "@(#)misc.c	1.3 2/4/96 (C) 1995 Darren Reed";
-static	char	rcsid[] = "$Id: misc.c,v 1.5 1997/02/11 22:24:01 kstailey Exp $";
+#if !defined(lint)
+static const char sccsid[] = "@(#)misc.c	1.3 2/4/96 (C) 1995 Darren Reed";
+static const char rcsid[] = "@(#)$Id: misc.c,v 1.6 1998/01/26 04:16:42 dgregor Exp $";
 #endif
-
-void	debug(), verbose();
 
 extern	int	opts;
 
 
 void	printpacket(ip)
-struct	ip	*ip;
+ip_t	*ip;
 {
 	struct	tcphdr	*tcp;
 
@@ -69,18 +74,35 @@ struct	ip	*ip;
 	putchar('\n');
 }
 
-
-void	verbose(fmt, p1, p2, p3, p4, p5, p6, p7, p8, p9)
-char	*fmt, *p1, *p2, *p3, *p4, *p5, *p6, *p7,*p8,*p9;
+#ifdef __STDC__
+void	verbose(char *fmt, ...)
+#else
+void	verbose(fmt, va_alist)
+char	*fmt;
+va_dcl
+#endif
 {
+	va_list pvar;
+
+	va_start(pvar, fmt);
 	if (opts & OPT_VERBOSE)
-		printf(fmt, p1, p2, p3, p4, p5, p6, p7, p8, p9);
+		vprintf(fmt, pvar);
+	va_end(pvar);
 }
 
 
-void	debug(fmt, p1, p2, p3, p4, p5, p6, p7, p8, p9)
-char	*fmt, *p1, *p2, *p3, *p4, *p5, *p6, *p7,*p8,*p9;
+#ifdef	__STDC__
+void	debug(char *fmt, ...)
+#else
+void	debug(fmt, va_alist)
+char *fmt;
+va_dcl
+#endif
 {
+	va_list pvar;
+
+	va_start(pvar, fmt);
 	if (opts & OPT_DEBUG)
-		printf(fmt, p1, p2, p3, p4, p5, p6, p7, p8, p9);
+		vprintf(fmt, pvar);
+	va_end(pvar);
 }

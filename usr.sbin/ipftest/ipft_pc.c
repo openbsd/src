@@ -1,6 +1,6 @@
-/*	$OpenBSD: ipft_pc.c,v 1.7 1997/06/23 16:44:49 kstailey Exp $	*/
+/*    $OpenBSD: ipft_pc.c,v 1.8 1998/01/26 04:16:35 dgregor Exp $     */
 /*
- * (C)opyright 1993-1996 by Darren Reed.
+ * Copyright (C) 1993-1997 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
@@ -21,17 +21,20 @@
 #include <sys/param.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
+#ifndef	linux
 #include <netinet/ip_var.h>
+#endif
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
-#include <netinet/tcpip.h>
 #include <net/if.h>
+#include "ip_fil_compat.h"
+#include <netinet/tcpip.h>
 #include "ipf.h"
 #include "ipt.h"
 #include "pcap.h"
 
-#if !defined(lint) && defined(LIBC_SCCS)
-static	char	rcsid[] = "$DRId: ipft_pc.c,v 2.0.1.1 1997/01/09 15:14:44 darrenr Exp $";
+#if !defined(lint)
+static const char rcsid[] = "@(#)$Id: ipft_pc.c,v 1.8 1998/01/26 04:16:35 dgregor Exp $";
 #endif
 
 struct	llc	{
@@ -60,7 +63,11 @@ static	struct	llc	llcs[DLT_MAX+1] = {
 	{ 0, 0, 0 }	/* DLT_FDDI */
 };
 
-static	int	pcap_open(), pcap_close(), pcap_readip();
+static	int	pcap_open __P((char *));
+static	int	pcap_close __P((void));
+static	int	pcap_readip __P((char *, int, char **, int *));
+static	void	swap_hdr __P((pcaphdr_t *));
+static	int	pcap_read_rec __P((struct pcap_pkthdr *));
 
 static	int	pfd = -1, s_type = -1, swapped = 0;
 

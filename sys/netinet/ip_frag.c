@@ -1,16 +1,13 @@
-/*	$OpenBSD: ip_frag.c,v 1.7 1997/02/11 22:23:20 kstailey Exp $	*/
 /*
- * (C)opyright 1993,1994,1995 by Darren Reed.
+ * Copyright (C) 1993-1997 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  */
-#if 0
-#if !defined(lint) && defined(LIBC_SCCS)
-static	char	sccsid[] = "@(#)ip_frag.c	1.11 3/24/96 (C) 1993-1995 Darren Reed";
-static	char	rcsid[] = "Id: ip_frag.c,v 2.0.1.1 1997/01/09 15:14:43 darrenr Exp";
-#endif
+#if !defined(lint)
+static const char sccsid[] = "@(#)ip_frag.c	1.11 3/24/96 (C) 1993-1995 Darren Reed";
+static const char rcsid[] = "@(#)$Id: ip_frag.c,v 1.8 1998/01/26 04:10:41 dgregor Exp $";
 #endif
 
 #if !defined(_KERNEL) && !defined(KERNEL)
@@ -20,16 +17,26 @@ static	char	rcsid[] = "Id: ip_frag.c,v 2.0.1.1 1997/01/09 15:14:43 darrenr Exp";
 #include <sys/errno.h>
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/time.h>
 #include <sys/file.h>
+#if defined(KERNEL) && (__FreeBSD_version >= 220000)
+#include <sys/filio.h>
+#include <sys/fcntl.h>
+#else
 #include <sys/ioctl.h>
+#endif
 #include <sys/uio.h>
+#ifndef linux
 #include <sys/protosw.h>
+#endif
 #include <sys/socket.h>
-#ifdef	_KERNEL
+#if defined(_KERNEL) && !defined(linux)
 # include <sys/systm.h>
 #endif
 #if !defined(__SVR4) && !defined(__svr4__)
-# include <sys/mbuf.h>
+# ifndef linux
+#  include <sys/mbuf.h>
+# endif
 #else
 # include <sys/byteorder.h>
 # include <sys/dditypes.h>
@@ -45,43 +52,44 @@ static	char	rcsid[] = "Id: ip_frag.c,v 2.0.1.1 1997/01/09 15:14:43 darrenr Exp";
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
+#ifndef linux
 #include <netinet/ip_var.h>
+#endif
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
-#include <netinet/tcpip.h>
 #include <netinet/ip_icmp.h>
 #include "ip_fil_compat.h"
+#include <netinet/tcpip.h>
 #include "ip_fil.h"
-#include "ip_frag.h"
+#include "ip_proxy.h"
 #include "ip_nat.h"
+#include "ip_frag.h"
 #include "ip_state.h"
+#include "ip_auth.h"
 
 ipfr_t	*ipfr_heads[IPFT_SIZE];
+ipfr_t	*ipfr_nattab[IPFT_SIZE];
 ipfrstat_t ipfr_stats;
-u_long	ipfr_inuse = 0;
-u_long	fr_ipfrttl = 120;	/* 60 seconds */
+int	ipfr_inuse = 0,
+	fr_ipfrttl = 120;	/* 60 seconds */
 #ifdef _KERNEL
 extern	int	ipfr_timer_id;
 #endif
-#if	SOLARIS
-# ifdef	_KERNEL
+#if	(SOLARIS || defined(__sgi)) && defined(_KERNEL)
 extern	kmutex_t	ipf_frag;
-# else
-#define	bcmp(a,b,c)	memcmp(a,b,c)
-#define	bcopy(a,b,c)	memmove(b,a,c)
-# endif
+extern	kmutex_t	ipf_natfrag;
+extern	kmutex_t	ipf_nat;
 #endif
 
-# if BSD < 199306
-int	ipfr_slowtimer __P((void));
-#else
-void	ipfr_slowtimer __P((void));
-#endif
 
-ipfrstat_t *
-ipfr_fragstats()
+static ipfr_t *ipfr_new __P((ip_t *, fr_info_t *, int, ipfr_t **));
+static ipfr_t *ipfr_lookup __P((ip_t *, fr_info_t *, ipfr_t **));
+
+
+ipfrstat_t *ipfr_fragstats()
 {
 	ipfr_stats.ifs_table = ipfr_heads;
+	ipfr_stats.ifs_nattab = ipfr_nattab;
 	ipfr_stats.ifs_inuse = ipfr_inuse;
 	return &ipfr_stats;
 }
@@ -91,11 +99,11 @@ ipfr_fragstats()
  * add a new entry to the fragment cache, registering it as having come
  * through this box, with the result of the filter operation.
  */
-int
-ipfr_newfrag(ip, fin, pass)
-	ip_t *ip;
-	fr_info_t *fin;
-	int pass;
+static ipfr_t *ipfr_new(ip, fin, pass, table)
+ip_t *ip;
+fr_info_t *fin;
+int pass;
+ipfr_t *table[];
 {
 	ipfr_t	**fp, *fr, frag;
 	u_int	idx;
@@ -115,33 +123,75 @@ ipfr_newfrag(ip, fin, pass)
 	/*
 	 * first, make sure it isn't already there...
 	 */
-	MUTEX_ENTER(&ipf_frag);
-	for (fp = &ipfr_heads[idx]; (fr = *fp); fp = &fr->ipfr_next)
+	for (fp = &table[idx]; (fr = *fp); fp = &fr->ipfr_next)
 		if (!bcmp((char *)&frag.ipfr_src, (char *)&fr->ipfr_src,
 			  IPFR_CMPSZ)) {
 			ipfr_stats.ifs_exists++;
-			MUTEX_EXIT(&ipf_frag);
-			return -1;
+			return NULL;
 		}
 
-	if (!(fr = (ipfr_t *)KMALLOC(sizeof(*fr)))) {
+	/*
+	 * allocate some memory, if possible, if not, just record that we
+	 * failed to do so.
+	 */
+	KMALLOC(fr, ipfr_t *, sizeof(*fr));
+	if (fr == NULL) {
 		ipfr_stats.ifs_nomem++;
-		MUTEX_EXIT(&ipf_frag);
-		return -1;
+		return NULL;
 	}
-	if ((fr->ipfr_next = ipfr_heads[idx]))
-		ipfr_heads[idx]->ipfr_prev = fr;
+
+	/*
+	 * Instert the fragment into the fragment table, copy the struct used
+	 * in the search using bcopy rather than reassign each field.
+	 * Set the ttl to the default and mask out logging from "pass"
+	 */
+	if ((fr->ipfr_next = table[idx]))
+		table[idx]->ipfr_prev = fr;
 	fr->ipfr_prev = NULL;
-	ipfr_heads[idx] = fr;
+	fr->ipfr_data = NULL;
+	table[idx] = fr;
 	bcopy((char *)&frag.ipfr_src, (char *)&fr->ipfr_src, IPFR_CMPSZ);
 	fr->ipfr_ttl = fr_ipfrttl;
 	fr->ipfr_pass = pass & ~(FR_LOGFIRST|FR_LOG);
+	/*
+	 * Compute the offset of the expected start of the next packet.
+	 */
 	fr->ipfr_off = (ip->ip_off & 0x1fff) + (fin->fin_dlen >> 3);
-	*fp = fr;
 	ipfr_stats.ifs_new++;
 	ipfr_inuse++;
+	return fr;
+}
+
+
+int ipfr_newfrag(ip, fin, pass)
+ip_t *ip;
+fr_info_t *fin;
+int pass;
+{
+	ipfr_t	*ipf;
+
+	MUTEX_ENTER(&ipf_frag);
+	ipf = ipfr_new(ip, fin, pass, ipfr_heads);
 	MUTEX_EXIT(&ipf_frag);
-	return 0;
+	return ipf ? 0 : -1;
+}
+
+
+int ipfr_nat_newfrag(ip, fin, pass, nat)
+ip_t *ip;
+fr_info_t *fin;
+int pass;
+nat_t *nat;
+{
+	ipfr_t	*ipf;
+
+	MUTEX_ENTER(&ipf_natfrag);
+	if ((ipf = ipfr_new(ip, fin, pass, ipfr_nattab))) {
+		ipf->ipfr_data = nat;
+		nat->nat_data = ipf;
+	}
+	MUTEX_EXIT(&ipf_natfrag);
+	return ipf ? 0 : -1;
 }
 
 
@@ -149,18 +199,19 @@ ipfr_newfrag(ip, fin, pass)
  * check the fragment cache to see if there is already a record of this packet
  * with its filter result known.
  */
-int
-ipfr_knownfrag(ip, fin)
-	ip_t *ip;
-	fr_info_t *fin;
+static ipfr_t *ipfr_lookup(ip, fin, table)
+ip_t *ip;
+fr_info_t *fin;
+ipfr_t *table[];
 {
 	ipfr_t	*f, frag;
 	u_int	idx;
-	int	ret;
 
 	/*
 	 * For fragments, we record protocol, packet id, TOS and both IP#'s
 	 * (these should all be the same for all fragments of a packet).
+	 *
+	 * build up a hash value to index the table with.
 	 */
 	frag.ipfr_p = ip->ip_p;
 	idx = ip->ip_p;
@@ -174,67 +225,140 @@ ipfr_knownfrag(ip, fin)
 	idx *= 127;
 	idx %= IPFT_SIZE;
 
-	MUTEX_ENTER(&ipf_frag);
-	for (f = ipfr_heads[idx]; f; f = f->ipfr_next)
+	/*
+	 * check the table, careful to only compare the right amount of data
+	 */
+	for (f = table[idx]; f; f = f->ipfr_next)
 		if (!bcmp((char *)&frag.ipfr_src, (char *)&f->ipfr_src,
 			  IPFR_CMPSZ)) {
 			u_short	atoff, off;
 
-			if (f != ipfr_heads[idx]) {
+			if (f != table[idx]) {
 				/*
 				 * move fragment info. to the top of the list
 				 * to speed up searches.
 				 */
 				if ((f->ipfr_prev->ipfr_next = f->ipfr_next))
 					f->ipfr_next->ipfr_prev = f->ipfr_prev;
-				f->ipfr_next = ipfr_heads[idx];
-				ipfr_heads[idx]->ipfr_prev = f;
+				f->ipfr_next = table[idx];
+				table[idx]->ipfr_prev = f;
 				f->ipfr_prev = NULL;
-				ipfr_heads[idx] = f;
+				table[idx] = f;
 			}
-			ret = f->ipfr_pass;
 			off = ip->ip_off;
-			atoff = (off & 0x1fff) - (fin->fin_dlen >> 3);
+			atoff = off + (fin->fin_dlen >> 3);
 			/*
 			 * If we've follwed the fragments, and this is the
 			 * last (in order), shrink expiration time.
 			 */
-			if (atoff == f->ipfr_off) {
+			if ((off & 0x1fff) == f->ipfr_off) {
 				if (!(off & IP_MF))
 					f->ipfr_ttl = 1;
 				else
-					f->ipfr_off = off;
+					f->ipfr_off = atoff;
 			}
 			ipfr_stats.ifs_hits++;
-			MUTEX_EXIT(&ipf_frag);
-			return ret;
+			return f;
 		}
+	return NULL;
+}
+
+
+/*
+ * functional interface for NAT lookups of the NAT fragment cache
+ */
+nat_t *ipfr_nat_knownfrag(ip, fin)
+ip_t *ip;
+fr_info_t *fin;
+{
+	nat_t	*nat;
+	ipfr_t	*ipf;
+
+	MUTEX_ENTER(&ipf_natfrag);
+	ipf = ipfr_lookup(ip, fin, ipfr_nattab);
+	if (ipf) {
+		nat = ipf->ipfr_data;
+		/*
+		 * This is the last fragment for this packet.
+		 */
+		if (ipf->ipfr_ttl == 1) {
+			nat->nat_data = NULL;
+			ipf->ipfr_data = NULL;
+		}
+	} else
+		nat = NULL;
+	MUTEX_EXIT(&ipf_natfrag);
+	return nat;
+}
+
+
+/*
+ * functional interface for normal lookups of the fragment cache
+ */
+int ipfr_knownfrag(ip, fin)
+ip_t *ip;
+fr_info_t *fin;
+{
+	int	ret;
+	ipfr_t	*ipf;
+
+	MUTEX_ENTER(&ipf_frag);
+	ipf = ipfr_lookup(ip, fin, ipfr_heads);
+	ret = ipf ? ipf->ipfr_pass : 0;
 	MUTEX_EXIT(&ipf_frag);
-	return 0;
+	return ret;
+}
+
+
+/*
+ * forget any references to this external object.
+ */
+void ipfr_forget(nat)
+void *nat;
+{
+	ipfr_t	*fr;
+	int	idx;
+
+	MUTEX_ENTER(&ipf_natfrag);
+	for (idx = IPFT_SIZE - 1; idx >= 0; idx--)
+		for (fr = ipfr_heads[idx]; fr; fr = fr->ipfr_next)
+			if (fr->ipfr_data == nat)
+				fr->ipfr_data = NULL;
+
+	MUTEX_EXIT(&ipf_natfrag);
 }
 
 
 /*
  * Free memory in use by fragment state info. kept.
  */
-void
-ipfr_unload()
+void ipfr_unload()
 {
 	ipfr_t	**fp, *fr;
+	nat_t	*nat;
 	int	idx;
-#if	!SOLARIS && defined(_KERNEL)
-	int	s;
-#endif
 
 	MUTEX_ENTER(&ipf_frag);
-	SPLNET(s);
 	for (idx = IPFT_SIZE - 1; idx >= 0; idx--)
 		for (fp = &ipfr_heads[idx]; (fr = *fp); ) {
 			*fp = fr->ipfr_next;
 			KFREE(fr);
 		}
-	SPLX(s);
 	MUTEX_EXIT(&ipf_frag);
+
+	MUTEX_ENTER(&ipf_nat);
+	MUTEX_ENTER(&ipf_natfrag);
+	for (idx = IPFT_SIZE - 1; idx >= 0; idx--)
+		for (fp = &ipfr_nattab[idx]; (fr = *fp); ) {
+			*fp = fr->ipfr_next;
+			if ((nat = (nat_t *)fr->ipfr_data)) {
+				if (nat->nat_data == fr)
+					nat->nat_data = NULL;
+			}
+			KFREE(fr);
+		}
+	MUTEX_EXIT(&ipf_natfrag);
+	MUTEX_EXIT(&ipf_nat);
 }
 
 
@@ -243,19 +367,28 @@ ipfr_unload()
  * Slowly expire held state for fragments.  Timeouts are set * in expectation
  * of this being called twice per second.
  */
-# if BSD < 199306
-int
+# if (BSD >= 199306) || SOLARIS || defined(__sgi)
+void ipfr_slowtimer()
 # else
-void
+int ipfr_slowtimer()
 # endif
-ipfr_slowtimer()
 {
 	ipfr_t	**fp, *fr;
+	nat_t	*nat;
 	int	s, idx;
 
-	MUTEX_ENTER(&ipf_frag);
-	SPLNET(s);
+#ifdef __sgi
+	ipfilter_sgi_intfsync();
+#endif
 
+	SPL_NET(s);
+	MUTEX_ENTER(&ipf_frag);
+
+	/*
+	 * Go through the entire table, looking for entries to expire,
+	 * decreasing the ttl by one for each entry.  If it reaches 0,
+	 * remove it from the chain and free it.
+	 */
 	for (idx = IPFT_SIZE - 1; idx >= 0; idx--)
 		for (fp = &ipfr_heads[idx]; (fr = *fp); ) {
 			--fr->ipfr_ttl;
@@ -273,17 +406,51 @@ ipfr_slowtimer()
 			} else
 				fp = &fr->ipfr_next;
 		}
-	SPLX(s);
-# if	SOLARIS
 	MUTEX_EXIT(&ipf_frag);
+
+	/*
+	 * Same again for the NAT table, except that if the structure also
+	 * still points to a NAT structure, and the NAT structure points back
+	 * at the one to be free'd, NULL the reference from the NAT struct.
+	 * NOTE: We need to grab both mutex's early, and in this order so as
+	 * to prevent a deadlock if both try to expire at the same time.
+	 */
+	MUTEX_ENTER(&ipf_nat);
+	MUTEX_ENTER(&ipf_natfrag);
+	for (idx = IPFT_SIZE - 1; idx >= 0; idx--)
+		for (fp = &ipfr_nattab[idx]; (fr = *fp); ) {
+			--fr->ipfr_ttl;
+			if (fr->ipfr_ttl == 0) {
+				if (fr->ipfr_prev)
+					fr->ipfr_prev->ipfr_next =
+					     fr->ipfr_next;
+				if (fr->ipfr_next)
+					fr->ipfr_next->ipfr_prev =
+					     fr->ipfr_prev;
+				*fp = fr->ipfr_next;
+				ipfr_stats.ifs_expire++;
+				ipfr_inuse--;
+				if ((nat = (nat_t *)fr->ipfr_data)) {
+					if (nat->nat_data == fr)
+						nat->nat_data = NULL;
+				}
+				KFREE(fr);
+			} else
+				fp = &fr->ipfr_next;
+		}
+	MUTEX_EXIT(&ipf_natfrag);
+	MUTEX_EXIT(&ipf_nat);
+	SPL_X(s);
 	fr_timeoutstate();
 	ip_natexpire();
-	ipfr_timer_id = timeout(ipfr_slowtimer, NULL, HZ/2);
+	fr_authexpire();
+# if	SOLARIS
+	ipfr_timer_id = timeout(ipfr_slowtimer, NULL, drv_usectohz(500000));
 # else
-	fr_timeoutstate();
-	ip_natexpire();
+#  ifndef linux
 	ip_slowtimo();
-#  if BSD < 199306
+#  endif
+#  if (BSD < 199306) && !defined(__sgi)
 	return 0;
 #  endif
 # endif
