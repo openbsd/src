@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tlreg.h,v 1.3 1999/09/13 20:41:40 jason Exp $	*/
+/*	$OpenBSD: if_tlreg.h,v 1.4 1999/09/13 20:45:26 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -111,10 +111,8 @@ struct tl_chain_data {
 };
 
 struct tl_softc {
-#ifdef __OpenBSD__
 	struct device		sc_dev;		/* generic device structure */
 	void *			sc_ih;		/* interrupt handler cookie */
-#endif
 	struct arpcom		arpcom;		/* interface info */
 	struct ifmedia		ifmedia;	/* media info */
 	bus_space_handle_t	tl_bhandle;
@@ -137,9 +135,6 @@ struct tl_softc {
 	struct tl_chain_data	tl_cdata;
 	u_int8_t		tl_txeoc;
 	u_int8_t		tl_bitrate;
-#ifdef __FreeBSD__
-	struct callout_handle	tl_stat_ch;
-#endif
 };
 
 /*
