@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.2 2000/03/02 07:44:08 itojun Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.3 2000/03/12 03:56:44 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -336,7 +336,6 @@ int rcvhlim;
 struct in6_pktinfo *rcvpktinfo;
 
 struct sockaddr_in6 Src, Dst, Rcv;
-struct sockaddr_in6 *src = &Src, *rcv = &Rcv;
 int datalen;			/* How much data */
 /* XXX: 2064 = 127(max hops in type 0 rthdr) * sizeof(ip6_hdr) + 16(margin) */
 char rtbuf[2064];
@@ -374,9 +373,8 @@ main(argc, argv)
 	struct addrinfo hints, *res;
 	extern char *optarg;
 	extern int optind;
-	int ch, i, on, probe, seq, hops;
-	static u_char rcvcmsgbuf[CMSG_SPACE(sizeof(struct in6_pktinfo))
-				+ CMSG_SPACE(sizeof(int))];
+	int ch, i, on, probe, seq, hops, rcvcmsglen;
+	static u_char *rcvcmsgbuf;
 	char hbuf[NI_MAXHOST];
 
 	on = 1;
@@ -523,7 +521,7 @@ main(argc, argv)
 	datalen += sizeof(struct opacket);
 	outpacket = (struct opacket *)malloc((unsigned)datalen);
 	if (! outpacket) {
-		perror("traceroute6: malloc");
+		perror("malloc");
 		exit(1);
 	}
 	(void) bzero((char *)outpacket, datalen);
@@ -532,18 +530,24 @@ main(argc, argv)
 	 * Receive ICMP
 	 */
 	if ((rcvsock = socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6)) < 0) {
-		perror("traceroute6: icmp socket");
+		perror("socket(ICMPv6)");
 		exit(5);
 	}
 	/* initialize msghdr for receiving packets */
 	rcviov[0].iov_base = (caddr_t)packet;
 	rcviov[0].iov_len = sizeof(packet);
-	rcvmhdr.msg_name = (caddr_t)rcv;
-	rcvmhdr.msg_namelen = sizeof(*rcv);
+	rcvmhdr.msg_name = (caddr_t)&Rcv;
+	rcvmhdr.msg_namelen = sizeof(Rcv);
 	rcvmhdr.msg_iov = rcviov;
 	rcvmhdr.msg_iovlen = 1;
+	rcvcmsglen = CMSG_SPACE(sizeof(struct in6_pktinfo))
+		+ CMSG_SPACE(sizeof(int));
+	if ((rcvcmsgbuf = malloc(rcvcmsglen)) == NULL) {
+		Fprintf(stderr, "traceroute6: malloc failed\n");
+		exit(1);
+	}
 	rcvmhdr.msg_control = (caddr_t) rcvcmsgbuf;
-	rcvmhdr.msg_controllen = sizeof(rcvcmsgbuf);
+	rcvmhdr.msg_controllen = rcvcmsglen;
 
 	/* specify to tell receiving interface */
 #ifdef IPV6_RECVPKTINFO
@@ -610,13 +614,13 @@ main(argc, argv)
 	 * Send UDP
 	 */
 	if ((sndsock = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
-		perror("traceroute6: udp socket");
+		perror("socket(SOCK_DGRAM)");
 		exit(5);
 	}
 #ifdef SO_SNDBUF
 	if (setsockopt(sndsock, SOL_SOCKET, SO_SNDBUF, (char *)&datalen,
 		       sizeof(datalen)) < 0) {
-		perror("traceroute6: SO_SNDBUF");
+		perror("setsockopt(SO_SNDBUF)");
 		exit(6);
 	}
 #endif /* SO_SNDBUF */
@@ -683,39 +687,73 @@ main(argc, argv)
 	/*
 	 * Source selection
 	 */
-	bzero((char *)src, sizeof(Src));
+	bzero(&Src, sizeof(Src));
 	if (source) {
-		if (inet_pton(AF_INET6, source, &Src.sin6_addr) != 1) {
-			Printf("traceroute6: unknown host %s\n", source);
+		struct addrinfo hints, *res;
+		int error;
+
+		memset(&hints, 0, sizeof(hints));
+		hints.ai_family = AF_INET6;
+		hints.ai_socktype = SOCK_DGRAM;	/*dummy*/
+		hints.ai_flags = AI_NUMERICHOST;
+		error = getaddrinfo(source, "0", &hints, &res);
+		if (error) {
+			Printf("traceroute6: %s: %s\n", source,
+			    gai_strerror(error));
 			exit(1);
 		}
+		if (res->ai_addrlen > sizeof(Src)) {
+			Printf("traceroute6: %s: %s\n", source,
+			    gai_strerror(error));
+			exit(1);
+		}
+		memcpy(&Src, res->ai_addr, res->ai_addrlen);
+		freeaddrinfo(res);
 	} else {
 		struct sockaddr_in6 Nxt;
 		int dummy, len;
 
-		len = sizeof(Src);
 		Nxt = Dst;
 		Nxt.sin6_port = htons(DUMMY_PORT);
 		if (cmsg != NULL)
 			bcopy(inet6_rthdr_getaddr(cmsg, 1), &Nxt.sin6_addr,
 			      sizeof(Nxt.sin6_addr));
 		if ((dummy = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
-			perror("socket") ;
+			perror("socket");
+			exit(1);
 		}
-		if(-1 == connect(dummy, (struct sockaddr *)&Nxt, sizeof(Nxt)))
+		if (connect(dummy, (struct sockaddr *)&Nxt, Nxt.sin6_len) < 0) {
 			perror("connect");
-		if(-1 == getsockname(dummy, (struct sockaddr *)src, &len)) {
-			perror("getsockname");
-			printf("%d\n", errno);
+			exit(1);
 		}
-		close(dummy) ;
+		len = sizeof(Src);
+		if (getsockname(dummy, (struct sockaddr *)&Src, &len) < 0) {
+			perror("getsockname");
+			exit(1);
+		}
+		close(dummy);
 	}
+
+#if 1
 	ident = (getpid() & 0xffff) | 0x8000;
-	Src.sin6_family = AF_INET6;
+#else
+	ident = 0;	/*let the kernel pick one*/
+#endif
 	Src.sin6_port = htons(ident);
-	if (bind(sndsock, (struct sockaddr *)src, sizeof(Src))  < 0){
-		perror ("traceroute6: bind:");
-		exit (1);
+	if (bind(sndsock, (struct sockaddr *)&Src, Src.sin6_len) < 0) {
+		perror("bind");
+		exit(1);
+	}
+
+	if (ident == 0) {
+		int len;
+
+		len = sizeof(Src);
+		if (getsockname(sndsock, (struct sockaddr *)&Src, &i) < 0) {
+			perror("getsockname");
+			exit(1);
+		}
+		ident = ntohs(Src.sin6_port);
 	}
 
 	/*
@@ -1048,7 +1086,7 @@ packet_ok(mhdr, cc, seq)
 	}
 	if (verbose) {
 		int i;
-		u_long *lp = (u_long *)(icp + 1);
+		u_int8_t *p;
 		char sbuf[NI_MAXHOST+1], dbuf[INET6_ADDRSTRLEN];
 
 		if (getnameinfo((struct sockaddr *)from, from->sin6_len,
@@ -1059,8 +1097,19 @@ packet_ok(mhdr, cc, seq)
 				   dbuf, sizeof(dbuf)));
 		Printf(": icmp type %d (%s) code %d\n", type, pr_type(type),
 		       icp->icmp6_code);
-		for (i = 4; i < cc ; i += sizeof(long))
-			Printf("%2d: %8.8x\n", i, (u_int32_t)ntohl(*lp++));
+		p = (u_int8_t *)(icp + 1);
+#define WIDTH	16
+		for (i = 0; i < cc; i++) {
+			if (i % WIDTH == 0)
+				Printf("%04x:", i);
+			if (i % 4 == 0)
+				Printf(" ");
+			Printf("%02x", p[i]);
+			if (i % WIDTH == WIDTH - 1)
+				Printf("\n");
+		}
+		if (cc % WIDTH != 0)
+			Printf("\n");
 	}
 	return(0);
 }
