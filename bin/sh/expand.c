@@ -1,4 +1,4 @@
-/*    $OpenBSD: expand.c,v 1.5 1996/11/02 05:18:24 millert Exp $     */
+/*    $OpenBSD: expand.c,v 1.6 1996/11/02 16:00:04 millert Exp $     */
 /*    $NetBSD: expand.c,v 1.20 1996/02/12 15:11:41 christos Exp $     */
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-static char rcsid[] = "$OpenBSD: expand.c,v 1.5 1996/11/02 05:18:24 millert Exp $";
+static char rcsid[] = "$OpenBSD: expand.c,v 1.6 1996/11/02 16:00:04 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -705,10 +705,9 @@ varisset(name)
 	} else if (is_digit(*name)) {
 		int num = atoi(name);
 		ap = shellparam.p;
-		do {
+		while (--num >= 0)
 			if (*ap++ == NULL)
 				return 0;
-		} while (--num >= 0);
 	}
 	return 1;
 }
