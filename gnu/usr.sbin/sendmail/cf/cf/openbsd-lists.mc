@@ -8,14 +8,14 @@ divert(-1)
 #
 
 divert(0)dnl
-VERSIONID(`$OpenBSD: openbsd-lists.mc,v 1.14 2002/07/03 16:06:19 millert Exp $')
+VERSIONID(`$OpenBSD: openbsd-lists.mc,v 1.15 2003/11/10 19:11:55 millert Exp $')
 OSTYPE(openbsd)dnl
 dnl
 dnl Advertise ourselves as ``openbsd.org''
 define(`confSMTP_LOGIN_MSG', `openbsd.org Sendmail $v/$Z/millert ready willing and able at $b')dnl
 dnl
 dnl Override some default values
-define(`confPRIVACY_FLAGS', `authwarnings, nobodyreturn')dnl
+define(`confPRIVACY_FLAGS', `authwarnings,needmailhelo,noexpn,novrfy,noetrn,noverb,nobodyreturn')dnl
 define(`confTRY_NULL_MX_LIST', `True')dnl
 define(`confMAX_HOP', `30')dnl
 define(`confQUEUE_LA', `6')dnl
