@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.19 1997/02/11 05:00:55 tholo Exp $	*/
+/*	$OpenBSD: su.c,v 1.20 1997/02/11 18:26:32 millert Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)su.c	5.26 (Berkeley) 7/6/91";*/
-static char rcsid[] = "$OpenBSD: su.c,v 1.19 1997/02/11 05:00:55 tholo Exp $";
+static char rcsid[] = "$OpenBSD: su.c,v 1.20 1997/02/11 18:26:32 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -189,10 +189,10 @@ main(argc, argv)
 
 	if (ruid) {
 #ifdef KERBEROS
-	    if (!use_kerberos || kerberos(username, user, pwd->pw_uid))
+	    if (use_kerberos == 0 ||
+		(use_kerberos = !kerberos(username, user, pwd->pw_uid)) == 0)
 #endif
 	    {
-		use_kerberos = 0;
 		/* only allow those in group zero to su to root. */
 		if (pwd->pw_uid == 0 && (gr = getgrgid((gid_t)0))
 		    && gr->gr_mem && *(gr->gr_mem))
