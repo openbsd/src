@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.31 2004/06/21 23:50:37 tholo Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.32 2004/10/28 08:43:03 itojun Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -67,8 +67,6 @@ static void pfxrtr_add(struct nd_prefix *, struct nd_defrouter *);
 static void pfxrtr_del(struct nd_pfxrouter *);
 static struct nd_pfxrouter *find_pfxlist_reachable_router(struct nd_prefix *);
 static void defrouter_delreq(struct nd_defrouter *);
-static void defrouter_addifreq(struct ifnet *);
-static void defrouter_delifreq(void);
 static void nd6_rtmsg(int, struct rtentry *);
 
 static void in6_init_address_ltimes(struct nd_prefix *,
@@ -80,7 +78,6 @@ extern int nd6_recalc_reachtm_interval;
 
 static struct ifnet *nd6_defifp;
 int nd6_defifindex;
-static struct ifaddr *nd6_defif_installed = NULL;
 
 /*
  * Receive Router Solicitation Message - just for routers.
@@ -472,102 +469,6 @@ defrouter_addreq(new)
 	return;
 }
 
-/* Add a route to a given interface as default */
-static void
-defrouter_addifreq(ifp)
-	struct ifnet *ifp;
-{
-	struct sockaddr_in6 def, mask;
-	struct ifaddr *ifa;
-	struct rtentry *newrt = NULL;
-	int error, flags;
-	struct rt_addrinfo info;
-
-	/* remove one if we have already installed one */
-	if (nd6_defif_installed)
-		defrouter_delifreq();
-
-	bzero(&def, sizeof(def));
-	bzero(&mask, sizeof(mask));
-
-	def.sin6_len = mask.sin6_len = sizeof(struct sockaddr_in6);
-	def.sin6_family = mask.sin6_family = AF_INET6;
-
-	/*
-	 * Search for an ifaddr beloging to the specified interface.
-	 * XXX: An IPv6 address are required to be assigned on the interface.
-	 */
-	if ((ifa = ifaof_ifpforaddr((struct sockaddr *)&def, ifp)) == NULL) {
-		nd6log((LOG_ERR,	/* better error? */
-		    "defrouter_addifreq: failed to find an ifaddr "
-		    "to install a route to interface %s\n",
-		    ifp->if_xname));
-		return;
-	}
-
-	/* RTF_CLONING is necessary to make sure to perform ND */
-	flags = ifa->ifa_flags | RTF_CLONING;
-	bzero(&info, sizeof(info));
-	info.rti_info[RTAX_DST] = (struct sockaddr *)&def;
-	info.rti_info[RTAX_GATEWAY] = (struct sockaddr *)ifa->ifa_addr;
-	info.rti_info[RTAX_NETMASK] = (struct sockaddr *)&mask;
-	info.rti_info[RTAX_IFA] = (struct sockaddr *)ifa->ifa_addr;
-	info.rti_flags = flags;
-	error = rtrequest1(RTM_ADD, &info, &newrt);
-	if (error != 0) {
-		nd6log((LOG_ERR,
-		    "defrouter_addifreq: failed to install a route to "
-		    "interface %s (errno = %d)\n",
-		    ifp->if_xname, error));
-
-		if (newrt)	/* maybe unnecessary, but do it for safety */
-			newrt->rt_refcnt--;
-	} else {
-		if (newrt) {
-			nd6_rtmsg(RTM_ADD, newrt);
-			newrt->rt_refcnt--;
-		}
-	}
-
-	nd6_defif_installed = ifa;
-	ifa->ifa_refcnt++;
-}
-
-/* Remove a default route points to interface */
-static void
-defrouter_delifreq()
-{
-	struct sockaddr_in6 def, mask;
-	struct rtentry *oldrt = NULL;
-
-	if (!nd6_defif_installed)
-		return;
-
-	Bzero(&def, sizeof(def));
-	Bzero(&mask, sizeof(mask));
-
-	def.sin6_len = mask.sin6_len = sizeof(struct sockaddr_in6);
-	def.sin6_family = mask.sin6_family = AF_INET6;
-
-	rtrequest(RTM_DELETE, (struct sockaddr *)&def,
-	    (struct sockaddr *)nd6_defif_installed->ifa_addr,
-	    (struct sockaddr *)&mask, RTF_GATEWAY, &oldrt);
-	if (oldrt) {
-		nd6_rtmsg(RTM_DELETE, oldrt);
-		if (oldrt->rt_refcnt <= 0) {
-			/*
-			 * XXX: borrowed from the RTM_DELETE case of
-			 * rtrequest().
-			 */
-			oldrt->rt_refcnt++;
-			rtfree(oldrt);
-		}
-	}
-
-	IFAFREE(nd6_defif_installed);
-	nd6_defif_installed = NULL;
-}
-
 struct nd_defrouter *
 defrouter_lookup(addr, ifp)
 	struct in6_addr *addr;
@@ -684,7 +585,6 @@ defrouter_reset()
 	for (dr = TAILQ_FIRST(&nd_defrouter); dr;
 	     dr = TAILQ_NEXT(dr, dr_entry))
 		defrouter_delreq(dr);
-	defrouter_delifreq();
 
 	/*
 	 * XXX should we also nuke any default routers in the kernel, by
@@ -737,46 +637,12 @@ defrouter_select()
 
 	/*
 	 * Let's handle easy case (3) first:
-	 * If default router list is empty, we should probably install
-	 * an interface route and assume that all destinations are on-link.
+	 * If default router list is empty, there's nothing to be done.
 	 */
 	if (!TAILQ_FIRST(&nd_defrouter)) {
-		/*
-		 * XXX: The specification does not say this mechanism should
-		 * be restricted to hosts, but this would be not useful
-		 * (even harmful) for routers.
-		 * This test is meaningless due to a test at the beginning of
-		 * the function, but we intentionally keep it to make the note
-		 * clear.
-		 */
-		if (!ip6_forwarding) {
-			if (nd6_defifp) {
-				/*
-				 * Install a route to the default interface
-				 * as default route.
-				 */
-				defrouter_addifreq(nd6_defifp);
-			} else {
-				/*
-				 * purge the existing route.
-				 * XXX: is this really correct?
-				 */
-				defrouter_delifreq();
-				nd6log((LOG_INFO, "defrouter_select: "
-				    "there's no default router and no default"
-				    " interface\n"));
-			}
-		}
 		splx(s);
 		return;
 	}
-
-	/*
-	 * If we have a default route for the default interface, delete it.
-	 * Note that the existence of the route is checked in the delete
-	 * function.
-	 */
-	defrouter_delifreq();
 
 	/*
 	 * Search for a (probably) reachable router from the list.
@@ -1979,7 +1845,9 @@ nd6_setdefaultiface(ifindex)
 {
 	int error = 0;
 
-	if (ifindex < 0 || if_indexlim <= ifindex || !ifindex2ifnet[ifindex])
+	if (ifindex < 0 || if_indexlim <= ifindex)
+		return (EINVAL);
+	if (ifindex != 0 && !ifindex2ifnet[ifindex])
 		return (EINVAL);
 
 	if (nd6_defifindex != ifindex) {
@@ -1988,11 +1856,6 @@ nd6_setdefaultiface(ifindex)
 			nd6_defifp = ifindex2ifnet[nd6_defifindex];
 		} else
 			nd6_defifp = NULL;
-
-		/*
-		 * Rescan default router list, refresh default route(s).
-		 */
-		defrouter_select();
 	}
 
 	return (error);
