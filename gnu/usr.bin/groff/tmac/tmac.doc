@@ -2891,10 +2891,16 @@
 ..
 .\" NS rZ macro - reference print
 .de rZ
-.if \\n(uK \{\&\\*(U1,
-.	nr aK 1
-.	if (\\n(uK>1 \{\
+.if \\n(uK \{\
+.	ie (\\n(uK>2 \{\&\\*(U1,
+.		nr aK 1
 .		aK
+.	\}
+.	el \{\
+.		ie (\\n(uK>1 \{\&\\*(U1 and \&\\*(U2,
+.		\}
+.		el \{\&\\*(U1,
+.		\}
 .	\}
 .	nr Kl -\\n(uK
 .\}
