@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.19 1999/08/13 21:10:48 deraadt Exp $
+	$OpenBSD: pcmciadevs,v 1.20 1999/08/14 05:47:41 fgsch Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -78,6 +78,7 @@ product ADAPTEC APA1460_2	0x0002 Adaptec APA-1460/B SCSI Host Adapter
 product BREEZECOM BREEZENET	0x0102 BreezeCOM BreezeNET IEEE 802.11 FHSS
 
 /* 3COM Products */
+product 3COM 3CXEM556B		0x003d 3Com/Megahertz 3CXEM556B-INT Ethernet/Modem
 product 3COM 3CXEM556		0x0035 3Com/Megahertz 3CXEM556 Ethernet/Modem
 product 3COM 3C562		0x0562 3Com 3c562 33.6 Modem/10Mbps Ethernet
 product 3COM 3C589		0x0589 3Com 3c589

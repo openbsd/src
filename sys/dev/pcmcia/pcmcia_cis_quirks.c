@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmcia_cis_quirks.c,v 1.1 1999/01/28 04:58:31 fgsch Exp $	*/
+/*	$OpenBSD: pcmcia_cis_quirks.c,v 1.2 1999/08/14 05:47:41 fgsch Exp $	*/
 /*	$NetBSD: pcmcia_cis_quirks.c,v 1.3 1998/12/29 09:00:28 marc Exp $	*/
 
 /*
@@ -115,6 +115,10 @@ static struct pcmcia_cis_quirk pcmcia_cis_quirks[] = {
 	{ PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3CXEM556, PCMCIA_CIS_INVALID, 
 	  &pcmcia_3cxem556_func0, &pcmcia_3cxem556_func0_cfe0 },
 	{ PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3CXEM556, PCMCIA_CIS_INVALID,
+	  &pcmcia_3cxem556_func1, &pcmcia_3cxem556_func1_cfe0 },
+	{ PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3CXEM556B, PCMCIA_CIS_INVALID,
+	  &pcmcia_3cxem556_func0, &pcmcia_3cxem556_func0_cfe0 },
+	{ PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3CXEM556B, PCMCIA_CIS_INVALID,
 	  &pcmcia_3cxem556_func1, &pcmcia_3cxem556_func1_cfe0 },
 	{ PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID, PCMCIA_CIS_SVEC_LANCARD,
 	  &pcmcia_sveclancard_func0, &pcmcia_sveclancard_func0_cfe0 },
