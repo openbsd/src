@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcnfsd_print.c,v 1.17 2003/04/05 10:43:39 avsm Exp $	*/
+/*	$OpenBSD: pcnfsd_print.c,v 1.18 2003/04/19 18:26:06 avsm Exp $	*/
 /*	$NetBSD: pcnfsd_print.c,v 1.3 1995/08/14 19:45:18 gwr Exp $	*/
 
 /*
@@ -220,7 +220,7 @@ pr_start2(system, pr, user, fname, opts, id)
 	*/
 	if (!stat(new_pathname, &statbuf)) {
 		if (snprintf(new_pathname, sizeof new_pathname, "%s%d.spl",
-		    rand(), pathname) >= sizeof new_pathname) {
+		    pathname, rand()) >= sizeof new_pathname) {
 			snprintf(tempstr, sizeof tempstr,
 			    "rpc.pcnfsd: spool file rename (%s->%s) failed.\n",
 			    pathname, new_pathname);
