@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.19 2003/03/03 14:47:37 deraadt Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.20 2003/03/03 19:35:17 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -498,7 +498,7 @@ initcon(struct con *cp, int fd, struct sockaddr_in *sin)
 	cp->ol = strlen(cp->op);
 	cp->w = t + 1;
 	cp->s = t;
-	strlcpy(cp->rend, "\n", sizeof cp->rend);
+	strlcpy(cp->rend, "\n\r", sizeof cp->rend);
 	clients++;
 }
 
