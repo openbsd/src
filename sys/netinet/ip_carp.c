@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.69 2004/11/16 18:13:02 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.70 2004/11/17 06:07:39 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -339,7 +339,7 @@ carp_input(struct mbuf *m, ...)
 	/* verify that the IP TTL is 255.  */
 	if (ip->ip_ttl != CARP_DFLTTL) {
 		carpstats.carps_badttl++;
-		CARP_LOG(sc, ("received ttl %d != 255i on %s", ip->ip_ttl,
+		CARP_LOG(sc, ("received ttl %d != 255 on %s", ip->ip_ttl,
 		    m->m_pkthdr.rcvif->if_xname));
 		m_freem(m);
 		return;
@@ -769,6 +769,7 @@ carp_prepare_ad(struct mbuf *m, struct carp_softc *sc, struct carp_header *ch)
 	if (mtag == NULL) {
 		m_freem(m);
 		sc->sc_ac.ac_if.if_oerrors++;
+		carpstats.carps_onomem++;
 		return (ENOMEM);
 	}
 	bcopy(&ifp, (caddr_t)(mtag + 1), sizeof(struct ifnet *));
@@ -806,7 +807,7 @@ carp_send_ad(void *v)
 	struct carp_softc *sc = v;
 	struct carp_header *ch_ptr;
 	struct mbuf *m;
-	int len, advbase, advskew, s;
+	int error, len, advbase, advskew, s;
 
 	s = splsoftnet();
 
@@ -879,7 +880,13 @@ carp_send_ad(void *v)
 		sc->sc_ac.ac_if.if_obytes += len;
 		carpstats.carps_opackets++;
 
-		if (ip_output(m, NULL, NULL, IP_RAWOUTPUT, &sc->sc_imo, NULL)) {
+		error = ip_output(m, NULL, NULL, IP_RAWOUTPUT, &sc->sc_imo,
+		    NULL);
+		if (error) {
+			if (error == ENOBUFS)
+				carpstats.carps_onomem++;
+			else
+				CARP_LOG(sc, ("ip_output failed: %d", error));
 			sc->sc_ac.ac_if.if_oerrors++;
 			if (sc->sc_sendad_errors < INT_MAX)
 				sc->sc_sendad_errors++;
@@ -945,7 +952,12 @@ carp_send_ad(void *v)
 		sc->sc_ac.ac_if.if_obytes += len;
 		carpstats.carps_opackets6++;
 
-		if (ip6_output(m, NULL, NULL, 0, &sc->sc_im6o, NULL)) {
+		error = ip6_output(m, NULL, NULL, 0, &sc->sc_im6o, NULL);
+		if (error) {
+			if (error == ENOBUFS)
+				carpstats.carps_onomem++;
+			else
+				CARP_LOG(sc, ("ip6_output failed: %d", error));
 			sc->sc_ac.ac_if.if_oerrors++;
 			if (sc->sc_sendad_errors < INT_MAX)
 				sc->sc_sendad_errors++;
