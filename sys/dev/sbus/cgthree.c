@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgthree.c,v 1.16 2002/05/21 20:25:28 jason Exp $	*/
+/*	$OpenBSD: cgthree.c,v 1.17 2002/06/02 19:51:03 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -634,14 +634,17 @@ cgthree_burner(vsc, on, flags)
 {
 	struct cgthree_softc *sc = vsc;
 	int s;
-	u_int32_t fbc;
+	u_int8_t fbc;
 
 	s = splhigh();
 	fbc = FBC_READ(sc, CG3_FBC_CTRL);
 	if (on)
-		fbc |= FBC_CTRL_VENAB;
-	else
+		fbc |= FBC_CTRL_VENAB | FBC_CTRL_TIME;
+	else {
 		fbc &= ~FBC_CTRL_VENAB;
+		if (flags & WSDISPLAY_BURN_VBLANK)
+			fbc &= ~FBC_CTRL_TIME;
+	}
 	FBC_WRITE(sc, CG3_FBC_CTRL, fbc);
 	splx(s);
 }
