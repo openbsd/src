@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pool.9,v 1.22 2003/02/24 02:26:06 deraadt Exp $
+.\"	$OpenBSD: pool.9,v 1.23 2003/04/20 20:00:25 jmc Exp $
 .\"	$NetBSD: pool.9,v 1.18 2001/06/21 11:59:01 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -147,7 +147,7 @@ and
 to allocate and release memory using the
 .Em kmem_map
 .Po
-see 
+see
 .Xr uvm 9
 .Pc .
 It is recommended to set this to
@@ -305,7 +305,7 @@ at which point the VM system will try to reclaim unused pages.
 The handle identifying the pool resource instance.
 .It Fa n
 The minimum number of items to keep in the pool.
-The number pages in the pool will not decrease below the required value to
+The number of pages in the pool will not decrease below the required value to
 accommodate the minimum number of items specified by this function.
 Unlike
 .Fn pool_prime ,

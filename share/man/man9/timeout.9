@@ -1,4 +1,4 @@
-.\"	$OpenBSD: timeout.9,v 1.19 2002/12/20 06:13:44 art Exp $
+.\"	$OpenBSD: timeout.9,v 1.20 2003/04/20 20:00:25 jmc Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -58,7 +58,7 @@ API provides a mechanism to execute a function at a given time.
 The granularity of the time is limited by the granularity of the
 .Xr hardclock 9
 timer which executes
-.Nm hz
+.Xr hz 9
 times a second.
 The function will be called at softclock interrupt level.
 .Pp
@@ -89,7 +89,7 @@ argument given in the
 argument.
 Once initialized, the
 .Fa to
-structure can be used in repeatedly in
+structure can be used repeatedly in
 .Fn timeout_add
 and
 .Fn timeout_del
@@ -142,7 +142,7 @@ macro can be used to check if a timeout has been initialized.
 The
 .Fn timeout_triggered
 macro can be used to check if a timeout is running or has been run.
-The 
+The
 .Fn timeout_add
 and
 .Fn timeout_del
