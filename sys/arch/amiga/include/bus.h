@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.9 1999/01/20 17:46:20 niklas Exp $	*/
+/*	$OpenBSD: bus.h,v 1.10 1999/09/09 21:28:14 espie Exp $	*/
 
 /*
  * Copyright (c) 1996 Niklas Hallqvist.
@@ -329,5 +329,8 @@ bus_space_free(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 {
 	/* XXX Nothing here yet.  */
 }
+
+/* let MI code be happy */
+typedef void *bus_dmamap_t;
 
 #endif /* _AMIGA_BUS_H_ */
