@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.49 2003/06/02 23:28:24 millert Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.50 2003/08/10 00:04:50 miod Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -477,7 +477,6 @@ void			uvm_init_limits(struct proc *);
 boolean_t		uvm_kernacc(caddr_t, size_t, int);
 __dead void		uvm_scheduler(void);
 void			uvm_swapin(struct proc *);
-boolean_t		uvm_useracc(caddr_t, size_t, int);
 int			uvm_vslock(struct proc *, caddr_t, size_t,
 			    vm_prot_t);
 void			uvm_vsunlock(struct proc *, caddr_t, size_t);

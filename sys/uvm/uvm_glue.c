@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_glue.c,v 1.34 2003/01/29 22:57:10 mickey Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.35 2003/08/10 00:04:50 miod Exp $	*/
 /*	$NetBSD: uvm_glue.c,v 1.44 2001/02/06 19:54:44 eeh Exp $	*/
 
 /* 
@@ -133,33 +133,6 @@ uvm_kernacc(addr, len, rw)
 	if (!readbuffers && rv && (eaddr > (vaddr_t)buffers &&
 			     saddr < (vaddr_t)buffers + MAXBSIZE * nbuf))
 		rv = FALSE;
-	return(rv);
-}
-
-/*
- * uvm_useracc: can the user access it?
- *
- * - called from physio() and sys___sysctl().
- */
-
-boolean_t
-uvm_useracc(addr, len, rw)
-	caddr_t addr;
-	size_t len;
-	int rw;
-{
-	vm_map_t map;
-	boolean_t rv;
-	vm_prot_t prot = rw == B_READ ? VM_PROT_READ : VM_PROT_WRITE;
-
-	/* XXX curproc */
-	map = &curproc->p_vmspace->vm_map;
-
-	vm_map_lock_read(map);
-	rv = uvm_map_checkprot(map, trunc_page((vaddr_t)addr),
-	    round_page((vaddr_t)addr + len), prot);
-	vm_map_unlock_read(map);
-
 	return(rv);
 }
 
