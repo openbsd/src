@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.57 2001/11/06 20:44:22 angelos Exp $
+.\" $OpenBSD: vpn.8,v 1.58 2001/11/14 06:09:05 deraadt Exp $
 .\"
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -296,7 +296,7 @@ pass out proto esp from gatewA/32 to gatewB/32
 
 # Passing in traffic from the designated subnets.
 pass in on enc0 from netB/netBmask to netA/netAmask
-pass out on enc0 from natA/netAmask to netB/netBmask
+pass out on enc0 from netA/netAmask to netB/netBmask
 
 # Passing in Photuris traffic from the security gateways
 pass in on ne0 proto udp from gatewB/32 port = 468 to gatewA/32 port = 468
