@@ -1,3 +1,4 @@
+/*	$OpenBSD: strncmp.S,v 1.2 2004/02/01 05:40:52 drahn Exp $	*/
 /*      $NetBSD: strncmp.S,v 1.2 2003/04/05 23:08:52 bjh21 Exp $ */
 
 /*

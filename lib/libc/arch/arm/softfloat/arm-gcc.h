@@ -1,3 +1,4 @@
+/*	$OpenBSD: arm-gcc.h,v 1.2 2004/02/01 05:40:52 drahn Exp $	*/
 /* $NetBSD: arm-gcc.h,v 1.2 2001/02/21 18:09:25 bjh21 Exp $ */
 
 /*

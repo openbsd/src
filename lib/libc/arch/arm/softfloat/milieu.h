@@ -1,3 +1,4 @@
+/*	$OpenBSD: milieu.h,v 1.2 2004/02/01 05:40:52 drahn Exp $	*/
 /* $NetBSD: milieu.h,v 1.1 2000/12/29 20:13:54 bjh21 Exp $ */
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: fpgetround.c,v 1.2 2004/02/01 05:40:52 drahn Exp $	*/
 /* $NetBSD: fpgetround.c,v 1.2 2002/01/13 21:45:53 thorpej Exp $ */
 
 /*-

@@ -1,3 +1,4 @@
+/*	$OpenBSD: softfloat-specialize.h,v 1.2 2004/02/01 05:40:52 drahn Exp $	*/
 /*	$NetBSD: softfloat-specialize,v 1.3 2002/05/12 13:12:45 bjh21 Exp $	*/
 
 /* This is a derivative work. */

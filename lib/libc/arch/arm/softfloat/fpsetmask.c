@@ -1,3 +1,4 @@
+/*	$OpenBSD: fpsetmask.c,v 1.2 2004/02/01 05:40:52 drahn Exp $	*/
 /* $NetBSD: fpsetmask.c,v 1.3 2002/05/12 13:12:45 bjh21 Exp $ */
 
 /*-

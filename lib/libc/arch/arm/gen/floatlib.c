@@ -1,3 +1,4 @@
+/*	$OpenBSD: floatlib.c,v 1.2 2004/02/01 05:40:52 drahn Exp $	*/
 /*
 ** libgcc support for software floating point.
 ** Copyright (C) 1991 by Pipeline Associates, Inc.  All rights reserved.

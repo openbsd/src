@@ -1,3 +1,4 @@
+/*	$OpenBSD: Ovfork.S,v 1.2 2004/02/01 05:40:52 drahn Exp $	*/
 /*	$NetBSD: Ovfork.S,v 1.6 2003/08/07 16:42:03 agc Exp $	*/
 
 /*-

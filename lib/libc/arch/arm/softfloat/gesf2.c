@@ -1,3 +1,4 @@
+/*	$OpenBSD: gesf2.c,v 1.2 2004/02/01 05:40:52 drahn Exp $	*/
 /* $NetBSD: gesf2.c,v 1.1 2000/06/06 08:15:05 bjh21 Exp $ */
 
 /*
