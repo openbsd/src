@@ -1,0 +1,27 @@
+dnl	$OpenBSD: xfer,v 1.1 2003/10/31 03:57:47 drahn Exp $
+Installation is supported from several media types, including:
+
+	CDROM
+	FFS partitions
+	FTP
+	HTTP
+
+OpenBSDXferShortPrelude
+
+OpenBSDXferBareTape(xbase xfont xserv xshare)
+
+OpenBSDXferFFS
+dnl	$OpenBSD: xfer,v 1.1 2003/10/31 03:57:47 drahn Exp $
+Installation is supported from several media types, including:
+
+	CDROM
+	FFS partitions
+	Tape
+	FTP
+	HTTP
+
+OpenBSDXferShortPrelude
+
+OpenBSDXferBareTape(xbase xfont xserv xshare)
+
+OpenBSDXferFFS

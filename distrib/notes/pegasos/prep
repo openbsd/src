@@ -1,0 +1,154 @@
+To be able to boot the OpenBSD/MACHINE installation program, you will
+need to acquire some limited knowledge of OpenFirmware, the low-level
+process that controls the microprocessor after hardware initialization
+and diagnostics are performed but before control is handed to the
+operating system.
+
+XXX
+
+Important Open Firmware command examples:
+
+boot cd:OFWBOOT /OSREV/MACHINE/bsd.rd
+		(boot from an appropriately prepared
+		OpenBSD CD in the CD/DVD drive)
+
+boot net: ofwboot /bsd.rd
+		(netboot from a pre-configured bootp/tftp/nfs
+		server containing the "ofwboot" and "bsd.rd"
+		files at the root directory of the tftp server)
+
+boot /pci/ide/disk:3,ofwboot /bsd /bsd
+		(After installation, boot /bsd from the primary
+		 device on the first ATA bus, the /bsd is specified
+		 TWICE because openfirmware seems to loose the first
+		 argument)
+
+
+printenv	(print current machine variables)
+setenv		(set a machine variable)
+devalias	(list device aliases; useful for locating other
+		devices in the machine such as hard drives etc)
+
+Other Open Firmware command examples:
+
+setenv auto-boot? false
+		(force the machine to wait at Open Firmware
+		for user input at next reboot; options are true/false)
+
+devalias hd /pci/ide/disk
+		Create a devalias so that booting is simplied
+setenv boot-device hd:3,ofwboot
+		(force the machine to boot into OpenBSD
+		automatically at next reboot)
+
+dev /		(change to root level of the device tree)
+pwd		(show current location in the device tree)
+ls		(show items at current location in the device tree)
+words		(show methods of items at current location in the device
+		tree)
+.properties	(show properties of items at current location in the
+		device tree)
+
+Autobooting OpenBSD/MACHINE
+
+It is possible to automatically boot into OpenBSD
+by setting up the following:
+
+setenv auto-boot? true
+setenv boot-device hd:3,ofwboot
+
+These settings assume that the master of the first IDE bus has OpenBSD
+installed on it, in MBR format.  It is not necessary to specify '/bsd'
+on the boot line or in the boot-device variable, since it is the
+default.
+
+XXX
+
+Sharing a disk with MorphOS:
+It is not currently possible to share a disk with MorphOS, Amiga labeled
+disks are not currently supported
+
+OpenBSD/MACHINE is capable of booting from a dedicated disk using a
+MBR partitioned disk, CD containing a ISO image or a firmware supported
+ethernet card.
+
+For dedicated disks, MACHINE port boots off a boot program in
+the FFS 'a' filesystem. This is set up by the install program
+and no special setup is required.
+To be able to boot the OpenBSD/MACHINE installation program, you will
+need to acquire some limited knowledge of OpenFirmware, the low-level
+process that controls the microprocessor after hardware initialization
+and diagnostics are performed but before control is handed to the
+operating system.
+
+XXX
+
+Important Open Firmware command examples:
+
+boot cd:OFWBOOT /OSREV/MACHINE/bsd.rd
+		(boot from an appropriately prepared
+		OpenBSD CD in the CD/DVD drive)
+
+boot net: ofwboot /bsd.rd
+		(netboot from a pre-configured bootp/tftp/nfs
+		server containing the "ofwboot" and "bsd.rd"
+		files at the root directory of the tftp server)
+
+boot /pci/ide/disk:3,ofwboot /bsd /bsd
+		(After installation, boot /bsd from the primary
+		 device on the first ATA bus, the /bsd is specified
+		 TWICE because openfirmware seems to loose the first
+		 argument)
+
+
+printenv	(print current machine variables)
+setenv		(set a machine variable)
+devalias	(list device aliases; useful for locating other
+		devices in the machine such as hard drives etc)
+
+Other Open Firmware command examples:
+
+setenv auto-boot? false
+		(force the machine to wait at Open Firmware
+		for user input at next reboot; options are true/false)
+
+devalias hd /pci/ide/disk
+		Create a devalias so that booting is simplied
+setenv boot-device hd:3,ofwboot
+		(force the machine to boot into OpenBSD
+		automatically at next reboot)
+
+dev /		(change to root level of the device tree)
+pwd		(show current location in the device tree)
+ls		(show items at current location in the device tree)
+words		(show methods of items at current location in the device
+		tree)
+.properties	(show properties of items at current location in the
+		device tree)
+
+Autobooting OpenBSD/MACHINE
+
+It is possible to automatically boot into OpenBSD
+by setting up the following:
+
+setenv auto-boot? true
+setenv boot-device hd:3,ofwboot
+
+These settings assume that the master of the first IDE bus has OpenBSD
+installed on it, in MBR format.  It is not necessary to specify '/bsd'
+on the boot line or in the boot-device variable, since it is the
+default.
+
+XXX
+
+Sharing a disk with MorphOS:
+It is not currently possible to share a disk with MorphOS, Amiga labeled
+disks are not currently supported
+
+OpenBSD/MACHINE is capable of booting from a dedicated disk using a
+MBR partitioned disk, CD containing a ISO image or a firmware supported
+ethernet card.
+
+For dedicated disks, MACHINE port boots off a boot program in
+the FFS 'a' filesystem. This is set up by the install program
+and no special setup is required.
