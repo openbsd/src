@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.31 2001/11/06 19:53:19 miod Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.32 2001/12/13 23:52:15 niklas Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2120,7 +2120,8 @@ void ti_init2(sc)
 	}
 
 	/* Init RX ring. */
-	ti_init_rx_ring_std(sc);
+	if (ti_init_rx_ring_std(sc) == ENOBUFS)
+		panic("not enough mbufs for rx ring");
 
 	/* Init jumbo RX ring. */
 	if (ifp->if_mtu > (ETHERMTU + ETHER_HDR_LEN + ETHER_CRC_LEN))
