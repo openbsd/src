@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.224 2000/03/20 07:33:07 rahnds Exp $
+	$OpenBSD: pcidevs,v 1.225 2000/03/20 07:40:44 rahnds Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -663,18 +663,6 @@ product ALLIANCE AT24		0x6424	AT24
 /* Alteon products */
 product ALTEON ACENIC		0x0001	Acenic
 
-/* Apple products */
-product APPLE BANDIT		0x0001	PCI
-product APPLE GC		0x0002	PCI
-product APPLE OHARE		0x0007	PCI
-product APPLE HEATHROW		0x0010	MACIO
-product APPLE PADDINGTON	0x0017	MACIO
-product APPLE UNINORTHETH	0x001e	PCI
-product APPLE UNINORTH		0x001f	PCI
-product APPLE UNINORTHAGP	0x0020	AGP
-product APPLE GMAC		0x0021	GMAC
-product APPLE KEYLARGO		0x0022	MACIO
-
 /* AMD products */
 product AMD PCNET_PCI		0x2000	79c970 PCnet-PCI LANCE
 product AMD PCHOME_PCI		0x2001	79c978 PChome-PCI LANCE
@@ -688,6 +676,18 @@ product AMD PBC756_ISA		0x7408  756 PCI-to-ISA Bridge
 product AMD PBC756_IDE		0x7409  756 IDE
 product AMD PBC756_PMC		0x740B  756 Power Management
 product AMD PBC756_USB		0x740C  756 USB Host
+
+/* Apple products */
+product APPLE BANDIT		0x0001	PCI
+product APPLE GC		0x0002	PCI
+product APPLE OHARE		0x0007	PCI
+product APPLE HEATHROW		0x0010	MACIO
+product APPLE PADDINGTON	0x0017	MACIO
+product APPLE UNINORTHETH	0x001e	PCI
+product APPLE UNINORTH		0x001f	PCI
+product APPLE UNINORTHAGP	0x0020	AGP
+product APPLE GMAC		0x0021	GMAC
+product APPLE KEYLARGO		0x0022	MACIO
 
 /* ARC Logic products */
 product ARC 1000PV		0xa091	1000PV
