@@ -1,4 +1,4 @@
-.\"	$OpenBSD: elf2aout.1,v 1.2 1997/05/05 09:32:34 graichen Exp $
+.\"	$OpenBSD: elf2aout.1,v 1.3 1998/06/12 12:09:44 d Exp $
 .\"
 .\" Copyright (c) 1996 Per Fogelstrom
 .\" 
@@ -50,8 +50,9 @@ to a.out format, into file
 .Ar aoutexec
 , suitable for bootstrapping certain
 .Nm MIPS
-systems. Systems requiering this
-conversion is the
-.Nm pmax.
+systems.
+The systems currently requiring this
+conversion are:
+.Nm pmax .
 .Sh DIAGNOSTICS
 If the conversion fails a diagnostic message is printed to explain the cause.
