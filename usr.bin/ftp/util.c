@@ -1,5 +1,5 @@
-/*	$OpenBSD: util.c,v 1.10 1997/06/10 19:39:54 millert Exp $	*/
-/*	$NetBSD: util.c,v 1.7 1997/04/14 09:09:24 lukem Exp $	*/
+/*	$OpenBSD: util.c,v 1.11 1997/07/25 21:56:23 millert Exp $	*/
+/*	$NetBSD: util.c,v 1.11 1997/07/21 14:03:49 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: util.c,v 1.10 1997/06/10 19:39:54 millert Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.11 1997/07/25 21:56:23 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -49,6 +49,7 @@ static char rcsid[] = "$OpenBSD: util.c,v 1.10 1997/06/10 19:39:54 millert Exp $
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <glob.h>
 #include <pwd.h>
 #include <signal.h>
@@ -71,7 +72,7 @@ setpeer(argc, argv)
 	char *argv[];
 {
 	char *host;
-	short port;
+	in_port_t port;
 
 	if (connected) {
 		fprintf(ttyout, "Already connected to %s, use close first.\n",
@@ -88,14 +89,19 @@ setpeer(argc, argv)
 	}
 	port = ftpport;
 	if (argc > 2) {
-		port = atoi(argv[2]);
-		if (port <= 0) {
-			fprintf(ttyout, "%s: bad port number '%s'.\n", argv[1], argv[2]);
-			fprintf(ttyout, "usage: %s host-name [port]\n", argv[0]);
+		char *ep;
+		long nport;
+
+		nport = strtol(argv[2], &ep, 10);
+		if (nport < 1 || nport > 0xffff || *ep != '\0') {
+			fprintf(ttyout, "%s: bad port number '%s'.\n",
+			    argv[1], argv[2]);
+			fprintf(ttyout, "usage: %s host-name [port]\n",
+			    argv[0]);
 			code = -1;
 			return;
 		}
-		port = htons(port);
+		port = htons((in_port_t)nport);
 	}
 	host = hookup(argv[1], port);
 	if (host) {
@@ -183,7 +189,7 @@ login(host, user, pass)
 	char *acct;
 	char anonpass[MAXLOGNAME + 1 + MAXHOSTNAMELEN];	/* "user@hostname" */
 	char hostname[MAXHOSTNAMELEN];
-	int n, aflag, retry = 0;
+	int n, aflag = 0, retry = 0;
 
 	acct = NULL;
 	if (user == NULL) {
@@ -220,13 +226,12 @@ login(host, user, pass)
 		    user, hp->h_name);
 #endif
 		pass = anonpass;
-		user = "ftp";
+		user = "anonymous";	/* as per RFC 1635 */
 	}
 
 tryagain:
-
 	if (retry)
-		user = "anonymous";
+		user = "ftp";		/* some servers only allow "ftp" */
 
 	while (user == NULL) {
 		char *myname = getlogin();
@@ -303,7 +308,7 @@ another(pargc, pargv, prompt)
 	}
 	fprintf(ttyout, "(%s) ", prompt);
 	line[len++] = ' ';
-	if (fgets(&line[len], sizeof(line) - len, stdin) == NULL)
+	if (fgets(&line[len], (int)(sizeof(line) - len), stdin) == NULL)
 		intr();
 	len += strlen(&line[len]);
 	if (len > 0 && line[len - 1] == '\n')
@@ -481,11 +486,19 @@ remotesize(file, noisy)
 	size = -1;
 	if (debug == 0)
 		verbose = -1;
-	if (command("SIZE %s", file) == COMPLETE)
-		sscanf(reply_string, "%*s %qd", &size);
-	else if (noisy && debug == 0) {
+	if (command("SIZE %s", file) == COMPLETE) {
+		char *cp, *ep;
+
+		cp = strchr(reply_string, ' ');
+		if (cp != NULL) {
+			cp++;
+			size = strtoq(cp, &ep, 10);
+			if (*ep != '\0' && !isspace(*ep))
+				size = -1;
+		}
+	} else if (noisy && debug == 0) {
 		fputs(reply_string, ttyout);
-		fputs("\n", ttyout);
+		fputc('\n', ttyout);
 	}
 	verbose = overbose;
 	return (size);
@@ -526,7 +539,7 @@ remotemodtime(file, noisy)
 			rtime += timebuf.tm_gmtoff;	/* conv. local -> GMT */
 	} else if (noisy && debug == 0) {
 		fputs(reply_string, ttyout);
-		fputs("\n", ttyout);
+		fputc('\n', ttyout);
 	}
 	verbose = overbose;
 	return (rtime);
@@ -548,8 +561,11 @@ foregroundproc()
 	    ctty_pgrp == pgrp));
 }
 
+void updateprogressmeter __P((int));
+
 void
-updateprogressmeter()
+updateprogressmeter(dummy)
+	int dummy;
 {
 
 	if (foregroundproc())
@@ -618,7 +634,7 @@ progressmeter(flag)
 		abbrevsize >>= 10;
 	}
 	snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
-	    " %5qd %c%c ", abbrevsize, prefixes[i],
+	    " %5qd %c%c ", (quad_t)abbrevsize, prefixes[i],
 	    prefixes[i] == ' ' ? ' ' : 'B');
 
 	timersub(&now, &lastupdate, &wait);
@@ -635,7 +651,7 @@ progressmeter(flag)
 	timersub(&now, &start, &td);
 	elapsed = td.tv_sec + (td.tv_usec / 1000000.0);
 
-	if (bytes <= 0 || elapsed <= 0.0) {
+	if (bytes <= 0 || elapsed <= 0.0 || cursize > filesize) {
 		snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
 		    "   --:-- ETA");
 	} else if (wait.tv_sec >= STALLTIME) {
@@ -697,13 +713,15 @@ ptransfer(siginfo)
 		meg = 1;
 	(void)snprintf(buf, sizeof(buf),
 	    "%qd byte%s %s in %.2f seconds (%.2f %sB/s)\n",
-	    bytes, bytes == 1 ? "" : "s", direction, elapsed,
+	    (quad_t)bytes, bytes == 1 ? "" : "s", direction, elapsed,
 	    bs / (1024.0 * (meg ? 1024.0 : 1.0)), meg ? "M" : "K");
-	if (siginfo && bytes > 0 && elapsed > 0.0 && filesize >= 0) {
+	if (siginfo && bytes > 0 && elapsed > 0.0 && filesize >= 0
+	    && bytes + restart_point <= filesize) {
 		remaining = (int)((filesize - restart_point) /
 				  (bytes / elapsed) - elapsed);
 		hh = remaining / 3600;
 		remaining %= 3600;
+			/* "buf+len(buf) -1" to overwrite \n */
 		snprintf(buf + strlen(buf) - 1, sizeof(buf) - strlen(buf),
 		    "  ETA: %02d:%02d:%02d\n", hh, remaining / 60,
 		    remaining % 60);

@@ -1,5 +1,5 @@
-/*	$OpenBSD: domacro.c,v 1.6 1997/04/23 20:33:02 deraadt Exp $	*/
-/*	$NetBSD: domacro.c,v 1.9 1997/03/13 06:23:14 lukem Exp $	*/
+/*	$OpenBSD: domacro.c,v 1.7 1997/07/25 21:56:19 millert Exp $	*/
+/*	$NetBSD: domacro.c,v 1.10 1997/07/20 09:45:45 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)domacro.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: domacro.c,v 1.6 1997/04/23 20:33:02 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: domacro.c,v 1.7 1997/07/25 21:56:19 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -135,7 +135,7 @@ TOP:
 		else {
 			if (verbose) {
 				fputs(line, ttyout);
-				fputs("\n", ttyout);
+				fputc('\n', ttyout);
 			}
 			(*c->c_handler)(margc, margv);
 			if (bell && c->c_bell) {

@@ -1,5 +1,5 @@
-/*	$OpenBSD: ruserpass.c,v 1.8 1997/04/23 20:33:21 deraadt Exp $	*/
-/*	$NetBSD: ruserpass.c,v 1.13 1997/04/01 14:20:34 mrg Exp $	*/
+/*	$OpenBSD: ruserpass.c,v 1.9 1997/07/25 21:56:22 millert Exp $	*/
+/*	$NetBSD: ruserpass.c,v 1.14 1997/07/20 09:46:01 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ruserpass.c	8.4 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: ruserpass.c,v 1.8 1997/04/23 20:33:21 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ruserpass.c,v 1.9 1997/07/25 21:56:22 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -133,12 +133,14 @@ next:
 				goto match;
 			if ((tmp = strchr(hostname, '.')) != NULL &&
 			    strcasecmp(tmp, mydomain) == 0 &&
-			    strncasecmp(hostname, tokval, tmp-hostname) == 0 &&
+			    strncasecmp(hostname, tokval,
+			    (size_t)(tmp - hostname)) == 0 &&
 			    tokval[tmp - hostname] == '\0')
 				goto match;
 			if ((tmp = strchr(host, '.')) != NULL &&
 			    strcasecmp(tmp, mydomain) == 0 &&
-			    strncasecmp(host, tokval, tmp - host) == 0 &&
+			    strncasecmp(host, tokval,
+			    (size_t)(tmp - host)) == 0 &&
 			    tokval[tmp - host] == '\0')
 				goto match;
 			continue;

@@ -1,5 +1,5 @@
-/*	$OpenBSD: cmdtab.c,v 1.9 1997/04/10 00:17:08 millert Exp $	*/
-/*	$NetBSD: cmdtab.c,v 1.15 1997/04/05 03:27:33 lukem Exp $	*/
+/*	$OpenBSD: cmdtab.c,v 1.10 1997/07/25 21:56:18 millert Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.16 1997/07/20 09:45:41 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.4 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: cmdtab.c,v 1.9 1997/04/10 00:17:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: cmdtab.c,v 1.10 1997/07/25 21:56:18 millert Exp $";
 #endif
 #endif /* not lint */
 

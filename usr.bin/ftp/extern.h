@@ -1,5 +1,5 @@
-/*	$OpenBSD: extern.h,v 1.14 1997/06/10 19:39:53 millert Exp $	*/
-/*	$NetBSD: extern.h,v 1.15 1997/04/14 09:09:17 lukem Exp $	*/
+/*	$OpenBSD: extern.h,v 1.15 1997/07/25 21:56:19 millert Exp $	*/
+/*	$NetBSD: extern.h,v 1.16 1997/07/20 09:45:48 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -42,7 +42,6 @@ void    abort_remote __P((FILE *));
 void    abortpt __P((int));
 void    abortrecv __P((int));
 void    abortsend __P((int));
-void    aborthttp __P((int));
 void	account __P((int, char **));
 void	alarmtimer __P((int));
 int	another __P((int *, char ***, const char *));
@@ -69,7 +68,7 @@ char   *domap __P((char *));
 void	doproxy __P((int, char **));
 char   *dotrans __P((char *));
 int     empty __P((struct fd_set *, int));
-int	foregroundproc __P(());
+int	foregroundproc __P((void));
 void	get __P((int, char **));
 struct cmd *getcmd __P((const char *));
 int	getit __P((int, char **, int, const char *));
@@ -77,7 +76,7 @@ int	getreply __P((int));
 int	globulize __P((char **));
 char   *gunique __P((const char *));
 void	help __P((int, char **));
-char   *hookup __P((const char *, int));
+char   *hookup __P((const char *, in_port_t));
 void	idle __P((int, char **));
 int     initconn __P((void));
 void	intr __P((void));

@@ -1,5 +1,5 @@
-/*	$OpenBSD: cmds.c,v 1.20 1997/04/23 20:32:57 deraadt Exp $	*/
-/*	$NetBSD: cmds.c,v 1.23 1997/04/14 09:09:15 lukem Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.21 1997/07/25 21:56:17 millert Exp $	*/
+/*	$NetBSD: cmds.c,v 1.26 1997/07/21 14:03:48 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: cmds.c,v 1.20 1997/04/23 20:32:57 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cmds.c,v 1.21 1997/07/25 21:56:17 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -340,7 +340,7 @@ mput(argc, argv)
 					if (!*tp) {
 						tp = cp;
 						tp2 = tmpbuf;
-						while ((*tp2 = *tp) != NULL) {
+						while ((*tp2 = *tp) != '\0') {
 						     if (isupper(*tp2)) {
 						        *tp2 = 'a' + *tp2 - 'A';
 						     }
@@ -483,7 +483,7 @@ usage:
 		if (!*tp) {
 			tp = argv[2];
 			tp2 = tmpbuf;
-			while ((*tp2 = *tp) != NULL) {
+			while ((*tp2 = *tp) != '\0') {
 				if (isupper(*tp2)) {
 					*tp2 = 'a' + *tp2 - 'A';
 				}
@@ -583,17 +583,15 @@ mget(argc, argv)
 		if (mflag && confirm(argv[0], cp)) {
 			tp = cp;
 			if (mcase) {
-				for (tp2 = tmpbuf; (ch = *tp++) != NULL; )
+				for (tp2 = tmpbuf; (ch = *tp++) != 0; )
 					*tp2++ = isupper(ch) ? tolower(ch) : ch;
 				*tp2 = '\0';
 				tp = tmpbuf;
 			}
-			if (ntflag) {
+			if (ntflag)
 				tp = dotrans(tp);
-			}
-			if (mapflag) {
+			if (mapflag)
 				tp = domap(tp);
-			}
 			recvrequest("RETR", tp, cp, "w",
 			    tp != cp || !interactive);
 			if (!mflag && fromatty) {
@@ -875,8 +873,6 @@ setdebug(argc, argv)
 	int argc;
 	char *argv[];
 {
-	int val;
-
 	if (argc > 2) {
 		fprintf(ttyout, "usage: %s [ on | off | debuglevel ]\n", argv[0]);
 		code = -1;
@@ -887,13 +883,17 @@ setdebug(argc, argv)
 		else if (strcasecmp(argv[1], "off") == 0)
 			debug = 0;
 		else {
-			val = atoi(argv[1]);
-			if (val < 0) {
-				fprintf(ttyout, "%s: bad debugging value.\n", argv[1]);
+			char *ep;
+			long val;
+
+			val = strtol(argv[1], &ep, 10);
+			if (val < 0 || val > INT_MAX || *ep != '\0') {
+				fprintf(ttyout, "%s: bad debugging value.\n",
+				    argv[1]);
 				code = -1;
 				return;
 			}
-			debug = val;
+			debug = (int)val;
 		}
 	} else
 		debug = !debug;
@@ -1094,7 +1094,7 @@ mls(argc, argv)
 {
 	sig_t oldintr;
 	int ointer, i;
-	const char *cmd;
+	int dolist;
 	char mode[1], *dest;
 
 	if (argc < 2 && !another(&argc, &argv, "remote-files"))
@@ -1113,14 +1113,14 @@ usage:
 			code = -1;
 			return;
 	}
-	cmd = strcmp(argv[0], "mls") == 0 ? "NLST" : "LIST";
+	dolist = strcmp(argv[0], "mls");
 	mname = argv[0];
 	mflag = 1;
 	oldintr = signal(SIGINT, mabort);
 	(void)setjmp(jabort);
 	for (i = 1; mflag && i < argc-1; ++i) {
 		*mode = (i == 1) ? 'w' : 'a';
-		recvrequest(cmd, dest, argv[i], mode, 0);
+		recvrequest(dolist ? "LIST" : "NLST", dest, argv[i], mode, 0);
 		if (!mflag && fromatty) {
 			ointer = interactive;
 			interactive = 1;
@@ -1168,7 +1168,7 @@ shell(argc, argv)
 			shellnam[0] = '+';
 		if (debug) {
 			fputs(shell, ttyout);
-			fputs("\n", ttyout);
+			fputc('\n', ttyout);
 			(void)fflush(ttyout);
 		}
 		if (argc > 1) {
@@ -1923,7 +1923,7 @@ restart(argc, argv)
 	else {
 		restart_point = atol(argv[1]);
 		fprintf(ttyout, "Restarting at %qd. Execute get, put or append to"
-			"initiate transfer\n", restart_point);
+			"initiate transfer\n", (quad_t)restart_point);
 	}
 }
 

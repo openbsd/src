@@ -1,5 +1,5 @@
-/*	$OpenBSD: ftp_var.h,v 1.12 1997/04/23 20:33:16 deraadt Exp $	*/
-/*	$NetBSD: ftp_var.h,v 1.16 1997/04/14 09:09:23 lukem Exp $	*/
+/*	$OpenBSD: ftp_var.h,v 1.13 1997/07/25 21:56:21 millert Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.17 1997/07/20 09:45:55 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -106,7 +106,7 @@ char	bytename[32];		/* local byte size in ascii */
 int	bytesize;		/* local byte size in binary */
 int	anonftp;		/* automatic anonymous login */
 int	dirchange;		/* remote directory changed by cd command */
-int	retry_connect;		/* retry connect if failed */
+unsigned int retry_connect;	/* retry connect if failed */
 int	ttywidth;		/* width of tty */
 
 #ifndef SMALL
@@ -114,8 +114,8 @@ int	  editing;		/* command line editing enabled */
 EditLine *el;			/* editline(3) status structure */
 History  *hist;			/* editline(3) history structure */
 char	 *cursor_pos;		/* cursor position we're looking for */
-int	  cursor_argc;		/* location of cursor in margv */
-int	  cursor_argo;		/* offset of cursor in margv[cursor_argc] */
+size_t	  cursor_argc;		/* location of cursor in margv */
+size_t	  cursor_argo;		/* offset of cursor in margv[cursor_argc] */
 #endif /* !SMALL */
 
 off_t	bytes;			/* current # of bytes read */
@@ -125,8 +125,8 @@ char   *direction;		/* direction transfer is occurring */
 char	*hostname;		/* name of host connected to */
 int	unix_server;		/* server is unix, can use binary for ascii */
 int	unix_proxy;		/* proxy is unix, can use binary for ascii */
-int	ftpport;		/* port number to use for ftp connections */
-int	httpport;		/* port number to use for http connections */
+in_port_t ftpport;		/* port number to use for ftp connections */
+in_port_t httpport;		/* port number to use for http connections */
 
 jmp_buf	toplevel;		/* non-local goto stuff for cmd scanner */
 

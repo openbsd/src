@@ -1,5 +1,5 @@
-/*	$OpenBSD: main.c,v 1.33 1997/06/10 19:39:54 millert Exp $	*/
-/*	$NetBSD: main.c,v 1.21 1997/04/05 03:27:39 lukem Exp $	*/
+/*	$OpenBSD: main.c,v 1.34 1997/07/25 21:56:22 millert Exp $	*/
+/*	$NetBSD: main.c,v 1.23 1997/07/20 09:45:58 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.33 1997/06/10 19:39:54 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.34 1997/07/25 21:56:22 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -65,13 +65,16 @@ static char rcsid[] = "$OpenBSD: main.c,v 1.33 1997/06/10 19:39:54 millert Exp $
 
 #include "ftp_var.h"
 
+int main __P((int, char **));
+
 int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
 	struct servent *sp;
-	int ch, top, port, rval;
+	int ch, top, rval;
+	long port;
 	struct passwd *pw = NULL;
 	char *cp, homedir[MAXPATHLEN];
 	int dumb_terminal = 0;
@@ -115,13 +118,13 @@ main(argc, argv)
 		verbose = 1;		/* verbose if from a tty */
 #ifndef SMALL
 		if (!dumb_terminal)
-			editing = 1;	/* editing mode on if from a tty */
+			editing = 1;	/* editing mode on if tty is usable */
 #endif
 	}
 
 	ttyout = stdout;
 	if (isatty(fileno(ttyout)) && !dumb_terminal && foregroundproc())
-		progress = 1;		/* progress bar on if going to a tty */
+		progress = 1;		/* progress bar on if tty is usable */
 
 	if (!isatty(fileno(ttyout))) {
 		outfd = fileno(stdout);
@@ -162,11 +165,11 @@ main(argc, argv)
 			break;
 
 		case 'P':
-			port = atoi(optarg);
-			if (port <= 0)
+			port = strtol(optarg, &cp, 10);
+			if (port < 1 || port > 0xffff || *cp != '\0')
 				warnx("bad port number: %s (ignored)", optarg);
 			else
-				ftpport = htons(port);
+				ftpport = htons((in_port_t)port);
 			break;
 
 		case 'r':
@@ -215,6 +218,11 @@ main(argc, argv)
 
 	setttywidth(0);
 	(void)signal(SIGWINCH, setttywidth);
+
+#ifdef __GNUC__				/* XXX: to shut up gcc warnings */
+	(void)&argc;
+	(void)&argv;
+#endif
 
 	if (argc > 0) {
 		if (strchr(argv[0], ':') != NULL) {
@@ -361,7 +369,7 @@ cmdscanner(top)
 				fputs("sorry, input line too long.\n", ttyout);
 				break;
 			}
-			memcpy(line, buf, num);
+			memcpy(line, buf, (size_t)num);
 			line[num] = '\0';
 			history(hist, H_ENTER, buf);
 		}

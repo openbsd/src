@@ -1,5 +1,5 @@
-/*	$OpenBSD: complete.c,v 1.7 1997/04/23 20:33:00 deraadt Exp $	*/
-/*	$NetBSD: complete.c,v 1.7 1997/04/14 09:09:16 lukem Exp $	*/
+/*	$OpenBSD: complete.c,v 1.8 1997/07/25 21:56:18 millert Exp $	*/
+/*	$NetBSD: complete.c,v 1.9 1997/07/20 09:45:43 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #ifndef SMALL
 #ifndef lint
-static char rcsid[] = "$OpenBSD: complete.c,v 1.7 1997/04/23 20:33:00 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: complete.c,v 1.8 1997/07/25 21:56:18 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -54,6 +54,12 @@ static char rcsid[] = "$OpenBSD: complete.c,v 1.7 1997/04/23 20:33:00 deraadt Ex
 #include <string.h>
 
 #include "ftp_var.h"
+
+static int	     comparstr		__P((const void *, const void *));
+static unsigned char complete_ambiguous	__P((char *, int, StringList *));
+static unsigned char complete_command	__P((char *, int));
+static unsigned char complete_local	__P((char *, int));
+static unsigned char complete_remote	__P((char *, int));
 
 static int
 comparstr(a, b)
@@ -80,7 +86,8 @@ complete_ambiguous(word, list, words)
 {
 	char insertstr[MAXPATHLEN];
 	char *lastmatch;
-	int i, j, matchlen, wordlen;
+	int i, j;
+	size_t matchlen, wordlen;
 
 	wordlen = strlen(word);
 	if (words->sl_cur == 0)
@@ -134,7 +141,7 @@ complete_command(word, list)
 {
 	struct cmd *c;
 	StringList *words;
-	int wordlen;
+	size_t wordlen;
 	unsigned char rv;
 
 	words = sl_init();
@@ -176,7 +183,7 @@ complete_local(word, list)
 			dir[0] = '/';
 			dir[1] = '\0';
 		} else {
-			(void)strncpy(dir, word, file - word);
+			(void)strncpy(dir, word, (size_t)(file - word));
 			dir[file - word] = '\0';
 		}
 		file++;
@@ -234,28 +241,14 @@ complete_remote(word, list)
 		cp = file;
 		while (*cp == '/' && cp > word)
 			cp--;
-		if (cp == word) {
-			dir[0] = '/';
-			dir[1] = '\0';
-		} else {
-			(void)strncpy(dir, word, cp - word + 1);
-			dir[cp - word + 1] = '\0';
-		}
+		(void)strncpy(dir, word, (size_t)(cp - word + 1));
+		dir[cp - word + 1] = '\0';
 		file++;
 	}
 
 	if (dirchange || strcmp(dir, lastdir) != 0) {	/* dir not cached */
 		char *emesg;
-		int dirlen, ftpdslashbug;
 
-		dirlen = strlen(dir);
-		ftpdslashbug = 0;
-		if (strcmp(dir, "/") == 0)
-			ftpdslashbug = 1;
-		else if (strcmp(dir, ".") == 0)
-			dirlen = 0;
-		else
-			dirlen++;
 		if (dirlist != NULL)
 			sl_free(dirlist, 1);
 		dirlist = sl_init();
@@ -271,15 +264,12 @@ complete_remote(word, list)
 				mflag = 0;
 				continue;
 			}
-			/*
-			 * Work around ftpd(1) bug, which puts a // instead
-			 * of / in front of each filename returned by "NLST /".
-			 * Without this, remote completes of / don't work.
-			 * However, only do this if the bug is present.
-			 */
-			if (ftpdslashbug && (cp[dirlen] != '/'))
-				ftpdslashbug = 0;
-			tcp = strdup(cp + dirlen + ftpdslashbug);
+			tcp = strrchr(cp, '/');
+			if (tcp)
+				tcp++;
+			else
+				tcp = cp;
+			tcp = strdup(tcp);
 			if (tcp == NULL)
 				errx(1, "Can't allocate memory for remote dir");
 			sl_add(dirlist, tcp);
@@ -318,7 +308,8 @@ complete(el, ch)
 
 	struct cmd *c;
 	const LineInfo *lf;
-	int len, celems, dolist;
+	int celems, dolist;
+	size_t len;
 
 	lf = el_line(el);
 	len = lf->lastchar - lf->buffer;
@@ -380,4 +371,5 @@ complete(el, ch)
 
 	return (CC_ERROR);
 }
-#endif
+
+#endif /* !SMALL */

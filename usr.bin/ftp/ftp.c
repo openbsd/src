@@ -1,5 +1,5 @@
-/*	$OpenBSD: ftp.c,v 1.19 1997/06/17 20:40:40 kstailey Exp $	*/
-/*	$NetBSD: ftp.c,v 1.25 1997/04/14 09:09:22 lukem Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.20 1997/07/25 21:56:21 millert Exp $	*/
+/*	$NetBSD: ftp.c,v 1.26 1997/07/20 09:45:53 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$OpenBSD: ftp.c,v 1.19 1997/06/17 20:40:40 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: ftp.c,v 1.20 1997/07/25 21:56:21 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -86,9 +86,9 @@ FILE	*cin, *cout;
 char *
 hookup(host, port)
 	const char *host;
-	int port;
+	in_port_t port;
 {
-	struct hostent *hp = 0;
+	struct hostent *hp = NULL;
 	int s, len, tos;
 	static char hostnamebuf[MAXHOSTNAMELEN];
 
@@ -105,7 +105,8 @@ hookup(host, port)
 			return ((char *) 0);
 		}
 		hisctladdr.sin_family = hp->h_addrtype;
-		memcpy(&hisctladdr.sin_addr, hp->h_addr_list[0], hp->h_length);
+		memcpy(&hisctladdr.sin_addr, hp->h_addr_list[0],
+		    (size_t)hp->h_length);
 		(void)strncpy(hostnamebuf, hp->h_name, sizeof(hostnamebuf) - 1);
 		hostnamebuf[sizeof(hostnamebuf) - 1] = '\0';
 	}
@@ -128,7 +129,7 @@ hookup(host, port)
 			warn("connect to address %s", ia);
 			hp->h_addr_list++;
 			memcpy(&hisctladdr.sin_addr, hp->h_addr_list[0],
-			    hp->h_length);
+			    (size_t)hp->h_length);
 			fprintf(ttyout, "Trying %s...\n", inet_ntoa(hisctladdr.sin_addr));
 			(void)close(s);
 			s = socket(hisctladdr.sin_family, SOCK_STREAM, 0);
@@ -415,15 +416,26 @@ sendrequest(cmd, local, remote, printnames)
 {
 	struct stat st;
 	int c, d;
-	FILE *fin, *dout = 0;
+	FILE *fin, *dout;
 	int (*closefunc) __P((FILE *));
 	sig_t oldinti, oldintr, oldintp;
-	off_t hashbytes;
+	volatile off_t hashbytes;
 	char *lmode, buf[BUFSIZ], *bufp;
 	int oprogress;
 
+#ifdef __GNUC__				/* XXX: to shut up gcc warnings */
+	(void)&fin;
+	(void)&dout;
+	(void)&closefunc;
+	(void)&oldinti;
+	(void)&oldintr;
+	(void)&oldintp;
+	(void)&lmode;
+#endif
+
 	hashbytes = mark;
 	direction = "sent";
+	dout = NULL;
 	bytes = 0;
 	filesize = -1;
 	oprogress = progress;
@@ -583,7 +595,8 @@ sendrequest(cmd, local, remote, printnames)
 		while ((c = read(fileno(fin), buf, sizeof(buf))) > 0) {
 			bytes += c;
 			for (bufp = buf; c > 0; c -= d, bufp += d)
-				if ((d = write(fileno(dout), bufp, c)) <= 0)
+				if ((d = write(fileno(dout), bufp, (size_t)c))
+				    <= 0)
 					break;
 			if (hash && (!progress || filesize < 0) ) {
 				while (bytes >= hashbytes) {
@@ -703,21 +716,36 @@ recvrequest(cmd, local, remote, lmode, printnames)
 	const char *cmd, *local, *remote, *lmode;
 	int printnames;
 {
-	FILE *fout, *din = 0;
+	FILE *fout, *din;
 	int (*closefunc) __P((FILE *));
 	sig_t oldinti, oldintr, oldintp;
-	int c, d, is_retr, tcrflag, bare_lfs = 0;
-	static int bufsize;
+	int c, d;
+	volatile int is_retr, tcrflag, bare_lfs;
+	static size_t bufsize;
 	static char *buf;
-	off_t hashbytes;
+	volatile off_t hashbytes;
 	struct stat st;
 	time_t mtime;
 	int oprogress;
 	int opreserve;
 
+#ifdef __GNUC__				/* XXX: to shut up gcc warnings */
+	(void)&local;
+	(void)&fout;
+	(void)&din;
+	(void)&closefunc;
+	(void)&oldinti;
+	(void)&oldintr;
+	(void)&oldintp;
+#endif
+
+	fout = NULL;
+	din = NULL;
+	oldinti = NULL;
 	hashbytes = mark;
 	direction = "received";
 	bytes = 0;
+	bare_lfs = 0;
 	filesize = -1;
 	oprogress = progress;
 	opreserve = preserve;
@@ -779,7 +807,7 @@ recvrequest(cmd, local, remote, lmode, printnames)
 				return;
 			}
 			if (!runique && errno == EACCES &&
-			    chmod(local, 0600) < 0) {
+			    chmod(local, (S_IRUSR|S_IWUSR)) < 0) {
 				warn("local: %s", local);
 				(void)signal(SIGINT, oldintr);
 				(void)signal(SIGINFO, oldinti);
@@ -891,7 +919,7 @@ recvrequest(cmd, local, remote, lmode, printnames)
 		}
 		errno = d = 0;
 		while ((c = read(fileno(din), buf, bufsize)) > 0) {
-			if ((d = write(fileno(fout), buf, c)) != c)
+			if ((d = write(fileno(fout), buf, (size_t)c)) != c)
 				break;
 			bytes += c;
 			if (hash && (!progress || filesize < 0)) {
@@ -1343,10 +1371,18 @@ proxtrans(cmd, local, remote)
 	const char *cmd, *local, *remote;
 {
 	sig_t oldintr;
-	int secndflag = 0, prox_type, nfnd;
+	int prox_type, nfnd;
+	volatile int secndflag;
 	char *cmd2;
 	struct fd_set mask;
 
+#ifdef __GNUC__				/* XXX: to shut up gcc warnings */
+	(void)&oldintr;
+	(void)&cmd2;
+#endif
+
+	oldintr = NULL;
+	secndflag = 0;
 	if (strcmp(cmd, "RETR"))
 		cmd2 = "RETR";
 	else
