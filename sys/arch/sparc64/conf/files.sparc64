@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.52 2004/09/27 21:12:40 jason Exp $
+#	$OpenBSD: files.sparc64,v 1.53 2004/09/28 02:06:36 jason Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -29,6 +29,10 @@ file	arch/sparc64/dev/fhc_central.c		fhc_central
 
 attach fhc at mainbus with fhc_mainbus
 file	arch/sparc64/dev/fhc_mainbus.c		fhc_mainbus
+
+device clkbrd
+attach clkbrd at fhc
+file	arch/sparc64/dev/clkbrd.c		clkbrd needs-flag
 
 device pcons
 attach pcons at mainbus

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.71 2004/09/27 21:12:40 jason Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.72 2004/09/28 02:06:36 jason Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -80,6 +80,7 @@
 
 #include "auxio.h"
 #include "fhc.h"
+#include "clkbrd.h"
 
 #include <sys/param.h>
 #include <sys/extent.h>
@@ -195,7 +196,7 @@ int	physmem;
 u_long	_randseed;
 extern	caddr_t msgbufaddr;
 
-#if (NAUXIO > 0) || (NFHC > 0)
+#if (NAUXIO > 0) || (NFHC > 0) || (NCLKBRD > 0)
 int sparc_led_blink;
 #endif
 
@@ -205,6 +206,10 @@ int sparc_led_blink;
 
 #if NFHC > 0
 #include <sparc64/dev/fhcvar.h>
+#endif
+
+#if NCLKBRD > 0
+#include <sparc64/dev/clkbrdvar.h>
 #endif
 
 #ifdef APERTURE
@@ -553,7 +558,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 			return (ENOENT);
 		return (sysctl_rdstring(oldp, oldlenp, newp, cp));
 	case CPU_LED_BLINK:
-#if NAUXIO > 0
+#if (NAUXIO > 0) || (NFHC > 0) || (NCLKBRD > 0)
 		oldval = sparc_led_blink;
 		ret = sysctl_int(oldp, oldlenp, newp, newlen,
 		    &sparc_led_blink);
@@ -562,8 +567,17 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		 * If we were false and are now true, call auxio_led_blink().
 		 * auxio_led_blink() will catch the other case itself.
 		 */
-		if (!oldval && sparc_led_blink > oldval)
+		if (!oldval && sparc_led_blink > oldval) {
+#if NAUXIO > 0
 			auxio_led_blink(NULL);
+#endif
+#if NFHC > 0
+			fhc_led_blink(NULL);
+#endif
+#if NCLKBRD > 0
+			clkbrd_led_blink(NULL);
+#endif
+		}
 		return (ret);
 #else
 		return (EOPNOTSUPP);
