@@ -1,4 +1,4 @@
-.\"	$OpenBSD: diskless.8,v 1.3 1996/06/10 04:44:27 deraadt Exp $
+.\"	$OpenBSD: diskless.8,v 1.4 1996/06/11 07:10:54 deraadt Exp $
 .\"	$NetBSD: diskless.8,v 1.7.4.1 1996/05/30 18:58:10 cgd Exp $
 .\"
 .\"
@@ -29,7 +29,7 @@
 .\"
 .Dd October 2, 1994
 .Dt DISKLESS 8
-.Os NetBSD
+.Os
 .Sh NAME
 .Nm diskless
 .Nd booting a system over the network
@@ -79,7 +79,7 @@ using a special PROM on the network card.
 .Pp
 In phase 2, the boot program loads a kernel.  Operation in
 this phase depends on the design of the boot program.
-(The design described here is the one used by Sun and NetBSD/hp300.)
+(The design described here is the one used by Sun and OpenBSD/hp300.)
 The boot program:
 .Pp
 .Bl -tag -width 2.2 -compact
@@ -241,7 +241,7 @@ This creates a 16 Megabyte swap file.
 Populate myclient's
 .Pa /
 filesystem on the server.  How this is done depends on the
-client architecture and the version of the NetBSD distribution.
+client architecture and the version of the OpenBSD distribution.
 It can be as simple as copying and modifying the server's root
 filesystem, or perhaps you need to get those files out of the
 standard binary distribution.
@@ -253,7 +253,7 @@ Export the required filesystems in
 /usr -ro myclient
 # for SunOS:
 # /export/myclient -rw=myclient,root=myclient
-# for NetBSD:
+# for OpenBSD:
 /export/myclient -maproot=root -alldirs myclient
 .Ed
 .Pp

@@ -36,11 +36,11 @@
 .Nm COMPAT_LINUX
 .Nd setup procedure for running Linux binaries
 .Sh DESCRIPTION
-NetBSD supports running Linux binaries. This only applies to i386 systems
+OpenBSD supports running Linux binaries. This only applies to i386 systems
 for now. Both the a.out and ELF binary formats are supported. Most programs
 should work, including the ones that use the Linux SVGAlib. Programs that
 will not work include the Linux /proc filesystem (which is different from
-the optional NetBSD /proc filesystem), and i386-specific calls, such as
+the optional OpenBSD /proc filesystem), and i386-specific calls, such as
 enabling virtual 8086 mode. Currently, sound is not supported for Linux
 binaries (they will probably run, but not produce any sound).
 
@@ -52,33 +52,33 @@ option enabled.
 A lot of programs are dynamically linked. This means, that you will
 also need the Linux shared libraries that the program depends on, and
 the runtime linker. Also, you will need to create a "shadow root"
-directory for Linux binaries on your NetBSD system. This directory
+directory for Linux binaries on your OpenBSD system. This directory
 is named /emul/linux. Any file operations done by Linux programs
-run under NetBSD will look in this directory first. So, if a Linux
-program opens, for example, /etc/passwd, NetBSD will
+run under OpenBSD will look in this directory first. So, if a Linux
+program opens, for example, /etc/passwd, OpenBSD will
 first try to open /emul/linux/etc/passwd, and if that does not exist
 open the 'real' /etc/passwd file. It is recommended that you install
 Linux packages that include configuration files, etc under /emul/linux,
-to avoid naming conflicts with possible NetBSD counterparts. Shared
+to avoid naming conflicts with possible OpenBSD counterparts. Shared
 libraries should also be installed in the shadow tree.
 .Pp
 Generally, you will need to look for the shared libraries that Linux
 binaries depend on only the first few times that you install a Linux
-program on your NetBSD system. After a while, you will have a sufficient
+program on your OpenBSD system. After a while, you will have a sufficient
 set of Linux shared libraries on your system to be able to run newly
 imported Linux binaries without any extra work.
 
 .Ss Setting up shared libraries
 How to get to know which shared libraries Linux binaries need, and where
 to get them? Basically, there are 2 possibilities (when following
-these instructions: you will need to be root on your NetBSD system to
+these instructions: you will need to be root on your OpenBSD system to
 do the necessary installation steps).
 
 .Bl -tag -width 123 -compact
 .It 1.
 You have access to a Linux system. In this case you can
 temporarily install the binary there, see what shared libraries
-it needs, and copy them to your NetBSD system. Example: you have
+it needs, and copy them to your OpenBSD system. Example: you have
 just ftp-ed the Linux binary of Doom. Put it on the Linux
 system you have access to, and check which shared libraries it
 needs by running `ldd linuxxdoom':
@@ -95,7 +95,7 @@ libc.so.4 (DLL Jump 4.5pl26) => /lib/libc.so.4.6.29
 You would need go get all the files from the last column, and
 put them under /emul/linux, with the names in the first column
 as symbolic links pointing to them. This means you eventually have
-these files on your NetBSD system:
+these files on your OpenBSD system:
 .Pp
 .nf
 /emul/linux/usr/X11/lib/libXt.so.3.1.0
@@ -139,14 +139,14 @@ you with:
 .Pp
 Please note that the symbolic link mechanism is
 .Nm only
-needed for Linux binaries, the NetBSD runtime linker takes care of
+needed for Linux binaries, the OpenBSD runtime linker takes care of
 looking for matching major revision numbers itself, you
 don't need to worry about that.
 .Pp
 Finally, you must make sure that you have the Linux runtime linker
 and its config files on your system. You should copy these
 files from the Linux system to their appropriate place on your
-NetBSD system (in the /emul/linux tree):
+OpenBSD system (in the /emul/linux tree):
 .Pp
 .nf
 /lib/ld.so
@@ -173,7 +173,7 @@ any version mismatches), and install them under /emul/linux
 .Pp
 ldconfig and ldd don't necessarily need to be under /emul/linux,
 you can install them elsewhere in the system too. Just make sure
-they don't conflict with their NetBSD counterparts. A good idea
+they don't conflict with their OpenBSD counterparts. A good idea
 would be to install them in /usr/local/bin as ldconfig-linux and
 ldd-linux.
 .Pp
@@ -188,7 +188,7 @@ add the following:
 /usr/local/lib
 .fi
 .Pp
-Note that these are mapped to /emul/linux/XXXX by NetBSD's compat
+Note that these are mapped to /emul/linux/XXXX by OpenBSD's compat
 code, and should exist as such on your system.
 
 Run the Linux ldconfig program. It should be statically
@@ -203,7 +203,7 @@ on itself. Suppose that you have it installed as ldd-linux, it
 should produce something like:
 .Pp
 .Bl -tag -width 123 -compact -offset indent
-.It (me@netbsd) ldd-linux `which ldd-linux`
+.It % ldd-linux `which ldd-linux`
 libc.so.4 (DLL Jump 4.5pl26) => /lib/libc.so.4.6.29
 .El
 .Pp

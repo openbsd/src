@@ -37,7 +37,7 @@
 .Nm COMPAT_SUNOS
 .Nd setup procedure for m68k and sparc architectures
 .Sh DESCRIPTION
-NetBSD/sparc and some of the NetBSD/m68k architectures can run
+OpenBSD/sparc and some of the OpenBSD/m68k architectures can run
 SunOS executables.  Most executables will work.
 .Pp
 The exceptions include programs that use the SunOS kvm library,
@@ -53,7 +53,7 @@ setup to allow dynamically linked executables to work.
 The files you need are on your SunOS machine.
 You need to worry about the legal issues of ensuring that you
 have a right to use the required files on your machine.
-On your NetBSD machine, do the following:
+On your OpenBSD machine, do the following:
 .Pp
 .Bl -enum -inset -offset 123 -compact
 .It
@@ -61,13 +61,13 @@ On your NetBSD machine, do the following:
 .fi
 .Pp
 .It
-.Li cp SunOS:/usr/lib/lib*.so.*.* NetBSD:/emul/sunos/usr/lib
+.Li cp SunOS:/usr/lib/lib*.so.*.* OpenBSD:/emul/sunos/usr/lib
 .Pp
 .It
-.Li cp SunOS:/usr/5lib/lib*.so.*.* NetBSD:/emul/sunos/usr/5lib
+.Li cp SunOS:/usr/5lib/lib*.so.*.* OpenBSD:/emul/sunos/usr/5lib
 .Pp
 .It
-.Li cp SunOS:/usr/lib/ld.so NetBSD:/emul/sunos/usr/lib/ld.so
+.Li cp SunOS:/usr/lib/ld.so OpenBSD:/emul/sunos/usr/lib/ld.so
 .Pp
 .It
 If you ever expect to use YP, you will want to create a link:
@@ -78,7 +78,7 @@ If you ever expect to use YP, you will want to create a link:
 .Pp
 Alternatively, you can use an NFS mount to accomplish the same
 effect.
-On your NetBSD machine, do the following:
+On your OpenBSD machine, do the following:
 .Pp
 .Bl -enum -inset -offset 123 -compact
 .Pp
@@ -90,7 +90,7 @@ On your NetBSD machine, do the following:
 .fi
 .El
 .Pp
-This will place the SunOS libraries on your NetBSD machine
+This will place the SunOS libraries on your OpenBSD machine
 in a location where the SunOS compatibility code will look for
 first, where they do not conflict with the standard libraries.
 .Pp
