@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.c,v 1.3 2004/11/28 20:09:47 henning Exp $	*/
+/*	$OpenBSD: monitor.c,v 1.4 2004/11/29 22:24:57 henning Exp $	*/
 
 /*
  * Copyright (c) 2004 Moritz Jodeit <moritz@jodeit.org>
@@ -378,11 +378,16 @@ handle_cmds(void)
 void
 sig_pass_to_slave(int signo)
 {
+	sigset_t allsigs, oldsigs;
 	int olderrno = errno;
+
+	sigfillset(&allsigs);
+	sigprocmask(SIG_BLOCK, &allsigs, &oldsigs);
 
 	if (slave_pid > 0)
 		kill(slave_pid, signo);
 
+	sigprocmask(SIG_SETMASK, &oldsigs, NULL);
 	errno = olderrno;
 }
 
@@ -391,7 +396,11 @@ void
 sig_chld(int signo)
 {
 	pid_t pid;
+	sigset_t allsigs, oldsigs;
 	int stat, olderrno = errno;
+
+	sigfillset(&allsigs);
+	sigprocmask(SIG_BLOCK, &allsigs, &oldsigs);
 
 	do {
 		pid = waitpid(-1, &stat, WNOHANG);
@@ -402,6 +411,7 @@ sig_chld(int signo)
 		slave_pid = -1;
 	}
 
+	sigprocmask(SIG_SETMASK, &oldsigs, NULL);
 	errno = olderrno;
 }
 
