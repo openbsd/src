@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.49 2004/08/03 06:58:40 miod Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.50 2004/08/03 17:11:48 marius Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -1742,6 +1742,172 @@ loop:
 		}
 	}
 	splx(s);
+}
+
+void
+nfs_merge_commit_ranges(vp)
+	struct vnode *vp;
+{
+	struct nfsnode *np = VTONFS(vp);
+
+	if (!(np->n_commitflags & NFS_COMMIT_PUSHED_VALID)) {
+		np->n_pushedlo = np->n_pushlo;
+		np->n_pushedhi = np->n_pushhi;
+		np->n_commitflags |= NFS_COMMIT_PUSHED_VALID;
+	} else {
+		if (np->n_pushlo < np->n_pushedlo)
+			np->n_pushedlo = np->n_pushlo;
+		if (np->n_pushhi > np->n_pushedhi)
+			np->n_pushedhi = np->n_pushhi;
+	}
+
+	np->n_pushlo = np->n_pushhi = 0;
+	np->n_commitflags &= ~NFS_COMMIT_PUSH_VALID;
+}
+
+int
+nfs_in_committed_range(vp, bp)
+	struct vnode *vp;
+	struct buf *bp;
+{
+	struct nfsnode *np = VTONFS(vp);
+	off_t lo, hi;
+
+	if (!(np->n_commitflags & NFS_COMMIT_PUSHED_VALID))
+		return 0;
+	lo = (off_t)bp->b_blkno * DEV_BSIZE;
+	hi = lo + bp->b_dirtyend;
+
+	return (lo >= np->n_pushedlo && hi <= np->n_pushedhi);
+}
+
+int
+nfs_in_tobecommitted_range(vp, bp)
+	struct vnode *vp;
+	struct buf *bp;
+{
+	struct nfsnode *np = VTONFS(vp);
+	off_t lo, hi;
+
+	if (!(np->n_commitflags & NFS_COMMIT_PUSH_VALID))
+		return 0;
+	lo = (off_t)bp->b_blkno * DEV_BSIZE;
+	hi = lo + bp->b_dirtyend;
+
+	return (lo >= np->n_pushlo && hi <= np->n_pushhi);
+}
+
+void
+nfs_add_committed_range(vp, bp)
+	struct vnode *vp;
+	struct buf *bp;
+{
+	struct nfsnode *np = VTONFS(vp);
+	off_t lo, hi;
+
+	lo = (off_t)bp->b_blkno * DEV_BSIZE;
+	hi = lo + bp->b_dirtyend;
+
+	if (!(np->n_commitflags & NFS_COMMIT_PUSHED_VALID)) {
+		np->n_pushedlo = lo;
+		np->n_pushedhi = hi;
+		np->n_commitflags |= NFS_COMMIT_PUSHED_VALID;
+	} else {
+		if (hi > np->n_pushedhi)
+			np->n_pushedhi = hi;
+		if (lo < np->n_pushedlo)
+			np->n_pushedlo = lo;
+	}
+}
+
+void
+nfs_del_committed_range(vp, bp)
+	struct vnode *vp;
+	struct buf *bp;
+{
+	struct nfsnode *np = VTONFS(vp);
+	off_t lo, hi;
+
+	if (!(np->n_commitflags & NFS_COMMIT_PUSHED_VALID))
+		return;
+
+	lo = (off_t)bp->b_blkno * DEV_BSIZE;
+	hi = lo + bp->b_dirtyend;
+
+	if (lo > np->n_pushedhi || hi < np->n_pushedlo)
+		return;
+	if (lo <= np->n_pushedlo)
+		np->n_pushedlo = hi;
+	else if (hi >= np->n_pushedhi)
+		np->n_pushedhi = lo;
+	else {
+		/*
+		 * XXX There's only one range. If the deleted range
+		 * is in the middle, pick the largest of the
+		 * contiguous ranges that it leaves.
+		 */
+		if ((np->n_pushedlo - lo) > (hi - np->n_pushedhi))
+			np->n_pushedhi = lo;
+		else
+			np->n_pushedlo = hi;
+	}
+}
+
+void
+nfs_add_tobecommitted_range(vp, bp)
+	struct vnode *vp;
+	struct buf *bp;
+{
+	struct nfsnode *np = VTONFS(vp);
+	off_t lo, hi;
+
+	lo = (off_t)bp->b_blkno * DEV_BSIZE;
+	hi = lo + bp->b_dirtyend;
+
+	if (!(np->n_commitflags & NFS_COMMIT_PUSH_VALID)) {
+		np->n_pushlo = lo;
+		np->n_pushhi = hi;
+		np->n_commitflags |= NFS_COMMIT_PUSH_VALID;
+	} else {
+		if (lo < np->n_pushlo)
+			np->n_pushlo = lo;
+		if (hi > np->n_pushhi)
+			np->n_pushhi = hi;
+	}
+}
+
+void
+nfs_del_tobecommitted_range(vp, bp)
+	struct vnode *vp;
+	struct buf *bp;
+{
+	struct nfsnode *np = VTONFS(vp);
+	off_t lo, hi;
+
+	if (!(np->n_commitflags & NFS_COMMIT_PUSH_VALID))
+		return;
+
+	lo = (off_t)bp->b_blkno * DEV_BSIZE;
+	hi = lo + bp->b_dirtyend;
+
+	if (lo > np->n_pushhi || hi < np->n_pushlo)
+		return;
+
+	if (lo <= np->n_pushlo)
+		np->n_pushlo = hi;
+	else if (hi >= np->n_pushhi)
+		np->n_pushhi = lo;
+	else {
+		/*
+		 * XXX There's only one range. If the deleted range
+		 * is in the middle, pick the largest of the
+		 * contiguous ranges that it leaves.
+		 */
+		if ((np->n_pushlo - lo) > (hi - np->n_pushhi))
+			np->n_pushhi = lo;
+		else
+			np->n_pushlo = hi;
+	}
 }
 
 /*

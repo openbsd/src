@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_node.c,v 1.26 2003/06/02 23:28:19 millert Exp $	*/
+/*	$OpenBSD: nfs_node.c,v 1.27 2004/08/03 17:11:48 marius Exp $	*/
 /*	$NetBSD: nfs_node.c,v 1.16 1996/02/18 11:53:42 fvdl Exp $	*/
 
 /*
@@ -127,6 +127,8 @@ loop:
 	bzero((caddr_t)np, sizeof *np);
 	vp->v_data = np;
 	np->n_vnode = vp;
+
+	rw_init(&np->n_commitlock);
 
 	/* 
 	 * Are we getting the root? If so, make sure the vnode flags

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsnode.h,v 1.21 2004/04/26 18:57:36 millert Exp $	*/
+/*	$OpenBSD: nfsnode.h,v 1.22 2004/08/03 17:11:48 marius Exp $	*/
 /*	$NetBSD: nfsnode.h,v 1.16 1996/02/18 11:54:04 fvdl Exp $	*/
 
 /*
@@ -42,6 +42,8 @@
 #ifndef _NFS_NFS_H_
 #include <nfs/nfs.h>
 #endif
+
+#include <sys/rwlock.h>
 
 /*
  * Silly rename structure that hangs off the nfsnode until the name
@@ -115,7 +117,20 @@ struct nfsnode {
 	nfsfh_t			n_fh;		/* Small File Handle */
 	struct ucred		*n_rcred;
 	struct ucred		*n_wcred;
+
+	off_t                    n_pushedlo;    /* 1st blk in commited range */
+	off_t                    n_pushedhi;    /* Last block in range */
+	off_t                    n_pushlo;      /* 1st block in commit range */
+	off_t                    n_pushhi;      /* Last block in range */
+	struct rwlock            n_commitlock;  /* Serialize commits */
+	int                      n_commitflags;
 };
+
+/*
+ * Values for n_commitflags
+ */
+#define NFS_COMMIT_PUSH_VALID   0x0001          /* push range valid */
+#define NFS_COMMIT_PUSHED_VALID 0x0002          /* pushed range valid */
 
 #define n_atim		n_un1.nf_atim
 #define n_mtim		n_un2.nf_mtim

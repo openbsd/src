@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.62 2004/07/21 17:30:56 marius Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.63 2004/08/03 17:11:48 marius Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -2989,10 +2989,16 @@ nfs_writebp(bp, force)
 	int oldflags = bp->b_flags, retv = 1;
 	struct proc *p = curproc;	/* XXX */
 	off_t off;
+	size_t cnt;
 	int   s;
+	struct vnode *vp;
+	struct nfsnode *np;
 
 	if(!(bp->b_flags & B_BUSY))
 		panic("bwrite: buffer is not busy???");
+
+	vp = bp->b_vp;
+	np = VTONFS(vp);
 
 #ifdef fvdl_debug
 	printf("nfs_writebp(%x): vp %x voff %d vend %d doff %d dend %d\n",
@@ -3017,10 +3023,45 @@ nfs_writebp(bp, force)
 	 */
 	if ((oldflags & (B_NEEDCOMMIT | B_WRITEINPROG)) == B_NEEDCOMMIT) {
 		off = ((u_quad_t)bp->b_blkno) * DEV_BSIZE + bp->b_dirtyoff;
-		bp->b_flags |= B_WRITEINPROG;
-		retv = nfs_commit(bp->b_vp, off, bp->b_dirtyend-bp->b_dirtyoff,
-			bp->b_proc);
-		bp->b_flags &= ~B_WRITEINPROG;
+		cnt = bp->b_dirtyend - bp->b_dirtyoff;
+
+		rw_enter_write(&np->n_commitlock);
+		if (!(bp->b_flags & B_NEEDCOMMIT)) {
+			rw_exit_write(&np->n_commitlock);
+			return (0);
+		}
+
+		/*
+		 * If it's already been commited by somebody else,
+		 * bail.
+		 */
+		if (!nfs_in_committed_range(vp, bp)) {
+			int pushedrange = 0;
+			/*
+			 * Since we're going to do this, push as much
+			 * as we can.
+			 */
+
+			if (nfs_in_tobecommitted_range(vp, bp)) {
+				pushedrange = 1;
+				off = np->n_pushlo;
+				cnt = np->n_pushhi - np->n_pushlo;
+			}
+
+			bp->b_flags |= B_WRITEINPROG;
+			retv = nfs_commit(bp->b_vp, off, cnt, bp->b_proc);
+			bp->b_flags &= ~B_WRITEINPROG;
+
+			if (retv == 0) {
+				if (pushedrange)
+					nfs_merge_commit_ranges(vp);
+				else 
+					nfs_add_committed_range(vp, bp);
+			}
+		} else
+			retv = 0; /* It has already been commited. */
+
+		rw_exit_write(&np->n_commitlock);
 		if (!retv) {
 			bp->b_dirtyoff = bp->b_dirtyend = 0;
 			bp->b_flags &= ~B_NEEDCOMMIT;

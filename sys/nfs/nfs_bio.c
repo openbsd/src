@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_bio.c,v 1.39 2004/07/21 17:30:55 marius Exp $	*/
+/*	$OpenBSD: nfs_bio.c,v 1.40 2004/08/03 17:11:48 marius Exp $	*/
 /*	$NetBSD: nfs_bio.c,v 1.25.4.2 1996/07/08 20:47:04 jtc Exp $	*/
 
 /*
@@ -34,7 +34,6 @@
  *
  *	@(#)nfs_bio.c	8.9 (Berkeley) 3/30/95
  */
-
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -415,7 +414,17 @@ again:
 		 * Since this block is being modified, it must be written
 		 * again and not just committed.
 		 */
-		bp->b_flags &= ~B_NEEDCOMMIT;
+
+		if (NFS_ISV3(vp)) {
+			rw_enter_write(&np->n_commitlock);
+			if (bp->b_flags & B_NEEDCOMMIT) {
+				bp->b_flags &= ~B_NEEDCOMMIT;
+				nfs_del_tobecommitted_range(vp, bp);
+			}
+			nfs_del_committed_range(vp, bp);
+			rw_exit_write(&np->n_commitlock);
+		} else 
+			bp->b_flags &= ~B_NEEDCOMMIT;
 
 		/*
 		 * If the lease is non-cachable or IO_SYNC do bwrite().
@@ -670,7 +679,7 @@ nfs_doio(bp, p)
 		error = nfs_readlinkrpc(vp, uiop, curproc->p_ucred);
 		break;
 	    default:
-		printf("nfs_doio:  type %x unexpected\n",vp->v_type);
+		printf("nfs_doio:  type %x unexpected\n", vp->v_type);
 		break;
 	    };
 	    if (error) {
@@ -695,10 +704,17 @@ nfs_doio(bp, p)
 		vp, bp, bp->b_dirtyoff, bp->b_dirtyend);
 #endif
 	    error = nfs_writerpc(vp, uiop, &iomode, &must_commit);
-	    if (!error && iomode == NFSV3WRITE_UNSTABLE)
+
+	    rw_enter_write(&np->n_commitlock);
+	    if (!error && iomode == NFSV3WRITE_UNSTABLE) {
 		bp->b_flags |= B_NEEDCOMMIT;
-	    else
+		nfs_add_tobecommitted_range(vp, bp);
+	    } else {
 		bp->b_flags &= ~B_NEEDCOMMIT;
+		nfs_del_committed_range(vp, bp);
+	    }
+	    rw_exit_write(&np->n_commitlock);
+
 	    bp->b_flags &= ~B_WRITEINPROG;
 
 	    /*
