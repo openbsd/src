@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.40 2004/05/27 04:55:27 tedu Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.41 2004/06/02 22:17:22 tedu Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -397,7 +397,7 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	 * Check arguments and construct default values.
 	 */
 	if (palloc == NULL)
-		palloc = &pool_allocator_kmem;
+		palloc = &pool_allocator_nointr;
 	if ((palloc->pa_flags & PA_INITIALIZED) == 0) {
 		if (palloc->pa_pagesz == 0)
 			palloc->pa_pagesz = PAGE_SIZE;
@@ -1933,22 +1933,26 @@ sysctl_dopool(int *name, u_int namelen, char *where, size_t *sizep)
  *
  * Each pool has a backend allocator that handles allocation, deallocation
  * and any additional draining that might be needed.
- *
- * We provide two standard allocators.
- *  pool_alloc_kmem - the default used when no allocator is specified.
- *  pool_alloc_nointr - used for pools that will not be accessed in
- *   interrupt context.
  */
+void	*pool_page_alloc_kmem(struct pool *, int);
+void	pool_page_free_kmem(struct pool *, void *);
+void	*pool_page_alloc_oldnointr(struct pool *, int);
+void	pool_page_free_oldnointr(struct pool *, void *);
 void	*pool_page_alloc(struct pool *, int);
 void	pool_page_free(struct pool *, void *);
-void	*pool_page_alloc_nointr(struct pool *, int);
-void	pool_page_free_nointr(struct pool *, void *);
 
+/* old default allocator, interrupt safe */
 struct pool_allocator pool_allocator_kmem = {
-	pool_page_alloc, pool_page_free, 0,
+	pool_page_alloc_kmem, pool_page_free_kmem, 0,
 };
+/* previous nointr.  handles large allocations safely */
+struct pool_allocator pool_allocator_oldnointr = {
+	pool_page_alloc_oldnointr, pool_page_free_oldnointr, 0,
+};
+/* safe for interrupts, name preserved for compat
+ * this is the default allocator */
 struct pool_allocator pool_allocator_nointr = {
-	pool_page_alloc_nointr, pool_page_free_nointr, 0,
+	pool_page_alloc, pool_page_free, 0,
 };
 
 /*
@@ -2092,19 +2096,36 @@ pool_page_free(struct pool *pp, void *v)
 }
 
 void *
-pool_page_alloc_nointr(struct pool *pp, int flags)
+pool_page_alloc_kmem(struct pool *pp, int flags)
+{
+	boolean_t waitok = (flags & PR_WAITOK) ? TRUE : FALSE;
+
+	return ((void *)uvm_km_alloc_poolpage1(kmem_map, uvmexp.kmem_object,
+	    waitok));
+}
+
+void
+pool_page_free_kmem(struct pool *pp, void *v)
+{
+
+	uvm_km_free_poolpage1(kmem_map, (vaddr_t)v);
+}
+
+void *
+pool_page_alloc_oldnointr(struct pool *pp, int flags)
 {
 	boolean_t waitok = (flags & PR_WAITOK) ? TRUE : FALSE;
 
 	splassert(IPL_NONE);
 
-	return (uvm_km_getpage(waitok));
+	return ((void *)uvm_km_alloc_poolpage1(kernel_map, uvm.kernel_object,
+	    waitok));
 }
 
 void
-pool_page_free_nointr(struct pool *pp, void *v)
+pool_page_free_oldnointr(struct pool *pp, void *v)
 {
 	splassert(IPL_NONE);
 
-	uvm_km_putpage(v);
+	uvm_km_free_poolpage1(kernel_map, (vaddr_t)v);
 }

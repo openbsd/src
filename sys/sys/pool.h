@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.h,v 1.15 2003/11/18 06:08:18 tedu Exp $	*/
+/*	$OpenBSD: pool.h,v 1.16 2004/06/02 22:17:22 tedu Exp $	*/
 /*	$NetBSD: pool.h,v 1.27 2001/06/06 22:00:17 rafal Exp $	*/
 
 /*-
@@ -188,12 +188,11 @@ struct pool {
 };
 
 #ifdef _KERNEL
-/*
- * Alternate pool page allocator, provided for pools that know they
- * will never be accessed in interrupt context.
- */
+/* old nointr allocator, still needed for large allocations */
+extern struct pool_allocator pool_allocator_oldnointr;
+/* interrupt safe (name preserved for compat) new default allocator */
 extern struct pool_allocator pool_allocator_nointr;
-/* Standard pool allocator, provided here for reference. */
+/* previous interrupt safe allocator, allocates from kmem */
 extern struct pool_allocator pool_allocator_kmem;
 
 int		pool_allocator_drain(struct pool_allocator *, struct pool *,
