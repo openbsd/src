@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5k.h,v 1.3 1997/05/29 19:15:44 deraadt Exp $	*/
+/*	$OpenBSD: md5k.h,v 1.4 1998/11/24 10:19:25 niklas Exp $	*/
 
 /* GLOBAL.H - RSAREF types and constants
  */
@@ -10,10 +10,10 @@
 typedef void *POINTER;
 
 /* UINT2 defines a two byte word */
-typedef unsigned short int UINT2;
+typedef u_int16_t UINT2;
 
 /* UINT4 defines a four byte word */
-typedef unsigned long int UINT4;
+typedef u_int32_t UINT4;
 
 /* MD5.H - header file for MD5C.C
  */
