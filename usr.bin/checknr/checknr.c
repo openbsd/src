@@ -1,4 +1,4 @@
-/*	$OpenBSD: checknr.c,v 1.13 2005/03/08 23:31:53 cloder Exp $	*/
+/*	$OpenBSD: checknr.c,v 1.14 2005/03/29 23:46:19 jaredy Exp $	*/
 /*	$NetBSD: checknr.c,v 1.4 1995/03/26 04:10:19 glass Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)checknr.c	8.1 (Berkeley) 6/6/93";
 #else 
-static const char rcsid[] = "$OpenBSD: checknr.c,v 1.13 2005/03/08 23:31:53 cloder Exp $";
+static const char rcsid[] = "$OpenBSD: checknr.c,v 1.14 2005/03/29 23:46:19 jaredy Exp $";
 #endif
 #endif /* not lint */
 
@@ -141,7 +141,7 @@ struct brstr {
 	{ "TS",	"TE" },
 	/* Refer */
 	{ "[",	"]" },
-	{ 0,	 },
+	{ 0,	 }
 };
 
 /*
@@ -214,10 +214,14 @@ main(int argc, char *argv[])
 			for (i=0; br[i].opbr; i++)
 				;
 			for (cp=argv[1]+3; cp[-1]; cp += 6) {
-				br[i].opbr = malloc(3);
-				strncpy(br[i].opbr, cp, 2);
-				br[i].clbr = malloc(3);
-				strncpy(br[i].clbr, cp+3, 2);
+				if (i >= MAXBR)
+					errx(1, "too many pairs");
+				if ((br[i].opbr = malloc(3)) == NULL)
+					err(1, "malloc");
+				strlcpy(br[i].opbr, cp, 3);
+				if ((br[i].clbr = malloc(3)) == NULL)
+					err(1, "malloc");
+				strlcpy(br[i].clbr, cp+3, 3);
 				addmac(br[i].opbr);	/* knows pairs are also known cmds */
 				addmac(br[i].clbr);
 				i++;
@@ -568,7 +572,8 @@ printf("binsrch(%s) -> %d\n", mac, slot);
 	dest = src+1;
 	while (dest > loc)
 		*dest-- = *src--;
-	*loc = strdup(mac);
+	if ((*loc = strdup(mac)) == NULL)
+		err(1, "strdup");
 	ncmds++;
 #ifdef DEBUG
 printf("after: %s %s %s %s %s, %d cmds\n", knowncmds[slot-2], knowncmds[slot-1], knowncmds[slot], knowncmds[slot+1], knowncmds[slot+2], ncmds);
