@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.190 2004/09/16 00:25:12 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.191 2004/09/16 17:36:29 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1807,7 +1807,7 @@ parse_update(struct peer *peer)
 	p += MSGSIZE_HEADER;	/* header is already checked */
 	datalen -= MSGSIZE_HEADER;
 
-	if (imsg_compose(ibuf_rde, IMSG_UPDATE, peer->conf.id, p,
+	if (imsg_compose(ibuf_rde, IMSG_UPDATE, peer->conf.id, 0, -1, p,
 	    datalen) == -1)
 		return (-1);
 
@@ -1834,7 +1834,7 @@ parse_refresh(struct peer *peer)
 
 	/* afi/safi unchecked -	unrecognized values will be ignored anyway */
 
-	if (imsg_compose(ibuf_rde, IMSG_REFRESH, peer->conf.id, &r,
+	if (imsg_compose(ibuf_rde, IMSG_REFRESH, peer->conf.id, 0, -1, &r,
 	    sizeof(r)) == -1)
 		return (-1);
 
@@ -2442,7 +2442,7 @@ void
 session_down(struct peer *peer)
 {
 	peer->stats.last_updown = time(NULL);
-	if (imsg_compose(ibuf_rde, IMSG_SESSION_DOWN, peer->conf.id,
+	if (imsg_compose(ibuf_rde, IMSG_SESSION_DOWN, peer->conf.id, 0, -1,
 	    NULL, 0) == -1)
 		fatalx("imsg_compose error");
 }
@@ -2481,7 +2481,7 @@ session_up(struct peer *peer)
 
 	memcpy(&sup.conf, &peer->conf, sizeof(sup.conf));
 	peer->stats.last_updown = time(NULL);
-	if (imsg_compose(ibuf_rde, IMSG_SESSION_UP, peer->conf.id,
+	if (imsg_compose(ibuf_rde, IMSG_SESSION_UP, peer->conf.id, 0, -1,
 	    &sup, sizeof(sup)) == -1)
 		fatalx("imsg_compose error");
 }
@@ -2489,13 +2489,13 @@ session_up(struct peer *peer)
 int
 imsg_compose_parent(int type, pid_t pid, void *data, u_int16_t datalen)
 {
-	return (imsg_compose_pid(ibuf_main, type, pid, data, datalen));
+	return (imsg_compose(ibuf_main, type, 0, pid, -1, data, datalen));
 }
 
 int
 imsg_compose_rde(int type, pid_t pid, void *data, u_int16_t datalen)
 {
-	return (imsg_compose_pid(ibuf_rde, type, pid, data, datalen));
+	return (imsg_compose(ibuf_rde, type, 0, pid, -1, data, datalen));
 }
 
 static struct sockaddr *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.107 2004/09/16 00:25:12 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.108 2004/09/16 17:36:29 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -388,32 +388,32 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
 
 	prepare_listeners(conf);
 
-	if (imsg_compose(ibuf_se, IMSG_RECONF_CONF, 0,
+	if (imsg_compose(ibuf_se, IMSG_RECONF_CONF, 0, 0, -1,
 	    conf, sizeof(struct bgpd_config)) == -1)
 		return (-1);
-	if (imsg_compose(ibuf_rde, IMSG_RECONF_CONF, 0,
+	if (imsg_compose(ibuf_rde, IMSG_RECONF_CONF, 0, 0, -1,
 	    conf, sizeof(struct bgpd_config)) == -1)
 		return (-1);
 	for (p = *peer_l; p != NULL; p = p->next)
-		if (imsg_compose(ibuf_se, IMSG_RECONF_PEER, p->conf.id,
+		if (imsg_compose(ibuf_se, IMSG_RECONF_PEER, p->conf.id, 0, -1,
 		    &p->conf, sizeof(struct peer_config)) == -1)
 			return (-1);
 	while ((n = TAILQ_FIRST(&net_l)) != NULL) {
-		if (imsg_compose(ibuf_rde, IMSG_NETWORK_ADD, 0,
+		if (imsg_compose(ibuf_rde, IMSG_NETWORK_ADD, 0, 0, -1,
 		    &n->net, sizeof(struct network_config)) == -1)
 			return (-1);
 		TAILQ_REMOVE(&net_l, n, entry);
 		free(n);
 	}
 	while ((r = TAILQ_FIRST(rules_l)) != NULL) {
-		if (imsg_compose(ibuf_rde, IMSG_RECONF_FILTER, 0,
+		if (imsg_compose(ibuf_rde, IMSG_RECONF_FILTER, 0, 0, -1,
 		    r, sizeof(struct filter_rule)) == -1)
 			return (-1);
 		TAILQ_REMOVE(rules_l, r, entry);
 		free(r);
 	}
 	while ((la = TAILQ_FIRST(conf->listen_addrs)) != NULL) {
-		if (imsg_compose_fdpass(ibuf_se, IMSG_RECONF_LISTENER, la->fd,
+		if (imsg_compose(ibuf_se, IMSG_RECONF_LISTENER, 0, 0, la->fd,
 		    la, sizeof(struct listen_addr)) == -1)
 			return (-1);
 		TAILQ_REMOVE(conf->listen_addrs, la, entry);
@@ -422,8 +422,8 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
 	free(conf->listen_addrs);
 	conf->listen_addrs = NULL;
 
-	if (imsg_compose(ibuf_se, IMSG_RECONF_DONE, 0, NULL, 0) == -1 ||
-	    imsg_compose(ibuf_rde, IMSG_RECONF_DONE, 0, NULL, 0) == -1)
+	if (imsg_compose(ibuf_se, IMSG_RECONF_DONE, 0, 0, -1, NULL, 0) == -1 ||
+	    imsg_compose(ibuf_rde, IMSG_RECONF_DONE, 0, 0, -1, NULL, 0) == -1)
 		return (-1);
 
 	/* mrt changes can be sent out of bound */
@@ -568,7 +568,7 @@ send_nexthop_update(struct kroute_nexthop *msg)
 
 	free(gw);
 
-	if (imsg_compose(ibuf_rde, IMSG_NEXTHOP_UPDATE, 0,
+	if (imsg_compose(ibuf_rde, IMSG_NEXTHOP_UPDATE, 0, 0, -1,
 	    msg, sizeof(struct kroute_nexthop)) == -1)
 		quit = 1;
 }
@@ -576,5 +576,5 @@ send_nexthop_update(struct kroute_nexthop *msg)
 void
 send_imsg_session(int type, pid_t pid, void *data, u_int16_t datalen)
 {
-	imsg_compose_pid(ibuf_se, type, pid, data, datalen);
+	imsg_compose(ibuf_se, type, 0, pid, -1, data, datalen);
 }
