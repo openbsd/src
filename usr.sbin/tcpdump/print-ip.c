@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ip.c,v 1.13 2000/12/22 19:08:00 mickey Exp $	*/
+/*	$OpenBSD: print-ip.c,v 1.14 2001/02/05 15:18:47 jason Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ip.c,v 1.13 2000/12/22 19:08:00 mickey Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ip.c,v 1.14 2001/02/05 15:18:47 jason Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -531,6 +531,14 @@ ip_print(register const u_char *bp, register u_int length)
 				return;
 			}
 			break;
+
+#ifndef IPPROTO_ETHERIP
+#define IPPROTO_ETHERIP	97
+#endif
+		case IPPROTO_ETHERIP:
+			etherip_print(cp, len, (const u_char *)ip);
+			break;
+
 #ifndef IPPROTO_VRRP  
 #define IPPROTO_VRRP 112
 #endif

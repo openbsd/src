@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ether.c,v 1.16 2000/10/03 14:31:57 ho Exp $	*/
+/*	$OpenBSD: print-ether.c,v 1.17 2001/02/05 15:18:47 jason Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -22,7 +22,7 @@
  */
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ether.c,v 1.16 2000/10/03 14:31:57 ho Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ether.c,v 1.17 2001/02/05 15:18:47 jason Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -58,7 +58,7 @@ struct rtentry;
 const u_char *packetp;
 const u_char *snapend;
 
-static inline void
+void
 ether_print(register const u_char *bp, u_int length)
 {
 	register const struct ether_header *ep;
@@ -77,7 +77,7 @@ ether_print(register const u_char *bp, u_int length)
 			     length);
 }
 
-static u_short extracted_ethertype;
+u_short extracted_ethertype;
 
 /*
  * This is the top level routine of the printer.  'p' is the points
