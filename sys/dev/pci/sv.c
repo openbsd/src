@@ -1,4 +1,4 @@
-/*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
+/*      $OpenBSD: sv.c,v 1.3 1998/07/13 13:53:16 csapuntz Exp $ */
 
 /*
  * Copyright (c) 1998 Constantine Paul Sapuntzakis
@@ -198,6 +198,7 @@ static __inline__ u_int8_t sv_read __P((struct sv_softc *, u_int8_t));
 static __inline__ u_int8_t sv_read_indirect __P((struct sv_softc *, u_int8_t));
 static __inline__ void sv_write __P((struct sv_softc *, u_int8_t, u_int8_t ));
 static __inline__ void sv_write_indirect __P((struct sv_softc *, u_int8_t, u_int8_t ));
+static void sv_init_mixer __P((struct sv_softc *));
 
 static __inline__ void
 sv_write (sc, reg, val)
@@ -406,6 +407,8 @@ sv_attach(parent, self, aux)
     return;
   }
   printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+
+  sv_init_mixer(sc);
 
   audio_attach_mi(&sv_hw_if, 0, sc, &sc->sc_dev);
 }
@@ -1032,8 +1035,9 @@ static const struct {
 };
 
 
+#define SV_DEVICES_PER_PORT 2
 #define SV_FIRST_MIXER (SV_LAST_CLASS + 1)
-#define SV_LAST_MIXER 2 * (ARRAY_SIZE(ports)) + SV_LAST_CLASS
+#define SV_LAST_MIXER (SV_DEVICES_PER_PORT * (ARRAY_SIZE(ports)) + SV_LAST_CLASS)
 #define SV_RECORD_SOURCE (SV_LAST_MIXER + 1)
 #define SV_MIC_BOOST (SV_LAST_MIXER + 2)
 #define SV_RECORD_GAIN (SV_LAST_MIXER + 3)
@@ -1058,8 +1062,8 @@ sv_query_devinfo(addr, dip)
   if (dip->index >= SV_FIRST_MIXER &&
       dip->index <= SV_LAST_MIXER) {
     int off = dip->index - SV_FIRST_MIXER;
-    int mute = (off % 2);
-    int idx = off / 2;
+    int mute = (off % SV_DEVICES_PER_PORT);
+    int idx = off / SV_DEVICES_PER_PORT;
 
     dip->mixer_class = ports[idx].class;
     strcpy(dip->label.name, ports[idx].audio);
@@ -1159,9 +1163,8 @@ sv_mixer_set_port(addr, cp)
   if (cp->dev >= SV_FIRST_MIXER &&
       cp->dev <= SV_LAST_MIXER) {
     int off = cp->dev - SV_FIRST_MIXER;
-    int mute = (off % 2);
-    
-    idx = off / 2;
+    int mute = (off % SV_DEVICES_PER_PORT);
+    idx = off / SV_DEVICES_PER_PORT;
 
     if (mute) {
       if (cp->type != AUDIO_MIXER_ENUM) 
@@ -1414,6 +1417,30 @@ sv_mixer_get_port(addr, cp)
   return (EINVAL);
 }
 
+
+static void
+sv_init_mixer(sc)
+     struct sv_softc *sc;
+{
+  mixer_ctrl_t cp;
+  int idx;
+
+  cp.type = AUDIO_MIXER_ENUM;
+  cp.dev = SV_SRS_MODE;
+  cp.un.ord = 0;
+
+  sv_mixer_set_port(sc, &cp);
+
+  for (idx = 0; idx < ARRAY_SIZE(ports); idx++) {
+    if (ports[idx].audio == AudioNdac) {
+      cp.type = AUDIO_MIXER_ENUM;
+      cp.dev = SV_FIRST_MIXER + idx * SV_DEVICES_PER_PORT + 1;
+      cp.un.ord = 0;
+      sv_mixer_set_port(sc, &cp);
+      break;
+    }
+  }
+}
 
 void *
 sv_malloc(addr, size, pool, flags)
