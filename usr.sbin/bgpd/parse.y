@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.155 2005/03/28 15:39:32 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.156 2005/03/29 11:13:33 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1630,6 +1630,8 @@ parse_config(char *filename, struct bgpd_config *xconf,
 	struct sym		*sym, *next;
 	struct peer		*p, *pnext;
 	struct listen_addr	*la;
+	struct network		*n;
+	struct filter_rule	*r;
 
 	if ((fin = fopen(filename, "r")) == NULL) {
 		warn("%s", filename);
@@ -1649,8 +1651,6 @@ parse_config(char *filename, struct bgpd_config *xconf,
 	if ((listen_addrs = calloc(1, sizeof(struct listen_addrs))) == NULL)
 		fatal(NULL);
 	LIST_INIT(mrtconf);
-	netconf = nc;
-	TAILQ_INIT(netconf);
 	TAILQ_INIT(listen_addrs);
 
 	peer_l = NULL;
@@ -1660,9 +1660,13 @@ parse_config(char *filename, struct bgpd_config *xconf,
 	lineno = 1;
 	errors = 0;
 	id = 1;
+	conf->opts = xconf->opts;
+
+	/* filter and network list are always empty in the parent */
 	filter_l = xfilter_l;
 	TAILQ_INIT(filter_l);
-	conf->opts = xconf->opts;
+	netconf = nc;
+	TAILQ_INIT(netconf);
 
 	yyparse();
 
@@ -1693,6 +1697,16 @@ parse_config(char *filename, struct bgpd_config *xconf,
 		for (p = peer_l; p != NULL; p = pnext) {
 			pnext = p->next;
 			free(p);
+		}
+
+		while ((n = TAILQ_FIRST(netconf)) != NULL) {
+			TAILQ_REMOVE(netconf, n, entry);
+			free(n);
+		}
+
+		while ((r = TAILQ_FIRST(filter_l)) != NULL) {
+			TAILQ_REMOVE(filter_l, r, entry);
+			free(r);
 		}
 	} else {
 		errors += merge_config(xconf, conf, peer_l, listen_addrs);
