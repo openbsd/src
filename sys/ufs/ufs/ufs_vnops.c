@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.44 2002/03/14 01:27:18 millert Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.45 2002/05/23 12:46:42 art Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -1738,6 +1738,7 @@ ufs_strategy(v)
 	struct vnode *vp = bp->b_vp;
 	struct inode *ip;
 	int error;
+	int s;
 
 	ip = VTOI(vp);
 	if (vp->v_type == VBLK || vp->v_type == VCHR)
@@ -1748,14 +1749,18 @@ ufs_strategy(v)
 		if (error) {
 			bp->b_error = error;
 			bp->b_flags |= B_ERROR;
+			s = splbio();
 			biodone(bp);
+			splx(s);
 			return (error);
 		}
 		if ((long)bp->b_blkno == -1)
 			clrbuf(bp);
 	}
 	if ((long)bp->b_blkno == -1) {
+		s = splbio();
 		biodone(bp);
+		splx(s);
 		return (0);
 	}
 	vp = ip->i_devvp;
