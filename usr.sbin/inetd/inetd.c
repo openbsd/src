@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.50 1998/10/28 18:01:17 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.51 1998/11/18 23:25:35 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.50 1998/10/28 18:01:17 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.51 1998/11/18 23:25:35 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -1188,6 +1188,8 @@ more:
 		sep->se_family = AF_INET;
 		if (strncmp(sep->se_proto, "rpc/", 4) == 0) {
 			char *cp, *ccp;
+			long l;
+
 			cp = strchr(sep->se_service, '/');
 			if (cp == 0) {
 				syslog(LOG_ERR, "%s: no rpc version",
@@ -1195,19 +1197,21 @@ more:
 				goto more;
 			}
 			*cp++ = '\0';
-			sep->se_rpcversl =
-				sep->se_rpcversh = strtol(cp, &ccp, 0);
-			if (ccp == cp) {
+			l = strtol(cp, &ccp, 0);
+			if (ccp == cp || l < 0 || l > INT_MAX) {
 		badafterall:
 				syslog(LOG_ERR, "%s/%s: bad rpc version",
 				    sep->se_service, cp);
 				goto more;
 			}
+			sep->se_rpcversl = sep->se_rpcversh = l;
 			if (*ccp == '-') {
 				cp = ccp + 1;
-				sep->se_rpcversh = strtol(cp, &ccp, 0); 
-				if (ccp == cp)
+				l = strtol(cp, &ccp, 0); 
+				if (ccp == cp || l < 0 || l > INT_MAX ||
+				    l < sep->se_rpcversl)
 					goto badafterall;
+				sep->se_rpcversh = l;
 			}
 		}
 	}
