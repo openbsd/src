@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo.c,v 1.29 2001/06/27 00:58:54 lebel Exp $	*/
+/*	$OpenBSD: getaddrinfo.c,v 1.30 2001/08/20 02:23:05 itojun Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.31 2000/08/31 17:36:43 itojun Exp $	*/
 
 /*
@@ -1807,7 +1807,7 @@ res_querydomainN(name, domain, target)
 			h_errno = NO_RECOVERY;
 			return (-1);
 		}
-		sprintf(nbuf, "%s.%s", name, domain);
+		snprintf(nbuf, sizeof(nbuf), "%s.%s", name, domain);
 	}
 	return (res_queryN(longname, target));
 }
