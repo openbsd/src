@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.53 2001/05/30 18:49:16 angelos Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.54 2001/05/30 22:06:42 angelos Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -759,7 +759,7 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming,
   int dstlen, srclen, keylen, hashlen, err;
   struct pf_key_v2_msg *update = 0, *ret = 0;
   struct ipsec_proto *iproto = proto->data;
-#ifdef SADB_CREDTYPE_NONE
+#if 0
   struct sadb_cred *cred;
 #endif
   size_t len;
@@ -1216,7 +1216,7 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming,
 	free (sid);
     }
 
-#ifdef SADB_CREDTYPE_NONE
+#if 0
   /* Setup credentials */
   if (isakmp_sa->recv_cert)
     {
@@ -1316,7 +1316,7 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming,
     }
 #endif /* SADB_CREDTYPE_NONE */
 
-#ifdef SADB_AUTHTYPE_NONE
+#if 0
   /* Setup authentication information */
   if (isakmp_sa->recv_key)
     {
