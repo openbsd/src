@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.56 2004/09/20 18:53:20 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.57 2005/01/27 12:58:22 otto Exp $	*/
 
 #ifndef SMALL
 static const char copyright[] =
@@ -36,7 +36,7 @@ static const char license[] =
 #endif /* SMALL */
 
 #ifndef SMALL
-static const char main_rcsid[] = "$OpenBSD: main.c,v 1.56 2004/09/20 18:53:20 millert Exp $";
+static const char main_rcsid[] = "$OpenBSD: main.c,v 1.57 2005/01/27 12:58:22 otto Exp $";
 #endif
 
 #include <sys/param.h>
@@ -811,7 +811,7 @@ list_stats(const char *name, const struct compressor *method,
 		printf("%10lld    %10lld  %4.1f%%  %s\n",
 		    (long long)(info->total_in + info->hlen),
 		    (long long)info->total_out,
-		    (info->total_out - info->total_in) *
+		    ((long long)info->total_out - (long long)info->total_in) *
 		    100.0 / info->total_out, name);
 		compressed_total += info->total_in;
 		uncompressed_total += info->total_out;
