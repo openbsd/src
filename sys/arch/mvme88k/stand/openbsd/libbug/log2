@@ -1,9 +1,0 @@
-rtc_rd.o
-return.o
-outstr.o
-outln.o
-instat.o
-getbrdid.o
-diskwr.o
-diskrd.o
-delay.o
