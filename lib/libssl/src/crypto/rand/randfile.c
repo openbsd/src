@@ -221,7 +221,7 @@ const char *RAND_file_name(char *buf, int size)
 
 	if (issetugid() == 0)
 		s = getenv("RANDFILE");
-	if (s != NULL && *s && strlen(s) < size)
+	if (s != NULL && *s && strlen(s) + 1 < size)
 		{
 		strlcpy(buf,s,size);
 		ret=buf;
