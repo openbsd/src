@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.81 1998/07/13 03:38:54 millert Exp $
+#	$OpenBSD: rc,v 1.82 1998/07/13 23:24:57 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -72,7 +72,7 @@ ttyflags -a
 
 # if there's no /etc/host.random, make one through /dev/urandom
 if [ ! -f /etc/host.random ]; then
-	dd if=/dev/urandom of=/etc/host.random bs=1024 count=64
+	dd if=/dev/urandom of=/etc/host.random bs=1024 count=64 >/dev/null 2>&1
 	chmod 600 /etc/host.random
 fi
 
