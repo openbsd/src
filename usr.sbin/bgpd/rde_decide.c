@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.34 2004/04/26 00:46:52 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.35 2004/06/22 23:17:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -23,7 +23,6 @@
 #include <string.h>
 
 #include "bgpd.h"
-#include "ensure.h"
 #include "rde.h"
 
 int	prefix_cmp(struct prefix *, struct prefix *);
@@ -112,7 +111,8 @@ prefix_cmp(struct prefix *p1, struct prefix *p2)
 {
 	struct rde_aspath	*asp1, *asp2;
 
-	ENSURE(p1 != NULL);
+	if (p1 == NULL)
+		return (-1);
 
 	/* p2 is allowed to be NULL */
 	if (p2 == NULL)
@@ -121,7 +121,6 @@ prefix_cmp(struct prefix *p1, struct prefix *p2)
 	asp1 = p1->aspath;
 	asp2 = p2->aspath;
 	/* 1. check if prefix is eligible a.k.a reachable */
-	ENSURE(asp2->nexthop != NULL && asp1->nexthop != NULL);
 
 	if (asp2->nexthop->state != NEXTHOP_REACH)
 		return (1);
@@ -219,11 +218,8 @@ prefix_evaluate(struct prefix *p, struct pt_entry *pte)
 	xp = LIST_FIRST(&pte->prefix_h);
 	if (pte->active != xp) {
 		/* need to generate an update */
-		if (pte->active != NULL) {
-			ENSURE(pte->active->aspath != NULL);
-			ENSURE(pte->active->aspath->active_cnt > 0);
+		if (pte->active != NULL)
 			pte->active->aspath->active_cnt--;
-		}
 
 		/*
 		 * Send update with remove for pte->active and add for xp
@@ -241,8 +237,6 @@ prefix_evaluate(struct prefix *p, struct pt_entry *pte)
 		else {
 			pte->active = xp;
 			pte->active->aspath->active_cnt++;
-			ENSURE(pte->active->aspath->active_cnt <=
-			    pte->active->aspath->prefix_cnt);
 		}
 	}
 }

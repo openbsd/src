@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.20 2004/06/22 20:28:58 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.21 2004/06/22 23:17:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -22,7 +22,6 @@
 #include <string.h>
 
 #include "bgpd.h"
-#include "ensure.h"
 #include "rde.h"
 
 int	up_generate_attr(struct rde_peer *, struct update_attr *,
@@ -106,12 +105,31 @@ up_down(struct rde_peer *peer)
 int
 up_prefix_cmp(struct update_prefix *a, struct update_prefix *b)
 {
-	ENSURE(a->prefix.af == AF_INET);
+	int	i;
 
-	if (ntohl(a->prefix.v4.s_addr) < ntohl(b->prefix.v4.s_addr))
+	if (a->prefix.af < b->prefix.af)
 		return (-1);
-	if (ntohl(a->prefix.v4.s_addr) > ntohl(b->prefix.v4.s_addr))
+	if (a->prefix.af > b->prefix.af)
 		return (1);
+	
+	switch (a->prefix.af) {
+	case AF_INET:
+		if (ntohl(a->prefix.v4.s_addr) < ntohl(b->prefix.v4.s_addr))
+			return (-1);
+		if (ntohl(a->prefix.v4.s_addr) > ntohl(b->prefix.v4.s_addr))
+			return (1);
+		break;
+	case AF_INET6:
+		i = memcmp(&a->prefix.v6, &b->prefix.v6,
+		    sizeof(struct in6_addr));
+		if (i > 0)
+			return (1);
+		if (i < 0)
+			return (-1);
+		break;
+	default:
+		fatalx("pt_prefix_cmp: unknown af");
+	}
 	if (a->prefixlen < b->prefixlen)
 		return (-1);
 	if (a->prefixlen > b->prefixlen)
@@ -138,8 +156,6 @@ up_add(struct rde_peer *peer, struct update_prefix *p, struct update_attr *a)
 {
 	struct update_attr	*na = NULL;
 	struct update_prefix	*np;
-
-	ENSURE(p != NULL);
 
 	/* 1. search for attr */
 	if (a != NULL && (na = RB_FIND(uptree_attr, &peer->up_attrs, a)) ==
@@ -215,7 +231,8 @@ up_generate_updates(struct rde_peer *peer,
 	struct attr_flags		 attrs;
 	struct bgpd_addr		 addr;
 
-	ENSURE(peer->state == PEER_UP);
+	if (peer->state != PEER_UP)
+		return;
 	/*
 	 * Filtering should be hooked up here.
 	 * With filtering the decision if withdraw, update or nothing
@@ -293,7 +310,6 @@ up_generate_updates(struct rde_peer *peer,
 		 */
 		if ((atr = attr_optget(&old->aspath->flags,
 		    ATTR_ORIGINATOR_ID)) != NULL) {
-			ENSURE(atr->len == 4);
 			if (memcmp(atr->data, &peer->remote_bgpid,
 			    sizeof(peer->remote_bgpid)) == 0)
 				/* would cause loop don't send */
@@ -411,7 +427,6 @@ up_generate_updates(struct rde_peer *peer,
 		 */
 		if ((atr = attr_optget(&new->aspath->flags,
 		    ATTR_ORIGINATOR_ID)) != NULL) {
-			ENSURE(atr->len == 4);
 			if (memcmp(atr->data, &peer->remote_bgpid,
 			    sizeof(peer->remote_bgpid)) == 0) {
 				/* would cause loop don't send */
@@ -600,8 +615,9 @@ up_set_prefix(u_char *buf, int len, struct bgpd_addr *prefix, u_int8_t plen)
 {
 	int	totlen;
 
-	ENSURE(prefix->af == AF_INET);
-	ENSURE(plen <= 32);
+	if (prefix->af != AF_INET)
+		return (-1);
+
 	totlen = (plen + 7) / 8 + 1;
 
 	if (totlen > len)

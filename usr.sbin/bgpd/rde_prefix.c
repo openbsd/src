@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_prefix.c,v 1.14 2004/06/22 20:28:58 claudio Exp $ */
+/*	$OpenBSD: rde_prefix.c,v 1.15 2004/06/22 23:17:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -95,7 +95,6 @@ pt_shutdown(void)
 int
 pt_empty(struct pt_entry *pte)
 {
-	ENSURE(pte != NULL);
 	return LIST_EMPTY(&pte->prefix_h);
 }
 
@@ -269,13 +268,6 @@ pt_prefix_cmp(const struct pt_entry *a, const struct pt_entry *b)
 	const struct pt_entry6	*a6, *b6;
 	int			 i;
 
-	if (a == NULL)
-		return (1);
-	if (b == NULL)
-		return (-1);
-
-	if (a->af != b->af)
-		log_debug("af non equal a %d b %d\n", a->af, b->af);
 	ENSURE(a->af == b->af);
 
 	switch (a->af) {
@@ -305,7 +297,6 @@ pt_prefix_cmp(const struct pt_entry *a, const struct pt_entry *b)
 		if (a6->prefixlen > b6->prefixlen)
 			return (1);
 		return (0);
-
 	default:
 		fatalx("pt_prefix_cmp: unknown af");
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.118 2004/06/22 20:28:58 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.119 2004/06/22 23:17:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -29,7 +29,6 @@
 #include <unistd.h>
 
 #include "bgpd.h"
-#include "ensure.h"
 #include "mrt.h"
 #include "rde.h"
 #include "session.h"
@@ -689,7 +688,6 @@ rde_reflector(struct rde_peer *peer, struct attr_flags *attrs)
 
 	/* check for originator id if eq router_id drop */
 	if ((a = attr_optget(attrs, ATTR_ORIGINATOR_ID)) != NULL) {
-		ENSURE(a->len == 4);
 		if (memcmp(&conf->bgpid, a->data, sizeof(conf->bgpid)) == 0)
 			/* this is comming from myself */
 			return (0);
@@ -814,7 +812,6 @@ rde_dump_as(struct as_filter *a, pid_t pid)
 			if (!aspath_match(asp->flags.aspath, a->type, a->as))
 				continue;
 			/* match found */
-			ENSURE(!path_empty(asp));
 			rde_dump_rib_as(LIST_FIRST(&asp->prefix_h), pid);
 			for (p = LIST_NEXT(LIST_FIRST(&asp->prefix_h), path_l);
 			    p != NULL; p = LIST_NEXT(p, path_l))
@@ -876,8 +873,6 @@ rde_send_kroute(struct prefix *new, struct prefix *old)
 	struct prefix	*p;
 	enum imsg_type	 type;
 
-	ENSURE(old == NULL || old->aspath->nexthop != NULL);
-	ENSURE(new == NULL || new->aspath->nexthop != NULL);
 	/*
 	 * If old is != NULL we know it was active and should be removed.
 	 * On the other hand new may be UNREACH and then we should not
@@ -966,8 +961,6 @@ rde_generate_updates(struct prefix *new, struct prefix *old)
 {
 	struct rde_peer			*peer;
 
-	ENSURE(old == NULL || old->aspath->nexthop != NULL);
-	ENSURE(new == NULL || new->aspath->nexthop != NULL);
 	/*
 	 * If old is != NULL we know it was active and should be removed.
 	 * On the other hand new may be UNREACH and then we should not
@@ -1091,13 +1084,12 @@ peer_get(u_int32_t id)
 	struct rde_peer		*peer;
 
 	head = PEER_HASH(id);
-	ENSURE(head != NULL);
 
 	LIST_FOREACH(peer, head, hash_l) {
 		if (peer->conf.id == id)
-			return peer;
+			return (peer);
 	}
-	return NULL;
+	return (NULL);
 }
 
 struct rde_peer *
@@ -1106,7 +1098,8 @@ peer_add(u_int32_t id, struct peer_config *p_conf)
 	struct rde_peer_head	*head;
 	struct rde_peer		*peer;
 
-	ENSURE(peer_get(id) == NULL);
+	if (peer_get(id))
+		return (NULL);
 
 	peer = calloc(1, sizeof(struct rde_peer));
 	if (peer == NULL)
@@ -1119,7 +1112,6 @@ peer_add(u_int32_t id, struct peer_config *p_conf)
 	up_init(peer);
 
 	head = PEER_HASH(id);
-	ENSURE(head != NULL);
 
 	LIST_INSERT_HEAD(head, peer, hash_l);
 	LIST_INSERT_HEAD(&peerlist, peer, peer_l);
@@ -1130,10 +1122,6 @@ peer_add(u_int32_t id, struct peer_config *p_conf)
 void
 peer_remove(struct rde_peer *peer)
 {
-	ENSURE(peer->state == PEER_DOWN);
-	ENSURE(peer_get(peer->conf.id) != NULL);
-	ENSURE(LIST_EMPTY(&peer->path_h));
-
 	LIST_REMOVE(peer, hash_l);
 	LIST_REMOVE(peer, peer_l);
 
@@ -1147,11 +1135,12 @@ peer_up(u_int32_t id, struct session_up *sup)
 
 	peer = peer_add(id, &sup->conf);
 	if (peer == NULL) {
-		log_warnx("peer_up: unknown peer id %d", id);
+		log_warnx("peer_up: peer id %d already exists", id);
 		return;
 	}
 
-	ENSURE(peer->state == PEER_DOWN || peer->state == PEER_NONE);
+	if (peer->state != PEER_DOWN && peer->state != PEER_NONE)
+		fatalx("peer_up: bad state");
 	peer->remote_bgpid = ntohl(sup->remote_bgpid);
 	memcpy(&peer->local_addr, &sup->local_addr, sizeof(peer->local_addr));
 	memcpy(&peer->remote_addr, &sup->remote_addr,
@@ -1326,7 +1315,6 @@ rde_shutdown(void)
 	 * the decision process is turend of if rde_quit = 1 and
 	 * rde_shutdown depends on this.
 	 */
-	ENSURE(rde_quit != 0);
 
 	/* First mark all peer as down */
 	for (i = 0; i <= peertable.peer_hashmask; i++)
@@ -1346,6 +1334,7 @@ rde_shutdown(void)
 				nasp = LIST_NEXT(asp, peer_l);
 				path_remove(asp);
 			}
+			LIST_INIT(&p->path_h);
 			/* finally remove peer */
 			peer_remove(p);
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.48 2004/06/22 20:28:58 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.49 2004/06/22 23:17:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -148,7 +148,6 @@ path_get(struct aspath *aspath, struct rde_peer *peer)
 	RIB_STAT(path_get);
 
 	head = PATH_HASH(aspath);
-	ENSURE(head != NULL);
 
 	LIST_FOREACH(asp, head, path_l) {
 		if (aspath_compare(asp->flags.aspath, aspath) == 0 &&
@@ -164,7 +163,6 @@ path_add(struct rde_peer *peer, struct attr_flags *attr)
 	struct rde_aspath	*asp;
 
 	RIB_STAT(path_add);
-	ENSURE(peer != NULL);
 
 	asp = path_alloc();
 
@@ -220,8 +218,6 @@ path_destroy(struct rde_aspath *asp)
 int
 path_empty(struct rde_aspath *asp)
 {
-	ENSURE(asp != NULL);
-
 	return LIST_EMPTY(&asp->prefix_h);
 }
 
@@ -240,13 +236,11 @@ path_link(struct rde_aspath *asp, struct rde_peer *peer)
 	RIB_STAT(path_link);
 
 	head = PATH_HASH(asp->flags.aspath);
-	ENSURE(head != NULL);
 
 	LIST_INSERT_HEAD(head, asp, path_l);
 	LIST_INSERT_HEAD(&peer->path_h, asp, peer_l);
 	asp->peer = peer;
 
-	ENSURE(asp->nexthop == NULL);
 	nexthop_add(asp);
 }
 
@@ -310,7 +304,6 @@ prefix_get(struct rde_aspath *asp, struct bgpd_addr *prefix, int prefixlen)
 	struct bgpd_addr addr;
 
 	RIB_STAT(prefix_get);
-	ENSURE(asp != NULL);
 
 	LIST_FOREACH(p, &asp->prefix_h, path_l) {
 		ENSURE(p->prefix != NULL);
@@ -403,8 +396,6 @@ prefix_move(struct rde_aspath *asp, struct prefix *p)
 	/* remove old prefix node */
 	oasp = p->aspath;
 	LIST_REMOVE(p, path_l);
-	ENSURE(oasp->prefix_cnt > 0);
-	ENSURE(oasp->peer->prefix_cnt > 0);
 	oasp->prefix_cnt--;
 	/* as before peer count needs no update because of move */
 
@@ -464,8 +455,6 @@ prefix_bypeer(struct pt_entry *pte, struct rde_peer *peer)
 {
 	struct prefix	*p;
 
-	ENSURE(pte != NULL);
-
 	LIST_FOREACH(p, &pte->prefix_h, prefix_l) {
 		if (p->aspath->peer == peer)
 			return p;
@@ -479,7 +468,6 @@ prefix_updateall(struct rde_aspath *asp, enum nexthop_state state)
 	struct prefix	*p;
 
 	RIB_STAT(prefix_updateall);
-	ENSURE(asp != NULL);
 
 	if (rde_noevaluate())
 		/* if the decision process is turned off this is a no-op */
@@ -553,7 +541,6 @@ prefix_link(struct prefix *pref, struct pt_entry *pte, struct rde_aspath *asp)
 	RIB_STAT(prefix_link);
 	ENSURE(pref->aspath == NULL &&
 	    pref->prefix == NULL);
-	ENSURE(pref != NULL && pte != NULL && asp != NULL);
 	ENSURE(prefix_bypeer(pte, asp->peer) == NULL);
 
 	LIST_INSERT_HEAD(&asp->prefix_h, pref, path_l);
@@ -576,16 +563,12 @@ static void
 prefix_unlink(struct prefix *pref)
 {
 	RIB_STAT(prefix_unlink);
-	ENSURE(pref != NULL);
-	ENSURE(pref->prefix != NULL && pref->aspath != NULL);
 
 	/* make route decision */
 	LIST_REMOVE(pref, prefix_l);
 	prefix_evaluate(NULL, pref->prefix);
 
 	LIST_REMOVE(pref, path_l);
-	ENSURE(pref->aspath->prefix_cnt > 0);
-	ENSURE(pref->aspath->peer->prefix_cnt > 0);
 	pref->aspath->prefix_cnt--;
 	pref->aspath->peer->prefix_cnt--;
 
@@ -722,7 +705,6 @@ nexthop_add(struct rde_aspath *asp)
 	struct nexthop	*nh;
 
 	RIB_STAT(nexthop_add);
-	ENSURE(asp != NULL);
 
 	if ((nh = asp->nexthop) == NULL)
 		nh = nexthop_get(asp->flags.nexthop);
@@ -745,7 +727,6 @@ nexthop_remove(struct rde_aspath *asp)
 	struct nexthop	*nh;
 
 	RIB_STAT(nexthop_remove);
-	ENSURE(asp != NULL);
 
 	LIST_REMOVE(asp, nexthop_l);
 
@@ -790,7 +771,13 @@ nexthop_update(struct kroute_nexthop *msg)
 		log_warnx("nexthop_update: non-existent nexthop");
 		return;
 	}
-	ENSURE(nh->exit_nexthop.v4.s_addr == msg->nexthop.v4.s_addr);
+	/* should I trust in the parent ??? */
+	if (nh->exit_nexthop.af != msg->nexthop.af ||
+	    (nh->exit_nexthop.af == AF_INET &&
+	    nh->exit_nexthop.v4.s_addr != msg->nexthop.v4.s_addr)) { 
+		log_warnx("nexthop_update: bad nexthop returned");
+		return;
+	}
 
 	if (msg->valid)
 		nh->state = NEXTHOP_REACH;

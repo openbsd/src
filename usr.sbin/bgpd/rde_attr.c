@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.32 2004/06/20 18:35:12 henning Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.33 2004/06/22 23:17:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -342,15 +342,15 @@ u_int8_t
 attr_missing(struct attr_flags *a, int ebgp)
 {
 	if ((a->wflags & F_ATTR_ORIGIN) == 0)
-		return ATTR_ORIGIN;
+		return (ATTR_ORIGIN);
 	if ((a->wflags & F_ATTR_ASPATH) == 0)
-		return ATTR_ASPATH;
+		return (ATTR_ASPATH);
 	if ((a->wflags & F_ATTR_NEXTHOP) == 0)
-		return ATTR_NEXTHOP;
+		return (ATTR_NEXTHOP);
 	if (!ebgp)
 		if ((a->wflags & F_ATTR_LOCALPREF) == 0)
-			return ATTR_LOCALPREF;
-	return 0;
+			return (ATTR_LOCALPREF);
+	return (0);
 }
 
 int
@@ -560,13 +560,11 @@ aspath_extract(void *seg, int pos)
 	u_char		*ptr = seg;
 	u_int16_t	 as = 0;
 
-	ENSURE(0 <= pos && pos < 255);
-
 	ptr += 2 + 2 * pos;
 	as = *ptr++;
 	as <<= 8;
 	as |= *ptr;
-	return as;
+	return (as);
 }
 
 int
@@ -578,24 +576,27 @@ aspath_verify(void *data, u_int16_t len)
 
 	if (len & 1)
 		/* odd length aspath are invalid */
-		return AS_ERR_BAD;
+		return (AS_ERR_BAD);
 
 	for (; len > 0; len -= seg_size, seg += seg_size) {
+		if (len < 2)
+			return (AS_ERR_BAD);
 		seg_type = seg[0];
 		seg_len = seg[1];
-		if (seg_type != AS_SET && seg_type != AS_SEQUENCE) {
-			return AS_ERR_TYPE;
-		}
+
+		if (seg_type != AS_SET && seg_type != AS_SEQUENCE)
+			return (AS_ERR_TYPE);
+
 		seg_size = 2 + 2 * seg_len;
 
 		if (seg_size > len)
-			return AS_ERR_LEN;
+			return (AS_ERR_LEN);
 
 		if (seg_size == 0)
 			/* empty aspath segment are not allowed */
-			return AS_ERR_BAD;
+			return (AS_ERR_BAD);
 	}
-	return 0;	/* aspath is valid but probably not loop free */
+	return (0);	/* aspath is valid but probably not loop free */
 }
 
 struct aspath *
@@ -613,7 +614,7 @@ aspath_create(void *data, u_int16_t len)
 	aspath->hdr.as_cnt = aspath_count(aspath);
 	aspath->hdr.prepend = 0;
 
-	return aspath;
+	return (aspath);
 }
 
 int
@@ -633,7 +634,8 @@ aspath_write(void *p, u_int16_t len, struct aspath *aspath, u_int16_t myAS,
 
 	/* first calculate new size */
 	if (aspath->hdr.len > 0) {
-		ENSURE(aspath->hdr.len > 2);
+		if (aspath->hdr.len < 2)
+			return (-1);
 		type = aspath->data[0];
 		size = aspath->data[1];
 	} else {
@@ -712,13 +714,13 @@ aspath_destroy(struct aspath *aspath)
 u_char *
 aspath_dump(struct aspath *aspath)
 {
-	return aspath->data;
+	return (aspath->data);
 }
 
 u_int16_t
 aspath_length(struct aspath *aspath)
 {
-	return aspath->hdr.len;
+	return (aspath->hdr.len);
 }
 
 u_int16_t
@@ -733,7 +735,6 @@ aspath_count(struct aspath *aspath)
 	for (len = aspath->hdr.len; len > 0; len -= seg_size, seg += seg_size) {
 		seg_type = seg[0];
 		seg_len = seg[1];
-		ENSURE(seg_type == AS_SET || seg_type == AS_SEQUENCE);
 		seg_size = 2 + 2 * seg_len;
 
 		if (seg_type == AS_SET)
@@ -741,7 +742,7 @@ aspath_count(struct aspath *aspath)
 		else
 			cnt += seg_len;
 	}
-	return cnt;
+	return (cnt);
 }
 
 u_int16_t
@@ -754,10 +755,9 @@ aspath_neighbor(struct aspath *aspath)
 	 */
 
 	if (aspath->hdr.len == 0)
-		return 0;
+		return (0);
 
-	ENSURE(aspath->hdr.len > 2);
-	return aspath_extract(aspath->data, 0);
+	return (aspath_extract(aspath->data, 0));
 }
 
 int
@@ -771,16 +771,14 @@ aspath_loopfree(struct aspath *aspath, u_int16_t myAS)
 	for (len = aspath->hdr.len; len > 0; len -= seg_size, seg += seg_size) {
 		seg_type = seg[0];
 		seg_len = seg[1];
-		ENSURE(seg_type == AS_SET || seg_type == AS_SEQUENCE);
 		seg_size = 2 + 2 * seg_len;
 
-		ENSURE(seg_size <= len);
 		for (i = 0; i < seg_len; i++) {
 			if (myAS == aspath_extract(seg, i))
-				return 0;
+				return (0);
 		}
 	}
-	return 1;
+	return (1);
 }
 
 #define AS_HASH_INITIAL 8271
@@ -798,16 +796,14 @@ aspath_hash(struct aspath *aspath)
 	for (len = aspath->hdr.len; len > 0; len -= seg_size, seg += seg_size) {
 		seg_type = seg[0];
 		seg_len = seg[1];
-		ENSURE(seg_type == AS_SET || seg_type == AS_SEQUENCE);
 		seg_size = 2 + 2 * seg_len;
 
-		ENSURE(seg_size <= len);
 		for (i = 0; i < seg_len; i++) {
 			hash += (hash << 5);
 			hash ^= aspath_extract(seg, i);
 		}
 	}
-	return hash;
+	return (hash);
 }
 
 int
@@ -824,7 +820,7 @@ aspath_compare(struct aspath *a1, struct aspath *a2)
 		return (1);
 	if (r < 0)
 		return (-1);
-	return 0;
+	return (0);
 }
 
 int
@@ -853,7 +849,6 @@ aspath_snprint(char *buf, size_t size, void *data, u_int16_t len)
 	for (; len > 0; len -= seg_size, seg += seg_size) {
 		seg_type = seg[0];
 		seg_len = seg[1];
-		ENSURE(seg_type == AS_SET || seg_type == AS_SEQUENCE);
 		seg_size = 2 + 2 * seg_len;
 
 		if (seg_type == AS_SET) {
@@ -867,7 +862,6 @@ aspath_snprint(char *buf, size_t size, void *data, u_int16_t len)
 			UPDATE();
 		}
 
-		ENSURE(seg_size <= len);
 		for (i = 0; i < seg_len; i++) {
 			r = snprintf(buf, size, "%hu", aspath_extract(seg, i));
 			UPDATE();
@@ -885,7 +879,7 @@ aspath_snprint(char *buf, size_t size, void *data, u_int16_t len)
 	if (size > 0)
 		*buf = '\0';
 
-	return total_size;
+	return (total_size);
 #undef UPDATE
 }
 
@@ -899,7 +893,6 @@ aspath_asprint(char **ret, void *data, u_int16_t len)
 	if (*ret == NULL)
 		return (-1);
 	plen = aspath_snprint(*ret, slen, data, len);
-	ENSURE(plen < slen);
 
 	return (plen);
 }
@@ -917,7 +910,6 @@ aspath_strlen(void *data, u_int16_t len)
 	for (; len > 0; len -= seg_size, seg += seg_size) {
 		seg_type = seg[0];
 		seg_len = seg[1];
-		ENSURE(seg_type == AS_SET || seg_type == AS_SEQUENCE);
 		seg_size = 2 + 2 * seg_len;
 
 		if (seg_type == AS_SET)
@@ -928,7 +920,6 @@ aspath_strlen(void *data, u_int16_t len)
 		else if (total_size != 0)
 			total_size += 1;
 
-		ENSURE(seg_size <= len);
 		for (i = 0; i < seg_len; i++) {
 			as = aspath_extract(seg, i);
 			if (as >= 10000)
@@ -949,7 +940,7 @@ aspath_strlen(void *data, u_int16_t len)
 		if (seg_type == AS_SET)
 			total_size += 2;
 	}
-	return total_size;
+	return (total_size);
 }
 
 /* we need to be able to search more than one as */
@@ -973,7 +964,6 @@ aspath_match(struct aspath *a, enum as_spec type, u_int16_t as)
 	for (len = a->hdr.len; len > 0; len -= seg_size, seg += seg_size) {
 		seg_type = seg[0];
 		seg_len = seg[1];
-		ENSURE(seg_type == AS_SET || seg_type == AS_SEQUENCE);
 		seg_size = 2 + 2 * seg_len;
 
 		final = (len == seg_size);
@@ -982,7 +972,6 @@ aspath_match(struct aspath *a, enum as_spec type, u_int16_t as)
 			/* not yet in the final segment */
 			continue;
 
-		ENSURE(seg_size <= len);
 		for (i = 0; i < seg_len; i++)
 			if (as == aspath_extract(seg, i)) {
 				if (final && i + 1 >= seg_len)
@@ -1004,7 +993,6 @@ community_match(void *data, u_int16_t len, int as, int type)
 	u_int8_t	*p = data;
 	u_int16_t	 eas, etype;
 
-	ENSURE((len & 0x3) == 0);
 	len >>= 2; /* divide by four */
 
 	for (; len > 0; len--) {
@@ -1016,9 +1004,9 @@ community_match(void *data, u_int16_t len, int as, int type)
 		etype |= *p++;
 		if ((as == COMMUNITY_ANY || (u_int16_t)as == eas) &&
 		    (type == COMMUNITY_ANY || type == etype))
-			return 1;
+			return (1);
 	}
-	return 0;
+	return (0);
 }
 
 int
