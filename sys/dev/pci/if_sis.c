@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.7 2000/10/16 17:08:08 aaron Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.8 2000/12/06 15:48:28 mickey Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -69,6 +69,7 @@
 #include <sys/errno.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
+#include <sys/timeout.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -592,7 +593,7 @@ void sis_attach(parent, self, aux)
 	bus_addr_t		iobase;
 	bus_size_t		iosize;
 
-	s = splimp();
+	s = splnet();
 	sc->sis_unit = sc->sc_dev.dv_unit;
 
 	switch (PCI_PRODUCT(pa->pa_id)) {
@@ -1060,7 +1061,7 @@ void sis_tick(xsc)
 	struct ifnet		*ifp;
 	int			s;
 
-	s = splimp();
+	s = splnet();
 
 	ifp = &sc->arpcom.ac_if;
 
@@ -1075,7 +1076,7 @@ void sis_tick(xsc)
 			if (ifp->if_snd.ifq_head != NULL)
 				sis_start(ifp);
 	}
-	timeout(sis_tick, sc, hz);
+	timeout_add(&sc->sis_timeout, hz);
 
 	splx(s);
 
@@ -1203,6 +1204,7 @@ void sis_start(ifp)
 	struct sis_softc	*sc;
 	struct mbuf		*m_head = NULL;
 	u_int32_t		idx;
+	int			s;
 
 	sc = ifp->if_softc;
 
@@ -1215,12 +1217,16 @@ void sis_start(ifp)
 		return;
 
 	while(sc->sis_ldata->sis_tx_list[idx].sis_mbuf == NULL) {
+		s = splimp();
 		IF_DEQUEUE(&ifp->if_snd, m_head);
+		splx(s);
 		if (m_head == NULL)
 			break;
 
 		if (sis_encap(sc, m_head, &idx)) {
+			s = splimp();
 			IF_PREPEND(&ifp->if_snd, m_head);
+			splx(s);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
@@ -1255,7 +1261,7 @@ void sis_init(xsc)
 	struct mii_data		*mii;
 	int			s;
 
-	s = splimp();
+	s = splnet();
 
 	/*
 	 * Cancel pending I/O and free all RX/TX buffers.
@@ -1401,7 +1407,8 @@ void sis_init(xsc)
 
 	(void)splx(s);
 
-	timeout(sis_tick, sc, hz);
+	timeout_set(&sc->sis_timeout, sis_tick, sc);
+	timeout_add(&sc->sis_timeout, hz);
 
 	return;
 }
@@ -1461,7 +1468,7 @@ int sis_ioctl(ifp, command, data)
 	struct mii_data		*mii;
 	int			s, error = 0;
 
-	s = splimp();
+	s = splnet();
 
 	if ((error = ether_ioctl(ifp, &sc->arpcom, command, data)) > 0) {
 		splx(s);
@@ -1527,12 +1534,14 @@ void sis_watchdog(ifp)
 	struct ifnet		*ifp;
 {
 	struct sis_softc	*sc;
+	int			s;
 
 	sc = ifp->if_softc;
 
 	ifp->if_oerrors++;
 	printf("sis%d: watchdog timeout\n", sc->sis_unit);
 
+	s = splnet();
 	sis_stop(sc);
 	sis_reset(sc);
 	sis_init(sc);
@@ -1540,6 +1549,7 @@ void sis_watchdog(ifp)
 	if (ifp->if_snd.ifq_head != NULL)
 		sis_start(ifp);
 
+	splx(s);
 	return;
 }
 
@@ -1556,7 +1566,7 @@ void sis_stop(sc)
 	ifp = &sc->arpcom.ac_if;
 	ifp->if_timer = 0;
 
-	untimeout(sis_tick, sc);
+	timeout_del(&sc->sis_timeout);
 	CSR_WRITE_4(sc, SIS_IER, 0);
 	CSR_WRITE_4(sc, SIS_IMR, 0);
 	SIS_SETBIT(sc, SIS_CSR, SIS_CSR_TX_DISABLE|SIS_CSR_RX_DISABLE);

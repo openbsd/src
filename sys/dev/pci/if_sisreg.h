@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sisreg.h,v 1.3 2000/08/25 17:39:25 aaron Exp $ */
+/*	$OpenBSD: if_sisreg.h,v 1.4 2000/12/06 15:48:28 mickey Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -379,6 +379,7 @@ struct sis_softc {
 	struct sis_list_data	*sis_ldata;
 	caddr_t			sis_ldata_ptr;
 	struct sis_ring_data	sis_cdata;
+	struct timeout		sis_timeout;
 };
 
 /*
