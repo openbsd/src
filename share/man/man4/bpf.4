@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bpf.4,v 1.21 2004/03/21 19:47:59 miod Exp $
+.\"	$OpenBSD: bpf.4,v 1.22 2004/05/31 17:06:37 canacar Exp $
 .\"     $NetBSD: bpf.4,v 1.7 1995/09/27 18:31:50 thorpej Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
@@ -30,7 +30,7 @@
 .Nm bpf
 .Nd Berkeley Packet Filter
 .Sh SYNOPSIS
-.Cd "pseudo-device bpfilter" Op Ar count
+.Cd "pseudo-device bpfilter"
 .Sh DESCRIPTION
 The Berkeley Packet Filter provides a raw interface to data link layers in
 a protocol-independent fashion.
@@ -47,16 +47,16 @@ network interface with the
 ioctl.
 A given interface can be shared between multiple listeners, and the filter
 underlying each descriptor will see an identical packet stream.
-The total number of open files is limited to the value given in the kernel
-configuration; the example given in the
-.Sx SYNOPSIS
-above sets the limit to 8.
 .Pp
 A separate device file is required for each minor device.
 If a file is in use, the open will fail and
 .Va errno
 will be set to
 .Er EBUSY .
+The number of open files can be increased by creating additional
+device nodes with the
+.Xr MAKEDEV 8
+script.
 .Pp
 Associated with each open instance of a
 .Nm
@@ -942,6 +942,7 @@ struct bpf_insn insns[] = {
 .Xr read 2 ,
 .Xr select 2 ,
 .Xr signal 3 ,
+.Xr MAKEDEV 8 ,
 .Xr tcpdump 8
 .Rs
 .%A McCanne, S.
