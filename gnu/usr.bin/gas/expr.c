@@ -1,4 +1,4 @@
-/*	$OpenBSD: expr.c,v 1.3 1998/02/15 18:48:45 niklas Exp $	*/
+/*	$OpenBSD: expr.c,v 1.4 1998/02/16 06:51:12 deraadt Exp $	*/
 
 /* expr.c -operands, expressions-
    Copyright (C) 1987, 1990, 1991, 1992 Free Software Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: expr.c,v 1.3 1998/02/15 18:48:45 niklas Exp $";
+static char rcsid[] = "$OpenBSD: expr.c,v 1.4 1998/02/16 06:51:12 deraadt Exp $";
 #endif
 
 #include <ctype.h>
@@ -523,7 +523,6 @@ register expressionS *expressionP;
 	    || (expressionP->X_subtract_symbol
 		&& expressionP->X_add_symbol
 		&& expressionP->X_subtract_symbol->sy_frag == expressionP->X_add_symbol->sy_frag
-		&& SEG_NORMAL (S_GET_SEGMENT (expressionP->X_add_symbol))
 		&& S_GET_VALUE(expressionP->X_subtract_symbol) == S_GET_VALUE(expressionP->X_add_symbol))) {
 	    expressionP->X_subtract_symbol	= NULL;
 	    expressionP->X_add_symbol		= NULL;
@@ -743,9 +742,7 @@ segT expr(rank, resultP)
 	register operatorT	op_right;
 	register char c_right;
 	
-#ifndef	__CHAR_UNSIGNED__
 	know(rank >= 0);
-#endif
 	(void) operand(resultP);
 	know(*input_line_pointer != ' '); /* Operand() gobbles spaces. */
 	c_left = *input_line_pointer; /* Potential operator character. */
