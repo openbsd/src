@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.496 2002/03/26 16:38:16 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.497 2002/03/26 20:37:07 millert Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -553,7 +553,7 @@
 #define	PCI_VENDOR_TOPIC	0x151f		/* Topic/SmartLink */
 #define	PCI_VENDOR_BLUESTEEL	0x15ab		/* Bluesteel Networks */
 #define	PCI_VENDOR_VMWARE	0x15ad		/* VMware */
-#define	PCI_VENDOR_COREGA	0x15e8		/* Corega */
+#define	PCI_VENDOR_NDC	0x15e8		/* National Datacomm Corp */
 #define	PCI_VENDOR_SYBA	0x1592		/* Syba */
 #define	PCI_VENDOR_EUMITCOM	0x1638		/* Eumitcom */
 #define	PCI_VENDOR_NETSEC	0x1660		/* NetSec */
@@ -1044,9 +1044,6 @@
 #define	PCI_PRODUCT_CONTAQ_82C599	0x0600		/* 82C599 PCI-VLB */
 #define	PCI_PRODUCT_CONTAQ_82C693	0xc693		/* CY82C693U PCI-ISA */
 
-/* Corega products */
-#define	PCI_PRODUCT_COREGA_CGWLPCIA11	0x0130		/* WLAN 11Mb */
-
 /* Corollary Products */
 #define	PCI_PRODUCT_COROLLARY_CBUSII_PCIB	0x0014		/* C-Bus II-PCI */
 
@@ -1536,6 +1533,10 @@
 
 /* Mutech products */
 #define	PCI_PRODUCT_MUTECH_MV1000	0x0001		/* MV1000 */
+
+/* National Datacomm Corp products */
+#define	PCI_PRODUCT_NDC_NCP130	0x0130		/* NCP130 */
+#define	PCI_PRODUCT_NDC_NCP130A2	0x0131		/* NCP130 Rev A2 */
 
 /* National Semiconductor products */
 #define	PCI_PRODUCT_NS_DP83810	0x0001		/* DP83810 10/100 */

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.496 2002/03/26 16:38:16 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.497 2002/03/26 20:37:07 millert Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1461,10 +1461,6 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_CONTAQ, PCI_PRODUCT_CONTAQ_82C693,
 	    "CY82C693U PCI-ISA",
-	},
-	{
-	    PCI_VENDOR_COREGA, PCI_PRODUCT_COREGA_CGWLPCIA11,
-	    "WLAN 11Mb",
 	},
 	{
 	    PCI_VENDOR_COROLLARY, PCI_PRODUCT_COROLLARY_CBUSII_PCIB,
@@ -2957,6 +2953,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_MUTECH, PCI_PRODUCT_MUTECH_MV1000,
 	    "MV1000",
+	},
+	{
+	    PCI_VENDOR_NDC, PCI_PRODUCT_NDC_NCP130,
+	    "NCP130",
+	},
+	{
+	    PCI_VENDOR_NDC, PCI_PRODUCT_NDC_NCP130A2,
+	    "NCP130 Rev A2",
 	},
 	{
 	    PCI_VENDOR_NS, PCI_PRODUCT_NS_DP83810,
@@ -7211,8 +7215,8 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "VMware",
 	},
 	{
-	    PCI_VENDOR_COREGA,
-	    "Corega",
+	    PCI_VENDOR_NDC,
+	    "National Datacomm Corp",
 	},
 	{
 	    PCI_VENDOR_SYBA,
