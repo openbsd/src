@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.13 1996/06/24 23:51:59 tholo Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.14 1996/12/04 10:04:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -437,7 +437,7 @@ dovmstat(interval, reps)
 		 * We round upward to avoid losing low-frequency events
 		 * (i.e., >= 1 per interval but < 1 per second).
 		 */
-		halfuptime = (uptime + 1) / 2;
+		halfuptime = uptime == 1 ? 0 : (uptime + 1) / 2;
 		(void)sleep(interval);
 	}
 }
