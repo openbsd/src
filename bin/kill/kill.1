@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kill.1,v 1.13 2000/04/15 11:45:53 aaron Exp $
+.\"	$OpenBSD: kill.1,v 1.14 2000/06/28 16:55:15 deraadt Exp $
 .\"	$NetBSD: kill.1,v 1.8 1995/09/07 06:30:26 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -119,6 +119,10 @@ ALRM (alarm clock)
 TERM (software termination signal)
 .El
 .Pp
+A signal number of 0 (kill -0 pid) checks the validity of a
+certain pid, to see if it exists.
+An exit code of 0 means that the specified process exists.
+.Pp
 The
 .Nm
 utility is built-in to
@@ -148,9 +152,3 @@ A
 .Nm
 command appeared in
 .At v6 .
-.Sh BUGS
-A replacement for the command
-.Dq Li kill 0
-for
-.Xr csh 1
-users should be provided.
