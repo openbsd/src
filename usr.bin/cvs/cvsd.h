@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvsd.h,v 1.5 2004/09/27 13:42:39 jfb Exp $	*/
+/*	$OpenBSD: cvsd.h,v 1.6 2004/11/09 20:51:33 krapht Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -74,13 +74,14 @@
 #define CVSD_MSG_MAXLEN    256
 
 
-#define CVSD_SET_ROOT        1
-#define CVSD_SET_CHMIN       2
-#define CVSD_SET_CHMAX       3
-#define CVSD_SET_ADDR        4
-#define CVSD_SET_SOCK        5
-#define CVSD_SET_USER        6
-#define CVSD_SET_GROUP       7
+#define CVSD_SET_ROOT     1
+#define CVSD_SET_CHMIN    2
+#define CVSD_SET_CHMAX    3
+#define CVSD_SET_ADDR     4
+#define CVSD_SET_SOCK     5
+#define CVSD_SET_USER     6
+#define CVSD_SET_GROUP    7
+#define CVSD_SET_MODDIR   8
 
 
 #define CVSD_ST_UNKNOWN      0
@@ -98,21 +99,33 @@ struct cvsd_msg {
 };
 
 
+struct cvsd_addr {
+	sa_family_t ca_fam;
+	union {
+		struct sockaddr_in  sin;
+		struct sockaddr_in6 sin6;
+	} ca_addr;
+};
+
+#define CVSD_SESS_LOCAL   0
+#define CVSD_SESS_REMOTE  1
+
+struct cvsd_sess {
+	int              cs_fd;
+	int              cs_type;
+	uid_t            cs_uid;     /* user ID of the session */
+	struct cvsd_addr cs_raddr;   /* remote address */
+};
+
+
 struct cvsd_child {
 	pid_t  ch_pid;
 	int    ch_sock;
 	u_int  ch_state;
 
+	struct cvsd_sess *ch_sess;
+
 	TAILQ_ENTRY(cvsd_child) ch_list;
-};
-
-
-struct cvsd_addr {
-	sa_family_t ca_fam;
-	union {
-		struct sockaddr_in *sin;
-		struct sockaddr_in6 *sin6;
-	} ca_addr;
 };
 
 
@@ -128,10 +141,6 @@ int                cvsd_child_fork (struct cvsd_child **);
 struct cvsd_child* cvsd_child_get  (void);
 int                cvsd_child_reap (void);
 
-/* from fdpass.c */
-int   cvsd_sendfd  (int, int);
-int   cvsd_recvfd  (int);
-
 
 /* from conf.y */
 int    cvs_conf_read (const char *);
@@ -140,5 +149,12 @@ u_int  cvs_acl_eval  (struct cvs_op *);
 /* from msg.c */
 int    cvsd_sendmsg (int, u_int, const void *, size_t);
 int    cvsd_recvmsg (int, u_int *, void *, size_t *);
+int    cvsd_sendfd  (int, int);
+int    cvsd_recvfd  (int);
+
+
+struct cvsd_sess*  cvsd_sess_alloc  (int);
+void               cvsd_sess_free   (struct cvsd_sess *);
+
 
 #endif /* CVSD_H */
