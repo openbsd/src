@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.2 2003/01/03 21:43:11 deraadt Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.3 2003/01/03 21:53:35 cedric Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -458,9 +458,11 @@ void
 _append_addr(char *s, int test)
 {
 	char		 buf[_BUF_SIZE], *p, *q;
-	struct addrinfo *res, *ai, hints = { 0, 0, SOCK_DGRAM };
+	struct addrinfo *res, *ai, hints;
 	int		 not = (*s == '!'), net = -1, rv;
 
+	bzero(&hints, sizeof(hints));
+	hints.ai_socktype = SOCK_DGRAM;
 	if (strlen(s) >= _BUF_SIZE) {
 		fprintf(stderr, "%s: address too long (%ld bytes)\n",
 		    __progname, (long)strlen(s));
