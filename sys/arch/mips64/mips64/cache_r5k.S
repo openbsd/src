@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r5k.S,v 1.8 2004/09/16 07:25:26 miod Exp $ */
+/*	$OpenBSD: cache_r5k.S,v 1.9 2004/09/16 10:13:37 miod Exp $ */
 
 /*
  * Copyright (c) 1998-2004 Opsycon AB (www.opsycon.se)
@@ -30,7 +30,7 @@
  *  NOTE!
  *
  *  This code does not support caches with other linesize than 32.
- *  Neither will it support R4000 or R4400 Secondary cahes. These
+ *  Neither will it support R4000 or R4400 Secondary caches. These
  *  configurations will need another set of cache functions.
  *
  *  Processors supported:
