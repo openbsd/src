@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccom.c,v 1.25 1998/06/28 01:47:23 angelos Exp $	*/
+/*	$OpenBSD: pccom.c,v 1.26 1998/10/07 02:10:52 downsj Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -1009,14 +1009,14 @@ comopen(dev, flag, mode, p)
 			switch (sc->sc_uarttype) {
 			case COM_UART_ST16650V2:
 				if (tp->t_ispeed <= 1200)
-					fifo |= FIFO_RCV_TRIGGER_8|FIFO_XMT_TRIGGER_8;
+					fifo |= FIFO_RCV_TRIGGER_8|FIFO_XMT_TRIGGER_8; /* XXX */
 				else
 					fifo |= FIFO_RCV_TRIGGER_28|FIFO_XMT_TRIGGER_30;
 				break;
 			case COM_UART_XR16850:
 				pccom_xr16850_fifo_init(iot, ioh);
 				if (tp->t_ispeed <= 1200)
-					fifo |= FIFO_RCV3_TRIGGER_8|FIFO_XMT3_TRIGGER_8;
+					fifo |= FIFO_RCV3_TRIGGER_8|FIFO_XMT3_TRIGGER_8; /* XXX */
 				else
 					fifo |= FIFO_RCV3_TRIGGER_60|FIFO_XMT3_TRIGGER_56;
 				break;
@@ -1493,14 +1493,14 @@ comparam(tp, t)
 
 			switch (sc->sc_uarttype) {
 			case COM_UART_ST16650V2:
-				if (tp->t_ispeed <= 1200)
-					fifo |= FIFO_RCV_TRIGGER_8|FIFO_XMT_TRIGGER_8;
+				if (t->c_ispeed <= 1200)
+					fifo |= FIFO_RCV_TRIGGER_8|FIFO_XMT_TRIGGER_8; /* XXX */
 				else
 					fifo |= FIFO_RCV_TRIGGER_28|FIFO_XMT_TRIGGER_30;
 				break;
 			case COM_UART_XR16850:
-				if (tp->t_ispeed <= 1200)
-					fifo |= FIFO_RCV3_TRIGGER_8|FIFO_XMT3_TRIGGER_8;
+				if (t->c_ispeed <= 1200)
+					fifo |= FIFO_RCV3_TRIGGER_8|FIFO_XMT3_TRIGGER_8; /* XXX */
 				else
 					fifo |= FIFO_RCV3_TRIGGER_60|FIFO_XMT3_TRIGGER_56;
 				break;
@@ -1512,7 +1512,7 @@ comparam(tp, t)
 				    lcr2 | LCR_DLAB);
 #endif
 			default:
-				if (tp->t_ispeed <= 1200)
+				if (t->c_ispeed <= 1200)
 					fifo |= FIFO_TRIGGER_1;
 				else
 					fifo |= FIFO_TRIGGER_8;
