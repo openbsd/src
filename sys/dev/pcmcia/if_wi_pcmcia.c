@@ -1,4 +1,4 @@
-/* $OpenBSD: if_wi_pcmcia.c,v 1.19 2002/03/28 16:45:52 provos Exp $ */
+/* $OpenBSD: if_wi_pcmcia.c,v 1.20 2002/03/29 18:54:07 millert Exp $ */
 /* $NetBSD: if_wi_pcmcia.c,v 1.14 2001/11/26 04:34:56 ichiro Exp $ */
 
 /*
@@ -237,7 +237,13 @@ static const struct wi_pcmcia_product {
 	{ PCMCIA_VENDOR_ERICSSON,
 	  PCMCIA_PRODUCT_ERICSSON_WIRELESSLAN,
 	  PCMCIA_CIS_ERICSSON_WIRELESSLAN,
-	  "DSSS Wireless LAN PC Card" },
+	  "DSSS Wireless LAN PC Card" 
+	},
+	{ PCMCIA_VENDOR_PROXIM,
+	  PCMCIA_PRODUCT_PROXIM_RANGELANDS_8430,
+	  PCMCIA_CIS_PROXIM_RANGELANDS_8430,
+	  "Proxim RangeLAN-DS/LAN PC CARD",
+	},
 	{ 0,
 	  0,
 	  { NULL, NULL, NULL, NULL },
