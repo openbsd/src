@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.137 2000/10/27 00:16:14 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.138 2000/11/13 13:18:58 niklas Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2516,10 +2516,18 @@ bus_mem_add_mapping(bpa, size, cacheable, bshp)
 		pmap_enter(pmap_kernel(), va, pa,
 		    VM_PROT_READ | VM_PROT_WRITE, TRUE,
 		    VM_PROT_READ | VM_PROT_WRITE);
-		if (!cacheable)
-			pmap_changebit(pa, PG_N, ~0);
-		else
-			pmap_changebit(pa, 0, ~PG_N);
+
+		/*
+		 * PG_N doesn't exist on 386's, so we assume that
+		 * the mainboard has wired up device space non-cacheable
+		 * on those machines.
+		 */
+		if (cpu_class != CPUCLASS_386) {
+			if (!cacheable)
+				pmap_changebit(pa, PG_N, ~0);
+			else
+				pmap_changebit(pa, 0, ~PG_N);
+		}
 	}
  
 	return 0;
