@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)quota.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$Id: quota.c,v 1.1.1.1 1995/10/18 08:45:58 deraadt Exp $";
+static char rcsid[] = "$Id: quota.c,v 1.2 1995/11/25 16:46:24 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -452,8 +452,9 @@ getprivs(id, quotatype)
 		if (strncmp(fst[i].f_fstypename, "nfs", MFSNAMELEN) == 0) {
 			if (getnfsquota(&fst[i], NULL, qup, id, quotatype) == 0)
 				continue;
-		} else if (strncmp(fst[i].f_fstypename, "ufs",
-		    MFSNAMELEN) == 0) {
+		} else if ((strncmp(fst[i].f_fstypename, "ffs",
+		    MFSNAMELEN) == 0) || (strncmp(fst[i].f_fstypename, "ufs",
+			MFSNAMELEN) == 0)) {
 			/*
 			 * XXX
 			 * UFS filesystems must be in /etc/fstab, and must
