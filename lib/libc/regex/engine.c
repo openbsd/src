@@ -1,3 +1,5 @@
+/*	$OpenBSD: engine.c,v 1.4 1997/04/28 20:44:57 millert Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
  * Copyright (c) 1992, 1993, 1994
@@ -33,10 +35,12 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *	@(#)engine.c	8.5 (Berkeley) 3/20/94
  */
 
 #if defined(SNAMES) && defined(LIBC_SCCS) && !defined(lint)
-static char enginercsid[] = "$OpenBSD: engine.c,v 1.3 1997/04/12 18:22:22 millert Exp $";
+static char enginercsid[] = "$OpenBSD: engine.c,v 1.4 1997/04/28 20:44:57 millert Exp $";
 #endif /* SNAMES and LIBC_SCCS and not lint */
 
 /*
@@ -125,7 +129,7 @@ static char *pchar __P((int ch));
 #ifdef REDEBUG
 #define	SP(t, s, c)	print(m, t, s, c, stdout)
 #define	AT(t, p1, p2, s1, s2)	at(m, t, p1, p2, s1, s2)
-#define	NOTE(str)	{ if (m->eflags&REG_TRACE) printf("=%s\n", (str)); }
+#define	NOTE(str)	{ if (m->eflags&REG_TRACE) (void)printf("=%s\n", (str)); }
 #else
 #define	SP(t, s, c)	/* nothing */
 #define	AT(t, p1, p2, s1, s2)	/* nothing */
@@ -1019,15 +1023,15 @@ FILE *d;
 	if (!(m->eflags&REG_TRACE))
 		return;
 
-	fprintf(d, "%s", caption);
+	(void)fprintf(d, "%s", caption);
 	if (ch != '\0')
-		fprintf(d, " %s", pchar(ch));
+		(void)fprintf(d, " %s", pchar(ch));
 	for (i = 0; i < g->nstates; i++)
 		if (ISSET(st, i)) {
-			fprintf(d, "%s%d", (first) ? "\t" : ", ", i);
+			(void)fprintf(d, "%s%d", (first) ? "\t" : ", ", i);
 			first = 0;
 		}
-	fprintf(d, "\n");
+	(void)fprintf(d, "\n");
 }
 
 /* 
@@ -1049,9 +1053,9 @@ sopno stopst;
 	if (!(m->eflags&REG_TRACE))
 		return;
 
-	printf("%s %s-", title, pchar(*start));
-	printf("%s ", pchar(*stop));
-	printf("%d-%d\n", startst, stopst);
+	(void)printf("%s %s-", title, pchar(*start));
+	(void)printf("%s ", pchar(*stop));
+	(void)printf("%ld-%ld\n", (long)startst, (long)stopst);
 }
 
 #ifndef PCHARDONE
@@ -1074,9 +1078,9 @@ int ch;
 	static char pbuf[10];
 
 	if (isprint(ch) || ch == ' ')
-		sprintf(pbuf, "%c", ch);
+		(void)sprintf(pbuf, "%c", ch);
 	else
-		sprintf(pbuf, "\\%o", ch);
+		(void)sprintf(pbuf, "\\%o", ch);
 	return(pbuf);
 }
 #endif

@@ -33,10 +33,16 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *	@(#)regcomp.c	8.5 (Berkeley) 3/20/94
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: regcomp.c,v 1.3 1996/09/15 09:31:25 tholo Exp $";
+#if 0
+static char sccsid[] = "@(#)regcomp.c	8.5 (Berkeley) 3/20/94";
+#else
+static char rcsid[] = "$OpenBSD: regcomp.c,v 1.4 1997/04/28 20:44:59 millert Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -101,6 +107,7 @@ static int freezeset __P((struct parse *p, cset *cs));
 static int firstch __P((struct parse *p, cset *cs));
 static int nch __P((struct parse *p, cset *cs));
 static void mcadd __P((struct parse *p, cset *cs, char *cp));
+static char *mcfind __P((cset *cs, char *cp));
 static void mcinvert __P((struct parse *p, cset *cs));
 static void mccase __P((struct parse *p, cset *cs));
 static int isinsets __P((struct re_guts *g, int c));
@@ -1255,6 +1262,25 @@ register char *cp;
 
 	(void) strcpy(cs->multis + oldend - 1, cp);
 	cs->multis[cs->smultis - 1] = '\0';
+}
+
+/*
+ - mcfind - find a collating element in a cset
+ == static char *mcfind(register cset *cs, register char *cp);
+ */
+static char *
+mcfind(cs, cp)
+register cset *cs;
+register char *cp;
+{
+	register char *p;
+
+	if (cs->multis == NULL)
+		return(NULL);
+	for (p = cs->multis; *p != '\0'; p += strlen(p) + 1)
+		if (strcmp(cp, p) == 0)
+			return(p);
+	return(NULL);
 }
 
 /*

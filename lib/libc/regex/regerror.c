@@ -33,10 +33,16 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *	@(#)regerror.c	8.4 (Berkeley) 3/20/94
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: regerror.c,v 1.3 1996/09/15 09:31:26 tholo Exp $";
+#if 0
+static char sccsid[] = "@(#)regerror.c	8.4 (Berkeley) 3/20/94";
+#else
+static char rcsid[] = "$OpenBSD: regerror.c,v 1.4 1997/04/28 20:44:59 millert Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -131,11 +137,11 @@ size_t errbuf_size;
 				break;
 	
 		if (errcode&REG_ITOA) {
-			if (r->code != 0)
+			if (r->code != 0) {
+				assert(strlen(r->name) < sizeof(convbuf));
 				(void) strcpy(convbuf, r->name);
-			else
-				sprintf(convbuf, "REG_0x%x", target);
-			assert(strlen(convbuf) < sizeof(convbuf));
+			} else
+				(void)sprintf(convbuf, "REG_0x%x", target);
 			s = convbuf;
 		} else
 			s = r->explain;
@@ -143,12 +149,8 @@ size_t errbuf_size;
 
 	len = strlen(s) + 1;
 	if (errbuf_size > 0) {
-		if (errbuf_size > len)
-			(void) strcpy(errbuf, s);
-		else {
-			(void) strncpy(errbuf, s, errbuf_size-1);
-			errbuf[errbuf_size-1] = '\0';
-		}
+		(void) strncpy(errbuf, s, errbuf_size-1);
+		errbuf[errbuf_size-1] = '\0';
 	}
 
 	return(len);
@@ -171,6 +173,6 @@ char *localbuf;
 	if (r->code == 0)
 		return("0");
 
-	sprintf(localbuf, "%d", r->code);
+	(void)sprintf(localbuf, "%d", r->code);
 	return(localbuf);
 }

@@ -1,4 +1,5 @@
-#	$OpenBSD: Makefile.inc,v 1.2 1996/08/19 08:31:01 tholo Exp $
+#	$OpenBSD: Makefile.inc,v 1.3 1997/04/28 20:44:55 millert Exp $
+#	@(#)Makefile.inc	8.1 (Berkeley) 6/4/93
 
 # regex sources
 .PATH: ${.CURDIR}/regex
