@@ -1848,6 +1848,7 @@
 ./usr/share/man/cat2/getgroups.0
 ./usr/share/man/cat2/getitimer.0
 ./usr/share/man/cat2/getlogin.0
+./usr/share/man/cat2/getlogin_r.0
 ./usr/share/man/cat2/getpeereid.0
 ./usr/share/man/cat2/getpeername.0
 ./usr/share/man/cat2/getpgid.0
@@ -3073,6 +3074,7 @@
 ./usr/share/man/cat3/dynamic_field_info.0
 ./usr/share/man/cat3/echo.0
 ./usr/share/man/cat3/echochar.0
+./usr/share/man/cat3/ecvt.0
 ./usr/share/man/cat3/edata.0
 ./usr/share/man/cat3/editline.0
 ./usr/share/man/cat3/el_deletestr.0
@@ -3152,6 +3154,7 @@
 ./usr/share/man/cat3/fabs.0
 ./usr/share/man/cat3/fabsf.0
 ./usr/share/man/cat3/fclose.0
+./usr/share/man/cat3/fcvt.0
 ./usr/share/man/cat3/fdopen.0
 ./usr/share/man/cat3/feof.0
 ./usr/share/man/cat3/ferror.0
@@ -3272,6 +3275,7 @@
 ./usr/share/man/cat3/gai_strerror.0
 ./usr/share/man/cat3/gamma.0
 ./usr/share/man/cat3/gammaf.0
+./usr/share/man/cat3/gcvt.0
 ./usr/share/man/cat3/get_myaddress.0
 ./usr/share/man/cat3/getaddrinfo.0
 ./usr/share/man/cat3/getbegyx.0
