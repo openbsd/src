@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.87 2003/10/16 23:04:09 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.88 2003/10/19 18:12:00 miod Exp $	*/
 /*
  * Copyright (c) 2001, 2002, 2003 Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -83,8 +83,6 @@ extern vaddr_t      virtual_avail, virtual_end;
 /*
  * conditional debugging
  */
-#define CD_NONE		0x00
-#define CD_NORM		0x01
 #define CD_FULL		0x02
 
 #define CD_ACTIVATE	0x0000004	/* pmap_activate */
@@ -109,7 +107,7 @@ extern vaddr_t      virtual_avail, virtual_end;
 #define CD_PGMV		0x0200000	/* pagemove */
 #define CD_ALL		0x0FFFFFC
 
-int pmap_con_dbg = CD_NONE;
+int pmap_con_dbg = 0;
 
 /*
  * Alignment checks for pages (must lie on page boundaries).
@@ -481,7 +479,7 @@ pmap_map(vaddr_t virt, paddr_t start, paddr_t end, vm_prot_t prot, u_int cmode)
 #endif
 
 #ifdef DEBUG
-	if ((pmap_con_dbg & (CD_MAP | CD_NORM)) == (CD_MAP | CD_NORM))
+	if (pmap_con_dbg & CD_MAP)
 		printf ("(pmap_map: %x) phys address from %x to %x mapped at virtual %x, prot %x cmode %x\n",
 			curproc, start, end, virt, prot, cmode);
 #endif
@@ -536,16 +534,15 @@ pmap_map(vaddr_t virt, paddr_t start, paddr_t end, vm_prot_t prot, u_int cmode)
 					    batctmp);
 			batc_entry[batc_used] = batctmp;
 #ifdef DEBUG
-			if ((pmap_con_dbg & (CD_MAP | CD_NORM)) == (CD_MAP | CD_NORM)) {
+			if (pmap_con_dbg & CD_MAP) {
 				printf("(pmap_map: %x) BATC used=%d, data=%x\n", curproc, batc_used, batctmp);
-			}
-			if (pmap_con_dbg & CD_MAP)
 				for (i = 0; i < BATC_BLKBYTES; i += PAGE_SIZE) {
 					pte = pmap_pte(kernel_pmap, virt + i);
 					if (PDT_VALID(pte))
 						printf("(pmap_map: %x) va %x is already mapped: pte %x\n",
 						    curproc, virt + i, *pte);
 				}
+			}
 #endif
 			batc_used++;
 			virt += BATC_BLKBYTES;
@@ -612,7 +609,7 @@ pmap_cache_ctrl(pmap_t pmap, vaddr_t s, vaddr_t e, u_int mode)
 		printf("(cache_ctrl) illegal mode %x\n",mode);
 		return;
 	}
-	if ((pmap_con_dbg & (CD_CACHE | CD_NORM)) == (CD_CACHE | CD_NORM)) {
+	if (pmap_con_dbg & CD_CACHE) {
 		printf("(pmap_cache_ctrl: %x) pmap %x, va %x, mode %x\n", curproc, pmap, s, mode);
 	}
 
@@ -633,7 +630,7 @@ pmap_cache_ctrl(pmap_t pmap, vaddr_t s, vaddr_t e, u_int mode)
 		if ((pte = pmap_pte(pmap, va)) == PT_ENTRY_NULL)
 			continue;
 #ifdef DEBUG
-		if ((pmap_con_dbg & (CD_CACHE | CD_NORM)) == (CD_CACHE | CD_NORM)) {
+		if (pmap_con_dbg & CD_CACHE) {
 			printf("(cache_ctrl) pte@0x%p\n", pte);
 		}
 #endif /* DEBUG */
@@ -718,7 +715,7 @@ pmap_bootstrap(vaddr_t load_start, paddr_t *phys_start, paddr_t *phys_end,
 	extern void *kernelstart, *etext;
 
 #ifdef DEBUG
-	if ((pmap_con_dbg & (CD_BOOT | CD_NORM)) == (CD_BOOT | CD_NORM)) {
+	if (pmap_con_dbg & CD_BOOT) {
 		printf("pmap_bootstrap: \"load_start\" 0x%x\n", load_start);
 	}
 	if (!PAGE_ALIGNED(load_start))
@@ -1077,7 +1074,7 @@ void
 pmap_init(void)
 {
 #ifdef DEBUG
-	if ((pmap_con_dbg & (CD_INIT | CD_NORM)) == (CD_INIT | CD_NORM))
+	if (pmap_con_dbg & CD_INIT)
 		printf("pmap_init()\n");
 #endif
 
@@ -1162,7 +1159,7 @@ pmap_create(void)
 	 */
 	s = round_page(2 * SDT_SIZE);
 #ifdef DEBUG
-	if ((pmap_con_dbg & (CD_CREAT | CD_NORM)) == (CD_CREAT | CD_NORM)) {
+	if (pmap_con_dbg & CD_CREAT) {
 		printf("(pmap_create: %x) need %d pages for sdt\n",
 		       curproc, atop(s));
 	}
@@ -1185,7 +1182,7 @@ pmap_create(void)
 		panic("pmap_create: sdt_table 0x%x not aligned on page boundary",
 		    (int)pmap->pm_stpa);
 
-	if ((pmap_con_dbg & (CD_CREAT | CD_NORM)) == (CD_CREAT | CD_NORM)) {
+	if (pmap_con_dbg & CD_CREAT) {
 		printf("(pmap_create: %x) pmap=0x%p, pm_stab=0x%x, pm_stpa=0x%x\n",
 		       curproc, pmap, pmap->pm_stab, pmap->pm_stpa);
 	}
@@ -1253,7 +1250,7 @@ pmap_release(pmap_t pmap)
 	pt_entry_t *gdttbl;	/* ptr to first entry in a page table */
 
 #ifdef DEBUG
-	if ((pmap_con_dbg & (CD_FREE | CD_NORM)) == (CD_FREE | CD_NORM))
+	if (pmap_con_dbg & CD_FREE)
 		printf("(pmap_release: %x) pmap %x\n", curproc, pmap);
 #endif
 
@@ -1282,7 +1279,7 @@ pmap_release(pmap_t pmap)
 	uvm_km_free(kernel_map, (vaddr_t)sdttbl, round_page(2 * SDT_SIZE));
 
 #ifdef DEBUG
-	if ((pmap_con_dbg & (CD_FREE | CD_NORM)) == (CD_FREE | CD_NORM))
+	if (pmap_con_dbg & CD_FREE)
 		printf("(pmap_release: %x) pm_count = 0\n", curproc);
 #endif
 }
@@ -1400,7 +1397,7 @@ pmap_remove_range(pmap_t pmap, vaddr_t s, vaddr_t e)
 	boolean_t kflush;
 
 #ifdef DEBUG
-	if ((pmap_con_dbg & (CD_RM | CD_NORM)) == (CD_RM | CD_NORM)) {
+	if (pmap_con_dbg & CD_RM) {
 		if (pmap == kernel_pmap)
 			printf("(pmap_remove: %x) pmap kernel s %x e %x\n", curproc, s, e);
 		else
@@ -1787,7 +1784,7 @@ pmap_expand(pmap_t pmap, vaddr_t v)
 	pt_entry_t *pte;
 
 #ifdef DEBUG
-	if ((pmap_con_dbg & (CD_EXP | CD_NORM)) == (CD_EXP | CD_NORM))
+	if (pmap_con_dbg & CD_EXP)
 		printf ("(pmap_expand: %x) map %x v %x\n", curproc, pmap, v);
 #endif
 
@@ -1923,7 +1920,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	CHECK_PAGE_ALIGN(pa, "pmap_entry - PA");
 
 #ifdef DEBUG
-	if ((pmap_con_dbg & (CD_ENT | CD_NORM)) == (CD_ENT | CD_NORM)) {
+	if (pmap_con_dbg & CD_ENT) {
 		if (pmap == kernel_pmap)
 			printf("(pmap_enter: %x) pmap kernel va %x pa %x\n", curproc, va, pa);
 		else
@@ -1957,7 +1954,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	 */
 	old_pa = ptoa(PG_PFNUM(*pte));
 #ifdef DEBUG
-	if ((pmap_con_dbg & (CD_ENT | CD_NORM)) == (CD_ENT | CD_NORM))
+	if (pmap_con_dbg & CD_ENT)
 		printf("(pmap_enter) old_pa %x pte %x\n", old_pa, *pte);
 #endif
 	if (old_pa == pa) {
@@ -1998,7 +1995,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			*pte = template | ap | trunc_page(pa);
 			flush_atc_entry(users, va, kflush);
 #ifdef DEBUG
-	if ((pmap_con_dbg & (CD_ENT | CD_NORM)) == (CD_ENT | CD_NORM))
+	if (pmap_con_dbg & CD_ENT)
 		printf("(pmap_enter) update pte to %x\n", *pte);
 #endif
 		}
@@ -2016,7 +2013,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 
 		pg = PHYS_TO_VM_PAGE(pa);
 #ifdef DEBUG
-		if ((pmap_con_dbg & (CD_ENT | CD_NORM)) == (CD_ENT | CD_NORM)) {
+		if (pmap_con_dbg & CD_ENT) {
 			if (va >= phys_map_vaddr1 && va < phys_map_vaddr_end) {
 				printf("vaddr1 0x%x vaddr2 0x%x va 0x%x pa 0x%x managed %x\n",
 				       phys_map_vaddr1, phys_map_vaddr2, va, old_pa,
@@ -2029,7 +2026,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 
 		if (pg != NULL) {
 #ifdef DEBUG
-			if ((pmap_con_dbg & (CD_ENT | CD_NORM)) == (CD_ENT | CD_NORM)) {
+			if (pmap_con_dbg & CD_ENT) {
 				if (va >= phys_map_vaddr1 && va < phys_map_vaddr_end) {
 					printf("va 0x%x and managed pa 0x%x\n", va, pa);
 				}
@@ -2105,7 +2102,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 
 		*pte = template | ap | trunc_page(pa);
 #ifdef DEBUG
-	if ((pmap_con_dbg & (CD_ENT | CD_NORM)) == (CD_ENT | CD_NORM))
+	if (pmap_con_dbg & CD_ENT)
 		printf("(pmap_enter) set pte to %x\n", *pte);
 #endif
 
@@ -2274,7 +2271,7 @@ pmap_collect(pmap_t pmap)
 	int spl;
 
 #ifdef DEBUG
-	if ((pmap_con_dbg & (CD_COL | CD_NORM)) == (CD_COL | CD_NORM))
+	if (pmap_con_dbg & CD_COL)
 		printf ("(pmap_collect: %x) pmap %x\n", curproc, pmap);
 #endif
 
@@ -2328,7 +2325,7 @@ pmap_collect(pmap_t pmap)
 	PMAP_UNLOCK(pmap, spl);
 
 #ifdef DEBUG
-	if ((pmap_con_dbg & (CD_COL | CD_NORM)) == (CD_COL | CD_NORM))
+	if (pmap_con_dbg & CD_COL)
 		printf("(pmap_collect: %x) done\n", curproc);
 #endif
 }
@@ -2368,7 +2365,7 @@ pmap_activate(struct proc *p)
 #endif
 
 #ifdef DEBUG
-	if ((pmap_con_dbg & (CD_ACTIVATE | CD_NORM)) == (CD_ACTIVATE | CD_NORM))
+	if (pmap_con_dbg & CD_ACTIVATE)
 		printf("(pmap_activate: %x) pmap 0x%p\n", p, pmap);
 #endif
 
@@ -2544,7 +2541,7 @@ changebit_Retry:
 
 	if (pvl->pv_pmap == PMAP_NULL) {
 #ifdef DEBUG
-		if ((pmap_con_dbg & (CD_CBIT | CD_NORM)) == (CD_CBIT | CD_NORM))
+		if (pmap_con_dbg & CD_CBIT)
 			printf("(pmap_changebit: %x) vm page 0x%x not mapped\n",
 			    curproc, pg);
 #endif
@@ -2660,7 +2657,7 @@ testbit_Retry:
 		/* we've already cached a this flag for this page,
 		   no use looking further... */
 #ifdef DEBUG
-		if ((pmap_con_dbg & (CD_TBIT | CD_NORM)) == (CD_TBIT | CD_NORM))
+		if (pmap_con_dbg & CD_TBIT)
 			printf("(pmap_testbit: %x) already cached a modify flag for this page\n",
 			    curproc);
 #endif
@@ -2670,7 +2667,7 @@ testbit_Retry:
 
 	if (pvl->pv_pmap == PMAP_NULL) {
 #ifdef DEBUG
-		if ((pmap_con_dbg & (CD_TBIT | CD_NORM)) == (CD_TBIT | CD_NORM))
+		if (pmap_con_dbg & CD_TBIT)
 			printf("(pmap_testbit: %x) vm page 0x%x not mapped\n",
 			    curproc, pg);
 #endif
@@ -2781,7 +2778,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	CHECK_PAGE_ALIGN(pa, "pmap_kenter_pa - PA");
 
 #ifdef DEBUG
-	if ((pmap_con_dbg & (CD_ENT | CD_NORM)) == (CD_ENT | CD_NORM)) {
+	if (pmap_con_dbg & CD_ENT) {
 		printf ("(pmap_kenter_pa: %x) va %x pa %x\n", curproc, va, pa);
 	}
 #endif
@@ -2822,7 +2819,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
 	vaddr_t e;
 
 #ifdef DEBUG
-	if ((pmap_con_dbg & (CD_RM | CD_NORM)) == (CD_RM | CD_NORM))
+	if (pmap_con_dbg & CD_RM)
 		printf("(pmap_kremove: %x) va %x len %x\n", curproc, va, len);
 #endif
 
