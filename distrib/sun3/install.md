@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.2 2001/06/23 19:44:59 deraadt Exp $
+#	$OpenBSD: install.md,v 1.3 2001/12/23 01:51:52 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -172,12 +172,11 @@ Welcome to the OpenBSD/sun3 ${VERSION_MAJOR}.${VERSION_MINOR} installation progr
 
 This program is designed to help you put OpenBSD on your disk in a simple and
 rational way.
-
 __EOT
 
 	else
 		cat << __EOT
-echo Welcome to the OpenBSD/sun3 ${VERSION} upgrade program.
+Welcome to the OpenBSD/sun3 ${VERSION} upgrade program.
 
 This program is designed to help you upgrade your OpenBSD system in a
 simple and rational way.
@@ -186,7 +185,6 @@ As a reminder, installing the 'etc' binary set is NOT recommended.
 Once the rest of your system has been upgraded, you should manually
 merge any changes to files in the 'etc' set into those files which
 already exist on your system.
-
 __EOT
 	fi
 

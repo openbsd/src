@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.2 2001/06/23 19:44:34 deraadt Exp $
+#       $OpenBSD: install.md,v 1.3 2001/12/23 01:51:52 krw Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -158,7 +158,6 @@ Welcome to the OpenBSD/alpha ${VERSION_MAJOR}.${VERSION_MINOR} installation prog
 
 This program is designed to help you put OpenBSD on your system in a
 simple and rational way.
-
 __EOT
 	else
 		cat << __EOT
@@ -171,7 +170,6 @@ As a reminder, installing the 'etc' binary set is NOT recommended.
 Once the rest of your system has been upgraded, you should manually
 merge any changes to files in the 'etc' set into those files which
 already exist on your system.
-
 __EOT
 	fi
 

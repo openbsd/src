@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.2 2001/06/23 19:45:01 deraadt Exp $
+#	$OpenBSD: install.md,v 1.3 2001/12/23 01:51:52 krw Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -153,12 +153,11 @@ Welcome to the OpenBSD/vax ${VERSION_MAJOR}.${VERSION_MINOR} installation progra
 
 This program is designed to help you put OpenBSD on your disk in a simple and
 rational way.
-
 __EOT
 
 	else
 		cat << __EOT
-echo Welcome to the OpenBSD/vax ${VERSION} upgrade program.
+Welcome to the OpenBSD/vax ${VERSION} upgrade program.
 
 This program is designed to help you upgrade your OpenBSD system in a
 simple and rational way.
@@ -167,7 +166,6 @@ As a reminder, installing the 'etc' binary set is NOT recommended.
 Once the rest of your system has been upgraded, you should manually
 merge any changes to files in the 'etc' set into those files which
 already exist on your system.
-
 __EOT
 	fi
 

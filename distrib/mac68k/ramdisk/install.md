@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$OpenBSD: install.md,v 1.5 2001/06/23 19:44:44 deraadt Exp $
+#	$OpenBSD: install.md,v 1.6 2001/12/23 01:51:52 krw Exp $
 #	$NetBSD: install.md,v 1.1.2.4 1996/08/26 15:45:14 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -125,7 +125,6 @@ As a reminder, installing the `etc' binary set is NOT recommended.
 Once the rest of your system has been upgraded, you should manually
 merge any changes to files in the `etc' set into those files which
 already exist on your system.
-
 __welcome_banner_2
 	fi
 
