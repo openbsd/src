@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.5 1996/08/16 09:29:34 mickey Exp $	*/
+/*	$OpenBSD: route.c,v 1.6 1996/10/25 10:50:52 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: route.c,v 1.5 1996/08/16 09:29:34 mickey Exp $";
+static char *rcsid = "$OpenBSD: route.c,v 1.6 1996/10/25 10:50:52 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -95,8 +95,8 @@ struct bits {
 };
 
 static union {
-	struct	sockaddr u_sa;
-	u_short	u_data[128];
+	struct		sockaddr u_sa;
+	u_int32_t	u_data[64];
 } pt_u;
 
 int	do_rtent = 0;
