@@ -1,12 +1,11 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.89 1999/05/04 18:12:24 rohee Exp $
+#	$OpenBSD: bsd.port.mk,v 1.90 1999/05/10 21:35:25 brad Exp $
+#	$FreeBSD: bsd.port.mk,v 1.264 1996/12/25 02:27:44 imp Exp $
+#	$NetBSD: bsd.port.mk,v 1.62 1998/04/09 12:47:02 hubertf Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
-#
-# FreeBSD Id: bsd.port.mk,v 1.264 1996/12/25 02:27:44 imp Exp
-#	$NetBSD: bsd.port.mk,v 1.62 1998/04/09 12:47:02 hubertf Exp $
 #
 # Please view me with 4 column tabs!
 
@@ -23,12 +22,12 @@
 # is listed), a port is maintained by the subscribers of the ports@openbsd.org
 # mailing list, and any correspondence should be directed there.  
 #
-OpenBSD_MAINTAINER=	marc@OpenBSD.ORG
+OpenBSD_MAINTAINER= ports-admin@openbsd.org
 
 # NEED_VERSION: we need at least this version of bsd.port.mk for this 
 # port  to build
 
-FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.89 1999/05/04 18:12:24 rohee Exp $$
+FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.90 1999/05/10 21:35:25 brad Exp $$
 .if defined(NEED_VERSION)
 _VERSION_REVISION=${FULL_REVISION:M[0-9]*.*}
 
