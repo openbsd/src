@@ -1,4 +1,4 @@
-/*	$OpenBSD: ises.c,v 1.2 2001/01/29 23:36:43 ho Exp $	*/
+/*	$OpenBSD: ises.c,v 1.3 2001/01/30 14:07:44 ho Exp $	*/
 
 /*
  * Copyright (c) 2000 Håkan Olsson (ho@crt.se)
@@ -83,15 +83,15 @@ void	ises_callback __P((struct ises_q *));
 int	ises_feed __P((struct ises_softc *));
 
 /* XXX for now... */
-void    ubsec_mcopy __P((struct mbuf *, struct mbuf *, int, int));
+void	ubsec_mcopy __P((struct mbuf *, struct mbuf *, int, int));
 
-#define	READ_REG(sc,r) \
+#define READ_REG(sc,r) \
     bus_space_read_4((sc)->sc_memt, (sc)->sc_memh,r)
 
 #define WRITE_REG(sc,reg,val) \
     bus_space_write_4((sc)->sc_memt, (sc)->sc_memh, reg, val)
 
-#define	SWAP32(x) ((x) = swap32((x)))
+#define SWAP32(x) ((x) = swap32((x)))
 
 #ifdef ISESDEBUG
 #  define DPRINTF(x) printf x
@@ -106,7 +106,7 @@ void    ubsec_mcopy __P((struct mbuf *, struct mbuf *, int, int));
 #endif
 
 struct cfattach ises_ca = {
-	sizeof (struct ises_softc), ises_match, ises_attach,
+	sizeof(struct ises_softc), ises_match, ises_attach,
 };
 
 struct cfdriver ises_cd = {
@@ -116,7 +116,7 @@ struct cfdriver ises_cd = {
 int
 ises_match(struct device *parent, void *match, void *aux)
 {
-	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
+	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_PIJNENBURG &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_PIJNENBURG_PCC_ISES)
@@ -161,10 +161,9 @@ ises_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Map control/status registers. */
-	if (pci_mapreg_map (pa, PCI_MAPREG_START, 
-			    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT,
-			    0, &sc->sc_memt, &sc->sc_memh, &membase, 
-			    &memsize)) {
+	if (pci_mapreg_map(pa, PCI_MAPREG_START,
+	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0, &sc->sc_memt,
+	    &sc->sc_memh, &membase, &memsize)) {
 		printf(": can't find mem space\n");
 		return;
 	}
@@ -172,7 +171,7 @@ ises_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Map interrupt. */
 	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin, pa->pa_intrline,
-			 &ih)) {
+	    &ih)) {
 		printf(": couldn't map interrupt\n");
 		goto fail;
 	}
@@ -191,27 +190,26 @@ ises_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Initialize DMA map */
 	sc->sc_dmat = pa->pa_dmat;
-	error = bus_dmamap_create (sc->sc_dmat, 1 << PGSHIFT, 1, 1 << PGSHIFT,
-				   0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, 
-				   &sc->sc_dmamap_xfer);
+	error = bus_dmamap_create(sc->sc_dmat, 1 << PGSHIFT, 1, 1 << PGSHIFT,
+	    0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &sc->sc_dmamap_xfer);
 	if (error) {
-		printf (": cannot create dma map (%d)\n", error);
+		printf(": cannot create dma map (%d)\n", error);
 		goto fail;
 	}
 	state++;
 
 	/* Allocate in DMAable memory. */
-	if (bus_dmamem_alloc (sc->sc_dmat, sizeof sc->sc_dmamap, 1, 0, &seg, 
-			      1, &nsegs, BUS_DMA_NOWAIT)) {
-		printf (": can't alloc dma buffer space\n");
+	if (bus_dmamem_alloc(sc->sc_dmat, sizeof sc->sc_dmamap, 1, 0, &seg, 1,
+	    &nsegs, BUS_DMA_NOWAIT)) {
+		printf(": can't alloc dma buffer space\n");
 		goto fail;
 	}
 	state++;
 
 	sc->sc_dmamap_phys = seg.ds_addr;
-	if (bus_dmamem_map (sc->sc_dmat, &seg, nsegs, sizeof sc->sc_dmamap,
-			    (caddr_t *)&sc->sc_dmamap, 0)) {
-		printf (": can't map dma buffer space\n");
+	if (bus_dmamem_map(sc->sc_dmat, &seg, nsegs, sizeof sc->sc_dmamap,
+	    (caddr_t *)&sc->sc_dmamap, 0)) {
+		printf(": can't map dma buffer space\n");
 		goto fail;
 	}
 	state++;
@@ -223,45 +221,44 @@ ises_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_cid < 0)
 		goto fail;
 
-	/* 
+	/*
 	 * Since none of the initialization steps generate interrupts
 	 * for example, the hardware reset, we use a number of timeouts
 	 * (or init states) to do the rest of the chip initialization.
 	 */
 
 	sc->sc_initstate = 0;
-	timeout_set (&sc->sc_timeout, ises_initstate, sc);
-	ises_initstate (sc); 
+	timeout_set(&sc->sc_timeout, ises_initstate, sc);
+	ises_initstate(sc);
 
 	return;
 
  fail:
-	switch (state) /* Always fallthrough here. */
-	  {
-	  case 4:
-		  bus_dmamem_unmap(sc->sc_dmat, (caddr_t)&sc->sc_dmamap, 
-				   sizeof sc->sc_dmamap);
-	  case 3:
-		  bus_dmamem_free(sc->sc_dmat, &seg, nsegs);
-	  case 2:
-		  bus_dmamap_destroy(sc->sc_dmat, sc->sc_dmamap_xfer);
-	  case 1:
-		  pci_intr_disestablish(pc, sc->sc_ih);
-	  default: /* 0 */
-		  bus_space_unmap(sc->sc_memt, sc->sc_memh, memsize);
-	  }
+	switch (state) { /* Always fallthrough here. */
+	case 4:
+		bus_dmamem_unmap(sc->sc_dmat, (caddr_t)&sc->sc_dmamap,
+		    sizeof sc->sc_dmamap);
+	case 3:
+		bus_dmamem_free(sc->sc_dmat, &seg, nsegs);
+	case 2:
+		bus_dmamap_destroy(sc->sc_dmat, sc->sc_dmamap_xfer);
+	case 1:
+		pci_intr_disestablish(pc, sc->sc_ih);
+	default: /* 0 */
+		bus_space_unmap(sc->sc_memt, sc->sc_memh, memsize);
+	}
 	return;
 }
 
 void
-ises_initstate (void *v)
+ises_initstate(void *v)
 {
-  	/* 
-	 * Step through chip initialization. 
+	/*
+	 * Step through chip initialization.
 	 * sc->sc_initstate tells us what to do.
 	 */
 	extern int hz;
-  	struct ises_softc *sc = v;
+	struct ises_softc *sc = v;
 	char *dv = sc->sc_dv.dv_xname;
 	u_int32_t stat;
 	int p, ticks;
@@ -272,210 +269,201 @@ ises_initstate (void *v)
 	DPRINTF (("%s: entered initstate %d\n", dv, sc->sc_initstate));
 #endif
 
-	switch (sc->sc_initstate)
-		{
-		case 0:
-			/* Power up the chip (clear powerdown bit) */
-			stat = READ_REG(sc, ISES_BO_STAT);
-			if (stat & ISES_BO_STAT_POWERDOWN) {
-				stat &= ~ISES_BO_STAT_POWERDOWN;
-				WRITE_REG(sc, ISES_BO_STAT, stat);
-				/* Selftests will take 1 second. */
-				break;
-			} 
-			/* FALLTHROUGH (chip is already powered up) */
-			sc->sc_initstate++;
-
-		case 1:
-			/* Perform a hardware reset */
-			stat = 0;
-
-			printf ("%s: initializing...\n", dv);
-
-			/* Clear all possible bypass bits. */
-			for (p = 0; p < 128; p++)
-				WRITE_REG(sc, ISES_B_BDATAOUT, 0L);
-
-			stat |= ISES_BO_STAT_HWRESET;
+	switch (sc->sc_initstate) {
+	case 0:
+		/* Power up the chip (clear powerdown bit) */
+		stat = READ_REG(sc, ISES_BO_STAT);
+		if (stat & ISES_BO_STAT_POWERDOWN) {
+			stat &= ~ISES_BO_STAT_POWERDOWN;
 			WRITE_REG(sc, ISES_BO_STAT, stat);
-			stat &= ~ISES_BO_STAT_HWRESET;
-			WRITE_REG(sc, ISES_BO_STAT, stat);
-			/* Again, selftests will take 1 second. */
+			/* Selftests will take 1 second. */
 			break;
+		}
+		/* FALLTHROUGH (chip is already powered up) */
+		sc->sc_initstate++;
 
-		case 2:
-			/* Set AConf to zero, i.e 32-bits access to A-int. */
-			stat = READ_REG(sc, ISES_BO_STAT);
-			stat &= ~ISES_BO_STAT_ACONF;
-			WRITE_REG(sc, ISES_BO_STAT, stat);
-			
-			/* Is the firmware already loaded? */
-			if (READ_REG(sc, ISES_A_STAT) & ISES_STAT_HW_DA) {
-				/* Yes it is, jump ahead a bit */
-				ticks = 1;
-				sc->sc_initstate += 4; /* Next step --> 7 */
-				break;
-			}
-			
-			/* 
-			 * Download the Basic Functionality firmware.
-			 * Prior to downloading we need to reset the NSRAM.
-			 * Setting the tamper bit will erase the contents
-			 * in 1 microsecond.
-			 */
-			stat = READ_REG(sc, ISES_BO_STAT);
-			stat |= ISES_BO_STAT_TAMPER;
-			WRITE_REG(sc, ISES_BO_STAT, stat);
+	case 1:
+		/* Perform a hardware reset */
+		stat = 0;
+
+		printf ("%s: initializing...\n", dv);
+
+		/* Clear all possible bypass bits. */
+		for (p = 0; p < 128; p++)
+			WRITE_REG(sc, ISES_B_BDATAOUT, 0L);
+
+		stat |= ISES_BO_STAT_HWRESET;
+		WRITE_REG(sc, ISES_BO_STAT, stat);
+		stat &= ~ISES_BO_STAT_HWRESET;
+		WRITE_REG(sc, ISES_BO_STAT, stat);
+		/* Again, selftests will take 1 second. */
+		break;
+
+	case 2:
+		/* Set AConf to zero, i.e 32-bits access to A-int. */
+		stat = READ_REG(sc, ISES_BO_STAT);
+		stat &= ~ISES_BO_STAT_ACONF;
+		WRITE_REG(sc, ISES_BO_STAT, stat);
+
+		/* Is the firmware already loaded? */
+		if (READ_REG(sc, ISES_A_STAT) & ISES_STAT_HW_DA) {
+			/* Yes it is, jump ahead a bit */
+			ticks = 1;
+			sc->sc_initstate += 4; /* Next step --> 7 */
+			break;
+		}
+
+		/*
+		 * Download the Basic Functionality firmware.
+		 * Prior to downloading we need to reset the NSRAM.
+		 * Setting the tamper bit will erase the contents
+		 * in 1 microsecond.
+		 */
+		stat = READ_REG(sc, ISES_BO_STAT);
+		stat |= ISES_BO_STAT_TAMPER;
+		WRITE_REG(sc, ISES_BO_STAT, stat);
+		ticks = 1;
+		break;
+
+	case 3:
+		/* After tamper bit has been set, powerdown chip. */
+		stat = READ_REG(sc, ISES_BO_STAT);
+		stat |= ISES_BO_STAT_POWERDOWN;
+		WRITE_REG(sc, ISES_BO_STAT, stat);
+		/* Wait one second for power to dissipate. */
+		break;
+
+	case 4:
+		/* Clear tamper and powerdown bits. */
+		stat = READ_REG(sc, ISES_BO_STAT);
+		stat &= ~(ISES_BO_STAT_TAMPER | ISES_BO_STAT_POWERDOWN);
+		WRITE_REG(sc, ISES_BO_STAT, stat);
+		/* Again, wait one second for selftests. */
+		break;
+
+	case 5:
+		/*
+		 * We'll need some space in the input queue (IQF)
+		 * and we need to be in the 'waiting for program
+		 * length' IDP state (0x4).
+		 */
+		p = ISES_STAT_IDP_STATE(READ_REG(sc, ISES_A_STAT));
+		if (READ_REG(sc, ISES_A_IQF) < 4 || p != 0x4) {
+			printf("%s: cannot download firmware, "
+			    "IDP state is \"%s\"\n", dv, ises_idp_state[p]);
+			return;
+		}
+
+		/* Write firmware length */
+		WRITE_REG(sc, ISES_A_IQD, ISES_BF_IDPLEN);
+
+		/* Write firmware code */
+		for (p = 0; p < sizeof(ises_bf_fw)/sizeof(u_int32_t); p++) {
+			WRITE_REG(sc, ISES_A_IQD, ises_bf_fw[p]);
+			if (READ_REG(sc, ISES_A_IQF) < 4)
+				DELAY(10);
+		}
+
+		/* Write firmware CRC */
+		WRITE_REG(sc, ISES_A_IQD, ISES_BF_IDPCRC);
+
+		/* Wait 1s while chip resets and runs selftests */
+		break;
+
+	case 6:
+		/* Did the download succed? */
+		if (READ_REG(sc, ISES_A_STAT) & ISES_STAT_HW_DA) {
 			ticks = 1;
 			break;
+		}
 
-		case 3:
-			/* After tamper bit has been set, powerdown chip. */
-			stat = READ_REG(sc, ISES_BO_STAT);
-			stat |= ISES_BO_STAT_POWERDOWN;
-			WRITE_REG(sc, ISES_BO_STAT, stat);
-			/* Wait one second for power to dissipate. */
+		/* We failed. We cannot do anything else. */
+		printf ("%s: firmware download failed\n", dv);
+		return;
+
+	case 7:
+		if (ises_assert_cmd_mode(sc) < 0)
+			goto fail;
+
+		/*
+		 * Now that the basic functionality firmware should be
+		 * up and running, try to get the firmware version.
+		 */
+
+		stat = ises_get_fwversion(sc);
+		if (stat == 0)
+			goto fail;
+
+		printf("%s: firmware v%d.%d loaded (%d bytes)", dv,
+		    stat & 0xffff, (stat >> 16) & 0xffff, ISES_BF_IDPLEN << 2);
+
+		/* We can use firmware version 1.x & 2.x */
+		switch (stat & 0xffff) {
+		case 0:
+			printf(" diagnostic, %s disabled\n", dv);
+			goto fail;
+		case 1: /* Basic Func "base" firmware */
+		case 2: /* Basic Func "ipsec" firmware, no ADP code */
 			break;
-
-		case 4:
-			/* Clear tamper and powerdown bits. */
-			stat = READ_REG(sc, ISES_BO_STAT);
-			stat &= ~(ISES_BO_STAT_TAMPER | 
-				  ISES_BO_STAT_POWERDOWN);
-			WRITE_REG(sc, ISES_BO_STAT, stat);
-			/* Again, wait one second for selftests. */
-			break;
-
-		case 5:
-			/*
-			 * We'll need some space in the input queue (IQF) 
-			 * and we need to be in the 'waiting for program
-			 * length' IDP state (0x4).
-			 */
-			p = ISES_STAT_IDP_STATE(READ_REG(sc, ISES_A_STAT));
-			if (READ_REG(sc, ISES_A_IQF) < 4 || p != 0x4) {
-				printf("%s: cannot download firmware, "
-				       "IDP state is \"%s\"\n", dv,
-				       ises_idp_state[p]);
-				return;
-			}
-
-			/* Write firmware length */
-			WRITE_REG(sc, ISES_A_IQD, ISES_BF_IDPLEN);
-
-			/* Write firmware code */
-			for (p = 0; p < sizeof (ises_bf_fw)/sizeof (u_int32_t);
-			     p++) {
-				WRITE_REG(sc, ISES_A_IQD, ises_bf_fw[p]);
-				if (READ_REG(sc, ISES_A_IQF) < 4)
-					DELAY(10);
-			}
-
-			/* Write firmware CRC */
-			WRITE_REG(sc, ISES_A_IQD, ISES_BF_IDPCRC);
-
-			/* Wait 1s while chip resets and runs selftests */
-			break;
-
-		case 6:
-			/* Did the download succed? */
-			if (READ_REG(sc, ISES_A_STAT) & ISES_STAT_HW_DA) {
-				ticks = 1;
-				break;
-			}
-
-			/* We failed. We cannot do anything else. */
-			printf ("%s: firmware download failed\n", dv);
-			return;
-			
-		case 7:
-			if (ises_assert_cmd_mode(sc) < 0)
-				goto fail;
-
-			/*
-			 * Now that the basic functionality firmware should be
-			 * up and running, try to get the firmware version.
-			 */
-			
-			stat = ises_get_fwversion(sc);
-			if (stat == 0)
-				goto fail;
-			
-			printf("%s: firmware v%d.%d loaded (%d bytes)", dv, 
-			       stat & 0xffff, (stat >> 16) & 0xffff,
-			       ISES_BF_IDPLEN << 2);
-			
-			/* We can use firmware version 1.x & 2.x */
-			switch (stat & 0xffff) {
-			case 0:
-				printf (" diagnostic, %s disabled\n", dv);
-				goto fail;
-			case 1: /* Basic Func "base" firmware */
-			case 2: /* Basic Func "ipsec" firmware, no ADP code */
-				break;
-			default:
-				printf(" unknown, %s disabled\n", dv);
-				goto fail;
-			}
-
-			stat = READ_REG(sc, ISES_A_STAT);
-			DPRINTF((", mode %s",
-				 ises_sw_mode[ISES_STAT_SW_MODE(stat)]));
-			
-			/* Reuse the timeout for HRNG entropy collection. */
-			timeout_del (&sc->sc_timeout);
-			ises_hrng_init (sc);
-			
-			/* Set the interrupt mask */
-			sc->sc_intrmask =
-				ISES_STAT_BCHU_OAF | ISES_STAT_BCHU_ERR | 
-				ISES_STAT_BCHU_OFHF | ISES_STAT_SW_OQSINC;
-#if 0
-				ISES_STAT_BCHU_ERR | ISES_STAT_BCHU_OAF |
-				ISES_STAT_BCHU_IFE | ISES_STAT_BCHU_IFHE |
-				ISES_STAT_BCHU_OFHF | ISES_STAT_BCHU_OFF;
-#endif
-
-			WRITE_REG(sc, ISES_A_INTE, sc->sc_intrmask);
-
-			/* We're done. */
-			printf("\n");
-
-			/* Register ourselves with crypto framework. */
-#ifdef notyet
-			crypto_register(sc->sc_cid, CRYPTO_3DES_CBC,
-					ises_newsession, ises_freesession, 
-					ises_process);
-			crypto_register(sc->sc_cid, CRYPTO_DES_CBC, 
-					NULL, NULL, NULL);
-			crypto_register(sc->sc_cid, CRYPTO_MD5_HMAC, 
-					NULL, NULL, NULL);
-			crypto_register(sc->sc_cid, CRYPTO_SHA1_HMAC, 
-					NULL, NULL, NULL);
-			crypto_register(sc->sc_cid, CRYPTO_RIPEMD160_HMAC, 
-					NULL, NULL, NULL);
-#endif
-
-			return;
-			
 		default:
-			printf ("%s: entered unknown initstate %d\n", dv, 
-				sc->sc_initstate);
+			printf(" unknown, %s disabled\n", dv);
 			goto fail;
 		}
-	
+
+		stat = READ_REG(sc, ISES_A_STAT);
+		DPRINTF((", mode %s",
+		    ises_sw_mode[ISES_STAT_SW_MODE(stat)]));
+
+		/* Reuse the timeout for HRNG entropy collection. */
+		timeout_del(&sc->sc_timeout);
+		ises_hrng_init(sc);
+
+		/* Set the interrupt mask */
+		sc->sc_intrmask = ISES_STAT_BCHU_OAF | ISES_STAT_BCHU_ERR |
+		    ISES_STAT_BCHU_OFHF | ISES_STAT_SW_OQSINC;
+#if 0
+		    ISES_STAT_BCHU_ERR | ISES_STAT_BCHU_OAF |
+		    ISES_STAT_BCHU_IFE | ISES_STAT_BCHU_IFHE |
+		    ISES_STAT_BCHU_OFHF | ISES_STAT_BCHU_OFF;
+#endif
+
+		WRITE_REG(sc, ISES_A_INTE, sc->sc_intrmask);
+
+		/* We're done. */
+		printf("\n");
+
+		/* Register ourselves with crypto framework. */
+#ifdef notyet
+		crypto_register(sc->sc_cid, CRYPTO_3DES_CBC,
+		    ises_newsession, ises_freesession, ises_process);
+		crypto_register(sc->sc_cid, CRYPTO_DES_CBC, NULL, NULL, NULL);
+		crypto_register(sc->sc_cid, CRYPTO_MD5_HMAC, NULL, NULL, NULL);
+		crypto_register(sc->sc_cid, CRYPTO_SHA1_HMAC, NULL, NULL,
+		    NULL);
+		crypto_register(sc->sc_cid, CRYPTO_RIPEMD160_HMAC, NULL, NULL,
+		    NULL);
+#endif
+
+		return;
+
+	default:
+		printf("%s: entered unknown initstate %d\n", dv,
+		    sc->sc_initstate);
+		goto fail;
+	}
+
 	/* Increment state counter and schedule next step in 'ticks' ticks. */
 	sc->sc_initstate++;
-	timeout_add (&sc->sc_timeout, ticks);
+	timeout_add(&sc->sc_timeout, ticks);
 	return;
 
  fail:
-	printf ("%s: firmware failure\n", dv);
-	timeout_del (&sc->sc_timeout);
+	printf("%s: firmware failure\n", dv);
+	timeout_del(&sc->sc_timeout);
 	return;
 }
 
-/* Put a command on the A-interface queue. */			
+/* Put a command on the A-interface queue. */
 int
 ises_queue_cmd(struct ises_softc *sc, u_int32_t cmd, u_int32_t *data)
 {
@@ -577,7 +565,7 @@ ises_intr(void *arg)
 	if (ints & ISES_STAT_SW_OQSINC) {	/* A-intf output q has data */
 		ises_process_oqueue(sc);
 	}
-	
+
 	if (ints & ISES_STAT_BCHU_OAF) {	/* output data available */
 		DPRINTF(("ises_intr: BCHU_OAF bit set\n"));
 		/* ises_process_oqueue(sc); */
@@ -634,7 +622,7 @@ ises_newsession(u_int32_t *sidp, struct cryptoini *cri)
 	struct cryptoini *c, *mac = NULL, *enc = NULL;
 	struct ises_softc *sc = NULL;
 	struct ises_session *ses = NULL;
-	MD5_CTX    md5ctx;
+	MD5_CTX	   md5ctx;
 	SHA1_CTX   sha1ctx;
 	RMD160_CTX rmd160ctx;
 	int i, sesn;
@@ -681,15 +669,15 @@ ises_newsession(u_int32_t *sidp, struct cryptoini *cri)
 				ses = &sc->sc_sessions[sesn];
 				break;
 			}
-		
+
 		if (ses == NULL)  {
-		  	i = sc->sc_nsessions * sizeof (struct ises_session);
+			i = sc->sc_nsessions * sizeof(struct ises_session);
 			ses = (struct ises_session *)
-			    malloc(i + sizeof (struct ises_session), M_DEVBUF,
-				   M_NOWAIT);
+			    malloc(i + sizeof(struct ises_session), M_DEVBUF,
+			    M_NOWAIT);
 			if (ses == NULL)
 				return (ENOMEM);
-			
+
 			memcpy(ses, sc->sc_sessions, i);
 			memset(sc->sc_sessions, 0, i);
 			free(sc->sc_sessions, M_DEVBUF);
@@ -697,16 +685,16 @@ ises_newsession(u_int32_t *sidp, struct cryptoini *cri)
 			ses = &sc->sc_sessions[sc->sc_nsessions];
 			sc->sc_nsessions++;
 		}
-	}	
+	}
 
-	memset(ses, 0, sizeof (struct ises_session));
+	memset(ses, 0, sizeof(struct ises_session));
 	ses->ses_used = 1;
 
 	if (enc) {
 		/* get an IV, network byte order */
 		/* XXX switch to using builtin HRNG ! */
 		get_random_bytes(ses->ses_iv, sizeof(ses->ses_iv));
-		
+
 		/* crypto key */
 		if (c->cri_alg == CRYPTO_DES_CBC) {
 			memcpy(&ses->ses_deskey[0], enc->cri_key, 8);
@@ -714,7 +702,7 @@ ises_newsession(u_int32_t *sidp, struct cryptoini *cri)
 			memcpy(&ses->ses_deskey[4], enc->cri_key, 8);
 		} else
 			memcpy(&ses->ses_deskey[0], enc->cri_key, 24);
-		
+
 		SWAP32(ses->ses_deskey[0]);
 		SWAP32(ses->ses_deskey[1]);
 		SWAP32(ses->ses_deskey[2]);
@@ -726,56 +714,56 @@ ises_newsession(u_int32_t *sidp, struct cryptoini *cri)
 	if (mac) {
 		for (i = 0; i < mac->cri_klen / 8; i++)
 			mac->cri_key[i] ^= HMAC_IPAD_VAL;
-		
+
 		if (mac->cri_alg == CRYPTO_MD5_HMAC) {
 			MD5Init(&md5ctx);
 			MD5Update(&md5ctx, mac->cri_key, mac->cri_klen / 8);
 			MD5Update(&md5ctx, hmac_ipad_buffer, HMAC_BLOCK_LEN -
-				  (mac->cri_klen / 8));
-			memcpy(ses->ses_hminner, md5ctx.state, 
-			       sizeof(md5ctx.state));
+			    (mac->cri_klen / 8));
+			memcpy(ses->ses_hminner, md5ctx.state,
+			    sizeof(md5ctx.state));
 		} else if (mac->cri_alg == CRYPTO_SHA1_HMAC) {
 			SHA1Init(&sha1ctx);
 			SHA1Update(&sha1ctx, mac->cri_key, mac->cri_klen / 8);
 			SHA1Update(&sha1ctx, hmac_ipad_buffer, HMAC_BLOCK_LEN -
-				  (mac->cri_klen / 8));
-			memcpy(ses->ses_hminner, sha1ctx.state, 
-			       sizeof(sha1ctx.state));
-		} else { 
+			    (mac->cri_klen / 8));
+			memcpy(ses->ses_hminner, sha1ctx.state,
+			    sizeof(sha1ctx.state));
+		} else {
 			RMD160Init(&rmd160ctx);
-			RMD160Update(&rmd160ctx, mac->cri_key, 
-				     mac->cri_klen / 8);
-			RMD160Update(&rmd160ctx, hmac_ipad_buffer, 
-				     HMAC_BLOCK_LEN - (mac->cri_klen / 8));
-			memcpy(ses->ses_hminner, rmd160ctx.state, 
-			       sizeof(rmd160ctx.state));
+			RMD160Update(&rmd160ctx, mac->cri_key,
+			    mac->cri_klen / 8);
+			RMD160Update(&rmd160ctx, hmac_ipad_buffer,
+			    HMAC_BLOCK_LEN - (mac->cri_klen / 8));
+			memcpy(ses->ses_hminner, rmd160ctx.state,
+			    sizeof(rmd160ctx.state));
 		}
 
 		for (i = 0; i < mac->cri_klen / 8; i++)
 			mac->cri_key[i] ^= (HMAC_IPAD_VAL ^ HMAC_OPAD_VAL);
-		
+
 		if (mac->cri_alg == CRYPTO_MD5_HMAC) {
 			MD5Init(&md5ctx);
 			MD5Update(&md5ctx, mac->cri_key, mac->cri_klen / 8);
 			MD5Update(&md5ctx, hmac_ipad_buffer, HMAC_BLOCK_LEN -
-				  (mac->cri_klen / 8));
-			memcpy(ses->ses_hmouter, md5ctx.state, 
-			       sizeof(md5ctx.state));
+			    (mac->cri_klen / 8));
+			memcpy(ses->ses_hmouter, md5ctx.state,
+			    sizeof(md5ctx.state));
 		} else if (mac->cri_alg == CRYPTO_SHA1_HMAC) {
 			SHA1Init(&sha1ctx);
 			SHA1Update(&sha1ctx, mac->cri_key, mac->cri_klen / 8);
 			SHA1Update(&sha1ctx, hmac_ipad_buffer, HMAC_BLOCK_LEN -
-				  (mac->cri_klen / 8));
-			memcpy(ses->ses_hmouter, sha1ctx.state, 
-			       sizeof(sha1ctx.state));
-		} else { 
+			    (mac->cri_klen / 8));
+			memcpy(ses->ses_hmouter, sha1ctx.state,
+			    sizeof(sha1ctx.state));
+		} else {
 			RMD160Init(&rmd160ctx);
-			RMD160Update(&rmd160ctx, mac->cri_key, 
-				     mac->cri_klen / 8);
-			RMD160Update(&rmd160ctx, hmac_ipad_buffer, 
-				     HMAC_BLOCK_LEN - (mac->cri_klen / 8));
-			memcpy(ses->ses_hmouter, rmd160ctx.state, 
-			       sizeof(rmd160ctx.state));
+			RMD160Update(&rmd160ctx, mac->cri_key,
+			    mac->cri_klen / 8);
+			RMD160Update(&rmd160ctx, hmac_ipad_buffer,
+			    HMAC_BLOCK_LEN - (mac->cri_klen / 8));
+			memcpy(ses->ses_hmouter, rmd160ctx.state,
+			    sizeof(rmd160ctx.state));
 		}
 
 		for (i = 0; i < mac->cri_klen / 8; i++)
@@ -795,7 +783,7 @@ ises_freesession(u_int64_t tsid)
 	struct ises_softc *sc;
 	int card, sesn;
 	u_int32_t sid = ((u_int32_t) tsid) & 0xffffffff;
-	
+
 	card = ISES_CARD(sid);
 	if (card >= ises_cd.cd_ndevs || ises_cd.cd_devs[card] == NULL)
 		return (EINVAL);
@@ -857,7 +845,7 @@ ises_process(struct cryptop *crp)
 
 	q->q_sc = sc;
 	q->q_crp = crp;
-	
+
 	if (crp->crp_flags & CRYPTO_F_IMBUF) {
 		q->q_src_m = (struct mbuf *)crp->crp_buf;
 		q->q_dst_m = (struct mbuf *)crp->crp_buf;
@@ -866,11 +854,11 @@ ises_process(struct cryptop *crp)
 		goto errout;
 	}
 
-	/* 
+	/*
 	 * Check if the crypto descriptors are sane. We accept:
 	 * - just one crd; either auth or crypto
 	 * - two crds; must be one auth and one crypto, although now
-	 *   for encryption we only want the first to be crypto, while 
+	 *   for encryption we only want the first to be crypto, while
 	 *   for decryption the second one should be crypto.
 	 */
 	maccrd = enccrd = NULL;
@@ -880,14 +868,14 @@ ises_process(struct cryptop *crp)
 		case CRYPTO_MD5_HMAC:
 		case CRYPTO_SHA1_HMAC:
 		case CRYPTO_RIPEMD160_HMAC:
-			if (maccrd || (enccrd && 
+			if (maccrd || (enccrd &&
 			    (enccrd->crd_flags & CRD_F_ENCRYPT) == 0))
 				goto errout;
 			maccrd = crd;
 			break;
 		case CRYPTO_DES_CBC:
 		case CRYPTO_3DES_CBC:
-			if (enccrd || 
+			if (enccrd ||
 			    (maccrd && (crd->crd_flags & CRD_F_ENCRYPT)))
 				goto errout;
 			enccrd = crd;
@@ -918,18 +906,18 @@ ises_process(struct cryptop *crp)
 				q->q_ctx.pc_iv[0] = ses->ses_iv[0];
 				q->q_ctx.pc_iv[1] = ses->ses_iv[1];
 			}
-			
+
 			if ((enccrd->crd_flags & CRD_F_IV_PRESENT) == 0)
 				m_copyback(q->q_src_m, enccrd->crd_inject,
-					   8, (caddr_t)q->q_ctx.pc_iv);
+				    8, (caddr_t)q->q_ctx.pc_iv);
 		} else {
 			q->q_ctx.pc_omrflags &= ~ISES_SOMR_EDR; /* XXX */
 
 			if (enccrd->crd_flags & CRD_F_IV_EXPLICIT)
 				bcopy(enccrd->crd_iv, q->q_ctx.pc_iv, 8);
-			else 
+			else
 				m_copyback(q->q_src_m, enccrd->crd_inject,
-					   8, (caddr_t)q->q_ctx.pc_iv);
+				    8, (caddr_t)q->q_ctx.pc_iv);
 		}
 
 		q->q_ctx.pc_deskey[0] = ses->ses_deskey[0];
@@ -945,7 +933,7 @@ ises_process(struct cryptop *crp)
 
 	if (maccrd) {
 		macoffset = maccrd->crd_skip;
-		
+
 		switch (crd->crd_alg) {
 		case CRYPTO_MD5_HMAC:
 			q->q_ctx.pc_omrflags |= ISES_HOMR_HFR_MD5;
@@ -954,7 +942,7 @@ ises_process(struct cryptop *crp)
 			q->q_ctx.pc_omrflags |= ISES_HOMR_HFR_SHA1;
 			break;
 		case CRYPTO_RIPEMD160_HMAC:
-		default: 
+		default:
 			q->q_ctx.pc_omrflags |= ISES_HOMR_HFR_RMD160;
 			break;
 		}
@@ -965,7 +953,7 @@ ises_process(struct cryptop *crp)
 		q->q_ctx.pc_hminner[3] = ses->ses_hminner[3];
 		q->q_ctx.pc_hminner[4] = ses->ses_hminner[4];
 		q->q_ctx.pc_hminner[5] = ses->ses_hminner[5];
-		
+
 		q->q_ctx.pc_hmouter[0] = ses->ses_hmouter[0];
 		q->q_ctx.pc_hmouter[1] = ses->ses_hmouter[1];
 		q->q_ctx.pc_hmouter[2] = ses->ses_hmouter[2];
@@ -978,12 +966,12 @@ ises_process(struct cryptop *crp)
 		/* XXX Check if ises handles differing end of auth/enc etc */
 		/* XXX For now, assume not (same as ubsec). */
 		if (((encoffset + enccrd->crd_len) !=
-		     (macoffset + maccrd->crd_len)) ||
+		    (macoffset + maccrd->crd_len)) ||
 		    (enccrd->crd_skip < maccrd->crd_skip)) {
 			err = EINVAL;
 			goto errout;
 		}
-		
+
 		sskip = maccrd->crd_skip;
 		cpskip = dskip = enccrd->crd_skip;
 		stheend = maccrd->crd_len;
@@ -999,22 +987,22 @@ ises_process(struct cryptop *crp)
 		coffset = 0;
 	}
 	q->q_ctx.pc_offset = coffset >> 2;
-	
-	q->q_src_l = mbuf2pages (q->q_src_m, &q->q_src_npa, &q->q_src_packp,
-				 &q->q_src_packl, 1, &nicealign);
+
+	q->q_src_l = mbuf2pages(q->q_src_m, &q->q_src_npa, &q->q_src_packp,
+	    &q->q_src_packl, 1, &nicealign);
 	if (q->q_src_l == 0) {
 		err = ENOMEM;
 		goto errout;
 	}
-	
+
 	/* XXX mcr stuff; q->q_mcr->mcr_pktlen = stheend; */
-	
+
 #if 0 /* XXX */
 	for (i = j = 0; i < q->q_src_npa; i++) {
 		struct ises_pktbuf *pb;
 
 		/* XXX DEBUG? */
-		
+
 		if (sskip) {
 			if (sskip >= q->q_src_packl) {
 				sskip -= q->q_src_packl;
@@ -1024,9 +1012,9 @@ ises_process(struct cryptop *crp)
 			q->q_src_packl -= sskip;
 			sskip = 0;
 		}
-		
+
 		pb = NULL; /* XXX initial packet */
-		
+
 		pb->pb_addr = q->q_src_packp;
 		if (stheend) {
 			if (q->q_src_packl > stheend) {
@@ -1043,7 +1031,7 @@ ises_process(struct cryptop *crp)
 			pb->pb_next = 0;
 		else
 			pb->pb_next = vtophys(&q->q_srcpkt);
-		
+
 		j++;
 	}
 
@@ -1054,103 +1042,102 @@ ises_process(struct cryptop *crp)
 		/* XXX mcr stuff */
 	} else {
 		if (!nicealign) {
-                        int totlen, len;
-                        struct mbuf *m, *top, **mp;
-			
-                        totlen = q->q_dst_l = q->q_src_l;
-                        if (q->q_src_m->m_flags & M_PKTHDR) {
-                                MGETHDR(m, M_DONTWAIT, MT_DATA);
-                                M_COPY_PKTHDR(m, q->q_src_m);
-                                len = MHLEN;
-                        } else {
-                                MGET(m, M_DONTWAIT, MT_DATA);
-                                len = MLEN;
-                        }
-                        if (m == NULL) {
-                                err = ENOMEM;
-                                goto errout;
-                        }
-                        if (totlen >= MINCLSIZE) {
-                                MCLGET(m, M_DONTWAIT);
-                                if (m->m_flags & M_EXT)
-                                        len = MCLBYTES;
-                        }
-                        m->m_len = len;
-                        top = NULL;
-                        mp = &top;
-			
-                        while (totlen > 0) {
-                                if (top) {
-                                        MGET(m, M_DONTWAIT, MT_DATA);
-                                        if (m == NULL) {
-                                                m_freem(top);
-                                                err = ENOMEM;
-                                                goto errout;
-                                        }
-                                        len = MLEN;
-                                }
-                                if (top && totlen >= MINCLSIZE) {
-                                        MCLGET(m, M_DONTWAIT);
-                                        if (m->m_flags & M_EXT)
-                                                len = MCLBYTES;
-                                }
-                                m->m_len = len = min(totlen, len);
-                                totlen -= len;
-                                *mp = m;
-				
+			int totlen, len;
+			struct mbuf *m, *top, **mp;
+
+			totlen = q->q_dst_l = q->q_src_l;
+			if (q->q_src_m->m_flags & M_PKTHDR) {
+				MGETHDR(m, M_DONTWAIT, MT_DATA);
+				M_COPY_PKTHDR(m, q->q_src_m);
+				len = MHLEN;
+			} else {
+				MGET(m, M_DONTWAIT, MT_DATA);
+				len = MLEN;
+			}
+			if (m == NULL) {
+				err = ENOMEM;
+				goto errout;
+			}
+			if (totlen >= MINCLSIZE) {
+				MCLGET(m, M_DONTWAIT);
+				if (m->m_flags & M_EXT)
+					len = MCLBYTES;
+			}
+			m->m_len = len;
+			top = NULL;
+			mp = &top;
+
+			while (totlen > 0) {
+				if (top) {
+					MGET(m, M_DONTWAIT, MT_DATA);
+					if (m == NULL) {
+						m_freem(top);
+						err = ENOMEM;
+						goto errout;
+					}
+					len = MLEN;
+				}
+				if (top && totlen >= MINCLSIZE) {
+					MCLGET(m, M_DONTWAIT);
+					if (m->m_flags & M_EXT)
+						len = MCLBYTES;
+				}
+				m->m_len = len = min(totlen, len);
+				totlen -= len;
+				*mp = m;
+
 				mp = &m->m_next;
-                        }
-                        q->q_dst_m = top;
-                        ubsec_mcopy(q->q_src_m, q->q_dst_m, cpskip, cpoffset);
-                } else
-                        q->q_dst_m = q->q_src_m;
-		
-                q->q_dst_l = mbuf2pages(q->q_dst_m, &q->q_dst_npa,
-					&q->q_dst_packp, &q->q_dst_packl, 
-					1, NULL);
+			}
+			q->q_dst_m = top;
+			ubsec_mcopy(q->q_src_m, q->q_dst_m, cpskip, cpoffset);
+		} else
+			q->q_dst_m = q->q_src_m;
+
+		q->q_dst_l = mbuf2pages(q->q_dst_m, &q->q_dst_npa,
+		    &q->q_dst_packp, &q->q_dst_packl, 1, NULL);
 
 #if 0
 		for (i = j = 0; i < q->q_dst_npa; i++) {
-                        struct ises_pktbuf *pb;
-			
-			if (dskip) {
-                                if (dskip >= q->q_dst_packl[i]) {
-                                        dskip -= q->q_dst_packl[i];
-                                        continue;
-                                }
-                                q->q_dst_packp[i] += dskip;
-                                q->q_dst_packl[i] -= dskip;
-                                dskip = 0;
-                        }
-			
-                        if (j == 0)
-                                pb = NULL; /* &q->q_mcr->mcr_opktbuf; */
-                        else
-                                pb = &q->q_dstpkt[j - 1];
+			struct ises_pktbuf *pb;
 
-                        pb->pb_addr = q->q_dst_packp[i];
-			
-                        if (dtheend) {
-                                if (q->q_dst_packl[i] > dtheend) {
-                                        pb->pb_len = dtheend;
-                                        dtheend = 0;
-                                } else {
-                                        pb->pb_len = q->q_dst_packl[i];
-                                        dtheend -= pb->pb_len;
-                                }
-                        } else
-                                pb->pb_len = q->q_dst_packl[i];
-			
-                        if ((i + 1) == q->q_dst_npa) {
-                                if (maccrd)
-                                        pb->pb_next = vtophys(q->q_macbuf);
-                                else
+			if (dskip) {
+				if (dskip >= q->q_dst_packl[i]) {
+					dskip -= q->q_dst_packl[i];
+					continue;
+				}
+				q->q_dst_packp[i] += dskip;
+				q->q_dst_packl[i] -= dskip;
+				dskip = 0;
+			}
+
+			if (j == 0)
+				pb = NULL; /* &q->q_mcr->mcr_opktbuf; */
+			else
+				pb = &q->q_dstpkt[j - 1];
+
+			pb->pb_addr = q->q_dst_packp[i];
+
+			if (dtheend) {
+				if (q->q_dst_packl[i] > dtheend) {
+					pb->pb_len = dtheend;
+					dtheend = 0;
+				} else {
+					pb->pb_len = q->q_dst_packl[i];
+					dtheend -= pb->pb_len;
+				}
+			} else
+				pb->pb_len = q->q_dst_packl[i];
+
+			if ((i + 1) == q->q_dst_npa) {
+				if (maccrd)
+					pb->pb_next = vtophys(q->q_macbuf);
+				else
 					pb->pb_next = 0;
-                        } else
-                                pb->pb_next = vtophys(&q->q_dstpkt[j]);
-                        j++;
-                }
-#endif	
+			} else
+				pb->pb_next = vtophys(&q->q_dstpkt[j]);
+			j++;
+		}
+#endif
 	}
 
 	s = splnet();
@@ -1160,7 +1147,7 @@ ises_process(struct cryptop *crp)
 	splx(s);
 
 	return (0);
-					
+
 errout:
 	if (q) {
 		if (q->q_src_m != q->q_dst_m)
@@ -1233,10 +1220,10 @@ ises_hrng_init(struct ises_softc *sc)
 #ifdef ISESDEBUG
 	/* Benchmark the HRNG. */
 
-	/* 
+	/*
 	 * XXX These values gets surprisingly large. Docs state the
 	 * HNRG produces > 1 mbit/s of random data. The values I'm seeing
-	 * are much higher, ca 2.7-2.8 mbit/s. AFAICT the algorithm is sound. 
+	 * are much higher, ca 2.7-2.8 mbit/s. AFAICT the algorithm is sound.
 	 * Compiler optimization issues, perhaps?
 	 */
 
@@ -1259,14 +1246,14 @@ ises_hrng_init(struct ises_softc *sc)
 		DELAY(1); /* OQS needs 1us to decrement */
 	}
 	microtime(&tv2);
-	
+
 	timersub(&tv2, &tv1, &tv1);
 	tv1.tv_usec += 1000000 * tv1.tv_sec;
-	printf(", %dKb/sec", 
-	       ISES_WPR * ISES_ROUNDS * 32 / 1024 * 1000000 / tv1.tv_usec);
+	printf(", %dKb/sec",
+	    ISES_WPR * ISES_ROUNDS * 32 / 1024 * 1000000 / tv1.tv_usec);
 #endif
 
-	printf ("\n");
+	printf("\n");
 	timeout_set(&sc->sc_timeout, ises_hrng, sc);
 	ises_hrng(sc); /* Call first update */
 }
@@ -1283,8 +1270,7 @@ ises_hrng(void *v)
 	u_int32_t cmd, n;
 	extern int hz; /* from param.c */
 
-	/* XXX How often should we repeat? */
-	timeout_add(&sc->sc_timeout, hz/ISESRNGIPS);
+	timeout_add(&sc->sc_timeout, hz / ISESRNGIPS);
 
 	if (ises_assert_cmd_mode(sc) != 0)
 		return;
@@ -1300,14 +1286,14 @@ ises_get_fwversion(struct ises_softc *sc)
 {
 	u_int32_t r;
 	int i;
-  
+
 	r = ISES_MKCMD(ISES_CMD_CHIP_ID, 0);
 	WRITE_REG(sc, ISES_A_IQD, r);
 	WRITE_REG(sc, ISES_A_IQS, 0);
 
 	for (i = 100; i > 0 && READ_REG(sc, ISES_A_OQS) == 0; i--)
 		DELAY(1);
-  
+
 	if (i < 1)
 		return (0); /* No response */
 
@@ -1318,22 +1304,22 @@ ises_get_fwversion(struct ises_softc *sc)
 	    ((r >> 24) & 0xff) != 3 || (r & ISES_RC_MASK) != ISES_RC_SUCCESS) {
 		if ((r & ISES_RC_MASK) == ISES_RC_SUCCESS)
 			for (i = ((r >> 24) & 0xff); i; i--)
-				(void) READ_REG(sc, ISES_A_OQD);
+				(void)READ_REG(sc, ISES_A_OQD);
 		r = 0;
 		goto out;
 	}
 
 	r = READ_REG(sc, ISES_A_OQD); /* read version */
-	(void) READ_REG (sc, ISES_A_OQD); /* Discard 64bit "chip-id" */
-	(void) READ_REG (sc, ISES_A_OQD);
+	(void)READ_REG(sc, ISES_A_OQD); /* Discard 64bit "chip-id" */
+	(void)READ_REG(sc, ISES_A_OQD);
  out:
 	WRITE_REG(sc, ISES_A_OQS, 0); /* Ack the response */
 	DELAY(1);
 	return (r);
 }
 
-/* 
- * ises_assert_cmd_mode() returns 
+/*
+ * ises_assert_cmd_mode() returns
  *   -1 for failure to go to cmd
  *    0 if mode already was cmd
  *   >0 if mode was other (WFC/WFR) but now is cmd (this has reset the queues)
@@ -1341,26 +1327,27 @@ ises_get_fwversion(struct ises_softc *sc)
 int
 ises_assert_cmd_mode(struct ises_softc *sc)
 {
-  switch (ISES_STAT_SW_MODE(READ_REG(sc, ISES_A_STAT))) {
-  case 0x0: /* Selftest. XXX This is a transient state. */
-  	DELAY(1000000);
-	if (ISES_STAT_SW_MODE(READ_REG(sc, ISES_A_STAT)) == 0)
-		return (-1);
-	return (ises_assert_cmd_mode(sc));
-  case 0x1: /* Command mode */
-  	return (0);
-  case 0x2: /* Waiting For Continue / WFC */
-    	bus_space_write_2(sc->sc_memt, sc->sc_memh, ISES_A_CTRL,
-	    ISES_A_CTRL_CONTINUE);
-	DELAY(1);
-	return ((ISES_STAT_SW_MODE(READ_REG(sc, ISES_A_STAT)) == 0) ? 1 : -1);
-  case 0x3: /* Waiting For Reset / WFR */
-    	bus_space_write_2(sc->sc_memt, sc->sc_memh, ISES_A_CTRL,
-	    ISES_A_CTRL_RESET);
-	DELAY(1000000);
-	return ((ISES_STAT_SW_MODE(READ_REG(sc, ISES_A_STAT)) == 0) ? 2 : -1);
-  default:
-  	return (-1); /* Unknown mode */
-  }
+	switch (ISES_STAT_SW_MODE(READ_REG(sc, ISES_A_STAT))) {
+	case 0x0: /* Selftest. XXX This is a transient state. */
+		DELAY(1000000);
+		if (ISES_STAT_SW_MODE(READ_REG(sc, ISES_A_STAT)) == 0)
+			return (-1);
+		return (ises_assert_cmd_mode(sc));
+	case 0x1: /* Command mode */
+		return (0);
+	case 0x2: /* Waiting For Continue / WFC */
+		bus_space_write_2(sc->sc_memt, sc->sc_memh, ISES_A_CTRL,
+		    ISES_A_CTRL_CONTINUE);
+		DELAY(1);
+		return ((ISES_STAT_SW_MODE(READ_REG(sc, ISES_A_STAT)) == 0) ?
+		    1 : -1);
+	case 0x3: /* Waiting For Reset / WFR */
+		bus_space_write_2(sc->sc_memt, sc->sc_memh, ISES_A_CTRL,
+		    ISES_A_CTRL_RESET);
+		DELAY(1000000);
+		return ((ISES_STAT_SW_MODE(READ_REG(sc, ISES_A_STAT)) == 0) ?
+		    2 : -1);
+	default:
+		return (-1); /* Unknown mode */
+	}
 }
-
