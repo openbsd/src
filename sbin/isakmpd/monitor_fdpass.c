@@ -41,8 +41,6 @@ mm_send_fd (int socket, int fd)
   char ch = '\0';
   ssize_t n;
 
-  LOG_DBG ((LOG_SYSDEP, 90, "mm_send_fd: send %d", fd));
-
   memset(&msg, 0, sizeof msg);
   msg.msg_control = (caddr_t)tmp;
   msg.msg_controllen = CMSG_LEN (sizeof (int));
@@ -109,8 +107,6 @@ mm_receive_fd (int socket)
       return -1;
     }
   fd = (*(int *)CMSG_DATA (cmsg));
-
-  LOG_DBG ((LOG_SYSDEP, 90, "mm_receive_fd: recv %d", fd));
 
   return fd;
 }
