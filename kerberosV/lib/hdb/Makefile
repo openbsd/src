@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2003/05/11 03:47:55 hin Exp $
+# $OpenBSD: Makefile,v 1.6 2003/05/11 20:54:39 mho Exp $
 
 KRBDEPTH=../..
 .include <${.CURDIR}/../../Makefile.inc>
@@ -33,8 +33,8 @@ ${ASN1_SRC}:	${KRB5SRC}/lib/hdb/hdb.asn1
 CLEANFILES+=	${ASN1_SRC} ${ASN1_SRC:.c=.x} hdb_err.[ch] \
 		hdb_asn1.[ch] ans1_files asn1.h asn1_files
 
-CFLAGS+=-I${KRB5SRC}/lib/hdb -I${KRB5SRC}/lib/asn1 -I../asn1 -I. -I../krb5 \
-	-DROKEN_RENAME
+CFLAGS+=-I${KRB5SRC}/lib/hdb -I${KRB5SRC}/lib/asn1 -I../asn1 -I. -I../krb5
+
 .PATH:	${KRB5SRC}/lib/hdb
 
 hdb_err.c hdb_err.h: ${KRB5SRC}/lib/hdb/hdb_err.et

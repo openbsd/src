@@ -1,9 +1,8 @@
-# $OpenBSD: Makefile,v 1.22 2003/05/11 03:47:55 hin Exp $
+# $OpenBSD: Makefile,v 1.23 2003/05/11 20:54:39 mho Exp $
 
 KRBDEPTH=../..
 .include <${.CURDIR}/../../Makefile.inc>
 
-CFLAGS+= -DROKEN_RENAME
 LIB=	krb5
 
 INCLUDE_FILES=	${KRB5SRC}/lib/krb5/{krb5.h,krb5-protos.h,krb5-private.h} \

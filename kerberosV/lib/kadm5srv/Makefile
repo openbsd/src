@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2003/05/11 03:47:55 hin Exp $
+# $OpenBSD: Makefile,v 1.6 2003/05/11 20:54:39 mho Exp $
 
 LIB=	kadm5srv
 
@@ -46,7 +46,7 @@ SRCS=	acl.c           \
 .PATH:	${KRB5SRC}/lib/kadm5
 
 CFLAGS+=-I${KRB5SRC}/lib/krb5 -I${KRB5SRC}/lib/asn1 -I../asn1 -I../krb5 \
-	-I${KRB5SRC}/lib/hdb -I../hdb -I. -DROKEN_RENAME
+	-I${KRB5SRC}/lib/hdb -I../hdb -I.
 
 CLEANFILES+=kadm5_err.[ch]
 
