@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.434 2003/12/31 22:14:41 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.435 2004/01/04 12:30:29 cedric Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -3039,6 +3039,7 @@ binatrule	: no BINAT natpass interface af proto FROM host TO ipspec tag
 			if ($4 != NULL) {
 				memcpy(binat.ifname, $4->ifname,
 				    sizeof(binat.ifname));
+				binat.ifnot = $4->not;
 				free($4);
 			}
 			if ($11 != NULL)
