@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.8 2002/06/15 17:23:31 art Exp $	*/
+/*	$OpenBSD: psl.h,v 1.9 2003/05/16 22:14:13 henric Exp $	*/
 /*	$NetBSD: psl.h,v 1.20 2001/04/13 23:30:05 thorpej Exp $ */
 
 /*
@@ -45,18 +45,19 @@
  *	@(#)psl.h	8.1 (Berkeley) 6/11/93
  */
 
-#ifndef PSR_IMPL
+#ifndef _SPARC64_PSL_
+#define _SPARC64_PSL_
 
 /*
  * SPARC Process Status Register (in psl.h for hysterical raisins).  This
  * doesn't exist on the V9.
  *
  * The picture in the Sun manuals looks like this:
- *	                                     1 1
- *	 31   28 27   24 23   20 19       14 3 2 11    8 7 6 5 4       0
+ *					     1 1
+ *	 31   28 27   24 23   20 19	  14 3 2 11    8 7 6 5 4       0
  *	+-------+-------+-------+-----------+-+-+-------+-+-+-+---------+
- *	|  impl |  ver  |  icc  |  reserved |E|E|  pil  |S|P|E|   CWP   |
- *	|       |       |n z v c|           |C|F|       | |S|T|         |
+ *	|  impl |  ver	|  icc	|  reserved |E|E|  pil	|S|P|E|	  CWP	|
+ *	|	|	|n z v c|	    |C|F|	| |S|T|		|
  *	+-------+-------+-------+-----------+-+-+-------+-+-+-+---------+
  */
 
@@ -245,14 +246,9 @@
 #if defined(_KERNEL) && !defined(_LOCORE)
 
 extern u_int64_t ver;	/* Copy of v9 version register.  We need to read this only once, in locore.s. */
-static __inline int getpstate(void);
-static __inline void setpstate(int);
-static __inline int getcwp(void);
-static __inline void setcwp(int);
 #ifndef SPLDEBUG
 static __inline void splx(int);
 #endif
-static __inline u_int64_t getver(void);
 
 #ifdef DIAGNOSTIC
 /*
@@ -274,40 +270,66 @@ void splassert_check(int, const char *);
 /*
  * GCC pseudo-functions for manipulating privileged registers
  */
-static __inline int getpstate()
+extern __inline u_int64_t getpstate(void);
+extern __inline
+u_int64_t getpstate()
 {
-	int pstate;
-
-	__asm __volatile("rdpr %%pstate,%0" : "=r" (pstate));
-	return (pstate);
+	return (sparc_rdpr(pstate));
 }
 
-static __inline void setpstate(newpstate)
-	int newpstate;
+extern __inline void setpstate(u_int64_t);
+extern __inline void setpstate(u_int64_t newpstate)
 {
-	__asm __volatile("wrpr %0,0,%%pstate" : : "r" (newpstate));
+	sparc_wrpr(pstate, newpstate, 0);
 }
 
-static __inline int getcwp()
+extern __inline int getcwp(void);
+extern __inline
+int getcwp()
 {
-	int cwp;
-
-	__asm __volatile("rdpr %%cwp,%0" : "=r" (cwp));
-	return (cwp);
+	return (sparc_rdpr(cwp));
 }
 
-static __inline void setcwp(newcwp)
-	int newcwp;
+extern __inline void setcwp(u_int64_t);
+extern __inline void
+setcwp(u_int64_t newcwp)
 {
-	__asm __volatile("wrpr %0,0,%%cwp" : : "r" (newcwp));
+	sparc_wrpr(cwp, newcwp, 0);
 }
 
-static __inline u_int64_t getver()
+extern __inline u_int64_t getver(void);
+extern __inline
+u_int64_t getver()
 {
-	u_int64_t ver;
+	return (sparc_rdpr(ver));
+}
 
-	__asm __volatile("rdpr %%ver,%0" : "=r" (ver));
-	return (ver);
+extern __inline u_int64_t intr_disable(void);
+extern __inline u_int64_t
+intr_disable()
+{
+	u_int64_t s;
+
+	s = sparc_rdpr(pstate);
+	sparc_wrpr(pstate, s & ~PSTATE_IE, 0);
+	return (s);
+}
+
+extern __inline void intr_restore(u_int64_t);
+extern __inline void
+intr_restore(u_int64_t s)
+{
+	sparc_wrpr(pstate, s, 0);
+}
+
+extern __inline void stxa_sync(u_int64_t, u_int64_t, u_int64_t);
+extern __inline void
+stxa_sync(u_int64_t va, u_int64_t asi, u_int64_t val)
+{
+	u_int64_t s = intr_disable();
+	stxa_nc(va, asi, val);
+	membar(Sync);
+	intr_restore(s);
 }
 
 /*
@@ -472,4 +494,4 @@ static __inline void splx(newpil)
 }
 #endif /* KERNEL && !_LOCORE */
 
-#endif /* PSR_IMPL */
+#endif /* _SPARC64_PSL_ */

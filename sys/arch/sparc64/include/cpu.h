@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.19 2003/03/21 22:59:09 jason Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.20 2003/05/16 22:14:13 henric Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -74,6 +74,7 @@
  * Exported definitions unique to SPARC cpu support.
  */
 
+#include <machine/ctlreg.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/intr.h>

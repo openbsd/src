@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctlreg.h,v 1.8 2003/02/17 01:29:20 henric Exp $	*/
+/*	$OpenBSD: ctlreg.h,v 1.9 2003/05/16 22:14:13 henric Exp $	*/
 /*	$NetBSD: ctlreg.h,v 1.28 2001/08/06 23:55:34 eeh Exp $ */
 
 /*
@@ -49,6 +49,8 @@
  * SUCH DAMAGE.
  */
 
+#ifndef _SPARC64_CTLREG_
+#define _SPARC64_CTLREG_
 
 /*
  * Sun 4u control registers. (includes address space definitions
@@ -72,30 +74,6 @@
 
 #define CMASK_GEN(bit)  ((1 << (bit)) << CMASK_SHIFT)
 #define MMASK_GEN(bit)  ((1 << (bit)) << MMASK_SHIFT)
-
-#ifndef __ASSEMBLER__
-#define Lookaside       CMASK_GEN(C_Lookaside)
-#define MemIssue        CMASK_GEN(C_MemIssue)
-#define Sync            CMASK_GEN(C_Sync)
-#define LoadLoad        MMASK_GEN(M_LoadLoad)
-#define StoreLoad       MMASK_GEN(M_StoreLoad)
-#define LoadStore       MMASK_GEN(M_LoadStore)
-#define StoreStore      MMASK_GEN(M_StoreStore)
-#endif
-
-#define casa(rs1, rs2, rd, asi) ({                                      \
-	u_int __rd = (u_int32_t)(rd);                                   \
-	__asm __volatile("casa [%1] %2, %3, %0"                         \
-	    : "+r" (__rd) : "r" (rs1), "n" (asi), "r" (rs2));           \
-	__rd;                                                           \
-})
-
-#define casxa(rs1, rs2, rd, asi) ({                                     \
-	u_long __rd = (u_int64_t)(rd);                                  \
-	__asm __volatile("casxa [%1] %2, %3, %0"                        \
-	    : "+r" (__rd) : "r" (rs1), "n" (asi), "r" (rs2));           \
-	__rd;                                                           \
-})
 
 /*
  * The Alternate address spaces. 
@@ -521,19 +499,103 @@
  * D$ so we need to flush the D$ to make sure we don't get data pollution.
  */
 
+extern __inline u_int32_t sparc_cas(u_int32_t *, u_int32_t, u_int32_t);
+extern __inline u_int32_t
+sparc_cas(u_int32_t *rs1, u_int32_t rs2, u_int32_t rd)
+{
+	__asm __volatile("casa [%1] ASI_PRIMARY, %2, %0"
+	    : "+r" (rd)
+	    : "r" (rs1), "r" (rs2)
+	    : "memory" );
+	return (rd);
+}
+
+extern __inline u_int64_t sparc_casx(u_int64_t *, u_int64_t, u_int64_t);
+extern __inline u_int64_t
+sparc_casx(u_int64_t *rs1, u_int64_t rs2, u_int64_t rd)
+{
+	__asm __volatile("casxa [%1] ASI_PRIMARY, %3, %0"
+	    : "+r" (rd)
+	    : "r" (rs1), "r" (rs2)
+	    : "memory" );
+	return (rd);
+}
+
+#define sparc_membar(mask) do {                                         \
+        if (mask)                                                       \
+                __asm __volatile("membar %0" : : "n" (mask) : "memory");\
+        else                                                            \
+                __asm __volatile("" : : : "memory");                    \
+} while(0)
+
+#define membar sparc_membar
+#define Lookaside       CMASK_GEN(C_Lookaside)
+#define MemIssue        CMASK_GEN(C_MemIssue)
+#define Sync            CMASK_GEN(C_Sync)
+#define LoadLoad        MMASK_GEN(M_LoadLoad)
+#define StoreLoad       MMASK_GEN(M_StoreLoad)
+#define LoadStore       MMASK_GEN(M_LoadStore)
+#define StoreStore      MMASK_GEN(M_StoreStore)
+
+#define sparc_wr(name, val, xor)					\
+do {									\
+	if (__builtin_constant_p(xor))					\
+		__asm __volatile("wr %%g0, %0, %%" #name		\
+		    : : "rI" ((val) ^ (xor)) : "%g0");			\
+	else								\
+		__asm __volatile("wr %0, %1, %%" #name			\
+		    : : "r" (val), "rI" (xor) : "%g0");			\
+} while(0)
+
+#define sparc_wrpr(name, val, xor)					\
+do {									\
+	if (__builtin_constant_p(xor))					\
+		__asm __volatile("wrpr %%g0, %0, %%" #name		\
+		    : : "rI" ((val) ^ (xor)) : "%g0");			\
+	else								\
+		__asm __volatile("wrpr %0, %1, %%" #name		\
+		    : : "r" (val), "rI" (xor) : "%g0");			\
+} while(0)
+
+
+#define sparc_rd(name) sparc_rd_ ## name()
+#define GEN_RD(name)							\
+extern __inline u_int64_t sparc_rd_ ## name(void);			\
+extern __inline u_int64_t						\
+sparc_rd_ ## name()							\
+{									\
+	u_int64_t r;							\
+	__asm __volatile("rd %%" #name ", %0" :				\
+	    "=r" (r) : : "%g0");					\
+	return (r);							\
+}
+
+#define sparc_rdpr(name) sparc_rdpr_ ## name()
+#define GEN_RDPR(name)							\
+extern __inline u_int64_t sparc_rdpr_ ## name(void);			\
+extern __inline u_int64_t						\
+sparc_rdpr_ ## name()							\
+{									\
+	u_int64_t r;							\
+	__asm __volatile("rdpr %%" #name ", %0" :			\
+	    "=r" (r) : : "%g0");					\
+	return (r);							\
+}
+
+GEN_RD(asi);
+GEN_RD(asr22);
+GEN_RDPR(cwp);
+GEN_RDPR(tick);
+GEN_RDPR(pstate);
+GEN_RDPR(pil);
+GEN_RDPR(ver);
+/*
+ * Before adding GEN_RDPRs for other registers, see Errata 50 (E.g,. in
+ * the US-IIi manual) regarding tstate, pc and npc reads.
+ */
+
 /* Generate ld*a/st*a functions for non-constant ASI's. */
 #define LDNC_GEN(tp, o)							\
-	extern __inline tp o ## _nc(paddr_t, int);			\
-	extern __inline tp						\
-	o ## _nc(paddr_t va, int asi)					\
-	{								\
-		tp r;							\
-		__asm __volatile(					\
-		    "wr %2, 0, %%asi;" #o " [%1] %%asi, %0"		\
-		    : "=r" (r)						\
-		    : "r" ((volatile tp *)va), "r" (asi));		\
-		return (r);						\
-	}								\
 	extern __inline tp o ## _asi(paddr_t);				\
 	extern __inline tp						\
 	o ## _asi(paddr_t va)						\
@@ -542,8 +604,16 @@
 		__asm __volatile(					\
 		    #o " [%1] %%asi, %0"				\
 		    : "=r" (r)						\
-		    : "r" ((volatile tp *)va));				\
+		    : "r" ((volatile tp *)va)				\
+		    : "%g0");						\
 		return (r);						\
+	}								\
+	extern __inline tp o ## _nc(paddr_t, int);			\
+	extern __inline tp						\
+	o ## _nc(paddr_t va, int asi)					\
+	{								\
+		sparc_wr(asi, asi, 0);					\
+		return (o ## _asi(va));					\
 	}
 
 LDNC_GEN(u_char, lduba);
@@ -558,53 +628,48 @@ LDNC_GEN(int, lda);
 	if(asi == ASI_PRIMARY  || 					\
 	    (sizeof(type) == 1 && asi == ASI_PRIMARY_LITTLE))		\
 		__r ## op ## type = *((volatile type *)va);		\
-		/*__asm __volatile(#op " [%1], %0"			\
-		    : "=r" (__r ## op ## type) : "r" (va));*/		\
 	else								\
 		__asm __volatile(#opa " [%1] " #asi ", %0"		\
 		    : "=r" (__r ## op ## type)				\
-		    : "r" ((volatile type *)va));			\
+		    : "r" ((volatile type *)va)				\
+		    : "%g0");						\
 	__r ## op ## type;						\
 })
 
 #ifdef __OPTIMIZE__
 #define LD_GENERIC(va, asi, op, type) (__builtin_constant_p(asi) ?	\
-	LDC_GEN(va, asi, op, op ## a, type) : op ## a_nc(va, asi))
-#else
-#define LD_GENERIC(va, asi, op, type) (op ## a_nc(va, asi))
-#endif
+	LDC_GEN((va), asi, op, op ## a, type) : op ## a_nc((va), asi))
+#else /* __OPTIMIZE */
+#define LD_GENERIC(va, asi, op, type) (op ## a_nc((va), asi))
+#endif /* __OPTIMIZE__ */
 
-#define lduba(va, asi)	LD_GENERIC(va, asi, ldub, u_char)
-#define lduha(va, asi)	LD_GENERIC(va, asi, lduh, u_short)
-#define lduwa(va, asi)	LD_GENERIC(va, asi, lduw, u_int)
+#define lduba(va, asi)	LD_GENERIC(va, asi, ldub, u_int8_t)
+#define lduha(va, asi)	LD_GENERIC(va, asi, lduh, u_int16_t)
+#define lduwa(va, asi)	LD_GENERIC(va, asi, lduw, u_int32_t)
 #define ldxa(va, asi)	LD_GENERIC(va, asi, ldx, u_int64_t)
 
-#define ldua(va, asi)	LD_GENERIC(va, asi, ldu, u_int)
-#define lda(va, asi)	LD_GENERIC(va, asi, ld, int)
-
 #define STNC_GEN(tp, o)							\
-	extern __inline void o ## _nc(paddr_t, int, tp);		\
-	extern __inline void						\
-	o ## _nc(paddr_t va, int asi, tp val)				\
-	{                                                               \
-		__asm __volatile(					\
-		    "wr %2, 0, %%asi;" #o " %0, [%1] %%asi"		\
-		    :							\
-		    : "r" (val), "r" ((volatile tp *)va), "r" (asi));	\
-	}								\
 	extern __inline void o ## _asi(paddr_t, tp);			\
 	extern __inline void						\
 	o ## _asi(paddr_t va, tp val)					\
-	{                                                               \
+	{								\
 		__asm __volatile(					\
 		    #o " %0, [%1] %%asi"				\
 		    :							\
-		    : "r" (val), "r" ((volatile tp *)va) );		\
+		    : "r" (val), "r" ((volatile tp *)va)		\
+		    : "memory");					\
+	}								\
+	extern __inline void o ## _nc(paddr_t, int, tp);		\
+	extern __inline void						\
+	o ## _nc(paddr_t va, int asi, tp val)				\
+	{								\
+		sparc_wr(asi, asi, 0);					\
+		o ## _asi(va, val);					\
 	}
 
-STNC_GEN(u_char, stba);
-STNC_GEN(u_short, stha);
-STNC_GEN(u_int, stwa);
+STNC_GEN(u_int8_t, stba);
+STNC_GEN(u_int16_t, stha);
+STNC_GEN(u_int32_t, stwa);
 STNC_GEN(u_int64_t, stxa);
 
 STNC_GEN(u_int, sta);
@@ -613,144 +678,54 @@ STNC_GEN(u_int, sta);
 	if(asi == ASI_PRIMARY ||					\
 	    (sizeof(type) == 1 && asi == ASI_PRIMARY_LITTLE))		\
 		*((volatile type *)va) = val;				\
-		/*__asm __volatile(#op " %0, [%1] " 			\
-		    : : "r" (val), "r" ((volatile type *)va));*/	\
 	else								\
 		__asm __volatile(#opa " %0, [%1] " #asi			\
-		    : : "r" (val), "r" ((volatile type *)va));		\
+		    : : "r" (val), "r" ((volatile type *)va)		\
+		    : "memory");					\
 	})
 
 #ifdef __OPTIMIZE__
 #define ST_GENERIC(va, asi, val, op, type) (__builtin_constant_p(asi) ?	\
-	STC_GEN(va, asi, val, op, op ## a, type) : op ## a_nc(va, asi, val))
-#else
-#define ST_GENERIC(va, asi, val, op, type) (op ## a_nc(va, asi, val))
-#endif
+	STC_GEN((va), (asi), (val), op, op ## a, type) :		\
+	op ## a_nc((va), asi, (val)))
+#else /* __OPTIMIZE__ */
+#define ST_GENERIC(va, asi, val, op, type) (op ## a_nc((va), asi, (val)))
+#endif /* __OPTIMIZE__ */
 
 #define stba(va, asi, val)	ST_GENERIC(va, asi, val, stb, u_int8_t)
 #define stha(va, asi, val)	ST_GENERIC(va, asi, val, sth, u_int16_t)
 #define stwa(va, asi, val)	ST_GENERIC(va, asi, val, stw, u_int32_t)
 #define stxa(va, asi, val)	ST_GENERIC(va, asi, val, stx, u_int64_t)
 
-#define sta(va, asi, val)	ST_GENERIC(va, asi, val, st, u_int)
-
-#define membar(mask) do {                                               \
-	__asm __volatile("membar %0" : : "n" (mask) : "memory");        \
-} while (0)
-
-#define rd(name) ({                                                     \
-	u_int64_t __sr;                                                 \
-	__asm __volatile("rd %%" #name ", %0" : "=r" (__sr) :);         \
-	__sr;                                                           \
-})
-
-#define wr(name, val, xor) do {                                         \
-	__asm __volatile("wr %0, %1, %%" #name                          \
-	    : : "r" (val), "rI" (xor));                                 \
-} while (0)
-
-#define rdpr(name) ({                                                   \
-	u_int64_t __pr;                                                 \
-	__asm __volatile("rdpr %%" #name", %0" : "=r" (__pr) :);        \
-	__pr;                                                           \
-})
-
-#define wrpr(name, val, xor) do {                                       \
-	__asm __volatile("wrpr %0, %1, %%" #name                        \
-	    : : "r" (val), "rI" (xor));                                 \
-} while (0)
 
 extern __inline void asi_set(int);
 extern __inline
 void asi_set(int asi)
 {
-	wr(asi, asi, 0);
+	sparc_wr(asi, asi, 0);
 }
 
 extern __inline u_int8_t asi_get(void);
 extern __inline
 u_int8_t asi_get()
 {
-	return rd(asi);
+	return sparc_rd(asi);
 }
 
-
-static __inline u_long
-intr_disable(void)
+/* flush address from instruction cache */
+extern __inline void flush(void *);
+extern __inline
+void flush(void *p)
 {
-	u_long s;
-
-	s = rdpr(pstate);
-	wrpr(pstate, s & ~PSTATE_IE, 0);
-	return (s);
+	__asm __volatile("flush %0"
+	    : : "r" (p)
+	    : "memory");
 }
-#define intr_restore(s) wrpr(pstate, (s), 0)
-
-/*
- * In some places, it is required that the store is directly followed by a
- * membar #Sync. Don't trust the compiler to not insert instructions in
- * between. We also need to disable interrupts completely.
- */
-#define stxa_sync(va, asi, val) do {					\
-	u_long stxa_sync_s;						\
-	stxa_sync_s = intr_disable();					\
-	if(PHYS_ASI(asi)) {						\
-		__asm __volatile(					\
-		    "stxa %g0, [%0] #ASI_DCACHE_TAG; membar #Sync"	\
-		    : : "r" (va & ~0x1f));				\
-	}								\
-	__asm __volatile("stxa %0, [%1] %2; membar #Sync"		\
-	    : : "r" (val), "r" (va), "n" (asi));			\
-	if(PHYS_ASI(asi)) {						\
-		__asm __volatile(					\
-		    "stxa %g0, [%0] #ASI_DCACHE_TAG; membar #Sync"	\
-		    : : "r" (va & ~0x1f));				\
-	}								\
-	intr_restore(stxa_sync_s);					\
-} while (0)
-
-/* flush address from data cache */
-#define	flush(loc) ({ \
-	__asm __volatile("flush %0" : : \
-	     "r" ((unsigned long)(loc))); \
-})
-
-/* The following two enable or disable the dcache in the LSU control register */
-#define	dcenable() ({ \
-	int res; \
-	__asm __volatile("ldxa [%%g0] %1,%0; or %0,%2,%0; stxa %0,[%%g0] %1; membar #Sync" \
-		: "r" (res) : "n" (ASI_MCCR), "n" (MCCR_DCACHE_EN)); \
-})
-#define	dcdisable() ({ \
-	int res; \
-	__asm __volatile("ldxa [%%g0] %1,%0; andn %0,%2,%0; stxa %0,[%%g0] %1; membar #Sync" \
-		: "r" (res) : "n" (ASI_MCCR), "n" (MCCR_DCACHE_EN)); \
-})
-
-/*
- * SPARC V9 memory barrier instructions.
- */
-/* Make all stores complete before next store */
-#define	membar_storestore() membar(StoreStore)
-/* Make all loads complete before next store */ 
-#define	membar_loadstore() membar(LoadStore)
-/* Make all stores complete before next load */ 
-#define	membar_storeload() membar(StoreLoad)
-/* Make all loads complete before next load */
-#define	membar_loadload() membar(LoadLoad)
-/* Complete all outstanding memory operations and exceptions */
-#define	membar_sync() membar(Sync)
-/* Complete all outstanding memory operations */
-#define	membar_memissue() membar(MemIssue)
-/* Complete all outstanding stores before any new loads */
-#define	membar_lookaside() membar(Lookaside)
 
 /* read 64-bit %tick register */
-#define	tick() ({ \
-	register u_long _tick_tmp; \
-	__asm __volatile("rdpr %%tick, %0" : "=r" (_tick_tmp) :); \
-	_tick_tmp; \
-})
+#define tick() (sparc_rdpr(tick) & TICK_TICKS)
 
 extern void next_tick(long);
-#endif
+
+#endif /* _LOCORE */
+#endif /* _SPARC64_CTLREG_ */
