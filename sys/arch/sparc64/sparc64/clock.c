@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.4 2001/11/06 19:53:16 miod Exp $	*/
+/*	$OpenBSD: clock.c,v 1.5 2001/12/07 16:30:20 jason Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -140,7 +140,6 @@ static int	clockmatch_rtc __P((struct device *, void *, void *));
 static void	clockattach_rtc __P((struct device *, struct device *, void *));
 static void	clockattach __P((int, bus_space_tag_t, bus_space_handle_t));
 
-
 struct cfattach clock_sbus_ca = {
 	sizeof(struct device), clockmatch_sbus, clockattach_sbus
 };
@@ -153,7 +152,9 @@ struct cfattach rtc_ebus_ca = {
 	sizeof(struct device), clockmatch_rtc, clockattach_rtc
 };
 
-extern struct cfdriver clock_cd;
+struct cfdriver rtc_cd = {
+	NULL, "rtc", DV_DULL
+};
 
 /* Global TOD clock handle & idprom pointer */
 static todr_chip_handle_t todr_handle = NULL;
