@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.347 2003/05/12 17:49:03 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.348 2003/05/12 22:53:47 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2145,9 +2145,16 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 			s->src.seqhi++;
 			s->src.wscale = pf_get_wscale(m, off, th->th_off, af);
 		}
+		s->src.max_win = MAX(ntohs(th->th_win), 1);
+		if (s->src.wscale & PF_WSCALE_MASK) {
+			/* Remove scale factor from initial window */
+			int win = s->src.max_win;
+			win += 1 << (s->src.wscale & PF_WSCALE_MASK);
+			s->src.max_win = (win - 1) >>
+			    (s->src.wscale & PF_WSCALE_MASK);
+		}
 		if (th->th_flags & TH_FIN)
 			s->src.seqhi++;
-		s->src.max_win = MAX(ntohs(th->th_win), 1);
 		s->dst.seqlo = 0;	/* Haven't seen these yet */
 		s->dst.seqhi = 1;
 		s->dst.max_win = 1;
@@ -2989,7 +2996,24 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 		end = seq + pd->p_len;
 		if (th->th_flags & TH_SYN) {
 			end++;
-			src->wscale = pf_get_wscale(m, off, th->th_off, pd->af);
+			if (dst->wscale & PF_WSCALE_FLAG) {
+				src->wscale = pf_get_wscale(m, off, th->th_off,
+				    pd->af);
+				if (src->wscale & PF_WSCALE_FLAG) {
+					/* Remove scale factor from initial
+					 * window */
+					sws = src->wscale & PF_WSCALE_MASK;
+					win = ((u_int32_t)win + (1 << sws) - 1)
+					    >> sws;
+					dws = dst->wscale & PF_WSCALE_MASK;
+				} else {
+					/* fixup other window */
+					dst->max_win <<= dst->wscale &
+					    PF_WSCALE_MASK;
+					/* in case of a retrans SYN|ACK */
+					dst->wscale = 0;
+				}
+			}
 		}
 		if (th->th_flags & TH_FIN)
 			end++;
@@ -3052,8 +3076,8 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 	    SEQ_GEQ(seq, src->seqlo - (dst->max_win << dws)) &&
 	    /* Retrans: not more than one window back */
 	    (ackskew >= -MAXACKWINDOW) &&
-	    /* Acking not more than one window back */
-	    (ackskew <= MAXACKWINDOW)) {
+	    /* Acking not more than one reassembled fragment backwards */
+	    (ackskew <= (MAXACKWINDOW << dws))) {
 	    /* Acking not more than one window forward */
 
 		(*state)->packets++;
