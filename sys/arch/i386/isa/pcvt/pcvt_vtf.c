@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_vtf.c,v 1.12 2000/01/17 02:46:23 aaron Exp $	*/
+/*	$OpenBSD: pcvt_vtf.c,v 1.13 2000/03/14 16:26:23 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -162,11 +162,18 @@ vt_sgr(struct video_state *svsp)
 
 		case 4:		/* underline */
 			svsp->vtsgr |= VT_UNDER;
+			if (pcdisp) {
+				setcolor &= ~(0x07 << 8);
+				setcolor |= (FG_CYAN << 8);
+				colortouched = 1;
+			}
 			break;
 
 		case 5:		/* blinking */
 			svsp->vtsgr |= VT_BLINK;
 			if (pcdisp) {
+				if ((setcolor >> 8) == 0)
+					setcolor = (FG_LIGHTGREY << 8);
 				setcolor |= (FG_BLINK << 8);
 				colortouched = 1;
 			}
@@ -194,6 +201,10 @@ vt_sgr(struct video_state *svsp)
 
 		case 24:	/* not underlined */
 			svsp->vtsgr &= ~VT_UNDER;
+			if (pcdisp) {
+				setcolor &= ~(0x07 << 8);
+				setcolor |= (FG_LIGHTGREY << 8);
+			}
 			break;
 
 		case 25:	/* not blinking */
