@@ -154,7 +154,7 @@ holler(str, p1, p2, p3, p4, p5, p6)
 			if (h_errno > 4)	/* oh no you don't, either */
 				fprintf(stderr, "preposterous h_errno: %d", h_errno);
 			else
-				fprintf(stderr, h_errs[h_errno]);
+				fprintf(stderr, "%s", h_errs[h_errno]);
 			h_errno = 0;	/* and reset for next call */
 		}
 #endif
