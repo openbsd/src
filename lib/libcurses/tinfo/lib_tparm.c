@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_tparm.c,v 1.3 1999/05/13 03:01:47 aaron Exp $	*/
+/*	$OpenBSD: lib_tparm.c,v 1.4 1999/06/06 15:55:18 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -45,7 +45,7 @@
 #include <term.h>
 #include <tic.h>
 
-MODULE_ID("$From: lib_tparm.c,v 1.38 1999/02/27 20:08:22 tom Exp $")
+MODULE_ID("$From: lib_tparm.c,v 1.39 1999/06/06 00:04:55 tom Exp $")
 
 /*
  *	char *
@@ -440,15 +440,13 @@ static	int static_vars[NUM_VARS];
 			case '/':
 				y = npop();
 				x = npop();
-				if (y)
-					npush(x / y);
+				npush(y ? (x / y) : 0);
 				break;
 
 			case 'm':
 				y = npop();
 				x = npop();
-				if (y)
-					npush(x % y);
+				npush(y ? (x % y) : 0);
 				break;
 
 			case 'A':
