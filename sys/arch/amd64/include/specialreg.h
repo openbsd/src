@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.1 2004/01/28 01:39:39 mickey Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.2 2004/02/09 22:15:52 mickey Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -117,7 +117,7 @@
 #define	CPUID_DS	0x00200000	/* Debug Store */
 #define	CPUID_ACPI	0x00400000	/* ACPI performance modulation regs */
 #define	CPUID_MMX	0x00800000	/* MMX supported */
-#define	CPUID_FXSR	0x01000000	/* fast FP/MMX save/restore */
+#define	CPUID_FXSR	0x01000000	/* FP/MMX save/restore */
 #define	CPUID_SSE	0x02000000	/* streaming SIMD extensions */
 #define	CPUID_SSE2	0x04000000	/* streaming SIMD extensions #2 */
 #define	CPUID_SS	0x08000000	/* self-snoop */
@@ -126,15 +126,6 @@
 #define	CPUID_IA64	0x40000000	/* IA-64 architecture */
 #define	CPUID_SBF	0x80000000	/* signal break on FERR */
 
-#define CPUID_FLAGS1	"\20\1FPU\2VME\3DE\4PSE\5TSC\6MSR\7PAE" \
-			    "\10MCE\11CX8\12APIC\13B10\14SEP\15MTRR"
-#define CPUID_MASK1	0x00001fff
-#define CPUID_FLAGS2	"\20\16PGE\17MCA\20CMOV\21PAT\22PSE36\23PN\24CFLUSH" \
-			    "\25B20\26DS\27ACPI\30MMX"
-#define CPUID_MASK2	0x00ffe000
-#define CPUID_FLAGS3	"\20\31FXSR\32SSE\33SSE2\34SS\35HTT\36TM\37IA64\40SBF"
-#define CPUID_MASK3	0xff000000
-
 /*
  * AMD/VIA processor specific flags.
  */
@@ -142,13 +133,10 @@
 #define CPUID_MPC	0x00080000	/* Multiprocessing Capable */
 #define	CPUID_NXE	0x00100000	/* No-Execute Extension */
 #define CPUID_MMXX	0x00400000	/* AMD MMX Extensions */
+#define	CPUID_FFXSR	0x02000000	/* fast FP/MMX save/restore */
+#define CPUID_LONG	0x20000000	/* long mode */
 #define CPUID_3DNOW2	0x40000000	/* 3DNow! Instruction Extension */
 #define CPUID_3DNOW	0x80000000	/* 3DNow! Instructions */
-
-#define CPUID_EXT_FLAGS2	"\20\16PGE\17MCA\20CMOV\21PAT\22PSE36\23PN" \
-				    "\24MPC\25NXE\26B21\27MMXX\30MMX"
-#define CPUID_EXT_FLAGS3	"\20\31FXSR\32SSE\33SSE2\34B27\35B28\36LONG" \
-				    "\0373DNOW2\0403DNOW"
 
 #define CPUID2FAMILY(cpuid)	(((cpuid) >> 8) & 15)
 #define CPUID2MODEL(cpuid)	(((cpuid) >> 4) & 15)
