@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.5 2004/06/07 07:13:35 mickey Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.6 2004/06/07 15:19:59 mickey Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -83,8 +83,8 @@ _dl_md_plabel(Elf_Addr pc, Elf_Addr *sl)
 		p = _dl_malloc(sizeof(*p));
 		if (p == NULL)
 			_dl_exit(5);
-		p->pc = key.pc;
-		p->sl = key.sl;
+		p->pc = pc;
+		p->sl = sl;
 		SPLAY_INSERT(_dl_md_plabels, &_dl_md_plabel_root, p);
 	}
 
