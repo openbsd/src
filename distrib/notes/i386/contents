@@ -34,22 +34,22 @@ useful for the installation.
 
 DistributionDescription(ten)
 
-OpenBSDbase(23.4,67.7,shared)
+OpenBSDbase(23.9,69.1,shared)
 
-OpenBSDcomp(16.3,48.1,shared)
+OpenBSDcomp(16.4,48.8,shared)
 
-OpenBSDetc(1.1,3.3)
+OpenBSDetc(1.2,3.9)
 
 OpenBSDgame(2.8,6.5)
 
-OpenBSDman(5.6,20.2)
+OpenBSDman(5.5,19.9)
 
 OpenBSDmisc(1.7,5.6)
 
-OpenBSDxbase(7.0,19.3)
+OpenBSDxbase(8.7,24.0)
 
-OpenBSDxfont(30.4,32.8)
+OpenBSDxfont(31.4,34.6)
 
-OpenBSDxserv(23.3,57.9)
+OpenBSDxserv(19.8,49.1)
 
-OpenBSDxshare(1.8,9.1)
+OpenBSDxshare(1.9,9.4)
