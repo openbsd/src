@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9xvar.h,v 1.8 2001/08/21 14:22:27 jason Exp $	*/
+/*	$OpenBSD: ncr53c9xvar.h,v 1.9 2001/09/27 04:01:42 jason Exp $	*/
 /*	$NetBSD: ncr53c9xvar.h,v 1.13 1998/05/26 23:17:34 thorpej Exp $	*/
 
 /*-
@@ -72,6 +72,10 @@
 /* Set this to 1 for normal debug, or 2 for per-target tracing. */
 #define NCR53C9X_DEBUG		1
 
+/* Wide or differential can have 16 targets */
+#define NCR_NTARG		8
+#define NCR_NLUN		8
+
 #define	NCR_ABORT_TIMEOUT	2000	/* time to wait for abort */
 #define	NCR_SENSE_TIMEOUT	1000	/* time to wait for sense */
 
@@ -106,7 +110,7 @@ struct ncr53c9x_ecb {
 	struct scsi_xfer *xs;	/* SCSI xfer ctrl block from above */
 	int flags;
 #define	ECB_ALLOC		0x01
-#define	ECB_NEXUS		0x02
+#define	ECB_READY		0x02
 #define	ECB_SENSE		0x04
 #define	ECB_ABORT		0x40
 #define	ECB_RESET		0x80
@@ -115,14 +119,15 @@ struct ncr53c9x_ecb {
 	struct timeout to;
 
 	struct {
-		u_char	id;			/* Selection Id msg */
+		u_char	msg[3];			/* Selection Id msg */
 		struct scsi_generic cmd;	/* SCSI command block */
 	} cmd;
-	int	 clen;		/* Size of command in cmd.cmd */
 	char	*daddr;		/* Saved data pointer */
-	int	 dleft;		/* Residue */
-	u_char 	 stat;		/* SCSI status byte */
-	u_char	pad[3];
+	int	clen;		/* Size of command in cmd.cmd */
+	int	dleft;		/* Residue */
+	u_char	stat;		/* SCSI status byte */
+	u_char	tag[2];		/* TAG bytes */
+	u_char	pad[1];
 
 #if NCR53C9X_DEBUG > 1
 	char trace[1000];
@@ -140,17 +145,34 @@ struct ncr53c9x_ecb {
 #endif
 
 /*
- * Some info about each (possible) target on the SCSI bus.  This should
- * probably have been a "per target+lunit" structure, but we'll leave it at
- * this for now.  Is there a way to reliably hook it up to sc->fordriver??
+ * Some info about ech (possible) target and LUN on the SCSI bus.
+ *
+ * SCSI I and II devices can have up to 8 LUNs, each with up to 256
+ * outstanding tags.  SCSI III devices have 64-bit LUN identifiers
+ * that can be sparsely allocated.
+ *
+ * Since SCSI II devices can have up to 8 LUNs, we use an array
+ * of 8 pointers to ncr53c9x_linfo structures for fast lookup.
+ * Longer LUNs need to traverse the linked list.
  */
+
+struct ncr53c9x_linfo {
+	int64_t			lun;
+	LIST_ENTRY(ncr53c9x_linfo) link;
+	time_t			last_used;
+	unsigned char		used;	/* # slots in use */
+	unsigned char		avail;	/* where to start scanning */
+	unsigned char		busy;
+	struct ncr53c9x_ecb	*untagged;
+	struct ncr53c9x_ecb	*queued[256];
+};
+
 struct ncr53c9x_tinfo {
-	int	cmds;		/* #commands processed */
-	int	dconns;		/* #disconnects */
-	int	touts;		/* #timeouts */
-	int	perrs;		/* #parity errors */
-	int	senses;		/* #request sense commands sent */
-	ushort	lubusy;		/* What local units/subr. are busy? */
+	int	cmds;		/* # of commands processed */
+	int	dconns;		/* # of disconnects */
+	int	touts;		/* # of timeouts */
+	int	perrs;		/* # of parity errors */
+	int	senses;		/* # of request sense commands sent */
 	u_char  flags;
 #define T_NEED_TO_RESET	0x01	/* Should send a BUS_DEV_RESET */
 #define T_NEGOTIATE	0x02	/* (Re)Negotiate synchronous options */
@@ -158,10 +180,20 @@ struct ncr53c9x_tinfo {
 #define T_SYNCMODE	0x08	/* sync mode has been negotiated */
 #define T_SYNCHOFF	0x10	/* .. */
 #define T_RSELECTOFF	0x20	/* .. */
+#define T_TAG		0x40	/* TAG QUEUEs are on */
+#define T_WIDE		0x80	/* Negotiate wide options */
 	u_char  period;		/* Period suggestion */
 	u_char  offset;		/* Offset suggestion */
-	u_char	pad[3];
-} tinfo_t;
+	u_char	cfg3;		/* per target config 3 */
+	u_char	nextag;		/* Next available tag */
+	u_char	width;		/* width suggestion */
+	LIST_HEAD(lun_list, ncr53c9x_linfo) luns;
+	struct ncr53c9x_linfo *lun[NCR_NLUN];	/* For speedy lookups */
+};
+
+/* Look up a lun in a tinfo */
+#define TINFO_LUN(t, l)		((((l) < NCR_NLUN) && (((t)->lun[(l)]) != NULL)) ? \
+    ((t)->lun[(l)]) : ncr53c9x_lunsearch((t), (int64_t)(l)))
 
 /* Register a linenumber (for debugging) */
 #define LOGLINE(p)
@@ -237,6 +269,7 @@ struct ncr53c9x_softc {
 	struct device sc_dev;			/* us as a device */
 
 	struct evcnt sc_intrcnt;		/* intr count */
+	struct timeout sc_watchdog;		/* periodic timer */
 	struct scsi_link sc_link;		/* scsi lint struct */
 
 	struct ncr53c9x_glue *sc_glue;		/* glue to MD code */
@@ -257,16 +290,14 @@ struct ncr53c9x_softc {
 	u_char	sc_espintr;
 	u_char	sc_espstat;
 	u_char	sc_espstep;
+	u_char	sc_espstat2;
 	u_char	sc_espfflags;
 
 	/* Lists of command blocks */
-	TAILQ_HEAD(ecb_list, ncr53c9x_ecb) free_list,
-				      ready_list,
-				      nexus_list;
+	TAILQ_HEAD(ecb_list, ncr53c9x_ecb) ready_list;
 
 	struct ncr53c9x_ecb *sc_nexus;		/* Current command */
-	struct ncr53c9x_ecb sc_ecb[3*8];	/* Three per target */
-	struct ncr53c9x_tinfo sc_tinfo[8];
+	struct ncr53c9x_tinfo sc_tinfo[NCR_NTARG];
 
 	/* Data about the current nexus (updated for every cmd switch) */
 	caddr_t	sc_dp;		/* Current data pointer */
@@ -281,9 +312,11 @@ struct ncr53c9x_softc {
 	u_char	sc_lastcmd;
 
 	/* Message stuff */
-	u_char	sc_msgpriq;	/* One or more messages to send (encoded) */
-	u_char	sc_msgout;	/* What message is on its way out? */
-	u_char	sc_msgoutq;	/* What messages have been sent so far? */
+	u_short sc_msgify;	/* IDENTIFY message associated with this nexus */
+	u_short sc_msgout;	/* What message is on its way out? */
+	u_short sc_msgpriq;	/* One or more messages to send (encoded) */
+	u_short sc_msgoutq;	/* What messages have been sent so far? */
+
 	u_char	*sc_omess;	/* MSGOUT buffer */
 	caddr_t	sc_omp;		/* Message pointer (for multibyte messages) */
 	size_t	sc_omlen;
@@ -307,11 +340,12 @@ struct ncr53c9x_softc {
 #define NCR_IDLE	1	/* waiting for something to do */
 #define NCR_SELECTING	2	/* SCSI command is arbiting  */
 #define NCR_RESELECTED	3	/* Has been reselected */
-#define NCR_CONNECTED	4	/* Actively using the SCSI bus */
-#define	NCR_DISCONNECT	5	/* MSG_DISCONNECT received */
-#define	NCR_CMDCOMPLETE	6	/* MSG_CMDCOMPLETE received */
-#define	NCR_CLEANING	7
-#define NCR_SBR		8	/* Expect a SCSI RST because we commanded it */
+#define NCR_IDENTIFIED	4	/* Has gotten IFY but not TAG */
+#define NCR_CONNECTED	5	/* Actively using the SCSI bus */
+#define NCR_DISCONNECT	6	/* MSG_DISCONNECT received */
+#define NCR_CMDCOMPLETE	7	/* MSG_CMDCOMPLETE received */
+#define NCR_CLEANING	8
+#define NCR_SBR		9	/* Expect a SCSI RST because we commanded it */
 
 /* values for sc_flags */
 #define NCR_DROP_MSGI	0x01	/* Discard all msgs (parity err detected) */
@@ -326,16 +360,19 @@ struct ncr53c9x_softc {
 /* values for sc_features */
 #define	NCR_F_HASCFG3	0x01	/* chip has CFG3 register */
 #define	NCR_F_FASTSCSI	0x02	/* chip supports Fast mode */
+#define	NCR_F_DMASELECT	0x04	/* can do dma select */
+#define	NCR_F_SELATN3	0x08	/* can do selatn3 */
 
 /* values for sc_msgout */
-#define SEND_DEV_RESET		0x01
-#define SEND_PARITY_ERROR	0x02
-#define SEND_INIT_DET_ERR	0x04
-#define SEND_REJECT		0x08
-#define SEND_IDENTIFY  		0x10
-#define SEND_ABORT		0x20
-#define SEND_SDTR		0x40
-#define SEND_WDTR		0x80
+#define SEND_DEV_RESET		0x0001
+#define SEND_PARITY_ERROR	0x0002
+#define SEND_INIT_DET_ERR	0x0004
+#define SEND_REJECT		0x0008
+#define SEND_IDENTIFY  		0x0010
+#define SEND_ABORT		0x0020
+#define SEND_WDTR		0x0040
+#define SEND_SDTR		0x0080
+#define SEND_TAG		0x0100
 
 /* SCSI Status codes */
 #define ST_MASK			0x3e /* bit 0,6,7 is reserved */
@@ -369,11 +406,11 @@ struct ncr53c9x_softc {
 			(*(sc)->sc_glue->gl_write_reg)((sc), (reg), (val))
 
 #ifdef NCR53C9X_DEBUG
-#define	NCRCMD(sc, cmd) do {				\
-	if (ncr53c9x_debug & NCR_SHOWCCMDS)		\
-		printf("<cmd:0x%x>", (unsigned)cmd);	\
-	sc->sc_lastcmd = cmd;				\
-	NCR_WRITE_REG(sc, NCR_CMD, cmd);		\
+#define	NCRCMD(sc, cmd) do {						\
+	if (ncr53c9x_debug & NCR_SHOWCCMDS)				\
+		printf("<cmd:0x%x %d>", (unsigned)cmd, __LINE__);	\
+	sc->sc_lastcmd = cmd;						\
+	NCR_WRITE_REG(sc, NCR_CMD, cmd);				\
 } while (0)
 #else
 #define	NCRCMD(sc, cmd)		NCR_WRITE_REG(sc, NCR_CMD, cmd)
@@ -403,5 +440,3 @@ int	ncr53c9x_scsi_cmd __P((struct scsi_xfer *));
 void	ncr53c9x_reset __P((struct ncr53c9x_softc *));
 int	ncr53c9x_intr __P((void *));
 void	ncr53c9x_init __P((struct ncr53c9x_softc *, int));
-
-extern	int ncr53c9x_dmaselect;

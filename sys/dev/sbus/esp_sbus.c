@@ -1,4 +1,4 @@
-/*	$OpenBSD: esp_sbus.c,v 1.4 2001/09/26 00:03:34 jason Exp $	*/
+/*	$OpenBSD: esp_sbus.c,v 1.5 2001/09/27 04:01:42 jason Exp $	*/
 /*	$NetBSD: esp_sbus.c,v 1.14 2001/04/25 17:53:37 bouyer Exp $	*/
 
 /*-
@@ -538,13 +538,8 @@ espattach(esc, gluep)
 	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
 
 	/* Turn on target selection using the `dma' method */
-#ifdef notyet
 	if (sc->sc_rev != NCR_VARIANT_FAS366)
 		sc->sc_features |= NCR_F_DMASELECT;
-#else
-	if (sc->sc_rev != NCR_VARIANT_FAS366)
-		ncr53c9x_dmaselect = 1;
-#endif
 
 	/* Do the common parts of attachment. */
 	ncr53c9x_attach(sc, &esp_switch, &esp_dev);

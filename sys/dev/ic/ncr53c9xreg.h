@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9xreg.h,v 1.5 2001/08/21 14:22:27 jason Exp $	*/
+/*	$OpenBSD: ncr53c9xreg.h,v 1.6 2001/09/27 04:01:42 jason Exp $	*/
 /*	$NetBSD: ncr53c9xreg.h,v 1.4 1997/05/17 20:56:55 pk Exp $	*/
 
 /*
@@ -83,6 +83,8 @@
 #define  NCRSTAT_PHASE	0x07		/*	Phase bits		*/
 
 #define	NCR_SELID	0x04		/* WO - Select/Reselect Bus ID	*/
+#define  NCR_BUSID_HME	0x10		/*	XXX HME reselect ID 	*/
+#define  NCR_BUSID_HME32 0x40		/*	XXX HME to select more than 16 */
 
 #define	NCR_INTR	0x05		/* RO - Interrupt		*/
 #define  NCRINTR_SBR	0x80		/*	SCSI Bus Reset		*/
@@ -139,6 +141,8 @@
 #define  NCRCFG2_BPA	0x04		/* 	Target Bad Parity Abort	*/
 #define  NCRCFG2_RPE	0x02		/* 	Register Parity Error	*/
 #define  NCRCFG2_DPE	0x01		/* 	DMA Parity Error	*/
+#define  NCRCFG2_HMEFE	0x10		/*	HME feature enable	*/
+#define  NCRCFG2_HME32	0x80		/*	HME 32 extended		*/
 
 /* Config #3 only on 53C9X */
 #define	NCR_CFG3	0x0c		/* RW - Configuration #3	*/
@@ -177,6 +181,16 @@
 #define  NCRF9XCFG3_SRESB	0x04	/*	Save Residual Byte	*/
 #define  NCRF9XCFG3_ADMA	0x02	/*	Alternate DMA Mode	*/
 #define  NCRF9XCFG3_T8M		0x01	/*	Threshold 8 Mode	*/
+
+/* Config #3 on FAS366 */
+#define  NCRFASCFG3_OBAUTO	0x80	/*	auto push odd-byte to dma */
+#define  NCRFASCFG3_EWIDE	0x40	/*	Enable Wide-SCSI	*/
+#define  NCRFASCFG3_IDBIT3	0x20	/*	Bit 3 of HME SCSI-ID	*/
+#define  NCRFASCFG3_IDRESCHK	0x10	/*	ID message checking	*/
+#define  NCRFASCFG3_QUENB	0x08	/*	3-byte msg support	*/
+#define  NCRFASCFG3_CDB10	0x04	/*	group 2 scsi-2 support	*/
+#define  NCRFASCFG3_FASTSCSI	0x02	/*	10 MB/S fast scsi mode	*/
+#define  NCRFASCFG3_FASTCLK	0x01	/*	fast clock mode		*/
 
 /* Config #4 only on ESP406/FAS408 */
 #define	NCR_CFG4	0x0d		/* RW - Configuration #4	*/
@@ -260,3 +274,13 @@
 #define	NCR_RCH		0xf	/* Recommand counter high */
 #define	NCR_UID		NCR_RCL	/* fas366 part-uniq id */
 
+/* status register #2 definitions (read only) */
+#define NCR_STAT2	NCR_CCF
+#define  FAS_STAT2_SEQCNT	0x01	/* Sequence counter bit 7-3 enabled */
+#define  FAS_STAT2_FLATCHED	0x02	/* FIFO flags register latched */
+#define  FAS_STAT2_CLATCHED	0x04	/* Xfer cntr & recommand ctr latched */
+#define  FAS_STAT2_CACTIVE	0x08	/* Command register is active */
+#define  FAS_STAT2_SCSI16	0x10	/* SCSI interface is wide */
+#define  FAS_STAT2_ISHUTTLE	0x20	/* FIFO Top register contains 1 byte */
+#define  FAS_STAT2_OSHUTTLE	0x40	/* next byte from FIFO is MSB */
+#define  FAS_STAT2_EMPTY	0x80	/* FIFO is empty */

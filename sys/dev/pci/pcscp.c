@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcscp.c,v 1.6 2001/08/26 03:32:22 jason Exp $	*/
+/*	$OpenBSD: pcscp.c,v 1.7 2001/09/27 04:01:42 jason Exp $	*/
 /*	$NetBSD: pcscp.c,v 1.11 2000/11/14 18:42:58 thorpej Exp $	*/
 
 /*-
@@ -346,7 +346,7 @@ pcscp_attach(parent, self, aux)
 	ncr53c9x_attach(sc, &pcscp_adapter, NULL);
 
 	/* Turn on target selection using the `dma' method */
-	ncr53c9x_dmaselect = 1;
+	sc->sc_features |= NCR_F_DMASELECT;
 }
 
 /*
