@@ -1,4 +1,4 @@
-/*	$OpenBSD: machine.c,v 1.7 1997/09/09 15:23:13 millert Exp $	*/
+/*	$OpenBSD: machine.c,v 1.8 1997/11/08 23:36:44 millert Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -600,8 +600,8 @@ const void *v1, *v2;
     /* compare percent cpu (pctcpu) */
     if ((lresult = PP(p2, p_pctcpu) - PP(p1, p_pctcpu)) == 0)
     {
-	/* use cpticks to break the tie */
-	if ((result = PP(p2, p_cpticks) - PP(p1, p_cpticks)) == 0)
+	/* use CPU usage to break the tie */
+	if ((result = PP(p2, p_rtime).tv_sec - PP(p1, p_rtime).tv_sec) == 0)
 	{
 	    /* use process state to break the tie */
 	    if ((result = sorted_state[(unsigned char) PP(p2, p_stat)] -
