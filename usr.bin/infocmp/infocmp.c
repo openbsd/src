@@ -1,4 +1,4 @@
-/*	$OpenBSD: infocmp.c,v 1.16 2003/04/06 18:41:03 deraadt Exp $	*/
+/*	$OpenBSD: infocmp.c,v 1.17 2003/04/08 19:08:58 deraadt Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -687,7 +687,8 @@ analyze_string(const char *name, const char *cap, TERMTYPE * tp)
 
 	/* now look at the expansion we got, if any */
 	if (expansion) {
-	    (void) sprintf(buf + strlen(buf), "{%s}", expansion);
+	    (void) snprintf(buf + strlen(buf), sizeof buf - strlen(buf),
+		"{%s}", expansion);
 	    sp += len - 1;
 	    continue;
 	} else {
@@ -1039,7 +1040,7 @@ dump_initializers(TERMTYPE * term)
 		    && *sp != '"')
 		    *tp++ = *sp;
 		else {
-		    (void) sprintf(tp, "\\%03o", CharOf(*sp));
+		    (void) snprintf(tp, buf + sizeof buf - tp, "\\%03o", CharOf(*sp));
 		    tp += 4;
 		}
 	    }
@@ -1123,7 +1124,8 @@ main(int argc, char *argv[])
     char *terminal, *firstdir, *restdir;
     /* Avoid "local data >32k" error with mwcc */
     /* Also avoid overflowing smaller stacks on systems like AmigaOS */
-    path *tfile = (path *) malloc(sizeof(path) * MAXTERMS);
+    size_t tlen = sizeof(path) * MAXTERMS;
+    path *tfile = (path *) malloc(tlen);
     int c, i, len;
     bool formatted = FALSE;
     bool filecompare = FALSE;
@@ -1317,7 +1319,9 @@ main(int argc, char *argv[])
 		tname[termcount] = argv[optind];
 
 		if (directory) {
-		    (void) sprintf(tfile[termcount], "%s/%c/%s",
+		    (void) snprintf(tfile[termcount],
+				    tlen - termcount,
+				   "%s/%c/%s",
 				   directory,
 				   *argv[optind], argv[optind]);
 		    if (itrace)
