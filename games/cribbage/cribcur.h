@@ -1,3 +1,4 @@
+/*	$OpenBSD: cribcur.h,v 1.2 2001/01/28 23:41:40 niklas Exp $	*/
 /*	$NetBSD: cribcur.h,v 1.3 1995/03/21 15:08:48 cgd Exp $	*/
 
 /*

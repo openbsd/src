@@ -1,9 +1,11 @@
+/*	$OpenBSD: hack.worn.c,v 1.2 2001/01/28 23:41:46 niklas Exp $	*/
+
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: hack.worn.c,v 1.3 1995/03/23 08:32:17 cgd Exp $";
+static char rcsid[] = "$OpenBSD: hack.worn.c,v 1.2 2001/01/28 23:41:46 niklas Exp $";
 #endif /* not lint */
 
 #include "hack.h"

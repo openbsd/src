@@ -1,9 +1,11 @@
+/*	$OpenBSD: makedefs.c,v 1.3 2001/01/28 23:41:46 niklas Exp $	*/
+
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: makedefs.c,v 1.4 1995/04/24 12:23:39 cgd Exp $";
+static char rcsid[] = "$OpenBSD: makedefs.c,v 1.3 2001/01/28 23:41:46 niklas Exp $";
 #endif /* not lint */
 
 #include <stdio.h>

@@ -1,3 +1,5 @@
+/*	$OpenBSD: dbm.h,v 1.3 2001/01/28 23:43:15 niklas Exp $	*/
+
 /*
  * Copyright (c) 1999 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.

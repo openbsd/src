@@ -1,4 +1,5 @@
 #!/bin/csh -f
+#	$OpenBSD: Do_troff,v 1.2 2001/01/28 23:41:41 niklas Exp $
 #	$NetBSD: Do_troff,v 1.2 1995/03/23 08:28:52 cgd Exp $
 #
 #	@(#)Do_troff	8.1 (Berkeley) 5/31/93

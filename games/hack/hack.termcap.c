@@ -1,9 +1,11 @@
+/*	$OpenBSD: hack.termcap.c,v 1.4 2001/01/28 23:41:45 niklas Exp $	*/
+
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: hack.termcap.c,v 1.6 1995/04/29 01:20:00 mycroft Exp $";
+static char rcsid[] = "$OpenBSD: hack.termcap.c,v 1.4 2001/01/28 23:41:45 niklas Exp $";
 #endif /* not lint */
 
 #include <stdio.h>

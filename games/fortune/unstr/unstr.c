@@ -1,3 +1,4 @@
+/*	$OpenBSD: unstr.c,v 1.5 2001/01/28 23:41:41 niklas Exp $	*/
 /*	$NetBSD: unstr.c,v 1.3 1995/03/23 08:29:00 cgd Exp $	*/
 
 /*-

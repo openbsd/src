@@ -1,3 +1,5 @@
+/*	$OpenBSD: def.obj.h,v 1.2 2001/01/28 23:41:42 niklas Exp $*/
+
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
  *

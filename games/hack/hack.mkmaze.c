@@ -1,9 +1,11 @@
+/*	$OpenBSD: hack.mkmaze.c,v 1.2 2001/01/28 23:41:44 niklas Exp $	*/
+
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: hack.mkmaze.c,v 1.3 1995/03/23 08:30:46 cgd Exp $";
+static char rcsid[] = "$OpenBSD: hack.mkmaze.c,v 1.2 2001/01/28 23:41:44 niklas Exp $";
 #endif /* not lint */
 
 #include "hack.h"

@@ -1,9 +1,11 @@
+/*	$OpenBSD: hack.engrave.c,v 1.2 2001/01/28 23:41:43 niklas Exp $	*/
+
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: hack.engrave.c,v 1.3 1995/03/23 08:30:08 cgd Exp $";
+static char rcsid[] = "$OpenBSD: hack.engrave.c,v 1.2 2001/01/28 23:41:43 niklas Exp $";
 #endif /* not lint */
 
 #include	"hack.h"

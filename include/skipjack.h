@@ -1,3 +1,5 @@
+/*	$OpenBSD: skipjack.h,v 1.2 2001/01/28 23:43:15 niklas Exp $	*/
+
 /* 
  * Further optimized test implementation of SKIPJACK algorithm 
  * Mark Tillotson <markt@chaos.org.uk>, 25 June 98

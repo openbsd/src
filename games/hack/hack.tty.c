@@ -1,3 +1,5 @@
+/*	$OpenBSD: hack.tty.c,v 1.4 2001/01/28 23:41:46 niklas Exp $	*/
+
 /*-
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)hack.tty.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: hack.tty.c,v 1.5 1995/04/29 01:08:54 mycroft Exp $";
+static char rcsid[] = "$OpenBSD: hack.tty.c,v 1.4 2001/01/28 23:41:46 niklas Exp $";
 #endif
 #endif /* not lint */
 

@@ -1,3 +1,4 @@
+/*	$OpenBSD: convert.c,v 1.3 2001/01/28 23:41:47 niklas Exp $	*/
 /*	$NetBSD: convert.c,v 1.2 1995/03/24 03:58:34 cgd Exp $	*/
 
 /*

@@ -1,9 +1,11 @@
+/*	$OpenBSD: hack.wizard.c,v 1.2 2001/01/28 23:41:46 niklas Exp $	*/
+
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: hack.wizard.c,v 1.3 1995/03/23 08:32:09 cgd Exp $";
+static char rcsid[] = "$OpenBSD: hack.wizard.c,v 1.2 2001/01/28 23:41:46 niklas Exp $";
 #endif /* not lint */
 
 /* wizard code - inspired by rogue code from Merlyn Leroy (digi-g!brian) */
