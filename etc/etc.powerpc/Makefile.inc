@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.7 1998/07/19 19:42:54 rahnds Exp $
+#	$OpenBSD: Makefile.inc,v 1.8 1998/09/09 13:54:58 rahnds Exp $
 #	etc.powerpc/Makefile.inc -- powerpc-specific etc Makefile targets
 
 .ifdef DESTDIR
@@ -15,8 +15,13 @@ bsd:
 	    make clean && make depend && make
 	cp ${.CURDIR}/../sys/arch/powerpc/compile/DDBOFW/bsd \
 	    ${DESTDIR}/snapshot/bsdofw
+	cd ${.CURDIR}/../sys/arch/powerpc/conf && config MIX
+	cd ${.CURDIR}/../sys/arch/powerpc/compile/MIX && \
+	    make clean && make depend && make
+	cp ${.CURDIR}/../sys/arch/powerpc/compile/MIX/bsd \
+	    ${DESTDIR}/snapshot/bsdmix
 
-# knows about bsdofw.rd and bsd.rd
+# knows about  bsd.rd, bsdofw.rd and bsdmix.rd
 distrib:
 	cp ${DESTDIR}/usr/mdec/ofwboot ${DESTDIR}/snapshot/ofwboot
 	cd ${.CURDIR}/../distrib && make cleandir && \
@@ -39,6 +44,15 @@ distrib:
 	cp ${DESTDIR}/usr/mdec/boot.mac ${DESTDIR}/snapshot/bootofw
 	mkisofs -r ${DESTDIR}/snapshot/bootofw > ${DESTDIR}/snapshot/bootofw.fs
 	rm -rf ${DESTDIR}/snapshot/bootofw
+	#
+	mkdir ${DESTDIR}/snapshot/bootmix
+	cp ${DESTDIR}/snapshot/bsdmix.rd ${DESTDIR}/snapshot/bootmix/bsdmix.rd
+	strip ${DESTDIR}/snapshot/bootmix/bsdmix.rd
+	gzip -9 ${DESTDIR}/snapshot/bootmix/bsdmix.rd
+	mv ${DESTDIR}/snapshot/bootmix/bsdmix.rd.gz ${DESTDIR}/snapshot/bootmix/bsd
+	cp ${DESTDIR}/usr/mdec/ofwboot ${DESTDIR}/snapshot/bootmix
+	mkisofs -r ${DESTDIR}/snapshot/bootmix > ${DESTDIR}/snapshot/bootmix.fs
+	rm -rf ${DESTDIR}/snapshot/bootmix
 
 
 .endif	# DESTDIR check
