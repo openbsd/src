@@ -1,4 +1,4 @@
-/* $OpenBSD: asm.h,v 1.9 2000/11/08 21:27:16 ericj Exp $ */
+/* $OpenBSD: asm.h,v 1.10 2002/04/26 19:57:11 fgsch Exp $ */
 /* $NetBSD: asm.h,v 1.23 2000/06/23 12:18:45 kleink Exp $ */
 
 /* 
@@ -248,7 +248,7 @@
 	ERSAVE()
 
 #define	ESETUP(_name_)						\
-	.loc	1 __LINE__;					\
+	/* .loc	1 __LINE__; */					\
 	.globl	_name_;						\
 	.ent	_name_ 0;					\
 _name_:;							\
@@ -263,7 +263,7 @@ _name_:;							\
 	stq	at_reg,(FRAME_AT*8)(sp);			\
 	.set	at;						\
 	stq	ra,(FRAME_RA*8)(sp);				\
-	.loc	1 __LINE__;					\
+	/* .loc	1 __LINE__; */					\
 	bsr	ra,exception_save_regs         /* jmp/CALL trashes pv/t12 */
 
 
@@ -413,7 +413,7 @@ _name_:
  *	Function invocation
  */
 #define	CALL(_name_)						\
-	.loc	1 __LINE__;					\
+	/* .loc	1 __LINE__; */					\
 	jsr	ra,_name_;					\
 	ldgp	gp,0(ra)
 /* but this would cover longer jumps
