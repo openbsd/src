@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: hash_buf.c,v 1.5 1998/03/05 20:42:56 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: hash_buf.c,v 1.6 1998/08/28 20:49:10 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -180,16 +180,12 @@ newbuf(hashp, addr, prev_bp)
 		/* Allocate a new one */
 		if ((bp = (BUFHEAD *)malloc(sizeof(BUFHEAD))) == NULL)
 			return (NULL);
-#ifdef PURIFY
 		memset(bp, 0xff, sizeof(BUFHEAD));
-#endif
 		if ((bp->page = (char *)malloc(hashp->BSIZE)) == NULL) {
 			free(bp);
 			return (NULL);
 		}
-#ifdef PURIFY
 		memset(bp->page, 0xff, hashp->BSIZE);
-#endif
 		if (hashp->nbufs)
 			hashp->nbufs--;
 	} else {

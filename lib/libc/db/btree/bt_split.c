@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: bt_split.c,v 1.4 1997/11/13 06:35:06 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: bt_split.c,v 1.5 1998/08/28 20:49:07 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -390,9 +390,7 @@ bt_page(t, h, lp, rp, skip, ilen)
 		mpool_put(t->bt_mp, r, 0);
 		return (NULL);
 	}
-#ifdef PURIFY
 	memset(l, 0xff, t->bt_psize);
-#endif
 	l->pgno = h->pgno;
 	l->nextpg = r->pgno;
 	l->prevpg = h->prevpg;

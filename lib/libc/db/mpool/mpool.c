@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: mpool.c,v 1.4 1996/09/15 09:30:51 tholo Exp $";
+static char rcsid[] = "$OpenBSD: mpool.c,v 1.5 1998/08/28 20:49:11 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -353,9 +353,7 @@ new:	if ((bp = (BKT *)malloc(sizeof(BKT) + mp->pagesize)) == NULL)
 #ifdef STATISTICS
 	++mp->pagealloc;
 #endif
-#if defined(DEBUG) || defined(PURIFY)
 	memset(bp, 0xff, sizeof(BKT) + mp->pagesize);
-#endif
 	bp->page = (char *)bp + sizeof(BKT);
 	++mp->curcache;
 	return (bp);
