@@ -977,9 +977,6 @@ dirswitch (dir, repos)
 	return;
     }
 
-    if (dir_name != NULL)
-	free (dir_name);
-
     dir_len = strlen (dir);
 
     /* Check for a trailing '/'.  This is not ISDIRSEP because \ in the
@@ -994,6 +991,9 @@ dirswitch (dir, repos)
 		     "E protocol error: invalid directory syntax in %s", dir);
 	return;
     }
+
+    if (dir_name != NULL)
+	free (dir_name);
 
     dir_name = malloc (strlen (server_temp_dir) + dir_len + 40);
     if (dir_name == NULL)
