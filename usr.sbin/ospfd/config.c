@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.2 2005/01/28 17:53:33 norby Exp $ */
+/*	$OpenBSD: config.c,v 1.3 2005/02/16 15:23:33 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -88,6 +88,7 @@ show_interface(struct iface *iface)
 	log_debug("    state: %s", if_state_name(iface->state));
 	log_debug("    address: %s", inet_ntoa(iface->addr));
 	log_debug("    mask: %s", inet_ntoa(iface->mask));
+	log_debug("    dst: %s", inet_ntoa(iface->dst));
 	log_debug("    area: %s", inet_ntoa(iface->area->id));
 	log_debug("    hello interval: %d", iface->hello_interval);
 	log_debug("    dead interval: %d", iface->dead_interval);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.8 2005/02/09 20:40:23 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.9 2005/02/16 15:23:33 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -92,9 +92,9 @@ const char * const if_auth_names[] = {
 int
 if_fsm(struct iface *iface, enum iface_event event)
 {
-	int			old_state;
-	int			new_state = 0;
-	int			i, ret = 0;
+	int	old_state;
+	int	new_state = 0;
+	int	i, ret = 0;
 
 	old_state = iface->state;
 
@@ -202,6 +202,14 @@ if_new(char *name, unsigned int idx)
 	sain = (struct sockaddr_in *) &ifr->ifr_addr;
 	iface->mask = sain->sin_addr;
 
+	/* get p2p dst address */
+	if (iface->type == IF_TYPE_POINTOPOINT) {
+		if (ioctl(s, SIOCGIFDSTADDR, (caddr_t)ifr) < 0)
+			errx(1, "if_new: cannot get dst addr");
+		sain = (struct sockaddr_in *) &ifr->ifr_addr;
+		iface->dst = sain->sin_addr;
+	}
+
 	/* get mtu */
 	if (ioctl(s, SIOCGIFMTU, (caddr_t)ifr) < 0)
 		errx(1, "if_new: cannot get mtu");
@@ -267,6 +275,7 @@ if_init(struct ospfd_conf *xconf)
 		LIST_FOREACH(iface, &area->iface_list, entry) {
 			switch (iface->type) {
 			case IF_TYPE_POINTOPOINT:
+				iface->fd = xconf->ospf_socket;
 				break;
 			case IF_TYPE_BROADCAST:
 				/* all bcast interfaces use the same socket */
@@ -373,6 +382,17 @@ if_act_start(struct iface *iface)
 
 	switch (iface->type) {
 	case IF_TYPE_POINTOPOINT:
+		inet_aton(AllSPFRouters, &addr);
+		if (if_join_group(iface, &addr)) {
+			log_warnx("if_act_start: error joining group %s, "
+			    "interface %s", inet_ntoa(addr), iface->name);
+			return (-1);
+		}
+		iface->state = IF_STA_POINTTOPOINT;
+		if (if_start_hello_timer(iface))
+			log_warnx("if_act_start: cannot schedule hello "
+			    "timer, interface %s", iface->name);
+		break;
 	case IF_TYPE_POINTOMULTIPOINT:
 	case IF_TYPE_VIRTUALLINK:
 	case IF_TYPE_NBMA:
@@ -556,9 +576,6 @@ if_act_reset(struct iface *iface)
 
 	switch (iface->type) {
 	case IF_TYPE_POINTOPOINT:
-		log_debug("if_act_reset: type %s not supported, interface %s",
-		    if_type_name(iface->type), iface->name);
-		return (-1);
 	case IF_TYPE_BROADCAST:
 		inet_aton(AllSPFRouters, &addr);
 		if (if_leave_group(iface, &addr)) {
@@ -736,6 +753,7 @@ if_join_group(struct iface *iface, struct in_addr *addr)
 	struct ip_mreq	 mreq;
 
 	switch (iface->type) {
+	case IF_TYPE_POINTOPOINT:
 	case IF_TYPE_BROADCAST:
 		mreq.imr_multiaddr.s_addr = addr->s_addr;
 		mreq.imr_interface.s_addr = iface->addr.s_addr;
@@ -747,7 +765,6 @@ if_join_group(struct iface *iface, struct in_addr *addr)
 			return (-1);
 		}
 		break;
-	case IF_TYPE_POINTOPOINT:
 	case IF_TYPE_POINTOMULTIPOINT:
 	case IF_TYPE_VIRTUALLINK:
 	case IF_TYPE_NBMA:
@@ -767,6 +784,7 @@ if_leave_group(struct iface *iface, struct in_addr *addr)
 	struct ip_mreq	 mreq;
 
 	switch (iface->type) {
+	case IF_TYPE_POINTOPOINT:
 	case IF_TYPE_BROADCAST:
 		mreq.imr_multiaddr.s_addr = addr->s_addr;
 		mreq.imr_interface.s_addr = iface->addr.s_addr;
@@ -778,7 +796,6 @@ if_leave_group(struct iface *iface, struct in_addr *addr)
 			return (-1);
 		}
 		break;
-	case IF_TYPE_POINTOPOINT:
 	case IF_TYPE_POINTOMULTIPOINT:
 	case IF_TYPE_VIRTUALLINK:
 	case IF_TYPE_NBMA:
@@ -796,6 +813,7 @@ int
 if_set_mcast(struct iface *iface)
 {
 	switch (iface->type) {
+	case IF_TYPE_POINTOPOINT:
 	case IF_TYPE_BROADCAST:
 		if (setsockopt(iface->fd, IPPROTO_IP, IP_MULTICAST_IF,
 		    (char *)&iface->addr.s_addr,
@@ -805,7 +823,6 @@ if_set_mcast(struct iface *iface)
 			return (-1);
 		}
 		break;
-	case IF_TYPE_POINTOPOINT:
 	case IF_TYPE_POINTOMULTIPOINT:
 	case IF_TYPE_VIRTUALLINK:
 	case IF_TYPE_NBMA:

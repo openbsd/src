@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.4 2005/02/07 05:51:00 david Exp $ */
+/*	$OpenBSD: packet.c,v 1.5 2005/02/16 15:23:33 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -277,6 +277,12 @@ find_iface(struct ospfd_conf *xconf, struct in_addr src)
 	/* returned interface needs to be active */
 	LIST_FOREACH(area, &xconf->area_list, entry) {
 		LIST_FOREACH(iface, &area->iface_list, entry) {
+			if (iface->fd > 0 &&
+			    (iface->type == IF_TYPE_POINTOPOINT) &&
+			    (iface->dst.s_addr == src.s_addr) &&
+			    !iface->passive)
+				return (iface);
+
 			if (iface->fd > 0 && (iface->addr.s_addr &
 			    iface->mask.s_addr) == (src.s_addr &
 			    iface->mask.s_addr) && !iface->passive)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.8 2005/02/10 14:05:48 claudio Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.9 2005/02/16 15:23:33 norby Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -233,6 +233,7 @@ struct iface {
 
 	char			 name[IF_NAMESIZE];
 	struct in_addr		 addr;
+	struct in_addr		 dst;
 	struct in_addr		 mask;
 	struct in_addr		 rtr_id;
 	char			*auth_key;
