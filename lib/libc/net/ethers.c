@@ -56,6 +56,7 @@ ether_aton(s)
 	return NULL;
 }
 
+int
 ether_ntohost(hostname, e)
 	char *hostname;
 	struct ether_addr *e;
@@ -110,6 +111,7 @@ ether_ntohost(hostname, e)
 	return -1;
 }
 
+int
 ether_hostton(hostname, e)
 	char *hostname;
 	struct ether_addr *e;
@@ -156,6 +158,7 @@ ether_hostton(hostname, e)
 	return -1;
 }
 
+int
 ether_line(l, e, hostname)
 	char *l;
 	struct ether_addr *e;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.3 1996/05/22 11:48:45 deraadt Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.4 1996/07/03 08:09:45 deraadt Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -246,5 +246,13 @@ void revarprequest __P((struct ifnet *));
 int revarpwhoarewe __P((struct ifnet *, struct in_addr *, struct in_addr *));
 int revarpwhoami __P((struct in_addr *, struct ifnet *));
 int db_show_arptab __P((void));
+
+#else
+
+char *ether_ntoa __P((struct ether_addr *));
+struct ether_addr *ether_aton __P((char *));
+int ether_ntohost __P((char *, struct ether_addr *));
+int ether_hostton __P((char *, struct ether_addr *));
+int ether_line __P((char *, struct ether_addr *, char *));
 
 #endif
