@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.10 1997/06/27 02:23:22 deraadt Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.11 1997/07/24 00:31:15 deraadt Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -527,7 +527,7 @@ udp_usrreq(so, req, m, addr, control)
 	int s;
 
 	if (req == PRU_CONTROL)
-		return (in_control(so, (long)m, (caddr_t)addr,
+		return (in_control(so, (u_long)m, (caddr_t)addr,
 			(struct ifnet *)control));
 	if (inp == NULL && req != PRU_ATTACH) {
 		error = EINVAL;
