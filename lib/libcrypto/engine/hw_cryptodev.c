@@ -42,10 +42,12 @@
 #include <ssl/objects.h>
 #include <ssl/engine.h>
 #include <ssl/evp.h>
+#include <errno.h>
+#include <string.h>
 
 static int cryptodev_fd = -1;
 static int cryptodev_sessions = 0;
-static u_int32_t cryptodev_symfeat = 0;
+static u_int32_t cryptodev_asymfeat = 0;
 
 static int bn2crparam(const BIGNUM *a, struct crparam *crp);
 static int crparam2bn(struct crparam *crp, BIGNUM *a);
@@ -67,6 +69,10 @@ static int cryptodev_dh_compute_key(unsigned char *key,
     const BIGNUM *pub_key, DH *dh);
 
 static const ENGINE_CMD_DEFN cryptodev_defns[] = {
+	{ENGINE_CMD_BASE,
+		"SO_PATH",
+		"Specifies the path to the some stupid shared library",
+		ENGINE_CMD_FLAG_STRING},
 	{ 0, NULL, NULL, 0 }
 };
 
@@ -124,8 +130,6 @@ check_dev_crypto()
 			return (0);
 		}
 	}
-	ioctl(cryptodev_fd, CIOCSYMFEAT, &cryptodev_symfeat);
-
 	return (1);
 }
 
@@ -260,6 +264,8 @@ get_cryptodev_digests(const int **cnids)
 int
 cryptodev_usable_ciphers(const int **nids)
 {
+	struct syslog_data sd = SYSLOG_DATA_INIT;
+	
 	if (!check_dev_crypto()) {
 		*nids = NULL;
 		return (0);
@@ -270,6 +276,14 @@ cryptodev_usable_ciphers(const int **nids)
 	 * yet set up to do them
 	 */
 	return (get_cryptodev_ciphers(nids));
+
+	/*
+	 * find out what asymmetric crypto algorithms we support
+	 */
+	if (ioctl(cryptodev_fd, CIOCASYMFEAT, &cryptodev_asymfeat) == -1) {
+		syslog_r(LOG_ERR, &sd, "CIOCASYMFEAT failed (%m)");
+	}
+	
 }
 
 int
@@ -652,23 +666,23 @@ cryptodev_sym(struct crypt_kop *kop, int rlen, BIGNUM *r, int slen, BIGNUM *s)
 	int ret = -1;
 
 	if (r) {
-		kop->crk_param[kop->crk_iparams].crp_p = malloc(rlen);
+		kop->crk_param[kop->crk_iparams].crp_p = calloc(rlen, sizeof(char));
 		kop->crk_param[kop->crk_iparams].crp_nbits = rlen * 8;
 		kop->crk_oparams++;
 	}
 	if (s) {
-		kop->crk_param[kop->crk_iparams+1].crp_p = malloc(slen);
+		kop->crk_param[kop->crk_iparams+1].crp_p = calloc(slen, sizeof(char));
 		kop->crk_param[kop->crk_iparams+1].crp_nbits = slen * 8;
 		kop->crk_oparams++;
 	}
 
-	if (ioctl(cryptodev_fd, CIOCKEY, &kop) == 0) {
+	if (ioctl(cryptodev_fd, CIOCKEY, kop) == 0) {
 		if (r)
-			crparam2bn(&kop->crk_param[3], r);
+			crparam2bn(&kop->crk_param[kop->crk_iparams], r);
 		if (s)
-			crparam2bn(&kop->crk_param[4], s);
+			crparam2bn(&kop->crk_param[kop->crk_iparams+1], s);
 		ret = 0;
-	}
+	} 
 	return (ret);
 }
 
@@ -677,8 +691,17 @@ cryptodev_bn_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
     const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *in_mont)
 {
 	struct crypt_kop kop;
-	int ret = 0;
+	int ret = 1;
 
+	/* Currently, we know we can do mod exp iff we can do any
+	 * asymmetric operations at all.
+	 */
+	if (cryptodev_asymfeat == 0) {
+		ret = BN_mod_exp(r, a, p, m, ctx);
+		return (ret);
+	}
+
+	
 	memset(&kop, 0, sizeof kop);
 	kop.crk_op = CRK_MOD_EXP;
 
@@ -692,23 +715,35 @@ cryptodev_bn_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	kop.crk_iparams = 3;
 
 	if (cryptodev_sym(&kop, BN_num_bytes(m), r, 0, NULL) == -1) {
-		ret = BN_mod_exp(r, a, p, m, ctx);
+		const RSA_METHOD *meth = RSA_PKCS1_SSLeay();
+		ret = meth->bn_mod_exp(r, a, p, m, ctx, in_mont);
 	}
 err:
 	zapparams(&kop);
 	return (ret);
 }
 
+static int
+cryptodev_rsa_nocrt_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa)
+{
+	int r;
+	BN_CTX *ctx;
+
+	ctx = BN_CTX_new();
+	r = cryptodev_bn_mod_exp(r0, I, rsa->d, rsa->n, ctx, NULL);
+	BN_CTX_free(ctx);
+	return (r);
+}
 
 static int
 cryptodev_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa)
 {
 	struct crypt_kop kop;
-	int ret = 0;
+	int ret = 1;
 
 	if (!rsa->p || !rsa->q || !rsa->dmp1 || !rsa->dmq1 || !rsa->iqmp) {
 		/* XXX 0 means failure?? */
-		goto err;
+		return (0);
 	}
 
 	memset(&kop, 0, sizeof kop);
@@ -730,7 +765,6 @@ cryptodev_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa)
 
 	if (cryptodev_sym(&kop, BN_num_bytes(rsa->n), r0, 0, NULL) == -1) {
 		const RSA_METHOD *meth = RSA_PKCS1_SSLeay();
-
 		ret = (*meth->rsa_mod_exp)(r0, I, rsa);
 	}
 err:
@@ -744,8 +778,8 @@ static RSA_METHOD cryptodev_rsa = {
 	NULL,				/* rsa_pub_dec */
 	NULL,				/* rsa_priv_enc */
 	NULL,				/* rsa_priv_dec */
-	cryptodev_rsa_mod_exp,		/* rsa_mod_exp */
-	cryptodev_bn_mod_exp,		/* bn_mod_exp */
+	NULL,
+	NULL,
 	NULL,				/* init */
 	NULL,				/* finish */
 	0,				/* flags */
@@ -798,7 +832,6 @@ cryptodev_dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 		dsaret->s = s;
 	} else {
 		const DSA_METHOD *meth = DSA_OpenSSL();
-
 		BN_free(r);
 		BN_free(s);
 		dsaret = (meth->dsa_do_sign)(dgst, dlen, dsa);
@@ -814,7 +847,7 @@ cryptodev_dsa_verify(const unsigned char *dgst, int dlen,
     DSA_SIG *sig, DSA *dsa)
 {
 	struct crypt_kop kop;
-	int dsaret = 0;
+	int dsaret = 1;
 
 	memset(&kop, 0, sizeof kop);
 	kop.crk_op = CRK_DSA_VERIFY;
@@ -849,13 +882,14 @@ err:
 	return (dsaret);
 }
 
+
 static DSA_METHOD cryptodev_dsa = {
 	"cryptodev DSA method",
-	cryptodev_dsa_do_sign,
+	NULL,
 	NULL,				/* dsa_sign_setup */
-	cryptodev_dsa_verify,
+	NULL,
 	NULL,				/* dsa_mod_exp */
-	cryptodev_dsa_bn_mod_exp,	/* bn_mod_exp */
+	NULL,
 	NULL,				/* init */
 	NULL,				/* finish */
 	0,	/* flags */
@@ -874,7 +908,7 @@ static int
 cryptodev_dh_compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 {
 	struct crypt_kop kop;
-	int dhret = 0;
+	int dhret = 1;
 	int keylen;
 
 	keylen = BN_num_bits(dh->p);
@@ -909,8 +943,8 @@ err:
 static DH_METHOD cryptodev_dh = {
 	"cryptodev DH method",
 	NULL,				/* cryptodev_dh_generate_key */
-	cryptodev_dh_compute_key,
-	cryptodev_mod_exp_dh,
+	NULL,
+	NULL,
 	NULL,
 	NULL,
 	0,	/* flags */
@@ -939,11 +973,23 @@ void
 ENGINE_load_cryptodev(void)
 {
 	ENGINE *engine = ENGINE_new();
-	const RSA_METHOD *rsa_meth;
-	const DH_METHOD *dh_meth;
+	struct syslog_data sd = SYSLOG_DATA_INIT;
 
 	if (engine == NULL)
 		return;
+
+
+	if (!check_dev_crypto()) {
+		return;
+	}
+	
+	/*
+	 * find out what asymmetric crypto algorithms we support
+	 */
+	if (ioctl(cryptodev_fd, CIOCASYMFEAT, &cryptodev_asymfeat) == -1) {
+		syslog_r(LOG_ERR, &sd, "CIOCASYMFEAT failed (%m)");
+		return;
+	}
 
 	if (!ENGINE_set_id(engine, "cryptodev") ||
 	    !ENGINE_set_name(engine, "OpenBSD cryptodev engine") ||
@@ -955,26 +1001,58 @@ ENGINE_load_cryptodev(void)
 		return;
 	}
 
-	if ((cryptodev_symfeat & CRSFEAT_RSA) &&
-	    ENGINE_set_RSA(engine, &cryptodev_rsa)) {
-		rsa_meth = RSA_PKCS1_SSLeay();
+	if (ENGINE_set_RSA(engine, &cryptodev_rsa)) {
+		const RSA_METHOD *rsa_meth = RSA_PKCS1_SSLeay();
+
+		cryptodev_rsa.bn_mod_exp = rsa_meth->bn_mod_exp;
+		cryptodev_rsa.rsa_mod_exp = rsa_meth->rsa_mod_exp;
 		cryptodev_rsa.rsa_pub_enc = rsa_meth->rsa_pub_enc;
 		cryptodev_rsa.rsa_pub_dec = rsa_meth->rsa_pub_dec;
-		cryptodev_rsa.rsa_priv_enc = rsa_meth->rsa_priv_dec;
+		cryptodev_rsa.rsa_priv_enc = rsa_meth->rsa_priv_enc;
 		cryptodev_rsa.rsa_priv_dec = rsa_meth->rsa_priv_dec;
+		if (cryptodev_asymfeat & CRF_MOD_EXP) {
+			cryptodev_rsa.bn_mod_exp = cryptodev_bn_mod_exp;
+			if (cryptodev_asymfeat & CRF_MOD_EXP_CRT)
+				cryptodev_rsa.rsa_mod_exp = 
+				    cryptodev_rsa_mod_exp;
+			else
+				cryptodev_rsa.rsa_mod_exp =
+				    cryptodev_rsa_nocrt_mod_exp;
+		}
 	}
 
-	if ((cryptodev_symfeat & CRSFEAT_DSA) &&
-	    ENGINE_set_DSA(engine, &cryptodev_dsa)) {
-	}
+#if 0 
+	/* dsa is currently busted. */
+	if (ENGINE_set_DSA(engine, &cryptodev_dsa)) {
+		const DSA_METHOD *meth = DSA_OpenSSL();
 
-	if ((cryptodev_symfeat & CRSFEAT_DH) &&
-	    ENGINE_set_DH(engine, &cryptodev_dh)) {
-		dh_meth = DH_OpenSSL();
+		cryptodev_dsa.dsa_do_sign = meth->dsa_do_sign;
+		cryptodev_dsa.dsa_do_verify = meth->dsa_do_verify;   
+		cryptodev_dsa.bn_mod_exp = meth->bn_mod_exp;
+		if (cryptodev_asymfeat & CRF_DSA_SIGN) 
+			cryptodev_dsa.dsa_do_sign = cryptodev_dsa_do_sign;   
+  	        if (cryptodev_asymfeat & CRF_DSA_VERIFY)
+			cryptodev_dsa.dsa_do_verify = cryptodev_dsa_verify;   
+  	        if (cryptodev_asymfeat & CRF_MOD_EXP)
+			cryptodev_dsa.bn_mod_exp = cryptodev_dsa_bn_mod_exp;
+	}
+#endif
+		
+
+	if (ENGINE_set_DH(engine, &cryptodev_dh)){
+		const DH_METHOD *dh_meth = DH_OpenSSL();
+
 		cryptodev_dh.generate_key = dh_meth->generate_key;
 		cryptodev_dh.compute_key = dh_meth->compute_key;
+		cryptodev_dh.bn_mod_exp = dh_meth->bn_mod_exp;
+		if (cryptodev_asymfeat & CRF_MOD_EXP) {
+			cryptodev_dh.bn_mod_exp = cryptodev_mod_exp_dh;
+			if (cryptodev_asymfeat & CRF_DH_COMPUTE_KEY)
+				cryptodev_dh.compute_key =
+				    cryptodev_dh_compute_key;
+		}
 	}
-
+	
 	ENGINE_add(engine);
 	ENGINE_free(engine);
 	ERR_clear_error();
