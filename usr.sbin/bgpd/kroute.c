@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.12 2003/12/25 01:59:34 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.13 2003/12/25 02:04:46 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -144,46 +144,26 @@ kroute_add(int fd, struct kroute *kroute)
 			return (0);
 	}
 
-	if ((n = kroute_msg(fd, RTM_ADD, kroute)) == -1)
+	if ((n = kroute_msg(fd, action, kroute)) == -1)
 		return (-1);
 
-	if ((kr = calloc(1, sizeof(struct kroute_node))) == NULL)
-		fatal(NULL, errno);
+	if (action == RTM_ADD) {
+		if ((kr = calloc(1, sizeof(struct kroute_node))) == NULL)
+			fatal(NULL, errno);
 
-	kr->r.prefix = kroute->prefix;
-	kr->r.prefixlen = kroute->prefixlen;
-	kr->r.nexthop = kroute->nexthop;
-	kr->flags = F_BGPD_INSERTED;
+		kr->r.prefix = kroute->prefix;
+		kr->r.prefixlen = kroute->prefixlen;
+		kr->r.nexthop = kroute->nexthop;
+		kr->flags = F_BGPD_INSERTED;
 
-	if (RB_INSERT(kroute_tree, &krt, kr) != NULL) {
-		logit(LOG_CRIT, "RB_INSERT failed!");
-		return (-1);
-	}
+		if (RB_INSERT(kroute_tree, &krt, kr) != NULL) {
+			logit(LOG_CRIT, "RB_INSERT failed!");
+			return (-1);
+		}
+	} else
+		kr->r.nexthop = kroute->nexthop;
 
 	return (n);
-}
-
-int
-kroute_change(int fd, struct kroute *kroute)
-{
-	struct kroute_node	*kr, s;
-
-	s.r.prefix = kroute->prefix;
-	s.r.prefixlen = kroute->prefixlen;
-
-	if ((kr = RB_FIND(kroute_tree, &krt, &s)) == NULL) {
-		log_kroute(LOG_CRIT, "kroute_change: no match for", kroute);
-		return (-1);
-	}
-
-	if (!(kr->flags & F_BGPD_INSERTED)) {
-		logit(LOG_CRIT, "trying to change route not inserted by bgpd");
-		return (0);
-	}
-
-	kr->r.nexthop = kroute->nexthop;
-
-	return (kroute_msg(fd, RTM_CHANGE, kroute));
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.20 2003/12/24 23:14:23 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.21 2003/12/25 02:04:46 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -299,7 +299,6 @@ int	 mrt_mergeconfig(struct mrt_config *, struct mrt_config *);
 /* kroute.c */
 int	kroute_init(void);
 int	kroute_add(int, struct kroute *);
-int	kroute_change(int, struct kroute *);
 int	kroute_delete(int, struct kroute *);
 void	kroute_shutdown(int);
 
