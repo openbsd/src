@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctags.c,v 1.4 1999/07/02 18:37:11 deraadt Exp $	*/
+/*	$OpenBSD: ctags.c,v 1.5 2000/07/25 19:28:30 deraadt Exp $	*/
 /*	$NetBSD: ctags.c,v 1.4 1995/09/02 05:57:23 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ctags.c	8.4 (Berkeley) 2/7/95";
 #endif
-static char rcsid[] = "$OpenBSD: ctags.c,v 1.4 1999/07/02 18:37:11 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ctags.c,v 1.5 2000/07/25 19:28:30 deraadt Exp $";
 #endif /* not lint */
 
 #include <err.h>
@@ -95,7 +95,7 @@ main(argc, argv)
 	int	exit_val;			/* exit value */
 	int	step;				/* step through args */
 	int	ch;				/* getopts char */
-	char	cmd[100];			/* too ugly to explain */
+	char	*cmd;
 
 	aflag = uflag = NO;
 	while ((ch = getopt(argc, argv, "BFadf:tuwvx")) != -1)
@@ -160,11 +160,14 @@ usage:		(void)fprintf(stderr,
 		else {
 			if (uflag) {
 				for (step = 0; step < argc; step++) {
-					(void)sprintf(cmd,
-						"mv %s OTAGS; fgrep -v '\t%s\t' OTAGS >%s; rm OTAGS",
-							outfile, argv[step],
-							outfile);
+					(void)asprintf(&cmd,
+					    "mv %s OTAGS; fgrep -v '\t%s\t' OTAGS >%s; rm OTAGS",
+					    outfile, argv[step], outfile);
+					if (cmd == NULL)
+						err(1, "out of space");
 					system(cmd);
+					free(cmd);
+					cmd = NULL;
 				}
 				++aflag;
 			}
@@ -173,9 +176,13 @@ usage:		(void)fprintf(stderr,
 			put_entries(head);
 			(void)fclose(outf);
 			if (uflag) {
-				(void)sprintf(cmd, "sort -o %s %s",
-						outfile, outfile);
+				(void)asprintf(&cmd, "sort -o %s %s",
+				    outfile, outfile);
+				if (cmd == NULL)
+						err(1, "out of space");
 				system(cmd);
+				free(cmd);
+				cmd = NULL;
 			}
 		}
 	}
@@ -231,7 +238,7 @@ find_entries(file)
 	char	*cp;
 
 	lineno = 0;				/* should be 1 ?? KB */
-	if (cp = strrchr(file, '.')) {
+	if ((cp = strrchr(file, '.'))) {
 		if (cp[1] == 'l' && !cp[2]) {
 			int	c;
 

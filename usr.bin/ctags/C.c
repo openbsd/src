@@ -1,4 +1,4 @@
-/*	$OpenBSD: C.c,v 1.4 1997/07/21 23:18:45 deraadt Exp $	*/
+/*	$OpenBSD: C.c,v 1.5 2000/07/25 19:28:30 deraadt Exp $	*/
 /*	$NetBSD: C.c,v 1.3 1995/03/26 20:14:02 glass Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)C.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: C.c,v 1.4 1997/07/21 23:18:45 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: C.c,v 1.5 2000/07/25 19:28:30 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -101,7 +101,7 @@ c_entries()
 			 * the above 3 cases are similar in that they
 			 * are special characters that also end tokens.
 			 */
-	endtok:			if (sp > tok) {
+endtok:			if (sp > tok) {
 				*sp = EOS;
 				token = YES;
 				sp = tok;
@@ -246,7 +246,13 @@ c_entries()
 				sp = tok;
 			}
 			else if (sp != tok || begtoken(c)) {
-				*sp++ = c;
+				if (sp >= tok + sizeof tok) {
+					/* hell... truncate it */
+					if (sp == tok + sizeof(tok))
+						*sp = '\0';
+					sp++;
+				} else
+					*sp++ = c;
 				token = YES;
 			}
 			continue;
@@ -347,7 +353,13 @@ hash_entry()
 			return;
 		if (iswhite(c))
 			break;
-		*sp++ = c;
+		if (sp >= tok + sizeof(tok)) {
+			/* hell... truncate it */
+			if (sp == tok + sizeof(tok))
+				*sp = '\0';
+			sp++;
+		} else		
+			*sp++ = c;
 	}
 	*sp = EOS;
 	if (memcmp(tok, "define", 6))	/* only interested in #define's */
@@ -359,7 +371,13 @@ hash_entry()
 			break;
 	}
 	for (sp = tok;;) {		/* get next token */
-		*sp++ = c;
+		if (sp >= tok + sizeof tok) {
+			/* hell... truncate it */
+			if (sp == tok + sizeof(tok))
+				*sp = '\0';
+			sp++;
+		} else
+			*sp++ = c;
 		if (GETC(==, EOF))
 			return;
 		/*
@@ -401,7 +419,13 @@ str_entry(c)
 	if (c == '{')		/* it was "struct {" */
 		return (YES);
 	for (sp = tok;;) {		/* get next token */
-		*sp++ = c;
+		if (sp >= tok + sizeof tok) {
+			/* hell... truncate it */
+			if (sp == tok + sizeof(tok))
+				*sp = '\0';
+			sp++;
+		} else
+			*sp++ = c;
 		if (GETC(==, EOF))
 			return (NO);
 		if (!intoken(c))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lisp.c,v 1.2 1996/06/26 05:32:29 deraadt Exp $	*/
+/*	$OpenBSD: lisp.c,v 1.3 2000/07/25 19:28:30 deraadt Exp $	*/
 /*	$NetBSD: lisp.c,v 1.3 1995/03/26 20:14:09 glass Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lisp.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: lisp.c,v 1.2 1996/06/26 05:32:29 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: lisp.c,v 1.3 2000/07/25 19:28:30 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -103,7 +103,7 @@ l_entries()
 				continue;
 		savedc = *cp;
 		*cp = EOS;
-		(void)strcpy(tok, lbp);
+		(void)strlcpy(tok, lbp, sizeof tok);
 		*cp = savedc;
 		getline();
 		pfnote(tok, lineno);

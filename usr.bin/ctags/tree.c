@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.2 1996/06/26 05:32:31 deraadt Exp $	*/
+/*	$OpenBSD: tree.c,v 1.3 2000/07/25 19:28:30 deraadt Exp $	*/
 /*	$NetBSD: tree.c,v 1.4 1995/03/26 20:14:11 glass Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tree.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: tree.c,v 1.2 1996/06/26 05:32:31 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tree.c,v 1.3 2000/07/25 19:28:30 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -47,6 +47,7 @@ static char rcsid[] = "$OpenBSD: tree.c,v 1.2 1996/06/26 05:32:31 deraadt Exp $"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/dirent.h>
 
 #include "ctags.h"
 
@@ -64,7 +65,7 @@ pfnote(name, ln)
 {
 	NODE	*np;
 	char	*fp;
-	char	nbuf[MAXTOKEN];
+	char	nbuf[1+MAXNAMLEN+1];
 
 	/*NOSTRICT*/
 	if (!(np = (NODE *)malloc(sizeof(NODE)))) {
@@ -80,7 +81,7 @@ pfnote(name, ln)
 			fp = curfile;
 		else
 			++fp;
-		(void)sprintf(nbuf, "M%s", fp);
+		(void)snprintf(nbuf, sizeof nbuf, "M%s", fp);
 		fp = strrchr(nbuf, '.');
 		if (fp && !fp[2])
 			*fp = EOS;
