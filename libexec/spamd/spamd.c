@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.36 2003/07/29 18:39:23 deraadt Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.37 2003/08/23 20:36:44 itojun Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -534,7 +534,8 @@ closecon(struct con *cp)
 		time_t t;
 
 		time(&t);
-		printf("%s connected for %d seconds.\n", cp->addr, t - cp->s);
+		printf("%s connected for %ld seconds.\n", cp->addr,
+		    (long)(t - cp->s));
 	}
 	if (cp->lists != NULL) {
 		free(cp->lists);
