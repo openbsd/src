@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.23 1995/11/22 17:40:14 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.24 1996/02/04 22:20:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -48,7 +48,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	5.25 (Berkeley) 4/1/91";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.23 1995/11/22 17:40:14 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.24 1996/02/04 22:20:49 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -103,7 +103,7 @@ static char rcsid[] = "$NetBSD: main.c,v 1.23 1995/11/22 17:40:14 christos Exp $
 
 #ifndef	DEFMAXLOCAL
 #define	DEFMAXLOCAL DEFMAXJOBS
-#endif	DEFMAXLOCAL
+#endif	/* DEFMAXLOCAL */
 
 #define	MAKEFLAGS	".MAKEFLAGS"
 

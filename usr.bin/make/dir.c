@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.9 1995/11/22 17:40:05 christos Exp $	*/
+/*	$NetBSD: dir.c,v 1.10 1996/02/04 22:20:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	5.6 (Berkeley) 12/28/90";
 #else
-static char rcsid[] = "$NetBSD: dir.c,v 1.9 1995/11/22 17:40:05 christos Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.10 1996/02/04 22:20:38 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -1065,7 +1065,7 @@ Dir_AddDir (path, name)
 	    (void)readdir(d);
 	    
 	    while ((dp = readdir (d)) != (struct dirent *) NULL) {
-#if defined(sun) && !defined(__svr4__)
+#if defined(sun) && defined(d_ino) /* d_ino is a sunos4 #define for d_fileno */
 		/*
 		 * The sun directory library doesn't check for a 0 inode
 		 * (0-inode slots just take up space), so we have to do
@@ -1074,7 +1074,7 @@ Dir_AddDir (path, name)
 		if (dp->d_fileno == 0) {
 		    continue;
 		}
-#endif /* sun && !__svr4__ */
+#endif /* sun && d_ino */
 		(void)Hash_CreateEntry(&p->files, dp->d_name, (Boolean *)NULL);
 	    }
 	    (void) closedir (d);

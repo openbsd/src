@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.7 1995/12/16 05:03:11 christos Exp $	*/
+/*	$NetBSD: make.h,v 1.8 1996/02/04 22:20:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -52,7 +52,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
-#ifndef MAKE_BOOTSTRAP
+#if !defined(MAKE_BOOTSTRAP) && defined(BSD)
 #include <sys/cdefs.h>
 #else
 #if defined(__STDC__) || defined(__cplusplus)

@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.11 1995/11/22 17:39:53 christos Exp $	*/
+/*	$NetBSD: arch.c,v 1.13 1996/02/04 22:20:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)arch.c	5.7 (Berkeley) 12/28/90";
 #else
-static char rcsid[] = "$NetBSD: arch.c,v 1.11 1995/11/22 17:39:53 christos Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.13 1996/02/04 22:20:34 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -100,9 +100,10 @@ static char rcsid[] = "$NetBSD: arch.c,v 1.11 1995/11/22 17:39:53 christos Exp $
 #include    <sys/param.h>
 #include    <ctype.h>
 #include    <ar.h>
-#ifndef __svr4__
+#if !defined(__svr4__) && !defined(__SVR4) 
 #include    <ranlib.h>
 #endif
+#include    <utime.h>
 #include    <stdio.h>
 #include    <stdlib.h>
 #include    "make.h"
@@ -561,6 +562,12 @@ ArchStatMember (archive, member, hash)
 	    }
 	    cp[1] = '\0';
 
+#if defined(__svr4__) || defined(__SVR4)
+	    /* svr4 names are slash terminated */
+	    if (cp[0] == '/')
+		cp[0] = '\0';
+#endif
+
 #ifdef AR_EFMT1
 	    /*
 	     * BSD 4.4 extended AR format: #1/<namelen>, with name as the
@@ -828,9 +835,10 @@ void
 Arch_TouchLib (gn)
     GNode	    *gn;      	/* The node of the library to touch */
 {
+#ifdef RANLIBMAG
     FILE *	    arch;	/* Stream open to archive */
     struct ar_hdr   arh;      	/* Header describing table of contents */
-    struct timeval  times[2];	/* Times for utimes() call */
+    struct utimbuf  times;	/* Times for utime() call */
 
     arch = ArchFindMember (gn->path, RANLIBMAG, &arh, "r+");
     sprintf(arh.ar_date, "%-12ld", (long) now);
@@ -839,10 +847,10 @@ Arch_TouchLib (gn)
 	(void)fwrite ((char *)&arh, sizeof (struct ar_hdr), 1, arch);
 	fclose (arch);
 
-	times[0].tv_sec = times[1].tv_sec = now;
-	times[0].tv_usec = times[1].tv_usec = 0;
-	utimes(gn->path, times);
+	times.actime = times.modtime = now;
+	utime(gn->path, &times);
     }
+#endif
 }
 
 /*-
@@ -983,7 +991,7 @@ Arch_FindLib (gn, path)
     Var_Set (TARGET, gn->name, gn);
 #else
     Var_Set (TARGET, gn->path == (char *) NULL ? gn->name : gn->path, gn);
-#endif LIBRARIES
+#endif /* LIBRARIES */
 }
 
 /*-

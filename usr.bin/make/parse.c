@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.18 1995/12/16 05:03:13 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.19 1996/02/07 23:04:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	5.18 (Berkeley) 2/19/91";
 #else
-static char rcsid[] = "$NetBSD: parse.c,v 1.18 1995/12/16 05:03:13 christos Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.19 1996/02/07 23:04:04 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -1728,9 +1728,12 @@ ParseDoInclude (file)
 	 * leading path components and call Dir_FindFile to see if
 	 * we can locate the beast.
 	 */
-	char	  *prefEnd;
+	char	  *prefEnd, *Fname;
 
-	prefEnd = strrchr (fname, '/');
+	/* Make a temporary copy of this, to be safe. */
+	Fname = strdup(fname);
+
+	prefEnd = strrchr (Fname, '/');
 	if (prefEnd != (char *)NULL) {
 	    char  	*newName;
 	    
@@ -1738,7 +1741,7 @@ ParseDoInclude (file)
 	    if (file[0] == '/')
 		newName = strdup(file);
 	    else
-		newName = str_concat (fname, file, STR_ADDSLASH);
+		newName = str_concat (Fname, file, STR_ADDSLASH);
 	    fullname = Dir_FindFile (newName, parseIncPath);
 	    if (fullname == (char *)NULL) {
 		fullname = Dir_FindFile(newName, dirSearchPath);
@@ -1748,6 +1751,7 @@ ParseDoInclude (file)
 	} else {
 	    fullname = (char *)NULL;
 	}
+	free (Fname);
     } else {
 	fullname = (char *)NULL;
     }

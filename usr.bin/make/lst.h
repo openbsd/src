@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.5 1995/06/14 15:19:31 christos Exp $	*/
+/*	$NetBSD: lst.h,v 1.6 1996/02/04 22:20:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -48,7 +48,7 @@
 #define _LST_H_
 
 #include	<sprite.h>
-#include	<sys/cdefs.h>
+#include	<sys/param.h>
 #if __STDC__
 #include	<stdlib.h>
 #endif

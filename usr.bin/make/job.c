@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.13 1995/11/22 17:40:09 christos Exp $	*/
+/*	$NetBSD: job.c,v 1.14 1996/02/04 22:20:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)job.c	5.15 (Berkeley) 3/1/91";
 #else
-static char rcsid[] = "$NetBSD: job.c,v 1.13 1995/11/22 17:40:09 christos Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.14 1996/02/04 22:20:42 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -109,6 +109,7 @@ static char rcsid[] = "$NetBSD: job.c,v 1.13 1995/11/22 17:40:09 christos Exp $"
 #include <sys/wait.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <utime.h>
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
@@ -375,6 +376,7 @@ JobPassSig(signo)
     int	    signo;	/* The signal number we've received */
 {
     sigset_t nmask, omask;
+    struct sigaction act;
     
     if (DEBUG(JOB)) {
 	(void) fprintf(stdout, "JobPassSig(%d) called.\n", signo);
@@ -406,8 +408,13 @@ JobPassSig(signo)
      * This ensures that all our jobs get continued when we wake up before
      * we take any other signal.
      */
-    sigfillset(&nmask);
-    (void) sigprocmask(SIG_BLOCK, &nmask, &omask);
+    sigemptyset(&nmask);
+    sigaddset(&nmask, signo);
+    sigprocmask(SIG_SETMASK, &nmask, &omask);
+    act.sa_handler = SIG_DFL;
+    sigemptyset(&act.sa_mask);
+    act.sa_flags = 0;
+    sigaction(signo, &act, NULL);
 
     if (DEBUG(JOB)) {
 	(void) fprintf(stdout,
@@ -423,8 +430,9 @@ JobPassSig(signo)
     Lst_ForEach(jobs, JobCondPassSig, (ClientData) &signo);
 
     (void) sigprocmask(SIG_SETMASK, &omask, NULL);
-    (void) signal(signo, JobPassSig);
-
+    sigprocmask(SIG_SETMASK, &omask, NULL);
+    act.sa_handler = JobPassSig;
+    sigaction(signo, &act, NULL);
 }
 
 /*-
@@ -1009,7 +1017,7 @@ Job_Touch(gn, silent)
     Boolean 	  silent;   	/* TRUE if should not print messages */
 {
     int		  streamID;   	/* ID of stream opened to do the touch */
-    struct timeval times[2];	/* Times for utimes() call */
+    struct utimbuf times;	/* Times for utime() call */
 
     if (gn->type & (OP_JOIN|OP_USE|OP_EXEC|OP_OPTIONAL)) {
 	/*
@@ -1035,9 +1043,8 @@ Job_Touch(gn, silent)
     } else {
 	char	*file = gn->path ? gn->path : gn->name;
 
-	times[0].tv_sec = times[1].tv_sec = now;
-	times[0].tv_usec = times[1].tv_usec = 0;
-	if (utimes(file, times) < 0){
+	times.actime = times.modtime = now;
+	if (utime(file, &times) < 0){
 	    streamID = open(file, O_RDWR | O_CREAT, 0666);
 
 	    if (streamID >= 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.4 1995/06/14 15:19:03 christos Exp $	*/
+/*	$NetBSD: config.h,v 1.5 1996/02/04 20:34:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -88,7 +88,9 @@
 #define	LIBSUFF	".a"
 #define	RECHECK
 
-#ifndef RANLIBMAG
-#define RANLIBMAG "__.SYMDEF"
+#if !defined(__svr4__) && !defined(__SVR4)
+# ifndef RANLIBMAG
+#  define RANLIBMAG "__.SYMDEF"
+# endif
 #endif
 /*#define POSIX*/
