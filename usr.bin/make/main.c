@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.10 1997/01/15 23:42:51 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.11 1997/01/27 05:24:09 briggs Exp $	*/
 /*	$NetBSD: main.c,v 1.31 1996/11/06 17:59:12 christos Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.10 1997/01/15 23:42:51 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.11 1997/01/27 05:24:09 briggs Exp $";
 #endif
 #endif /* not lint */
 
@@ -490,8 +490,9 @@ main(argc, argv)
 	 * so we can share an executable for similar machines.
 	 * (i.e. m68k: amiga hp300, mac68k, sun3, ...)
 	 *
-	 * Note that while MACHINE is decided at run-time,
-	 * MACHINE_ARCH is always known at compile time.
+	 * Note that both MACHINE and MACHINE_ARCH can be overridden
+	 * by environment variables.  MACHINE through the getenv()
+	 * above and MACHINE_ARCH, below.
 	 */
     	if (!machine) {
 #ifndef MACHINE
@@ -599,7 +600,9 @@ main(argc, argv)
 	Var_Set("MFLAGS", "", VAR_GLOBAL);
 	Var_Set("MACHINE", machine, VAR_GLOBAL);
 #ifdef MACHINE_ARCH
-	Var_Set("MACHINE_ARCH", MACHINE_ARCH, VAR_GLOBAL);
+	if (NULL == getenv("MACHINE_ARCH")) {
+		Var_Set("MACHINE_ARCH", MACHINE_ARCH, VAR_GLOBAL);
+	}
 #endif
 
 	/*
