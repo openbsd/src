@@ -1,3 +1,3 @@
-block in quick on tun0 dup-to tun1:fec0::1 from any to 192.168.1.0/24
-block in quick on tun0 dup-to tun1:192.168.1.1 from any to fec0::1/128
+block in quick on tun0 dup-to (tun1 fec0::1) from any to 192.168.1.0/24
+block in quick on tun0 dup-to (tun1 192.168.1.1) from any to fec0::1/128
 
