@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.47 2003/07/02 21:04:10 deraadt Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.48 2003/09/09 04:46:44 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fstat.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: fstat.c,v 1.47 2003/07/02 21:04:10 deraadt Exp $";
+static char *rcsid = "$OpenBSD: fstat.c,v 1.48 2003/09/09 04:46:44 jmc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1100,7 +1100,7 @@ getfname(char *filename)
 void
 usage(void)
 {
-	fprintf(stderr, "usage: fstat [-fnv] [-p pid] [-u user] "
-	    "[-N system] [-M core] [file ...]\n");
+	fprintf(stderr, "usage: fstat [-fnov] [-M core] [-N system] "
+	    "[-p pid] [-u user] [file ...]\n");
 	exit(1);
 }
