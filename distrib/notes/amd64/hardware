@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.6 2004/03/15 22:24:58 grange Exp $
+dnl	$OpenBSD: hardware,v 1.7 2004/03/16 23:21:33 grange Exp $
 OpenBSD/MACHINE OSREV should work on all Athlon 64-based designs.
 
 OpenBSD does not currently support multiple processors (SMP), but will
@@ -596,7 +596,6 @@ Supported hardware {:-include-:}:
 		"PS/2"-style mice
 		Serial mice (uses serial port driver)
 	Sound Devices
-		AMD 768 and 8111 AC'97
 		C-Media CMI8[37]38
 		Cirrus Logic CrystalClear CS4280, CS4281
 		Ensoniq AudioPCI
@@ -620,15 +619,14 @@ Supported hardware {:-include-:}:
 		Brooktree 848/849/878/879-based TV tuner
 		D-Link DSB-R100 USB radio
 	Miscellaneous Devices
-		APM power management
 		Brooktree 8[47][89] based frame grabber and TV tuner cards,
 		including:
-		    Hauppauge Wincast TV
-		    STB TV PCI Television Tuner
-		    Miro PC TV
-		    Intel Smart Video Recorder III
-		    IMS TV Turbo
 		    AVer Media TV/FM
+		    Hauppauge Wincast TV
+		    IMS TV Turbo
+		    Intel Smart Video Recorder III
+		    Miro PC TV
+		    STB TV PCI Television Tuner
 		Hardware monitoring sensors, including:
 		    National Semiconductor LM78, LM78-J, LM79
 		    Winbond W83697HF, W83627HF, W83627THF, W83781D, W83782D
