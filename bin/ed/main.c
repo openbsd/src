@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.21 2001/01/17 19:19:31 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.22 2001/06/22 23:53:53 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
@@ -39,7 +39,7 @@ char *copyright =
 #if 0
 static char *rcsid = "@(#)main.c,v 1.1 1994/02/01 00:34:42 alm Exp";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.21 2001/01/17 19:19:31 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.22 2001/06/22 23:53:53 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -1454,7 +1454,7 @@ handle_hup(signo)
 		strlcat(path, "/ed.hup", sizeof(path));
 		write_file(hup, "w", 1, addr_last);
 	}
-	quit(2);
+	_exit(2);
 }
 
 
@@ -1463,7 +1463,7 @@ handle_int(signo)
 	int signo;
 {
 	if (!sigactive)
-		quit(1);
+		_exit(1);
 	sigflags &= ~(1 << (signo - 1));
 #ifdef _POSIX_SOURCE
 	siglongjmp(env, -1);
