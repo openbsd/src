@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.33 2003/10/31 09:00:32 mcbride Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.34 2004/10/28 20:34:57 henning Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -1006,6 +1006,7 @@ nd6_ifptomac(ifp)
 	case IFT_FDDI:
 	case IFT_IEEE1394:
 	case IFT_PROPVIRTUAL:
+	case IFT_CARP:
 	case IFT_L2VLAN:
 	case IFT_IEEE80211:
 		return ((caddr_t)(ifp + 1));
