@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.15 2004/04/27 23:20:42 henning Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.16 2004/04/28 00:38:39 henning Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -168,9 +168,9 @@ print_peer(struct peer_config *p)
 	else
 		printf("%s\tannounce ???\n", c);
 
-	if (p->auth.method == MD5SIG)
+	if (p->auth.method == AUTH_MD5SIG)
 		printf("%s\ttcp md5sig\n", c);
-	else if (p->auth.method == IPSEC_MANUAL_ESP) {
+	else if (p->auth.method == AUTH_IPSEC_MANUAL_ESP) {
 		printf("%s\tipsec esp in spi %u %s XXXXXX", c, p->auth.spi_in,
 		    print_auth_alg(p->auth.auth_alg_in));
 		if (p->auth.enc_alg_in)
@@ -183,7 +183,7 @@ print_peer(struct peer_config *p)
 			printf(" %s XXXXXX",
 			    print_enc_alg(p->auth.enc_alg_out));
 		printf("\n");
-	} else if (p->auth.method == IPSEC_IKE)
+	} else if (p->auth.method == AUTH_IPSEC_IKE)
 		printf("%s\tipsec ike\n", c);
 
 	if (p->attrset.flags)
