@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.19 1998/09/27 03:56:00 rahnds Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.20 1998/10/09 02:13:56 rahnds Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -892,6 +892,31 @@ ppc_intr_setup(intr_establish_t *establish, intr_disestablish_t *disestablish)
 	intr_establish_func = establish;
 	intr_disestablish_func = disestablish;
 }
+
+/*
+ * General functions to enable and disable interrupts
+ * without having inlined assembly code in many functions,
+ * should be moved into a header file for inlining the function
+ * so it is faster
+ */
+void
+ppc_intr_enable(void)
+{
+	u_int32_t emsr, dmsr;
+	__asm__ volatile("mfmsr %0" : "=r"(emsr));
+	dmsr = emsr | PSL_EE;
+	__asm__ volatile("mtmsr %0" :: "r"(dmsr));
+}
+
+void
+ppc_intr_disable(void)
+{
+	u_int32_t emsr, dmsr;
+	__asm__ volatile("mfmsr %0" : "=r"(emsr));
+	dmsr = emsr & ~PSL_EE;
+	__asm__ volatile("mtmsr %0" :: "r"(dmsr));
+}
+
 /*
  * probably should be ppc_space_copy
  */
