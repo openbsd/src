@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.13 2000/05/05 23:54:51 ho Exp $ */
+/* $OpenBSD: user.c,v 1.14 2000/06/09 16:34:24 millert Exp $ */
 /* $NetBSD: user.c,v 1.17 2000/04/14 06:26:55 simonb Exp $ */
 
 /*
@@ -144,7 +144,7 @@ enum {
 };
 
 /* Full paths of programs used here */
-#define CHOWN		"/usr/sbin/chown"
+#define CHOWN		"/sbin/chown"
 #define MKDIR		"/bin/mkdir"
 #define MV		"/bin/mv"
 #define NOLOGIN		"/sbin/nologin"
