@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.1 1998/01/28 11:14:56 pefo Exp $	*/
+/*	$OpenBSD: signal.h,v 1.2 1999/01/27 04:10:03 imp Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -38,6 +38,9 @@
  *	@(#)signal.h	8.1 (Berkeley) 6/10/93
  */
 
+#ifndef _MIPS_SIGNAL_H_
+#define _MIPS_SIGNAL_H_
+
 /*
  * Machine-dependent signal definitions
  */
@@ -65,3 +68,4 @@ struct	sigcontext {
 };
 
 #endif	/* !_ANSI_SOURCE */
+#endif	/* !_MIPS_SIGNAL_H_ */
