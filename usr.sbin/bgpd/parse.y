@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.145 2004/11/18 17:07:38 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.146 2004/11/19 10:03:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1114,13 +1114,14 @@ filter_set_opt	: LOCALPREF number		{
 			$$.med = $2;
 		}
 		| NEXTHOP address		{
+			$$.flags = SET_NEXTHOP;
 			memcpy(&$$.nexthop, &$2, sizeof($$.nexthop));
 		}
 		| NEXTHOP BLACKHOLE		{
-			$$.flags |= SET_NEXTHOP_BLACKHOLE;
+			$$.flags = SET_NEXTHOP_BLACKHOLE;
 		}
 		| NEXTHOP REJECT		{
-			$$.flags |= SET_NEXTHOP_REJECT;
+			$$.flags = SET_NEXTHOP_REJECT;
 		}
 		| PREPEND_SELF number		{
 			$$.flags = SET_PREPEND_SELF;
