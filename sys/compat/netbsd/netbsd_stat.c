@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_stat.c,v 1.2 1999/09/14 01:05:25 kstailey Exp $	*/
+/*	$OpenBSD: netbsd_stat.c,v 1.3 1999/09/17 12:13:47 kstailey Exp $	*/
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -88,7 +88,7 @@ openbsd_to_netbsd_stat(obst, nbst)
 	nbst->st_blksize = obst->st_blksize;
 	nbst->st_flags = obst->st_flags;
 	nbst->st_gen = obst->st_gen;
-	memcpy(nbst->st_qspare, obst->st_qspare, sizeof(nbst->st_qspare));
+	bcopy(obst->st_qspare, nbst->st_qspare, sizeof(obst->st_qspare));
 }
 
 /*
@@ -138,7 +138,7 @@ netbsd_sys___lstat13(p, v, retval)
 {
 	register struct netbsd_sys___lstat13_args /* {
 		syscallarg(const char *) path;
-		syscallarg(struct netbsd_stat *) nsb;
+		syscallarg(struct netbsd_stat *) ub;
 	} */ *uap = v;
 	struct netbsd_stat nsb;
 	struct stat sb;
@@ -173,7 +173,7 @@ netbsd_sys___fstat13(p, v, retval)
 {
 	register struct netbsd_sys___fstat13_args /* {
 		syscallarg(int) fd;
-		syscallarg(struct netbsd_stat *) nsb;
+		syscallarg(struct netbsd_stat *) ub;
 	} */ *uap = v;
 	int fd = SCARG(uap, fd);
 	register struct filedesc *fdp = p->p_fd;
@@ -202,6 +202,6 @@ netbsd_sys___fstat13(p, v, retval)
 	if (error)
 		return (error);
 	openbsd_to_netbsd_stat(&sb, &nsb);
-		error = copyout(&nsb, SCARG(uap, ub), sizeof(nsb));
+	error = copyout(&nsb, SCARG(uap, ub), sizeof(nsb));
 	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_stat.h,v 1.1 1999/09/12 14:15:16 kstailey Exp $	*/
+/*	$OpenBSD: netbsd_stat.h,v 1.2 1999/09/17 12:13:47 kstailey Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -78,7 +78,7 @@ struct netbsd_stat {
 	dev_t	  st_dev;		/* inode's device */
 	ino_t	  st_ino;		/* inode's number */
 	mode_t	  st_mode;		/* inode protection mode */
-	nlink_t	  st_nlink;		/* number of hard links */
+	netbsd_nlink_t	  st_nlink;	/* number of hard links */
 	uid_t	  st_uid;		/* user ID of the file's owner */
 	gid_t	  st_gid;		/* group ID of the file's group */
 	dev_t	  st_rdev;		/* device type */
