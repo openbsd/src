@@ -1,4 +1,4 @@
-/*	$OpenBSD: start.s,v 1.2 2000/10/04 04:57:29 bjc Exp $ */
+/*	$OpenBSD: start.s,v 1.3 2000/11/25 21:33:08 hugh Exp $ */
 /*	$NetBSD: start.s,v 1.2 1999/10/23 14:40:38 ragge Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
@@ -147,7 +147,7 @@ cont_750:
 	movl	r11, r5
 	brw	start_all
 
-	.org 0x200
+	.org 0x300
 
 start_uvax:
 	mtpr	$0, $PR_MAPEN	# Turn off MM, please.
