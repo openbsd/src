@@ -1,4 +1,4 @@
-/*	$OpenBSD: xinstall.c,v 1.7 1996/08/18 22:08:31 millert Exp $	*/
+/*	$OpenBSD: xinstall.c,v 1.8 1996/09/22 20:17:54 imp Exp $	*/
 /*	$NetBSD: xinstall.c,v 1.9 1995/12/20 10:25:17 jonathan Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #endif
-static char rcsid[] = "$OpenBSD: xinstall.c,v 1.7 1996/08/18 22:08:31 millert Exp $";
+static char rcsid[] = "$OpenBSD: xinstall.c,v 1.8 1996/09/22 20:17:54 imp Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -533,28 +533,28 @@ void
 install_dir(path)
         char *path;
 {
-        register char *p;
-        struct stat sb;
-        int ch;
+	register char *p;
+	struct stat sb;
+	int ch;
 
-        for (p = path;; ++p)
-                if (!*p || (p != path && *p  == '/')) {
-                        ch = *p;
-                        *p = '\0';
-                        if (stat(path, &sb)) {
-                                if (errno != ENOENT || mkdir(path, 0777) < 0) {
+	for (p = path;; ++p)
+		if (!*p || (p != path && *p  == '/')) {
+			ch = *p;
+			*p = '\0';
+			if (stat(path, &sb)) {
+				if (errno != ENOENT || mkdir(path, 0777) < 0) {
 					err(EX_OSERR, "%s", path);
 					/* NOTREACHED */
-                                }
-                        }
-                        if (!(*p = ch))
+				}
+			}
+			if (!(*p = ch))
 				break;
-                }
+ 		}
 
 	if (((gid != (gid_t)-1 || uid != (uid_t)-1) && chown(path, uid, gid)) ||
-            chmod(path, mode)) {
-                warn("%s", path);
-        }
+	    chmod(path, mode)) {
+		warn("%s", path);
+	}
 }
 
 /*
