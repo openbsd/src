@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_object.h,v 1.9 1998/03/01 00:38:17 niklas Exp $	*/
+/*	$OpenBSD: vm_object.h,v 1.10 2000/01/27 18:52:42 art Exp $	*/
 /*	$NetBSD: vm_object.h,v 1.16 1995/03/29 22:10:28 briggs Exp $	*/
 
 /* 
@@ -75,6 +75,7 @@
 #include <vm/vm_page.h>
 #include <vm/vm_pager.h>
 
+#if !defined(UVM)
 /*
  *	Types defined:
  *
@@ -228,4 +229,5 @@ void		 vm_object_shadow __P((vm_object_t *,
 		    vm_offset_t *, vm_size_t));
 void		 vm_object_terminate __P((vm_object_t));
 #endif
+#endif /* UVM */
 #endif /* _VM_OBJECT_ */
