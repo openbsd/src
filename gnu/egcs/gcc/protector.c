@@ -2281,6 +2281,22 @@ push_frame_in_operand (insn, orig, push_size, boundary)
 	  return;
 	}
       /*
+	Handle alpha case:
+	 (plus:SI (subreg:SI (reg:DI 63 FP) 0) (const_int 64 [0x40]))
+      */
+      if (CONSTANT_P (XEXP (x, 1))
+	  && GET_CODE (XEXP (x, 0)) == SUBREG
+	  && SUBREG_REG (XEXP (x, 0)) == frame_pointer_rtx)
+	{
+	  if (x->used || offset < boundary)
+	    return;
+
+	  XEXP (x, 1) = gen_rtx_CONST_INT (VOIDmode, offset + push_size);
+	  x->used = 1; insn_pushed = TRUE;
+
+	  return;
+	}
+      /*
 	Handle powerpc case:
 	 (set (reg x) (plus fp const))
 	 (set (.....) (... (plus (reg x) (const B))))
