@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.89 2002/03/31 03:05:04 krw Exp $
+#	$OpenBSD: install.sh,v 1.90 2002/03/31 15:30:42 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -72,12 +72,12 @@
 
 # A list of devices holding filesystems and the associated mount points
 # is kept in the file named FILESYSTEMS.
-FILESYSTEMS="/tmp/filesystems"
+FILESYSTEMS=/tmp/filesystems
 
 # The Fully Qualified Domain Name
 FQDN=
 
-MODE="install"
+MODE=install
 
 # include machine-dependent functions
 # The following functions must be provided:
@@ -113,7 +113,7 @@ else
 	echo "otherwise you should reboot the miniroot and start over..."
 	echo -n "Skip disk initialization? [n] "
 	getresp n
-	case "$resp" in
+	case $resp in
 	y*|Y*)	echo
 		echo "Cool!  Let's get to it..."
 		echo
@@ -214,14 +214,18 @@ __EOT
 			while : ; do
 				echo -n "Mount point for ${DISK}${_pp} (size=${_ps}k) [$_mp, RET, none, or done]? "
 				getresp "$_mp"
-				case "X${resp}" in
-				X/*)	_mount_points[${_i}]=$resp
-					break ;;
-				Xdone|X)
-					break ;;
-				Xnone)	_mount_points[${_i}]=
-					break;;
-				*)	echo "mount point must be an absolute path!";;
+				case $resp in
+				/*)	_mount_points[${_i}]=$resp
+					break
+					;;
+				done|"")break
+					;;
+				none)	_mount_points[${_i}]=
+					break
+					;;
+				*)	echo "mount point must be an absolute path!"
+					break
+					;;
 				esac
 			done
 			_i=$(( ${_i} + 1 ))
@@ -260,7 +264,7 @@ __EOT
 
 	echo -n	"Are you really sure that you're ready to proceed? [n] "
 	getresp n
-	case "$resp" in
+	case $resp in
 	y*|Y*)	;;
 	*)	echo "ok, try again later..."
 		exit
@@ -294,7 +298,7 @@ will be preserved and copied into the new root filesystem.
 __EOT
 echo -n	"Configure the network? [y] "
 getresp y
-case "$resp" in
+case $resp in
 y*|Y*)	donetconfig
 	;;
 esac
@@ -323,7 +327,7 @@ mount | while read line; do
 		echo "You appear to be running diskless."
 		echo -n	"Are the install sets on one of your currently mounted filesystems? [n] "
 		getresp n
-		case "$resp" in
+		case $resp in
 		y*|Y*)	get_localdir
 			;;
 		esac
@@ -332,7 +336,7 @@ done
 
 echo
 echo 'Please enter the initial password that the root account will have.'
-_oifs="$IFS"
+_oifs=$IFS
 IFS=
 resp=
 while [ "X${resp}" = X"" ]; do
@@ -341,7 +345,7 @@ while [ "X${resp}" = X"" ]; do
 	getresp -n
 	stty echo
 	echo
-	_password="$resp"
+	_password=$resp
 
 	echo -n "Password (again): "
 	stty -echo
@@ -353,7 +357,7 @@ while [ "X${resp}" = X"" ]; do
 		resp=
 	fi
 done
-IFS="$_oifs"
+IFS=$_oifs
 
 md_questions
 

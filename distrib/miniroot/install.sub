@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.195 2002/03/31 03:05:04 krw Exp $
+#	$OpenBSD: install.sub,v 1.196 2002/03/31 15:30:42 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -78,14 +78,14 @@ getresp() {
 	fi
 
 	set -o noglob
-	valid=""
+	valid=
 	while [ "X$valid" = "X" ]; do
 		read resp
 		if [ ${_no_shell} -eq 1 ]; then
-			test -z "$resp" && resp="$1"
+			test -z "$resp" && resp=$1
 		else
-			case "$resp" in
-			"")	resp="$1"
+			case $resp in
+			"")	resp=$1
 				;;
 			!)	echo "Type 'exit' to return to install."
 				sh
@@ -96,7 +96,7 @@ getresp() {
 				;;
 			esac
 		fi
-		valid="true"
+		valid=true
 	done
 	set +o noglob
 }
@@ -122,7 +122,7 @@ addel() {
 	while [ $# != 0 ]; do
 		echo "$1"
 		if [ "$_a" = "$1" ]; then
-			_seen="yes"
+			_seen=yes
 		fi
 		shift
 	done
@@ -146,10 +146,10 @@ rmel() {
 
 cutword () {
 # read lines on stdin, return Nth element of each line, like cut(1)
-	local _a _n _oifs="$IFS"
+	local _a _n _oifs=$IFS
 
 	# optional field separator
-	case "$1" in
+	case $1 in
 	-t?*) IFS=${1#-t}; shift;;
 	esac
 
@@ -159,20 +159,20 @@ cutword () {
 		test "$1" = "" && break
 		eval echo \$$_n
 	done
-	IFS="$_oifs"
+	IFS=$_oifs
 }
 
 cutlast () {
 # read a line of data, return last element. Equiv. of awk '{print $NF}'.
-	local _a _oifs="$IFS"
+	local _a _oifs=$IFS
 
 	# optional field separator
-	case "$1" in
+	case $1 in
 	-t?*)	IFS=${1#-t}; shift;;
 	esac
 
 	read _a; set -- $_a
-	IFS="$_oifs"
+	IFS=$_oifs
 	if [ "$1" = "" ]; then return; fi
 	while [ "$#" -gt 10 ]; do shift 10; done
 	eval echo \$$#
@@ -192,10 +192,10 @@ basename () {
 	local _oifs
 
 	if [ "$1" = "" ]; then return; fi
-	_oifs="$IFS"
-	IFS="/"
+	_oifs=$IFS
+	IFS=/
 	set -- $1
-	IFS="$_oifs"
+	IFS=$_oifs
 	while [ "$#" -gt 10 ]; do shift 10; done
 	eval echo \$$#
 }
@@ -256,7 +256,7 @@ bsort() {
 
 dir_has_sets() {
 	# return true when the directory $1 contains a set for $2...$n
-	local _dir="$1" _file
+	local _dir=$1 _file
 
 	shift
 	for _file in $*
@@ -317,13 +317,13 @@ get_localdir() {
 	while : ; do
 		echo -n "Enter the pathname where the sets are stored: [$_dir] "
 		getresp "$_dir"
-		_dir="$resp"
+		_dir=$resp
 
 		# Allow break-out with empty response
 		if [ -z "$_dir" ]; then
 			echo -n "Are you sure you don't want to set the pathname? [n] "
 			getresp n
-			case "$resp" in
+			case $resp in
 			y*|Y*)	break
 				;;
 			*)	continue
@@ -333,7 +333,7 @@ get_localdir() {
 
 		if dir_has_sets "$_mp/$_dir" $THESETS
 		then
-			local_sets_dir="$_mp/$_dir"
+			local_sets_dir=$_mp/$_dir
 			break
 		else
 			cat << __EOT
@@ -342,7 +342,7 @@ upgrade sets.
 __EOT
 			echo -n "Re-enter pathname? [y] "
 			getresp y
-			case "$resp" in
+			case $resp in
 			y*|Y*)	;;
 			*)	local_sets_dir=
 				break
@@ -366,7 +366,7 @@ __EOT
 	if [ "X${resp}" = "Xdone" ]; then
 		DISK=done
 	elif isin $resp $_DKDEVS ; then
-		DISK="$resp"
+		DISK=$resp
 	else
 		echo
 		echo "The disk $resp does not exist."
@@ -395,7 +395,7 @@ __EOT
 	echo -n "Which disk is the root disk? [${_defdsk}] "
 	getresp "$_defdsk"
 	if isin $resp $_DKDEVS ; then
-		ROOTDISK="$resp"
+		ROOTDISK=$resp
 	else
 		echo
 		echo "The disk '$resp' does not exist."
@@ -463,12 +463,12 @@ __EOT
 		fi
 		echo -n	"Configure which interface? (or 'done') [$_ouranswer] "
 		getresp "$_ouranswer"
-		case "$resp" in
+		case $resp in
 		"done")	;;
 		"")	_reprompt=0
 			;;
 		*)	_ifs=$resp
-			_ouranswer="done"
+			_ouranswer=done
 			if isin $_ifs $_IFS ; then
 				if configure_ifs $_ifs ; then
 					_ifsdone="$_ifs $_ifsdone"
@@ -702,7 +702,7 @@ enable_network() {
 			if [ "$cmd2" ]; then
 				# we are carrying over from the 'read dt dtaddr' last time
 				set -- $cmd2
-				af="$1" name="$2" mask="$3" bcaddr="$4" ext1="$5" cmd2=
+				af=$1 name=$2 mask=$3 bcaddr=$4 ext1=$5 cmd2=
 				# make sure and get any remaining args in ext2, like the read below
 				i=1; while [ i -lt 6 -a -n "$1" ]; do shift; let i=i+1; done
 				ext2="$@"
@@ -712,7 +712,7 @@ enable_network() {
 			fi
 			# $af can be "dhcp", "up", "rtsol", an address family, commands, or
 			# a comment.
-			case "$af" in
+			case $af in
 			"#"*|"!"*|"bridge"|""|"rtsol")
 				# skip comments, user commands, bridges,
 				# IPv6 rtsol and empty lines
@@ -742,7 +742,7 @@ enable_network() {
 					alias=
 				fi
 				cmd="ifconfig $if $af $alias $name "
-				case "$dt" in
+				case $dt in
 				dest)	cmd="$cmd $dtaddr"
 					;;
 				[a-z!]*)
@@ -825,7 +825,7 @@ get_selection() {
 # Do globbing on the selection and parse +/-, sets _get_files and _setsdone
 # (which must exist in the local namespace) as side effects.
 glob_selection() {
-	local _selection="$1" _parent_dir="$2" _sets="$3"
+	local _selection=$1 _parent_dir=$2 _sets=$3
 	local _action _matched _tfile _f
 
 	if [ "X${_selection}" = X"" ]; then
@@ -834,10 +834,10 @@ glob_selection() {
 
 	# Change +/- into add/remove
 	_action=add
-	case "$_selection" in
-	+*)	_selection="${_selection#?}"
+	case $_selection in
+	+*)	_selection=${_selection#?}
 		;;
-	-*)	_selection="${_selection#?}"
+	-*)	_selection=${_selection#?}
 		_action=remove
 		;;
 	esac
@@ -905,7 +905,7 @@ local _sets _kernel _f _file_list _get_files _failed_files _osetsdone
 local _url_type _url_base _url_login _url_pass _oifs
 
 # Parse arguments, shell style
-case "$1" in
+case $1 in
 -ftp)	_url_type=ftp ;;
 -http)	_url_type=http ;;
 esac
@@ -930,7 +930,7 @@ else
 fi
 if [ "${_url_type}" = "ftp" -a "X$ftp_proxy" = "X" ]; then
 	# Use active mode ftp? (irrelevant if using a proxy)
-	case "${_ftp_active}" in
+	case $_ftp_active in
 	-A)	resp=y ;;
 	*)	resp=n ;;
 	esac
@@ -940,7 +940,7 @@ if [ "${_url_type}" = "ftp" -a "X$ftp_proxy" = "X" ]; then
 	echo "In this case, you should explicitly request an active session."
 	echo -n "Do you want to use active ftp? [${resp}] "
 	getresp "$resp"
-	case "$resp" in
+	case $resp in
 	y*|Y*)	_ftp_active=-A ;;
 	*)	unset _ftp_active ;;
 	esac
@@ -950,7 +950,7 @@ fi
 test -z "$_ftp_getlist" && _ftp_getlist=y
 echo -n "Do you want a list of potential ${_url_type} servers? [${_ftp_getlist}] "
 getresp "$_ftp_getlist"
-case "$resp" in
+case $resp in
 n*|N*)	_ftp_getlist=n
 	;;
 *)
@@ -993,21 +993,21 @@ while [ "X${resp}" = X"" ]; do
 			cutword -t' ' 1 | cutword -t' ' 1`
 		host=`echo $url | cutword -t/ 1`
 		path=`echo $url | sed -e "s/^${host}\///"`
-		path="${path}/${VERSION_MAJOR}.${VERSION_MINOR}/${ARCH}"
+		path=${path}/${VERSION_MAJOR}.${VERSION_MINOR}/${ARCH}
 		eval _${_url_type}_server_ip=$host
 		eval _${_url_type}_server_dir=$path
 		# do it again, just to double check
 		resp=
 		echo "Using	$tline"
 	else
-		eval _${_url_type}_server_ip="$resp"
+		eval _${_url_type}_server_ip=$resp
 	fi
 done
 
 # Get server directory
 if [ "${_url_type}" = "ftp" -a "X${_ftp_server_dir}" = X"" ]; then
 	# Default ftp dir
-	_ftp_server_dir="pub/OpenBSD/${VERSION_MAJOR}.${VERSION_MINOR}/${ARCH}"
+	_ftp_server_dir=pub/OpenBSD/${VERSION_MAJOR}.${VERSION_MINOR}/${ARCH}
 fi
 resp=
 while [ "X${resp}" = X"" ]; do
@@ -1027,13 +1027,13 @@ if [ "${_url_type}" = "ftp" ]; then
 
 	# Get login name, setting IFS to nothing so trailing or
 	# embedded blanks are preserved!
-	_oifs="$IFS"
+	_oifs=$IFS
 	IFS=
 	resp=
 	while [ "X${resp}" = X"" ]; do
 		echo -n "Login? [${_ftp_server_login}] "
 		getresp "$_ftp_server_login"
-		_ftp_server_login="$resp"
+		_ftp_server_login=$resp
 	done
 
 	# Get password unless anonymous
@@ -1045,20 +1045,20 @@ if [ "${_url_type}" = "ftp" ]; then
 			getresp -n "$_ftp_server_password"
 			stty echo
 			echo
-			_ftp_server_password="$resp"
+			_ftp_server_password=$resp
 		done
 	else
 		# only used by ftp_list_files()
 		_ftp_server_password=root@`hostname`.${FQDN}
 	fi
-	IFS="$_oifs"
+	IFS=$_oifs
 fi
 
 # Build up the base url since it is so nasty...
 if [ "${_url_type}" = "ftp" -a "${_ftp_server_login}" != "anonymous" ]; then
 	_url_login=`encode_for_url "${_ftp_server_login}"`
 	_url_pass=`encode_for_url "${_ftp_server_password}"`
-	_url_base="ftp://${_url_login}:${_url_pass}@${_ftp_server_ip}/${_ftp_server_dir}"
+	_url_base=ftp://${_url_login}:${_url_pass}@${_ftp_server_ip}/${_ftp_server_dir}
 else
 	eval _url_base=${_url_type}://\$_${_url_type}_server_ip/\$_${_url_type}_server_dir
 fi
@@ -1090,14 +1090,14 @@ else
 	eval echo "There are no OpenBSD install sets available in \"\$_${_url_type}_server_dir\"."
 	echo -n "Search for *.tar.gz and *.tgz files? [y] "
 	getresp y
-	case "$resp" in
+	case $resp in
 	n*|N*)	return ;;
 	esac
 	# *.tar.gz and *.tgz are possible sets
 	_sets=
 	_kernel=
 	for _f in ${_file_list} ; do
-		case "$_f" in
+		case $_f in
 		*.tar.gz|*.tgz)	_sets="$_sets ${_f}"
 		esac
 	done
@@ -1105,7 +1105,7 @@ else
 		echo "There are no *.tar.gz or *.tgz files in that dir."
 		echo -n "See a directory listing? [y] "
 		getresp y
-		case "$resp" in
+		case $resp in
 		n*|N*)	return ;;
 		esac
 		echo
@@ -1127,12 +1127,12 @@ eval echo "\\\\n"\
 "these sets are required for your ${MODE} and some are optional -- you will want\\\\n"\
 "at least the base and bsd sets.  Consult the installation notes if you are not\\\\n"\
 "sure which sets are required!"
-_osetsdone="$_setsdone"
+_osetsdone=$_setsdone
 # Set the minimal default
 for _f in $_sets $_kernel; do
 	# From logic above, $_sets contains only .tgz and .tar.gz
 	# file names, and $_kernel is empty or 'bsd'.
-	case "$_f" in
+	case $_f in
 	base*|bsd|comp*|etc*|game*|man*|misc*)
 		if ! isin ${_f} ${_setsdone}; then
 			_get_files=`addel ${_f} ${_get_files}`
@@ -1175,9 +1175,9 @@ echo
 echo "Fetching files via ${_url_type} may take a long time, especially over a slow network"
 echo -n "connection. Ready to download files? [y] "
 getresp y
-case "$resp" in
+case $resp in
 y*|Y*)	;;
-*)	_setsdone="$_osetsdone"
+*)	_setsdone=$_osetsdone
 	return
 	;;
 esac
@@ -1250,7 +1250,7 @@ else
 	echo "There are no OpenBSD install sets available in \"$1\"."
 	echo -n "Search for *.tar.gz and *.tgz files? [y] "
 	getresp y
-	case "$resp" in
+	case $resp in
 	n*|N*)	return ;;
 	esac
 	# *.tar.gz and *.tgz are possible sets
@@ -1261,7 +1261,7 @@ else
 		echo "There are no *.tar.gz or *.tgz files in that dir."
 		echo -n "See a directory listing? [y] "
 		getresp y
-		case "$resp" in
+		case $resp in
 		n*|N*)	return ;;
 		esac
 		echo
@@ -1282,10 +1282,10 @@ echo "\n"\
 "Some of these sets are required for your ${MODE} and some are optional --\n"\
 "You will want at least the base and bsd sets.\n"\
 "Consult the installation notes if you are not sure which sets are required!"
-_osetsdone="$_setsdone"
+_osetsdone=$_setsdone
 # Set a minimal default
 for _f in $_sets $_kernel; do
-	case "$_f" in
+	case $_f in
 	# From logic above, $_sets contains only .tgz and .tar.gz
 	# file names, and $_kernel is empty or 'bsd'.
 	base*|bsd|comp*|etc*|game*|man*|misc*)
@@ -1326,9 +1326,9 @@ fi
 echo
 echo -n "Ready to extract selected file sets? [y] "
 getresp y
-case "$resp" in
+case $resp in
 y*|Y*)	;;
-*)	_setsdone="$_osetsdone"
+*)	_setsdone=$_osetsdone
 	return
 	;;
 esac
@@ -1397,7 +1397,7 @@ __EOT
 _drive=`echo $_CDDEVS | cutword 1`
 echo -n	"Which CD-ROM contains the installation media? [$_drive] "
 getresp "$_drive"
-case "$resp" in
+case $resp in
 abort)	echo "Aborting."
 	return
 	;;
@@ -1440,7 +1440,7 @@ else
 	while [ "X${resp}" = X"" ]; do
 		echo -n 'CD-ROM partition to mount? (normally "c") [c] '
 		getresp c
-		case "$resp" in
+		case $resp in
 		$_range)
 			_part=$resp
 			;;
@@ -1463,7 +1463,7 @@ __EOT
 	while [ "X${resp}" = X"" ]; do
 		echo -n "Which filesystem type? [cd9660] "
 		getresp cd9660
-		case "$resp" in
+		case $resp in
 		cd9660|ffs)
 			_fstype=$resp
 			;;
@@ -1484,7 +1484,7 @@ fi
 
 # Get the directory where the file lives
 resp=
-_directory="${VERSION_MAJOR}.${VERSION_MINOR}/${ARCH}"
+_directory=${VERSION_MAJOR}.${VERSION_MINOR}/${ARCH}
 echo "Enter the directory relative to the mount point that contains"
 echo -n "the file: [${_directory}] "
 
@@ -1514,7 +1514,7 @@ __EOT
 echo -n	"Which is the disk with the installation sets? [abort] "
 getresp abort
 
-case "$resp" in
+case $resp in
 abort)	echo "Aborting."
 	return 0
 	;;
@@ -1558,7 +1558,7 @@ resp=
 while [ "X${resp}" = X"" ]; do
 	echo -n "Partition? [$_def_partition] "
 	getresp "$_def_partition"
-	case "$resp" in
+	case $resp in
 	$_partition_range)
 		_partition=$resp
 		;;
@@ -1581,19 +1581,19 @@ _md_fsopts=`md_native_fsopts`
 if [ ! -z "$_md_fstype" ]; then
 	echo "	$_md_fstype"
 else
-	_md_fstype="_undefined_"
+	_md_fstype=_undefined_
 fi
 resp=
 while [ "X${resp}" = X"" ]; do
 	echo -n "Which filesystem type? [default] "
 	getresp default
-	case "$resp" in
+	case $resp in
 	default)
 		_fstype=
-		_fsopts="ro"
+		_fsopts=ro
 		;;
 	ffs)	_fstype="-t $resp"
-		_fsopts="async,ro"
+		_fsopts=async,ro
 		;;
 	$_md_fstype)
 		_fstype="-t $resp"
@@ -1649,8 +1649,8 @@ install_nfs() {
 	# Determine use of TCP
 	echo -n "Use TCP transport? (only works with capable NFS server) [n] "
 	getresp n
-	case "$resp" in
-	y*|Y*)	_nfs_tcp="-T"
+	case $resp in
+	y*|Y*)	_nfs_tcp=-T
 		;;
 	*)	_nfs_tcp=
 		;;
@@ -1692,7 +1692,7 @@ while [ "X${resp}" = X"" ]; do
 	getresp "$_tape"
 done
 _tape=`basename $resp`
-TAPE="/dev/${_tape}"
+TAPE=/dev/${_tape}
 if [ ! -c $TAPE ]; then
 	echo "$TAPE does not exist or is not a character special file."
 	echo "Aborting."
@@ -1714,7 +1714,7 @@ resp=
 while [ "X${resp}" = X"" ]; do
 	echo -n "File number? "
 	getresp
-	case "$resp" in
+	case $resp in
 	[1-9]*)	_nskip=$(( $resp - 1 ))
 		;;
 	*)	echo "Invalid file number ${resp}."
@@ -1746,7 +1746,7 @@ resp=
 while [ "X${resp}" = X"" ]; do
 	echo -n "Which way is it? [1] "
 	getresp 1
-	case "$resp" in
+	case $resp in
 	1)	_xcmd="tar -zxvpf -"
 		;;
 	2)	_xcmd="tar -xvpf -"
@@ -1797,9 +1797,9 @@ fi
 while : ; do
 	echo -n	"What timezone are you in? (\`?' for list) [$TZ] "
 	getresp "$TZ"
-	case "$resp" in
+	case $resp in
 	"")	echo "Timezone defaults to GMT"
-		TZ="GMT"
+		TZ=GMT
 		break
 		;;
 	"?")	ls -F ${_zonepath}/usr/share/zoneinfo
@@ -1810,7 +1810,7 @@ while : ; do
 			echo " within zone '$_a'"
 			echo -n "Select a sub-timezone (\`?' for list): "
 			getresp
-			case "$resp" in
+			case $resp in
 			"?")	ls -F ${_zonepath}/usr/share/zoneinfo/$_a ;;
 			*)	_a=${_a}/${resp}
 				if [ -f ${_zonepath}/usr/share/zoneinfo/$_a ]; then
@@ -1820,7 +1820,7 @@ while : ; do
 			esac
 		done
 		if [ -f ${_zonepath}/usr/share/zoneinfo/$_a ]; then
-			TZ="$_a"
+			TZ=$_a
 			echo "You have selected timezone \"$_a\"".
 			return
 		fi
@@ -1866,7 +1866,7 @@ __EOT
 }
 
 install_sets() {
-local _yup="FALSE" _have_nfs
+local _yup=FALSE _have_nfs
 
 # Can we do an NFS install?
 test -f /sbin/mount_nfs && _have_nfs=true
@@ -1884,7 +1884,7 @@ __EOT
 if [ "X$local_sets_dir" != "X" ]; then
 	install_from_mounted_fs "${local_sets_dir}"
 	if [ X"$_setsdone" != X ]; then
-		_yup="TRUE"
+		_yup=TRUE
 	fi
 fi
 
@@ -1898,7 +1898,7 @@ while [ X"${resp}" = X ]; do
 		test -n "$_have_nfs" && echo -n ", (N)FS"
 		echo -n " or local (d)isk? "
 		getresp
-		case "$resp" in
+		case $resp in
 		d*|D*)	install_disk
 			resp=d
 			;;
@@ -1931,7 +1931,7 @@ while [ X"${resp}" = X ]; do
 		esac
 	else
 		# So we'll ask next time
-		_yup="FALSE"
+		_yup=FALSE
 	fi
 
 	# Perform sanity checks...
@@ -1941,7 +1941,7 @@ while [ X"${resp}" = X ]; do
 		echo
 		echo -n	"Extract more sets? [n] "
 		getresp n
-		case "$resp" in
+		case $resp in
 		y*|Y*)	# Force loop to repeat
 			resp=
 			;;
@@ -1962,14 +1962,14 @@ munge_fstab() {
 	while read _dev _mp _fstype _opt _rest; do
 		# Skip comment lines, non-ffs filesystems and
 		# 'noauto' filesystems.
-		case "$_dev" in
+		case $_dev in
 		\#*)	continue ;;
 		esac
-		case "$_fstype" in
+		case $_fstype in
 		ffs)	;;
 		*)	continue ;;
 		esac
-		case "$_opt" in
+		case $_opt in
 		*noauto*)
 			continue ;;
 		esac
@@ -2137,7 +2137,7 @@ donetconfig() {
 	echo "a default route, or any name servers."
 	echo
 
-	FQDN=""
+	FQDN=
 	get_fqdn /tmp/resolv.conf
 
 	configure_all_interfaces
@@ -2185,7 +2185,7 @@ donetconfig() {
 			sed -e 's/^nameserver //'`
 			do
 			if [ "X${resp}" = "X" ]; then
-				resp="$n"
+				resp=$n
 			else
 				resp="$resp $n"
 			fi
@@ -2202,7 +2202,7 @@ donetconfig() {
 
 		echo -n "Would you like to use the nameserver now? [y] "
 		getresp y
-		case "$resp" in
+		case $resp in
 		y*|Y*)	cp /tmp/resolv.conf /tmp/resolv.conf.shadow
 			;;
 		esac
@@ -2221,7 +2221,7 @@ to refer to the server by name rather than by its numeric ip address.
 __EOT
 		echo -n "Would you like to edit the host table with ${EDITOR}? [n] "
 		getresp n
-		case "$resp" in
+		case $resp in
 		y*|Y*)	${EDITOR} /tmp/hosts
 			;;
 		esac
@@ -2236,7 +2236,7 @@ to redo the default route in the event that it failed above.
 __EOT
 	echo -n "Escape to shell? [n] "
 	getresp n
-	case "$resp" in
+	case $resp in
 	y*|Y*)	echo "Type 'exit' to return to install."
 		sh
 		;;

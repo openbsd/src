@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: upgrade.sh,v 1.26 2002/03/31 03:05:04 krw Exp $
+#	$OpenBSD: upgrade.sh,v 1.27 2002/03/31 15:30:42 krw Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -44,7 +44,7 @@
 #	In a perfect world, this would be a nice C program, with a reasonable
 #	user interface.
 
-MODE="upgrade"
+MODE=upgrade
 
 # include machine-dependent functions
 # The following functions must be provided:
@@ -75,7 +75,7 @@ THESETS=`echo $THESETS | sed -e 's/ etc / /'`
 md_welcome_banner
 echo -n "Proceed with upgrade? [n] "
 getresp n
-case "$resp" in
+case $resp in
 y*|Y*)	echo	"Cool!  Let's get to it..."
 	;;
 *)	md_not_going_to_install
@@ -99,7 +99,7 @@ resp=
 while [ "X${resp}" = "X" ]; do
 	echo -n	"Root filesystem? [${ROOTDISK}a] "
 	getresp "${ROOTDISK}a"
-	_root_filesystem="/dev/`basename $resp`"
+	_root_filesystem=/dev/`basename $resp`
 	if [ ! -b ${_root_filesystem} ]; then
 		echo "Sorry, ${_root_filesystem} is not a block device."
 		resp=
@@ -147,7 +147,7 @@ if you wish to use the network installation capabilities of this program.
 __EOT
 echo -n	"Enable network? [y] "
 getresp y
-case "$resp" in
+case $resp in
 y*|Y*)
 	if ! enable_network; then
 		echo "ERROR: can't enable network!"
@@ -164,7 +164,7 @@ opportunity to redo the default route in the event that it failed above.
 __EOT
 	echo -n "Escape to shell? [n] "
 	getresp n
-	case "$resp" in
+	case $resp in
 	y*|Y*)	echo "Type 'exit' to return to upgrade."
 		sh
 		;;
@@ -189,7 +189,7 @@ NOTE:	1) this fstab is used only during the upgrade. It will not be
 __EOT
 echo -n	"Edit the fstab with ${EDITOR}? [n] "
 getresp n
-case "$resp" in
+case $resp in
 y*|Y*)	${EDITOR} /tmp/fstab
 	;;
 esac
@@ -238,7 +238,7 @@ fi
 
 echo -n	"Are the upgrade sets on one of your normally mounted (local) filesystems? [y] "
 getresp y
-case "$resp" in
+case $resp in
 y*|Y*)	get_localdir /mnt
 	;;
 esac
