@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.29 1996/04/08 18:32:47 ragge Exp $  */
+/* $NetBSD: machdep.c,v 1.30 1996/05/19 16:44:13 ragge Exp $  */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -63,7 +63,6 @@
 #include <sys/device.h>
 #include <sys/exec.h>
 #include <sys/mount.h>
-#include <sys/cpu.h>
 #include <sys/syscallargs.h>
 #include <sys/ptrace.h>
 #ifdef SYSVMSG
@@ -112,7 +111,7 @@
 #endif
 
 void	netintr __P((void));
-void	machinecheck __P((u_int));
+void	machinecheck __P((caddr_t));
 void	cmrerr __P((void));
 
 extern int virtual_avail, virtual_end;
@@ -530,10 +529,6 @@ boot(howto)
 {
 	showto = howto;
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
-		extern struct proc proc0;
-		/* allow safe curproc referencies */
-		if (curproc == NULL)
-			curproc = &proc0;
 		waittime = 0;
 		vfs_shutdown();
 		/*
@@ -638,7 +633,7 @@ netintr()
 
 void
 machinecheck(frame)
-	u_int           frame;
+	caddr_t frame;
 {
 	if ((*cpu_calls[cpunumber].cpu_mchk) (frame) == 0)
 		return;

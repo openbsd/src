@@ -1,4 +1,4 @@
-/*      $NetBSD: vm_machdep.c,v 1.24 1996/04/08 18:33:01 ragge Exp $       */
+/*      $NetBSD: vm_machdep.c,v 1.25 1996/05/19 16:44:33 ragge Exp $       */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -41,7 +41,7 @@
 #include <sys/vnode.h>
 #include <sys/core.h>
 #include <sys/mount.h>
-#include <sys/cpu.h>
+#include <sys/device.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.14 1996/04/08 18:32:46 ragge Exp $	*/
+/*	$NetBSD: locore.c,v 1.15 1996/05/19 16:44:07 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -36,6 +36,7 @@
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/reboot.h>
+#include <sys/device.h>
 
 #include <vm/vm.h>
 
@@ -43,7 +44,6 @@
 
 #include <machine/cpu.h>
 #include <machine/sid.h>
-#include <machine/uvaxII.h>
 #include <machine/param.h>
 #include <machine/vmparam.h>
 #include <machine/pcb.h>

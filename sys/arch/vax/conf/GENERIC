@@ -1,5 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.3 1996/05/03 09:09:08 mickey Exp $
-#	$NetBSD: GENERIC,v 1.12 1996/03/17 22:56:29 ragge Exp $
+#	$NetBSD: GENERIC,v 1.13 1996/05/19 16:25:23 ragge Exp $
 #
 # GENERIC VAX configuration file; all supported devices.
 #
@@ -103,6 +102,7 @@ ts0		at uba? csr 0172520	# TS11/TSV05 tape.
 
 # Terminal lines
 dhu0		at uba? csr 0160440	# DHU-11
+dz0		at uba? csr 0160100	# DZ-11
 
 pseudo-device   loop	1
 pseudo-device   pty	48

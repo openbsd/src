@@ -30,8 +30,6 @@
 	__asm__(".stabs msg,30,0,0,0");			\
 	__asm__(".stabs \"_/**/sym\",1,0,0,0")
 #endif
-#else
-#define	__warn_references(sym,msg)	/* nothing */
 #endif
 
 #endif /* !_MACHINE_CDEFS_H_ */

@@ -267,4 +267,4 @@ void	ubareset __P((int));
 int	ubasetup __P((int, struct buf *, int));
 
 #endif /* _KERNEL */
-#endif /* !_LOCORE */
+#endif !_LOCORE

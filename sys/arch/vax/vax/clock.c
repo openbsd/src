@@ -1,4 +1,4 @@
-/*      $NetBSD: clock.c,v 1.13 1996/04/08 18:32:27 ragge Exp $  */
+/*      $NetBSD: clock.c,v 1.14 1996/05/19 16:43:57 ragge Exp $  */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -33,6 +33,7 @@
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
+#include <sys/device.h>
 
 #include <machine/mtpr.h>
 #include <machine/sid.h>

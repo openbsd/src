@@ -1,4 +1,4 @@
-#       $NetBSD: files.vax,v 1.18 1996/03/17 22:56:30 ragge Exp $
+#       $NetBSD: files.vax,v 1.19 1996/05/19 16:25:29 ragge Exp $
 #
 # new style config file for vax architecture
 #
@@ -79,6 +79,11 @@ device	dhu
 attach	dhu at uba
 file	arch/vax/uba/dhu.c		dhu needs-count
 
+# DZ11 at UBA
+device	dz
+attach	dz at uba
+file	arch/vax/uba/dz.c		dz needs-count
+
 # These devices aren't tested (or even compiled!)
 # They are just included here to make some files happy ;)
 #
@@ -128,11 +133,6 @@ file	arch/vax/uba/dmx.c		dmz needs-count
 device	dn
 attach	dn at uba
 file	arch/vax/uba/dn.c		dn needs-count
-
-# DZ11 at UBA
-device	dz
-attach	dz at uba
-file	arch/vax/uba/dz.c		dz needs-count
 
 # IDC (RB730) on UBA (VAX 11/730)
 device	idc { drive=-1 }

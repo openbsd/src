@@ -1,4 +1,4 @@
-/*      $NetBSD: trap.c,v 1.20 1996/04/08 18:32:58 ragge Exp $     */
+/*      $NetBSD: trap.c,v 1.21 1996/05/19 16:44:27 ragge Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -42,7 +42,6 @@
 #include <sys/systm.h>
 #include <sys/signalvar.h>
 #include <sys/exec.h>
-#include <sys/cpu.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>

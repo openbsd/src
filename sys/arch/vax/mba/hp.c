@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.8 1996/04/08 18:38:58 ragge Exp $ */
+/*	$NetBSD: hp.c,v 1.9 1996/05/19 16:43:34 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -51,7 +51,6 @@
 #include <sys/ioccom.h>
 #include <sys/fcntl.h>
 #include <sys/syslog.h>
-#include <sys/cpu.h>
 
 #include <machine/trap.h>
 #include <machine/pte.h>

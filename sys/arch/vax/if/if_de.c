@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.19 1996/04/08 18:34:54 ragge Exp $	*/
+/*	$NetBSD: if_de.c,v 1.21 1996/05/19 16:43:02 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -71,6 +71,11 @@
 #include <netinet/if_ether.h>
 #endif
 
+#ifdef NS
+#include <netns/ns.h>
+#include <netns/ns_if.h>
+#endif
+
 #ifdef ISO
 #include <netiso/iso.h>
 #include <netiso/iso_var.h>
@@ -103,7 +108,7 @@ int	dedebug = 0;
  * efficiently.
  */
 struct	de_softc {
-	struct	device ds_device;	/* Configuration common part */
+	struct	device ds_dev;	/* Configuration common part */
 	struct	arpcom ds_ac;		/* Ethernet common part */
 	struct	dedevice *ds_vaddr;	/* Virtual address of this interface */
 #define	ds_if	ds_ac.ac_if		/* network-visible interface */
@@ -138,13 +143,13 @@ struct	de_softc {
 int	dematch __P((struct device *, void *, void *));
 void	deattach __P((struct device *, struct device *, void *));
 int	dewait __P((struct de_softc *, char *));
-void	deinit __P((int));
+void	deinit __P((struct de_softc *));
 int     deioctl __P((struct ifnet *, u_long, caddr_t));
 void	dereset __P((int));
 void    destart __P((struct ifnet *));
 void	deread __P((struct de_softc *, struct ifrw *, int));
 void    derecv __P((int));
-void	de_setaddr __P((u_char *, int));
+void	de_setaddr __P((u_char *, struct de_softc *));
 void	deintr __P((int));
 
 
@@ -165,17 +170,17 @@ deattach(parent, self, aux)
 	struct	device *parent, *self;
 	void	*aux;
 {
-	struct	uba_attach_args *ua = aux;
+	struct uba_attach_args *ua = aux;
 	struct de_softc *ds = (struct de_softc *)self;
 	struct ifnet *ifp = &ds->ds_if;
 	struct dedevice *addr;
+	char *c;
 	int csr1;
 
-	printf("\n");
 	addr = (struct dedevice *)ua->ua_addr;
 	ds->ds_vaddr = addr;
-	ifp->if_unit = ds->ds_device.dv_unit;
-	ifp->if_name = "de";
+	bcopy(ds->ds_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	ifp->if_softc = ds;
 	ifp->if_flags = IFF_BROADCAST | IFF_NOTRAILERS;
 
 	/*
@@ -185,12 +190,13 @@ deattach(parent, self, aux)
 	 */
 	csr1 = addr->pcsr1;
 	if (csr1 & 0xff60)
-		printf("de%d: broken\n", ds->ds_device.dv_unit);
+		c = "broken";
 	else if (csr1 & 0x10)
-		printf("de%d: delua\n", ds->ds_device.dv_unit);
+		c = "delua";
 	else
-		printf("de%d: deuna\n", ds->ds_device.dv_unit);
+		c = "deuna";
 
+	printf("\n%s: %s\n", ds->ds_dev.dv_xname, c);
 	/*
 	 * Reset the board and temporarily map
 	 * the pcbb buffer onto the Unibus.
@@ -200,7 +206,7 @@ deattach(parent, self, aux)
 	addr->pcsr0 = PCSR0_RSET;
 	(void)dewait(ds, "reset");
 
-	ds->ds_ubaddr = uballoc(ds->ds_device.dv_parent->dv_unit,
+	ds->ds_ubaddr = uballoc(ds->ds_dev.dv_parent->dv_unit,
 	    (char *)&ds->ds_pcbb, sizeof (struct de_pcbb), 0);
 	addr->pcsr2 = ds->ds_ubaddr & 0xffff;
 	addr->pcsr3 = (ds->ds_ubaddr >> 16) & 0x3;
@@ -211,10 +217,10 @@ deattach(parent, self, aux)
 	addr->pclow = CMD_GETCMD;
 	(void)dewait(ds, "read addr ");
 
-	ubarelse(ds->ds_device.dv_parent->dv_unit, &ds->ds_ubaddr);
+	ubarelse(ds->ds_dev.dv_parent->dv_unit, &ds->ds_ubaddr);
  	bcopy((caddr_t)&ds->ds_pcbb.pcbb2, (caddr_t)ds->ds_addr,
 	    sizeof (ds->ds_addr));
-	printf("de%d: hardware address %s\n", ds->ds_device.dv_unit,
+	printf("%s: hardware address %s\n", ds->ds_dev.dv_xname,
 		ether_sprintf(ds->ds_addr));
 	ifp->if_ioctl = deioctl;
 	ifp->if_start = destart;
@@ -242,7 +248,7 @@ dereset(unit)
 	sc->ds_flags &= ~DSF_RUNNING;
 	addr->pcsr0 = PCSR0_RSET;
 	(void)dewait(sc, "reset");
-	deinit(unit);
+	deinit(sc);
 }
 
 /*
@@ -250,19 +256,15 @@ dereset(unit)
  * operations, and reinitialize UNIBUS usage.
  */
 void
-deinit(unit)
-	int unit;
-{
+deinit(ds)
 	struct de_softc *ds;
+{
 	volatile struct dedevice *addr;
+	struct ifnet *ifp = &ds->ds_if;
 	struct ifrw *ifrw;
 	struct ifxmt *ifxp;
-	struct ifnet *ifp;
 	struct de_ring *rp;
 	int s,incaddr;
-
-	ds = (struct de_softc *)de_cd.cd_devs[unit];
-	ifp = &ds->ds_if;
 
 	/* not yet, if address still unknown */
 	if (ifp->if_addrlist.tqh_first == (struct ifaddr *)0)
@@ -271,14 +273,14 @@ deinit(unit)
 	if (ds->ds_flags & DSF_RUNNING)
 		return;
 	if ((ifp->if_flags & IFF_RUNNING) == 0) {
-		if (if_ubaminit(&ds->ds_deuba, ds->ds_device.dv_parent->dv_unit,
+		if (if_ubaminit(&ds->ds_deuba, ds->ds_dev.dv_parent->dv_unit,
 		    sizeof (struct ether_header), (int)btoc(ETHERMTU),
 		    ds->ds_ifr, NRCV, ds->ds_ifw, NXMT) == 0) { 
-			printf("de%d: can't initialize\n", unit);
+			printf("%s: can't initialize\n", ds->ds_dev.dv_xname);
 			ds->ds_if.if_flags &= ~IFF_UP;
 			return;
 		}
-		ds->ds_ubaddr = uballoc(ds->ds_device.dv_parent->dv_unit,
+		ds->ds_ubaddr = uballoc(ds->ds_dev.dv_parent->dv_unit,
 		    INCORE_BASE(ds), INCORE_SIZE(ds), 0);
 	}
 	addr = ds->ds_vaddr;
@@ -344,7 +346,7 @@ deinit(unit)
 	destart(&ds->ds_if);		/* queue output packets */
 	ds->ds_flags |= DSF_RUNNING;		/* need before de_setaddr */
 	if (ds->ds_flags & DSF_SETADDR)
-		de_setaddr(ds->ds_addr, unit);
+		de_setaddr(ds->ds_addr, ds);
 	addr->pclow = CMD_START | PCSR0_INTE;
 	splx(s);
 }
@@ -360,7 +362,7 @@ destart(ifp)
 	struct ifnet *ifp;
 {
         int len;
-	register struct de_softc *ds = de_cd.cd_devs[ifp->if_unit];
+	register struct de_softc *ds = ifp->if_softc;
 	volatile struct dedevice *addr = ds->ds_vaddr;
 	register struct de_ring *rp;
 	struct mbuf *m;
@@ -572,25 +574,32 @@ deioctl(ifp, cmd, data)
 	caddr_t data;
 {
 	register struct ifaddr *ifa = (struct ifaddr *)data;
-	register struct de_softc *ds = de_cd.cd_devs[ifp->if_unit];
+	register struct de_softc *ds = ifp->if_softc;
 	int s = splnet(), error = 0;
-
-	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data)) > 0) {
-		splx(s);
-		return error;
-	}
 
 	switch (cmd) {
 
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-		deinit(ifp->if_unit);
+		deinit(ds);
 
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
 			arp_ifinit(&ds->ds_ac, ifa);
 			break;
+#endif
+#ifdef NS
+		case AF_NS:
+		    {
+			register struct ns_addr *ina = &(IA_SNS(ifa)->sns_addr);
+			
+			if (ns_nullhost(*ina))
+				ina->x_host = *(union ns_host *)(ds->ds_addr);
+			else
+				de_setaddr(ina->x_host.c_host, ds);
+			break;
+		    }
 #endif
 		}
 		break;
@@ -605,7 +614,7 @@ deioctl(ifp, cmd, data)
 			ds->ds_if.if_flags &= ~IFF_OACTIVE;
 		} else if (ifp->if_flags & IFF_UP &&
 		    (ds->ds_flags & DSF_RUNNING) == 0)
-			deinit(ifp->if_unit);
+			deinit(ds);
 		break;
 
 	default:
@@ -619,11 +628,10 @@ deioctl(ifp, cmd, data)
  * set ethernet address for unit
  */
 void
-de_setaddr(physaddr, unit)
+de_setaddr(physaddr, ds)
 	u_char	*physaddr;
-	int	unit;
+	struct de_softc *ds;
 {
-	register struct de_softc *ds = de_cd.cd_devs[unit];
 	volatile struct dedevice *addr= ds->ds_vaddr;
 	
 	if (! (ds->ds_flags & DSF_RUNNING))
@@ -656,7 +664,7 @@ dewait(ds, fn)
 	addr->pchigh = csr0 >> 8;
 	if (csr0 & PCSR0_PCEI)
 		printf("de%d: %s failed, csr0=%b csr1=%b\n", 
-		    ds->ds_device.dv_unit, fn, csr0, PCSR0_BITS, 
+		    ds->ds_dev.dv_unit, fn, csr0, PCSR0_BITS, 
 		    addr->pcsr1, PCSR1_BITS);
 	return (csr0 & PCSR0_PCEI);
 }

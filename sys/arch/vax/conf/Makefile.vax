@@ -1,7 +1,6 @@
-#	$OpenBSD: Makefile.vax,v 1.3 1996/05/03 09:09:08 mickey Exp $
-#	$NetBSD: Makefile.vax,v 1.20 1996/02/29 20:57:46 cgd Exp $
+#	$Bsd: Makefile.vax,v 1.21 1996/05/11 16:13:17 mycroft Exp $
 
-# Makefile for OpenBSD
+# Makefile for Bsd
 #
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -139,7 +138,7 @@ links:
 
 SRCS=	${VAX}/vax/intvec.s ${VAX}/vax/subr.s lim.c \
 	param.c ioconf.c ${CFILES} ${SFILES}
-depend: .depend
+depend:: .depend
 .depend: ${SRCS} param.c
 	mkdep ${AFLAGS} ${CPPFLAGS} ${VAX}/vax/intvec.s ${VAX}/vax/subr.s
 	mkdep -a ${CFLAGS} ${CPPFLAGS} lim.c

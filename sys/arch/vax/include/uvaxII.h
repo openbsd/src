@@ -1,4 +1,4 @@
-/*	$NetBSD: uvaxII.h,v 1.3 1996/04/08 18:35:54 ragge Exp $ */
+/*	$NetBSD: uvaxII.h,v 1.4 1996/05/19 16:43:28 ragge Exp $ */
 /*-
  * Copyright (c) 1986, 1988 The Regents of the University of California.
  * All rights reserved.
@@ -125,7 +125,7 @@ struct ka630clock {
 struct	sbi_attach_args;
 
 /* Prototypes */
-void	uvaxII_conf __P((void *, void *, void *));
+void	uvaxII_conf __P((struct device *, struct device *, void *));
 int	uvaxII_clock __P((void));
 void	uvaxII_memenable __P((struct sbi_attach_args *, struct device *));
 void	uvaxII_memerr __P((void));

@@ -1,4 +1,4 @@
-/*	$NetBSD: uda.c,v 1.15 1996/03/17 22:56:50 ragge Exp $	*/
+/*	$NetBSD: uda.c,v 1.16 1996/05/19 16:43:42 ragge Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -252,7 +252,12 @@ struct ra_info {
 /*
  * Definition of the driver for autoconf.
  */
-int	udaprobe(), udaslave(), udaattach(), udadgo(), udaintr();
+int	udaprobe __P((caddr_t, int, struct uba_ctlr *, struct uba_softc *));
+int	udaslave __P((struct uba_device *, caddr_t));
+void	udaattach __P((struct uba_device *));
+void	udadgo __P((struct uba_ctlr *));
+void	udaintr __P((int));
+
 struct	uba_ctlr *udaminfo[NUDA];
 struct	uba_device *udadinfo[NRA];
 struct	disklabel udalabel[NRA];
@@ -265,8 +270,15 @@ struct	uba_driver udadriver =
 /*
  * More driver definitions, for generic MSCP code.
  */
-int	udadgram(), udactlrdone(), udaunconf(), udaiodone();
-int	udaonline(), udagotstatus(), udaioerror(), udareplace(), udabb();
+void    udadgram __P((struct mscp_info *, struct mscp *));
+void    udactlrdone __P((struct mscp_info *, struct mscp *));
+int     udaunconf __P((struct mscp_info *, struct mscp *));
+void    udaiodone __P((struct mscp_info *, struct buf *, int)); 
+int     udaonline __P((struct uba_device *, struct mscp *));
+int     udagotstatus __P((struct uba_device *, struct mscp *));
+void    udareplace __P((struct uba_device *, struct mscp *));
+int     udaioerror __P((struct uba_device *, struct mscp *, struct buf *));
+void    udabb __P((struct uba_device *, struct mscp *, struct buf *));
 
 struct	buf udautab[NRA];	/* per drive transfer queue */
 
@@ -506,7 +518,7 @@ again:
 findunit:
 	udaslavereply.mscp_opcode = 0;
 	sc->sc_flags |= SC_INSLAVE;
-	if ((mp = mscp_getcp(&sc->sc_mi, MSCP_DONTWAIT)) == NULL)
+	if ((mp = mscp_getcp((void *)&sc->sc_mi, MSCP_DONTWAIT)) == NULL)
 		panic("udaslave");		/* `cannot happen' */
 	mp->mscp_opcode = M_OP_GETUNITST;
 	if (ui->ui_slave == '?') {
@@ -577,14 +589,14 @@ gotit:
 			 */
 			printf("uda%d: unit %d off line: ", um->um_ctlr,
 				mp->mscp_unit);
-			mscp_printevent(mp);
+			mscp_printevent((void *)mp);
 			goto try_another;
 		}
 		break;
 
 	default:
 		printf("uda%d: unable to get unit status: ", um->um_ctlr);
-		mscp_printevent(mp);
+		mscp_printevent((void *)mp);
 		return (0);
 	}
 
@@ -630,6 +642,7 @@ try_another:
  * what?).  Set up the inverting pointer, and attempt to bring the
  * drive on line and read its label.
  */
+void
 udaattach(ui)
 	register struct uba_device *ui;
 {
@@ -1225,7 +1238,7 @@ loop:
 	 * be too small:  We should have at least as many command
 	 * packets as credits, for best performance.
 	 */
-	if ((mp = mscp_getcp(&sc->sc_mi, MSCP_DONTWAIT)) == NULL) {
+	if ((mp = mscp_getcp((void*)&sc->sc_mi, MSCP_DONTWAIT)) == NULL) {
 		if (sc->sc_mi.mi_credits > MSCP_MINCREDITS &&
 		    (sc->sc_flags & SC_GRIPED) == 0) {
 			log(LOG_NOTICE, "uda%d: command ring too small\n",
@@ -1307,6 +1320,7 @@ out:
  * this calls us again immediately we will not recurse, because
  * that time we will be in udastart().  Clever....
  */
+void
 udadgo(um)
 	register struct uba_ctlr *um;
 {
@@ -1333,6 +1347,7 @@ udadgo(um)
 		udastart(um);
 }
 
+void
 udaiodone(mi, bp, info)
 	register struct mscp_info *mi;
 	struct buf *bp;
@@ -1425,7 +1440,9 @@ udasaerror(um, doreset)
  * continue initialisation, or acknowledge command and response
  * interrupts, and process responses.
  */
+void
 udaintr(ctlr)
+	int ctlr;
 {
 	struct uba_ctlr *um = udaminfo[ctlr];
 	struct uda_softc *sc = &uda_softc[ctlr];
@@ -1616,6 +1633,7 @@ udainitds(ctlr)
 /*
  * Handle an error datagram.
  */
+void
 udadgram(mi, mp)
 	struct mscp_info *mi;
 	struct mscp *mp;
@@ -1637,6 +1655,7 @@ udadgram(mi, mp)
  * The Set Controller Characteristics command finished.
  * Record the new state of the controller.
  */
+void
 udactlrdone(mi, mp)
 	register struct mscp_info *mi;
 	struct mscp *mp;
@@ -1775,6 +1794,7 @@ udaioerror(ui, mp, bp)
  * A replace operation finished.
  */
 /*ARGSUSED*/
+void
 udareplace(ui, mp)
 	struct uba_device *ui;
 	struct mscp *mp;
@@ -1787,6 +1807,7 @@ udareplace(ui, mp)
  * A bad block related operation finished.
  */
 /*ARGSUSED*/
+void
 udabb(ui, mp, bp)
 	struct uba_device *ui;
 	struct mscp *mp;

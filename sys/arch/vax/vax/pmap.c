@@ -1,4 +1,4 @@
-/*      $NetBSD: pmap.c,v 1.26 1996/04/08 18:32:53 ragge Exp $     */
+/*      $NetBSD: pmap.c,v 1.27 1996/05/19 16:44:20 ragge Exp $     */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -37,6 +37,7 @@
 #include <sys/user.h>
 #include <sys/msgbuf.h>
 #include <sys/systm.h>
+#include <sys/device.h>
 
 #include <vm/vm.h>
 #include <vm/vm_page.h>
@@ -47,7 +48,6 @@
 #include <machine/mtpr.h>
 #include <machine/macros.h>
 #include <machine/sid.h>
-#include <machine/uvaxII.h>
 #include <machine/cpu.h>
 #include <machine/scb.h>
 

@@ -1,4 +1,4 @@
-/*      $NetBSD: autoconf.c,v 1.12 1996/04/08 18:32:26 ragge Exp $      */
+/*      $NetBSD: autoconf.c,v 1.13 1996/05/19 16:43:53 ragge Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -66,15 +66,11 @@ struct bp_conf {
 
 extern int cold;
 
-void    notsupp_conf __P((void *, void *, void *));
-int     notsupp_clock __P((void));
-void    notsupp_memerr __P((void));
-int     notsupp_mchk __P((caddr_t));
 void    notsupp_steal_pages __P((void));
 
 
 #ifdef VAX8600 /* XXX These are in ka860 also */
-void    ka86_conf __P((void *, void *, void *));
+void    ka86_conf __P((struct device *, struct device *, void *));
 int     ka86_clock __P((void));
 void    ka86_memenable __P((struct sbi_attach_args *, struct device *));
 void    ka86_memerr __P((void));
@@ -82,7 +78,7 @@ int     ka86_mchk __P((caddr_t));
 void    ka86_steal_pages __P((void));
 #endif
 #ifdef VAX780 /* XXX These are in ka780 also */
-void    ka780_conf __P((void *, void *, void *));
+void    ka780_conf __P((struct device *, struct device *, void *));
 int     ka780_clock __P((void));
 void    ka780_memenable __P((struct sbi_attach_args *, void *));
 void    ka780_memerr __P((void));
@@ -104,70 +100,55 @@ int   nexty730[NNEX730] = {
 
 struct	cpu_dep	cpu_calls[VAX_MAX+1]={
 		/* Type 0,noexist */
-	{notsupp_steal_pages, notsupp_clock, notsupp_mchk, notsupp_memerr,
-	    notsupp_conf},
+	{notsupp_steal_pages, NULL, NULL, NULL, NULL },
 #ifdef	VAX780	/* Type 1, 11/{780,782,785} */
 	{ka780_steal_pages, ka780_clock, ka780_mchk, ka780_memerr, ka780_conf},
 #else
-	{notsupp_steal_pages, notsupp_clock, notsupp_mchk, notsupp_memerr,
-	    notsupp_conf},
+	{notsupp_steal_pages, NULL, NULL, NULL, NULL },
 #endif
 #ifdef  VAX750	/* Type 2, 11/750 */
 	{ka750_steal_pages, ka750_clock, ka750_mchk, ka750_memerr, ka750_conf},
 #else
-	{notsupp_steal_pages, notsupp_clock, notsupp_mchk, notsupp_memerr,
-	    notsupp_conf},
+	{notsupp_steal_pages, NULL, NULL, NULL, NULL },
 #endif
 #ifdef	VAX730	/* Type 3, 11/{730,725}, ceauciesco-vax */
-	{notsupp_steal_pages, notsupp_clock, notsupp_mchk, notsupp_memerr,
-	    notsupp_conf},
+	{notsupp_steal_pages, NULL, NULL, NULL, NULL },
 #else
-	{notsupp_steal_pages, notsupp_clock, notsupp_mchk, notsupp_memerr,
-	    notsupp_conf},
+	{notsupp_steal_pages, NULL, NULL, NULL, NULL },
 #endif
 #ifdef	VAX8600	/* Type 4, 8600/8650 (11/{790,795}) */
 	{ka86_steal_pages, ka86_clock, ka86_mchk, ka86_memerr, ka86_conf},
 #else
-	{notsupp_steal_pages, notsupp_clock, notsupp_mchk, notsupp_memerr,
-	    notsupp_conf},
+	{notsupp_steal_pages, NULL, NULL, NULL, NULL },
 #endif
 #ifdef	VAX8200	/* Type 5, 8200, 8300, 8350 */
-	{notsupp_steal_pages, notsupp_clock, notsupp_mchk, notsupp_memerr,
-	    notsupp_conf},
+	{notsupp_steal_pages, NULL, NULL, NULL, NULL },
 #else
-	{notsupp_steal_pages, notsupp_clock, notsupp_mchk, notsupp_memerr,
-	    notsupp_conf},
+	{notsupp_steal_pages, NULL, NULL, NULL, NULL },
 #endif
 #ifdef	VAX8800	/* Type 6, 85X0, 8700, 88X0 */
-	{notsupp_steal_pages, notsupp_clock, notsupp_mchk, notsupp_memerr,
-	    notsupp_conf},
+	{notsupp_steal_pages, NULL, NULL, NULL, NULL },
 #else
-	{notsupp_steal_pages, notsupp_clock, notsupp_mchk, notsupp_memerr,
-	    notsupp_conf},
+	{notsupp_steal_pages, NULL, NULL, NULL, NULL },
 #endif
 #ifdef	VAX610	/* Type 7, KA610 */
-	{notsupp_steal_pages, notsupp_clock, notsupp_mchk, notsupp_memerr,
-	    notsupp_conf},
+	{notsupp_steal_pages, NULL, NULL, NULL, NULL },
 #else
-	{notsupp_steal_pages, notsupp_clock, notsupp_mchk, notsupp_memerr,
-	    notsupp_conf},
+	{notsupp_steal_pages, NULL, NULL, NULL, NULL },
 #endif
 #ifdef  VAX630  /* Type 8, KA630 or KA410 (uVAX II) */
 	{uvaxII_steal_pages, uvaxII_clock, uvaxII_mchk, uvaxII_memerr,
 	    uvaxII_conf},
 #else
-	{notsupp_steal_pages, notsupp_clock, notsupp_mchk, notsupp_memerr,
-	    notsupp_conf},
+	{notsupp_steal_pages, NULL, NULL, NULL, NULL },
 #endif
 		/* Type 9, not used */
-	{notsupp_steal_pages, notsupp_clock, notsupp_mchk, notsupp_memerr,
-	    notsupp_conf},
+	{notsupp_steal_pages, NULL, NULL, NULL, NULL },
 #ifdef	VAX650  /* Type 10, KA65X (uVAX III) */
 	{uvaxIII_steal_pages, uvaxIII_clock, uvaxIII_mchk, uvaxIII_memerr,
 	    uvaxIII_conf},
 #else
-	{notsupp_steal_pages, notsupp_clock, notsupp_mchk, notsupp_memerr,
-	    notsupp_conf},
+	{notsupp_steal_pages, NULL, NULL, NULL, NULL },
 #endif
 };
 
@@ -176,30 +157,6 @@ notsupp_steal_pages()
 {
 	printf("This cputype not supported.\n");
 	asm("halt");
-}
-
-void
-notsupp_conf(dev, dev2, a)
-	void *dev, *dev2, *a;
-{
-}
-
-int
-notsupp_clock()
-{
-	return 0;
-}
-
-void
-notsupp_memerr()
-{
-}
-
-int
-notsupp_mchk(a)
-	caddr_t a;
-{
-	return 0;
 }
 
 void	gencnslask __P((void));

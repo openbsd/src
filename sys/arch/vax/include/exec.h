@@ -46,10 +46,4 @@ struct relocation_info_vax {
 };
 #define relocation_info	relocation_info_vax
 
-#define ELF_TARG_CLASS		ELFCLASS32
-#define ELF_TARG_DATA		ELFDATA2LSB
-#define ELF_TARG_MACH		EM_VAX
-
-#define DO_AOUT			/* support a.out */
-
 #endif  /* _VAX_EXEC_H_ */

@@ -46,7 +46,7 @@
  * to __mcount, so that our return address won't get popped from stack.
  */
 #define MCOUNT \
-__asm(".text; .globl mcount; mcount: pushl 16(fp); calls $1,__mcount; rsb");
+asm(".text; .globl mcount; mcount: pushl 16(fp); calls $1,__mcount; rsb");
 
 #ifdef _KERNEL
 /*

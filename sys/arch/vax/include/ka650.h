@@ -1,4 +1,4 @@
-/*	$NetBSD: ka650.h,v 1.1 1995/12/13 18:58:05 ragge Exp $	*/
+/*	$NetBSD: ka650.h,v 1.4 1996/05/19 16:43:20 ragge Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -207,7 +207,7 @@ struct ka650_ipcr {
 };
 #define KA650_IPCR	0x20001e00
 
-#endif	/* _LOCORE */
+#endif	_LOCORE
 
 /*
  * Physical start address of the Qbus memory.
@@ -237,7 +237,7 @@ struct ka650_ipcr {
 /* prototypes */
 struct sbi_attach_args;
 
-void	uvaxIII_conf __P((void *, void *, void *));
+void	uvaxIII_conf __P((struct device *, struct device *, void *));
 int	uvaxIII_clock __P((void));
 void	uvaxIII_memenable __P((struct sbi_attach_args *, struct device *));
 void	uvaxIII_memerr __P((void));

@@ -1,4 +1,4 @@
-/*	$NetBSD: ubareg.h,v 1.4 1995/11/10 19:25:50 ragge Exp $	*/
+/*	$NetBSD: ubareg.h,v 1.7 1996/04/08 18:37:35 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.

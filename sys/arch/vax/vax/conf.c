@@ -45,6 +45,10 @@
 
 int	ttselect	__P((dev_t, int, struct proc *));
 
+#ifndef LKM
+#define lkmenodev       enodev
+#endif
+
 #include "hp.h" /* 0 */
 bdev_decl(hp);
 
@@ -199,6 +203,11 @@ cdev_decl(pts);
 #define	ptcioctl	ptyioctl
 cdev_decl(ptc);
 cdev_decl(log);
+#ifdef LKM
+#define	NLKM	1
+#else
+#define	NLKM	0
+#endif
 cdev_decl(lkm);
 
 cdev_decl(hp);

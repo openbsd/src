@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.16 1996/04/08 18:35:46 ragge Exp $      */
+/*      $NetBSD: cpu.h,v 1.17 1996/05/19 16:43:16 ragge Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -33,6 +33,8 @@
  /* All bugs are subject to removal without further notice */
 
 #include <sys/cdefs.h>
+#include <sys/device.h>
+
 #include <machine/mtpr.h>
 #include <machine/pcb.h>
 
@@ -49,7 +51,8 @@ struct	cpu_dep {
 	int	(*cpu_clock) __P((void)); /* CPU dependent clock handling */
 	int	(*cpu_mchk) __P((caddr_t));   /* Machine check handling */
 	void	(*cpu_memerr) __P((void)); /* Memory subsystem errors */
-	void	(*cpu_conf) __P((void *, void *, void *)); /* Autoconfiguration */
+	    /* Autoconfiguration */
+	void	(*cpu_conf) __P((struct device *, struct device *, void *));
 };
 
 struct clockframe {
