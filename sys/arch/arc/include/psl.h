@@ -1,4 +1,4 @@
-/*      $OpenBSD: psl.h,v 1.1.1.1 1996/06/24 09:07:18 pefo Exp $	*/
+/*      $OpenBSD: psl.h,v 1.2 1998/01/28 13:46:25 pefo Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -67,3 +67,7 @@
 #define	USERMODE(ps)	(((ps) & SR_KSU_MASK) == SR_KSU_USER)
 #define	BASEPRI(ps)	(((ps) & (INT_MASK | SR_INT_ENA_PREV)) \
 			== (INT_MASK | SR_INT_ENA_PREV))
+
+#ifdef _KERNEL
+#include <machine/intr.h>
+#endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: picabus.c,v 1.7 1997/05/24 18:36:26 pefo Exp $	*/
+/*	$OpenBSD: picabus.c,v 1.8 1998/01/28 13:46:38 pefo Exp $	*/
 /*	$NetBSD: tc.c,v 1.2 1995/03/08 00:39:05 cgd Exp $	*/
 
 /*
@@ -41,8 +41,8 @@
 #include <machine/pio.h>
 #include <machine/autoconf.h>
 
+#include <mips/archtype.h>
 #include <arc/pica/pica.h>
-#include <arc/arc/arctype.h>
 #include <arc/dev/dma.h>
 
 struct pica_softc {
@@ -70,7 +70,7 @@ int	pica_matchname __P((struct confargs *, char *));
 int	pica_iointr __P((unsigned int, struct clockframe *));
 int	pica_clkintr __P((unsigned int, struct clockframe *));
 
-extern int cputype;
+extern int system_type;
 
 /*
  *  Interrupt dispatch table.
@@ -156,7 +156,7 @@ picamatch(parent, cfdata, aux)
 
         /* Make sure that unit exists. */
 	if (cf->cf_unit != 0 ||
-	    cputype > npica_cpu_devs || pica_cpu_devs[cputype] == NULL)
+	    system_type > npica_cpu_devs || pica_cpu_devs[system_type] == NULL)
 		return (0);
 
 	return (1);
@@ -175,7 +175,7 @@ picaattach(parent, self, aux)
 	printf("\n");
 
 	/* keep our CPU device description handy */
-	sc->sc_devs = pica_cpu_devs[cputype];
+	sc->sc_devs = pica_cpu_devs[system_type];
 
 	/* set up interrupt handlers */
 	set_intr(INT_MASK_1, pica_iointr, 2);

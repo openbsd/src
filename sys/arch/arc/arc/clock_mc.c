@@ -1,5 +1,4 @@
-/*	$OpenBSD: clock_mc.c,v 1.7 1997/04/19 17:19:40 pefo Exp $	*/
-/*	$NetBSD: clock_mc.c,v 1.2 1995/06/28 04:30:30 cgd Exp $	*/
+/*	$OpenBSD: clock_mc.c,v 1.8 1998/01/28 13:45:47 pefo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -55,17 +54,20 @@
 #include <dev/isa/isavar.h>
 #include <dev/ic/mc146818reg.h>
 
-#include <arc/arc/clockvar.h>
-#include <arc/arc/arctype.h>
+#include <mips/archtype.h>
+
+#include <mips/dev/clockvar.h>
+
 #include <arc/pica/pica.h>
 #include <arc/algor/algor.h>
 #include <arc/isa/isa_machdep.h>
 #include <arc/isa/timerreg.h>
 
-extern u_int	cputype;
 extern int	cpu_int_mask;
+extern int	clock_started;
 
-void		mcclock_attach __P((struct device *parent,
+int		clockintr __P((void *cf));            
+void		md_clk_attach __P((struct device *parent,
 		    struct device *self, void *aux));
 static void	mcclock_init_pica __P((struct clock_softc *csc));
 static void	mcclock_init_tyne __P((struct clock_softc *csc));
@@ -105,7 +107,7 @@ static u_int	mc_read_p4032 __P((struct clock_softc *csc, u_int reg));
 static struct mcclockdata mcclockdata_p4032 = { mc_write_p4032, mc_read_p4032 };
 
 void
-mcclock_attach(parent, self, aux)
+md_clk_attach(parent, self, aux)
 	struct device *parent;
 	struct device *self;
 	void *aux;
@@ -117,7 +119,7 @@ mcclock_attach(parent, self, aux)
 	csc->sc_get = mcclock_get;
 	csc->sc_set = mcclock_set;
 
-        switch (cputype) {
+        switch (system_type) {
 
         case ACER_PICA_61:
 		csc->sc_init = mcclock_init_pica;
@@ -163,6 +165,15 @@ mcclock_init_tyne(csc)
 	isa_outb(TIMER_CNTR0, TIMER_DIV(hz) / 256);
 }
 
+int                          
+clockintr(cf)           
+        void *cf;            
+{
+        if(clock_started)
+                hardclock((struct clockframe *)cf);
+        return(1);              
+}
+
 static void
 mcclock_init_p4032(csc)
 	struct clock_softc *csc;
@@ -202,7 +213,7 @@ mcclock_get(csc, base, ct)
 	ct->day = regs[MC_DOM];
 	ct->mon = regs[MC_MONTH];
 	ct->year = regs[MC_YEAR];
-	if(cputype == ALGOR_P4032)
+	if(system_type == ALGOR_P4032)
 		ct->year -= 80;
 }
 
@@ -227,7 +238,7 @@ printf("%d-%d-%d, %d:%d:%d\n", regs[MC_YEAR], regs[MC_MONTH], regs[MC_DOM], regs
 	regs[MC_DOW] = ct->dow;
 	regs[MC_DOM] = ct->day;
 	regs[MC_MONTH] = ct->mon;
-	if(cputype == ALGOR_P4032)
+	if(system_type == ALGOR_P4032)
 		regs[MC_YEAR] = ct->year + 80;
 	else
 		regs[MC_YEAR] = ct->year;

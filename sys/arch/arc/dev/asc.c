@@ -1,4 +1,4 @@
-/*	$OpenBSD: asc.c,v 1.6 1997/08/01 23:39:23 deraadt Exp $	*/
+/*	$OpenBSD: asc.c,v 1.7 1998/01/28 13:46:04 pefo Exp $	*/
 /*	$NetBSD: asc.c,v 1.10 1994/12/05 19:11:12 dean Exp $	*/
 
 /*-
@@ -138,16 +138,17 @@
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
 
+#include <mips/archtype.h>
+
 #include <arc/dev/dma.h>
 #include <arc/dev/scsi.h>
 #include <arc/dev/ascreg.h>
 
 #include <arc/pica/pica.h>
-#include <arc/arc/arctype.h>
 
 
 #define	readback(a)	{ register int foo; foo = (a); }
-extern int cputype;
+extern int system_type;
 
 /*
  * In 4ns ticks.
@@ -533,7 +534,7 @@ ascattach(parent, self, aux)
 	 * 1) how to do dma
 	 * 2) timing based on chip clock frequency
 	 */
-	switch (cputype) {
+	switch (system_type) {
 	case ACER_PICA_61:
 		bufsiz = 63 * 1024; /*XXX check if code handles 0 as 64k */
 		asc->dma = &asc->__dma;
@@ -545,7 +546,7 @@ ascattach(parent, self, aux)
 	/*
 	 * Now for timing. The pica has a 25Mhz
 	 */
-	switch (cputype) {
+	switch (system_type) {
 	case ACER_PICA_61:
 		asc->min_period = ASC_MIN_PERIOD25;
 		asc->max_period = ASC_MAX_PERIOD25;

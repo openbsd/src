@@ -1,4 +1,4 @@
-/*      $OpenBSD: param.h,v 1.9 1997/04/30 09:54:15 niklas Exp $ */
+/*      $OpenBSD: param.h,v 1.10 1998/01/28 13:46:20 pefo Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,10 +41,16 @@
  *	from: @(#)param.h	8.1 (Berkeley) 6/10/93
  */
 
-#ifndef _ARC_PARAM_H_
-#define _ARC_PARAM_H_
+#ifndef _MACHINE_PARAM_H_
+#define _MACHINE_PARAM_H_
 
-#include <machine/intr.h>
+#ifdef _KERNEL    
+#ifdef _LOCORE
+#include <machine/psl.h>                                             
+#else                                                                
+#include <machine/cpu.h>
+#endif                                                              
+#endif                                                             
 
 /*
  * Machine dependent constants for ARC BIOS MIPS machines:
@@ -57,7 +63,6 @@
 #define	_MACHINE	arc
 #define MACHINE_ARCH	"mips"
 #define _MACHINE_ARCH	mips
-#define MID_MACHINE	MID_PMAX	/* XXX Bogus, but needed for now... */
 
 /*
  * Round p (pointer or byte index) up to a correctly-aligned value for all
@@ -149,7 +154,7 @@
 #define	bdbtofsb(bn)	((bn) / (BLKDEV_IOSIZE/DEV_BSIZE))
 
 /*
- * Mach derived conversion macros
+ * Conversion macros
  */
 #define mips_round_page(x)	((((unsigned)(x)) + NBPG - 1) & ~(NBPG-1))
 #define mips_trunc_page(x)	((unsigned)(x) & ~(NBPG-1))
@@ -158,14 +163,14 @@
 
 #ifdef _KERNEL
 #ifndef _LOCORE
-extern int (*Mach_splnet)(void), (*Mach_splbio)(void), (*Mach_splimp)(void),
-	   (*Mach_spltty)(void), (*Mach_splclock)(void), (*Mach_splstatclock)(void);
-#define	splnet()	((*Mach_splnet)())
-#define	splbio()	((*Mach_splbio)())
-#define	splimp()	((*Mach_splimp)())
-#define	spltty()	((*Mach_spltty)())
-#define	splclock()	((*Mach_splclock)())
-#define	splstatclock()	((*Mach_splstatclock)())
+extern int (*Mips_splnet)(void), (*Mips_splbio)(void), (*Mips_splimp)(void),
+	   (*Mips_spltty)(void), (*Mips_splclock)(void), (*Mips_splstatclock)(void);
+#define	splnet()	((*Mips_splnet)())
+#define	splbio()	((*Mips_splbio)())
+#define	splimp()	((*Mips_splimp)())
+#define	spltty()	((*Mips_spltty)())
+#define	splclock()	((*Mips_splclock)())
+#define	splstatclock()	((*Mips_splstatclock)())
 
 int splhigh __P((void));
 int splx __P((int));
@@ -184,4 +189,4 @@ void delay __P((int));
 #define	DELAY(n)	{ register int N = (n); while (--N > 0); }
 #endif /* !_KERNEL */
 
-#endif /* _ARC_PARAM_H_ */
+#endif /* _MACHINE_PARAM_H_ */

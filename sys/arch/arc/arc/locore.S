@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.12 1997/04/19 17:19:43 pefo Exp $	*/
+/*	$OpenBSD: locore.S,v 1.13 1998/01/28 13:45:54 pefo Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -50,7 +50,7 @@
  *	v 1.1 89/07/10 14:27:41 nelson Exp  SPRITE (DECWRL)
  *
  *	from: @(#)locore.s	8.5 (Berkeley) 1/4/94
- *	$Id: locore.S,v 1.12 1997/04/19 17:19:43 pefo Exp $
+ *	$Id: locore.S,v 1.13 1998/01/28 13:45:54 pefo Exp $
  */
 
 /*
@@ -928,8 +928,8 @@ END(_remque)
  * Don't check for invalid pte's here. We load them as well and
  * let the processor trap to load the correct value after service.
  */
-	.globl	MachTLBMiss
-MachTLBMiss:
+	.globl	MipsTLBMiss
+MipsTLBMiss:
 	.set	noat
 	dmfc0	k0, COP_0_BAD_VADDR	# get the virtual address
 	lw	k1, UADDR+U_PCB_SEGTAB		# get the current segment table
@@ -960,14 +960,14 @@ MachTLBMiss:
 	nop
 	eret
 1:
-	j	MachTLBMissException
+	j	MipsTLBMissException
 	nop
 2:
 	j	SlowFault
 	nop
 
-	.globl	MachTLBMissEnd
-MachTLBMissEnd:
+	.globl	MipsTLBMissEnd
+MipsTLBMissEnd:
 	.set	at
 
 /*
@@ -975,8 +975,8 @@ MachTLBMissEnd:
  * handle all execptions except RESET and TLBMiss.
  * NOTE: This code must be relocatable!!!
  */
-	.globl	MachException
-MachException:
+	.globl	MipsException
+MipsException:
 /*
  * Find out what mode we came from and jump to the proper handler.
  */
@@ -1001,8 +1001,8 @@ MachException:
 	j	k0				# Jump to the function.
 	nop
 	.set	at
-	.globl	MachExceptionEnd
-MachExceptionEnd:
+	.globl	MipsExceptionEnd
+MipsExceptionEnd:
 
 /*
  * We couldn't find a TLB entry.
@@ -1013,7 +1013,7 @@ SlowFault:
 	mfc0	k0, COP_0_STATUS_REG
 	nop
 	and	k0, k0, SR_KSU_USER
-	bne	k0, zero, MachUserGenException
+	bne	k0, zero, MipsUserGenException
 	nop
 	.set	at
 /*
@@ -1022,7 +1022,7 @@ SlowFault:
 
 /*----------------------------------------------------------------------------
  *
- * MachKernGenException --
+ * MipsKernGenException --
  *
  *	Handle an exception from kernel mode.
  *
@@ -1047,7 +1047,7 @@ SlowFault:
 #define KERN_MULT_HI_OFFSET	(STAND_FRAME_SIZE + KERN_REG_SIZE + 8)
 #define	KERN_EXC_FRAME_SIZE	(STAND_FRAME_SIZE + KERN_REG_SIZE + 12)
 
-NNON_LEAF(MachKernGenException, KERN_EXC_FRAME_SIZE, ra)
+NNON_LEAF(MipsKernGenException, KERN_EXC_FRAME_SIZE, ra)
 	.set	noat
 #ifdef DEBUG
 	la	k0, mdbpcb			# save registers for mdb
@@ -1137,11 +1137,11 @@ NNON_LEAF(MachKernGenException, KERN_EXC_FRAME_SIZE, ra)
 	addu	sp, sp, KERN_EXC_FRAME_SIZE
 	eret					#  exception.
 	.set	at
-END(MachKernGenException)
+END(MipsKernGenException)
 
 /*----------------------------------------------------------------------------
  *
- * MachUserGenException --
+ * MipsUserGenException --
  *
  *	Handle an exception from user mode.
  *
@@ -1153,7 +1153,7 @@ END(MachKernGenException)
  *
  *----------------------------------------------------------------------------
  */
-NNON_LEAF(MachUserGenException, STAND_FRAME_SIZE, ra)
+NNON_LEAF(MipsUserGenException, STAND_FRAME_SIZE, ra)
 	.set	noat
 	.mask	0x80000000, (STAND_RA_OFFSET - STAND_FRAME_SIZE)
 /*
@@ -1260,11 +1260,11 @@ NNON_LEAF(MachUserGenException, STAND_FRAME_SIZE, ra)
 	lw	ra, UADDR+U_PCB_REGS+(RA * 4)
 	eret
 	.set	at
-END(MachUserGenException)
+END(MipsUserGenException)
 
 /*----------------------------------------------------------------------------
  *
- * MachKernIntr --
+ * MipsKernIntr --
  *
  *	Handle an interrupt from kernel mode.
  *	Interrupts use the standard kernel stack.
@@ -1285,7 +1285,7 @@ END(MachUserGenException)
 #define KINTR_MULT_GP_OFFSET	(STAND_FRAME_SIZE + KERN_REG_SIZE + 12)
 #define	KINTR_FRAME_SIZE	(STAND_FRAME_SIZE + KERN_REG_SIZE + 16)
 
-NNON_LEAF(MachKernIntr, KINTR_FRAME_SIZE, ra)
+NNON_LEAF(MipsKernIntr, KINTR_FRAME_SIZE, ra)
 	.set	noat
 	subu	sp, sp, KINTR_FRAME_SIZE	# allocate stack frame
 	.mask	0x80000000, (STAND_RA_OFFSET - KINTR_FRAME_SIZE)
@@ -1360,11 +1360,11 @@ NNON_LEAF(MachKernIntr, KINTR_FRAME_SIZE, ra)
 	addu	sp, sp, KINTR_FRAME_SIZE
 	eret					#  interrupt.
 	.set	at
-END(MachKernIntr)
+END(MipsKernIntr)
 
 /*----------------------------------------------------------------------------
  *
- * MachUserIntr --
+ * MipsUserIntr --
  *
  *	Handle an interrupt from user mode.
  *	Note: we save minimal state in the u.u_pcb struct and use the standard
@@ -1381,7 +1381,7 @@ END(MachKernIntr)
  *
  *----------------------------------------------------------------------------
  */
-NNON_LEAF(MachUserIntr, STAND_FRAME_SIZE, ra)
+NNON_LEAF(MipsUserIntr, STAND_FRAME_SIZE, ra)
 	.set	noat
 	.mask	0x80000000, (STAND_RA_OFFSET - STAND_FRAME_SIZE)
 /*
@@ -1539,11 +1539,11 @@ NNON_LEAF(MachUserIntr, STAND_FRAME_SIZE, ra)
 	lw	ra, UADDR+U_PCB_REGS+(RA * 4)
 	eret
 	.set	at
-END(MachUserIntr)
+END(MipsUserIntr)
 
 /*----------------------------------------------------------------------------
  *
- * MachTLBInvalidException --
+ * MipsTLBInvalidException --
  *
  *	Handle a TLB invalid exception from kernel mode in kernel space.
  *	The BaddVAddr, Context, and EntryHi registers contain the failed
@@ -1557,7 +1557,7 @@ END(MachUserIntr)
  *
  *----------------------------------------------------------------------------
  */
-NLEAF(MachTLBInvalidException)
+NLEAF(MipsTLBInvalidException)
 	.set	noat
 	dmfc0	k0, COP_0_BAD_VADDR	# get the fault address
 	li	k1, (VM_MIN_KERNEL_ADDRESS)	# compute index
@@ -1587,7 +1587,7 @@ NLEAF(MachTLBInvalidException)
 	dsrl	k0, k0, 34
 	dmtc0	k0, COP_0_TLB_LO0		# load PTE entry
 	and	k0, k0, PG_V			# check for valid entry
-	beq	k0, zero, MachKernGenException	# PTE invalid
+	beq	k0, zero, MipsKernGenException	# PTE invalid
 	lw	k0, 4(k1)			# get odd PTE entry
 	dsll	k0, k0, 34
 	dsrl	k0, k0, 34
@@ -1614,7 +1614,7 @@ KernTLBIOdd:
 	dsrl	k0, k0, 34
 	dmtc0	k0, COP_0_TLB_LO1		# save PTE entry
 	and	k0, k0, PG_V			# check for valid entry
-	beq	k0, zero, MachKernGenException	# PTE invalid
+	beq	k0, zero, MipsKernGenException	# PTE invalid
 	lw	k0, -4(k1)			# get even PTE entry
 	dsll	k0, k0, 34
 	dsrl	k0, k0, 34
@@ -1627,11 +1627,11 @@ KernTLBIOdd:
 	nop
 	nop
 	eret
-END(MachTLBInvalidException)
+END(MipsTLBInvalidException)
 
 /*----------------------------------------------------------------------------
  *
- * MachTLBMissException --
+ * MipsTLBMissException --
  *
  *	Handle a TLB miss exception from kernel mode in kernel space.
  *	The BaddVAddr, Context, and EntryHi registers contain the failed
@@ -1645,7 +1645,7 @@ END(MachTLBInvalidException)
  *
  *----------------------------------------------------------------------------
  */
-NLEAF(MachTLBMissException)
+NLEAF(MipsTLBMissException)
 	.set	noat
 	dmfc0	k0, COP_0_BAD_VADDR	# get the fault address
 	li	k1, (VM_MIN_KERNEL_ADDRESS)	# compute index
@@ -1678,7 +1678,7 @@ NLEAF(MachTLBMissException)
 sys_stk_chk:
 	subu	k0, sp, UADDR + 0x200		# check to see if we have a
 	sltiu	k0, UPAGES*NBPG - 0x200		#  valid kernel stack
-	bne	k0, zero, MachKernGenException	# Go panic
+	bne	k0, zero, MipsKernGenException	# Go panic
 	nop
 
 	la	a0, start - START_FRAME - 8	# set sp to a valid place
@@ -1701,7 +1701,7 @@ sys_stk_chk:
 	la	sp, start - START_FRAME		# set sp to a valid place
 	PANIC("kernel stack overflow")
 	.set	at
-END(MachTLBMissException)
+END(MipsTLBMissException)
 
 /*
  * Set/clear software interrupt routines.
@@ -1747,14 +1747,14 @@ END(clearsoftnet)
  * Set/change interrupt priority routines.
  */
 
-LEAF(MachEnableIntr)
+LEAF(MipsEnableIntr)
 	mfc0	v0, COP_0_STATUS_REG	# read status register
 	nop
 	or	v0, v0, SR_INT_ENAB
 	mtc0	v0, COP_0_STATUS_REG	# enable all interrupts
 	j	ra
 	nop
-END(MachEnableIntr)
+END(MipsEnableIntr)
 
 LEAF(spl0)
 	mfc0	v0, COP_0_STATUS_REG	# read status register
@@ -1784,7 +1784,7 @@ LEAF(splsoftnet)
 	and	v0, v0, (INT_MASK | SR_INT_ENAB)
 END(splsoftnet)
 
-LEAF(Mach_spl0)
+LEAF(Mips_spl0)
 	mfc0	v0, COP_0_STATUS_REG	# read status register
 	li	t0, ~(INT_MASK_0|SOFT_INT_MASK_1|SOFT_INT_MASK_0)
 	and	t0, t0, v0
@@ -1792,9 +1792,9 @@ LEAF(Mach_spl0)
 	nop					# 3 ins to disable
 	j	ra
 	and	v0, v0, (INT_MASK | SR_INT_ENAB)
-END(Mach_spl0)
+END(Mips_spl0)
 
-LEAF(Mach_spl1)
+LEAF(Mips_spl1)
 	mfc0	v0, COP_0_STATUS_REG	# read status register
 	li	t0, ~(INT_MASK_1|SOFT_INT_MASK_0|SOFT_INT_MASK_1)
 	and	t0, t0, v0
@@ -1802,9 +1802,9 @@ LEAF(Mach_spl1)
 	nop					# 3 ins to disable
 	j	ra
 	and	v0, v0, (INT_MASK | SR_INT_ENAB)
-END(Mach_spl1)
+END(Mips_spl1)
 
-LEAF(Mach_spl2)
+LEAF(Mips_spl2)
 	mfc0	v0, COP_0_STATUS_REG	# read status register
 	li	t0, ~(INT_MASK_2|SOFT_INT_MASK_1|SOFT_INT_MASK_0)
 	and	t0, t0, v0
@@ -1812,9 +1812,9 @@ LEAF(Mach_spl2)
 	nop					# 3 ins to disable
 	j	ra
 	and	v0, v0, (INT_MASK | SR_INT_ENAB)
-END(Mach_spl2)
+END(Mips_spl2)
 
-LEAF(Mach_spl3)
+LEAF(Mips_spl3)
 	mfc0	v0, COP_0_STATUS_REG	# read status register
 	li	t0, ~(INT_MASK_3|SOFT_INT_MASK_1|SOFT_INT_MASK_0)
 	and	t0, t0, v0
@@ -1822,9 +1822,9 @@ LEAF(Mach_spl3)
 	nop					# 3 ins to disable
 	j	ra
 	and	v0, v0, (INT_MASK | SR_INT_ENAB)
-END(Mach_spl3)
+END(Mips_spl3)
 
-LEAF(Mach_spl4)
+LEAF(Mips_spl4)
 	mfc0	v0, COP_0_STATUS_REG	# read status register
 	li	t0, ~(INT_MASK_4|SOFT_INT_MASK_1|SOFT_INT_MASK_0)
 	and	t0, t0, v0
@@ -1832,9 +1832,9 @@ LEAF(Mach_spl4)
 	nop					# 3 ins to disable
 	j	ra
 	and	v0, v0, (INT_MASK | SR_INT_ENAB)
-END(Mach_spl4)
+END(Mips_spl4)
 
-LEAF(Mach_spl5)
+LEAF(Mips_spl5)
 	mfc0	v0, COP_0_STATUS_REG	# read status register
 	li	t0, ~(INT_MASK_5|SOFT_INT_MASK_1|SOFT_INT_MASK_0)
 	and	t0, t0, v0
@@ -1842,7 +1842,7 @@ LEAF(Mach_spl5)
 	nop					# 3 ins to disable
 	j	ra
 	and	v0, v0, (INT_MASK | SR_INT_ENAB)
-END(Mach_spl5)
+END(Mips_spl5)
 
 /*
  * We define an alternate entry point after mcount is called so it
@@ -2271,11 +2271,11 @@ END(R4K_TLBGetPID)
 
 /*----------------------------------------------------------------------------
  *
- * MachSwitchFPState --
+ * MipsSwitchFPState --
  *
  *	Save the current state into 'from' and restore it from 'to'.
  *
- *	MachSwitchFPState(from, to)
+ *	MipsSwitchFPState(from, to)
  *		struct proc *from;
  *		struct user *to;
  *
@@ -2287,7 +2287,7 @@ END(R4K_TLBGetPID)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(MachSwitchFPState)
+LEAF(MipsSwitchFPState)
 	mfc0	t1, COP_0_STATUS_REG	# Save old SR
 	li	t0, SR_COP_1_BIT	# enable the coprocessor
 	mtc0	t0, COP_0_STATUS_REG
@@ -2387,15 +2387,15 @@ LEAF(MachSwitchFPState)
 	mtc0	t1, COP_0_STATUS_REG	# Restore the status register.
 	j	ra
 	nop
-END(MachSwitchFPState)
+END(MipsSwitchFPState)
 
 /*----------------------------------------------------------------------------
  *
- * MachSaveCurFPState --
+ * MipsSaveCurFPState --
  *
  *	Save the current floating point coprocessor state.
  *
- *	MachSaveCurFPState(p)
+ *	MipsSaveCurFPState(p)
  *		struct proc *p;
  *
  * Results:
@@ -2406,7 +2406,7 @@ END(MachSwitchFPState)
  *
  *----------------------------------------------------------------------------
  */
-LEAF(MachSaveCurFPState)
+LEAF(MipsSaveCurFPState)
 	lw	a0, P_ADDR(a0)			# get pointer to pcb for proc
 	mfc0	t1, COP_0_STATUS_REG	# Disable interrupts and
 	li	t0, SR_COP_1_BIT		#  enable the coprocessor
@@ -2462,15 +2462,15 @@ LEAF(MachSaveCurFPState)
 	mtc0	t1, COP_0_STATUS_REG	# Restore the status register.
 	j	ra
 	nop
-END(MachSaveCurFPState)
+END(MipsSaveCurFPState)
 
 /*----------------------------------------------------------------------------
  *
- * MachFPTrap --
+ * MipsFPTrap --
  *
  *	Handle a floating point Trap.
  *
- *	MachFPTrap(statusReg, causeReg, pc)
+ *	MipsFPTrap(statusReg, causeReg, pc)
  *		unsigned statusReg;
  *		unsigned causeReg;
  *		unsigned pc;
@@ -2483,7 +2483,7 @@ END(MachSaveCurFPState)
  *
  *----------------------------------------------------------------------------
  */
-NON_LEAF(MachFPTrap, STAND_FRAME_SIZE, ra)
+NON_LEAF(MipsFPTrap, STAND_FRAME_SIZE, ra)
 	subu	sp, sp, STAND_FRAME_SIZE
 	mfc0	t0, COP_0_STATUS_REG
 	sw	ra, STAND_RA_OFFSET(sp)
@@ -2515,7 +2515,7 @@ NON_LEAF(MachFPTrap, STAND_FRAME_SIZE, ra)
 	li	a0, UADDR+U_PCB_REGS		# first arg is ptr to CPU registers
 	move	a1, a2				# second arg is instruction PC
 	move	a2, t1				# third arg is floating point CSR
-	jal	MachEmulateBranch		# compute PC after branch
+	jal	MipsEmulateBranch		# compute PC after branch
 	move	a3, zero			# fourth arg is FALSE
 /*
  * Now load the floating-point instruction in the branch delay slot
@@ -2526,7 +2526,7 @@ NON_LEAF(MachFPTrap, STAND_FRAME_SIZE, ra)
 	lw	a0, 4(a2)			# a0 = coproc instruction
 /*
  * This is not in the branch delay slot so calculate the resulting
- * PC (epc + 4) into v0 and continue to MachEmulateFP().
+ * PC (epc + 4) into v0 and continue to MipsEmulateFP().
  */
 1:
 	lw	a0, 0(a2)			# a0 = coproc instruction
@@ -2553,10 +2553,10 @@ NON_LEAF(MachFPTrap, STAND_FRAME_SIZE, ra)
 	nop
 
 /*
- * Finally, we can call MachEmulateFP() where a0 is the instruction to emulate.
+ * Finally, we can call MipsEmulateFP() where a0 is the instruction to emulate.
  */
 4:
-	jal	MachEmulateFP
+	jal	MipsEmulateFP
 	nop
 
 /*
@@ -2569,7 +2569,7 @@ FPReturn:
 	mtc0	t0, COP_0_STATUS_REG
 	j	ra
 	addu	sp, sp, STAND_FRAME_SIZE
-END(MachFPTrap)
+END(MipsFPTrap)
 
 /*----------------------------------------------------------------------------
  *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.6 1997/11/10 00:39:10 niklas Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.7 1998/01/28 13:46:00 pefo Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  * from: Utah Hdr: vm_machdep.c 1.21 91/04/06
  *
  *	from: @(#)vm_machdep.c	8.3 (Berkeley) 1/4/94
- *      $Id: vm_machdep.c,v 1.6 1997/11/10 00:39:10 niklas Exp $
+ *      $Id: vm_machdep.c,v 1.7 1998/01/28 13:46:00 pefo Exp $
  */
 
 #include <sys/param.h>
@@ -103,7 +103,7 @@ cpu_fork(p1, p2)
 	 * has state stored there.
 	 */
 	if (p1 == machFPCurProcPtr)
-		MachSaveCurFPState(p1);
+		MipsSaveCurFPState(p1);
 
 	/*
 	 * Copy pcb and stack from proc p1 to p2. 
@@ -206,7 +206,7 @@ cpu_coredump(p, vp, cred, chdr)
 	 * has state stored there.
 	 */
 	if (p == machFPCurProcPtr)
-		MachSaveCurFPState(p);
+		MipsSaveCurFPState(p);
 
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MIPS, CORE_CPU);
 	cseg.c_addr = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.18 1997/11/23 05:21:54 mickey Exp $ */
+/*	$OpenBSD: conf.c,v 1.19 1998/01/28 13:45:49 pefo Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)conf.c	8.2 (Berkeley) 11/14/93
- *      $Id: conf.c,v 1.18 1997/11/23 05:21:54 mickey Exp $
+ *      $Id: conf.c,v 1.19 1998/01/28 13:45:49 pefo Exp $
  */
 
 #include <sys/param.h>
@@ -201,8 +201,6 @@ struct cdevsw	cdevsw[] =
 };
 
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
-
-int	mem_no = 2; 	/* major device number of memory special file */
 
 /*
  * Swapdev is a fake device implemented

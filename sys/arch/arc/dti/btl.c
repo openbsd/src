@@ -69,7 +69,7 @@
 
 #include <dev/isa/isavar.h>
 #include <arc/dti/btlreg.h>
-#include <arc/arc/arctype.h>    /* XXX for cpu types */
+#include <mips/archtype.h>    /* XXX for cpu types */
 
 #ifndef DDB
 #define Debugger() panic("should call debugger here (bt742a.c)")
@@ -100,11 +100,11 @@ struct bt_mbx {
 	struct bt_mbx_in *tmbi;		/* Target Mail Box in */
 };
 
-extern int cputype;  /* XXX */
+extern int system_type;  /* XXX */
 
-#define KVTOPHYS(x)	((cputype == DESKSTATION_TYNE) ? \
+#define KVTOPHYS(x)	((system_type == DESKSTATION_TYNE) ? \
 	(((int)(x) & 0x7fffff) | 0x800000) : ((int)(x)))
-#define PHYSTOKV(x)	((cputype == DESKSTATION_TYNE) ? \
+#define PHYSTOKV(x)	((system_type == DESKSTATION_TYNE) ? \
 	(((int)(x) & 0x7fffff) | TYNE_V_BOUNCE) : ((int)(x)))
 
 #include "aha.h"
@@ -391,7 +391,7 @@ btattach(parent, self, aux)
 	/*
 	 * create mbox area
 	 */
-	if (cputype == DESKSTATION_TYNE) {
+	if (system_type == DESKSTATION_TYNE) {
 		bouncebase = TYNE_V_BOUNCE;
 		bouncesize = TYNE_S_BOUNCE;
 	} else {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.12 1997/07/23 07:00:39 denny Exp $	*/
+/*	$OpenBSD: trap.c,v 1.13 1998/01/28 13:46:00 pefo Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  * from: Utah Hdr: trap.c 1.32 91/04/06
  *
  *	from: @(#)trap.c	8.5 (Berkeley) 1/11/94
- *      $Id: trap.c,v 1.12 1997/07/23 07:00:39 denny Exp $
+ *      $Id: trap.c,v 1.13 1998/01/28 13:46:00 pefo Exp $
  */
 
 #include "ppp.h"
@@ -75,91 +75,91 @@
 #include <vm/vm_page.h>
 
 #include <arc/pica/pica.h>
-#include <arc/arc/arctype.h>
+#include <mips/archtype.h>
 
 #include <sys/cdefs.h>
 #include <sys/syslog.h>
 
 struct	proc *machFPCurProcPtr;		/* pointer to last proc to use FP */
 
-extern void MachKernGenException __P((void));
-extern void MachUserGenException __P((void));
-extern void MachKernIntr __P((void));
-extern void MachUserIntr __P((void));
-extern void MachTLBModException __P((void));
-extern void MachTLBInvalidException __P((void));
+extern void MipsKernGenException __P((void));
+extern void MipsUserGenException __P((void));
+extern void MipsKernIntr __P((void));
+extern void MipsUserIntr __P((void));
+extern void MipsTLBModException __P((void));
+extern void MipsTLBInvalidException __P((void));
 
 void (*machExceptionTable[])(void) = {
 /*
  * The kernel exception handlers.
  */
-	MachKernIntr,			/* external interrupt */
-	MachKernGenException,		/* TLB modification */
-	MachTLBInvalidException,	/* TLB miss (load or instr. fetch) */
-	MachTLBInvalidException,	/* TLB miss (store) */
-	MachKernGenException,		/* address error (load or I-fetch) */
-	MachKernGenException,		/* address error (store) */
-	MachKernGenException,		/* bus error (I-fetch) */
-	MachKernGenException,		/* bus error (load or store) */
-	MachKernGenException,		/* system call */
-	MachKernGenException,		/* breakpoint */
-	MachKernGenException,		/* reserved instruction */
-	MachKernGenException,		/* coprocessor unusable */
-	MachKernGenException,		/* arithmetic overflow */
-	MachKernGenException,		/* trap exception */
-	MachKernGenException,		/* viritual coherence exception inst */
-	MachKernGenException,		/* floating point exception */
-	MachKernGenException,		/* reserved */
-	MachKernGenException,		/* reserved */
-	MachKernGenException,		/* reserved */
-	MachKernGenException,		/* reserved */
-	MachKernGenException,		/* reserved */
-	MachKernGenException,		/* reserved */
-	MachKernGenException,		/* reserved */
-	MachKernGenException,		/* watch exception */
-	MachKernGenException,		/* reserved */
-	MachKernGenException,		/* reserved */
-	MachKernGenException,		/* reserved */
-	MachKernGenException,		/* reserved */
-	MachKernGenException,		/* reserved */
-	MachKernGenException,		/* reserved */
-	MachKernGenException,		/* reserved */
-	MachKernGenException,		/* viritual coherence exception data */
+	MipsKernIntr,			/* external interrupt */
+	MipsKernGenException,		/* TLB modification */
+	MipsTLBInvalidException,	/* TLB miss (load or instr. fetch) */
+	MipsTLBInvalidException,	/* TLB miss (store) */
+	MipsKernGenException,		/* address error (load or I-fetch) */
+	MipsKernGenException,		/* address error (store) */
+	MipsKernGenException,		/* bus error (I-fetch) */
+	MipsKernGenException,		/* bus error (load or store) */
+	MipsKernGenException,		/* system call */
+	MipsKernGenException,		/* breakpoint */
+	MipsKernGenException,		/* reserved instruction */
+	MipsKernGenException,		/* coprocessor unusable */
+	MipsKernGenException,		/* arithmetic overflow */
+	MipsKernGenException,		/* trap exception */
+	MipsKernGenException,		/* viritual coherence exception inst */
+	MipsKernGenException,		/* floating point exception */
+	MipsKernGenException,		/* reserved */
+	MipsKernGenException,		/* reserved */
+	MipsKernGenException,		/* reserved */
+	MipsKernGenException,		/* reserved */
+	MipsKernGenException,		/* reserved */
+	MipsKernGenException,		/* reserved */
+	MipsKernGenException,		/* reserved */
+	MipsKernGenException,		/* watch exception */
+	MipsKernGenException,		/* reserved */
+	MipsKernGenException,		/* reserved */
+	MipsKernGenException,		/* reserved */
+	MipsKernGenException,		/* reserved */
+	MipsKernGenException,		/* reserved */
+	MipsKernGenException,		/* reserved */
+	MipsKernGenException,		/* reserved */
+	MipsKernGenException,		/* viritual coherence exception data */
 /*
  * The user exception handlers.
  */
-	MachUserIntr,			/*  0 */
-	MachUserGenException,		/*  1 */
-	MachUserGenException,		/*  2 */
-	MachUserGenException,		/*  3 */
-	MachUserGenException,		/*  4 */
-	MachUserGenException,		/*  5 */
-	MachUserGenException,		/*  6 */
-	MachUserGenException,		/*  7 */
-	MachUserGenException,		/*  8 */
-	MachUserGenException,		/*  9 */
-	MachUserGenException,		/* 10 */
-	MachUserGenException,		/* 11 */
-	MachUserGenException,		/* 12 */
-	MachUserGenException,		/* 13 */
-	MachUserGenException,		/* 14 */
-	MachUserGenException,		/* 15 */
-	MachUserGenException,		/* 16 */
-	MachUserGenException,		/* 17 */
-	MachUserGenException,		/* 18 */
-	MachUserGenException,		/* 19 */
-	MachUserGenException,		/* 20 */
-	MachUserGenException,		/* 21 */
-	MachUserGenException,		/* 22 */
-	MachUserGenException,		/* 23 */
-	MachUserGenException,		/* 24 */
-	MachUserGenException,		/* 25 */
-	MachUserGenException,		/* 26 */
-	MachUserGenException,		/* 27 */
-	MachUserGenException,		/* 28 */
-	MachUserGenException,		/* 29 */
-	MachUserGenException,		/* 20 */
-	MachUserGenException,		/* 31 */
+	MipsUserIntr,			/*  0 */
+	MipsUserGenException,		/*  1 */
+	MipsUserGenException,		/*  2 */
+	MipsUserGenException,		/*  3 */
+	MipsUserGenException,		/*  4 */
+	MipsUserGenException,		/*  5 */
+	MipsUserGenException,		/*  6 */
+	MipsUserGenException,		/*  7 */
+	MipsUserGenException,		/*  8 */
+	MipsUserGenException,		/*  9 */
+	MipsUserGenException,		/* 10 */
+	MipsUserGenException,		/* 11 */
+	MipsUserGenException,		/* 12 */
+	MipsUserGenException,		/* 13 */
+	MipsUserGenException,		/* 14 */
+	MipsUserGenException,		/* 15 */
+	MipsUserGenException,		/* 16 */
+	MipsUserGenException,		/* 17 */
+	MipsUserGenException,		/* 18 */
+	MipsUserGenException,		/* 19 */
+	MipsUserGenException,		/* 20 */
+	MipsUserGenException,		/* 21 */
+	MipsUserGenException,		/* 22 */
+	MipsUserGenException,		/* 23 */
+	MipsUserGenException,		/* 24 */
+	MipsUserGenException,		/* 25 */
+	MipsUserGenException,		/* 26 */
+	MipsUserGenException,		/* 27 */
+	MipsUserGenException,		/* 28 */
+	MipsUserGenException,		/* 29 */
+	MipsUserGenException,		/* 20 */
+	MipsUserGenException,		/* 31 */
 };
 
 char	*trap_type[] = {
@@ -225,16 +225,15 @@ void logstacktrace __P((int, int, int, int));
 
 /* extern functions printed by name in stack backtraces */
 extern void idle __P((void));
-extern void MachTLBMiss __P((void));
+extern void MipsTLBMiss __P((void));
 extern u_int mdbpeek __P((int));
 extern int mdb __P((u_int, u_int, struct proc *, int));
 #endif	/* DEBUG */
 
 extern const struct callback *callv;
 extern u_long intrcnt[];
-extern u_int cputype;
-extern void MachSwitchFPState __P((struct proc *, int *));
-extern void MachFPTrap __P((u_int, u_int, u_int));
+extern void MipsSwitchFPState __P((struct proc *, int *));
+extern void MipsFPTrap __P((u_int, u_int, u_int));
 extern void arpintr __P((void));
 extern void ipintr __P((void));
 extern void pppintr __P((void));
@@ -243,11 +242,11 @@ u_int trap __P((u_int, u_int, u_int, u_int, u_int));
 void interrupt __P((u_int, u_int, u_int, u_int, u_int));
 void softintr __P((u_int, u_int));
 int cpu_singlestep __P((struct proc *));
-u_int MachEmulateBranch __P((int *, int, int, u_int));
+u_int MipsEmulateBranch __P((int *, int, int, u_int));
 
 /*
  * Handle an exception.
- * Called from MachKernGenException() or MachUserGenException()
+ * Called from MipsKernGenException() or MipsUserGenException()
  * when a processor trap occurs.
  * In the case of a kernel trap, we return the pc where to resume if
  * ((struct pcb *)UADDR)->pcb_onfault is set, otherwise, return old pc.
@@ -481,7 +480,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 		cnt.v_syscall++;
 		/* compute next PC after syscall instruction */
 		if ((int)causeReg < 0)
-			locr0[PC] = MachEmulateBranch(locr0, pc, 0, 0);
+			locr0[PC] = MipsEmulateBranch(locr0, pc, 0, 0);
 		else
 			locr0[PC] += 4;
 		callp = p->p_emul->e_sysent;
@@ -716,7 +715,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 			typ = ILL_ILLOPC;
 			break;
 		}
-		MachSwitchFPState(machFPCurProcPtr, p->p_md.md_regs);
+		MipsSwitchFPState(machFPCurProcPtr, p->p_md.md_regs);
 		machFPCurProcPtr = p;
 		p->p_md.md_regs[PS] |= SR_COP_1_BIT;
 		p->p_md.md_flags |= MDP_FPUSED;
@@ -732,7 +731,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 #endif
 
 	case T_FPE+T_USER:
-		MachFPTrap(statusReg, causeReg, pc);
+		MipsFPTrap(statusReg, causeReg, pc);
 		goto out;
 
 	case T_OVFLOW+T_USER:
@@ -842,7 +841,7 @@ out:
 
 /*
  * Handle an interrupt.
- * Called from MachKernIntr() or MachUserIntr()
+ * Called from MipsKernIntr() or MipsUserIntr()
  * Note: curproc might be NULL.
  */
 void
@@ -972,7 +971,7 @@ set_intr(mask, int_hand, prio)
 	/*
 	 *  Update external interrupt mask but don't enable clock.
 	 */
-	switch(cputype) {
+	switch(system_type) {
 	case ACER_PICA_61:
 	case MAGNUM:
 		out32(R4030_SYS_EXT_IMASK, cpu_int_mask & (~INT_MASK_4 >> 10));
@@ -988,7 +987,7 @@ set_intr(mask, int_hand, prio)
 }
 
 /*
- * This is called from MachUserIntr() if astpending is set.
+ * This is called from MipsUserIntr() if astpending is set.
  * This is very similar to the tail of trap().
  */
 void
@@ -1098,7 +1097,7 @@ arc_errintr()
  * Return the resulting PC as if the branch was executed.
  */
 unsigned
-MachEmulateBranch(regsPtr, instPC, fpcCSR, instptr)
+MipsEmulateBranch(regsPtr, instPC, fpcCSR, instptr)
 	int *regsPtr;
 	int instPC;
 	int fpcCSR;
@@ -1159,7 +1158,7 @@ MachEmulateBranch(regsPtr, instPC, fpcCSR, instptr)
 			break;
 
 		default:
-			panic("MachEmulateBranch: Bad branch cond");
+			panic("MipsEmulateBranch: Bad branch cond");
 		}
 		break;
 
@@ -1259,7 +1258,7 @@ cpu_singlestep(p)
 
 	/* compute next address after current location */
 	if(curinstr != 0) {
-		va = MachEmulateBranch(locr0, locr0[PC], locr0[FSR], curinstr);
+		va = MipsEmulateBranch(locr0, locr0[PC], locr0[FSR], curinstr);
 	}
 	else {
 		va = locr0[PC] + 4;
@@ -1378,10 +1377,10 @@ specialframe:
 	}
 
 	/* Backtraces should contine through interrupts from kernel mode */
-	if (pc >= (unsigned)MachKernIntr && pc < (unsigned)MachUserIntr) {
+	if (pc >= (unsigned)MipsKernIntr && pc < (unsigned)MipsUserIntr) {
 		/* NOTE: the offsets depend on the code in locore.s */
-		(*printfn)("MachKernIntr+%x: (%x, %x ,%x) -------\n",
-		       pc-(unsigned)MachKernIntr, a0, a1, a2);
+		(*printfn)("MipsKernIntr+%x: (%x, %x ,%x) -------\n",
+		       pc-(unsigned)MipsKernIntr, a0, a1, a2);
 		a0 = mdbpeek(sp + 36);
 		a1 = mdbpeek(sp + 40);
 		a2 = mdbpeek(sp + 44);
@@ -1404,14 +1403,14 @@ specialframe:
 	 * have a preceding "j ra" at the tail of the preceding function. 
 	 * Depends on relative ordering of functions in locore.
 	 */
-	if (pcBetween(MachKernGenException, MachUserGenException))
-		subr = (unsigned) MachKernGenException;
-	else if (pcBetween(MachUserGenException,MachKernIntr))
-		subr = (unsigned) MachUserGenException;
-	else if (pcBetween(MachKernIntr, MachUserIntr))
-		subr = (unsigned) MachKernIntr;
-	else if (pcBetween(MachUserIntr, MachTLBInvalidException))
-		subr = (unsigned) MachUserIntr;
+	if (pcBetween(MipsKernGenException, MipsUserGenException))
+		subr = (unsigned) MipsKernGenException;
+	else if (pcBetween(MipsUserGenException,MipsKernIntr))
+		subr = (unsigned) MipsUserGenException;
+	else if (pcBetween(MipsKernIntr, MipsUserIntr))
+		subr = (unsigned) MipsKernIntr;
+	else if (pcBetween(MipsUserIntr, MipsTLBInvalidException))
+		subr = (unsigned) MipsUserIntr;
 	else if (pcBetween(splx, wbflush))
 		subr = (unsigned) splx;
 	else if (pcBetween(cpu_switch, fuword))
@@ -1421,7 +1420,7 @@ specialframe:
 		ra = 0;
 		goto done;
 	}
-	else if (pc >= (unsigned)MachTLBMiss && pc < (unsigned)setsoftclock) {
+	else if (pc >= (unsigned)MipsTLBMiss && pc < (unsigned)setsoftclock) {
 		(*printfn)("<<locore>>");
 		goto done;
 	}
@@ -1574,10 +1573,10 @@ finish:
 static struct { void *addr; char *name;} names[] = {
 	Name(interrupt),
 	Name(trap),
-	Name(MachKernGenException),
-	Name(MachUserGenException),
-	Name(MachKernIntr),
-	Name(MachUserIntr),
+	Name(MipsKernGenException),
+	Name(MipsUserGenException),
+	Name(MipsKernIntr),
+	Name(MipsUserIntr),
 	Name(splx),
 	Name(idle),
 	Name(cpu_switch),

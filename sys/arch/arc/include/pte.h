@@ -1,4 +1,4 @@
-/*      $OpenBSD: pte.h,v 1.3 1997/01/22 22:41:15 pefo Exp $	*/
+/*      $OpenBSD: pte.h,v 1.4 1998/01/28 13:46:25 pefo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -79,7 +79,7 @@ struct tlb {
 typedef union pt_entry {
 	unsigned int	pt_entry;	/* for copying, etc. */
 	struct pte	pt_pte;		/* for getting to bits by name */
-} pt_entry_t;	/* Mach page table entry */
+} pt_entry_t;	/* Mips page table entry */
 #endif /* _LOCORE */
 
 #define	PT_ENTRY_NULL	((pt_entry_t *) 0)

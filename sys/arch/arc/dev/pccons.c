@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccons.c,v 1.15 1997/05/19 16:01:07 pefo Exp $	*/
+/*	$OpenBSD: pccons.c,v 1.16 1998/01/28 13:46:05 pefo Exp $	*/
 /*	$NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp $	*/
 
 /*-
@@ -71,8 +71,10 @@
 #include <machine/autoconf.h>
 #include <machine/display.h>
 #include <machine/pccons.h>
-#include <arc/arc/arctype.h>
-#include <arc/arc/arcbios.h>
+
+#include <mips/archtype.h>
+#include <arch/mips/mips/arcbios.h>
+
 #include <arc/pica/pica.h>
 #include <arc/dti/desktech.h>
 
@@ -80,7 +82,7 @@
 #include <arc/isa/isa_machdep.h>
 #include <machine/kbdreg.h>
 
-extern int cputype;
+extern int system_type;
 
 #define	XFREE86_BUG_COMPAT
 
@@ -579,7 +581,7 @@ pcattach(parent, self, aux)
 	printf(": %s\n", vs.color ? "color" : "mono");
 	do_async_update(1);
 
-	switch(cputype) {
+	switch(system_type) {
 	case ACER_PICA_61:
 		BUS_INTR_ESTABLISH(ca, pcintr, (void *)(long)sc);
 		break;
@@ -858,7 +860,7 @@ pccnprobe(cp)
 
 	/* initialize required fields */
 	cp->cn_dev = makedev(maj, 0);
-	if(cputype == ALGOR_P4032) {
+	if(system_type == ALGOR_P4032) {
 		cp->cn_pri = CN_DEAD;	/* XXX For now... */
 	}
 	else {
@@ -876,7 +878,7 @@ pccninit(cp)
 	 * For now, don't screw with it.
 	 */
 	/* crtat = 0; */
-	switch(cputype) {
+	switch(system_type) {
 
 	case ACER_PICA_61:
 		mono_base += PICA_V_LOCAL_VIDEO_CTRL;
@@ -888,14 +890,15 @@ pccninit(cp)
 		break;
 
 	case DESKSTATION_TYNE:
-		mono_base += TYNE_V_ISA_IO;
-		mono_buf += TYNE_V_ISA_MEM;
-		cga_base += TYNE_V_ISA_IO;
-		cga_buf += TYNE_V_ISA_MEM;
-		kbd_cmdp = TYNE_V_ISA_IO + 0x64;
-		kbd_datap = TYNE_V_ISA_IO + 0x60;
-		outb(TYNE_V_ISA_IO + 0x3ce, 6);		/* Correct video mode */
-		outb(TYNE_V_ISA_IO + 0x3cf, inb(TYNE_V_ISA_IO + 0x3cf) | 0xc);
+		mono_base += arc_bus_io.bus_base;
+		mono_buf += arc_bus_mem.bus_base;
+		cga_base += arc_bus_io.bus_base;
+		cga_buf += arc_bus_mem.bus_base;
+		kbd_cmdp = arc_bus_io.bus_base + 0x64;
+		kbd_datap = arc_bus_io.bus_base + 0x60;
+		outb(arc_bus_io.bus_base + 0x3ce, 6);	/* Correct video mode */
+		outb(arc_bus_io.bus_base + 0x3cf,
+			inb(arc_bus_io.bus_base + 0x3cf) | 0xc);
 		kbc_put8042cmd(CMDBYTE);		/* Want XT codes.. */
 		break;
 
@@ -907,6 +910,15 @@ pccninit(cp)
 		kbd_cmdp = arc_bus_io.bus_base + 0x64;
 		kbd_datap = arc_bus_io.bus_base + 0x60;
 		kbc_put8042cmd(CMDBYTE);		/* Want XT codes.. */
+		break;
+
+	case SNI_RM200:
+		mono_base += arc_bus_io.bus_base;
+		mono_buf += arc_bus_mem.bus_base;
+		cga_base += arc_bus_io.bus_base;
+		cga_buf += arc_bus_mem.bus_base;
+		kbd_cmdp = arc_bus_io.bus_base + 0x64;
+		kbd_datap = arc_bus_io.bus_base + 0x60;
 		break;
 	}
 }
@@ -1896,7 +1908,7 @@ pcmmap(dev, offset, nprot)
 	int nprot;
 {
 
-	switch(cputype) {
+	switch(system_type) {
 
 	case ACER_PICA_61:
 		if (offset >= 0xa0000 && offset < 0xc0000)

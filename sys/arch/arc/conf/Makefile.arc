@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.arc,v 1.9 1997/09/15 02:40:26 deraadt Exp $
+#	$OpenBSD: Makefile.arc,v 1.10 1998/01/28 13:46:02 pefo Exp $
 
 #	@(#)Makefile.arc	8.2 (Berkeley) 2/16/94
 #
@@ -34,6 +34,7 @@ TOUCH?=	touch -f -c
 # source tree is located via $S relative to the compilation directory
 S=	../../../..
 ARC=	../..
+MIPS=	../../../mips
 
 INCLUDES=	-I. -I$S/arch -I$S
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Darc
@@ -124,13 +125,13 @@ symbols.sort: ${ARC}/arc/symbols.raw
 	grep -v '^#' ${ARC}/arc/symbols.raw \
 	    | sed 's/^	//' | sort -u > symbols.sort
 
-locore.o: ${ARC}/arc/locore.S ${ARC}/include/asm.h \
-	${ARC}/include/cpu.h ${ARC}/include/reg.h assym.h
+locore.o: ${ARC}/arc/locore.S ${MIPS}/include/asm.h \
+	${MIPS}/include/cpu.h ${MIPS}/include/reg.h assym.h
 	${NORMAL_S} -mips3 ${ARC}/arc/locore.S
 
-fp.o: ${ARC}/arc/fp.S ${ARC}/include/asm.h \
-	${ARC}/include/cpu.h ${ARC}/include/reg.h assym.h
-	${NORMAL_S} -mips3 ${ARC}/arc/fp.S
+fp.o: ${MIPS}/mips/fp.S ${MIPS}/include/asm.h \
+	${ARC}/include/cpu.h ${MIPS}/include/reg.h assym.h
+	${NORMAL_S} -mips3 ${MIPS}/mips/fp.S
 
 # the following are necessary because the files depend on the types of
 # cpu's included in the system configuration

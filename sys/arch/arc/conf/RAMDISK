@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.6 1997/08/01 11:31:23 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.7 1998/01/28 13:46:03 pefo Exp $
 #
 #	Generic configuration file for MIPS R4x00 ARC Systems
 #
@@ -72,6 +72,8 @@ cpu*		at mainbus0
 
 pica*		at mainbus0	# ACER Pica systems local bus.
 isabr*		at mainbus0	# ISA Bus bridge (std ISA bus).
+algor*		at mainbus0	# P4032 PCI Bridge.
+pbcpcibr*	at mainbus0	# PCI Bus bridge.
 
 #### PICA bus devices
 
@@ -88,6 +90,13 @@ fd*		at fdc? drive ?
 
 asc0		at pica?
 scsibus* 	at asc?
+
+#### Algor bus devices
+
+clock0		at algor?
+com0		at algor?
+com1		at algor?
+lpt0		at algor?
 
 #### ISA Bus.
 
@@ -117,6 +126,15 @@ ed2    		at isa? port 0x300 iomem 0xcc000 irq 10 #
 btl0		at isa? port 0x330 irq ? drq ?
 scsibus* 	at btl?
 
+#### PCI Bus
+
+pci*		at pbcpcibr?
+
+de*		at pci? dev ? function ?
+ncr*		at pci? dev ? function ?
+scsibus*	at ncr?
+
+
 #### SCSI Bus devices
 
 sd*		at scsibus? target ? lun ?
@@ -137,7 +155,7 @@ pseudo-device	ppp		 2	# serial-line PPP ports
 #pseudo-device	pty		64	# pseudo ptys
 #pseudo-device	tb		 1	# tablet line discipline
 #pseudo-device	vnd		 4	# paging to files
-#pseudo-device   ccd		 4	# concatenated disk devices
+#pseudo-device	ccd		 4	# concatenated disk devices
 pseudo-device	rd		 1	# Ram disk.
 
 # RAMDISK stuff

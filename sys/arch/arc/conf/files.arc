@@ -1,4 +1,4 @@
-#	$OpenBSD: files.arc,v 1.16 1997/12/27 12:13:13 niklas Exp $
+#	$OpenBSD: files.arc,v 1.17 1998/01/28 13:46:03 pefo Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
 #
@@ -10,19 +10,13 @@ maxusers 2 8 64
 
 file	arch/arc/arc/autoconf.c
 file	arch/arc/arc/conf.c
-file	arch/arc/arc/cpu_exec.c
-file	arch/arc/arc/disksubr.c
 file	arch/arc/dev/dma.c
 file	arch/arc/arc/machdep.c
-file	arch/arc/arc/minidebug.c
-file	arch/arc/arc/mem.c
 file	arch/arc/arc/pmap.c
-file	arch/arc/arc/process_machdep.c
-file	arch/arc/arc/sys_machdep.c
 file	arch/arc/arc/trap.c
 file	arch/arc/arc/vm_machdep.c
 
-file	arch/arc/arc/arcbios.c
+file	arch/mips/mips/arcbios.c
 
 #
 #	Machine-independent ATAPI drivers 
@@ -36,12 +30,12 @@ major	{ acd = 5 }
 define	mainbus {}
 device	mainbus
 attach	mainbus at root
-file	arch/arc/arc/mainbus.c	mainbus
+file	arch/mips/mips/mainbus.c	mainbus
 
 #	Our CPU configurator
 device	cpu
 attach	cpu at mainbus			# not optional
-file arch/arc/arc/cpu.c			cpu
+file arch/mips/mips/cpu.c		cpu
 
 #
 #	PICA bus autoconfiguration devices
@@ -108,7 +102,6 @@ device	clock
 attach	clock at pica with clock_pica
 attach	clock at isa with clock_isa
 attach	clock at algor with clock_algor
-file	arch/arc/arc/clock.c	clock & (clock_isa | clock_pica | clock_algor) needs-flag
 file	arch/arc/arc/clock_mc.c	clock & (clock_isa | clock_pica | clock_algor) needs-flag
 
 #	Console driver on PC-style graphics
