@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.48 2003/08/20 20:28:40 mickey Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.49 2003/08/20 20:53:31 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -1006,10 +1006,12 @@ mbattach(parent, self, aux)
 	/* PDC first */
 	bzero (&nca, sizeof(nca));
 	nca.ca_name = "pdc";
-	nca.ca_hpa = 0;
-	nca.ca_hpamask = 0;
 	nca.ca_iot = &hppa_bustag;
 	nca.ca_dmatag = &hppa_dmatag;
+	config_found(self, &nca, mbprint);
+
+	/* get some power */
+	nca.ca_name = "power";
 	config_found(self, &nca, mbprint);
 
 	bzero (&nca, sizeof(nca));

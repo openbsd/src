@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.18 2003/08/14 19:54:15 mickey Exp $
+#	$OpenBSD: RAMDISK,v 1.19 2003/08/20 20:53:31 mickey Exp $
 #
 # Diskless kernel config
 #
@@ -43,11 +43,11 @@ mainbus0 at root		# root "bus"
 
 mem*	at mainbus0		# /dev/*mem and memory controller
 pdc0	at mainbus0		# PDC/IODC wrapper for boot console
+power0	at mainbus0		# power/fail manager (iv 2)
 cpu*	at mainbus0 irq 31	# HP PA-RISC cpu
-phantomas0 at mainbus0		# Phantom PseudoBC GSC+ Port
 #fpu*	at mainbus0		# HP PA-RISC fpu (iv N/A)
 #pmu*	at mainbus0 irq 29	# HP PA-RISC perfomance monitor unit
-#power*	at mainbus0		# power/fail manager (iv 2)
+phantomas0 at mainbus0		# Phantom PseudoBC GSC+ Port
 
 lasi0	at mainbus0 offset 0x100000 irq 28	# LASI host adapter
 lasi0	at mainbus0 offset 0xfd00000 irq 28	# LASI on C1[01]0, J2[01]0

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.45 2003/03/29 00:51:38 mickey Exp $
+#	$OpenBSD: files.hppa,v 1.46 2003/08/20 20:53:31 mickey Exp $
 #
 # hppa-specific configuration info
 
@@ -74,6 +74,10 @@ file	arch/hppa/hppa/mainbus.c	mainbus
 device	pdc
 attach	pdc at mainbus
 file	arch/hppa/dev/pdc.c		pdc
+
+device	power
+attach	power at mainbus
+file	arch/hppa/dev/power.c		power
 
 device	mem
 attach	mem at mainbus
