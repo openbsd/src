@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.1 2004/02/01 05:09:49 drahn Exp $	*/
+/*	$OpenBSD: conf.h,v 1.2 2004/02/11 06:43:05 miod Exp $	*/
 /*	$NetBSD: conf.h,v 1.7 2002/04/19 01:04:39 wiz Exp $	*/
 
 /*
@@ -52,14 +52,8 @@ cdev_decl(mm);
 
 bdev_decl(wd);
 cdev_decl(wd);
-bdev_decl(sw);
-cdev_decl(sw);
 bdev_decl(fd);
 cdev_decl(fd);
-bdev_decl(rd);
-cdev_decl(rd);
-bdev_decl(raid);
-cdev_decl(raid);
 
 /* Character device declarations */
 
@@ -108,19 +102,8 @@ cdev_decl(prof);
 #define	ofromwrite ofromrw
 cdev_decl(ofrom);
 cdev_decl(joy);
-cdev_decl(usb);
-cdev_decl(uhid);
-cdev_decl(ugen);
-cdev_decl(ulpt);
-cdev_decl(ucom);
-cdev_decl(urio);
-cdev_decl(uscanner);
 cdev_decl(vc_nb_);
-cdev_decl(wsdisplay);
 cdev_decl(wsfont);
-cdev_decl(wskbd);
-cdev_decl(wsmouse);
-cdev_decl(wsmux);
 cdev_decl(scsibus);
 cdev_decl(openfirm);
 cdev_decl(pci);
