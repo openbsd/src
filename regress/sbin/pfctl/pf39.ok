@@ -13,11 +13,11 @@ o_allowopts = "allow-opts "
 o_label = "label blah"
 o_qname = "queue blah"
 pass in log quick on lo0 inet proto tcp all tos 0x08 keep state fragment label blah 
-pass in log quick on lo0 inet proto icmp all user = 3 group = 32767 icmp-type echorep code 0 tos 0x08 keep state allow-opts label blah queue blah
-pass in log quick on lo0 inet proto icmp all user = 3 group = 0 icmp-type echorep code 0 tos 0x08 keep state allow-opts label blah queue blah
-pass in log quick on lo0 inet proto icmp all user = 0 group = 32767 icmp-type echorep code 0 tos 0x08 keep state allow-opts label blah queue blah
-pass in log quick on lo0 inet proto icmp all user = 0 group = 0 icmp-type echorep code 0 tos 0x08 keep state allow-opts label blah queue blah
+pass in log quick on lo0 inet proto icmp all user = 3 group = 32767 icmp-type echorep code 0 tos 0x08 keep state allow-opts label blah queue blah 
+pass in log quick on lo0 inet proto icmp all user = 3 group = 0 icmp-type echorep code 0 tos 0x08 keep state allow-opts label blah queue blah 
+pass in log quick on lo0 inet proto icmp all user = 0 group = 32767 icmp-type echorep code 0 tos 0x08 keep state allow-opts label blah queue blah 
+pass in log quick on lo0 inet proto icmp all user = 0 group = 0 icmp-type echorep code 0 tos 0x08 keep state allow-opts label blah queue blah 
 pass in log quick on lo0 inet proto tcp all keep state 
-pass in log quick on lo0 inet proto tcp all tos 0x08 keep state label blah queue blah
+pass in log quick on lo0 inet proto tcp all tos 0x08 keep state label blah queue blah 
 pass in log quick on lo0 inet proto icmp all icmp-type echorep code 0 tos 0x08 
 pass in log quick on lo0 inet proto tcp all flags S/SA allow-opts 
