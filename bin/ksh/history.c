@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.4 1997/01/02 17:37:26 downsj Exp $	*/
+/*	$OpenBSD: history.c,v 1.5 1997/01/02 18:16:52 downsj Exp $	*/
 
 /*
  * command history
@@ -26,11 +26,9 @@
 #  ifndef HISTFILE
 #   ifdef OS2
 #    define HISTFILE "history.ksh"
-#   elif __OpenBSD__ /* OS2 */
-#    define HISTFILE ".ksh_history"
-#   else /* __OpenBSD__ */
+#   else /* OS2 */
 #    define HISTFILE ".pdksh_hist"
-#   endif /* OS2 and __OpenBSD__ */
+#   endif /* OS2 */
 #  endif
 
 # else
