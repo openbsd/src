@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.22 2003/09/20 13:57:35 miod Exp $ */
+/*	$OpenBSD: vmparam.h,v 1.23 2003/10/02 10:18:11 miod Exp $ */
 /* 
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
@@ -78,13 +78,13 @@
 #define	MAXSLP 		20
 
 #define	VM_MIN_ADDRESS		((vm_offset_t) 0)
-#define	VM_MAX_ADDRESS		((vm_offset_t) 0xffc00000U)
+#define	VM_MAX_ADDRESS		((vm_offset_t) 0xffc00000)
 #define VM_MAXUSER_ADDRESS	VM_MAX_ADDRESS
 
 /* on vme188, max = 0xf0000000 */
 
 #define VM_MIN_KERNEL_ADDRESS	((vm_offset_t) 0)
-#define VM_MAX_KERNEL_ADDRESS	((vm_offset_t) 0x1fffffff)
+#define VM_MAX_KERNEL_ADDRESS	((vm_offset_t) 0x20000000)
 
 #define KERNEL_STACK_SIZE	(3 * PAGE_SIZE)	/* kernel stack size */
 #define INTSTACK_SIZE		(4 * PAGE_SIZE)	/* interrupt stack size */
