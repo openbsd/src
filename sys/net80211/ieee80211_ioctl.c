@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.3 2004/06/28 19:29:40 millert Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.4 2004/11/25 11:20:04 reyk Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -82,8 +82,14 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung 
 #include <dev/wi/if_wavelan_ieee.h>
 #elif defined(__OpenBSD__)
 #include <dev/ic/if_wi_ieee.h>
+#include <dev/ic/if_wi_hostap.h>
 #else
 #include <dev/ic/wi_ieee.h>
+#endif
+
+#if defined(__OpenBSD__)
+void	 node2sta(struct ieee80211com *, struct ieee80211_node *,
+	    struct hostap_sta *);
 #endif
 
 /*
@@ -1128,6 +1134,11 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	static const u_int8_t empty_macaddr[IEEE80211_ADDR_LEN] = {
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 	};
+#if defined(__OpenBSD__)
+	struct ieee80211_node *ni;
+	struct hostap_getall reqall;
+	struct hostap_sta stabuf;
+#endif
 
 	switch (cmd) {
 	case SIOCSIFADDR:
@@ -1366,6 +1377,71 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		else
 			ifp->if_mtu = ifr->ifr_mtu;
 		break;
+#if defined(__OpenBSD__)
+	case SIOCHOSTAP_DEL:
+		if ((error = suser(curproc, 0)))
+			break;
+		if ((error = copyin(ifr->ifr_data, &stabuf, sizeof(stabuf))))
+			break;
+		ni = ieee80211_find_node(ic, stabuf.addr);
+		if (ni == NULL)
+			error = ENOENT;
+		else {
+			if (ni->ni_state == IEEE80211_STA_COLLECT)
+				break;
+
+			/* Disassociate station. */
+			if (ni->ni_state == IEEE80211_STA_ASSOC)
+				IEEE80211_SEND_MGMT(ic, ni,
+				    IEEE80211_FC0_SUBTYPE_DISASSOC,
+				    IEEE80211_REASON_ASSOC_LEAVE);
+
+			/* Deauth station. */
+			if (ni->ni_state >= IEEE80211_STA_AUTH)
+				IEEE80211_SEND_MGMT(ic, ni,
+				    IEEE80211_FC0_SUBTYPE_DEAUTH,
+				    IEEE80211_REASON_AUTH_LEAVE);
+
+			ieee80211_free_node(ic, ni);
+		}
+		break;
+	case SIOCHOSTAP_GET:
+		if ((error = copyin(ifr->ifr_data, &stabuf, sizeof(stabuf))))
+			break;
+		ni = ieee80211_find_node(ic, stabuf.addr);
+		if (ni == NULL)
+			error = ENOENT;
+		else {
+			node2sta(ic, ni, &stabuf);
+			error = copyout(&stabuf, ifr->ifr_data,
+			    sizeof(stabuf));
+		}
+		break;
+	case SIOCHOSTAP_GETALL:
+		if ((error = copyin(ifr->ifr_data, &reqall, sizeof(reqall))))
+			break;
+
+		reqall.nstations = i = 0;
+		ni = TAILQ_FIRST(&ic->ic_node);
+		while(ni && reqall.size >= i + sizeof(struct hostap_sta)) {
+			node2sta(ic, ni, &stabuf);
+			error = copyout(&stabuf, (caddr_t) reqall.addr + i,
+			    sizeof(struct hostap_sta));
+			if (error)
+				break;
+			i += sizeof(struct hostap_sta);
+			reqall.nstations++;
+			ni = TAILQ_NEXT(ni, ni_list);
+		}
+
+		if (!error)
+			error = copyout(&reqall, ifr->ifr_data,
+			    sizeof(reqall));
+		break;
+	case SIOCHOSTAP_ADD:
+	case SIOCHOSTAP_GFLAGS:
+	case SIOCHOSTAP_SFLAGS:
+#endif
 	default:
 		error = EINVAL;
 		break;
@@ -1373,3 +1449,21 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	return error;
 }
 #endif /* !__FreeBSD__ */
+
+#if defined(__OpenBSD__)
+void
+node2sta(struct ieee80211com *ic, struct ieee80211_node *ni,
+    struct hostap_sta *sta)
+{
+	bcopy(ni->ni_macaddr, sta->addr, IEEE80211_ADDR_LEN);
+	sta->flags = 0;
+	if (ni->ni_state >= IEEE80211_STA_AUTH)
+		sta->flags |= HOSTAP_FLAGS_AUTHEN;
+	if (ni->ni_state >= IEEE80211_STA_ASSOC)
+		sta->flags |= HOSTAP_FLAGS_ASSOC;
+	sta->asid = ni->ni_associd;
+	sta->capinfo = ni->ni_capinfo;
+	sta->sig_info = (*ic->ic_node_getrssi)(ic, ni);
+	sta->rates = 0x00;	/* not compatible */
+}
+#endif
