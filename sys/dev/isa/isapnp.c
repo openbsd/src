@@ -1,4 +1,4 @@
-/*	$OpenBSD: isapnp.c,v 1.5 1996/08/16 08:35:01 deraadt Exp $	*/
+/*	$OpenBSD: isapnp.c,v 1.6 1996/10/18 15:39:34 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996, Shawn Hsiao <shawn@alpha.secc.fju.edu.tw>
@@ -100,6 +100,8 @@ struct cfdriver isapnp_cd = {
 	NULL, "isapnp", DV_DULL, 1
 };
 
+void postisapnpattach __P((struct device *parent,
+			   struct device *self, void *aux));
 static int isapnpquery __P((struct isapnp_softc *sc,
 			    u_int32_t dev_id, struct isa_attach_args *ia));
 static void send_Initiation_LFSR __P((struct isapnp_softc *sc));
@@ -116,6 +118,10 @@ static int find_free_drq __P((int drq_mask));
 static int find_free_io  __P((struct isapnp_softc *sc, int desc,
 			      int min_addr, int max_addr, int size,
 			      int alignment, int range_check));
+static int handle_small_res __P((unsigned char *resinfo,
+				 int item, int len, struct cardinfo *card));
+static void handle_large_res __P((unsigned char *resinfo,
+				  int item, int len, struct cardinfo *card));
 
 int
 isapnpmatch(parent, match, aux)
@@ -137,8 +143,10 @@ isapnpattach(parent, self, aux)
 	struct isa_softc *isc = (void *)parent;
 	struct isapnp_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
+#ifdef notdef
 	struct cardinfo *card;
 	int iobase;
+#endif
 	int num_pnp_devs;
 
 	/*
@@ -296,7 +304,9 @@ isapnpquery(sc, dev_id, ipa)
 	struct devinfo *dev;
 	struct confinfo *conf;
 	struct isa_attach_args *tmp;
+#ifdef notdef
 	int irq, drq, iobase, mbase;
+#endif
 	int c, i, j, fail, success;
 
 	for (card = sc->q_card.tqh_first; card;
@@ -762,7 +772,10 @@ read_config(sc, card, csn)
 	struct cardinfo *card;
 	int csn;
 {
-	u_char serial[9], tag, *resinfo;
+#ifdef notdef
+	u_char serial[9];
+#endif
+	u_char tag, *resinfo;
 	int i, large_len;
 
 	/*
