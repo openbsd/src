@@ -15,7 +15,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: packet.c,v 1.23 2000/03/28 20:31:27 markus Exp $");
+RCSID("$Id: packet.c,v 1.24 2000/04/03 07:07:15 markus Exp $");
 
 #include "xmalloc.h"
 #include "buffer.h"
@@ -333,6 +333,18 @@ packet_put_string(const char *buf, unsigned int len)
 {
 	buffer_put_string(&outgoing_packet, buf, len);
 }
+void
+packet_put_cstring(const char *str)
+{
+	buffer_put_string(&outgoing_packet, str, strlen(str));
+}
+
+void
+packet_put_raw(const char *buf, unsigned int len)
+{
+	buffer_append(&outgoing_packet, buf, len);
+}
+
 
 /* Appends an arbitrary precision integer to packet data. */
 
@@ -340,6 +352,11 @@ void
 packet_put_bignum(BIGNUM * value)
 {
 	buffer_put_bignum(&outgoing_packet, value);
+}
+void
+packet_put_bignum2(BIGNUM * value)
+{
+	buffer_put_bignum2(&outgoing_packet, value);
 }
 
 /*
@@ -635,6 +652,21 @@ void
 packet_get_bignum(BIGNUM * value, int *length_ptr)
 {
 	*length_ptr = buffer_get_bignum(&incoming_packet, value);
+}
+
+void
+packet_get_bignum2(BIGNUM * value, int *length_ptr)
+{
+	*length_ptr = buffer_get_bignum2(&incoming_packet, value);
+}
+
+char *
+packet_get_raw(int *length_ptr)
+{
+	int bytes = buffer_len(&incoming_packet);
+	if (length_ptr != NULL)
+		*length_ptr = bytes;
+	return buffer_ptr(&incoming_packet);
 }
 
 /*
