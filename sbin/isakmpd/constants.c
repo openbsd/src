@@ -1,5 +1,5 @@
-/*	$OpenBSD: constants.c,v 1.4 1998/11/20 07:34:06 niklas Exp $	*/
-/*	$EOM: constants.c,v 1.5 1998/11/20 07:17:00 niklas Exp $	*/
+/*	$OpenBSD: constants.c,v 1.5 1999/02/26 03:35:06 niklas Exp $	*/
+/*	$EOM: constants.c,v 1.6 1999/02/25 11:38:48 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -36,6 +36,8 @@
 
 #include <stdio.h>
 #include <string.h>
+
+#include "sysdep.h"
 
 #include "constants.h"
 
