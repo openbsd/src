@@ -1,4 +1,4 @@
-/* $OpenBSD: defs.h,v 1.3 2002/08/12 00:42:56 aaron Exp $ */
+/* $OpenBSD: defs.h,v 1.4 2004/04/19 17:48:31 millert Exp $ */
 /* $NetBSD: defs.h,v 1.5 1999/12/24 09:08:49 agc Exp $ */
 
 /*
@@ -59,5 +59,7 @@
 #ifndef MAX
 #define MAX(a,b)	(((a) > (b)) ? (a) : (b))
 #endif
+
+#define	_PATH_NONEXISTENT	"/nonexistent"
 
 #endif /* !DEFS_H_ */

@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.56 2004/02/26 21:18:18 millert Exp $ */
+/* $OpenBSD: user.c,v 1.57 2004/04/19 17:48:31 millert Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -1028,7 +1028,8 @@ adduser(char *login_name, user_t *up)
 		warnx("Warning: expire time `%s' invalid, password expiry off",
 				up->u_expire);
 	}
-	if (lstat(home, &st) < 0 && !(up->u_flags & F_MKDIR)) {
+	if (lstat(home, &st) < 0 && !(up->u_flags & F_MKDIR) &&
+	    strcmp(home, _PATH_NONEXISTENT) != 0) {
 		warnx("Warning: home directory `%s' doesn't exist, and -m was"
 		    " not specified", home);
 	}
