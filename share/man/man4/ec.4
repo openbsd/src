@@ -1,5 +1,5 @@
-.\"	$OpenBSD: sm.4,v 1.2 1998/09/26 22:42:54 fgsch Exp $	
-.\"	$NetBSD: sm.4,v 1.3 1998/08/09 00:39:02 thorpej Exp $
+.\"	$OpenBSD: ec.4,v 1.1 1998/09/26 22:42:52 fgsch Exp $	
+.\"	$NetBSD: ec.4,v 1.4 1998/08/09 00:39:02 thorpej Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -36,32 +36,22 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 11, 1998
-.Dt SM 4
+.Dd September 22, 1998
+.Dt EC 4
 .Os OpenBSD
 .Sh NAME
-.Nm sm
-.Nd device driver for SMC91C9x-based Ethernet interfaces
+.Nm ec
+.Nd device driver for 3Com Etherlink II (3c503) Ethernet cards
 .Sh SYNOPSIS
-.Cd "sm0 at isa? port 0x300 irq 10"
-.Cd "sm* at pcmcia? function ?"
+.Cd "ec0 at isa? port 0x250 iomem 0xd8000 irq 9"
 .Sh DESCRIPTION
 The
 .Nm
-device driver supports SMC91C9x-based Ethernet interfaces.
-.Pp
-The ISA attachment of the
-.Nm
-driver supports any SMC91C9x-based Ethernet interface on the ISA
-bus, including the EFA Info*Express SVC VLB interface, and the
-on-board SMC91C9x Ethernet found in many embedded PCs and laptop
-docking stations.
-.Pp
-The PCMCIA attachment of the
-.Nm
-driver supports Megahertz X-JACK Ethernet cards.
+device driver supports 3Com Etherlink II (3c503) Ethernet cards.
 .Sh MEDIA SELECTION
-The SMC91C9x supports AUI and UTP media types.
+The Etherlink II supports two media types on a single card.  All support
+the AUI media type.  The other media is either BNC or UTP behind a
+transciever.  Software cannot differentiate between BNC and UTP cards.
 .Pp
 To enable the AUI media, select the
 .Em 10base5
@@ -70,21 +60,28 @@ or
 media type with
 .Xr ifconfig 8 's
 .Sq media
-directive.  To select UTP, select the
-.Em 10baseT
+directive.  To select the other media (BNC or UTP), select the
+.Em 10base2
 or
-.Em utp
+.Em bnc
 media type.
 .Sh DIAGNOSTICS
 .Bl -diag
-.It "sm0: unable to read MAC address from CIS"
-This indicates that the Ethernet address, which is stored in the
-CIS information on the Megahertz X-JACK PCMCIA Ethernet card, is
-corrupted.
+.It "ec0: wildcarded IRQ is not allowed"
+The IRQ was wildcarded in the kernel configuration file.  This is not
+supported.
+.It "ec0: invalid IRQ <n>, must be 3, 4, 5, or 9"
+An IRQ other than the above listed IRQs was specified in the kernel
+configuration file.  The Etherlink II hardware only supports the
+above listed IRQs.
+.It "ec0: failed to clear shared memory at offset <off>"
+The memory test was unable to clear shared the interface's shared memory
+region.  This often indicates that the card is configured at a conflicting
+.Em iomem
+address.
 .El
 .Sh SEE ALSO
 .Xr ifmedia 4 ,
-.Xr ifconfig 8 ,
 .Xr intro 4 ,
 .Xr isa 4 ,
-.Xr pcmcia 4
+.Xr ifconfig 8

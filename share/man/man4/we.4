@@ -1,5 +1,5 @@
-.\"	$OpenBSD: sm.4,v 1.2 1998/09/26 22:42:54 fgsch Exp $	
-.\"	$NetBSD: sm.4,v 1.3 1998/08/09 00:39:02 thorpej Exp $
+.\"	$OpenBSD: we.4,v 1.1 1998/09/26 22:42:54 fgsch Exp $
+.\"	$NetBSD: we.4,v 1.4 1998/08/09 00:39:02 thorpej Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -36,32 +36,34 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 11, 1998
-.Dt SM 4
+.Dd September 22, 1998
+.Dt WE 4
 .Os OpenBSD
 .Sh NAME
-.Nm sm
-.Nd device driver for SMC91C9x-based Ethernet interfaces
+.Nm we
+.Nd device driver for Western Digital/SMC WD80x3, SMC Elite Ultra,
+and SMC EtherEZ Ethernet cards
 .Sh SYNOPSIS
-.Cd "sm0 at isa? port 0x300 irq 10"
-.Cd "sm* at pcmcia? function ?"
+.Cd "we0 at isa? port 0x280 iomem 0xd0000 irq 9"
+.Cd "we1 at isa? port 0x300 iomem 0xcc000 irq 10"
 .Sh DESCRIPTION
 The
 .Nm
-device driver supports SMC91C9x-based Ethernet interfaces.
-.Pp
-The ISA attachment of the
-.Nm
-driver supports any SMC91C9x-based Ethernet interface on the ISA
-bus, including the EFA Info*Express SVC VLB interface, and the
-on-board SMC91C9x Ethernet found in many embedded PCs and laptop
-docking stations.
-.Pp
-The PCMCIA attachment of the
-.Nm
-driver supports Megahertz X-JACK Ethernet cards.
+device driver supports Western Digital/SMC WD80x3, SMC Elite Ultra, and
+SMC EtherEZ Ethernet cards.
 .Sh MEDIA SELECTION
-The SMC91C9x supports AUI and UTP media types.
+The ability to select media from software is dependent on the particular
+model of WD/SMC card.  The following models support only manual configuration:
+WD8003S, WD8003E, and WD8013EBT.
+.Pp
+Other WD/SMC 80x3 interfaces support two types of media on a single card.
+All support the AUI media type.  The other media is either BNC or UTP
+beind a transciever.  Sofware cannot differentiate between BNC and UTP
+cards.  On some models, the AUI port is always active.
+.Pp
+The SMC Elite Ultra and SMC EtherEZ interfaces support three media
+a single card: AUI, BNC, and UTP.  If the transciever is active, the BNC
+media is selected.  Otherwise, the AUI and UTP ports are both active.
 .Pp
 To enable the AUI media, select the
 .Em 10base5
@@ -70,21 +72,29 @@ or
 media type with
 .Xr ifconfig 8 's
 .Sq media
-directive.  To select UTP, select the
-.Em 10baseT
+directive.  To select the other media (transciever), select the
+.Em 10base2
 or
-.Em utp
+.Em bnc
 media type.
 .Sh DIAGNOSTICS
 .Bl -diag
-.It "sm0: unable to read MAC address from CIS"
-This indicates that the Ethernet address, which is stored in the
-CIS information on the Megahertz X-JACK PCMCIA Ethernet card, is
-corrupted.
+.It "we0: overriding IRQ <n> to <m>"
+The IRQ specified in the kernel configuration file is different from that
+found in the card's configuration registers.  The value in the kernel
+configuration file is being overridden by the one configured into the card.
+.It "we0: can't wildcard IRQ on a <model>"
+The IRQ was wildcarded in the kernel configuration file, and the card is
+a WD8003S, WD8003E, or WD8013EBT, which do not support software IRQ
+configuration.
+.It "we0: failed to clear shared memory at offset <off>"
+The memory test was unable to clear shared the interface's shared memory
+region.  This often indicates that the card is configured at a conflicting
+.Em iomem
+address.
 .El
 .Sh SEE ALSO
 .Xr ifmedia 4 ,
-.Xr ifconfig 8 ,
 .Xr intro 4 ,
 .Xr isa 4 ,
-.Xr pcmcia 4
+.Xr ifconfig 8
