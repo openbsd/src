@@ -1,4 +1,4 @@
-/*	$OpenBSD: dino.c,v 1.6 2004/06/17 05:40:32 mickey Exp $	*/
+/*	$OpenBSD: dino.c,v 1.7 2004/06/17 06:06:18 mickey Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -245,7 +245,6 @@ dino_intr_establish(void *v, pci_intr_handle_t ih,
 			sc->sc_imr |= (1 << (ih - 1));
 		else
 			r->imr = sc->sc_imr |= (1 << (ih - 1));
-		r->icr &= ~(1 << (ih - 1));
 	}
 
 	return (iv);
@@ -1487,7 +1486,10 @@ dinoattach(parent, self, aux)
 	s = splhigh();
 	r->imr = ~0;
 	data = r->irr0;
+	data = r->irr1;
 	r->imr = 0;
+	__asm __volatile ("" ::: "memory");
+	r->icr = 0;
 	r->iar0 = cpu_gethpa(0) | (31 - ca->ca_irq);
 	splx(s);
 
