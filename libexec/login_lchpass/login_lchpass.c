@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_lchpass.c,v 1.4 2001/12/06 05:37:04 millert Exp $	*/
+/*	$OpenBSD: login_lchpass.c,v 1.5 2001/12/07 04:20:19 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Berkeley Software Design, Inc. All rights reserved.
@@ -38,6 +38,7 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/file.h>
+#include <sys/uio.h>
 #include <sys/wait.h>
 
 #include <err.h>
@@ -52,6 +53,8 @@
 #include <stdarg.h>
 #include <login_cap.h>
 
+#define BACK_CHANNEL	3
+
 int local_passwd __P((char *, int));
 
 int
@@ -59,7 +62,7 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	FILE *back;
+	struct iovec iov[2];
 	struct passwd *pwd;
 	char localhost[MAXHOSTNAMELEN];
     	char *username = 0;
@@ -67,6 +70,11 @@ main(argc, argv)
 	char *p;
     	int c;
 	struct rlimit rl;
+
+	iov[0].iov_base = BI_SILENT;
+	iov[0].iov_len = sizeof(BI_SILENT) - 1;
+	iov[1].iov_base = "\n";
+	iov[1].iov_len = 1;
 
 	rl.rlim_cur = 0;
 	rl.rlim_max = 0;
@@ -107,14 +115,9 @@ main(argc, argv)
 
 	pwd = getpwnam(username);
 
-	if (!(back = fdopen(3, "a")))  {
-		syslog(LOG_ERR, "reopening back channel");
-		exit(1);
-	}
-
 	if (pwd && *pwd->pw_passwd == '\0') {
 		syslog(LOG_ERR, "%s attempting to add password", username);
-		fprintf(back, BI_SILENT "\n");
+		(void)writev(BACK_CHANNEL, iov, 2);
 		exit(0);
 	}
 
@@ -125,14 +128,19 @@ main(argc, argv)
 
 	(void)setpriority(PRIO_PROCESS, 0, -4);
 
-	printf("Changing local password for %s.\n", pwd->pw_name);
+	(void)printf("Changing local password for %s.\n", pwd->pw_name);
 	p = getpass("Old Password:");
 
 	salt = crypt(p, salt);
 	memset(p, 0, strlen(p));
 	if (!pwd || strcmp(salt, pwd->pw_passwd) != 0)
 		exit(1);
+
+	/*
+	 * We rely on local_passwd() to block signals during the
+	 * critical section.
+	 */
 	local_passwd(pwd->pw_name, 1);
-	fprintf(back, BI_SILENT "\n");
+	(void)writev(BACK_CHANNEL, iov, 2);
 	exit(0);
 }
