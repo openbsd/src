@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.58 2002/03/01 22:29:29 provos Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.59 2002/03/02 00:44:52 provos Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -123,7 +123,7 @@ int	tcp_rttdflt = TCPTV_SRTTDFLT / PR_SLOWHZ;
 #ifndef TCP_DO_RFC1323
 #define TCP_DO_RFC1323	1
 #endif
-int    tcp_do_rfc1323 = TCP_DO_RFC1323;
+int	tcp_do_rfc1323 = TCP_DO_RFC1323;
 
 #ifndef TCP_DO_SACK
 #ifdef TCP_SACK
@@ -132,7 +132,8 @@ int    tcp_do_rfc1323 = TCP_DO_RFC1323;
 #define TCP_DO_SACK	0
 #endif
 #endif
-int    tcp_do_sack = TCP_DO_SACK;		/* RFC 2018 selective ACKs */
+int	tcp_do_sack = TCP_DO_SACK;		/* RFC 2018 selective ACKs */
+int	tcp_ack_on_push = 0;	/* set to enable immediate ACK-on-PUSH */
 
 #ifndef TCBHASHSIZE
 #define	TCBHASHSIZE	128

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.105 2002/03/01 22:29:29 provos Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.106 2002/03/02 00:44:52 provos Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -140,6 +140,21 @@ do { \
 #else
 #define ND6_HINT(tp)
 #endif
+
+/*
+ * Macro to compute ACK transmission behavior.  Delay the ACK unless
+ * we have already delayed an ACK (must send an ACK every two segments).
+ * We also ACK immediately if we received a PUSH and the ACK-on-PUSH
+ * option is enabled.
+ */
+#define	TCP_SETUP_ACK(tp, th) \
+do { \
+	if ((tp)->t_flags & TF_DELACK || \
+	    (tcp_ack_on_push && (th)->th_flags & TH_PUSH)) \
+		tp->t_flags |= TF_ACKNOW; \
+	else \
+		TCP_SET_DELACK(tp); \
+} while (0)
 
 /*
  * Insert segment ti into reassembly queue of tcp with
@@ -992,13 +1007,12 @@ findpcb:
 			 * Drop TCP, IP headers and TCP options then add data
 			 * to socket buffer.
 			 */
-			if (th->th_flags & TH_PUSH)
-				tp->t_flags |= TF_ACKNOW;
-			else
-				TCP_SET_DELACK(tp);
 			m_adj(m, iphlen + off);
 			sbappend(&so->so_rcv, m);
 			sorwakeup(so);
+			TCP_SETUP_ACK(tp, th);
+			if (tp->t_flags & TF_ACKNOW)
+				(void) tcp_output(tp);
 			return;
 		}
 	}
@@ -1978,10 +1992,7 @@ dodata:							/* XXX */
 	    TCPS_HAVERCVDFIN(tp->t_state) == 0) {
 		if (th->th_seq == tp->rcv_nxt && tp->segq.lh_first == NULL &&
 		    tp->t_state == TCPS_ESTABLISHED) {
-			if (th->th_flags & TH_PUSH)
-				tp->t_flags |= TF_ACKNOW;
-			else
-				TCP_SET_DELACK(tp);
+			TCP_SETUP_ACK(tp, th);
 			tp->rcv_nxt += tlen;
 			tiflags = th->th_flags & TH_FIN;
 			tcpstat.tcps_rcvpack++;

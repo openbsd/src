@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.39 2002/03/01 22:29:29 provos Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.40 2002/03/02 00:44:52 provos Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -323,7 +323,8 @@ struct	tcpstat {
 #define	TCPCTL_SACK	       10 /* selective acknowledgement, rfc 2018 */
 #define TCPCTL_MSSDFLT	       11 /* Default maximum segment size */
 #define	TCPCTL_RSTPPSLIMIT     12 /* RST pps limit */
-#define	TCPCTL_MAXID	       13
+#define	TCPCTL_ACK_ON_PUSH     13 /* ACK immediately on PUSH */
+#define	TCPCTL_MAXID	       14
 
 #define	TCPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -339,6 +340,7 @@ struct	tcpstat {
 	{ "sack",	CTLTYPE_INT }, \
 	{ "mssdflt",	CTLTYPE_INT }, \
 	{ "rstppslimit",	CTLTYPE_INT }, \
+	{ "ackonpush",	CTLTYPE_INT }, \
 }
 
 struct tcp_ident_mapping {
@@ -352,6 +354,7 @@ extern	struct tcpstat tcpstat;	/* tcp statistics */
 u_int32_t tcp_now;		/* for RFC 1323 timestamps */
 extern	int tcp_do_rfc1323;	/* enabled/disabled? */
 extern	int tcp_mssdflt;	/* default maximum segment size */
+extern	int tcp_ack_on_push;	/* ACK immediately on PUSH */
 #ifdef TCP_SACK
 extern	int tcp_do_sack;	/* SACK enabled/disabled */
 extern	struct pool sackhl_pool;
