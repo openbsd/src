@@ -1,6 +1,7 @@
-dnl	$OpenBSD: install,v 1.3 2003/11/03 14:05:15 miod Exp $
+dnl	$OpenBSD: install,v 1.4 2004/01/20 17:30:21 miod Exp $
 OpenBSDInstallShortPrelude
 
+dnl XXX sync with reality!
 Currently only MBR partitioning is supported, RDB support may be added
 later.
 
@@ -28,15 +29,16 @@ OpenBSDInstallPart3({:- or "wd0" for IDE/ATA drives-:})
 	is not found, you will first be given an opportunity to run
 	fdisk (MBR partitioned disk) and create an OpenBSD partition.
 
-	If fdisk is being invoked, it will start by
-	displaying the current partitions defined and then allow you
-	to modify this information, add new partitions and change
-	which partition to boot from by default.  If you make a mistake,
-	you will be allowed to repeat this procedure as necessary to
-	correct this.  Note that you should make OpenBSD be the active
-	partition at least until the install has been completed.
+	If fdisk is being invoked, it will start by displaying the
+	current partitions defined and then allow you to modify this
+	information, add new partitions and change which partition to
+	boot from by default.  If you make a mistake, you will be
+	allowed to repeat this procedure as necessary to correct this.
+dnl XXX is this true?
+	Note that you should make OpenBSD be the active partition at
+	least until the install has been completed.
 
-OpenBSDInstallPart4({:-If you have DOS or Linux
+OpenBSDInstallPart4({:-If you have MorphOS
 	partitions defined on the disk, these will usually show up as
 	partition 'h', 'i' and so on.
 
@@ -50,7 +52,7 @@ OpenBSDInstallPart4({:-If you have DOS or Linux
 	and a size that keeps it inside of that portion of the disk.  This
 	is within the bounds of the 'c' partition.-:})
 
-OpenBSDInstallPart5(sd0)
+OpenBSDInstallPart5(wd0)
 
 OpenBSDInstallNet({:-CD-ROM, -:})
 
