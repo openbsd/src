@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.42 2000/05/15 03:36:34 angelos Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.43 2000/06/01 05:40:41 angelos Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -474,7 +474,22 @@ esp_input_cb(void *op)
     protoff = (long) crp->crp_opaque3;
     m = (struct mbuf *) crp->crp_buf;
 
-    tdb->tdb_ref--;
+    /*
+     * Check that the TDB is still valid -- not really an error, but
+     * we need to handle it as such. It may happen if the TDB expired
+     * or was deleted while there was a pending request in the crypto
+     * queue.
+     */
+    if (tdb->tdb_flags & TDBF_INVALID)
+    {
+	espstat.esps_invalid++;
+	tdb_delete(tdb, 0, 0);
+	error = ENXIO;
+	DPRINTF(("esp_input_cb(): TDB expired while processing crypto\n"));
+	goto baddone;
+    }
+    else
+      tdb->tdb_ref--;
 
     /* Check for crypto errors */
     if (crp->crp_etype)
@@ -501,21 +516,6 @@ esp_input_cb(void *op)
 	espstat.esps_crypto++;
 	DPRINTF(("esp_input_cb(): bogus returned buffer from crypto\n"));
 	error = EINVAL;
-	goto baddone;
-    }
-
-    /*
-     * Check that the TDB is still valid -- not really an error, but
-     * we need to handle it as such. It may happen if the TDB expired
-     * or was deleted while there was a pending request in the crypto
-     * queue.
-     */
-    if (tdb->tdb_flags & TDBF_INVALID)
-    {
-	espstat.esps_invalid++;
-	tdb_delete(tdb, 0, 0);
-	error = ENXIO;
-	DPRINTF(("esp_input_cb(): TDB expired while processing crypto\n"));
 	goto baddone;
     }
 
@@ -960,7 +960,22 @@ esp_output_cb(void *op)
     tdb = (struct tdb *) crp->crp_opaque1;
     m = (struct mbuf *) crp->crp_buf;
 
-    tdb->tdb_ref--;
+    /*
+     * Check that the TDB is still valid -- not really an error, but
+     * we need to handle it as such. It may happen if the TDB expired
+     * or was deleted while there was a pending request in the crypto
+     * queue.
+     */
+    if (tdb->tdb_flags & TDBF_INVALID)
+    {
+	espstat.esps_invalid++;
+	tdb_delete(tdb, 0, 0);
+	error = ENXIO;
+	DPRINTF(("esp_output_cb(): TDB expired while processing crypto\n"));
+	goto baddone;
+    }
+    else
+      tdb->tdb_ref--;
 
     /* Check for crypto errors */
     if (crp->crp_etype)
@@ -987,21 +1002,6 @@ esp_output_cb(void *op)
 	espstat.esps_crypto++;
 	DPRINTF(("esp_output_cb(): bogus returned buffer from crypto\n"));
 	error = EINVAL;
-	goto baddone;
-    }
-
-    /*
-     * Check that the TDB is still valid -- not really an error, but
-     * we need to handle it as such. It may happen if the TDB expired
-     * or was deleted while there was a pending request in the crypto
-     * queue.
-     */
-    if (tdb->tdb_flags & TDBF_INVALID)
-    {
-	espstat.esps_invalid++;
-	tdb_delete(tdb, 0, 0);
-	error = ENXIO;
-	DPRINTF(("esp_output_cb(): TDB expired while processing crypto\n"));
 	goto baddone;
     }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.37 2000/04/25 02:53:46 jason Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.38 2000/06/01 05:40:41 angelos Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -644,7 +644,22 @@ ah_input_cb(void *op)
     protoff = (long) crp->crp_opaque3;
     m = (struct mbuf *) crp->crp_buf;
 
-    tdb->tdb_ref--;
+    /*
+     * Check that the TDB is still valid -- not really an error, but
+     * we need to handle it as such. It may happen if the TDB expired
+     * or was deleted while there was a pending request in the crypto
+     * queue.
+     */
+    if (tdb->tdb_flags & TDBF_INVALID)
+    {
+	ahstat.ahs_invalid++;
+	tdb_delete(tdb, 0, 0);
+	error = ENXIO;
+	DPRINTF(("ah_input_cb(): TDB expired while processing crypto\n"));
+	goto baddone;
+    }
+    else
+        tdb->tdb_ref--;
 
     /* Check for crypto errors */
     if (crp->crp_etype)
@@ -670,21 +685,6 @@ ah_input_cb(void *op)
 	ahstat.ahs_crypto++;
 	DPRINTF(("ah_input_cb(): bogus returned buffer from crypto\n"));
 	error = EINVAL;
-	goto baddone;
-    }
-
-    /*
-     * Check that the TDB is still valid -- not really an error, but
-     * we need to handle it as such. It may happen if the TDB expired
-     * or was deleted while there was a pending request in the crypto
-     * queue.
-     */
-    if (tdb->tdb_flags & TDBF_INVALID)
-    {
-	ahstat.ahs_invalid++;
-	tdb_delete(tdb, 0, 0);
-	error = ENXIO;
-	DPRINTF(("ah_input_cb(): TDB expired while processing crypto\n"));
 	goto baddone;
     }
 
@@ -1086,7 +1086,22 @@ ah_output_cb(void *op)
     protoff = (long) crp->crp_opaque3;
     m = (struct mbuf *) crp->crp_buf;
 
-    tdb->tdb_ref--;
+    /*
+     * Check that the TDB is still valid -- not really an error, but
+     * we need to handle it as such. It may happen if the TDB expired
+     * or was deleted while there was a pending request in the crypto
+     * queue.
+     */
+    if (tdb->tdb_flags & TDBF_INVALID)
+    {
+	ahstat.ahs_invalid++;
+	tdb_delete(tdb, 0, 0);
+	error = ENXIO;
+	DPRINTF(("ah_output_cb(): TDB expired while processing crypto\n"));
+	goto baddone;
+    }
+    else
+      tdb->tdb_ref--;
 
     /* Check for crypto errors */
     if (crp->crp_etype)
@@ -1112,21 +1127,6 @@ ah_output_cb(void *op)
 	ahstat.ahs_crypto++;
 	DPRINTF(("ah_output_cb(): bogus returned buffer from crypto\n"));
 	error = EINVAL;
-	goto baddone;
-    }
-
-    /*
-     * Check that the TDB is still valid -- not really an error, but
-     * we need to handle it as such. It may happen if the TDB expired
-     * or was deleted while there was a pending request in the crypto
-     * queue.
-     */
-    if (tdb->tdb_flags & TDBF_INVALID)
-    {
-	ahstat.ahs_invalid++;
-	tdb_delete(tdb, 0, 0);
-	error = ENXIO;
-	DPRINTF(("ah_output_cb(): TDB expired while processing crypto\n"));
 	goto baddone;
     }
 
