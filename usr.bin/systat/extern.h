@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.12 2004/04/14 19:53:04 deraadt Exp $	*/
+/*	$OpenBSD: extern.h,v 1.13 2004/04/26 19:22:30 itojun Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1996/05/10 23:16:34 thorpej Exp $	*/
 
 /*-
@@ -55,6 +55,7 @@ extern int	nhosts;
 extern int	nports;
 extern int	protos;
 extern int	verbose;
+extern int	nflag;
 
 struct inpcb;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.c,v 1.24 2003/06/03 02:56:17 millert Exp $	*/
+/*	$OpenBSD: netstat.c,v 1.25 2004/04/26 19:22:30 itojun Exp $	*/
 /*	$NetBSD: netstat.c,v 1.3 1995/06/18 23:53:07 cgd Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)netstat.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: netstat.c,v 1.24 2003/06/03 02:56:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: netstat.c,v 1.25 2004/04/26 19:22:30 itojun Exp $";
 #endif /* not lint */
 
 /*
@@ -123,7 +123,6 @@ static struct {
 } netcb;
 
 static	int aflag = 0;
-static	int nflag = 0;
 static	int lastrow = 1;
 
 void
@@ -551,10 +550,7 @@ inet6name(struct in6_addr *in6)
 	struct sockaddr_in6 sin6;
 	int flags;
 
-	if (nflag)
-		flags = NI_NUMERICHOST;
-	else
-		flags = 0;
+	flags = nflag ? NI_NUMERICHOST : 0;
 	if (IN6_IS_ADDR_UNSPECIFIED(in6))
 		return "*";
 	memset(&sin6, 0, sizeof(sin6));

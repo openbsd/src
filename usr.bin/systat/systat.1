@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.33 2004/02/20 22:07:08 jmc Exp $
+.\"	$OpenBSD: systat.1,v 1.34 2004/04/26 19:22:30 itojun Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -38,6 +38,7 @@
 .Nd display system statistics on a CRT
 .Sh SYNOPSIS
 .Nm systat
+.Op Fl n
 .Op Fl w Ar wait
 .Op Ar display
 .Op Ar refresh-interval
@@ -82,6 +83,8 @@ This allows each display to have certain display-specific commands.
 .Pp
 The options are as follows:
 .Bl -tag -width "refresh-interval"
+.It Fl n
+Do not try to reverse-map IP address.
 .It Fl w Ar wait
 Specifies the screen refresh time interval in seconds.
 This option is overridden by

@@ -1,4 +1,4 @@
-/*	$OpenBSD: netcmds.c,v 1.12 2003/06/03 02:56:17 millert Exp $	*/
+/*	$OpenBSD: netcmds.c,v 1.13 2004/04/26 19:22:30 itojun Exp $	*/
 /*	$NetBSD: netcmds.c,v 1.4 1995/05/21 17:14:38 mycroft Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)netcmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: netcmds.c,v 1.12 2003/06/03 02:56:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: netcmds.c,v 1.13 2004/04/26 19:22:30 itojun Exp $";
 #endif /* not lint */
 
 /*
@@ -341,11 +341,7 @@ showhosts(void)
 	struct sockaddr *sa;
 	int flags;
 
-#if 0
 	flags = nflag ? NI_NUMERICHOST : 0;
-#else
-	flags = 0;
-#endif
 	for (p = hosts; p < hosts+nhosts; p++) {
 		sa = (struct sockaddr *)&p->addr;
 		if (getnameinfo(sa, sa->sa_len, hbuf, sizeof(hbuf), NULL, 0,
