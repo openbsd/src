@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.44 1999/01/08 00:26:59 millert Exp $
+#	$OpenBSD: Makefile,v 1.45 1999/01/24 16:08:37 art Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -87,7 +87,7 @@ build:
 	ldconfig
 .endif
 .if (${KERBEROS} == "yes")
-	(cd ${.CURDIR}/kerberosIV && ${MAKE} build)
+	(cd ${.CURDIR}/kerberosIV && ${MAKE} SUDO=${SUDO} build)
 .endif
 .if (${MACHINE_ARCH} == "mips")
 	ldconfig
