@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.137 1999/05/07 18:31:36 deraadt Exp $
+$OpenBSD: pcidevs,v 1.138 1999/05/07 20:39:43 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1060,6 +1060,8 @@ product OLICOM OC2326		0x0014	OC2326
 product OPTI 82C557		0xc557	82C557 Host
 product OPTI 82C558		0xc558	82C558 PCI-ISA
 product OPTI 82C621		0xc621	82C621 IDE
+product OPTI 82C700		0xc700	82C700
+product OPTI 82C701		0xc701	82C701
 product OPTI 82C822		0xc822	82C822
 product OPTI RM861HA		0xc861	RM861HA
 
@@ -1087,6 +1089,14 @@ product QUANTUMDESIGNS 8580	0x0002	8580
 product REALTEK RT8029		0x8029	8029
 product REALTEK RT8129		0x8129	8129
 product REALTEK RT8139		0x8139	8139
+
++/* RICOH products */
+product RICOH RF5C465		0x0465	5C465 PCI-CardBus
+product RICOH RF5C466		0x0466	5C466 PCI-CardBus
+product RICOH RF5C475		0x0475	5C475 PCI-CardBus
+product RICOH RF5C476		0x0476	5C476 PCI-CardBus
+product RICOH RF5C477		0x0477	5C477 PCI-CardBus
+product RICOH RF5C478		0x0478	5C478 PCI-CardBus
 
 /* S3 products */
 product S3 VIRGE		0x5631	ViRGE
@@ -1174,14 +1184,17 @@ product TEKRAM 	DC290		0xdc29	DC-290(M)
 product TEKRAM2	DC690C		0x690c	DC-690C
 
 /* Texas Instruments products */
-product TI	TLAN		0x0500	TLAN
-product TI	PCI1130		0xac12	PCI1130 PCI-CardBus
-product TI	PCI1131		0xac15	PCI1131
-product TI	PCI1250		0xac16	PCI1250
-product TI	PCI1220		0xac17	PCI1220 PCI-CardBus
-product TI	PCI2030		0xac20	PCI2030
-product TI	PERMEDIA	0x3d04	3DLabs Permedia
-product TI	PERMEDIA2	0x3d07	3DLabs Permedia 2
+product TI TLAN			0x0500	TLAN
+product TI PCI1130		0xac12	PCI1130 PCI-CardBus
+product TI PCI1031		0xac13	PCI1031 PCI-pcmcia
+product TI PCI1131		0xac15	PCI1131 PCI-CardBus
+product TI PCI1250		0xac16	PCI1250 PCI-CardBus
+product TI PCI1220		0xac17	PCI1220 PCI-CardBus
+product TI PCI1221		0xac19	PCI1221 PCI-CardBus
+product TI PCI1225		0xac1C	PCI1225 PCI-CardBus
+product TI PCI2030		0xac20	PCI2030 PCI-CardBus
+product TI PERMEDIA		0x3d04	3DLabs Permedia
+product TI PERMEDIA2		0x3d07	3DLabs Permedia 2
 
 /* Toshiba products */
 product TOSHIBA	R4X00		0x102f	R4x00 Host-PCI
@@ -1189,8 +1202,9 @@ product TOSHIBA	TC35856F	0x0020	TC35856F ATM (Meteor)
 
 /* Toshiba (2nd ID) products */
 product TOSHIBA2 THB 		0x0601	Host-PCI
-product TOSHIBA2 TOPIC95	0x060a	PCI-CardBus
-product TOSHIBA2 TCB		0x060f	PCI-CardBus
+product TOSHIBA2 ToPIC95	0x0603	ToPIC95 CardBus-PCI
+product TOSHIBA2 ToPIC95	0x060a	ToPIC95B PCI-CardBus
+product TOSHIBA2 ToPIC97	0x060f	ToPIC97 PCI-CardBus
 product TOSHIBA2 TFIRO		0x0701	PCI-FIRO
 
 /* Trident products */
