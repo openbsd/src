@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_enc.c,v 1.15 1999/12/27 04:35:09 angelos Exp $	*/
+/*	$OpenBSD: if_enc.c,v 1.16 2000/01/02 09:22:58 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -136,9 +136,25 @@ void
 encstart(ifp)
 struct ifnet *ifp;
 {
+    struct mbuf *m;
+    int s;
+
+#ifndef IPSEC
+    for (;;)
+    {
+        s = splimp();
+        IF_DEQUEUE(&ifp->if_snd, m);
+        splx(s);
+
+        if (m == NULL)
+          return;
+        else
+          m_freem(m);
+    }
+#else /* IPSEC */
     struct enc_softc *enc = ifp->if_softc;
-    int s, err = 0, protoflag;
-    struct mbuf *m, *mp;
+    int err = 0, protoflag;
+    struct mbuf *mp;
     struct tdb *tdb;
 
     /* If the interface is not setup, flush the queue */
@@ -266,6 +282,7 @@ struct ifnet *ifp;
 
 	/* XXX Should find a way to avoid bridging-loops, some mbuf flag ? */
     }
+#endif /* IPSEC */
 }
 
 /*
@@ -365,6 +382,7 @@ register struct ifnet *ifp;
 u_long cmd;
 caddr_t data;
 {
+#ifdef IPSEC
     struct enc_softc *enc = (struct enc_softc *) ifp->if_softc;
     struct ifsa *ifsa = (struct ifsa *) data;
     struct proc *prc = curproc;             /* XXX */
@@ -373,6 +391,9 @@ caddr_t data;
 
     switch (cmd) 
     {
+	case SIOCSIFADDR:
+	    return EOPNOTSUPP;
+
 	case SIOCGENCSA:
 	    ifsa->sa_spi = enc->sc_spi;
 	    ifsa->sa_proto = enc->sc_sproto;
@@ -523,4 +544,7 @@ caddr_t data;
     }
 
     return (error);
+#else /* IPSEC */
+    return EOPNOTSUPP;
+#endif /* IPSEC */
 }
