@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.18 1999/01/11 02:01:45 niklas Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.19 1999/01/11 21:55:27 niklas Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -252,13 +252,12 @@
 	"IPv6 fragq",	/* 94 M_FRAGQ */ \
 	"Sec Assoc",	/* 95 M_SECA */ \
 	"IPv6 if info",	/* 96 M_I6IFP */ \
-	"",		/* 97 M_POOL */ \
 	NULL, NULL, NULL, NULL, NULL, \
 	NULL, NULL, NULL, NULL, NULL, \
 	NULL, NULL, NULL, NULL, NULL, \
 	NULL, NULL, NULL, NULL, NULL, \
 	NULL, NULL, NULL, NULL, NULL, \
-	NULL, NULL, NULL, NULL, \
+	NULL, NULL, NULL, NULL, NULL, \
 	"temp",		/* 127 M_TEMP */ \
 }
 
