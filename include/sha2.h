@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha2.h,v 1.1 2003/05/08 23:34:55 millert Exp $	*/
+/*	$OpenBSD: sha2.h,v 1.2 2004/04/27 17:50:36 millert Exp $	*/
 
 /*
  * FILE:	sha2.h
@@ -68,25 +68,43 @@ typedef SHA512_CTX SHA384_CTX;
 
 __BEGIN_DECLS
 void SHA256_Init(SHA256_CTX *);
-void SHA256_Update(SHA256_CTX *, const u_int8_t *, size_t);
-void SHA256_Final(u_int8_t[SHA256_DIGEST_LENGTH], SHA256_CTX *);
-char *SHA256_End(SHA256_CTX *, char[SHA256_DIGEST_STRING_LENGTH]);
-char *SHA256_File(char *, char *);
-char *SHA256_Data(const u_int8_t *, size_t, char[SHA256_DIGEST_STRING_LENGTH]);
+void SHA256_Update(SHA256_CTX *, const u_int8_t *, size_t)
+	__attribute__((__bounded__(__string__,2,3)));
+void SHA256_Final(u_int8_t[SHA256_DIGEST_LENGTH], SHA256_CTX *)
+	__attribute__((__bounded__(__minbytes__,1,SHA256_DIGEST_LENGTH)));
+char *SHA256_End(SHA256_CTX *, char[SHA256_DIGEST_STRING_LENGTH])
+	__attribute__((__bounded__(__minbytes__,2,SHA256_DIGEST_STRING_LENGTH)));
+char *SHA256_File(char *, char [SHA256_DIGEST_STRING_LENGTH])
+	__attribute__((__bounded__(__minbytes__,2,SHA256_DIGEST_STRING_LENGTH)));
+char *SHA256_Data(const u_int8_t *, size_t, char[SHA256_DIGEST_STRING_LENGTH])
+	__attribute__((__bounded__(__string__,1,2)))
+	__attribute__((__bounded__(__minbytes__,3,SHA256_DIGEST_STRING_LENGTH)));
 
 void SHA384_Init(SHA384_CTX *);
-void SHA384_Update(SHA384_CTX *, const u_int8_t *, size_t);
-void SHA384_Final(u_int8_t[SHA384_DIGEST_LENGTH], SHA384_CTX *);
-char *SHA384_End(SHA384_CTX *, char[SHA384_DIGEST_STRING_LENGTH]);
-char *SHA384_File(char *, char *);
-char *SHA384_Data(const u_int8_t *, size_t, char[SHA384_DIGEST_STRING_LENGTH]);
+void SHA384_Update(SHA384_CTX *, const u_int8_t *, size_t)
+	__attribute__((__bounded__(__string__,2,3)));
+void SHA384_Final(u_int8_t[SHA384_DIGEST_LENGTH], SHA384_CTX *)
+	__attribute__((__bounded__(__minbytes__,1,SHA384_DIGEST_LENGTH)));
+char *SHA384_End(SHA384_CTX *, char[SHA384_DIGEST_STRING_LENGTH])
+	__attribute__((__bounded__(__minbytes__,2,SHA384_DIGEST_STRING_LENGTH)));
+char *SHA384_File(char *, char [SHA384_DIGEST_STRING_LENGTH])
+	__attribute__((__bounded__(__minbytes__,2,SHA384_DIGEST_STRING_LENGTH)));
+char *SHA384_Data(const u_int8_t *, size_t, char[SHA384_DIGEST_STRING_LENGTH])
+	__attribute__((__bounded__(__string__,1,2)))
+	__attribute__((__bounded__(__minbytes__,3,SHA384_DIGEST_STRING_LENGTH)));
 
 void SHA512_Init(SHA512_CTX *);
-void SHA512_Update(SHA512_CTX *, const u_int8_t *, size_t);
-void SHA512_Final(u_int8_t[SHA512_DIGEST_LENGTH], SHA512_CTX *);
-char *SHA512_End(SHA512_CTX *, char[SHA512_DIGEST_STRING_LENGTH]);
-char *SHA512_File(char *, char *);
-char *SHA512_Data(const u_int8_t *, size_t, char[SHA512_DIGEST_STRING_LENGTH]);
+void SHA512_Update(SHA512_CTX *, const u_int8_t *, size_t)
+	__attribute__((__bounded__(__string__,2,3)));
+void SHA512_Final(u_int8_t[SHA512_DIGEST_LENGTH], SHA512_CTX *)
+	__attribute__((__bounded__(__minbytes__,1,SHA512_DIGEST_LENGTH)));
+char *SHA512_End(SHA512_CTX *, char[SHA512_DIGEST_STRING_LENGTH])
+	__attribute__((__bounded__(__minbytes__,2,SHA512_DIGEST_STRING_LENGTH)));
+char *SHA512_File(char *, char [SHA512_DIGEST_STRING_LENGTH])
+	__attribute__((__bounded__(__minbytes__,2,SHA512_DIGEST_STRING_LENGTH)));
+char *SHA512_Data(const u_int8_t *, size_t, char[SHA512_DIGEST_STRING_LENGTH])
+	__attribute__((__bounded__(__string__,1,2)))
+	__attribute__((__bounded__(__minbytes__,3,SHA512_DIGEST_STRING_LENGTH)));
 __END_DECLS
 
 #endif /* _SHA2_H */
