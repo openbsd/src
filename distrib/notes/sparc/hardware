@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.45 2003/02/03 08:13:42 fgsch Exp $
+dnl	$OpenBSD: hardware,v 1.46 2003/03/05 14:44:17 miod Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
     * sun4: the VME series
 	- 4/100: Original sparc with VME. Many hardware bugs.
@@ -106,6 +106,9 @@ Supported devices {:-include-:}:
 	    driver does not support hardware acceleration)
 	  + cgfourteen - 8/24-bit color, accelerated (but the driver does
 	    not support hardware acceleration)
+	  + Parallax XVideo and PowerVideo (tvtwo) - 24-bit color,
+	    accelerated (but the driver does not support hardware
+	    acceleration)
 	  + p9100 ("pnozz") framebuffer found in Tapdole SPARCbook 3GS and
 	    3GX (8, 16 or 32-bit unaccelerated)
 	  + TCX - 8/24-bit color
