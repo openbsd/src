@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.55 2004/06/24 22:32:26 tom Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.56 2004/06/25 01:32:54 tom Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -128,9 +128,18 @@ read_conf(void)
 		} while (rc > 0 && *p++ != '\n' &&
 		    (p-cmd_buf) < sizeof(cmd_buf));
 
-		if (rc < 0)
+		if (rc < 0) {			/* Error from read() */
 			printf("%s: %s\n", cmd.path, strerror(errno));
-		else {
+			break;
+		}
+
+		if (rc == 0) {			/* eof from read() */
+			if (p != cmd_buf) {	/* Line w/o trailing \n */
+				*p = '\0';
+				rc = docmd();
+				break;
+			}
+		} else {			/* rc > 0, read a char */
 			p--;			/* Get back to last character */
 
 			if (*p != '\n') {	/* Line was too long */
