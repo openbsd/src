@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";*/
-static char rcsid[] = "$Id: main.c,v 1.7 1997/04/06 08:43:41 deraadt Exp $";
+static char rcsid[] = "$Id: main.c,v 1.8 1997/06/02 08:12:10 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -295,6 +295,9 @@ main(argc, argv)
 			alarm(TO);
 		}
 		if ((rval = getname()) == 2) {
+			oflush();
+			alarm(0);
+			signal(SIGALRM, SIG_DFL);
 			execle(PP, "ppplogin", ttyn, (char *) 0, env);
 			syslog(LOG_ERR, "%s: %m", PP);
 			exit(1);
