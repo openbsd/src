@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.28 2001/03/09 05:44:42 smurph Exp $	*/
+/* $OpenBSD: machdep.c,v 1.29 2001/03/12 22:59:02 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -62,22 +62,21 @@
 #include <sys/msgbuf.h>
 #include <sys/syscallargs.h>
 #ifdef SYSVMSG
-   #include <sys/msg.h>
+#include <sys/msg.h>
 #endif
 #ifdef SYSVSEM
-   #include <sys/sem.h>
+#include <sys/sem.h>
 #endif
 #ifdef SYSVSHM
-   #include <sys/shm.h>
+#include <sys/shm.h>
 #endif
 #include <sys/ioctl.h>
 #include <sys/exec.h>
 #include <sys/sysctl.h>
 #include <sys/errno.h>
+
 #include <net/netisr.h>
 
-#include <mvme88k/dev/sysconreg.h>
-#include <mvme88k/dev/pcctworeg.h>
 #include <machine/locore.h>
 #include <machine/cpu.h>
 #include <machine/cpu_number.h>
@@ -86,6 +85,8 @@
 #include <machine/trap.h>
 #include <machine/bug.h>
 #include <machine/prom.h>
+#include <machine/m88100.h>  		/* DMT_VALID        */
+#include <machine/m882xx.h>  		/* CMMU stuff       */
 
 #include <dev/cons.h>
 
@@ -98,13 +99,14 @@
 #include <uvm/uvm_extern.h>
 #endif
 
-#define __IS_MACHDEP_C__
-#include <assym.s>			/* EF_EPSR, etc. */
-#include <machine/m88100.h>  		/* DMT_VALID        */
-#include <machine/m882xx.h>  		/* CMMU stuff       */
+#include <mvme88k/dev/sysconreg.h>
+#include <mvme88k/dev/pcctworeg.h>
+
+#include "assym.s"			/* EF_EPSR, etc. */
+#include "ksyms.h"
 #if DDB
-   #include <machine/db_machdep.h>
-   #include <ddb/db_output.h>		/* db_printf()		*/
+#include <machine/db_machdep.h>
+#include <ddb/db_output.h>		/* db_printf()		*/
 #endif /* DDB */
 
 #if DDB
@@ -232,7 +234,6 @@ caddr_t allocsys __P((caddr_t));
 char  machine[] = "mvme88k";	 /* cpu "architecture" */
 char  cpu_model[120];
 extern unsigned master_cpu;
-extern   char version[];
 
 struct bugenv bugargs;
 struct kernel {
@@ -246,7 +247,9 @@ struct kernel {
 	void *emini;
 	void *end_load;
 }kflags;
-char *esym;
+#if defined(DDB) || NKSYMS > 0
+extern char *esym;
+#endif
 
 int boothowto; /* read in locore.S */
 int bootdev;   /* read in locore.S */
@@ -495,6 +498,10 @@ cpu_startup()
 			   VM_PROT_READ|VM_PROT_WRITE, TRUE);
 	initmsgbuf((caddr_t)msgbufp, round_page(MSGBUFSIZE));
 
+	/*
+	 * Good {morning,afternoon,evening,night}.
+	 */
+	printf("%s",version);
 	printf("real mem  = %d\n", ctob(physmem));
 
 	/*
@@ -2041,64 +2048,6 @@ myetheraddr(cp)
 	bcopy(&brdid.etheraddr, cp, 6);
 }
 
-void netintr()
-{
-#ifdef INET
-	if (netisr & (1 << NETISR_ARP)) {
-		netisr &= ~(1 << NETISR_ARP);
-		arpintr();
-	}
-	if (netisr & (1 << NETISR_IP)) {
-		netisr &= ~(1 << NETISR_IP);
-		ipintr();
-	}
-#endif
-#ifdef INET6
-	if (netisr & (1 << NETISR_IPV6)) {
-		netisr &= ~(1 << NETISR_IPV6);
-		ip6intr();
-	}
-#endif
-#ifdef NETATALK
-	if (netisr & (1 << NETISR_ATALK)) {
-		netisr &= ~(1 << NETISR_ATALK);
-		atintr();
-	}
-#endif
-#ifdef NS
-	if (netisr & (1 << NETISR_NS)) {
-		netisr &= ~(1 << NETISR_NS);
-		nsintr();
-	}
-#endif
-#ifdef ISO
-	if (netisr & (1 << NETISR_ISO)) {
-		netisr &= ~(1 << NETISR_ISO);
-		clnlintr();
-	}
-#endif
-#ifdef CCITT
-	if (netisr & (1 << NETISR_CCITT)) {
-		netisr &= ~(1 << NETISR_CCITT);
-		ccittintr();
-	}
-#endif
-#include "ppp.h"
-#if NPPP > 0
-	if (netisr & (1 << NETISR_PPP)) {
-		netisr &= ~(1 << NETISR_PPP);
-		pppintr();
-	}
-#endif
-#include "bridge.h"
-#if NBRIDGE > 0
-	if (netisr & (1 << NETISR_BRIDGE)) {
-		netisr &= ~(1 << NETISR_BRIDGE);
-		bridgeintr();
-	}
-#endif
-}
-
 void
 dosoftint()
 {
@@ -2109,7 +2058,15 @@ dosoftint()
 #else
 		cnt.v_soft++;
 #endif
-		netintr();
+#define DONETISR(bit, fn) \
+	do { \
+		if (netisr & (1 << bit)) { \
+			netisr &= ~(1 << bit); \
+			fn(); \
+		} \
+	} while (0)
+#include <net/netisr_dispatch.h>
+#undef DONETISR
 	}
 
 	if (ssir & SIR_CLOCK) {
@@ -2121,8 +2078,6 @@ dosoftint()
 #endif
 		softclock();
 	}
-
-	return;
 }
 
 int
@@ -2340,7 +2295,6 @@ mvme_bootstrap(void)
 	last_addr = size_memory();
 	cmmu_parity_enable();
 
-	printf("%s",version);
 	identifycpu();
 	setup_board_config();
 	cmmu_init();
