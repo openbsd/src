@@ -1,4 +1,4 @@
-/*	$OpenBSD: whatis.c,v 1.4 1997/11/30 05:30:37 deraadt Exp $	*/
+/*	$OpenBSD: whatis.c,v 1.5 2000/04/01 05:05:35 millert Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -58,6 +58,7 @@ static char sccsid[] = "@(#)whatis.c	8.5 (Berkeley) 11/26/93";
 #define	MAXLINELEN	8192			/* max line handled */
 
 static int *found, foundman;
+extern char *__progname;
 
 void dashtrunc __P((char *, char *));
 int match __P((char *, char *));
@@ -103,7 +104,7 @@ main(argc, argv)
 	memset(found, 0, argc * sizeof(int));
 
 	for (p = argv; *p; ++p)			/* trim full paths */
-		if (beg = strrchr(*p, '/'))
+		if ((beg = strrchr(*p, '/')))
 			*p = beg + 1;
 
 	if (p_augment)
@@ -141,7 +142,7 @@ whatis(argv, path, buildpath)
 	char hold[MAXPATHLEN];
 
 	for (name = path; name; name = end) {	/* through name list */
-		if (end = strchr(name, ':'))
+		if ((end = strchr(name, ':')))
 			*end++ = '\0';
 
 		if (buildpath) {
@@ -175,7 +176,7 @@ whatis(argv, path, buildpath)
 
 /*
  * match --
- *	match a full word
+ *	match a full word or a full string
  */
 int
 match(bp, str)
@@ -187,13 +188,26 @@ match(bp, str)
 	if (!*str || !*bp)
 		return(0);
 	for (len = strlen(str);;) {
-		for (; *bp && !isdigit(*bp) && !isalpha(*bp); ++bp);
+		/* skip leading crud */
+		for (; *bp && !isalnum(*bp); ++bp)
+			;
 		if (!*bp)
 			break;
-		for (start = bp++;
-		    *bp && (*bp == '_' || isdigit(*bp) || isalpha(*bp)); ++bp);
-		if (bp - start == len && !strncasecmp(start, str, len))
-			return(1);
+
+		/* check for word match first */
+		for (start = bp++; *bp && (*bp == '_' || isalnum(*bp)); ++bp)
+			;
+		if (bp - start == len) {
+		    if (strncasecmp(start, str, len) == 0)
+			    return(1);
+		} else if (*bp && *bp != ',') {
+		    /* check for full string match */
+		    for (bp = start;
+			*bp && *bp != ',' && *bp != '(' && !isspace(*bp); ++bp)
+			    ;
+		    if (bp - start == len && strncasecmp(start, str, len) == 0)
+			    return(1);
+		}
 	}
 	return(0);
 }
@@ -221,7 +235,9 @@ dashtrunc(from, to)
 void
 usage()
 {
+
 	(void)fprintf(stderr,
-	    "usage: whatis [-C file] [-M path] [-m path] command ...\n");
+	    "usage: %s [-C file] [-M path] [-m path] command ...\n",
+	    __progname);
 	exit(1);
 }

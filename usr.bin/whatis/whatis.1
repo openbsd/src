@@ -1,4 +1,4 @@
-.\"	$OpenBSD: whatis.1,v 1.6 2000/03/14 14:58:26 aaron Exp $
+.\"	$OpenBSD: whatis.1,v 1.7 2000/04/01 05:05:35 millert Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -50,9 +50,17 @@ looks up a given command and gives the header line from the manual page.
 You can then use the
 .Xr man 1
 command to get more information.
+.Nm
+will match on a case insensitive basis and for multiple word entries
+will match on each individual word.
 .Pp
 The options are as follows:
 .Bl -tag -width Fl
+.It Fl C Ar file
+Specify an alternate configuration file in
+.Xr man.conf 5
+format.  The default is
+.Pa /etc/man.conf .
 .It Fl M Ar path
 Override the list of standard directories
 .Nm
@@ -100,7 +108,8 @@ name of the whatis database
 .Xr apropos 1 ,
 .Xr man 1 ,
 .Xr whereis 1 ,
-.Xr which 1
+.Xr which 1 ,
+.Xr man.conf 5
 .Sh HISTORY
 The
 .Nm
