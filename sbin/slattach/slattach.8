@@ -1,4 +1,4 @@
-.\"	$OpenBSD: slattach.8,v 1.8 1999/05/23 14:11:22 aaron Exp $
+.\"	$OpenBSD: slattach.8,v 1.9 1999/09/25 16:53:39 deraadt Exp $
 .\"	$NetBSD: slattach.8,v 1.12 1995/03/18 15:01:12 cgd Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
@@ -48,7 +48,8 @@
 .Sh DESCRIPTION
 .Nm
 is used to assign a tty line to a network interface,
-and to define the network source and destination addresses.
+and will attach the named tty line to the first
+available slipdevice that is configured and up.
 The following operands are supported by
 .Nm slattach :
 .Bl -tag -width Ar
@@ -100,7 +101,9 @@ is the name that is shown by
 .Xr netstat 1 .
 .Sh EXAMPLES
 .Bd -literal -offset indent -compact
+ifconfig sl0 10.0.0.1 10.0.0.2 link0 link2 up
 slattach ttyh8
+ifconfig sl1 192.168.0.1 192.168.0.2 link0 up
 slattach \-s 4800 /dev/tty01
 .Ed
 .Sh DIAGNOSTICS
