@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_examine.c,v 1.10 2002/05/16 13:01:41 art Exp $	*/
+/*	$OpenBSD: db_examine.c,v 1.11 2004/04/25 03:21:50 itojun Exp $	*/
 /*	$NetBSD: db_examine.c,v 1.11 1996/03/30 22:30:07 christos Exp $	*/
 
 /*
@@ -64,7 +64,7 @@ db_examine_cmd(addr, have_addr, count, modif)
 	char *		modif;
 {
 	if (modif[0] != '\0')
-		db_strcpy(db_examine_format, modif);
+		db_strlcpy(db_examine_format, modif, sizeof(db_examine_format));
 
 	if (count == -1)
 		count = 1;
@@ -241,13 +241,31 @@ db_print_loc_and_inst(loc)
 	(void) db_disasm(loc, FALSE);
 }
 
-void
-db_strcpy(dst, src)
-	register char *dst;
-	register char *src;
+/* local copy is needed here so that we can trace strlcpy() in libkern */
+size_t
+db_strlcpy(char *dst, const char *src, size_t siz)
 {
-	while ((*dst++ = *src++) != '\0')
-		;
+	char *d = dst;
+	const char *s = src;
+	size_t n = siz;
+
+	/* Copy as many bytes as will fit */
+	if (n != 0 && --n != 0) {
+		do {
+			if ((*d++ = *s++) == 0)
+				break;
+		} while (--n != 0);
+	}
+
+	/* Not enough room in dst, add NUL and traverse rest of src */
+	if (n == 0) {
+		if (siz != 0)
+			*d = '\0';		/* NUL-terminate dst */
+		while (*s++)
+			;
+	}
+
+	return(s - src - 1);	/* count does not include NUL */
 }
 
 /*

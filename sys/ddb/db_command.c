@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.34 2004/03/15 12:56:29 aaron Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.35 2004/04/25 03:21:50 itojun Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /* 
@@ -224,7 +224,7 @@ db_command(last_cmdp, cmd_table)
 			db_flush_lex();
 			return;
 		    }
-		    db_strcpy(modif, db_tok_string);
+		    db_strlcpy(modif, db_tok_string, sizeof(modif));
 		}
 		else {
 		    db_unread_token(t);
