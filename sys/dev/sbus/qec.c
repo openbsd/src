@@ -1,4 +1,4 @@
-/*	$OpenBSD: qec.c,v 1.6 2003/03/27 17:39:05 jason Exp $	*/
+/*	$OpenBSD: qec.c,v 1.7 2003/06/24 21:54:38 henric Exp $	*/
 /*	$NetBSD: qec.c,v 1.12 2000/12/04 20:12:55 fvdl Exp $ */
 
 /*-
@@ -72,7 +72,8 @@ void *	qec_intr_establish(
 		int,			/*`device class' interrupt level*/
 		int,			/*flags*/
 		int (*)(void *),	/*handler*/
-		void *);		/*arg*/
+		void *,			/*arg*/
+		const char *);		/*what*/
 
 struct cfattach qec_ca = {
 	sizeof(struct qec_softc), qecmatch, qecattach
@@ -286,7 +287,7 @@ qec_bus_map(t, t0, addr, size, flags, hp)
 }
 
 void *
-qec_intr_establish(t, t0, pri, level, flags, handler, arg)
+qec_intr_establish(t, t0, pri, level, flags, handler, arg, what)
 	bus_space_tag_t t;
 	bus_space_tag_t t0;
 	int pri;
@@ -294,6 +295,7 @@ qec_intr_establish(t, t0, pri, level, flags, handler, arg)
 	int flags;
 	int (*handler)(void *);
 	void *arg;
+	const char *what;
 {
 	struct qec_softc *sc = t->cookie;
 
@@ -310,15 +312,15 @@ qec_intr_establish(t, t0, pri, level, flags, handler, arg)
 		pri = sc->sc_intr->sbi_pri;
 	}
 
-        if (t->parent == 0 || t->parent->sparc_bus_mmap == 0) {
-                printf("\nebus_bus_mmap: invalid parent");
-                return (NULL);
-        }
+	for (t = t->parent; t; t = t->parent) {
+		if (t->sparc_intr_establish != NULL)
+			return ((*t->sparc_intr_establish)
+			    (t, t0, pri, level, flags, handler, arg, what));
+	}
 
-        t = t->parent;
+	panic("qec_intr_extablish): no handler found");
 
-        return ((*t->sparc_intr_establish)(t, t0, pri, level, flags,
-            handler, arg));
+	return (NULL);
 }
 
 void

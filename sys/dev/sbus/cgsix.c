@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.42 2003/06/18 17:35:30 miod Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.43 2003/06/24 21:54:38 henric Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -195,7 +195,7 @@ cgsixattach(parent, self, aux)
 	}
 
 	if ((sc->sc_ih = bus_intr_establish(sa->sa_bustag, sa->sa_pri,
-	    IPL_TTY, 0, cgsix_intr, sc)) == NULL) {
+	    IPL_TTY, 0, cgsix_intr, sc, self->dv_xname)) == NULL) {
 		printf(": couldn't establish interrupt, pri %d\n", sa->sa_pri);
 		goto fail_intr;
 	}

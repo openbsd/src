@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizo.c,v 1.15 2003/06/11 03:16:12 henric Exp $	*/
+/*	$OpenBSD: schizo.c,v 1.16 2003/06/24 21:54:39 henric Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -82,7 +82,7 @@ paddr_t schizo_bus_mmap(bus_space_tag_t, bus_addr_t, off_t, int, int);
 int _schizo_bus_map(bus_space_tag_t, bus_space_tag_t, bus_addr_t,
     bus_size_t, int, bus_space_handle_t *);
 void *_schizo_intr_establish(bus_space_tag_t, bus_space_tag_t, int, int, int,
-    int (*)(void *), void *);
+    int (*)(void *), void *, const char *);
 paddr_t _schizo_bus_mmap(bus_space_tag_t, bus_space_tag_t, bus_addr_t, off_t, int, int);
 
 int schizo_dmamap_create(bus_dma_tag_t, bus_dma_tag_t, bus_size_t, int,
@@ -437,18 +437,13 @@ _schizo_bus_mmap(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t paddr,
 
 void *
 _schizo_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
-    int level, int flags, int (*handler)(void *), void *arg)
+    int level, int flags, int (*handler)(void *), void *arg, const char *what)
 {
 	struct schizo_pbm *pbm = t->cookie;
 	struct intrhand *ih = NULL;
 	volatile u_int64_t *intrmapptr = NULL, *intrclrptr = NULL;
 	int ino;
 	long vec = INTVEC(ihandle);
-
-	ih = (struct intrhand *)malloc(sizeof(struct intrhand), M_DEVBUF,
-	    M_NOWAIT);
-	if (ih == NULL)
-		return (NULL);
 
 	vec = INTVEC(ihandle);
 	ino = INTINO(vec);
@@ -468,11 +463,10 @@ _schizo_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
 		intrclrptr = &pbmreg->iclr[ino];
 	}
 
-	ih->ih_map = intrmapptr;
-	ih->ih_clr = intrclrptr;
-	ih->ih_fun = handler;
-	ih->ih_pil = level;
-	ih->ih_number = ino;
+	ih = bus_intr_allocate(t0, handler, arg, ino, level, intrmapptr,
+	    intrclrptr, what);
+	if (ih == NULL)
+		return (NULL);
 
 	intr_establish(ih->ih_pil, ih);
 

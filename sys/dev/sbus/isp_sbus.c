@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_sbus.c,v 1.5 2003/02/17 01:29:21 henric Exp $	*/
+/*	$OpenBSD: isp_sbus.c,v 1.6 2003/06/24 21:54:38 henric Exp $	*/
 /* $NetBSD: isp_sbus.c,v 1.46 2001/09/26 20:53:14 eeh Exp $ */
 
 /*
@@ -252,7 +252,7 @@ isp_sbus_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Establish interrupt channel */
 	bus_intr_establish(sbc->sbus_bustag, sbc->sbus_pri, IPL_BIO, 0,
-	    isp_sbus_intr, sbc);
+	    isp_sbus_intr, sbc, self->dv_xname);
 	sbus_establish(&sbc->sbus_sd, &sbc->sbus_isp.isp_osinfo._dev);
 
 	/*

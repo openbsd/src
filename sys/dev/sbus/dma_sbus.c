@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma_sbus.c,v 1.9 2003/06/05 12:27:03 deraadt Exp $	*/
+/*	$OpenBSD: dma_sbus.c,v 1.10 2003/06/24 21:54:38 henric Exp $	*/
 /*	$NetBSD: dma_sbus.c,v 1.5 2000/07/09 20:57:42 pk Exp $ */
 
 /*-
@@ -101,7 +101,8 @@ void	*dmabus_intr_establish(
 		int,			/*`device class' level*/
 		int,			/*flags*/
 		int (*)(void *),	/*handler*/
-		void *);		/*handler arg*/
+		void *,			/*handler arg*/
+		const char *);		/*what*/
 
 static	bus_space_tag_t dma_alloc_bustag(struct dma_softc *sc);
 
@@ -254,7 +255,8 @@ dmabus_intr_establish(
 	int level,
 	int flags,
 	int (*handler)(void *),
-	void *arg)
+	void *arg,
+	const char *what)
 {
 	struct lsi64854_softc *sc = t->cookie;
 
@@ -269,9 +271,11 @@ dmabus_intr_establish(
 	for (t = t->parent; t; t = t->parent) {
 		if (t->sparc_intr_establish != NULL)
 			return ((*t->sparc_intr_establish)
-				(t, t0, pri, level, flags, handler, arg));
+				(t, t0, pri, level, flags, handler, arg, what));
 
 	}
+
+	panic("dmabus_intr_establish: no handler found");
 
 	return (NULL);
 }

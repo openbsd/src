@@ -1,4 +1,4 @@
-/*	$OpenBSD: spif.c,v 1.7 2003/06/02 18:32:41 jason Exp $	*/
+/*	$OpenBSD: spif.c,v 1.8 2003/06/24 21:54:38 henric Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Jason L. Wright (jason@thought.net)
@@ -216,14 +216,16 @@ spifattach(parent, self, aux)
 	}
 
 	sc->sc_ppcih = bus_intr_establish(sa->sa_bustag,
-	    sa->sa_intr[PARALLEL_INTR].sbi_pri, IPL_TTY, 0, spifppcintr, sc);
+	    sa->sa_intr[PARALLEL_INTR].sbi_pri, IPL_TTY, 0, spifppcintr, sc,
+	    self->dv_xname);
 	if (sc->sc_ppcih == NULL) {
 		printf(": failed to establish ppc interrupt\n");
 		goto fail_unmapregs;
 	}
 
 	sc->sc_stcih = bus_intr_establish(sa->sa_bustag,
-	    sa->sa_intr[SERIAL_INTR].sbi_pri, IPL_TTY, 0, spifstcintr, sc);
+	    sa->sa_intr[SERIAL_INTR].sbi_pri, IPL_TTY, 0, spifstcintr, sc,
+	    self->dv_xname);
 	if (sc->sc_stcih == NULL) {
 		printf(": failed to establish stc interrupt\n");
 		goto fail_unmapregs;

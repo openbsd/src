@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.64 2003/06/16 20:46:14 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.65 2003/06/24 21:54:39 henric Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -1653,7 +1653,7 @@ int sparc_bus_subregion(bus_space_tag_t, bus_space_tag_t,  bus_space_handle_t,
 paddr_t sparc_bus_mmap(bus_space_tag_t, bus_space_tag_t, bus_addr_t, off_t,
     int, int);
 void *sparc_mainbus_intr_establish(bus_space_tag_t, bus_space_tag_t, int, int,
-    int, int (*)(void *), void *);
+    int, int (*)(void *), void *, const char *);
 void sparc_bus_barrier(bus_space_tag_t, bus_space_tag_t,  bus_space_handle_t,
     bus_size_t, bus_size_t, int);
 int sparc_bus_alloc(bus_space_tag_t, bus_space_tag_t, bus_addr_t, bus_addr_t,
@@ -1892,21 +1892,52 @@ bus_space_probe(bus_space_tag_t tag, bus_addr_t paddr, bus_size_t size,
 	return (result);
 }
 
-
 void *
-sparc_mainbus_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int	pil,
-    int level, int flags, int (*handler)(void *), void *arg)
+bus_intr_allocate(bus_space_tag_t t, int (*handler)(void *), void *arg,
+    int number, int pil,
+    volatile u_int64_t *mapper, volatile u_int64_t *clearer,
+    const char *what)
 {
 	struct intrhand *ih;
+	size_t namelen = strlen(what) + 1;
 
 	ih = (struct intrhand *)
-		malloc(sizeof(struct intrhand), M_DEVBUF, M_NOWAIT);
+		malloc(sizeof(struct intrhand) + namelen - 1, M_DEVBUF, M_NOWAIT);
 	if (ih == NULL)
 		return (NULL);
 
+	memset(ih, 0, sizeof(struct intrhand) + namelen);
+
 	ih->ih_fun = handler;
 	ih->ih_arg = arg;
-	intr_establish(pil, ih);
+	ih->ih_number = number;
+	ih->ih_pil = pil;
+	ih->ih_map = mapper;
+	ih->ih_clr = clearer;
+	ih->ih_bus = t;
+	strlcpy(ih->ih_name, what, namelen);
+
+	return (ih);
+}
+
+void
+bus_intr_free(void *arg)
+{
+	free(arg, M_DEVBUF);
+}
+
+void *
+sparc_mainbus_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int number,
+    int pil, int flags, int (*handler)(void *), void *arg, const char *what)
+{
+	struct intrhand *ih;
+
+	ih = bus_intr_allocate(t0, handler, arg, number, pil, NULL, NULL, what);
+	if (ih == NULL)
+		return (NULL);
+
+	intr_establish(ih->ih_pil, ih);
+
 	return (ih);
 }
 
@@ -2114,13 +2145,13 @@ bus_space_mmap(bus_space_tag_t t, bus_addr_t a, off_t o, int p, int f)
 
 void *
 bus_intr_establish(bus_space_tag_t t, int p, int l, int f, int (*h)(void *),
-    void *a)
+    void *a, const char *w)
 {
 	const bus_space_tag_t t0 = t;
 	void *ret;
 
 	_BS_PRECALL(t, sparc_intr_establish);
-	ret = _BS_CALL(t, sparc_intr_establish)(t, t0, p, l, f, h, a);
+	ret = _BS_CALL(t, sparc_intr_establish)(t, t0, p, l, f, h, a, w);
 	_BS_POSTCALL;
 	return (ret);
 }

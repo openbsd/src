@@ -1,4 +1,4 @@
-/*	$OpenBSD: sab.c,v 1.12 2003/06/02 20:02:49 jason Exp $	*/
+/*	$OpenBSD: sab.c,v 1.13 2003/06/24 21:54:39 henric Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -252,7 +252,7 @@ sab_attach(parent, self, aux)
 	BUS_SPACE_SET_FLAGS(sc->sc_bt, sc->sc_bh, BSHDB_NO_ACCESS);
 
 	sc->sc_ih = bus_intr_establish(sc->sc_bt, ea->ea_intrs[0],
-	    IPL_TTY, 0, sab_intr, sc);
+	    IPL_TTY, 0, sab_intr, sc, self->dv_xname);
 	if (sc->sc_ih == NULL) {
 		printf(": can't map interrupt\n");
 		return;

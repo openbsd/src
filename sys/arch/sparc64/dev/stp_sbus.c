@@ -1,4 +1,4 @@
-/*	$OpenBSD: stp_sbus.c,v 1.2 2003/06/23 19:47:03 jason Exp $	*/
+/*	$OpenBSD: stp_sbus.c,v 1.3 2003/06/24 21:54:39 henric Exp $	*/
 /*	$NetBSD: stp4020.c,v 1.23 2002/06/01 23:51:03 lukem Exp $	*/
 
 /*-
@@ -166,10 +166,10 @@ stpattach(parent, self, aux)
 	 * the lower level for PC card I/O.
 	 */
 	bus_intr_establish(sa->sa_bustag, sa->sa_intr[1].sbi_pri,
-	    IPL_NONE, 0, stp4020_statintr, sc);
+	    IPL_NONE, 0, stp4020_statintr, sc, self->dv_xname);
 
 	bus_intr_establish(sa->sa_bustag, sa->sa_intr[0].sbi_pri,
-	    IPL_NONE, 0, stp4020_iointr, sc);
+	    IPL_NONE, 0, stp4020_iointr, sc, self->dv_xname);
 
 	stpattach_common(sc, sa->sa_frequency);
 }

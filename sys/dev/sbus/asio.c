@@ -1,4 +1,4 @@
-/*	$OpenBSD: asio.c,v 1.7 2003/06/02 18:32:41 jason Exp $	*/
+/*	$OpenBSD: asio.c,v 1.8 2003/06/24 21:54:38 henric Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -232,7 +232,7 @@ com_asio_attach(parent, self, aux)
 	sc->sc_frequency = BAUD_BASE;
 
 	sc->sc_ih = bus_intr_establish(aaa->aaa_iot, aaa->aaa_pri,
-	    IPL_TTY, 0, comintr, sc);
+	    IPL_TTY, 0, comintr, sc, self->dv_xname);
 	if (sc->sc_ih == NULL) {
 		printf(": cannot allocate intr\n");
 		return;

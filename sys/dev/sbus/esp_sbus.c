@@ -1,4 +1,4 @@
-/*	$OpenBSD: esp_sbus.c,v 1.12 2003/03/27 16:43:28 jason Exp $	*/
+/*	$OpenBSD: esp_sbus.c,v 1.13 2003/06/24 21:54:38 henric Exp $	*/
 /*	$NetBSD: esp_sbus.c,v 1.14 2001/04/25 17:53:37 bouyer Exp $	*/
 
 /*-
@@ -537,7 +537,7 @@ espattach(esc, gluep)
 
 	/* Establish interrupt channel */
 	icookie = bus_intr_establish(esc->sc_bustag, esc->sc_pri, IPL_BIO, 0,
-				     ncr53c9x_intr, sc);
+				     ncr53c9x_intr, sc, sc->sc_dev.dv_xname);
 
 	/* register interrupt stats */
 	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);

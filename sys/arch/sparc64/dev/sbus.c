@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbus.c,v 1.19 2003/06/18 17:33:35 miod Exp $	*/
+/*	$OpenBSD: sbus.c,v 1.20 2003/06/24 21:54:39 henric Exp $	*/
 /*	$NetBSD: sbus.c,v 1.46 2001/10/07 20:30:41 eeh Exp $ */
 
 /*-
@@ -151,7 +151,8 @@ static void *sbus_intr_establish(bus_space_tag_t, bus_space_tag_t,
     int,		/*`device class' priority*/
     int,		/*flags*/
     int (*)(void *),	/*handler*/
-    void *);		/*handler arg*/
+    void *,		/*handler arg*/
+    const char *);	/*what*/
 
 
 /* autoconfiguration driver */
@@ -644,20 +645,17 @@ sbus_get_intr(struct sbus_softc *sc, int node, struct sbus_intr **ipp, int *np,
  */
 void *
 sbus_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int pri, int level,
-    int flags, int (*handler)(void *), void *arg)
+    int flags, int (*handler)(void *), void *arg, const char *what)
 {
 	struct sbus_softc *sc = t->cookie;
 	struct sysioreg *sysio;
 	struct intrhand *ih;
+	volatile u_int64_t *map = NULL;
+	volatile u_int64_t *clr = NULL;
 	int ipl;
 	long vec = pri; 
 
 	sysio = bus_space_vaddr(sc->sc_bustag, sc->sc_bh);
-
-	ih = (struct intrhand *)
-		malloc(sizeof(struct intrhand), M_DEVBUF, M_NOWAIT);
-	if (ih == NULL)
-		return (NULL);
 
 	if ((flags & BUS_INTR_ESTABLISH_SOFTINTR) != 0)
 		ipl = 1 << vec;
@@ -682,16 +680,16 @@ sbus_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int pri, int level,
 			bus_space_handle_t maph;
 			int slot = INTSLOT(pri);
 
-			ih->ih_map = &(&sysio->sbus_slot0_int)[slot];
-			ih->ih_clr = &sysio->sbus0_clr_int[vec];
+			map = &(&sysio->sbus_slot0_int)[slot];
+			clr = &sysio->sbus0_clr_int[vec];
 #ifdef DEBUG
 			if (sbus_debug & SDB_INTR) {
-				int64_t intrmap = *ih->ih_map;
+				int64_t intrmap = *map;
 				
 				printf("SBUS %lx IRQ as %llx in slot %d\n", 
 				       (long)vec, (long long)intrmap, slot);
 				printf("\tmap addr %p clr addr %p\n",
-				    ih->ih_map, ih->ih_clr);
+				    map, clr);
 			}
 #endif
 			/* Enable the interrupt */
@@ -705,7 +703,7 @@ sbus_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int pri, int level,
 			 * to the appropriate offset from sc->sc_bustag and
 			 * sc->sc_bh.
 			 */
-			bus_space_map(sc->sc_bustag, (bus_addr_t)ih->ih_map, 8,
+			bus_space_map(sc->sc_bustag, (bus_addr_t)map, 8,
 			    BUS_SPACE_MAP_PROMADDRESS, &maph);
 			bus_space_write_8(sc->sc_bustag, maph, 0, vec);
 		} else {
@@ -725,9 +723,9 @@ sbus_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int pri, int level,
 				    ("OBIO %lx IRQ as %lx in slot %d\n", 
 				    vec, (long)intrmap, i));
 				/* Register the map and clear intr registers */
-				ih->ih_map = &intrptr[i];
+				map = &intrptr[i];
 				intrptr = (int64_t *)&sysio->scsi_clr_int;
-				ih->ih_clr = &intrptr[i];
+				clr = &intrptr[i];
 				/* Enable the interrupt */
 				intrmap |= INTMAP_V;
 				/*
@@ -739,7 +737,7 @@ sbus_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int pri, int level,
 				 * sc->sc_bh.
 				 */
 				bus_space_map(sc->sc_bustag,
-				    (bus_addr_t)ih->ih_map, 8,
+				    (bus_addr_t)map, 8,
 				    BUS_SPACE_MAP_PROMADDRESS, &maph);
 				bus_space_write_8(sc->sc_bustag, maph, 0,
 				    (u_long)intrmap);
@@ -751,11 +749,12 @@ sbus_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int pri, int level,
 	if (sbus_debug & SDB_INTR) { long i; for (i = 0; i < 400000000; i++); }
 #endif
 
-	ih->ih_fun = handler;
-	ih->ih_arg = arg;
-	ih->ih_number = vec;
-	ih->ih_pil = ipl;
+	ih = bus_intr_allocate(t0, handler, arg, vec, ipl, map, clr, what);
+	if (ih == NULL)
+		return (ih);
+
 	intr_establish(ih->ih_pil, ih);
+
 	return (ih);
 }
 

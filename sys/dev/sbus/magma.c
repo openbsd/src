@@ -1,4 +1,4 @@
-/*	$OpenBSD: magma.c,v 1.7 2003/03/27 17:39:05 jason Exp $	*/
+/*	$OpenBSD: magma.c,v 1.8 2003/06/24 21:54:38 henric Exp $	*/
 /*
  * magma.c
  *
@@ -366,7 +366,7 @@ magma_attach(parent, dev, aux)
 		return;
 	}
 	sc->sc_ih = bus_intr_establish(sa->sa_bustag, sa->sa_pri, IPL_TTY, 0,
-	    magma_hard, sc);
+	    magma_hard, sc, dev->dv_xname);
 	if (sc->sc_ih == NULL) {
 		printf(": failed to establish interrupt\n");
 		bus_space_unmap(sc->sc_bustag, sc->sc_iohandle,

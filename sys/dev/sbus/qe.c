@@ -1,4 +1,4 @@
-/*	$OpenBSD: qe.c,v 1.12 2003/06/02 18:32:41 jason Exp $	*/
+/*	$OpenBSD: qe.c,v 1.13 2003/06/24 21:54:38 henric Exp $	*/
 /*	$NetBSD: qe.c,v 1.16 2001/03/30 17:30:18 christos Exp $	*/
 
 /*-
@@ -246,8 +246,8 @@ qeattach(parent, self, aux)
 	qestop(sc);
 
 	/* Note: no interrupt level passed */
-	if (bus_intr_establish(sa->sa_bustag, 0, IPL_NET, 0, qeintr, sc) ==
-	    NULL) {
+	if (bus_intr_establish(sa->sa_bustag, 0, IPL_NET, 0, qeintr, sc,
+	    self->dv_xname) == NULL) {
 		printf(": no interrupt established\n");
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.11 2003/06/02 18:32:41 jason Exp $	*/
+/*	$OpenBSD: be.c,v 1.12 2003/06/24 21:54:38 henric Exp $	*/
 /*	$NetBSD: be.c,v 1.26 2001/03/20 15:39:20 pk Exp $	*/
 
 /*-
@@ -297,7 +297,7 @@ beattach(parent, self, aux)
 
 	/* Establish interrupt handler */
 	if (sa->sa_nintr == 0 || bus_intr_establish(sa->sa_bustag, sa->sa_pri,
-	    IPL_NET, 0, beintr, sc) == NULL) {
+	    IPL_NET, 0, beintr, sc, self->dv_xname) == NULL) {
 		printf(": no interrupt established\n");
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_hme_sbus.c,v 1.4 2003/02/17 01:29:20 henric Exp $	*/
+/*	$OpenBSD: if_hme_sbus.c,v 1.5 2003/06/24 21:54:38 henric Exp $	*/
 /*	$NetBSD: if_hme_sbus.c,v 1.6 2001/02/28 14:52:48 mrg Exp $	*/
 
 /*-
@@ -207,5 +207,5 @@ hmeattach_sbus(parent, self, aux)
 	/* Establish interrupt handler */
 	if (sa->sa_nintr != 0)
 		(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri, IPL_NET, 0,
-					 hme_intr, sc);
+					 hme_intr, sc, self->dv_xname);
 }

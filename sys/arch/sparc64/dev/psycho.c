@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.36 2003/06/11 03:16:12 henric Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.37 2003/06/24 21:54:39 henric Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -101,7 +101,7 @@ paddr_t psycho_bus_mmap(bus_space_tag_t, bus_space_tag_t, bus_addr_t, off_t,
 int _psycho_bus_map(bus_space_tag_t, bus_space_tag_t, bus_addr_t,
     bus_size_t, int, bus_space_handle_t *);
 void *psycho_intr_establish(bus_space_tag_t, bus_space_tag_t, int, int, int,
-    int (*)(void *), void *);
+    int (*)(void *), void *, const char *);
 
 int psycho_dmamap_create(bus_dma_tag_t, bus_dma_tag_t, bus_size_t, int,
     bus_size_t, bus_size_t, int, bus_dmamap_t *);
@@ -1066,7 +1066,7 @@ psycho_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
  */
 void *
 psycho_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
-    int level, int flags, int (*handler)(void *), void *arg)
+    int level, int flags, int (*handler)(void *), void *arg, const char *what)
 {
 	struct psycho_pbm *pp = t->cookie;
 	struct psycho_softc *sc = pp->pp_sc;
@@ -1075,11 +1075,6 @@ psycho_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
 	int64_t intrmap = 0;
 	int ino;
 	long vec = INTVEC(ihandle); 
-
-	ih = (struct intrhand *)
-		malloc(sizeof(struct intrhand), M_DEVBUF, M_NOWAIT);
-	if (ih == NULL)
-		return (NULL);
 
 	/*
 	 * Hunt through all the interrupt mapping regs to look for our
@@ -1106,62 +1101,52 @@ psycho_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
 		level = 2;
 	}
 
-	if ((flags & BUS_INTR_ESTABLISH_SOFTINTR) == 0) {
+	if (flags & BUS_INTR_ESTABLISH_SOFTINTR)
+		goto found;
 
-		DPRINTF(PDB_INTR,
-		    ("\npsycho: intr %lx: %p\nHunting for IRQ...\n",
-		    (long)ino, intrlev[ino]));
+	DPRINTF(PDB_INTR,
+	    ("\npsycho: intr %lx: %p\nHunting for IRQ...\n",
+	    (long)ino, intrlev[ino]));
 
-		/* Hunt thru obio first */
-		for (intrmapptr = psycho_psychoreg_vaddr(sc, scsi_int_map),
-		    intrclrptr = psycho_psychoreg_vaddr(sc, scsi_clr_int);
-		    intrmapptr < (volatile u_int64_t *)
-			psycho_psychoreg_vaddr(sc, ffb0_int_map);
-		    intrmapptr++, intrclrptr++) {
-			if (INTINO(*intrmapptr) == ino)
-				goto found;
-		}
-
-		/* Now do PCI interrupts */
-		for (intrmapptr = psycho_psychoreg_vaddr(sc, pcia_slot0_int),
-		    intrclrptr = psycho_psychoreg_vaddr(sc, pcia0_clr_int[0]);
-		    intrmapptr <= (volatile u_int64_t *)
-			psycho_psychoreg_vaddr(sc, pcib_slot3_int);
-		    intrmapptr++, intrclrptr += 4) {
-			/* Skip PCI-A Slot 2 and PCI-A Slot 3 on psycho's */
-			if (sc->sc_mode == PSYCHO_MODE_PSYCHO &&
-			    (intrmapptr ==
-				psycho_psychoreg_vaddr(sc, pcia_slot2_int) ||
-			    intrmapptr ==
-				psycho_psychoreg_vaddr(sc, pcia_slot3_int)))
-				continue;
-
-			if (((*intrmapptr ^ vec) & 0x3c) == 0) {
-				intrclrptr += vec & 0x3;
-				goto found;
-			}
-		}
-		printf("Cannot find interrupt vector %lx\n", vec);
-		return (NULL);
-
-	found:
-		/* Register the map and clear intr registers */
-		ih->ih_map = intrmapptr;
-		ih->ih_clr = intrclrptr;
+	/* Hunt thru obio first */
+	for (intrmapptr = psycho_psychoreg_vaddr(sc, scsi_int_map),
+	    intrclrptr = psycho_psychoreg_vaddr(sc, scsi_clr_int);
+	    intrmapptr < (volatile u_int64_t *)
+		psycho_psychoreg_vaddr(sc, ffb0_int_map);
+	    intrmapptr++, intrclrptr++) {
+		if (INTINO(*intrmapptr) == ino)
+			goto found;
 	}
-#ifdef NOT_DEBUG
-	if (psycho_debug & PDB_INTR) {
-		long i;
 
-		for (i = 0; i < 500000000; i++)
+	/* Now do PCI interrupts */
+	for (intrmapptr = psycho_psychoreg_vaddr(sc, pcia_slot0_int),
+	    intrclrptr = psycho_psychoreg_vaddr(sc, pcia0_clr_int[0]);
+	    intrmapptr <= (volatile u_int64_t *)
+		psycho_psychoreg_vaddr(sc, pcib_slot3_int);
+	    intrmapptr++, intrclrptr += 4) {
+		/* Skip PCI-A Slot 2 and PCI-A Slot 3 on psycho's */
+		if (sc->sc_mode == PSYCHO_MODE_PSYCHO &&
+		    (intrmapptr ==
+			psycho_psychoreg_vaddr(sc, pcia_slot2_int) ||
+		    intrmapptr ==
+			psycho_psychoreg_vaddr(sc, pcia_slot3_int)))
 			continue;
-	}
-#endif
 
-	ih->ih_fun = handler;
-	ih->ih_arg = arg;
-	ih->ih_pil = level;
-	ih->ih_number = ino | sc->sc_ign;
+		if (((*intrmapptr ^ vec) & 0x3c) == 0) {
+			intrclrptr += vec & 0x3;
+			goto found;
+		}
+	}
+	printf("Cannot find interrupt vector %lx\n", vec);
+	return (NULL);
+
+found:
+	ih = bus_intr_allocate(t0, handler, arg, ino | sc->sc_ign, level,
+	    intrmapptr, intrclrptr, what);
+	if (ih == NULL) {
+		printf("Cannot allocate interrupt vector %lx\n", vec);
+		return (NULL);
+	}
 
 	DPRINTF(PDB_INTR, (
 	    "\ninstalling handler %p arg %p with number %x pil %u",

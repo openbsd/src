@@ -1,4 +1,4 @@
-/*	$OpenBSD: pckbc_ebus.c,v 1.4 2003/06/02 20:02:49 jason Exp $	*/
+/*	$OpenBSD: pckbc_ebus.c,v 1.5 2003/06/24 21:54:39 henric Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -143,14 +143,14 @@ pckbc_ebus_attach(parent, self, aux)
 	psc->intr_establish = pckbc_ebus_intr_establish;
 
 	sc->sc_irq[0] = bus_intr_establish(ea->ea_iotag, ea->ea_intrs[0],
-	    IPL_TTY, 0, pckbcintr, psc);
+	    IPL_TTY, 0, pckbcintr, psc, self->dv_xname);
 	if (sc->sc_irq[0] == NULL) {
 		printf(": couldn't get intr0\n");
 		return;
 	}
 
 	sc->sc_irq[1] = bus_intr_establish(ea->ea_iotag, ea->ea_intrs[1],
-	    IPL_TTY, 0, pckbcintr, psc);
+	    IPL_TTY, 0, pckbcintr, psc, self->dv_xname);
 	if (sc->sc_irq[1] == NULL) {
 		printf(": couldn't get intr1\n");
 		return;

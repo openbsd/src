@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_ledma.c,v 1.8 2003/05/14 23:35:31 miod Exp $	*/
+/*	$OpenBSD: if_le_ledma.c,v 1.9 2003/06/24 21:54:38 henric Exp $	*/
 /*	$NetBSD: if_le_ledma.c,v 1.14 2001/05/30 11:46:35 mrg Exp $	*/
 
 /*-
@@ -434,7 +434,7 @@ leattach_ledma(parent, self, aux)
 	/* Establish interrupt handler */
 	if (sa->sa_nintr != 0)
 		(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri, IPL_NET, 0,
-					 am7990_intr, sc);
+					 am7990_intr, sc, self->dv_xname);
 
 	am7990_config(&lesc->sc_am7990);
 
