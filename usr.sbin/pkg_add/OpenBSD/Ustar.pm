@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.10 2004/09/14 22:40:01 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.11 2004/11/01 15:21:48 espie Exp $
 #
 # Copyright (c) 2002-2004 Marc Espie <espie@openbsd.org>
 #
@@ -201,7 +201,7 @@ sub create
 }
 
 sub isLink() { 1 }
-sub isHardLink() { 1 }
+sub isSymLink() { 1 }
 
 package OpenBSD::Ustar::File;
 our @ISA=qw(OpenBSD::Ustar::Object);
