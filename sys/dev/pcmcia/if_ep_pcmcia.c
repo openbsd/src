@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_pcmcia.c,v 1.2 1996/05/05 13:39:22 mickey Exp $       */
+/*	$OpenBSD: if_ep_pcmcia.c,v 1.3 1996/05/07 07:34:16 deraadt Exp $       */
 /*	$NetBSD: if_ep.c,v 1.90 1996/04/11 22:29:15 cgd Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
 #endif
 
 #include <machine/cpu.h>
-#include <machine/pio.h>
+#include <machine/bus.h>
 
 #include <dev/ic/elink3var.h>
 #include <dev/ic/elink3reg.h>
@@ -97,22 +97,24 @@ ep_pcmcia_isasetup(parent, match, aux, pc_link)
 	struct ep_softc *sc = (void *) match;
 	struct isa_attach_args *ia = aux;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	bus_chipset_tag_t bc = sc->sc_bc;
+	bus_io_handle_t ioh = sc->sc_ioh;
 	int             i;
 	extern int      ifqmaxlen;
 
-	outw(ia->ia_iobase + EP_COMMAND, WINDOW_SELECT | 0);
-	outw(ia->ia_iobase + EP_W0_CONFIG_CTRL, ENABLE_DRQ_IRQ);
-	outw(ia->ia_iobase + EP_W0_RESOURCE_CFG, 0x3f00);
+	bus_io_write_2(bc, ioh, EP_COMMAND, WINDOW_SELECT | 0);
+	bus_io_write_2(bc, ioh, EP_W0_CONFIG_CTRL, ENABLE_DRQ_IRQ);
+	bus_io_write_2(bc, ioh, EP_W0_RESOURCE_CFG, 0x3f00);
 
 	/*
 	 * ok til here. Now try to figure out which link we have.
 	 * try coax first...
 	 */
 #ifdef EP_COAX_DEFAULT
-	outw(ia->ia_iobase + EP_W0_ADDRESS_CFG, 0xC000);
+	bus_io_write_2(bc, ioh, EP_W0_ADDRESS_CFG, 0xC000);
 #else
 	/* COAX as default is reported to be a problem */
-	outw(ia->ia_iobase + EP_W0_ADDRESS_CFG, 0x0000);
+	bus_io_write_2(bc, ioh, EP_W0_ADDRESS_CFG, 0x0000);
 #endif
 	ifp->if_snd.ifq_maxlen = ifqmaxlen;
 
@@ -199,12 +201,19 @@ ep_pcmcia_attach(parent, self, aux)
 	void *aux;
 {
 	struct ep_softc *sc = (void *)self;
-	u_short conn = 0;
 	struct isa_attach_args *ia = aux;
+	bus_chipset_tag_t bc = ia->ia_bc;
+	bus_io_handle_t ioh;
+	u_short conn = 0;
 
-	sc->ep_iobase = ia->ia_iobase;
+	if (bus_io_map(bc, ia->ia_iobase, ia->ia_iosize, &ioh))
+		panic("ep_isa_attach: can't map i/o space");
+
+	sc->sc_bc = bc;
+	sc->sc_ioh = ioh;
+	
 	GO_WINDOW(0);
-	conn = inw(ia->ia_iobase + EP_W0_CONFIG_CTRL);
+	conn = bus_io_read_2(bc, ioh, EP_W0_CONFIG_CTRL);
 
 	printf(": ");
 

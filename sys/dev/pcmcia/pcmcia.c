@@ -1,4 +1,4 @@
-/*	$Id: pcmcia.c,v 1.4 1996/05/03 07:59:40 deraadt Exp $	*/
+/*	$Id: pcmcia.c,v 1.5 1996/05/07 07:34:17 deraadt Exp $	*/
 /*
  * Copyright (c) 1996 John T. Kohl.  All rights reserved.
  * Copyright (c) 1994 Stefan Grefen.  All rights reserved.
@@ -47,7 +47,6 @@
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>
 #include <sys/proc.h>
-#include <sys/cpu.h>
 
 #include <dev/pcmcia/pcmciavar.h>
 #include <dev/pcmcia/pcmciareg.h>
@@ -678,10 +677,10 @@ pcmcia_mapcard(link, unit, pc_cf)
 		goto error;
 	}
 
-#define GETMEM(x) bus_mem_read_1(pca->scratch_bc, SCRATCH_MEM(pca), \
+#define GETMEM(x) bus_mem_read_1(pca->pa_bc, SCRATCH_MEM(pca), \
 				 (pc_cf->cfg_off & (SCRATCH_SIZE(pca)-1)) + x)
 #define PUTMEM(x,v) \
-	bus_mem_write_1(pca->scratch_bc, SCRATCH_MEM(pca), \
+	bus_mem_write_1(pca->pa_bc, SCRATCH_MEM(pca), \
 			(pc_cf->cfg_off & (SCRATCH_SIZE(pca)-1)) + x, v)
 
 	if (ISSET(pc_cf->cfgtype, DOSRESET)) {
