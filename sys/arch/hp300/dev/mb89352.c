@@ -1,4 +1,4 @@
-/*	$OpenBSD: mb89352.c,v 1.1 2004/08/03 21:46:56 miod Exp $	*/
+/*	$OpenBSD: mb89352.c,v 1.2 2004/08/18 17:18:00 miod Exp $	*/
 /*	$NetBSD: mb89352.c,v 1.5 2000/03/23 07:01:31 thorpej Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
@@ -535,12 +535,6 @@ spc_select(struct spc_softc *sc, struct spc_acb *acb)
 	spc_write(PCTL, 0);
 	spc_write(TEMP, (1 << sc->sc_initiator) | (1 << target));
 
-#ifdef hp300
-	/* Select timeout hardcoded to 2ms */
-	spc_write(TCH, 15);
-	spc_write(TCM, 32);
-	spc_write(TCL, 4);
-#else
 	/*
 	 * Setup BSY timeout (selection timeout).
 	 * 250ms according to the SCSI specification.
@@ -557,7 +551,6 @@ spc_select(struct spc_softc *sc, struct spc_acb *acb)
 	spc_write(TCH, 2);
 	spc_write(TCM, 113);
 	spc_write(TCL, 3);
-#endif
 	spc_write(SCMD, SCMD_SELECT);
 
 	sc->sc_state = SPC_SELECTING;
@@ -837,42 +830,37 @@ nextbyte:
 	 * itself.
 	 */
 	for (;;) {
-		if (spc_read(INTS) != 0) {
-			/*
-			 * Target left MESSAGE IN, probably because it
-			 * a) noticed our ATN signal, or
-			 * b) ran out of messages.
-			 */
-			goto out;
-		}
 		/* If parity error, just dump everything on the floor. */
 		if ((spc_read(SERR) & (SERR_SCSI_PAR|SERR_SPC_PAR)) != 0) {
 			sc->sc_flags |= SPC_DROP_MSGIN;
 			spc_sched_msgout(sc, SEND_PARITY_ERROR);
 		}
 
-		/* send TRANSFER command. */
-		spc_write(TCH, 0);
-		spc_write(TCM, 0);
-		spc_write(TCL, 1);
-		spc_write(PCTL, sc->sc_phase | PCTL_BFINT_ENAB);
-		spc_write(SCMD, SCMD_XFR | SCMD_PROG_XFR);  /* XXX */
+		if ((spc_read(PSNS) & PSNS_ATN) != 0)
+			spc_write(SCMD, SCMD_RST_ATN);
 
-		for (;;) {
-			if ((spc_read(SSTS) & SSTS_DREG_EMPTY) == 0)
-				break;
-			if (spc_read(INTS) != 0)
+		while ((spc_read(PSNS) & PSNS_REQ) == 0) {
+			if ((spc_read(PSNS) & PH_MASK) != PH_MSGIN &&
+			    (spc_read(SSTS) & SSTS_INITIATOR) == 0)
+				/*
+				 * Target left MESSAGE IN, probably because it
+				 * a) noticed our ATN signal, or
+				 * b) ran out of messages.
+				 */
 				goto out;
+			DELAY(1);
 		}
+
+		spc_write(PCTL, PH_MSGIN);
+		msg = spc_read(TEMP);
 
 		/* Gather incoming message bytes if needed. */
 		if ((sc->sc_flags & SPC_DROP_MSGIN) == 0) {
 			if (n >= SPC_MAX_MSG_LEN) {
-				msg = spc_read(DREG);
 				sc->sc_flags |= SPC_DROP_MSGIN;
 				spc_sched_msgout(sc, SEND_REJECT);
 			} else {
-				*sc->sc_imp++ = spc_read(DREG);
+				*sc->sc_imp++ = msg;
 				n++;
 				/*
 				 * This testing is suboptimal, but most
@@ -888,8 +876,7 @@ nextbyte:
 				    n == sc->sc_imess[1] + 2)
 					break;
 			}
-		} else
-			msg = spc_read(DREG);
+		}
 
 		/*
 		 * If we reach this spot we're either:
@@ -898,9 +885,10 @@ nextbyte:
 		 */
 
 		/* Ack the last byte read. */
-#if 0
+		spc_write(SCMD, SCMD_SET_ACK);
+		while ((spc_read(PSNS) & PSNS_REQ) != 0)
+			DELAY(1);	/* XXX needs timeout */
 		spc_write(SCMD, SCMD_RST_ACK);
-#endif
 	}
 
 	SPC_MISC(("n=%d imess=0x%02x  ", n, sc->sc_imess[0]));
@@ -1072,19 +1060,16 @@ nextbyte:
 	}
 
 	/* Ack the last message byte. */
-#if 0
+	spc_write(SCMD, SCMD_SET_ACK);
+	while ((spc_read(PSNS) & PSNS_REQ) != 0)
+		DELAY(1);	/* XXX needs timeout */
 	spc_write(SCMD, SCMD_RST_ACK);
-#endif
 
 	/* Go get the next message, if any. */
 	goto nextmsg;
 
 out:
-	spc_write(SCMD, SCMD_RST_ACK);
 	SPC_MISC(("n=%d imess=0x%02x  ", n, sc->sc_imess[0]));
-
-	while ((spc_read(SSTS) & SSTS_ACTIVE) == SSTS_INITIATOR)
-		;	/* XXX needs timeout */
 }
 
 /*
@@ -1215,7 +1200,7 @@ nextbyte:
 	spc_write(TCM, n >> 8);
 	spc_write(TCL, n);
 	spc_write(PCTL, sc->sc_phase | PCTL_BFINT_ENAB);
-	spc_write(SCMD, SCMD_XFR | SCMD_PROG_XFR | SCMD_ICPT_XFR);
+	spc_write(SCMD, SCMD_XFR | SCMD_PROG_XFR);
 	for (;;) {
 		if ((spc_read(SSTS) & SSTS_BUSY) != 0)
 			break;
@@ -1311,7 +1296,7 @@ spc_dataout_pio(struct spc_softc *sc, u_char *p, int n)
 	spc_write(TCM, n >> 8);
 	spc_write(TCL, n);
 	spc_write(PCTL, sc->sc_phase | PCTL_BFINT_ENAB);
-	spc_write(SCMD, SCMD_XFR | SCMD_PROG_XFR | SCMD_ICPT_XFR);	/* XXX */
+	spc_write(SCMD, SCMD_XFR | SCMD_PROG_XFR);	/* XXX */
 	for (;;) {
 		if ((spc_read(SSTS) & SSTS_BUSY) != 0)
 			break;
@@ -1408,46 +1393,31 @@ spc_datain_pio(struct spc_softc *sc, u_char *p, int n)
 	spc_write(TCL, n);
 	spc_write(PCTL, sc->sc_phase | PCTL_BFINT_ENAB);
 	spc_write(SCMD, SCMD_XFR | SCMD_PROG_XFR);	/* XXX */
-	for (;;) {
-		if ((spc_read(SSTS) & SSTS_BUSY) != 0)
-			break;
-		if (spc_read(INTS) != 0)
-			goto phasechange;
-	}
 
 	/*
 	 * We leave this loop if one or more of the following is true:
 	 * a) phase != PH_DATAIN && FIFOs are empty
 	 * b) reset has occurred or busfree is detected.
 	 */
+	intstat = 0;
 	while (n > 0) {
 		int xfer;
 
-		/* Wait for fifo half full or phase mismatch */
-		for (;;) {
-			/* XXX needs timeout */
-			intstat = spc_read(INTS);
-			sstat = spc_read(SSTS);
-			if (intstat != 0 ||
-			    (sstat & SSTS_DREG_FULL) != 0 ||
-			    (sstat & SSTS_DREG_EMPTY) == 0)
-				break;
-		}
-
-		if (intstat != 0)
-			goto phasechange;
-
-		if (sstat & SSTS_DREG_FULL) {
+		sstat = spc_read(SSTS);
+		if ((sstat & SSTS_DREG_FULL) != 0) {
 			xfer = DINAMOUNT;
 			n -= xfer;
 			in += xfer;
 			while (xfer-- > 0)
 				*p++ = spc_read(DREG);
-		}
-		while (n > 0 && (spc_read(SSTS) & SSTS_DREG_EMPTY) == 0) {
+		} else if ((sstat & SSTS_DREG_EMPTY) == 0) {
 			n--;
 			in++;
 			*p++ = spc_read(DREG);
+		} else {
+			if (intstat != 0)
+				goto phasechange;
+			intstat = spc_read(INTS);
 		}
 	}
 
@@ -1460,9 +1430,14 @@ spc_datain_pio(struct spc_softc *sc, u_char *p, int n)
 	 */
 	if (in == 0) {
 		for (;;) {
-			/* XXX needs timeout */
-			if (spc_read(INTS) != 0)
-				break;
+			sstat = spc_read(SSTS);
+			if ((sstat & SSTS_DREG_EMPTY) == 0) {
+				(void) spc_read(DREG);
+			} else {
+				if (intstat != 0)
+					goto phasechange;
+				intstat = spc_read(INTS);
+			}
 		}
 		SPC_MISC(("extra data  "));
 	}
@@ -1855,7 +1830,16 @@ dophase:
 			break;
 		SPC_ASSERT(sc->sc_nexus != NULL);
 		acb = sc->sc_nexus;
-		spc_datain_pio(sc, &acb->target_stat, 1);
+		if ((spc_read(PSNS) & PSNS_ATN) != 0)
+			spc_write(SCMD, SCMD_RST_ATN);
+		while ((spc_read(PSNS) & PSNS_REQ) == 0)
+			DELAY(1);	/* XXX needs timeout */
+		spc_write(PCTL, PH_STAT);
+		acb->target_stat = spc_read(TEMP);
+		spc_write(SCMD, SCMD_SET_ACK);
+		while ((spc_read(PSNS) & PSNS_REQ) != 0)
+			DELAY(1);	/* XXX needs timeout */
+		spc_write(SCMD, SCMD_RST_ACK);
 
 		SPC_MISC(("target_stat=0x%02x  ", acb->target_stat));
 		sc->sc_prevphase = PH_STAT;
