@@ -1,6 +1,6 @@
 #if defined(LIBC_SCCS) && !defined(lint) && !defined(NOID)
 static char elsieid[] = "@(#)zic.c	7.99";
-static char rcsid[] = "$OpenBSD: zic.c,v 1.10 1999/07/01 23:05:39 d Exp $";
+static char rcsid[] = "$OpenBSD: zic.c,v 1.11 2000/03/30 23:26:45 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include "private.h"
@@ -611,20 +611,10 @@ const char * const	tofile;
 		if (mkdirs(toname) != 0)
 			(void) exit(EXIT_FAILURE);
 
-		result = link(fromname, toname);
 #if (HAVE_SYMLINK - 0) 
-		if (result != 0) {
-		        char *s = (char *) tofile;
-		        register char * symlinkcontents = NULL;
-		        while ((s = strchr(s+1, '/')) != NULL)
-			        symlinkcontents = ecatalloc(symlinkcontents, "../");
-			symlinkcontents = ecatalloc(symlinkcontents, fromfile);
-
-			result = symlink(symlinkcontents, toname);
-			if (result == 0)
-warning(_("hard link failed, symbolic link used"));
-			ifree(symlinkcontents);
-		}
+		result = symlink(fromname, toname);
+#else
+		result = link(fromname, toname);
 #endif
 		if (result != 0) {
 			const char *e = strerror(errno);
