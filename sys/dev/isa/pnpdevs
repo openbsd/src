@@ -1,4 +1,4 @@
-#	$OpenBSD: pnpdevs,v 1.38 1998/11/27 08:42:40 deraadt Exp $
+#	$OpenBSD: pnpdevs,v 1.39 1998/11/27 08:49:10 deraadt Exp $
 
 #
 # NOTE: All `com' devices also need pccom identifiers.
@@ -209,10 +209,10 @@ le	PNP80D8		#Novell/Anthem NE2100
 #	PNP80ED	#DEC (DE102) EtherWorks LC/TP_BNC
 #	PNP80EE	#DEC EE101 (Built-In)
 #	PNP80EF	#DECpc 433 WS (Built-In)
-ep	PNP80F1		#3Com EtherLink Plus
+#eg	PNP80F1		#3Com EtherLink Plus
 #ec	PNP80F3		#3Com EtherLink II or IITP (8 or 16-bit)
 #	PNP80F4		#3Com TokenLink
-ep	PNP80F6		#3Com EtherLink 16
+#ie	PNP80F6		#3Com EtherLink 16
 ep	PNP80F7		#3Com EtherLink III
 ep	PNP80F8		#3Com Generic Etherlink Plug and Play Device
 #	PNP80FB	#Thomas Conrad TC6045
@@ -374,6 +374,7 @@ pccom	GVC5000 #some GVC modem
 
 # Ethernet:
 #le	BRI1001	#BOCALANcard COMBO	(PNP8200)
+#ep	TCM5090	#3COM 3c509B		(PNP80F7)
 #ep	TCM5095 #3COM 3c509B		(PNP80F7)
 ne	@@@1980	#OvisLink LE-8019R
 we	SMC8416 #SMC EtherEZ
