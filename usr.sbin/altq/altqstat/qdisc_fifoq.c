@@ -1,4 +1,4 @@
-/*	$KAME: qdisc_fifoq.c,v 1.3 2000/10/18 09:15:16 kjc Exp $	*/
+/*	$KAME: qdisc_fifoq.c,v 1.4 2001/08/15 12:51:59 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
  *	Sony Computer Science Laboratories, Inc.  All rights reserved.
@@ -53,7 +53,8 @@ fifoq_stat_loop(int fd, const char *ifname, int count, int interval)
 	double sec;
 	int cnt = count;
 
-	strcpy(get_stats.iface.fifoq_ifname, ifname);
+	strlcpy(get_stats.iface.fifoq_ifname, ifname,
+		sizeof(get_stats.iface.fifoq_ifname));
 
 	gettimeofday(&last_time, NULL);
 	last_time.tv_sec -= interval;

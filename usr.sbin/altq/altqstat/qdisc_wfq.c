@@ -1,4 +1,4 @@
-/*	$KAME: qdisc_wfq.c,v 1.2 2000/10/18 09:15:17 kjc Exp $	*/
+/*	$KAME: qdisc_wfq.c,v 1.3 2001/08/15 12:51:59 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
  *	Sony Computer Science Laboratories, Inc.  All rights reserved.
@@ -67,7 +67,8 @@ wfq_stat_loop(int fd, const char *ifname, int count, int interval)
 	struct wfqinfo *qinfo, **top;
 	int cnt = count;
 
-	strcpy(wfq_stats.iface.wfq_ifacename, ifname);
+	strlcpy(wfq_stats.iface.wfq_ifacename, ifname,
+		sizeof(wfq_stats.iface.wfq_ifacename));
 
 	/*
 	 * first, find out how many queues are available

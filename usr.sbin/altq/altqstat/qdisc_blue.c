@@ -1,5 +1,5 @@
-/*	$OpenBSD: qdisc_blue.c,v 1.1.1.1 2001/06/27 18:23:19 kjc Exp $	*/
-/*	$KAME: qdisc_blue.c,v 1.2 2000/10/18 09:15:16 kjc Exp $	*/
+/*	$OpenBSD: qdisc_blue.c,v 1.2 2001/08/16 12:59:43 kjc Exp $	*/
+/*	$KAME: qdisc_blue.c,v 1.3 2001/08/15 12:51:58 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
  *	Sony Computer Science Laboratories, Inc.  All rights reserved.
@@ -54,7 +54,8 @@ blue_stat_loop(int fd, const char *ifname, int count, int interval)
 	double sec;
 	int cnt = count;
 
-	strcpy(blue_stats.iface.blue_ifname, ifname);
+	strlcpy(blue_stats.iface.blue_ifname, ifname,
+		sizeof(blue_stats.iface.blue_ifname));
 
 	gettimeofday(&last_time, NULL);
 	last_time.tv_sec -= interval;

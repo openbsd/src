@@ -1,5 +1,5 @@
-/*	$OpenBSD: qdisc_priq.c,v 1.1.1.1 2001/06/27 18:23:21 kjc Exp $	*/
-/*	$KAME: qdisc_priq.c,v 1.1 2000/10/18 09:15:17 kjc Exp $	*/
+/*	$OpenBSD: qdisc_priq.c,v 1.2 2001/08/16 12:59:43 kjc Exp $	*/
+/*	$KAME: qdisc_priq.c,v 1.2 2001/08/15 12:51:59 kjc Exp $	*/
 /*
  * Copyright (C) 2000
  *	Sony Computer Science Laboratories, Inc.  All rights reserved.
@@ -58,7 +58,8 @@ priq_stat_loop(int fd, const char *ifname, int count, int interval)
 	double			sec;
 	int			cnt = count;
 	
-	strcpy(get_stats.iface.ifname, ifname);
+	strlcpy(get_stats.iface.ifname, ifname,
+		sizeof(get_stats.iface.ifname));
 	new = &stats1[0];
 	last = &stats2[0];
 
@@ -86,7 +87,7 @@ priq_stat_loop(int fd, const char *ifname, int count, int interval)
 
 			if (sp->class_handle != lp->class_handle) {
 				quip_chandle2name(ifname, sp->class_handle,
-						  clnames[i]);
+						  clnames[i], sizeof(clnames[0]));
 				continue;
 			}
 

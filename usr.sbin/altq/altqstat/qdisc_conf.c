@@ -1,4 +1,4 @@
-/*	$KAME: qdisc_conf.c,v 1.3 2000/10/18 09:15:16 kjc Exp $	*/
+/*	$KAME: qdisc_conf.c,v 1.4 2001/08/15 12:51:59 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
  *	Sony Computer Science Laboratories, Inc.  All rights reserved.
@@ -78,11 +78,11 @@ ifname2qdisc(const char *ifname, char *qname)
 	if (ifname[0] == '_') {
 		/* input interface */
 		if (qname != NULL)
-			strcpy(qname, "cdnr");
+			strlcpy(qname, "cdnr", 64);
 		return (ALTQT_CDNR);
 	}
 
-	strcpy(qtypereq.ifname, ifname);
+	strlcpy(qtypereq.ifname, ifname, sizeof(qtypereq.ifname));
 	if ((fd = open(ALTQ_DEVICE, O_RDONLY)) < 0) {
 		warn("can't open %s", ALTQ_DEVICE);
 		return (0);
@@ -99,7 +99,7 @@ ifname2qdisc(const char *ifname, char *qname)
 		qtype = qtypereq.arg;
 		for (stat = qdisc_table; stat->qdisc_name != NULL; stat++)
 			if (stat->altqtype == qtype)
-				strcpy(qname, stat->qdisc_name);
+				strlcpy(qname, stat->qdisc_name, 64);
 	}
 		
 	return (qtype);

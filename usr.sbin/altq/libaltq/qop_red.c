@@ -1,5 +1,5 @@
-/*	$OpenBSD: qop_red.c,v 1.1.1.1 2001/06/27 18:23:35 kjc Exp $	*/
-/*	$KAME: qop_red.c,v 1.3 2000/10/18 09:15:19 kjc Exp $	*/
+/*	$OpenBSD: qop_red.c,v 1.2 2001/08/16 12:59:43 kjc Exp $	*/
+/*	$KAME: qop_red.c,v 1.5 2001/08/16 10:39:14 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
  *	Sony Computer Science Laboratories, Inc.  All rights reserved.
@@ -50,10 +50,10 @@
 #include "altq_qop.h"
 #include "qop_red.h"
 
-static int red_attach(struct ifinfo *ifinfo);
-static int red_detach(struct ifinfo *ifinfo);
-static int red_enable(struct ifinfo *ifinfo);
-static int red_disable(struct ifinfo *ifinfo);
+static int red_attach(struct ifinfo *);
+static int red_detach(struct ifinfo *);
+static int red_enable(struct ifinfo *);
+static int red_disable(struct ifinfo *);
 
 #define RED_DEVICE	"/dev/altq/red"
 
@@ -137,7 +137,7 @@ red_interface_parser(const char *ifname, int argc, char **argv)
 		} else if (EQUAL(*argv, "flowvalve")) {
 			flags |= REDF_FLOWVALVE;
 		} else {
-			LOG(LOG_ERR, 0, "Unknown keyword '%s'\n", argv);
+			LOG(LOG_ERR, 0, "Unknown keyword '%s'", argv);
 			return (0);
 		}
 		argc--; argv++;
@@ -181,7 +181,7 @@ qcmd_red_add_if(const char *ifname, u_int bandwidth, int weight,
 	error = qop_red_add_if(NULL, ifname, bandwidth, weight, inv_pmax,
 			       th_min, th_max, qlimit, pkttime, flags);
 	if (error != 0)
-		LOG(LOG_ERR, errno, "%s: can't add red on interface '%s'\n",
+		LOG(LOG_ERR, errno, "%s: can't add red on interface '%s'",
 		    qoperror(error), ifname);
 	return (error);
 }
@@ -233,7 +233,7 @@ red_attach(struct ifinfo *ifinfo)
 	if (red_fd < 0 &&
 	    (red_fd = open(RED_DEVICE, O_RDWR)) < 0 &&
 	    (red_fd = open_module(RED_DEVICE, O_RDWR)) < 0) {
-		LOG(LOG_ERR, errno, "RED open\n");
+		LOG(LOG_ERR, errno, "RED open");
 		return (QOPERR_SYSCALL);
 	}
 
@@ -258,7 +258,7 @@ red_attach(struct ifinfo *ifinfo)
 		return (QOPERR_SYSCALL);
 
 #if 1
-	LOG(LOG_INFO, 0, "red attached to %s\n", iface.red_ifname);
+	LOG(LOG_INFO, 0, "red attached to %s", iface.red_ifname);
 #endif
 	return (0);
 }

@@ -1,5 +1,5 @@
-/*	$OpenBSD: qdisc_cdnr.c,v 1.1.1.1 2001/06/27 18:23:20 kjc Exp $	*/
-/*	$KAME: qdisc_cdnr.c,v 1.3 2000/10/18 09:15:16 kjc Exp $	*/
+/*	$OpenBSD: qdisc_cdnr.c,v 1.2 2001/08/16 12:59:43 kjc Exp $	*/
+/*	$KAME: qdisc_cdnr.c,v 1.4 2001/08/15 12:51:58 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
  *	Sony Computer Science Laboratories, Inc.  All rights reserved.
@@ -69,9 +69,10 @@ cdnr_stat_loop(int fd, const char *ifname, int count, int interval)
 
 	if (ifname[0] == '_')
 		ifname++;
-	sprintf(_ifname, "_%s", ifname);
+	snprintf(_ifname, sizeof(_ifname), "_%s", ifname);
 
-	strcpy(get_stats.iface.cdnr_ifname, ifname);
+	strlcpy(get_stats.iface.cdnr_ifname, ifname,
+		sizeof(get_stats.iface.cdnr_ifname));
 	new = &stats1[0];
 	last = &stats2[0];
 
@@ -104,7 +105,7 @@ cdnr_stat_loop(int fd, const char *ifname, int count, int interval)
 
 			if (sp->tce_handle != lp->tce_handle) {
 				quip_chandle2name(_ifname, sp->tce_handle,
-						  cdnrnames[i]);
+						  cdnrnames[i], sizeof(cdnrnames[0]));
 				continue;
 			}
 

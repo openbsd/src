@@ -1,5 +1,5 @@
-/*	$OpenBSD: altqstat.c,v 1.1.1.1 2001/06/27 18:23:19 kjc Exp $	*/
-/*	$KAME: altqstat.c,v 1.4 2000/12/03 05:44:19 kawa Exp $	*/
+/*	$OpenBSD: altqstat.c,v 1.2 2001/08/16 12:59:43 kjc Exp $	*/
+/*	$KAME: altqstat.c,v 1.6 2001/08/16 07:43:14 itojun Exp $	*/
 /*
  * Copyright (C) 1999-2000
  *	Sony Computer Science Laboratories, Inc.  All rights reserved.
@@ -55,7 +55,7 @@ char *qdisc_name = NULL;
 
 stat_loop_t *stat_loop;
 
-static void sig_handler(int sig);
+static void sig_handler(int);
 static void usage(void);
 
 static void
@@ -90,7 +90,7 @@ main (int argc, char **argv)
 	while ((ch = getopt(argc, argv, "I:c:ei:nrsw:")) != -1) {
 		switch (ch) {
 		case 'I':
-			sprintf(input, "_%s", optarg);
+			snprintf(input, sizeof(input), "_%s", optarg);
 			interface = input;
 			break;
 		case 'c':
@@ -161,7 +161,7 @@ main (int argc, char **argv)
 	printf("%s: %s on interface %s\n",
 	       argv[0], qdisc_name, interface);
 
-	sprintf(device, "%s/%s", DEV_PATH, qdisc_name);
+	snprintf(device, sizeof(device), "%s/%s", DEV_PATH, qdisc_name);
 	if ((qdiscfd = open(device, O_RDONLY)) < 0)
 		err(1, "can't open %s", device);
 
@@ -204,12 +204,12 @@ calc_pps(u_int64_t new_pkts, u_int64_t last_pkts, double interval)
 }
 
 #define	R2S_BUFS	8
-
+#define	RATESTR_MAX	16
 char *
 rate2str(double rate)
 {
 	char *buf;
-	static char r2sbuf[R2S_BUFS][16];  /* ring bufer for up to R2S_BUFS */
+	static char r2sbuf[R2S_BUFS][RATESTR_MAX];  /* ring bufer */
 	static int idx = 0;
 
 	buf = r2sbuf[idx++];
@@ -217,10 +217,10 @@ rate2str(double rate)
 		idx = 0;
 
 	if (rate == 0.0)
-		sprintf(buf, "0");
+		snprintf(buf, RATESTR_MAX, "0");
 	else if (rate >= 1000000.0)
-		sprintf(buf, "%.2fM", rate / 1000000.0);
+		snprintf(buf, RATESTR_MAX, "%.2fM", rate / 1000000.0);
 	else
-		sprintf(buf, "%.2fK", rate / 1000.0);
+		snprintf(buf, RATESTR_MAX, "%.2fK", rate / 1000.0);
 	return (buf);
 }

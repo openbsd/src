@@ -1,5 +1,5 @@
-/*	$OpenBSD: parser.c,v 1.3 2001/08/06 06:57:37 itojun Exp $	*/
-/*	$KAME: parser.c,v 1.6 2001/05/30 10:30:44 kjc Exp $	*/
+/*	$OpenBSD: parser.c,v 1.4 2001/08/16 12:59:43 kjc Exp $	*/
+/*	$KAME: parser.c,v 1.12 2001/08/16 10:39:13 kjc Exp $	*/
 /*******************************************************************
 
   Copyright (c) 1996 by the University of Southern California
@@ -54,37 +54,33 @@
 /*
  * Forward & External Declarations
  */
-static int is_qdisc_name(const char *qname);
-static int qdisc_interface_parser(const char * qname, const char *ifname,
-				  int argc, char **argv);
-static int qdisc_class_parser(const char *qname, const char *ifname,
-			      const char *class_name, const char *parent_name,
-			      int argc, char **argv);
+static int is_qdisc_name(const char *);
+static int qdisc_interface_parser(const char *, const char *, int, char **);
+static int qdisc_class_parser(const char *, const char *, const char *,
+	const char *, int, char **);
 
-static int pfxcmp(const char *s1, const char *s2);
-static int next_word(char **cpp, char *b);
+static int pfxcmp(const char *, const char *);
+static int next_word(char **, char *);
 
-static int do_cmd(int op, char *cmdbuf);
-static int get_ifname(char **cpp, char **ifnamep);
-static int get_addr(char **cpp, struct in_addr *addr, struct in_addr *mask);
-static int get_port(const char *name, u_int16_t *port_no);
-static int get_proto(const char *name, int *proto_no);
-static int get_fltr_opts(char **cpp, char *fltr_name, int *ruleno);
-static int interface_parser(char *cmdbuf);
-static int class_parser(char *cmdbuf) ;
-static int filter_parser(char *cmdbuf);
+static int do_cmd(int, char *);
+static int get_ifname(char **, char **);
+static int get_addr(char **, struct in_addr *, struct in_addr *);
+static int get_port(const char *, u_int16_t *);
+static int get_proto(const char *, int *);
+static int get_fltr_opts(char **, char *, size_t, int *);
+static int interface_parser(char *);
+static int class_parser(char *) ;
+static int filter_parser(char *);
 #ifdef INET6
-static int filter6_parser(char *cmdbuf);
-static int get_ip6addr(char **cpp, struct in6_addr *addr,
-		       struct in6_addr *mask);
+static int filter6_parser(char *);
+static int get_ip6addr(char **, struct in6_addr *, struct in6_addr *);
 #endif
-static int ctl_parser(char *cmdbuf);
-static int delete_parser(char *cmdbuf);
-static int red_parser(char *cmdbuf);
-static int rio_parser(char *cmdbuf);
-static int conditioner_parser(char *cmdbuf);
-static int tc_action_parser(char *ifname, char **cpp,
-			    struct tc_action *action);
+static int ctl_parser(char *);
+static int delete_parser(char *);
+static int red_parser(char *);
+static int rio_parser(char *);
+static int conditioner_parser(char *);
+static int tc_action_parser(char *, char **, struct tc_action *);
 
 /*
  * Globals
@@ -185,13 +181,13 @@ qdisc_class_parser(const char *qname, const char *ifname,
 			}
 			if ((ifinfo = ifname2ifinfo(ifname)) == NULL) {
 				LOG(LOG_ERR, 0,
-				    "no such interface, line %d\n", line_no);
+				    "no such interface, line %d", line_no);
 				return (0);
 			}
 			if (strncmp(ifinfo->qdisc->qname, qname,
 				    strlen(ifinfo->qdisc->qname)) != 0) {
 				LOG(LOG_ERR, 0,
-				    "qname doesn't match the interface, line %d\n",
+				    "qname doesn't match the interface, line %d",
 				    line_no);
 				return (0);
 			}
@@ -219,11 +215,11 @@ qcmd_config(void)
 	for (i = 0; i < MAX_T; i++)
 		if_names[i][0] = '\0';
 
-	LOG(LOG_INFO, 0, "ALTQ config file is %s\n", altqconfigfile);
+	LOG(LOG_INFO, 0, "ALTQ config file is %s", altqconfigfile);
 
 	f = fopen(altqconfigfile, "r");
 	if (f == NULL) {
-		LOG(LOG_ERR, errno, "Can't open %s", altqconfigfile, 0);
+		LOG(LOG_ERR, errno, "can't open %s", altqconfigfile, 0);
 		return (QOPERR_INVAL);
 	}
 	line_no = 0;
@@ -293,7 +289,7 @@ DoCommand(char *infile, FILE *infp)
 	if (rc == 0) {
 		if (infile) {
 			/* error in the config file.  cleanup and exit. */
-			LOG(LOG_ERR, 0, "Config failed. Exiting.\n");
+			LOG(LOG_ERR, 0, "config failed. exiting...");
 			(void) qcmd_destroyall();
 			(void) fclose(infp);
 			exit(1);
@@ -442,7 +438,7 @@ get_ifname(char **cpp, char **ifnamep)
 			if (strcmp(w, ifnp->if_name) == 0) {
 				/* if_name found. advance the word pointer */
 				*cpp = ocp; 
-				strcpy(if_names[TNO], w);
+				strlcpy(if_names[TNO], w, sizeof(if_names[TNO]));
 				*ifnamep = if_names[TNO];
 				return (1);
 			}
@@ -535,7 +531,7 @@ get_proto(const char *name, int *proto_no)
 }
 
 static int
-get_fltr_opts(char **cpp, char *fltr_name, int *ruleno)
+get_fltr_opts(char **cpp, char *fltr_name, size_t len, int *ruleno)
 {
 	char w[128], *ocp;
 
@@ -544,7 +540,7 @@ get_fltr_opts(char **cpp, char *fltr_name, int *ruleno)
 		if (EQUAL(w, "name")) {
 			if (!next_word(&ocp, w))
 				return (0);
-			strcpy(fltr_name, w);
+			strlcpy(fltr_name, w, len);
 			*cpp = ocp;
 		} else if (EQUAL(w, "ruleno")) {
 			if (!next_word(&ocp, w))
@@ -568,7 +564,7 @@ interface_parser(char *cmdbuf)
 	int     argc, rval;
     
 	if (!get_ifname(&cp, &ifname)) {
-		LOG(LOG_ERR, 0, "missing interface name in %s, line %d\n",
+		LOG(LOG_ERR, 0, "missing interface name in %s, line %d",
 		    altqconfigfile, line_no);
 		return (0);
 	}
@@ -581,7 +577,7 @@ interface_parser(char *cmdbuf)
 	ap = w;
 	while (next_word(&cp, ap)) {
 		if (is_qdisc_name(ap))
-			strcpy(qdisc_name, ap);
+			strlcpy(qdisc_name, ap, sizeof(qdisc_name));
 
 		argv[argc] = ap;
 		ap += strlen(ap) + 1;
@@ -590,7 +586,7 @@ interface_parser(char *cmdbuf)
 
 	rval = qdisc_interface_parser(qdisc_name, ifname, argc, argv);
 	if (rval == 0) {
-		LOG(LOG_ERR, 0, "Error in %s, line %d\n",
+		LOG(LOG_ERR, 0, "Error in %s, line %d",
 		    altqconfigfile, line_no);
 		return (0);
 	}
@@ -609,34 +605,34 @@ class_parser(char *cmdbuf)
 
 	/* get scheduling class */
 	if (!next_word(&cp, qdisc_name)) {
-		LOG(LOG_ERR, 0, "missing scheduling discipline in %s, line %d\n",
+		LOG(LOG_ERR, 0, "missing scheduling discipline in %s, line %d",
 		    altqconfigfile, line_no);
 		return (0);
 	}
 	if (!is_qdisc_name(qdisc_name)) {
 		LOG(LOG_ERR, 0,
-		    "unknown scheduling discipline '%s' in %s, line %d\n",
+		    "unknown scheduling discipline '%s' in %s, line %d",
 		    qdisc_name, altqconfigfile, line_no);
 		return (0);
 	}
 
 	/* get interface name */
 	if (!get_ifname(&cp, &ifname)) {
-		LOG(LOG_ERR, 0, "missing interface name in %s, line %d\n",
+		LOG(LOG_ERR, 0, "missing interface name in %s, line %d",
 		    altqconfigfile, line_no);
 		return (0);
 	}
 
 	/* get class name */
 	if (!next_word(&cp, class_name)) {
-		LOG(LOG_ERR, 0, "missing class name in %s, line %d\n",
+		LOG(LOG_ERR, 0, "missing class name in %s, line %d",
 		    altqconfigfile, line_no);
 		return (0);
 	}
 
 	/* get parent name */
 	if (!next_word(&cp, parent_name)) {
-		LOG(LOG_ERR, 0, "missing parent class in %s, line %d\n",
+		LOG(LOG_ERR, 0, "missing parent class in %s, line %d",
 		    altqconfigfile, line_no);
 		return (0);
 	}
@@ -657,7 +653,7 @@ class_parser(char *cmdbuf)
 	rval = qdisc_class_parser(qdisc_name, ifname, clname, parent,
 				 argc, argv);
     	if (rval == 0) {
-		LOG(LOG_ERR, 0, "can't add class '%s' on interface '%s'\n",
+		LOG(LOG_ERR, 0, "can't add class '%s' on interface '%s'",
 		    clname, ifname);
 		return (0);
 	}
@@ -681,23 +677,23 @@ filter_parser(char *cmdbuf)
 	sfilt.ff_flow.fi_family = AF_INET;
 
 	if (!get_ifname(&cp, &ifname)) {
-		LOG(LOG_ERR, 0, "missing interface name in %s, line %d\n",
+		LOG(LOG_ERR, 0, "missing interface name in %s, line %d",
 		    altqconfigfile, line_no);
 		return (0);
 	}
 
 	if (!next_word(&cp, class_name)) {
 		LOG(LOG_ERR, 0,
-		    "missing class name in %s, line %d\n",
+		    "missing class name in %s, line %d",
 		    altqconfigfile, line_no);
 		return (0);
 	}
 
 	fltr_name[0] = '\0';
 	ruleno = 0;
-	if (!get_fltr_opts(&cp, &fltr_name[0], &ruleno)) {
+	if (!get_fltr_opts(&cp, &fltr_name[0], sizeof(fltr_name), &ruleno)) {
 		LOG(LOG_ERR, 0,
-		    "bad filter option in %s, line %d\n",
+		    "bad filter option in %s, line %d",
 		    altqconfigfile, line_no);
 		return (0);
 	}
@@ -708,7 +704,7 @@ filter_parser(char *cmdbuf)
 	/* get filter destination Address */
 	if (!get_addr(&cp, &sfilt.ff_flow.fi_dst, &sfilt.ff_mask.mask_dst)) {
 		LOG(LOG_ERR, 0,
-		    "bad filter destination address in %s, line %d\n",
+		    "bad filter destination address in %s, line %d",
 		    altqconfigfile, line_no);
 		return (0);
 	}
@@ -716,43 +712,43 @@ filter_parser(char *cmdbuf)
 	/* get filter destination port */
 	if (!next_word(&cp, w)) {
 		LOG(LOG_ERR, 0,
-		    "missing filter destination port in %s, line %d\n",
+		    "missing filter destination port in %s, line %d",
 		    altqconfigfile, line_no);
 		return (0);
 	}
 	if (!get_port(w, &sfilt.ff_flow.fi_dport)) {
-		LOG(LOG_ERR, 0, "bad filter destination port in %s, line %d\n",
+		LOG(LOG_ERR, 0, "bad filter destination port in %s, line %d",
 		    altqconfigfile, line_no);
 		return (0);
 	}
     
 	/* get filter source address */
 	if (!get_addr(&cp, &sfilt.ff_flow.fi_src, &sfilt.ff_mask.mask_src)) {
-		LOG(LOG_ERR, 0, "bad filter source address in %s, line %d\n",
+		LOG(LOG_ERR, 0, "bad filter source address in %s, line %d",
 		    altqconfigfile, line_no);
 		return (0);
 	}
 
 	/* get filter source port */
 	if (!next_word(&cp, w)) {
-		LOG(LOG_ERR, 0, "missing filter source port in %s, line %d\n",
+		LOG(LOG_ERR, 0, "missing filter source port in %s, line %d",
 		    altqconfigfile, line_no);
 		return (0);
 	}
 	if (!get_port(w, &sfilt.ff_flow.fi_sport)) {
-		LOG(LOG_ERR, 0, "bad filter source port in %s, line %d\n",
+		LOG(LOG_ERR, 0, "bad filter source port in %s, line %d",
 		    altqconfigfile, line_no);
 		return (0);
 	}
 
 	/* get filter protocol id */
 	if (!next_word(&cp, w)) {
-		LOG(LOG_ERR, 0, "missing filter protocol id in %s, line %d\n",
+		LOG(LOG_ERR, 0, "missing filter protocol id in %s, line %d",
 		    altqconfigfile, line_no);
 		return (0);
 	}
 	if (!get_proto(w, &protocol)) {
-		LOG(LOG_ERR, 0, "bad protocol in %s, line %d\n",
+		LOG(LOG_ERR, 0, "bad protocol in %s, line %d",
 		    altqconfigfile, line_no);
 		return (0);
 	}
@@ -793,7 +789,7 @@ filter_parser(char *cmdbuf)
 	filter_dontwarn = 0;		/* XXX */
 	if (error) {
 		LOG(LOG_ERR, 0,
-		    "can't add filter to class '%s' on interface '%s'\n",
+		    "can't add filter to class '%s' on interface '%s'",
 		    class_name, ifname);
 		return (0);
 	}
@@ -818,22 +814,22 @@ filter6_parser(char *cmdbuf)
 	sfilt.ff_flow6.fi6_family = AF_INET6;
 
 	if (!get_ifname(&cp, &ifname)) {
-		LOG(LOG_ERR, 0, "missing interface name in %s, line %d\n",
+		LOG(LOG_ERR, 0, "missing interface name in %s, line %d",
 		    altqconfigfile, line_no);
 		return (0);
 	}
 
 	if (!next_word(&cp, class_name)) {
-		LOG(LOG_ERR, 0, "missing class name in %s, line %d\n",
+		LOG(LOG_ERR, 0, "missing class name in %s, line %d",
 		    altqconfigfile, line_no);
 		return (0);
 	}
 
 	fltr_name[0] = '\0';
 	ruleno = 0;
-	if (!get_fltr_opts(&cp, &fltr_name[0], &ruleno)) {
+	if (!get_fltr_opts(&cp, &fltr_name[0], sizeof(fltr_name), &ruleno)) {
 		LOG(LOG_ERR, 0,
-		    "bad filter option in %s, line %d\n",
+		    "bad filter option in %s, line %d",
 		    altqconfigfile, line_no);
 		return (0);
 	}
@@ -844,52 +840,52 @@ filter6_parser(char *cmdbuf)
 	/* get filter destination address */
 	if (!get_ip6addr(&cp, &sfilt.ff_flow6.fi6_dst,
 			 &sfilt.ff_mask6.mask6_dst)) {
-		LOG(LOG_ERR, 0, "bad destination address in %s, line %d\n",
+		LOG(LOG_ERR, 0, "bad destination address in %s, line %d",
 		    altqconfigfile, line_no);
 		return (0);
 	}
-	
+
 	/* get filter destination port */
 	if (!next_word(&cp, w)) {
 		LOG(LOG_ERR, 0,
-		    "missing filter destination port in %s, line %d\n",
+		    "missing filter destination port in %s, line %d",
 		    altqconfigfile, line_no);
 		return (0);
 	}
 	if (!get_port(w, &sfilt.ff_flow6.fi6_dport)) {
-		LOG(LOG_ERR, 0, "bad filter destination port in %s, line %d\n",
+		LOG(LOG_ERR, 0, "bad filter destination port in %s, line %d",
 		    altqconfigfile, line_no);
 		return (0);
 	}
-    
+
 	/* get filter source address */
 	if (!get_ip6addr(&cp, &sfilt.ff_flow6.fi6_src,
 			 &sfilt.ff_mask6.mask6_src)) {
-		LOG(LOG_ERR, 0, "bad source address in %s, line %d\n",
+		LOG(LOG_ERR, 0, "bad source address in %s, line %d",
 		    altqconfigfile, line_no);
 		return (0);
 	}
 
 	/* get filter source port */
 	if (!next_word(&cp, w)) {
-		LOG(LOG_ERR, 0, "missing filter source port in %s, line %d\n",
+		LOG(LOG_ERR, 0, "missing filter source port in %s, line %d",
 		    altqconfigfile, line_no);
 		return (0);
 	}
 	if (!get_port(w, &sfilt.ff_flow6.fi6_sport)) {
-		LOG(LOG_ERR, 0, "bad filter source port in %s, line %d\n",
+		LOG(LOG_ERR, 0, "bad filter source port in %s, line %d",
 		    altqconfigfile, line_no);
 		return (0);
 	}
 
 	/* get filter protocol id */
 	if (!next_word(&cp, w)) {
-		LOG(LOG_ERR, 0, "missing filter protocol id in %s, line %d\n",
+		LOG(LOG_ERR, 0, "missing filter protocol id in %s, line %d",
 		    altqconfigfile, line_no);
 		return (0);
 	}
 	if (!get_proto(w, &protocol)) {
-		LOG(LOG_ERR, 0, "bad protocol in %s, line %d\n",
+		LOG(LOG_ERR, 0, "bad protocol in %s, line %d",
 		    altqconfigfile, line_no);
 		return (0);
 	}
@@ -910,8 +906,8 @@ filter6_parser(char *cmdbuf)
 					}
 				}
 			}
-			sfilt.ff_flow6.fi6_tclass = tclass; 
-			sfilt.ff_mask6.mask6_tclass = tclassmask; 
+			sfilt.ff_flow6.fi6_tclass = tclass;
+			sfilt.ff_mask6.mask6_tclass = tclassmask;
 		} else if (EQUAL(w, "gpi")) {
 			if (next_word(&cp, w)) {
 				sfilt.ff_flow6.fi6_gpi =
@@ -939,7 +935,7 @@ filter6_parser(char *cmdbuf)
 	filter_dontwarn = 0;		/* XXX */
 	if (ret) {
 		LOG(LOG_ERR, 0,
-		    "can't add filter to class '%s' on interface '%s'\n",
+		    "can't add filter to class '%s' on interface '%s'",
 		    class_name, ifname);
 		return (0);
 	}
@@ -1019,7 +1015,7 @@ ctl_parser(char *cmdbuf)
 		       state ? "enabled" : "disabled", ifname);
 		return (1);
 	}
-	
+
 	if (EQUAL(w, "enable")) {
 		rval = qcmd_enable(ifname);
 		printf("altq %s on %s\n",
@@ -1053,7 +1049,7 @@ delete_parser(char *cmdbuf)
 
 	if (!next_word(&cp, class_name)) {
 		LOG(LOG_ERR, 0,
-		    "missing class name in %s, line %d\n",
+		    "missing class name in %s, line %d",
 		    altqconfigfile, line_no);
 		return (0);
 	}
@@ -1061,7 +1057,7 @@ delete_parser(char *cmdbuf)
 	ret = qcmd_delete_class(ifname, class_name);
 	if (ret) {
 		LOG(LOG_ERR, 0,
-		    "can't delete class '%s' on interface '%s'\n",
+		    "can't delete class '%s' on interface '%s'",
 		    class_name, ifname);
 		return (0);
 	}
@@ -1088,14 +1084,14 @@ red_parser(char *cmdbuf)
 	inv_pmax = (int)strtol(w, NULL, 0);
 
 	if (qop_red_set_defaults(th_min, th_max, inv_pmax) != 0) {
-		LOG(LOG_ERR, 0, "can't set red default parameters\n");
+		LOG(LOG_ERR, 0, "can't set red default parameters");
 		return (0);
 	}
 
 	return (1);
 
  bad:
-	LOG(LOG_ERR, 0, "bad red parameter in %s, line %d\n",
+	LOG(LOG_ERR, 0, "bad red parameter in %s, line %d",
 	    altqconfigfile, line_no);
 	return (0);
 }
@@ -1122,14 +1118,14 @@ rio_parser(char *cmdbuf)
 	}
 
 	if (qop_rio_set_defaults(&params[0]) != 0) {
-		LOG(LOG_ERR, 0, "can't set rio default parameters\n");
+		LOG(LOG_ERR, 0, "can't set rio default parameters");
 		return (0);
 	}
 
 	return (1);
 
  bad:
-	LOG(LOG_ERR, 0, "bad rio parameter in %s, line %d\n",
+	LOG(LOG_ERR, 0, "bad rio parameter in %s, line %d",
 	    altqconfigfile, line_no);
 	return (0);
 }
@@ -1142,14 +1138,14 @@ conditioner_parser(char *cmdbuf)
 	struct tc_action action[64];
 		
 	if (!get_ifname(&cp, &ifname)) {
-		LOG(LOG_ERR, 0, "missing interface name in %s, line %d\n",
+		LOG(LOG_ERR, 0, "missing interface name in %s, line %d",
 		    altqconfigfile, line_no);
 		return (0);
 	}
 
 	/* get conditioner name */
 	if (!next_word(&cp, cdnr_name)) {
-		LOG(LOG_ERR, 0, "missing cdnr name in %s, line %d\n",
+		LOG(LOG_ERR, 0, "missing cdnr name in %s, line %d",
 		    altqconfigfile, line_no);
 		return (0);
 	}
@@ -1173,14 +1169,14 @@ tc_action_parser(char *ifname, char **cpp, struct tc_action *action)
 	char	type[128], w[128];
 	int	depth, i;
 	struct tb_profile profile[2];
-	
+
 	/*
 	 * find a possibly nested pair of '<' and '>',
 	 * make them pointed by 'start' and 'end'.
 	 */
 	start = strchr(*cpp, '<');
 	if (start == NULL) {
-		LOG(LOG_ERR, 0, "conditioner action missing in %s, line %d\n",
+		LOG(LOG_ERR, 0, "conditioner action missing in %s, line %d",
 		    altqconfigfile, line_no);
 		return (0);
 	}
@@ -1190,7 +1186,7 @@ tc_action_parser(char *ifname, char **cpp, struct tc_action *action)
 		end = strpbrk(cp, "<>");
 		if (end == NULL) {
 			LOG(LOG_ERR, 0,
-			    "conditioner action delimiter mismatch in %s, line %d\n",
+			    "conditioner action delimiter mismatch in %s, line %d",
 			    altqconfigfile, line_no);
 			return (0);
 		}
@@ -1210,18 +1206,18 @@ tc_action_parser(char *ifname, char **cpp, struct tc_action *action)
 
 	if (!next_word(&cp, type)) {
 		LOG(LOG_ERR, 0,
-		    "missing conditioner action type in %s, line %d\n",
+		    "missing conditioner action type in %s, line %d",
 		    altqconfigfile, line_no);
 		return (0);
 	}
-	
+
 	/*
 	 * action type specific process
 	 */
 	if (EQUAL(type, "conditioner")) {
 		if (!next_word(&cp, w)) {
 			LOG(LOG_ERR, 0,
-			    "missing conditioner name in %s, line %d\n",
+			    "missing conditioner name in %s, line %d",
 			    altqconfigfile, line_no);
 			return (0);
 		}
@@ -1229,7 +1225,7 @@ tc_action_parser(char *ifname, char **cpp, struct tc_action *action)
 		action->tca_handle = cdnr_name2handle(ifname, w);
 		if (action->tca_handle == CDNR_NULL_HANDLE) {
 			LOG(LOG_ERR, 0,
-			    "wrong conditioner name %s in %s, line %d\n",
+			    "wrong conditioner name %s in %s, line %d",
 			    w, altqconfigfile, line_no);
 			return (0);
 		}
@@ -1239,7 +1235,7 @@ tc_action_parser(char *ifname, char **cpp, struct tc_action *action)
 		action->tca_code = TCACODE_DROP;
 	} else if (EQUAL(type, "mark")) {
 		if (!next_word(&cp, w)) {
-			LOG(LOG_ERR, 0, "missing dscp in %s, line %d\n",
+			LOG(LOG_ERR, 0, "missing dscp in %s, line %d",
 			    altqconfigfile, line_no);
 			return (0);
 		}
@@ -1247,13 +1243,13 @@ tc_action_parser(char *ifname, char **cpp, struct tc_action *action)
 		action->tca_dscp = (u_int8_t)strtol(w, NULL, 0);
 	} else if (EQUAL(type, "tbmeter")) {
 		if (!next_word(&cp, w)) {
-			LOG(LOG_ERR, 0, "missing tb profile in %s, line %d\n",
+			LOG(LOG_ERR, 0, "missing tb profile in %s, line %d",
 			    altqconfigfile, line_no);
 			return (0);
 		}
 		profile[0].rate = atobps(w);
 		if (!next_word(&cp, w)) {
-			LOG(LOG_ERR, 0, "missing tb profile in %s, line %d\n",
+			LOG(LOG_ERR, 0, "missing tb profile in %s, line %d",
 			    altqconfigfile, line_no);
 			return (0);
 		}
@@ -1272,14 +1268,14 @@ tc_action_parser(char *ifname, char **cpp, struct tc_action *action)
 		for (i=0; i<2; i++) {
 			if (!next_word(&cp, w)) {
 				LOG(LOG_ERR, 0,
-				    "missing tb profile in %s, line %d\n",
+				    "missing tb profile in %s, line %d",
 				    altqconfigfile, line_no);
 				return (0);
 			}
 			profile[i].rate = atobps(w);
 			if (!next_word(&cp, w)) {
 				LOG(LOG_ERR, 0,
-				    "missing tb profile in %s, line %d\n",
+				    "missing tb profile in %s, line %d",
 				    altqconfigfile, line_no);
 				return (0);
 			}
@@ -1307,21 +1303,21 @@ tc_action_parser(char *ifname, char **cpp, struct tc_action *action)
 		u_int32_t cmtd_rate, peak_rate, avg_interval;
 		
 		if (!next_word(&cp, w)) {
-			LOG(LOG_ERR, 0, "missing cmtd rate in %s, line %d\n",
+			LOG(LOG_ERR, 0, "missing cmtd rate in %s, line %d",
 			    altqconfigfile, line_no);
 			return (0);
 		}
 		cmtd_rate = atobps(w);
 
 		if (!next_word(&cp, w)) {
-			LOG(LOG_ERR, 0, "missing peak rate in %s, line %d\n",
+			LOG(LOG_ERR, 0, "missing peak rate in %s, line %d",
 			    altqconfigfile, line_no);
 			return (0);
 		}
 		peak_rate = atobps(w);
 
 		if (!next_word(&cp, w)) {
-			LOG(LOG_ERR, 0, "missing avg interval in %s, line %d\n",
+			LOG(LOG_ERR, 0, "missing avg interval in %s, line %d",
 			    altqconfigfile, line_no);
 			return (0);
 		}
@@ -1341,11 +1337,11 @@ tc_action_parser(char *ifname, char **cpp, struct tc_action *action)
 			return (0);
 	} else {
 		LOG(LOG_ERR, 0,
-		    "Unkown action type %s in %s, line %d\n",
+		    "Unkown action type %s in %s, line %d",
 		    type, altqconfigfile, line_no);
 		return (0);
 	}
-	    
+
 	*end = '>';	/* restore the end delimiter */
 
 	return (1);

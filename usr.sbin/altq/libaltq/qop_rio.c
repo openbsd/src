@@ -1,5 +1,5 @@
-/*	$OpenBSD: qop_rio.c,v 1.1.1.1 2001/06/27 18:23:35 kjc Exp $	*/
-/*	$KAME: qop_rio.c,v 1.3 2000/10/18 09:15:20 kjc Exp $	*/
+/*	$OpenBSD: qop_rio.c,v 1.2 2001/08/16 12:59:43 kjc Exp $	*/
+/*	$KAME: qop_rio.c,v 1.5 2001/08/16 10:39:15 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
  *	Sony Computer Science Laboratories, Inc.  All rights reserved.
@@ -51,10 +51,10 @@
 #include "altq_qop.h"
 #include "qop_rio.h"
 
-static int rio_attach(struct ifinfo *ifinfo);
-static int rio_detach(struct ifinfo *ifinfo);
-static int rio_enable(struct ifinfo *ifinfo);
-static int rio_disable(struct ifinfo *ifinfo);
+static int rio_attach(struct ifinfo *);
+static int rio_detach(struct ifinfo *);
+static int rio_enable(struct ifinfo *);
+static int rio_disable(struct ifinfo *);
 
 #define RIO_DEVICE	"/dev/altq/rio"
 
@@ -166,7 +166,7 @@ rio_interface_parser(const char *ifname, int argc, char **argv)
 		} else if (EQUAL(*argv, "ecn")) {
 			flags |= RIOF_ECN;
 		} else {
-			LOG(LOG_ERR, 0, "Unknown keyword '%s'\n", argv);
+			LOG(LOG_ERR, 0, "Unknown keyword '%s'", argv);
 			return (0);
 		}
 		argc--; argv++;
@@ -226,7 +226,7 @@ qcmd_rio_add_if(const char *ifname, u_int bandwidth, int weight,
 	error = qop_rio_add_if(NULL, ifname, bandwidth, weight, red_params,
 			       qlimit, pkttime, flags);
 	if (error != 0)
-		LOG(LOG_ERR, errno, "%s: can't add rio on interface '%s'\n",
+		LOG(LOG_ERR, errno, "%s: can't add rio on interface '%s'",
 		    qoperror(error), ifname);
 	return (error);
 }
@@ -278,7 +278,7 @@ rio_attach(struct ifinfo *ifinfo)
 	if (rio_fd < 0 &&
 	    (rio_fd = open(RIO_DEVICE, O_RDWR)) < 0 &&
 	    (rio_fd = open_module(RIO_DEVICE, O_RDWR)) < 0) {
-		LOG(LOG_ERR, errno, "RIO open\n");
+		LOG(LOG_ERR, errno, "RIO open");
 		return (QOPERR_SYSCALL);
 	}
 
@@ -302,7 +302,7 @@ rio_attach(struct ifinfo *ifinfo)
 		return (QOPERR_SYSCALL);
 
 #if 1
-	LOG(LOG_INFO, 0, "rio attached to %s\n", iface.rio_ifname);
+	LOG(LOG_INFO, 0, "rio attached to %s", iface.rio_ifname);
 #endif
 	return (0);
 }

@@ -1,5 +1,5 @@
-/*	$OpenBSD: qdisc_red.c,v 1.1.1.1 2001/06/27 18:23:21 kjc Exp $	*/
-/*	$KAME: qdisc_red.c,v 1.2 2000/10/18 09:15:17 kjc Exp $	*/
+/*	$OpenBSD: qdisc_red.c,v 1.2 2001/08/16 12:59:43 kjc Exp $	*/
+/*	$KAME: qdisc_red.c,v 1.3 2001/08/15 12:51:59 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
  *	Sony Computer Science Laboratories, Inc.  All rights reserved.
@@ -56,7 +56,8 @@ red_stat_loop(int fd, const char *ifname, int count, int interval)
 	double sec;
 	int cnt = count;
 	
-	strcpy(red_stats.iface.red_ifname, ifname);
+	strlcpy(red_stats.iface.red_ifname, ifname,
+		sizeof(red_stats.iface.red_ifname));
 
 	gettimeofday(&last_time, NULL);
 	last_time.tv_sec -= interval;

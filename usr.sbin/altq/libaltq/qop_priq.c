@@ -1,5 +1,5 @@
-/*	$OpenBSD: qop_priq.c,v 1.1.1.1 2001/06/27 18:23:34 kjc Exp $	*/
-/*	$KAME: qop_priq.c,v 1.1 2000/10/18 09:15:19 kjc Exp $	*/
+/*	$OpenBSD: qop_priq.c,v 1.2 2001/08/16 12:59:43 kjc Exp $	*/
+/*	$KAME: qop_priq.c,v 1.3 2001/08/16 10:39:14 kjc Exp $	*/
 /*
  * Copyright (C) 2000
  *	Sony Computer Science Laboratories, Inc.  All rights reserved.
@@ -50,18 +50,18 @@
 #include "altq_qop.h"
 #include "qop_priq.h"
 
-static int qop_priq_enable_hook(struct ifinfo *ifinfo);
+static int qop_priq_enable_hook(struct ifinfo *);
 
-static int priq_attach(struct ifinfo *ifinfo);
-static int priq_detach(struct ifinfo *ifinfo);
-static int priq_clear(struct ifinfo *ifinfo);
-static int priq_enable(struct ifinfo *ifinfo);
-static int priq_disable(struct ifinfo *ifinfo);
-static int priq_add_class(struct classinfo *clinfo);
-static int priq_modify_class(struct classinfo *clinfo, void *arg);
-static int priq_delete_class(struct classinfo *clinfo);
-static int priq_add_filter(struct fltrinfo *fltrinfo);
-static int priq_delete_filter(struct fltrinfo *fltrinfo);
+static int priq_attach(struct ifinfo *);
+static int priq_detach(struct ifinfo *);
+static int priq_clear(struct ifinfo *);
+static int priq_enable(struct ifinfo *);
+static int priq_disable(struct ifinfo *);
+static int priq_add_class(struct classinfo *);
+static int priq_modify_class(struct classinfo *, void *);
+static int priq_delete_class(struct classinfo *);
+static int priq_add_filter(struct fltrinfo *);
+static int priq_delete_filter(struct fltrinfo *);
 
 #define PRIQ_DEVICE	"/dev/altq/priq"
 
@@ -110,7 +110,7 @@ priq_interface_parser(const char *ifname, int argc, char **argv)
 		} else if (EQUAL(*argv, "priq")) {
 			/* just skip */
 		} else {
-			LOG(LOG_ERR, 0, "Unknown keyword '%s'\n", argv);
+			LOG(LOG_ERR, 0, "Unknown keyword '%s'", argv);
 			return (0);
 		}
 		argc--; argv++;
@@ -152,7 +152,7 @@ priq_class_parser(const char *ifname, const char *class_name,
 			flags |= PRCF_CLEARDSCP;
 		} else {
 			LOG(LOG_ERR, 0,
-			    "Unknown keyword '%s' in %s, line %d\n",
+			    "Unknown keyword '%s' in %s, line %d",
 			    *argv, altqconfigfile, line_no);
 			return (0);
 		}
@@ -166,7 +166,7 @@ priq_class_parser(const char *ifname, const char *class_name,
 	error = qcmd_priq_add_class(ifname, class_name, pri, qlimit, flags);
 
 	if (error) {
-		LOG(LOG_ERR, errno, "priq_class_parser: %s\n",
+		LOG(LOG_ERR, errno, "priq_class_parser: %s",
 		    qoperror(error));
 		return (0);
 	}
@@ -183,7 +183,7 @@ qcmd_priq_add_if(const char *ifname, u_int bandwidth, int flags)
 	
 	error = qop_priq_add_if(NULL, ifname, bandwidth, flags);
 	if (error != 0)
-		LOG(LOG_ERR, errno, "%s: can't add priq on interface '%s'\n",
+		LOG(LOG_ERR, errno, "%s: can't add priq on interface '%s'",
 		    qoperror(error), ifname);
 	return (error);
 }
@@ -203,7 +203,7 @@ qcmd_priq_add_class(const char *ifname, const char *class_name,
 					   pri, qlimit, flags);
 	if (error != 0)
 		LOG(LOG_ERR, errno,
-		    "priq: %s: can't add class '%s' on interface '%s'\n",
+		    "priq: %s: can't add class '%s' on interface '%s'",
 		    qoperror(error), class_name, ifname);
 	return (error);
 }
@@ -334,7 +334,7 @@ qop_priq_enable_hook(struct ifinfo *ifinfo)
 	
 	priq_ifinfo = ifinfo->private;
 	if (priq_ifinfo->default_class == NULL) {
-		LOG(LOG_ERR, 0, "priq: no default class on interface %s!\n",
+		LOG(LOG_ERR, 0, "priq: no default class on interface %s!",
 		    ifinfo->ifname);
 		return (QOPERR_CLASS);
 	}
@@ -355,7 +355,7 @@ priq_attach(struct ifinfo *ifinfo)
 	if (priq_fd < 0 &&
 	    (priq_fd = open(PRIQ_DEVICE, O_RDWR)) < 0 &&
 	    (priq_fd = open_module(PRIQ_DEVICE, O_RDWR)) < 0) {
-		LOG(LOG_ERR, errno, "PRIQ open\n");
+		LOG(LOG_ERR, errno, "PRIQ open");
 		return (QOPERR_SYSCALL);
 	}
 

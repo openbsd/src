@@ -1,5 +1,5 @@
-/*	$OpenBSD: altqstat.h,v 1.1.1.1 2001/06/27 18:23:19 kjc Exp $	*/
-/*	$KAME: altqstat.h,v 1.2 2000/10/18 09:15:16 kjc Exp $	*/
+/*	$OpenBSD: altqstat.h,v 1.2 2001/08/16 12:59:43 kjc Exp $	*/
+/*	$KAME: altqstat.h,v 1.4 2001/08/16 07:43:14 itojun Exp $	*/
 /*
  * Copyright (C) 1999-2000
  *	Sony Computer Science Laboratories, Inc.  All rights reserved.
@@ -53,15 +53,15 @@ stat_loop_t priq_stat_loop;
 
 struct redstats;
 
-void chandle2name(const char *ifname, u_long handle, char *name);
-stat_loop_t *qdisc2stat_loop(const char *qdisc_name);
-int ifname2qdisc(const char *ifname, char *qname);
-double calc_interval(struct timeval *cur_time, struct timeval *last_time);
-double calc_rate(u_int64_t new_bytes, u_int64_t last_bytes, double interval);
-double calc_pps(u_int64_t new_pkts, u_int64_t last_pkts, double interval);
-char *rate2str(double rate);
-int print_redstats(struct redstats *rp);
-int print_riostats(struct redstats *rp);
+void chandle2name(const char *, u_long, char *, size_t);
+stat_loop_t *qdisc2stat_loop(const char *);
+int ifname2qdisc(const char *, char *);
+double calc_interval(struct timeval *, struct timeval *);
+double calc_rate(u_int64_t, u_int64_t, double);
+double calc_pps(u_int64_t, u_int64_t, double);
+char *rate2str(double);
+int print_redstats(struct redstats *);
+int print_riostats(struct redstats *);
 
 
 
