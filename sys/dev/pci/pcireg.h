@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcireg.h,v 1.9 1998/07/12 04:22:09 deraadt Exp $	*/
+/*	$OpenBSD: pcireg.h,v 1.10 1999/01/30 23:24:22 niklas Exp $	*/
 /*	$NetBSD: pcireg.h,v 1.11 1996/08/10 15:42:33 mycroft Exp $	*/
 
 /*
@@ -243,6 +243,69 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_CACHELINE_MASK			0xff
 #define	PCI_CACHELINE(bhlcr) \
 	    (((bhlcr) >> PCI_CACHELINE_SHIFT) & PCI_CACHELINE_MASK)
+
+/* config registers for header type 0 devices */
+
+#define PCI_MAPS	0x10
+#define PCI_CARDBUSCIS	0x28
+#define PCI_SUBVEND_0	0x2c
+#define PCI_SUBDEV_0	0x2e
+#define PCI_INTLINE	0x3c
+#define PCI_INTPIN	0x3d
+#define PCI_MINGNT	0x3e
+#define PCI_MAXLAT	0x3f
+
+/* config registers for header type 1 devices */
+
+#define PCI_SECSTAT_1	0 /**/
+
+#define PCI_PRIBUS_1	0x18
+#define PCI_SECBUS_1	0x19
+#define PCI_SUBBUS_1	0x1a
+#define PCI_SECLAT_1	0x1b
+
+#define PCI_IOBASEL_1	0x1c
+#define PCI_IOLIMITL_1	0x1d
+#define PCI_IOBASEH_1	0 /**/
+#define PCI_IOLIMITH_1	0 /**/
+
+#define PCI_MEMBASE_1	0x20
+#define PCI_MEMLIMIT_1	0x22
+
+#define PCI_PMBASEL_1	0x24
+#define PCI_PMLIMITL_1	0x26
+#define PCI_PMBASEH_1	0 /**/
+#define PCI_PMLIMITH_1	0 /**/
+
+#define PCI_BRIDGECTL_1 0 /**/
+
+#define PCI_SUBVEND_1	0x34
+#define PCI_SUBDEV_1	0x36
+
+/* config registers for header type 2 devices */
+
+#define PCI_SECSTAT_2	0x16
+
+#define PCI_PRIBUS_2	0x18
+#define PCI_SECBUS_2	0x19
+#define PCI_SUBBUS_2	0x1a
+#define PCI_SECLAT_2	0x1b
+
+#define PCI_MEMBASE0_2	0x1c
+#define PCI_MEMLIMIT0_2 0x20
+#define PCI_MEMBASE1_2	0x24
+#define PCI_MEMLIMIT1_2 0x28
+#define PCI_IOBASE0_2	0x2c
+#define PCI_IOLIMIT0_2	0x30
+#define PCI_IOBASE1_2	0x34
+#define PCI_IOLIMIT1_2	0x38
+
+#define PCI_BRIDGECTL_2 0x3e
+
+#define PCI_SUBVEND_2	0x40
+#define PCI_SUBDEV_2	0x42
+
+#define PCI_PCCARDIF_2	0x44
 
 /*
  * Mapping registers
