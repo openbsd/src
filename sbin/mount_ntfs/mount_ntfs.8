@@ -1,4 +1,4 @@
-.\" $OpenBSD: mount_ntfs.8,v 1.2 2003/05/20 03:19:57 tedu Exp $
+.\" $OpenBSD: mount_ntfs.8,v 1.3 2003/05/20 09:22:07 jmc Exp $
 .\" $NetBSD: mount_ntfs.8,v 1.13 2003/02/14 16:21:48 grant Exp $
 .\"
 .\" Copyright (c) 1993,1994 Christopher G. Demetriou
@@ -88,7 +88,7 @@ in the file system.
 .El
 .Sh FEATURES
 .Ss NTFS file attributes
-NTFS file attributes can be accessed in following way:
+NTFS file attributes can be accessed in the following way:
 .Bd -literal -offset indent
 foo[[:ATTRTYPE]:ATTRNAME]
 .Ed
@@ -116,7 +116,7 @@ There is limited writing ability for files.
 Limitations:
 .Bl -bullet -compact
 .It
-file must be nonresident
+file must be non-resident
 .It
 file must
 .Em not
@@ -125,13 +125,13 @@ contain any holes (uninitialized areas)
 file can't be compressed
 .El
 .Pp
-Note that that it's not currently possible to create or remove files
-on NTFS filesystem.
+Note that it's not currently possible to create or remove files
+on NTFS filesystems.
 .Pp
 .Sy Warning :
 do not mount NTFS filesystems read-write.
 The write support is not very useful and is not tested well.
-It's not safe to write to any file on NTFS, you might damage the filesystem.
+It's not safe to write to any file on NTFS; you might damage the filesystem.
 Unless you want to debug NTFS filesystem code, mount the NTFS filesystem
 read-only.
 .Sh SEE ALSO
@@ -139,12 +139,12 @@ read-only.
 .Xr unmount 2 ,
 .Xr fstab 5 ,
 .Xr disklabel 8 ,
-.Xr mbrlabel 8 ,
+.\" .Xr mbrlabel 8 ,
 .Xr mount 8
 .Sh HISTORY
 Support for NTFS first appeared in
 .Fx 3.0 .
-It has been ported to
+It was ported to
 .Nx
 and first appeared in
 .Nx 1.5 .
@@ -163,25 +163,25 @@ and
 .An Jaromir Dolecek
 .Aq jdolecek@NetBSD.org .
 .Sh BUGS
-The write support should be enhanced to actually be able change
+The write support should be enhanced to actually be able to change
 file size, and to create and remove files and directories.
 It's not very useful right now.
 .Pp
-If the attempt to mount NTFS gives you error like this:
+If the attempt to mount NTFS gives you an error like this:
 .Bd -literal
 # mount -t ntfs /dev/wd0k /mnt
 mount_ntfs: /dev/wd0k on /mnt: Invalid argument
 .Ed
 .Pp
-make sure that appropriate partition has correct entry in the
+make sure that the appropriate partition has the correct entry in the
 disk label, particularly that the partition offset is correct.
 If the NTFS partition is the first partition on the disk, the
 offset should be '63' on i386 (see
 .Xr disklabel 8 ) .
-.Xr mbrlabel 8
-could help you to setup the disk label correctly.
+.\" .Xr mbrlabel 8
+.\" could help you to set up the disk label correctly.
 .Pp
-If you mark the NTFS partition as
+If the NTFS partition is marked as
 .Ql dynamic
 under Microsoft Windows XP,
 it won't be possible to access it under
