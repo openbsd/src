@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.12 1997/05/19 05:36:56 millert Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.13 1997/07/24 14:22:21 deraadt Exp $	*/
 /*	$NetBSD: fetch.c,v 1.8 1997/04/21 18:45:47 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fetch.c,v 1.12 1997/05/19 05:36:56 millert Exp $";
+static char rcsid[] = "$OpenBSD: fetch.c,v 1.13 1997/07/24 14:22:21 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -203,7 +203,7 @@ url_get(line, proxyenv, fd)
 		    path);
 	else
 		fprintf(ttyout, "Requesting %s (via %s)\n", line, proxyenv);
-	snprintf(buf, sizeof(buf), "GET %s%s HTTP/1.0\n\n",
+	snprintf(buf, sizeof(buf), "GET %s%s HTTP/1.0\r\n\r\n",
 	    proxy ? "" : "/", path);
 	buflen = strlen(buf);
 	if (write(s, buf, buflen) < buflen) {
@@ -253,17 +253,18 @@ url_get(line, proxyenv, fd)
 		    strncasecmp(cp, CONTENTLEN, sizeof(CONTENTLEN) - 1) == 0)
 			break;
 	}
-	if (*cp == '\0')
-		goto improper;
-	cp += sizeof(CONTENTLEN) - 1;
-	cp2 = strchr(cp, '\n');
-	if (cp2 == NULL)
-		goto improper;
-	else
-		*cp2 = '\0';
-	filesize = atoi(cp);
-	if (filesize < 1)
-		goto improper;
+	if (*cp != '\0') {
+		cp += sizeof(CONTENTLEN) - 1;
+		cp2 = strchr(cp, '\n');
+		if (cp2 == NULL)
+			goto improper;
+		else
+			*cp2 = '\0';
+		filesize = atoi(cp);
+		if (filesize < 1)
+			goto improper;
+	} else
+		filesize = -1;
 
 	/* Open the output file. */
 	if (fd == -1) {
