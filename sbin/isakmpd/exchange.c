@@ -1,5 +1,5 @@
-/*	$OpenBSD: exchange.c,v 1.28 2000/02/25 17:23:39 niklas Exp $	*/
-/*	$EOM: exchange.c,v 1.116 2000/02/20 19:58:37 niklas Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.29 2000/04/07 22:07:30 niklas Exp $	*/
+/*	$EOM: exchange.c,v 1.119 2000/04/07 19:16:44 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -61,7 +61,9 @@
 #include "transport.h"
 #include "sa.h"
 #include "util.h"
+#ifdef USE_X509
 #include "x509.h"
+#endif
 
 /* Initial number of bits from the cookies used as hash.  */
 #define INITIAL_BUCKET_BITS 6
@@ -1319,12 +1321,22 @@ exchange_finalize (struct message *msg)
       msg->isakmp_sa->id_r_len = exchange->id_r_len;
       msg->isakmp_sa->initiator = exchange->initiator;
 
-      msg->isakmp_sa->id_i = calloc (exchange->id_i_len, sizeof (char));
-      if (msg->isakmp_sa->id_i == NULL)
-	log_fatal ("exchange_finalize: failed to allocate memory for copying id_i (%d bytes)", exchange->id_i_len);
-      msg->isakmp_sa->id_r = calloc (exchange->id_r_len, sizeof (char));
-      if (msg->isakmp_sa->id_r == NULL)
-	log_fatal ("exchange_finalize: failed to allocate memory for copying id_r (%d bytes)", exchange->id_r_len);
+      msg->isakmp_sa->id_i = malloc (exchange->id_i_len);
+      if (!msg->isakmp_sa->id_i)
+	{
+	  log_error ("exchange_finalize: malloc (%d) failed",
+		     exchange->id_i_len);
+	  /* XXX How to cleanup?  */
+	  return;
+	}
+      msg->isakmp_sa->id_r = malloc (exchange->id_r_len);
+      if (!msg->isakmp_sa->id_r)
+	{
+	  log_error ("exchange_finalize: malloc (%d) failed",
+		     exchange->id_r_len);
+	  /* XXX How to cleanup?  */
+	  return;
+	}
 
       memcpy (msg->isakmp_sa->id_i, exchange->id_i, exchange->id_i_len);
       memcpy (msg->isakmp_sa->id_r, exchange->id_r, exchange->id_r_len);
@@ -1333,18 +1345,28 @@ exchange_finalize (struct message *msg)
         {
         case ISAKMP_CERTENC_NONE:
 	    msg->isakmp_sa->recv_cert = strdup (exchange->recv_cert);
-	    if (msg->isakmp_sa->recv_cert == NULL)
-	      log_fatal ("exchange_finalize: strdup (\"%s\") failed",
-			 exchange->recv_cert);
+	    if (!msg->isakmp_sa->recv_cert)
+	      {
+		log_error ("exchange_finalize: strdup (\"%s\") failed",
+			   exchange->recv_cert);
+		/* XXX How to cleanup?  */
+		return;
+	      }
 	    break;
 
 	case ISAKMP_CERTENC_X509_SIG:
+#ifdef USE_X509
 	    msg->isakmp_sa->recv_cert = LC (X509_dup,
 					    ((X509 *) exchange->recv_cert));
-	    if (msg->isakmp_sa->recv_cert == NULL)
-	      log_fatal ("exchange_finalize: "
-			 "failed copying X509 certificate to isakmp_sa");
+	    if (!msg->isakmp_sa->recv_cert)
+	      {
+		log_print ("exchange_finalize: "
+			   "failed copying X509 certificate to isakmp_sa");
+		/* XXX How to cleanup?  */
+		return;
+	      }
 	    break;
+#endif
 
 	    /* XXX Eventually handle these */
 	case ISAKMP_CERTENC_PKCS:
