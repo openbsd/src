@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.59 2004/10/20 08:52:19 otto Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.60 2004/11/27 19:16:25 otto Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -65,7 +65,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.59 2004/10/20 08:52:19 otto Exp $";
+static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.60 2004/11/27 19:16:25 otto Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1276,7 +1276,7 @@ readhash(FILE *f)
 static int
 asciifile(FILE *f)
 {
-	char buf[BUFSIZ];
+	unsigned char buf[BUFSIZ];
 	int i, cnt;
 
 	if (aflag || f == NULL)
@@ -1303,7 +1303,7 @@ static __inline int max(int a, int b)
 static char *
 match_function(const long *f, int pos, FILE *file)
 {
-	char buf[FUNCTION_CONTEXT_SIZE];
+	unsigned char buf[FUNCTION_CONTEXT_SIZE];
 	size_t nc;
 	int last = lastline;
 	char *p;
