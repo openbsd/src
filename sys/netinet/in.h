@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.42 2000/09/19 03:20:57 angelos Exp $	*/
+/*	$OpenBSD: in.h,v 1.43 2000/12/09 01:32:09 itojun Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -215,8 +215,6 @@ struct sockaddr_in {
 	struct	    in_addr sin_addr;
 	int8_t	    sin_zero[8];
 };
-
-#define INET_ADDRSTRLEN                 16
 
 /*
  * Structure used to describe IP options.
