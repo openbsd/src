@@ -1,4 +1,4 @@
-#	$OpenBSD: pnpdevs,v 1.7 1997/12/25 14:13:13 downsj Exp $
+#	$OpenBSD: pnpdevs,v 1.8 1997/12/26 09:53:15 deraadt Exp $
 
 #
 # NOTE: All `com' devices also need pccom identifiers.
@@ -269,7 +269,7 @@ ed	PNP81c8		#SMC EtherElite Ultra 16
 #	PNP81ef	#Proteon ISA Token Ring (1346)
 #	PNP81f0	#Proteon ISA Token Ring (1347)
 #	PNP81ff	#Cabletron E2000 Series DNI
-#	PNP8200	#Cabletron E2100 Series DNI
+le	PNP8200	#Cabletron E2100 Series DNI
 #	PNP8209	#Zenith Data Systems Z-Note
 #	PNP820a	#Zenith Data Systems NE2000-Compatible
 #	PNP8213	#Xircom Pocket Ethernet II
@@ -277,7 +277,7 @@ ed	PNP81c8		#SMC EtherElite Ultra 16
 #	PNP821d	#RadiSys EXM-10
 #	PNP8227	#SMC 3000 Series
 #	PNP8228	#SMC 91C2 controller
-#	PNP8231	#Advanced Micro Devices AM2100/AM1500T
+le	PNP8231	#Advanced Micro Devices AM2100/AM1500T
 #	PNP8263	#Tulip NCC-16
 #	PNP8277	#Exos 105
 #	PNP828A	#Intel '595 based Ethernet
@@ -357,7 +357,7 @@ com	BDP0356 #Best Data 56x2
 pccom	BDP0356	#Best Data 56x2
 
 # Ethernet:
-le	BRI1001	#BOCALANcard COMBO
+#le	BRI1001	#BOCALANcard COMBO	(PNP8200)
 
 # Sound:
 sb	ADS7150	#AD1815
