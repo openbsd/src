@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.119 2003/12/17 05:46:37 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.120 2003/12/18 08:05:20 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -754,15 +754,17 @@ void
 microtime(struct timeval *tv)
 {
 	extern u_long cpu_itmr;
-	u_long itmr;
+	u_long itmr, mask;
 	int s;
 
 	s = splhigh();
 	tv->tv_sec  = time.tv_sec;
 	tv->tv_usec = time.tv_usec;
 
+	rsm(PSL_I, mask);
 	mfctl(CR_ITMR, itmr);
 	itmr -= cpu_itmr;
+	ssm(PSL_I, mask);
 	splx(s);
 
 	tv->tv_usec += itmr * cpu_ticksdenom / cpu_ticksnum;
