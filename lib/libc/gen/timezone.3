@@ -1,4 +1,4 @@
-.\"	$OpenBSD: timezone.3,v 1.5 1999/03/10 02:43:11 pjanzen Exp $
+.\"	$OpenBSD: timezone.3,v 1.6 1999/05/20 14:50:35 aaron Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -38,6 +38,7 @@
 .Nm timezone
 .Nd return the timezone abbreviation
 .Sh SYNOPSIS
+.Fd #include <time.h>
 .Ft char *
 .Fn timezone "int zone" "int dst"
 .Sh DESCRIPTION

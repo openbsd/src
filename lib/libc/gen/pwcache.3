@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pwcache.3,v 1.4 1998/06/15 17:54:57 mickey Exp $
+.\"	$OpenBSD: pwcache.3,v 1.5 1999/05/20 14:50:35 aaron Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -38,7 +38,10 @@
 .Nm pwcache
 .Nd cache password and group entries
 .Sh SYNOPSIS
+.Fd #include <pwd.h>
+.Ft char *
 .Fn user_from_uid "uid_t uid" "int nouser"
+.Ft char *
 .Fn group_from_gid "gid_t gid" "int nogroup"
 .Sh DESCRIPTION
 The
