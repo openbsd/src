@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofbus.c,v 1.5 1998/09/20 23:03:03 rahnds Exp $	*/
+/*	$OpenBSD: ofbus.c,v 1.6 1999/10/28 04:25:25 rahnds Exp $	*/
 /*	$NetBSD: ofbus.c,v 1.3 1996/10/13 01:38:11 christos Exp $	*/
 
 /*
@@ -40,7 +40,6 @@
 
 /* a bit of a hack to prevent conflicts between ofdisk and sd/wd */
 #include "sd.h"
-#include "wd.h"
 
 int ofrprobe __P((struct device *, void *, void *));
 void ofrattach __P((struct device *, struct device *, void *));
@@ -187,9 +186,9 @@ ofbattach(parent, dev, aux)
 			units = 7; /* What about wide or hostid != 7?	XXX */
 #endif
 		} else if (!strcmp(name, "ide")) {
-#if NWD > 0
-			units = 0; /* if wd driver in kernel, dont use ofw */
-else 
+#if NSD > 0
+			units = 0; /* if sd? driver in kernel, dont use ofw */
+#else 
 			units = 2;
 #endif
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofnet.c,v 1.2 1997/11/07 08:07:22 niklas Exp $	*/
+/*	$OpenBSD: ofnet.c,v 1.3 1999/10/28 04:25:25 rahnds Exp $	*/
 /*	$NetBSD: ofnet.c,v 1.4 1996/10/16 19:33:21 ws Exp $	*/
 
 /*
@@ -69,6 +69,7 @@ struct ofn_softc {
 	int sc_phandle;
 	int sc_ihandle;
 	struct arpcom sc_arpcom;
+	void *dmabuf;
 };
 
 static int ofnprobe __P((struct device *, void *, void *));
@@ -138,10 +139,20 @@ ofnattach(parent, self, aux)
 	    || l >= sizeof path
 	    || (path[l] = 0, !(of->sc_ihandle = OF_open(path))))
 		panic("ofnattach: unable to open");
+printf("\nethernet dev: path %s\n", path);
+	OF_call_method("dma-alloc", of->sc_ihandle, 1, 1, MAXPHYS,
+		&(of->dmabuf));
 	if (OF_getprop(ofp->phandle, "mac-address",
-		       of->sc_arpcom.ac_enaddr, sizeof of->sc_arpcom.ac_enaddr)
-	    < 0)
-		panic("ofnattach: no max-address");
+		       of->sc_arpcom.ac_enaddr, sizeof
+			       (of->sc_arpcom.ac_enaddr)) < 0)
+	{
+		if (OF_getprop(ofp->phandle, "local-mac-address",
+			       of->sc_arpcom.ac_enaddr, sizeof
+				       (of->sc_arpcom.ac_enaddr)) < 0)
+		{
+			panic("ofnattach: no mac-address");
+		}
+	}
 	printf(": address %s\n", ether_sprintf(of->sc_arpcom.ac_enaddr));
 	
 	bcopy(of->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
@@ -162,8 +173,6 @@ ofnattach(parent, self, aux)
 	dk_establish(0, self);					/* XXX */
 }
 
-static char buf[ETHERMTU + sizeof(struct ether_header)];
-
 static void
 ofnread(of)
 	struct ofn_softc *of;
@@ -173,6 +182,7 @@ ofnread(of)
 	struct mbuf *m, **mp, *head;
 	int l, len;
 	char *bufp;
+	char *buf = of->dmabuf;
 
 #if NIPKDB_OFN > 0
 	ipkdbrint(kifp, ifp);
@@ -278,7 +288,9 @@ ofnstart(ifp)
 	struct ofn_softc *of = ifp->if_softc;
 	struct mbuf *m, *m0;
 	char *bufp;
+	char *buf;
 	int len;
+	buf = of->dmabuf;
 	
 	if (!(ifp->if_flags & IFF_RUNNING))
 		return;
@@ -378,6 +390,7 @@ ofnwatchdog(ifp)
 }
 
 #if NIPKDB_OFN > 0
+/* has not been updated to use dmabuf */
 static void
 ipkdbofstart(kip)
 	struct ipkdb_if *kip;
@@ -439,7 +452,8 @@ ipkdbprobe(match, aux)
 	name[len] = 0;
 	if ((phandle = OF_instance_to_package(kip->port)) == -1)
 		return -1;
-	if (OF_getprop(phandle, "mac-address", kip->myenetaddr, sizeof kip->myenetaddr)
+	if ( OF_getprop(phandle, "local-mac-address", kip->myenetaddr, sizeof kip->myenetaddr) &&
+	OF_getprop(phandle, "mac-address", kip->myenetaddr, sizeof kip->myenetaddr)
 	    < 0)
 		return -1;
 	

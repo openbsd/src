@@ -1,4 +1,4 @@
-/*	$OpenBSD: openfirm.h,v 1.2 1997/11/07 08:07:24 niklas Exp $	*/
+/*	$OpenBSD: openfirm.h,v 1.3 1999/10/28 04:25:25 rahnds Exp $	*/
 /*	$NetBSD: openfirm.h,v 1.1 1996/09/30 16:35:10 ws Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
 
 int openfirmware __P((void *));
 
-extern char *OF_buf;
+extern char OF_buf[];
 
 int OF_peer __P((int phandle));
 int OF_child __P((int phandle));
