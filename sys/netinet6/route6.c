@@ -1,9 +1,10 @@
-/*	$OpenBSD: route6.c,v 1.2 2000/02/07 06:09:10 itojun Exp $	*/
+/*	$OpenBSD: route6.c,v 1.3 2000/10/02 04:44:08 itojun Exp $	*/
+/*	$KAME: route6.c,v 1.21 2000/09/20 23:00:49 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -141,8 +142,23 @@ ip6_rthdr0(m, ip6, rh0)
 	rh0->ip6r0_segleft--;
 	nextaddr = rh0->ip6r0_addr + index;
 
+	/*
+	 * reject invalid addresses.  be proactive about malicious use of
+	 * IPv4 mapped/compat address.
+	 * XXX need more checks?
+	 */
 	if (IN6_IS_ADDR_MULTICAST(nextaddr) ||
-	    IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst)) {
+	    IN6_IS_ADDR_UNSPECIFIED(nextaddr) ||
+	    IN6_IS_ADDR_V4MAPPED(nextaddr) ||
+	    IN6_IS_ADDR_V4COMPAT(nextaddr)) {
+		ip6stat.ip6s_badoptions++;
+		m_freem(m);
+		return(-1);
+	}
+	if (IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst) ||
+	    IN6_IS_ADDR_UNSPECIFIED(&ip6->ip6_dst) ||
+	    IN6_IS_ADDR_V4MAPPED(&ip6->ip6_dst) ||
+	    IN6_IS_ADDR_V4COMPAT(&ip6->ip6_dst)) {
 		ip6stat.ip6s_badoptions++;
 		m_freem(m);
 		return(-1);
@@ -167,6 +183,6 @@ ip6_rthdr0(m, ip6, rh0)
 #else
 	ip6_forward(m, 1);
 #endif
-    
+
 	return(-1);			/* m would be freed in ip6_forward() */
 }
