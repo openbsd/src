@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.17 2002/06/14 21:34:59 todd Exp $ */
+/*	$OpenBSD: vs.c,v 1.18 2002/12/14 07:20:25 fgsch Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -806,7 +806,7 @@ vs_nintr(sc)
 	/*
 	 * If this is a controller error, there won't be a m328_cmd
 	 * pointer in the CTAG feild.  Bad things happen if you try 
-	 * to point to address 0.  Controller error should be handeled
+	 * to point to address 0.  Controller error should be handled
 	 * in vsdma.c  I'll change this soon - steve.
 	 */
 	if (m328_cmd) {

@@ -1,4 +1,4 @@
-/*    $OpenBSD: sfas.c,v 1.15 2002/03/14 01:26:29 millert Exp $  */
+/*    $OpenBSD: sfas.c,v 1.16 2002/12/14 07:20:25 fgsch Exp $  */
 /*	$NetBSD: sfas.c,v 1.12 1996/10/13 03:07:33 christos Exp $	*/
 
 /*
@@ -450,7 +450,7 @@ sfas_scsidone(dev, xs, stat)
 		switch(stat) {
 		case SCSI_CHECK:
 		/* If we get here we have valid sense data. Faults during
-		 * sense is handeled elsewhere and will generate a
+		 * sense is handled elsewhere and will generate a
 		 * XS_DRIVER_STUFFUP. */
 			xs->error = XS_SENSE;
 			break;
@@ -1362,7 +1362,7 @@ sfas_midaction(dev, rp, nexus)
 			nexus->status = -1;
 
 		/*
-		 * Preload the command complete message. Handeled in
+		 * Preload the command complete message. Handled in
 		 * sfas_postaction.
 		 */
 		dev->sc_msg_in[0] = msg;
@@ -1671,7 +1671,7 @@ sfas_postaction(dev, rp, nexus)
 				case 0x02: /* EXTENDED IDENTIFY (SCSI-1) */
 				case 0x03: /* WIDE DATA TRANSFER REQUEST */
 			        default:
-					/* Reject any unhandeled messages. */
+					/* Reject any unhandled messages. */
 
 					dev->sc_msg_out[0] = 0x07;
 					dev->sc_msg_out_len = 1;
@@ -1682,7 +1682,7 @@ sfas_postaction(dev, rp, nexus)
 				break;
 
 			default:
-				/* Reject any unhandeled messages. */
+				/* Reject any unhandled messages. */
 
 				dev->sc_msg_out[0] = 0x07;
 				dev->sc_msg_out_len = 1;
