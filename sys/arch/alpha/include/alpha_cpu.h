@@ -1,4 +1,4 @@
-/* $OpenBSD: alpha_cpu.h,v 1.7 2002/05/10 10:14:48 art Exp $ */
+/* $OpenBSD: alpha_cpu.h,v 1.8 2002/11/26 01:35:23 art Exp $ */
 /* $NetBSD: alpha_cpu.h,v 1.43 2001/12/18 04:18:22 thorpej Exp $ */
 
 /*
@@ -208,27 +208,27 @@ struct alpha_logout_area {
 #define ALPHA_K0SEG_TO_PHYS(x)	((x) & ~ALPHA_K0SEG_BASE)
 #define ALPHA_PHYS_TO_K0SEG(x)	((x) | ALPHA_K0SEG_BASE)
 
-#define	ALPHA_PTE_VALID			0x0001
+#define	ALPHA_PTE_VALID			0x0001UL
 
-#define	ALPHA_PTE_FAULT_ON_READ		0x0002
-#define	ALPHA_PTE_FAULT_ON_WRITE	0x0004
-#define	ALPHA_PTE_FAULT_ON_EXECUTE	0x0008
+#define	ALPHA_PTE_FAULT_ON_READ		0x0002UL
+#define	ALPHA_PTE_FAULT_ON_WRITE	0x0004UL
+#define	ALPHA_PTE_FAULT_ON_EXECUTE	0x0008UL
 
-#define	ALPHA_PTE_ASM			0x0010		/* addr. space match */
-#define	ALPHA_PTE_GRANULARITY		0x0060		/* granularity hint */
+#define	ALPHA_PTE_ASM			0x0010UL	/* addr. space match */
+#define	ALPHA_PTE_GRANULARITY		0x0060UL	/* granularity hint */
 
-#define	ALPHA_PTE_PROT			0xff00
-#define	ALPHA_PTE_KR			0x0100
-#define	ALPHA_PTE_UR			0x0200
-#define	ALPHA_PTE_KW			0x1000
-#define	ALPHA_PTE_UW			0x2000
+#define	ALPHA_PTE_PROT			0xff00UL
+#define	ALPHA_PTE_KR			0x0100UL
+#define	ALPHA_PTE_UR			0x0200UL
+#define	ALPHA_PTE_KW			0x1000UL
+#define	ALPHA_PTE_UW			0x2000UL
 
 #define	ALPHA_PTE_WRITE			(ALPHA_PTE_KW | ALPHA_PTE_UW)
 
-#define	ALPHA_PTE_SOFTWARE		0x00000000ffff0000
+#define	ALPHA_PTE_SOFTWARE		0x00000000ffff0000UL
 #define	ALPHA_PTE_PALCODE		(~ALPHA_PTE_SOFTWARE) /* shorthand */
 
-#define	ALPHA_PTE_PFN			0xffffffff00000000
+#define	ALPHA_PTE_PFN			0xffffffff00000000UL
 
 #define	ALPHA_PTE_TO_PFN(pte)		((pte) >> 32)
 #define	ALPHA_PTE_FROM_PFN(pfn)		((pfn) << 32)
