@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.12 2001/05/16 17:14:38 millert Exp $
+;	$OpenBSD: syscalls.master,v 1.13 2001/05/16 21:24:01 millert Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -452,8 +452,8 @@
 #endif	/* !LKM */
 ; System calls 220-240 are reserved for use by OpenBSD
 #ifdef SYSVSEM
-220	NOARGS		{ int sys___osemctl(int semid, int semnum, int cmd, \
-			    union semun *arg); }
+220	NOARGS		{ int compat_23_sys___semctl(int semid, int semnum, \
+			    int cmd, union semun *arg); } __osemctl
 221	NOARGS		{ int sys_semget(key_t key, int nsems, int semflg); }
 222	NOARGS		{ int sys_semop(int semid, struct sembuf *sops, \
 			    u_int nsops); }
@@ -465,8 +465,8 @@
 223	UNIMPL		semconfig
 #endif
 #ifdef SYSVMSG
-224	NOARGS		{ int sys_omsgctl(int msqid, int cmd, \
-			    struct omsqid_ds *buf); }
+224	NOARGS		{ int compat_23_sys_msgctl(int msqid, int cmd, \
+			    struct omsqid_ds *buf); } omsgctl
 225	NOARGS		{ int sys_msgget(key_t key, int msgflg); }
 226	NOARGS		{ int sys_msgsnd(int msqid, const void *msgp, \
 			    size_t msgsz, int msgflg); }
@@ -481,8 +481,8 @@
 #ifdef SYSVSHM
 228	NOARGS		{ void *sys_shmat(int shmid, const void *shmaddr, \
 			    int shmflg); }
-229	NOARGS		{ int sys_oshmctl(int shmid, int cmd, \
-			    struct oshmid_ds *buf); }
+229	NOARGS		{ int compat_23_sys_shmctl(int shmid, int cmd, \
+			    struct oshmid_ds *buf); } oshmctl
 230	NOARGS		{ int sys_shmdt(const void *shmaddr); }
 231	NOARGS		{ int sys_shmget(key_t key, int size, int shmflg); }
 #else

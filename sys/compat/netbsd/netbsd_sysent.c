@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_sysent.c,v 1.12 2001/05/16 17:17:07 millert Exp $	*/
+/*	$OpenBSD: netbsd_sysent.c,v 1.13 2001/05/16 21:24:01 millert Exp $	*/
 
 /*
  * System call switch table.
@@ -539,8 +539,8 @@ struct sysent netbsd_sysent[] = {
 	    sys_nosys },			/* 219 = unimplemented */
 #endif	/* !LKM */
 #ifdef SYSVSEM
-	{ 4, s(struct sys___osemctl_args),
-	    sys___osemctl },			/* 220 = __osemctl */
+	{ 4, s(struct compat_23_sys___semctl_args),
+	    compat_23_sys___semctl },		/* 220 = __osemctl */
 	{ 3, s(struct sys_semget_args),
 	    sys_semget },			/* 221 = semget */
 	{ 3, s(struct sys_semop_args),
@@ -558,8 +558,8 @@ struct sysent netbsd_sysent[] = {
 	    sys_nosys },			/* 223 = unimplemented semconfig */
 #endif
 #ifdef SYSVMSG
-	{ 3, s(struct sys_omsgctl_args),
-	    sys_omsgctl },			/* 224 = omsgctl */
+	{ 3, s(struct compat_23_sys_msgctl_args),
+	    compat_23_sys_msgctl },		/* 224 = omsgctl */
 	{ 2, s(struct sys_msgget_args),
 	    sys_msgget },			/* 225 = msgget */
 	{ 4, s(struct sys_msgsnd_args),
@@ -579,8 +579,8 @@ struct sysent netbsd_sysent[] = {
 #ifdef SYSVSHM
 	{ 3, s(struct sys_shmat_args),
 	    sys_shmat },			/* 228 = shmat */
-	{ 3, s(struct sys_oshmctl_args),
-	    sys_oshmctl },			/* 229 = oshmctl */
+	{ 3, s(struct compat_23_sys_shmctl_args),
+	    compat_23_sys_shmctl },		/* 229 = oshmctl */
 	{ 1, s(struct sys_shmdt_args),
 	    sys_shmdt },			/* 230 = shmdt */
 	{ 3, s(struct sys_shmget_args),

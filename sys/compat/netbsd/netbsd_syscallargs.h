@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_syscallargs.h,v 1.12 2001/05/16 17:17:06 millert Exp $	*/
+/*	$OpenBSD: netbsd_syscallargs.h,v 1.13 2001/05/16 21:24:00 millert Exp $	*/
 
 /*
  * System call argument lists.
@@ -475,13 +475,13 @@ int	sys_lkmnosys	__P((struct proc *, void *, register_t *));
 #else	/* !LKM */
 #endif	/* !LKM */
 #ifdef SYSVSEM
-int	sys___osemctl	__P((struct proc *, void *, register_t *));
+int	compat_23_sys___semctl	__P((struct proc *, void *, register_t *));
 int	sys_semget	__P((struct proc *, void *, register_t *));
 int	sys_semop	__P((struct proc *, void *, register_t *));
 #else
 #endif
 #ifdef SYSVMSG
-int	sys_omsgctl	__P((struct proc *, void *, register_t *));
+int	compat_23_sys_msgctl	__P((struct proc *, void *, register_t *));
 int	sys_msgget	__P((struct proc *, void *, register_t *));
 int	sys_msgsnd	__P((struct proc *, void *, register_t *));
 int	sys_msgrcv	__P((struct proc *, void *, register_t *));
@@ -489,7 +489,7 @@ int	sys_msgrcv	__P((struct proc *, void *, register_t *));
 #endif
 #ifdef SYSVSHM
 int	sys_shmat	__P((struct proc *, void *, register_t *));
-int	sys_oshmctl	__P((struct proc *, void *, register_t *));
+int	compat_23_sys_shmctl	__P((struct proc *, void *, register_t *));
 int	sys_shmdt	__P((struct proc *, void *, register_t *));
 int	sys_shmget	__P((struct proc *, void *, register_t *));
 #else
