@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.125 1999/11/23 02:20:14 deraadt Exp $
+#	$OpenBSD: rc,v 1.126 2000/01/01 22:45:35 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -103,6 +103,17 @@ else
 	    > /dev/null 2>&1
 	dd if=/var/db/host.random of=/dev/arandom bs=1024 count=64 \
 	    > /dev/null 2>&1
+fi
+
+if [ -f /etc/sysctl.conf ]; then
+(
+	# delete comments and blank lines
+	set -- `sed -e 's/#.*$//' /etc/sysctl.conf | grep -v '^$'`
+	while [ $# -ge 1 ] ; do
+		sysctl -w $1
+		shift 1
+	done
+)
 fi
 
 # set hostname, turn on network
@@ -297,17 +308,6 @@ echo clearing /tmp
 (cd /tmp && rm -rf [a-km-pr-zA-Z]* &&
     find . ! -name . ! -name lost+found ! -name quota.user \
 	! -name quota.group -execdir rm -rf -- {} \; -type d -prune)
-
-if [ -f /etc/sysctl.conf ]; then
-(
-	# delete comments and blank lines
-	set -- `sed -e 's/#.*$//' /etc/sysctl.conf | grep -v '^$'`
-	while [ $# -ge 1 ] ; do
-		sysctl -w $1
-		shift 1
-	done
-)
-fi
 
 [ -f /etc/rc.securelevel ] && . /etc/rc.securelevel
 if [ X${securelevel} != X"" ]; then
