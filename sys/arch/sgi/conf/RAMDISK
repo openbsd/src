@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.6 2004/08/11 15:13:21 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.7 2004/09/15 16:07:31 pefo Exp $
 #
 
 machine		sgi mips64
@@ -8,8 +8,6 @@ option		TIMEZONE=0	# minutes west of GMT (for)
 option		DST=0		# use daylight savings rules
 
 # Make options
-makeoption	ISALEV="-mips2 -D_MIPS_ISA=_MIPS_ISA_MIPS2"
-makeoption	ENDIAN="-EB"
 
 # Standard system options
 option		SWAPPAGER	# swap pager (anonymous and swap space)
