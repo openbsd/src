@@ -1,9 +1,9 @@
-/*	$OpenBSD: main.c,v 1.8 1996/09/02 16:04:13 briggs Exp $	*/
-/*	$NetBSD: main.c,v 1.30 1996/08/13 16:42:08 christos Exp $	*/
+/*	$OpenBSD: main.c,v 1.9 1996/11/30 21:08:59 millert Exp $	*/
+/*	$NetBSD: main.c,v 1.31 1996/11/06 17:59:12 christos Exp $	*/
 
 /*
- * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
- * Copyright (c) 1988, 1989 by Adam de Boor
+ * Copyright (c) 1988, 1989, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  * Copyright (c) 1989 by Berkeley Softworks
  * All rights reserved.
  *
@@ -40,17 +40,16 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1989 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)main.c	5.25 (Berkeley) 4/1/91";
-static char rcsid[] = "$NetBSD: main.c,v 1.26 1996/03/11 13:45:33 christos Exp $";
+static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.8 1996/09/02 16:04:13 briggs Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.9 1996/11/30 21:08:59 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -87,7 +86,9 @@ static char rcsid[] = "$OpenBSD: main.c,v 1.8 1996/09/02 16:04:13 briggs Exp $";
 #include <sys/resource.h>
 #include <sys/signal.h>
 #include <sys/stat.h>
+#ifndef MACHINE
 #include <sys/utsname.h>
+#endif
 #include <sys/wait.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -116,6 +117,8 @@ Boolean			allPrecious;	/* .PRECIOUS given on line by itself */
 
 static Boolean		noBuiltins;	/* -r flag */
 static Lst		makefiles;	/* ordered list of makefiles to read */
+static Boolean		printVars;	/* print value of one or more vars */
+static Lst		variables;	/* list of variables to print */
 int			maxJobs;	/* -j argument */
 static int		maxLocal;	/* -L argument */
 Boolean			compatMake;	/* -B argument */
@@ -131,8 +134,10 @@ Boolean			oldVars;	/* variable substitution style */
 Boolean			checkEnvFirst;	/* -e flag */
 static Boolean		jobsRunning;	/* TRUE if the jobs might be running */
 
-static Boolean		ReadMakefile();
-static void		usage();
+static void		MainParseArgs __P((int, char **));
+char *			chdir_verify_path __P((char *, char *));
+static int		ReadMakefile __P((ClientData, ClientData));
+static void		usage __P((void));
 
 static char *curdir;			/* startup directory */
 static char *objdir;			/* where we chdir'ed to */
@@ -163,9 +168,9 @@ MainParseArgs(argc, argv)
 
 	optind = 1;	/* since we're called more than once */
 #ifdef REMOTE
-# define OPTFLAGS "BD:I:L:PSd:ef:ij:km:nqrst"
+# define OPTFLAGS "BD:I:L:PSV:d:ef:ij:km:nqrst"
 #else
-# define OPTFLAGS "BD:I:PSd:ef:ij:km:nqrst"
+# define OPTFLAGS "BD:I:PSV:d:ef:ij:km:nqrst"
 #endif
 rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != EOF) {
 		switch(c) {
@@ -177,6 +182,12 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != EOF) {
 		case 'I':
 			Parse_AddIncludeDir(optarg);
 			Var_Append(MAKEFLAGS, "-I", VAR_GLOBAL);
+			Var_Append(MAKEFLAGS, optarg, VAR_GLOBAL);
+			break;
+		case 'V':
+			printVars = TRUE;
+			(void)Lst_AtEnd(variables, (ClientData)optarg);
+			Var_Append(MAKEFLAGS, "-V", VAR_GLOBAL);
 			Var_Append(MAKEFLAGS, optarg, VAR_GLOBAL);
 			break;
 		case 'B':
@@ -324,7 +335,7 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != EOF) {
 	 */
 	for (argv += optind, argc -= optind; *argv; ++argv, --argc)
 		if (Parse_IsVar(*argv)) {
-			char *var = strdup(*argv);
+			char *var = estrdup(*argv);
 
 			Parse_DoVar(var, VAR_CMD);
 			free(var);
@@ -375,6 +386,34 @@ Main_ParseArgLine(line)
 	MainParseArgs(argc, argv);
 }
 
+char *
+chdir_verify_path(path, obpath)
+	char *path;
+	char *obpath;
+{
+	struct stat sb;
+
+	if (stat(path, &sb) == 0 && S_ISDIR(sb.st_mode)) {
+		if (chdir(path)) {
+			(void)fprintf(stderr, "make warning: %s: %s.\n",
+				      path, strerror(errno));
+			return 0;
+		}
+		else {
+			if (path[0] != '/') {
+				(void) snprintf(obpath, MAXPATHLEN, "%s/%s",
+						curdir, path);
+				return obpath;
+			}
+			else
+				return path;
+		}
+	}
+
+	return 0;
+}
+
+
 /*-
  * main --
  *	The main function, for obvious reasons. Initializes variables
@@ -400,11 +439,10 @@ main(argc, argv)
 	Lst targs;	/* target nodes to create -- passed to Make_Init */
 	Boolean outOfDate = TRUE; 	/* FALSE if all targets up to date */
 	struct stat sb, sa;
-	char *p, *p1, *path, *pwd, *getenv(), *getwd();
+	char *p, *p1, *path, *pathp, *pwd;
 	char mdpath[MAXPATHLEN + 1];
 	char obpath[MAXPATHLEN + 1];
 	char cdpath[MAXPATHLEN + 1];
-	struct utsname utsname;
     	char *machine = getenv("MACHINE");
 	Lst sysMkPath;			/* Path of sys.mk */
 	char *cp = NULL, *start;
@@ -443,7 +481,7 @@ main(argc, argv)
 
 	if ((pwd = getenv("PWD")) != NULL) {
 	    if (stat(pwd, &sb) == 0 && sa.st_ino == sb.st_ino &&
-		sa.st_dev == sb.st_dev) 
+		sa.st_dev == sb.st_dev)
 		(void) strcpy(curdir, pwd);
 	}
 
@@ -457,6 +495,8 @@ main(argc, argv)
 	 */
     	if (!machine) {
 #ifndef MACHINE
+	    struct utsname utsname;
+
 	    if (uname(&utsname) == -1) {
 		    perror("make: uname");
 		    exit(2);
@@ -468,54 +508,39 @@ main(argc, argv)
 	}
 
 	/*
-	 * if the MAKEOBJDIR (or by default, the _PATH_OBJDIR) directory
-	 * exists, change into it and build there.  Once things are
-	 * initted, have to add the original directory to the search path,
+	 * If the MAKEOBJDIR (or by default, the _PATH_OBJDIR) directory
+	 * exists, change into it and build there.  (If a .${MACHINE} suffix
+	 * exists, use that directory instead).
+	 * Otherwise check MAKEOBJDIRPREFIX`cwd` (or by default,
+	 * _PATH_OBJDIRPREFIX`cwd`) and build there if it exists.
+	 * If all fails, use the current directory to build.
+	 *
+	 * Once things are initted,
+	 * have to add the original directory to the search path,
 	 * and modify the paths for the Makefiles apropriately.  The
 	 * current directory is also placed as a variable for make scripts.
 	 */
-	if (!(path = getenv("MAKEOBJDIR"))) {
-		path = _PATH_OBJDIR;
-		(void) sprintf(mdpath, "%s.%s", path, machine);
-	}
-	else
-		(void) strncpy(mdpath, path, MAXPATHLEN + 1);
-	
-	if (stat(mdpath, &sb) == 0 && S_ISDIR(sb.st_mode)) {
-
-		if (chdir(mdpath)) {
-			(void)fprintf(stderr, "make warning: %s: %s.\n",
-				      mdpath, strerror(errno));
+	if (!(pathp = getenv("MAKEOBJDIRPREFIX"))) {
+		if (!(path = getenv("MAKEOBJDIR"))) {
+			path = _PATH_OBJDIR;
+			pathp = _PATH_OBJDIRPREFIX;
+			(void) snprintf(mdpath, MAXPATHLEN, "%s.%s",
+					path, machine);
+			if (!(objdir = chdir_verify_path(mdpath, obpath)))
+				if (!(objdir=chdir_verify_path(path, obpath))) {
+					(void) snprintf(mdpath, MAXPATHLEN,
+							"%s%s", pathp, curdir);
+					if (!(objdir=chdir_verify_path(mdpath,
+								       obpath)))
+						objdir = curdir;
+				}
+		}
+		else if (!(objdir = chdir_verify_path(path, obpath)))
 			objdir = curdir;
-		}
-		else {
-			if (mdpath[0] != '/') {
-				(void) sprintf(obpath, "%s/%s", curdir, mdpath);
-				objdir = obpath;
-			}
-			else
-				objdir = mdpath;
-		}
 	}
 	else {
-		if (stat(path, &sb) == 0 && S_ISDIR(sb.st_mode)) {
-
-			if (chdir(path)) {
-				(void)fprintf(stderr, "make warning: %s: %s.\n",
-					      path, strerror(errno));
-				objdir = curdir;
-			}
-			else {
-				if (path[0] != '/') {
-					(void) sprintf(obpath, "%s/%s", curdir,
-						       path);
-					objdir = obpath;
-				}
-				else
-					objdir = obpath;
-			}
-		}
-		else
+		(void) snprintf(mdpath, MAXPATHLEN, "%s%s", pathp, curdir);
+		if (!(objdir = chdir_verify_path(mdpath, obpath)))
 			objdir = curdir;
 	}
 
@@ -523,6 +548,8 @@ main(argc, argv)
 
 	create = Lst_Init(FALSE);
 	makefiles = Lst_Init(FALSE);
+	printVars = FALSE;
+	variables = Lst_Init(FALSE);
 	beSilent = FALSE;		/* Print commands as executed */
 	ignoreErrors = FALSE;		/* Pay attention to non-zero returns */
 	noExecute = FALSE;		/* Execute all commands */
@@ -542,7 +569,7 @@ main(argc, argv)
 	maxJobs = maxLocal;
 #endif
 	compatMake = FALSE;		/* No compat mode */
-    
+
 
 	/*
 	 * Initialize the parsing, directory and variable modules to prepare
@@ -585,7 +612,7 @@ main(argc, argv)
 #else
 	Main_ParseArgLine(getenv("MAKE"));
 #endif
-    
+
 	MainParseArgs(argc, argv);
 
 	/*
@@ -624,7 +651,7 @@ main(argc, argv)
 	 */
 	if (Lst_IsEmpty(sysIncPath)) {
 		for (start = syspath; *start != '\0'; start = cp) {
-			for (cp = start; *cp != '\0' && *cp != ':'; cp++) 
+			for (cp = start; *cp != '\0' && *cp != ':'; cp++)
 				continue;
 			if (*cp == '\0') {
 				Dir_AddDir(sysIncPath, start);
@@ -658,10 +685,10 @@ main(argc, argv)
 		ln = Lst_Find(makefiles, (ClientData)NULL, ReadMakefile);
 		if (ln != NILLNODE)
 			Fatal("make: cannot open %s.", (char *)Lst_Datum(ln));
-	} else if (!ReadMakefile("makefile"))
-		(void)ReadMakefile("Makefile");
+	} else if (!ReadMakefile("makefile", NULL))
+		(void)ReadMakefile("Makefile", NULL);
 
-	(void)ReadMakefile(".depend");
+	(void)ReadMakefile(".depend", NULL);
 
 	Var_Append("MFLAGS", Var_Value(MAKEFLAGS, VAR_GLOBAL, &p1), VAR_GLOBAL);
 	if (p1)
@@ -719,6 +746,21 @@ main(argc, argv)
 	if (DEBUG(GRAPH1))
 		Targ_PrintGraph(1);
 
+	/* print the values of any variables requested by the user */
+	if (printVars) {
+		LstNode ln;
+
+		for (ln = Lst_First(variables); ln != NILLNODE;
+		    ln = Lst_Succ(ln)) {
+			char *value = Var_Value((char *)Lst_Datum(ln),
+					  VAR_GLOBAL, &p1);
+
+			printf("%s\n", value ? value : "");
+			if (p1)
+				free(p1);
+		}
+	}
+
 	/*
 	 * Have now read the entire graph and need to make a list of targets
 	 * to create. If none was given on the command line, we consult the
@@ -729,7 +771,7 @@ main(argc, argv)
 	else
 		targs = Targ_FindList(create, TARG_CREATE);
 
-	if (!compatMake) {
+	if (!compatMake && !printVars) {
 		/*
 		 * Initialize job module before traversing the graph, now that
 		 * any .BEGIN and .END targets have been read.  This is done
@@ -745,14 +787,16 @@ main(argc, argv)
 
 		/* Traverse the graph, checking on all the targets */
 		outOfDate = Make_Run(targs);
-	} else
+	} else if (!printVars) {
 		/*
 		 * Compat_Init will take care of creating all the targets as
 		 * well as initializing the module.
 		 */
 		Compat_Run(targs);
-    
+	}
+
 	Lst_Destroy(targs, NOFREE);
+	Lst_Destroy(variables, NOFREE);
 	Lst_Destroy(makefiles, NOFREE);
 	Lst_Destroy(create, (void (*) __P((ClientData))) free);
 
@@ -785,9 +829,10 @@ main(argc, argv)
  *	lots
  */
 static Boolean
-ReadMakefile(fname)
-	char *fname;		/* makefile to read */
+ReadMakefile(p, q)
+	ClientData p, q;
 {
+	char *fname = p;		/* makefile to read */
 	extern Lst parseIncPath;
 	FILE *stream;
 	char *name, path[MAXPATHLEN + 1];
@@ -888,7 +933,7 @@ Cmd_Exec(cmd, err)
 	 */
 	(void) dup2(fds[1], 1);
 	(void) close(fds[1]);
-	
+
 	(void) execv("/bin/sh", args);
 	_exit(1);
 	/*NOTREACHED*/
@@ -902,13 +947,13 @@ Cmd_Exec(cmd, err)
 	 * No need for the writing half
 	 */
 	(void) close(fds[1]);
-	
+
 	buf = Buf_Init (MAKE_BSIZE);
 
 	do {
 	    char   result[BUFSIZ];
 	    cc = read(fds[0], result, sizeof(result));
-	    if (cc > 0) 
+	    if (cc > 0)
 		Buf_AddBytes(buf, cc, (Byte *) result);
 	}
 	while (cc > 0 || (cc == -1 && errno == EINTR));
@@ -927,7 +972,7 @@ Cmd_Exec(cmd, err)
 	res = (char *)Buf_GetAll (buf, &cc);
 	Buf_Destroy (buf, FALSE);
 
-	if (cc == 0) 
+	if (cc == 0)
 	    *err = "Couldn't read shell's output for \"%s\"";
 
 	if (status)
@@ -1043,7 +1088,7 @@ Fatal(va_alist)
  *	a message and exits.
  *
  * Results:
- *	None 
+ *	None
  *
  * Side Effects:
  *	All children are killed indiscriminately and the program Lib_Exits
@@ -1099,10 +1144,10 @@ DieHorribly()
 /*
  * Finish --
  *	Called when aborting due to errors in child shell to signal
- *	abnormal exit. 
+ *	abnormal exit.
  *
  * Results:
- *	None 
+ *	None
  *
  * Side Effects:
  *	The program exits
@@ -1130,7 +1175,7 @@ emalloc(len)
 }
 
 /*
- * emalloc --
+ * estrdup --
  *	strdup, but die on error.
  */
 char *
@@ -1197,8 +1242,9 @@ static void
 usage()
 {
 	(void)fprintf(stderr,
-"usage: make [-eiknqrst] [-D variable] [-d flags] [-f makefile ]\n\
-            [-I directory] [-j max_jobs] [-m directory] [variable=value]\n");
+"usage: make [-Beiknqrst] [-D variable] [-d flags] [-f makefile ]\n\
+            [-I directory] [-j max_jobs] [-m directory] [-V variable]\n\
+            [variable=value] [target ...]\n");
 	exit(2);
 }
 

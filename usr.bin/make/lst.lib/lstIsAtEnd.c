@@ -1,9 +1,9 @@
-/*	$OpenBSD: lstIsAtEnd.c,v 1.2 1996/06/26 05:36:52 deraadt Exp $	*/
-/*	$NetBSD: lstIsAtEnd.c,v 1.4 1995/06/14 15:21:25 christos Exp $	*/
+/*	$OpenBSD: lstIsAtEnd.c,v 1.3 1996/11/30 21:09:18 millert Exp $	*/
+/*	$NetBSD: lstIsAtEnd.c,v 1.5 1996/11/06 17:59:45 christos Exp $	*/
 
 /*
- * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1989, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Adam de Boor.
@@ -39,9 +39,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)lstIsAtEnd.c	5.3 (Berkeley) 6/1/90";
+static char sccsid[] = "@(#)lstIsAtEnd.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lstIsAtEnd.c,v 1.2 1996/06/26 05:36:52 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: lstIsAtEnd.c,v 1.3 1996/11/30 21:09:18 millert Exp $";
 #endif
 #endif /* not lint */
 

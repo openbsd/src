@@ -1,9 +1,9 @@
-/*	$OpenBSD: str.c,v 1.4 1996/06/26 05:36:37 deraadt Exp $	*/
-/*	$NetBSD: str.c,v 1.12 1996/03/29 02:17:34 jtc Exp $	*/
+/*	$OpenBSD: str.c,v 1.5 1996/11/30 21:09:04 millert Exp $	*/
+/*	$NetBSD: str.c,v 1.13 1996/11/06 17:59:23 christos Exp $	*/
 
 /*-
- * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
- * Copyright (c) 1988, 1989 by Adam de Boor
+ * Copyright (c) 1988, 1989, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  * Copyright (c) 1989 by Berkeley Softworks
  * All rights reserved.
  *
@@ -43,7 +43,7 @@
 #if 0
 static char     sccsid[] = "@(#)str.c	5.8 (Berkeley) 6/1/90";
 #else
-static char rcsid[] = "$OpenBSD: str.c,v 1.4 1996/06/26 05:36:37 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: str.c,v 1.5 1996/11/30 21:09:04 millert Exp $";
 #endif
 #endif				/* not lint */
 
@@ -74,8 +74,9 @@ str_init()
 void
 str_end()
 {
-    if (argv[0]) {
-	free(argv[0]);
+    if (argv) {
+	if (argv[0])
+	    free(argv[0]);
 	free((Address) argv);
     }
     if (buffer)
@@ -223,7 +224,7 @@ brk_string(str, store_argc, expand)
 				ch = *++p;
 				break;
 			}
-				
+
 			switch (ch = *++p) {
 			case '\0':
 			case '\n':
@@ -260,12 +261,12 @@ done:	argv[argc] = (char *)NULL;
 
 /*
  * Str_FindSubstring -- See if a string contains a particular substring.
- * 
+ *
  * Results: If string contains substring, the return value is the location of
  * the first matching instance of substring in string.  If string doesn't
  * contain substring, the return value is NULL.  Matching is done on an exact
  * character-for-character basis with no wildcards or special characters.
- * 
+ *
  * Side effects: None.
  */
 char *
@@ -298,13 +299,13 @@ Str_FindSubstring(string, substring)
 
 /*
  * Str_Match --
- * 
+ *
  * See if a particular string matches a particular pattern.
- * 
+ *
  * Results: Non-zero is returned if string matches pattern, 0 otherwise. The
  * matching operation permits the following special characters in the
  * pattern: *?\[] (see the man page for details on what these mean).
- * 
+ *
  * Side effects: None.
  */
 int
@@ -401,8 +402,8 @@ thisCharOK:	++pattern;
 /*-
  *-----------------------------------------------------------------------
  * Str_SYSVMatch --
- *	Check word against pattern for a match (% is wild), 
- *	
+ *	Check word against pattern for a match (% is wild),
+ *
  * Results:
  *	Returns the beginning position of a match or null. The number
  *	of characters matched is returned in len.
@@ -452,7 +453,7 @@ Str_SYSVMatch(word, pattern, len)
 	    return m;
 	}
     while (*w++ != '\0');
-	    
+
     return NULL;
 }
 
@@ -463,7 +464,7 @@ Str_SYSVMatch(word, pattern, len)
  *	Substitute '%' on the pattern with len characters from src.
  *	If the pattern does not contain a '%' prepend len characters
  *	from src.
- *	
+ *
  * Results:
  *	None
  *

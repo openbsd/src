@@ -1,5 +1,5 @@
-/*	$OpenBSD: config.h,v 1.6 1996/09/21 19:36:27 niklas Exp $	*/
-/*	$NetBSD: config.h,v 1.6 1996/05/28 23:34:39 christos Exp $	*/
+/*	$OpenBSD: config.h,v 1.7 1996/11/30 21:08:53 millert Exp $	*/
+/*	$NetBSD: config.h,v 1.7 1996/11/06 17:59:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -38,7 +38,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)config.h	5.9 (Berkeley) 6/1/90
+ *	from: @(#)config.h	8.1 (Berkeley) 6/6/93
  */
 
 #define	DEFSHELL	1			/* Bourne shell */
@@ -95,12 +95,12 @@
 #define POSIX
 
 /*
- * SYSVINCLUDES
+ * SYSVINCLUDE
  *	Recognize system V like include directives [include "filename"]
  * SYSVVARSUB
  *	Recognize system V like ${VAR:x=y} variable substitutions
  */
-#define SYSVINCLUDES
+#define SYSVINCLUDE
 #define SYSVVARSUB
 
 /*
@@ -118,4 +118,3 @@
 #  define RANLIBMAG "__.SYMDEF"
 # endif
 #endif
-/*#define POSIX*/

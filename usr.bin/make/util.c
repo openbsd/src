@@ -1,13 +1,12 @@
-/*	$OpenBSD: util.c,v 1.4 1996/09/02 16:04:21 briggs Exp $	*/
-/*	$NetBSD: util.c,v 1.5 1995/11/22 17:40:17 christos Exp $	*/
+/*	$OpenBSD: util.c,v 1.5 1996/11/30 21:09:06 millert Exp $	*/
+/*	$NetBSD: util.c,v 1.9 1996/11/11 15:16:10 christos Exp $	*/
 
 /*
  * Missing stuff from OS's
- *
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: util.c,v 1.4 1996/09/02 16:04:21 briggs Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.5 1996/11/30 21:09:06 millert Exp $";
 #endif
 
 #include <stdio.h>
@@ -27,8 +26,8 @@ extern int errno, sys_nerr;
 extern char *sys_errlist[];
 
 char *
-strerror(e) 
-    int e; 
+strerror(e)
+    int e;
 {
     static char buf[100];
     if (e < 0 || e >= sys_nerr) {
@@ -53,6 +52,7 @@ strdup(str)
     const char *str;
 {
     size_t len;
+    char *p;
 
     if (str == NULL)
 	return NULL;
@@ -69,7 +69,7 @@ strdup(str)
 
 int
 setenv(name, value, dum)
-    const char *name; 
+    const char *name;
     const char *value;
     int dum;
 {
@@ -81,15 +81,15 @@ setenv(name, value, dum)
 
     if (ptr == NULL)
 	return -1;
-    
+
     p = ptr;
 
-    while (*name) 
+    while (*name)
 	*p++ = *name++;
 
     *p++ = '=';
 
-    while (*value) 
+    while (*value)
 	*p++ = *value++;
 
     *p = '\0';
@@ -238,14 +238,14 @@ getwd(pathname)
 	/* look in the parent for the entry with the same inode */
 	if (DEV_DEV_COMPARE(st_dotdot.st_dev, st_cur.st_dev)) {
 	    /* Parent has same device. No need to stat every member */
-	    for (d = readdir(dp); d != NULL; d = readdir(dp)) 
+	    for (d = readdir(dp); d != NULL; d = readdir(dp))
 		if (d->d_fileno == st_cur.st_ino)
 		    break;
 	}
 	else {
-	    /* 
-	     * Parent has a different device. This is a mount point so we 
-	     * need to stat every member 
+	    /*
+	     * Parent has a different device. This is a mount point so we
+	     * need to stat every member
 	     */
 	    for (d = readdir(dp); d != NULL; d = readdir(dp)) {
 		if (ISDOT(d->d_name) || ISDOTDOT(d->d_name))
@@ -259,7 +259,7 @@ getwd(pathname)
 		}
 		/* check if we found it yet */
 		if (st_next.st_ino == st_cur.st_ino &&
-		    DEV_DEV_COMPARE(st_next.st_dev, st_cur.st_dev)) 
+		    DEV_DEV_COMPARE(st_next.st_dev, st_cur.st_dev))
 		    break;
 	    }
 	}

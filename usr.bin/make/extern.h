@@ -1,9 +1,9 @@
-/*	$OpenBSD: extern.h,v 1.5 1996/09/02 16:04:16 briggs Exp $	*/
-/*	$NetBSD: nonints.h,v 1.11 1996/08/13 16:42:11 christos Exp $	*/
+/*	$OpenBSD: extern.h,v 1.6 1996/11/30 21:09:01 millert Exp $	*/
+/*	$NetBSD: nonints.h,v 1.12 1996/11/06 17:59:19 christos Exp $	*/
 
 /*-
- * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
- * Copyright (c) 1988, 1989 by Adam de Boor
+ * Copyright (c) 1988, 1989, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  * Copyright (c) 1989 by Berkeley Softworks
  * All rights reserved.
  *
@@ -38,7 +38,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)nonints.h	5.6 (Berkeley) 4/18/91
+ *	from: @(#)nonints.h	8.3 (Berkeley) 3/19/94
  */
 
 /* arch.c */
@@ -51,6 +51,7 @@ void Arch_FindLib __P((GNode *, Lst));
 Boolean Arch_LibOODate __P((GNode *));
 void Arch_Init __P((void));
 void Arch_End __P((void));
+int Arch_IsLib __P((GNode *));
 
 /* compat.c */
 void Compat_Run __P((Lst));

@@ -1,9 +1,9 @@
-/*	$OpenBSD: lstFindFrom.c,v 1.2 1996/06/26 05:36:48 deraadt Exp $	*/
-/*	$NetBSD: lstFindFrom.c,v 1.5 1995/06/14 15:21:09 christos Exp $	*/
+/*	$OpenBSD: lstFindFrom.c,v 1.3 1996/11/30 21:09:15 millert Exp $	*/
+/*	$NetBSD: lstFindFrom.c,v 1.6 1996/11/06 17:59:40 christos Exp $	*/
 
 /*
- * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1989, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Adam de Boor.
@@ -38,8 +38,11 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)lstFindFrom.c	5.3 (Berkeley) 6/1/90"; */
-static char *rcsid = "$OpenBSD: lstFindFrom.c,v 1.2 1996/06/26 05:36:48 deraadt Exp $";
+#if 0
+static char sccsid[] = "@(#)lstFindFrom.c	8.1 (Berkeley) 6/6/93";
+#else
+static char *rcsid = "$OpenBSD: lstFindFrom.c,v 1.3 1996/11/30 21:09:15 millert Exp $";
+#endif
 #endif /* not lint */
 
 /*-
@@ -73,13 +76,13 @@ Lst_FindFrom (l, ln, d, cProc)
 {
     register ListNode	tln;
     Boolean		found = FALSE;
-    
+
     if (!LstValid (l) || LstIsEmpty (l) || !LstNodeValid (ln, l)) {
 	return (NILLNODE);
     }
-    
+
     tln = (ListNode)ln;
-    
+
     do {
 	if ((*cProc) (tln->datum, d) == 0) {
 	    found = TRUE;
@@ -88,7 +91,7 @@ Lst_FindFrom (l, ln, d, cProc)
 	    tln = tln->nextPtr;
 	}
     } while (tln != (ListNode)ln && tln != NilListNode);
-    
+
     if (found) {
 	return ((LstNode)tln);
     } else {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bit.h,v 1.3 1996/06/26 05:36:25 deraadt Exp $	*/
+/*	$OpenBSD: bit.h,v 1.4 1996/11/30 21:08:50 millert Exp $	*/
 /*	$NetBSD: bit.h,v 1.5 1995/11/08 02:30:53 christos Exp $	*/
 
 /*
@@ -99,5 +99,5 @@ extern Boolean	  Bit_Intersect();
 extern Boolean 	  Bit_Union();
 extern Boolean 	  Bit_AnySet();
 extern int  	  *Bit_Expand();
-	 
+
 #endif /* _BIT */

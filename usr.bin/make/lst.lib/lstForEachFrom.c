@@ -1,9 +1,9 @@
-/*	$OpenBSD: lstForEachFrom.c,v 1.2 1996/06/26 05:36:50 deraadt Exp $	*/
-/*	$NetBSD: lstForEachFrom.c,v 1.4 1995/06/14 15:21:16 christos Exp $	*/
+/*	$OpenBSD: lstForEachFrom.c,v 1.3 1996/11/30 21:09:16 millert Exp $	*/
+/*	$NetBSD: lstForEachFrom.c,v 1.5 1996/11/06 17:59:42 christos Exp $	*/
 
 /*
- * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1989, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Adam de Boor.
@@ -39,9 +39,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)lstForEachFrom.c	5.3 (Berkeley) 6/1/90";
+static char sccsid[] = "@(#)lstForEachFrom.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lstForEachFrom.c,v 1.2 1996/06/26 05:36:50 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: lstForEachFrom.c,v 1.3 1996/11/30 21:09:16 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -58,7 +58,7 @@ static char rcsid[] = "$OpenBSD: lstForEachFrom.c,v 1.2 1996/06/26 05:36:50 dera
  * Lst_ForEachFrom --
  *	Apply the given function to each element of the given list. The
  *	function should return 0 if traversal should continue and non-
- *	zero if it should abort. 
+ *	zero if it should abort.
  *
  * Results:
  *	None.
@@ -73,7 +73,7 @@ void
 Lst_ForEachFrom (l, ln, proc, d)
     Lst	    	    	l;
     LstNode    	  	ln;
-    register int	(*proc)();
+    register int	(*proc) __P((ClientData, ClientData));
     register ClientData	d;
 {
     register ListNode	tln = (ListNode)ln;
@@ -81,19 +81,19 @@ Lst_ForEachFrom (l, ln, proc, d)
     register ListNode	next;
     Boolean 	    	done;
     int     	    	result;
-    
+
     if (!LstValid (list) || LstIsEmpty (list)) {
 	return;
     }
-    
+
     do {
 	/*
 	 * Take care of having the current element deleted out from under
 	 * us.
 	 */
-	
+
 	next = tln->nextPtr;
-	
+
 	(void) tln->useCount++;
 	result = (*proc) (tln->datum, d);
 	(void) tln->useCount--;
@@ -106,7 +106,7 @@ Lst_ForEachFrom (l, ln, proc, d)
 	 */
 	done = (next == tln->nextPtr &&
 		(next == NilListNode || next == list->firstPtr));
-	
+
 	next = tln->nextPtr;
 
 	if (tln->flags & LN_DELETED) {
@@ -114,6 +114,6 @@ Lst_ForEachFrom (l, ln, proc, d)
 	}
 	tln = next;
     } while (!result && !LstIsEmpty(list) && !done);
-    
+
 }
 
