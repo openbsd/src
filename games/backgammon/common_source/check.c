@@ -1,4 +1,4 @@
-/*	$NetBSD: check.c,v 1.3 1995/03/21 15:05:36 cgd Exp $	*/
+/*	$OpenBSD: check.c,v 1.2 1998/03/19 11:13:18 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,26 +37,28 @@
 #if 0
 static char sccsid[] = "@(#)check.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: check.c,v 1.3 1995/03/21 15:05:36 cgd Exp $";
+static char rcsid[] = "$OpenBSD: check.c,v 1.2 1998/03/19 11:13:18 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
 #include "back.h"
 
-getmove ()  {
-	register int	i, c;
+void
+getmove()
+{
+	int     i, c;
 
 	c = 0;
-	for (;;)  {
+	for (;;) {
 		i = checkmove(c);
 
-		switch (i)  {
+		switch (i) {
 		case -1:
-			if (movokay(mvlim))  {
+			if (movokay(mvlim)) {
 				if (tflag)
-					curmove (20,0);
+					curmove(20, 0);
 				else
-					writec ('\n');
+					writec('\n');
 				for (i = 0; i < mvlim; i++)
 					if (h[i])
 						wrhit(g[i]);
@@ -67,7 +69,6 @@ getmove ()  {
 					bflag = pnum;
 				return;
 			}
-
 		case -4:
 		case 0:
 			if (tflag)
@@ -75,20 +76,20 @@ getmove ()  {
 			if (i != 0 && i != -4)
 				break;
 			if (tflag)
-				curmove (20,0);
+				curmove(20, 0);
 			else
-				writec ('\n');
-			writel (*Colorptr);
+				writec('\n');
+			writel(*Colorptr);
 			if (i == -4)
-				writel (" must make ");
+				writel(" must make ");
 			else
-				writel (" can only make ");
-			writec (mvlim+'0');
-			writel (" move");
+				writel(" can only make ");
+			writec(mvlim + '0');
+			writel(" move");
 			if (mvlim > 1)
-				writec ('s');
-			writec ('.');
-			writec ('\n');
+				writec('s');
+			writec('.');
+			writec('\n');
 			break;
 
 		case -3:
@@ -96,69 +97,64 @@ getmove ()  {
 				return;
 		}
 
-		if (! tflag)
-			proll ();
-		else  {
-			curmove (cturn == -1? 18: 19,39);
-			cline ();
+		if (!tflag)
+			proll();
+		else {
+			curmove(cturn == -1 ? 18 : 19, 39);
+			cline();
 			c = -1;
 		}
 	}
 }
-
-movokay (mv)
-register int	mv;
 
+int
+movokay(mv)
+	int     mv;
 {
-	register int	i, m;
+	int     i, m;
 
 	if (d0)
 		swap;
 
-	for (i = 0; i < mv; i++)  {
-
-		if (p[i] == g[i])  {
-			moverr (i);
-			curmove (20,0);
-			writel ("Attempt to move to same location.\n");
-			return (0);
+	for (i = 0; i < mv; i++) {
+		if (p[i] == g[i]) {
+			moverr(i);
+			curmove(20, 0);
+			writel("Attempt to move to same location.\n");
+			return(0);
 		}
-
-		if (cturn*(g[i]-p[i]) < 0)  {
-			moverr (i);
-			curmove (20,0);
-			writel ("Backwards move.\n");
-			return (0);
+		if (cturn * (g[i] - p[i]) < 0) {
+			moverr(i);
+			curmove(20, 0);
+			writel("Backwards move.\n");
+			return(0);
 		}
-
-		if (abs(board[bar]) && p[i] != bar)  {
-			moverr (i);
-			curmove (20,0);
-			writel ("Men still on bar.\n");
-			return (0);
+		if (abs(board[bar]) && p[i] != bar) {
+			moverr(i);
+			curmove(20, 0);
+			writel("Men still on bar.\n");
+			return(0);
 		}
-
-		if ( (m = makmove(i)) )  {
-			moverr (i);
-			switch (m)  {
-
+		if (m = makmove(i)) {
+			moverr(i);
+			switch (m) {
 			case 1:
-				writel ("Move not rolled.\n");
+				writel("Move not rolled.\n");
 				break;
 
 			case 2:
-				writel ("Bad starting position.\n");
+				writel("Bad starting position.\n");
 				break;
 
 			case 3:
-				writel ("Destination occupied.\n");
+				writel("Destination occupied.\n");
 				break;
 
 			case 4:
-				writel ("Can't remove men yet.\n");
+				writel("Can't remove men yet.\n");
 			}
-			return (0);
+			return(0);
 		}
 	}
-	return (1);
+	return(1);
 }

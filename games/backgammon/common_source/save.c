@@ -1,4 +1,4 @@
-/*	$NetBSD: save.c,v 1.4 1995/04/29 00:44:13 mycroft Exp $	*/
+/*	$OpenBSD: save.c,v 1.3 1998/03/19 11:13:25 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,150 +37,149 @@
 #if 0
 static char sccsid[] = "@(#)save.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: save.c,v 1.4 1995/04/29 00:44:13 mycroft Exp $";
+static char rcsid[] = "$OpenBSD: save.c,v 1.3 1998/03/19 11:13:25 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
 #include "back.h"
 
-extern int	errno;
+extern int errno;
 
-static char	confirm[] = "Are you sure you want to leave now?";
-static char	prompt[] = "Enter a file name:  ";
-static char	exist1[] = "The file '";
-static char	exist2[] =
+static char confirm[] = "Are you sure you want to leave now?";
+static char prompt[] = "Enter a file name:  ";
+static char exist1[] = "The file '";
+static char exist2[] =
 	"' already exists.\nAre you sure you want to use this file?";
-static char	cantuse[] = "\nCan't use ";
-static char	saved[] = "This game has been saved on the file '";
-static char	type[] = "'.\nType \"backgammon -s ";
-static char	rec[] = "\" to recover your game.\n\n";
-static char	cantrec[] = "Can't recover file:  ";
+static char cantuse[] = "\nCan't use ";
+static char saved[] = "This game has been saved on the file '";
+static char type[] = "'.\nType \"backgammon -s ";
+static char rec[] = "\" to recover your game.\n\n";
+static char cantrec[] = "Can't recover file:  ";
 
-save (n)
-register int	n;
-
+void
+save(n)
+	int     n;
 {
-	register int	fdesc;
-	register char	*fs;
-	char		fname[50];
+	int     fdesc;
+	char   *fs;
+	char    fname[50];
 
-	if (n)  {
-		if (tflag)  {
-			curmove (20,0);
+	if (n) {
+		if (tflag) {
+			curmove(20, 0);
 			clend();
 		} else
-			writec ('\n');
-		writel (confirm);
-		if (! yorn(0))
+			writec('\n');
+		writel(confirm);
+		if (!yorn(0))
 			return;
 	}
 	cflag = 1;
-	for (;;)  {
-		writel (prompt);
+	for (;;) {
+		writel(prompt);
 		fs = fname;
-		while ((*fs = readc()) != '\n')  {
-			if (*fs == old.c_cc[VERASE])  {
-				if (fs > fname)  {
+		while ((*fs = readc()) != '\n') {
+			if (*fs == old.c_cc[VERASE]) {
+				if (fs > fname) {
 					fs--;
 					if (tflag)
-						curmove (curr,curc-1);
+						curmove(curr, curc - 1);
 					else
-						writec (*fs);
+						writec(*fs);
 				} else
-					writec ('\007');
+					writec('\007');
 				continue;
 			}
-			writec (*fs++);
+			writec(*fs++);
 		}
 		*fs = '\0';
-		if ((fdesc = open(fname,2)) == -1 && errno == 2)  {
-			if ((fdesc = creat (fname,0700)) != -1)
-			break;
+		if ((fdesc = open(fname, 2)) == -1 && errno == 2) {
+			if ((fdesc = creat(fname, 0600)) != -1)
+				break;
 		}
-		if (fdesc != -1)  {
-			if (tflag)  {
-				curmove (18,0);
+		if (fdesc != -1) {
+			if (tflag) {
+				curmove(18, 0);
 				clend();
 			} else
-				writec ('\n');
-			writel (exist1);
-			writel (fname);
-			writel (exist2);
+				writec('\n');
+			writel(exist1);
+			writel(fname);
+			writel(exist2);
 			cflag = 0;
-			close (fdesc);
-			if (yorn (0))  {
-				unlink (fname);
-				fdesc = creat (fname,0700);
+			close(fdesc);
+			if (yorn(0)) {
+				unlink(fname);
+				fdesc = creat(fname, 0600);
 				break;
-			} else  {
+			} else {
 				cflag = 1;
 				continue;
 			}
 		}
-		writel (cantuse);
-		writel (fname);
-		writel (".\n");
-		close (fdesc);
+		writel(cantuse);
+		writel(fname);
+		writel(".\n");
+		close(fdesc);
 		cflag = 1;
 	}
-	write (fdesc,board,sizeof board);
-	write (fdesc,off,sizeof off);
-	write (fdesc,in,sizeof in);
-	write (fdesc,dice,sizeof dice);
-	write (fdesc,&cturn,sizeof cturn);
-	write (fdesc,&dlast,sizeof dlast);
-	write (fdesc,&pnum,sizeof pnum);
-	write (fdesc,&rscore,sizeof rscore);
-	write (fdesc,&wscore,sizeof wscore);
-	write (fdesc,&gvalue,sizeof gvalue);
-	write (fdesc,&raflag,sizeof raflag);
-	close (fdesc);
+	write(fdesc, board, sizeof(board));
+	write(fdesc, off, sizeof(off));
+	write(fdesc, in, sizeof(in));
+	write(fdesc, dice, sizeof(dice));
+	write(fdesc, &cturn, sizeof(cturn));
+	write(fdesc, &dlast, sizeof(dlast));
+	write(fdesc, &pnum, sizeof(pnum));
+	write(fdesc, &rscore, sizeof(rscore));
+	write(fdesc, &wscore, sizeof(wscore));
+	write(fdesc, &gvalue, sizeof(gvalue));
+	write(fdesc, &raflag, sizeof(raflag));
+	close(fdesc);
 	if (tflag)
-		curmove (18,0);
-	writel (saved);
-	writel (fname);
-	writel (type);
-	writel (fname);
-	writel (rec);
+		curmove(18, 0);
+	writel(saved);
+	writel(fname);
+	writel(type);
+	writel(fname);
+	writel(rec);
 	if (tflag)
 		clend();
-	getout ();
+	getout(0);
 }
-
-recover (s)
-char	*s;
 
+void
+recover(s)
+	char   *s;
 {
-	register int	i;
-	int		fdesc;
+	int     fdesc;
 
-	if ((fdesc = open (s,0)) == -1)
-		norec (s);
-	read (fdesc,board,sizeof board);
-	read (fdesc,off,sizeof off);
-	read (fdesc,in,sizeof in);
-	read (fdesc,dice,sizeof dice);
-	read (fdesc,&cturn,sizeof cturn);
-	read (fdesc,&dlast,sizeof dlast);
-	read (fdesc,&pnum,sizeof pnum);
-	read (fdesc,&rscore,sizeof rscore);
-	read (fdesc,&wscore,sizeof wscore);
-	read (fdesc,&gvalue,sizeof gvalue);
-	read (fdesc,&raflag,sizeof raflag);
-	close (fdesc);
+	if ((fdesc = open(s, 0)) == -1)
+		norec(s);
+	read(fdesc, board, sizeof(board));
+	read(fdesc, off, sizeof(off));
+	read(fdesc, in, sizeof(in));
+	read(fdesc, dice, sizeof(dice));
+	read(fdesc, &cturn, sizeof(cturn));
+	read(fdesc, &dlast, sizeof(dlast));
+	read(fdesc, &pnum, sizeof(pnum));
+	read(fdesc, &rscore, sizeof(rscore));
+	read(fdesc, &wscore, sizeof(wscore));
+	read(fdesc, &gvalue, sizeof(gvalue));
+	read(fdesc, &raflag, sizeof(raflag));
+	close(fdesc);
 	rflag = 1;
 }
 
-norec (s)
-register char	*s;
-
+void
+norec(s)
+	char   *s;
 {
-	register char	*c;
+	char   *c;
 
 	tflag = 0;
-	writel (cantrec);
+	writel(cantrec);
 	c = s;
 	while (*c != '\0')
-		writec (*c++);
-	getout ();
+		writec(*c++);
+	getout(0);
 }

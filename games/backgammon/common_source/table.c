@@ -1,4 +1,4 @@
-/*	$NetBSD: table.c,v 1.4 1995/04/29 00:44:16 mycroft Exp $	*/
+/*	$OpenBSD: table.c,v 1.2 1998/03/19 11:13:27 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,65 +37,63 @@
 #if 0
 static char sccsid[] = "@(#)table.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: table.c,v 1.4 1995/04/29 00:44:16 mycroft Exp $";
+static char rcsid[] = "$OpenBSD: table.c,v 1.2 1998/03/19 11:13:27 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
 #include "back.h"
 
-char	*help2[] = {
+char   *help2[] = {
 	"   Enter moves as <s>-<f> or <s>/<r> where <s> is the starting",
 	"position, <f> is the finishing position, and <r> is the roll.",
 	"Remember, each die roll must be moved separately.",
 	0
 };
 
-struct state	{
-	char	ch;
-	int	fcode;
-	int	newst;
+struct state {
+	char    ch;
+	int     fcode;
+	int     newst;
 };
 
-struct state	atmata[] = {
+struct state atmata[] = {
 
-	'R', 1, 0,	'?', 7, 0,	'Q', 0, -3,	'B', 8, 25,
-	'9', 2, 25,	'8', 2, 25,	'7', 2, 25,	'6', 2, 25,
-	'5', 2, 25,	'4', 2, 25,	'3', 2, 25,	'2', 2, 19,
-	'1', 2, 15,	'0', 2, 25,	'.', 0, 0,	'9', 2, 25,
-	'8', 2, 25,	'7', 2, 25,	'6', 2, 25,	'5', 2, 25,
+	{'R', 1, 0},	{'?', 7, 0},	{'Q', 0, -3},	{'B', 8, 25},
+	{'9', 2, 25},	{'8', 2, 25},	{'7', 2, 25},	{'6', 2, 25},
+	{'5', 2, 25},	{'4', 2, 25},	{'3', 2, 25},	{'2', 2, 19},
+	{'1', 2, 15},	{'0', 2, 25},	{'.', 0, 0},	{'9', 2, 25},
+	{'8', 2, 25},	{'7', 2, 25},	{'6', 2, 25},	{'5', 2, 25},
 
-	'4', 2, 25,	'3', 2, 25,	'2', 2, 25,	'1', 2, 25,
-	'0', 2, 25,	'/', 0, 32,	'-', 0, 39,	'.', 0, 0,
-	'/', 5, 32,	' ', 6, 3,	',', 6, 3,	'\n', 0, -1,
-	'6', 3, 28,	'5', 3, 28,	'4', 3, 28,	'3', 3, 28,
-	'2', 3, 28,	'1', 3, 28,	'.', 0, 0,	'H', 9, 61,
+	{'4', 2, 25},	{'3', 2, 25},	{'2', 2, 25},	{'1', 2, 25},
+	{'0', 2, 25},	{'/', 0, 32},	{'-', 0, 39},	{'.', 0, 0},
+	{'/', 5, 32},	{' ', 6, 3},	{',', 6, 3},	{'\n', 0, -1},
+	{'6', 3, 28},	{'5', 3, 28},	{'4', 3, 28},	{'3', 3, 28},
+	{'2', 3, 28},	{'1', 3, 28},	{'.', 0, 0},	{'H', 9, 61},
 
-	'9', 4, 61,	'8', 4, 61,	'7', 4, 61,	'6', 4, 61,
-	'5', 4, 61,	'4', 4, 61,	'3', 4, 61,	'2', 4, 53,
-	'1', 4, 51,	'0', 4, 61,	'.', 0, 0,	'9', 4, 61,
-	'8', 4, 61,	'7', 4, 61,	'6', 4, 61,	'5', 4, 61,
-	'4', 4, 61,	'3', 4, 61,	'2', 4, 61,	'1', 4, 61,
+	{'9', 4, 61},	{'8', 4, 61},	{'7', 4, 61},	{'6', 4, 61},
+	{'5', 4, 61},	{'4', 4, 61},	{'3', 4, 61},	{'2', 4, 53},
+	{'1', 4, 51},	{'0', 4, 61},	{'.', 0, 0},	{'9', 4, 61},
+	{'8', 4, 61},	{'7', 4, 61},	{'6', 4, 61},	{'5', 4, 61},
+	{'4', 4, 61},	{'3', 4, 61},	{'2', 4, 61},	{'1', 4, 61},
 
-	'0', 4, 61,	' ', 6, 3,	',', 6, 3,	'-', 5, 39,
-	'\n', 0, -1,	'.', 0, 0
+	{'0', 4, 61},	{' ', 6, 3},	{',', 6, 3},	{'-', 5, 39},
+	{'\n', 0, -1},	{'.', 0, 0}
 };
 
-checkmove (ist)
-
-int	ist;
-
+int
+checkmove(ist)
+	int     ist;
 {
-	register int	j, n;
-	register char	c;
-	char		a;
+	int     j, n;
+	char    c;
 
 domove:
-	if (ist == 0)  {
+	if (ist == 0) {
 		if (tflag)
-			curmove (curr,32);
+			curmove(curr, 32);
 		else
-			writel ("\t\t");
-		writel ("Move:  ");
+			writel("\t\t");
+		writel("Move:  ");
 	}
 	ist = mvl = ncin = 0;
 	for (j = 0; j < 5; j++)
@@ -104,32 +102,31 @@ domove:
 dochar:
 	c = readc();
 
-	if (c == 'S')  {
+	if (c == 'S') {
 		raflag = 0;
-		save (1);
-		if (tflag)  {
-			curmove (cturn == -1? 18: 19,39);
+		save(1);
+		if (tflag) {
+			curmove(cturn == -1 ? 18 : 19, 39);
 			ist = -1;
 			goto domove;
-		} else  {
-			proll ();
+		} else {
+			proll();
 			ist = 0;
 			goto domove;
 		}
 	}
-
-	if (c == old.c_cc[VERASE] && ncin > 0)  {
+	if (c == old.c_cc[VERASE] && ncin > 0) {
 		if (tflag)
-			curmove (curr,curc-1);
-		else  {
+			curmove(curr, curc - 1);
+		else {
 			if (old.c_cc[VERASE] == '\010')
-				writel ("\010 \010");
+				writel("\010 \010");
 			else
-				writec (cin[ncin-1]);
+				writec(cin[ncin - 1]);
 		}
 		ncin--;
 		n = rsetbrd();
-		if (n == 0)  {
+		if (n == 0) {
 			n = -1;
 			if (tflag)
 				refresh();
@@ -138,110 +135,104 @@ dochar:
 			goto dochar;
 		goto domove;
 	}
-
-	if (c == old.c_cc[VKILL] && ncin > 0)  {
-		if (tflag)  {
+	if (c == old.c_cc[VKILL] && ncin > 0) {
+		if (tflag) {
 			refresh();
-			curmove (curr,39);
+			curmove(curr, 39);
 			ist = -1;
 			goto domove;
-		} else  if (old.c_cc[VERASE] == '\010')  {
+		} else if (old.c_cc[VERASE] == '\010') {
 			for (j = 0; j < ncin; j++)
-				writel ("\010 \010");
+				writel("\010 \010");
 			ist = -1;
 			goto domove;
-		} else  {
-			writec ('\\');
-			writec ('\n');
-			proll ();
+		} else {
+			writec('\\');
+			writec('\n');
+			proll();
 			ist = 0;
 			goto domove;
 		}
 	}
-
-	n = dotable(c,ist);
-	if (n >= 0)  {
+	n = dotable(c, ist);
+	if (n >= 0) {
 		cin[ncin++] = c;
 		if (n > 2)
-		if ((! tflag) || c != '\n')
-			writec (c);
+		if ((!tflag) || c != '\n')
+			writec(c);
 		ist = n;
 		if (n)
 			goto dochar;
 		else
 			goto domove;
 	}
-
 	if (n == -1 && mvl >= mvlim)
 		return(0);
 	if (n == -1 && mvl < mvlim-1)
 		return(-4);
-
-	if (n == -6)  {
-		if (! tflag)  {
-			if (movokay(mvl+1))  {
+	if (n == -6) {
+		if (!tflag) {
+			if (movokay(mvl + 1)) {
 				wrboard();
-				movback (mvl+1);
+				movback(mvl + 1);
 			}
-			proll ();
-			writel ("\t\tMove:  ");
+			proll();
+			writel("\t\tMove:  ");
 			for (j = 0; j < ncin;)
-				writec (cin[j++]);
-		} else  {
-			if (movokay(mvl+1))  {
+				writec(cin[j++]);
+		} else {
+			if (movokay(mvl + 1)) {
 				refresh();
-				movback (mvl+1);
+				movback(mvl + 1);
 			} else
-				curmove (cturn == -1? 18:19,ncin+39);
+				curmove(cturn == -1 ? 18 : 19, ncin + 39);
 		}
 		ist = n = rsetbrd();
 		goto dochar;
 	}
-
 	if (n != -5)
 		return(n);
-	writec ('\007');
+	writec('\007');
 	goto dochar;
 }
-
-dotable (c,i)
-char		c;
-register int	i;
 
+int
+dotable(c, i)
+	char    c;
+	int     i;
 {
-	register int	a, j;
-	int		test;
+	int     a;
+	int     test;
 
 	test = (c == 'R');
 
-	while ( (a = atmata[i].ch) != '.')  {
-		if (a == c || (test && a == '\n'))  {
-			switch  (atmata[i].fcode)  {
-
+	while ((a = atmata[i].ch) != '.') {
+		if (a == c || (test && a == '\n')) {
+			switch (atmata[i].fcode) {
 			case 1:
 				wrboard();
-				if (tflag)  {
-					curmove (cturn == -1? 18: 19,0);
-					proll ();
-					writel ("\t\t");
+				if (tflag) {
+					curmove(cturn == -1 ? 18 : 19, 0);
+					proll();
+					writel("\t\t");
 				} else
-					proll ();
+					proll();
 				break;
 
 			case 2:
 				if (p[mvl] == -1)
-					p[mvl] = c-'0';
+					p[mvl] = c - '0';
 				else
-					p[mvl] = p[mvl]*10+c-'0';
+					p[mvl] = p[mvl] * 10 + c - '0';
 				break;
 
 			case 3:
-				if (g[mvl] != -1)  {
+				if (g[mvl] != -1) {
 					if (mvl < mvlim)
 						mvl++;
-					p[mvl] = p[mvl-1];
+					p[mvl] = p[mvl - 1];
 				}
-				g[mvl] = p[mvl]+cturn*(c-'0');
+				g[mvl] = p[mvl] + cturn * (c - '0');
 				if (g[mvl] < 0)
 					g[mvl] = 0;
 				if (g[mvl] > 25)
@@ -250,15 +241,15 @@ register int	i;
 
 			case 4:
 				if (g[mvl] == -1)
-					g[mvl] = c-'0';
+					g[mvl] = c - '0';
 				else
-					g[mvl] = g[mvl]*10+c-'0';
+					g[mvl] = g[mvl] * 10 + c - '0';
 				break;
 
 			case 5:
 				if (mvl < mvlim)
 					mvl++;
-				p[mvl] = g[mvl-1];
+				p[mvl] = g[mvl - 1];
 				break;
 
 			case 6:
@@ -268,16 +259,16 @@ register int	i;
 
 			case 7:
 				if (tflag)
-					curmove (20,0);
+					curmove(20, 0);
 				else
-					writec ('\n');
-				text (help2);
-				if (tflag)  {
-					curmove (cturn == -1? 18: 19,39);
-				} else  {
-					writec ('\n');
+					writec('\n');
+				text(help2);
+				if (tflag) {
+					curmove(cturn == -1 ? 18 : 19, 39);
+				} else {
+					writec('\n');
 					proll();
-					writel ("\t\tMove:  ");
+					writel("\t\tMove:  ");
 				}
 				break;
 
@@ -289,26 +280,26 @@ register int	i;
 				g[mvl] = home;
 			}
 
-			if (! test || a != '\n')
-				return (atmata[i].newst);
+			if (!test || a != '\n')
+				return(atmata[i].newst);
 			else
-				return (-6);
+				return(-6);
 		}
-
 		i++;
 	}
-
 	return (-5);
 }
-
-rsetbrd ()  {
-	register int	i, j, n;
+
+int
+rsetbrd()
+{
+	int     i, j, n;
 
 	n = 0;
 	mvl = 0;
 	for (i = 0; i < 4; i++)
 		p[i] = g[i] = -1;
 	for (j = 0; j < ncin; j++)
-		n = dotable (cin[j],n);
-	return (n);
+		n = dotable(cin[j], n);
+	return(n);
 }

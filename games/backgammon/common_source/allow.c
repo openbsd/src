@@ -1,4 +1,4 @@
-/*	$NetBSD: allow.c,v 1.3 1995/03/21 15:05:24 cgd Exp $	*/
+/*	$OpenBSD: allow.c,v 1.2 1998/03/19 11:13:13 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,37 +37,37 @@
 #if 0
 static char sccsid[] = "@(#)allow.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: allow.c,v 1.3 1995/03/21 15:05:24 cgd Exp $";
+static char rcsid[] = "$OpenBSD: allow.c,v 1.2 1998/03/19 11:13:13 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
 #include "back.h"
 
-movallow ()  {
-
-	register int	i, m, iold;
-	int		r;
+int
+movallow()
+{
+	int     i, m, iold, r;
 
 	if (d0)
 		swap;
-	m = (D0 == D1? 4: 2);
+	m = (D0 == D1 ? 4 : 2);
 	for (i = 0; i < 4; i++)
 		p[i] = bar;
 	i = iold = 0;
-	while (i < m)  {
+	while (i < m) {
 		if (*offptr == 15)
 			break;
 		h[i] = 0;
-		if (board[bar])  {
+		if (board[bar]) {
 			if (i == 1 || m == 4)
-				g[i] = bar+cturn*D1;
+				g[i] = bar + cturn * D1;
 			else
-				g[i] = bar+cturn*D0;
-			if (r = makmove(i))  {
+				g[i] = bar + cturn * D0;
+			if (r = makmove(i)) {
 				if (d0 || m == 4)
 					break;
 				swap;
-				movback (i);
+				movback(i);
 				if (i > iold)
 					iold = i;
 				for (i = 0; i < 4; i++)
@@ -77,10 +77,10 @@ movallow ()  {
 				i++;
 			continue;
 		}
-		if ((p[i] += cturn) == home)  {
+		if ((p[i] += cturn) == home) {
 			if (i > iold)
 				iold = i;
-			if (m == 2 && i)  {
+			if (m == 2 && i) {
 				movback(i);
 				p[i--] = bar;
 				if (p[i] != bar)
@@ -91,25 +91,25 @@ movallow ()  {
 			if (d0 || m == 4)
 				break;
 			swap;
-			movback (i);
+			movback(i);
 			for (i = 0; i < 4; i++)
 				p[i] = bar;
 			i = 0;
 			continue;
 		}
 		if (i == 1 || m == 4)
-			g[i] = p[i]+cturn*D1;
+			g[i] = p[i] + cturn * D1;
 		else
-			g[i] = p[i]+cturn*D0;
-		if (g[i]*cturn > home)  {
+			g[i] = p[i] + cturn * D0;
+		if (g[i] * cturn > home) {
 			if (*offptr >= 0)
 				g[i] = home;
 			else
 				continue;
 		}
-		if (board[p[i]]*cturn > 0 && (r = makmove(i)) == 0)
+		if (board[p[i]] * cturn > 0 && (r = makmove(i)) == 0)
 			i++;
 	}
-	movback (i);
-	return (iold > i? iold: i);
+	movback(i);
+	return (iold > i ? iold : i);
 }
