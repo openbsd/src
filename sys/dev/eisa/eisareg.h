@@ -1,7 +1,8 @@
-/*	$NetBSD: eisareg.h,v 1.1 1995/04/17 12:08:21 cgd Exp $	*/
+/*	$OpenBSD: eisareg.h,v 1.2 1996/04/18 23:47:12 niklas Exp $	*/
+/*	$NetBSD: eisareg.h,v 1.2 1996/02/27 00:21:02 cgd Exp $	*/
 
 /*
- * Copyright (c) 1995 Christopher G. Demetriou
+ * Copyright (c) 1995, 1996 Christopher G. Demetriou
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,6 +32,75 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef __DEV_EISA_EISAREG_H__
+#define	__DEV_EISA_EISAREG_H__
+
 /*
- * XXX something should go here.  nothing does, yet.
+ * Register (etc.) descriptions for the EISA bus.
+
+ * Mostly culled from EISA chipset descriptions in:
+ *	Intel Peripheral Components Databook (1992)
  */
+
+/*
+ * Max number of EISA slots in a machine.  64K I/O space total.
+ */
+#define	EISA_MAX_SLOT		16	/* number of slots.  0 -> 0xf */
+
+/*
+ * Slot I/O space size, and I/O address of a given slot.
+ */
+#define	EISA_SLOT_SIZE		0x1000
+#define	EISA_SLOT_ADDR(s)	((s) * EISA_SLOT_SIZE)
+
+/*
+ * Slot offsets for important/standard registers.
+ */
+#define	EISA_SLOTOFF_VID	0xc80		/* offset of vendor id regs */
+#define	EISA_NVIDREGS		2
+#define	EISA_SLOTOFF_PID	0xc82		/* offset of product id regs */
+#define	EISA_NPIDREGS		2
+
+
+/*
+ * EISA ID functions, used to manipulate and decode EISA ID registers.
+ * ``Somebody was let out without adult supervision.''
+ */
+
+#define	EISA_IDSTRINGLEN	8	/* length of ID string, incl. NUL */
+
+/*
+ * Vendor ID: three characters, encoded in 16 bits.
+ *
+ * EISA_VENDID_NODEV returns true if there's no device in the slot.
+ * EISA_VENDID_IDDELAY returns true if there's a device in the slot,
+ *	but that device hasn't been configured by system firmware.
+ * EISA_VENDID_n returns the "n"th character of the vendor ID.
+ */
+#define	EISA_VENDID_NODEV(vid)						\
+	    (((vid)[0] & 0x80) != 0)
+#define	EISA_VENDID_IDDELAY(vid)					\
+	    (((vid)[0] & 0xf0) == 0x70)
+#define	EISA_VENDID_0(vid)						\
+	    ((((vid)[0] & 0x7c) >> 2) + '@')
+#define	EISA_VENDID_1(vid)						\
+	    (((((vid)[0] & 0x03) << 3) | (((vid)[1] & 0xe0) >> 5)) + '@')
+#define	EISA_VENDID_2(vid)						\
+	    (((vid)[1] & 0x1f) + '@')
+
+/*
+ * Product ID: four hex digits, encoded in 16 bits (normal, sort of).
+ *
+ * EISA_PRIDID_n returns the "n"th hex digit of the product ID.
+ */
+#define	__EISA_HEX_MAP	"0123456789ABCDEF"
+#define	EISA_PRODID_0(pid)						\
+	    (__EISA_HEX_MAP[(((pid)[0] >> 4) & 0xf)])
+#define	EISA_PRODID_1(pid)						\
+	    (__EISA_HEX_MAP[(((pid)[0] >> 0) & 0xf)])
+#define	EISA_PRODID_2(pid)						\
+	    (__EISA_HEX_MAP[(((pid)[1] >> 4) & 0xf)])
+#define	EISA_PRODID_3(pid)						\
+	    (__EISA_HEX_MAP[(((pid)[1] >> 0) & 0xf)])
+
+#endif /* !__DEV_EISA_EISAREG_H__ */

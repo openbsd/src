@@ -1,4 +1,5 @@
-/*	$NetBSD: pdqvar.h,v 1.2 1995/08/19 04:35:22 cgd Exp $	*/
+/*	$OpenBSD: pdqvar.h,v 1.2 1996/04/18 23:47:25 niklas Exp $	*/
+/*	$NetBSD: pdqvar.h,v 1.4 1996/03/11 21:41:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Matt Thomas (thomas@lkg.dec.com)
@@ -22,12 +23,49 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * from Id: pdq_os.h,v 1.11 1995/08/20 18:59:00 thomas Exp
+ *
+ * Log: pdq_os.h,v
+ * Revision 1.11  1995/08/20  18:59:00  thomas
+ * Changes for NetBSD
+ *
+ * Revision 1.10  1995/08/16  22:57:28  thomas
+ * Add support for NetBSD
+ *
+ * Revision 1.9  1995/06/21  18:29:27  thomas
+ * SVR4.2 changes
+ *
+ * Revision 1.8  1995/06/12  17:49:37  thomas
+ * Add SVR4.2 support
+ *
+ * Revision 1.7  1995/04/20  20:17:33  thomas
+ * Add PCI support for BSD/OS.
+ * Fix BSD/OS EISA support.
+ * Set latency timer for DEFPA to recommended value if 0.
+ *
+ * Revision 1.6  1995/03/14  01:52:52  thomas
+ * Update for new FreeBSD PCI Interrupt interface
+ * Use inl/inb/... inline macros provided by FreeBSD and BSDI
+ *
+ * Revision 1.5  1995/03/10  17:42:24  thomas
+ * More changes for BSDI
+ *
+ * Revision 1.4  1995/03/06  17:08:56  thomas
+ * Add copyright/disclaimer
+ * Add inx/outx macros
+ *
+ * Revision 1.3  1995/03/03  13:48:35  thomas
+ * more fixes
+ *
+ *
  */
 
 /*
  * DEC PDQ FDDI Controller; PDQ O/S dependent definitions
  *
  * Written by Matt Thomas
+ *
  */
 
 #ifndef _PDQ_OS_H
@@ -65,9 +103,9 @@
 #define	PDQ_OS_MEMFREE_CONTIG(p, n)	kmem_free(kernel_map, (vm_offset_t) p, n)
 #endif /* __FreeBSD__ */
 
-#if !defined(PDQ_HWSUPPORT)
 #if defined(__FreeBSD__)
 #include <machine/cpufunc.h>
+#include <machine/clock.h>
 typedef void ifnet_ret_t;
 typedef int ioctl_cmd_t;
 #elif defined(__bsdi__)
@@ -78,6 +116,8 @@ typedef int ioctl_cmd_t;
 typedef void ifnet_ret_t;
 typedef u_long ioctl_cmd_t;
 #endif
+
+#if !defined(PDQ_HWSUPPORT)
 #define PDQ_OS_IORD_32(port)		inl(port)
 #define PDQ_OS_IOWR_32(port, data)	outl(port, data)
 #define PDQ_OS_IORD_8(port)		inb(port)
@@ -87,11 +127,11 @@ typedef struct {
 #ifdef __bsdi__
     struct device sc_dev;		/* base device */
     struct isadev sc_id;		/* ISA device */
-    struct intrhand sc_ih;		/* intrrupt vectoring */
+    struct intrhand sc_ih;		/* interrupt vectoring */
     struct atshutdown sc_ats;		/* shutdown routine */
 #elif defined(__NetBSD__)
     struct device sc_dev;		/* base device */
-    void *sc_ih;			/* intrrupt vectoring */
+    void *sc_ih;			/* interrupt vectoring */
     void *sc_ats;			/* shutdown hook */
 #endif
     struct arpcom sc_ac;
@@ -248,5 +288,6 @@ extern void pdq_run(pdq_t *pdq);
 
 extern int pdq_interrupt(pdq_t *pdq);
 extern pdq_t *pdq_initialize(void *csr_va, const char *name, int unit, void *ctx, pdq_type_t type);
+
 
 #endif /* _PDQ_OS_H */

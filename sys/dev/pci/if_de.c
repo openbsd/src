@@ -1,4 +1,5 @@
-/*    $NetBSD: if_de.c,v 1.11 1995/12/24 02:32:13 mycroft Exp $       */
+/*    $OpenBSD: if_de.c,v 1.5 1996/04/18 23:47:56 niklas Exp $       */
+/*    $NetBSD: if_de.c,v 1.13 1996/03/14 03:04:17 cgd Exp $       */
 
 /*-
  * Copyright (c) 1994, 1995 Matt Thomas (matt@lkg.dec.com)
@@ -107,10 +108,11 @@
 #endif /* __bsdi__ */
 
 #if defined(__NetBSD__)
+#include <machine/bus.h>
+#include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/ic/dc21040reg.h>
-#if defined(__i386__)
-#include <machine/pio.h>
+#ifdef __i386__	/* XXX -- fix later -- cgd */
 #include <i386/isa/isa_machdep.h>
 #endif
 #endif /* __NetBSD__ */
@@ -140,33 +142,40 @@ typedef struct {
 
 #ifdef TULIP_IOMAPPED
 #ifndef __NetBSD__
-typedef tulip_uint16_t tulip_csrptr_t;
 #else
-typedef int tulip_csrptr_t;
 #endif
 
 #define	TULIP_EISA_CSRSIZE	16
-#define	TULIP_EISA_CSROFFSET	0
 #define	TULIP_PCI_CSRSIZE	8
-#define	TULIP_PCI_CSROFFSET	0
+
+#ifndef __NetBSD__
+typedef tulip_uint16_t tulip_csrptr_t;
 
 #define	TULIP_READ_CSR(sc, csr)			(inl((sc)->tulip_csrs.csr))
 #define	TULIP_WRITE_CSR(sc, csr, val)   	outl((sc)->tulip_csrs.csr, val)
 
 #define	TULIP_READ_CSRBYTE(sc, csr)		(inb((sc)->tulip_csrs.csr))
 #define	TULIP_WRITE_CSRBYTE(sc, csr, val)	outb((sc)->tulip_csrs.csr, val)
+#else
+typedef bus_io_size_t tulip_csrptr_t;
+
+#define	TULIP_READ_CSR(sc, csr)	\
+    bus_io_read_4((sc)->tulip_bc, (sc)->tulip_ioh, (sc)->tulip_csrs.csr)
+#define	TULIP_WRITE_CSR(sc, csr, val) \
+    bus_io_write_4((sc)->tulip_bc, (sc)->tulip_ioh, (sc)->tulip_csrs.csr, (val))
+
+#define	TULIP_READ_CSRBYTE(sc, csr) \
+    bus_io_read_1((sc)->tulip_bc, (sc)->tulip_ioh, (sc)->tulip_csrs.csr)
+#define	TULIP_WRITE_CSRBYTE(sc, csr, val) \
+    bus_io_write_1((sc)->tulip_bc, (sc)->tulip_ioh, (sc)->tulip_csrs.csr, (val))
+#endif
 
 #else /* TULIP_IOMAPPED */
 
-typedef volatile tulip_uint32_t *tulip_csrptr_t;
+#define	TULIP_PCI_CSRSIZE	8
 
-#if defined(__alpha__)
-#define	TULIP_PCI_CSRSIZE	(256 / sizeof(tulip_uint32_t))
-#define	TULIP_PCI_CSROFFSET	(24 / sizeof(tulip_uint32_t))
-#elif defined(__i386__)
-#define	TULIP_PCI_CSRSIZE	(8 / sizeof(tulip_uint32_t))
-#define	TULIP_PCI_CSROFFSET	0
-#endif
+#ifndef __NetBSD__
+typedef volatile tulip_uint32_t *tulip_csrptr_t;
 
 /*
  * macros to read and write CSRs.  Note that the "0 +" in
@@ -174,14 +183,17 @@ typedef volatile tulip_uint32_t *tulip_csrptr_t;
  * and WRITE_CSR shouldn't be assigned from.
  */
 #define	TULIP_READ_CSR(sc, csr)		(0 + *(sc)->tulip_csrs.csr)
-#ifndef __alpha__
 #define	TULIP_WRITE_CSR(sc, csr, val) \
 	    ((void)(*(sc)->tulip_csrs.csr = (val)))
 #else
-#define	TULIP_WRITE_CSR(sc, csr, val) \
-	    ((void)(*(sc)->tulip_csrs.csr = (val), MB()))
-#endif
+typedef bus_mem_size_t tulip_csrptr_t;
 
+#define	TULIP_READ_CSR(sc, csr)	\
+    bus_mem_read_4((sc)->tulip_bc, (sc)->tulip_memh, (sc)->tulip_csrs.csr)
+#define	TULIP_WRITE_CSR(sc, csr, val) \
+    bus_mem_write_4((sc)->tulip_bc, (sc)->tulip_memh, (sc)->tulip_csrs.csr, \
+      (val))
+#endif
 #endif /* TULIP_IOMAPPED */
 
 typedef struct {
@@ -305,6 +317,12 @@ struct _tulip_softc_t {
     struct device tulip_dev;		/* base device */
     void *tulip_ih;			/* intrrupt vectoring */
     void *tulip_ats;			/* shutdown hook */
+    bus_chipset_tag_t tulip_bc;		/* bus chipset tag */
+#ifdef TULIP_IOMAPPED
+    bus_io_handle_t tulip_ioh;		/* I/O region handle */
+#else
+    bus_io_handle_t tulip_memh;		/* memory region handle */
+#endif
 #endif
     struct arpcom tulip_ac;
     tulip_regfile_t tulip_csrs;
@@ -2416,7 +2434,6 @@ tulip_pci_attach(
 #if !defined(TULIP_IOMAPPED) && !defined(__bsdi__)
     vm_offset_t pa_csrs;
 #endif
-    unsigned csroffset = TULIP_PCI_CSROFFSET;
     unsigned csrsize = TULIP_PCI_CSRSIZE;
     tulip_csrptr_t csr_base;
     tulip_desc_t *rxdescs, *txdescs;
@@ -2441,7 +2458,6 @@ tulip_pci_attach(
 #if defined(TULIP_EISA)
     } else {
 	revinfo = inl(ia->ia_iobase + DE425_CFRV) & 0xFF;
-	csroffset = TULIP_EISA_CSROFFSET;
 	csrsize = TULIP_EISA_CSRSIZE;
 	chipid = TULIP_DE425;
 #endif
@@ -2530,11 +2546,13 @@ tulip_pci_attach(
 #endif /* __bsdi__ */
 
 #if defined(__NetBSD__)
+    sc->tulip_bc = pa->pa_bc;
 #if defined(TULIP_IOMAPPED)
-    retval = pci_map_io(pa->pa_tag, PCI_CBIO, &csr_base);
+    retval = pci_map_io(pa->pa_tag, PCI_CBIO, &sc->tulip_ioh);
 #else
-    retval = pci_map_mem(pa->pa_tag, PCI_CBMA, (vm_offset_t *) &csr_base, &pa_csrs);
+    retval = pci_map_mem(pa->pa_tag, PCI_CBMA, &sc->tulip_memh, &pa_csrs);
 #endif
+    csr_base = 0;
     if (retval) {
 	free((caddr_t) txdescs, M_DEVBUF);
 	free((caddr_t) rxdescs, M_DEVBUF);
@@ -2542,7 +2560,7 @@ tulip_pci_attach(
     }
 #endif /* __NetBSD__ */
 
-    tulip_initcsrs(sc, csr_base + csroffset, csrsize);
+    tulip_initcsrs(sc, csr_base, csrsize);
     tulip_initring(sc, &sc->tulip_rxinfo, rxdescs, TULIP_RXDESCS);
     tulip_initring(sc, &sc->tulip_txinfo, txdescs, TULIP_TXDESCS);
     if ((retval = tulip_read_macaddr(sc)) < 0) {

@@ -1,5 +1,5 @@
-/*    $OpenBSD: bt.c,v 1.6 1996/03/20 01:00:41 mickey Exp $      */
-/*    $NetBSD: bt742a.c,v 1.50 1995/12/24 02:31:13 mycroft Exp $      */
+/*	$OpenBSD: bt.c,v 1.7 1996/04/18 23:47:31 niklas Exp $      */
+/*	$NetBSD: bt742a.c,v 1.55 1996/03/16 05:33:28 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -68,6 +68,12 @@
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 
+/*              
+ * Note that stdarg.h and the ANSI style va_start macro is used for both
+ * ANSI and traditional C compilers.
+ */
+#include <machine/stdarg.h>
+
 #ifndef DDB
 #define Debugger() panic("should call debugger here (bt742a.c)")
 #endif /* ! DDB */
@@ -78,10 +84,9 @@ typedef u_long physlen;
 /*
  * I/O Port Interface
  */
-#define	BT_BASE			bt->sc_iobase
-#define	BT_CTRL_STAT_PORT	(BT_BASE + 0x0)		/* control & status */
-#define	BT_CMD_DATA_PORT	(BT_BASE + 0x1)		/* cmds and datas */
-#define	BT_INTR_PORT		(BT_BASE + 0x2)		/* Intr. stat */
+#define	BT_CTRL_STAT_PORT	0x0		/* control & status */
+#define	BT_CMD_DATA_PORT	0x1		/* cmds and datas */
+#define	BT_INTR_PORT		0x2		/* Intr. stat */
 
 /*
  * BT_CTRL_STAT bits (write)
@@ -125,9 +130,12 @@ typedef u_long physlen;
 #define BT_READ_FIFO		0x1d	/* read fifo buffer */
 #define BT_ECHO			0x1e	/* Echo command data */
 #define BT_MBX_INIT_EXTENDED	0x81	/* Mbx initialization */
-#define BT_INQUIRE_EXTENDED	0x8D	/* Adapter Setup Inquiry */
+#define BT_INQUIRE_REV_THIRD	0x84	/* Get 3rd firmware version byte */
+#define BT_INQUIRE_REV_FOURTH	0x85	/* Get 4th firmware version byte */
+#define BT_GET_BOARD_INFO	0x8b	/* Get hardware ID and revision */
+#define BT_INQUIRE_EXTENDED	0x8d	/* Adapter Setup Inquiry */
 
-/* Follows command appeared at FirmWare 3.31 */
+/* Follows command appeared at firmware 3.31 */
 #define	BT_ROUND_ROBIN	0x8f	/* Enable/Disable(default) round robin */
 #define   BT_DISABLE		0x00	/* Parameter value for Disable */
 #define   BT_ENABLE		0x01	/* Parameter value for Enable */
@@ -289,6 +297,11 @@ struct bt_boardID {
 	u_char  firm_version;
 };
 
+struct bt_board_info {
+	u_char	id[4];		/* i.e bt742a -> '7','4','2','A' */
+	u_char	version[2];	/* i.e Board Revision 'H' -> 'H', 0x00 */
+};
+
 struct bt_setup {
 	u_char  sync_neg:1;
 	u_char  parity:1;
@@ -330,18 +343,18 @@ struct bt_config {
 #define KVTOPHYS(x)	vtophys(x)
 
 struct bt_softc {
-        struct device sc_dev;
-        struct isadev sc_id;
-        void *sc_ih;
+	struct device sc_dev;
+	struct isadev sc_id;
+	void *sc_ih;
 
 	int sc_iobase;
-	int sc_irq, bt_drq;
+	int sc_irq, sc_drq;
 
-	struct bt_mbx bt_mbx;		/* all our mailboxes */
-	struct bt_ccb *ccbhash[CCB_HASH_SIZE];
-	TAILQ_HEAD(, bt_ccb) free_ccb;
-	int numccbs;
-	int bt_scsi_dev;		/* adapters scsi id */
+	struct bt_mbx sc_mbx;		/* all our mailboxes */
+	struct bt_ccb *sc_ccbhash[CCB_HASH_SIZE];
+	TAILQ_HEAD(, bt_ccb) sc_free_ccb;
+	int sc_numccbs;
+	int sc_scsi_dev;		/* adapters scsi id */
 	struct scsi_link sc_link;	/* prototype for devs */
 };
 
@@ -352,14 +365,15 @@ struct bt_softc {
 #define	BT_SHOWMISC 0x08
 int     bt_debug = 0;
 
-int bt_cmd();	/* XXX must be varargs to prototype */
+int bt_cmd __P((int, struct bt_softc *, int, int, int, u_char *,
+	unsigned, ...));
 int btintr __P((void *));
 void bt_free_ccb __P((struct bt_softc *, struct bt_ccb *, int));
 struct bt_ccb *bt_get_ccb __P((struct bt_softc *, int));
 struct bt_ccb *bt_ccb_phys_kv __P((struct bt_softc *, u_long));
 struct bt_mbx_out *bt_send_mbo __P((struct bt_softc *, int, struct bt_ccb *));
 void bt_done __P((struct bt_softc *, struct bt_ccb *));
-int bt_find __P((struct bt_softc *));
+int bt_find __P((struct isa_attach_args *, struct bt_softc *));
 void bt_init __P((struct bt_softc *));
 void bt_inquire_setup_information __P((struct bt_softc *));
 void btminphys __P((struct buf *));
@@ -397,7 +411,7 @@ struct cfdriver btcd = {
 #define BT_RESET_TIMEOUT 1000
 
 /*
- * bt_cmd(bt, icnt, ocnt,wait, retval, opcode, args)
+ * bt_cmd(iobase, sc, icnt, ocnt, wait, retval, opcode, ... args ...)
  *
  * Activate Adapter command
  *    icnt:   number of args (outbound bytes written after opcode)
@@ -405,24 +419,37 @@ struct cfdriver btcd = {
  *    wait:   number of seconds to wait for response
  *    retval: buffer where to place returned bytes
  *    opcode: opcode BT_NOP, BT_MBX_INIT, BT_START_SCSI ...
- *    args:   parameters
+ *    args:   variable number of parameters
  *
  * Performs an adapter command through the ports.  Not to be confused with a
  * scsi command, which is read in via the dma; one of the adapter commands
  * tells it to read in a scsi command.
  */
 int
-bt_cmd(bt, icnt, ocnt, wait, retval, opcode, args)
-	struct bt_softc *bt;
+#ifdef __STDC__
+bt_cmd(int iobase, struct bt_softc *sc, int icnt, int ocnt, int wait,
+    u_char *retval, unsigned opcode, ...)
+#else
+bt_cmd(iobase, sc, icnt, ocnt, wait, retval, opcode, va_alist)
+	int iobase;
+	struct bt_softc *sc;
 	int icnt, ocnt, wait;
 	u_char *retval;
 	unsigned opcode;
-	u_char args;
+	va_dcl
+#endif
 {
-	unsigned *ic = &opcode;
+	va_list ap;
+	unsigned data;
+	const char *name;
 	u_char oc;
 	register i;
 	int sts;
+
+	if (sc == NULL)
+		name = sc->sc_dev.dv_xname;
+	else
+		name = "(probe)";
 
 	/*
 	 * multiply the wait argument by a big constant
@@ -439,7 +466,7 @@ bt_cmd(bt, icnt, ocnt, wait, retval, opcode, args)
 	if (opcode != BT_MBX_INIT && opcode != BT_START_SCSI) {
 		i = 100000;	/* 1 sec? */
 		while (--i) {
-			sts = inb(BT_CTRL_STAT_PORT);
+			sts = inb(iobase + BT_CTRL_STAT_PORT);
 			if (sts & BT_IDLE) {
 				break;
 			}
@@ -447,7 +474,7 @@ bt_cmd(bt, icnt, ocnt, wait, retval, opcode, args)
 		}
 		if (!i) {
 			printf("%s: bt_cmd, host not idle(0x%x)\n",
-				bt->sc_dev.dv_xname, sts);
+				name, sts);
 			return ENXIO;
 		}
 	}
@@ -456,49 +483,50 @@ bt_cmd(bt, icnt, ocnt, wait, retval, opcode, args)
 	 * queue feeding to us.
 	 */
 	if (ocnt) {
-		while ((inb(BT_CTRL_STAT_PORT)) & BT_DF)
-			inb(BT_CMD_DATA_PORT);
+		while ((inb(iobase + BT_CTRL_STAT_PORT)) & BT_DF)
+			inb(iobase + BT_CMD_DATA_PORT);
 	}
 	/*
 	 * Output the command and the number of arguments given
 	 * for each byte, first check the port is empty.
 	 */
-	icnt++;
-	/* include the command */
-	while (icnt--) {
-		sts = inb(BT_CTRL_STAT_PORT);
+	va_start(ap, opcode);
+	/* test icnt >= 0, to include the command in data sent */
+	for (data = opcode; icnt >= 0; icnt--, data = va_arg(ap, u_char)) {
+		sts = inb(iobase + BT_CTRL_STAT_PORT);
 		for (i = wait; i; i--) {
-			sts = inb(BT_CTRL_STAT_PORT);
+			sts = inb(iobase + BT_CTRL_STAT_PORT);
 			if (!(sts & BT_CDF))
 				break;
 			delay(10);
 		}
 		if (!i) {
-			printf("%s: bt_cmd, cmd/data port full\n",
-				bt->sc_dev.dv_xname);
-			outb(BT_CTRL_STAT_PORT, BT_SRST);
+			printf("%s: bt_cmd, cmd/data port full\n", name);
+			outb(iobase + BT_CTRL_STAT_PORT, BT_SRST);
+			va_end(ap);
 			return ENXIO;
 		}
-		outb(BT_CMD_DATA_PORT, (u_char) (*ic++));
+		outb(iobase + BT_CMD_DATA_PORT, data);
 	}
+	va_end(ap);
 	/*
 	 * If we expect input, loop that many times, each time,
 	 * looking for the data register to have valid data
 	 */
 	while (ocnt--) {
-		sts = inb(BT_CTRL_STAT_PORT);
+		sts = inb(iobase + BT_CTRL_STAT_PORT);
 		for (i = wait; i; i--) {
-			sts = inb(BT_CTRL_STAT_PORT);
+			sts = inb(iobase + BT_CTRL_STAT_PORT);
 			if (sts & BT_DF)
 				break;
 			delay(10);
 		}
 		if (!i) {
 			printf("bt%d: bt_cmd, cmd/data port empty %d\n",
-				bt->sc_dev.dv_xname, ocnt);
+				name, ocnt);
 			return ENXIO;
 		}
-		oc = inb(BT_CMD_DATA_PORT);
+		oc = inb(iobase + BT_CMD_DATA_PORT);
 		if (retval)
 			*retval++ = oc;
 	}
@@ -507,17 +535,17 @@ bt_cmd(bt, icnt, ocnt, wait, retval, opcode, args)
 	 */
 	i = 100000;	/* 1 sec? */
 	while (--i) {
-		sts = inb(BT_INTR_PORT);
+		sts = inb(iobase + BT_INTR_PORT);
 		if (sts & BT_HACC)
 			break;
 		delay(10);
 	}
 	if (!i) {
 		printf("%s: bt_cmd, host not finished(0x%x)\n",
-			bt->sc_dev.dv_xname, sts);
+			name, sts);
 		return ENXIO;
 	}
-	outb(BT_CTRL_STAT_PORT, BT_IRST);
+	outb(iobase + BT_CTRL_STAT_PORT, BT_IRST);
 	return 0;
 }
 
@@ -529,46 +557,27 @@ bt_cmd(bt, icnt, ocnt, wait, retval, opcode, args)
  */
 int
 btprobe(parent, match, aux)
-        struct device *parent;
-        void *match, *aux;
+	struct device *parent;
+	void *match, *aux;
 {
-	struct bt_softc *bt = match;
-        register struct isa_attach_args *ia = aux;
+	struct bt_softc *sc = match;
+	register struct isa_attach_args *ia = aux;
 
 #ifdef NEWCONFIG
-        if (ia->ia_iobase == IOBASEUNK)
-                return 0;
+	if (ia->ia_iobase == IOBASEUNK)
+		return 0;
 #endif
-
-	bt->sc_iobase = ia->ia_iobase;
 
 	/*
 	 * Try initialise a unit at this location
-	 * sets up dma and bus speed, loads bt->sc_irq
+	 * sets up dma and bus speed, loads sc->sc_irq
 	 */
-	if (bt_find(bt) != 0)
+	if (bt_find(ia, NULL) != 0)
 		return 0;
-
-	if (ia->ia_irq != IRQUNK) {
-		if (ia->ia_irq != bt->sc_irq) {
-			printf("%s: irq mismatch; kernel configured %d != board configured %d\n",
-			    bt->sc_dev.dv_xname, ia->ia_irq, bt->sc_irq);
-                	return 0;
-		}
-	} else
-		ia->ia_irq = bt->sc_irq;
-
-	if (ia->ia_drq != DRQUNK) {
-		if (ia->ia_drq != bt->bt_drq) {
-			printf("%s: drq mismatch; kernel configured %d != board configured %d\n",
-			    bt->sc_dev.dv_xname, ia->ia_drq, bt->bt_drq);
-                	return 0;
-		}
-	} else
-		ia->ia_drq = bt->bt_drq;
 
 	ia->ia_msize = 0;
 	ia->ia_iosize = 4;
+	/* IRQ and DRQ set by bt_find() */
 	return 1;
 }
 
@@ -577,7 +586,7 @@ btprint(aux, name)
 	void *aux;
 	char *name;
 {
-	if (name != NULL)       
+	if (name != NULL)
 		printf("%s: scsibus ", name);
 	return UNCONF;
 }
@@ -587,39 +596,43 @@ btprint(aux, name)
  */
 void
 btattach(parent, self, aux)
-        struct device *parent, *self;
-        void *aux;
+	struct device *parent, *self;
+	void *aux;
 {
-        struct isa_attach_args *ia = aux;
-	struct bt_softc *bt = (void *)self;
+	struct isa_attach_args *ia = aux;
+	struct bt_softc *sc = (struct bt_softc *)self;
 
-	if (ia->ia_drq != DRQUNK)
-		isa_dmacascade(ia->ia_drq);
+	if (bt_find(ia, sc) != 0)
+		panic("btattach: bt_find of %s failed", self->dv_xname);
+	sc->sc_iobase = ia->ia_iobase;
 
-	bt_init(bt);
-	TAILQ_INIT(&bt->free_ccb);
+	if (sc->sc_drq != DRQUNK)
+		isa_dmacascade(sc->sc_drq);
+
+	bt_init(sc);
+	TAILQ_INIT(&sc->sc_free_ccb);
 
 	/*
 	 * fill in the prototype scsi_link.
 	 */
-	bt->sc_link.adapter_softc = bt;
-	bt->sc_link.adapter_target = bt->bt_scsi_dev;
-	bt->sc_link.adapter = &bt_switch;
-	bt->sc_link.device = &bt_dev;
-	bt->sc_link.openings = 2;
+	sc->sc_link.adapter_softc = sc;
+	sc->sc_link.adapter_target = sc->sc_scsi_dev;
+	sc->sc_link.adapter = &bt_switch;
+	sc->sc_link.device = &bt_dev;
+	sc->sc_link.openings = 2;
 
 	printf("\n");
 
 #ifdef NEWCONFIG
-	isa_establish(&bt->sc_id, &bt->sc_dev);
+	isa_establish(&sc->sc_id, &sc->sc_dev);
 #endif
-	bt->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_BIO, btintr,
-	    bt, bt->sc_dev.dv_xname);
+	sc->sc_ih = isa_intr_establish(sc->sc_irq, IST_EDGE, IPL_BIO, btintr,
+	    sc, sc->sc_dev.dv_xname);
 
 	/*
 	 * ask the adapter what subunits are present
 	 */
-	config_found(self, &bt->sc_link, btprint);
+	config_found(self, &sc->sc_link, btprint);
 }
 
 /*
@@ -629,7 +642,8 @@ int
 btintr(arg)
 	void *arg;
 {
-	struct bt_softc *bt = arg;
+	struct bt_softc *sc = arg;
+	int iobase = sc->sc_iobase;
 	struct bt_mbx_in *wmbi;
 	struct bt_mbx *wmbx;
 	struct bt_ccb *ccb;
@@ -638,7 +652,7 @@ btintr(arg)
 	int found = 0;
 
 #ifdef BTDEBUG
-	printf("%s: btintr ", bt->sc_dev.dv_xname);
+	printf("%s: btintr ", sc->sc_dev.dv_xname);
 #endif /* BTDEBUG */
 
 	/*
@@ -646,42 +660,42 @@ btintr(arg)
 	 * not telling about a completed operation
 	 * just return.
 	 */
-	stat = inb(BT_INTR_PORT);
+	stat = inb(iobase + BT_INTR_PORT);
 	if ((stat & (BT_MBOA | BT_MBIF)) == 0) {
-		outb(BT_CTRL_STAT_PORT, BT_IRST);
+		outb(iobase + BT_CTRL_STAT_PORT, BT_IRST);
 		return -1;	/* XXX */
 	}
 
 	/* Mail box out empty? */
 	if (stat & BT_MBOA) {
 		/* Disable MBO available interrupt. */
-		outb(BT_CMD_DATA_PORT, BT_MBO_INTR_EN);
+		outb(iobase + BT_CMD_DATA_PORT, BT_MBO_INTR_EN);
 		for (i = 100000; i; i--) {
-			if (!(inb(BT_CTRL_STAT_PORT) & BT_CDF))
+			if (!(inb(iobase + BT_CTRL_STAT_PORT) & BT_CDF))
 				break;
 			delay(10);
 		}
 		if (!i) {
 			printf("%s: btintr, cmd/data port full\n",
-			    bt->sc_dev.dv_xname);
-			outb(BT_CTRL_STAT_PORT, BT_SRST);
+			    sc->sc_dev.dv_xname);
+			outb(iobase + BT_CTRL_STAT_PORT, BT_SRST);
 			return 1;
 		}
-		outb(BT_CMD_DATA_PORT, 0x00);	/* Disable */
-		wakeup(&bt->bt_mbx);
+		outb(iobase + BT_CMD_DATA_PORT, 0x00);	/* Disable */
+		wakeup(&sc->sc_mbx);
 	}
 
 	/* Mail box in full? */
 	if ((stat & BT_MBIF) == 0)
 		return 1;
-	wmbx = &bt->bt_mbx;
+	wmbx = &sc->sc_mbx;
 	wmbi = wmbx->tmbi;
 AGAIN:
 	while (wmbi->stat != BT_MBI_FREE) {
-		ccb = bt_ccb_phys_kv(bt, wmbi->ccb_addr);
+		ccb = bt_ccb_phys_kv(sc, wmbi->ccb_addr);
 		if (!ccb) {
 			wmbi->stat = BT_MBI_FREE;
-			printf("%s: BAD CCB ADDR!\n", bt->sc_dev.dv_xname);
+			printf("%s: BAD CCB ADDR!\n", sc->sc_dev.dv_xname);
 			continue;
 		}
 		found++;
@@ -715,7 +729,7 @@ AGAIN:
 		wmbi->stat = BT_MBI_FREE;
 		if (ccb) {
 			untimeout(bt_timeout, ccb);
-			bt_done(bt, ccb);
+			bt_done(sc, ccb);
 		}
 		bt_nextmbx(wmbi, wmbx, mbi);
 	}
@@ -730,7 +744,7 @@ AGAIN:
 		if (!found) {
 #if 0
 			printf("%s: mbi interrupt with no full mailboxes\n",
-			    bt->sc_dev.dv_xname);
+			    sc->sc_dev.dv_xname);
 #endif
 		} else {
 			found = 0;
@@ -738,7 +752,7 @@ AGAIN:
 		}
 	}
 	wmbx->tmbi = wmbi;
-	outb(BT_CTRL_STAT_PORT, BT_IRST);
+	outb(iobase + BT_CTRL_STAT_PORT, BT_IRST);
 	return 1;
 }
 
@@ -746,8 +760,8 @@ AGAIN:
  * A ccb is put onto the free list.
  */
 void
-bt_free_ccb(bt, ccb, flags)
-	struct bt_softc *bt;
+bt_free_ccb(sc, ccb, flags)
+	struct bt_softc *sc;
 	struct bt_ccb *ccb;
 	int flags;
 {
@@ -756,21 +770,21 @@ bt_free_ccb(bt, ccb, flags)
 	s = splbio();
 
 	ccb->flags = CCB_FREE;
-	TAILQ_INSERT_HEAD(&bt->free_ccb, ccb, chain);
+	TAILQ_INSERT_HEAD(&sc->sc_free_ccb, ccb, chain);
 
 	/*
 	 * If there were none, wake anybody waiting for one to come free,
 	 * starting with queued entries.
 	 */
 	if (ccb->chain.tqe_next == 0)
-		wakeup(&bt->free_ccb);
+		wakeup(&sc->sc_free_ccb);
 
 	splx(s);
 }
 
 static inline void
-bt_init_ccb(bt, ccb)
-	struct bt_softc *bt;
+bt_init_ccb(sc, ccb)
+	struct bt_softc *sc;
 	struct bt_ccb *ccb;
 {
 	int hashnum;
@@ -782,13 +796,13 @@ bt_init_ccb(bt, ccb)
 	 */
 	ccb->hashkey = KVTOPHYS(ccb);
 	hashnum = CCB_HASH(ccb->hashkey);
-	ccb->nexthash = bt->ccbhash[hashnum];
-	bt->ccbhash[hashnum] = ccb;
+	ccb->nexthash = sc->sc_ccbhash[hashnum];
+	sc->sc_ccbhash[hashnum] = ccb;
 }
 
 static inline void
-bt_reset_ccb(bt, ccb)
-	struct bt_softc *bt;
+bt_reset_ccb(sc, ccb)
+	struct bt_softc *sc;
 	struct bt_ccb *ccb;
 {
 
@@ -801,8 +815,8 @@ bt_reset_ccb(bt, ccb)
  * the hash table too otherwise either return an error or sleep.
  */
 struct bt_ccb *
-bt_get_ccb(bt, flags)
-	struct bt_softc *bt;
+bt_get_ccb(sc, flags)
+	struct bt_softc *sc;
 	int flags;
 {
 	struct bt_ccb *ccb;
@@ -815,29 +829,29 @@ bt_get_ccb(bt, flags)
 	 * but only if we can't allocate a new one.
 	 */
 	for (;;) {
-		ccb = bt->free_ccb.tqh_first;
+		ccb = sc->sc_free_ccb.tqh_first;
 		if (ccb) {
-			TAILQ_REMOVE(&bt->free_ccb, ccb, chain);
+			TAILQ_REMOVE(&sc->sc_free_ccb, ccb, chain);
 			break;
 		}
-		if (bt->numccbs < BT_CCB_MAX) {
+		if (sc->sc_numccbs < BT_CCB_MAX) {
 			if (ccb = (struct bt_ccb *) malloc(sizeof(struct bt_ccb),
 			    M_TEMP, M_NOWAIT)) {
-				bt_init_ccb(bt, ccb);
-				bt->numccbs++;
+				bt_init_ccb(sc, ccb);
+				sc->sc_numccbs++;
 			} else {
 				printf("%s: can't malloc ccb\n",
-				    bt->sc_dev.dv_xname);
+				    sc->sc_dev.dv_xname);
 				goto out;
 			}
 			break;
 		}
 		if ((flags & SCSI_NOSLEEP) != 0)
 			goto out;
-		tsleep(&bt->free_ccb, PRIBIO, "btccb", 0);
+		tsleep(&sc->sc_free_ccb, PRIBIO, "btccb", 0);
 	}
 
-	bt_reset_ccb(bt, ccb);
+	bt_reset_ccb(sc, ccb);
 	ccb->flags = CCB_ACTIVE;
 
 out:
@@ -850,12 +864,12 @@ out:
  * it corresponds to:
  */
 struct bt_ccb *
-bt_ccb_phys_kv(bt, ccb_phys)
-	struct bt_softc *bt;
+bt_ccb_phys_kv(sc, ccb_phys)
+	struct bt_softc *sc;
 	u_long ccb_phys;
 {
 	int hashnum = CCB_HASH(ccb_phys);
-	struct bt_ccb *ccb = bt->ccbhash[hashnum];
+	struct bt_ccb *ccb = sc->sc_ccbhash[hashnum];
 
 	while (ccb) {
 		if (ccb->hashkey == ccb_phys)
@@ -869,17 +883,18 @@ bt_ccb_phys_kv(bt, ccb_phys)
  * Get a mbo and send the ccb.
  */
 struct bt_mbx_out *
-bt_send_mbo(bt, cmd, ccb)
-	struct bt_softc *bt;
+bt_send_mbo(sc, cmd, ccb)
+	struct bt_softc *sc;
 	int cmd;
 	struct bt_ccb *ccb;
 {
+	int iobase = sc->sc_iobase;
 	struct bt_mbx_out *wmbo;	/* Mail Box Out pointer */
 	struct bt_mbx *wmbx;		/* Mail Box pointer specified unit */
 	int i;
 
 	/* Get the target out mail box pointer and increment. */
-	wmbx = &bt->bt_mbx;
+	wmbx = &sc->sc_mbx;
 	wmbo = wmbx->tmbo;
 	bt_nextmbx(wmbx->tmbo, wmbx, mbo);
 
@@ -889,19 +904,19 @@ bt_send_mbo(bt, cmd, ccb)
 	 */
 	while (wmbo->cmd != BT_MBO_FREE) {
 		/* Enable mbo available interrupt. */
-		outb(BT_CMD_DATA_PORT, BT_MBO_INTR_EN);
+		outb(iobase + BT_CMD_DATA_PORT, BT_MBO_INTR_EN);
 		for (i = 100000; i; i--) {
-			if (!(inb(BT_CTRL_STAT_PORT) & BT_CDF))
+			if (!(inb(iobase + BT_CTRL_STAT_PORT) & BT_CDF))
 				break;
 			delay(10);
 		}
 		if (!i) {
 			printf("%s: bt_send_mbo, cmd/data port full\n",
-			    bt->sc_dev.dv_xname);
-			outb(BT_CTRL_STAT_PORT, BT_SRST);
+			    sc->sc_dev.dv_xname);
+			outb(iobase + BT_CTRL_STAT_PORT, BT_SRST);
 			return NULL;
 		}
-		outb(BT_CMD_DATA_PORT, 0x01);	/* Enable */
+		outb(iobase + BT_CMD_DATA_PORT, 0x01);	/* Enable */
 		tsleep(wmbx, PRIBIO, "btsnd", 0);/*XXX can't do this */
 	}
 
@@ -911,7 +926,7 @@ bt_send_mbo(bt, cmd, ccb)
 	wmbo->cmd = cmd;
 
 	/* Send it! */
-	outb(BT_CMD_DATA_PORT, BT_START_SCSI);
+	outb(iobase + BT_CMD_DATA_PORT, BT_START_SCSI);
 
 	return wmbo;
 }
@@ -922,8 +937,8 @@ bt_send_mbo(bt, cmd, ccb)
  * went. Wake up the owner if waiting
  */
 void
-bt_done(bt, ccb)
-	struct bt_softc *bt;
+bt_done(sc, ccb)
+	struct bt_softc *sc;
 	struct bt_ccb *ccb;
 {
 	struct scsi_sense_data *s1, *s2;
@@ -935,7 +950,7 @@ bt_done(bt, ccb)
 	 * into the xfer and call whoever started it
 	 */
 	if ((xs->flags & INUSE) == 0) {
-		printf("%s: exiting but not in use!\n", bt->sc_dev.dv_xname);
+		printf("%s: exiting but not in use!\n", sc->sc_dev.dv_xname);
 		Debugger();
 	}
 	if (xs->error == XS_NOERROR) {
@@ -949,7 +964,7 @@ bt_done(bt, ccb)
 				break;
 			default:	/* Other scsi protocol messes */
 				printf("%s: host_stat %x\n",
-				    bt->sc_dev.dv_xname, ccb->host_stat);
+				    sc->sc_dev.dv_xname, ccb->host_stat);
 				xs->error = XS_DRIVER_STUFFUP;
 			}
 		} else if (ccb->target_stat != SCSI_OK) {
@@ -965,14 +980,14 @@ bt_done(bt, ccb)
 				break;
 			default:
 				printf("%s: target_stat %x\n",
-				    bt->sc_dev.dv_xname, ccb->target_stat);
+				    sc->sc_dev.dv_xname, ccb->target_stat);
 				xs->error = XS_DRIVER_STUFFUP;
 			}
 		} else
 			xs->resid = 0;
 	}
 	xs->flags |= ITSDONE;
-	bt_free_ccb(bt, ccb, xs->flags);
+	bt_free_ccb(sc, ccb, xs->flags);
 	scsi_done(xs);
 }
 
@@ -980,23 +995,26 @@ bt_done(bt, ccb)
  * Find the board and find it's irq/drq
  */
 int
-bt_find(bt)
-	struct bt_softc *bt;
+bt_find(ia, sc)
+	struct isa_attach_args *ia;
+	struct bt_softc *sc;
 {
+	int iobase = ia->ia_iobase;
 	u_char ad[4];
 	volatile int i, sts;
 	struct bt_extended_inquire info;
 	struct bt_config conf;
+	int irq, drq;
 
 	/*
 	 * reset board, If it doesn't respond, assume
 	 * that it's not there.. good for the probe
 	 */
 
-	outb(BT_CTRL_STAT_PORT, BT_HRST | BT_SRST);
+	outb(iobase + BT_CTRL_STAT_PORT, BT_HRST | BT_SRST);
 
 	for (i = BT_RESET_TIMEOUT; i; i--) {
-		sts = inb(BT_CTRL_STAT_PORT);
+		sts = inb(iobase + BT_CTRL_STAT_PORT);
 		if (sts == (BT_IDLE | BT_INIT))
 			break;
 		delay(1000);
@@ -1005,14 +1023,15 @@ bt_find(bt)
 #ifdef	UTEST
 		printf("bt_find: No answer from bt742a board\n");
 #endif
-		return ENXIO;
+		return 1;
 	}
 
 	/*
 	 * Check that we actually know how to use this board.
 	 */
 	delay(1000);
-	bt_cmd(bt, 1, sizeof(info), 0, &info, BT_INQUIRE_EXTENDED, sizeof(info));
+	bt_cmd(iobase, sc, 1, sizeof(info), 0, (u_char *)&info,
+	    BT_INQUIRE_EXTENDED, sizeof(info));
 	switch (info.bus_type) {
 	case BT_BUS_TYPE_24BIT:
 		/* XXXX How do we avoid conflicting with the aha1542 probe? */
@@ -1020,11 +1039,10 @@ bt_find(bt)
 		break;
 	case BT_BUS_TYPE_MCA:
 		/* We don't grok MicroChannel (yet). */
-		return EINVAL;
+		return 1;
 	default:
-		printf("%s: illegal bus type %c\n", bt->sc_dev.dv_xname,
-		    info.bus_type);
-		return EINVAL;
+		printf("bt_find: illegal bus type %c\n", info.bus_type);
+		return 1;
 	}
 
 	/*
@@ -1032,56 +1050,69 @@ bt_find(bt)
 	 * jumpers and save int level
 	 */
 	delay(1000);
-	bt_cmd(bt, 0, sizeof(conf), 0, &conf, BT_CONF_GET);
+	bt_cmd(iobase, sc, 0, sizeof(conf), 0, (u_char *)&conf, BT_CONF_GET);
 	switch (conf.chan) {
 	case EISADMA:
-		bt->bt_drq = DRQUNK;
+		drq = DRQUNK;
 		break;
 	case CHAN0:
-		bt->bt_drq = 0;
+		drq = 0;
 		break;
 	case CHAN5:
-		bt->bt_drq = 5;
+		drq = 5;
 		break;
 	case CHAN6:
-		bt->bt_drq = 6;
+		drq = 6;
 		break;
 	case CHAN7:
-		bt->bt_drq = 7;
+		drq = 7;
 		break;
 	default:
-		printf("%s: illegal dma setting %x\n", bt->sc_dev.dv_xname,
-		    conf.chan);
-		return EIO;
+		printf("bt_find: illegal dma setting %x\n", conf.chan);
+		return 1;
 	}
 
 	switch (conf.intr) {
 	case INT9:
-		bt->sc_irq = 9;
+		irq = 9;
 		break;
 	case INT10:
-		bt->sc_irq = 10;
+		irq = 10;
 		break;
 	case INT11:
-		bt->sc_irq = 11;
+		irq = 11;
 		break;
 	case INT12:
-		bt->sc_irq = 12;
+		irq = 12;
 		break;
 	case INT14:
-		bt->sc_irq = 14;
+		irq = 14;
 		break;
 	case INT15:
-		bt->sc_irq = 15;
+		irq = 15;
 		break;
 	default:
-		printf("%s: illegal int setting %x\n", bt->sc_dev.dv_xname,
-		    conf.intr);
-		return EIO;
+		printf("bt_find: illegal int setting %x\n", conf.intr);
+		return 1;
 	}
 
-	/* who are we on the scsi bus? */
-	bt->bt_scsi_dev = conf.scsi_dev;
+	if (sc != NULL) {
+		/* who are we on the scsi bus? */
+		sc->sc_scsi_dev = conf.scsi_dev;
+
+		sc->sc_iobase = iobase;
+		sc->sc_irq = irq;
+		sc->sc_drq = drq;
+	} else {
+		if (ia->ia_irq == IRQUNK)
+			ia->ia_irq = irq;
+		else if (ia->ia_irq != irq)
+			return 1;
+		if (ia->ia_drq == DRQUNK)
+			ia->ia_drq = drq;
+		else if (ia->ia_drq != drq)
+			return 1;
+	}
 
 	return 0;
 }
@@ -1090,59 +1121,94 @@ bt_find(bt)
  * Start the board, ready for normal operation
  */
 void
-bt_init(bt)
-	struct bt_softc *bt;
+bt_init(sc)
+	struct bt_softc *sc;
 {
+	int iobase = sc->sc_iobase;
 	u_char ad[4];
 	int i;
 
 	/*
 	 * Initialize mail box
 	 */
-	*((physaddr *)ad) = KVTOPHYS(&bt->bt_mbx);
+	*((physaddr *)ad) = KVTOPHYS(&sc->sc_mbx);
 
-	bt_cmd(bt, 5, 0, 0, 0, BT_MBX_INIT_EXTENDED, BT_MBX_SIZE,
+	bt_cmd(iobase, sc, 5, 0, 0, 0, BT_MBX_INIT_EXTENDED, BT_MBX_SIZE,
 	    ad[0], ad[1], ad[2], ad[3]);
 
 	for (i = 0; i < BT_MBX_SIZE; i++) {
-		bt->bt_mbx.mbo[i].cmd = BT_MBO_FREE;
-		bt->bt_mbx.mbi[i].stat = BT_MBI_FREE;
+		sc->sc_mbx.mbo[i].cmd = BT_MBO_FREE;
+		sc->sc_mbx.mbi[i].stat = BT_MBI_FREE;
 	}
 
 	/*
 	 * Set up initial mail box for round-robin operation.
 	 */
-	bt->bt_mbx.tmbo = &bt->bt_mbx.mbo[0];
-	bt->bt_mbx.tmbi = &bt->bt_mbx.mbi[0];
+	sc->sc_mbx.tmbo = &sc->sc_mbx.mbo[0];
+	sc->sc_mbx.tmbi = &sc->sc_mbx.mbi[0];
 
-	bt_inquire_setup_information(bt);
+	bt_inquire_setup_information(sc);
 }
 
 void
-bt_inquire_setup_information(bt)
-	struct bt_softc *bt;
+bt_inquire_setup_information(sc)
+	struct bt_softc *sc;
 {
+	int iobase = sc->sc_iobase;
 	struct bt_boardID bID;
-	char dummy[8];
+	struct bt_board_info binfo;
+	char dummy[8], sub_ver[3];
 	struct bt_setup setup;
-	int i;
+	int i, ver;
 
-	/* Inquire Board ID to Bt742 for firmware version */
-	bt_cmd(bt, 0, sizeof(bID), 0, &bID, BT_INQUIRE);
-	printf(": version %c.%c, ", bID.firm_revision, bID.firm_version);
+	/*
+	 * Get and print board hardware information.
+	 */
+	bt_cmd(iobase, sc, 1, sizeof(binfo), 0, (u_char *)&binfo,
+	    BT_GET_BOARD_INFO, sizeof(binfo));
+	printf(": Bt%c%c%c", binfo.id[0], binfo.id[1], binfo.id[2]);
+	if (binfo.id[3] != ' ')
+		printf("%c", binfo.id[3]);
+	if (binfo.version[0] != ' ')
+		printf("%c%s", binfo.version[0], binfo.version[1]);
+	printf("\n");
 
-	if (bID.firm_revision != '2') {	/* XXXX */
-		/* Enable round-robin scheme - appeared at firmware rev. 3.31 */
-		bt_cmd(bt, 1, 0, 0, 0, BT_ROUND_ROBIN, BT_ENABLE);
+	/*
+	 * Inquire Board ID to Bt742 for board type and firmware version.
+	 */
+	bt_cmd(iobase, sc, 0, sizeof(bID), 0, (u_char *)&bID, BT_INQUIRE);
+	ver = (bID.firm_revision - '0') * 10 + (bID.firm_version - '0');
+
+	/*
+	 * Get the rest of the firmware version.  Firmware revisions
+	 * before 3.3 apparently don't accept the BT_INQUIRE_REV_FOURTH
+	 * command.
+	 */
+	i = 0;
+	bt_cmd(iobase, sc, 0, 1, 0, &sub_ver[i++], BT_INQUIRE_REV_THIRD);
+	if (ver >= 33)
+		bt_cmd(iobase, sc, 0, 1, 0, &sub_ver[i++],
+		    BT_INQUIRE_REV_FOURTH);
+	if (sub_ver[i - 1] == ' ')
+		i--;
+	sub_ver[i] = '\0';
+
+	printf("%s: firmware version %c.%c%s, ", sc->sc_dev.dv_xname,
+	    bID.firm_revision, bID.firm_version, sub_ver);
+
+	/* Enable round-robin scheme - appeared at firmware rev. 3.31 */
+	if (ver > 33 || (ver == 33 && sub_ver[0] >= 1)) {
+		bt_cmd(iobase, sc, 1, 0, 0, 0, BT_ROUND_ROBIN, BT_ENABLE);
 	}
 
 	/* Inquire Installed Devices (to force synchronous negotiation) */
-	bt_cmd(bt, 0, sizeof(dummy), 10, dummy, BT_DEV_GET);
+	bt_cmd(iobase, sc, 0, sizeof(dummy), 10, dummy, BT_DEV_GET);
 
 	/* Obtain setup information from Bt742. */
-	bt_cmd(bt, 1, sizeof(setup), 0, &setup, BT_SETUP_GET, sizeof(setup));
+	bt_cmd(iobase, sc, 1, sizeof(setup), 0, (u_char *)&setup, BT_SETUP_GET,
+	    sizeof(setup));
 
-	printf("%s, %s, %d mbxs",
+	printf("%s, %s, %d mailboxes",
 	    setup.sync_neg ? "sync" : "async",
 	    setup.parity ? "parity" : "no parity",
 	    setup.num_mbx);
@@ -1152,7 +1218,7 @@ bt_inquire_setup_information(bt)
 		    (!setup.sync[i].offset && !setup.sync[i].period))
 			continue;
 		printf("\n%s targ %d: sync, offset %d, period %dnsec",
-		    bt->sc_dev.dv_xname, i,
+		    sc->sc_dev.dv_xname, i,
 		    setup.sync[i].offset, setup.sync[i].period * 50 + 200);
 	}
 }
@@ -1176,7 +1242,7 @@ bt_scsi_cmd(xs)
 	struct scsi_xfer *xs;
 {
 	struct scsi_link *sc_link = xs->sc_link;
-	struct bt_softc *bt = sc_link->adapter_softc;
+	struct bt_softc *sc = sc_link->adapter_softc;
 	struct bt_ccb *ccb;
 	struct bt_scat_gath *sg;
 	int seg;		/* scatter gather seg being worked on */
@@ -1195,11 +1261,11 @@ bt_scsi_cmd(xs)
 	 */
 	flags = xs->flags;
 	if ((flags & (ITSDONE|INUSE)) != INUSE) {
-		printf("%s: done or not in use?\n", bt->sc_dev.dv_xname);
+		printf("%s: done or not in use?\n", sc->sc_dev.dv_xname);
 		xs->flags &= ~ITSDONE;
 		xs->flags |= INUSE;
 	}
-	if ((ccb = bt_get_ccb(bt, flags)) == NULL) {
+	if ((ccb = bt_get_ccb(sc, flags)) == NULL) {
 		xs->error = XS_DRIVER_STUFFUP;
 		return TRY_AGAIN_LATER;
 	}
@@ -1305,9 +1371,9 @@ bt_scsi_cmd(xs)
 			 * there's still data, must have run out of segs!
 			 */
 			printf("%s: bt_scsi_cmd, more than %d dma segs\n",
-			    bt->sc_dev.dv_xname, BT_NSEG);
+			    sc->sc_dev.dv_xname, BT_NSEG);
 			xs->error = XS_DRIVER_STUFFUP;
-			bt_free_ccb(bt, ccb, flags);
+			bt_free_ccb(sc, ccb, flags);
 			return COMPLETE;
 		}
 	} else {		/* No data xfer, use non S/G values */
@@ -1325,10 +1391,10 @@ bt_scsi_cmd(xs)
 
 	s = splbio();
 
-	if (bt_send_mbo(bt, BT_MBO_START, ccb) == NULL) {
+	if (bt_send_mbo(sc, BT_MBO_START, ccb) == NULL) {
 		splx(s);
 		xs->error = XS_DRIVER_STUFFUP;
-		bt_free_ccb(bt, ccb, flags);
+		bt_free_ccb(sc, ccb, flags);
 		return TRY_AGAIN_LATER;
 	}
 
@@ -1347,9 +1413,9 @@ bt_scsi_cmd(xs)
 	/*
 	 * If we can't use interrupts, poll on completion
 	 */
-	if (bt_poll(bt, xs, xs->timeout)) {
+	if (bt_poll(sc, xs, xs->timeout)) {
 		bt_timeout(ccb);
-		if (bt_poll(bt, xs, 2000))
+		if (bt_poll(sc, xs, 2000))
 			bt_timeout(ccb);
 	}
 	return COMPLETE;
@@ -1359,11 +1425,12 @@ bt_scsi_cmd(xs)
  * Poll a particular unit, looking for a particular xs
  */
 int
-bt_poll(bt, xs, count)
-	struct bt_softc *bt;
+bt_poll(sc, xs, count)
+	struct bt_softc *sc;
 	struct scsi_xfer *xs;
 	int count;
 {
+	int iobase = sc->sc_iobase;
 
 	/* timeouts are in msec, so we loop in 1000 usec cycles */
 	while (count) {
@@ -1371,8 +1438,8 @@ bt_poll(bt, xs, count)
 		 * If we had interrupts enabled, would we
 		 * have got an interrupt?
 		 */
-		if (inb(BT_INTR_PORT) & BT_ANY_INTR)
-			btintr(bt);
+		if (inb(iobase + BT_INTR_PORT) & BT_ANY_INTR)
+			btintr(sc);
 		if (xs->flags & ITSDONE)
 			return 0;
 		delay(1000);	/* only happens in boot so ok */
@@ -1388,7 +1455,7 @@ bt_timeout(arg)
 	struct bt_ccb *ccb = arg;
 	struct scsi_xfer *xs = ccb->xs;
 	struct scsi_link *sc_link = xs->sc_link;
-	struct bt_softc *bt = sc_link->adapter_softc;
+	struct bt_softc *sc = sc_link->adapter_softc;
 	int s;
 
 	sc_print_addr(sc_link);
@@ -1399,9 +1466,9 @@ bt_timeout(arg)
 	/*
 	 * If the ccb's mbx is not free, then the board has gone Far East?
 	 */
-	if (bt_ccb_phys_kv(bt, ccb->mbx->ccb_addr) == ccb &&
+	if (bt_ccb_phys_kv(sc, ccb->mbx->ccb_addr) == ccb &&
 	    ccb->mbx->cmd != BT_MBO_FREE) {
-		printf("%s: not taking commands!\n", bt->sc_dev.dv_xname);
+		printf("%s: not taking commands!\n", sc->sc_dev.dv_xname);
 		Debugger();
 	}
 
@@ -1414,13 +1481,13 @@ bt_timeout(arg)
 		/* abort timed out */
 		printf(" AGAIN\n");
 		ccb->xs->retries = 0;
-		bt_done(bt, ccb);
+		bt_done(sc, ccb);
 	} else {
 		/* abort the operation that has timed out */
 		printf("\n");
 		ccb->xs->error = XS_TIMEOUT;
 		ccb->flags = CCB_ABORTED;
-		bt_send_mbo(bt, BT_MBO_ABORT, ccb);
+		bt_send_mbo(sc, BT_MBO_ABORT, ccb);
 		/* 2 secs for the abort */
 		if ((xs->flags & SCSI_POLL) == 0)
 			timeout(bt_timeout, ccb, 2 * hz);
@@ -1442,14 +1509,14 @@ bt_print_ccb(ccb)
 }
 
 void
-bt_print_active_ccbs(bt)
-	struct bt_softc *bt;
+bt_print_active_ccbs(sc)
+	struct bt_softc *sc;
 {
 	struct bt_ccb *ccb;
 	int i = 0;
 
 	while (i < CCB_HASH_SIZE) {
-		ccb = bt->ccbhash[i];
+		ccb = sc->sc_ccbhash[i];
 		while (ccb) {
 			if (ccb->flags != CCB_FREE)
 				bt_print_ccb(ccb);

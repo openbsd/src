@@ -1,4 +1,5 @@
-/*	$NetBSD: kbd_tables.c,v 1.1.1.1 1996/01/24 01:15:35 gwr Exp $	*/
+/*	$OpenBSD: kbd_tables.c,v 1.2 1996/04/18 23:48:16 niklas Exp $	*/
+/*	$NetBSD: kbd_tables.c,v 1.2 1996/02/29 19:32:18 gwr Exp $	*/
 
 /*
  * Copyright (c) 1996 Gordon W. Ross
@@ -871,6 +872,33 @@ char kbd_stringtab[16][10] = {
 	{ 0x1b, '[', 'D', 0 },	/* Left */
 	{ 0x1b, '[', 'C', 0 },	/* Right */
 };
+
+/*
+ * The "NumLock" map, which is used to remap
+ * function keysyms when NumLock is on.
+ */
+unsigned short kbd_numlock_map[64] = {
+	/* KEYSYM_FUNC_L: Identity map */
+	0x600, 0x601, 0x602, 0x603, 0x604, 0x605, 0x606, 0x607,
+	0x608, 0x609, 0x60a, 0x60b, 0x60c, 0x60d, 0x60e, 0x60f,
+
+	/* KEYSYM_FUNC_R: remap to numbers... */
+	0x610, 0x611, 0x612,
+	'=', '/', '*',
+	'7', '8', '9',
+	'4', '5', '6',
+	'1', '2', '3',
+	0x61f,
+
+	/* KEYSYM_FUNC_F: Identity map */
+	0x620, 0x621, 0x622, 0x623, 0x624, 0x625, 0x626, 0x627,
+	0x628, 0x629, 0x62a, 0x62b, 0x62c, 0x62d, 0x62e, 0x62f,
+
+	/* KEYSYM_FUNC_N: remap just a few... */
+	0x630, 0x631, 0x632, 0x633, 0x634, 0x635, 0x636,   '0',
+	0x638,   '.',  '\r', 0x63b, 0x63c,   '+',   '-', 0x63f,
+};
+
 
 /*
  * Keyboard descriptions for each type.

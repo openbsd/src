@@ -1,3 +1,6 @@
+/*	$OpenBSD: aic7xxxvar.h,v 1.2 1996/04/18 23:47:16 niklas Exp $	*/
+/*	$NetBSD: aic7xxxvar.h,v 1.2 1996/03/14 02:30:30 cgd Exp $	*/
+
 /*
  * Interface to the generic driver for the aic7xxx based adaptec 
  * SCSI controllers.  This is used to implement product specific 
@@ -19,8 +22,6 @@
  *    Justin T. Gibbs.
  * 4. Modifications may be freely made to this file if the above conditions
  *    are met.
- *
- *	$Id: aic7xxxvar.h,v 1.1.1.1 1995/10/18 08:52:30 deraadt Exp $
  */
 
 #ifndef _AIC7XXX_H_

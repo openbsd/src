@@ -1,4 +1,5 @@
-/*	$NetBSD: pdq.c,v 1.2 1995/08/19 04:35:18 cgd Exp $	*/
+/*	$OpenBSD: pdq.c,v 1.2 1996/04/18 23:47:22 niklas Exp $	*/
+/*	$NetBSD: pdq.c,v 1.3 1996/03/11 21:41:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Matt Thomas (matt@lkg.dec.com)
@@ -22,6 +23,66 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * from Id: pdq.c,v 1.18 1995/08/20 18:59:00 thomas Exp thomas
+ *
+ * Log: pdq.c,v
+ * Revision 1.18  1995/08/20  18:59:00  thomas
+ * Changes for NetBSD
+ *
+ * Revision 1.17  1995/08/16  22:57:28  thomas
+ * Add support for NetBSD
+ *
+ * Revision 1.16  1995/08/04  21:54:56  thomas
+ * Clean IRQ processing under BSD/OS.
+ * A receive tweaks.  (print source of MAC CRC errors, etc.)
+ *
+ * Revision 1.15  1995/06/30  23:36:21  thomas
+ * Optimize fix.
+ *
+ * Revision 1.14  1995/06/30  23:35:39  thomas
+ * Fix severe bug in transmit path (corruption of ring).
+ *
+ * Revision 1.13  1995/06/21  18:29:27  thomas
+ * SVR4.2 changes
+ *
+ * Revision 1.12  1995/06/05  23:49:36  thomas
+ * Fix bonehead error.  Don't try to queue a command if there
+ * is a command.
+ *
+ * Revision 1.11  1995/06/03  15:43:26  thomas
+ * Fix the command submission logic to only submit one
+ * command at a time no matter what.  This simplies the
+ * code significantly thereby allowing us to do some up
+ * front optimizations.
+ *
+ * Revision 1.10  1995/06/02  22:18:34  thomas
+ * Don't know why but on some motherboards, the PDQ just can't
+ * multiple outstanding commands.
+ *
+ * Revision 1.9  1995/04/20  20:17:33  thomas
+ * Add PCI support for BSD/OS.
+ * Fix BSD/OS EISA support.
+ * Set latency timer for DEFPA to recommended value if 0.
+ *
+ * Revision 1.8  1995/03/14  01:52:52  thomas
+ * Update for new FreeBSD PCI Interrupt interface
+ *
+ * Revision 1.7  1995/03/07  23:03:16  thomas
+ * Fix SMT queue processing
+ *
+ * Revision 1.6  1995/03/06  18:03:47  thomas
+ * restart trasmitter once link is available
+ *
+ * Revision 1.5  1995/03/06  17:07:56  thomas
+ * Add copyright/disclaimer
+ * Add error recovery code.
+ * Add BPF SMT support
+ *
+ * Revision 1.3  1995/03/03  13:48:35  thomas
+ * more fixes
+ *
+ *
  */
 
 /*
@@ -38,10 +99,10 @@
 #define	PDQ_HWSUPPORT	/* for pdq.h */
 
 #include "pdqreg.h"
-#ifndef __NetBSD__
-#include "pdq_os.h"
-#else
+#if defined(__NetBSD__)
 #include "pdqvar.h"
+#else
+#include "pdq_os.h"
 #endif
 
 #define	PDQ_ROUNDUP(n, x)	(((n) + ((x) - 1)) & ~((x) - 1))
@@ -1364,7 +1425,17 @@ pdq_initialize(
      */
     p = (pdq_uint8_t *) PDQ_OS_MEMALLOC_CONTIG(contig_bytes);
     if (p != NULL) {
-	pdq_physaddr_t physaddr = PDQ_OS_VA_TO_PA(p) & 0x1FFF;
+	pdq_physaddr_t physaddr = PDQ_OS_VA_TO_PA(p);
+	/*
+	 * Assert that we really got contiguous memory.  This isn't really
+	 * needed on systems that actually have physical contiguous allocation
+	 * routines, but on those systems that don't ...
+	 */
+	for (idx = PDQ_OS_PAGESIZE; idx < 0x2000; idx += PDQ_OS_PAGESIZE) {
+	    if (PDQ_OS_VA_TO_PA(p + idx) - physaddr != idx)
+		goto cleanup_and_return;
+	}
+	physaddr &= 0x1FFF;
 	if (physaddr) {
 	    pdq->pdq_unsolicited_info.ui_events = (pdq_unsolicited_event_t *) p;
 	    pdq->pdq_dbp = (pdq_descriptor_block_t *) &p[0x2000 - physaddr];
@@ -1385,8 +1456,8 @@ pdq_initialize(
      */
     if (pdq->pdq_dbp == NULL || pdq->pdq_unsolicited_info.ui_events == NULL) {
       cleanup_and_return:
-	if (pdq->pdq_dbp != NULL)
-	    PDQ_OS_MEMFREE_CONTIG(pdq->pdq_dbp, contig_bytes);
+	if (p /* pdq->pdq_dbp */ != NULL)
+	    PDQ_OS_MEMFREE_CONTIG(p /* pdq->pdq_dbp */, contig_bytes);
 	if (contig_bytes == sizeof(pdq_descriptor_block_t) && pdq->pdq_unsolicited_info.ui_events != NULL)
 	    PDQ_OS_MEMFREE(pdq->pdq_unsolicited_info.ui_events,
 			   PDQ_NUM_UNSOLICITED_EVENTS * sizeof(pdq_unsolicited_event_t));
@@ -1519,7 +1590,6 @@ pdq_initialize(
      */
     state = pdq_stop(pdq);
 
-    /* state = PDQ_PSTS_ADAPTER_STATE(*pdq->pdq_csrs.csr_port_status); */
     PDQ_PRINTF(("PDQ Adapter State = %s\n", pdq_adapter_states[state]));
     PDQ_ASSERT(state == PDQS_DMA_AVAILABLE);
     /*

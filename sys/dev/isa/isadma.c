@@ -1,4 +1,5 @@
-/*	$NetBSD: isadma.c,v 1.12 1995/04/17 12:09:11 cgd Exp $	*/
+/*	$OpenBSD: isadma.c,v 1.3 1996/04/18 23:47:41 niklas Exp $	*/
+/*	$NetBSD: isadma.c,v 1.17 1996/03/01 04:35:27 mycroft Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -24,10 +25,19 @@ struct dma_info {
 };
 
 static struct dma_info dma_info[8];
+static u_int8_t dma_finished;
 
 /* high byte of address is stored in this port for i-th dma channel */
-static int dmapageport[8] =
-	{ 0x87, 0x83, 0x81, 0x82, 0x8f, 0x8b, 0x89, 0x8a };
+static int dmapageport[8] = {
+	0x87, 0x83, 0x81, 0x82, 0x8f, 0x8b, 0x89, 0x8a
+};
+
+static u_int8_t dmamode[4] = {
+	DMA37MD_READ | DMA37MD_SINGLE,
+	DMA37MD_WRITE | DMA37MD_SINGLE,
+	DMA37MD_READ | DMA37MD_LOOP,
+	DMA37MD_WRITE | DMA37MD_LOOP
+};
 
 /*
  * isadma_cascade(): program 8237 DMA controller channel to accept
@@ -38,18 +48,20 @@ isadma_cascade(chan)
 	int chan;
 {
 
-#ifdef DIAGNOSTIC
+#ifdef ISADMA_DEBUG
 	if (chan < 0 || chan > 7)
 		panic("isadma_cascade: impossible request"); 
 #endif
 
 	/* set dma channel mode, and set dma channel mode */
 	if ((chan & 4) == 0) {
-		outb(DMA1_MODE, DMA37MD_CASCADE | chan);
+		outb(DMA1_MODE, chan | DMA37MD_CASCADE);
 		outb(DMA1_SMSK, chan);
 	} else {
-		outb(DMA2_MODE, DMA37MD_CASCADE | (chan & 3));
-		outb(DMA2_SMSK, chan & 3);
+		chan &= 3;
+
+		outb(DMA2_MODE, chan | DMA37MD_CASCADE);
+		outb(DMA2_SMSK, chan);
 	}
 }
 
@@ -69,9 +81,10 @@ isadma_start(addr, nbytes, chan, flags)
 	int mflags;
 	vm_size_t size;
 
-#ifdef DIAGNOSTIC
+#ifdef ISADMA_DEBUG
 	if (chan < 0 || chan > 7 ||
-	    ((flags & ISADMA_START_READ) == 0) == ((flags & ISADMA_START_WRITE) == 0) ||
+	    (((flags & DMAMODE_READ) != 0) + ((flags & DMAMODE_WRITE) != 0) +
+	    ((flags & DMAMODE_LOOP) != 0) != 1) ||
 	    ((chan & 4) ? (nbytes >= (1<<17) || nbytes & 1 || (u_int)addr & 1) :
 	    (nbytes >= (1<<16))))
 		panic("isadma_start: impossible request"); 
@@ -93,8 +106,11 @@ isadma_start(addr, nbytes, chan, flags)
 	if (isadma_map(addr, nbytes, di->phys, mflags) != 1)
 		panic("isadma_start: cannot map");
 
-	if ((flags & ISADMA_START_READ) == 0)
+	/* XXX Will this do what we want with DMAMODE_LOOP?  */
+	if ((flags & DMAMODE_READ) == 0)
 		isadma_copytobuf(addr, nbytes, 1, di->phys);
+
+	dma_finished &= ~(1 << chan);
 
 	if ((chan & 4) == 0) {
 		/*
@@ -102,17 +118,14 @@ isadma_start(addr, nbytes, chan, flags)
 		 * byte mode channels.
 		 */
 		/* set dma channel mode, and reset address ff */
-		if (flags & ISADMA_START_READ)
-			outb(DMA1_MODE, chan | DMA37MD_SINGLE | DMA37MD_WRITE);
-		else
-			outb(DMA1_MODE, chan | DMA37MD_SINGLE | DMA37MD_READ);
+		outb(DMA1_MODE, chan | dmamode[flags]);
 		outb(DMA1_FFC, 0);
 
 		/* send start address */
-		waport =  DMA1_CHN(chan);
+		waport = DMA1_CHN(chan);
+		outb(dmapageport[chan], di->phys[0].addr>>16);
 		outb(waport, di->phys[0].addr);
 		outb(waport, di->phys[0].addr>>8);
-		outb(dmapageport[chan], di->phys[0].addr>>16);
 
 		/* send count */
 		outb(waport + 1, --nbytes);
@@ -126,17 +139,14 @@ isadma_start(addr, nbytes, chan, flags)
 		 * word mode channels.
 		 */
 		/* set dma channel mode, and reset address ff */
-		if (flags & ISADMA_START_READ)
-			outb(DMA2_MODE, (chan & 3) | DMA37MD_SINGLE | DMA37MD_WRITE);
-		else
-			outb(DMA2_MODE, (chan & 3) | DMA37MD_SINGLE | DMA37MD_READ);
+		outb(DMA2_MODE, (chan & 3) | dmamode[flags]);
 		outb(DMA2_FFC, 0);
 
 		/* send start address */
 		waport = DMA2_CHN(chan & 3);
+		outb(dmapageport[chan], di->phys[0].addr>>16);
 		outb(waport, di->phys[0].addr>>1);
 		outb(waport, di->phys[0].addr>>9);
-		outb(dmapageport[chan], di->phys[0].addr>>16);
 
 		/* send count */
 		nbytes >>= 1;
@@ -154,7 +164,7 @@ isadma_abort(chan)
 {
 	struct dma_info *di;
 
-#ifdef DIAGNOSTIC
+#ifdef ISADMA_DEBUG
 	if (chan < 0 || chan > 7)
 		panic("isadma_abort: impossible request");
 #endif
@@ -173,6 +183,25 @@ isadma_abort(chan)
 
 	isadma_unmap(di->addr, di->nbytes, 1, di->phys);
 	di->flags = 0;
+}
+
+int
+isadma_finished(chan)
+	int chan;
+{
+
+#ifdef ISADMA_DEBUG
+	if (chan < 0 || chan > 7)
+		panic("isadma_finished: impossible request");
+#endif
+
+	/* check that the terminal count was reached */
+	if ((chan & 4) == 0)
+		dma_finished |= inb(DMA1_SR) & 0x0f;
+	else
+		dma_finished |= (inb(DMA2_SR) & 0x0f) << 4;
+
+	return ((dma_finished & (1 << chan)) != 0);
 }
 
 void
@@ -208,7 +237,8 @@ isadma_done(chan)
 	else
 		outb(DMA2_SMSK, DMA37SM_SET | (chan & 3));
 
-	if (di->flags & ISADMA_START_READ)
+	/* XXX Will this do what we want with DMAMODE_LOOP?  */
+	if (di->flags & DMAMODE_READ)
 		isadma_copyfrombuf(di->addr, di->nbytes, 1, di->phys);
 
 	isadma_unmap(di->addr, di->nbytes, 1, di->phys);

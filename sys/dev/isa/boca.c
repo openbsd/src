@@ -1,7 +1,8 @@
-/*    $OpenBSD: boca.c,v 1.6 1996/03/20 01:00:40 mickey Exp $ */
-/*    $NetBSD: boca.c,v 1.6 1995/12/24 02:31:11 mycroft Exp $ */
+/*	$OpenBSD: boca.c,v 1.7 1996/04/18 23:47:30 niklas Exp $ */
+/*	$NetBSD: boca.c,v 1.9 1996/03/10 09:01:22 cgd Exp $	*/
 
 /*
+ * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
  * Copyright (c) 1995 Charles Hannum.  All rights reserved.
  *
  * This code is derived from public-domain software written by
@@ -36,17 +37,24 @@
 #include <sys/param.h>
 #include <sys/device.h>
 
-#include <machine/pio.h>
+#include <machine/bus.h>
 
 #include <dev/isa/isavar.h>
+#include <dev/isa/comreg.h>
+#include <dev/isa/comvar.h>
+
+#define	NSLAVES	8
 
 struct boca_softc {
 	struct device sc_dev;
 	void *sc_ih;
 
+	bus_chipset_tag_t sc_bc;
 	int sc_iobase;
-	int sc_alive;		/* mask of slave units attached */
-	void *sc_slaves[8];	/* com device unit numbers */
+
+	int sc_alive;			/* mask of slave units attached */
+	void *sc_slaves[NSLAVES];	/* com device unit numbers */
+	bus_io_handle_t sc_slaveioh[NSLAVES];
 };
 
 int bocaprobe();
@@ -63,44 +71,62 @@ bocaprobe(parent, self, aux)
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;
+	int iobase = ia->ia_iobase;
+	bus_chipset_tag_t bc = ia->ia_bc;
+	bus_io_handle_t ioh;
+	int i, rv = 1;
 
 	/*
 	 * Do the normal com probe for the first UART and assume
-	 * its presence means there is a multiport board there.
+	 * its presence, and the ability to map the other UARTS,
+	 * means there is a multiport board there.
 	 * XXX Needs more robustness.
 	 */
-	ia->ia_iosize = 8 * 8;
-	return (comprobe1(ia->ia_iobase));
+
+	/* if the first port is in use as console, then it. */
+	if (iobase == comconsaddr && !comconsattached)
+		goto checkmappings;
+
+	if (bus_io_map(bc, iobase, COM_NPORTS, &ioh)) {
+		rv = 0;
+		goto out;
+	}
+	rv = comprobe1(bc, ioh, iobase);
+	bus_io_unmap(bc, ioh, COM_NPORTS);
+	if (rv == 0)
+		goto out;
+
+checkmappings:
+	for (i = 1; i < NSLAVES; i++) {
+		iobase += COM_NPORTS;
+
+		if (iobase == comconsaddr && !comconsattached)
+			continue;
+
+		if (bus_io_map(bc, iobase, COM_NPORTS, &ioh)) {
+			rv = 0;
+			goto out;
+		}
+		bus_io_unmap(bc, ioh, COM_NPORTS);
+	}
+
+out:
+	if (rv)
+		ia->ia_iosize = NSLAVES * COM_NPORTS;
+	return (rv);
 }
 
-struct boca_attach_args {
-	int ba_slave;
-};
-
 int
-bocasubmatch(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
-{
-	struct boca_softc *sc = (void *)parent;
-	struct cfdata *cf = match;
-	struct isa_attach_args *ia = aux;
-	struct boca_attach_args *ba = ia->ia_aux;
-
-	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != ba->ba_slave)
-		return (0);
-	return ((*cf->cf_driver->cd_match)(parent, match, ia));
-}
-
-int
-bocaprint(aux, boca)
+bocaprint(aux, pnp)
 	void *aux;
-	char *boca;
+	char *pnp;
 {
-	struct isa_attach_args *ia = aux;
-	struct boca_attach_args *ba = ia->ia_aux;
+	struct commulti_attach_args *ca = aux;
 
-	printf(" slave %d", ba->ba_slave);
+	if (pnp)
+		printf("com at %s", pnp);
+	printf(" slave %d", ca->ca_slave);
+	return (UNCONF);
 }
 
 void
@@ -110,28 +136,37 @@ bocaattach(parent, self, aux)
 {
 	struct boca_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
-	struct boca_attach_args ba;
-	struct isa_attach_args isa;
-	int subunit;
+	struct commulti_attach_args ca;
+	int i, subunit;
 
+	sc->sc_bc = ia->ia_bc;
 	sc->sc_iobase = ia->ia_iobase;
+
+	for (i = 0; i < NSLAVES; i++)
+		if (bus_io_map(bc, sc->sc_iobase + i * COM_NPORTS, COM_NPORTS,
+		    &sc->sc_slaveioh[i]))
+			panic("bocaattach: couldn't map slave %d", i);
 
 	printf("\n");
 
-	isa.ia_aux = &ba;
-	for (ba.ba_slave = 0; ba.ba_slave < 8; ba.ba_slave++) {
-		struct cfdata *cf;
-		isa.ia_iobase = sc->sc_iobase + 8 * ba.ba_slave;
-		isa.ia_iosize = 0x666;
-		isa.ia_irq = IRQUNK;
-		isa.ia_drq = DRQUNK;
-		isa.ia_msize = 0;
-		if ((cf = config_search(bocasubmatch, self, &isa)) != 0) {
-			subunit = cf->cf_unit;	/* can change if unit == * */
-			config_attach(self, cf, &isa, bocaprint);
-			sc->sc_slaves[ba.ba_slave] =
-			    cf->cf_driver->cd_devs[subunit];
-			sc->sc_alive |= 1 << ba.ba_slave;
+	for (i = 0; i < NSLAVES; i++) {
+		struct cfdata *match;
+
+		ca.ca_slave = i;
+		ca.ca_bc = sc->sc_bc;
+		ca.ca_ioh = sc->sc_slaveioh[i];
+		ca.ca_iobase = sc->sc_iobase + i * COM_NPORTS;
+		ca.ca_noien = 0;
+
+		/* mimic config_found(), but with special functionality */
+		if ((match = config_search(NULL, self, &ca)) != NULL) {
+			subunit = match->cf_unit; /* can change if unit == * */
+			config_attach(self, match, &ca, bocaprint);
+			sc->sc_slaves[i] = match->cf_driver->cd_devs[subunit];
+			sc->sc_alive |= 1 << i;
+		} else {
+			bocaprint(&ca, self->dv_xname);
+			printf(" not configured\n");
 		}
 	}
 
@@ -144,11 +179,11 @@ bocaintr(arg)
 	void *arg;
 {
 	struct boca_softc *sc = arg;
-	int iobase = sc->sc_iobase;
+	bus_chipset_tag_t bc = sc->sc_bc;
 	int alive = sc->sc_alive;
 	int bits;
 
-	bits = inb(iobase | 0x07) & alive;
+	bits = bus_io_read_1(bc, sc->sc_slaveioh[0], 7) & alive;
 	if (bits == 0)
 		return (0);
 
@@ -165,7 +200,7 @@ bocaintr(arg)
 		TRY(6);
 		TRY(7);
 #undef TRY
-		bits = inb(iobase | 0x07) & alive;
+		bits = bus_io_read_1(bc, sc->sc_slaveioh[0], 7) & alive;
 		if (bits == 0)
 			return (1);
  	}

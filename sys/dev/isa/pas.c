@@ -1,5 +1,5 @@
-/*	$OpenBSD: pas.c,v 1.7 1996/03/20 01:00:57 mickey Exp $	*/
-/*	$NetBSD: pas.c,v 1.12 1996/02/16 08:18:34 mycroft Exp $	*/
+/*	$OpenBSD: pas.c,v 1.8 1996/04/18 23:47:44 niklas Exp $	*/
+/*	$NetBSD: pas.c,v 1.13 1996/03/01 04:08:43 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -408,7 +408,7 @@ pasforceintr(aux)
 	 * it is needed (and you pay the latency).  Also, you might
 	 * never need the buffer anyway.)
 	 */
-	at_dma(1, &dmabuf, 1, ia->ia_drq);
+	at_dma(DMAMODE_READ, &dmabuf, 1, ia->ia_drq);
 	if (pas_wdsp(iobase, SB_DSP_RDMA) == 0) {
 		(void)pas_wdsp(iobase, 0);
 		(void)pas_wdsp(iobase, 0);

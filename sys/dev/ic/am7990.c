@@ -1,4 +1,5 @@
-/*	$NetBSD: am7990.c,v 1.10 1996/01/02 21:51:56 thorpej Exp $	*/
+/*	$OpenBSD: am7990.c,v 1.4 1996/04/18 23:47:17 niklas Exp $	*/
+/*	$NetBSD: am7990.c,v 1.11 1996/03/14 19:05:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -56,7 +57,9 @@
 #if defined(CCITT) && defined(LLC)
 #include <sys/socketvar.h>
 #include <netccitt/x25.h>
-extern llc_ctlinput(), cons_rtrequest();
+#include <netccitt/pk.h>
+#include <netccitt/pk_var.h>
+#include <netccitt/pk_extern.h>
 #endif
 
 #if NBPFILTER > 0
@@ -790,7 +793,7 @@ leioctl(ifp, cmd, data)
 #if defined(CCITT) && defined(LLC)
 	case SIOCSIFCONF_X25:
 		ifp->if_flags |= IFF_UP;
-		ifa->ifa_rtrequest = (void (*)())cons_rtrequest; /* XXX */
+		ifa->ifa_rtrequest = cons_rtrequest; /* XXX */
 		error = x25_llcglue(PRC_IFUP, ifa->ifa_addr);
 		if (error == 0)
 			leinit(sc);

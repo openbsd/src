@@ -1,4 +1,5 @@
-/*	$NetBSD: kbd.c,v 1.1.1.1 1996/01/24 01:15:35 gwr Exp $	*/
+/*	$OpenBSD: kbd.c,v 1.2 1996/04/18 23:48:15 niklas Exp $	*/
+/*	$NetBSD: kbd.c,v 1.4 1996/02/29 19:32:14 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -64,7 +65,6 @@
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
-/* #include <sys/tty.h> */
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
@@ -168,16 +168,15 @@ struct kbd_softc {
 };
 
 /* Prototypes */
-void	kbd_ascii(struct tty *);
-void	kbd_serial(struct tty *, void (*)(), void (*)());
-int 	kbd_iopen(int unit);
-void	kbd_was_reset(struct kbd_softc *);
-void	kbd_new_layout(struct kbd_softc *);
-void	kbd_rint(int);
 int 	kbd_docmd(struct kbd_softc *k, int cmd);
+int 	kbd_iopen(int unit);
+void	kbd_new_layout(struct kbd_softc *k);
 void	kbd_output(struct kbd_softc *k, int c);
-void	kbd_start_tx(struct kbd_softc *k);
 void	kbd_repeat(void *arg);
+void	kbd_set_leds(struct kbd_softc *k, int leds);
+void	kbd_start_tx(struct kbd_softc *k);
+void	kbd_update_leds(struct kbd_softc *k);
+void	kbd_was_reset(struct kbd_softc *k);
 
 extern void kd_input(int ascii);
 
@@ -231,7 +230,7 @@ kbd_attach(parent, self, aux)
 	int reset, s, tconst;
 
 	cf = k->k_dev.dv_cfdata;
-	kbd_unit = cf->cf_unit;
+	kbd_unit = k->k_dev.dv_unit;
 	channel = args->channel;
 	cs = &zsc->zsc_cs[channel];
 	cs->cs_private = k;
@@ -251,7 +250,7 @@ kbd_attach(parent, self, aux)
 		/* Not the console; may need reset. */
 		reset = (channel == 0) ?
 			ZSWR9_A_RESET : ZSWR9_B_RESET;
-		ZS_WRITE(cs, 9, reset);
+		zs_write_reg(cs, 9, reset);
 	}
 	/* These are OK as set by zscc: WR3, WR4, WR5 */
 	cs->cs_preg[5] |= ZSWR5_DTR | ZSWR5_RTS;
@@ -455,7 +454,8 @@ kbdioctl(dev, cmd, data, flag, p)
 		break;
 
 	case KIOCSLED:
-		error = kbd_set_leds(k, data);
+		error = kbd_drain_tx(k);
+		kbd_set_leds(k, *(int *)data);
 		break;
 
 	case KIOCGLED:
@@ -618,24 +618,40 @@ kbd_code_to_keysym(ks, c)
 	 */
 	if (KEY_UP(c))
 		km = ks->kbd_k.k_release;
-	else {
-		if (ks->kbd_modbits & KBMOD_CTRL_MASK)
-			km = ks->kbd_k.k_control;
-		else {
-			if (ks->kbd_modbits & KBMOD_SHIFT_MASK)
-				km = ks->kbd_k.k_shifted;
-			else
-				km = ks->kbd_k.k_normal;
-		}
-	}
+	else if (ks->kbd_modbits & KBMOD_CTRL_MASK)
+		km = ks->kbd_k.k_control;
+	else if (ks->kbd_modbits & KBMOD_SHIFT_MASK)
+		km = ks->kbd_k.k_shifted;
+	else
+		km = ks->kbd_k.k_normal;
+
 	if (km == NULL) {
 		/*
 		 * Do not know how to translate yet.
 		 * We will find out when a RESET comes along.
 		 */
-		keysym = KEYSYM_NOP;
-	} else
-		keysym = km->keymap[KEY_CODE(c)];
+		return (KEYSYM_NOP);
+	}
+	keysym = km->keymap[KEY_CODE(c)];
+
+	/*
+	 * Post-processing for Caps-lock
+	 */
+	if ((ks->kbd_modbits & (1 << KBMOD_CAPSLOCK)) &&
+		(KEYSYM_CLASS(keysym) == KEYSYM_ASCII) )
+	{
+		if (('a' <= keysym) && (keysym <= 'z'))
+			keysym -= ('a' - 'A');
+	}
+
+	/*
+	 * Post-processing for Num-lock
+	 */
+	if ((ks->kbd_modbits & (1 << KBMOD_NUMLOCK)) &&
+		(KEYSYM_CLASS(keysym) == KEYSYM_FUNC) )
+	{
+		keysym = kbd_numlock_map[keysym & 0x3F];
+	}
 
 	return (keysym);
 }
@@ -679,10 +695,9 @@ kbd_input_keysym(k, keysym)
 	register int keysym;
 {
 	struct kbd_state *ks = &k->k_state;
-	register int class, data;
+	register int data;
 
-	class = KEYSYM_CLASS(keysym);
-	switch (class) {
+	switch (KEYSYM_CLASS(keysym)) {
 
 	case KEYSYM_ASCII:
 		data = KEYSYM_DATA(keysym);
@@ -713,6 +728,7 @@ kbd_input_keysym(k, keysym)
 	case KEYSYM_INVMOD:
 		data = 1 << (keysym & 0x1F);
 		ks->kbd_modbits ^= data;
+		kbd_update_leds(k);
 		break;
 
 	case KEYSYM_ALL_UP:
@@ -875,16 +891,14 @@ kbd_rxint(cs)
 	put = k->k_rbput;
 
 	/* Read the input data ASAP. */
-	c = *(cs->cs_reg_data);
-	ZS_DELAY();
+	c = zs_read_data(cs);
 
 	/* Save the status register too. */
-	rr1 = ZS_READ(cs, 1);
+	rr1 = zs_read_reg(cs, 1);
 
 	if (rr1 & (ZSRR1_FE | ZSRR1_DO | ZSRR1_PE)) {
 		/* Clear the receive error. */
-		*(cs->cs_reg_csr) = ZSWR0_RESET_ERRORS;
-		ZS_DELAY();
+		zs_write_csr(cs, ZSWR0_RESET_ERRORS);
 	}
 
 	/*
@@ -934,8 +948,7 @@ kbd_txint(cs)
 
 	k = cs->cs_private;
 
-	*(cs->cs_reg_csr) = ZSWR0_RESET_TXINT;
-	ZS_DELAY();
+	zs_write_csr(cs, ZSWR0_RESET_TXINT);
 
 	k->k_intr_flags |= INTR_TX_EMPTY;
 	/* Ask for softint() call. */
@@ -953,11 +966,8 @@ kbd_stint(cs)
 
 	k = cs->cs_private;
 
-	rr0 = *(cs->cs_reg_csr);
-	ZS_DELAY();
-
-	*(cs->cs_reg_csr) = ZSWR0_RESET_STATUS;
-	ZS_DELAY();
+	rr0 = zs_read_csr(cs);
+	zs_write_csr(cs, ZSWR0_RESET_STATUS);
 
 #if 0
 	if (rr0 & ZSRR0_BREAK) {
@@ -1267,25 +1277,21 @@ kbd_start_tx(k)
 
 	/* Need splzs to avoid interruption of the delay. */
 	(void) splzs();
-	*(cs->cs_reg_data) = c;
-	ZS_DELAY();
+	zs_write_data(cs, c);
 
 out:
 	splx(s);
 }
 
 
-int
-kbd_set_leds(k, data)
+void
+kbd_set_leds(k, new_leds)
 	struct kbd_softc *k;
-	caddr_t data;
+	int new_leds;
 {
 	struct kbd_state *ks = &k->k_state;
-	int error, s;
-	char new_leds;
+	int s;
 
-	error = 0;
-	new_leds = *(char*)data;
 	s = spltty();
 
 	/* Don't send unless state changes. */
@@ -1297,14 +1303,30 @@ kbd_set_leds(k, data)
 	if (ks->kbd_id < 4)
 		goto out;
 
-	error = kbd_drain_tx(k);
 	kbd_output(k, KBD_CMD_SETLED);
 	kbd_output(k, new_leds);
 	kbd_start_tx(k);
 
 out:
 	splx(s);
-	return(error);
+}
+
+void
+kbd_update_leds(k)
+    struct kbd_softc *k;
+{
+    struct kbd_state *ks = &k->k_state;
+    register char leds;
+
+	leds = ks->kbd_leds;
+	leds &= ~(LED_CAPS_LOCK|LED_NUM_LOCK);
+
+	if (ks->kbd_modbits & (1 << KBMOD_CAPSLOCK))
+		leds |= LED_CAPS_LOCK;
+	if (ks->kbd_modbits & (1 << KBMOD_NUMLOCK))
+		leds |= LED_NUM_LOCK;
+
+	kbd_set_leds(k, leds);
 }
 
 
@@ -1350,4 +1372,3 @@ kbd_docmd(k, cmd)
 	kbd_start_tx(k);
 	return (0);
 }
-

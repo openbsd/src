@@ -1,7 +1,8 @@
-$NetBSD: pcidevs,v 1.3 1995/11/10 19:36:09 christos Exp $
+$OpenBSD: pcidevs,v 1.6 1996/04/18 23:48:04 niklas Exp $
+/*	$NetBSD: pcidevs,v 1.6 1996/02/19 20:08:25 christos Exp $	*/
 
 /*
- * Copyright (c) 1995 Christopher G. Demetriou
+ * Copyright (c) 1995, 1996 Christopher G. Demetriou
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,147 +36,466 @@ $NetBSD: pcidevs,v 1.3 1995/11/10 19:36:09 christos Exp $
  * List of known PCI vendors
  */
 
-vendor OLDCOMPAQ	0x0E11		Compaq	# Old ID.  see "COMPAQ" below.
-vendor OLDNCR		0x1000		NCR	# Old ID.  see "NCR" below.
-vendor ATI		0x1002		ATI
-vendor VLSI		0x1004		VLSI
-vendor ADL		0x1005		Advance Logic
-vendor NS		0x100B		NS
-vendor TSENG		0x100C		Tseng'Lab
-vendor WEITEK		0x100E		Weitek
-vendor DEC		0x1011		DEC
-vendor CIRRUS		0x1013		Cirrus Logic
-vendor IBM		0x1014		IBM
-vendor NCR		0x101A		NCR
-vendor WD		0x101C		Western Digital
-vendor AMD		0x1022		AMD
-vendor TRIDENT		0x1023		Trident
-vendor ACER		0x1025		Acer Incorporated
-vendor MATROX		0x102B		Matrox
-vendor CT		0x102C		Chips & Technologies
-vendor COMPAQ		0x1032		Compaq
-vendor NEC		0x1033		NEC
-vendor FD		0x1036		Future Domain
-vendor SIS		0x1039		Silicon Integrated Systems
-vendor HP		0x103C		Hewlett-Packard
-vendor KPC		0x1040		Kubota Pacific Corp.
-vendor PCTECH		0x1042		PCTECH
-vendor DPT		0x1044		DPT
-vendor OPTI		0x1045		OPTI
-vendor SGS		0x104A		SGS Thomson
-vendor BUSLOGIC		0x104B		BusLogic
-vendor TI		0x104C		Texas Instruments
-vendor SONY		0x104D		Sony
-vendor MOT		0x1057		Motorola
-vendor PROMISE		0x105A		Promise
-vendor N9		0x105D		Number Nine
-vendor UMC		0x1060		UMC
-vendor X		0x1061		X TECHNOLOGY
-vendor MYLEX		0x1069		Mylex
-vendor APPLE		0x106B		Apple
-vendor NEXGEN		0x1074		NexGen
-vendor QLOGIC		0x1077		Q Logic
-vendor LEADTEK		0x107D		Leadtek Research
-vendor CONTAQ		0x1080		Contaq
-vendor FOREX		0x1083		Forex
-vendor BIT3		0x108A		Bit3 Computer Corp.
-vendor QLICOM		0x108D		Qlicom
-vendor CMD		0x1095		CMD Technologies
-vendor VISION		0x1098		Vision
-vendor SIERRA		0x10A8		Sierra
-vendor ACC		0x10AA		ACC MICROELECTRONICS
-vendor WINBOND		0x10AD		Winbond
-vendor CABLETRON	0x10B1		Cabletron
-vendor 3COM		0x10B7		3Com
-vendor AL		0x10B9		Acer Labs
-vendor ASP		0x10CD		Advanced System Products
-vendor CERN		0x10DC		CERN	# ??? XXX
-vendor ECP		0x10DC		ECP	# ??? XXX
-vendor ECU		0x10DC		ECU	# ??? XXX
-vendor IMS		0x10E0		IMS
-vendor TEKRAM2		0x10E1		Tekram
-vendor AMCC		0x10E8		AMCC
-vendor INTERG		0x10EA		Intergraphics
-vendor REALTEK		0x10EC		Realtek
-vendor INIT		0x1101		Initio Corp
-vendor VIA		0x1106		VIA Technologies
-vendor PROTEON		0x1108		Proteon
-vendor VORTEX		0x1119		VORTEX
-vendor EF		0x111A		Efficient Networks
-vendor FORE		0x1127		Fore Systems
-vendor IMAGINGTECH	0x112F		Imaging Technology
-vendor PLX		0x113C		PLX
-vendor ALLIANCE		0x1142		Alliance
-vendor MUTECH		0x1159		Mutech
-vendor ZEITNET		0x1193		ZeitNet
-vendor SPECIALIX	0x11CB		Specialix
-vendor CYCLADES		0x120E		Cyclades
-vendor SYMPHONY		0x1C1C		Symphony
-vendor TEKRAM		0x1DE1		Tekram
-vendor AVANCE		0x4005		Avance
-vendor S3		0x5333		S3 Inc.
-vendor INTEL		0x8086		Intel
-vendor ADP		0x9004		Adaptec
-vendor ATRONICS		0x907F		Atronics
-vendor HERCULES		0xEDD8		Hercules
+vendor OLDCOMPAQ	0x0e11	Compaq  # Old ID.  see "COMPAQ" below.
+vendor OLDNCR		0x1000	NCR	# Old ID.  see "NCR" below.
+vendor ATI		0x1002	ATI Technologies
+vendor ULSI		0x1003	ULSI Systems
+vendor VLSI		0x1004	VLSI Technology
+vendor AVANCE		0x1005	Avance Logic
+vendor REPLY		0x1006	Reply Group
+vendor NETFRAME		0x1007	NetFrame Systems
+vendor EPSON		0x1008	Epson
+vendor PHOENIX		0x100a	Phoenix Technologies
+vendor NS		0x100b	National Semiconductor
+vendor TSENG		0x100c	Tseng Labs
+vendor AST		0x100d	AST Research
+vendor WEITEK		0x100e	Weitek
+vendor VIDEOLOGIC	0x1010	Video Logic, Ltd.
+vendor DEC		0x1011	Digital Equipment
+vendor MICRONICS	0x1012	Micronics Computers
+vendor CIRRUS		0x1013	Cirrus Logic
+vendor IBM		0x1014	IBM
+vendor ICLPERSONAL	0x1016	ICL Personal Systems
+vendor SPEA		0x1017	SPEA Software
+vendor UNISYS		0x1018	Unisys Systems
+vendor ELITEGROUP	0x1019	Elitegroup Computer Systems
+vendor NCR		0x101a	NCR
+vendor VITESSE		0x101b	Vitesse Semiconductor
+vendor WD		0x101c	Western Digital
+vendor AMI		0x101e	American Megatrends
+vendor PICTURETEL	0x101f	PictureTel
+vendor HITACHICOMP	0x1020	Hitachi Computer Products
+vendor OKI		0x1021	OKI Electric Industry
+vendor AMD		0x1022	AMD
+vendor TRIDENT		0x1023	Trident Microsystems
+vendor ZENITH		0x1024	Zenith Data Systems
+vendor ACER		0x1025	Acer
+vendor DELL		0x1028	Dell Computer
+vendor SIEMENS		0x1029	Siemens Nixdorf IS
+vendor MATROX		0x102b	Matrox
+vendor CHIPS		0x102c	Chips and Technologies
+vendor WYSE		0x102d	WYSE Technology
+vendor OLIVETTI		0x102e	Olivetti Advanced Technology
+vendor TOSHIBA		0x102f	Toshiba America
+vendor TMCRESEARCH	0x1030	TMC Research
+vendor MIRO		0x1031	Miro Computer Products
+vendor COMPAQ		0x1032	Compaq
+vendor NEC		0x1033	NEC
+vendor BURNDY		0x1034	Burndy
+vendor COMPCOMM		0x1035	Comp. & Comm. Research Lab
+vendor FUTUREDOMAIN	0x1036	Future Domain
+vendor HITACHIMICRO	0x1037	Hitach Microsystems
+vendor AMP		0x1038	AMP
+vendor SIS		0x1039	Silicon Integrated System
+vendor SEIKOEPSON	0x103a	Seiko Epson
+vendor TATUNGAMERICA	0x103b	Tatung Co. of America
+vendor HP		0x103C	Hewlett-Packard
+vendor SOLLIDAY		0x103e	Solliday Engineering
+vendor LOGICMODELLING	0x103f	Logic Modeling
+vendor KPC		0x1040	Kubota Pacific
+vendor COMPUTREND	0x1041	Computrend
+vendor PCTECH		0x1042	PC Technology
+vendor ASUSTEK		0x1043	Asustek Computer
+vendor DPT		0x1044	Distributed Processing Technology
+vendor OPTI		0x1045	Opti
+vendor IPCCORP		0x1046	IPC Corporation
+vendor GENOA		0x1047	Genoa Systems
+vendor ELSA		0x1048	Elsa
+vendor FOUNTAINTECH	0x1049	Fountain Technology
+vendor SGSTHOMSON	0x104a	SGS Thomson Microelectric
+vendor BUSLOGIC		0x104b	BusLogic
+vendor TI		0x104C	Texas Instruments
+vendor SONY		0x104D	Sony
+vendor OAKTECH		0x104e	Oak Technology
+vendor COTIME		0x104f	Co-time Computer
+vendor WINBOND		0x1050	Winbond Electronics
+vendor ANIGMA		0x1051	Anigma
+vendor YOUNGMICRO	0x1052	Young Micro Systems
+vendor HITACHI		0x1054	Hitachi
+vendor EFARMICRO	0x1055	Efar Microsystems
+vendor ICL		0x1056	ICL
+vendor MOT		0x1057	Motorola
+vendor ETR		0x1058	Electronics & Telec. RSH
+vendor TEKNOR		0x1059	Teknor Microsystems
+vendor PROMISE		0x105a	Promise Technology
+vendor FOXCONN		0x105b	Foxconn International
+vendor WIPRO		0x105c	Wipro Infotech
+vendor NUMBER9		0x105d	Number 9 Computer Company
+vendor VTECH		0x105e	Vtech Computers
+vendor INFOTRONIC	0x105f	Infotronic America
+vendor UMC		0x1060	United Microelectronics
+vendor ITT		0x1061	I. T. T.  (or X technology?)
+vendor MASPAR		0x1062	Maspar Computer
+vendor OCEANOA		0x1063	Ocean Office Automation
+vendor ALCATEL		0x1064	Alcatel CIT
+vendor TEXASMICRO	0x1065	Texas Microsystems
+vendor PICOPOWER	0x1066	Picopower Technology
+vendor MITSUBISHI	0x1067	Mitsubishi
+vendor DIVERSIFIED	0x1068	Diversified Technology
+vendor MYLEX		0x1069	Mylex
+vendor ATEN		0x106a	Aten Research
+vendor APPLE		0x106B	Apple
+vendor HYUNDAI		0x106c	Hyundai Electronics America
+vendor SEQUENT		0x106d	Sequent
+vendor DFI		0x106e	DFI
+vendor CITYGATE		0x106f	City Gate Development
+vendor DAEWOO		0x1070	Daewoo Telecom
+vendor MITAC		0x1071	Mitac
+vendor GIT		0x1072	GIT Co.
+vendor YAMAHA		0x1073	Yamaha
+vendor NEXGEN		0x1074	NexGen Microsystems
+vendor AIR		0x1075	Advanced Integration Research
+vendor CHAINTECH	0x1076	Chaintech Computer
+vendor QLOGIC		0x1077	Q Logic
+vendor CYRIX		0x1078	Cyrix Corporation
+vendor IBUS		0x1079	I-Bus
+vendor NETWORTH		0x107a	NetWorth
+vendor GATEWAY		0x107b	Gateway 2000
+vendor GOLDSTART	0x107c	Goldstar
+vendor LEADTEK		0x107d	LeadTek Research
+vendor INTERPHASE	0x107e	Interphase
+vendor DATATECH		0x107f	Data Technology Corporation
+vendor CONTAQ		0x1080	Contaq Microsystems
+vendor SUPERMAC		0x1081	Supermac Technology
+vendor EFA		0x1082	EFA Corporation of America
+vendor FOREX		0x1083	Forex Computer
+vendor PARADOR		0x1084	Parador
+vendor TULIP		0x1085	Tulip Computers
+vendor JBOND		0x1086	J. Bond Computer Systems
+vendor CACHECOMP	0x1087	Cache Computer
+vendor MICROCOMP	0x1088	Microcomputer Systems
+vendor DG		0x1089	Data General Corporation
+vendor BIT3		0x108A	Bit3 Computer Corp.
+vendor OAKLEIGH		0x108c	Oakleigh Systems
+vendor OLICOM		0x108d	Olicom
+vendor SYSTEMSOFT	0x108f	Systemsoft
+vendor ENCORE		0x1090	Encore Computer
+vendor INTERGRAPH	0x1091	Intergraph
+vendor DIAMOND		0x1092	Diamond Computer Systems
+vendor NATIONALINST	0x1093	National Instruments
+vendor FICOMP		0x1094	First Int'l Computers
+vendor CMDTECH		0x1095	CMD Technology
+vendor ALACRON		0x1096	Alacron
+vendor APPIAN		0x1097	Appian Technology
+vendor QUANTUMDESIGNS	0x1098	Quantum Designs (or Vision?)
+vendor SAMSUNGELEC	0x1099	Samsung Electronics
+vendor PACKARDBELL	0x109a	Packard Bell
+vendor GEMLIGHT		0x109b	Gemlight Computer
+vendor MEGACHIPS	0x109c	Megachips
+vendor ZIDA		0x109d	Zida Technologies
+vendor BROOKTREE	0x109e	Brooktree
+vendor TRIGEM		0x109f	Trigem Computer
+vendor MEIDENSHA	0x10a0	Meidensha
+vendor JUKO		0x10a1	Juko Electronics
+vendor QUANTUM		0x10a2	Quantum
+vendor EVEREX		0x10a3	Everex Systems
+vendor GLOBE		0x10a4	Globe Manufacturing Sales
+vendor RACAL		0x10a5	Racal Interlan
+vendor INFORMTECH	0x10a6	Informtech Industrial
+vendor BENCHMARQ	0x10a7	Benchmarq Microelectronics
+vendor SIERRA		0x10a8	Sierra Semiconductor
+vendor SGI		0x10a9	Silicon Graphics
+vendor ACC		0x10aa	ACC Microelectronics
+vendor DIGICOM		0x10ab	Digicom
+vendor HONEYWELL	0x10ac	Honeywell IASD
+vendor SYMPHONY		0x10ad	Symphony Labs (or Winbond?)
+vendor CORNERSTONE	0x10ae	Cornerstone Technology
+vendor MICROCOMPSON	0x10af	Micro Computer Sysytems (M) SON
+vendor CARDEXPER	0x10b0	CardExpert Technology
+vendor CABLETRON	0x10B1	Cabletron Systems
+vendor RAYETHON		0x10b2	Raytheon
+vendor DATABOOK		0x10b3	Databook
+vendor STB		0x10b4	STB Systems
+vendor PLX		0x10b5	PLX Technology
+vendor MADGE		0x10b6	Madge Networks
+vendor 3COM		0x10B7	3Com
+vendor SMC		0x10b8	Standard Microsystems
+vendor ALI		0x10b9	Acer Labs
+vendor MITSUBISHIELEC	0x10ba	Mitsubishi Electronics
+vendor DAPHA		0x10bb	Dapha Electronics
+vendor ALR		0x10bc	Advanced Logic Research
+vendor SURECOM		0x10bd	Surecom Technology
+vendor TSENGLABS	0x10be	Tseng Labs International
+vendor MOST		0x10bf	Most
+vendor BOCA		0x10c0	Boca Research
+vendor ICM		0x10c1	ICM
+vendor AUSPEX		0x10c2	Auspex Systems
+vendor SAMSUNGSEMI	0x10c3	Samsung Semiconductors
+vendor AWARD		0x10c4	Award Software Int'l
+vendor XEROX		0x10c5	Xerox
+vendor RAMBUS		0x10c6	Rambus
+vendor MEDIAVIS		0x10c7	Media Vision
+vendor NEOMAGIC		0x10c8	Neomagic
+vendor DATAEXPERT	0x10c9	Dataexpert
+vendor FUJITSU		0x10ca	Fujitsu
+vendor OMRON		0x10cb	Omron
+vendor MENTOR		0x10cc	Mentor ARC
+vendor ADVSYSPROD	0x10cd	Advanced System Products
+vendor RADIUS		0x10ce	Radius
+vendor CITICORP		0x10cf	Citicorp TTI
+vendor FUJUTSU		0x10d0	Fujitsu Limited
+vendor FUTUREPLUS	0x10d1	Future+ Systems
+vendor MOLEX		0x10d2	Molex
+vendor JABIL		0x10d3	Jabil Circuit
+vendor HAULON		0x10d4	Hualon Microelectronics
+vendor AUTOLOGIC	0x10d5	Autologic
+vendor CETIA		0x10d6	Cetia
+vendor BCM		0x10d7	BCM Advanced
+vendor APL		0x10d8	Advanced Peripherals Labs
+vendor MACRONIX		0x10d9	Macronix
+vendor THOMASCONRAD	0x10da	Thomas-Conrad
+vendor ROHM		0x10db	Rohm Research
+vendor CERN		0x10DC	CERN/ECP/EDU
+vendor ES		0x10dd	Evans & Sutherland
+vendor NVIDIA		0x10de	Nvidia Corporation
+vendor EMULEX		0x10df	Emulex
+vendor IMS		0x10e0	Integrated Micro Solutions
+vendor TEKRAM		0x10e1	Tekram Technology
+vendor APTIX		0x10e2	Aptix Corporation
+vendor NEWBRIDGE	0x10e3	Newbridge Microsystems
+vendor TANDEM		0x10e4	Tandem Computers
+vendor MICROINDUSTRIES	0x10e5	Micro Industries
+vendor GAINBERY		0x10e6	Gainbery Computer Products
+vendor VADEM		0x10e7	Vadem
+vendor AMCIRCUITS	0x10e8	Applied Micro Circuits
+vendor ALPSELECTIC	0x10e9	Alps Electric
+vendor INTERGRAPHICS	0x10ea	Integraphics Systems
+vendor ARTISTSGRAPHICS	0x10eb	Artists Graphics
+vendor REALTEK		0x10ec	Realtek Semiconductor
+vendor ASCIICORP	0x10ed	ASCII Corporation
+vendor XILINX		0x10ee	Xilinx
+vendor RACORE		0x10ef	Racore Computer Products
+vendor PERITEK		0x10f0	Peritek
+vendor TYAN		0x10f1	Tyan Computer
+vendor ACHME		0x10f2	Achme Computer
+vendor ALARIS		0x10f3	Alaris
+vendor SMOS		0x10f4	S-MOS Systems
+vendor MKK		0x10f5	NKK Corporation
+vendor CREATIVE		0x10f6	Creative Electronic Systems
+vendor MATSUSHITA	0x10f7	Matsushita
+vendor ALTOS		0x10f8	Altos India
+vendor PCDIRECT		0x10f9	PC Direct
+vendor TRUEVISIO	0x10fa	Truevision
+vendor THESYS		0x10fb	Thesys Ges. F. Mikroelektronik
+vendor IODATA		0x10fc	I-O Data Device
+vendor SOYO		0x10fd	Soyo Technology
+vendor FAST		0x10fe	Fast Electronic
+vendor NCUBE		0x10ff	NCube
+vendor JAZZ		0x1100	Jazz Multimedia
+vendor INITIO		0x1101	Initio
+vendor CREATIVELABS	0x1102	Creative Labs
+vendor TRIONES		0x1103	Triones Technologies
+vendor RASTEROPS	0x1104	RasterOps
+vendor SIGMA		0x1105	Sigma Designs
+vendor VIATECH		0x1106	Via Technologies
+vendor STRATIS		0x1107	Stratus Computer
+vendor PROTEON		0x1108	Proteon
+vendor COGENT		0x1109	Cogent Data Technologies
+vendor XENON		0x110b	Xenon Microsystems
+vendor MINIMAX		0x110c	Mini-Max Technology
+vendor ZNYX		0x110d	Znyx Advanced Systems
+vendor CPUTECH		0x110e	CPU Technology
+vendor ROSS		0x110f	Ross Technology
+vendor POWERHOUSE	0x1110	Powerhouse Systems
+vendor SCO		0x1111	Santa Cruz Operation
+vendor ROCKWELL		0x1112	Rockwell Network Systems
+vendor ACCTON		0x1113	Accton Technology
+vendor ATMEL		0x1114	Atmel
+vendor 3DLABS		0x1115	3D Labs
+vendor DATATRANSLATION	0x1116	Data Translation
+vendor DATACUBE		0x1117	Datacube
+vendor BERG		0x1118	Berg Electronics
+vendor VORTEX		0x1119	Vortex Computer Systems
+vendor EFFICIENTNETS	0x111a	Efficent Networks
+vendor TELEDYNE		0x111b	Teledyne Electronic Systems
+vendor TRICORD		0x111c	Tricord Systems
+vendor IDT		0x111d	IDT
+vendor ELDEC		0x111e	Eldec
+vendor PDI		0x111f	Prescision Digital Images
+vendor EMC		0x1120	Emc
+vendor ZILOG		0x1121	Zilog
+vendor MULTITECH	0x1122	Multi-tech Systems
+vendor LEUTRON		0x1124	Leutron Vision
+vendor EUROCORE		0x1125	Eurocore
+vendor VIGRA		0x1125	Vigra
+vendor FORE		0x1127	FORE Systems
+vendor FIRMWORKS	0x1129	Firmworks
+vendor HERMES		0x112a	Hermes Electronics
+vendor LINOTYPE		0x112b	Linotype
+vendor RAVICAD		0x112d	Ravicad
+vendor INFOMEDIA	0x112e	Infomedia Microelectronics
+vendor IMAGINGTECH	0x112f	Imaging Technlogy
+vendor COMPUTERVISION	0x1130	Computervision
+vendor PHILIPS		0x1131	Philips
+vendor MITEL		0x1132	Mitel
+vendor EICON		0x1133	Eicon Technology
+vendor MCS		0x1134	Mercury Computer Systems
+vendor FUJIXEROX	0x1135	Fuji Xerox
+vendor MOMENTUM		0x1136	Momentum Data Systems
+vendor CISCO		0x1137	Cisco Systems
+vendor ZIATECH		0x1138	Ziatech
+vendor DYNPIC		0x1139	Dynamic Pictures
+vendor FWB		0x113a	FWB
+vendor CYCLONE		0x113c	Cyclone Micro
+vendor LEADINGEDGE	0x113d	Leading Edge
+vendor SANYO		0x113e	Sanyo Electric
+vendor EQUINOX		0x113f	Equinox Systems
+vendor INTERVOICE	0x1140	Intervoice
+vendor CREST		0x1141	Crest Microsystem
+vendor ALLIANCE		0x1142	Alliance Semiconductor
+vendor NETPOWER		0x1143	NetPower
+vendor CINMILACRON	0x1144	Cincinnati Milacron
+vendor WORKBIT		0x1145	Workbit
+vendor FORCE		0x1146	Force Computers
+vendor INTERFACE	0x1147	Interface
+vendor SCHNEIDERKOCH	0x1148	Schneider & Koch
+vendor WINSYSTEM	0x1149	Win System
+vendor VMIC		0x114a	VMIC
+vendor CANOPUS		0x114b	Canopus
+vendor ANNABOOKS	0x114c	Annabooks
+vendor IC		0x114d	IC Corporation
+vendor NIKON		0x114e	Nikon Systems
+vendor DIGIINTERNAT	0x114f	Digi International
+vendor TMC		0x1150	Thinking Machines
+vendor JAE		0x1151	JAE Electronics
+vendor MEGATEK		0x1152	Megatek
+vendor LANDWIN		0x1153	Land Win Electronic
+vendor MELCO		0x1154	Melco
+vendor PINETECH		0x1155	Pine Technology
+vendor PERISCOPE	0x1156	Periscope Engineering
+vendor AVSYS		0x1157	Avsys
+vendor VOARX		0x1158	Voarx R & D
+vendor MUTECH		0x1159	Mutech
+vendor HARLEQUIN	0x115a	Harlequin
+vendor PARALLAX		0x115b	Parallax Graphics
+vendor XIRCOM		0x115d	Xircom
+vendor PEERPROTO	0x115e	Peer Protocols
+vendor MAXTOR		0x115f	Maxtor
+vendor MEGASOFT		0x1160	Megasoft
+vendor PFU		0x1161	PFU Limited
+vendor OALAB		0x1162	OA Laboratory
+vendor SYNEMA		0x1163	Synema Corporation
+vendor APT		0x1164	Advanced Peripherals Technologies
+vendor IMAGRAPH		0x1165	Imagraph
+vendor PEQUR		0x1166	Pequr Technology
+vendor MUTOH		0x1167	Mutoh Industries
+vendor THINE		0x1168	Thine Electronics
+vendor CDAC		0x1169	Centre for Dev. of Advanced Computing
+vendor POLARIS		0x116a	Polaris Communications
+vendor CONNECTWARE	0x116b	Connectware
+vendor MARTINMARIETTA	0x116d	Martin-Marietta
+vendor WSTECH		0x116f	Workstation Technology
+vendor INVENTEC		0x1170	Inventec
+vendor ZEITNET		0x1193	ZeitNet
+vendor SPECIALIX	0x11cb	Specialix
+vendor CYCLADES		0x120e	Cyclades
+vendor SYMPHONY2	0x1c1c	Symphony (duplicate? see 0x10ad)
+vendor TEKRAM2		0x1de1	Tekram (mistyped? see 0x10e1)
+vendor AVANCE2		0x4005	Avance Logic (mistyped? see 0x1005)
+vendor S3		0x5333	S3
+vendor INTEL		0x8086	Intel
+vendor ADP		0x9004	Adaptec
+vendor ATRONICS		0x907f	Atronics
+vendor NETPOWERNEW	0xdead	NetPower
+vendor ARK		0xedd8	Ark Logic (or Arc? or Hercules?)
 
 /*
  * List of known products.  Grouped by vendor.
  */
 
+/* 3COM Products */
+product	3COM 3C590	0x5900	3c590
+product	3COM 3C595	0x5950	3c595
+
+/* Acer products */
+product ACER M1435	0x1435	M1435
+
 /* Adaptec products */
-product	ADP AIC7850	0x7075	UNSUPP	AIC-7850
-product	ADP AIC7870	0x7078	UNSUPP	AIC-7870
-product	ADP AIC2940	0x7178	UNSUPP	AIC-2940
-product	ADP AIC2940U	0x8178	UNSUPP	AIC-2940 (\"Ultra\")
+product	ADP 3940U	0x8278	AHA-3940 Ultra
+product	ADP 2944U	0x8478	AHA-2944 Ultra
+product	ADP 2940U	0x8178	AHA-2940 Ultra
+product	ADP 3940	0x7278	AHA-3940
+product	ADP 2944	0x7478	AHA-2944
+product	ADP 2940	0x7178	AHA-2940
+product	ADP AIC7880	0x8078	AIC-7880 Ultra
+product	ADP AIC7870	0x7078	AIC-7870
+product	ADP AIC7850	0x5078	AIC-7850
 
 /* ATI products */
-product ATI MACH32	0x4158	UNSUPP	Mach32
-product ATI MACH64_CX	0x4358	UNSUPP	Mach64-CX
-product ATI MACH64_GX	0x4758	UNSUPP	Mach64-GX
+product ATI MACH32	0x4158	Mach32
+product ATI MACH64_CX	0x4358	Mach64-CX
+product ATI MACH64_GX	0x4758	Mach64-GX
+
+/* BusLogic products */
+product BUSLOGIC 946C	0x0140	946C
+
+/* Cirrus Logic products */
+/* product CIRRUS UNK	0x00a4	unknown */
+product CIRRUS 5434	0x00a8	5434
 
 /* DEC products */
-product DEC 21050	0x0001	UNSUPP	DECchip 21050 (\"PPB\")
-product DEC 21040	0x0002  	DECchip 21040 (\"Tulip\")
-product DEC 21030	0x0004	UNSUPP	DECchip 21030 (\"TGA\")
-product DEC NVRAM	0x0007	UNSUPP	Zephyr NV-RAM
-product DEC KZPSA	0x0008	UNSUPP	KZPSA
-product DEC 21140	0x0009		DECchip 21140 (\"FasterNet\")
-product DEC DEFPA	0x000f	UNSUPP	DEFPA
-/* product DEC ???	0x0010	UNSUPP	??? VME Interface */
-product DEC 21041	0x0014  	DECchip 21041 (\"Tulip Pass 3\")
+product DEC 21050	0x0001	DECchip 21050 PCI-PCI Bridge
+product DEC 21040	0x0002  DECchip 21040 (\"Tulip\")
+product DEC 21030	0x0004	DECchip 21030 (\"TGA\")
+product DEC NVRAM	0x0007	Zephyr NV-RAM
+product DEC KZPSA	0x0008	KZPSA
+product DEC 21140	0x0009	DECchip 21140 (\"FasterNet\")
+product DEC DEFPA	0x000f	DEFPA
+/* product DEC ???	0x0010	??? VME Interface */
+product DEC 21041	0x0014  DECchip 21041 (\"Tulip Pass 3\")
 
-/* Intel products */
-/* XXX name? */
-product INTEL PCEB	0x0482	UNSUPP	82375EB PCI-EISA Bridge
-product INTEL PCIB	0x0486	UNSUPP	82426EX PCI-ISA Bridge
-product INTEL PCMC	0x04a3	UNSUPP	82434LX PCI, Cache, and Memory controller
-
-/* XXX the following two Intel products are UNVERIFIED. */
-product INTEL CDC	0x0483	UNSUPP	82424 Cache and DRAM controller
-/* XXX Supported on the Alpha. XXX unverified. XXX includes PCI-ISA bridge */
-product INTEL SIO	0x0484	UNSUPP	82378 System I/O
-
-/* Mylex products */
-product MYLEX 960P	0x0001	UNSUPP	RAID controller
-
-/* NCR/Symbios Logic products */
-product NCR 810		0x0001		53c810
-product OLDNCR 810	0x0001		53c810
-product NCR 825		0x0003		53c825
-product OLDNCR 825	0x0003		53c825
-product NCR 815		0x0004		53c815
-product OLDNCR 815	0x0004		53c815
-
-/* QLogic products */
-product QLOGIC ISP1020	0x1020	UNSUPP	ISP1020
-
-/* S3 Products */
-product S3 VISION864	0x88c0	UNSUPP	Vision 864
-
-/* 3COM Products */
-product	3COM 3C590	0x5900		3c590
-product	3COM 3C595	0x5950		3c595
+/* Diamond products */
+product DIAMOND vIPER	0x9001	Viper/PCI
 
 /* CMD Technologies Products */
-product CMD PCI0640	0x0640	UNSUPP	PCI to IDE Controller
+product CMDTECH PCI0640	0x0640	UNSUPP  PCI to IDE Controller
+
+/* FORE products */
+product FORE PCA200	0x0210	ATM PCA-200
+
+/* Intel products */
+product INTEL PCEB	0x0482	82375EB PCI-EISA Bridge
+product INTEL CDC	0x0483	82424ZX Cache and DRAM controller
+product INTEL SIO	0x0484	82378IB PCI-ISA Bridge (System I/O)
+product INTEL PCIB	0x0486	82426EX PCI-ISA Bridge
+product INTEL PCMC	0x04a3	82434LX PCI, Cache, and Memory Controller
+
+/* Mylex products */
+product MYLEX 960P	0x0001	RAID controller
+
+/* NCR/Symbios Logic products */
+product OLDNCR 810	0x0001	53c810
+product OLDNCR 820	0x0002	53c820
+product OLDNCR 825	0x0003	53c825
+product OLDNCR 815	0x0004	53c815
+/* do the NCR chips use the new ID, as well? */
+
+/* Number Nine products */
+product NUMBER9 IMAG128	0x2309	Imagine-128
+
+/* Opti products */
+product OPTI 82C822	0xc822	82C822
+product OPTI 82C621	0xc821	82C621
+
+/* QLogic products */
+product QLOGIC ISP1020	0x1020	ISP1020
+
+/* S3 products */
+/* Names??? */
+product S3 TRIO64	0x8811	Trio64
+product S3 928		0x88b0	928
+product S3 864_0	0x88c0	Vision 864-0
+product S3 864_1	0x88c1	Vision 864-1
+product S3 964		0x88d0	964
+
+/* SMC products */
+product SMC 37C665	0x1000	37C665
+
+/* Tseng Labs products */
+product TSENG W32P_A	0x3202	ET4000w32p rev A
+product TSENG W32P_D	0x3207	ET4000w32p rev D
+
+/* UMC products */
+product UMC UM8673F	0x0101	UM8673F
+product UMC UM8881F	0x8881	UM8881F
+product UMC UM8886F	0x8886	UM8886F

@@ -1,4 +1,5 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.3 1996/02/10 00:11:48 christos Exp $	*/
+/*	$OpenBSD: ncr5380sbc.c,v 1.4 1996/04/18 23:47:19 niklas Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.8 1996/03/07 15:00:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -81,15 +82,8 @@
 #include <scsi/scsi_message.h>
 #include <scsi/scsiconf.h>
 
-#ifndef DEBUG
-#define DEBUG XXX
-#endif
-
 #include <dev/ic/ncr5380reg.h>
 #include <dev/ic/ncr5380var.h>
-
-static int	ncr5380_wait_req __P((struct ncr5380_softc *));
-static int	ncr5380_wait_not_req __P((struct ncr5380_softc *));
 
 static void	ncr5380_sched __P((struct ncr5380_softc *));
 static void	ncr5380_done __P((struct ncr5380_softc *));
@@ -105,6 +99,8 @@ static int	ncr5380_command __P((struct ncr5380_softc *));
 static int	ncr5380_status __P((struct ncr5380_softc *));
 static void	ncr5380_machine __P((struct ncr5380_softc *));
 
+void	ncr5380_abort __P((struct ncr5380_softc *));
+void	ncr5380_cmd_timeout __P((void *));
 /*
  * Action flags returned by the info_tranfer functions:
  * (These determine what happens next.)
@@ -124,7 +120,7 @@ static void	ncr5380_machine __P((struct ncr5380_softc *));
 #define Debugger() printf("Debug: ncr5380.c:%d\n", __LINE__)
 #endif
 
-#ifdef DEBUG
+#ifdef	NCR5380_DEBUG
 
 #define	NCR_DBG_BREAK	1
 #define	NCR_DBG_CMDS	2
@@ -133,11 +129,14 @@ int ncr5380_debug = 0;
 	do { if (ncr5380_debug & NCR_DBG_BREAK) Debugger(); } while (0)
 static void ncr5380_show_scsi_cmd __P((struct scsi_xfer *));
 static void ncr5380_show_sense __P((struct scsi_xfer *));
-#else	/* DEBUG */
+
+#else	/* NCR5380_DEBUG */
+
 #define	NCR_BREAK() 		/* nada */
 #define ncr5380_show_scsi_cmd(xs) /* nada */
 #define ncr5380_show_sense(xs) /* nada */
-#endif	/* DEBUG */
+
+#endif	/* NCR5380_DEBUG */
 
 static char *
 phase_names[8] = {
@@ -166,8 +165,12 @@ int ncr5380_wait_phase_timo = 1000 * 10 * 300;	/* 5 min. */
 int ncr5380_wait_req_timo = 1000 * 50;	/* X2 = 100 mS. */
 int ncr5380_wait_nrq_timo = 1000 * 25;	/* X2 =  50 mS. */
 
+static __inline int ncr5380_wait_req __P((struct ncr5380_softc *));
+static __inline int ncr5380_wait_not_req __P((struct ncr5380_softc *));
+static __inline void ncr_sched_msgout __P((struct ncr5380_softc *, int));
+
 /* Return zero on success. */
-static __inline__ int ncr5380_wait_req(sc)
+static __inline int ncr5380_wait_req(sc)
 	struct ncr5380_softc *sc;
 {
 	register int timo = ncr5380_wait_req_timo;
@@ -184,7 +187,7 @@ static __inline__ int ncr5380_wait_req(sc)
 }
 
 /* Return zero on success. */
-static __inline__ int ncr5380_wait_not_req(sc)
+static __inline int ncr5380_wait_not_req(sc)
 	struct ncr5380_softc *sc;
 {
 	register int timo = ncr5380_wait_nrq_timo;
@@ -201,7 +204,7 @@ static __inline__ int ncr5380_wait_not_req(sc)
 }
 
 /* Ask the target for a MSG_OUT phase. */
-static __inline__ void
+static __inline void
 ncr_sched_msgout(sc, msg_code)
 	struct ncr5380_softc *sc;
 	int msg_code;
@@ -333,7 +336,7 @@ ncr5380_init(sc)
 {
 	int i, j;
 
-#ifdef	DEBUG
+#ifdef	NCR5380_DEBUG
 	ncr5380_debug_sc = sc;
 #endif
 
@@ -718,9 +721,11 @@ ncr5380_done(sc)
 	switch (sr->sr_status) {
 	case SCSI_OK:	/* 0 */
 		if (sr->sr_flags & SR_SENSE) {
+#ifdef	NCR5380_DEBUG
 			if (ncr5380_debug & NCR_DBG_CMDS) {
 				ncr5380_show_sense(xs);
 			}
+#endif
 			xs->error = XS_SENSE;
 		}
 		break;
@@ -804,7 +809,7 @@ ncr5380_sched(sc)
 {
 	struct sci_req	*sr;
 	struct scsi_xfer *xs;
-	int	target, lun;
+	int	target = 0, lun = 0;
 	int	error, i;
 
 	/* Another hack (Er.. hook!) for the sun3 si: */
@@ -838,10 +843,16 @@ next_job:
 			target = sc->sc_ring[i].sr_target;
 			lun = sc->sc_ring[i].sr_lun;
 			if (sc->sc_matrix[target][lun] == NULL) {
-			    sc->sc_matrix[target][lun] =
-					sr = &sc->sc_ring[i];
-			    sc->sc_rr = i;
-			    break;
+				/*
+				 * Do not mark the  target/LUN busy yet,
+				 * because reselect may cause some other
+				 * job to become the current one, so we
+				 * might not actually start this job.
+				 * Instead, set sc_matrix later on.
+				 */
+				sc->sc_rr = i;
+				sr = &sc->sc_ring[i];
+				break;
 			}
 		}
 		i++;
@@ -883,7 +894,8 @@ next_job:
 		goto have_nexus;
 	}
 
-	/* Normal selection result */
+	/* Normal selection result.  Target/LUN is now busy. */
+	sc->sc_matrix[target][lun] = sr;
 	sc->sc_current = sr;	/* connected */
 	xs = sr->sr_xs;
 
@@ -955,11 +967,13 @@ next_job:
 	 * Normal commands start in MSG_OUT phase where we will
 	 * send and IDENDIFY message, and then expect CMD phase.
 	 */
+#ifdef	NCR5380_DEBUG
 	if (ncr5380_debug & NCR_DBG_CMDS) {
 		printf("ncr5380_sched: begin, target=%d, LUN=%d\n",
 			   xs->sc_link->target, xs->sc_link->lun);
 		ncr5380_show_scsi_cmd(xs);
 	}
+#endif
 	if (xs->flags & SCSI_RESET) {
 		NCR_TRACE("sched: cmd=reset, sr=0x%x\n", (long)sr);
 		/* Not an error, so do not set NCR_ABORTING */
@@ -970,7 +984,8 @@ next_job:
 #ifdef	DIAGNOSTIC
 	if ((xs->flags & (SCSI_DATA_IN | SCSI_DATA_OUT)) == 0) {
 		if (sc->sc_dataptr) {
-			printf("%s: ptr but no data in/out flags?\n");
+			printf("%s: ptr but no data in/out flags?\n",
+			    sc->sc_dev.dv_xname);
 			NCR_BREAK();
 			sc->sc_dataptr = NULL;
 		}
@@ -1265,8 +1280,8 @@ ncr5380_select(sc, sr)
 	struct ncr5380_softc *sc;
 	struct sci_req *sr;
 {
-	int timo;
-	u_char bus, data, icmd;
+	int timo, s;
+	u_char data, icmd;
 
 	/* Check for reselect */
 	ncr5380_reselect(sc);
@@ -1296,25 +1311,36 @@ ncr5380_select(sc, sr)
 	 * We then wait for one arbitration delay (2.2uS) and
 	 * check the ICMD_LST bit, which will be set if some
 	 * other target drives SEL during arbitration.
+	 *
+	 * There is a time-critical section during the period
+	 * after we enter arbitration up until we assert SEL.
+	 * Avoid long interrupts during this period.
 	 */
+	s = splimp();	/* XXX: Begin time-critical section */
+
 	*(sc->sci_odata) = 0x80;	/* OUR_ID */
 	*(sc->sci_mode) = SCI_MODE_ARB;
 
-	/* Wait for ICMD_AIP. */
-	timo = ncr5380_wait_req_timo;
+#define	WAIT_AIP_USEC	20	/* pleanty of time */
+	/* Wait for the AIP bit to turn on. */
+	timo = WAIT_AIP_USEC;
 	for (;;) {
 		if (*(sc->sci_icmd) & SCI_ICMD_AIP)
 			break;
-		if (--timo <= 0) {
-			/* Did not see any "bus free" period. */
-			*sc->sci_mode = 0;
+		if (timo <= 0) {
+			/*
+			 * Did not see any "bus free" period.
+			 * The usual reason is a reselection,
+			 * so treat this as arbitration loss.
+			 */
 			NCR_TRACE("select: bus busy, rc=%d\n", XS_BUSY);
-			return XS_BUSY;
+			goto lost_arb;
 		}
+		timo -= 2;
 		delay(2);
 	}
-	NCR_TRACE("select: have AIP after %d loops\n",
-			  ncr5380_wait_req_timo - timo);
+	NCR_TRACE("select: have AIP after %d uSec.\n",
+			  WAIT_AIP_USEC - timo);
 
 	/* Got AIP.  Wait one arbitration delay (2.2 uS.) */
 	delay(3);
@@ -1322,10 +1348,8 @@ ncr5380_select(sc, sr)
 	/* Check for ICMD_LST */
 	if (*(sc->sci_icmd) & SCI_ICMD_LST) {
 		/* Some other target asserted SEL. */
-		*sc->sci_mode = 0;
 		NCR_TRACE("select: lost one, rc=%d\n", XS_BUSY);
-		ncr5380_reselect(sc);	/* XXX */
-		return XS_BUSY;
+		goto lost_arb;
 	}
 
 	/*
@@ -1335,7 +1359,7 @@ ncr5380_select(sc, sr)
 	 * We can now declare victory by asserting SEL.
 	 *
 	 * Note that the 5380 is asserting BSY because we
-	 * asked it to do arbitration.  We will now hold
+	 * have entered arbitration mode.  We will now hold
 	 * BSY directly so we can turn off ARB mode.
 	 */
 	icmd = (SCI_ICMD_BSY | SCI_ICMD_SEL);
@@ -1349,27 +1373,41 @@ ncr5380_select(sc, sr)
 	 */
 	delay(2);
 
-#if 1
 	/*
-	 * XXX: Check one last time to see if we really
-	 * XXX: did win arbitration.  (too paranoid?)
+	 * Check one last time to see if we really did
+	 * win arbitration.  This might only happen if
+	 * there can be a higher selection ID than ours.
+	 * Keep this code for reference anyway...
 	 */
 	if (*(sc->sci_icmd) & SCI_ICMD_LST) {
+		/* Some other target asserted SEL. */
+		NCR_TRACE("select: lost two, rc=%d\n", XS_BUSY);
+
+	lost_arb:
 		*sc->sci_icmd = 0;
 		*sc->sci_mode = 0;
-		NCR_TRACE("select: lost two, rc=%d\n", XS_BUSY);
+
+		splx(s);	/* XXX: End of time-critical section. */
+
+		/*
+		 * When we lose arbitration, it usually means
+		 * there is a target trying to reselect us.
+		 */
+		ncr5380_reselect(sc);
 		return XS_BUSY;
 	}
-#endif
+
 	/* Leave ARB mode Now that we drive BSY+SEL */
 	*sc->sci_mode = 0;
 	*sc->sci_sel_enb = 0;
+
+	splx(s);	/* XXX: End of time-critical section. */
 
 	/*
 	 * Arbitration is complete.  Now do selection:
 	 * Drive the data bus with the ID bits for both
 	 * the host and target.  Also set ATN now, to
-	 * ask the target for a messgae out phase.
+	 * ask the target for a message out phase.
 	 */
 	data = 0x80 | (1 << sr->sr_target);
 	*(sc->sci_odata) = data;
@@ -1481,7 +1519,7 @@ ncr5380_msg_in(sc)
 	register struct ncr5380_softc *sc;
 {
 	struct sci_req *sr = sc->sc_current;
-	int n, phase, timo;
+	int n, phase;
 	int act_flags;
 	register u_char icmd;
 
@@ -1953,7 +1991,7 @@ ncr5380_command(sc)
 	}
 
 	if (len != xs->cmdlen) {
-#ifdef	DEBUG
+#ifdef	NCR5380_DEBUG
 		printf("ncr5380_command: short transfer: wanted %d got %d.\n",
 			   xs->cmdlen, len);
 		ncr5380_show_scsi_cmd(xs);
@@ -1982,7 +2020,7 @@ ncr5380_data_xfer(sc, phase)
 	struct sci_req *sr = sc->sc_current;
 	struct scsi_xfer *xs = sr->sr_xs;
 	int expected_phase;
-	int i, len;
+	int len;
 
 	if (sr->sr_flags & SR_SENSE) {
 		NCR_TRACE("data_xfer: get sense, sr=0x%x\n", (long)sr);
@@ -2073,7 +2111,6 @@ ncr5380_status(sc)
 	int len;
 	u_char status;
 	struct sci_req *sr = sc->sc_current;
-	struct scsi_xfer *xs = sr->sr_xs;
 
 	/* acknowledge phase change */
 	*sc->sci_tcmd = PHASE_STATUS;
@@ -2328,7 +2365,7 @@ do_actions:
 }
 
 
-#ifdef	DEBUG
+#ifdef	NCR5380_DEBUG
 
 static void
 ncr5380_show_scsi_cmd(xs)
@@ -2497,4 +2534,4 @@ ncr5380_show_state()
 }
 
 #endif	/* DDB */
-#endif	/* DEBUG */
+#endif	/* NCR5380_DEBUG */

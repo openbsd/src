@@ -1,32 +1,44 @@
-#	$OpenBSD: files.isa,v 1.6 1996/02/27 11:12:56 niklas Exp $
-#	$NetBSD: files.isa,v 1.10 1996/01/13 02:05:15 thorpej Exp $
+#	$OpenBSD: files.isa,v 1.7 1996/04/18 23:47:33 niklas Exp $
+#	$NetBSD: files.isa,v 1.12 1996/03/04 03:29:16 cgd Exp $
 #
 # Config.new file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
 # defined first.
 
-# ports should define their own "device isa" line (like the one below,
-# but with the correct bus attachment).  IT MUST USE CONFIGURATION
-# LOCATORS IDENTICAL TO THOSE SPECIFIED BELOW.
-
 # ports should specify appropriate major numbers for the following
 # devices:
 #	mcd, scd, wd, wt
 
-#device	isa at root {[port = -1], [size = 0],
-#		     [iomem = -1], [iosiz = 0],
-#		     [irq = -1], [drq = -1]}
+define	isa {[port = -1], [size = 0],
+		  [iomem = -1], [iosiz = 0],
+		  [irq = -1], [drq = -1]}
+
+device	isa at isabus: isa
 file	dev/isa/isa.c			isa needs-flag
 
 # ISA DMA controller
 define	isadma
 file	dev/isa/isadma.c		isadma needs-flag
 
-#pcmcia
+# PCMCIA
+# XXX What is this?
 #config problems
 #device pcic at isa
 #file dev/isa/pcmcia_pcic.c  pcic pcmciabus
-file dev/isa/pcmcia_isa.c  pcmciabus
+
+define	pcicbus {[iomem = -1], [iosiz = 0]}
+
+device	pcic at isa: pcicbus
+file	dev/isa/pcmcia_pcic.c		pcic
+
+file	dev/isa/pcmcia_isa.c		pcmcia
+
+#
+# PCMCIA-only drivers
+#
+
+include "../../../dev/pcmcia/files.pcmcia"
+
 
 #
 # 8250/16[45]50-based multi-port serial boards
@@ -51,7 +63,7 @@ file	dev/isa/rtfps.c			rtfps
 #
 
 # 8250/16[45]50-based "com" ports
-device	com at isa, commulti, pcmciabus: tty
+device	com at isa, commulti: tty
 file	dev/isa/com.c			com needs-flag
 
 # Cyclades Cyclom multiport serial cards
@@ -128,7 +140,7 @@ file	dev/isa/elink.c			elink
 # National Semiconductor DS8390/WD83C690-based boards
 # (WD/SMC 80x3 family, SMC Ultra [8216], 3Com 3C503, NE[12]000, and clones)
 # XXX conflicts with amiga if_ed.c
-#device	ed at isa, pcmciabus: ether, ifnet
+#device	ed at isa, pcmcia: ether, ifnet
 #file	dev/isa/if_ed.c			ed needs-flag
 
 # 3Com 3C505
@@ -140,7 +152,7 @@ device	el at isa: ether, ifnet
 file	dev/isa/if_el.c			el
 
 # 3Com 3C5x9, 3c59x (EtherLink III) family
-device	ep at isa, pci, pcmciabus: ether, ifnet, elink
+device	ep at isa, pci: ether, ifnet, elink
 file	dev/isa/if_ep.c			ep needs-flag
 
 # Fujitsu MB8696[05]-based boards

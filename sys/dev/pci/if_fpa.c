@@ -1,4 +1,5 @@
-/*	$NetBSD: if_fpa.c,v 1.2 1995/08/19 04:35:25 cgd Exp $	*/
+/*	$OpenBSD: if_fpa.c,v 1.4 1996/04/18 23:47:58 niklas Exp $	*/
+/*	$NetBSD: if_fpa.c,v 1.7 1996/03/17 00:55:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Matt Thomas (thomas@lkg.dec.com)
@@ -22,6 +23,58 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Id: if_fpa.c,v 1.2 1995/08/20 18:56:11 thomas Exp
+ *
+ * Log: if_fpa.c,v
+ * Revision 1.2  1995/08/20  18:56:11  thomas
+ * Misc. changes for NetBSD
+ *
+ * Revision 1.1  1995/08/16  22:57:28  thomas
+ * Initial revision
+ *
+ * Revision 1.13  1995/08/04  21:54:56  thomas
+ * Clean IRQ processing under BSD/OS.
+ * A receive tweaks.  (print source of MAC CRC errors, etc.)
+ *
+ * Revision 1.12  1995/06/02  16:04:22  thomas
+ * Use correct PCI defs for BSDI now that they have fixed them.
+ * Increment the slot number 0x1000, not one! (*duh*)
+ *
+ * Revision 1.11  1995/04/21  13:23:55  thomas
+ * Fix a few pub in the DEFPA BSDI support
+ *
+ * Revision 1.10  1995/04/20  21:46:42  thomas
+ * Why???
+ * ,
+ *
+ * Revision 1.9  1995/04/20  20:17:33  thomas
+ * Add PCI support for BSD/OS.
+ * Fix BSD/OS EISA support.
+ * Set latency timer for DEFPA to recommended value if 0.
+ *
+ * Revision 1.8  1995/04/04  22:54:29  thomas
+ * Fix DEFEA support
+ *
+ * Revision 1.7  1995/03/14  01:52:52  thomas
+ * Update for new FreeBSD PCI Interrupt interface
+ *
+ * Revision 1.6  1995/03/10  17:06:59  thomas
+ * Update for latest version of FreeBSD.
+ * Compensate for the fast that the ifp will not be first thing
+ * in softc on BSDI.
+ *
+ * Revision 1.5  1995/03/07  19:59:42  thomas
+ * First pass at BSDI EISA support
+ *
+ * Revision 1.4  1995/03/06  17:06:03  thomas
+ * Add transmit timeout support.
+ * Add support DEFEA (untested).
+ *
+ * Revision 1.3  1995/03/03  13:48:35  thomas
+ * more fixes
+ *
+ *
  */
 
 /*
@@ -44,7 +97,7 @@
 #include <sys/malloc.h>
 #if defined(__FreeBSD__)
 #include <sys/devconf.h>
-#elif defined(__bsdi__) || defined(__NetBSD__)
+#elif defined(__bsdi__) || defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/device.h>
 #endif
 
@@ -83,11 +136,12 @@
 #include <i386/pci/pci.h>
 #include <i386/pci/pdqreg.h>
 #include <i386/pci/pdq_os.h>
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) || defined (__OpenBSD__)
+#include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/ic/pdqreg.h>
 #include <dev/ic/pdqvar.h>
-#endif /* __NetBSD__ */
+#endif /* __NetBSD__ || __OpenBSD */
 
 
 #define	DEC_VENDORID		0x1011
@@ -126,9 +180,15 @@ static pdq_softc_t *pdqs_pci[NFPA];
 #define	PDQ_PCI_UNIT_TO_SOFTC(unit)	(pdqs_pci[unit])
 #endif /* __FreeBSD__ */
 
-#if defined(__bsdi__) || defined(__NetBSD__)
+#if defined(__bsdi__)
 extern struct cfdriver fpacd;
 #define	PDQ_PCI_UNIT_TO_SOFTC(unit)	((pdq_softc_t *)fpacd.cd_devs[unit])
+#endif
+
+#if defined(__NetBSD__) || defined (__OpenBSD__)
+extern struct cfattach fpa_ca;
+extern struct cfdriver fpa_cd;
+#define	PDQ_PCI_UNIT_TO_SOFTC(unit)	((pdq_softc_t *)fpa_cd.cd_devs[unit])
 #endif
 
 static ifnet_ret_t
@@ -152,7 +212,7 @@ pdq_pci_ifintr(
     pdq_softc_t * const sc = (pdq_softc_t *) arg;
 #ifdef __FreeBSD__
     return pdq_interrupt(sc->sc_pdq);
-#elif defined(__bsdi__) || defined(__NetBSD__)
+#elif defined(__bsdi__) || defined(__NetBSD__) || defined(__OpenBSD__)
     (void) pdq_interrupt(sc->sc_pdq);
     return 1;
 #endif
@@ -340,7 +400,7 @@ struct cfdriver fpacd = {
     0, "fpa", pdq_pci_probe, pdq_pci_attach, DV_IFNET, sizeof(pdq_softc_t)
 };
 
-#elif defined(__NetBSD__)
+#elif defined(__NetBSD__) || defined (__OpenBSD__)
 
 static int
 pdq_pci_probe(
@@ -386,11 +446,12 @@ pdq_pci_attach(
 				sc->sc_if.if_unit, (void *) sc, PDQ_DEFPA);
     if (sc->sc_pdq == NULL)
 	return;
-    bcopy((caddr_t) sc->sc_pdq->pdq_hwaddr.lanaddr_bytes, sc->sc_ac.ac_enaddr, 6);
+    bcopy((caddr_t) sc->sc_pdq->pdq_hwaddr.lanaddr_bytes, sc->sc_ac.ac_enaddr,
+	6);
     pdq_ifattach(sc, pdq_pci_ifinit, pdq_pci_ifwatchdog);
 
-    sc->sc_ih = pci_map_int(pa->pa_tag, IPL_NET, pdq_pci_ifintr, sc,
-			    sc->sc_dev.dv_xname);
+    sc->sc_ih = pci_map_int(pa->pa_tag, IPL_NET, pdq_pci_ifintr, sc
+	sc->sc_dev.dv_xname);
     if (sc->sc_ih == NULL) {
 	printf("fpa%d: error: couldn't map interrupt\n",  sc->sc_if.if_unit);
 	return;
@@ -403,7 +464,11 @@ pdq_pci_attach(
 #endif
 }
 
-struct cfdriver fpacd = {
-    0, "fpa", pdq_pci_probe, pdq_pci_attach, DV_IFNET, sizeof(pdq_softc_t)
+struct cfattach fpa_ca = {
+    sizeof(pdq_softc_t), pdq_pci_probe, pdq_pci_attach
 };
-#endif /* __NetBSD__ */
+
+struct cfdriver fpa_cd = {
+    0, "fpa", DV_IFNET
+};
+#endif /* __NetBSD__ || __OpenBSD__ */

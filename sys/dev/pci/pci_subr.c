@@ -1,7 +1,8 @@
-/*	$NetBSD: pci_subr.c,v 1.12 1995/08/16 04:54:50 cgd Exp $	*/
+/*	$OpenBSD: pci_subr.c,v 1.2 1996/04/18 23:48:03 niklas Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.17 1996/03/02 02:28:48 cgd Exp $	*/
 
 /*
- * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
+ * Copyright (c) 1995, 1996 Christopher G. Demetriou.  All rights reserved.
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,79 +44,6 @@
 #ifdef PCIVERBOSE
 #include <dev/pci/pcidevs.h>
 #endif
-
-int
-pciprint(aux, pci)
-	void *aux;
-	char *pci;
-{
-	register struct pci_attach_args *pa = aux;
-
-	printf(" bus %d device %d", pa->pa_bus, pa->pa_device);
-	return (UNCONF);
-}
-
-int
-pcisubmatch(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
-{
-	struct cfdata *cf = match;
-	struct pci_attach_args *pa = aux;
-
-	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != pa->pa_bus)
-		return 0;
-	if (cf->cf_loc[1] != -1 && cf->cf_loc[1] != pa->pa_device)
-		return 0;
-	return ((*cf->cf_driver->cd_match)(parent, match, aux));
-}
-
-/*
- * Try to find and attach the PCI device at the give bus and device number.
- * Return 1 if successful, 0 if unsuccessful.
- */
-int
-pci_attach_subdev(pcidev, bus, device)
-	struct device *pcidev;
-	int bus, device;
-{
-	pcitag_t tag;
-	pcireg_t id, class;
-	struct pci_attach_args pa;
-	struct cfdata *cf;
-	int supported;
-	char devinfo[256];
-
-	tag = pci_make_tag(bus, device, 0);
-	id = pci_conf_read(tag, PCI_ID_REG);
-	if (id == 0 || id == 0xffffffff)
-		return (0);
-	class = pci_conf_read(tag, PCI_CLASS_REG);
-
-	pa.pa_bus = bus;
-	pa.pa_device = device;
-	pa.pa_tag = tag;
-	pa.pa_id = id;
-	pa.pa_class = class;
-
-#if defined(PCIVERBOSE) && 0 /* _too_ verbose */
-	pci_devinfo(id, class, devinfo, NULL);
-	printf("%s bus %d device %d: %s\n", pcidev->dv_xname, bus,
-	    device, devinfo);
-#endif /* _too_ verbose */
-
-	if ((cf = config_search(pcisubmatch, pcidev, &pa)) != NULL)
-		config_attach(pcidev, cf, &pa, pciprint);
-	else {
-		pci_devinfo(id, class, devinfo, &supported);
-		printf("%s bus %d device %d: %s not %s\n", pcidev->dv_xname,
-		    bus, device, devinfo,
-		    supported ? "configured" : "supported");
-		return (0);
-	}
-
-	return (1);
-}
 
 /*
  * Descriptions of known PCI classes and subclasses.
@@ -214,17 +142,16 @@ struct pci_knowndev {
 	int			flags;
 	char			*vendorname, *productname;
 };
-#define	PCI_KNOWNDEV_UNSUPP	0x01		/* unsupported device */
-#define	PCI_KNOWNDEV_NOPROD	0x02		/* match on vendor only */
+#define	PCI_KNOWNDEV_NOPROD	0x01		/* match on vendor only */
 
 #include <dev/pci/pcidevs_data.h>
 #endif /* PCIVERBOSE */
 
 void
-pci_devinfo(id_reg, class_reg, cp, supp)
+pci_devinfo(id_reg, class_reg, showclass, cp)
 	pcireg_t id_reg, class_reg;
+	int showclass;
 	char *cp;
-	int *supp;
 {
 	pci_vendor_id_t vendor;
 	pci_product_id_t product;
@@ -236,6 +163,9 @@ pci_devinfo(id_reg, class_reg, cp, supp)
 	struct pci_class *classp, *subclassp;
 #ifdef PCIVERBOSE
 	struct pci_knowndev *kdp;
+	const char *unmatched = "unknown ";
+#else
+	const char *unmatched = "";
 #endif
 
 	vendor = PCI_VENDOR(id_reg);
@@ -254,21 +184,15 @@ pci_devinfo(id_reg, class_reg, cp, supp)
                         break;
 		kdp++;
 	}
-        if (kdp->vendorname == NULL) {
+        if (kdp->vendorname == NULL)
 		vendor_namep = product_namep = NULL;
-		if (supp != NULL)
-			*supp = 0;
-        } else {
+	else {
 		vendor_namep = kdp->vendorname;
 		product_namep = (kdp->flags & PCI_KNOWNDEV_NOPROD) == 0 ?
 		    kdp->productname : NULL;
-		if (supp != NULL)
-			*supp = (kdp->flags & PCI_KNOWNDEV_UNSUPP) == 0;
         }
 #else /* PCIVERBOSE */
 	vendor_namep = product_namep = NULL;
-	if (supp != NULL)
-		*supp = 1;		/* always say 'not configured' */
 #endif /* PCIVERBOSE */
 
 	classp = pci_class;
@@ -286,27 +210,31 @@ pci_devinfo(id_reg, class_reg, cp, supp)
 	}
 
 	if (vendor_namep == NULL)
-		cp += sprintf(cp, "unknown vendor/product: 0x%04x/0x%04x",
-		    vendor, product);
+		cp += sprintf(cp, "%svendor 0x%04x product 0x%04x",
+		    unmatched, vendor, product);
 	else if (product_namep != NULL)
 		cp += sprintf(cp, "%s %s", vendor_namep, product_namep);
 	else
-		cp += sprintf(cp, "vendor: %s, unknown product: 0x%x",
+		cp += sprintf(cp, "vendor %s, unknown product 0x%x",
 		    vendor_namep, product);
-	cp += sprintf(cp, " (");
-	if (classp->name == NULL)
-		cp += sprintf(cp, "unknown class/subclass: 0x%02x/0x%02x",
-		    class, subclass);
-	else {
-		cp += sprintf(cp, "class: %s, ", classp->name);
-		if (subclassp == NULL || subclassp->name == NULL)
-			cp += sprintf(cp, "unknown subclass: 0x%02x",
-			    subclass);
-		else
-			cp += sprintf(cp, "subclass: %s", subclassp->name);
-	}
+	if (showclass) {
+		cp += sprintf(cp, " (");
+		if (classp->name == NULL)
+			cp += sprintf(cp,
+			    "unknown class 0x%2x, subclass 0x%02x",
+			    class, subclass);
+		else {
+			cp += sprintf(cp, "class %s, ", classp->name);
+			if (subclassp == NULL || subclassp->name == NULL)
+				cp += sprintf(cp, "unknown subclass 0x%02x",
+				    subclass);
+			else
+				cp += sprintf(cp, "subclass %s",
+				    subclassp->name);
+		}
 #if 0 /* not very useful */
-	cp += sprintf(cp, ", interface: 0x%02x", interface);
+		cp += sprintf(cp, ", interface 0x%02x", interface);
 #endif
-	cp += sprintf(cp, ", revision: 0x%02x)", revision);
+		cp += sprintf(cp, ", revision 0x%02x)", revision);
+	}
 }

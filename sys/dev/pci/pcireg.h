@@ -1,7 +1,8 @@
-/*	$NetBSD: pcireg.h,v 1.4 1995/07/27 00:29:02 mycroft Exp $	*/
+/*	$OpenBSD: pcireg.h,v 1.2 1996/04/18 23:48:07 niklas Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.5 1996/03/04 19:30:51 cgd Exp $	*/
 
 /*
- * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
+ * Copyright (c) 1995, 1996 Christopher G. Demetriou.  All rights reserved.
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -165,23 +166,36 @@ typedef u_int8_t pci_revision_t;
 
 /*
  * Mapping registers
- * XXX ADJUST
  */
-#define	PCI_MAP_REG_START		0x10
-#define	PCI_MAP_REG_END			0x28
+#define	PCI_MAPREG_START		0x10
+#define	PCI_MAPREG_END			0x28
 
-#define	PCI_MAP_MEMORY				0x00000000
+#define	PCI_MAPREG_TYPE(mr)						\
+	    ((mr) & PCI_MAPREG_TYPE_MASK)
+#define	PCI_MAPREG_TYPE_MASK			0x00000001
 
-#define	PCI_MAP_MEMORY_TYPE_32BIT		0x00000000
-#define	PCI_MAP_MEMORY_TYPE_32BIT_1M		0x00000002
-#define	PCI_MAP_MEMORY_TYPE_64BIT		0x00000004
-#define	PCI_MAP_MEMORY_TYPE_MASK		0x00000006
-#define	PCI_MAP_MEMORY_CACHABLE			0x00000008
-#define	PCI_MAP_MEMORY_ADDRESS_MASK		0xfffffff0
+#define	PCI_MAPREG_TYPE_MEM			0x00000000
+#define	PCI_MAPREG_TYPE_IO			0x00000001
 
-#define	PCI_MAP_IO				0x00000001
+#define	PCI_MAPREG_MEM_TYPE(mr)						\
+	    ((mr) & PCI_MAPREG_MEM_TYPE_MASK)
+#define	PCI_MAPREG_MEM_TYPE_MASK		0x00000006
 
-#define	PCI_MAP_IO_ADDRESS_MASK			0xfffffffe
+#define	PCI_MAPREG_MEM_TYPE_32BIT		0x00000000
+#define	PCI_MAPREG_MEM_TYPE_32BIT_1M		0x00000002
+#define	PCI_MAPREG_MEM_TYPE_64BIT		0x00000004
+
+#define	PCI_MAPREG_MEM_CACHEABLE(mr)					\
+	    (((mr) & PCI_MAPREG_MEM_CACHEABLE_MASK) != 0)
+#define	PCI_MAPREG_MEM_CACHEABLE_MASK		0x00000008
+
+#define	PCI_MAPREG_MEM_ADDR(mr)						\
+	    ((mr) & PCI_MAPREG_MEM_ADDR_MASK)
+#define	PCI_MAPREG_MEM_ADDR_MASK		0xfffffff0
+
+#define	PCI_MAPREG_IO_ADDR(mr)						\
+	    ((mr) & PCI_MAPREG_IO_ADDR_MASK)
+#define	PCI_MAPREG_IO_ADDR_MASK			0xfffffffe
 
 /*
  * Interrupt Configuration Register; contains interrupt pin and line.

@@ -1,7 +1,8 @@
-/*	$NetBSD: eisavar.h,v 1.1 1995/04/17 12:08:23 cgd Exp $	*/
+/*	$OpenBSD: eisavar.h,v 1.3 1996/04/18 23:47:13 niklas Exp $	*/
+/*	$NetBSD: eisavar.h,v 1.4 1996/03/08 20:25:22 cgd Exp $	*/
 
 /*
- * Copyright (c) 1995 Christopher G. Demetriou
+ * Copyright (c) 1995, 1996 Christopher G. Demetriou
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,23 +32,75 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * XXX
- * XXX EISA AUTOCONFIG SHOULD BE SEPERATED FROM ISA AUTOCONFIG!!!
- * XXX
- */
+#ifndef __DEV_EISA_EISAVAR_H__
+#define	__DEV_EISA_EISAVAR_H__
 
 /*
- * pull in the ISA definitions
+ * Definitions for EISA autoconfiguration.
+ *
+ * This file describes types, constants, and functions which are used
+ * for EISA autoconfiguration.
  */
+
+#include <machine/bus.h>
+#include <dev/eisa/eisareg.h>		/* For ID register & string info. */
+
+
+typedef int	eisa_slot_t;		/* really only needs to be 4 bits */
+
+
+/*
+ * EISA bus attach arguments.
+ */
+struct eisabus_attach_args {
+	char		*eba_busname;		/* XXX should be common */
+	bus_chipset_tag_t eba_bc;		/* XXX should be common */
+};
+
+
+/*
+ * EISA device attach arguments.
+ */
+struct eisa_attach_args {
+	bus_chipset_tag_t ea_bc;
+
+	eisa_slot_t	ea_slot;
+	u_int8_t	ea_vid[EISA_NVIDREGS];
+	u_int8_t	ea_pid[EISA_NPIDREGS];
+	char		ea_idstring[EISA_IDSTRINGLEN];
+};
+
+
+/*
+ * Easy to remember names for EISA device locators.
+ */
+
+#define	eisacf_slot		cf_loc[0]		/* slot */
+
+
+/*
+ * EISA device locator values that mean "unknown" or "unspecified."
+ * Note that not all are supplied by 'config' and should be filled
+ * in by the device if appropriate.
+ */
+
+#define	EISA_UNKNOWN_SLOT	((eisa_slot_t)-1)
+
+/*
+ * The EISA bus cfdriver, so that subdevices can more easily tell
+ * what bus they're on.
+ */
+
+extern struct cfdriver eisacd;
+
+/*
+ * XXX interrupt attachment, etc., is done by using the ISA interfaces.
+ * XXX THIS SHOULD CHANGE.
+ */
+
 #include <dev/isa/isavar.h>
 
-/*
- * and bend them to our twisted ways:
- * map the functions, etc. that are used
- */
-
-#define eisa_attach_args	isa_attach_args			/* XXX */
-#define eisadev			isadev				/* XXX */
 #define	eisa_intr_establish	isa_intr_establish		/* XXX */
 #define	eisa_intr_disestablish	isa_intr_disestablish		/* XXX */
+
+#endif /* !__DEV_EISA_EISAVAR_H__ */

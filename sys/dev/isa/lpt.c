@@ -1,5 +1,5 @@
-/*	$OpenBSD: lpt.c,v 1.7 1996/03/20 01:00:55 mickey Exp $ */
-/*	$NetBSD: lpt.c,v 1.31 1995/12/24 02:31:40 mycroft Exp $ */
+/*	$OpenBSD: lpt.c,v 1.8 1996/04/18 23:47:43 niklas Exp $ */
+/*	$NetBSD: lpt.c,v 1.32 1996/03/08 22:17:58 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -66,7 +66,7 @@
 #include <sys/syslog.h>
 
 #include <machine/cpu.h>
-#include <machine/pio.h>
+#include <machine/bus.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/lptreg.h>
@@ -93,6 +93,8 @@ struct lpt_softc {
 	u_char *sc_cp;
 	int sc_spinmax;
 	int sc_iobase;
+	bus_chipset_tag_t sc_bc;
+	bus_io_handle_t sc_ioh;
 	int sc_irq;
 	u_char sc_state;
 #define	LPT_OPEN	0x01	/* device is open */
@@ -119,8 +121,8 @@ struct cfdriver lptcd = {
 
 #define	LPS_INVERT	(LPS_SELECT|LPS_NERR|LPS_NBSY|LPS_NACK)
 #define	LPS_MASK	(LPS_SELECT|LPS_NERR|LPS_NBSY|LPS_NACK|LPS_NOPAPER)
-#define	NOT_READY()	((inb(iobase + lpt_status) ^ LPS_INVERT) & LPS_MASK)
-#define	NOT_READY_ERR()	not_ready(inb(iobase + lpt_status), sc)
+#define	NOT_READY()	((bus_io_read_1(bc, ioh, lpt_status) ^ LPS_INVERT) & LPS_MASK)
+#define	NOT_READY_ERR()	not_ready(bus_io_read_1(bc, ioh, lpt_status), sc)
 static int not_ready __P((u_char, struct lpt_softc *));
 
 static void lptwakeup __P((void *arg));
@@ -130,22 +132,24 @@ static int pushbytes __P((struct lpt_softc *));
  * Internal routine to lptprobe to do port tests of one byte value.
  */
 int
-lpt_port_test(port, data, mask)
-	int port;
+lpt_port_test(ioh, off, data, mask, base)
+	bus_io_handle_t ioh;
+	size_t off;
 	u_char data, mask;
+	u_long base;
 {
 	int timeout;
 	u_char temp;
 
 	data &= mask;
-	outb(port, data);
+	bus_io_write_1(bc, ioh, off, data);
 	timeout = 1000;
 	do {
 		delay(10);
-		temp = inb(port) & mask;
+		temp = bus_io_read_1(bc, ioh, off) & mask;
 	} while (temp != data && --timeout);
-	lprintf("lpt: port=0x%x out=0x%x in=0x%x timeout=%d\n", port, data,
-	    temp, timeout);
+	lprintf("lpt: port=0x%x out=0x%x in=0x%x timeout=%d\n", base + off,
+	    data, temp, timeout);
 	return (temp == data);
 }
 
@@ -176,47 +180,58 @@ lptprobe(parent, match, aux)
 	void *match, *aux;
 {
 	struct isa_attach_args *ia = aux;
-	int iobase = ia->ia_iobase;
-	int port;
+	bus_chipset_tag_t bc;
+	bus_io_handle_t ioh;
+	u_long base;
 	u_char mask, data;
-	int i;
+	int i, rv;
 
 #ifdef DEBUG
 #define	ABORT	do {printf("lptprobe: mask %x data %x failed\n", mask, data); \
-		    return 0;} while (0)
+		    goto out;} while (0)
 #else
-#define	ABORT	return 0
+#define	ABORT	goto out
 #endif
 
-	port = iobase + lpt_data;
+	bc = ia->ia_bc;
+	base = ia->ia_iobase;
+	if (bus_io_map(bc, base, LPT_NPORTS, &ioh))
+		return 0;
+
+	rv = 0;
 	mask = 0xff;
 
 	data = 0x55;				/* Alternating zeros */
-	if (!lpt_port_test(port, data, mask))
+	if (!lpt_port_test(ioh, lpt_data, data, mask, base))
 		ABORT;
 
 	data = 0xaa;				/* Alternating ones */
-	if (!lpt_port_test(port, data, mask))
+	if (!lpt_port_test(ioh, lpt_data, data, mask, base))
 		ABORT;
 
 	for (i = 0; i < CHAR_BIT; i++) {	/* Walking zero */
 		data = ~(1 << i);
-		if (!lpt_port_test(port, data, mask))
+		if (!lpt_port_test(ioh, lpt_data, data, mask, base))
 			ABORT;
 	}
 
 	for (i = 0; i < CHAR_BIT; i++) {	/* Walking one */
 		data = (1 << i);
-		if (!lpt_port_test(port, data, mask))
+		if (!lpt_port_test(ioh, lpt_data, data, mask, base))
 			ABORT;
 	}
 
-	outb(iobase + lpt_data, 0);
-	outb(iobase + lpt_control, 0);
+	bus_io_write_1(bc, ioh, lpt_data, 0);
+	bus_io_write_1(bc, ioh, lpt_control, 0);
 
 	ia->ia_iosize = LPT_NPORTS;
 	ia->ia_msize = 0;
-	return 1;
+
+	rv = 1;
+
+out:
+	bus_io_unmap(bc, ioh, LPT_NPORTS);
+	return rv;
 }
 
 void
@@ -226,17 +241,24 @@ lptattach(parent, self, aux)
 {
 	struct lpt_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
-	int iobase = ia->ia_iobase;
+	bus_chipset_tag_t bc;
+	bus_io_handle_t ioh;
 
 	if (ia->ia_irq != IRQUNK)
 		printf("\n");
 	else
 		printf(": polled\n");
 
-	sc->sc_iobase = iobase;
+	sc->sc_iobase = ia->ia_iobase;
 	sc->sc_irq = ia->ia_irq;
 	sc->sc_state = 0;
-	outb(iobase + lpt_control, LPC_NINIT);
+
+	bc = sc->sc_bc = ia->ia_bc;
+	if (bus_io_map(bc, sc->sc_iobase, LPT_NPORTS, &ioh))
+		panic("lptattach: couldn't map I/O ports");
+	sc->sc_ioh = ioh;
+
+	bus_io_write_1(bc, ioh, lpt_control, LPC_NINIT);
 
 	if (ia->ia_irq != IRQUNK)
 		sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_NONE,
@@ -254,7 +276,8 @@ lptopen(dev, flag)
 	int unit = LPTUNIT(dev);
 	u_char flags = LPTFLAGS(dev);
 	struct lpt_softc *sc;
-	int iobase;
+	bus_chipset_tag_t bc;
+	bus_io_handle_t ioh;
 	u_char control;
 	int error;
 	int spin;
@@ -280,16 +303,17 @@ lptopen(dev, flag)
 	sc->sc_state = LPT_INIT;
 	sc->sc_flags = flags;
 	lprintf("%s: open: flags=0x%x\n", sc->sc_dev.dv_xname, flags);
-	iobase = sc->sc_iobase;
+	bc = sc->sc_bc;
+	ioh = sc->sc_ioh;
 
 	if ((flags & LPT_NOPRIME) == 0) {
 		/* assert INIT for 100 usec to start up printer */
-		outb(iobase + lpt_control, LPC_SELECT);
+		bus_io_write_1(bc, ioh, lpt_control, LPC_SELECT);
 		delay(100);
 	}
 
 	control = LPC_SELECT | LPC_NINIT;
-	outb(iobase + lpt_control, control);
+	bus_io_write_1(bc, ioh, lpt_control, control);
 
 	/* wait till ready (printer running diagnostics) */
 	for (spin = 0; NOT_READY_ERR(); spin += STEP) {
@@ -311,7 +335,7 @@ lptopen(dev, flag)
 	if (flags & LPT_AUTOLF)
 		control |= LPC_AUTOLF;
 	sc->sc_control = control;
-	outb(iobase + lpt_control, control);
+	bus_io_write_1(bc, ioh, lpt_control, control);
 
 	sc->sc_inbuf = geteblk(LPT_BSIZE);
 	sc->sc_count = 0;
@@ -368,7 +392,8 @@ lptclose(dev, flag)
 {
 	int unit = LPTUNIT(dev);
 	struct lpt_softc *sc = lptcd.cd_devs[unit];
-	int iobase = sc->sc_iobase;
+	bus_chipset_tag_t bc = sc->sc_bc;
+	bus_io_handle_t ioh = sc->sc_ioh;
 
 	if (sc->sc_count)
 		(void) pushbytes(sc);
@@ -376,9 +401,9 @@ lptclose(dev, flag)
 	if ((sc->sc_flags & LPT_NOINTR) == 0)
 		untimeout(lptwakeup, sc);
 
-	outb(iobase + lpt_control, LPC_NINIT);
+	bus_io_write_1(bc, ioh, lpt_control, LPC_NINIT);
 	sc->sc_state = 0;
-	outb(iobase + lpt_control, LPC_NINIT);
+	bus_io_write_1(bc, ioh, lpt_control, LPC_NINIT);
 	brelse(sc->sc_inbuf);
 
 	lprintf("%s: closed\n", sc->sc_dev.dv_xname);
@@ -389,7 +414,8 @@ int
 pushbytes(sc)
 	struct lpt_softc *sc;
 {
-	int iobase = sc->sc_iobase;
+	bus_chipset_tag_t bc = sc->sc_bc;
+	bus_io_handle_t ioh = sc->sc_ioh;
 	int error;
 
 	if (sc->sc_flags & LPT_NOINTR) {
@@ -417,10 +443,10 @@ pushbytes(sc)
 				break;
 			}
 
-			outb(iobase + lpt_data, *sc->sc_cp++);
-			outb(iobase + lpt_control, control | LPC_STROBE);
+			bus_io_write_1(bc, ioh, lpt_data, *sc->sc_cp++);
+			bus_io_write_1(bc, ioh, lpt_control, control | LPC_STROBE);
 			sc->sc_count--;
-			outb(iobase + lpt_control, control);
+			bus_io_write_1(bc, ioh, lpt_control, control);
 
 			/* adapt busy-wait algorithm */
 			if (spin*2 + 16 < sc->sc_spinmax)
@@ -484,7 +510,8 @@ lptintr(arg)
 	void *arg;
 {
 	struct lpt_softc *sc = arg;
-	int iobase = sc->sc_iobase;
+	bus_chipset_tag_t bc = sc->sc_bc;
+	bus_io_handle_t ioh = sc->sc_ioh;
 
 	if (((sc->sc_state & LPT_OPEN) == 0 && sc->sc_count == 0) || (sc->sc_flags & LPT_NOINTR))
 		return 0;
@@ -496,10 +523,10 @@ lptintr(arg)
 	if (sc->sc_count) {
 		u_char control = sc->sc_control;
 		/* send char */
-		outb(iobase + lpt_data, *sc->sc_cp++);
-		outb(iobase + lpt_control, control | LPC_STROBE);
+		bus_io_write_1(bc, ioh, lpt_data, *sc->sc_cp++);
+		bus_io_write_1(bc, ioh, lpt_control, control | LPC_STROBE);
 		sc->sc_count--;
-		outb(iobase + lpt_control, control);
+		bus_io_write_1(bc, ioh, lpt_control, control);
 		sc->sc_state |= LPT_OBUSY;
 	} else
 		sc->sc_state &= ~LPT_OBUSY;

@@ -1,4 +1,5 @@
-/*	$NetBSD: ramdisk.h,v 1.2 1995/10/26 15:46:24 gwr Exp $	*/
+/*	$OpenBSD: ramdisk.h,v 1.3 1996/04/18 23:47:04 niklas Exp $	*/
+/*	$NetBSD: ramdisk.h,v 1.3 1996/03/07 10:26:31 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -83,8 +84,9 @@ struct rd_conf {
 /*
  * If the option RAMDISK_HOOKS is on, then these functions are
  * called by the ramdisk driver to allow machine-dependent to
- * configure and/or load each ramdisk unit.
+ * match/configure and/or load each ramdisk unit.
  */
+extern int  rd_match_hook  __P((struct device *, void *, void *));
 extern void rd_attach_hook __P((int unit, struct rd_conf *));
 extern void rd_open_hook   __P((int unit, struct rd_conf *));
 #endif

@@ -1,5 +1,5 @@
-/*	$OpenBSD: isa.c,v 1.4 1996/03/08 16:43:06 niklas Exp $	*/
-/*	$NetBSD: isa.c,v 1.76 1996/01/16 07:52:38 mycroft Exp $ */
+/*	$OpenBSD: isa.c,v 1.5 1996/04/18 23:47:41 niklas Exp $	*/
+/*	$NetBSD: isa.c,v 1.78 1996/03/08 20:36:21 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -40,6 +40,45 @@
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 
+int isamatch __P((struct device *, void *, void *));
+void isaattach __P((struct device *, struct device *, void *));
+
+struct cfdriver isacd = {
+	NULL, "isa", isamatch, isaattach, DV_DULL, sizeof(struct isa_softc), 1
+};
+
+int
+isamatch(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
+{
+	struct cfdata *cf = match;
+	struct isabus_attach_args *iba = aux;
+
+	if (strcmp(iba->iba_busname, cf->cf_driver->cd_name))
+		return (0);
+
+	/* XXX check other indicators */
+
+        return (1);
+}
+
+void
+isaattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	struct isa_softc *sc = (struct isa_softc *)self;
+	struct isabus_attach_args *iba = aux;
+
+	printf("\n");
+
+	sc->sc_bc = iba->iba_bc;
+
+	TAILQ_INIT(&sc->sc_subdevs);
+	config_scan(isascan, self);
+}
+
 int
 isaprint(aux, isa)
 	void *aux;
@@ -67,6 +106,7 @@ isascan(parent, match)
 	struct device *parent;
 	void *match;
 {
+	struct isa_softc *sc = (struct isa_softc *)parent;
 	struct device *dev = match;
 	struct cfdata *cf = dev->dv_cfdata;
 	struct isa_attach_args ia;
@@ -74,6 +114,7 @@ isascan(parent, match)
 	if (cf->cf_fstate == FSTATE_STAR)
 		panic("clone devices not supported on ISA bus");
 
+	ia.ia_bc = sc->sc_bc;
 	ia.ia_iobase = cf->cf_loc[0];
 	ia.ia_iosize = 0x666;
 	ia.ia_maddr = cf->cf_loc[2];

@@ -1,15 +1,13 @@
-#	$NetBSD: files.pci,v 1.2 1995/04/17 17:54:35 cgd Exp $
+#	$OpenBSD: files.pcmcia,v 1.2 1996/04/18 23:48:11 niklas Exp $
 #
-# Config.new file and device description for machine-independent PCMCIA code.
+# Config file and device description for machine-independent PCMCIA code.
 # Included by ports that need it.
 
+# XXX Does this comment hold?
 # ports should define their own "device pcmcia" line (like the one below,
 # but with the correct bus attachment).
 
-#define  pcmciabus {[port = -1], [size = 0],  
-#                [iomem = -1], [iosiz = 0],
-#                [irq = -1], [drq = -1]}
+device pcmcia at pcicbus: isa
 
-
-file	dev/pcmcia/pcmcia.c		pcmciabus   needs-count
-file	dev/pcmcia/pcmcia_conf.c	pcmciabus
+file	dev/pcmcia/pcmcia.c		pcmcia needs-count
+file	dev/pcmcia/pcmcia_conf.c	pcmcia

@@ -1,4 +1,5 @@
-/*	$NetBSD: kbd_tables.h,v 1.1.1.1 1996/01/24 01:15:35 gwr Exp $	*/
+/*	$OpenBSD: kbd_tables.h,v 1.2 1996/04/18 23:48:17 niklas Exp $	*/
+/*	$NetBSD: kbd_tables.h,v 1.3 1996/02/29 19:37:53 gwr Exp $	*/
 
 /*
  * Copyright (c) 1996 Gordon W. Ross
@@ -138,10 +139,11 @@ struct keyboard {
 	struct keymap	*k_control; 	/* Ctrl is down */
 	struct keymap	*k_normal;  	/* No shifts */
 	struct keymap	*k_shifted; 	/* Shift is down */
-	/* capslock? numlock? */
 };
 
 extern char kbd_stringtab[16][10];
+extern unsigned short kbd_numlock_map[64];
+
 extern struct keyboard * keyboards[];
 extern int kbd_max_type;
 #define	KBD_MIN_TYPE 2

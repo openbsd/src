@@ -1,4 +1,5 @@
-/*	$NetBSD: ms.c,v 1.1.1.1 1996/01/24 01:15:35 gwr Exp $	*/
+/*	$OpenBSD: ms.c,v 1.2 1996/04/18 23:48:18 niklas Exp $	*/
+/*	$NetBSD: ms.c,v 1.3 1996/02/19 04:36:15 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -181,7 +182,7 @@ ms_attach(parent, self, aux)
 	int reset, s, tconst;
 
 	cf = ms->ms_dev.dv_cfdata;
-	ms_unit = cf->cf_unit;
+	ms_unit = ms->ms_dev.dv_unit;
 	channel = args->channel;
 	cs = &zsc->zsc_cs[channel];
 	cs->cs_private = ms;
@@ -196,7 +197,7 @@ ms_attach(parent, self, aux)
 	/* May need reset... */
 	reset = (channel == 0) ?
 		ZSWR9_A_RESET : ZSWR9_B_RESET;
-	ZS_WRITE(cs, 9, reset);
+	zs_write_reg(cs, 9, reset);
 	/* These are OK as set by zscc: WR3, WR4, WR5 */
 	cs->cs_preg[5] |= ZSWR5_DTR | ZSWR5_RTS;
 	cs->cs_preg[12] = tconst;
@@ -487,16 +488,14 @@ ms_rxint(cs)
 	put = ms->ms_rbput;
 
 	/* Read the input data ASAP. */
-	c = *(cs->cs_reg_data);
-	ZS_DELAY();
+	c = zs_read_data(cs);
 
 	/* Save the status register too. */
-	rr1 = ZS_READ(cs, 1);
+	rr1 = zs_read_reg(cs, 1);
 
 	if (rr1 & (ZSRR1_FE | ZSRR1_DO | ZSRR1_PE)) {
 		/* Clear the receive error. */
-		*(cs->cs_reg_csr) = ZSWR0_RESET_ERRORS;
-		ZS_DELAY();
+		zs_write_csr(cs, ZSWR0_RESET_ERRORS);
 	}
 
 	ms->ms_rbuf[put] = (c << 8) | rr1;
@@ -528,8 +527,7 @@ ms_txint(cs)
 
 	ms = cs->cs_private;
 
-	*(cs->cs_reg_csr) = ZSWR0_RESET_TXINT;
-	ZS_DELAY();
+	zs_write_csr(cs, ZSWR0_RESET_TXINT);
 
 	ms->ms_intr_flags |= INTR_TX_EMPTY;
 	/* Ask for softint() call. */
@@ -547,11 +545,8 @@ ms_stint(cs)
 
 	ms = cs->cs_private;
 
-	rr0 = *(cs->cs_reg_csr);
-	ZS_DELAY();
-
-	*(cs->cs_reg_csr) = ZSWR0_RESET_STATUS;
-	ZS_DELAY();
+	rr0 = zs_read_csr(cs);
+	zs_write_csr(cs, ZSWR0_RESET_STATUS);
 
 	ms->ms_intr_flags |= INTR_ST_CHECK;
 	/* Ask for softint() call. */

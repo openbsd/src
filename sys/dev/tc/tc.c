@@ -1,4 +1,5 @@
-/*	$NetBSD: tc.c,v 1.1 1995/12/20 00:48:32 cgd Exp $	*/
+/*	$OpenBSD: tc.c,v 1.2 1996/04/18 23:48:22 niklas Exp $	*/
+/*	$NetBSD: tc.c,v 1.10 1996/03/05 23:15:07 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -32,10 +33,12 @@
 
 #include <dev/tc/tcreg.h>
 #include <dev/tc/tcvar.h>
+#include <dev/tc/tcdevs.h>
 
 struct tc_softc {
 	struct	device sc_dv;
 
+	int	sc_speed;
 	int	sc_nslots;
 	struct tc_slotdesc *sc_slots;
 
@@ -51,7 +54,9 @@ struct cfdriver tccd =
     { NULL, "tc", tcmatch, tcattach, DV_DULL, sizeof (struct tc_softc) };
 
 int	tcprint __P((void *, char *));
+int	tcsubmatch __P((struct device *, void *, void *));
 int	tc_checkslot __P((tc_addr_t, char *));
+void	tc_devinfo __P((const char *, char *));
 
 int
 tcmatch(parent, cfdata, aux)
@@ -59,6 +64,13 @@ tcmatch(parent, cfdata, aux)
 	void *cfdata;
 	void *aux;
 {
+	struct cfdata *cf = cfdata;
+	struct tcbus_attach_args *tba = aux;
+
+	if (strcmp(tba->tba_busname, cf->cf_driver->cd_name))
+		return (0);
+
+	/* XXX check other indicators */
 
 	return (1);
 }
@@ -70,28 +82,31 @@ tcattach(parent, self, aux)
 	void *aux;
 {
 	struct tc_softc *sc = (struct tc_softc *)self;
-	struct tc_attach_args *tc = aux;
-	struct tcdev_attach_args tcdev;
+	struct tcbus_attach_args *tba = aux;
+	struct tc_attach_args ta;
 	const struct tc_builtin *builtin;
 	struct tc_slotdesc *slot;
 	tc_addr_t tcaddr;
+	void *match;
 	int i;
 
-	printf("\n");
+	printf("%s MHz clock\n",
+	    tba->tba_speed == TC_SPEED_25_MHZ ? "25" : "12.5");
 
 	/*
 	 * Save important CPU/chipset information.
 	 */
-	sc->sc_nslots = tc->tca_nslots;
-	sc->sc_slots = tc->tca_slots;
-	sc->sc_intr_establish = tc->tca_intr_establish;
-	sc->sc_intr_disestablish = tc->tca_intr_disestablish;
+	sc->sc_speed = tba->tba_speed;
+	sc->sc_nslots = tba->tba_nslots;
+	sc->sc_slots = tba->tba_slots;
+	sc->sc_intr_establish = tba->tba_intr_establish;
+	sc->sc_intr_disestablish = tba->tba_intr_disestablish;
 
 	/*
 	 * Try to configure each built-in device
 	 */
-	for (i = 0; i < tc->tca_nbuiltins; i++) {
-		builtin = &tc->tca_builtins[i];
+	for (i = 0; i < tba->tba_nbuiltins; i++) {
+		builtin = &tba->tba_builtins[i];
 
 		/* sanity check! */
 		if (builtin->tcb_slot > sc->sc_nslots)
@@ -109,12 +124,13 @@ tcattach(parent, self, aux)
 		/*
 		 * Set up the device attachment information.
 		 */
-		strncpy(tcdev.tcda_modname, builtin->tcb_modname, TC_ROM_LLEN);
-		tcdev.tcda_modname[TC_ROM_LLEN] = '\0';
-		tcdev.tcda_slot = builtin->tcb_slot;
-		tcdev.tcda_offset = builtin->tcb_offset;
-		tcdev.tcda_addr = tcaddr;
-		tcdev.tcda_cookie = builtin->tcb_cookie;
+		strncpy(ta.ta_modname, builtin->tcb_modname, TC_ROM_LLEN);
+		ta.ta_modname[TC_ROM_LLEN] = '\0';
+		ta.ta_slot = builtin->tcb_slot;
+		ta.ta_offset = builtin->tcb_offset;
+		ta.ta_addr = tcaddr;
+		ta.ta_cookie = builtin->tcb_cookie;
+		ta.ta_busspeed = sc->sc_speed;
 	
 		/*
 		 * Mark the slot as used, so we don't check it later.
@@ -124,7 +140,7 @@ tcattach(parent, self, aux)
 		/*
 		 * Attach the device.
 		 */
-		config_found(self, &tcdev, tcprint);
+		config_found_sm(self, &ta, tcprint, tcsubmatch);
 	}
 
 	/*
@@ -143,16 +159,16 @@ tcattach(parent, self, aux)
 		tcaddr = slot->tcs_addr;
 		if (tc_badaddr(tcaddr))
 			continue;
-		if (tc_checkslot(tcaddr, tcdev.tcda_modname) == 0)
+		if (tc_checkslot(tcaddr, ta.ta_modname) == 0)
 			continue;
 
 		/*
 		 * Set up the rest of the attachment information.
 		 */
-		tcdev.tcda_slot = i;
-		tcdev.tcda_offset = 0;
-		tcdev.tcda_addr = tcaddr;
-		tcdev.tcda_cookie = slot->tcs_cookie;
+		ta.ta_slot = i;
+		ta.ta_offset = 0;
+		ta.ta_addr = tcaddr;
+		ta.ta_cookie = slot->tcs_cookie;
 
 		/*
 		 * Mark the slot as used.
@@ -162,7 +178,7 @@ tcattach(parent, self, aux)
 		/*
 		 * Attach the device.
 		 */
-		config_found(self, &tcdev, tcprint);
+		config_found_sm(self, &ta, tcprint, tcsubmatch);
 	}
 }
 
@@ -171,25 +187,34 @@ tcprint(aux, pnp)
 	void *aux;
 	char *pnp;
 {
-	struct tcdev_attach_args *tcdev = aux;
+	struct tc_attach_args *ta = aux;
+	char devinfo[256];
 
-        if (pnp)
-                printf("%s at %s", tcdev->tcda_modname, pnp);	/* XXX */
-        printf(" slot %d offset 0x%lx", tcdev->tcda_slot,
-	    (long)tcdev->tcda_offset);
-        return (UNCONF);
+	if (pnp) {
+		tc_devinfo(ta->ta_modname, devinfo);
+		printf("%s at %s", devinfo, pnp);  
+	}
+	printf(" slot %d offset 0x%lx", ta->ta_slot,
+	    (long)ta->ta_offset);
+	return (UNCONF);
 }
 
-int
-tc_submatch(match, d)
-	struct cfdata *match;
-	struct tcdev_attach_args *d;
+int   
+tcsubmatch(parent, match, aux) 
+        struct device *parent;
+        void *match, *aux; 
 {
+	struct cfdata *cf = match;
+	struct tc_attach_args *d = aux;
 
-	return (((match->tccf_slot == d->tcda_slot) ||
-		 (match->tccf_slot == TCCF_SLOT_UNKNOWN)) &&
-		((match->tccf_offset == d->tcda_offset) ||
-		 (match->tccf_offset == TCCF_OFFSET_UNKNOWN)));
+	if ((cf->tccf_slot != TCCF_SLOT_UNKNOWN) &&
+	    (cf->tccf_slot != d->ta_slot))
+		return 0;
+	if ((cf->tccf_offset != TCCF_SLOT_UNKNOWN) &&
+	    (cf->tccf_offset != d->ta_offset))
+		return 0;
+
+	return ((*cf->cf_driver->cd_match)(parent, match, aux));
 }
 
 
@@ -260,4 +285,53 @@ tc_intr_disestablish(dev, cookie)
 	struct tc_softc *sc = (struct tc_softc *)dev;
 
 	(*sc->sc_intr_disestablish)(sc->sc_dv.dv_parent, cookie);
+}
+
+#ifdef TCVERBOSE
+/*      
+ * Descriptions of of known devices.
+ */     
+struct tc_knowndev {
+	const char *id, *driver, *description;
+};      
+
+#include <dev/tc/tcdevs_data.h>
+#endif /* TCVERBOSE */
+
+void
+tc_devinfo(id, cp)
+	const char *id;
+	char *cp;
+{
+	const char *driver, *description;
+#ifdef TCVERBOSE
+	struct tc_knowndev *tdp;
+	int match;
+	const char *unmatched = "unknown ";
+#else
+	const char *unmatched = "";
+#endif
+
+	driver = NULL;
+	description = id;
+
+#ifdef TCVERBOSE
+	/* find the device in the table, if possible. */
+	tdp = tc_knowndevs;
+	while (tdp->id != NULL) {
+		/* check this entry for a match */
+		match = !strcmp(tdp->id, id);
+		if (match) {
+			driver = tdp->driver;
+			description = tdp->description;
+			break;
+		}
+		tdp++;
+	}
+#endif
+
+	if (driver == NULL)
+		cp += sprintf(cp, "%sdevice %s", unmatched, id);
+	else
+		cp += sprintf(cp, "%s (%s)", driver, description);
 }

@@ -1,4 +1,5 @@
-/*	$NetBSD: ramdisk.c,v 1.4 1996/01/07 22:03:31 thorpej Exp $	*/
+/*	$OpenBSD: ramdisk.c,v 1.4 1996/04/18 23:47:04 niklas Exp $	*/
+/*	$NetBSD: ramdisk.c,v 1.5 1996/03/07 10:26:29 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -117,7 +118,15 @@ rd_match(parent, self, aux)
 	void	*self;
 	void	*aux;
 {
+#ifdef	RAMDISK_HOOKS
+	/*
+	 * This external function allows for a machine dependent
+	 * match function.
+	 */
+	return (rd_match_hook(parent, self, aux));
+#else
 	return(1);
+#endif
 }
 
 static void

@@ -1,12 +1,8 @@
-#	$NetBSD: files.tc,v 1.1 1995/12/20 00:54:18 cgd Exp $
+#	$OpenBSD: files.tc,v 1.2 1996/04/18 23:48:21 niklas Exp $
+#	$NetBSD: files.tc,v 1.2 1996/02/27 22:00:04 cgd Exp $
 #
 # Config.new file and device description for machine-independent
 # TurboChannel code.  Included by ports that need it.
-
-# ports should define "chipsets" which have the tcbus attribute
-# and attach their TC bus subdevices
-
-define	tcbus { }
 
 device	tc at tcbus {[slot = -1], [offset = -1]}
 file	dev/tc/tc.c			tc	needs-flag

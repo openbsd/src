@@ -1,4 +1,5 @@
-/*	$NetBSD: sbreg.h,v 1.12 1995/05/08 22:02:29 brezak Exp $	*/
+/*	$OpenBSD: sbreg.h,v 1.2 1996/04/18 23:47:49 niklas Exp $	*/
+/*	$NetBSD: sbreg.h,v 1.16 1996/03/16 04:00:14 jtk Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -96,12 +97,14 @@
 #define	SBP_RECORD_FROM(src, filteron, high) ((src) | (filteron) | (high))
 #define		SBP_FILTER_ON		0x0
 #define		SBP_FILTER_OFF		0x20
-#define		SBP_FILTER_MASK		0x20
-#define		SBP_FILTER_LOW		0
-#define		SBP_FILTER_HIGH		0x08
+#define		SBP_IFILTER_MASK	0x28
+#define		SBP_OFILTER_MASK	0x20
+#define		SBP_IFILTER_LOW		0
+#define		SBP_IFILTER_HIGH	0x08
 #define		SBP_FROM_MIC		0x00
 #define		SBP_FROM_CD		0x02
 #define		SBP_FROM_LINE		0x06
+#define sbdsp_mono_vol(left) (((left) << 4) | (left))
 #define sbdsp_stereo_vol(left, right) (((left) << 4) | (right))
 #define SBP_MAXVOL 0xf			/* per channel */
 #define SBP_MINVOL 0x0			/* per channel */
@@ -148,6 +151,8 @@
 #define SB_MIDI_UART_INTR	0x35	/* enter UART mode w/ read intrs */
 #define SB_MIDI_WRITE		0x38	/* write a MIDI byte (non-UART mode) */
 #define SB_DSP_TIMECONST	0x40	/* set ADAC time constant */
+#define	SB_DSP16_OUTPUTRATE	0x41	/* set ADAC output rate */
+#define	SB_DSP16_INPUTRATE	0x42	/* set ADAC input rate */
 #define SB_DSP_BLOCKSIZE	0x48	/* set blk size for high speed xfer */
 #define SB_DSP_WDMA_4		0x74	/* begin 4-bit ADPCM DMA output */
 #define SB_DSP_WDMA_2_6		0x76	/* begin 2.6-bit ADPCM DMA output */
@@ -156,6 +161,10 @@
 #define SB_DSP_HS_INPUT		0x99	/* set high speed mode for rdma */
 #define SB_DSP_RECORD_MONO	0xA0	/* set mono recording */
 #define SB_DSP_RECORD_STEREO	0xA8	/* set stereo recording */
+#define	SB_DSP16_WDMA_16	0xB6	/* begin 16-bit linear output */
+#define	SB_DSP16_RDMA_16	0xBE	/* begin 16-bit linear input */
+#define	SB_DSP16_WDMA_8		0xC6	/* begin 8-bit linear output */
+#define	SB_DSP16_RDMA_8		0xCE	/* begin 8-bit linear input */
 #define SB_DSP_HALT		0xd0	/* temporarilty suspend DMA */
 #define SB_DSP_SPKR_ON		0xd1	/* turn speaker on */
 #define SB_DSP_SPKR_OFF		0xd3	/* turn speaker off */
@@ -164,6 +173,47 @@
 #define 	SB_SPKR_OFF	0x00
 #define 	SB_SPKR_ON	0xff
 #define SB_DSP_VERSION		0xe1	/* get version number */
+
+/* Some of these come from linux driver (It serves as convenient unencumbered
+   documentation) */
+#define	JAZZ16_READ_VER		0xFA	/* 0x12 means ProSonic/Jazz16? */
+#define		JAZZ16_VER_JAZZ	0x12
+#define	JAZZ16_SET_DMAINTR	0xFB
+
+#define JAZZ16_CONFIG_PORT	0x201
+#define	JAZZ16_WAKEUP		0xAF
+#define	JAZZ16_SETBASE		0x50
+
+#define	JAZZ16_RECORD_STEREO	0xAC	/* 16-bit record */
+#define	JAZZ16_RECORD_MONO	0xA4	/* 16-bit record */
+
+/*
+ * These come from Jazz16 chipset documentation, which doesn't include
+ * full register details, alas.  Their source code CD-ROM probably includes
+ * details, but it has an NDA attached.
+ */
+#define	JAZZ16_DIR_PB 		0x10
+#define	JAZZ16_SINGLE_PB	0x14
+#define	JAZZ16_SINGLE_ALAW_PB 	0x17
+#define	JAZZ16_CONT_PB		0x1C
+#define	JAZZ16_CONT_ALAW_PB 	0x1F
+#define	JAZZ16_DIR_PCM_REC	0x20
+#define	JAZZ16_SINGLE_REC	0x24
+#define	JAZZ16_SINGLE_ALAW_REC 	0x27
+#define	JAZZ16_CONT_REC		0x2C
+#define	JAZZ16_CONT_ALAW_REC 	0x2F
+#define	JAZZ16_SINGLE_ADPCM_PB 	0x74
+#define	JAZZ16_SINGLE_MULAW_PB 	0x77
+#define	JAZZ16_CONT_ADPCM_PB 	0x7C
+#define	JAZZ16_SINGLE_ADPCM_REC 0x84
+#define	JAZZ16_SINGLE_MULAW_REC 0x87
+#define	JAZZ16_CONT_ADPCM_REC 	0x8C
+#define	JAZZ16_CONT_MULAW_REC 	0x8F
+#define	JAZZ16_CONT_PB_XX 	0x90
+#define	JAZZ16_SINGLE_PB_XX	0x91
+#define	JAZZ16_SINGLE_REC_XX	0x98
+#define	JAZZ16_CONT_REC_XX	0x99
+
 
 /*
  * The ADPCM encodings are differential, meaning each sample represents

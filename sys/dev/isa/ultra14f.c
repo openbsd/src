@@ -1,5 +1,5 @@
-/*	$OpenBSD: ultra14f.c,v 1.11 1996/03/20 01:01:04 mickey Exp $	*/
-/*	$NetBSD: ultra14f.c,v 1.61 1996/02/09 17:38:09 mycroft Exp $	*/
+/*	$OpenBSD: ultra14f.c,v 1.12 1996/04/18 23:47:50 niklas Exp $	*/
+/*	$NetBSD: ultra14f.c,v 1.62 1996/02/24 05:27:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -609,7 +609,7 @@ uhaattach(parent, self, aux)
 	isa_establish(&uha->sc_id, &uha->sc_dev);
 #endif
 	uha->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_BIO,
-	    uha->intr, uha, sc->sc_dev.dv_xname);
+	    uha->intr, uha, uha->sc_dev.dv_xname);
 
 	/*
 	 * ask the adapter what subunits are present
@@ -918,11 +918,11 @@ u14_find(uha, ia)
 	if (ia->ia_iobase == IOBASEUNK)
 		return ENXIO;
 
-	model = inb(iobase + U14_ID) | (inb(iobase + U14_ID + 1) << 8);
+	model = (inb(iobase + U14_ID) << 8) | inb(iobase + U14_ID + 1);
 	if ((model & 0xfff0) != 0x5640)
 		return ENXIO;
 
-	config = inb(iobase + U14_CONFIG) | (inb(iobase + U14_CONFIG + 1) << 8);
+	config = (inb(iobase + U14_CONFIG) << 8) | inb(iobase + U14_CONFIG + 1);
 
 	switch (model & 0x000f) {
 	case 0x0001:

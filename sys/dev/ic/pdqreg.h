@@ -1,4 +1,5 @@
-/*	$NetBSD: pdqreg.h,v 1.2 1995/08/19 04:35:21 cgd Exp $	*/
+/*	$OpenBSD: pdqreg.h,v 1.2 1996/04/18 23:47:24 niklas Exp $	*/
+/*	$NetBSD: pdqreg.h,v 1.3 1996/03/11 21:41:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Matt Thomas (thomas@lkg.dec.com)
@@ -22,12 +23,34 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Id: pdqreg.h,v 1.6 1995/06/03 15:43:26 thomas Exp
+ *
+ * Log: pdqreg.h,v
+ * Revision 1.6  1995/06/03  15:43:26  thomas
+ * Fix the command submission logic to only submit one
+ * command at a time no matter what.  This simplies the
+ * code significantly thereby allowing us to do some up
+ * front optimizations.
+ *
+ * Revision 1.5  1995/03/10  17:41:55  thomas
+ * Add DEFTA, DEFQA, and DEFAA
+ *
+ * Revision 1.4  1995/03/06  17:07:05  thomas
+ * Add copyright/disclaimer
+ * Add EISA register definitions
+ *
+ * Revision 1.3  1995/03/03  13:48:35  thomas
+ * more fixes
+ *
+ *
  */
 
 /*
  * DEC PDQ FDDI Controller; PDQ port driver definitions
  *
  * Written by Matt Thomas
+ *
  */
 
 #ifndef _PDQREG_H
