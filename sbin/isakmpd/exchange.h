@@ -1,5 +1,5 @@
-/*	$OpenBSD: exchange.h,v 1.10 1999/04/27 21:14:04 niklas Exp $	*/
-/*	$EOM: exchange.h,v 1.23 1999/04/25 22:04:35 niklas Exp $	*/
+/*	$OpenBSD: exchange.h,v 1.11 1999/04/30 11:47:11 niklas Exp $	*/
+/*	$EOM: exchange.h,v 1.24 1999/04/29 20:45:11 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -123,6 +123,12 @@ struct exchange {
 
   /* The last message sent, to be acked when something new is received.  */
   struct message *last_sent;
+
+  /*
+   * If some message is queued up for sending, we want to be able to remove
+   * it from the queue, when the exchange is deleted.
+   */
+  struct message *in_transit;
 
   /*
    * Initiator's & responder's nonces respectively, with lengths.
