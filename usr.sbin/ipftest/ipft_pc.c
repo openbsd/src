@@ -1,4 +1,4 @@
-/*    $OpenBSD: ipft_pc.c,v 1.8 1998/01/26 04:16:35 dgregor Exp $     */
+/*    $OpenBSD: ipft_pc.c,v 1.9 1998/06/04 23:11:40 deraadt Exp $     */
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
  *
@@ -34,7 +34,7 @@
 #include "pcap.h"
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)$Id: ipft_pc.c,v 1.8 1998/01/26 04:16:35 dgregor Exp $";
+static const char rcsid[] = "@(#)$Id: ipft_pc.c,v 1.9 1998/06/04 23:11:40 deraadt Exp $";
 #endif
 
 struct	llc	{
@@ -47,7 +47,7 @@ struct	llc	{
  * While many of these maybe the same, some do have different header formats
  * which make this useful.
  */
-#define	DLT_MAX	10
+#define	DLT_MAX	12
 
 static	struct	llc	llcs[DLT_MAX+1] = {
 	{ 0, 0, 0 },	/* DLT_NULL */
@@ -60,7 +60,9 @@ static	struct	llc	llcs[DLT_MAX+1] = {
 	{ 0, 0, 0 },	/* DLT_ARCNET */
 	{ 0, 0, 0 },	/* DLT_SLIP */
 	{ 0, 0, 0 },	/* DLT_PPP */
-	{ 0, 0, 0 }	/* DLT_FDDI */
+	{ 0, 0, 0 },	/* DLT_FDDI */
+	{ 0, 0, 0 },	/* DLT_ATMRFC1483 */
+	{ 0, 0, 0 }		/* DLT_LOOP */
 };
 
 static	int	pcap_open __P((char *));

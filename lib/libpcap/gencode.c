@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.c,v 1.6 1997/07/25 20:30:18 mickey Exp $	*/
+/*	$OpenBSD: gencode.c,v 1.7 1998/06/04 23:11:34 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -493,6 +493,11 @@ init_linktype(type)
 		off_nl = 0;
 		return;
 
+	case DLT_LOOP:
+		off_linktype = -1;
+		off_nl = 4;
+		return;
+
 	case DLT_PPP:
 		off_linktype = 2;
 		off_nl = 4;
@@ -575,10 +580,11 @@ gen_linktype(proto)
 			proto = 0x0021;		/* XXX - need ppp.h defs */
 		break;
 
+	case DLT_LOOP:
 	case DLT_NULL:
 		/* XXX */
 		if (proto == ETHERTYPE_IP)
-			return (gen_cmp(0, BPF_W, (bpf_int32)AF_INET));
+			return (gen_cmp(0, BPF_W, htonl((bpf_int32) AF_INET)));
 		else
 			return gen_false();
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.8 1997/12/31 04:33:38 mickey Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.9 1998/06/04 23:11:38 deraadt Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -111,11 +111,11 @@ loopattach(n)
 		ifp->if_ioctl = loioctl;
 		ifp->if_output = looutput;
 		ifp->if_type = IFT_LOOP;
-		ifp->if_hdrlen = 0;
+		ifp->if_hdrlen = 4;
 		ifp->if_addrlen = 0;
 		if_attachhead(ifp);
 #if NBPFILTER > 0
-		bpfattach(&ifp->if_bpf, ifp, DLT_NULL, sizeof(u_int));
+		bpfattach(&ifp->if_bpf, ifp, DLT_LOOP, sizeof(u_int));
 #endif
 	}
 }
