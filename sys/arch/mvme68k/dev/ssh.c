@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssh.c,v 1.8 2004/03/04 23:02:22 miod Exp $ */
+/*	$OpenBSD: ssh.c,v 1.9 2004/03/26 00:04:49 miod Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -315,18 +315,26 @@ struct ssh_softc *sc;
 
 void
 ssh_scsidone(acb, stat)
-struct ssh_acb *acb;
-int stat;
+	struct ssh_acb *acb;
+	int stat;
 {
-	struct scsi_xfer *xs = acb->xs;
-	struct scsi_link *slp = xs->sc_link;
-	struct ssh_softc *sc = slp->adapter_softc;
+	struct scsi_xfer *xs;
+	struct scsi_link *slp;
+	struct ssh_softc *sc;
 	int dosched = 0;
 
+	if (acb == NULL || (xs = acb->xs) == NULL) {
 #ifdef DIAGNOSTIC
-	if (acb == NULL || xs == NULL)
-		panic("ssh_scsidone");
+		printf("ssh_scsidone: NULL acb or scsi_xfer\n");
+#if defined(DEBUG) && defined(DDB)
+		Debugger();
 #endif
+#endif
+		return;
+	}
+	slp = xs->sc_link;
+	sc = slp->adapter_softc;
+
 	/*
 	 * is this right?
 	 */

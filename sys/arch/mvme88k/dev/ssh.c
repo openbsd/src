@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssh.c,v 1.25 2004/03/04 23:02:23 miod Exp $	*/
+/*	$OpenBSD: ssh.c,v 1.26 2004/03/26 00:04:51 miod Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -573,9 +573,9 @@ ssh_scsidone(acb, stat)
 	struct ssh_acb *acb;
 	int stat;
 {
-	struct scsi_xfer *xs = acb->xs;
-	struct scsi_link *slp = xs->sc_link;
-	struct ssh_softc *sc = slp->adapter_softc;
+	struct scsi_xfer *xs;
+	struct scsi_link *slp;
+	struct ssh_softc *sc;
 	int dosched = 0;
 
 	if (acb == NULL || (xs = acb->xs) == NULL) {
