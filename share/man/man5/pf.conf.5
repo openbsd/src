@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.171 2003/01/25 17:49:37 cedric Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.172 2003/01/30 15:05:37 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -890,6 +890,14 @@ Any address.
 Any address which is not currently routable.
 .It Ar <table>
 Any address that matches the given table.
+.El
+.Pp
+Interface names can have modifiers appended:
+.Bl -tag -width ":broadcast" -compact
+.It Ar :network
+Translates to the network(s) attached to the interface.
+.It Ar :broadcast
+Translates to the interface's broadcast address(es).
 .El
 .Pp
 Host name resolution and interface to address translation are done at
