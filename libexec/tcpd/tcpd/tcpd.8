@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpd.8,v 1.13 2002/05/06 23:34:33 millert Exp $
+.\"	$OpenBSD: tcpd.8,v 1.14 2003/02/14 23:20:36 jmc Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -68,8 +68,8 @@ runs the appropriate server program and goes away.
 .Pp
 Optional features are: pattern-based access control, client username
 lookups with the RFC 931 etc. protocol, protection against hosts that
-pretend to have someone elses host name, and protection against hosts
-that pretend to have someone elses network address.
+pretend to have someone else's host name, and protection against hosts
+that pretend to have someone else's network address.
 .Sh LOGGING
 Connections that are monitored by
 .Nm
@@ -95,7 +95,7 @@ For details, see the
 manual page.
 .Sh HOST NAME VERIFICATION
 The authentication scheme of some protocols
-.Pf ( .Xr rsh 1 )
+.Pf ( Xr rsh 1 )
 relies on host names.
 Some implementations believe the host name that they get from any random
 name server; other implementations are more careful but use a flawed algorithm.
@@ -121,7 +121,7 @@ Optionally,
 .Nm
 disables source-routing socket options on every connection that it deals with.
 This will take care of most attacks from hosts that pretend
-to have an address that belongs to someone elses network.
+to have an address that belongs to someone else's network.
 UDP services do not benefit from this protection.
 This feature must be turned on at compile-time.
 .Sh RFC 931

@@ -41,6 +41,7 @@
 protocol server
 .Sh SYNOPSIS
 .Nm telnetd
+.Bk -words
 .Op Fl BUhkln
 .Op Fl D Ar debugmode
 .Op Fl S Ar tos
@@ -53,6 +54,7 @@ protocol server
 .Op Fl L Ar /bin/login
 .Op Fl y
 .Op Ar port
+.Ek
 .Sh DESCRIPTION
 The
 .Nm telnetd
@@ -257,7 +259,9 @@ a specific authentication type without having to recompile
 .It Fl L Ar pathname
 Specify pathname to an alternative login program.
 .It Fl y
-Makes telnetd not warn when a user is trying to login with cleartext
+Makes
+.Nm telnetd
+not warn when a user is trying to login with cleartext
 passwords.
 .El
 .Pp
@@ -331,17 +335,17 @@ current state of terminal echoing.
 When terminal echo is not desired, a
 .Dv WILL ECHO
 is sent to indicate that
-.Tn telnetd
+.Nm telnetd
 will take care of echoing any data that needs to be
 echoed to the terminal, and then nothing is echoed.
 When terminal echo is desired, a
 .Dv WONT ECHO
 is sent to indicate that
-.Tn telnetd
+.Nm telnetd
 will not be doing any terminal echoing, so the
 client should do any terminal echoing that is needed.
 .It "WILL BINARY"
-Indicates that the client is willing to send a
+Indicates that the client is willing to send
 8 bits of data, rather than the normal 7 bits
 of the Network Virtual Terminal.
 .It "WILL SGA"
@@ -350,7 +354,7 @@ Indicates that it will not be sending
 go ahead, commands.
 .It "WILL STATUS"
 Indicates a willingness to send the client, upon
-request, of the current status of all
+request, the current status of all
 .Tn TELNET
 options.
 .It "WILL TIMING-MARK"
@@ -382,7 +386,7 @@ options:
 .Bl -tag -width "DO AUTHENTICATION"
 .It "DO BINARY"
 Sent to indicate that
-.Tn telnetd
+.Nm telnetd
 is willing to receive an 8 bit data stream.
 .It "DO LFLOW"
 Requests that the client handle flow control

@@ -1,4 +1,4 @@
-.\" $OpenBSD: usermod.8,v 1.12 2002/06/14 21:35:01 todd Exp $
+.\" $OpenBSD: usermod.8,v 1.13 2003/02/14 23:20:36 jmc Exp $
 .\" $NetBSD: usermod.8,v 1.10 2001/02/21 12:16:07 agc Exp $
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -39,6 +39,7 @@
 .Nd modify user login information
 .Sh SYNOPSIS
 .Nm usermod
+.Bk -words
 .Op Fl mov
 .Op Fl G Ar secondary-group[,group,...]
 .Op Fl c Ar comment
@@ -54,6 +55,7 @@
 .Op Fl s Ar shell
 .Op Fl u Ar uid
 .Ar user
+.Ek
 .Sh DESCRIPTION
 The
 .Nm
@@ -75,7 +77,7 @@ is the comment field (also, for historical reasons known as the
 GECOS field) which will be added for the user, and typically will include
 the username, and, perhaps, contact information for the user.
 .It Fl d Ar home-directory
-Sets the home directory to
+sets the home directory to
 .Ar home-directory
 without populating it; if the
 .Fl m
@@ -127,7 +129,7 @@ file - it has the format:
 .Ar gid | name | Li =uid
 .Ed
 .It Fl L Ar login-class
-This option sets the login class for the user being created.  See
+this option sets the login class for the user being created.  See
 .Xr login.conf 5
 for more information on user login classes. This value can be preset
 for all users by using the
@@ -218,8 +220,8 @@ utility exits 0 on success, and >0 if an error occurs.
 .El
 .Sh SEE ALSO
 .Xr chpass 1 ,
-.Xr passwd 5 ,
 .Xr group 5 ,
+.Xr passwd 5 ,
 .Xr pwd_mkdb 8
 .Sh HISTORY
 The

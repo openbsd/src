@@ -1,4 +1,4 @@
-.\" $OpenBSD: tokenadm.8,v 1.3 2001/08/01 21:18:13 millert Exp $
+.\" $OpenBSD: tokenadm.8,v 1.4 2003/02/14 23:20:36 jmc Exp $
 .\"
 .\" Copyright (c) 1996 Berkeley Software Design, Inc. All rights reserved.
 .\"
@@ -51,7 +51,7 @@
 .Sh DESCRIPTION
 The
 .Nm tokenadm
-utility is display and edit user entries in the various token databases.
+utility displays and edits user entries in the various token databases.
 It may also be invoked as one the following:
 .Nm activadm , cryptoadm ,
 or
@@ -86,11 +86,13 @@ flag.
 .It Fl e
 Enable users.
 This should be used to re-enable users who were disabled by the
+.Fl d
+flag.
+The
 .Fl m
 flag may also be used with the
 .Fl e
-flag
-option.
+flag.
 .It Fl m
 Add
 [or remove]
@@ -101,9 +103,11 @@ Not all modes are available for all types of cards.
 The
 .Fl m
 flag may be used alone or in conjunction with either the
-.Fl de
+.Fl d
+or
+.Fl e
 flags.
-When ever reduced-input mode is set the reduced-input state is reset.
+Whenever reduced-input mode is set the reduced-input state is reset.
 This should be done if a paper copy of challenge/responses had been
 produced and then misplaced.
 .It Fl r
