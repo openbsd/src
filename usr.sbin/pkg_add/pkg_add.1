@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.24 2004/11/15 10:21:40 jmc Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.25 2004/11/15 13:20:40 jmc Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -49,10 +49,10 @@ FTP site or on the official
 CD.
 .Bd -filled -offset indent
 .Em Note :
-System distribution files, e.g. base28.tgz, comp28.tgz, etc., are
+System distribution files, e.g., base28.tgz, comp28.tgz, are
 .Em not
 packages and may not be installed using
-.Nm pkg_add .
+.Nm .
 .Ed
 .Pp
 Each package name may be specified as a filename (which normally consists of the
@@ -61,7 +61,7 @@ package name itself plus the
 suffix) or an URL referring to FTP, HTTP, or SCP locations.
 For example, the following is valid:
 .Pp
-.Ic pkg_add -v ftp://ftp.openbsd.org/pub/OpenBSD/2.7/packages/i386/m4-1.4.tgz
+.Li pkg_add -v ftp://ftp.openbsd.org/pub/OpenBSD/2.7/packages/i386/m4-1.4.tgz
 .Pp
 If the given package names are not found in the current working directory,
 .Nm
@@ -81,8 +81,9 @@ will first look at already installed packages, then match
 dependencies with the list of packages left to install, then
 install default packages that satisfy the dependencies.
 .Pp
-Alternatively, it is possible to add packages interactively from within
-the ftp client,
+Alternatively, it is possible to add packages interactively from within the
+.Xr ftp 1
+client,
 in which case setting
 .Ev PKG_PATH
 correctly will be necessary for any dependency to be found out and retrieved
@@ -122,7 +123,7 @@ Assume
 .Ar arch
 as current machine architecture for any package tests.
 .It Fl a
-Automated package installation, do not record packages as installed manually.
+Automated package installation; do not record packages as installed manually.
 .It Fl B Ar pkg-destdir
 Set
 .Ar pkg-destdir
@@ -192,14 +193,14 @@ or
 .It Fl Q Ar quick-destdir
 Quick and dirty installation under
 .Ar quick-destdir .
-Contrarily to
+Contrary to
 .Fl B
 .Ar pkg-destdir ,
 symbolic links are resolved, and package installation stops at
 .Cm @endfake
 marker.
 .It Fl q
-Replace package quickly, do not bother checking md5s before removing files.
+Replace package quickly; do not bother checking MD5s before removing files.
 .It Fl r
 Allow replacing existing packages.
 This is an experimental option for now:
@@ -225,15 +226,15 @@ mode.
 If you wish to use active mode instead, set the
 .Ev FTPMODE
 environment variable to
-.Qq active .
+.Dq active .
 If
 .Nm
 consistently fails to fetch a package from a site known to work,
 it may be because the site does not support
-passive mode ftp correctly.
+passive mode FTP correctly.
 This is very rare since
 .Nm
-will try active mode ftp if the server refuses a passive mode
+will try active mode FTP if the server refuses a passive mode
 connection.
 .Ss Technical details
 .Nm
@@ -244,7 +245,9 @@ into a special staging directory in
 .Pa /var/tmp
 (or
 .Ev PKG_TMPDIR
-if set - see CAVEATS section)
+if set \- see
+.Sx CAVEATS ,
+below)
 and then runs through the following sequence to fully extract the contents
 of the package:
 .Bl -enum
@@ -255,7 +258,7 @@ installation is terminated.
 .It
 A check is made to determine if the package conflicts (from
 .Cm @pkgcfl
-directives, see
+directives; see
 .Xr pkg_create 1 )
 with a package already recorded as installed.
 If it is, installation is terminated.
@@ -269,7 +272,7 @@ All package dependencies (from
 .Cm @libdepend ,
 and
 .Cm @newdepend
-directives, see
+directives; see
 .Xr pkg_create 1 )
 are read from the packing list.
 If any of these dependencies are not currently fulfilled,
@@ -361,6 +364,16 @@ as it will safely record an interrupted install as
 .Pa borked.n .
 .Sh ENVIRONMENT
 .Bl -tag -width PKG_DESTDIR
+.It Ev FTPMODE
+Specifies whether
+.Xr ftp 1
+should operate in
+.Dq active
+or
+.Dq passive
+mode.
+The default is
+.Dq passive .
 .It Ev PKG_DBDIR
 Where to register packages instead of
 .Pa /var/db/pkg .
@@ -391,11 +404,13 @@ Temporary area where package information files will be extracted, instead of
 .Pa /var/tmp .
 .El
 .Sh SEE ALSO
+.Xr ftp 1 ,
 .Xr pkg_create 1 ,
 .Xr pkg_delete 1 ,
 .Xr pkg_info 1 ,
 .Xr mkdtemp 3 ,
-.Xr sysconf 3
+.Xr sysconf 3 ,
+.Xr bsd.port.mk 5
 .Sh AUTHORS
 .Bl -tag -width indent -compact
 .It "Jordan Hubbard"
@@ -413,6 +428,7 @@ looks through
 .Ev ${TMPDIR} ,
 .Pa /var/tmp ,
 .Pa /tmp ,
+and
 .Pa /usr/tmp
 for such an area, in sequence.
 .Pp
@@ -432,7 +448,7 @@ The
 option has not seen wide-testing yet and is almost certainly full of bugs.
 In particular, failure modes are untested, and a large number of code paths
 have not seen actual use yet.
-This options only handles atomic updates of single packages, there is no code
+This option only handles atomic updates of single packages, there is no code
 to replace multiple packages with another set of equivalent multiple packages.
 For instance, since this option will often replace a package with
 a newer package by creating an extra stub package for older shared libraries,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.19 2004/11/15 10:43:45 jmc Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.20 2004/11/15 13:20:40 jmc Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -36,7 +36,9 @@
 .Op Fl hv
 .Op Fl A Ar arches
 .Op Fl B Ar pkg-destdir
-.Op Fl D Ar name=value
+.Oo Fl D Ar name
+.Ns = Ns Ar value
+.Oc
 .Op Fl i Ar iscript
 .Op Fl k Ar dscript
 .Op Fl L Ar localbase
@@ -45,9 +47,9 @@
 .Op Fl r Ar rscript
 .Op Fl S Ar pkg-destdir
 .Op Fl U Ar undisplayfile
-.Fl c Ar comment
-.Fl d Ar description
-.Fl f Ar packlist
+.Fl c Ar desc
+.Fl d Ar desc
+.Fl f Ar packinglist
 .Ar pkg-name
 .Ek
 .Sh DESCRIPTION
@@ -62,7 +64,7 @@ and
 .Xr pkg_info 1 .
 .Ar pkg-name
 will traditionally have a
-.Pa .tgz
+.Dq .tgz
 extension, to denote the underlying binary format.
 .Pp
 Use of the
@@ -80,24 +82,32 @@ is a comma-separated list of architectures.
 Use
 .Sq *
 to mean any architecture (e.g., arch-independent packages).
-.It Fl c [ Ar \&- ] Ns Ar desc
+.It Fl B Ar pkg-destdir
+Set
+.Ar pkg-destdir
+as the prefix to prepend to any file to select for the package.
+.It Fl c No [-] Ns Ar desc
 Fetch package
 .Dq one line description
 from file
 .Ar desc
 or, if preceded by
-.Dq \&- ,
+.Sq - ,
 the argument itself.
 This string should also
 give some idea of which version of the product (if any) the package
 represents.
-.It Fl D Ar name=value
-Define name to value, for substitution and fragment inclusion purpose.
-.It Fl d [ Ar \&- ] Ns Ar desc
+.It Fl D Ar name Ns = Ns Ar value
+Define
+.Ar name
+to
+.Ar value ,
+for substitution and fragment inclusion purposes.
+.It Fl d No [-] Ns Ar desc
 Fetch long description for package from file
 .Ar desc
 or, if preceded by
-.Dq \&- ,
+.Sq - ,
 the argument itself.
 .It Fl f Ar packinglist
 Fetch
@@ -159,12 +169,14 @@ It will be invoked automatically
 at installation/deinstallation time to determine whether or not
 installation/deinstallation should proceed.
 .It Fl S Ar pkg-destdir
-.It Fl B Ar pkg-destdir
 Set
 .Ar pkg-destdir
 as the prefix to prepend to any file to select for the package.
-Prefer
-.Fl B .
+This option is identical to the
+.Fl B
+option; however the
+.Fl B
+option is preferred.
 .It Fl U Ar undisplayfile
 Display the file (using
 .Xr more 1 )
@@ -190,9 +202,12 @@ There are a few annotations that can be inserted for better control.
 All these commands start with an
 .Sq @ .
 Here is a list:
-.Bl -tag -width indent
+.Pp
+.Bl -tag -width Ds -compact
+.Pp
 .It Cm @arch Ar arches
 List of architectures for which this package is intended.
+.Pp
 .It Cm @comment Ar string
 Imbed a comment in the packing list.
 Useful in trying to document some particularly hairy sequence that
@@ -203,11 +218,12 @@ see
 .Xr bsd.port.mk 5
 .Pc
 will insist in inserting in a packing-list.
+.Pp
 .It Cm @conflict Ar pkgspec
 Declare a conflict with packages matching
 .Ar pkgspec
 .Po
-See
+see
 .Xr packages-specs 7
 .Pc .
 The
@@ -218,10 +234,12 @@ be installed if a package
 matching
 .Ar pkgspec
 has been installed because they install the same files and thus conflict.
+.Pp
 .It Cm @cwd Ar pathname
 Set the package current directory.
 All subsequent filenames will be assumed relative to
 .Ar pathname .
+.Pp
 .It Cm @dir Ar directoryname
 Create directory
 .Pa directoryname
@@ -230,6 +248,7 @@ at
 time, taking
 .Cm @mode ,
 .Cm @group ,
+and
 .Cm @owner
 into account, and remove it during
 .Xr pkg_delete 1 .
@@ -238,6 +257,7 @@ If
 .Ar name
 does not begin with an @, same as
 .Dl name/
+.Pp
 .It Cm @dirrm Ar directoryname
 Declare directory
 .Pa directoryname
@@ -245,17 +265,20 @@ to be deleted at deinstall time.
 Deprecated, use
 .Dl directoryname/
 instead, as it handles proper directory creation as well.
+.Pp
 .It Cm @display Ar name
 Declare
 .Pa name
 as the file to be displayed at install time (see
 .Fl M
 above).
+.Pp
 .It Cm @endfake
 Mark end of packing-list for
 .Xr pkg_add 1
 .Fl Q
 option.
+.Pp
 .It Cm @exec Ar command
 Execute
 .Ar command
@@ -297,10 +320,11 @@ the converse of
 in the example case,
 .Pa emacs .
 .El
+.Pp
 .It Cm @extra Ar filename
 Declare extra file
 .Pa filename
-to be deleted at deinstall time, if user sets
+to be deleted at deinstall time, if user sets the
 .Fl c
 option.
 Those files are extra configuration files that are normally not deleted.
@@ -309,10 +333,12 @@ can be an absolute path.
 If
 .Pa filename
 ends with a slash, it is a directory.
+.Pp
 .It Cm @extraunexec Ar command
 Extra
 .Ar command
 to execute when removing extra files.
+.Pp
 .It Cm @file Ar filename
 Default annotation, to use if
 .Ar filename
@@ -320,6 +346,7 @@ begins with @.
 .Ar filename
 is always a relative path, relative to the current
 .Cm @cwd .
+.Pp
 .It Cm @fontdir Ar directoryname
 Specialized version of
 .Cm @dir ,
@@ -334,14 +361,17 @@ when needed.
 Delete extra files at
 .Xr pkg_delete 1
 time.
+.Pp
 .It Cm @group Ar group
 Set default group ownership for all subsequently extracted files to
 .Ar group .
 Use without an arg to set back to default (extraction)
 group ownership.
+.Pp
 .It Cm @ignore
 Used internally to tell extraction to ignore the next file (don't
 copy it anywhere), as it's used for some special purpose.
+.Pp
 .It Cm @info Ar filename
 Specialized version of
 .Cm @file ,
@@ -351,6 +381,7 @@ Automatically grab
 chapter files, run
 .Xr install-info 1
 as needed.
+.Pp
 .It Cm @lib Ar filename
 Specialized version of
 .Cm @file ,
@@ -359,14 +390,17 @@ Satisfy LIB_DEPENDS,
 run
 .Xr ldconfig 8
 as needed.
+.Pp
 .It Cm @localbase Ar base
 Used internally to record the settings of
 .Fl L
 option.
+.Pp
 .It Cm @man Ar filename
 Specialized version of
 .Cm @file ,
 to handle manual pages.
+.Pp
 .It Cm @mandir Ar directoryname
 Specialized version of
 .Cm @dir ,
@@ -376,6 +410,7 @@ directory to
 remove
 .Xr apropos 1
 database when needed.
+.Pp
 .It Cm @mode Ar mode
 Set default permission for all subsequently extracted files to
 .Ar mode .
@@ -383,6 +418,7 @@ Format is the same as that used by the
 .Xr chmod 1
 command.
 Use without an arg to set back to default (extraction) permissions.
+.Pp
 .It Cm @name Ar pkgname
 Set the name of the package.
 This name is potentially different than the name of
@@ -392,36 +428,55 @@ Note that
 .Nm
 will derive this field from the package name and add it automatically
 if none is given.
-.It Cm @newgroup Ar name:gid
+.Pp
+.It Cm @newgroup Ar name : Ns Ar gid
 During
 .Xr pkg_add 1 ,
 create a new group, using
 .Xr groupadd 8 .
 Happens before file and user creations.
 .Ar gid
-can be prefixed with a ! to ensure group has the correct gid.
+can be prefixed with a
+.Sq !\&
+to ensure group has the correct GID.
 During
 .Xr pkg_delete 1 ,
 groups will be deleted if extra clean-up has been requested, and if
 other installed packages don't list the same group.
-.It Cm @newuser Ar name:uid:group:loginclass:comment:home:shell
+.Pp
+.It Xo
+.Cm @newuser
+.Sm off
+.Ar name :
+.Ar uid :
+.Ar group :
+.Ar loginclass :
+.Ar comment :
+.Ar home :
+.Ar shell
+.Sm on
+.Xc
 During
 .Xr pkg_add 1 ,
-create a new user, happens before any file creation.
+create a new user.
+Happens before any file creation.
 All fields correspond to
 .Xr useradd 8
 parameters.
 Some fields are optional and can be left empty.
 If the user already exists, no action is taken.
-Individual fields can be prefixed by a ! to make sure an existing
+Individual fields can be prefixed by a
+.Sq !\&
+to make sure an existing
 user matches.
 For instance, the directive
 .Li @newuser foo:!42
-will make sure user foo has uid 42.
+will make sure user foo has UID 42.
 During
 .Xr pkg_delete 1 ,
 users will be deleted if extra clean-up has been requested, and if
 other installed packages don't list the same user.
+.Pp
 .It Cm @option Ar name
 Effects vary depending on
 .Ar name .
@@ -432,11 +487,13 @@ By default, a package conflicts with other versions of the same package.
 With this option, the older package version will still be noticed, but the
 installation will proceed anyway.
 .El
+.Pp
 .It Cm @owner Ar user
 Set default ownership for all subsequently extracted files to
 .Ar user .
 Use without an arg to set back to default (extraction)
 ownership.
+.Pp
 .It Cm @pkgcfl Ar pkgcflname
 Declare a conflict to the
 .Ar pkgcflname
@@ -455,6 +512,7 @@ wildcards.
 Deprecated, use
 .Cm @conflict
 instead.
+.Pp
 .It Cm @pkgdep Ar pkgname
 Declare a dependency on the
 .Ar pkgname
@@ -468,6 +526,7 @@ package is deinstalled.
 Multiple
 .Cm @pkgdep
 directives may be used if the package depends on multiple other packages.
+.Pp
 .It Cm @sample Ar filename
 Last preceding
 .Cm @file
@@ -486,14 +545,16 @@ If
 .Ar filename
 ends with a slash,
 it refers to a configuration directory instead.
+.Pp
 .It Cm @shell Ar filename
 Specialized version of
 .Cm @file ,
 to handle shells.
 See
 .Xr shells 5 .
-.It Cm @sysctl Ar var=val
-.It Cm @sysctl Ar var>=val
+.Pp
+.It Cm @sysctl Ar var Ns = Ns Ar val
+.It Cm @sysctl Ar var Ns \*(Ge Ns Ar val
 During
 .Xr pkg_add 1 ,
 check that
@@ -503,6 +564,7 @@ variable
 is set to exactly/at least a given value
 .Ar val .
 Adjust it otherwise.
+.Pp
 .It Cm @unexec Ar command
 Execute
 .Ar command
@@ -519,7 +581,7 @@ description and message files,
 constructs like
 .Li ${VAR}
 will be replaced with the variable value, according to
-.Fl D Ar name=value
+.Fl D Ar name Ns = Ns Ar value
 options.
 .Sh ENVIRONMENT
 .Bl -tag -width PKG_DESTDIR
@@ -537,7 +599,10 @@ option is specified.
 .Xr pkg_delete 1 ,
 .Xr pkg_info 1 ,
 .Xr tar 1 ,
-.Xr sysconf 3
+.Xr sysconf 3 ,
+.Xr bsd.port.mk 5 ,
+.Xr packages-specs 7 ,
+.Xr ports 7
 .Sh HISTORY
 The
 .Nm

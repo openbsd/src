@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_info.1,v 1.11 2004/11/15 10:54:49 jmc Exp $
+.\"	$OpenBSD: pkg_info.1,v 1.12 2004/11/15 13:20:40 jmc Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -25,9 +25,9 @@
 .Nd a utility for displaying information on software packages
 .Sh SYNOPSIS
 .Nm pkg_info
-.Op Fl cDdfhIiKkLMmpqRrsuv
-.Op Fl e Ar package
-.Op Fl l Ar prefix
+.Op Fl cDdfIiKkLMpqRrsUv
+.Op Fl e Ar pkg-name
+.Op Fl l Ar str
 .Ar pkg-name Op Ar ...
 .Nm pkg_info
 .Op Fl Aa Ar flags
@@ -44,7 +44,7 @@ command.
 The
 .Ar pkg-name
 may be the name of an installed package, the pathname to a package
-distribution file, or a URL to a package available through ftp, http, or scp.
+distribution file, or a URL to a package available through FTP, HTTP, or SCP.
 .Nm
 will try to complete
 .Ar pkg-name
@@ -102,7 +102,7 @@ Show the index entry for each package.
 .It Fl i
 Show the install script (if any) for each package.
 .It Fl K
-Prefix file names with category keyword (e.g., @file, @lib...).
+Prefix file names with category keyword (e.g., @file, @lib).
 Always used together with
 .Fl L .
 .It Fl k
@@ -119,7 +119,7 @@ shown with
 .Ar str .
 This is primarily of use to front-end programs that want to request a
 lot of different information fields at once for a package, but don't
-necessary want the output intermingled in such a way that they can't
+necessarily want the output intermingled in such a way that they can't
 organize it.
 This lets you add a special token to the start of each field.
 .It Fl M
@@ -178,7 +178,9 @@ in
 .Xr pkg_add 1 ,
 .Xr pkg_create 1 ,
 .Xr pkg_delete 1 ,
-.Xr mkstemp 3
+.Xr mkstemp 3 ,
+.Xr bsd.port.mk 5 ,
+.Xr packages-specs 7
 .Sh AUTHORS
 .Bl -tag -width indent -compact
 .It "Jordan Hubbard"
