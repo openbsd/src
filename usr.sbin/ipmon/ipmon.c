@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmon.c,v 1.18 1999/02/05 05:58:48 deraadt Exp $
+/*	$OpenBSD: ipmon.c,v 1.19 1999/11/25 23:16:20 deraadt Exp $
  * Copyright (C) 1993-1998 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipmon.c	1.21 6/5/96 (C)1993-1997 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ipmon.c,v 1.18 1999/02/05 05:58:48 deraadt Exp $";
+static const char rcsid[] = "@(#)$Id: ipmon.c,v 1.19 1999/11/25 23:16:20 deraadt Exp $";
 #endif
 
 #ifndef SOLARIS
@@ -615,7 +615,7 @@ int	blen;
 		(void) sprintf(t, "%s -> ", hostname(res, ip->ip_src));
 		t += strlen(t);
 		(void) sprintf(t, "%s PR icmp len %hu %hu icmp %d/%d",
-			hostname(res, ip->ip_dst), hl, ntohs(ip->ip_len),
+			hostname(res, ip->ip_dst), hl, ip->ip_len,
 			ic->icmp_type, ic->icmp_code);
 		if (ic->icmp_type == ICMP_UNREACH ||
 		    ic->icmp_type == ICMP_SOURCEQUENCH ||
