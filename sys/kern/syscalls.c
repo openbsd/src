@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscalls.c,v 1.41 1999/08/08 00:32:22 niklas Exp $	*/
+/*	$OpenBSD: syscalls.c,v 1.42 2000/02/07 04:50:04 assar Exp $	*/
 
 /*
  * System call names.
@@ -181,11 +181,7 @@ char *syscallnames[] = {
 	"ofstatfs",			/* 158 = ofstatfs */
 	"#159 (unimplemented)",		/* 159 = unimplemented */
 	"#160 (unimplemented)",		/* 160 = unimplemented */
-#if defined(NFSCLIENT) || defined(NFSSERVER)
 	"getfh",			/* 161 = getfh */
-#else
-	"#161 (unimplemented getfh)",		/* 161 = unimplemented getfh */
-#endif
 	"compat_09_ogetdomainname",	/* 162 = compat_09 ogetdomainname */
 	"compat_09_osetdomainname",	/* 163 = compat_09 osetdomainname */
 	"compat_09_ouname",	/* 164 = compat_09 ouname */
@@ -358,4 +354,7 @@ char *syscallnames[] = {
 	"statfs",			/* 261 = statfs */
 	"fstatfs",			/* 262 = fstatfs */
 	"pipe",			/* 263 = pipe */
+	"fhopen",			/* 264 = fhopen */
+	"fhstat",			/* 265 = fhstat */
+	"fhstatfs",			/* 266 = fhstatfs */
 };

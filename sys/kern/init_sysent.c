@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_sysent.c,v 1.41 1999/08/08 00:32:22 niklas Exp $	*/
+/*	$OpenBSD: init_sysent.c,v 1.42 2000/02/07 04:50:04 assar Exp $	*/
 
 /*
  * System call switch table.
@@ -372,13 +372,8 @@ struct sysent sysent[] = {
 	    sys_nosys },			/* 159 = unimplemented */
 	{ 0, 0,
 	    sys_nosys },			/* 160 = unimplemented */
-#if defined(NFSCLIENT) || defined(NFSSERVER)
 	{ 2, s(struct sys_getfh_args),
 	    sys_getfh },			/* 161 = getfh */
-#else
-	{ 0, 0,
-	    sys_nosys },			/* 161 = unimplemented getfh */
-#endif
 	{ 2, s(struct compat_09_sys_getdomainname_args),
 	    compat_09(sys_getdomainname) },	/* 162 = compat_09 ogetdomainname */
 	{ 2, s(struct compat_09_sys_setdomainname_args),
@@ -687,5 +682,11 @@ struct sysent sysent[] = {
 	    sys_fstatfs },			/* 262 = fstatfs */
 	{ 1, s(struct sys_pipe_args),
 	    sys_pipe },				/* 263 = pipe */
+	{ 2, s(struct sys_fhopen_args),
+	    sys_fhopen },			/* 264 = fhopen */
+	{ 2, s(struct sys_fhstat_args),
+	    sys_fhstat },			/* 265 = fhstat */
+	{ 2, s(struct sys_fhstatfs_args),
+	    sys_fhstatfs },			/* 266 = fhstatfs */
 };
 
