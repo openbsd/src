@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.17 2004/03/02 12:40:31 henning Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.18 2004/03/02 12:43:09 henning Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -100,7 +100,7 @@ discover_interfaces(struct interface_info *iface)
 		} else if (ifa->ifa_addr->sa_family == AF_INET) {
 			struct iaddr addr;
 
-			bcopy(ifa->ifa_addr, &foo, sizeof(foo));
+			memcpy(&foo, ifa->ifa_addr, sizeof(foo));
 			if (foo.sin_addr.s_addr == htonl(INADDR_LOOPBACK))
 				continue;
 			if (!iface->ifp) {
