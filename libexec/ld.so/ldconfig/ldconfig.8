@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldconfig.8,v 1.10 2002/05/24 04:17:00 deraadt Exp $
+.\"	$OpenBSD: ldconfig.8,v 1.11 2002/08/28 14:06:47 mpech Exp $
 .\"
 .\" Copyright (c) 1993,1995 Paul Kranenburg
 .\" All rights reserved.
@@ -86,8 +86,8 @@ The following options are recognized by
 .It Fl m
 Merge the result of the scan of the directories given as arguments into
 the existing hints file.
-The default action is to build the hints file afresh. This option cannot
-be used with
+The default action is to build the hints file afresh.
+This option cannot be used with
 .Fl U .
 .It Fl r
 List the current contents of
@@ -119,7 +119,8 @@ Whenever such a program is run,
 .Xr ld.so 1
 will only load shared libraries from the
 .Pa ld.so.hints
-file. In particular, the
+file.
+In particular, the
 .Ev LD_LIBRARY_PATH
 is not used to search for libraries.
 Thus, the role of
