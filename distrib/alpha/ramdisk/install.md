@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.27 1998/11/09 03:58:04 millert Exp $
+#       $OpenBSD: install.md,v 1.28 1999/04/01 21:30:20 deraadt Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -154,7 +154,7 @@ just split the space into a root and swap partition for now.
 __md_prep_disklabel_1
 
 	disklabel -W ${_disk}
-	disklabel -E ${_disk}
+	disklabel -f /tmp/fstab.${_disk} -E ${_disk}
 }
 
 md_welcome_banner() {

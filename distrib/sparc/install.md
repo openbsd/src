@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.24 1998/11/03 04:10:16 aaron Exp $
+#	$OpenBSD: install.md,v 1.25 1999/04/01 21:30:51 deraadt Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -203,7 +203,7 @@ just split the space into a root and swap partition for now.
 
 __md_prep_disklabel_1
 	disklabel -W ${_disk}
-	disklabel -E ${_disk}
+	disklabel -f /tmp/fstab.${_disk} -E ${_disk}
 }
 
 md_copy_kernel() {
