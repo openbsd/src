@@ -1,4 +1,4 @@
-/*	$OpenBSD: mulaw.h,v 1.6 2001/05/01 01:49:48 aaron Exp $ */
+/*	$OpenBSD: mulaw.h,v 1.7 2001/12/31 04:14:00 mickey Exp $ */
 /*	$NetBSD: mulaw.h,v 1.11 1999/11/01 18:12:19 augustss Exp $	*/
 
 /*-
@@ -37,9 +37,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* *_mts versions convert mono to stereo, in addition */
+
 /* Convert 8-bit mu-law to 16 bit unsigned linear. */
 extern void mulaw_to_ulinear16_le __P((void *, u_char *buf, int cnt));
+extern void mulaw_to_ulinear16_le_mts __P((void *, u_char *buf, int cnt));
 extern void mulaw_to_ulinear16_be __P((void *, u_char *buf, int cnt));
+extern void mulaw_to_ulinear16_be_mts __P((void *, u_char *buf, int cnt));
 /* Convert 8-bit mu-law to 16 bit signed linear. */
 extern void mulaw_to_slinear16_le __P((void *, u_char *buf, int cnt));
 extern void mulaw_to_slinear16_be __P((void *, u_char *buf, int cnt));
@@ -54,7 +58,9 @@ extern void alaw_to_ulinear16_le __P((void *, u_char *buf, int cnt));
 extern void alaw_to_ulinear16_be __P((void *, u_char *buf, int cnt));
 /* Convert 8-bit a-law to 16 bit signed linear. */
 extern void alaw_to_slinear16_le __P((void *, u_char *buf, int cnt));
+extern void alaw_to_slinear16_le_mts __P((void *, u_char *buf, int cnt));
 extern void alaw_to_slinear16_be __P((void *, u_char *buf, int cnt));
+extern void alaw_to_slinear16_be_mts __P((void *, u_char *buf, int cnt));
 /* Convert 8-bit a-law to/from 8 bit unsigned linear. */
 extern void alaw_to_ulinear8 __P((void *, u_char *buf, int cnt));
 extern void ulinear8_to_alaw __P((void *, u_char *buf, int cnt));
@@ -67,10 +73,14 @@ extern void slinear8_to_alaw __P((void *, u_char *buf, int cnt));
 #define mulaw_to_ulinear16 mulaw_to_slinear16_le 
 #define alaw_to_ulinear16 alaw_to_ulinear16_le
 #define mulaw_to_slinear16 mulaw_to_ulinear16_le
+#define mulaw_to_slinear16_mts mulaw_to_ulinear16_le_mts
 #define alaw_to_slinear16 alaw_to_slinear16_le
+#define alaw_to_slinear16_mts alaw_to_slinear16_le_mts
 #else
 #define mulaw_to_ulinear16 mulaw_to_slinear16_be 
 #define alaw_to_ulinear16 alaw_to_ulinear16_be
 #define mulaw_to_slinear16 mulaw_to_ulinear16_be
+#define mulaw_to_slinear16_mts mulaw_to_ulinear16_be_mts
 #define alaw_to_slinear16 alaw_to_slinear16_be
+#define alaw_to_slinear16_mts alaw_to_slinear16_be_mts
 #endif
