@@ -1,4 +1,4 @@
-/*	$OpenBSD: last.c,v 1.21 2003/04/05 16:24:59 deraadt Exp $	*/
+/*	$OpenBSD: last.c,v 1.22 2003/04/06 18:40:14 deraadt Exp $	*/
 /*	$NetBSD: last.c,v 1.6 1994/12/24 16:49:02 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)last.c	8.2 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: last.c,v 1.21 2003/04/05 16:24:59 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: last.c,v 1.22 2003/04/06 18:40:14 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -105,6 +105,7 @@ time_t	 dateconv(char *);
 int	 want(struct utmp *, int);
 void	 wtmp(void);
 void	 checkargs(void);
+void	 usage(void);
 
 #define NAME_WIDTH	8
 #define HOST_WIDTH	24
@@ -163,11 +164,7 @@ main(argc, argv)
 			break;
 		case '?':
 		default:
-			(void)fprintf(stderr,
-			    "usage: last [-#] [-cns] [-f file] [-T] [-t tty]"
-			    " [-h host] [-d [[CC]YY][MMDD]hhmm[.SS]"
-			    " [user ...]\n");
-			exit(1);
+			usage();
 		}
 
 	if (argc) {
@@ -570,7 +567,7 @@ ttyconv(arg)
 /*
  * dateconv --
  * Convert the snapshot time in command line given in the format
- *	[[CC]YY][MMDD]hhmm[.ss]] to a time_t.
+ *	[[CC]YY][MMDD]hhmm[.SS]] to a time_t.
  *	Derived from atime_arg1() in usr.bin/touch/touch.c
  */
 time_t
@@ -588,7 +585,7 @@ dateconv(arg)
 	if ((t = localtime(&timet)) == NULL)
 		err(1, "localtime");
 
-	/* [[yy]yy][mmdd]hhmm[.ss] */
+	/* [[CC]YY][MMDD]hhmm[.SS] */
 	if ((p = strchr(arg, '.')) == NULL)
 		t->tm_sec = 0;		/* Seconds defaults to 0. */
 	else {
@@ -600,12 +597,12 @@ dateconv(arg)
 
 	yearset = 0;
 	switch (strlen(arg)) {
-	case 12:			/* ccyymmddhhmm */
+	case 12:			/* CCYYMMDDhhmm */
 		t->tm_year = ATOI2(arg);
 		t->tm_year *= 100;
 		yearset = 1;
 		/* FALLTHOUGH */
-	case 10:			/* yymmddhhmm */
+	case 10:			/* YYMMDDhhmm */
 		if (yearset) {
 			yearset = ATOI2(arg);
 			t->tm_year += yearset;
@@ -636,8 +633,8 @@ dateconv(arg)
 	timet = mktime(t);
 	if (timet == -1)
 terr:	   errx(1,
-	"out of range or illegal time specification: [[yy]yy][mmdd]hhmm[.ss]");
-	return timet;
+	"out of range or illegal time specification: [[CC]YY][MMDD]hhmm[.SS]");
+	return (timet);
 }
 
 
@@ -657,4 +654,15 @@ onintr(signo)
 	if (signo == SIGINT)
 		exit(1);
 	(void)fflush(stdout);			/* fix required for rsh */
+}
+
+void
+usage(void)
+{
+	extern char *__progname;
+
+	fprintf(stderr,
+	    "usage: %s [-#] [-csT] [-f file] [-t tty] [-h host]"
+	    " [-d [[CC]YY][MMDD]hhmm[.SS]] [user ...]\n", __progname);
+	exit(1);
 }
