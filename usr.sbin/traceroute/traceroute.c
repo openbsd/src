@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.47 2002/07/03 23:01:10 deraadt Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.48 2002/08/08 23:53:21 stevesk Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";*/
 #else
-static char rcsid[] = "$OpenBSD: traceroute.c,v 1.47 2002/07/03 23:01:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: traceroute.c,v 1.48 2002/08/08 23:53:21 stevesk Exp $";
 #endif
 #endif /* not lint */
 
@@ -276,7 +276,6 @@ void usage(void);
 
 int s;				/* receive (icmp) socket file descriptor */
 int sndsock;			/* send (udp) socket file descriptor */
-struct timezone tz;		/* leftover */
 
 int datalen;			/* How much data */
 int headerlen;			/* How long packet's header is */
@@ -565,13 +564,12 @@ main(int argc, char *argv[])
 		for (probe = 0, loss = 0; probe < nprobes; ++probe) {
 			int cc;
 			struct timeval t1, t2;
-			struct timezone tz;
 			int code;
 
-			(void) gettimeofday(&t1, &tz);
+			(void) gettimeofday(&t1, NULL);
 			send_probe(++seq, ttl, incflag, &to);
 			while ((cc = wait_for_reply(s, &from, &t1))) {
-				(void) gettimeofday(&t2, &tz);
+				(void) gettimeofday(&t2, NULL);
 				if (t2.tv_sec - t1.tv_sec > waittime) {
 					cc = 0;
 					break;
@@ -767,7 +765,7 @@ send_probe(int seq, int ttl, int iflag, struct sockaddr_in *to)
 	}
 	op->seq = seq;
 	op->ttl = ttl;
-	(void) gettimeofday(&tv, &tz);
+	(void) gettimeofday(&tv, NULL);
 
 	/*
 	 * We don't want hostiles snooping the net to get any useful
@@ -781,7 +779,7 @@ send_probe(int seq, int ttl, int iflag, struct sockaddr_in *to)
 	 * work wants to use them they will have to subtract out the
 	 * perturbation first.
 	 */
-	(void) gettimeofday(&tv, &tz);
+	(void) gettimeofday(&tv, NULL);
 	op->sec = htonl(tv.tv_sec + sec_perturb);
 	op->usec = htonl((tv.tv_usec + usec_perturb) % 1000000);
 
