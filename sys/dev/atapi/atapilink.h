@@ -1,4 +1,4 @@
-/*	$OpenBSD: atapilink.h,v 1.7 1996/09/06 12:19:12 mickey Exp $	*/
+/*	$OpenBSD: atapilink.h,v 1.8 1996/09/11 07:22:05 downsj Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -153,7 +153,6 @@ struct at_dev_link {
 #define AQUIRK_CDROM		0x01	/* device is a CD-ROM */
 #define AQUIRK_LITTLETOC	0x02	/* Audio TOC uses wrong byte order */
 #define AQUIRK_NOCAPACITY	0x04	/* no READ_CD_CAPACITY command */
-#define	AQUIRK_TIMING		0x08	/* timing problems */
 	void	(*start) __P((void *));	/* device start routine */
 	int	(*done) __P((void *));	/* device done routine */
 };

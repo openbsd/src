@@ -1,4 +1,4 @@
-/*	$OpenBSD: acd.c,v 1.12 1996/09/04 22:13:45 niklas Exp $	*/
+/*	$OpenBSD: acd.c,v 1.13 1996/09/11 07:22:03 downsj Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -219,17 +219,20 @@ acdattach(parent, self, aux)
 	 */
 	cap = &acd->mode_page.page_cap;
 
-	printf ("%s: ", self->dv_xname);
-	if (cap->cur_speed != cap->max_speed)
-		printf ("%d/", cap->cur_speed * 1000 / 1024);
-	printf ("%dKb/sec", cap->max_speed * 1000 / 1024);
-	if (cap->buf_size)
-		printf (", %dKb cache", cap->buf_size);
-	if (cap->format_cap & FORMAT_AUDIO_PLAY)
-		printf (", audio play");
-	if (cap->max_vol_levels)
-		printf (", %d volume levels", cap->max_vol_levels);
-	printf ("\n");
+	/* Don't print anything unless it looks valid. */
+	if (cap->cur_speed > 0) {
+		printf ("%s: ", self->dv_xname);
+		if (cap->cur_speed != cap->max_speed)
+			printf ("%d/", cap->cur_speed * 1000 / 1024);
+		printf ("%dKb/sec", cap->max_speed * 1000 / 1024);
+		if (cap->buf_size)
+			printf (", %dKb cache", cap->buf_size);
+		if (cap->format_cap & FORMAT_AUDIO_PLAY)
+			printf (", audio play");
+		if (cap->max_vol_levels)
+			printf (", %d volume levels", cap->max_vol_levels);
+		printf ("\n");
+	}
 }
 
 /*
