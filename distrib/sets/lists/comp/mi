@@ -2090,6 +2090,7 @@
 ./usr/share/man/cat3/rmd160.0
 ./usr/share/man/cat3/rpc.0
 ./usr/share/man/cat3/rpc_createerr.0
+./usr/share/man/cat3/rpcauth.0
 ./usr/share/man/cat3/rresvport.0
 ./usr/share/man/cat3/ruserok.0
 ./usr/share/man/cat3/savetty.0
