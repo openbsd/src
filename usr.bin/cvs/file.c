@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.45 2004/12/28 19:44:17 xsa Exp $	*/
+/*	$OpenBSD: file.c,v 1.46 2004/12/28 20:00:14 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -145,8 +145,9 @@ cvs_file_init(void)
 
 	TAILQ_INIT(&cvs_ign_pats);
 
-	cvs_addedrev = rcsnum_alloc();
-	rcsnum_aton("0", NULL, cvs_addedrev);
+	if (((cvs_addedrev = rcsnum_alloc()) == NULL) ||
+	    (rcsnum_aton("0", NULL, cvs_addedrev) < 0))
+		return (-1);
 
 	/* standard patterns to ignore */
 	for (i = 0; i < (int)(sizeof(cvs_ign_std)/sizeof(char *)); i++)
