@@ -1,4 +1,4 @@
-/*	$OpenBSD: sb_isapnp.c,v 1.8 1999/01/02 22:01:27 niklas Exp $	*/
+/*	$OpenBSD: sb_isapnp.c,v 1.9 1999/01/11 03:03:42 downsj Exp $	*/
 /*	$NetBSD: sb_isa.c,v 1.3 1997/03/20 11:03:11 mycroft Exp $	*/
 
 /*
@@ -91,7 +91,9 @@ sb_isapnp_attach(parent, self, aux)
 	struct isa_attach_args *ia = aux;
 
 	sc->sc_iot = ia->ia_iot;
+	sc->sc_ioh = ia->ipa_io[0].h;
 	sc->sc_irq = ia->ipa_irq[0].num;
+	sc->sc_iobase = ia->ipa_io[0].base;
 	sc->sc_ic = ia->ia_ic;
 	sc->sc_drq8 = ia->ipa_drq[0].num;
 	
