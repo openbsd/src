@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.24 1998/11/17 23:10:13 aaron Exp $
+.\"	$OpenBSD: options.4,v 1.25 1998/11/29 14:12:14 angelos Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt 
@@ -598,6 +598,17 @@ one segment has been dropped per window, the transmission can continue
 without waiting for a retranmission timeout. This option cannot be used
 together with
 .Em TCP_SACK .
+.It Cd option TCPCOOKIE
+This causes the kernel to keep a list of "friendly" hosts, that is IP
+addresses that have been verified to exist. TCP connections from these
+addresses are allowed to proceed. Connections from other addresses
+trigger a mechanism for determining whether those are "friendly". The
+list of friendle addresses is controlled by the
+.Em TCK_NFRIENDS
+option, which is by default set to 16. Unfortunately, hosts behind a
+some stateful packet-filtering firewalls are unverifiable due to the
+nature of the mechanism and the filtering process, thus connections
+from such hosts are not allowed to proceed.
 .It Cd option TCP_SACK
 Turns on selective acknowledgements. Additional information about
 segments already received can be transmitted back to the sender,
