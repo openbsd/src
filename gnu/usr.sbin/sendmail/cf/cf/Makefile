@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2000/04/02 19:48:11 millert Exp $
+#	$OpenBSD: Makefile,v 1.3 2000/04/02 21:11:43 millert Exp $
 #
 #  Makefile for configuration files.
 #
@@ -25,10 +25,9 @@ RM=	rm -f
 	( cd ${.CURDIR} && $(M4) ${CFDIR}/m4/cf.m4 ${@:R}.mc > ${.OBJDIR}/$@ )
 	$(CHMOD) $(ROMODE) $@
 
-# XXX - need more/better examples!
 ALL=	clientproto.cf openbsd-proto.cf courtesan.cf courtesan-nonet.cf \
-	gandalf.cf saruman.cf alatar.cf nettan.cf waldorf.cf lucifier.cf \
-	elbereth.cf corpse.cf knecht.cf
+	courtesan-lists.mc  openbsd-lists.mc gandalf.cf saruman.cf alatar.cf \
+	nettan.cf waldorf.cf lucifier.cf elbereth.cf corpse.cf knecht.cf
 
 all: $(ALL)
 
