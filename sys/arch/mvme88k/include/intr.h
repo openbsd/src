@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.9 2002/04/29 07:35:20 miod Exp $	*/
+/*	$OpenBSD: intr.h,v 1.10 2003/01/03 23:17:42 miod Exp $	*/
 /*
  * Copyright (C) 2000 Steve Murphree, Jr.
  * All rights reserved.
@@ -92,7 +92,22 @@ int spl0(void);
 /* needs major cleanup - XXX nivas */
 
 /* SPL asserts */
-#define	splassert(wantipl)	/* nothing */
+#ifdef DIAGNOSTIC
+/*
+ * Although this function is implemented in MI code, it must be in this MD
+ * header because we don't want this header to include MI includes.
+ */
+void splassert_fail(int, int, const char *);
+extern int splassert_ctl;
+void splassert_check(int, const char *);
+#define splassert(__wantipl) do {			\
+	if (__predict_false(splassert_ctl > 0)) {	\
+		splassert_check(__wantipl, __func__);	\
+	}						\
+} while (0)
+#else
+#define	splassert(wantipl)	do { /* nothing */ } while (0)
+#endif
 
 #if 0
 spl0 is a function by itself. I really am serious about the clean up

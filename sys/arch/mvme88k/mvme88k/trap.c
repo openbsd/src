@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.36 2002/05/16 21:11:16 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.37 2003/01/03 23:17:43 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -1832,3 +1832,22 @@ register struct proc *p;
 	return (0);
 }
 
+
+#ifdef DIAGNOSTIC
+void
+splassert_check(int wantipl, const char *func)
+{
+	int oldipl;
+
+	oldipl = spl();
+
+	if (oldipl < wantipl) {
+		splassert_fail(wantipl, oldipl, func);
+		/*
+		 * If the splassert_ctl is set to not panic, raise the ipl
+		 * in a feeble attempt to reduce damage.
+		 */
+		setipl(wantipl);
+	}
+}
+#endif
