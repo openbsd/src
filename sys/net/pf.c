@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.129 2001/08/19 19:03:58 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.130 2001/08/19 19:08:35 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2332,8 +2332,8 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 		 * the crappy stack check or if we picked up the connection
 		 * after establishment)
 		 */
-		if (SEQ_GEQ(seq + MAX(1, dst->max_win), src->seqhi))
-			src->seqhi = seq + MAX(1, dst->max_win);
+		if (SEQ_GEQ(end + MAX(1, dst->max_win), src->seqhi))
+			src->seqhi = end + MAX(1, dst->max_win);
 		if (win > src->max_win)
 			src->max_win = win;
 	}
@@ -2413,7 +2413,7 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 	} else if (dst->state < TCPS_SYN_SENT &&
 	    SEQ_GEQ(src->seqhi + MAXACKWINDOW, end) &&
 	    /* Within a window forward of the originating packet */
-	    SEQ_GEQ(src->seqlo - MAXACKWINDOW, seq)) {
+	    SEQ_GEQ(seq, src->seqlo - MAXACKWINDOW)) {
 	    /* Within a window backward of the originating packet */
 
 		/*
@@ -2461,13 +2461,15 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 			printf("pf: BAD state: ");
 			pf_print_state(*state);
 			pf_print_flags(th->th_flags);
-			printf(" seq=%lu ack=%lu len=%u ", seq, ack, len);
-			printf("\n");
-			printf("State failure: %c %c %c %c\n",
+			printf(" seq=%lu ack=%lu len=%u ackskew=%d pkts=%d\n",
+			    seq, ack, len, ackskew, (*state)->packets++);
+			printf("pf: State failure on: %c %c %c %c | %c %c\n",
 			    SEQ_GEQ(src->seqhi, end) ? ' ' : '1',
 			    SEQ_GEQ(seq, src->seqlo - dst->max_win) ? ' ': '2',
 			    (ackskew >= -MAXACKWINDOW) ? ' ' : '3',
-			    (ackskew <= MAXACKWINDOW) ? ' ' : '4');
+			    (ackskew <= MAXACKWINDOW) ? ' ' : '4',
+	    		    SEQ_GEQ(src->seqhi + MAXACKWINDOW, end) ?' ' :'5',
+	    		    SEQ_GEQ(seq, src->seqlo - MAXACKWINDOW) ?' ' :'6');
 		}
 		return (PF_DROP);
 	}
