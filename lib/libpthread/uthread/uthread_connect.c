@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_connect.c,v 1.3 1999/11/25 07:01:33 d Exp $	*/
+/*	$OpenBSD: uthread_connect.c,v 1.4 2001/08/21 19:24:53 fgsch Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -43,6 +43,7 @@
 int
 connect(int fd, const struct sockaddr * name, socklen_t namelen)
 {
+	struct pthread	*curthread = _get_curthread();
 	struct sockaddr tmpname;
 	int             errnolen, ret, tmpnamelen;
 
@@ -51,7 +52,7 @@ connect(int fd, const struct sockaddr * name, socklen_t namelen)
 			if (!(_thread_fd_table[fd]->flags & O_NONBLOCK) &&
 			((errno == EWOULDBLOCK) || (errno == EINPROGRESS) ||
 			 (errno == EALREADY) || (errno == EAGAIN))) {
-				_thread_run->data.fd.fd = fd;
+				curthread->data.fd.fd = fd;
 
 				/* Set the timeout: */
 				_thread_kern_set_timeout(NULL);

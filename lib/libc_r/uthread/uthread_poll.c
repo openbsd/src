@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_poll.c,v 1.5 2001/08/15 15:47:56 fgsch Exp $	*/
+/*	$OpenBSD: uthread_poll.c,v 1.6 2001/08/21 19:24:53 fgsch Exp $	*/
 /*
  * Copyright (c) 1999 Daniel Eischen <eischen@vigrid.com>
  * All rights reserved.
@@ -47,6 +47,7 @@
 int 
 poll(struct pollfd fds[], int nfds, int timeout)
 {
+	struct pthread	*curthread = _get_curthread();
 	struct timespec	ts;
 	int		numfds = nfds;
 	int             i, ret = 0;
@@ -84,10 +85,10 @@ poll(struct pollfd fds[], int nfds, int timeout)
 			fds[i].revents = 0;
 		}
 
-		_thread_run->data.poll_data = &data;
-		_thread_run->interrupted = 0;
+		curthread->data.poll_data = &data;
+		curthread->interrupted = 0;
 		_thread_kern_sched_state(PS_POLL_WAIT, __FILE__, __LINE__);
-		if (_thread_run->interrupted) {
+		if (curthread->interrupted) {
 			errno = EINTR;
 			ret = -1;
 		} else {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_private.h,v 1.22 2001/08/15 23:50:34 fgsch Exp $	*/
+/*	$OpenBSD: pthread_private.h,v 1.23 2001/08/21 19:24:53 fgsch Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -278,7 +278,7 @@ struct pthread_mutex_attr {
  */
 enum pthread_cond_type {
 	COND_TYPE_FAST,
-#define COND_TYPE_MAX	((int)COND_TYPE_FAST + 1)
+	COND_TYPE_MAX
 };
 
 struct pthread_cond {
@@ -287,6 +287,7 @@ struct pthread_cond {
 	pthread_mutex_t			c_mutex;
 	void				*c_data;
 	long				c_flags;
+	int				c_seqno;
 
 	/*
 	 * Lock for accesses to this structure.
@@ -333,6 +334,7 @@ struct pthread_attr {
 	void	(*cleanup_attr) ();
 	void	*stackaddr_attr;
 	size_t	stacksize_attr;
+	size_t	guardsize_attr;
 };
 
 /*
@@ -409,8 +411,8 @@ enum pthread_state {
 	PS_JOIN,
 	PS_SUSPENDED,
 	PS_DEAD,
-	PS_DEADLOCK
-#define PS_STATE_MAX	((int)PS_DEADLOCK + 1)
+	PS_DEADLOCK,
+	PS_STATE_MAX
 };
 
 
@@ -803,6 +805,8 @@ extern int	_thread_kern_new_state;
 __BEGIN_DECLS
 int     _find_dead_thread(pthread_t);
 int     _find_thread(pthread_t);
+struct pthread *_get_curthread(void);
+void	_set_curthread(struct pthread *);
 int     _thread_create(pthread_t *,const pthread_attr_t *,void *(*start_routine)(void *),void *,pthread_t);
 void    _dispatch_signals(void);
 void    _thread_signal(pthread_t, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_gc.c,v 1.9 2000/01/06 07:17:23 d Exp $	*/
+/*	$OpenBSD: uthread_gc.c,v 1.10 2001/08/21 19:24:53 fgsch Exp $	*/
 /*
  * Copyright (c) 1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -48,6 +48,7 @@
 pthread_addr_t
 _thread_gc(pthread_addr_t arg)
 {
+	struct pthread	*curthread = _get_curthread();
 	int		f_debug;
 	int		f_done = 0;
 	int		ret;
@@ -62,13 +63,13 @@ _thread_gc(pthread_addr_t arg)
 	sigprocmask (SIG_BLOCK, &mask, NULL);
 
 	/* Mark this thread as a library thread (not a user thread). */
-	_thread_run->flags |= PTHREAD_FLAGS_PRIVATE;
+	curthread->flags |= PTHREAD_FLAGS_PRIVATE;
 
 	/* Set a debug flag based on an environment variable. */
 	f_debug = (getenv("LIBC_R_DEBUG") != NULL);
 
 	/* Set the name of this thread. */
-	pthread_set_name_np(_thread_run,"GC");
+	pthread_set_name_np(curthread,"GC");
 
 	while (!f_done) {
 		/* Check if debugging this application. */
@@ -83,8 +84,8 @@ _thread_gc(pthread_addr_t arg)
 		_thread_kern_sig_defer();
 
 		/* Check if this is the last running thread: */
-		if (TAILQ_FIRST(&_thread_list) == _thread_run &&
-		    TAILQ_NEXT(_thread_run, tle) == NULL)
+		if (TAILQ_FIRST(&_thread_list) == curthread &&
+		    TAILQ_NEXT(curthread, tle) == NULL)
 			/*
 			 * This is the last thread, so it can exit
 			 * now.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_spinlock.c,v 1.7 2000/01/06 07:22:04 d Exp $	*/
+/*	$OpenBSD: uthread_spinlock.c,v 1.8 2001/08/21 19:24:53 fgsch Exp $	*/
 /*
  * Copyright (c) 1997 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -52,18 +52,20 @@ extern char *__progname;
 void
 _spinlock(spinlock_t *lck)
 {
+	struct pthread	*curthread = _get_curthread();
+
 	/*
 	 * Try to grab the lock and loop if another thread grabs
 	 * it before we do.
 	 */
 	while(_atomic_lock(&lck->access_lock)) {
 		/* Block the thread until the lock. */
-		_thread_run->data.spinlock = lck;
+		curthread->data.spinlock = lck;
 		_thread_kern_sched_state(PS_SPINBLOCK, __FILE__, __LINE__);
 	}
 
 	/* The running thread now owns the lock: */
-	lck->lock_owner = _thread_run;
+	lck->lock_owner = curthread;
 }
 
 /*
@@ -79,6 +81,7 @@ _spinlock(spinlock_t *lck)
 void
 _spinlock_debug(spinlock_t *lck, const char *fname, int lineno)
 {
+	struct pthread	*curthread = _get_curthread();
 	int cnt = 0;
 
 	/*
@@ -89,19 +92,19 @@ _spinlock_debug(spinlock_t *lck, const char *fname, int lineno)
 		cnt++;
 		if (cnt > 100) {
 			char str[256];
-			snprintf(str, sizeof(str), "%s - Warning: Thread %p attempted to lock %p from %s (%d) was left locked from %s (%d)\n", __progname, _thread_run, lck, fname, lineno, lck->fname, lck->lineno);
+			snprintf(str, sizeof(str), "%s - Warning: Thread %p attempted to lock %p from %s (%d) was left locked from %s (%d)\n", __progname, curthread, lck, fname, lineno, lck->fname, lck->lineno);
 			_thread_sys_write(2,str,strlen(str));
 			sleep(1);
 			cnt = 0;
 		}
 
 		/* Block the thread until the lock. */
-		_thread_run->data.spinlock = lck;
+		curthread->data.spinlock = lck;
 		_thread_kern_sched_state(PS_SPINBLOCK, fname, lineno);
 	}
 
 	/* The running thread now owns the lock: */
-	lck->lock_owner = _thread_run;
+	lck->lock_owner = curthread;
 	lck->fname = fname;
 	lck->lineno = lineno;
 }

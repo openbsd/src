@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_sigmask.c,v 1.3 1999/11/25 07:01:44 d Exp $	*/
+/*	$OpenBSD: uthread_sigmask.c,v 1.4 2001/08/21 19:24:53 fgsch Exp $	*/
 /*
  * Copyright (c) 1997 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -41,12 +41,13 @@
 int
 pthread_sigmask(int how, const sigset_t *set, sigset_t *oset)
 {
+	struct pthread	*curthread = _get_curthread();
 	int ret = 0;
 
 	/* Check if the existing signal process mask is to be returned: */
 	if (oset != NULL) {
 		/* Return the current mask: */
-		*oset = _thread_run->sigmask;
+		*oset = curthread->sigmask;
 	}
 	/* Check if a new signal set was provided by the caller: */
 	if (set != NULL) {
@@ -55,19 +56,19 @@ pthread_sigmask(int how, const sigset_t *set, sigset_t *oset)
 		/* Block signals: */
 		case SIG_BLOCK:
 			/* Add signals to the existing mask: */
-			_thread_run->sigmask |= *set;
+			curthread->sigmask |= *set;
 			break;
 
 		/* Unblock signals: */
 		case SIG_UNBLOCK:
 			/* Clear signals from the existing mask: */
-			_thread_run->sigmask &= ~(*set);
+			curthread->sigmask &= ~(*set);
 			break;
 
 		/* Set the signal process mask: */
 		case SIG_SETMASK:
 			/* Set the new mask: */
-			_thread_run->sigmask = *set;
+			curthread->sigmask = *set;
 			break;
 
 		/* Trap invalid actions: */

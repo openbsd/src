@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_writev.c,v 1.4 2001/08/11 14:56:07 fgsch Exp $	*/
+/*	$OpenBSD: uthread_writev.c,v 1.5 2001/08/21 19:24:53 fgsch Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -47,6 +47,7 @@
 ssize_t
 writev(int fd, const struct iovec * iov, int iovcnt)
 {
+	struct pthread	*curthread = _get_curthread();
 	int	blocking;
 	int	idx = 0;
 	int	type;
@@ -159,11 +160,11 @@ writev(int fd, const struct iovec * iov, int iovcnt)
 			 */
 			if (blocking && ((n < 0 && (errno == EWOULDBLOCK ||
 			    errno == EAGAIN)) || (n >= 0 && idx < iovcnt))) {
-				_thread_run->data.fd.fd = fd;
+				curthread->data.fd.fd = fd;
 				_thread_kern_set_timeout(NULL);
 
 				/* Reset the interrupted operation flag: */
-				_thread_run->interrupted = 0;
+				curthread->interrupted = 0;
 
 				_thread_kern_sched_state(PS_FDW_WAIT,
 				    __FILE__, __LINE__);
@@ -172,7 +173,7 @@ writev(int fd, const struct iovec * iov, int iovcnt)
 				 * Check if the operation was
 				 * interrupted by a signal
 				 */
-				if (_thread_run->interrupted) {
+				if (curthread->interrupted) {
 					/* Return an error: */
 					ret = -1;
 				}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_cond.c,v 1.9 2000/01/06 07:14:47 d Exp $	*/
+/*	$OpenBSD: uthread_cond.c,v 1.10 2001/08/21 19:24:53 fgsch Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -158,6 +158,7 @@ pthread_cond_destroy(pthread_cond_t * cond)
 int
 pthread_cond_wait(pthread_cond_t * cond, pthread_mutex_t * mutex)
 {
+	struct pthread	*curthread = _get_curthread();
 	int             rval = 0;
 
 	/* This is a cancellation point: */
@@ -197,19 +198,19 @@ pthread_cond_wait(pthread_cond_t * cond, pthread_mutex_t * mutex)
 				rval = EINVAL;
 			} else {
 				/* Reset the timeout flag: */
-				_thread_run->timeout = 0;
+				curthread->timeout = 0;
 
 				/*
 				 * Queue the running thread for the condition
 				 * variable:
 				 */
-				cond_queue_enq(*cond, _thread_run);
+				cond_queue_enq(*cond, curthread);
 
 				/* Remember the mutex that is being used: */
 				(*cond)->c_mutex = *mutex;
 
 				/* Wait forever: */
-				_thread_run->wakeup_time.tv_sec = -1;
+				curthread->wakeup_time.tv_sec = -1;
 
 				/* Unlock the mutex: */
 				if ((rval = _mutex_cv_unlock(mutex)) != 0) {
@@ -218,7 +219,7 @@ pthread_cond_wait(pthread_cond_t * cond, pthread_mutex_t * mutex)
 					 * the running thread from the condition
 					 * variable queue:
 					 */
-					cond_queue_remove(*cond, _thread_run);
+					cond_queue_remove(*cond, curthread);
 
 					/* Check for no more waiters: */
 					if (TAILQ_FIRST(&(*cond)->c_queue) ==
@@ -264,6 +265,7 @@ int
 pthread_cond_timedwait(pthread_cond_t * cond, pthread_mutex_t * mutex,
 		       const struct timespec * abstime)
 {
+	struct pthread	*curthread = _get_curthread();
 	int             rval = 0;
 
 	/* This is a cancellation point: */
@@ -307,19 +309,19 @@ pthread_cond_timedwait(pthread_cond_t * cond, pthread_mutex_t * mutex,
 				_SPINUNLOCK(&(*cond)->lock);
 			} else {
 				/* Set the wakeup time: */
-				_thread_run->wakeup_time.tv_sec =
+				curthread->wakeup_time.tv_sec =
 				    abstime->tv_sec;
-				_thread_run->wakeup_time.tv_nsec =
+				curthread->wakeup_time.tv_nsec =
 				    abstime->tv_nsec;
 
 				/* Reset the timeout flag: */
-				_thread_run->timeout = 0;
+				curthread->timeout = 0;
 
 				/*
 				 * Queue the running thread for the condition
 				 * variable:
 				 */
-				cond_queue_enq(*cond, _thread_run);
+				cond_queue_enq(*cond, curthread);
 
 				/* Remember the mutex that is being used: */
 				(*cond)->c_mutex = *mutex;
@@ -331,7 +333,7 @@ pthread_cond_timedwait(pthread_cond_t * cond, pthread_mutex_t * mutex,
 					 * the running thread from the condition
 					 * variable queue: 
 					 */
-					cond_queue_remove(*cond, _thread_run);
+					cond_queue_remove(*cond, curthread);
 
 					/* Check for no more waiters: */
 					if (TAILQ_FIRST(&(*cond)->c_queue) == NULL)
@@ -348,7 +350,7 @@ pthread_cond_timedwait(pthread_cond_t * cond, pthread_mutex_t * mutex,
 				  	     &(*cond)->lock, __FILE__, __LINE__);
 
 					/* Check if the wait timedout: */
-					if (_thread_run->timeout == 0) {
+					if (curthread->timeout == 0) {
 						/* Lock the mutex: */
 						rval = _mutex_cv_lock(mutex);
 					}
@@ -362,7 +364,7 @@ pthread_cond_timedwait(pthread_cond_t * cond, pthread_mutex_t * mutex,
 					 	 * variable queue:
 						 */
 						cond_queue_remove(*cond,
-						    _thread_run);
+						    curthread);
 
 						/* Check for no more waiters: */
 						if (TAILQ_FIRST(&(*cond)->c_queue) == NULL)

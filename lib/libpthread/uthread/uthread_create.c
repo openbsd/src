@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_create.c,v 1.14 2000/10/04 05:55:35 d Exp $	*/
+/*	$OpenBSD: uthread_create.c,v 1.15 2001/08/21 19:24:53 fgsch Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -49,6 +49,7 @@ int
 pthread_create(pthread_t * thread, const pthread_attr_t * attr,
 	       void *(*start_routine) (void *), void *arg)
 {
+	struct pthread	*curthread = _get_curthread();
 	int		f_gc = 0;
 	int             ret = 0;
 	pthread_t       gc_thread;
@@ -102,7 +103,7 @@ pthread_create(pthread_t * thread, const pthread_attr_t * attr,
 			new_thread->magic = PTHREAD_MAGIC;
 
 			/* Initialise the thread for signals: */
-			new_thread->sigmask = _thread_run->sigmask;
+			new_thread->sigmask = curthread->sigmask;
 
 			/*
 			 * Set up new stack frame so that it 'returns' to
@@ -122,11 +123,11 @@ pthread_create(pthread_t * thread, const pthread_attr_t * attr,
 			if (new_thread->attr.flags & PTHREAD_INHERIT_SCHED) {
 				/* Copy the scheduling attributes: */
 				new_thread->base_priority
-				    = _thread_run->base_priority;
+				    = curthread->base_priority;
 				new_thread->attr.prio
-				    = _thread_run->base_priority;
+				    = curthread->base_priority;
 				new_thread->attr.sched_policy
-				    = _thread_run->attr.sched_policy;
+				    = curthread->attr.sched_policy;
 			} else {
 				/*
 				 * Use just the thread priority, leaving the
@@ -205,11 +206,13 @@ pthread_create(pthread_t * thread, const pthread_attr_t * attr,
 void
 _thread_start(void)
 {
+	struct pthread	*curthread = _get_curthread();
+
 	/* We just left the scheduler via longjmp: */
 	_thread_kern_in_sched = 0;
 
 	/* Run the current thread's start routine with argument: */
-	pthread_exit(_thread_run->start_routine(_thread_run->arg));
+	pthread_exit(curthread->start_routine(curthread->arg));
 
 	/* This point should never be reached. */
 	PANIC("Thread has resumed after exit");

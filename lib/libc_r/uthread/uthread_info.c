@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_info.c,v 1.9 1999/11/25 06:57:04 d Exp $	*/
+/*	$OpenBSD: uthread_info.c,v 1.10 2001/08/21 19:24:53 fgsch Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -74,6 +74,7 @@ static const struct s_thread_info thread_info[] = {
 void
 _thread_dump_info(void)
 {
+	struct pthread	*curthread = _get_curthread();
 	char            s[512];
 	int             fd;
 	int             i;
@@ -127,7 +128,7 @@ _thread_dump_info(void)
 			_thread_sys_write(fd, s, strlen(s));
 
 			/* Check if this is the running thread: */
-			if (pthread == _thread_run) {
+			if (pthread == curthread) {
 				/* Output a record for the running thread: */
 				strcpy(s, "This is the running thread\n");
 				_thread_sys_write(fd, s, strlen(s));

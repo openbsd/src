@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_exit.c,v 1.12 2000/01/06 07:16:40 d Exp $	*/
+/*	$OpenBSD: uthread_exit.c,v 1.13 2001/08/21 19:24:53 fgsch Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -145,29 +145,30 @@ _thread_exit(const char *fname, int lineno, const char *string)
 void
 pthread_exit(void *status)
 {
+	struct pthread	*curthread = _get_curthread();
 	pthread_t       pthread;
 
 	/* Check if this thread is already in the process of exiting: */
-	if ((_thread_run->flags & PTHREAD_EXITING) != 0) {
+	if ((curthread->flags & PTHREAD_EXITING) != 0) {
 		PANIC("Thread has called pthread_exit() from a destructor. POSIX 1003.1 1996 s16.2.5.2 does not allow this!");
 	}
 
 	/* Flag this thread as exiting: */
-	_thread_run->flags |= PTHREAD_EXITING;
+	curthread->flags |= PTHREAD_EXITING;
 
 	/* Save the return value: */
-	_thread_run->ret = status;
+	curthread->ret = status;
 
-	while (_thread_run->cleanup != NULL) {
+	while (curthread->cleanup != NULL) {
 		pthread_cleanup_pop(1);
 	}
 
-	if (_thread_run->attr.cleanup_attr != NULL) {
-		_thread_run->attr.cleanup_attr(_thread_run->attr.arg_attr);
+	if (curthread->attr.cleanup_attr != NULL) {
+		curthread->attr.cleanup_attr(curthread->attr.arg_attr);
 	}
 
 	/* Check if there is thread specific data: */
-	if (_thread_run->specific_data != NULL) {
+	if (curthread->specific_data != NULL) {
 		/* Run the thread-specific data destructors: */
 		_thread_cleanupspecific();
 	}
@@ -179,9 +180,9 @@ pthread_exit(void *status)
 	_thread_kern_sig_defer();
 
 	/* Check if there are any threads joined to this one: */
-	while ((pthread = TAILQ_FIRST(&(_thread_run->join_queue))) != NULL) {
+	while ((pthread = TAILQ_FIRST(&(curthread->join_queue))) != NULL) {
 		/* Remove the thread from the queue: */
-		TAILQ_REMOVE(&_thread_run->join_queue, pthread, qe);
+		TAILQ_REMOVE(&curthread->join_queue, pthread, qe);
 
 		/* Wake the joined thread and let it detach this thread: */
 		PTHREAD_NEW_STATE(pthread,PS_RUNNING);
@@ -200,7 +201,7 @@ pthread_exit(void *status)
 		PANIC("Cannot lock gc mutex");
 
 	/* Add this thread to the list of dead threads. */
-	TAILQ_INSERT_HEAD(&_dead_list, _thread_run, dle);
+	TAILQ_INSERT_HEAD(&_dead_list, curthread, dle);
 
 	/*
 	 * Defer signals to protect the scheduling queues from access
@@ -209,7 +210,7 @@ pthread_exit(void *status)
 	_thread_kern_sig_defer();
 
 	/* Remove this thread from the thread list: */
-	TAILQ_REMOVE(&_thread_list, _thread_run, tle);
+	TAILQ_REMOVE(&_thread_list, curthread, tle);
 
 	/*
 	 * Undefer and handle pending signals, yielding if necessary:
@@ -227,7 +228,7 @@ pthread_exit(void *status)
 	 * Mark the thread as dead so it will not return if it
 	 * gets context switched out when the mutex is unlocked.
 	 */
-	PTHREAD_SET_STATE(_thread_run, PS_DEAD);
+	PTHREAD_SET_STATE(curthread, PS_DEAD);
 
 	/* Unlock the garbage collector mutex: */
 	if (pthread_mutex_unlock(&_gc_mutex) != 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_sigwait.c,v 1.8 2000/01/06 07:21:14 d Exp $	*/
+/*	$OpenBSD: uthread_sigwait.c,v 1.9 2001/08/21 19:24:53 fgsch Exp $	*/
 /*
  * Copyright (c) 1997 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -41,6 +41,7 @@
 int
 sigwait(const sigset_t * set, int *sig)
 {
+	struct pthread	*curthread = _get_curthread();
 	int		ret = 0;
 	int		i;
 	sigset_t	tempset, waitset;
@@ -72,7 +73,7 @@ sigwait(const sigset_t * set, int *sig)
 	sigdelset(&waitset, SIGINFO);
 
 	/* Check to see if a pending signal is in the wait mask. */
-	if ((tempset = (_thread_run->sigpend & waitset)) != 0) {
+	if ((tempset = (curthread->sigpend & waitset)) != 0) {
 		/* Enter a loop to find a pending signal: */
 		for (i = 1; i < NSIG; i++) {
 			if (sigismember (&tempset, i))
@@ -80,7 +81,7 @@ sigwait(const sigset_t * set, int *sig)
 		}
 
 		/* Clear the pending signal: */
-		sigdelset(&_thread_run->sigpend,i);
+		sigdelset(&curthread->sigpend,i);
 
 		/* Return the signal number to the caller: */
 		*sig = i;
@@ -115,19 +116,19 @@ sigwait(const sigset_t * set, int *sig)
 		 * mask is independent of the threads signal mask
 		 * and requires separate storage.
 		 */
-		_thread_run->data.sigwait = &waitset;
+		curthread->data.sigwait = &waitset;
 
 		/* Wait for a signal: */
 		_thread_kern_sched_state(PS_SIGWAIT, __FILE__, __LINE__);
 
 		/* Return the signal number to the caller: */
-		*sig = _thread_run->signo;
+		*sig = curthread->signo;
 
 		/*
 		 * Probably unnecessary, but since it's in a union struct
 		 * we don't know how it could be used in the future.
 		 */
-		_thread_run->data.sigwait = NULL;
+		curthread->data.sigwait = NULL;
 	}
 
 	/* Restore the sigactions: */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_cancel.c,v 1.2 1999/11/25 07:01:32 d Exp $	*/
+/*	$OpenBSD: uthread_cancel.c,v 1.3 2001/08/21 19:24:53 fgsch Exp $	*/
 /*
  * David Leonard <d@openbsd.org>, 1999. Public domain.
  */
@@ -64,24 +64,25 @@ pthread_setcancelstate(state, oldstate)
 	int state;
 	int *oldstate;
 {
+	struct pthread	*curthread = _get_curthread();
 	int ostate;
 	int ret;
 
-	ostate = _thread_run->cancelstate;
+	ostate = curthread->cancelstate;
 
 	switch (state) {
 	case PTHREAD_CANCEL_ENABLE:
 		if (oldstate)
 			*oldstate = ostate;
-		_thread_run->cancelstate = PTHREAD_CANCEL_ENABLE;
-		if (_thread_run->canceltype == PTHREAD_CANCEL_ASYNCHRONOUS)
+		curthread->cancelstate = PTHREAD_CANCEL_ENABLE;
+		if (curthread->canceltype == PTHREAD_CANCEL_ASYNCHRONOUS)
 			_thread_cancellation_point();
 		ret = 0;
 		break;
 	case PTHREAD_CANCEL_DISABLE:
 		if (oldstate)
 			*oldstate = ostate;
-		_thread_run->cancelstate = PTHREAD_CANCEL_DISABLE;
+		curthread->cancelstate = PTHREAD_CANCEL_DISABLE;
 		ret = 0;
 		break;
 	default:
@@ -97,22 +98,23 @@ pthread_setcanceltype(type, oldtype)
 	int type;
 	int *oldtype;
 {
+	struct pthread	*curthread = _get_curthread();
 	int otype;
 	int ret;
 
-	otype = _thread_run->canceltype;
+	otype = curthread->canceltype;
 	switch (type) {
 	case PTHREAD_CANCEL_ASYNCHRONOUS:
 		if (oldtype)
 			*oldtype = otype;
-		_thread_run->canceltype = PTHREAD_CANCEL_ASYNCHRONOUS;
+		curthread->canceltype = PTHREAD_CANCEL_ASYNCHRONOUS;
 		_thread_cancellation_point();
 		ret = 0;
 		break;
 	case PTHREAD_CANCEL_DEFERRED:
 		if (oldtype)
 			*oldtype = otype;
-		_thread_run->canceltype = PTHREAD_CANCEL_DEFERRED;
+		curthread->canceltype = PTHREAD_CANCEL_DEFERRED;
 		ret = 0;
 		break;
 	default:
@@ -132,17 +134,19 @@ pthread_testcancel()
 void
 _thread_enter_cancellation_point()
 {
+	struct pthread	*curthread = _get_curthread();
 
 	/* Look for a cancellation before we block: */
 	_thread_cancellation_point();
-	_thread_run->flags |= PTHREAD_FLAGS_CANCELPT;
+	curthread->flags |= PTHREAD_FLAGS_CANCELPT;
 }
 
 void
 _thread_leave_cancellation_point()
 {
+	struct pthread	*curthread = _get_curthread();
 
-	_thread_run->flags &=~ PTHREAD_FLAGS_CANCELPT;
+	curthread->flags &=~ PTHREAD_FLAGS_CANCELPT;
 	/* Look for a cancellation after we unblock: */
 	_thread_cancellation_point();
 }
@@ -154,11 +158,12 @@ _thread_leave_cancellation_point()
 void
 _thread_cancellation_point()
 {
+	struct pthread	*curthread = _get_curthread();
 
-	if ((_thread_run->cancelstate == PTHREAD_CANCEL_ENABLE) &&
-	    ((_thread_run->flags & (PTHREAD_FLAGS_CANCELED|PTHREAD_EXITING)) ==
+	if ((curthread->cancelstate == PTHREAD_CANCEL_ENABLE) &&
+	    ((curthread->flags & (PTHREAD_FLAGS_CANCELED|PTHREAD_EXITING)) ==
 		PTHREAD_FLAGS_CANCELED)) {
-		_thread_run->flags &=~ PTHREAD_FLAGS_CANCELED;
+		curthread->flags &=~ PTHREAD_FLAGS_CANCELED;
 		pthread_exit(PTHREAD_CANCELED);
 		PANIC("cancel");
 	}

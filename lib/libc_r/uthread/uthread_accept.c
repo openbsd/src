@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_accept.c,v 1.4 1999/11/25 07:01:30 d Exp $	*/
+/*	$OpenBSD: uthread_accept.c,v 1.5 2001/08/21 19:24:53 fgsch Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -44,6 +44,7 @@
 int
 accept(int fd, struct sockaddr * name, socklen_t *namelen)
 {
+	struct pthread	*curthread = _get_curthread();
 	int             ret;
 
 	/* Lock the file descriptor: */
@@ -53,19 +54,19 @@ accept(int fd, struct sockaddr * name, socklen_t *namelen)
 			/* Check if the socket is to block: */
 			if ((_thread_fd_table[fd]->flags & O_NONBLOCK) == 0 && (errno == EWOULDBLOCK || errno == EAGAIN)) {
 				/* Save the socket file descriptor: */
-				_thread_run->data.fd.fd = fd;
-				_thread_run->data.fd.fname = __FILE__;
-				_thread_run->data.fd.branch = __LINE__;
+				curthread->data.fd.fd = fd;
+				curthread->data.fd.fname = __FILE__;
+				curthread->data.fd.branch = __LINE__;
 
 				/* Set the timeout: */
 				_thread_kern_set_timeout(NULL);
-				_thread_run->interrupted = 0;
+				curthread->interrupted = 0;
 
 				/* Schedule the next thread: */
 				_thread_kern_sched_state(PS_FDR_WAIT, __FILE__, __LINE__);
 
 				/* Check if the wait was interrupted: */
-				if (_thread_run->interrupted) {
+				if (curthread->interrupted) {
 					/* Return an error status: */
 					errno = EINTR;
 					ret = -1;

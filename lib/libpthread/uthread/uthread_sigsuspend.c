@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_sigsuspend.c,v 1.4 1999/11/25 07:01:45 d Exp $	*/
+/*	$OpenBSD: uthread_sigsuspend.c,v 1.5 2001/08/21 19:24:53 fgsch Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -41,16 +41,19 @@
 int
 sigsuspend(const sigset_t * set)
 {
+	struct pthread	*curthread = _get_curthread();
 	int             ret = -1;
 	sigset_t        oset;
+
+	_thread_enter_cancellation_point();
 
 	/* Check if a new signal set was provided by the caller: */
 	if (set != NULL) {
 		/* Save the current signal mask: */
-		oset = _thread_run->sigmask;
+		oset = curthread->sigmask;
 
 		/* Change the caller's mask: */
-		_thread_run->sigmask = *set;
+		curthread->sigmask = *set;
 
 		/* Wait for a signal: */
 		_thread_kern_sched_state(PS_SIGSUSPEND, __FILE__, __LINE__);
@@ -59,11 +62,13 @@ sigsuspend(const sigset_t * set)
 		errno = EINTR;
 
 		/* Restore the signal mask: */
-		_thread_run->sigmask = oset;
+		curthread->sigmask = oset;
 	} else {
 		/* Return an invalid argument error: */
 		errno = EINVAL;
 	}
+
+	_thread_leave_cancellation_point();
 
 	/* Return the completion status: */
 	return (ret);

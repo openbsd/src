@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_write.c,v 1.7 2001/08/11 15:01:57 fgsch Exp $	*/
+/*	$OpenBSD: uthread_write.c,v 1.8 2001/08/21 19:24:53 fgsch Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -45,6 +45,7 @@
 ssize_t
 write(int fd, const void *buf, size_t nbytes)
 {
+	struct pthread	*curthread = _get_curthread();
 	int	blocking;
 	int	type;
 	ssize_t n;
@@ -99,11 +100,11 @@ write(int fd, const void *buf, size_t nbytes)
 			 */
 			if (blocking && ((n < 0 && (errno == EWOULDBLOCK ||
 			    errno == EAGAIN)) || (n >= 0 && num < nbytes))) {
-				_thread_run->data.fd.fd = fd;
+				curthread->data.fd.fd = fd;
 				_thread_kern_set_timeout(NULL);
 
 				/* Reset the interrupted operation flag: */
-				_thread_run->interrupted = 0;
+				curthread->interrupted = 0;
 
 				_thread_kern_sched_state(PS_FDW_WAIT,
 				    __FILE__, __LINE__);
@@ -112,7 +113,7 @@ write(int fd, const void *buf, size_t nbytes)
 				 * Check if the operation was
 				 * interrupted by a signal
 				 */
-				if (_thread_run->interrupted) {
+				if (curthread->interrupted) {
 					/* Return an error: */
 					ret = -1;
 				}

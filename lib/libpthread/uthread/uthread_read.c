@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_read.c,v 1.6 2001/08/17 06:50:25 fgsch Exp $	*/
+/*	$OpenBSD: uthread_read.c,v 1.7 2001/08/21 19:24:53 fgsch Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -45,6 +45,7 @@
 ssize_t
 read(int fd, void *buf, size_t nbytes)
 {
+	struct pthread	*curthread = _get_curthread();
 	ssize_t	ret;
 	int	type;
 
@@ -71,11 +72,11 @@ read(int fd, void *buf, size_t nbytes)
 		else while ((ret = _thread_sys_read(fd, buf, nbytes)) < 0) {
 			if ((_thread_fd_table[fd]->flags & O_NONBLOCK) == 0 &&
 			    (errno == EWOULDBLOCK || errno == EAGAIN)) {
-				_thread_run->data.fd.fd = fd;
+				curthread->data.fd.fd = fd;
 				_thread_kern_set_timeout(NULL);
 
 				/* Reset the interrupted operation flag: */
-				_thread_run->interrupted = 0;
+				curthread->interrupted = 0;
 
 				_thread_kern_sched_state(PS_FDR_WAIT,
 				    __FILE__, __LINE__);
@@ -84,7 +85,7 @@ read(int fd, void *buf, size_t nbytes)
 				 * Check if the operation was
 				 * interrupted by a signal
 				 */
-				if (_thread_run->interrupted) {
+				if (curthread->interrupted) {
 					errno = EINTR;
 					ret = -1;
 					break;

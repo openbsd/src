@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_execve.c,v 1.5 1999/11/25 07:01:34 d Exp $	*/
+/*	$OpenBSD: uthread_execve.c,v 1.6 2001/08/21 19:24:53 fgsch Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -42,6 +42,7 @@
 int 
 execve(const char *name, char *const * argv, char *const * envp)
 {
+	struct pthread	*curthread = _get_curthread();
 	int		flags;
 	int             i;
 	int             ret;
@@ -103,7 +104,7 @@ execve(const char *name, char *const * argv, char *const * envp)
 	}
 
 	/* Set the signal mask: */
-	_thread_sys_sigprocmask(SIG_SETMASK, &_thread_run->sigmask, NULL);
+	_thread_sys_sigprocmask(SIG_SETMASK, &curthread->sigmask, NULL);
 
 	/* Execute the process: */
 	ret = _thread_sys_execve(name, argv, envp);

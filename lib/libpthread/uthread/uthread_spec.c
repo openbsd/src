@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_spec.c,v 1.6 1999/11/25 07:01:46 d Exp $	*/
+/*	$OpenBSD: uthread_spec.c,v 1.7 2001/08/21 19:24:53 fgsch Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -89,6 +89,7 @@ pthread_key_delete(pthread_key_t key)
 void 
 _thread_cleanupspecific(void)
 {
+	struct pthread	*curthread = _get_curthread();
 	void           *data;
 	int             key;
 	int             itr;
@@ -96,16 +97,16 @@ _thread_cleanupspecific(void)
 
 	for (itr = 0; itr < PTHREAD_DESTRUCTOR_ITERATIONS; itr++) {
 		for (key = 0; key < PTHREAD_KEYS_MAX; key++) {
-			if (_thread_run->specific_data_count) {
+			if (curthread->specific_data_count) {
 				/* Lock the key table entry: */
 				_SPINLOCK(&key_table[key].lock);
 				destructor = data = NULL;
 
 				if (key_table[key].allocated) {
-					if (_thread_run->specific_data[key]) {
-						data = (void *) _thread_run->specific_data[key];
-						_thread_run->specific_data[key] = NULL;
-						_thread_run->specific_data_count--;
+					if (curthread->specific_data[key]) {
+						data = (void *) curthread->specific_data[key];
+						curthread->specific_data[key] = NULL;
+						curthread->specific_data_count--;
 						destructor = key_table[key].destructor;
 					}
 				}
@@ -120,14 +121,14 @@ _thread_cleanupspecific(void)
 				if (destructor)
 					destructor(data);
 			} else {
-				free(_thread_run->specific_data);
-				_thread_run->specific_data = NULL;
+				free(curthread->specific_data);
+				curthread->specific_data = NULL;
 				return;
 			}
 		}
 	}
-	free(_thread_run->specific_data);
-	_thread_run->specific_data = NULL;
+	free(curthread->specific_data);
+	curthread->specific_data = NULL;
 }
 
 static inline const void **
@@ -143,11 +144,11 @@ pthread_key_allocate_data(void)
 int 
 pthread_setspecific(pthread_key_t key, const void *value)
 {
-	pthread_t       pthread;
-	int             ret = 0;
+	struct pthread	*pthread;
+	int		ret = 0;
 
 	/* Point to the running thread: */
-	pthread = _thread_run;
+	pthread = _get_curthread();
 
 	if ((pthread->specific_data) ||
 	    (pthread->specific_data = pthread_key_allocate_data())) {
@@ -174,11 +175,11 @@ pthread_setspecific(pthread_key_t key, const void *value)
 void *
 pthread_getspecific(pthread_key_t key)
 {
-	pthread_t       pthread;
+	struct pthread	*pthread;
 	void		*data;
 
 	/* Point to the running thread: */
-	pthread = _thread_run;
+	pthread = _get_curthread();
 
 	/* Check if there is specific data: */
 	if (pthread->specific_data != NULL && key < PTHREAD_KEYS_MAX) {

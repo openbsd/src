@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_sig.c,v 1.7 2000/01/06 07:20:52 d Exp $	*/
+/*	$OpenBSD: uthread_sig.c,v 1.8 2001/08/21 19:24:53 fgsch Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -65,6 +65,7 @@ _thread_sig_init(void)
 void
 _thread_sig_handler(int sig, int code, struct sigcontext * scp)
 {
+	struct pthread	*curthread = _get_curthread();
 	char	c;
 	int	i;
 
@@ -81,8 +82,8 @@ _thread_sig_handler(int sig, int code, struct sigcontext * scp)
 		 * the currently running thread has deferred thread
 		 * signals.
 		 */
-		else if (_thread_run->sig_defer_count > 0)
-			_thread_run->yield_on_sig_undefer = 1;
+		else if (curthread->sig_defer_count > 0)
+			curthread->yield_on_sig_undefer = 1;
 
 		else {
 			/*
@@ -105,7 +106,7 @@ _thread_sig_handler(int sig, int code, struct sigcontext * scp)
 	 * running thread that has deferred signals.
 	 */
 	else if ((_queue_signals != 0) || ((_thread_kern_in_sched == 0) &&
-	    (_thread_run->sig_defer_count > 0))) {
+	    (curthread->sig_defer_count > 0))) {
 		/* Cast the signal number to a character variable: */
 		c = sig;
 
@@ -151,6 +152,7 @@ _thread_sig_handler(int sig, int code, struct sigcontext * scp)
 void
 _thread_sig_handle(int sig, struct sigcontext * scp)
 {
+	struct pthread	*curthread = _get_curthread();
 	int		i;
 	pthread_t	pthread, pthread_next;
 
@@ -238,13 +240,13 @@ _thread_sig_handle(int sig, struct sigcontext * scp)
 			 * list: 
 			 */
 			TAILQ_FOREACH(pthread, &_thread_list, tle) {
-				pthread_t pthread_saved = _thread_run;
+				pthread_t pthread_saved = curthread;
 
 				/* Current thread inside critical region? */
-				if (_thread_run->sig_defer_count > 0)
+				if (curthread->sig_defer_count > 0)
 					pthread->sig_defer_count++;
 
-				_thread_run = pthread;
+				curthread = pthread;
 				_thread_signal(pthread,sig);
 
 				/*
@@ -252,10 +254,10 @@ _thread_sig_handle(int sig, struct sigcontext * scp)
 				 * running thread:
 				 */
 				_dispatch_signals();
-				_thread_run = pthread_saved;
+				curthread = pthread_saved;
 
 				/* Current thread inside critical region? */
-				if (_thread_run->sig_defer_count > 0)
+				if (curthread->sig_defer_count > 0)
 					pthread->sig_defer_count--;
 			}
 	}
@@ -362,13 +364,14 @@ _thread_signal(pthread_t pthread, int sig)
 void
 _dispatch_signals()
 {
+	struct pthread	*curthread = _get_curthread();
 	int i;
 
 	/*
 	 * Check if there are pending signals for the running
 	 * thread that aren't blocked:
 	 */
-	if ((_thread_run->sigpend & ~_thread_run->sigmask) != 0)
+	if ((curthread->sigpend & ~curthread->sigmask) != 0)
 		/* Look for all possible pending signals: */
 		for (i = 1; i < NSIG; i++)
 			/*
@@ -377,10 +380,10 @@ _dispatch_signals()
 			 */
 			if (_thread_sigact[i - 1].sa_handler != SIG_DFL &&
 			    _thread_sigact[i - 1].sa_handler != SIG_IGN &&
-			    sigismember(&_thread_run->sigpend,i) &&
-			    !sigismember(&_thread_run->sigmask,i)) {
+			    sigismember(&curthread->sigpend,i) &&
+			    !sigismember(&curthread->sigmask,i)) {
 				/* Clear the pending signal: */
-				sigdelset(&_thread_run->sigpend,i);
+				sigdelset(&curthread->sigpend,i);
 
 				/*
 				 * Dispatch the signal via the custom signal

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_single_np.c,v 1.3 1999/11/25 07:01:45 d Exp $	*/
+/*	$OpenBSD: uthread_single_np.c,v 1.4 2001/08/21 19:24:53 fgsch Exp $	*/
 /*
  * Copyright (c) 1996 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -39,8 +39,10 @@
 
 int pthread_single_np()
 {
+	struct pthread	*curthread = _get_curthread();
+
 	/* Enter single-threaded (non-POSIX) scheduling mode: */
-	_thread_single = _thread_run;
+	_thread_single = curthread;
 	return(0);
 }
 #endif

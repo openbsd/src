@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_fork.c,v 1.9 2000/01/06 07:17:09 d Exp $	*/
+/*	$OpenBSD: uthread_fork.c,v 1.10 2001/08/21 19:24:53 fgsch Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -44,6 +44,7 @@
 pid_t
 fork(void)
 {
+	struct pthread	*curthread = _get_curthread();
 	int             i, flags;
 	pid_t           ret;
 	pthread_t	pthread;
@@ -63,7 +64,7 @@ fork(void)
 		_thread_sys_close(_thread_kern_pipe[1]);
 
 		/* Reset signals pending for the running thread: */
-		sigemptyset(&_thread_run->sigpend);
+		sigemptyset(&curthread->sigpend);
 
 		/*
 		 * Create a pipe that is written to by the signal handler to
@@ -117,7 +118,7 @@ fork(void)
 				TAILQ_REMOVE(&_thread_list, pthread, tle);
 
 				/* Make sure this isn't the running thread: */
-				if (pthread != _thread_run) {
+				if (pthread != curthread) {
 					/* XXX should let gc do all this. */
 					if(pthread->stack != NULL)
 						_thread_stack_free(pthread->stack);
@@ -133,7 +134,7 @@ fork(void)
 			}
 
 			/* Restore the running thread */
-			TAILQ_INSERT_HEAD(&_thread_list, _thread_run, tle);
+			TAILQ_INSERT_HEAD(&_thread_list, curthread, tle);
 
 			/* Re-init the dead thread list: */
 			TAILQ_INIT(&_dead_list);
@@ -143,7 +144,7 @@ fork(void)
 			TAILQ_INIT(&_workq);
 
 			/* Re-init the threads mutex queue: */
-			TAILQ_INIT(&_thread_run->mutexq);
+			TAILQ_INIT(&curthread->mutexq);
 
 			/* No spinlocks yet: */
 			_spinblock_count = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_join.c,v 1.6 1999/11/25 07:01:37 d Exp $	*/
+/*	$OpenBSD: uthread_join.c,v 1.7 2001/08/21 19:24:53 fgsch Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -40,6 +40,7 @@
 int
 pthread_join(pthread_t pthread, void **thread_return)
 {
+	struct pthread	*curthread = _get_curthread();
 	int ret = 0;
 
 	/* This is a cancellation point: */
@@ -51,7 +52,7 @@ pthread_join(pthread_t pthread, void **thread_return)
 		ret = EINVAL;
 
 	/* Check if the caller has specified itself: */
-	else if (pthread == _thread_run)
+	else if (pthread == curthread)
 		/* Avoid a deadlock condition: */
 		ret = EDEADLK;
 
@@ -72,7 +73,7 @@ pthread_join(pthread_t pthread, void **thread_return)
 	/* Check if the thread is not dead: */
 	else if (pthread->state != PS_DEAD) {
 		/* Add the running thread to the join queue: */
-		TAILQ_INSERT_TAIL(&(pthread->join_queue), _thread_run, qe);
+		TAILQ_INSERT_TAIL(&(pthread->join_queue), curthread, qe);
 
 		/* Schedule the next thread: */
 		_thread_kern_sched_state(PS_JOIN, __FILE__, __LINE__);
