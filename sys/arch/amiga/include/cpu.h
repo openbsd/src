@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.6 1996/05/02 06:44:44 niklas Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.7 1996/05/02 07:57:23 niklas Exp $	*/
 /*	$NetBSD: cpu.h,v 1.31 1996/04/27 20:55:08 veego Exp $	*/
 
 /*
@@ -48,6 +48,7 @@
 /*
  * Exported definitions unique to amiga/68k cpu support.
  */
+#include <machine/psl.h>
 
 /*
  * definitions of cpu-dependent requirements
