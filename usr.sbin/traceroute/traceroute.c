@@ -1,5 +1,5 @@
+/*	$OpenBSD: traceroute.c,v 1.21 1997/06/11 06:47:24 denny Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
-/*	$OpenBSD: traceroute.c,v 1.20 1997/06/11 00:52:17 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -259,11 +259,14 @@ static char rcsid[] = "$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft 
 struct packetdata {
 	u_char seq;		/* sequence number of this packet */
 	u_char ttl;		/* ttl packet left with */
-	struct timeval tv;	/* time packet left */
+	u_int32_t sec;		/* time packet left */
+	u_int32_t usec;
 };
 
 struct in_addr gateway[MAX_LSRR + 1];
 int lsrrlen = 0;
+int32_t sec_perturb;
+int32_t usec_perturb;
 
 u_char packet[512], *outpacket;	/* last inbound (icmp) packet */
 
@@ -305,6 +308,7 @@ main(argc, argv)
 	struct sockaddr_in from, to;
 	int ch, i, lsrr, on, probe, seq, tos, ttl, ttl_flag;
 	struct ip *ip;
+	u_int32_t tmprnd;
 
 	if ((pe = getprotobyname("icmp")) == NULL) {
 		Fprintf(stderr, "icmp: unknown protocol\n");
@@ -456,6 +460,10 @@ main(argc, argv)
 	ip->ip_tos = tos;
 
 	ident = (getpid() & 0xffff) | 0x8000;
+	tmprnd = arc4random();
+	sec_perturb = (tmprnd & 0x80000000) ? -(tmprnd & 0x7ff) :
+						(tmprnd & 0x7ff);
+	usec_perturb = arc4random();
 
 	if (options & SO_DEBUG)
 		(void) setsockopt(s, SOL_SOCKET, SO_DEBUG,
@@ -670,6 +678,7 @@ send_probe(seq, ttl, to)
 	struct udphdr *up = (struct udphdr *)(p + lsrrlen);
 	struct packetdata *op = (struct packetdata *)(up + 1);
 	int i;
+	struct timeval tv;
 
 	ip->ip_len = htons(datalen);
 	ip->ip_ttl = ttl;
@@ -682,7 +691,23 @@ send_probe(seq, ttl, to)
 
 	op->seq = seq;
 	op->ttl = ttl;
-	(void) gettimeofday(&op->tv, &tz);
+	(void) gettimeofday(&tv, &tz);
+
+	/*
+	 * We don't want hostiles snooping the net to get any useful
+	 * information about us. Send the timestamp in network byte order,
+	 * and perturb the timestamp enough that they won't know our
+	 * real clock ticker. We don't want to perturb the time by too
+	 * much: being off by a suspiciously large amount might indicate
+	 * OpenBSD.
+	 *
+	 * The timestamps in the packet are currently unused. If future
+	 * work wants to use them they will have to subtract out the
+	 * perturbation first.
+	 */
+	(void) gettimeofday(&tv, &tz);
+	op->sec = htonl(tv.tv_sec + sec_perturb);
+	op->usec = htonl((tv.tv_usec + usec_perturb) % 1000000);
 
 	if (dump)
 		dump_packet();
@@ -865,7 +890,7 @@ inetname(in)
 	register char *cp;
 	register struct hostent *hp;
 	static int first = 1;
-	static char domain[MAXHOSTNAMELEN + 1], line[MAXHOSTNAMELEN + 1];
+	static char domain[MAXHOSTNAMELEN], line[MAXHOSTNAMELEN];
 
 	if (first && !nflag) {
 		first = 0;
