@@ -1,3 +1,4 @@
+/*	$OpenBSD	*/
 /*	$NetBSD: fdisk.c,v 1.11 1995/10/04 23:11:19 ghudson Exp $	*/
 
 /*
@@ -42,6 +43,7 @@ static char rcsid[] = "$NetBSD: fdisk.c,v 1.11 1995/10/04 23:11:19 ghudson Exp $
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 #define LBUF 100
 static char lbuf[LBUF];
@@ -595,7 +597,8 @@ open_disk(u_flag)
 {
 	struct stat st;
 
-	if ((fd = open(disk, u_flag ? O_RDWR : O_RDONLY)) == -1) {
+	fd = opendev(disk, (u_flag ? O_RDWR : O_RDONLY), OPENDEV_PART, &disk);
+	if (fd == -1) {
 		warn("%s", disk);
 		return (-1);
 	}
