@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: main.c,v 1.46 2001/05/03 13:41:07 espie Exp $ */
+/*	$OpenBSD: main.c,v 1.47 2001/05/07 22:57:19 espie Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -107,7 +107,7 @@ static char copyright[] =
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: main.c,v 1.46 2001/05/03 13:41:07 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.47 2001/05/07 22:57:19 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -914,7 +914,6 @@ ReadMakefile(p, q)
 		 */
 found:		Var_Set("MAKEFILE", fname, VAR_GLOBAL);
 		Parse_File(fname, stream);
-		(void)fclose(stream);
 	}
 	return TRUE;
 }

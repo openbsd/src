@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: lowparse.c,v 1.6 2001/05/03 13:41:07 espie Exp $ */
+/*	$OpenBSD: lowparse.c,v 1.7 2001/05/07 22:57:19 espie Exp $ */
 
 /* low-level parsing functions. */
 
@@ -147,7 +147,7 @@ static void
 free_ifile(ifile)
     IFile *ifile;
 {
-    if (ifile->F)
+    if (ifile->F && fileno(ifile->F) != STDIN_FILENO)
 	(void)fclose(ifile->F);
     else
 	free(ifile->str);
