@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.119 2001/06/24 23:42:40 mickey Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.120 2001/06/25 01:21:15 provos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -48,6 +48,7 @@
 #include <sys/kernel.h>
 
 #include <net/if.h>
+#include <net/if_enc.h>
 #include <net/route.h>
 
 #if NPF > 0
@@ -564,6 +565,24 @@ sendit:
 	if (sproto != 0) {
 	        s = splnet();
 
+		/*
+		 * Packet filter
+		 */
+#if NPF > 0
+		{
+			void *ifp = (void *)&encif[0].sc_if;
+			struct mbuf *m1 = m;
+			if (pf_test(PF_OUT, ifp, &m1) != PF_PASS) {
+				error = EHOSTUNREACH;
+				splx(s);
+				m_freem(m1);
+				goto done;
+			}
+			ip = mtod(m = m1, struct ip *);
+			hlen = ip->ip_hl << 2;
+		}
+#endif
+
 		tdb = gettdb(sspi, &sdst, sproto);
 		if (tdb == NULL) {
 			error = EHOSTUNREACH;
@@ -642,8 +661,11 @@ sendit:
 #if NPF > 0
 	{
 		struct mbuf *m1 = m;
-		if (pf_test(PF_OUT, ifp, &m1) != PF_PASS)
+		if (pf_test(PF_OUT, ifp, &m1) != PF_PASS) {
+			error = EHOSTUNREACH;
+			m_freem(m1);
 			goto done;
+		}
 		ip = mtod(m = m1, struct ip *);
 	}
 #endif
